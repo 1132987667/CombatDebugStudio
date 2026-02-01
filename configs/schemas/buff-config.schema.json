@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Buff Config",
+  "description": "Configuration for a buff effect",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the buff",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the buff",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the buff's effect"
+    },
+    "duration": {
+      "type": "integer",
+      "description": "Duration of the buff in milliseconds (-1 for permanent)",
+      "minimum": -1
+    },
+    "maxStacks": {
+      "type": "integer",
+      "description": "Maximum number of stacks for the buff",
+      "minimum": 1
+    },
+    "cooldown": {
+      "type": "integer",
+      "description": "Cooldown time in milliseconds",
+      "minimum": 0
+    },
+    "isPermanent": {
+      "type": "boolean",
+      "description": "Whether the buff is permanent"
+    },
+    "isDebuff": {
+      "type": "boolean",
+      "description": "Whether the buff is a debuff"
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Additional parameters for the buff",
+      "additionalProperties": true
+    }
+  },
+  "required": ["id", "name", "description", "duration", "maxStacks", "cooldown"]
+}

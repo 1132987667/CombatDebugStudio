@@ -1,0 +1,736 @@
+[
+  {
+    "id": "buff_speed_up",
+    "name": "速度提升",
+    "maxStacks": 1,
+    "duration": 1,
+    "attributes": {
+      "speed": "+10"
+    }
+  },
+  {
+    "id": "buff_ally_atk_up",
+    "name": "同伴攻击提升",
+    "maxStacks": 1,
+    "duration": 2,
+    "attributes": {
+      "attack": "+0.05"
+    }
+  },
+  {
+    "id": "buff_commander_aura",
+    "name": "统领光环",
+    "maxStacks": 1,
+    "duration": -1,
+    "onAdd": "owner.addAura('aura_crit_up');"
+  },
+  {
+    "id": "buff_iron_armor",
+    "name": "铁甲护体",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "physicalDamageTaken": "-0.2"
+    }
+  },
+  {
+    "id": "buff_sky_overlord",
+    "name": "天空霸主",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "slowImmune": "+1.0"
+    }
+  },
+  {
+    "id": "buff_guard_shield",
+    "name": "近卫之盾",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTakeDamage": "owner.shareDamage(0.1,adjacentAllies);"
+  },
+  {
+    "id": "buff_general_awe",
+    "name": "将军之威",
+    "maxStacks": 1,
+    "duration": -1,
+    "onAdd": "owner.addAura('aura_all_def_up');"
+  },
+  {
+    "id": "buff_wind_shield",
+    "name": "风之护盾",
+    "maxStacks": 1,
+    "duration": 2,
+    "onTakeDamage": "damage=damage-owner.attack*0.8;if(damage<0)damage=0;"
+  },
+  {
+    "id": "buff_wind_spirit",
+    "name": "风之灵",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTurnEnd": "if(random(0,100)<=30){owner.removeDebuff();}"
+  },
+  {
+    "id": "buff_suffocation",
+    "name": "窒息",
+    "maxStacks": 1,
+    "duration": 3,
+    "onTurnEnd": "target.takeDamage(target.maxHealth*0.08);"
+  },
+  {
+    "id": "buff_strong_body",
+    "name": "力士之躯",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "critRate": "-0.15"
+    }
+  },
+  {
+    "id": "buff_revered_awe",
+    "name": "尊者之威",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "magicDamageTaken": "-0.1"
+    }
+  },
+  {
+    "id": "buff_diamond_rage",
+    "name": "金刚之怒",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTakeDamage": "owner.attributes.attack=owner.attributes.attack*1.02;"
+  },
+  {
+    "id": "buff_demon_subduing",
+    "name": "伏魔之力",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "demonDamage": "+0.2"
+    }
+  },
+  {
+    "id": "buff_dragon_awe",
+    "name": "龙威",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "critDamage": "+0.2"
+    }
+  },
+  {
+    "id": "buff_zen_heart",
+    "name": "禅心",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTurnStart": "owner.healLowestAlly(owner.maxHealth*0.05);"
+  },
+  {
+    "id": "buff_seal_all",
+    "name": "全面封印",
+    "maxStacks": 1,
+    "duration": 2,
+    "onBeforeAction": "cancelAction=true;"
+  },
+  {
+    "id": "buff_traitor_scheme",
+    "name": "叛徒之谋",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "buddhistDamage": "+0.15"
+    }
+  },
+  {
+    "id": "buff_general_bravery",
+    "name": "将领之勇",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTakeDamage": "owner.attributes.defense=owner.attributes.defense*1.03;"
+  },
+  {
+    "id": "buff_elder_wisdom",
+    "name": "长老之智",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "skillCooldown": "-1"
+    }
+  },
+  {
+    "id": "buff_leader_aura",
+    "name": "首领光环",
+    "maxStacks": 1,
+    "duration": -1,
+    "onAdd": "owner.addAura('aura_traitor_atk_def_up');"
+  },
+  {
+    "id": "buff_commander_awe",
+    "name": "统帅之威",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "critRate": "+0.1"
+    }
+  },
+  {
+    "id": "buff_sacred_blessing",
+    "name": "灵山祝福",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTurnStart": "owner.clearRandomDebuff();"
+  },
+  {
+    "id": "buff_atk_up",
+    "name": "攻击提升",
+    "maxStacks": 1,
+    "duration": 2,
+    "attributes": {
+      "attack": "+0.1"
+    }
+  },
+  {
+    "id": "buff_bleed",
+    "name": "流血",
+    "maxStacks": 1,
+    "duration": 2,
+    "onTurnEnd": "target.takeDamage(attacker.attack*0.1)"
+  },
+  {
+    "id": "buff_atk_reduction",
+    "name": "攻击降低",
+    "maxStacks": 1,
+    "duration": 2,
+    "attributes": {
+      "attack": "-0.15"
+    }
+  },
+  {
+    "id": "buff_stone_flesh",
+    "name": "岩石肌肤",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTakeDamage": "if(attackType=='normal'){damage=damage*0.9;}"
+  },
+  {
+    "id": "buff_metallization",
+    "name": "金属化",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTakeDamage": "if(attackType=='magic'&&random(0,100)<=20){attacker.takeDamage(damage*0.3);}"
+  },
+  {
+    "id": "buff_earth_protection",
+    "name": "土灵加护",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTakeDamage": "if(random(0,100)<=15){owner.addBuff('buff_shield',1);}"
+  },
+  {
+    "id": "buff_unshakable",
+    "name": "不动如山",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "stunResist": "+1.0",
+      "knockbackResist": "+1.0"
+    }
+  },
+  {
+    "id": "buff_indestructible",
+    "name": "金刚不坏",
+    "maxStacks": 5,
+    "duration": -1,
+    "onTakeDamage": "if(random(0,100)<=25){owner.attributes.defense=owner.attributes.defense*1.05;}"
+  },
+  {
+    "id": "buff_earth_gift",
+    "name": "大地恩赐",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTurnEnd": "if(owner.health<owner.maxHealth*0.5){owner.heal(owner.maxHealth*0.05);}"
+  },
+  {
+    "id": "buff_petrify",
+    "name": "石化",
+    "maxStacks": 1,
+    "duration": 1,
+    "onBeforeAction": "cancelAction=true;"
+  },
+  {
+    "id": "buff_confusion",
+    "name": "混乱",
+    "maxStacks": 1,
+    "duration": 1,
+    "onBeforeAction": "target=random_target;"
+  },
+  {
+    "id": "buff_old_tree_roots",
+    "name": "老树盘根",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTakeDamage": "if(random(0,100)<=20){attacker.addBuff('buff_speed_reduction',2);}"
+  },
+  {
+    "id": "buff_demon_aura",
+    "name": "妖气弥漫",
+    "maxStacks": 1,
+    "duration": -1,
+    "onAdd": "owner.addAura('aura_dodge_up');"
+  },
+  {
+    "id": "buff_thick_skin",
+    "name": "厚皮",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "critDamageTaken": "-0.25"
+    }
+  },
+  {
+    "id": "buff_seal",
+    "name": "封印",
+    "maxStacks": 1,
+    "duration": 1,
+    "onBeforeAction": "if(action.type!='basic'){cancelAction=true;}"
+  },
+  {
+    "id": "buff_mist_shield",
+    "name": "迷雾护盾",
+    "maxStacks": 1,
+    "duration": 1,
+    "onTakeDamage": "damage=damage*0.7;"
+  },
+  {
+    "id": "buff_thousand_year",
+    "name": "千年树龄",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTurnEnd": "owner.heal(owner.maxHealth*0.05);"
+  },
+  {
+    "id": "buff_scheming",
+    "name": "老谋深算",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "debuffDuration": "-1"
+    }
+  },
+  {
+    "id": "buff_mist_coverage",
+    "name": "迷雾笼罩",
+    "maxStacks": 1,
+    "duration": -1,
+    "onAdd": "owner.addAura('aura_all_dodge_up');"
+  },
+  {
+    "id": "buff_forest_rage",
+    "name": "森林之怒",
+    "maxStacks": 1,
+    "duration": 2,
+    "attributes": {
+      "attack": "+0.2"
+    }
+  },
+  {
+    "id": "buff_slow_heavy",
+    "name": "沉重减速",
+    "maxStacks": 1,
+    "duration": 1,
+    "attributes": {
+      "speed": "-10"
+    }
+  },
+  {
+    "id": "buff_quicksand_body",
+    "name": "流沙之体",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTakeDamage": "if(random(0,100)<=15){attacker.addBuff('buff_speed_reduction',2);}"
+  },
+  {
+    "id": "buff_snake_skin",
+    "name": "蛇皮",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "physicalDamageTaken": "-0.15"
+    }
+  },
+  {
+    "id": "buff_water_protection",
+    "name": "水之加护",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "waterDamageTaken": "-0.3"
+    }
+  },
+  {
+    "id": "buff_sand_avatar",
+    "name": "沙之化身",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "poisonResist": "+1.0",
+      "bleedResist": "+1.0"
+    }
+  },
+  {
+    "id": "buff_snake_king_awe",
+    "name": "蛇王威严",
+    "maxStacks": 1,
+    "duration": -1,
+    "onAdd": "owner.addAura('aura_snake_atk_up');"
+  },
+  {
+    "id": "buff_water_guardian",
+    "name": "水之守护",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTurnEnd": "owner.healAllAllies(owner.maxHealth*0.03);"
+  },
+  {
+    "id": "buff_drowning",
+    "name": "溺水",
+    "maxStacks": 1,
+    "duration": 3,
+    "onTurnEnd": "target.takeDamage(target.maxHealth*0.08);"
+  },
+  {
+    "id": "buff_burn",
+    "name": "灼烧",
+    "maxStacks": 1,
+    "duration": 2,
+    "onTurnEnd": "target.takeDamage(attacker.attack*0.15);"
+  },
+  {
+    "id": "buff_lava_skin",
+    "name": "熔岩皮肤",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "fireDamageTaken": "-0.3"
+    }
+  },
+  {
+    "id": "buff_fire_resonance",
+    "name": "火元素共鸣",
+    "maxStacks": 1,
+    "duration": -1,
+    "onAdd": "owner.addAura('aura_fire_atk_up');"
+  },
+  {
+    "id": "buff_fire_control",
+    "name": "火焰掌控",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "burnDuration": "+1"
+    }
+  },
+  {
+    "id": "buff_magma_shield",
+    "name": "岩浆护盾",
+    "maxStacks": 1,
+    "duration": 2,
+    "onTakeDamage": "damage=damage-owner.attack*2.0;if(damage<0)damage=0;"
+  },
+  {
+    "id": "buff_fire_lord",
+    "name": "火焰领主",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "burnImmune": "+1.0",
+      "fireDamage": "+0.2"
+    }
+  },
+  {
+    "id": "buff_giant_power",
+    "name": "巨人之力",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTakeDamage": "owner.attributes.attack=owner.attributes.attack*1.03;"
+  },
+  {
+    "id": "buff_earth_fire_heart",
+    "name": "地火之心",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTurnEnd": "if(owner.health<owner.maxHealth*0.3){owner.heal(owner.maxHealth*0.1);}"
+  },
+  {
+    "id": "buff_fire_vulnerability",
+    "name": "火焰易伤",
+    "maxStacks": 1,
+    "duration": 2,
+    "attributes": {
+      "fireDamageTaken": "+0.3"
+    }
+  },
+  {
+    "id": "buff_lava_bind",
+    "name": "熔岩束缚",
+    "maxStacks": 1,
+    "duration": 1,
+    "onBeforeAction": "cancelAction=true;"
+  },
+  {
+    "id": "buff_web_master",
+    "name": "蛛网大师",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "webSuccessRate": "+0.1"
+    }
+  },
+  {
+    "id": "buff_moth_powder",
+    "name": "毒蛾粉",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "poisonChance": "+0.15"
+    }
+  },
+  {
+    "id": "buff_guard_loyalty",
+    "name": "亲卫之忠",
+    "maxStacks": 1,
+    "duration": -1,
+    "onAdd": "if(owner.hasAlly('boss_007')){owner.attributes.defense=owner.attributes.defense*1.2;}"
+  },
+  {
+    "id": "buff_guard_web",
+    "name": "守护蛛网",
+    "maxStacks": 1,
+    "duration": 2,
+    "onTakeDamage": "damage=damage-owner.attack*1.0;if(damage<0)damage=0;"
+  },
+  {
+    "id": "buff_spider_queen",
+    "name": "蛛后之母",
+    "maxStacks": 1,
+    "duration": -1,
+    "onAdd": "owner.addAura('aura_spider_atk_def_up');"
+  },
+  {
+    "id": "buff_queen_awe",
+    "name": "女王威严",
+    "maxStacks": 1,
+    "duration": -1,
+    "attributes": {
+      "poisonDuration": "+1"
+    }
+  },
+  {
+    "id": "buff_valley_overlord",
+    "name": "谷中霸主",
+    "maxStacks": 1,
+    "duration": -1,
+    "onTurnStart": "if(owner.health>owner.maxHealth*0.7){owner.attributes.attack=owner.attributes.attack*1.1;}"
+  },
+  {
+    "id": "buff_bind",
+    "name": "束缚",
+    "maxStacks": 1,
+    "duration": 2,
+    "onBeforeAction": "cancelAction=true;"
+  }
+},
+{
+  "id": "buff_hit_reduction",
+  "name": "命中率下降",
+  "maxStacks": 1,
+  "duration": 1,
+  "attributes": {
+    "hitRate": "-0.1"
+  }
+},
+{
+  "id": "buff_speed_reduction",
+  "name": "速度降低",
+  "maxStacks": 1,
+  "duration": 1,
+  "attributes": {
+    "speed": "-5"
+  }
+},
+{
+  "id": "buff_poison",
+  "name": "中毒",
+  "maxStacks": 1,
+  "duration": 2,
+  "onTurnEnd": "target.takeDamage(target.maxHealth*0.03)"
+},
+{
+  "id": "buff_strong_poison",
+  "name": "剧毒",
+  "maxStacks": 1,
+  "duration": 2,
+  "onTurnEnd": "target.takeDamage(target.maxHealth*0.05)"
+},
+{
+  "id": "buff_stun",
+  "name": "眩晕",
+  "maxStacks": 1,
+  "duration": 1,
+  "onBeforeAction": "if(owner.isTarget){cancelAction=true;}"
+},
+{
+  "id": "buff_crit_damage_reduction",
+  "name": "坚韧表皮",
+  "maxStacks": 1,
+  "duration": -1,
+  "onTakeDamage": "if(isCritical){damage=damage*0.8;}"
+},
+{
+  "id": "buff_stone_skin",
+  "name": "石化皮肤",
+  "maxStacks": 1,
+  "duration": -1,
+  "onTakeDamage": "if(attackType=='normal'&&random(0,100)<=15){attacker.addBuff('buff_speed_reduction',1);}"
+},
+{
+  "id": "buff_mountain_child",
+  "name": "山林之子",
+  "maxStacks": 1,
+  "duration": -1,
+  "onTakeDamage": "if(owner.health<owner.maxHealth*0.5){owner.attributes.attack=owner.attributes.attack*1.1;}"
+},
+{
+  "id": "buff_flower_regeneration",
+  "name": "花之再生",
+  "maxStacks": 1,
+  "duration": -1,
+  "onTurnEnd": "owner.heal(owner.maxHealth*0.03)"
+},
+{
+  "id": "buff_leader_awe",
+  "name": "首领威严",
+  "maxStacks": 1,
+  "duration": -1,
+  "onAdd": "if(owner.hasAlly()){owner.attributes.defense=owner.attributes.defense*1.1;}"
+},
+{
+  "id": "buff_mountain_protection",
+  "name": "山灵庇护",
+  "maxStacks": 1,
+  "duration": -1,
+  "onHeal": "healAmount=healAmount*1.2"
+},
+{
+  "id": "buff_shield",
+  "name": "护盾",
+  "maxStacks": 1,
+  "duration": 1,
+  "onTakeDamage": "if(damage>0){damage=damage*0.7;removeBuff=true;}"
+},
+{
+  "id": "buff_mountain_god",
+  "name": "山神降临",
+  "maxStacks": 1,
+  "duration": 2,
+  "onAdd": "owner.attributes.attack=owner.attributes.attack*1.3;owner.attributes.defense=owner.attributes.defense*1.3;owner.attributes.speed=owner.attributes.speed+10;",
+  "onRemove": "owner.attributes.attack=owner.attributes.attack/1.3;owner.attributes.defense=owner.attributes.defense/1.3;owner.attributes.speed=owner.attributes.speed-10;"
+},
+{
+  "id": "buff_flower_bloom",
+  "name": "万花齐放",
+  "maxStacks": 1,
+  "duration": 2,
+  "attributes": {
+    "hitRate": "-0.15"
+  }
+},
+{
+  "id": "buff_def_reduction",
+  "name": "防御降低",
+  "maxStacks": 1,
+  "duration": 1,
+  "attributes": {
+    "defense": "-0.05"
+  }
+},
+{
+  "id": "buff_dodge_up",
+  "name": "闪避提升",
+  "maxStacks": 1,
+  "duration": 1,
+  "attributes": {
+    "dodge": "+0.15"
+  }
+},
+{
+  "id": "buff_def_up",
+  "name": "防御提升",
+  "maxStacks": 1,
+  "duration": 1,
+  "attributes": {
+    "defense": "+0.1"
+  }
+},
+{
+  "id": "buff_commander",
+  "name": "队长指挥",
+  "maxStacks": 1,
+  "duration": -1,
+  "onAdd": "owner.addAura('aura_shrimp_attack_up')"
+},
+{
+  "id": "buff_shell_defense",
+  "name": "甲壳防御",
+  "maxStacks": 1,
+  "duration": -1,
+  "onTakeDamage": "if(attackType=='normal'){damage=damage*0.9;}"
+},
+{
+  "id": "buff_fish_rage",
+  "name": "鱼群之怒",
+  "maxStacks": 3,
+  "duration": -1,
+  "onAdd": "owner.attributes.attack=owner.attributes.attack*1.05;"
+},
+{
+  "id": "buff_gold_shield",
+  "name": "金甲护体",
+  "maxStacks": 1,
+  "duration": 2,
+  "onTakeDamage": "damage=damage-owner.defense*1.5;if(damage<0)damage=0;"
+},
+{
+  "id": "buff_water_dominance",
+  "name": "统御水域",
+  "maxStacks": 1,
+  "duration": -1,
+  "onAdd": "owner.addAura('aura_water_speed_up')"
+},
+{
+  "id": "buff_gold_shell",
+  "name": "黄金甲壳",
+  "maxStacks": 1,
+  "duration": -1,
+  "attributes": {
+    "critRate": "-0.15"
+  }
+},
+{
+  "id": "buff_water_resonance",
+  "name": "水之共鸣",
+  "maxStacks": 1,
+  "duration": -1,
+  "onTurnEnd": "owner.healAllAllies(owner.maxHealth*0.02)"
+},
+{
+  "id": "buff_wet",
+  "name": "湿透",
+  "maxStacks": 1,
+  "duration": 3,
+  "attributes": {
+    "lightningDamageTaken": "+0.3"
+  }
+]

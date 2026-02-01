@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>演武场 - 现代简约版</title>
+    <style>
+        /* 全局样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 色彩系统 */
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --primary-light: #93c5fd;
+            --secondary: #f59e0b;
+            --secondary-dark: #d97706;
+            --secondary-light: #fcd34d;
+            --accent: #ef4444;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* 容器 */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* 标题 */
+        .title {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .title h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .title p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* 主布局 - 现代网格布局 */
+        .arena-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        /* 敌人选择区域 */
+        .enemy-selector {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .enemy-selector h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .enemy-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .enemy-card {
+            background-color: var(--background);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .enemy-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-light);
+        }
+
+        .enemy-card.selected {
+            border-color: var(--primary);
+            background-color: rgba(59, 130, 246, 0.05);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .enemy-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .enemy-stats {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        /* 战斗区域 */
+        .battle-arena {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(245, 158, 11, 0.05));
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 2px solid var(--primary-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 战斗背景效果 */
+        .battle-arena::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.6;
+            }
+        }
+
+        .battle-stage {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+        }
+
+        .combatant {
+            flex: 1;
+            text-align: center;
+        }
+
+        .combatant-card {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .combatant-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 0.75rem;
+            background-color: var(--border);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 9999px;
+            width: 85%;
+            transition: width 0.3s ease;
+        }
+
+        .combatant-stats {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .battle-center {
+            flex: 1;
+            text-align: center;
+            padding: 0 2rem;
+        }
+
+        .battle-status {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .battle-status h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+        }
+
+        .battle-status p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* 控制区域 */
+        .control-panel {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 var(--primary-dark);
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 var(--primary-dark), 0 10px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+            color: white;
+            box-shadow: 0 4px 0 var(--secondary-dark);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 var(--secondary-dark), 0 10px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .speed-control label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .speed-control input {
+            width: 150px;
+        }
+
+        /* 战斗日志 */
+        .battle-log {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .battle-log h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .log-content {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: var(--background);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .log-entry {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .log-entry.info {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .log-entry.damage {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--accent);
+        }
+
+        .log-entry.heal {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid #10b981;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .arena-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .battle-stage {
+                flex-direction: column;
+                gap: 2rem;
+            }
+
+            .battle-center {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .title h1 {
+                font-size: 2rem;
+            }
+
+            .control-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 标题 -->
+        <div class="title">
+            <h1>演武场</h1>
+            <p>现代简约版 - 选择敌人进行战斗模拟</p>
+        </div>
+
+        <!-- 主布局 -->
+        <div class="arena-grid">
+            <!-- 左侧敌人选择 -->
+            <div class="enemy-selector">
+                <h2>敌人 1</h2>
+                <div class="enemy-list">
+                    <div class="enemy-card selected">
+                        <h3>花妖王</h3>
+                        <div class="enemy-stats">
+                            <span>等级: 8</span>
+                            <span>生命值: 147</span>
+                            <span>攻击力: 20-30</span>
+                            <span>防御力: 14</span>
+                            <span>速度: 23</span>
+                        </div>
+                    </div>
+                    <div class="enemy-card">
+                        <h3>草精</h3>
+                        <div class="enemy-stats">
+                            <span>等级: 2</span>
+                            <span>生命值: 68</span>
+                            <span>攻击力: 7-11</span>
+                            <span>防御力: 4</span>
+                            <span>速度: 13</span>
+                        </div>
+                    </div>
+                    <div class="enemy-card">
+                        <h3>山魈首领</h3>
+                        <div class="enemy-stats">
+                            <span>等级: 9</span>
+                            <span>生命值: 160</span>
+                            <span>攻击力: 22-33</span>
+                            <span>防御力: 15</span>
+                            <span>速度: 25</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中间战斗区域 -->
+            <div class="battle-arena">
+                <div class="battle-stage">
+                    <!-- 左侧战斗者 -->
+                    <div class="combatant">
+                        <div class="combatant-card">
+                            <h3>花妖王</h3>
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: 85%"></div>
+                            </div>
+                            <div class="combatant-stats">
+                                <p>生命值: 125/147</p>
+                                <p>MP: 85/100</p>
+                                <p>等级: 8</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 中间战斗状态 -->
+                    <div class="battle-center">
+                        <div class="battle-status">
+                            <h2>战斗进行中</h2>
+                            <p>回合: 3</p>
+                            <p>花妖王 使用 剧毒荆棘</p>
+                            <p>山魈首领 受到 25 点伤害</p>
+                        </div>
+                    </div>
+
+                    <!-- 右侧战斗者 -->
+                    <div class="combatant">
+                        <div class="combatant-card">
+                            <h3>山魈首领</h3>
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: 70%"></div>
+                            </div>
+                            <div class="combatant-stats">
+                                <p>生命值: 112/160</p>
+                                <p>MP: 90/100</p>
+                                <p>等级: 9</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧敌人选择 -->
+            <div class="enemy-selector">
+                <h2>敌人 2</h2>
+                <div class="enemy-list">
+                    <div class="enemy-card">
+                        <h3>花妖王</h3>
+                        <div class="enemy-stats">
+                            <span>等级: 8</span>
+                            <span>生命值: 147</span>
+                            <span>攻击力: 20-30</span>
+                            <span>防御力: 14</span>
+                            <span>速度: 23</span>
+                        </div>
+                    </div>
+                    <div class="enemy-card">
+                        <h3>草精</h3>
+                        <div class="enemy-stats">
+                            <span>等级: 2</span>
+                            <span>生命值: 68</span>
+                            <span>攻击力: 7-11</span>
+                            <span>防御力: 4</span>
+                            <span>速度: 13</span>
+                        </div>
+                    </div>
+                    <div class="enemy-card selected">
+                        <h3>山魈首领</h3>
+                        <div class="enemy-stats">
+                            <span>等级: 9</span>
+                            <span>生命值: 160</span>
+                            <span>攻击力: 22-33</span>
+                            <span>防御力: 15</span>
+                            <span>速度: 25</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 控制区域 -->
+        <div class="control-panel">
+            <div class="control-buttons">
+                <button class="btn btn-primary">开始战斗</button>
+                <button class="btn btn-secondary">重置</button>
+            </div>
+            <div class="speed-control">
+                <label for="speed">战斗速度:</label>
+                <input type="range" id="speed" min="0.5" max="3" step="0.5" value="1">
+                <span>1x</span>
+            </div>
+        </div>
+
+        <!-- 战斗日志 -->
+        <div class="battle-log">
+            <h2>战斗日志</h2>
+            <div class="log-content">
+                <div class="log-entry info">
+                    战斗开始！花妖王 VS 山魈首领
+                </div>
+                <div class="log-entry damage">
+                    山魈首领 使用 碎石猛击，对花妖王造成 22 点伤害
+                </div>
+                <div class="log-entry heal">
+                    花妖王 花之再生效果，恢复 4 点生命值
+                </div>
+                <div class="log-entry damage">
+                    花妖王 使用 剧毒荆棘，对山魈首领造成 25 点伤害
+                </div>
+                <div class="log-entry info">
+                    山魈首领 被施加 剧毒 效果
+                </div>
+                <div class="log-entry damage">
+                    山魈首领 受到剧毒伤害 7 点
+                </div>
+                <div class="log-entry damage">
+                    花妖王 使用 剧毒荆棘，对山魈首领造成 23 点伤害
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

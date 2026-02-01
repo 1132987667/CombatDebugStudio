@@ -1,0 +1,3177 @@
+[
+  {
+    "id": "skill_enemy_001_easy_1_small",
+    "name": "花粉迷雾",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.8",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_hit_reduction",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_easy_2_small",
+    "name": "缠绕根须",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.85",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_speed_reduction",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_easy_3_small",
+    "name": "野性扑击",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "heal",
+        "formula": "damage*0.15",
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_normal_1_small",
+    "name": "毒液喷射",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.85",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "1.0",
+        "buffId": "buff_poison",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_normal_2_small",
+    "name": "岩石投掷",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.1",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_normal_3_small",
+    "name": "狂怒连击",
+    "mpCost": 8,
+    "cooldown": 3,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.6",
+        "attackType": "normal"
+      },
+      {
+        "type": "damage",
+        "formula": "attack*0.6",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_normal_1_passive",
+    "name": "坚韧表皮",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_crit_damage_reduction",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_normal_2_passive",
+    "name": "石化皮肤",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_stone_skin",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_normal_3_passive",
+    "name": "山林之子",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_mountain_child",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_hard_1_small",
+    "name": "剧毒荆棘",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_strong_poison",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_hard_2_small",
+    "name": "碎石猛击",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.1",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_001_small",
+    "name": "守护之光",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_shield",
+        "duration": 1,
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_hard_1_passive",
+    "name": "花之再生",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_flower_regeneration",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_hard_2_passive",
+    "name": "首领威严",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_leader_awe",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_001_passive",
+    "name": "山灵庇护",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_mountain_protection",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_hard_1_ultimate",
+    "name": "万花齐放",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.2",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_flower_bloom",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_001_hard_2_ultimate",
+    "name": "山崩地裂",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.8",
+        "attackType": "normal"
+      }
+    ],
+    "condition": "target.hasBuff('buff_stun')"
+  },
+  {
+    "id": "skill_boss_001_ultimate",
+    "name": "山神降临",
+    "mpCost": 25,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_mountain_god",
+        "duration": 2,
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_easy_1_small",
+    "name": "水枪射击",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.85",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.2",
+        "buffId": "buff_def_reduction",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_easy_2_small",
+    "name": "钳击",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_easy_3_small",
+    "name": "滑溜闪避",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.8",
+        "attackType": "normal"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_dodge_up",
+        "duration": 1,
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_normal_1_small",
+    "name": "水刃连斩",
+    "mpCost": 8,
+    "cooldown": 3,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.65",
+        "attackType": "normal"
+      },
+      {
+        "type": "damage",
+        "formula": "attack*0.65",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_normal_2_small",
+    "name": "铁甲冲击",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_def_up",
+        "duration": 1,
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_normal_3_small",
+    "name": "水泡困缚",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_speed_reduction",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_normal_1_passive",
+    "name": "队长指挥",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_commander",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_normal_2_passive",
+    "name": "甲壳防御",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_shell_defense",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_normal_3_passive",
+    "name": "鱼群之怒",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_fish_rage",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_hard_1_small",
+    "name": "统领之击",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.05",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_hard_2_small",
+    "name": "金甲护体",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_gold_shield",
+        "duration": 2,
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_002_small",
+    "name": "水疗波",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "heal",
+        "formula": "attack*0.5",
+        "target": "lowest_ally"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_hard_1_passive",
+    "name": "统御水域",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_water_dominance",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_hard_2_passive",
+    "name": "黄金甲壳",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_gold_shell",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_002_passive",
+    "name": "水之共鸣",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_water_resonance",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_hard_1_ultimate",
+    "name": "水军冲锋",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.1",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_speed_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_002_hard_2_ultimate",
+    "name": "甲壳风暴",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "1.0",
+        "buffId": "buff_def_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_002_ultimate",
+    "name": "涧水狂澜",
+    "mpCost": 25,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.3",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.5",
+        "buffId": "buff_wet",
+        "duration": 3
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_easy_1_small",
+    "name": "岩刺突袭",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.2",
+        "buffId": "buff_bleed",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_easy_2_small",
+    "name": "碎石飞溅",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.85",
+        "attackType": "normal"
+      },
+      {
+        "type": "damage",
+        "formula": "attack*0.5",
+        "attackType": "normal",
+        "target": "random_adjacent"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_easy_3_small",
+    "name": "土遁偷袭",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_dodge_up",
+        "duration": 1,
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_normal_1_small",
+    "name": "巨石碾压",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.1",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_normal_2_small",
+    "name": "铁石重击",
+    "mpCost": 8,
+    "cooldown": 3,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.2",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_normal_3_small",
+    "name": "地裂术",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "1.0",
+        "buffId": "buff_speed_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_normal_1_passive",
+    "name": "岩石肌肤",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_stone_flesh",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_normal_2_passive",
+    "name": "金属化",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_metallization",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_normal_3_passive",
+    "name": "土灵加护",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_earth_protection",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_hard_1_small",
+    "name": "山崩",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.3",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_hard_2_small",
+    "name": "金刚破",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.15",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_003_small",
+    "name": "地脉涌动",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "heal",
+        "formula": "attack*0.3",
+        "target": "all_allies"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_hard_1_passive",
+    "name": "不动如山",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_unshakable",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_hard_2_passive",
+    "name": "金刚不坏",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_indestructible",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_003_passive",
+    "name": "大地恩赐",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_earth_gift",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_hard_1_ultimate",
+    "name": "陨石天降",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.4",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_def_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_003_hard_2_ultimate",
+    "name": "金刚怒",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*2.2",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "1.0",
+        "buffId": "buff_atk_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_003_ultimate",
+    "name": "山神震怒",
+    "mpCost": 25,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.5",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.5",
+        "buffId": "buff_petrify",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_easy_1_small",
+    "name": "藤鞭抽打",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_poison",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_easy_2_small",
+    "name": "迷幻攻击",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.85",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.2",
+        "buffId": "buff_confusion",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_easy_3_small",
+    "name": "野猪冲撞",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_normal_1_small",
+    "name": "根须缠绕",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_normal_2_small",
+    "name": "迷魂阵",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.35",
+        "buffId": "buff_confusion",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_normal_3_small",
+    "name": "狂暴冲撞",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.2",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_normal_1_passive",
+    "name": "老树盘根",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_old_tree_roots",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_normal_2_passive",
+    "name": "妖气弥漫",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_demon_aura",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_normal_3_passive",
+    "name": "厚皮",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_thick_skin",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_hard_1_small",
+    "name": "毒雾弥漫",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.8",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_poison",
+        "duration": 3
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_hard_2_small",
+    "name": "妖术封印",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_seal",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_004_small",
+    "name": "迷雾之护",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_mist_shield",
+        "duration": 1,
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_hard_1_passive",
+    "name": "千年树龄",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_thousand_year",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_hard_2_passive",
+    "name": "老谋深算",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_scheming",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_004_passive",
+    "name": "迷雾笼罩",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_mist_coverage",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_hard_1_ultimate",
+    "name": "森林之怒",
+    "mpCost": 20,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.3",
+        "attackType": "normal"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_forest_rage",
+        "duration": 2,
+        "target": "all_allies"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_004_hard_2_ultimate",
+    "name": "妖气爆发",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.4",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.5",
+        "buffId": "buff_atk_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_004_ultimate",
+    "name": "迷雾幻境",
+    "mpCost": 25,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "debuff",
+        "formula": "0.6",
+        "buffId": "buff_confusion",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_easy_1_small",
+    "name": "流沙陷阱",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_slow_heavy",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_easy_2_small",
+    "name": "毒牙撕咬",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_poison",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_easy_3_small",
+    "name": "水波冲击",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.85",
+        "attackType": "normal"
+      },
+      {
+        "type": "damage",
+        "formula": "attack*0.5",
+        "attackType": "normal",
+        "target": "random_adjacent"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_normal_1_small",
+    "name": "沙暴术",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.7",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.2",
+        "buffId": "buff_hit_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_normal_2_small",
+    "name": "缠绕绞杀",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.1",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_normal_3_small",
+    "name": "水刃连斩",
+    "mpCost": 8,
+    "cooldown": 3,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.7",
+        "attackType": "normal"
+      },
+      {
+        "type": "damage",
+        "formula": "attack*0.7",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_normal_1_passive",
+    "name": "流沙之体",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_quicksand_body",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_normal_2_passive",
+    "name": "蛇皮",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_snake_skin",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_normal_3_passive",
+    "name": "水之加护",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_water_protection",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_hard_1_small",
+    "name": "沙尘暴",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_hit_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_hard_2_small",
+    "name": "剧毒喷射",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.8",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.5",
+        "buffId": "buff_strong_poison",
+        "duration": 3
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_005_small",
+    "name": "浊浪冲击",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_def_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_hard_1_passive",
+    "name": "沙之化身",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_sand_avatar",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_hard_2_passive",
+    "name": "蛇王威严",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_snake_king_awe",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_005_passive",
+    "name": "水之守护",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_water_guardian",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_hard_1_ultimate",
+    "name": "流沙地狱",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.3",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.5",
+        "buffId": "buff_slow_heavy",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_005_hard_2_ultimate",
+    "name": "万蛇噬心",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*2.0",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_005_ultimate",
+    "name": "河神之怒",
+    "mpCost": 25,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.5",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_drowning",
+        "duration": 3
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_easy_1_small",
+    "name": "火焰吐息",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.2",
+        "buffId": "buff_burn",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_easy_2_small",
+    "name": "熔岩溅射",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "damage",
+        "formula": "attack*0.5",
+        "attackType": "normal",
+        "target": "random_adjacent"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_easy_3_small",
+    "name": "火球术",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_normal_1_small",
+    "name": "烈焰爪击",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.1",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_burn",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_normal_2_small",
+    "name": "熔岩爆裂",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.8",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_burn",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_normal_3_small",
+    "name": "火焰连斩",
+    "mpCost": 8,
+    "cooldown": 3,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.75",
+        "attackType": "normal"
+      },
+      {
+        "type": "damage",
+        "formula": "attack*0.75",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_normal_1_passive",
+    "name": "熔岩皮肤",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_lava_skin",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_normal_2_passive",
+    "name": "火元素共鸣",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_fire_resonance",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_normal_3_passive",
+    "name": "火焰掌控",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_fire_control",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_hard_1_small",
+    "name": "火山喷发",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_burn",
+        "duration": 3
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_hard_2_small",
+    "name": "熔岩重击",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.3",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_006_small",
+    "name": "岩浆护盾",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_magma_shield",
+        "duration": 2,
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_hard_1_passive",
+    "name": "火焰领主",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_fire_lord",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_hard_2_passive",
+    "name": "巨人之力",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_giant_power",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_006_passive",
+    "name": "地火之心",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_earth_fire_heart",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_hard_1_ultimate",
+    "name": "炼狱火海",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.4",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "1.0",
+        "buffId": "buff_fire_vulnerability",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_006_hard_2_ultimate",
+    "name": "巨岩熔爆",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*2.2",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "1.0",
+        "buffId": "buff_def_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_006_ultimate",
+    "name": "火山觉醒",
+    "mpCost": 25,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.6",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.5",
+        "buffId": "buff_lava_bind",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_easy_1_small",
+    "name": "蛛网缠绕",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_easy_2_small",
+    "name": "毒粉挥洒",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.85",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_poison",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_easy_3_small",
+    "name": "啃噬",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "heal",
+        "formula": "damage*0.2",
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_normal_1_small",
+    "name": "毒牙连刺",
+    "mpCost": 8,
+    "cooldown": 3,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.7",
+        "attackType": "normal"
+      },
+      {
+        "type": "damage",
+        "formula": "attack*0.7",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_normal_2_small",
+    "name": "毒雾弥漫",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.75",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_poison",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_normal_3_small",
+    "name": "蛛丝束缚",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_slow_heavy",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_normal_1_passive",
+    "name": "蛛网大师",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_web_master",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_normal_2_passive",
+    "name": "毒蛾粉",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_moth_powder",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_normal_3_passive",
+    "name": "亲卫之忠",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_guard_loyalty",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_hard_1_small",
+    "name": "千丝万缕",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_hard_2_small",
+    "name": "女王毒粉",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.85",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.5",
+        "buffId": "buff_strong_poison",
+        "duration": 3
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_007_small",
+    "name": "守护蛛网",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_allies",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_guard_web",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_hard_1_passive",
+    "name": "蛛后之母",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_spider_queen",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_hard_2_passive",
+    "name": "女王威严",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_queen_awe",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_007_passive",
+    "name": "谷中霸主",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_valley_overlord",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_hard_1_ultimate",
+    "name": "盘丝大阵",
+    "mpCost": 20,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.3",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.6",
+        "buffId": "buff_bind",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_007_hard_2_ultimate",
+    "name": "毒爆术",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*2.0",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_007_ultimate",
+    "name": "蛛谷天罗",
+    "mpCost": 25,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.5",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.5",
+        "buffId": "buff_atk_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_easy_1_small",
+    "name": "狮吼",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.2",
+        "buffId": "buff_def_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_easy_2_small",
+    "name": "象鼻重击",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.1",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_easy_3_small",
+    "name": "疾风爪",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_speed_up",
+        "duration": 1,
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_normal_1_small",
+    "name": "统领之吼",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_ally_atk_up",
+        "duration": 2,
+        "target": "all_allies"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_normal_2_small",
+    "name": "铁甲冲撞",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.3",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_normal_3_small",
+    "name": "狂风之翼",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.8",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_speed_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_normal_1_passive",
+    "name": "统领光环",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_commander_aura",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_normal_2_passive",
+    "name": "铁甲护体",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_iron_armor",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_normal_3_passive",
+    "name": "天空霸主",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_sky_overlord",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_hard_1_small",
+    "name": "近卫之怒",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.2",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_hard_2_small",
+    "name": "战争践踏",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_def_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_008_small",
+    "name": "风之护盾",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_allies",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_wind_shield",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_hard_1_passive",
+    "name": "近卫之盾",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_guard_shield",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_hard_2_passive",
+    "name": "将军之威",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_general_awe",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_008_passive",
+    "name": "风之灵",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_wind_spirit",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_hard_1_ultimate",
+    "name": "狮王咆哮",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.4",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_008_hard_2_ultimate",
+    "name": "象阵冲锋",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*2.3",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_008_ultimate",
+    "name": "狂风绝息",
+    "mpCost": 25,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.6",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.5",
+        "buffId": "buff_suffocation",
+        "duration": 3
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_easy_1_small",
+    "name": "金刚拳",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.2",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_easy_2_small",
+    "name": "禅音波",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.9",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_atk_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_easy_3_small",
+    "name": "护法杖击",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.05",
+        "attackType": "normal"
+      },
+      {
+        "type": "heal",
+        "formula": "damage*0.1",
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_normal_1_small",
+    "name": "力士之锤",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.2",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_def_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_normal_2_small",
+    "name": "罗汉掌",
+    "mpCost": 8,
+    "cooldown": 3,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.75",
+        "attackType": "normal"
+      },
+      {
+        "type": "damage",
+        "formula": "attack*0.75",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_normal_3_small",
+    "name": "金刚护体",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_def_up",
+        "duration": 2,
+        "target": "self"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_normal_1_passive",
+    "name": "力士之躯",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_strong_body",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_normal_2_passive",
+    "name": "尊者之威",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_revered_awe",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_normal_3_passive",
+    "name": "金刚之怒",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_diamond_rage",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_hard_1_small",
+    "name": "罗汉伏魔",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.3",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_hard_2_small",
+    "name": "降龙掌",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.4",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_009_small",
+    "name": "禅音护体",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_allies",
+    "actions": [
+      {
+        "type": "heal",
+        "formula": "attack*0.5",
+        "target": "all_allies"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_hard_1_passive",
+    "name": "伏魔之力",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_demon_subduing",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_hard_2_passive",
+    "name": "龙威",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_dragon_awe",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_009_passive",
+    "name": "禅心",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_zen_heart",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_hard_1_ultimate",
+    "name": "金刚伏魔阵",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.5",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_atk_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_009_hard_2_ultimate",
+    "name": "飞龙在天",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*2.4",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_009_ultimate",
+    "name": "雷音禅唱",
+    "mpCost": 25,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.7",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.6",
+        "buffId": "buff_seal_all",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_easy_1_small",
+    "name": "叛徒之击",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_easy_2_small",
+    "name": "护法之怒",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.1",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_easy_3_small",
+    "name": "使者之威",
+    "mpCost": 5,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.95",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "1.0",
+        "buffId": "buff_atk_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_normal_1_small",
+    "name": "精英叛变",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.2",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_normal_2_small",
+    "name": "将领冲锋",
+    "mpCost": 8,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.3",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.3",
+        "buffId": "buff_def_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_normal_3_small",
+    "name": "长老之杖",
+    "mpCost": 8,
+    "cooldown": 3,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*0.8",
+        "attackType": "normal"
+      },
+      {
+        "type": "damage",
+        "formula": "attack*0.8",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_normal_1_passive",
+    "name": "叛徒之谋",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_traitor_scheme",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_normal_2_passive",
+    "name": "将领之勇",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_general_bravery",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_normal_3_passive",
+    "name": "长老之智",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_elder_wisdom",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_hard_1_small",
+    "name": "首领之怒",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.0",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.4",
+        "buffId": "buff_atk_reduction",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_hard_2_small",
+    "name": "统帅之击",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.5",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.25",
+        "buffId": "buff_stun",
+        "duration": 1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_010_small",
+    "name": "灵霄之光",
+    "mpCost": 12,
+    "cooldown": 2,
+    "selector": "all_allies",
+    "actions": [
+      {
+        "type": "heal",
+        "formula": "attack*0.6",
+        "target": "all_allies"
+      },
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_atk_up",
+        "duration": 2,
+        "target": "all_allies"
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_hard_1_passive",
+    "name": "首领光环",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_leader_aura",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_hard_2_passive",
+    "name": "统帅之威",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_commander_awe",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_010_passive",
+    "name": "灵山祝福",
+    "mpCost": 0,
+    "cooldown": 0,
+    "selector": "self",
+    "actions": [
+      {
+        "type": "buff",
+        "formula": "1.0",
+        "buffId": "buff_sacred_blessing",
+        "duration": -1
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_hard_1_ultimate",
+    "name": "叛变之潮",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.6",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.5",
+        "buffId": "buff_confusion",
+        "duration": 2
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_010_hard_2_ultimate",
+    "name": "护法天降",
+    "mpCost": 20,
+    "cooldown": 3,
+    "maxUses": 2,
+    "selector": "single_enemy",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*2.5",
+        "attackType": "normal"
+      }
+    ]
+  },
+  {
+    "id": "skill_boss_010_ultimate",
+    "name": "灵山之巅",
+    "mpCost": 25,
+    "cooldown": 4,
+    "maxUses": 1,
+    "selector": "all_enemies",
+    "actions": [
+      {
+        "type": "damage",
+        "formula": "attack*1.8",
+        "attackType": "normal"
+      },
+      {
+        "type": "debuff",
+        "formula": "0.6",
+        "buffId": "buff_seal_all",
+        "duration": 2
+      }
+    ]
+  }
+]

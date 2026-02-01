@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>演武场 - 中心战斗环绕布局</title>
+    <style>
+        :root {
+            --rice-paper: #F8F5F0;
+            --dark-ink: #333333;
+            --red-seal: #C41E3A;
+            --light-gray: #D8D5D0;
+            --medium-gray: #999999;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SimSun', serif;
+            background: var(--rice-paper);
+            min-height: 100vh;
+            color: var(--dark-ink);
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr 250px;
+            grid-template-rows: auto 1fr auto;
+            gap: 16px;
+            height: 100vh;
+            padding: 16px;
+        }
+
+        .top-center {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            padding: 12px 20px;
+            background: rgba(216, 213, 208, 0.6);
+            border: 1px solid var(--medium-gray);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .main-title {
+            font-size: 1.5rem;
+            color: var(--dark-ink);
+            font-weight: bold;
+        }
+
+        .left-full {
+            grid-row: 2 / 4;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .left-panel {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            padding: 16px;
+            flex: 1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .panel-title {
+            color: var(--dark-ink);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .enemy-scroller {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .enemy-select-item {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--light-gray);
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .enemy-select-item:hover {
+            border-color: var(--red-seal);
+            transform: translateX(4px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .enemy-select-item.selected {
+            background: rgba(196, 30, 58, 0.1);
+            border-color: var(--red-seal);
+        }
+
+        .enemy-select-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .enemy-select-icon {
+            font-size: 1.3rem;
+        }
+
+        .enemy-select-name {
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .enemy-select-brief {
+            font-size: 0.7rem;
+            color: var(--medium-gray);
+            display: flex;
+            gap: 8px;
+        }
+
+        .enemy-select-brief span {
+            color: var(--dark-ink);
+            font-weight: bold;
+        }
+
+        .center-main {
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .center-top {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 16px;
+            background: rgba(216, 213, 208, 0.6);
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .fighter-main {
+            text-align: center;
+            width: 150px;
+        }
+
+        .fighter-main.active {
+            animation: mainPulse 1s infinite;
+        }
+
+        @keyframes mainPulse {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .fighter-main-avatar {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 6px;
+            background: rgba(216, 213, 208, 0.8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            border: 1px solid var(--medium-gray);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .fighter-main-name {
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .fighter-main-hp {
+            background: rgba(216, 213, 208, 0.8);
+            border-radius: 3px;
+            padding: 1px;
+            margin-bottom: 3px;
+            border: 1px solid var(--light-gray);
+        }
+
+        .fighter-main-hp-bar {
+            height: 8px;
+            background: linear-gradient(90deg, var(--red-seal), #d9304f);
+            border-radius: 2px;
+        }
+
+        .fighter-main-hp-text {
+            font-size: 0.7rem;
+            color: var(--dark-ink);
+        }
+
+        .fighter-main-attrs {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.65rem;
+            color: var(--medium-gray);
+            margin-top: 4px;
+        }
+
+        .fighter-main-attrs span {
+            color: var(--dark-ink);
+            font-weight: bold;
+        }
+
+        .vs-main {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--red-seal);
+            text-shadow: 0 0 10px rgba(196, 30, 58, 0.3);
+        }
+
+        .center-middle {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .battle-visual {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(216, 213, 208, 0.3);
+            border-radius: 4px;
+        }
+
+        .battle-effects {
+            display: flex;
+            gap: 40px;
+            font-size: 2rem;
+            opacity: 0.3;
+        }
+
+        .center-bottom {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(216, 213, 208, 0.6);
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .main-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--medium-gray);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--dark-ink);
+        }
+
+        .main-btn.start {
+            background: var(--red-seal);
+            color: #fff;
+            border-color: var(--red-seal);
+        }
+
+        .main-btn.auto {
+            background: rgba(216, 213, 208, 0.9);
+            color: var(--dark-ink);
+            border-color: var(--medium-gray);
+        }
+
+        .main-btn.reset {
+            background: rgba(216, 213, 208, 0.9);
+            color: var(--dark-ink);
+            border-color: var(--medium-gray);
+        }
+
+        .main-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .right-full {
+            grid-row: 2 / 4;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .right-panel {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .skills-center {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .skill-center-item {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--light-gray);
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .skill-center-item:hover {
+            border-color: var(--red-seal);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .skill-center-icon {
+            font-size: 1.3rem;
+            margin-bottom: 2px;
+        }
+
+        .skill-center-name {
+            font-size: 0.75rem;
+            color: var(--dark-ink);
+            font-weight: bold;
+        }
+
+        .skill-center-desc {
+            font-size: 0.6rem;
+            color: var(--medium-gray);
+            margin-top: 2px;
+        }
+
+        .log-center {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--light-gray);
+            border-radius: 6px;
+            padding: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .log-center-entries {
+            font-size: 0.75rem;
+        }
+
+        .log-center-entry {
+            padding: 5px 8px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            border-left: 2px solid var(--medium-gray);
+            background: rgba(216, 213, 208, 0.6);
+        }
+
+        .log-center-entry.damage {
+            border-left-color: var(--red-seal);
+        }
+
+        .log-center-entry.heal {
+            border-left-color: var(--medium-gray);
+        }
+
+        .stats-center {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .stat-center-item {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--light-gray);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-center-value {
+            font-size: 1.2rem;
+            color: var(--red-seal);
+            font-weight: bold;
+        }
+
+        .stat-center-label {
+            font-size: 0.7rem;
+            color: var(--medium-gray);
+            margin-top: 2px;
+        }
+
+        .bottom-full {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            padding: 10px 16px;
+            background: rgba(216, 213, 208, 0.6);
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+
+        .info-badge-label {
+            color: var(--medium-gray);
+        }
+
+        .info-badge-value {
+            color: var(--red-seal);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-center">
+            <div class="main-title">⚔️ 演武场 - 中心战斗环绕布局 ⚔️</div>
+        </div>
+
+        <div class="left-full">
+            <div class="left-panel">
+                <div class="panel-title">👹 选择敌人 (左)</div>
+                <div class="enemy-scroller">
+                    <div class="enemy-select-item selected">
+                        <div class="enemy-select-header">
+                            <span class="enemy-select-icon">👹</span>
+                            <span class="enemy-select-name">普通敌人</span>
+                        </div>
+                        <div class="enemy-select-brief">
+                            <span>HP:100</span>
+                            <span>ATK:10</span>
+                            <span>DEF:5</span>
+                        </div>
+                    </div>
+                    <div class="enemy-select-item">
+                        <div class="enemy-select-header">
+                            <span class="enemy-select-icon">👺</span>
+                            <span class="enemy-select-name">精英敌人</span>
+                        </div>
+                        <div class="enemy-select-brief">
+                            <span>HP:200</span>
+                            <span>ATK:15</span>
+                            <span>DEF:8</span>
+                        </div>
+                    </div>
+                    <div class="enemy-select-item">
+                        <div class="enemy-select-header">
+                            <span class="enemy-select-icon">👿</span>
+                            <span class="enemy-select-name">BOSS敌人</span>
+                        </div>
+                        <div class="enemy-select-brief">
+                            <span>HP:500</span>
+                            <span>ATK:25</span>
+                            <span>DEF:15</span>
+                        </div>
+                    </div>
+                    <div class="enemy-select-item">
+                        <div class="enemy-select-header">
+                            <span class="enemy-select-icon">💀</span>
+                            <span class="enemy-select-name">亡灵战士</span>
+                        </div>
+                        <div class="enemy-select-brief">
+                            <span>HP:150</span>
+                            <span>ATK:18</span>
+                            <span>DEF:6</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="left-panel">
+                <div class="panel-title">🎮 选择敌人 (右)</div>
+                <div class="enemy-scroller">
+                    <div class="enemy-select-item selected">
+                        <div class="enemy-select-header">
+                            <span class="enemy-select-icon">👺</span>
+                            <span class="enemy-select-name">精英敌人</span>
+                        </div>
+                        <div class="enemy-select-brief">
+                            <span>HP:200</span>
+                            <span>ATK:15</span>
+                            <span>DEF:8</span>
+                        </div>
+                    </div>
+                    <div class="enemy-select-item">
+                        <div class="enemy-select-header">
+                            <span class="enemy-select-icon">👹</span>
+                            <span class="enemy-select-name">普通敌人</span>
+                        </div>
+                        <div class="enemy-select-brief">
+                            <span>HP:100</span>
+                            <span>ATK:10</span>
+                            <span>DEF:5</span>
+                        </div>
+                    </div>
+                    <div class="enemy-select-item">
+                        <div class="enemy-select-header">
+                            <span class="enemy-select-icon">👿</span>
+                            <span class="enemy-select-name">BOSS敌人</span>
+                        </div>
+                        <div class="enemy-select-brief">
+                            <span>HP:500</span>
+                            <span>ATK:25</span>
+                            <span>DEF:15</span>
+                        </div>
+                    </div>
+                    <div class="enemy-select-item">
+                        <div class="enemy-select-header">
+                            <span class="enemy-select-icon">💀</span>
+                            <span class="enemy-select-name">亡灵战士</span>
+                        </div>
+                        <div class="enemy-select-brief">
+                            <span>HP:150</span>
+                            <span>ATK:18</span>
+                            <span>DEF:6</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="center-main">
+            <div class="center-top">
+                <div class="fighter-main active">
+                    <div class="fighter-main-avatar">👹</div>
+                    <div class="fighter-main-name">普通敌人</div>
+                    <div class="fighter-main-hp">
+                        <div class="fighter-main-hp-bar" style="width: 100%"></div>
+                    </div>
+                    <div class="fighter-main-hp-text">100 / 100</div>
+                    <div class="fighter-main-attrs">
+                        <span>ATK:10</span>
+                        <span>DEF:5</span>
+                    </div>
+                </div>
+
+                <div class="vs-main">VS</div>
+
+                <div class="fighter-main">
+                    <div class="fighter-main-avatar">👺</div>
+                    <div class="fighter-main-name">精英敌人</div>
+                    <div class="fighter-main-hp">
+                        <div class="fighter-main-hp-bar" style="width: 100%"></div>
+                    </div>
+                    <div class="fighter-main-hp-text">200 / 200</div>
+                    <div class="fighter-main-attrs">
+                        <span>ATK:15</span>
+                        <span>DEF:8</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="center-middle">
+                <div class="battle-visual">
+                    <div class="battle-effects">
+                        <span>💥</span>
+                        <span>⚔️</span>
+                        <span>🔥</span>
+                        <span>⚡</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="center-bottom">
+                <button class="main-btn start">⚔️ 开始战斗</button>
+                <button class="main-btn auto">🔄 自动战斗</button>
+                <button class="main-btn reset">🔙 重置</button>
+                <button class="main-btn auto">🔀 切换敌人</button>
+            </div>
+        </div>
+
+        <div class="right-full">
+            <div class="right-panel">
+                <div class="panel-title">⚡ 技能</div>
+                <div class="skills-center">
+                    <div class="skill-center-item">
+                        <div class="skill-center-icon">💥</div>
+                        <div class="skill-center-name">普通攻击</div>
+                        <div class="skill-center-desc">100%伤害</div>
+                    </div>
+                    <div class="skill-center-item">
+                        <div class="skill-center-icon">🔥</div>
+                        <div class="skill-center-name">火焰斩</div>
+                        <div class="skill-center-desc">150%伤害</div>
+                    </div>
+                    <div class="skill-center-item">
+                        <div class="skill-center-icon">🛡️</div>
+                        <div class="skill-center-name">防御姿态</div>
+                        <div class="skill-center-desc">+50%防御</div>
+                    </div>
+                    <div class="skill-center-item">
+                        <div class="skill-center-icon">⚔️</div>
+                        <div class="skill-center-name">终极技能</div>
+                        <div class="skill-center-desc">300%伤害</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="panel-title">📜 战斗日志</div>
+                <div class="log-center">
+                    <div class="log-center-entries">
+                        <div class="log-center-entry">⚔️ 战斗准备就绪</div>
+                        <div class="log-center-entry">👹 vs 👺</div>
+                        <div class="log-center-entry damage">点击开始战斗</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="panel-title">📊 统计</div>
+                <div class="stats-center">
+                    <div class="stat-center-item">
+                        <div class="stat-center-value">0</div>
+                        <div class="stat-center-label">回合</div>
+                    </div>
+                    <div class="stat-center-item">
+                        <div class="stat-center-value">0</div>
+                        <div class="stat-center-label">总伤害</div>
+                    </div>
+                    <div class="stat-center-item">
+                        <div class="stat-center-value">0</div>
+                        <div class="stat-center-label">技能</div>
+                    </div>
+                    <div class="stat-center-item">
+                        <div class="stat-center-value">--</div>
+                        <div class="stat-center-label">胜者</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-full">
+            <div class="info-badge">
+                <span class="info-badge-label">状态:</span>
+                <span class="info-badge-value">准备就绪</span>
+            </div>
+            <div class="info-badge">
+                <span class="info-badge-label">速度:</span>
+                <span class="info-badge-value">1x</span>
+            </div>
+            <div class="info-badge">
+                <span class="info-badge-label">模式:</span>
+                <span class="info-badge-value">手动</span>
+            </div>
+            <div class="info-badge">
+                <span class="info-badge-label">结果:</span>
+                <span class="info-badge-value">--</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

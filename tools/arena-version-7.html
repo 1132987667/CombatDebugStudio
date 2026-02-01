@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>演武场 - 游戏底部控制布局</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'SimSun', serif;
+            background: #F8F5F0;
+            min-height: 100vh;
+            color: #333333;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 16px;
+        }
+
+        .battle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #F8F5F0;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .battle-title {
+            font-size: 1.2rem;
+            color: #C41E3A;
+            font-weight: bold;
+        }
+
+        .battle-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-badge {
+            background: #F8F5F0;
+            padding: 6px 12px;
+            border: 1px solid #333333;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .stat-badge span {
+            color: #C41E3A;
+            font-weight: bold;
+        }
+
+        .main-area {
+            display: flex;
+            flex: 1;
+            gap: 16px;
+            min-height: 0;
+        }
+
+        .left-enemies {
+            width: 220px;
+            background: #F8F5F0;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .left-enemies h3 {
+            color: #333333;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .enemy-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .enemy-card {
+            background: #F8F5F0;
+            border: 1px solid #333333;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .enemy-card:hover {
+            border-color: #C41E3A;
+        }
+
+        .enemy-card.selected {
+            border-color: #C41E3A;
+            background: rgba(196, 30, 58, 0.1);
+        }
+
+        .enemy-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .enemy-icon {
+            font-size: 1.5rem;
+        }
+
+        .enemy-name {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #333333;
+        }
+
+        .enemy-brief {
+            display: flex;
+            gap: 8px;
+            font-size: 0.7rem;
+            color: #666666;
+        }
+
+        .enemy-brief span {
+            color: #C41E3A;
+        }
+
+        .center-arena {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #F8F5F0;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .combat-zone {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex: 1;
+            padding: 20px;
+        }
+
+        .fighter {
+            text-align: center;
+            width: 180px;
+        }
+
+        .fighter.active {
+            animation: fighterPulse 1s infinite;
+        }
+
+        @keyframes fighterPulse {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.1); }
+        }
+
+        .fighter-avatar {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 8px;
+            background: linear-gradient(135deg, #C41E3A, #A01830);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            border: 2px solid #333333;
+        }
+
+        .fighter-name {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #333333;
+            margin-bottom: 6px;
+        }
+
+        .hp-bar-wrap {
+            background: #F8F5F0;
+            border: 1px solid #333333;
+            border-radius: 4px;
+            padding: 2px;
+            margin-bottom: 4px;
+        }
+
+        .hp-bar {
+            height: 10px;
+            background: linear-gradient(90deg, #C41E3A, #E64A66);
+            border-radius: 3px;
+        }
+
+        .hp-text {
+            font-size: 0.75rem;
+            color: #333333;
+        }
+
+        .fighter-attrs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: #666666;
+        }
+
+        .fighter-attrs span {
+            color: #C41E3A;
+        }
+
+        .vs-badge {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #C41E3A;
+        }
+
+        .right-enemies {
+            width: 220px;
+            background: #F8F5F0;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .right-enemies h3 {
+            color: #333333;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .bottom-panel {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            height: 140px;
+        }
+
+        .skill-panel {
+            flex: 2;
+            background: #F8F5F0;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .skill-panel h3 {
+            color: #333333;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .skills {
+            display: flex;
+            gap: 10px;
+        }
+
+        .skill-btn {
+            flex: 1;
+            background: #F8F5F0;
+            border: 2px solid #333333;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .skill-btn:hover {
+            border-color: #C41E3A;
+            transform: translateY(-2px);
+        }
+
+        .skill-name {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #C41E3A;
+            margin-bottom: 4px;
+        }
+
+        .skill-desc {
+            font-size: 0.65rem;
+            color: #666666;
+        }
+
+        .skill-cooldown {
+            font-size: 0.7rem;
+            color: #C41E3A;
+            margin-top: 4px;
+        }
+
+        .control-panel {
+            flex: 1;
+            background: #F8F5F0;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .control-panel h3 {
+            color: #333333;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .ctrl-btn {
+            padding: 10px;
+            border: 1px solid #333333;
+            background: #F8F5F0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .ctrl-btn.start {
+            background: #C41E3A;
+            color: #F8F5F0;
+            grid-column: span 2;
+        }
+
+        .ctrl-btn.auto {
+            background: #F8F5F0;
+            color: #333333;
+        }
+
+        .ctrl-btn.reset {
+            background: #F8F5F0;
+            color: #333333;
+        }
+
+        .ctrl-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(51, 51, 51, 0.2);
+        }
+
+        .ctrl-btn.start:hover {
+            background: #A01830;
+        }
+
+        .log-panel {
+            flex: 1;
+            background: #F8F5F0;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        .log-panel h3 {
+            color: #333333;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .log-content {
+            font-size: 0.75rem;
+        }
+
+        .log-item {
+            padding: 4px 8px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            border-left: 2px solid #333333;
+            background: rgba(51, 51, 51, 0.05);
+        }
+
+        .log-item.damage {
+            border-left-color: #C41E3A;
+        }
+
+        .log-item.heal {
+            border-left-color: #2E7D32;
+        }
+
+        footer {
+            text-align: center;
+            padding: 8px;
+            color: #666666;
+            font-size: 0.7rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="battle-header">
+            <div class="battle-title">⚔️ 演武场 - 战斗模拟 ⚔️</div>
+            <div class="battle-stats">
+                <div class="stat-badge">回合: <span id="round">0</span></div>
+                <div class="stat-badge">伤害: <span id="damage">0</span></div>
+                <div class="stat-badge">技能: <span id="skills">0</span></div>
+            </div>
+        </div>
+
+        <div class="main-area">
+            <div class="left-enemies">
+                <h3>👹 敌人选择</h3>
+                <div class="enemy-grid">
+                    <div class="enemy-card selected">
+                        <div class="enemy-card-header">
+                            <span class="enemy-icon">👹</span>
+                            <span class="enemy-name">普通敌人</span>
+                        </div>
+                        <div class="enemy-brief">
+                            <span>HP:100</span>
+                            <span>ATK:10</span>
+                        </div>
+                    </div>
+                    <div class="enemy-card">
+                        <div class="enemy-card-header">
+                            <span class="enemy-icon">👺</span>
+                            <span class="enemy-name">精英敌人</span>
+                        </div>
+                        <div class="enemy-brief">
+                            <span>HP:200</span>
+                            <span>ATK:15</span>
+                        </div>
+                    </div>
+                    <div class="enemy-card">
+                        <div class="enemy-card-header">
+                            <span class="enemy-icon">👿</span>
+                            <span class="enemy-name">BOSS敌人</span>
+                        </div>
+                        <div class="enemy-brief">
+                            <span>HP:500</span>
+                            <span>ATK:25</span>
+                        </div>
+                    </div>
+                    <div class="enemy-card">
+                        <div class="enemy-card-header">
+                            <span class="enemy-icon">💀</span>
+                            <span class="enemy-name">亡灵战士</span>
+                        </div>
+                        <div class="enemy-brief">
+                            <span>HP:150</span>
+                            <span>ATK:18</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="center-arena">
+                <div class="combat-zone">
+                    <div class="fighter active">
+                        <div class="fighter-avatar">👹</div>
+                        <div class="fighter-name">普通敌人</div>
+                        <div class="hp-bar-wrap">
+                            <div class="hp-bar" style="width: 100%"></div>
+                        </div>
+                        <div class="hp-text">100 / 100</div>
+                        <div class="fighter-attrs">
+                            <span>ATK:10</span>
+                            <span>DEF:5</span>
+                            <span>SPD:8</span>
+                        </div>
+                    </div>
+
+                    <div class="vs-badge">VS</div>
+
+                    <div class="fighter">
+                        <div class="fighter-avatar">👺</div>
+                        <div class="fighter-name">精英敌人</div>
+                        <div class="hp-bar-wrap">
+                            <div class="hp-bar" style="width: 100%"></div>
+                        </div>
+                        <div class="hp-text">200 / 200</div>
+                        <div class="fighter-attrs">
+                            <span>ATK:15</span>
+                            <span>DEF:8</span>
+                            <span>SPD:10</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-enemies">
+                <h3>🎮 对手选择</h3>
+                <div class="enemy-grid">
+                    <div class="enemy-card selected">
+                        <div class="enemy-card-header">
+                            <span class="enemy-icon">👺</span>
+                            <span class="enemy-name">精英敌人</span>
+                        </div>
+                        <div class="enemy-brief">
+                            <span>HP:200</span>
+                            <span>ATK:15</span>
+                        </div>
+                    </div>
+                    <div class="enemy-card">
+                        <div class="enemy-card-header">
+                            <span class="enemy-icon">👹</span>
+                            <span class="enemy-name">普通敌人</span>
+                        </div>
+                        <div class="enemy-brief">
+                            <span>HP:100</span>
+                            <span>ATK:10</span>
+                        </div>
+                    </div>
+                    <div class="enemy-card">
+                        <div class="enemy-card-header">
+                            <span class="enemy-icon">👿</span>
+                            <span class="enemy-name">BOSS敌人</span>
+                        </div>
+                        <div class="enemy-brief">
+                            <span>HP:500</span>
+                            <span>ATK:25</span>
+                        </div>
+                    </div>
+                    <div class="enemy-card">
+                        <div class="enemy-card-header">
+                            <span class="enemy-icon">💀</span>
+                            <span class="enemy-name">亡灵战士</span>
+                        </div>
+                        <div class="enemy-brief">
+                            <span>HP:150</span>
+                            <span>ATK:18</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-panel">
+            <div class="skill-panel">
+                <h3>⚡ 技能释放</h3>
+                <div class="skills">
+                    <div class="skill-btn">
+                        <div class="skill-name">💥 普通攻击</div>
+                        <div class="skill-desc">基础伤害</div>
+                        <div class="skill-cooldown">CD: 0</div>
+                    </div>
+                    <div class="skill-btn">
+                        <div class="skill-name">🔥 火焰斩</div>
+                        <div class="skill-desc">150%伤害</div>
+                        <div class="skill-cooldown">CD: 2</div>
+                    </div>
+                    <div class="skill-btn">
+                        <div class="skill-name">🛡️ 防御姿态</div>
+                        <div class="skill-desc">+50%防御</div>
+                        <div class="skill-cooldown">CD: 3</div>
+                    </div>
+                    <div class="skill-btn">
+                        <div class="skill-name">⚔️ 终极技能</div>
+                        <div class="skill-desc">300%伤害</div>
+                        <div class="skill-cooldown">CD: 5</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <h3>🎮 控制台</h3>
+                <div class="controls">
+                    <button class="ctrl-btn start">⚔️ 开始战斗</button>
+                    <button class="ctrl-btn auto">🔄 自动</button>
+                    <button class="ctrl-btn reset">🔙 重置</button>
+                </div>
+            </div>
+
+            <div class="log-panel">
+                <h3>📜 战斗日志</h3>
+                <div class="log-content">
+                    <div class="log-item">⚔️ 准备就绪</div>
+                    <div class="log-item">👹 vs 👺</div>
+                    <div class="log-item damage">点击开始战斗</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>版本 7.0 | 游戏底部控制布局 | 按 F5 刷新</footer>
+    </div>
+</body>
+</html>

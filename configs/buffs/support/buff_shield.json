@@ -1,0 +1,16 @@
+{
+  "id": "shield",
+  "name": "护盾",
+  "description": "获得护盾保护，能够吸收一定量的伤害，并且会缓慢恢复",
+  "duration": 25000,
+  "maxStacks": 1,
+  "cooldown": 40000,
+  "isPermanent": false,
+  "isDebuff": false,
+  "parameters": {
+    "baseShield": 100,
+    "shieldScale": 1,
+    "shieldRegen": 5,
+    "refreshBonus": 20
+  }
+}

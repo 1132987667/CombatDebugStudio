@@ -1,0 +1,16 @@
+{
+  "id": "poison",
+  "name": "毒素",
+  "description": "中毒效果，持续造成伤害并降低移动速度，伤害随时间递增",
+  "duration": 10000,
+  "maxStacks": 3,
+  "cooldown": 5000,
+  "isPermanent": false,
+  "isDebuff": true,
+  "parameters": {
+    "baseDamage": 10,
+    "damageInterval": 2000,
+    "damageMultiplier": 1.2,
+    "refreshBonus": 5
+  }
+}

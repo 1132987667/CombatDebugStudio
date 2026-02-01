@@ -1,0 +1,23 @@
+{
+  "global": {
+    "maxBuffsPerCharacter": 20,
+    "defaultCooldown": 10000,
+    "tickInterval": 50,
+    "performanceMonitorEnabled": false
+  },
+  "validation": {
+    "strictMode": true,
+    "logInvalidConfigs": true
+  },
+  "debug": {
+    "logLevel": "INFO",
+    "verboseLogging": false,
+    "enableProfiling": false
+  },
+  "balancing": {
+    "maxModifierValue": 1000,
+    "maxDebuffValue": -500,
+    "stackMultiplier": 0.8,
+    "durationMultiplier": 0.9
+  }
+}

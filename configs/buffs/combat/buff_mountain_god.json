@@ -1,0 +1,16 @@
+{
+  "id": "mountain_god",
+  "name": "山神降临",
+  "description": "获得山神的祝福，大幅提升攻击力和防御力，同时提高暴击率",
+  "duration": 30000,
+  "maxStacks": 1,
+  "cooldown": 60000,
+  "isPermanent": false,
+  "isDebuff": false,
+  "parameters": {
+    "attackBonus": 50,
+    "defenseBonus": 30,
+    "regeneration": 5,
+    "refreshBonus": 10
+  }
+}

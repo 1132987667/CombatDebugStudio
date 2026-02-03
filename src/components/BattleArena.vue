@@ -477,6 +477,11 @@ import { ref, computed, reactive, onMounted, watch } from "vue";
 import enemiesData from "@configs/enemies/enemies.json";
 import scenesData from "@configs/scenes/scenes.json";
 import Dialog from "./Dialog.vue";
+import ParticipantPanel from "./ParticipantPanel.vue";
+import BattleField from "./BattleField.vue";
+import BattleLog from "./BattleLog.vue";
+import DebugPanel from "./DebugPanel.vue";
+import ControlBar from "./ControlBar.vue";
 import { GameBattleSystem } from "@/core/BattleSystem";
 import type {
   BattleState,
@@ -996,6 +1001,146 @@ const addLog = (
 ) => {
   battleLogs.unshift({ turn, source, action, target, result, level });
   if (battleLogs.length > 100) battleLogs.pop();
+};
+
+// 子组件事件处理方法
+const endTurn = () => {
+  // 结束当前回合的逻辑
+  if (currentActorId.value) {
+    addLog(currentTurn.value.toString(), "系统", "结束回合", currentActor.value?.name || "", "回合结束", "info");
+    currentActorId.value = null;
+  }
+};
+
+const executeSkill = (skillName: string) => {
+  if (!skillName) return;
+  if (currentActor.value) {
+    addLog(currentTurn.value.toString(), currentActor.value.name, "使用技能", "", skillName, "info");
+  }
+};
+
+const addStatus = (status: { name: string; turns: number }) => {
+  if (!status.name) return;
+  const selectedChar = battleCharacters.find(c => c.id === selectedCharacterId.value) || 
+                      enemyParty.find(e => e.id === selectedCharacterId.value);
+  if (selectedChar) {
+    selectedChar.buffs.push({
+      id: `status_${Date.now()}`,
+      name: status.name,
+      remainingTurns: status.turns,
+      isPositive: true
+    });
+    addLog(currentTurn.value.toString(), "系统", "添加状态", selectedChar.name, `${status.name} (${status.turns}回合)`, "status");
+  }
+};
+
+const adjustStats = (stats: { hp: number; mp: number }) => {
+  const selectedChar = battleCharacters.find(c => c.id === selectedCharacterId.value) || 
+                      enemyParty.find(e => e.id === selectedCharacterId.value);
+  if (selectedChar) {
+    selectedChar.currentHp = Math.max(0, Math.min(selectedChar.maxHp, selectedChar.currentHp + stats.hp));
+    selectedChar.currentMp = Math.max(0, Math.min(selectedChar.maxMp, selectedChar.currentMp + stats.mp));
+    addLog(currentTurn.value.toString(), "系统", "调整属性", selectedChar.name, `HP:${stats.hp}, MP:${stats.mp}`, "info");
+  }
+};
+
+const clearStatuses = () => {
+  const selectedChar = battleCharacters.find(c => c.id === selectedCharacterId.value) || 
+                      enemyParty.find(e => e.id === selectedCharacterId.value);
+  if (selectedChar) {
+    selectedChar.buffs = [];
+    addLog(currentTurn.value.toString(), "系统", "清除状态", selectedChar.name, "所有状态已清除", "status");
+  }
+};
+
+const exportState = () => {
+  const state = {
+    battleCharacters,
+    enemyParty,
+    currentTurn: currentTurn.value,
+    rules,
+    battleLogs
+  };
+  const json = JSON.stringify(state, null, 2);
+  localStorage.setItem('battleState', json);
+  lastExportTime.value = new Date().toLocaleString();
+  addLog(currentTurn.value.toString(), "系统", "导出状态", "", "战斗状态已导出", "info");
+};
+
+const importState = () => {
+  const savedState = localStorage.getItem('battleState');
+  if (savedState) {
+    try {
+      const state = JSON.parse(savedState);
+      // 这里需要实现导入逻辑
+      addLog(currentTurn.value.toString(), "系统", "导入状态", "", "战斗状态已导入", "info");
+    } catch (e) {
+      addLog(currentTurn.value.toString(), "系统", "导入状态", "", "导入失败", "error");
+    }
+  }
+};
+
+const viewExport = () => {
+  const savedState = localStorage.getItem('battleState');
+  if (savedState) {
+    console.log('Exported Battle State:', JSON.parse(savedState));
+  }
+};
+
+const reloadExport = () => {
+  importState();
+};
+
+const locateException = () => {
+  // 异常定位逻辑
+  addLog(currentTurn.value.toString(), "系统", "定位异常", "", "开始异常检测", "info");
+};
+
+const saveScene = () => {
+  if (sceneName.value) {
+    savedScenes.value.push(sceneName.value);
+    addLog(currentTurn.value.toString(), "系统", "保存场景", "", sceneName.value, "info");
+    sceneName.value = "";
+  }
+};
+
+const loadScene = () => {
+  if (selectedScene.value) {
+    addLog(currentTurn.value.toString(), "系统", "加载场景", "", selectedScene.value, "info");
+  }
+};
+
+const deleteScene = () => {
+  if (selectedScene.value) {
+    const index = savedScenes.value.indexOf(selectedScene.value);
+    if (index > -1) {
+      savedScenes.value.splice(index, 1);
+      addLog(currentTurn.value.toString(), "系统", "删除场景", "", selectedScene.value, "info");
+      selectedScene.value = "";
+    }
+  }
+};
+
+const addCustomStatus = () => {
+  // 添加自定义状态逻辑
+  addLog(currentTurn.value.toString(), "系统", "添加自定义状态", "", "自定义状态已添加", "status");
+};
+
+const clearInjectableStatuses = () => {
+  injectableStatuses.forEach(status => {
+    status.active = false;
+  });
+  addLog(currentTurn.value.toString(), "系统", "清空状态", "", "所有可注入状态已清空", "status");
+};
+
+const exitTool = () => {
+  // 退出工具逻辑
+  addLog(currentTurn.value.toString(), "系统", "退出工具", "", "战斗测试工具已退出", "info");
+};
+
+const showHelp = () => {
+  // 显示帮助逻辑
+  addLog(currentTurn.value.toString(), "系统", "显示帮助", "", "帮助文档已打开", "info");
 };
 
 const togglePause = () => {

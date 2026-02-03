@@ -12,8 +12,21 @@ import type { EnemyInstance } from '@/types/enemy'
 import type { AttributeType } from '@/types/modifier'
 import { logger } from '@/utils/logger'
 import { BattleAIFactory, BattleAI } from '@/core/BattleAI'
+import { container } from './di/Container'
+import { BattleManager } from './battle/BattleManager'
+import { TurnManager } from './battle/TurnManager'
+import { ActionExecutor } from './battle/ActionExecutor'
+import { ParticipantManager } from './battle/ParticipantManager'
+import { AISystem } from './battle/AISystem'
 
-interface ParticipantInfo {
+// 注册依赖项
+container.register('TurnManager', new TurnManager())
+container.register('ActionExecutor', new ActionExecutor())
+container.register('ParticipantManager', new ParticipantManager())
+container.register('AISystem', new AISystem())
+container.register('BattleManager', new BattleManager())
+
+export interface ParticipantInfo {
   id: string
   name: string
   type: 'character' | 'enemy'
@@ -188,7 +201,7 @@ abstract class BaseBattleParticipant {
   }
 }
 
-class SimpleBattleCharacter
+export class SimpleBattleCharacter
   extends BaseBattleParticipant
   implements BattleCharacter
 {
@@ -258,7 +271,7 @@ class SimpleBattleCharacter
   }
 }
 
-class SimpleBattleEnemy extends BaseBattleParticipant implements BattleEnemy {
+export class SimpleBattleEnemy extends BaseBattleParticipant implements BattleEnemy {
   type = 'enemy' as const
   enemy: EnemyInstance
 

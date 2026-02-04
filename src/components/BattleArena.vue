@@ -10,388 +10,51 @@
     </div>
 
     <div class="main-layout">
-      <div class="config-panel panel-left">
-        <div class="panel-section">
-          <div class="section-header">
-            <span>参战角色</span>
-          </div>
-          <div class="section-content">
-            <div class="character-field">
-              <div class="character-party our-party">
-                <div class="party-header">我方 ({{battleCharacters.filter(c => c.enabled).length}}人)</div>
-                <div class="party-members">
-                  <div v-for="char in battleCharacters" :key="char.id" class="character-item" :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }" @click="selectCharacter(char.id)">
-                    <div class="char-check">
-                      <input type="checkbox" v-model="char.enabled" @click.stop>
-                    </div>
-                    <div class="char-info">
-                      <span class="char-name">{{ char.name }}</span>
-                      <span class="char-stats">HP:{{ char.currentHp }}/{{ char.maxHp }} SPD:{{ char.speed }}</span>
-                    </div>
-                    <div class="char-order" v-if="char.enabled">
-                      <span class="order-num">{{ getOrderIndex(char.id) }}</span>
-                    </div>
-                    <div class="char-status" v-if="char.isFirst">
-                      <span class="first-badge">先手</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <!-- 左侧：参战角色配置 -->
+      <ParticipantPanel
+        :battle-characters="battleCharacters"
+        :enemy-party="enemyParty"
+        :selected-character-id="selectedCharacterId"
+        @update:selected-character-id="selectCharacter"
+        @add-enemy="addEnemyToBattle"
+        @add-character="addCharacter"
+        @move-character="moveCharacter"
+      />
 
-              <div class="field-divider">
-                <span class="vs-text">VS</span>
-              </div>
-
-              <div class="character-party enemy-party">
-                <div class="party-header">敌方 ({{ enemyParty.length }}人)</div>
-                <div class="party-members">
-                  <div v-for="char in enemyParty" :key="char.id" class="character-item" :class="{ selected: selectedCharacterId === char.id }" @click="selectCharacter(char.id)">
-                    <div class="char-check">
-                      <input type="checkbox" v-model="char.enabled" @click.stop>
-                    </div>
-                    <div class="char-info">
-                      <span class="char-name">{{ char.name }}</span>
-                      <span class="char-stats">HP:{{ char.currentHp }}/{{ char.maxHp }} SPD:{{ char.speed }}</span>
-                    </div>
-                    <div class="char-order" v-if="char.enabled">
-                      <span class="order-num">-</span>
-                    </div>
-                    <div class="char-status" v-if="char.buffs && char.buffs.length > 0">
-                      <span class="first-badge">状态</span>
-                    </div>
-                  </div>
-                  <div v-if="enemyParty.length === 0" class="empty-party">(空位)</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="section-actions">
-            <button class="btn-small" @click="moveCharacter(-1)">[↑]上调</button>
-            <button class="btn-small" @click="moveCharacter(1)">[↓]下调</button>
-            <button class="btn-small" @click="addCharacter">[+]添加</button>
-          </div>
-        </div>
-
-        <div class="panel-section">
-          <div class="section-header">
-            <span>角色库</span>
-          </div>
-          <div class="section-content">
-            <div class="character-search">
-              <input type="text" v-model="enemySearch" placeholder="搜索角色库..." class="search-input">
-            </div>
-            <div class="scene-enemy-list">
-              <div v-for="group in groupedEnemies" :key="group.scene.id" class="scene-group">
-                <div class="scene-header" @click="toggleSceneExpand(group.scene.id)">
-                  <span class="expand-icon">{{ isSceneExpanded(group.scene.id) ? '▼' : '▶' }}</span>
-                  <span class="scene-name">{{ group.scene.name }}</span>
-                  <span class="scene-level">Lv.{{ group.scene.requiredLevel }}+</span>
-                  <span class="scene-count">{{ group.enemies.length }}人</span>
-                </div>
-                <div class="scene-enemies" v-show="isSceneExpanded(group.scene.id)">
-                  <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item" @click="addEnemyToBattle(enemy)">
-                    <div class="char-info">
-                      <span class="char-name">{{ enemy.name }}</span>
-                      <span class="char-stats">Lv.{{ enemy.level }} HP:{{ enemy.stats.health }} ATK:{{
-                        enemy.stats.minAttack }}-{{ enemy.stats.maxAttack }}</span>
-                    </div>
-                    <div class="char-actions">
-                      <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, 'our')">我方</button>
-                      <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, 'enemy')">敌方</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div v-if="groupedEnemies.length === 0" class="empty-message">
-                未找到匹配的敌人
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <!-- 中间：战斗战场和日志 -->
       <div class="battle-panel panel-center">
-        <div class="battle-top-section">
-          <div class="battle-header">
-            <div class="turn-info">
-              <span class="turn-label">当前回合:</span>
-              <span class="turn-num">{{ currentTurn }}/{{ maxTurns }}</span>
-              <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} (SPD:{{ currentActor?.speed || 0
-                }})</span>
-            </div>
-          </div>
-
-          <div class="battle-field">
-            <div class="field-party our-party">
-              <div class="party-header">我方 ({{ ourParty.length }}人)</div>
-              <div class="party-members">
-                <div v-for="member in ourParty" :key="member.id" class="member-card" :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: selectedCharacterId === member.id }" @click="selectCharacter(member.id)">
-                  <div class="member-info">
-                    <div class="member-name">
-                      Lv.{{ member.level }} {{ member.name }}
-                      <div class="member-action" v-if="currentActor?.id === member.id">
-                        <span class="acting-badge">←操作中</span>
-                      </div>
-                    </div>
-                    <div class="member-hp">
-                      <span class="hp-text">HP: {{ member.currentHp }}/{{ member.maxHp }}</span>
-                      <div class="hp-bar">
-                        <div class="hp-fill" :class="getHpColorClass(member)" :style="{ width: getHpPercent(member) + '%' }"></div>
-                      </div>
-                    </div>
-                    <div class="member-energy">
-                      <span class="energy-text">能量: {{ member.currentEnergy || 0 }}/150</span>
-                      <div class="energy-bar">
-                        <div class="energy-ticks">
-                            <div class="tick"></div>
-                            <div class="tick"></div>
-                            <div class="tick"></div>
-                            <div class="tick"></div>
-                          </div>
-                        <div class="energy-fill" :style="{ width: ((member.currentEnergy || 0) / 150) * 100 + '%' }">
-                        </div>
-                      </div>
-                    </div>
-                    <div class="member-status">
-                      <span v-for="status in getMemberStatuses(member)" :key="status.id" class="status-tag" :class="status.isPositive ? 'positive' : 'negative'">
-                        {{ status.name }}:{{ status.remainingTurns }}
-                      </span>
-                      <span v-if="getMemberStatuses(member).length === 0" class="no-status">无</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="field-divider">
-              <span class="vs-text">VS</span>
-            </div>
-
-            <div class="field-party enemy-party">
-              <div class="party-header">敌方 ({{ enemyParty.length }}人)</div>
-              <div class="party-members">
-                <div v-for="member in enemyParty" :key="member.id" class="member-card" :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: selectedCharacterId === member.id }" @click="selectCharacter(member.id)">
-                  <div class="member-info">
-                    <div class="member-name">
-                      Lv.{{ member.level }} {{ member.name }}
-                      <div class="member-action" v-if="currentActor?.id === member.id">
-                        <span class="acting-badge enemy-acting">←操作中</span>
-                      </div>
-                    </div>
-                    <div class="member-hp">
-                      <span class="hp-text">HP: {{ member.currentHp }}/{{ member.maxHp }}</span>
-                      <div class="hp-bar">
-                        <div class="hp-fill enemy-fill" :class="getHpColorClass(member)" :style="{ width: getHpPercent(member) + '%' }"></div>
-                      </div>
-                    </div>
-                    <div class="member-energy">
-                      <span class="energy-text">能量: {{ member.currentEnergy || 0 }}/150</span>
-                      <div class="energy-bar">
-                        <div class="energy-ticks">
-                            <div class="tick"></div>
-                            <div class="tick"></div>
-                            <div class="tick"></div>
-                            <div class="tick"></div>
-                          </div>
-                        <div class="energy-fill enemy-fill" :style="{ width: ((member.currentEnergy || 0) / 150) * 100 + '%' }"></div>
-                      </div>
-                    </div>
-                    <div class="member-status">
-                      <span v-for="status in getMemberStatuses(member)" :key="status.id" class="status-tag" :class="status.isPositive ? 'positive' : 'negative'">
-                        {{ status.name }}:{{ status.remainingTurns }}
-                      </span>
-                      <span v-if="getMemberStatuses(member).length === 0" class="no-status">无</span>
-                    </div>
-                  </div>
-                </div>
-                <div v-if="enemyParty.length === 0" class="empty-party">(空位)</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="battle-log-section">
-          <div class="log-header">
-            <span>战斗日志 (最新在上，按时间倒序)</span>
-            <div class="log-filters">
-              <label class="filter-check">
-                <input type="checkbox" v-model="logFilters.damage">伤害
-              </label>
-              <label class="filter-check">
-                <input type="checkbox" v-model="logFilters.status">状态
-              </label>
-              <label class="filter-check">
-                <input type="checkbox" v-model="logFilters.crit">暴击
-              </label>
-              <label class="filter-check">
-                <input type="checkbox" v-model="logFilters.heal">治疗
-              </label>
-              <input type="text" v-model="logKeyword" placeholder="关键字" class="log-keyword">
-              <button class="btn-small">[F]过滤</button>
-            </div>
-          </div>
-          <div class="log-content">
-            <div v-for="(log, index) in filteredLogs" :key="index" class="log-entry" :class="log.level">
-              <span class="log-turn">[{{ log.turn }}]</span>
-              <span class="log-source">{{ log.source }}</span>
-              <span class="log-action">{{ log.action }}</span>
-              <span class="log-target">{{ log.target }}</span>
-              <span class="log-result">{{ log.result }}</span>
-              <div v-if="log.subEffects && log.subEffects.length" class="sub-effects">
-                <div v-for="(effect, ei) in log.subEffects" :key="ei" class="sub-effect">
-                  → {{ effect }}
-                </div>
-              </div>
-            </div>
-            <div v-if="filteredLogs.length === 0" class="no-logs">暂无战斗日志</div>
-          </div>
-        </div>
+        <BattleField
+          :our-party="ourParty"
+          :enemy-party="enemyParty"
+          :current-turn="currentTurn"
+          :max-turns="maxTurns"
+          :current-actor="currentActor"
+          :selected-character-id="selectedCharacterId"
+          @select-character="selectCharacter"
+        />
+        
+        <BattleLog :logs="battleLogs" />
       </div>
 
-      <div class="debug-panel panel-right">
-        <div class="section">
-          <div class="section-header">
-            <span>属性监控</span>
-            <span class="selected-info">(当前选中: {{ getSelectedCharName() }})</span>
-          </div>
-          <div class="monitor-group">
-            <div class="monitor-subtitle">基础属性</div>
-            <div class="monitor-grid">
-              <div class="monitor-item">
-                <span class="monitor-label">HP:</span>
-                <span class="monitor-value">{{ selectedCharMonitor?.currentHp || 0 }}/{{ selectedCharMonitor?.maxHp || 0
-                  }}</span>
-              </div>
-              <div class="monitor-item">
-                <span class="monitor-label">能量:</span>
-                <span class="monitor-value">{{ selectedCharMonitor?.currentEnergy || 0 }}/{{ selectedCharMonitor?.maxEnergy || 150
-                  }}</span>
-              </div>
-              <div class="monitor-item">
-                <span class="monitor-label">ATK:</span>
-                <span class="monitor-value">{{ selectedCharMonitor?.attack || 0 }}</span>
-              </div>
-              <div class="monitor-item">
-                <span class="monitor-label">DEF:</span>
-                <span class="monitor-value">{{ selectedCharMonitor?.defense || 0 }}</span>
-              </div>
-              <div class="monitor-item">
-                <span class="monitor-label">SPD:</span>
-                <span class="monitor-value">{{ selectedCharMonitor?.speed || 0 }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="monitor-group">
-            <div class="monitor-subtitle">状态加成</div>
-            <div class="monitor-grid">
-              <div class="monitor-item">
-                <span class="monitor-label">ATK:</span>
-                <span class="monitor-value bonus">+{{ getStatBonus('attack') }}</span>
-              </div>
-              <div class="monitor-item">
-                <span class="monitor-label">DEF:</span>
-                <span class="monitor-value bonus">+{{ getStatBonus('defense') }}</span>
-              </div>
-              <div class="monitor-item">
-                <span class="monitor-label">伤害加成:</span>
-                <span class="monitor-value bonus">+{{ getDamageBonus() }}%</span>
-              </div>
-              <div class="monitor-item">
-                <span class="monitor-label">受伤减免:</span>
-                <span class="monitor-value bonus">+{{ getDamageReduction() }}%</span>
-              </div>
-            </div>
-          </div>
-          <div class="monitor-group">
-            <div class="monitor-subtitle">最终属性</div>
-            <div class="monitor-grid">
-              <div class="monitor-item">
-                <span class="monitor-label">实际ATK:</span>
-                <span class="monitor-value final">{{ getFinalStat('attack') }}</span>
-              </div>
-              <div class="monitor-item">
-                <span class="monitor-label">实际DEF:</span>
-                <span class="monitor-value final">{{ getFinalStat('defense') }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="monitor-group">
-            <div class="monitor-subtitle">技能信息</div>
-            <div class="skills-display">
-              <div class="skill-item passive" v-if="getCharPassive(selectedCharMonitor)">
-                <span class="skill-label">被动:</span>
-                <span class="skill-name">{{ getCharPassive(selectedCharMonitor) }}</span>
-              </div>
-              <div class="skill-item small" v-if="getCharSmallSkill(selectedCharMonitor)">
-                <span class="skill-label">小技能:</span>
-                <span class="skill-name">{{ getCharSmallSkill(selectedCharMonitor) }}</span>
-              </div>
-              <div class="skill-item ultimate" v-if="getCharUltimate(selectedCharMonitor)">
-                <span class="skill-label">大技能:</span>
-                <span class="skill-name">{{ getCharUltimate(selectedCharMonitor) }}</span>
-              </div>
-              <div v-if="!getCharPassive(selectedCharMonitor) && !getCharSmallSkill(selectedCharMonitor) && !getCharUltimate(selectedCharMonitor)" class="no-skills">
-                暂未配置技能
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-header">手动干预</div>
-          <div class="intervention-list">
-            <button class="intervention-btn">[1] 立即结束当前回合</button>
-            <div class="intervention-row">
-              <span>[2]</span>
-              <input type="text" v-model="manualSkillName" placeholder="技能名" class="intervention-input">
-              <button class="btn-small">[执行]</button>
-            </div>
-            <div class="intervention-row">
-              <span>[3]</span>
-              <input type="text" v-model="manualStatusName" placeholder="状态名" class="intervention-input">
-              <span>回合:</span>
-              <input type="number" v-model="manualStatusTurns" class="intervention-num">
-              <button class="btn-small">[执行]</button>
-            </div>
-            <div class="intervention-row">
-              <span>[4]</span>
-              <span>HP[</span>
-              <input type="number" v-model="manualHpAmount" class="intervention-num">
-              <span>] MP[</span>
-              <input type="number" v-model="manualMpAmount" class="intervention-num">
-              <span>]</span>
-              <button class="btn-small">[执行]</button>
-            </div>
-            <button class="intervention-btn">[5] 清除所有状态</button>
-            <button class="intervention-btn danger">[R] 重置战斗</button>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-header">数据快照</div>
-          <div class="snapshot-actions">
-            <button class="intervention-btn">[E] 导出当前状态(JSON)</button>
-            <button class="intervention-btn">[I] 导入状态数据</button>
-          </div>
-          <div class="last-export">
-            <span>最近导出: {{ lastExportTime || '无' }}</span>
-            <div class="snapshot-btns">
-              <button class="btn-small">[查看]</button>
-              <button class="btn-small">[重载]</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-header">异常检测</div>
-          <div class="exception-status" :class="exceptionStatus.class">
-            <span>{{ exceptionStatus.message }}</span>
-            <button v-if="exceptionStatus.hasException" class="btn-small">[定位]</button>
-          </div>
-        </div>
-      </div>
+      <!-- 右侧：调试面板 -->
+      <DebugPanel
+        :selected-character="selectedCharMonitor"
+        :last-export-time="lastExportTime"
+        :exception-status="exceptionStatus"
+        @end-turn="endTurn"
+        @execute-skill="executeSkill"
+        @add-status="addStatus"
+        @adjust-stats="adjustStats"
+        @clear-statuses="clearStatuses"
+        @export-state="exportState"
+        @import-state="importState"
+        @view-export="viewExport"
+        @reload-export="reloadExport"
+        @locate-exception="locateException"
+      />
     </div>
 
+    <!-- 对话框组件 -->
     <Dialog v-model="showRulesDialog" title="战斗规则" width="450px">
       <div class="rule-list">
         <label class="rule-item">
@@ -453,22 +116,20 @@
       </div>
     </Dialog>
 
-    <div class="control-bar">
-      <div class="control-group">
-        <button class="control-btn" @click="startBattle" :disabled="isBattleActive">开始战斗</button>
-        <button class="control-btn" @click="endBattle" :disabled="!isBattleActive">结束战斗</button>
-        <button class="control-btn" @click="resetBattle" :disabled="!isBattleActive && !isAutoPlaying">重置战斗</button>
-        <button class="control-btn" @click="stepBack" :disabled="!isBattleActive">回退1回合</button>
-        <button class="control-btn" @click="togglePause" :disabled="!isBattleActive">{{ isPaused ? '[|] 继续' : '[||] 暂停' }}</button>
-        <button class="control-btn" @click="singleStep" :disabled="!isBattleActive">单步执行</button>
-        <button class="control-btn" @click="toggleAutoPlay" :disabled="!isBattleActive">{{ isAutoPlaying ? '[■] 停止自动' : '[▶] 自动播放' }}</button>
-      </div>
-      <div class="control-group right">
-        <button class="control-btn">[Q] 退出工具</button>
-        <button class="control-btn">[H] 帮助文档</button>
-        <span class="mode-indicator">当前模式: 调试模式 | 战斗状态: {{ battleStateDisplay }}</span>
-      </div>
-    </div>
+    <!-- 底部控制栏 -->
+    <ControlBar
+      :is-battle-active="isBattleActive"
+      :is-auto-playing="isAutoPlaying"
+      :is-paused="isPaused"
+      :battle-state-display="battleStateDisplay"
+      @start-battle="startBattle"
+      @end-battle="endBattle"
+      @reset-battle="resetBattle"
+      @step-back="stepBack"
+      @toggle-pause="togglePause"
+      @single-step="singleStep"
+      @toggle-auto-play="toggleAutoPlay"
+    />
   </div>
 </template>
 
@@ -482,7 +143,8 @@ import BattleField from "./BattleField.vue";
 import BattleLog from "./BattleLog.vue";
 import DebugPanel from "./DebugPanel.vue";
 import ControlBar from "./ControlBar.vue";
-import { GameBattleSystem } from "@/core/BattleSystem";
+import { BattleSystemFactory } from "@/core/battle/BattleSystemFactory";
+import type { IBattleSystem } from "@/core/battle/interfaces";
 import type {
   BattleState,
   BattleParticipant,
@@ -601,9 +263,15 @@ const showRulesDialog = ref(false);
 const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
 
-// Battle System
-const battleSystem = GameBattleSystem.getInstance();
+// Battle System - 使用工厂模式创建实例
+const battleSystem = ref<IBattleSystem | null>(null);
 const currentBattleId = ref<string | null>(null);
+
+// 初始化战斗系统
+onMounted(() => {
+  BattleSystemFactory.initialize();
+  battleSystem.value = BattleSystemFactory.createBattleSystem();
+});
 
 const allEnemies = enemiesData as EnemyData[];
 

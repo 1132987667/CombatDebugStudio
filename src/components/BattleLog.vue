@@ -16,7 +16,7 @@
           <input type="checkbox" v-model="logFilters.heal">治疗
         </label>
         <input type="text" v-model="logKeyword" placeholder="关键字" class="log-keyword">
-        <button class="btn-small" @click="$emit('filter-change', { filters: logFilters, keyword: logKeyword })">[F]过滤</button>
+        <button class="btn-small" @click="applyFilters">[F]过滤</button>
       </div>
     </div>
     <div class="log-content">
@@ -57,13 +57,11 @@ interface LogFilters {
   heal: boolean;
 }
 
-const props = defineProps<{
+interface Props {
   logs: BattleLog[];
-}>();
+}
 
-const emit = defineEmits<{
-  "filter-change": [data: { filters: LogFilters; keyword: string }];
-}>();
+const props = defineProps<Props>();
 
 const logKeyword = ref("");
 const logFilters = reactive<LogFilters>({
@@ -75,18 +73,23 @@ const logFilters = reactive<LogFilters>({
 
 const filteredLogs = computed(() => {
   let logs = [...props.logs];
+  
   if (!logFilters.damage) {
     logs = logs.filter((l) => l.level !== "damage" && l.level !== "crit");
   }
+  
   if (!logFilters.status) {
     logs = logs.filter((l) => l.level !== "status");
   }
+  
   if (!logFilters.crit) {
     logs = logs.filter((l) => l.level !== "crit");
   }
+  
   if (!logFilters.heal) {
     logs = logs.filter((l) => l.level !== "heal");
   }
+  
   if (logKeyword.value) {
     const keyword = logKeyword.value.toLowerCase();
     logs = logs.filter(
@@ -96,142 +99,148 @@ const filteredLogs = computed(() => {
         l.result.toLowerCase().includes(keyword)
     );
   }
+  
   return logs;
 });
+
+const applyFilters = () => {
+  // 触发过滤逻辑，这里可以添加额外的过滤逻辑
+  console.log("应用过滤器", logFilters, logKeyword.value);
+};
 </script>
 
 <style scoped>
 .battle-log-section {
-  margin-top: 20px;
-  border-top: 1px solid #ddd;
-  padding-top: 15px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
 }
 
 .log-header {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  background: var(--header-bg);
 }
 
 .log-filters {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.5rem;
 }
 
 .filter-check {
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-size: 12px;
+  gap: 0.25rem;
+  font-size: 0.8rem;
 }
 
 .log-keyword {
-  width: 120px;
-  padding: 3px 6px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 12px;
-}
-
-.btn-small {
-  padding: 3px 8px;
-  font-size: 12px;
-  background: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.btn-small:hover {
-  background: #e0e0e0;
+  width: 80px;
+  padding: 0.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.8rem;
 }
 
 .log-content {
-  max-height: 300px;
+  flex: 1;
   overflow-y: auto;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  padding: 10px;
-  background: #f9f9f9;
+  padding: 0.5rem;
 }
 
 .log-entry {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 6px;
-  margin-bottom: 4px;
-  border-radius: 3px;
-  font-size: 12px;
+  padding: 0.5rem;
+  margin-bottom: 0.25rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
   line-height: 1.3;
+  background: var(--log-bg);
+  border-left: 3px solid var(--log-border);
 }
 
 .log-entry.damage {
-  background: rgba(255, 0, 0, 0.05);
-  border-left: 3px solid #ff4444;
+  background: var(--log-damage-bg);
+  border-left-color: var(--log-damage-border);
 }
 
 .log-entry.crit {
-  background: rgba(255, 165, 0, 0.05);
-  border-left: 3px solid #ff9900;
+  background: var(--log-crit-bg);
+  border-left-color: var(--log-crit-border);
 }
 
 .log-entry.heal {
-  background: rgba(0, 255, 0, 0.05);
-  border-left: 3px solid #44cc44;
+  background: var(--log-heal-bg);
+  border-left-color: var(--log-heal-border);
 }
 
 .log-entry.status {
-  background: rgba(0, 0, 255, 0.05);
-  border-left: 3px solid #4444ff;
+  background: var(--log-status-bg);
+  border-left-color: var(--log-status-border);
 }
 
-.log-entry.info {
-  background: rgba(128, 128, 128, 0.05);
-  border-left: 3px solid #888888;
+.log-entry.error {
+  background: var(--log-error-bg);
+  border-left-color: var(--log-error-border);
 }
 
 .log-turn {
+  color: var(--text-muted);
   font-weight: bold;
-  color: #666;
 }
 
 .log-source {
-  color: #333;
-}
-
-.log-action {
-  color: #666;
-}
-
-.log-target {
-  color: #888;
-}
-
-.log-result {
+  color: var(--text-primary);
   font-weight: bold;
 }
 
+.log-action {
+  color: var(--text-secondary);
+}
+
+.log-target {
+  color: var(--text-primary);
+  font-weight: bold;
+}
+
+.log-result {
+  color: var(--text-accent);
+}
+
 .sub-effects {
-  margin-left: 20px;
-  margin-top: 4px;
-  width: 100%;
+  margin-top: 0.25rem;
+  padding-left: 1rem;
 }
 
 .sub-effect {
-  font-size: 11px;
-  color: #777;
-  margin-left: 10px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .no-logs {
   text-align: center;
-  color: #999;
-  padding: 20px;
+  color: var(--text-muted);
+  padding: 2rem;
   font-style: italic;
+}
+
+.btn-small {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--button-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btn-small:hover {
+  background: var(--button-hover-bg);
 }
 </style>

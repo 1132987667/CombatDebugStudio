@@ -66,5 +66,116 @@ export default {
 </script>
 
 <style scoped>
-@import './BattleArena.scss';
+.notifications-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notification {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 300px;
+  max-width: 400px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification-icon {
+  font-size: 18px;
+  font-weight: bold;
+  min-width: 20px;
+  text-align: center;
+}
+
+.notification-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.notification-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.notification-message {
+  font-size: 12px;
+  color: #606266;
+  line-height: 1.4;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #c0c4cc;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.notification-close:hover {
+  background: #ecf5ff;
+  color: #409eff;
+}
+
+/* 不同类型通知的样式 */
+.notification-success {
+  border-left: 4px solid #67c23a;
+}
+
+.notification-success .notification-icon {
+  color: #67c23a;
+}
+
+.notification-error {
+  border-left: 4px solid #f56c6c;
+}
+
+.notification-error .notification-icon {
+  color: #f56c6c;
+}
+
+.notification-warning {
+  border-left: 4px solid #e6a23c;
+}
+
+.notification-warning .notification-icon {
+  color: #e6a23c;
+}
+
+.notification-info {
+  border-left: 4px solid #409eff;
+}
+
+.notification-info .notification-icon {
+  color: #409eff;
+}
 </style>

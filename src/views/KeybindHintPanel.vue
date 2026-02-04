@@ -84,5 +84,5 @@ defineExpose({
 </script>
 
 <style scoped>
-@import './BattleArena.scss';
+@import '@/styles/main.scss';
 </style>

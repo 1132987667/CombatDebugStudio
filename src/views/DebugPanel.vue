@@ -15,8 +15,9 @@
           </div>
           <div class="monitor-item">
             <span class="monitor-label">能量:</span>
-            <span class="monitor-value">{{ selectedCharMonitor?.currentEnergy || 0 }}/{{ selectedCharMonitor?.maxEnergy || 150
-              }}</span>
+            <span class="monitor-value">{{ selectedCharMonitor?.currentEnergy || 0 }}/{{ selectedCharMonitor?.maxEnergy
+              || 150
+            }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">ATK:</span>
@@ -81,7 +82,9 @@
             <span class="skill-label">大技能:</span>
             <span class="skill-name">{{ getCharUltimate(selectedCharMonitor) }}</span>
           </div>
-          <div v-if="!getCharPassive(selectedCharMonitor) && !getCharSmallSkill(selectedCharMonitor) && !getCharUltimate(selectedCharMonitor)" class="no-skills">
+          <div
+            v-if="!getCharPassive(selectedCharMonitor) && !getCharSmallSkill(selectedCharMonitor) && !getCharUltimate(selectedCharMonitor)"
+            class="no-skills">
             暂未配置技能
           </div>
         </div>
@@ -102,7 +105,8 @@
           <input type="text" v-model="manualStatusName" placeholder="状态名" class="intervention-input">
           <span>回合:</span>
           <input type="number" v-model="manualStatusTurns" class="intervention-num">
-          <button class="btn-small" @click="$emit('add-status', { name: manualStatusName, turns: manualStatusTurns })">[执行]</button>
+          <button class="btn-small"
+            @click="$emit('add-status', { name: manualStatusName, turns: manualStatusTurns })">[执行]</button>
         </div>
         <div class="intervention-row">
           <span>[4]</span>
@@ -111,7 +115,8 @@
           <span>] MP[</span>
           <input type="number" v-model="manualMpAmount" class="intervention-num">
           <span>]</span>
-          <button class="btn-small" @click="$emit('adjust-stats', { hp: manualHpAmount, mp: manualMpAmount })">[执行]</button>
+          <button class="btn-small"
+            @click="$emit('adjust-stats', { hp: manualHpAmount, mp: manualMpAmount })">[执行]</button>
         </div>
         <button class="intervention-btn" @click="$emit('clear-statuses')">[5] 清除所有状态</button>
         <button class="intervention-btn danger" @click="$emit('reset-battle')">[R] 重置战斗</button>
@@ -228,9 +233,9 @@ const manualMpAmount = ref(50);
 
 const selectedCharMonitor = computed(() => {
   if (!props.battleCharacters || !props.enemyParty) return null;
-  return props.battleCharacters.find((c) => c.id === props.selectedCharacterId) || 
-         props.enemyParty.find((e) => e.id === props.selectedCharacterId) || 
-         null;
+  return props.battleCharacters.find((c) => c.id === props.selectedCharacterId) ||
+    props.enemyParty.find((e) => e.id === props.selectedCharacterId) ||
+    null;
 });
 
 const getSelectedCharName = () => {
@@ -240,21 +245,23 @@ const getSelectedCharName = () => {
   return char?.name || enemy?.name || "未选择";
 };
 
+const getChar = (char: BattleCharacter | null): EnemyData | null => {
+  if (!char || !char.originalId) return null;
+  return (enemiesData as EnemyData[]).find((e) => e.id === char.originalId) || null;
+};
+
 const getCharPassive = (char: BattleCharacter | null): string => {
-  if (!char || !char.originalId) return "";
-  const enemy = (enemiesData as EnemyData[]).find((e) => e.id === char.originalId);
+  const enemy = getChar(char);
   return enemy?.skills?.passive || "";
 };
 
 const getCharSmallSkill = (char: BattleCharacter | null): string => {
-  if (!char || !char.originalId) return "";
-  const enemy = (enemiesData as EnemyData[]).find((e) => e.id === char.originalId);
+  const enemy = getChar(char);
   return enemy?.skills?.small || "";
 };
 
 const getCharUltimate = (char: BattleCharacter | null): string => {
-  if (!char || !char.originalId) return "";
-  const enemy = (enemiesData as EnemyData[]).find((e) => e.id === char.originalId);
+  const enemy = getChar(char);
   return enemy?.skills?.ultimate || "";
 };
 
@@ -292,5 +299,5 @@ const exceptionStatus = computed(() => {
 </script>
 
 <style scoped>
-@import './BattleArena.scss';
+@import '@/styles/main.scss';
 </style>

@@ -86,7 +86,10 @@ export class KeybindManager {
     const action = this.getKeybindAction(key);
 
     if (action) {
-      event.preventDefault();
+      // 特殊处理F12键，允许默认的浏览器调试功能
+      if (key !== 'f12') {
+        event.preventDefault();
+      }
       this.triggerAction(action);
     }
   }

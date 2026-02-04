@@ -6,7 +6,7 @@
           <span class="turn-label">当前回合:</span>
           <span class="turn-num">{{ currentTurn }}/{{ maxTurns }}</span>
           <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} (SPD:{{ currentActor?.speed || 0
-            }})</span>
+          }})</span>
         </div>
       </div>
 
@@ -14,13 +14,9 @@
         <div class="field-party our-party">
           <div class="party-header">我方 ({{ ourParty.length }}人)</div>
           <div class="party-members">
-            <div 
-              v-for="member in ourParty" 
-              :key="member.id" 
-              class="member-card" 
-              :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: selectedCharacterId === member.id, hit: member.isHit, casting: member.isCasting }" 
-              @click="selectCharacter(member.id)"
-            >
+            <div v-for="member in ourParty" :key="member.id" class="member-card"
+              :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: selectedCharacterId === member.id, hit: member.isHit, casting: member.isCasting }"
+              @click="selectCharacter(member.id)">
               <DamageNumber ref="damageNumberRefs" :position="{ x: 50, y: 20 }" />
               <SkillEffect ref="skillEffectRefs" :position="{ x: 50, y: 50 }" />
               <div class="member-info">
@@ -33,29 +29,26 @@
                 <div class="member-hp">
                   <span class="hp-text">HP: {{ member.currentHp }}/{{ member.maxHp }}</span>
                   <div class="hp-bar">
-                    <div class="hp-fill" :class="getHpColorClass(member)" :style="{ width: getHpPercent(member) + '%' }"></div>
+                    <div class="hp-fill" :class="getHpColorClass(member)"
+                      :style="{ width: getHpPercent(member) + '%' }"></div>
                   </div>
                 </div>
                 <div class="member-energy">
                   <span class="energy-text">能量: {{ member.currentEnergy || 0 }}/150</span>
                   <div class="energy-bar">
                     <div class="energy-ticks">
-                        <div class="tick"></div>
-                        <div class="tick"></div>
-                        <div class="tick"></div>
-                        <div class="tick"></div>
-                      </div>
+                      <div class="tick"></div>
+                      <div class="tick"></div>
+                      <div class="tick"></div>
+                      <div class="tick"></div>
+                    </div>
                     <div class="energy-fill" :style="{ width: ((member.currentEnergy || 0) / 150) * 100 + '%' }">
                     </div>
                   </div>
                 </div>
                 <div class="member-status">
-                  <span 
-                    v-for="status in getMemberStatuses(member)" 
-                    :key="status.id" 
-                    class="status-tag" 
-                    :class="status.isPositive ? 'positive' : 'negative'"
-                  >
+                  <span v-for="status in getMemberStatuses(member)" :key="status.id" class="status-tag"
+                    :class="status.isPositive ? 'positive' : 'negative'">
                     {{ status.name }}:{{ status.remainingTurns }}
                   </span>
                   <span v-if="getMemberStatuses(member).length === 0" class="no-status">无</span>
@@ -72,13 +65,9 @@
         <div class="field-party enemy-party">
           <div class="party-header">敌方 ({{ enemyParty.length }}人)</div>
           <div class="party-members">
-            <div 
-              v-for="member in enemyParty" 
-              :key="member.id" 
-              class="member-card" 
-              :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: selectedCharacterId === member.id, hit: member.isHit, casting: member.isCasting }" 
-              @click="selectCharacter(member.id)"
-            >
+            <div v-for="member in enemyParty" :key="member.id" class="member-card"
+              :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: selectedCharacterId === member.id, hit: member.isHit, casting: member.isCasting }"
+              @click="selectCharacter(member.id)">
               <DamageNumber ref="damageNumberRefs" :position="{ x: 50, y: 20 }" />
               <SkillEffect ref="skillEffectRefs" :position="{ x: 50, y: 50 }" />
               <div class="member-info">
@@ -91,28 +80,26 @@
                 <div class="member-hp">
                   <span class="hp-text">HP: {{ member.currentHp }}/{{ member.maxHp }}</span>
                   <div class="hp-bar">
-                    <div class="hp-fill enemy-fill" :class="getHpColorClass(member)" :style="{ width: getHpPercent(member) + '%' }"></div>
+                    <div class="hp-fill enemy-fill" :class="getHpColorClass(member)"
+                      :style="{ width: getHpPercent(member) + '%' }"></div>
                   </div>
                 </div>
                 <div class="member-energy">
                   <span class="energy-text">能量: {{ member.currentEnergy || 0 }}/150</span>
                   <div class="energy-bar">
                     <div class="energy-ticks">
-                        <div class="tick"></div>
-                        <div class="tick"></div>
-                        <div class="tick"></div>
-                        <div class="tick"></div>
-                      </div>
-                    <div class="energy-fill enemy-fill" :style="{ width: ((member.currentEnergy || 0) / 150) * 100 + '%' }"></div>
+                      <div class="tick"></div>
+                      <div class="tick"></div>
+                      <div class="tick"></div>
+                      <div class="tick"></div>
+                    </div>
+                    <div class="energy-fill enemy-fill"
+                      :style="{ width: ((member.currentEnergy || 0) / 150) * 100 + '%' }"></div>
                   </div>
                 </div>
                 <div class="member-status">
-                  <span 
-                    v-for="status in getMemberStatuses(member)" 
-                    :key="status.id" 
-                    class="status-tag" 
-                    :class="status.isPositive ? 'positive' : 'negative'"
-                  >
+                  <span v-for="status in getMemberStatuses(member)" :key="status.id" class="status-tag"
+                    :class="status.isPositive ? 'positive' : 'negative'">
                     {{ status.name }}:{{ status.remainingTurns }}
                   </span>
                   <span v-if="getMemberStatuses(member).length === 0" class="no-status">无</span>
@@ -124,13 +111,16 @@
         </div>
       </div>
     </div>
+
+    <BattleLog :logs="props.battleLogs" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import DamageNumber from "./DamageNumber.vue";
-import SkillEffect from "./SkillEffect.vue";
+import DamageNumber from "../components/DamageNumber.vue";
+import SkillEffect from "../components/SkillEffect.vue";
+import BattleLog from "./BattleLog.vue";
 
 interface BattleCharacter {
   id: string;
@@ -164,6 +154,15 @@ const props = defineProps<{
   currentActorId: string | null;
   currentTurn: number;
   maxTurns: number;
+  battleLogs: Array<{
+    turn: string;
+    source: string;
+    action: string;
+    target: string;
+    result: string;
+    level: string;
+    subEffects?: string[];
+  }>;
 }>();
 
 const emit = defineEmits<{
@@ -220,14 +219,14 @@ function showSkillEffect(characterId: string, type: 'attack' | 'heal' | 'buff' |
 function triggerHitEffect(characterId: string) {
   const character = props.battleCharacters.find(c => c.id === characterId);
   const enemy = props.enemyParty.find(e => e.id === characterId);
-  
+
   if (character) {
     character.isHit = true;
     setTimeout(() => {
       character.isHit = false;
     }, 300);
   }
-  
+
   if (enemy) {
     enemy.isHit = true;
     setTimeout(() => {
@@ -239,14 +238,14 @@ function triggerHitEffect(characterId: string) {
 function triggerCastingEffect(characterId: string, duration: number = 1000) {
   const character = props.battleCharacters.find(c => c.id === characterId);
   const enemy = props.enemyParty.find(e => e.id === characterId);
-  
+
   if (character) {
     character.isCasting = true;
     setTimeout(() => {
       character.isCasting = false;
     }, duration);
   }
-  
+
   if (enemy) {
     enemy.isCasting = true;
     setTimeout(() => {
@@ -264,5 +263,5 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@import './BattleArena.scss';
+@import '@/styles/main.scss';
 </style>

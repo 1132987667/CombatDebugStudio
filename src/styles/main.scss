@@ -5,7 +5,7 @@
   padding: 0;
   background: #1a1a2e;
   color: #eee;
-  font-family: "Consolas", "Monaco", monospace;
+  font-family: 'Consolas', 'Monaco', monospace;
   font-size: 14px;
   overflow: hidden;
 }
@@ -63,7 +63,7 @@
 .main-layout {
   display: grid;
   grid-template-columns: 30% 1fr 30%;
-  gap: 0;
+  gap: 1rem;
   height: calc(100vh - 140px);
   margin-top: 80px;
   overflow: hidden;
@@ -72,9 +72,8 @@
 .panel-left,
 .panel-center,
 .panel-right {
-  overflow-y: auto;
+  height: calc(100vh - 140px);
   padding: 0.75rem;
-  margin: 0.75rem 0 0.75rem 0.75rem;
 }
 
 .panel-left {
@@ -82,18 +81,19 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  width: 100%;
+  gap: 1rem;
 }
 
 .panel-section {
-  flex: 1;
   display: flex;
   flex-direction: column;
   background: #1a1a2e;
   border: 1px solid #0f3460;
   border-radius: 4px;
   padding: 0.75rem;
-  margin-bottom: 0.75rem;
   overflow-y: auto;
+  height: calc((100vh - 140px - 2rem) / 2);
 }
 
 .panel-section:not(:last-child) {
@@ -104,6 +104,7 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  padding-right: 0.5rem;
 }
 
 .character-field {
@@ -229,7 +230,7 @@
 }
 
 .battle-top-section {
-  flex: 1;
+  flex: 3;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -533,7 +534,7 @@
 .turn-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .turn-label {
@@ -592,6 +593,8 @@
   display: flex;
   gap: 0.5rem;
   transition: all 0.15s;
+  position: relative;
+  min-height: 120px;
 }
 
 .member-card.active {
@@ -829,7 +832,7 @@
   border: 1px solid #0f3460;
   border-radius: 4px;
   overflow: hidden;
-  flex: 1;
+  flex: 2;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -1212,13 +1215,9 @@
 }
 
 .control-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.7;
   cursor: not-allowed;
-  background: #0a0a15;
-  border-color: #0f1a2a;
-  color: #666;
 }
-
 .control-btn.stop {
   color: #f44336;
   border-color: #7a1a1a;
@@ -1460,7 +1459,7 @@
   .hint-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .keybind-hint-panel {
     width: 95%;
     max-height: 90vh;
@@ -1608,7 +1607,10 @@
 .action-btn.primary:hover {
   background: #c62828;
 }
-
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 /* Notification.vue specific styles */
 .notifications-container {
   position: fixed;
@@ -1760,31 +1762,6 @@
   justify-content: center;
   gap: 10px;
   margin-bottom: 15px;
-}
-
-.control-btn {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #0f3460;
-  border-radius: 50%;
-  background: #1a1a2e;
-  cursor: pointer;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  color: #4fc3f7;
-}
-
-.control-btn:hover:not(:disabled) {
-  background: #1a4a7a;
-  border-color: #4fc3f7;
-}
-
-.control-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .play-btn {
@@ -2120,26 +2097,6 @@
   justify-content: center;
 }
 
-.action-btn {
-  padding: 8px 16px;
-  border: 1px solid #0f3460;
-  border-radius: 4px;
-  background: #1a1a2e;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-  color: #4fc3f7;
-}
-
-.action-btn:hover:not(:disabled) {
-  background: #1a4a7a;
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* 滚动条样式 */
 .events-list::-webkit-scrollbar {
   width: 6px;
@@ -2174,15 +2131,6 @@
 
 .timeline-track::-webkit-scrollbar-thumb:hover {
   background: #1a4a7a;
-}
-
-/* ParticipantPanel.vue specific styles */
-.config-panel {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
 
 .section-actions {

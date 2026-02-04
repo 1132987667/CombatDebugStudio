@@ -11,61 +11,27 @@
 
     <div class="main-layout">
       <!-- 左侧：参战角色配置 -->
-      <ParticipantPanel
-        :battle-characters="battleCharacters"
-        :enemy-party="enemyParty"
-        :selected-character-id="selectedCharacterId"
-        @update:selected-character-id="selectCharacter"
-        @add-enemy="addEnemyToBattle"
-        @add-character="addCharacter"
-        @move-character="moveCharacter"
-      />
+      <ParticipantPanel :battle-characters="battleCharacters" :enemy-party="enemyParty"
+        :selected-character-id="selectedCharacterId" @update:selected-character-id="selectCharacter"
+        @add-enemy="addEnemyToBattle" @add-character="addCharacter" @move-character="moveCharacter" />
 
       <!-- 中间：战斗战场和日志 -->
-      <div class="battle-panel panel-center">
-        <BattleField
-          ref="battleFieldRef"
-          :battle-characters="battleCharacters"
-          :enemy-party="enemyParty"
-          :current-turn="currentTurn"
-          :max-turns="maxTurns"
-          :current-actor-id="currentActorId"
-          :selected-character-id="selectedCharacterId"
-          @select-character="selectCharacter"
-          @show-damage="handleShowDamage"
-          @show-skill-effect="handleShowSkillEffect"
-        />
-        
-        <BattleLog :logs="battleLogs" />
-      </div>
+      <BattleField ref="battleFieldRef" :battle-characters="battleCharacters" :enemy-party="enemyParty"
+        :current-turn="currentTurn" :max-turns="maxTurns" :current-actor-id="currentActorId"
+        :selected-character-id="selectedCharacterId" :battle-logs="battleLogs" @select-character="selectCharacter"
+        @show-damage="handleShowDamage" @show-skill-effect="handleShowSkillEffect" />
 
       <!-- 右侧：调试面板 -->
       <div class="right-panel">
-        <DebugPanel
-          :battle-characters="battleCharacters"
-          :enemy-party="enemyParty"
-          :selected-character-id="selectedCharacterId"
-          :last-export-time="lastExportTime"
-          :exception-status="exceptionStatus"
-          @end-turn="endTurn"
-          @execute-skill="executeSkill"
-          @add-status="addStatus"
-          @adjust-stats="adjustStats"
-          @clear-statuses="clearStatuses"
-          @export-state="exportState"
-          @import-state="importState"
-          @view-export="viewExport"
-          @reload-export="reloadExport"
-          @locate-exception="locateException"
-        />
-        
-        <BattleReplay 
-          :battle-manager="battleSystem"
-          @replay-event="handleReplayEvent"
-          @replay-start="handleReplayStart"
-          @replay-end="handleReplayEnd"
-          @replay-pause="handleReplayPause"
-        />
+        <DebugPanel :battle-characters="battleCharacters" :enemy-party="enemyParty"
+          :selected-character-id="selectedCharacterId" :last-export-time="lastExportTime"
+          :exception-status="exceptionStatus" @end-turn="endTurn" @execute-skill="executeSkill" @add-status="addStatus"
+          @adjust-stats="adjustStats" @clear-statuses="clearStatuses" @export-state="exportState"
+          @import-state="importState" @view-export="viewExport" @reload-export="reloadExport"
+          @locate-exception="locateException" />
+
+        <BattleReplay :battle-manager="battleSystem" @replay-event="handleReplayEvent" @replay-start="handleReplayStart"
+          @replay-end="handleReplayEnd" @replay-pause="handleReplayPause" />
       </div>
     </div>
 
@@ -91,7 +57,8 @@
       </div>
       <div class="speed-selector">
         <span>自动速率:</span>
-        <button v-for="speed in [0.5, 1, 2, 5]" :key="speed" class="speed-btn" :class="{ active: autoSpeed === speed }" @click="autoSpeed = speed">
+        <button v-for="speed in [0.5, 1, 2, 5]" :key="speed" class="speed-btn" :class="{ active: autoSpeed === speed }"
+          @click="autoSpeed = speed">
           {{ speed }}x
         </button>
         <input type="number" v-model="customSpeed" class="custom-speed" placeholder="自定义">
@@ -116,7 +83,8 @@
     <Dialog v-model="showStatusDialog" title="初始状态注入" width="500px">
       <div class="selected-info" style="margin-bottom: 1rem;">当前选中: {{ getSelectedCharName() }}</div>
       <div class="status-injection">
-        <div v-for="status in injectableStatuses" :key="status.id" class="status-item" :class="{ active: status.active }">
+        <div v-for="status in injectableStatuses" :key="status.id" class="status-item"
+          :class="{ active: status.active }">
           <label>
             <input type="checkbox" v-model="status.active">
             <span class="status-name" :class="status.isPositive ? 'positive' : 'negative'">{{ status.name }}</span>
@@ -132,26 +100,17 @@
     </Dialog>
 
     <!-- 底部控制栏 -->
-    <ControlBar
-      :is-battle-active="isBattleActive"
-      :is-auto-playing="isAutoPlaying"
-      :is-paused="isPaused"
-      :battle-state-display="battleStateDisplay"
-      @start-battle="startBattle"
-      @end-battle="endBattle"
-      @reset-battle="resetBattle"
-      @step-back="stepBack"
-      @toggle-pause="togglePause"
-      @single-step="singleStep"
-      @toggle-auto-play="toggleAutoPlay"
-    />
-  
+    <ControlBar :is-battle-active="isBattleActive" :is-auto-playing="isAutoPlaying" :is-paused="isPaused"
+      :battle-state-display="battleStateDisplay" @start-battle="startBattle" @end-battle="endBattle"
+      @reset-battle="resetBattle" @step-back="stepBack" @toggle-pause="togglePause" @single-step="singleStep"
+      @toggle-auto-play="toggleAutoPlay" />
+
     <!-- 快捷键提示面板 -->
     <KeybindHintPanel ref="keybindHintPanelRef" />
-    
+
     <!-- 新手引导 -->
     <NewbieGuide />
-    
+
     <!-- 通知组件 -->
     <Notification ref="notification" />
   </div>
@@ -161,7 +120,7 @@
 import { ref, computed, reactive, onMounted, watch } from "vue";
 import enemiesData from "@configs/enemies/enemies.json";
 import scenesData from "@configs/scenes/scenes.json";
-import Dialog from "./Dialog.vue";
+import Dialog from "../components/Dialog.vue";
 import ParticipantPanel from "./ParticipantPanel.vue";
 import BattleField from "./BattleField.vue";
 import BattleLog from "./BattleLog.vue";
@@ -170,7 +129,7 @@ import ControlBar from "./ControlBar.vue";
 import BattleReplay from "./BattleReplay.vue";
 import KeybindHintPanel from "./KeybindHintPanel.vue";
 import NewbieGuide from "./NewbieGuide.vue";
-import Notification from "./Notification.vue";
+import Notification from "../components/Notification.vue";
 import { keybindManager } from "@/core/input/KeybindManager";
 import { BattleSystemFactory } from "@/core/battle/BattleSystemFactory";
 import type { IBattleSystem } from "@/core/battle/interfaces";
@@ -307,26 +266,26 @@ const currentBattleId = ref<string | null>(null);
 onMounted(() => {
   BattleSystemFactory.initialize();
   battleSystem.value = BattleSystemFactory.createBattleSystem();
-  
+
   // 初始化快捷键系统
   keybindManager.startListening();
-  
+
   // 注册快捷键处理函数
   keybindManager.onAction('menu', () => {
     // 打开菜单
     console.log('打开菜单');
   });
-  
+
   keybindManager.onAction('pause', () => {
     // 暂停/继续战斗
     togglePause();
   });
-  
+
   keybindManager.onAction('replay', () => {
     // 打开战斗回放
     console.log('打开战斗回放');
   });
-  
+
   keybindManager.onAction('debug', () => {
     // 进入调试模式
     console.log('进入调试模式');
@@ -358,13 +317,13 @@ function createBattleCharacter(
     buffs:
       index === 0
         ? [
-            {
-              id: "buff_1",
-              name: "力量祝福",
-              remainingTurns: 5,
-              isPositive: true,
-            },
-          ]
+          {
+            id: "buff_1",
+            name: "力量祝福",
+            remainingTurns: 5,
+            isPositive: true,
+          },
+        ]
         : [],
   };
 }
@@ -386,13 +345,13 @@ const enemyParty = reactive<BattleCharacter[]>(
     buffs:
       index === 0
         ? [
-            {
-              id: "debuff_1",
-              name: "灼烧",
-              remainingTurns: 2,
-              isPositive: false,
-            },
-          ]
+          {
+            id: "debuff_1",
+            name: "灼烧",
+            remainingTurns: 2,
+            isPositive: false,
+          },
+        ]
         : [],
   }))
 );
@@ -749,8 +708,8 @@ const executeSkill = (skillName: string) => {
 
 const addStatus = (status: { name: string; turns: number }) => {
   if (!status.name) return;
-  const selectedChar = battleCharacters.find(c => c.id === selectedCharacterId.value) || 
-                      enemyParty.find(e => e.id === selectedCharacterId.value);
+  const selectedChar = battleCharacters.find(c => c.id === selectedCharacterId.value) ||
+    enemyParty.find(e => e.id === selectedCharacterId.value);
   if (selectedChar) {
     selectedChar.buffs.push({
       id: `status_${Date.now()}`,
@@ -763,8 +722,8 @@ const addStatus = (status: { name: string; turns: number }) => {
 };
 
 const adjustStats = (stats: { hp: number; mp: number }) => {
-  const selectedChar = battleCharacters.find(c => c.id === selectedCharacterId.value) || 
-                      enemyParty.find(e => e.id === selectedCharacterId.value);
+  const selectedChar = battleCharacters.find(c => c.id === selectedCharacterId.value) ||
+    enemyParty.find(e => e.id === selectedCharacterId.value);
   if (selectedChar) {
     selectedChar.currentHp = Math.max(0, Math.min(selectedChar.maxHp, selectedChar.currentHp + stats.hp));
     selectedChar.currentMp = Math.max(0, Math.min(selectedChar.maxMp, selectedChar.currentMp + stats.mp));
@@ -773,8 +732,8 @@ const adjustStats = (stats: { hp: number; mp: number }) => {
 };
 
 const clearStatuses = () => {
-  const selectedChar = battleCharacters.find(c => c.id === selectedCharacterId.value) || 
-                      enemyParty.find(e => e.id === selectedCharacterId.value);
+  const selectedChar = battleCharacters.find(c => c.id === selectedCharacterId.value) ||
+    enemyParty.find(e => e.id === selectedCharacterId.value);
   if (selectedChar) {
     selectedChar.buffs = [];
     addLog(currentTurn.value.toString(), "系统", "清除状态", selectedChar.name, "所有状态已清除", "status");
@@ -876,7 +835,7 @@ const handleShowDamage = (characterId: string, value: number, type: 'damage' | '
   if (battleFieldRef.value) {
     battleFieldRef.value.triggerHitEffect(characterId);
   }
-  
+
   // 这里可以添加更多的伤害显示逻辑
   console.log(`显示伤害: ${characterId} - ${value} (${type})`, { isCritical });
 };
@@ -886,7 +845,7 @@ const handleShowSkillEffect = (characterId: string, type: 'attack' | 'heal' | 'b
   if (battleFieldRef.value) {
     battleFieldRef.value.triggerCastingEffect(characterId, 800);
   }
-  
+
   // 这里可以添加更多的技能效果显示逻辑
   console.log(`显示技能效果: ${characterId} - ${type}`, { name });
 };
@@ -894,7 +853,7 @@ const handleShowSkillEffect = (characterId: string, type: 'attack' | 'heal' | 'b
 // 战斗回放相关方法
 const handleReplayEvent = (event: any, index: number) => {
   console.log('回放事件:', event, '索引:', index);
-  
+
   // 根据事件类型处理不同的回放逻辑
   switch (event.type) {
     case 'action':
@@ -1003,7 +962,7 @@ const toggleAutoPlay = () => {
     isAutoPlaying.value = true;
     isPaused.value = false;
     addLog("系统", "", "", "", "开始自动战斗", "info");
-    
+
     // 开始自动战斗循环
     const autoBattleInterval = setInterval(async () => {
       if (!isAutoPlaying.value || !currentBattleId.value || isPaused.value) {
@@ -1012,22 +971,22 @@ const toggleAutoPlay = () => {
       }
 
       try {
-          await battleSystem.value?.processTurn(currentBattleId.value!);
-          syncBattleState();
+        await battleSystem.value?.processTurn(currentBattleId.value!);
+        syncBattleState();
 
-          // 检查战斗是否结束
-          if (!currentBattleId.value) {
-            clearInterval(autoBattleInterval);
-            isAutoPlaying.value = false;
-            isPaused.value = true;
-          }
-        } catch (error) {
-          console.error("自动战斗时出错:", error);
-          addLog("系统", "", "", "", `自动战斗时出错: ${error}`, "error");
+        // 检查战斗是否结束
+        if (!currentBattleId.value) {
           clearInterval(autoBattleInterval);
           isAutoPlaying.value = false;
           isPaused.value = true;
         }
+      } catch (error) {
+        console.error("自动战斗时出错:", error);
+        addLog("系统", "", "", "", `自动战斗时出错: ${error}`, "error");
+        clearInterval(autoBattleInterval);
+        isAutoPlaying.value = false;
+        isPaused.value = true;
+      }
     }, 1000 / autoSpeed.value);
   }
 };
@@ -1089,7 +1048,7 @@ const startBattle = () => {
   isPaused.value = false;
   isAutoPlaying.value = false;
   isBattleActive.value = true;
-  
+
   // 清空已处理的 action ID 集合，确保新战斗的所有 action 都能被处理
   processedActionIds.value.clear();
 
@@ -1241,17 +1200,17 @@ const syncBattleLogs = (battleState: BattleState) => {
     // 如果回合号也相同，按 action ID 排序
     return a.id.localeCompare(b.id);
   });
-  
+
   // 遍历排序后的 actions
   sortedActions.forEach((action: BattleSystemAction) => {
     // 检查是否已经处理过该 action
     if (processedActionIds.value.has(action.id)) {
       return;
     }
-    
+
     // 标记该 action 为已处理
     processedActionIds.value.add(action.id);
-    
+
     // 构建日志内容
     let logSource = action.sourceId;
     let logTarget = action.targetId;
@@ -1288,7 +1247,7 @@ const syncBattleLogs = (battleState: BattleState) => {
       let energyCost = "";
       let damage = "";
       let heal = "";
-      
+
       action.effects.forEach(effect => {
         if (effect.description.includes("消耗")) {
           energyCost = effect.description;
@@ -1300,7 +1259,7 @@ const syncBattleLogs = (battleState: BattleState) => {
           effects.push(effect.description);
         }
       });
-      
+
       // 构建标准化的日志格式
       if (action.type === "skill") {
         let skillName = "";
@@ -1313,7 +1272,7 @@ const syncBattleLogs = (battleState: BattleState) => {
           else if (action.skillId.includes("enemy_skill_2")) skillName = "狂暴";
           else skillName = "技能";
         }
-        
+
         const parts = [];
         if (energyCost) {
           // 消耗能量是自己的行为，不需要显示目标
@@ -1322,18 +1281,18 @@ const syncBattleLogs = (battleState: BattleState) => {
         parts.push(`对 ${logTarget} 使用 ${skillName}`);
         if (damage) parts.push(damage);
         if (heal) parts.push(heal);
-        
+
         // 如果只有消耗能量和使用技能，没有其他效果，添加一个占位符表示操作完成
         if (parts.length === 2 && !damage && !heal) {
           parts.push(" ");
         }
-        
+
         // 过滤掉重复的技能使用描述和空字符串
-        const filteredEffects = effects.filter(effect => 
+        const filteredEffects = effects.filter(effect =>
           !effect.includes(`${logSource} 使用 ${skillName}`) && effect.trim() !== ""
         );
         if (filteredEffects.length > 0) parts.push(...filteredEffects);
-        
+
         logResult = parts.filter(p => p.trim() !== "").join("，");
         logLevel = action.sourceId.includes("enemy") ? "enemy" : "ally";
       } else if (action.sourceId === "system" && action.effects && action.effects.some(e => e.description.includes("战斗开始"))) {
@@ -1351,11 +1310,11 @@ const syncBattleLogs = (battleState: BattleState) => {
       // 伤害动作
       logResult = `对 ${logTarget} 普通攻击，造成 ${action.damage} 伤害`;
       logLevel = action.sourceId.includes("enemy") ? "enemy" : "ally";
-      
+
       // 触发伤害显示
       if (battleFieldRef.value) {
-        const targetCharacter = battleCharacters.find(c => c.name === logTarget) || 
-                              enemyParty.find(e => e.name === logTarget);
+        const targetCharacter = battleCharacters.find(c => c.name === logTarget) ||
+          enemyParty.find(e => e.name === logTarget);
         if (targetCharacter) {
           battleFieldRef.value.showDamage(targetCharacter.id, action.damage, 'damage', false);
         }
@@ -1364,11 +1323,11 @@ const syncBattleLogs = (battleState: BattleState) => {
       // 治疗动作
       logResult = `对 ${logTarget} 治疗，恢复 ${action.heal} HP`;
       logLevel = action.sourceId.includes("enemy") ? "enemy" : "ally";
-      
+
       // 触发治疗显示
       if (battleFieldRef.value) {
-        const targetCharacter = battleCharacters.find(c => c.name === logTarget) || 
-                              enemyParty.find(e => e.name === logTarget);
+        const targetCharacter = battleCharacters.find(c => c.name === logTarget) ||
+          enemyParty.find(e => e.name === logTarget);
         if (targetCharacter) {
           battleFieldRef.value.showDamage(targetCharacter.id, action.heal, 'heal', false);
         }
@@ -1403,7 +1362,7 @@ const syncBattleLogs = (battleState: BattleState) => {
       );
       if (isLogExists) return;
     }
-    
+
     // 添加日志
     addLog(
       turnLabel,
@@ -1442,24 +1401,24 @@ const resetBattle = () => {
   isPaused.value = true;
   isAutoPlaying.value = false;
   isBattleActive.value = false;
-  
+
   // 清空战斗日志
   battleLogs.length = 0;
-  
+
   // 清空已处理的 action ID 集合
   processedActionIds.value.clear();
-  
+
   // 重置角色状态到初始值
   battleCharacters.forEach(char => {
     char.currentHp = char.maxHp;
     char.currentEnergy = 0;
   });
-  
+
   enemyParty.forEach(enemy => {
     enemy.currentHp = enemy.maxHp;
     enemy.currentEnergy = 0;
   });
-  
+
   // 添加重置日志
   addLog(
     "系统",
@@ -1478,6 +1437,5 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@import './BattleArena.scss';
-
+@import '@/styles/main.scss';
 </style>

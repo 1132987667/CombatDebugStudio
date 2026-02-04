@@ -1,9 +1,6 @@
 <template>
-  <div class="config-panel panel-left">
+  <div class="panel-left">
     <div class="panel-section">
-      <div class="section-header">
-        <span>参战角色</span>
-      </div>
       <div class="section-content">
         <div class="character-field">
           <div class="character-party our-party">
@@ -16,8 +13,7 @@
                   <input type="checkbox" v-model="char.enabled" @click.stop>
                 </div>
                 <div class="char-info">
-                  <span class="char-name">{{ char.name }}</span>
-                  <span class="char-stats">HP:{{ char.currentHp }}/{{ char.maxHp }} SPD:{{ char.speed }}</span>
+                  <span class="char-name">{{ char.name }}({{ char.level }})</span>
                 </div>
                 <div class="char-order" v-if="char.enabled">
                   <span class="order-num">{{ getOrderIndex(char.id) }}</span>
@@ -27,10 +23,6 @@
                 </div>
               </div>
             </div>
-          </div>
-
-          <div class="field-divider">
-            <span class="vs-text">VS</span>
           </div>
 
           <div class="character-party enemy-party">
@@ -60,7 +52,6 @@
       <div class="section-actions">
         <button class="btn-small" @click="moveCharacter(-1)">[↑]上调</button>
         <button class="btn-small" @click="moveCharacter(1)">[↓]下调</button>
-        <button class="btn-small" @click="addCharacter">[+]添加</button>
       </div>
     </div>
 
@@ -81,12 +72,11 @@
               <span class="scene-count">{{ group.enemies.length }}人</span>
             </div>
             <div class="scene-enemies" v-show="isSceneExpanded(group.scene.id)">
-              <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item"
-                @click="addEnemyToBattle(enemy)">
+              <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item">
                 <div class="char-info">
                   <span class="char-name">{{ enemy.name }}</span>
-                  <span class="char-stats">Lv.{{ enemy.level }} HP:{{ enemy.stats.health }} ATK:{{ enemy.stats.minAttack
-                    }}-{{ enemy.stats.maxAttack }}</span>
+                  <span class="char-stats">Lv.{{ enemy.level }} 气血:{{ enemy.stats.health }} 攻击:{{ enemy.stats.minAttack
+                  }}-{{ enemy.stats.maxAttack }}</span>
                 </div>
                 <div class="char-actions">
                   <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, 'our')">我方</button>
@@ -196,7 +186,8 @@ const emit = defineEmits<Emits>();
 const enemySearch = ref("");
 const enemies = ref<EnemyData[]>(enemiesData as EnemyData[]);
 const scenes = ref<SceneData[]>(scenesData as SceneData[]);
-const expandedScenes = reactive<Record<string, boolean>>({});
+const expandedScenes = reactive<Record<string, boolean>>({
+});
 
 // 默认展开所有场景
 scenes.value.forEach((s) => (expandedScenes[s.id] = true));
@@ -273,5 +264,5 @@ const moveCharacter = (direction: number) => {
 </script>
 
 <style scoped>
-@import './BattleArena.scss';
+@import '@/styles/main.scss';
 </style>

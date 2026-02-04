@@ -46,55 +46,5 @@ const battleStateDisplay = computed(() => {
 </script>
 
 <style scoped>
-.control-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #333;
-  color: white;
-  padding: 10px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
-  z-index: 1000;
-}
-
-.control-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.control-group.right {
-  justify-content: flex-end;
-}
-
-.control-btn {
-  background: #444;
-  color: white;
-  border: 1px solid #555;
-  border-radius: 4px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
-}
-
-.control-btn:hover:not(:disabled) {
-  background: #555;
-  border-color: #666;
-}
-
-.control-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.mode-indicator {
-  font-size: 12px;
-  color: #ccc;
-  margin-left: 15px;
-}
+@import './BattleArena.scss';
 </style>

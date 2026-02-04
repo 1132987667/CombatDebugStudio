@@ -5,7 +5,11 @@ import type {
 } from '@/types/battle'
 import { logger } from '@/utils/logger'
 
-// 战斗AI接口
+/**
+ * 战斗AI接口
+ * 定义了AI在战斗中的核心行为和决策方法
+ * 所有AI实现都必须遵循此接口规范
+ */
 export interface BattleAI {
   /**
    * 做出战斗决策
@@ -36,45 +40,86 @@ export interface BattleAI {
   selectAttack(participant: BattleParticipant): BattleAction
 }
 
-// 技能类型
+/**
+ * 技能类型枚举
+ * 定义了游戏中技能的不同类型
+ */
 export enum SkillType {
+  /** 被动技能 */
   PASSIVE = 'passive',
+  /** 小技能 */
   SMALL = 'small',
+  /** 终极技能（大招） */
   ULTIMATE = 'ultimate',
 }
 
-// 技能定义
+/**
+ * 技能定义接口
+ * 描述了技能的基本属性和效果
+ */
 export interface Skill {
+  /** 技能唯一标识符 */
   id: string
+  /** 技能名称 */
   name: string
+  /** 技能类型 */
   type: SkillType
+  /** 技能能量消耗 */
   energyCost: number
+  /** 技能冷却时间（毫秒） */
   cooldown: number
+  /** 技能上次使用时间戳 */
   lastUsed: number
+  /** 技能描述 */
   description: string
+  /** 技能伤害值（可选） */
   damage?: number
+  /** 技能治疗值（可选） */
   heal?: number
+  /** 技能附加的buff ID（可选） */
   buffId?: string
 }
 
-// 战场分析结果
+/**
+ * 战场分析结果接口
+ * 包含AI分析战场态势后得出的关键信息
+ */
 interface BattleAnalysis {
+  /** 友方单位列表 */
   allies: BattleParticipant[]
+  /** 敌方单位列表 */
   enemies: BattleParticipant[]
+  /** 团队血量百分比 */
   teamHealthPercent: number
+  /** 最高威胁的敌人 */
   highestThreatEnemy: { enemy: BattleParticipant | null; threat: number }
+  /** 是否需要治疗 */
   needsHealing: boolean
+  /** 是否应该使用技能 */
   shouldUseSkill: boolean
 }
 
-// 基础AI策略
+/**
+ * 基础AI策略类
+ * 提供了AI的通用实现，作为具体AI实现的基类
+ * 包含技能管理、战场分析、决策逻辑等核心功能
+ */
 export class BaseBattleAI implements BattleAI {
+  /** 技能集合，以技能ID为键 */
   protected skills: Map<string, Skill> = new Map()
 
+  /**
+   * 构造函数
+   * 初始化AI实例并加载默认技能
+   */
   constructor() {
     this.initializeSkills()
   }
 
+  /**
+   * 初始化技能
+   * 子类应重写此方法添加特定技能
+   */
   protected initializeSkills(): void {
     // 子类实现
   }
@@ -424,8 +469,16 @@ export class BaseBattleAI implements BattleAI {
   }
 }
 
-// 角色AI
+/**
+ * 角色AI类
+ * 为玩家角色提供特定的AI行为
+ * 包含治疗优先、血量保护、智能技能选择等特性
+ */
 export class CharacterAI extends BaseBattleAI {
+  /**
+   * 初始化技能
+   * 添加角色默认技能：治疗术、强力攻击、终极技能
+   */
   protected initializeSkills(): void {
     // 默认角色技能
     this.addSkill({
@@ -537,8 +590,16 @@ export class CharacterAI extends BaseBattleAI {
   }
 }
 
-// 敌人AI
+/**
+ * 敌人AI类
+ * 为敌人单位提供特定的AI行为
+ * 包含更激进的技能使用策略和目标选择逻辑
+ */
 export class EnemyAI extends BaseBattleAI {
+  /**
+   * 初始化技能
+   * 添加敌人默认技能：爪击、狂暴
+   */
   protected initializeSkills(): void {
     // 默认敌人技能
     this.addSkill({
@@ -594,8 +655,18 @@ export class EnemyAI extends BaseBattleAI {
   }
 }
 
-// AI工厂
+/**
+ * AI工厂类
+ * 负责创建不同类型的AI实例
+ * 使用工厂模式简化AI实例的创建和管理
+ */
 export class BattleAIFactory {
+  /**
+   * 创建AI实例
+   * 根据类型创建角色AI或敌人AI
+   * @param type AI类型：character或enemy
+   * @returns 创建的AI实例
+   */
   public static createAI(type: 'character' | 'enemy'): BattleAI {
     return type === 'character' ? new CharacterAI() : new EnemyAI()
   }

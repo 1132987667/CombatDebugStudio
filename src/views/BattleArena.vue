@@ -24,34 +24,49 @@
       <!-- 中间：战斗战场和日志 -->
       <div class="battle-panel panel-center">
         <BattleField
-          :our-party="ourParty"
+          ref="battleFieldRef"
+          :battle-characters="battleCharacters"
           :enemy-party="enemyParty"
           :current-turn="currentTurn"
           :max-turns="maxTurns"
-          :current-actor="currentActor"
+          :current-actor-id="currentActorId"
           :selected-character-id="selectedCharacterId"
           @select-character="selectCharacter"
+          @show-damage="handleShowDamage"
+          @show-skill-effect="handleShowSkillEffect"
         />
         
         <BattleLog :logs="battleLogs" />
       </div>
 
       <!-- 右侧：调试面板 -->
-      <DebugPanel
-        :selected-character="selectedCharMonitor"
-        :last-export-time="lastExportTime"
-        :exception-status="exceptionStatus"
-        @end-turn="endTurn"
-        @execute-skill="executeSkill"
-        @add-status="addStatus"
-        @adjust-stats="adjustStats"
-        @clear-statuses="clearStatuses"
-        @export-state="exportState"
-        @import-state="importState"
-        @view-export="viewExport"
-        @reload-export="reloadExport"
-        @locate-exception="locateException"
-      />
+      <div class="right-panel">
+        <DebugPanel
+          :battle-characters="battleCharacters"
+          :enemy-party="enemyParty"
+          :selected-character-id="selectedCharacterId"
+          :last-export-time="lastExportTime"
+          :exception-status="exceptionStatus"
+          @end-turn="endTurn"
+          @execute-skill="executeSkill"
+          @add-status="addStatus"
+          @adjust-stats="adjustStats"
+          @clear-statuses="clearStatuses"
+          @export-state="exportState"
+          @import-state="importState"
+          @view-export="viewExport"
+          @reload-export="reloadExport"
+          @locate-exception="locateException"
+        />
+        
+        <BattleReplay 
+          :battle-manager="battleSystem"
+          @replay-event="handleReplayEvent"
+          @replay-start="handleReplayStart"
+          @replay-end="handleReplayEnd"
+          @replay-pause="handleReplayPause"
+        />
+      </div>
     </div>
 
     <!-- 对话框组件 -->
@@ -130,6 +145,15 @@
       @single-step="singleStep"
       @toggle-auto-play="toggleAutoPlay"
     />
+  
+    <!-- 快捷键提示面板 -->
+    <KeybindHintPanel ref="keybindHintPanelRef" />
+    
+    <!-- 新手引导 -->
+    <NewbieGuide />
+    
+    <!-- 通知组件 -->
+    <Notification ref="notification" />
   </div>
 </template>
 
@@ -143,8 +167,16 @@ import BattleField from "./BattleField.vue";
 import BattleLog from "./BattleLog.vue";
 import DebugPanel from "./DebugPanel.vue";
 import ControlBar from "./ControlBar.vue";
+import BattleReplay from "./BattleReplay.vue";
+import KeybindHintPanel from "./KeybindHintPanel.vue";
+import NewbieGuide from "./NewbieGuide.vue";
+import Notification from "./Notification.vue";
+import { keybindManager } from "@/core/input/KeybindManager";
 import { BattleSystemFactory } from "@/core/battle/BattleSystemFactory";
 import type { IBattleSystem } from "@/core/battle/interfaces";
+
+// 通知组件引用
+const notification = ref(null);
 import type {
   BattleState,
   BattleParticipant,
@@ -167,6 +199,8 @@ interface BattleCharacter {
   speed: number;
   enabled: boolean;
   isFirst: boolean;
+  isHit?: boolean;
+  isCasting?: boolean;
   buffs: Array<{
     id: string;
     name: string;
@@ -262,15 +296,41 @@ const enemies = ref<EnemyData[]>(enemiesData as EnemyData[]);
 const showRulesDialog = ref(false);
 const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
+const battleFieldRef = ref<InstanceType<typeof BattleField> | null>(null);
+const keybindHintPanelRef = ref<InstanceType<typeof KeybindHintPanel> | null>(null);
 
 // Battle System - 使用工厂模式创建实例
 const battleSystem = ref<IBattleSystem | null>(null);
 const currentBattleId = ref<string | null>(null);
 
-// 初始化战斗系统
+// 初始化战斗系统和快捷键
 onMounted(() => {
   BattleSystemFactory.initialize();
   battleSystem.value = BattleSystemFactory.createBattleSystem();
+  
+  // 初始化快捷键系统
+  keybindManager.startListening();
+  
+  // 注册快捷键处理函数
+  keybindManager.onAction('menu', () => {
+    // 打开菜单
+    console.log('打开菜单');
+  });
+  
+  keybindManager.onAction('pause', () => {
+    // 暂停/继续战斗
+    togglePause();
+  });
+  
+  keybindManager.onAction('replay', () => {
+    // 打开战斗回放
+    console.log('打开战斗回放');
+  });
+  
+  keybindManager.onAction('debug', () => {
+    // 进入调试模式
+    console.log('进入调试模式');
+  });
 });
 
 const allEnemies = enemiesData as EnemyData[];
@@ -811,13 +871,104 @@ const showHelp = () => {
   addLog(currentTurn.value.toString(), "系统", "显示帮助", "", "帮助文档已打开", "info");
 };
 
+const handleShowDamage = (characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) => {
+  // 触发击中效果
+  if (battleFieldRef.value) {
+    battleFieldRef.value.triggerHitEffect(characterId);
+  }
+  
+  // 这里可以添加更多的伤害显示逻辑
+  console.log(`显示伤害: ${characterId} - ${value} (${type})`, { isCritical });
+};
+
+const handleShowSkillEffect = (characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) => {
+  // 触发施法动画
+  if (battleFieldRef.value) {
+    battleFieldRef.value.triggerCastingEffect(characterId, 800);
+  }
+  
+  // 这里可以添加更多的技能效果显示逻辑
+  console.log(`显示技能效果: ${characterId} - ${type}`, { name });
+};
+
+// 战斗回放相关方法
+const handleReplayEvent = (event: any, index: number) => {
+  console.log('回放事件:', event, '索引:', index);
+  
+  // 根据事件类型处理不同的回放逻辑
+  switch (event.type) {
+    case 'action':
+      // 处理动作回放
+      handleActionReplay(event.data.action);
+      break;
+    case 'turn_start':
+      // 处理回合开始回放
+      handleTurnStartReplay(event.data.turn, event.data.participantId);
+      break;
+    case 'turn_end':
+      // 处理回合结束回放
+      handleTurnEndReplay(event.data.turn);
+      break;
+    case 'battle_start':
+      // 处理战斗开始回放
+      handleBattleStartReplay();
+      break;
+    case 'battle_end':
+      // 处理战斗结束回放
+      handleBattleEndReplay(event.data.winner);
+      break;
+  }
+};
+
+const handleReplayStart = (recording: any) => {
+  console.log('开始回放:', recording);
+  // 重置战斗状态，准备回放
+  resetBattle();
+};
+
+const handleReplayEnd = (recording: any) => {
+  console.log('回放结束:', recording);
+  // 回放结束后的处理
+};
+
+const handleReplayPause = (recording: any, index: number) => {
+  console.log('回放暂停:', recording, '当前索引:', index);
+  // 回放暂停后的处理
+};
+
+// 具体的回放处理方法
+const handleActionReplay = (action: any) => {
+  console.log('回放动作:', action);
+  // 这里可以添加动作回放的具体逻辑
+};
+
+const handleTurnStartReplay = (turn: number, participantId: string) => {
+  console.log('回放回合开始:', turn, '行动者:', participantId);
+  // 这里可以添加回合开始回放的具体逻辑
+};
+
+const handleTurnEndReplay = (turn: number) => {
+  console.log('回放回合结束:', turn);
+  // 这里可以添加回合结束回放的具体逻辑
+};
+
+const handleBattleStartReplay = () => {
+  console.log('回放战斗开始');
+  // 这里可以添加战斗开始回放的具体逻辑
+};
+
+const handleBattleEndReplay = (winner: string) => {
+  console.log('回放战斗结束:', winner);
+  // 这里可以添加战斗结束回放的具体逻辑
+};
+
 const togglePause = () => {
   isPaused.value = !isPaused.value;
 };
 
 const singleStep = async () => {
   if (!currentBattleId.value) {
-    alert("请先开始战斗");
+    notification.value?.addNotification("提示", "请先开始战斗", "warning");
     return;
   }
 
@@ -825,7 +976,7 @@ const singleStep = async () => {
 
   try {
     // 执行战斗回合
-    await battleSystem.processTurn(currentBattleId.value!);
+    await battleSystem.value?.processTurn(currentBattleId.value!);
 
     // 同步战斗状态
     syncBattleState();
@@ -838,7 +989,7 @@ const singleStep = async () => {
 
 const toggleAutoPlay = () => {
   if (!currentBattleId.value) {
-    alert("请先开始战斗");
+    notification.value?.addNotification("提示", "请先开始战斗", "warning");
     return;
   }
 
@@ -861,22 +1012,22 @@ const toggleAutoPlay = () => {
       }
 
       try {
-        await battleSystem.processTurn(currentBattleId.value!);
-        syncBattleState();
+          await battleSystem.value?.processTurn(currentBattleId.value!);
+          syncBattleState();
 
-        // 检查战斗是否结束
-        if (!currentBattleId.value) {
+          // 检查战斗是否结束
+          if (!currentBattleId.value) {
+            clearInterval(autoBattleInterval);
+            isAutoPlaying.value = false;
+            isPaused.value = true;
+          }
+        } catch (error) {
+          console.error("自动战斗时出错:", error);
+          addLog("系统", "", "", "", `自动战斗时出错: ${error}`, "error");
           clearInterval(autoBattleInterval);
           isAutoPlaying.value = false;
           isPaused.value = true;
         }
-      } catch (error) {
-        console.error("自动战斗时出错:", error);
-        addLog("系统", "", "", "", `自动战斗时出错: ${error}`, "error");
-        clearInterval(autoBattleInterval);
-        isAutoPlaying.value = false;
-        isPaused.value = true;
-      }
     }, 1000 / autoSpeed.value);
   }
 };
@@ -894,12 +1045,12 @@ const startBattle = () => {
 
   // 检查是否有足够的参战单位
   if (enabledCharacters.length === 0) {
-    alert("请至少选择一个角色参战");
+    notification.value?.addNotification("提示", "请至少选择一个角色参战", "warning");
     return;
   }
 
   if (enemies.length === 0) {
-    alert("请至少添加一个敌人");
+    notification.value?.addNotification("提示", "请至少添加一个敌人", "warning");
     return;
   }
 
@@ -928,8 +1079,10 @@ const startBattle = () => {
   ];
 
   // 创建战斗
-  const battleState = battleSystem.createBattle(participantsInfo);
-  currentBattleId.value = battleState.battleId;
+  const battleState = battleSystem.value?.createBattle(participantsInfo);
+  if (battleState) {
+    currentBattleId.value = battleState.battleId;
+  }
 
   // 重置战斗状态
   currentTurn.value = 1;
@@ -967,7 +1120,7 @@ const syncBattleState = () => {
 
   try {
     // 获取当前战斗状态
-    const battleState = battleSystem.getBattleState(currentBattleId.value);
+    const battleState = battleSystem.value?.getBattleState(currentBattleId.value!);
     if (!battleState) {
       console.error("无法获取战斗状态:", currentBattleId.value);
       addLog("系统", "", "", "", `无法获取战斗状态，战斗可能已结束`, "error");
@@ -1198,10 +1351,28 @@ const syncBattleLogs = (battleState: BattleState) => {
       // 伤害动作
       logResult = `对 ${logTarget} 普通攻击，造成 ${action.damage} 伤害`;
       logLevel = action.sourceId.includes("enemy") ? "enemy" : "ally";
+      
+      // 触发伤害显示
+      if (battleFieldRef.value) {
+        const targetCharacter = battleCharacters.find(c => c.name === logTarget) || 
+                              enemyParty.find(e => e.name === logTarget);
+        if (targetCharacter) {
+          battleFieldRef.value.showDamage(targetCharacter.id, action.damage, 'damage', false);
+        }
+      }
     } else if (action.heal && action.heal > 0) {
       // 治疗动作
       logResult = `对 ${logTarget} 治疗，恢复 ${action.heal} HP`;
       logLevel = action.sourceId.includes("enemy") ? "enemy" : "ally";
+      
+      // 触发治疗显示
+      if (battleFieldRef.value) {
+        const targetCharacter = battleCharacters.find(c => c.name === logTarget) || 
+                              enemyParty.find(e => e.name === logTarget);
+        if (targetCharacter) {
+          battleFieldRef.value.showDamage(targetCharacter.id, action.heal, 'heal', false);
+        }
+      }
     }
 
     // 检查是否已经添加过该日志
@@ -1247,7 +1418,7 @@ const syncBattleLogs = (battleState: BattleState) => {
 
 const endBattle = () => {
   if (!currentBattleId.value) {
-    alert("当前没有进行中的战斗");
+    notification.value?.addNotification("提示", "当前没有进行中的战斗", "warning");
     return;
   }
 
@@ -1308,4 +1479,5 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @import './BattleArena.scss';
+
 </style>

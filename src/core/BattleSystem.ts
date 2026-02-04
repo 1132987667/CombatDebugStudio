@@ -6,6 +6,7 @@ import type {
   BattleEntityType,
   BattleCharacter,
   BattleEnemy,
+  ParticipantInfo,
 } from '@/types/battle'
 import type { Character } from '@/types/character'
 import type { EnemyInstance } from '@/types/enemy'
@@ -26,40 +27,62 @@ container.register('ParticipantManager', new ParticipantManager())
 container.register('AISystem', new AISystem())
 container.register('BattleManager', new BattleManager())
 
-export interface ParticipantInfo {
-  id: string
-  name: string
-  type: 'character' | 'enemy'
-  maxHealth: number
-  currentHealth: number
-  maxEnergy: number
-  currentEnergy: number
-}
-
+/**
+ * 战斗数据接口
+ * 描述战斗的完整状态和数据
+ */
 interface BattleData {
+  /** 战斗唯一标识符 */
   battleId: string
+  /** 参与者映射，以参与者ID为键 */
   participants: Map<string, BattleParticipant>
+  /** 战斗行动记录 */
   actions: BattleAction[]
+  /** 回合顺序，按参与者ID排序 */
   turnOrder: string[]
+  /** 当前回合索引 */
   currentTurn: number
+  /** 战斗是否活跃 */
   isActive: boolean
+  /** 战斗开始时间戳 */
   startTime: number
+  /** 战斗结束时间戳（可选） */
   endTime?: number
+  /** 战斗胜利者（可选） */
   winner?: BattleEntityType
-  aiInstances: Map<string, BattleAI> // 每个参与者的AI实例
+  /** 每个参与者的AI实例映射 */
+  aiInstances: Map<string, BattleAI>
 }
 
+/**
+ * 基础战斗参与者抽象类
+ * 为所有战斗参与者提供通用的属性和方法
+ * 是角色和敌人的基类
+ */
 abstract class BaseBattleParticipant {
+  /** 参与者唯一标识符 */
   id: string
+  /** 参与者名称 */
   name: string
+  /** 参与者等级 */
   level: number
+  /** 当前生命值 */
   currentHealth: number
+  /** 最大生命值 */
   maxHealth: number
+  /** 当前能量值 */
   currentEnergy: number
+  /** 最大能量值 */
   maxEnergy: number
+  /**  buff实例ID列表 */
   buffs: string[]
+  /** 技能集合，以技能ID为键 */
   skills: Map<string, any> = new Map()
 
+  /**
+   * 构造函数
+   * @param data 参与者初始化数据
+   */
   constructor(data: {
     id: string
     name: string
@@ -88,6 +111,10 @@ abstract class BaseBattleParticipant {
     }
   }
 
+  /**
+   * 获取参与者类型
+   * 子类必须实现此方法
+   */
   abstract get type(): BattleEntityType
 
   getAttribute(attribute: string): number {

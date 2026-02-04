@@ -1,5 +1,5 @@
 import type { BattleParticipant } from '@/types/battle';
-import type { ParticipantInfo } from '../BattleSystem';
+import type { ParticipantInfo } from '@/types/battle';
 import { SimpleBattleCharacter, SimpleBattleEnemy } from '../BattleSystem';
 
 interface CreateParticipantData {

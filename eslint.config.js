@@ -3,6 +3,7 @@ import ts from '@typescript-eslint/eslint-plugin'
 import tsParser from '@typescript-eslint/parser'
 import vuePlugin from 'eslint-plugin-vue'
 import vueParser from 'vue-eslint-parser'
+import globals from 'globals'
 
 export default [
   {
@@ -15,6 +16,10 @@ export default [
       parserOptions: {
         parser: tsParser,
         extraFileExtensions: ['.vue']
+      },
+      globals: {
+        ...globals.browser, // 添加浏览器全局变量
+        ...globals.node // 添加Node.js全局变量
       }
     },
     plugins: {

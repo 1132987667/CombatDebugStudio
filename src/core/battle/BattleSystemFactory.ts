@@ -27,11 +27,11 @@ export class BattleSystemFactory {
     this.container.register<IParticipantManager>(PARTICIPANT_MANAGER_TOKEN.toString(), new ParticipantManager());
     this.container.register<IAISystem>(AI_SYSTEM_TOKEN.toString(), new AISystem());
     
-    // 注册战斗系统（使用工厂模式避免单例）
+    // 2. 容器注册改为单例，工厂调用 getInstance()
     this.container.registerFactory<IBattleSystem>(
       BATTLE_SYSTEM_TOKEN.toString(),
-      () => new GameBattleSystem(),
-      false // 非单例模式
+      () => GameBattleSystem.getInstance(), // 通过静态方法获取单例
+      true // singleton: true（与类设计一致）
     );
   }
 

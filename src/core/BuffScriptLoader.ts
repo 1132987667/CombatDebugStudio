@@ -1,11 +1,27 @@
 import { BuffScriptRegistry } from './BuffScriptRegistry'
 
+/**
+ * Buff脚本加载器类
+ * 负责加载和注册Buff脚本
+ * 使用单例模式确保系统全局唯一
+ * 支持脚本的动态加载、重载和清理
+ */
 export class BuffScriptLoader {
+  /** 单例实例 */
   private static instance: BuffScriptLoader
+  /** 已加载的脚本名称集合 */
   private loadedScripts = new Set<string>()
 
+  /**
+   * 私有构造函数
+   * 防止外部直接实例化，确保单例模式
+   */
   private constructor() {}
 
+  /**
+   * 获取单例实例
+   * @returns Buff脚本加载器实例
+   */
   public static getInstance(): BuffScriptLoader {
     if (!BuffScriptLoader.instance) {
       BuffScriptLoader.instance = new BuffScriptLoader()
@@ -13,6 +29,10 @@ export class BuffScriptLoader {
     return BuffScriptLoader.instance
   }
 
+  /**
+   * 加载Buff脚本
+   * 手动导入已知的脚本并注册到脚本注册表
+   */
   public async loadScripts(): Promise<void> {
     try {
       // 手动导入已知的脚本
@@ -66,6 +86,10 @@ export class BuffScriptLoader {
     }
   }
 
+  /**
+   * 重载Buff脚本
+   * 清空已加载的脚本并重新加载
+   */
   public async reloadScripts(): Promise<void> {
     // 清空已加载的脚本
     this.loadedScripts.clear()
@@ -76,10 +100,17 @@ export class BuffScriptLoader {
     await this.loadScripts()
   }
 
+  /**
+   * 获取已加载的脚本数量
+   * @returns 已加载的脚本数量
+   */
   public getLoadedScriptCount(): number {
     return this.loadedScripts.size
   }
 
+  /**
+   * 清空所有已加载的脚本
+   */
   public clear(): void {
     this.loadedScripts.clear()
     // 使用批量卸载而不是清空整个注册表

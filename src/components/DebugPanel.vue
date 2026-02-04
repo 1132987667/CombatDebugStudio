@@ -199,6 +199,11 @@ const props = defineProps<{
   enemyParty: BattleCharacter[];
   selectedCharacterId: string;
   lastExportTime: string | null;
+  exceptionStatus: {
+    message: string;
+    class: string;
+    hasException: boolean;
+  };
 }>();
 
 const emit = defineEmits<{
@@ -222,12 +227,14 @@ const manualHpAmount = ref(100);
 const manualMpAmount = ref(50);
 
 const selectedCharMonitor = computed(() => {
+  if (!props.battleCharacters || !props.enemyParty) return null;
   return props.battleCharacters.find((c) => c.id === props.selectedCharacterId) || 
          props.enemyParty.find((e) => e.id === props.selectedCharacterId) || 
          null;
 });
 
 const getSelectedCharName = () => {
+  if (!props.battleCharacters || !props.enemyParty) return "未选择";
   const char = props.battleCharacters.find((c) => c.id === props.selectedCharacterId);
   const enemy = props.enemyParty.find((e) => e.id === props.selectedCharacterId);
   return char?.name || enemy?.name || "未选择";
@@ -285,241 +292,5 @@ const exceptionStatus = computed(() => {
 </script>
 
 <style scoped>
-.debug-panel {
-  width: 300px;
-  padding: 15px;
-  background: #f5f5f5;
-  border-left: 1px solid #ddd;
-  overflow-y: auto;
-  max-height: calc(100vh - 120px);
-}
-
-.section {
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  margin-bottom: 15px;
-  overflow: hidden;
-}
-
-.section-header {
-  padding: 10px 15px;
-  background: #f0f0f0;
-  border-bottom: 1px solid #ddd;
-  font-weight: bold;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.selected-info {
-  font-size: 12px;
-  font-weight: normal;
-  color: #666;
-}
-
-.monitor-group {
-  padding: 12px 15px;
-  border-bottom: 1px solid #eee;
-}
-
-.monitor-group:last-child {
-  border-bottom: none;
-}
-
-.monitor-subtitle {
-  font-size: 12px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #666;
-}
-
-.monitor-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.monitor-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px;
-  background: #f9f9f9;
-  border-radius: 3px;
-  font-size: 12px;
-}
-
-.monitor-label {
-  font-weight: bold;
-  color: #666;
-}
-
-.monitor-value {
-  color: #333;
-}
-
-.monitor-value.bonus {
-  color: #4CAF50;
-}
-
-.monitor-value.final {
-  color: #2196F3;
-  font-weight: bold;
-}
-
-.skills-display {
-  padding: 8px;
-  background: #f9f9f9;
-  border-radius: 3px;
-}
-
-.skill-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px;
-  margin-bottom: 4px;
-  border-radius: 2px;
-  font-size: 11px;
-}
-
-.skill-item.passive {
-  background: #E8F5E9;
-}
-
-.skill-item.small {
-  background: #E3F2FD;
-}
-
-.skill-item.ultimate {
-  background: #F3E5F5;
-}
-
-.skill-label {
-  font-weight: bold;
-  color: #666;
-}
-
-.skill-name {
-  color: #333;
-}
-
-.no-skills {
-  text-align: center;
-  color: #999;
-  font-style: italic;
-  padding: 10px;
-  font-size: 11px;
-}
-
-.intervention-list {
-  padding: 12px 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.intervention-btn {
-  padding: 8px;
-  background: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  text-align: left;
-}
-
-.intervention-btn:hover {
-  background: #e0e0e0;
-}
-
-.intervention-btn.danger {
-  background: #FFEBEE;
-  border-color: #FFCDD2;
-  color: #C62828;
-}
-
-.intervention-btn.danger:hover {
-  background: #FFCDD2;
-}
-
-.intervention-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-}
-
-.intervention-input {
-  flex: 1;
-  padding: 4px 6px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 12px;
-}
-
-.intervention-num {
-  width: 50px;
-  padding: 4px 6px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 12px;
-}
-
-.btn-small {
-  padding: 3px 8px;
-  font-size: 11px;
-  background: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.btn-small:hover {
-  background: #e0e0e0;
-}
-
-.snapshot-actions {
-  padding: 12px 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.last-export {
-  padding: 12px 15px;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  color: #666;
-}
-
-.snapshot-btns {
-  display: flex;
-  gap: 6px;
-}
-
-.exception-status {
-  padding: 12px 15px;
-  font-size: 12px;
-  text-align: center;
-}
-
-.exception-status.normal {
-  background: #E8F5E9;
-  color: #2E7D32;
-}
-
-.exception-status.warning {
-  background: #FFF3E0;
-  color: #E65100;
-}
-
-.exception-status.error {
-  background: #FFEBEE;
-  color: #C62828;
-}
+@import './BattleArena.scss';
 </style>

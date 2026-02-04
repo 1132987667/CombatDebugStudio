@@ -1,11 +1,12 @@
 import type { BattleState, BattleParticipant, BattleEntityType, BattleAction } from '@/types/battle';
-import type { ParticipantInfo } from '../BattleSystem';
+import type { ParticipantInfo } from '@/types/battle';
 import { container } from '../di/Container';
 import { logger } from '@/utils/logger';
 import { TurnManager } from './TurnManager';
 import { ActionExecutor } from './ActionExecutor';
 import { ParticipantManager } from './ParticipantManager';
 import { AISystem } from './AISystem';
+import { BattleRecorder } from './BattleRecorder';
 
 interface BattleData {
   battleId: string;
@@ -27,12 +28,14 @@ export class BattleManager {
   private actionExecutor: ActionExecutor;
   private participantManager: ParticipantManager;
   private aiSystem: AISystem;
+  private battleRecorder: BattleRecorder;
 
   constructor() {
     this.turnManager = container.resolve<TurnManager>('TurnManager');
     this.actionExecutor = container.resolve<ActionExecutor>('ActionExecutor');
     this.participantManager = container.resolve<ParticipantManager>('ParticipantManager');
     this.aiSystem = container.resolve<AISystem>('AISystem');
+    this.battleRecorder = new BattleRecorder();
   }
 
   public createBattle(participantsInfo: ParticipantInfo[]): BattleState {
@@ -55,13 +58,19 @@ export class BattleManager {
     };
 
     this.battles.set(battleId, battleData);
+    
+    // 开始记录战斗
+    this.battleRecorder.startRecording(battleId, {
+      participants: participantsInfo
+    });
+
     this.battleLogger.info(`Battle created: ${battleId}`, {
       participantCount: participantsInfo.length,
       characterCount: participantsInfo.filter((p) => p.type === 'character').length,
       enemyCount: participantsInfo.filter((p) => p.type === 'enemy').length,
     });
 
-    this.addBattleAction(battleId, {
+    const initAction = {
       id: `init_${Date.now()}`,
       type: 'attack',
       sourceId: 'system',
@@ -70,6 +79,7 @@ export class BattleManager {
       heal: 0,
       success: true,
       timestamp: Date.now(),
+      turn: 0,
       effects: [
         {
           type: 'status',
@@ -77,7 +87,12 @@ export class BattleManager {
           duration: 0,
         },
       ],
-    });
+    };
+
+    this.addBattleAction(battleId, initAction);
+    
+    // 记录初始化动作
+    this.battleRecorder.recordAction(battleId, initAction, 0);
 
     return this.convertToBattleState(battleData);
   }
@@ -100,12 +115,19 @@ export class BattleManager {
       return;
     }
 
+    // 记录回合开始事件
+    const currentTurn = battle.currentTurn + 1;
+    this.battleRecorder.recordTurnStart(battleId, currentTurn, currentParticipantId);
+
     try {
       await this.aiSystem.executeAIAction(battle, participant, this.actionExecutor);
     } catch (error) {
       this.battleLogger.error('AI决策出错:', error);
       await this.actionExecutor.executeDefaultAction(battle, participant);
     }
+
+    // 记录回合结束事件
+    this.battleRecorder.recordTurnEnd(battleId, currentTurn);
 
     battle.currentTurn++;
 
@@ -122,6 +144,10 @@ export class BattleManager {
 
     const executedAction = await this.actionExecutor.executeAction(action, battle);
     this.addBattleAction(battle.battleId, executedAction);
+
+    // 记录动作事件
+    const currentTurn = battle.currentTurn + 1;
+    this.battleRecorder.recordAction(battle.battleId, executedAction, currentTurn);
 
     return executedAction;
   }
@@ -141,7 +167,7 @@ export class BattleManager {
     battle.winner = winner;
     battle.endTime = Date.now();
 
-    this.addBattleAction(battleId, {
+    const endAction = {
       id: `end_${Date.now()}`,
       type: 'skill',
       sourceId: 'system',
@@ -156,7 +182,16 @@ export class BattleManager {
           duration: 0,
         },
       ],
-    });
+    };
+
+    this.addBattleAction(battleId, endAction);
+    
+    // 记录结束动作
+    this.battleRecorder.recordAction(battleId, endAction, battle.currentTurn + 1);
+    
+    // 结束记录并保存战斗过程
+    this.battleRecorder.endRecording(battleId, winner);
+    this.battleRecorder.saveRecording(battleId);
 
     this.battleLogger.info(`Battle ended: ${battleId}`, { winner });
   }
@@ -228,5 +263,34 @@ export class BattleManager {
         this.battles.delete(battleId);
       }
     }
+  }
+
+  // 战斗记录相关方法
+  public getBattleRecording(battleId: string) {
+    return this.battleRecorder.getRecording(battleId);
+  }
+
+  public getAllBattleRecordings() {
+    return this.battleRecorder.getAllRecordings();
+  }
+
+  public saveBattleRecording(battleId: string, name?: string) {
+    return this.battleRecorder.saveRecording(battleId, name);
+  }
+
+  public loadBattleRecording(saveKey: string) {
+    return this.battleRecorder.loadRecording(saveKey);
+  }
+
+  public getSavedBattleRecordingsList() {
+    return this.battleRecorder.getSavedRecordingsList();
+  }
+
+  public deleteBattleRecording(saveKey: string) {
+    return this.battleRecorder.deleteRecording(saveKey);
+  }
+
+  public clearAllBattleRecordings() {
+    this.battleRecorder.clearRecordings();
   }
 }

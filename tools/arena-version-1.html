@@ -3,576 +3,570 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>演武场 - 现代简约版</title>
+    <title>传统工具界面</title>
     <style>
-        /* 全局样式重置 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        /* 色彩系统 */
-        :root {
-            --primary: #3b82f6;
-            --primary-dark: #1d4ed8;
-            --primary-light: #93c5fd;
-            --secondary: #f59e0b;
-            --secondary-dark: #d97706;
-            --secondary-light: #fcd34d;
-            --accent: #ef4444;
-            --background: #f8fafc;
-            --card-bg: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--background);
-            color: var(--text-primary);
-            line-height: 1.6;
-            min-height: 100vh;
+            background: linear-gradient(to bottom, #0a1628, #1a365d);
+            color: rgba(255, 255, 255, 0.85);
+            height: 100vh;
+            overflow: hidden;
         }
 
-        /* 容器 */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
+        /* ============ 顶部菜单栏 ============ */
+        .toolbar {
+            background: rgba(26, 54, 93, 0.9);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 16px;
+            display: flex;
+            gap: 24px;
         }
 
-        /* 标题 */
-        .title {
-            text-align: center;
-            margin-bottom: 3rem;
-            position: relative;
+        .menu-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .title h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
+        .menu-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.85);
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 2px;
+            font-size: 13px;
+            transition: all 0.2s;
         }
 
-        .title p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
+        .menu-btn:hover {
+            background: rgba(96, 165, 250, 0.15);
+            border-color: rgba(96, 165, 250, 0.4);
         }
 
-        /* 主布局 - 现代网格布局 */
-        .arena-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr 1fr;
-            gap: 2rem;
-            margin-bottom: 3rem;
+        .menu-btn.active {
+            background: rgba(34, 211, 238, 0.15);
+            border-color: #22d3ee;
+            color: #22d3ee;
         }
 
-        /* 敌人选择区域 */
-        .enemy-selector {
-            background-color: var(--card-bg);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
+        /* ============ 主容器 ============ */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 36px - 24px);
         }
 
-        .enemy-selector h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--primary-dark);
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--primary-light);
-        }
-
-        .enemy-list {
+        /* ============ 左侧工具栏 ============ */
+        .sidebar {
+            width: 60px;
+            background: rgba(16, 32, 56, 0.8);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-        }
-
-        .enemy-card {
-            background-color: var(--background);
-            border-radius: 0.75rem;
-            padding: 1rem;
-            border: 1px solid var(--border);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .enemy-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-            border-color: var(--primary-light);
-        }
-
-        .enemy-card.selected {
-            border-color: var(--primary);
-            background-color: rgba(59, 130, 246, 0.05);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        }
-
-        .enemy-card h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .enemy-stats {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-        }
-
-        /* 战斗区域 */
-        .battle-arena {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(245, 158, 11, 0.05));
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: var(--shadow-lg);
-            border: 2px solid var(--primary-light);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* 战斗背景效果 */
-        .battle-arena::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-            animation: pulse 8s ease-in-out infinite;
-            z-index: 0;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 0.3;
-            }
-            50% {
-                transform: scale(1.2);
-                opacity: 0.6;
-            }
-        }
-
-        .battle-stage {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            height: 100%;
+            padding: 16px 0;
+            gap: 8px;
         }
 
-        .combatant {
-            flex: 1;
-            text-align: center;
-        }
-
-        .combatant-card {
-            background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            max-width: 200px;
-            margin: 0 auto;
-        }
-
-        .combatant-card h3 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-        }
-
-        .health-bar {
-            width: 100%;
-            height: 0.75rem;
-            background-color: var(--border);
-            border-radius: 9999px;
-            overflow: hidden;
-            margin-bottom: 1rem;
-        }
-
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #059669);
-            border-radius: 9999px;
-            width: 85%;
-            transition: width 0.3s ease;
-        }
-
-        .combatant-stats {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .battle-center {
-            flex: 1;
-            text-align: center;
-            padding: 0 2rem;
-        }
-
-        .battle-status {
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-        }
-
-        .battle-status h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--primary-dark);
-            margin-bottom: 1rem;
-        }
-
-        .battle-status p {
-            color: var(--text-secondary);
-            font-size: 1rem;
-        }
-
-        /* 控制区域 */
-        .control-panel {
-            background-color: var(--card-bg);
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .control-buttons {
+        .tool-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.05);
             display: flex;
+            align-items: center;
             justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .tool-icon:hover {
+            background: rgba(96, 165, 250, 0.15);
+            border-color: rgba(96, 165, 250, 0.3);
+        }
+
+        .tool-icon.active {
+            background: rgba(34, 211, 238, 0.15);
+            border-color: #22d3ee;
+            color: #22d3ee;
+        }
+
+        /* ============ 左侧折叠面板 ============ */
+        .left-panel {
+            width: 200px;
+            background: rgba(16, 32, 56, 0.7);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+        }
+
+        .tree-node {
+            padding: 6px 8px;
+            margin: 4px 0;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .tree-node:hover {
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        .tree-node.selected {
+            background: rgba(34, 211, 238, 0.15);
+            border-left-color: #22d3ee;
+            color: #22d3ee;
+        }
+
+        /* ============ 中央工作区 ============ */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(20, 38, 68, 0.6);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-bar {
+            height: 36px;
+            background: rgba(26, 54, 93, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+        }
+
+        .tab {
+            padding: 6px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 2px 2px 0 0;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            border-bottom: none;
+        }
+
+        .tab:hover {
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        .tab.active {
+            background: rgba(30, 41, 59, 0.95);
+            border-color: rgba(255, 255, 255, 0.1);
+            border-bottom-color: transparent;
+            color: #22d3ee;
+        }
+
+        .editor {
+            flex: 1;
+            padding: 16px;
+            overflow: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .editor-line {
+            display: flex;
+            margin-bottom: 4px;
+        }
+
+        .line-number {
+            color: rgba(96, 165, 250, 0.6);
+            width: 40px;
+            text-align: right;
+            padding-right: 12px;
+            user-select: none;
+            font-size: 12px;
+        }
+
+        .line-content {
+            flex: 1;
+        }
+
+        .line-content .keyword {
+            color: #22d3ee;
+        }
+
+        .line-content .string {
+            color: #86efac;
+        }
+
+        .line-content .comment {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .line-content .function {
+            color: #a78bfa;
+        }
+
+        .editor-line.active {
+            background: rgba(34, 211, 238, 0.08);
+            border-left: 2px solid #22d3ee;
+            padding-left: 4px;
+        }
+
+        /* ============ 右侧属性面板 ============ */
+        .right-panel {
+            width: 240px;
+            background: rgba(16, 32, 56, 0.7);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .property-group {
+            margin-bottom: 16px;
+        }
+
+        .property-title {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .property-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .property-label {
+            width: 90px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .property-value {
+            flex: 1;
         }
 
         .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            font-weight: 600;
+            width: 100%;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.85);
+            border-radius: 2px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 0 var(--primary-dark);
-            transform: translateY(0);
+            font-size: 12px;
+            transition: all 0.2s;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
+        .btn:hover {
+            background: rgba(96, 165, 250, 0.2);
+            border-color: rgba(96, 165, 250, 0.5);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 0 var(--primary-dark), 0 10px 20px rgba(59, 130, 246, 0.4);
+        .btn.primary {
+            background: rgba(34, 211, 238, 0.15);
+            border-color: #22d3ee;
+            color: #22d3ee;
         }
 
-        .btn-secondary {
-            background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
-            color: white;
-            box-shadow: 0 4px 0 var(--secondary-dark);
+        .btn.primary:hover {
+            background: rgba(34, 211, 238, 0.25);
         }
 
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 0 var(--secondary-dark), 0 10px 20px rgba(245, 158, 11, 0.4);
+        .btn.danger {
+            background: rgba(249, 115, 22, 0.1);
+            border-color: #f97316;
+            color: #f97316;
         }
 
-        .speed-control {
+        .btn.danger:hover {
+            background: rgba(249, 115, 22, 0.2);
+        }
+
+        .checkbox {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 1rem;
+            gap: 6px;
+            margin-bottom: 6px;
         }
 
-        .speed-control label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-primary);
+        .checkbox input {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
         }
 
-        .speed-control input {
-            width: 150px;
+        .select {
+            width: 100%;
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.85);
+            border-radius: 2px;
+            font-size: 12px;
+            cursor: pointer;
         }
 
-        /* 战斗日志 */
-        .battle-log {
-            background-color: var(--card-bg);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
+        /* ============ 底部状态栏 ============ */
+        .status-bar {
+            height: 24px;
+            background: rgba(26, 54, 93, 0.9);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
         }
 
-        .battle-log h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--primary-dark);
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--primary-light);
+        .status-left {
+            display: flex;
+            gap: 16px;
         }
 
-        .log-content {
-            max-height: 300px;
-            overflow-y: auto;
-            background-color: var(--background);
-            border-radius: 0.75rem;
-            padding: 1rem;
-            border: 1px solid var(--border);
+        .status-right {
+            display: flex;
+            gap: 16px;
         }
 
-        .log-entry {
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            line-height: 1.5;
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .log-entry.info {
-            background-color: rgba(59, 130, 246, 0.1);
-            border-left: 4px solid var(--primary);
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
         }
 
-        .log-entry.damage {
-            background-color: rgba(239, 68, 68, 0.1);
-            border-left: 4px solid var(--accent);
+        .status-dot.online {
+            background: #22d3ee;
+            box-shadow: 0 0 6px rgba(34, 211, 238, 0.5);
         }
 
-        .log-entry.heal {
-            background-color: rgba(16, 185, 129, 0.1);
-            border-left: 4px solid #10b981;
-        }
-
-        /* 响应式设计 */
-        @media (max-width: 1200px) {
-            .arena-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .battle-stage {
-                flex-direction: column;
-                gap: 2rem;
-            }
-
-            .battle-center {
-                order: -1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            .title h1 {
-                font-size: 2rem;
-            }
-
-            .control-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .btn {
-                width: 200px;
-            }
+        .status-dot.offline {
+            background: rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 标题 -->
-        <div class="title">
-            <h1>演武场</h1>
-            <p>现代简约版 - 选择敌人进行战斗模拟</p>
+    <!-- 顶部菜单栏 -->
+    <div class="toolbar">
+        <div class="menu-group">
+            <button class="menu-btn active">文件</button>
+            <button class="menu-btn">编辑</button>
+            <button class="menu-btn">视图</button>
+            <button class="menu-btn">工具</button>
+            <button class="menu-btn">帮助</button>
+        </div>
+        <div class="menu-group">
+            <button class="menu-btn">保存</button>
+            <button class="menu-btn">运行</button>
+            <button class="menu-btn danger">停止</button>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 左侧工具栏 -->
+        <div class="sidebar">
+            <div class="tool-icon active">📁</div>
+            <div class="tool-icon">🔍</div>
+            <div class="tool-icon">⚙️</div>
+            <div class="tool-icon">📊</div>
+            <div class="tool-icon">🔧</div>
+            <div class="tool-icon">⚙️</div>
         </div>
 
-        <!-- 主布局 -->
-        <div class="arena-grid">
-            <!-- 左侧敌人选择 -->
-            <div class="enemy-selector">
-                <h2>敌人 1</h2>
-                <div class="enemy-list">
-                    <div class="enemy-card selected">
-                        <h3>花妖王</h3>
-                        <div class="enemy-stats">
-                            <span>等级: 8</span>
-                            <span>生命值: 147</span>
-                            <span>攻击力: 20-30</span>
-                            <span>防御力: 14</span>
-                            <span>速度: 23</span>
-                        </div>
-                    </div>
-                    <div class="enemy-card">
-                        <h3>草精</h3>
-                        <div class="enemy-stats">
-                            <span>等级: 2</span>
-                            <span>生命值: 68</span>
-                            <span>攻击力: 7-11</span>
-                            <span>防御力: 4</span>
-                            <span>速度: 13</span>
-                        </div>
-                    </div>
-                    <div class="enemy-card">
-                        <h3>山魈首领</h3>
-                        <div class="enemy-stats">
-                            <span>等级: 9</span>
-                            <span>生命值: 160</span>
-                            <span>攻击力: 22-33</span>
-                            <span>防御力: 15</span>
-                            <span>速度: 25</span>
-                        </div>
-                    </div>
-                </div>
+        <!-- 左侧折叠面板 -->
+        <div class="left-panel">
+            <div class="panel-title">项目结构</div>
+            <div class="tree-node selected">main.js</div>
+            <div class="tree-node">config.json</div>
+            <div class="tree-node">styles.css</div>
+            <div class="tree-node">utils/</div>
+            <div class="tree-node">  └─ helpers.js</div>
+            <div class="tree-node">  └─ validators.js</div>
+            <div class="tree-node">components/</div>
+            <div class="tree-node">  └─ header.vue</div>
+            <div class="tree-node">  └─ footer.vue</div>
+        </div>
+
+        <!-- 中央工作区 -->
+        <div class="workspace">
+            <div class="tab-bar">
+                <div class="tab active">main.js</div>
+                <div class="tab">config.json</div>
+                <div class="tab">控制台</div>
             </div>
-
-            <!-- 中间战斗区域 -->
-            <div class="battle-arena">
-                <div class="battle-stage">
-                    <!-- 左侧战斗者 -->
-                    <div class="combatant">
-                        <div class="combatant-card">
-                            <h3>花妖王</h3>
-                            <div class="health-bar">
-                                <div class="health-fill" style="width: 85%"></div>
-                            </div>
-                            <div class="combatant-stats">
-                                <p>生命值: 125/147</p>
-                                <p>MP: 85/100</p>
-                                <p>等级: 8</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 中间战斗状态 -->
-                    <div class="battle-center">
-                        <div class="battle-status">
-                            <h2>战斗进行中</h2>
-                            <p>回合: 3</p>
-                            <p>花妖王 使用 剧毒荆棘</p>
-                            <p>山魈首领 受到 25 点伤害</p>
-                        </div>
-                    </div>
-
-                    <!-- 右侧战斗者 -->
-                    <div class="combatant">
-                        <div class="combatant-card">
-                            <h3>山魈首领</h3>
-                            <div class="health-bar">
-                                <div class="health-fill" style="width: 70%"></div>
-                            </div>
-                            <div class="combatant-stats">
-                                <p>生命值: 112/160</p>
-                                <p>MP: 90/100</p>
-                                <p>等级: 9</p>
-                            </div>
-                        </div>
-                    </div>
+            <div class="editor">
+                <div class="editor-line">
+                    <div class="line-number">1</div>
+                    <div class="line-content"><span class="comment">// 系统配置文件</span></div>
                 </div>
-            </div>
-
-            <!-- 右侧敌人选择 -->
-            <div class="enemy-selector">
-                <h2>敌人 2</h2>
-                <div class="enemy-list">
-                    <div class="enemy-card">
-                        <h3>花妖王</h3>
-                        <div class="enemy-stats">
-                            <span>等级: 8</span>
-                            <span>生命值: 147</span>
-                            <span>攻击力: 20-30</span>
-                            <span>防御力: 14</span>
-                            <span>速度: 23</span>
-                        </div>
-                    </div>
-                    <div class="enemy-card">
-                        <h3>草精</h3>
-                        <div class="enemy-stats">
-                            <span>等级: 2</span>
-                            <span>生命值: 68</span>
-                            <span>攻击力: 7-11</span>
-                            <span>防御力: 4</span>
-                            <span>速度: 13</span>
-                        </div>
-                    </div>
-                    <div class="enemy-card selected">
-                        <h3>山魈首领</h3>
-                        <div class="enemy-stats">
-                            <span>等级: 9</span>
-                            <span>生命值: 160</span>
-                            <span>攻击力: 22-33</span>
-                            <span>防御力: 15</span>
-                            <span>速度: 25</span>
-                        </div>
-                    </div>
+                <div class="editor-line">
+                    <div class="line-number">2</div>
+                    <div class="line-content"><span class="keyword">const</span> config = {</div>
+                </div>
+                <div class="editor-line active">
+                    <div class="line-number">3</div>
+                    <div class="line-content">  <span class="keyword">host</span>: <span class="string">'localhost'</span>,</div>
+                </div>
+                <div class="editor-line">
+                    <div class="line-number">4</div>
+                    <div class="line-content">  <span class="keyword">port</span>: <span class="number">3000</span>,</div>
+                </div>
+                <div class="editor-line">
+                    <div class="line-number">5</div>
+                    <div class="line-content">  <span class="keyword">debug</span>: <span class="keyword">true</span>,</div>
+                </div>
+                <div class="editor-line">
+                    <div class="line-number">6</div>
+                    <div class="line-content">  <span class="keyword">timeout</span>: <span class="number">30000</span></div>
+                </div>
+                <div class="editor-line">
+                    <div class="line-number">7</div>
+                    <div class="line-content">};</div>
+                </div>
+                <div class="editor-line">
+                    <div class="line-number">8</div>
+                    <div class="line-content"></div>
+                </div>
+                <div class="editor-line">
+                    <div class="line-number">9</div>
+                    <div class="line-content"><span class="keyword">function</span> <span class="function">initialize</span>() {</div>
+                </div>
+                <div class="editor-line">
+                    <div class="line-number">10</div>
+                    <div class="line-content">  <span class="keyword">console</span>.<span class="function">log</span>(<span class="string">'Starting server...'</span>);</div>
+                </div>
+                <div class="editor-line">
+                    <div class="line-number">11</div>
+                    <div class="line-content">  <span class="comment">// 启动服务</span></div>
+                </div>
+                <div class="editor-line">
+                    <div class="line-number">12</div>
+                    <div class="line-content">}</div>
                 </div>
             </div>
         </div>
 
-        <!-- 控制区域 -->
-        <div class="control-panel">
-            <div class="control-buttons">
-                <button class="btn btn-primary">开始战斗</button>
-                <button class="btn btn-secondary">重置</button>
+        <!-- 右侧属性面板 -->
+        <div class="right-panel">
+            <div class="property-group">
+                <div class="property-title">文件信息</div>
+                <div class="property-item">
+                    <div class="property-label">文件名</div>
+                    <div class="property-value">main.js</div>
+                </div>
+                <div class="property-item">
+                    <div class="property-label">大小</div>
+                    <div class="property-value">2.4 KB</div>
+                </div>
+                <div class="property-item">
+                    <div class="property-label">修改时间</div>
+                    <div class="property-value">2026-02-04 14:30</div>
+                </div>
             </div>
-            <div class="speed-control">
-                <label for="speed">战斗速度:</label>
-                <input type="range" id="speed" min="0.5" max="3" step="0.5" value="1">
-                <span>1x</span>
-            </div>
-        </div>
 
-        <!-- 战斗日志 -->
-        <div class="battle-log">
-            <h2>战斗日志</h2>
-            <div class="log-content">
-                <div class="log-entry info">
-                    战斗开始！花妖王 VS 山魈首领
+            <div class="property-group">
+                <div class="property-title">运行配置</div>
+                <div class="property-item">
+                    <div class="property-label">环境</div>
+                    <select class="select">
+                        <option>开发环境</option>
+                        <option>测试环境</option>
+                        <option>生产环境</option>
+                    </select>
                 </div>
-                <div class="log-entry damage">
-                    山魈首领 使用 碎石猛击，对花妖王造成 22 点伤害
+                <div class="checkbox">
+                    <input type="checkbox" id="autoReload">
+                    <label for="autoReload">自动重载</label>
                 </div>
-                <div class="log-entry heal">
-                    花妖王 花之再生效果，恢复 4 点生命值
+                <div class="checkbox">
+                    <input type="checkbox" id="debugMode" checked>
+                    <label for="debugMode">调试模式</label>
                 </div>
-                <div class="log-entry damage">
-                    花妖王 使用 剧毒荆棘，对山魈首领造成 25 点伤害
-                </div>
-                <div class="log-entry info">
-                    山魈首领 被施加 剧毒 效果
-                </div>
-                <div class="log-entry damage">
-                    山魈首领 受到剧毒伤害 7 点
-                </div>
-                <div class="log-entry damage">
-                    花妖王 使用 剧毒荆棘，对山魈首领造成 23 点伤害
-                </div>
+            </div>
+
+            <div class="property-group">
+                <div class="property-title">操作</div>
+                <button class="btn primary">保存文件</button>
+                <button class="btn">格式化代码</button>
+                <button class="btn danger">删除文件</button>
             </div>
         </div>
     </div>
+
+    <!-- 底部状态栏 -->
+    <div class="status-bar">
+        <div class="status-left">
+            <div class="status-item">
+                <span>行 3, 列 15</span>
+            </div>
+            <div class="status-item">
+                <span>UTF-8</span>
+            </div>
+            <div class="status-item">
+                <span>JavaScript</span>
+            </div>
+        </div>
+        <div class="status-right">
+            <div class="status-item">
+                <div class="status-dot online"></div>
+                <span>已连接</span>
+            </div>
+            <div class="status-item">
+                <span>内存: 128.5 MB</span>
+            </div>
+            <div class="status-item">
+                <span>运行中</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 简单的交互效果
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.tree-node').forEach(node => {
+            node.addEventListener('click', () => {
+                document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+                node.classList.add('selected');
+            });
+        });
+
+        document.querySelectorAll('.tool-icon').forEach(icon => {
+            icon.addEventListener('click', () => {
+                document.querySelectorAll('.tool-icon').forEach(i => i.classList.remove('active'));
+                icon.classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>

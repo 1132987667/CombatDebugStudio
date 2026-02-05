@@ -21,6 +21,7 @@
     </div>
     <div class="log-content">
       <div v-for="(log, index) in filteredLogs" :key="index" class="log-entry" :class="log.level">
+        {{ log }}
         <span class="log-turn">[{{ log.turn }}]</span>
         <span class="log-source">{{ log.source }}</span>
         <span class="log-action">{{ log.action }}</span>
@@ -110,5 +111,5 @@ const applyFilters = () => {
 </script>
 
 <style scoped>
-@import '@/styles/main.scss';
+@use'@/styles/main.scss';
 </style>

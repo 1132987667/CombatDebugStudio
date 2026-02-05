@@ -150,7 +150,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import type { Enemy } from "@/types/enemy";
+import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import enemiesData from "@configs/enemies/enemies.json";
+import skillsData from "@configs/skills/skills.json";
+import scenesData from "@configs/scenes/scenes.json";
 
 interface BattleCharacter {
   originalId?: string;
@@ -176,28 +180,7 @@ interface BattleCharacter {
   }>;
 }
 
-interface EnemyData {
-  id: string;
-  name: string;
-  level: number;
-  stats: {
-    health: number;
-    minAttack: number;
-    maxAttack: number;
-    defense: number;
-    speed: number;
-  };
-  drops: Array<{
-    itemId: string;
-    quantity: number;
-    chance: number;
-  }>;
-  skills: {
-    small?: string;
-    passive?: string;
-    ultimate?: string;
-  };
-}
+// 使用统一的Enemy接口定义，移除重复定义
 
 const props = defineProps<{
   battleCharacters: BattleCharacter[];
@@ -231,6 +214,14 @@ const manualStatusTurns = ref(2);
 const manualHpAmount = ref(100);
 const manualMpAmount = ref(50);
 
+// 初始化GameDataProcessor
+const gameDataProcessor = GameDataProcessor.getInstance({
+  enemies: enemiesData as Enemy[],
+  skills: skillsData,
+  scenes: scenesData,
+  buffs: []
+});
+
 const selectedCharMonitor = computed(() => {
   if (!props.battleCharacters || !props.enemyParty) return null;
   return props.battleCharacters.find((c) => c.id === props.selectedCharacterId) ||
@@ -245,24 +236,22 @@ const getSelectedCharName = () => {
   return char?.name || enemy?.name || "未选择";
 };
 
-const getChar = (char: BattleCharacter | null): EnemyData | null => {
-  if (!char || !char.originalId) return null;
-  return (enemiesData as EnemyData[]).find((e) => e.id === char.originalId) || null;
-};
-
 const getCharPassive = (char: BattleCharacter | null): string => {
-  const enemy = getChar(char);
-  return enemy?.skills?.passive || "";
+  if (!char?.originalId) return "";
+  const skills = gameDataProcessor.getCharacterSkills(char);
+  return skills.passive?.name || "";
 };
 
 const getCharSmallSkill = (char: BattleCharacter | null): string => {
-  const enemy = getChar(char);
-  return enemy?.skills?.small || "";
+  if (!char?.originalId) return "";
+  const skills = gameDataProcessor.getCharacterSkills(char);
+  return skills.small?.name || "";
 };
 
 const getCharUltimate = (char: BattleCharacter | null): string => {
-  const enemy = getChar(char);
-  return enemy?.skills?.ultimate || "";
+  if (!char?.originalId) return "";
+  const skills = gameDataProcessor.getCharacterSkills(char);
+  return skills.ultimate?.name || "";
 };
 
 const getStatBonus = (stat: string) => {
@@ -299,5 +288,5 @@ const exceptionStatus = computed(() => {
 </script>
 
 <style scoped>
-@import '@/styles/main.scss';
+@use'@/styles/main.scss';
 </style>

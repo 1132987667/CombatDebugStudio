@@ -109,7 +109,7 @@
     <KeybindHintPanel ref="keybindHintPanelRef" />
 
     <!-- 新手引导 -->
-    <NewbieGuide />
+    <!-- <NewbieGuide /> -->
 
     <!-- 通知组件 -->
     <Notification ref="notification" />
@@ -117,7 +117,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, watch } from "vue";
+import { ref, computed, reactive, onMounted, onUnmounted, watch } from "vue";
+import type { Enemy } from "@/types/enemy";
 import enemiesData from "@configs/enemies/enemies.json";
 import scenesData from "@configs/scenes/scenes.json";
 import Dialog from "../components/Dialog.vue";
@@ -135,7 +136,7 @@ import { BattleSystemFactory } from "@/core/battle/BattleSystemFactory";
 import type { IBattleSystem } from "@/core/battle/interfaces";
 
 // 通知组件引用
-const notification = ref(null);
+const notification = ref<Notification>(null);
 import type {
   BattleState,
   BattleParticipant,
@@ -168,28 +169,7 @@ interface BattleCharacter {
   }>;
 }
 
-interface EnemyData {
-  id: string;
-  name: string;
-  level: number;
-  stats: {
-    health: number;
-    minAttack: number;
-    maxAttack: number;
-    defense: number;
-    speed: number;
-  };
-  drops: Array<{
-    itemId: string;
-    quantity: number;
-    chance: number;
-  }>;
-  skills: {
-    small?: string;
-    passive?: string;
-    ultimate?: string;
-  };
-}
+// 使用统一的Enemy接口定义，移除重复定义
 
 interface SceneData {
   id: string;
@@ -209,7 +189,7 @@ interface SceneData {
 
 interface GroupedEnemies {
   scene: SceneData;
-  enemies: EnemyData[];
+  enemies: Enemy[];
 }
 
 interface BattleLog {
@@ -242,6 +222,48 @@ const sceneName = ref("");
 const customSpeed = ref<number | null>(null);
 const autoSpeed = ref(1);
 const currentActorId = ref<string | null>(null);
+
+// 自动战斗状态同步定时器
+let syncInterval: number | null = null;
+
+// 监听自动播放速度变化，同步到战斗引擎
+watch(autoSpeed, (newSpeed) => {
+  if (currentBattleId.value && battleSystem.value) {
+    battleSystem.value.setAutoBattleSpeed(currentBattleId.value, newSpeed);
+    addLog("系统", "", "", "", `自动播放速度更新为: ${newSpeed}x`, "info");
+    
+    // 如果正在自动播放，更新状态同步定时器
+    if (isAutoPlaying.value && syncInterval !== null) {
+      clearInterval(syncInterval);
+      syncInterval = setInterval(() => {
+        if (currentBattleId.value) {
+          syncBattleState();
+        }
+      }, 1000 / newSpeed);
+    }
+  }
+});
+
+// 监听自动播放状态，启动或停止状态同步
+watch(isAutoPlaying, (newValue) => {
+  if (newValue && currentBattleId.value) {
+    // 开始自动播放时，启动状态同步定时器
+    if (syncInterval !== null) {
+      clearInterval(syncInterval);
+    }
+    syncInterval = setInterval(() => {
+      if (currentBattleId.value) {
+        syncBattleState();
+      }
+    }, 1000 / autoSpeed.value);
+  } else {
+    // 停止自动播放时，清除状态同步定时器
+    if (syncInterval !== null) {
+      clearInterval(syncInterval);
+      syncInterval = null;
+    }
+  }
+});
 const logKeyword = ref("");
 const manualSkillName = ref("");
 const manualStatusName = ref("");
@@ -251,7 +273,7 @@ const manualMpAmount = ref(50);
 const lastExportTime = ref<string | null>(null);
 const selectedCharMonitor = ref<BattleCharacter | null>(null);
 const enemySearch = ref("");
-const enemies = ref<EnemyData[]>(enemiesData as EnemyData[]);
+const enemies = ref<Enemy[]>(enemiesData as Enemy[]);
 const showRulesDialog = ref(false);
 const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
@@ -292,10 +314,10 @@ onMounted(() => {
   });
 });
 
-const allEnemies = enemiesData as EnemyData[];
+const allEnemies = enemiesData as Enemy[];
 
 function createBattleCharacter(
-  enemy: EnemyData,
+  enemy: Enemy,
   index: number
 ): BattleCharacter {
   return {
@@ -432,32 +454,6 @@ const currentActor = computed(() => {
   );
 });
 
-const filteredLogs = computed(() => {
-  let logs = [...battleLogs];
-  if (!logFilters.damage) {
-    logs = logs.filter((l) => l.level !== "damage" && l.level !== "crit");
-  }
-  if (!logFilters.status) {
-    logs = logs.filter((l) => l.level !== "status");
-  }
-  if (!logFilters.crit) {
-    logs = logs.filter((l) => l.level !== "crit");
-  }
-  if (!logFilters.heal) {
-    logs = logs.filter((l) => l.level !== "heal");
-  }
-  if (logKeyword.value) {
-    const keyword = logKeyword.value.toLowerCase();
-    logs = logs.filter(
-      (l) =>
-        l.source.toLowerCase().includes(keyword) ||
-        l.target.toLowerCase().includes(keyword) ||
-        l.result.toLowerCase().includes(keyword)
-    );
-  }
-  return logs;
-});
-
 const filteredEnemies = computed(() => {
   let filtered = [...enemies.value];
   if (enemySearch.value) {
@@ -473,37 +469,6 @@ const scenes = ref<SceneData[]>(scenesData as SceneData[]);
 const expandedScenes = reactive<Record<string, boolean>>({});
 scenes.value.forEach((s) => (expandedScenes[s.id] = true));
 
-const toggleSceneExpand = (sceneId: string) => {
-  expandedScenes[sceneId] = !expandedScenes[sceneId];
-};
-
-const isSceneExpanded = (sceneId: string): boolean => {
-  return expandedScenes[sceneId] === true;
-};
-
-const groupedEnemies = computed<GroupedEnemies[]>(() => {
-  const allScenes = scenes.value;
-  const allEnemies = filteredEnemies.value;
-
-  return allScenes
-    .map((scene) => {
-      const sceneEnemyIds = new Set([
-        ...scene.difficulties.easy.enemyIds,
-        ...scene.difficulties.normal.enemyIds,
-        ...scene.difficulties.hard.enemyIds,
-      ]);
-
-      const sceneEnemies = allEnemies.filter((enemy) =>
-        sceneEnemyIds.has(enemy.id)
-      );
-
-      return {
-        scene,
-        enemies: sceneEnemies,
-      };
-    })
-    .filter((group) => group.enemies.length > 0);
-});
 
 const battleStateDisplay = computed(() => {
   if (isAutoPlaying.value) return "自动播放";
@@ -531,11 +496,6 @@ watch(
   }
 );
 
-const getOrderIndex = (charId: string) => {
-  const index = ourParty.value.findIndex((c) => c.id === charId);
-  return index >= 0 ? index + 1 : 0;
-};
-
 const selectCharacter = (charId: string) => {
   selectedCharacterId.value = charId;
   selectedCharMonitor.value =
@@ -544,7 +504,7 @@ const selectCharacter = (charId: string) => {
     null;
 };
 
-const addEnemyToBattle = (enemy: EnemyData, side: "our" | "enemy" = "our") => {
+const addEnemyToBattle = (enemy: Enemy, side: "our" | "enemy" = "our") => {
   const newCharacter: BattleCharacter = {
     id: `enemy_${Date.now()}_${enemy.id}`,
     name: enemy.name,
@@ -615,41 +575,6 @@ const addCharacter = () => {
   });
 };
 
-const getHpPercent = (char: BattleCharacter) => {
-  return Math.max(0, (char.currentHp / char.maxHp) * 100);
-};
-
-
-
-const getHpColorClass = (char: BattleCharacter): string => {
-  const percent = (char.currentHp / char.maxHp) * 100;
-  if (percent <= 25) return 'low';
-  if (percent <= 50) return 'medium';
-  return 'high';
-};
-
-const getMemberStatuses = (char: BattleCharacter) => {
-  return char.buffs || [];
-};
-
-const getCharPassive = (char: BattleCharacter | null): string => {
-  if (!char) return "";
-  const enemy = allEnemies.find((e) => e.id === char.originalId);
-  return enemy?.skills?.passive || "";
-};
-
-const getCharSmallSkill = (char: BattleCharacter | null): string => {
-  if (!char) return "";
-  const enemy = allEnemies.find((e) => e.id === char.originalId);
-  return enemy?.skills?.small || "";
-};
-
-const getCharUltimate = (char: BattleCharacter | null): string => {
-  if (!char) return "";
-  const enemy = allEnemies.find((e) => e.id === char.originalId);
-  return enemy?.skills?.ultimate || "";
-};
-
 const getStatBonus = (stat: string) => {
   const char = selectedCharMonitor.value;
   if (!char) return 0;
@@ -657,25 +582,6 @@ const getStatBonus = (stat: string) => {
   if (stat === "attack") return bonuses.length * 10;
   if (stat === "defense") return bonuses.length * 5;
   return 0;
-};
-
-const getDamageBonus = () => {
-  const char = selectedCharMonitor.value;
-  if (!char) return 0;
-  const bonuses = char.buffs?.filter((b) => b.isPositive) || [];
-  return bonuses.length * 15;
-};
-
-const getDamageReduction = () => {
-  return 10;
-};
-
-const getFinalStat = (stat: string) => {
-  const char = selectedCharMonitor.value;
-  if (!char) return 0;
-  const base = stat === "attack" ? char.attack : char.defense;
-  const bonus = getStatBonus(stat);
-  return Math.floor(base * (1 + bonus / 100));
 };
 
 const addLog = (
@@ -922,6 +828,12 @@ const handleBattleEndReplay = (winner: string) => {
 };
 
 const togglePause = () => {
+  if (isAutoPlaying.value && currentBattleId.value) {
+    // 如果正在自动播放，先停止自动播放
+    battleSystem.value?.stopAutoBattle(currentBattleId.value);
+    isAutoPlaying.value = false;
+    addLog("系统", "", "", "", "停止自动战斗", "info");
+  }
   isPaused.value = !isPaused.value;
 };
 
@@ -953,41 +865,17 @@ const toggleAutoPlay = () => {
   }
 
   if (isAutoPlaying.value) {
-    // 停止自动播放
+    // 停止自动播放 - 使用战斗引擎API
+    battleSystem.value?.stopAutoBattle(currentBattleId.value!);
     isAutoPlaying.value = false;
     isPaused.value = true;
     addLog("系统", "", "", "", "停止自动战斗", "info");
   } else {
-    // 开始自动播放
+    // 开始自动播放 - 使用战斗引擎API
+    battleSystem.value?.startAutoBattle(currentBattleId.value!, autoSpeed.value);
     isAutoPlaying.value = true;
     isPaused.value = false;
     addLog("系统", "", "", "", "开始自动战斗", "info");
-
-    // 开始自动战斗循环
-    const autoBattleInterval = setInterval(async () => {
-      if (!isAutoPlaying.value || !currentBattleId.value || isPaused.value) {
-        clearInterval(autoBattleInterval);
-        return;
-      }
-
-      try {
-        await battleSystem.value?.processTurn(currentBattleId.value!);
-        syncBattleState();
-
-        // 检查战斗是否结束
-        if (!currentBattleId.value) {
-          clearInterval(autoBattleInterval);
-          isAutoPlaying.value = false;
-          isPaused.value = true;
-        }
-      } catch (error) {
-        console.error("自动战斗时出错:", error);
-        addLog("系统", "", "", "", `自动战斗时出错: ${error}`, "error");
-        clearInterval(autoBattleInterval);
-        isAutoPlaying.value = false;
-        isPaused.value = true;
-      }
-    }, 1000 / autoSpeed.value);
   }
 };
 
@@ -1041,34 +929,34 @@ const startBattle = () => {
   const battleState = battleSystem.value?.createBattle(participantsInfo);
   if (battleState) {
     currentBattleId.value = battleState.battleId;
+
+    // 重置战斗状态
+    currentTurn.value = 1;
+    isPaused.value = false;
+    isAutoPlaying.value = false;
+    isBattleActive.value = true;
+
+    // 清空已处理的 action ID 集合，确保新战斗的所有 action 都能被处理
+    processedActionIds.value.clear();
+
+    // 添加战斗开始日志
+    addLog(
+      "系统",
+      "",
+      "",
+      "",
+      `战斗开始！战斗ID: ${battleState.battleId}`,
+      "info"
+    );
+    addLog(
+      "系统",
+      "",
+      "",
+      "",
+      `参战角色: ${enabledCharacters.length} 人 | 参战敌人: ${enemies.length} 人`,
+      "info"
+    );
   }
-
-  // 重置战斗状态
-  currentTurn.value = 1;
-  isPaused.value = false;
-  isAutoPlaying.value = false;
-  isBattleActive.value = true;
-
-  // 清空已处理的 action ID 集合，确保新战斗的所有 action 都能被处理
-  processedActionIds.value.clear();
-
-  // 添加战斗开始日志
-  addLog(
-    "系统",
-    "",
-    "",
-    "",
-    `战斗开始！战斗ID: ${battleState.battleId}`,
-    "info"
-  );
-  addLog(
-    "系统",
-    "",
-    "",
-    "",
-    `参战角色: ${enabledCharacters.length} 人 | 参战敌人: ${enemies.length} 人`,
-    "info"
-  );
 };
 
 // 同步战斗状态到 UI
@@ -1381,8 +1269,20 @@ const endBattle = () => {
     return;
   }
 
+  // 停止自动战斗
+  if (isAutoPlaying.value && battleSystem.value) {
+    battleSystem.value.stopAutoBattle(currentBattleId.value);
+    isAutoPlaying.value = false;
+  }
+
+  // 清理状态同步定时器
+  if (syncInterval !== null) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+  }
+
   // 结束战斗，默认角色方胜利
-  battleSystem.endBattle(currentBattleId.value, "character");
+  battleSystem.value?.endBattle(currentBattleId.value, "character");
 
   // 同步战斗状态
   syncBattleState();
@@ -1395,6 +1295,17 @@ const endBattle = () => {
 };
 
 const resetBattle = () => {
+  // 停止自动战斗
+  if (isAutoPlaying.value && currentBattleId.value && battleSystem.value) {
+    battleSystem.value.stopAutoBattle(currentBattleId.value);
+  }
+
+  // 清理状态同步定时器
+  if (syncInterval !== null) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+  }
+
   // 重置战斗状态
   currentBattleId.value = null;
   currentTurn.value = 1;
@@ -1434,8 +1345,21 @@ onMounted(() => {
   currentActorId.value = ourParty.value[0]?.id || null;
   addLog("系统", "", "", "", "测试工具已加载", "info");
 });
+
+onUnmounted(() => {
+  // 清理自动战斗状态同步定时器
+  if (syncInterval !== null) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+  }
+  
+  // 停止所有自动战斗
+  if (currentBattleId.value && battleSystem.value) {
+    battleSystem.value.stopAutoBattle(currentBattleId.value);
+  }
+});
 </script>
 
-<style scoped lang="scss">
-@import '@/styles/main.scss';
+<style lang="scss">
+@use '@/styles/main.scss';
 </style>

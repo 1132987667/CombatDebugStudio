@@ -58,6 +58,14 @@
     <div class="panel-section">
       <div class="section-header">
         <span>角色库</span>
+        <div class="expand-collapse-controls">
+          <button class="btn-small" @click="collapseAllScenes" :disabled="!hasExpandedScenes">
+            <span class="icon">−</span>一键折叠
+          </button>
+          <button class="btn-small" @click="expandAllScenes" :disabled="allScenesExpanded">
+            <span class="icon">+</span>一键展开
+          </button>
+        </div>
       </div>
       <div class="section-content">
         <div class="character-search">
@@ -66,24 +74,26 @@
         <div class="scene-enemy-list">
           <div v-for="group in groupedEnemies" :key="group.scene.id" class="scene-group">
             <div class="scene-header" @click="toggleSceneExpand(group.scene.id)">
-              <span class="expand-icon">{{ isSceneExpanded(group.scene.id) ? '▼' : '▶' }}</span>
+              <span class="expand-icon">{{ isSceneExpanded(group.scene.id) ? '-' : '+' }}</span>
               <span class="scene-name">{{ group.scene.name }}</span>
               <span class="scene-level">Lv.{{ group.scene.requiredLevel }}+</span>
               <span class="scene-count">{{ group.enemies.length }}人</span>
             </div>
-            <div class="scene-enemies" v-show="isSceneExpanded(group.scene.id)">
-              <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item">
-                <div class="char-info">
-                  <span class="char-name">{{ enemy.name }}</span>
-                  <span class="char-stats">Lv.{{ enemy.level }} 气血:{{ enemy.stats.health }} 攻击:{{ enemy.stats.minAttack
-                  }}-{{ enemy.stats.maxAttack }}</span>
-                </div>
-                <div class="char-actions">
-                  <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, 'our')">我方</button>
-                  <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, 'enemy')">敌方</button>
+            <Transition name="scene-enemies">
+              <div class="scene-enemies" v-show="isSceneExpanded(group.scene.id)">
+                <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item">
+                  <div class="char-info">
+                    <span class="char-name">{{ enemy.name }} (Lv.{{ enemy.level }})</span>
+                    <span class="char-stats">气血:{{ enemy.stats.health }} 攻击:{{ enemy.stats.minAttack
+                    }}-{{ enemy.stats.maxAttack }}</span>
+                  </div>
+                  <div class="char-actions">
+                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, 'our')">我方</button>
+                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, 'enemy')">敌方</button>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Transition>
           </div>
           <div v-if="groupedEnemies.length === 0" class="empty-message">
             未找到匹配的敌人
@@ -96,6 +106,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
+import type { Enemy } from "@/types/enemy";
 import enemiesData from "@configs/enemies/enemies.json";
 import scenesData from "@configs/scenes/scenes.json";
 
@@ -123,28 +134,7 @@ interface BattleCharacter {
   }>;
 }
 
-interface EnemyData {
-  id: string;
-  name: string;
-  level: number;
-  stats: {
-    health: number;
-    minAttack: number;
-    maxAttack: number;
-    defense: number;
-    speed: number;
-  };
-  drops: Array<{
-    itemId: string;
-    quantity: number;
-    chance: number;
-  }>;
-  skills: {
-    small?: string;
-    passive?: string;
-    ultimate?: string;
-  };
-}
+// 使用统一的Enemy接口定义，移除重复定义
 
 interface SceneData {
   id: string;
@@ -164,7 +154,7 @@ interface SceneData {
 
 interface GroupedEnemies {
   scene: SceneData;
-  enemies: EnemyData[];
+  enemies: Enemy[];
 }
 
 interface Props {
@@ -175,7 +165,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:selectedCharacterId', id: string): void;
-  (e: 'addEnemy', enemy: EnemyData, side: 'our' | 'enemy'): void;
+  (e: 'addEnemy', enemy: Enemy, side: 'our' | 'enemy'): void;
   (e: 'addCharacter'): void;
   (e: 'moveCharacter', direction: number): void;
 }
@@ -184,7 +174,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const enemySearch = ref("");
-const enemies = ref<EnemyData[]>(enemiesData as EnemyData[]);
+const enemies = ref<Enemy[]>(enemiesData as Enemy[]);
 const scenes = ref<SceneData[]>(scenesData as SceneData[]);
 const expandedScenes = reactive<Record<string, boolean>>({
 });
@@ -199,6 +189,30 @@ const toggleSceneExpand = (sceneId: string) => {
 const isSceneExpanded = (sceneId: string): boolean => {
   return expandedScenes[sceneId] === true;
 };
+
+// 一键展开所有场景
+const expandAllScenes = () => {
+  scenes.value.forEach((scene) => {
+    expandedScenes[scene.id] = true;
+  });
+};
+
+// 一键折叠所有场景
+const collapseAllScenes = () => {
+  scenes.value.forEach((scene) => {
+    expandedScenes[scene.id] = false;
+  });
+};
+
+// 检查是否有展开的场景
+const hasExpandedScenes = computed(() => {
+  return scenes.value.some((scene) => expandedScenes[scene.id]);
+});
+
+// 检查是否所有场景都已展开
+const allScenesExpanded = computed(() => {
+  return scenes.value.every((scene) => expandedScenes[scene.id]);
+});
 
 const filteredEnemies = computed(() => {
   let filtered = [...enemies.value];
@@ -250,7 +264,7 @@ const selectCharacter = (charId: string) => {
   emit('update:selectedCharacterId', charId);
 };
 
-const addEnemyToBattle = (enemy: EnemyData, side: 'our' | 'enemy' = 'our') => {
+const addEnemyToBattle = (enemy: Enemy, side: 'our' | 'enemy' = 'our') => {
   emit('addEnemy', enemy, side);
 };
 
@@ -264,5 +278,137 @@ const moveCharacter = (direction: number) => {
 </script>
 
 <style scoped>
-@import '@/styles/main.scss';
+@use'@/styles/main.scss';
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #0f3460;
+}
+
+.expand-collapse-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.expand-collapse-controls .btn-small {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background: #0f3460;
+  color: #4fc3f7;
+  border: 1px solid #1a4a7a;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 1;
+}
+
+.expand-collapse-controls .btn-small:hover:not(:disabled) {
+  background: #1a4a7a;
+  border-color: #4fc3f7;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(79, 195, 247, 0.2);
+}
+
+.expand-collapse-controls .btn-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.expand-collapse-controls .btn-small .icon {
+  font-weight: bold;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.scene-enemies {
+  transition: all 0.3s ease-in-out;
+  overflow: hidden;
+}
+
+.scene-enemies-enter-active,
+.scene-enemies-leave-active {
+  transition: all 0.3s ease;
+}
+
+.scene-enemies-enter-from,
+.scene-enemies-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.scene-enemies-enter-to,
+.scene-enemies-leave-from {
+  max-height: 500px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scene-header {
+  cursor: pointer;
+  padding: 0.5rem;
+  background: #0f0f1a;
+  border-radius: 3px;
+  margin-bottom: 0.25rem;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.scene-header:hover {
+  background: #1a1a2e;
+  border-color: #4fc3f7;
+}
+
+.expand-icon {
+  display: inline-block;
+  width: 1rem;
+  text-align: center;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.scene-header:hover .expand-icon {
+  transform: scale(1.2);
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .expand-collapse-controls {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .expand-collapse-controls .btn-small {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .expand-collapse-controls {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .expand-collapse-controls .btn-small {
+    flex: 1;
+    justify-content: center;
+  }
+}
 </style>

@@ -406,7 +406,9 @@ export class GameBattleSystem implements IBattleSystem {
   }
 
   public createBattle(participantsInfo: ParticipantInfo[]): BattleState {
-    const battleId = `battle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    console.log('participantsInfo', participantsInfo)
+
+    const battleId = `battle_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
 
     const participants = new Map<string, BattleParticipant>()
     const turnOrder: string[] = []
@@ -495,7 +497,12 @@ export class GameBattleSystem implements IBattleSystem {
     return this.convertToBattleState(battleData)
   }
 
-  public async processTurn(battleId: string): Promise<void> {
+  /**
+   * 内部方法：处理战斗回合的核心逻辑
+   * 用于自动战斗和手动战斗
+   * @param battleId 战斗ID
+   */
+  private async processTurnInternal(battleId: string): Promise<void> {
     const battle = this.battles.get(battleId)
     if (!battle || !battle.isActive) {
       return
@@ -565,6 +572,21 @@ export class GameBattleSystem implements IBattleSystem {
     } else if (aliveEnemies.length === 0) {
       this.endBattle(battle.battleId, 'character')
     }
+  }
+
+  public async processTurn(battleId: string): Promise<void> {
+    const battle = this.battles.get(battleId)
+    if (!battle || !battle.isActive) {
+      return
+    }
+
+    // 检查是否在自动战斗中，如果是则跳过
+    const autoState = this.autoBattleStates.get(battleId)
+    if (autoState?.isActive) {
+      return
+    }
+
+    await this.processTurnInternal(battleId)
   }
 
   // 执行默认行动
@@ -741,6 +763,7 @@ export class GameBattleSystem implements IBattleSystem {
       ],
     })
 
+    this.stopAutoBattle(battleId)
     this.battleLogger.info(`Battle ended: ${battleId}`, { winner })
   }
 
@@ -799,6 +822,137 @@ export class GameBattleSystem implements IBattleSystem {
       if (!battle.isActive) {
         this.battles.delete(battleId)
       }
+    }
+  }
+
+  /**
+   * 自动战斗状态管理
+   * 存储每个战斗的自动战斗状态
+   */
+  private autoBattleStates = new Map<string, {
+    isActive: boolean
+    intervalId: number | null
+    speed: number
+  }>()
+
+  /**
+   * 开始自动战斗
+   * @param battleId 战斗ID
+   * @param speed 自动播放速度（每秒回合数）
+   */
+  public startAutoBattle(battleId: string, speed: number): void {
+    const battle = this.battles.get(battleId)
+    if (!battle) {
+      this.battleLogger.warn(`战斗 ${battleId} 不存在，无法开始自动战斗`)
+      return
+    }
+
+    const existingState = this.autoBattleStates.get(battleId)
+    if (existingState?.isActive) {
+      this.battleLogger.warn(`战斗 ${battleId} 已经在进行自动战斗`)
+      return
+    }
+
+    // 如果存在已停止的状态，先清理
+    if (existingState && existingState.intervalId !== null) {
+      clearInterval(existingState.intervalId)
+    }
+
+    const intervalId = setInterval(() => {
+      const currentBattle = this.battles.get(battleId)
+      const autoState = this.autoBattleStates.get(battleId)
+      
+      if (!currentBattle || !autoState || !autoState.isActive || !currentBattle.isActive) {
+        this.stopAutoBattle(battleId)
+        return
+      }
+
+      this.processTurnInternal(battleId).catch((error) => {
+        this.battleLogger.error(`自动战斗时出错:`, error)
+        this.stopAutoBattle(battleId)
+      })
+    }, 1000 / speed)
+
+    this.autoBattleStates.set(battleId, {
+      isActive: true,
+      intervalId: intervalId as unknown as number,
+      speed: speed
+    })
+
+    this.battleLogger.info(`战斗 ${battleId} 开始自动播放，速度: ${speed}x`)
+  }
+
+  /**
+   * 停止自动战斗
+   * @param battleId 战斗ID
+   */
+  public stopAutoBattle(battleId: string): void {
+    const autoState = this.autoBattleStates.get(battleId)
+    if (!autoState) {
+      return
+    }
+
+    if (autoState.intervalId !== null) {
+      clearInterval(autoState.intervalId)
+    }
+
+    autoState.isActive = false
+    autoState.intervalId = null
+
+    this.battleLogger.info(`战斗 ${battleId} 停止自动播放`)
+  }
+
+  /**
+   * 检查战斗是否正在进行自动战斗
+   * @param battleId 战斗ID
+   * @returns 是否正在自动战斗
+   */
+  public isAutoBattleActive(battleId: string): boolean {
+    const autoState = this.autoBattleStates.get(battleId)
+    return autoState?.isActive || false
+  }
+
+  /**
+   * 设置自动战斗速度
+   * @param battleId 战斗ID
+   * @param speed 播放速度
+   */
+  public setAutoBattleSpeed(battleId: string, speed: number): void {
+    const autoState = this.autoBattleStates.get(battleId)
+    if (!autoState) {
+      this.battleLogger.warn(`战斗 ${battleId} 不存在，无法设置自动战斗速度`)
+      return
+    }
+
+    const wasActive = autoState.isActive
+    const oldSpeed = autoState.speed
+
+    if (wasActive && autoState.intervalId !== null) {
+      clearInterval(autoState.intervalId)
+    }
+
+    autoState.speed = speed
+
+    if (wasActive) {
+      const intervalId = setInterval(() => {
+        const currentBattle = this.battles.get(battleId)
+        const currentAutoState = this.autoBattleStates.get(battleId)
+        
+        if (!currentBattle || !currentAutoState || !currentAutoState.isActive || !currentBattle.isActive) {
+          this.stopAutoBattle(battleId)
+          return
+        }
+
+        this.processTurnInternal(battleId).catch((error) => {
+          this.battleLogger.error(`自动战斗时出错:`, error)
+          this.stopAutoBattle(battleId)
+        })
+      }, 1000 / speed)
+
+      autoState.intervalId = intervalId as unknown as number
+      this.battleLogger.info(`战斗 ${battleId} 自动播放速度从 ${oldSpeed}x 更新为: ${speed}x`)
+    } else {
+      autoState.speed = speed
     }
   }
 }

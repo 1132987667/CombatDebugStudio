@@ -705,5 +705,5 @@ watch(() => currentEventIndex.value, () => {
 </script>
 
 <style scoped>
-@import '@/styles/main.scss';
+@use'@/styles/main.scss';
 </style>

@@ -7,7 +7,16 @@
       <button class="control-btn" @click="$emit('step-back')" :disabled="!isBattleActive">回退1回合</button>
       <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">{{ isPaused ? '[|] 继续' : '[||] 暂停' }}</button>
       <button class="control-btn" @click="$emit('single-step')" :disabled="!isBattleActive">单步执行</button>
-      <button class="control-btn" @click="$emit('toggle-auto-play')" :disabled="!isBattleActive">{{ isAutoPlaying ? '[■] 停止自动' : '[▶] 自动播放' }}</button>
+      <button 
+        class="control-btn auto-play-btn" 
+        :class="{ 'auto-playing': isAutoPlaying }"
+        @click="$emit('toggle-auto-play')" 
+        :disabled="!isBattleActive"
+      >
+        <span v-if="!isAutoPlaying" class="play-icon">▶</span>
+        <span v-else class="stop-icon">■</span>
+        <span class="auto-text">{{ isAutoPlaying ? '停止自动' : '自动播放' }}</span>
+      </button>
     </div>
     <div class="control-group right">
       <button class="control-btn" @click="$emit('exit-tool')">[Q] 退出工具</button>
@@ -46,5 +55,5 @@ const battleStateDisplay = computed(() => {
 </script>
 
 <style scoped>
-@import '@/styles/main.scss';
+@use'@/styles/main.scss';
 </style>

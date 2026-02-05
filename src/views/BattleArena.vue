@@ -103,7 +103,7 @@
     <ControlBar :is-battle-active="isBattleActive" :is-auto-playing="isAutoPlaying" :is-paused="isPaused"
       :battle-state-display="battleStateDisplay" @start-battle="startBattle" @end-battle="endBattle"
       @reset-battle="resetBattle" @step-back="stepBack" @toggle-pause="togglePause" @single-step="singleStep"
-      @toggle-auto-play="toggleAutoPlay" />
+      @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange" />
 
     <!-- 快捷键提示面板 -->
     <KeybindHintPanel ref="keybindHintPanelRef" />
@@ -121,6 +121,8 @@ import { ref, computed, reactive, onMounted, onUnmounted, watch } from "vue";
 import type { Enemy } from "@/types/enemy";
 import enemiesData from "@configs/enemies/enemies.json";
 import scenesData from "@configs/scenes/scenes.json";
+import { GameDataProcessor } from "@/utils/GameDataProcessor";
+import skillsData from "@configs/skills/skills.json";
 import Dialog from "../components/Dialog.vue";
 import ParticipantPanel from "./ParticipantPanel.vue";
 import BattleField from "./BattleField.vue";
@@ -134,6 +136,8 @@ import Notification from "../components/Notification.vue";
 import { keybindManager } from "@/core/input/KeybindManager";
 import { BattleSystemFactory } from "@/core/battle/BattleSystemFactory";
 import type { IBattleSystem } from "@/core/battle/interfaces";
+import { createBattleLogHTML } from "@/utils/BattleLogFormatter";
+import type { BattleLogEntry, LogFilters } from '@/types/battle-log';
 
 // 通知组件引用
 const notification = ref<Notification>(null);
@@ -187,21 +191,6 @@ interface SceneData {
   };
 }
 
-interface GroupedEnemies {
-  scene: SceneData;
-  enemies: Enemy[];
-}
-
-interface BattleLog {
-  turn: string;
-  source: string;
-  action: string;
-  target: string;
-  result: string;
-  level: string;
-  subEffects?: string[];
-}
-
 interface InjectableStatus {
   id: string;
   name: string;
@@ -221,49 +210,9 @@ const selectedScene = ref("");
 const sceneName = ref("");
 const customSpeed = ref<number | null>(null);
 const autoSpeed = ref(1);
+const autoPlayMode = ref<'off' | 'auto' | 'fast'>('auto');
 const currentActorId = ref<string | null>(null);
 
-// 自动战斗状态同步定时器
-let syncInterval: number | null = null;
-
-// 监听自动播放速度变化，同步到战斗引擎
-watch(autoSpeed, (newSpeed) => {
-  if (currentBattleId.value && battleSystem.value) {
-    battleSystem.value.setAutoBattleSpeed(currentBattleId.value, newSpeed);
-    addLog("系统", "", "", "", `自动播放速度更新为: ${newSpeed}x`, "info");
-    
-    // 如果正在自动播放，更新状态同步定时器
-    if (isAutoPlaying.value && syncInterval !== null) {
-      clearInterval(syncInterval);
-      syncInterval = setInterval(() => {
-        if (currentBattleId.value) {
-          syncBattleState();
-        }
-      }, 1000 / newSpeed);
-    }
-  }
-});
-
-// 监听自动播放状态，启动或停止状态同步
-watch(isAutoPlaying, (newValue) => {
-  if (newValue && currentBattleId.value) {
-    // 开始自动播放时，启动状态同步定时器
-    if (syncInterval !== null) {
-      clearInterval(syncInterval);
-    }
-    syncInterval = setInterval(() => {
-      if (currentBattleId.value) {
-        syncBattleState();
-      }
-    }, 1000 / autoSpeed.value);
-  } else {
-    // 停止自动播放时，清除状态同步定时器
-    if (syncInterval !== null) {
-      clearInterval(syncInterval);
-      syncInterval = null;
-    }
-  }
-});
 const logKeyword = ref("");
 const manualSkillName = ref("");
 const manualStatusName = ref("");
@@ -283,6 +232,34 @@ const keybindHintPanelRef = ref<InstanceType<typeof KeybindHintPanel> | null>(nu
 // Battle System - 使用工厂模式创建实例
 const battleSystem = ref<IBattleSystem | null>(null);
 const currentBattleId = ref<string | null>(null);
+
+// 初始化GameDataProcessor
+const gameDataProcessor = GameDataProcessor.getInstance({
+  enemies: enemiesData as Enemy[],
+  skills: skillsData,
+  scenes: scenesData,
+  buffs: []
+});
+
+// 获取技能名称的工具函数
+const getSkillName = (skillId: string | undefined): string => {
+  if (!skillId) return "";
+
+  // 首先尝试从GameDataProcessor获取技能信息
+  const skill = gameDataProcessor.findSkillById(skillId);
+  if (skill?.name) {
+    return skill.name;
+  }
+
+  // 如果无法找到，检查是否是默认角色技能
+  const defaultSkills: { [key: string]: string } = {
+    'skill_heal': '治疗术',
+    'skill_attack': '强力攻击',
+    'skill_ultimate': '终极技能'
+  };
+
+  return defaultSkills[skillId] || skillId;
+};
 
 // 初始化战斗系统和快捷键
 onMounted(() => {
@@ -313,6 +290,50 @@ onMounted(() => {
     console.log('进入调试模式');
   });
 });
+
+// 监听自动播放速度变化，同步到战斗引擎
+watch(autoSpeed, (newSpeed) => {
+  if (currentBattleId.value && battleSystem.value) {
+    try {
+      battleSystem.value.setAutoBattleSpeed(currentBattleId.value, newSpeed);
+      addLog("系统", "", "", "", `自动播放速度更新为: ${newSpeed}x`, "info");
+    } catch (error) {
+      console.error("设置自动战斗速度失败:", error);
+      addLog("系统", "", "", "", `设置自动战斗速度失败: ${error}`, "error");
+    }
+  }
+});
+
+// 监听自动播放状态，启动或停止自动战斗
+watch(isAutoPlaying, (newValue) => {
+  if (!currentBattleId.value || !battleSystem.value) {
+    return;
+  }
+
+  try {
+    if (newValue) {
+      battleSystem.value?.startAutoBattle(currentBattleId.value, autoSpeed.value);
+      syncBattleState();
+    } else {
+      battleSystem.value?.stopAutoBattle(currentBattleId.value);
+      syncBattleState();
+    }
+  } catch (error) {
+    console.error("切换自动战斗状态失败:", error);
+    isAutoPlaying.value = !newValue;
+    addLog("系统", "", "", "", `自动战斗切换失败: ${error}`, "error");
+  }
+});
+
+// 监听战斗状态变化，自动同步UI
+watch(
+  () => currentBattleId.value,
+  (newBattleId) => {
+    if (newBattleId) {
+      syncBattleState();
+    }
+  }
+);
 
 const allEnemies = enemiesData as Enemy[];
 
@@ -378,7 +399,7 @@ const enemyParty = reactive<BattleCharacter[]>(
   }))
 );
 
-const battleLogs = reactive<BattleLog[]>([]);
+const battleLogs = reactive<BattleLogEntry[]>([]);
 
 const rules = reactive({
   speedFirst: true,
@@ -471,6 +492,7 @@ scenes.value.forEach((s) => (expandedScenes[s.id] = true));
 
 
 const battleStateDisplay = computed(() => {
+  // 这里保持原有的显示逻辑，因为ControlBar组件内部已经处理了新的模式
   if (isAutoPlaying.value) return "自动播放";
   if (!isPaused.value) return "进行中";
   return "暂停";
@@ -590,9 +612,10 @@ const addLog = (
   action: string,
   target: string,
   result: string,
-  level: string = "info"
+  level: string = "info",
+  htmlResult?: string
 ) => {
-  battleLogs.unshift({ turn, source, action, target, result, level });
+  battleLogs.unshift({ turn, source, action, target, result, level, htmlResult });
   if (battleLogs.length > 100) battleLogs.pop();
 };
 
@@ -875,8 +898,22 @@ const toggleAutoPlay = () => {
     battleSystem.value?.startAutoBattle(currentBattleId.value!, autoSpeed.value);
     isAutoPlaying.value = true;
     isPaused.value = false;
+    syncBattleState();
     addLog("系统", "", "", "", "开始自动战斗", "info");
   }
+};
+
+// 处理战斗速度变化
+const handleBattleSpeedChange = (speed: number) => {
+  // 更新自动播放速度
+  autoSpeed.value = speed;
+
+  // 如果正在自动播放，更新战斗引擎的速度设置
+  if (isAutoPlaying.value && currentBattleId.value && battleSystem.value) {
+    battleSystem.value.setAutoBattleSpeed(currentBattleId.value, speed);
+  }
+
+  addLog("系统", "", "", "", `战斗速度已调整为: ${speed}倍`, "info");
 };
 
 const stepBack = () => {
@@ -930,11 +967,24 @@ const startBattle = () => {
   if (battleState) {
     currentBattleId.value = battleState.battleId;
 
+    // 注册回合执行回调，用于自动战斗时同步日志
+    battleSystem.value.onTurnExecuted = (battleId: string) => {
+      syncBattleState();
+    };
+
     // 重置战斗状态
     currentTurn.value = 1;
     isPaused.value = false;
-    isAutoPlaying.value = false;
     isBattleActive.value = true;
+
+    // 根据自动播放模式决定是否开始自动战斗
+    if (autoPlayMode.value !== 'off') {
+      isAutoPlaying.value = true;
+      battleSystem.value.startAutoBattle(currentBattleId.value, autoSpeed.value);
+      addLog("系统", "", "", "", "开始自动战斗", "info");
+    } else {
+      isAutoPlaying.value = false;
+    }
 
     // 清空已处理的 action ID 集合，确保新战斗的所有 action 都能被处理
     processedActionIds.value.clear();
@@ -1071,6 +1121,115 @@ const syncParticipantsState = (battleState: BattleState) => {
 // 已处理的 action ID 集合
 const processedActionIds = ref<Set<string>>(new Set());
 
+// 解析战斗动作并生成标准化日志
+const parseBattleAction = (action: BattleSystemAction, battleState: BattleState): { log: any; shouldDisplay: boolean } => {
+  // 检查是否已经处理过该 action
+  if (processedActionIds.value.has(action.id)) {
+    return { log: null, shouldDisplay: false };
+  }
+
+  // 标记该 action 为已处理
+  processedActionIds.value.add(action.id);
+
+  // 解析来源和目标名称
+  let sourceName = action.sourceId;
+  let targetName = action.targetId;
+
+  if (action.sourceId === "system") {
+    sourceName = "系统";
+  } else {
+    const sourceParticipant = battleState.participants.get(action.sourceId);
+    if (sourceParticipant) {
+      sourceName = sourceParticipant.name;
+    }
+  }
+
+  if (action.targetId === "system") {
+    targetName = "";
+  } else {
+    const targetParticipant = battleState.participants.get(action.targetId);
+    if (targetParticipant) {
+      targetName = targetParticipant.name;
+    }
+  }
+
+  // 判断来源和目标是友方还是敌方
+  const sourceIsAlly = !action.sourceId.includes("enemy") && action.sourceId !== "system";
+  const targetIsAlly = action.targetId && !action.targetId.includes("enemy") && action.targetId !== "system";
+
+  // 根据动作类型生成标准化日志
+  const turn = action.turn || 1;
+  const options = {
+    turn,
+    source: sourceName,
+    target: targetName,
+    damage: action.damage,
+    heal: action.heal,
+    skillName: getSkillName(action.skillId) || "",
+    damageType: "物理",
+    sourceIsAlly,
+    targetIsAlly
+  };
+
+  let actionType = "normal_attack";
+  let logLevel: any = action.sourceId.includes("enemy") ? "enemy" : "ally";
+
+  // 判断动作类型
+  if (action.sourceId === "system") {
+    if (action.effects?.some(e => e.description.includes("战斗开始"))) {
+      actionType = "battle_start";
+      logLevel = "info";
+      // 解析战斗开始信息
+      const match = action.effects[0].description.match(/参战角色: (\d+) 人，参战敌人: (\d+) 人/);
+      if (match) {
+        options.source = match[1];
+        options.target = match[2];
+      }
+    } else if (action.effects?.some(e => e.description.includes("战斗结束"))) {
+      actionType = "battle_end";
+      logLevel = "info";
+      // 解析战斗结束信息
+      const match = action.effects[0].description.match(/胜利者: (.+)/);
+      if (match) {
+        options.source = match[1] === "角色方" ? "我方" : "敌方";
+      }
+    }
+  } else if (action.type === "skill") {
+    if (action.heal && action.heal > 0) {
+      actionType = "heal_skill";
+    } else if (action.damage && action.damage > 0) {
+      actionType = "skill_attack";
+    }
+  }
+
+  // 使用格式化工具生成标准化日志
+  const formattedLog = createBattleLogHTML(actionType, options, logLevel);
+
+  // 构建完整的日志对象
+  const fullLog = {
+    turn: formattedLog.turn,
+    source: sourceName,
+    action: "对",
+    target: targetName,
+    result: formattedLog.htmlResult,
+    htmlResult: formattedLog.htmlResult,
+    level: formattedLog.level
+  };
+
+  // 检查是否已经添加过该日志
+  const isLogExists = battleLogs.some(
+    (log) =>
+      log.turn === fullLog.turn &&
+      log.htmlResult === fullLog.htmlResult
+  );
+
+  if (isLogExists) {
+    return { log: null, shouldDisplay: false };
+  }
+
+  return { log: fullLog, shouldDisplay: true };
+};
+
 // 同步战斗日志
 const syncBattleLogs = (battleState: BattleState) => {
   // 按时间戳和回合号排序 actions
@@ -1091,174 +1250,31 @@ const syncBattleLogs = (battleState: BattleState) => {
 
   // 遍历排序后的 actions
   sortedActions.forEach((action: BattleSystemAction) => {
-    // 检查是否已经处理过该 action
-    if (processedActionIds.value.has(action.id)) {
+    const { log, shouldDisplay } = parseBattleAction(action, battleState);
+
+    if (!shouldDisplay || !log) {
       return;
     }
 
-    // 标记该 action 为已处理
-    processedActionIds.value.add(action.id);
-
-    // 构建日志内容
-    let logSource = action.sourceId;
-    let logTarget = action.targetId;
-    let logResult = "";
-    let logLevel = "info";
-
-    // 解析来源和目标
-    if (action.sourceId === "system") {
-      logSource = "系统";
-    } else {
-      // 尝试获取参与者名称
-      const participant = battleState.participants.get(action.sourceId);
-      if (participant) {
-        logSource = participant.name;
-        // 根据参与者类型设置日志级别
-        logLevel = participant.type === "enemy" ? "enemy" : "ally";
+    // 触发视觉效果（伤害/治疗显示）
+    if (battleFieldRef.value && (action.damage || action.heal)) {
+      const targetCharacter = battleCharacters.find(c => c.name === log.target) ||
+        enemyParty.find(e => e.name === log.target);
+      if (targetCharacter) {
+        const effectType = action.damage ? 'damage' : 'heal';
+        battleFieldRef.value.showDamage(targetCharacter.id, action.damage || action.heal || 0, effectType, false);
       }
     }
 
-    if (action.targetId === "system") {
-      logTarget = "";
-    } else {
-      // 尝试获取参与者名称
-      const participant = battleState.participants.get(action.targetId);
-      if (participant) {
-        logTarget = participant.name;
-      }
-    }
-
-    // 构建结果信息
-    if (action.effects && action.effects.length > 0) {
-      // 详细解析 effects 数组
-      const effects: string[] = [];
-      let energyCost = "";
-      let damage = "";
-      let heal = "";
-
-      action.effects.forEach(effect => {
-        if (effect.description.includes("消耗")) {
-          energyCost = effect.description;
-        } else if (effect.description.includes("伤害")) {
-          damage = effect.description;
-        } else if (effect.description.includes("恢复")) {
-          heal = effect.description;
-        } else if (!effect.description.includes("战斗开始") && !effect.description.includes("战斗结束")) {
-          effects.push(effect.description);
-        }
-      });
-
-      // 构建标准化的日志格式
-      if (action.type === "skill") {
-        let skillName = "";
-        if (action.skillId) {
-          // 从技能ID中提取技能名称
-          if (action.skillId.includes("heal")) skillName = "治疗术";
-          else if (action.skillId.includes("attack")) skillName = "强力攻击";
-          else if (action.skillId.includes("ultimate")) skillName = "终极技能";
-          else if (action.skillId.includes("enemy_skill_1")) skillName = "爪击";
-          else if (action.skillId.includes("enemy_skill_2")) skillName = "狂暴";
-          else skillName = "技能";
-        }
-
-        const parts = [];
-        if (energyCost) {
-          // 消耗能量是自己的行为，不需要显示目标
-          parts.push(energyCost);
-        }
-        parts.push(`对 ${logTarget} 使用 ${skillName}`);
-        if (damage) parts.push(damage);
-        if (heal) parts.push(heal);
-
-        // 如果只有消耗能量和使用技能，没有其他效果，添加一个占位符表示操作完成
-        if (parts.length === 2 && !damage && !heal) {
-          parts.push(" ");
-        }
-
-        // 过滤掉重复的技能使用描述和空字符串
-        const filteredEffects = effects.filter(effect =>
-          !effect.includes(`${logSource} 使用 ${skillName}`) && effect.trim() !== ""
-        );
-        if (filteredEffects.length > 0) parts.push(...filteredEffects);
-
-        logResult = parts.filter(p => p.trim() !== "").join("，");
-        logLevel = action.sourceId.includes("enemy") ? "enemy" : "ally";
-      } else if (action.sourceId === "system" && action.effects && action.effects.some(e => e.description.includes("战斗开始"))) {
-        // 战斗开始日志
-        logResult = action.effects[0].description;
-        logLevel = "info";
-      } else if (action.sourceId === "system" && action.effects && action.effects.some(e => e.description.includes("战斗结束"))) {
-        // 战斗结束日志
-        logResult = action.effects[0].description;
-        logLevel = "info";
-      } else {
-        logResult = effects.join("，");
-      }
-    } else if (action.damage && action.damage > 0) {
-      // 伤害动作
-      logResult = `对 ${logTarget} 普通攻击，造成 ${action.damage} 伤害`;
-      logLevel = action.sourceId.includes("enemy") ? "enemy" : "ally";
-
-      // 触发伤害显示
-      if (battleFieldRef.value) {
-        const targetCharacter = battleCharacters.find(c => c.name === logTarget) ||
-          enemyParty.find(e => e.name === logTarget);
-        if (targetCharacter) {
-          battleFieldRef.value.showDamage(targetCharacter.id, action.damage, 'damage', false);
-        }
-      }
-    } else if (action.heal && action.heal > 0) {
-      // 治疗动作
-      logResult = `对 ${logTarget} 治疗，恢复 ${action.heal} HP`;
-      logLevel = action.sourceId.includes("enemy") ? "enemy" : "ally";
-
-      // 触发治疗显示
-      if (battleFieldRef.value) {
-        const targetCharacter = battleCharacters.find(c => c.name === logTarget) ||
-          enemyParty.find(e => e.name === logTarget);
-        if (targetCharacter) {
-          battleFieldRef.value.showDamage(targetCharacter.id, action.heal, 'heal', false);
-        }
-      }
-    }
-
-    // 检查是否已经添加过该日志
-    // 为系统消息使用特殊的回合标识
-    let turnLabel = "";
-    if (action.sourceId === "system" && action.effects && action.effects.some(e => e.description.includes("战斗开始"))) {
-      turnLabel = "系统";
-      const isLogExists = battleLogs.some(
-        (log) => log.turn === "系统" && log.result === action.effects[0].description
-      );
-      if (isLogExists) return;
-    } else if (action.sourceId === "system" && action.effects && action.effects.some(e => e.description.includes("战斗结束"))) {
-      turnLabel = "系统";
-      const isLogExists = battleLogs.some(
-        (log) => log.turn === "系统" && log.result === action.effects[0].description
-      );
-      if (isLogExists) return;
-    } else {
-      // 使用 action.turn 作为回合号
-      const turnNum = action.turn || 1;
-      turnLabel = `回合${turnNum}`;
-      const isLogExists = battleLogs.some(
-        (log) =>
-          log.turn === `回合${turnNum}` &&
-          log.source === logSource &&
-          log.target === logTarget &&
-          log.result === logResult
-      );
-      if (isLogExists) return;
-    }
-
-    // 添加日志
+    // 添加标准化日志
     addLog(
-      turnLabel,
-      logSource,
-      "对",
-      logTarget,
-      logResult,
-      logLevel
+      log.turn,
+      log.source,
+      log.action,
+      log.target,
+      log.result,
+      log.level,
+      log.htmlResult
     );
   });
 };
@@ -1269,16 +1285,15 @@ const endBattle = () => {
     return;
   }
 
+  // 清除回合执行回调
+  if (battleSystem.value) {
+    battleSystem.value.onTurnExecuted = null;
+  }
+
   // 停止自动战斗
   if (isAutoPlaying.value && battleSystem.value) {
     battleSystem.value.stopAutoBattle(currentBattleId.value);
     isAutoPlaying.value = false;
-  }
-
-  // 清理状态同步定时器
-  if (syncInterval !== null) {
-    clearInterval(syncInterval);
-    syncInterval = null;
   }
 
   // 结束战斗，默认角色方胜利
@@ -1295,15 +1310,14 @@ const endBattle = () => {
 };
 
 const resetBattle = () => {
+  // 清除回合执行回调
+  if (battleSystem.value) {
+    battleSystem.value.onTurnExecuted = null;
+  }
+
   // 停止自动战斗
   if (isAutoPlaying.value && currentBattleId.value && battleSystem.value) {
     battleSystem.value.stopAutoBattle(currentBattleId.value);
-  }
-
-  // 清理状态同步定时器
-  if (syncInterval !== null) {
-    clearInterval(syncInterval);
-    syncInterval = null;
   }
 
   // 重置战斗状态
@@ -1347,12 +1361,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  // 清理自动战斗状态同步定时器
-  if (syncInterval !== null) {
-    clearInterval(syncInterval);
-    syncInterval = null;
-  }
-  
   // 停止所有自动战斗
   if (currentBattleId.value && battleSystem.value) {
     battleSystem.value.stopAutoBattle(currentBattleId.value);

@@ -21,15 +21,10 @@
     </div>
     <div class="log-content">
       <div v-for="(log, index) in filteredLogs" :key="index" class="log-entry" :class="log.level">
-        {{ log }}
         <span class="log-turn">[{{ log.turn }}]</span>
-        <span class="log-source">{{ log.source }}</span>
-        <span class="log-action">{{ log.action }}</span>
-        <span class="log-target">{{ log.target }}</span>
-        <span class="log-result">{{ log.result }}</span>
+        <span class="log-result" v-html="log.htmlResult || log.result"></span>
         <div v-if="log.subEffects && log.subEffects.length" class="sub-effects">
-          <div v-for="(effect, ei) in log.subEffects" :key="ei" class="sub-effect">
-            → {{ effect }}
+          <div v-for="(effect, ei) in log.subEffects" :key="ei" class="sub-effect" v-html="effect">
           </div>
         </div>
       </div>
@@ -40,26 +35,10 @@
 
 <script setup lang="ts">
 import { computed, ref, reactive } from "vue";
-
-interface BattleLog {
-  turn: string;
-  source: string;
-  action: string;
-  target: string;
-  result: string;
-  level: string;
-  subEffects?: string[];
-}
-
-interface LogFilters {
-  damage: boolean;
-  status: boolean;
-  crit: boolean;
-  heal: boolean;
-}
+import type { BattleLogEntry, LogFilters } from '@/types/battle-log';
 
 interface Props {
-  logs: BattleLog[];
+  logs: BattleLogEntry[];
 }
 
 const props = defineProps<Props>();
@@ -74,33 +53,22 @@ const logFilters = reactive<LogFilters>({
 
 const filteredLogs = computed(() => {
   let logs = [...props.logs];
-  
+
   if (!logFilters.damage) {
     logs = logs.filter((l) => l.level !== "damage" && l.level !== "crit");
   }
-  
+
   if (!logFilters.status) {
     logs = logs.filter((l) => l.level !== "status");
   }
-  
+
   if (!logFilters.crit) {
     logs = logs.filter((l) => l.level !== "crit");
   }
-  
+
   if (!logFilters.heal) {
     logs = logs.filter((l) => l.level !== "heal");
   }
-  
-  if (logKeyword.value) {
-    const keyword = logKeyword.value.toLowerCase();
-    logs = logs.filter(
-      (l) =>
-        l.source.toLowerCase().includes(keyword) ||
-        l.target.toLowerCase().includes(keyword) ||
-        l.result.toLowerCase().includes(keyword)
-    );
-  }
-  
   return logs;
 });
 

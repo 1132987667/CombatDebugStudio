@@ -20,15 +20,15 @@
             }}</span>
           </div>
           <div class="monitor-item">
-            <span class="monitor-label">ATK:</span>
+            <span class="monitor-label">攻击:</span>
             <span class="monitor-value">{{ selectedCharMonitor?.attack || 0 }}</span>
           </div>
           <div class="monitor-item">
-            <span class="monitor-label">DEF:</span>
+            <span class="monitor-label">防御:</span>
             <span class="monitor-value">{{ selectedCharMonitor?.defense || 0 }}</span>
           </div>
           <div class="monitor-item">
-            <span class="monitor-label">SPD:</span>
+            <span class="monitor-label">速度:</span>
             <span class="monitor-value">{{ selectedCharMonitor?.speed || 0 }}</span>
           </div>
         </div>
@@ -37,11 +37,11 @@
         <div class="monitor-subtitle">状态加成</div>
         <div class="monitor-grid">
           <div class="monitor-item">
-            <span class="monitor-label">ATK:</span>
+            <span class="monitor-label">攻击:</span>
             <span class="monitor-value bonus">+{{ getStatBonus('attack') }}</span>
           </div>
           <div class="monitor-item">
-            <span class="monitor-label">DEF:</span>
+            <span class="monitor-label">防御:</span>
             <span class="monitor-value bonus">+{{ getStatBonus('defense') }}</span>
           </div>
           <div class="monitor-item">
@@ -58,11 +58,11 @@
         <div class="monitor-subtitle">最终属性</div>
         <div class="monitor-grid">
           <div class="monitor-item">
-            <span class="monitor-label">实际ATK:</span>
+            <span class="monitor-label">攻击:</span>
             <span class="monitor-value final">{{ getFinalStat('attack') }}</span>
           </div>
           <div class="monitor-item">
-            <span class="monitor-label">实际DEF:</span>
+            <span class="monitor-label">防御:</span>
             <span class="monitor-value final">{{ getFinalStat('defense') }}</span>
           </div>
         </div>

@@ -1,18 +1,67 @@
-import type { BattleAction, BattleParticipant } from '@/types/battle';
+import type { BattleAction, BattleParticipant, BattleState } from '@/types/battle';
 import { logger } from '@/utils/logger';
 
-interface Battle {
+/**
+ * 战斗数据接口
+ * 存储战斗的基本信息，用于动作执行时的上下文获取
+ */
+interface BattleData {
+  /** 战斗的唯一标识符 */
   battleId: string;
+  /** 参与者映射表，以参与者ID为键 */
   participants: Map<string, BattleParticipant>;
+  /** 回合顺序数组，存储参与者ID */
   turnOrder: string[];
+  /** 当前回合号 */
   currentTurn: number;
+  /** 战斗是否处于活跃状态 */
   isActive: boolean;
 }
 
+/**
+ * 动作执行器类
+ * 负责执行战斗中的各种动作，包括攻击、技能、治疗等
+ * 实现了IActionExecutor接口，处理动作的验证和执行逻辑
+ */
 export class ActionExecutor {
+  /** 日志记录器实例，用于记录动作执行过程中的信息 */
   private logger = logger;
+  /** 战斗数据存储映射，以battleId为键 */
+  private battles = new Map<string, BattleData>();
+  /** 参与者到战斗的映射，用于通过参与者ID快速查找所属战斗 */
+  private participantToBattle = new Map<string, string>();
 
-  public async executeAction(action: BattleAction, battle: Battle): Promise<BattleAction> {
+  /**
+   * 注册战斗数据
+   * 将战斗数据添加到管理器中，并建立参与者到战斗的映射关系
+   * @param battleId - 战斗的唯一标识符
+   * @param battle - 战斗数据对象，包含参与者信息和回合状态
+   */
+  public registerBattle(battleId: string, battle: BattleData): void {
+    this.battles.set(battleId, battle);
+    battle.participants.forEach((_, participantId) => {
+      this.participantToBattle.set(participantId, battleId);
+    });
+  }
+
+  /**
+   * 执行战斗动作
+   * 根据动作类型处理攻击、技能或治疗，并更新参与者和动作状态
+   * @param action - 要执行的战斗动作对象，包含源目标、类型和效果
+   * @returns Promise<void> - 异步执行，完成后无返回值
+   * @throws Error - 当找不到对应的战斗或参与者无效时抛出
+   */
+  public async executeAction(action: BattleAction): Promise<void> {
+    const battleId = this.participantToBattle.get(action.sourceId);
+    if (!battleId) {
+      throw new Error(`No battle found for participant ${action.sourceId}`);
+    }
+
+    const battle = this.battles.get(battleId);
+    if (!battle) {
+      throw new Error(`Battle ${battleId} not found`);
+    }
+
     const source = battle.participants.get(action.sourceId);
     const target = battle.participants.get(action.targetId);
 
@@ -21,13 +70,33 @@ export class ActionExecutor {
     }
 
     this.processActionType(action, source, target);
-
     source.afterAction();
-
-    return action;
   }
 
-  public async executeDefaultAction(battle: Battle, participant: BattleParticipant): Promise<void> {
+  /**
+   * 验证动作的有效性
+   * 检查动作对象是否包含必要的基本信息
+   * @param action - 要验证的战斗动作对象
+   * @returns boolean - 动作有效返回true，无效返回false
+   */
+  public validateAction(action: BattleAction): boolean {
+    if (!action.sourceId || !action.targetId || !action.type) {
+      return false;
+    }
+    if (!['attack', 'skill', 'heal', 'buff', 'item'].includes(action.type)) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * 执行默认动作
+   * 当AI决策失败或需要默认行为时执行，生成随机目标的普通攻击
+   * @param battle - 当前战斗数据对象
+   * @param participant - 执行默认动作的参与者
+   * @returns Promise<void> - 异步执行，完成后无返回值
+   */
+  public async executeDefaultAction(battle: BattleData, participant: BattleParticipant): Promise<void> {
     const enemies = this.getAliveParticipantsByType(battle, 'enemy');
     const characters = this.getAliveParticipantsByType(battle, 'character');
 
@@ -60,9 +129,31 @@ export class ActionExecutor {
           description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
         },
       ],
-    }, battle);
+    });
   }
 
+  /**
+   * 移除战斗数据
+   * 在战斗结束时调用，清理相关的战斗和参与者映射
+   * @param battleId - 要移除的战斗ID
+   */
+  public removeBattle(battleId: string): void {
+    const battle = this.battles.get(battleId);
+    if (battle) {
+      battle.participants.forEach((_, participantId) => {
+        this.participantToBattle.delete(participantId);
+      });
+    }
+    this.battles.delete(battleId);
+  }
+
+  /**
+   * 根据动作类型分发处理逻辑
+   * 私有方法，根据action.type调用相应的处理函数
+   * @param action - 要处理的战斗动作对象
+   * @param source - 动作发起者
+   * @param target - 动作承受者
+   */
   private processActionType(action: BattleAction, source: BattleParticipant, target: BattleParticipant): void {
     switch (action.type) {
       case 'attack':
@@ -79,11 +170,18 @@ export class ActionExecutor {
     }
   }
 
+  /**
+   * 处理攻击动作
+   * 对目标造成伤害，计算实际伤害值并更新目标生命值
+   * @param action - 攻击动作对象
+   * @param source - 攻击发起者
+   * @param target - 攻击承受者
+   */
   private processAttack(action: BattleAction, source: BattleParticipant, target: BattleParticipant): void {
     if (action.damage) {
       const actualDamage = target.takeDamage(action.damage);
       action.damage = actualDamage;
-      
+
       action.effects.push({
         type: 'damage',
         value: actualDamage,
@@ -92,6 +190,14 @@ export class ActionExecutor {
     }
   }
 
+  /**
+   * 处理技能动作
+   * 处理技能的能量消耗、伤害计算、治疗效果和增益施加
+   * 如果能量不足会自动降级为普通攻击
+   * @param action - 技能动作对象
+   * @param source - 技能使用者
+   * @param target - 技能目标
+   */
   private processSkill(action: BattleAction, source: BattleParticipant, target: BattleParticipant): void {
     if (action.skillId) {
       const energyCost = this.getSkillEnergyCost(action.skillId);
@@ -141,6 +247,13 @@ export class ActionExecutor {
     }
   }
 
+  /**
+   * 处理治疗动作
+   * 为目标恢复生命值，计算实际恢复量并更新
+   * @param action - 治疗动作对象
+   * @param source - 治疗发起者
+   * @param target - 治疗承受者
+   */
   private processHeal(action: BattleAction, source: BattleParticipant, target: BattleParticipant): void {
     if (action.heal) {
       const actualHeal = target.heal(action.heal);
@@ -153,6 +266,12 @@ export class ActionExecutor {
     }
   }
 
+  /**
+   * 获取技能的能量消耗
+   * 根据技能ID判断消耗类型，大招100能量，技能50能量
+   * @param skillId - 技能的唯一标识符
+   * @returns number - 能量消耗值
+   */
   private getSkillEnergyCost(skillId: string): number {
     if (skillId.includes('ultimate') || skillId.includes('大招')) {
       return 100;
@@ -162,7 +281,14 @@ export class ActionExecutor {
     return 0;
   }
 
-  private getAliveParticipantsByType(battle: Battle, type: 'character' | 'enemy'): string[] {
+  /**
+   * 获取指定类型的存活参与者ID列表
+   * 用于查找可以执行动作的有效目标
+   * @param battle - 战斗数据对象
+   * @param type - 参与者类型，'character'或'enemy'
+   * @returns string[] - 符合条件的参与者ID数组
+   */
+  private getAliveParticipantsByType(battle: BattleData, type: 'character' | 'enemy'): string[] {
     return Array.from(battle.participants.entries())
       .filter(([_, p]) => p.type === type && p.isAlive())
       .map(([id, _]) => id);

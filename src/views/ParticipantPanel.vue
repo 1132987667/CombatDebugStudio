@@ -1,6 +1,14 @@
 <template>
   <div class="panel-left">
     <div class="panel-section">
+      <div class="section-header">
+        <span>参战管理</span>
+        <div class="expand-collapse-controls">
+          <button class="btn-small" @click="collapseAllScenes" :disabled="!hasExpandedScenes">
+            <span class="icon">−</span>清空
+          </button>
+        </div>
+      </div>
       <div class="section-content">
         <div class="character-field">
           <div class="character-party our-party">
@@ -386,7 +394,7 @@ const moveCharacter = (direction: number) => {
     flex-direction: column;
     gap: 0.25rem;
   }
-  
+
   .expand-collapse-controls .btn-small {
     font-size: 0.7rem;
     padding: 0.2rem 0.4rem;
@@ -399,13 +407,13 @@ const moveCharacter = (direction: number) => {
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .expand-collapse-controls {
     flex-direction: row;
     width: 100%;
     justify-content: flex-end;
   }
-  
+
   .expand-collapse-controls .btn-small {
     flex: 1;
     justify-content: center;

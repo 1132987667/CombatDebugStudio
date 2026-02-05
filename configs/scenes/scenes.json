@@ -1,212 +1,212 @@
 [
-    {
-      "id": "scene_001",
-      "name": "小花山",
-      "background": "花果山外围，花妖草精遍布，是初出茅庐的修仙者试炼之地。",
-      "difficulties": {
-        "easy": {
-          "enemyIds": ["enemy_001_easy_1", "enemy_001_easy_2", "enemy_001_easy_3"]
-        },
-        "normal": {
-          "enemyIds": ["enemy_001_normal_1", "enemy_001_normal_2", "enemy_001_normal_3"]
-        },
-        "hard": {
-          "enemyIds": ["enemy_001_hard_1", "enemy_001_hard_2", "boss_001"]
-        }
+  {
+    "id": "scene_001",
+    "name": "小花山",
+    "background": "花果山外围，花妖草精遍布，是初出茅庐的修仙者试炼之地。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["enemy_001", "enemy_002", "enemy_003"]
       },
-      "requiredLevel": 1,
-      "rewards": {
-        "exp": 100,
-        "gold": 200
+      "normal": {
+        "enemyIds": ["enemy_004", "enemy_005", "enemy_006"]
+      },
+      "hard": {
+        "enemyIds": ["enemy_007", "enemy_008", "boss_001"]
       }
     },
-    {
-      "id": "scene_002",
-      "name": "浅水涧",
-      "background": "水帘洞前，虾兵蟹将守卫着通往水帘洞的通道。",
-      "difficulties": {
-        "easy": {
-          "enemyIds": ["enemy_002_easy_1", "enemy_002_easy_2", "enemy_002_easy_3"]
-        },
-        "normal": {
-          "enemyIds": ["enemy_002_normal_1", "enemy_002_normal_2", "enemy_002_normal_3"]
-        },
-        "hard": {
-          "enemyIds": ["enemy_002_hard_1", "enemy_002_hard_2", "boss_002"]
-        }
-      },
-      "requiredLevel": 3,
-      "rewards": {
-        "exp": 150,
-        "gold": 300
-      }
-    },
-    {
-      "id": "scene_003",
-      "name": "碎石坡",
-      "background": "五行山脚，岩妖石精盘踞于此，阻挡着通往高老庄的道路。",
-      "difficulties": {
-        "easy": {
-          "enemyIds": ["enemy_003_easy_1", "enemy_003_easy_2", "enemy_003_easy_3"]
-        },
-        "normal": {
-          "enemyIds": ["enemy_003_normal_1", "enemy_003_normal_2", "enemy_003_normal_3"]
-        },
-        "hard": {
-          "enemyIds": ["enemy_003_hard_1", "enemy_003_hard_2", "boss_003"]
-        }
-      },
-      "requiredLevel": 5,
-      "rewards": {
-        "exp": 200,
-        "gold": 400
-      }
-    },
-    {
-      "id": "scene_004",
-      "name": "迷雾林",
-      "background": "高老庄外，迷雾笼罩的森林中隐藏着各种妖怪。",
-      "difficulties": {
-        "easy": {
-          "enemyIds": ["enemy_004_easy_1", "enemy_004_easy_2", "enemy_004_easy_3"]
-        },
-        "normal": {
-          "enemyIds": ["enemy_004_normal_1", "enemy_004_normal_2", "enemy_004_normal_3"]
-        },
-        "hard": {
-          "enemyIds": ["enemy_004_hard_1", "enemy_004_hard_2", "boss_004"]
-        }
-      },
-      "requiredLevel": 7,
-      "rewards": {
-        "exp": 250,
-        "gold": 500
-      }
-    },
-    {
-      "id": "scene_005",
-      "name": "浊浪滩",
-      "background": "流沙河岸，沙妖水怪潜伏在浊浪之中。",
-      "difficulties": {
-        "easy": {
-          "enemyIds": ["enemy_005_easy_1", "enemy_005_easy_2", "enemy_005_easy_3"]
-        },
-        "normal": {
-          "enemyIds": ["enemy_005_normal_1", "enemy_005_normal_2", "enemy_005_normal_3"]
-        },
-        "hard": {
-          "enemyIds": ["enemy_005_hard_1", "enemy_005_hard_2", "boss_005"]
-        }
-      },
-      "requiredLevel": 9,
-      "rewards": {
-        "exp": 300,
-        "gold": 600
-      }
-    },
-    {
-      "id": "scene_006",
-      "name": "熔岩洞",
-      "background": "火焰山脚，熔岩洞窟中栖息着火焰生物。",
-      "difficulties": {
-        "easy": {
-          "enemyIds": ["enemy_006_easy_1", "enemy_006_easy_2", "enemy_006_easy_3"]
-        },
-        "normal": {
-          "enemyIds": ["enemy_006_normal_1", "enemy_006_normal_2", "enemy_006_normal_3"]
-        },
-        "hard": {
-          "enemyIds": ["enemy_006_hard_1", "enemy_006_hard_2", "boss_006"]
-        }
-      },
-      "requiredLevel": 11,
-      "rewards": {
-        "exp": 350,
-        "gold": 700
-      }
-    },
-    {
-      "id": "scene_007",
-      "name": "蛛丝谷",
-      "background": "盘丝洞口，蜘蛛精和毒蛾在这里编织着致命的陷阱。",
-      "difficulties": {
-        "easy": {
-          "enemyIds": ["enemy_007_easy_1", "enemy_007_easy_2", "enemy_007_easy_3"]
-        },
-        "normal": {
-          "enemyIds": ["enemy_007_normal_1", "enemy_007_normal_2", "enemy_007_normal_3"]
-        },
-        "hard": {
-          "enemyIds": ["enemy_007_hard_1", "enemy_007_hard_2", "boss_007"]
-        }
-      },
-      "requiredLevel": 13,
-      "rewards": {
-        "exp": 400,
-        "gold": 800
-      }
-    },
-    {
-      "id": "scene_008",
-      "name": "狂风岭",
-      "background": "狮驼岭，狮妖象怪在此称霸一方。",
-      "difficulties": {
-        "easy": {
-          "enemyIds": ["enemy_008_easy_1", "enemy_008_easy_2", "enemy_008_easy_3"]
-        },
-        "normal": {
-          "enemyIds": ["enemy_008_normal_1", "enemy_008_normal_2", "enemy_008_normal_3"]
-        },
-        "hard": {
-          "enemyIds": ["enemy_008_hard_1", "enemy_008_hard_2", "boss_008"]
-        }
-      },
-      "requiredLevel": 15,
-      "rewards": {
-        "exp": 450,
-        "gold": 900
-      }
-    },
-    {
-      "id": "scene_009",
-      "name": "禅音崖",
-      "background": "雷音寺外，佛门叛徒和护法在此争斗不休。",
-      "difficulties": {
-        "easy": {
-          "enemyIds": ["enemy_009_easy_1", "enemy_009_easy_2", "enemy_009_easy_3"]
-        },
-        "normal": {
-          "enemyIds": ["enemy_009_normal_1", "enemy_009_normal_2", "enemy_009_normal_3"]
-        },
-        "hard": {
-          "enemyIds": ["enemy_009_hard_1", "enemy_009_hard_2", "boss_009"]
-        }
-      },
-      "requiredLevel": 17,
-      "rewards": {
-        "exp": 500,
-        "gold": 1000
-      }
-    },
-    {
-      "id": "scene_010",
-      "name": "灵霄台",
-      "background": "灵山之巅，佛门叛徒和金刚护法在此做最后抵抗。",
-      "difficulties": {
-        "easy": {
-          "enemyIds": ["enemy_010_easy_1", "enemy_010_easy_2", "enemy_010_easy_3"]
-        },
-        "normal": {
-          "enemyIds": ["enemy_010_normal_1", "enemy_010_normal_2", "enemy_010_normal_3"]
-        },
-        "hard": {
-          "enemyIds": ["enemy_010_hard_1", "enemy_010_hard_2", "boss_010"]
-        }
-      },
-      "requiredLevel": 19,
-      "rewards": {
-        "exp": 600,
-        "gold": 1200
-      }
+    "requiredLevel": 1,
+    "rewards": {
+      "exp": 100,
+      "gold": 200
     }
+  },
+  {
+    "id": "scene_002",
+    "name": "浅水涧",
+    "background": "水帘洞前，虾兵蟹将守卫着通往水帘洞的通道。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["enemy_009", "enemy_010", "enemy_011"]
+      },
+      "normal": {
+        "enemyIds": ["enemy_012", "enemy_013", "enemy_014"]
+      },
+      "hard": {
+        "enemyIds": ["enemy_015", "enemy_016", "boss_002"]
+      }
+    },
+    "requiredLevel": 3,
+    "rewards": {
+      "exp": 150,
+      "gold": 300
+    }
+  },
+  {
+    "id": "scene_003",
+    "name": "碎石坡",
+    "background": "五行山脚，岩妖石精盘踞于此，阻挡着通往高老庄的道路。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["enemy_001", "enemy_002", "enemy_003"]
+      },
+      "normal": {
+        "enemyIds": ["enemy_004", "enemy_005", "enemy_006"]
+      },
+      "hard": {
+        "enemyIds": ["enemy_007", "enemy_008", "boss_003"]
+      }
+    },
+    "requiredLevel": 5,
+    "rewards": {
+      "exp": 200,
+      "gold": 400
+    }
+  },
+  {
+    "id": "scene_004",
+    "name": "迷雾林",
+    "background": "高老庄外，迷雾笼罩的森林中隐藏着各种妖怪。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["enemy_009", "enemy_010", "enemy_011"]
+      },
+      "normal": {
+        "enemyIds": ["enemy_012", "enemy_013", "enemy_014"]
+      },
+      "hard": {
+        "enemyIds": ["enemy_015", "enemy_016", "boss_004"]
+      }
+    },
+    "requiredLevel": 7,
+    "rewards": {
+      "exp": 250,
+      "gold": 500
+    }
+  },
+  {
+    "id": "scene_005",
+    "name": "浊浪滩",
+    "background": "流沙河岸，沙妖水怪潜伏在浊浪之中。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["enemy_001", "enemy_002", "enemy_003"]
+      },
+      "normal": {
+        "enemyIds": ["enemy_004", "enemy_005", "enemy_006"]
+      },
+      "hard": {
+        "enemyIds": ["enemy_007", "enemy_008", "boss_001"]
+      }
+    },
+    "requiredLevel": 9,
+    "rewards": {
+      "exp": 300,
+      "gold": 600
+    }
+  },
+  {
+    "id": "scene_006",
+    "name": "熔岩洞",
+    "background": "火焰山脚，熔岩洞窟中栖息着火焰生物。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["enemy_009", "enemy_010", "enemy_011"]
+      },
+      "normal": {
+        "enemyIds": ["enemy_012", "enemy_013", "enemy_014"]
+      },
+      "hard": {
+        "enemyIds": ["enemy_015", "enemy_016", "boss_002"]
+      }
+    },
+    "requiredLevel": 11,
+    "rewards": {
+      "exp": 350,
+      "gold": 700
+    }
+  },
+  {
+    "id": "scene_007",
+    "name": "蛛丝谷",
+    "background": "盘丝洞口，蜘蛛精和毒蛾在这里编织着致命的陷阱。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["enemy_001", "enemy_002", "enemy_003"]
+      },
+      "normal": {
+        "enemyIds": ["enemy_004", "enemy_005", "enemy_006"]
+      },
+      "hard": {
+        "enemyIds": ["enemy_007", "enemy_008", "boss_001"]
+      }
+    },
+    "requiredLevel": 13,
+    "rewards": {
+      "exp": 400,
+      "gold": 800
+    }
+  },
+  {
+    "id": "scene_008",
+    "name": "狂风岭",
+    "background": "狮驼岭，狮妖象怪在此称霸一方。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["enemy_009", "enemy_010", "enemy_011"]
+      },
+      "normal": {
+        "enemyIds": ["enemy_012", "enemy_013", "enemy_014"]
+      },
+      "hard": {
+        "enemyIds": ["enemy_015", "enemy_016", "boss_002"]
+      }
+    },
+    "requiredLevel": 15,
+    "rewards": {
+      "exp": 450,
+      "gold": 900
+    }
+  },
+  {
+    "id": "scene_009",
+    "name": "禅音崖",
+    "background": "雷音寺外，佛门叛徒和护法在此争斗不休。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["enemy_001", "enemy_002", "enemy_003"]
+      },
+      "normal": {
+        "enemyIds": ["enemy_004", "enemy_005", "enemy_006"]
+      },
+      "hard": {
+        "enemyIds": ["enemy_007", "enemy_008", "boss_001"]
+      }
+    },
+    "requiredLevel": 17,
+    "rewards": {
+      "exp": 500,
+      "gold": 1000
+    }
+  },
+  {
+    "id": "scene_010",
+    "name": "灵霄台",
+    "background": "灵山之巅，佛门叛徒和金刚护法在此做最后抵抗。",
+    "difficulties": {
+      "easy": {
+        "enemyIds": ["enemy_009", "enemy_010", "enemy_011"]
+      },
+      "normal": {
+        "enemyIds": ["enemy_012", "enemy_013", "enemy_014"]
+      },
+      "hard": {
+        "enemyIds": ["enemy_015", "enemy_016", "boss_002"]
+      }
+    },
+    "requiredLevel": 19,
+    "rewards": {
+      "exp": 600,
+      "gold": 1200
+    }
+  }
 ]

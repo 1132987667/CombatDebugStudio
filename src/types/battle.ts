@@ -46,7 +46,7 @@ export type BattleParticipant = BattleCharacter | BattleEnemy
 
 export interface BattleAction {
   id: string
-  type: 'attack' | 'skill' | 'buff' | 'item'
+  type: 'attack' | 'skill' | 'buff' | 'item' | 'status'
   sourceId: string
   targetId: string
   skillId?: string

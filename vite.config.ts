@@ -29,8 +29,9 @@ export default defineConfig({
     },
   },
   test: {
-    environment: 'jsdom',
+    environment: 'node',
     include: ['test/**/*.test.ts'],
     exclude: ['node_modules', 'build'],
+    globals: true,
   },
 })

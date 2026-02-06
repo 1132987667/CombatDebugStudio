@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "技能配置接口定义",
+  "description": "定义技能配置的JSON Schema,用于验证技能数据的完整性和正确性",
+  "definitions": {
+    "SkillActionType": {
+      "type": "string",
+      "enum": ["damage", "heal", "buff", "debuff", "custom"],
+      "description": "技能动作类型:伤害、治疗、增益、减益、自定义"
+    },
+    "SkillSelector": {
+      "type": "string",
+      "enum": ["single_enemy", "all_enemies", "single_ally", "all_allies", "self", "lowest_hp_ally", "lowest_hp_enemy", "random_enemy", "random_ally", "random_adjacent", "front_row", "back_row", "all"],
+      "description": "技能目标选择器"
+    },
+    "AttackType": {
+      "type": "string",
+      "enum": ["normal", "magic", "physical", "true"],
+      "description": "攻击类型:普通、魔法、物理、真实伤害"
+    },
+    "SkillAction": {
+      "type": "object",
+      "description": "技能动作定义",
+      "required": ["type", "formula"],
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/SkillActionType",
+          "description": "动作类型"
+        },
+        "formula": {
+          "type": "string",
+          "description": "效果公式,支持变量引用(如attack、defense等)"
+        },
+        "attackType": {
+          "$ref": "#/definitions/AttackType",
+          "description": "攻击类型,仅在type为damage时使用"
+        },
+        "buffId": {
+          "type": "string",
+          "description": "增益/减益效果ID,仅在type为buff或debuff时使用"
+        },
+        "duration": {
+          "type": "integer",
+          "description": "持续时间(回合数),-1表示永久"
+        },
+        "stacks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "叠加层数"
+        },
+        "target": {
+          "$ref": "#/definitions/SkillSelector",
+          "description": "目标选择器,可选,用于覆盖技能级别的selector"
+        },
+        "condition": {
+          "type": "string",
+          "description": "触发条件表达式"
+        },
+        "priority": {
+          "type": "integer",
+          "default": 0,
+          "description": "执行优先级,数值越小越先执行"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "自定义参数"
+        }
+      }
+    },
+    "SkillConfig": {
+      "type": "object",
+      "description": "技能配置定义",
+      "required": ["id", "name", "mpCost", "cooldown", "selector", "actions"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "技能唯一标识符,命名规范: skill_[角色类型]_[编号]_[难度]_[类型]_[大小]",
+          "pattern": "^skill_[a-z]+_[0-9]+_[a-z]+_[0-9]+_[a-z]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "技能名称"
+        },
+        "description": {
+          "type": "string",
+          "description": "技能描述"
+        },
+        "mpCost": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "法力值消耗,0表示不消耗"
+        },
+        "cooldown": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "冷却时间(回合数),0表示无冷却"
+        },
+        "maxUses": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "最大使用次数,0或未指定表示无限制"
+        },
+        "selector": {
+          "$ref": "#/definitions/SkillSelector",
+          "description": "目标选择器"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SkillAction"
+          },
+          "minItems": 1,
+          "description": "技能动作列表"
+        },
+        "condition": {
+          "type": "string",
+          "description": "施放条件表达式"
+        },
+        "skillType": {
+          "type": "string",
+          "enum": ["active", "passive", "ultimate", "reaction"],
+          "description": "技能类型:主动、被动、终极、反应"
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "技能等级"
+        },
+        "icon": {
+          "type": "string",
+          "description": "技能图标资源路径"
+        },
+        "animation": {
+          "type": "string",
+          "description": "技能动画资源路径"
+        },
+        "soundEffect": {
+          "type": "string",
+          "description": "技能音效资源路径"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "技能标签数组,用于分类和筛选"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "自定义参数"
+        }
+      }
+    }
+  },
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/SkillConfig"
+  }
+}

@@ -8,17 +8,22 @@ describe('BuffSystem', () => {
   let registry: BuffScriptRegistry
 
   beforeEach(() => {
-    // 重置单例
-    (BuffSystem as any).instance = undefined
-    (BuffScriptRegistry as any).instance = undefined
+    // 重置单例 - 使用更安全的方法
+    if ((BuffSystem as any)._instance) {
+      (BuffSystem as any)._instance = undefined
+    }
+    if ((BuffScriptRegistry as any)._instance) {
+      (BuffScriptRegistry as any)._instance = undefined
+    }
     
     buffSystem = BuffSystem.getInstance()
     registry = BuffScriptRegistry.getInstance()
     
     // 注册测试脚本
-    registry.registerScript(
+    registry.register(
       MountainGodBuff.BUFF_ID,
-      new MountainGodBuff()
+      () => new MountainGodBuff(),
+      { filePath: 'test/path' }
     )
   })
 

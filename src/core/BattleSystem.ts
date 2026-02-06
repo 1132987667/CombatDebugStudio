@@ -16,6 +16,14 @@ import { BattleAIFactory, BattleAI } from '@/core/BattleAI'
 import { container } from './di/Container'
 import { TurnManager } from './battle/TurnManager'
 import { TURN_MANAGER_TOKEN } from './battle/interfaces'
+import { SkillManager } from '@/core/skill/SkillManager'
+import type { ExtendedSkillStep } from '@/types/skill'
+
+// ES6类型定义兼容
+interface Timeout {
+  ref(): void
+  unref(): void
+}
 
 /**
  * 战斗数据接口
@@ -42,6 +50,8 @@ interface BattleData {
   winner?: BattleEntityType
   /** 每个参与者的AI实例映射 */
   aiInstances: Map<string, BattleAI>
+  /** 技能管理器实例 */
+  skillManager: SkillManager
 }
 
 /**
@@ -108,20 +118,30 @@ abstract class BaseBattleParticipant {
   abstract get type(): BattleEntityType
 
   getAttribute(attribute: string): number {
-    // Simplified attribute system - in real implementation, this would use the actual attribute system
+    // 扩展的属性系统，支持更多属性
     switch (attribute) {
       case 'HP':
         return this.currentHealth
       case 'MAX_HP':
         return this.maxHealth
       case 'ATK':
-        return this.level * 5 // Simplified attack calculation
+        return this.level * 5 // 基础攻击力
       case 'DEF':
-        return this.level * 2 // Simplified defense calculation
+        return this.level * 2 // 基础防御力
+      case 'MDEF':
+        return this.level * 1 // 基础魔法防御
+      case 'SPD':
+        return this.level * 3 // 基础速度
       case 'energy':
         return this.currentEnergy
       case 'max_energy':
         return this.maxEnergy
+      case 'strength':
+        return this.level * 4 // 力量属性
+      case 'magicPower':
+        return this.level * 3 // 魔法力属性
+      case 'wisdom':
+        return this.level * 2 // 智慧属性
       default:
         return 0
     }
@@ -133,7 +153,7 @@ abstract class BaseBattleParticipant {
     } else if (attribute === 'energy') {
       this.currentEnergy = Math.max(0, Math.min(value, this.maxEnergy))
     }
-    // Other attributes would be handled in a real implementation
+    // 其他属性在真实实现中需要处理
   }
 
   addBuff(buffInstanceId: string): void {
@@ -357,8 +377,16 @@ export class SimpleBattleEnemy
             return stats.minAttack + (stats.maxAttack - stats.minAttack) / 2
           case 'DEF':
             return stats.defense
+          case 'MDEF':
+            return stats.defense * 0.8
           case 'SPD':
             return stats.speed
+          case 'strength':
+            return stats.minAttack * 0.5
+          case 'magicPower':
+            return stats.minAttack * 0.3
+          case 'wisdom':
+            return stats.defense * 0.2
           default:
             return 0
         }
@@ -398,6 +426,9 @@ export class GameBattleSystem implements IBattleSystem {
 
   // 战斗日志记录器实例
   private battleLogger = logger
+
+  // 技能管理器实例
+  private skillManager = new SkillManager()
 
   // 私有构造函数，防止外部直接实例化
   private constructor() {}
@@ -480,6 +511,7 @@ export class GameBattleSystem implements IBattleSystem {
       startTime: Date.now(), // 战斗开始时间
       winner: undefined, // 胜利者（未确定）
       aiInstances,
+      skillManager: this.skillManager
     }
 
     // 将战斗数据存入映射表
@@ -683,32 +715,37 @@ export class GameBattleSystem implements IBattleSystem {
 
     // 处理技能执行
     if (action.type === 'skill' && action.skillId) {
-      // 计算技能能量消耗
-      const energyCost = this.getSkillEnergyCost(action.skillId)
-      if (energyCost > 0) {
-        const success = source.spendEnergy(energyCost)
-        if (!success) {
-          // 能量不足，改为普通攻击
-          action.type = 'attack'
-          action.damage = Math.floor(Math.random() * 20) + 10
-          action.effects = [
-            {
-              type: 'damage',
-              value: action.damage,
-              description: `${source.name} 普通攻击 (能量不足)`,
-            },
-          ]
-        } else {
-          // 能量消耗成功，添加效果描述
-          action.effects.push({
-            type: 'status',
-            description: `消耗 ${energyCost} 能量`,
-          })
-        }
+      try {
+        // 使用新的技能管理器执行技能
+        const skillAction = battle.skillManager.executeSkill(action.skillId, source, target)
+        
+        // 合并技能执行结果
+        action.damage = skillAction.damage
+        action.heal = skillAction.heal
+        action.effects = skillAction.effects
+        
+        this.battleLogger.info(`技能执行成功: ${action.skillId}`, {
+          source: source.name,
+          target: target.name,
+          damage: action.damage,
+          heal: action.heal
+        })
+      } catch (error) {
+        this.battleLogger.error(`技能执行失败: ${action.skillId}`, error)
+        // 技能执行失败，降级为普通攻击
+        action.type = 'attack'
+        action.damage = Math.floor(Math.random() * 20) + 10
+        action.effects = [
+          {
+            type: 'damage',
+            value: action.damage,
+            description: `${source.name} 普通攻击 (技能执行失败)`,
+          },
+        ]
       }
     }
 
-    // 应用伤害
+    // 应用伤害（如果技能执行失败或使用普通攻击）
     if (action.damage && action.damage > 0) {
       const actualDamage = target.takeDamage(action.damage)
       action.damage = actualDamage
@@ -732,24 +769,11 @@ export class GameBattleSystem implements IBattleSystem {
       })
     }
 
-    // 应用增益效果（如果指定）
-    if (action.buffId) {
-      // 实际实现中会使用BuffSystem
-      const buffInstanceId = `${target.id}_${action.buffId}_${Date.now()}`
-      target.addBuff(buffInstanceId)
-
-      action.effects.push({
-        type: 'buff',
-        buffId: action.buffId,
-        description: `${action.buffId} applied to ${target.name}`,
-      })
-    }
-
-    // 行动后处理（如减少状态持续时间等）
-    source.afterAction()
-
-    // 将动作添加到战斗日志
+    // 添加动作到战斗记录
     this.addBattleAction(battle.battleId, action)
+
+    // 行动后处理
+    source.afterAction()
 
     return action
   }
@@ -757,95 +781,34 @@ export class GameBattleSystem implements IBattleSystem {
   /**
    * 获取技能能量消耗
    * @param {string} skillId - 技能ID
-   * @returns {number} 能量消耗值
+   * @returns {number} 能量消耗
    */
   private getSkillEnergyCost(skillId: string): number {
-    // 实现50能量释放小技能，100能量释放大招的机制
-    if (skillId.includes('ultimate') || skillId.includes('大招')) {
-      return 100 // 大招消耗100能量
-    } else if (skillId.includes('skill') || skillId.includes('技能')) {
-      return 50 // 小技能消耗50能量
-    }
-    return 0
+    // 简化实现，实际应该从技能配置中获取
+    const skillConfig = this.skillManager.getSkillConfig(skillId)
+    return skillConfig?.mpCost || 0
   }
 
   /**
-   * 获取战斗状态
-   * @param {string} battleId - 战斗ID
-   * @returns {BattleState | undefined} 战斗状态，如果不存在则返回undefined
-   */
-  public getBattleState(battleId: string): BattleState | undefined {
-    const battle = this.battles.get(battleId)
-    if (!battle) return undefined
-
-    return this.convertToBattleState(battle)
-  }
-
-  /**
-   * 结束战斗
-   * @param {string} battleId - 战斗ID
-   * @param {BattleEntityType} winner - 胜利者类型
-   */
-  public endBattle(battleId: string, winner: BattleEntityType): void {
-    const battle = this.battles.get(battleId)
-    if (!battle) return
-
-    // 设置战斗为非活跃状态
-    battle.isActive = false
-    battle.winner = winner
-    battle.endTime = Date.now()
-
-    // 添加战斗结束的系统动作
-    this.addBattleAction(battleId, {
-      id: `end_${Date.now()}`,
-      type: 'skill',
-      sourceId: 'system',
-      targetId: 'system',
-      success: true,
-      timestamp: Date.now(),
-      turn: battle.currentTurn + 1,
-      effects: [
-        {
-          type: 'status',
-          description: `战斗结束！胜利者: ${winner === 'character' ? '角色方' : '敌方'}`,
-          duration: 0,
-        },
-      ],
-    })
-
-    // 停止自动战斗
-    this.stopAutoBattle(battleId)
-    this.battleLogger.info(`Battle ended: ${battleId}`, { winner })
-  }
-
-  /**
-   * 添加战斗动作到日志
+   * 添加战斗动作到记录
    * @param {string} battleId - 战斗ID
    * @param {BattleAction} action - 战斗动作
    */
   private addBattleAction(battleId: string, action: BattleAction): void {
     const battle = this.battles.get(battleId)
-    if (!battle) return
-
-    // 添加动作到动作记录
-    battle.actions.push(action)
-
-    // 只保留最近100个动作，防止内存问题
-    if (battle.actions.length > 100) {
-      battle.actions = battle.actions.slice(-100)
+    if (battle) {
+      battle.actions.push(action)
     }
   }
 
   /**
-   * 通过参与者ID查找战斗
+   * 根据参与者ID查找战斗
    * @param {string} participantId - 参与者ID
-   * @returns {BattleData | undefined} 战斗数据，如果不存在则返回undefined
+   * @returns {BattleData | undefined} 战斗数据
    */
-  private findBattleByParticipant(
-    participantId: string,
-  ): BattleData | undefined {
+  private findBattleByParticipant(participantId: string): BattleData | undefined {
     for (const battle of this.battles.values()) {
-      if (battle.participants.has(participantId) && battle.isActive) {
+      if (battle.participants.has(participantId)) {
         return battle
       }
     }
@@ -853,16 +816,54 @@ export class GameBattleSystem implements IBattleSystem {
   }
 
   /**
-   * 转换战斗数据为战斗状态
+   * 结束战斗
+   * @param {string} battleId - 战斗ID
+   * @param {BattleEntityType} winner - 胜利者类型
+   */
+  private endBattle(battleId: string, winner: BattleEntityType): void {
+    const battle = this.battles.get(battleId)
+    if (battle) {
+      battle.isActive = false
+      battle.winner = winner
+      battle.endTime = Date.now()
+
+      this.battleLogger.info(`Battle ended: ${battleId}`, {
+        winner,
+        duration: battle.endTime - battle.startTime,
+      })
+
+      // 添加战斗结束动作
+      this.addBattleAction(battleId, {
+        id: `end_${Date.now()}`,
+        type: 'status',
+        sourceId: 'system',
+        targetId: 'system',
+        damage: 0,
+        heal: 0,
+        success: true,
+        timestamp: Date.now(),
+        effects: [
+          {
+            type: 'status',
+            description: `战斗结束！胜利者: ${winner === 'character' ? '角色' : '敌人'}`,
+            duration: 0,
+          },
+        ],
+      })
+    }
+  }
+
+  /**
+   * 将战斗数据转换为战斗状态
    * @param {BattleData} battleData - 战斗数据
    * @returns {BattleState} 战斗状态
    */
   private convertToBattleState(battleData: BattleData): BattleState {
     return {
       battleId: battleData.battleId,
-      participants: new Map(battleData.participants),
-      actions: [...battleData.actions],
-      turnOrder: [...battleData.turnOrder],
+      participants: Array.from(battleData.participants.values()),
+      actions: battleData.actions,
+      turnOrder: battleData.turnOrder,
       currentTurn: battleData.currentTurn,
       isActive: battleData.isActive,
       startTime: battleData.startTime,
@@ -871,129 +872,49 @@ export class GameBattleSystem implements IBattleSystem {
     }
   }
 
-  /**
-   * 获取所有战斗状态
-   * @returns {BattleState[]} 所有战斗状态数组
-   */
-  public getAllBattles(): BattleState[] {
-    return Array.from(this.battles.values()).map((b) =>
-      this.convertToBattleState(b),
-    )
-  }
-
-  /**
-   * 获取所有活跃战斗状态
-   * @returns {BattleState[]} 活跃战斗状态数组
-   */
-  public getActiveBattles(): BattleState[] {
-    return Array.from(this.battles.values())
-      .filter((b) => b.isActive)
-      .map((b) => this.convertToBattleState(b))
-  }
-
-  /**
-   * 清理已完成的战斗
-   */
-  public clearCompletedBattles(): void {
-    for (const [battleId, battle] of this.battles.entries()) {
-      if (!battle.isActive) {
-        this.battles.delete(battleId)
-      }
-    }
-  }
-
-  /**
-   * 自动战斗状态管理
-   * 存储每个战斗的自动战斗状态
-   */
-  private autoBattleStates = new Map<
-    string,
-    {
-      isActive: boolean
-      intervalId: number | null
-      speed: number
-      errorCount: number
-      consecutiveFailures: number
-    }
-  >()
+  // 自动战斗相关属性和方法（保持与原有代码兼容）
+  private autoBattleStates = new Map<string, { isActive: boolean; intervalId?: Timeout }>()
 
   /**
    * 开始自动战斗
-   * 支持异常重试和状态恢复
-   * @param battleId - 战斗ID
-   * @param speed - 自动播放速度（每秒回合数）
+   * @param {string} battleId - 战斗ID
    */
-  public startAutoBattle(battleId: string, speed: number): void {
+  public startAutoBattle(battleId: string): void {
     const battle = this.battles.get(battleId)
-    if (!battle) {
-      this.battleLogger.warn(`战斗 ${battleId} 不存在，无法开始自动战斗`)
+    if (!battle || !battle.isActive) {
       return
     }
 
-    const existingState = this.autoBattleStates.get(battleId)
-    if (existingState?.isActive) {
-      this.battleLogger.warn(`战斗 ${battleId} 已经在进行自动战斗`)
-      return
-    }
+    const autoState = this.autoBattleStates.get(battleId) || { isActive: false }
+    autoState.isActive = true
+    this.autoBattleStates.set(battleId, autoState)
 
-    if (existingState && existingState.intervalId !== null) {
-      clearInterval(existingState.intervalId)
-    }
-
-    const safeSpeed = Math.max(0.5, Math.min(speed, 5))
-    const intervalMs = Math.floor(1000 / safeSpeed)
-
-    const intervalId = setInterval(() => {
-      this.executeAutoBattleTurn(battleId)
-    }, intervalMs)
-
-    this.autoBattleStates.set(battleId, {
-      isActive: true,
-      intervalId: intervalId as unknown as number,
-      speed: safeSpeed,
-      errorCount: 0,
-      consecutiveFailures: 0,
-    })
-
-    this.battleLogger.info(`战斗 ${battleId} 开始自动播放，速度: ${safeSpeed}x`)
-  }
-
-  /**
-   * 回合执行回调类型
-   */
-  public onTurnExecuted: ((battleId: string) => void) | null = null
-
-  /**
-   * 执行自动战斗回合
-   * 包含异常处理和状态恢复
-   * @param battleId - 战斗ID
-   */
-  private executeAutoBattleTurn(battleId: string): void {
-    const battle = this.battles.get(battleId)
-    const autoState = this.autoBattleStates.get(battleId)
-
-    if (!battle || !autoState || !autoState.isActive || !battle.isActive) {
-      this.stopAutoBattle(battleId)
-      return
-    }
-
-    try {
-      this.processTurnInternal(battleId)
-      autoState.consecutiveFailures = 0
-
-      if (this.onTurnExecuted) {
-        this.onTurnExecuted(battleId)
+    // 自动战斗逻辑
+    const autoBattleLoop = async () => {
+      if (!autoState.isActive) {
+        return
       }
-    } catch (error) {
-      autoState.errorCount++
-      autoState.consecutiveFailures++
-      this.battleLogger.error(`自动战斗回合执行错误:`, error)
 
-      if (autoState.consecutiveFailures >= 5) {
-        this.battleLogger.warn(`自动战斗连续失败5次，暂停自动战斗`)
+      try {
+        await this.processTurnInternal(battleId)
+        
+        // 检查战斗是否结束
+        const currentBattle = this.battles.get(battleId)
+        if (!currentBattle || !currentBattle.isActive) {
+          this.stopAutoBattle(battleId)
+          return
+        }
+
+        // 继续下一回合
+        setTimeout(autoBattleLoop, 1000)
+      } catch (error) {
+        this.battleLogger.error('自动战斗出错:', error)
         this.stopAutoBattle(battleId)
       }
     }
+
+    autoState.intervalId = setTimeout(autoBattleLoop, 1000)
+    this.battleLogger.info(`自动战斗开始: ${battleId}`)
   }
 
   /**
@@ -1002,86 +923,48 @@ export class GameBattleSystem implements IBattleSystem {
    */
   public stopAutoBattle(battleId: string): void {
     const autoState = this.autoBattleStates.get(battleId)
-    if (!autoState) {
-      return
+    if (autoState) {
+      autoState.isActive = false
+      if (autoState.intervalId) {
+        clearTimeout(autoState.intervalId)
+      }
+      this.autoBattleStates.delete(battleId)
+      this.battleLogger.info(`自动战斗停止: ${battleId}`)
     }
-
-    // 清除定时器
-    if (autoState.intervalId !== null) {
-      clearInterval(autoState.intervalId)
-    }
-
-    // 更新状态
-    autoState.isActive = false
-    autoState.intervalId = null
-
-    this.battleLogger.info(`战斗 ${battleId} 停止自动播放`)
   }
 
   /**
-   * 检查战斗是否正在进行自动战斗
-   * @param {string} battleId - 战斗ID
-   * @returns {boolean} 是否正在自动战斗
+   * 获取技能管理器实例
    */
-  public isAutoBattleActive(battleId: string): boolean {
-    const autoState = this.autoBattleStates.get(battleId)
-    return autoState?.isActive || false
+  public getSkillManager(): SkillManager {
+    return this.skillManager
   }
 
   /**
-   * 设置自动战斗速度
-   * @param {string} battleId - 战斗ID
-   * @param {number} speed - 播放速度
+   * 加载技能配置
    */
-  public setAutoBattleSpeed(battleId: string, speed: number): void {
-    const autoState = this.autoBattleStates.get(battleId)
-    if (!autoState) {
-      this.battleLogger.warn(`战斗 ${battleId} 不存在，无法设置自动战斗速度`)
-      return
-    }
+  public loadSkillConfigs(skillConfigs: any[]): void {
+    this.skillManager.loadSkillConfigs(skillConfigs)
+  }
 
-    const wasActive = autoState.isActive
-    const oldSpeed = autoState.speed
+  /**
+   * 获取伤害计算日志
+   */
+  public getDamageCalculationLogs(): any[] {
+    return this.skillManager.getDamageCalculationLogs()
+  }
 
-    // 如果当前有定时器，先清除
-    if (wasActive && autoState.intervalId !== null) {
-      clearInterval(autoState.intervalId)
-    }
+  /**
+   * 获取治疗计算日志
+   */
+  public getHealCalculationLogs(): any[] {
+    return this.skillManager.getHealCalculationLogs()
+  }
 
-    // 更新速度
-    autoState.speed = speed
-
-    // 如果之前是激活状态，重新创建定时器
-    if (wasActive) {
-      const intervalId = setInterval(() => {
-        const currentBattle = this.battles.get(battleId)
-        const currentAutoState = this.autoBattleStates.get(battleId)
-
-        // 检查状态有效性
-        if (
-          !currentBattle ||
-          !currentAutoState ||
-          !currentAutoState.isActive ||
-          !currentBattle.isActive
-        ) {
-          this.stopAutoBattle(battleId)
-          return
-        }
-
-        // 执行回合逻辑
-        this.processTurnInternal(battleId).catch((error) => {
-          this.battleLogger.error(`自动战斗时出错:`, error)
-          this.stopAutoBattle(battleId)
-        })
-      }, 1000 / speed)
-
-      autoState.intervalId = intervalId as unknown as number
-      this.battleLogger.info(
-        `战斗 ${battleId} 自动播放速度从 ${oldSpeed}x 更新为: ${speed}x`,
-      )
-    } else {
-      // 如果未激活，只更新速度值
-      autoState.speed = speed
-    }
+  /**
+   * 清空所有计算日志
+   */
+  public clearCalculationLogs(): void {
+    this.skillManager.clearCalculationLogs()
   }
 }

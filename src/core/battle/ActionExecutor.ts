@@ -1,4 +1,5 @@
 import type { BattleAction, BattleParticipant, BattleState } from '@/types/battle';
+import { SkillManager } from '@/core/skill/SkillManager';
 import { logger } from '@/utils/logger';
 
 /**
@@ -26,6 +27,8 @@ interface BattleData {
 export class ActionExecutor {
   /** 日志记录器实例，用于记录动作执行过程中的信息 */
   private logger = logger;
+  /** 技能管理器实例，用于处理技能执行 */
+  private skillManager = new SkillManager();
   /** 战斗数据存储映射，以battleId为键 */
   private battles = new Map<string, BattleData>();
   /** 参与者到战斗的映射，用于通过参与者ID快速查找所属战斗 */
@@ -192,58 +195,54 @@ export class ActionExecutor {
 
   /**
    * 处理技能动作
-   * 处理技能的能量消耗、伤害计算、治疗效果和增益施加
-   * 如果能量不足会自动降级为普通攻击
+   * 使用SkillManager处理技能执行，包括能量消耗和技能效果
    * @param action - 技能动作对象
    * @param source - 技能使用者
    * @param target - 技能目标
    */
   private processSkill(action: BattleAction, source: BattleParticipant, target: BattleParticipant): void {
-    if (action.skillId) {
-      const energyCost = this.getSkillEnergyCost(action.skillId);
-      if (energyCost > 0) {
-        const success = source.spendEnergy(energyCost);
-        if (!success) {
-          action.type = 'attack';
-          action.damage = Math.floor(Math.random() * 20) + 10;
-          action.effects.push({
-            type: 'status',
-            description: `能量不足，改为普通攻击`,
-          });
-          this.processAttack(action, source, target);
-          return;
-        }
+    if (!action.skillId) {
+      this.logger.error('技能动作缺少skillId');
+      return;
+    }
+
+    // 检查能量消耗
+    const energyCost = this.getSkillEnergyCost(action.skillId);
+    if (energyCost > 0) {
+      const success = source.spendEnergy(energyCost);
+      if (!success) {
+        // 能量不足，降级为普通攻击
+        action.type = 'attack';
+        action.damage = Math.floor(Math.random() * 20) + 10;
+        action.effects.push({
+          type: 'status',
+          description: `能量不足，改为普通攻击`,
+        });
+        this.processAttack(action, source, target);
+        return;
       }
     }
 
-    if (action.damage) {
-      const actualDamage = target.takeDamage(action.damage);
-      action.damage = actualDamage;
+    try {
+      // 使用SkillManager执行技能
+      const skillAction = this.skillManager.executeSkill(action.skillId, source, target);
+      
+      // 合并技能执行结果到当前动作
+      action.damage = skillAction.damage;
+      action.heal = skillAction.heal;
+      action.effects.push(...skillAction.effects);
+      
+      this.logger.debug(`技能执行成功: ${action.skillId}`);
+    } catch (error) {
+      this.logger.error(`技能执行失败: ${action.skillId}`, error);
+      // 技能执行失败，降级为普通攻击
+      action.type = 'attack';
+      action.damage = Math.floor(Math.random() * 20) + 10;
       action.effects.push({
-        type: 'damage',
-        value: actualDamage,
-        description: `${source.name} 使用技能 造成 ${actualDamage} 伤害`,
+        type: 'status',
+        description: `技能执行失败，改为普通攻击`,
       });
-    }
-
-    if (action.heal) {
-      const actualHeal = target.heal(action.heal);
-      action.heal = actualHeal;
-      action.effects.push({
-        type: 'heal',
-        value: actualHeal,
-        description: `${source.name} 使用技能 恢复 ${actualHeal} 生命值`,
-      });
-    }
-
-    if (action.buffId) {
-      const buffInstanceId = `${target.id}_${action.buffId}_${Date.now()}`;
-      target.addBuff(buffInstanceId);
-      action.effects.push({
-        type: 'buff',
-        buffId: action.buffId,
-        description: `${action.buffId} 施加给 ${target.name}`,
-      });
+      this.processAttack(action, source, target);
     }
   }
 

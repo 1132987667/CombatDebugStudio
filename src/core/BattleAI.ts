@@ -143,7 +143,7 @@ export class BaseBattleAI implements BattleAI {
         const skillId = this.selectSkill(participant, battleAnalysis)
         if (skillId) {
           try {
-            return this.createSkillAction(battleState, participant, skillId)
+            return this.createSkillStep(battleState, participant, skillId)
           } catch (skillError) {
             logger.error('技能执行出错:', skillError)
             return this.selectAttack(participant)
@@ -379,7 +379,7 @@ export class BaseBattleAI implements BattleAI {
     return allies.length > 0 ? allies[0].target.id : participant.id
   }
 
-  protected createSkillAction(
+  protected createSkillStep(
     battleState: BattleState,
     participant: BattleParticipant,
     skillId: string,

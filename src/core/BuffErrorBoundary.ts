@@ -1,4 +1,4 @@
-import { logger } from '@/utils/logger'
+import { logger } from '@/utils/logging'
 
 /**
  * Buff错误边界类

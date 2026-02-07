@@ -10,85 +10,39 @@
     </div>
 
     <div class="replay-controls">
-      <button 
-        class="control-btn"
-        @click="goToStart"
-        :disabled="!canReplay"
-        title="回到开始"
-      >
+      <button class="control-btn" @click="goToStart" :disabled="!canReplay" title="回到开始">
         ⏮
       </button>
-      <button 
-        class="control-btn"
-        @click="stepBack"
-        :disabled="!canStepBack"
-        title="上一步"
-      >
+      <button class="control-btn" @click="stepBack" :disabled="!canStepBack" title="上一步">
         ⏪
       </button>
-      <button 
-        class="control-btn"
-        @click="stepBackFrame"
-        :disabled="!canStepBack"
-        title="逐帧后退"
-      >
+      <button class="control-btn" @click="stepBackFrame" :disabled="!canStepBack" title="逐帧后退">
         ⏪
       </button>
-      <button 
-        class="control-btn play-btn"
-        @click="togglePlayPause"
-        :disabled="!canReplay"
-        title="播放/暂停"
-      >
+      <button class="control-btn play-btn" @click="togglePlayPause" :disabled="!canReplay" title="播放/暂停">
         {{ isPlaying ? '⏸' : '▶' }}
       </button>
-      <button 
-        class="control-btn"
-        @click="stepForwardFrame"
-        :disabled="!canStepForward"
-        title="逐帧前进"
-      >
+      <button class="control-btn" @click="stepForwardFrame" :disabled="!canStepForward" title="逐帧前进">
         ⏩
       </button>
-      <button 
-        class="control-btn"
-        @click="stepForward"
-        :disabled="!canStepForward"
-        title="下一步"
-      >
+      <button class="control-btn" @click="stepForward" :disabled="!canStepForward" title="下一步">
         ⏩
       </button>
-      <button 
-        class="control-btn"
-        @click="goToEnd"
-        :disabled="!canReplay"
-        title="跳到结束"
-      >
+      <button class="control-btn" @click="goToEnd" :disabled="!canReplay" title="跳到结束">
         ⏭
       </button>
     </div>
 
     <div class="replay-frame-controls" v-if="canReplay">
       <span class="frame-info">当前帧: {{ currentFrame }} / {{ totalFrames }}</span>
-      <input 
-        type="range" 
-        class="frame-slider"
-        :min="0"
-        :max="totalFrames - 1"
-        v-model.number="currentFrame"
-        @input="jumpToFrame"
-      />
+      <input type="range" class="frame-slider" :min="0" :max="totalFrames - 1" v-model.number="currentFrame"
+        @input="jumpToFrame" />
     </div>
 
     <div class="replay-speed">
       <span class="speed-label">速度:</span>
-      <button 
-        v-for="speed in [0.5, 1, 2, 5]" 
-        :key="speed"
-        class="speed-btn"
-        :class="{ active: replaySpeed === speed }"
-        @click="setSpeed(speed)"
-      >
+      <button v-for="speed in [0.5, 1, 2, 5]" :key="speed" class="speed-btn" :class="{ active: replaySpeed === speed }"
+        @click="setSpeed(speed)">
         {{ speed }}x
       </button>
     </div>
@@ -103,23 +57,14 @@
         </div>
       </div>
       <div class="timeline-track" ref="timelineTrack">
-        <div 
-          class="timeline-events"
-          :style="{ width: totalEvents * (20 * zoomLevel) + 'px' }"
-        >
-          <div 
-            v-for="(event, index) in currentRecording?.events" 
-            :key="event.eventId"
-            class="timeline-event"
-            :class="[
-              { active: index === currentEventIndex, 'key-event': isKeyEvent(event), 'bookmarked': isBookmarked(index) },
-              'event-type-' + event.type,
-              'event-severity-' + getEventSeverity(event)
-            ]"
+        <div class="timeline-events" :style="{ width: totalEvents * (20 * zoomLevel) + 'px' }">
+          <div v-for="(event, index) in currentRecording?.events" :key="event.eventId" class="timeline-event" :class="[
+            { active: index === currentEventIndex, 'key-event': isKeyEvent(event), 'bookmarked': isBookmarked(index) },
+            'event-type-' + event.type,
+            'event-severity-' + getEventSeverity(event)
+          ]"
             :title="`${getEventTypeLabel(event.type)} - 回合 ${event.turn}${isKeyEvent(event) ? ' (关键事件)' : ''}${isBookmarked(index) ? ' (已标记)' : ''}`"
-            @click="jumpToEvent(index)"
-            @contextmenu.prevent="toggleBookmark(index)"
-          >
+            @click="jumpToEvent(index)" @contextmenu.prevent="toggleBookmark(index)">
             <div class="event-marker"></div>
             <div v-if="isKeyEvent(event)" class="key-event-indicator">!</div>
             <div v-if="isBookmarked(index)" class="bookmark-indicator">🔖</div>
@@ -131,14 +76,8 @@
             </div>
           </div>
         </div>
-        <div 
-          class="timeline-cursor"
-          :style="{ left: currentEventIndex * (20 * zoomLevel) + 'px' }"
-        ></div>
-        <div 
-          class="timeline-frame-cursor"
-          :style="{ left: (currentFrame / totalFrames) * 100 + '%' }"
-        ></div>
+        <div class="timeline-cursor" :style="{ left: currentEventIndex * (20 * zoomLevel) + 'px' }"></div>
+        <div class="timeline-frame-cursor" :style="{ left: (currentFrame / totalFrames) * 100 + '%' }"></div>
       </div>
       <div class="timeline-labels">
         <span v-for="turn in visibleTurns" :key="turn" class="turn-label">{{ turn }}</span>
@@ -160,26 +99,15 @@
             <option value="key">关键事件</option>
             <option value="bookmarked">已标记</option>
           </select>
-          <input 
-            v-model="searchQuery" 
-            placeholder="搜索事件..." 
-            class="search-input"
-          />
+          <input v-model="searchQuery" placeholder="搜索事件..." class="search-input" />
         </div>
       </div>
       <div class="events-list">
-        <div 
-          v-for="(event, index) in filteredEvents" 
-          :key="event.eventId"
-          class="event-item"
-          :class="[
-            { active: index === currentEventIndex, 'key-event': isKeyEvent(event), 'bookmarked': isBookmarked(index) },
-            'event-type-' + event.type,
-            'event-severity-' + getEventSeverity(event)
-          ]"
-          @click="jumpToEvent(index)"
-          @contextmenu.prevent="toggleBookmark(index)"
-        >
+        <div v-for="(event, index) in filteredEvents" :key="event.eventId" class="event-item" :class="[
+          { active: index === currentEventIndex, 'key-event': isKeyEvent(event), 'bookmarked': isBookmarked(index) },
+          'event-type-' + event.type,
+          'event-severity-' + getEventSeverity(event)
+        ]" @click="jumpToEvent(index)" @contextmenu.prevent="toggleBookmark(index)">
           <div class="event-index">{{ index + 1 }}</div>
           <div class="event-type">
             {{ getEventTypeLabel(event.type) }}
@@ -190,18 +118,11 @@
           <div class="event-time">{{ formatTime(event.timestamp) }}</div>
           <div class="event-details">{{ getEventDetails(event) }}</div>
           <div class="event-actions">
-            <button 
-              class="action-icon" 
-              @click.stop="toggleBookmark(index)"
-              :title="isBookmarked(index) ? '取消标记' : '标记事件'"
-            >
+            <button class="action-icon" @click.stop="toggleBookmark(index)"
+              :title="isBookmarked(index) ? '取消标记' : '标记事件'">
               {{ isBookmarked(index) ? '🔖' : '📌' }}
             </button>
-            <button 
-              class="action-icon" 
-              @click.stop="inspectEvent(event)"
-              title="详细查看"
-            >
+            <button class="action-icon" @click.stop="inspectEvent(event)" title="详细查看">
               🔍
             </button>
           </div>
@@ -343,9 +264,9 @@ const visibleTurns = computed(() => {
 
 const filteredEvents = computed(() => {
   if (!currentRecording.value) return [];
-  
+
   let events = currentRecording.value.events;
-  
+
   // 按类型过滤
   if (filterType.value !== 'all') {
     if (filterType.value === 'key') {
@@ -356,24 +277,24 @@ const filteredEvents = computed(() => {
       events = events.filter(event => event.type === filterType.value);
     }
   }
-  
+
   // 搜索过滤
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase();
-    events = events.filter(event => 
+    events = events.filter(event =>
       event.type.toLowerCase().includes(query) ||
       getEventDetails(event).toLowerCase().includes(query) ||
       event.turn.toString().includes(query)
     );
   }
-  
+
   return events;
 });
 
 function loadRecording() {
   // 这里应该显示一个加载对话框，让用户选择要加载的记录
   console.log('加载记录');
-  
+
   // 模拟加载一个记录
   if (props.battleManager) {
     const savedList = props.battleManager.getSavedBattleRecordingsList();
@@ -410,7 +331,7 @@ function deleteCurrentRecording() {
 
 function togglePlayPause() {
   if (!canReplay.value) return;
-  
+
   if (isPlaying.value) {
     pauseReplay();
   } else {
@@ -452,7 +373,7 @@ function playNextEvent() {
 
 function stepBack() {
   if (!canStepBack.value) return;
-  
+
   currentEventIndex.value--;
   // 更新当前帧到事件的开始帧
   currentFrame.value = currentEventIndex.value * 10;
@@ -461,7 +382,7 @@ function stepBack() {
 
 function stepForward() {
   if (!canStepForward.value) return;
-  
+
   currentEventIndex.value++;
   // 更新当前帧到事件的开始帧
   currentFrame.value = currentEventIndex.value * 10;
@@ -470,7 +391,7 @@ function stepForward() {
 
 function goToStart() {
   if (!canReplay.value) return;
-  
+
   currentEventIndex.value = 0;
   currentFrame.value = 0;
   emitCurrentEvent();
@@ -478,7 +399,7 @@ function goToStart() {
 
 function goToEnd() {
   if (!canReplay.value) return;
-  
+
   currentEventIndex.value = totalEvents.value - 1;
   currentFrame.value = totalFrames.value - 1;
   emitCurrentEvent();
@@ -486,7 +407,7 @@ function goToEnd() {
 
 function jumpToEvent(index: number) {
   if (!currentRecording.value || index < 0 || index >= totalEvents.value) return;
-  
+
   currentEventIndex.value = index;
   // 更新当前帧到事件的开始帧
   currentFrame.value = index * 10;
@@ -495,7 +416,7 @@ function jumpToEvent(index: number) {
 
 function stepBackFrame() {
   if (!canReplay.value || currentFrame.value <= 0) return;
-  
+
   currentFrame.value--;
   // 更新事件索引
   currentEventIndex.value = Math.floor(currentFrame.value / 10);
@@ -504,7 +425,7 @@ function stepBackFrame() {
 
 function stepForwardFrame() {
   if (!canReplay.value || currentFrame.value >= totalFrames.value - 1) return;
-  
+
   currentFrame.value++;
   // 更新事件索引
   currentEventIndex.value = Math.floor(currentFrame.value / 10);
@@ -513,7 +434,7 @@ function stepForwardFrame() {
 
 function jumpToFrame() {
   if (!currentRecording.value) return;
-  
+
   // 确保帧索引在有效范围内
   currentFrame.value = Math.max(0, Math.min(currentFrame.value, totalFrames.value - 1));
   // 更新事件索引
@@ -527,7 +448,7 @@ function setSpeed(speed: number) {
 
 function emitCurrentEvent() {
   if (!currentRecording.value || currentEventIndex.value >= currentRecording.value.events.length) return;
-  
+
   const event = currentRecording.value.events[currentEventIndex.value];
   emit('replay-event', event, currentEventIndex.value);
 }
@@ -603,17 +524,17 @@ function getEventStats(): string {
 
 function exportDebugData(): void {
   if (!currentRecording.value) return;
-  
+
   const debugData = {
     recording: currentRecording.value,
     currentEventIndex: currentEventIndex.value,
     bookmarkedEvents: Array.from(bookmarkedEvents.value),
     exportTime: new Date().toISOString()
   };
-  
+
   const dataStr = JSON.stringify(debugData, null, 2);
   const dataBlob = new Blob([dataStr], { type: 'application/json' });
-  
+
   const link = document.createElement('a');
   link.href = URL.createObjectURL(dataBlob);
   link.download = `battle_debug_${currentRecording.value.battleId}_${Date.now()}.json`;
@@ -653,27 +574,27 @@ function getEventDetails(event: BattleEvent): string {
 function isKeyEvent(event: BattleEvent): boolean {
   // 定义关键事件类型
   const keyEventTypes = ['battle_start', 'battle_end'];
-  
+
   // 检查是否是关键事件类型
   if (keyEventTypes.includes(event.type)) {
     return true;
   }
-  
+
   // 检查是否是高伤害攻击
   if (event.type === 'action' && event.data.action.damage && event.data.action.damage > 500) {
     return true;
   }
-  
+
   // 检查是否是技能释放
   if (event.type === 'action' && event.data.action.type === 'skill') {
     return true;
   }
-  
+
   // 检查是否是状态变化
   if (event.type === 'state_change') {
     return true;
   }
-  
+
   return false;
 }
 
@@ -685,6 +606,7 @@ function cleanup() {
 }
 
 onMounted(() => {
+  console.log('BattleReplay 组件挂载');
   // 初始化时加载最新的记录
   loadRecording();
 });

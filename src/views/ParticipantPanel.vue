@@ -4,7 +4,8 @@
       <div class="section-header">
         <span>参战管理</span>
         <div class="expand-collapse-controls">
-          <button class="btn-small" @click="collapseAllScenes" :disabled="!hasExpandedScenes">
+          <button class="btn-small" @click="clearParticipants"
+            :disabled="battleCharacters.length === 0 && enemyParty.length === 0">
             <span class="icon">−</span>清空
           </button>
         </div>
@@ -176,6 +177,7 @@ interface Emits {
   (e: 'addEnemy', enemy: Enemy, side: 'our' | 'enemy'): void;
   (e: 'addCharacter'): void;
   (e: 'moveCharacter', direction: number): void;
+  (e: 'clearParticipants'): void;
 }
 
 const props = defineProps<Props>();
@@ -282,6 +284,10 @@ const addCharacter = () => {
 
 const moveCharacter = (direction: number) => {
   emit('moveCharacter', direction);
+};
+
+const clearParticipants = () => {
+  emit('clearParticipants');
 };
 </script>
 

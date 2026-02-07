@@ -1,5 +1,5 @@
 import { BuffScriptRegistry } from './BuffScriptRegistry'
-import { logger } from '@/utils/logger'
+import { logger } from '@/utils/logging'
 import { buffScripts, type BuffScriptType } from '@/scripts'
 
 /**

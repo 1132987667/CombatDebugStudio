@@ -15,7 +15,7 @@ export * from './types/enemy'
 export * from './types/battle'
 
 // 工具函数导出
-export * from './utils/logger'
+export * from './utils/logging'
 export * from './utils/perf-monitor'
 export * from './utils/object-pool'
 export * from './utils/schema-validator'

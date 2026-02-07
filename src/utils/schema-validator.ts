@@ -1,4 +1,4 @@
-import { logger } from './logger'
+import { logger } from '@/utils/logging'
 
 interface ValidationError {
   field: string

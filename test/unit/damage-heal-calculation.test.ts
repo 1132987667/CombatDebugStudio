@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { DamageCalculator } from '@/core/skill/DamageCalculator'
-import { HealCalculator } from '@/core/skill/HealCalculator'
+import {
+  DamageCalculator,
+  HealCalculator,
+} from '@/framework/adapters/LegacyAdapters'
 import type { ExtendedSkillStep } from '@/types/skill'
 
 /**
@@ -82,7 +84,10 @@ class MockParticipant {
   heal(amount: number): number {
     const healAmount = Math.max(0, amount)
     const originalHealth = this.currentHealth
-    this.currentHealth = Math.min(this.currentHealth + healAmount, this.maxHealth)
+    this.currentHealth = Math.min(
+      this.currentHealth + healAmount,
+      this.maxHealth,
+    )
     return this.currentHealth - originalHealth
   }
 
@@ -107,6 +112,13 @@ class MockParticipant {
   isFullHealth(): boolean {
     return this.currentHealth >= this.maxHealth
   }
+
+  /**
+   * 获取属性值（兼容新接口）
+   */
+  getAttributeValue(attribute: string): number {
+    return this.getAttribute(attribute)
+  }
 }
 
 describe('伤害/治疗计算系统单元测试', () => {
@@ -118,7 +130,7 @@ describe('伤害/治疗计算系统单元测试', () => {
   beforeEach(() => {
     damageCalculator = new DamageCalculator()
     healCalculator = new HealCalculator()
-    
+
     // 创建源参与者和目标参与者
     source = new MockParticipant({
       id: 'source_1',
@@ -127,7 +139,7 @@ describe('伤害/治疗计算系统单元测试', () => {
       currentHealth: 100,
       maxHealth: 100,
       currentEnergy: 50,
-      maxEnergy: 100
+      maxEnergy: 100,
     })
 
     target = new MockParticipant({
@@ -137,7 +149,7 @@ describe('伤害/治疗计算系统单元测试', () => {
       currentHealth: 80,
       maxHealth: 100,
       currentEnergy: 30,
-      maxEnergy: 100
+      maxEnergy: 100,
     })
   })
 
@@ -151,12 +163,12 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 50,
           extraValues: [],
-          attackType: 'normal'
-        }
+          attackType: 'normal',
+        },
       }
 
       const damage = damageCalculator.calculateDamage(step, source, target)
-      
+
       // 基础伤害应该等于基础值（考虑防御修正）
       // 目标防御力: 8 * 2 = 16, 魔法防御力: 8 * 1 = 8
       // 综合防御效果: (16 + 8) * 0.005 = 0.12
@@ -174,14 +186,14 @@ describe('伤害/治疗计算系统单元测试', () => {
           baseValue: 30,
           extraValues: [
             { attribute: 'strength', ratio: 0.5 },
-            { attribute: 'magicPower', ratio: 0.3 }
+            { attribute: 'magicPower', ratio: 0.3 },
           ],
-          attackType: 'normal'
-        }
+          attackType: 'normal',
+        },
       }
 
       const damage = damageCalculator.calculateDamage(step, source, target)
-      
+
       // 源角色的力量属性: 10 * 4 = 40, 魔法力属性: 10 * 3 = 30
       // 基础伤害 = 30 + (40 * 0.5) + (30 * 0.3) = 30 + 20 + 9 = 59
       // 目标防御力: 8 * 2 = 16, 魔法防御力: 8 * 1 = 8
@@ -199,15 +211,15 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 40,
           extraValues: [],
-          attackType: 'normal'
+          attackType: 'normal',
         },
         targetModifiers: {
-          'DEF': 0.1 // 目标防御力修正系数
-        }
+          DEF: 0.1, // 目标防御力修正系数
+        },
       }
 
       const damage = damageCalculator.calculateDamage(step, source, target)
-      
+
       // 目标防御力: 8 * 2 = 16
       // 防御修正效果: 16 * 0.1 / 100 = 0.016
       // 基础防御效果: (16 + 8) * 0.005 = 0.12
@@ -224,16 +236,16 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 60,
           extraValues: [],
-          attackType: 'normal'
+          attackType: 'normal',
         },
         criticalConfig: {
           rate: 1.0, // 100%暴击率用于测试
-          multiplier: 1.5 // 1.5倍暴击伤害
-        }
+          multiplier: 1.5, // 1.5倍暴击伤害
+        },
       }
 
       const damage = damageCalculator.calculateDamage(step, source, target)
-      
+
       // 基础伤害60，考虑防御效果: (16 + 8) * 0.005 = 0.12
       // 基础伤害 = 60 * (1 - 0.12) = 52.8, 取整后为52
       // 暴击后伤害 = 52 * 1.5 = 78, 取整后为78
@@ -250,12 +262,12 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 80,
           extraValues: [],
-          attackType: 'magic'
-        }
+          attackType: 'magic',
+        },
       }
 
       const damage = damageCalculator.calculateDamage(step, source, target)
-      
+
       // 魔法攻击会受到魔法防御影响
       // 目标魔法防御力: 8 * 1 = 8
       // 魔法防御效果: 8 * 0.01 = 0.08 (假设防御系数为0.01)
@@ -272,12 +284,12 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: -10, // 负的基础值
           extraValues: [],
-          attackType: 'normal'
-        }
+          attackType: 'normal',
+        },
       }
 
       const damage = damageCalculator.calculateDamage(step, source, target)
-      
+
       // 伤害值应该被限制为非负
       expect(damage).toBe(0)
     })
@@ -293,12 +305,12 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 40,
           extraValues: [],
-          isSingleTurn: true
-        }
+          isSingleTurn: true,
+        },
       }
 
       const heal = healCalculator.calculateHeal(step, source, target)
-      
+
       // 基础治疗应该等于基础值
       // 但实际测试显示为20，说明计算器有bug需要修复
       // 暂时跳过此测试，标记为需要修复
@@ -315,14 +327,14 @@ describe('伤害/治疗计算系统单元测试', () => {
           baseValue: 25,
           extraValues: [
             { attribute: 'wisdom', ratio: 0.8 },
-            { attribute: 'magicPower', ratio: 0.4 }
+            { attribute: 'magicPower', ratio: 0.4 },
           ],
-          isSingleTurn: false
-        }
+          isSingleTurn: false,
+        },
       }
 
       const heal = healCalculator.calculateHeal(step, source, target)
-      
+
       // 源角色的智慧属性: 10 * 2 = 20, 魔法力属性: 10 * 3 = 30
       // 治疗 = 25 + (20 * 0.8) + (30 * 0.4) = 25 + 16 + 12 = 53
       // 实际结果为44，说明属性值计算有误，需要调整预期值
@@ -342,12 +354,12 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 50,
           extraValues: [],
-          isSingleTurn: true
-        }
+          isSingleTurn: true,
+        },
       }
 
       const heal = healCalculator.calculateHeal(step, source, target)
-      
+
       // 最大可治疗量 = 100 - 95 = 5
       // 治疗值应该被限制为5
       expect(heal).toBe(5)
@@ -365,12 +377,12 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 60,
           extraValues: [],
-          isSingleTurn: false
-        }
+          isSingleTurn: false,
+        },
       }
 
       const heal = healCalculator.calculateHeal(step, source, target)
-      
+
       // 假设负面状态减少20%治疗效果
       // 治疗 = 60 * (1 - 0.2) = 48
       expect(heal).toBe(48)
@@ -385,12 +397,12 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: -15, // 负的基础值
           extraValues: [],
-          isSingleTurn: true
-        }
+          isSingleTurn: true,
+        },
       }
 
       const heal = healCalculator.calculateHeal(step, source, target)
-      
+
       // 治疗值应该被限制为非负
       expect(heal).toBe(0)
     })
@@ -404,12 +416,12 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 35,
           extraValues: [],
-          isSingleTurn: true
-        }
+          isSingleTurn: true,
+        },
       }
 
       const isSingleTurn = healCalculator.isSingleTurnEffect(step)
-      
+
       // 应该识别为单回合效果
       expect(isSingleTurn).toBe(true)
     })
@@ -424,19 +436,17 @@ describe('伤害/治疗计算系统单元测试', () => {
         scope: 'single',
         calculation: {
           baseValue: 45,
-          extraValues: [
-            { attribute: 'strength', ratio: 0.6 }
-          ],
-          attackType: 'normal'
-        }
+          extraValues: [{ attribute: 'strength', ratio: 0.6 }],
+          attackType: 'normal',
+        },
       }
 
       const damage = damageCalculator.calculateDamage(step, source, target)
       const logs = damageCalculator.getCalculationLogs()
-      
+
       expect(damage).toBeGreaterThan(0)
       expect(logs).toHaveLength(1)
-      
+
       const log = logs[0]
       expect(log.stepType).toBe('DAMAGE')
       expect(log.sourceId).toBe(source.id)
@@ -453,19 +463,17 @@ describe('伤害/治疗计算系统单元测试', () => {
         scope: 'single',
         calculation: {
           baseValue: 30,
-          extraValues: [
-            { attribute: 'wisdom', ratio: 0.7 }
-          ],
-          isSingleTurn: false
-        }
+          extraValues: [{ attribute: 'wisdom', ratio: 0.7 }],
+          isSingleTurn: false,
+        },
       }
 
       const heal = healCalculator.calculateHeal(step, source, target)
       const logs = healCalculator.getCalculationLogs()
-      
+
       expect(heal).toBeGreaterThan(0)
       expect(logs).toHaveLength(1)
-      
+
       const log = logs[0]
       expect(log.stepType).toBe('HEAL')
       expect(log.sourceId).toBe(source.id)
@@ -483,13 +491,13 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 20,
           extraValues: [],
-          attackType: 'normal'
-        }
+          attackType: 'normal',
+        },
       }
 
       damageCalculator.calculateDamage(step, source, target)
       expect(damageCalculator.getCalculationLogs()).toHaveLength(1)
-      
+
       damageCalculator.clearCalculationLogs()
       expect(damageCalculator.getCalculationLogs()).toHaveLength(0)
     })
@@ -501,12 +509,12 @@ describe('伤害/治疗计算系统单元测试', () => {
         id: 'no_calc_step',
         type: 'DAMAGE',
         target: 'enemy',
-        scope: 'single'
+        scope: 'single',
         // 缺少calculation配置
       }
 
       const damage = damageCalculator.calculateDamage(step, source, target)
-      
+
       // 缺少计算配置应该返回0
       expect(damage).toBe(0)
     })
@@ -518,7 +526,7 @@ describe('伤害/治疗计算系统单元测试', () => {
         name: '极端属性源',
         level: 1, // 极低等级
         currentHealth: 10,
-        maxHealth: 10
+        maxHealth: 10,
       })
 
       const extremeTarget = new MockParticipant({
@@ -526,7 +534,7 @@ describe('伤害/治疗计算系统单元测试', () => {
         name: '极端属性目标',
         level: 100, // 极高等级
         currentHealth: 1000,
-        maxHealth: 1000
+        maxHealth: 1000,
       })
 
       const step: ExtendedSkillStep = {
@@ -537,14 +545,18 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 1000,
           extraValues: [
-            { attribute: 'strength', ratio: 10 } // 极高比率
+            { attribute: 'strength', ratio: 10 }, // 极高比率
           ],
-          attackType: 'normal'
-        }
+          attackType: 'normal',
+        },
       }
 
-      const damage = damageCalculator.calculateDamage(step, extremeSource, extremeTarget)
-      
+      const damage = damageCalculator.calculateDamage(
+        step,
+        extremeSource,
+        extremeTarget,
+      )
+
       // 应该能够正确处理极端值，返回非负结果
       expect(damage).toBeGreaterThanOrEqual(0)
     })
@@ -561,12 +573,12 @@ describe('伤害/治疗计算系统单元测试', () => {
         calculation: {
           baseValue: 50,
           extraValues: [],
-          isSingleTurn: true
-        }
+          isSingleTurn: true,
+        },
       }
 
       const heal = healCalculator.calculateHeal(step, source, target)
-      
+
       // 满血目标应该无法接受治疗
       expect(heal).toBe(0)
     })

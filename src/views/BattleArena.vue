@@ -13,7 +13,8 @@
       <!-- 左侧：参战角色配置 -->
       <ParticipantPanel :battle-characters="battleCharacters" :enemy-party="enemyParty"
         :selected-character-id="selectedCharacterId" @update:selected-character-id="selectCharacter"
-        @add-enemy="addEnemyToBattle" @add-character="addCharacter" @move-character="moveCharacter" />
+        @add-enemy="addEnemyToBattle" @add-character="addCharacter" @move-character="moveCharacter"
+        @clear-participants="clearParticipants" />
 
       <!-- 中间：战斗战场和日志 -->
       <BattleField ref="battleFieldRef" :battle-characters="battleCharacters" :enemy-party="enemyParty"
@@ -106,7 +107,7 @@
       @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange" />
 
     <!-- 快捷键提示面板 -->
-    <KeybindHintPanel ref="keybindHintPanelRef" />
+    <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
 
     <!-- 新手引导 -->
     <!-- <NewbieGuide /> -->
@@ -123,21 +124,19 @@ import enemiesData from "@configs/enemies/enemies.json";
 import scenesData from "@configs/scenes/scenes.json";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import skillsData from "@configs/skills/skills.json";
-import Dialog from "../components/Dialog.vue";
+import Dialog from "@/components/Dialog.vue";
 import ParticipantPanel from "./ParticipantPanel.vue";
 import BattleField from "./BattleField.vue";
-import BattleLog from "./BattleLog.vue";
 import DebugPanel from "./DebugPanel.vue";
 import ControlBar from "./ControlBar.vue";
 import BattleReplay from "./BattleReplay.vue";
 import KeybindHintPanel from "./KeybindHintPanel.vue";
 import NewbieGuide from "./NewbieGuide.vue";
-import Notification from "../components/Notification.vue";
+import Notification from "@/components/Notification.vue";
 import { keybindManager } from "@/core/input/KeybindManager";
 import { BattleSystemFactory } from "@/core/battle/BattleSystemFactory";
 import type { IBattleSystem } from "@/core/battle/interfaces";
-import { createBattleLogHTML } from "@/utils/BattleLogFormatter";
-import type { BattleLogEntry, LogFilters } from '@/types/battle-log';
+import { BattleLogManager } from '@/utils/logging'
 
 // 通知组件引用
 const notification = ref<Notification>(null);
@@ -200,11 +199,38 @@ interface InjectableStatus {
   isPositive: boolean;
 }
 
-const currentTurn = ref(1);
+/**
+ * 当前回合数（从battleSystem同步）
+ */
+const currentTurn = computed(() => {
+  if (!currentBattleId.value || !battleSystem.value) return 1;
+  const battleState = battleSystem.value.getBattleState(currentBattleId.value);
+  return battleState ? battleState.currentTurn + 1 : 1; // 战斗系统从0开始计数
+});
+
+/**
+ * 最大回合数（默认值）
+ */
 const maxTurns = ref(999);
+
+/**
+ * 是否暂停（界面可控制状态）
+ */
 const isPaused = ref(true);
+
+/**
+ * 是否自动播放（界面可控制状态）
+ */
 const isAutoPlaying = ref(false);
-const isBattleActive = ref(false); // 战斗是否正在进行
+
+/**
+ * 战斗是否正在进行（从battleSystem同步）
+ */
+const isBattleActive = computed(() => {
+  if (!currentBattleId.value || !battleSystem.value) return false;
+  const battleState = battleSystem.value.getBattleState(currentBattleId.value);
+  return battleState ? battleState.isActive : false;
+});
 const selectedCharacterId = ref("char_1");
 const selectedScene = ref("");
 const sceneName = ref("");
@@ -267,6 +293,11 @@ onMounted(() => {
   battleSystem.value = BattleSystemFactory.createBattleSystem();
 
   // 初始化快捷键系统
+  // initKeybindManager();
+});
+
+function initKeybindManager() {
+  // 初始化快捷键系统
   keybindManager.startListening();
 
   // 注册快捷键处理函数
@@ -289,17 +320,17 @@ onMounted(() => {
     // 进入调试模式
     console.log('进入调试模式');
   });
-});
+}
 
 // 监听自动播放速度变化，同步到战斗引擎
 watch(autoSpeed, (newSpeed) => {
   if (currentBattleId.value && battleSystem.value) {
     try {
       battleSystem.value.setAutoBattleSpeed(currentBattleId.value, newSpeed);
-      addLog("系统", "", "", "", `自动播放速度更新为: ${newSpeed}x`, "info");
+      logManager.addSystemLog(`自动播放速度更新为: ${newSpeed}x`);
     } catch (error) {
       console.error("设置自动战斗速度失败:", error);
-      addLog("系统", "", "", "", `设置自动战斗速度失败: ${error}`, "error");
+      logManager.addErrorLog(`设置自动战斗速度失败: ${error}`);
     }
   }
 });
@@ -321,7 +352,7 @@ watch(isAutoPlaying, (newValue) => {
   } catch (error) {
     console.error("切换自动战斗状态失败:", error);
     isAutoPlaying.value = !newValue;
-    addLog("系统", "", "", "", `自动战斗切换失败: ${error}`, "error");
+    logManager.addErrorLog(`自动战斗切换失败: ${error}`);
   }
 });
 
@@ -331,6 +362,17 @@ watch(
   (newBattleId) => {
     if (newBattleId) {
       syncBattleState();
+    }
+  }
+);
+
+// 监听battleSystem状态变化，自动同步界面状态
+watch(
+  () => isBattleActive.value,
+  (newIsActive) => {
+    if (!newIsActive && currentBattleId.value) {
+      // 战斗已结束，同步界面状态
+      syncUIStateWithBattleSystem();
     }
   }
 );
@@ -399,20 +441,18 @@ const enemyParty = reactive<BattleCharacter[]>(
   }))
 );
 
-const battleLogs = reactive<BattleLogEntry[]>([]);
+// 创建日志管理器实例
+const logManager = new BattleLogManager({ maxLogs: 100 });
+
+// 提供响应式接口
+const battleLogs = computed(() => logManager.getFilteredLogs());
+const logFilters = computed(() => logManager.getFilters());
 
 const rules = reactive({
   speedFirst: true,
   fixedTurns: false,
   critEnabled: true,
   dodgeEnabled: false,
-});
-
-const logFilters = reactive({
-  damage: true,
-  status: true,
-  crit: true,
-  heal: false,
 });
 
 const savedScenes = ref(["测试_灼烧叠加", "测试_暴击率", "测试_群体治疗"]);
@@ -514,7 +554,7 @@ watch(
 watch(
   () => rules.critEnabled,
   (val) => {
-    addLog("系统", "", "", "", `暴击率 ${val ? "已启用" : "已禁用"}`, "info");
+    logManager.addSystemLog(`暴击率 ${val ? "已启用" : "已禁用"}`);
   }
 );
 
@@ -597,33 +637,14 @@ const addCharacter = () => {
   });
 };
 
-const getStatBonus = (stat: string) => {
-  const char = selectedCharMonitor.value;
-  if (!char) return 0;
-  const bonuses = char.buffs?.filter((b) => !b.isPositive) || [];
-  if (stat === "attack") return bonuses.length * 10;
-  if (stat === "defense") return bonuses.length * 5;
-  return 0;
-};
-
-const addLog = (
-  turn: string,
-  source: string,
-  action: string,
-  target: string,
-  result: string,
-  level: string = "info",
-  htmlResult?: string
-) => {
-  battleLogs.unshift({ turn, source, action, target, result, level, htmlResult });
-  if (battleLogs.length > 100) battleLogs.pop();
-};
+// 使用日志管理器的便捷方法替换原有的addLog
+// 原有的addLog函数已被日志管理器替代
 
 // 子组件事件处理方法
 const endTurn = () => {
   // 结束当前回合的逻辑
   if (currentActorId.value) {
-    addLog(currentTurn.value.toString(), "系统", "结束回合", currentActor.value?.name || "", "回合结束", "info");
+    logManager.addActionLog("系统", "结束回合", currentActor.value?.name || "", "回合结束");
     currentActorId.value = null;
   }
 };
@@ -631,7 +652,7 @@ const endTurn = () => {
 const executeSkill = (skillName: string) => {
   if (!skillName) return;
   if (currentActor.value) {
-    addLog(currentTurn.value.toString(), currentActor.value.name, "使用技能", "", skillName, "info");
+    logManager.addActionLog(currentActor.value.name, "使用技能", "", skillName);
   }
 };
 
@@ -646,7 +667,7 @@ const addStatus = (status: { name: string; turns: number }) => {
       remainingTurns: status.turns,
       isPositive: true
     });
-    addLog(currentTurn.value.toString(), "系统", "添加状态", selectedChar.name, `${status.name} (${status.turns}回合)`, "status");
+    logManager.addActionLog("系统", "添加状态", selectedChar.name, `${status.name} (${status.turns}回合)`);
   }
 };
 
@@ -656,7 +677,7 @@ const adjustStats = (stats: { hp: number; mp: number }) => {
   if (selectedChar) {
     selectedChar.currentHp = Math.max(0, Math.min(selectedChar.maxHp, selectedChar.currentHp + stats.hp));
     selectedChar.currentMp = Math.max(0, Math.min(selectedChar.maxMp, selectedChar.currentMp + stats.mp));
-    addLog(currentTurn.value.toString(), "系统", "调整属性", selectedChar.name, `HP:${stats.hp}, MP:${stats.mp}`, "info");
+    logManager.addActionLog("系统", "调整属性", selectedChar.name, `HP:${stats.hp}, MP:${stats.mp}`);
   }
 };
 
@@ -665,7 +686,7 @@ const clearStatuses = () => {
     enemyParty.find(e => e.id === selectedCharacterId.value);
   if (selectedChar) {
     selectedChar.buffs = [];
-    addLog(currentTurn.value.toString(), "系统", "清除状态", selectedChar.name, "所有状态已清除", "status");
+    logManager.addActionLog("系统", "清除状态", selectedChar.name, "所有状态已清除");
   }
 };
 
@@ -680,7 +701,7 @@ const exportState = () => {
   const json = JSON.stringify(state, null, 2);
   localStorage.setItem('battleState', json);
   lastExportTime.value = new Date().toLocaleString();
-  addLog(currentTurn.value.toString(), "系统", "导出状态", "", "战斗状态已导出", "info");
+  logManager.addSystemLog("战斗状态已导出");
 };
 
 const importState = () => {
@@ -689,9 +710,9 @@ const importState = () => {
     try {
       const state = JSON.parse(savedState);
       // 这里需要实现导入逻辑
-      addLog(currentTurn.value.toString(), "系统", "导入状态", "", "战斗状态已导入", "info");
+      logManager.addSystemLog("战斗状态已导入");
     } catch (e) {
-      addLog(currentTurn.value.toString(), "系统", "导入状态", "", "导入失败", "error");
+      logManager.addErrorLog("导入失败");
     }
   }
 };
@@ -709,20 +730,20 @@ const reloadExport = () => {
 
 const locateException = () => {
   // 异常定位逻辑
-  addLog(currentTurn.value.toString(), "系统", "定位异常", "", "开始异常检测", "info");
+  logManager.addSystemLog("开始异常检测");
 };
 
 const saveScene = () => {
   if (sceneName.value) {
     savedScenes.value.push(sceneName.value);
-    addLog(currentTurn.value.toString(), "系统", "保存场景", "", sceneName.value, "info");
+    logManager.addSystemLog(`保存场景: ${sceneName.value}`);
     sceneName.value = "";
   }
 };
 
 const loadScene = () => {
   if (selectedScene.value) {
-    addLog(currentTurn.value.toString(), "系统", "加载场景", "", selectedScene.value, "info");
+    logManager.addSystemLog(`加载场景: ${selectedScene.value}`);
   }
 };
 
@@ -731,32 +752,41 @@ const deleteScene = () => {
     const index = savedScenes.value.indexOf(selectedScene.value);
     if (index > -1) {
       savedScenes.value.splice(index, 1);
-      addLog(currentTurn.value.toString(), "系统", "删除场景", "", selectedScene.value, "info");
+      logManager.addSystemLog(`删除场景: ${selectedScene.value}`);
       selectedScene.value = "";
     }
   }
 };
 
+const clearParticipants = () => {
+  // 清空所有参与者
+  battleCharacters.length = 0;
+  enemyParty.length = 0;
+  selectedCharacterId.value = null;
+  selectedCharMonitor.value = null;
+  logManager.addSystemLog("所有参战角色已清空");
+};
+
 const addCustomStatus = () => {
   // 添加自定义状态逻辑
-  addLog(currentTurn.value.toString(), "系统", "添加自定义状态", "", "自定义状态已添加", "status");
+  logManager.addSystemLog("自定义状态已添加");
 };
 
 const clearInjectableStatuses = () => {
   injectableStatuses.forEach(status => {
     status.active = false;
   });
-  addLog(currentTurn.value.toString(), "系统", "清空状态", "", "所有可注入状态已清空", "status");
+  logManager.addSystemLog("所有可注入状态已清空");
 };
 
 const exitTool = () => {
   // 退出工具逻辑
-  addLog(currentTurn.value.toString(), "系统", "退出工具", "", "战斗测试工具已退出", "info");
+  logManager.addSystemLog("战斗测试工具已退出");
 };
 
 const showHelp = () => {
   // 显示帮助逻辑
-  addLog(currentTurn.value.toString(), "系统", "显示帮助", "", "帮助文档已打开", "info");
+  logManager.addSystemLog("帮助文档已打开");
 };
 
 const handleShowDamage = (characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) => {
@@ -855,7 +885,7 @@ const togglePause = () => {
     // 如果正在自动播放，先停止自动播放
     battleSystem.value?.stopAutoBattle(currentBattleId.value);
     isAutoPlaying.value = false;
-    addLog("系统", "", "", "", "停止自动战斗", "info");
+    logManager.addSystemLog("停止自动战斗");
   }
   isPaused.value = !isPaused.value;
 };
@@ -876,7 +906,7 @@ const singleStep = async () => {
     syncBattleState();
   } catch (error) {
     console.error("执行回合时出错:", error);
-    addLog("系统", "", "", "", `执行回合时出错: ${error}`, "error");
+    logManager.addErrorLog(`执行回合时出错: ${error}`);
     isPaused.value = true;
   }
 };
@@ -892,14 +922,14 @@ const toggleAutoPlay = () => {
     battleSystem.value?.stopAutoBattle(currentBattleId.value!);
     isAutoPlaying.value = false;
     isPaused.value = true;
-    addLog("系统", "", "", "", "停止自动战斗", "info");
+    logManager.addSystemLog("停止自动战斗");
   } else {
     // 开始自动播放 - 使用战斗引擎API
     battleSystem.value?.startAutoBattle(currentBattleId.value!, autoSpeed.value);
     isAutoPlaying.value = true;
     isPaused.value = false;
     syncBattleState();
-    addLog("系统", "", "", "", "开始自动战斗", "info");
+    logManager.addSystemLog("开始自动战斗");
   }
 };
 
@@ -913,7 +943,7 @@ const handleBattleSpeedChange = (speed: number) => {
     battleSystem.value.setAutoBattleSpeed(currentBattleId.value, speed);
   }
 
-  addLog("系统", "", "", "", `战斗速度已调整为: ${speed}倍`, "info");
+  logManager.addSystemLog(`战斗速度已调整为: ${speed}倍`);
 };
 
 const stepBack = () => {
@@ -922,6 +952,7 @@ const stepBack = () => {
   }
 };
 
+// 开始战斗
 const startBattle = () => {
   // 获取启用的角色和敌人的详细信息
   const enabledCharacters = battleCharacters.filter((c) => c.enabled);
@@ -938,79 +969,101 @@ const startBattle = () => {
     return;
   }
 
-  // 构建参与者信息数组
+  /**
+   * 构建参与者信息数组
+   * 将启用的角色和敌人信息转换为战斗系统所需的格式
+   * @returns {Array} 包含所有参战者信息的数组
+   */
   const participantsInfo = [
-    // 角色
+    // 角色信息映射
     ...enabledCharacters.map((char) => ({
-      id: char.id,
-      name: char.name,
-      type: 'character' as const,
-      maxHealth: char.maxHp,
-      currentHealth: char.currentHp,
-      maxEnergy: char.maxEnergy,
-      currentEnergy: char.currentEnergy
+      id: char.id,                    // 角色唯一标识符
+      name: char.name,                // 角色名称
+      type: 'character' as const,     // 参与者类型：角色
+      maxHealth: char.maxHp,          // 最大生命值
+      currentHealth: char.currentHp,  // 当前生命值
+      maxEnergy: char.maxEnergy,      // 最大能量值
+      currentEnergy: char.currentEnergy // 当前能量值
     })),
-    // 敌人
+    // 敌人信息映射
     ...enemies.map((enemy) => ({
-      id: enemy.id,
-      name: enemy.name,
-      type: 'enemy' as const,
-      maxHealth: enemy.maxHp,
-      currentHealth: enemy.currentHp,
-      maxEnergy: enemy.maxEnergy,
-      currentEnergy: enemy.currentEnergy
+      id: enemy.id,                   // 敌人唯一标识符
+      name: enemy.name,               // 敌人名称
+      type: 'enemy' as const,         // 参与者类型：敌人
+      maxHealth: enemy.maxHp,         // 最大生命值
+      currentHealth: enemy.currentHp, // 当前生命值
+      maxEnergy: enemy.maxEnergy,     // 最大能量值
+      currentEnergy: enemy.currentEnergy // 当前能量值
     }))
   ];
 
-  // 创建战斗
+  /**
+   * 创建战斗实例
+   * 使用参与者信息初始化战斗系统
+   * @returns {BattleState|null} 战斗状态对象，创建失败时返回null
+   */
   const battleState = battleSystem.value?.createBattle(participantsInfo);
   if (battleState) {
     currentBattleId.value = battleState.battleId;
 
     // 注册回合执行回调，用于自动战斗时同步日志
-    battleSystem.value.onTurnExecuted = (battleId: string) => {
-      syncBattleState();
-    };
+    if (battleSystem.value) {
+      battleSystem.value.onTurnExecuted = () => {
+        syncBattleState();
+      };
+    }
 
     // 重置战斗状态
-    currentTurn.value = 1;
     isPaused.value = false;
-    isBattleActive.value = true;
+    isAutoPlaying.value = autoPlayMode.value !== 'off';
 
     // 根据自动播放模式决定是否开始自动战斗
     if (autoPlayMode.value !== 'off') {
-      isAutoPlaying.value = true;
-      battleSystem.value.startAutoBattle(currentBattleId.value, autoSpeed.value);
-      addLog("系统", "", "", "", "开始自动战斗", "info");
+      battleSystem.value?.startAutoBattle(currentBattleId.value, autoSpeed.value);
+      logManager.addSystemLog("开始自动战斗");
     } else {
-      isAutoPlaying.value = false;
+      // 手动模式，不需要额外操作
     }
 
     // 清空已处理的 action ID 集合，确保新战斗的所有 action 都能被处理
     processedActionIds.value.clear();
 
     // 添加战斗开始日志
-    addLog(
-      "系统",
-      "",
-      "",
-      "",
-      `战斗开始！战斗ID: ${battleState.battleId}`,
-      "info"
-    );
-    addLog(
-      "系统",
-      "",
-      "",
-      "",
-      `参战角色: ${enabledCharacters.length} 人 | 参战敌人: ${enemies.length} 人`,
-      "info"
-    );
+    logManager.addSystemLog(`战斗开始！战斗ID: ${battleState.battleId}`);
+    logManager.addSystemLog(`参战角色: ${enabledCharacters.length} 人 | 参战敌人: ${enemies.length} 人`);
+  }
+};
+
+/**
+ * 状态同步器：确保界面状态与battleSystem状态一致
+ */
+const syncUIStateWithBattleSystem = () => {
+  if (!currentBattleId.value || !battleSystem.value) {
+    // 没有战斗时，保持界面状态不变
+    return;
+  }
+
+  const battleState = battleSystem.value.getBattleState(currentBattleId.value);
+  if (!battleState) {
+    // 战斗不存在时，重置界面状态
+    isPaused.value = true;
+    isAutoPlaying.value = false;
+    return;
+  }
+
+  // 同步战斗活跃状态
+  if (!battleState.isActive && isBattleActive.value) {
+    // 战斗已结束，但界面状态还未更新
+    isPaused.value = true;
+    isAutoPlaying.value = false;
   }
 };
 
 // 同步战斗状态到 UI
 const syncBattleState = () => {
+  // 首先同步界面状态与battleSystem状态
+  syncUIStateWithBattleSystem();
+
   if (!currentBattleId.value) {
     return;
   }
@@ -1020,13 +1073,13 @@ const syncBattleState = () => {
     const battleState = battleSystem.value?.getBattleState(currentBattleId.value!);
     if (!battleState) {
       console.error("无法获取战斗状态:", currentBattleId.value);
-      addLog("系统", "", "", "", `无法获取战斗状态，战斗可能已结束`, "error");
+      logManager.addErrorLog(`无法获取战斗状态，战斗可能已结束`);
       currentBattleId.value = null;
       return;
     }
 
-    // 更新战斗状态
-    currentTurn.value = battleState.currentTurn + 1; // 战斗系统从0开始计数
+    // 注意：currentTurn现在是computed属性，会自动从battleSystem同步
+    // 无需手动更新：currentTurn.value = battleState.currentTurn + 1;
 
     // 更新当前行动者
     if (battleState.currentTurn < battleState.turnOrder.length) {
@@ -1040,14 +1093,7 @@ const syncBattleState = () => {
       syncParticipantsState(battleState);
     } catch (syncError: any) {
       console.error("同步参与者状态时出错:", syncError);
-      addLog(
-        "系统",
-        "",
-        "",
-        "",
-        `同步参与者状态时出错: ${syncError.message || syncError}`,
-        "error"
-      );
+      logManager.addErrorLog(`同步参与者状态时出错: ${syncError.message || syncError}`);
     }
 
     // 同步战斗日志
@@ -1055,14 +1101,7 @@ const syncBattleState = () => {
       syncBattleLogs(battleState);
     } catch (logError: any) {
       console.error("同步战斗日志时出错:", logError);
-      addLog(
-        "系统",
-        "",
-        "",
-        "",
-        `同步战斗日志时出错: ${logError.message || logError}`,
-        "error"
-      );
+      logManager.addErrorLog(`同步战斗日志时出错: ${logError.message || logError}`);
     }
 
     // 检查战斗是否结束
@@ -1074,15 +1113,9 @@ const syncBattleState = () => {
     }
   } catch (error: any) {
     console.error("同步战斗状态时出错:", error);
-    addLog(
-      "系统",
-      "",
-      "",
-      "",
-      `同步战斗状态时出错: ${error.message || error}`,
-      "error"
-    );
+    logManager.addErrorLog(`同步战斗状态时出错: ${error.message || error}`);
     // 出错后重置战斗状态
+    currentBattleId.value = null;
     isPaused.value = true;
     isAutoPlaying.value = false;
   }
@@ -1267,12 +1300,12 @@ const syncBattleLogs = (battleState: BattleState) => {
     }
 
     // 添加标准化日志
-    addLog(
+    logManager.addLog(
       log.turn,
       log.source,
       log.action,
       log.target,
-      log.result,
+      log.result || '',
       log.level,
       log.htmlResult
     );
@@ -1328,7 +1361,7 @@ const resetBattle = () => {
   isBattleActive.value = false;
 
   // 清空战斗日志
-  battleLogs.length = 0;
+  logManager.clearLogs();
 
   // 清空已处理的 action ID 集合
   processedActionIds.value.clear();
@@ -1345,19 +1378,12 @@ const resetBattle = () => {
   });
 
   // 添加重置日志
-  addLog(
-    "系统",
-    "",
-    "",
-    "",
-    "战斗已重置",
-    "info"
-  );
+  logManager.addSystemLog("战斗已重置");
 };
 
 onMounted(() => {
   currentActorId.value = ourParty.value[0]?.id || null;
-  addLog("系统", "", "", "", "测试工具已加载", "info");
+  logManager.addSystemLog("测试工具已加载");
 });
 
 onUnmounted(() => {

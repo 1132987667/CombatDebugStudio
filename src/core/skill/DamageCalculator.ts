@@ -1,6 +1,6 @@
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
 import type { BattleParticipant } from '@/types/battle'
-import { logger } from '@/utils/logger'
+import { logger } from '@/utils/logging'
 
 /**
  * 伤害计算器类

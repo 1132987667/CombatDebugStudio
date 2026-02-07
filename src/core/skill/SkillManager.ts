@@ -3,7 +3,7 @@ import type { BattleAction, BattleParticipant } from '@/types/battle'
 import { BuffSystem } from '@/core/BuffSystem'
 import { DamageCalculator } from './DamageCalculator'
 import { HealCalculator } from './HealCalculator'
-import { logger } from '@/utils/logger'
+import { logger } from '@/utils/logging'
 
 /**
  * 技能管理器类

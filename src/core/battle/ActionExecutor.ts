@@ -1,6 +1,6 @@
 import type { BattleAction, BattleParticipant, BattleState } from '@/types/battle';
 import { SkillManager } from '@/core/skill/SkillManager';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/logging';
 
 /**
  * 战斗数据接口

@@ -1,7 +1,7 @@
 import type { IBuffScript } from '@/types/buff'
 import type { BuffContext } from '@/core/BuffContext'
 import { BuffErrorBoundary } from '@/core/BuffErrorBoundary'
-import { logger } from '@/utils/logger'
+import { logger } from '@/utils/logging'
 
 export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TParams> {
   params?: TParams

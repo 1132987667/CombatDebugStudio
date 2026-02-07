@@ -7,7 +7,7 @@ export interface DamageHealCalculationConfig {
    * 作为伤害/治疗计算的基础数值
    */
   baseValue: number
-  
+
   /**
    * 额外值列表
    * 由多个(关联属性, 比率)键值对组成的数组
@@ -18,19 +18,19 @@ export interface DamageHealCalculationConfig {
      * 如：'attack'、'defense'、'magicPower'等
      */
     attribute: string
-    
+
     /**
      * 比率系数
      * 关联属性乘以该比率后加入最终计算
      */
     ratio: number
   }>
-  
+
   /**
    * 攻击类型（仅DAMAGE类型使用）
    */
   attackType?: 'normal' | 'magic' | 'physical' | 'true'
-  
+
   /**
    * 是否为单回合效果（仅HEAL类型使用）
    */
@@ -45,7 +45,7 @@ export interface CriticalConfig {
    * 暴击率
    */
   rate: number
-  
+
   /**
    * 暴击倍率
    */
@@ -61,13 +61,13 @@ export interface ExtendedSkillStep extends SkillStep {
    * 当type为DAMAGE或HEAL时必填
    */
   calculation?: DamageHealCalculationConfig
-  
+
   /**
    * 目标属性修正（可选）
    * 对目标特定属性的修正系数
    */
   targetModifiers?: Record<string, number>
-  
+
   /**
    * 暴击配置（可选）
    */
@@ -75,54 +75,8 @@ export interface ExtendedSkillStep extends SkillStep {
 }
 
 /**
- * 计算日志接口
+ * 计算日志接口 - 使用统一类型定义
  */
-export interface CalculationLog {
-  /**
-   * 时间戳
-   */
-  timestamp: number
-  
-  /**
-   * 步骤类型
-   */
-  stepType: 'DAMAGE' | 'HEAL'
-  
-  /**
-   * 施放者ID
-   */
-  sourceId: string
-  
-  /**
-   * 目标ID
-   */
-  targetId: string
-  
-  /**
-   * 基础值
-   */
-  baseValue: number
-  
-  /**
-   * 额外值列表
-   */
-  extraValues: Array<{ attribute: string; value: number; ratio: number }>
-  
-  /**
-   * 最终值
-   */
-  finalValue: number
-  
-  /**
-   * 是否暴击
-   */
-  critical: boolean
-  
-  /**
-   * 修正系数
-   */
-  modifiers: Record<string, number>
-}
 
 /**
  * 计算错误接口
@@ -132,27 +86,27 @@ export interface CalculationError {
    * 错误代码
    */
   code: string
-  
+
   /**
    * 错误信息
    */
   message: string
-  
+
   /**
    * 相关技能步骤
    */
   step: ExtendedSkillStep
-  
+
   /**
    * 施放者（可选）
    */
   source?: any
-  
+
   /**
    * 目标（可选）
    */
   target?: any
-  
+
   /**
    * 时间戳
    */
@@ -163,43 +117,37 @@ export interface CalculationError {
  * 属性类型
  * 物理 金 木 水 火 土
  */
-export type ElementType = 
-  | 'PHYSICAL'
-  | 'JIN'
-  | 'MU'
-  | 'SHU'
-  | 'HUO'
-  | 'TU'
+export type ElementType = 'PHYSICAL' | 'JIN' | 'MU' | 'SHU' | 'HUO' | 'TU'
 
 /**
  * 技能目标类型枚举
  * 定义技能的目标类型（单个目标、群体目标、特定目标等）
  */
-export type SkillTargetType = 
-  | 'single'           // 单个目标
-  | 'multiple'         // 多个目标
-  | 'area'             // 区域目标
-  | 'chain'            // 连锁目标
-  | 'all'              // 所有目标
+export type SkillTargetType =
+  | 'single' // 单个目标
+  | 'multiple' // 多个目标
+  | 'area' // 区域目标
+  | 'chain' // 连锁目标
+  | 'all' // 所有目标
 
 /**
  * 技能作用范围枚举
  * 定义技能的作用范围（敌人、友方、自己、所有单位等）
  */
-export type SkillScope = 
-  | 'enemy'            // 敌人
-  | 'ally'             // 友方
-  | 'self'             // 自己
-  | 'all'              // 所有单位
-  | 'enemy_front'      // 敌人前排
-  | 'enemy_back'       // 敌人后排
-  | 'ally_front'       // 友方前排
-  | 'ally_back'        // 友方后排
-  | 'adjacent'         // 相邻目标
-  | 'lowest_hp_ally'   // 生命值最低的友方
-  | 'lowest_hp_enemy'  // 生命值最低的敌人
-  | 'random_enemy'     // 随机敌人
-  | 'random_ally'      // 随机友方
+export type SkillScope =
+  | 'enemy' // 敌人
+  | 'ally' // 友方
+  | 'self' // 自己
+  | 'all' // 所有单位
+  | 'enemy_front' // 敌人前排
+  | 'enemy_back' // 敌人后排
+  | 'ally_front' // 友方前排
+  | 'ally_back' // 友方后排
+  | 'adjacent' // 相邻目标
+  | 'lowest_hp_ally' // 生命值最低的友方
+  | 'lowest_hp_enemy' // 生命值最低的敌人
+  | 'random_enemy' // 随机敌人
+  | 'random_ally' // 随机友方
 
 /**
  * 资源消耗类型

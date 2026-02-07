@@ -3,7 +3,7 @@ import type {
   BattleAction,
   BattleState,
 } from '@/types/battle'
-import { logger } from '@/utils/logger'
+import { logger } from '@/utils/logging'
 
 /**
  * 战斗AI接口

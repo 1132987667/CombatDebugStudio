@@ -1,6 +1,10 @@
-import type { BattleParticipant, BattleState, BattleAction } from '@/types/battle';
-import { BattleAIFactory, BattleAI } from '../BattleAI';
-import { ActionExecutor } from './ActionExecutor';
+import type {
+  BattleParticipant,
+  BattleState,
+  BattleAction,
+} from '@/types/battle'
+import { BattleAIFactory, BattleAI } from '../BattleAI'
+import { ActionExecutor } from './ActionExecutor'
 
 /**
  * 战斗数据接口
@@ -8,19 +12,19 @@ import { ActionExecutor } from './ActionExecutor';
  */
 interface BattleData {
   /** 战斗的唯一标识符 */
-  battleId: string;
+  battleId: string
   /** 参与者映射表，以参与者ID为键 */
-  participants: Map<string, BattleParticipant>;
+  participants: Map<string, BattleParticipant>
   /** 战斗动作历史记录 */
-  actions: BattleAction[];
+  actions: BattleAction[]
   /** 回合顺序数组，存储参与者ID */
-  turnOrder: string[];
+  turnOrder: string[]
   /** 当前回合号 */
-  currentTurn: number;
+  currentTurn: number
   /** 战斗是否处于活跃状态 */
-  isActive: boolean;
+  isActive: boolean
   /** 每个参与者的AI实例映射表 */
-  aiInstances: Map<string, BattleAI>;
+  aiInstances: Map<string, BattleAI>
 }
 
 /**
@@ -30,7 +34,7 @@ interface BattleData {
  */
 export class AISystem {
   /** AI实例存储映射，以参与者ID为键，用于缓存和复用 */
-  private aiInstances = new Map<string, BattleAI>();
+  private aiInstances = new Map<string, BattleAI>()
 
   /**
    * 创建AI实例集合
@@ -38,16 +42,18 @@ export class AISystem {
    * @param participants - 参与者映射表，包含所有需要AI控制的参与者
    * @returns Map<string, BattleAI> - 以参与者ID为键的AI实例映射表
    */
-  public createAIInstances(participants: Map<string, BattleParticipant>): Map<string, BattleAI> {
-    const aiInstances = new Map<string, BattleAI>();
+  public createAIInstances(
+    participants: Map<string, BattleParticipant>,
+  ): Map<string, BattleAI> {
+    const aiInstances = new Map<string, BattleAI>()
 
     participants.forEach((participant) => {
-      const ai = BattleAIFactory.createAI(participant.type);
-      aiInstances.set(participant.id, ai);
-      this.aiInstances.set(participant.id, ai);
-    });
+      const ai = BattleAIFactory.createAI(participant.type)
+      aiInstances.set(participant.id, ai)
+      this.aiInstances.set(participant.id, ai)
+    })
 
-    return aiInstances;
+    return aiInstances
   }
 
   /**
@@ -57,15 +63,18 @@ export class AISystem {
    * @param participant - 当前需要决策的参与者
    * @returns BattleAction - 生成的战斗动作，包含攻击目标、技能选择等
    */
-  public makeDecision(battleState: BattleState, participant: BattleParticipant): BattleAction {
-    let ai = this.aiInstances.get(participant.id);
+  public makeDecision(
+    battleState: BattleState,
+    participant: BattleParticipant,
+  ): BattleAction {
+    let ai = this.aiInstances.get(participant.id)
 
     if (!ai) {
-      ai = BattleAIFactory.createAI(participant.type);
-      this.aiInstances.set(participant.id, ai);
+      ai = BattleAIFactory.createAI(participant.type)
+      this.aiInstances.set(participant.id, ai)
     }
 
-    return ai.makeDecision(battleState, participant);
+    return ai.makeDecision(battleState, participant)
   }
 
   /**
@@ -75,17 +84,20 @@ export class AISystem {
    * @param participant - 选择目标的主体参与者
    * @returns string - 选中目标的参与者ID，如果没有有效目标返回空字符串
    */
-  public selectTarget(battleState: BattleState, participant: BattleParticipant): string {
+  public selectTarget(
+    battleState: BattleState,
+    participant: BattleParticipant,
+  ): string {
     const enemies = Array.from(battleState.participants.values()).filter(
-      (p) => p.type !== participant.type && p.isAlive()
-    );
+      (p) => p.type !== participant.type && p.isAlive(),
+    )
 
     if (enemies.length === 0) {
-      return '';
+      return ''
     }
 
-    const randomIndex = Math.floor(Math.random() * enemies.length);
-    return enemies[randomIndex].id;
+    const randomIndex = Math.floor(Math.random() * enemies.length)
+    return enemies[randomIndex].id
   }
 
   /**
@@ -97,14 +109,14 @@ export class AISystem {
    */
   public shouldUseSkill(participant: BattleParticipant): boolean {
     if (participant.currentEnergy < 50) {
-      return false;
+      return false
     }
 
     if (participant.currentEnergy >= 100) {
-      return Math.random() > 0.3;
+      return Math.random() > 0.3
     }
 
-    return Math.random() > 0.7;
+    return Math.random() > 0.7
   }
 
   /**
@@ -115,25 +127,29 @@ export class AISystem {
    * @param actionExecutor - 动作执行器实例，用于执行生成的战斗动作
    * @returns Promise<void> - 异步执行，完成后无返回值
    */
-  public async executeAIAction(battle: BattleData, participant: BattleParticipant, actionExecutor: ActionExecutor): Promise<void> {
-    let ai = this.aiInstances.get(participant.id);
+  public async executeAIAction(
+    battle: BattleData,
+    participant: BattleParticipant,
+    actionExecutor: ActionExecutor,
+  ): Promise<void> {
+    let ai = this.aiInstances.get(participant.id)
 
     if (!ai) {
-      const defaultAi = BattleAIFactory.createAI(participant.type);
-      this.aiInstances.set(participant.id, defaultAi);
-      await actionExecutor.executeDefaultAction(battle, participant);
-      return;
+      const defaultAi = BattleAIFactory.createAI(participant.type)
+      this.aiInstances.set(participant.id, defaultAi)
+      await actionExecutor.executeDefaultAction(battle, participant)
+      return
     }
 
-    const battleState = this.convertToBattleState(battle);
-    const action = ai.makeDecision(battleState, participant);
-    action.turn = battle.currentTurn + 1;
+    const battleState = this.convertToBattleState(battle)
+    const action = ai.makeDecision(battleState, participant)
+    action.turn = battle.currentTurn + 1
 
-    const target = battle.participants.get(action.targetId);
+    const target = battle.participants.get(action.targetId)
     if (target && target.isAlive()) {
-      await actionExecutor.executeAction(action);
+      await actionExecutor.executeAction(action)
     } else {
-      await actionExecutor.executeDefaultAction(battle, participant);
+      await actionExecutor.executeDefaultAction(battle, participant)
     }
   }
 
@@ -143,7 +159,7 @@ export class AISystem {
    * @param participantId - 要移除AI实例的参与者ID
    */
   public removeAI(participantId: string): void {
-    this.aiInstances.delete(participantId);
+    this.aiInstances.delete(participantId)
   }
 
   /**
@@ -151,7 +167,7 @@ export class AISystem {
    * 在系统重置或大规模清理时调用
    */
   public clearAllAI(): void {
-    this.aiInstances.clear();
+    this.aiInstances.clear()
   }
 
   /**
@@ -172,6 +188,6 @@ export class AISystem {
       startTime: 0,
       endTime: undefined,
       winner: undefined,
-    };
+    }
   }
 }

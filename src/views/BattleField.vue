@@ -6,7 +6,7 @@
           <span class="turn-label">当前回合:</span>
           <span class="turn-num">{{ currentTurn }}/{{ maxTurns }}</span>
           <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} (SPD:{{ currentActor?.speed || 0
-            }})</span>
+          }})</span>
         </div>
       </div>
 
@@ -158,34 +158,9 @@ import SkillEffect from "../components/SkillEffect.vue";
 import BattleLog from "./BattleLog.vue";
 import type { BattleLogEntry } from '@/types/battle-log';
 
-interface BattleCharacter {
-  id: string;
-  name: string;
-  level: number;
-  maxHp: number;
-  currentHp: number;
-  maxMp: number;
-  currentMp: number;
-  currentEnergy: number;
-  maxEnergy: number;
-  attack: number;
-  defense: number;
-  speed: number;
-  enabled: boolean;
-  isFirst: boolean;
-  isHit?: boolean;
-  isCasting?: boolean;
-  buffs: Array<{
-    id: string;
-    name: string;
-    remainingTurns: number;
-    isPositive: boolean;
-  }>;
-}
-
 const props = defineProps<{
-  battleCharacters: BattleCharacter[];
-  enemyParty: BattleCharacter[];
+  battleCharacters: any[];
+  enemyParty: any[];
   selectedCharacterId: string;
   currentActorId: string | null;
   currentTurn: number;
@@ -221,11 +196,11 @@ const selectCharacter = (charId: string) => {
   emit('select-character', charId);
 };
 
-const getHpPercent = (char: BattleCharacter) => {
+const getHpPercent = (char: any) => {
   return Math.max(0, (char.currentHp / char.maxHp) * 100);
 };
 
-const getHpColorClass = (char: BattleCharacter): string => {
+const getHpColorClass = (char: any): string => {
   const percent = (char.currentHp / char.maxHp) * 100;
   if (percent <= 25) return 'low';
   if (percent <= 50) return 'medium';
@@ -339,7 +314,7 @@ const getStatusBuffEffect = (status: any) => {
   return buffEffects[status.name] || '';
 };
 
-const getMemberStatuses = (char: BattleCharacter) => {
+const getMemberStatuses = (char: any) => {
   return char.buffs || [];
 };
 

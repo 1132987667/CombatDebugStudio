@@ -55,7 +55,7 @@ export class PerformanceMonitor {
   private stats: Map<string, PerformanceStats> = new Map()
   private memoryHistory: MemoryUsage[] = []
   private maxHistorySize = 1000
-  private memoryMonitorInterval?: NodeJS.Timeout
+  private memoryMonitorInterval?: Number
 
   constructor() {
     this.logger = new Logger('PerformanceMonitor')

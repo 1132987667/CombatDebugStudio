@@ -9,6 +9,8 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
+        "scope": "single",
         "formula": "attack*0.8",
         "attackType": "normal"
       },

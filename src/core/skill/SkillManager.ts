@@ -63,11 +63,27 @@ export class SkillManager {
       effects: []
     }
 
-    // 按优先级排序执行技能步骤
-    const sortedSteps = [...skillConfig.steps].sort((a, b) => (a.priority || 0) - (b.priority || 0))
-    
-    for (const skillStep of sortedSteps) {
-      this.executeSkillStep(skillStep as ExtendedSkillStep, action, source, target)
+    // 兼容旧格式和新格式
+    if (skillConfig.steps && skillConfig.steps.length > 0) {
+      // 新格式：使用步骤配置
+      const sortedSteps = [...skillConfig.steps].sort((a, b) => (a.priority || 0) - (b.priority || 0))
+      
+      for (const skillStep of sortedSteps) {
+        this.executeSkillStep(skillStep as ExtendedSkillStep, action, source, target)
+      }
+    } else if ((skillConfig as any).damage) {
+      // 旧格式：直接使用 damage 属性创建伤害效果
+      const damage = (skillConfig as any).damage
+      const actualDamage = target.takeDamage(damage)
+      action.damage = actualDamage
+      action.effects.push({
+        type: 'damage',
+        value: actualDamage,
+        description: `${source.name} 使用 ${skillConfig.name || skillId} 造成 ${actualDamage} 伤害`
+      })
+      this.logger.debug(`旧格式技能执行完成: ${skillId}, 伤害: ${actualDamage}`)
+    } else {
+      throw new Error(`技能配置无效: ${skillId}，既没有 steps 也没有 damage 属性`)
     }
 
     return action
@@ -328,5 +344,35 @@ export class SkillManager {
     }
 
     return true
+  }
+
+  /**
+   * 获取伤害计算器实例
+   */
+  public getDamageCalculator(): DamageCalculator {
+    return this.damageCalculator
+  }
+
+  /**
+   * 获取治疗计算器实例
+   */
+  public getHealCalculator(): HealCalculator {
+    return this.healCalculator
+  }
+
+  /**
+   * 重新配置伤害计算器
+   */
+  public reconfigureDamageCalculator(config: any): void {
+    this.damageCalculator.setConfig(config)
+    this.logger.info('伤害计算器重新配置完成')
+  }
+
+  /**
+   * 重新配置治疗计算器
+   */
+  public reconfigureHealCalculator(config: any): void {
+    this.healCalculator.setConfig(config)
+    this.logger.info('治疗计算器重新配置完成')
   }
 }

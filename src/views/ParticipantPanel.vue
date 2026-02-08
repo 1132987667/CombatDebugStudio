@@ -115,51 +115,8 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
-import type { Enemy } from "@/types/enemy";
-import enemiesData from "@configs/enemies/enemies.json";
-import scenesData from "@configs/scenes/scenes.json";
-
-interface BattleCharacter {
-  originalId?: string;
-  id: string;
-  name: string;
-  level: number;
-  maxHp: number;
-  currentHp: number;
-  maxMp: number;
-  currentMp: number;
-  currentEnergy: number;
-  maxEnergy: number;
-  attack: number;
-  defense: number;
-  speed: number;
-  enabled: boolean;
-  isFirst: boolean;
-  buffs: Array<{
-    id: string;
-    name: string;
-    remainingTurns: number;
-    isPositive: boolean;
-  }>;
-}
-
-// 使用统一的Enemy接口定义，移除重复定义
-
-interface SceneData {
-  id: string;
-  name: string;
-  background: string;
-  difficulties: {
-    easy: { enemyIds: string[] };
-    normal: { enemyIds: string[] };
-    hard: { enemyIds: string[] };
-  };
-  requiredLevel: number;
-  rewards: {
-    exp: number;
-    gold: number;
-  };
-}
+import { GameDataProcessor } from "@/utils/GameDataProcessor";
+import type { UIBattleCharacter, Enemy, SceneData } from "@/types";
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -167,15 +124,14 @@ interface GroupedEnemies {
 }
 
 interface Props {
-  battleCharacters: BattleCharacter[];
-  enemyParty: BattleCharacter[];
+  battleCharacters: UIBattleCharacter[];
+  enemyParty: UIBattleCharacter[];
   selectedCharacterId: string;
 }
 
 interface Emits {
   (e: 'update:selectedCharacterId', id: string): void;
   (e: 'addEnemy', enemy: Enemy, side: 'our' | 'enemy'): void;
-  (e: 'addCharacter'): void;
   (e: 'moveCharacter', direction: number): void;
   (e: 'clearParticipants'): void;
 }
@@ -183,14 +139,17 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+// 初始化 GameDataProcessor
+const gameDataProcessor = GameDataProcessor.getInstance();
 const enemySearch = ref("");
-const enemies = ref<Enemy[]>(enemiesData as Enemy[]);
-const scenes = ref<SceneData[]>(scenesData as SceneData[]);
-const expandedScenes = reactive<Record<string, boolean>>({
-});
+const enemiesData = ref<Enemy[]>([]);
+const scenesData = ref<SceneData[]>([]);
+enemiesData.value = gameDataProcessor.getEnemiesData();
+scenesData.value = gameDataProcessor.getScenesData();
+const expandedScenes = reactive<Record<string, boolean>>({});
 
 // 默认展开所有场景
-scenes.value.forEach((s) => (expandedScenes[s.id] = true));
+scenesData.value.forEach((s) => (expandedScenes[s.id] = true));
 
 const toggleSceneExpand = (sceneId: string) => {
   expandedScenes[sceneId] = !expandedScenes[sceneId];
@@ -202,30 +161,30 @@ const isSceneExpanded = (sceneId: string): boolean => {
 
 // 一键展开所有场景
 const expandAllScenes = () => {
-  scenes.value.forEach((scene) => {
+  scenesData.value.forEach((scene) => {
     expandedScenes[scene.id] = true;
   });
 };
 
 // 一键折叠所有场景
 const collapseAllScenes = () => {
-  scenes.value.forEach((scene) => {
+  scenesData.value.forEach((scene) => {
     expandedScenes[scene.id] = false;
   });
 };
 
 // 检查是否有展开的场景
 const hasExpandedScenes = computed(() => {
-  return scenes.value.some((scene) => expandedScenes[scene.id]);
+  return scenesData.value.some((scene) => expandedScenes[scene.id]);
 });
 
 // 检查是否所有场景都已展开
 const allScenesExpanded = computed(() => {
-  return scenes.value.every((scene) => expandedScenes[scene.id]);
+  return scenesData.value.every((scene) => expandedScenes[scene.id]);
 });
 
 const filteredEnemies = computed(() => {
-  let filtered = [...enemies.value];
+  let filtered = [...enemiesData.value];
   if (enemySearch.value) {
     const keyword = enemySearch.value.toLowerCase();
     filtered = filtered.filter((enemy) =>
@@ -236,9 +195,8 @@ const filteredEnemies = computed(() => {
 });
 
 const groupedEnemies = computed<GroupedEnemies[]>(() => {
-  const allScenes = scenes.value;
+  const allScenes = scenesData.value;
   const allEnemies = filteredEnemies.value;
-
   return allScenes
     .map((scene) => {
       const sceneEnemyIds = new Set([
@@ -278,9 +236,7 @@ const addEnemyToBattle = (enemy: Enemy, side: 'our' | 'enemy' = 'our') => {
   emit('addEnemy', enemy, side);
 };
 
-const addCharacter = () => {
-  emit('addCharacter');
-};
+
 
 const moveCharacter = (direction: number) => {
   emit('moveCharacter', direction);

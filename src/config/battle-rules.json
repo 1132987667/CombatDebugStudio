@@ -1,0 +1,58 @@
+{
+  "version": "1.0.0",
+  "rules": {
+    "turnSystem": {
+      "speedFirst": true,
+      "fixedTurns": false,
+      "maxTurns": 999,
+      "turnTimeout": 30000
+    },
+    "combat": {
+      "critEnabled": true,
+      "dodgeEnabled": false,
+      "minDamage": 1,
+      "maxDamage": 9999,
+      "energyGainPerTurn": 25,
+      "energyGainOnHit": 15
+    },
+    "damage": {
+      "critical": {
+        "enabled": true,
+        "defaultRate": 0.05,
+        "defaultMultiplier": 1.5
+      },
+      "defense": {
+        "enabled": true,
+        "physicalDefenseFactor": 0.01,
+        "magicDefenseFactor": 0.01,
+        "normalDefenseFactor": 0.005
+      },
+      "thresholds": {
+        "minDamage": 1,
+        "maxDamage": 9999
+      }
+    },
+    "ai": {
+      "decisionDelay": 1000,
+      "skillPriority": {
+        "heal": 90,
+        "attack": 70,
+        "buff": 60,
+        "debuff": 50
+      }
+    },
+    "autoBattle": {
+      "enabled": true,
+      "defaultSpeed": 1.0,
+      "availableSpeeds": [0.5, 1.0, 2.0, 5.0],
+      "turnInterval": 1000
+    }
+  },
+  "scenes": {
+    "default": {
+      "background": "default_bg",
+      "music": "battle_theme",
+      "difficulty": "normal"
+    }
+  }
+}

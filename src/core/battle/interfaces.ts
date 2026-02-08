@@ -7,6 +7,7 @@ import type {
   BattleParticipant,
   BattleEntityType,
   ParticipantInfo,
+  BattleData,
 } from '@/types/battle'
 
 import type { BattleAI } from '@/core/BattleAI'
@@ -105,6 +106,17 @@ export interface IBattleSystem {
    * @param speed - 新的自动战斗速度（1-10）
    */
   setAutoBattleSpeed(battleId: string, speed: number): void
+
+  /**
+   * 获取当前战斗数据
+   * @param battleId - 战斗ID
+   * @returns BattleData | undefined - 战斗数据，如果不存在则返回undefined
+   */
+  getCurBattleData(battleId: string | null): BattleData | undefined
+  /**
+   * 获取参与者管理器实例
+   */
+  getParticipantManager(): IParticipantManager
 }
 
 /**
@@ -187,6 +199,15 @@ export interface IParticipantManager {
     participantId: string,
     updates: Partial<BattleParticipant>,
   ): void
+
+  // createParticipantByIds
+  /**
+   * 创建战斗参与者
+   * @param battleId - 战斗ID
+   * @param participantIds - 参与者ID数组
+   * @returns BattleParticipant[] - 创建的参与者对象数组
+   */
+  createParticipantByIds(ids: string[], type: string): BattleParticipant[]
 }
 
 /**

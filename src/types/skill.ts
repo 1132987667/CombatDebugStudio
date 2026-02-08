@@ -1,3 +1,5 @@
+import type { BuffContext } from '@/core/BuffContext'
+
 /**
  * 伤害/治疗计算配置接口
  */
@@ -157,6 +159,32 @@ export enum CostType {
   HP = '生命值',
   NONE = '无消耗',
 }
+
+/**
+ * 技能步骤类型枚举
+ * 定义技能执行步骤的所有可能类型
+ */
+export type SkillStepType =
+  | 'DAMAGE' // 造成伤害
+  | 'HEAL' // 治疗目标
+  | 'BUFF' // 施加增益效果
+  | 'DEBUFF' // 施加减益效果
+  | 'REMOVE_BUFF' // 移除增益效果
+  | 'REMOVE_DEBUFF' // 移除减益效果
+  | 'CLEANSE' // 净化（移除所有负面效果）
+  | 'DISPEL' // 驱散（移除所有正面效果）
+  | 'STUN' // 眩晕
+  | 'SILENCE' // 沉默
+  | 'KNOCKBACK' // 击退
+  | 'PULL' // 拉扯
+  | 'TELEPORT' // 传送
+  | 'SUMMON' // 召唤
+  | 'TRANSFORM' // 变身
+  | 'SHIELD' // 护盾
+  | 'REFLECT' // 反射
+  | 'DRAIN' // 吸取
+  | 'REVIVE' // 复活
+  | 'CUSTOM' // 自定义效果
 
 /**
  * 技能步骤接口

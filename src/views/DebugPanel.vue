@@ -11,7 +11,7 @@
           <div class="monitor-item">
             <span class="monitor-label">HP:</span>
             <span class="monitor-value">{{ selectedCharMonitor?.currentHp || 0 }}/{{ selectedCharMonitor?.maxHp || 0
-              }}</span>
+            }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">能量:</span>
@@ -70,20 +70,20 @@
       <div class="monitor-group">
         <div class="monitor-subtitle">技能信息</div>
         <div class="skills-display">
-          <div class="skill-item passive" v-if="getCharPassive(selectedCharMonitor)">
+          <div class="skill-item passive" v-if="getCharPassive(getSelectedCharId)">
             <span class="skill-label">被动:</span>
-            <span class="skill-name">{{ getCharPassive(selectedCharMonitor) }}</span>
+            <span class="skill-name">{{ getCharPassive(getSelectedCharId) }}</span>
           </div>
-          <div class="skill-item small" v-if="getCharSmallSkill(selectedCharMonitor)">
+          <div class="skill-item small" v-if="getCharSmallSkill(getSelectedCharId)">
             <span class="skill-label">小技能:</span>
-            <span class="skill-name">{{ getCharSmallSkill(selectedCharMonitor) }}</span>
+            <span class="skill-name">{{ getCharSmallSkill(getSelectedCharId) }}</span>
           </div>
-          <div class="skill-item ultimate" v-if="getCharUltimate(selectedCharMonitor)">
+          <div class="skill-item ultimate" v-if="getCharUltimate(getSelectedCharId)">
             <span class="skill-label">大技能:</span>
-            <span class="skill-name">{{ getCharUltimate(selectedCharMonitor) }}</span>
+            <span class="skill-name">{{ getCharUltimate(getSelectedCharId) }}</span>
           </div>
           <div
-            v-if="!getCharPassive(selectedCharMonitor) && !getCharSmallSkill(selectedCharMonitor) && !getCharUltimate(selectedCharMonitor)"
+            v-if="!getCharPassive(getSelectedCharId) && !getCharSmallSkill(getSelectedCharId) && !getCharUltimate(getSelectedCharId)"
             class="no-skills">
             暂未配置技能
           </div>
@@ -150,48 +150,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import type { Enemy } from "@/types/enemy";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
-import enemiesData from "@configs/enemies/enemies.json";
-import skillsData from "@configs/skills/skills.json";
-import scenesData from "@configs/scenes/scenes.json";
-
-interface BattleCharacter {
-  originalId?: string;
-  id: string;
-  name: string;
-  level: number;
-  maxHp: number;
-  currentHp: number;
-  maxMp: number;
-  currentMp: number;
-  currentEnergy: number;
-  maxEnergy: number;
-  attack: number;
-  defense: number;
-  speed: number;
-  enabled: boolean;
-  isFirst: boolean;
-  buffs: Array<{
-    id: string;
-    name: string;
-    remainingTurns: number;
-    isPositive: boolean;
-  }>;
-}
-
-// 使用统一的Enemy接口定义，移除重复定义
+import type { UIBattleCharacter, Enemy, SceneData } from "@/types";
 
 const props = defineProps<{
-  battleCharacters: BattleCharacter[];
-  enemyParty: BattleCharacter[];
+  battleCharacters: UIBattleCharacter[];
+  enemyParty: UIBattleCharacter[];
   selectedCharacterId: string;
   lastExportTime: string | null;
-  exceptionStatus: {
-    message: string;
-    class: string;
-    hasException: boolean;
-  };
 }>();
 
 const emit = defineEmits<{
@@ -214,13 +180,8 @@ const manualStatusTurns = ref(2);
 const manualHpAmount = ref(100);
 const manualMpAmount = ref(50);
 
-// 初始化GameDataProcessor
-const gameDataProcessor = GameDataProcessor.getInstance({
-  enemies: enemiesData as Enemy[],
-  skills: skillsData,
-  scenes: scenesData,
-  buffs: []
-});
+// 初始化GameDataProcessor（自动加载配置）
+const gameDataProcessor = GameDataProcessor.getInstance();
 
 const selectedCharMonitor = computed(() => {
   if (!props.battleCharacters || !props.enemyParty) return null;
@@ -229,6 +190,11 @@ const selectedCharMonitor = computed(() => {
     null;
 });
 
+const getSelectedCharId = (): string => {
+  if (!props.battleCharacters || !props.enemyParty) return "";
+  return props.selectedCharacterId || "";
+};
+
 const getSelectedCharName = () => {
   if (!props.battleCharacters || !props.enemyParty) return "未选择";
   const char = props.battleCharacters.find((c) => c.id === props.selectedCharacterId);
@@ -236,21 +202,21 @@ const getSelectedCharName = () => {
   return char?.name || enemy?.name || "未选择";
 };
 
-const getCharPassive = (char: BattleCharacter | null): string => {
-  if (!char?.originalId) return "";
-  const skills = gameDataProcessor.getCharacterSkills(char);
+const getCharPassive = (id: string): string => {
+  if (!id) return "";
+  const skills = gameDataProcessor.getCharacterSkills(id);
   return skills.passive?.name || "";
 };
 
-const getCharSmallSkill = (char: BattleCharacter | null): string => {
-  if (!char?.originalId) return "";
-  const skills = gameDataProcessor.getCharacterSkills(char);
+const getCharSmallSkill = (id: string): string => {
+  if (!id) return "";
+  const skills = gameDataProcessor.getCharacterSkills(id);
   return skills.small?.name || "";
 };
 
-const getCharUltimate = (char: BattleCharacter | null): string => {
-  if (!char?.originalId) return "";
-  const skills = gameDataProcessor.getCharacterSkills(char);
+const getCharUltimate = (id: string): string => {
+  if (!id) return "";
+  const skills = gameDataProcessor.getCharacterSkills(id);
   return skills.ultimate?.name || "";
 };
 

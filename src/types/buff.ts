@@ -1,5 +1,48 @@
 import type { BuffContext } from '@/core/BuffContext'
 
+// [
+//   {
+//     id: "burn",
+//     name: "灼烧",
+//     duration: 3,
+//     effect: "伤害:15/回合",
+//     active: false,
+//     isPositive: false,
+//   },
+//   {
+//     id: "power",
+//     name: "力量祝福",
+//     duration: 5,
+//     effect: "ATK+20%",
+//     active: true,
+//     isPositive: true,
+//   },
+//   {
+//     id: "weak",
+//     name: "虚弱",
+//     duration: 2,
+//     effect: "DEF-30%",
+//     active: false,
+//     isPositive: false,
+//   },
+//   {
+//     id: "poison",
+//     name: "中毒",
+//     duration: 4,
+//     effect: "伤害:20/回合",
+//     active: false,
+//     isPositive: false,
+//   },
+//   {
+//     id: "shield",
+//     name: "护盾",
+//     duration: 3,
+//     effect: "吸收100伤害",
+//     active: false,
+//     isPositive: true,
+//   },
+// ]
+
 /**
  * 增益效果脚本接口
  * 定义了增益效果的生命周期回调函数,用于实现自定义的增益逻辑
@@ -100,6 +143,12 @@ export interface BuffConfig {
    * 用于存储额外的自定义参数,键值对形式
    */
   parameters?: Record<string, any>
+
+  /**
+   * 是否为正面效果
+   * true表示该增益效果为buff,会增强角色属性
+   */
+  isPositive?: boolean
 }
 
 /**

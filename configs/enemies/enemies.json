@@ -23,7 +23,7 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_001_small_01"]
+      "small": "skill_enemy_001_small"
     }
   },
   {
@@ -50,7 +50,7 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_002_small_01"]
+      "small": "skill_enemy_002_small"
     }
   },
   {
@@ -77,7 +77,7 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_003_small_01"]
+      "small": "skill_enemy_003_small"
     }
   },
   {
@@ -104,8 +104,8 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_004_small_01"],
-      "passive": ["skill_enemy_004_passive_01"]
+      "small": "skill_enemy_004_small",
+      "passive": "skill_enemy_004_passive"
     }
   },
   {
@@ -132,8 +132,8 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_005_small_01"],
-      "passive": ["skill_enemy_005_passive_01"]
+      "small": "skill_enemy_005_small",
+      "passive": "skill_enemy_005_passive"
     }
   },
   {
@@ -160,8 +160,8 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_006_small_01"],
-      "passive": ["skill_enemy_006_passive_01"]
+      "small": "skill_enemy_006_small",
+      "passive": "skill_enemy_006_passive"
     }
   },
   {
@@ -188,9 +188,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_007_small_01"],
-      "passive": ["skill_enemy_007_passive_01"],
-      "ultimate": ["skill_enemy_007_ultimate_01"]
+      "small": "skill_enemy_007_small",
+      "passive": "skill_enemy_007_passive",
+      "ultimate": "skill_enemy_007_ultimate"
     }
   },
   {
@@ -217,9 +217,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_008_small_01"],
-      "passive": ["skill_enemy_008_passive_01"],
-      "ultimate": ["skill_enemy_008_ultimate_01"]
+      "small": "skill_enemy_008_small",
+      "passive": "skill_enemy_008_passive",
+      "ultimate": "skill_enemy_008_ultimate"
     }
   },
   {
@@ -246,9 +246,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_001_small_01"],
-      "passive": ["skill_boss_001_passive_01"],
-      "ultimate": ["skill_boss_001_ultimate_01"]
+      "small": "skill_boss_001_small",
+      "passive": "skill_boss_001_passive",
+      "ultimate": "skill_boss_001_ultimate"
     }
   },
   {
@@ -275,7 +275,7 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_009_small_01"]
+      "small": "skill_enemy_009_small"
     }
   },
   {
@@ -302,7 +302,7 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_010_small_01"]
+      "small": "skill_enemy_010_small"
     }
   },
   {
@@ -329,7 +329,7 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_011_small_01"]
+      "small": "skill_enemy_011_small"
     }
   },
   {
@@ -356,8 +356,8 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_012_small_01"],
-      "passive": ["skill_enemy_012_passive_01"]
+      "small": "skill_enemy_012_small",
+      "passive": "skill_enemy_012_passive"
     }
   },
   {
@@ -384,8 +384,8 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_013_small_01"],
-      "passive": ["skill_enemy_013_passive_01"]
+      "small": "skill_enemy_013_small",
+      "passive": "skill_enemy_013_passive"
     }
   },
   {
@@ -412,8 +412,8 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_014_small_01"],
-      "passive": ["skill_enemy_014_passive_01"]
+      "small": "skill_enemy_014_small",
+      "passive": "skill_enemy_014_passive"
     }
   },
   {
@@ -440,9 +440,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_015_small_01"],
-      "passive": ["skill_enemy_015_passive_01"],
-      "ultimate": ["skill_enemy_015_ultimate_01"]
+      "small": "skill_enemy_015_small",
+      "passive": "skill_enemy_015_passive",
+      "ultimate": "skill_enemy_015_ultimate"
     }
   },
   {
@@ -469,9 +469,9 @@
       }
     ],
     "skills": {
-      "small": ["skill_enemy_016_small_01"],
-      "passive": ["skill_enemy_016_passive_01"],
-      "ultimate": ["skill_enemy_016_ultimate_01"]
+      "small": "skill_enemy_016_small",
+      "passive": "skill_enemy_016_passive",
+      "ultimate": "skill_enemy_016_ultimate"
     }
   },
   {
@@ -498,9 +498,2025 @@
       }
     ],
     "skills": {
-      "small": ["skill_boss_002_small_01"],
-      "passive": ["skill_boss_002_passive_01"],
-      "ultimate": ["skill_boss_002_ultimate_01"]
+      "small": "skill_boss_002_small",
+      "passive": "skill_boss_002_passive",
+      "ultimate": "skill_boss_002_ultimate"
+    }
+  },
+  {
+    "id": "enemy_017",
+    "name": "小岩妖",
+    "level": 5,
+    "stats": {
+      "health": 92,
+      "minAttack": 12,
+      "maxAttack": 18,
+      "defense": 8,
+      "speed": 18
+    },
+    "drops": [
+      {
+        "itemId": "mat_002",
+        "quantity": 2,
+        "chance": 0.8
+      },
+      {
+        "itemId": "mat_006",
+        "quantity": 1,
+        "chance": 0.2
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_017_small"
+    }
+  },
+  {
+    "id": "enemy_018",
+    "name": "碎石精",
+    "level": 6,
+    "stats": {
+      "health": 104,
+      "minAttack": 14,
+      "maxAttack": 21,
+      "defense": 9,
+      "speed": 21
+    },
+    "drops": [
+      {
+        "itemId": "mat_002",
+        "quantity": 1,
+        "chance": 0.7
+      },
+      {
+        "itemId": "mat_003",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_018_small"
+    }
+  },
+  {
+    "id": "enemy_019",
+    "name": "土行小妖",
+    "level": 6,
+    "stats": {
+      "health": 104,
+      "minAttack": 14,
+      "maxAttack": 21,
+      "defense": 9,
+      "speed": 21
+    },
+    "drops": [
+      {
+        "itemId": "mat_006",
+        "quantity": 2,
+        "chance": 0.6
+      },
+      {
+        "itemId": "elix_001",
+        "quantity": 1,
+        "chance": 0.4
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_019_small"
+    }
+  },
+  {
+    "id": "enemy_020",
+    "name": "岩妖头目",
+    "level": 8,
+    "stats": {
+      "health": 147,
+      "minAttack": 20,
+      "maxAttack": 30,
+      "defense": 14,
+      "speed": 23
+    },
+    "drops": [
+      {
+        "itemId": "mat_002",
+        "quantity": 4,
+        "chance": 0.75
+      },
+      {
+        "itemId": "mat_006",
+        "quantity": 2,
+        "chance": 0.25
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_020_small",
+      "passive": "skill_enemy_020_passive"
+    }
+  },
+  {
+    "id": "enemy_021",
+    "name": "铁石精",
+    "level": 9,
+    "stats": {
+      "health": 160,
+      "minAttack": 22,
+      "maxAttack": 33,
+      "defense": 15,
+      "speed": 25
+    },
+    "drops": [
+      {
+        "itemId": "mat_003",
+        "quantity": 2,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_003",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_021_small",
+      "passive": "skill_enemy_021_passive"
+    }
+  },
+  {
+    "id": "enemy_022",
+    "name": "土行妖",
+    "level": 9,
+    "stats": {
+      "health": 160,
+      "minAttack": 22,
+      "maxAttack": 33,
+      "defense": 15,
+      "speed": 25
+    },
+    "drops": [
+      {
+        "itemId": "mat_006",
+        "quantity": 3,
+        "chance": 0.65
+      },
+      {
+        "itemId": "crys_001",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_022_small",
+      "passive": "skill_enemy_022_passive"
+    }
+  },
+  {
+    "id": "enemy_023",
+    "name": "巨岩妖",
+    "level": 12,
+    "stats": {
+      "health": 242,
+      "minAttack": 33,
+      "maxAttack": 49,
+      "defense": 21,
+      "speed": 34
+    },
+    "drops": [
+      {
+        "itemId": "mat_002",
+        "quantity": 6,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_004",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_023_small",
+      "passive": "skill_enemy_023_passive",
+      "ultimate": "skill_enemy_023_ultimate"
+    }
+  },
+  {
+    "id": "enemy_024",
+    "name": "金刚石精",
+    "level": 13,
+    "stats": {
+      "health": 257,
+      "minAttack": 35,
+      "maxAttack": 52,
+      "defense": 22,
+      "speed": 36
+    },
+    "drops": [
+      {
+        "itemId": "mat_003",
+        "quantity": 3,
+        "chance": 0.65
+      },
+      {
+        "itemId": "mat_006",
+        "quantity": 4,
+        "chance": 0.35
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_024_small",
+      "passive": "skill_enemy_024_passive",
+      "ultimate": "skill_enemy_024_ultimate"
+    }
+  },
+  {
+    "id": "boss_003",
+    "name": "碎石坡守护者",
+    "level": 13,
+    "stats": {
+      "health": 257,
+      "minAttack": 35,
+      "maxAttack": 52,
+      "defense": 22,
+      "speed": 36
+    },
+    "drops": [
+      {
+        "itemId": "mat_007",
+        "quantity": 1,
+        "chance": 0.6
+      },
+      {
+        "itemId": "crys_004",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_boss_003_small",
+      "passive": "skill_boss_003_passive",
+      "ultimate": "skill_boss_003_ultimate"
+    }
+  },
+  {
+    "id": "enemy_025",
+    "name": "小树精",
+    "level": 7,
+    "stats": {
+      "health": 128,
+      "minAttack": 16,
+      "maxAttack": 24,
+      "defense": 11,
+      "speed": 24
+    },
+    "drops": [
+      {
+        "itemId": "mat_006",
+        "quantity": 2,
+        "chance": 0.8
+      },
+      {
+        "itemId": "mat_009",
+        "quantity": 1,
+        "chance": 0.2
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_025_small"
+    }
+  },
+  {
+    "id": "enemy_026",
+    "name": "迷路家仆妖",
+    "level": 8,
+    "stats": {
+      "health": 142,
+      "minAttack": 18,
+      "maxAttack": 27,
+      "defense": 12,
+      "speed": 26
+    },
+    "drops": [
+      {
+        "itemId": "mat_010",
+        "quantity": 2,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_001",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_026_small"
+    }
+  },
+  {
+    "id": "enemy_027",
+    "name": "幼年野猪精",
+    "level": 8,
+    "stats": {
+      "health": 142,
+      "minAttack": 18,
+      "maxAttack": 27,
+      "defense": 12,
+      "speed": 26
+    },
+    "drops": [
+      {
+        "itemId": "mat_009",
+        "quantity": 2,
+        "chance": 0.6
+      },
+      {
+        "itemId": "mat_002",
+        "quantity": 2,
+        "chance": 0.4
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_027_small"
+    }
+  },
+  {
+    "id": "enemy_028",
+    "name": "百年树精",
+    "level": 10,
+    "stats": {
+      "health": 184,
+      "minAttack": 26,
+      "maxAttack": 38,
+      "defense": 16,
+      "speed": 29
+    },
+    "drops": [
+      {
+        "itemId": "mat_006",
+        "quantity": 4,
+        "chance": 0.75
+      },
+      {
+        "itemId": "mat_008",
+        "quantity": 1,
+        "chance": 0.25
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_028_small",
+      "passive": "skill_enemy_028_passive"
+    }
+  },
+  {
+    "id": "enemy_029",
+    "name": "家仆妖头目",
+    "level": 11,
+    "stats": {
+      "health": 198,
+      "minAttack": 28,
+      "maxAttack": 41,
+      "defense": 17,
+      "speed": 31
+    },
+    "drops": [
+      {
+        "itemId": "mat_010",
+        "quantity": 3,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_004",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_029_small",
+      "passive": "skill_enemy_029_passive"
+    }
+  },
+  {
+    "id": "enemy_030",
+    "name": "野猪精头领",
+    "level": 11,
+    "stats": {
+      "health": 198,
+      "minAttack": 28,
+      "maxAttack": 41,
+      "defense": 17,
+      "speed": 31
+    },
+    "drops": [
+      {
+        "itemId": "mat_009",
+        "quantity": 3,
+        "chance": 0.65
+      },
+      {
+        "itemId": "crys_002",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_030_small",
+      "passive": "skill_enemy_030_passive"
+    }
+  },
+  {
+    "id": "enemy_031",
+    "name": "千年树妖",
+    "level": 14,
+    "stats": {
+      "health": 276,
+      "minAttack": 38,
+      "maxAttack": 56,
+      "defense": 23,
+      "speed": 39
+    },
+    "drops": [
+      {
+        "itemId": "mat_006",
+        "quantity": 5,
+        "chance": 0.7
+      },
+      {
+        "itemId": "mat_011",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_031_small",
+      "passive": "skill_enemy_031_passive",
+      "ultimate": "skill_enemy_031_ultimate"
+    }
+  },
+  {
+    "id": "enemy_032",
+    "name": "管家妖",
+    "level": 15,
+    "stats": {
+      "health": 293,
+      "minAttack": 40,
+      "maxAttack": 59,
+      "defense": 24,
+      "speed": 41
+    },
+    "drops": [
+      {
+        "itemId": "mat_010",
+        "quantity": 4,
+        "chance": 0.65
+      },
+      {
+        "itemId": "mat_008",
+        "quantity": 2,
+        "chance": 0.35
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_032_small",
+      "passive": "skill_enemy_032_passive",
+      "ultimate": "skill_enemy_032_ultimate"
+    }
+  },
+  {
+    "id": "boss_004",
+    "name": "迷雾林守护者",
+    "level": 15,
+    "stats": {
+      "health": 293,
+      "minAttack": 40,
+      "maxAttack": 59,
+      "defense": 24,
+      "speed": 41
+    },
+    "drops": [
+      {
+        "itemId": "mat_012",
+        "quantity": 1,
+        "chance": 0.6
+      },
+      {
+        "itemId": "crys_005",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_boss_004_small",
+      "passive": "skill_boss_004_passive",
+      "ultimate": "skill_boss_004_ultimate"
+    }
+  },
+  {
+    "id": "enemy_033",
+    "name": "小沙妖",
+    "level": 9,
+    "stats": {
+      "health": 160,
+      "minAttack": 22,
+      "maxAttack": 33,
+      "defense": 15,
+      "speed": 25
+    },
+    "drops": [
+      {
+        "itemId": "mat_002",
+        "quantity": 3,
+        "chance": 0.8
+      },
+      {
+        "itemId": "mat_008",
+        "quantity": 1,
+        "chance": 0.2
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_033_small"
+    }
+  },
+  {
+    "id": "enemy_034",
+    "name": "水蛇幼体",
+    "level": 10,
+    "stats": {
+      "health": 175,
+      "minAttack": 24,
+      "maxAttack": 36,
+      "defense": 16,
+      "speed": 28
+    },
+    "drops": [
+      {
+        "itemId": "mat_005",
+        "quantity": 3,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_005",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_034_small"
+    }
+  },
+  {
+    "id": "enemy_035",
+    "name": "小河伯侍从",
+    "level": 10,
+    "stats": {
+      "health": 175,
+      "minAttack": 24,
+      "maxAttack": 36,
+      "defense": 16,
+      "speed": 28
+    },
+    "drops": [
+      {
+        "itemId": "mat_008",
+        "quantity": 2,
+        "chance": 0.6
+      },
+      {
+        "itemId": "elix_001",
+        "quantity": 1,
+        "chance": 0.4
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_035_small"
+    }
+  },
+  {
+    "id": "enemy_036",
+    "name": "沙妖头目",
+    "level": 12,
+    "stats": {
+      "health": 242,
+      "minAttack": 33,
+      "maxAttack": 49,
+      "defense": 21,
+      "speed": 34
+    },
+    "drops": [
+      {
+        "itemId": "mat_002",
+        "quantity": 5,
+        "chance": 0.75
+      },
+      {
+        "itemId": "mat_007",
+        "quantity": 1,
+        "chance": 0.25
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_036_small",
+      "passive": "skill_enemy_036_passive"
+    }
+  },
+  {
+    "id": "enemy_037",
+    "name": "成年水蛇精",
+    "level": 13,
+    "stats": {
+      "health": 257,
+      "minAttack": 35,
+      "maxAttack": 52,
+      "defense": 22,
+      "speed": 36
+    },
+    "drops": [
+      {
+        "itemId": "mat_005",
+        "quantity": 4,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_006",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_037_small",
+      "passive": "skill_enemy_037_passive"
+    }
+  },
+  {
+    "id": "enemy_038",
+    "name": "河伯副官",
+    "level": 13,
+    "stats": {
+      "health": 257,
+      "minAttack": 35,
+      "maxAttack": 52,
+      "defense": 22,
+      "speed": 36
+    },
+    "drops": [
+      {
+        "itemId": "mat_008",
+        "quantity": 3,
+        "chance": 0.65
+      },
+      {
+        "itemId": "crys_008",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_038_small",
+      "passive": "skill_enemy_038_passive"
+    }
+  },
+  {
+    "id": "enemy_039",
+    "name": "沙妖王",
+    "level": 16,
+    "stats": {
+      "health": 340,
+      "minAttack": 46,
+      "maxAttack": 68,
+      "defense": 28,
+      "speed": 45
+    },
+    "drops": [
+      {
+        "itemId": "mat_002",
+        "quantity": 7,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_004",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_039_small",
+      "passive": "skill_enemy_039_passive",
+      "ultimate": "skill_enemy_039_ultimate"
+    }
+  },
+  {
+    "id": "enemy_040",
+    "name": "水蛇精首领",
+    "level": 17,
+    "stats": {
+      "health": 357,
+      "minAttack": 48,
+      "maxAttack": 71,
+      "defense": 29,
+      "speed": 47
+    },
+    "drops": [
+      {
+        "itemId": "mat_005",
+        "quantity": 5,
+        "chance": 0.65
+      },
+      {
+        "itemId": "mat_007",
+        "quantity": 2,
+        "chance": 0.35
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_040_small",
+      "passive": "skill_enemy_040_passive",
+      "ultimate": "skill_enemy_040_ultimate"
+    }
+  },
+  {
+    "id": "boss_005",
+    "name": "浊浪滩守护者",
+    "level": 17,
+    "stats": {
+      "health": 357,
+      "minAttack": 48,
+      "maxAttack": 71,
+      "defense": 29,
+      "speed": 47
+    },
+    "drops": [
+      {
+        "itemId": "mat_017",
+        "quantity": 1,
+        "chance": 0.6
+      },
+      {
+        "itemId": "crys_002",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_boss_005_small",
+      "passive": "skill_boss_005_passive",
+      "ultimate": "skill_boss_005_ultimate"
+    }
+  },
+  {
+    "id": "enemy_041",
+    "name": "小火蜥蜴",
+    "level": 11,
+    "stats": {
+      "health": 198,
+      "minAttack": 28,
+      "maxAttack": 41,
+      "defense": 17,
+      "speed": 31
+    },
+    "drops": [
+      {
+        "itemId": "mat_013",
+        "quantity": 1,
+        "chance": 0.8
+      },
+      {
+        "itemId": "mat_007",
+        "quantity": 1,
+        "chance": 0.2
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_041_small"
+    }
+  },
+  {
+    "id": "enemy_042",
+    "name": "熔岩小精",
+    "level": 12,
+    "stats": {
+      "health": 213,
+      "minAttack": 30,
+      "maxAttack": 44,
+      "defense": 18,
+      "speed": 33
+    },
+    "drops": [
+      {
+        "itemId": "mat_014",
+        "quantity": 1,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_003",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_042_small"
+    }
+  },
+  {
+    "id": "enemy_043",
+    "name": "火童侍者",
+    "level": 12,
+    "stats": {
+      "health": 213,
+      "minAttack": 30,
+      "maxAttack": 44,
+      "defense": 18,
+      "speed": 33
+    },
+    "drops": [
+      {
+        "itemId": "mat_013",
+        "quantity": 2,
+        "chance": 0.6
+      },
+      {
+        "itemId": "elix_004",
+        "quantity": 1,
+        "chance": 0.4
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_043_small"
+    }
+  },
+  {
+    "id": "enemy_044",
+    "name": "熔岩蜥蜴",
+    "level": 14,
+    "stats": {
+      "health": 276,
+      "minAttack": 38,
+      "maxAttack": 56,
+      "defense": 23,
+      "speed": 39
+    },
+    "drops": [
+      {
+        "itemId": "mat_013",
+        "quantity": 3,
+        "chance": 0.75
+      },
+      {
+        "itemId": "mat_007",
+        "quantity": 2,
+        "chance": 0.25
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_044_small",
+      "passive": "skill_enemy_044_passive"
+    }
+  },
+  {
+    "id": "enemy_045",
+    "name": "熔岩精头目",
+    "level": 15,
+    "stats": {
+      "health": 293,
+      "minAttack": 40,
+      "maxAttack": 59,
+      "defense": 24,
+      "speed": 41
+    },
+    "drops": [
+      {
+        "itemId": "mat_014",
+        "quantity": 2,
+        "chance": 0.7
+      },
+      {
+        "itemId": "mat_011",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_045_small",
+      "passive": "skill_enemy_045_passive"
+    }
+  },
+  {
+    "id": "enemy_046",
+    "name": "火童队长",
+    "level": 15,
+    "stats": {
+      "health": 293,
+      "minAttack": 40,
+      "maxAttack": 59,
+      "defense": 24,
+      "speed": 41
+    },
+    "drops": [
+      {
+        "itemId": "mat_015",
+        "quantity": 1,
+        "chance": 0.65
+      },
+      {
+        "itemId": "crys_003",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_046_small",
+      "passive": "skill_enemy_046_passive"
+    }
+  },
+  {
+    "id": "enemy_047",
+    "name": "火焰蜥蜴王",
+    "level": 18,
+    "stats": {
+      "health": 414,
+      "minAttack": 56,
+      "maxAttack": 82,
+      "defense": 32,
+      "speed": 51
+    },
+    "drops": [
+      {
+        "itemId": "mat_013",
+        "quantity": 4,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_006",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_047_small",
+      "passive": "skill_enemy_047_passive",
+      "ultimate": "skill_enemy_047_ultimate"
+    }
+  },
+  {
+    "id": "enemy_048",
+    "name": "熔岩巨精",
+    "level": 19,
+    "stats": {
+      "health": 433,
+      "minAttack": 58,
+      "maxAttack": 85,
+      "defense": 33,
+      "speed": 53
+    },
+    "drops": [
+      {
+        "itemId": "mat_014",
+        "quantity": 3,
+        "chance": 0.65
+      },
+      {
+        "itemId": "mat_007",
+        "quantity": 3,
+        "chance": 0.35
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_048_small",
+      "passive": "skill_enemy_048_passive",
+      "ultimate": "skill_enemy_048_ultimate"
+    }
+  },
+  {
+    "id": "boss_006",
+    "name": "熔岩洞守护者",
+    "level": 19,
+    "stats": {
+      "health": 433,
+      "minAttack": 58,
+      "maxAttack": 85,
+      "defense": 33,
+      "speed": 53
+    },
+    "drops": [
+      {
+        "itemId": "mat_016",
+        "quantity": 1,
+        "chance": 0.6
+      },
+      {
+        "itemId": "crys_006",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_boss_006_small",
+      "passive": "skill_boss_006_passive",
+      "ultimate": "skill_boss_006_ultimate"
+    }
+  },
+  {
+    "id": "enemy_049",
+    "name": "小蜘蛛精",
+    "level": 13,
+    "stats": {
+      "health": 257,
+      "minAttack": 35,
+      "maxAttack": 52,
+      "defense": 22,
+      "speed": 36
+    },
+    "drops": [
+      {
+        "itemId": "mat_012",
+        "quantity": 1,
+        "chance": 0.8
+      },
+      {
+        "itemId": "mat_023",
+        "quantity": 1,
+        "chance": 0.2
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_049_small"
+    }
+  },
+  {
+    "id": "enemy_050",
+    "name": "幼年毒蛾",
+    "level": 14,
+    "stats": {
+      "health": 276,
+      "minAttack": 38,
+      "maxAttack": 56,
+      "defense": 23,
+      "speed": 39
+    },
+    "drops": [
+      {
+        "itemId": "mat_022",
+        "quantity": 1,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_005",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_050_small"
+    }
+  },
+  {
+    "id": "enemy_051",
+    "name": "蛛后幼虫",
+    "level": 14,
+    "stats": {
+      "health": 276,
+      "minAttack": 38,
+      "maxAttack": 56,
+      "defense": 23,
+      "speed": 39
+    },
+    "drops": [
+      {
+        "itemId": "mat_012",
+        "quantity": 2,
+        "chance": 0.6
+      },
+      {
+        "itemId": "elix_001",
+        "quantity": 1,
+        "chance": 0.4
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_051_small"
+    }
+  },
+  {
+    "id": "enemy_052",
+    "name": "蜘蛛精头目",
+    "level": 16,
+    "stats": {
+      "health": 340,
+      "minAttack": 46,
+      "maxAttack": 68,
+      "defense": 28,
+      "speed": 45
+    },
+    "drops": [
+      {
+        "itemId": "mat_012",
+        "quantity": 3,
+        "chance": 0.75
+      },
+      {
+        "itemId": "mat_018",
+        "quantity": 1,
+        "chance": 0.25
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_052_small",
+      "passive": "skill_enemy_052_passive"
+    }
+  },
+  {
+    "id": "enemy_053",
+    "name": "成年毒蛾",
+    "level": 17,
+    "stats": {
+      "health": 357,
+      "minAttack": 48,
+      "maxAttack": 71,
+      "defense": 29,
+      "speed": 47
+    },
+    "drops": [
+      {
+        "itemId": "mat_022",
+        "quantity": 2,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_006",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_053_small",
+      "passive": "skill_enemy_053_passive"
+    }
+  },
+  {
+    "id": "enemy_054",
+    "name": "蛛后亲卫",
+    "level": 17,
+    "stats": {
+      "health": 357,
+      "minAttack": 48,
+      "maxAttack": 71,
+      "defense": 29,
+      "speed": 47
+    },
+    "drops": [
+      {
+        "itemId": "mat_018",
+        "quantity": 1,
+        "chance": 0.65
+      },
+      {
+        "itemId": "crys_009",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_054_small",
+      "passive": "skill_enemy_054_passive"
+    }
+  },
+  {
+    "id": "enemy_055",
+    "name": "盘丝大仙",
+    "level": 20,
+    "stats": {
+      "health": 530,
+      "minAttack": 71,
+      "maxAttack": 105,
+      "defense": 38,
+      "speed": 59
+    },
+    "drops": [
+      {
+        "itemId": "mat_012",
+        "quantity": 4,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_004",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_055_small",
+      "passive": "skill_enemy_055_passive",
+      "ultimate": "skill_enemy_055_ultimate"
+    }
+  },
+  {
+    "id": "enemy_056",
+    "name": "毒蛾女王",
+    "level": 21,
+    "stats": {
+      "health": 551,
+      "minAttack": 73,
+      "maxAttack": 108,
+      "defense": 39,
+      "speed": 61
+    },
+    "drops": [
+      {
+        "itemId": "mat_022",
+        "quantity": 3,
+        "chance": 0.65
+      },
+      {
+        "itemId": "mat_018",
+        "quantity": 2,
+        "chance": 0.35
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_056_small",
+      "passive": "skill_enemy_056_passive",
+      "ultimate": "skill_enemy_056_ultimate"
+    }
+  },
+  {
+    "id": "boss_007",
+    "name": "蛛丝谷守护者",
+    "level": 21,
+    "stats": {
+      "health": 551,
+      "minAttack": 73,
+      "maxAttack": 108,
+      "defense": 39,
+      "speed": 61
+    },
+    "drops": [
+      {
+        "itemId": "mat_019",
+        "quantity": 1,
+        "chance": 0.6
+      },
+      {
+        "itemId": "crys_003",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_boss_007_small",
+      "passive": "skill_boss_007_passive",
+      "ultimate": "skill_boss_007_ultimate"
+    }
+  },
+  {
+    "id": "enemy_057",
+    "name": "小狮兵",
+    "level": 15,
+    "stats": {
+      "health": 293,
+      "minAttack": 40,
+      "maxAttack": 59,
+      "defense": 24,
+      "speed": 41
+    },
+    "drops": [
+      {
+        "itemId": "mat_020",
+        "quantity": 1,
+        "chance": 0.8
+      },
+      {
+        "itemId": "mat_016",
+        "quantity": 1,
+        "chance": 0.2
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_057_small"
+    }
+  },
+  {
+    "id": "enemy_058",
+    "name": "幼年象妖",
+    "level": 16,
+    "stats": {
+      "health": 312,
+      "minAttack": 42,
+      "maxAttack": 62,
+      "defense": 25,
+      "speed": 43
+    },
+    "drops": [
+      {
+        "itemId": "mat_024",
+        "quantity": 1,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_003",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_058_small"
+    }
+  },
+  {
+    "id": "enemy_059",
+    "name": "小鹏怪",
+    "level": 16,
+    "stats": {
+      "health": 312,
+      "minAttack": 42,
+      "maxAttack": 62,
+      "defense": 25,
+      "speed": 43
+    },
+    "drops": [
+      {
+        "itemId": "mat_025",
+        "quantity": 1,
+        "chance": 0.6
+      },
+      {
+        "itemId": "elix_005",
+        "quantity": 1,
+        "chance": 0.4
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_059_small"
+    }
+  },
+  {
+    "id": "enemy_060",
+    "name": "狮兵统领",
+    "level": 18,
+    "stats": {
+      "health": 414,
+      "minAttack": 56,
+      "maxAttack": 82,
+      "defense": 32,
+      "speed": 51
+    },
+    "drops": [
+      {
+        "itemId": "mat_020",
+        "quantity": 2,
+        "chance": 0.75
+      },
+      {
+        "itemId": "mat_016",
+        "quantity": 2,
+        "chance": 0.25
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_060_small",
+      "passive": "skill_enemy_060_passive"
+    }
+  },
+  {
+    "id": "enemy_061",
+    "name": "铁甲象妖",
+    "level": 19,
+    "stats": {
+      "health": 433,
+      "minAttack": 58,
+      "maxAttack": 85,
+      "defense": 33,
+      "speed": 53
+    },
+    "drops": [
+      {
+        "itemId": "mat_024",
+        "quantity": 2,
+        "chance": 0.7
+      },
+      {
+        "itemId": "mat_011",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_061_small",
+      "passive": "skill_enemy_061_passive"
+    }
+  },
+  {
+    "id": "enemy_062",
+    "name": "鹏怪头目",
+    "level": 19,
+    "stats": {
+      "health": 433,
+      "minAttack": 58,
+      "maxAttack": 85,
+      "defense": 33,
+      "speed": 53
+    },
+    "drops": [
+      {
+        "itemId": "mat_025",
+        "quantity": 2,
+        "chance": 0.65
+      },
+      {
+        "itemId": "crys_006",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_062_small",
+      "passive": "skill_enemy_062_passive"
+    }
+  },
+  {
+    "id": "enemy_063",
+    "name": "狮王近卫",
+    "level": 22,
+    "stats": {
+      "health": 648,
+      "minAttack": 87,
+      "maxAttack": 128,
+      "defense": 44,
+      "speed": 69
+    },
+    "drops": [
+      {
+        "itemId": "mat_020",
+        "quantity": 3,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_006",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_063_small",
+      "passive": "skill_enemy_063_passive",
+      "ultimate": "skill_enemy_063_ultimate"
+    }
+  },
+  {
+    "id": "enemy_064",
+    "name": "象妖将军",
+    "level": 23,
+    "stats": {
+      "health": 670,
+      "minAttack": 89,
+      "maxAttack": 131,
+      "defense": 45,
+      "speed": 71
+    },
+    "drops": [
+      {
+        "itemId": "mat_024",
+        "quantity": 3,
+        "chance": 0.65
+      },
+      {
+        "itemId": "mat_016",
+        "quantity": 3,
+        "chance": 0.35
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_064_small",
+      "passive": "skill_enemy_064_passive",
+      "ultimate": "skill_enemy_064_ultimate"
+    }
+  },
+  {
+    "id": "boss_008",
+    "name": "狂风岭守护者",
+    "level": 23,
+    "stats": {
+      "health": 670,
+      "minAttack": 89,
+      "maxAttack": 131,
+      "defense": 45,
+      "speed": 71
+    },
+    "drops": [
+      {
+        "itemId": "mat_015",
+        "quantity": 2,
+        "chance": 0.6
+      },
+      {
+        "itemId": "crys_009",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_boss_008_small",
+      "passive": "skill_boss_008_passive",
+      "ultimate": "skill_boss_008_ultimate"
+    }
+  },
+  {
+    "id": "enemy_065",
+    "name": "小金刚",
+    "level": 17,
+    "stats": {
+      "health": 357,
+      "minAttack": 48,
+      "maxAttack": 71,
+      "defense": 29,
+      "speed": 47
+    },
+    "drops": [
+      {
+        "itemId": "mat_019",
+        "quantity": 1,
+        "chance": 0.8
+      },
+      {
+        "itemId": "elix_002",
+        "quantity": 1,
+        "chance": 0.2
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_065_small"
+    }
+  },
+  {
+    "id": "enemy_066",
+    "name": "罗汉侍者",
+    "level": 18,
+    "stats": {
+      "health": 377,
+      "minAttack": 50,
+      "maxAttack": 74,
+      "defense": 30,
+      "speed": 49
+    },
+    "drops": [
+      {
+        "itemId": "mat_017",
+        "quantity": 1,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_001",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_066_small"
+    }
+  },
+  {
+    "id": "enemy_067",
+    "name": "护法学徒",
+    "level": 18,
+    "stats": {
+      "health": 377,
+      "minAttack": 50,
+      "maxAttack": 74,
+      "defense": 30,
+      "speed": 49
+    },
+    "drops": [
+      {
+        "itemId": "frag_004",
+        "quantity": 1,
+        "chance": 0.6
+      },
+      {
+        "itemId": "elix_003",
+        "quantity": 1,
+        "chance": 0.4
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_067_small"
+    }
+  },
+  {
+    "id": "enemy_068",
+    "name": "金刚力士",
+    "level": 20,
+    "stats": {
+      "health": 530,
+      "minAttack": 71,
+      "maxAttack": 105,
+      "defense": 38,
+      "speed": 59
+    },
+    "drops": [
+      {
+        "itemId": "mat_019",
+        "quantity": 2,
+        "chance": 0.75
+      },
+      {
+        "itemId": "ess_001",
+        "quantity": 1,
+        "chance": 0.25
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_068_small",
+      "passive": "skill_enemy_068_passive"
+    }
+  },
+  {
+    "id": "enemy_069",
+    "name": "罗汉尊者",
+    "level": 21,
+    "stats": {
+      "health": 551,
+      "minAttack": 73,
+      "maxAttack": 108,
+      "defense": 39,
+      "speed": 61
+    },
+    "drops": [
+      {
+        "itemId": "mat_017",
+        "quantity": 2,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_006",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_069_small",
+      "passive": "skill_enemy_069_passive"
+    }
+  },
+  {
+    "id": "enemy_070",
+    "name": "护法金刚",
+    "level": 21,
+    "stats": {
+      "health": 551,
+      "minAttack": 73,
+      "maxAttack": 108,
+      "defense": 39,
+      "speed": 61
+    },
+    "drops": [
+      {
+        "itemId": "mat_026",
+        "quantity": 1,
+        "chance": 0.65
+      },
+      {
+        "itemId": "crys_003",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_070_small",
+      "passive": "skill_enemy_070_passive"
+    }
+  },
+  {
+    "id": "enemy_071",
+    "name": "金刚罗汉",
+    "level": 24,
+    "stats": {
+      "health": 794,
+      "minAttack": 107,
+      "maxAttack": 158,
+      "defense": 50,
+      "speed": 81
+    },
+    "drops": [
+      {
+        "itemId": "mat_019",
+        "quantity": 3,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_004",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_071_small",
+      "passive": "skill_enemy_071_passive",
+      "ultimate": "skill_enemy_071_ultimate"
+    }
+  },
+  {
+    "id": "enemy_072",
+    "name": "降龙罗汉",
+    "level": 25,
+    "stats": {
+      "health": 819,
+      "minAttack": 109,
+      "maxAttack": 162,
+      "defense": 51,
+      "speed": 83
+    },
+    "drops": [
+      {
+        "itemId": "mat_017",
+        "quantity": 3,
+        "chance": 0.65
+      },
+      {
+        "itemId": "ess_001",
+        "quantity": 2,
+        "chance": 0.35
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_072_small",
+      "passive": "skill_enemy_072_passive",
+      "ultimate": "skill_enemy_072_ultimate"
+    }
+  },
+  {
+    "id": "boss_009",
+    "name": "禅音崖守护者",
+    "level": 25,
+    "stats": {
+      "health": 819,
+      "minAttack": 109,
+      "maxAttack": 162,
+      "defense": 51,
+      "speed": 83
+    },
+    "drops": [
+      {
+        "itemId": "ess_002",
+        "quantity": 1,
+        "chance": 0.6
+      },
+      {
+        "itemId": "crys_006",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_boss_009_small",
+      "passive": "skill_boss_009_passive",
+      "ultimate": "skill_boss_009_ultimate"
+    }
+  },
+  {
+    "id": "enemy_073",
+    "name": "佛门叛徒侍从",
+    "level": 19,
+    "stats": {
+      "health": 433,
+      "minAttack": 58,
+      "maxAttack": 85,
+      "defense": 33,
+      "speed": 53
+    },
+    "drops": [
+      {
+        "itemId": "frag_001",
+        "quantity": 1,
+        "chance": 0.8
+      },
+      {
+        "itemId": "elix_002",
+        "quantity": 2,
+        "chance": 0.2
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_073_small"
+    }
+  },
+  {
+    "id": "enemy_074",
+    "name": "金刚护法随从",
+    "level": 20,
+    "stats": {
+      "health": 454,
+      "minAttack": 60,
+      "maxAttack": 88,
+      "defense": 34,
+      "speed": 55
+    },
+    "drops": [
+      {
+        "itemId": "frag_002",
+        "quantity": 1,
+        "chance": 0.7
+      },
+      {
+        "itemId": "elix_001",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_074_small"
+    }
+  },
+  {
+    "id": "enemy_075",
+    "name": "罗汉使者学徒",
+    "level": 20,
+    "stats": {
+      "health": 454,
+      "minAttack": 60,
+      "maxAttack": 88,
+      "defense": 34,
+      "speed": 55
+    },
+    "drops": [
+      {
+        "itemId": "frag_003",
+        "quantity": 1,
+        "chance": 0.6
+      },
+      {
+        "itemId": "elix_006",
+        "quantity": 1,
+        "chance": 0.4
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_075_small"
+    }
+  },
+  {
+    "id": "enemy_076",
+    "name": "佛门叛徒精英",
+    "level": 22,
+    "stats": {
+      "health": 648,
+      "minAttack": 87,
+      "maxAttack": 128,
+      "defense": 44,
+      "speed": 69
+    },
+    "drops": [
+      {
+        "itemId": "ess_002",
+        "quantity": 1,
+        "chance": 0.75
+      },
+      {
+        "itemId": "crys_001",
+        "quantity": 1,
+        "chance": 0.25
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_076_small",
+      "passive": "skill_enemy_076_passive"
+    }
+  },
+  {
+    "id": "enemy_077",
+    "name": "金刚护法将领",
+    "level": 23,
+    "stats": {
+      "health": 670,
+      "minAttack": 89,
+      "maxAttack": 131,
+      "defense": 45,
+      "speed": 71
+    },
+    "drops": [
+      {
+        "itemId": "ess_003",
+        "quantity": 1,
+        "chance": 0.7
+      },
+      {
+        "itemId": "crys_004",
+        "quantity": 1,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_077_small",
+      "passive": "skill_enemy_077_passive"
+    }
+  },
+  {
+    "id": "enemy_078",
+    "name": "罗汉使者长老",
+    "level": 23,
+    "stats": {
+      "health": 670,
+      "minAttack": 89,
+      "maxAttack": 131,
+      "defense": 45,
+      "speed": 71
+    },
+    "drops": [
+      {
+        "itemId": "elix_007",
+        "quantity": 1,
+        "chance": 0.65
+      },
+      {
+        "itemId": "crys_007",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_078_small",
+      "passive": "skill_enemy_078_passive"
+    }
+  },
+  {
+    "id": "enemy_079",
+    "name": "佛门叛徒首领",
+    "level": 26,
+    "stats": {
+      "health": 988,
+      "minAttack": 133,
+      "maxAttack": 196,
+      "defense": 56,
+      "speed": 91
+    },
+    "drops": [
+      {
+        "itemId": "ess_002",
+        "quantity": 2,
+        "chance": 0.7
+      },
+      {
+        "itemId": "crys_001",
+        "quantity": 2,
+        "chance": 0.3
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_079_small",
+      "passive": "skill_enemy_079_passive",
+      "ultimate": "skill_enemy_079_ultimate"
+    }
+  },
+  {
+    "id": "enemy_080",
+    "name": "金刚护法统帅",
+    "level": 27,
+    "stats": {
+      "health": 1014,
+      "minAttack": 135,
+      "maxAttack": 200,
+      "defense": 57,
+      "speed": 93
+    },
+    "drops": [
+      {
+        "itemId": "ess_003",
+        "quantity": 2,
+        "chance": 0.65
+      },
+      {
+        "itemId": "crys_004",
+        "quantity": 2,
+        "chance": 0.35
+      }
+    ],
+    "skills": {
+      "small": "skill_enemy_080_small",
+      "passive": "skill_enemy_080_passive",
+      "ultimate": "skill_enemy_080_ultimate"
+    }
+  },
+  {
+    "id": "boss_010",
+    "name": "灵霄台守护者",
+    "level": 27,
+    "stats": {
+      "health": 1014,
+      "minAttack": 135,
+      "maxAttack": 200,
+      "defense": 57,
+      "speed": 93
+    },
+    "drops": [
+      {
+        "itemId": "elix_007",
+        "quantity": 2,
+        "chance": 0.6
+      },
+      {
+        "itemId": "crys_003",
+        "quantity": 1,
+        "chance": 0.05
+      }
+    ],
+    "skills": {
+      "small": "skill_boss_010_small",
+      "passive": "skill_boss_010_passive",
+      "ultimate": "skill_boss_010_ultimate"
     }
   }
 ]

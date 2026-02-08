@@ -1,6 +1,7 @@
 import type { Character } from './character'
 import type { EnemyInstance } from './enemy'
-
+import type { BattleAI } from '@/core/BattleAI'
+import type { SkillManager } from '@/core/skill/SkillManager'
 export type BattleEntityType = 'character' | 'enemy'
 
 export interface BattleEntity {
@@ -96,4 +97,34 @@ export interface BattleSystem {
   executeAction(action: BattleAction): Promise<BattleAction>
   getBattleState(battleId: string): BattleState | undefined
   endBattle(battleId: string, winner: BattleEntityType): void
+  resetBattle(battleId: string): void
+}
+
+/**
+ * 战斗数据接口
+ * 描述战斗的完整状态和数据
+ */
+export interface BattleData {
+  /** 战斗唯一标识符 */
+  battleId: string
+  /** 参与者映射，以参与者ID为键 */
+  participants: Map<string, BattleParticipant>
+  /** 战斗行动记录 */
+  actions: BattleAction[]
+  /** 回合顺序，按参与者ID排序 */
+  turnOrder: string[]
+  /** 当前回合索引 */
+  currentTurn: number
+  /** 战斗是否活跃 */
+  isActive: boolean
+  /** 战斗开始时间戳 */
+  startTime: number
+  /** 战斗结束时间戳（可选） */
+  endTime?: number
+  /** 战斗胜利者（可选） */
+  winner?: BattleEntityType
+  /** 每个参与者的AI实例映射 */
+  aiInstances: Map<string, BattleAI>
+  /** 技能管理器实例 */
+  skillManager: SkillManager
 }

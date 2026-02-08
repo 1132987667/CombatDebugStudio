@@ -47,13 +47,13 @@
     "background": "五行山脚，岩妖石精盘踞于此，阻挡着通往高老庄的道路。",
     "difficulties": {
       "easy": {
-        "enemyIds": ["enemy_001", "enemy_002", "enemy_003"]
+        "enemyIds": ["enemy_017", "enemy_018", "enemy_019"]
       },
       "normal": {
-        "enemyIds": ["enemy_004", "enemy_005", "enemy_006"]
+        "enemyIds": ["enemy_020", "enemy_021", "enemy_022"]
       },
       "hard": {
-        "enemyIds": ["enemy_007", "enemy_008", "boss_003"]
+        "enemyIds": ["enemy_023", "enemy_024", "boss_003"]
       }
     },
     "requiredLevel": 5,
@@ -68,13 +68,13 @@
     "background": "高老庄外，迷雾笼罩的森林中隐藏着各种妖怪。",
     "difficulties": {
       "easy": {
-        "enemyIds": ["enemy_009", "enemy_010", "enemy_011"]
+        "enemyIds": ["enemy_025", "enemy_026", "enemy_027"]
       },
       "normal": {
-        "enemyIds": ["enemy_012", "enemy_013", "enemy_014"]
+        "enemyIds": ["enemy_028", "enemy_029", "enemy_030"]
       },
       "hard": {
-        "enemyIds": ["enemy_015", "enemy_016", "boss_004"]
+        "enemyIds": ["enemy_031", "enemy_032", "boss_004"]
       }
     },
     "requiredLevel": 7,
@@ -89,13 +89,13 @@
     "background": "流沙河岸，沙妖水怪潜伏在浊浪之中。",
     "difficulties": {
       "easy": {
-        "enemyIds": ["enemy_001", "enemy_002", "enemy_003"]
+        "enemyIds": ["enemy_033", "enemy_034", "enemy_035"]
       },
       "normal": {
-        "enemyIds": ["enemy_004", "enemy_005", "enemy_006"]
+        "enemyIds": ["enemy_036", "enemy_037", "enemy_038"]
       },
       "hard": {
-        "enemyIds": ["enemy_007", "enemy_008", "boss_001"]
+        "enemyIds": ["enemy_039", "enemy_040", "boss_005"]
       }
     },
     "requiredLevel": 9,
@@ -110,13 +110,13 @@
     "background": "火焰山脚，熔岩洞窟中栖息着火焰生物。",
     "difficulties": {
       "easy": {
-        "enemyIds": ["enemy_009", "enemy_010", "enemy_011"]
+        "enemyIds": ["enemy_041", "enemy_042", "enemy_043"]
       },
       "normal": {
-        "enemyIds": ["enemy_012", "enemy_013", "enemy_014"]
+        "enemyIds": ["enemy_044", "enemy_045", "enemy_046"]
       },
       "hard": {
-        "enemyIds": ["enemy_015", "enemy_016", "boss_002"]
+        "enemyIds": ["enemy_047", "enemy_048", "boss_006"]
       }
     },
     "requiredLevel": 11,
@@ -131,13 +131,13 @@
     "background": "盘丝洞口，蜘蛛精和毒蛾在这里编织着致命的陷阱。",
     "difficulties": {
       "easy": {
-        "enemyIds": ["enemy_001", "enemy_002", "enemy_003"]
+        "enemyIds": ["enemy_049", "enemy_050", "enemy_051"]
       },
       "normal": {
-        "enemyIds": ["enemy_004", "enemy_005", "enemy_006"]
+        "enemyIds": ["enemy_052", "enemy_053", "enemy_054"]
       },
       "hard": {
-        "enemyIds": ["enemy_007", "enemy_008", "boss_001"]
+        "enemyIds": ["enemy_055", "enemy_056", "boss_007"]
       }
     },
     "requiredLevel": 13,
@@ -152,13 +152,13 @@
     "background": "狮驼岭，狮妖象怪在此称霸一方。",
     "difficulties": {
       "easy": {
-        "enemyIds": ["enemy_009", "enemy_010", "enemy_011"]
+        "enemyIds": ["enemy_057", "enemy_058", "enemy_059"]
       },
       "normal": {
-        "enemyIds": ["enemy_012", "enemy_013", "enemy_014"]
+        "enemyIds": ["enemy_060", "enemy_061", "enemy_062"]
       },
       "hard": {
-        "enemyIds": ["enemy_015", "enemy_016", "boss_002"]
+        "enemyIds": ["enemy_063", "enemy_064", "boss_008"]
       }
     },
     "requiredLevel": 15,
@@ -173,13 +173,13 @@
     "background": "雷音寺外，佛门叛徒和护法在此争斗不休。",
     "difficulties": {
       "easy": {
-        "enemyIds": ["enemy_001", "enemy_002", "enemy_003"]
+        "enemyIds": ["enemy_065", "enemy_066", "enemy_067"]
       },
       "normal": {
-        "enemyIds": ["enemy_004", "enemy_005", "enemy_006"]
+        "enemyIds": ["enemy_068", "enemy_069", "enemy_070"]
       },
       "hard": {
-        "enemyIds": ["enemy_007", "enemy_008", "boss_001"]
+        "enemyIds": ["enemy_071", "enemy_072", "boss_009"]
       }
     },
     "requiredLevel": 17,
@@ -194,13 +194,13 @@
     "background": "灵山之巅，佛门叛徒和金刚护法在此做最后抵抗。",
     "difficulties": {
       "easy": {
-        "enemyIds": ["enemy_009", "enemy_010", "enemy_011"]
+        "enemyIds": ["enemy_073", "enemy_074", "enemy_075"]
       },
       "normal": {
-        "enemyIds": ["enemy_012", "enemy_013", "enemy_014"]
+        "enemyIds": ["enemy_076", "enemy_077", "enemy_078"]
       },
       "hard": {
-        "enemyIds": ["enemy_015", "enemy_016", "boss_002"]
+        "enemyIds": ["enemy_079", "enemy_080", "boss_010"]
       }
     },
     "requiredLevel": 19,

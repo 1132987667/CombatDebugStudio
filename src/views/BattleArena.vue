@@ -13,8 +13,7 @@
       <!-- 左侧：参战角色配置 -->
       <ParticipantPanel :battle-characters="battleCharacters" :enemy-party="enemyParty"
         :selected-character-id="selectedCharacterId" @update:selected-character-id="selectCharacter"
-        @add-enemy="addEnemyToBattle" @add-character="addCharacter" @move-character="moveCharacter"
-        @clear-participants="clearParticipants" />
+        @add-enemy="addEnemyToBattle" @move-character="moveCharacter" @clear-participants="clearParticipants" />
 
       <!-- 中间：战斗战场和日志 -->
       <BattleField ref="battleFieldRef" :battle-characters="battleCharacters" :enemy-party="enemyParty"
@@ -25,11 +24,10 @@
       <!-- 右侧：调试面板 -->
       <div class="right-panel">
         <DebugPanel :battle-characters="battleCharacters" :enemy-party="enemyParty"
-          :selected-character-id="selectedCharacterId" :last-export-time="lastExportTime"
-          :exception-status="exceptionStatus" @end-turn="endTurn" @execute-skill="executeSkill" @add-status="addStatus"
-          @adjust-stats="adjustStats" @clear-statuses="clearStatuses" @export-state="exportState"
-          @import-state="importState" @view-export="viewExport" @reload-export="reloadExport"
-          @locate-exception="locateException" />
+          :selected-character-id="selectedCharacterId" :last-export-time="lastExportTime" @end-turn="endTurn"
+          @execute-skill="executeSkill" @add-status="addStatus" @adjust-stats="adjustStats"
+          @clear-statuses="clearStatuses" @export-state="exportState" @import-state="importState"
+          @view-export="viewExport" @reload-export="reloadExport" @locate-exception="locateException" />
 
         <BattleReplay :battle-manager="battleSystem" @replay-event="handleReplayEvent" @replay-start="handleReplayStart"
           @replay-end="handleReplayEnd" @replay-pause="handleReplayPause" />
@@ -102,9 +100,9 @@
 
     <!-- 底部控制栏 -->
     <ControlBar :is-battle-active="isBattleActive" :is-auto-playing="isAutoPlaying" :is-paused="isPaused"
-      :battle-state-display="battleStateDisplay" @start-battle="startBattle" @end-battle="endBattle"
-      @reset-battle="resetBattle" @step-back="stepBack" @toggle-pause="togglePause" @single-step="singleStep"
-      @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange" />
+      @start-battle="startBattle" @end-battle="endBattle" @reset-battle="resetBattle" @step-back="stepBack"
+      @toggle-pause="togglePause" @single-step="singleStep" @toggle-auto-play="toggleAutoPlay"
+      @battle-speed-change="handleBattleSpeedChange" />
 
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
@@ -119,11 +117,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted, watch } from "vue";
-import type { Enemy } from "@/types/enemy";
-import enemiesData from "@configs/enemies/enemies.json";
-import scenesData from "@configs/scenes/scenes.json";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
-import skillsData from "@configs/skills/skills.json";
 import Dialog from "@/components/Dialog.vue";
 import ParticipantPanel from "./ParticipantPanel.vue";
 import BattleField from "./BattleField.vue";
@@ -135,8 +129,9 @@ import NewbieGuide from "./NewbieGuide.vue";
 import Notification from "@/components/Notification.vue";
 import { keybindManager } from "@/core/input/KeybindManager";
 import { BattleSystemFactory } from "@/core/battle/BattleSystemFactory";
-import type { IBattleSystem } from "@/core/battle/interfaces";
-import { BattleLogManager } from '@/utils/logging'
+import type { IBattleSystem, IParticipantManager } from "@/core/battle/interfaces";
+import { BattleLogManager, BattleLogFormatter } from '@/utils/logging';
+import type { UIBattleCharacter, Enemy, SceneData } from "@/types";
 
 // 通知组件引用
 const notification = ref<Notification>(null);
@@ -145,50 +140,6 @@ import type {
   BattleParticipant,
   BattleAction as BattleSystemAction,
 } from "@/types/battle";
-
-interface BattleCharacter {
-  originalId?: string;
-  id: string;
-  name: string;
-  level: number;
-  maxHp: number;
-  currentHp: number;
-  maxMp: number;
-  currentMp: number;
-  currentEnergy: number;
-  maxEnergy: number;
-  attack: number;
-  defense: number;
-  speed: number;
-  enabled: boolean;
-  isFirst: boolean;
-  isHit?: boolean;
-  isCasting?: boolean;
-  buffs: Array<{
-    id: string;
-    name: string;
-    remainingTurns: number;
-    isPositive: boolean;
-  }>;
-}
-
-// 使用统一的Enemy接口定义，移除重复定义
-
-interface SceneData {
-  id: string;
-  name: string;
-  background: string;
-  difficulties: {
-    easy: { enemyIds: string[] };
-    normal: { enemyIds: string[] };
-    hard: { enemyIds: string[] };
-  };
-  requiredLevel: number;
-  rewards: {
-    exp: number;
-    gold: number;
-  };
-}
 
 interface InjectableStatus {
   id: string;
@@ -200,13 +151,9 @@ interface InjectableStatus {
 }
 
 /**
- * 当前回合数（从battleSystem同步）
+ * 当前回合数（可手动重置）
  */
-const currentTurn = computed(() => {
-  if (!currentBattleId.value || !battleSystem.value) return 1;
-  const battleState = battleSystem.value.getBattleState(currentBattleId.value);
-  return battleState ? battleState.currentTurn + 1 : 1; // 战斗系统从0开始计数
-});
+const currentTurn = ref(1);
 
 /**
  * 最大回合数（默认值）
@@ -224,13 +171,9 @@ const isPaused = ref(true);
 const isAutoPlaying = ref(false);
 
 /**
- * 战斗是否正在进行（从battleSystem同步）
+ * 战斗是否正在进行（可手动控制）
  */
-const isBattleActive = computed(() => {
-  if (!currentBattleId.value || !battleSystem.value) return false;
-  const battleState = battleSystem.value.getBattleState(currentBattleId.value);
-  return battleState ? battleState.isActive : false;
-});
+const isBattleActive = ref(false);
 const selectedCharacterId = ref("char_1");
 const selectedScene = ref("");
 const sceneName = ref("");
@@ -246,9 +189,16 @@ const manualStatusTurns = ref(2);
 const manualHpAmount = ref(100);
 const manualMpAmount = ref(50);
 const lastExportTime = ref<string | null>(null);
-const selectedCharMonitor = ref<BattleCharacter | null>(null);
+const selectedCharMonitor = ref<UIBattleCharacter | null>(null);
 const enemySearch = ref("");
-const enemies = ref<Enemy[]>(enemiesData as Enemy[]);
+
+
+// 初始化GameDataProcessor（自动加载配置）
+const gameDataProcessor = GameDataProcessor.getInstance();
+
+const enemies: Enemy[] = gameDataProcessor.getEnemiesData();
+
+
 const showRulesDialog = ref(false);
 const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
@@ -257,40 +207,38 @@ const keybindHintPanelRef = ref<InstanceType<typeof KeybindHintPanel> | null>(nu
 
 // Battle System - 使用工厂模式创建实例
 const battleSystem = ref<IBattleSystem | null>(null);
-const currentBattleId = ref<string | null>(null);
+const participantManager = ref<IParticipantManager | null>(null);
 
-// 初始化GameDataProcessor
-const gameDataProcessor = GameDataProcessor.getInstance({
-  enemies: enemiesData as Enemy[],
-  skills: skillsData,
-  scenes: scenesData,
-  buffs: []
+const currentBattleId = ref<string | null>(null);
+const battleData = computed(() => {
+  return battleSystem.value?.getCurBattleData(currentBattleId.value);
 });
 
 // 获取技能名称的工具函数
-const getSkillName = (skillId: string | undefined): string => {
+const getSkillName = async (skillId: string | undefined): Promise<string> => {
   if (!skillId) return "";
-
-  // 首先尝试从GameDataProcessor获取技能信息
   const skill = gameDataProcessor.findSkillById(skillId);
   if (skill?.name) {
     return skill.name;
   }
-
-  // 如果无法找到，检查是否是默认角色技能
-  const defaultSkills: { [key: string]: string } = {
-    'skill_heal': '治疗术',
-    'skill_attack': '强力攻击',
-    'skill_ultimate': '终极技能'
-  };
-
-  return defaultSkills[skillId] || skillId;
+  return "未知技能";
 };
 
 // 初始化战斗系统和快捷键
 onMounted(() => {
   BattleSystemFactory.initialize();
   battleSystem.value = BattleSystemFactory.createBattleSystem();
+  participantManager.value = battleSystem.value.getParticipantManager();
+
+  // 完成 敌我ParticipantInfo的初始化
+  // 我方 boss5 和 boss8
+  // 敌方 boss6 和 boss7
+  const participantLists = participantManager.value.createParticipantByIds(
+    ["boss_6", "boss_7"],
+    "enemy"
+  );
+
+  currentBattleId.value = battleSystem.value.createBattle([]).battleId;
 
   // 初始化快捷键系统
   // initKeybindManager();
@@ -377,12 +325,12 @@ watch(
   }
 );
 
-const allEnemies = enemiesData as Enemy[];
+
 
 function createBattleCharacter(
   enemy: Enemy,
   index: number
-): BattleCharacter {
+): UIBattleCharacter {
   return {
     originalId: enemy.id,
     id: `char_${index + 1}`,
@@ -413,32 +361,12 @@ function createBattleCharacter(
   };
 }
 
-const initialCharacters = allEnemies
-  .slice(0, 4)
-  .map((enemy, index) => createBattleCharacter(enemy, index));
 
-const battleCharacters = reactive<BattleCharacter[]>(initialCharacters);
+const battleCharacters = reactive<UIBattleCharacter[]>([]);
 
-const initialEnemies = allEnemies
-  .slice(4, 6)
-  .map((enemy, index) => createBattleCharacter(enemy, index));
 
-const enemyParty = reactive<BattleCharacter[]>(
-  initialEnemies.map((char, index) => ({
-    ...char,
-    id: `enemy_${index + 1}`,
-    buffs:
-      index === 0
-        ? [
-          {
-            id: "debuff_1",
-            name: "灼烧",
-            remainingTurns: 2,
-            isPositive: false,
-          },
-        ]
-        : [],
-  }))
+
+const enemyParty = reactive<UIBattleCharacter[]>([]
 );
 
 // 创建日志管理器实例
@@ -455,50 +383,9 @@ const rules = reactive({
   dodgeEnabled: false,
 });
 
-const savedScenes = ref(["测试_灼烧叠加", "测试_暴击率", "测试_群体治疗"]);
+const savedScenes = ref([]);
 
-const injectableStatuses = reactive<InjectableStatus[]>([
-  {
-    id: "burn",
-    name: "灼烧",
-    duration: 3,
-    effect: "伤害:15/回合",
-    active: false,
-    isPositive: false,
-  },
-  {
-    id: "power",
-    name: "力量祝福",
-    duration: 5,
-    effect: "ATK+20%",
-    active: true,
-    isPositive: true,
-  },
-  {
-    id: "weak",
-    name: "虚弱",
-    duration: 2,
-    effect: "DEF-30%",
-    active: false,
-    isPositive: false,
-  },
-  {
-    id: "poison",
-    name: "中毒",
-    duration: 4,
-    effect: "伤害:20/回合",
-    active: false,
-    isPositive: false,
-  },
-  {
-    id: "shield",
-    name: "护盾",
-    duration: 3,
-    effect: "吸收100伤害",
-    active: false,
-    isPositive: true,
-  },
-]);
+const injectableStatuses = reactive<InjectableStatus[]>([]);
 
 const ourParty = computed(() => {
   return battleCharacters
@@ -515,32 +402,12 @@ const currentActor = computed(() => {
   );
 });
 
-const filteredEnemies = computed(() => {
-  let filtered = [...enemies.value];
-  if (enemySearch.value) {
-    const keyword = enemySearch.value.toLowerCase();
-    filtered = filtered.filter((enemy) =>
-      enemy.name.toLowerCase().includes(keyword)
-    );
-  }
-  return filtered;
-});
 
-const scenes = ref<SceneData[]>(scenesData as SceneData[]);
+
+const scenes = ref<any[]>([]);
+
 const expandedScenes = reactive<Record<string, boolean>>({});
 scenes.value.forEach((s) => (expandedScenes[s.id] = true));
-
-
-const battleStateDisplay = computed(() => {
-  // 这里保持原有的显示逻辑，因为ControlBar组件内部已经处理了新的模式
-  if (isAutoPlaying.value) return "自动播放";
-  if (!isPaused.value) return "进行中";
-  return "暂停";
-});
-
-const exceptionStatus = computed(() => {
-  return { message: "[正常] 无逻辑异常", class: "normal", hasException: false };
-});
 
 watch(
   selectedCharacterId,
@@ -567,7 +434,7 @@ const selectCharacter = (charId: string) => {
 };
 
 const addEnemyToBattle = (enemy: Enemy, side: "our" | "enemy" = "our") => {
-  const newCharacter: BattleCharacter = {
+  const newCharacter: UIBattleCharacter = {
     id: `enemy_${Date.now()}_${enemy.id}`,
     name: enemy.name,
     level: enemy.level,
@@ -615,30 +482,6 @@ const moveCharacter = (direction: number) => {
   battleCharacters[idx1] = targetChar;
   battleCharacters[idx2] = currentChar;
 };
-
-const addCharacter = () => {
-  const newId = `char_${Date.now()}`;
-  battleCharacters.push({
-    id: newId,
-    name: `新角色_${battleCharacters.length + 1}`,
-    level: 1,
-    maxHp: 500,
-    currentHp: 500,
-    maxMp: 50,
-    currentMp: 50,
-    currentEnergy: 0,
-    maxEnergy: 150,
-    attack: 50,
-    defense: 30,
-    speed: 100,
-    enabled: true,
-    isFirst: false,
-    buffs: [],
-  });
-};
-
-// 使用日志管理器的便捷方法替换原有的addLog
-// 原有的addLog函数已被日志管理器替代
 
 // 子组件事件处理方法
 const endTurn = () => {
@@ -767,17 +610,7 @@ const clearParticipants = () => {
   logManager.addSystemLog("所有参战角色已清空");
 };
 
-const addCustomStatus = () => {
-  // 添加自定义状态逻辑
-  logManager.addSystemLog("自定义状态已添加");
-};
 
-const clearInjectableStatuses = () => {
-  injectableStatuses.forEach(status => {
-    status.active = false;
-  });
-  logManager.addSystemLog("所有可注入状态已清空");
-};
 
 const exitTool = () => {
   // 退出工具逻辑
@@ -1155,7 +988,7 @@ const syncParticipantsState = (battleState: BattleState) => {
 const processedActionIds = ref<Set<string>>(new Set());
 
 // 解析战斗动作并生成标准化日志
-const parseBattleAction = (action: BattleSystemAction, battleState: BattleState): { log: any; shouldDisplay: boolean } => {
+const parseBattleAction = async (action: BattleSystemAction, battleState: BattleState): Promise<{ log: any; shouldDisplay: boolean }> => {
   // 检查是否已经处理过该 action
   if (processedActionIds.value.has(action.id)) {
     return { log: null, shouldDisplay: false };
@@ -1198,7 +1031,7 @@ const parseBattleAction = (action: BattleSystemAction, battleState: BattleState)
     target: targetName,
     damage: action.damage,
     heal: action.heal,
-    skillName: getSkillName(action.skillId) || "",
+    skillName: await getSkillName(action.skillId) || "",
     damageType: "物理",
     sourceIsAlly,
     targetIsAlly
@@ -1236,7 +1069,7 @@ const parseBattleAction = (action: BattleSystemAction, battleState: BattleState)
   }
 
   // 使用格式化工具生成标准化日志
-  const formattedLog = createBattleLogHTML(actionType, options, logLevel);
+  const formattedLog = BattleLogFormatter.createBattleLogHTML(actionType, options, logLevel);
 
   // 构建完整的日志对象
   const fullLog = {
@@ -1250,7 +1083,7 @@ const parseBattleAction = (action: BattleSystemAction, battleState: BattleState)
   };
 
   // 检查是否已经添加过该日志
-  const isLogExists = battleLogs.some(
+  const isLogExists = battleLogs.value.some(
     (log) =>
       log.turn === fullLog.turn &&
       log.htmlResult === fullLog.htmlResult
@@ -1264,7 +1097,7 @@ const parseBattleAction = (action: BattleSystemAction, battleState: BattleState)
 };
 
 // 同步战斗日志
-const syncBattleLogs = (battleState: BattleState) => {
+const syncBattleLogs = async (battleState: BattleState) => {
   // 按时间戳和回合号排序 actions
   const sortedActions = [...battleState.actions].sort((a, b) => {
     // 首先按时间戳排序
@@ -1282,11 +1115,11 @@ const syncBattleLogs = (battleState: BattleState) => {
   });
 
   // 遍历排序后的 actions
-  sortedActions.forEach((action: BattleSystemAction) => {
-    const { log, shouldDisplay } = parseBattleAction(action, battleState);
+  for (const action of sortedActions) {
+    const { log, shouldDisplay } = await parseBattleAction(action, battleState);
 
     if (!shouldDisplay || !log) {
-      return;
+      continue;
     }
 
     // 触发视觉效果（伤害/治疗显示）
@@ -1309,7 +1142,7 @@ const syncBattleLogs = (battleState: BattleState) => {
       log.level,
       log.htmlResult
     );
-  });
+  }
 };
 
 const endBattle = () => {
@@ -1342,15 +1175,16 @@ const endBattle = () => {
   isBattleActive.value = false;
 };
 
+// 重置战斗
 const resetBattle = () => {
   // 清除回合执行回调
   if (battleSystem.value) {
     battleSystem.value.onTurnExecuted = null;
   }
 
-  // 停止自动战斗
-  if (isAutoPlaying.value && currentBattleId.value && battleSystem.value) {
-    battleSystem.value.stopAutoBattle(currentBattleId.value);
+  // 重置战斗系统中的战斗状态
+  if (currentBattleId.value && battleSystem.value) {
+    battleSystem.value.resetBattle(currentBattleId.value);
   }
 
   // 重置战斗状态
@@ -1381,7 +1215,10 @@ const resetBattle = () => {
   logManager.addSystemLog("战斗已重置");
 };
 
-onMounted(() => {
+
+
+onMounted(async () => {
+
   currentActorId.value = ourParty.value[0]?.id || null;
   logManager.addSystemLog("测试工具已加载");
 });

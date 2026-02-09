@@ -11,23 +11,23 @@
 
     <div class="main-layout">
       <!-- 左侧：参战角色配置 -->
-      <ParticipantPanel :allyTeam="allyTeam" :enemyTeam="enemyTeam"
-        :selected-character-id="selectedCharacterId" @update:selected-character-id="selectCharacter"
-        @add-enemy="addEnemyToBattle" @move-character="moveCharacter" @clear-participants="clearParticipants" />
+      <ParticipantPanel :allyTeam="allyTeam" :enemyTeam="enemyTeam" :selected-character-id="selectedCharacterId"
+        @update:selected-character-id="selectCharacter" @add-enemy="addEnemyToBattle" @move-character="moveCharacter"
+        @clear-participants="clearParticipants" />
 
       <!-- 中间：战斗战场和日志 -->
-      <BattleField ref="battleFieldRef" :battle-characters="allyTeam" :enemy-party="enemyTeam"
-        :current-turn="currentTurn" :max-turns="maxTurns" :current-actor-id="currentActorId"
-        :selected-character-id="selectedCharacterId" :battle-logs="battleLogs" @select-character="selectCharacter"
-        @show-damage="handleShowDamage" @show-skill-effect="handleShowSkillEffect" />
+      <BattleField ref="battleFieldRef" :allyTeam="allyTeam" :enemyTeam="enemyTeam" :current-turn="currentTurn"
+        :max-turns="maxTurns" :current-actor-id="currentActorId" :selected-character-id="selectedCharacterId"
+        :battle-logs="battleLogs" @select-character="selectCharacter" @show-damage="handleShowDamage"
+        @show-skill-effect="handleShowSkillEffect" />
 
       <!-- 右侧：调试面板 -->
       <div class="right-panel">
-        <DebugPanel :battle-characters="allyTeam" :enemy-party="enemyTeam"
-          :selected-character-id="selectedCharacterId" :last-export-time="lastExportTime" @end-turn="endTurn"
-          @execute-skill="executeSkill" @add-status="addStatus" @adjust-stats="adjustStats"
-          @clear-statuses="clearStatuses" @export-state="exportState" @import-state="importState"
-          @view-export="viewExport" @reload-export="reloadExport" @locate-exception="locateException" />
+        <DebugPanel :allyTeam="allyTeam" :enemyTeam="enemyTeam" :selected-character-id="selectedCharacterId"
+          :last-export-time="lastExportTime" @end-turn="endTurn" @execute-skill="executeSkill" @add-status="addStatus"
+          @adjust-stats="adjustStats" @clear-statuses="clearStatuses" @export-state="exportState"
+          @import-state="importState" @view-export="viewExport" @reload-export="reloadExport"
+          @locate-exception="locateException" />
 
         <BattleReplay :battle-manager="battleSystem" @replay-event="handleReplayEvent" @replay-start="handleReplayStart"
           @replay-end="handleReplayEnd" @replay-pause="handleReplayPause" />
@@ -35,8 +35,8 @@
     </div>
 
     <!-- 对话框组件 -->
-    <BattleRulesDialog v-model="showRulesDialog" :rules="rules" :speed="autoSpeed"
-      @update:rules="updateRules" @update:speed="updateSpeed" @rule-change="handleRuleChange" />
+    <BattleRulesDialog v-model="showRulesDialog" :rules="rules" :speed="autoSpeed" @update:rules="updateRules"
+      @update:speed="updateSpeed" @rule-change="handleRuleChange" />
 
     <SceneManagementDialog v-model="showSceneDialog" :scene-name="sceneName" :selected-scene="selectedScene"
       :saved-scenes="savedScenes" @update:scene-name="val => sceneName = val"
@@ -93,7 +93,7 @@ import type {
 import { PARTICIPANT_SIDE } from "@/types/battle";
 
 // 通知组件引用
-const notification = ref<Notification | null>(null);
+const notification = ref<InstanceType<typeof Notification> | null>(null);
 
 interface InjectableStatus {
   id: string;
@@ -161,8 +161,8 @@ const keybindHintPanelRef = ref<InstanceType<typeof KeybindHintPanel> | null>(nu
 // Battle System - 使用工厂模式创建实例
 
 BattleSystemFactory.initialize();
-const battleSystem : IBattleSystem = BattleSystemFactory.createBattleSystem();
-const participantManager : ParticipantManager = battleSystem.getParticipantManager();
+const battleSystem: IBattleSystem = BattleSystemFactory.createBattleSystem();
+const participantManager: ParticipantManager = battleSystem.getParticipantManager();
 
 const currentBattleId = ref<string | null>(null);
 const battleData = computed(() => {
@@ -186,10 +186,10 @@ onMounted(() => {
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
   const enemyIds = ["boss_006", "boss_007"];
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
-
-  allyTeam.values = allyList.map((ally, index) => GameDataProcessor.enemyToBattleCharacter(ally, index));
-  enemyTeam.values = enemyList.map((enemy, index) => GameDataProcessor.enemyToBattleCharacter(enemy, index, true));
-
+  console.log('allyList', allyList, 'enemyList', enemyList);
+  allyTeam.value = allyList.map((ally, index) => GameDataProcessor.enemyToBattleCharacter(ally, index));
+  enemyTeam.value = enemyList.map((enemy, index) => GameDataProcessor.enemyToBattleCharacter(enemy, index, true));
+  console.log('allyTeam', allyTeam.value, 'enemyTeam', enemyTeam.value);
 
   const allyParticipants = allyList.map((ally) => GameDataProcessor.enemyToParticipantInfo(ally, PARTICIPANT_SIDE.ALLY));
   const enemyParticipants = enemyList.map((enemy) => GameDataProcessor.enemyToParticipantInfo(enemy, PARTICIPANT_SIDE.ENEMY));
@@ -349,8 +349,8 @@ const injectableStatuses = reactive<InjectableStatus[]>([]);
 const currentActor = computed(() => {
   if (!currentActorId.value) return null;
   return (
-    allyTeam.find((c) => c.id === currentActorId.value) ||
-    enemyTeam.find((e) => e.id === currentActorId.value) ||
+    allyTeam.value.find((c) => c.id === currentActorId.value) ||
+    enemyTeam.value.find((e) => e.id === currentActorId.value) ||
     null
   );
 });
@@ -372,8 +372,8 @@ watch(
 const selectCharacter = (charId: string) => {
   selectedCharacterId.value = charId;
   selectedCharMonitor.value =
-    allyTeam.find((c) => c.id === charId) ||
-    enemyTeam.find((e) => e.id === charId) ||
+    allyTeam.value.find((c) => c.id === charId) ||
+    enemyTeam.value.find((e) => e.id === charId) ||
     null;
 };
 
@@ -397,22 +397,30 @@ const addEnemyToBattle = (enemy: Enemy, side: ParticipantSide = PARTICIPANT_SIDE
   };
 
   if (side === PARTICIPANT_SIDE.ALLY) {
-    allyTeam.push(newCharacter);
+    allyTeam.value.push(newCharacter);
   } else {
-    enemyTeam.push(newCharacter);
+    enemyTeam.value.push(newCharacter);
   }
 
   selectCharacter(newCharacter.id);
 };
 
 const getSelectedCharName = () => {
-  const char = allyTeam.find((c) => c.id === selectedCharacterId.value);
-  const enemy = enemyTeam.find((e) => e.id === selectedCharacterId.value);
+  const char = allyTeam.value.find((c) => c.id === selectedCharacterId.value);
+  const enemy = enemyTeam.value.find((e) => e.id === selectedCharacterId.value);
   return char?.name || enemy?.name || "未选择";
 };
 
 const moveCharacter = (direction: number) => {
-  const enabledChars = allyTeam.filter((c) => c.enabled);
+  const selectedChar = allyTeam.value.find(c => c.id === selectedCharacterId.value) ||
+    enemyTeam.value.find(e => e.id === selectedCharacterId.value);
+
+  if (!selectedChar) return;
+
+  const isAlly = allyTeam.value.some(c => c.id === selectedCharacterId.value);
+  const team = isAlly ? allyTeam.value : enemyTeam.value;
+
+  const enabledChars = team.filter((c) => c.enabled);
   const currentIndex = enabledChars.findIndex(
     (c) => c.id === selectedCharacterId.value
   );
@@ -421,10 +429,10 @@ const moveCharacter = (direction: number) => {
   if (newIndex < 0 || newIndex >= enabledChars.length) return;
   const targetChar = enabledChars[newIndex];
   const currentChar = enabledChars[currentIndex];
-  const idx1 = allyTeam.indexOf(currentChar);
-  const idx2 = allyTeam.indexOf(targetChar);
-  allyTeam[idx1] = targetChar;
-  allyTeam[idx2] = currentChar;
+  const idx1 = team.indexOf(currentChar);
+  const idx2 = team.indexOf(targetChar);
+  team[idx1] = targetChar;
+  team[idx2] = currentChar;
 };
 
 // 子组件事件处理方法
@@ -459,8 +467,8 @@ const addStatus = (status: { name: string; turns: number }) => {
 };
 
 const adjustStats = (stats: { hp: number; mp: number }) => {
-  const selectedChar = allyTeam.find(c => c.id === selectedCharacterId.value) ||
-    enemyTeam.find(e => e.id === selectedCharacterId.value);
+  const selectedChar = allyTeam.value.find(c => c.id === selectedCharacterId.value) ||
+    enemyTeam.value.find(e => e.id === selectedCharacterId.value);
   if (selectedChar) {
     selectedChar.currentHp = Math.max(0, Math.min(selectedChar.maxHp, selectedChar.currentHp + stats.hp));
     selectedChar.currentMp = Math.max(0, Math.min(selectedChar.maxMp, selectedChar.currentMp + stats.mp));
@@ -469,8 +477,8 @@ const adjustStats = (stats: { hp: number; mp: number }) => {
 };
 
 const clearStatuses = () => {
-  const selectedChar = allyTeam.find(c => c.id === selectedCharacterId.value) ||
-    enemyTeam.find(e => e.id === selectedCharacterId.value);
+  const selectedChar = allyTeam.value.find(c => c.id === selectedCharacterId.value) ||
+    enemyTeam.value.find(e => e.id === selectedCharacterId.value);
   if (selectedChar) {
     selectedChar.buffs = [];
     logManager.addActionLog("系统", "清除状态", selectedChar.name, "所有状态已清除");
@@ -479,8 +487,8 @@ const clearStatuses = () => {
 
 const exportState = () => {
   const state = {
-    battleCharacters: allyTeam,
-    enemyParty: enemyTeam,
+    battleCharacters: allyTeam.value,
+    enemyParty: enemyTeam.value,
     currentTurn: currentTurn.value,
     rules,
     battleLogs
@@ -561,8 +569,8 @@ const updateStatuses = (newStatuses: any[]) => {
 };
 
 const handleAddStatus = () => {
-  const selectedChar = allyTeam.find(c => c.id === selectedCharacterId.value) ||
-    enemyTeam.find(e => e.id === selectedCharacterId.value);
+  const selectedChar = allyTeam.value.find(c => c.id === selectedCharacterId.value) ||
+    enemyTeam.value.find(e => e.id === selectedCharacterId.value);
   if (selectedChar) {
     const activeStatuses = injectableStatuses.filter(s => s.active);
     activeStatuses.forEach(status => {
@@ -581,8 +589,8 @@ const handleAddStatus = () => {
 };
 
 const handleClearStatuses = () => {
-  const selectedChar = allyTeam.find(c => c.id === selectedCharacterId.value) ||
-    enemyTeam.find(e => e.id === selectedCharacterId.value);
+  const selectedChar = allyTeam.value.find(c => c.id === selectedCharacterId.value) ||
+    enemyTeam.value.find(e => e.id === selectedCharacterId.value);
   if (selectedChar) {
     selectedChar.buffs = [];
     logManager.addActionLog("系统", "清除状态", selectedChar.name, "所有状态已清除");
@@ -590,10 +598,10 @@ const handleClearStatuses = () => {
 };
 
 
-const allyTeam = reactive<UIBattleCharacter[]>([]);
-const enemyTeam = reactive<UIBattleCharacter[]>([]);
+const allyTeam = ref<UIBattleCharacter[]>([]);
+const enemyTeam = ref<UIBattleCharacter[]>([]);
 // 选中的战斗角色ID
-const selectedCharacterId = ref<string | null>("char_1");
+const selectedCharacterId = ref<string | null>(null);
 // 选中的战斗角色监控
 const selectedCharMonitor = ref<UIBattleCharacter | null>(null);
 
@@ -601,16 +609,23 @@ watch(
   selectedCharacterId,
   (newId) => {
     selectedCharMonitor.value =
-      allyTeam.find((c) => c.id === newId) || null;
+      allyTeam.value.find((c) => c.id === newId) || null;
   },
   { immediate: true }
+);
+
+watch(
+  () => [allyTeam.value.length, enemyTeam.value.length],
+  ([allyCount, enemyCount]) => {
+    logManager.addSystemLog(`当前参战角色: ${allyCount}人/${enemyCount}人`);
+  }
 );
 
 
 const clearParticipants = () => {
   // 清空所有参与者
-  allyTeam.length = 0;
-  enemyTeam.length = 0;
+  allyTeam.value.length = 0;
+  enemyTeam.value.length = 0;
   selectedCharacterId.value = null;
   selectedCharMonitor.value = null;
   logManager.addSystemLog("所有参战角色已清空");
@@ -782,63 +797,31 @@ const stepBack = () => {
 // 开始战斗
 const startBattle = () => {
   // 获取启用的角色和敌人的详细信息
-  const enabledCharacters = allyTeam.filter((c) => c.enabled);
-  const enemies = enemyTeam;
+  const enabledAllyTeam = allyTeam.value.filter((c) => c.enabled);
+  const enabledEnemyTeam = enemyTeam.value.filter((e) => e.enabled);
 
-  // 检查是否有足够的参战单位
-  if (enabledCharacters.length === 0) {
-    notification.value?.addNotification("提示", "请至少选择一个角色参战", "warning");
+  if (enabledAllyTeam.length === 0) {
+    notification.value?.addNotification("提示", "我方请至少选择一个角色参战", "warning");
     return;
   }
-
-  if (enemies.length === 0) {
-    notification.value?.addNotification("提示", "请至少添加一个敌人", "warning");
+  if (enabledEnemyTeam.length === 0) {
+    notification.value?.addNotification("提示", "敌方请至少选择一个角色参战", "warning");
     return;
   }
-
-  /**
-   * 构建参与者信息数组
-   * 将启用的角色和敌人信息转换为战斗系统所需的格式
-   * @returns {Array} 包含所有参战者信息的数组
-   */
-  const participantsInfo = [
-    // 角色信息映射
-    ...enabledCharacters.map((char) => ({
-      id: char.id,                    // 角色唯一标识符
-      name: char.name,                // 角色名称
-      type: PARTICIPANT_SIDE.ALLY,     // 参与者类型：角色
-      maxHealth: char.maxHp,          // 最大生命值
-      currentHealth: char.currentHp,  // 当前生命值
-      maxEnergy: char.maxEnergy,      // 最大能量值
-      currentEnergy: char.currentEnergy // 当前能量值
-    })),
-    // 敌人信息映射
-    ...enemies.map((enemy) => ({
-      id: enemy.id,                   // 敌人唯一标识符
-      name: enemy.name,               // 敌人名称
-      type: PARTICIPANT_SIDE.ENEMY,         // 参与者类型：敌人
-      maxHealth: enemy.maxHp,         // 最大生命值
-      currentHealth: enemy.currentHp, // 当前生命值
-      maxEnergy: enemy.maxEnergy,     // 最大能量值
-      currentEnergy: enemy.currentEnergy // 当前能量值
-    }))
-  ];
-
+  const allParticipants = battleSystem.getCurParticipantsInfo()
   /**
    * 创建战斗实例
    * 使用参与者信息初始化战斗系统
    * @returns {BattleState|null} 战斗状态对象，创建失败时返回null
    */
-  const battleState = battleSystem?.createBattle(participantsInfo);
+  const battleState = battleSystem.createBattle(allParticipants);
   if (battleState) {
     currentBattleId.value = battleState.battleId;
 
     // 注册回合执行回调，用于自动战斗时同步日志
-    if (battleSystem) {
-      battleSystem.onTurnExecuted = () => {
-        syncBattleState();
-      };
-    }
+    battleSystem.onTurnExecuted = () => {
+      syncBattleState();
+    };
 
     // 重置战斗状态
     isPaused.value = false;
@@ -857,7 +840,7 @@ const startBattle = () => {
 
     // 添加战斗开始日志
     logManager.addSystemLog(`战斗开始！战斗ID: ${battleState.battleId}`);
-    logManager.addSystemLog(`参战角色: ${enabledCharacters.length} 人 | 参战敌人: ${enemies.length} 人`);
+    logManager.addSystemLog(`参战角色: ${enabledAllyTeam.length} 人 | 参战敌人: ${enabledEnemyTeam.length} 人`);
   }
 };
 
@@ -953,10 +936,10 @@ const syncParticipantsState = (battleState: BattleState) => {
   // 遍历所有参与者
   battleState.participants.forEach((participant: BattleParticipant) => {
     // 查找对应的角色或敌人
-    const character = allyTeam.find(
+    const character = allyTeam.value.find(
       (c) => c.id === participant.id.replace("character_", "")
     );
-    const enemy = enemyTeam.find(
+    const enemy = enemyTeam.value.find(
       (e) => e.id === participant.id.replace("enemy_", "")
     );
 
@@ -1118,8 +1101,8 @@ const syncBattleLogs = async (battleState: BattleState) => {
 
     // 触发视觉效果（伤害/治疗显示）
     if (battleFieldRef.value && (action.damage || action.heal)) {
-      const targetCharacter = allyTeam.find(c => c.name === log.target) ||
-        enemyTeam.find(e => e.name === log.target);
+      const targetCharacter = allyTeam.value.find(c => c.name === log.target) ||
+        enemyTeam.value.find(e => e.name === log.target);
       if (targetCharacter) {
         const effectType = action.damage ? 'damage' : 'heal';
         battleFieldRef.value.showDamage(targetCharacter.id, action.damage || action.heal || 0, effectType, false);
@@ -1195,12 +1178,12 @@ const resetBattle = () => {
   processedActionIds.value.clear();
 
   // 重置角色状态到初始值
-  allyTeam.forEach(char => {
+  allyTeam.value.forEach(char => {
     char.currentHp = char.maxHp;
     char.currentEnergy = 0;
   });
 
-  enemyTeam.forEach(enemy => {
+  enemyTeam.value.forEach(enemy => {
     enemy.currentHp = enemy.maxHp;
     enemy.currentEnergy = 0;
   });

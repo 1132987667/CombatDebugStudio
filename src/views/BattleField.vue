@@ -12,9 +12,9 @@
 
       <div class="battle-field">
         <div class="field-party our-party">
-          <div class="party-header">我方 ({{ ourParty.length }}人)</div>
+          <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
-            <div v-for="member in ourParty" :key="member.id" class="member-card"
+            <div v-for="member in filterAllyTeam" :key="member.id" class="member-card"
               :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: selectedCharacterId === member.id, hit: member.isHit, casting: member.isCasting }"
               @click="selectCharacter(member.id)">
               <DamageNumber ref="damageNumberRefs" :position="{ x: 50, y: 20 }" />
@@ -65,9 +65,9 @@
         </div> -->
 
         <div class="field-party enemy-party">
-          <div class="party-header">敌方 ({{ enemyParty.length }}人)</div>
+          <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
-            <div v-for="member in enemyParty" :key="member.id" class="member-card"
+            <div v-for="member in filterEnemyTeam" :key="member.id" class="member-card"
               :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: selectedCharacterId === member.id, hit: member.isHit, casting: member.isCasting }"
               @click="selectCharacter(member.id)">
               <DamageNumber ref="damageNumberRefs" :position="{ x: 50, y: 20 }" />
@@ -109,7 +109,7 @@
                 </div>
               </div>
             </div>
-            <div v-if="enemyParty.length === 0" class="empty-party">(空位)</div>
+            <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>
       </div>
@@ -159,9 +159,9 @@ import BattleLog from "@/views/BattleLog.vue";
 import type { BattleLogEntry } from '@/types/battle-log';
 
 const props = defineProps<{
-  battleCharacters: any[];
-  enemyParty: any[];
-  selectedCharacterId: string;
+  allyTeam: any[];
+  enemyTeam: any[];
+  selectedCharacterId: string | null;
   currentActorId: string | null;
   currentTurn: number;
   maxTurns: number;
@@ -177,8 +177,13 @@ const emit = defineEmits<{
 const damageNumberRefs = ref<InstanceType<typeof DamageNumber>[]>([]);
 const skillEffectRefs = ref<InstanceType<typeof SkillEffect>[]>([]);
 
-const ourParty = computed(() => {
-  return props.battleCharacters
+const filterAllyTeam = computed(() => {
+  return props.allyTeam
+    .filter((c) => c.enabled)
+    .sort((a, b) => b.speed - a.speed);
+});
+const filterEnemyTeam = computed(() => {
+  return props.enemyTeam
     .filter((c) => c.enabled)
     .sort((a, b) => b.speed - a.speed);
 });
@@ -186,8 +191,8 @@ const ourParty = computed(() => {
 const currentActor = computed(() => {
   if (!props.currentActorId) return null;
   return (
-    props.battleCharacters.find((c) => c.id === props.currentActorId) ||
-    props.enemyParty.find((e) => e.id === props.currentActorId) ||
+    props.allyTeam.find((c) => c.id === props.currentActorId) ||
+    props.enemyTeam.find((e) => e.id === props.currentActorId) ||
     null
   );
 });
@@ -327,8 +332,8 @@ function showSkillEffect(characterId: string, type: 'attack' | 'heal' | 'buff' |
 }
 
 function triggerHitEffect(characterId: string) {
-  const character = props.battleCharacters.find(c => c.id === characterId);
-  const enemy = props.enemyParty.find(e => e.id === characterId);
+  const character = props.allyTeam.find(c => c.id === characterId);
+  const enemy = props.enemyTeam.find(e => e.id === characterId);
 
   if (character) {
     character.isHit = true;
@@ -346,8 +351,8 @@ function triggerHitEffect(characterId: string) {
 }
 
 function triggerCastingEffect(characterId: string, duration: number = 1000) {
-  const character = props.battleCharacters.find(c => c.id === characterId);
-  const enemy = props.enemyParty.find(e => e.id === characterId);
+  const character = props.allyTeam.find(c => c.id === characterId);
+  const enemy = props.enemyTeam.find(e => e.id === characterId);
 
   if (character) {
     character.isCasting = true;

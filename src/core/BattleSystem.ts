@@ -428,6 +428,7 @@ export class GameBattleSystem implements IBattleSystem {
   private aiSystem: AISystem
   private battleRecorder: BattleRecorder
   private currentBattleId: string | null = null
+  private curParticipantsInfo: ParticipantInfo[] = []
 
   // 私有构造函数，防止外部直接实例化
   private constructor() {
@@ -499,6 +500,7 @@ export class GameBattleSystem implements IBattleSystem {
    */
   public createBattle(participantsInfo: ParticipantInfo[]): BattleState {
     console.log('participantsInfo', participantsInfo)
+    this.curParticipantsInfo = participantsInfo
 
     const battleId = `battle_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
     const participants =
@@ -537,9 +539,12 @@ export class GameBattleSystem implements IBattleSystem {
     // 记录战斗创建日志
     this.battleLogger.info(`Battle created: ${battleId}`, {
       participantCount: participantsInfo.length,
-      characterCount: participantsInfo.filter((p) => p.type === PARTICIPANT_SIDE.ALLY)
-        .length,
-      enemyCount: participantsInfo.filter((p) => p.type === PARTICIPANT_SIDE.ENEMY).length,
+      characterCount: participantsInfo.filter(
+        (p) => p.type === PARTICIPANT_SIDE.ALLY,
+      ).length,
+      enemyCount: participantsInfo.filter(
+        (p) => p.type === PARTICIPANT_SIDE.ENEMY,
+      ).length,
     })
 
     // 添加战斗开始的系统动作
@@ -670,7 +675,10 @@ export class GameBattleSystem implements IBattleSystem {
     if (participant.type === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
       targetId = enemies[Math.floor(Math.random() * enemies.length)]
       damage = Math.floor(Math.random() * 20) + 10 // 10-30伤害
-    } else if (participant.type === PARTICIPANT_SIDE.ENEMY && characters.length > 0) {
+    } else if (
+      participant.type === PARTICIPANT_SIDE.ENEMY &&
+      characters.length > 0
+    ) {
       targetId = characters[Math.floor(Math.random() * characters.length)]
       damage = Math.floor(Math.random() * 15) + 8 // 8-23伤害
     } else {
@@ -1194,5 +1202,9 @@ export class GameBattleSystem implements IBattleSystem {
       return undefined
     }
     return this.battles.get(battleId)
+  }
+
+  public getCurParticipantsInfo(): ParticipantInfo[] {
+    return this.curParticipantsInfo
   }
 }

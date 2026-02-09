@@ -27,6 +27,9 @@
                 <div class="char-order" v-if="char.enabled">
                   <span class="order-num">{{ getOrderIndex(char.id) }}</span>
                 </div>
+                <div class="char-status" v-if="char.buffs && char.buffs.length > 0">
+                  <span class="first-badge">状态</span>
+                </div>
                 <div class="char-status" v-if="char.isFirst">
                   <span class="first-badge">先手</span>
                 </div>
@@ -35,19 +38,19 @@
           </div>
 
           <div class="character-party enemy-party">
-            <div class="party-header">敌方 ({{ enemyTeam.length }}人)</div>
+            <div class="party-header">敌方 ({{enemyTeam.filter(c => c.enabled).length}}人)</div>
             <div class="party-members">
               <div v-for="char in enemyTeam" :key="char.id" class="character-item"
-                :class="{ selected: selectedCharacterId === char.id }" @click="selectCharacter(char.id)">
+                :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
+                @click="selectCharacter(char.id)">
                 <div class="char-check">
                   <input type="checkbox" v-model="char.enabled" @click.stop>
                 </div>
                 <div class="char-info">
-                  <span class="char-name">{{ char.name }}</span>
-                  <span class="char-stats">HP:{{ char.currentHp }}/{{ char.maxHp }} SPD:{{ char.speed }}</span>
+                  <span class="char-name">{{ char.name }}({{ char.level }})</span>
                 </div>
                 <div class="char-order" v-if="char.enabled">
-                  <span class="order-num">-</span>
+                  <span class="order-num">{{ getOrderIndex(char.id) }}</span>
                 </div>
                 <div class="char-status" v-if="char.buffs && char.buffs.length > 0">
                   <span class="first-badge">状态</span>
@@ -117,7 +120,7 @@
 import { computed, reactive, ref } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import type { UIBattleCharacter, Enemy, SceneData } from "@/types";
-import { PARTICIPANT_SIDE } from "@/types/battle";
+import { PARTICIPANT_SIDE, ParticipantSide } from "@/types/battle";
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -127,7 +130,7 @@ interface GroupedEnemies {
 interface Props {
   allyTeam: UIBattleCharacter[];
   enemyTeam: UIBattleCharacter[];
-  selectedCharacterId: string;
+  selectedCharacterId: string | null;
 }
 
 interface Emits {
@@ -223,9 +226,18 @@ const ourParty = computed(() => {
     .sort((a, b) => b.speed - a.speed);
 });
 
+const enemyParty = computed(() => {
+  return props.enemyTeam
+    .filter((c) => c.enabled)
+    .sort((a, b) => b.speed - a.speed);
+});
+
 const getOrderIndex = (charId: string) => {
-  const index = ourParty.value.findIndex((c) => c.id === charId);
-  return index >= 0 ? index + 1 : 0;
+  const allyIndex = ourParty.value.findIndex((c) => c.id === charId);
+  if (allyIndex >= 0) return allyIndex + 1;
+
+  const enemyIndex = enemyParty.value.findIndex((c) => c.id === charId);
+  return enemyIndex >= 0 ? enemyIndex + 1 : 0;
 };
 
 const selectCharacter = (charId: string) => {

@@ -154,9 +154,9 @@ import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import type { UIBattleCharacter, Enemy, SceneData } from "@/types";
 
 const props = defineProps<{
-  battleCharacters: UIBattleCharacter[];
-  enemyParty: UIBattleCharacter[];
-  selectedCharacterId: string;
+  allyTeam: UIBattleCharacter[];
+  enemyTeam: UIBattleCharacter[];
+  selectedCharacterId: string | null;
   lastExportTime: string | null;
 }>();
 
@@ -183,21 +183,21 @@ const manualMpAmount = ref(50);
 // 初始化GameDataProcessor（自动加载配置）
 
 const selectedCharMonitor = computed(() => {
-  if (!props.battleCharacters || !props.enemyParty) return null;
-  return props.battleCharacters.find((c) => c.id === props.selectedCharacterId) ||
-    props.enemyParty.find((e) => e.id === props.selectedCharacterId) ||
+  if (!props.allyTeam || !props.enemyTeam) return null;
+  return props.allyTeam.find((c) => c.id === props.selectedCharacterId) ||
+    props.enemyTeam.find((e) => e.id === props.selectedCharacterId) ||
     null;
 });
 
 const getSelectedCharId = (): string => {
-  if (!props.battleCharacters || !props.enemyParty) return "";
+  if (!props.allyTeam || !props.enemyTeam) return "";
   return props.selectedCharacterId || "";
 };
 
 const getSelectedCharName = () => {
-  if (!props.battleCharacters || !props.enemyParty) return "未选择";
-  const char = props.battleCharacters.find((c) => c.id === props.selectedCharacterId);
-  const enemy = props.enemyParty.find((e) => e.id === props.selectedCharacterId);
+  if (!props.allyTeam || !props.enemyTeam) return "未选择";
+  const char = props.allyTeam.find((c) => c.id === props.selectedCharacterId);
+  const enemy = props.enemyTeam.find((e) => e.id === props.selectedCharacterId);
   return char?.name || enemy?.name || "未选择";
 };
 

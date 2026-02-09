@@ -126,6 +126,12 @@ export interface IBattleSystem {
    * 获取参与者管理器实例
    */
   getParticipantManager(): IParticipantManager
+
+  /**
+   * 获取当前战斗的参与者信息
+   * @returns ParticipantInfo[] - 当前战斗的参与者信息数组
+   */
+  getCurParticipantsInfo(): ParticipantInfo[]
 }
 
 /**

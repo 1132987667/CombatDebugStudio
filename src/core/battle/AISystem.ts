@@ -1,3 +1,12 @@
+/**
+ * 文件: AISystem.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: AI系统
+ * 描述: 负责创建AI实例、做出战斗决策、选择目标和使用技能，实现了IAISystem接口，处理AI的智能行为逻辑
+ * 版本: 1.0.0
+ */
+
 import type {
   BattleParticipant,
   BattleState,

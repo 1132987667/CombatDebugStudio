@@ -1,3 +1,12 @@
+/**
+ * 文件: ActionExecutor.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 动作执行器
+ * 描述: 负责执行战斗中的各种动作，包括攻击、技能、治疗等，实现了IActionExecutor接口，处理动作的验证和执行逻辑
+ * 版本: 1.0.0
+ */
+
 import type {
   BattleAction,
   BattleParticipant,

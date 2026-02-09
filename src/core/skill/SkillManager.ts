@@ -1,3 +1,12 @@
+/**
+ * 文件: SkillManager.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 技能管理器
+ * 描述: 负责技能配置的加载、解析和执行，集成完整的伤害/治疗计算系统
+ * 版本: 1.0.0
+ */
+
 import type { SkillConfig, SkillStep, ExtendedSkillStep, CalculationLog } from '@/types/skill'
 import type { BattleAction, BattleParticipant } from '@/types/battle'
 import { BuffSystem } from '@/core/BuffSystem'

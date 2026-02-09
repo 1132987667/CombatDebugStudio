@@ -1,3 +1,12 @@
+/**
+ * 文件: BuffScriptLoader.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: Buff脚本加载器
+ * 描述: 负责加载和注册Buff脚本，使用单例模式确保系统全局唯一，支持脚本的动态加载、重载和清理
+ * 版本: 1.0.0
+ */
+
 import { BuffScriptRegistry } from './BuffScriptRegistry'
 
 /**
@@ -38,7 +47,8 @@ export class BuffScriptLoader {
       // 手动导入已知的脚本
       // 注意：在实际项目中，这里可以使用 Vite 的 glob 导入
       // 但为了类型安全，我们暂时使用手动导入
-      const { MountainGodBuff } = await import('@/scripts/combat/MountainGodBuff')
+      const { MountainGodBuff } =
+        await import('@/scripts/combat/MountainGodBuff')
       const { PoisonDebuff } = await import('@/scripts/combat/PoisonDebuff')
       const { BerserkBuff } = await import('@/scripts/combat/BerserkBuff')
       const { HealOverTime } = await import('@/scripts/support/HealOverTime')
@@ -46,38 +56,42 @@ export class BuffScriptLoader {
 
       // 注册脚本
       const registry = BuffScriptRegistry.getInstance()
-      
+
       if (MountainGodBuff.BUFF_ID) {
-        registry.register(MountainGodBuff.BUFF_ID, () => new MountainGodBuff(), { 
-          filePath: '@/scripts/combat/MountainGodBuff'
-        })
+        registry.register(
+          MountainGodBuff.BUFF_ID,
+          () => new MountainGodBuff(),
+          {
+            filePath: '@/scripts/combat/MountainGodBuff',
+          },
+        )
         this.loadedScripts.add('MountainGodBuff')
       }
-      
+
       if (PoisonDebuff.BUFF_ID) {
-        registry.register(PoisonDebuff.BUFF_ID, () => new PoisonDebuff(), { 
-          filePath: '@/scripts/combat/PoisonDebuff'
+        registry.register(PoisonDebuff.BUFF_ID, () => new PoisonDebuff(), {
+          filePath: '@/scripts/combat/PoisonDebuff',
         })
         this.loadedScripts.add('PoisonDebuff')
       }
-      
+
       if (BerserkBuff.BUFF_ID) {
-        registry.register(BerserkBuff.BUFF_ID, () => new BerserkBuff(), { 
-          filePath: '@/scripts/combat/BerserkBuff'
+        registry.register(BerserkBuff.BUFF_ID, () => new BerserkBuff(), {
+          filePath: '@/scripts/combat/BerserkBuff',
         })
         this.loadedScripts.add('BerserkBuff')
       }
-      
+
       if (HealOverTime.BUFF_ID) {
-        registry.register(HealOverTime.BUFF_ID, () => new HealOverTime(), { 
-          filePath: '@/scripts/support/HealOverTime'
+        registry.register(HealOverTime.BUFF_ID, () => new HealOverTime(), {
+          filePath: '@/scripts/support/HealOverTime',
         })
         this.loadedScripts.add('HealOverTime')
       }
-      
+
       if (ShieldBuff.BUFF_ID) {
-        registry.register(ShieldBuff.BUFF_ID, () => new ShieldBuff(), { 
-          filePath: '@/scripts/support/ShieldBuff'
+        registry.register(ShieldBuff.BUFF_ID, () => new ShieldBuff(), {
+          filePath: '@/scripts/support/ShieldBuff',
         })
         this.loadedScripts.add('ShieldBuff')
       }
@@ -96,7 +110,7 @@ export class BuffScriptLoader {
     // 使用批量卸载而不是清空整个注册表
     const registry = BuffScriptRegistry.getInstance()
     const scriptIds = registry.list()
-    scriptIds.forEach(id => registry.unregister(id))
+    scriptIds.forEach((id) => registry.unregister(id))
     await this.loadScripts()
   }
 
@@ -116,6 +130,6 @@ export class BuffScriptLoader {
     // 使用批量卸载而不是清空整个注册表
     const registry = BuffScriptRegistry.getInstance()
     const scriptIds = registry.list()
-    scriptIds.forEach(id => registry.unregister(id))
+    scriptIds.forEach((id) => registry.unregister(id))
   }
 }

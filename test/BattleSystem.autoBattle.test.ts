@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { GameBattleSystem } from '../BattleSystem';
+import { GameBattleSystem } from '../src/core/BattleSystem';
 import type { ParticipantInfo } from '@/types/battle';
 
 describe('自动播放功能测试', () => {

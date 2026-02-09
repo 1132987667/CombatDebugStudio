@@ -1,3 +1,12 @@
+/**
+ * 文件: BuffScriptRegistry.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: Buff脚本注册表
+ * 描述: 负责管理和注册Buff脚本，使用单例模式确保系统全局唯一，支持脚本的注册、获取、批量注册、检查和卸载
+ * 版本: 1.0.0
+ */
+
 import { IBuffScript } from '@/types/buff'
 import { SimpleLogger } from '@/utils/logging'
 

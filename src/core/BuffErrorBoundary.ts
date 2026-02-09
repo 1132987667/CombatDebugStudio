@@ -1,3 +1,12 @@
+/**
+ * 文件: BuffErrorBoundary.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: Buff错误边界类
+ * 描述: 负责捕获和处理Buff脚本执行过程中的错误，防止单个Buff脚本的错误影响整个系统的运行
+ * 版本: 1.0.0
+ */
+
 import { logger } from '@/utils/logging'
 
 /**
@@ -41,7 +50,7 @@ export class BuffErrorBoundary {
     if (error instanceof Error) {
       logger.error('Buff script error:', {
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
       })
     } else {
       logger.error('Unknown buff script error:', error)
@@ -56,7 +65,7 @@ export class BuffErrorBoundary {
    */
   public static executeWithRetry<T>(
     fn: () => T,
-    maxRetries: number = 3
+    maxRetries: number = 3,
   ): T | null {
     let retries = 0
 

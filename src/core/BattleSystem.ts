@@ -1,3 +1,12 @@
+/**
+ * 文件: BattleSystem.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 战斗系统核心实现
+ * 描述: 实现战斗系统的核心功能，包括战斗创建、参与者管理、回合处理、动作执行等，集成AI系统和技能系统
+ * 版本: 1.0.0
+ */
+
 import type {
   BattleSystem as IBattleSystem,
   BattleState,

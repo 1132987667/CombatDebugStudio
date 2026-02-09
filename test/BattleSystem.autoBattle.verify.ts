@@ -3,7 +3,7 @@
  * 用于验证自动战斗功能是否正常工作
  */
 
-import { GameBattleSystem } from './BattleSystem';
+import { GameBattleSystem } from '../src/core/BattleSystem';
 import type { ParticipantInfo } from '@/types/battle';
 
 console.log('=== 自动播放功能验证 ===\n');

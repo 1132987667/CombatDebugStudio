@@ -1,3 +1,12 @@
+/**
+ * 文件: BattleAI.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 战斗AI接口和实现
+ * 描述: 定义战斗AI的核心行为和决策方法，包括决策制定、目标选择、技能使用等，提供多种AI策略实现
+ * 版本: 1.0.0
+ */
+
 import type {
   BattleParticipant,
   BattleAction,

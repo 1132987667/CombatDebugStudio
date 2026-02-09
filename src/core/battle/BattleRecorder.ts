@@ -1,3 +1,12 @@
+/**
+ * 文件: BattleRecorder.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 战斗记录器
+ * 描述: 负责记录战斗过程中的所有事件，支持回放和分析功能
+ * 版本: 1.0.0
+ */
+
 import type {
   BattleState,
   BattleParticipant,

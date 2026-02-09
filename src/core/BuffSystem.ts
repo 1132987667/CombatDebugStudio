@@ -1,3 +1,12 @@
+/**
+ * 文件: BuffSystem.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: Buff系统
+ * 描述: 负责管理Buff实例的生命周期、状态更新和修饰符堆栈，使用单例模式确保系统全局唯一
+ * 版本: 1.0.0
+ */
+
 import { reactive } from 'vue'
 import type { BuffConfig, BuffInstance } from '@/types/buff'
 import { BuffScriptRegistry } from './BuffScriptRegistry'
@@ -15,13 +24,9 @@ export class BuffSystem {
   /** 单例实例 */
   private static instance: BuffSystem
   /** Buff实例映射，以实例ID为键，使用reactive确保响应性 */
-  private buffInstances = reactive<Map<string, BuffInstance>>(
-    new Map()
-  )
+  private buffInstances = reactive<Map<string, BuffInstance>>(new Map())
   /** 修饰符堆栈映射，以角色ID为键，使用reactive确保响应性 */
-  private modifierStacks = reactive<Map<string, ModifierStack>>(
-    new Map()
-  )
+  private modifierStacks = reactive<Map<string, ModifierStack>>(new Map())
 
   /**
    * 私有构造函数
@@ -50,7 +55,7 @@ export class BuffSystem {
   public addBuff(
     characterId: string,
     buffId: string,
-    config: BuffConfig
+    config: BuffConfig,
   ): string {
     const script = BuffScriptRegistry.getInstance().get(buffId)
     if (!script) {
@@ -59,7 +64,7 @@ export class BuffSystem {
 
     const instanceId = `${characterId}_${buffId}_${Date.now()}`
     const context = new BuffContext(characterId, instanceId, config)
-    
+
     const buffInstance: BuffInstance = {
       id: instanceId,
       characterId,
@@ -68,11 +73,11 @@ export class BuffSystem {
       context,
       startTime: Date.now(),
       duration: config.duration || -1,
-      isActive: true
+      isActive: true,
     }
 
     this.buffInstances.set(instanceId, buffInstance)
-    
+
     if (!this.modifierStacks.has(characterId)) {
       this.modifierStacks.set(characterId, new ModifierStack())
     }
@@ -138,7 +143,10 @@ export class BuffSystem {
         instance.script.onUpdate(instance.context, deltaTime)
       })
 
-      if (instance.duration > 0 && Date.now() - instance.startTime >= instance.duration) {
+      if (
+        instance.duration > 0 &&
+        Date.now() - instance.startTime >= instance.duration
+      ) {
         toRemove.push(instance.id)
       }
     })
@@ -170,7 +178,7 @@ export class BuffSystem {
     if (!this.modifierStacks.has(characterId)) {
       this.modifierStacks.set(characterId, new ModifierStack())
     }
-    return this.modifierStacks.get(characterId) as ModifierStack  
+    return this.modifierStacks.get(characterId) as ModifierStack
   }
 
   /**

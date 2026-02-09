@@ -1,3 +1,12 @@
+/**
+ * 文件: BuffAutoRegistry.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 自动Buff脚本注册器
+ * 描述: 负责自动扫描和注册所有Buff脚本，支持批量注册和错误处理
+ * 版本: 1.0.0
+ */
+
 import { BuffScriptRegistry } from './BuffScriptRegistry'
 import { logger } from '@/utils/logging'
 import { buffScripts, type BuffScriptType } from '@/scripts'
@@ -16,7 +25,7 @@ export class BuffAutoRegistry {
    */
   public async autoRegisterAllScripts(): Promise<void> {
     this.logger.info('开始自动注册buff脚本...')
-    
+
     const scriptTypes = Object.keys(buffScripts) as BuffScriptType[]
     let successCount = 0
     let errorCount = 0
@@ -31,7 +40,9 @@ export class BuffAutoRegistry {
       }
     }
 
-    this.logger.info(`buff脚本自动注册完成: 成功 ${successCount} 个, 失败 ${errorCount} 个`)
+    this.logger.info(
+      `buff脚本自动注册完成: 成功 ${successCount} 个, 失败 ${errorCount} 个`,
+    )
   }
 
   /**
@@ -46,18 +57,18 @@ export class BuffAutoRegistry {
     try {
       const scriptModule = await buffScripts[scriptType]()
       const scriptClass = Object.values(scriptModule)[0] as any
-      
+
       if (!scriptClass || typeof scriptClass !== 'function') {
         throw new Error(`无效的脚本类: ${scriptType}`)
       }
 
       // 获取BUFF_ID常量
       const buffId = scriptClass.BUFF_ID || scriptType
-      
+
       // 注册脚本
       this.registry.register(buffId, () => new scriptClass(), {
         filePath: `scripts/${scriptType}`,
-        scriptType
+        scriptType,
       })
 
       this.registeredScripts.add(scriptType)
@@ -72,7 +83,7 @@ export class BuffAutoRegistry {
    */
   public async registerScripts(scriptTypes: BuffScriptType[]): Promise<void> {
     this.logger.info(`批量注册buff脚本: ${scriptTypes.join(', ')}`)
-    
+
     for (const scriptType of scriptTypes) {
       try {
         await this.registerScript(scriptType)
@@ -118,7 +129,7 @@ export class BuffAutoRegistry {
   public async registerDynamicScript(
     buffId: string,
     scriptFactory: () => any,
-    metadata?: { filePath?: string; scriptType?: string }
+    metadata?: { filePath?: string; scriptType?: string },
   ): Promise<void> {
     if (this.registeredScripts.has(buffId)) {
       this.logger.warn(`脚本已存在: ${buffId}`)
@@ -148,7 +159,9 @@ export class BuffAutoRegistry {
     }
 
     if (missingScripts.length > 0) {
-      this.logger.info(`发现 ${missingScripts.length} 个未注册脚本: ${missingScripts.join(', ')}`)
+      this.logger.info(
+        `发现 ${missingScripts.length} 个未注册脚本: ${missingScripts.join(', ')}`,
+      )
       await this.registerScripts(missingScripts)
     } else {
       this.logger.debug('所有脚本均已注册')
@@ -169,14 +182,16 @@ export class BuffAutoRegistry {
   } {
     const scriptTypes = Object.keys(buffScripts) as BuffScriptType[]
     const registeredList = this.getRegisteredScripts()
-    const missingList = scriptTypes.filter(type => !this.isScriptRegistered(type))
+    const missingList = scriptTypes.filter(
+      (type) => !this.isScriptRegistered(type),
+    )
 
     return {
       totalScripts: scriptTypes.length,
       registeredScripts: registeredList.length,
       missingScripts: missingList.length,
       registeredList,
-      missingList
+      missingList,
     }
   }
 }

@@ -1,3 +1,12 @@
+/**
+ * 文件: ActionExecutor.diagnostic.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 动作执行器（带诊断版本）
+ * 描述: 负责执行战斗中的各种动作，包含详细的诊断和日志记录功能
+ * 版本: 1.0.0
+ */
+
 import type {
   BattleAction,
   BattleParticipant,

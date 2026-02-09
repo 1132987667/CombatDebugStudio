@@ -1,3 +1,12 @@
+/**
+ * 文件: HealCalculator.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 治疗计算器
+ * 描述: 负责实现复杂的治疗计算逻辑，包括基础值、额外值、属性加成等机制
+ * 版本: 1.0.0
+ */
+
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
 import type { BattleParticipant } from '@/types/battle'
 import { logger } from '@/utils/logging'

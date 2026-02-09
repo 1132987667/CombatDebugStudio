@@ -1,3 +1,12 @@
+/**
+ * 文件: ModifierStack.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 修饰符堆栈
+ * 描述: 负责管理属性修饰符的添加、移除、计算等操作，支持不同类型的修饰符：加法、乘法、百分比
+ * 版本: 1.0.0
+ */
+
 import type { Modifier, ModifierType, AttributeType } from '@/types/modifier'
 
 /**
@@ -20,7 +29,7 @@ export class ModifierStack {
     buffInstanceId: string,
     attribute: AttributeType,
     value: number,
-    type: ModifierType
+    type: ModifierType,
   ): void {
     const key = attribute
     if (!this.modifiers.has(key)) {
@@ -32,7 +41,7 @@ export class ModifierStack {
       buffInstanceId,
       attribute,
       value,
-      type
+      type,
     })
   }
 
@@ -43,7 +52,7 @@ export class ModifierStack {
   public removeModifier(buffInstanceId: string): void {
     for (const [key, stack] of this.modifiers.entries()) {
       const filtered = stack.filter(
-        (modifier) => modifier.buffInstanceId !== buffInstanceId
+        (modifier) => modifier.buffInstanceId !== buffInstanceId,
       )
       if (filtered.length === 0) {
         this.modifiers.delete(key)
@@ -75,7 +84,7 @@ export class ModifierStack {
           additiveSum += modifier.value
           break
         case 'MULTIPLICATIVE':
-          multiplicativeSum *= (1 + modifier.value)
+          multiplicativeSum *= 1 + modifier.value
           break
         case 'PERCENTAGE':
           additiveSum += baseValue * modifier.value

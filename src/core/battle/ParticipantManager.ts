@@ -1,3 +1,12 @@
+/**
+ * 文件: ParticipantManager.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 参与者管理器
+ * 描述: 负责创建、查询、更新和清理战斗参与者，实现了IParticipantManager接口，处理参与者的全生命周期管理
+ * 版本: 1.0.0
+ */
+
 import type { BattleParticipant } from '@/types/battle'
 import type { ParticipantInfo } from '@/types/battle'
 import type { Enemy } from '@/types'

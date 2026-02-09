@@ -1,3 +1,12 @@
+/**
+ * 文件: BattleSystemFactory.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 战斗系统工厂
+ * 描述: 负责创建和初始化战斗系统的各个组件，使用依赖注入容器管理服务实例
+ * 版本: 1.0.0
+ */
+
 import { Container } from '../di/Container'
 import {
   IBattleSystem,

@@ -1,3 +1,12 @@
+/**
+ * 文件: BuffContext.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: Buff上下文类
+ * 描述: 为Buff实例提供运行环境和上下文信息，包含Buff的配置、状态、变量管理等功能
+ * 版本: 1.0.0
+ */
+
 import type { BuffConfig } from '@/types/buff'
 import type { Character } from '@/types/character'
 import { BuffSystem } from './BuffSystem'
@@ -25,11 +34,7 @@ export class BuffContext {
    * @param instanceId Buff实例ID
    * @param config Buff配置信息
    */
-  constructor(
-    characterId: string,
-    instanceId: string,
-    config: BuffConfig
-  ) {
+  constructor(characterId: string, instanceId: string, config: BuffConfig) {
     this.characterId = characterId
     this.instanceId = instanceId
     this.config = config
@@ -90,16 +95,11 @@ export class BuffContext {
   public addModifier(
     attribute: string,
     value: number,
-    type: 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE'
+    type: 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE',
   ): void {
     const system = BuffSystem.getInstance()
     const modifierStack = system.getModifierStack(this.characterId)
-    modifierStack.addModifier(
-      this.instanceId,
-      attribute as any,
-      value,
-      type
-    )
+    modifierStack.addModifier(this.instanceId, attribute as any, value, type)
   }
 
   /**

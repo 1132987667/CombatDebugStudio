@@ -1,4 +1,13 @@
-import type { BattleParticipant, BattleState } from '@/types/battle'
+/**
+ * 文件: TurnManager.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 回合管理器
+ * 描述: 负责管理战斗回合的初始化、推进和查询，实现了ITurnManager接口，处理回合顺序和回合计数
+ * 版本: 1.0.0
+ */
+
+import type { BattleParticipant } from '@/types/battle'
 
 /**
  * 战斗回合数据接口

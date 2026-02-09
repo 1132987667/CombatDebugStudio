@@ -1,6 +1,15 @@
+/**
+ * 文件: BattleRuleManager.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 战斗规则管理器
+ * 描述: 负责加载和管理战斗规则配置，包括回合系统、战斗机制、伤害计算、AI行为等规则
+ * 版本: 1.0.0
+ */
+
 import { logger } from '@/utils/logging'
 import battleRulesConfig from '@configs/battle-rules.json'
-  
+
 /**
  * 战斗规则配置接口
  */

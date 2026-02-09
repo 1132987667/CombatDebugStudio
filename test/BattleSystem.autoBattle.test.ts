@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GameBattleSystem } from '../src/core/BattleSystem';
 import type { ParticipantInfo } from '@/types/battle';
+import { PARTICIPANT_SIDE } from '@/types/battle';
 
 describe('自动播放功能测试', () => {
   let battleSystem: GameBattleSystem;
@@ -17,14 +18,14 @@ describe('自动播放功能测试', () => {
       {
         id: 'char1',
         name: '测试角色',
-        type: 'character',
+        type: PARTICIPANT_SIDE.ALLY,
         currentHealth: 100,
         maxEnergy: 100
       },
       {
         id: 'enemy1',
         name: '测试敌人',
-        type: 'enemy',
+        type: PARTICIPANT_SIDE.ENEMY,
         currentHealth: 80,
         maxEnergy: 80
       }
@@ -182,7 +183,7 @@ describe('自动播放功能测试', () => {
       
       battleSystem.startAutoBattle(battleState.battleId, 1);
       
-      battleSystem.endBattle(battleState.battleId, 'character');
+      battleSystem.endBattle(battleState.battleId, PARTICIPANT_SIDE.ALLY);
       
       vi.advanceTimersByTime(1000);
       

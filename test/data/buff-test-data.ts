@@ -1,4 +1,5 @@
 import type { BuffConfig } from '@/types/buff'
+import { PARTICIPANT_SIDE } from '@/types/battle'
 
 /**
  * 完整的buff测试数据集合
@@ -204,7 +205,7 @@ export const testCharacters = {
   character_1: {
     id: 'char_character_1',
     name: '测试角色1',
-    type: 'character' as const,
+    type: PARTICIPANT_SIDE.ALLY,
     level: 5,
     currentHealth: 100,
     maxHealth: 100,
@@ -224,7 +225,7 @@ export const testCharacters = {
   enemy_1: {
     id: 'enemy_enemy_1',
     name: '测试敌人1',
-    type: 'enemy' as const,
+    type: PARTICIPANT_SIDE.ENEMY,
     level: 5,
     currentHealth: 100,
     maxHealth: 100,

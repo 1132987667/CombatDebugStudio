@@ -11,7 +11,9 @@ import type {
   BattleAction,
   BattleParticipant,
   BattleState,
+  ParticipantSide,
 } from '@/types/battle'
+import { PARTICIPANT_SIDE } from '@/types/battle'
 import { logger } from '@/utils/logging'
 import { SkillManager } from '@/core/skill/SkillManager'
 
@@ -162,16 +164,16 @@ export class ActionExecutor {
     battle: BattleData,
     participant: BattleParticipant,
   ): Promise<void> {
-    const enemies = this.getAliveParticipantsByType(battle, 'enemy')
-    const characters = this.getAliveParticipantsByType(battle, 'character')
+    const enemies = this.getAliveParticipantsByType(battle, PARTICIPANT_SIDE.ENEMY)
+    const characters = this.getAliveParticipantsByType(battle, PARTICIPANT_SIDE.ALLY)
 
     let targetId: string
     let damage: number
 
-    if (participant.type === 'character' && enemies.length > 0) {
+    if (participant.type === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
       targetId = enemies[Math.floor(Math.random() * enemies.length)]
       damage = Math.floor(Math.random() * 20) + 10
-    } else if (participant.type === 'enemy' && characters.length > 0) {
+    } else if (participant.type === PARTICIPANT_SIDE.ENEMY && characters.length > 0) {
       targetId = characters[Math.floor(Math.random() * characters.length)]
       damage = Math.floor(Math.random() * 15) + 8
     } else {
@@ -341,7 +343,7 @@ export class ActionExecutor {
 
   private getAliveParticipantsByType(
     battle: BattleData,
-    type: 'character' | 'enemy',
+    type: ParticipantSide,
   ): string[] {
     return Array.from(battle.participants.entries())
       .filter(([_, p]) => p.type === type && p.isAlive())

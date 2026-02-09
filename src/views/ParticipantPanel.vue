@@ -5,7 +5,7 @@
         <span>参战管理</span>
         <div class="expand-collapse-controls">
           <button class="btn-small" @click="clearParticipants"
-            :disabled="battleCharacters.length === 0 && enemyParty.length === 0">
+            :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
             <span class="icon">−</span>清空
           </button>
         </div>
@@ -13,9 +13,9 @@
       <div class="section-content">
         <div class="character-field">
           <div class="character-party our-party">
-            <div class="party-header">我方 ({{battleCharacters.filter(c => c.enabled).length}}人)</div>
+            <div class="party-header">我方 ({{allyTeam.filter(c => c.enabled).length}}人)</div>
             <div class="party-members">
-              <div v-for="char in battleCharacters" :key="char.id" class="character-item"
+              <div v-for="char in allyTeam" :key="char.id" class="character-item"
                 :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
                 @click="selectCharacter(char.id)">
                 <div class="char-check">
@@ -35,9 +35,9 @@
           </div>
 
           <div class="character-party enemy-party">
-            <div class="party-header">敌方 ({{ enemyParty.length }}人)</div>
+            <div class="party-header">敌方 ({{ enemyTeam.length }}人)</div>
             <div class="party-members">
-              <div v-for="char in enemyParty" :key="char.id" class="character-item"
+              <div v-for="char in enemyTeam" :key="char.id" class="character-item"
                 :class="{ selected: selectedCharacterId === char.id }" @click="selectCharacter(char.id)">
                 <div class="char-check">
                   <input type="checkbox" v-model="char.enabled" @click.stop>
@@ -53,7 +53,7 @@
                   <span class="first-badge">状态</span>
                 </div>
               </div>
-              <div v-if="enemyParty.length === 0" class="empty-party">(空位)</div>
+              <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
             </div>
           </div>
         </div>
@@ -97,8 +97,8 @@
                     }}-{{ enemy.stats.maxAttack }}</span>
                   </div>
                   <div class="char-actions">
-                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, 'our')">我方</button>
-                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, 'enemy')">敌方</button>
+                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, PARTICIPANT_SIDE.ALLY)">我方</button>
+                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, PARTICIPANT_SIDE.ENEMY)">敌方</button>
                   </div>
                 </div>
               </div>
@@ -117,6 +117,7 @@
 import { computed, reactive, ref } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import type { UIBattleCharacter, Enemy, SceneData } from "@/types";
+import { PARTICIPANT_SIDE } from "@/types/battle";
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -124,14 +125,14 @@ interface GroupedEnemies {
 }
 
 interface Props {
-  battleCharacters: UIBattleCharacter[];
-  enemyParty: UIBattleCharacter[];
+  allyTeam: UIBattleCharacter[];
+  enemyTeam: UIBattleCharacter[];
   selectedCharacterId: string;
 }
 
 interface Emits {
   (e: 'update:selectedCharacterId', id: string): void;
-  (e: 'addEnemy', enemy: Enemy, side: 'our' | 'enemy'): void;
+  (e: 'addEnemy', enemy: Enemy, side: ParticipantSide): void;
   (e: 'moveCharacter', direction: number): void;
   (e: 'clearParticipants'): void;
 }
@@ -140,12 +141,11 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 // 初始化 GameDataProcessor
-const gameDataProcessor = GameDataProcessor.getInstance();
 const enemySearch = ref("");
 const enemiesData = ref<Enemy[]>([]);
 const scenesData = ref<SceneData[]>([]);
-enemiesData.value = gameDataProcessor.getEnemiesData();
-scenesData.value = gameDataProcessor.getScenesData();
+enemiesData.value = GameDataProcessor.getEnemiesData();
+scenesData.value = GameDataProcessor.getScenesData();
 const expandedScenes = reactive<Record<string, boolean>>({});
 
 // 默认展开所有场景
@@ -218,7 +218,7 @@ const groupedEnemies = computed<GroupedEnemies[]>(() => {
 });
 
 const ourParty = computed(() => {
-  return props.battleCharacters
+  return props.allyTeam
     .filter((c) => c.enabled)
     .sort((a, b) => b.speed - a.speed);
 });
@@ -232,7 +232,7 @@ const selectCharacter = (charId: string) => {
   emit('update:selectedCharacterId', charId);
 };
 
-const addEnemyToBattle = (enemy: Enemy, side: 'our' | 'enemy' = 'our') => {
+const addEnemyToBattle = (enemy: Enemy, side: ParticipantSide = PARTICIPANT_SIDE.ALLY) => {
   emit('addEnemy', enemy, side);
 };
 

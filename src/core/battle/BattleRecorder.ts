@@ -11,7 +11,7 @@ import type {
   BattleState,
   BattleParticipant,
   BattleAction,
-  BattleEntityType,
+  ParticipantSide,
 } from '@/types/battle'
 import { logger } from '@/utils/logging'
 
@@ -33,13 +33,13 @@ interface RecordedBattle {
   battleId: string
   startTime: number
   endTime?: number
-  winner?: BattleEntityType
+  winner?: ParticipantSide
   events: BattleEvent[]
   initialState: {
     participants: Array<{
       id: string
       name: string
-      type: BattleEntityType
+      type: ParticipantSide
       maxHealth: number
       currentHealth: number
       maxEnergy: number
@@ -58,7 +58,7 @@ export class BattleRecorder {
       participants: Array<{
         id: string
         name: string
-        type: BattleEntityType
+        type: ParticipantSide
         maxHealth: number
         currentHealth: number
         maxEnergy: number
@@ -121,7 +121,7 @@ export class BattleRecorder {
     })
   }
 
-  public endRecording(battleId: string, winner?: BattleEntityType) {
+  public endRecording(battleId: string, winner?: ParticipantSide) {
     const recording = this.recordings.get(battleId)
     if (!recording) {
       return

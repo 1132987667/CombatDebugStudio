@@ -2,13 +2,25 @@ import type { Character } from './character'
 import type { EnemyInstance } from './enemy'
 import type { BattleAI } from '@/core/BattleAI'
 import type { SkillManager } from '@/core/skill/SkillManager'
-export type BattleEntityType = 'character' | 'enemy'
+
+/**
+ * 参与方常量
+ * 用于区分战斗中的不同参与方
+ */
+export const PARTICIPANT_SIDE = {
+  /** 我方/友方 */
+  ALLY: 'ally' as const,
+  /** 敌方 */
+  ENEMY: 'enemy' as const,
+}
+
+export type ParticipantSide = (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
 
 export interface BattleEntity {
   id: string
   name: string
   level: number
-  type: BattleEntityType
+  type: ParticipantSide
   currentHealth: number
   maxHealth: number
   currentEnergy: number
@@ -34,12 +46,12 @@ export interface BattleEntity {
 }
 
 export interface BattleCharacter extends BattleEntity {
-  type: 'character'
+  type: ParticipantSide
   character: Character
 }
 
 export interface BattleEnemy extends BattleEntity {
-  type: 'enemy'
+  type: ParticipantSide
   enemy: EnemyInstance
 }
 
@@ -78,13 +90,13 @@ export interface BattleState {
   isActive: boolean
   startTime: number
   endTime?: number
-  winner?: BattleEntityType
+  winner?: ParticipantSide
 }
 
 export interface ParticipantInfo {
   id: string
   name: string
-  type: 'character' | 'enemy'
+  type: ParticipantSide
   maxHealth: number
   currentHealth: number
   maxEnergy: number
@@ -96,7 +108,7 @@ export interface BattleSystem {
   processTurn(battleId: string): Promise<void>
   executeAction(action: BattleAction): Promise<BattleAction>
   getBattleState(battleId: string): BattleState | undefined
-  endBattle(battleId: string, winner: BattleEntityType): void
+  endBattle(battleId: string, winner: ParticipantSide): void
   resetBattle(battleId: string): void
 }
 
@@ -122,7 +134,7 @@ export interface BattleData {
   /** 战斗结束时间戳（可选） */
   endTime?: number
   /** 战斗胜利者（可选） */
-  winner?: BattleEntityType
+  winner?: ParticipantSide
   /** 每个参与者的AI实例映射 */
   aiInstances: Map<string, BattleAI>
   /** 技能管理器实例 */

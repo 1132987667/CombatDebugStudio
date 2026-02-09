@@ -11,7 +11,9 @@ import type {
   BattleParticipant,
   BattleAction,
   BattleState,
+  ParticipantSide,
 } from '@/types/battle'
+import { PARTICIPANT_SIDE } from '@/types/battle'
 import { logger } from '@/utils/logging'
 
 /**
@@ -277,7 +279,7 @@ export class BaseBattleAI implements BattleAI {
     threat += energyPercent * 30 // 能量越高威胁越高
 
     // 基于类型
-    if (target.type === 'character' && participant.type === 'enemy') {
+    if (target.type === PARTICIPANT_SIDE.ALLY && participant.type === PARTICIPANT_SIDE.ENEMY) {
       threat += 20 // 敌人优先攻击角色
     }
 
@@ -586,7 +588,7 @@ export class CharacterAI extends BaseBattleAI {
     _participant: BattleParticipant,
   ): string {
     const enemies = Array.from(battleState.participants.values())
-      .filter((p) => p.type === 'enemy' && p.isAlive())
+      .filter((p) => p.type === PARTICIPANT_SIDE.ENEMY && p.isAlive())
       .map((p) => p)
 
     if (enemies.length === 0) {
@@ -651,7 +653,7 @@ export class EnemyAI extends BaseBattleAI {
     _participant: BattleParticipant,
   ): string {
     const characters = Array.from(battleState.participants.values())
-      .filter((p) => p.type === 'character' && p.isAlive())
+      .filter((p) => p.type === PARTICIPANT_SIDE.ALLY && p.isAlive())
       .map((p) => p)
 
     if (characters.length === 0) {
@@ -676,7 +678,7 @@ export class BattleAIFactory {
    * @param type AI类型：character或enemy
    * @returns 创建的AI实例
    */
-  public static createAI(type: 'character' | 'enemy'): BattleAI {
-    return type === 'character' ? new CharacterAI() : new EnemyAI()
+  public static createAI(type: ParticipantSide): BattleAI {
+    return type === PARTICIPANT_SIDE.ALLY ? new CharacterAI() : new EnemyAI()
   }
 }

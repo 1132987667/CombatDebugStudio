@@ -11,7 +11,9 @@ import type {
   BattleAction,
   BattleParticipant,
   BattleState,
+  ParticipantSide,
 } from '@/types/battle'
+import { PARTICIPANT_SIDE } from '@/types/battle'
 import { SkillManager } from '@/core/skill/SkillManager'
 import { logger } from '@/utils/logging'
 
@@ -114,16 +116,16 @@ export class ActionExecutor {
     battle: BattleData,
     participant: BattleParticipant,
   ): Promise<void> {
-    const enemies = this.getAliveParticipantsByType(battle, 'enemy')
-    const characters = this.getAliveParticipantsByType(battle, 'character')
+    const enemies = this.getAliveParticipantsByType(battle, PARTICIPANT_SIDE.ENEMY)
+    const characters = this.getAliveParticipantsByType(battle, PARTICIPANT_SIDE.ALLY)
 
     let targetId: string
     let damage: number
 
-    if (participant.type === 'character' && enemies.length > 0) {
+    if (participant.type === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
       targetId = enemies[Math.floor(Math.random() * enemies.length)]
       damage = Math.floor(Math.random() * 20) + 10
-    } else if (participant.type === 'enemy' && characters.length > 0) {
+    } else if (participant.type === PARTICIPANT_SIDE.ENEMY && characters.length > 0) {
       targetId = characters[Math.floor(Math.random() * characters.length)]
       damage = Math.floor(Math.random() * 15) + 8
     } else {
@@ -334,12 +336,12 @@ export class ActionExecutor {
    * 获取指定类型的存活参与者ID列表
    * 用于查找可以执行动作的有效目标
    * @param battle - 战斗数据对象
-   * @param type - 参与者类型，'character'或'enemy'
+   * @param type - 参与者类型，ALLY或ENEMY
    * @returns string[] - 符合条件的参与者ID数组
    */
   private getAliveParticipantsByType(
     battle: BattleData,
-    type: 'character' | 'enemy',
+    type: ParticipantSide,
   ): string[] {
     return Array.from(battle.participants.entries())
       .filter(([_, p]) => p.type === type && p.isAlive())

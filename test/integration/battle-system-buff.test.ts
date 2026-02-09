@@ -5,6 +5,7 @@ import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
 import { MountainGodBuff } from '@/scripts/combat/MountainGodBuff'
 import { BattleSystemFactory } from '@/core/battle/BattleSystemFactory'
 import type { BattleAction, ParticipantInfo } from '@/types/battle'
+import { PARTICIPANT_SIDE } from '@/types/battle'
 
 /**
  * 战斗系统Buff功能综合测试
@@ -39,7 +40,7 @@ describe('BattleSystem Buff功能综合测试', () => {
       {
         id: 'char_1',
         name: '测试角色1',
-        type: 'character',
+        type: PARTICIPANT_SIDE.ALLY,
         level: 5,
         currentHealth: 100,
         maxHealth: 100,
@@ -49,7 +50,7 @@ describe('BattleSystem Buff功能综合测试', () => {
       {
         id: 'enemy_1',
         name: '测试敌人1',
-        type: 'enemy',
+        type: PARTICIPANT_SIDE.ENEMY,
         level: 5,
         currentHealth: 100,
         maxHealth: 100,

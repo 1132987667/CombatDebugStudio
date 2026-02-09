@@ -1,8 +1,11 @@
 import type { BuffConfig } from '@/types/buff'
+import { ParticipantSide } from '@/types/battle'
+
 // UI角色接口定义
 export interface UIBattleCharacter {
   originalId?: string
   id: string
+  team: ParticipantSide
   name: string
   level: number
   maxHp: number

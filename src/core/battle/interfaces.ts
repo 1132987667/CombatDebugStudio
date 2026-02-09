@@ -14,9 +14,9 @@ import type {
   BattleState,
   BattleAction,
   BattleParticipant,
-  BattleEntityType,
   ParticipantInfo,
   BattleData,
+  ParticipantSide,
 } from '@/types/battle'
 
 import type { BattleAI } from '@/core/BattleAI'
@@ -59,7 +59,7 @@ export interface IBattleSystem {
    * @param battleId - 战斗ID
    * @param winner - 胜利者类型
    */
-  endBattle(battleId: string, winner: BattleEntityType): void
+  endBattle(battleId: string, winner: ParticipantSide): void
 
   /**
    * 获取所有战斗
@@ -172,51 +172,6 @@ export interface IActionExecutor {
    * @returns boolean - 动作是否有效
    */
   validateAction(action: BattleAction): boolean
-}
-
-/**
- * 参与者管理器接口
- * 负责管理战斗参与者的创建、查询和更新
- */
-export interface IParticipantManager {
-  /**
-   * 创建战斗参与者
-   * @param info - 参与者信息
-   * @returns BattleParticipant - 创建的参与者对象
-   */
-  createParticipant(info: ParticipantInfo): BattleParticipant
-
-  /**
-   * 获取战斗参与者
-   * @param battleId - 战斗ID
-   * @param participantId - 参与者ID
-   * @returns BattleParticipant | undefined - 参与者对象，如果不存在则返回undefined
-   */
-  getParticipant(
-    battleId: string,
-    participantId: string,
-  ): BattleParticipant | undefined
-
-  /**
-   * 更新战斗参与者
-   * @param battleId - 战斗ID
-   * @param participantId - 参与者ID
-   * @param updates - 要更新的属性
-   */
-  updateParticipant(
-    battleId: string,
-    participantId: string,
-    updates: Partial<BattleParticipant>,
-  ): void
-
-  // createParticipantByIds
-  /**
-   * 创建战斗参与者
-   * @param battleId - 战斗ID
-   * @param participantIds - 参与者ID数组
-   * @returns BattleParticipant[] - 创建的参与者对象数组
-   */
-  createParticipantByIds(ids: string[], type: string): BattleParticipant[]
 }
 
 /**

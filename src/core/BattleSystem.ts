@@ -12,12 +12,13 @@ import type {
   BattleState,
   BattleAction,
   BattleParticipant,
-  BattleEntityType,
   BattleCharacter,
   BattleEnemy,
   ParticipantInfo,
   BattleData,
+  ParticipantSide,
 } from '@/types/battle'
+import { PARTICIPANT_SIDE } from '@/types/battle'
 import type { Character } from '@/types/character'
 import type { EnemyInstance } from '@/types/enemy'
 import type { AttributeType } from '@/types/modifier'
@@ -100,7 +101,7 @@ abstract class BaseBattleParticipant {
    * 获取参与者类型
    * 子类必须实现此方法
    */
-  abstract get type(): BattleEntityType
+  abstract get type(): ParticipantSide
 
   getAttribute(attribute: string): number {
     // 扩展的属性系统，支持更多属性
@@ -227,7 +228,7 @@ export class SimpleBattleCharacter
   extends BaseBattleParticipant
   implements BattleCharacter
 {
-  type = 'character' as const
+  type = PARTICIPANT_SIDE.ALLY
   character: Character
 
   constructor(data: {
@@ -297,7 +298,7 @@ export class SimpleBattleEnemy
   extends BaseBattleParticipant
   implements BattleEnemy
 {
-  type = 'enemy' as const
+  type = PARTICIPANT_SIDE.ENEMY
   enemy: EnemyInstance
 
   constructor(data: {
@@ -536,9 +537,9 @@ export class GameBattleSystem implements IBattleSystem {
     // 记录战斗创建日志
     this.battleLogger.info(`Battle created: ${battleId}`, {
       participantCount: participantsInfo.length,
-      characterCount: participantsInfo.filter((p) => p.type === 'character')
+      characterCount: participantsInfo.filter((p) => p.type === PARTICIPANT_SIDE.ALLY)
         .length,
-      enemyCount: participantsInfo.filter((p) => p.type === 'enemy').length,
+      enemyCount: participantsInfo.filter((p) => p.type === PARTICIPANT_SIDE.ENEMY).length,
     })
 
     // 添加战斗开始的系统动作
@@ -555,7 +556,7 @@ export class GameBattleSystem implements IBattleSystem {
       effects: [
         {
           type: 'status',
-          description: `战斗开始！参战角色: ${participantsInfo.filter((p) => p.type === 'character').length} 人，参战敌人: ${participantsInfo.filter((p) => p.type === 'enemy').length} 人`,
+          description: `战斗开始！参战角色: ${participantsInfo.filter((p) => p.type === PARTICIPANT_SIDE.ALLY).length} 人，参战敌人: ${participantsInfo.filter((p) => p.type === PARTICIPANT_SIDE.ENEMY).length} 人`,
           duration: 0,
         },
       ],
@@ -655,21 +656,21 @@ export class GameBattleSystem implements IBattleSystem {
   ): Promise<void> {
     // 获取所有存活的敌人和角色
     const enemies = Array.from(battle.participants.values())
-      .filter((p) => p.type === 'enemy' && p.isAlive())
+      .filter((p) => p.type === PARTICIPANT_SIDE.ENEMY && p.isAlive())
       .map((p) => p.id)
 
     const characters = Array.from(battle.participants.values())
-      .filter((p) => p.type === 'character' && p.isAlive())
+      .filter((p) => p.type === PARTICIPANT_SIDE.ALLY && p.isAlive())
       .map((p) => p.id)
 
     let targetId: string
     let damage: number
 
     // 根据参与者类型选择目标
-    if (participant.type === 'character' && enemies.length > 0) {
+    if (participant.type === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
       targetId = enemies[Math.floor(Math.random() * enemies.length)]
       damage = Math.floor(Math.random() * 20) + 10 // 10-30伤害
-    } else if (participant.type === 'enemy' && characters.length > 0) {
+    } else if (participant.type === PARTICIPANT_SIDE.ENEMY && characters.length > 0) {
       targetId = characters[Math.floor(Math.random() * characters.length)]
       damage = Math.floor(Math.random() * 15) + 8 // 8-23伤害
     } else {
@@ -844,25 +845,25 @@ export class GameBattleSystem implements IBattleSystem {
    */
   private checkBattleEndCondition(battle: BattleData): void {
     const aliveCharacters = Array.from(battle.participants.values()).filter(
-      (p) => p.type === 'character' && p.isAlive(),
+      (p) => p.type === PARTICIPANT_SIDE.ALLY && p.isAlive(),
     )
     const aliveEnemies = Array.from(battle.participants.values()).filter(
-      (p) => p.type === 'enemy' && p.isAlive(),
+      (p) => p.type === PARTICIPANT_SIDE.ENEMY && p.isAlive(),
     )
 
     if (aliveCharacters.length === 0) {
-      this.endBattle(battle.battleId, 'enemy')
+      this.endBattle(battle.battleId, PARTICIPANT_SIDE.ENEMY)
     } else if (aliveEnemies.length === 0) {
-      this.endBattle(battle.battleId, 'character')
+      this.endBattle(battle.battleId, PARTICIPANT_SIDE.ALLY)
     }
   }
 
   /**
    * 结束战斗
    * @param {string} battleId - 战斗ID
-   * @param {BattleEntityType} winner - 胜利者类型
+   * @param {ParticipantSide} winner - 胜利者类型
    */
-  public endBattle(battleId: string, winner: BattleEntityType): void {
+  public endBattle(battleId: string, winner: ParticipantSide): void {
     const battle = this.battles.get(battleId)
     if (battle) {
       battle.isActive = false
@@ -886,7 +887,7 @@ export class GameBattleSystem implements IBattleSystem {
         effects: [
           {
             type: 'status',
-            description: `战斗结束！胜利者: ${winner === 'character' ? '角色方' : '敌方'}`,
+            description: `战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}`,
             duration: 0,
           },
         ],

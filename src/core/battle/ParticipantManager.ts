@@ -7,9 +7,8 @@
  * 版本: 1.0.0
  */
 
-import type { BattleParticipant } from '@/types/battle'
-import type { ParticipantInfo } from '@/types/battle'
-import type { Enemy } from '@/types'
+import type { BattleParticipant, ParticipantInfo, ParticipantSide } from '@/types/battle'
+import { PARTICIPANT_SIDE } from '@/types/battle'
 import { SimpleBattleCharacter, SimpleBattleEnemy } from '../BattleSystem'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { logger } from '@/utils/logging'
@@ -39,7 +38,7 @@ export interface ParticipantStateSnapshot {
 /**
  * 参与者管理器类
  * 负责创建、查询、更新和清理战斗参与者
- * 实现了IParticipantManager接口，处理参与者的全生命周期管理
+ * 处理参与者的全生命周期管理
  */
 export class ParticipantManager {
   /** 参与者存储映射，以参与者ID为键 */
@@ -65,7 +64,7 @@ export class ParticipantManager {
   public createParticipant(info: ParticipantInfo): BattleParticipant {
     let participant: BattleParticipant
 
-    if (info.type === 'character') {
+    if (info.type === PARTICIPANT_SIDE.ALLY) {
       participant = new SimpleBattleCharacter({
         id: `character_${info.id}`,
         name: info.name,
@@ -74,7 +73,7 @@ export class ParticipantManager {
         maxHealth: info.maxHealth,
         buffs: [],
       })
-    } else if (info.type === 'enemy') {
+    } else if (info.type === PARTICIPANT_SIDE.ENEMY) {
       participant = new SimpleBattleEnemy({
         id: `enemy_${info.id}`,
         name: info.name,
@@ -118,28 +117,19 @@ export class ParticipantManager {
    * 根据角色ID数组创建参与者信息
    * 从游戏数据中查找对应的敌人数据，转换为参与者信息数组
    * @param ids - 角色ID字符串数组
-   * @param type - 参与者类型，默认为'enemy'
+   * @param type - 参与者类型，默认为ENEMY
    * @returns ParticipantInfo[] - 参与者信息数组
    */
   public createParticipantByIds(
     ids: string[],
-    type: 'character' | 'enemy' = 'enemy',
+    type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
   ): ParticipantInfo[] {
-    const gameDataProcessor = GameDataProcessor.getInstance()
     const participantInfos: ParticipantInfo[] = []
 
     ids.forEach((id) => {
-      const enemy = gameDataProcessor.findEnemyById(id)
+      const enemy = GameDataProcessor.findEnemyById(id)
       if (enemy) {
-        const participantInfo: ParticipantInfo = {
-          id: enemy.id,
-          name: enemy.name,
-          type: type,
-          maxHealth: enemy.stats.health,
-          currentHealth: enemy.stats.health,
-          maxEnergy: 150,
-          currentEnergy: 0,
-        }
+        const participantInfo = GameDataProcessor.enemyToParticipantInfo(enemy, type)
         participantInfos.push(participantInfo)
       } else {
         this.logger.warn(`未找到ID为 ${id} 的角色数据`)
@@ -439,12 +429,12 @@ export class ParticipantManager {
    * 按类型获取存活参与者
    * 从参与者集合中筛选出指定类型的存活参与者
    * @param participants - 参与者映射表
-   * @param type - 参与者类型，'character'或'enemy'
+   * @param type - 参与者类型，ALLY或ENEMY
    * @returns BattleParticipant[] - 符合条件的参与者数组
    */
   public getAliveParticipantsByType(
     participants: Map<string, BattleParticipant>,
-    type: 'character' | 'enemy',
+    type: ParticipantSide,
   ): BattleParticipant[] {
     return this.getAliveParticipants(participants).filter(
       (p) => p.type === type,
@@ -486,7 +476,7 @@ export class ParticipantManager {
    */
   public hasAliveParticipantsByType(
     participants: Map<string, BattleParticipant>,
-    type: 'character' | 'enemy',
+    type: ParticipantSide,
   ): boolean {
     return this.getAliveParticipantsByType(participants, type).length > 0
   }

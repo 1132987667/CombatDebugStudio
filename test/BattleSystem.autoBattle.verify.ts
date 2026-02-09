@@ -5,6 +5,7 @@
 
 import { GameBattleSystem } from '../src/core/BattleSystem';
 import type { ParticipantInfo } from '@/types/battle';
+import { PARTICIPANT_SIDE } from '@/types/battle';
 
 console.log('=== 自动播放功能验证 ===\n');
 
@@ -16,14 +17,14 @@ const participants: ParticipantInfo[] = [
   {
     id: 'char1',
     name: '测试角色',
-    type: 'character',
+    type: PARTICIPANT_SIDE.ALLY,
     currentHealth: 100,
     maxEnergy: 100
   },
   {
     id: 'enemy1',
     name: '测试敌人',
-    type: 'enemy',
+    type: PARTICIPANT_SIDE.ENEMY,
     currentHealth: 80,
     maxEnergy: 80
   }
@@ -68,7 +69,7 @@ console.log('\n9. 等待1秒...');
 await new Promise(resolve => setTimeout(resolve, 1000));
 
 console.log('\n10. 结束战斗...');
-battleSystem.endBattle(battleState.battleId, 'character');
+battleSystem.endBattle(battleState.battleId, PARTICIPANT_SIDE.ALLY);
 console.log(`    当前状态: ${battleSystem.isAutoBattleActive(battleState.battleId) ? '运行中 ✗' : '未运行 ✓'}`);
 
 const finalBattleState = battleSystem.getBattleState(battleState.battleId);

@@ -17,60 +17,81 @@ import enemiesData from '@configs/enemies/enemies.json'
 import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
 import type { Enemy, SkillConfig, SceneData, CharacterStats } from '@/types'
+import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter'
+import type { ParticipantInfo, ParticipantSide } from '@/types/battle'
+import { PARTICIPANT_SIDE } from '@/types/battle'
 
 /**
  * 游戏数据处理工具类
- * 提供单例模式和自动加载功能
+ * 提供纯静态方法和模块级缓存
  */
 export class GameDataProcessor {
-  private dataProcessor: DataProcessor
-  private static instance: GameDataProcessor
-
-  private constructor() {
-    this.dataProcessor = new DataProcessor()
-  }
-
-  public static getInstance(): GameDataProcessor {
-    if (!GameDataProcessor.instance) {
-      GameDataProcessor.instance = new GameDataProcessor()
-    }
-    return GameDataProcessor.instance
-  }
-
   /**
    * 获取所有敌人数据
    */
-  getEnemiesData(): Enemy[] {
+  static getEnemiesData(): Enemy[] {
     return enemiesData
   }
 
   /**
    * 获取所有场景数据
    */
-  getScenesData(): SceneData[] {
+  static getScenesData(): SceneData[] {
     return scenesData
   }
 
   /**
    * 根据ID查找敌人
    */
-  findEnemyById(enemyId: string): Enemy | undefined {
+  static findEnemyById(enemyId: string): Enemy | undefined {
     const cacheKey = `enemy_${enemyId}`
-    const cached = this.dataProcessor.getCachedData<Enemy>(cacheKey)
+    const cached = DataProcessor.getCachedData<Enemy>(cacheKey)
     if (cached) return cached
     const enemy = DataProcessor.find(enemiesData, (e) => e.id === enemyId)
     if (enemy) {
-      this.dataProcessor.setCachedData(cacheKey, enemy)
+      DataProcessor.setCachedData(cacheKey, enemy)
     }
     return enemy
   }
 
   /**
+   * 根据ID数组批量查找敌人
+   * @param enemyIds - 敌人ID数组
+   * @returns Enemy[] - 找到的敌人数组
+   */
+  static findEnemiesByIds(enemyIds: string[]): Enemy[] {
+    return enemyIds
+      .map(id => this.findEnemyById(id))
+      .filter(enemy => enemy !== undefined) as Enemy[]
+  }
+
+  /**
+   * 将Enemy转换为ParticipantInfo
+   * @param enemy - 敌人数据
+   * @param type - 参与者类型
+   * @returns ParticipantInfo - 参与者信息
+   */
+  static enemyToParticipantInfo(
+    enemy: Enemy,
+    type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
+  ): ParticipantInfo {
+    return {
+      id: enemy.id,
+      name: enemy.name,
+      type: type,
+      maxHealth: enemy.stats.health,
+      currentHealth: enemy.stats.health,
+      maxEnergy: 150,
+      currentEnergy: 0,
+    }
+  }
+
+  /**
    * 根据名称搜索敌人
    */
-  searchEnemiesByName(name: string, limit?: number): Enemy[] {
+  static searchEnemiesByName(name: string, limit?: number): Enemy[] {
     const cacheKey = `enemy_search_${name}_${limit}`
-    const cached = this.dataProcessor.getCachedData<Enemy[]>(cacheKey)
+    const cached = DataProcessor.getCachedData<Enemy[]>(cacheKey)
     if (cached) return cached
 
     const result = DataProcessor.search(enemiesData, {
@@ -80,20 +101,20 @@ export class GameDataProcessor {
     })
 
     const limitedResult = limit ? result.slice(0, limit) : result
-    this.dataProcessor.setCachedData(cacheKey, limitedResult)
+    DataProcessor.setCachedData(cacheKey, limitedResult)
     return limitedResult
   }
 
   /**
    * 根据场景ID获取场景数据
    */
-  findSceneById(sceneId: string): SceneData | undefined {
+  static findSceneById(sceneId: string): SceneData | undefined {
     const cacheKey = `scene_${sceneId}`
-    const cached = this.dataProcessor.getCachedData<SceneData>(cacheKey)
+    const cached = DataProcessor.getCachedData<SceneData>(cacheKey)
     if (cached) return cached
     const scene = DataProcessor.find(scenesData, (s) => s.id === sceneId)
     if (scene) {
-      this.dataProcessor.setCachedData(cacheKey, scene)
+      DataProcessor.setCachedData(cacheKey, scene)
     }
     return scene
   }
@@ -101,36 +122,36 @@ export class GameDataProcessor {
   /**
    * 获取场景中的敌人数据
    */
-  getSceneEnemies(
+  static getSceneEnemies(
     sceneId: string,
     difficulty: 'easy' | 'normal' | 'hard' = 'easy',
   ): Enemy[] {
     const cacheKey = `scene_enemies_${sceneId}_${difficulty}`
-    const cached = this.dataProcessor.getCachedData<Enemy[]>(cacheKey)
+    const cached = DataProcessor.getCachedData<Enemy[]>(cacheKey)
     if (cached) return cached
-    const scene = this.findSceneById(sceneId)
+    const scene = GameDataProcessor.findSceneById(sceneId)
     if (!scene) return []
 
     const enemyIds = scene.difficulties[difficulty]?.enemyIds || []
     const enemies = enemyIds
-      .map((id) => this.findEnemyById(id))
+      .map((id) => GameDataProcessor.findEnemyById(id))
       .filter((enemy): enemy is Enemy => enemy !== undefined)
 
-    this.dataProcessor.setCachedData(cacheKey, enemies)
+    DataProcessor.setCachedData(cacheKey, enemies)
     return enemies
   }
 
   /**
    * 根据技能ID查找技能
    */
-  findSkillById(skillId: string): SkillConfig | undefined {
+  static findSkillById(skillId: string): SkillConfig | undefined {
     const cacheKey = `skill_${skillId}`
-    const cached = this.dataProcessor.getCachedData<SkillConfig>(cacheKey)
+    const cached = DataProcessor.getCachedData<SkillConfig>(cacheKey)
     if (cached) return cached
 
     const skill = DataProcessor.find(skillsData, (s) => s.id === skillId)
     if (skill) {
-      this.dataProcessor.setCachedData(cacheKey, skill)
+      DataProcessor.setCachedData(cacheKey, skill)
     }
     return skill
   }
@@ -138,7 +159,7 @@ export class GameDataProcessor {
   /**
    * 获取角色的技能信息
    */
-  getCharacterSkills(id: string): {
+  static getCharacterSkills(id: string): {
     small?: any
     passive?: any
     ultimate?: any
@@ -146,32 +167,32 @@ export class GameDataProcessor {
     if (!id) return {}
 
     const cacheKey = `character_skills_${id}`
-    const cached = this.dataProcessor.getCachedData<any>(cacheKey)
+    const cached = DataProcessor.getCachedData(cacheKey)
     if (cached) return cached
 
-    const enemy = this.findEnemyById(id)
+    const enemy = GameDataProcessor.findEnemyById(id)
     if (!enemy) return {}
 
     const skills: any = {}
 
     if (enemy.skills?.small?.[0]) {
-      skills.small = this.findSkillById(enemy.skills.small[0])
+      skills.small = GameDataProcessor.findSkillById(enemy.skills.small[0])
     }
     if (enemy.skills?.passive?.[0]) {
-      skills.passive = this.findSkillById(enemy.skills.passive[0])
+      skills.passive = GameDataProcessor.findSkillById(enemy.skills.passive[0])
     }
     if (enemy.skills?.ultimate?.[0]) {
-      skills.ultimate = this.findSkillById(enemy.skills.ultimate[0])
+      skills.ultimate = GameDataProcessor.findSkillById(enemy.skills.ultimate[0])
     }
 
-    this.dataProcessor.setCachedData(cacheKey, skills)
+    DataProcessor.setCachedData(cacheKey, skills)
     return skills
   }
 
   /**
    * 转换敌人数据为战斗角色
    */
-  createBattleCharacter(
+  static createBattleCharacter(
     enemy: Enemy,
     index: number,
     isEnemyParty: boolean = false,
@@ -207,22 +228,55 @@ export class GameDataProcessor {
   }
 
   /**
+   * 转换敌人数据为UI角色
+   * @param enemy - 敌人数据
+   * @param index - 队伍中的索引位置
+   * @param isEnemy - 是否为敌方队伍
+   * @returns UIBattleCharacter - UI层可用的角色对象
+   */
+  static enemyToBattleCharacter(
+    enemy: Enemy,
+    index: number,
+    isEnemy: boolean = false,
+  ): UIBattleCharacter {
+    return {
+      originalId: enemy.id,
+      id: isEnemy ? `${PARTICIPANT_SIDE.ENEMY}_${index + 1}` : `${PARTICIPANT_SIDE.ALLY}_${index + 1}`,
+      team: isEnemy ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY,
+      name: enemy.name,
+      level: enemy.level,
+      maxHp: enemy.stats.health,
+      currentHp: enemy.stats.health,
+      maxMp: 100,
+      currentMp: 100,
+      currentEnergy: 0,
+      maxEnergy: 150,
+      attack: Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2),
+      defense: enemy.stats.defense,
+      speed: enemy.stats.speed,
+      enabled: index < 3,
+      isFirst: index === 0,
+      buffs: [],
+    }
+  }
+
+  /**
    * 批量创建战斗角色
    */
-  createBattleCharacters(
+  static createBattleCharacters(
     enemies: Enemy[],
     startIndex: number = 0,
     isEnemyParty: boolean = false,
   ): CharacterStats[] {
     return enemies.map((enemy, index) =>
-      this.createBattleCharacter(enemy, startIndex + index, isEnemyParty),
+      GameDataProcessor.createBattleCharacter(enemy, startIndex + index, isEnemyParty),
     )
   }
 
   /**
    * 过滤活跃角色
    */
-  filterActiveCharacters(characters: CharacterStats[]): CharacterStats[] {
+  static filterActiveCharacters(characters: CharacterStats[]): CharacterStats[] {
     return DataProcessor.filter(characters, {
       condition: (char) => char.enabled === true,
       sortBy: 'speed',
@@ -233,7 +287,7 @@ export class GameDataProcessor {
   /**
    * 根据ID查找角色
    */
-  findCharacterById(
+  static findCharacterById(
     characters: CharacterStats[],
     enemyParty: CharacterStats[],
     characterId: string,
@@ -247,7 +301,7 @@ export class GameDataProcessor {
   /**
    * 根据名称查找角色
    */
-  findCharacterByName(
+  static findCharacterByName(
     characters: CharacterStats[],
     enemyParty: CharacterStats[],
     name: string,
@@ -261,7 +315,7 @@ export class GameDataProcessor {
   /**
    * 计算角色属性加成
    */
-  calculateStatBonus(character: CharacterStats, stat: string): number {
+  static calculateStatBonus(character: CharacterStats, stat: string): number {
     if (!character.buffs) return 0
 
     const bonuses = character.buffs.filter((buff) => !buff.isPositive)
@@ -273,7 +327,7 @@ export class GameDataProcessor {
   /**
    * 计算伤害加成
    */
-  calculateDamageBonus(character: CharacterStats): number {
+  static calculateDamageBonus(character: CharacterStats): number {
     if (!character.buffs) return 0
 
     const bonuses = character.buffs.filter((buff) => buff.isPositive)
@@ -283,24 +337,24 @@ export class GameDataProcessor {
   /**
    * 计算最终属性值
    */
-  calculateFinalStat(character: CharacterStats, stat: string): number {
+  static calculateFinalStat(character: CharacterStats, stat: string): number {
     const base = stat === 'attack' ? character.attack : character.defense
-    const bonus = this.calculateStatBonus(character, stat)
+    const bonus = GameDataProcessor.calculateStatBonus(character, stat)
     return Math.floor(base * (1 + bonus / 100))
   }
 
   /**
    * 获取角色生命值百分比
    */
-  getHpPercent(character: CharacterStats): number {
+  static getHpPercent(character: CharacterStats): number {
     return Math.max(0, (character.currentHp / character.maxHp) * 100)
   }
 
   /**
    * 获取角色生命值颜色类别
    */
-  getHpColorClass(character: CharacterStats): string {
-    const percent = this.getHpPercent(character)
+  static getHpColorClass(character: CharacterStats): string {
+    const percent = GameDataProcessor.getHpPercent(character)
     if (percent <= 25) return 'low'
     if (percent <= 50) return 'medium'
     return 'high'
@@ -309,7 +363,7 @@ export class GameDataProcessor {
   /**
    * 验证战斗角色数据
    */
-  validateBattleCharacter(character: CharacterStats): {
+  static validateBattleCharacter(character: CharacterStats): {
     isValid: boolean
     errors: string[]
   } {
@@ -344,53 +398,53 @@ export class GameDataProcessor {
   /**
    * 获取角色被动技能
    */
-  getCharacterPassiveSkill(character: CharacterStats): string {
-    const skills = this.getCharacterSkills(character)
+  static getCharacterPassiveSkill(character: CharacterStats): string {
+    const skills = GameDataProcessor.getCharacterSkills(character.originalId || '')
     return skills.passive?.name || ''
   }
 
   /**
    * 获取角色小技能
    */
-  getCharacterSmallSkill(character: CharacterStats): string {
-    const skills = this.getCharacterSkills(character)
+  static getCharacterSmallSkill(character: CharacterStats): string {
+    const skills = GameDataProcessor.getCharacterSkills(character.originalId || '')
     return skills.small?.name || ''
   }
 
   /**
    * 获取角色终极技能
    */
-  getCharacterUltimateSkill(character: CharacterStats): string {
-    const skills = this.getCharacterSkills(character)
+  static getCharacterUltimateSkill(character: CharacterStats): string {
+    const skills = GameDataProcessor.getCharacterSkills(character.originalId || '')
     return skills.ultimate?.name || ''
   }
 
   /**
    * 分组场景敌人数据
    */
-  groupEnemiesByScene(): Array<{ scene: SceneData; enemies: Enemy[] }> {
+  static groupEnemiesByScene(): Array<{ scene: SceneData; enemies: Enemy[] }> {
     const cacheKey = 'grouped_enemies'
-    const cached = this.dataProcessor.getCachedData<any[]>(cacheKey)
+    const cached = DataProcessor.getCachedData<any[]>(cacheKey)
     if (cached) return cached
 
     const grouped = scenesData
       .map((scene) => {
         const sceneEnemies = scene.difficulties.easy.enemyIds
-          .map((id: string) => this.findEnemyById(id))
+          .map((id: string) => GameDataProcessor.findEnemyById(id))
           .filter((enemy): enemy is Enemy => enemy !== undefined)
 
         return { scene, enemies: sceneEnemies }
       })
       .filter((group) => group.enemies.length > 0)
 
-    this.dataProcessor.setCachedData(cacheKey, grouped)
+    DataProcessor.setCachedData(cacheKey, grouped)
     return grouped
   }
 
   /**
    * 搜索和过滤敌人数据
    */
-  searchAndFilterEnemies(
+  static searchAndFilterEnemies(
     searchQuery: string,
     sceneId?: string,
   ): { grouped: Array<{ scene: SceneData; enemies: Enemy[] }>; all: Enemy[] } {
@@ -407,7 +461,7 @@ export class GameDataProcessor {
 
     // 按场景过滤
     if (sceneId) {
-      const scene = this.findSceneById(sceneId)
+      const scene = GameDataProcessor.findSceneById(sceneId)
       if (scene) {
         const sceneEnemyIds = new Set([
           ...scene.difficulties.easy.enemyIds,
@@ -436,7 +490,7 @@ export class GameDataProcessor {
   /**
    * 获取所有可用的状态效果
    */
-  getInjectableStatuses(): any[] {
+  static getInjectableStatuses(): any[] {
     return [
       {
         id: 'burn',
@@ -484,18 +538,17 @@ export class GameDataProcessor {
   /**
    * 清除所有缓存
    */
-  clearCache(): void {
-    this.dataProcessor.clearCache()
+  static clearCache(): void {
+    DataProcessor.clearCache()
   }
 
   /**
    * 获取缓存统计信息
    */
-  getCacheStats(): { size: number; keys: string[] } {
-    // 这里需要访问内部缓存，但为了封装性，我们只返回基本信息
+  static getCacheStats(): { size: number; keys: string[] } {
     return {
-      size: 0, // 实际实现中需要计算缓存大小
-      keys: [], // 实际实现中需要返回缓存键列表
+      size: 0,
+      keys: [],
     }
   }
 }

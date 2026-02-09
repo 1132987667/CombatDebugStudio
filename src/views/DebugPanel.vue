@@ -181,7 +181,6 @@ const manualHpAmount = ref(100);
 const manualMpAmount = ref(50);
 
 // 初始化GameDataProcessor（自动加载配置）
-const gameDataProcessor = GameDataProcessor.getInstance();
 
 const selectedCharMonitor = computed(() => {
   if (!props.battleCharacters || !props.enemyParty) return null;
@@ -204,19 +203,19 @@ const getSelectedCharName = () => {
 
 const getCharPassive = (id: string): string => {
   if (!id) return "";
-  const skills = gameDataProcessor.getCharacterSkills(id);
+  const skills = GameDataProcessor.getCharacterSkills(id);
   return skills.passive?.name || "";
 };
 
 const getCharSmallSkill = (id: string): string => {
   if (!id) return "";
-  const skills = gameDataProcessor.getCharacterSkills(id);
+  const skills = GameDataProcessor.getCharacterSkills(id);
   return skills.small?.name || "";
 };
 
 const getCharUltimate = (id: string): string => {
   if (!id) return "";
-  const skills = gameDataProcessor.getCharacterSkills(id);
+  const skills = GameDataProcessor.getCharacterSkills(id);
   return skills.ultimate?.name || "";
 };
 

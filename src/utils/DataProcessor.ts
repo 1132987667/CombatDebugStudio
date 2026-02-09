@@ -70,7 +70,7 @@ export interface ValidationResult {
  * 数据处理工具类
  */
 export class DataProcessor {
-  private cache: Map<string, { data: any; timestamp: number }> = new Map()
+  private static cache: Map<string, { data: any; timestamp: number }> = new Map()
 
   constructor() {}
 
@@ -330,7 +330,7 @@ export class DataProcessor {
   /**
    * 获取缓存数据
    */
-  getCachedData<T>(key: string): T | null {
+  static getCachedData<T>(key: string): T | null {
     const cached = this.cache.get(key)
     if (!cached) return null
     return cached.data
@@ -339,7 +339,7 @@ export class DataProcessor {
   /**
    * 设置缓存数据
    */
-  setCachedData<T>(key: string, data: T): void {
+  static setCachedData<T>(key: string, data: T): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),

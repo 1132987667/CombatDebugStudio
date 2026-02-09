@@ -1,3 +1,12 @@
+<!--
+ * 文件: DamageNumber.vue
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 伤害数字显示组件
+ * 描述: 负责在战斗场景中显示动态的伤害数值，支持暴击、连击、护盾伤害等特效
+ * 版本: 1.0.0
+-->
+
 <template>
   <div class="damage-number-container">
     <transition-group name="damage" tag="div" class="damage-numbers">

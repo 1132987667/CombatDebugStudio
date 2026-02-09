@@ -1,11 +1,16 @@
+<!--
+ * 文件: Notification.vue
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 通知组件
+ * 描述: 显示系统通知消息，支持不同类型通知和自动关闭功能
+ * 版本: 1.0.0
+-->
+
 <template>
   <div class="notifications-container">
-    <div 
-      v-for="notification in notifications" 
-      :key="notification.id" 
-      class="notification" 
-      :class="`notification-${notification.type}`"
-    >
+    <div v-for="notification in notifications" :key="notification.id" class="notification"
+      :class="`notification-${notification.type}`">
       <div class="notification-icon">
         {{ getIcon(notification.type) }}
       </div>
@@ -20,49 +25,53 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Notification',
-  data() {
-    return {
-      notifications: []
-    }
-  },
-  methods: {
-    // 获取不同类型消息的图标
-    getIcon(type) {
-      const icons = {
-        success: '✓',
-        error: '✗',
-        info: 'ℹ',
-        warning: '⚠'
-      }
-      return icons[type] || 'ℹ'
-    },
-    // 添加通知
-    addNotification(title, message, type = 'info', duration = 3000) {
-      const id = Date.now() + Math.random()
-      const notification = {
-        id,
-        title,
-        message,
-        type
-      }
-      this.notifications.push(notification)
-      
-      // 自动移除通知
-      if (duration > 0) {
-        setTimeout(() => {
-          this.removeNotification(id)
-        }, duration)
-      }
-    },
-    // 移除指定消息
-    removeNotification(notificationId) {
-      this.notifications = this.notifications.filter(n => n.id !== notificationId)
-    }
+<script setup lang="ts">
+import { ref } from 'vue'
+
+interface NotificationItem {
+  id: number
+  title: string
+  message: string
+  type: 'success' | 'error' | 'info' | 'warning'
+}
+
+const notifications = ref<NotificationItem[]>([])
+
+const getIcon = (type: string): string => {
+  const icons: Record<string, string> = {
+    success: '✓',
+    error: '✗',
+    info: 'ℹ',
+    warning: '⚠'
+  }
+  return icons[type] || 'ℹ'
+}
+
+const addNotification = (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info', duration: number = 3000): void => {
+  const id = Date.now() + Math.random()
+  const notification: NotificationItem = {
+    id,
+    title,
+    message,
+    type
+  }
+  notifications.value.push(notification)
+
+  if (duration > 0) {
+    setTimeout(() => {
+      removeNotification(id)
+    }, duration)
   }
 }
+
+const removeNotification = (notificationId: number): void => {
+  notifications.value = notifications.value.filter(n => n.id !== notificationId)
+}
+
+defineExpose({
+  addNotification,
+  removeNotification
+})
 </script>
 
 <style scoped>
@@ -94,6 +103,7 @@ export default {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -146,7 +156,6 @@ export default {
   color: #409eff;
 }
 
-/* 不同类型通知的样式 */
 .notification-success {
   border-left: 4px solid #67c23a;
 }

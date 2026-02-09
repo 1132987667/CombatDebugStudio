@@ -12,9 +12,8 @@ describe('Buffer Effects Comprehensive Test', () => {
 
   beforeEach(() => {
     // 重置单例
-    ;(BuffSystem as any).instance = undefined(
-      BuffScriptRegistry as any,
-    ).instance = undefined
+    ;(BuffSystem as any).instance = undefined
+    ;(BuffScriptRegistry as any).instance = undefined
 
     buffSystem = BuffSystem.getInstance()
     registry = BuffScriptRegistry.getInstance()

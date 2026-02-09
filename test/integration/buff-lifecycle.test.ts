@@ -8,9 +8,13 @@ describe('Buff Lifecycle', () => {
   let registry: BuffScriptRegistry
 
   beforeEach(() => {
-    // 重置单例
-    (BuffSystem as any).instance = undefined
-    (BuffScriptRegistry as any).instance = undefined
+    // 重置单例 - 使用更安全的方法
+    if ((BuffSystem as any).instance) {
+      (BuffSystem as any).instance = undefined
+    }
+    if ((BuffScriptRegistry as any).instance) {
+      (BuffScriptRegistry as any).instance = undefined
+    }
     
     buffSystem = BuffSystem.getInstance()
     registry = BuffScriptRegistry.getInstance()

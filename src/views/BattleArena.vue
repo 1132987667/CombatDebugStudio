@@ -118,7 +118,6 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, onUnmounted, watch } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
-import Dialog from "@/components/Dialog.vue";
 import ParticipantPanel from "./ParticipantPanel.vue";
 import BattleField from "./BattleField.vue";
 import DebugPanel from "./DebugPanel.vue";
@@ -126,7 +125,8 @@ import ControlBar from "./ControlBar.vue";
 import BattleReplay from "./BattleReplay.vue";
 import KeybindHintPanel from "./KeybindHintPanel.vue";
 import NewbieGuide from "./NewbieGuide.vue";
-import Notification from "@/components/Notification.vue";
+import Dialog from "@/components/Dialog.vue";
+import Notification from "@/components/Notification";
 import { keybindManager } from "@/core/input/KeybindManager";
 import { BattleSystemFactory } from "@/core/battle/BattleSystemFactory";
 import type { IBattleSystem, IParticipantManager } from "@/core/battle/interfaces";

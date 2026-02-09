@@ -1,3 +1,12 @@
+<!--
+ * 文件: Dialog.vue
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 对话框组件
+ * 描述: 提供模态对话框功能，支持标题、内容插槽和底部操作区域
+ * 版本: 1.0.0
+-->
+
 <template>
   <Teleport to="body">
     <Transition name="dialog-fade">

@@ -153,9 +153,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import DamageNumber from "../components/DamageNumber.vue";
-import SkillEffect from "../components/SkillEffect.vue";
-import BattleLog from "./BattleLog.vue";
+import DamageNumber from "@/components/DamageNumber.vue";
+import SkillEffect from "@/components/SkillEffect.vue";
+import BattleLog from "@/views/BattleLog.vue";
 import type { BattleLogEntry } from '@/types/battle-log';
 
 const props = defineProps<{

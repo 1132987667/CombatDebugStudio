@@ -1,3 +1,12 @@
+<!--
+ * 文件: SkillEffect.vue
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 技能效果组件
+ * 描述: 显示技能施放效果，包括图标、名称和粒子特效
+ * 版本: 1.0.0
+-->
+
 <template>
   <div class="skill-effect-container">
     <transition-group name="skill" tag="div" class="skill-effects">

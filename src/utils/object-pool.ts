@@ -1,3 +1,12 @@
+/**
+ * 文件: object-pool.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 对象池管理器
+ * 描述: 提供对象池模式实现，用于复用对象，减少垃圾回收压力，提高性能
+ * 版本: 1.0.0
+ */
+
 import { logger } from '@/utils/logging'
 
 interface ObjectPoolOptions<T> {

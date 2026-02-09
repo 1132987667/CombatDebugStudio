@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logging'
-import battleRulesConfig from '@/config/battle-rules.json'
-
+import battleRulesConfig from '@configs/battle-rules.json'
+  
 /**
  * 战斗规则配置接口
  */

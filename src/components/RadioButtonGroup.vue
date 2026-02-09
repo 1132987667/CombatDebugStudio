@@ -1,3 +1,12 @@
+<!--
+ * 文件: RadioButtonGroup.vue
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 单选按钮组组件
+ * 描述: 提供单选按钮组功能，支持图标、标签显示和键盘导航
+ * 版本: 1.0.0
+-->
+
 <template>
   <div class="radio-button-group" role="radiogroup" :aria-labelledby="labelId">
     <label v-if="label" :id="labelId" class="radio-group-label">{{ label }}</label>

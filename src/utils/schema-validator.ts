@@ -1,3 +1,12 @@
+/**
+ * 文件: schema-validator.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: JSON模式验证器
+ * 描述: 提供JSON Schema验证功能，用于验证配置数据的格式和约束
+ * 版本: 1.0.0
+ */
+
 import { logger } from '@/utils/logging'
 
 interface ValidationError {

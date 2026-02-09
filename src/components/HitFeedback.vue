@@ -1,3 +1,12 @@
+<!--
+ * 文件: HitFeedback.vue
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 命中反馈组件
+ * 描述: 显示攻击命中效果，包括闪光、震动、眩晕等视觉反馈
+ * 版本: 1.0.0
+-->
+
 <template>
   <div class="hit-feedback-container">
     <transition-group name="hit" tag="div" class="hit-effects">

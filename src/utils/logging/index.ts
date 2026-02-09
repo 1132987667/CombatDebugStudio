@@ -1,4 +1,13 @@
 /**
+ * 文件: index.ts (logging模块)
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 战斗日志系统统一导出入口
+ * 描述: 提供统一的日志接口，包括BattleLogManager、SimpleLogger、FrameworkLogger等
+ * 版本: 1.0.0
+ */
+
+/**
  * 战斗日志系统 - 统一导出入口
  *
  * 提供统一的日志接口，包括：

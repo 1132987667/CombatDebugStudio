@@ -1,3 +1,12 @@
+/**
+ * 文件: DataProcessor.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 通用数据处理工具类
+ * 描述: 提供通用的数据处理功能，包括过滤、搜索、转换、排序等操作
+ * 版本: 1.0.0
+ */
+
 export interface FilterOptions<T> {
   /** 过滤条件 */
   condition: (item: T) => boolean

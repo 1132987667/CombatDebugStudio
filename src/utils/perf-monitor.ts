@@ -1,3 +1,12 @@
+/**
+ * 文件: perf-monitor.ts
+ * 创建日期: 2026-02-09
+ * 作者: CombatDebugStudio
+ * 功能: 性能监控器
+ * 描述: 提供性能监控功能，记录和报告代码执行时间和性能指标
+ * 版本: 1.0.0
+ */
+
 import { logger } from '@/utils/logging'
 
 interface PerformanceMetric {

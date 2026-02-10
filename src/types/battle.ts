@@ -4,6 +4,29 @@ import type { BattleAI } from '@/core/BattleAI'
 import type { SkillManager } from '@/core/skill/SkillManager'
 
 /**
+ * 战斗阶段枚举
+ * 定义战斗生命周期中的所有阶段
+ */
+export enum BattlePhase {
+  /** 已就绪 - 战斗系统初始化完成，等待参与者加入 */
+  READY = 'READY',
+  /** 对战双方已就位 - 所有参与者已添加到战斗中 */
+  BOTH_SIDES_READY = 'BOTH_SIDES_READY',
+  /** 战前准备 - 初始化技能、buff等战前状态 */
+  PRE_BATTLE_PREPARATION = 'PRE_BATTLE_PREPARATION',
+  /** 开始对战 - 战斗正式开始，进入战斗循环 */
+  BATTLE_STARTED = 'BATTLE_STARTED',
+  /** 回合开始 - 新回合开始 */
+  ROUND_START = 'ROUND_START',
+  /** 回合结束 - 当前回合结束 */
+  ROUND_END = 'ROUND_END',
+  /** 战斗结算 - 计算战斗结果、奖励等 */
+  BATTLE_SETTLEMENT = 'BATTLE_SETTLEMENT',
+  /** 对战结束 - 战斗完全结束，可以清理资源 */
+  BATTLE_ENDED = 'BATTLE_ENDED',
+}
+
+/**
  * 参与方常量
  * 用于区分战斗中的不同参与方
  */
@@ -14,7 +37,8 @@ export const PARTICIPANT_SIDE = {
   ENEMY: 'enemy' as const,
 }
 
-export type ParticipantSide = (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
+export type ParticipantSide =
+  (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
 
 export interface BattleEntity {
   id: string
@@ -139,4 +163,6 @@ export interface BattleData {
   aiInstances: Map<string, BattleAI>
   /** 技能管理器实例 */
   skillManager: SkillManager
+  /** 战斗当前阶段 */
+  phase?: BattlePhase
 }

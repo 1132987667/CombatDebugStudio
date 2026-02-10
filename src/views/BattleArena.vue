@@ -196,11 +196,11 @@ onMounted(() => {
 
   const allParticipants = [...allyParticipants, ...enemyParticipants];
   const battleState = battleSystem.createBattle(allParticipants);
-  currentBattleId.value = battleState.battleId;
+  // currentBattleId.value = battleState.battleId;
 
-  // 获取第一个可行动的我方参与者作为当前行动者
-  const firstActor = battleState.turnOrder.find(id => id.startsWith('character_')) || battleState.turnOrder[0] || null;
-  currentActorId.value = firstActor;
+  // // 获取第一个可行动的我方参与者作为当前行动者
+  // const firstActor = battleState.turnOrder.find(id => id.startsWith('character_')) || battleState.turnOrder[0] || null;
+  // currentActorId.value = firstActor;
   logManager.addSystemLog("测试工具已加载");
 
   // 初始化快捷键系统

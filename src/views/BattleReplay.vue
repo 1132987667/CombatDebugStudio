@@ -169,6 +169,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { raf } from '@/utils/RAF';
 
 interface BattleEvent {
   eventId: string;
@@ -215,7 +216,7 @@ const currentEventIndex = ref(0);
 const currentFrame = ref(0);
 const isPlaying = ref(false);
 const replaySpeed = ref(1);
-const playInterval = ref<number | null>(null);
+const playInterval = ref<symbol | null>(null);
 const timelineTrack = ref<HTMLElement | null>(null);
 const zoomLevel = ref(1);
 const filterType = ref('all');
@@ -347,7 +348,7 @@ function startReplay() {
 function pauseReplay() {
   isPlaying.value = false;
   if (playInterval.value) {
-    clearInterval(playInterval.value);
+    raf.clearTimeout(playInterval.value);
     playInterval.value = null;
   }
   if (currentRecording.value) {
@@ -365,7 +366,7 @@ function playNextEvent() {
   }
 
   const delay = 1000 / replaySpeed.value;
-  playInterval.value = window.setTimeout(() => {
+  playInterval.value = raf.setTimeout(() => {
     stepForward();
     playNextEvent();
   }, delay);
@@ -600,7 +601,7 @@ function isKeyEvent(event: BattleEvent): boolean {
 
 function cleanup() {
   if (playInterval.value) {
-    clearInterval(playInterval.value);
+    raf.clearTimeout(playInterval.value);
     playInterval.value = null;
   }
 }

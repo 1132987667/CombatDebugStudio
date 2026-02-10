@@ -1,15 +1,12 @@
 <template>
   <div class="newbie-guide" :class="{ 'active': isActive }">
     <div class="guide-overlay" @click="nextStep"></div>
-    
+
     <div class="guide-content" :class="'step-' + currentStep">
       <div class="step-indicator">
         <span class="step-number">{{ currentStep }}/{{ totalSteps }}</span>
         <div class="step-progress">
-          <div 
-            class="step-progress-bar"
-            :style="{ width: (currentStep / totalSteps) * 100 + '%' }"
-          ></div>
+          <div class="step-progress-bar" :style="{ width: (currentStep / totalSteps) * 100 + '%' }"></div>
         </div>
       </div>
 
@@ -98,6 +95,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { keybindManager } from '@/core/input/KeybindManager';
+import { raf } from '@/utils/RAF';
 
 const isActive = ref(false);
 const currentStep = ref(1);
@@ -152,7 +150,7 @@ function checkShowGuide() {
   const guideCompleted = localStorage.getItem('newbieGuideCompleted');
   if (guideCompleted !== 'true') {
     // 延迟显示，确保页面加载完成
-    setTimeout(() => {
+    raf.setTimeout(() => {
       startGuide();
     }, 1000);
   }
@@ -214,6 +212,7 @@ defineExpose({
     transform: translateY(-50px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -343,16 +342,16 @@ defineExpose({
     margin: 20px;
     max-width: none;
   }
-  
+
   .guide-step {
     padding: 20px;
   }
-  
+
   .guide-actions {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .action-btn {
     width: 100%;
     max-width: 200px;

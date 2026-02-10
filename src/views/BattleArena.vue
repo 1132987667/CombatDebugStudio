@@ -12,30 +12,30 @@
     <div class="main-layout">
       <!-- 左侧：参战角色配置 -->
       <ParticipantPanel :allyTeam="allyTeam" :enemyTeam="enemyTeam" :selected-character-id="selectedCharacterId"
-        @update:selected-character-id="selectCharacter" @add-enemy="addEnemyToBattle" @move-character="moveCharacter"
-        @clear-participants="clearParticipants" />
+        :battle-system="battleSystem" @update:selected-character-id="selectCharacter" @add-enemy="addEnemyToBattle"
+        @move-character="moveCharacter" @clear-participants="clearParticipants" />
 
       <!-- 中间：战斗战场和日志 -->
       <BattleField ref="battleFieldRef" :allyTeam="allyTeam" :enemyTeam="enemyTeam" :current-turn="currentTurn"
         :max-turns="maxTurns" :current-actor-id="currentActorId" :selected-character-id="selectedCharacterId"
-        :battle-logs="battleLogs" @select-character="selectCharacter" @show-damage="handleShowDamage"
-        @show-skill-effect="handleShowSkillEffect" />
+        :battle-logs="battleLogs" :battle-system="battleSystem" @select-character="selectCharacter"
+        @show-damage="handleShowDamage" @show-skill-effect="handleShowSkillEffect" />
 
       <!-- 右侧：调试面板 -->
       <div class="right-panel">
         <DebugPanel :allyTeam="allyTeam" :enemyTeam="enemyTeam" :selected-character-id="selectedCharacterId"
-          :last-export-time="lastExportTime" @end-turn="endTurn" @execute-skill="executeSkill" @add-status="addStatus"
-          @adjust-stats="adjustStats" @clear-statuses="clearStatuses" @export-state="exportState"
-          @import-state="importState" @view-export="viewExport" @reload-export="reloadExport"
-          @locate-exception="locateException" />
+          :last-export-time="lastExportTime" :battle-system="battleSystem" @end-turn="endTurn"
+          @execute-skill="executeSkill" @add-status="addStatus" @adjust-stats="adjustStats"
+          @clear-statuses="clearStatuses" @export-state="exportState" @import-state="importState"
+          @view-export="viewExport" @reload-export="reloadExport" @locate-exception="locateException" />
 
-        <BattleReplay :battle-manager="battleSystem" @replay-event="handleReplayEvent" @replay-start="handleReplayStart"
-          @replay-end="handleReplayEnd" @replay-pause="handleReplayPause" />
+        <BattleReplay :battle-manager="battleSystem" :battle-system="battleSystem" @replay-event="handleReplayEvent"
+          @replay-start="handleReplayStart" @replay-end="handleReplayEnd" @replay-pause="handleReplayPause" />
       </div>
     </div>
 
     <!-- 对话框组件 -->
-    <BattleRulesDialog v-model="showRulesDialog" :rules="rules" :speed="autoSpeed" @update:rules="updateRules"
+    <BattleRulesDialog v-model="showRulesDialog" :rules="rules" :speed="battleSpeed" @update:rules="updateRules"
       @update:speed="updateSpeed" @rule-change="handleRuleChange" />
 
     <SceneManagementDialog v-model="showSceneDialog" :scene-name="sceneName" :selected-scene="selectedScene"
@@ -90,7 +90,7 @@ import type {
   BattleAction as BattleSystemAction,
   ParticipantSide,
 } from "@/types/battle";
-import { PARTICIPANT_SIDE } from "@/types/battle";
+import { PARTICIPANT_SIDE, BATTLE_PHASE } from "@/types/battle";
 
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
@@ -113,39 +113,29 @@ const currentTurn = ref(1);
  * 最大回合数（默认值）
  */
 const maxTurns = ref(999);
-
 /**
- * 是否暂停（界面可控制状态）
+ * 是否处于战斗暂停状态（界面可控制状态）
  */
-const isPaused = ref(true);
-
+const isPaused = ref(false);
 /**
  * 是否自动播放（界面可控制状态）
  */
 const isAutoPlaying = ref(false);
-
 /**
  * 战斗是否正在进行（可手动控制）
  */
 const isBattleActive = ref(false);
 
+const battleSpeed = ref(1);
 
+const autoPlayMode = ref<'off' | 'auto' | 'fast'>('auto');
 
 const selectedScene = ref("");
 const sceneName = ref("");
-const customSpeed = ref<number | null>(null);
-const autoSpeed = ref(1);
-const autoPlayMode = ref<'off' | 'auto' | 'fast'>('auto');
 const currentActorId = ref<string | null>(null);
 
-const logKeyword = ref("");
-const manualSkillName = ref("");
-const manualStatusName = ref("");
-const manualStatusTurns = ref(2);
-const manualHpAmount = ref(100);
-const manualMpAmount = ref(50);
+
 const lastExportTime = ref<string | null>(null);
-const enemySearch = ref("");
 
 
 // 初始化GameDataProcessor（自动加载配置）
@@ -162,12 +152,25 @@ const keybindHintPanelRef = ref<InstanceType<typeof KeybindHintPanel> | null>(nu
 
 BattleSystemFactory.initialize();
 const battleSystem: IBattleSystem = BattleSystemFactory.createBattleSystem();
-const participantManager: ParticipantManager = battleSystem.getParticipantManager();
 
 const currentBattleId = ref<string | null>(null);
 const battleData = computed(() => {
-  return battleSystem.getCurBattleData(currentBattleId.value);
+  return battleSystem.getCurBattleData();
 });
+// 监听 battleData 变化
+watch(
+  battleData,
+  (newData) => {
+    if (newData) {
+      isPaused.value = newData.phase === BATTLE_PHASE.PAUSED;
+      isAutoPlaying.value = newData.autoPlaying || false;
+      currentTurn.value = newData.currentTurn;
+      maxTurns.value = newData.maxTurns;
+      battleSpeed.value = newData.battleSpeed
+    }
+  },
+  { immediate: true, deep: true }  // 深度监听
+);
 
 // 获取技能名称的工具函数
 const getSkillName = async (skillId: string | undefined): Promise<string> => {
@@ -179,10 +182,9 @@ const getSkillName = async (skillId: string | undefined): Promise<string> => {
   return "未知技能";
 };
 
-// 初始化战斗系统和快捷键
-onMounted(() => {
+function initBattle() {
   // 完成 敌我ParticipantInfo的初始化
-  const allyIds = ["boss_006", "boss_007"];
+  const allyIds = ["boss_005", "boss_008"];
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
   const enemyIds = ["boss_006", "boss_007"];
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
@@ -196,7 +198,17 @@ onMounted(() => {
 
   const allParticipants = [...allyParticipants, ...enemyParticipants];
   const battleState = battleSystem.createBattle(allParticipants);
-  // currentBattleId.value = battleState.battleId;
+  currentBattleId.value = battleState.battleId;
+  // 注册回合执行回调，用于自动战斗时同步日志
+  battleSystem.onTurnExecuted = () => {
+    syncBattleState();
+  };
+}
+
+// 初始化战斗系统和快捷键
+onMounted(() => {
+  initBattle();
+
 
   // // 获取第一个可行动的我方参与者作为当前行动者
   // const firstActor = battleState.turnOrder.find(id => id.startsWith('character_')) || battleState.turnOrder[0] || null;
@@ -234,10 +246,10 @@ function initKeybindManager() {
 }
 
 // 监听自动播放速度变化，同步到战斗引擎
-watch(autoSpeed, (newSpeed) => {
+watch(battleSpeed, (newSpeed) => {
   if (currentBattleId.value && battleSystem) {
     try {
-      battleSystem.setAutoBattleSpeed(currentBattleId.value, newSpeed);
+      battleSystem.setBattleSpeed(currentBattleId.value, newSpeed);
       logManager.addSystemLog(`自动播放速度更新为: ${newSpeed}x`);
     } catch (error) {
       console.error("设置自动战斗速度失败:", error);
@@ -254,7 +266,7 @@ watch(isAutoPlaying, (newValue) => {
 
   try {
     if (newValue) {
-      battleSystem?.startAutoBattle(currentBattleId.value, autoSpeed.value);
+      battleSystem?.startAutoBattle();
       syncBattleState();
     } else {
       battleSystem?.stopAutoBattle(currentBattleId.value);
@@ -287,44 +299,6 @@ watch(
     }
   }
 );
-
-
-
-function createBattleCharacter(
-  enemy: Enemy,
-  index: number
-): UIBattleCharacter {
-  return {
-    originalId: enemy.id,
-    id: `char_${index + 1}`,
-    name: enemy.name,
-    level: enemy.level,
-    maxHp: enemy.stats.health,
-    currentHp: enemy.stats.health,
-    maxMp: 100,
-    currentMp: 100,
-    currentEnergy: 0,
-    maxEnergy: 150,
-    attack: Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2),
-    defense: enemy.stats.defense,
-    speed: enemy.stats.speed,
-    enabled: index < 3,
-    isFirst: index === 0,
-    buffs:
-      index === 0
-        ? [
-          {
-            id: "buff_1",
-            name: "力量祝福",
-            remainingTurns: 5,
-            isPositive: true,
-          },
-        ]
-        : [],
-  };
-}
-
-
 
 
 // 创建日志管理器实例
@@ -535,7 +509,7 @@ const updateRules = (newRules: any) => {
 };
 
 const updateSpeed = (speed: number) => {
-  autoSpeed.value = speed;
+  battleSpeed.value = speed;
 };
 
 const handleRuleChange = (key: string, value: boolean) => {
@@ -767,7 +741,7 @@ const toggleAutoPlay = () => {
     logManager.addSystemLog("停止自动战斗");
   } else {
     // 开始自动播放 - 使用战斗引擎API
-    battleSystem?.startAutoBattle(currentBattleId.value!, autoSpeed.value);
+    battleSystem?.startAutoBattle();
     isAutoPlaying.value = true;
     isPaused.value = false;
     syncBattleState();
@@ -778,11 +752,11 @@ const toggleAutoPlay = () => {
 // 处理战斗速度变化
 const handleBattleSpeedChange = (speed: number) => {
   // 更新自动播放速度
-  autoSpeed.value = speed;
+  battleSpeed.value = speed;
 
   // 如果正在自动播放，更新战斗引擎的速度设置
   if (isAutoPlaying.value && currentBattleId.value && battleSystem) {
-    battleSystem.setAutoBattleSpeed(currentBattleId.value, speed);
+    battleSystem.setBattleSpeed(currentBattleId.value, speed);
   }
 
   logManager.addSystemLog(`战斗速度已调整为: ${speed}倍`);
@@ -809,39 +783,19 @@ const startBattle = () => {
     return;
   }
   const allParticipants = battleSystem.getCurParticipantsInfo()
-  /**
-   * 创建战斗实例
-   * 使用参与者信息初始化战斗系统
-   * @returns {BattleState|null} 战斗状态对象，创建失败时返回null
-   */
-  const battleState = battleSystem.createBattle(allParticipants);
-  if (battleState) {
-    currentBattleId.value = battleState.battleId;
 
-    // 注册回合执行回调，用于自动战斗时同步日志
-    battleSystem.onTurnExecuted = () => {
-      syncBattleState();
-    };
 
-    // 重置战斗状态
-    isPaused.value = false;
-    isAutoPlaying.value = autoPlayMode.value !== 'off';
+  const curBattleData = battleSystem.getCurBattleData()
+  battleSystem.startAutoBattle();
+  logManager.addSystemLog("开始自动战斗");
 
-    // 根据自动播放模式决定是否开始自动战斗
-    if (autoPlayMode.value !== 'off') {
-      battleSystem?.startAutoBattle(currentBattleId.value, autoSpeed.value);
-      logManager.addSystemLog("开始自动战斗");
-    } else {
-      // 手动模式，不需要额外操作
-    }
 
-    // 清空已处理的 action ID 集合，确保新战斗的所有 action 都能被处理
-    processedActionIds.value.clear();
+  // 清空已处理的 action ID 集合，确保新战斗的所有 action 都能被处理
+  processedActionIds.value.clear();
 
-    // 添加战斗开始日志
-    logManager.addSystemLog(`战斗开始！战斗ID: ${battleState.battleId}`);
-    logManager.addSystemLog(`参战角色: ${enabledAllyTeam.length} 人 | 参战敌人: ${enabledEnemyTeam.length} 人`);
-  }
+  // 添加战斗开始日志
+  logManager.addSystemLog(`战斗开始！战斗ID: ${battleState.battleId}`);
+  logManager.addSystemLog(`参战角色: ${enabledAllyTeam.length} 人 | 参战敌人: ${enabledEnemyTeam.length} 人`);
 };
 
 /**
@@ -1161,7 +1115,7 @@ const resetBattle = () => {
 
   // 重置战斗系统中的战斗状态
   if (currentBattleId.value && battleSystem) {
-    battleSystem.resetBattle(currentBattleId.value);
+    battleSystem.resetBattle();
   }
 
   // 重置战斗状态

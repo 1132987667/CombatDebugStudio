@@ -19,18 +19,19 @@ import type {
   ParticipantSide,
   BattlePhase,
 } from '@/types/battle'
-import { PARTICIPANT_SIDE } from '@/types/battle'
+import { BATTLE_PHASE, PARTICIPANT_SIDE } from '@/types/battle'
 import type { Character } from '@/types/character'
 import type { EnemyInstance } from '@/types/enemy'
 import type { AttributeType } from '@/types/modifier'
 import { logger } from '@/utils/logging'
+import { raf } from '@/utils/RAF'
 import { container } from './di/Container'
 import {
   TURN_MANAGER_TOKEN,
   ACTION_EXECUTOR_TOKEN,
-  PARTICIPANT_MANAGER_TOKEN,
   AI_SYSTEM_TOKEN,
 } from '@/core/battle/interfaces'
+import type { BattleAI } from '@/core/BattleAI'
 
 import { TurnManager } from '@/core/battle/TurnManager'
 import { ActionExecutor } from '@/core/battle/ActionExecutor'
@@ -410,6 +411,9 @@ export class GameBattleSystem implements IBattleSystem {
   // 存储所有战斗数据的映射表，key为战斗ID，value为战斗数据
   private battles = new Map<string, BattleData>()
 
+  private curBattleId: string
+  private curBattleData: BattleData
+
   // 战斗日志记录器实例
   private battleLogger = logger
 
@@ -422,7 +426,6 @@ export class GameBattleSystem implements IBattleSystem {
   private participantManager: ParticipantManager
   private aiSystem: AISystem
   private battleRecorder: BattleRecorder
-  private currentBattleId: string | null = null
   private curParticipantsInfo: ParticipantInfo[] = []
 
   // 私有构造函数，防止外部直接实例化
@@ -433,13 +436,34 @@ export class GameBattleSystem implements IBattleSystem {
     this.actionExecutor = container.resolve<ActionExecutor>(
       ACTION_EXECUTOR_TOKEN.toString(),
     )
-    this.participantManager = container.resolve<ParticipantManager>(
-      PARTICIPANT_MANAGER_TOKEN.toString(),
-    )
+    this.participantManager = new ParticipantManager()
     this.aiSystem = container.resolve<AISystem>(AI_SYSTEM_TOKEN.toString())
     this.battleRecorder = new BattleRecorder()
 
+    this.curBattleData = this.getDefBattleData()
+    this.curBattleId = this.curBattleData.battleId
     this.initializeRuleManager()
+  }
+
+  public generateBattleId(): string {
+    return `battle_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+  }
+
+  public getDefBattleData(): BattleData {
+    return {
+      battleId: this.generateBattleId(),
+      participants: new Map<string, BattleParticipant>(),
+      actions: [], // 战斗动作记录
+      turnOrder: [],
+      currentTurn: 0, // 当前回合索引
+      isActive: true, // 战斗是否活跃
+      startTime: Date.now(), // 战斗开始时间
+      winner: undefined, // 胜利者（未确定）
+      aiInstances: new Map<string, BattleAI>(),
+      autoPlaying: true,
+      battleSpeed: 1,
+      phase: BATTLE_PHASE.READY, // 初始阶段
+    }
   }
 
   /**
@@ -496,39 +520,27 @@ export class GameBattleSystem implements IBattleSystem {
     console.log('participantsInfo', participantsInfo)
     this.curParticipantsInfo = participantsInfo
 
-    const battleId = `battle_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
     const participants =
       this.participantManager.createParticipants(participantsInfo)
     const turnOrder = this.turnManager.createTurnOrder(
       Array.from(participants.values()),
     )
-    const aiInstances = this.aiSystem.createAIInstances(participants)
-    this.currentBattleId = battleId
-
-    // 构建战斗数据对象
-    const battleData: BattleData = {
-      battleId,
-      participants,
-      actions: [], // 战斗动作记录
-      turnOrder,
-      currentTurn: 0, // 当前回合索引
-      isActive: true, // 战斗是否活跃
-      startTime: Date.now(), // 战斗开始时间
-      winner: undefined, // 胜利者（未确定）
-      aiInstances,
-      skillManager: this.skillManager,
-      phase: BattlePhase.READY, // 初始阶段
-    }
-
+    const battleData = this.curBattleData
+    battleData.participants = participants
+    battleData.turnOrder = turnOrder
+    battleData.aiInstances = this.aiSystem.createAIInstances(participants)
     // 将战斗数据存入映射表
-    this.battles.set(battleId, battleData)
+    this.battles.set(battleData.battleId, battleData)
 
     // 更新阶段
-    battleData.phase = BattlePhase.BOTH_SIDES_READY
+    battleData.phase = BATTLE_PHASE.BOTH_SIDES_READY
 
     // 统一注册到 ActionExecutor，建立参与者到战斗的映射
-    this.actionExecutor.registerBattle(battleId, battleData)
-
+    this.actionExecutor.registerBattle(
+      this.curBattleData.battleId,
+      this.curBattleData,
+    )
+    const battleId = this.curBattleData.battleId
     // 开始记录战斗
     this.battleRecorder.startRecording(battleId, {
       participants: participantsInfo,
@@ -572,7 +584,7 @@ export class GameBattleSystem implements IBattleSystem {
     this.battleRecorder.recordAction(battleId, initAction, 0)
 
     // 更新阶段
-    battleData.phase = BattlePhase.BATTLE_STARTED
+    battleData.phase = BATTLE_PHASE.BATTLE_STARTED
 
     // 返回战斗状态
     return this.convertToBattleState(battleData)
@@ -590,7 +602,7 @@ export class GameBattleSystem implements IBattleSystem {
     }
 
     // 转换到"回合开始"阶段
-    battle.phase = BattlePhase.ROUND_START
+    battle.phase = BATTLE_PHASE.ROUND_START
 
     // 所有存活参与者获得能量
     this.participantManager.gainEnergyToAllAlive(battle.participants, 25)
@@ -602,7 +614,7 @@ export class GameBattleSystem implements IBattleSystem {
 
     if (!participant || !participant.isAlive()) {
       battle.currentTurn = (currentTurnIndex + 1) % battle.turnOrder.length
-      battle.phase = BattlePhase.ROUND_END
+      battle.phase = BATTLE_PHASE.ROUND_END
       return
     }
 
@@ -631,7 +643,7 @@ export class GameBattleSystem implements IBattleSystem {
     this.battleRecorder.recordTurnEnd(battleId, currentTurn)
 
     // 转换到"回合结束"阶段
-    battle.phase = BattlePhase.ROUND_END
+    battle.phase = BATTLE_PHASE.ROUND_END
 
     // 进入下一回合
     battle.currentTurn = (currentTurnIndex + 1) % battle.turnOrder.length
@@ -740,7 +752,7 @@ export class GameBattleSystem implements IBattleSystem {
     if (action.type === 'skill' && action.skillId) {
       try {
         // 使用新的技能管理器执行技能
-        const skillAction = battle.skillManager.executeSkill(
+        const skillAction = this.skillManager.executeSkill(
           action.skillId,
           source,
           target,
@@ -817,12 +829,6 @@ export class GameBattleSystem implements IBattleSystem {
    * @param {string} skillId - 技能ID
    * @returns {number} 能量消耗
    */
-  private getSkillEnergyCost(skillId: string): number {
-    // 简化实现，实际应该从技能配置中获取
-    const skillConfig = this.skillManager.getSkillConfig(skillId)
-    return skillConfig?.mpCost || 0
-  }
-
   /**
    * 添加战斗动作到记录
    * @param {string} battleId - 战斗ID
@@ -891,7 +897,7 @@ export class GameBattleSystem implements IBattleSystem {
     }
 
     // 转换到"战斗结算"阶段
-    battle.phase = BattlePhase.BATTLE_SETTLEMENT
+    battle.phase = BATTLE_PHASE.BATTLE_SETTLEMENT
 
     battle.isActive = false
     battle.winner = winner
@@ -935,7 +941,7 @@ export class GameBattleSystem implements IBattleSystem {
     this.battleRecorder.saveRecording(battleId)
 
     // 转换到"对战结束"阶段
-    battle.phase = BattlePhase.BATTLE_ENDED
+    battle.phase = BATTLE_PHASE.BATTLE_ENDED
   }
 
   /**
@@ -957,7 +963,7 @@ export class GameBattleSystem implements IBattleSystem {
     battle.winner = undefined
     battle.endTime = undefined
     battle.currentTurn = 0
-    battle.phase = BattlePhase.READY
+    battle.phase = BATTLE_PHASE.READY
 
     // 清空战斗动作记录
     battle.actions = []
@@ -970,7 +976,7 @@ export class GameBattleSystem implements IBattleSystem {
     })
 
     // 清除战斗记录
-    this.battleRecorder.clearRecordings(battleId)
+    this.battleRecorder.clearRecordings()
 
     this.battleLogger.info(`战斗已重置: ${battleId}`)
   }
@@ -1002,7 +1008,7 @@ export class GameBattleSystem implements IBattleSystem {
    * @returns 是否已结束
    */
   public isBattleEnded(battleId: string): boolean {
-    return this.isBattleInPhase(battleId, BattlePhase.BATTLE_ENDED)
+    return this.isBattleInPhase(battleId, BATTLE_PHASE.BATTLE_ENDED)
   }
 
   /**
@@ -1014,9 +1020,9 @@ export class GameBattleSystem implements IBattleSystem {
     const battle = this.battles.get(battleId)
     if (!battle) return false
     return (
-      battle.phase === BattlePhase.BATTLE_STARTED ||
-      battle.phase === BattlePhase.ROUND_START ||
-      battle.phase === BattlePhase.ROUND_END
+      battle.phase === BATTLE_PHASE.BATTLE_STARTED ||
+      battle.phase === BATTLE_PHASE.ROUND_START ||
+      battle.phase === BATTLE_PHASE.ROUND_END
     )
   }
 
@@ -1085,20 +1091,18 @@ export class GameBattleSystem implements IBattleSystem {
   // 自动战斗相关属性和方法（保持与原有代码兼容）
   private autoBattleStates = new Map<
     string,
-    { isActive: boolean; intervalId?: number }
+    { isActive: boolean; intervalId?: symbol }
   >()
 
   /**
    * 开始自动战斗
    * @param {string} battleId - 战斗ID
    */
-  public startAutoBattle(battleId: string): void {
-    const battle = this.battles.get(battleId)
-    if (!battle || !battle.isActive) {
-      return
+  public startAutoBattle(): void {
+    const battleId = this.curBattleId
+    const autoState = this.autoBattleStates.get(this.curBattleId) || {
+      isActive: false,
     }
-
-    const autoState = this.autoBattleStates.get(battleId) || { isActive: false }
     autoState.isActive = true
     this.autoBattleStates.set(battleId, autoState)
 
@@ -1119,14 +1123,14 @@ export class GameBattleSystem implements IBattleSystem {
         }
 
         // 继续下一回合
-        setTimeout(autoBattleLoop, 1000)
+        raf.setTimeout(autoBattleLoop, 1000)
       } catch (error) {
         this.battleLogger.error('自动战斗出错:', error)
         this.stopAutoBattle(battleId)
       }
     }
 
-    autoState.intervalId = setTimeout(autoBattleLoop, 1000)
+    autoState.intervalId = raf.setTimeout(autoBattleLoop, 1000)
     this.battleLogger.info(`自动战斗开始: ${battleId}`)
   }
 
@@ -1139,7 +1143,7 @@ export class GameBattleSystem implements IBattleSystem {
     if (autoState) {
       autoState.isActive = false
       if (autoState.intervalId) {
-        clearTimeout(autoState.intervalId)
+        raf.clearTimeout(autoState.intervalId)
       }
       this.autoBattleStates.delete(battleId)
       this.battleLogger.info(`自动战斗停止: ${battleId}`)
@@ -1249,30 +1253,24 @@ export class GameBattleSystem implements IBattleSystem {
   }
 
   /**
-   * 设置自动战斗速度（延迟时间）
-   */
-  public setAutoBattleSpeed(battleId: string, speedMs: number): void {
-    // 自动战斗速度设置逻辑（如果有）
-  }
-
-  /**
    * 获取参与者管理器实例
    */
   public getParticipantManager(): ParticipantManager {
     return this.participantManager
   }
 
+  public getCurParticipantsInfo(): ParticipantInfo[] {
+    return this.curParticipantsInfo
+  }
+
   /**
    * 获取当前战斗数据
    */
-  public getCurBattleData(battleId: string | null): BattleData | undefined {
-    if (!battleId) {
-      return undefined
-    }
-    return this.battles.get(battleId)
+  public getCurBattleData(): BattleData | undefined {
+    return this.curBattleData
   }
 
-  public getCurParticipantsInfo(): ParticipantInfo[] {
-    return this.curParticipantsInfo
+  public setBattleSpeed(speed: number): void {
+    this.curBattleData.battleSpeed = speed
   }
 }

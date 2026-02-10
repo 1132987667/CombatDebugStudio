@@ -153,6 +153,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { raf } from '@/utils/RAF';
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
@@ -221,15 +222,15 @@ const statusTooltip = ref({
   status: null as any
 });
 
-let tooltipTimeout: number | null = null;
+let tooltipTimeout: symbol | null = null;
 
 // 显示状态工具提示
 const showStatusTooltip = (event: MouseEvent, status: any) => {
   if (tooltipTimeout) {
-    clearTimeout(tooltipTimeout);
+    raf.clearTimeout(tooltipTimeout);
   }
 
-  tooltipTimeout = setTimeout(() => {
+  tooltipTimeout = raf.setTimeout(() => {
     statusTooltip.value = {
       visible: true,
       x: event.clientX + 10,
@@ -239,7 +240,7 @@ const showStatusTooltip = (event: MouseEvent, status: any) => {
     };
 
     // 添加淡入动画
-    setTimeout(() => {
+    raf.setTimeout(() => {
       statusTooltip.value.opacity = 1;
     }, 10);
   }, 300);
@@ -248,7 +249,7 @@ const showStatusTooltip = (event: MouseEvent, status: any) => {
 // 隐藏状态工具提示
 const hideStatusTooltip = () => {
   if (tooltipTimeout) {
-    clearTimeout(tooltipTimeout);
+    raf.clearTimeout(tooltipTimeout);
     tooltipTimeout = null;
   }
 
@@ -337,14 +338,14 @@ function triggerHitEffect(characterId: string) {
 
   if (character) {
     character.isHit = true;
-    setTimeout(() => {
+    raf.setTimeout(() => {
       character.isHit = false;
     }, 300);
   }
 
   if (enemy) {
     enemy.isHit = true;
-    setTimeout(() => {
+    raf.setTimeout(() => {
       enemy.isHit = false;
     }, 300);
   }
@@ -356,14 +357,14 @@ function triggerCastingEffect(characterId: string, duration: number = 1000) {
 
   if (character) {
     character.isCasting = true;
-    setTimeout(() => {
+    raf.setTimeout(() => {
       character.isCasting = false;
     }, duration);
   }
 
   if (enemy) {
     enemy.isCasting = true;
-    setTimeout(() => {
+    raf.setTimeout(() => {
       enemy.isCasting = false;
     }, duration);
   }

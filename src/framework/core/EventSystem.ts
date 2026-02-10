@@ -20,6 +20,7 @@
 
 import type { IEventSystem, EventListener } from './interfaces'
 import { FrameworkLogger } from '@/utils/logging'
+import { raf } from '@/utils/RAF'
 
 /**
  * 事件监听器包装器
@@ -241,14 +242,14 @@ export class EventSystem implements IEventSystem {
   public waitForEvent(event: string, timeout?: number): Promise<any> {
     return new Promise((resolve, reject) => {
       const timer = timeout
-        ? setTimeout(() => {
+        ? raf.setTimeout(() => {
             this.off(event, eventListener)
             reject(new Error(`Event ${event} timeout after ${timeout}ms`))
           }, timeout)
         : undefined
 
       const eventListener: EventListener = (data?: any) => {
-        if (timer) clearTimeout(timer)
+        if (timer) raf.clearTimeout(timer)
         this.off(event, eventListener)
         resolve(data)
       }

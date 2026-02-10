@@ -12,18 +12,15 @@ import {
   IBattleSystem,
   ITurnManager,
   IActionExecutor,
-  IParticipantManager,
   IAISystem,
   BATTLE_SYSTEM_TOKEN,
   TURN_MANAGER_TOKEN,
   ACTION_EXECUTOR_TOKEN,
-  PARTICIPANT_MANAGER_TOKEN,
   AI_SYSTEM_TOKEN,
 } from './interfaces'
 import { GameBattleSystem } from '../BattleSystem'
 import { TurnManager } from './TurnManager'
 import { ActionExecutor } from './ActionExecutor'
-import { ParticipantManager } from './ParticipantManager'
 import { AISystem } from './AISystem'
 
 export class BattleSystemFactory {
@@ -38,10 +35,6 @@ export class BattleSystemFactory {
     this.container.register<IActionExecutor>(
       ACTION_EXECUTOR_TOKEN.toString(),
       new ActionExecutor(),
-    )
-    this.container.register<IParticipantManager>(
-      PARTICIPANT_MANAGER_TOKEN.toString(),
-      new ParticipantManager(),
     )
     this.container.register<IAISystem>(
       AI_SYSTEM_TOKEN.toString(),
@@ -67,12 +60,6 @@ export class BattleSystemFactory {
   public static getActionExecutor(): IActionExecutor {
     return this.container.resolve<IActionExecutor>(
       ACTION_EXECUTOR_TOKEN.toString(),
-    )
-  }
-
-  public static getParticipantManager(): IParticipantManager {
-    return this.container.resolve<IParticipantManager>(
-      PARTICIPANT_MANAGER_TOKEN.toString(),
     )
   }
 

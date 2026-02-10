@@ -94,7 +94,7 @@ export interface IBattleSystem {
    * @param battleId - 战斗ID
    * @param speed - 自动战斗速度（1-10）
    */
-  startAutoBattle(battleId: string, speed: number): void
+  startAutoBattle(): void
 
   /**
    * 停止自动战斗
@@ -114,24 +114,25 @@ export interface IBattleSystem {
    * @param battleId - 战斗ID
    * @param speed - 新的自动战斗速度（1-10）
    */
-  setAutoBattleSpeed(battleId: string, speed: number): void
+  setBattleSpeed(battleId: string, speed: number): void
 
   /**
    * 获取当前战斗数据
    * @param battleId - 战斗ID
    * @returns BattleData | undefined - 战斗数据，如果不存在则返回undefined
    */
-  getCurBattleData(battleId: string | null): BattleData | undefined
-  /**
-   * 获取参与者管理器实例
-   */
-  getParticipantManager(): IParticipantManager
+  getCurBattleData(): BattleData | undefined
 
   /**
    * 获取当前战斗的参与者信息
    * @returns ParticipantInfo[] - 当前战斗的参与者信息数组
    */
   getCurParticipantsInfo(): ParticipantInfo[]
+
+  /**
+   * 重置当前战斗
+   */
+  resetBattle(): void
 }
 
 /**
@@ -226,5 +227,4 @@ export interface IAISystem {
 export const BATTLE_SYSTEM_TOKEN = Symbol('BattleSystem')
 export const TURN_MANAGER_TOKEN = Symbol('TurnManager')
 export const ACTION_EXECUTOR_TOKEN = Symbol('ActionExecutor')
-export const PARTICIPANT_MANAGER_TOKEN = Symbol('ParticipantManager')
 export const AI_SYSTEM_TOKEN = Symbol('AISystem')

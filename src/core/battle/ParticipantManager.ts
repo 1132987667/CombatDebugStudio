@@ -3,11 +3,15 @@
  * 创建日期: 2026-02-09
  * 作者: CombatDebugStudio
  * 功能: 参与者管理器
- * 描述: 负责创建、查询、更新和清理战斗参与者，实现了IParticipantManager接口，处理参与者的全生命周期管理
+ * 描述: 负责创建、查询、更新和清理战斗参与者，处理参与者的全生命周期管理
  * 版本: 1.0.0
  */
 
-import type { BattleParticipant, ParticipantInfo, ParticipantSide } from '@/types/battle'
+import type {
+  BattleParticipant,
+  ParticipantInfo,
+  ParticipantSide,
+} from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
 import { SimpleBattleCharacter, SimpleBattleEnemy } from '../BattleSystem'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
@@ -129,7 +133,10 @@ export class ParticipantManager {
     ids.forEach((id) => {
       const enemy = GameDataProcessor.findEnemyById(id)
       if (enemy) {
-        const participantInfo = GameDataProcessor.enemyToParticipantInfo(enemy, type)
+        const participantInfo = GameDataProcessor.enemyToParticipantInfo(
+          enemy,
+          type,
+        )
         participantInfos.push(participantInfo)
       } else {
         this.logger.warn(`未找到ID为 ${id} 的角色数据`)
@@ -172,7 +179,6 @@ export class ParticipantManager {
    * @returns BattleParticipant | undefined - 找到返回参与者对象，未找到返回undefined
    */
   public getParticipant(
-    battleId: string,
     participantId: string,
   ): BattleParticipant | undefined {
     return this.participants.get(participantId)

@@ -18,6 +18,7 @@
  */
 
 import { FrameworkLogger } from '@/utils/logging'
+import { raf } from '@/utils/RAF'
 
 /**
  * 性能指标接口
@@ -64,7 +65,7 @@ export class PerformanceMonitor {
   private stats: Map<string, PerformanceStats> = new Map()
   private memoryHistory: MemoryUsage[] = []
   private maxHistorySize = 1000
-  private memoryMonitorInterval?: Number
+  private memoryMonitorInterval?: symbol
 
   constructor() {
     this.logger = new Logger('PerformanceMonitor')
@@ -273,7 +274,7 @@ export class PerformanceMonitor {
    * 启动内存监控
    */
   private startMemoryMonitoring(): void {
-    this.memoryMonitorInterval = setInterval(() => {
+    this.memoryMonitorInterval = raf.setInterval(() => {
       const memoryUsage = this.getCurrentMemoryUsage()
       this.memoryHistory.push(memoryUsage)
 
@@ -292,7 +293,7 @@ export class PerformanceMonitor {
    */
   private stopMemoryMonitoring(): void {
     if (this.memoryMonitorInterval) {
-      clearInterval(this.memoryMonitorInterval)
+      raf.clearInterval(this.memoryMonitorInterval)
       this.memoryMonitorInterval = undefined
     }
   }

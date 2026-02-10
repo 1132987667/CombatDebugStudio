@@ -27,6 +27,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { raf } from '@/utils/RAF'
 
 interface NotificationItem {
   id: number
@@ -58,7 +59,7 @@ const addNotification = (title: string, message: string, type: 'success' | 'erro
   notifications.value.push(notification)
 
   if (duration > 0) {
-    setTimeout(() => {
+    raf.setTimeout(() => {
       removeNotification(id)
     }, duration)
   }

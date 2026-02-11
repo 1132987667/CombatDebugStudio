@@ -90,7 +90,7 @@ import type {
   BattleAction as BattleSystemAction,
   ParticipantSide,
 } from "@/types/battle";
-import { PARTICIPANT_SIDE, BATTLE_PHASE } from "@/types/battle";
+import { PARTICIPANT_SIDE, BATTLE_STATUS, ROUND_STATUS } from "@/types/battle";
 
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
@@ -121,6 +121,7 @@ const isPaused = ref(false);
  * 是否自动播放（界面可控制状态）
  */
 const isAutoPlaying = ref(false);
+const battleState = ref(BATTLE_STATUS.CREATED);
 /**
  * 战斗是否正在进行（可手动控制）
  */
@@ -162,7 +163,7 @@ watch(
   battleData,
   (newData) => {
     if (newData) {
-      isPaused.value = newData.phase === BATTLE_PHASE.PAUSED;
+      isPaused.value = newData.battleState === BATTLE_STATUS.PAUSED;
       isAutoPlaying.value = newData.autoPlaying || false;
       currentTurn.value = newData.currentTurn;
       maxTurns.value = newData.maxTurns;

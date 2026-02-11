@@ -37,9 +37,8 @@ export class RAFTimer {
   /**
    * 主动画帧循环
    */
-  private loop(): void {
+  private loop = (): void => {
     const now = performance.now()
-
     // 遍历所有定时器
     for (const timer of this.timers.values()) {
       if (timer.paused) continue

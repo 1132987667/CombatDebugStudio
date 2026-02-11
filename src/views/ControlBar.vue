@@ -13,8 +13,8 @@
       <button class="control-btn" @click="$emit('reset-battle')"
         :disabled="!isBattleActive && autoPlayMode !== 'off'">重置战斗</button>
       <button class="control-btn" @click="$emit('step-back')" :disabled="!isBattleActive">回退1回合</button>
-      <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">{{ isPaused ? '[|] 继续' :
-        '[||] 暂停' }}</button>
+      <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">{{ isPaused ? '继 续' :
+        '暂 停' }}</button>
       <button class="control-btn" @click="$emit('single-step')" :disabled="!isBattleActive">单步执行</button>
 
       <!-- 自动播放模式单选按钮组 -->

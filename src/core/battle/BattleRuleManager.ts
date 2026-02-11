@@ -8,7 +8,6 @@
  */
 
 import { logger } from '@/utils/logging'
-import battleRulesConfig from '@configs/battle-rules.json'
 
 /**
  * 战斗规则配置接口
@@ -78,15 +77,9 @@ export class BattleRuleManager {
    * 加载战斗规则配置
    */
   public async loadConfig(): Promise<BattleRulesConfig> {
-    try {
-      // 直接导入JSON配置
-      this.config = battleRulesConfig as BattleRulesConfig
-      this.logger.info('战斗规则配置加载成功', { version: this.config.version })
-      return this.config
-    } catch (error) {
-      this.logger.error('战斗规则配置加载失败，使用默认配置', error)
-      return this.getDefaultConfig()
-    }
+    this.config = this.getDefaultConfig()
+    this.logger.info('战斗规则配置加载成功', { version: this.config.version })
+    return this.config
   }
 
   /**

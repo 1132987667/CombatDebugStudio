@@ -4,31 +4,44 @@ import type { BattleAI } from '@/core/BattleAI'
 import type { SkillManager } from '@/core/skill/SkillManager'
 
 /**
- * 战斗阶段常量
- * 定义战斗生命周期中的所有阶段
+ * 战斗状态常量
+ * 控制战斗的宏观生命周期
  */
-export const BATTLE_PHASE = {
-  /** 已就绪 - 战斗系统初始化完成，等待参与者加入 */
-  READY: 'READY',
-  /** 对战双方已就位 - 所有参与者已添加到战斗中 */
-  BOTH_SIDES_READY: 'BOTH_SIDES_READY',
-  /** 战前准备 - 初始化技能、buff等战前状态 */
-  PRE_BATTLE_PREPARATION: 'PRE_BATTLE_PREPARATION',
-  /** 开始对战 - 战斗正式开始，进入战斗循环 */
-  BATTLE_STARTED: 'BATTLE_STARTED',
+export const BATTLE_STATUS = {
+  /** 已创建 - 战斗实例已创建，等待参与者加入 */
+  CREATED: 'CREATED',
+  /** 战前准备 - 初始化技能、buff等 */
+  PREPARING: 'PREPARING',
+  /** 战斗进行中 */
+  ACTIVE: 'ACTIVE',
   /** 战斗暂停 */
   PAUSED: 'PAUSED',
-  /** 回合开始 - 新回合开始 */
-  ROUND_START: 'ROUND_START',
-  /** 回合结束 - 当前回合结束 */
-  ROUND_END: 'ROUND_END',
-  /** 战斗结算 - 计算战斗结果、奖励等 */
-  BATTLE_SETTLEMENT: 'BATTLE_SETTLEMENT',
-  /** 对战结束 - 战斗完全结束，可以清理资源 */
-  BATTLE_ENDED: 'BATTLE_ENDED',
+  /** 战斗结算 */
+  SETTLEMENT: 'SETTLEMENT',
+  /** 战斗结束 */
+  ENDED: 'ENDED',
 } as const
 
-export type BattlePhase = (typeof BATTLE_PHASE)[keyof typeof BATTLE_PHASE]
+export type BattleStatus = (typeof BATTLE_STATUS)[keyof typeof BATTLE_STATUS]
+
+/**
+ * 回合状态常量
+ * 控制回合内的子阶段
+ */
+export const ROUND_STATUS = {
+  /** 无回合 - 不在回合中 */
+  NONE: 'NONE',
+  /** 回合开始 */
+  START: 'START',
+  /** 行动选择 */
+  ACTION: 'ACTION',
+  /** 行动执行 */
+  EXECUTION: 'EXECUTION',
+  /** 回合结束 */
+  END: 'END',
+} as const
+
+export type RoundStatus = (typeof ROUND_STATUS)[keyof typeof ROUND_STATUS]
 
 /**
  * 参与方常量
@@ -159,8 +172,6 @@ export interface BattleData {
   currentTurn: number
   /** 最大回合数 */
   maxTurns: number
-  /** 战斗是否活跃 */
-  isActive: boolean
   /** 战斗开始时间戳 */
   startTime: number
   /** 战斗结束时间戳（可选） */
@@ -171,8 +182,12 @@ export interface BattleData {
   aiInstances: Map<string, BattleAI>
   /** 战斗速度（1-10） */
   battleSpeed: number
-  /** 战斗当前阶段 */
-  phase?: BattlePhase
+  /** 战斗状态 */
+  battleState?: BattleStatus
+  /** 回合状态 */
+  roundState?: RoundStatus
+  /** 自动战斗定时器ID */
+  autoBattleIntervalId?: symbol
   /** 是否自动播放 */
   autoPlaying: boolean
 }

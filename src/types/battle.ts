@@ -65,10 +65,9 @@ export interface BattleEntity {
   currentHealth: number
   maxHealth: number
   currentEnergy: number
-  maxEnergy: number // Fixed at 150
+  maxEnergy: number
   buffs: string[]
 
-  // Common battle methods
   getAttribute(attribute: string): number
   setAttribute(attribute: string, value: number): void
   addBuff(buffInstanceId: string): void
@@ -78,12 +77,14 @@ export interface BattleEntity {
   heal(amount: number): number
   isAlive(): boolean
 
-  // Energy management
   gainEnergy(amount: number): void
   spendEnergy(amount: number): boolean
   afterAction(): void
   isFullHealth(): boolean
   needsHealing(): boolean
+
+  getSkills(): any[]
+  hasSkill(skillId: string): boolean
 }
 
 export interface BattleCharacter extends BattleEntity {
@@ -126,6 +127,7 @@ export interface BattleState {
   battleId: string
   participants: Map<string, BattleParticipant>
   actions: BattleAction[]
+  /** 回合顺序，按速度规则排序 */
   turnOrder: string[]
   currentTurn: number
   isActive: boolean
@@ -166,10 +168,12 @@ export interface BattleData {
   participants: Map<string, BattleParticipant>
   /** 战斗行动记录 */
   actions: BattleAction[]
-  /** 回合顺序，按参与者ID排序 */
+  /** 回合顺序，按速度规则排序 */
   turnOrder: string[]
-  /** 当前回合索引 */
+  /** 当前行动次序索引（表示当前回合内的第几个行动） */
   currentTurn: number
+  /** 当前回合数（从1开始） */
+  currentRound: number
   /** 最大回合数 */
   maxTurns: number
   /** 战斗开始时间戳 */
@@ -190,4 +194,8 @@ export interface BattleData {
   autoBattleIntervalId?: symbol
   /** 是否自动播放 */
   autoPlaying: boolean
+  /** 战斗是否处于活跃状态 */
+  isActive: boolean
+  /** 技能管理器实例（可选，用于技能执行） */
+  skillManager?: import('@/core/skill/SkillManager').SkillManager
 }

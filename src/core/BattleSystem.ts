@@ -17,7 +17,6 @@ import type {
   ParticipantInfo,
   BattleData,
   ParticipantSide,
-  BattleStatus,
   RoundStatus,
 } from '@/types/battle'
 import { BATTLE_STATUS, ROUND_STATUS, PARTICIPANT_SIDE } from '@/types/battle'
@@ -41,6 +40,8 @@ import { AISystem } from '@/core/battle/AISystem'
 import { BattleRecorder } from '@/core/battle/BattleRecorder'
 import { BattleRuleManager } from '@/core/battle/BattleRuleManager'
 import { SkillManager } from '@/core/skill/SkillManager'
+import { BuffSystem } from '@/core/BuffSystem'
+import type { BattleLogEntry } from '@/types/battle-log'
 
 /**
  * 基础战斗参与者抽象类
@@ -426,9 +427,13 @@ export class GameBattleSystem implements IBattleSystem {
   // 战斗日志记录器实例
   private battleLogger = logger
 
+  // 事件系统
+  private eventListeners: Map<string, Function[]> = new Map()
+
   // 技能管理器实例
   private skillManager = new SkillManager()
   private ruleManager = new BattleRuleManager()
+  private buffSystem = BuffSystem.getInstance()
 
   private turnManager: TurnManager
   private actionExecutor: ActionExecutor
@@ -463,19 +468,19 @@ export class GameBattleSystem implements IBattleSystem {
     return {
       battleId: this.generateBattleId(),
       participants: new Map<string, BattleParticipant>(),
-      actions: [], // 战斗动作记录
+      actions: [],
       turnOrder: [],
-      currentTurn: 0, // 当前回合索引
-      /** 最大回合数 */
+      currentTurn: 0,
+      currentRound: 1,
       maxTurns: 999,
-      startTime: Date.now(), // 战斗开始时间
-      winner: undefined, // 胜利者（未确定）
+      startTime: Date.now(),
+      winner: undefined,
       aiInstances: new Map<string, BattleAI>(),
       autoPlaying: true,
-      // 1 2 3 5
       battleSpeed: 1,
       battleState: BATTLE_STATUS.CREATED,
       roundState: ROUND_STATUS.NONE,
+      isActive: false,
     }
   }
 
@@ -602,6 +607,7 @@ export class GameBattleSystem implements IBattleSystem {
     // 进入战斗阶段
     battleData.battleState = BATTLE_STATUS.ACTIVE
     battleData.roundState = ROUND_STATUS.START
+    battleData.isActive = true
 
     // 返回战斗状态
     return this.convertToBattleState(battleData)
@@ -609,7 +615,7 @@ export class GameBattleSystem implements IBattleSystem {
 
   /**
    * 内部方法：处理战斗回合的核心逻辑
-   * 用于自动战斗和手动战斗
+   * 实现每回合重新计算出手顺序，并按顺序执行所有角色行动
    * @param {string} battleId - 战斗ID
    */
   private async processTurnInternal(battleId: string): Promise<void> {
@@ -618,54 +624,267 @@ export class GameBattleSystem implements IBattleSystem {
       return
     }
 
-    // 转换到回合开始
     battle.roundState = ROUND_STATUS.START
-    // 所有存活参与者获得能量
+
     const combatRules = this.ruleManager.getCombatRules()
     this.participantManager.gainEnergyToAllAlive(
       battle.participants,
       combatRules.energyGainPerTurn,
     )
 
-    // 使用TurnManager获取当前回合参与者，自动跳过死亡角色
-    const currentParticipantId = this.turnManager.getCurrentParticipantId(
-      battle,
-      battle.participants,
-    )
+    const aliveParticipants = Array.from(battle.participants.values())
+      .filter((p) => p.isAlive())
 
-    if (!currentParticipantId) {
-      // 所有参与者都死亡，结束战斗
+    if (aliveParticipants.length === 0) {
       battle.roundState = ROUND_STATUS.END
       this.checkBattleEndCondition(battle)
       return
     }
 
-    const participant = battle.participants.get(currentParticipantId)!
-    const currentTurn = this.turnManager.getTurnNumber(battle)
+    const newTurnOrder = this.turnManager.recalculateTurnOrder(battle)
+    battle.turnOrder = newTurnOrder
+    battle.currentTurn = 0
 
-    // 记录回合开始事件
-    this.battleRecorder.recordTurnStart(battleId, currentTurn, currentParticipantId)
+    this.battleRecorder.recordTurnStart(battleId, 1, newTurnOrder[0])
 
-    try {
-      // 使用AI系统执行动作（从原始版本继承）
-      await this.aiSystem.executeAIAction(battle, participant, this.actionExecutor)
-    } catch (error) {
-      this.battleLogger.error('AI决策出错:', error)
-      // 降级为执行默认动作
-      await this.executeDefaultAction(battle, participant)
+    this.syncBattleStateUpdate(battleId)
+
+    this.battleLogger.info('回合开始，重新计算出手顺序', {
+      turnOrder: newTurnOrder.map((id) => {
+        const participant = battle.participants.get(id)
+        const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(participant!)
+        return {
+          id,
+          name: participant?.name,
+          effectiveSpeed,
+        }
+      }),
+    })
+
+    for (let i = 0; i < newTurnOrder.length; i++) {
+      const participantId = newTurnOrder[i]
+      const participant = battle.participants.get(participantId)
+
+      if (!participant || !participant.isAlive()) {
+        continue
+      }
+
+      battle.currentTurn = i
+
+      this.syncBattleStateUpdate(battleId)
+
+      try {
+        await this.executeParticipantAction(battle, participant)
+      } catch (error) {
+        this.battleLogger.error('角色行动执行出错:', error)
+        await this.executeDefaultAction(battle, participant)
+      }
+
+      this.buffSystem.update(0)
+
+      this.syncBattleStateUpdate(battleId)
+
+      this.checkBattleEndCondition(battle)
+
+      if (!battle.isActive) {
+        return
+      }
     }
 
-    // 记录回合结束事件
-    this.battleRecorder.recordTurnEnd(battleId, currentTurn)
-
-    // 转换到回合结束
     battle.roundState = ROUND_STATUS.END
 
-    // 推进到下一回合
-    this.turnManager.advanceTurn(battle)
+    this.battleRecorder.recordTurnEnd(battleId, this.turnManager.getTurnNumber(battle))
 
-    // 检查战斗结束条件
-    this.checkBattleEndCondition(battle)
+    battle.currentRound++
+
+    battle.roundState = ROUND_STATUS.START
+  }
+
+  /**
+   * 执行单个参与者的行动
+   * @param battle 战斗数据
+   * @param participant 当前行动者
+   */
+  private async executeParticipantAction(
+    battle: BattleData,
+    participant: BattleParticipant,
+  ): Promise<void> {
+    try {
+      const availableSkills = participant.getSkills().filter((skill) => {
+        const energyCost = this.getSkillEnergyCost(skill?.id)
+        return participant.currentEnergy >= energyCost
+      })
+
+      if (availableSkills.length > 0 && Math.random() < 0.4 && availableSkills[0]) {
+        const selectedSkill = availableSkills[Math.floor(Math.random() * availableSkills.length)]
+        await this.selectAndExecuteSkill(battle, participant, selectedSkill)
+      } else {
+        await this.selectAndExecuteAttack(battle, participant)
+      }
+
+      participant.afterAction()
+    } catch (actionError) {
+      this.battleLogger.error(`角色[${participant.name}]行动执行出错:`, actionError)
+      await this.executeDefaultAction(battle, participant)
+    }
+  }
+
+  /**
+   * 选择并执行技能
+   * @param battle 战斗数据
+   * @param source 技能使用者
+   * @param skill 技能对象
+   * @returns 战斗动作
+   */
+  private async selectAndExecuteSkill(
+    battle: BattleData,
+    source: BattleParticipant,
+    skill: any,
+  ): Promise<BattleAction> {
+    const energyCost = this.getSkillEnergyCost(skill.id)
+    source.spendEnergy(energyCost)
+
+    const targetId = this.selectTarget(battle, source)
+
+    const action: BattleAction = {
+      id: `skill_${skill.id}_${Date.now()}`,
+      type: 'skill',
+      skillId: skill.id,
+      sourceId: source.id,
+      targetId: targetId,
+      damage: 0,
+      heal: 0,
+      success: true,
+      timestamp: Date.now(),
+      turn: this.turnManager.getTurnNumber(battle),
+      effects: [],
+    }
+
+    try {
+      const skillAction = this.skillManager.executeSkill(skill.id, source, battle.participants.get(targetId)!)
+
+      action.damage = skillAction.damage
+      action.heal = skillAction.heal
+      action.effects = skillAction.effects
+
+      this.battleLogger.info(`技能执行成功: ${skill.id}`, {
+        source: source.name,
+        target: targetId,
+        damage: action.damage,
+        heal: action.heal,
+      })
+    } catch (error) {
+      this.battleLogger.error(`技能执行失败: ${skill.id}`, error)
+      action.type = 'attack'
+      action.damage = Math.floor(Math.random() * 20) + 10
+      action.effects = [{
+        type: 'damage',
+        value: action.damage,
+        description: `${source.name} 普通攻击 (技能执行失败)`,
+      }]
+    }
+
+    this.addBattleAction(battle.battleId, action)
+    this.battleRecorder.recordAction(battle.battleId, action, this.turnManager.getTurnNumber(battle))
+
+    this.syncBattleStateUpdate(battle.battleId)
+
+    return action
+  }
+
+  /**
+   * 选择并执行普通攻击
+   * @param battle 战斗数据
+   * @param source 攻击者
+   * @returns 战斗动作
+   */
+  private async selectAndExecuteAttack(
+    battle: BattleData,
+    source: BattleParticipant,
+  ): Promise<BattleAction> {
+    const target = this.selectTarget(battle, source)
+
+    const targetParticipant = battle.participants.get(target)
+    const baseDamage = source.getAttribute('ATK')
+    const damage = Math.floor(baseDamage * (0.8 + Math.random() * 0.4))
+
+    const action: BattleAction = {
+      id: `attack_${Date.now()}`,
+      type: 'attack',
+      sourceId: source.id,
+      targetId: target,
+      damage,
+      heal: 0,
+      success: true,
+      timestamp: Date.now(),
+      turn: this.turnManager.getTurnNumber(battle),
+      effects: [{
+        type: 'damage',
+        value: damage,
+        description: `${source.name} 普通攻击 造成 ${damage} 伤害`,
+      }],
+    }
+
+    targetParticipant!.takeDamage(damage)
+
+    this.triggerDamageAnimation({
+      targetId: target,
+      damage,
+      damageType: 'physical',
+      isCritical: false,
+      isHeal: false,
+    })
+
+    const logEntry: BattleLogEntry = {
+      turn: `回合${this.turnManager.getTurnNumber(battle)}`,
+      source: source.name,
+      action: '对',
+      target: targetParticipant!.name,
+      result: `${source.name} 对 ${targetParticipant!.name} 发动普通攻击，造成 ${damage} 点物理伤害。`,
+      level: 'damage',
+    }
+    this.syncBattleLog(battle.battleId, logEntry)
+
+    this.addBattleAction(battle.battleId, action)
+    this.battleRecorder.recordAction(battle.battleId, action, this.turnManager.getTurnNumber(battle))
+
+    this.battleLogger.info(`普通攻击: ${source.name} → ${targetParticipant!.name}`, {
+      damage,
+      targetHealth: targetParticipant!.currentHealth,
+    })
+
+    return action
+  }
+
+  /**
+   * 选择攻击目标
+   * @param battle 战斗数据
+   * @param source 行动者
+   * @returns 目标参与者ID
+   */
+  private selectTarget(battle: BattleData, source: BattleParticipant): string {
+    const enemies = Array.from(battle.participants.values())
+      .filter((p) => p.type !== source.type && p.isAlive())
+
+    if (enemies.length === 0) {
+      return source.id
+    }
+
+    return enemies[Math.floor(Math.random() * enemies.length)].id
+  }
+
+  /**
+   * 获取技能能量消耗
+   * @param skillId 技能ID
+   * @returns 能量消耗
+   */
+  private getSkillEnergyCost(skillId: string): number {
+    if (skillId.includes('ultimate') || skillId.includes('大招')) {
+      return 100
+    } else if (skillId.includes('skill') || skillId.includes('技能')) {
+      return 50
+    }
+    return 0
   }
 
   /**
@@ -975,7 +1194,6 @@ export class GameBattleSystem implements IBattleSystem {
     this.stopAutoBattle(battleId)
 
     // 重置战斗状态
-    battle.isActive = false
     battle.winner = undefined
     battle.endTime = undefined
     battle.turnOrder = []
@@ -1004,7 +1222,7 @@ export class GameBattleSystem implements IBattleSystem {
    * @param {string} battleId - 战斗ID
    * @returns 当前战斗状态
    */
-  public getBattleStatus(battleId: string): BattleState | undefined {
+  public getBattleStatus(battleId: string): string | undefined {
     const battle = this.battles.get(battleId)
     return battle?.battleState
   }
@@ -1025,7 +1243,7 @@ export class GameBattleSystem implements IBattleSystem {
    * @param {BattleState} state - 要检查的状态
    * @returns 是否处于指定状态
    */
-  public isBattleInState(battleId: string, state: BattleState): boolean {
+  public isBattleInState(battleId: string, state: string): boolean {
     const battle = this.battles.get(battleId)
     return battle?.battleState === state
   }
@@ -1137,7 +1355,7 @@ export class GameBattleSystem implements IBattleSystem {
           return
         }
         // 继续下一回合
-        const delay = GameBattleSystem.AUTO_BATTLE_DELAYS[battle.battleSpeed] ?? 500
+        const delay = this.getBattleDelay(battleId)
         const intervalId = this.rafTimer.setTimeout(autoBattleLoop, delay)
         battle.autoBattleIntervalId = intervalId
       } catch (error) {
@@ -1146,10 +1364,18 @@ export class GameBattleSystem implements IBattleSystem {
       }
     }
     // 初始延迟
-    const delay = GameBattleSystem.AUTO_BATTLE_DELAYS[curBattleData.battleSpeed] ?? 500
+    const delay = this.getBattleDelay(battleId)
     const intervalId = this.rafTimer.setTimeout(autoBattleLoop, delay)
     curBattleData.autoBattleIntervalId = intervalId
     this.battleLogger.info(`自动战斗开始: ${this.curBattleId}`)
+  }
+
+  private getBattleDelay(battleId: string): number {
+    const curBattleData = this.getBattleData(battleId)
+    if (!curBattleData) {
+      return 500
+    }
+    return GameBattleSystem.AUTO_BATTLE_DELAYS[curBattleData?.battleSpeed] ?? 500
   }
 
   /**
@@ -1297,7 +1523,82 @@ export class GameBattleSystem implements IBattleSystem {
     return this.battles.get(battleId)
   }
 
-  public setBattleSpeed(speed: number): void {
+  public setBattleSpeed(battleId: string, speed: number): void {
+    const battle = this.battles.get(battleId)
+    if (battle) {
+      battle.battleSpeed = speed
+    }
     this.curBattleData.battleSpeed = speed
+  }
+
+  /**
+   * 事件系统方法
+   */
+  public on(event: string, callback: Function): void {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, [])
+    }
+    this.eventListeners.get(event)!.push(callback)
+  }
+
+  public off(event: string, callback: Function): void {
+    const listeners = this.eventListeners.get(event)
+    if (listeners) {
+      const index = listeners.indexOf(callback)
+      if (index > -1) {
+        listeners.splice(index, 1)
+      }
+    }
+  }
+
+  private emit(event: string, data: any): void {
+    const listeners = this.eventListeners.get(event)
+    if (listeners) {
+      listeners.forEach(callback => callback(data))
+    }
+  }
+
+  /**
+   * 同步战斗日志到外部系统
+   */
+  private syncBattleLog(battleId: string, logEntry: BattleLogEntry): void {
+    this.battleLogger.info('syncBattleLog called', { battleId, logEntry })
+    this.emit('battleLog', { battleId, log: logEntry })
+  }
+
+  /**
+   * 同步战斗状态更新
+   */
+  private syncBattleStateUpdate(battleId: string): void {
+    const battle = this.battles.get(battleId)
+    if (battle) {
+      this.emit('battleStateUpdate', {
+        battleId,
+        participants: Array.from(battle.participants.values()).map(p => ({
+          id: p.id,
+          name: p.name,
+          currentHp: p.getAttribute('HP'),
+          maxHp: p.getAttribute('MAX_HP'),
+          currentEnergy: p.currentEnergy,
+          buffs: p.buffs,
+        })),
+        turnOrder: battle.turnOrder,
+        currentTurn: battle.currentTurn,
+        currentRound: battle.currentRound,
+      })
+    }
+  }
+
+  /**
+   * 触发伤害数字动画
+   */
+  private triggerDamageAnimation(data: {
+    targetId: string
+    damage: number
+    damageType: string
+    isCritical: boolean
+    isHeal: boolean
+  }): void {
+    this.emit('damageAnimation', data)
   }
 }

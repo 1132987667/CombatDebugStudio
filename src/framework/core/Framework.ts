@@ -21,7 +21,6 @@
 import type {
   FrameworkConfig,
   IBattleSystem,
-  ITurnManager,
   IAISystem,
   IConfigManager,
   IPluginManager,

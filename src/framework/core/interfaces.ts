@@ -74,28 +74,6 @@ export interface BattleParticipant extends BattleEntity {
 }
 
 /**
- * 技能接口
- */
-export interface Skill {
-  /** 技能ID */
-  readonly id: string
-  /** 技能名称 */
-  readonly name: string
-  /** 技能类型 */
-  readonly type: SkillType
-  /** 技能消耗 */
-  readonly cost: SkillCost
-  /** 技能效果 */
-  readonly effects: SkillEffect[]
-  /** 冷却时间 */
-  readonly cooldown: number
-  /** 是否可用 */
-  isAvailable(participant: BattleParticipant): boolean
-  /** 执行技能 */
-  execute(caster: BattleParticipant, targets: BattleParticipant[]): SkillResult
-}
-
-/**
  * 状态效果接口
  */
 export interface StatusEffect {
@@ -188,20 +166,6 @@ export interface IBattleSystem {
 }
 
 /**
- * 回合管理器接口
- */
-export interface ITurnManager {
-  /** 计算回合顺序 */
-  calculateTurnOrder(participants: BattleParticipant[]): string[]
-  /** 获取当前回合 */
-  getCurrentTurn(battleId: string): number
-  /** 推进回合 */
-  advanceTurn(battleId: string): void
-  /** 获取当前行动者 */
-  getCurrentActor(battleId: string): BattleParticipant | undefined
-}
-
-/**
  * AI系统接口
  */
 export interface IAISystem {
@@ -282,31 +246,6 @@ export interface IEventSystem {
   once(event: string, listener: EventListener): void
 }
 
-/**
- * 类型定义
- */
-export type SkillType = 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate'
-export type EffectType =
-  | 'buff'
-  | 'debuff'
-  | 'control'
-  | 'damage_over_time'
-  | 'heal_over_time'
-export type ActionType = 'skill' | 'attack' | 'defend' | 'item' | 'flee'
-
-export interface SkillCost {
-  energy?: number
-  health?: number
-  cooldown?: number
-}
-
-export interface SkillEffect {
-  type: EffectType
-  value: number
-  duration?: number
-  target: 'self' | 'enemy' | 'ally' | 'all'
-}
-
 export interface BattleAttributes {
   attack: number
   defense: number
@@ -352,13 +291,6 @@ export interface BattleAI {
   participant: BattleParticipant
   makeDecision(battleState: BattleState): BattleAction
 }
-
-export interface SkillResult {
-  success: boolean
-  actions: BattleAction[]
-  effects: StatusEffect[]
-}
-
 /**
  * 依赖注入令牌
  */

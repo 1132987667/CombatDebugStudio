@@ -131,34 +131,75 @@ export interface IBattleSystem {
 
   /**
    * 重置当前战斗
+   * @param battleId - 战斗ID
    */
-  resetBattle(): void
+  resetBattle(battleId: string): void
+
+  /**
+   * 事件监听方法
+   * @param event - 事件名称
+   * @param callback - 回调函数
+   */
+  on(event: string, callback: Function): void
+
+  /**
+   * 移除事件监听方法
+   * @param event - 事件名称
+   * @param callback - 回调函数
+   */
+  off(event: string, callback: Function): void
 }
 
 /**
  * 回合管理器接口
- * 负责管理战斗回合的推进和计算
+ * 负责管理战斗回合的初始化、推进和查询
  */
 export interface ITurnManager {
   /**
-   * 计算下一回合的行动者
-   * @param battleId - 战斗ID
-   * @returns string | null - 下一回合行动者的ID，如果没有则返回null
-   */
-  calculateNextTurn(battleId: string): string | null
-
-  /**
    * 获取当前回合数
-   * @param battleId - 战斗ID
-   * @returns number - 当前回合数
+   * @param battle 战斗数据
+   * @returns 当前回合索引（从0开始）
    */
-  getCurrentTurn(battleId: string): number
+  getCurrentTurn(battle: BattleData): number
 
   /**
-   * 推进回合
-   * @param battleId - 战斗ID
+   * 获取当前回合编号（从1开始，供显示用）
+   * @param battle 战斗数据
+   * @returns 当前回合编号
    */
-  advanceTurn(battleId: string): void
+  getTurnNumber(battle: BattleData): number
+
+  /**
+   * 获取当前回合的参与者ID
+   * 自动跳过死亡角色，直到找到存活的参与者或回到起点
+   * @param battle 战斗数据
+   * @param participants 参与者映射
+   * @returns 当前回合参与者的ID，如果没有存活参与者则返回null
+   */
+  getCurrentParticipantId(
+    battle: BattleData,
+    participants: Map<string, BattleParticipant>,
+  ): string | null
+
+  /**
+   * 推进到下一回合
+   * @param battle 战斗数据
+   */
+  advanceTurn(battle: BattleData): void
+
+  /**
+   * 根据参与者速度创建回合顺序
+   * @param participants 参与者数组
+   * @returns 按速度排序的参与者ID数组
+   */
+  createTurnOrder(participants: BattleParticipant[]): string[]
+
+  /**
+   * 初始化战斗的回合信息
+   * @param battle 战斗数据
+   * @param turnOrder 参与者ID数组，按速度从高到低排序
+   */
+  initializeBattle(battle: BattleData, turnOrder: string[]): void
 }
 
 /**

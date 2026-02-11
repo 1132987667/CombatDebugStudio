@@ -994,6 +994,7 @@ export class BattleLogManager {
   private autoCleanup: boolean
   private filters: LogFilters
   private logger: SimpleLogger
+  private updateTrigger: number = 0
 
   constructor(options: BattleLogManagerOptions = {}) {
     this.maxLogs = options.maxLogs || 100
@@ -1167,8 +1168,26 @@ export class BattleLogManager {
     }
   }
 
+  private listeners: Set<(logs: BattleLogEntry[]) => void> = new Set()
+
+  addListener(callback: (logs: BattleLogEntry[]) => void): void {
+    this.listeners.add(callback)
+    callback(this.getFilteredLogs())
+  }
+
+  removeListener(callback: (logs: BattleLogEntry[]) => void): void {
+    this.listeners.delete(callback)
+  }
+
   private emitLogUpdate(): void {
-    // 事件发射逻辑用于响应式更新
+    const filteredLogs = this.getFilteredLogs()
+    this.listeners.forEach(callback => {
+      try {
+        callback(filteredLogs)
+      } catch (error) {
+        console.error('Log listener error:', error)
+      }
+    })
   }
 }
 

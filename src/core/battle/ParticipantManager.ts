@@ -89,12 +89,9 @@ export class ParticipantManager {
     } else {
       throw new Error(`Unknown participant type: ${info.type}`)
     }
-
     participant.currentEnergy = info.currentEnergy
     participant.maxEnergy = info.maxEnergy
-
     this.participants.set(participant.id, participant)
-
     return participant
   }
 

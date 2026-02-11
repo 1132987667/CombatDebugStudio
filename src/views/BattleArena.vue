@@ -90,6 +90,7 @@ import type {
   BattleAction as BattleSystemAction,
   ParticipantSide,
 } from "@/types/battle";
+import type { BattleLogEntry } from '@/types/battle-log';
 import { PARTICIPANT_SIDE, BATTLE_STATUS, ROUND_STATUS } from "@/types/battle";
 
 // 通知组件引用
@@ -154,6 +155,116 @@ const keybindHintPanelRef = ref<InstanceType<typeof KeybindHintPanel> | null>(nu
 BattleSystemFactory.initialize();
 const battleSystem: IBattleSystem = BattleSystemFactory.createBattleSystem();
 
+// 事件监听器引用，用于清理
+let battleLogHandler: ((data: any) => void) | null = null
+let battleStateUpdateHandler: ((data: any) => void) | null = null
+let damageAnimationHandler: ((data: any) => void) | null = null
+let skillEffectHandler: ((data: any) => void) | null = null
+
+// 初始化战斗系统事件监听
+const initBattleSystemListeners = () => {
+  const battleSystemAny = battleSystem as any
+  if (battleSystemAny && typeof battleSystemAny.on === 'function') {
+    battleLogHandler = (data: { battleId: string; log: any }) => {
+      const { log } = data
+      logManager.addLog(
+        log.turn,
+        log.source,
+        log.action,
+        log.target,
+        log.result || '',
+        log.level,
+        log.htmlResult
+      )
+    }
+    battleSystemAny.on('battleLog', battleLogHandler)
+
+    battleStateUpdateHandler = (data: { battleId: string; participants: any[]; turnOrder: string[]; currentTurn: number; currentRound: number }) => {
+      let hasUpdates = false
+      const { participants, currentRound: newRound } = data
+      participants.forEach((p: any) => {
+        const character = allyTeam.value.find(c => c.id === p.id)
+        const enemy = enemyTeam.value.find(e => e.id === p.id)
+        if (character) {
+          character.currentHp = p.currentHp
+          character.maxHp = p.maxHp
+          character.currentEnergy = p.currentEnergy
+          if (p.buffs) {
+            character.buffs = p.buffs
+          }
+          hasUpdates = true
+        } else if (enemy) {
+          enemy.currentHp = p.currentHp
+          enemy.maxHp = p.maxHp
+          enemy.currentEnergy = p.currentEnergy
+          if (p.buffs) {
+            enemy.buffs = p.buffs
+          }
+          hasUpdates = true
+        }
+      })
+      if (hasUpdates) {
+        allyTeam.value = [...allyTeam.value]
+        enemyTeam.value = [...enemyTeam.value]
+      }
+      if (newRound && newRound !== currentTurn.value) {
+        currentTurn.value = newRound
+      }
+    }
+    battleSystemAny.on('battleStateUpdate', battleStateUpdateHandler)
+
+    damageAnimationHandler = (data: { targetId: string; damage: number; damageType: string; isCritical: boolean; isHeal: boolean }) => {
+      if (battleFieldRef.value) {
+        const targetCharacter = allyTeam.value.find(c => c.id === data.targetId) ||
+          enemyTeam.value.find(e => e.id === data.targetId)
+        if (targetCharacter) {
+          battleFieldRef.value.showDamage(
+            targetCharacter.id,
+            data.damage,
+            data.isHeal ? 'heal' : 'damage',
+            data.isCritical
+          )
+        }
+      }
+    }
+    battleSystemAny.on('damageAnimation', damageAnimationHandler)
+
+    skillEffectHandler = (data: { sourceId: string; targetId: string; skillName: string; effectType: string; damageType: string }) => {
+      if (battleFieldRef.value) {
+        battleFieldRef.value.showSkillEffect(
+          data.targetId,
+          data.effectType as 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate',
+          data.skillName
+        )
+      }
+    }
+    battleSystemAny.on('skillEffect', skillEffectHandler)
+  }
+}
+
+// 清理事件监听器
+const cleanupBattleSystemListeners = () => {
+  const battleSystemAny = battleSystem as any
+  if (battleSystemAny && typeof battleSystemAny.off === 'function') {
+    if (battleLogHandler) {
+      battleSystemAny.off('battleLog', battleLogHandler)
+      battleLogHandler = null
+    }
+    if (battleStateUpdateHandler) {
+      battleSystemAny.off('battleStateUpdate', battleStateUpdateHandler)
+      battleStateUpdateHandler = null
+    }
+    if (damageAnimationHandler) {
+      battleSystemAny.off('damageAnimation', damageAnimationHandler)
+      damageAnimationHandler = null
+    }
+    if (skillEffectHandler) {
+      battleSystemAny.off('skillEffect', skillEffectHandler)
+      skillEffectHandler = null
+    }
+  }
+}
+
 const currentBattleId = ref<string | null>(null);
 const battleData = computed(() => {
   return battleSystem.getCurBattleData();
@@ -165,7 +276,7 @@ watch(
     if (newData) {
       isPaused.value = newData.battleState === BATTLE_STATUS.PAUSED;
       isAutoPlaying.value = newData.autoPlaying || false;
-      currentTurn.value = newData.currentTurn;
+      currentTurn.value = newData.currentRound || 1;
       maxTurns.value = newData.maxTurns;
       battleSpeed.value = newData.battleSpeed
     }
@@ -210,6 +321,8 @@ function initBattle() {
 onMounted(() => {
   initBattle();
 
+  // 初始化战斗系统事件监听
+  initBattleSystemListeners();
 
   // // 获取第一个可行动的我方参与者作为当前行动者
   // const firstActor = battleState.turnOrder.find(id => id.startsWith('character_')) || battleState.turnOrder[0] || null;
@@ -303,10 +416,15 @@ watch(
 
 
 // 创建日志管理器实例
-const logManager = new BattleLogManager({ maxLogs: 100 });
+const logManager = new BattleLogManager({ maxLogs: 100 })
 
-// 提供响应式接口
-const battleLogs = computed(() => logManager.getFilteredLogs());
+// 使用响应式日志列表
+const battleLogs = ref<BattleLogEntry[]>([])
+
+// 设置日志监听器
+logManager.addListener((logs) => {
+  battleLogs.value = logs
+})
 const logFilters = computed(() => logManager.getFilters());
 
 const rules = reactive({
@@ -607,22 +725,47 @@ const clearParticipants = () => {
 };
 
 const handleShowDamage = (characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) => {
-  // 触发击中效果
   if (battleFieldRef.value) {
     battleFieldRef.value.triggerHitEffect(characterId);
   }
 
-  // 这里可以添加更多的伤害显示逻辑
+  if (damageNumberRefs.value) {
+    const damageType = type === 'heal' ? 'heal' : (type === 'critical' ? 'critical' : 'damage');
+    damageNumberRefs.value.addDamage(
+      value,
+      damageType as any,
+      'physical',
+      isCritical || type === 'critical',
+      false,
+      false,
+      { x: 100 + Math.random() * 100, y: 50 + Math.random() * 50 },
+      1500,
+      0
+    );
+  }
+
   console.log(`显示伤害: ${characterId} - ${value} (${type})`, { isCritical });
 };
 
 const handleShowSkillEffect = (characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) => {
-  // 触发施法动画
   if (battleFieldRef.value) {
     battleFieldRef.value.triggerCastingEffect(characterId, 800);
   }
 
-  // 这里可以添加更多的技能效果显示逻辑
+  if (skillEffectRefs.value) {
+    skillEffectRefs.value.addSkillEffect(
+      type,
+      'physical',
+      name,
+      undefined,
+      { x: 150, y: 100 },
+      1000,
+      0,
+      1,
+      true
+    );
+  }
+
   console.log(`显示技能效果: ${characterId} - ${type}`, { name });
 };
 
@@ -1148,6 +1291,9 @@ const resetBattle = () => {
 };
 
 onUnmounted(() => {
+  // 清理战斗系统事件监听器
+  cleanupBattleSystemListeners();
+
   // 停止所有自动战斗
   if (currentBattleId.value && battleSystem) {
     battleSystem.stopAutoBattle(currentBattleId.value);

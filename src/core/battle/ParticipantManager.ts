@@ -13,7 +13,6 @@ import type {
   ParticipantSide,
 } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
-import { SimpleBattleCharacter, SimpleBattleEnemy } from '../BattleSystem'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { logger } from '@/utils/logging'
 
@@ -60,37 +59,15 @@ export class ParticipantManager {
 
   /**
    * 创建单个参与者
-   * 根据参与者信息创建对应的角色或敌人对象
-   * @param info - 参与者信息对象，包含ID、名称、类型、生命值等
-   * @returns BattleParticipant - 创建的参与者对象
-   * @throws Error - 当参与者类型未知时抛出
+   * 直接使用ParticipantInfo作为参与者，保留原有接口以保持向后兼容
+   * @param info - 参与者信息对象，包含完整战斗属性和所有方法
+   * @returns BattleParticipant - ParticipantInfo对象（实现了BattleParticipant接口）
    */
   public createParticipant(info: ParticipantInfo): BattleParticipant {
-    let participant: BattleParticipant
-
-    if (info.type === PARTICIPANT_SIDE.ALLY) {
-      participant = new SimpleBattleCharacter({
-        id: `character_${info.id}`,
-        name: info.name,
-        level: 5,
-        currentHealth: info.currentHealth,
-        maxHealth: info.maxHealth,
-        buffs: [],
-      })
-    } else if (info.type === PARTICIPANT_SIDE.ENEMY) {
-      participant = new SimpleBattleEnemy({
-        id: `enemy_${info.id}`,
-        name: info.name,
-        level: 5,
-        currentHealth: info.currentHealth,
-        maxHealth: info.maxHealth,
-        buffs: [],
-      })
-    } else {
-      throw new Error(`Unknown participant type: ${info.type}`)
-    }
-    participant.currentEnergy = info.currentEnergy
-    participant.maxEnergy = info.maxEnergy
+    const prefix = info.type === PARTICIPANT_SIDE.ALLY ? 'character_' : 'enemy_'
+    const participant = Object.assign({}, info, {
+      id: `${prefix}${info.id}`,
+    }) as unknown as BattleParticipant
     this.participants.set(participant.id, participant)
     return participant
   }
@@ -175,9 +152,7 @@ export class ParticipantManager {
    * @param participantId - 参与者的唯一标识符
    * @returns BattleParticipant | undefined - 找到返回参与者对象，未找到返回undefined
    */
-  public getParticipant(
-    participantId: string,
-  ): BattleParticipant | undefined {
+  public getParticipant(participantId: string): BattleParticipant | undefined {
     return this.participants.get(participantId)
   }
 

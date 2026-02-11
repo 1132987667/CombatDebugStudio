@@ -44,364 +44,6 @@ import { BuffSystem } from '@/core/BuffSystem'
 import type { BattleLogEntry } from '@/types/battle-log'
 
 /**
- * 基础战斗参与者抽象类
- * 为所有战斗参与者提供通用的属性和方法
- * 是角色和敌人的基类
- */
-abstract class BaseBattleParticipant {
-  /** 参与者唯一标识符 */
-  id: string
-  /** 参与者名称 */
-  name: string
-  /** 参与者等级 */
-  level: number
-  /** 当前生命值 */
-  currentHealth: number
-  /** 最大生命值 */
-  maxHealth: number
-  /** 当前能量值 */
-  currentEnergy: number
-  /** 最大能量值 */
-  maxEnergy: number
-  /**  buff实例ID列表 */
-  buffs: string[]
-  /** 技能集合，以技能ID为键 */
-  skills: Map<string, any> = new Map()
-
-  /**
-   * 构造函数
-   * @param data 参与者初始化数据
-   */
-  constructor(data: {
-    id: string
-    name: string
-    level: number
-    currentHealth: number
-    maxHealth: number
-    currentEnergy?: number
-    maxEnergy?: number
-    buffs?: string[]
-    skills?: any[]
-  }) {
-    this.id = data.id
-    this.name = data.name
-    this.level = data.level
-    this.currentHealth = data.currentHealth
-    this.maxHealth = data.maxHealth
-    this.currentEnergy = data.currentEnergy || 0
-    this.maxEnergy = data.maxEnergy || 150
-    this.buffs = data.buffs || []
-
-    // 初始化技能
-    if (data.skills) {
-      data.skills.forEach((skill) => {
-        this.skills.set(skill.id, skill)
-      })
-    }
-  }
-
-  /**
-   * 获取参与者类型
-   * 子类必须实现此方法
-   */
-  abstract get type(): ParticipantSide
-
-  getAttribute(attribute: string): number {
-    // 扩展的属性系统，支持更多属性
-    switch (attribute) {
-      case 'HP':
-        return this.currentHealth
-      case 'MAX_HP':
-        return this.maxHealth
-      case 'ATK':
-        return this.level * 5 // 基础攻击力
-      case 'DEF':
-        return this.level * 2 // 基础防御力
-      case 'MDEF':
-        return this.level * 1 // 基础魔法防御
-      case 'SPD':
-        return this.level * 3 // 基础速度
-      case 'energy':
-        return this.currentEnergy
-      case 'max_energy':
-        return this.maxEnergy
-      case 'strength':
-        return this.level * 4 // 力量属性
-      case 'magicPower':
-        return this.level * 3 // 魔法力属性
-      case 'wisdom':
-        return this.level * 2 // 智慧属性
-      default:
-        return 0
-    }
-  }
-
-  setAttribute(attribute: string, value: number): void {
-    if (attribute === 'HP') {
-      this.currentHealth = Math.max(0, Math.min(value, this.maxHealth))
-    } else if (attribute === 'energy') {
-      this.currentEnergy = Math.max(0, Math.min(value, this.maxEnergy))
-    }
-    // 其他属性在真实实现中需要处理
-  }
-
-  addBuff(buffInstanceId: string): void {
-    if (!this.buffs.includes(buffInstanceId)) {
-      this.buffs.push(buffInstanceId)
-    }
-  }
-
-  removeBuff(buffInstanceId: string): void {
-    this.buffs = this.buffs.filter((id) => id !== buffInstanceId)
-  }
-
-  hasBuff(buffId: string): boolean {
-    return this.buffs.some((id) => id.includes(buffId))
-  }
-
-  takeDamage(amount: number): number {
-    const damage = Math.max(0, amount)
-    this.currentHealth = Math.max(0, this.currentHealth - damage)
-    // 受到攻击获得15能量
-    this.gainEnergy(15)
-    return damage
-  }
-
-  heal(amount: number): number {
-    const healAmount = Math.max(0, amount)
-    const originalHealth = this.currentHealth
-    this.currentHealth = Math.min(
-      this.currentHealth + healAmount,
-      this.maxHealth,
-    )
-    return this.currentHealth - originalHealth
-  }
-
-  gainEnergy(amount: number): void {
-    this.currentEnergy = Math.min(this.currentEnergy + amount, this.maxEnergy)
-  }
-
-  spendEnergy(amount: number): boolean {
-    if (this.currentEnergy >= amount) {
-      this.currentEnergy -= amount
-      return true
-    }
-    return false
-  }
-
-  isAlive(): boolean {
-    return this.currentHealth > 0
-  }
-
-  // 技能管理
-  addSkill(skill: any): void {
-    this.skills.set(skill.id, skill)
-  }
-
-  getSkill(skillId: string): any {
-    return this.skills.get(skillId)
-  }
-
-  getSkills(): any[] {
-    return Array.from(this.skills.values())
-  }
-
-  hasSkill(skillId: string): boolean {
-    return this.skills.has(skillId)
-  }
-
-  // 行动后处理
-  afterAction(): void {
-    // 每次行动后获得能量
-    this.gainEnergy(10)
-  }
-
-  // 检查是否满血
-  isFullHealth(): boolean {
-    return this.currentHealth >= this.maxHealth
-  }
-
-  // 检查是否需要治疗
-  needsHealing(): boolean {
-    return this.currentHealth / this.maxHealth < 0.5
-  }
-}
-
-export class SimpleBattleCharacter
-  extends BaseBattleParticipant
-  implements BattleCharacter
-{
-  type = PARTICIPANT_SIDE.ALLY
-  character: Character
-
-  constructor(data: {
-    id: string
-    name: string
-    level: number
-    currentHealth: number
-    maxHealth: number
-    buffs?: string[]
-    character?: Character
-  }) {
-    super(data)
-    this.character = data.character || this.createDefaultCharacter(data)
-  }
-
-  private createDefaultCharacter(data: {
-    id: string
-    name: string
-    level: number
-  }): Character {
-    const attributes: Record<AttributeType, number> = {
-      HP: data.level * 10,
-      MP: data.level * 5,
-      ATK: data.level * 2,
-      DEF: data.level,
-      SPD: data.level,
-      CRIT_RATE: 0.05,
-      CRIT_DMG: 1.5,
-      ACCURACY: 0.9,
-      EVADE: 0.1,
-      LIFESTEAL: 0,
-      REGENERATION: 0,
-      MANA_REGEN: 0,
-      DAMAGE_BOOST: 0,
-      DAMAGE_REDUCE: 0,
-    }
-
-    const buffs: string[] = []
-
-    return {
-      id: data.id,
-      name: data.name,
-      level: data.level,
-      attributes,
-      buffs,
-      getAttribute: (attribute: AttributeType) => attributes[attribute] || 0,
-      setAttribute: (attribute: AttributeType, value: number) => {
-        attributes[attribute] = value
-      },
-      addBuff: (buffInstanceId: string) => {
-        if (!buffs.includes(buffInstanceId)) {
-          buffs.push(buffInstanceId)
-        }
-      },
-      removeBuff: (buffInstanceId: string) => {
-        const index = buffs.indexOf(buffInstanceId)
-        if (index !== -1) {
-          buffs.splice(index, 1)
-        }
-      },
-      hasBuff: (buffId: string) => buffs.some((id) => id.includes(buffId)),
-    }
-  }
-}
-
-export class SimpleBattleEnemy
-  extends BaseBattleParticipant
-  implements BattleEnemy
-{
-  type = PARTICIPANT_SIDE.ENEMY
-  enemy: EnemyInstance
-
-  constructor(data: {
-    id: string
-    name: string
-    level: number
-    currentHealth: number
-    maxHealth: number
-    buffs?: string[]
-    enemy?: EnemyInstance
-  }) {
-    super(data)
-    this.enemy = data.enemy || this.createDefaultEnemy(data)
-  }
-
-  private createDefaultEnemy(data: {
-    id: string
-    name: string
-    level: number
-    currentHealth: number
-    maxHealth: number
-  }): EnemyInstance {
-    const stats = {
-      health: data.maxHealth,
-      minAttack: data.level * 2,
-      maxAttack: data.level * 4,
-      defense: data.level,
-      speed: data.level * 2,
-    }
-
-    const buffs: string[] = []
-    const activeSkills = new Set<string>()
-    let enemyCurrentHealth = data.currentHealth
-    const enemyMaxHealth = data.maxHealth
-
-    return {
-      id: data.id,
-      name: data.name,
-      level: data.level,
-      stats,
-      drops: [],
-      skills: {},
-      get currentHealth() {
-        return enemyCurrentHealth
-      },
-      set currentHealth(value: number) {
-        enemyCurrentHealth = Math.max(0, Math.min(value, enemyMaxHealth))
-      },
-      buffs,
-      activeSkills,
-      lastActionTime: Date.now(),
-      get isDefeated() {
-        return enemyCurrentHealth <= 0
-      },
-      getAttribute: (attribute: string) => {
-        switch (attribute) {
-          case 'HP':
-            return enemyCurrentHealth
-          case 'MAX_HP':
-            return enemyMaxHealth
-          case 'ATK':
-            return stats.minAttack + (stats.maxAttack - stats.minAttack) / 2
-          case 'DEF':
-            return stats.defense
-          case 'MDEF':
-            return stats.defense * 0.8
-          case 'SPD':
-            return stats.speed
-          case 'strength':
-            return stats.minAttack * 0.5
-          case 'magicPower':
-            return stats.minAttack * 0.3
-          case 'wisdom':
-            return stats.defense * 0.2
-          default:
-            return 0
-        }
-      },
-      setAttribute: (attribute: string, value: number) => {
-        if (attribute === 'HP') {
-          enemyCurrentHealth = Math.max(0, Math.min(value, enemyMaxHealth))
-        }
-      },
-      addBuff: (buffInstanceId: string) => {
-        if (!buffs.includes(buffInstanceId)) {
-          buffs.push(buffInstanceId)
-        }
-      },
-      removeBuff: (buffInstanceId: string) => {
-        const index = buffs.indexOf(buffInstanceId)
-        if (index !== -1) {
-          buffs.splice(index, 1)
-        }
-      },
-      hasBuff: (buffId: string) => buffs.some((id) => id.includes(buffId)),
-    }
-  }
-}
-
-/**
  * 战斗系统核心类
  * 负责管理所有战斗实例、处理回合逻辑、执行战斗动作
  * 采用单例模式确保全局只有一个战斗系统实例
@@ -632,8 +274,9 @@ export class GameBattleSystem implements IBattleSystem {
       combatRules.energyGainPerTurn,
     )
 
-    const aliveParticipants = Array.from(battle.participants.values())
-      .filter((p) => p.isAlive())
+    const aliveParticipants = Array.from(battle.participants.values()).filter(
+      (p) => p.isAlive(),
+    )
 
     if (aliveParticipants.length === 0) {
       battle.roundState = ROUND_STATUS.END
@@ -652,7 +295,9 @@ export class GameBattleSystem implements IBattleSystem {
     this.battleLogger.info('回合开始，重新计算出手顺序', {
       turnOrder: newTurnOrder.map((id) => {
         const participant = battle.participants.get(id)
-        const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(participant!)
+        const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(
+          participant!,
+        )
         return {
           id,
           name: participant?.name,
@@ -693,7 +338,10 @@ export class GameBattleSystem implements IBattleSystem {
 
     battle.roundState = ROUND_STATUS.END
 
-    this.battleRecorder.recordTurnEnd(battleId, this.turnManager.getTurnNumber(battle))
+    this.battleRecorder.recordTurnEnd(
+      battleId,
+      this.turnManager.getTurnNumber(battle),
+    )
 
     battle.currentRound++
 
@@ -715,8 +363,13 @@ export class GameBattleSystem implements IBattleSystem {
         return participant.currentEnergy >= energyCost
       })
 
-      if (availableSkills.length > 0 && Math.random() < 0.4 && availableSkills[0]) {
-        const selectedSkill = availableSkills[Math.floor(Math.random() * availableSkills.length)]
+      if (
+        availableSkills.length > 0 &&
+        Math.random() < 0.4 &&
+        availableSkills[0]
+      ) {
+        const selectedSkill =
+          availableSkills[Math.floor(Math.random() * availableSkills.length)]
         await this.selectAndExecuteSkill(battle, participant, selectedSkill)
       } else {
         await this.selectAndExecuteAttack(battle, participant)
@@ -724,7 +377,10 @@ export class GameBattleSystem implements IBattleSystem {
 
       participant.afterAction()
     } catch (actionError) {
-      this.battleLogger.error(`角色[${participant.name}]行动执行出错:`, actionError)
+      this.battleLogger.error(
+        `角色[${participant.name}]行动执行出错:`,
+        actionError,
+      )
       await this.executeDefaultAction(battle, participant)
     }
   }
@@ -761,7 +417,11 @@ export class GameBattleSystem implements IBattleSystem {
     }
 
     try {
-      const skillAction = this.skillManager.executeSkill(skill.id, source, battle.participants.get(targetId)!)
+      const skillAction = this.skillManager.executeSkill(
+        skill.id,
+        source,
+        battle.participants.get(targetId)!,
+      )
 
       action.damage = skillAction.damage
       action.heal = skillAction.heal
@@ -777,15 +437,21 @@ export class GameBattleSystem implements IBattleSystem {
       this.battleLogger.error(`技能执行失败: ${skill.id}`, error)
       action.type = 'attack'
       action.damage = Math.floor(Math.random() * 20) + 10
-      action.effects = [{
-        type: 'damage',
-        value: action.damage,
-        description: `${source.name} 普通攻击 (技能执行失败)`,
-      }]
+      action.effects = [
+        {
+          type: 'damage',
+          value: action.damage,
+          description: `${source.name} 普通攻击 (技能执行失败)`,
+        },
+      ]
     }
 
     this.addBattleAction(battle.battleId, action)
-    this.battleRecorder.recordAction(battle.battleId, action, this.turnManager.getTurnNumber(battle))
+    this.battleRecorder.recordAction(
+      battle.battleId,
+      action,
+      this.turnManager.getTurnNumber(battle),
+    )
 
     this.syncBattleStateUpdate(battle.battleId)
 
@@ -818,11 +484,13 @@ export class GameBattleSystem implements IBattleSystem {
       success: true,
       timestamp: Date.now(),
       turn: this.turnManager.getTurnNumber(battle),
-      effects: [{
-        type: 'damage',
-        value: damage,
-        description: `${source.name} 普通攻击 造成 ${damage} 伤害`,
-      }],
+      effects: [
+        {
+          type: 'damage',
+          value: damage,
+          description: `${source.name} 普通攻击 造成 ${damage} 伤害`,
+        },
+      ],
     }
 
     targetParticipant!.takeDamage(damage)
@@ -846,12 +514,19 @@ export class GameBattleSystem implements IBattleSystem {
     this.syncBattleLog(battle.battleId, logEntry)
 
     this.addBattleAction(battle.battleId, action)
-    this.battleRecorder.recordAction(battle.battleId, action, this.turnManager.getTurnNumber(battle))
+    this.battleRecorder.recordAction(
+      battle.battleId,
+      action,
+      this.turnManager.getTurnNumber(battle),
+    )
 
-    this.battleLogger.info(`普通攻击: ${source.name} → ${targetParticipant!.name}`, {
-      damage,
-      targetHealth: targetParticipant!.currentHealth,
-    })
+    this.battleLogger.info(
+      `普通攻击: ${source.name} → ${targetParticipant!.name}`,
+      {
+        damage,
+        targetHealth: targetParticipant!.currentHealth,
+      },
+    )
 
     return action
   }
@@ -863,8 +538,9 @@ export class GameBattleSystem implements IBattleSystem {
    * @returns 目标参与者ID
    */
   private selectTarget(battle: BattleData, source: BattleParticipant): string {
-    const enemies = Array.from(battle.participants.values())
-      .filter((p) => p.type !== source.type && p.isAlive())
+    const enemies = Array.from(battle.participants.values()).filter(
+      (p) => p.type !== source.type && p.isAlive(),
+    )
 
     if (enemies.length === 0) {
       return source.id
@@ -1334,7 +1010,9 @@ export class GameBattleSystem implements IBattleSystem {
    * 开始自动战斗
    * @param {string} battleId - 战斗ID
    */
-  public startAutoBattle(battleId: string | undefined = this.curBattleId): void {
+  public startAutoBattle(
+    battleId: string | undefined = this.curBattleId,
+  ): void {
     const curBattleData = this.getBattleData(battleId)
     if (!curBattleData) {
       this.battleLogger.warn(`战斗不存在: ${battleId}`)
@@ -1343,14 +1021,17 @@ export class GameBattleSystem implements IBattleSystem {
     curBattleData.autoPlaying = true
     // 自动战斗逻辑
     const autoBattleLoop = async () => {
-     const battle = this.getBattleData(battleId)
+      const battle = this.getBattleData(battleId)
       if (!battle?.autoPlaying) {
         return
       }
       try {
         await this.processTurnInternal(battleId)
         // 检查战斗是否结束
-        if (battle.battleState === BATTLE_STATUS.ENDED || battle.battleState === BATTLE_STATUS.PAUSED) {
+        if (
+          battle.battleState === BATTLE_STATUS.ENDED ||
+          battle.battleState === BATTLE_STATUS.PAUSED
+        ) {
           this.stopAutoBattle(battleId)
           return
         }
@@ -1375,7 +1056,9 @@ export class GameBattleSystem implements IBattleSystem {
     if (!curBattleData) {
       return 500
     }
-    return GameBattleSystem.AUTO_BATTLE_DELAYS[curBattleData?.battleSpeed] ?? 500
+    return (
+      GameBattleSystem.AUTO_BATTLE_DELAYS[curBattleData?.battleSpeed] ?? 500
+    )
   }
 
   /**
@@ -1519,7 +1202,9 @@ export class GameBattleSystem implements IBattleSystem {
     return this.curBattleData
   }
 
-  public getBattleData(battleId: string | undefined = this.curBattleId): BattleData | undefined {
+  public getBattleData(
+    battleId: string | undefined = this.curBattleId,
+  ): BattleData | undefined {
     return this.battles.get(battleId)
   }
 
@@ -1554,7 +1239,7 @@ export class GameBattleSystem implements IBattleSystem {
   private emit(event: string, data: any): void {
     const listeners = this.eventListeners.get(event)
     if (listeners) {
-      listeners.forEach(callback => callback(data))
+      listeners.forEach((callback) => callback(data))
     }
   }
 
@@ -1574,7 +1259,7 @@ export class GameBattleSystem implements IBattleSystem {
     if (battle) {
       this.emit('battleStateUpdate', {
         battleId,
-        participants: Array.from(battle.participants.values()).map(p => ({
+        participants: Array.from(battle.participants.values()).map((p) => ({
           id: p.id,
           name: p.name,
           currentHp: p.getAttribute('HP'),

@@ -136,14 +136,90 @@ export interface BattleState {
   winner?: ParticipantSide
 }
 
+/**
+ * 参与者信息接口
+ * 用于创建战斗参与者的基础数据结构
+ * 包含从enemy迁移的所有战斗属性
+ * 同时实现了BattleEntity的所有方法
+ */
 export interface ParticipantInfo {
+  /** 参与者唯一标识符 */
   id: string
+  /** 参与者名称 */
   name: string
+  /** 参与者类型（我方/敌方） */
   type: ParticipantSide
+  /** 最大生命值 */
   maxHealth: number
+  /** 当前生命值 */
   currentHealth: number
+  /** 最大能量值 */
   maxEnergy: number
+  /** 当前能量值（初始值25） */
   currentEnergy: number
+  /** 等级（≥1） */
+  level: number
+  /** 最小攻击力（≤最大攻击） */
+  minAttack: number
+  /** 最大攻击力（≥最小攻击） */
+  maxAttack: number
+  /** 防御力（≥0） */
+  defense: number
+  /** 速度（≥1） */
+  speed: number
+  /** 暴击率（百分比，0-100，默认10） */
+  critRate: number
+  /** 暴击伤害（百分比，≥100，默认125） */
+  critDamage: number
+  /** 免伤率（百分比，0-100） */
+  damageReduction: number
+  /** 气血加成（百分比，可正可负） */
+  healthBonus: number
+  /** 攻击加成（百分比，可正可负） */
+  attackBonus: number
+  /** 防御加成（百分比，可正可负） */
+  defenseBonus: number
+  /** 速度加成（百分比，可正可负） */
+  speedBonus: number
+  /** Buff实例ID列表 */
+  buffs: string[]
+  /** 技能配置 */
+  skills: {
+    small?: string[]
+    passive?: string[]
+    ultimate?: string[]
+  }
+
+  /** 获取属性值 */
+  getAttribute(attribute: string): number
+  /** 设置属性值 */
+  setAttribute(attribute: string, value: number): void
+  /** 添加Buff */
+  addBuff(buffInstanceId: string): void
+  /** 移除Buff */
+  removeBuff(buffInstanceId: string): void
+  /** 检查是否拥有指定Buff */
+  hasBuff(buffId: string): boolean
+  /** 受到伤害 */
+  takeDamage(amount: number): number
+  /** 治疗 */
+  heal(amount: number): number
+  /** 是否存活 */
+  isAlive(): boolean
+  /** 增加能量 */
+  gainEnergy(amount: number): void
+  /** 消耗能量 */
+  spendEnergy(amount: number): boolean
+  /** 行动后处理 */
+  afterAction(): void
+  /** 是否满血 */
+  isFullHealth(): boolean
+  /** 是否需要治疗 */
+  needsHealing(): boolean
+  /** 获取所有技能 */
+  getSkills(): any[]
+  /** 检查是否拥有指定技能 */
+  hasSkill(skillId: string): boolean
 }
 
 export interface BattleSystem {

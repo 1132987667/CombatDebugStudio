@@ -18,8 +18,12 @@ import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
 import type { Enemy, SkillConfig, SceneData, CharacterStats } from '@/types'
 import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter'
-import type { ParticipantInfo, ParticipantSide } from '@/types/battle'
+import type { ParticipantSide } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
+import {
+  BattleParticipantImpl,
+  type ParticipantInitData,
+} from '@/core/battle/BattleParticipantImpl'
 
 /**
  * 游戏数据处理工具类
@@ -66,148 +70,33 @@ export class GameDataProcessor {
   }
 
   /**
-   * 将Enemy转换为ParticipantInfo
-   * 完整迁移enemy中的所有战斗属性到ParticipantInfo
+   * 将Enemy转换为BattleParticipant
+   * 使用 BattleParticipantImpl 类创建参与者实例
    * @param enemy - 敌人数据
    * @param type - 参与者类型
-   * @returns ParticipantInfo - 包含完整战斗属性的参与者信息
+   * @returns BattleParticipant - 包含完整战斗属性的参与者实例
    */
   static enemyToParticipantInfo(
     enemy: Enemy,
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
-  ): ParticipantInfo {
-    const baseInfo: ParticipantInfo = {
+  ): BattleParticipantImpl {
+    return new BattleParticipantImpl({
       id: enemy.id,
       name: enemy.name,
       type: type,
+      level: enemy.level,
       maxHealth: enemy.stats.health,
       currentHealth: enemy.stats.health,
-      maxEnergy: 150,
-      currentEnergy: 25,
-      level: enemy.level,
       minAttack: enemy.stats.minAttack,
       maxAttack: enemy.stats.maxAttack,
       defense: enemy.stats.defense,
       speed: enemy.stats.speed,
-      critRate: 10,
-      critDamage: 125,
-      damageReduction: 0,
-      healthBonus: 0,
-      attackBonus: 0,
-      defenseBonus: 0,
-      speedBonus: 0,
-      buffs: [],
       skills: {
-        small: enemy.skills.small || [],
-        passive: enemy.skills.passive || [],
-        ultimate: enemy.skills.ultimate || [],
+        small: GameDataProcessor.normalizeSkillIds(enemy.skills?.small),
+        passive: GameDataProcessor.normalizeSkillIds(enemy.skills?.passive),
+        ultimate: GameDataProcessor.normalizeSkillIds(enemy.skills?.ultimate),
       },
-      getAttribute(attribute: string): number {
-        switch (attribute) {
-          case 'HP':
-            return this.currentHealth
-          case 'MAX_HP':
-            return this.maxHealth
-          case 'ATK':
-            return this.minAttack + (this.maxAttack - this.minAttack) / 2
-          case 'MIN_ATK':
-            return this.minAttack
-          case 'MAX_ATK':
-            return this.maxAttack
-          case 'DEF':
-            return this.defense
-          case 'SPD':
-            return this.speed
-          case 'CRIT_RATE':
-            return this.critRate
-          case 'CRIT_DMG':
-            return this.critDamage
-          case 'DMG_RED':
-            return this.damageReduction
-          case 'energy':
-            return this.currentEnergy
-          case 'max_energy':
-            return this.maxEnergy
-          default:
-            return 0
-        }
-      },
-      setAttribute(attribute: string, value: number): void {
-        if (attribute === 'HP') {
-          this.currentHealth = Math.max(0, Math.min(value, this.maxHealth))
-        } else if (attribute === 'energy') {
-          this.currentEnergy = Math.max(0, Math.min(value, this.maxEnergy))
-        }
-      },
-      addBuff(buffInstanceId: string): void {
-        if (!this.buffs.includes(buffInstanceId)) {
-          this.buffs.push(buffInstanceId)
-        }
-      },
-      removeBuff(buffInstanceId: string): void {
-        this.buffs = this.buffs.filter((id) => id !== buffInstanceId)
-      },
-      hasBuff(buffId: string): boolean {
-        return this.buffs.some((id) => id.includes(buffId))
-      },
-      takeDamage(amount: number): number {
-        const damage = Math.max(0, amount)
-        this.currentHealth = Math.max(0, this.currentHealth - damage)
-        this.gainEnergy(15)
-        return damage
-      },
-      heal(amount: number): number {
-        const healAmount = Math.max(0, amount)
-        const originalHealth = this.currentHealth
-        this.currentHealth = Math.min(
-          this.currentHealth + healAmount,
-          this.maxHealth,
-        )
-        return this.currentHealth - originalHealth
-      },
-      isAlive(): boolean {
-        return this.currentHealth > 0
-      },
-      gainEnergy(amount: number): void {
-        this.currentEnergy = Math.min(
-          this.currentEnergy + amount,
-          this.maxEnergy,
-        )
-      },
-      spendEnergy(amount: number): boolean {
-        if (this.currentEnergy >= amount) {
-          this.currentEnergy -= amount
-          return true
-        }
-        return false
-      },
-      afterAction(): void {
-        this.gainEnergy(10)
-      },
-      isFullHealth(): boolean {
-        return this.currentHealth >= this.maxHealth
-      },
-      needsHealing(): boolean {
-        return this.currentHealth / this.maxHealth < 0.5
-      },
-      getSkills(): any[] {
-        const allSkills: any[] = []
-        if (this.skills.small) {
-          allSkills.push(...this.skills.small)
-        }
-        if (this.skills.passive) {
-          allSkills.push(...this.skills.passive)
-        }
-        if (this.skills.ultimate) {
-          allSkills.push(...this.skills.ultimate)
-        }
-        return allSkills
-      },
-      hasSkill(skillId: string): boolean {
-        return this.getSkills().includes(skillId)
-      },
-    }
-    return baseInfo
+    })
   }
 
   /**
@@ -273,9 +162,11 @@ export class GameDataProcessor {
     const cached = DataProcessor.getCachedData<SkillConfig>(cacheKey)
     if (cached) return cached
 
-    const skill = DataProcessor.find(skillsData, (s) => s.id === skillId)
+    const skill = DataProcessor.find(skillsData, (s) => s.id === skillId) as SkillConfig | undefined
     if (skill) {
       DataProcessor.setCachedData(cacheKey, skill)
+    } else {
+      console.warn(`Skill with ID ${skillId} not found`)
     }
     return skill
   }
@@ -284,9 +175,9 @@ export class GameDataProcessor {
    * 获取角色的技能信息
    */
   static getCharacterSkills(id: string): {
-    small?: any
-    passive?: any
-    ultimate?: any
+    small?: SkillConfig | undefined
+    passive?: SkillConfig | undefined
+    ultimate?: SkillConfig | undefined
   } {
     if (!id) return {}
 
@@ -299,16 +190,18 @@ export class GameDataProcessor {
 
     const skills: any = {}
 
-    if (enemy.skills?.small?.[0]) {
-      skills.small = GameDataProcessor.findSkillById(enemy.skills.small[0])
+    const smallIds = GameDataProcessor.normalizeSkillIds(enemy.skills?.small)
+    const passiveIds = GameDataProcessor.normalizeSkillIds(enemy.skills?.passive)
+    const ultimateIds = GameDataProcessor.normalizeSkillIds(enemy.skills?.ultimate)
+
+    if (smallIds[0]) {
+      skills.small = GameDataProcessor.findSkillById(smallIds[0])
     }
-    if (enemy.skills?.passive?.[0]) {
-      skills.passive = GameDataProcessor.findSkillById(enemy.skills.passive[0])
+    if (passiveIds[0]) {
+      skills.passive = GameDataProcessor.findSkillById(passiveIds[0])
     }
-    if (enemy.skills?.ultimate?.[0]) {
-      skills.ultimate = GameDataProcessor.findSkillById(
-        enemy.skills.ultimate[0],
-      )
+    if (ultimateIds[0]) {
+      skills.ultimate = GameDataProcessor.findSkillById(ultimateIds[0])
     }
 
     DataProcessor.setCachedData(cacheKey, skills)
@@ -365,7 +258,7 @@ export class GameDataProcessor {
     index: number,
     isEnemy: boolean = false,
   ): UIBattleCharacter {
-    return {
+    return {    
       originalId: enemy.id,
       id: isEnemy
         ? `${PARTICIPANT_SIDE.ENEMY}_${index + 1}`
@@ -379,13 +272,54 @@ export class GameDataProcessor {
       currentMp: 100,
       currentEnergy: 0,
       maxEnergy: 150,
+      minAttack: enemy.stats.minAttack,
+      maxAttack: enemy.stats.maxAttack,
       attack: Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2),
       defense: enemy.stats.defense,
       speed: enemy.stats.speed,
+      critRate: 10,
+      critDamage: 125,
+      damageReduction: 0,
+      healthBonus: 0,
+      attackBonus: 0,
+      defenseBonus: 0,
+      speedBonus: 0,
       enabled: index < 3,
       isFirst: index === 0,
       buffs: [],
+      skills: {
+        small: GameDataProcessor.getSkillByIds(enemy.skills?.small || []),
+        passive: GameDataProcessor.getSkillByIds(enemy.skills?.passive || []),
+        ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate || []),
+      },
     }
+  }
+
+  /**
+   * 将技能ID标准化为数组格式
+   * @param skillIds - 技能ID（字符串或字符串数组）
+   * @returns 标准化后的技能ID数组
+   */
+  static normalizeSkillIds(skillIds: string | string[] | undefined): string[] {
+    if (!skillIds) return []
+    return Array.isArray(skillIds) ? skillIds : [skillIds]
+  }
+
+  /**
+   * 根据技能ID数组获取有效的技能配置
+   * @param skillIds - 技能ID数组
+   * @returns 有效的技能配置数组
+   */
+  static getSkillByIds (skillIds: string[]): SkillConfig[] {
+    if (!skillIds || skillIds.length === 0) return []
+    let validSkills: SkillConfig[] = []
+    for (const id of skillIds) {
+      const skill = GameDataProcessor.findSkillById(id)
+      if (skill) {
+        validSkills.push(skill)
+      }
+    }
+    return validSkills
   }
 
   /**

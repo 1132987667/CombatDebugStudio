@@ -12,9 +12,16 @@ export interface EnemyDrop {
   chance: number
 }
 
+/**
+ * 敌人技能配置接口
+ * 支持字符串或字符串数组格式
+ */
 export interface EnemySkills {
+  /** 小技能ID（字符串或字符串数组） */
   small?: string[]
+  /** 被动技能ID（字符串或字符串数组） */
   passive?: string[]
+  /** 终极技能ID（字符串或字符串数组） */
   ultimate?: string[]
 }
 

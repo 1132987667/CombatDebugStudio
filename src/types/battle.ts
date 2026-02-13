@@ -87,17 +87,61 @@ export interface BattleEntity {
   hasSkill(skillId: string): boolean
 }
 
-export interface BattleCharacter extends BattleEntity {
-  type: ParticipantSide
-  character: Character
+/**
+ * 战斗参与者接口
+ * 表示参与战斗的实体（角色或敌人）
+ * 扩展 BattleEntity 接口，添加战斗相关属性
+ */
+export interface BattleParticipant extends BattleEntity {
+  /** 速度值（用于回合顺序计算） */
+  speed: number
+  /** 最小攻击力 */
+  minAttack: number
+  /** 最大攻击力 */
+  maxAttack: number
+  /** 平均攻击力（计算值） */
+  attack: number
+  /** 防御力 */
+  defense: number
+  /** 暴击率（百分比，0-100） */
+  critRate: number
+  /** 暴击伤害（百分比，≥100） */
+  critDamage: number
+  /** 免伤率（百分比，0-100） */
+  damageReduction: number
+  /** 气血加成（百分比） */
+  healthBonus: number
+  /** 攻击加成（百分比） */
+  attackBonus: number
+  /** 防御加成（百分比） */
+  defenseBonus: number
+  /** 速度加成（百分比） */
+  speedBonus: number
+  /** 状态效果列表 */
+  statusEffects?: StatusEffect[]
+  /** 技能配置 */
+  skills: {
+    small?: string[]
+    passive?: string[]
+    ultimate?: string[]
+  }
 }
 
-export interface BattleEnemy extends BattleEntity {
-  type: ParticipantSide
-  enemy: EnemyInstance
+/**
+ * 状态效果接口
+ */
+export interface StatusEffect {
+  /** 效果ID */
+  id: string
+  /** 效果名称 */
+  name: string
+  /** 效果类型 */
+  type: 'buff' | 'debuff'
+  /** 持续时间 */
+  duration: number
+  /** 剩余回合数 */
+  remainingTurns: number
 }
-
-export type BattleParticipant = BattleCharacter | BattleEnemy
 
 export interface BattleAction {
   id: string
@@ -137,10 +181,9 @@ export interface BattleState {
 }
 
 /**
- * 参与者信息接口
+ * 参与者初始化数据接口
  * 用于创建战斗参与者的基础数据结构
- * 包含从enemy迁移的所有战斗属性
- * 同时实现了BattleEntity的所有方法
+ * 仅包含数据属性，不包含方法实现
  */
 export interface ParticipantInfo {
   /** 参与者唯一标识符 */
@@ -152,11 +195,11 @@ export interface ParticipantInfo {
   /** 最大生命值 */
   maxHealth: number
   /** 当前生命值 */
-  currentHealth: number
+  currentHealth?: number
   /** 最大能量值 */
-  maxEnergy: number
+  maxEnergy?: number
   /** 当前能量值（初始值25） */
-  currentEnergy: number
+  currentEnergy?: number
   /** 等级（≥1） */
   level: number
   /** 最小攻击力（≤最大攻击） */
@@ -168,68 +211,37 @@ export interface ParticipantInfo {
   /** 速度（≥1） */
   speed: number
   /** 暴击率（百分比，0-100，默认10） */
-  critRate: number
+  critRate?: number
   /** 暴击伤害（百分比，≥100，默认125） */
-  critDamage: number
+  critDamage?: number
   /** 免伤率（百分比，0-100） */
-  damageReduction: number
+  damageReduction?: number
   /** 气血加成（百分比，可正可负） */
-  healthBonus: number
+  healthBonus?: number
   /** 攻击加成（百分比，可正可负） */
-  attackBonus: number
+  attackBonus?: number
   /** 防御加成（百分比，可正可负） */
-  defenseBonus: number
+  defenseBonus?: number
   /** 速度加成（百分比，可正可负） */
-  speedBonus: number
+  speedBonus?: number
   /** Buff实例ID列表 */
-  buffs: string[]
+  buffs?: string[]
   /** 技能配置 */
-  skills: {
+  skills?: {
     small?: string[]
     passive?: string[]
     ultimate?: string[]
   }
-
-  /** 获取属性值 */
-  getAttribute(attribute: string): number
-  /** 设置属性值 */
-  setAttribute(attribute: string, value: number): void
-  /** 添加Buff */
-  addBuff(buffInstanceId: string): void
-  /** 移除Buff */
-  removeBuff(buffInstanceId: string): void
-  /** 检查是否拥有指定Buff */
-  hasBuff(buffId: string): boolean
-  /** 受到伤害 */
-  takeDamage(amount: number): number
-  /** 治疗 */
-  heal(amount: number): number
-  /** 是否存活 */
-  isAlive(): boolean
-  /** 增加能量 */
-  gainEnergy(amount: number): void
-  /** 消耗能量 */
-  spendEnergy(amount: number): boolean
-  /** 行动后处理 */
-  afterAction(): void
-  /** 是否满血 */
-  isFullHealth(): boolean
-  /** 是否需要治疗 */
-  needsHealing(): boolean
-  /** 获取所有技能 */
-  getSkills(): any[]
-  /** 检查是否拥有指定技能 */
-  hasSkill(skillId: string): boolean
 }
 
 export interface BattleSystem {
-  createBattle(participantsInfo: ParticipantInfo[]): BattleState
+  createBattle(participantsInfo: BattleParticipant[]): BattleState
   processTurn(battleId: string): Promise<void>
   executeAction(action: BattleAction): Promise<BattleAction>
   getBattleState(battleId: string): BattleState | undefined
   endBattle(battleId: string, winner: ParticipantSide): void
   resetBattle(battleId: string): void
-  getCurParticipantsInfo(): ParticipantInfo[]
+  getCurParticipantsInfo(): BattleParticipant[]
   getCurBattleData(battleId: string | null): BattleData | undefined
 }
 

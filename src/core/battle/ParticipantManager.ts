@@ -9,10 +9,13 @@
 
 import type {
   BattleParticipant,
-  ParticipantInfo,
   ParticipantSide,
 } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
+import {
+  BattleParticipantImpl,
+  type ParticipantInitData,
+} from './BattleParticipantImpl'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { logger } from '@/utils/logging'
 
@@ -59,27 +62,39 @@ export class ParticipantManager {
 
   /**
    * 创建单个参与者
-   * 直接使用ParticipantInfo作为参与者，保留原有接口以保持向后兼容
-   * @param info - 参与者信息对象，包含完整战斗属性和所有方法
-   * @returns BattleParticipant - ParticipantInfo对象（实现了BattleParticipant接口）
+   * 使用 BattleParticipantImpl 类创建参与者实例
+   * @param info - 参与者初始化数据或 BattleParticipantImpl 实例
+   * @returns BattleParticipant - 创建的参与者实例
    */
-  public createParticipant(info: ParticipantInfo): BattleParticipant {
+  public createParticipant(
+    info: ParticipantInitData | BattleParticipantImpl,
+  ): BattleParticipant {
     const prefix = info.type === PARTICIPANT_SIDE.ALLY ? 'character_' : 'enemy_'
-    const participant = Object.assign({}, info, {
-      id: `${prefix}${info.id}`,
-    }) as unknown as BattleParticipant
+    const newId = `${prefix}${info.id}`
+
+    let participant: BattleParticipantImpl
+    if (info instanceof BattleParticipantImpl) {
+      participant = info
+      participant.id = newId
+    } else {
+      participant = new BattleParticipantImpl({
+        ...info,
+        id: newId,
+      })
+    }
+
     this.participants.set(participant.id, participant)
     return participant
   }
 
   /**
    * 批量创建参与者
-   * 根据参与者信息数组创建多个参与者对象
-   * @param participantsInfo - 参与者信息数组
+   * 根据参与者初始化数据数组创建多个参与者对象
+   * @param participantsInfo - 参与者初始化数据数组
    * @returns Map<string, BattleParticipant> - 以参与者ID为键的映射表
    */
   public createParticipants(
-    participantsInfo: ParticipantInfo[],
+    participantsInfo: (ParticipantInitData | BattleParticipantImpl)[],
   ): Map<string, BattleParticipant> {
     const participants = new Map<string, BattleParticipant>()
 
@@ -92,56 +107,57 @@ export class ParticipantManager {
   }
 
   /**
-   * 根据角色ID数组创建参与者信息
-   * 从游戏数据中查找对应的敌人数据，转换为参与者信息数组
+   * 根据角色ID数组创建参与者
+   * 从游戏数据中查找对应的敌人数据，转换为参与者实例数组
    * @param ids - 角色ID字符串数组
    * @param type - 参与者类型，默认为ENEMY
-   * @returns ParticipantInfo[] - 参与者信息数组
+   * @returns BattleParticipantImpl[] - 参与者实例数组
    */
   public createParticipantByIds(
     ids: string[],
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
-  ): ParticipantInfo[] {
-    const participantInfos: ParticipantInfo[] = []
+  ): BattleParticipantImpl[] {
+    const participants: BattleParticipantImpl[] = []
 
     ids.forEach((id) => {
       const enemy = GameDataProcessor.findEnemyById(id)
       if (enemy) {
-        const participantInfo = GameDataProcessor.enemyToParticipantInfo(
-          enemy,
-          type,
-        )
-        participantInfos.push(participantInfo)
+        const participant = GameDataProcessor.enemyToParticipantInfo(enemy, type)
+        participants.push(participant)
       } else {
         this.logger.warn(`未找到ID为 ${id} 的角色数据`)
       }
     })
 
-    this.logger.info(`根据ID创建参与者信息完成: ${ids.join(', ')}`, {
-      count: participantInfos.length,
+    this.logger.info(`根据ID创建参与者完成: ${ids.join(', ')}`, {
+      count: participants.length,
       type,
     })
 
-    return participantInfos
+    return participants
   }
 
   /**
    * 创建角色类型参与者
    * 包装createParticipant方法，明确表示创建角色
-   * @param info - 角色参与者信息
+   * @param info - 角色参与者初始化数据
    * @returns BattleParticipant - 创建的角色参与者对象
    */
-  public createCharacter(info: ParticipantInfo): BattleParticipant {
+  public createCharacter(
+    info: ParticipantInitData | BattleParticipantImpl,
+  ): BattleParticipant {
     return this.createParticipant(info)
   }
 
   /**
    * 创建敌人类型参与者
    * 包装createParticipant方法，明确表示创建敌人
-   * @param info - 敌人参与者信息
+   * @param info - 敌人参与者初始化数据
    * @returns BattleParticipant - 创建的敌人参与者对象
    */
-  public createEnemy(info: ParticipantInfo): BattleParticipant {
+  public createEnemy(
+    info: ParticipantInitData | BattleParticipantImpl,
+  ): BattleParticipant {
     return this.createParticipant(info)
   }
 

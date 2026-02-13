@@ -14,7 +14,6 @@ import type {
   BattleState,
   BattleAction,
   BattleParticipant,
-  ParticipantInfo,
   BattleData,
   ParticipantSide,
 } from '@/types/battle'
@@ -28,10 +27,10 @@ import type { BattleAI } from '@/core/BattleAI'
 export interface IBattleSystem {
   /**
    * 创建新的战斗
-   * @param participantsInfo - 参与者信息数组
+   * @param participantsInfo - 参与者数组
    * @returns BattleState - 创建的战斗状态
    */
-  createBattle(participantsInfo: ParticipantInfo[]): BattleState
+  createBattle(participantsInfo: BattleParticipant[]): BattleState
 
   /**
    * 处理战斗回合
@@ -125,9 +124,9 @@ export interface IBattleSystem {
 
   /**
    * 获取当前战斗的参与者信息
-   * @returns ParticipantInfo[] - 当前战斗的参与者信息数组
+   * @returns BattleParticipant[] - 当前战斗的参与者数组
    */
-  getCurParticipantsInfo(): ParticipantInfo[]
+  getCurParticipantsInfo(): BattleParticipant[]
 
   /**
    * 重置当前战斗

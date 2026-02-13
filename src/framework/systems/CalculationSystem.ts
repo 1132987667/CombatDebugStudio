@@ -374,19 +374,17 @@ export class DamageCalculator implements Calculator {
     source: BattleParticipant,
     context: CalculationContext,
   ): number {
-    // 基础伤害基于源参与者的攻击属性
     const attack =
-      source.attributes.attack || source.getAttribute?.('ATK') || 10
-    return attack * (context.skill ? 1.2 : 1.0) // 技能伤害加成
+      source.attack || source.getAttribute?.('ATK') || 10
+    return attack * (context.skill ? 1.2 : 1.0)
   }
 
   private calculateAttributeBonus(
     source: BattleParticipant,
     target: BattleParticipant,
   ): number {
-    // 基于属性差异的加成
-    const sourceAttack = source.attributes.attack || 10
-    const targetDefense = target.attributes.defense || 5
+    const sourceAttack = source.attack || 10
+    const targetDefense = target.defense || 5
     return Math.max(0, sourceAttack - targetDefense) * 0.5
   }
 
@@ -436,8 +434,8 @@ export class DamageCalculator implements Calculator {
   }
 
   private applyDefense(damage: number, target: BattleParticipant): number {
-    const defense = target.attributes.defense || 5
-    const defenseMultiplier = Math.max(0.1, 1 - defense * 0.01) // 防御减免
+    const defense = target.defense || 5
+    const defenseMultiplier = Math.max(0.1, 1 - defense * 0.01)
     return damage * defenseMultiplier
   }
 
@@ -445,7 +443,7 @@ export class DamageCalculator implements Calculator {
     source: BattleParticipant,
     modifiers: CalculationModifiers,
   ): boolean {
-    const baseRate = source.attributes.criticalChance || 0.05
+    const baseRate = (source.critRate || 10) / 100
     const finalRate = baseRate + (modifiers.criticalRate || 0)
     return Math.random() < finalRate
   }
@@ -454,7 +452,7 @@ export class DamageCalculator implements Calculator {
     target: BattleParticipant,
     modifiers: CalculationModifiers,
   ): boolean {
-    const baseRate = target.attributes.dodgeChance || 0.05
+    const baseRate = 0.05
     const finalRate = baseRate + (modifiers.dodgeRate || 0)
     return Math.random() < finalRate
   }
@@ -518,15 +516,13 @@ export class HealCalculator implements Calculator {
     source: BattleParticipant,
     context: CalculationContext,
   ): number {
-    // 基础治疗基于源参与者的魔法属性
     const magicPower =
-      source.attributes.magicPower || source.getAttribute?.('MAGIC') || 8
-    return magicPower * (context.skill ? 1.5 : 1.0) // 技能治疗加成
+      source.attack || source.getAttribute?.('MAGIC') || 8
+    return magicPower * (context.skill ? 1.5 : 1.0)
   }
 
   private calculateAttributeBonus(source: BattleParticipant): number {
-    // 基于魔法属性的加成
-    const magicPower = source.attributes.magicPower || 8
+    const magicPower = source.attack || 8
     return magicPower * 0.3
   }
 
@@ -576,11 +572,10 @@ export class HealCalculator implements Calculator {
   }
 
   private applyHealingCap(heal: number, target: BattleParticipant): number {
-    const currentHealth = target.getCurrentHealth()
-    const maxHealth = target.getMaxHealth()
+    const currentHealth = target.currentHealth
+    const maxHealth = target.maxHealth
     const missingHealth = maxHealth - currentHealth
 
-    // 治疗量不能超过缺失的生命值
     return Math.min(heal, missingHealth)
   }
 }

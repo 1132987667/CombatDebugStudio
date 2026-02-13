@@ -23,7 +23,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_001_small"
+      "small": [
+        "skill_enemy_001_small"
+      ]
     }
   },
   {
@@ -50,7 +52,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_002_small"
+      "small": [
+        "skill_enemy_002_small"
+      ]
     }
   },
   {
@@ -77,7 +81,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_003_small"
+      "small": [
+        "skill_enemy_003_small"
+      ]
     }
   },
   {
@@ -104,8 +110,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_004_small",
-      "passive": "skill_enemy_004_passive"
+      "small": [
+        "skill_enemy_004_small"
+      ],
+      "passive": [
+        "skill_enemy_004_passive"
+      ]
     }
   },
   {
@@ -132,8 +142,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_005_small",
-      "passive": "skill_enemy_005_passive"
+      "small": [
+        "skill_enemy_005_small"
+      ],
+      "passive": [
+        "skill_enemy_005_passive"
+      ]
     }
   },
   {
@@ -160,8 +174,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_006_small",
-      "passive": "skill_enemy_006_passive"
+      "small": [
+        "skill_enemy_006_small"
+      ],
+      "passive": [
+        "skill_enemy_006_passive"
+      ]
     }
   },
   {
@@ -188,9 +206,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_007_small",
-      "passive": "skill_enemy_007_passive",
-      "ultimate": "skill_enemy_007_ultimate"
+      "small": [
+        "skill_enemy_007_small"
+      ],
+      "passive": [
+        "skill_enemy_007_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_007_ultimate"
+      ]
     }
   },
   {
@@ -217,9 +241,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_008_small",
-      "passive": "skill_enemy_008_passive",
-      "ultimate": "skill_enemy_008_ultimate"
+      "small": [
+        "skill_enemy_008_small"
+      ],
+      "passive": [
+        "skill_enemy_008_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_008_ultimate"
+      ]
     }
   },
   {
@@ -246,9 +276,15 @@
       }
     ],
     "skills": {
-      "small": "skill_boss_001_small",
-      "passive": "skill_boss_001_passive",
-      "ultimate": "skill_boss_001_ultimate"
+      "small": [
+        "skill_boss_001_small"
+      ],
+      "passive": [
+        "skill_boss_001_passive"
+      ],
+      "ultimate": [
+        "skill_boss_001_ultimate"
+      ]
     }
   },
   {
@@ -275,7 +311,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_009_small"
+      "small": [
+        "skill_enemy_009_small"
+      ]
     }
   },
   {
@@ -302,7 +340,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_010_small"
+      "small": [
+        "skill_enemy_010_small"
+      ]
     }
   },
   {
@@ -329,7 +369,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_011_small"
+      "small": [
+        "skill_enemy_011_small"
+      ]
     }
   },
   {
@@ -356,8 +398,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_012_small",
-      "passive": "skill_enemy_012_passive"
+      "small": [
+        "skill_enemy_012_small"
+      ],
+      "passive": [
+        "skill_enemy_012_passive"
+      ]
     }
   },
   {
@@ -384,8 +430,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_013_small",
-      "passive": "skill_enemy_013_passive"
+      "small": [
+        "skill_enemy_013_small"
+      ],
+      "passive": [
+        "skill_enemy_013_passive"
+      ]
     }
   },
   {
@@ -412,8 +462,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_014_small",
-      "passive": "skill_enemy_014_passive"
+      "small": [
+        "skill_enemy_014_small"
+      ],
+      "passive": [
+        "skill_enemy_014_passive"
+      ]
     }
   },
   {
@@ -440,9 +494,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_015_small",
-      "passive": "skill_enemy_015_passive",
-      "ultimate": "skill_enemy_015_ultimate"
+      "small": [
+        "skill_enemy_015_small"
+      ],
+      "passive": [
+        "skill_enemy_015_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_015_ultimate"
+      ]
     }
   },
   {
@@ -469,9 +529,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_016_small",
-      "passive": "skill_enemy_016_passive",
-      "ultimate": "skill_enemy_016_ultimate"
+      "small": [
+        "skill_enemy_016_small"
+      ],
+      "passive": [
+        "skill_enemy_016_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_016_ultimate"
+      ]
     }
   },
   {
@@ -498,9 +564,15 @@
       }
     ],
     "skills": {
-      "small": "skill_boss_002_small",
-      "passive": "skill_boss_002_passive",
-      "ultimate": "skill_boss_002_ultimate"
+      "small": [
+        "skill_boss_002_small"
+      ],
+      "passive": [
+        "skill_boss_002_passive"
+      ],
+      "ultimate": [
+        "skill_boss_002_ultimate"
+      ]
     }
   },
   {
@@ -527,7 +599,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_017_small"
+      "small": [
+        "skill_enemy_017_small"
+      ]
     }
   },
   {
@@ -554,7 +628,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_018_small"
+      "small": [
+        "skill_enemy_018_small"
+      ]
     }
   },
   {
@@ -581,7 +657,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_019_small"
+      "small": [
+        "skill_enemy_019_small"
+      ]
     }
   },
   {
@@ -608,8 +686,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_020_small",
-      "passive": "skill_enemy_020_passive"
+      "small": [
+        "skill_enemy_020_small"
+      ],
+      "passive": [
+        "skill_enemy_020_passive"
+      ]
     }
   },
   {
@@ -636,8 +718,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_021_small",
-      "passive": "skill_enemy_021_passive"
+      "small": [
+        "skill_enemy_021_small"
+      ],
+      "passive": [
+        "skill_enemy_021_passive"
+      ]
     }
   },
   {
@@ -664,8 +750,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_022_small",
-      "passive": "skill_enemy_022_passive"
+      "small": [
+        "skill_enemy_022_small"
+      ],
+      "passive": [
+        "skill_enemy_022_passive"
+      ]
     }
   },
   {
@@ -692,9 +782,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_023_small",
-      "passive": "skill_enemy_023_passive",
-      "ultimate": "skill_enemy_023_ultimate"
+      "small": [
+        "skill_enemy_023_small"
+      ],
+      "passive": [
+        "skill_enemy_023_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_023_ultimate"
+      ]
     }
   },
   {
@@ -721,9 +817,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_024_small",
-      "passive": "skill_enemy_024_passive",
-      "ultimate": "skill_enemy_024_ultimate"
+      "small": [
+        "skill_enemy_024_small"
+      ],
+      "passive": [
+        "skill_enemy_024_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_024_ultimate"
+      ]
     }
   },
   {
@@ -750,9 +852,15 @@
       }
     ],
     "skills": {
-      "small": "skill_boss_003_small",
-      "passive": "skill_boss_003_passive",
-      "ultimate": "skill_boss_003_ultimate"
+      "small": [
+        "skill_boss_003_small"
+      ],
+      "passive": [
+        "skill_boss_003_passive"
+      ],
+      "ultimate": [
+        "skill_boss_003_ultimate"
+      ]
     }
   },
   {
@@ -779,7 +887,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_025_small"
+      "small": [
+        "skill_enemy_025_small"
+      ]
     }
   },
   {
@@ -806,7 +916,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_026_small"
+      "small": [
+        "skill_enemy_026_small"
+      ]
     }
   },
   {
@@ -833,7 +945,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_027_small"
+      "small": [
+        "skill_enemy_027_small"
+      ]
     }
   },
   {
@@ -860,8 +974,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_028_small",
-      "passive": "skill_enemy_028_passive"
+      "small": [
+        "skill_enemy_028_small"
+      ],
+      "passive": [
+        "skill_enemy_028_passive"
+      ]
     }
   },
   {
@@ -888,8 +1006,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_029_small",
-      "passive": "skill_enemy_029_passive"
+      "small": [
+        "skill_enemy_029_small"
+      ],
+      "passive": [
+        "skill_enemy_029_passive"
+      ]
     }
   },
   {
@@ -916,8 +1038,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_030_small",
-      "passive": "skill_enemy_030_passive"
+      "small": [
+        "skill_enemy_030_small"
+      ],
+      "passive": [
+        "skill_enemy_030_passive"
+      ]
     }
   },
   {
@@ -944,9 +1070,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_031_small",
-      "passive": "skill_enemy_031_passive",
-      "ultimate": "skill_enemy_031_ultimate"
+      "small": [
+        "skill_enemy_031_small"
+      ],
+      "passive": [
+        "skill_enemy_031_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_031_ultimate"
+      ]
     }
   },
   {
@@ -973,9 +1105,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_032_small",
-      "passive": "skill_enemy_032_passive",
-      "ultimate": "skill_enemy_032_ultimate"
+      "small": [
+        "skill_enemy_032_small"
+      ],
+      "passive": [
+        "skill_enemy_032_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_032_ultimate"
+      ]
     }
   },
   {
@@ -1002,9 +1140,15 @@
       }
     ],
     "skills": {
-      "small": "skill_boss_004_small",
-      "passive": "skill_boss_004_passive",
-      "ultimate": "skill_boss_004_ultimate"
+      "small": [
+        "skill_boss_004_small"
+      ],
+      "passive": [
+        "skill_boss_004_passive"
+      ],
+      "ultimate": [
+        "skill_boss_004_ultimate"
+      ]
     }
   },
   {
@@ -1031,7 +1175,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_033_small"
+      "small": [
+        "skill_enemy_033_small"
+      ]
     }
   },
   {
@@ -1058,7 +1204,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_034_small"
+      "small": [
+        "skill_enemy_034_small"
+      ]
     }
   },
   {
@@ -1085,7 +1233,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_035_small"
+      "small": [
+        "skill_enemy_035_small"
+      ]
     }
   },
   {
@@ -1112,8 +1262,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_036_small",
-      "passive": "skill_enemy_036_passive"
+      "small": [
+        "skill_enemy_036_small"
+      ],
+      "passive": [
+        "skill_enemy_036_passive"
+      ]
     }
   },
   {
@@ -1140,8 +1294,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_037_small",
-      "passive": "skill_enemy_037_passive"
+      "small": [
+        "skill_enemy_037_small"
+      ],
+      "passive": [
+        "skill_enemy_037_passive"
+      ]
     }
   },
   {
@@ -1168,8 +1326,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_038_small",
-      "passive": "skill_enemy_038_passive"
+      "small": [
+        "skill_enemy_038_small"
+      ],
+      "passive": [
+        "skill_enemy_038_passive"
+      ]
     }
   },
   {
@@ -1196,9 +1358,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_039_small",
-      "passive": "skill_enemy_039_passive",
-      "ultimate": "skill_enemy_039_ultimate"
+      "small": [
+        "skill_enemy_039_small"
+      ],
+      "passive": [
+        "skill_enemy_039_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_039_ultimate"
+      ]
     }
   },
   {
@@ -1225,9 +1393,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_040_small",
-      "passive": "skill_enemy_040_passive",
-      "ultimate": "skill_enemy_040_ultimate"
+      "small": [
+        "skill_enemy_040_small"
+      ],
+      "passive": [
+        "skill_enemy_040_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_040_ultimate"
+      ]
     }
   },
   {
@@ -1254,9 +1428,15 @@
       }
     ],
     "skills": {
-      "small": "skill_boss_005_small",
-      "passive": "skill_boss_005_passive",
-      "ultimate": "skill_boss_005_ultimate"
+      "small": [
+        "skill_boss_005_small"
+      ],
+      "passive": [
+        "skill_boss_005_passive"
+      ],
+      "ultimate": [
+        "skill_boss_005_ultimate"
+      ]
     }
   },
   {
@@ -1283,7 +1463,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_041_small"
+      "small": [
+        "skill_enemy_041_small"
+      ]
     }
   },
   {
@@ -1310,7 +1492,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_042_small"
+      "small": [
+        "skill_enemy_042_small"
+      ]
     }
   },
   {
@@ -1337,7 +1521,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_043_small"
+      "small": [
+        "skill_enemy_043_small"
+      ]
     }
   },
   {
@@ -1364,8 +1550,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_044_small",
-      "passive": "skill_enemy_044_passive"
+      "small": [
+        "skill_enemy_044_small"
+      ],
+      "passive": [
+        "skill_enemy_044_passive"
+      ]
     }
   },
   {
@@ -1392,8 +1582,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_045_small",
-      "passive": "skill_enemy_045_passive"
+      "small": [
+        "skill_enemy_045_small"
+      ],
+      "passive": [
+        "skill_enemy_045_passive"
+      ]
     }
   },
   {
@@ -1420,8 +1614,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_046_small",
-      "passive": "skill_enemy_046_passive"
+      "small": [
+        "skill_enemy_046_small"
+      ],
+      "passive": [
+        "skill_enemy_046_passive"
+      ]
     }
   },
   {
@@ -1448,9 +1646,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_047_small",
-      "passive": "skill_enemy_047_passive",
-      "ultimate": "skill_enemy_047_ultimate"
+      "small": [
+        "skill_enemy_047_small"
+      ],
+      "passive": [
+        "skill_enemy_047_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_047_ultimate"
+      ]
     }
   },
   {
@@ -1477,9 +1681,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_048_small",
-      "passive": "skill_enemy_048_passive",
-      "ultimate": "skill_enemy_048_ultimate"
+      "small": [
+        "skill_enemy_048_small"
+      ],
+      "passive": [
+        "skill_enemy_048_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_048_ultimate"
+      ]
     }
   },
   {
@@ -1506,9 +1716,15 @@
       }
     ],
     "skills": {
-      "small": "skill_boss_006_small",
-      "passive": "skill_boss_006_passive",
-      "ultimate": "skill_boss_006_ultimate"
+      "small": [
+        "skill_boss_006_small"
+      ],
+      "passive": [
+        "skill_boss_006_passive"
+      ],
+      "ultimate": [
+        "skill_boss_006_ultimate"
+      ]
     }
   },
   {
@@ -1535,7 +1751,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_049_small"
+      "small": [
+        "skill_enemy_049_small"
+      ]
     }
   },
   {
@@ -1562,7 +1780,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_050_small"
+      "small": [
+        "skill_enemy_050_small"
+      ]
     }
   },
   {
@@ -1589,7 +1809,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_051_small"
+      "small": [
+        "skill_enemy_051_small"
+      ]
     }
   },
   {
@@ -1616,8 +1838,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_052_small",
-      "passive": "skill_enemy_052_passive"
+      "small": [
+        "skill_enemy_052_small"
+      ],
+      "passive": [
+        "skill_enemy_052_passive"
+      ]
     }
   },
   {
@@ -1644,8 +1870,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_053_small",
-      "passive": "skill_enemy_053_passive"
+      "small": [
+        "skill_enemy_053_small"
+      ],
+      "passive": [
+        "skill_enemy_053_passive"
+      ]
     }
   },
   {
@@ -1672,8 +1902,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_054_small",
-      "passive": "skill_enemy_054_passive"
+      "small": [
+        "skill_enemy_054_small"
+      ],
+      "passive": [
+        "skill_enemy_054_passive"
+      ]
     }
   },
   {
@@ -1700,9 +1934,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_055_small",
-      "passive": "skill_enemy_055_passive",
-      "ultimate": "skill_enemy_055_ultimate"
+      "small": [
+        "skill_enemy_055_small"
+      ],
+      "passive": [
+        "skill_enemy_055_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_055_ultimate"
+      ]
     }
   },
   {
@@ -1729,9 +1969,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_056_small",
-      "passive": "skill_enemy_056_passive",
-      "ultimate": "skill_enemy_056_ultimate"
+      "small": [
+        "skill_enemy_056_small"
+      ],
+      "passive": [
+        "skill_enemy_056_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_056_ultimate"
+      ]
     }
   },
   {
@@ -1758,9 +2004,15 @@
       }
     ],
     "skills": {
-      "small": "skill_boss_007_small",
-      "passive": "skill_boss_007_passive",
-      "ultimate": "skill_boss_007_ultimate"
+      "small": [
+        "skill_boss_007_small"
+      ],
+      "passive": [
+        "skill_boss_007_passive"
+      ],
+      "ultimate": [
+        "skill_boss_007_ultimate"
+      ]
     }
   },
   {
@@ -1787,7 +2039,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_057_small"
+      "small": [
+        "skill_enemy_057_small"
+      ]
     }
   },
   {
@@ -1814,7 +2068,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_058_small"
+      "small": [
+        "skill_enemy_058_small"
+      ]
     }
   },
   {
@@ -1841,7 +2097,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_059_small"
+      "small": [
+        "skill_enemy_059_small"
+      ]
     }
   },
   {
@@ -1868,8 +2126,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_060_small",
-      "passive": "skill_enemy_060_passive"
+      "small": [
+        "skill_enemy_060_small"
+      ],
+      "passive": [
+        "skill_enemy_060_passive"
+      ]
     }
   },
   {
@@ -1896,8 +2158,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_061_small",
-      "passive": "skill_enemy_061_passive"
+      "small": [
+        "skill_enemy_061_small"
+      ],
+      "passive": [
+        "skill_enemy_061_passive"
+      ]
     }
   },
   {
@@ -1924,8 +2190,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_062_small",
-      "passive": "skill_enemy_062_passive"
+      "small": [
+        "skill_enemy_062_small"
+      ],
+      "passive": [
+        "skill_enemy_062_passive"
+      ]
     }
   },
   {
@@ -1952,9 +2222,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_063_small",
-      "passive": "skill_enemy_063_passive",
-      "ultimate": "skill_enemy_063_ultimate"
+      "small": [
+        "skill_enemy_063_small"
+      ],
+      "passive": [
+        "skill_enemy_063_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_063_ultimate"
+      ]
     }
   },
   {
@@ -1981,9 +2257,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_064_small",
-      "passive": "skill_enemy_064_passive",
-      "ultimate": "skill_enemy_064_ultimate"
+      "small": [
+        "skill_enemy_064_small"
+      ],
+      "passive": [
+        "skill_enemy_064_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_064_ultimate"
+      ]
     }
   },
   {
@@ -2010,9 +2292,15 @@
       }
     ],
     "skills": {
-      "small": "skill_boss_008_small",
-      "passive": "skill_boss_008_passive",
-      "ultimate": "skill_boss_008_ultimate"
+      "small": [
+        "skill_boss_008_small"
+      ],
+      "passive": [
+        "skill_boss_008_passive"
+      ],
+      "ultimate": [
+        "skill_boss_008_ultimate"
+      ]
     }
   },
   {
@@ -2039,7 +2327,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_065_small"
+      "small": [
+        "skill_enemy_065_small"
+      ]
     }
   },
   {
@@ -2066,7 +2356,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_066_small"
+      "small": [
+        "skill_enemy_066_small"
+      ]
     }
   },
   {
@@ -2093,7 +2385,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_067_small"
+      "small": [
+        "skill_enemy_067_small"
+      ]
     }
   },
   {
@@ -2120,8 +2414,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_068_small",
-      "passive": "skill_enemy_068_passive"
+      "small": [
+        "skill_enemy_068_small"
+      ],
+      "passive": [
+        "skill_enemy_068_passive"
+      ]
     }
   },
   {
@@ -2148,8 +2446,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_069_small",
-      "passive": "skill_enemy_069_passive"
+      "small": [
+        "skill_enemy_069_small"
+      ],
+      "passive": [
+        "skill_enemy_069_passive"
+      ]
     }
   },
   {
@@ -2176,8 +2478,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_070_small",
-      "passive": "skill_enemy_070_passive"
+      "small": [
+        "skill_enemy_070_small"
+      ],
+      "passive": [
+        "skill_enemy_070_passive"
+      ]
     }
   },
   {
@@ -2204,9 +2510,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_071_small",
-      "passive": "skill_enemy_071_passive",
-      "ultimate": "skill_enemy_071_ultimate"
+      "small": [
+        "skill_enemy_071_small"
+      ],
+      "passive": [
+        "skill_enemy_071_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_071_ultimate"
+      ]
     }
   },
   {
@@ -2233,9 +2545,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_072_small",
-      "passive": "skill_enemy_072_passive",
-      "ultimate": "skill_enemy_072_ultimate"
+      "small": [
+        "skill_enemy_072_small"
+      ],
+      "passive": [
+        "skill_enemy_072_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_072_ultimate"
+      ]
     }
   },
   {
@@ -2262,9 +2580,15 @@
       }
     ],
     "skills": {
-      "small": "skill_boss_009_small",
-      "passive": "skill_boss_009_passive",
-      "ultimate": "skill_boss_009_ultimate"
+      "small": [
+        "skill_boss_009_small"
+      ],
+      "passive": [
+        "skill_boss_009_passive"
+      ],
+      "ultimate": [
+        "skill_boss_009_ultimate"
+      ]
     }
   },
   {
@@ -2291,7 +2615,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_073_small"
+      "small": [
+        "skill_enemy_073_small"
+      ]
     }
   },
   {
@@ -2318,7 +2644,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_074_small"
+      "small": [
+        "skill_enemy_074_small"
+      ]
     }
   },
   {
@@ -2345,7 +2673,9 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_075_small"
+      "small": [
+        "skill_enemy_075_small"
+      ]
     }
   },
   {
@@ -2372,8 +2702,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_076_small",
-      "passive": "skill_enemy_076_passive"
+      "small": [
+        "skill_enemy_076_small"
+      ],
+      "passive": [
+        "skill_enemy_076_passive"
+      ]
     }
   },
   {
@@ -2400,8 +2734,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_077_small",
-      "passive": "skill_enemy_077_passive"
+      "small": [
+        "skill_enemy_077_small"
+      ],
+      "passive": [
+        "skill_enemy_077_passive"
+      ]
     }
   },
   {
@@ -2428,8 +2766,12 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_078_small",
-      "passive": "skill_enemy_078_passive"
+      "small": [
+        "skill_enemy_078_small"
+      ],
+      "passive": [
+        "skill_enemy_078_passive"
+      ]
     }
   },
   {
@@ -2456,9 +2798,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_079_small",
-      "passive": "skill_enemy_079_passive",
-      "ultimate": "skill_enemy_079_ultimate"
+      "small": [
+        "skill_enemy_079_small"
+      ],
+      "passive": [
+        "skill_enemy_079_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_079_ultimate"
+      ]
     }
   },
   {
@@ -2485,9 +2833,15 @@
       }
     ],
     "skills": {
-      "small": "skill_enemy_080_small",
-      "passive": "skill_enemy_080_passive",
-      "ultimate": "skill_enemy_080_ultimate"
+      "small": [
+        "skill_enemy_080_small"
+      ],
+      "passive": [
+        "skill_enemy_080_passive"
+      ],
+      "ultimate": [
+        "skill_enemy_080_ultimate"
+      ]
     }
   },
   {
@@ -2514,9 +2868,15 @@
       }
     ],
     "skills": {
-      "small": "skill_boss_010_small",
-      "passive": "skill_boss_010_passive",
-      "ultimate": "skill_boss_010_ultimate"
+      "small": [
+        "skill_boss_010_small"
+      ],
+      "passive": [
+        "skill_boss_010_passive"
+      ],
+      "ultimate": [
+        "skill_boss_010_ultimate"
+      ]
     }
   }
 ]

@@ -89,9 +89,10 @@ import type {
   BattleParticipant,
   BattleAction as BattleSystemAction,
   ParticipantSide,
+  BattleStatus,
 } from "@/types/battle";
 import type { BattleLogEntry } from '@/types/battle-log';
-import { PARTICIPANT_SIDE, BATTLE_STATUS, ROUND_STATUS } from "@/types/battle";
+import { PARTICIPANT_SIDE, BATTLE_STATUS } from "@/types/battle";
 
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
@@ -118,30 +119,28 @@ const maxTurns = ref(999);
  * 是否处于战斗暂停状态（界面可控制状态）
  */
 const isPaused = ref(false);
+
+const battleId = ref<string | null>(null);
 /**
  * 是否自动播放（界面可控制状态）
  */
 const isAutoPlaying = ref(false);
-const battleState = ref(BATTLE_STATUS.CREATED);
+/**
+ * 战斗状态（界面显示用）
+ */
+const battleStatus = ref<BattleStatus>(BATTLE_STATUS.CREATED);
 /**
  * 战斗是否正在进行（可手动控制）
  */
 const isBattleActive = ref(false);
 
 const battleSpeed = ref(1);
-
-const autoPlayMode = ref<'off' | 'auto' | 'fast'>('auto');
-
 const selectedScene = ref("");
 const sceneName = ref("");
 const currentActorId = ref<string | null>(null);
 
 
 const lastExportTime = ref<string | null>(null);
-
-
-// 初始化GameDataProcessor（自动加载配置）
-const enemies: Enemy[] = GameDataProcessor.getEnemiesData();
 
 
 const showRulesDialog = ref(false);
@@ -274,14 +273,16 @@ watch(
   battleData,
   (newData) => {
     if (newData) {
+      battleStatus.value = newData.battleState ?? BATTLE_STATUS.CREATED;
       isPaused.value = newData.battleState === BATTLE_STATUS.PAUSED;
       isAutoPlaying.value = newData.autoPlaying || false;
       currentTurn.value = newData.currentRound || 1;
       maxTurns.value = newData.maxTurns;
       battleSpeed.value = newData.battleSpeed
+      battleId.value = newData.battleId
     }
   },
-  { immediate: true, deep: true }  // 深度监听
+  { immediate: true, deep: true }
 );
 
 // 获取技能名称的工具函数
@@ -472,7 +473,9 @@ const selectCharacter = (charId: string) => {
 
 const addEnemyToBattle = (enemy: Enemy, side: ParticipantSide = PARTICIPANT_SIDE.ALLY) => {
   const newCharacter: UIBattleCharacter = {
+    originalId: enemy.id,
     id: `enemy_${Date.now()}_${enemy.id}`,
+    team: side,
     name: enemy.name,
     level: enemy.level,
     maxHp: enemy.stats.health,
@@ -481,12 +484,26 @@ const addEnemyToBattle = (enemy: Enemy, side: ParticipantSide = PARTICIPANT_SIDE
     currentMp: 100,
     currentEnergy: 0,
     maxEnergy: 150,
+    minAttack: enemy.stats.minAttack,
+    maxAttack: enemy.stats.maxAttack,
     attack: Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2),
     defense: enemy.stats.defense,
     speed: enemy.stats.speed,
+    critRate: 10,
+    critDamage: 125,
+    damageReduction: 0,
+    healthBonus: 0,
+    attackBonus: 0,
+    defenseBonus: 0,
+    speedBonus: 0,
     enabled: true,
     isFirst: false,
     buffs: [],
+    skills: {
+      small: GameDataProcessor.normalizeSkillIds(enemy.skills?.small),
+      passive: GameDataProcessor.normalizeSkillIds(enemy.skills?.passive),
+      ultimate: GameDataProcessor.normalizeSkillIds(enemy.skills?.ultimate),
+    },
   };
 
   if (side === PARTICIPANT_SIDE.ALLY) {
@@ -929,7 +946,6 @@ const startBattle = () => {
   const allParticipants = battleSystem.getCurParticipantsInfo()
 
 
-  const curBattleData = battleSystem.getCurBattleData()
   battleSystem.startAutoBattle();
   logManager.addSystemLog("开始自动战斗");
 
@@ -938,7 +954,7 @@ const startBattle = () => {
   processedActionIds.value.clear();
 
   // 添加战斗开始日志
-  logManager.addSystemLog(`战斗开始！战斗ID: ${battleState.battleId}`);
+  logManager.addSystemLog(`战斗开始！战斗ID: ${currentBattleId.value}`);
   logManager.addSystemLog(`参战角色: ${enabledAllyTeam.length} 人 | 参战敌人: ${enabledEnemyTeam.length} 人`);
 };
 

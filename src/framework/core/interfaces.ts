@@ -17,6 +17,8 @@
  * 4. 配置驱动 - 支持外部配置和运行时调整
  */
 
+import type { BattleParticipant } from '@/types/battle'
+
 /**
  * 框架配置接口
  */
@@ -38,7 +40,7 @@ export interface FrameworkConfig {
 }
 
 /**
- * 战斗实体基础接口
+ * 战斗实体基础接口（框架层）
  */
 export interface BattleEntity {
   /** 实体唯一标识 */
@@ -55,23 +57,8 @@ export interface BattleEntity {
   getMaxHealth(): number
 }
 
-/**
- * 战斗参与者接口
- */
-export interface BattleParticipant extends BattleEntity {
-  /** 能量值 */
-  readonly energy: number
-  /** 最大能量值 */
-  readonly maxEnergy: number
-  /** 速度值（用于回合顺序计算） */
-  readonly speed: number
-  /** 技能列表 */
-  readonly skills: Skill[]
-  /** 状态效果列表 */
-  readonly statusEffects: StatusEffect[]
-  /** 属性加成 */
-  readonly attributes: BattleAttributes
-}
+// 重新导出 BattleParticipant，统一从类型层导入
+export type { BattleParticipant }
 
 /**
  * 状态效果接口

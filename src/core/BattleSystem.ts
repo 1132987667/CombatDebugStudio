@@ -12,9 +12,6 @@ import type {
   BattleState,
   BattleAction,
   BattleParticipant,
-  BattleCharacter,
-  BattleEnemy,
-  ParticipantInfo,
   BattleData,
   ParticipantSide,
   RoundStatus,
@@ -51,10 +48,8 @@ import type { BattleLogEntry } from '@/types/battle-log'
 export class GameBattleSystem implements IBattleSystem {
   // 单例实例
   private static instance: GameBattleSystem
-
   // 存储所有战斗数据的映射表，key为战斗ID，value为战斗数据
   private battles = new Map<string, BattleData>()
-
   private curBattleId: string
   private curBattleData: BattleData
 
@@ -82,7 +77,7 @@ export class GameBattleSystem implements IBattleSystem {
   private participantManager: ParticipantManager
   private aiSystem: AISystem
   private battleRecorder: BattleRecorder
-  private curParticipantsInfo: ParticipantInfo[] = []
+  private curParticipantsInfo: BattleParticipant[] = []
   private rafTimer = new RAFTimer()
 
   // 私有构造函数，防止外部直接实例化
@@ -173,10 +168,10 @@ export class GameBattleSystem implements IBattleSystem {
 
   /**
    * 创建新的战斗实例
-   * @param {ParticipantInfo[]} participantsInfo - 参与者信息数组
+   * @param {BattleParticipant[]} participantsInfo - 参与者数组
    * @returns {BattleState} 创建的战斗状态
    */
-  public createBattle(participantsInfo: ParticipantInfo[]): BattleState {
+  public createBattle(participantsInfo: BattleParticipant[]): BattleState {
     console.log('participantsInfo', participantsInfo)
     this.curParticipantsInfo = participantsInfo
 
@@ -1191,7 +1186,7 @@ export class GameBattleSystem implements IBattleSystem {
     return this.participantManager
   }
 
-  public getCurParticipantsInfo(): ParticipantInfo[] {
+  public getCurParticipantsInfo(): BattleParticipant[] {
     return this.curParticipantsInfo
   }
 

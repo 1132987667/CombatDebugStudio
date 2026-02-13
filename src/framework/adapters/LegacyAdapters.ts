@@ -212,17 +212,10 @@ export class LegacyDamageCalculatorAdapter {
     attribute: string,
   ): number {
     try {
-      // 检查participant是否有getAttribute方法
       if (participant && typeof participant.getAttribute === 'function') {
         return participant.getAttribute(attribute) || 0
       }
 
-      // 如果getAttribute不存在，尝试使用getAttributeValue
-      if (participant && typeof participant.getAttributeValue === 'function') {
-        return participant.getAttributeValue(attribute) || 0
-      }
-
-      // 如果都没有，返回默认值
       this.logger.warn(`无法获取属性值: ${attribute}，参与者缺少必要的方法`)
       return 0
     } catch (error) {
@@ -237,20 +230,15 @@ export class LegacyDamageCalculatorAdapter {
   private convertToFrameworkParticipant(
     legacyParticipant: BattleParticipant,
   ): any {
-    // 简化转换，实际项目中需要更完整的映射
     return {
       id: legacyParticipant.id,
       name: legacyParticipant.name,
       getCurrentHealth: () => legacyParticipant.currentHealth,
       getMaxHealth: () => legacyParticipant.maxHealth,
-      attributes: {
-        attack: legacyParticipant.getAttribute?.('ATK') || 10,
-        defense: legacyParticipant.getAttribute?.('DEF') || 5,
-        magicPower: legacyParticipant.getAttribute?.('MAGIC') || 8,
-        criticalChance: 0.05,
-        dodgeChance: 0.05,
-      },
-      statusEffects: [],
+      attack: legacyParticipant.getAttribute?.('ATK') || legacyParticipant.attack || 10,
+      defense: legacyParticipant.getAttribute?.('DEF') || legacyParticipant.defense || 5,
+      critRate: legacyParticipant.critRate || 10,
+      speed: legacyParticipant.speed || 10,
     }
   }
 

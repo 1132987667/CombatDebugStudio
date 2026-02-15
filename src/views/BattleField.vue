@@ -5,8 +5,7 @@
         <div class="turn-info">
           <span class="turn-label">当前回合:</span>
           <span class="turn-num">{{ currentTurn }}/{{ maxTurns }}</span>
-          <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} (SPD:{{ currentActor?.speed || 0
-          }})</span>
+          <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} (SPD:{{ getMemberSpeed(currentActor) }})</span>
         </div>
       </div>
 
@@ -27,7 +26,7 @@
                   </div>
                 </div>
                 <div class="member-hp">
-                  <span class="hp-text">{{ member.currentHp }}/{{ member.maxHp }}</span>
+                  <span class="hp-text">{{ getMemberHp(member) }}</span>
                   <div class="hp-bar">
                     <div class="hp-fill" :class="getHpColorClass(member)"
                       :style="{ width: getHpPercent(member) + '%' }"></div>
@@ -80,7 +79,7 @@
                   </div>
                 </div>
                 <div class="member-hp">
-                  <span class="hp-text">HP: {{ member.currentHp }}/{{ member.maxHp }}</span>
+                  <span class="hp-text">HP: {{ getMemberHp(member) }}</span>
                   <div class="hp-bar">
                     <div class="hp-fill enemy-fill" :class="getHpColorClass(member)"
                       :style="{ width: getHpPercent(member) + '%' }"></div>
@@ -154,10 +153,12 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { raf } from '@/utils/RAF';
+import { GameDataProcessor } from '@/utils/GameDataProcessor';
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
 import type { BattleLogEntry } from '@/types/battle-log';
+import type { UIBattleCharacter } from '@/types';
 
 const props = defineProps<{
   allyTeam: any[];
@@ -181,13 +182,26 @@ const skillEffectRefs = ref<InstanceType<typeof SkillEffect>[]>([]);
 const filterAllyTeam = computed(() => {
   return props.allyTeam
     .filter((c) => c.enabled)
-    .sort((a, b) => b.speed - a.speed);
+    .sort((a, b) => getSpeed(b) - getSpeed(a));
 });
 const filterEnemyTeam = computed(() => {
   return props.enemyTeam
     .filter((c) => c.enabled)
-    .sort((a, b) => b.speed - a.speed);
+    .sort((a, b) => getSpeed(a) - getSpeed(b));
 });
+
+// 获取成员显示用的HP
+const getMemberHp = (member: UIBattleCharacter | null): string => {
+  if (!member) return '0/0';
+  const maxHp = getMaxHp(member);
+  return `${member.currentHp}/${maxHp}`;
+};
+
+// 获取成员显示用的速度
+const getMemberSpeed = (member: UIBattleCharacter | null): number => {
+  if (!member) return 0;
+  return getSpeed(member);
+};
 
 const currentActor = computed(() => {
   if (!props.currentActorId) return null;
@@ -202,12 +216,29 @@ const selectCharacter = (charId: string) => {
   emit('select-character', charId);
 };
 
-const getHpPercent = (char: any) => {
-  return Math.max(0, (char.currentHp / char.maxHp) * 100);
+// 获取角色属性值的兼容函数
+const getMaxHp = (char: UIBattleCharacter | null): number => {
+  if (!char) return 0;
+  return GameDataProcessor.getAttributeValue(char.maxHp);
+};
+
+const getSpeed = (char: UIBattleCharacter | null): number => {
+  if (!char) return 0;
+  return GameDataProcessor.getAttributeValue(char.speed);
+};
+
+const getHpPercent = (char: any): number => {
+  if (!char) return 0;
+  const maxHp = typeof char.maxHp === 'object' ? GameDataProcessor.getAttributeValue(char.maxHp) : char.maxHp;
+  if (!maxHp) return 0;
+  return Math.max(0, (char.currentHp / maxHp) * 100);
 };
 
 const getHpColorClass = (char: any): string => {
-  const percent = (char.currentHp / char.maxHp) * 100;
+  if (!char) return 'high';
+  const maxHp = typeof char.maxHp === 'object' ? GameDataProcessor.getAttributeValue(char.maxHp) : char.maxHp;
+  if (!maxHp) return 'high';
+  const percent = (char.currentHp / maxHp) * 100;
   if (percent <= 25) return 'low';
   if (percent <= 50) return 'medium';
   return 'high';

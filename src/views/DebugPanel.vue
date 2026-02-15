@@ -10,7 +10,7 @@
         <div class="monitor-grid">
           <div class="monitor-item">
             <span class="monitor-label">HP:</span>
-            <span class="monitor-value">{{ selectedChar?.currentHp || 0 }}/{{ selectedChar?.maxHp || 0 }}</span>
+            <span class="monitor-value">{{ selectedChar?.currentHp || 0 }}/{{ baseProps.maxHp }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">能量:</span>
@@ -18,27 +18,27 @@
           </div>
           <div class="monitor-item">
             <span class="monitor-label">攻击:</span>
-            <span class="monitor-value">{{ selectedChar?.minAttack || 0 }}-{{ selectedChar?.maxAttack || 0 }}</span>
+            <span class="monitor-value">{{ attackRange.min }}-{{ attackRange.max }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">防御:</span>
-            <span class="monitor-value">{{ selectedChar?.defense || 0 }}</span>
+            <span class="monitor-value">{{ baseProps.defense }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">速度:</span>
-            <span class="monitor-value">{{ selectedChar?.speed || 0 }}</span>
+            <span class="monitor-value">{{ baseProps.speed }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">暴击率:</span>
-            <span class="monitor-value">{{ selectedChar?.critRate || 0 }}%</span>
+            <span class="monitor-value">{{ baseProps.critRate }}%</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">暴击伤害:</span>
-            <span class="monitor-value">{{ selectedChar?.critDamage || 125 }}%</span>
+            <span class="monitor-value">{{ baseProps.critDamage }}%</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">免伤率:</span>
-            <span class="monitor-value">{{ selectedChar?.damageReduction || 0 }}%</span>
+            <span class="monitor-value">{{ baseProps.damageReduction }}%</span>
           </div>
         </div>
       </div>
@@ -239,7 +239,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
-import type { UIBattleCharacter } from "@/types";
+import type { UIBattleCharacter, AttributeValue } from "@/types";
 import type { SkillConfig } from "@/types/skill";
 
 const props = defineProps<{
@@ -396,21 +396,59 @@ const finalStats = computed(() => {
   const char = selectedChar.value;
   if (!char) return { attack: 0, defense: 0, speed: 0, health: 0 };
 
+  const getVal = (attr: number | AttributeValue | undefined) => GameDataProcessor.getAttributeValue(attr);
+  const getBonus = (attr: number | AttributeValue | undefined) => GameDataProcessor.getAttributeValue(attr);
+
+  const baseAttack = getVal(char.attack);
+  const baseDefense = getVal(char.defense);
+  const baseSpeed = getVal(char.speed);
+  const baseHealth = getVal(char.maxHp);
+  const attackBonus = getBonus(char.attackBonus);
+  const defenseBonus = getBonus(char.defenseBonus);
+  const speedBonus = getBonus(char.speedBonus);
+  const healthBonus = getBonus(char.healthBonus);
+
   const calc = (base: number, bonus = 0) => Math.floor(base * (1 + bonus / 100));
 
   return {
-    attack: calc(char.attack, char.attackBonus),
-    defense: calc(char.defense, char.defenseBonus),
-    speed: calc(char.speed, char.speedBonus),
-    health: calc(char.maxHp, char.healthBonus),
+    attack: calc(baseAttack, attackBonus),
+    defense: calc(baseDefense, defenseBonus),
+    speed: calc(baseSpeed, speedBonus),
+    health: calc(baseHealth, healthBonus),
+  };
+});
+
+// 模板中直接使用的属性计算
+const baseProps = computed(() => {
+  const char = selectedChar.value;
+  if (!char) return { maxHp: 0, defense: 0, speed: 0, critRate: 10, critDamage: 125, damageReduction: 0 };
+  
+  return {
+    maxHp: GameDataProcessor.getAttributeValue(char.maxHp),
+    defense: GameDataProcessor.getAttributeValue(char.defense),
+    speed: GameDataProcessor.getAttributeValue(char.speed),
+    critRate: GameDataProcessor.getAttributeValue(char.critRate),
+    critDamage: GameDataProcessor.getAttributeValue(char.critDamage),
+    damageReduction: GameDataProcessor.getAttributeValue(char.damageReduction),
+  };
+});
+
+// 攻击范围计算
+const attackRange = computed(() => {
+  const char = selectedChar.value;
+  if (!char) return { min: 0, max: 0 };
+  return {
+    min: char.minAttack || 0,
+    max: char.maxAttack || 0,
   };
 });
 
 // ------------------------------------------------------------
 // 4. 辅助函数（纯展示逻辑，无需缓存）
-const formatBonus = (value: number | undefined): string => {
-  if (value === undefined || value === 0) return "0%";
-  return value > 0 ? `+${value}%` : `${value}%`;
+const formatBonus = (value: number | AttributeValue | undefined): string => {
+  const numValue = GameDataProcessor.getAttributeValue(value);
+  if (numValue === 0) return "0%";
+  return numValue > 0 ? `+${numValue}%` : `${numValue}%`;
 };
 
 // ------------------------------------------------------------

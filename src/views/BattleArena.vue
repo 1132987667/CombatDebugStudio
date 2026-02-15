@@ -189,7 +189,6 @@ const initBattleSystemListeners = () => {
         const enemy = enemyTeam.value.find(e => e.id === p.id)
         if (character) {
           character.currentHp = p.currentHp
-          character.maxHp = p.maxHp
           character.currentEnergy = p.currentEnergy
           if (p.buffs) {
             character.buffs = p.buffs
@@ -197,7 +196,6 @@ const initBattleSystemListeners = () => {
           hasUpdates = true
         } else if (enemy) {
           enemy.currentHp = p.currentHp
-          enemy.maxHp = p.maxHp
           enemy.currentEnergy = p.currentEnergy
           if (p.buffs) {
             enemy.buffs = p.buffs
@@ -329,8 +327,6 @@ onMounted(() => {
   initBattleSystemListeners();
 
   // // 获取第一个可行动的我方参与者作为当前行动者
-  // const firstActor = battleState.turnOrder.find(id => id.startsWith('character_')) || battleState.turnOrder[0] || null;
-  // currentActorId.value = firstActor;
   logManager.addSystemLog("测试工具已加载");
 
   // 初始化快捷键系统
@@ -1057,14 +1053,12 @@ const syncParticipantsState = (battleState: BattleState) => {
     if (character) {
       // 更新角色状态
       character.currentHp = participant.currentHealth;
-      character.maxHp = participant.maxHealth;
       character.currentEnergy = participant.currentEnergy;
       character.maxEnergy = participant.maxEnergy;
       // 这里可以根据需要更新其他状态，如MP、buff等
     } else if (enemy) {
       // 更新敌人状态
       enemy.currentHp = participant.currentHealth;
-      enemy.maxHp = participant.maxHealth;
       enemy.currentEnergy = participant.currentEnergy;
       enemy.maxEnergy = participant.maxEnergy;
       // 这里可以根据需要更新其他状态，如MP、buff等
@@ -1290,12 +1284,12 @@ const resetBattle = () => {
 
   // 重置角色状态到初始值
   allyTeam.value.forEach(char => {
-    char.currentHp = char.maxHp;
+    char.currentHp = GameDataProcessor.getAttributeValue(char.maxHp);
     char.currentEnergy = 0;
   });
 
   enemyTeam.value.forEach(enemy => {
-    enemy.currentHp = enemy.maxHp;
+    enemy.currentHp = GameDataProcessor.getAttributeValue(enemy.maxHp);
     enemy.currentEnergy = 0;
   });
 

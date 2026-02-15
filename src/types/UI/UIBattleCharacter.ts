@@ -1,6 +1,44 @@
 import type { BuffConfig } from '@/types/buff'
 import { ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types'
+
+/**
+ * 属性值类型
+ */
+export type AttributeValueType = '数值' | '百分比'
+
+/**
+ * 属性来源类型（可扩展）
+ */
+export type AttributeSourceType = '基础' | '装备' | '天赋' | '被动技能' | 'buff' | '其他'
+
+/**
+ * 单个属性来源选项
+ */
+export interface AttributeOption {
+  /** 来源类型 */
+  from: AttributeSourceType
+  /** 来源描述 */
+  sourceName?: string
+  /** 数值 */
+  value: number
+  /** 属性值类型 */
+  valueType: AttributeValueType
+}
+
+/**
+ * 属性对象结构
+ * 用于存储属性的最终值及各项来源
+ */
+export interface AttributeValue {
+  /** 计算后的最终值 */
+  value: number
+  /** 属性值类型 */
+  valueType: AttributeValueType
+  /** 属性来源详情数组（可扩展） */
+  options: AttributeOption[]
+}
+
 /**
  * 技能配置接口
  * 定义角色的技能ID列表
@@ -30,7 +68,7 @@ export interface UIBattleCharacter {
   /** 等级 */
   level: number
   /** 最大生命值 */
-  maxHp: number
+  maxHp: number | AttributeValue
   /** 当前生命值 */
   currentHp: number
   /** 最大魔法值 */
@@ -46,25 +84,25 @@ export interface UIBattleCharacter {
   /** 最大攻击力 */
   maxAttack: number
   /** 平均攻击力（计算值） */
-  attack: number
+  attack: number | AttributeValue
   /** 防御力 */
-  defense: number
+  defense: number | AttributeValue
   /** 速度 */
-  speed: number
+  speed: number | AttributeValue
   /** 暴击率（百分比，0-100） */
-  critRate: number
+  critRate: number | AttributeValue
   /** 暴击伤害（百分比，≥100） */
-  critDamage: number
+  critDamage: number | AttributeValue
   /** 免伤率（百分比，0-100） */
-  damageReduction: number
+  damageReduction: number | AttributeValue
   /** 气血加成（百分比） */
-  healthBonus: number
+  healthBonus: number | AttributeValue
   /** 攻击加成（百分比） */
-  attackBonus: number
+  attackBonus: number | AttributeValue
   /** 防御加成（百分比） */
-  defenseBonus: number
+  defenseBonus: number | AttributeValue
   /** 速度加成（百分比） */
-  speedBonus: number
+  speedBonus: number | AttributeValue
   /** 是否启用 */
   enabled: boolean
   /** 是否先手 */

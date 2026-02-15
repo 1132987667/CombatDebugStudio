@@ -266,7 +266,7 @@
   {
     "id": "skill_boss_001_passive",
     "name": "山灵庇护",
-    "description": "被动效果：受到攻击时，有15%几率使攻击者减速，持续2回合",
+    "description": "被动效果：受到攻击时，有15%几率使攻击者减速，持续2回合；永久提升自身防御力20%",
     "mpCost": 0,
     "cooldown": 0,
     "selector": "self",
@@ -597,7 +597,7 @@
   {
     "id": "skill_boss_002_passive",
     "name": "水之共鸣",
-    "description": "被动效果：每回合开始时，为生命值最低的友方单位恢复5%最大生命值",
+    "description": "被动效果：每回合开始时，为生命值最低的友方单位恢复5%最大生命值；永久提升自身生命值15%",
     "mpCost": 0,
     "cooldown": 0,
     "selector": "self",
@@ -936,7 +936,7 @@
   {
     "id": "skill_boss_003_passive",
     "name": "大地恩赐",
-    "description": "被动效果：生命值低于50%时，每回合结束时恢复10%最大生命值",
+    "description": "被动效果：生命值低于50%时，每回合结束时恢复10%最大生命值；永久提升自身生命值20%",
     "mpCost": 0,
     "cooldown": 0,
     "selector": "self",
@@ -1276,7 +1276,7 @@
   {
     "id": "skill_boss_004_passive",
     "name": "迷雾笼罩",
-    "description": "被动效果：为所有友方单位施加光环，提升全体闪避率",
+    "description": "被动效果：为所有友方单位施加光环，提升全体闪避率；永久提升自身速度20%",
     "mpCost": 0,
     "cooldown": 0,
     "selector": "self",
@@ -1622,7 +1622,7 @@
   {
     "id": "skill_boss_005_passive",
     "name": "水之守护",
-    "description": "被动技能,自身获得水之守护效果,永久提升魔法防御力和水属性抗性,受到攻击时有概率回复生命值",
+    "description": "被动技能,自身获得水之守护效果,永久提升魔法防御力和水属性抗性,受到攻击时有概率回复生命值;永久提升自身攻击力15%",
     "mpCost": 0,
     "cooldown": 0,
     "selector": "self",
@@ -1956,7 +1956,7 @@
   {
     "id": "skill_boss_006_passive",
     "name": "地火之心",
-    "description": "被动技能,自身获得地火之心效果,永久提升所有属性,受到火属性伤害时回复生命值",
+    "description": "被动技能,自身获得地火之心效果,永久提升所有属性,受到火属性伤害时回复生命值;永久提升自身攻击力20%和防御力15%",
     "mpCost": 0,
     "cooldown": 0,
     "selector": "self",
@@ -2300,7 +2300,7 @@
   {
     "id": "skill_boss_007_passive",
     "name": "谷中霸主",
-    "description": "被动效果：提升自身所有属性10%，并免疫所有控制效果",
+    "description": "被动效果：提升自身所有属性10%，并免疫所有控制效果;永久提升自身生命值25%与攻击力15%",
     "mpCost": 0,
     "cooldown": 0,
     "selector": "self",
@@ -2624,7 +2624,7 @@
   {
     "id": "skill_boss_008_passive",
     "name": "风之灵",
-    "description": "被动效果：提升自身速度30%，并在每回合开始时恢复5%最大生命值",
+    "description": "被动效果：提升自身速度30%，并在每回合开始时恢复5%最大生命值;永久提升自身速度额外15%",
     "mpCost": 0,
     "cooldown": 0,
     "selector": "self",
@@ -2956,7 +2956,7 @@
   {
     "id": "skill_boss_009_passive",
     "name": "禅心",
-    "description": "被动效果：每回合开始时，为生命值最低的友方单位恢复5%最大生命值",
+    "description": "被动效果：每回合开始时，为生命值最低的友方单位恢复5%最大生命值;永久提升自身生命值20%与防御力15%",
     "mpCost": 0,
     "cooldown": 0,
     "selector": "self",
@@ -3283,7 +3283,7 @@
   {
     "id": "skill_boss_010_passive",
     "name": "灵山祝福",
-    "description": "被动效果：每回合开始时，为所有友方单位恢复3%最大生命值",
+    "description": "被动效果：每回合开始时，为所有友方单位恢复3%最大生命值;永久提升自身生命值30%与攻击力20%",
     "mpCost": 0,
     "cooldown": 0,
     "selector": "self",

@@ -3,20 +3,55 @@
  * 创建日期: 2026-02-09
  * 作者: CombatDebugStudio
  * 功能: 技能管理器
- * 描述: 负责技能配置的加载、解析和执行，集成完整的伤害/治疗计算系统
+ * 描述: 负责技能配置的加载、解析和执行，集成完整的伤害/治疗计算系统，支持插件化的计算器注册
  * 版本: 1.0.0
  */
 
 import type { SkillConfig, SkillStep, ExtendedSkillStep, CalculationLog } from '@/types/skill'
-import type { BattleAction, BattleParticipant } from '@/types/battle'
+import type { BattleAction, BattleParticipant, BattleEnvironment } from '@/types/battle'
 import { BuffSystem } from '@/core/BuffSystem'
 import { DamageCalculator } from './DamageCalculator'
 import { HealCalculator } from './HealCalculator'
 import { battleLogManager } from '@/utils/logging'
 
 /**
+ * 计算上下文接口 - 统一伤害和治疗计算的输入
+ * 借鉴framework的CalculationSystem设计
+ */
+export interface CalculationContext {
+  source: BattleParticipant
+  target: BattleParticipant
+  skill?: SkillConfig
+  environment?: BattleEnvironment
+}
+
+/**
+ * 计算结果接口
+ */
+export interface CalculationResult {
+  value: number
+  isCritical: boolean
+  isDodged: boolean
+  details: {
+    baseValue: number
+    bonus: number
+    multiplier: number
+  }
+}
+
+/**
+ * 计算器插件接口 - 支持动态注册扩展
+ * 借鉴framework的Calculator接口设计
+ */
+export interface SkillCalculator {
+  calculate(context: CalculationContext, step: ExtendedSkillStep): CalculationResult
+  getSupportedTypes(): string[]
+}
+
+/**
  * 技能管理器类
  * 负责技能配置的加载、解析和执行，集成完整的伤害/治疗计算系统
+ * 支持插件化的计算器注册
  */
 export class SkillManager {
   private logger = battleLogManager
@@ -24,6 +59,7 @@ export class SkillManager {
   private buffSystem = BuffSystem.getInstance()
   private damageCalculator = new DamageCalculator()
   private healCalculator = new HealCalculator()
+  private calculators: Map<string, SkillCalculator> = new Map()
 
   /**
    * 加载技能配置
@@ -298,7 +334,43 @@ export class SkillManager {
    */
   public clearSkillConfigs(): void {
     this.skillConfigs.clear()
-    this.logger.info('技能配置已清空')
+    this.logger.info('所有技能配置已清空')
+  }
+
+  /**
+   * 注册自定义计算器 - 借鉴framework的插件化设计
+   * 允许动态注册新的计算逻辑
+   * @param type 计算器类型标识
+   * @param calculator 计算器实例
+   */
+  public registerCalculator(type: string, calculator: SkillCalculator): void {
+    this.calculators.set(type, calculator)
+    this.logger.info(`注册技能计算器: ${type}`)
+  }
+
+  /**
+   * 注销计算器
+   * @param type 计算器类型标识
+   */
+  public unregisterCalculator(type: string): void {
+    this.calculators.delete(type)
+    this.logger.info(`注销技能计算器: ${type}`)
+  }
+
+  /**
+   * 获取计算器
+   * @param type 计算器类型标识
+   * @returns 计算器实例或undefined
+   */
+  public getCalculator(type: string): SkillCalculator | undefined {
+    return this.calculators.get(type)
+  }
+
+  /**
+   * 获取所有已注册的计算器
+   */
+  public getAllCalculators(): Map<string, SkillCalculator> {
+    return new Map(this.calculators)
   }
 
   /**

@@ -223,13 +223,13 @@ const groupedEnemies = computed<GroupedEnemies[]>(() => {
 const ourParty = computed(() => {
   return props.allyTeam
     .filter((c) => c.enabled)
-    .sort((a, b) => b.speed - a.speed);
+    .sort((a, b) => GameDataProcessor.getAttributeValue(b.speed) - GameDataProcessor.getAttributeValue(a.speed));
 });
 
 const enemyParty = computed(() => {
   return props.enemyTeam
     .filter((c) => c.enabled)
-    .sort((a, b) => b.speed - a.speed);
+    .sort((a, b) => GameDataProcessor.getAttributeValue(b.speed) - GameDataProcessor.getAttributeValue(a.speed));
 });
 
 const getOrderIndex = (charId: string) => {

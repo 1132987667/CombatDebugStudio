@@ -8,7 +8,7 @@
  */
 
 import { IBuffScript } from '@/types/buff'
-import { SimpleLogger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 脚本工厂类型
@@ -48,7 +48,7 @@ export class BuffScriptRegistry {
   /** 脚本注册表，以脚本ID为键 */
   private registry = new Map<string, RegistryEntry>()
   /** 日志记录器 */
-  private readonly logger = new SimpleLogger({ prefix: 'BuffScriptRegistry' })
+  private readonly logger = battleLogManager
 
   /**
    * 私有构造函数

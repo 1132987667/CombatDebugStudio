@@ -51,7 +51,7 @@
                   <span v-for="status in getMemberStatuses(member)" :key="status.id" class="status-tag"
                     :class="status.isPositive ? 'positive' : 'negative'" @mouseenter="showStatusTooltip($event, status)"
                     @mouseleave="hideStatusTooltip">
-                    {{ status.name }}:{{ status.remainingTurns }}
+                    {{ status.name }}:{{ status.duration }}
                   </span>
                   <span v-if="getMemberStatuses(member).length === 0" class="no-status">无</span>
                 </div>
@@ -103,7 +103,7 @@
                   <span v-for="status in getMemberStatuses(member)" :key="status.id" class="status-tag"
                     :class="status.isPositive ? 'positive' : 'negative'" @mouseenter="showStatusTooltip($event, status)"
                     @mouseleave="hideStatusTooltip">
-                    {{ status.name }}:{{ status.remainingTurns }}
+                    {{ status.name }}:{{ status.duration }}
                   </span>
                   <span v-if="getMemberStatuses(member).length === 0" class="no-status">无</span>
                 </div>
@@ -136,7 +136,7 @@
         </div>
         <div class="tooltip-row">
           <span class="label">剩余回合:</span>
-          <span class="value">{{ statusTooltip.status?.remainingTurns || 0 }}回合</span>
+          <span class="value">{{ statusTooltip.status?.duration || 0 }}回合</span>
         </div>
         <div class="tooltip-row" v-if="getStatusEffectValue(statusTooltip.status)">
           <span class="label">效果强度:</span>

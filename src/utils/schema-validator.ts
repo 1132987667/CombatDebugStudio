@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 interface ValidationError {
   field: string
@@ -195,7 +195,7 @@ export class SchemaValidator {
 
     const result = this.validate(config, schema)
     if (!result.valid) {
-      logger.error('Invalid buff config:', result.errors)
+      battleLogManager.error('Invalid buff config:', result.errors)
       return false
     }
     return true

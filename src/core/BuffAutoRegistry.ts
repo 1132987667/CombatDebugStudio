@@ -8,7 +8,7 @@
  */
 
 import { BuffScriptRegistry } from './BuffScriptRegistry'
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 import { buffScripts, type BuffScriptType } from '@/scripts'
 
 /**
@@ -16,7 +16,7 @@ import { buffScripts, type BuffScriptType } from '@/scripts'
  * 负责自动扫描和注册所有buff脚本
  */
 export class BuffAutoRegistry {
-  private logger = logger
+  private logger = battleLogManager
   private registry = BuffScriptRegistry.getInstance()
   private registeredScripts = new Set<string>()
 
@@ -207,9 +207,9 @@ export const buffAutoRegistry = new BuffAutoRegistry()
 export async function initializeBuffAutoRegistry(): Promise<void> {
   try {
     await buffAutoRegistry.autoRegisterAllScripts()
-    logger.info('buff脚本自动注册器初始化完成')
+    battleLogManager.info('buff脚本自动注册器初始化完成')
   } catch (error) {
-    logger.error('buff脚本自动注册器初始化失败', error)
+    battleLogManager.error('buff脚本自动注册器初始化失败', error)
     throw error
   }
 }

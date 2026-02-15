@@ -11,30 +11,11 @@ import type {
   BattleParticipant,
   BattleState,
   BattleAction,
+  BattleData,
 } from '@/types/battle'
+import { BATTLE_CONSTANTS } from '@/types/battle'
 import { BattleAIFactory, BattleAI } from '../BattleAI'
-import { ActionExecutor } from './ActionExecutor'
-
-/**
- * 战斗数据接口
- * 存储战斗的完整信息，用于AI决策时的上下文获取
- */
-interface BattleData {
-  /** 战斗的唯一标识符 */
-  battleId: string
-  /** 参与者映射表，以参与者ID为键 */
-  participants: Map<string, BattleParticipant>
-  /** 战斗动作历史记录 */
-  actions: BattleAction[]
-  /** 回合顺序数组，存储参与者ID */
-  turnOrder: string[]
-  /** 当前回合号 */
-  currentTurn: number
-  /** 战斗是否处于活跃状态 */
-  isActive: boolean
-  /** 每个参与者的AI实例映射表 */
-  aiInstances: Map<string, BattleAI>
-}
+import type { IActionExecutor } from './interfaces'
 
 /**
  * AI系统类
@@ -66,6 +47,23 @@ export class AISystem {
   }
 
   /**
+   * 获取或创建AI实例
+   * 如果参与者已有AI实例则返回，否则创建新的AI实例
+   * @param participant - 需要AI实例的参与者
+   * @returns BattleAI | null - AI实例，如果无法创建返回null
+   */
+  private getOrCreateAI(participant: BattleParticipant): BattleAI | null {
+    let ai = this.aiInstances.get(participant.id)
+
+    if (!ai) {
+      ai = BattleAIFactory.createAI(participant.type)
+      this.aiInstances.set(participant.id, ai)
+    }
+
+    return ai
+  }
+
+  /**
    * 做出战斗决策
    * 根据当前战斗状态和参与者信息，生成最优的战斗动作
    * @param battleState - 当前战斗状态，包含所有参与者信息和回合状态
@@ -76,56 +74,12 @@ export class AISystem {
     battleState: BattleState,
     participant: BattleParticipant,
   ): BattleAction {
-    let ai = this.aiInstances.get(participant.id)
-
+    const ai = this.getOrCreateAI(participant)
     if (!ai) {
-      ai = BattleAIFactory.createAI(participant.type)
-      this.aiInstances.set(participant.id, ai)
+      throw new Error(`Failed to create AI for participant: ${participant.id}`)
     }
 
     return ai.makeDecision(battleState, participant)
-  }
-
-  /**
-   * 选择攻击目标
-   * 从敌对方中随机选择一个存活的目标作为攻击对象
-   * @param battleState - 当前战斗状态
-   * @param participant - 选择目标的主体参与者
-   * @returns string - 选中目标的参与者ID，如果没有有效目标返回空字符串
-   */
-  public selectTarget(
-    battleState: BattleState,
-    participant: BattleParticipant,
-  ): string {
-    const enemies = Array.from(battleState.participants.values()).filter(
-      (p) => p.type !== participant.type && p.isAlive(),
-    )
-
-    if (enemies.length === 0) {
-      return ''
-    }
-
-    const randomIndex = Math.floor(Math.random() * enemies.length)
-    return enemies[randomIndex].id
-  }
-
-  /**
-   * 判断是否应该使用技能
-   * 根据参与者的当前能量值和随机因素决定是否释放技能
-   * 能量越高使用概率越大，满能量时30%概率使用大招
-   * @param participant - 要判断的参与者
-   * @returns boolean - 应该使用技能返回true，否则返回false
-   */
-  public shouldUseSkill(participant: BattleParticipant): boolean {
-    if (participant.currentEnergy < 50) {
-      return false
-    }
-
-    if (participant.currentEnergy >= 100) {
-      return Math.random() > 0.3
-    }
-
-    return Math.random() > 0.7
   }
 
   /**
@@ -139,13 +93,10 @@ export class AISystem {
   public async executeAIAction(
     battle: BattleData,
     participant: BattleParticipant,
-    actionExecutor: ActionExecutor,
+    actionExecutor: IActionExecutor,
   ): Promise<void> {
-    let ai = this.aiInstances.get(participant.id)
-
+    const ai = this.getOrCreateAI(participant)
     if (!ai) {
-      const defaultAi = BattleAIFactory.createAI(participant.type)
-      this.aiInstances.set(participant.id, defaultAi)
       await actionExecutor.executeDefaultAction(battle, participant)
       return
     }

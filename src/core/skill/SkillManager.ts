@@ -12,14 +12,14 @@ import type { BattleAction, BattleParticipant } from '@/types/battle'
 import { BuffSystem } from '@/core/BuffSystem'
 import { DamageCalculator } from './DamageCalculator'
 import { HealCalculator } from './HealCalculator'
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 技能管理器类
  * 负责技能配置的加载、解析和执行，集成完整的伤害/治疗计算系统
  */
 export class SkillManager {
-  private logger = logger
+  private logger = battleLogManager
   private skillConfigs = new Map<string, SkillConfig>()
   private buffSystem = BuffSystem.getInstance()
   private damageCalculator = new DamageCalculator()

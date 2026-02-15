@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 战斗规则配置接口
@@ -70,7 +70,7 @@ export interface BattleRulesConfig {
  * 负责加载、管理和应用战斗规则配置
  */
 export class BattleRuleManager {
-  private logger = logger
+  private logger = battleLogManager
   private config: BattleRulesConfig | null = null
 
   /**

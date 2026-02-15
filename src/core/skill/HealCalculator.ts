@@ -9,14 +9,14 @@
 
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
 import type { BattleParticipant } from '@/types/battle'
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 治疗计算器类
  * 负责实现复杂的治疗计算逻辑
  */
 export class HealCalculator {
-  private logger = logger
+  private logger = battleLogManager
   private calculationLogs: CalculationLog[] = []
 
   /**

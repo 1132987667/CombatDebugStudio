@@ -17,7 +17,7 @@
  * 4. 资源使用报告
  */
 
-import { FrameworkLogger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 import { raf } from '@/utils/RAF'
 
 /**
@@ -58,7 +58,7 @@ export interface MemoryUsage {
  * 性能监控器类
  */
 export class PerformanceMonitor {
-  private logger: Logger
+  private logger = battleLogManager
   private isEnabled = false
   private startTime = 0
   private metrics: Map<string, PerformanceMetric[]> = new Map()
@@ -68,7 +68,6 @@ export class PerformanceMonitor {
   private memoryMonitorInterval?: symbol
 
   constructor() {
-    this.logger = new Logger('PerformanceMonitor')
   }
 
   /**

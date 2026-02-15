@@ -156,13 +156,35 @@ export class GameDataProcessor {
 
   /**
    * 根据技能ID查找技能
+   * 支持精确匹配和模糊匹配（当精确匹配失败时，尝试匹配包含该ID的技能）
    */
   static findSkillById(skillId: string): SkillConfig | undefined {
     const cacheKey = `skill_${skillId}`
     const cached = DataProcessor.getCachedData<SkillConfig>(cacheKey)
     if (cached) return cached
 
-    const skill = DataProcessor.find(skillsData, (s) => s.id === skillId) as SkillConfig | undefined
+    // 首先尝试精确匹配
+    let skill = DataProcessor.find(skillsData, (s) => s.id === skillId) as SkillConfig | undefined
+    
+    // 如果精确匹配失败，尝试模糊匹配
+    if (!skill) {
+      // 构建模糊匹配的正则表达式
+      // 例如: skill_enemy_001_small -> 匹配 skill_enemy_001_*_small 或 skill_enemy_001_*_*_small
+      const parts = skillId.split('_')
+      if (parts.length >= 4) {
+        // 提取基础部分，如 skill_enemy_001
+        const baseId = parts.slice(0, 3).join('_')
+        // 提取类型部分，如 small
+        const skillType = parts[parts.length - 1]
+        
+        // 尝试匹配包含基础ID和类型的技能
+        skill = DataProcessor.find(skillsData, (s) => {
+          const sid = s.id as string
+          return sid.startsWith(baseId) && sid.endsWith(skillType)
+        }) as SkillConfig | undefined
+      }
+    }
+
     if (skill) {
       DataProcessor.setCachedData(cacheKey, skill)
     } else {

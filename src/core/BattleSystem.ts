@@ -20,7 +20,7 @@ import { BATTLE_STATUS, ROUND_STATUS, PARTICIPANT_SIDE } from '@/types/battle'
 import type { Character } from '@/types/character'
 import type { EnemyInstance } from '@/types/enemy'
 import type { AttributeType } from '@/types/modifier'
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 import { RAFTimer } from '@/utils/RAF'
 import { container } from './di/Container'
 import {
@@ -62,7 +62,7 @@ export class GameBattleSystem implements IBattleSystem {
   }
 
   // 战斗日志记录器实例
-  private battleLogger = logger
+  private battleLogger = battleLogManager
 
   // 事件系统
   private eventListeners: Map<string, Function[]> = new Map()
@@ -241,6 +241,9 @@ export class GameBattleSystem implements IBattleSystem {
     // 记录初始化动作到战斗记录器
     this.battleRecorder.recordAction(battleId, initAction, 0)
 
+    // 应用所有角色的被动技能效果
+    this.applyPassiveSkills(participants)
+
     // 进入战斗阶段
     battleData.battleState = BATTLE_STATUS.ACTIVE
     battleData.roundState = ROUND_STATUS.START
@@ -248,6 +251,49 @@ export class GameBattleSystem implements IBattleSystem {
 
     // 返回战斗状态
     return this.convertToBattleState(battleData)
+  }
+
+  /**
+   * 应用所有角色的被动技能效果
+   * 被动技能在战斗开始时自动生效
+   * @param participants 参与者映射
+   */
+  private applyPassiveSkills(
+    participants: Map<string, BattleParticipant>,
+  ): void {
+    for (const participant of participants.values()) {
+      const skills = participant.getSkills()
+      const passiveSkills = skills.filter(
+        (skill) => skill.type === 'passive',
+      )
+
+      for (const passiveSkill of passiveSkills) {
+        try {
+          // 被动技能通过buff机制生效
+          const skillConfig = this.skillManager.getSkillConfig(passiveSkill.id)
+          if (skillConfig?.steps) {
+            for (const step of skillConfig.steps) {
+              if (step.type === 'buff' && step.buffId) {
+                this.buffSystem.addBuff(participant.id, step.buffId, {
+                  id: step.buffId,
+                  name: skillConfig.name,
+                  duration: step.duration || -1,
+                  description: skillConfig.description,
+                })
+                this.battleLogger.info(
+                  `被动技能生效[${participant.name}]: ${skillConfig.name}`,
+                )
+              }
+            }
+          }
+        } catch (error) {
+          this.battleLogger.error(
+            `应用被动技能失败[${participant.name} - ${passiveSkill.name}]:`,
+            error,
+          )
+        }
+      }
+    }
   }
 
   /**
@@ -353,16 +399,44 @@ export class GameBattleSystem implements IBattleSystem {
     participant: BattleParticipant,
   ): Promise<void> {
     try {
-      const availableSkills = participant.getSkills().filter((skill) => {
+      // 获取所有可用技能并过滤掉被动技能
+      const allAvailableSkills = participant.getSkills().filter((skill) => {
         const energyCost = this.getSkillEnergyCost(skill?.id)
         return participant.currentEnergy >= energyCost
       })
 
-      if (
-        availableSkills.length > 0 &&
-        Math.random() < 0.4 &&
-        availableSkills[0]
-      ) {
+      // 过滤掉被动技能
+      const availableSkills = allAvailableSkills.filter((skill) => {
+        return skill.type !== 'passive'
+      })
+
+      // 检查是否使用AI系统进行决策
+      const aiInstance = battle.aiInstances?.get(participant.id)
+      if (aiInstance) {
+        // 使用AI系统决策
+        const action = aiInstance.makeDecision(
+          {
+            participants: battle.participants,
+            turnOrder: battle.turnOrder,
+            currentTurn: battle.currentTurn,
+          },
+          participant,
+        )
+        
+        this.battleLogger.debug(`AI决策[${participant.name}]: ${action.type === 'skill' ? '使用技能' : '普通攻击'}`)
+        
+        if (action.type === 'skill' && action.skillId) {
+          const skill = participant.getSkills().find(s => s.id === action.skillId)
+          if (skill) {
+            await this.selectAndExecuteSkill(battle, participant, skill)
+          } else {
+            await this.selectAndExecuteAttack(battle, participant)
+          }
+        } else {
+          await this.selectAndExecuteAttack(battle, participant)
+        }
+      } else if (availableSkills.length > 0 && Math.random() < 0.4 && availableSkills[0]) {
+        // 没有AI实例时使用原来的随机选择逻辑（也过滤了被动技能）
         const selectedSkill =
           availableSkills[Math.floor(Math.random() * availableSkills.length)]
         await this.selectAndExecuteSkill(battle, participant, selectedSkill)

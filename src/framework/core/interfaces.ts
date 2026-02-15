@@ -17,7 +17,7 @@
  * 4. 配置驱动 - 支持外部配置和运行时调整
  */
 
-import type { BattleParticipant } from '@/types/battle'
+import type { BattleParticipant, BattleAction } from '@/types/battle'
 
 /**
  * 框架配置接口

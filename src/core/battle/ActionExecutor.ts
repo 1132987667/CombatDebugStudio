@@ -10,29 +10,16 @@
 import type {
   BattleAction,
   BattleParticipant,
-  BattleState,
   ParticipantSide,
+  BattleData,
+  BATTLE_CONSTANTS,
+  SKILL_CONSTANTS,
+  ACTION_TYPES,
+  VALID_ACTION_TYPES,
+  EFFECT_TYPES,
 } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
-import { SkillManager } from '@/core/skill/SkillManager'
-import { logger } from '@/utils/logging'
-
-/**
- * 战斗数据接口
- * 存储战斗的基本信息，用于动作执行时的上下文获取
- */
-interface BattleData {
-  /** 战斗的唯一标识符 */
-  battleId: string
-  /** 参与者映射表，以参与者ID为键 */
-  participants: Map<string, BattleParticipant>
-  /** 回合顺序数组，存储参与者ID */
-  turnOrder: string[]
-  /** 当前回合号 */
-  currentTurn: number
-  /** 战斗是否处于活跃状态 */
-  isActive: boolean
-}
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 动作执行器类
@@ -41,7 +28,7 @@ interface BattleData {
  */
 export class ActionExecutor {
   /** 日志记录器实例，用于记录动作执行过程中的信息 */
-  private logger = logger
+  private logger = battleLogManager
   /** 战斗数据存储映射，以battleId为键 */
   private battles = new Map<string, BattleData>()
   /** 参与者到战斗的映射，用于通过参与者ID快速查找所属战斗 */
@@ -99,7 +86,7 @@ export class ActionExecutor {
     if (!action.sourceId || !action.targetId || !action.type) {
       return false
     }
-    if (!['attack', 'skill', 'heal', 'buff', 'item'].includes(action.type)) {
+    if (!VALID_ACTION_TYPES.includes(action.type as any)) {
       return false
     }
     return true
@@ -124,17 +111,17 @@ export class ActionExecutor {
 
     if (participant.type === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
       targetId = enemies[Math.floor(Math.random() * enemies.length)]
-      damage = Math.floor(Math.random() * 20) + 10
+      damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
     } else if (participant.type === PARTICIPANT_SIDE.ENEMY && characters.length > 0) {
       targetId = characters[Math.floor(Math.random() * characters.length)]
-      damage = Math.floor(Math.random() * 15) + 8
+      damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.ENEMY_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.ENEMY_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.ENEMY_ATTACK_DAMAGE_MIN
     } else {
       return
     }
 
     await this.executeAction({
       id: `action_${Date.now()}`,
-      type: 'attack',
+      type: ACTION_TYPES.ATTACK,
       sourceId: participant.id,
       targetId,
       damage,
@@ -143,7 +130,7 @@ export class ActionExecutor {
       turn: battle.currentTurn + 1,
       effects: [
         {
-          type: 'damage',
+          type: EFFECT_TYPES.DAMAGE,
           value: damage,
           description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
         },
@@ -179,13 +166,13 @@ export class ActionExecutor {
     target: BattleParticipant,
   ): void {
     switch (action.type) {
-      case 'attack':
+      case ACTION_TYPES.ATTACK:
         this.processAttack(action, source, target)
         break
-      case 'skill':
+      case ACTION_TYPES.SKILL:
         this.processSkill(action, source, target)
         break
-      case 'heal':
+      case ACTION_TYPES.HEAL:
         this.processHeal(action, source, target)
         break
       default:
@@ -210,7 +197,7 @@ export class ActionExecutor {
       action.damage = actualDamage
 
       action.effects.push({
-        type: 'damage',
+        type: EFFECT_TYPES.DAMAGE,
         value: actualDamage,
         description: `${source.name} 攻击 ${target.name} 造成 ${actualDamage} 伤害`,
       })
@@ -240,10 +227,10 @@ export class ActionExecutor {
 
     if (!battle) {
       this.logger.error(`无法找到参与者 ${source.id} 所属的战斗`)
-      action.type = 'attack'
-      action.damage = Math.floor(Math.random() * 20) + 10
+      action.type = ACTION_TYPES.ATTACK
+      action.damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
       action.effects.push({
-        type: 'status',
+        type: EFFECT_TYPES.STATUS,
         description: `找不到战斗数据，改为普通攻击`,
       })
       this.processAttack(action, source, target)
@@ -256,10 +243,10 @@ export class ActionExecutor {
       const success = source.spendEnergy(energyCost)
       if (!success) {
         // 能量不足，降级为普通攻击
-        action.type = 'attack'
-        action.damage = Math.floor(Math.random() * 20) + 10
+        action.type = ACTION_TYPES.ATTACK
+        action.damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
         action.effects.push({
-          type: 'status',
+          type: EFFECT_TYPES.STATUS,
           description: `能量不足，改为普通攻击`,
         })
         this.processAttack(action, source, target)
@@ -284,10 +271,10 @@ export class ActionExecutor {
     } catch (error) {
       this.logger.error(`技能执行失败: ${action.skillId}`, error)
       // 技能执行失败，降级为普通攻击
-      action.type = 'attack'
-      action.damage = Math.floor(Math.random() * 20) + 10
+      action.type = ACTION_TYPES.ATTACK
+      action.damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
       action.effects.push({
-        type: 'status',
+        type: EFFECT_TYPES.STATUS,
         description: `技能执行失败，改为普通攻击`,
       })
       this.processAttack(action, source, target)
@@ -310,7 +297,7 @@ export class ActionExecutor {
       const actualHeal = target.heal(action.heal)
       action.heal = actualHeal
       action.effects.push({
-        type: 'heal',
+        type: EFFECT_TYPES.HEAL,
         value: actualHeal,
         description: `${source.name} 治疗 ${target.name} 恢复 ${actualHeal} 生命值`,
       })
@@ -325,11 +312,11 @@ export class ActionExecutor {
    */
   private getSkillEnergyCost(skillId: string): number {
     if (skillId.includes('ultimate') || skillId.includes('大招')) {
-      return 100
+      return SKILL_CONSTANTS.ULTIMATE_ENERGY_COST
     } else if (skillId.includes('skill') || skillId.includes('技能')) {
-      return 50
+      return SKILL_CONSTANTS.SKILL_ENERGY_COST
     }
-    return 0
+    return SKILL_CONSTANTS.PASSIVE_ENERGY_COST
   }
 
   /**

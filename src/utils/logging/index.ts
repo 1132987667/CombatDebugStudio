@@ -2,19 +2,19 @@
  * 文件: index.ts (logging模块)
  * 创建日期: 2026-02-09
  * 作者: CombatDebugStudio
- * 功能: 战斗日志系统统一导出入口
- * 描述: 提供统一的日志接口，包括BattleLogManager、SimpleLogger、FrameworkLogger等
- * 版本: 1.0.0
+ * 功能: 统一日志系统导出入口
+ * 描述: 提供统一的日志接口，BattleLogManager 作为唯一日志管理器
+ * 版本: 2.0.0
  */
 
 /**
- * 战斗日志系统 - 统一导出入口
+ * 统一日志系统 - 导出入口
  *
- * 提供统一的日志接口，包括：
- * - BattleLogManager: 战斗日志管理器
+ * 提供统一的日志接口：
+ * - BattleLogManager: 统一日志管理器（融合系统日志和战斗日志）
  * - BattleLogFormatter: 战斗日志格式化工具
- * - SimpleLogger: 轻量级日志记录器
- * - FrameworkLogger: 框架级日志记录器
+ * - ConsoleLogHandler: 控制台日志处理器
+ * - FileLogHandler: 文件日志处理器
  *
  * @module logging
  */
@@ -33,38 +33,20 @@ export type {
   LogHandler,
 } from '@/types/battle-log'
 
-// 导出 SimpleLoggerConfig 接口
-export type { SimpleLoggerConfig } from './BattleLogManager'
-
 // 导出 BattleLogManager 和相关功能
 export {
   BattleLogManager,
-  createBattleLogManager,
   battleLogManager,
 } from './BattleLogManager'
+
+// 导出 BattleLogManager 类型
+export type { BattleLogManager } from './BattleLogManager'
 
 // 导出 BattleLogFormatter 命名空间
 export { BattleLogFormatter } from './BattleLogManager'
 
-// 导出简单日志记录器
-export { SimpleLogger, logger, type SimpleLogLevel } from './BattleLogManager'
-
-// 导出框架日志记录器
+// 导出日志处理器
 export {
-  FrameworkLogger,
   ConsoleLogHandler,
   FileLogHandler,
-} from './BattleLogManager'
-
-// 向后兼容导出
-// 注意：原 logger.ts 和 Logger.ts 已合并，此处提供兼容层
-export {
-  /**
-   * @deprecated 请使用 SimpleLogger
-   */
-  SimpleLogger as Logger,
-  /**
-   * @deprecated 请使用 logger (SimpleLogger实例)
-   */
-  logger as legacyLogger,
 } from './BattleLogManager'

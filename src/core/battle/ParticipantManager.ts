@@ -17,7 +17,7 @@ import {
   type ParticipantInitData,
 } from './BattleParticipantImpl'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 参与者状态变化事件接口
@@ -58,7 +58,7 @@ export class ParticipantManager {
   /** 状态快照历史记录 */
   private stateSnapshots = new Map<string, ParticipantStateSnapshot[]>()
   /** 日志记录器 */
-  private logger = logger
+  private logger = battleLogManager
 
   /**
    * 创建单个参与者

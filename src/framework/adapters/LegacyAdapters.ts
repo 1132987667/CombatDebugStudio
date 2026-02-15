@@ -24,7 +24,7 @@ import {
   CalculationContext,
   CalculationResult,
 } from '../systems/CalculationSystem'
-import { FrameworkLogger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 计算日志接口（兼容原有格式）
@@ -46,11 +46,10 @@ interface CalculationLog {
  * 保持与现有DamageCalculator相同的接口
  */
 export class LegacyDamageCalculatorAdapter {
-  private logger: Logger
+  private logger = battleLogManager
   private calculationLogs: CalculationLog[] = []
 
   constructor() {
-    this.logger = new Logger('LegacyDamageCalculatorAdapter')
   }
 
   /**
@@ -294,11 +293,10 @@ export class LegacyDamageCalculatorAdapter {
  * 保持与现有HealCalculator相同的接口
  */
 export class LegacyHealCalculatorAdapter {
-  private logger: Logger
+  private logger = battleLogManager
   private calculationLogs: CalculationLog[] = []
 
   constructor() {
-    this.logger = new Logger('LegacyHealCalculatorAdapter')
   }
 
   /**
@@ -464,10 +462,9 @@ export class LegacyHealCalculatorAdapter {
  * 保持与现有BattleManager相同的接口
  */
 export class LegacyBattleManagerAdapter {
-  private logger: Logger
+  private logger = battleLogManager
 
   constructor() {
-    this.logger = new Logger('LegacyBattleManagerAdapter')
   }
 
   /**

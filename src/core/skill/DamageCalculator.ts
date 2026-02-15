@@ -9,7 +9,7 @@
 
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
 import type { BattleParticipant } from '@/types/battle'
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 伤害计算配置接口
@@ -50,7 +50,7 @@ export interface DamageModifier {
  * 负责实现复杂的伤害计算逻辑
  */
 export class DamageCalculator {
-  private logger = logger
+  private logger = battleLogManager
   private calculationLogs: CalculationLog[] = []
   private modifiers: DamageModifier[] = []
   private config: DamageCalculationConfig = {

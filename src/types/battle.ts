@@ -54,6 +54,94 @@ export const PARTICIPANT_SIDE = {
   ENEMY: 'enemy' as const,
 }
 
+/** 战斗相关常量 */
+export const BATTLE_CONSTANTS = {
+  /** 默认攻击伤害范围 */
+  DEFAULT_ATTACK_DAMAGE_MIN: 10,
+  DEFAULT_ATTACK_DAMAGE_MAX: 20,
+  /** 敌人默认攻击伤害范围 */
+  ENEMY_ATTACK_DAMAGE_MIN: 8,
+  ENEMY_ATTACK_DAMAGE_MAX: 15,
+  /** 默认能量上限 */
+  DEFAULT_MAX_ENERGY: 150,
+  /** 技能能量消耗阈值 */
+  SKILL_ENERGY_THRESHOLD: 50,
+  ULTIMATE_ENERGY_THRESHOLD: 100,
+  /** 技能使用概率 */
+  SKILL_USE_CHANCE: 0.4,
+  ULTIMATE_USE_CHANCE: 0.3,
+  LOW_ENERGY_USE_CHANCE: 0.7,
+  /** AI决策能量阈值 */
+  AI_SKILL_ENERGY_THRESHOLD: 0.7,
+  ENEMY_SKILL_ENERGY_THRESHOLD: 50,
+  /** 治疗血量阈值 */
+  HEAL_THRESHOLD: 0.3,
+  CRITICAL_HEALTH_THRESHOLD: 0.5,
+  /** 威胁值计算权重 */
+  THREAT_HEALTH_WEIGHT: 50,
+  THREAT_ENERGY_WEIGHT: 30,
+  THREAT_TYPE_WEIGHT: 20,
+  THREAT_BUFF_WEIGHT: 10,
+  /** 技能选择威胁阈值 */
+  SKILL_SELECTION_THREAT_THRESHOLD: 50,
+} as const
+
+/** 技能类型相关常量 */
+export const SKILL_CONSTANTS = {
+  /** 技能能量消耗 */
+  ULTIMATE_ENERGY_COST: 100,
+  SKILL_ENERGY_COST: 50,
+  PASSIVE_ENERGY_COST: 0,
+  /** 技能冷却时间（毫秒） */
+  HEAL_SKILL_COOLDOWN: 2000,
+  ATTACK_SKILL_COOLDOWN: 1500,
+  ULTIMATE_SKILL_COOLDOWN: 5000,
+  ENEMY_BASIC_SKILL_COOLDOWN: 1000,
+  ENEMY_ULTIMATE_SKILL_COOLDOWN: 3000,
+  /** 默认技能能量消耗 */
+  HEAL_SKILL_ENERGY: 30,
+  ATTACK_SKILL_ENERGY: 25,
+  ENEMY_BASIC_SKILL_ENERGY: 20,
+  ENEMY_ULTIMATE_SKILL_ENERGY: 80,
+} as const
+
+/** 技能效果常量 */
+export const SKILL_EFFECT_CONSTANTS = {
+  HEAL_SKILL_HEAL: 50,
+  ATTACK_SKILL_DAMAGE: 35,
+  ULTIMATE_SKILL_DAMAGE: 80,
+  ENEMY_BASIC_SKILL_DAMAGE: 25,
+  ENEMY_ULTIMATE_SKILL_DAMAGE: 60,
+  DEFAULT_SKILL_DAMAGE: 10,
+} as const
+
+/** 动作类型常量 */
+export const ACTION_TYPES = {
+  ATTACK: 'attack',
+  SKILL: 'skill',
+  HEAL: 'heal',
+  BUFF: 'buff',
+  ITEM: 'item',
+} as const
+
+/** 动作类型数组 */
+export const VALID_ACTION_TYPES = [
+  ACTION_TYPES.ATTACK,
+  ACTION_TYPES.SKILL,
+  ACTION_TYPES.HEAL,
+  ACTION_TYPES.BUFF,
+  ACTION_TYPES.ITEM,
+] as const
+
+/** 战斗效果类型常量 */
+export const EFFECT_TYPES = {
+  DAMAGE: 'damage',
+  HEAL: 'heal',
+  BUFF: 'buff',
+  DEBUFF: 'debuff',
+  STATUS: 'status',
+} as const
+
 export type ParticipantSide =
   (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
 

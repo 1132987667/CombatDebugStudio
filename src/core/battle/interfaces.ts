@@ -219,6 +219,18 @@ export interface IActionExecutor {
    * @returns boolean - 动作是否有效
    */
   validateAction(action: BattleAction): boolean
+
+  /**
+   * 执行默认动作
+   * 当AI决策失败或需要默认行为时执行
+   * @param battle - 当前战斗数据
+   * @param participant - 执行动作的参与者
+   * @returns Promise<void> - 异步执行完成
+   */
+  executeDefaultAction(
+    battle: BattleData,
+    participant: BattleParticipant,
+  ): Promise<void>
 }
 
 /**
@@ -247,19 +259,18 @@ export interface IAISystem {
   ): BattleAction
 
   /**
-   * 选择攻击目标
-   * @param battleState - 当前战斗状态
+   * 执行AI动作
+   * 综合决策、目标选择和动作执行
+   * @param battle - 当前战斗数据
    * @param participant - 当前参与者
-   * @returns string - 目标参与者ID
+   * @param actionExecutor - 动作执行器
+   * @returns Promise<void> - 异步执行完成
    */
-  selectTarget(battleState: BattleState, participant: BattleParticipant): string
-
-  /**
-   * 判断是否应该使用技能
-   * @param participant - 当前参与者
-   * @returns boolean - 是否应该使用技能
-   */
-  shouldUseSkill(participant: BattleParticipant): boolean
+  executeAIAction(
+    battle: BattleData,
+    participant: BattleParticipant,
+    actionExecutor: IActionExecutor,
+  ): Promise<void>
 }
 
 // 依赖注入令牌

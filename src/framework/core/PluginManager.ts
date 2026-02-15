@@ -24,7 +24,8 @@ import type {
   IEventSystem,
   IConfigManager,
 } from './interfaces'
-import { FrameworkLogger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
+import type { BattleLogManager } from '@/utils/logging'
 
 /**
  * 插件包装器
@@ -44,13 +45,13 @@ export class PluginManager implements IPluginManager {
   private plugins: Map<string, PluginWrapper> = new Map()
   private eventSystem: IEventSystem
   private configManager: IConfigManager
-  private logger: Logger
+  private logger: BattleLogManager
   private isInitialized = false
 
   constructor(eventSystem: IEventSystem, configManager: IConfigManager) {
     this.eventSystem = eventSystem
     this.configManager = configManager
-    this.logger = new Logger()
+    this.logger = battleLogManager
   }
 
   /**
@@ -462,10 +463,9 @@ export abstract class BasePlugin implements Plugin {
   public abstract readonly description: string
 
   protected config: any = {}
-  protected logger: Logger
+  protected logger = battleLogManager
 
   constructor() {
-    this.logger = new Logger()
   }
 
   /**

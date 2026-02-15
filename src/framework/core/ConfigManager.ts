@@ -19,7 +19,7 @@
  */
 
 import type { IConfigManager } from './interfaces'
-import { FrameworkLogger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 配置项定义
@@ -39,11 +39,10 @@ export class ConfigManager implements IConfigManager {
   private configs: Map<string, ConfigItem> = new Map()
   private changeListeners: Map<string, Array<(newValue: any) => void>> =
     new Map()
-  private logger: Logger
+  private logger = battleLogManager
   private isInitialized = false
 
   constructor() {
-    this.logger = new Logger()
   }
 
   /**

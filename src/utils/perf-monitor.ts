@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 interface PerformanceMetric {
   name: string
@@ -24,12 +24,12 @@ class PerformanceMonitor {
 
   public enable(): void {
     this.enabled = true
-    logger.info('Performance monitoring enabled')
+    battleLogManager.info('Performance monitoring enabled')
   }
 
   public disable(): void {
     this.enabled = false
-    logger.info('Performance monitoring disabled')
+    battleLogManager.info('Performance monitoring disabled')
   }
 
   public measure<T>(name: string, fn: () => T): T {
@@ -77,18 +77,18 @@ class PerformanceMonitor {
 
   public reset(): void {
     this.metrics.clear()
-    logger.info('Performance metrics reset')
+    battleLogManager.info('Performance metrics reset')
   }
 
   public printReport(): void {
     if (!this.enabled || this.metrics.size === 0) {
-      logger.info('No performance metrics to report')
+      battleLogManager.info('No performance metrics to report')
       return
     }
 
-    logger.info('=== Performance Report ===')
+    battleLogManager.info('=== Performance Report ===')
     this.getMetrics().forEach((metric) => {
-      logger.info(`${metric.name}:`, {
+      battleLogManager.info(`${metric.name}:`, {
         calls: metric.calls,
         avgTime: `${metric.avgTime.toFixed(2)}ms`,
         maxTime: `${metric.maxTime.toFixed(2)}ms`,
@@ -96,7 +96,7 @@ class PerformanceMonitor {
         totalTime: `${metric.totalTime.toFixed(2)}ms`
       })
     })
-    logger.info('========================')
+    battleLogManager.info('========================')
   }
 }
 

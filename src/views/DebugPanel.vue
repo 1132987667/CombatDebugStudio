@@ -245,7 +245,7 @@ import type { SkillConfig } from "@/types/skill";
 const props = defineProps<{
   allyTeam: UIBattleCharacter[];
   enemyTeam: UIBattleCharacter[];
-  selectedCharacterId: string | null;
+  selectedChar: UIBattleCharacter | null;
   lastExportTime: string | null;
 }>();
 
@@ -352,16 +352,8 @@ const getScopeName = (scope: string): string => {
 };
 
 // ------------------------------------------------------------
-// 1. 当前选中的角色（角色或敌人）
-const selectedChar = computed(() => {
-  const { allyTeam, enemyTeam, selectedCharacterId } = props;
-  if (!selectedCharacterId) return null;
-  return (
-    allyTeam.find((c) => c.id === selectedCharacterId) ||
-    enemyTeam.find((e) => e.id === selectedCharacterId) ||
-    null
-  );
-});
+// 1. 当前选中的角色（直接从 props 获取）
+const selectedChar = computed(() => props.selectedChar);
 
 // 选中角色名称（用于标题栏）
 const selectedCharName = computed(() => selectedChar.value?.name || "未选择");
@@ -373,8 +365,21 @@ const selectedOriginalId = computed(() => {
 });
 
 // ------------------------------------------------------------
-// 2. 技能信息（一次性获取全部技能）
+// 2. 技能信息（优先使用角色自带的技能配置，如果没有则回退到查询）
 const selectedCharSkills = computed(() => {
+  const char = selectedChar.value;
+  if (!char) return { passive: null, small: null, ultimate: null };
+  
+  // 优先使用角色自带的 skills 配置
+  if (char.skills && (char.skills.passive?.length || char.skills.small?.length || char.skills.ultimate?.length)) {
+    return {
+      passive: char.skills.passive?.[0] || null,
+      small: char.skills.small?.[0] || null,
+      ultimate: char.skills.ultimate?.[0] || null,
+    };
+  }
+  
+  // 回退到通过 originalId 查询
   const id = selectedOriginalId.value;
   if (!id) return { passive: null, small: null, ultimate: null };
   return GameDataProcessor.getCharacterSkills(id);

@@ -19,7 +19,7 @@
  */
 
 import type { IEventSystem, EventListener } from './interfaces'
-import { FrameworkLogger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 import { raf } from '@/utils/RAF'
 
 /**
@@ -49,11 +49,10 @@ export class EventSystem implements IEventSystem {
   private listeners: Map<string, EventListenerWrapper[]> = new Map()
   private eventHistory: EventData[] = []
   private maxHistorySize = 1000
-  private logger: Logger
+  private logger = battleLogManager
   private isEnabled = true
 
   constructor() {
-    this.logger = new Logger()
   }
 
   /**

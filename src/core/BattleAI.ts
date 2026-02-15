@@ -12,9 +12,14 @@ import type {
   BattleAction,
   BattleState,
   ParticipantSide,
+  BATTLE_CONSTANTS,
+  SKILL_CONSTANTS,
+  SKILL_EFFECT_CONSTANTS,
+  ACTION_TYPES,
+  EFFECT_TYPES,
 } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 战斗AI接口
@@ -91,6 +96,9 @@ export interface Skill {
   buffId?: string
 }
 
+/** 技能配置加载器类型 */
+export type SkillConfigLoader = (skillIds: string[]) => Skill[]
+
 /**
  * 战场分析结果接口
  * 包含AI分析战场态势后得出的关键信息
@@ -118,18 +126,47 @@ interface BattleAnalysis {
 export class BaseBattleAI implements BattleAI {
   /** 技能集合，以技能ID为键 */
   protected skills: Map<string, Skill> = new Map()
+  /** 技能配置加载器（可选） */
+  protected skillConfigLoader?: SkillConfigLoader
 
   /**
    * 构造函数
-   * 初始化AI实例并加载默认技能
+   * 初始化AI实例并加载技能
+   * @param skillIds - 可选的技能ID列表，用于从外部加载技能配置
    */
-  constructor() {
-    this.initializeSkills()
+  constructor(skillIds?: string[]) {
+    if (skillIds && skillIds.length > 0) {
+      this.loadSkillsFromConfig(skillIds)
+    } else {
+      this.initializeSkills()
+    }
+  }
+
+  /**
+   * 从外部配置加载技能
+   * @param skillIds - 技能ID列表
+   */
+  protected loadSkillsFromConfig(skillIds: string[]): void {
+    if (this.skillConfigLoader) {
+      const loadedSkills = this.skillConfigLoader(skillIds)
+      loadedSkills.forEach((skill) => {
+        this.skills.set(skill.id, skill)
+      })
+    }
+  }
+
+  /**
+   * 设置技能配置加载器
+   * @param loader - 技能配置加载函数
+   */
+  public setSkillConfigLoader(loader: SkillConfigLoader): void {
+    this.skillConfigLoader = loader
   }
 
   /**
    * 初始化技能
    * 子类应重写此方法添加特定技能
+   * 如果已通过构造函数传入skillIds，则此方法不会自动调用
    */
   protected initializeSkills(): void {
     // 子类实现
@@ -140,49 +177,44 @@ export class BaseBattleAI implements BattleAI {
     participant: BattleParticipant,
   ): BattleAction {
     try {
-      // 验证参数
       if (!battleState || !participant) {
-        logger.error('AI决策参数无效:', { battleState, participant })
+        battleLogManager.error('AI决策参数无效:', { battleState, participant })
         return this.selectAttack(participant)
       }
 
-      // 分析战场态势
       const battleAnalysis = this.analyzeBattleState(battleState, participant)
 
-      // 基于战场分析做出决策
       if (battleAnalysis.shouldUseSkill) {
         const skillId = this.selectSkill(participant, battleAnalysis)
         if (skillId) {
           try {
             return this.createSkillStep(battleState, participant, skillId)
           } catch (skillError) {
-            logger.error('技能执行出错:', skillError)
+            battleLogManager.error('技能执行出错:', skillError)
             return this.selectAttack(participant)
           }
         }
       }
 
-      // 默认使用攻击
       return this.selectAttack(participant)
     } catch (error) {
-      logger.error('AI决策出错:', error)
+      battleLogManager.error('AI决策出错:', error)
       try {
         return this.selectAttack(participant)
       } catch (attackError) {
-        logger.error('攻击执行出错:', attackError)
-        // 返回一个安全的默认行动
+        battleLogManager.error('攻击执行出错:', attackError)
         return {
           id: `fallback_${Date.now()}`,
-          type: 'attack',
+          type: ACTION_TYPES.ATTACK,
           sourceId: participant?.id || 'unknown',
           targetId: 'unknown',
-          damage: 10,
+          damage: SKILL_EFFECT_CONSTANTS.DEFAULT_SKILL_DAMAGE,
           success: true,
           timestamp: Date.now(),
           effects: [
             {
-              type: 'damage',
-              value: 10,
+              type: EFFECT_TYPES.DAMAGE,
+              value: SKILL_EFFECT_CONSTANTS.DEFAULT_SKILL_DAMAGE,
               description: '默认攻击',
             },
           ],
@@ -191,9 +223,6 @@ export class BaseBattleAI implements BattleAI {
     }
   }
 
-  /**
-   * 分析战场态势
-   */
   protected analyzeBattleState(
     battleState: BattleState,
     participant: BattleParticipant,
@@ -206,12 +235,10 @@ export class BaseBattleAI implements BattleAI {
       (p) => p.type !== participant.type && p.isAlive(),
     )
 
-    // 计算团队血量
     const teamHealth = allies.reduce((sum, p) => sum + p.currentHealth, 0)
     const teamMaxHealth = allies.reduce((sum, p) => sum + p.maxHealth, 0)
     const teamHealthPercent = teamMaxHealth > 0 ? teamHealth / teamMaxHealth : 0
 
-    // 计算敌人威胁
     const highestThreatEnemy = enemies.reduce<{
       enemy: BattleParticipant | null
       threat: number
@@ -223,8 +250,7 @@ export class BaseBattleAI implements BattleAI {
       { enemy: null, threat: 0 },
     )
 
-    // 检查是否有需要治疗的队友
-    const needsHealing = allies.some((p) => p.currentHealth / p.maxHealth < 0.3)
+    const needsHealing = allies.some((p) => p.currentHealth / p.maxHealth < BATTLE_CONSTANTS.HEAL_THRESHOLD)
 
     return {
       allies,
@@ -248,21 +274,16 @@ export class BaseBattleAI implements BattleAI {
       throw new Error('No valid targets')
     }
 
-    // 基于威胁值排序选择目标
     const targetsWithThreat = enemies.map((target) => ({
       target,
       threat: this.calculateThreat(target, _participant, battleState),
     }))
 
-    // 按威胁值排序
     targetsWithThreat.sort((a, b) => b.threat - a.threat)
 
     return targetsWithThreat[0].target.id
   }
 
-  /**
-   * 计算目标的威胁值
-   */
   protected calculateThreat(
     target: BattleParticipant,
     participant: BattleParticipant,
@@ -270,51 +291,42 @@ export class BaseBattleAI implements BattleAI {
   ): number {
     let threat = 0
 
-    // 基于血量
     const healthPercent = target.currentHealth / target.maxHealth
-    threat += (1 - healthPercent) * 50 // 血量越低威胁越高
+    threat += (1 - healthPercent) * BATTLE_CONSTANTS.THREAT_HEALTH_WEIGHT
 
-    // 基于能量
     const energyPercent = target.currentEnergy / target.maxEnergy
-    threat += energyPercent * 30 // 能量越高威胁越高
+    threat += energyPercent * BATTLE_CONSTANTS.THREAT_ENERGY_WEIGHT
 
-    // 基于类型
     if (target.type === PARTICIPANT_SIDE.ALLY && participant.type === PARTICIPANT_SIDE.ENEMY) {
-      threat += 20 // 敌人优先攻击角色
+      threat += BATTLE_CONSTANTS.THREAT_TYPE_WEIGHT
     }
 
-    // 基于状态效果
     if (target.buffs.length > 0) {
-      threat += target.buffs.length * 10 // 有buff的目标威胁更高
+      threat += target.buffs.length * BATTLE_CONSTANTS.THREAT_BUFF_WEIGHT
     }
 
     return threat
   }
 
   public shouldUseSkill(participant: BattleParticipant): boolean {
-    // 检查能量是否足够
     const energy =
       participant.getAttribute('energy') || participant.currentEnergy || 0
     const maxEnergy =
-      participant.getAttribute('max_energy') || participant.maxEnergy || 150
-
-    // 能量达到70%以上考虑使用技能
-    return energy >= maxEnergy * 0.7
+      participant.getAttribute('max_energy') || participant.maxEnergy || BATTLE_CONSTANTS.DEFAULT_MAX_ENERGY
+    return energy >= maxEnergy * BATTLE_CONSTANTS.AI_SKILL_ENERGY_THRESHOLD
   }
 
   public selectSkill(
     _participant: BattleParticipant,
     analysis?: BattleAnalysis,
   ): string | null {
-    // 简单的技能选择逻辑
-    const skills = Array.from(this.skills.values())
+    const allSkills = Array.from(this.skills.values())
+    const skills = allSkills.filter((s) => s.type !== SkillType.PASSIVE)
     if (skills.length === 0) {
       return null
     }
 
-    // 基于战场分析的技能选择
     if (analysis) {
-      // 优先选择治疗技能如果团队需要治疗
       if (analysis.needsHealing) {
         const healSkill = skills.find((s) => s.heal && s.heal > 0)
         if (healSkill) {
@@ -322,8 +334,7 @@ export class BaseBattleAI implements BattleAI {
         }
       }
 
-      // 如果敌人威胁很高，优先选择高伤害技能
-      if (analysis.highestThreatEnemy.threat > 50) {
+      if (analysis.highestThreatEnemy.threat > BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD) {
         const damageSkill = skills.find((s) => s.damage && s.damage > 0)
         if (damageSkill) {
           return damageSkill.id
@@ -331,13 +342,11 @@ export class BaseBattleAI implements BattleAI {
       }
     }
 
-    // 优先选择小技能
     const smallSkill = skills.find((s) => s.type === SkillType.SMALL)
     if (smallSkill) {
       return smallSkill.id
     }
 
-    // 其次选择大招
     const ultimateSkill = skills.find((s) => s.type === SkillType.ULTIMATE)
     if (ultimateSkill) {
       return ultimateSkill.id
@@ -349,44 +358,37 @@ export class BaseBattleAI implements BattleAI {
   public selectAttack(participant: BattleParticipant): BattleAction {
     return {
       id: `attack_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type: 'attack',
+      type: ACTION_TYPES.ATTACK,
       sourceId: participant.id,
-      targetId: '', // 会在makeDecision中设置
-      damage: Math.floor(Math.random() * 20) + 10,
+      targetId: '',
+      damage: Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN,
       success: true,
       timestamp: Date.now(),
       effects: [
         {
-          type: 'damage',
-          value: Math.floor(Math.random() * 20) + 10,
+          type: EFFECT_TYPES.DAMAGE,
+          value: Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN,
           description: `${participant.name} 普通攻击`,
         },
       ],
     }
   }
 
-  /**
-   * 选择治疗目标
-   */
   protected selectHealTarget(
     battleState: BattleState,
     participant: BattleParticipant,
   ): string {
-    // 收集所有友方目标
     const allies: { target: BattleParticipant; healthPercent: number }[] = []
 
     battleState.participants.forEach((target) => {
-      // 只选择同类型的目标（角色选择角色，敌人选择敌人）
       if (target.type === participant.type && target.isAlive()) {
         const healthPercent = target.currentHealth / target.maxHealth
         allies.push({ target, healthPercent })
       }
     })
 
-    // 按血量百分比排序，优先选择血量低的目标
     allies.sort((a, b) => a.healthPercent - b.healthPercent)
 
-    // 返回血量最低的友方目标
     return allies.length > 0 ? allies[0].target.id : participant.id
   }
 
@@ -401,19 +403,16 @@ export class BaseBattleAI implements BattleAI {
       throw new Error(`Skill not found: ${skillId}`)
     }
 
-    // 根据技能类型选择目标
     let targetId = ''
     if (skill.heal) {
-      // 治疗技能选择友方目标
       targetId = this.selectHealTarget(battleState, participant)
     } else {
-      // 其他技能选择敌方目标
       targetId = this.selectTarget(battleState, participant)
     }
 
     const action: BattleAction = {
       id: `skill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type: 'skill',
+      type: ACTION_TYPES.SKILL,
       sourceId: participant.id,
       targetId,
       skillId,
@@ -421,17 +420,16 @@ export class BaseBattleAI implements BattleAI {
       timestamp: Date.now(),
       effects: [
         {
-          type: 'status',
+          type: EFFECT_TYPES.STATUS,
           description: `${participant.name} 使用 ${skill.name}`,
         },
       ],
     }
 
-    // 添加技能效果
     if (skill.damage) {
       action.damage = skill.damage
       action.effects.push({
-        type: 'damage',
+        type: EFFECT_TYPES.DAMAGE,
         value: skill.damage,
         description: `造成 ${skill.damage} 伤害`,
       })
@@ -440,7 +438,7 @@ export class BaseBattleAI implements BattleAI {
     if (skill.heal) {
       action.heal = skill.heal
       action.effects.push({
-        type: 'heal',
+        type: EFFECT_TYPES.HEAL,
         value: skill.heal,
         description: `恢复 ${skill.heal} 生命值`,
       })
@@ -449,7 +447,7 @@ export class BaseBattleAI implements BattleAI {
     if (skill.buffId) {
       action.buffId = skill.buffId
       action.effects.push({
-        type: 'buff',
+        type: EFFECT_TYPES.BUFF,
         buffId: skill.buffId,
         description: `施加 ${skill.name} 效果`,
       })
@@ -458,23 +456,14 @@ export class BaseBattleAI implements BattleAI {
     return action
   }
 
-  /**
-   * 添加技能
-   */
   public addSkill(skill: Skill): void {
     this.skills.set(skill.id, skill)
   }
 
-  /**
-   * 获取技能
-   */
   public getSkill(skillId: string): Skill | undefined {
     return this.skills.get(skillId)
   }
 
-  /**
-   * 获取所有技能
-   */
   public getSkills(): Skill[] {
     return Array.from(this.skills.values())
   }
@@ -483,55 +472,47 @@ export class BaseBattleAI implements BattleAI {
 /**
  * 角色AI类
  * 为玩家角色提供特定的AI行为
- * 包含治疗优先、血量保护、智能技能选择等特性
  */
 export class CharacterAI extends BaseBattleAI {
-  /**
-   * 初始化技能
-   * 添加角色默认技能：治疗术、强力攻击、终极技能
-   */
   protected initializeSkills(): void {
-    // 默认角色技能
     this.addSkill({
       id: 'skill_heal',
       name: '治疗术',
       type: SkillType.SMALL,
-      energyCost: 30,
-      cooldown: 2000,
+      energyCost: SKILL_CONSTANTS.HEAL_SKILL_ENERGY,
+      cooldown: SKILL_CONSTANTS.HEAL_SKILL_COOLDOWN,
       lastUsed: 0,
       description: '恢复生命值',
-      heal: 50,
+      heal: SKILL_EFFECT_CONSTANTS.HEAL_SKILL_HEAL,
     })
 
     this.addSkill({
       id: 'skill_attack',
       name: '强力攻击',
       type: SkillType.SMALL,
-      energyCost: 25,
-      cooldown: 1500,
+      energyCost: SKILL_CONSTANTS.ATTACK_SKILL_ENERGY,
+      cooldown: SKILL_CONSTANTS.ATTACK_SKILL_COOLDOWN,
       lastUsed: 0,
       description: '造成额外伤害',
-      damage: 35,
+      damage: SKILL_EFFECT_CONSTANTS.ATTACK_SKILL_DAMAGE,
     })
 
     this.addSkill({
       id: 'skill_ultimate',
       name: '终极技能',
       type: SkillType.ULTIMATE,
-      energyCost: 100,
-      cooldown: 5000,
+      energyCost: SKILL_CONSTANTS.ULTIMATE_ENERGY_COST,
+      cooldown: SKILL_CONSTANTS.ULTIMATE_SKILL_COOLDOWN,
       lastUsed: 0,
       description: '造成大量伤害',
-      damage: 80,
+      damage: SKILL_EFFECT_CONSTANTS.ULTIMATE_SKILL_DAMAGE,
     })
   }
 
   public shouldUseSkill(participant: BattleParticipant): boolean {
-    // 角色特有逻辑
     const healthPercent = participant.currentHealth / participant.maxHealth
 
-    // 血量低于50%时优先治疗
-    if (healthPercent < 0.5) {
+    if (healthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD) {
       return true
     }
 
@@ -544,8 +525,7 @@ export class CharacterAI extends BaseBattleAI {
   ): string | null {
     const healthPercent = participant.currentHealth / participant.maxHealth
 
-    // 血量低时优先使用治疗技能
-    if (healthPercent < 0.5) {
+    if (healthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD) {
       const healSkill = Array.from(this.skills.values()).find(
         (s) => s.heal && s.heal > 0,
       )
@@ -554,24 +534,20 @@ export class CharacterAI extends BaseBattleAI {
       }
     }
 
-    // 满血时不使用治疗技能
-    const healSkill = Array.from(this.skills.values()).find(
+    const healSkill2 = Array.from(this.skills.values()).find(
       (s) => s.heal && s.heal > 0,
     )
-    if (healSkill && healthPercent >= 1) {
-      // 满血，跳过治疗技能，选择其他技能
+    if (healSkill2 && healthPercent >= 1) {
       const attackSkills = Array.from(this.skills.values()).filter(
         (s) => s.damage && s.damage > 0,
       )
       if (attackSkills.length > 0) {
-        // 优先选择伤害最高的技能
         attackSkills.sort((a, b) => (b.damage || 0) - (a.damage || 0))
         return attackSkills[0].id
       }
     }
 
-    // 能量足够时优先使用大招
-    if (participant.currentEnergy >= 100) {
+    if (participant.currentEnergy >= BATTLE_CONSTANTS.ULTIMATE_ENERGY_THRESHOLD) {
       const ultimateSkill = Array.from(this.skills.values()).find(
         (s) => s.type === SkillType.ULTIMATE,
       )
@@ -595,7 +571,6 @@ export class CharacterAI extends BaseBattleAI {
       throw new Error('No enemies found')
     }
 
-    // 优先攻击血量最低的敌人
     enemies.sort((a, b) => a.currentHealth - b.currentHealth)
     return enemies[0].id
   }
@@ -604,41 +579,34 @@ export class CharacterAI extends BaseBattleAI {
 /**
  * 敌人AI类
  * 为敌人单位提供特定的AI行为
- * 包含更激进的技能使用策略和目标选择逻辑
  */
 export class EnemyAI extends BaseBattleAI {
-  /**
-   * 初始化技能
-   * 添加敌人默认技能：爪击、狂暴
-   */
   protected initializeSkills(): void {
-    // 默认敌人技能
     this.addSkill({
       id: 'enemy_skill_1',
       name: '爪击',
       type: SkillType.SMALL,
-      energyCost: 20,
-      cooldown: 1000,
+      energyCost: SKILL_CONSTANTS.ENEMY_BASIC_SKILL_ENERGY,
+      cooldown: SKILL_CONSTANTS.ENEMY_BASIC_SKILL_COOLDOWN,
       lastUsed: 0,
       description: '快速攻击',
-      damage: 25,
+      damage: SKILL_EFFECT_CONSTANTS.ENEMY_BASIC_SKILL_DAMAGE,
     })
 
     this.addSkill({
       id: 'enemy_skill_2',
       name: '狂暴',
       type: SkillType.ULTIMATE,
-      energyCost: 80,
-      cooldown: 3000,
+      energyCost: SKILL_CONSTANTS.ENEMY_ULTIMATE_SKILL_ENERGY,
+      cooldown: SKILL_CONSTANTS.ENEMY_ULTIMATE_SKILL_COOLDOWN,
       lastUsed: 0,
       description: '增加攻击力',
-      damage: 60,
+      damage: SKILL_EFFECT_CONSTANTS.ENEMY_ULTIMATE_SKILL_DAMAGE,
     })
   }
 
   public shouldUseSkill(participant: BattleParticipant): boolean {
-    // 敌人更激进
-    return participant.currentEnergy >= 50
+    return participant.currentEnergy >= BATTLE_CONSTANTS.ENEMY_SKILL_ENERGY_THRESHOLD
   }
 
   public selectSkill(
@@ -660,7 +628,6 @@ export class EnemyAI extends BaseBattleAI {
       throw new Error('No characters found')
     }
 
-    // 优先攻击血量最低的角色
     characters.sort((a, b) => a.currentHealth - b.currentHealth)
     return characters[0].id
   }
@@ -669,16 +636,21 @@ export class EnemyAI extends BaseBattleAI {
 /**
  * AI工厂类
  * 负责创建不同类型的AI实例
- * 使用工厂模式简化AI实例的创建和管理
  */
 export class BattleAIFactory {
-  /**
-   * 创建AI实例
-   * 根据类型创建角色AI或敌人AI
-   * @param type AI类型：character或enemy
-   * @returns 创建的AI实例
-   */
   public static createAI(type: ParticipantSide): BattleAI {
     return type === PARTICIPANT_SIDE.ALLY ? new CharacterAI() : new EnemyAI()
+  }
+
+  public static createAIWithSkills(
+    type: ParticipantSide,
+    skillIds: string[],
+    skillLoader?: SkillConfigLoader,
+  ): BattleAI {
+    const ai = type === PARTICIPANT_SIDE.ALLY ? new CharacterAI(skillIds) : new EnemyAI(skillIds)
+    if (skillLoader) {
+      ai.setSkillConfigLoader(skillLoader)
+    }
+    return ai
   }
 }

@@ -1,7 +1,7 @@
 import type { IBuffScript } from '@/types/buff'
 import type { BuffContext } from '@/core/BuffContext'
 import { BuffErrorBoundary } from '@/core/BuffErrorBoundary'
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TParams> {
   params?: TParams
@@ -54,7 +54,7 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
   }
 
   protected log(context: BuffContext, message: string): void {
-    logger.debug(`[${context.config.id}] ${message}`)
+    battleLogManager.debug(`[${context.config.id}] ${message}`)
   }
 
   protected triggerEvent(

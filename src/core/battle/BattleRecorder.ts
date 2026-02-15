@@ -13,7 +13,7 @@ import type {
   BattleAction,
   ParticipantSide,
 } from '@/types/battle'
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 interface BattleEvent {
   eventId: string
@@ -50,7 +50,7 @@ interface RecordedBattle {
 
 export class BattleRecorder {
   private recordings = new Map<string, RecordedBattle>()
-  private battleLogger = logger
+  private battleLogger = battleLogManager
 
   public startRecording(
     battleId: string,

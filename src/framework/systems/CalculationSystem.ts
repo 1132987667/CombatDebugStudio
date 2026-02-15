@@ -25,7 +25,7 @@ import type {
   BattleAttributes,
 } from '../core/interfaces'
 import type { CalculationLog } from '@/types/battle-log'
-import { FrameworkLogger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 import { PerformanceMonitor } from '../utils/PerformanceMonitor'
 
 /**
@@ -118,14 +118,13 @@ export interface Calculator {
  * 计算系统实现
  */
 export class CalculationSystem implements ICalculationSystem {
-  private logger: Logger
+  private logger = battleLogManager
   private performanceMonitor: PerformanceMonitor
   private calculators: Map<string, Calculator> = new Map()
   private calculationLogs: CalculationLog[] = []
   private maxLogSize = 1000
 
   constructor() {
-    this.logger = new Logger('CalculationSystem')
     this.performanceMonitor = new PerformanceMonitor()
 
     // 注册默认计算器
@@ -308,8 +307,6 @@ export class CalculationSystem implements ICalculationSystem {
  * 伤害计算器实现
  */
 export class DamageCalculator implements Calculator {
-  private logger = new Logger('DamageCalculator')
-
   public calculate(context: CalculationContext): CalculationResult {
     const { source, target, modifiers = {}, environment = {} } = context
 
@@ -462,8 +459,6 @@ export class DamageCalculator implements Calculator {
  * 治疗计算器实现
  */
 export class HealCalculator implements Calculator {
-  private logger = new Logger('HealCalculator')
-
   public calculate(context: CalculationContext): CalculationResult {
     const { source, target, modifiers = {}, environment = {} } = context
 

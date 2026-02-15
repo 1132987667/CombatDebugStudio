@@ -29,7 +29,8 @@ import type {
 import { EventSystem } from './EventSystem'
 import { ConfigManager } from './ConfigManager'
 import { PluginManager } from './PluginManager'
-import { FrameworkLogger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
+import type { BattleLogManager } from '@/utils/logging'
 import { PerformanceMonitor } from '../utils/PerformanceMonitor'
 
 /**
@@ -38,7 +39,7 @@ import { PerformanceMonitor } from '../utils/PerformanceMonitor'
 export class CombatFramework {
   private static instance: CombatFramework
   private config: FrameworkConfig
-  private logger: Logger
+  private logger: BattleLogManager
   private performanceMonitor: PerformanceMonitor
   private eventSystem: IEventSystem
   private configManager: IConfigManager
@@ -63,7 +64,7 @@ export class CombatFramework {
     }
 
     // 初始化核心组件
-    this.logger = new Logger()
+    this.logger = battleLogManager
     this.performanceMonitor = new PerformanceMonitor()
     this.eventSystem = new EventSystem()
     this.configManager = new ConfigManager()
@@ -184,7 +185,7 @@ export class CombatFramework {
   /**
    * 获取日志记录器
    */
-  public getLogger(): Logger {
+  public getLogger(): BattleLogManager {
     return this.logger
   }
 

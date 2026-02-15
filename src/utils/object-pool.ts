@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 interface ObjectPoolOptions<T> {
   maxSize: number
@@ -29,7 +29,7 @@ export class ObjectPool<T> {
     if (this.pool.length > 0) {
       const obj = this.pool.pop()!
       if (this.options.validate && !this.options.validate(obj)) {
-        logger.warn('Object pool validation failed, creating new instance')
+        battleLogManager.warn('Object pool validation failed, creating new instance')
         return this.options.create()
       }
       this.borrowedCount++
@@ -37,7 +37,7 @@ export class ObjectPool<T> {
     }
 
     if (this.borrowedCount >= this.options.maxSize) {
-      logger.warn('Object pool max size reached, creating new instance')
+      battleLogManager.warn('Object pool max size reached, creating new instance')
     }
 
     this.borrowedCount++
@@ -46,7 +46,7 @@ export class ObjectPool<T> {
 
   public return(obj: T): void {
     if (this.pool.length >= this.options.maxSize) {
-      logger.debug('Object pool full, discarding instance')
+      battleLogManager.debug('Object pool full, discarding instance')
       return
     }
 
@@ -55,7 +55,7 @@ export class ObjectPool<T> {
       this.pool.push(obj)
       this.borrowedCount = Math.max(0, this.borrowedCount - 1)
     } catch (error) {
-      logger.error('Failed to reset object in pool:', error)
+      battleLogManager.error('Failed to reset object in pool:', error)
     }
   }
 
@@ -70,14 +70,14 @@ export class ObjectPool<T> {
   public clear(): void {
     this.pool = []
     this.borrowedCount = 0
-    logger.info('Object pool cleared')
+    battleLogManager.info('Object pool cleared')
   }
 
   public prewarm(count: number): void {
     for (let i = 0; i < count && this.pool.length < this.options.maxSize; i++) {
       this.pool.push(this.options.create())
     }
-    logger.info(`Object pool prewarmed with ${count} instances`)
+    battleLogManager.info(`Object pool prewarmed with ${count} instances`)
   }
 }
 

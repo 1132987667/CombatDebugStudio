@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { logger } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * Buff错误边界类
@@ -48,12 +48,12 @@ export class BuffErrorBoundary {
    */
   private static handleError(error: unknown): void {
     if (error instanceof Error) {
-      logger.error('Buff script error:', {
+      battleLogManager.error('Buff script error:', {
         message: error.message,
         stack: error.stack,
       })
     } else {
-      logger.error('Unknown buff script error:', error)
+      battleLogManager.error('Unknown buff script error:', error)
     }
   }
 
@@ -78,7 +78,7 @@ export class BuffErrorBoundary {
           BuffErrorBoundary.handleError(error)
           return null
         }
-        logger.warn(`Retrying buff script execution (${retries}/${maxRetries})`)
+        battleLogManager.warn(`Retrying buff script execution (${retries}/${maxRetries})`)
       }
     }
 

@@ -179,6 +179,8 @@ export interface BattleLogManagerOptions {
   filters?: Partial<LogFilters>
   /** 是否启用自动清理 */
   autoCleanup?: boolean
+  /** 日志来源标识 */
+  source?: string
 }
 
 /**

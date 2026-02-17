@@ -18,27 +18,39 @@
           </div>
           <div class="monitor-item">
             <span class="monitor-label">攻击:</span>
-            <span class="monitor-value">{{ attackRange.min }}-{{ attackRange.max }}</span>
+            <span class="monitor-value" 
+              @mouseenter="showAttrTooltip($event, '攻击', [], 0, '数值')"
+              @mouseleave="hideAttrTooltip">{{ attackRange.min }}-{{ attackRange.max }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">防御:</span>
-            <span class="monitor-value">{{ baseProps.defense }}</span>
+            <span class="monitor-value" 
+              @mouseenter="showAttrTooltip($event, '防御', baseProps.defenseOptions, baseProps.defense, '数值')"
+              @mouseleave="hideAttrTooltip">{{ baseProps.defense }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">速度:</span>
-            <span class="monitor-value">{{ baseProps.speed }}</span>
+            <span class="monitor-value" 
+              @mouseenter="showAttrTooltip($event, '速度', baseProps.speedOptions, baseProps.speed, '数值')"
+              @mouseleave="hideAttrTooltip">{{ baseProps.speed }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">暴击率:</span>
-            <span class="monitor-value">{{ baseProps.critRate }}%</span>
+            <span class="monitor-value" 
+              @mouseenter="showAttrTooltip($event, '暴击率', baseProps.critRateOptions, baseProps.critRate, '百分比')"
+              @mouseleave="hideAttrTooltip">{{ baseProps.critRate }}%</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">暴击伤害:</span>
-            <span class="monitor-value">{{ baseProps.critDamage }}%</span>
+            <span class="monitor-value" 
+              @mouseenter="showAttrTooltip($event, '暴击伤害', baseProps.critDamageOptions, baseProps.critDamage, '百分比')"
+              @mouseleave="hideAttrTooltip">{{ baseProps.critDamage }}%</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">免伤率:</span>
-            <span class="monitor-value">{{ baseProps.damageReduction }}%</span>
+            <span class="monitor-value" 
+              @mouseenter="showAttrTooltip($event, '免伤率', baseProps.damageReductionOptions, baseProps.damageReduction, '百分比')"
+              @mouseleave="hideAttrTooltip">{{ baseProps.damageReduction }}%</span>
           </div>
         </div>
       </div>
@@ -47,19 +59,27 @@
         <div class="monitor-grid">
           <div class="monitor-item">
             <span class="monitor-label">气血加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(selectedChar?.healthBonus) }}</span>
+            <span class="monitor-value bonus" 
+              @mouseenter="showAttrTooltip($event, '气血加成', bonusProps.healthBonusOptions, bonusProps.healthBonus, '百分比')"
+              @mouseleave="hideAttrTooltip">{{ formatBonus(selectedChar?.healthBonus) }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">攻击加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(selectedChar?.attackBonus) }}</span>
+            <span class="monitor-value bonus" 
+              @mouseenter="showAttrTooltip($event, '攻击加成', bonusProps.attackBonusOptions, bonusProps.attackBonus, '百分比')"
+              @mouseleave="hideAttrTooltip">{{ formatBonus(selectedChar?.attackBonus) }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">防御加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(selectedChar?.defenseBonus) }}</span>
+            <span class="monitor-value bonus" 
+              @mouseenter="showAttrTooltip($event, '防御加成', bonusProps.defenseBonusOptions, bonusProps.defenseBonus, '百分比')"
+              @mouseleave="hideAttrTooltip">{{ formatBonus(selectedChar?.defenseBonus) }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">速度加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(selectedChar?.speedBonus) }}</span>
+            <span class="monitor-value bonus" 
+              @mouseenter="showAttrTooltip($event, '速度加成', bonusProps.speedBonusOptions, bonusProps.speedBonus, '百分比')"
+              @mouseleave="hideAttrTooltip">{{ formatBonus(selectedChar?.speedBonus) }}</span>
           </div>
         </div>
       </div>
@@ -68,19 +88,27 @@
         <div class="monitor-grid">
           <div class="monitor-item">
             <span class="monitor-label">最终攻击:</span>
-            <span class="monitor-value final">{{ finalStats.attack }}</span>
+            <span class="monitor-value final" 
+              @mouseenter="showAttrTooltip($event, '最终攻击', finalProps.attackOptions, finalProps.attack, '数值')"
+              @mouseleave="hideAttrTooltip">{{ finalStats.attack }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">最终防御:</span>
-            <span class="monitor-value final">{{ finalStats.defense }}</span>
+            <span class="monitor-value final" 
+              @mouseenter="showAttrTooltip($event, '最终防御', finalProps.defenseOptions, finalProps.defense, '数值')"
+              @mouseleave="hideAttrTooltip">{{ finalStats.defense }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">最终速度:</span>
-            <span class="monitor-value final">{{ finalStats.speed }}</span>
+            <span class="monitor-value final" 
+              @mouseenter="showAttrTooltip($event, '最终速度', finalProps.speedOptions, finalProps.speed, '数值')"
+              @mouseleave="hideAttrTooltip">{{ finalStats.speed }}</span>
           </div>
           <div class="monitor-item">
             <span class="monitor-label">最终气血:</span>
-            <span class="monitor-value final">{{ finalStats.health }}</span>
+            <span class="monitor-value final" 
+              @mouseenter="showAttrTooltip($event, '最终气血', finalProps.healthOptions, finalProps.health, '数值')"
+              @mouseleave="hideAttrTooltip">{{ finalStats.health }}</span>
           </div>
         </div>
       </div>
@@ -233,19 +261,32 @@
         <button v-if="exceptionStatus.hasException" class="btn-small" @click="$emit('locate-exception')">[定位]</button>
       </div>
     </div>
+
+    <!-- 属性悬浮提示 -->
+    <AttributeTooltip 
+      :visible="attrTooltipVisible" 
+      :title="attrTooltipData.title"
+      :options="attrTooltipData.options"
+      :final-value="attrTooltipData.finalValue"
+      :value-type="attrTooltipData.valueType"
+      :trigger-rect="attrTooltipData.triggerRect"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
+import AttributeTooltip from "@/components/AttributeTooltip.vue";
 import type { UIBattleCharacter, AttributeValue } from "@/types";
+import type { AttributeOption, AttributeValueType } from "@/types/UI/UIBattleCharacter";
 import type { SkillConfig } from "@/types/skill";
 
 const props = defineProps<{
   allyTeam: UIBattleCharacter[];
   enemyTeam: UIBattleCharacter[];
   selectedChar: UIBattleCharacter | null;
+  selectedCharacterId?: string | null;
   lastExportTime: string | null;
 }>();
 
@@ -352,8 +393,23 @@ const getScopeName = (scope: string): string => {
 };
 
 // ------------------------------------------------------------
-// 1. 当前选中的角色（直接从 props 获取）
-const selectedChar = computed(() => props.selectedChar);
+// 1. 当前选中的角色（优先使用 props，如果为空则尝试从队伍中查找）
+const selectedChar = computed(() => {
+  // 优先使用 props 传入的 selectedChar
+  if (props.selectedChar) return props.selectedChar;
+  
+  // 如果 props.selectedChar 为空，尝试从队伍中根据 selectedCharacterId 查找
+  const charId = props.selectedCharacterId;
+  if (!charId) return null;
+  
+  const ally = props.allyTeam.find(c => c.id === charId);
+  if (ally) return ally;
+  
+  const enemy = props.enemyTeam.find(e => e.id === charId);
+  if (enemy) return enemy;
+  
+  return null;
+});
 
 // 选中角色名称（用于标题栏）
 const selectedCharName = computed(() => selectedChar.value?.name || "未选择");
@@ -421,7 +477,10 @@ const finalStats = computed(() => {
 // 模板中直接使用的属性计算
 const baseProps = computed(() => {
   const char = selectedChar.value;
-  if (!char) return { maxHp: 0, defense: 0, speed: 0, critRate: 10, critDamage: 125, damageReduction: 0 };
+  if (!char) return { 
+    maxHp: 0, defense: 0, speed: 0, critRate: 10, critDamage: 125, damageReduction: 0,
+    maxHpOptions: [], defenseOptions: [], speedOptions: [], critRateOptions: [], critDamageOptions: [], damageReductionOptions: []
+  };
   
   return {
     maxHp: GameDataProcessor.getAttributeValue(char.maxHp),
@@ -430,8 +489,100 @@ const baseProps = computed(() => {
     critRate: GameDataProcessor.getAttributeValue(char.critRate),
     critDamage: GameDataProcessor.getAttributeValue(char.critDamage),
     damageReduction: GameDataProcessor.getAttributeValue(char.damageReduction),
+    maxHpOptions: GameDataProcessor.getAttributeOptions(char.maxHp),
+    defenseOptions: GameDataProcessor.getAttributeOptions(char.defense),
+    speedOptions: GameDataProcessor.getAttributeOptions(char.speed),
+    critRateOptions: GameDataProcessor.getAttributeOptions(char.critRate),
+    critDamageOptions: GameDataProcessor.getAttributeOptions(char.critDamage),
+    damageReductionOptions: GameDataProcessor.getAttributeOptions(char.damageReduction),
   };
 });
+
+// 属性加成计算（含来源信息）
+const bonusProps = computed(() => {
+  const char = selectedChar.value;
+  if (!char) return {
+    healthBonus: 0, attackBonus: 0, defenseBonus: 0, speedBonus: 0,
+    healthBonusOptions: [], attackBonusOptions: [], defenseBonusOptions: [], speedBonusOptions: []
+  };
+  
+  return {
+    healthBonus: GameDataProcessor.getAttributeValue(char.healthBonus),
+    attackBonus: GameDataProcessor.getAttributeValue(char.attackBonus),
+    defenseBonus: GameDataProcessor.getAttributeValue(char.defenseBonus),
+    speedBonus: GameDataProcessor.getAttributeValue(char.speedBonus),
+    healthBonusOptions: GameDataProcessor.getAttributeOptions(char.healthBonus),
+    attackBonusOptions: GameDataProcessor.getAttributeOptions(char.attackBonus),
+    defenseBonusOptions: GameDataProcessor.getAttributeOptions(char.defenseBonus),
+    speedBonusOptions: GameDataProcessor.getAttributeOptions(char.speedBonus),
+  };
+});
+
+// 最终属性计算（含来源信息）
+const finalProps = computed(() => {
+  const char = selectedChar.value;
+  if (!char) return {
+    attack: 0, defense: 0, speed: 0, health: 0,
+    attackOptions: [], defenseOptions: [], speedOptions: [], healthOptions: []
+  };
+  
+  const getVal = (attr: number | AttributeValue | undefined) => GameDataProcessor.getAttributeValue(attr);
+  const getOpts = (attr: number | AttributeValue | undefined) => GameDataProcessor.getAttributeOptions(attr);
+  const getBonus = (attr: number | AttributeValue | undefined) => GameDataProcessor.getAttributeValue(attr);
+
+  const baseAttack = getVal(char.attack);
+  const baseDefense = getVal(char.defense);
+  const baseSpeed = getVal(char.speed);
+  const baseHealth = getVal(char.maxHp);
+  const attackBonus = getBonus(char.attackBonus);
+  const defenseBonus = getBonus(char.defenseBonus);
+  const speedBonus = getBonus(char.speedBonus);
+  const healthBonus = getBonus(char.healthBonus);
+
+  const calc = (base: number, bonus = 0) => Math.floor(base * (1 + bonus / 100));
+
+  return {
+    attack: calc(baseAttack, attackBonus),
+    defense: calc(baseDefense, defenseBonus),
+    speed: calc(baseSpeed, speedBonus),
+    health: calc(baseHealth, healthBonus),
+    attackOptions: getOpts(char.attack),
+    defenseOptions: getOpts(char.defense),
+    speedOptions: getOpts(char.speed),
+    healthOptions: getOpts(char.maxHp),
+  };
+});
+
+// 属性悬浮提示状态
+const attrTooltipVisible = ref(false)
+const attrTooltipData = ref<{
+  title: string
+  options: AttributeOption[]
+  finalValue: number
+  valueType: AttributeValueType
+  triggerRect: DOMRect | null
+}>({
+  title: '',
+  options: [],
+  finalValue: 0,
+  valueType: '数值',
+  triggerRect: null
+})
+
+const showAttrTooltip = (event: MouseEvent, title: string, options: AttributeOption[], finalValue: number, valueType: AttributeValueType) => {
+  attrTooltipData.value = {
+    title,
+    options,
+    finalValue,
+    valueType,
+    triggerRect: (event.target as HTMLElement).getBoundingClientRect()
+  }
+  attrTooltipVisible.value = true
+}
+
+const hideAttrTooltip = () => {
+  attrTooltipVisible.value = false
+}
 
 // 攻击范围计算
 const attackRange = computed(() => {
@@ -448,7 +599,8 @@ const attackRange = computed(() => {
 const formatBonus = (value: number | AttributeValue | undefined): string => {
   const numValue = GameDataProcessor.getAttributeValue(value);
   if (numValue === 0) return "0%";
-  return numValue > 0 ? `+${numValue}%` : `${numValue}%`;
+  const roundedValue = Math.round(numValue * 100) / 100;
+  return roundedValue > 0 ? `+${roundedValue}%` : `${roundedValue}%`;
 };
 
 // ------------------------------------------------------------

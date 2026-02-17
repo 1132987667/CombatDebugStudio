@@ -1,0 +1,49 @@
+{
+  "task_execution": {
+    "timeout": {
+      "enabled": true,
+      "max_execution_time": 3600000, // 最大执行时间（毫秒），默认1小时
+      "grace_period": 300000, // 优雅关闭时间（毫秒），默认5分钟
+      "heartbeat_interval": 60000 // 心跳间隔（毫秒），默认1分钟
+    },
+    "error_handling": {
+      "enabled": true,
+      "max_retries": 3, // 最大重试次数
+      "retry_delay": 5000, // 重试延迟（毫秒）
+      "error_logging": true, // 错误日志记录
+      "continue_on_error": false // 错误后是否继续执行
+    },
+    "progress": {
+      "enabled": true,
+      "save_interval": 300000, // 进度保存间隔（毫秒），默认5分钟
+      "save_path": ".trae/task_progress", // 进度保存路径
+      "auto_resume": true // 自动恢复上次未完成的任务
+    },
+    "notification": {
+      "enabled": true,
+      "on_completion": true, // 任务完成通知
+      "on_error": true, // 任务错误通知
+      "on_timeout": true, // 任务超时通知
+      "notification_method": "console" // 通知方式：console, file, webhook
+    },
+    "resource_management": {
+      "memory_limit": "2GB", // 内存限制
+      "cpu_limit": 80, // CPU使用率限制（百分比）
+      "cleanup_on_finish": true // 任务完成后清理资源
+    }
+  },
+  "auto_battle": {
+    "enabled": true,
+    "max_rounds": 999, // 最大回合数
+    "speed_level": 3, // 战斗速度级别（1-5）
+    "auto_end": true, // 战斗结束后自动停止
+    "record_battle": true, // 记录战斗过程
+    "save_recording": true // 保存战斗记录
+  },
+  "logging": {
+    "level": "info", // 日志级别：debug, info, warn, error
+    "file_path": ".trae/logs", // 日志文件路径
+    "max_file_size": "10MB", // 最大日志文件大小
+    "max_files": 5 // 最大日志文件数量
+  }
+}

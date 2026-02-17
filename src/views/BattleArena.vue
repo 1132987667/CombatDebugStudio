@@ -23,7 +23,7 @@
 
       <!-- 右侧：调试面板 -->
       <div class="right-panel">
-        <DebugPanel :allyTeam="allyTeam" :enemyTeam="enemyTeam" :selected-char="selectedChar"
+        <DebugPanel :allyTeam="allyTeam" :enemyTeam="enemyTeam" :selected-char="selectedChar" :selected-character-id="selectedCharacterId"
           :last-export-time="lastExportTime" :battle-system="battleSystem" @end-turn="endTurn"
           @execute-skill="executeSkill" @add-status="addStatus" @adjust-stats="adjustStats"
           @clear-statuses="clearStatuses" @export-state="exportState" @import-state="importState"
@@ -574,7 +574,8 @@ const addStatus = (status: { name: string; turns: number }) => {
 
 const adjustStats = (stats: { hp: number; mp: number }) => {
   if (selectedChar.value) {
-    selectedChar.value.currentHp = Math.max(0, Math.min(selectedChar.value.maxHp, selectedChar.value.currentHp + stats.hp));
+    const maxHp = GameDataProcessor.getAttributeValue(selectedChar.value.maxHp);
+    selectedChar.value.currentHp = Math.max(0, Math.min(maxHp, selectedChar.value.currentHp + stats.hp));
     selectedChar.value.currentMp = Math.max(0, Math.min(selectedChar.value.maxMp, selectedChar.value.currentMp + stats.mp));
     logManager.addActionLog("系统", "调整属性", selectedChar.value.name, `HP:${stats.hp}, MP:${stats.mp}`);
   }

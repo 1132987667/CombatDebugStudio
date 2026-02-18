@@ -15,7 +15,7 @@ import { PARTICIPANT_SIDE } from '@/types/battle'
 import {
   BattleParticipantImpl,
   type ParticipantInitData,
-} from './BattleParticipantImpl'
+} from '@/core/battle/BattleParticipantImpl'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { battleLogManager } from '@/utils/logging'
 

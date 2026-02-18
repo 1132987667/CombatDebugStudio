@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { BuffSystem } from '@/core/BuffSystem'
 import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
+import { SpeedUpBuff } from '@/scripts/combat/SpeedUpBuff'
+import { AttackUpBuff } from '@/scripts/combat/AttackUpBuff'
 
 /**
  * 缓冲区效果综合测试
@@ -17,6 +19,10 @@ describe('Buffer Effects Comprehensive Test', () => {
 
     buffSystem = BuffSystem.getInstance()
     registry = BuffScriptRegistry.getInstance()
+
+    // 注册必要的Buff脚本
+    registry.register(SpeedUpBuff.BUFF_ID, () => new SpeedUpBuff(), { filePath: 'test/path' })
+    registry.register(AttackUpBuff.BUFF_ID, () => new AttackUpBuff(), { filePath: 'test/path' })
   })
 
   /**

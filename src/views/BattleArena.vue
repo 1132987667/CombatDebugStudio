@@ -1,5 +1,23 @@
 <template>
   <div class="battle-test-tool">
+    <!-- 加载指示器 -->
+    <div v-if="battleStore.isBattleLoading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">{{ battleStore.getCurrentOperation || '加载中...' }}</div>
+      <div v-if="battleStore.getLoadingProgress !== null" class="loading-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: battleStore.getLoadingProgress + '%' }"></div>
+        </div>
+        <div class="progress-text">{{ battleStore.getLoadingProgress }}%</div>
+      </div>
+    </div>
+    
+    <!-- 错误提示 -->
+    <div v-if="battleStore.hasError" class="error-toast" @click="battleStore.clearError()">
+      <span class="error-message">{{ battleStore.getErrorMessage }}</span>
+      <span class="error-close">&times;</span>
+    </div>
+
     <div class="tool-header">
       <h1>回合制战斗系统测试工具 v1.0</h1>
       <div class="header-actions">
@@ -11,31 +29,23 @@
 
     <div class="main-layout">
       <!-- 左侧：参战角色配置 -->
-      <ParticipantPanel :allyTeam="allyTeam" :enemyTeam="enemyTeam" :selected-character-id="selectedCharacterId"
-        :battle-system="battleSystem" @update:selected-character-id="selectCharacter" @add-enemy="addEnemyToBattle"
-        @move-character="moveCharacter" @clear-participants="clearParticipants" />
+      <ParticipantPanel />
 
       <!-- 中间：战斗战场和日志 -->
-      <BattleField ref="battleFieldRef" :allyTeam="allyTeam" :enemyTeam="enemyTeam" :current-turn="currentTurn"
-        :max-turns="maxTurns" :current-actor-id="currentActorId" :selected-character-id="selectedCharacterId"
-        :battle-logs="battleLogs" :battle-system="battleSystem" @select-character="selectCharacter"
-        @show-damage="handleShowDamage" @show-skill-effect="handleShowSkillEffect" />
+      <BattleField ref="battleFieldRef" :current-actor-id="battleStore.getCurrentActorId"
+        @select-character="selectCharacter" />
 
       <!-- 右侧：调试面板 -->
       <div class="right-panel">
-        <DebugPanel :allyTeam="allyTeam" :enemyTeam="enemyTeam" :selected-char="selectedChar" :selected-character-id="selectedCharacterId"
-          :last-export-time="lastExportTime" :battle-system="battleSystem" @end-turn="endTurn"
-          @execute-skill="executeSkill" @add-status="addStatus" @adjust-stats="adjustStats"
-          @clear-statuses="clearStatuses" @export-state="exportState" @import-state="importState"
-          @view-export="viewExport" @reload-export="reloadExport" @locate-exception="locateException" />
+        <DebugPanel />
 
-        <BattleReplay :battle-manager="battleSystem" :battle-system="battleSystem" @replay-event="handleReplayEvent"
-          @replay-start="handleReplayStart" @replay-end="handleReplayEnd" @replay-pause="handleReplayPause" />
+        <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart"
+          @replay-end="handleReplayEnd" @replay-pause="handleReplayPause" />
       </div>
     </div>
 
     <!-- 对话框组件 -->
-    <BattleRulesDialog v-model="showRulesDialog" :rules="rules" :speed="battleSpeed" @update:rules="updateRules"
+    <BattleRulesDialog v-model="showRulesDialog" :rules="battleStore.getRules" :speed="battleStore.getBattleSpeed" @update:rules="battleStore.updateRules"
       @update:speed="updateSpeed" @rule-change="handleRuleChange" />
 
     <SceneManagementDialog v-model="showSceneDialog" :scene-name="sceneName" :selected-scene="selectedScene"
@@ -43,14 +53,14 @@
       @update:selected-scene="val => selectedScene = val" @save="handleSaveScene" @load="handleLoadScene"
       @delete="handleDeleteScene" />
 
-    <StatusInjectionDialog v-model="showStatusDialog" :selected-char-name="getSelectedCharName()"
+    <StatusInjectionDialog v-model="showStatusDialog" :selected-char-name="getSelectedCharName"
       :injectable-statuses="injectableStatuses" @update:injectable-statuses="val => updateStatuses(val)"
       @add="handleAddStatus" @clear="handleClearStatuses" />
 
     <!-- 底部控制栏 -->
-    <ControlBar :is-battle-active="isBattleActive" :is-auto-playing="isAutoPlaying" :is-paused="isPaused"
+    <ControlBar :is-battle-active="battleStore.getIsBattleActive" :is-paused="false" :is-auto-playing="battleStore.autoPlayMode"
       @start-battle="startBattle" @end-battle="endBattle" @reset-battle="resetBattle" @step-back="stepBack"
-      @toggle-pause="togglePause" @single-step="singleStep" @toggle-auto-play="toggleAutoPlay"
+      @single-step="singleStep" @toggle-auto-play="toggleAutoPlay"
       @battle-speed-change="handleBattleSpeedChange" />
 
     <!-- 快捷键提示面板 -->
@@ -65,580 +75,180 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import ParticipantPanel from "./ParticipantPanel.vue";
 import BattleField from "./BattleField.vue";
 import DebugPanel from "./DebugPanel.vue";
 import ControlBar from "./ControlBar.vue";
 import BattleReplay from "./BattleReplay.vue";
-import KeybindHintPanel from "./KeybindHintPanel.vue";
-import NewbieGuide from "./NewbieGuide.vue";
 import Notification from "@/components/Notification.vue";
 import BattleRulesDialog from "./components/BattleRulesDialog.vue";
 import SceneManagementDialog from "./components/SceneManagementDialog.vue";
 import StatusInjectionDialog from "./components/StatusInjectionDialog.vue";
-import { keybindManager } from "@/core/input/KeybindManager";
-import { BattleSystemFactory } from "@/core/battle/BattleSystemFactory";
-import type { IBattleSystem } from "@/core/battle/interfaces";
-import { BattleLogFormatter, battleLogManager } from '@/utils/logging';
-import type { ParticipantManager } from "@/core/battle/ParticipantManager";
-import type { UIBattleCharacter, Enemy, SceneData } from "@/types";
-import type {
-  BattleState,
-  BattleParticipant,
-  BattleAction as BattleSystemAction,
-  ParticipantSide,
-  BattleStatus,
-} from "@/types/battle";
-import type { BattleLogEntry } from '@/types/battle-log';
-import { PARTICIPANT_SIDE, BATTLE_STATUS } from "@/types/battle";
+import { battleLogManager } from '@/utils/logging';
+import { useCharacterStore, useBattleStore } from '@/stores';
+import { container, initializeContainer } from '@/core/di/Container';
+import type { UIBattleCharacter } from "@/types";
+import { PARTICIPANT_SIDE } from "@/types/battle";
+import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
-interface InjectableStatus {
-  id: string;
-  name: string;
-  duration: number;
-  effect: string;
-  active: boolean;
-  isPositive: boolean;
-}
+// 使用Pinia状态管理
+const characterStore = useCharacterStore();
+const battleStore = useBattleStore();
 
-/**
- * 当前回合数（可手动重置）
- */
-const currentTurn = ref(1);
-
-/**
- * 最大回合数（默认值）
- */
-const maxTurns = ref(999);
-/**
- * 是否处于战斗暂停状态（界面可控制状态）
- */
-const isPaused = ref(false);
-
-const battleId = ref<string | null>(null);
-/**
- * 是否自动播放（界面可控制状态）
- */
-const isAutoPlaying = ref(false);
-/**
- * 战斗状态（界面显示用）
- */
-const battleStatus = ref<BattleStatus>(BATTLE_STATUS.CREATED);
-/**
- * 战斗是否正在进行（可手动控制）
- */
-const isBattleActive = ref(false);
-
-const battleSpeed = ref(1);
 const selectedScene = ref("");
 const sceneName = ref("");
-const currentActorId = ref<string | null>(null);
-
-
-const lastExportTime = ref<string | null>(null);
-
-
 const showRulesDialog = ref(false);
 const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
 const battleFieldRef = ref<InstanceType<typeof BattleField> | null>(null);
-const keybindHintPanelRef = ref<InstanceType<typeof KeybindHintPanel> | null>(null);
+const savedScenes = ref<string[]>([]);
+const injectableStatuses = ref<InjectableStatus[]>([]);
 
-// Battle System - 使用工厂模式创建实例
-
-BattleSystemFactory.initialize();
-const battleSystem: IBattleSystem = BattleSystemFactory.createBattleSystem();
-
-// 事件监听器引用，用于组件卸载时清理
-/** 战斗日志事件处理器 */
-let battleLogHandler: ((data: { battleId: string; log: BattleLogEntry }) => void) | null = null
-/** 战斗状态更新事件处理器 */
-let battleStateUpdateHandler: ((data: any) => void) | null = null
-/** 伤害动画事件处理器 */
-let damageAnimationHandler: ((data: any) => void) | null = null
-/** 技能效果事件处理器 */
-let skillEffectHandler: ((data: any) => void) | null = null
-
-// 初始化战斗系统事件监听
-const initBattleSystemListeners = () => {
-  if (battleSystem && typeof battleSystem.on === 'function') {
-    battleLogHandler = (data: { battleId: string; log: BattleLogEntry }) => {
-      const { log } = data
-      logManager.addLog(
-        log.turn,
-        log.source,
-        log.action,
-        log.target,
-        log.result || '',
-        log.level,
-        log.htmlResult
-      )
-    }
-    battleSystem.on('battleLog', battleLogHandler)
-
-    battleStateUpdateHandler = (data: { battleId: string; participants: any[]; turnOrder: string[]; currentTurn: number; currentRound: number }) => {
-      let hasUpdates = false
-      const { participants, currentRound: newRound } = data
-      participants.forEach((p: any) => {
-        const character = allyTeam.value.find(c => c.id === p.id)
-        const enemy = enemyTeam.value.find(e => e.id === p.id)
-        if (character) {
-          character.currentHp = p.currentHp
-          character.currentEnergy = p.currentEnergy
-          if (p.buffs) {
-            character.buffs = p.buffs
-          }
-          hasUpdates = true
-        } else if (enemy) {
-          enemy.currentHp = p.currentHp
-          enemy.currentEnergy = p.currentEnergy
-          if (p.buffs) {
-            enemy.buffs = p.buffs
-          }
-          hasUpdates = true
-        }
-      })
-      if (hasUpdates) {
-        allyTeam.value = [...allyTeam.value]
-        enemyTeam.value = [...enemyTeam.value]
-      }
-      if (newRound && newRound !== currentTurn.value) {
-        currentTurn.value = newRound
-      }
-    }
-    battleSystem.on('battleStateUpdate', battleStateUpdateHandler)
-
-    damageAnimationHandler = (data: { targetId: string; damage: number; damageType: string; isCritical: boolean; isHeal: boolean }) => {
-      if (battleFieldRef.value) {
-        const targetCharacter = allyTeam.value.find(c => c.id === data.targetId) ||
-          enemyTeam.value.find(e => e.id === data.targetId)
-        if (targetCharacter) {
-          battleFieldRef.value.showDamage(
-            targetCharacter.id,
-            data.damage,
-            data.isHeal ? 'heal' : 'damage',
-            data.isCritical
-          )
-        }
-      }
-    }
-    battleSystem.on('damageAnimation', damageAnimationHandler)
-
-    skillEffectHandler = (data: { sourceId: string; targetId: string; skillName: string; effectType: string; damageType: string }) => {
-      if (battleFieldRef.value) {
-        battleFieldRef.value.showSkillEffect(
-          data.targetId,
-          data.effectType as 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate',
-          data.skillName
-        )
-      }
-    }
-    battleSystem.on('skillEffect', skillEffectHandler)
-  }
-}
-
-// 清理事件监听器
-const cleanupBattleSystemListeners = () => {
-  const battleSystemAny = battleSystem as any
-  if (battleSystemAny && typeof battleSystemAny.off === 'function') {
-    if (battleLogHandler) {
-      battleSystemAny.off('battleLog', battleLogHandler)
-      battleLogHandler = null
-    }
-    if (battleStateUpdateHandler) {
-      battleSystemAny.off('battleStateUpdate', battleStateUpdateHandler)
-      battleStateUpdateHandler = null
-    }
-    if (damageAnimationHandler) {
-      battleSystemAny.off('damageAnimation', damageAnimationHandler)
-      damageAnimationHandler = null
-    }
-    if (skillEffectHandler) {
-      battleSystemAny.off('skillEffect', skillEffectHandler)
-      skillEffectHandler = null
-    }
-  }
-}
-
-const currentBattleId = ref<string | null>(null);
-const battleData = computed(() => {
-  return battleSystem.getCurBattleData();
+// 计算属性
+const getSelectedCharName = computed(() => {
+  return characterStore.selectedCharName;
 });
-// 监听 battleData 变化
-watch(
-  battleData,
-  (newData) => {
-    if (newData) {
-      battleStatus.value = newData.battleState ?? BATTLE_STATUS.CREATED;
-      isPaused.value = newData.battleState === BATTLE_STATUS.PAUSED;
-      isAutoPlaying.value = newData.autoPlaying || false;
-      currentTurn.value = newData.currentRound || 1;
-      maxTurns.value = newData.maxTurns;
-      battleSpeed.value = newData.battleSpeed
-      battleId.value = newData.battleId
-    }
-  },
-  { immediate: true, deep: true }
-);
 
-// 获取技能名称的工具函数
-const getSkillName = async (skillId: string | undefined): Promise<string> => {
-  if (!skillId) return "";
-  const skill = GameDataProcessor.findSkillById(skillId);
-  if (skill?.name) {
-    return skill.name;
-  }
-  return "未知技能";
-};
+// 使用统一的日志管理器单例
+const logManager = battleLogManager;
 
+// 初始化战斗
 function initBattle() {
   // 完成 敌我ParticipantInfo的初始化
   const allyIds = ["boss_005", "boss_008"];
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
   const enemyIds = ["boss_006", "boss_007"];
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
-  console.log('allyList', allyList, 'enemyList', enemyList);
-  allyTeam.value = allyList.map((ally, index) => GameDataProcessor.enemyToBattleCharacter(ally, index));
-  enemyTeam.value = enemyList.map((enemy, index) => GameDataProcessor.enemyToBattleCharacter(enemy, index, true));
-  console.log('allyTeam', allyTeam.value, 'enemyTeam', enemyTeam.value);
-
-  const allyParticipants = allyList.map((ally) => GameDataProcessor.enemyToParticipantInfo(ally, PARTICIPANT_SIDE.ALLY));
-  const enemyParticipants = enemyList.map((enemy) => GameDataProcessor.enemyToParticipantInfo(enemy, PARTICIPANT_SIDE.ENEMY));
-
-  const allParticipants = [...allyParticipants, ...enemyParticipants];
-  const battleState = battleSystem.createBattle(allParticipants);
-  currentBattleId.value = battleState.battleId;
-  // 注册回合执行回调，用于自动战斗时同步日志
-  battleSystem.onTurnExecuted = () => {
-    syncBattleState();
-  };
+  
+  const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToBattleCharacter(ally, index));
+  const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToBattleCharacter(enemy, index, true));
+  // 使用Pinia store初始化队伍数据
+  characterStore.initializeTeams(allyTeamData, enemyTeamData);
 }
 
 // 初始化战斗系统和快捷键
 onMounted(() => {
+  // 初始化队伍数据
   initBattle();
-
-  // 初始化战斗系统事件监听
-  initBattleSystemListeners();
-
-  // // 获取第一个可行动的我方参与者作为当前行动者
+  
+  // 初始化战斗管理器
+  // 确保容器已初始化
+  initializeContainer();
+  const battleManager = container.resolve('BattleManager');
+  battleStore.initializeBattleManager(battleManager);
+  
+  // 初始化队伍到战斗管理器
+  const allyTeam = characterStore.allyTeam;
+  const enemyTeam = characterStore.enemyTeam;
+  if (allyTeam.size > 0 && enemyTeam.size > 0) {
+    battleManager.initializeTeams(Array.from(allyTeam.values()), Array.from(enemyTeam.values()));
+  }
+  
   logManager.addSystemLog("测试工具已加载");
-
-  // 初始化快捷键系统
-  // initKeybindManager();
+  logManager.addSystemLog(`战斗管理器初始化完成，队伍数据: 我方${allyTeam.size}人 | 敌方${enemyTeam.size}人`);
 });
 
-function initKeybindManager() {
-  // 初始化快捷键系统
-  keybindManager.startListening();
-
-  // 注册快捷键处理函数
-  keybindManager.onAction('menu', () => {
-    // 打开菜单
-    console.log('打开菜单');
-  });
-
-  keybindManager.onAction('pause', () => {
-    // 暂停/继续战斗
-    togglePause();
-  });
-
-  keybindManager.onAction('replay', () => {
-    // 打开战斗回放
-    console.log('打开战斗回放');
-  });
-
-  keybindManager.onAction('debug', () => {
-    // 进入调试模式
-    console.log('进入调试模式');
-  });
-}
-
-// 监听自动播放速度变化，同步到战斗引擎
-watch(battleSpeed, (newSpeed) => {
-  if (currentBattleId.value && battleSystem) {
-    try {
-      battleSystem.setBattleSpeed(currentBattleId.value, newSpeed);
-      logManager.addSystemLog(`自动播放速度更新为: ${newSpeed}x`);
-    } catch (error) {
-      console.error("设置自动战斗速度失败:", error);
-      logManager.addErrorLog(`设置自动战斗速度失败: ${error}`);
-    }
-  }
-});
-
-// 监听自动播放状态，启动或停止自动战斗
-watch(isAutoPlaying, (newValue) => {
-  if (!currentBattleId.value || !battleSystem) {
-    return;
-  }
-
-  try {
-    if (newValue) {
-      battleSystem?.startAutoBattle();
-      syncBattleState();
-    } else {
-      battleSystem?.stopAutoBattle(currentBattleId.value);
-      syncBattleState();
-    }
-  } catch (error) {
-    console.error("切换自动战斗状态失败:", error);
-    isAutoPlaying.value = !newValue;
-    logManager.addErrorLog(`自动战斗切换失败: ${error}`);
-  }
-});
-
-// 监听战斗状态变化，自动同步UI
+// 监听战斗日志变化
 watch(
-  () => currentBattleId.value,
-  (newBattleId) => {
-    if (newBattleId) {
-      syncBattleState();
+  () => battleStore.getBattleLogs,
+  (newLogs) => {
+    if (newLogs.length > 0) {
+      const lastLog = newLogs[newLogs.length - 1];
+      logManager.addLog(
+        lastLog.turn,
+        lastLog.source,
+        lastLog.action,
+        lastLog.target,
+        lastLog.result || '',
+        lastLog.level,
+        lastLog.htmlResult
+      );
+    }
+  },
+  { deep: true }
+);
+
+// 监听动画状态变化
+watch(
+  () => battleStore.getAnimationState,
+  (newAnimationState) => {
+    if (battleFieldRef.value) {
+      // 处理伤害动画
+      if (newAnimationState.damage) {
+        const { targetId, damage, isHeal, isCritical } = newAnimationState.damage;
+        battleFieldRef.value.showDamage(
+          targetId,
+          damage,
+          isHeal ? 'heal' : 'damage',
+          isCritical
+        );
+      }
+
+      // 处理闪避动画
+      if (newAnimationState.miss) {
+        const { targetId } = newAnimationState.miss;
+        battleFieldRef.value.showMiss(targetId);
+      }
+
+      // 处理Buff效果动画
+      if (newAnimationState.buff) {
+        const { targetId, buffName, isPositive } = newAnimationState.buff;
+        battleFieldRef.value.showBuffEffect(targetId, buffName, isPositive);
+      }
+
+      // 处理技能效果动画
+      if (newAnimationState.skill) {
+        const { targetId, effectType, skillName } = newAnimationState.skill;
+        battleFieldRef.value.showSkillEffect(
+          targetId,
+          effectType as 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate',
+          skillName
+        );
+      }
+    }
+  },
+  { deep: true }
+);
+
+// 监听战斗活跃状态变化
+watch(
+  () => battleStore.getIsBattleActive,
+  (isActive) => {
+    if (!isActive) {
+      // 清理所有角色的动画状态
+      characterStore.resetCharacterStates();
+      
+      // 清理BattleField中的动画效果
+      if (battleFieldRef.value) {
+        battleFieldRef.value.cleanupAnimations();
+      }
     }
   }
 );
-
-// 监听battleSystem状态变化，自动同步界面状态
-watch(
-  () => isBattleActive.value,
-  (newIsActive) => {
-    if (!newIsActive && currentBattleId.value) {
-      // 战斗已结束，同步界面状态
-      syncUIStateWithBattleSystem();
-    }
-  }
-);
-
-
-// 使用统一的日志管理器单例
-const logManager = battleLogManager
-
-// 使用响应式日志列表
-const battleLogs = ref<BattleLogEntry[]>([])
-
-// 设置日志监听器
-logManager.addListener((logs) => {
-  console.log('收到日志:', logs)
-  battleLogs.value = logs
-})
-const logFilters = computed(() => logManager.getFilters());
-
-const rules = reactive({
-  speedFirst: true,
-  fixedTurns: false,
-  critEnabled: true,
-  dodgeEnabled: false,
-});
-
-const savedScenes = ref([]);
-
-const injectableStatuses = reactive<InjectableStatus[]>([]);
-
-
-const currentActor = computed(() => {
-  if (!currentActorId.value) return null;
-  return (
-    allyTeam.value.find((c) => c.id === currentActorId.value) ||
-    enemyTeam.value.find((e) => e.id === currentActorId.value) ||
-    null
-  );
-});
-
-
-
-const scenes = ref<any[]>([]);
-
-const expandedScenes = reactive<Record<string, boolean>>({});
-scenes.value.forEach((s) => (expandedScenes[s.id] = true));
-
-watch(
-  () => rules.critEnabled,
-  (val) => {
-    logManager.addSystemLog(`暴击率 ${val ? "已启用" : "已禁用"}`);
-  }
-);
-
-const selectCharacter = (charId: string) => {
-  selectedCharacterId.value = charId;
-  selectedChar.value =
-    allyTeam.value.find((c) => c.id === charId) ||
-    enemyTeam.value.find((e) => e.id === charId) ||
-    null;
-};
-
-const addEnemyToBattle = (enemy: Enemy, side: ParticipantSide = PARTICIPANT_SIDE.ALLY) => {
-  const newCharacter: UIBattleCharacter = {
-    originalId: enemy.id,
-    id: `enemy_${Date.now()}_${enemy.id}`,
-    team: side,
-    name: enemy.name,
-    level: enemy.level,
-    maxHp: enemy.stats.health,
-    currentHp: enemy.stats.health,
-    maxMp: 100,
-    currentMp: 100,
-    currentEnergy: 0,
-    maxEnergy: 150,
-    minAttack: enemy.stats.minAttack,
-    maxAttack: enemy.stats.maxAttack,
-    attack: Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2),
-    defense: enemy.stats.defense,
-    speed: enemy.stats.speed,
-    critRate: 10,
-    critDamage: 125,
-    damageReduction: 0,
-    healthBonus: 0,
-    attackBonus: 0,
-    defenseBonus: 0,
-    speedBonus: 0,
-    enabled: true,
-    isFirst: false,
-    buffs: [],
-    skills: {
-      small: GameDataProcessor.getSkillByIds(enemy.skills?.small || []),
-      passive: GameDataProcessor.getSkillByIds(enemy.skills?.passive || []),
-      ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate || []),
-    },
-  };
-
-  if (side === PARTICIPANT_SIDE.ALLY) {
-    allyTeam.value.push(newCharacter);
-  } else {
-    enemyTeam.value.push(newCharacter);
-  }
-
-  selectCharacter(newCharacter.id);
-};
-
-const getSelectedCharName = () => {
-  return selectedChar.value?.name || "未选择";
-};
-
-const moveCharacter = (direction: number) => {
-  if (!selectedChar.value) return;
-
-  const isAlly = allyTeam.value.some(c => c.id === selectedCharacterId.value);
-  const team = isAlly ? allyTeam.value : enemyTeam.value;
-
-  const enabledChars = team.filter((c) => c.enabled);
-  const currentIndex = enabledChars.findIndex(
-    (c) => c.id === selectedCharacterId.value
-  );
-  if (currentIndex < 0) return;
-  const newIndex = currentIndex + direction;
-  if (newIndex < 0 || newIndex >= enabledChars.length) return;
-  const targetChar = enabledChars[newIndex];
-  const currentChar = enabledChars[currentIndex];
-  const idx1 = team.indexOf(currentChar);
-  const idx2 = team.indexOf(targetChar);
-  team[idx1] = targetChar;
-  team[idx2] = currentChar;
-};
 
 // 子组件事件处理方法
-const endTurn = () => {
-  // 结束当前回合的逻辑
-  if (currentActorId.value) {
-    logManager.addActionLog("系统", "结束回合", currentActor.value?.name || "", "回合结束");
-    currentActorId.value = null;
-  }
-};
-
-const executeSkill = (skillName: string) => {
-  if (!skillName) return;
-  if (currentActor.value) {
-    logManager.addActionLog(currentActor.value.name, "使用技能", "", skillName);
-  }
-};
-
-const addStatus = (status: { name: string; turns: number }) => {
-  if (!status.name) return;
-  if (selectedChar.value) {
-    selectedChar.value.buffs.push({
-      id: `status_${Date.now()}`,
-      name: status.name,
-      duration: status.turns,
-      maxStacks: 1,
-      cooldown: 0,
-      description: '',
-      isPositive: true
-    });
-    logManager.addActionLog("系统", "添加状态", selectedChar.value.name, `${status.name} (${status.turns}回合)`);
-  }
-};
-
-const adjustStats = (stats: { hp: number; mp: number }) => {
-  if (selectedChar.value) {
-    const maxHp = GameDataProcessor.getAttributeValue(selectedChar.value.maxHp);
-    selectedChar.value.currentHp = Math.max(0, Math.min(maxHp, selectedChar.value.currentHp + stats.hp));
-    selectedChar.value.currentMp = Math.max(0, Math.min(selectedChar.value.maxMp, selectedChar.value.currentMp + stats.mp));
-    logManager.addActionLog("系统", "调整属性", selectedChar.value.name, `HP:${stats.hp}, MP:${stats.mp}`);
-  }
-};
-
-const clearStatuses = () => {
-  if (selectedChar.value) {
-    selectedChar.value.buffs = [];
-    logManager.addActionLog("系统", "清除状态", selectedChar.value.name, "所有状态已清除");
-  }
-};
-
 const exportState = () => {
-  const state = {
-    battleCharacters: allyTeam.value,
-    enemyParty: enemyTeam.value,
-    currentTurn: currentTurn.value,
-    rules,
-    battleLogs
-  };
-  const json = JSON.stringify(state, null, 2);
-  localStorage.setItem('battleState', json);
-  lastExportTime.value = new Date().toLocaleString();
-  logManager.addSystemLog("战斗状态已导出");
-};
-
-const importState = () => {
-  const savedState = localStorage.getItem('battleState');
-  if (savedState) {
-    try {
-      const state = JSON.parse(savedState);
-      // 这里需要实现导入逻辑
-      logManager.addSystemLog("战斗状态已导入");
-    } catch (e) {
-      logManager.addErrorLog("导入失败");
-    }
+  const result = battleStore.exportState(
+    Array.from(characterStore.allyTeam.values()),
+    Array.from(characterStore.enemyTeam.values()),
+    characterStore.currentTurn
+  );
+  
+  if (result) {
+    logManager.addSystemLog("战斗状态已导出");
   }
+  
+  return result;
 };
-
-const viewExport = () => {
-  const savedState = localStorage.getItem('battleState');
-  if (savedState) {
-    console.log('Exported Battle State:', JSON.parse(savedState));
-  }
-};
-
-const reloadExport = () => {
-  importState();
-};
-
-const locateException = () => {
-  // 异常定位逻辑
-  logManager.addSystemLog("开始异常检测");
-};
-
 
 // 战斗规则组件事件处理
-const updateRules = (newRules: any) => {
-  Object.assign(rules, newRules);
-};
-
 const updateSpeed = (speed: number) => {
-  battleSpeed.value = speed;
+  battleStore.setBattleSpeed(speed);
 };
 
 const handleRuleChange = (key: string, value: boolean) => {
@@ -665,17 +275,18 @@ const handleDeleteScene = (sceneNameValue: string) => {
 
 // 状态注入组件事件处理
 const updateStatuses = (newStatuses: any[]) => {
-  const targetIndex = injectableStatuses.findIndex(s => s.id === selectedCharacterId.value);
+  const targetIndex = injectableStatuses.value.findIndex(s => s.id === characterStore.selectedCharacterId);
   if (targetIndex !== -1) {
-    injectableStatuses.splice(targetIndex, 1, ...newStatuses);
+    injectableStatuses.value.splice(targetIndex, 1, ...newStatuses);
   }
 };
 
 const handleAddStatus = () => {
-  if (selectedChar.value) {
-    const activeStatuses = injectableStatuses.filter(s => s.active);
+  if (characterStore.selectedChar) {
+    const selectedChar = characterStore.selectedChar;
+    const activeStatuses = injectableStatuses.value.filter(s => s.active);
     activeStatuses.forEach(status => {
-      selectedChar.value!.buffs.push({
+      selectedChar.buffs.push({
         id: `status_${Date.now()}_${status.id}`,
         name: status.name,
         duration: status.duration,
@@ -686,97 +297,26 @@ const handleAddStatus = () => {
       });
     });
     if (activeStatuses.length > 0) {
-      logManager.addActionLog("系统", "添加状态", selectedChar.value.name,
+      logManager.addActionLog("系统", "添加状态", selectedChar.name,
         `${activeStatuses.map(s => s.name).join(', ')} (${activeStatuses.length}个状态)`);
     }
   }
 };
 
 const handleClearStatuses = () => {
-  if (selectedChar.value) {
-    selectedChar.value.buffs = [];
-    logManager.addActionLog("系统", "清除状态", selectedChar.value.name, "所有状态已清除");
+  if (characterStore.selectedChar) {
+    characterStore.selectedChar.buffs = [];
+    logManager.addActionLog("系统", "清除状态", characterStore.selectedChar.name, "所有状态已清除");
   }
 };
 
-
-const allyTeam = ref<UIBattleCharacter[]>([]);
-const enemyTeam = ref<UIBattleCharacter[]>([]);
-// 选中的战斗角色ID
-const selectedCharacterId = ref<string | null>(null);
-// 选中的战斗角色监控
-const selectedChar = ref<UIBattleCharacter | null>(null);
-
+// 监听队伍成员数量变化
 watch(
-  selectedCharacterId,
-  (newId) => {
-    selectedChar.value =
-      allyTeam.value.find((c) => c.id === newId) || null;
-  },
-  { immediate: true }
-);
-
-watch(
-  () => [allyTeam.value.length, enemyTeam.value.length],
+  () => [characterStore.allyTeam.size, characterStore.enemyTeam.size],
   ([allyCount, enemyCount]) => {
     logManager.addSystemLog(`当前参战角色: ${allyCount}人/${enemyCount}人`);
   }
 );
-
-
-const clearParticipants = () => {
-  // 清空所有参与者
-  allyTeam.value.length = 0;
-  enemyTeam.value.length = 0;
-  selectedCharacterId.value = null;
-  selectedChar.value = null;
-  logManager.addSystemLog("所有参战角色已清空");
-};
-
-const handleShowDamage = (characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) => {
-  if (battleFieldRef.value) {
-    battleFieldRef.value.triggerHitEffect(characterId);
-  }
-
-  if (damageNumberRefs.value) {
-    const damageType = type === 'heal' ? 'heal' : (type === 'critical' ? 'critical' : 'damage');
-    damageNumberRefs.value.addDamage(
-      value,
-      damageType as any,
-      'physical',
-      isCritical || type === 'critical',
-      false,
-      false,
-      { x: 100 + Math.random() * 100, y: 50 + Math.random() * 50 },
-      1500,
-      0
-    );
-  }
-
-  console.log(`显示伤害: ${characterId} - ${value} (${type})`, { isCritical });
-};
-
-const handleShowSkillEffect = (characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) => {
-  if (battleFieldRef.value) {
-    battleFieldRef.value.triggerCastingEffect(characterId, 800);
-  }
-
-  if (skillEffectRefs.value) {
-    skillEffectRefs.value.addSkillEffect(
-      type,
-      'physical',
-      name,
-      undefined,
-      { x: 150, y: 100 },
-      1000,
-      0,
-      1,
-      true
-    );
-  }
-
-  console.log(`显示技能效果: ${characterId} - ${type}`, { name });
-};
 
 // 战斗回放相关方法
 const handleReplayEvent = (event: any, index: number) => {
@@ -811,16 +351,26 @@ const handleReplayStart = (recording: any) => {
   console.log('开始回放:', recording);
   // 重置战斗状态，准备回放
   resetBattle();
+  // 使用battleManager开始回放
+  if (battleStore.getBattleManager) {
+    battleStore.getBattleManager.startReplay(recording);
+  }
 };
 
 const handleReplayEnd = (recording: any) => {
   console.log('回放结束:', recording);
   // 回放结束后的处理
+  if (battleStore.getBattleManager) {
+    battleStore.getBattleManager.stopReplay();
+  }
 };
 
 const handleReplayPause = (recording: any, index: number) => {
   console.log('回放暂停:', recording, '当前索引:', index);
   // 回放暂停后的处理
+  if (battleStore.getBattleManager) {
+    battleStore.getBattleManager.pauseReplay();
+  }
 };
 
 // 具体的回放处理方法
@@ -849,84 +399,17 @@ const handleBattleEndReplay = (winner: string) => {
   // 这里可以添加战斗结束回放的具体逻辑
 };
 
-const togglePause = () => {
-  if (isAutoPlaying.value && currentBattleId.value) {
-    // 如果正在自动播放，先停止自动播放
-    battleSystem?.stopAutoBattle(currentBattleId.value);
-    isAutoPlaying.value = false;
-    logManager.addSystemLog("停止自动战斗");
-  }
-  isPaused.value = !isPaused.value;
-};
-
-const singleStep = async () => {
-  if (!currentBattleId.value) {
-    notification.value?.addNotification("提示", "请先开始战斗", "warning");
-    return;
-  }
-
-  isPaused.value = false;
-
-  try {
-    // 执行战斗回合
-    await battleSystem?.processTurn(currentBattleId.value!);
-
-    // 同步战斗状态
-    syncBattleState();
-  } catch (error) {
-    console.error("执行回合时出错:", error);
-    logManager.addErrorLog(`执行回合时出错: ${error}`);
-    isPaused.value = true;
-  }
-};
-
-const toggleAutoPlay = () => {
-  if (!currentBattleId.value) {
-    notification.value?.addNotification("提示", "请先开始战斗", "warning");
-    return;
-  }
-
-  if (isAutoPlaying.value) {
-    // 停止自动播放 - 使用战斗引擎API
-    battleSystem?.stopAutoBattle(currentBattleId.value!);
-    isAutoPlaying.value = false;
-    isPaused.value = true;
-    logManager.addSystemLog("停止自动战斗");
-  } else {
-    // 开始自动播放 - 使用战斗引擎API
-    battleSystem?.startAutoBattle();
-    isAutoPlaying.value = true;
-    isPaused.value = false;
-    syncBattleState();
-    logManager.addSystemLog("开始自动战斗");
-  }
-};
-
-// 处理战斗速度变化
-const handleBattleSpeedChange = (speed: number) => {
-  // 更新自动播放速度
-  battleSpeed.value = speed;
-
-  // 如果正在自动播放，更新战斗引擎的速度设置
-  if (isAutoPlaying.value && currentBattleId.value && battleSystem) {
-    battleSystem.setBattleSpeed(currentBattleId.value, speed);
-  }
-
-  logManager.addSystemLog(`战斗速度已调整为: ${speed}倍`);
-};
-
 const stepBack = () => {
-  if (currentTurn.value > 1) {
-    currentTurn.value--;
+  if (characterStore.currentTurn > 1) {
+    characterStore.decrementTurn();
   }
 };
 
 // 开始战斗
-const startBattle = () => {
-  console.log('startBattle called, currentBattleId:', currentBattleId.value, 'battleSystem:', !!battleSystem);
+const startBattle = async () => {
   // 获取启用的角色和敌人的详细信息
-  const enabledAllyTeam = allyTeam.value.filter((c) => c.enabled);
-  const enabledEnemyTeam = enemyTeam.value.filter((e) => e.enabled);
+  const enabledAllyTeam = Array.from(characterStore.allyTeam.values()).filter((c) => c.enabled);
+  const enabledEnemyTeam = Array.from(characterStore.enemyTeam.values()).filter((e) => e.enabled);
 
   if (enabledAllyTeam.length === 0) {
     notification.value?.addNotification("提示", "我方请至少选择一个角色参战", "warning");
@@ -936,379 +419,217 @@ const startBattle = () => {
     notification.value?.addNotification("提示", "敌方请至少选择一个角色参战", "warning");
     return;
   }
-  console.log('Calling battleSystem.startAutoBattle()');
-  battleSystem.startAutoBattle();
-  console.log('After startAutoBattle, isAutoPlaying:', isAutoPlaying.value);
-  logManager.addSystemLog("开始自动战斗");
-  isBattleActive.value = true;
-  isAutoPlaying.value = true;
-
-
-  // 清空已处理的 action ID 集合，确保新战斗的所有 action 都能被处理
-  processedActionIds.value.clear();
-
-  // 添加战斗开始日志
-  logManager.addSystemLog(`战斗开始！战斗ID: ${currentBattleId.value}`);
-  logManager.addSystemLog(`参战角色: ${enabledAllyTeam.length} 人 | 参战敌人: ${enabledEnemyTeam.length} 人`);
-};
-
-/**
- * 状态同步器：确保界面状态与battleSystem状态一致
- */
-const syncUIStateWithBattleSystem = () => {
-  if (!currentBattleId.value || !battleSystem) {
-    // 没有战斗时，保持界面状态不变
-    return;
-  }
-
-  const battleState = battleSystem.getBattleState(currentBattleId.value);
-  if (!battleState) {
-    // 战斗不存在时，重置界面状态
-    isPaused.value = true;
-    isAutoPlaying.value = false;
-    return;
-  }
-
-  // 同步战斗活跃状态
-  if (!battleState.isActive && isBattleActive.value) {
-    // 战斗已结束，但界面状态还未更新
-    isPaused.value = true;
-    isAutoPlaying.value = false;
-  }
-};
-
-// 同步战斗状态到 UI
-const syncBattleState = () => {
-  // 首先同步界面状态与battleSystem状态
-  syncUIStateWithBattleSystem();
-
-  if (!currentBattleId.value) {
-    return;
-  }
 
   try {
-    // 获取当前战斗状态
-    const battleState = battleSystem?.getBattleState(currentBattleId.value!);
-    if (!battleState) {
-      console.error("无法获取战斗状态:", currentBattleId.value);
-      logManager.addErrorLog(`无法获取战斗状态，战斗可能已结束`);
-      currentBattleId.value = null;
-      return;
+    const result = await battleStore.startBattle(Array.from(characterStore.allyTeam.values()), Array.from(characterStore.enemyTeam.values()));
+    
+    if (result) {
+      notification.value?.addNotification("成功", "战斗已开始", "success");
+    } else {
+      notification.value?.addNotification("错误", battleStore.getErrorMessage || "开始战斗失败", "error");
     }
-
-    // 注意：currentTurn现在是computed属性，会自动从battleSystem同步
-    // 无需手动更新：currentTurn.value = battleState.currentTurn + 1;
-
-    // 更新当前行动者
-    if (battleState.currentTurn < battleState.turnOrder.length) {
-      const currentParticipantId =
-        battleState.turnOrder[battleState.currentTurn];
-      currentActorId.value = currentParticipantId;
-    }
-
-    // 同步参与者状态
-    try {
-      syncParticipantsState(battleState);
-    } catch (syncError: any) {
-      console.error("同步参与者状态时出错:", syncError);
-      logManager.addErrorLog(`同步参与者状态时出错: ${syncError.message || syncError}`);
-    }
-
-    // 同步战斗日志
-    try {
-      syncBattleLogs(battleState);
-    } catch (logError: any) {
-      console.error("同步战斗日志时出错:", logError);
-      logManager.addErrorLog(`同步战斗日志时出错: ${logError.message || logError}`);
-    }
-
-    // 检查战斗是否结束
-    if (!battleState.isActive) {
-      // 战斗结束日志已经在 syncBattleLogs 中添加，这里不需要重复添加
-      currentBattleId.value = null;
-      isPaused.value = true;
-      isAutoPlaying.value = false;
-    }
-  } catch (error: any) {
-    console.error("同步战斗状态时出错:", error);
-    logManager.addErrorLog(`同步战斗状态时出错: ${error.message || error}`);
-    // 出错后重置战斗状态
-    currentBattleId.value = null;
-    isPaused.value = true;
-    isAutoPlaying.value = false;
+  } catch (error) {
+    console.error("开始战斗时出错:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logManager.addErrorLog(`开始战斗时出错: ${errorMsg}`);
+    notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
 
-// 同步参与者状态
-const syncParticipantsState = (battleState: BattleState) => {
-  // 遍历所有参与者
-  battleState.participants.forEach((participant: BattleParticipant) => {
-    // 查找对应的角色或敌人
-    const character = allyTeam.value.find(
-      (c) => c.id === participant.id.replace("character_", "")
-    );
-    const enemy = enemyTeam.value.find(
-      (e) => e.id === participant.id.replace("enemy_", "")
-    );
-
-    if (character) {
-      // 更新角色状态
-      character.currentHp = participant.currentHealth;
-      character.currentEnergy = participant.currentEnergy;
-      character.maxEnergy = participant.maxEnergy;
-      // 这里可以根据需要更新其他状态，如MP、buff等
-    } else if (enemy) {
-      // 更新敌人状态
-      enemy.currentHp = participant.currentHealth;
-      enemy.currentEnergy = participant.currentEnergy;
-      enemy.maxEnergy = participant.maxEnergy;
-      // 这里可以根据需要更新其他状态，如MP、buff等
+const endBattle = async () => {
+  try {
+    const result = await battleStore.endBattle(PARTICIPANT_SIDE.ALLY);
+    
+    if (result) {
+      notification.value?.addNotification("成功", "战斗已结束", "success");
+    } else {
+      notification.value?.addNotification("错误", battleStore.getErrorMessage || "结束战斗失败", "error");
     }
-  });
-};
-
-// 已处理的 action ID 集合
-const processedActionIds = ref<Set<string>>(new Set());
-
-// 解析战斗动作并生成标准化日志
-const parseBattleAction = async (action: BattleSystemAction, battleState: BattleState): Promise<{ log: any; shouldDisplay: boolean }> => {
-  // 检查是否已经处理过该 action
-  if (processedActionIds.value.has(action.id)) {
-    return { log: null, shouldDisplay: false };
+  } catch (error) {
+    console.error("结束战斗时出错:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logManager.addErrorLog(`结束战斗时出错: ${errorMsg}`);
+    notification.value?.addNotification("错误", errorMsg, "error");
   }
-
-  // 标记该 action 为已处理
-  processedActionIds.value.add(action.id);
-
-  // 解析来源和目标名称
-  let sourceName = action.sourceId;
-  let targetName = action.targetId;
-
-  if (action.sourceId === "system") {
-    sourceName = "系统";
-  } else {
-    const sourceParticipant = battleState.participants.get(action.sourceId);
-    if (sourceParticipant) {
-      sourceName = sourceParticipant.name;
-    }
-  }
-
-  if (action.targetId === "system") {
-    targetName = "";
-  } else {
-    const targetParticipant = battleState.participants.get(action.targetId);
-    if (targetParticipant) {
-      targetName = targetParticipant.name;
-    }
-  }
-
-  // 判断来源和目标是友方还是敌方
-  const sourceIsAlly = !action.sourceId.includes(PARTICIPANT_SIDE.ENEMY) && action.sourceId !== "system";
-  const targetIsAlly = action.targetId && !action.targetId.includes(PARTICIPANT_SIDE.ENEMY) && action.targetId !== "system";
-
-  // 根据动作类型生成标准化日志
-  const turn = action.turn || 1;
-  const options = {
-    turn,
-    source: sourceName,
-    target: targetName,
-    damage: action.damage,
-    heal: action.heal,
-    skillName: await getSkillName(action.skillId) || "",
-    damageType: "物理",
-    sourceIsAlly,
-    targetIsAlly
-  };
-
-  let actionType = "normal_attack";
-  let logLevel: any = action.sourceId.includes(PARTICIPANT_SIDE.ENEMY) ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY;
-
-  // 判断动作类型
-  if (action.sourceId === "system") {
-    if (action.effects?.some(e => e.description.includes("战斗开始"))) {
-      actionType = "battle_start";
-      logLevel = "info";
-      // 解析战斗开始信息
-      const match = action.effects[0].description.match(/参战角色: (\d+) 人，参战敌人: (\d+) 人/);
-      if (match) {
-        options.source = match[1];
-        options.target = match[2];
-      }
-    } else if (action.effects?.some(e => e.description.includes("战斗结束"))) {
-      actionType = "battle_end";
-      logLevel = "info";
-      // 解析战斗结束信息
-      const match = action.effects[0].description.match(/胜利者: (.+)/);
-      if (match) {
-        options.source = match[1] === "角色方" ? "我方" : "敌方";
-      }
-    }
-  } else if (action.type === "skill") {
-    if (action.heal && action.heal > 0) {
-      actionType = "heal_skill";
-    } else if (action.damage && action.damage > 0) {
-      actionType = "skill_attack";
-    }
-  }
-
-  // 使用格式化工具生成标准化日志
-  const formattedLog = BattleLogFormatter.createBattleLogHTML(actionType, options, logLevel);
-
-  // 构建完整的日志对象
-  const fullLog = {
-    turn: formattedLog.turn,
-    source: sourceName,
-    action: "对",
-    target: targetName,
-    result: formattedLog.htmlResult,
-    htmlResult: formattedLog.htmlResult,
-    level: formattedLog.level
-  };
-
-  // 检查是否已经添加过该日志
-  const isLogExists = battleLogs.value.some(
-    (log) =>
-      log.turn === fullLog.turn &&
-      log.htmlResult === fullLog.htmlResult
-  );
-
-  if (isLogExists) {
-    return { log: null, shouldDisplay: false };
-  }
-
-  return { log: fullLog, shouldDisplay: true };
-};
-
-// 同步战斗日志
-const syncBattleLogs = async (battleState: BattleState) => {
-  // 按时间戳和回合号排序 actions
-  const sortedActions = [...battleState.actions].sort((a, b) => {
-    // 首先按时间戳排序
-    if (a.timestamp !== b.timestamp) {
-      return a.timestamp - b.timestamp;
-    }
-    // 如果时间戳相同，按回合号排序
-    const turnA = a.turn || 0;
-    const turnB = b.turn || 0;
-    if (turnA !== turnB) {
-      return turnA - turnB;
-    }
-    // 如果回合号也相同，按 action ID 排序
-    return a.id.localeCompare(b.id);
-  });
-
-  // 遍历排序后的 actions
-  for (const action of sortedActions) {
-    const { log, shouldDisplay } = await parseBattleAction(action, battleState);
-
-    if (!shouldDisplay || !log) {
-      continue;
-    }
-
-    // 触发视觉效果（伤害/治疗显示）
-    if (battleFieldRef.value && (action.damage || action.heal)) {
-      const targetCharacter = allyTeam.value.find(c => c.name === log.target) ||
-        enemyTeam.value.find(e => e.name === log.target);
-      if (targetCharacter) {
-        const effectType = action.damage ? 'damage' : 'heal';
-        battleFieldRef.value.showDamage(targetCharacter.id, action.damage || action.heal || 0, effectType, false);
-      }
-    }
-
-    // 添加标准化日志
-    logManager.addLog(
-      log.turn,
-      log.source,
-      log.action,
-      log.target,
-      log.result || '',
-      log.level,
-      log.htmlResult
-    );
-  }
-};
-
-const endBattle = () => {
-  if (!currentBattleId.value) {
-    notification.value?.addNotification("提示", "当前没有进行中的战斗", "warning");
-    return;
-  }
-
-  // 清除回合执行回调
-  if (battleSystem) {
-    battleSystem.onTurnExecuted = null;
-  }
-
-  // 停止自动战斗
-  if (isAutoPlaying.value && battleSystem) {
-    battleSystem.stopAutoBattle(currentBattleId.value);
-    isAutoPlaying.value = false;
-  }
-
-  // 结束战斗，默认角色方胜利
-  battleSystem?.endBattle(currentBattleId.value, PARTICIPANT_SIDE.ALLY);
-
-  // 同步战斗状态
-  syncBattleState();
-
-  // 重置战斗状态
-  currentBattleId.value = null;
-  isPaused.value = true;
-  isAutoPlaying.value = false;
-  isBattleActive.value = false;
 };
 
 // 重置战斗
-const resetBattle = () => {
-  // 清除回合执行回调
-  if (battleSystem) {
-    battleSystem.onTurnExecuted = null;
+const resetBattle = async () => {
+  try {
+    const result = await battleStore.resetBattle();
+    
+    if (result) {
+      notification.value?.addNotification("成功", "战斗已重置", "success");
+    } else {
+      notification.value?.addNotification("错误", battleStore.getErrorMessage || "重置战斗失败", "error");
+    }
+  } catch (error) {
+    console.error("重置战斗时出错:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logManager.addErrorLog(`重置战斗时出错: ${errorMsg}`);
+    notification.value?.addNotification("错误", errorMsg, "error");
   }
+};
 
-  // 重置战斗系统中的战斗状态
-  if (currentBattleId.value && battleSystem) {
-    battleSystem.resetBattle();
+// 执行单个回合
+const singleStep = async () => {
+  try {
+    const result = await battleStore.processSingleTurn();
+    
+    if (!result) {
+      notification.value?.addNotification("错误", battleStore.getErrorMessage || "执行回合失败", "error");
+    }
+  } catch (error) {
+    console.error("执行回合时出错:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logManager.addErrorLog(`执行回合时出错: ${errorMsg}`);
+    notification.value?.addNotification("错误", errorMsg, "error");
   }
+};
 
-  // 重置战斗状态
-  currentBattleId.value = null;
-  currentTurn.value = 1;
-  isPaused.value = true;
-  isAutoPlaying.value = false;
-  isBattleActive.value = false;
+// 切换自动战斗状态
+const toggleAutoPlay = async () => {
+  try {
+    const result = await battleStore.toggleAutoPlay();
+    
+    if (result) {
+      notification.value?.addNotification("成功", battleStore.autoPlayMode ? "已开始自动战斗" : "已停止自动战斗", "success");
+    } else {
+      notification.value?.addNotification("错误", battleStore.getErrorMessage || "切换自动战斗状态失败", "error");
+    }
+  } catch (error) {
+    console.error("切换自动战斗状态失败:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logManager.addErrorLog(`切换自动战斗状态失败: ${errorMsg}`);
+    notification.value?.addNotification("错误", errorMsg, "error");
+  }
+};
 
-  // 清空战斗日志
-  logManager.clearLogs();
+// 处理战斗速度变化
+const handleBattleSpeedChange = (speed: number) => {
+  battleStore.setBattleSpeed(speed);
+};
 
-  // 清空已处理的 action ID 集合
-  processedActionIds.value.clear();
-
-  // 重置角色状态到初始值
-  allyTeam.value.forEach(char => {
-    char.currentHp = GameDataProcessor.getAttributeValue(char.maxHp);
-    char.currentEnergy = 0;
-  });
-
-  enemyTeam.value.forEach(enemy => {
-    enemy.currentHp = GameDataProcessor.getAttributeValue(enemy.maxHp);
-    enemy.currentEnergy = 0;
-  });
-
-  // 添加重置日志
-  logManager.addSystemLog("战斗已重置");
+// 选择角色
+const selectCharacter = (characterId: string) => {
+  characterStore.selectCharacter(characterId);
 };
 
 onUnmounted(() => {
-  // 清理战斗系统事件监听器
-  cleanupBattleSystemListeners();
-
-  // 停止所有自动战斗
-  if (currentBattleId.value && battleSystem) {
-    battleSystem.stopAutoBattle(currentBattleId.value);
-  }
+  // 组件卸载时的清理工作
+  // 清理战斗管理器事件监听器，防止内存泄漏
+  battleStore.destroy();
 });
 </script>
 
 <style lang="scss">
 @use '@/styles/main.scss';
+
+// 加载指示器样式
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+
+  .loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #22d3ee;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 20px;
+  }
+
+  .loading-text {
+    color: white;
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+
+  .loading-progress {
+    width: 300px;
+    margin-top: 20px;
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+
+      .progress-fill {
+        height: 100%;
+        background-color: #22d3ee;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+    }
+
+    .progress-text {
+      color: white;
+      font-size: 14px;
+      text-align: center;
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+// 错误提示样式
+.error-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(249, 115, 22, 0.9);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 999;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(2px);
+
+  &:hover {
+    background-color: rgba(249, 115, 22, 1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  .error-message {
+    flex: 1;
+    margin-right: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .error-close {
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 4px;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
 </style>

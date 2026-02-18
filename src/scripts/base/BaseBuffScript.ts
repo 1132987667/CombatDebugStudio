@@ -54,7 +54,7 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
   }
 
   protected log(context: BuffContext, message: string): void {
-    battleLogManager.debug(`[${context.config.id}] ${message}`)
+    battleLogManager.addSystemBattleLog(`[${context.config.id}] ${message}`, 'status')
   }
 
   protected triggerEvent(

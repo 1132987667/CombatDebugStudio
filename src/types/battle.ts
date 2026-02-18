@@ -1,7 +1,8 @@
-import type { Character } from './character'
-import type { EnemyInstance } from './enemy'
+import type { Character } from '@/types/character'
+import type { EnemyInstance } from '@/types/enemy'
 import type { BattleAI } from '@/core/BattleAI'
 import type { SkillManager } from '@/core/skill/SkillManager'
+import type { SkillConfig } from '@/types/skill'
 
 /**
  * 战斗状态常量
@@ -171,7 +172,7 @@ export interface BattleEntity {
   isFullHealth(): boolean
   needsHealing(): boolean
 
-  getSkills(): any[]
+  getSkills(): string[]
   hasSkill(skillId: string): boolean
 }
 
@@ -181,6 +182,8 @@ export interface BattleEntity {
  * 扩展 BattleEntity 接口，添加战斗相关属性
  */
 export interface BattleParticipant extends BattleEntity {
+  /** 队伍归属 */
+  team: ParticipantSide
   /** 速度值（用于回合顺序计算） */
   speed: number
   /** 最小攻击力 */
@@ -209,9 +212,9 @@ export interface BattleParticipant extends BattleEntity {
   statusEffects?: StatusEffect[]
   /** 技能配置 */
   skills: {
-    small?: string[]
-    passive?: string[]
-    ultimate?: string[]
+    small?: SkillConfig[]
+    passive?: SkillConfig[]
+    ultimate?: SkillConfig[]
   }
 }
 
@@ -280,6 +283,8 @@ export interface ParticipantInfo {
   name: string
   /** 参与者类型（我方/敌方） */
   type: ParticipantSide
+  /** 队伍归属 */
+  team: ParticipantSide
   /** 最大生命值 */
   maxHealth: number
   /** 当前生命值 */
@@ -316,12 +321,40 @@ export interface ParticipantInfo {
   buffs?: string[]
   /** 技能配置 */
   skills?: {
-    small?: string[]
-    passive?: string[]
-    ultimate?: string[]
+    small?: SkillConfig[]
+    passive?: SkillConfig[]
+    ultimate?: SkillConfig[]
   }
 }
 
+/**
+ * 战斗系统事件类型枚举
+ * 定义所有战斗系统支持的事件名称
+ */
+export enum BattleSystemEvent {
+  /** 战斗日志事件 */
+  BATTLE_LOG = 'battleLog',
+  /** 战斗状态更新事件 */
+  BATTLE_STATE_UPDATE = 'battleStateUpdate',
+  /** 伤害动画事件 */
+  DAMAGE_ANIMATION = 'damageAnimation',
+  /** 闪避动画事件 */
+  MISS_ANIMATION = 'missAnimation',
+  /** Buff效果事件 */
+  BUFF_EFFECT = 'buffEffect',
+  /** 技能效果事件 */
+  SKILL_EFFECT = 'skillEffect',
+  /** 战斗结束事件 */
+  BATTLE_END = 'battleEnd',
+  /** 回合开始事件 */
+  TURN_START = 'turnStart',
+  /** 回合结束事件 */
+  TURN_END = 'turnEnd'
+}
+
+/**
+ * 战斗系统接口
+ */
 export interface BattleSystem {
   createBattle(participantsInfo: BattleParticipant[]): BattleState
   processTurn(battleId: string): Promise<void>

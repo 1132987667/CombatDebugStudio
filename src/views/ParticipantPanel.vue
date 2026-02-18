@@ -5,7 +5,7 @@
         <span>参战管理</span>
         <div class="expand-collapse-controls">
           <button class="btn-small" @click="clearParticipants"
-            :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
+            :disabled="characterStore.allyTeam.length === 0 && characterStore.enemyTeam.length === 0">
             <span class="icon">−</span>清空
           </button>
         </div>
@@ -13,13 +13,13 @@
       <div class="section-content">
         <div class="character-field">
           <div class="character-party our-party">
-            <div class="party-header">我方 ({{allyTeam.filter(c => c.enabled).length}}人)</div>
+            <div class="party-header">我方 ({{Array.from(characterStore.allyTeam.values()).filter(c => c.enabled).length}}人)</div>
             <div class="party-members">
-              <div v-for="char in allyTeam" :key="char.id" class="character-item"
-                :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
+              <div v-for="char in Array.from(characterStore.allyTeam.values())" :key="char.id" class="character-item"
+                :class="{ selected: characterStore.selectedCharacterId === char.id, disabled: !char.enabled }"
                 @click="selectCharacter(char.id)">
                 <div class="char-check">
-                  <input type="checkbox" v-model="char.enabled" @click.stop>
+                  <input type="checkbox" :checked="char.enabled" @change="toggleCharacterEnabled(char.id, $event.target.checked)" @click.stop>
                 </div>
                 <div class="char-info">
                   <span class="char-name">{{ char.name }}({{ char.level }})</span>
@@ -38,13 +38,13 @@
           </div>
 
           <div class="character-party enemy-party">
-            <div class="party-header">敌方 ({{enemyTeam.filter(c => c.enabled).length}}人)</div>
+            <div class="party-header">敌方 ({{Array.from(characterStore.enemyTeam.values()).filter(c => c.enabled).length}}人)</div>
             <div class="party-members">
-              <div v-for="char in enemyTeam" :key="char.id" class="character-item"
-                :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
+              <div v-for="char in Array.from(characterStore.enemyTeam.values())" :key="char.id" class="character-item"
+                :class="{ selected: characterStore.selectedCharacterId === char.id, disabled: !char.enabled }"
                 @click="selectCharacter(char.id)">
                 <div class="char-check">
-                  <input type="checkbox" v-model="char.enabled" @click.stop>
+                  <input type="checkbox" :checked="char.enabled" @change="toggleCharacterEnabled(char.id, $event.target.checked)" @click.stop>
                 </div>
                 <div class="char-info">
                   <span class="char-name">{{ char.name }}({{ char.level }})</span>
@@ -56,7 +56,7 @@
                   <span class="first-badge">状态</span>
                 </div>
               </div>
-              <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
+              <div v-if="characterStore.enemyTeam.length === 0" class="empty-party">(空位)</div>
             </div>
           </div>
         </div>
@@ -119,29 +119,21 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
-import type { UIBattleCharacter, Enemy, SceneData } from "@/types";
-import { PARTICIPANT_SIDE, ParticipantSide } from "@/types/battle";
+import { useCharacterList } from "@/composables/useCharacterList";
+import { useCharacterStore } from "@/stores";
+import type { Enemy, SceneData } from "@/types";
+import { PARTICIPANT_SIDE } from "@/types/battle";
 
 interface GroupedEnemies {
   scene: SceneData;
   enemies: Enemy[];
 }
 
-interface Props {
-  allyTeam: UIBattleCharacter[];
-  enemyTeam: UIBattleCharacter[];
-  selectedCharacterId: string | null;
-}
+// 使用Pinia store
+const characterStore = useCharacterStore();
 
-interface Emits {
-  (e: 'update:selectedCharacterId', id: string): void;
-  (e: 'addEnemy', enemy: Enemy, side: ParticipantSide): void;
-  (e: 'moveCharacter', direction: number): void;
-  (e: 'clearParticipants'): void;
-}
-
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+// 使用角色列表管理组合式函数
+const { getOrderIndex: getCharacterOrderIndex } = useCharacterList();
 
 // 初始化 GameDataProcessor
 const enemySearch = ref("");
@@ -220,42 +212,62 @@ const groupedEnemies = computed<GroupedEnemies[]>(() => {
     .filter((group) => group.enemies.length > 0);
 });
 
-const ourParty = computed(() => {
-  return props.allyTeam
-    .filter((c) => c.enabled)
-    .sort((a, b) => GameDataProcessor.getAttributeValue(b.speed) - GameDataProcessor.getAttributeValue(a.speed));
-});
-
-const enemyParty = computed(() => {
-  return props.enemyTeam
-    .filter((c) => c.enabled)
-    .sort((a, b) => GameDataProcessor.getAttributeValue(b.speed) - GameDataProcessor.getAttributeValue(a.speed));
-});
-
 const getOrderIndex = (charId: string) => {
-  const allyIndex = ourParty.value.findIndex((c) => c.id === charId);
-  if (allyIndex >= 0) return allyIndex + 1;
-
-  const enemyIndex = enemyParty.value.findIndex((c) => c.id === charId);
-  return enemyIndex >= 0 ? enemyIndex + 1 : 0;
+  return getCharacterOrderIndex(charId, Array.from(characterStore.allyTeam.values()), Array.from(characterStore.enemyTeam.values()));
 };
 
 const selectCharacter = (charId: string) => {
-  emit('update:selectedCharacterId', charId);
+  characterStore.selectCharacter(charId);
 };
 
-const addEnemyToBattle = (enemy: Enemy, side: ParticipantSide = PARTICIPANT_SIDE.ALLY) => {
-  emit('addEnemy', enemy, side);
+const addEnemyToBattle = (enemy: Enemy, side: string = PARTICIPANT_SIDE.ALLY) => {
+  const newCharacter = {
+    originalId: enemy.id,
+    id: `enemy_${Date.now()}_${enemy.id}`,
+    team: side,
+    name: enemy.name,
+    level: enemy.level,
+    maxHp: GameDataProcessor.createAttributeValue(enemy.stats.health, {}, 'health'),
+    currentHp: enemy.stats.health,
+    maxMp: 100,
+    currentMp: 100,
+    currentEnergy: 0,
+    maxEnergy: 150,
+    minAttack: enemy.stats.minAttack,
+    maxAttack: enemy.stats.maxAttack,
+    attack: GameDataProcessor.createAttributeValue(Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2), {}, 'attack'),
+    defense: GameDataProcessor.createAttributeValue(enemy.stats.defense, {}, 'defense'),
+    speed: GameDataProcessor.createAttributeValue(enemy.stats.speed, {}, 'speed'),
+    critRate: GameDataProcessor.createPercentAttributeValue(10, {}, 'critRate'),
+    critDamage: GameDataProcessor.createPercentAttributeValue(125, {}, 'critDamage'),
+    damageReduction: GameDataProcessor.createPercentAttributeValue(0, {}, 'damageReduction'),
+    healthBonus: GameDataProcessor.createPercentAttributeValue(0, {}, 'healthBonus'),
+    attackBonus: GameDataProcessor.createPercentAttributeValue(0, {}, 'attackBonus'),
+    defenseBonus: GameDataProcessor.createPercentAttributeValue(0, {}, 'defenseBonus'),
+    speedBonus: GameDataProcessor.createPercentAttributeValue(0, {}, 'speedBonus'),
+    enabled: true,
+    isFirst: false,
+    buffs: [],
+    skills: {
+      small: GameDataProcessor.getSkillByIds(enemy.skills?.small || []),
+      passive: GameDataProcessor.getSkillByIds(enemy.skills?.passive || []),
+      ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate || []),
+    },
+  };
+  
+  characterStore.addEnemyToBattle(newCharacter, side);
 };
-
-
 
 const moveCharacter = (direction: number) => {
-  emit('moveCharacter', direction);
+  characterStore.moveCharacter(direction);
 };
 
 const clearParticipants = () => {
-  emit('clearParticipants');
+  characterStore.clearParticipants();
+};
+
+const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
+  characterStore.setCharacterEnabled(characterId, enabled);
 };
 </script>
 

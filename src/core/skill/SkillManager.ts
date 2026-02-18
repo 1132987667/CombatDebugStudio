@@ -10,9 +10,10 @@
 import type { SkillConfig, SkillStep, ExtendedSkillStep, CalculationLog } from '@/types/skill'
 import type { BattleAction, BattleParticipant, BattleEnvironment } from '@/types/battle'
 import { BuffSystem } from '@/core/BuffSystem'
-import { DamageCalculator } from './DamageCalculator'
-import { HealCalculator } from './HealCalculator'
+import { DamageCalculator } from '@/core/skill/DamageCalculator'
+import { HealCalculator } from '@/core/skill/HealCalculator'
 import { battleLogManager } from '@/utils/logging'
+import { validateSkillConfigs } from '@/utils/schema-validator'
 
 /**
  * 计算上下文接口 - 统一伤害和治疗计算的输入
@@ -54,22 +55,66 @@ export interface SkillCalculator {
  * 支持插件化的计算器注册
  */
 export class SkillManager {
+  private static instance: SkillManager
   private logger = battleLogManager
   private skillConfigs = new Map<string, SkillConfig>()
   private buffSystem = BuffSystem.getInstance()
-  private damageCalculator = new DamageCalculator()
-  private healCalculator = new HealCalculator()
+  private damageCalculator
+  private healCalculator
   private calculators: Map<string, SkillCalculator> = new Map()
+
+  /**
+   * 私有构造函数，防止外部实例化
+   */
+  private constructor() {
+    try {
+      const { container } = require('@/core/di/Container')
+      this.damageCalculator = container.resolve('DamageCalculator')
+      this.healCalculator = container.resolve('HealCalculator')
+    } catch (error) {
+      // 如果依赖注入容器不可用，则使用默认实例
+      console.warn('依赖注入容器不可用，使用默认实例初始化', error)
+      this.damageCalculator = new DamageCalculator()
+      this.healCalculator = new HealCalculator()
+    }
+  }
+
+  /**
+   * 获取单例实例
+   * @returns SkillManager实例
+   */
+  public static getInstance(): SkillManager {
+    if (!SkillManager.instance) {
+      SkillManager.instance = new SkillManager()
+    }
+    return SkillManager.instance
+  }
 
   /**
    * 加载技能配置
    * @param skillConfigs 技能配置数组
    */
   public loadSkillConfigs(skillConfigs: SkillConfig[]): void {
+    // 验证技能配置
+    const validationResult = validateSkillConfigs(skillConfigs)
+    
+    if (!validationResult.valid) {
+      // 记录验证错误
+      validationResult.errors.forEach(error => {
+        this.logger.error(`技能配置验证失败: ${error}`)
+      })
+      
+      // 拒绝无效配置
+      throw new Error('技能配置验证失败，请检查配置文件')
+    }
+    
+    // 加载验证通过的配置
     for (const config of skillConfigs) {
       this.skillConfigs.set(config.id, config)
       this.logger.debug(`加载技能配置: ${config.id} - ${config.name}`)
     }
+    
+    this.logger.info(`成功加载 ${skillConfigs.length} 个技能配置`)
     this.logger.info(`技能配置加载完成，共加载 ${skillConfigs.length} 个技能`)
   }
 
@@ -83,6 +128,28 @@ export class SkillManager {
   }
 
   /**
+   * 检查技能是否可用（未冷却且满足能量要求）
+   * @param skillId 技能ID
+   * @param source 施放者
+   * @returns 是否可用
+   */
+  public isSkillAvailable(skillId: string, source: BattleParticipant): boolean {
+    const skillConfig = this.getSkillConfig(skillId)
+    if (!skillConfig) {
+      return false
+    }
+
+    // 检查技能冷却
+    if ('isSkillAvailable' in source && typeof source.isSkillAvailable === 'function') {
+      if (!source.isSkillAvailable(skillId)) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  /**
    * 执行技能动作
    * @param skillId 技能ID
    * @param source 施放者
@@ -93,6 +160,11 @@ export class SkillManager {
     const skillConfig = this.getSkillConfig(skillId)
     if (!skillConfig) {
       throw new Error(`技能配置不存在: ${skillId}`)
+    }
+
+    // 检查技能是否可用
+    if (!this.isSkillAvailable(skillId, source)) {
+      throw new Error(`技能不可用: ${skillId}`)
     }
 
     const action: BattleAction = {
@@ -114,7 +186,17 @@ export class SkillManager {
       const sortedSteps = [...skillConfig.steps].sort((a, b) => (a.priority || 0) - (b.priority || 0))
       
       for (const skillStep of sortedSteps) {
+        // 每段伤害前检查目标是否存活
+        if (!target.isAlive()) {
+          break
+        }
+        
         this.executeSkillStep(skillStep as ExtendedSkillStep, action, source, target)
+        
+        // 为多段伤害添加间隔（模拟间隔效果，实际动画间隔由BattleSystem处理）
+        if (sortedSteps.length > 1) {
+          // 这里可以添加配置化的间隔时间
+        }
       }
     } else if ((skillConfig as any).damage) {
       // 旧格式：直接使用 damage 属性创建伤害效果
@@ -131,7 +213,25 @@ export class SkillManager {
       throw new Error(`技能配置无效: ${skillId}，既没有 steps 也没有 damage 属性`)
     }
 
+    // 设置技能冷却
+    if (skillConfig.cooldown && skillConfig.cooldown > 0) {
+      if ('setSkillCooldown' in source && typeof source.setSkillCooldown === 'function') {
+        source.setSkillCooldown(skillId, skillConfig.cooldown)
+        this.logger.info(`技能设置冷却: ${skillId}, 冷却回合数: ${skillConfig.cooldown}`)
+      }
+    }
+
     return action
+  }
+
+  /**
+   * 标准化技能步骤类型
+   * 将小写类型转换为大写，确保与代码中的 SkillStepType 一致
+   * @param type 技能步骤类型
+   * @returns 标准化后的技能步骤类型
+   */
+  private normalizeSkillStepType(type: string): string {
+    return type.toUpperCase()
   }
 
   /**
@@ -147,7 +247,10 @@ export class SkillManager {
     source: BattleParticipant,
     target: BattleParticipant
   ): void {
-    switch (skillStep.type) {
+    // 标准化技能步骤类型，处理大小写差异
+    const normalizedType = this.normalizeSkillStepType(skillStep.type)
+    
+    switch (normalizedType) {
       case 'DAMAGE':
         this.executeDamageStep(skillStep, battleAction, source, target)
         break
@@ -165,7 +268,7 @@ export class SkillManager {
         this.executeControlStep(skillStep, battleAction, source, target)
         break
       default:
-        this.logger.warn(`未知的技能步骤类型: ${skillStep.type}`)
+        this.logger.warn(`未知的技能步骤类型: ${skillStep.type} (标准化后: ${normalizedType})`)
     }
   }
 
@@ -179,17 +282,31 @@ export class SkillManager {
     target: BattleParticipant
   ): void {
     // 使用新的伤害计算器
-    const damage = this.damageCalculator.calculateDamage(skillStep, source, target)
-    const actualDamage = this.damageCalculator.applyDamage(target, damage)
+    const damageResult = this.damageCalculator.calculateDamage(skillStep, source, target)
     
-    battleAction.damage += actualDamage
-    battleAction.effects.push({
-      type: 'damage',
-      value: actualDamage,
-      description: `${source.name} 造成 ${actualDamage} 伤害`
-    })
+    if (damageResult.isMiss) {
+      // 处理闪避情况
+      battleAction.effects.push({
+        type: 'miss',
+        value: 0,
+        description: `${target.name} 闪避了攻击`
+      })
+      
+      this.logger.info(`伤害步骤执行完成: ${source.name} → ${target.name}, 闪避`)
+    } else {
+      // 处理正常伤害情况
+      const actualDamage = this.damageCalculator.applyDamage(target, damageResult.damage)
+      
+      battleAction.damage += actualDamage
+      battleAction.effects.push({
+        type: 'damage',
+        value: actualDamage,
+        description: `${source.name} 造成 ${actualDamage} 伤害`,
+        isCritical: damageResult.isCritical
+      })
 
-    this.logger.info(`伤害步骤执行完成: ${source.name} → ${target.name}, 伤害: ${actualDamage}`)
+      this.logger.info(`伤害步骤执行完成: ${source.name} → ${target.name}, 伤害: ${actualDamage}, 暴击: ${damageResult.isCritical}`)
+    }
   }
 
   /**
@@ -399,27 +516,33 @@ export class SkillManager {
    * 验证技能步骤
    */
   private validateSkillStep(step: ExtendedSkillStep): boolean {
-    if (!step.type || !step.formula) {
+    if (!step.type) {
       return false
     }
 
-    // 验证DAMAGE/HEAL类型的计算配置
-    if (step.type === 'DAMAGE' || step.type === 'HEAL') {
-      if (!step.calculation) {
-        this.logger.warn(`技能步骤缺少计算配置: ${step.type}`)
+    // 标准化技能步骤类型，处理大小写差异
+    const normalizedType = this.normalizeSkillStepType(step.type)
+
+    // 验证DAMAGE/HEAL类型的计算配置（可选）
+    if (normalizedType === 'DAMAGE' || normalizedType === 'HEAL') {
+      // 允许使用 formula 字符串或 calculation 对象
+      if (!step.formula && !step.calculation) {
+        this.logger.warn(`DAMAGE/HEAL 类型的技能步骤需要 formula 或 calculation`)
         return false
       }
 
-      if (step.calculation.baseValue < 0) {
-        this.logger.warn(`基础值不能为负数: ${step.calculation.baseValue}`)
-        return false
-      }
-
-      // 验证额外值配置
-      for (const extra of step.calculation.extraValues) {
-        if (!extra.attribute || extra.ratio < 0) {
-          this.logger.warn(`无效的额外值配置: ${JSON.stringify(extra)}`)
+      if (step.calculation) {
+        if (step.calculation.baseValue < 0) {
+          this.logger.warn(`基础值不能为负数: ${step.calculation.baseValue}`)
           return false
+        }
+
+        // 验证额外值配置
+        for (const extra of step.calculation.extraValues) {
+          if (!extra.attribute || extra.ratio < 0) {
+            this.logger.warn(`无效的额外值配置: ${JSON.stringify(extra)}`)
+            return false
+          }
         }
       }
     }

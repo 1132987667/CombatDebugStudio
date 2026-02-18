@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { BuffScriptRegistry } from './BuffScriptRegistry'
+import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
 
 /**
  * Buff脚本加载器类
@@ -40,60 +40,45 @@ export class BuffScriptLoader {
 
   /**
    * 加载Buff脚本
-   * 手动导入已知的脚本并注册到脚本注册表
+   * 使用Vite的glob导入自动扫描scripts/目录下的所有Buff脚本并注册
    */
   public async loadScripts(): Promise<void> {
     try {
-      // 手动导入已知的脚本
-      // 注意：在实际项目中，这里可以使用 Vite 的 glob 导入
-      // 但为了类型安全，我们暂时使用手动导入
-      const { MountainGodBuff } =
-        await import('@/scripts/combat/MountainGodBuff')
-      const { PoisonDebuff } = await import('@/scripts/combat/PoisonDebuff')
-      const { BerserkBuff } = await import('@/scripts/combat/BerserkBuff')
-      const { HealOverTime } = await import('@/scripts/support/HealOverTime')
-      const { ShieldBuff } = await import('@/scripts/support/ShieldBuff')
-
+      // 使用Vite的glob导入自动扫描scripts/目录下的所有脚本
+      const modules = import.meta.glob('@/scripts/**/*.ts', { eager: false })
+      
       // 注册脚本
       const registry = BuffScriptRegistry.getInstance()
-
-      if (MountainGodBuff.BUFF_ID) {
-        registry.register(
-          MountainGodBuff.BUFF_ID,
-          () => new MountainGodBuff(),
-          {
-            filePath: '@/scripts/combat/MountainGodBuff',
-          },
-        )
-        this.loadedScripts.add('MountainGodBuff')
-      }
-
-      if (PoisonDebuff.BUFF_ID) {
-        registry.register(PoisonDebuff.BUFF_ID, () => new PoisonDebuff(), {
-          filePath: '@/scripts/combat/PoisonDebuff',
-        })
-        this.loadedScripts.add('PoisonDebuff')
-      }
-
-      if (BerserkBuff.BUFF_ID) {
-        registry.register(BerserkBuff.BUFF_ID, () => new BerserkBuff(), {
-          filePath: '@/scripts/combat/BerserkBuff',
-        })
-        this.loadedScripts.add('BerserkBuff')
-      }
-
-      if (HealOverTime.BUFF_ID) {
-        registry.register(HealOverTime.BUFF_ID, () => new HealOverTime(), {
-          filePath: '@/scripts/support/HealOverTime',
-        })
-        this.loadedScripts.add('HealOverTime')
-      }
-
-      if (ShieldBuff.BUFF_ID) {
-        registry.register(ShieldBuff.BUFF_ID, () => new ShieldBuff(), {
-          filePath: '@/scripts/support/ShieldBuff',
-        })
-        this.loadedScripts.add('ShieldBuff')
+      
+      // 遍历所有找到的模块
+      for (const [path, moduleLoader] of Object.entries(modules)) {
+        try {
+          // 动态加载模块
+          const module = await moduleLoader()
+          
+          // 遍历模块导出的所有成员
+          for (const [exportName, exportValue] of Object.entries(module)) {
+            // 检查是否是Buff脚本类（有BUFF_ID静态属性）
+            if (typeof exportValue === 'function' && exportValue.BUFF_ID) {
+              const BuffClass = exportValue
+              const buffId = BuffClass.BUFF_ID
+              
+              // 注册脚本
+              registry.register(
+                buffId,
+                () => new BuffClass(),
+                {
+                  filePath: path,
+                },
+              )
+              
+              this.loadedScripts.add(exportName)
+              console.log(`Loaded and registered buff script: ${exportName} (${buffId})`)
+            }
+          }
+        } catch (moduleError) {
+          console.error(`Failed to load module ${path}:`, moduleError)
+        }
       }
     } catch (error) {
       console.error('Failed to load buff scripts:', error)

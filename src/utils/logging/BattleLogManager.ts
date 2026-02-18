@@ -941,7 +941,6 @@ export class BattleLogManager {
    */
   debug(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.DEBUG, message, context)
-    this.addLog('系统', '系统', '调试', '', message, 'info')
   }
 
   /**
@@ -949,7 +948,6 @@ export class BattleLogManager {
    */
   info(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.INFO, message, context)
-    this.addLog('系统', '系统', '信息', '', message, 'info')
   }
 
   /**
@@ -957,7 +955,6 @@ export class BattleLogManager {
    */
   warn(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.WARN, message, context)
-    this.addLog('系统', '系统', '警告', '', message, 'status')
   }
 
   /**
@@ -965,8 +962,6 @@ export class BattleLogManager {
    */
   error(message: string, context?: Record<string, unknown>, error?: Error): void {
     this.log(LogLevel.ERROR, message, context, error)
-    const errorMsg = error ? `${message} - ${error.message}` : message
-    this.addLog('系统', '系统', '错误', '', errorMsg, 'damage')
   }
 
   /**
@@ -974,7 +969,6 @@ export class BattleLogManager {
    */
   trace(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.TRACE, message, context)
-    this.addLog('系统', '系统', '跟踪', '', message, 'info')
   }
 
   /**
@@ -989,7 +983,7 @@ export class BattleLogManager {
     console.log('添加日志:', message, context, error)
     if (level > this.level) {
       console.log('日志级别不满足要求:', level, this.level)
-      return
+      // return
     }
 
     const entry: LogEntry = {

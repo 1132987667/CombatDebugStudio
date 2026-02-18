@@ -21,6 +21,22 @@
           <span class="tooltip-value">{{ displayValue }}</span>
         </div>
         
+        <!-- 属性描述部分 -->
+        <div v-if="attributeMeta" class="tooltip-description">
+          <div class="description-item">
+            <span class="description-label">描述:</span>
+            <span class="description-text">{{ attributeMeta.description }}</span>
+          </div>
+          <div class="description-item">
+            <span class="description-label">影响:</span>
+            <span class="description-text">{{ attributeMeta.impact }}</span>
+          </div>
+          <div class="description-item">
+            <span class="description-label">范围:</span>
+            <span class="description-text">{{ attributeMeta.range }}</span>
+          </div>
+        </div>
+        
         <div class="tooltip-divider"></div>
         
         <div class="tooltip-content">
@@ -41,6 +57,9 @@
                   {{ formatValue(option.value, option.valueType) }}
                 </span>
               </div>
+            </div>
+            <div v-if="options.length === 0" class="no-sources">
+              无详细来源信息
             </div>
           </div>
           
@@ -65,6 +84,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { AttributeOption, AttributeValueType, AttributeSourceType } from '@/types/UI/UIBattleCharacter'
+import { getAttributeMeta, getAttributeCodeByName } from '@/types/attribute-meta'
 
 interface Props {
   visible: boolean
@@ -85,6 +105,40 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const tooltipRef = ref<HTMLElement | null>(null)
+
+// 根据属性名称获取属性元数据
+const attributeMeta = computed(() => {
+  try {
+    // 尝试根据属性名称获取属性编码
+    let attributeCode = getAttributeCodeByName(props.title)
+    
+    // 如果没有找到，尝试使用常见的属性名称映射
+    if (!attributeCode) {
+      const nameMap: Record<string, string> = {
+        '生命值': 'currentHp',
+        '气血': 'currentHp',
+        '攻击力': 'attack',
+        '攻击': 'attack',
+        '防御力': 'defense',
+        '防御': 'defense',
+        '速度': 'speed',
+        '暴击率': 'critRate',
+        '暴击伤害': 'critDamage',
+        '免伤率': 'damageReduction',
+        '气血加成': 'healthBonus',
+        '攻击加成': 'attackBonus',
+        '防御加成': 'defenseBonus',
+        '速度加成': 'speedBonus'
+      }
+      attributeCode = nameMap[props.title] || props.title.toLowerCase()
+    }
+    
+    return getAttributeMeta(attributeCode)
+  } catch (error) {
+    console.error('获取属性元数据时出错:', error)
+    return undefined
+  }
+})
 
 const getSourceLabel = (source: AttributeSourceType): string => {
   const labels: Record<AttributeSourceType, string> = {
@@ -138,7 +192,7 @@ const arrowClass = computed(() => {
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
   const tooltipWidth = 320
-  const tooltipHeight = 300
+  const tooltipHeight = 350 // 增加高度以容纳属性描述
   
   const rightSpace = viewportWidth - props.triggerRect.right
   const leftSpace = props.triggerRect.left
@@ -149,7 +203,7 @@ const arrowClass = computed(() => {
     return 'arrow-left'
   } else if (leftSpace > 320) {
     return 'arrow-right'
-  } else if (bottomSpace > 300) {
+  } else if (bottomSpace > 350) {
     return 'arrow-top'
   } else {
     return 'arrow-bottom'
@@ -166,7 +220,7 @@ const tooltipStyle = computed(() => {
   }
   
   const tooltipWidth = 320
-  const tooltipHeight = 300
+  const tooltipHeight = 350 // 增加高度以容纳属性描述
   const offset = 12
   
   const viewportWidth = window.innerWidth
@@ -233,18 +287,53 @@ onUnmounted(() => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(96, 165, 250, 0.3);
     
     .tooltip-title {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.85);
+      color: #22d3ee;
+      text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
     }
     
     .tooltip-value {
       font-size: 18px;
       font-weight: 700;
       color: #22d3ee;
-      font-family: 'Consolas', monospace;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  }
+  
+  .tooltip-description {
+    background: rgba(34, 211, 238, 0.05);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 12px;
+    
+    .description-item {
+      display: flex;
+      margin-bottom: 6px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .description-label {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        width: 40px;
+        flex-shrink: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .description-text {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        flex: 1;
+        line-height: 1.4;
+      }
     }
   }
   
@@ -301,7 +390,7 @@ onUnmounted(() => {
           .source-amount {
             font-size: 14px;
             font-weight: 600;
-            font-family: 'Consolas', monospace;
+            font-family: 'JetBrains Mono', monospace;
             color: rgba(255, 255, 255, 0.85);
             
             &.positive {
@@ -314,6 +403,14 @@ onUnmounted(() => {
           }
         }
       }
+      
+      .no-sources {
+        text-align: center;
+        padding: 12px;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 12px;
+        font-style: italic;
+      }
     }
     
     .calculation-section {
@@ -323,15 +420,17 @@ onUnmounted(() => {
       margin-top: 8px;
       
       .calculation-title {
-        font-size: 12px;
+        font-size: 11px;
         color: rgba(255, 255, 255, 0.5);
         margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
       
       .calculation-formula {
         font-size: 13px;
         color: rgba(255, 255, 255, 0.7);
-        font-family: 'Consolas', monospace;
+        font-family: 'JetBrains Mono', monospace;
         line-height: 1.6;
         word-break: break-all;
       }
@@ -353,7 +452,7 @@ onUnmounted(() => {
           font-size: 16px;
           font-weight: 700;
           color: #22d3ee;
-          font-family: 'Consolas', monospace;
+          font-family: 'JetBrains Mono', monospace;
         }
       }
     }
@@ -397,14 +496,38 @@ onUnmounted(() => {
   }
 }
 
+/* 悬浮提示过渡动画 */
 .tooltip-fade-enter-active,
 .tooltip-fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .tooltip-fade-enter-from,
 .tooltip-fade-leave-to {
   opacity: 0;
-  transform: scale(0.95);
+  transform: translateY(-8px);
+}
+
+.tooltip-fade-enter-to,
+.tooltip-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .attribute-tooltip {
+    max-width: 280px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .attribute-tooltip {
+    max-width: 260px;
+    left: 10px !important;
+    right: 10px !important;
+    font-size: 11px;
+  }
 }
 </style>

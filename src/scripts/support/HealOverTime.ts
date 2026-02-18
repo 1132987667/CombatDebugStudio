@@ -1,4 +1,4 @@
-import { BaseBuffScript } from '../base/BaseBuffScript'
+import { BaseBuffScript } from '@/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/core/BuffContext'
 
 export class HealOverTime extends BaseBuffScript {

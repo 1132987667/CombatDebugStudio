@@ -4,7 +4,7 @@
       <div class="battle-header">
         <div class="turn-info">
           <span class="turn-label">当前回合:</span>
-          <span class="turn-num">{{ currentTurn }}/{{ maxTurns }}</span>
+          <span class="turn-num">{{ characterStore.currentTurn }}/{{ characterStore.maxTurns }}</span>
           <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} (SPD:{{ getMemberSpeed(currentActor) }})</span>
         </div>
       </div>
@@ -14,10 +14,10 @@
           <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
             <div v-for="member in filterAllyTeam" :key="member.id" class="member-card"
-              :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: selectedCharacterId === member.id, hit: member.isHit, casting: member.isCasting }"
-              @click="selectCharacter(member.id)">
-              <DamageNumber ref="damageNumberRefs" :position="{ x: 50, y: 20 }" />
-              <SkillEffect ref="skillEffectRefs" :position="{ x: 50, y: 50 }" />
+            :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: characterStore.selectedCharacterId === member.id, hit: characterEffects.animation[member.id]?.isHit, casting: characterEffects.animation[member.id]?.isCasting, buffed: characterEffects.animation[member.id]?.isBuffed }"
+            @click="selectCharacter(member.id)">
+              <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)" :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
+              <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)" :skill-name="getCharacterSkillName(member.id)" />
               <div class="member-info">
                 <div class="member-name">
                   Lv.{{ member.level }} {{ member.name }}
@@ -67,10 +67,10 @@
           <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
             <div v-for="member in filterEnemyTeam" :key="member.id" class="member-card"
-              :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: selectedCharacterId === member.id, hit: member.isHit, casting: member.isCasting }"
+              :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: characterStore.selectedCharacterId === member.id, hit: characterEffects.animation[member.id]?.isHit, casting: characterEffects.animation[member.id]?.isCasting, buffed: characterEffects.animation[member.id]?.isBuffed }"
               @click="selectCharacter(member.id)">
-              <DamageNumber ref="damageNumberRefs" :position="{ x: 50, y: 20 }" />
-              <SkillEffect ref="skillEffectRefs" :position="{ x: 50, y: 50 }" />
+              <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)" :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
+              <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)" :skill-name="getCharacterSkillName(member.id)" />
               <div class="member-info">
                 <div class="member-name">
                   Lv.{{ member.level }} {{ member.name }}
@@ -108,13 +108,13 @@
                 </div>
               </div>
             </div>
-            <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
+            <div v-if="characterStore.enemyTeam.size === 0" class="empty-party">(空位)</div>
           </div>
         </div>
       </div>
     </div>
 
-    <BattleLog :logs="props.battleLogs" />
+    <BattleLog :logs="logStore.battleLogs" />
 
     <!-- 状态工具提示 -->
     <div v-if="statusTooltip.visible" class="status-tooltip" :style="{
@@ -151,97 +151,102 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { raf } from '@/utils/RAF';
 import { GameDataProcessor } from '@/utils/GameDataProcessor';
+import { useCharacterList } from '@/composables/useCharacterList';
+import { useCharacterStore, useLogStore } from "@/stores";
+import { eventBus } from "@/main";
+import { BattleSystemEvent } from "@/types/battle";
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
-import type { BattleLogEntry } from '@/types/battle-log';
-import type { UIBattleCharacter } from '@/types';
+
+// 使用Pinia stores
+const characterStore = useCharacterStore();
+const logStore = useLogStore();
 
 const props = defineProps<{
-  allyTeam: any[];
-  enemyTeam: any[];
-  selectedCharacterId: string | null;
   currentActorId: string | null;
-  currentTurn: number;
-  maxTurns: number;
-  battleLogs: BattleLogEntry[];
+  turnOrder?: string[];
+  damageEffects?: Record<string, { value: number; type: 'damage' | 'heal' | 'critical' | 'miss'; isCritical: boolean }>;
+  skillEffects?: Record<string, { type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate'; name?: string }>;
 }>();
 
 const emit = defineEmits<{
   "select-character": [characterId: string];
-  "show-damage": [characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean];
-  "show-skill-effect": [characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string];
 }>();
 
-const damageNumberRefs = ref<InstanceType<typeof DamageNumber>[]>([]);
-const skillEffectRefs = ref<InstanceType<typeof SkillEffect>[]>([]);
+// 角色效果状态
+const characterEffects = ref<{
+  damage: Record<string, { value: number; type: 'damage' | 'heal' | 'critical' | 'miss'; isCritical: boolean }>;
+  skill: Record<string, { type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate'; name?: string }>;
+  animation: Record<string, { isHit: boolean; isCasting: boolean; isBuffed: boolean }>;
+}>({
+  damage: {},
+  skill: {},
+  animation: {}
+});
 
+// 使用角色列表管理组合式函数
+const { 
+  filterAndSortAllyTeam, 
+  filterAndSortEnemyTeam, 
+  getHpPercent, 
+  getHpColorClass, 
+  getMemberHp, 
+  getMemberSpeed 
+} = useCharacterList();
+
+// 根据回合顺序排序角色列表
 const filterAllyTeam = computed(() => {
-  return props.allyTeam
-    .filter((c) => c.enabled)
-    .sort((a, b) => getSpeed(b) - getSpeed(a));
+  const enabledAllies = Array.from(characterStore.allyTeam.values()).filter((c) => c.enabled);
+  if (props.turnOrder) {
+    // 如果有回合顺序，按照回合顺序排序
+    return enabledAllies.sort((a, b) => {
+      const indexA = props.turnOrder!.indexOf(a.id);
+      const indexB = props.turnOrder!.indexOf(b.id);
+      // 不在回合顺序中的角色放在最后
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  } else {
+    // 否则按速度排序
+    return enabledAllies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
+  }
 });
+
 const filterEnemyTeam = computed(() => {
-  return props.enemyTeam
-    .filter((c) => c.enabled)
-    .sort((a, b) => getSpeed(a) - getSpeed(b));
+  const enabledEnemies = Array.from(characterStore.enemyTeam.values()).filter((c) => c.enabled);
+  if (props.turnOrder) {
+    // 如果有回合顺序，按照回合顺序排序
+    return enabledEnemies.sort((a, b) => {
+      const indexA = props.turnOrder!.indexOf(a.id);
+      const indexB = props.turnOrder!.indexOf(b.id);
+      // 不在回合顺序中的角色放在最后
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  } else {
+    // 否则按速度排序
+    return enabledEnemies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
+  }
 });
-
-// 获取成员显示用的HP
-const getMemberHp = (member: UIBattleCharacter | null): string => {
-  if (!member) return '0/0';
-  const maxHp = getMaxHp(member);
-  return `${member.currentHp}/${maxHp}`;
-};
-
-// 获取成员显示用的速度
-const getMemberSpeed = (member: UIBattleCharacter | null): number => {
-  if (!member) return 0;
-  return getSpeed(member);
-};
 
 const currentActor = computed(() => {
   if (!props.currentActorId) return null;
   return (
-    props.allyTeam.find((c) => c.id === props.currentActorId) ||
-    props.enemyTeam.find((e) => e.id === props.currentActorId) ||
+    characterStore.allyTeam.get(props.currentActorId) ||
+    characterStore.enemyTeam.get(props.currentActorId) ||
     null
   );
 });
 
 const selectCharacter = (charId: string) => {
+  characterStore.selectCharacter(charId);
   emit('select-character', charId);
-};
-
-// 获取角色属性值的兼容函数
-const getMaxHp = (char: UIBattleCharacter | null): number => {
-  if (!char) return 0;
-  return GameDataProcessor.getAttributeValue(char.maxHp);
-};
-
-const getSpeed = (char: UIBattleCharacter | null): number => {
-  if (!char) return 0;
-  return GameDataProcessor.getAttributeValue(char.speed);
-};
-
-const getHpPercent = (char: any): number => {
-  if (!char) return 0;
-  const maxHp = typeof char.maxHp === 'object' ? GameDataProcessor.getAttributeValue(char.maxHp) : char.maxHp;
-  if (!maxHp) return 0;
-  return Math.max(0, (char.currentHp / maxHp) * 100);
-};
-
-const getHpColorClass = (char: any): string => {
-  if (!char) return 'high';
-  const maxHp = typeof char.maxHp === 'object' ? GameDataProcessor.getAttributeValue(char.maxHp) : char.maxHp;
-  if (!maxHp) return 'high';
-  const percent = (char.currentHp / maxHp) * 100;
-  if (percent <= 25) return 'low';
-  if (percent <= 50) return 'medium';
-  return 'high';
 };
 
 // 状态工具提示相关逻辑
@@ -254,6 +259,8 @@ const statusTooltip = ref({
 });
 
 let tooltipTimeout: symbol | null = null;
+// 跟踪所有定时器，用于组件卸载时清理
+const timeouts = ref<symbol[]>([]);
 
 // 显示状态工具提示
 const showStatusTooltip = (event: MouseEvent, status: any) => {
@@ -271,10 +278,12 @@ const showStatusTooltip = (event: MouseEvent, status: any) => {
     };
 
     // 添加淡入动画
-    raf.setTimeout(() => {
+    const fadeInTimeout = raf.setTimeout(() => {
       statusTooltip.value.opacity = 1;
     }, 10);
+    timeouts.value.push(fadeInTimeout);
   }, 300);
+  timeouts.value.push(tooltipTimeout);
 };
 
 // 隐藏状态工具提示
@@ -355,60 +364,287 @@ const getMemberStatuses = (char: any) => {
   return char.buffs || [];
 };
 
+// 获取角色伤害信息
+function getCharacterDamage(characterId: string): number {
+  return props.damageEffects?.[characterId]?.value || characterEffects.value.damage[characterId]?.value || 0;
+}
+
+// 获取角色伤害类型
+function getCharacterDamageType(characterId: string): 'damage' | 'heal' | 'critical' | 'miss' {
+  return props.damageEffects?.[characterId]?.type || characterEffects.value.damage[characterId]?.type || 'damage';
+}
+
+// 获取角色是否暴击
+function getCharacterIsCritical(characterId: string): boolean {
+  return props.damageEffects?.[characterId]?.isCritical || characterEffects.value.damage[characterId]?.isCritical || false;
+}
+
+// 获取角色技能效果类型
+function getCharacterSkillEffect(characterId: string): 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate' | null {
+  return props.skillEffects?.[characterId]?.type || characterEffects.value.skill[characterId]?.type || null;
+}
+
+// 获取角色技能名称
+function getCharacterSkillName(characterId: string): string | undefined {
+  return props.skillEffects?.[characterId]?.name || characterEffects.value.skill[characterId]?.name;
+}
+
+// 显示伤害效果
 function showDamage(characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) {
-  emit('show-damage', characterId, value, type, isCritical);
+  characterEffects.value.damage[characterId] = { value, type, isCritical };
+  
+  // 触发 hit 效果
+  triggerHitEffect(characterId);
+  
+  // 3秒后清除效果
+  const timeoutId = raf.setTimeout(() => {
+    delete characterEffects.value.damage[characterId];
+  }, 3000);
+  timeouts.value.push(timeoutId);
 }
 
+// 显示Miss效果
+function showMiss(characterId: string) {
+  characterEffects.value.damage[characterId] = { value: 0, type: 'miss', isCritical: false };
+  
+  // 3秒后清除效果
+  const timeoutId = raf.setTimeout(() => {
+    delete characterEffects.value.damage[characterId];
+  }, 3000);
+  timeouts.value.push(timeoutId);
+}
+
+// 显示技能效果
 function showSkillEffect(characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) {
-  emit('show-skill-effect', characterId, type, name);
+  characterEffects.value.skill[characterId] = { type, name };
+  
+  // 触发施法效果
+  triggerCastingEffect(characterId);
+  
+  // 3秒后清除效果
+  const timeoutId = raf.setTimeout(() => {
+    delete characterEffects.value.skill[characterId];
+  }, 3000);
+  timeouts.value.push(timeoutId);
 }
 
+// 显示Buff效果
+function showBuffEffect(characterId: string, _buffName: string, _isPositive: boolean) {
+  // 触发Buff效果动画
+  triggerBuffEffect(characterId);
+}
+
+// 触发Hit效果
 function triggerHitEffect(characterId: string) {
-  const character = props.allyTeam.find(c => c.id === characterId);
-  const enemy = props.enemyTeam.find(e => e.id === characterId);
-
-  if (character) {
-    character.isHit = true;
-    raf.setTimeout(() => {
-      character.isHit = false;
-    }, 300);
+  // 初始化角色动画状态
+  if (!characterEffects.value.animation[characterId]) {
+    characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
   }
-
-  if (enemy) {
-    enemy.isHit = true;
-    raf.setTimeout(() => {
-      enemy.isHit = false;
-    }, 300);
-  }
+  
+  // 触发hit效果
+  characterEffects.value.animation[characterId].isHit = true;
+  const timeoutId = raf.setTimeout(() => {
+    if (characterEffects.value.animation[characterId]) {
+      characterEffects.value.animation[characterId].isHit = false;
+    }
+  }, 300);
+  timeouts.value.push(timeoutId);
 }
 
+// 触发施法效果
 function triggerCastingEffect(characterId: string, duration: number = 1000) {
-  const character = props.allyTeam.find(c => c.id === characterId);
-  const enemy = props.enemyTeam.find(e => e.id === characterId);
-
-  if (character) {
-    character.isCasting = true;
-    raf.setTimeout(() => {
-      character.isCasting = false;
-    }, duration);
+  // 初始化角色动画状态
+  if (!characterEffects.value.animation[characterId]) {
+    characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
   }
-
-  if (enemy) {
-    enemy.isCasting = true;
-    raf.setTimeout(() => {
-      enemy.isCasting = false;
-    }, duration);
-  }
+  
+  // 触发casting效果
+  characterEffects.value.animation[characterId].isCasting = true;
+  const timeoutId = raf.setTimeout(() => {
+    if (characterEffects.value.animation[characterId]) {
+      characterEffects.value.animation[characterId].isCasting = false;
+    }
+  }, duration);
+  timeouts.value.push(timeoutId);
 }
 
+// 触发Buff效果
+function triggerBuffEffect(characterId: string) {
+  // 初始化角色动画状态
+  if (!characterEffects.value.animation[characterId]) {
+    characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
+  }
+  
+  // 触发buffed效果
+  characterEffects.value.animation[characterId].isBuffed = true;
+  const timeoutId = raf.setTimeout(() => {
+    if (characterEffects.value.animation[characterId]) {
+      characterEffects.value.animation[characterId].isBuffed = false;
+    }
+  }, 500);
+  timeouts.value.push(timeoutId);
+}
+
+// 清理所有动画效果
+function cleanupAnimations() {
+  // 清理所有伤害效果
+  characterEffects.value.damage = {};
+  // 清理所有技能效果
+  characterEffects.value.skill = {};
+  // 清理所有动画状态
+  characterEffects.value.animation = {};
+  // 清理工具提示
+  hideStatusTooltip();
+}
+
+// 暴露方法供父组件调用
 defineExpose({
   showDamage,
+  showMiss,
   showSkillEffect,
+  showBuffEffect,
   triggerHitEffect,
-  triggerCastingEffect
+  triggerCastingEffect,
+  triggerBuffEffect,
+  cleanupAnimations
+});
+
+// 组件挂载时订阅事件总线
+onMounted(() => {
+  // 订阅伤害动画事件
+  eventBus.on(BattleSystemEvent.DAMAGE_ANIMATION, (data: { targetId: string; damage: number; damageType: string; isCritical: boolean; isHeal: boolean }) => {
+    if (data && data.targetId) {
+      showDamage(data.targetId, data.damage, data.isHeal ? 'heal' : data.isCritical ? 'critical' : 'damage', data.isCritical);
+    }
+  });
+
+  // 订阅闪避动画事件
+  eventBus.on(BattleSystemEvent.MISS_ANIMATION, (data: { targetId: string }) => {
+    if (data && data.targetId) {
+      showMiss(data.targetId);
+    }
+  });
+
+  // 订阅Buff效果事件
+  eventBus.on(BattleSystemEvent.BUFF_EFFECT, (data: { targetId: string; buffName: string; isPositive: boolean }) => {
+    if (data && data.targetId) {
+      showBuffEffect(data.targetId, data.buffName, data.isPositive);
+    }
+  });
+
+  // 订阅技能效果事件
+  eventBus.on(BattleSystemEvent.SKILL_EFFECT, (data: { sourceId: string; targetId: string; skillName: string; effectType: string; damageType: string }) => {
+    if (data && data.targetId) {
+      showSkillEffect(data.targetId, data.effectType as any, data.skillName);
+    }
+  });
+});
+
+// 组件卸载时清理所有定时器和事件订阅
+onUnmounted(() => {
+  // 清理事件总线订阅
+  eventBus.off(BattleSystemEvent.DAMAGE_ANIMATION);
+  eventBus.off(BattleSystemEvent.MISS_ANIMATION);
+  eventBus.off(BattleSystemEvent.BUFF_EFFECT);
+  eventBus.off(BattleSystemEvent.SKILL_EFFECT);
+
+  // 清理工具提示定时器
+  if (tooltipTimeout) {
+    raf.clearTimeout(tooltipTimeout);
+  }
+  
+  // 清理所有其他定时器
+  timeouts.value.forEach(timeoutId => {
+    raf.clearTimeout(timeoutId);
+  });
+  
+  // 清理所有动画效果
+  cleanupAnimations();
 });
 </script>
 
 <style scoped lang="scss">
 @use'@/styles/main.scss';
+
+.member-card.buffed {
+  animation: buffGlow 0.5s ease-out;
+}
+
+@keyframes buffGlow {
+  0% {
+    box-shadow: 0 0 0 rgba(100, 200, 255, 0);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(100, 200, 255, 0.8);
+    filter: brightness(1.2);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(100, 200, 255, 0);
+    filter: brightness(1);
+  }
+}
+
+.member-card.buffed .member-status {
+  animation: statusPulse 0.5s ease-out;
+}
+
+@keyframes statusPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Hit效果动画 */
+.member-card.hit {
+  animation: hitEffect 0.3s ease-out;
+}
+
+@keyframes hitEffect {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+    filter: brightness(0.8);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+  100% {
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+}
+
+/* 施法效果动画 */
+.member-card.casting {
+  animation: castingEffect 1s ease-out;
+}
+
+@keyframes castingEffect {
+  0% {
+    box-shadow: 0 0 0 rgba(200, 150, 255, 0);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(200, 150, 255, 0.6);
+    filter: brightness(1.1);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(200, 150, 255, 0);
+    filter: brightness(1);
+  }
+}
+
+/* 确保动画只播放一次 */
+.member-card.hit, .member-card.casting, .member-card.buffed {
+  animation-iteration-count: 1;
+}
 </style>

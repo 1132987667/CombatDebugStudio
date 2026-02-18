@@ -86,6 +86,34 @@ export interface IBuffScript<TParams = any> {
 }
 
 /**
+ * 叠加规则枚举
+ */
+export enum StackRule {
+  /** 独立叠加：每层独立计算效果 */
+  INDEPENDENT = 'independent',
+  /** 刷新持续时间：新Buff覆盖旧Buff并重置时间 */
+  REFRESH = 'refresh',
+  /** 限制层数：达到最大层数后无法继续叠加 */
+  LIMITED = 'limited'
+}
+
+/**
+ * 控制效果类型枚举
+ */
+export enum ControlType {
+  /** 无控制效果 */
+  NONE = 'none',
+  /** 眩晕：无法进行任何行动 */
+  STUN = 'stun',
+  /** 沉默：无法使用技能，但可普攻 */
+  SILENCE = 'silence',
+  /** 冰冻：无法行动，可能有额外效果 */
+  FREEZE = 'freeze',
+  /** 睡眠：无法行动，受攻击后解除 */
+  SLEEP = 'sleep'
+}
+
+/**
  * 增益效果配置接口
  * 定义了增益效果的基础属性和约束条件
  */
@@ -127,6 +155,42 @@ export interface BuffConfig {
   cooldown: number
 
   /**
+   * 叠加规则
+   * 定义Buff的叠加方式
+   */
+  stackRule: StackRule
+
+  /**
+   * 控制效果类型
+   * 定义Buff是否为控制效果及其类型
+   */
+  controlType: ControlType
+
+  /**
+   * 控制效果优先级
+   * 数值越大优先级越高
+   */
+  controlPriority: number
+
+  /**
+   * 免疫标签
+   * 拥有对应标签的角色免疫此Buff
+   */
+  immuneTags?: string[]
+
+  /**
+   * 是否可驱散
+   * true表示此Buff可被驱散技能移除
+   */
+  dispellable?: boolean
+
+  /**
+   * 图标路径
+   * 用于UI显示Buff图标
+   */
+  iconPath?: string
+
+  /**
    * 是否为永久效果
    * true表示增益效果不会因时间流逝而消失
    */
@@ -155,7 +219,7 @@ export interface BuffConfig {
  * 增益效果实例接口
  * 表示一个已应用到角色身上的增益效果实例
  */
-export interface BuffInstance {
+export interface BuffInstance<TParams = any> {
   /**
    * 实例唯一标识符
    * 用于唯一标识一个增益效果实例
@@ -178,7 +242,7 @@ export interface BuffInstance {
    * 增益效果脚本对象
    * 包含增益效果的所有生命周期回调函数
    */
-  script: IBuffScript
+  script: IBuffScript<TParams>
 
   /**
    * 增益效果上下文对象
@@ -187,16 +251,28 @@ export interface BuffInstance {
   context: BuffContext
 
   /**
-   * 开始时间戳
-   * 增益效果开始生效的时间(毫秒)
+   * 开始回合
+   * 增益效果开始生效的回合数
    */
-  startTime: number
+  startTurn: number
 
   /**
    * 持续时间(回合数)
    * 当前实例的持续时间,可能与BuffConfig中的duration不同(如被刷新)
    */
   duration: number
+
+  /**
+   * 剩余回合数
+   * 增益效果还剩余的回合数
+   */
+  remainingTurns: number
+
+  /**
+   * 当前叠加层数
+   * 此Buff实例的当前叠加层数
+   */
+  currentStacks: number
 
   /**
    * 是否处于激活状态

@@ -96,6 +96,18 @@ export class BuffScriptRegistry {
   }
 
   /**
+   * 注册Buff脚本实例（兼容测试代码）
+   * @param scriptId 脚本ID
+   * @param script 脚本实例
+   */
+  public registerScript(scriptId: string, script: any): void {
+    this.register(scriptId, () => script, {
+      filePath: 'test',
+      version: 'test'
+    })
+  }
+
+  /**
    * 获取Buff脚本实例
    * @param scriptId 脚本ID
    * @returns Buff脚本实例，不存在或创建失败则返回null

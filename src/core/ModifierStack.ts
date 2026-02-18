@@ -17,6 +17,8 @@ import type { Modifier, ModifierType, AttributeType } from '@/types/modifier'
 export class ModifierStack {
   /** 修饰符映射，以属性名称为键，值为修饰符数组 */
   private modifiers = new Map<string, Modifier[]>()
+  /** 计算结果缓存，以属性名称为键，值为缓存的计算结果 */
+  private cache = new Map<string, number>()
 
   /**
    * 添加修饰符
@@ -43,6 +45,9 @@ export class ModifierStack {
       value,
       type,
     })
+
+    // 清理该属性的缓存
+    this.cache.delete(key)
   }
 
   /**
@@ -59,6 +64,8 @@ export class ModifierStack {
       } else {
         this.modifiers.set(key, filtered)
       }
+      // 清理该属性的缓存
+      this.cache.delete(key)
     }
   }
 
@@ -69,6 +76,14 @@ export class ModifierStack {
    * @returns 计算后的属性值
    */
   public calculate(attribute: AttributeType, baseValue: number): number {
+    // 生成缓存键，包含属性名称和基础值
+    const cacheKey = `${attribute}_${baseValue}`
+    
+    // 检查缓存中是否存在结果
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey)!
+    }
+
     const modifiers = this.modifiers.get(attribute)
     if (!modifiers || modifiers.length === 0) {
       return baseValue
@@ -97,6 +112,9 @@ export class ModifierStack {
     result += additiveSum
     result *= multiplicativeSum
 
+    // 缓存计算结果
+    this.cache.set(cacheKey, result)
+
     return result
   }
 
@@ -122,6 +140,7 @@ export class ModifierStack {
    */
   public clear(): void {
     this.modifiers.clear()
+    this.cache.clear()
   }
 
   /**

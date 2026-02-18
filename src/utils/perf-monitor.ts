@@ -24,12 +24,12 @@ class PerformanceMonitor {
 
   public enable(): void {
     this.enabled = true
-    battleLogManager.info('Performance monitoring enabled')
+    battleLogManager.addSystemBattleLog('Performance monitoring enabled')
   }
 
   public disable(): void {
     this.enabled = false
-    battleLogManager.info('Performance monitoring disabled')
+    battleLogManager.addSystemBattleLog('Performance monitoring disabled')
   }
 
   public measure<T>(name: string, fn: () => T): T {
@@ -77,26 +77,20 @@ class PerformanceMonitor {
 
   public reset(): void {
     this.metrics.clear()
-    battleLogManager.info('Performance metrics reset')
+    battleLogManager.addSystemBattleLog('Performance metrics reset')
   }
 
   public printReport(): void {
     if (!this.enabled || this.metrics.size === 0) {
-      battleLogManager.info('No performance metrics to report')
+      battleLogManager.addSystemBattleLog('No performance metrics to report')
       return
     }
 
-    battleLogManager.info('=== Performance Report ===')
+    battleLogManager.addSystemBattleLog('=== Performance Report ===')
     this.getMetrics().forEach((metric) => {
-      battleLogManager.info(`${metric.name}:`, {
-        calls: metric.calls,
-        avgTime: `${metric.avgTime.toFixed(2)}ms`,
-        maxTime: `${metric.maxTime.toFixed(2)}ms`,
-        minTime: `${metric.minTime.toFixed(2)}ms`,
-        totalTime: `${metric.totalTime.toFixed(2)}ms`
-      })
+      battleLogManager.addSystemBattleLog(`${metric.name}: calls=${metric.calls}, avg=${metric.avgTime.toFixed(2)}ms, max=${metric.maxTime.toFixed(2)}ms, min=${metric.minTime.toFixed(2)}ms, total=${metric.totalTime.toFixed(2)}ms`)
     })
-    battleLogManager.info('========================')
+    battleLogManager.addSystemBattleLog('========================')
   }
 }
 

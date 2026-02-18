@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { Container } from '../di/Container'
+import { container, initializeContainer } from '@/core/di/Container'
 import {
   IBattleSystem,
   ITurnManager,
@@ -17,60 +17,60 @@ import {
   TURN_MANAGER_TOKEN,
   ACTION_EXECUTOR_TOKEN,
   AI_SYSTEM_TOKEN,
-} from './interfaces'
-import { GameBattleSystem } from '../BattleSystem'
-import { TurnManager } from './TurnManager'
-import { ActionExecutor } from './ActionExecutor'
-import { AISystem } from './AISystem'
+} from '@/core/battle/interfaces'
 
 export class BattleSystemFactory {
-  private static container = Container.getInstance()
-
+  /**
+   * 初始化战斗系统
+   * 现在使用统一的容器初始化函数
+   */
   public static initialize(): void {
-    // 注册核心服务
-    this.container.register<ITurnManager>(
-      TURN_MANAGER_TOKEN.toString(),
-      new TurnManager(),
-    )
-    this.container.register<IActionExecutor>(
-      ACTION_EXECUTOR_TOKEN.toString(),
-      new ActionExecutor(),
-    )
-    this.container.register<IAISystem>(
-      AI_SYSTEM_TOKEN.toString(),
-      new AISystem(),
-    )
-
-    // 2. 容器注册改为单例，工厂调用 getInstance()
-    this.container.registerFactory<IBattleSystem>(
-      BATTLE_SYSTEM_TOKEN.toString(),
-      () => GameBattleSystem.getInstance(), // 通过静态方法获取单例
-      true, // singleton: true（与类设计一致）
-    )
+    // 使用统一的容器初始化函数
+    initializeContainer()
   }
 
+  /**
+   * 创建战斗系统实例
+   * @returns IBattleSystem - 战斗系统实例
+   */
   public static createBattleSystem(): IBattleSystem {
-    return this.container.resolve<IBattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    return container.resolve<IBattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
   }
 
+  /**
+   * 获取回合管理器实例
+   * @returns ITurnManager - 回合管理器实例
+   */
   public static getTurnManager(): ITurnManager {
-    return this.container.resolve<ITurnManager>(TURN_MANAGER_TOKEN.toString())
+    return container.resolve<ITurnManager>(TURN_MANAGER_TOKEN.toString())
   }
 
+  /**
+   * 获取动作执行器实例
+   * @returns IActionExecutor - 动作执行器实例
+   */
   public static getActionExecutor(): IActionExecutor {
-    return this.container.resolve<IActionExecutor>(
+    return container.resolve<IActionExecutor>(
       ACTION_EXECUTOR_TOKEN.toString(),
     )
   }
 
+  /**
+   * 获取AI系统实例
+   * @returns IAISystem - AI系统实例
+   */
   public static getAISystem(): IAISystem {
-    return this.container.resolve<IAISystem>(AI_SYSTEM_TOKEN.toString())
+    return container.resolve<IAISystem>(AI_SYSTEM_TOKEN.toString())
   }
 
+  /**
+   * 重置战斗系统
+   * 用于测试场景
+   */
   public static reset(): void {
-    // 重置容器（用于测试）
-    this.container = Container.getInstance()
-    // 清空所有服务
-    // 注意：实际实现中需要更复杂的重置逻辑
+    // 重置容器
+    container.clear()
+    // 重新初始化
+    initializeContainer()
   }
 }

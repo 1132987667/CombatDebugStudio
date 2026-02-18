@@ -60,7 +60,7 @@ export interface CriticalConfig {
 export interface ExtendedSkillStep extends SkillStep {
   /**
    * 伤害/治疗计算配置
-   * 当type为DAMAGE或HEAL时必填
+   * 当type为DAMAGE或HEAL时使用
    */
   calculation?: DamageHealCalculationConfig
 
@@ -345,6 +345,13 @@ export interface SkillConfig {
    * 可选,用于标识技能的类型,如主动技能、被动技能、终极技能等
    */
   skillType?: 'active' | 'passive' | 'ultimate' | 'reaction'
+
+  /**
+   * 触发时机
+   * 可选,用于配置被动技能的触发时机
+   * 仅对被动技能有效
+   */
+  triggerTimes?: string[]
 
   /**
    * 技能等级

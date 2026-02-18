@@ -1,0 +1,213 @@
+{
+  "effects": [
+    {
+      "id": "buff_stun",
+      "type": "debuff",
+      "params": {
+        "duration": 1,
+        "maxStacks": 1,
+        "effect": "stun"
+      },
+      "description": "眩晕效果，使目标无法行动"
+    },
+    {
+      "id": "buff_poison",
+      "type": "debuff",
+      "params": {
+        "duration": 2,
+        "maxStacks": 3,
+        "damage": "attack*0.1",
+        "tickInterval": 1
+      },
+      "description": "中毒效果，每回合造成伤害"
+    },
+    {
+      "id": "buff_burn",
+      "type": "debuff",
+      "params": {
+        "duration": 3,
+        "maxStacks": 2,
+        "damage": "attack*0.08",
+        "tickInterval": 1
+      },
+      "description": "燃烧效果，每回合造成伤害"
+    },
+    {
+      "id": "buff_atk_up",
+      "type": "buff",
+      "params": {
+        "duration": 2,
+        "maxStacks": 3,
+        "attackBonus": 1.2
+      },
+      "description": "攻击提升效果"
+    },
+    {
+      "id": "buff_def_up",
+      "type": "buff",
+      "params": {
+        "duration": 2,
+        "maxStacks": 3,
+        "defenseBonus": 1.2
+      },
+      "description": "防御提升效果"
+    },
+    {
+      "id": "buff_speed_up",
+      "type": "buff",
+      "params": {
+        "duration": 2,
+        "maxStacks": 3,
+        "speedBonus": 1.2
+      },
+      "description": "速度提升效果"
+    },
+    {
+      "id": "buff_def_reduction",
+      "type": "debuff",
+      "params": {
+        "duration": 2,
+        "maxStacks": 2,
+        "defenseReduction": 0.7
+      },
+      "description": "防御降低效果"
+    },
+    {
+      "id": "buff_mountain_god",
+      "type": "buff",
+      "params": {
+        "duration": 2,
+        "maxStacks": 1,
+        "attackBonus": 1.5,
+        "defenseBonus": 1.5
+      },
+      "description": "山神状态，攻击力和防御力大幅提升"
+    },
+    {
+      "id": "buff_flower_bloom",
+      "type": "debuff",
+      "params": {
+        "duration": 2,
+        "maxStacks": 1,
+        "effect": "defense_reduction"
+      },
+      "description": "花朵绽放效果，降低目标防御力"
+    },
+    {
+      "id": "buff_shell_defense",
+      "type": "buff",
+      "params": {
+        "duration": -1,
+        "maxStacks": 1,
+        "defenseBonus": 1.15
+      },
+      "description": "甲壳防御，永久降低受到的物理伤害"
+    },
+    {
+      "id": "buff_fish_rage",
+      "type": "buff",
+      "params": {
+        "duration": -1,
+        "maxStacks": 1,
+        "effect": "cleanse"
+      },
+      "description": "鱼群之怒，每回合结束时有几率清除自身负面状态"
+    },
+    {
+      "id": "buff_fire_control",
+      "type": "buff",
+      "params": {
+        "duration": -1,
+        "maxStacks": 1,
+        "criticalRateBonus": 0.05,
+        "criticalDamageBonus": 0.1
+      },
+      "description": "火焰掌控，提升暴击率和暴击伤害"
+    },
+    {
+      "id": "buff_lava_bind",
+      "type": "debuff",
+      "params": {
+        "duration": 1,
+        "maxStacks": 1,
+        "effect": "stun"
+      },
+      "description": "熔岩束缚，使目标无法行动"
+    },
+    {
+      "id": "buff_queen_awe",
+      "type": "buff",
+      "params": {
+        "duration": -1,
+        "maxStacks": 1,
+        "effect": "aura"
+      },
+      "description": "蜂王威慑，对周围敌人产生威慑效果"
+    },
+    {
+      "id": "buff_valley_overlord",
+      "type": "buff",
+      "params": {
+        "duration": -1,
+        "maxStacks": 1,
+        "allStatsBonus": 1.1,
+        "healthBonus": 1.25,
+        "attackBonus": 1.15
+      },
+      "description": "谷中霸主，提升所有属性并免疫控制效果"
+    },
+    {
+      "id": "buff_sky_overlord",
+      "type": "buff",
+      "params": {
+        "duration": -1,
+        "maxStacks": 1,
+        "effect": "aura"
+      },
+      "description": "天空霸主，对周围敌人产生威慑效果"
+    },
+    {
+      "id": "buff_wind_shield",
+      "type": "buff",
+      "params": {
+        "duration": 2,
+        "maxStacks": 1,
+        "defenseBonus": 1.2
+      },
+      "description": "风之护盾，提升防御力"
+    },
+    {
+      "id": "buff_leader_aura",
+      "type": "buff",
+      "params": {
+        "duration": -1,
+        "maxStacks": 1,
+        "teamAttackBonus": 1.15
+      },
+      "description": "首领光环，提升所有友方单位的攻击力"
+    },
+    {
+      "id": "buff_commander_awe",
+      "type": "buff",
+      "params": {
+        "duration": -1,
+        "maxStacks": 1,
+        "defenseBonus": 1.2,
+        "controlDurationReduction": 0.5
+      },
+      "description": "统帅之威，提升自身防御力并降低控制效果持续时间"
+    },
+    {
+      "id": "buff_sacred_blessing",
+      "type": "buff",
+      "params": {
+        "duration": -1,
+        "maxStacks": 1,
+        "teamHealPerTurn": 0.03,
+        "healthBonus": 1.3,
+        "attackBonus": 1.2
+      },
+      "description": "灵山祝福，每回合为所有友方单位恢复生命值"
+    }
+  ]
+}

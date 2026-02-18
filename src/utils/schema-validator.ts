@@ -1,205 +1,296 @@
 /**
  * 文件: schema-validator.ts
- * 创建日期: 2026-02-09
+ * 创建日期: 2026-02-19
  * 作者: CombatDebugStudio
- * 功能: JSON模式验证器
- * 描述: 提供JSON Schema验证功能，用于验证配置数据的格式和约束
- * 版本: 1.0.0
+ * 功能: 配置文件验证工具
+ * 描述: 使用JSON Schema验证技能和Effect配置的完整性和正确性
  */
 
-import { battleLogManager } from '@/utils/logging'
-
-interface ValidationError {
-  field: string
-  message: string
+/**
+ * 验证结果接口
+ */
+export interface ValidationResult {
+  /** 是否验证通过 */
+  valid: boolean
+  /** 错误信息列表 */
+  errors: string[]
 }
 
-interface Schema {
-  type: string
-  properties?: Record<string, Schema>
-  required?: string[]
-  minLength?: number
-  maxLength?: number
-  minimum?: number
-  maximum?: number
-  enum?: any[]
-}
-
-export class SchemaValidator {
-  public validate(data: any, schema: Schema): {
-    valid: boolean
-    errors: ValidationError[]
-  } {
-    const errors: ValidationError[] = []
-    this.validateValue('', data, schema, errors)
-    return {
-      valid: errors.length === 0,
-      errors
-    }
-  }
-
-  private validateValue(
-    path: string,
-    value: any,
-    schema: Schema,
-    errors: ValidationError[]
-  ): void {
-    // 验证类型
-    if (schema.type === 'string' && typeof value !== 'string') {
-      errors.push({
-        field: path || 'root',
-        message: 'Expected string'
-      })
-      return
-    }
-
-    if (schema.type === 'number' && typeof value !== 'number') {
-      errors.push({
-        field: path || 'root',
-        message: 'Expected number'
-      })
-      return
-    }
-
-    if (schema.type === 'boolean' && typeof value !== 'boolean') {
-      errors.push({
-        field: path || 'root',
-        message: 'Expected boolean'
-      })
-      return
-    }
-
-    if (schema.type === 'array' && !Array.isArray(value)) {
-      errors.push({
-        field: path || 'root',
-        message: 'Expected array'
-      })
-      return
-    }
-
-    if (schema.type === 'object' && typeof value !== 'object') {
-      errors.push({
-        field: path || 'root',
-        message: 'Expected object'
-      })
-      return
-    }
-
-    // 验证字符串长度
-    if (schema.type === 'string') {
-      if (schema.minLength !== undefined && value.length < schema.minLength) {
-        errors.push({
-          field: path || 'root',
-          message: `String length must be at least ${schema.minLength}`
-        })
-      }
-      if (schema.maxLength !== undefined && value.length > schema.maxLength) {
-        errors.push({
-          field: path || 'root',
-          message: `String length must be at most ${schema.maxLength}`
-        })
-      }
-    }
-
-    // 验证数字范围
-    if (schema.type === 'number') {
-      if (schema.minimum !== undefined && value < schema.minimum) {
-        errors.push({
-          field: path || 'root',
-          message: `Number must be at least ${schema.minimum}`
-        })
-      }
-      if (schema.maximum !== undefined && value > schema.maximum) {
-        errors.push({
-          field: path || 'root',
-          message: `Number must be at most ${schema.maximum}`
-        })
-      }
-    }
-
-    // 验证枚举值
-    if (schema.enum !== undefined && !schema.enum.includes(value)) {
-      errors.push({
-        field: path || 'root',
-        message: `Value must be one of: ${schema.enum.join(', ')}`
-      })
-    }
-
-    // 验证对象属性
-    if (schema.type === 'object' && typeof value === 'object' && value !== null) {
-      if (schema.required) {
-        for (const requiredField of schema.required) {
-          if (!(requiredField in value)) {
-            errors.push({
-              field: path ? `${path}.${requiredField}` : requiredField,
-              message: 'Required field'
-            })
+/**
+ * 技能配置JSON Schema
+ */
+const skillSchema = {
+  type: 'object',
+  required: ['id', 'name', 'mpCost', 'cooldown', 'steps'],
+  properties: {
+    id: {
+      type: 'string',
+      pattern: '^skill_.*$'
+    },
+    name: {
+      type: 'string',
+      minLength: 1
+    },
+    description: {
+      type: 'string'
+    },
+    mpCost: {
+      type: 'number',
+      minimum: 0
+    },
+    cooldown: {
+      type: 'number',
+      minimum: 0
+    },
+    maxUses: {
+      type: 'number',
+      minimum: 1
+    },
+    targetType: {
+      type: 'string'
+    },
+    scope: {
+      type: 'string'
+    },
+    steps: {
+      type: 'array',
+      minItems: 1,
+      items: {
+        type: 'object',
+        required: ['type', 'formula'],
+        properties: {
+          type: {
+            type: 'string'
+          },
+          formula: {
+            type: 'string',
+            minLength: 1
+          },
+          attackType: {
+            type: 'string'
+          },
+          effectId: {
+            type: 'string'
+          },
+          effectParams: {
+            type: 'object'
+          },
+          duration: {
+            type: 'number'
+          },
+          stacks: {
+            type: 'number',
+            minimum: 1
+          },
+          targetType: {
+            type: 'string'
+          },
+          scope: {
+            type: 'string'
+          },
+          condition: {
+            type: 'string'
+          },
+          priority: {
+            type: 'number'
+          },
+          parameters: {
+            type: 'object'
           }
         }
       }
-
-      if (schema.properties) {
-        for (const [key, propertySchema] of Object.entries(schema.properties)) {
-          if (key in value) {
-            this.validateValue(
-              path ? `${path}.${key}` : key,
-              value[key],
-              propertySchema,
-              errors
-            )
-          }
-        }
+    },
+    condition: {
+      type: 'string'
+    },
+    skillType: {
+      type: 'string'
+    },
+    triggerTimes: {
+      type: 'array',
+      items: {
+        type: 'string'
       }
-    }
-  }
-
-  public validateBuffConfig(config: any): boolean {
-    const schema: Schema = {
-      type: 'object',
-      required: ['id', 'name', 'description', 'duration', 'maxStacks', 'cooldown'],
-      properties: {
-        id: {
-          type: 'string',
-          minLength: 1
-        },
-        name: {
-          type: 'string',
-          minLength: 1
-        },
-        description: {
-          type: 'string'
-        },
-        duration: {
-          type: 'number',
-          minimum: -1
-        },
-        maxStacks: {
-          type: 'number',
-          minimum: 1
-        },
-        cooldown: {
-          type: 'number',
-          minimum: 0
-        },
-        isPermanent: {
-          type: 'boolean'
-        },
-        isDebuff: {
-          type: 'boolean'
-        },
-        parameters: {
-          type: 'object'
-        }
+    },
+    level: {
+      type: 'number',
+      minimum: 1
+    },
+    icon: {
+      type: 'string'
+    },
+    animation: {
+      type: 'string'
+    },
+    soundEffect: {
+      type: 'string'
+    },
+    tags: {
+      type: 'array',
+      items: {
+        type: 'string'
       }
+    },
+    parameters: {
+      type: 'object'
     }
-
-    const result = this.validate(config, schema)
-    if (!result.valid) {
-      battleLogManager.error('Invalid buff config:', result.errors)
-      return false
-    }
-    return true
   }
 }
 
-export const schemaValidator = new SchemaValidator()
+/**
+ * Effect配置JSON Schema
+ */
+const effectSchema = {
+  type: 'object',
+  required: ['id', 'type', 'params'],
+  properties: {
+    id: {
+      type: 'string',
+      minLength: 1
+    },
+    type: {
+      type: 'string',
+      enum: ['damage', 'heal', 'buff', 'debuff', 'special']
+    },
+    params: {
+      type: 'object'
+    },
+    description: {
+      type: 'string'
+    }
+  }
+}
+
+/**
+ * 验证技能配置
+ * @param skillConfig 技能配置对象
+ * @returns 验证结果
+ */
+export function validateSkillConfig(skillConfig: any): ValidationResult {
+  const errors: string[] = []
+  
+  // 检查必填字段
+  if (!skillConfig.id) {
+    errors.push('Missing required field: id')
+  }
+  
+  if (!skillConfig.name) {
+    errors.push('Missing required field: name')
+  }
+  
+  if (skillConfig.mpCost === undefined) {
+    errors.push('Missing required field: mpCost')
+  }
+  
+  if (skillConfig.cooldown === undefined) {
+    errors.push('Missing required field: cooldown')
+  }
+  
+  if (!skillConfig.steps || !Array.isArray(skillConfig.steps) || skillConfig.steps.length === 0) {
+    errors.push('Missing required field: steps (must be a non-empty array)')
+  } else {
+    // 验证每个步骤
+    skillConfig.steps.forEach((step: any, index: number) => {
+      if (!step.type) {
+        errors.push(`Step ${index}: Missing required field: type`)
+      }
+      
+      if (!step.formula) {
+        errors.push(`Step ${index}: Missing required field: formula`)
+      }
+      
+      // 检查effectId（如果是buff或debuff类型）
+      if ((step.type === 'buff' || step.type === 'debuff') && !step.effectId) {
+        errors.push(`Step ${index}: Missing required field: effectId for ${step.type} type`)
+      }
+    })
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  }
+}
+
+/**
+ * 验证Effect配置
+ * @param effectConfig Effect配置对象
+ * @returns 验证结果
+ */
+export function validateEffectConfig(effectConfig: any): ValidationResult {
+  const errors: string[] = []
+  
+  // 检查必填字段
+  if (!effectConfig.id) {
+    errors.push('Missing required field: id')
+  }
+  
+  if (!effectConfig.type) {
+    errors.push('Missing required field: type')
+  } else if (!['damage', 'heal', 'buff', 'debuff', 'special'].includes(effectConfig.type)) {
+    errors.push(`Invalid type: ${effectConfig.type}. Must be one of: damage, heal, buff, debuff, special`)
+  }
+  
+  if (!effectConfig.params) {
+    errors.push('Missing required field: params')
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  }
+}
+
+/**
+ * 批量验证技能配置
+ * @param skillConfigs 技能配置数组
+ * @returns 验证结果
+ */
+export function validateSkillConfigs(skillConfigs: any[]): ValidationResult {
+  const errors: string[] = []
+  let validCount = 0
+  
+  skillConfigs.forEach((config, index) => {
+    const result = validateSkillConfig(config)
+    if (result.valid) {
+      validCount++
+    } else {
+      errors.push(`Skill ${index} (${config.id || 'unknown'}): ${result.errors.join(', ')}`)
+    }
+  })
+  
+  return {
+    valid: errors.length === 0,
+    errors: [
+      `Validation summary: ${validCount}/${skillConfigs.length} skills are valid`,
+      ...errors
+    ]
+  }
+}
+
+/**
+ * 批量验证Effect配置
+ * @param effectConfigs Effect配置数组
+ * @returns 验证结果
+ */
+export function validateEffectConfigs(effectConfigs: any[]): ValidationResult {
+  const errors: string[] = []
+  let validCount = 0
+  
+  effectConfigs.forEach((config, index) => {
+    const result = validateEffectConfig(config)
+    if (result.valid) {
+      validCount++
+    } else {
+      errors.push(`Effect ${index} (${config.id || 'unknown'}): ${result.errors.join(', ')}`)
+    }
+  })
+  
+  return {
+    valid: errors.length === 0,
+    errors: [
+      `Validation summary: ${validCount}/${effectConfigs.length} effects are valid`,
+      ...errors
+    ]
+  }
+}

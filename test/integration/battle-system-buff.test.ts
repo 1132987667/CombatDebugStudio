@@ -1,9 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { GameBattleSystem } from '@/core/BattleSystem'
 import { BuffSystem } from '@/core/BuffSystem'
 import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
 import { MountainGodBuff } from '@/scripts/combat/MountainGodBuff'
-import { BattleSystemFactory } from '@/core/battle/BattleSystemFactory'
+import { AttackUpBuff } from '@/scripts/combat/AttackUpBuff'
+import { DodgeUpBuff } from '@/scripts/combat/DodgeUpBuff'
+import { SpeedUpBuff } from '@/scripts/combat/SpeedUpBuff'
+import { container, initializeContainer } from '@/core/di/Container'
+import { BATTLE_SYSTEM_TOKEN } from '@/core/battle/interfaces'
 import type { BattleAction, ParticipantInfo } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
 
@@ -18,7 +21,7 @@ import { PARTICIPANT_SIDE } from '@/types/battle'
  */
 
 describe('BattleSystem Buff功能综合测试', () => {
-  let battleSystem: GameBattleSystem
+  let battleSystem: any // 暂时使用any类型，因为容器返回的是IBattleSystem
   let buffSystem: BuffSystem
   let registry: BuffScriptRegistry
   let battleId: string
@@ -28,13 +31,21 @@ describe('BattleSystem Buff功能综合测试', () => {
     vi.setSystemTime(Date.now())
 
     // 初始化依赖注入容器
-    BattleSystemFactory.initialize()
+    initializeContainer()
     
-    battleSystem = GameBattleSystem.getInstance()
+    battleSystem = container.resolve(BATTLE_SYSTEM_TOKEN.toString())
     buffSystem = BuffSystem.getInstance()
     registry = BuffScriptRegistry.getInstance()
 
+    // 注册所有必要的Buff脚本
     registry.register(MountainGodBuff.BUFF_ID, () => new MountainGodBuff(), { filePath: 'test/path' })
+    registry.register(AttackUpBuff.BUFF_ID, () => new AttackUpBuff(), { filePath: 'test/path' })
+    registry.register(DodgeUpBuff.BUFF_ID, () => new DodgeUpBuff(), { filePath: 'test/path' })
+    registry.register(SpeedUpBuff.BUFF_ID, () => new SpeedUpBuff(), { filePath: 'test/path' })
+
+    // 清除之前的buff实例
+    buffSystem.clearAllBuffs('char_character_1')
+    buffSystem.clearAllBuffs('enemy_enemy_1')
 
     const participantsInfo: ParticipantInfo[] = [
       {

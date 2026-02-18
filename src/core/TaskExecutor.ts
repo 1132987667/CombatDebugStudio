@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { GameBattleSystem } from './BattleSystem'
+import { GameBattleSystem } from '@/core/BattleSystem'
 import { RAFTimer } from '@/utils/RAF'
 import { battleLogManager } from '@/utils/logging'
 
@@ -69,14 +69,22 @@ interface TaskProgress {
 export class TaskExecutor {
   private static instance: TaskExecutor
   private tasks: Map<string, Task> = new Map()
-  private config: TaskConfig
-  private timer: RAFTimer = new RAFTimer()
+  private taskIdCounter = 0
+  private timer: RAFTimer
   private heartbeats: Map<string, symbol> = new Map()
   private progressTimers: Map<string, symbol> = new Map()
   private battleSystem: GameBattleSystem = GameBattleSystem.getInstance()
   private logger = battleLogManager
 
   private constructor() {
+    try {
+      const { container } = require('@/core/di/Container')
+      this.timer = container.resolve('RAFTimer')
+    } catch (error) {
+      // 如果依赖注入容器不可用，则使用默认实例
+      console.warn('依赖注入容器不可用，使用默认实例初始化', error)
+      this.timer = new RAFTimer()
+    }
     this.logger = battleLogManager
     this.config = this.loadConfig()
     this.initialize()

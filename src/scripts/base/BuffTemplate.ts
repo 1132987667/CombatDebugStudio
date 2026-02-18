@@ -1,4 +1,4 @@
-import { BaseBuffScript } from './BaseBuffScript'
+import { BaseBuffScript } from '@/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/core/BuffContext'
 
 /**

@@ -29,7 +29,7 @@ export class ObjectPool<T> {
     if (this.pool.length > 0) {
       const obj = this.pool.pop()!
       if (this.options.validate && !this.options.validate(obj)) {
-        battleLogManager.warn('Object pool validation failed, creating new instance')
+        battleLogManager.addSystemBattleLog('Object pool validation failed, creating new instance', 'status')
         return this.options.create()
       }
       this.borrowedCount++
@@ -37,7 +37,7 @@ export class ObjectPool<T> {
     }
 
     if (this.borrowedCount >= this.options.maxSize) {
-      battleLogManager.warn('Object pool max size reached, creating new instance')
+      battleLogManager.addSystemBattleLog('Object pool max size reached, creating new instance', 'status')
     }
 
     this.borrowedCount++
@@ -46,7 +46,7 @@ export class ObjectPool<T> {
 
   public return(obj: T): void {
     if (this.pool.length >= this.options.maxSize) {
-      battleLogManager.debug('Object pool full, discarding instance')
+      battleLogManager.addSystemBattleLog('Object pool full, discarding instance', 'status')
       return
     }
 
@@ -55,7 +55,7 @@ export class ObjectPool<T> {
       this.pool.push(obj)
       this.borrowedCount = Math.max(0, this.borrowedCount - 1)
     } catch (error) {
-      battleLogManager.error('Failed to reset object in pool:', error)
+      battleLogManager.addErrorLog('Failed to reset object in pool')
     }
   }
 
@@ -70,14 +70,14 @@ export class ObjectPool<T> {
   public clear(): void {
     this.pool = []
     this.borrowedCount = 0
-    battleLogManager.info('Object pool cleared')
+    battleLogManager.addSystemBattleLog('Object pool cleared')
   }
 
   public prewarm(count: number): void {
     for (let i = 0; i < count && this.pool.length < this.options.maxSize; i++) {
       this.pool.push(this.options.create())
     }
-    battleLogManager.info(`Object pool prewarmed with ${count} instances`)
+    battleLogManager.addSystemBattleLog(`Object pool prewarmed with ${count} instances`)
   }
 }
 

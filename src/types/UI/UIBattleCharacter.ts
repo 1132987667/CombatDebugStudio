@@ -68,7 +68,7 @@ export interface UIBattleCharacter {
   /** 等级 */
   level: number
   /** 最大生命值 */
-  maxHp: number | AttributeValue
+  maxHp: AttributeValue
   /** 当前生命值 */
   currentHp: number
   /** 最大魔法值 */
@@ -84,25 +84,25 @@ export interface UIBattleCharacter {
   /** 最大攻击力 */
   maxAttack: number
   /** 平均攻击力（计算值） */
-  attack: number | AttributeValue
+  attack: AttributeValue
   /** 防御力 */
-  defense: number | AttributeValue
+  defense: AttributeValue
   /** 速度 */
-  speed: number | AttributeValue
+  speed: AttributeValue
   /** 暴击率（百分比，0-100） */
-  critRate: number | AttributeValue
+  critRate: AttributeValue
   /** 暴击伤害（百分比，≥100） */
-  critDamage: number | AttributeValue
+  critDamage: AttributeValue
   /** 免伤率（百分比，0-100） */
-  damageReduction: number | AttributeValue
+  damageReduction: AttributeValue
   /** 气血加成（百分比） */
-  healthBonus: number | AttributeValue
+  healthBonus: AttributeValue
   /** 攻击加成（百分比） */
-  attackBonus: number | AttributeValue
+  attackBonus: AttributeValue
   /** 防御加成（百分比） */
-  defenseBonus: number | AttributeValue
+  defenseBonus: AttributeValue
   /** 速度加成（百分比） */
-  speedBonus: number | AttributeValue
+  speedBonus: AttributeValue
   /** 是否启用 */
   enabled: boolean
   /** 是否先手 */

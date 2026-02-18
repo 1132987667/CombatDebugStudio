@@ -1,9 +1,9 @@
 [
   {
-    "id": "skill_enemy_001_easy_1_small",
+    "id": "skill_enemy_001_small",
     "name": "花粉迷雾",
     "description": "对单个敌人造成80%攻击力的普通伤害，并使其命中率降低30%，持续1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -17,16 +17,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_hit_reduction",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_hit_reduction",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_easy_2_small",
+    "id": "skill_enemy_001_small",
     "name": "缠绕根须",
     "description": "对单个敌人造成85%攻击力的普通伤害，并使其速度降低25%，持续1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -38,16 +41,19 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_speed_reduction",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_speed_reduction",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_easy_3_small",
+    "id": "skill_enemy_001_small",
     "name": "野性扑击",
     "description": "对单个敌人造成90%攻击力的普通伤害，并恢复造成伤害15%的生命值",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -64,10 +70,10 @@
     ]
   },
   {
-    "id": "skill_enemy_001_normal_1_small",
+    "id": "skill_enemy_001_small",
     "name": "毒液喷射",
     "description": "对单个敌人造成85%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -79,16 +85,19 @@
       {
         "type": "debuff",
         "formula": "1.0",
-        "buffId": "buff_poison",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_poison",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_normal_2_small",
+    "id": "skill_enemy_001_small",
     "name": "岩石投掷",
     "description": "对单个敌人造成110%攻击力的普通伤害",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -100,10 +109,10 @@
     ]
   },
   {
-    "id": "skill_enemy_001_normal_3_small",
+    "id": "skill_enemy_001_small",
     "name": "狂怒连击",
     "description": "对单个敌人进行两次连续攻击，每次造成60%攻击力的普通伤害，总计120%攻击力",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 3,
     "selector": "single_enemy",
     "steps": [
@@ -120,7 +129,7 @@
     ]
   },
   {
-    "id": "skill_enemy_001_normal_1_passive",
+    "id": "skill_enemy_001_passive",
     "name": "坚韧表皮",
     "description": "被动效果：永久降低受到的暴击伤害15%",
     "mpCost": 0,
@@ -130,13 +139,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_crit_damage_reduction",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_crit_damage_reduction",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_normal_2_passive",
+    "id": "skill_enemy_001_passive",
     "name": "石化皮肤",
     "description": "被动效果：受到普通攻击时，伤害降低10%",
     "mpCost": 0,
@@ -146,13 +158,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_stone_skin",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_stone_skin",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_normal_3_passive",
+    "id": "skill_enemy_001_passive",
     "name": "山林之子",
     "description": "被动效果：免疫减速效果",
     "mpCost": 0,
@@ -162,16 +177,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_mountain_child",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_mountain_child",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_hard_1_small",
+    "id": "skill_enemy_001_small",
     "name": "剧毒荆棘",
     "description": "对单个敌人造成90%攻击力的普通伤害，并施加强效中毒效果，每回合造成攻击者攻击力15%的伤害，持续2回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -183,16 +201,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_strong_poison",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_strong_poison",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_hard_2_small",
+    "id": "skill_enemy_001_small",
     "name": "碎石猛击",
     "description": "对单个敌人造成110%攻击力的普通伤害，并有25%几率使目标眩晕1回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -204,8 +225,11 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
@@ -213,7 +237,7 @@
     "id": "skill_boss_001_small",
     "name": "守护之光",
     "description": "对单个敌人造成95%攻击力的普通伤害，并为自身施加护盾，持续1回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -225,14 +249,17 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_shield",
         "duration": 1,
-        "target": "self"
+        "target": "self",
+        "effectId": "buff_shield",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_hard_1_passive",
+    "id": "skill_enemy_001_passive",
     "name": "花之再生",
     "description": "被动效果：每回合结束时，恢复自身最大生命值5%的生命值",
     "mpCost": 0,
@@ -242,13 +269,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_flower_regeneration",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_flower_regeneration",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_hard_2_passive",
+    "id": "skill_enemy_001_passive",
     "name": "首领威严",
     "description": "被动效果：为所有友方单位施加光环，提升攻击力和防御力",
     "mpCost": 0,
@@ -258,8 +288,11 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_leader_awe",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_leader_awe",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
@@ -274,16 +307,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_mountain_protection",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_mountain_protection",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_hard_1_ultimate",
+    "id": "skill_enemy_001_ultimate",
     "name": "万花齐放",
     "description": "终极技能：对所有敌人造成120%攻击力的普通伤害，并使其受到30%额外伤害，持续2回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "all_enemies",
@@ -296,16 +332,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_flower_bloom",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_flower_bloom",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_001_hard_2_ultimate",
+    "id": "skill_enemy_001_ultimate",
     "name": "山崩地裂",
     "description": "终极技能：对眩晕状态的单个敌人造成180%攻击力的普通伤害（仅对眩晕目标有效）",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "single_enemy",
@@ -322,7 +361,7 @@
     "id": "skill_boss_001_ultimate",
     "name": "山神降临",
     "description": "终极技能：使自身进入山神状态，攻击力和防御力大幅提升，持续2回合",
-    "mpCost": 25,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "self",
@@ -330,17 +369,21 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_mountain_god",
         "duration": 2,
-        "stacks": 1
+        "stacks": 1,
+        "effectId": "buff_mountain_god",
+        "effectParams": {
+          "duration": 2,
+          "stacks": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_easy_1_small",
+    "id": "skill_enemy_002_small",
     "name": "水枪射击",
     "description": "对单个敌人造成85%攻击力的普通伤害，并使其防御力降低20%，持续1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -352,16 +395,19 @@
       {
         "type": "debuff",
         "formula": "0.2",
-        "buffId": "buff_def_reduction",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_def_reduction",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_easy_2_small",
+    "id": "skill_enemy_002_small",
     "name": "钳击",
     "description": "对单个敌人造成95%攻击力的普通伤害",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -373,10 +419,10 @@
     ]
   },
   {
-    "id": "skill_enemy_002_easy_3_small",
+    "id": "skill_enemy_002_small",
     "name": "滑溜闪避",
     "description": "对单个敌人造成80%攻击力的普通伤害，并为自身提升闪避率，持续1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -388,17 +434,20 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_dodge_up",
         "duration": 1,
-        "target": "self"
+        "target": "self",
+        "effectId": "buff_dodge_up",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_normal_1_small",
+    "id": "skill_enemy_002_small",
     "name": "水刃连斩",
     "description": "对单个敌人进行两次连续攻击，每次造成65%攻击力的普通伤害，总计130%攻击力",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 3,
     "selector": "single_enemy",
     "steps": [
@@ -415,10 +464,10 @@
     ]
   },
   {
-    "id": "skill_enemy_002_normal_2_small",
+    "id": "skill_enemy_002_small",
     "name": "铁甲冲击",
     "description": "对单个敌人造成100%攻击力的普通伤害，并为自身提升防御力，持续1回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -430,17 +479,20 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_def_up",
         "duration": 1,
-        "target": "self"
+        "target": "self",
+        "effectId": "buff_def_up",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_normal_3_small",
+    "id": "skill_enemy_002_small",
     "name": "水泡困缚",
     "description": "对单个敌人造成90%攻击力的普通伤害，并使其速度降低30%，持续1回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -452,13 +504,16 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_speed_reduction",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_speed_reduction",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_normal_1_passive",
+    "id": "skill_enemy_002_passive",
     "name": "队长指挥",
     "description": "被动效果：为所有友方单位施加光环，提升暴击率",
     "mpCost": 0,
@@ -468,13 +523,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_commander",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_commander",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_normal_2_passive",
+    "id": "skill_enemy_002_passive",
     "name": "甲壳防御",
     "description": "被动效果：永久降低受到的物理伤害15%",
     "mpCost": 0,
@@ -484,13 +542,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_shell_defense",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_shell_defense",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_normal_3_passive",
+    "id": "skill_enemy_002_passive",
     "name": "鱼群之怒",
     "description": "被动效果：每回合结束时，有30%几率清除自身一个负面状态",
     "mpCost": 0,
@@ -500,16 +561,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_fish_rage",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_fish_rage",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_hard_1_small",
+    "id": "skill_enemy_002_small",
     "name": "统领之击",
     "description": "对单个敌人造成105%攻击力的普通伤害",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -521,10 +585,10 @@
     ]
   },
   {
-    "id": "skill_enemy_002_hard_2_small",
+    "id": "skill_enemy_002_small",
     "name": "金甲护体",
     "description": "对单个敌人造成95%攻击力的普通伤害，并为自身施加黄金护盾，持续2回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -536,9 +600,12 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_gold_shield",
         "duration": 2,
-        "target": "self"
+        "target": "self",
+        "effectId": "buff_gold_shield",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
@@ -546,7 +613,7 @@
     "id": "skill_boss_002_small",
     "name": "水疗波",
     "description": "对单个敌人造成90%攻击力的普通伤害，并为生命值最低的友方单位恢复50%攻击力的生命值",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -563,7 +630,7 @@
     ]
   },
   {
-    "id": "skill_enemy_002_hard_1_passive",
+    "id": "skill_enemy_002_passive",
     "name": "统御水域",
     "description": "被动效果：为所有友方单位施加水元素共鸣光环，提升水属性攻击力",
     "mpCost": 0,
@@ -573,13 +640,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_water_dominance",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_water_dominance",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_hard_2_passive",
+    "id": "skill_enemy_002_passive",
     "name": "黄金甲壳",
     "description": "被动效果：永久降低受到的魔法伤害20%",
     "mpCost": 0,
@@ -589,8 +659,11 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_gold_shell",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_gold_shell",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
@@ -605,16 +678,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_water_resonance",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_water_resonance",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_hard_1_ultimate",
+    "id": "skill_enemy_002_ultimate",
     "name": "水军冲锋",
     "description": "终极技能：对所有敌人造成110%攻击力的普通伤害，并使其速度降低40%，持续2回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "all_enemies",
@@ -627,16 +703,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_speed_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_speed_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_002_hard_2_ultimate",
+    "id": "skill_enemy_002_ultimate",
     "name": "甲壳风暴",
     "description": "终极技能：对单个敌人造成190%攻击力的普通伤害，并使其防御力降低100%，持续2回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "single_enemy",
@@ -649,8 +728,11 @@
       {
         "type": "debuff",
         "formula": "1.0",
-        "buffId": "buff_def_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_def_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
@@ -658,7 +740,7 @@
     "id": "skill_boss_002_ultimate",
     "name": "涧水狂澜",
     "description": "终极技能：对所有敌人造成130%攻击力的普通伤害，并施加潮湿效果，使其受到50%额外伤害，持续3回合",
-    "mpCost": 25,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -671,16 +753,19 @@
       {
         "type": "debuff",
         "formula": "0.5",
-        "buffId": "buff_wet",
-        "duration": 3
+        "duration": 3,
+        "effectId": "buff_wet",
+        "effectParams": {
+          "duration": 3
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_easy_1_small",
+    "id": "skill_enemy_003_small",
     "name": "岩刺突袭",
     "description": "对单个敌人造成85%攻击力的普通伤害，并有20%几率使目标眩晕1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -692,16 +777,19 @@
       {
         "type": "debuff",
         "formula": "0.2",
-        "buffId": "buff_bleed",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_bleed",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_easy_2_small",
+    "id": "skill_enemy_003_small",
     "name": "碎石飞溅",
     "description": "对单个敌人造成85%攻击力的普通伤害，并对随机相邻敌人造成50%攻击力的普通伤害",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -719,10 +807,10 @@
     ]
   },
   {
-    "id": "skill_enemy_003_easy_3_small",
+    "id": "skill_enemy_003_small",
     "name": "土遁偷袭",
     "description": "对单个敌人造成95%攻击力的普通伤害，并为自身提升闪避率，持续1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -734,17 +822,20 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_dodge_up",
         "duration": 1,
-        "target": "self"
+        "target": "self",
+        "effectId": "buff_dodge_up",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_normal_1_small",
+    "id": "skill_enemy_003_small",
     "name": "巨石碾压",
     "description": "对单个敌人造成110%攻击力的普通伤害，并有25%几率使目标眩晕1回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -756,16 +847,19 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_normal_2_small",
+    "id": "skill_enemy_003_small",
     "name": "铁石重击",
     "description": "对单个敌人造成120%攻击力的普通伤害",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 3,
     "selector": "single_enemy",
     "steps": [
@@ -777,10 +871,10 @@
     ]
   },
   {
-    "id": "skill_enemy_003_normal_3_small",
+    "id": "skill_enemy_003_small",
     "name": "地裂术",
     "description": "对单个敌人造成100%攻击力的普通伤害，并使其速度降低100%，持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -792,13 +886,16 @@
       {
         "type": "debuff",
         "formula": "1.0",
-        "buffId": "buff_speed_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_speed_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_normal_1_passive",
+    "id": "skill_enemy_003_passive",
     "name": "岩石肌肤",
     "description": "被动效果：受到普通攻击时，伤害降低10%",
     "mpCost": 0,
@@ -808,13 +905,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_stone_flesh",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_stone_flesh",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_normal_2_passive",
+    "id": "skill_enemy_003_passive",
     "name": "金属化",
     "description": "被动效果：受到魔法攻击时，有20%几率使攻击者受到30%反弹伤害",
     "mpCost": 0,
@@ -824,13 +924,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_metallization",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_metallization",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_normal_3_passive",
+    "id": "skill_enemy_003_passive",
     "name": "土灵加护",
     "description": "被动效果：受到攻击时，有15%几率为自身施加护盾",
     "mpCost": 0,
@@ -840,16 +943,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_earth_protection",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_earth_protection",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_hard_1_small",
+    "id": "skill_enemy_003_small",
     "name": "山崩",
     "description": "对单个敌人造成130%攻击力的普通伤害，并有30%几率使目标眩晕1回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -861,16 +967,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_hard_2_small",
+    "id": "skill_enemy_003_small",
     "name": "金刚破",
     "description": "对单个敌人造成115%攻击力的普通伤害",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -885,7 +994,7 @@
     "id": "skill_boss_003_small",
     "name": "地脉涌动",
     "description": "对单个敌人造成100%攻击力的普通伤害，并为所有友方单位恢复30%攻击力的生命值",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -902,7 +1011,7 @@
     ]
   },
   {
-    "id": "skill_enemy_003_hard_1_passive",
+    "id": "skill_enemy_003_passive",
     "name": "不动如山",
     "description": "被动效果：免疫眩晕和击退效果",
     "mpCost": 0,
@@ -912,13 +1021,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_unshakable",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_unshakable",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_hard_2_passive",
+    "id": "skill_enemy_003_passive",
     "name": "金刚不坏",
     "description": "被动效果：受到攻击时，有25%几率使自身防御力提升5%（可叠加5层）",
     "mpCost": 0,
@@ -928,8 +1040,11 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_indestructible",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_indestructible",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
@@ -944,16 +1059,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_earth_gift",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_earth_gift",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_hard_1_ultimate",
+    "id": "skill_enemy_003_ultimate",
     "name": "陨石天降",
     "description": "终极技能：对所有敌人造成140%攻击力的普通伤害，并使其防御力降低40%，持续2回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "all_enemies",
@@ -966,16 +1084,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_def_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_def_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_003_hard_2_ultimate",
+    "id": "skill_enemy_003_ultimate",
     "name": "金刚怒",
     "description": "终极技能：对单个敌人造成220%攻击力的普通伤害，并使其攻击力降低100%，持续2回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "single_enemy",
@@ -988,8 +1109,11 @@
       {
         "type": "debuff",
         "formula": "1.0",
-        "buffId": "buff_atk_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_atk_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
@@ -997,7 +1121,7 @@
     "id": "skill_boss_003_ultimate",
     "name": "山神震怒",
     "description": "终极技能：对所有敌人造成150%攻击力的普通伤害，并有50%几率使目标石化1回合",
-    "mpCost": 25,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -1010,16 +1134,19 @@
       {
         "type": "debuff",
         "formula": "0.5",
-        "buffId": "buff_petrify",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_petrify",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_easy_1_small",
+    "id": "skill_enemy_004_small",
     "name": "藤鞭抽打",
     "description": "对单个敌人造成90%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续2回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1031,16 +1158,19 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_poison",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_poison",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_easy_2_small",
+    "id": "skill_enemy_004_small",
     "name": "迷幻攻击",
     "description": "对单个敌人造成85%攻击力的普通伤害，并有20%几率使目标混乱1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1052,16 +1182,19 @@
       {
         "type": "debuff",
         "formula": "0.2",
-        "buffId": "buff_confusion",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_confusion",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_easy_3_small",
+    "id": "skill_enemy_004_small",
     "name": "野猪冲撞",
     "description": "对单个敌人造成100%攻击力的普通伤害",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1073,10 +1206,10 @@
     ]
   },
   {
-    "id": "skill_enemy_004_normal_1_small",
+    "id": "skill_enemy_004_small",
     "name": "根须缠绕",
     "description": "对单个敌人造成95%攻击力的普通伤害，并有30%几率使目标眩晕1回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1088,16 +1221,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_normal_2_small",
+    "id": "skill_enemy_004_small",
     "name": "迷魂阵",
     "description": "对单个敌人造成90%攻击力的普通伤害，并有35%几率使目标混乱1回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1109,16 +1245,19 @@
       {
         "type": "debuff",
         "formula": "0.35",
-        "buffId": "buff_confusion",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_confusion",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_normal_3_small",
+    "id": "skill_enemy_004_small",
     "name": "狂暴冲撞",
     "description": "对单个敌人造成120%攻击力的普通伤害",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1130,7 +1269,7 @@
     ]
   },
   {
-    "id": "skill_enemy_004_normal_1_passive",
+    "id": "skill_enemy_004_passive",
     "name": "老树盘根",
     "description": "被动效果：受到攻击时，有20%几率使攻击者减速，持续2回合",
     "mpCost": 0,
@@ -1140,13 +1279,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_old_tree_roots",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_old_tree_roots",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_normal_2_passive",
+    "id": "skill_enemy_004_passive",
     "name": "妖气弥漫",
     "description": "被动效果：为所有友方单位施加光环，提升闪避率",
     "mpCost": 0,
@@ -1156,13 +1298,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_demon_aura",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_demon_aura",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_normal_3_passive",
+    "id": "skill_enemy_004_passive",
     "name": "厚皮",
     "description": "被动效果：永久降低受到的暴击伤害25%",
     "mpCost": 0,
@@ -1172,16 +1317,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_thick_skin",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_thick_skin",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_hard_1_small",
+    "id": "skill_enemy_004_small",
     "name": "毒雾弥漫",
     "description": "对所有敌人造成80%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续3回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -1193,16 +1341,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_poison",
-        "duration": 3
+        "duration": 3,
+        "effectId": "buff_poison",
+        "effectParams": {
+          "duration": 3
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_hard_2_small",
+    "id": "skill_enemy_004_small",
     "name": "妖术封印",
     "description": "对单个敌人造成95%攻击力的普通伤害，并有30%几率封印目标技能1回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1214,8 +1365,11 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_seal",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_seal",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
@@ -1223,7 +1377,7 @@
     "id": "skill_boss_004_small",
     "name": "迷雾之护",
     "description": "对单个敌人造成100%攻击力的普通伤害，并为自身施加迷雾护盾，持续1回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1235,14 +1389,17 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_mist_shield",
         "duration": 1,
-        "target": "self"
+        "target": "self",
+        "effectId": "buff_mist_shield",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_hard_1_passive",
+    "id": "skill_enemy_004_passive",
     "name": "千年树龄",
     "description": "被动效果：每回合结束时，恢复自身最大生命值5%的生命值",
     "mpCost": 0,
@@ -1252,13 +1409,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_thousand_year",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_thousand_year",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_hard_2_passive",
+    "id": "skill_enemy_004_passive",
     "name": "老谋深算",
     "description": "被动效果：受到的负面状态持续时间减少1回合",
     "mpCost": 0,
@@ -1268,8 +1428,11 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_scheming",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_scheming",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
@@ -1284,16 +1447,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_mist_coverage",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_mist_coverage",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_hard_1_ultimate",
+    "id": "skill_enemy_004_ultimate",
     "name": "森林之怒",
     "description": "终极技能：对所有敌人造成130%攻击力的普通伤害，并为所有友方单位提升攻击力20%，持续2回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -1306,17 +1472,20 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_forest_rage",
         "duration": 2,
-        "target": "all_allies"
+        "target": "all_allies",
+        "effectId": "buff_forest_rage",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_004_hard_2_ultimate",
+    "id": "skill_enemy_004_ultimate",
     "name": "妖气爆发",
     "description": "终极技能：对所有敌人造成140%攻击力的普通伤害，并使其攻击力降低50%，持续2回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "all_enemies",
@@ -1329,8 +1498,11 @@
       {
         "type": "debuff",
         "formula": "0.5",
-        "buffId": "buff_atk_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_atk_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
@@ -1338,7 +1510,7 @@
     "id": "skill_boss_004_ultimate",
     "name": "迷雾幻境",
     "description": "终极技能：使所有敌人有60%几率陷入混乱状态2回合",
-    "mpCost": 25,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -1346,16 +1518,19 @@
       {
         "type": "debuff",
         "formula": "0.6",
-        "buffId": "buff_confusion",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_confusion",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_easy_1_small",
+    "id": "skill_enemy_005_small",
     "name": "流沙陷阱",
     "description": "对单个敌人造成90%攻击力的普通伤害,并有30%概率使其受到重度减速效果持续1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1367,16 +1542,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_slow_heavy",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_slow_heavy",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_easy_2_small",
+    "id": "skill_enemy_005_small",
     "name": "毒牙撕咬",
     "description": "对单个敌人造成95%攻击力的普通伤害,并有25%概率使其中毒持续2回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1388,16 +1566,19 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_poison",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_poison",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_easy_3_small",
+    "id": "skill_enemy_005_small",
     "name": "水波冲击",
     "description": "对单个敌人造成85%攻击力的普通伤害,并有50%概率对随机相邻敌人造成50%攻击力的溅射伤害",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1415,10 +1596,10 @@
     ]
   },
   {
-    "id": "skill_enemy_005_normal_1_small",
+    "id": "skill_enemy_005_small",
     "name": "沙暴术",
     "description": "对所有敌人造成70%攻击力的普通伤害,并有20%概率使敌人命中率降低持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -1430,16 +1611,19 @@
       {
         "type": "debuff",
         "formula": "0.2",
-        "buffId": "buff_hit_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_hit_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_normal_2_small",
+    "id": "skill_enemy_005_small",
     "name": "缠绕绞杀",
     "description": "对单个敌人造成110%攻击力的普通伤害,并有30%概率使其眩晕持续1回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1451,16 +1635,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_normal_3_small",
+    "id": "skill_enemy_005_small",
     "name": "水刃连斩",
     "description": "对单个敌人造成两次70%攻击力的普通伤害,总共140%攻击力的伤害",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 3,
     "selector": "single_enemy",
     "steps": [
@@ -1477,7 +1664,7 @@
     ]
   },
   {
-    "id": "skill_enemy_005_normal_1_passive",
+    "id": "skill_enemy_005_passive",
     "name": "流沙之体",
     "description": "被动技能,自身获得流沙之体效果,永久提升防御力和闪避率",
     "mpCost": 0,
@@ -1487,13 +1674,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_quicksand_body",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_quicksand_body",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_normal_2_passive",
+    "id": "skill_enemy_005_passive",
     "name": "蛇皮",
     "description": "被动技能,自身获得蛇皮效果,永久提升物理防御力和毒素抗性",
     "mpCost": 0,
@@ -1503,13 +1693,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_snake_skin",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_snake_skin",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_normal_3_passive",
+    "id": "skill_enemy_005_passive",
     "name": "水之加护",
     "description": "被动技能,自身获得水之加护效果,永久提升魔法防御力和水属性抗性",
     "mpCost": 0,
@@ -1519,16 +1712,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_water_protection",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_water_protection",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_hard_1_small",
+    "id": "skill_enemy_005_small",
     "name": "沙尘暴",
     "description": "对所有敌人造成90%攻击力的普通伤害,并有40%概率使敌人命中率降低持续2回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -1540,16 +1736,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_hit_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_hit_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_hard_2_small",
+    "id": "skill_enemy_005_small",
     "name": "剧毒喷射",
     "description": "对所有敌人造成80%攻击力的普通伤害,并有50%概率使敌人受到强效中毒效果持续3回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -1561,8 +1760,11 @@
       {
         "type": "debuff",
         "formula": "0.5",
-        "buffId": "buff_strong_poison",
-        "duration": 3
+        "duration": 3,
+        "effectId": "buff_strong_poison",
+        "effectParams": {
+          "duration": 3
+        }
       }
     ]
   },
@@ -1570,7 +1772,7 @@
     "id": "skill_boss_005_small",
     "name": "浊浪冲击",
     "description": "对所有敌人造成100%攻击力的普通伤害,并有30%概率使敌人防御力降低持续2回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -1582,13 +1784,16 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_def_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_def_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_hard_1_passive",
+    "id": "skill_enemy_005_passive",
     "name": "沙之化身",
     "description": "被动技能,自身获得沙之化身效果,永久大幅提升防御力和闪避率,并对物理伤害有额外减免",
     "mpCost": 0,
@@ -1598,13 +1803,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_sand_avatar",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_sand_avatar",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_hard_2_passive",
+    "id": "skill_enemy_005_passive",
     "name": "蛇王威严",
     "description": "被动技能,自身获得蛇王威严效果,永久提升攻击力和毒素抗性,攻击时有概率使敌人中毒",
     "mpCost": 0,
@@ -1614,8 +1822,11 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_snake_king_awe",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_snake_king_awe",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
@@ -1630,16 +1841,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_water_guardian",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_water_guardian",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_hard_1_ultimate",
+    "id": "skill_enemy_005_ultimate",
     "name": "流沙地狱",
     "description": "终极技能,对所有敌人造成130%攻击力的普通伤害,并有50%概率使敌人受到重度减速效果持续2回合,最多使用2次",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "all_enemies",
@@ -1652,16 +1866,19 @@
       {
         "type": "debuff",
         "formula": "0.5",
-        "buffId": "buff_slow_heavy",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_slow_heavy",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_005_hard_2_ultimate",
+    "id": "skill_enemy_005_ultimate",
     "name": "万蛇噬心",
     "description": "终极技能,对单个敌人造成200%攻击力的普通伤害,最多使用2次",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "single_enemy",
@@ -1677,7 +1894,7 @@
     "id": "skill_boss_005_ultimate",
     "name": "河神之怒",
     "description": "终极技能,对所有敌人造成150%攻击力的普通伤害,并有40%概率使敌人陷入溺水状态持续3回合,最多使用1次",
-    "mpCost": 25,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -1690,16 +1907,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_drowning",
-        "duration": 3
+        "duration": 3,
+        "effectId": "buff_drowning",
+        "effectParams": {
+          "duration": 3
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_easy_1_small",
+    "id": "skill_enemy_006_small",
     "name": "火焰吐息",
     "description": "对单个敌人造成95%攻击力的普通伤害,并有20%概率使其燃烧持续2回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1711,16 +1931,19 @@
       {
         "type": "debuff",
         "formula": "0.2",
-        "buffId": "buff_burn",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_burn",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_easy_2_small",
+    "id": "skill_enemy_006_small",
     "name": "熔岩溅射",
     "description": "对单个敌人造成90%攻击力的普通伤害,并有50%概率对随机相邻敌人造成50%攻击力的溅射伤害",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1738,10 +1961,10 @@
     ]
   },
   {
-    "id": "skill_enemy_006_easy_3_small",
+    "id": "skill_enemy_006_small",
     "name": "火球术",
     "description": "对单个敌人造成100%攻击力的普通伤害",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1753,10 +1976,10 @@
     ]
   },
   {
-    "id": "skill_enemy_006_normal_1_small",
+    "id": "skill_enemy_006_small",
     "name": "烈焰爪击",
     "description": "对单个敌人造成110%攻击力的普通伤害,并有30%概率使其燃烧持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1768,16 +1991,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_burn",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_burn",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_normal_2_small",
+    "id": "skill_enemy_006_small",
     "name": "熔岩爆裂",
     "description": "对所有敌人造成80%攻击力的普通伤害,并有25%概率使敌人燃烧持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -1789,16 +2015,19 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_burn",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_burn",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_normal_3_small",
+    "id": "skill_enemy_006_small",
     "name": "火焰连斩",
     "description": "对单个敌人造成两次75%攻击力的普通伤害,总共150%攻击力的伤害",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 3,
     "selector": "single_enemy",
     "steps": [
@@ -1815,7 +2044,7 @@
     ]
   },
   {
-    "id": "skill_enemy_006_normal_1_passive",
+    "id": "skill_enemy_006_passive",
     "name": "熔岩皮肤",
     "description": "被动技能,自身获得熔岩皮肤效果,永久提升物理防御力和火属性抗性,受到攻击时有概率反弹火属性伤害",
     "mpCost": 0,
@@ -1825,13 +2054,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_lava_skin",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_lava_skin",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_normal_2_passive",
+    "id": "skill_enemy_006_passive",
     "name": "火元素共鸣",
     "description": "被动技能,自身获得火元素共鸣效果,永久提升火属性攻击力和火属性抗性",
     "mpCost": 0,
@@ -1841,13 +2073,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_fire_resonance",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_fire_resonance",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_normal_3_passive",
+    "id": "skill_enemy_006_passive",
     "name": "火焰掌控",
     "description": "被动技能,自身获得火焰掌控效果,永久提升暴击率和暴击伤害",
     "mpCost": 0,
@@ -1857,16 +2092,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_fire_control",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_fire_control",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_hard_1_small",
+    "id": "skill_enemy_006_small",
     "name": "火山喷发",
     "description": "对所有敌人造成100%攻击力的普通伤害,并有40%概率使敌人燃烧持续3回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -1878,16 +2116,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_burn",
-        "duration": 3
+        "duration": 3,
+        "effectId": "buff_burn",
+        "effectParams": {
+          "duration": 3
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_hard_2_small",
+    "id": "skill_enemy_006_small",
     "name": "熔岩重击",
     "description": "对单个敌人造成130%攻击力的普通伤害,并有25%概率使其眩晕持续1回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -1899,8 +2140,11 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
@@ -1908,21 +2152,24 @@
     "id": "skill_boss_006_small",
     "name": "岩浆护盾",
     "description": "自身获得岩浆护盾效果持续2回合,大幅提升防御力,并对攻击者反弹火属性伤害",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "self",
     "steps": [
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_magma_shield",
         "duration": 2,
-        "target": "self"
+        "target": "self",
+        "effectId": "buff_magma_shield",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_hard_1_passive",
+    "id": "skill_enemy_006_passive",
     "name": "火焰领主",
     "description": "被动技能,自身获得火焰领主效果,永久大幅提升火属性攻击力和火属性抗性,火属性技能伤害提升50%",
     "mpCost": 0,
@@ -1932,13 +2179,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_fire_lord",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_fire_lord",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_hard_2_passive",
+    "id": "skill_enemy_006_passive",
     "name": "巨人之力",
     "description": "被动技能,自身获得巨人之力效果,永久大幅提升攻击力和暴击伤害,物理技能伤害提升30%",
     "mpCost": 0,
@@ -1948,8 +2198,11 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_giant_power",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_giant_power",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
@@ -1964,16 +2217,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_earth_fire_heart",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_earth_fire_heart",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_hard_1_ultimate",
+    "id": "skill_enemy_006_ultimate",
     "name": "炼狱火海",
     "description": "终极技能,对所有敌人造成140%攻击力的普通伤害,并使敌人受到火属性易伤效果持续2回合,最多使用2次",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "all_enemies",
@@ -1986,16 +2242,19 @@
       {
         "type": "debuff",
         "formula": "1.0",
-        "buffId": "buff_fire_vulnerability",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_fire_vulnerability",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_006_hard_2_ultimate",
+    "id": "skill_enemy_006_ultimate",
     "name": "巨岩熔爆",
     "description": "终极技能,对单个敌人造成220%攻击力的普通伤害,并使其防御力降低持续2回合,最多使用2次",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "single_enemy",
@@ -2008,8 +2267,11 @@
       {
         "type": "debuff",
         "formula": "1.0",
-        "buffId": "buff_def_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_def_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
@@ -2017,7 +2279,7 @@
     "id": "skill_boss_006_ultimate",
     "name": "火山觉醒",
     "description": "终极技能,对所有敌人造成160%攻击力的普通伤害,并有50%概率使敌人被熔岩束缚持续1回合,最多使用1次",
-    "mpCost": 25,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -2030,16 +2292,19 @@
       {
         "type": "debuff",
         "formula": "0.5",
-        "buffId": "buff_lava_bind",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_lava_bind",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_easy_1_small",
+    "id": "skill_enemy_007_small",
     "name": "蛛网缠绕",
     "description": "对单个敌人造成90%攻击力的普通伤害，并有30%几率使目标眩晕1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2051,16 +2316,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_easy_2_small",
+    "id": "skill_enemy_007_small",
     "name": "毒粉挥洒",
     "description": "对单个敌人造成85%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续2回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2072,16 +2340,19 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_poison",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_poison",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_easy_3_small",
+    "id": "skill_enemy_007_small",
     "name": "啃噬",
     "description": "对单个敌人造成100%攻击力的普通伤害，并恢复造成伤害20%的生命值",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2098,10 +2369,10 @@
     ]
   },
   {
-    "id": "skill_enemy_007_normal_1_small",
+    "id": "skill_enemy_007_small",
     "name": "毒牙连刺",
     "description": "对单个敌人进行两次连续攻击，每次造成70%攻击力的普通伤害，总计140%攻击力",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 3,
     "selector": "single_enemy",
     "steps": [
@@ -2118,10 +2389,10 @@
     ]
   },
   {
-    "id": "skill_enemy_007_normal_2_small",
+    "id": "skill_enemy_007_small",
     "name": "毒雾弥漫",
     "description": "对所有敌人造成75%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -2133,16 +2404,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_poison",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_poison",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_normal_3_small",
+    "id": "skill_enemy_007_small",
     "name": "蛛丝束缚",
     "description": "对单个敌人造成95%攻击力的普通伤害，并使其速度大幅降低，持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2154,13 +2428,16 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_slow_heavy",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_slow_heavy",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_normal_1_passive",
+    "id": "skill_enemy_007_passive",
     "name": "蛛网大师",
     "description": "被动效果：提升自身控制技能的成功率20%",
     "mpCost": 0,
@@ -2170,13 +2447,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_web_master",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_web_master",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_normal_2_passive",
+    "id": "skill_enemy_007_passive",
     "name": "毒蛾粉",
     "description": "被动效果：受到攻击时，有25%几率使攻击者中毒，每回合造成攻击者攻击力5%的伤害，持续2回合",
     "mpCost": 0,
@@ -2186,13 +2466,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_moth_powder",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_moth_powder",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_normal_3_passive",
+    "id": "skill_enemy_007_passive",
     "name": "亲卫之忠",
     "description": "被动效果：当友方单位受到攻击时，有15%几率为其分担30%的伤害",
     "mpCost": 0,
@@ -2202,16 +2485,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_guard_loyalty",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_guard_loyalty",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_hard_1_small",
+    "id": "skill_enemy_007_small",
     "name": "千丝万缕",
     "description": "对所有敌人造成90%攻击力的普通伤害，并有40%几率使目标眩晕1回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -2223,16 +2509,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_hard_2_small",
+    "id": "skill_enemy_007_small",
     "name": "女王毒粉",
     "description": "对所有敌人造成85%攻击力的普通伤害，并施加强效中毒效果，每回合造成攻击者攻击力15%的伤害，持续3回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -2244,8 +2533,11 @@
       {
         "type": "debuff",
         "formula": "0.5",
-        "buffId": "buff_strong_poison",
-        "duration": 3
+        "duration": 3,
+        "effectId": "buff_strong_poison",
+        "effectParams": {
+          "duration": 3
+        }
       }
     ]
   },
@@ -2253,20 +2545,23 @@
     "id": "skill_boss_007_small",
     "name": "守护蛛网",
     "description": "为所有友方单位施加蛛网护盾，提升防御力20%，持续2回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_allies",
     "steps": [
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_guard_web",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_guard_web",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_hard_1_passive",
+    "id": "skill_enemy_007_passive",
     "name": "蛛后之母",
     "description": "被动效果：每回合结束时，有30%几率召唤一只小蜘蛛协助战斗",
     "mpCost": 0,
@@ -2276,13 +2571,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_spider_queen",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_spider_queen",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_hard_2_passive",
+    "id": "skill_enemy_007_passive",
     "name": "女王威严",
     "description": "被动效果：降低所有敌方单位的攻击力15%",
     "mpCost": 0,
@@ -2292,8 +2590,11 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_queen_awe",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_queen_awe",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
@@ -2308,16 +2609,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_valley_overlord",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_valley_overlord",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_hard_1_ultimate",
+    "id": "skill_enemy_007_ultimate",
     "name": "盘丝大阵",
     "description": "终极技能：对所有敌人造成130%攻击力的普通伤害，并使其被束缚2回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -2330,16 +2634,19 @@
       {
         "type": "debuff",
         "formula": "0.6",
-        "buffId": "buff_bind",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_bind",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_007_hard_2_ultimate",
+    "id": "skill_enemy_007_ultimate",
     "name": "毒爆术",
     "description": "终极技能：对所有敌人造成200%攻击力的普通伤害",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "all_enemies",
@@ -2355,7 +2662,7 @@
     "id": "skill_boss_007_ultimate",
     "name": "蛛谷天罗",
     "description": "终极技能：对所有敌人造成150%攻击力的普通伤害，并降低其攻击力50%，持续2回合",
-    "mpCost": 25,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -2368,16 +2675,19 @@
       {
         "type": "debuff",
         "formula": "0.5",
-        "buffId": "buff_atk_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_atk_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_easy_1_small",
+    "id": "skill_enemy_008_small",
     "name": "狮吼",
     "description": "对单个敌人造成90%攻击力的普通伤害，并降低其防御力20%，持续2回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2389,16 +2699,19 @@
       {
         "type": "debuff",
         "formula": "0.2",
-        "buffId": "buff_def_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_def_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_easy_2_small",
+    "id": "skill_enemy_008_small",
     "name": "象鼻重击",
     "description": "对单个敌人造成110%攻击力的普通伤害",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2410,10 +2723,10 @@
     ]
   },
   {
-    "id": "skill_enemy_008_easy_3_small",
+    "id": "skill_enemy_008_small",
     "name": "疾风爪",
     "description": "对单个敌人造成95%攻击力的普通伤害，并提升自身速度，持续1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2425,17 +2738,20 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_speed_up",
         "duration": 1,
-        "target": "self"
+        "target": "self",
+        "effectId": "buff_speed_up",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_normal_1_small",
+    "id": "skill_enemy_008_small",
     "name": "统领之吼",
     "description": "对单个敌人造成100%攻击力的普通伤害，并提升所有友方单位的攻击力，持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2447,17 +2763,20 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_ally_atk_up",
         "duration": 2,
-        "target": "all_allies"
+        "target": "all_allies",
+        "effectId": "buff_ally_atk_up",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_normal_2_small",
+    "id": "skill_enemy_008_small",
     "name": "铁甲冲撞",
     "description": "对单个敌人造成130%攻击力的普通伤害",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2469,10 +2788,10 @@
     ]
   },
   {
-    "id": "skill_enemy_008_normal_3_small",
+    "id": "skill_enemy_008_small",
     "name": "狂风之翼",
     "description": "对所有敌人造成80%攻击力的普通伤害，并降低其速度30%，持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -2484,13 +2803,16 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_speed_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_speed_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_normal_1_passive",
+    "id": "skill_enemy_008_passive",
     "name": "统领光环",
     "description": "被动效果：提升所有友方单位的攻击力10%",
     "mpCost": 0,
@@ -2500,13 +2822,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_commander_aura",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_commander_aura",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_normal_2_passive",
+    "id": "skill_enemy_008_passive",
     "name": "铁甲护体",
     "description": "被动效果：提升自身防御力25%",
     "mpCost": 0,
@@ -2516,13 +2841,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_iron_armor",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_iron_armor",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_normal_3_passive",
+    "id": "skill_enemy_008_passive",
     "name": "天空霸主",
     "description": "被动效果：提升自身速度20%",
     "mpCost": 0,
@@ -2532,16 +2860,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_sky_overlord",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_sky_overlord",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_hard_1_small",
+    "id": "skill_enemy_008_small",
     "name": "近卫之怒",
     "description": "对单个敌人造成120%攻击力的普通伤害",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2553,10 +2884,10 @@
     ]
   },
   {
-    "id": "skill_enemy_008_hard_2_small",
+    "id": "skill_enemy_008_small",
     "name": "战争践踏",
     "description": "对所有敌人造成100%攻击力的普通伤害，并降低其防御力30%，持续2回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -2568,8 +2899,11 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_def_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_def_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
@@ -2577,20 +2911,23 @@
     "id": "skill_boss_008_small",
     "name": "风之护盾",
     "description": "为所有友方单位施加风之护盾，提升防御力20%，持续2回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_allies",
     "steps": [
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_wind_shield",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_wind_shield",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_hard_1_passive",
+    "id": "skill_enemy_008_passive",
     "name": "近卫之盾",
     "description": "被动效果：当友方单位受到致命伤害时，有30%几率为其抵挡50%的伤害",
     "mpCost": 0,
@@ -2600,13 +2937,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_guard_shield",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_guard_shield",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_hard_2_passive",
+    "id": "skill_enemy_008_passive",
     "name": "将军之威",
     "description": "被动效果：提升所有友方单位的防御力15%",
     "mpCost": 0,
@@ -2616,8 +2956,11 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_general_awe",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_general_awe",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
@@ -2632,16 +2975,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_wind_spirit",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_wind_spirit",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_hard_1_ultimate",
+    "id": "skill_enemy_008_ultimate",
     "name": "狮王咆哮",
     "description": "终极技能：对所有敌人造成140%攻击力的普通伤害，并有40%几率使目标眩晕1回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "all_enemies",
@@ -2654,16 +3000,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_008_hard_2_ultimate",
+    "id": "skill_enemy_008_ultimate",
     "name": "象阵冲锋",
     "description": "终极技能：对单个敌人造成230%攻击力的普通伤害",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "single_enemy",
@@ -2679,7 +3028,7 @@
     "id": "skill_boss_008_ultimate",
     "name": "狂风绝息",
     "description": "终极技能：对所有敌人造成160%攻击力的普通伤害，并使其窒息，持续3回合",
-    "mpCost": 25,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -2692,16 +3041,19 @@
       {
         "type": "debuff",
         "formula": "0.5",
-        "buffId": "buff_suffocation",
-        "duration": 3
+        "duration": 3,
+        "effectId": "buff_suffocation",
+        "effectParams": {
+          "duration": 3
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_easy_1_small",
+    "id": "skill_enemy_009_small",
     "name": "金刚拳",
     "description": "对单个敌人造成100%攻击力的普通伤害，并有20%几率使目标眩晕1回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2713,16 +3065,19 @@
       {
         "type": "debuff",
         "formula": "0.2",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_easy_2_small",
+    "id": "skill_enemy_009_small",
     "name": "禅音波",
     "description": "对单个敌人造成90%攻击力的普通伤害，并降低其攻击力25%，持续2回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2734,16 +3089,19 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_atk_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_atk_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_easy_3_small",
+    "id": "skill_enemy_009_small",
     "name": "护法杖击",
     "description": "对单个敌人造成105%攻击力的普通伤害，并根据造成的伤害值为自身恢复10%的生命值",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2760,10 +3118,10 @@
     ]
   },
   {
-    "id": "skill_enemy_009_normal_1_small",
+    "id": "skill_enemy_009_small",
     "name": "力士之锤",
     "description": "对单个敌人造成120%攻击力的普通伤害，并降低其防御力30%，持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2775,16 +3133,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_def_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_def_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_normal_2_small",
+    "id": "skill_enemy_009_small",
     "name": "罗汉掌",
     "description": "对单个敌人造成两次75%攻击力的普通伤害，总共150%攻击力的伤害",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 3,
     "selector": "single_enemy",
     "steps": [
@@ -2801,10 +3162,10 @@
     ]
   },
   {
-    "id": "skill_enemy_009_normal_3_small",
+    "id": "skill_enemy_009_small",
     "name": "金刚护体",
     "description": "对单个敌人造成95%攻击力的普通伤害，同时自身获得防御力提升效果持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2816,14 +3177,17 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_def_up",
         "duration": 2,
-        "target": "self"
+        "target": "self",
+        "effectId": "buff_def_up",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_normal_1_passive",
+    "id": "skill_enemy_009_passive",
     "name": "力士之躯",
     "description": "被动技能，自身获得力士之躯效果，永久提升攻击力和生命值上限",
     "mpCost": 0,
@@ -2833,13 +3197,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_strong_body",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_strong_body",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_normal_2_passive",
+    "id": "skill_enemy_009_passive",
     "name": "尊者之威",
     "description": "被动技能，自身获得尊者之威效果，永久提升防御力和闪避率",
     "mpCost": 0,
@@ -2849,13 +3216,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_revered_awe",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_revered_awe",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_normal_3_passive",
+    "id": "skill_enemy_009_passive",
     "name": "金刚之怒",
     "description": "被动技能，自身获得金刚之怒效果，永久提升攻击力和暴击率",
     "mpCost": 0,
@@ -2865,16 +3235,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_diamond_rage",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_diamond_rage",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_hard_1_small",
+    "id": "skill_enemy_009_small",
     "name": "罗汉伏魔",
     "description": "对单个敌人造成130%攻击力的普通伤害",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2886,10 +3259,10 @@
     ]
   },
   {
-    "id": "skill_enemy_009_hard_2_small",
+    "id": "skill_enemy_009_small",
     "name": "降龙掌",
     "description": "对单个敌人造成140%攻击力的普通伤害，并有25%几率使目标眩晕1回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -2901,8 +3274,11 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
@@ -2910,7 +3286,7 @@
     "id": "skill_boss_009_small",
     "name": "禅音护体",
     "description": "为所有友方单位恢复50%攻击力的生命值",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_allies",
     "steps": [
@@ -2922,7 +3298,7 @@
     ]
   },
   {
-    "id": "skill_enemy_009_hard_1_passive",
+    "id": "skill_enemy_009_passive",
     "name": "伏魔之力",
     "description": "被动效果：对妖魔鬼怪类敌人造成的伤害提升20%",
     "mpCost": 0,
@@ -2932,13 +3308,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_demon_subduing",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_demon_subduing",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_hard_2_passive",
+    "id": "skill_enemy_009_passive",
     "name": "龙威",
     "description": "被动效果：提升自身暴击伤害20%",
     "mpCost": 0,
@@ -2948,8 +3327,11 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_dragon_awe",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_dragon_awe",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
@@ -2964,16 +3346,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_zen_heart",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_zen_heart",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_hard_1_ultimate",
+    "id": "skill_enemy_009_ultimate",
     "name": "金刚伏魔阵",
     "description": "终极技能：对所有敌人造成150%攻击力的普通伤害，并使其攻击力降低40%，持续2回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "all_enemies",
@@ -2986,16 +3371,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_atk_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_atk_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_009_hard_2_ultimate",
+    "id": "skill_enemy_009_ultimate",
     "name": "飞龙在天",
     "description": "终极技能：对单个敌人造成240%攻击力的普通伤害",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "single_enemy",
@@ -3011,7 +3399,7 @@
     "id": "skill_boss_009_ultimate",
     "name": "雷音禅唱",
     "description": "终极技能：对所有敌人造成170%攻击力的普通伤害，并封印所有技能2回合",
-    "mpCost": 25,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -3024,16 +3412,19 @@
       {
         "type": "debuff",
         "formula": "0.6",
-        "buffId": "buff_seal_all",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_seal_all",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_easy_1_small",
+    "id": "skill_enemy_010_small",
     "name": "叛徒之击",
     "description": "对单个敌人造成100%攻击力的普通伤害",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -3045,10 +3436,10 @@
     ]
   },
   {
-    "id": "skill_enemy_010_easy_2_small",
+    "id": "skill_enemy_010_small",
     "name": "护法之怒",
     "description": "对单个敌人造成110%攻击力的普通伤害",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -3060,10 +3451,10 @@
     ]
   },
   {
-    "id": "skill_enemy_010_easy_3_small",
+    "id": "skill_enemy_010_small",
     "name": "使者之威",
     "description": "对单个敌人造成95%攻击力的普通伤害，并降低其攻击力，持续2回合",
-    "mpCost": 5,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -3075,16 +3466,19 @@
       {
         "type": "debuff",
         "formula": "1.0",
-        "buffId": "buff_atk_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_atk_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_normal_1_small",
+    "id": "skill_enemy_010_small",
     "name": "精英叛变",
     "description": "对单个敌人造成120%攻击力的普通伤害",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -3096,10 +3490,10 @@
     ]
   },
   {
-    "id": "skill_enemy_010_normal_2_small",
+    "id": "skill_enemy_010_small",
     "name": "将领冲锋",
     "description": "对单个敌人造成130%攻击力的普通伤害，并降低其防御力30%，持续2回合",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -3111,16 +3505,19 @@
       {
         "type": "debuff",
         "formula": "0.3",
-        "buffId": "buff_def_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_def_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_normal_3_small",
+    "id": "skill_enemy_010_small",
     "name": "长老之杖",
     "description": "对单个敌人连续造成两次80%攻击力的普通伤害",
-    "mpCost": 8,
+    "mpCost": 50,
     "cooldown": 3,
     "selector": "single_enemy",
     "steps": [
@@ -3137,7 +3534,7 @@
     ]
   },
   {
-    "id": "skill_enemy_010_normal_1_passive",
+    "id": "skill_enemy_010_passive",
     "name": "叛徒之谋",
     "description": "被动效果：对生命值低于50%的敌人造成的伤害提升30%",
     "mpCost": 0,
@@ -3147,13 +3544,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_traitor_scheme",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_traitor_scheme",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_normal_2_passive",
+    "id": "skill_enemy_010_passive",
     "name": "将领之勇",
     "description": "被动效果：提升自身攻击力20%",
     "mpCost": 0,
@@ -3163,13 +3563,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_general_bravery",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_general_bravery",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_normal_3_passive",
+    "id": "skill_enemy_010_passive",
     "name": "长老之智",
     "description": "被动效果：提升自身技能暴击率20%",
     "mpCost": 0,
@@ -3179,16 +3582,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_elder_wisdom",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_elder_wisdom",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_hard_1_small",
+    "id": "skill_enemy_010_small",
     "name": "首领之怒",
     "description": "对所有敌人造成100%攻击力的普通伤害，并降低其攻击力40%，持续2回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_enemies",
     "steps": [
@@ -3200,16 +3606,19 @@
       {
         "type": "debuff",
         "formula": "0.4",
-        "buffId": "buff_atk_reduction",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_atk_reduction",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_hard_2_small",
+    "id": "skill_enemy_010_small",
     "name": "统帅之击",
     "description": "对单个敌人造成150%攻击力的普通伤害，并有25%几率使目标眩晕1回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
@@ -3221,8 +3630,11 @@
       {
         "type": "debuff",
         "formula": "0.25",
-        "buffId": "buff_stun",
-        "duration": 1
+        "duration": 1,
+        "effectId": "buff_stun",
+        "effectParams": {
+          "duration": 1
+        }
       }
     ]
   },
@@ -3230,7 +3642,7 @@
     "id": "skill_boss_010_small",
     "name": "灵霄之光",
     "description": "为所有友方单位恢复60%攻击力的生命值，并提升其攻击力，持续2回合",
-    "mpCost": 12,
+    "mpCost": 50,
     "cooldown": 2,
     "selector": "all_allies",
     "steps": [
@@ -3242,14 +3654,17 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_atk_up",
         "duration": 2,
-        "target": "all_allies"
+        "target": "all_allies",
+        "effectId": "buff_atk_up",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_hard_1_passive",
+    "id": "skill_enemy_010_passive",
     "name": "首领光环",
     "description": "被动效果：提升所有友方单位的攻击力15%",
     "mpCost": 0,
@@ -3259,13 +3674,16 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_leader_aura",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_leader_aura",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_hard_2_passive",
+    "id": "skill_enemy_010_passive",
     "name": "统帅之威",
     "description": "被动效果：提升自身防御力20%，并降低受到的控制效果持续时间50%",
     "mpCost": 0,
@@ -3275,8 +3693,11 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_commander_awe",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_commander_awe",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
@@ -3291,16 +3712,19 @@
       {
         "type": "buff",
         "formula": "1.0",
-        "buffId": "buff_sacred_blessing",
-        "duration": -1
+        "duration": -1,
+        "effectId": "buff_sacred_blessing",
+        "effectParams": {
+          "duration": -1
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_hard_1_ultimate",
+    "id": "skill_enemy_010_ultimate",
     "name": "叛变之潮",
     "description": "终极技能：对所有敌人造成160%攻击力的普通伤害，并有50%几率使目标混乱2回合",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "all_enemies",
@@ -3313,16 +3737,19 @@
       {
         "type": "debuff",
         "formula": "0.5",
-        "buffId": "buff_confusion",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_confusion",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   },
   {
-    "id": "skill_enemy_010_hard_2_ultimate",
+    "id": "skill_enemy_010_ultimate",
     "name": "护法天降",
     "description": "终极技能：对单个敌人造成250%攻击力的普通伤害",
-    "mpCost": 20,
+    "mpCost": 150,
     "cooldown": 3,
     "maxUses": 2,
     "selector": "single_enemy",
@@ -3338,7 +3765,7 @@
     "id": "skill_boss_010_ultimate",
     "name": "灵山之巅",
     "description": "终极技能：对所有敌人造成180%攻击力的普通伤害，并封印所有技能2回合",
-    "mpCost": 25,
+    "mpCost": 150,
     "cooldown": 4,
     "maxUses": 1,
     "selector": "all_enemies",
@@ -3351,8 +3778,11 @@
       {
         "type": "debuff",
         "formula": "0.6",
-        "buffId": "buff_seal_all",
-        "duration": 2
+        "duration": 2,
+        "effectId": "buff_seal_all",
+        "effectParams": {
+          "duration": 2
+        }
       }
     ]
   }

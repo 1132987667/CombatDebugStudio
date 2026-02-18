@@ -12,15 +12,17 @@
  * 专门处理游戏相关的数据操作，提供游戏特定的API接口
  */
 
-import { DataProcessor } from './DataProcessor'
+import { DataProcessor } from '@/utils/DataProcessor'
+import { reactive } from 'vue'
 import enemiesData from '@configs/enemies/enemies.json'
 import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
 import buffsData from '@configs/buffs/buffs.json'
 import type { Enemy, SkillConfig, SceneData, CharacterStats } from '@/types'
-import type { UIBattleCharacter, AttributeValue, AttributeOption, AttributeValueType, AttributeSourceType } from '@/types/UI/UIBattleCharacter'
+import type { UIBattleCharacter, AttributeValue, AttributeOption, AttributeValueType } from '@/types/UI/UIBattleCharacter'
 import type { ParticipantSide } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
+import { AttributeMetaMap, getAttributeMeta } from '@/types/attribute-meta'
 import {
   BattleParticipantImpl,
 } from '@/core/battle/BattleParticipantImpl'
@@ -81,27 +83,22 @@ export class GameDataProcessor {
   }
 
   /**
-   * 根据ID查找敌人
-   */
-  static findEnemyById(enemyId: string): Enemy | undefined {
-    const cacheKey = `enemy_${enemyId}`
-    const cached = DataProcessor.getCachedData<Enemy>(cacheKey)
-    if (cached) return cached
-    const enemy = DataProcessor.find(enemiesData, (e) => e.id === enemyId)
-    if (enemy) {
-      DataProcessor.setCachedData(cacheKey, enemy)
-    }
-    return enemy
-  }
-
-  /**
    * 根据ID数组批量查找敌人
    * @param enemyIds - 敌人ID数组
    * @returns Enemy[] - 找到的敌人数组
    */
   static findEnemiesByIds(enemyIds: string[]): Enemy[] {
     return enemyIds
-      .map((id) => this.findEnemyById(id))
+      .map((id) => {
+        const cacheKey = `enemy_${id}`
+        const cached = DataProcessor.getCachedData<Enemy>(cacheKey)
+        if (cached) return cached
+        const enemy = DataProcessor.find(enemiesData, (e) => e.id === id)
+        if (enemy) {
+          DataProcessor.setCachedData(cacheKey, enemy)
+        }
+        return enemy
+      })
       .filter((enemy) => enemy !== undefined) as Enemy[]
   }
 
@@ -149,7 +146,32 @@ export class GameDataProcessor {
     enemy: Enemy,
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
   ): BattleParticipantImpl {
-    const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive || [])
+    const getSkillsByIds = (skillIds: string[]): SkillConfig[] => {
+      return skillIds
+        .map((id) => {
+          const skillCacheKey = `skill_${id}`
+          const cachedSkill = DataProcessor.getCachedData<SkillConfig>(skillCacheKey)
+          if (cachedSkill) return cachedSkill
+          
+          // 只进行精确匹配
+          const skill = DataProcessor.find(skillsData, (s) => s.id === id) as SkillConfig | undefined
+          
+          if (skill) {
+            DataProcessor.setCachedData(skillCacheKey, skill)
+          } else {
+            console.warn(`Skill with ID ${id} not found`)
+          }
+          return skill
+        })
+        .filter((skill): skill is SkillConfig => skill !== undefined)
+    }
+
+    const passiveSkillIds = GameDataProcessor.normalizeSkillIds(enemy.skills?.passive || [])
+    const passiveSkills = getSkillsByIds(passiveSkillIds)
+    
+    const smallSkills = getSkillsByIds(GameDataProcessor.normalizeSkillIds(enemy.skills?.small || []))
+    const ultimateSkills = getSkillsByIds(GameDataProcessor.normalizeSkillIds(enemy.skills?.ultimate || []))
+    
     const bonuses = GameDataProcessor.calculatePassiveSkillBonuses(passiveSkills)
 
     const baseHealth = enemy.stats.health
@@ -166,6 +188,7 @@ export class GameDataProcessor {
       id: enemy.id,
       name: enemy.name,
       type: type,
+      team: type,
       level: enemy.level,
       maxHealth: finalHealth,
       currentHealth: finalHealth,
@@ -181,9 +204,9 @@ export class GameDataProcessor {
       defenseBonus: bonuses.defenseBonus * 100,
       speedBonus: bonuses.speedBonus * 100,
       skills: {
-        small: GameDataProcessor.normalizeSkillIds(enemy.skills?.small),
-        passive: GameDataProcessor.normalizeSkillIds(enemy.skills?.passive),
-        ultimate: GameDataProcessor.normalizeSkillIds(enemy.skills?.ultimate),
+        small: smallSkills,
+        passive: passiveSkills,
+        ultimate: ultimateSkills,
       },
     })
   }
@@ -236,7 +259,16 @@ export class GameDataProcessor {
 
     const enemyIds = scene.difficulties[difficulty]?.enemyIds || []
     const enemies = enemyIds
-      .map((id) => GameDataProcessor.findEnemyById(id))
+      .map((id) => {
+        const enemyCacheKey = `enemy_${id}`
+        const cachedEnemy = DataProcessor.getCachedData<Enemy>(enemyCacheKey)
+        if (cachedEnemy) return cachedEnemy
+        const enemy = DataProcessor.find(enemiesData, (e) => e.id === id)
+        if (enemy) {
+          DataProcessor.setCachedData(enemyCacheKey, enemy)
+        }
+        return enemy
+      })
       .filter((enemy): enemy is Enemy => enemy !== undefined)
 
     DataProcessor.setCachedData(cacheKey, enemies)
@@ -245,34 +277,15 @@ export class GameDataProcessor {
 
   /**
    * 根据技能ID查找技能
-   * 支持精确匹配和模糊匹配（当精确匹配失败时，尝试匹配包含该ID的技能）
+   * 仅支持精确匹配，确保配置一致性
    */
   static findSkillById(skillId: string): SkillConfig | undefined {
     const cacheKey = `skill_${skillId}`
     const cached = DataProcessor.getCachedData<SkillConfig>(cacheKey)
     if (cached) return cached
 
-    // 首先尝试精确匹配
-    let skill = DataProcessor.find(skillsData, (s) => s.id === skillId) as SkillConfig | undefined
-    
-    // 如果精确匹配失败，尝试模糊匹配
-    if (!skill) {
-      // 构建模糊匹配的正则表达式
-      // 例如: skill_enemy_001_small -> 匹配 skill_enemy_001_*_small 或 skill_enemy_001_*_*_small
-      const parts = skillId.split('_')
-      if (parts.length >= 4) {
-        // 提取基础部分，如 skill_enemy_001
-        const baseId = parts.slice(0, 3).join('_')
-        // 提取类型部分，如 small
-        const skillType = parts[parts.length - 1]
-        
-        // 尝试匹配包含基础ID和类型的技能
-        skill = DataProcessor.find(skillsData, (s) => {
-          const sid = s.id as string
-          return sid.startsWith(baseId) && sid.endsWith(skillType)
-        }) as SkillConfig | undefined
-      }
-    }
+    // 只进行精确匹配
+    const skill = DataProcessor.find(skillsData, (s) => s.id === skillId) as SkillConfig | undefined
 
     if (skill) {
       DataProcessor.setCachedData(cacheKey, skill)
@@ -296,8 +309,14 @@ export class GameDataProcessor {
     const cached = DataProcessor.getCachedData(cacheKey)
     if (cached) return cached
 
-    const enemy = GameDataProcessor.findEnemyById(id)
+    const enemyCacheKey = `enemy_${id}`
+    const cachedEnemy = DataProcessor.getCachedData<Enemy>(enemyCacheKey)
+    const enemy = cachedEnemy || DataProcessor.find(enemiesData, (e) => e.id === id)
     if (!enemy) return {}
+
+    if (!cachedEnemy) {
+      DataProcessor.setCachedData(enemyCacheKey, enemy)
+    }
 
     const skills: any = {}
 
@@ -462,11 +481,16 @@ export class GameDataProcessor {
     passiveBonuses: Record<string, { value: number; source: string; valueType: AttributeValueType }[]> = {},
     attributeKey: string = 'attack'
   ): AttributeValue {
+    // 获取属性元数据
+    const attributeMeta = getAttributeMeta(attributeKey)
+    const isPercentage = attributeMeta?.isPercentage || false
+    const valueType = isPercentage ? '百分比' : '数值'
+    
     const options: AttributeOption[] = [
       {
         from: '基础',
         value: baseValue,
-        valueType: '数值',
+        valueType: valueType,
       },
     ]
 
@@ -499,7 +523,7 @@ export class GameDataProcessor {
 
     return {
       value: finalValue,
-      valueType: '数值',
+      valueType: valueType,
       options,
     }
   }
@@ -516,11 +540,16 @@ export class GameDataProcessor {
     passiveBonuses: Record<string, { value: number; source: string; valueType: AttributeValueType }[]> = {},
     attributeKey: string = 'attack'
   ): AttributeValue {
+    // 获取属性元数据
+    const attributeMeta = getAttributeMeta(attributeKey)
+    const isPercentage = attributeMeta?.isPercentage || true
+    const valueType = isPercentage ? '百分比' : '数值'
+    
     const options: AttributeOption[] = [
       {
         from: '基础',
         value: basePercent,
-        valueType: '百分比',
+        valueType: valueType,
       },
     ]
 
@@ -540,9 +569,34 @@ export class GameDataProcessor {
 
     return {
       value: finalValue,
-      valueType: '百分比',
+      valueType: valueType,
       options,
     }
+  }
+
+  /**
+   * 根据技能ID数组获取技能配置
+   * @param skillIds - 技能ID数组
+   * @returns SkillConfig[] - 技能配置数组
+   */
+  static getSkillByIds(skillIds: string[]): SkillConfig[] {
+    return skillIds
+      .map((id) => {
+        const skillCacheKey = `skill_${id}`
+        const cachedSkill = DataProcessor.getCachedData<SkillConfig>(skillCacheKey)
+        if (cachedSkill) return cachedSkill
+        
+        // 只进行精确匹配
+        const skill = DataProcessor.find(skillsData, (s) => s.id === id) as SkillConfig | undefined
+        
+        if (skill) {
+          DataProcessor.setCachedData(skillCacheKey, skill)
+        } else {
+          console.warn(`Skill with ID ${id} not found`)
+        }
+        return skill
+      })
+      .filter((skill): skill is SkillConfig => skill !== undefined)
   }
 
   /**
@@ -557,7 +611,28 @@ export class GameDataProcessor {
     index: number,
     isEnemy: boolean = false,
   ): UIBattleCharacter {
-    const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive || [])
+    const getSkillsByIds = (skillIds: string[]): SkillConfig[] => {
+      return skillIds
+        .map((id) => {
+          const skillCacheKey = `skill_${id}`
+          const cachedSkill = DataProcessor.getCachedData<SkillConfig>(skillCacheKey)
+          if (cachedSkill) return cachedSkill
+          
+          // 只进行精确匹配
+          const skill = DataProcessor.find(skillsData, (s) => s.id === id) as SkillConfig | undefined
+          
+          if (skill) {
+            DataProcessor.setCachedData(skillCacheKey, skill)
+          } else {
+            console.warn(`Skill with ID ${id} not found`)
+          }
+          return skill
+        })
+        .filter((skill): skill is SkillConfig => skill !== undefined)
+    }
+
+    const passiveSkillIds = GameDataProcessor.normalizeSkillIds(enemy.skills?.passive || [])
+    const passiveSkills = getSkillsByIds(passiveSkillIds)
     const passiveBonuses = GameDataProcessor.parsePassiveSkillBonuses(passiveSkills)
 
     const baseHealth = enemy.stats.health
@@ -565,7 +640,7 @@ export class GameDataProcessor {
     const baseDefense = enemy.stats.defense
     const baseSpeed = enemy.stats.speed
 
-    return {    
+    return reactive({
       originalId: enemy.id,
       id: isEnemy
         ? `${PARTICIPANT_SIDE.ENEMY}_${index + 1}`
@@ -595,39 +670,129 @@ export class GameDataProcessor {
       isFirst: index === 0,
       buffs: [],
       skills: {
-        small: GameDataProcessor.getSkillByIds(enemy.skills?.small || []),
+        small: getSkillsByIds(GameDataProcessor.normalizeSkillIds(enemy.skills?.small || [])),
         passive: passiveSkills,
-        ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate || []),
+        ultimate: getSkillsByIds(GameDataProcessor.normalizeSkillIds(enemy.skills?.ultimate || [])),
       },
+    }) as UIBattleCharacter
+  }
+
+  /**
+   * 转换战斗参与者为UI角色
+   * @param participant - 战斗参与者
+   * @param index - 队伍中的索引位置
+   * @returns UIBattleCharacter - UI层可用的角色对象
+   */
+  static participantToUIBattleCharacter(
+    participant: BattleParticipantImpl,
+    index: number = 0,
+  ): UIBattleCharacter {
+    // 生成缓存键
+    const cacheKey = `ui_character_${participant.id}_${participant.currentHealth}_${participant.currentEnergy}_${participant.maxEnergy}`;
+    
+    // 尝试从缓存获取
+    const cachedCharacter = DataProcessor.getCachedData<UIBattleCharacter>(cacheKey);
+    if (cachedCharacter) {
+      // 保留原有的UI特定属性
+      cachedCharacter.enabled = index < 3;
+      cachedCharacter.isFirst = index === 0;
+      return cachedCharacter;
     }
+
+    // 创建属性值对象
+    const createAttributeValue = (value: number, type: string): AttributeValue => {
+      // 映射属性键名到 attribute-meta.ts 中定义的键名
+      const attributeKeyMap: Record<string, string> = {
+        'health': 'currentHp',
+        'attack': 'attack',
+        'defense': 'defense',
+        'speed': 'speed',
+        'critRate': 'critRate',
+        'critDamage': 'critDamage',
+        'damageReduction': 'damageReduction',
+        'healthBonus': 'healthBonus',
+        'attackBonus': 'attackBonus',
+        'defenseBonus': 'defenseBonus',
+        'speedBonus': 'speedBonus'
+      };
+      
+      const mappedKey = attributeKeyMap[type] || type;
+      
+      // 获取属性元数据
+      const attributeMeta = getAttributeMeta(mappedKey)
+      const isPercentage = attributeMeta?.isPercentage || (type !== 'health' && type !== 'attack' && type !== 'defense' && type !== 'speed')
+      const valueType = isPercentage ? '百分比' : '数值'
+      
+      return {
+        value,
+        valueType: valueType,
+        options: [
+          {
+            from: '基础',
+            sourceName: '基础属性',
+            value,
+            valueType: valueType,
+          },
+        ],
+      }
+    }
+
+    const character = reactive({
+      originalId: participant.id,
+      id: participant.id,
+      team: participant.team,
+      name: participant.name,
+      level: participant.level,
+      maxHp: createAttributeValue(participant.maxHealth, 'health'),
+      currentHp: participant.currentHealth,
+      maxMp: 100,
+      currentMp: 100,
+      currentEnergy: participant.currentEnergy,
+      maxEnergy: participant.maxEnergy,
+      minAttack: participant.minAttack,
+      maxAttack: participant.maxAttack,
+      attack: createAttributeValue(participant.attack, 'attack'),
+      defense: createAttributeValue(participant.defense, 'defense'),
+      speed: createAttributeValue(participant.speed, 'speed'),
+      critRate: createAttributeValue(participant.critRate, 'critRate'),
+      critDamage: createAttributeValue(participant.critDamage, 'critDamage'),
+      damageReduction: createAttributeValue(participant.damageReduction, 'damageReduction'),
+      healthBonus: createAttributeValue(participant.healthBonus, 'healthBonus'),
+      attackBonus: createAttributeValue(participant.attackBonus, 'attackBonus'),
+      defenseBonus: createAttributeValue(participant.defenseBonus, 'defenseBonus'),
+      speedBonus: createAttributeValue(participant.speedBonus, 'speedBonus'),
+      enabled: index < 3,
+      isFirst: index === 0,
+      buffs: [],
+      skills: participant.skills,
+    }) as UIBattleCharacter;
+    
+    // 缓存结果
+    DataProcessor.setCachedData(cacheKey, character);
+    
+    return character;
   }
 
   /**
    * 将技能ID标准化为数组格式
-   * @param skillIds - 技能ID（字符串或字符串数组）
+   * @param skillIds - 技能ID（字符串、字符串数组或对象）
    * @returns 标准化后的技能ID数组
    */
-  static normalizeSkillIds(skillIds: string | string[] | undefined): string[] {
+  static normalizeSkillIds(skillIds: string | string[] | object | undefined): string[] {
     if (!skillIds) return []
-    return Array.isArray(skillIds) ? skillIds : [skillIds]
+    if (Array.isArray(skillIds)) {
+      // 过滤掉非字符串元素
+      return skillIds.filter(id => typeof id === 'string')
+    }
+    if (typeof skillIds === 'string') {
+      return [skillIds]
+    }
+    // 如果是对象，返回空数组，防止出现[object Object]错误
+    console.warn('技能ID格式错误，预期字符串或字符串数组，实际为对象:', skillIds)
+    return []
   }
 
-  /**
-   * 根据技能ID数组获取有效的技能配置
-   * @param skillIds - 技能ID数组
-   * @returns 有效的技能配置数组
-   */
-  static getSkillByIds (skillIds: string[]): SkillConfig[] {
-    if (!skillIds || skillIds.length === 0) return []
-    let validSkills: SkillConfig[] = []
-    for (const id of skillIds) {
-      const skill = GameDataProcessor.findSkillById(id)
-      if (skill) {
-        validSkills.push(skill)
-      }
-    }
-    return validSkills
-  }
+
 
   /**
    * 批量创建战斗角色
@@ -811,7 +976,10 @@ export class GameDataProcessor {
     const grouped = scenesData
       .map((scene) => {
         const sceneEnemies = scene.difficulties.easy.enemyIds
-          .map((id: string) => GameDataProcessor.findEnemyById(id))
+          .map((id: string) => {
+            const enemies = GameDataProcessor.findEnemiesByIds([id])
+            return enemies.length > 0 ? enemies[0] : undefined
+          })
           .filter((enemy): enemy is Enemy => enemy !== undefined)
 
         return { scene, enemies: sceneEnemies }

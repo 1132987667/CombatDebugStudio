@@ -54,12 +54,22 @@
 import { ref, computed, watch } from 'vue'
 import Dialog from '@/components/Dialog.vue'
 
+/**
+ * 可注入状态接口
+ * 用于定义战斗中可注入到角色的状态数据
+ */
 export interface InjectableStatus {
+  /** 状态唯一标识符 */
   id: string
+  /** 状态名称 */
   name: string
+  /** 持续回合数 */
   duration: number
+  /** 状态效果描述 */
   effect: string
+  /** 是否激活 */
   active: boolean
+  /** 是否为增益状态 */
   isPositive: boolean
 }
 

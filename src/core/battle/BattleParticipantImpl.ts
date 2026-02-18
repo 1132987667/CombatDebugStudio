@@ -12,6 +12,7 @@ import type {
   StatusEffect,
   ParticipantSide,
 } from '@/types/battle'
+import type { SkillConfig } from '@/types/skill'
 
 /**
  * 参与者初始化数据接口
@@ -24,6 +25,8 @@ export interface ParticipantInitData {
   name: string
   /** 参与者类型（我方/敌方） */
   type: ParticipantSide
+  /** 队伍归属 */
+  team: ParticipantSide
   /** 等级 */
   level: number
   /** 最大生命值 */
@@ -62,9 +65,9 @@ export interface ParticipantInitData {
   statusEffects?: StatusEffect[]
   /** 技能配置 */
   skills?: {
-    small?: string[]
-    passive?: string[]
-    ultimate?: string[]
+    small?: SkillConfig[]
+    passive?: SkillConfig[]
+    ultimate?: SkillConfig[]
   }
 }
 
@@ -81,6 +84,8 @@ export class BattleParticipantImpl implements BattleParticipant {
   level: number
   /** 参与者类型 */
   type: ParticipantSide
+  /** 队伍归属 */
+  team: ParticipantSide
   /** 当前生命值 */
   currentHealth: number
   /** 最大生命值 */
@@ -120,10 +125,12 @@ export class BattleParticipantImpl implements BattleParticipant {
   statusEffects?: StatusEffect[]
   /** 技能配置 */
   skills: {
-    small?: string[]
-    passive?: string[]
-    ultimate?: string[]
+    small?: SkillConfig[]
+    passive?: SkillConfig[]
+    ultimate?: SkillConfig[]
   }
+  /** 技能冷却状态映射，key为技能ID，value为剩余冷却回合数 */
+  skillCooldowns: Map<string, number>
 
   /**
    * 构造函数
@@ -134,6 +141,7 @@ export class BattleParticipantImpl implements BattleParticipant {
     this.name = data.name
     this.level = data.level
     this.type = data.type
+    this.team = data.team
     this.maxHealth = data.maxHealth
     this.currentHealth = data.currentHealth ?? data.maxHealth
     this.maxEnergy = data.maxEnergy ?? 150
@@ -154,6 +162,7 @@ export class BattleParticipantImpl implements BattleParticipant {
     this.speedBonus = data.speedBonus ?? 0
     this.statusEffects = data.statusEffects
     this.skills = data.skills ?? {}
+    this.skillCooldowns = new Map<string, number>()
   }
 
   /**
@@ -238,6 +247,12 @@ export class BattleParticipantImpl implements BattleParticipant {
     const damage = Math.max(0, amount)
     this.currentHealth = Math.max(0, this.currentHealth - damage)
     this.gainEnergy(15)
+    
+    // 触发受击时的被动技能
+    // 注意：这里需要通过某种方式获取PassiveSkillManager实例
+    // 由于依赖注入的限制，我们暂时不在这里直接触发
+    // 而是在BattleSystem的伤害处理中触发
+    
     return damage
   }
 
@@ -278,7 +293,7 @@ export class BattleParticipantImpl implements BattleParticipant {
    * 行动后处理
    */
   afterAction(): void {
-    this.gainEnergy(10)
+    this.gainEnergy(25)
   }
 
   /**
@@ -287,9 +302,9 @@ export class BattleParticipantImpl implements BattleParticipant {
    */
   getSkills(): string[] {
     const allSkills: string[] = []
-    if (this.skills.small) allSkills.push(...this.skills.small)
-    if (this.skills.passive) allSkills.push(...this.skills.passive)
-    if (this.skills.ultimate) allSkills.push(...this.skills.ultimate)
+    if (this.skills.small) allSkills.push(...this.skills.small.map(skill => skill.id))
+    if (this.skills.passive) allSkills.push(...this.skills.passive.map(skill => skill.id))
+    if (this.skills.ultimate) allSkills.push(...this.skills.ultimate.map(skill => skill.id))
     return allSkills
   }
 
@@ -327,5 +342,58 @@ export class BattleParticipantImpl implements BattleParticipant {
    */
   hasBuff(buffId: string): boolean {
     return this.buffs.some((id) => id.includes(buffId))
+  }
+
+  /**
+   * 检查技能是否可用（未冷却）
+   * @param skillId - 技能ID
+   * @returns 是否可用
+   */
+  isSkillAvailable(skillId: string): boolean {
+    const cooldown = this.skillCooldowns.get(skillId)
+    return cooldown === undefined || cooldown <= 0
+  }
+
+  /**
+   * 设置技能冷却
+   * @param skillId - 技能ID
+   * @param cooldown - 冷却回合数
+   */
+  setSkillCooldown(skillId: string, cooldown: number): void {
+    if (cooldown > 0) {
+      this.skillCooldowns.set(skillId, cooldown)
+    } else {
+      this.skillCooldowns.delete(skillId)
+    }
+  }
+
+  /**
+   * 减少所有技能的冷却回合数
+   */
+  reduceSkillCooldowns(): void {
+    for (const [skillId, cooldown] of this.skillCooldowns.entries()) {
+      const newCooldown = cooldown - 1
+      if (newCooldown <= 0) {
+        this.skillCooldowns.delete(skillId)
+      } else {
+        this.skillCooldowns.set(skillId, newCooldown)
+      }
+    }
+  }
+
+  /**
+   * 获取技能剩余冷却回合数
+   * @param skillId - 技能ID
+   * @returns 剩余冷却回合数，0表示无冷却
+   */
+  getSkillCooldown(skillId: string): number {
+    return this.skillCooldowns.get(skillId) || 0
+  }
+
+  /**
+   * 重置所有技能冷却
+   */
+  resetSkillCooldowns(): void {
+    this.skillCooldowns.clear()
   }
 }

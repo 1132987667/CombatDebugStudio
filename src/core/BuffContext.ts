@@ -9,7 +9,7 @@
 
 import type { BuffConfig } from '@/types/buff'
 import type { Character } from '@/types/character'
-import { BuffSystem } from './BuffSystem'
+import { BuffSystem } from '@/core/BuffSystem'
 
 /**
  * Buff上下文类
@@ -100,6 +100,13 @@ export class BuffContext {
     const system = BuffSystem.getInstance()
     const modifierStack = system.getModifierStack(this.characterId)
     modifierStack.addModifier(this.instanceId, attribute as any, value, type)
+
+    // 如果修改的是速度属性，标记需要重新计算回合顺序
+    if (attribute === 'SPD') {
+      // 这里需要获取到对应的战斗数据并标记速度变化
+      // 由于上下文限制，这里暂时只做标记，实际实现需要根据具体架构调整
+      console.log(`Speed modifier added for character ${this.characterId}`)
+    }
   }
 
   /**

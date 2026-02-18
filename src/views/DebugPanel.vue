@@ -3,262 +3,285 @@
     <div class="section">
       <div class="section-header">
         <span>属性监控</span>
-        <span class="selected-info">(当前选中: {{ selectedCharName }})</span>
+        <span class="selected-info">(当前选中: {{ characterStore.selectedCharName }})</span>
       </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">基础属性</div>
         <div class="monitor-grid">
-          <div class="monitor-item">
-            <span class="monitor-label">HP:</span>
-            <span class="monitor-value">{{ selectedChar?.currentHp || 0 }}/{{ baseProps.maxHp }}</span>
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '气血', characterStore.currentCharacter?.maxHp?.options || [], typeof characterStore.currentCharacter?.maxHp === 'object' ? characterStore.currentCharacter.maxHp.value : characterStore.currentCharacter?.maxHp || 0, '数值')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">气血:</span>
+            <span class="monitor-value">{{ characterStore.currentCharacter?.currentHp || 0 }}/{{ typeof characterStore.currentCharacter?.maxHp === 'object' ? characterStore.currentCharacter.maxHp.value : characterStore.currentCharacter?.maxHp || 0 }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '能量', [], characterStore.currentCharacter?.currentEnergy || 0, '数值')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">能量:</span>
-            <span class="monitor-value">{{ selectedChar?.currentEnergy || 0 }}/{{ selectedChar?.maxEnergy || 150 }}</span>
+            <span class="monitor-value">{{ characterStore.currentCharacter?.currentEnergy || 0 }}/{{ characterStore.currentCharacter?.maxEnergy || 150 }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '攻击', characterStore.currentCharacter?.attack?.options || [], characterStore.attackRange.min, '数值')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击:</span>
-            <span class="monitor-value" 
-              @mouseenter="showAttrTooltip($event, '攻击', [], 0, '数值')"
-              @mouseleave="hideAttrTooltip">{{ attackRange.min }}-{{ attackRange.max }}</span>
+            <span class="monitor-value">{{ characterStore.attackRange.min }}-{{ characterStore.attackRange.max }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '防御', characterStore.currentCharacter?.defense?.options || [], typeof characterStore.currentCharacter?.defense === 'object' ? characterStore.currentCharacter.defense.value : characterStore.currentCharacter?.defense || 0, '数值')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御:</span>
-            <span class="monitor-value" 
-              @mouseenter="showAttrTooltip($event, '防御', baseProps.defenseOptions, baseProps.defense, '数值')"
-              @mouseleave="hideAttrTooltip">{{ baseProps.defense }}</span>
+            <span class="monitor-value">{{ typeof characterStore.currentCharacter?.defense === 'object' ? characterStore.currentCharacter.defense.value : characterStore.currentCharacter?.defense || 0 }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '速度', characterStore.currentCharacter?.speed?.options || [], typeof characterStore.currentCharacter?.speed === 'object' ? characterStore.currentCharacter.speed.value : characterStore.currentCharacter?.speed || 0, '数值')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度:</span>
-            <span class="monitor-value" 
-              @mouseenter="showAttrTooltip($event, '速度', baseProps.speedOptions, baseProps.speed, '数值')"
-              @mouseleave="hideAttrTooltip">{{ baseProps.speed }}</span>
+            <span class="monitor-value">{{ typeof characterStore.currentCharacter?.speed === 'object' ? characterStore.currentCharacter.speed.value : characterStore.currentCharacter?.speed || 0 }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '暴击率', characterStore.currentCharacter?.critRate?.options || [], typeof characterStore.currentCharacter?.critRate === 'object' ? characterStore.currentCharacter.critRate.value : characterStore.currentCharacter?.critRate || 10, '百分比')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">暴击率:</span>
-            <span class="monitor-value" 
-              @mouseenter="showAttrTooltip($event, '暴击率', baseProps.critRateOptions, baseProps.critRate, '百分比')"
-              @mouseleave="hideAttrTooltip">{{ baseProps.critRate }}%</span>
+            <span class="monitor-value">{{ typeof characterStore.currentCharacter?.critRate === 'object' ? characterStore.currentCharacter.critRate.value : characterStore.currentCharacter?.critRate || 10 }}%</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '暴击伤害', characterStore.currentCharacter?.critDamage?.options || [], typeof characterStore.currentCharacter?.critDamage === 'object' ? characterStore.currentCharacter.critDamage.value : characterStore.currentCharacter?.critDamage || 125, '百分比')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">暴击伤害:</span>
-            <span class="monitor-value" 
-              @mouseenter="showAttrTooltip($event, '暴击伤害', baseProps.critDamageOptions, baseProps.critDamage, '百分比')"
-              @mouseleave="hideAttrTooltip">{{ baseProps.critDamage }}%</span>
+            <span class="monitor-value">{{ typeof characterStore.currentCharacter?.critDamage === 'object' ? characterStore.currentCharacter.critDamage.value : characterStore.currentCharacter?.critDamage || 125 }}%</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '免伤率', characterStore.currentCharacter?.damageReduction?.options || [], typeof characterStore.currentCharacter?.damageReduction === 'object' ? characterStore.currentCharacter.damageReduction.value : characterStore.currentCharacter?.damageReduction || 0, '百分比')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">免伤率:</span>
-            <span class="monitor-value" 
-              @mouseenter="showAttrTooltip($event, '免伤率', baseProps.damageReductionOptions, baseProps.damageReduction, '百分比')"
-              @mouseleave="hideAttrTooltip">{{ baseProps.damageReduction }}%</span>
+            <span class="monitor-value">{{ typeof characterStore.currentCharacter?.damageReduction === 'object' ? characterStore.currentCharacter.damageReduction.value : characterStore.currentCharacter?.damageReduction || 0 }}%</span>
           </div>
         </div>
       </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">属性加成</div>
         <div class="monitor-grid">
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '气血加成', characterStore.currentCharacter?.healthBonus?.options || [], getBonusValue(characterStore.currentCharacter?.healthBonus), '百分比')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血加成:</span>
-            <span class="monitor-value bonus" 
-              @mouseenter="showAttrTooltip($event, '气血加成', bonusProps.healthBonusOptions, bonusProps.healthBonus, '百分比')"
-              @mouseleave="hideAttrTooltip">{{ formatBonus(selectedChar?.healthBonus) }}</span>
+            <span class="monitor-value bonus">{{ formatBonus(characterStore.currentCharacter?.healthBonus) }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '攻击加成', characterStore.currentCharacter?.attackBonus?.options || [], getBonusValue(characterStore.currentCharacter?.attackBonus), '百分比')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击加成:</span>
-            <span class="monitor-value bonus" 
-              @mouseenter="showAttrTooltip($event, '攻击加成', bonusProps.attackBonusOptions, bonusProps.attackBonus, '百分比')"
-              @mouseleave="hideAttrTooltip">{{ formatBonus(selectedChar?.attackBonus) }}</span>
+            <span class="monitor-value bonus">{{ formatBonus(characterStore.currentCharacter?.attackBonus) }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '防御加成', characterStore.currentCharacter?.defenseBonus?.options || [], getBonusValue(characterStore.currentCharacter?.defenseBonus), '百分比')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御加成:</span>
-            <span class="monitor-value bonus" 
-              @mouseenter="showAttrTooltip($event, '防御加成', bonusProps.defenseBonusOptions, bonusProps.defenseBonus, '百分比')"
-              @mouseleave="hideAttrTooltip">{{ formatBonus(selectedChar?.defenseBonus) }}</span>
+            <span class="monitor-value bonus">{{ formatBonus(characterStore.currentCharacter?.defenseBonus) }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '速度加成', characterStore.currentCharacter?.speedBonus?.options || [], getBonusValue(characterStore.currentCharacter?.speedBonus), '百分比')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度加成:</span>
-            <span class="monitor-value bonus" 
-              @mouseenter="showAttrTooltip($event, '速度加成', bonusProps.speedBonusOptions, bonusProps.speedBonus, '百分比')"
-              @mouseleave="hideAttrTooltip">{{ formatBonus(selectedChar?.speedBonus) }}</span>
+            <span class="monitor-value bonus">{{ formatBonus(characterStore.currentCharacter?.speedBonus) }}</span>
           </div>
         </div>
       </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">最终属性</div>
         <div class="monitor-grid">
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '最终攻击', characterStore.currentCharacter?.attack?.options || [], characterStore.attackRange.min, '数值')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终攻击:</span>
-            <span class="monitor-value final" 
-              @mouseenter="showAttrTooltip($event, '最终攻击', finalProps.attackOptions, finalProps.attack, '数值')"
-              @mouseleave="hideAttrTooltip">{{ finalStats.attack }}</span>
+            <span class="monitor-value final">{{ characterStore.attackRange.min }}-{{ characterStore.attackRange.max }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '最终防御', characterStore.currentCharacter?.defense?.options || [], typeof characterStore.currentCharacter?.defense === 'object' ? characterStore.currentCharacter.defense.value : characterStore.currentCharacter?.defense || 0, '数值')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终防御:</span>
-            <span class="monitor-value final" 
-              @mouseenter="showAttrTooltip($event, '最终防御', finalProps.defenseOptions, finalProps.defense, '数值')"
-              @mouseleave="hideAttrTooltip">{{ finalStats.defense }}</span>
+            <span class="monitor-value final">{{ typeof characterStore.currentCharacter?.defense === 'object' ? characterStore.currentCharacter.defense.value : characterStore.currentCharacter?.defense || 0 }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '最终速度', characterStore.currentCharacter?.speed?.options || [], typeof characterStore.currentCharacter?.speed === 'object' ? characterStore.currentCharacter.speed.value : characterStore.currentCharacter?.speed || 0, '数值')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终速度:</span>
-            <span class="monitor-value final" 
-              @mouseenter="showAttrTooltip($event, '最终速度', finalProps.speedOptions, finalProps.speed, '数值')"
-              @mouseleave="hideAttrTooltip">{{ finalStats.speed }}</span>
+            <span class="monitor-value final">{{ typeof characterStore.currentCharacter?.speed === 'object' ? characterStore.currentCharacter.speed.value : characterStore.currentCharacter?.speed || 0 }}</span>
           </div>
-          <div class="monitor-item">
+          <div class="monitor-item" 
+            @mouseenter="showAttrTooltip($event, '最终气血', characterStore.currentCharacter?.maxHp?.options || [], typeof characterStore.currentCharacter?.maxHp === 'object' ? characterStore.currentCharacter.maxHp.value : characterStore.currentCharacter?.maxHp || 0, '数值')"
+            @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终气血:</span>
-            <span class="monitor-value final" 
-              @mouseenter="showAttrTooltip($event, '最终气血', finalProps.healthOptions, finalProps.health, '数值')"
-              @mouseleave="hideAttrTooltip">{{ finalStats.health }}</span>
+            <span class="monitor-value final">{{ typeof characterStore.currentCharacter?.maxHp === 'object' ? characterStore.currentCharacter.maxHp.value : characterStore.currentCharacter?.maxHp || 0 }}</span>
           </div>
         </div>
       </div>
       <div class="monitor-group">
-        <div class="monitor-subtitle">技能信息</div>
-        <div class="skills-display">
-          <div 
-            class="skill-item passive" 
-            v-if="passiveSkillName"
-            @mouseenter="showSkillTooltip($event, 'passive')"
-            @mouseleave="hideSkillTooltip"
-            @mousemove="updateTooltipPosition"
-          >
-            <span class="skill-label">被动:</span>
-            <span class="skill-name">{{ passiveSkillName }}</span>
-          </div>
-          <div 
-            class="skill-item small" 
-            v-if="smallSkillName"
-            @mouseenter="showSkillTooltip($event, 'small')"
-            @mouseleave="hideSkillTooltip"
-            @mousemove="updateTooltipPosition"
-          >
-            <span class="skill-label">小技能:</span>
-            <span class="skill-name">{{ smallSkillName }}</span>
-          </div>
-          <div 
-            class="skill-item ultimate" 
-            v-if="ultimateSkillName"
-            @mouseenter="showSkillTooltip($event, 'ultimate')"
-            @mouseleave="hideSkillTooltip"
-            @mousemove="updateTooltipPosition"
-          >
-            <span class="skill-label">大技能:</span>
-            <span class="skill-name">{{ ultimateSkillName }}</span>
-          </div>
-          <div
-            v-if="!passiveSkillName && !smallSkillName && !ultimateSkillName"
-            class="no-skills"
-          >
-            暂未配置技能
+          <div class="monitor-subtitle">技能信息</div>
+          <div class="skills-display">
+            <div
+              v-if="!characterStore.currentCharacter?.skills"
+              class="no-skills"
+            >
+              暂未配置技能
+            </div>
+            <div v-else class="skills-list">
+              <div class="skill-category" v-if="characterStore.currentCharacter.skills.passive && characterStore.currentCharacter.skills.passive.length > 0">
+                <div class="skill-category-title">被动技能</div>
+                <div class="skill-items">
+                  <div 
+                    class="skill-item passive" 
+                    v-for="(skill, index) in characterStore.currentCharacter.skills.passive" 
+                    :key="index"
+                    @mouseenter="showSkillTooltip($event, skill)"
+                    @mousemove="updateTooltipPosition"
+                    @mouseleave="hideSkillTooltip"
+                  >
+                    {{ skill.name || '未知技能' }}
+                  </div>
+                </div>
+              </div>
+              <div class="skill-category" v-if="characterStore.currentCharacter.skills.small && characterStore.currentCharacter.skills.small.length > 0">
+                <div class="skill-category-title">小技能</div>
+                <div class="skill-items">
+                  <div 
+                    class="skill-item small" 
+                    v-for="(skill, index) in characterStore.currentCharacter.skills.small" 
+                    :key="index"
+                    @mouseenter="showSkillTooltip($event, skill)"
+                    @mousemove="updateTooltipPosition"
+                    @mouseleave="hideSkillTooltip"
+                  >
+                    {{ skill.name || '未知技能' }}
+                  </div>
+                </div>
+              </div>
+              <div class="skill-category" v-if="characterStore.currentCharacter.skills.ultimate && characterStore.currentCharacter.skills.ultimate.length > 0">
+                <div class="skill-category-title">终极技能</div>
+                <div class="skill-items">
+                  <div 
+                    class="skill-item ultimate" 
+                    v-for="(skill, index) in characterStore.currentCharacter.skills.ultimate" 
+                    :key="index"
+                    @mouseenter="showSkillTooltip($event, skill)"
+                    @mousemove="updateTooltipPosition"
+                    @mouseleave="hideSkillTooltip"
+                  >
+                    {{ skill.name || '未知技能' }}
+                  </div>
+                </div>
+              </div>
+              <div v-if="(!characterStore.currentCharacter.skills.passive || characterStore.currentCharacter.skills.passive.length === 0) && (!characterStore.currentCharacter.skills.small || characterStore.currentCharacter.skills.small.length === 0) && (!characterStore.currentCharacter.skills.ultimate || characterStore.currentCharacter.skills.ultimate.length === 0)" class="no-skills">
+                暂未配置技能
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
     <!-- 技能悬浮提示 -->
-    <Teleport to="body">
-      <Transition name="tooltip-fade">
-        <div 
-          v-if="tooltipVisible && tooltipContent"
-          class="skill-tooltip"
-          :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
-        >
-          <div class="tooltip-header">
-            <span class="tooltip-name">{{ tooltipContent.name }}</span>
-            <span class="tooltip-type" :class="tooltipContent.skillType || 'active'">
-              {{ tooltipContent.skillType === 'passive' ? '被动' : tooltipContent.skillType === 'ultimate' ? '终极' : '主动' }}
-            </span>
-          </div>
-          <div class="tooltip-description">{{ tooltipContent.description || '暂无描述' }}</div>
-          <div class="tooltip-stats">
-            <div class="stat-item" v-if="tooltipContent.mpCost > 0">
-              <span class="stat-label">消耗:</span>
-              <span class="stat-value">{{ tooltipContent.mpCost }} 能量</span>
-            </div>
-            <div class="stat-item" v-if="tooltipContent.cooldown > 0">
-              <span class="stat-label">冷却:</span>
-              <span class="stat-value">{{ tooltipContent.cooldown }} 回合</span>
-            </div>
-            <div class="stat-item" v-if="tooltipContent.maxUses">
-              <span class="stat-label">次数:</span>
-              <span class="stat-value">{{ tooltipContent.maxUses }} 次</span>
-            </div>
-          </div>
-          <div class="tooltip-effects" v-if="tooltipContent.steps && tooltipContent.steps.length > 0">
-            <div class="effects-title">技能效果</div>
-            <div 
-              class="effect-item" 
-              v-for="(step, index) in tooltipContent.steps" 
-              :key="index"
-            >
-              <span class="effect-type">{{ getStepTypeName(step.type) }}</span>
-              <span class="effect-formula" v-if="step.formula">{{ step.formula }}</span>
-              <span class="effect-scope" v-if="step.scope">{{ getScopeName(step.scope) }}</span>
-              <span class="effect-duration" v-if="step.duration">({{ step.duration }}回合)</span>
-            </div>
-          </div>
-          <div class="tooltip-condition" v-if="tooltipContent.condition">
-            <span class="condition-label">条件:</span>
-            <span class="condition-value">{{ tooltipContent.condition }}</span>
-          </div>
+    <div 
+      v-if="tooltipVisible && tooltipContent" 
+      class="skill-tooltip"
+      :style="{
+        left: tooltipPosition.x + 'px',
+        top: tooltipPosition.y + 'px'
+      }"
+    >
+      <div class="tooltip-header">
+        <div class="tooltip-name">{{ tooltipContent.name || '未知技能' }}</div>
+        <div class="tooltip-type" :class="getSkillTypeClass(tooltipContent)">
+          {{ getSkillTypeName(tooltipContent) }}
         </div>
-      </Transition>
-    </Teleport>
+      </div>
+      <div class="tooltip-description">
+        {{ tooltipContent.description || '无描述' }}
+      </div>
+      
+      <!-- 技能基础信息 -->
+      <div class="tooltip-stats">
+        <div class="stat-item">
+          <div class="stat-label">能量消耗</div>
+          <div class="stat-value">{{ tooltipContent.mpCost || 0 }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">冷却时间</div>
+          <div class="stat-value">{{ tooltipContent.cooldown || 0 }}回合</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">目标类型</div>
+          <div class="stat-value">{{ getTargetTypeName(tooltipContent.targetType) }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">作用范围</div>
+          <div class="stat-value">{{ getScopeName(tooltipContent.scope) }}</div>
+        </div>
+      </div>
+      
+      <!-- 技能效果 -->
+      <div v-if="tooltipContent.steps && tooltipContent.steps.length > 0" class="tooltip-effects">
+        <div class="effects-title">技能效果</div>
+        <div class="effect-item" v-for="(step, idx) in tooltipContent.steps" :key="idx">
+          <span class="effect-type">{{ getStepTypeName(step.type) }}</span>
+          <span class="effect-formula">{{ step.formula || '' }}</span>
+          <span class="effect-duration" v-if="step.duration">{{ step.duration }}回合</span>
+        </div>
+      </div>
+      
+      <!-- 施放条件 -->
+      <div v-if="tooltipContent.condition" class="tooltip-condition">
+        <span class="condition-label">施放条件:</span>
+        <span class="condition-value">{{ tooltipContent.condition }}</span>
+      </div>
+      
+      <!-- 技能可用性 -->
+      <div class="tooltip-availability" :class="{ 'available': isSkillAvailable(tooltipContent), 'unavailable': !isSkillAvailable(tooltipContent) }">
+        {{ isSkillAvailable(tooltipContent) ? '当前可用' : '当前不可用' }}
+      </div>
+    </div>
 
     <div class="section">
       <div class="section-header">手动干预</div>
       <div class="intervention-list">
-        <button class="intervention-btn" @click="$emit('end-turn')">[1] 立即结束当前回合</button>
-        <div class="intervention-row">
-          <span>[2]</span>
-          <input type="text" v-model="manualSkillName" placeholder="技能名" class="intervention-input" />
-          <button class="btn-small" @click="$emit('execute-skill', manualSkillName)">[执行]</button>
-        </div>
-        <div class="intervention-row">
-          <span>[3]</span>
-          <input type="text" v-model="manualStatusName" placeholder="状态名" class="intervention-input" />
-          <span>回合:</span>
-          <input type="number" v-model="manualStatusTurns" class="intervention-num" />
-          <button class="btn-small" @click="$emit('add-status', { name: manualStatusName, turns: manualStatusTurns })">
-            [执行]
-          </button>
-        </div>
-        <div class="intervention-row">
-          <span>[4]</span>
-          <span>HP[</span>
-          <input type="number" v-model="manualHpAmount" class="intervention-num" />
-          <span>] MP[</span>
-          <input type="number" v-model="manualMpAmount" class="intervention-num" />
-          <span>]</span>
-          <button class="btn-small" @click="$emit('adjust-stats', { hp: manualHpAmount, mp: manualMpAmount })">
-            [执行]
-          </button>
-        </div>
-        <button class="intervention-btn" @click="$emit('clear-statuses')">[5] 清除所有状态</button>
-        <button class="intervention-btn danger" @click="$emit('reset-battle')">[R] 重置战斗</button>
+        <button class="intervention-btn" @click="resetBattle">[R] 重置战斗</button>
       </div>
     </div>
 
     <div class="section">
       <div class="section-header">数据快照</div>
       <div class="snapshot-actions">
-        <button class="intervention-btn" @click="$emit('export-state')">[E] 导出当前状态(JSON)</button>
-        <button class="intervention-btn" @click="$emit('import-state')">[I] 导入状态数据</button>
+        <button class="intervention-btn" @click="exportState">[E] 导出当前状态(JSON)</button>
+        <button class="intervention-btn" @click="importState">[I] 导入状态数据</button>
       </div>
       <div class="last-export">
-        <span>最近导出: {{ lastExportTime || '无' }}</span>
+        <span>最近导出: {{ debugStore.lastExportTime || '无' }}</span>
         <div class="snapshot-btns">
-          <button class="btn-small" @click="$emit('view-export')">[查看]</button>
-          <button class="btn-small" @click="$emit('reload-export')">[重载]</button>
+          <button class="btn-small" @click="viewExport">[查看]</button>
+          <button class="btn-small" @click="reloadExport">[重载]</button>
         </div>
       </div>
     </div>
 
     <div class="section">
       <div class="section-header">异常检测</div>
-      <div class="exception-status" :class="exceptionStatus.class">
-        <span>{{ exceptionStatus.message }}</span>
-        <button v-if="exceptionStatus.hasException" class="btn-small" @click="$emit('locate-exception')">[定位]</button>
+      <div class="exception-status" :class="'normal'">
+        <span>系统正常运行中</span>
       </div>
     </div>
 
@@ -275,33 +298,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { GameDataProcessor } from "@/utils/GameDataProcessor";
+import { ref } from "vue";
+import { useCharacterStore, useDebugStore } from "@/stores";
 import AttributeTooltip from "@/components/AttributeTooltip.vue";
-import type { UIBattleCharacter, AttributeValue } from "@/types";
+import { GameDataProcessor } from "@/utils/GameDataProcessor";
+import type { AttributeValue } from "@/types";
 import type { AttributeOption, AttributeValueType } from "@/types/UI/UIBattleCharacter";
 import type { SkillConfig } from "@/types/skill";
 
-const props = defineProps<{
-  allyTeam: UIBattleCharacter[];
-  enemyTeam: UIBattleCharacter[];
-  selectedChar: UIBattleCharacter | null;
-  selectedCharacterId?: string | null;
-  lastExportTime: string | null;
-}>();
+// 使用Pinia stores
+const characterStore = useCharacterStore();
+const debugStore = useDebugStore();
 
-const emit = defineEmits<{
-  "end-turn": [];
-  "execute-skill": [skillName: string];
-  "add-status": [status: { name: string; turns: number }];
-  "adjust-stats": [stats: { hp: number; mp: number }];
-  "clear-statuses": [];
-  "reset-battle": [];
-  "export-state": [];
-  "import-state": [];
-  "view-export": [];
-  "reload-export": [];
-  "locate-exception": [];
+const props = defineProps<{
+  battleSystem?: any;
 }>();
 
 // 手动干预表单数据
@@ -316,28 +326,6 @@ const manualMpAmount = ref(50);
 const tooltipVisible = ref(false);
 const tooltipContent = ref<SkillConfig | null>(null);
 const tooltipPosition = ref({ x: 0, y: 0 });
-
-/**
- * 显示技能悬浮提示
- * @param event - 鼠标事件
- * @param skillType - 技能类型
- */
-const showSkillTooltip = (event: MouseEvent, skillType: 'passive' | 'small' | 'ultimate') => {
-  const skill = selectedCharSkills.value[skillType];
-  if (!skill) return;
-  
-  tooltipContent.value = skill;
-  tooltipVisible.value = true;
-  updateTooltipPosition(event);
-};
-
-/**
- * 隐藏技能悬浮提示
- */
-const hideSkillTooltip = () => {
-  tooltipVisible.value = false;
-  tooltipContent.value = null;
-};
 
 /**
  * 更新悬浮提示位置
@@ -359,199 +347,127 @@ const updateTooltipPosition = (event: MouseEvent) => {
 };
 
 /**
- * 获取技能步骤类型的中文名称
- * @param type - 步骤类型
+ * 显示技能悬浮提示
+ * @param event - 鼠标事件
+ * @param skill - 技能配置
  */
-const getStepTypeName = (type: string): string => {
-  const typeMap: Record<string, string> = {
-    damage: "伤害",
-    heal: "治疗",
-    buff: "增益",
-    debuff: "减益",
-    stun: "眩晕",
-    silence: "沉默",
-    shield: "护盾",
+const showSkillTooltip = (event: MouseEvent, skill: SkillConfig) => {
+  updateTooltipPosition(event);
+  tooltipContent.value = skill;
+  tooltipVisible.value = true;
+};
+
+/**
+ * 隐藏技能悬浮提示
+ */
+const hideSkillTooltip = () => {
+  tooltipVisible.value = false;
+  tooltipContent.value = null;
+};
+
+/**
+ * 获取技能类型对应的CSS类名
+ * @param skill - 技能配置
+ * @returns CSS类名
+ */
+const getSkillTypeClass = (skill: SkillConfig): string => {
+  if (skill.skillType === 'passive') return 'passive';
+  if (skill.skillType === 'ultimate') return 'ultimate';
+  return 'active';
+};
+
+/**
+ * 获取技能类型的中文名称
+ * @param skill - 技能配置
+ * @returns 技能类型中文名称
+ */
+const getSkillTypeName = (skill: SkillConfig): string => {
+  if (skill.skillType === 'passive') return '被动';
+  if (skill.skillType === 'ultimate') return '终极';
+  return '主动';
+};
+
+/**
+ * 获取目标类型的中文名称
+ * @param targetType - 目标类型
+ * @returns 目标类型中文名称
+ */
+const getTargetTypeName = (targetType?: string): string => {
+  const targetTypes: Record<string, string> = {
+    'single': '单个目标',
+    'multiple': '多个目标',
+    'area': '区域目标',
+    'chain': '连锁目标',
+    'all': '所有目标'
   };
-  return typeMap[type] || type;
+  return targetTypes[targetType || ''] || '未知';
 };
 
 /**
  * 获取作用范围的中文名称
  * @param scope - 作用范围
+ * @returns 作用范围中文名称
  */
-const getScopeName = (scope: string): string => {
-  const scopeMap: Record<string, string> = {
-    enemy: "敌方",
-    ally: "友方",
-    self: "自身",
-    all: "全体",
-    single: "单体",
-    enemy_front: "敌方前排",
-    enemy_back: "敌方后排",
+const getScopeName = (scope?: string): string => {
+  const scopes: Record<string, string> = {
+    'enemy': '敌人',
+    'ally': '友方',
+    'self': '自己',
+    'all': '所有单位',
+    'enemy_front': '敌人前排',
+    'enemy_back': '敌人后排',
+    'ally_front': '友方前排',
+    'ally_back': '友方后排',
+    'adjacent': '相邻目标',
+    'lowest_hp_ally': '生命值最低友方',
+    'lowest_hp_enemy': '生命值最低敌人',
+    'random_enemy': '随机敌人',
+    'random_ally': '随机友方'
   };
-  return scopeMap[scope] || scope;
+  return scopes[scope || ''] || '未知';
 };
 
-// ------------------------------------------------------------
-// 1. 当前选中的角色（优先使用 props，如果为空则尝试从队伍中查找）
-const selectedChar = computed(() => {
-  // 优先使用 props 传入的 selectedChar
-  if (props.selectedChar) return props.selectedChar;
-  
-  // 如果 props.selectedChar 为空，尝试从队伍中根据 selectedCharacterId 查找
-  const charId = props.selectedCharacterId;
-  if (!charId) return null;
-  
-  const ally = props.allyTeam.find(c => c.id === charId);
-  if (ally) return ally;
-  
-  const enemy = props.enemyTeam.find(e => e.id === charId);
-  if (enemy) return enemy;
-  
-  return null;
-});
-
-// 选中角色名称（用于标题栏）
-const selectedCharName = computed(() => selectedChar.value?.name || "未选择");
-
-// 选中角色的原始ID（用于查询技能）
-const selectedOriginalId = computed(() => {
-  const char = selectedChar.value;
-  return char?.originalId || char?.id || "";
-});
-
-// ------------------------------------------------------------
-// 2. 技能信息（优先使用角色自带的技能配置，如果没有则回退到查询）
-const selectedCharSkills = computed(() => {
-  const char = selectedChar.value;
-  if (!char) return { passive: null, small: null, ultimate: null };
-  
-  // 优先使用角色自带的 skills 配置
-  if (char.skills && (char.skills.passive?.length || char.skills.small?.length || char.skills.ultimate?.length)) {
-    return {
-      passive: char.skills.passive?.[0] || null,
-      small: char.skills.small?.[0] || null,
-      ultimate: char.skills.ultimate?.[0] || null,
-    };
-  }
-  
-  // 回退到通过 originalId 查询
-  const id = selectedOriginalId.value;
-  if (!id) return { passive: null, small: null, ultimate: null };
-  return GameDataProcessor.getCharacterSkills(id);
-});
-
-// 各技能名称（直接绑定到模板）
-const passiveSkillName = computed(() => selectedCharSkills.value.passive?.name || "");
-const smallSkillName = computed(() => selectedCharSkills.value.small?.name || "");
-const ultimateSkillName = computed(() => selectedCharSkills.value.ultimate?.name || "");
-
-// ------------------------------------------------------------
-// 3. 最终属性（一次计算全部）
-const finalStats = computed(() => {
-  const char = selectedChar.value;
-  if (!char) return { attack: 0, defense: 0, speed: 0, health: 0 };
-
-  const getVal = (attr: number | AttributeValue | undefined) => GameDataProcessor.getAttributeValue(attr);
-  const getBonus = (attr: number | AttributeValue | undefined) => GameDataProcessor.getAttributeValue(attr);
-
-  const baseAttack = getVal(char.attack);
-  const baseDefense = getVal(char.defense);
-  const baseSpeed = getVal(char.speed);
-  const baseHealth = getVal(char.maxHp);
-  const attackBonus = getBonus(char.attackBonus);
-  const defenseBonus = getBonus(char.defenseBonus);
-  const speedBonus = getBonus(char.speedBonus);
-  const healthBonus = getBonus(char.healthBonus);
-
-  const calc = (base: number, bonus = 0) => Math.floor(base * (1 + bonus / 100));
-
-  return {
-    attack: calc(baseAttack, attackBonus),
-    defense: calc(baseDefense, defenseBonus),
-    speed: calc(baseSpeed, speedBonus),
-    health: calc(baseHealth, healthBonus),
+/**
+ * 获取技能步骤类型的中文名称
+ * @param stepType - 技能步骤类型
+ * @returns 技能步骤类型中文名称
+ */
+const getStepTypeName = (stepType?: string): string => {
+  const stepTypes: Record<string, string> = {
+    'DAMAGE': '造成伤害',
+    'HEAL': '治疗目标',
+    'BUFF': '施加增益',
+    'DEBUFF': '施加减益',
+    'REMOVE_BUFF': '移除增益',
+    'REMOVE_DEBUFF': '移除减益',
+    'CLEANSE': '净化',
+    'DISPEL': '驱散',
+    'STUN': '眩晕',
+    'SILENCE': '沉默',
+    'KNOCKBACK': '击退',
+    'PULL': '拉扯',
+    'TELEPORT': '传送',
+    'SUMMON': '召唤',
+    'TRANSFORM': '变身',
+    'SHIELD': '护盾',
+    'REFLECT': '反射',
+    'DRAIN': '吸取',
+    'REVIVE': '复活',
+    'CUSTOM': '自定义效果'
   };
-});
+  return stepTypes[stepType || ''] || '未知';
+};
 
-// 模板中直接使用的属性计算
-const baseProps = computed(() => {
-  const char = selectedChar.value;
-  if (!char) return { 
-    maxHp: 0, defense: 0, speed: 0, critRate: 10, critDamage: 125, damageReduction: 0,
-    maxHpOptions: [], defenseOptions: [], speedOptions: [], critRateOptions: [], critDamageOptions: [], damageReductionOptions: []
-  };
-  
-  return {
-    maxHp: GameDataProcessor.getAttributeValue(char.maxHp),
-    defense: GameDataProcessor.getAttributeValue(char.defense),
-    speed: GameDataProcessor.getAttributeValue(char.speed),
-    critRate: GameDataProcessor.getAttributeValue(char.critRate),
-    critDamage: GameDataProcessor.getAttributeValue(char.critDamage),
-    damageReduction: GameDataProcessor.getAttributeValue(char.damageReduction),
-    maxHpOptions: GameDataProcessor.getAttributeOptions(char.maxHp),
-    defenseOptions: GameDataProcessor.getAttributeOptions(char.defense),
-    speedOptions: GameDataProcessor.getAttributeOptions(char.speed),
-    critRateOptions: GameDataProcessor.getAttributeOptions(char.critRate),
-    critDamageOptions: GameDataProcessor.getAttributeOptions(char.critDamage),
-    damageReductionOptions: GameDataProcessor.getAttributeOptions(char.damageReduction),
-  };
-});
-
-// 属性加成计算（含来源信息）
-const bonusProps = computed(() => {
-  const char = selectedChar.value;
-  if (!char) return {
-    healthBonus: 0, attackBonus: 0, defenseBonus: 0, speedBonus: 0,
-    healthBonusOptions: [], attackBonusOptions: [], defenseBonusOptions: [], speedBonusOptions: []
-  };
-  
-  return {
-    healthBonus: GameDataProcessor.getAttributeValue(char.healthBonus),
-    attackBonus: GameDataProcessor.getAttributeValue(char.attackBonus),
-    defenseBonus: GameDataProcessor.getAttributeValue(char.defenseBonus),
-    speedBonus: GameDataProcessor.getAttributeValue(char.speedBonus),
-    healthBonusOptions: GameDataProcessor.getAttributeOptions(char.healthBonus),
-    attackBonusOptions: GameDataProcessor.getAttributeOptions(char.attackBonus),
-    defenseBonusOptions: GameDataProcessor.getAttributeOptions(char.defenseBonus),
-    speedBonusOptions: GameDataProcessor.getAttributeOptions(char.speedBonus),
-  };
-});
-
-// 最终属性计算（含来源信息）
-const finalProps = computed(() => {
-  const char = selectedChar.value;
-  if (!char) return {
-    attack: 0, defense: 0, speed: 0, health: 0,
-    attackOptions: [], defenseOptions: [], speedOptions: [], healthOptions: []
-  };
-  
-  const getVal = (attr: number | AttributeValue | undefined) => GameDataProcessor.getAttributeValue(attr);
-  const getOpts = (attr: number | AttributeValue | undefined) => GameDataProcessor.getAttributeOptions(attr);
-  const getBonus = (attr: number | AttributeValue | undefined) => GameDataProcessor.getAttributeValue(attr);
-
-  const baseAttack = getVal(char.attack);
-  const baseDefense = getVal(char.defense);
-  const baseSpeed = getVal(char.speed);
-  const baseHealth = getVal(char.maxHp);
-  const attackBonus = getBonus(char.attackBonus);
-  const defenseBonus = getBonus(char.defenseBonus);
-  const speedBonus = getBonus(char.speedBonus);
-  const healthBonus = getBonus(char.healthBonus);
-
-  const calc = (base: number, bonus = 0) => Math.floor(base * (1 + bonus / 100));
-
-  return {
-    attack: calc(baseAttack, attackBonus),
-    defense: calc(baseDefense, defenseBonus),
-    speed: calc(baseSpeed, speedBonus),
-    health: calc(baseHealth, healthBonus),
-    attackOptions: getOpts(char.attack),
-    defenseOptions: getOpts(char.defense),
-    speedOptions: getOpts(char.speed),
-    healthOptions: getOpts(char.maxHp),
-  };
-});
+/**
+ * 检查技能是否可用
+ * @param skill - 技能配置
+ * @returns 是否可用
+ */
+const isSkillAvailable = (skill: SkillConfig): boolean => {
+  // 简单检查：能量消耗是否为0或角色有足够能量
+  // 实际项目中需要检查角色当前能量和技能冷却
+  return (skill.mpCost || 0) === 0 || (characterStore.currentCharacter?.currentEnergy || 0) >= (skill.mpCost || 0);
+};
 
 // 属性悬浮提示状态
 const attrTooltipVisible = ref(false)
@@ -575,7 +491,7 @@ const showAttrTooltip = (event: MouseEvent, title: string, options: AttributeOpt
     options,
     finalValue,
     valueType,
-    triggerRect: (event.target as HTMLElement).getBoundingClientRect()
+    triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect()
   }
   attrTooltipVisible.value = true
 }
@@ -584,40 +500,169 @@ const hideAttrTooltip = () => {
   attrTooltipVisible.value = false
 }
 
-// 攻击范围计算
-const attackRange = computed(() => {
-  const char = selectedChar.value;
-  if (!char) return { min: 0, max: 0 };
-  return {
-    min: char.minAttack || 0,
-    max: char.maxAttack || 0,
-  };
-});
+/**
+ * 获取加成属性的值
+ * @param bonus - 加成属性值
+ * @returns 数值类型的加成值
+ */
+const getBonusValue = (bonus: any): number => {
+  if (typeof bonus === 'number') return bonus;
+  if (typeof bonus === 'object' && bonus !== null && typeof bonus.value === 'number') return bonus.value;
+  return 0;
+};
 
-// ------------------------------------------------------------
-// 4. 辅助函数（纯展示逻辑，无需缓存）
-const formatBonus = (value: number | AttributeValue | undefined): string => {
-  const numValue = GameDataProcessor.getAttributeValue(value);
+/**
+ * 格式化加成值显示
+ * @param value - 加成属性值
+ * @returns 格式化后的字符串
+ */
+const formatBonus = (value: any): string => {
+  const numValue = getBonusValue(value);
+  if (isNaN(numValue)) return "0%";
   if (numValue === 0) return "0%";
   const roundedValue = Math.round(numValue * 100) / 100;
   return roundedValue > 0 ? `+${roundedValue}%` : `${roundedValue}%`;
 };
 
 // ------------------------------------------------------------
-// 5. 异常检测（保持原样，仅示例）
-const exceptionStatus = computed(() => {
-  return { message: "[正常] 无逻辑异常", class: "normal", hasException: false };
-});
+// 辅助函数（纯展示逻辑，无需缓存）
+
+// 手动干预方法
+const endTurn = () => {
+  if (props.battleSystem) {
+    try {
+      props.battleSystem.endTurn();
+    } catch (error) {
+      console.warn('结束回合失败:', error);
+    }
+  }
+};
+
+const executeSkill = (skillName: string) => {
+  if (props.battleSystem && characterStore.currentCharacter) {
+    try {
+      props.battleSystem.executeSkill(characterStore.currentCharacter.id, skillName);
+    } catch (error) {
+      console.warn('执行技能失败:', error);
+    }
+  }
+};
+
+interface StatusData {
+  name: string;
+  turns: number;
+}
+
+const addStatus = (status: StatusData) => {
+  if (props.battleSystem && characterStore.currentCharacter) {
+    try {
+      props.battleSystem.addStatus(characterStore.currentCharacter.id, status.name, status.turns);
+    } catch (error) {
+      console.warn('添加状态失败:', error);
+    }
+  }
+};
+
+interface StatsData {
+  hp: number;
+  mp: number;
+}
+
+const adjustStats = (stats: StatsData) => {
+  if (props.battleSystem && characterStore.currentCharacter) {
+    try {
+      props.battleSystem.adjustStats(characterStore.currentCharacter.id, stats.hp, stats.mp);
+    } catch (error) {
+      console.warn('调整属性失败:', error);
+    }
+  }
+};
+
+const clearStatuses = () => {
+  if (props.battleSystem && characterStore.currentCharacter) {
+    try {
+      props.battleSystem.clearStatuses(characterStore.currentCharacter.id);
+    } catch (error) {
+      console.warn('清除状态失败:', error);
+    }
+  }
+};
+
+const resetBattle = () => {
+  if (props.battleSystem) {
+    try {
+      props.battleSystem.resetBattle();
+      characterStore.resetBattle();
+    } catch (error) {
+      console.warn('重置战斗失败:', error);
+    }
+  }
+};
+
+// 数据快照方法
+const exportState = () => {
+  try {
+    // 这里需要获取当前战斗状态的数据
+    // 由于debugStore.exportState需要参数，我们需要从characterStore中获取队伍数据
+    const allyTeam = characterStore.allyTeam;
+    const enemyTeam = characterStore.enemyTeam;
+    const currentTurn = characterStore.getCurrentTurn;
+    const rules = {}; // 这里需要从battleStore中获取规则
+    const battleLogs = []; // 这里需要从battleStore中获取战斗日志
+    
+    debugStore.exportState(allyTeam, enemyTeam, currentTurn, rules, battleLogs);
+  } catch (error) {
+    console.warn('导出状态失败:', error);
+  }
+};
+
+const importState = () => {
+  try {
+    const state = debugStore.importState();
+    if (state) {
+      console.log('导入状态成功:', state);
+      // 这里需要实现导入状态的逻辑
+    }
+  } catch (error) {
+    console.warn('导入状态失败:', error);
+  }
+};
+
+const viewExport = () => {
+  try {
+    const state = debugStore.viewExport();
+    if (state) {
+      console.log('导出状态:', state);
+      // 这里可以显示导出的状态
+    }
+  } catch (error) {
+    console.warn('查看导出状态失败:', error);
+  }
+};
+
+const reloadExport = () => {
+  try {
+    const state = debugStore.reloadExport();
+    if (state) {
+      console.log('重载状态成功:', state);
+      // 这里需要实现重载状态的逻辑
+    }
+  } catch (error) {
+    console.warn('重载状态失败:', error);
+  }
+};
 </script>
 
 <style scoped>
 @use "@/styles/main.scss";
 
 .skill-item {
-  cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
   padding: 4px 8px;
   border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .skill-item:hover {
@@ -636,6 +681,45 @@ const exceptionStatus = computed(() => {
 .skill-item.ultimate:hover {
   border-left: 2px solid #f97316;
 }
+
+/* 技能信息显示样式 */
+.skills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skill-category {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skill-category-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #60a5fa;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.skill-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 8px;
+}
+
+.no-skills {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
 </style>
 
 <style>
@@ -795,6 +879,28 @@ const exceptionStatus = computed(() => {
 .condition-value {
   color: rgba(255, 255, 255, 0.7);
   font-family: 'JetBrains Mono', monospace;
+}
+
+/* 技能可用性状态 */
+.tooltip-availability {
+  margin-top: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.tooltip-availability.available {
+  background: rgba(34, 211, 238, 0.15);
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.3);
+}
+
+.tooltip-availability.unavailable {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.3);
 }
 
 /* 悬浮提示过渡动画 */

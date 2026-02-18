@@ -47,7 +47,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { keybindManager } from '@/core/input/KeybindManager';
 import type { KeybindAction, KeybindSetting } from '@/types/input';
-import Notification from '../components/Notification.vue';
+import Notification from '@/components/Notification.vue';
 
 // 通知组件引用
 const notification = ref(null);

@@ -12,14 +12,14 @@ import type {
   BattleParticipant,
   ParticipantSide,
   BattleData,
-  BATTLE_CONSTANTS,
-  SKILL_CONSTANTS,
   ACTION_TYPES,
   VALID_ACTION_TYPES,
   EFFECT_TYPES,
 } from '@/types/battle'
-import { PARTICIPANT_SIDE } from '@/types/battle'
+import { PARTICIPANT_SIDE, BATTLE_CONSTANTS, SKILL_CONSTANTS } from '@/types/battle'
 import { battleLogManager } from '@/utils/logging'
+import { BuffSystem } from '@/core/BuffSystem'
+import { ControlType } from '@/types/buff'
 
 /**
  * 动作执行器类
@@ -70,6 +70,27 @@ export class ActionExecutor {
 
     if (!source || !target) {
       throw new Error(`Invalid source or target in action`)
+    }
+
+    // 检查角色是否处于控制状态
+    const buffSystem = BuffSystem.getInstance()
+    const controlType = buffSystem.getHighestPriorityControlEffect(source.id)
+    
+    if (controlType === ControlType.STUN) {
+      // 眩晕状态：无法进行任何行动
+      action.effects.push({
+        type: EFFECT_TYPES.STATUS,
+        description: `${source.name} 处于眩晕状态，无法行动`,
+      })
+      return
+    } else if (controlType === ControlType.SILENCE && action.type === ACTION_TYPES.SKILL) {
+      // 沉默状态：无法使用技能，改为普通攻击
+      action.type = ACTION_TYPES.ATTACK
+      action.damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
+      action.effects.push({
+        type: EFFECT_TYPES.STATUS,
+        description: `${source.name} 处于沉默状态，无法使用技能，改为普通攻击`,
+      })
     }
 
     this.processActionType(action, source, target)
@@ -255,6 +276,20 @@ export class ActionExecutor {
     }
 
     try {
+      // 检查技能管理器是否存在
+      if (!battle.skillManager) {
+        this.logger.error(`战斗数据中缺少技能管理器`)
+        // 技能管理器不存在，降级为普通攻击
+        action.type = ACTION_TYPES.ATTACK
+        action.damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
+        action.effects.push({
+          type: EFFECT_TYPES.STATUS,
+          description: `技能管理器不存在，改为普通攻击`,
+        })
+        this.processAttack(action, source, target)
+        return
+      }
+      
       // 使用战斗中的 SkillManager 执行技能
       const skillAction = battle.skillManager.executeSkill(
         action.skillId,

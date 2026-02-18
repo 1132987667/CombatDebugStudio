@@ -46,6 +46,18 @@ export interface DamageModifier {
 }
 
 /**
+ * 伤害计算结果接口
+ */
+export interface DamageCalculationResult {
+  /** 最终伤害值 */
+  damage: number
+  /** 是否闪避 */
+  isMiss: boolean
+  /** 是否暴击 */
+  isCritical: boolean
+}
+
+/**
  * 伤害计算器类
  * 负责实现复杂的伤害计算逻辑
  */
@@ -98,21 +110,76 @@ export class DamageCalculator {
   }
 
   /**
+   * 解析公式字符串
+   * @param formula 公式字符串，如 "attack*0.8"
+   * @param source 施放者
+   * @param target 目标
+   * @returns 计算结果
+   */
+  private parseFormula(formula: string, source: BattleParticipant, target: BattleParticipant): number {
+    try {
+      // 简单的公式解析和计算
+      // 支持的变量：attack, defense, speed, maxHealth, currentHealth, level
+      const variables: Record<string, number> = {
+        attack: this.getAttributeValue(source, 'ATK') || 0,
+        defense: this.getAttributeValue(target, 'DEF') || 0,
+        speed: this.getAttributeValue(source, 'speed') || 0,
+        maxHealth: this.getAttributeValue(target, 'MAX_HP') || 0,
+        currentHealth: this.getAttributeValue(target, 'HP') || 0,
+        level: source.level || 1,
+        damage: 0, // 用于后续计算，初始为0
+      }
+
+      // 替换变量为实际值
+      let expression = formula
+      for (const [varName, value] of Object.entries(variables)) {
+        expression = expression.replace(new RegExp(varName, 'g'), value.toString())
+      }
+
+      // 计算表达式
+      // 使用 Function 构造函数来安全地执行表达式
+      const calculate = new Function('return ' + expression)
+      const result = calculate()
+
+      return typeof result === 'number' ? result : 0
+    } catch (error) {
+      this.logger.error('公式解析出错:', error)
+      return 0
+    }
+  }
+
+  /**
    * 计算最终伤害值
    */
   public calculateDamage(
     step: ExtendedSkillStep,
     source: BattleParticipant,
     target: BattleParticipant,
-  ): number {
-    if (!step.calculation) {
-      this.logger.warn('伤害步骤缺少计算配置')
-      return 0
-    }
-
+  ): DamageCalculationResult {
     try {
-      // 1. 基础值
-      let result = step.calculation.baseValue
+      // 1. 闪避判定
+      const dodgeRate = this.getAttributeValue(target, 'dodgeRate') || 0
+      const isMiss = Math.random() < dodgeRate
+      
+      if (isMiss) {
+        // 记录闪避日志
+        this.recordCalculationLog({
+          timestamp: Date.now(),
+          stepType: 'DAMAGE',
+          sourceId: source.id,
+          targetId: target.id,
+          baseValue: 0,
+          extraValues: [],
+          finalValue: 0,
+          critical: false,
+          modifiers: { miss: 1 },
+        })
+        
+        return { damage: 0, isMiss: true, isCritical: false }
+      }
+
+      // 2. 计算基础伤害
+      let result = 0
       const extraValues: Array<{
         attribute: string
         value: number
@@ -120,29 +187,41 @@ export class DamageCalculator {
       }> = []
       const modifiers: Record<string, number> = {}
 
-      // 2. 额外值计算
-      step.calculation.extraValues.forEach((extra) => {
-        const attributeValue = this.getAttributeValue(source, extra.attribute)
-        const extraValue = attributeValue * extra.ratio
-        result += extraValue
-        extraValues.push({
-          attribute: extra.attribute,
-          value: attributeValue,
-          ratio: extra.ratio,
-        })
-      })
+      if (step.calculation) {
+        // 使用 calculation 对象
+        result = step.calculation.baseValue
 
-      // 3. 攻击类型影响（防御效果）
-      if (step.calculation.attackType && this.config.defenseEnabled) {
-        const defenseEffect = this.calculateDefenseEffect(
-          step.calculation.attackType,
-          target,
-        )
-        result *= 1 - defenseEffect
-        modifiers['defense'] = defenseEffect
+        // 3. 额外值计算
+        step.calculation.extraValues.forEach((extra) => {
+          const attributeValue = this.getAttributeValue(source, extra.attribute)
+          const extraValue = attributeValue * extra.ratio
+          result += extraValue
+          extraValues.push({
+            attribute: extra.attribute,
+            value: attributeValue,
+            ratio: extra.ratio,
+          })
+        })
+
+        // 4. 攻击类型影响（防御效果）
+        if (step.calculation.attackType && this.config.defenseEnabled) {
+          const defenseEffect = this.calculateDefenseEffect(
+            step.calculation.attackType,
+            target,
+          )
+          result *= 1 - defenseEffect
+          modifiers['defense'] = defenseEffect
+        }
+      } else if (step.formula) {
+        // 使用 formula 字符串
+        result = this.parseFormula(step.formula, source, target)
+        modifiers['formula'] = 1
+      } else {
+        this.logger.warn('伤害步骤缺少计算配置和公式')
+        return { damage: 0, isMiss: false, isCritical: false }
       }
 
-      // 4. 目标属性修正
+      // 5. 目标属性修正
       if (step.targetModifiers) {
         Object.entries(step.targetModifiers).forEach(([attr, modifier]) => {
           const targetAttrValue = this.getAttributeValue(target, attr)
@@ -152,7 +231,7 @@ export class DamageCalculator {
         })
       }
 
-      // 5. 暴击判定
+      // 6. 暴击判定
       let isCritical = false
       let criticalMultiplier = 1
 
@@ -174,7 +253,7 @@ export class DamageCalculator {
         }
       }
 
-      // 6. 应用伤害修饰器
+      // 7. 应用伤害修饰器
       let finalResult = result
       for (const modifier of this.modifiers) {
         const originalValue = finalResult
@@ -182,7 +261,7 @@ export class DamageCalculator {
         modifiers[modifier.name] = finalResult / originalValue
       }
 
-      // 7. 应用伤害阈值限制
+      // 8. 应用伤害阈值限制
       finalResult = Math.max(
         this.config.minDamageThreshold,
         Math.min(this.config.maxDamageThreshold, finalResult),
@@ -197,17 +276,17 @@ export class DamageCalculator {
         stepType: 'DAMAGE',
         sourceId: source.id,
         targetId: target.id,
-        baseValue: step.calculation.baseValue,
+        baseValue: step.calculation?.baseValue || 0,
         extraValues,
         finalValue,
         critical: isCritical,
         modifiers,
       })
 
-      return finalValue
+      return { damage: finalValue, isMiss: false, isCritical }
     } catch (error) {
       this.logger.error('伤害计算出错:', error)
-      return 0
+      return { damage: 0, isMiss: false, isCritical: false }
     }
   }
 

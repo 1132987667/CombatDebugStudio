@@ -37,7 +37,7 @@ export class RAFTimer {
   /**
    * 主动画帧循环
    */
-  private loop = (): void => {
+  private loop = async (): Promise<void> => {
     const now = performance.now()
     // 遍历所有定时器
     for (const timer of this.timers.values()) {
@@ -47,7 +47,8 @@ export class RAFTimer {
 
       if (elapsed >= timer.interval) {
         try {
-          timer.callback()
+          // 处理异步回调函数
+          await Promise.resolve(timer.callback())
         } catch (error) {
           console.error('Timer callback error:', error)
         }

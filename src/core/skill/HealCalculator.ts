@@ -20,6 +20,45 @@ export class HealCalculator {
   private calculationLogs: CalculationLog[] = []
 
   /**
+   * 解析公式字符串
+   * @param formula 公式字符串，如 "attack*0.5"
+   * @param source 施放者
+   * @param target 目标
+   * @returns 计算结果
+   */
+  private parseFormula(formula: string, source: BattleParticipant, target: BattleParticipant): number {
+    try {
+      // 简单的公式解析和计算
+      // 支持的变量：attack, defense, speed, maxHealth, currentHealth, level
+      const variables: Record<string, number> = {
+        attack: this.getAttributeValue(source, 'ATK') || 0,
+        defense: this.getAttributeValue(target, 'DEF') || 0,
+        speed: this.getAttributeValue(source, 'speed') || 0,
+        maxHealth: this.getAttributeValue(target, 'MAX_HP') || 0,
+        currentHealth: this.getAttributeValue(target, 'HP') || 0,
+        level: source.level || 1,
+        damage: 0, // 用于后续计算，初始为0
+      }
+
+      // 替换变量为实际值
+      let expression = formula
+      for (const [varName, value] of Object.entries(variables)) {
+        expression = expression.replace(new RegExp(varName, 'g'), value.toString())
+      }
+
+      // 计算表达式
+      // 使用 Function 构造函数来安全地执行表达式
+      const calculate = new Function('return ' + expression)
+      const result = calculate()
+
+      return typeof result === 'number' ? result : 0
+    } catch (error) {
+      this.logger.error('公式解析出错:', error)
+      return 0
+    }
+  }
+
+  /**
    * 计算最终治疗值
    */
   public calculateHeal(
@@ -27,39 +66,48 @@ export class HealCalculator {
     source: BattleParticipant,
     target: BattleParticipant
   ): number {
-    if (!step.calculation) {
-      this.logger.warn('治疗步骤缺少计算配置')
-      return 0
-    }
-
     try {
-      // 1. 基础值
-      let result = step.calculation.baseValue
+      // 1. 计算基础治疗值
+      let result = 0
       const extraValues: Array<{ attribute: string; value: number; ratio: number }> = []
+      const modifiers: Record<string, number> = {}
       
-      this.logger.debug(`治疗计算开始: 基础值=${result}`)
-      
-      // 调试：检查基础值是否正确
-      console.log(`DEBUG: 基础治疗值 = ${result}`)
+      if (step.calculation) {
+        // 使用 calculation 对象
+        result = step.calculation.baseValue
+        
+        this.logger.debug(`治疗计算开始: 基础值=${result}`)
+        
+        // 调试：检查基础值是否正确
+        console.log(`DEBUG: 基础治疗值 = ${result}`)
 
-      // 2. 额外值计算
-      step.calculation.extraValues.forEach(extra => {
-        const attributeValue = this.getAttributeValue(source, extra.attribute)
-        const extraValue = attributeValue * extra.ratio
-        result += extraValue
-        extraValues.push({
-          attribute: extra.attribute,
-          value: attributeValue,
-          ratio: extra.ratio
+        // 2. 额外值计算
+        step.calculation.extraValues.forEach(extra => {
+          const attributeValue = this.getAttributeValue(source, extra.attribute)
+          const extraValue = attributeValue * extra.ratio
+          result += extraValue
+          extraValues.push({
+            attribute: extra.attribute,
+            value: attributeValue,
+            ratio: extra.ratio
+          })
+          this.logger.debug(`额外值计算: ${extra.attribute}=${attributeValue} * ${extra.ratio} = ${extraValue}, 当前结果=${result}`)
         })
-        this.logger.debug(`额外值计算: ${extra.attribute}=${attributeValue} * ${extra.ratio} = ${extraValue}, 当前结果=${result}`)
-      })
-      
-      // 调试：检查额外值计算后的结果
-      console.log(`DEBUG: 额外值计算后结果 = ${result}`)
+        
+        // 调试：检查额外值计算后的结果
+        console.log(`DEBUG: 额外值计算后结果 = ${result}`)
+      } else if (step.formula) {
+        // 使用 formula 字符串
+        result = this.parseFormula(step.formula, source, target)
+        modifiers['formula'] = 1
+        this.logger.debug(`治疗计算开始: 公式计算结果=${result}`)
+        console.log(`DEBUG: 公式计算治疗值 = ${result}`)
+      } else {
+        this.logger.warn('治疗步骤缺少计算配置和公式')
+        return 0
+      }
 
       // 3. 目标属性修正
-      const modifiers: Record<string, number> = {}
       if (step.targetModifiers && Object.keys(step.targetModifiers).length > 0) {
         Object.entries(step.targetModifiers).forEach(([attr, modifier]) => {
           const targetAttrValue = this.getAttributeValue(target, attr)
@@ -105,7 +153,7 @@ export class HealCalculator {
         stepType: 'HEAL',
         sourceId: source.id,
         targetId: target.id,
-        baseValue: step.calculation.baseValue,
+        baseValue: step.calculation?.baseValue || 0,
         extraValues,
         finalValue,
         critical: false, // 治疗无暴击

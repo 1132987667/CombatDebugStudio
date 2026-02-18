@@ -135,6 +135,12 @@ export interface IBattleSystem {
   resetBattle(battleId: string): void
 
   /**
+   * 加载技能配置
+   * @param skillConfigs 技能配置数组
+   */
+  loadSkillConfigs(skillConfigs: any[]): void
+
+  /**
    * 事件监听方法
    * @param event - 事件名称
    * @param callback - 回调函数
@@ -279,3 +285,6 @@ export const BATTLE_SYSTEM_TOKEN = Symbol('BattleSystem')
 export const TURN_MANAGER_TOKEN = Symbol('TurnManager')
 export const ACTION_EXECUTOR_TOKEN = Symbol('ActionExecutor')
 export const AI_SYSTEM_TOKEN = Symbol('AISystem')
+export const PARTICIPANT_MANAGER_TOKEN = Symbol('ParticipantManager')
+export const BATTLE_RECORDER_TOKEN = Symbol('BattleRecorder')
+export const BATTLE_RULE_MANAGER_TOKEN = Symbol('BattleRuleManager')

@@ -14,8 +14,8 @@ import type {
   BattleData,
 } from '@/types/battle'
 import { BATTLE_CONSTANTS } from '@/types/battle'
-import { BattleAIFactory, BattleAI } from '../BattleAI'
-import type { IActionExecutor } from './interfaces'
+import { BattleAIFactory, BattleAI } from '@/core/BattleAI'
+import type { IActionExecutor } from '@/core/battle/interfaces'
 
 /**
  * AI系统类
@@ -38,7 +38,33 @@ export class AISystem {
     const aiInstances = new Map<string, BattleAI>()
 
     participants.forEach((participant) => {
-      const ai = BattleAIFactory.createAI(participant.type)
+      // 获取参与者的技能ID
+      const skillIds = participant.getSkills() || []
+      // 创建技能加载器，从SkillManager获取技能配置
+      const skillLoader = (skillIds: string[]) => {
+        const SkillManager = require('@/core/skill/SkillManager').SkillManager
+        const skillManager = SkillManager.getInstance()
+        return skillIds.map(skillId => {
+          const config = skillManager.getSkillConfig(skillId)
+          if (config) {
+            return {
+              id: config.id,
+              name: config.name,
+              type: 'small',
+              energyCost: config.energyCost || 50,
+              cooldown: config.cooldown || 0,
+              lastUsed: 0,
+              description: config.description || '',
+              damage: config.damage || 0,
+              heal: config.heal || 0,
+              buffId: config.buffId || undefined
+            }
+          }
+          return null
+        }).filter(Boolean)
+      }
+      // 创建带有技能的AI实例
+      const ai = BattleAIFactory.createAIWithSkills(participant.type, skillIds, skillLoader)
       aiInstances.set(participant.id, ai)
       this.aiInstances.set(participant.id, ai)
     })
@@ -56,7 +82,33 @@ export class AISystem {
     let ai = this.aiInstances.get(participant.id)
 
     if (!ai) {
-      ai = BattleAIFactory.createAI(participant.type)
+      // 获取参与者的技能ID
+      const skillIds = participant.getSkills() || []
+      // 创建技能加载器，从SkillManager获取技能配置
+      const skillLoader = (skillIds: string[]) => {
+        const SkillManager = require('@/core/skill/SkillManager').SkillManager
+        const skillManager = SkillManager.getInstance()
+        return skillIds.map(skillId => {
+          const config = skillManager.getSkillConfig(skillId)
+          if (config) {
+            return {
+              id: config.id,
+              name: config.name,
+              type: 'small',
+              energyCost: config.energyCost || 50,
+              cooldown: config.cooldown || 0,
+              lastUsed: 0,
+              description: config.description || '',
+              damage: config.damage || 0,
+              heal: config.heal || 0,
+              buffId: config.buffId || undefined
+            }
+          }
+          return null
+        }).filter(Boolean)
+      }
+      // 创建带有技能的AI实例
+      ai = BattleAIFactory.createAIWithSkills(participant.type, skillIds, skillLoader)
       this.aiInstances.set(participant.id, ai)
     }
 

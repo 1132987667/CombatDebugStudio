@@ -8,35 +8,29 @@
  */
 
 import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
+import { container } from '@/core/di/Container'
 
 /**
  * Buff脚本加载器类
  * 负责加载和注册Buff脚本
- * 使用单例模式确保系统全局唯一
  * 支持脚本的动态加载、重载和清理
+ * 推荐通过容器注入使用
  */
 export class BuffScriptLoader {
-  /** 单例实例 */
-  private static instance: BuffScriptLoader
   /** 已加载的脚本名称集合 */
   private loadedScripts = new Set<string>()
+  /** Buff脚本注册表（通过容器注入） */
+  private registry: BuffScriptRegistry
 
   /**
    * 私有构造函数
-   * 防止外部直接实例化，确保单例模式
+   * @param registry Buff脚本注册表实例
    */
-  private constructor() {}
-
-  /**
-   * 获取单例实例
-   * @returns Buff脚本加载器实例
-   */
-  public static getInstance(): BuffScriptLoader {
-    if (!BuffScriptLoader.instance) {
-      BuffScriptLoader.instance = new BuffScriptLoader()
-    }
-    return BuffScriptLoader.instance
+  constructor(registry?: BuffScriptRegistry) {
+    this.registry = registry || container.resolve('BuffScriptRegistry')
   }
+
+
 
   /**
    * 加载Buff脚本
@@ -46,9 +40,6 @@ export class BuffScriptLoader {
     try {
       // 使用Vite的glob导入自动扫描scripts/目录下的所有脚本
       const modules = import.meta.glob('@/scripts/**/*.ts', { eager: false })
-      
-      // 注册脚本
-      const registry = BuffScriptRegistry.getInstance()
       
       // 遍历所有找到的模块
       for (const [path, moduleLoader] of Object.entries(modules)) {
@@ -64,7 +55,7 @@ export class BuffScriptLoader {
               const buffId = BuffClass.BUFF_ID
               
               // 注册脚本
-              registry.register(
+              this.registry.register(
                 buffId,
                 () => new BuffClass(),
                 {
@@ -92,10 +83,9 @@ export class BuffScriptLoader {
   public async reloadScripts(): Promise<void> {
     // 清空已加载的脚本
     this.loadedScripts.clear()
-    // 使用批量卸载而不是清空整个注册表
-    const registry = BuffScriptRegistry.getInstance()
-    const scriptIds = registry.list()
-    scriptIds.forEach((id) => registry.unregister(id))
+    // 使用批量卸载
+    const scriptIds = this.registry.list()
+    scriptIds.forEach((id) => this.registry.unregister(id))
     await this.loadScripts()
   }
 
@@ -112,9 +102,8 @@ export class BuffScriptLoader {
    */
   public clear(): void {
     this.loadedScripts.clear()
-    // 使用批量卸载而不是清空整个注册表
-    const registry = BuffScriptRegistry.getInstance()
-    const scriptIds = registry.list()
-    scriptIds.forEach((id) => registry.unregister(id))
+    // 使用批量卸载
+    const scriptIds = this.registry.list()
+    scriptIds.forEach((id) => this.registry.unregister(id))
   }
 }

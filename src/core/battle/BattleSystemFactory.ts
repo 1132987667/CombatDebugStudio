@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { container, initializeContainer } from '@/core/di/Container'
+import { container, resetContainer } from '@/core/di/Container'
 import {
   IBattleSystem,
   ITurnManager,
@@ -23,10 +23,11 @@ export class BattleSystemFactory {
   /**
    * 初始化战斗系统
    * 现在使用统一的容器初始化函数
+   * 注意：此方法已废弃，容器初始化应在 main.ts 中完成
+   * @deprecated
    */
   public static initialize(): void {
-    // 使用统一的容器初始化函数
-    initializeContainer()
+    console.warn('BattleSystemFactory.initialize() 已废弃，容器初始化已在 main.ts 中完成')
   }
 
   /**
@@ -68,9 +69,6 @@ export class BattleSystemFactory {
    * 用于测试场景
    */
   public static reset(): void {
-    // 重置容器
-    container.clear()
-    // 重新初始化
-    initializeContainer()
+    resetContainer()
   }
 }

@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia';
 import { PARTICIPANT_SIDE, BattleSystemEvent } from '@/types/battle';
-import { battleLogManager } from '@/utils/logging';
+import { useBattleLogStore } from './battleLogStore';
+import { useCharacterStore } from './characterStore';
 import type { UIBattleCharacter } from '@/types';
 import type { BattleLogEntry } from '@/types/battle-log';
 import type { BattleLogEventData, BattleStateUpdateEventData } from '@/types/battle-events';
+import type { BattleManager } from '@/core/battle/BattleManager';
 
 /**
  * 战斗规则接口
@@ -72,11 +74,11 @@ export interface BattleState {
   error: ErrorState;
   autoPlayMode: boolean;
   isBattleActive: boolean;
-  battleLogs: BattleLogEntry[];
   animationState: AnimationState;
   currentBattleId: string | null;
   turnOrder: string[];
   battleSpeed: number;
+  battleManager: BattleManager | null;
 }
 
 export const useBattleStore = defineStore('battle', {
@@ -101,7 +103,6 @@ export const useBattleStore = defineStore('battle', {
     },
     autoPlayMode: false,
     isBattleActive: false,
-    battleLogs: [],
     animationState: {
       damage: null,
       miss: null,
@@ -111,6 +112,7 @@ export const useBattleStore = defineStore('battle', {
     currentBattleId: null,
     turnOrder: [],
     battleSpeed: 1,
+    battleManager: null,
   }),
 
   getters: {
@@ -199,10 +201,11 @@ export const useBattleStore = defineStore('battle', {
     },
 
     /**
-     * 获取战斗日志
+     * 获取战斗日志（从 battleLogStore 获取）
      */
-    getBattleLogs: (state): BattleLogEntry[] => {
-      return state.battleLogs;
+    getBattleLogs: (): BattleLogEntry[] => {
+      const battleLogStore = useBattleLogStore()
+      return battleLogStore.logs
     },
 
     /**
@@ -238,11 +241,94 @@ export const useBattleStore = defineStore('battle', {
 
   actions: {
     /**
+     * 初始化战斗管理器
+     */
+    initializeBattleManager(battleManager: BattleManager) {
+      this.battleManager = battleManager;
+
+      battleManager.on(BattleSystemEvent.BATTLE_LOG, (data: any) => {
+        if (data && data.log) {
+          this.addBattleLog(data.log);
+        }
+      });
+
+      battleManager.on(BattleSystemEvent.BATTLE_STATE_UPDATE, (data: any) => {
+        if (data) {
+          this.currentBattleId = data.battleId;
+          this.turnOrder = data.turnOrder || [];
+          this.setBattleActive(true);
+        }
+      });
+
+      battleManager.on(BattleSystemEvent.BATTLE_END, (data: any) => {
+        this.setBattleActive(false);
+        this.setAutoPlayMode(false);
+        if (data && data.winner) {
+          this.addBattleLog({
+            turn: '战斗结束',
+            source: '系统',
+            action: '宣布',
+            target: '',
+            result: `战斗结束！胜利者: ${data.winner === 'ALLY' ? '我方' : '敌方'}`,
+            level: 'system'
+          });
+        }
+      });
+
+      battleManager.on(BattleSystemEvent.TURN_START, (data: any) => {
+        if (data && data.actorId) {
+          this.setCurrentActorId(data.actorId);
+          this.addBattleLog({
+            turn: `回合${data.turn}`,
+            source: '系统',
+            action: '开始',
+            target: '',
+            result: `回合${data.turn}开始，当前行动者: ${data.actorId}`,
+            level: 'system'
+          });
+        }
+      });
+
+      battleManager.on(BattleSystemEvent.TURN_END, (data: any) => {
+        if (data) {
+          this.addBattleLog({
+            turn: `回合${data.turn}`,
+            source: '系统',
+            action: '结束',
+            target: '',
+            result: `回合${data.turn}结束`,
+            level: 'system'
+          });
+        }
+      });
+
+      battleManager.on(BattleSystemEvent.DAMAGE_ANIMATION, (data: any) => {
+        this.setAnimationState('damage', data);
+      });
+
+      battleManager.on(BattleSystemEvent.MISS_ANIMATION, (data: any) => {
+        this.setAnimationState('miss', data);
+      });
+
+      battleManager.on(BattleSystemEvent.BUFF_EFFECT, (data: any) => {
+        this.setAnimationState('buff', data);
+      });
+
+      battleManager.on(BattleSystemEvent.SKILL_EFFECT, (data: any) => {
+        this.setAnimationState('skill', data);
+      });
+
+      const battleLogStore = useBattleLogStore()
+      battleLogStore.addSystemLog('战斗管理器已初始化');
+    },
+
+    /**
      * 更新战斗规则
      */
     updateRules(newRules: Partial<BattleRules>) {
       Object.assign(this.rules, newRules);
-      battleLogManager.addSystemLog(`战斗规则已更新: ${JSON.stringify(newRules)}`);
+      const battleLogStore = useBattleLogStore()
+      battleLogStore.addSystemLog(`战斗规则已更新: ${JSON.stringify(newRules)}`)
     },
 
     /**
@@ -280,7 +366,7 @@ export const useBattleStore = defineStore('battle', {
         details,
         field,
       };
-      
+
       // 在控制台输出错误详情
       if (message && details) {
         console.error(`[Battle Error] ${message}: ${details}`);
@@ -324,21 +410,19 @@ export const useBattleStore = defineStore('battle', {
     },
 
     /**
-     * 添加战斗日志
+     * 添加战斗日志（委托给 battleLogStore）
      */
     addBattleLog(log: BattleLogEntry) {
-      this.battleLogs.push(log);
-      // 限制日志数量，避免内存占用过高
-      if (this.battleLogs.length > 100) {
-        this.battleLogs.shift();
-      }
+      const battleLogStore = useBattleLogStore()
+      battleLogStore.addLog(log)
     },
 
     /**
-     * 清除战斗日志
+     * 清除战斗日志（委托给 battleLogStore）
      */
     clearBattleLogs() {
-      this.battleLogs = [];
+      const battleLogStore = useBattleLogStore()
+      battleLogStore.clearLogs()
     },
 
     /**
@@ -357,38 +441,20 @@ export const useBattleStore = defineStore('battle', {
     /**
      * 开始战斗
      */
-    async startBattle(allyTeam: UIBattleCharacter[], enemyTeam: UIBattleCharacter[]) {
+    async startBattle() {
       this.setLoading(true, '开始战斗');
       this.clearError();
 
       try {
-        // 验证队伍数据
-        if (!allyTeam || !enemyTeam) {
-          throw new Error('队伍数据不能为空');
-        }
-
-        // 获取启用的角色
-        const enabledAllyTeam = allyTeam.filter((c) => c.enabled);
-        const enabledEnemyTeam = enemyTeam.filter((e) => e.enabled);
-
-        if (enabledAllyTeam.length === 0) {
-          throw new Error('我方请至少选择一个角色参战');
-        }
-        if (enabledEnemyTeam.length === 0) {
-          throw new Error('敌方请至少选择一个角色参战');
-        }
-
         if (!this.battleManager) {
           throw new Error('战斗管理器未初始化');
         }
-
-        // 开始自动战斗
+        const battleLogStore = useBattleLogStore()
         await this.battleManager.startAutoBattle();
         this.setBattleActive(true);
         this.autoPlayMode = true;
-        battleLogManager.addSystemLog(`战斗开始！参战角色: ${enabledAllyTeam.length}人 | 参战敌人: ${enabledEnemyTeam.length}人`);
-        
-        // 记录战斗开始日志
+        battleLogStore.addSystemLog(`战斗已开始`);
+
         this.addBattleLog({
           turn: '战斗开始',
           source: '系统',
@@ -397,12 +463,12 @@ export const useBattleStore = defineStore('battle', {
           result: `战斗开始！参战角色: ${enabledAllyTeam.length}人 | 参战敌人: ${enabledEnemyTeam.length}人`,
           level: 'system'
         });
-        
+
         return true;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         this.setError(errorMsg, error instanceof Error ? error.stack : null);
-        battleLogManager.addErrorLog(`开始战斗失败: ${errorMsg}`);
+        battleLogStore.addErrorLog(`开始战斗失败: ${errorMsg}`);
         return false;
       } finally {
         this.setLoading(false);
@@ -426,12 +492,13 @@ export const useBattleStore = defineStore('battle', {
         // 同步战斗状态
         this.battleManager.syncBattleState();
         this.setBattleActive(false);
-        battleLogManager.addSystemLog(`战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`);
+        const battleLogStore = useBattleLogStore()
+        battleLogStore.addSystemLog(`战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`)
         return true;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         this.setError(errorMsg, error instanceof Error ? error.stack : null);
-        battleLogManager.addErrorLog(`结束战斗失败: ${errorMsg}`);
+        battleLogStore.addErrorLog(`结束战斗失败: ${errorMsg}`);
         return false;
       } finally {
         this.setLoading(false);
@@ -458,12 +525,12 @@ export const useBattleStore = defineStore('battle', {
         this.clearBattleLogs();
         this.currentBattleId = null;
         this.turnOrder = [];
-        battleLogManager.addSystemLog('战斗已重置');
+        battleLogStore.addSystemLog('战斗已重置');
         return true;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         this.setError(errorMsg, error instanceof Error ? error.stack : null);
-        battleLogManager.addErrorLog(`重置战斗失败: ${errorMsg}`);
+        battleLogStore.addErrorLog(`重置战斗失败: ${errorMsg}`);
         return false;
       } finally {
         this.setLoading(false);
@@ -490,7 +557,7 @@ export const useBattleStore = defineStore('battle', {
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         this.setError(errorMsg, error instanceof Error ? error.stack : null);
-        battleLogManager.addErrorLog(`执行回合时出错: ${errorMsg}`);
+        battleLogStore.addErrorLog(`执行回合时出错: ${errorMsg}`);
         return false;
       } finally {
         this.setLoading(false);
@@ -514,20 +581,20 @@ export const useBattleStore = defineStore('battle', {
           this.battleManager.stopAutoBattle();
           this.autoPlayMode = false;
           this.isBattleActive = false;
-          battleLogManager.addSystemLog('停止自动战斗');
+          battleLogStore.addSystemLog('停止自动战斗');
         } else {
           // 开始自动播放
           await this.battleManager.startAutoBattle();
           this.autoPlayMode = true;
           this.isBattleActive = true;
           this.battleManager.syncBattleState();
-          battleLogManager.addSystemLog('开始自动战斗');
+          battleLogStore.addSystemLog('开始自动战斗');
         }
         return true;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         this.setError(errorMsg, error instanceof Error ? error.stack : null);
-        battleLogManager.addErrorLog(`切换自动战斗状态失败: ${errorMsg}`);
+        battleLogStore.addErrorLog(`切换自动战斗状态失败: ${errorMsg}`);
         // 恢复原状态
         this.autoPlayMode = !this.autoPlayMode;
         return false;
@@ -549,7 +616,7 @@ export const useBattleStore = defineStore('battle', {
           try {
             const state = JSON.parse(savedState);
             // 这里需要实现导入逻辑
-            battleLogManager.addSystemLog('战斗状态已导入');
+            battleLogStore.addSystemLog('战斗状态已导入');
             return true;
           } catch (e) {
             const errorMsg = e instanceof Error ? e.message : String(e);
@@ -561,7 +628,7 @@ export const useBattleStore = defineStore('battle', {
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         this.setError(errorMsg, error instanceof Error ? error.stack : null);
-        battleLogManager.addErrorLog(`导入失败: ${errorMsg}`);
+        battleLogStore.addErrorLog(`导入失败: ${errorMsg}`);
         return false;
       } finally {
         this.setLoading(false);
@@ -571,23 +638,28 @@ export const useBattleStore = defineStore('battle', {
     /**
      * 导出战斗状态
      */
-    exportState(allyTeam: UIBattleCharacter[], enemyTeam: UIBattleCharacter[], currentTurn: number) {
+    exportState(currentTurn: number) {
       try {
+        const characterStore = useCharacterStore()
+        const allyTeam = Array.from(characterStore.allyTeam.values())
+        const enemyTeam = Array.from(characterStore.enemyTeam.values())
+        
+        const battleLogStore = useBattleLogStore()
         const state = {
           battleCharacters: allyTeam,
           enemyParty: enemyTeam,
           currentTurn,
           rules: this.rules,
-          battleLogs: this.battleLogs
+          battleLogs: battleLogStore.logs
         };
         const json = JSON.stringify(state, null, 2);
         localStorage.setItem('battleState', json);
-        battleLogManager.addSystemLog('战斗状态已导出');
+        battleLogStore.addSystemLog('战斗状态已导出')
         return true;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         this.setError(errorMsg, error instanceof Error ? error.stack : null);
-        battleLogManager.addErrorLog(`导出状态时出错: ${errorMsg}`);
+        battleLogStore.addErrorLog(`导出状态时出错: ${errorMsg}`);
         return false;
       }
     },
@@ -603,12 +675,14 @@ export const useBattleStore = defineStore('battle', {
 
         this.battleManager.setBattleSpeed(speed);
         this.battleSpeed = speed;
-        battleLogManager.addSystemLog(`战斗速度已调整为: ${speed}倍`);
+        const battleLogStore = useBattleLogStore()
+        battleLogStore.addSystemLog(`战斗速度已调整为: ${speed}倍`)
         return true;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         this.setError(errorMsg, error instanceof Error ? error.stack : null);
-        battleLogManager.addErrorLog(`设置战斗速度失败: ${errorMsg}`);
+        const battleLogStore = useBattleLogStore()
+        battleLogStore.addErrorLog(`设置战斗速度失败: ${errorMsg}`)
         return false;
       }
     },

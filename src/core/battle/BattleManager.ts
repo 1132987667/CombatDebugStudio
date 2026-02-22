@@ -6,12 +6,13 @@ import { InterventionManager } from '@/core/battle/intervention/InterventionMana
 import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager';
 import type { UIBattleCharacter } from '@/types';
 import { GameDataProcessor } from '@/utils/GameDataProcessor';
-import type { BattleParticipant } from '@/types/battle';
+import type { BattleParticipant, BattleSystemEvent } from '@/types/battle';
 import { PARTICIPANT_SIDE } from '@/types/battle';
 import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl';
 import type { BattleEventName, BattleEventCallback, BattleEndedEventData } from '@/types/battle-events';
 import { LocalStorage } from '@/utils/storage';
 import { eventBus } from '@/main';
+import { useCharacterStore } from '@/stores/characterStore';
 
 /**
  * 战斗管理器
@@ -49,6 +50,23 @@ export class BattleManager {
    */
   private emit<T extends BattleEventName>(event: T, data: any) {
     eventBus.emit(event, data);
+  }
+
+  /**
+   * 订阅事件
+   * @param event 事件名称
+   * @param callback 回调函数
+   */
+  on<T extends BattleEventName>(event: T, callback: (data: T) => void) {
+    eventBus.on(event, callback);
+  }
+
+  /**
+   * 取消订阅事件
+   * @param event 事件名称
+   */
+  off<T extends BattleEventName>(event: T) {
+    eventBus.off(event);
   }
 
   /**
@@ -97,95 +115,25 @@ export class BattleManager {
       if (!allyTeam || !enemyTeam) {
         throw new Error('队伍数据不能为空');
       }
-
       if (allyTeam.length === 0 && enemyTeam.length === 0) {
         throw new Error('至少需要一个角色或敌人参战');
       }
+      // 从 characterStore 获取队伍数据初始化
+      this.battleStateManager.initializeTeams();
 
-      this.battleStateManager.initializeTeams(allyTeam, enemyTeam);
-
-      // 转换我方队伍为战斗参与者
+      // 使用工厂方法转换队伍
       const allyParticipants = allyTeam.map((char, index) => {
-        // 验证角色数据
         if (!char) {
           throw new Error(`我方队伍中第${index + 1}个角色数据无效`);
         }
-
-        // 安全获取属性值
-        const maxHpValue = typeof char.maxHp === 'object' && char.maxHp.value !== undefined ? char.maxHp.value : 0;
-        const attackValue = typeof char.attack === 'object' && char.attack.value !== undefined ? char.attack.value : 0;
-        const defenseValue = typeof char.defense === 'object' && char.defense.value !== undefined ? char.defense.value : 0;
-        const speedValue = typeof char.speed === 'object' && char.speed.value !== undefined ? char.speed.value : 0;
-        const critRateValue = typeof char.critRate === 'object' && char.critRate.value !== undefined ? char.critRate.value : 10;
-        const critDamageValue = typeof char.critDamage === 'object' && char.critDamage.value !== undefined ? char.critDamage.value : 125;
-        const damageReductionValue = typeof char.damageReduction === 'object' && char.damageReduction.value !== undefined ? char.damageReduction.value : 0;
-        const healthBonusValue = typeof char.healthBonus === 'object' && char.healthBonus.value !== undefined ? char.healthBonus.value : 0;
-        const attackBonusValue = typeof char.attackBonus === 'object' && char.attackBonus.value !== undefined ? char.attackBonus.value : 0;
-        const speedBonusValue = typeof char.speedBonus === 'object' && char.speedBonus.value !== undefined ? char.speedBonus.value : 0;
-
-        return new BattleParticipantImpl({
-          id: char.originalId || `ally_${index}`,
-          name: char.name || `Ally ${index + 1}`,
-          type: PARTICIPANT_SIDE.ALLY,
-          team: PARTICIPANT_SIDE.ALLY,
-          level: char.level || 1,
-          maxHealth: maxHpValue,
-          currentHealth: char.currentHp || maxHpValue,
-          minAttack: char.minAttack || 0,
-          maxAttack: char.maxAttack || 0,
-          attack: attackValue,
-          defense: defenseValue,
-          speed: speedValue,
-          critRate: critRateValue,
-          critDamage: critDamageValue,
-          damageReduction: damageReductionValue,
-          healthBonus: healthBonusValue,
-          attackBonus: attackBonusValue,
-          speedBonus: speedBonusValue,
-          skills: char.skills || {},
-        });
+        return BattleParticipantImpl.fromUICharacter(char, true, index)
       });
-      
-      // 转换敌方队伍为战斗参与者
+
       const enemyParticipants = enemyTeam.map((char, index) => {
-        // 验证敌人数据
         if (!char) {
           throw new Error(`敌方队伍中第${index + 1}个角色数据无效`);
         }
-
-        // 安全获取属性值
-        const maxHpValue = typeof char.maxHp === 'object' && char.maxHp.value !== undefined ? char.maxHp.value : 0;
-        const attackValue = typeof char.attack === 'object' && char.attack.value !== undefined ? char.attack.value : 0;
-        const defenseValue = typeof char.defense === 'object' && char.defense.value !== undefined ? char.defense.value : 0;
-        const speedValue = typeof char.speed === 'object' && char.speed.value !== undefined ? char.speed.value : 0;
-        const critRateValue = typeof char.critRate === 'object' && char.critRate.value !== undefined ? char.critRate.value : 10;
-        const critDamageValue = typeof char.critDamage === 'object' && char.critDamage.value !== undefined ? char.critDamage.value : 125;
-        const damageReductionValue = typeof char.damageReduction === 'object' && char.damageReduction.value !== undefined ? char.damageReduction.value : 0;
-        const healthBonusValue = typeof char.healthBonus === 'object' && char.healthBonus.value !== undefined ? char.healthBonus.value : 0;
-        const attackBonusValue = typeof char.attackBonus === 'object' && char.attackBonus.value !== undefined ? char.attackBonus.value : 0;
-        const speedBonusValue = typeof char.speedBonus === 'object' && char.speedBonus.value !== undefined ? char.speedBonus.value : 0;
-
-        return new BattleParticipantImpl({
-          id: char.originalId || `enemy_${index}`,
-          name: char.name || `Enemy ${index + 1}`,
-          type: PARTICIPANT_SIDE.ENEMY,
-          team: PARTICIPANT_SIDE.ENEMY,
-          level: char.level || 1,
-          maxHealth: maxHpValue,
-          currentHealth: char.currentHp || maxHpValue,
-          minAttack: char.minAttack || 0,
-          maxAttack: char.maxAttack || 0,
-          attack: attackValue,
-          defense: defenseValue,
-          speed: speedValue,
-          critRate: critRateValue,
-          critDamage: critDamageValue,
-          damageReduction: damageReductionValue,
-          healthBonus: healthBonusValue,
-          attackBonus: attackBonusValue,
-          speedBonus: speedBonusValue,
-          skills: char.skills || {},
-        });
+        return BattleParticipantImpl.fromUICharacter(char, false, index)
       });
 
       // 合并所有参与者
@@ -198,7 +146,6 @@ export class BattleManager {
 
       // 创建战斗状态
       const battleState = this.battleSystem.createBattle(allParticipants);
-      
       const battleId = battleState.battleId;
       this.setBattleId(battleId);
       
@@ -216,6 +163,7 @@ export class BattleManager {
    * @param battleId 战斗ID
    */
   setBattleId(battleId: string) {
+    console.log('BattleManager setBattleId', battleId)
     this.battleStateManager.setBattleId(battleId);
     this.autoBattleManager.setBattleId(battleId);
   }
@@ -246,9 +194,37 @@ export class BattleManager {
 
   /**
    * 开始战斗
+   * 从 characterStore 获取启用的角色数据
    */
   async startBattle() {
-    await this.autoBattleManager.startAutoBattle();
+    if (!this.battleSystem) {
+      throw new Error('战斗系统未初始化');
+    }
+    
+    const characterStore = useCharacterStore()
+    const enabledAllyTeam = Array.from(characterStore.allyTeam.values()).filter(c => c.enabled)
+    const enabledEnemyTeam = Array.from(characterStore.enemyTeam.values()).filter(e => e.enabled)
+    
+    if (enabledAllyTeam.length === 0 || enabledEnemyTeam.length === 0) {
+      this.battleLogManager.addErrorLog('队伍数据未初始化，请先添加角色到队伍');
+      return;
+    }
+    
+    // 建立映射关系（从 characterStore 获取队伍数据）
+    this.battleStateManager.initializeTeams();
+    
+    // 转换为战斗参与者
+    const allyParticipants = enabledAllyTeam.map((char, index) => {
+      return BattleParticipantImpl.fromUICharacter(char, true, index)
+    });
+    const enemyParticipants = enabledEnemyTeam.map((char, index) => {
+      return BattleParticipantImpl.fromUICharacter(char, false, index)
+    });
+    const allParticipants = [...allyParticipants, ...enemyParticipants];
+    const battleState = this.battleSystem.createBattle(allParticipants);
+    this.autoBattleManager.setBattleId(battleState.battleId);
+    this.battleLogManager.clearLogs();
+    this.battleLogManager.addSystemLog('战斗已创建');
   }
 
   /**
@@ -273,7 +249,7 @@ export class BattleManager {
     const result = this.autoBattleManager.stopAutoBattle();
     // 触发战斗结束事件
     const eventData: any = { winner };
-    this.emit('battleEnd', eventData);
+    this.emit(BattleSystemEvent.BATTLE_END, eventData);
     return result;
   }
 

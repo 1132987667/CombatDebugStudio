@@ -6,13 +6,25 @@ import { eventBus } from '@/main';
 import { BattleSystemEvent } from '@/types/battle';
 import type { BattleLogEventData, BattleStateUpdateEventData, BattleEndedEventData } from '@/types/battle-events';
 import { useBattleStore } from '@/stores/battleStore';
-import { battleLogManager } from '@/utils/logging';
+import { useBattleLogStore } from '@/stores/battleLogStore';
+import { BattleStateManager } from '@/core/battle/state/BattleStateManager';
+import type { IBattleSystem } from '@/core/battle/interfaces';
 
 /**
  * 战斗事件管理器类
  */
 export class BattleEventManager {
   private battleStore = useBattleStore();
+  private battleStateManager: BattleStateManager | null = null;
+  private battleSystem: IBattleSystem | null = null;
+
+  /**
+   * 设置战斗系统引用（由外部注入）
+   */
+  setBattleSystem(battleSystem: IBattleSystem, battleStateManager: BattleStateManager) {
+    this.battleSystem = battleSystem;
+    this.battleStateManager = battleStateManager;
+  }
 
   /**
    * 开始监听战斗事件
@@ -55,7 +67,8 @@ export class BattleEventManager {
         this.battleStore.addBattleLog(data.log);
       }
     } catch (error) {
-      battleLogManager.error('处理战斗日志事件时出错:', error);
+      const battleLogStore = useBattleLogStore()
+      battleLogStore.addErrorLog(`处理战斗日志事件时出错: ${error}`)
     }
   }
 
@@ -69,9 +82,17 @@ export class BattleEventManager {
         this.battleStore.turnOrder = data.turnOrder || [];
         // 同步战斗状态到UI
         this.battleStore.setBattleActive(true);
+
+        // 通过 BattleStateManager 同步角色状态
+        if (this.battleStateManager && this.battleSystem) {
+          // 设置战斗ID并同步状态
+          this.battleStateManager.setBattleId(data.battleId);
+          this.battleStateManager.syncBattleState();
+        }
       }
     } catch (error) {
-      battleLogManager.error('处理战斗状态更新事件时出错:', error);
+      const battleLogStore = useBattleLogStore()
+      battleLogStore.addErrorLog(`处理战斗状态更新事件时出错: ${error}`)
     }
   }
 
@@ -94,7 +115,8 @@ export class BattleEventManager {
         });
       }
     } catch (error) {
-      battleLogManager.error('处理战斗结束事件时出错:', error);
+      const battleLogStore = useBattleLogStore()
+      battleLogStore.addErrorLog(`处理战斗结束事件时出错: ${error}`)
     }
   }
 
@@ -116,7 +138,8 @@ export class BattleEventManager {
         });
       }
     } catch (error) {
-      battleLogManager.error('处理回合开始事件时出错:', error);
+      const battleLogStore = useBattleLogStore()
+      battleLogStore.addErrorLog(`处理回合开始事件时出错: ${error}`)
     }
   }
 
@@ -137,7 +160,8 @@ export class BattleEventManager {
         });
       }
     } catch (error) {
-      battleLogManager.error('处理回合结束事件时出错:', error);
+      const battleLogStore = useBattleLogStore()
+      battleLogStore.addErrorLog(`处理回合结束事件时出错: ${error}`)
     }
   }
 }

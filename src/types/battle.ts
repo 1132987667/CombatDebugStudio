@@ -330,6 +330,7 @@ export interface ParticipantInfo {
 /**
  * 战斗系统事件类型枚举
  * 定义所有战斗系统支持的事件名称
+ * 注意：所有事件必须使用此枚举，禁止使用字符串字面量
  */
 export enum BattleSystemEvent {
   /** 战斗日志事件 */
@@ -346,6 +347,8 @@ export enum BattleSystemEvent {
   SKILL_EFFECT = 'skillEffect',
   /** 战斗结束事件 */
   BATTLE_END = 'battleEnd',
+  /** 战斗重置事件 */
+  BATTLE_RESET = 'battle-reset',
   /** 回合开始事件 */
   TURN_START = 'turnStart',
   /** 回合结束事件 */

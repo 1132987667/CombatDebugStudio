@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { battleLogManager } from '@/utils/logging'
+import { useBattleLogStore } from '@/stores/battleLogStore'
 
 /**
  * 错误类型枚举
@@ -89,27 +89,28 @@ export class BuffErrorBoundary {
     error: unknown,
     options?: { buffId?: string; scriptPath?: string }
   ): void {
+    const battleLogStore = useBattleLogStore()
     const buffError = BuffErrorBoundary.parseError(error, options)
     
     // 根据错误类型记录不同级别的日志
     switch (buffError.type) {
       case BuffErrorType.CONFIG_ERROR:
-        battleLogManager.addErrorLog(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogStore.addErrorLog(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       case BuffErrorType.RUNTIME_ERROR:
-        battleLogManager.addErrorLog(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogStore.addErrorLog(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       case BuffErrorType.DEPENDENCY_ERROR:
-        battleLogManager.addWarningLog(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogStore.addWarningLog(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       default:
-        battleLogManager.addErrorLog(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogStore.addErrorLog(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
     }
     
     // 记录详细的错误信息（如堆栈）
     if (buffError.stack) {
-      battleLogManager.addDebugLog(`Buff error stack: ${buffError.stack}`)
+      battleLogStore.addDebugLog(`Buff error stack: ${buffError.stack}`)
     }
   }
 
@@ -166,6 +167,7 @@ export class BuffErrorBoundary {
     options?: { buffId?: string; scriptPath?: string }
   ): T | null {
     let retries = 0
+    const battleLogStore = useBattleLogStore()
 
     while (retries < maxRetries) {
       try {
@@ -176,7 +178,7 @@ export class BuffErrorBoundary {
           BuffErrorBoundary.handleError(error, options)
           return null
         }
-        battleLogManager.addSystemBattleLog(`Retrying buff script execution (${retries}/${maxRetries})`, 'status')
+        battleLogStore.addSystemBattleLog(`Retrying buff script execution (${retries}/${maxRetries})`, 'status')
       }
     }
 

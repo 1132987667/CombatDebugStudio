@@ -33,7 +33,7 @@
                   </div>
                 </div>
                 <div class="member-energy">
-                  <span class="energy-text">{{ member.currentEnergy || 0 }}/150</span>
+                  <span class="energy-text">{{ member.currentEnergy || 0 }}/{{ member.maxEnergy || 150 }}</span>
                   <div class="energy-bar">
                     <div class="energy-ticks">
                       <div class="tick"></div>
@@ -41,7 +41,7 @@
                       <div class="tick"></div>
                       <div class="tick"></div>
                     </div>
-                    <div class="energy-fill" :style="{ width: ((member.currentEnergy || 0) / 150) * 100 + '%' }">
+                    <div class="energy-fill" :style="{ width: ((member.currentEnergy || 0) / (member.maxEnergy || 150)) * 100 + '%' }">
                     </div>
                   </div>
                 </div>
@@ -86,7 +86,7 @@
                   </div>
                 </div>
                 <div class="member-energy">
-                  <span class="energy-text">能量: {{ member.currentEnergy || 0 }}/150</span>
+                  <span class="energy-text">能量: {{ member.currentEnergy || 0 }}/{{ member.maxEnergy || 150 }}</span>
                   <div class="energy-bar">
                     <div class="energy-ticks">
                       <div class="tick"></div>
@@ -95,7 +95,7 @@
                       <div class="tick"></div>
                     </div>
                     <div class="energy-fill enemy-fill"
-                      :style="{ width: ((member.currentEnergy || 0) / 150) * 100 + '%' }"></div>
+                      :style="{ width: ((member.currentEnergy || 0) / (member.maxEnergy || 150)) * 100 + '%' }"></div>
                   </div>
                 </div>
                 <div class="member-status">
@@ -151,13 +151,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from "vue";
+import { computed, ref, onUnmounted } from "vue";
 import { raf } from '@/utils/RAF';
 import { GameDataProcessor } from '@/utils/GameDataProcessor';
 import { useCharacterList } from '@/composables/useCharacterList';
 import { useCharacterStore, useLogStore } from "@/stores";
-import { eventBus } from "@/main";
-import { BattleSystemEvent } from "@/types/battle";
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
@@ -509,45 +507,8 @@ defineExpose({
   cleanupAnimations
 });
 
-// 组件挂载时订阅事件总线
-onMounted(() => {
-  // 订阅伤害动画事件
-  eventBus.on(BattleSystemEvent.DAMAGE_ANIMATION, (data: { targetId: string; damage: number; damageType: string; isCritical: boolean; isHeal: boolean }) => {
-    if (data && data.targetId) {
-      showDamage(data.targetId, data.damage, data.isHeal ? 'heal' : data.isCritical ? 'critical' : 'damage', data.isCritical);
-    }
-  });
-
-  // 订阅闪避动画事件
-  eventBus.on(BattleSystemEvent.MISS_ANIMATION, (data: { targetId: string }) => {
-    if (data && data.targetId) {
-      showMiss(data.targetId);
-    }
-  });
-
-  // 订阅Buff效果事件
-  eventBus.on(BattleSystemEvent.BUFF_EFFECT, (data: { targetId: string; buffName: string; isPositive: boolean }) => {
-    if (data && data.targetId) {
-      showBuffEffect(data.targetId, data.buffName, data.isPositive);
-    }
-  });
-
-  // 订阅技能效果事件
-  eventBus.on(BattleSystemEvent.SKILL_EFFECT, (data: { sourceId: string; targetId: string; skillName: string; effectType: string; damageType: string }) => {
-    if (data && data.targetId) {
-      showSkillEffect(data.targetId, data.effectType as any, data.skillName);
-    }
-  });
-});
-
-// 组件卸载时清理所有定时器和事件订阅
+// 组件卸载时清理所有定时器
 onUnmounted(() => {
-  // 清理事件总线订阅
-  eventBus.off(BattleSystemEvent.DAMAGE_ANIMATION);
-  eventBus.off(BattleSystemEvent.MISS_ANIMATION);
-  eventBus.off(BattleSystemEvent.BUFF_EFFECT);
-  eventBus.off(BattleSystemEvent.SKILL_EFFECT);
-
   // 清理工具提示定时器
   if (tooltipTimeout) {
     raf.clearTimeout(tooltipTimeout);

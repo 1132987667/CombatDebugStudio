@@ -22,7 +22,7 @@ import {
   ACTION_TYPES,
   EFFECT_TYPES,
 } from '@/types/battle'
-import { battleLogManager } from '@/utils/logging'
+import { useBattleLogStore } from '@/stores/battleLogStore'
 
 /**
  * 战斗AI接口
@@ -216,9 +216,10 @@ export class BaseBattleAI implements BattleAI {
     battleState: BattleState,
     participant: BattleParticipant,
   ): BattleAction {
+    const battleLogStore = useBattleLogStore()
     try {
       if (!battleState || !participant) {
-        battleLogManager.addErrorLog('AI决策参数无效')
+        battleLogStore.addErrorLog('AI决策参数无效')
         return this.selectAttack(participant)
       }
 
@@ -230,7 +231,7 @@ export class BaseBattleAI implements BattleAI {
         try {
           return this.createSkillStep(battleState, participant, skillId)
         } catch (skillError) {
-          battleLogManager.addErrorLog('技能执行出错')
+          battleLogStore.addErrorLog('技能执行出错')
           return this.selectAttack(participant)
         }
       }
@@ -238,11 +239,11 @@ export class BaseBattleAI implements BattleAI {
 
       return this.selectAttack(participant)
     } catch (error) {
-      battleLogManager.addErrorLog('AI决策出错')
+      battleLogStore.addErrorLog('AI决策出错')
       try {
         return this.selectAttack(participant)
       } catch (attackError) {
-        battleLogManager.addErrorLog('攻击执行出错')
+        battleLogStore.addErrorLog('攻击执行出错')
         return {
           id: `fallback_${Date.now()}`,
           type: ACTION_TYPES.ATTACK,

@@ -25,6 +25,7 @@ import { ControlType } from '@/types/buff'
  * 动作执行器类
  * 负责执行战斗中的各种动作，包括攻击、技能、治疗等
  * 实现了IActionExecutor接口，处理动作的验证和执行逻辑
+ * 推荐通过容器注入使用
  */
 export class ActionExecutor {
   /** 日志记录器实例，用于记录动作执行过程中的信息 */
@@ -33,6 +34,16 @@ export class ActionExecutor {
   private battles = new Map<string, BattleData>()
   /** 参与者到战斗的映射，用于通过参与者ID快速查找所属战斗 */
   private participantToBattle = new Map<string, string>()
+  /** Buff系统实例（通过构造函数注入） */
+  private buffSystem: BuffSystem
+
+  /**
+   * 私有构造函数
+   * @param buffSystem Buff系统实例（通过构造函数注入）
+   */
+  constructor(buffSystem: BuffSystem) {
+    this.buffSystem = buffSystem
+  }
 
   /**
    * 注册战斗数据
@@ -73,8 +84,7 @@ export class ActionExecutor {
     }
 
     // 检查角色是否处于控制状态
-    const buffSystem = BuffSystem.getInstance()
-    const controlType = buffSystem.getHighestPriorityControlEffect(source.id)
+    const controlType = this.buffSystem.getHighestPriorityControlEffect(source.id)
     
     if (controlType === ControlType.STUN) {
       // 眩晕状态：无法进行任何行动

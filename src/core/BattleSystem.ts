@@ -17,23 +17,9 @@ import type {
   RoundStatus,
 } from '@/types/battle'
 import { BATTLE_STATUS, ROUND_STATUS, PARTICIPANT_SIDE, BattleSystemEvent } from '@/types/battle'
-import type { Character } from '@/types/character'
-import type { EnemyInstance } from '@/types/enemy'
-import type { AttributeType } from '@/types/modifier'
 import { battleLogManager } from '@/utils/logging'
-import { RAFTimer } from '@/utils/RAF'
 import { eventBus } from '@/main'
-// 移除对容器的直接依赖，改为通过构造函数注入
-import {
-  TURN_MANAGER_TOKEN,
-  ACTION_EXECUTOR_TOKEN,
-  AI_SYSTEM_TOKEN,
-  PARTICIPANT_MANAGER_TOKEN,
-  BATTLE_RECORDER_TOKEN,
-  BATTLE_RULE_MANAGER_TOKEN,
-} from '@/core/battle/interfaces'
 import type { BattleAI } from '@/core/BattleAI'
-
 import { TurnManager } from '@/core/battle/TurnManager'
 import { ActionExecutor } from '@/core/battle/ActionExecutor'
 import { ParticipantManager } from '@/core/battle/ParticipantManager'
@@ -41,19 +27,16 @@ import { AISystem } from '@/core/battle/AISystem'
 import { BattleRecorder } from '@/core/battle/BattleRecorder'
 import { BattleRuleManager } from '@/core/battle/BattleRuleManager'
 import { SkillManager } from '@/core/skill/SkillManager'
-import { BuffSystem } from '@/core/BuffSystem'
 import { PassiveSkillManager, PassiveSkillTrigger } from '@/core/skill/PassiveSkillManager'
-import { DamageCalculator } from '@/core/skill/DamageCalculator'
 import type { BattleLogEntry } from '@/types/battle-log'
 
 /**
- * 战斗系统核心类
+ * 战斗系统类
  * 负责管理所有战斗实例、处理回合逻辑、执行战斗动作
- * 采用单例模式确保全局只有一个战斗系统实例
+ * 通过依赖注入容器管理实例
  */
 export class GameBattleSystem implements IBattleSystem {
-  // 单例实例
-  private static instance: GameBattleSystem
+
   // 存储所有战斗数据的映射表，key为战斗ID，value为战斗数据
   private battles = new Map<string, BattleData>()
   private curBattleId: string
@@ -78,9 +61,6 @@ export class GameBattleSystem implements IBattleSystem {
   private ruleManager: BattleRuleManager
   private buffSystem
   private damageCalculator
-
-
-
   private turnManager: TurnManager
   private actionExecutor: ActionExecutor
   private participantManager: ParticipantManager
@@ -116,85 +96,37 @@ export class GameBattleSystem implements IBattleSystem {
     this.curBattleId = this.curBattleData.battleId
   }
 
+
+
   /**
-   * 获取战斗系统单例实例
-   * @param turnManager 回合管理器实例
-   * @param actionExecutor 动作执行器实例
-   * @param participantManager 参与者管理器实例
-   * @param aiSystem AI系统实例
-   * @param battleRecorder 战斗记录器实例
-   * @param ruleManager 战斗规则管理器实例
-   * @param damageCalculator 伤害计算器实例
-   * @param rafTimer RAF定时器实例
-   * @param skillManager 技能管理器实例
-   * @param buffSystem Buff系统实例
-   * @param passiveSkillManager 被动技能管理器实例
-   * @returns {GameBattleSystem} 战斗系统单例实例
+   * 创建战斗系统实例（内部使用，由容器调用）
    */
-  public static getInstance(
-    turnManager?: TurnManager,
-    actionExecutor?: ActionExecutor,
-    participantManager?: ParticipantManager,
-    aiSystem?: AISystem,
-    battleRecorder?: BattleRecorder,
-    ruleManager?: BattleRuleManager,
-    damageCalculator?: any,
-    rafTimer?: any,
-    skillManager?: any,
-    buffSystem?: any,
-    passiveSkillManager?: any
+  public static createInstance(
+    turnManager: TurnManager,
+    actionExecutor: ActionExecutor,
+    participantManager: ParticipantManager,
+    aiSystem: AISystem,
+    battleRecorder: BattleRecorder,
+    ruleManager: BattleRuleManager,
+    damageCalculator: any,
+    rafTimer: any,
+    skillManager: any,
+    buffSystem: any,
+    passiveSkillManager: any
   ): GameBattleSystem {
-    if (!GameBattleSystem.instance) {
-      // 如果没有提供依赖，则使用默认实例
-      if (!turnManager) {
-        turnManager = new TurnManager()
-      }
-      if (!actionExecutor) {
-        actionExecutor = new ActionExecutor()
-      }
-      if (!participantManager) {
-        participantManager = new ParticipantManager()
-      }
-      if (!aiSystem) {
-        aiSystem = new AISystem()
-      }
-      if (!battleRecorder) {
-        battleRecorder = new BattleRecorder()
-      }
-      if (!ruleManager) {
-        ruleManager = new BattleRuleManager()
-      }
-      if (!damageCalculator) {
-        damageCalculator = new DamageCalculator()
-      }
-      if (!rafTimer) {
-        rafTimer = new RAFTimer()
-      }
-      if (!skillManager) {
-        skillManager = SkillManager.getInstance()
-      }
-      if (!buffSystem) {
-        buffSystem = BuffSystem.getInstance()
-      }
-      if (!passiveSkillManager) {
-        passiveSkillManager = PassiveSkillManager.getInstance()
-      }
-      
-      GameBattleSystem.instance = new GameBattleSystem(
-        turnManager,
-        actionExecutor,
-        participantManager,
-        aiSystem,
-        battleRecorder,
-        ruleManager,
-        damageCalculator,
-        rafTimer,
-        skillManager,
-        buffSystem,
-        passiveSkillManager
-      )
-    }
-    return GameBattleSystem.instance
+    return new GameBattleSystem(
+      turnManager,
+      actionExecutor,
+      participantManager,
+      aiSystem,
+      battleRecorder,
+      ruleManager,
+      damageCalculator,
+      rafTimer,
+      skillManager,
+      buffSystem,
+      passiveSkillManager
+    )
   }
 
   public generateBattleId(): string {
@@ -254,74 +186,6 @@ export class GameBattleSystem implements IBattleSystem {
 
     // 初始化内置修饰器
     this.skillManager.getDamageCalculator().initializeBuiltinModifiers()
-  }
-
-  /**
-   * 获取战斗系统单例实例
-   * @returns {GameBattleSystem} 战斗系统单例实例
-   */
-  public static getInstance(): GameBattleSystem {
-    if (!GameBattleSystem.instance) {
-      // 从依赖注入容器获取依赖
-      try {
-        const { container } = require('@/core/di/Container')
-        
-        const turnManager = container.resolve(TURN_MANAGER_TOKEN.toString())
-        const actionExecutor = container.resolve(ACTION_EXECUTOR_TOKEN.toString())
-        const participantManager = container.resolve(PARTICIPANT_MANAGER_TOKEN.toString())
-        const aiSystem = container.resolve(AI_SYSTEM_TOKEN.toString())
-        const battleRecorder = container.resolve(BATTLE_RECORDER_TOKEN.toString())
-        const ruleManager = container.resolve(BATTLE_RULE_MANAGER_TOKEN.toString())
-        const damageCalculator = container.resolve('DamageCalculator')
-        const rafTimer = container.resolve('RAFTimer')
-        const skillManager = container.resolve('SkillManager')
-        const buffSystem = container.resolve('BuffSystem')
-        const passiveSkillManager = container.resolve('PassiveSkillManager')
-        
-        GameBattleSystem.instance = new GameBattleSystem(
-          turnManager,
-          actionExecutor,
-          participantManager,
-          aiSystem,
-          battleRecorder,
-          ruleManager,
-          damageCalculator,
-          rafTimer,
-          skillManager,
-          buffSystem,
-          passiveSkillManager
-        )
-      } catch (error) {
-        // 如果依赖注入容器不可用，则使用默认实例
-        console.warn('依赖注入容器不可用，使用默认实例初始化', error)
-        const turnManager = new TurnManager()
-        const actionExecutor = new ActionExecutor()
-        const participantManager = new ParticipantManager()
-        const aiSystem = new AISystem()
-        const battleRecorder = new BattleRecorder()
-        const ruleManager = new BattleRuleManager()
-        const damageCalculator = new DamageCalculator()
-        const rafTimer = new RAFTimer()
-        const skillManager = SkillManager.getInstance()
-        const buffSystem = BuffSystem.getInstance()
-        const passiveSkillManager = PassiveSkillManager.getInstance()
-        
-        GameBattleSystem.instance = new GameBattleSystem(
-          turnManager,
-          actionExecutor,
-          participantManager,
-          aiSystem,
-          battleRecorder,
-          ruleManager,
-          damageCalculator,
-          rafTimer,
-          skillManager,
-          buffSystem,
-          passiveSkillManager
-        )
-      }
-    }
-    return GameBattleSystem.instance
   }
 
   /**
@@ -1427,7 +1291,7 @@ export class GameBattleSystem implements IBattleSystem {
     this.battleRecorder.clearRecordings()
 
     // 触发战斗重置事件，通知所有监听器进行清理
-    this.emit('battle-reset', {
+    this.emit(BattleSystemEvent.BATTLE_RESET, {
       battleId
     })
 

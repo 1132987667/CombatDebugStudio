@@ -27,8 +27,9 @@ export * from '@/scripts'
 export async function initializeBuffSystem(): Promise<void> {
   try {
     // 加载所有 Buff 脚本
-    const { BuffScriptLoader } = await import('@/core/BuffScriptLoader')
-    await BuffScriptLoader.getInstance().loadScripts()
+    const { container } = await import('@/core/di/Container')
+    const loader = container.resolve('BuffScriptLoader')
+    await loader.loadScripts()
 
     console.log('Buff system initialized successfully')
   } catch (error) {

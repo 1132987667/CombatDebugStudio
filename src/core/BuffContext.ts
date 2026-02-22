@@ -15,30 +15,72 @@ import { BuffSystem } from '@/core/BuffSystem'
  * Buff上下文类
  * 为Buff实例提供运行环境和上下文信息
  * 包含Buff的配置、状态、变量管理等功能
+ * 支持对象池复用
  */
 export class BuffContext {
   /** 角色ID */
-  public readonly characterId: string
+  public characterId: string = ''
   /** Buff实例ID */
-  public readonly instanceId: string
+  public instanceId: string = ''
   /** Buff配置信息 */
-  public readonly config: BuffConfig
+  public config: BuffConfig = {} as BuffConfig
   /** Buff开始时间戳 */
-  public readonly startTime: number
+  public startTime: number = 0
   /** 变量映射，用于存储Buff运行时的临时数据 */
   public variables = new Map<string, any>()
+  /** Buff系统实例（通过容器或构造函数注入） */
+  private _buffSystem: any = null
 
   /**
    * 构造函数
    * @param characterId 角色ID
    * @param instanceId Buff实例ID
    * @param config Buff配置信息
+   * @param buffSystem Buff系统实例（可选，用于依赖注入）
    */
-  constructor(characterId: string, instanceId: string, config: BuffConfig) {
+  constructor(characterId?: string, instanceId?: string, config?: BuffConfig, buffSystem?: any) {
+    if (buffSystem) {
+      this._buffSystem = buffSystem
+    }
+    if (characterId && instanceId && config) {
+      this.initialize(characterId, instanceId, config)
+    }
+  }
+
+  /**
+   * 获取Buff系统实例（延迟获取）
+   */
+  private get buffSystem(): any {
+    if (!this._buffSystem) {
+      this._buffSystem = (window as any).__container?.resolve?.('BuffSystem')
+    }
+    return this._buffSystem
+  }
+
+  /**
+   * 初始化上下文（用于对象池复用）
+   */
+  public initialize(characterId: string, instanceId: string, config: BuffConfig, buffSystem?: any): void {
     this.characterId = characterId
     this.instanceId = instanceId
     this.config = config
     this.startTime = Date.now()
+    this.variables.clear()
+    if (buffSystem) {
+      this._buffSystem = buffSystem
+    }
+  }
+
+  /**
+   * 重置上下文（用于对象池归还）
+   */
+  public reset(): void {
+    this.characterId = ''
+    this.instanceId = ''
+    this.config = {} as BuffConfig
+    this.startTime = 0
+    this.variables.clear()
+    this._buffSystem = null
   }
 
   /**
@@ -97,7 +139,11 @@ export class BuffContext {
     value: number,
     type: 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE',
   ): void {
-    const system = BuffSystem.getInstance()
+    const system = this.buffSystem
+    if (!system) {
+      console.warn('BuffSystem 未注入，无法添加修饰符')
+      return
+    }
     const modifierStack = system.getModifierStack(this.characterId)
     modifierStack.addModifier(this.instanceId, attribute as any, value, type)
 
@@ -113,7 +159,11 @@ export class BuffContext {
    * 移除所有修饰符
    */
   public removeModifiers(): void {
-    const system = BuffSystem.getInstance()
+    const system = this.buffSystem
+    if (!system) {
+      console.warn('BuffSystem 未注入，无法移除修饰符')
+      return
+    }
     const modifierStack = system.getModifierStack(this.characterId)
     modifierStack.removeModifier(this.instanceId)
   }

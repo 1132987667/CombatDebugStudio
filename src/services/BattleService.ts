@@ -2,25 +2,18 @@ import { BattleManager } from '@/core/battle/BattleManager';
 
 /**
  * 战斗服务
- * 全局单例，负责管理BattleManager实例
+ * 负责管理BattleManager实例
+ * 推荐通过容器注入使用
  */
 export class BattleService {
-  private static instance: BattleService;
   private battleManager: BattleManager;
 
-  private constructor() {
-    // 初始化BattleManager实例
-    this.battleManager = new BattleManager();
-  }
-
   /**
-   * 获取战斗服务单例
+   * 构造函数
+   * @param battleManager BattleManager实例（通过构造函数注入）
    */
-  public static getInstance(): BattleService {
-    if (!BattleService.instance) {
-      BattleService.instance = new BattleService();
-    }
-    return BattleService.instance;
+  constructor(battleManager: BattleManager) {
+    this.battleManager = battleManager;
   }
 
   /**
@@ -32,13 +25,9 @@ export class BattleService {
 
   /**
    * 重置战斗服务
+   * @param battleManager 新的BattleManager实例（可选）
    */
-  public reset(): void {
-    this.battleManager = new BattleManager();
+  public reset(battleManager?: BattleManager): void {
+    this.battleManager = battleManager || new BattleManager();
   }
 }
-
-/**
- * 战斗服务单例
- */
-export const battleService = BattleService.getInstance();

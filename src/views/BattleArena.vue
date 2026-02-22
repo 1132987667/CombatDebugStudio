@@ -86,13 +86,12 @@ import Notification from "@/components/Notification.vue";
 import BattleRulesDialog from "./components/BattleRulesDialog.vue";
 import SceneManagementDialog from "./components/SceneManagementDialog.vue";
 import StatusInjectionDialog from "./components/StatusInjectionDialog.vue";
-import { battleLogManager } from '@/utils/logging';
+import { useBattleLogStore } from '@/stores/battleLogStore';
 import { useCharacterStore, useBattleStore } from '@/stores';
-import { container, initializeContainer } from '@/core/di/Container';
-import type { UIBattleCharacter } from "@/types";
+import { container } from '@/core/di/Container';
 import { PARTICIPANT_SIDE } from "@/types/battle";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
-
+import type { BattleManager } from '@/core/battle/BattleManager';
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -114,8 +113,18 @@ const getSelectedCharName = computed(() => {
   return characterStore.selectedCharName;
 });
 
-// 使用统一的日志管理器单例
-const logManager = battleLogManager;
+// 使用统一的日志管理器store
+const battleLogStore = useBattleLogStore()
+const logManager = {
+  addSystemLog: (msg: string) => battleLogStore.addSystemLog(msg),
+  addErrorLog: (msg: string) => battleLogStore.addErrorLog(msg),
+  addLog: (turn: number, source: string, action: string, target: string, result: string, level: string, htmlResult?: string) => {
+    battleLogStore.addLog({ turn, source, action, target, result, level, htmlResult })
+  },
+  addActionLog: (source: string, action: string, target: string, result: string) => {
+    battleLogStore.addActionLog(source, action, target, result)
+  }
+}
 
 // 初始化战斗
 function initBattle() {
@@ -137,41 +146,20 @@ onMounted(() => {
   initBattle();
   
   // 初始化战斗管理器
-  // 确保容器已初始化
-  initializeContainer();
-  const battleManager = container.resolve('BattleManager');
+  const battleManager : BattleManager = container.resolve('BattleManager');
   battleStore.initializeBattleManager(battleManager);
-  
-  // 初始化队伍到战斗管理器
+  // 从 characterStore 获取角色数据并开始战斗
   const allyTeam = characterStore.allyTeam;
   const enemyTeam = characterStore.enemyTeam;
   if (allyTeam.size > 0 && enemyTeam.size > 0) {
-    battleManager.initializeTeams(Array.from(allyTeam.values()), Array.from(enemyTeam.values()));
+    battleManager.startBattle();
   }
-  
   logManager.addSystemLog("测试工具已加载");
   logManager.addSystemLog(`战斗管理器初始化完成，队伍数据: 我方${allyTeam.size}人 | 敌方${enemyTeam.size}人`);
 });
 
-// 监听战斗日志变化
-watch(
-  () => battleStore.getBattleLogs,
-  (newLogs) => {
-    if (newLogs.length > 0) {
-      const lastLog = newLogs[newLogs.length - 1];
-      logManager.addLog(
-        lastLog.turn,
-        lastLog.source,
-        lastLog.action,
-        lastLog.target,
-        lastLog.result || '',
-        lastLog.level,
-        lastLog.htmlResult
-      );
-    }
-  },
-  { deep: true }
-);
+// 监听战斗日志变化 - 已移除，因为会造成递归更新
+// 日志直接在模板中通过 battleLogStore.filteredLogs 访问
 
 // 监听动画状态变化
 watch(
@@ -233,11 +221,7 @@ watch(
 
 // 子组件事件处理方法
 const exportState = () => {
-  const result = battleStore.exportState(
-    Array.from(characterStore.allyTeam.values()),
-    Array.from(characterStore.enemyTeam.values()),
-    characterStore.currentTurn
-  );
+  const result = battleStore.exportState(characterStore.currentTurn);
   
   if (result) {
     logManager.addSystemLog("战斗状态已导出");
@@ -421,7 +405,7 @@ const startBattle = async () => {
   }
 
   try {
-    const result = await battleStore.startBattle(Array.from(characterStore.allyTeam.values()), Array.from(characterStore.enemyTeam.values()));
+    const result = await battleStore.startBattle();
     
     if (result) {
       notification.value?.addNotification("成功", "战斗已开始", "success");

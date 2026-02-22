@@ -54,12 +54,14 @@ export class AutoBattleManager {
    */
   setBattleId(battleId: string) {
     this.battleId.value = battleId;
+    console.log('AutoBattleManager setBattleId', battleId)
   }
 
   /**
    * 开始自动战斗
    */
   async startAutoBattle() {
+    console.log('startAutoBattle', this.battleId.value)
     if (!this.battleId.value) {
       this.battleLogManager.addSystemLog('请先创建战斗');
       return;

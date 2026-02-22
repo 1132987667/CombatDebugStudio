@@ -70,19 +70,19 @@ export interface UIBattleCharacter {
   /** 最大生命值 */
   maxHp: AttributeValue
   /** 当前生命值 */
-  currentHp: number
+  currentHp: AttributeValue
   /** 最大魔法值 */
-  maxMp: number
+  maxMp: AttributeValue
   /** 当前魔法值 */
-  currentMp: number
+  currentMp: AttributeValue
   /** 当前能量值 */
-  currentEnergy: number
+  currentEnergy: AttributeValue
   /** 最大能量值 */
-  maxEnergy: number
+  maxEnergy: AttributeValue
   /** 最小攻击力 */
-  minAttack: number
+  minAttack: AttributeValue
   /** 最大攻击力 */
-  maxAttack: number
+  maxAttack: AttributeValue
   /** 平均攻击力（计算值） */
   attack: AttributeValue
   /** 防御力 */

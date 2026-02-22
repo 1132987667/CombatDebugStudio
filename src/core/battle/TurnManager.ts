@@ -14,9 +14,18 @@ import type { AttributeType } from '@/types/modifier'
  * 回合管理器类
  * 负责管理战斗回合的初始化、推进和查询
  * 是回合数据的唯一数据源
+ * 推荐通过容器注入使用
  */
 export class TurnManager {
-  private buffSystem = BuffSystem.getInstance()
+  private buffSystem: BuffSystem
+
+  /**
+   * 私有构造函数
+   * @param buffSystem Buff系统实例（通过构造函数注入）
+   */
+  constructor(buffSystem: BuffSystem) {
+    this.buffSystem = buffSystem
+  }
 
   /**
    * 获取当前回合数

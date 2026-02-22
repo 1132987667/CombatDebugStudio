@@ -4,15 +4,16 @@ import type { BattleState, BattleParticipant, ParticipantSide } from '@/types/ba
 import type { UIBattleCharacter } from '@/types';
 import { GameDataProcessor } from '@/utils/GameDataProcessor';
 import { PARTICIPANT_SIDE } from '@/types/battle';
+import { useCharacterStore } from '@/stores/characterStore';
+import { eventBus } from '@/main';
 
 /**
  * 战斗状态管理器
  * 负责从BattleSystem获取状态，转换为UI角色状态，并管理状态同步
+ * 注意：不再存储队伍数据，只通过映射表关联参与者和UI角色
  */
 export class BattleStateManager {
   private battleSystem: IBattleSystem;
-  private allyTeam = ref<UIBattleCharacter[]>([]);
-  private enemyTeam = ref<UIBattleCharacter[]>([]);
   private currentTurn = ref(1);
   private currentActorId = ref<string | null>(null);
   private battleId = ref<string | null>(null);
@@ -28,20 +29,12 @@ export class BattleStateManager {
    */
   constructor(battleSystem: IBattleSystem) {
     this.battleSystem = battleSystem;
-  }
-
-  /**
-   * 获取我方队伍
-   */
-  getAllyTeam() {
-    return this.allyTeam;
-  }
-
-  /**
-   * 获取敌方队伍
-   */
-  getEnemyTeam() {
-    return this.enemyTeam;
+    
+    // 监听队伍数据变化事件
+    eventBus.on('teamDataChanged', () => {
+      // 重新初始化队伍映射关系
+      this.initializeTeams();
+    });
   }
 
   /**
@@ -74,16 +67,17 @@ export class BattleStateManager {
 
   /**
    * 初始化队伍数据
-   * @param allyTeam 我方队伍
-   * @param enemyTeam 敌方队伍
+   * 从 characterStore 获取启用的队伍数据
    */
-  initializeTeams(allyTeam: UIBattleCharacter[], enemyTeam: UIBattleCharacter[]) {
-    this.allyTeam.value = [...allyTeam];
-    this.enemyTeam.value = [...enemyTeam];
-    
+  initializeTeams() {
     // 清空映射表
     this.participantToUICharacterMap.clear();
     this.uiCharacterToParticipantMap.clear();
+    
+    // 从 characterStore 获取启用的队伍数据
+    const characterStore = useCharacterStore();
+    const allyTeam = Array.from(characterStore.allyTeam.values()).filter(c => c.enabled);
+    const enemyTeam = Array.from(characterStore.enemyTeam.values()).filter(e => e.enabled);
     
     // 建立我方队伍的映射关系
     allyTeam.forEach((char, index) => {
@@ -168,10 +162,6 @@ export class BattleStateManager {
         this.updateCharacterState(character, participant);
       }
     });
-
-    // 使用不可变数据模式更新队伍
-    this.allyTeam.value = [...this.allyTeam.value];
-    this.enemyTeam.value = [...this.enemyTeam.value];
   }
 
   /**
@@ -180,17 +170,25 @@ export class BattleStateManager {
    * @returns UI角色或undefined
    */
   private findUICharacter(participantId: string): UIBattleCharacter | undefined {
-    // 优先使用映射表查找
-    const mappedCharacter = this.participantToUICharacterMap.get(participantId);
-    if (mappedCharacter) {
-      return mappedCharacter;
+    // 首先通过映射表查找
+    let character = this.participantToUICharacterMap.get(participantId);
+    
+    // 如果映射表中找不到，直接从 characterStore 查找
+    if (!character) {
+      const characterStore = useCharacterStore();
+      // 尝试在 allyTeam 中查找
+      character = characterStore.allyTeam.get(participantId);
+      // 尝试在 enemyTeam 中查找
+      if (!character) {
+        character = characterStore.enemyTeam.get(participantId);
+      }
+      // 如果找到，更新映射表
+      if (character) {
+        this.participantToUICharacterMap.set(participantId, character);
+      }
     }
     
-    // 映射表未找到时，尝试回退方案：遍历所有角色查找匹配的原始ID
-    return (
-      this.allyTeam.value.find(c => c.originalId === participantId) ||
-      this.enemyTeam.value.find(e => e.originalId === participantId)
-    );
+    return character;
   }
 
   /**
@@ -240,10 +238,6 @@ export class BattleStateManager {
       // 更新角色属性
       Object.assign(character, updates);
 
-      // 使用不可变数据模式更新队伍
-      this.allyTeam.value = [...this.allyTeam.value];
-      this.enemyTeam.value = [...this.enemyTeam.value];
-
       // 同步到核心战斗系统
       if (this.battleId.value) {
         try {
@@ -264,26 +258,7 @@ export class BattleStateManager {
    * @returns 参与者ID
    */
   private getParticipantId(characterId: string): string | null {
-    // 优先使用映射表查找
-    const mappedParticipantId = this.uiCharacterToParticipantMap.get(characterId);
-    if (mappedParticipantId) {
-      return mappedParticipantId;
-    }
-    
-    // 映射表未找到时，尝试回退方案
-    const character = this.allyTeam.value.find(c => c.id === characterId) ||
-                     this.enemyTeam.value.find(e => e.id === characterId);
-    
-    if (character) {
-      // 如果角色有原始ID，直接使用
-      if (character.originalId) {
-        return character.originalId;
-      }
-      // 否则根据队伍类型生成
-      const isAlly = this.allyTeam.value.some(c => c.id === characterId);
-      return isAlly ? `character_${characterId}` : `enemy_${characterId}`;
-    }
-    
-    return null;
+    // 通过映射表查找
+    return this.uiCharacterToParticipantMap.get(characterId) || null;
   }
 }

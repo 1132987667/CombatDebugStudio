@@ -13,7 +13,7 @@ import type {
   BattleAction,
   BattleData,
 } from '@/types/battle'
-import { BATTLE_CONSTANTS } from '@/types/battle'
+import { BATTLE_CONSTANTS, SKILL_CONSTANTS } from '@/types/battle'
 import { BattleAIFactory, BattleAI } from '@/core/BattleAI'
 import type { IActionExecutor } from '@/core/battle/interfaces'
 
@@ -21,10 +21,21 @@ import type { IActionExecutor } from '@/core/battle/interfaces'
  * AI系统类
  * 负责创建AI实例、做出战斗决策、选择目标和使用技能
  * 实现了IAISystem接口，处理AI的智能行为逻辑
+ * 推荐通过容器注入使用
  */
 export class AISystem {
   /** AI实例存储映射，以参与者ID为键，用于缓存和复用 */
   private aiInstances = new Map<string, BattleAI>()
+  /** 技能管理器实例（通过构造函数注入） */
+  private skillManager: any
+
+  /**
+   * 私有构造函数
+   * @param skillManager 技能管理器实例（通过构造函数注入）
+   */
+  constructor(skillManager: any) {
+    this.skillManager = skillManager
+  }
 
   /**
    * 创建AI实例集合
@@ -42,16 +53,14 @@ export class AISystem {
       const skillIds = participant.getSkills() || []
       // 创建技能加载器，从SkillManager获取技能配置
       const skillLoader = (skillIds: string[]) => {
-        const SkillManager = require('@/core/skill/SkillManager').SkillManager
-        const skillManager = SkillManager.getInstance()
         return skillIds.map(skillId => {
-          const config = skillManager.getSkillConfig(skillId)
+          const config = this.skillManager.getSkillConfig(skillId)
           if (config) {
             return {
               id: config.id,
               name: config.name,
               type: 'small',
-              energyCost: config.energyCost || 50,
+              energyCost: config.energyCost || SKILL_CONSTANTS.SKILL_ENERGY_COST,
               cooldown: config.cooldown || 0,
               lastUsed: 0,
               description: config.description || '',
@@ -86,16 +95,14 @@ export class AISystem {
       const skillIds = participant.getSkills() || []
       // 创建技能加载器，从SkillManager获取技能配置
       const skillLoader = (skillIds: string[]) => {
-        const SkillManager = require('@/core/skill/SkillManager').SkillManager
-        const skillManager = SkillManager.getInstance()
         return skillIds.map(skillId => {
-          const config = skillManager.getSkillConfig(skillId)
+          const config = this.skillManager.getSkillConfig(skillId)
           if (config) {
             return {
               id: config.id,
               name: config.name,
               type: 'small',
-              energyCost: config.energyCost || 50,
+              energyCost: config.energyCost || SKILL_CONSTANTS.SKILL_ENERGY_COST,
               cooldown: config.cooldown || 0,
               lastUsed: 0,
               description: config.description || '',

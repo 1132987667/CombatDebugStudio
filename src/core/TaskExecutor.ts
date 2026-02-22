@@ -69,33 +69,25 @@ interface TaskProgress {
 export class TaskExecutor {
   private static instance: TaskExecutor
   private tasks: Map<string, Task> = new Map()
-  private taskIdCounter = 0
   private timer: RAFTimer
   private heartbeats: Map<string, symbol> = new Map()
   private progressTimers: Map<string, symbol> = new Map()
-  private battleSystem: GameBattleSystem = GameBattleSystem.getInstance()
+  private battleSystem: GameBattleSystem
   private logger = battleLogManager
 
-  private constructor() {
-    try {
-      const { container } = require('@/core/di/Container')
-      this.timer = container.resolve('RAFTimer')
-    } catch (error) {
-      // 如果依赖注入容器不可用，则使用默认实例
-      console.warn('依赖注入容器不可用，使用默认实例初始化', error)
-      this.timer = new RAFTimer()
-    }
+  /**
+   * 私有构造函数
+   * @param battleSystem 战斗系统实例（通过构造函数注入）
+   */
+  private constructor(battleSystem: GameBattleSystem) {
+    this.battleSystem = battleSystem
+    this.timer = new RAFTimer()
     this.logger = battleLogManager
     this.config = this.loadConfig()
     this.initialize()
   }
 
-  public static getInstance(): TaskExecutor {
-    if (!TaskExecutor.instance) {
-      TaskExecutor.instance = new TaskExecutor()
-    }
-    return TaskExecutor.instance
-  }
+
 
   private loadConfig(): TaskConfig {
     try {
@@ -708,6 +700,3 @@ export class TaskExecutor {
     this.logger.info('任务执行器已销毁')
   }
 }
-
-// 导出单例实例
-export const taskExecutor = TaskExecutor.getInstance()

@@ -12,18 +12,17 @@ import type { BuffConfig, BuffInstance } from '@/types/buff'
 import { StackRule, ControlType } from '@/types/buff'
 import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
 import { BuffContext } from '@/core/BuffContext'
+import { BuffContextPool } from '@/utils/BuffContextPool'
 import { ModifierStack } from '@/core/ModifierStack'
 import { BuffErrorBoundary } from '@/core/BuffErrorBoundary'
 
 /**
  * Buff系统类
  * 负责管理Buff实例的生命周期、状态更新和修饰符堆栈
- * 使用单例模式确保系统全局唯一
  * 使用Vue的reactive函数使状态具有响应性
+ * 推荐通过容器注入使用
  */
 export class BuffSystem {
-  /** 单例实例 */
-  private static instance: BuffSystem
   /** Buff实例映射，以实例ID为键，使用reactive确保响应性 */
   private buffInstances = reactive<Map<string, BuffInstance>>(new Map())
   /** 需要更新的Buff实例ID集合，只包含有实际更新逻辑的Buff */
@@ -32,23 +31,21 @@ export class BuffSystem {
   private modifierStacks = reactive<Map<string, ModifierStack>>(new Map())
   /** 角色当前回合数映射 */
   private characterTurns = new Map<string, number>()
+  /** Buff脚本注册表实例（通过构造函数注入） */
+  private readonly scriptRegistry: BuffScriptRegistry
 
   /**
    * 私有构造函数
-   * 防止外部直接实例化，确保单例模式
+   * 防止外部直接实例化
+   * @param scriptRegistry Buff脚本注册表实例
    */
-  private constructor() {}
-
-  /**
-   * 获取单例实例
-   * @returns Buff系统实例
-   */
-  public static getInstance(): BuffSystem {
-    if (!BuffSystem.instance) {
-      BuffSystem.instance = new BuffSystem()
-    }
-    return BuffSystem.instance
+  private constructor(scriptRegistry: BuffScriptRegistry) {
+    this.scriptRegistry = scriptRegistry
   }
+
+
+
+
 
   /**
    * 添加Buff
@@ -64,9 +61,10 @@ export class BuffSystem {
     config: BuffConfig,
     currentTurn: number = 0,
   ): string {
-    const script = BuffScriptRegistry.getInstance().get(buffId)
+    const script = this.scriptRegistry.get(buffId)
     if (!script) {
-      throw new Error(`Buff script ${buffId} not found`)
+      console.warn(`Buff script ${buffId} not found, skipping buff`)
+      return ''
     }
 
     // 检查是否已存在同类型Buff，根据叠加规则处理
@@ -93,15 +91,8 @@ export class BuffSystem {
 
     // 生成唯一的实例ID，添加随机数以防止在快速循环中重复
     const instanceId = `${characterId}_${buffId}_${currentTurn}_${Math.floor(Math.random() * 10000)}`
-    let context
-    try {
-      const { container } = require('@/core/di/Container')
-      // 由于BuffContext是一个需要动态参数的类，我们仍然直接创建它
-      context = new BuffContext(characterId, instanceId, config)
-    } catch (error) {
-      // 如果依赖注入容器不可用，则直接创建实例
-      context = new BuffContext(characterId, instanceId, config)
-    }
+    // 从对象池获取 BuffContext
+    const context = BuffContextPool.borrow(characterId, instanceId, config, this)
 
     const buffInstance: BuffInstance = {
       id: instanceId,
@@ -119,15 +110,8 @@ export class BuffSystem {
     this.buffInstances.set(instanceId, buffInstance)
 
     if (!this.modifierStacks.has(characterId)) {
-      let modifierStack
-      try {
-        const { container } = require('@/core/di/Container')
-        // 由于ModifierStack是一个需要与特定角色关联的类，我们仍然直接创建它
-        modifierStack = new ModifierStack()
-      } catch (error) {
-        // 如果依赖注入容器不可用，则直接创建实例
-        modifierStack = new ModifierStack()
-      }
+      // 直接创建ModifierStack实例，避免模块系统兼容性问题
+      const modifierStack = new ModifierStack()
       this.modifierStacks.set(characterId, modifierStack)
     }
 
@@ -155,6 +139,9 @@ export class BuffSystem {
 
     instance.isActive = false
     this.buffInstances.delete(instanceId)
+
+    // 归还 BuffContext 到对象池
+    BuffContextPool.return(instance.context)
 
     return true
   }
@@ -228,6 +215,10 @@ export class BuffSystem {
     return instances
   }
 
+  public getScriptRegistry(): BuffScriptRegistry {
+    return this.scriptRegistry
+  }
+
   /**
    * 检查角色是否可以使用技能
    * @param characterId 角色ID
@@ -255,15 +246,8 @@ export class BuffSystem {
    */
   public getModifierStack(characterId: string): ModifierStack {
     if (!this.modifierStacks.has(characterId)) {
-      let modifierStack
-      try {
-        const { container } = require('@/core/di/Container')
-        // 由于ModifierStack是一个需要与特定角色关联的类，我们仍然直接创建它
-        modifierStack = new ModifierStack()
-      } catch (error) {
-        // 如果依赖注入容器不可用，则直接创建实例
-        modifierStack = new ModifierStack()
-      }
+      // 直接创建ModifierStack实例，避免模块系统兼容性问题
+      const modifierStack = new ModifierStack()
       this.modifierStacks.set(characterId, modifierStack)
     }
     return this.modifierStacks.get(characterId) as ModifierStack

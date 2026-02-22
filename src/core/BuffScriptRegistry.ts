@@ -39,12 +39,10 @@ interface RegistryEntry<TParams = any> {
 /**
  * Buff脚本注册表类
  * 负责管理和注册Buff脚本
- * 使用单例模式确保系统全局唯一
  * 支持脚本的注册、获取、批量注册、检查和卸载
+ * 使用依赖注入方式获取实例，推荐通过容器使用
  */
 export class BuffScriptRegistry {
-  /** 单例实例 */
-  private static instance: BuffScriptRegistry
   /** 脚本注册表，以脚本ID为键 */
   private registry = new Map<string, RegistryEntry>()
   /** 日志记录器 */
@@ -52,20 +50,11 @@ export class BuffScriptRegistry {
 
   /**
    * 私有构造函数
-   * 防止外部直接实例化，确保单例模式
+   * 防止外部直接实例化
    */
   private constructor() {}
 
-  /**
-   * 获取单例实例
-   * @returns Buff脚本注册表实例
-   */
-  public static getInstance(): BuffScriptRegistry {
-    if (!BuffScriptRegistry.instance) {
-      BuffScriptRegistry.instance = new BuffScriptRegistry()
-    }
-    return BuffScriptRegistry.instance
-  }
+
 
   /**
    * 注册Buff脚本

@@ -100,6 +100,7 @@ import { BattleRuleManager } from '@/core/battle/BattleRuleManager'
 import { BattleManager } from '@/core/battle/BattleManager'
 import { BattleStateManager } from '@/core/battle/state/BattleStateManager'
 import { AutoBattleManager } from '@/core/battle/auto/AutoBattleManager'
+import type { IBattleSystem } from '@/core/battle/interfaces';
 import { InterventionManager } from '@/core/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager'
 import { DamageCalculator } from '@/core/skill/DamageCalculator'
@@ -107,40 +108,54 @@ import { HealCalculator } from '@/core/skill/HealCalculator'
 import { RAFTimer } from '@/utils/RAF'
 import { SkillManager } from '@/core/skill/SkillManager'
 import { BuffSystem } from '@/core/BuffSystem'
+import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
+import { BuffScriptLoader } from '@/core/BuffScriptLoader'
 import { PassiveSkillManager } from '@/core/skill/PassiveSkillManager'
-import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
-import { BuffContext } from '@/core/BuffContext'
-import { ModifierStack } from '@/core/ModifierStack'
-import { BattleAI } from '@/core/BattleAI'
-import { CharacterAI } from '@/core/BattleAI'
-import { EnemyAI } from '@/core/BattleAI'
 import { TaskExecutor } from '@/core/TaskExecutor'
+import { BattleService } from '@/services/BattleService'
+import { battleEventManager } from '@/core/battle/events/BattleEventManager'
 
 /**
  * 初始化依赖注入容器
  * 集中管理所有服务注册
+ * 注意：服务注册顺序很重要，需要先注册被依赖的服务
  */
 export function initializeContainer(): void {
-  // 注册核心服务
-  container.register(TURN_MANAGER_TOKEN.toString(), new TurnManager())
-  container.register(ACTION_EXECUTOR_TOKEN.toString(), new ActionExecutor())
-  container.register(PARTICIPANT_MANAGER_TOKEN.toString(), new ParticipantManager())
-  container.register(AI_SYSTEM_TOKEN.toString(), new AISystem())
-  container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder())
-  container.register(BATTLE_RULE_MANAGER_TOKEN.toString(), new BattleRuleManager())
+  // 先清除容器，避免重复注册
+  container.clear()
   
-  // 注册计算服务
+  // 1. 注册基础服务（无依赖或只依赖外部）
+  container.register('BuffScriptRegistry', new BuffScriptRegistry())
+  
+  // 1.5 注册BuffScriptLoader（依赖BuffScriptRegistry）
+  const buffScriptRegistry = container.resolve<BuffScriptRegistry>('BuffScriptRegistry')
+  container.register('BuffScriptLoader', new BuffScriptLoader(buffScriptRegistry))
+  
+  // 2. 注册BuffSystem（依赖BuffScriptRegistry）
+  container.register('BuffSystem', new BuffSystem(buffScriptRegistry))
+  
+  // 3. 注册SkillManager（依赖BuffSystem）
+  const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+  container.register('SkillManager', new SkillManager(buffSystem))
+  
+  // 4. 注册PassiveSkillManager（依赖SkillManager和BuffSystem）
+  const skillManager = container.resolve<SkillManager>('SkillManager')
+  container.register('PassiveSkillManager', new PassiveSkillManager(skillManager, buffSystem))
+  
+  // 5. 注册计算服务
   container.register('DamageCalculator', new DamageCalculator())
   container.register('HealCalculator', new HealCalculator())
   container.register('RAFTimer', new RAFTimer())
   
-  // 注册系统服务
-  container.register('SkillManager', SkillManager.getInstance())
-  container.register('BuffSystem', BuffSystem.getInstance())
-  container.register('PassiveSkillManager', PassiveSkillManager.getInstance())
-  container.register('TaskExecutor', TaskExecutor.getInstance())
-
-  // 注册战斗系统（使用工厂方法确保单例）
+  // 6. 注册核心战斗组件（依赖上面注册的服务）
+  container.register(TURN_MANAGER_TOKEN.toString(), new TurnManager(buffSystem))
+  container.register(ACTION_EXECUTOR_TOKEN.toString(), new ActionExecutor(buffSystem))
+  container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
+  container.register(PARTICIPANT_MANAGER_TOKEN.toString(), new ParticipantManager())
+  container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder())
+  container.register(BATTLE_RULE_MANAGER_TOKEN.toString(), new BattleRuleManager())
+  
+  // 7. 注册战斗系统（使用工厂方法确保单例）
   container.registerFactory(BATTLE_SYSTEM_TOKEN.toString(), () => {
     // 手动创建GameBattleSystem实例并注入依赖
     const turnManager = container.resolve(TURN_MANAGER_TOKEN.toString())
@@ -155,7 +170,7 @@ export function initializeContainer(): void {
     const buffSystem = container.resolve('BuffSystem')
     const passiveSkillManager = container.resolve('PassiveSkillManager')
     
-    return GameBattleSystem.getInstance(
+    return GameBattleSystem.createInstance(
       turnManager,
       actionExecutor,
       participantManager,
@@ -170,9 +185,13 @@ export function initializeContainer(): void {
     )
   }, true)
 
+  // 8. 注册TaskExecutor（依赖GameBattleSystem）
+  const battleSystem = container.resolve<any>(BATTLE_SYSTEM_TOKEN.toString())
+  container.register('TaskExecutor', new TaskExecutor(battleSystem))
+
   // 注册BattleManager
   container.registerFactory('BattleManager', () => {
-    const battleSystem = container.resolve(BATTLE_SYSTEM_TOKEN.toString())
+    const battleSystem : IBattleSystem = container.resolve(BATTLE_SYSTEM_TOKEN.toString())
     
     // 创建并注入所有子管理器
     const battleStateManager = new BattleStateManager(battleSystem)
@@ -180,13 +199,24 @@ export function initializeContainer(): void {
     const interventionManager = new InterventionManager(battleSystem, battleStateManager)
     const battleReplayManager = new BattleReplayManager()
     
-    return new BattleManager(
+    const battleManager = new BattleManager(
       battleSystem,
       battleStateManager,
       autoBattleManager,
       interventionManager,
       battleReplayManager
     )
+
+    // 注入战斗系统引用到事件管理器
+    battleEventManager.setBattleSystem(battleSystem, battleStateManager)
+    
+    return battleManager
+  }, true)
+
+  // 注册BattleService
+  container.registerFactory('BattleService', () => {
+    const battleManager = container.resolve('BattleManager')
+    return new BattleService(battleManager)
   }, true)
 }
 

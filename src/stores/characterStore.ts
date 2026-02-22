@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { UIBattleCharacter } from '@/types';
 import { PARTICIPANT_SIDE } from '@/types/battle';
+import { eventBus } from '@/main';
 
 interface CharacterState {
   allyTeam: Map<string, UIBattleCharacter>;
@@ -119,6 +120,12 @@ export const useCharacterStore = defineStore('character', {
         enemyMap.set(char.id, char);
       });
       this.enemyTeam = enemyMap;
+      
+      // 触发队伍数据变化事件
+      eventBus.emit('teamDataChanged', {
+        allyTeam: Array.from(this.allyTeam.values()),
+        enemyTeam: Array.from(this.enemyTeam.values())
+      });
     },
 
     /**
@@ -131,6 +138,12 @@ export const useCharacterStore = defineStore('character', {
       
       if (target) {
         Object.assign(target, updates);
+        
+        // 触发队伍数据变化事件
+        eventBus.emit('teamDataChanged', {
+          allyTeam: Array.from(this.allyTeam.values()),
+          enemyTeam: Array.from(this.enemyTeam.values())
+        });
       }
     },
 
@@ -172,6 +185,12 @@ export const useCharacterStore = defineStore('character', {
       if (this.selectedCharacterId === characterId) {
         this.selectedCharacterId = null;
       }
+      
+      // 触发队伍数据变化事件
+      eventBus.emit('teamDataChanged', {
+        allyTeam: Array.from(this.allyTeam.values()),
+        enemyTeam: Array.from(this.enemyTeam.values())
+      });
     },
 
     /**
@@ -214,6 +233,12 @@ export const useCharacterStore = defineStore('character', {
       } else {
         this.enemyTeam = newTeamMap;
       }
+      
+      // 触发队伍数据变化事件
+      eventBus.emit('teamDataChanged', {
+        allyTeam: Array.from(this.allyTeam.values()),
+        enemyTeam: Array.from(this.enemyTeam.values())
+      });
     },
 
     /**
@@ -224,6 +249,12 @@ export const useCharacterStore = defineStore('character', {
       this.enemyTeam.clear();
       this.selectedCharacterId = null;
       this.currentTurn = 1;
+      
+      // 触发队伍数据变化事件
+      eventBus.emit('teamDataChanged', {
+        allyTeam: Array.from(this.allyTeam.values()),
+        enemyTeam: Array.from(this.enemyTeam.values())
+      });
     },
 
     /**
@@ -239,6 +270,12 @@ export const useCharacterStore = defineStore('character', {
       this.enemyTeam.forEach(enemy => {
         enemy.currentHp = typeof enemy.maxHp === 'object' && enemy.maxHp.value !== undefined ? enemy.maxHp.value : 0;
         enemy.currentEnergy = 0;
+      });
+      
+      // 触发队伍数据变化事件
+      eventBus.emit('teamDataChanged', {
+        allyTeam: Array.from(this.allyTeam.values()),
+        enemyTeam: Array.from(this.enemyTeam.values())
       });
     },
 

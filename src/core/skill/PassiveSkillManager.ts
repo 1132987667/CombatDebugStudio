@@ -34,30 +34,25 @@ export enum PassiveSkillTrigger {
 /**
  * 被动技能管理器类
  * 负责管理被动技能的触发时机和效果执行
+ * 推荐通过容器注入使用
  */
 export class PassiveSkillManager {
-  private static instance: PassiveSkillManager
   private skillManager: SkillManager
   private buffSystem: BuffSystem
 
   /**
    * 私有构造函数，防止外部实例化
+   * @param skillManager 技能管理器实例（通过构造函数注入）
+   * @param buffSystem Buff系统实例（通过构造函数注入）
    */
-  private constructor() {
-    this.skillManager = SkillManager.getInstance()
-    this.buffSystem = BuffSystem.getInstance()
+  private constructor(skillManager: SkillManager, buffSystem: BuffSystem) {
+    this.skillManager = skillManager
+    this.buffSystem = buffSystem
   }
 
-  /**
-   * 获取单例实例
-   * @returns PassiveSkillManager实例
-   */
-  public static getInstance(): PassiveSkillManager {
-    if (!PassiveSkillManager.instance) {
-      PassiveSkillManager.instance = new PassiveSkillManager()
-    }
-    return PassiveSkillManager.instance
-  }
+
+
+
 
   /**
    * 触发指定时机的被动技能

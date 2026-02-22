@@ -53,42 +53,29 @@ export interface SkillCalculator {
  * 技能管理器类
  * 负责技能配置的加载、解析和执行，集成完整的伤害/治疗计算系统
  * 支持插件化的计算器注册
+ * 推荐通过容器注入使用
  */
 export class SkillManager {
-  private static instance: SkillManager
   private logger = battleLogManager
   private skillConfigs = new Map<string, SkillConfig>()
-  private buffSystem = BuffSystem.getInstance()
+  private buffSystem: BuffSystem
   private damageCalculator
   private healCalculator
   private calculators: Map<string, SkillCalculator> = new Map()
 
   /**
    * 私有构造函数，防止外部实例化
+   * @param buffSystem Buff系统实例（通过构造函数注入）
    */
-  private constructor() {
-    try {
-      const { container } = require('@/core/di/Container')
-      this.damageCalculator = container.resolve('DamageCalculator')
-      this.healCalculator = container.resolve('HealCalculator')
-    } catch (error) {
-      // 如果依赖注入容器不可用，则使用默认实例
-      console.warn('依赖注入容器不可用，使用默认实例初始化', error)
-      this.damageCalculator = new DamageCalculator()
-      this.healCalculator = new HealCalculator()
-    }
+  private constructor(buffSystem: BuffSystem) {
+    this.buffSystem = buffSystem
+    this.damageCalculator = new DamageCalculator()
+    this.healCalculator = new HealCalculator()
   }
 
-  /**
-   * 获取单例实例
-   * @returns SkillManager实例
-   */
-  public static getInstance(): SkillManager {
-    if (!SkillManager.instance) {
-      SkillManager.instance = new SkillManager()
-    }
-    return SkillManager.instance
-  }
+
+
+
 
   /**
    * 加载技能配置
@@ -351,6 +338,19 @@ export class SkillManager {
   ): void {
     if (!skillStep.buffId) {
       this.logger.warn(`buff步骤缺少buffId: ${skillStep.type}`)
+      return
+    }
+
+    // 检查 Buff 脚本是否已注册
+    const scriptRegistry = this.buffSystem.getScriptRegistry()
+    
+    if (!scriptRegistry.has(skillStep.buffId)) {
+      this.logger.warn(`Buff脚本未找到: ${skillStep.buffId}，跳过buff效果`)
+      battleAction.effects.push({
+        type: 'buff',
+        buffId: skillStep.buffId,
+        description: `${source.name} 尝试施加 ${skillStep.buffId} 失败（脚本未注册）`
+      })
       return
     }
 

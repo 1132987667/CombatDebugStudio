@@ -7,16 +7,16 @@
  * 版本: 1.0.0
  */
 
-import { taskExecutor } from '@/core/TaskExecutor'
-import { GameBattleSystem } from '@/core/BattleSystem'
+import { container } from '@/core/di/Container'
 import { PARTICIPANT_SIDE } from '@/types/battle'
+import { BATTLE_SYSTEM_TOKEN } from '@/core/battle/interfaces'
 
 /**
  * 创建示例战斗
  * @returns 战斗ID
  */
 function createExampleBattle() {
-  const battleSystem = GameBattleSystem.getInstance()
+  const battleSystem = container.resolve<any>(BATTLE_SYSTEM_TOKEN.toString())
   
   // 创建示例参与者
   const participants = [
@@ -226,6 +226,7 @@ function createExampleBattle() {
     },
   ]
 
+  console.log('auto task example')
   // 创建战斗
   const battleState = battleSystem.createBattle(participants)
   return battleState.battleId
@@ -236,6 +237,9 @@ function createExampleBattle() {
  */
 async function runAutoBattleTaskExample() {
   console.log('=== 自动战斗任务示例 ===')
+
+  // 从容器获取 TaskExecutor
+  const taskExecutor = container.resolve('TaskExecutor')
 
   // 创建示例战斗
   const battleId = createExampleBattle()
@@ -287,6 +291,9 @@ async function runAutoBattleTaskExample() {
  */
 async function runMultipleTasksExample() {
   console.log('=== 多任务执行示例 ===')
+
+  // 从容器获取 TaskExecutor
+  const taskExecutor = container.resolve('TaskExecutor')
 
   // 创建多个战斗和任务
   for (let i = 1; i <= 3; i++) {

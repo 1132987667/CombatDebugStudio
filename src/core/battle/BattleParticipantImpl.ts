@@ -13,6 +13,7 @@ import type {
   ParticipantSide,
 } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
+import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter'
 
 /**
  * 参与者初始化数据接口
@@ -131,6 +132,71 @@ export class BattleParticipantImpl implements BattleParticipant {
   }
   /** 技能冷却状态映射，key为技能ID，value为剩余冷却回合数 */
   skillCooldowns: Map<string, number>
+
+  /**
+   * 从UI角色创建战斗参与者实例
+   * @param uiCharacter - UI角色数据
+   * @param isAlly - 是否为我方角色
+   * @param index - 角色在队伍中的索引
+   * @returns BattleParticipantImpl 实例
+   */
+  static fromUICharacter(
+    uiCharacter: UIBattleCharacter,
+    isAlly: boolean,
+    index: number
+  ): BattleParticipantImpl {
+    const side = isAlly ? ParticipantSide.ALLY : ParticipantSide.ENEMY
+
+    const getValue = (attr: { value?: number } | number | undefined, defaultValue: number): number => {
+      if (attr === undefined || attr === null) return defaultValue
+      if (typeof attr === 'number') return attr
+      if (typeof attr === 'object' && 'value' in attr) return attr.value ?? defaultValue
+      return defaultValue
+    }
+
+    const maxHp = getValue(uiCharacter.maxHp, 0)
+    const maxMp = getValue(uiCharacter.maxMp, 0)
+    const currentMp = getValue(uiCharacter.currentMp, maxMp)
+    const maxEnergy = getValue(uiCharacter.maxEnergy, 100)
+    const currentEnergy = getValue(uiCharacter.currentEnergy, 25)
+    const attack = getValue(uiCharacter.attack, 0)
+    const defense = getValue(uiCharacter.defense, 0)
+    const speed = getValue(uiCharacter.speed, 0)
+    const critRate = getValue(uiCharacter.critRate, 10)
+    const critDamage = getValue(uiCharacter.critDamage, 125)
+    const damageReduction = getValue(uiCharacter.damageReduction, 0)
+    const healthBonus = getValue(uiCharacter.healthBonus, 0)
+    const attackBonus = getValue(uiCharacter.attackBonus, 0)
+    const speedBonus = getValue(uiCharacter.speedBonus, 0)
+    const minAttack = getValue(uiCharacter.minAttack, attack)
+    const maxAttack = getValue(uiCharacter.maxAttack, attack)
+
+    return new BattleParticipantImpl({
+      id: uiCharacter.originalId || `${isAlly ? 'ally' : 'enemy'}_${index}`,
+      name: uiCharacter.name || `${isAlly ? 'Ally' : 'Enemy'} ${index + 1}`,
+      type: side,
+      team: side,
+      level: uiCharacter.level || 1,
+      maxHealth: maxHp,
+      currentHealth: getValue(uiCharacter.currentHp, maxHp),
+      maxMp,
+      currentMp,
+      maxEnergy,
+      currentEnergy,
+      minAttack,
+      maxAttack,
+      attack,
+      defense,
+      speed,
+      critRate,
+      critDamage,
+      damageReduction,
+      healthBonus,
+      attackBonus,
+      speedBonus,
+      skills: uiCharacter.skills || {},
+    })
+  }
 
   /**
    * 构造函数

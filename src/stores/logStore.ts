@@ -32,8 +32,9 @@ export const useLogStore = defineStore('log', {
       
       // 应用过滤器
       logs = logs.filter(log => {
-        if (log.level === 'system' && !state.logFilters.showSystem) return false;
-        if (log.level === 'action' && !state.logFilters.showAction) return false;
+        const category = log.category;
+        if (category === 'system' && !state.logFilters.showSystem) return false;
+        if (category === 'action' && !state.logFilters.showAction) return false;
         if (log.level === 'error' && !state.logFilters.showError) return false;
         return true;
       });
@@ -97,21 +98,21 @@ export const useLogStore = defineStore('log', {
      * 添加系统日志
      */
     addSystemLog(message: string) {
-      battleLogManager.addLog(0, '系统', '系统消息', '', message, 'system', '');
+      battleLogManager.addLog('系统', '系统', '系统消息', '', message, 'system', 'info', '');
     },
 
     /**
      * 添加动作日志
      */
     addActionLog(source: string, action: string, target: string, result: string) {
-      battleLogManager.addLog(0, source, action, target, result, 'action', '');
+      battleLogManager.addLog('当前回合', source, action, target, result, 'action', 'info', '');
     },
 
     /**
      * 添加错误日志
      */
     addErrorLog(message: string) {
-      battleLogManager.addLog(0, '系统', '错误', '', message, 'error', '');
+      battleLogManager.addLog('系统', '系统', '错误', '', message, 'system', 'error', '');
     },
   },
 });

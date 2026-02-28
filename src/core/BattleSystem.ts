@@ -410,8 +410,8 @@ export class GameBattleSystem implements IBattleSystem {
           await new Promise(resolve => setTimeout(resolve, 100))
         }
 
-        // 更新所有Buff的状态
-        this.buffSystem.update(0)
+        // 更新当前行动者的Buff回合状态
+        this.buffSystem.updatePerTurn(participant.id, battle.currentRound || 1)
 
         // 同步战斗状态更新
         this.syncBattleStateUpdate(battleId)
@@ -528,7 +528,8 @@ export class GameBattleSystem implements IBattleSystem {
           action: '被',
           target: '控制',
           result: `${participant.name} 被控制，无法行动`,
-          level: 'status',
+          level: 'info',
+          category: 'status',
         }
         this.syncBattleLog(battle.battleId, logEntry)
 
@@ -748,7 +749,8 @@ export class GameBattleSystem implements IBattleSystem {
         action: '对',
         target: targetParticipant!.name,
         result: `${source.name} 对 ${targetParticipant!.name} 发动普通攻击，但是被闪避了！`,
-        level: 'miss',
+        level: 'info',
+        category: 'status',
       }
       this.syncBattleLog(battle.battleId, logEntry)
 
@@ -796,7 +798,8 @@ export class GameBattleSystem implements IBattleSystem {
         action: '对',
         target: targetParticipant!.name,
         result: `${source.name} 对 ${targetParticipant!.name} 发动普通攻击，${isCritical ? '暴击！' : ''}造成 ${damage} 点物理伤害。`,
-        level: isCritical ? 'crit' : 'damage',
+        level: 'info',
+        category: isCritical ? 'crit' : 'damage',
       }
       this.syncBattleLog(battle.battleId, logEntry)
 
@@ -1179,6 +1182,12 @@ export class GameBattleSystem implements IBattleSystem {
     // 清理战斗相关的所有定时器
     this.cleanupBattleTimers(battleId)
 
+    // 清理所有参与者Buff实例，避免战斗结束后残留
+    battle.participants.forEach((participant) => {
+      this.buffSystem.clearAllBuffs(participant.id)
+      participant.buffs = []
+    })
+
     // 转换到战斗结算
     battle.battleState = BATTLE_STATUS.SETTLEMENT
     battle.roundState = ROUND_STATUS.NONE
@@ -1284,6 +1293,7 @@ export class GameBattleSystem implements IBattleSystem {
     battle.participants.forEach((participant) => {
       participant.currentHealth = participant.maxHealth
       participant.currentEnergy = 0
+      this.buffSystem.clearAllBuffs(participant.id)
       participant.buffs = []
     })
 
@@ -1648,14 +1658,19 @@ export class GameBattleSystem implements IBattleSystem {
     if (battle) {
       this.emit(BattleSystemEvent.BATTLE_STATE_UPDATE, {
         battleId,
-        participants: Array.from(battle.participants.values()).map((p) => ({
-          id: p.id,
-          name: p.name,
-          currentHp: p.getAttribute('HP'),
-          maxHp: p.getAttribute('MAX_HP'),
-          currentEnergy: p.currentEnergy,
-          buffs: p.buffs,
-        })),
+        participants: Array.from(battle.participants.values()).map((p) => {
+          const activeBuffIds = this.buffSystem.getBuffInstances(p.id).map((buff) => buff.id)
+          p.buffs = activeBuffIds
+
+          return {
+            id: p.id,
+            name: p.name,
+            currentHp: p.getAttribute('HP'),
+            maxHp: p.getAttribute('MAX_HP'),
+            currentEnergy: p.currentEnergy,
+            buffs: activeBuffIds,
+          }
+        }),
         turnOrder: battle.turnOrder,
         currentTurn: battle.currentTurn,
         currentRound: battle.currentRound,

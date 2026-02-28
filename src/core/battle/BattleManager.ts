@@ -1,6 +1,6 @@
 import type { IBattleSystem } from '@/core/battle/interfaces';
 import { BattleStateManager } from '@/core/battle/state/BattleStateManager';
-import { getBattleLogManager } from '@/core/battle/logs/BattleLogManager';
+import { battleLogManager } from '@/utils/logging';
 import { AutoBattleManager } from '@/core/battle/auto/AutoBattleManager';
 import { InterventionManager } from '@/core/battle/intervention/InterventionManager';
 import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager';
@@ -21,7 +21,7 @@ import { useCharacterStore } from '@/stores/characterStore';
 export class BattleManager {
   private battleSystem: IBattleSystem;
   private battleStateManager: BattleStateManager;
-  private battleLogManager = getBattleLogManager();
+  private battleLogManager = battleLogManager;
   private autoBattleManager: AutoBattleManager;
   private interventionManager: InterventionManager;
   private battleReplayManager: BattleReplayManager;
@@ -196,7 +196,7 @@ export class BattleManager {
    * 开始战斗
    * 从 characterStore 获取启用的角色数据
    */
-  async startBattle() {
+  async startBattle(): Promise<string | null> {
     if (!this.battleSystem) {
       throw new Error('战斗系统未初始化');
     }
@@ -207,7 +207,7 @@ export class BattleManager {
     
     if (enabledAllyTeam.length === 0 || enabledEnemyTeam.length === 0) {
       this.battleLogManager.addErrorLog('队伍数据未初始化，请先添加角色到队伍');
-      return;
+      return null;
     }
     
     // 建立映射关系（从 characterStore 获取队伍数据）
@@ -222,9 +222,13 @@ export class BattleManager {
     });
     const allParticipants = [...allyParticipants, ...enemyParticipants];
     const battleState = this.battleSystem.createBattle(allParticipants);
+    this.battleStateManager.setBattleId(battleState.battleId);
     this.autoBattleManager.setBattleId(battleState.battleId);
     this.battleLogManager.clearLogs();
     this.battleLogManager.addSystemLog('战斗已创建');
+    this.syncBattleState();
+
+    return battleState.battleId;
   }
 
   /**

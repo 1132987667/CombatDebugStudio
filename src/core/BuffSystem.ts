@@ -220,26 +220,6 @@ export class BuffSystem {
   }
 
   /**
-   * 检查角色是否可以使用技能
-   * @param characterId 角色ID
-   * @returns 是否可以使用技能
-   */
-  public canUseSkill(characterId: string): boolean {
-    const buffInstances = this.getBuffInstances(characterId)
-    
-    // 检查是否有阻止使用技能的Buff（如沉默）
-    for (const instance of buffInstances) {
-      // 这里需要根据实际的Buff类型和效果来判断
-      // 暂时假设包含'silence'或'stun'的Buff会阻止使用技能
-      if (instance.buffId.includes('silence') || instance.buffId.includes('stun')) {
-        return false
-      }
-    }
-    
-    return true
-  }
-
-  /**
    * 获取角色的修饰符堆栈
    * @param characterId 角色ID
    * @returns 修饰符堆栈实例

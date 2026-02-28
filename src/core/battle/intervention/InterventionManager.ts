@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import type { IBattleSystem } from '@/core/battle/interfaces';
 import { BattleStateManager } from '@/core/battle/state/BattleStateManager';
-import { getBattleLogManager } from '@/core/battle/logs/BattleLogManager';
+import { battleLogManager } from '@/utils/logging';
 import type { UIBattleCharacter } from '@/types';
 import { GameDataProcessor } from '@/utils/GameDataProcessor';
 
@@ -12,7 +12,7 @@ import { GameDataProcessor } from '@/utils/GameDataProcessor';
 export class InterventionManager {
   private battleSystem: IBattleSystem;
   private battleStateManager: BattleStateManager;
-  private battleLogManager = getBattleLogManager();
+  private battleLogManager = battleLogManager;
   private selectedCharacterId = ref<string | null>(null);
   private selectedChar = ref<UIBattleCharacter | null>(null);
 

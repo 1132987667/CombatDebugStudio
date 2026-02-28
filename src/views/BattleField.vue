@@ -14,14 +14,14 @@
           <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
             <div v-for="member in filterAllyTeam" :key="member.id" class="member-card"
-            :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: characterStore.selectedCharacterId === member.id, hit: characterEffects.animation[member.id]?.isHit, casting: characterEffects.animation[member.id]?.isCasting, buffed: characterEffects.animation[member.id]?.isBuffed }"
+            :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: characterStore.selectedCharacterId === member.id, hit: getAnimationState(member.id).isHit, casting: getAnimationState(member.id).isCasting, buffed: getAnimationState(member.id).isBuffed }"
             @click="selectCharacter(member.id)">
               <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)" :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
               <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)" :skill-name="getCharacterSkillName(member.id)" />
               <div class="member-info">
                 <div class="member-name">
                   Lv.{{ member.level }} {{ member.name }}
-                  <div class="member-action" v-if="currentActor?.id === member.id">
+                  <div class="member-action" v-if="isCurrentActor(member.id)">
                     <span class="acting-badge">←操作中</span>
                   </div>
                 </div>
@@ -67,14 +67,14 @@
           <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
             <div v-for="member in filterEnemyTeam" :key="member.id" class="member-card"
-              :class="{ active: currentActor?.id === member.id, dead: member.currentHp <= 0, selected: characterStore.selectedCharacterId === member.id, hit: characterEffects.animation[member.id]?.isHit, casting: characterEffects.animation[member.id]?.isCasting, buffed: characterEffects.animation[member.id]?.isBuffed }"
+              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: characterStore.selectedCharacterId === member.id, hit: getAnimationState(member.id).isHit, casting: getAnimationState(member.id).isCasting, buffed: getAnimationState(member.id).isBuffed }"
               @click="selectCharacter(member.id)">
               <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)" :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
               <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)" :skill-name="getCharacterSkillName(member.id)" />
               <div class="member-info">
                 <div class="member-name">
                   Lv.{{ member.level }} {{ member.name }}
-                  <div class="member-action" v-if="currentActor?.id === member.id">
+                  <div class="member-action" v-if="isCurrentActor(member.id)">
                     <span class="acting-badge enemy-acting">←操作中</span>
                   </div>
                 </div>
@@ -114,7 +114,7 @@
       </div>
     </div>
 
-    <BattleLog :logs="logStore.battleLogs" />
+    <BattleLog :logs="battleLogStore.filteredLogs" />
 
     <!-- 状态工具提示 -->
     <div v-if="statusTooltip.visible" class="status-tooltip" :style="{
@@ -153,16 +153,17 @@
 <script setup lang="ts">
 import { computed, ref, onUnmounted } from "vue";
 import { raf } from '@/utils/RAF';
-import { GameDataProcessor } from '@/utils/GameDataProcessor';
-import { useCharacterList } from '@/composables/useCharacterList';
-import { useCharacterStore, useLogStore } from "@/stores";
+import { useCharacterStore } from "@/stores";
+import { useBattleLogStore } from '@/stores/battleLogStore';
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
+import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter';
+import type { AttributeValue } from '@/types';
 
 // 使用Pinia stores
 const characterStore = useCharacterStore();
-const logStore = useLogStore();
+const battleLogStore = useBattleLogStore();
 
 const props = defineProps<{
   currentActorId: string | null;
@@ -186,15 +187,54 @@ const characterEffects = ref<{
   animation: {}
 });
 
-// 使用角色列表管理组合式函数
-const { 
-  filterAndSortAllyTeam, 
-  filterAndSortEnemyTeam, 
-  getHpPercent, 
-  getHpColorClass, 
-  getMemberHp, 
-  getMemberSpeed 
-} = useCharacterList();
+function toNumber(value: number | AttributeValue | undefined): number {
+  if (typeof value === 'number') return value;
+  if (value && typeof value === 'object' && 'value' in value) {
+    return value.value ?? 0;
+  }
+  return 0;
+}
+
+function getMemberSpeed(member: UIBattleCharacter | null): number {
+  if (!member) return 0;
+  return toNumber(member.speed);
+}
+
+function getHpPercent(member: UIBattleCharacter): number {
+  const maxHp = toNumber(member.maxHp);
+  const currentHp = toNumber(member.currentHp);
+  if (maxHp <= 0) return 0;
+  return Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
+}
+
+function getHpColorClass(member: UIBattleCharacter): string {
+  const hpPercent = getHpPercent(member);
+  if (hpPercent <= 25) return 'danger';
+  if (hpPercent <= 50) return 'warning';
+  return 'safe';
+}
+
+function getMemberHp(member: UIBattleCharacter): string {
+  const currentHp = Math.max(0, Math.floor(toNumber(member.currentHp)));
+  const maxHp = Math.max(0, Math.floor(toNumber(member.maxHp)));
+  return `${currentHp}/${maxHp}`;
+}
+
+function getNumericValue(value: number | AttributeValue | undefined): number {
+  return toNumber(value);
+}
+
+function isCurrentActor(memberId: string): boolean {
+  return currentActor.value?.id === memberId || props.currentActorId === memberId;
+}
+
+function isMemberDead(member: UIBattleCharacter): boolean {
+  return getNumericValue(member.currentHp) <= 0;
+}
+
+function getAnimationState(characterId: string): { isHit: boolean; isCasting: boolean; isBuffed: boolean } {
+  return characterEffects.value.animation[characterId] || { isHit: false, isCasting: false, isBuffed: false };
+}
 
 // 根据回合顺序排序角色列表
 const filterAllyTeam = computed(() => {

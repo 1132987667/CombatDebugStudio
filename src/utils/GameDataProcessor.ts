@@ -687,8 +687,12 @@ export class GameDataProcessor {
     participant: BattleParticipantImpl,
     index: number = 0,
   ): UIBattleCharacter {
+    const buffSignature = Array.isArray(participant.buffs)
+      ? participant.buffs.slice().sort().join(',')
+      : ''
+
     // 生成缓存键
-    const cacheKey = `ui_character_${participant.id}_${participant.currentHealth}_${participant.currentEnergy}_${participant.maxEnergy}`;
+    const cacheKey = `ui_character_${participant.id}_${participant.currentHealth}_${participant.currentEnergy}_${participant.maxEnergy}_${participant.attack}_${participant.defense}_${participant.speed}_${participant.critRate}_${participant.critDamage}_${participant.damageReduction}_${participant.healthBonus}_${participant.attackBonus}_${participant.defenseBonus}_${participant.speedBonus}_${buffSignature}`;
     
     // 尝试从缓存获取
     const cachedCharacter = DataProcessor.getCachedData<UIBattleCharacter>(cacheKey);
@@ -763,7 +767,7 @@ export class GameDataProcessor {
       speedBonus: createAttributeValue(participant.speedBonus, 'speedBonus'),
       enabled: index < 3,
       isFirst: index === 0,
-      buffs: [],
+      buffs: [...(participant.buffs || [])],
       skills: participant.skills,
     }) as UIBattleCharacter;
     

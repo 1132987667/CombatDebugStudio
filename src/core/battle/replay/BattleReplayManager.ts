@@ -1,13 +1,13 @@
 import { ref, computed } from 'vue';
 import type { BattleSystemAction, BattleState } from '@/types/battle';
-import { getBattleLogManager } from '@/core/battle/logs/BattleLogManager';
+import { battleLogManager } from '@/utils/logging';
 
 /**
  * 战斗回放管理器
  * 负责战斗回放的控制、管理和事件处理
  */
 export class BattleReplayManager {
-  private battleLogManager = getBattleLogManager();
+  private battleLogManager = battleLogManager;
   private isReplaying = ref(false);
   private isPaused = ref(false);
   private currentReplayIndex = ref(0);

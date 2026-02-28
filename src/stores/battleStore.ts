@@ -257,6 +257,7 @@ export const useBattleStore = defineStore('battle', {
           this.currentBattleId = data.battleId;
           this.turnOrder = data.turnOrder || [];
           this.setBattleActive(true);
+          this.battleManager?.syncBattleState();
         }
       });
 
@@ -270,7 +271,8 @@ export const useBattleStore = defineStore('battle', {
             action: '宣布',
             target: '',
             result: `战斗结束！胜利者: ${data.winner === 'ALLY' ? '我方' : '敌方'}`,
-            level: 'system'
+            level: 'info',
+            category: 'system'
           });
         }
       });
@@ -284,7 +286,8 @@ export const useBattleStore = defineStore('battle', {
             action: '开始',
             target: '',
             result: `回合${data.turn}开始，当前行动者: ${data.actorId}`,
-            level: 'system'
+            level: 'info',
+            category: 'system'
           });
         }
       });
@@ -297,7 +300,8 @@ export const useBattleStore = defineStore('battle', {
             action: '结束',
             target: '',
             result: `回合${data.turn}结束`,
-            level: 'system'
+            level: 'info',
+            category: 'system'
           });
         }
       });
@@ -444,13 +448,28 @@ export const useBattleStore = defineStore('battle', {
     async startBattle() {
       this.setLoading(true, '开始战斗');
       this.clearError();
+      const battleLogStore = useBattleLogStore()
 
       try {
         if (!this.battleManager) {
           throw new Error('战斗管理器未初始化');
         }
-        const battleLogStore = useBattleLogStore()
-        await this.battleManager.startAutoBattle();
+        const characterStore = useCharacterStore()
+        const enabledAllyTeam = Array.from(characterStore.allyTeam.values()).filter(c => c.enabled)
+        const enabledEnemyTeam = Array.from(characterStore.enemyTeam.values()).filter(e => e.enabled)
+
+        const battleId = await this.battleManager.startBattle();
+        if (!battleId) {
+          throw new Error('战斗创建失败，请检查参战队伍配置');
+        }
+
+        const autoBattleStarted = await this.battleManager.startAutoBattle();
+        if (!autoBattleStarted) {
+          throw new Error('自动战斗启动失败');
+        }
+
+        this.currentBattleId = battleId;
+        this.battleManager.syncBattleState();
         this.setBattleActive(true);
         this.autoPlayMode = true;
         battleLogStore.addSystemLog(`战斗已开始`);
@@ -461,7 +480,8 @@ export const useBattleStore = defineStore('battle', {
           action: '宣布',
           target: '',
           result: `战斗开始！参战角色: ${enabledAllyTeam.length}人 | 参战敌人: ${enabledEnemyTeam.length}人`,
-          level: 'system'
+          level: 'info',
+          category: 'system'
         });
 
         return true;
@@ -481,6 +501,7 @@ export const useBattleStore = defineStore('battle', {
     async endBattle(winner: PARTICIPANT_SIDE = PARTICIPANT_SIDE.ALLY) {
       this.setLoading(true, '结束战斗');
       this.clearError();
+      const battleLogStore = useBattleLogStore()
 
       try {
         if (!this.battleManager) {
@@ -492,7 +513,6 @@ export const useBattleStore = defineStore('battle', {
         // 同步战斗状态
         this.battleManager.syncBattleState();
         this.setBattleActive(false);
-        const battleLogStore = useBattleLogStore()
         battleLogStore.addSystemLog(`战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`)
         return true;
       } catch (error) {
@@ -511,6 +531,7 @@ export const useBattleStore = defineStore('battle', {
     async resetBattle() {
       this.setLoading(true, '重置战斗');
       this.clearError();
+      const battleLogStore = useBattleLogStore()
 
       try {
         if (!this.battleManager) {
@@ -543,6 +564,7 @@ export const useBattleStore = defineStore('battle', {
     async processSingleTurn() {
       this.setLoading(true, '执行回合');
       this.clearError();
+      const battleLogStore = useBattleLogStore()
 
       try {
         if (!this.battleManager) {
@@ -570,6 +592,7 @@ export const useBattleStore = defineStore('battle', {
     async toggleAutoPlay() {
       this.setLoading(true);
       this.clearError();
+      const battleLogStore = useBattleLogStore()
 
       try {
         if (!this.battleManager) {
@@ -609,6 +632,7 @@ export const useBattleStore = defineStore('battle', {
     async importState() {
       this.setLoading(true);
       this.clearError();
+      const battleLogStore = useBattleLogStore()
 
       try {
         const savedState = localStorage.getItem('battleState');
@@ -639,12 +663,13 @@ export const useBattleStore = defineStore('battle', {
      * 导出战斗状态
      */
     exportState(currentTurn: number) {
+      const battleLogStore = useBattleLogStore()
+
       try {
         const characterStore = useCharacterStore()
         const allyTeam = Array.from(characterStore.allyTeam.values())
         const enemyTeam = Array.from(characterStore.enemyTeam.values())
-        
-        const battleLogStore = useBattleLogStore()
+
         const state = {
           battleCharacters: allyTeam,
           enemyParty: enemyTeam,

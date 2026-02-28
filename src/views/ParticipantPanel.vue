@@ -119,7 +119,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
-import { useCharacterList } from "@/composables/useCharacterList";
 import { useCharacterStore } from "@/stores";
 import type { Enemy, SceneData } from "@/types";
 import { PARTICIPANT_SIDE } from "@/types/battle";
@@ -131,9 +130,6 @@ interface GroupedEnemies {
 
 // 使用Pinia store
 const characterStore = useCharacterStore();
-
-// 使用角色列表管理组合式函数
-const { getOrderIndex: getCharacterOrderIndex } = useCharacterList();
 
 // 初始化 GameDataProcessor
 const enemySearch = ref("");
@@ -213,7 +209,13 @@ const groupedEnemies = computed<GroupedEnemies[]>(() => {
 });
 
 const getOrderIndex = (charId: string) => {
-  return getCharacterOrderIndex(charId, Array.from(characterStore.allyTeam.values()), Array.from(characterStore.enemyTeam.values()));
+  const ordered = [
+    ...Array.from(characterStore.allyTeam.values()),
+    ...Array.from(characterStore.enemyTeam.values()),
+  ].filter((char) => char.enabled)
+
+  const index = ordered.findIndex((char) => char.id === charId)
+  return index >= 0 ? index + 1 : 0
 };
 
 const selectCharacter = (charId: string) => {

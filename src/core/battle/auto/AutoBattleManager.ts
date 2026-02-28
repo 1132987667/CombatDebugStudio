@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue';
 import type { IBattleSystem } from '@/core/battle/interfaces';
 import { BattleStateManager } from '@/core/battle/state/BattleStateManager';
-import { getBattleLogManager } from '@/core/battle/logs/BattleLogManager';
+import { battleLogManager } from '@/utils/logging';
 
 /**
  * 自动战斗管理器
@@ -10,7 +10,7 @@ import { getBattleLogManager } from '@/core/battle/logs/BattleLogManager';
 export class AutoBattleManager {
   private battleSystem: IBattleSystem;
   private battleStateManager: BattleStateManager;
-  private battleLogManager = getBattleLogManager();
+  private battleLogManager = battleLogManager;
   private isAutoPlaying = ref(false);
   private isPaused = ref(true);
   private battleSpeed = ref(1);
@@ -60,11 +60,11 @@ export class AutoBattleManager {
   /**
    * 开始自动战斗
    */
-  async startAutoBattle() {
+  async startAutoBattle(): Promise<boolean> {
     console.log('startAutoBattle', this.battleId.value)
     if (!this.battleId.value) {
       this.battleLogManager.addSystemLog('请先创建战斗');
-      return;
+      return false;
     }
 
     try {
@@ -81,12 +81,14 @@ export class AutoBattleManager {
 
       // 同步战斗状态
       this.battleStateManager.syncBattleState();
+      return true;
     } catch (error) {
       console.error('开始自动战斗时出错:', error);
       const errorMsg = error instanceof Error ? error.message : String(error);
       this.battleLogManager.addErrorLog(`开始自动战斗时出错: ${errorMsg}`);
       this.isAutoPlaying.value = false;
       this.isPaused.value = true;
+      return false;
     }
   }
 

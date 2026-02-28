@@ -10,6 +10,7 @@
 import type { SkillConfig, SkillStep, ExtendedSkillStep, CalculationLog } from '@/types/skill'
 import type { BattleAction, BattleParticipant, BattleEnvironment } from '@/types/battle'
 import { BuffSystem } from '@/core/BuffSystem'
+import { StackRule, ControlType } from '@/types/buff'
 import { DamageCalculator } from '@/core/skill/DamageCalculator'
 import { HealCalculator } from '@/core/skill/HealCalculator'
 import { battleLogManager } from '@/utils/logging'
@@ -252,7 +253,9 @@ export class SkillManager {
         this.executeShieldStep(skillStep, battleAction, source, target)
         break
       case 'CONTROL':
-        this.executeControlStep(skillStep, battleAction, source, target)
+      case 'STUN':
+      case 'SILENCE':
+        this.executeControlStep(skillStep, battleAction, source, target, normalizedType)
         break
       default:
         this.logger.warn(`未知的技能步骤类型: ${skillStep.type} (标准化后: ${normalizedType})`)
@@ -362,15 +365,21 @@ export class SkillManager {
       id: skillStep.buffId,
       name: skillStep.buffId,
       description: `来自技能 ${battleAction.skillId} 的效果`,
-      duration: (skillStep.duration || 1) * 1000, // 转换为毫秒
+      duration: skillStep.duration ?? 1,
       maxStacks: skillStep.stacks || 1,
       cooldown: 0,
+      stackRule: StackRule.LIMITED,
+      controlType: ControlType.NONE,
+      controlPriority: 0,
       isDebuff: skillStep.type === 'DEBUFF',
       parameters: skillStep.parameters || {}
     }
 
     // 添加buff
     const instanceId = this.buffSystem.addBuff(buffTarget.id, skillStep.buffId, buffConfig)
+    if (instanceId) {
+      buffTarget.addBuff(instanceId)
+    }
     
     battleAction.effects.push({
       type: 'buff',
@@ -406,13 +415,40 @@ export class SkillManager {
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
     source: BattleParticipant,
-    target: BattleParticipant
+    target: BattleParticipant,
+    normalizedType: string = 'CONTROL'
   ): void {
-    // 控制逻辑待实现
-    this.logger.debug(`控制步骤: ${skillStep.formula}`)
+    const controlType = normalizedType === 'STUN'
+      ? ControlType.STUN
+      : normalizedType === 'SILENCE'
+        ? ControlType.SILENCE
+        : ControlType.STUN
+
+    const controlBuffId = skillStep.buffId || `control_${controlType}`
+    const controlConfig = {
+      id: controlBuffId,
+      name: controlBuffId,
+      description: `来自技能 ${battleAction.skillId} 的控制效果`,
+      duration: skillStep.duration ?? 1,
+      maxStacks: 1,
+      cooldown: 0,
+      stackRule: StackRule.REFRESH,
+      controlType,
+      controlPriority: 100,
+      isDebuff: true,
+      parameters: skillStep.parameters || {}
+    }
+
+    const instanceId = this.buffSystem.addBuff(target.id, controlBuffId, controlConfig)
+    if (instanceId) {
+      target.addBuff(instanceId)
+    }
+
+    this.logger.debug(`控制步骤执行: ${controlType} -> ${target.name}`)
     battleAction.effects.push({
       type: 'status',
-      description: '控制效果（待实现）'
+      buffId: controlBuffId,
+      description: `${source.name} 对 ${target.name} 施加了${controlType === ControlType.STUN ? '眩晕' : '沉默'}`
     })
   }
 

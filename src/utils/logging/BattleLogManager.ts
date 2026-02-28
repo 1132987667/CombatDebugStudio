@@ -14,6 +14,7 @@ import type {
   BattleLogManagerOptions,
   LogFormatOptions,
   HTMLFormatOptions,
+  BattleLogCategory,
   BattleLogLevel,
   ActionType,
   LogEntry,
@@ -30,7 +31,7 @@ import { LogLevel } from '@/types/battle-log'
  */
 export function formatNormalAttack(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, damage } = options
   return {
@@ -44,7 +45,7 @@ export function formatNormalAttack(options: LogFormatOptions): {
  */
 export function formatSkillAttack(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, skillName, damage, damageType } = options
   return {
@@ -58,7 +59,7 @@ export function formatSkillAttack(options: LogFormatOptions): {
  */
 export function formatHealSkill(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, skillName, heal } = options
   return {
@@ -72,7 +73,7 @@ export function formatHealSkill(options: LogFormatOptions): {
  */
 export function formatBuffSkill(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, targetScope, skillName, effect, duration } = options
   return {
@@ -86,7 +87,7 @@ export function formatBuffSkill(options: LogFormatOptions): {
  */
 export function formatDebuffSkill(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, skillName, effect, duration } = options
   return {
@@ -100,7 +101,7 @@ export function formatDebuffSkill(options: LogFormatOptions): {
  */
 export function formatStatusEffect(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { triggerTime, source, target, statusName, damage, damageType } =
     options
@@ -115,7 +116,7 @@ export function formatStatusEffect(options: LogFormatOptions): {
  */
 export function formatControlEffect(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, skillName, statusName } = options
   return {
@@ -129,7 +130,7 @@ export function formatControlEffect(options: LogFormatOptions): {
  */
 export function formatCriticalHit(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, skillName, damage, damageType } = options
   return {
@@ -143,7 +144,7 @@ export function formatCriticalHit(options: LogFormatOptions): {
  */
 export function formatMissedAttack(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, skillName } = options
   const attackType = skillName ? `【${skillName}】` : '普通攻击'
@@ -158,7 +159,7 @@ export function formatMissedAttack(options: LogFormatOptions): {
  */
 export function formatBlockedAttack(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, skillName, damage } = options
   return {
@@ -172,7 +173,7 @@ export function formatBlockedAttack(options: LogFormatOptions): {
  */
 export function formatDefenseAction(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, stanceName, effect } = options
   return {
@@ -186,7 +187,7 @@ export function formatDefenseAction(options: LogFormatOptions): {
  */
 export function formatChargeAction(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, chargeDescription, skillName } = options
   return {
@@ -200,7 +201,7 @@ export function formatChargeAction(options: LogFormatOptions): {
  */
 export function formatUnitDeath(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target } = options
   return {
@@ -214,7 +215,7 @@ export function formatUnitDeath(options: LogFormatOptions): {
  */
 export function formatBattleVictory(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { exp, gold } = options
   return {
@@ -228,7 +229,7 @@ export function formatBattleVictory(options: LogFormatOptions): {
  */
 export function formatBattleDefeat(_options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   return {
     result: `【战斗结束】我方已全军覆没，战斗失败。`,
@@ -241,7 +242,7 @@ export function formatBattleDefeat(_options: LogFormatOptions): {
  */
 export function formatBattleStart(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   return {
     result: `【战斗开始】战斗开始！参战角色: ${options.source} 人，参战敌人: ${options.target} 人`,
@@ -254,7 +255,7 @@ export function formatBattleStart(options: LogFormatOptions): {
  */
 export function formatBattleEnd(options: LogFormatOptions): {
   result: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   return {
     result: `【战斗结束】战斗结束！胜利者: ${options.source}`,
@@ -268,7 +269,7 @@ export function formatBattleEnd(options: LogFormatOptions): {
 export function formatBattleLog(
   actionType: ActionType,
   options: LogFormatOptions,
-): { result: string; level: BattleLogLevel } {
+): { result: string; level: BattleLogCategory } {
   switch (actionType) {
     case 'normal_attack':
       return formatNormalAttack(options)
@@ -315,15 +316,14 @@ export function formatBattleLog(
 /**
  * 获取日志颜色映射
  */
-export function getLogLevelColor(level: BattleLogLevel): string {
-  const colorMap: Record<BattleLogLevel, string> = {
+export function getLogLevelColor(level: BattleLogCategory): string {
+  const colorMap: Record<BattleLogCategory, string> = {
+    system: '#9e9e9e',
+    action: '#4fc3f7',
     damage: '#f44336',
     heal: '#4caf50',
     crit: '#ff9800',
     status: '#2196f3',
-    info: '#9e9e9e',
-    ally: '#4fc3f7',
-    enemy: '#e94560',
   }
   return colorMap[level] || '#9e9e9e'
 }
@@ -334,10 +334,11 @@ export function getLogLevelColor(level: BattleLogLevel): string {
 export function createBattleLog(
   actionType: ActionType,
   options: LogFormatOptions,
-  customLevel?: BattleLogLevel,
+  customLevel?: BattleLogCategory,
 ): BattleLogEntry {
   const formatted = formatBattleLog(actionType, options)
-  const level = customLevel || formatted.level
+  const category = customLevel || formatted.level
+  const level: BattleLogLevel = getLevelFromCategory(category)
 
   return {
     turn:
@@ -347,7 +348,18 @@ export function createBattleLog(
     target: options.target,
     result: formatted.result,
     level: level,
+    category,
   }
+}
+
+function getLevelFromCategory(category: BattleLogCategory): BattleLogLevel {
+  if (category === 'system') return 'info'
+  if (category === 'action') return 'info'
+  if (category === 'damage') return 'info'
+  if (category === 'heal') return 'info'
+  if (category === 'crit') return 'info'
+  if (category === 'status') return 'info'
+  return 'info'
 }
 
 function formatSource(source: string, isAlly?: boolean): string {
@@ -372,7 +384,7 @@ function formatTarget(target: string, isAlly?: boolean): string {
  */
 export function formatNormalAttackHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const {
     source,
@@ -398,7 +410,7 @@ export function formatNormalAttackHTML(options: HTMLFormatOptions): {
  */
 export function formatSkillAttackHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const {
     source,
@@ -426,7 +438,7 @@ export function formatSkillAttackHTML(options: HTMLFormatOptions): {
  */
 export function formatHealSkillHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, skillName, heal, sourceIsAlly, targetIsAlly } =
     options
@@ -441,7 +453,7 @@ export function formatHealSkillHTML(options: HTMLFormatOptions): {
  */
 export function formatBuffSkillHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, targetScope, skillName, effect, duration, sourceIsAlly } =
     options
@@ -456,7 +468,7 @@ export function formatBuffSkillHTML(options: HTMLFormatOptions): {
  */
 export function formatDebuffSkillHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const {
     source,
@@ -478,7 +490,7 @@ export function formatDebuffSkillHTML(options: HTMLFormatOptions): {
  */
 export function formatStatusEffectHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const {
     triggerTime,
@@ -507,7 +519,7 @@ export function formatStatusEffectHTML(options: HTMLFormatOptions): {
  */
 export function formatControlEffectHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const {
     source,
@@ -528,7 +540,7 @@ export function formatControlEffectHTML(options: HTMLFormatOptions): {
  */
 export function formatCriticalHitHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const {
     source,
@@ -550,7 +562,7 @@ export function formatCriticalHitHTML(options: HTMLFormatOptions): {
  */
 export function formatMissedAttackHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, skillName, sourceIsAlly, targetIsAlly } = options
   const attackType = skillName
@@ -567,7 +579,7 @@ export function formatMissedAttackHTML(options: HTMLFormatOptions): {
  */
 export function formatBlockedAttackHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, skillName, damage, sourceIsAlly, targetIsAlly } =
     options
@@ -582,7 +594,7 @@ export function formatBlockedAttackHTML(options: HTMLFormatOptions): {
  */
 export function formatDefenseActionHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, stanceName, effect, sourceIsAlly } = options
   return {
@@ -596,7 +608,7 @@ export function formatDefenseActionHTML(options: HTMLFormatOptions): {
  */
 export function formatChargeActionHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, chargeDescription, skillName, sourceIsAlly } = options
   return {
@@ -610,7 +622,7 @@ export function formatChargeActionHTML(options: HTMLFormatOptions): {
  */
 export function formatUnitDeathHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { source, target, sourceIsAlly, targetIsAlly } = options
   return {
@@ -624,7 +636,7 @@ export function formatUnitDeathHTML(options: HTMLFormatOptions): {
  */
 export function formatBattleVictoryHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   const { exp, gold } = options
   return {
@@ -638,7 +650,7 @@ export function formatBattleVictoryHTML(options: HTMLFormatOptions): {
  */
 export function formatBattleDefeatHTML(_options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   return {
     htmlResult: `【战斗结束】我方已全军覆没，战斗失败。`,
@@ -651,7 +663,7 @@ export function formatBattleDefeatHTML(_options: HTMLFormatOptions): {
  */
 export function formatBattleStartHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   return {
     htmlResult: `【战斗开始】战斗开始！参战角色: ${options.source} 人，参战敌人: ${options.target} 人`,
@@ -664,7 +676,7 @@ export function formatBattleStartHTML(options: HTMLFormatOptions): {
  */
 export function formatBattleEndHTML(options: HTMLFormatOptions): {
   htmlResult: string
-  level: BattleLogLevel
+  level: BattleLogCategory
 } {
   return {
     htmlResult: `【战斗结束】战斗结束！胜利者: ${options.source}`,
@@ -678,7 +690,7 @@ export function formatBattleEndHTML(options: HTMLFormatOptions): {
 export function formatBattleLogHTML(
   actionType: ActionType,
   options: HTMLFormatOptions,
-): { htmlResult: string; level: BattleLogLevel } {
+): { htmlResult: string; level: BattleLogCategory } {
   switch (actionType) {
     case 'normal_attack':
       return formatNormalAttackHTML(options)
@@ -717,7 +729,7 @@ export function formatBattleLogHTML(
     default:
       return {
         htmlResult: `${formatSource(options.source, options.sourceIsAlly)} 对 ${formatTarget(options.target, options.targetIsAlly)} 执行了未知动作。`,
-        level: 'info',
+        level: 'system',
       }
   }
 }
@@ -728,10 +740,11 @@ export function formatBattleLogHTML(
 export function createBattleLogHTML(
   actionType: ActionType,
   options: HTMLFormatOptions,
-  customLevel?: BattleLogLevel,
+  customLevel?: BattleLogCategory,
 ): BattleLogEntry {
   const formatted = formatBattleLogHTML(actionType, options)
-  const level = customLevel || formatted.level
+  const category = customLevel || formatted.level
+  const level = getLevelFromCategory(category)
 
   return {
     turn:
@@ -740,7 +753,8 @@ export function createBattleLogHTML(
     action: '对',
     target: options.target,
     result: formatted.htmlResult,
-    level: level,
+    level,
+    category,
     htmlResult: formatted.htmlResult,
   }
 }
@@ -1049,17 +1063,18 @@ export class BattleLogManager {
     action: string,
     target: string,
     result: string,
-    level: string = 'info',
+    category: BattleLogCategory = 'system',
+    level?: BattleLogLevel,
     htmlResult?: string,
   ): void {
-    console.log('添加战斗日志:', turn, source, action, target, result, level, htmlResult)
     const logEntry: BattleLogEntry = {
       turn,
       source,
       action,
       target,
       result,
-      level,
+      category,
+      level: level || getLevelFromCategory(category),
       htmlResult,
     }
 
@@ -1075,14 +1090,14 @@ export class BattleLogManager {
   /**
    * 添加系统战斗日志
    */
-  addSystemBattleLog(message: string, level: string = 'info'): void {
-    this.addLog('系统', '系统', '系统消息', '', message, level)
+  addSystemBattleLog(message: string, level: BattleLogLevel = 'info'): void {
+    this.addLog('系统', '系统', '系统消息', '', message, 'system', level)
   }
 
   /**
    * 添加系统日志（兼容旧接口）
    */
-  addSystemLog(message: string, level: string = 'info'): void {
+  addSystemLog(message: string, level: BattleLogLevel = 'info'): void {
     this.addSystemBattleLog(message, level)
   }
 
@@ -1094,9 +1109,9 @@ export class BattleLogManager {
     action: string,
     target: string,
     result: string,
-    level: string = 'info',
+    level: BattleLogLevel = 'info',
   ): void {
-    this.addLog('当前回合', source, action, target, result, level)
+    this.addLog('当前回合', source, action, target, result, 'action', level)
   }
 
   /**
@@ -1116,6 +1131,7 @@ export class BattleLogManager {
       '回合开始',
       '',
       `第${turn}回合开始`,
+      'system',
       'info',
     )
   }
@@ -1130,6 +1146,7 @@ export class BattleLogManager {
       '回合结束',
       '',
       `第${turn}回合结束`,
+      'system',
       'info',
     )
   }
@@ -1243,9 +1260,9 @@ export class BattleLogManager {
    * 判断日志是否应该显示
    */
   private shouldDisplayLog(log: BattleLogEntry): boolean {
-    const level = log.level as BattleLogLevel
+    const category = log.category
 
-    switch (level) {
+    switch (category) {
       case 'damage':
         return this.filters.damage
       case 'heal':
@@ -1283,7 +1300,6 @@ export class BattleLogManager {
    */
   private emitLogUpdate(): void {
     const filteredLogs = this.getFilteredLogs()
-    console.log('触发日志更新:', filteredLogs)
     this.listeners.forEach(callback => {
       try {
         callback(filteredLogs)

@@ -10,6 +10,7 @@
 import type { BattleParticipant } from '@/types/battle'
 import { SkillManager } from '@/core/skill/SkillManager'
 import { BuffSystem } from '@/core/BuffSystem'
+import { StackRule, ControlType } from '@/types/buff'
 
 /**
  * 被动技能触发时机枚举
@@ -107,13 +108,21 @@ export class PassiveSkillManager {
     if (skillConfig.steps) {
       for (const step of skillConfig.steps) {
         if (step.type === 'buff' && step.buffId) {
-          this.buffSystem.addBuff(participant.id, step.buffId, {
+          const instanceId = this.buffSystem.addBuff(participant.id, step.buffId, {
             id: step.buffId,
             name: skillConfig.name,
-            duration: step.duration || -1,
+            duration: step.duration ?? -1,
+            maxStacks: step.stacks || 1,
+            cooldown: 0,
+            stackRule: StackRule.LIMITED,
+            controlType: ControlType.NONE,
+            controlPriority: 0,
             description: skillConfig.description,
             sourceId: participant.id
           })
+          if (instanceId) {
+            participant.addBuff(instanceId)
+          }
           console.log(`被动技能生效[${participant.name}]: ${skillConfig.name}`)
         }
         // 可以根据需要扩展其他类型的效果

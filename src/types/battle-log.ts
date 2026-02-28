@@ -26,13 +26,21 @@ export enum LogLevel {
  * 战斗日志级别类型 - 用于UI展示和过滤
  */
 export type BattleLogLevel =
-  | 'damage' // 红色 - 伤害
-  | 'heal' // 绿色 - 治疗
-  | 'crit' // 橙色 - 暴击
-  | 'status' // 蓝色 - 状态
-  | 'info' // 灰色 - 信息
-  | 'ally' // 青色 - 友方
-  | 'enemy' // 红色 - 敌方
+  | 'debug'
+  | 'info'
+  | 'warning'
+  | 'error'
+
+/**
+ * 战斗日志类别类型 - 用于业务过滤和展示分组
+ */
+export type BattleLogCategory =
+  | 'system'
+  | 'action'
+  | 'damage'
+  | 'heal'
+  | 'crit'
+  | 'status'
 
 /**
  * 战斗日志条目类型枚举
@@ -92,8 +100,11 @@ export interface BattleLogEntry {
   /** 结果描述 */
   result: string
 
-  /** 日志级别 */
-  level: string
+  /** 日志级别（强弱） */
+  level: BattleLogLevel
+
+  /** 日志类别（业务维度） */
+  category: BattleLogCategory
 
   /** HTML格式的结果（可选） */
   htmlResult?: string
@@ -186,20 +197,19 @@ export interface BattleLogManagerOptions {
 /**
  * 日志颜色映射 - 统一所有UI颜色定义
  */
-export const LogLevelColors: Record<BattleLogLevel, string> = {
-  damage: '#f44336', // 红色 - 伤害
-  heal: '#4caf50', // 绿色 - 治疗
-  crit: '#ff9800', // 橙色 - 暴击
-  status: '#2196f3', // 蓝色 - 状态
-  info: '#9e9e9e', // 灰色 - 信息
-  ally: '#4fc3f7', // 青色 - 友方
-  enemy: '#e94560', // 红色 - 敌方
+export const LogLevelColors: Record<BattleLogCategory, string> = {
+  system: '#9e9e9e',
+  action: '#4fc3f7',
+  damage: '#f44336',
+  heal: '#4caf50',
+  crit: '#ff9800',
+  status: '#2196f3',
 }
 
 /**
  * 获取日志颜色 - 统一颜色获取方法
  */
-export function getLogLevelColor(level: BattleLogLevel): string {
+export function getLogLevelColor(level: BattleLogCategory): string {
   return LogLevelColors[level] || '#9e9e9e'
 }
 
@@ -240,13 +250,10 @@ export const DefaultLogFilters: LogFilters = {
  * 日志级别优先级映射
  */
 export const LogLevelPriority: Record<BattleLogLevel, number> = {
-  damage: 3,
-  heal: 2,
-  crit: 4,
-  status: 2,
+  debug: 0,
   info: 1,
-  ally: 2,
-  enemy: 3,
+  warning: 2,
+  error: 3,
 }
 
 /**
@@ -256,10 +263,8 @@ export function shouldDisplayLog(
   log: BattleLogEntry,
   filters: LogFilters,
 ): boolean {
-  // 根据日志级别和过滤器进行判断
-  const level = log.level as BattleLogLevel
-
-  switch (level) {
+  // 根据日志类别和过滤器进行判断
+  switch (log.category) {
     case 'damage':
       return filters.damage
     case 'heal':
@@ -282,7 +287,8 @@ export function createDefaultBattleLogEntry(
   action: string,
   target: string,
   result: string,
-  level: string = 'info',
+  level: BattleLogLevel = 'info',
+  category: BattleLogCategory = 'system',
 ): BattleLogEntry {
   return {
     turn,
@@ -291,6 +297,7 @@ export function createDefaultBattleLogEntry(
     target,
     result,
     level,
+    category,
   }
 }
 
@@ -309,16 +316,13 @@ export const LogUtils = {
    * 检查日志级别是否有效
    */
   isValidLogLevel(level: string): boolean {
-    const validLevels: BattleLogLevel[] = [
-      'damage',
-      'heal',
-      'crit',
-      'status',
-      'info',
-      'ally',
-      'enemy',
-    ]
+    const validLevels: BattleLogLevel[] = ['debug', 'info', 'warning', 'error']
     return validLevels.includes(level as BattleLogLevel)
+  },
+
+  isValidLogCategory(category: string): boolean {
+    const validCategories: BattleLogCategory[] = ['system', 'action', 'damage', 'heal', 'crit', 'status']
+    return validCategories.includes(category as BattleLogCategory)
   },
 
   /**

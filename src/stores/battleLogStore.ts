@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { BattleLogEntry } from '@/types/battle-log'
+import type { BattleLogEntry, BattleLogCategory, BattleLogLevel } from '@/types/battle-log'
 import type { BattleSystemAction, BattleState } from '@/types/battle'
-import { BattleLogFormatter } from '@/utils/logging'
+import { BattleLogFormatter, battleLogManager } from '@/utils/logging'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { PARTICIPANT_SIDE } from '@/types/battle'
 
@@ -15,7 +15,7 @@ interface LogFilters {
   showBuffs: boolean
 }
 
-const MAX_LOG_COUNT = 100
+let hasBoundBattleLogListener = false
 
 export const useBattleLogStore = defineStore('battleLog', () => {
   const logs = ref<BattleLogEntry[]>([])
@@ -33,23 +33,24 @@ export const useBattleLogStore = defineStore('battleLog', () => {
 
   const filteredLogs = computed(() => {
     return logs.value.filter(log => {
-      if (log.level === 'info' && !filters.value.showSystemMessages) {
+      const category = log.category
+
+      if (category === 'system' && !filters.value.showSystemMessages) {
         return false
       }
-      if (log.level === PARTICIPANT_SIDE.ALLY && !filters.value.showAllyActions) {
+      if (category === 'action' && log.source !== '系统' && !log.source.includes(PARTICIPANT_SIDE.ENEMY) && !filters.value.showAllyActions) {
         return false
       }
-      if (log.level === PARTICIPANT_SIDE.ENEMY && !filters.value.showEnemyActions) {
+      if (category === 'action' && log.source.includes(PARTICIPANT_SIDE.ENEMY) && !filters.value.showEnemyActions) {
         return false
       }
-      const resultLower = (log.result || '').toLowerCase()
-      if (!filters.value.showDamage && resultLower.includes('伤害')) {
+      if (!filters.value.showDamage && category === 'damage') {
         return false
       }
-      if (!filters.value.showHealing && resultLower.includes('治疗')) {
+      if (!filters.value.showHealing && category === 'heal') {
         return false
       }
-      if (!filters.value.showBuffs && (resultLower.includes('增益') || resultLower.includes('减益'))) {
+      if (!filters.value.showBuffs && category === 'status') {
         return false
       }
       return true
@@ -58,86 +59,61 @@ export const useBattleLogStore = defineStore('battleLog', () => {
 
   const logCount = computed(() => logs.value.length)
 
-  function addLog(log: BattleLogEntry) {
-    logs.value.push(log)
-    if (logs.value.length > MAX_LOG_COUNT) {
-      logs.value.shift()
+  function syncLogsFromManager() {
+    logs.value = battleLogManager.getAllLogs()
+  }
+
+  function ensureLogBinding() {
+    if (hasBoundBattleLogListener) {
+      return
     }
+
+    battleLogManager.addListener((nextLogs) => {
+      logs.value = [...nextLogs]
+    })
+
+    hasBoundBattleLogListener = true
+  }
+
+  function addLog(log: BattleLogEntry) {
+    battleLogManager.addLog(
+      String(log.turn),
+      log.source,
+      log.action,
+      log.target,
+      log.result,
+      log.category,
+      log.level,
+      log.htmlResult,
+    )
   }
 
   function addSystemLog(message: string) {
-    addLog({
-      turn: 0,
-      source: '系统',
-      action: '消息',
-      target: '',
-      result: message,
-      level: 'info',
-      htmlResult: message
-    })
+    battleLogManager.addSystemLog(message, 'info')
   }
 
   function addErrorLog(message: string) {
-    addLog({
-      turn: 0,
-      source: '系统',
-      action: '错误',
-      target: '',
-      result: message,
-      level: 'error',
-      htmlResult: message
-    })
+    battleLogManager.addErrorLog(message)
   }
 
   function addWarningLog(message: string) {
-    addLog({
-      turn: 0,
-      source: '系统',
-      action: '警告',
-      target: '',
-      result: message,
-      level: 'warning',
-      htmlResult: message
-    })
+    battleLogManager.addSystemBattleLog(message, 'warning')
   }
 
   function addDebugLog(message: string) {
-    addLog({
-      turn: 0,
-      source: '系统',
-      action: '调试',
-      target: '',
-      result: message,
-      level: 'debug',
-      htmlResult: message
-    })
+    battleLogManager.addSystemBattleLog(message, 'debug')
   }
 
-  function addSystemBattleLog(message: string, level: string = 'info') {
-    addLog({
-      turn: 0,
-      source: '系统',
-      action: '战斗',
-      target: '',
-      result: message,
-      level: level,
-      htmlResult: message
-    })
+  function addSystemBattleLog(message: string, level: BattleLogLevel = 'info') {
+    battleLogManager.addSystemBattleLog(message, level)
   }
 
   function addActionLog(source: string, action: string, target: string, result: string) {
-    addLog({
-      turn: 0,
-      source,
-      action,
-      target,
-      result,
-      level: 'action',
-      htmlResult: result
-    })
+    battleLogManager.addActionLog(source, action, target, result, 'info')
   }
 
   function clearLogs() {
+    battleLogManager.clearLogs()
     logs.value = []
     processedActionIds.value.clear()
   }
@@ -189,13 +165,13 @@ export const useBattleLogStore = defineStore('battleLog', () => {
       targetIsAlly
     }
 
-    let actionType = 'normal_attack'
-    let logLevel: string = action.sourceId.includes(PARTICIPANT_SIDE.ENEMY) ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY
+    let actionType: 'normal_attack' | 'battle_start' | 'battle_end' | 'heal_skill' | 'skill_attack' = 'normal_attack'
+    let logCategory: BattleLogCategory = 'action'
 
     if (action.sourceId === 'system') {
       if (action.effects?.some(e => e.description.includes('战斗开始'))) {
         actionType = 'battle_start'
-        logLevel = 'info'
+        logCategory = 'system'
         const match = action.effects[0].description.match(/参战角色: (\d+) 人，参战敌人: (\d+) 人/)
         if (match) {
           options.source = match[1]
@@ -203,7 +179,7 @@ export const useBattleLogStore = defineStore('battleLog', () => {
         }
       } else if (action.effects?.some(e => e.description.includes('战斗结束'))) {
         actionType = 'battle_end'
-        logLevel = 'info'
+        logCategory = 'system'
         const match = action.effects[0].description.match(/胜利者: (.+)/)
         if (match) {
           options.source = match[1] === '角色方' ? '我方' : '敌方'
@@ -217,7 +193,7 @@ export const useBattleLogStore = defineStore('battleLog', () => {
       }
     }
 
-    const formattedLog = BattleLogFormatter.createBattleLogHTML(actionType, options, logLevel)
+    const formattedLog = BattleLogFormatter.createBattleLogHTML(actionType, options, logCategory)
 
     const fullLog: BattleLogEntry = {
       turn: formattedLog.turn,
@@ -226,6 +202,7 @@ export const useBattleLogStore = defineStore('battleLog', () => {
       target: targetName,
       result: formattedLog.htmlResult || '',
       level: formattedLog.level,
+      category: formattedLog.category,
       htmlResult: formattedLog.htmlResult
     }
 
@@ -235,6 +212,8 @@ export const useBattleLogStore = defineStore('battleLog', () => {
   }
 
   function shouldDisplayLog(log: BattleLogEntry): boolean {
+    const category = log.category
+
     const isLogExists = logs.value.some(
       (existingLog) =>
         existingLog.turn === log.turn &&
@@ -245,28 +224,27 @@ export const useBattleLogStore = defineStore('battleLog', () => {
       return false
     }
 
-    if (log.level === 'info' && !filters.value.showSystemMessages) {
+    if (category === 'system' && !filters.value.showSystemMessages) {
       return false
     }
 
-    if (log.level === PARTICIPANT_SIDE.ALLY && !filters.value.showAllyActions) {
+    if (category === 'action' && log.source !== '系统' && !log.source.includes(PARTICIPANT_SIDE.ENEMY) && !filters.value.showAllyActions) {
       return false
     }
 
-    if (log.level === PARTICIPANT_SIDE.ENEMY && !filters.value.showEnemyActions) {
+    if (category === 'action' && log.source.includes(PARTICIPANT_SIDE.ENEMY) && !filters.value.showEnemyActions) {
       return false
     }
 
-    const resultLower = (log.result || '').toLowerCase()
-    if (!filters.value.showDamage && resultLower.includes('伤害')) {
+    if (!filters.value.showDamage && category === 'damage') {
       return false
     }
 
-    if (!filters.value.showHealing && resultLower.includes('治疗')) {
+    if (!filters.value.showHealing && category === 'heal') {
       return false
     }
 
-    if (!filters.value.showBuffs && (resultLower.includes('增益') || resultLower.includes('减益'))) {
+    if (!filters.value.showBuffs && category === 'status') {
       return false
     }
 
@@ -300,6 +278,7 @@ export const useBattleLogStore = defineStore('battleLog', () => {
         target: log.target,
         result: log.result || '',
         level: log.level,
+        category: log.category,
         htmlResult: log.htmlResult
       })
     }
@@ -313,6 +292,9 @@ export const useBattleLogStore = defineStore('battleLog', () => {
     }
     return '未知技能'
   }
+
+  ensureLogBinding()
+  syncLogsFromManager()
 
   return {
     logs,

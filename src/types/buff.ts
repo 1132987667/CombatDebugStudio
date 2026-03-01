@@ -213,6 +213,12 @@ export interface BuffConfig {
    * true表示该增益效果为buff,会增强角色属性
    */
   isPositive?: boolean
+
+  /**
+   * 属性修饰符
+   * 定义属性加成，使用字符串格式如 "+10"（数值加成）、"+0.05"（百分比加成）、"-0.15"（百分比减成）
+   */
+  attributes?: Record<string, string>
 }
 
 /**

@@ -125,14 +125,14 @@ export const ACTION_TYPES = {
   ITEM: 'item',
 } as const
 
-/** 动作类型数组 */
-export const VALID_ACTION_TYPES = [
+/** 动作类型数组 - 从 ACTION_TYPES 自动生成 */
+export const VALID_ACTION_TYPES = Object.freeze([
   ACTION_TYPES.ATTACK,
   ACTION_TYPES.SKILL,
   ACTION_TYPES.HEAL,
   ACTION_TYPES.BUFF,
   ACTION_TYPES.ITEM,
-] as const
+]) as readonly (typeof ACTION_TYPES)[keyof typeof ACTION_TYPES][]
 
 /** 战斗效果类型常量 */
 export const EFFECT_TYPES = {
@@ -250,6 +250,13 @@ export interface BattleAction {
   effects: BattleEffect[]
 }
 
+/**
+ * 战斗系统动作类型
+ * 用于战斗回放和日志记录
+ * @deprecated 与 BattleAction 相同，请使用 BattleAction
+ */
+export type BattleSystemAction = BattleAction
+
 export interface BattleEffect {
   type: 'damage' | 'heal' | 'buff' | 'debuff' | 'status'
   value?: number
@@ -352,11 +359,12 @@ export enum BattleSystemEvent {
   /** 回合开始事件 */
   TURN_START = 'turnStart',
   /** 回合结束事件 */
-  TURN_END = 'turnEnd'
+  TURN_END = 'turnEnd',
 }
 
 /**
  * 战斗系统接口
+ * @deprecated 请使用 @/core/battle/interfaces 中的 IBattleSystem 接口
  */
 export interface BattleSystem {
   createBattle(participantsInfo: BattleParticipant[]): BattleState

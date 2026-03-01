@@ -3,6 +3,7 @@ import type { AttributeType } from '@/types/modifier'
 /**
  * 角色属性接口
  * 定义角色的基础属性值
+ * 注意：使用小驼峰命名以与 UIBattleCharacter 保持一致
  */
 export interface CharacterStats {
   /** 原始角色ID */
@@ -13,40 +14,53 @@ export interface CharacterStats {
   name: string
   /** 角色等级 */
   level: number
-  /** 生命值 */
-  HP: number
+  /** 当前生命值 */
+  hp: number
   /** 最大生命值 */
-  MAX_HP: number
-  /** 魔法值 */
-  MP: number
+  maxHp: number
+  /** 当前魔法值 */
+  mp: number
+  /** 最大魔法值 */
+  maxMp: number
   /** 攻击力 */
-  ATK: number
+  attack: number
   /** 防御力 */
-  DEF: number
+  defense: number
   /** 速度 */
-  SPD: number
+  speed: number
   /** 暴击率 */
-  CRIT_RATE: number
+  critRate: number
   /** 暴击伤害 */
-  CRIT_DMG: number
+  critDamage: number
   /** 命中率 */
-  ACCURACY: number
+  accuracy: number
   /** 闪避率 */
-  EVADE: number
+  evade: number
   /** 吸血 */
-  LIFESTEAL: number
+  lifeSteal: number
   /** 生命回复 */
-  REGENERATION: number
+  regeneration: number
   /** 魔法回复 */
-  MANA_REGEN: number
+  manaRegen: number
   /** 伤害提升 */
-  DAMAGE_BOOST: number
+  damageBoost: number
   /** 伤害减免 */
-  DAMAGE_REDUCE: number
+  damageReduce: number
   /** 是否启用 */
   enabled: boolean
+  /** 当前能量 */
+  currentEnergy?: number
+  /** 最大能量 */
+  maxEnergy?: number
+  /** buff列表 */
+  buffs?: any[]
 }
 
+/**
+ * 角色接口
+ * 定义角色的基础属性和方法
+ * 注意：BattleEntity 是角色在战斗中的特化版本，提供了更丰富的战斗相关方法
+ */
 export interface Character {
   id: string
   name: string

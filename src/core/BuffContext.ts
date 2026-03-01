@@ -48,11 +48,11 @@ export class BuffContext {
   }
 
   /**
-   * 获取Buff系统实例（延迟获取）
+   * 获取Buff系统实例（通过构造函数注入）
    */
   private get buffSystem(): any {
     if (!this._buffSystem) {
-      this._buffSystem = (window as any).__container?.resolve?.('BuffSystem')
+      console.warn('BuffSystem 未注入，Buff上下文无法正常工作')
     }
     return this._buffSystem
   }

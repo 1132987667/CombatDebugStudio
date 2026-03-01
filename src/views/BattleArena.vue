@@ -119,7 +119,7 @@ const logManager = {
   addSystemLog: (msg: string) => battleLogStore.addSystemLog(msg),
   addErrorLog: (msg: string) => battleLogStore.addErrorLog(msg),
   addLog: (turn: number, source: string, action: string, target: string, result: string, level: string, htmlResult?: string) => {
-    battleLogStore.addLog({ turn, source, action, target, result, level, htmlResult })
+    battleLogStore.addLog({ turn: String(turn), source, action, target, result, level: level as any, htmlResult })
   },
   addActionLog: (source: string, action: string, target: string, result: string) => {
     battleLogStore.addActionLog(source, action, target, result)
@@ -333,27 +333,23 @@ const handleReplayEvent = (event: any, index: number) => {
 
 const handleReplayStart = (recording: any) => {
   console.log('开始回放:', recording);
-  // 重置战斗状态，准备回放
   resetBattle();
-  // 使用battleManager开始回放
-  if (battleStore.getBattleManager) {
-    battleStore.getBattleManager.startReplay(recording);
+  if (battleStore.battleManager) {
+    battleStore.battleManager.startReplay(recording);
   }
 };
 
 const handleReplayEnd = (recording: any) => {
   console.log('回放结束:', recording);
-  // 回放结束后的处理
-  if (battleStore.getBattleManager) {
-    battleStore.getBattleManager.stopReplay();
+  if (battleStore.battleManager) {
+    battleStore.battleManager.stopReplay();
   }
 };
 
 const handleReplayPause = (recording: any, index: number) => {
   console.log('回放暂停:', recording, '当前索引:', index);
-  // 回放暂停后的处理
-  if (battleStore.getBattleManager) {
-    battleStore.getBattleManager.pauseReplay();
+  if (battleStore.battleManager) {
+    battleStore.battleManager.pauseReplay();
   }
 };
 

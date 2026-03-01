@@ -51,6 +51,8 @@ interface RecordedBattle {
 export class BattleRecorder {
   private recordings = new Map<string, RecordedBattle>()
   private battleLogger = battleLogManager
+  private maxRecordings = 10
+  private cleanupScheduled = false
 
   public startRecording(
     battleId: string,
@@ -84,6 +86,9 @@ export class BattleRecorder {
     this.battleLogger.info(`开始记录战斗: ${battleId}`, {
       participantCount: initialState.participants.length,
     })
+
+    // 定期清理旧记录
+    this.scheduleCleanup()
   }
 
   public recordAction(battleId: string, action: BattleAction, turn: number) {
@@ -248,5 +253,51 @@ export class BattleRecorder {
   public clearRecordings() {
     this.recordings.clear()
     this.battleLogger.info('清空所有战斗记录')
+  }
+
+  /**
+   * 清理已保存的战斗记录
+   */
+  public clearRecording(battleId: string): void {
+    if (this.recordings.has(battleId)) {
+      this.recordings.delete(battleId)
+      this.battleLogger.info(`清理战斗记录: ${battleId}`)
+    }
+  }
+
+  /**
+   * 定期清理旧记录，防止内存泄漏
+   */
+  private scheduleCleanup(): void {
+    if (this.cleanupScheduled) {
+      return
+    }
+
+    this.cleanupScheduled = true
+
+    setTimeout(() => {
+      this.cleanupOldRecordings()
+      this.cleanupScheduled = false
+    }, 60000)
+  }
+
+  /**
+   * 清理超过限制的旧记录
+   */
+  private cleanupOldRecordings(): void {
+    if (this.recordings.size <= this.maxRecordings) {
+      return
+    }
+
+    // 按开始时间排序，删除最早的记录
+    const sortedRecordings = Array.from(this.recordings.entries())
+      .sort((a, b) => a[1].startTime - b[1].startTime)
+
+    const toDeleteCount = this.recordings.size - this.maxRecordings
+    for (let i = 0; i < toDeleteCount; i++) {
+      const [battleId] = sortedRecordings[i]
+      this.recordings.delete(battleId)
+      this.battleLogger.info(`清理过期战斗记录: ${battleId}`)
+    }
   }
 }

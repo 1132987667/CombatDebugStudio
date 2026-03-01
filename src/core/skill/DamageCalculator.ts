@@ -315,6 +315,30 @@ export class DamageCalculator {
   }
 
   /**
+   * 获取防御值（从基础伤害中减去的固定值）
+   */
+  private getDefenseValue(
+    attackType: 'normal' | 'magic' | 'physical' | 'true',
+    target: BattleParticipant,
+  ): number {
+    switch (attackType) {
+      case 'true':
+        return 0 // 真实伤害无视防御
+      case 'physical':
+        return this.getAttributeValue(target, 'DEF') * 0.5 // 物理防御固定值
+      case 'magic':
+        return this.getAttributeValue(target, 'MDEF') * 0.5 // 魔法防御固定值
+      case 'normal':
+      default:
+        return (
+          (this.getAttributeValue(target, 'DEF') +
+            this.getAttributeValue(target, 'MDEF')) *
+          0.25
+        ) // 综合防御固定值
+    }
+  }
+
+  /**
    * 获取属性值
    */
   private getAttributeValue(

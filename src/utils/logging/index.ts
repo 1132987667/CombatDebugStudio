@@ -39,9 +39,6 @@ export {
   battleLogManager,
 } from '@/utils/logging/BattleLogManager'
 
-// 导出 BattleLogManager 类型
-export type { BattleLogManager } from '@/utils/logging/BattleLogManager'
-
 // 导出 BattleLogFormatter 命名空间
 export { BattleLogFormatter } from '@/utils/logging/BattleLogManager'
 

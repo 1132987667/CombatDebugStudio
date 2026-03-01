@@ -5,7 +5,7 @@
  * 功能: 统一日志管理器
  * 描述: 整合系统日志和战斗日志功能，提供统一的日志接口
  * 版本: 2.0.0
- * 
+ *
  */
 
 import type {
@@ -16,6 +16,7 @@ import type {
   HTMLFormatOptions,
   BattleLogCategory,
   BattleLogLevel,
+  BattleLogMessageType,
   ActionType,
   LogEntry,
   LogHandler,
@@ -59,7 +60,7 @@ export function formatSkillAttack(options: LogFormatOptions): {
  */
 export function formatHealSkill(options: LogFormatOptions): {
   result: string
-  level: BattleLogCategory
+  level: BattleLogMessageType
 } {
   const { source, target, skillName, heal } = options
   return {
@@ -73,7 +74,7 @@ export function formatHealSkill(options: LogFormatOptions): {
  */
 export function formatBuffSkill(options: LogFormatOptions): {
   result: string
-  level: BattleLogCategory
+  level: BattleLogMessageType
 } {
   const { source, targetScope, skillName, effect, duration } = options
   return {
@@ -324,6 +325,10 @@ export function getLogLevelColor(level: BattleLogCategory): string {
     heal: '#4caf50',
     crit: '#ff9800',
     status: '#2196f3',
+    debug: '#9e9e9e',
+    info: '#2196f3',
+    warning: '#ff9800',
+    error: '#f44336',
   }
   return colorMap[level] || '#9e9e9e'
 }
@@ -521,14 +526,8 @@ export function formatControlEffectHTML(options: HTMLFormatOptions): {
   htmlResult: string
   level: BattleLogCategory
 } {
-  const {
-    source,
-    target,
-    skillName,
-    statusName,
-    sourceIsAlly,
-    targetIsAlly,
-  } = options
+  const { source, target, skillName, statusName, sourceIsAlly, targetIsAlly } =
+    options
   return {
     htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动<span class="skill-debuff">【${skillName}】</span>，成功使目标陷入<span class="debuff">【${statusName}】</span>状态，无法行动。`,
     level: 'status',
@@ -800,7 +799,7 @@ export const BattleLogFormatter = {
   formatBattleEndHTML,
   formatBattleLogHTML,
   createBattleLogHTML,
-};
+}
 /**
  * 控制台日志处理器
  */
@@ -859,7 +858,7 @@ export class FileLogHandler implements LogHandler {
 
 /**
  * 统一日志管理器
- * 
+ *
  */
 export class BattleLogManager {
   /** 单例实例 */
@@ -887,7 +886,9 @@ export class BattleLogManager {
   /**
    * 获取单例实例
    */
-  public static getInstance(options?: BattleLogManagerOptions): BattleLogManager {
+  public static getInstance(
+    options?: BattleLogManagerOptions,
+  ): BattleLogManager {
     if (!BattleLogManager.instance) {
       BattleLogManager.instance = new BattleLogManager(options)
     }
@@ -974,7 +975,11 @@ export class BattleLogManager {
   /**
    * 记录错误级别日志
    */
-  error(message: string, context?: Record<string, unknown>, error?: Error): void {
+  error(
+    message: string,
+    context?: Record<string, unknown>,
+    error?: Error,
+  ): void {
     this.log(LogLevel.ERROR, message, context, error)
   }
 
@@ -1064,7 +1069,7 @@ export class BattleLogManager {
     target: string,
     result: string,
     category: BattleLogCategory = 'system',
-    level?: BattleLogLevel,
+    level?: BattleLogMessageType,
     htmlResult?: string,
   ): void {
     const logEntry: BattleLogEntry = {
@@ -1300,7 +1305,7 @@ export class BattleLogManager {
    */
   private emitLogUpdate(): void {
     const filteredLogs = this.getFilteredLogs()
-    this.listeners.forEach(callback => {
+    this.listeners.forEach((callback) => {
       try {
         callback(filteredLogs)
       } catch (error) {

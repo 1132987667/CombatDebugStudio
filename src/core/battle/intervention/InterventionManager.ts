@@ -1,4 +1,3 @@
-import { ref } from 'vue';
 import type { IBattleSystem } from '@/core/battle/interfaces';
 import { BattleStateManager } from '@/core/battle/state/BattleStateManager';
 import { battleLogManager } from '@/utils/logging';
@@ -13,8 +12,8 @@ export class InterventionManager {
   private battleSystem: IBattleSystem;
   private battleStateManager: BattleStateManager;
   private battleLogManager = battleLogManager;
-  private selectedCharacterId = ref<string | null>(null);
-  private selectedChar = ref<UIBattleCharacter | null>(null);
+  private selectedCharacterId: string | null = null;
+  private selectedChar: UIBattleCharacter | null = null;
 
   /**
    * 构造函数
@@ -45,13 +44,13 @@ export class InterventionManager {
    * @param charId 角色ID
    */
   selectCharacter(charId: string) {
-    this.selectedCharacterId.value = charId;
+    this.selectedCharacterId = charId;
     
     // 查找并设置选中的角色
-    const allyTeam = this.battleStateManager.getAllyTeam().value;
-    const enemyTeam = this.battleStateManager.getEnemyTeam().value;
+    const allyTeam = this.battleStateManager.getAllyTeam()
+    const enemyTeam = this.battleStateManager.getEnemyTeam()
     
-    this.selectedChar.value = 
+    this.selectedChar = 
       allyTeam.find((c) => c.id === charId) ||
       enemyTeam.find((e) => e.id === charId) ||
       null;
@@ -62,14 +61,14 @@ export class InterventionManager {
    */
   endTurn() {
     // 结束当前回合的逻辑
-    if (this.selectedCharacterId.value) {
+    if (this.selectedCharacterId) {
       this.battleLogManager.addActionLog(
         "系统",
         "结束回合",
-        this.selectedChar.value?.name || "",
+        this.selectedChar?.name || "",
         "回合结束"
       );
-      this.selectedCharacterId.value = null;
+      this.selectedCharacterId = null;
     }
   }
 
@@ -78,9 +77,9 @@ export class InterventionManager {
    * @param skillName 技能名称
    */
   executeSkill(skillName: string) {
-    if (this.selectedChar.value) {
+    if (this.selectedChar) {
       this.battleLogManager.addActionLog(
-        this.selectedChar.value.name,
+        this.selectedChar.name,
         "使用技能",
         "",
         skillName
@@ -95,8 +94,7 @@ export class InterventionManager {
   addStatus(status: { name: string; turns: number }) {
     if (!status.name) return;
     
-    if (this.selectedChar.value) {
-      // 创建新的状态对象
+    if (this.selectedChar) {
       const newStatus = {
         id: `status_${Date.now()}`,
         name: status.name,
@@ -107,21 +105,19 @@ export class InterventionManager {
         isPositive: true
       };
 
-      // 添加状态到角色
-      if (!this.selectedChar.value.buffs) {
-        this.selectedChar.value.buffs = [];
+      if (!this.selectedChar.buffs) {
+        this.selectedChar.buffs = [];
       }
-      this.selectedChar.value.buffs.push(newStatus);
+      this.selectedChar.buffs.push(newStatus);
 
-      // 使用状态管理器更新角色
-      this.battleStateManager.updateCharacterManually(this.selectedChar.value.id, {
-        buffs: [...this.selectedChar.value.buffs]
+      this.battleStateManager.updateCharacterManually(this.selectedChar.id, {
+        buffs: [...this.selectedChar.buffs]
       });
 
       this.battleLogManager.addActionLog(
         "系统",
         "添加状态",
-        this.selectedChar.value.name,
+        this.selectedChar.name,
         `${status.name} (${status.turns}回合)`
       );
     }
@@ -131,26 +127,25 @@ export class InterventionManager {
    * 调整属性
    * @param stats 属性对象
    */
-  adjustStats(stats: { hp: number; mp: number }) {
-    if (this.selectedChar.value) {
-      const maxHp = GameDataProcessor.getAttributeValue(this.selectedChar.value.maxHp);
-      const maxMp = this.selectedChar.value.maxMp || 100;
+  adjustStats(stats: { hp: number; energy: number }) {
+    if (this.selectedChar) {
+      const maxHp = GameDataProcessor.getAttributeValue(this.selectedChar.maxHp);
+      const maxEnergy = GameDataProcessor.getAttributeValue(this.selectedChar.maxEnergy);
+      const currentEnergy = GameDataProcessor.getAttributeValue(this.selectedChar.currentEnergy);
 
-      // 计算新的属性值
-      const newHp = Math.max(0, Math.min(maxHp, this.selectedChar.value.currentHp + stats.hp));
-      const newMp = Math.max(0, Math.min(maxMp, (this.selectedChar.value.currentMp || 0) + stats.mp));
+      const newHp = Math.max(0, Math.min(maxHp, this.selectedChar.currentHp + stats.hp));
+      const newEnergy = Math.max(0, Math.min(maxEnergy, currentEnergy + stats.energy));
 
-      // 使用状态管理器更新角色
-      this.battleStateManager.updateCharacterManually(this.selectedChar.value.id, {
+      this.battleStateManager.updateCharacterManually(this.selectedChar.id, {
         currentHp: newHp,
-        currentMp: newMp
+        currentEnergy: newEnergy
       });
 
       this.battleLogManager.addActionLog(
         "系统",
         "调整属性",
-        this.selectedChar.value.name,
-        `HP:${stats.hp}, MP:${stats.mp}`
+        this.selectedChar.name,
+        `HP:${stats.hp}, 能量:${stats.energy}`
       );
     }
   }
@@ -159,16 +154,15 @@ export class InterventionManager {
    * 清除状态
    */
   clearStatuses() {
-    if (this.selectedChar.value) {
-      // 使用状态管理器更新角色
-      this.battleStateManager.updateCharacterManually(this.selectedChar.value.id, {
+    if (this.selectedChar) {
+      this.battleStateManager.updateCharacterManually(this.selectedChar.id, {
         buffs: []
       });
 
       this.battleLogManager.addActionLog(
         "系统",
         "清除状态",
-        this.selectedChar.value.name,
+        this.selectedChar.name,
         "所有状态已清除"
       );
     }
@@ -180,10 +174,10 @@ export class InterventionManager {
    */
   exportState() {
     const state = {
-      battleCharacters: this.battleStateManager.getAllyTeam().value,
-      enemyParty: this.battleStateManager.getEnemyTeam().value,
-      currentTurn: this.battleStateManager.getCurrentTurn().value,
-      battleLogs: this.battleLogManager.getLogs().value
+      battleCharacters: this.battleStateManager.getAllyTeam(),
+      enemyParty: this.battleStateManager.getEnemyTeam(),
+      currentTurn: this.battleStateManager.getCurrentTurn(),
+      battleLogs: this.battleLogManager.getLogs()
     };
 
     // 保存到本地存储
@@ -262,8 +256,8 @@ export class InterventionManager {
     this.battleStateManager.initializeTeams([], []);
     
     // 重置选中状态
-    this.selectedCharacterId.value = null;
-    this.selectedChar.value = null;
+    this.selectedCharacterId = null;
+    this.selectedChar = null;
     
     this.battleLogManager.addSystemLog("所有参战角色已清空");
   }

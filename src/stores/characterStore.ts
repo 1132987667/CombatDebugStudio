@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import type { UIBattleCharacter } from '@/types';
-import { PARTICIPANT_SIDE } from '@/types/battle';
+import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle';
 import { eventBus } from '@/main';
 
 interface CharacterState {
@@ -58,9 +58,11 @@ export const useCharacterStore = defineStore('character', {
       const char = state.allyTeam.get(state.selectedCharacterId!) ||
                    state.enemyTeam.get(state.selectedCharacterId!);
       if (!char) return { min: 0, max: 0 };
+      const getValue = (val: number | { value: number }): number => 
+        typeof val === 'number' ? val : val?.value ?? 0;
       return {
-        min: char.minAttack || 0,
-        max: char.maxAttack || 0,
+        min: getValue(char.minAttack as any),
+        max: getValue(char.maxAttack as any),
       };
     },
 
@@ -166,7 +168,7 @@ export const useCharacterStore = defineStore('character', {
     /**
      * 添加敌人到战斗
      */
-    addEnemyToBattle(enemy: UIBattleCharacter, side: PARTICIPANT_SIDE = PARTICIPANT_SIDE.ALLY) {
+    addEnemyToBattle(enemy: UIBattleCharacter, side: ParticipantSide = PARTICIPANT_SIDE.ALLY) {
       if (side === PARTICIPANT_SIDE.ALLY) {
         this.allyTeam.set(enemy.id, enemy);
       } else {
@@ -202,11 +204,10 @@ export const useCharacterStore = defineStore('character', {
       const isAlly = this.allyTeam.has(this.selectedCharacterId);
       const team = isAlly ? this.allyTeam : this.enemyTeam;
 
-      // 将Map转换为数组
-      const teamArray = Array.from(team.values());
-      const enabledChars = teamArray.filter((c) => c.enabled);
+      const teamArray: UIBattleCharacter[] = Array.from(team.values());
+      const enabledChars = teamArray.filter((c: UIBattleCharacter) => c.enabled);
       const currentIndex = enabledChars.findIndex(
-        (c) => c.id === this.selectedCharacterId
+        (c: UIBattleCharacter) => c.id === this.selectedCharacterId
       );
 
       if (currentIndex < 0) return;
@@ -219,12 +220,10 @@ export const useCharacterStore = defineStore('character', {
       const idx1 = teamArray.indexOf(currentChar);
       const idx2 = teamArray.indexOf(targetChar);
       
-      // 交换角色位置
       [teamArray[idx1], teamArray[idx2]] = [teamArray[idx2], teamArray[idx1]];
 
-      // 将数组转换回Map
       const newTeamMap = new Map<string, UIBattleCharacter>();
-      teamArray.forEach(char => {
+      teamArray.forEach((char: UIBattleCharacter) => {
         newTeamMap.set(char.id, char);
       });
 

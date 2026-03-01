@@ -10,7 +10,13 @@ export type AttributeValueType = '数值' | '百分比'
 /**
  * 属性来源类型（可扩展）
  */
-export type AttributeSourceType = '基础' | '装备' | '天赋' | '被动技能' | 'buff' | '其他'
+export type AttributeSourceType =
+  | '基础'
+  | '装备'
+  | '天赋'
+  | '被动技能'
+  | 'buff'
+  | '其他'
 
 /**
  * 单个属性来源选项
@@ -71,10 +77,6 @@ export interface UIBattleCharacter {
   maxHp: AttributeValue
   /** 当前生命值 */
   currentHp: AttributeValue
-  /** 最大魔法值 */
-  maxMp: AttributeValue
-  /** 当前魔法值 */
-  currentMp: AttributeValue
   /** 当前能量值 */
   currentEnergy: AttributeValue
   /** 最大能量值 */
@@ -113,7 +115,7 @@ export interface UIBattleCharacter {
   skills: UISkills
 }
 
-export interface EnemyStats {
+export interface UIEnemyStats {
   health: number
   minAttack: number
   maxAttack: number

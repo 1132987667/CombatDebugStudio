@@ -87,25 +87,11 @@ export class TurnManager {
       return
     }
 
-    // 获取当前回合的参与者
-    const currentParticipantId = this.getCurrentParticipantId(battle, battle.participants)
-    if (currentParticipantId) {
-      // 触发当前参与者的Buff每回合更新
-      this.buffSystem.updatePerTurn(currentParticipantId, battle.currentRound || 1)
-    }
-
     battle.currentTurn = (battle.currentTurn + 1) % battle.turnOrder.length
     
     // 检查是否进入新的回合
     if (battle.currentTurn === 0) {
       battle.currentRound = (battle.currentRound || 0) + 1
-      
-      // 触发所有存活参与者的Buff每回合更新
-      battle.participants.forEach((participant) => {
-        if (participant.isAlive()) {
-          this.buffSystem.updatePerTurn(participant.id, battle.currentRound)
-        }
-      })
     }
   }
 
@@ -135,7 +121,7 @@ export class TurnManager {
   }
 
   /**
-   * 根据参与者基础速度创建回合顺序
+   * 根据参与者有效速度创建回合顺序
    * 速度高的参与者排在前面，相同速度时随机排序
    * @param participants 参与者数组
    * @returns 按速度排序的参与者ID数组
@@ -143,7 +129,16 @@ export class TurnManager {
   public createTurnOrder(participants: BattleParticipant[]): string[] {
     return participants
       .filter((p) => p.isAlive())
-      .sort((a, b) => this.compareSpeed(a, b))
+      .sort((a, b) => {
+        const speedA = this.calculateEffectiveSpeed(a)
+        const speedB = this.calculateEffectiveSpeed(b)
+
+        if (speedA !== speedB) {
+          return speedB - speedA
+        }
+
+        return Math.random() - 0.5
+      })
       .map((p) => p.id)
   }
 

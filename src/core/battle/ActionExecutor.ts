@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import type {
+import {
   BattleAction,
   BattleParticipant,
   ParticipantSide,

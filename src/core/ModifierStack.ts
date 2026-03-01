@@ -64,9 +64,9 @@ export class ModifierStack {
       } else {
         this.modifiers.set(key, filtered)
       }
-      // 清理该属性的缓存
-      this.cache.delete(key)
     }
+    // 清理该属性的所有缓存（因为缓存键包含baseValue，需要清除所有可能的缓存）
+    this.cache.clear()
   }
 
   /**
@@ -76,15 +76,15 @@ export class ModifierStack {
    * @returns 计算后的属性值
    */
   public calculate(attribute: AttributeType, baseValue: number): number {
-    // 生成缓存键，包含属性名称和基础值
-    const cacheKey = `${attribute}_${baseValue}`
+    const modifiers = this.modifiers.get(attribute)
+    const modifierCount = modifiers?.length ?? 0
+
+    const cacheKey = `${attribute}_${baseValue}_${modifierCount}`
     
-    // 检查缓存中是否存在结果
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey)!
     }
 
-    const modifiers = this.modifiers.get(attribute)
     if (!modifiers || modifiers.length === 0) {
       return baseValue
     }
@@ -112,7 +112,6 @@ export class ModifierStack {
     result += additiveSum
     result *= multiplicativeSum
 
-    // 缓存计算结果
     this.cache.set(cacheKey, result)
 
     return result

@@ -25,14 +25,11 @@ export enum LogLevel {
 /**
  * 战斗日志级别类型 - 用于UI展示和过滤
  */
-export type BattleLogLevel =
-  | 'debug'
-  | 'info'
-  | 'warning'
-  | 'error'
+export type BattleLogLevel = 'debug' | 'info' | 'warning' | 'error'
 
 /**
  * 战斗日志类别类型 - 用于业务过滤和展示分组
+ * 注意: 此类型扩展为包含日志级别值，以兼容现有代码
  */
 export type BattleLogCategory =
   | 'system'
@@ -41,6 +38,16 @@ export type BattleLogCategory =
   | 'heal'
   | 'crit'
   | 'status'
+  | 'debug'
+  | 'info'
+  | 'warning'
+  | 'error'
+
+/**
+ * 统一日志消息类型 - 合并级别和类别
+ * 用于需要同时表示级别和业务类别的场景
+ */
+export type BattleLogMessageType = BattleLogLevel | BattleLogCategory
 
 /**
  * 战斗日志条目类型枚举
@@ -100,8 +107,8 @@ export interface BattleLogEntry {
   /** 结果描述 */
   result: string
 
-  /** 日志级别（强弱） */
-  level: BattleLogLevel
+  /** 日志级别/类别（统一类型） */
+  level: BattleLogMessageType
 
   /** 日志类别（业务维度） */
   category: BattleLogCategory
@@ -287,7 +294,7 @@ export function createDefaultBattleLogEntry(
   action: string,
   target: string,
   result: string,
-  level: BattleLogLevel = 'info',
+  level: BattleLogMessageType = 'info',
   category: BattleLogCategory = 'system',
 ): BattleLogEntry {
   return {
@@ -321,22 +328,35 @@ export const LogUtils = {
   },
 
   isValidLogCategory(category: string): boolean {
-    const validCategories: BattleLogCategory[] = ['system', 'action', 'damage', 'heal', 'crit', 'status']
+    const validCategories: BattleLogCategory[] = [
+      'system',
+      'action',
+      'damage',
+      'heal',
+      'crit',
+      'status',
+    ]
     return validCategories.includes(category as BattleLogCategory)
   },
 
   /**
    * 获取日志级别的显示名称
+   * @param level - 日志级别或类别
    */
-  getLevelDisplayName(level: BattleLogLevel): string {
-    const displayNames: Record<BattleLogLevel, string> = {
+  getLevelDisplayName(level: BattleLogMessageType): string {
+    const displayNames: Partial<
+      Record<BattleLogLevel | BattleLogCategory, string>
+    > = {
       damage: '伤害',
       heal: '治疗',
       crit: '暴击',
       status: '状态',
       info: '信息',
-      ally: '友方',
-      enemy: '敌方',
+      debug: '调试',
+      warning: '警告',
+      error: '错误',
+      system: '系统',
+      action: '动作',
     }
     return displayNames[level] || '未知'
   },

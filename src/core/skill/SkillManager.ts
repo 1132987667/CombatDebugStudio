@@ -134,6 +134,12 @@ export class SkillManager {
       }
     }
 
+    // 检查能量是否足够
+    const energyCost = skillConfig.mpCost || 0
+    if (source.currentEnergy < energyCost) {
+      return false
+    }
+
     return true
   }
 
@@ -197,6 +203,92 @@ export class SkillManager {
         description: `${source.name} 使用 ${skillConfig.name || skillId} 造成 ${actualDamage} 伤害`
       })
       this.logger.debug(`旧格式技能执行完成: ${skillId}, 伤害: ${actualDamage}`)
+
+      // 兼容处理旧格式中的其他效果属性
+      // 处理 heal 属性（治疗效果）
+      if ((skillConfig as any).heal) {
+        const healValue = (skillConfig as any).heal
+        const actualHeal = source.takeHeal ? source.takeHeal(healValue) : Math.floor(healValue)
+        action.heal = actualHeal
+        action.effects.push({
+          type: 'heal',
+          value: actualHeal,
+          description: `${source.name} 使用 ${skillConfig.name || skillId} 恢复 ${actualHeal} 生命值`
+        })
+        this.logger.debug(`旧格式技能治疗效果: ${skillId}, 治疗: ${actualHeal}`)
+      }
+
+      // 处理 buffId 属性（Buff效果）
+      if ((skillConfig as any).buffId) {
+        const buffId = (skillConfig as any).buffId
+        const scriptRegistry = this.buffSystem.getScriptRegistry()
+
+        if (scriptRegistry.has(buffId)) {
+          const buffConfig = {
+            id: buffId,
+            name: buffId,
+            description: `来自技能 ${skillConfig.name || skillId} 的效果`,
+            duration: (skillConfig as any).buffDuration ?? 1,
+            maxStacks: 1,
+            cooldown: 0,
+            stackRule: StackRule.LIMITED,
+            controlType: ControlType.NONE,
+            controlPriority: 0,
+            isDebuff: false,
+            parameters: {}
+          }
+
+          const instanceId = this.buffSystem.addBuff(target.id, buffId, buffConfig)
+          if (instanceId) {
+            target.addBuff(instanceId)
+          }
+
+          action.effects.push({
+            type: 'buff',
+            buffId: buffId,
+            instanceId,
+            description: `${source.name} 使用 ${skillConfig.name || skillId} 对 ${target.name} 施加 ${buffId}`
+          })
+          this.logger.debug(`旧格式技能Buff效果: ${skillId}, Buff: ${buffId}`)
+        } else {
+          this.logger.warn(`旧格式技能Buff未找到: ${buffId}`)
+        }
+      }
+
+      // 处理 buffDuration 属性（Debuff效果）
+      if ((skillConfig as any).debuffId) {
+        const debuffId = (skillConfig as any).debuffId
+        const scriptRegistry = this.buffSystem.getScriptRegistry()
+
+        if (scriptRegistry.has(debuffId)) {
+          const debuffConfig = {
+            id: debuffId,
+            name: debuffId,
+            description: `来自技能 ${skillConfig.name || skillId} 的debuff效果`,
+            duration: (skillConfig as any).debuffDuration ?? 1,
+            maxStacks: 1,
+            cooldown: 0,
+            stackRule: StackRule.LIMITED,
+            controlType: ControlType.NONE,
+            controlPriority: 0,
+            isDebuff: true,
+            parameters: {}
+          }
+
+          const instanceId = this.buffSystem.addBuff(target.id, debuffId, debuffConfig)
+          if (instanceId) {
+            target.addBuff(instanceId)
+          }
+
+          action.effects.push({
+            type: 'debuff',
+            buffId: debuffId,
+            instanceId,
+            description: `${source.name} 使用 ${skillConfig.name || skillId} 对 ${target.name} 施加 ${debuffId}`
+          })
+          this.logger.debug(`旧格式技能Debuff效果: ${skillId}, Debuff: ${debuffId}`)
+        }
+      }
     } else {
       throw new Error(`技能配置无效: ${skillId}，既没有 steps 也没有 damage 属性`)
     }

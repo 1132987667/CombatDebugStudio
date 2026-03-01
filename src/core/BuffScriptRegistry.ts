@@ -9,6 +9,20 @@
 
 import { IBuffScript } from '@/types/buff'
 import { battleLogManager } from '@/utils/logging'
+import buffsData from '@configs/buffs/buffs.json'
+
+/**
+ * Buff配置数据接口
+ * 对应buffs.json中的配置结构
+ */
+interface BuffConfigData {
+  id: string
+  name?: string
+  maxStacks?: number
+  duration?: number
+  attributes?: Record<string, string>
+  onAdd?: string
+}
 
 /**
  * 脚本工厂类型
@@ -45,6 +59,8 @@ interface RegistryEntry<TParams = any> {
 export class BuffScriptRegistry {
   /** 脚本注册表，以脚本ID为键 */
   private registry = new Map<string, RegistryEntry>()
+  /** Buff配置数据缓存，以buffId为键 */
+  private buffConfigs = new Map<string, BuffConfigData>()
   /** 日志记录器 */
   private readonly logger = battleLogManager
 
@@ -52,7 +68,130 @@ export class BuffScriptRegistry {
    * 私有构造函数
    * 防止外部直接实例化
    */
-  private constructor() {}
+  private constructor() {
+    this.loadBuffConfigs()
+  }
+
+  /**
+   * 加载Buff配置文件
+   * 从buffs.json中读取配置数据并缓存
+   */
+  private loadBuffConfigs(): void {
+    try {
+      if (Array.isArray(buffsData)) {
+        for (const buff of buffsData) {
+          if (buff.id) {
+            this.buffConfigs.set(buff.id, buff as BuffConfigData)
+          }
+        }
+        this.logger.info(`已加载 ${this.buffConfigs.size} 个Buff配置`)
+      }
+    } catch (error) {
+      this.logger.error('加载Buff配置失败:', error)
+    }
+  }
+
+  /**
+   * 获取Buff配置数据
+   * @param buffId Buff ID
+   * @returns Buff配置数据
+   */
+  public getBuffConfig(buffId: string): BuffConfigData | undefined {
+    return this.buffConfigs.get(buffId)
+  }
+
+  /**
+   * 获取Buff的属性修饰符
+   * @param buffId Buff ID
+   * @returns 属性修饰符对象
+   */
+  public getBuffAttributes(buffId: string): Record<string, string> | undefined {
+    const config = this.buffConfigs.get(buffId)
+    return config?.attributes
+  }
+
+  /**
+   * 解析属性修饰符字符串
+   * 将 "+10" 解析为数值和类型
+   * @param value 属性值字符串，如 "+10", "-0.15", "0.2"
+   * @returns 包含数值和修饰类型的对象
+   */
+  public parseAttributeValue(value: string): { value: number; type: 'ADDITIVE' | 'PERCENTAGE' } {
+    const trimmed = value.trim()
+    if (trimmed.startsWith('+') || trimmed.startsWith('-')) {
+      const numValue = parseFloat(trimmed)
+      if (Math.abs(numValue) < 1) {
+        return { value: numValue, type: 'PERCENTAGE' }
+      }
+      return { value: numValue, type: 'ADDITIVE' }
+    }
+    const numValue = parseFloat(trimmed)
+    if (isNaN(numValue)) {
+      return { value: 0, type: 'ADDITIVE' }
+    }
+    if (Math.abs(numValue) < 1) {
+      return { value: numValue, type: 'PERCENTAGE' }
+    }
+    return { value: numValue, type: 'ADDITIVE' }
+  }
+
+  /**
+   * 标准化属性名称
+   * 将不同格式的属性名称转换为统一的内部格式
+   * @param attribute 属性名称
+   * @returns 标准化后的属性名称
+   */
+  public normalizeAttributeName(attribute: string): string {
+    const attributeMap: Record<string, string> = {
+      'speed': 'SPD',
+      'attack': 'ATK',
+      'defense': 'DEF',
+      'health': 'HP',
+      'critRate': 'CRIT_RATE',
+      'critDamage': 'CRIT_DMG',
+      'physicalDamageTaken': 'PHYSICAL_DMG_TAKEN',
+      'magicDamageTaken': 'MAGIC_DMG_TAKEN',
+      'fireDamageTaken': 'FIRE_DMG_TAKEN',
+      'waterDamageTaken': 'WATER_DMG_TAKEN',
+      'lightningDamageTaken': 'LIGHTNING_DMG_TAKEN',
+      'demonDamage': 'DEMON_DMG',
+      'buddhistDamage': 'BUDDHIST_DMG',
+      'slowImmune': 'SLOW_IMMUNE',
+      'stunResist': 'STUN_RESIST',
+      'knockbackResist': 'KNOCKBACK_RESIST',
+      'poisonResist': 'POISON_RESIST',
+      'bleedResist': 'BLEED_RESIST',
+      'burnImmune': 'BURN_IMMUNE',
+      'fireDamage': 'FIRE_DMG',
+      'poisonChance': 'POISON_CHANCE',
+      'webSuccessRate': 'WEB_SUCCESS_RATE',
+      'debuffDuration': 'DEBUFF_DURATION',
+      'hitRate': 'HIT_RATE',
+      'dodge': 'DODGE',
+      'skillCooldown': 'SKILL_CD',
+    }
+    return attributeMap[attribute.toLowerCase()] || attribute.toUpperCase()
+  }
+
+  /**
+   * 批量加载Buff配置（用于动态刷新配置）
+   * @param configs Buff配置数组
+   */
+  public loadBuffConfigsFromArray(configs: BuffConfigData[]): void {
+    for (const buff of configs) {
+      if (buff.id) {
+        this.buffConfigs.set(buff.id, buff)
+      }
+    }
+  }
+
+  /**
+   * 重新加载Buff配置文件
+   */
+  public reloadBuffConfigs(): void {
+    this.buffConfigs.clear()
+    this.loadBuffConfigs()
+  }
 
 
 

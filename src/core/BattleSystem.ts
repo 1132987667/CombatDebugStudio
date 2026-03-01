@@ -16,7 +16,13 @@ import type {
   ParticipantSide,
   RoundStatus,
 } from '@/types/battle'
-import { BATTLE_STATUS, ROUND_STATUS, PARTICIPANT_SIDE, BattleSystemEvent } from '@/types/battle'
+import type { ExtendedSkillStep } from '@/types/skill'
+import {
+  BATTLE_STATUS,
+  ROUND_STATUS,
+  PARTICIPANT_SIDE,
+  BattleSystemEvent,
+} from '@/types/battle'
 import { battleLogManager } from '@/utils/logging'
 import { eventBus } from '@/main'
 import type { BattleAI } from '@/core/BattleAI'
@@ -27,8 +33,23 @@ import { AISystem } from '@/core/battle/AISystem'
 import { BattleRecorder } from '@/core/battle/BattleRecorder'
 import { BattleRuleManager } from '@/core/battle/BattleRuleManager'
 import { SkillManager } from '@/core/skill/SkillManager'
-import { PassiveSkillManager, PassiveSkillTrigger } from '@/core/skill/PassiveSkillManager'
+import {
+  PassiveSkillManager,
+  PassiveSkillTrigger,
+} from '@/core/skill/PassiveSkillManager'
+import { DamageCalculator } from '@/core/skill/DamageCalculator'
+import { RAFTimer } from '@/utils/RAF'
+import { BuffSystem } from '@/core/BuffSystem'
 import type { BattleLogEntry } from '@/types/battle-log'
+import {
+  BATTLE_SYSTEM_TOKEN,
+  TURN_MANAGER_TOKEN,
+  ACTION_EXECUTOR_TOKEN,
+  AI_SYSTEM_TOKEN,
+  PARTICIPANT_MANAGER_TOKEN,
+  BATTLE_RECORDER_TOKEN,
+  BATTLE_RULE_MANAGER_TOKEN,
+} from '@/core/battle/interfaces'
 
 /**
  * 战斗系统类
@@ -36,7 +57,6 @@ import type { BattleLogEntry } from '@/types/battle-log'
  * 通过依赖注入容器管理实例
  */
 export class GameBattleSystem implements IBattleSystem {
-
   // 存储所有战斗数据的映射表，key为战斗ID，value为战斗数据
   private battles = new Map<string, BattleData>()
   private curBattleId: string
@@ -56,27 +76,30 @@ export class GameBattleSystem implements IBattleSystem {
   // 事件系统使用全局事件总线
 
   // 技能管理器实例
-  private skillManager
-  private passiveSkillManager
-  private ruleManager: BattleRuleManager
-  private buffSystem
-  private damageCalculator
-  private turnManager: TurnManager
-  private actionExecutor: ActionExecutor
-  private participantManager: ParticipantManager
-  private aiSystem: AISystem
-  private battleRecorder: BattleRecorder
+  private skillManager!: SkillManager
+  private passiveSkillManager!: PassiveSkillManager
+  private ruleManager!: BattleRuleManager
+  private buffSystem!: BuffSystem
+  private damageCalculator!: DamageCalculator
+  private turnManager!: TurnManager
+  private actionExecutor!: ActionExecutor
+  private participantManager!: ParticipantManager
+  private aiSystem!: AISystem
+  private battleRecorder!: BattleRecorder
   private curParticipantsInfo: BattleParticipant[] = []
-  private rafTimer
+  private rafTimer!: RAFTimer
   /** 动画播放状态管理 */
-  private animationState = new Map<string, {
-    isPlaying: boolean
-    animationQueue: Array<{
-      type: string
-      data: any
-      resolve: () => void
-    }>
-  }>()
+  private animationState = new Map<
+    string,
+    {
+      isPlaying: boolean
+      animationQueue: Array<{
+        type: string
+        data: any
+        resolve: () => void
+      }>
+    }
+  >()
 
   // 私有构造函数，防止外部直接实例化
   private constructor(
@@ -86,20 +109,19 @@ export class GameBattleSystem implements IBattleSystem {
     private aiSystem: AISystem,
     private battleRecorder: BattleRecorder,
     private ruleManager: BattleRuleManager,
-    private damageCalculator,
-    private rafTimer,
-    private skillManager,
-    private buffSystem,
-    private passiveSkillManager
+    damageCalculator: DamageCalculator,
+    rafTimer: RAFTimer,
+    skillManager: SkillManager,
+    buffSystem: BuffSystem,
+    passiveSkillManager: PassiveSkillManager,
   ) {
     this.curBattleData = this.getDefBattleData()
     this.curBattleId = this.curBattleData.battleId
   }
 
-
-
   /**
    * 创建战斗系统实例（内部使用，由容器调用）
+   * @deprecated 使用 createInstanceWithContainer 替代
    */
   public static createInstance(
     turnManager: TurnManager,
@@ -108,11 +130,11 @@ export class GameBattleSystem implements IBattleSystem {
     aiSystem: AISystem,
     battleRecorder: BattleRecorder,
     ruleManager: BattleRuleManager,
-    damageCalculator: any,
-    rafTimer: any,
-    skillManager: any,
-    buffSystem: any,
-    passiveSkillManager: any
+    damageCalculator: DamageCalculator,
+    rafTimer: RAFTimer,
+    skillManager: SkillManager,
+    buffSystem: BuffSystem,
+    passiveSkillManager: PassiveSkillManager,
   ): GameBattleSystem {
     return new GameBattleSystem(
       turnManager,
@@ -125,7 +147,52 @@ export class GameBattleSystem implements IBattleSystem {
       rafTimer,
       skillManager,
       buffSystem,
-      passiveSkillManager
+      passiveSkillManager,
+    )
+  }
+
+  /**
+   * 使用容器创建战斗系统实例（推荐方式）
+   * 容器会自动解析所有依赖
+   */
+  public static createInstanceWithContainer(container: any): GameBattleSystem {
+    const turnManager = container.resolve<TurnManager>(
+      TURN_MANAGER_TOKEN.toString(),
+    )
+    const actionExecutor = container.resolve<ActionExecutor>(
+      ACTION_EXECUTOR_TOKEN.toString(),
+    )
+    const participantManager = container.resolve<ParticipantManager>(
+      PARTICIPANT_MANAGER_TOKEN.toString(),
+    )
+    const aiSystem = container.resolve<AISystem>(AI_SYSTEM_TOKEN.toString())
+    const battleRecorder = container.resolve<BattleRecorder>(
+      BATTLE_RECORDER_TOKEN.toString(),
+    )
+    const ruleManager = container.resolve<BattleRuleManager>(
+      BATTLE_RULE_MANAGER_TOKEN.toString(),
+    )
+    const damageCalculator =
+      container.resolve<DamageCalculator>('DamageCalculator')
+    const rafTimer = container.resolve<RAFTimer>('RAFTimer')
+    const skillManager = container.resolve<SkillManager>('SkillManager')
+    const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+    const passiveSkillManager = container.resolve<PassiveSkillManager>(
+      'PassiveSkillManager',
+    )
+
+    return new GameBattleSystem(
+      turnManager,
+      actionExecutor,
+      participantManager,
+      aiSystem,
+      battleRecorder,
+      ruleManager,
+      damageCalculator,
+      rafTimer,
+      skillManager,
+      buffSystem,
+      passiveSkillManager,
     )
   }
 
@@ -267,13 +334,15 @@ export class GameBattleSystem implements IBattleSystem {
     // 记录初始化动作到战斗记录器
     this.battleRecorder.recordAction(battleId, initAction, 0)
 
-    // 应用所有角色的被动技能效果
-    this.applyPassiveSkills(participants)
-
-    // 进入战斗阶段
+    // 进入战斗阶段后再应用被动技能
+    // 确保Buff系统已经完全初始化后再触发被动技能
     battleData.battleState = BATTLE_STATUS.ACTIVE
     battleData.roundState = ROUND_STATUS.START
     battleData.isActive = true
+
+    // 应用所有角色的被动技能效果
+    // 在战斗状态变为ACTIVE后调用，确保Buff系统已完全初始化
+    this.applyPassiveSkills(participants)
 
     // 返回战斗状态
     return this.convertToBattleState(battleData)
@@ -290,7 +359,7 @@ export class GameBattleSystem implements IBattleSystem {
     // 使用PassiveSkillManager触发战斗开始时的被动技能
     this.passiveSkillManager.triggerPassiveSkillsForAll(
       PassiveSkillTrigger.BATTLE_START,
-      participants
+      participants,
     )
   }
 
@@ -314,12 +383,16 @@ export class GameBattleSystem implements IBattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         PassiveSkillTrigger.TURN_START,
         battle.participants,
-        { round: battle.currentRound }
+        { round: battle.currentRound },
       )
 
       // 为所有存活参与者减少技能冷却回合数
       battle.participants.forEach((participant) => {
-        if (participant.isAlive() && 'reduceSkillCooldowns' in participant && typeof participant.reduceSkillCooldowns === 'function') {
+        if (
+          participant.isAlive() &&
+          'reduceSkillCooldowns' in participant &&
+          typeof participant.reduceSkillCooldowns === 'function'
+        ) {
           participant.reduceSkillCooldowns()
         }
       })
@@ -379,7 +452,7 @@ export class GameBattleSystem implements IBattleSystem {
       for (let i = 0; i < currentTurnOrder.length; i++) {
         // 检查是否有动画正在播放，如果有，等待动画完成
         while (this.isAnimationPlaying(battleId)) {
-          await new Promise(resolve => setTimeout(resolve, 100))
+          await new Promise((resolve) => setTimeout(resolve, 100))
         }
 
         const participantId = currentTurnOrder[i]
@@ -407,7 +480,7 @@ export class GameBattleSystem implements IBattleSystem {
 
         // 等待动画播放完成
         while (this.isAnimationPlaying(battleId)) {
-          await new Promise(resolve => setTimeout(resolve, 100))
+          await new Promise((resolve) => setTimeout(resolve, 100))
         }
 
         // 更新当前行动者的Buff回合状态
@@ -427,14 +500,14 @@ export class GameBattleSystem implements IBattleSystem {
 
       // 等待所有动画播放完成
       while (this.isAnimationPlaying(battleId)) {
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 100))
       }
 
       // 触发回合结束时的被动技能
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         PassiveSkillTrigger.TURN_END,
         battle.participants,
-        { round: battle.currentRound }
+        { round: battle.currentRound },
       )
 
       // 设置回合状态为结束
@@ -546,7 +619,10 @@ export class GameBattleSystem implements IBattleSystem {
           return false
         }
         // 检查技能是否冷却
-        if ('isSkillAvailable' in participant && typeof participant.isSkillAvailable === 'function') {
+        if (
+          'isSkillAvailable' in participant &&
+          typeof participant.isSkillAvailable === 'function'
+        ) {
           if (!participant.isSkillAvailable(skillId)) {
             return false
           }
@@ -571,24 +647,34 @@ export class GameBattleSystem implements IBattleSystem {
           },
           participant,
         )
-        
-        this.battleLogger.debug(`AI决策[${participant.name}]: ${action.type === 'skill' ? '使用技能' : '普通攻击'}`)
-        
+
+        this.battleLogger.debug(
+          `AI决策[${participant.name}]: ${action.type === 'skill' ? '使用技能' : '普通攻击'}`,
+        )
+
         if (action.type === 'skill' && action.skillId) {
           const skillId = action.skillId
           if (allSkillIds.includes(skillId)) {
-            await this.selectAndExecuteSkill(battle, participant, { id: skillId })
+            await this.selectAndExecuteSkill(battle, participant, {
+              id: skillId,
+            })
           } else {
             await this.selectAndExecuteAttack(battle, participant)
           }
         } else {
           await this.selectAndExecuteAttack(battle, participant)
         }
-      } else if (availableSkills.length > 0 && Math.random() < 0.4 && availableSkills[0]) {
+      } else if (
+        availableSkills.length > 0 &&
+        Math.random() < 0.4 &&
+        availableSkills[0]
+      ) {
         // 没有AI实例时使用原来的随机选择逻辑（也过滤了被动技能）
         const selectedSkillId =
           availableSkills[Math.floor(Math.random() * availableSkills.length)]
-        await this.selectAndExecuteSkill(battle, participant, { id: selectedSkillId })
+        await this.selectAndExecuteSkill(battle, participant, {
+          id: selectedSkillId,
+        })
       } else {
         await this.selectAndExecuteAttack(battle, participant)
       }
@@ -616,7 +702,10 @@ export class GameBattleSystem implements IBattleSystem {
     skill: any,
   ): Promise<BattleAction> {
     // 检查技能是否可用
-    if ('isSkillAvailable' in source && typeof source.isSkillAvailable === 'function') {
+    if (
+      'isSkillAvailable' in source &&
+      typeof source.isSkillAvailable === 'function'
+    ) {
       if (!source.isSkillAvailable(skill.id)) {
         // 技能冷却中，执行普通攻击
         return this.selectAndExecuteAttack(battle, source)
@@ -697,15 +786,40 @@ export class GameBattleSystem implements IBattleSystem {
     const target = this.selectTarget(battle, source)
 
     const targetParticipant = battle.participants.get(target)
-    
+
     // 触发攻击前的被动技能
     this.passiveSkillManager.triggerPassiveSkills(
       PassiveSkillTrigger.BEFORE_ATTACK,
       source,
-      { targetId: target }
+      { targetId: target },
     )
-    
-    // 闪避判定
+
+    // 构造普通攻击的技能步骤配置
+    const attackStep: ExtendedSkillStep = {
+      type: 'DAMAGE',
+      id: 'normal_attack',
+      targetId: target,
+      calculation: {
+        baseValue: 0,
+        extraValues: [{ attribute: 'ATK', ratio: 1.0 }],
+      },
+      attackType: 'physical',
+      targetModifiers: {
+        DEF: 1,
+      },
+      criticalConfig: {
+        rate: (source.getAttribute('critRate') || 10) / 100,
+        multiplier: (source.getAttribute('critDamage') || 125) / 100,
+      },
+    }
+
+    // 使用DamageCalculator统一计算伤害
+    const damageResult = this.damageCalculator.calculateDamage(
+      attackStep,
+      source,
+      targetParticipant!,
+    )
+
     const action: BattleAction = {
       id: `attack_${Date.now()}`,
       type: 'attack',
@@ -719,19 +833,7 @@ export class GameBattleSystem implements IBattleSystem {
       effects: [],
     }
 
-    // 使用DamageCalculator计算伤害
-    const attack = source.getAttribute('ATK') || 0
-    const defense = targetParticipant!.getAttribute('DEF') || 0
-    const damageBoost = (source.getAttribute('damageBoost') || 0) / 100
-    const damageReduction = (targetParticipant!.getAttribute('damageReduction') || 0) / 100
-    const critRate = (source.getAttribute('critRate') || 10) / 100
-    const critDamage = (source.getAttribute('critDamage') || 125) / 100
-
-    // 闪避判定
-    const dodgeRate = targetParticipant!.getAttribute('dodgeRate') || 0
-    const isMiss = Math.random() < dodgeRate
-
-    if (isMiss) {
+    if (damageResult.isMiss) {
       // 处理闪避情况
       action.effects.push({
         type: 'miss',
@@ -758,37 +860,23 @@ export class GameBattleSystem implements IBattleSystem {
         `普通攻击: ${source.name} → ${targetParticipant!.name}，被闪避`,
       )
     } else {
-      // 暴击判定
-      const isCritical = Math.random() < critRate
-      
-      // 计算基础伤害
-      let baseDamage = Math.max(1, attack - defense)
-      
-      // 应用增伤和减伤
-      let finalDamage = baseDamage * (1 + damageBoost) * (1 - damageReduction)
-      
-      // 应用暴击伤害
-      if (isCritical) {
-        finalDamage *= critDamage
-      }
-      
-      // 四舍五入取整
-      const damage = Math.floor(finalDamage)
+      // 应用伤害
+      const damage = damageResult.damage
       action.damage = damage
-      
+
       targetParticipant!.takeDamage(damage)
 
       action.effects.push({
         type: 'damage',
         value: damage,
-        description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
+        description: `${source.name} 普通攻击 造成 ${damage} 伤害${damageResult.isCritical ? ' (暴击)' : ''}`,
       })
 
       this.triggerDamageAnimation({
         targetId: target,
         damage,
         damageType: 'physical',
-        isCritical: isCritical,
+        isCritical: damageResult.isCritical,
         isHeal: false,
       })
 
@@ -797,9 +885,9 @@ export class GameBattleSystem implements IBattleSystem {
         source: source.name,
         action: '对',
         target: targetParticipant!.name,
-        result: `${source.name} 对 ${targetParticipant!.name} 发动普通攻击，${isCritical ? '暴击！' : ''}造成 ${damage} 点物理伤害。`,
+        result: `${source.name} 对 ${targetParticipant!.name} 发动普通攻击，${damageResult.isCritical ? '暴击！' : ''}造成 ${damage} 点物理伤害。`,
         level: 'info',
-        category: isCritical ? 'crit' : 'damage',
+        category: damageResult.isCritical ? 'crit' : 'damage',
       }
       this.syncBattleLog(battle.battleId, logEntry)
 
@@ -807,7 +895,7 @@ export class GameBattleSystem implements IBattleSystem {
         `普通攻击: ${source.name} → ${targetParticipant!.name}`,
         {
           damage,
-          isCritical,
+          isCritical: damageResult.isCritical,
           targetHealth: targetParticipant!.currentHealth,
         },
       )
@@ -817,7 +905,11 @@ export class GameBattleSystem implements IBattleSystem {
     this.passiveSkillManager.triggerPassiveSkills(
       PassiveSkillTrigger.AFTER_ATTACK,
       source,
-      { targetId: target, damage: action.damage, isCritical: action.effects.some(e => e.description?.includes('暴击')) }
+      {
+        targetId: target,
+        damage: action.damage,
+        isCritical: action.effects.some((e) => e.description?.includes('暴击')),
+      },
     )
 
     this.addBattleAction(battle.battleId, action)
@@ -973,7 +1065,9 @@ export class GameBattleSystem implements IBattleSystem {
         action.effects = skillAction.effects
 
         // 检查是否有闪避效果
-        const hasMissEffect = skillAction.effects.some(effect => effect.type === 'miss')
+        const hasMissEffect = skillAction.effects.some(
+          (effect) => effect.type === 'miss',
+        )
         if (hasMissEffect) {
           // 触发闪避动画并等待完成
           await this.triggerMissAnimationAndWait({
@@ -989,7 +1083,7 @@ export class GameBattleSystem implements IBattleSystem {
             if (effect.target === 'self') {
               buffTarget = source
             }
-            
+
             // 触发buff添加动画并等待完成
             await this.triggerBuffEffectAndWait({
               targetId: buffTarget.id,
@@ -1039,7 +1133,7 @@ export class GameBattleSystem implements IBattleSystem {
       this.passiveSkillManager.triggerPassiveSkills(
         PassiveSkillTrigger.ON_HIT,
         target,
-        { sourceId: source.id, damage: actualDamage }
+        { sourceId: source.id, damage: actualDamage },
       )
 
       // 检查目标是否死亡，如果死亡则触发死亡时的被动技能
@@ -1047,7 +1141,7 @@ export class GameBattleSystem implements IBattleSystem {
         this.passiveSkillManager.triggerPassiveSkills(
           PassiveSkillTrigger.ON_DEATH,
           target,
-          { sourceId: source.id, cause: 'damage' }
+          { sourceId: source.id, cause: 'damage' },
         )
       }
 
@@ -1154,11 +1248,61 @@ export class GameBattleSystem implements IBattleSystem {
       (p) => p.type === PARTICIPANT_SIDE.ENEMY && p.isAlive(),
     )
 
+    // 检查一方全部死亡
     if (aliveCharacters.length === 0) {
       this.endBattle(battle.battleId, PARTICIPANT_SIDE.ENEMY)
     } else if (aliveEnemies.length === 0) {
       this.endBattle(battle.battleId, PARTICIPANT_SIDE.ALLY)
+    } else if (battle.currentRound >= battle.maxTurns) {
+      // 回合数达到上限，根据剩余血量判断胜负
+      this.handleMaxTurnsReached(battle, aliveCharacters, aliveEnemies)
     }
+  }
+
+  /**
+   * 处理回合数达到上限的情况
+   * @param battle 战斗数据
+   * @param aliveCharacters 存活的角色
+   * @param aliveEnemies 存活的敌人
+   */
+  private handleMaxTurnsReached(
+    battle: BattleData,
+    aliveCharacters: BattleParticipant[],
+    aliveEnemies: BattleParticipant[],
+  ): void {
+    // 计算各方的总剩余血量百分比
+    const charactersTotalHealthPercent = aliveCharacters.reduce((sum, p) => {
+      return sum + p.getAttribute('HP') / p.getAttribute('MAX_HP')
+    }, 0)
+
+    const enemiesTotalHealthPercent = aliveEnemies.reduce((sum, p) => {
+      return sum + p.getAttribute('HP') / p.getAttribute('MAX_HP')
+    }, 0)
+
+    // 血量百分比高的一方获胜
+    let winner: PARTICIPANT_SIDE
+    if (charactersTotalHealthPercent > enemiesTotalHealthPercent) {
+      winner = PARTICIPANT_SIDE.ALLY
+    } else if (enemiesTotalHealthPercent > charactersTotalHealthPercent) {
+      winner = PARTICIPANT_SIDE.ENEMY
+    } else {
+      // 血量相同，判定为平局，默认角色方胜利
+      winner = PARTICIPANT_SIDE.ALLY
+    }
+
+    this.endBattle(battle.battleId, winner)
+
+    // 添加回合上限到达的日志
+    const logEntry: BattleLogEntry = {
+      turn: `回合${battle.currentRound}`,
+      source: '系统',
+      action: '战斗结束',
+      target: '系统',
+      result: `回合数达到上限(${battle.maxTurns})，${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}以血量优势获胜`,
+      level: 'warn',
+      category: 'status',
+    }
+    this.syncBattleLog(battle.battleId, logEntry)
   }
 
   /**
@@ -1239,7 +1383,7 @@ export class GameBattleSystem implements IBattleSystem {
     // 触发战斗结束事件，通知所有监听器进行清理
     this.emit(BattleSystemEvent.BATTLE_END, {
       battleId,
-      winner
+      winner,
     })
   }
 
@@ -1253,7 +1397,7 @@ export class GameBattleSystem implements IBattleSystem {
 
     // 清理自动战斗定时器
     if (battle.autoBattleIntervalId) {
-      this.rafTimer.clearTimeout(battle.autoBattleIntervalId)
+      this.rafTimer.clearInterval(battle.autoBattleIntervalId)
       battle.autoBattleIntervalId = undefined
     }
 
@@ -1297,12 +1441,12 @@ export class GameBattleSystem implements IBattleSystem {
       participant.buffs = []
     })
 
-    // 清除战斗记录
-    this.battleRecorder.clearRecordings()
+    // 清除当前战斗的记录
+    this.battleRecorder.clearRecording(battleId)
 
     // 触发战斗重置事件，通知所有监听器进行清理
     this.emit(BattleSystemEvent.BATTLE_RESET, {
-      battleId
+      battleId,
     })
 
     this.battleLogger.info(`战斗已重置: ${battleId}`)
@@ -1637,7 +1781,7 @@ export class GameBattleSystem implements IBattleSystem {
    */
   private emit(event: string, data: any): void {
     this.battleLogger.debug(`发射事件: ${event}`, {
-      data: JSON.stringify(data, null, 2).substring(0, 1000) // 限制日志长度
+      data: JSON.stringify(data, null, 2).substring(0, 1000), // 限制日志长度
     })
     eventBus.emit(event, data)
   }
@@ -1659,7 +1803,9 @@ export class GameBattleSystem implements IBattleSystem {
       this.emit(BattleSystemEvent.BATTLE_STATE_UPDATE, {
         battleId,
         participants: Array.from(battle.participants.values()).map((p) => {
-          const activeBuffIds = this.buffSystem.getBuffInstances(p.id).map((buff) => buff.id)
+          const activeBuffIds = this.buffSystem
+            .getBuffInstances(p.id)
+            .map((buff) => buff.id)
           p.buffs = activeBuffIds
 
           return {
@@ -1694,9 +1840,7 @@ export class GameBattleSystem implements IBattleSystem {
   /**
    * 触发闪避动画
    */
-  private triggerMissAnimation(data: {
-    targetId: string
-  }): void {
+  private triggerMissAnimation(data: { targetId: string }): void {
     this.emit(BattleSystemEvent.MISS_ANIMATION, data)
   }
 
@@ -1722,24 +1866,24 @@ export class GameBattleSystem implements IBattleSystem {
     battleId: string,
     animationType: string,
     data: any,
-    duration: number = 1000
+    duration: number = 1000,
   ): Promise<void> {
     return new Promise<void>((resolve) => {
       // 初始化战斗的动画状态
       if (!this.animationState.has(battleId)) {
         this.animationState.set(battleId, {
           isPlaying: false,
-          animationQueue: []
+          animationQueue: [],
         })
       }
 
       const state = this.animationState.get(battleId)!
-      
+
       // 添加到动画队列
       state.animationQueue.push({
         type: animationType,
         data,
-        resolve
+        resolve,
       })
 
       // 如果没有动画在播放，开始处理队列
@@ -1778,7 +1922,7 @@ export class GameBattleSystem implements IBattleSystem {
     setTimeout(() => {
       // 标记动画完成
       animation.resolve()
-      
+
       // 继续处理下一个动画
       this.processAnimationQueue(battleId)
     }, 1000) // 默认动画持续时间1秒
@@ -1818,7 +1962,7 @@ export class GameBattleSystem implements IBattleSystem {
         battle.battleId,
         'skill-effect',
         data,
-        1500
+        1500,
       )
     }
   }
@@ -1839,7 +1983,7 @@ export class GameBattleSystem implements IBattleSystem {
         battle.battleId,
         BattleSystemEvent.DAMAGE_ANIMATION,
         data,
-        data.isCritical ? 1500 : 1000
+        data.isCritical ? 1500 : 1000,
       )
     }
   }
@@ -1856,7 +2000,7 @@ export class GameBattleSystem implements IBattleSystem {
         battle.battleId,
         BattleSystemEvent.MISS_ANIMATION,
         data,
-        1000
+        1000,
       )
     }
   }
@@ -1875,7 +2019,7 @@ export class GameBattleSystem implements IBattleSystem {
         battle.battleId,
         BattleSystemEvent.BUFF_EFFECT,
         data,
-        800
+        800,
       )
     }
   }

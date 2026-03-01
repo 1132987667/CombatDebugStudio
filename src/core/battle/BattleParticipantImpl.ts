@@ -7,11 +7,8 @@
  * 版本: 1.0.0
  */
 
-import type {
-  BattleParticipant,
-  StatusEffect,
-  ParticipantSide,
-} from '@/types/battle'
+import type { BattleParticipant, StatusEffect } from '@/types/battle'
+import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
 import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter'
 
@@ -42,6 +39,8 @@ export interface ParticipantInitData {
   minAttack: number
   /** 最大攻击力 */
   maxAttack: number
+  /** 平均攻击力 */
+  attack?: number
   /** 防御力 */
   defense: number
   /** 速度 */
@@ -143,20 +142,22 @@ export class BattleParticipantImpl implements BattleParticipant {
   static fromUICharacter(
     uiCharacter: UIBattleCharacter,
     isAlly: boolean,
-    index: number
+    index: number,
   ): BattleParticipantImpl {
-    const side = isAlly ? ParticipantSide.ALLY : ParticipantSide.ENEMY
+    const side = isAlly ? PARTICIPANT_SIDE.ALLY : PARTICIPANT_SIDE.ENEMY
 
-    const getValue = (attr: { value?: number } | number | undefined, defaultValue: number): number => {
+    const getValue = (
+      attr: { value?: number } | number | undefined,
+      defaultValue: number,
+    ): number => {
       if (attr === undefined || attr === null) return defaultValue
       if (typeof attr === 'number') return attr
-      if (typeof attr === 'object' && 'value' in attr) return attr.value ?? defaultValue
+      if (typeof attr === 'object' && 'value' in attr)
+        return attr.value ?? defaultValue
       return defaultValue
     }
 
     const maxHp = getValue(uiCharacter.maxHp, 0)
-    const maxMp = getValue(uiCharacter.maxMp, 0)
-    const currentMp = getValue(uiCharacter.currentMp, maxMp)
     const maxEnergy = getValue(uiCharacter.maxEnergy, 100)
     const currentEnergy = getValue(uiCharacter.currentEnergy, 25)
     const attack = getValue(uiCharacter.attack, 0)
@@ -179,8 +180,6 @@ export class BattleParticipantImpl implements BattleParticipant {
       level: uiCharacter.level || 1,
       maxHealth: maxHp,
       currentHealth: getValue(uiCharacter.currentHp, maxHp),
-      maxMp,
-      currentMp,
       maxEnergy,
       currentEnergy,
       minAttack,
@@ -210,7 +209,7 @@ export class BattleParticipantImpl implements BattleParticipant {
     this.team = data.team
     this.maxHealth = data.maxHealth
     this.currentHealth = data.currentHealth ?? data.maxHealth
-    this.maxEnergy = data.maxEnergy ?? 150
+    this.maxEnergy = data.maxEnergy ?? 100
     this.currentEnergy = data.currentEnergy ?? 25
     this.buffs = data.buffs ?? []
 
@@ -273,10 +272,49 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @param value - 属性值
    */
   setAttribute(attribute: string, value: number): void {
-    if (attribute === 'HP') {
-      this.currentHealth = Math.max(0, Math.min(value, this.maxHealth))
-    } else if (attribute === 'energy') {
-      this.currentEnergy = Math.max(0, Math.min(value, this.maxEnergy))
+    switch (attribute) {
+      case 'HP':
+        this.currentHealth = Math.max(0, Math.min(value, this.maxHealth))
+        break
+      case 'energy':
+        this.currentEnergy = Math.max(0, Math.min(value, this.maxEnergy))
+        break
+      case 'MAX_HP':
+        this.maxHealth = Math.max(0, value)
+        break
+      case 'max_energy':
+        this.maxEnergy = Math.max(0, value)
+        break
+      case 'ATK':
+      case 'attack':
+        this.attack = value
+        break
+      case 'MIN_ATK':
+        this.minAttack = value
+        break
+      case 'MAX_ATK':
+        this.maxAttack = value
+        break
+      case 'DEF':
+      case 'defense':
+        this.defense = value
+        break
+      case 'SPD':
+      case 'speed':
+        this.speed = value
+        break
+      case 'CRIT_RATE':
+      case 'critRate':
+        this.critRate = value
+        break
+      case 'CRIT_DMG':
+      case 'critDamage':
+        this.critDamage = value
+        break
+      case 'DMG_RED':
+      case 'damageReduction':
+        this.damageReduction = value
+        break
     }
   }
 
@@ -310,15 +348,19 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @returns 实际受到的伤害值
    */
   takeDamage(amount: number): number {
+    if (!this.isAlive()) {
+      return 0
+    }
+
     const damage = Math.max(0, amount)
     this.currentHealth = Math.max(0, this.currentHealth - damage)
     this.gainEnergy(15)
-    
+
     // 触发受击时的被动技能
     // 注意：这里需要通过某种方式获取PassiveSkillManager实例
     // 由于依赖注入的限制，我们暂时不在这里直接触发
     // 而是在BattleSystem的伤害处理中触发
-    
+
     return damage
   }
 
@@ -330,7 +372,10 @@ export class BattleParticipantImpl implements BattleParticipant {
   heal(amount: number): number {
     const healAmount = Math.max(0, amount)
     const originalHealth = this.currentHealth
-    this.currentHealth = Math.min(this.currentHealth + healAmount, this.maxHealth)
+    this.currentHealth = Math.min(
+      this.currentHealth + healAmount,
+      this.maxHealth,
+    )
     return this.currentHealth - originalHealth
   }
 
@@ -368,9 +413,12 @@ export class BattleParticipantImpl implements BattleParticipant {
    */
   getSkills(): string[] {
     const allSkills: string[] = []
-    if (this.skills.small) allSkills.push(...this.skills.small.map(skill => skill.id))
-    if (this.skills.passive) allSkills.push(...this.skills.passive.map(skill => skill.id))
-    if (this.skills.ultimate) allSkills.push(...this.skills.ultimate.map(skill => skill.id))
+    if (this.skills.small)
+      allSkills.push(...this.skills.small.map((skill) => skill.id))
+    if (this.skills.passive)
+      allSkills.push(...this.skills.passive.map((skill) => skill.id))
+    if (this.skills.ultimate)
+      allSkills.push(...this.skills.ultimate.map((skill) => skill.id))
     return allSkills
   }
 

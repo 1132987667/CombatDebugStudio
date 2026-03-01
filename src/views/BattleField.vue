@@ -33,7 +33,7 @@
                   </div>
                 </div>
                 <div class="member-energy">
-                  <span class="energy-text">{{ member.currentEnergy || 0 }}/{{ member.maxEnergy || 150 }}</span>
+                  <span class="energy-text">{{ toNumber(member.currentEnergy) }}/{{ toNumber(member.maxEnergy) }}</span>
                   <div class="energy-bar">
                     <div class="energy-ticks">
                       <div class="tick"></div>
@@ -41,8 +41,7 @@
                       <div class="tick"></div>
                       <div class="tick"></div>
                     </div>
-                    <div class="energy-fill" :style="{ width: ((member.currentEnergy || 0) / (member.maxEnergy || 150)) * 100 + '%' }">
-                    </div>
+                    <div class="energy-fill" :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }"></div>
                   </div>
                 </div>
                 <!-- 角色状态标签列表 -->
@@ -86,7 +85,7 @@
                   </div>
                 </div>
                 <div class="member-energy">
-                  <span class="energy-text">能量: {{ member.currentEnergy || 0 }}/{{ member.maxEnergy || 150 }}</span>
+                  <span class="energy-text">能量: {{ toNumber(member.currentEnergy) }}/{{ toNumber(member.maxEnergy) }}</span>
                   <div class="energy-bar">
                     <div class="energy-ticks">
                       <div class="tick"></div>
@@ -95,7 +94,7 @@
                       <div class="tick"></div>
                     </div>
                     <div class="energy-fill enemy-fill"
-                      :style="{ width: ((member.currentEnergy || 0) / (member.maxEnergy || 150)) * 100 + '%' }"></div>
+                      :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }"></div>
                   </div>
                 </div>
                 <div class="member-status">

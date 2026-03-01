@@ -65,6 +65,7 @@ export interface EffectConfig {
 /**
  * 技能步骤接口扩展
  * 包含效果配置
+ * @deprecated 请使用 @/types/skill 中的 ExtendedSkillStep 接口
  */
 export interface SkillStepWithEffect extends SkillStep {
   /**

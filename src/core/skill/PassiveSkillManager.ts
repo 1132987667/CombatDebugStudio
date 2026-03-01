@@ -51,10 +51,16 @@ export class PassiveSkillManager {
     this.buffSystem = buffSystem
   }
 
-
-
-
-
+  /**
+   * 静态工厂方法：创建PassiveSkillManager实例
+   * 用于解决私有构造函数无法直接实例化的问题
+   * @param skillManager 技能管理器实例
+   * @param buffSystem Buff系统实例
+   * @returns PassiveSkillManager实例
+   */
+  public static create(skillManager: SkillManager, buffSystem: BuffSystem): PassiveSkillManager {
+    return new PassiveSkillManager(skillManager, buffSystem)
+  }
   /**
    * 触发指定时机的被动技能
    * @param trigger 触发时机

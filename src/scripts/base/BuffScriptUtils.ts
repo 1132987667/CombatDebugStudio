@@ -2,6 +2,10 @@ import type { Character } from '@/types/character'
 import type { BuffContext } from '@/core/BuffContext'
 
 export class BuffScriptUtils {
+  /**
+   * 计算伤害值
+   * @deprecated 请使用 @/core/skill/DamageCalculator 中的 calculateDamage 方法
+   */
   public static calculateDamage(
     attacker: Character,
     defender: Character,
@@ -11,19 +15,20 @@ export class BuffScriptUtils {
     const attack = attacker.getAttribute('ATK')
     const defense = defender.getAttribute('DEF')
     
-    // 基础伤害计算
     let damage = baseDamage * (attack / (attack + defense * 0.8))
     
-    // 暴击伤害计算
     if (isCritical) {
       const critDmg = attacker.getAttribute('CRIT_DMG')
       damage *= (1 + critDmg)
     }
     
-    // 确保伤害不低于最小值
     return Math.max(1, Math.floor(damage))
   }
 
+  /**
+   * 计算治疗量
+   * @deprecated 请使用 @/core/skill/HealCalculator 中的 calculateHealing 方法
+   */
   public static calculateHealing(
     character: Character,
     baseHealing: number
@@ -31,10 +36,8 @@ export class BuffScriptUtils {
     const level = character.level
     const maxHP = character.getAttribute('HP')
     
-    // 治疗量计算，基于角色等级和最大生命值
     let healing = baseHealing * (1 + level * 0.01)
     
-    // 确保治疗量不超过最大生命值的一定比例
     const maxHealing = maxHP * 0.3
     return Math.min(maxHealing, Math.floor(healing))
   }

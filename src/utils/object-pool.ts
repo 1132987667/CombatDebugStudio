@@ -29,7 +29,7 @@ export class ObjectPool<T> {
     if (this.pool.length > 0) {
       const obj = this.pool.pop()!
       if (this.options.validate && !this.options.validate(obj)) {
-        battleLogManager.addSystemBattleLog('Object pool validation failed, creating new instance', 'status')
+        battleLogManager.addSystemBattleLog('Object pool validation failed, creating new instance', 'info')
         return this.options.create()
       }
       this.borrowedCount++
@@ -37,7 +37,7 @@ export class ObjectPool<T> {
     }
 
     if (this.borrowedCount >= this.options.maxSize) {
-      battleLogManager.addSystemBattleLog('Object pool max size reached, creating new instance', 'status')
+      battleLogManager.addSystemBattleLog('Object pool max size reached, creating new instance', 'warning')
     }
 
     this.borrowedCount++
@@ -46,7 +46,7 @@ export class ObjectPool<T> {
 
   public return(obj: T): void {
     if (this.pool.length >= this.options.maxSize) {
-      battleLogManager.addSystemBattleLog('Object pool full, discarding instance', 'status')
+      battleLogManager.addSystemBattleLog('Object pool full, discarding instance', 'warning')
       return
     }
 

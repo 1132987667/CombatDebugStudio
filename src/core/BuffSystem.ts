@@ -7,7 +7,6 @@
  * 版本: 1.0.0
  */
 
-import { reactive } from 'vue'
 import type { BuffConfig, BuffInstance } from '@/types/buff'
 import { StackRule, ControlType } from '@/types/buff'
 import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
@@ -15,24 +14,27 @@ import { BuffContext } from '@/core/BuffContext'
 import { BuffContextPool } from '@/utils/BuffContextPool'
 import { ModifierStack } from '@/core/ModifierStack'
 import { BuffErrorBoundary } from '@/core/BuffErrorBoundary'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * Buff系统类
  * 负责管理Buff实例的生命周期、状态更新和修饰符堆栈
- * 使用Vue的reactive函数使状态具有响应性
- * 推荐通过容器注入使用
+ * 使用单例模式确保系统全局唯一
+ * 注意：不再使用Vue的reactive，避免在纯业务逻辑层引入不必要的响应式开销
  */
 export class BuffSystem {
-  /** Buff实例映射，以实例ID为键，使用reactive确保响应性 */
-  private buffInstances = reactive<Map<string, BuffInstance>>(new Map())
+  /** Buff实例映射，以实例ID为键 */
+  private buffInstances = new Map<string, BuffInstance>()
   /** 需要更新的Buff实例ID集合，只包含有实际更新逻辑的Buff */
   private updateRequiredBuffs = new Set<string>()
-  /** 修饰符堆栈映射，以角色ID为键，使用reactive确保响应性 */
-  private modifierStacks = reactive<Map<string, ModifierStack>>(new Map())
+  /** 修饰符堆栈映射，以角色ID为键 */
+  private modifierStacks = new Map<string, ModifierStack>()
   /** 角色当前回合数映射 */
   private characterTurns = new Map<string, number>()
   /** Buff脚本注册表实例（通过构造函数注入） */
   private readonly scriptRegistry: BuffScriptRegistry
+  /** 日志记录器 */
+  private readonly logger = battleLogManager
 
   /**
    * 私有构造函数
@@ -119,7 +121,35 @@ export class BuffSystem {
       script.onApply(context)
     })
 
+    // 解析并应用属性修饰符
+    this.applyAttributeModifiers(characterId, instanceId, buffId)
+
     return instanceId
+  }
+
+  /**
+   * 应用属性修饰符
+   * 从Buff配置中解析attributes并添加到修饰符堆栈
+   * @param characterId 角色ID
+   * @param instanceId Buff实例ID
+   * @param buffId Buff ID
+   */
+  private applyAttributeModifiers(characterId: string, instanceId: string, buffId: string): void {
+    const attributes = this.scriptRegistry.getBuffAttributes(buffId)
+    if (!attributes || Object.keys(attributes).length === 0) {
+      return
+    }
+
+    const modifierStack = this.getModifierStack(characterId)
+
+    for (const [attr, valueStr] of Object.entries(attributes)) {
+      const normalizedAttr = this.scriptRegistry.normalizeAttributeName(attr)
+      const parsed = this.scriptRegistry.parseAttributeValue(valueStr)
+
+      modifierStack.addModifier(instanceId, normalizedAttr as any, parsed.value, parsed.type)
+
+      this.logger.debug(`应用属性修饰符: ${attr} = ${valueStr} (${parsed.type}) 到角色 ${characterId}`)
+    }
   }
 
   /**
@@ -140,7 +170,9 @@ export class BuffSystem {
     instance.isActive = false
     this.buffInstances.delete(instanceId)
 
-    // 归还 BuffContext 到对象池
+    const modifierStack = this.getModifierStack(instance.characterId)
+    modifierStack.removeModifier(instanceId)
+
     BuffContextPool.return(instance.context)
 
     return true

@@ -363,6 +363,7 @@ export class GameBattleSystem implements IBattleSystem {
         { round: battle.currentRound },
       )
 
+      // 减少所有角色技能冷却
       battle.participants.forEach((participant) => {
         if (
           participant.isAlive() &&
@@ -373,14 +374,14 @@ export class GameBattleSystem implements IBattleSystem {
         }
       })
 
-      const combatRules = this.ruleManager.getCombatRules()
-      this.participantManager.gainEnergyToAllAlive(
-        battle.participants,
-        combatRules.energyGainPerTurn,
-      )
-
+      // 为所有存活角色增加回合开始能量
       const aliveParticipants = Array.from(battle.participants.values()).filter(
         (p) => p.isAlive(),
+      )
+      const combatRules = this.ruleManager.getCombatRules()
+      this.participantManager.gainEnergyToAliveParticipants(
+        aliveParticipants,
+        combatRules.energyGainPerTurn,
       )
 
       if (aliveParticipants.length === 0) {
@@ -897,11 +898,6 @@ export class GameBattleSystem implements IBattleSystem {
    * 处理战斗回合
    */
   public async processTurn(): Promise<void> {
-    const battle = this.battleData
-    if (!battle || !battle.isActive) {
-      return
-    }
-
     await this.processTurnInternal()
   }
 

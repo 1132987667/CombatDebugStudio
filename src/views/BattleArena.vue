@@ -11,7 +11,7 @@
         <div class="progress-text">{{ battleStore.getLoadingProgress }}%</div>
       </div>
     </div>
-    
+
     <!-- 错误提示 -->
     <div v-if="battleStore.hasError" class="error-toast" @click="battleStore.clearError()">
       <span class="error-message">{{ battleStore.getErrorMessage }}</span>
@@ -39,14 +39,14 @@
       <div class="right-panel">
         <DebugPanel />
 
-        <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart"
-          @replay-end="handleReplayEnd" @replay-pause="handleReplayPause" />
+        <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart" @replay-end="handleReplayEnd"
+          @replay-pause="handleReplayPause" />
       </div>
     </div>
 
     <!-- 对话框组件 -->
-    <BattleRulesDialog v-model="showRulesDialog" :rules="battleStore.getRules" :speed="battleStore.getBattleSpeed" @update:rules="battleStore.updateRules"
-      @update:speed="updateSpeed" @rule-change="handleRuleChange" />
+    <BattleRulesDialog v-model="showRulesDialog" :rules="battleStore.getRules" :speed="battleStore.getBattleSpeed"
+      @update:rules="battleStore.updateRules" @update:speed="updateSpeed" @rule-change="handleRuleChange" />
 
     <SceneManagementDialog v-model="showSceneDialog" :scene-name="sceneName" :selected-scene="selectedScene"
       :saved-scenes="savedScenes" @update:scene-name="val => sceneName = val"
@@ -58,9 +58,9 @@
       @add="handleAddStatus" @clear="handleClearStatuses" />
 
     <!-- 底部控制栏 -->
-    <ControlBar :is-battle-active="battleStore.getIsBattleActive" :is-paused="false" :is-auto-playing="battleStore.autoPlayMode"
-      @start-battle="startBattle" @end-battle="endBattle" @reset-battle="resetBattle" @step-back="stepBack"
-      @single-step="singleStep" @toggle-auto-play="toggleAutoPlay"
+    <ControlBar :is-battle-active="battleStore.getIsBattleActive" :is-paused="false"
+      :is-auto-playing="battleStore.autoPlayMode" @start-battle="startBattle" @end-battle="endBattle"
+      @reset-battle="resetBattle" @step-back="stepBack" @single-step="singleStep" @toggle-auto-play="toggleAutoPlay"
       @battle-speed-change="handleBattleSpeedChange" />
 
     <!-- 快捷键提示面板 -->
@@ -131,7 +131,7 @@ function initBattle() {
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
   const enemyIds = ["boss_006", "boss_007"];
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
-  
+
   const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToBattleCharacter(ally, index));
   const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToBattleCharacter(enemy, index, true));
   // 使用Pinia store初始化队伍数据
@@ -142,16 +142,13 @@ function initBattle() {
 onMounted(() => {
   // 初始化队伍数据
   initBattle();
-  
+
   // 初始化战斗管理器
-  const battleManager : BattleManager = container.resolve('BattleManager');
+  const battleManager: BattleManager = container.resolve('BattleManager');
   battleStore.initializeBattleManager(battleManager);
   // 从 characterStore 获取角色数据并开始战斗
   const allyTeam = characterStore.allyTeam;
   const enemyTeam = characterStore.enemyTeam;
-  if (allyTeam.size > 0 && enemyTeam.size > 0) {
-    battleManager.startBattle();
-  }
   logManager.addSystemLog("测试工具已加载");
   logManager.addSystemLog(`战斗管理器初始化完成，队伍数据: 我方${allyTeam.size}人 | 敌方${enemyTeam.size}人`);
 });
@@ -208,7 +205,7 @@ watch(
     if (!isActive) {
       // 清理所有角色的动画状态
       characterStore.resetCharacterStates();
-      
+
       // 清理BattleField中的动画效果
       if (battleFieldRef.value) {
         battleFieldRef.value.cleanupAnimations();
@@ -220,11 +217,11 @@ watch(
 // 子组件事件处理方法
 const exportState = () => {
   const result = battleStore.exportState(characterStore.currentTurn);
-  
+
   if (result) {
     logManager.addSystemLog("战斗状态已导出");
   }
-  
+
   return result;
 };
 
@@ -400,7 +397,7 @@ const startBattle = async () => {
 
   try {
     const result = await battleStore.startBattle();
-    
+
     if (result) {
       notification.value?.addNotification("成功", "战斗已开始", "success");
     } else {
@@ -417,7 +414,7 @@ const startBattle = async () => {
 const endBattle = async () => {
   try {
     const result = await battleStore.endBattle(PARTICIPANT_SIDE.ALLY);
-    
+
     if (result) {
       notification.value?.addNotification("成功", "战斗已结束", "success");
     } else {
@@ -435,7 +432,7 @@ const endBattle = async () => {
 const resetBattle = async () => {
   try {
     const result = await battleStore.resetBattle();
-    
+
     if (result) {
       notification.value?.addNotification("成功", "战斗已重置", "success");
     } else {
@@ -453,7 +450,7 @@ const resetBattle = async () => {
 const singleStep = async () => {
   try {
     const result = await battleStore.processSingleTurn();
-    
+
     if (!result) {
       notification.value?.addNotification("错误", battleStore.getErrorMessage || "执行回合失败", "error");
     }
@@ -469,7 +466,7 @@ const singleStep = async () => {
 const toggleAutoPlay = async () => {
   try {
     const result = await battleStore.toggleAutoPlay();
-    
+
     if (result) {
       notification.value?.addNotification("成功", battleStore.autoPlayMode ? "已开始自动战斗" : "已停止自动战斗", "success");
     } else {

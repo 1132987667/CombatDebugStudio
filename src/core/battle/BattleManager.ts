@@ -7,7 +7,11 @@ import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager'
 import type { UIBattleCharacter } from '@/types'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import type { BattleEventName, BattleEvents } from '@/types/battle-events'
-import { PARTICIPANT_SIDE, BattleParticipant, BattleSystemEvent } from '@/types/battle'
+import {
+  PARTICIPANT_SIDE,
+  BattleParticipant,
+  BattleSystemEvent,
+} from '@/types/battle'
 import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
 import type {
   BattleEventName,
@@ -227,7 +231,10 @@ export class BattleManager {
     const enemyParticipants = enabledEnemyTeam.map((char, index) => {
       return BattleParticipantImpl.fromUICharacter(char, false, index)
     })
-    const allParticipants = [...allyParticipants, ...enemyParticipants]
+    const allParticipants: BattleParticipantImpl[] = [
+      ...allyParticipants,
+      ...enemyParticipants,
+    ]
     const battleState = this.battleSystem.initialize(allParticipants)
     this.battleStateManager.setBattleId(battleState.battleId)
     this.autoBattleManager.setBattleId(battleState.battleId)

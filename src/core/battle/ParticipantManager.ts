@@ -7,10 +7,7 @@
  * 版本: 1.0.0
  */
 
-import type {
-  BattleParticipant,
-  ParticipantSide,
-} from '@/types/battle'
+import type { BattleParticipant, ParticipantSide } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
 import {
   BattleParticipantImpl,
@@ -122,7 +119,10 @@ export class ParticipantManager {
     ids.forEach((id) => {
       const enemy = GameDataProcessor.findEnemyById(id)
       if (enemy) {
-        const participant = GameDataProcessor.enemyToParticipantInfo(enemy, type)
+        const participant = GameDataProcessor.enemyToParticipantInfo(
+          enemy,
+          type,
+        )
         participants.push(participant)
       } else {
         this.logger.warn(`未找到ID为 ${id} 的角色数据`)
@@ -391,19 +391,17 @@ export class ParticipantManager {
   }
 
   /**
-   * 为所有存活参与者恢复能量
-   * 遍历参与者集合，为每个存活的参与者增加能量值
-   * @param participants - 参与者映射表
-   * @param amount - 要恢复的能量值
+   * 为存活的参与者数组增加能量值
+   * 直接遍历参与者数组，无需再检查存活状态
+   * @param participants - 存活的参与者数组
+   * @param amount - 要增加的能量值
    */
-  public gainEnergyToAllAlive(
-    participants: Map<string, BattleParticipant>,
+  public gainEnergyToAliveParticipants(
+    participants: BattleParticipant[],
     amount: number,
   ): void {
     participants.forEach((participant) => {
-      if (participant.isAlive()) {
-        participant.gainEnergy(amount)
-      }
+      participant.gainEnergy(amount)
     })
   }
 

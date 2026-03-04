@@ -113,7 +113,7 @@ export class GameBattleSystem implements IBattleSystem {
     rafTimer: RAFTimer,
     skillManager: SkillManager,
     buffSystem: BuffSystem,
-    passiveSkillManager: PassiveSkillManager,
+    private passiveSkillManager: PassiveSkillManager,
   ) {
     this.curBattleData = this.getDefBattleData()
     this.curBattleId = this.curBattleData.battleId

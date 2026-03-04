@@ -100,6 +100,15 @@ export class GameBattleSystem implements IBattleSystem {
       }>
     }
   >()
+  /**
+   * 等待指定时间（使用 RAFTimer）
+   * @param ms 等待毫秒数
+   */
+  private wait(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      this.rafTimer.setTimeout(resolve, ms)
+    })
+  }
 
   // 私有构造函数，防止外部直接实例化
   private constructor(
@@ -452,7 +461,7 @@ export class GameBattleSystem implements IBattleSystem {
       for (let i = 0; i < currentTurnOrder.length; i++) {
         // 检查是否有动画正在播放，如果有，等待动画完成
         while (this.isAnimationPlaying(battleId)) {
-          await new Promise((resolve) => setTimeout(resolve, 100))
+          await this.wait(100)
         }
 
         const participantId = currentTurnOrder[i]
@@ -480,7 +489,7 @@ export class GameBattleSystem implements IBattleSystem {
 
         // 等待动画播放完成
         while (this.isAnimationPlaying(battleId)) {
-          await new Promise((resolve) => setTimeout(resolve, 100))
+          await this.wait(100)
         }
 
         // 更新当前行动者的Buff回合状态
@@ -500,7 +509,7 @@ export class GameBattleSystem implements IBattleSystem {
 
       // 等待所有动画播放完成
       while (this.isAnimationPlaying(battleId)) {
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await this.wait(100)
       }
 
       // 触发回合结束时的被动技能
@@ -961,11 +970,6 @@ export class GameBattleSystem implements IBattleSystem {
   public async processTurn(battleId: string): Promise<void> {
     const battle = this.battles.get(battleId)
     if (!battle || !battle.isActive) {
-      return
-    }
-
-    // 检查是否在自动战斗中，如果是则跳过
-    if (battle.autoPlaying) {
       return
     }
 
@@ -1623,10 +1627,10 @@ export class GameBattleSystem implements IBattleSystem {
 
   /**
    * 停止自动战斗
-   * @param {string} battleId - 战斗ID
+   * @param {string} battleId - 战斗ID，默认当前战斗ID
    */
-  public stopAutoBattle(battleId: string): void {
-    const battle = this.battles.get(battleId)
+  public stopAutoBattle(battleId: string | undefined = this.curBattleId): void {
+    const battle = this.getBattleData(battleId)
     if (!battle) {
       this.battleLogger.warn(`战斗不存在: ${battleId}`)
       return
@@ -1773,7 +1777,6 @@ export class GameBattleSystem implements IBattleSystem {
     if (battle) {
       battle.battleSpeed = speed
     }
-    this.curBattleData.battleSpeed = speed
   }
 
   /**
@@ -1919,7 +1922,7 @@ export class GameBattleSystem implements IBattleSystem {
     this.emit(animation.type, animation.data)
 
     // 等待动画完成
-    setTimeout(() => {
+    this.rafTimer.setTimeout(() => {
       // 标记动画完成
       animation.resolve()
 

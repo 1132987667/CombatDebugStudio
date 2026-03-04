@@ -7,7 +7,7 @@ import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager'
 import type { UIBattleCharacter } from '@/types'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import type { BattleEventName, BattleEvents } from '@/types/battle-events'
-import { PARTICIPANT_SIDE } from '@/types/battle'
+import { PARTICIPANT_SIDE, BattleParticipant, BattleSystemEvent } from '@/types/battle'
 import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
 import type {
   BattleEventName,
@@ -148,7 +148,7 @@ export class BattleManager {
       }
 
       // 创建战斗状态
-      const battleState = this.battleSystem.createBattle(allParticipants)
+      const battleState = this.battleSystem.initialize(allParticipants)
       const battleId = battleState.battleId
       this.setBattleId(battleId)
 
@@ -228,7 +228,7 @@ export class BattleManager {
       return BattleParticipantImpl.fromUICharacter(char, false, index)
     })
     const allParticipants = [...allyParticipants, ...enemyParticipants]
-    const battleState = this.battleSystem.createBattle(allParticipants)
+    const battleState = this.battleSystem.initialize(allParticipants)
     this.battleStateManager.setBattleId(battleState.battleId)
     this.autoBattleManager.setBattleId(battleState.battleId)
     this.battleLogManager.clearLogs()
@@ -240,16 +240,18 @@ export class BattleManager {
 
   /**
    * 开始自动战斗
+   * @param battleId 战斗ID
    */
-  startAutoBattle() {
-    return this.autoBattleManager.startAutoBattle()
+  startAutoBattle(battleId: string) {
+    return this.autoBattleManager.startAutoBattle(battleId)
   }
 
   /**
    * 停止自动战斗
+   * @param battleId 战斗ID
    */
-  stopAutoBattle() {
-    return this.autoBattleManager.stopAutoBattle()
+  stopAutoBattle(battleId: string) {
+    return this.autoBattleManager.stopAutoBattle(battleId)
   }
 
   /**
@@ -257,11 +259,13 @@ export class BattleManager {
    * @param winner 获胜方
    */
   endBattle(winner: any) {
-    const result = this.autoBattleManager.stopAutoBattle()
+    const battleId = this.battleStateManager.getBattleId()?.value
+    if (battleId) {
+      this.autoBattleManager.stopAutoBattle(battleId)
+    }
     // 触发战斗结束事件
     const eventData: any = { winner }
     this.emit(BattleSystemEvent.BATTLE_END, eventData)
-    return result
   }
 
   /**
@@ -360,11 +364,11 @@ export class BattleManager {
    */
   getBattleData() {
     return {
-      isPaused: this.autoBattleManager.getIsPaused()?.value || false,
-      isAutoPlaying: this.autoBattleManager.getIsAutoPlaying()?.value || false,
+      isPaused: this.autoBattleManager.getIsPaused() || false,
+      isAutoPlaying: this.autoBattleManager.getIsAutoPlaying() || false,
       currentTurn: this.battleStateManager.getCurrentTurn()?.value || 1,
       maxTurns: 999, // 默认最大回合数
-      battleSpeed: this.autoBattleManager.getBattleSpeed()?.value || 1,
+      battleSpeed: this.autoBattleManager.getBattleSpeed() || 1,
       battleId: this.battleStateManager.getBattleId()?.value || null,
     }
   }
@@ -391,7 +395,7 @@ export class BattleManager {
    * @param battleId 战斗ID
    * @param name 记录名称
    */
-  saveBattleRecording(battleId: string, name?: string) {
+  saveBattleRecording(battleId: string) {
     // 生成记录键名
     const saveKey = `battle_recording_${battleId}`
 

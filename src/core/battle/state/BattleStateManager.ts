@@ -7,8 +7,12 @@ import { eventBus } from '@/main'
 
 /**
  * 战斗状态管理器
- * 负责从BattleSystem获取状态，转换为UI角色状态，并管理状态同步
- * 注意：不再存储队伍数据，只通过映射表关联参与者和UI角色
+ * 负责UI层与核心战斗系统之间的状态同步与转换
+ * 核心功能：
+ * - 从BattleSystem获取战斗状态（回合数、当前行动者、参与者状态等）
+ * - 将战斗参与者状态转换为UI角色状态
+ * - 通过映射表关联参与者和UI角色，不直接存储队伍数据
+ * - 提供手动更新接口，同步UI更改到核心战斗系统
  */
 export class BattleStateManager {
   private currentTurn = 1
@@ -161,7 +165,7 @@ export class BattleStateManager {
     }
 
     try {
-      const battleState = this.battleSystem.getBattleState(this.battleId)
+      const battleState = this.battleSystem.getBattleState()
       if (!battleState) {
         // 战斗不存在时，重置状态
         this.resetState()

@@ -492,7 +492,7 @@ export const useBattleStore = defineStore('battle', {
           throw new Error('战斗创建失败，请检查参战队伍配置');
         }
 
-        const autoBattleStarted = await this.battleManager.startAutoBattle();
+        const autoBattleStarted = await this.battleManager.startAutoBattle(battleId);
         if (!autoBattleStarted) {
           throw new Error('自动战斗启动失败');
         }
@@ -626,13 +626,17 @@ export const useBattleStore = defineStore('battle', {
 
         if (this.autoPlayMode) {
           // 停止自动播放
-          this.battleManager.stopAutoBattle();
+          if (this.currentBattleId) {
+            this.battleManager.stopAutoBattle(this.currentBattleId);
+          }
           this.autoPlayMode = false;
           this.isBattleActive = false;
           this.addSystemLog('停止自动战斗');
         } else {
           // 开始自动播放
-          await this.battleManager.startAutoBattle();
+          if (this.currentBattleId) {
+            await this.battleManager.startAutoBattle(this.currentBattleId);
+          }
           this.autoPlayMode = true;
           this.isBattleActive = true;
           this.battleManager.syncBattleState();

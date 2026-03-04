@@ -26,18 +26,17 @@ import type { BattleAI } from '@/core/BattleAI'
  */
 export interface IBattleSystem {
   /**
-   * 创建新的战斗
+   * 初始化战斗
    * @param participantsInfo - 参与者数组
-   * @returns BattleState - 创建的战斗状态
+   * @returns BattleState - 初始化后的战斗状态
    */
-  createBattle(participantsInfo: BattleParticipant[]): BattleState
+  initialize(participantsInfo: BattleParticipant[]): BattleState
 
   /**
    * 处理战斗回合
-   * @param battleId - 战斗ID
    * @returns Promise<void> - 异步处理完成
    */
-  processTurn(battleId: string): Promise<void>
+  processTurn(): Promise<void>
 
   /**
    * 执行战斗动作
@@ -48,41 +47,26 @@ export interface IBattleSystem {
 
   /**
    * 获取战斗状态
-   * @param battleId - 战斗ID
    * @returns BattleState | undefined - 战斗状态，如果不存在则返回undefined
    */
-  getBattleState(battleId: string): BattleState | undefined
+  getBattleState(): BattleState | undefined
 
   /**
    * 结束战斗
-   * @param battleId - 战斗ID
    * @param winner - 胜利者类型
    */
-  endBattle(battleId: string, winner: ParticipantSide): void
+  endBattle(winner: ParticipantSide): void
 
   /**
-   * 获取所有战斗
-   * @returns BattleState[] - 所有战斗状态的数组
+   * 重置当前战斗
    */
-  getAllBattles(): BattleState[]
-
-  /**
-   * 获取活跃战斗
-   * @returns BattleState[] - 活跃战斗状态的数组
-   */
-  getActiveBattles(): BattleState[]
-
-  /**
-   * 清理已完成战斗
-   */
-  clearCompletedBattles(): void
+  resetBattle(): void
 
   /**
    * 回合执行完成回调
-   * @param battleId - 战斗ID
    * @param turn - 回合标识
    */
-  onTurnExecuted(battleId: string, turn: number): void
+  onTurnExecuted(turn: number): void
 
   /**
    * 自动战斗相关方法
@@ -90,37 +74,31 @@ export interface IBattleSystem {
 
   /**
    * 开始自动战斗
-   * @param battleId - 战斗ID
-   * @param speed - 自动战斗速度（1-10）
    */
   startAutoBattle(): void
 
   /**
    * 停止自动战斗
-   * @param battleId - 战斗ID
    */
-  stopAutoBattle(battleId: string): void
+  stopAutoBattle(): void
 
   /**
    * 检查是否处于自动战斗状态
-   * @param battleId - 战斗ID
    * @returns boolean - 是否处于自动战斗状态
    */
-  isAutoBattleActive(battleId: string): boolean
+  isAutoBattleActive(): boolean
 
   /**
    * 设置自动战斗速度
-   * @param battleId - 战斗ID
    * @param speed - 新的自动战斗速度（1-10）
    */
-  setBattleSpeed(battleId: string, speed: number): void
+  setBattleSpeed(speed: number): void
 
   /**
    * 获取当前战斗数据
-   * @param battleId - 战斗ID
    * @returns BattleData | undefined - 战斗数据，如果不存在则返回undefined
    */
-  getCurBattleData(): BattleData | undefined
+  getBattleData(): BattleData | undefined
 
   /**
    * 获取当前战斗的参与者信息
@@ -129,30 +107,10 @@ export interface IBattleSystem {
   getCurParticipantsInfo(): BattleParticipant[]
 
   /**
-   * 重置当前战斗
-   * @param battleId - 战斗ID
-   */
-  resetBattle(battleId: string): void
-
-  /**
    * 加载技能配置
    * @param skillConfigs 技能配置数组
    */
   loadSkillConfigs(skillConfigs: any[]): void
-
-  /**
-   * 事件监听方法
-   * @param event - 事件名称
-   * @param callback - 回调函数
-   */
-  on(event: string, callback: Function): void
-
-  /**
-   * 移除事件监听方法
-   * @param event - 事件名称
-   * @param callback - 回调函数
-   */
-  off(event: string, callback: Function): void
 }
 
 /**

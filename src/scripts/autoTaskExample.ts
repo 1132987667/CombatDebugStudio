@@ -228,7 +228,7 @@ function createExampleBattle() {
 
   console.log('auto task example')
   // 创建战斗
-  const battleState = battleSystem.createBattle(participants)
+  const battleState = battleSystem.initialize(participants)
   return battleState.battleId
 }
 

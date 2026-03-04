@@ -21,7 +21,7 @@ import type {
   LogEntry,
   LogHandler,
 } from '@/types/battle-log'
-import { LogLevel } from '@/types/battle-log'
+import { LogLevel, LogLevelLabel } from '@/types/battle-log'
 
 /**
  * 战斗日志格式化模块
@@ -806,7 +806,7 @@ export const BattleLogFormatter = {
 export class ConsoleLogHandler implements LogHandler {
   handle(entry: LogEntry): void {
     const timestamp = new Date(entry.timestamp).toISOString()
-    const levelName = LogLevel[entry.level]
+    const levelName = LogLevelLabel[entry.level]
     const contextStr = entry.context ? JSON.stringify(entry.context) : ''
     const errorStr = entry.error ? `\nError: ${entry.error.message}` : ''
 
@@ -877,7 +877,7 @@ export class BattleLogManager {
   /** 日志过滤器配置 */
   private filters: LogFilters
   /** 当前日志级别，默认INFO */
-  private level: LogLevel = LogLevel.INFO
+  private level: LogLevel = LogLevel.DEBUG
   /** 日志处理器数组 */
   private handlers: LogHandler[] = []
   /** 日志来源标识 */
@@ -999,7 +999,7 @@ export class BattleLogManager {
     context?: Record<string, unknown>,
     error?: Error,
   ): void {
-    console.log('添加日志:', message, context, error)
+    console.log(`添加日志[${level}]:`, message, context, error)
     if (level > this.level) {
       console.log('日志级别不满足要求:', level, this.level)
       // return
@@ -1312,6 +1312,70 @@ export class BattleLogManager {
         console.error('Log listener error:', error)
       }
     })
+  }
+
+  /**
+   * 同步战斗日志
+   * @param battleState 战斗状态
+   */
+  async syncBattleLogs(battleState: any): Promise<void> {
+    if (!battleState || !battleState.actions) {
+      return
+    }
+
+    const sortedActions = [...battleState.actions].sort((a: any, b: any) => {
+      if (a.timestamp !== b.timestamp) {
+        return a.timestamp - b.timestamp
+      }
+      const turnA = a.turn || 0
+      const turnB = b.turn || 0
+      if (turnA !== turnB) {
+        return turnA - turnB
+      }
+      return a.id.localeCompare(b.id)
+    })
+
+    for (const action of sortedActions) {
+      const actionType = action.type || 'attack'
+      const sourceId = action.sourceId || ''
+      const targetId = action.targetId || ''
+      const damage = action.damage || 0
+      const heal = action.heal || 0
+      const effects = action.effects || []
+
+      let logMessage = ''
+      if (actionType === 'skill' && action.skillId) {
+        logMessage = `使用技能 ${action.skillId}`
+      } else if (actionType === 'attack') {
+        logMessage = '发起攻击'
+      }
+
+      if (damage > 0) {
+        this.addActionLog(
+          sourceId,
+          '攻击',
+          targetId,
+          `造成 ${damage} 伤害`,
+          'info',
+        )
+      }
+
+      if (heal > 0) {
+        this.addActionLog(
+          sourceId,
+          '治疗',
+          targetId,
+          `恢复 ${heal} 生命值`,
+          'info',
+        )
+      }
+
+      for (const effect of effects) {
+        if (effect.type === 'status' && effect.description) {
+          this.addSystemBattleLog(effect.description, 'info')
+        }
+      }
+    }
   }
 }
 

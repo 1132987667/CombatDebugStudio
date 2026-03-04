@@ -60,10 +60,11 @@ export class AutoBattleManager {
 
   /**
    * 开始自动战斗
+   * @param battleId 战斗ID
    */
-  async startAutoBattle(): Promise<boolean> {
-    console.log('startAutoBattle', this.battleId)
-    if (!this.battleId) {
+  async startAutoBattle(battleId: string): Promise<boolean> {
+    console.log('startAutoBattle', battleId)
+    if (!battleId) {
       this.battleLogManager.addSystemLog('请先创建战斗')
       return false
     }
@@ -76,7 +77,7 @@ export class AutoBattleManager {
       this.battleSystem.startAutoBattle()
 
       // 设置战斗速度
-      this.battleSystem.setBattleSpeed(this.battleId, this.battleSpeed)
+      this.battleSystem.setBattleSpeed(this.battleSpeed)
 
       this.battleLogManager.addSystemLog('开始自动战斗')
 
@@ -95,15 +96,16 @@ export class AutoBattleManager {
 
   /**
    * 停止自动战斗
+   * @param battleId 战斗ID
    */
-  async stopAutoBattle() {
-    if (!this.battleId) {
+  async stopAutoBattle(battleId: string) {
+    if (!battleId) {
       return
     }
 
     try {
       // 停止自动战斗
-      this.battleSystem.stopAutoBattle(this.battleId)
+      this.battleSystem.stopAutoBattle()
 
       this.isAutoPlaying = false
       this.isPaused = true
@@ -121,9 +123,13 @@ export class AutoBattleManager {
    */
   async toggleAutoPlay() {
     if (this.isAutoPlaying) {
-      await this.stopAutoBattle()
+      if (this.battleId) {
+        await this.stopAutoBattle(this.battleId)
+      }
     } else {
-      await this.startAutoBattle()
+      if (this.battleId) {
+        await this.startAutoBattle(this.battleId)
+      }
     }
   }
 
@@ -131,8 +137,8 @@ export class AutoBattleManager {
    * 切换暂停状态
    */
   togglePause() {
-    if (this.isAutoPlaying) {
-      this.stopAutoBattle()
+    if (this.isAutoPlaying && this.battleId) {
+      this.stopAutoBattle(this.battleId)
     }
     this.isPaused = !this.isPaused
   }
@@ -146,7 +152,7 @@ export class AutoBattleManager {
 
     if (this.isAutoPlaying && this.battleId) {
       try {
-        this.battleSystem.setBattleSpeed(this.battleId, speed)
+        this.battleSystem.setBattleSpeed(speed)
         this.battleLogManager.addSystemLog(`战斗速度已调整为: ${speed}倍`)
       } catch (error) {
         console.error('设置战斗速度时出错:', error)
@@ -168,11 +174,11 @@ export class AutoBattleManager {
     try {
       this.isPaused = false
 
-      await this.battleSystem.processTurn(this.battleId)
+      await this.battleSystem.processTurn()
 
       this.battleStateManager.syncBattleState()
 
-      const battleState = this.battleSystem.getBattleState(this.battleId)
+      const battleState = this.battleSystem.getBattleState()
       if (battleState) {
         await this.battleLogManager.syncBattleLogs(battleState)
       }

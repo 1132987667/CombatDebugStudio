@@ -249,23 +249,19 @@ export class TaskExecutor {
    * @param task 任务对象
    */
   private async executeAutoBattleTask(task: Task): Promise<void> {
-    const { battleId, maxRounds = 999, speed = 3 } = task.config
-
-    if (!battleId) {
-      throw new Error('自动战斗任务需要指定battleId')
-    }
+    const { maxRounds = 999, speed = 3 } = task.config
 
     // 设置战斗速度
-    this.battleSystem.setBattleSpeed(battleId, speed)
+    this.battleSystem.setBattleSpeed(speed)
 
     // 开始自动战斗
-    this.battleSystem.startAutoBattle(battleId)
+    this.battleSystem.startAutoBattle()
 
     // 监控战斗状态
     const monitorInterval = this.timer.setInterval(async () => {
-      const battleData = this.battleSystem.getBattleData(battleId)
+      const battleData = this.battleSystem.getBattleData()
       if (!battleData) {
-        throw new Error(`战斗不存在: ${battleId}`)
+        throw new Error(`战斗不存在`)
       }
 
       // 检查战斗是否结束

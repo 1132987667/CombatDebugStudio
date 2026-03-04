@@ -12,14 +12,24 @@
  */
 
 /**
- * 日志级别枚举 - 统一所有日志系统的级别定义
+ * 日志级别 - 统一所有日志系统的级别定义
  */
-export enum LogLevel {
-  ERROR = 0,
-  WARN = 1,
-  INFO = 2,
-  DEBUG = 3,
-  TRACE = 4,
+export const LogLevel = {
+  ERROR: 0,
+  WARN: 1,
+  INFO: 2,
+  DEBUG: 3,
+  TRACE: 4,
+} as const
+
+export type LogLevel = typeof LogLevel[keyof typeof LogLevel]
+
+export const LogLevelLabel: Record<LogLevel, string> = {
+  [LogLevel.ERROR]: '错误',
+  [LogLevel.WARN]: '警告',
+  [LogLevel.INFO]: '信息',
+  [LogLevel.DEBUG]: '调试',
+  [LogLevel.TRACE]: '跟踪',
 }
 
 /**

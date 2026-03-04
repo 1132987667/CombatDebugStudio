@@ -106,6 +106,19 @@ export const SKILL_CONSTANTS = {
   ENEMY_ULTIMATE_SKILL_ENERGY: 80,
 } as const
 
+/** 自动战斗速度到延迟(ms)的映射 */
+export const AUTO_BATTLE_CONFIG = {
+  /** 速度等级对应的延迟时间(ms) */
+  DELAYS: {
+    1: 1000,
+    2: 500,
+    3: 330,
+    5: 200,
+  } as Record<number, number>,
+  /** 默认延迟时间(ms) */
+  DEFAULT_DELAY: 500,
+} as const
+
 /** 技能效果常量 */
 export const SKILL_EFFECT_CONSTANTS = {
   HEAL_SKILL_HEAL: 50,
@@ -360,21 +373,6 @@ export enum BattleSystemEvent {
   TURN_START = 'turnStart',
   /** 回合结束事件 */
   TURN_END = 'turnEnd',
-}
-
-/**
- * 战斗系统接口
- * @deprecated 请使用 @/core/battle/interfaces 中的 IBattleSystem 接口
- */
-export interface BattleSystem {
-  createBattle(participantsInfo: BattleParticipant[]): BattleState
-  processTurn(battleId: string): Promise<void>
-  executeAction(action: BattleAction): Promise<BattleAction>
-  getBattleState(battleId: string): BattleState | undefined
-  endBattle(battleId: string, winner: ParticipantSide): void
-  resetBattle(battleId: string): void
-  getCurParticipantsInfo(): BattleParticipant[]
-  getCurBattleData(battleId: string | null): BattleData | undefined
 }
 
 /**

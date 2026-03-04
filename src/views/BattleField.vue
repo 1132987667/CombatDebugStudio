@@ -41,7 +41,7 @@
                       <div class="tick"></div>
                       <div class="tick"></div>
                     </div>
-                    <div class="energy-fill" :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }"></div>
+                    <div class="energy-fill" :class="getEnergyColorClass(member)" :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }"></div>
                   </div>
                 </div>
                 <!-- 角色状态标签列表 -->
@@ -93,7 +93,7 @@
                       <div class="tick"></div>
                       <div class="tick"></div>
                     </div>
-                    <div class="energy-fill enemy-fill"
+                    <div class="energy-fill enemy-fill" :class="getEnergyColorClass(member)"
                       :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }"></div>
                   </div>
                 </div>
@@ -113,7 +113,7 @@
       </div>
     </div>
 
-    <BattleLog :logs="battleLogStore.filteredLogs" />
+    <BattleLog :logs="battleStore.filteredLogs" />
 
     <!-- 状态工具提示 -->
     <div v-if="statusTooltip.visible" class="status-tooltip" :style="{
@@ -152,8 +152,7 @@
 <script setup lang="ts">
 import { computed, ref, onUnmounted } from "vue";
 import { raf } from '@/utils/RAF';
-import { useCharacterStore } from "@/stores";
-import { useBattleLogStore } from '@/stores/battleLogStore';
+import { useCharacterStore, useBattleStore } from "@/stores";
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
@@ -162,7 +161,7 @@ import type { AttributeValue } from '@/types';
 
 // 使用Pinia stores
 const characterStore = useCharacterStore();
-const battleLogStore = useBattleLogStore();
+const battleStore = useBattleStore();
 
 const props = defineProps<{
   currentActorId: string | null;
@@ -211,6 +210,20 @@ function getHpColorClass(member: UIBattleCharacter): string {
   if (hpPercent <= 25) return 'danger';
   if (hpPercent <= 50) return 'warning';
   return 'safe';
+}
+
+function getEnergyPercent(member: UIBattleCharacter): number {
+  const maxEnergy = toNumber(member.maxEnergy);
+  const currentEnergy = toNumber(member.currentEnergy);
+  if (maxEnergy <= 0) return 0;
+  return Math.max(0, Math.min(100, (currentEnergy / maxEnergy) * 100));
+}
+
+function getEnergyColorClass(member: UIBattleCharacter): string {
+  const energyPercent = getEnergyPercent(member);
+  if (energyPercent >= 80) return 'full';
+  if (energyPercent >= 50) return 'medium';
+  return 'low';
 }
 
 function getMemberHp(member: UIBattleCharacter): string {

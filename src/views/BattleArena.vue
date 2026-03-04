@@ -86,8 +86,7 @@ import Notification from "@/components/Notification.vue";
 import BattleRulesDialog from "./components/BattleRulesDialog.vue";
 import SceneManagementDialog from "./components/SceneManagementDialog.vue";
 import StatusInjectionDialog from "./components/StatusInjectionDialog.vue";
-import { useBattleLogStore } from '@/stores/battleLogStore';
-import { useCharacterStore, useBattleStore } from '@/stores';
+import { useBattleStore, useCharacterStore } from '@/stores';
 import { container } from '@/core/di/Container';
 import { PARTICIPANT_SIDE } from "@/types/battle";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
@@ -114,15 +113,14 @@ const getSelectedCharName = computed(() => {
 });
 
 // 使用统一的日志管理器store
-const battleLogStore = useBattleLogStore()
 const logManager = {
-  addSystemLog: (msg: string) => battleLogStore.addSystemLog(msg),
-  addErrorLog: (msg: string) => battleLogStore.addErrorLog(msg),
+  addSystemLog: (msg: string) => battleStore.addSystemLog(msg),
+  addErrorLog: (msg: string) => battleStore.addErrorLog(msg),
   addLog: (turn: number, source: string, action: string, target: string, result: string, level: string, htmlResult?: string) => {
-    battleLogStore.addLog({ turn: String(turn), source, action, target, result, level: level as any, htmlResult })
+    battleStore.addLog(String(turn), source, action, target, result, 'system', level as any, htmlResult)
   },
   addActionLog: (source: string, action: string, target: string, result: string) => {
-    battleLogStore.addActionLog(source, action, target, result)
+    battleStore.addActionLog(source, action, target, result)
   }
 }
 
@@ -159,7 +157,7 @@ onMounted(() => {
 });
 
 // 监听战斗日志变化 - 已移除，因为会造成递归更新
-// 日志直接在模板中通过 battleLogStore.filteredLogs 访问
+// 日志直接在模板中通过 battleStore.filteredLogs 访问
 
 // 监听动画状态变化
 watch(

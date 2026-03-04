@@ -607,6 +607,68 @@
   opacity: 0.5;
 }
 
+.member-card.hit {
+  animation: hitFlash 0.4s ease-out;
+}
+
+@keyframes hitFlash {
+  0% {
+    background: rgba(239, 68, 68, 0.6);
+    transform: translateX(-2px);
+  }
+  25% {
+    background: rgba(239, 68, 68, 0.3);
+    transform: translateX(2px);
+  }
+  50% {
+    background: rgba(239, 68, 68, 0.6);
+    transform: translateX(-2px);
+  }
+  75% {
+    background: rgba(239, 68, 68, 0.3);
+    transform: translateX(2px);
+  }
+  100% {
+    background: #1a1a2e;
+    transform: translateX(0);
+  }
+}
+
+.member-card.casting {
+  animation: castingGlow 1s ease-in-out infinite;
+  border-color: #9c88ff;
+}
+
+@keyframes castingGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(156, 136, 255, 0.3);
+    background: #2a2a4e;
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(156, 136, 255, 0.6);
+    background: #3a3a5e;
+  }
+}
+
+.member-card.buffed {
+  animation: buffedGlow 1.5s ease-in-out infinite;
+  border-color: #4caf50;
+}
+
+@keyframes buffedGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.5);
+  }
+}
+
+.member-card.selected {
+  border-color: #22d3ee;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+}
+
 .member-info {
   flex: 1;
   min-width: 0;
@@ -740,11 +802,37 @@
 .energy-fill {
   height: 100%;
   background: linear-gradient(90deg, #ffeb3b, #fbc02d);
-  transition: width 0.3s;
+  transition: width 0.3s, background 0.3s;
+}
+
+.energy-fill.low {
+  background: linear-gradient(90deg, #f44336, #c62828);
+}
+
+.energy-fill.medium {
+  background: linear-gradient(90deg, #ffeb3b, #fbc02d);
+}
+
+.energy-fill.full {
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
 }
 
 .energy-fill.enemy-fill {
   background: linear-gradient(90deg, #ff5722, #e64a19);
+}
+
+.energy-fill.enemy-fill.low {
+  background: linear-gradient(90deg, #f44336, #c62828);
+}
+
+.energy-fill.enemy-fill.medium {
+  background: linear-gradient(90deg, #ff9800, #e65100);
+}
+
+.energy-fill.enemy-fill.full {
+  background: linear-gradient(90deg, #ef4444, #b91c1c);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
 }
 
 .member-status {
@@ -1046,7 +1134,39 @@
   color: #fff;
 }
 
+/* 日志片段颜色样式 */
+.log-friendly {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.log-hostile {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.log-segment.log-damage {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.log-segment.log-heal {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.log-segment.log-crit {
+  color: #ff9800;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+}
+
 /* 战斗日志语义化标签样式 - 色彩语义系统 */
+.normal-attack {
+  color: #60a5fa;
+  font-weight: 500;
+}
+
 .skill-attack {
   color: #f97316;
   font-weight: 500;
@@ -1060,6 +1180,11 @@
 .skill-debuff {
   color: #a855f7;
   font-weight: 500;
+}
+
+.damage-value {
+  color: #f87171;
+  font-weight: bold;
 }
 
 .crit-value {

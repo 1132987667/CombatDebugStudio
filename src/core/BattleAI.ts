@@ -12,17 +12,16 @@ import type {
   BattleAction,
   BattleState,
   ParticipantSide,
-
 } from '@/types/battle'
 import {
-  PARTICIPANT_SIDE, 
+  PARTICIPANT_SIDE,
   BATTLE_CONSTANTS,
   SKILL_CONSTANTS,
   SKILL_EFFECT_CONSTANTS,
   ACTION_TYPES,
   EFFECT_TYPES,
 } from '@/types/battle'
-import { useBattleLogStore } from '@/stores/battleLogStore'
+import { useBattleStore } from '@/stores/battleStore'
 
 /**
  * 战斗AI接口
@@ -31,7 +30,10 @@ import { useBattleLogStore } from '@/stores/battleLogStore'
  */
 import type { BuffSystem } from '@/core/BuffSystem'
 import type { SkillManager } from '@/core/skill/SkillManager'
-import { AIPriorityStrategy, AIPriorityStrategyFactory } from '@/core/battle/AIPriorityStrategy'
+import {
+  AIPriorityStrategy,
+  AIPriorityStrategyFactory,
+} from '@/core/battle/AIPriorityStrategy'
 
 export interface BattleAI {
   /**
@@ -155,8 +157,9 @@ export class BaseBattleAI implements BattleAI {
    */
   constructor(skillIds?: string[], strategyName: string = 'balanced') {
     // 初始化优先级策略
-    this.priorityStrategy = AIPriorityStrategyFactory.createStrategy(strategyName)
-    
+    this.priorityStrategy =
+      AIPriorityStrategyFactory.createStrategy(strategyName)
+
     // 加载技能
     if (skillIds && skillIds.length > 0) {
       this.loadSkillsFromConfig(skillIds)
@@ -170,7 +173,8 @@ export class BaseBattleAI implements BattleAI {
    * @param strategyName 策略名称
    */
   public setPriorityStrategy(strategyName: string): void {
-    this.priorityStrategy = AIPriorityStrategyFactory.createStrategy(strategyName)
+    this.priorityStrategy =
+      AIPriorityStrategyFactory.createStrategy(strategyName)
   }
 
   /**
@@ -216,34 +220,38 @@ export class BaseBattleAI implements BattleAI {
     battleState: BattleState,
     participant: BattleParticipant,
   ): BattleAction {
-    const battleLogStore = useBattleLogStore()
+    const battleStore = useBattleStore()
     try {
       if (!battleState || !participant) {
-        battleLogStore.addErrorLog('AI决策参数无效')
+        battleStore.addErrorLog('AI决策参数无效')
         return this.selectAttack(participant)
       }
 
       const battleAnalysis = this.analyzeBattleState(battleState, participant)
 
       if (battleAnalysis.shouldUseSkill) {
-      const skillId = this.selectSkill(participant, battleState, battleAnalysis)
-      if (skillId) {
-        try {
-          return this.createSkillStep(battleState, participant, skillId)
-        } catch (skillError) {
-          battleLogStore.addErrorLog('技能执行出错')
-          return this.selectAttack(participant)
+        const skillId = this.selectSkill(
+          participant,
+          battleState,
+          battleAnalysis,
+        )
+        if (skillId) {
+          try {
+            return this.createSkillStep(battleState, participant, skillId)
+          } catch (skillError) {
+            battleStore.addErrorLog('技能执行出错')
+            return this.selectAttack(participant)
+          }
         }
       }
-    }
 
       return this.selectAttack(participant)
     } catch (error) {
-      battleLogStore.addErrorLog('AI决策出错')
+      battleStore.addErrorLog('AI决策出错')
       try {
         return this.selectAttack(participant)
       } catch (attackError) {
-        battleLogStore.addErrorLog('攻击执行出错')
+        battleStore.addErrorLog('攻击执行出错')
         return {
           id: `fallback_${Date.now()}`,
           type: ACTION_TYPES.ATTACK,
@@ -291,7 +299,9 @@ export class BaseBattleAI implements BattleAI {
       { enemy: null, threat: 0 },
     )
 
-    const needsHealing = allies.some((p) => p.currentHealth / p.maxHealth < BATTLE_CONSTANTS.HEAL_THRESHOLD)
+    const needsHealing = allies.some(
+      (p) => p.currentHealth / p.maxHealth < BATTLE_CONSTANTS.HEAL_THRESHOLD,
+    )
 
     return {
       allies,
@@ -338,7 +348,10 @@ export class BaseBattleAI implements BattleAI {
     const energyPercent = target.currentEnergy / target.maxEnergy
     threat += energyPercent * BATTLE_CONSTANTS.THREAT_ENERGY_WEIGHT
 
-    if (target.type === PARTICIPANT_SIDE.ALLY && participant.type === PARTICIPANT_SIDE.ENEMY) {
+    if (
+      target.type === PARTICIPANT_SIDE.ALLY &&
+      participant.type === PARTICIPANT_SIDE.ENEMY
+    ) {
       threat += BATTLE_CONSTANTS.THREAT_TYPE_WEIGHT
     }
 
@@ -353,7 +366,9 @@ export class BaseBattleAI implements BattleAI {
     const energy =
       participant.getAttribute('energy') || participant.currentEnergy || 0
     const maxEnergy =
-      participant.getAttribute('max_energy') || participant.maxEnergy || BATTLE_CONSTANTS.DEFAULT_MAX_ENERGY
+      participant.getAttribute('max_energy') ||
+      participant.maxEnergy ||
+      BATTLE_CONSTANTS.DEFAULT_MAX_ENERGY
     return energy >= maxEnergy * BATTLE_CONSTANTS.AI_SKILL_ENERGY_THRESHOLD
   }
 
@@ -367,45 +382,53 @@ export class BaseBattleAI implements BattleAI {
       return null
     }
 
-    // 优先使用参与者真实拥有的技能
+    // 优先使用参与者真实拥有的技能，但必须是在AI技能列表中存在的
     const participantSkills = participant.getSkills() || []
-    
+
     // 过滤掉被动技能
-    const availableSkills = participantSkills.filter(skillId => {
+    const availableSkills = participantSkills.filter((skillId) => {
       return !skillId.includes('passive')
     })
-    
-    if (availableSkills.length > 0) {
+
+    // 只保留AI技能列表中存在的技能
+    const validSkills = availableSkills.filter((skillId) => {
+      return this.skills.has(skillId)
+    })
+
+    if (validSkills.length > 0) {
       // 如果有battleState，使用优先级策略计算权重
       if (battleState) {
         // 构建技能对象列表
-        const skills = availableSkills.map(skillId => ({
-          id: skillId,
-          name: skillId,
-          type: 'small' as SkillType,
-          energyCost: 0,
-          cooldown: 0,
-          lastUsed: 0,
-          description: '',
-        }))
-        
+        const skills = validSkills.map((skillId) => {
+          const skill = this.skills.get(skillId)
+          return {
+            id: skillId,
+            name: skill?.name || skillId,
+            type: skill?.type || ('small' as SkillType),
+            energyCost: skill?.energyCost || 0,
+            cooldown: skill?.cooldown || 0,
+            lastUsed: skill?.lastUsed || 0,
+            description: skill?.description || '',
+          }
+        })
+
         // 计算技能权重
         const skillWeights = this.priorityStrategy.calculateSkillWeights(
           battleState,
           participant,
-          skills
+          skills,
         )
-        
+
         // 选择权重最高的技能
         if (skillWeights.length > 0) {
           return skillWeights[0].skillId
         }
       }
-      
+
       // 回退：从可用技能中选择第一个
-      return availableSkills[0]
+      return validSkills[0]
     }
-    
+
     // 如果没有真实技能，回退到AI内部技能
     const allSkills = Array.from(this.skills.values())
     const skills = allSkills.filter((s) => s.type !== SkillType.PASSIVE)
@@ -418,9 +441,9 @@ export class BaseBattleAI implements BattleAI {
       const skillWeights = this.priorityStrategy.calculateSkillWeights(
         battleState,
         participant,
-        skills
+        skills,
       )
-      
+
       // 选择权重最高的技能
       if (skillWeights.length > 0) {
         return skillWeights[0].skillId
@@ -436,7 +459,10 @@ export class BaseBattleAI implements BattleAI {
         }
       }
 
-      if (analysis.highestThreatEnemy.threat > BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD) {
+      if (
+        analysis.highestThreatEnemy.threat >
+        BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD
+      ) {
         const damageSkill = skills.find((s) => s.damage && s.damage > 0)
         if (damageSkill) {
           return damageSkill.id
@@ -463,13 +489,23 @@ export class BaseBattleAI implements BattleAI {
       type: ACTION_TYPES.ATTACK,
       sourceId: participant.id,
       targetId: '',
-      damage: Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN,
+      damage:
+        Math.floor(
+          Math.random() *
+            (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX -
+              BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
+        ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN,
       success: true,
       timestamp: Date.now(),
       effects: [
         {
           type: EFFECT_TYPES.DAMAGE,
-          value: Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN,
+          value:
+            Math.floor(
+              Math.random() *
+                (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX -
+                  BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
+            ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN,
           description: `${participant.name} 普通攻击`,
         },
       ],
@@ -652,17 +688,22 @@ export class CharacterAI extends BaseBattleAI {
     participant: BattleParticipant,
     analysis?: BattleAnalysis,
   ): string | null {
-    // 优先使用参与者真实拥有的技能
+    // 优先使用参与者真实拥有的技能，但必须是在AI技能列表中存在的
     const participantSkills = participant.getSkills() || []
-    
+
     // 过滤掉被动技能
-    const availableSkills = participantSkills.filter(skillId => {
+    const availableSkills = participantSkills.filter((skillId) => {
       return !skillId.includes('passive')
     })
-    
-    if (availableSkills.length > 0) {
+
+    // 只保留AI技能列表中存在的技能
+    const validSkills = availableSkills.filter((skillId) => {
+      return this.skills.has(skillId)
+    })
+
+    if (validSkills.length > 0) {
       // 从可用技能中选择一个
-      return availableSkills[0]
+      return validSkills[0]
     }
 
     // 如果没有真实技能，回退到AI内部技能
@@ -690,7 +731,9 @@ export class CharacterAI extends BaseBattleAI {
       }
     }
 
-    if (participant.currentEnergy >= BATTLE_CONSTANTS.ULTIMATE_ENERGY_THRESHOLD) {
+    if (
+      participant.currentEnergy >= BATTLE_CONSTANTS.ULTIMATE_ENERGY_THRESHOLD
+    ) {
       const ultimateSkill = Array.from(this.skills.values()).find(
         (s) => s.type === SkillType.ULTIMATE,
       )
@@ -758,24 +801,31 @@ export class EnemyAI extends BaseBattleAI {
   }
 
   public shouldUseSkill(participant: BattleParticipant): boolean {
-    return participant.currentEnergy >= BATTLE_CONSTANTS.ENEMY_SKILL_ENERGY_THRESHOLD
+    return (
+      participant.currentEnergy >= BATTLE_CONSTANTS.ENEMY_SKILL_ENERGY_THRESHOLD
+    )
   }
 
   public selectSkill(
     participant: BattleParticipant,
     analysis?: BattleAnalysis,
   ): string | null {
-    // 优先使用参与者真实拥有的技能
+    // 优先使用参与者真实拥有的技能，但必须是在AI技能列表中存在的
     const participantSkills = participant.getSkills() || []
-    
+
     // 过滤掉被动技能
-    const availableSkills = participantSkills.filter(skillId => {
+    const availableSkills = participantSkills.filter((skillId) => {
       return !skillId.includes('passive')
     })
-    
-    if (availableSkills.length > 0) {
+
+    // 只保留AI技能列表中存在的技能
+    const validSkills = availableSkills.filter((skillId) => {
+      return this.skills.has(skillId)
+    })
+
+    if (validSkills.length > 0) {
       // 从可用技能中选择一个
-      return availableSkills[0]
+      return validSkills[0]
     }
 
     // 如果没有真实技能，回退到AI内部技能
@@ -820,14 +870,15 @@ export class BattleAIFactory {
     skillLoader?: SkillConfigLoader,
     strategyConfig?: AIStrategyConfig,
   ): BattleAI {
-    const ai = type === PARTICIPANT_SIDE.ALLY 
-      ? new CharacterAI(skillIds, strategyConfig?.priorityStrategy)
-      : new EnemyAI(skillIds, strategyConfig?.priorityStrategy)
-    
+    const ai =
+      type === PARTICIPANT_SIDE.ALLY
+        ? new CharacterAI(skillIds, strategyConfig?.priorityStrategy)
+        : new EnemyAI(skillIds, strategyConfig?.priorityStrategy)
+
     if (skillLoader) {
       ai.setSkillConfigLoader(skillLoader)
     }
-    
+
     return ai
   }
 
@@ -837,14 +888,15 @@ export class BattleAIFactory {
     skillLoader?: SkillConfigLoader,
     strategyConfig?: AIStrategyConfig,
   ): BattleAI {
-    const ai = type === PARTICIPANT_SIDE.ALLY 
-      ? new CharacterAI(skillIds, strategyConfig?.priorityStrategy)
-      : new EnemyAI(skillIds, strategyConfig?.priorityStrategy)
-    
+    const ai =
+      type === PARTICIPANT_SIDE.ALLY
+        ? new CharacterAI(skillIds, strategyConfig?.priorityStrategy)
+        : new EnemyAI(skillIds, strategyConfig?.priorityStrategy)
+
     if (skillLoader) {
       ai.setSkillConfigLoader(skillLoader)
     }
-    
+
     return ai
   }
 
@@ -863,7 +915,7 @@ export class BattleAIFactory {
       config.type,
       config.skillIds,
       config.skillLoader,
-      config.strategy
+      config.strategy,
     )
   }
 }

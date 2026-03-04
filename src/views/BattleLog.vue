@@ -20,9 +20,16 @@
       </div>
     </div>
     <div class="log-content">
-      <div v-for="(log, index) in filteredLogs" :key="index" class="log-entry" :class="log.level">
+      <div v-for="(log, index) in filteredLogs" :key="index" class="log-entry" :class="log.category">
         <span class="log-turn">[{{ log.turn }}]</span>
-        <span class="log-result" v-html="log.htmlResult || log.result"></span>
+        <span class="log-result" v-if="log.segments">
+          <span 
+            v-for="(segment, segIndex) in log.segments" 
+            :key="segIndex"
+            :class="getSegmentClass(segment.color)"
+          >{{ segment.text }}</span>
+        </span>
+        <span class="log-result" v-else v-html="log.htmlResult || log.result"></span>
         <div v-if="log.subEffects && log.subEffects.length" class="sub-effects">
           <div v-for="(effect, ei) in log.subEffects" :key="ei" class="sub-effect" v-html="effect">
           </div>
@@ -36,6 +43,7 @@
 <script setup lang="ts">
 import { computed, ref, reactive } from "vue";
 import type { BattleLogEntry, LogFilters } from '@/types/battle-log';
+import { LogSegmentColorClass } from '@/types/battle-log';
 
 interface Props {
   logs: BattleLogEntry[];
@@ -51,23 +59,30 @@ const logFilters = reactive<LogFilters>({
   heal: false,
 });
 
+function getSegmentClass(color?: string): string {
+  if (!color || color === 'default') {
+    return ''
+  }
+  return LogSegmentColorClass[color as keyof typeof LogSegmentColorClass] || ''
+}
+
 const filteredLogs = computed(() => {
   let logs = [...props.logs];
 
   if (!logFilters.damage) {
-    logs = logs.filter((l) => l.level !== "damage" && l.level !== "crit");
+    logs = logs.filter((l) => l.category !== "damage" && l.category !== "crit");
   }
 
   if (!logFilters.status) {
-    logs = logs.filter((l) => l.level !== "status");
+    logs = logs.filter((l) => l.category !== "status");
   }
 
   if (!logFilters.crit) {
-    logs = logs.filter((l) => l.level !== "crit");
+    logs = logs.filter((l) => l.category !== "crit");
   }
 
   if (!logFilters.heal) {
-    logs = logs.filter((l) => l.level !== "heal");
+    logs = logs.filter((l) => l.category !== "heal");
   }
   return logs;
 });

@@ -17,6 +17,7 @@ export type EffectType =
   | 'heal' // 治疗效果
   | 'buff' // Buff效果
   | 'debuff' // 减益效果
+  | 'miss' // 闪避效果
   | 'special' // 特殊效果
 
 /**

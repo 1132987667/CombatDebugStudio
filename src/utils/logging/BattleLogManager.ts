@@ -403,9 +403,9 @@ export function formatNormalAttackHTML(options: HTMLFormatOptions): {
   const isCrit = isCritical || forceCritical
   const damageHtml = isCrit
     ? `<span class="crit-value">${damage}</span>`
-    : damage
+    : `<span class="damage-value">${damage}</span>`
   return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动普通攻击，造成 ${damageHtml} 点物理伤害。`,
+    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动<span class="normal-attack">普通攻击</span>，造成 ${damageHtml} 点物理伤害。`,
     level: isCrit ? 'crit' : 'damage',
   }
 }
@@ -431,7 +431,7 @@ export function formatSkillAttackHTML(options: HTMLFormatOptions): {
   const isCrit = isCritical || forceCritical
   const damageHtml = isCrit
     ? `<span class="crit-value">${damage}</span>`
-    : damage
+    : `<span class="damage-value">${damage}</span>`
   return {
     htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动<span class="skill-attack">【${skillName}】</span>，造成 ${damageHtml} 点${damageType || '魔法'}伤害。`,
     level: isCrit ? 'crit' : 'damage',
@@ -512,7 +512,7 @@ export function formatStatusEffectHTML(options: HTMLFormatOptions): {
   const isCrit = isCritical || forceCritical
   const damageHtml = isCrit
     ? `<span class="crit-value">${damage}</span>`
-    : damage
+    : `<span class="damage-value">${damage}</span>`
   return {
     htmlResult: `[${triggerTime}] ${formatSource(source, sourceIsAlly)}的<span class="debuff">【${statusName}】</span>效果对 ${formatTarget(target, targetIsAlly)} 生效，造成 ${damageHtml} 点${damageType || '持续'}伤害。`,
     level: isCrit ? 'crit' : 'damage',
@@ -583,7 +583,7 @@ export function formatBlockedAttackHTML(options: HTMLFormatOptions): {
   const { source, target, skillName, damage, sourceIsAlly, targetIsAlly } =
     options
   return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动<span class="skill-attack">【${skillName}】</span>，攻击被<span class="evade">格挡</span>，最终造成 ${damage} 点伤害。`,
+    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动<span class="skill-attack">【${skillName}】</span>，攻击被<span class="evade">格挡</span>，最终造成 <span class="damage-value">${damage}</span> 点伤害。`,
     level: 'damage',
   }
 }
@@ -999,9 +999,9 @@ export class BattleLogManager {
     context?: Record<string, unknown>,
     error?: Error,
   ): void {
-    console.log(`添加日志[${level}]:`, message, context, error)
+    // console.log(`添加日志[${level}]:`, message, context, error)
     if (level > this.level) {
-      console.log('日志级别不满足要求:', level, this.level)
+      // console.log('日志级别不满足要求:', level, this.level)
       // return
     }
 

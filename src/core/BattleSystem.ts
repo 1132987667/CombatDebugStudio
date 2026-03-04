@@ -15,11 +15,10 @@ import type {
   ParticipantSide,
   RoundStatus,
 } from '@/types/battle'
-import type {
-  IBattleSystem
-} from '@/core/battle/interfaces.ts'
+import type { IBattleSystem } from '@/core/battle/interfaces.ts'
 
 import type { ExtendedSkillStep } from '@/types/skill'
+import type { EffectType } from '@/types/effect'
 import {
   BATTLE_STATUS,
   ROUND_STATUS,
@@ -47,6 +46,7 @@ import { DamageCalculator } from '@/core/skill/DamageCalculator'
 import { RAFTimer } from '@/utils/RAF'
 import { BuffSystem } from '@/core/BuffSystem'
 import type { BattleLogEntry } from '@/types/battle-log'
+import type { BattleLogCategory } from '@/types/battle-log'
 import {
   TURN_MANAGER_TOKEN,
   ACTION_EXECUTOR_TOKEN,
@@ -57,27 +57,55 @@ import {
 } from '@/core/battle/interfaces'
 import type { Container } from '@/core/di/Container'
 
-
 /**
  * 战斗系统核心管理类
- * 
+ *
  * @class GameBattleSystem
  * @implements {IBattleSystem}
- * 
+ *
  * @description
  * 负责战斗的完整生命周期管理，包括创建、回合流转、伤害计算及结算。
- * 
+ *
  * @architecture
  * 1. 【依赖注入】: 通过 DI 容器注入管理器实例，降低耦合。
  * 2. 【事件驱动】: 使用 Eventbus 驱动 UI 动画和状态同步。
  * 3. 【状态隔离】: 每个战斗实例拥有独立的 BattleData 对象，支持并行运行。
- * 
+ *
  * @features
  * - 支持多场战斗并行运行。
  * - 集成 AI 决策系统。
  * - 支持战斗录像与回放。
  * - 自动战斗与手动战斗模式切换。
  */
+
+/**
+ * 效果类型常量
+ */
+const EFFECT_TYPE: Record<string, EffectType> = {
+  DAMAGE: 'damage',
+  HEAL: 'heal',
+  BUFF: 'buff',
+  DEBUFF: 'debuff',
+  MISS: 'miss',
+  SPECIAL: 'special',
+} as const
+
+/**
+ * 战斗日志类别常量
+ */
+const BATTLE_LOG_CATEGORY: Record<string, BattleLogCategory> = {
+  SYSTEM: 'system',
+  ACTION: 'action',
+  DAMAGE: 'damage',
+  HEAL: 'heal',
+  CRIT: 'crit',
+  STATUS: 'status',
+  DEBUG: 'debug',
+  INFO: 'info',
+  WARNING: 'warning',
+  ERROR: 'error',
+} as const
+
 export class GameBattleSystem implements IBattleSystem {
   private battleData: BattleData
 
@@ -125,7 +153,9 @@ export class GameBattleSystem implements IBattleSystem {
    * 使用容器创建战斗系统实例（推荐方式）
    * 容器会自动解析所有依赖
    */
-  public static createInstanceWithContainer(container: Container): GameBattleSystem {
+  public static createInstanceWithContainer(
+    container: Container,
+  ): GameBattleSystem {
     const turnManager = container.resolve<TurnManager>(
       TURN_MANAGER_TOKEN.toString(),
     )
@@ -389,7 +419,7 @@ export class GameBattleSystem implements IBattleSystem {
       this.syncBattleStateUpdate()
 
       for (let i = 0; i < currentTurnOrder.length; i++) {
-        while (this.isAnimationPlaying()) {
+        while (this.isAnimating()) {
           await this.wait(100)
         }
 
@@ -411,7 +441,7 @@ export class GameBattleSystem implements IBattleSystem {
           await this.executeDefaultAction(battle, participant)
         }
 
-        while (this.isAnimationPlaying()) {
+        while (this.isAnimating()) {
           await this.wait(100)
         }
 
@@ -426,7 +456,7 @@ export class GameBattleSystem implements IBattleSystem {
         }
       }
 
-      while (this.isAnimationPlaying()) {
+      while (this.isAnimating()) {
         await this.wait(100)
       }
 
@@ -667,7 +697,7 @@ export class GameBattleSystem implements IBattleSystem {
       action.damage = Math.floor(Math.random() * 20) + 10
       action.effects = [
         {
-          type: 'damage',
+          type: EFFECT_TYPE.DAMAGE,
           value: action.damage,
           description: `${source.name} 普通攻击 (技能执行失败)`,
         },
@@ -744,7 +774,7 @@ export class GameBattleSystem implements IBattleSystem {
     if (damageResult.isMiss) {
       // 处理闪避情况
       action.effects.push({
-        type: 'miss',
+        type: EFFECT_TYPE.MISS,
         value: 0,
         description: `${targetParticipant!.name} 闪避了攻击`,
       })
@@ -775,7 +805,7 @@ export class GameBattleSystem implements IBattleSystem {
       targetParticipant!.takeDamage(damage)
 
       action.effects.push({
-        type: 'damage',
+        type: EFFECT_TYPE.DAMAGE,
         value: damage,
         description: `${source.name} 普通攻击 造成 ${damage} 伤害${damageResult.isCritical ? ' (暴击)' : ''}`,
       })
@@ -795,7 +825,9 @@ export class GameBattleSystem implements IBattleSystem {
         target: targetParticipant!.name,
         result: `${source.name} 对 ${targetParticipant!.name} 发动普通攻击，${damageResult.isCritical ? '暴击！' : ''}造成 ${damage} 点物理伤害。`,
         level: 'info',
-        category: damageResult.isCritical ? 'crit' : 'damage',
+        category: damageResult.isCritical
+          ? BATTLE_LOG_CATEGORY.CRIT
+          : BATTLE_LOG_CATEGORY.DAMAGE,
       }
       this.syncBattleLog(logEntry)
 
@@ -920,7 +952,7 @@ export class GameBattleSystem implements IBattleSystem {
       turn: this.turnManager.getTurnNumber(battle),
       effects: [
         {
-          type: 'damage',
+          type: EFFECT_TYPE.DAMAGE,
           value: damage,
           description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
         },
@@ -963,7 +995,7 @@ export class GameBattleSystem implements IBattleSystem {
 
         // 检查是否有闪避效果
         const hasMissEffect = skillAction.effects.some(
-          (effect) => effect.type === 'miss',
+          (effect) => effect.type === EFFECT_TYPE.MISS,
         )
         if (hasMissEffect) {
           // 触发闪避动画并等待完成
@@ -974,7 +1006,10 @@ export class GameBattleSystem implements IBattleSystem {
 
         // 检查是否有buff效果并触发相应事件
         for (const effect of skillAction.effects) {
-          if (effect.type === 'buff' || effect.type === 'debuff') {
+          if (
+            effect.type === EFFECT_TYPE.BUFF ||
+            effect.type === EFFECT_TYPE.DEBUFF
+          ) {
             // 确定buff目标
             let buffTarget = target
             if (effect.target === 'self') {
@@ -985,7 +1020,7 @@ export class GameBattleSystem implements IBattleSystem {
             await this.triggerBuffEffectAndWait({
               targetId: buffTarget.id,
               buffName: effect.buffId || 'unknown',
-              isPositive: effect.type === 'buff',
+              isPositive: effect.type === EFFECT_TYPE.BUFF,
             })
           }
         }
@@ -1013,7 +1048,7 @@ export class GameBattleSystem implements IBattleSystem {
         action.damage = Math.floor(Math.random() * 20) + 10
         action.effects = [
           {
-            type: 'damage',
+            type: EFFECT_TYPE.DAMAGE,
             value: action.damage,
             description: `${source.name} 普通攻击 (技能执行失败)`,
           },
@@ -1440,7 +1475,8 @@ export class GameBattleSystem implements IBattleSystem {
       return AUTO_BATTLE_CONFIG.DEFAULT_DELAY
     }
     return (
-      AUTO_BATTLE_CONFIG.DELAYS[battle.battleSpeed] ?? AUTO_BATTLE_CONFIG.DEFAULT_DELAY
+      AUTO_BATTLE_CONFIG.DELAYS[battle.battleSpeed] ??
+      AUTO_BATTLE_CONFIG.DEFAULT_DELAY
     )
   }
 
@@ -1722,7 +1758,7 @@ export class GameBattleSystem implements IBattleSystem {
    * 检查是否有动画正在播放
    * @returns 是否有动画正在播放
    */
-  private isAnimationPlaying(): boolean {
+  private isAnimating(): boolean {
     return this.isAnimationPlaying
   }
 
@@ -1745,11 +1781,7 @@ export class GameBattleSystem implements IBattleSystem {
     damageType: string
   }): Promise<void> {
     if (this.battleData) {
-      await this.triggerAnimationAndWait(
-        'skill-effect',
-        data,
-        1500,
-      )
+      await this.triggerAnimationAndWait('skill-effect', data, 1500)
     }
   }
 

@@ -140,6 +140,9 @@ export interface BattleLogEntry {
 
   /** 附加效果列表，如暴击、状态等详细信息 */
   subEffects?: string[]
+
+  /** 日志片段列表，用于结构化渲染 */
+  segments?: LogSegment[]
 }
 
 /**
@@ -165,6 +168,21 @@ export interface LogFormatOptions {
   chargeDescription?: string
   exp?: number
   gold?: number
+}
+
+/**
+ * 日志片段颜色类型
+ */
+export type LogSegmentColor = 'friendly' | 'hostile' | 'damage' | 'heal' | 'crit' | 'default'
+
+/**
+ * 日志片段接口 - 用于结构化渲染日志内容
+ */
+export interface LogSegment {
+  /** 片段文本内容 */
+  text: string
+  /** 片段颜色类型 */
+  color?: LogSegmentColor
 }
 
 /**
@@ -293,6 +311,96 @@ export function shouldDisplayLog(
     default:
       return true
   }
+}
+
+/**
+ * 日志片段颜色映射到CSS类名
+ */
+export const LogSegmentColorClass: Record<LogSegmentColor, string> = {
+  friendly: 'log-friendly',
+  hostile: 'log-hostile',
+  damage: 'log-damage',
+  heal: 'log-heal',
+  crit: 'log-crit',
+  default: '',
+}
+
+/**
+ * 创建攻击日志片段 - 结构化生成战斗攻击日志
+ * @param attacker 攻击者名称
+ * @param target 目标名称
+ * @param damage 伤害值
+ * @param isFriendlyAttacker 攻击者是否为我方
+ * @param isFriendlyTarget 目标是否为我方
+ * @returns LogSegment 数组
+ */
+export function createAttackLogSegments(
+  attacker: string,
+  target: string,
+  damage: number,
+  isFriendlyAttacker: boolean,
+  isFriendlyTarget: boolean,
+): LogSegment[] {
+  return [
+    { text: attacker, color: isFriendlyAttacker ? 'friendly' : 'hostile' },
+    { text: ' 对 ' },
+    { text: target, color: isFriendlyTarget ? 'friendly' : 'hostile' },
+    { text: ' 发动普通攻击，造成 ' },
+    { text: damage.toString(), color: 'damage' },
+    { text: ' 点伤害' },
+  ]
+}
+
+/**
+ * 创建治疗日志片段 - 结构化生成治疗日志
+ * @param healer 治疗者名称
+ * @param target 目标名称
+ * @param healAmount 治疗量
+ * @param isFriendlyHealer 治疗者是否为我方
+ * @param isFriendlyTarget 目标是否为我方
+ * @returns LogSegment 数组
+ */
+export function createHealLogSegments(
+  healer: string,
+  target: string,
+  healAmount: number,
+  isFriendlyHealer: boolean,
+  isFriendlyTarget: boolean,
+): LogSegment[] {
+  return [
+    { text: healer, color: isFriendlyHealer ? 'friendly' : 'hostile' },
+    { text: ' 对 ' },
+    { text: target, color: isFriendlyTarget ? 'friendly' : 'hostile' },
+    { text: ' 恢复 ' },
+    { text: healAmount.toString(), color: 'heal' },
+    { text: ' 点生命值' },
+  ]
+}
+
+/**
+ * 创建暴击攻击日志片段 - 结构化生成暴击攻击日志
+ * @param attacker 攻击者名称
+ * @param target 目标名称
+ * @param damage 伤害值
+ * @param isFriendlyAttacker 攻击者是否为我方
+ * @param isFriendlyTarget 目标是否为我方
+ * @returns LogSegment 数组
+ */
+export function createCritAttackLogSegments(
+  attacker: string,
+  target: string,
+  damage: number,
+  isFriendlyAttacker: boolean,
+  isFriendlyTarget: boolean,
+): LogSegment[] {
+  return [
+    { text: attacker, color: isFriendlyAttacker ? 'friendly' : 'hostile' },
+    { text: ' 对 ' },
+    { text: target, color: isFriendlyTarget ? 'friendly' : 'hostile' },
+    { text: ' 发动暴击，造成 ' },
+    { text: damage.toString(), color: 'crit' },
+    { text: ' 点暴击伤害！' },
+  ]
 }
 
 /**

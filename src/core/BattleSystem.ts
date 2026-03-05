@@ -390,29 +390,23 @@ export class GameBattleSystem implements IBattleSystem {
         return
       }
 
-      let currentTurnOrder = battle.turnOrder
-      if (this.turnManager.needRecalculateTurnOrder(battle)) {
-        currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
-        battle.turnOrder = currentTurnOrder
-        battle.currentTurn = 0
-        this.turnManager.resetSpeedChanged(battle)
+      let currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
+      battle.turnOrder = currentTurnOrder
+      battle.currentTurn = 0
 
-        this.battleLogger.info('回合开始，重新计算出手顺序', {
-          turnOrder: currentTurnOrder.map((id) => {
-            const participant = battle.participants.get(id)
-            const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(
-              participant!,
-            )
-            return {
-              id,
-              name: participant?.name,
-              effectiveSpeed,
-            }
-          }),
-        })
-      } else {
-        this.battleLogger.info('回合开始，使用当前出手顺序')
-      }
+      this.battleLogger.info('回合开始，重新计算出手顺序', {
+        turnOrder: currentTurnOrder.map((id) => {
+          const participant = battle.participants.get(id)
+          const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(
+            participant!,
+          )
+          return {
+            id,
+            name: participant?.name,
+            effectiveSpeed,
+          }
+        }),
+      })
 
       const battleId = battle.battleId
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0])

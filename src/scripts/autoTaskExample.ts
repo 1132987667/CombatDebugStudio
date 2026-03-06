@@ -118,8 +118,15 @@ function createExampleBattle() {
         if (this.skills.ultimate) allSkills.push(...this.skills.ultimate)
         return allSkills
       },
+      getSkillIds(): string[] {
+        const allSkills: string[] = []
+        if (this.skills.small) allSkills.push(...this.skills.small.map((s) => s.id))
+        if (this.skills.passive) allSkills.push(...this.skills.passive.map((s) => s.id))
+        if (this.skills.ultimate) allSkills.push(...this.skills.ultimate.map((s) => s.id))
+        return allSkills
+      },
       hasSkill(skillId: string): boolean {
-        return this.getSkills().includes(skillId)
+        return this.getSkillIds().includes(skillId)
       },
     },
     {
@@ -220,8 +227,15 @@ function createExampleBattle() {
         if (this.skills.ultimate) allSkills.push(...this.skills.ultimate)
         return allSkills
       },
+      getSkillIds(): string[] {
+        const allSkills: string[] = []
+        if (this.skills.small) allSkills.push(...this.skills.small.map((s) => s.id))
+        if (this.skills.passive) allSkills.push(...this.skills.passive.map((s) => s.id))
+        if (this.skills.ultimate) allSkills.push(...this.skills.ultimate.map((s) => s.id))
+        return allSkills
+      },
       hasSkill(skillId: string): boolean {
-        return this.getSkills().includes(skillId)
+        return this.getSkillIds().includes(skillId)
       },
     },
   ]

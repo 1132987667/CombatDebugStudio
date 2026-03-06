@@ -51,7 +51,7 @@ export class AISystem {
 
     participants.forEach((participant) => {
       // 获取参与者的技能ID
-      const skillIds = participant.getSkills() || []
+      const skillIds = participant.getSkillIds() || []
       // 创建技能加载器，从SkillManager获取技能配置
       const skillLoader = (skillIds: string[]) => {
         return skillIds.map(skillId => {
@@ -93,7 +93,7 @@ export class AISystem {
 
     if (!ai) {
       // 获取参与者的技能ID
-      const skillIds = participant.getSkills() || []
+      const skillIds = participant.getSkillIds() || []
       // 创建技能加载器，从SkillManager获取技能配置
       const skillLoader = (skillIds: string[]) => {
         return skillIds.map(skillId => {

@@ -1,10 +1,6 @@
 /**
  * 文件: BattleAI.ts
- * 创建日期: 2026-02-09
- * 作者: CombatDebugStudio
  * 功能: 战斗AI接口和实现
- * 描述: 定义战斗AI的核心行为和决策方法，包括决策制定、目标选择、技能使用等，提供多种AI策略实现
- * 版本: 1.0.0
  */
 
 import type {
@@ -22,12 +18,6 @@ import {
   EFFECT_TYPES,
 } from '@/types/battle'
 import { useBattleStore } from '@/stores/battleStore'
-
-/**
- * 战斗AI接口
- * 定义了AI在战斗中的核心行为和决策方法
- * 所有AI实现都必须遵循此接口规范
- */
 import type { BuffSystem } from '@/core/BuffSystem'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import {
@@ -35,132 +25,76 @@ import {
   AIPriorityStrategyFactory,
 } from '@/core/battle/AIPriorityStrategy'
 
+/** 战斗AI接口 */
 export interface BattleAI {
-  /**
-   * 设置上下文
-   */
+  /** 设置上下文（Buff系统、技能管理器） */
   setContext(buffSystem: BuffSystem, skillManager: SkillManager): void
 
-  /**
-   * 做出战斗决策
-   */
+  /** 做出战斗决策 */
   makeDecision(
     battleState: BattleState,
     participant: BattleParticipant,
   ): BattleAction
 
-  /**
-   * 选择目标
-   */
+  /** 选择攻击目标 */
   selectTarget(battleState: BattleState, participant: BattleParticipant): string
 
-  /**
-   * 检查是否应该使用技能
-   */
+  /** 判断是否应该使用技能 */
   shouldUseSkill(participant: BattleParticipant): boolean
 
-  /**
-   * 选择技能
-   */
+  /** 选择要使用的技能 */
   selectSkill(participant: BattleParticipant): string | null
 
-  /**
-   * 选择攻击
-   */
+  /** 选择普通攻击 */
   selectAttack(participant: BattleParticipant): BattleAction
 }
 
-/**
- * 技能类型枚举
- * 定义了游戏中技能的不同类型
- */
+/** 技能类型枚举 */
 export enum SkillType {
-  /** 被动技能 */
   PASSIVE = 'passive',
-  /** 小技能 */
   SMALL = 'small',
-  /** 终极技能（大招） */
   ULTIMATE = 'ultimate',
 }
 
-/**
- * 技能定义接口
- * 描述了技能的基本属性和效果
- */
+/** 技能定义接口 */
 export interface Skill {
-  /** 技能唯一标识符 */
   id: string
-  /** 技能名称 */
   name: string
-  /** 技能类型 */
   type: SkillType
-  /** 技能能量消耗 */
   energyCost: number
-  /** 技能冷却时间（毫秒） */
   cooldown: number
-  /** 技能上次使用时间戳 */
   lastUsed: number
-  /** 技能描述 */
   description: string
-  /** 技能伤害值（可选） */
   damage?: number
-  /** 技能治疗值（可选） */
   heal?: number
-  /** 技能附加的buff ID（可选） */
   buffId?: string
 }
 
 /** 技能配置加载器类型 */
 export type SkillConfigLoader = (skillIds: string[]) => Skill[]
 
-/**
- * 战场分析结果接口
- * 包含AI分析战场态势后得出的关键信息
- */
+/** 战场分析结果接口 */
 interface BattleAnalysis {
-  /** 友方单位列表 */
   allies: BattleParticipant[]
-  /** 敌方单位列表 */
   enemies: BattleParticipant[]
-  /** 团队血量百分比 */
   teamHealthPercent: number
-  /** 最高威胁的敌人 */
   highestThreatEnemy: { enemy: BattleParticipant | null; threat: number }
-  /** 是否需要治疗 */
   needsHealing: boolean
-  /** 是否应该使用技能 */
   shouldUseSkill: boolean
 }
 
-/**
- * 基础AI策略类
- * 提供了AI的通用实现，作为具体AI实现的基类
- * 包含技能管理、战场分析、决策逻辑等核心功能
- */
+/** 基础AI策略类 */
 export class BaseBattleAI implements BattleAI {
-  /** 技能集合，以技能ID为键 */
   protected skills: Map<string, Skill> = new Map()
-  /** 技能配置加载器（可选） */
   protected skillConfigLoader?: SkillConfigLoader
-  /** Buff系统实例 */
   protected buffSystem?: BuffSystem
-  /** 技能管理器实例 */
   protected skillManager?: SkillManager
-  /** 优先级策略 */
   protected priorityStrategy: AIPriorityStrategy
 
-  /**
-   * 构造函数
-   * 初始化AI实例并加载技能
-   * @param skillIds - 可选的技能ID列表，用于从外部加载技能配置
-   * @param strategyName - 可选的优先级策略名称
-   */
   constructor(skillIds?: string[], strategyName: string = 'balanced') {
-    // 初始化优先级策略
     this.priorityStrategy =
       AIPriorityStrategyFactory.createStrategy(strategyName)
 
-    // 加载技能
     if (skillIds && skillIds.length > 0) {
       this.loadSkillsFromConfig(skillIds)
     } else {
@@ -168,26 +102,18 @@ export class BaseBattleAI implements BattleAI {
     }
   }
 
-  /**
-   * 设置优先级策略
-   * @param strategyName 策略名称
-   */
+  /** 设置优先级策略 */
   public setPriorityStrategy(strategyName: string): void {
     this.priorityStrategy =
       AIPriorityStrategyFactory.createStrategy(strategyName)
   }
 
-  /**
-   * 获取当前优先级策略
-   */
+  /** 获取当前优先级策略 */
   public getPriorityStrategy(): AIPriorityStrategy {
     return this.priorityStrategy
   }
 
-  /**
-   * 从外部配置加载技能
-   * @param skillIds - 技能ID列表
-   */
+  /** 从外部配置加载技能 */
   protected loadSkillsFromConfig(skillIds: string[]): void {
     if (this.skillConfigLoader) {
       const loadedSkills = this.skillConfigLoader(skillIds)
@@ -199,23 +125,15 @@ export class BaseBattleAI implements BattleAI {
     }
   }
 
-  /**
-   * 设置技能配置加载器
-   * @param loader - 技能配置加载函数
-   */
+  /** 设置技能配置加载器 */
   public setSkillConfigLoader(loader: SkillConfigLoader): void {
     this.skillConfigLoader = loader
   }
 
-  /**
-   * 初始化技能
-   * 子类应重写此方法添加特定技能
-   * 如果已通过构造函数传入skillIds，则此方法不会自动调用
-   */
-  protected initializeSkills(): void {
-    // 子类实现
-  }
+  /** 初始化技能（子类可重写） */
+  protected initializeSkills(): void {}
 
+  /** 做出战斗决策 */
   public makeDecision(
     battleState: BattleState,
     participant: BattleParticipant,
@@ -272,6 +190,7 @@ export class BaseBattleAI implements BattleAI {
     }
   }
 
+  /** 分析战场态势 */
   protected analyzeBattleState(
     battleState: BattleState,
     participant: BattleParticipant,
@@ -313,6 +232,7 @@ export class BaseBattleAI implements BattleAI {
     }
   }
 
+  /** 选择目标（优先选择血量最少的角色） */
   public selectTarget(
     battleState: BattleState,
     _participant: BattleParticipant,
@@ -335,6 +255,7 @@ export class BaseBattleAI implements BattleAI {
     return targetsWithThreat[0].target.id
   }
 
+  /** 计算目标威胁值 */
   protected calculateThreat(
     target: BattleParticipant,
     participant: BattleParticipant,
@@ -372,33 +293,28 @@ export class BaseBattleAI implements BattleAI {
     return energy >= maxEnergy * BATTLE_CONSTANTS.AI_SKILL_ENERGY_THRESHOLD
   }
 
+  /** 选择要使用的技能 */
   public selectSkill(
     participant: BattleParticipant,
     battleState?: BattleState,
     analysis?: BattleAnalysis,
   ): string | null {
-    // 检查是否可以使用技能
     if (!this.canUseSkill(participant)) {
       return null
     }
 
-    // 优先使用参与者真实拥有的技能，但必须是在AI技能列表中存在的
-    const participantSkills = participant.getSkills() || []
+    const participantSkills = participant.getSkillIds() || []
 
-    // 过滤掉被动技能
     const availableSkills = participantSkills.filter((skillId) => {
       return !skillId.includes('passive')
     })
 
-    // 只保留AI技能列表中存在的技能
     const validSkills = availableSkills.filter((skillId) => {
       return this.skills.has(skillId)
     })
 
     if (validSkills.length > 0) {
-      // 如果有battleState，使用优先级策略计算权重
       if (battleState) {
-        // 构建技能对象列表
         const skills = validSkills.map((skillId) => {
           const skill = this.skills.get(skillId)
           return {
@@ -412,31 +328,26 @@ export class BaseBattleAI implements BattleAI {
           }
         })
 
-        // 计算技能权重
         const skillWeights = this.priorityStrategy.calculateSkillWeights(
           battleState,
           participant,
           skills,
         )
 
-        // 选择权重最高的技能
         if (skillWeights.length > 0) {
           return skillWeights[0].skillId
         }
       }
 
-      // 回退：从可用技能中选择第一个
       return validSkills[0]
     }
 
-    // 如果没有真实技能，回退到AI内部技能
     const allSkills = Array.from(this.skills.values())
     const skills = allSkills.filter((s) => s.type !== SkillType.PASSIVE)
     if (skills.length === 0) {
       return null
     }
 
-    // 使用优先级策略计算权重
     if (battleState) {
       const skillWeights = this.priorityStrategy.calculateSkillWeights(
         battleState,
@@ -444,13 +355,11 @@ export class BaseBattleAI implements BattleAI {
         skills,
       )
 
-      // 选择权重最高的技能
       if (skillWeights.length > 0) {
         return skillWeights[0].skillId
       }
     }
 
-    // 回退：使用原来的逻辑
     if (analysis) {
       if (analysis.needsHealing) {
         const healSkill = skills.find((s) => s.heal && s.heal > 0)
@@ -483,6 +392,7 @@ export class BaseBattleAI implements BattleAI {
     return null
   }
 
+  /** 选择普通攻击 */
   public selectAttack(participant: BattleParticipant): BattleAction {
     return {
       id: `attack_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -512,6 +422,7 @@ export class BaseBattleAI implements BattleAI {
     }
   }
 
+  /** 选择治疗目标 */
   protected selectHealTarget(
     battleState: BattleState,
     participant: BattleParticipant,
@@ -530,6 +441,7 @@ export class BaseBattleAI implements BattleAI {
     return allies.length > 0 ? allies[0].target.id : participant.id
   }
 
+  /** 创建技能行动 */
   protected createSkillStep(
     battleState: BattleState,
     participant: BattleParticipant,
@@ -594,29 +506,28 @@ export class BaseBattleAI implements BattleAI {
     return action
   }
 
+  /** 添加技能 */
   public addSkill(skill: Skill): void {
     this.skills.set(skill.id, skill)
   }
 
+  /** 获取技能 */
   public getSkill(skillId: string): Skill | undefined {
     return this.skills.get(skillId)
   }
 
+  /** 获取所有技能 */
   public getSkills(): Skill[] {
     return Array.from(this.skills.values())
   }
 
-  /**
-   * 设置上下文
-   */
+  /** 设置上下文 */
   public setContext(buffSystem: BuffSystem, skillManager: SkillManager): void {
     this.buffSystem = buffSystem
     this.skillManager = skillManager
   }
 
-  /**
-   * 检查是否可以使用技能
-   */
+  /** 检查是否可以使用技能 */
   protected canUseSkill(participant: BattleParticipant): boolean {
     if (this.buffSystem) {
       return this.buffSystem.canUseSkill(participant.id)
@@ -625,20 +536,13 @@ export class BaseBattleAI implements BattleAI {
   }
 }
 
-/**
- * 角色AI类
- * 为玩家角色提供特定的AI行为
- */
+/** 角色AI类 */
 export class CharacterAI extends BaseBattleAI {
-  /**
-   * 构造函数
-   * @param skillIds 技能ID列表
-   * @param strategyName 优先级策略名称
-   */
   constructor(skillIds?: string[], strategyName: string = 'balanced') {
     super(skillIds, strategyName)
   }
 
+  /** 初始化角色技能 */
   protected initializeSkills(): void {
     this.addSkill({
       id: 'skill_heal',
@@ -674,6 +578,7 @@ export class CharacterAI extends BaseBattleAI {
     })
   }
 
+  /** 判断是否使用技能（生命低于临界值时触发） */
   public shouldUseSkill(participant: BattleParticipant): boolean {
     const healthPercent = participant.currentHealth / participant.maxHealth
 
@@ -684,29 +589,25 @@ export class CharacterAI extends BaseBattleAI {
     return super.shouldUseSkill(participant)
   }
 
+  /** 选择技能（角色AI优先使用真实技能） */
   public selectSkill(
     participant: BattleParticipant,
     analysis?: BattleAnalysis,
   ): string | null {
-    // 优先使用参与者真实拥有的技能，但必须是在AI技能列表中存在的
-    const participantSkills = participant.getSkills() || []
+    const participantSkills = participant.getSkillIds() || []
 
-    // 过滤掉被动技能
     const availableSkills = participantSkills.filter((skillId) => {
       return !skillId.includes('passive')
     })
 
-    // 只保留AI技能列表中存在的技能
     const validSkills = availableSkills.filter((skillId) => {
       return this.skills.has(skillId)
     })
 
     if (validSkills.length > 0) {
-      // 从可用技能中选择一个
       return validSkills[0]
     }
 
-    // 如果没有真实技能，回退到AI内部技能
     const healthPercent = participant.currentHealth / participant.maxHealth
 
     if (healthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD) {
@@ -745,6 +646,7 @@ export class CharacterAI extends BaseBattleAI {
     return super.selectSkill(participant, analysis)
   }
 
+  /** 选择目标（优先选择血量最少的敌人） */
   public selectTarget(
     battleState: BattleState,
     _participant: BattleParticipant,
@@ -762,20 +664,13 @@ export class CharacterAI extends BaseBattleAI {
   }
 }
 
-/**
- * 敌人AI类
- * 为敌人单位提供特定的AI行为
- */
+/** 敌人AI类 */
 export class EnemyAI extends BaseBattleAI {
-  /**
-   * 构造函数
-   * @param skillIds 技能ID列表
-   * @param strategyName 优先级策略名称
-   */
   constructor(skillIds?: string[], strategyName: string = 'aggressive') {
     super(skillIds, strategyName)
   }
 
+  /** 初始化敌人技能 */
   protected initializeSkills(): void {
     this.addSkill({
       id: 'enemy_skill_1',
@@ -800,38 +695,36 @@ export class EnemyAI extends BaseBattleAI {
     })
   }
 
+  /** 判断是否使用技能（能量足够时触发） */
   public shouldUseSkill(participant: BattleParticipant): boolean {
     return (
       participant.currentEnergy >= BATTLE_CONSTANTS.ENEMY_SKILL_ENERGY_THRESHOLD
     )
   }
 
+  /** 选择技能（敌人AI优先使用真实技能） */
   public selectSkill(
     participant: BattleParticipant,
     analysis?: BattleAnalysis,
   ): string | null {
-    // 优先使用参与者真实拥有的技能，但必须是在AI技能列表中存在的
-    const participantSkills = participant.getSkills() || []
+    const participantSkills = participant.getSkillIds() || []
 
-    // 过滤掉被动技能
     const availableSkills = participantSkills.filter((skillId) => {
       return !skillId.includes('passive')
     })
 
-    // 只保留AI技能列表中存在的技能
     const validSkills = availableSkills.filter((skillId) => {
       return this.skills.has(skillId)
     })
 
     if (validSkills.length > 0) {
-      // 从可用技能中选择一个
       return validSkills[0]
     }
 
-    // 如果没有真实技能，回退到AI内部技能
     return super.selectSkill(participant, analysis)
   }
 
+  /** 选择目标（优先选择血量最少的角色） */
   public selectTarget(
     battleState: BattleState,
     _participant: BattleParticipant,
@@ -849,21 +742,15 @@ export class EnemyAI extends BaseBattleAI {
   }
 }
 
-/**
- * AI策略配置接口
- */
+/** AI策略配置接口 */
 export interface AIStrategyConfig {
-  /** 优先级策略名称 */
   priorityStrategy?: string
-  /** 自定义参数 */
   parameters?: Record<string, any>
 }
 
-/**
- * AI工厂类
- * 负责创建不同类型的AI实例
- */
+/** AI工厂类 */
 export class BattleAIFactory {
+  /** 创建AI实例 */
   public static createAI(
     type: ParticipantSide,
     skillIds?: string[],
@@ -882,6 +769,7 @@ export class BattleAIFactory {
     return ai
   }
 
+  /** 创建带技能的AI实例 */
   public static createAIWithSkills(
     type: ParticipantSide,
     skillIds: string[],
@@ -900,11 +788,7 @@ export class BattleAIFactory {
     return ai
   }
 
-  /**
-   * 从配置创建AI实例
-   * @param config 配置对象
-   * @returns AI实例
-   */
+  /** 从配置创建AI实例 */
   public static createAIFromConfig(config: {
     type: ParticipantSide
     skillIds?: string[]

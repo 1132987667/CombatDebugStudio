@@ -408,10 +408,22 @@ export class BattleParticipantImpl implements BattleParticipant {
   }
 
   /**
+   * 获取所有技能配置
+   * @returns 技能配置对象
+   */
+  getSkills(): {
+    small?: SkillConfig[]
+    passive?: SkillConfig[]
+    ultimate?: SkillConfig[]
+  } {
+    return this.skills
+  }
+
+  /**
    * 获取所有技能ID
    * @returns 技能ID数组
    */
-  getSkills(): string[] {
+  getSkillIds(): string[] {
     const allSkills: string[] = []
     if (this.skills.small)
       allSkills.push(...this.skills.small.map((skill) => skill.id))
@@ -428,7 +440,7 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @returns 是否拥有
    */
   hasSkill(skillId: string): boolean {
-    return this.getSkills().includes(skillId)
+    return this.getSkillIds().includes(skillId)
   }
 
   /**

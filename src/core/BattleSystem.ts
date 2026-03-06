@@ -549,7 +549,7 @@ export class GameBattleSystem implements IBattleSystem {
       }
 
       // 获取所有可用技能并过滤掉被动技能
-      const allSkillIds = participant.getSkills()
+      const allSkillIds = participant.getSkillIds()
       console.log('allSkillIds', participant, participant.skills, allSkillIds)
       const allAvailableSkills = allSkillIds.filter((skillId) => {
         const energyCost = this.getSkillEnergyCost(skillId)

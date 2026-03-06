@@ -76,7 +76,7 @@ export class PassiveSkillManager {
       return
     }
 
-    const skills = participant.getSkills()
+    const skills = participant.getSkillIds()
     if (!skills) return
 
     for (const skillId of skills) {

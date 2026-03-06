@@ -79,16 +79,16 @@ export class TurnManager {
   }
 
   /**
-   * 推进到下一回合
-   * @param battle 战斗数据
-   */
+ * 推进到下一回合
+ * @param battle 战斗数据
+ */
   public advanceTurn(battle: BattleData): void {
     if (battle.turnOrder.length === 0) {
       return
     }
 
     battle.currentTurn = (battle.currentTurn + 1) % battle.turnOrder.length
-
+    
     // 检查是否进入新的回合
     if (battle.currentTurn === 0) {
       battle.currentRound = (battle.currentRound || 0) + 1
@@ -125,8 +125,8 @@ export class TurnManager {
    * @returns 按实际速度排序的参与者ID数组
    */
   public recalculateTurnOrder(battle: BattleData): string[] {
-    const participants = Array.from(battle.participants.values()).filter((p) =>
-      p.isAlive(),
+    const participants = Array.from(battle.participants.values()).filter(
+      (p) => p.isAlive(),
     )
 
     return participants

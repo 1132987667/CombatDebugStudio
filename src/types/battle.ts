@@ -1,3 +1,9 @@
+/**
+ * 战斗系统类型定义模块
+ * 包含战斗相关的所有类型定义、枚举和常量
+ * 提供战斗实体、参与者、动作、效果等核心数据结构
+ */
+
 import type { Character } from '@/types/character'
 import type { EnemyInstance } from '@/types/enemy'
 import type { BattleAI } from '@/core/BattleAI'
@@ -159,6 +165,12 @@ export const EFFECT_TYPES = {
 export type ParticipantSide =
   (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
 
+/**
+ * 战斗实体接口
+ * 定义战斗中最基础的实体结构
+ * 包含实体的基本属性（ID、名称、等级、阵营等）和核心方法（生命值、能量、Buff等）
+ * 所有参与战斗的角色和敌人都应实现此接口
+ */
 export interface BattleEntity {
   id: string
   name: string
@@ -233,6 +245,9 @@ export interface BattleParticipant extends BattleEntity {
 
 /**
  * 状态效果接口
+ * 定义战斗中的状态效果（Buff/Debuff）
+ * 包含效果的ID、名称、类型、持续时间等属性
+ * 用于表示角色在战斗中获得的各种增益或减益效果
  */
 export interface StatusEffect {
   /** 效果ID */
@@ -247,6 +262,12 @@ export interface StatusEffect {
   remainingTurns: number
 }
 
+/**
+ * 战斗动作接口
+ * 表示战斗中执行的一个具体动作
+ * 包含动作的基本信息（ID、类型、来源、目标）、动作结果（伤害、治疗等）以及时间戳
+ * 用于记录战斗过程中的所有行动，支持战斗回放和日志功能
+ */
 export interface BattleAction {
   id: string
   type: 'attack' | 'skill' | 'buff' | 'item' | 'status'
@@ -270,6 +291,12 @@ export interface BattleAction {
  */
 export type BattleSystemAction = BattleAction
 
+/**
+ * 战斗效果接口
+ * 表示战斗中产生的单一效果
+ * 包含效果的类型、数值、关联的Buff以及效果描述
+ * 用于描述战斗动作产生的具体效果（如伤害、治疗、Buff等）
+ */
 export interface BattleEffect {
   type: 'damage' | 'heal' | 'buff' | 'debuff' | 'status'
   value?: number
@@ -278,6 +305,12 @@ export interface BattleEffect {
   description: string
 }
 
+/**
+ * 战斗状态接口
+ * 表示战斗的完整运行时状态
+ * 包含战斗ID、所有参与者、战斗动作记录、回合顺序、当前回合等核心信息
+ * 用于在战斗过程中实时跟踪和更新战斗状态
+ */
 export interface BattleState {
   battleId: string
   participants: Map<string, BattleParticipant>
@@ -378,6 +411,8 @@ export enum BattleSystemEvent {
 /**
  * 战斗数据接口
  * 描述战斗的完整状态和数据
+ * 包含战斗的核心运行时信息（参与者、回合、状态等）以及战斗控制相关属性
+ * 是战斗系统中最全面的数据结构，用于管理整个战斗的生命周期
  */
 export interface BattleData {
   /** 战斗唯一标识符 */

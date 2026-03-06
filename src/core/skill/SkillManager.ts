@@ -7,8 +7,17 @@
  * 版本: 1.0.0
  */
 
-import type { SkillConfig, SkillStep, ExtendedSkillStep, CalculationLog } from '@/types/skill'
-import type { BattleAction, BattleParticipant, BattleEnvironment } from '@/types/battle'
+import type {
+  SkillConfig,
+  SkillStep,
+  ExtendedSkillStep,
+  CalculationLog,
+} from '@/types/skill'
+import type {
+  BattleAction,
+  BattleParticipant,
+  BattleEnvironment,
+} from '@/types/battle'
 import { BuffSystem } from '@/core/BuffSystem'
 import { StackRule, ControlType } from '@/types/buff'
 import { DamageCalculator } from '@/core/skill/DamageCalculator'
@@ -46,7 +55,10 @@ export interface CalculationResult {
  * 借鉴framework的Calculator接口设计
  */
 export interface SkillCalculator {
-  calculate(context: CalculationContext, step: ExtendedSkillStep): CalculationResult
+  calculate(
+    context: CalculationContext,
+    step: ExtendedSkillStep,
+  ): CalculationResult
   getSupportedTypes(): string[]
 }
 
@@ -74,10 +86,6 @@ export class SkillManager {
     this.healCalculator = new HealCalculator()
   }
 
-
-
-
-
   /**
    * 加载技能配置
    * @param skillConfigs 技能配置数组
@@ -85,23 +93,23 @@ export class SkillManager {
   public loadSkillConfigs(skillConfigs: SkillConfig[]): void {
     // 验证技能配置
     const validationResult = validateSkillConfigs(skillConfigs)
-    
+
     if (!validationResult.valid) {
       // 记录验证错误
-      validationResult.errors.forEach(error => {
+      validationResult.errors.forEach((error) => {
         this.logger.error(`技能配置验证失败: ${error}`)
       })
-      
+
       // 拒绝无效配置
       throw new Error('技能配置验证失败，请检查配置文件')
     }
-    
+
     // 加载验证通过的配置
     for (const config of skillConfigs) {
       this.skillConfigs.set(config.id, config)
       this.logger.debug(`加载技能配置: ${config.id} - ${config.name}`)
     }
-    
+
     this.logger.info(`成功加载 ${skillConfigs.length} 个技能配置`)
     this.logger.info(`技能配置加载完成，共加载 ${skillConfigs.length} 个技能`)
   }
@@ -128,7 +136,10 @@ export class SkillManager {
     }
 
     // 检查技能冷却
-    if ('isSkillAvailable' in source && typeof source.isSkillAvailable === 'function') {
+    if (
+      'isSkillAvailable' in source &&
+      typeof source.isSkillAvailable === 'function'
+    ) {
       if (!source.isSkillAvailable(skillId)) {
         return false
       }
@@ -150,7 +161,11 @@ export class SkillManager {
    * @param target 目标
    * @returns 战斗动作
    */
-  public executeSkill(skillId: string, source: BattleParticipant, target: BattleParticipant): BattleAction {
+  public executeSkill(
+    skillId: string,
+    source: BattleParticipant,
+    target: BattleParticipant,
+  ): BattleAction {
     const skillConfig = this.getSkillConfig(skillId)
     if (!skillConfig) {
       throw new Error(`技能配置不存在: ${skillId}`)
@@ -171,22 +186,29 @@ export class SkillManager {
       heal: 0,
       success: true,
       timestamp: Date.now(),
-      effects: []
+      effects: [],
     }
 
     // 兼容旧格式和新格式
     if (skillConfig.steps && skillConfig.steps.length > 0) {
       // 新格式：使用步骤配置
-      const sortedSteps = [...skillConfig.steps].sort((a, b) => (a.priority || 0) - (b.priority || 0))
-      
+      const sortedSteps = [...skillConfig.steps].sort(
+        (a, b) => (a.priority || 0) - (b.priority || 0),
+      )
+
       for (const skillStep of sortedSteps) {
         // 每段伤害前检查目标是否存活
         if (!target.isAlive()) {
           break
         }
-        
-        this.executeSkillStep(skillStep as ExtendedSkillStep, action, source, target)
-        
+
+        this.executeSkillStep(
+          skillStep as ExtendedSkillStep,
+          action,
+          source,
+          target,
+        )
+
         // 为多段伤害添加间隔（模拟间隔效果，实际动画间隔由BattleSystem处理）
         if (sortedSteps.length > 1) {
           // 这里可以添加配置化的间隔时间
@@ -200,7 +222,7 @@ export class SkillManager {
       action.effects.push({
         type: 'damage',
         value: actualDamage,
-        description: `${source.name} 使用 ${skillConfig.name || skillId} 造成 ${actualDamage} 伤害`
+        description: `${source.name} 使用 ${skillConfig.name || skillId} 造成 ${actualDamage} 伤害`,
       })
       this.logger.debug(`旧格式技能执行完成: ${skillId}, 伤害: ${actualDamage}`)
 
@@ -208,12 +230,14 @@ export class SkillManager {
       // 处理 heal 属性（治疗效果）
       if ((skillConfig as any).heal) {
         const healValue = (skillConfig as any).heal
-        const actualHeal = source.takeHeal ? source.takeHeal(healValue) : Math.floor(healValue)
+        const actualHeal = source.takeHeal
+          ? source.takeHeal(healValue)
+          : Math.floor(healValue)
         action.heal = actualHeal
         action.effects.push({
           type: 'heal',
           value: actualHeal,
-          description: `${source.name} 使用 ${skillConfig.name || skillId} 恢复 ${actualHeal} 生命值`
+          description: `${source.name} 使用 ${skillConfig.name || skillId} 恢复 ${actualHeal} 生命值`,
         })
         this.logger.debug(`旧格式技能治疗效果: ${skillId}, 治疗: ${actualHeal}`)
       }
@@ -235,10 +259,14 @@ export class SkillManager {
             controlType: ControlType.NONE,
             controlPriority: 0,
             isDebuff: false,
-            parameters: {}
+            parameters: {},
           }
 
-          const instanceId = this.buffSystem.addBuff(target.id, buffId, buffConfig)
+          const instanceId = this.buffSystem.addBuff(
+            target.id,
+            buffId,
+            buffConfig,
+          )
           if (instanceId) {
             target.addBuff(instanceId)
           }
@@ -247,7 +275,7 @@ export class SkillManager {
             type: 'buff',
             buffId: buffId,
             instanceId,
-            description: `${source.name} 使用 ${skillConfig.name || skillId} 对 ${target.name} 施加 ${buffId}`
+            description: `${source.name} 使用 ${skillConfig.name || skillId} 对 ${target.name} 施加 ${buffId}`,
           })
           this.logger.debug(`旧格式技能Buff效果: ${skillId}, Buff: ${buffId}`)
         } else {
@@ -272,10 +300,14 @@ export class SkillManager {
             controlType: ControlType.NONE,
             controlPriority: 0,
             isDebuff: true,
-            parameters: {}
+            parameters: {},
           }
 
-          const instanceId = this.buffSystem.addBuff(target.id, debuffId, debuffConfig)
+          const instanceId = this.buffSystem.addBuff(
+            target.id,
+            debuffId,
+            debuffConfig,
+          )
           if (instanceId) {
             target.addBuff(instanceId)
           }
@@ -284,20 +316,29 @@ export class SkillManager {
             type: 'debuff',
             buffId: debuffId,
             instanceId,
-            description: `${source.name} 使用 ${skillConfig.name || skillId} 对 ${target.name} 施加 ${debuffId}`
+            description: `${source.name} 使用 ${skillConfig.name || skillId} 对 ${target.name} 施加 ${debuffId}`,
           })
-          this.logger.debug(`旧格式技能Debuff效果: ${skillId}, Debuff: ${debuffId}`)
+          this.logger.debug(
+            `旧格式技能Debuff效果: ${skillId}, Debuff: ${debuffId}`,
+          )
         }
       }
     } else {
-      throw new Error(`技能配置无效: ${skillId}，既没有 steps 也没有 damage 属性`)
+      throw new Error(
+        `技能配置无效: ${skillId}，既没有 steps 也没有 damage 属性`,
+      )
     }
 
     // 设置技能冷却
     if (skillConfig.cooldown && skillConfig.cooldown > 0) {
-      if ('setSkillCooldown' in source && typeof source.setSkillCooldown === 'function') {
+      if (
+        'setSkillCooldown' in source &&
+        typeof source.setSkillCooldown === 'function'
+      ) {
         source.setSkillCooldown(skillId, skillConfig.cooldown)
-        this.logger.info(`技能设置冷却: ${skillId}, 冷却回合数: ${skillConfig.cooldown}`)
+        this.logger.info(
+          `技能设置冷却: ${skillId}, 冷却回合数: ${skillConfig.cooldown}`,
+        )
       }
     }
 
@@ -325,11 +366,11 @@ export class SkillManager {
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
     source: BattleParticipant,
-    target: BattleParticipant
+    target: BattleParticipant,
   ): void {
     // 标准化技能步骤类型，处理大小写差异
     const normalizedType = this.normalizeSkillStepType(skillStep.type)
-    
+
     switch (normalizedType) {
       case 'DAMAGE':
         this.executeDamageStep(skillStep, battleAction, source, target)
@@ -347,10 +388,18 @@ export class SkillManager {
       case 'CONTROL':
       case 'STUN':
       case 'SILENCE':
-        this.executeControlStep(skillStep, battleAction, source, target, normalizedType)
+        this.executeControlStep(
+          skillStep,
+          battleAction,
+          source,
+          target,
+          normalizedType,
+        )
         break
       default:
-        this.logger.warn(`未知的技能步骤类型: ${skillStep.type} (标准化后: ${normalizedType})`)
+        this.logger.warn(
+          `未知的技能步骤类型: ${skillStep.type} (标准化后: ${normalizedType})`,
+        )
     }
   }
 
@@ -361,33 +410,44 @@ export class SkillManager {
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
     source: BattleParticipant,
-    target: BattleParticipant
+    target: BattleParticipant,
   ): void {
     // 使用新的伤害计算器
-    const damageResult = this.damageCalculator.calculateDamage(skillStep, source, target)
-    
+    const damageResult = this.damageCalculator.calculateDamage(
+      skillStep,
+      source,
+      target,
+    )
+
     if (damageResult.isMiss) {
       // 处理闪避情况
       battleAction.effects.push({
         type: 'miss',
         value: 0,
-        description: `${target.name} 闪避了攻击`
+        description: `${target.name} 闪避了攻击`,
       })
-      
-      this.logger.info(`伤害步骤执行完成: ${source.name} → ${target.name}, 闪避`)
+
+      this.logger.info(
+        `伤害步骤执行完成: ${source.name} → ${target.name}, 闪避`,
+      )
     } else {
       // 处理正常伤害情况
-      const actualDamage = this.damageCalculator.applyDamage(target, damageResult.damage)
-      
+      const actualDamage = this.damageCalculator.applyDamage(
+        target,
+        damageResult.damage,
+      )
+
       battleAction.damage += actualDamage
       battleAction.effects.push({
         type: 'damage',
         value: actualDamage,
         description: `${source.name} 造成 ${actualDamage} 伤害`,
-        isCritical: damageResult.isCritical
+        isCritical: damageResult.isCritical,
       })
 
-      this.logger.info(`伤害步骤执行完成: ${source.name} → ${target.name}, 伤害: ${actualDamage}, 暴击: ${damageResult.isCritical}`)
+      this.logger.info(
+        `伤害步骤执行完成: ${source.name} → ${target.name}, 伤害: ${actualDamage}, 暴击: ${damageResult.isCritical}`,
+      )
     }
   }
 
@@ -398,28 +458,30 @@ export class SkillManager {
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
     source: BattleParticipant,
-    target: BattleParticipant
+    target: BattleParticipant,
   ): void {
     // 使用新的治疗计算器
     const heal = this.healCalculator.calculateHeal(skillStep, source, target)
     const actualHeal = this.healCalculator.applyHeal(target, heal)
-    
+
     battleAction.heal += actualHeal
     battleAction.effects.push({
       type: 'heal',
       value: actualHeal,
-      description: `${source.name} 恢复 ${actualHeal} 生命值`
+      description: `${source.name} 恢复 ${actualHeal} 生命值`,
     })
 
     // 检查是否为单回合效果
     if (this.healCalculator.isSingleTurnEffect(skillStep)) {
       battleAction.effects.push({
         type: 'status',
-        description: '单回合治疗效果立即生效'
+        description: '单回合治疗效果立即生效',
       })
     }
 
-    this.logger.info(`治疗步骤执行完成: ${source.name} → ${target.name}, 治疗: ${actualHeal}`)
+    this.logger.info(
+      `治疗步骤执行完成: ${source.name} → ${target.name}, 治疗: ${actualHeal}`,
+    )
   }
 
   /**
@@ -429,7 +491,7 @@ export class SkillManager {
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
     source: BattleParticipant,
-    target: BattleParticipant
+    target: BattleParticipant,
   ): void {
     if (!skillStep.buffId) {
       this.logger.warn(`buff步骤缺少buffId: ${skillStep.type}`)
@@ -438,20 +500,20 @@ export class SkillManager {
 
     // 检查 Buff 脚本是否已注册
     const scriptRegistry = this.buffSystem.getScriptRegistry()
-    
+
     if (!scriptRegistry.has(skillStep.buffId)) {
       this.logger.warn(`Buff脚本未找到: ${skillStep.buffId}，跳过buff效果`)
       battleAction.effects.push({
         type: 'buff',
         buffId: skillStep.buffId,
-        description: `${source.name} 尝试施加 ${skillStep.buffId} 失败（脚本未注册）`
+        description: `${source.name} 尝试施加 ${skillStep.buffId} 失败（脚本未注册）`,
       })
       return
     }
 
     // 确定buff目标
     const buffTarget = skillStep.targetType === 'self' ? source : target
-    
+
     // 创建buff配置
     const buffConfig = {
       id: skillStep.buffId,
@@ -464,23 +526,29 @@ export class SkillManager {
       controlType: ControlType.NONE,
       controlPriority: 0,
       isDebuff: skillStep.type === 'DEBUFF',
-      parameters: skillStep.parameters || {}
+      parameters: skillStep.parameters || {},
     }
 
     // 添加buff
-    const instanceId = this.buffSystem.addBuff(buffTarget.id, skillStep.buffId, buffConfig)
+    const instanceId = this.buffSystem.addBuff(
+      buffTarget.id,
+      skillStep.buffId,
+      buffConfig,
+    )
     if (instanceId) {
       buffTarget.addBuff(instanceId)
     }
-    
+
     battleAction.effects.push({
       type: 'buff',
       buffId: skillStep.buffId,
       instanceId,
-      description: `${source.name} 施加 ${skillStep.buffId} 给 ${buffTarget.name}`
+      description: `${source.name} 施加 ${skillStep.buffId} 给 ${buffTarget.name}`,
     })
 
-    this.logger.info(`buff步骤执行完成: ${skillStep.buffId} 施加给 ${buffTarget.name}`)
+    this.logger.info(
+      `buff步骤执行完成: ${skillStep.buffId} 施加给 ${buffTarget.name}`,
+    )
   }
 
   /**
@@ -490,13 +558,13 @@ export class SkillManager {
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
     source: BattleParticipant,
-    target: BattleParticipant
+    target: BattleParticipant,
   ): void {
     // 护盾逻辑待实现
     this.logger.debug(`护盾步骤: ${skillStep.formula}`)
     battleAction.effects.push({
       type: 'status',
-      description: '护盾效果（待实现）'
+      description: '护盾效果（待实现）',
     })
   }
 
@@ -508,13 +576,14 @@ export class SkillManager {
     battleAction: BattleAction,
     source: BattleParticipant,
     target: BattleParticipant,
-    normalizedType: string = 'CONTROL'
+    normalizedType: string = 'CONTROL',
   ): void {
-    const controlType = normalizedType === 'STUN'
-      ? ControlType.STUN
-      : normalizedType === 'SILENCE'
-        ? ControlType.SILENCE
-        : ControlType.STUN
+    const controlType =
+      normalizedType === 'STUN'
+        ? ControlType.STUN
+        : normalizedType === 'SILENCE'
+          ? ControlType.SILENCE
+          : ControlType.STUN
 
     const controlBuffId = skillStep.buffId || `control_${controlType}`
     const controlConfig = {
@@ -528,10 +597,14 @@ export class SkillManager {
       controlType,
       controlPriority: 100,
       isDebuff: true,
-      parameters: skillStep.parameters || {}
+      parameters: skillStep.parameters || {},
     }
 
-    const instanceId = this.buffSystem.addBuff(target.id, controlBuffId, controlConfig)
+    const instanceId = this.buffSystem.addBuff(
+      target.id,
+      controlBuffId,
+      controlConfig,
+    )
     if (instanceId) {
       target.addBuff(instanceId)
     }
@@ -540,7 +613,7 @@ export class SkillManager {
     battleAction.effects.push({
       type: 'status',
       buffId: controlBuffId,
-      description: `${source.name} 对 ${target.name} 施加了${controlType === ControlType.STUN ? '眩晕' : '沉默'}`
+      description: `${source.name} 对 ${target.name} 施加了${controlType === ControlType.STUN ? '眩晕' : '沉默'}`,
     })
   }
 
@@ -655,7 +728,9 @@ export class SkillManager {
     if (normalizedType === 'DAMAGE' || normalizedType === 'HEAL') {
       // 允许使用 formula 字符串或 calculation 对象
       if (!step.formula && !step.calculation) {
-        this.logger.warn(`DAMAGE/HEAL 类型的技能步骤需要 formula 或 calculation`)
+        this.logger.warn(
+          `DAMAGE/HEAL 类型的技能步骤需要 formula 或 calculation`,
+        )
         return false
       }
 

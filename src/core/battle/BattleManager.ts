@@ -195,8 +195,9 @@ export class BattleManager {
    * @param skillsData 技能配置数据
    */
   loadSkillConfigs(skillsData: any) {
-    // 这里可以添加技能配置加载逻辑
-    // 例如：this.battleSystem.loadSkills(skillsData);
+    if (this.battleSystem) {
+      this.battleSystem.loadSkillConfigs(skillsData)
+    }
   }
 
   /**

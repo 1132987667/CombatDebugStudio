@@ -207,21 +207,14 @@ export class BattleEventManager {
 
   /**
    * 处理战斗状态更新事件
+   * 只更新 BattleStore 的战斗状态，不直接操作角色数据
    */
   private handleBattleStateUpdateEvent(data: BattleStateUpdateEventData) {
     try {
       if (data) {
         this.getBattleStore().currentBattleId = data.battleId
         this.getBattleStore().turnOrder = data.turnOrder || []
-        // 同步战斗状态到UI
         this.getBattleStore().setBattleActive(true)
-
-        // 通过 BattleStateManager 同步角色状态
-        if (this.battleStateManager && this.battleSystem) {
-          // 设置战斗ID并同步状态
-          this.battleStateManager.setBattleId(data.battleId)
-          this.battleStateManager.syncBattleState()
-        }
       }
     } catch (error) {
       this.getBattleStore().addErrorLog(`处理战斗状态更新事件时出错: ${error}`)

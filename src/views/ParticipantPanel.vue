@@ -223,34 +223,61 @@ const selectCharacter = (charId: string) => {
 };
 
 const addEnemyToBattle = (enemy: Enemy, side: string = PARTICIPANT_SIDE.ALLY) => {
+  const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive || [])
+  
+  let attackBonusValue = 0
+  let defenseBonusValue = 0
+  let speedBonusValue = 0
+  let healthBonusValue = 0
+  
+  if (passiveSkills.length > 0) {
+    passiveSkills.forEach(skill => {
+      if (skill.effects) {
+        skill.effects.forEach(effect => {
+          if (effect.type === 'stat_boost' || effect.type === 'attribute_modify') {
+            if (effect.attribute === 'attack' || effect.attribute === 'ATK') {
+              attackBonusValue += effect.value || 0
+            } else if (effect.attribute === 'defense' || effect.attribute === 'DEF') {
+              defenseBonusValue += effect.value || 0
+            } else if (effect.attribute === 'speed' || effect.attribute === 'SPD') {
+              speedBonusValue += effect.value || 0
+            } else if (effect.attribute === 'health' || effect.attribute === 'HP' || effect.attribute === 'maxHp') {
+              healthBonusValue += effect.value || 0
+            }
+          }
+        })
+      }
+    })
+  }
+
   const newCharacter = {
     originalId: enemy.id,
     id: `enemy_${Date.now()}_${enemy.id}`,
     team: side,
     name: enemy.name,
     level: enemy.level,
-    maxHp: GameDataProcessor.createAttributeValue(enemy.stats.health, {}, 'health'),
-    currentHp: enemy.stats.health,
+    maxHp: GameDataProcessor.createAttributeValue(enemy.stats.health + Math.floor(enemy.stats.health * healthBonusValue), {}, 'health'),
+    currentHp: enemy.stats.health + Math.floor(enemy.stats.health * healthBonusValue),
     maxEnergy: GameDataProcessor.createAttributeValue(150, {}, 'maxEnergy'),
     currentEnergy: GameDataProcessor.createAttributeValue(25, {}, 'currentEnergy'),
-    minAttack: enemy.stats.minAttack,
-    maxAttack: enemy.stats.maxAttack,
-    attack: GameDataProcessor.createAttributeValue(Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2), {}, 'attack'),
-    defense: GameDataProcessor.createAttributeValue(enemy.stats.defense, {}, 'defense'),
-    speed: GameDataProcessor.createAttributeValue(enemy.stats.speed, {}, 'speed'),
+    minAttack: GameDataProcessor.createAttributeValue(enemy.stats.minAttack + Math.floor(enemy.stats.minAttack * attackBonusValue), {}, 'minAttack'),
+    maxAttack: GameDataProcessor.createAttributeValue(enemy.stats.maxAttack + Math.floor(enemy.stats.maxAttack * attackBonusValue), {}, 'maxAttack'),
+    attack: GameDataProcessor.createAttributeValue(Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2) + Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2 * attackBonusValue), {}, 'attack'),
+    defense: GameDataProcessor.createAttributeValue(enemy.stats.defense + Math.floor(enemy.stats.defense * defenseBonusValue), {}, 'defense'),
+    speed: GameDataProcessor.createAttributeValue(enemy.stats.speed + Math.floor(enemy.stats.speed * speedBonusValue), {}, 'speed'),
     critRate: GameDataProcessor.createPercentAttributeValue(10, {}, 'critRate'),
     critDamage: GameDataProcessor.createPercentAttributeValue(125, {}, 'critDamage'),
     damageReduction: GameDataProcessor.createPercentAttributeValue(0, {}, 'damageReduction'),
-    healthBonus: GameDataProcessor.createPercentAttributeValue(0, {}, 'healthBonus'),
-    attackBonus: GameDataProcessor.createPercentAttributeValue(0, {}, 'attackBonus'),
-    defenseBonus: GameDataProcessor.createPercentAttributeValue(0, {}, 'defenseBonus'),
-    speedBonus: GameDataProcessor.createPercentAttributeValue(0, {}, 'speedBonus'),
+    healthBonus: GameDataProcessor.createPercentAttributeValue(healthBonusValue * 100, {}, 'healthBonus'),
+    attackBonus: GameDataProcessor.createPercentAttributeValue(attackBonusValue * 100, {}, 'attackBonus'),
+    defenseBonus: GameDataProcessor.createPercentAttributeValue(defenseBonusValue * 100, {}, 'defenseBonus'),
+    speedBonus: GameDataProcessor.createPercentAttributeValue(speedBonusValue * 100, {}, 'speedBonus'),
     enabled: true,
     isFirst: false,
     buffs: [],
     skills: {
       small: GameDataProcessor.getSkillByIds(enemy.skills?.small || []),
-      passive: GameDataProcessor.getSkillByIds(enemy.skills?.passive || []),
+      passive: passiveSkills,
       ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate || []),
     },
   };

@@ -12,7 +12,6 @@ import type {
 import {
   PARTICIPANT_SIDE,
   BATTLE_CONSTANTS,
-  SKILL_CONSTANTS,
   SKILL_EFFECT_CONSTANTS,
   ACTION_TYPES,
   EFFECT_TYPES,
@@ -24,6 +23,14 @@ import {
   AIPriorityStrategy,
   AIPriorityStrategyFactory,
 } from '@/core/battle/AIPriorityStrategy'
+import {
+  SkillConfig,
+  ExtendedSkillStep,
+  Skill,
+  SkillType,
+  convertSkillConfigToSkill,
+} from '@/types/skill'
+import type { UISkills } from '@/types/UI/UIBattleCharacter'
 
 /** 战斗AI接口 */
 export interface BattleAI {
@@ -47,27 +54,6 @@ export interface BattleAI {
 
   /** 选择普通攻击 */
   selectAttack(participant: BattleParticipant): BattleAction
-}
-
-/** 技能类型枚举 */
-export enum SkillType {
-  PASSIVE = 'passive',
-  SMALL = 'small',
-  ULTIMATE = 'ultimate',
-}
-
-/** 技能定义接口 */
-export interface Skill {
-  id: string
-  name: string
-  type: SkillType
-  energyCost: number
-  cooldown: number
-  lastUsed: number
-  description: string
-  damage?: number
-  heal?: number
-  buffId?: string
 }
 
 /** 技能配置加载器类型 */
@@ -146,13 +132,13 @@ export class BaseBattleAI implements BattleAI {
       }
 
       const battleAnalysis = this.analyzeBattleState(battleState, participant)
-
       if (battleAnalysis.shouldUseSkill) {
         const skillId = this.selectSkill(
           participant,
           battleState,
           battleAnalysis,
         )
+        console.log(`${participant.name}选择使用技能。`, skillId)
         if (skillId) {
           try {
             return this.createSkillStep(battleState, participant, skillId)
@@ -166,6 +152,7 @@ export class BaseBattleAI implements BattleAI {
       return this.selectAttack(participant)
     } catch (error) {
       battleStore.addErrorLog('AI决策出错')
+      console.log('AI决策出错')
       try {
         return this.selectAttack(participant)
       } catch (attackError) {
@@ -302,14 +289,9 @@ export class BaseBattleAI implements BattleAI {
     if (!this.canUseSkill(participant)) {
       return null
     }
+    const participantSkills = participant.getSkillIds('active')
 
-    const participantSkills = participant.getSkillIds() || []
-
-    const availableSkills = participantSkills.filter((skillId) => {
-      return !skillId.includes('passive')
-    })
-
-    const validSkills = availableSkills.filter((skillId) => {
+    const validSkills = participantSkills.filter((skillId) => {
       return this.skills.has(skillId)
     })
 
@@ -448,7 +430,7 @@ export class BaseBattleAI implements BattleAI {
     skillId: string,
   ): BattleAction {
     const skill = this.skills.get(skillId)
-
+    console.log(`${participant.name}使用技能。`, skill)
     if (!skill) {
       throw new Error(`Skill not found: ${skillId}`)
     }
@@ -542,42 +524,6 @@ export class CharacterAI extends BaseBattleAI {
     super(skillIds, strategyName)
   }
 
-  /** 初始化角色技能 */
-  protected initializeSkills(): void {
-    this.addSkill({
-      id: 'skill_heal',
-      name: '治疗术',
-      type: SkillType.SMALL,
-      energyCost: SKILL_CONSTANTS.HEAL_SKILL_ENERGY,
-      cooldown: SKILL_CONSTANTS.HEAL_SKILL_COOLDOWN,
-      lastUsed: 0,
-      description: '恢复生命值',
-      heal: SKILL_EFFECT_CONSTANTS.HEAL_SKILL_HEAL,
-    })
-
-    this.addSkill({
-      id: 'skill_attack',
-      name: '强力攻击',
-      type: SkillType.SMALL,
-      energyCost: SKILL_CONSTANTS.ATTACK_SKILL_ENERGY,
-      cooldown: SKILL_CONSTANTS.ATTACK_SKILL_COOLDOWN,
-      lastUsed: 0,
-      description: '造成额外伤害',
-      damage: SKILL_EFFECT_CONSTANTS.ATTACK_SKILL_DAMAGE,
-    })
-
-    this.addSkill({
-      id: 'skill_ultimate',
-      name: '终极技能',
-      type: SkillType.ULTIMATE,
-      energyCost: SKILL_CONSTANTS.ULTIMATE_ENERGY_COST,
-      cooldown: SKILL_CONSTANTS.ULTIMATE_SKILL_COOLDOWN,
-      lastUsed: 0,
-      description: '造成大量伤害',
-      damage: SKILL_EFFECT_CONSTANTS.ULTIMATE_SKILL_DAMAGE,
-    })
-  }
-
   /** 判断是否使用技能（生命低于临界值时触发） */
   public shouldUseSkill(participant: BattleParticipant): boolean {
     const healthPercent = participant.currentHealth / participant.maxHealth
@@ -594,13 +540,9 @@ export class CharacterAI extends BaseBattleAI {
     participant: BattleParticipant,
     analysis?: BattleAnalysis,
   ): string | null {
-    const participantSkills = participant.getSkillIds() || []
+    const participantSkills = participant.getSkillIds('active')
 
-    const availableSkills = participantSkills.filter((skillId) => {
-      return !skillId.includes('passive')
-    })
-
-    const validSkills = availableSkills.filter((skillId) => {
+    const validSkills = participantSkills.filter((skillId) => {
       return this.skills.has(skillId)
     })
 
@@ -670,31 +612,6 @@ export class EnemyAI extends BaseBattleAI {
     super(skillIds, strategyName)
   }
 
-  /** 初始化敌人技能 */
-  protected initializeSkills(): void {
-    this.addSkill({
-      id: 'enemy_skill_1',
-      name: '爪击',
-      type: SkillType.SMALL,
-      energyCost: SKILL_CONSTANTS.ENEMY_BASIC_SKILL_ENERGY,
-      cooldown: SKILL_CONSTANTS.ENEMY_BASIC_SKILL_COOLDOWN,
-      lastUsed: 0,
-      description: '快速攻击',
-      damage: SKILL_EFFECT_CONSTANTS.ENEMY_BASIC_SKILL_DAMAGE,
-    })
-
-    this.addSkill({
-      id: 'enemy_skill_2',
-      name: '狂暴',
-      type: SkillType.ULTIMATE,
-      energyCost: SKILL_CONSTANTS.ENEMY_ULTIMATE_SKILL_ENERGY,
-      cooldown: SKILL_CONSTANTS.ENEMY_ULTIMATE_SKILL_COOLDOWN,
-      lastUsed: 0,
-      description: '增加攻击力',
-      damage: SKILL_EFFECT_CONSTANTS.ENEMY_ULTIMATE_SKILL_DAMAGE,
-    })
-  }
-
   /** 判断是否使用技能（能量足够时触发） */
   public shouldUseSkill(participant: BattleParticipant): boolean {
     return (
@@ -707,13 +624,9 @@ export class EnemyAI extends BaseBattleAI {
     participant: BattleParticipant,
     analysis?: BattleAnalysis,
   ): string | null {
-    const participantSkills = participant.getSkillIds() || []
+    const participantSkills = participant.getSkillIds('active')
 
-    const availableSkills = participantSkills.filter((skillId) => {
-      return !skillId.includes('passive')
-    })
-
-    const validSkills = availableSkills.filter((skillId) => {
+    const validSkills = participantSkills.filter((skillId) => {
       return this.skills.has(skillId)
     })
 
@@ -772,20 +685,49 @@ export class BattleAIFactory {
   /** 创建带技能的AI实例 */
   public static createAIWithSkills(
     type: ParticipantSide,
-    skillIds: string[],
-    skillLoader?: SkillConfigLoader,
+    uiSkills: UISkills,
     strategyConfig?: AIStrategyConfig,
+    skillLoader?: SkillConfigLoader,
   ): BattleAI {
+    const allConfigs: SkillConfig[] = [
+      ...(uiSkills.small ?? []),
+      ...(uiSkills.passive ?? []),
+      ...(uiSkills.ultimate ?? []),
+    ]
+    const validConfigs = allConfigs.filter(this.isValidSkillConfig)
+
+    const skills: Skill[] = validConfigs.map((config) =>
+      convertSkillConfigToSkill(config, {
+        lastUsed: 0,
+        includeDamage: true,
+        includeHeal: true,
+        includeBuffId: true,
+      }),
+    )
+
+    const skillIds = skills.map((s) => s.id)
     const ai =
       type === PARTICIPANT_SIDE.ALLY
         ? new CharacterAI(skillIds, strategyConfig?.priorityStrategy)
         : new EnemyAI(skillIds, strategyConfig?.priorityStrategy)
+
+    skills.forEach((skill) => ai.addSkill(skill))
 
     if (skillLoader) {
       ai.setSkillConfigLoader(skillLoader)
     }
 
     return ai
+  }
+
+  /** 验证技能配置有效性 */
+  private static isValidSkillConfig(config: unknown): config is SkillConfig {
+    return (
+      config !== null &&
+      typeof config === 'object' &&
+      'id' in config &&
+      'name' in config
+    )
   }
 
   /** 从配置创建AI实例 */

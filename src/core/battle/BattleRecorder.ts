@@ -290,8 +290,9 @@ export class BattleRecorder {
     }
 
     // 按开始时间排序，删除最早的记录
-    const sortedRecordings = Array.from(this.recordings.entries())
-      .sort((a, b) => a[1].startTime - b[1].startTime)
+    const sortedRecordings = Array.from(this.recordings.entries()).sort(
+      (a, b) => a[1].startTime - b[1].startTime,
+    )
 
     const toDeleteCount = this.recordings.size - this.maxRecordings
     for (let i = 0; i < toDeleteCount; i++) {

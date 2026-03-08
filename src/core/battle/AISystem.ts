@@ -13,10 +13,11 @@ import type {
   BattleAction,
   BattleData,
 } from '@/types/battle'
-import { BATTLE_CONSTANTS, SKILL_CONSTANTS } from '@/types/battle'
+import { BATTLE_CONSTANTS } from '@/types/battle'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import { BattleAIFactory, BattleAI } from '@/core/BattleAI'
 import type { IActionExecutor } from '@/core/battle/interfaces'
+import type { SkillConfig } from '@/types/skill'
 
 /**
  * AI系统类
@@ -48,33 +49,11 @@ export class AISystem {
     participants: Map<string, BattleParticipant>,
   ): Map<string, BattleAI> {
     const aiInstances = new Map<string, BattleAI>()
-
     participants.forEach((participant) => {
-      // 获取参与者的技能ID
-      const skillIds = participant.getSkillIds() || []
-      // 创建技能加载器，从SkillManager获取技能配置
-      const skillLoader = (skillIds: string[]) => {
-        return skillIds.map(skillId => {
-          const config = this.skillManager.getSkillConfig(skillId)
-          if (config) {
-            return {
-              id: config.id,
-              name: config.name,
-              type: 'small',
-              energyCost: config.energyCost || SKILL_CONSTANTS.SKILL_ENERGY_COST,
-              cooldown: config.cooldown || 0,
-              lastUsed: 0,
-              description: config.description || '',
-              damage: config.damage || 0,
-              heal: config.heal || 0,
-              buffId: config.buffId || undefined
-            }
-          }
-          return null
-        }).filter(Boolean)
-      }
-      // 创建带有技能的AI实例
-      const ai = BattleAIFactory.createAIWithSkills(participant.type, skillIds, skillLoader)
+      const ai = BattleAIFactory.createAIWithSkills(
+        participant.type,
+        participant.getSkills(),
+      )
       aiInstances.set(participant.id, ai)
       this.aiInstances.set(participant.id, ai)
     })
@@ -92,31 +71,10 @@ export class AISystem {
     let ai = this.aiInstances.get(participant.id)
 
     if (!ai) {
-      // 获取参与者的技能ID
-      const skillIds = participant.getSkillIds() || []
-      // 创建技能加载器，从SkillManager获取技能配置
-      const skillLoader = (skillIds: string[]) => {
-        return skillIds.map(skillId => {
-          const config = this.skillManager.getSkillConfig(skillId)
-          if (config) {
-            return {
-              id: config.id,
-              name: config.name,
-              type: 'small',
-              energyCost: config.energyCost || SKILL_CONSTANTS.SKILL_ENERGY_COST,
-              cooldown: config.cooldown || 0,
-              lastUsed: 0,
-              description: config.description || '',
-              damage: config.damage || 0,
-              heal: config.heal || 0,
-              buffId: config.buffId || undefined
-            }
-          }
-          return null
-        }).filter(Boolean)
-      }
-      // 创建带有技能的AI实例
-      ai = BattleAIFactory.createAIWithSkills(participant.type, skillIds, skillLoader)
+      ai = BattleAIFactory.createAIWithSkills(
+        participant.type,
+        participant.getSkills(),
+      )
       this.aiInstances.set(participant.id, ai)
     }
 
@@ -189,9 +147,13 @@ export class AISystem {
     actionExecutor: IActionExecutor,
   ): Promise<BattleAction> {
     // 获取所有有效目标（活着的目标）
-    const validTargets = Array.from(battle.participants.values()).filter(p => {
-      return p.isAlive() && p.id !== participant.id && p.team !== participant.team
-    })
+    const validTargets = Array.from(battle.participants.values()).filter(
+      (p) => {
+        return (
+          p.isAlive() && p.id !== participant.id && p.team !== participant.team
+        )
+      },
+    )
 
     if (validTargets.length === 0) {
       // 没有有效目标，返回默认动作

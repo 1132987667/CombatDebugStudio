@@ -25,7 +25,6 @@ import {
   PARTICIPANT_SIDE,
   AUTO_BATTLE_CONFIG,
   BATTLE_CONSTANTS,
-  SKILL_CONSTANTS,
   BattleSystemEvent,
 } from '@/types/battle'
 import { battleLogManager } from '@/utils/logging'
@@ -882,11 +881,11 @@ export class GameBattleSystem implements IBattleSystem {
       return skillConfig.mpCost
     }
     if (skillId.includes('ultimate') || skillId.includes('大招')) {
-      return SKILL_CONSTANTS.ULTIMATE_ENERGY_COST
+      return 150
     } else if (skillId.includes('skill') || skillId.includes('技能')) {
-      return SKILL_CONSTANTS.SKILL_ENERGY_COST
+      return 50
     }
-    return SKILL_CONSTANTS.PASSIVE_ENERGY_COST
+    return 0
   }
 
   /**

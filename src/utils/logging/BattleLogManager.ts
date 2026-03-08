@@ -868,6 +868,10 @@ export class BattleLogManager {
   private logs: BattleLogEntry[] = []
   /** 系统日志条目数组 */
   private systemLogs: LogEntry[] = []
+  /** 调试日志条目数组 */
+  private debugLogs: LogEntry[] = []
+  /** 调试日志最大数量 */
+  private maxDebugLogs: number = 500
   /** 战斗日志最大数量 */
   private maxLogs: number = 200
   /** 系统日志最大数量，默认1000条 */
@@ -999,10 +1003,8 @@ export class BattleLogManager {
     context?: Record<string, unknown>,
     error?: Error,
   ): void {
-    // console.log(`添加日志[${level}]:`, message, context, error)
     if (level > this.level) {
-      // console.log('日志级别不满足要求:', level, this.level)
-      // return
+      return
     }
 
     const entry: LogEntry = {
@@ -1017,6 +1019,11 @@ export class BattleLogManager {
     this.systemLogs.push(entry)
     if (this.systemLogs.length > this.maxSystemLogs) {
       this.systemLogs = this.systemLogs.slice(-this.maxSystemLogs)
+    }
+
+    this.debugLogs.push(entry)
+    if (this.debugLogs.length > this.maxDebugLogs) {
+      this.debugLogs = this.debugLogs.slice(-this.maxDebugLogs)
     }
 
     for (const handler of this.handlers) {
@@ -1036,10 +1043,24 @@ export class BattleLogManager {
   }
 
   /**
+   * 获取调试日志
+   */
+  getDebugLogs(): LogEntry[] {
+    return [...this.debugLogs]
+  }
+
+  /**
    * 清除系统日志
    */
   clearSystemLogs(): void {
     this.systemLogs = []
+  }
+
+  /**
+   * 清除调试日志
+   */
+  clearDebugLogs(): void {
+    this.debugLogs = []
   }
 
   /**

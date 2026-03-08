@@ -9,6 +9,7 @@ import type { EnemyInstance } from '@/types/enemy'
 import type { BattleAI } from '@/core/BattleAI'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import type { SkillConfig } from '@/types/skill'
+import type { UISkills } from '@/types/UI/UIBattleCharacter'
 
 /**
  * 战斗状态常量
@@ -91,25 +92,6 @@ export const BATTLE_CONSTANTS = {
   THREAT_BUFF_WEIGHT: 10,
   /** 技能选择威胁阈值 */
   SKILL_SELECTION_THREAT_THRESHOLD: 50,
-} as const
-
-/** 技能类型相关常量 */
-export const SKILL_CONSTANTS = {
-  /** 技能能量消耗 */
-  ULTIMATE_ENERGY_COST: 100,
-  SKILL_ENERGY_COST: 50,
-  PASSIVE_ENERGY_COST: 0,
-  /** 技能冷却时间（毫秒） */
-  HEAL_SKILL_COOLDOWN: 2000,
-  ATTACK_SKILL_COOLDOWN: 1500,
-  ULTIMATE_SKILL_COOLDOWN: 5000,
-  ENEMY_BASIC_SKILL_COOLDOWN: 1000,
-  ENEMY_ULTIMATE_SKILL_COOLDOWN: 3000,
-  /** 默认技能能量消耗 */
-  HEAL_SKILL_ENERGY: 30,
-  ATTACK_SKILL_ENERGY: 25,
-  ENEMY_BASIC_SKILL_ENERGY: 20,
-  ENEMY_ULTIMATE_SKILL_ENERGY: 80,
 } as const
 
 /** 自动战斗速度到延迟(ms)的映射 */
@@ -197,7 +179,8 @@ export interface BattleEntity {
   isFullHealth(): boolean
   needsHealing(): boolean
 
-  getSkills(): string[]
+  getSkills(): UISkills
+  getSkillIds(filter?: 'all' | 'active' | 'passive'): string[]
   hasSkill(skillId: string): boolean
 }
 

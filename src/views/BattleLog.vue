@@ -1,7 +1,7 @@
 <template>
   <div class="battle-log-section">
     <div class="log-header">
-      <span>战斗日志 (最新在上，按时间倒序)</span>
+      <span>战斗日志 (最新在上)</span>
       <div class="log-filters">
         <label class="filter-check">
           <input type="checkbox" v-model="logFilters.damage">伤害
@@ -67,7 +67,7 @@ function getSegmentClass(color?: string): string {
 }
 
 const filteredLogs = computed(() => {
-  let logs = [...props.logs];
+  let logs = [...props.logs].reverse();
 
   if (!logFilters.damage) {
     logs = logs.filter((l) => l.category !== "damage" && l.category !== "crit");

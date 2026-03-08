@@ -207,9 +207,9 @@ function getHpPercent(member: UIBattleCharacter): number {
 
 function getHpColorClass(member: UIBattleCharacter): string {
   const hpPercent = getHpPercent(member);
-  if (hpPercent <= 25) return 'danger';
-  if (hpPercent <= 50) return 'warning';
-  return 'safe';
+  if (hpPercent <= 25) return 'high';
+  if (hpPercent <= 50) return 'medium';
+  return 'low';
 }
 
 function getEnergyPercent(member: UIBattleCharacter): number {

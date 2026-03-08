@@ -1,6 +1,31 @@
 import type { BuffContext } from '@/core/BuffContext'
 
 /**
+ * 技能类型枚举
+ */
+export enum SkillType {
+  PASSIVE = 'passive',
+  SMALL = 'small',
+  ULTIMATE = 'ultimate',
+}
+
+/**
+ * 技能定义接口（AI系统使用的运行时类型）
+ */
+export interface Skill {
+  id: string
+  name: string
+  type: SkillType
+  energyCost: number
+  cooldown: number
+  lastUsed: number
+  description: string
+  damage?: number
+  heal?: number
+  buffId?: string
+}
+
+/**
  * 伤害/治疗计算配置接口
  */
 export interface DamageHealCalculationConfig {
@@ -59,6 +84,18 @@ export interface CriticalConfig {
  */
 export interface ExtendedSkillStep extends SkillStep {
   /**
+   * 步骤ID (兼容旧版本)
+   * 用于标识步骤的唯一ID
+   */
+  id?: string
+
+  /**
+   * 目标ID (兼容旧版本)
+   * 指定该步骤的目标角色ID
+   */
+  targetId?: string
+
+  /**
    * 伤害/治疗计算配置
    * 当type为DAMAGE或HEAL时使用
    */
@@ -116,6 +153,76 @@ export interface CalculationError {
 }
 
 /**
+ * 计算日志接口
+ */
+export interface CalculationLog {
+  /**
+   * 时间戳
+   */
+  timestamp: number
+
+  /**
+   * 计算类型
+   */
+  type: 'damage' | 'heal' | 'buff' | 'debuff'
+
+  /**
+   * 步骤类型
+   */
+  stepType?: 'DAMAGE' | 'HEAL'
+
+  /**
+   * 来源ID
+   */
+  sourceId: string
+
+  /**
+   * 目标ID
+   */
+  targetId: string
+
+  /**
+   * 技能ID
+   */
+  skillId?: string
+
+  /**
+   * 基础值
+   */
+  baseValue?: number
+
+  /**
+   * 最终值
+   */
+  finalValue?: number
+
+  /**
+   * 暴击
+   */
+  isCritical?: boolean
+
+  /**
+   * 闪避
+   */
+  isDodged?: boolean
+
+  /**
+   * 格挡
+   */
+  isBlocked?: boolean
+
+  /**
+   * 额外值列表
+   */
+  extraValues?: Array<{ attribute: string; value: number; ratio: number }>
+
+  /**
+   * 最终乘数
+   */
+  finalMultiplier?: number
+}
+
+/**
  * 属性类型
  * 物理 金 木 水 火 土
  */
@@ -150,6 +257,10 @@ export type SkillScope =
   | 'lowest_hp_enemy' // 生命值最低的敌人
   | 'random_enemy' // 随机敌人
   | 'random_ally' // 随机友方
+  | 'lowest_ally' // 生命值最低的友方单位
+  | 'random_adjacent' // 随机相邻目标
+  | 'all_allies' // 所有友方单位
+  | 'all_enemies' // 所有敌方单位
 
 /**
  * 资源消耗类型
@@ -165,26 +276,46 @@ export enum CostType {
  * 定义技能执行步骤的所有可能类型
  */
 export type SkillStepType =
-  | 'DAMAGE' // 造成伤害
-  | 'HEAL' // 治疗目标
-  | 'BUFF' // 施加增益效果
-  | 'DEBUFF' // 施加减益效果
-  | 'REMOVE_BUFF' // 移除增益效果
-  | 'REMOVE_DEBUFF' // 移除减益效果
-  | 'CLEANSE' // 净化（移除所有负面效果）
-  | 'DISPEL' // 驱散（移除所有正面效果）
-  | 'STUN' // 眩晕
-  | 'SILENCE' // 沉默
-  | 'KNOCKBACK' // 击退
-  | 'PULL' // 拉扯
-  | 'TELEPORT' // 传送
-  | 'SUMMON' // 召唤
-  | 'TRANSFORM' // 变身
-  | 'SHIELD' // 护盾
-  | 'REFLECT' // 反射
-  | 'DRAIN' // 吸取
-  | 'REVIVE' // 复活
-  | 'CUSTOM' // 自定义效果
+  | 'damage' // 造成伤害
+  | 'heal' // 治疗目标
+  | 'buff' // 施加增益效果
+  | 'debuff' // 施加减益效果
+  | 'remove_buff' // 移除增益效果
+  | 'remove_debuff' // 移除减益效果
+  | 'cleanse' // 净化（移除所有负面效果）
+  | 'dispel' // 驱散（移除所有正面效果）
+  | 'stun' // 眩晕
+  | 'silence' // 沉默
+  | 'knockback' // 击退
+  | 'pull' // 拉扯
+  | 'teleport' // 传送
+  | 'summon' // 召唤
+  | 'transform' // 变身
+  | 'shield' // 护盾
+  | 'reflect' // 反射
+  | 'drain' // 吸取
+  | 'revive' // 复活
+  | 'custom' // 自定义效果
+  | 'DAMAGE' // 造成伤害 (兼容旧版本)
+  | 'HEAL' // 治疗目标 (兼容旧版本)
+  | 'BUFF' // 施加增益效果 (兼容旧版本)
+  | 'DEBUFF' // 施加减益效果 (兼容旧版本)
+  | 'REMOVE_BUFF' // 移除增益效果 (兼容旧版本)
+  | 'REMOVE_DEBUFF' // 移除减益效果 (兼容旧版本)
+  | 'CLEANSE' // 净化 (兼容旧版本)
+  | 'DISPEL' // 驱散 (兼容旧版本)
+  | 'STUN' // 眩晕 (兼容旧版本)
+  | 'SILENCE' // 沉默 (兼容旧版本)
+  | 'KNOCKBACK' // 击退 (兼容旧版本)
+  | 'PULL' // 拉扯 (兼容旧版本)
+  | 'TELEPORT' // 传送 (兼容旧版本)
+  | 'SUMMON' // 召唤 (兼容旧版本)
+  | 'TRANSFORM' // 变身 (兼容旧版本)
+  | 'SHIELD' // 护盾 (兼容旧版本)
+  | 'REFLECT' // 反射 (兼容旧版本)
+  | 'DRAIN' // 吸取 (兼容旧版本)
+  | 'REVIVE' // 复活 (兼容旧版本)
+  | 'CUSTOM' // 自定义效果 (兼容旧版本)
 
 /**
  * 技能步骤接口
@@ -198,17 +329,12 @@ export interface SkillStep {
   type: SkillStepType
 
   /**
-   * 资源消耗类型
-   * 指定施放技能所需的资源类型
-   */
-  costType?: CostType
-
-  /**
    * 效果公式
    * 用于计算效果值的数学表达式,支持变量引用(如attack、defense等)
    * 示例: "attack*0.8"、"defense*1.5"、"damage*0.2"
    */
-  formula: string
+  formula?: string
+
   /**
    * 攻击类型
    * 仅在type为damage时使用,指定伤害的攻击类型
@@ -216,10 +342,17 @@ export interface SkillStep {
   attackType?: 'normal' | 'magic' | 'physical' | 'true'
 
   /**
-   * 增益/减益效果ID
-   * 仅在type为buff或debuff时使用,指定要应用的buff效果ID
+   * 目标类型
+   * 指定该步骤的目标类型（如enemy、self、ally等）
+   * 用于覆盖技能级别的selector
    */
-  buffId?: string
+  target?: SkillScope
+
+  /**
+   * 效果ID
+   * 仅在type为buff或debuff时使用,指定要应用的效果ID
+   */
+  effectId?: string
 
   /**
    * 持续时间(回合数)
@@ -235,20 +368,6 @@ export interface SkillStep {
   stacks?: number
 
   /**
-   * 目标类型
-   * 可选,用于覆盖技能级别的目标类型
-   * 如果未指定,则使用技能级别的targetType
-   */
-  targetType?: SkillTargetType
-
-  /**
-   * 作用范围
-   * 可选,用于覆盖技能级别的作用范围
-   * 如果未指定,则使用技能级别的scope
-   */
-  scope?: SkillScope
-
-  /**
    * 触发条件
    * 可选,指定动作执行的条件表达式
    * 示例: "target.hp < 50"、"self.hasBuff('buff_rage')"
@@ -256,17 +375,46 @@ export interface SkillStep {
   condition?: string
 
   /**
-   * 优先级
-   * 动作的执行顺序,数值越小越先执行
-   * 默认值为0
+   * 效果参数
+   * 用于存储效果特有的额外参数
    */
-  priority?: number
+  effectParams?: Record<string, any>
 
   /**
-   * 自定义参数
+   * 目标类型 (兼容旧版本)
+   * 用于覆盖技能级别的目标类型
+   */
+  targetType?: SkillTargetType
+
+  /**
+   * 作用范围 (兼容旧版本)
+   * 用于覆盖技能级别的作用范围
+   */
+  scope?: SkillScope
+
+  /**
+   * 增益/减益效果ID (兼容旧版本)
+   * 仅在type为buff或debuff时使用,指定要应用的buff效果ID
+   */
+  buffId?: string
+
+  /**
+   * 资源消耗类型 (兼容旧版本)
+   * 指定施放技能所需的资源类型
+   */
+  costType?: CostType
+
+  /**
+   * 自定义参数 (兼容旧版本)
    * 用于存储动作特有的额外参数
    */
   parameters?: Record<string, any>
+
+  /**
+   * 优先级 (兼容旧版本)
+   * 动作的执行顺序,数值越小越先执行
+   */
+  priority?: number
 }
 
 /**
@@ -316,16 +464,23 @@ export interface SkillConfig {
   maxUses?: number
 
   /**
-   * 目标类型
-   * 指定技能的目标类型（单个目标、群体目标、区域目标等）
+   * 目标选择器
+   * 指定技能的目标选择方式
+   * 示例: "single_enemy", "all_enemies", "self"
    */
-  targetType: SkillTargetType
+  selector: string
 
   /**
-   * 作用范围
+   * 目标类型 (兼容旧版本)
+   * 指定技能的目标类型（单个目标、群体目标、区域目标等）
+   */
+  targetType?: SkillTargetType
+
+  /**
+   * 作用范围 (兼容旧版本)
    * 指定技能的作用范围（敌人、友方、自己等）
    */
-  scope: SkillScope
+  scope?: SkillScope
 
   /**
    * 技能步骤列表
@@ -578,4 +733,74 @@ export interface SkillTreeConfig {
    * 该技能树可分配的最大技能点数
    */
   maxPoints?: number
+}
+
+/**
+ * Skill 转换选项
+ */
+export interface ConvertSkillOptions {
+  lastUsed?: number
+  includeDamage?: boolean
+  includeHeal?: boolean
+  includeBuffId?: boolean
+}
+
+/**
+ * 将 SkillConfig 转换为 Skill（AI系统使用的运行时类型）
+ * @param config - 技能配置对象
+ * @param options - 转换选项
+ * @returns 转换后的 Skill 对象
+ */
+export function convertSkillConfigToSkill(
+  config: SkillConfig,
+  options: ConvertSkillOptions = {},
+): Skill {
+  const {
+    lastUsed = 0,
+    includeDamage = false,
+    includeHeal = false,
+    includeBuffId = false,
+  } = options
+
+  const firstStep = config.steps?.[0] as ExtendedSkillStep | undefined
+  const calculation = firstStep?.calculation
+
+  const skill: Skill = {
+    id: config.id,
+    name: config.name,
+    type: inferSkillType(config),
+    energyCost: config.mpCost || 0,
+    cooldown: config.cooldown || 0,
+    lastUsed,
+    description: config.description || '',
+  }
+
+  if (includeDamage) {
+    skill.damage = calculation?.baseValue || 0
+  }
+
+  if (includeHeal) {
+    skill.heal = calculation?.baseValue || 0
+  }
+
+  if (includeBuffId) {
+    skill.buffId = firstStep?.buffId || firstStep?.effectId
+  }
+
+  return skill
+}
+
+/**
+ * 根据 SkillConfig 推断 SkillType
+ * @param config - 技能配置对象
+ * @returns 推断出的技能类型
+ */
+function inferSkillType(config: SkillConfig): SkillType {
+  if (config.skillType === 'passive') {
+    return SkillType.PASSIVE
+  }
+  if (config.skillType === 'ultimate') {
+    return SkillType.ULTIMATE
+  }
+  return SkillType.SMALL
 }

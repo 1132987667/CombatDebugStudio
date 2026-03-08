@@ -13,11 +13,8 @@ import type {
   ExtendedSkillStep,
   CalculationLog,
 } from '@/types/skill'
-import type {
-  BattleAction,
-  BattleParticipant,
-  BattleEnvironment,
-} from '@/types/battle'
+import type { BattleAction, BattleParticipant } from '@/types/battle'
+import type { CombatRecord } from '@/types/combat-record'
 import { BuffSystem } from '@/core/BuffSystem'
 import { StackRule, ControlType } from '@/types/buff'
 import { DamageCalculator } from '@/core/skill/DamageCalculator'
@@ -33,7 +30,6 @@ export interface CalculationContext {
   source: BattleParticipant
   target: BattleParticipant
   skill?: SkillConfig
-  environment?: BattleEnvironment
 }
 
 /**
@@ -72,8 +68,8 @@ export class SkillManager {
   private logger = battleLogManager
   private skillConfigs = new Map<string, SkillConfig>()
   private buffSystem: BuffSystem
-  private damageCalculator
-  private healCalculator
+  private damageCalculator: DamageCalculator
+  private healCalculator: HealCalculator
   private calculators: Map<string, SkillCalculator> = new Map()
 
   /**
@@ -159,12 +155,14 @@ export class SkillManager {
    * @param skillId 技能ID
    * @param source 施放者
    * @param target 目标
+   * @param record 战斗记录对象（可选）
    * @returns 战斗动作
    */
   public executeSkill(
     skillId: string,
     source: BattleParticipant,
     target: BattleParticipant,
+    record?: CombatRecord,
   ): BattleAction {
     const skillConfig = this.getSkillConfig(skillId)
     if (!skillConfig) {
@@ -207,6 +205,7 @@ export class SkillManager {
           action,
           source,
           target,
+          record,
         )
 
         // 为多段伤害添加间隔（模拟间隔效果，实际动画间隔由BattleSystem处理）
@@ -230,8 +229,8 @@ export class SkillManager {
       // 处理 heal 属性（治疗效果）
       if ((skillConfig as any).heal) {
         const healValue = (skillConfig as any).heal
-        const actualHeal = source.takeHeal
-          ? source.takeHeal(healValue)
+        const actualHeal = source.heal
+          ? source.heal(healValue)
           : Math.floor(healValue)
         action.heal = actualHeal
         action.effects.push({
@@ -361,26 +360,28 @@ export class SkillManager {
    * @param battleAction 战斗动作
    * @param source 施放者
    * @param target 目标
+   * @param record 战斗记录对象（可选）
    */
   private executeSkillStep(
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
     source: BattleParticipant,
     target: BattleParticipant,
+    record?: CombatRecord,
   ): void {
     // 标准化技能步骤类型，处理大小写差异
     const normalizedType = this.normalizeSkillStepType(skillStep.type)
 
     switch (normalizedType) {
       case 'DAMAGE':
-        this.executeDamageStep(skillStep, battleAction, source, target)
+        this.executeDamageStep(skillStep, battleAction, source, target, record)
         break
       case 'HEAL':
-        this.executeHealStep(skillStep, battleAction, source, target)
+        this.executeHealStep(skillStep, battleAction, source, target, record)
         break
       case 'BUFF':
       case 'DEBUFF':
-        this.executeBuffStep(skillStep, battleAction, source, target)
+        this.executeBuffStep(skillStep, battleAction, source, target, record)
         break
       case 'SHIELD':
         this.executeShieldStep(skillStep, battleAction, source, target)
@@ -411,12 +412,14 @@ export class SkillManager {
     battleAction: BattleAction,
     source: BattleParticipant,
     target: BattleParticipant,
+    record?: CombatRecord,
   ): void {
     // 使用新的伤害计算器
     const damageResult = this.damageCalculator.calculateDamage(
       skillStep,
       source,
       target,
+      record,
     )
 
     if (damageResult.isMiss) {
@@ -459,9 +462,15 @@ export class SkillManager {
     battleAction: BattleAction,
     source: BattleParticipant,
     target: BattleParticipant,
+    record?: CombatRecord,
   ): void {
     // 使用新的治疗计算器
-    const heal = this.healCalculator.calculateHeal(skillStep, source, target)
+    const heal = this.healCalculator.calculateHeal(
+      skillStep,
+      source,
+      target,
+      record,
+    )
     const actualHeal = this.healCalculator.applyHeal(target, heal)
 
     battleAction.heal += actualHeal
@@ -492,6 +501,7 @@ export class SkillManager {
     battleAction: BattleAction,
     source: BattleParticipant,
     target: BattleParticipant,
+    record?: CombatRecord,
   ): void {
     if (!skillStep.buffId) {
       this.logger.warn(`buff步骤缺少buffId: ${skillStep.type}`)
@@ -534,6 +544,8 @@ export class SkillManager {
       buffTarget.id,
       skillStep.buffId,
       buffConfig,
+      0,
+      record,
     )
     if (instanceId) {
       buffTarget.addBuff(instanceId)

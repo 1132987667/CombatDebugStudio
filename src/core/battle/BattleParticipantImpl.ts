@@ -10,7 +10,7 @@
 import type { BattleParticipant, StatusEffect } from '@/types/battle'
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
-import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter'
+import type { UIBattleCharacter, UISkills } from '@/types/UI/UIBattleCharacter'
 
 /**
  * 参与者初始化数据接口
@@ -172,8 +172,18 @@ export class BattleParticipantImpl implements BattleParticipant {
     const minAttack = getValue(uiCharacter.minAttack, attack)
     const maxAttack = getValue(uiCharacter.maxAttack, attack)
 
+    const instanceId = uiCharacter.id || `${isAlly ? 'ally' : 'enemy'}_${Date.now()}_${index}`
+
+    const statusEffects: StatusEffect[] = (uiCharacter.buffs || []).map(buff => ({
+      id: buff.id,
+      name: buff.name,
+      type: buff.isPositive ? 'buff' as const : 'debuff' as const,
+      duration: buff.duration,
+      remainingTurns: buff.duration
+    }))
+
     return new BattleParticipantImpl({
-      id: uiCharacter.originalId || `${isAlly ? 'ally' : 'enemy'}_${index}`,
+      id: instanceId,
       name: uiCharacter.name || `${isAlly ? 'Ally' : 'Enemy'} ${index + 1}`,
       type: side,
       team: side,
@@ -194,6 +204,7 @@ export class BattleParticipantImpl implements BattleParticipant {
       attackBonus,
       speedBonus,
       skills: uiCharacter.skills || {},
+      statusEffects,
     })
   }
 
@@ -242,7 +253,7 @@ export class BattleParticipantImpl implements BattleParticipant {
       case 'MAX_HP':
         return this.maxHealth
       case 'ATK':
-        return this.attack
+        return this.getRandomAttack()
       case 'MIN_ATK':
         return this.minAttack
       case 'MAX_ATK':
@@ -264,6 +275,15 @@ export class BattleParticipantImpl implements BattleParticipant {
       default:
         return 0
     }
+  }
+
+  /**
+   * 获取随机攻击力（用于伤害计算）
+   * 在minAttack和maxAttack之间随机取值
+   * @returns 随机攻击力
+   */
+  getRandomAttack(): number {
+    return Math.floor(Math.random() * (this.maxAttack - this.minAttack + 1)) + this.minAttack
   }
 
   /**
@@ -411,27 +431,44 @@ export class BattleParticipantImpl implements BattleParticipant {
    * 获取所有技能配置
    * @returns 技能配置对象
    */
-  getSkills(): {
-    small?: SkillConfig[]
-    passive?: SkillConfig[]
-    ultimate?: SkillConfig[]
-  } {
+  getSkills(): UISkills {
     return this.skills
   }
 
   /**
-   * 获取所有技能ID
+   * 获取技能ID
+   * @param filter - 技能类型过滤：'all'返回所有，'active'返回主动技能，'passive'返回被动技能
    * @returns 技能ID数组
    */
-  getSkillIds(): string[] {
+  getSkillIds(filter: 'all' | 'active' | 'passive' = 'all'): string[] {
     const allSkills: string[] = []
-    if (this.skills.small)
-      allSkills.push(...this.skills.small.map((skill) => skill.id))
-    if (this.skills.passive)
-      allSkills.push(...this.skills.passive.map((skill) => skill.id))
-    if (this.skills.ultimate)
-      allSkills.push(...this.skills.ultimate.map((skill) => skill.id))
-    return allSkills
+    const activeSkills: string[] = []
+    const passiveSkills: string[] = []
+
+    if (this.skills.small) {
+      const smallIds = this.skills.small.map((skill) => skill.id)
+      allSkills.push(...smallIds)
+      activeSkills.push(...smallIds)
+    }
+    if (this.skills.passive) {
+      const passiveIds = this.skills.passive.map((skill) => skill.id)
+      allSkills.push(...passiveIds)
+      passiveSkills.push(...passiveIds)
+    }
+    if (this.skills.ultimate) {
+      const ultimateIds = this.skills.ultimate.map((skill) => skill.id)
+      allSkills.push(...ultimateIds)
+      activeSkills.push(...ultimateIds)
+    }
+
+    switch (filter) {
+      case 'active':
+        return activeSkills
+      case 'passive':
+        return passiveSkills
+      default:
+        return allSkills
+    }
   }
 
   /**

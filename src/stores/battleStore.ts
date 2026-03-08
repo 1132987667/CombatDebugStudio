@@ -1049,12 +1049,12 @@ export const useBattleStore = defineStore('battle', {
       }
 
       const sourceIsAlly =
-        action.sourceId !== 'system' &&
-        !action.sourceId.includes(PARTICIPANT_SIDE.ENEMY)
-      const targetIsAlly =
-        action.targetId && action.targetId !== 'system'
-          ? !action.targetId.includes(PARTICIPANT_SIDE.ENEMY)
-          : undefined
+        action.sourceId !== 'system'
+          ? battleState.participants.get(action.sourceId)?.team === PARTICIPANT_SIDE.ALLY
+          : false
+      const targetIsAlly = action.targetId && action.targetId !== 'system'
+        ? battleState.participants.get(action.targetId)?.team === PARTICIPANT_SIDE.ALLY
+        : undefined
 
       const turn = action.turn || 1
       const options = {

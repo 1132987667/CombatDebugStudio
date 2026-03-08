@@ -43,6 +43,7 @@ const props = defineProps<{
   isBattleActive: boolean;
   isPaused: boolean;
   isAutoPlaying: boolean;
+  battleSpeed?: number;
 }>();
 
 const emit = defineEmits<{
@@ -59,7 +60,8 @@ const emit = defineEmits<{
 }>();
 
 // 自动播放模式状态 - 默认开启自动战斗
-const autoPlayMode = ref<'off' | 'auto' | 'fast'>('auto');
+const autoPlayMode = ref<'off' | 'auto' | 'fast'>(props.isAutoPlaying ? 'auto' : 'off');
+const battleSpeed = ref(props.battleSpeed ?? 1);
 
 // 自动播放选项配置
 const autoPlayOptions = [
@@ -108,6 +110,13 @@ watch(() => props.isAutoPlaying, (newValue) => {
     autoPlayMode.value = 'auto';
   } else if (!newValue && autoPlayMode.value !== 'off') {
     autoPlayMode.value = 'off';
+  }
+});
+
+// 监听外部战斗速度变化
+watch(() => props.battleSpeed, (newSpeed) => {
+  if (newSpeed !== undefined && newSpeed !== battleSpeed.value) {
+    battleSpeed.value = newSpeed;
   }
 });
 

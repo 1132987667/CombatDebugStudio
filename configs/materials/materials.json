@@ -1,0 +1,94 @@
+[
+  {
+    "id": "mat_001",
+    "name": "灵草",
+    "type": "material",
+    "description": "生长在灵山深处的普通药草，具有基本的灵气",
+    "rarity": 1
+  },
+  {
+    "id": "mat_002",
+    "name": "铁矿石",
+    "type": "material",
+    "description": "蕴含少量灵气的矿石，可用于锻造基础武器",
+    "rarity": 1
+  },
+  {
+    "id": "mat_003",
+    "name": "毒液囊",
+    "type": "material",
+    "description": "从毒物体内提取的毒液，可用于炼制毒药",
+    "rarity": 2
+  },
+  {
+    "id": "mat_004",
+    "name": "羽毛",
+    "type": "material",
+    "description": "鸟类妖物的羽毛，可用于制作羽扇和箭矢",
+    "rarity": 1
+  },
+  {
+    "id": "elix_001",
+    "name": "小还丹",
+    "type": "consumable",
+    "description": "基础的恢复丹药，可恢复少量生命值",
+    "rarity": 1,
+    "effects": [
+      { "type": "heal", "value": 30 }
+    ]
+  },
+  {
+    "id": "elix_002",
+    "name": "中还丹",
+    "type": "consumable",
+    "description": "中级的恢复丹药，可恢复中等生命值",
+    "rarity": 2,
+    "effects": [
+      { "type": "heal", "value": 60 }
+    ]
+  },
+  {
+    "id": "elix_003",
+    "name": "大还丹",
+    "type": "consumable",
+    "description": "高级的恢复丹药，可恢复大量生命值",
+    "rarity": 3,
+    "effects": [
+      { "type": "heal", "value": 100 }
+    ]
+  },
+  {
+    "id": "weapon_001",
+    "name": "铁剑",
+    "type": "equipment",
+    "description": "普通的铁制长剑，适合初学者使用",
+    "rarity": 1,
+    "slot": "weapon",
+    "stats": {
+      "minAttack": 5,
+      "maxAttack": 8
+    }
+  },
+  {
+    "id": "armor_001",
+    "name": "皮甲",
+    "type": "equipment",
+    "description": "简单的皮制护甲，提供基础防护",
+    "rarity": 1,
+    "slot": "armor",
+    "stats": {
+      "defense": 3
+    }
+  },
+  {
+    "id": "accessory_001",
+    "name": "速度之符",
+    "type": "equipment",
+    "description": "刻有加速阵法的符咒，可提升穿戴者速度",
+    "rarity": 2,
+    "slot": "accessory",
+    "stats": {
+      "speed": 5
+    }
+  }
+]

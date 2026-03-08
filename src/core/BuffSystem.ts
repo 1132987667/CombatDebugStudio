@@ -8,6 +8,7 @@
  */
 
 import type { BuffConfig, BuffInstance } from '@/types/buff'
+import type { CombatRecord } from '@/types/combat-record'
 import { StackRule, ControlType } from '@/types/buff'
 import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
 import { BuffContext } from '@/core/BuffContext'
@@ -55,6 +56,7 @@ export class BuffSystem {
    * @param buffId Buff ID
    * @param config Buff配置
    * @param currentTurn 当前回合数
+   * @param record 战斗记录对象（可选）
    * @returns Buff实例ID
    */
   public addBuff(
@@ -62,6 +64,7 @@ export class BuffSystem {
     buffId: string,
     config: BuffConfig,
     currentTurn: number = 0,
+    record?: CombatRecord,
   ): string {
     const script = this.scriptRegistry.get(buffId)
     if (!script) {
@@ -123,6 +126,16 @@ export class BuffSystem {
 
     // 解析并应用属性修饰符
     this.applyAttributeModifiers(characterId, instanceId, buffId)
+
+    if (record) {
+      record.effects.push({
+        type: config.isDebuff ? 'debuff' : 'buff',
+        targetId: characterId,
+        buffId: config.id,
+        instanceId,
+        description: `${characterId} 获得 ${config.name}`,
+      })
+    }
 
     return instanceId
   }

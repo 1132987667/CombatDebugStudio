@@ -9,6 +9,7 @@
 
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
 import type { BattleParticipant } from '@/types/battle'
+import type { CombatRecord } from '@/types/combat-record'
 import { battleLogManager } from '@/utils/logging'
 
 /**
@@ -64,8 +65,16 @@ export class HealCalculator {
   public calculateHeal(
     step: ExtendedSkillStep,
     source: BattleParticipant,
-    target: BattleParticipant
+    target: BattleParticipant,
+    record?: CombatRecord,
   ): number {
+    const intermediateSteps: Array<{
+      type: 'damage' | 'heal'
+      description: string
+      input?: Record<string, any>
+      output: number
+      formula?: string
+    }> = []
     try {
       // 1. 计算基础治疗值
       let result = 0
@@ -73,11 +82,16 @@ export class HealCalculator {
       const modifiers: Record<string, number> = {}
       
       if (step.calculation) {
-        // 使用 calculation 对象
         result = step.calculation.baseValue
         
         this.logger.debug(`治疗计算开始: 基础值=${result}`)
         
+        intermediateSteps.push({
+          type: 'heal',
+          description: '基础治疗',
+          output: result,
+        })
+
         // 调试：检查基础值是否正确
         console.log(`DEBUG: 基础治疗值 = ${result}`)
 
@@ -92,16 +106,27 @@ export class HealCalculator {
             ratio: extra.ratio
           })
           this.logger.debug(`额外值计算: ${extra.attribute}=${attributeValue} * ${extra.ratio} = ${extraValue}, 当前结果=${result}`)
+          intermediateSteps.push({
+            type: 'heal',
+            description: `${extra.attribute} 加成`,
+            input: { attributeValue, ratio: extra.ratio },
+            output: result,
+          })
         })
         
         // 调试：检查额外值计算后的结果
         console.log(`DEBUG: 额外值计算后结果 = ${result}`)
       } else if (step.formula) {
-        // 使用 formula 字符串
         result = this.parseFormula(step.formula, source, target)
         modifiers['formula'] = 1
         this.logger.debug(`治疗计算开始: 公式计算结果=${result}`)
         console.log(`DEBUG: 公式计算治疗值 = ${result}`)
+        intermediateSteps.push({
+          type: 'heal',
+          description: '公式计算',
+          formula: step.formula,
+          output: result,
+        })
       } else {
         this.logger.warn('治疗步骤缺少计算配置和公式')
         return 0
@@ -159,6 +184,25 @@ export class HealCalculator {
         critical: false, // 治疗无暴击
         modifiers
       })
+
+      if (record) {
+        record.effects.push({
+          type: 'heal',
+          targetId: target.id,
+          value: finalValue,
+          description: `恢复 ${finalValue} 点生命值`,
+        })
+        record.heal += finalValue
+
+        if (record.hasDetail) {
+          this.initializeRecordDetail(record)
+          record.detail!.steps.push(...intermediateSteps)
+          record.detail!.critical = false
+          record.detail!.miss = false
+          record.detail!.modifiers = { ...modifiers }
+          record.detail!.finalValue = finalValue
+        }
+      }
 
       return finalValue
     } catch (error) {
@@ -235,6 +279,21 @@ export class HealCalculator {
     const actualHeal = target.heal(heal)
     this.logger.info(`应用治疗: ${target.name} 恢复 ${actualHeal} 生命值`)
     return actualHeal
+  }
+
+  /**
+   * 初始化记录详情对象
+   */
+  private initializeRecordDetail(record: CombatRecord): void {
+    if (!record.detail) {
+      record.detail = {
+        steps: [],
+        finalValue: 0,
+        critical: false,
+        miss: false,
+        modifiers: {},
+      }
+    }
   }
 
   /**

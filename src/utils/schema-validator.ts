@@ -25,32 +25,32 @@ const skillSchema = {
   properties: {
     id: {
       type: 'string',
-      pattern: '^skill_.*$'
+      pattern: '^skill_.*$',
     },
     name: {
       type: 'string',
-      minLength: 1
+      minLength: 1,
     },
     description: {
-      type: 'string'
+      type: 'string',
     },
     mpCost: {
       type: 'number',
-      minimum: 0
+      minimum: 0,
     },
     cooldown: {
       type: 'number',
-      minimum: 0
+      minimum: 0,
     },
     maxUses: {
       type: 'number',
-      minimum: 1
+      minimum: 1,
     },
     targetType: {
-      type: 'string'
+      type: 'string',
     },
     scope: {
-      type: 'string'
+      type: 'string',
     },
     steps: {
       type: 'array',
@@ -60,81 +60,81 @@ const skillSchema = {
         required: ['type', 'formula'],
         properties: {
           type: {
-            type: 'string'
+            type: 'string',
           },
           formula: {
             type: 'string',
-            minLength: 1
+            minLength: 1,
           },
           attackType: {
-            type: 'string'
+            type: 'string',
           },
           effectId: {
-            type: 'string'
+            type: 'string',
           },
           effectParams: {
-            type: 'object'
+            type: 'object',
           },
           duration: {
-            type: 'number'
+            type: 'number',
           },
           stacks: {
             type: 'number',
-            minimum: 1
+            minimum: 1,
           },
           targetType: {
-            type: 'string'
+            type: 'string',
           },
           scope: {
-            type: 'string'
+            type: 'string',
           },
           condition: {
-            type: 'string'
+            type: 'string',
           },
           priority: {
-            type: 'number'
+            type: 'number',
           },
           parameters: {
-            type: 'object'
-          }
-        }
-      }
+            type: 'object',
+          },
+        },
+      },
     },
     condition: {
-      type: 'string'
+      type: 'string',
     },
     skillType: {
-      type: 'string'
+      type: 'string',
     },
     triggerTimes: {
       type: 'array',
       items: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     level: {
       type: 'number',
-      minimum: 1
+      minimum: 1,
     },
     icon: {
-      type: 'string'
+      type: 'string',
     },
     animation: {
-      type: 'string'
+      type: 'string',
     },
     soundEffect: {
-      type: 'string'
+      type: 'string',
     },
     tags: {
       type: 'array',
       items: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     },
     parameters: {
-      type: 'object'
-    }
-  }
+      type: 'object',
+    },
+  },
 }
 
 /**
@@ -146,19 +146,19 @@ const effectSchema = {
   properties: {
     id: {
       type: 'string',
-      minLength: 1
+      minLength: 1,
     },
     type: {
       type: 'string',
-      enum: ['damage', 'heal', 'buff', 'debuff', 'special']
+      enum: ['damage', 'heal', 'buff', 'debuff', 'special'],
     },
     params: {
-      type: 'object'
+      type: 'object',
     },
     description: {
-      type: 'string'
-    }
-  }
+      type: 'string',
+    },
+  },
 }
 
 /**
@@ -168,25 +168,33 @@ const effectSchema = {
  */
 export function validateSkillConfig(skillConfig: any): ValidationResult {
   const errors: string[] = []
-  
+
   // 检查必填字段
   if (!skillConfig.id) {
     errors.push('Missing required field: id')
   }
-  
+
+  if (!skillConfig.type) {
+    errors.push('Missing required field: type')
+  }
+
   if (!skillConfig.name) {
     errors.push('Missing required field: name')
   }
-  
-  if (skillConfig.mpCost === undefined) {
-    errors.push('Missing required field: mpCost')
+
+  if (skillConfig.energyCost === undefined) {
+    errors.push('Missing required field: energyCost')
   }
-  
+
   if (skillConfig.cooldown === undefined) {
     errors.push('Missing required field: cooldown')
   }
-  
-  if (!skillConfig.steps || !Array.isArray(skillConfig.steps) || skillConfig.steps.length === 0) {
+
+  if (
+    !skillConfig.steps ||
+    !Array.isArray(skillConfig.steps) ||
+    skillConfig.steps.length === 0
+  ) {
     errors.push('Missing required field: steps (must be a non-empty array)')
   } else {
     // 验证每个步骤
@@ -194,21 +202,23 @@ export function validateSkillConfig(skillConfig: any): ValidationResult {
       if (!step.type) {
         errors.push(`Step ${index}: Missing required field: type`)
       }
-      
+
       if (!step.formula) {
         errors.push(`Step ${index}: Missing required field: formula`)
       }
-      
+
       // 检查effectId（如果是buff或debuff类型）
       if ((step.type === 'buff' || step.type === 'debuff') && !step.effectId) {
-        errors.push(`Step ${index}: Missing required field: effectId for ${step.type} type`)
+        errors.push(
+          `Step ${index}: Missing required field: effectId for ${step.type} type`,
+        )
       }
     })
   }
-  
+
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   }
 }
 
@@ -219,25 +229,29 @@ export function validateSkillConfig(skillConfig: any): ValidationResult {
  */
 export function validateEffectConfig(effectConfig: any): ValidationResult {
   const errors: string[] = []
-  
+
   // 检查必填字段
   if (!effectConfig.id) {
     errors.push('Missing required field: id')
   }
-  
+
   if (!effectConfig.type) {
     errors.push('Missing required field: type')
-  } else if (!['damage', 'heal', 'buff', 'debuff', 'special'].includes(effectConfig.type)) {
-    errors.push(`Invalid type: ${effectConfig.type}. Must be one of: damage, heal, buff, debuff, special`)
+  } else if (
+    !['damage', 'heal', 'buff', 'debuff', 'special'].includes(effectConfig.type)
+  ) {
+    errors.push(
+      `Invalid type: ${effectConfig.type}. Must be one of: damage, heal, buff, debuff, special`,
+    )
   }
-  
+
   if (!effectConfig.params) {
     errors.push('Missing required field: params')
   }
-  
+
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   }
 }
 
@@ -249,22 +263,24 @@ export function validateEffectConfig(effectConfig: any): ValidationResult {
 export function validateSkillConfigs(skillConfigs: any[]): ValidationResult {
   const errors: string[] = []
   let validCount = 0
-  
+
   skillConfigs.forEach((config, index) => {
     const result = validateSkillConfig(config)
     if (result.valid) {
       validCount++
     } else {
-      errors.push(`Skill ${index} (${config.id || 'unknown'}): ${result.errors.join(', ')}`)
+      errors.push(
+        `Skill ${index} (${config.id || 'unknown'}): ${result.errors.join(', ')}`,
+      )
     }
   })
-  
+
   return {
     valid: errors.length === 0,
     errors: [
       `Validation summary: ${validCount}/${skillConfigs.length} skills are valid`,
-      ...errors
-    ]
+      ...errors,
+    ],
   }
 }
 
@@ -276,21 +292,23 @@ export function validateSkillConfigs(skillConfigs: any[]): ValidationResult {
 export function validateEffectConfigs(effectConfigs: any[]): ValidationResult {
   const errors: string[] = []
   let validCount = 0
-  
+
   effectConfigs.forEach((config, index) => {
     const result = validateEffectConfig(config)
     if (result.valid) {
       validCount++
     } else {
-      errors.push(`Effect ${index} (${config.id || 'unknown'}): ${result.errors.join(', ')}`)
+      errors.push(
+        `Effect ${index} (${config.id || 'unknown'}): ${result.errors.join(', ')}`,
+      )
     }
   })
-  
+
   return {
     valid: errors.length === 0,
     errors: [
       `Validation summary: ${validCount}/${effectConfigs.length} effects are valid`,
-      ...errors
-    ]
+      ...errors,
+    ],
   }
 }

@@ -9,6 +9,11 @@
 
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
 import type { BattleParticipant } from '@/types/battle'
+import type {
+  CombatRecord,
+  EffectRecord,
+  CalculationStep,
+} from '@/types/combat-record'
 import { battleLogManager } from '@/utils/logging'
 
 /**
@@ -116,7 +121,11 @@ export class DamageCalculator {
    * @param target 目标
    * @returns 计算结果
    */
-  private parseFormula(formula: string, source: BattleParticipant, target: BattleParticipant): number {
+  private parseFormula(
+    formula: string,
+    source: BattleParticipant,
+    target: BattleParticipant,
+  ): number {
     try {
       // 简单的公式解析和计算
       // 支持的变量：attack, defense, speed, maxHealth, currentHealth, level
@@ -133,7 +142,10 @@ export class DamageCalculator {
       // 替换变量为实际值
       let expression = formula
       for (const [varName, value] of Object.entries(variables)) {
-        expression = expression.replace(new RegExp(varName, 'g'), value.toString())
+        expression = expression.replace(
+          new RegExp(varName, 'g'),
+          value.toString(),
+        )
       }
 
       // 计算表达式
@@ -155,12 +167,14 @@ export class DamageCalculator {
     step: ExtendedSkillStep,
     source: BattleParticipant,
     target: BattleParticipant,
+    record?: CombatRecord,
   ): DamageCalculationResult {
+    const intermediateSteps: CalculationStep[] = []
     try {
       // 1. 闪避判定
       const dodgeRate = this.getAttributeValue(target, 'dodgeRate') || 0
       const isMiss = Math.random() < dodgeRate
-      
+
       if (isMiss) {
         // 记录闪避日志
         this.recordCalculationLog({
@@ -174,7 +188,20 @@ export class DamageCalculator {
           critical: false,
           modifiers: { miss: 1 },
         })
-        
+
+        if (record) {
+          record.effects.push({
+            type: 'miss',
+            targetId: target.id,
+            description: `${target.name} 闪避了攻击`,
+          })
+          if (record.hasDetail) {
+            this.initializeRecordDetail(record)
+            record.detail!.miss = true
+            record.detail!.finalValue = 0
+          }
+        }
+
         return { damage: 0, isMiss: true, isCritical: false }
       }
 
@@ -188,8 +215,13 @@ export class DamageCalculator {
       const modifiers: Record<string, number> = {}
 
       if (step.calculation) {
-        // 使用 calculation 对象
         result = step.calculation.baseValue
+
+        intermediateSteps.push({
+          type: 'damage',
+          description: '基础伤害',
+          output: result,
+        })
 
         // 3. 额外值计算
         step.calculation.extraValues.forEach((extra) => {
@@ -201,6 +233,12 @@ export class DamageCalculator {
             value: attributeValue,
             ratio: extra.ratio,
           })
+          intermediateSteps.push({
+            type: 'damage',
+            description: `${extra.attribute} 加成`,
+            input: { attributeValue, ratio: extra.ratio },
+            output: result,
+          })
         })
 
         // 4. 攻击类型影响（防御效果）
@@ -211,11 +249,22 @@ export class DamageCalculator {
           )
           result *= 1 - defenseEffect
           modifiers['defense'] = defenseEffect
+          intermediateSteps.push({
+            type: 'damage',
+            description: `${step.calculation.attackType} 防御效果`,
+            input: { defenseEffect },
+            output: result,
+          })
         }
       } else if (step.formula) {
-        // 使用 formula 字符串
         result = this.parseFormula(step.formula, source, target)
         modifiers['formula'] = 1
+        intermediateSteps.push({
+          type: 'damage',
+          description: '公式计算',
+          formula: step.formula,
+          output: result,
+        })
       } else {
         this.logger.warn('伤害步骤缺少计算配置和公式')
         return { damage: 0, isMiss: false, isCritical: false }
@@ -282,6 +331,28 @@ export class DamageCalculator {
         critical: isCritical,
         modifiers,
       })
+
+      if (record) {
+        record.effects.push({
+          type: isCritical ? 'critical' : 'damage',
+          targetId: target.id,
+          value: finalValue,
+          isCritical,
+          description: isCritical
+            ? `暴击造成 ${finalValue} 点伤害`
+            : `造成 ${finalValue} 点伤害`,
+        })
+        record.damage += finalValue
+
+        if (record.hasDetail) {
+          this.initializeRecordDetail(record)
+          record.detail!.steps.push(...intermediateSteps)
+          record.detail!.critical = isCritical
+          record.detail!.miss = false
+          record.detail!.modifiers = { ...modifiers }
+          record.detail!.finalValue = finalValue
+        }
+      }
 
       return { damage: finalValue, isMiss: false, isCritical }
     } catch (error) {
@@ -373,6 +444,21 @@ export class DamageCalculator {
    */
   public clearCalculationLogs(): void {
     this.calculationLogs = []
+  }
+
+  /**
+   * 初始化记录详情对象
+   */
+  private initializeRecordDetail(record: CombatRecord): void {
+    if (!record.detail) {
+      record.detail = {
+        steps: [],
+        finalValue: 0,
+        critical: false,
+        miss: false,
+        modifiers: {},
+      }
+    }
   }
 
   /**

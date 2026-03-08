@@ -16,7 +16,8 @@ import {
   VALID_ACTION_TYPES,
   EFFECT_TYPES,
 } from '@/types/battle'
-import { PARTICIPANT_SIDE, BATTLE_CONSTANTS, SKILL_CONSTANTS } from '@/types/battle'
+import { PARTICIPANT_SIDE, BATTLE_CONSTANTS } from '@/types/battle'
+import { CombatRecord, createEmptyRecord } from '@/types/combat-record'
 import { battleLogManager } from '@/utils/logging'
 import { BuffSystem } from '@/core/BuffSystem'
 import { ControlType } from '@/types/buff'
@@ -84,8 +85,10 @@ export class ActionExecutor {
     }
 
     // 检查角色是否处于控制状态
-    const controlType = this.buffSystem.getHighestPriorityControlEffect(source.id)
-    
+    const controlType = this.buffSystem.getHighestPriorityControlEffect(
+      source.id,
+    )
+
     if (controlType === ControlType.STUN) {
       // 眩晕状态：无法进行任何行动
       action.effects.push({
@@ -93,10 +96,18 @@ export class ActionExecutor {
         description: `${source.name} 处于眩晕状态，无法行动`,
       })
       return
-    } else if (controlType === ControlType.SILENCE && action.type === ACTION_TYPES.SKILL) {
+    } else if (
+      controlType === ControlType.SILENCE &&
+      action.type === ACTION_TYPES.SKILL
+    ) {
       // 沉默状态：无法使用技能，改为普通攻击
       action.type = ACTION_TYPES.ATTACK
-      action.damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
+      action.damage =
+        Math.floor(
+          Math.random() *
+            (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX -
+              BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
+        ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
       action.effects.push({
         type: EFFECT_TYPES.STATUS,
         description: `${source.name} 处于沉默状态，无法使用技能，改为普通攻击`,
@@ -134,18 +145,37 @@ export class ActionExecutor {
     battle: BattleData,
     participant: BattleParticipant,
   ): Promise<void> {
-    const enemies = this.getAliveParticipantsByType(battle, PARTICIPANT_SIDE.ENEMY)
-    const characters = this.getAliveParticipantsByType(battle, PARTICIPANT_SIDE.ALLY)
+    const enemies = this.getAliveParticipantsByType(
+      battle,
+      PARTICIPANT_SIDE.ENEMY,
+    )
+    const characters = this.getAliveParticipantsByType(
+      battle,
+      PARTICIPANT_SIDE.ALLY,
+    )
 
     let targetId: string
     let damage: number
 
     if (participant.type === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
       targetId = enemies[Math.floor(Math.random() * enemies.length)]
-      damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
-    } else if (participant.type === PARTICIPANT_SIDE.ENEMY && characters.length > 0) {
+      damage =
+        Math.floor(
+          Math.random() *
+            (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX -
+              BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
+        ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
+    } else if (
+      participant.type === PARTICIPANT_SIDE.ENEMY &&
+      characters.length > 0
+    ) {
       targetId = characters[Math.floor(Math.random() * characters.length)]
-      damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.ENEMY_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.ENEMY_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.ENEMY_ATTACK_DAMAGE_MIN
+      damage =
+        Math.floor(
+          Math.random() *
+            (BATTLE_CONSTANTS.ENEMY_ATTACK_DAMAGE_MAX -
+              BATTLE_CONSTANTS.ENEMY_ATTACK_DAMAGE_MIN),
+        ) + BATTLE_CONSTANTS.ENEMY_ATTACK_DAMAGE_MIN
     } else {
       return
     }
@@ -252,14 +282,18 @@ export class ActionExecutor {
       return
     }
 
-    // 从映射获取战斗数据
     const battleId = this.participantToBattle.get(source.id)
     const battle = battleId ? this.battles.get(battleId) : null
 
     if (!battle) {
       this.logger.error(`无法找到参与者 ${source.id} 所属的战斗`)
       action.type = ACTION_TYPES.ATTACK
-      action.damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
+      action.damage =
+        Math.floor(
+          Math.random() *
+            (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX -
+              BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
+        ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
       action.effects.push({
         type: EFFECT_TYPES.STATUS,
         description: `找不到战斗数据，改为普通攻击`,
@@ -268,30 +302,16 @@ export class ActionExecutor {
       return
     }
 
-    // 检查能量消耗
-    const energyCost = this.getSkillEnergyCost(action.skillId)
-    if (energyCost > 0) {
-      const success = source.spendEnergy(energyCost)
-      if (!success) {
-        // 能量不足，降级为普通攻击
-        action.type = ACTION_TYPES.ATTACK
-        action.damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
-        action.effects.push({
-          type: EFFECT_TYPES.STATUS,
-          description: `能量不足，改为普通攻击`,
-        })
-        this.processAttack(action, source, target)
-        return
-      }
-    }
-
     try {
-      // 检查技能管理器是否存在
       if (!battle.skillManager) {
         this.logger.error(`战斗数据中缺少技能管理器`)
-        // 技能管理器不存在，降级为普通攻击
         action.type = ACTION_TYPES.ATTACK
-        action.damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
+        action.damage =
+          Math.floor(
+            Math.random() *
+              (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX -
+                BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
+          ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
         action.effects.push({
           type: EFFECT_TYPES.STATUS,
           description: `技能管理器不存在，改为普通攻击`,
@@ -299,25 +319,54 @@ export class ActionExecutor {
         this.processAttack(action, source, target)
         return
       }
-      
-      // 使用战斗中的 SkillManager 执行技能
+
+      const energyCost = this.getSkillEnergyCost(action.skillId)
+      if (energyCost > 0) {
+        const success = source.spendEnergy(energyCost)
+        if (!success) {
+          action.type = ACTION_TYPES.ATTACK
+          action.damage =
+            Math.floor(
+              Math.random() *
+                (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX -
+                  BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
+            ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
+          action.effects.push({
+            type: EFFECT_TYPES.STATUS,
+            description: `能量不足，改为普通攻击`,
+          })
+          this.processAttack(action, source, target)
+          return
+        }
+      }
+
+      const record = this.createSkillRecord(action, source, target, battle)
+
       const skillAction = battle.skillManager.executeSkill(
         action.skillId,
         source,
         target,
+        record,
       )
 
-      // 合并技能执行结果到当前动作
       action.damage = skillAction.damage
       action.heal = skillAction.heal
       action.effects.push(...skillAction.effects)
 
+      if (record) {
+        this.finalizeRecord(record, action)
+      }
+
       this.logger.debug(`技能执行成功: ${action.skillId}`)
     } catch (error) {
       this.logger.error(`技能执行失败: ${action.skillId}`, error)
-      // 技能执行失败，降级为普通攻击
       action.type = ACTION_TYPES.ATTACK
-      action.damage = Math.floor(Math.random() * (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX - BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN)) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
+      action.damage =
+        Math.floor(
+          Math.random() *
+            (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX -
+              BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
+        ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
       action.effects.push({
         type: EFFECT_TYPES.STATUS,
         description: `技能执行失败，改为普通攻击`,
@@ -357,11 +406,11 @@ export class ActionExecutor {
    */
   private getSkillEnergyCost(skillId: string): number {
     if (skillId.includes('ultimate') || skillId.includes('大招')) {
-      return SKILL_CONSTANTS.ULTIMATE_ENERGY_COST
+      return 150
     } else if (skillId.includes('skill') || skillId.includes('技能')) {
-      return SKILL_CONSTANTS.SKILL_ENERGY_COST
+      return 50
     }
-    return SKILL_CONSTANTS.PASSIVE_ENERGY_COST
+    return 0
   }
 
   /**
@@ -378,5 +427,73 @@ export class ActionExecutor {
     return Array.from(battle.participants.entries())
       .filter(([_, p]) => p.type === type && p.isAlive())
       .map(([id, _]) => id)
+  }
+
+  /**
+   * 判断是否需要记录详细调试信息
+   * 可根据配置或调试模式启用
+   */
+  private shouldRecordDetail(): boolean {
+    return true
+  }
+
+  /**
+   * 为技能执行创建记录对象
+   */
+  private createSkillRecord(
+    action: BattleAction,
+    source: BattleParticipant,
+    target: BattleParticipant,
+    battle: BattleData,
+  ): CombatRecord | undefined {
+    if (!this.shouldRecordDetail()) {
+      return undefined
+    }
+
+    return createEmptyRecord(
+      battle.battleId,
+      source.id,
+      source.name,
+      'skill',
+      target.id,
+      target.name,
+      battle.currentRound,
+      action.skillId,
+    )
+  }
+
+  /**
+   * 完成记录对象的最终处理
+   */
+  private finalizeRecord(record: CombatRecord, action: BattleAction): void {
+    record.message = this.generateRecordMessage(record, action)
+    this.logger.debug('技能记录已生成', record)
+  }
+
+  /**
+   * 生成记录的描述消息
+   */
+  private generateRecordMessage(
+    record: CombatRecord,
+    action: BattleAction,
+  ): string {
+    const parts: string[] = []
+
+    if (record.damage > 0) {
+      parts.push(`造成 ${record.damage} 伤害`)
+    }
+    if (record.heal > 0) {
+      parts.push(`恢复 ${record.heal} 生命值`)
+    }
+    if (record.effects.length > 0) {
+      const buffCount = record.effects.filter(
+        (e) => e.type === 'buff' || e.type === 'debuff',
+      ).length
+      if (buffCount > 0) {
+        parts.push(`施加 ${buffCount} 个效果`)
+      }
+    }
+
+    return parts.length > 0 ? parts.join('，') : '无效果'
   }
 }

@@ -21,6 +21,8 @@
     <div class="tool-header">
       <h1>回合制战斗系统测试工具 v1.0</h1>
       <div class="header-actions">
+        <button class="header-btn" @click="showDebugLogDialog = true">调试日志</button>
+        <button class="header-btn" @click="showCompendiumDialog = true">图鉴</button>
         <button class="header-btn" @click="showRulesDialog = true">战斗规则</button>
         <button class="header-btn" @click="showSceneDialog = true">场景管理</button>
         <button class="header-btn" @click="showStatusDialog = true">初始状态注入</button>
@@ -57,9 +59,13 @@
       :injectable-statuses="injectableStatuses" @update:injectable-statuses="val => updateStatuses(val)"
       @add="handleAddStatus" @clear="handleClearStatuses" />
 
+    <CompendiumDialog v-model="showCompendiumDialog" />
+
+    <DebugLogDialog v-model="showDebugLogDialog" :logs="debugLogs" @clear="clearDebugLogs" />
+
     <!-- 底部控制栏 -->
     <ControlBar :is-battle-active="battleStore.getIsBattleActive" :is-paused="false"
-      :is-auto-playing="battleStore.autoPlayMode" @start-battle="startBattle" @end-battle="endBattle"
+      :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.getBattleSpeed" @start-battle="startBattle" @end-battle="endBattle"
       @reset-battle="resetBattle" @step-back="stepBack" @single-step="singleStep" @toggle-auto-play="toggleAutoPlay"
       @battle-speed-change="handleBattleSpeedChange" />
 
@@ -86,11 +92,16 @@ import Notification from "@/components/Notification.vue";
 import BattleRulesDialog from "./components/BattleRulesDialog.vue";
 import SceneManagementDialog from "./components/SceneManagementDialog.vue";
 import StatusInjectionDialog from "./components/StatusInjectionDialog.vue";
+import CompendiumDialog from "@/components/CompendiumDialog.vue";
+import DebugLogDialog from "./components/DebugLogDialog.vue";
 import { useBattleStore, useCharacterStore } from '@/stores';
 import { container } from '@/core/di/Container';
+import { battleLogManager } from '@/utils/logging/BattleLogManager';
 import { PARTICIPANT_SIDE } from "@/types/battle";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 import type { BattleManager } from '@/core/battle/BattleManager';
+import type { LogEntry } from '@/types/battle-log';
+import skillsData from '@configs/skills/skills.json';
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -103,6 +114,17 @@ const sceneName = ref("");
 const showRulesDialog = ref(false);
 const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
+const showCompendiumDialog = ref(false);
+const showDebugLogDialog = ref(false);
+
+const debugLogs = ref<LogEntry[]>([]);
+
+const clearDebugLogs = () => {
+  debugLogs.value = [];
+  battleLogManager.clearDebugLogs();
+};
+
+let logUpdateInterval: ReturnType<typeof setInterval> | null = null;
 const battleFieldRef = ref<InstanceType<typeof BattleField> | null>(null);
 const savedScenes = ref<string[]>([]);
 const injectableStatuses = ref<InjectableStatus[]>([]);
@@ -127,9 +149,9 @@ const logManager = {
 // 初始化战斗
 function initBattle() {
   // 完成 敌我ParticipantInfo的初始化
-  const allyIds = ["boss_005", "boss_008"];
+  const allyIds = ["enemy_063", "enemy_056"];
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
-  const enemyIds = ["boss_006", "boss_007"];
+  const enemyIds = ["enemy_064", "enemy_055"];
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
 
   const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToBattleCharacter(ally, index));
@@ -146,11 +168,21 @@ onMounted(() => {
   // 初始化战斗管理器
   const battleManager: BattleManager = container.resolve('BattleManager');
   battleStore.initializeBattleManager(battleManager);
+  battleManager.loadSkillConfigs(skillsData);
   // 从 characterStore 获取角色数据并开始战斗
   const allyTeam = characterStore.allyTeam;
   const enemyTeam = characterStore.enemyTeam;
   logManager.addSystemLog("测试工具已加载");
   logManager.addSystemLog(`战斗管理器初始化完成，队伍数据: 我方${allyTeam.size}人 | 敌方${enemyTeam.size}人`);
+
+  // 监听 battleLogManager 的调试日志
+  const updateDebugLogs = () => {
+    debugLogs.value = battleLogManager.getDebugLogs();
+  };
+  // 初始加载
+  updateDebugLogs();
+  // 定期更新日志 (每秒)
+  logUpdateInterval = setInterval(updateDebugLogs, 1000);
 });
 
 // 监听战斗日志变化 - 已移除，因为会造成递归更新
@@ -494,6 +526,11 @@ onUnmounted(() => {
   // 组件卸载时的清理工作
   // 清理战斗管理器事件监听器，防止内存泄漏
   battleStore.destroy();
+  // 清理日志更新定时器
+  if (logUpdateInterval) {
+    clearInterval(logUpdateInterval);
+    logUpdateInterval = null;
+  }
 });
 </script>
 

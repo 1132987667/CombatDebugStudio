@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import type { BattleParticipant, StatusEffect } from '@/types/battle'
+import type { BattleParticipant, StatusEffect, ParticipantSnapshot, BuffInstanceSnapshot } from '@/types/battle'
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
 import type { UIBattleCharacter, UISkills } from '@/types/UI/UIBattleCharacter'
@@ -558,5 +558,38 @@ export class BattleParticipantImpl implements BattleParticipant {
    */
   resetSkillCooldowns(): void {
     this.skillCooldowns.clear()
+  }
+
+  /**
+   * 创建参与者快照
+   * @param buffSnapshots - Buff实例快照列表
+   * @returns 参与者快照数据
+   */
+  toSnapshot(buffSnapshots: BuffInstanceSnapshot[] = []): ParticipantSnapshot {
+    const skillCooldowns: Record<string, number> = {}
+    this.skillCooldowns.forEach((value, key) => {
+      skillCooldowns[key] = value
+    })
+
+    return {
+      id: this.id,
+      name: this.name,
+      type: this.type,
+      team: this.team,
+      hp: this.currentHealth,
+      maxHp: this.maxHealth,
+      energy: this.currentEnergy,
+      maxEnergy: this.maxEnergy,
+      buffs: buffSnapshots,
+      skillCooldowns,
+      statusEffects: this.statusEffects ? [...this.statusEffects] : [],
+      attributes: {
+        attack: this.attack,
+        defense: this.defense,
+        speed: this.speed,
+        critRate: this.critRate,
+        critDamage: this.critDamage,
+      },
+    }
   }
 }

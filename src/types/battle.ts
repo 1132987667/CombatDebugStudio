@@ -435,3 +435,145 @@ export interface BattleData {
   /** 技能管理器实例（可选，用于技能执行） */
   skillManager?: import('@/core/skill/SkillManager').SkillManager
 }
+
+/** 战斗回放系统版本号 */
+export const BATTLE_REPLAY_VERSION = '1.0.0'
+
+/** Buff实例快照 */
+export interface BuffInstanceSnapshot {
+  buffId: string
+  instanceId: string
+  remainingTurns: number
+  stacks: number
+  sourceId: string
+}
+
+/** 参与者状态快照 */
+export interface ParticipantSnapshot {
+  id: string
+  name: string
+  type: ParticipantSide
+  team: ParticipantSide
+  hp: number
+  maxHp: number
+  energy: number
+  maxEnergy: number
+  buffs: BuffInstanceSnapshot[]
+  skillCooldowns: Record<string, number>
+  statusEffects: StatusEffect[]
+  attributes: {
+    attack: number
+    defense: number
+    speed: number
+    critRate: number
+    critDamage: number
+  }
+}
+
+/** 战斗状态快照 */
+export interface BattleStateSnapshot {
+  timestamp: number
+  turn: number
+  roundIndex: number
+  participants: ParticipantSnapshot[]
+  currentActorId?: string
+}
+
+/** 回合数据 */
+export interface BattleRound {
+  roundNumber: number
+  startSnapshot?: BattleStateSnapshot
+  endSnapshot?: BattleStateSnapshot
+  events: BattleEvent[]
+}
+
+/** 战斗日志条目 */
+export interface BattleLogEntry {
+  eventId: string
+  type: BattleEventType
+  timestamp: number
+  turn: number
+  roundNumber: number
+  sourceId?: string
+  targetId?: string
+  message: string
+  details?: Record<string, any>
+}
+
+/** 战斗结果 */
+export interface BattleResult {
+  winner: ParticipantSide
+  duration: number
+  totalRounds: number
+  totalEvents: number
+  stats: {
+    totalDamage: number
+    totalHealing: number
+    criticalHits: number
+    dodges: number
+    buffsApplied: number
+    buffsRemoved: number
+  }
+}
+
+/** 增强的战斗回放数据 */
+export interface BattleReplay {
+  version: string
+  replayId: string
+  randomSeed: string
+  checksum: string
+  startTime: number
+  endTime?: number
+  duration: number
+  initialState: BattleStateSnapshot
+  finalState?: BattleStateSnapshot
+  rounds: BattleRound[]
+  logs: BattleLogEntry[]
+  result?: BattleResult
+}
+
+/** 事件类型枚举 */
+export enum BattleEventType {
+  ACTION = 'action',
+  STATE_CHANGE = 'state_change',
+  TURN_START = 'turn_start',
+  TURN_END = 'turn_end',
+  BATTLE_START = 'battle_start',
+  BATTLE_END = 'battle_end',
+  BUFF_ADD = 'buff_add',
+  BUFF_REMOVE = 'buff_remove',
+  BUFF_UPDATE = 'buff_update',
+  DAMAGE = 'damage',
+  HEAL = 'heal',
+}
+
+/** 战斗事件 */
+export interface BattleEvent {
+  eventId: string
+  type: string
+  timestamp: number
+  turn: number
+  roundNumber: number
+  data: any
+}
+
+/** 扩展的战斗事件 */
+export interface ReplayBattleEvent {
+  eventId: string
+  type: BattleEventType
+  timestamp: number
+  turn: number
+  roundNumber: number
+  sourceId?: string
+  targetId?: string
+  data: Record<string, any>
+}
+
+/** 快照索引项 */
+export interface SnapshotIndexItem {
+  snapshotIndex: number
+  eventIndex: number
+  turn: number
+  roundNumber: number
+  timestamp: number
+}

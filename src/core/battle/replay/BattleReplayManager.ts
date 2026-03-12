@@ -1,5 +1,6 @@
-import type { BattleSystemAction, BattleState } from '@/types/battle'
+import type { BattleSystemAction, BattleState, BattleReplay } from '@/types/battle'
 import { battleLogManager } from '@/utils/logging'
+import { ReplayEngine, type ReplayState, type ReplayEvent } from './ReplayEngine'
 
 /**
  * 战斗回放管理器
@@ -13,6 +14,8 @@ import { battleLogManager } from '@/utils/logging'
  * 与 BattleRecorder 的关系：
  * - BattleRecorder: 负责记录战斗过程，生成回放数据
  * - BattleReplayManager: 负责回放的控制和管理
+ *
+ * 版本: 2.0.0 - 使用 ReplayEngine 实现确定性回放和状态跳转
  */
 export class BattleReplayManager {
   private battleLogManager = battleLogManager
@@ -22,72 +25,95 @@ export class BattleReplayManager {
   private replaySpeed = 1
   private replayEvents: any[] = []
   private replayTimer: symbol | null = null
+  private replayEngine: ReplayEngine | null = null
+  private loadedReplayData: BattleReplay | null = null
+  private stateUnsubscribe: (() => void) | null = null
+  private eventUnsubscribe: (() => void) | null = null
 
   /**
    * 获取是否正在回放
    */
   getIsReplaying() {
-    return this.isReplaying
+    return this.replayEngine?.isPlayingState() || false
   }
 
   /**
    * 获取是否暂停
    */
   getIsPaused() {
-    return this.isPaused
+    return this.replayEngine?.isPausedState() || false
   }
 
   /**
    * 获取当前回放索引
    */
   getCurrentReplayIndex() {
-    return this.currentReplayIndex
+    return this.replayEngine?.getCurrentIndex() || 0
   }
 
   /**
    * 获取回放速度
    */
   getReplaySpeed() {
-    return this.replaySpeed
+    return this.replayEngine?.getSpeed() || 1
   }
 
   /**
    * 获取回放事件
    */
   getReplayEvents() {
-    return this.replayEvents
+    return this.replayEngine?.getEvents() || []
+  }
+
+  /**
+   * 获取当前状态快照
+   */
+  getCurrentSnapshot() {
+    return this.replayEngine?.getCurrentSnapshot() || null
   }
 
   /**
    * 开始回放
    * @param recording 回放记录
    */
-  startReplay(recording: any) {
+  startReplay(recording: BattleReplay) {
     if (!recording || !recording.events || recording.events.length === 0) {
       this.battleLogManager.addSystemLog('没有找到回放记录')
       return
     }
 
-    // 重置回放状态
     this.resetReplayState()
 
-    // 设置回放事件
-    this.replayEvents = recording.events
-    this.isReplaying = true
-    this.isPaused = false
+    this.replayEngine = new ReplayEngine()
+    this.loadedReplayData = recording
+
+    const success = this.replayEngine.loadReplay(recording)
+    if (!success) {
+      this.battleLogManager.addSystemLog('加载回放数据失败')
+      return
+    }
+
+    this.stateUnsubscribe = this.replayEngine.onStateChange((state: ReplayState) => {
+      this.isReplaying = state.isPlaying
+      this.isPaused = state.isPaused
+      this.currentReplayIndex = state.currentIndex
+    })
+
+    this.eventUnsubscribe = this.replayEngine.onEvent((event: ReplayEvent) => {
+      this.handleReplayEvent(event)
+    })
+
+    this.replayEngine.play()
 
     this.battleLogManager.addSystemLog('开始回放')
-
-    // 开始播放事件
-    this.playNextEvent()
   }
 
   /**
    * 暂停回放
    */
   pauseReplay() {
-    if (this.isReplaying) {
-      this.isPaused = true
+    if (this.replayEngine) {
+      this.replayEngine.pause()
       this.battleLogManager.addSystemLog('回放已暂停')
     }
   }
@@ -96,10 +122,9 @@ export class BattleReplayManager {
    * 继续回放
    */
   resumeReplay() {
-    if (this.isReplaying && this.isPaused) {
-      this.isPaused = false
+    if (this.replayEngine) {
+      this.replayEngine.resume()
       this.battleLogManager.addSystemLog('回放已继续')
-      this.playNextEvent()
     }
   }
 
@@ -117,70 +142,115 @@ export class BattleReplayManager {
    */
   setReplaySpeed(speed: number) {
     this.replaySpeed = speed
+    if (this.replayEngine) {
+      this.replayEngine.setSpeed(speed)
+    }
     this.battleLogManager.addSystemLog(`回放速度已调整为: ${speed}倍`)
   }
 
   /**
-   * 播放下一个事件
+   * 跳转到指定事件索引
+   * @param index 事件索引
    */
-  private playNextEvent() {
-    if (!this.isReplaying || this.isPaused) {
-      return
+  seekToEvent(index: number): boolean {
+    if (!this.replayEngine) {
+      return false
     }
+    return this.replayEngine.seekToEvent(index)
+  }
 
-    if (this.currentReplayIndex >= this.replayEvents.length) {
-      // 回放结束
-      this.handleReplayEnd()
-      return
+  /**
+   * 跳转到指定回合
+   * @param turn 回合数
+   */
+  seekToTurn(turn: number): boolean {
+    if (!this.replayEngine) {
+      return false
     }
+    return this.replayEngine.seekToTurn(turn)
+  }
 
-    // 获取当前事件
-    const event = this.replayEvents[this.currentReplayIndex]
+  /**
+   * 跳转到指定回合数
+   * @param roundNumber 回合数
+   */
+  seekToRound(roundNumber: number): boolean {
+    if (!this.replayEngine) {
+      return false
+    }
+    return this.replayEngine.seekToRound(roundNumber)
+  }
 
-    // 处理事件
-    this.handleReplayEvent(event, this.currentReplayIndex)
+  /**
+   * 跳转到指定时间戳
+   * @param timestamp 时间戳
+   */
+  seekToTime(timestamp: number): boolean {
+    if (!this.replayEngine) {
+      return false
+    }
+    return this.replayEngine.seekToTime(timestamp)
+  }
 
-    // 增加索引
-    this.currentReplayIndex++
+  /**
+   * 步进到下一个事件
+   */
+  stepForward(): boolean {
+    if (!this.replayEngine) {
+      return false
+    }
+    return this.replayEngine.stepForward()
+  }
 
-    // 计算下一个事件的延迟
-    const delay = this.calculateEventDelay(event)
+  /**
+   * 步进到上一个事件
+   */
+  stepBackward(): boolean {
+    if (!this.replayEngine) {
+      return false
+    }
+    return this.replayEngine.stepBackward()
+  }
 
-    // 安排播放下一个事件
-    import('@/utils/RAF').then(({ raf }) => {
-      this.replayTimer = raf.setTimeout(() => {
-        this.playNextEvent()
-      }, delay)
-    })
+  /**
+   * 获取总事件数
+   */
+  getTotalEvents(): number {
+    return this.replayEngine?.getTotalEvents() || 0
   }
 
   /**
    * 处理回放事件
    * @param event 事件对象
-   * @param index 事件索引
    */
-  private handleReplayEvent(event: any, index: number) {
-    console.log('回放事件:', event, '索引:', index)
+  private handleReplayEvent(event: ReplayEvent) {
+    console.log('回放事件:', event)
 
-    // 根据事件类型处理不同的逻辑
     switch (event.type) {
       case 'action':
-        this.handleActionReplay(event.data.action)
+        this.handleActionReplay(event.data?.action)
         break
       case 'turn_start':
-        this.handleTurnStartReplay(event.data.turn, event.data.participantId)
+        this.handleTurnStartReplay(event.data?.turn, event.data?.participantId)
         break
       case 'turn_end':
-        this.handleTurnEndReplay(event.data.turn)
+        this.handleTurnEndReplay(event.data?.turn)
         break
       case 'battle_start':
         this.handleBattleStartReplay()
         break
       case 'battle_end':
-        this.handleBattleEndReplay(event.data.winner)
+        this.handleBattleEndReplay(event.data?.winner)
         break
-      default:
-        console.log('未知事件类型:', event.type)
+      case 'buff_add':
+        this.handleBuffAddReplay(event.data)
+        break
+      case 'buff_remove':
+        this.handleBuffRemoveReplay(event.data)
+        break
+      case 'buff_update':
+        this.handleBuffUpdateReplay(event.data)
+        break
     }
   }
 
@@ -190,7 +260,6 @@ export class BattleReplayManager {
    */
   private handleActionReplay(action: any) {
     console.log('回放动作:', action)
-    // 这里可以添加动作回放的具体逻辑
   }
 
   /**
@@ -200,7 +269,6 @@ export class BattleReplayManager {
    */
   private handleTurnStartReplay(turn: number, participantId: string) {
     console.log('回放回合开始:', turn, '行动者:', participantId)
-    // 这里可以添加回合开始回放的具体逻辑
   }
 
   /**
@@ -209,7 +277,6 @@ export class BattleReplayManager {
    */
   private handleTurnEndReplay(turn: number) {
     console.log('回放回合结束:', turn)
-    // 这里可以添加回合结束回放的具体逻辑
   }
 
   /**
@@ -217,7 +284,6 @@ export class BattleReplayManager {
    */
   private handleBattleStartReplay() {
     console.log('回放战斗开始')
-    // 这里可以添加战斗开始回放的具体逻辑
   }
 
   /**
@@ -226,43 +292,69 @@ export class BattleReplayManager {
    */
   private handleBattleEndReplay(winner: string) {
     console.log('回放战斗结束:', winner)
-    // 这里可以添加战斗结束回放的具体逻辑
   }
 
   /**
-   * 处理回放结束
+   * 处理Buff添加回放
+   * @param data Buff数据
    */
-  private handleReplayEnd() {
-    this.resetReplayState()
-    this.battleLogManager.addSystemLog('回放已结束')
+  private handleBuffAddReplay(data: any) {
+    console.log('回放Buff添加:', data)
   }
 
   /**
-   * 计算事件延迟
-   * @param event 事件对象
-   * @returns 延迟时间（毫秒）
+   * 处理Buff移除回放
+   * @param data Buff数据
    */
-  private calculateEventDelay(event: any): number {
-    // 根据事件类型和回放速度计算延迟
-    const baseDelay = 500 // 基础延迟
-    return baseDelay / this.replaySpeed
+  private handleBuffRemoveReplay(data: any) {
+    console.log('回放Buff移除:', data)
+  }
+
+  /**
+   * 处理Buff更新回放
+   * @param data Buff数据
+   */
+  private handleBuffUpdateReplay(data: any) {
+    console.log('回放Buff更新:', data)
   }
 
   /**
    * 重置回放状态
    */
   private resetReplayState() {
+    if (this.stateUnsubscribe) {
+      this.stateUnsubscribe()
+      this.stateUnsubscribe = null
+    }
+
+    if (this.eventUnsubscribe) {
+      this.eventUnsubscribe()
+      this.eventUnsubscribe = null
+    }
+
+    if (this.replayEngine) {
+      this.replayEngine.stop()
+      this.replayEngine = null
+    }
+
+    this.loadedReplayData = null
     this.isReplaying = false
     this.isPaused = false
     this.currentReplayIndex = 0
     this.replayEvents = []
 
-    // 清除定时器
     if (this.replayTimer) {
       import('@/utils/RAF').then(({ raf }) => {
         raf.clearTimeout(this.replayTimer!)
       })
       this.replayTimer = null
     }
+  }
+
+  /**
+   * 销毁管理器
+   */
+  destroy() {
+    this.resetReplayState()
   }
 }

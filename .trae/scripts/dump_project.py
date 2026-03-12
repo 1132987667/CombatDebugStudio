@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # 调用命令为:
 # python d:\5-workspace\code\CombatDebugStudio\.trae\scripts\dump_project.py d:\5-workspace\code\CombatDebugStudio -o output.txt
+# python D:\4-softworkspace\java\CombatDebugStudio\.trae\scripts\dump_project.py D:\4-softworkspace\java\CombatDebugStudio -o output.txt
 """
 dump_project.py - 抽取项目文件夹架构和所有文件内容。
 支持忽略规则（类似 .gitignore）。

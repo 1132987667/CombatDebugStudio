@@ -11,6 +11,8 @@
  * 确保系统中所有战斗日志相关的类型引用保持一致
  */
 
+import type { BattleAction } from './battle'
+
 /**
  * 日志级别 - 统一所有日志系统的级别定义
  */
@@ -100,6 +102,7 @@ export interface LogEntry {
 
 /**
  * 战斗日志条目接口 - 统一所有战斗日志条目定义
+ * 精简版本：移除冗余字段，仅保留核心数据
  */
 export interface BattleLogEntry {
   /** 回合号，如 '回合1' 或 '回合开始' */
@@ -114,35 +117,14 @@ export interface BattleLogEntry {
   /** 目标 */
   target: string
 
-  /** 结果描述 */
-  result: string
-
   /** 日志级别/类别（统一类型） */
   level: BattleLogMessageType
 
   /** 日志类别（业务维度） */
   category: BattleLogCategory
 
-  /** HTML格式的结果（可选） */
-  htmlResult?: string
-
-  /** 行动类型：system-系统消息，普通攻击-普通攻击，小技能-普通技能，大技能-终极技能 */
-  type?: BattleLogType
-
-  /** 是否命中（仅普通攻击有效） */
-  isHit?: boolean
-
-  /** 是否暴击（仅普通攻击有效） */
-  isCrit?: boolean
-
-  /** 技能名称（仅小技能和大技能有效） */
-  skillName?: string
-
-  /** 附加效果列表，如暴击、状态等详细信息 */
-  subEffects?: string[]
-
-  /** 日志片段列表，用于结构化渲染 */
-  segments?: LogSegment[]
+  /** 日志片段列表，用于结构化渲染（必需） */
+  segments: LogSegment[]
 }
 
 /**
@@ -420,9 +402,9 @@ export function createDefaultBattleLogEntry(
     source,
     action,
     target,
-    result,
     level,
     category,
+    segments: [{ text: result }],
   }
 }
 
@@ -550,4 +532,311 @@ export interface CalculationLog {
 
   /** 计算上下文（框架系统） */
   context?: CalculationContext
+}
+
+/**
+ * BattleAction 转换为 BattleLogEntry 的选项
+ */
+export interface BattleActionToLogEntryOptions {
+  turnNumber?: number
+  sourceIsAlly?: boolean
+  targetIsAlly?: boolean
+}
+
+/**
+ * 参与者映射类型
+ */
+export interface ParticipantMap {
+  get(id: string): { name: string; team: string } | undefined
+}
+
+/**
+ * 将 BattleAction 转换为 BattleLogEntry
+ * 统一转换逻辑，确保日志生成准确、可复用
+ */
+export function battleActionToLogEntry(
+  action: BattleAction,
+  participants: ParticipantMap,
+  options?: BattleActionToLogEntryOptions,
+): BattleLogEntry {
+  const turn = options?.turnNumber ?? action.turn ?? 1
+  const turnStr = `回合${turn}`
+
+  let sourceName = action.sourceId
+  if (action.sourceId === 'system') {
+    sourceName = '系统'
+  } else {
+    const sourceParticipant = participants.get(action.sourceId)
+    if (sourceParticipant) {
+      sourceName = sourceParticipant.name
+    }
+  }
+
+  let targetName = ''
+  if (action.targetId && action.targetId !== 'system') {
+    const targetParticipant = participants.get(action.targetId)
+    if (targetParticipant) {
+      targetName = targetParticipant.name
+    }
+  }
+
+  const sourceIsAlly = options?.sourceIsAlly ?? (action.sourceId !== 'system' ? participants.get(action.sourceId)?.team === 'ally' : false)
+  const targetIsAlly = options?.targetIsAlly ?? (action.targetId ? participants.get(action.targetId)?.team === 'ally' : undefined)
+
+  const { category, level, segments } = generateLogSegments(
+    action,
+    sourceName,
+    targetName,
+    sourceIsAlly,
+    targetIsAlly,
+  )
+
+  return {
+    turn: turnStr,
+    source: sourceName,
+    action: '对',
+    target: targetName,
+    level,
+    category,
+    segments,
+  }
+}
+
+/**
+ * 根据动作类型生成日志片段
+ */
+function generateLogSegments(
+  action: BattleAction,
+  sourceName: string,
+  targetName: string,
+  sourceIsAlly: boolean,
+  targetIsAlly: boolean | undefined,
+): {
+  category: BattleLogCategory
+  level: BattleLogMessageType
+  segments: LogSegment[]
+} {
+  if (action.sourceId === 'system') {
+    return generateSystemLogSegments(action)
+  }
+
+  if (!action.success || action.isHit === false) {
+    return generateMissLogSegments(action, sourceName, targetName, sourceIsAlly, targetIsAlly)
+  }
+
+  if (action.isCrit) {
+    return generateCritLogSegments(action, sourceName, targetName, sourceIsAlly, targetIsAlly)
+  }
+
+  if (action.heal && action.heal > 0) {
+    return generateHealLogSegments(action, sourceName, targetName, sourceIsAlly, targetIsAlly)
+  }
+
+  if (action.damage && action.damage > 0) {
+    return generateDamageLogSegments(action, sourceName, targetName, sourceIsAlly, targetIsAlly)
+  }
+
+  return generateDefaultLogSegments(action, sourceName, targetName, sourceIsAlly, targetIsAlly)
+}
+
+/**
+ * 生成系统日志片段
+ */
+function generateSystemLogSegments(
+  action: BattleAction,
+): {
+  category: BattleLogCategory
+  level: BattleLogMessageType
+  segments: LogSegment[]
+} {
+  const description = action.effects[0]?.description || ''
+
+  if (description.includes('战斗开始')) {
+    return {
+      category: 'system',
+      level: 'info',
+      segments: [{ text: description }],
+    }
+  }
+
+  if (description.includes('战斗结束') || description.includes('胜利') || description.includes('失败')) {
+    return {
+      category: 'system',
+      level: description.includes('胜利') ? 'info' : 'warning',
+      segments: [{ text: description }],
+    }
+  }
+
+  return {
+    category: 'system',
+    level: 'info',
+    segments: [{ text: description }],
+  }
+}
+
+/**
+ * 生成未命中日志片段
+ */
+function generateMissLogSegments(
+  action: BattleAction,
+  sourceName: string,
+  targetName: string,
+  sourceIsAlly: boolean,
+  targetIsAlly: boolean | undefined,
+): {
+  category: BattleLogCategory
+  level: BattleLogMessageType
+  segments: LogSegment[]
+} {
+  const skillName = action.skillName || '普通攻击'
+  const isSkill = action.type === 'skill'
+
+  return {
+    category: 'status',
+    level: 'info',
+    segments: [
+      { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+      { text: ' 对 ' },
+      { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+      { text: ` 发动${isSkill ? `【${skillName}】` : ''}，攻击被闪避，未命中` },
+    ],
+  }
+}
+
+/**
+ * 生成暴击日志片段
+ */
+function generateCritLogSegments(
+  action: BattleAction,
+  sourceName: string,
+  targetName: string,
+  sourceIsAlly: boolean,
+  targetIsAlly: boolean | undefined,
+): {
+  category: BattleLogCategory
+  level: BattleLogMessageType
+  segments: LogSegment[]
+} {
+  const skillName = action.skillName || '普通攻击'
+  const isSkill = action.type === 'skill'
+  const damage = action.damage || 0
+
+  return {
+    category: 'crit',
+    level: 'info',
+    segments: [
+      { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+      { text: ' 对 ' },
+      { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+      { text: ` 发动${isSkill ? `【${skillName}】` : ''}，触发会心一击，造成 ` },
+      { text: damage.toString(), color: 'crit' },
+      { text: ' 点暴击伤害！' },
+    ],
+  }
+}
+
+/**
+ * 生成治疗日志片段
+ */
+function generateHealLogSegments(
+  action: BattleAction,
+  sourceName: string,
+  targetName: string,
+  sourceIsAlly: boolean,
+  targetIsAlly: boolean | undefined,
+): {
+  category: BattleLogCategory
+  level: BattleLogMessageType
+  segments: LogSegment[]
+} {
+  const skillName = action.skillName || '治疗'
+  const healAmount = action.heal || 0
+
+  return {
+    category: 'heal',
+    level: 'info',
+    segments: [
+      { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+      { text: ' 对 ' },
+      { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+      { text: ` 施放【${skillName}】，为其恢复 ` },
+      { text: healAmount.toString(), color: 'heal' },
+      { text: ' 点生命值' },
+    ],
+  }
+}
+
+/**
+ * 生成伤害日志片段
+ */
+function generateDamageLogSegments(
+  action: BattleAction,
+  sourceName: string,
+  targetName: string,
+  sourceIsAlly: boolean,
+  targetIsAlly: boolean | undefined,
+): {
+  category: BattleLogCategory
+  level: BattleLogMessageType
+  segments: LogSegment[]
+} {
+  const skillName = action.skillName
+  const isSkill = action.type === 'skill'
+  const damage = action.damage || 0
+
+  if (isSkill && skillName) {
+    return {
+      category: 'damage',
+      level: 'info',
+      segments: [
+        { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+        { text: ' 对 ' },
+        { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+        { text: ` 发动终极技能【${skillName}】，造成 ` },
+        { text: damage.toString(), color: 'damage' },
+        { text: ' 点魔法伤害' },
+      ],
+    }
+  }
+
+  return {
+    category: 'damage',
+    level: 'info',
+    segments: [
+      { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+      { text: ' 对 ' },
+      { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+      { text: ' 发动普通攻击，造成 ' },
+      { text: damage.toString(), color: 'damage' },
+      { text: ' 点物理伤害' },
+    ],
+  }
+}
+
+/**
+ * 生成默认日志片段
+ */
+function generateDefaultLogSegments(
+  action: BattleAction,
+  sourceName: string,
+  targetName: string,
+  sourceIsAlly: boolean,
+  targetIsAlly: boolean | undefined,
+): {
+  category: BattleLogCategory
+  level: BattleLogMessageType
+  segments: LogSegment[]
+} {
+  const effectDescription = action.effects[0]?.description || '执行了动作'
+
+  return {
+    category: 'action',
+    level: 'info',
+    segments: [
+      { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+      { text: ' 对 ' },
+      { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+      { text: ` ${effectDescription}` },
+    ],
+  }
 }

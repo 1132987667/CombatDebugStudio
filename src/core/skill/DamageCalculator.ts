@@ -289,11 +289,14 @@ export class DamageCalculator {
           isCritical = Math.random() < step.criticalConfig.rate
           criticalMultiplier = isCritical ? step.criticalConfig.multiplier : 1
         } else {
-          // 使用默认暴击配置
-          isCritical = Math.random() < this.config.defaultCriticalRate
-          criticalMultiplier = isCritical
-            ? this.config.defaultCriticalMultiplier
-            : 1
+          // 优先使用 source 的暴击属性，否则使用默认配置
+          const sourceCritRate = this.getAttributeValue(source, 'CRIT_RATE')
+          const sourceCritDamage = this.getAttributeValue(source, 'CRIT_DMG')
+          const critRate = sourceCritRate > 0 ? sourceCritRate : this.config.defaultCriticalRate
+          const critDamage = sourceCritDamage > 0 ? sourceCritDamage : this.config.defaultCriticalMultiplier
+
+          isCritical = Math.random() < critRate / 100
+          criticalMultiplier = isCritical ? critDamage / 100 : 1
         }
 
         if (isCritical) {

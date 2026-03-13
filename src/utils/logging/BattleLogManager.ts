@@ -20,6 +20,7 @@ import type {
   ActionType,
   LogEntry,
   LogHandler,
+  LogSegment,
 } from '@/types/battle-log'
 import { LogLevel, LogLevelLabel } from '@/types/battle-log'
 
@@ -1088,20 +1089,18 @@ export class BattleLogManager {
     source: string,
     action: string,
     target: string,
-    result: string,
+    segments: LogSegment[],
     category: BattleLogCategory = 'system',
     level?: BattleLogMessageType,
-    htmlResult?: string,
   ): void {
     const logEntry: BattleLogEntry = {
       turn,
       source,
       action,
       target,
-      result,
       category,
       level: level || getLevelFromCategory(category),
-      htmlResult,
+      segments,
     }
 
     this.logs.unshift(logEntry)
@@ -1117,7 +1116,7 @@ export class BattleLogManager {
    * 添加系统战斗日志
    */
   addSystemBattleLog(message: string, level: BattleLogLevel = 'info'): void {
-    this.addLog('系统', '系统', '系统消息', '', message, 'system', level)
+    this.addLog('系统', '系统', '系统消息', '', [{ text: message }], 'system', level)
   }
 
   /**
@@ -1137,7 +1136,7 @@ export class BattleLogManager {
     result: string,
     level: BattleLogLevel = 'info',
   ): void {
-    this.addLog('当前回合', source, action, target, result, 'action', level)
+    this.addLog('当前回合', source, action, target, [{ text: result }], 'action', level)
   }
 
   /**
@@ -1156,7 +1155,7 @@ export class BattleLogManager {
       '系统',
       '回合开始',
       '',
-      `第${turn}回合开始`,
+      [{ text: `第${turn}回合开始` }],
       'system',
       'info',
     )
@@ -1171,7 +1170,7 @@ export class BattleLogManager {
       '系统',
       '回合结束',
       '',
-      `第${turn}回合结束`,
+      [{ text: `第${turn}回合结束` }],
       'system',
       'info',
     )
@@ -1325,6 +1324,9 @@ export class BattleLogManager {
    * 触发日志更新通知
    */
   private emitLogUpdate(): void {
+    if (this.listeners.size === 0) {
+      return
+    }
     const filteredLogs = this.getFilteredLogs()
     this.listeners.forEach((callback) => {
       try {

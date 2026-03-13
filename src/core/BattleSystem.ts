@@ -537,9 +537,9 @@ export class GameBattleSystem implements IBattleSystem {
           source: participant.name,
           action: '被',
           target: '控制',
-          result: `${participant.name} 被控制，无法行动`,
           level: 'info',
           category: 'status',
+          segments: [{ text: `${participant.name} 被控制，无法行动` }],
         }
         this.syncBattleLog(logEntry)
 
@@ -783,9 +783,14 @@ export class GameBattleSystem implements IBattleSystem {
         source: source.name,
         action: '对',
         target: targetParticipant!.name,
-        result: `${source.name} 对 ${targetParticipant!.name} 发动普通攻击，但是被闪避了！`,
         level: 'info',
         category: 'status',
+        segments: [
+          { text: source.name, color: 'hostile' },
+          { text: ' 对 ' },
+          { text: targetParticipant!.name, color: 'friendly' },
+          { text: ' 发动普通攻击，但是被闪避了！' },
+        ],
       }
       this.syncBattleLog(logEntry)
 
@@ -818,11 +823,18 @@ export class GameBattleSystem implements IBattleSystem {
         source: source.name,
         action: '对',
         target: targetParticipant!.name,
-        result: `${source.name} 对 ${targetParticipant!.name} 发动普通攻击，${damageResult.isCritical ? '暴击！' : ''}造成 ${damage} 点物理伤害。`,
         level: 'info',
         category: damageResult.isCritical
           ? BATTLE_LOG_CATEGORY.CRIT
           : BATTLE_LOG_CATEGORY.DAMAGE,
+        segments: [
+          { text: source.name, color: source.type === PARTICIPANT_SIDE.ALLY ? 'friendly' : 'hostile' },
+          { text: ' 对 ' },
+          { text: targetParticipant!.name, color: targetParticipant!.type === PARTICIPANT_SIDE.ALLY ? 'friendly' : 'hostile' },
+          { text: ` 发动普通攻击，${damageResult.isCritical ? '暴击！' : ''}造成 ` },
+          { text: damage.toString(), color: damageResult.isCritical ? 'crit' : 'damage' },
+          { text: ' 点物理伤害' },
+        ],
       }
       this.syncBattleLog(logEntry)
 
@@ -1214,9 +1226,9 @@ export class GameBattleSystem implements IBattleSystem {
       source: '系统',
       action: '战斗结束',
       target: '系统',
-      result: `回合数达到上限(${battle.maxTurns})，${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}以血量优势获胜`,
       level: 'warn',
       category: 'status',
+      segments: [{ text: `回合数达到上限(${battle.maxTurns})，${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}以血量优势获胜` }],
     }
     this.syncBattleLog(logEntry)
   }

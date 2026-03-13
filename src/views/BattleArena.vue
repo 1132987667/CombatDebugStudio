@@ -22,6 +22,7 @@
       <h1>回合制战斗系统测试工具 v1.0</h1>
       <div class="header-actions">
         <button class="header-btn" @click="showDebugLogDialog = true">调试日志</button>
+        <button class="header-btn" @click="showDebugControlDialog = true">调试面板</button>
         <button class="header-btn" @click="showCompendiumDialog = true">图鉴</button>
         <button class="header-btn" @click="showRulesDialog = true">战斗规则</button>
         <button class="header-btn" @click="showSceneDialog = true">场景管理</button>
@@ -63,6 +64,8 @@
 
     <DebugLogDialog v-model="showDebugLogDialog" :logs="debugLogs" @clear="clearDebugLogs" />
 
+    <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
+
     <!-- 底部控制栏 -->
     <ControlBar :is-battle-active="battleStore.getIsBattleActive" :is-paused="false"
       :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.getBattleSpeed" @start-battle="startBattle" @end-battle="endBattle"
@@ -94,6 +97,7 @@ import SceneManagementDialog from "./components/SceneManagementDialog.vue";
 import StatusInjectionDialog from "./components/StatusInjectionDialog.vue";
 import CompendiumDialog from "@/components/CompendiumDialog.vue";
 import DebugLogDialog from "./components/DebugLogDialog.vue";
+import DebugControlDialog from "./components/DebugControlDialog.vue";
 import { useBattleStore, useCharacterStore } from '@/stores';
 import { container } from '@/core/di/Container';
 import { battleLogManager } from '@/utils/logging/BattleLogManager';
@@ -116,12 +120,106 @@ const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
 const showCompendiumDialog = ref(false);
 const showDebugLogDialog = ref(false);
+const showDebugControlDialog = ref(false);
 
 const debugLogs = ref<LogEntry[]>([]);
 
 const clearDebugLogs = () => {
   debugLogs.value = [];
   battleLogManager.clearDebugLogs();
+};
+
+const handleDebugAction = (action: string) => {
+  console.log('Debug action:', action)
+  switch (action) {
+    case 'win_battle':
+      battleStore.addSystemLog('调试: 立即胜利')
+      break
+    case 'lose_battle':
+      battleStore.addSystemLog('调试: 立即失败')
+      break
+    case 'skip_turn':
+      battleStore.addSystemLog('调试: 跳过回合')
+      break
+    case 'end_battle':
+      battleStore.addSystemLog('调试: 强制结束战斗')
+      break
+    case 'full_health':
+      battleStore.addSystemLog('调试: 满血')
+      break
+    case 'full_energy':
+      battleStore.addSystemLog('调试: 满能量')
+      break
+    case 'kill_selected':
+      battleStore.addSystemLog('调试: 杀死选中')
+      break
+    case 'max_skill_cd':
+      battleStore.addSystemLog('调试: 满技能CD')
+      break
+    case 'force_crit':
+      battleStore.addSystemLog('调试: 触发暴击')
+      break
+    case 'force_dodge':
+      battleStore.addSystemLog('调试: 触发闪避')
+      break
+    case 'force_block':
+      battleStore.addSystemLog('调试: 触发格挡')
+      break
+    case 'add_buff':
+      battleStore.addSystemLog('调试: 添加Buff')
+      break
+    case 'dump_logs':
+      console.log('Current logs:', battleLogManager.getAllLogs())
+      battleStore.addSystemLog('日志已输出到控制台')
+      break
+    case 'export_state':
+      battleStore.addSystemLog('调试: 导出状态')
+      break
+    case 'import_state':
+      battleStore.addSystemLog('调试: 导入状态')
+      break
+    case 'reset_battle':
+      battleStore.addSystemLog('调试: 重置战斗')
+      break
+    case 'log_battle_store':
+      battleStore.addLog(
+        '回合1',
+        '测试角色',
+        '对',
+        '测试目标',
+        [
+          { text: '测试角色', color: 'friendly' },
+          { text: ' 对 ' },
+          { text: '测试目标', color: 'hostile' },
+          { text: ' 造成了 ' },
+          { text: '100', color: 'damage' },
+          { text: ' 点伤害' }
+        ],
+        'damage',
+        'info'
+      )
+      battleStore.addSystemLog('日志调试: battleStore.addLog 已调用')
+      break
+    case 'log_battle_manager':
+      battleLogManager.addLog(
+        '回合1',
+        '测试角色',
+        '对',
+        '测试目标',
+        [
+          { text: '测试角色', color: 'friendly' },
+          { text: ' 对 ' },
+          { text: '测试目标', color: 'hostile' },
+          { text: ' 造成了 ' },
+          { text: '150', color: 'crit' },
+          { text: ' 点暴击伤害' }
+        ],
+        'crit',
+        'info'
+      )
+      battleStore.addSystemLog('日志调试: battleLogManager.addLog 已调用')
+      break
+  }
 };
 
 let logUpdateInterval: ReturnType<typeof setInterval> | null = null;

@@ -90,8 +90,7 @@ const handleAutoPlayModeChange = (mode: string) => {
   }
 };
 
-// 战斗速度控制
-const battleSpeed = ref(1);
+// 战斗速度控制 - 使用传入的 props.battleSpeed
 const speedLevels = [1, 2, 3]; // 支持1倍、2倍、3倍三个速度档位
 
 // 切换战斗速度

@@ -2,22 +2,13 @@ import { defineStore } from 'pinia'
 import {
   PARTICIPANT_SIDE,
   BattleSystemEvent,
-  type ParticipantSide,
 } from '@/types/battle'
 import { useCharacterStore } from './characterStore'
-import type { UIBattleCharacter } from '@/types'
-import type {
-  BattleLogEntry,
-  BattleLogCategory,
-  BattleLogLevel,
-} from '@/types/battle-log'
-import type {
-  BattleLogEventData,
-  BattleStateUpdateEventData,
-} from '@/types/battle-events'
+import type { BattleLogEntry, BattleLogCategory, BattleLogLevel, LogSegment } from '@/types/battle-log'
+import { battleActionToLogEntry } from '@/types/battle-log'
 import type { BattleManager } from '@/core/battle/BattleManager'
 import type { BattleSystemAction, BattleState } from '@/types/battle'
-import { BattleLogFormatter, battleLogManager } from '@/utils/logging'
+import { battleLogManager } from '@/utils/logging'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 
 /**
@@ -104,7 +95,6 @@ export interface BattleStoreState {
   turnOrder: string[]
   battleSpeed: number
   battleManager: BattleManager | null
-  logs: BattleLogEntry[]
   filters: LogFilters
   processedActionIds: Set<string>
 }
@@ -141,7 +131,6 @@ export const useBattleStore = defineStore('battle', {
     turnOrder: [],
     battleSpeed: 1,
     battleManager: null,
-    logs: [],
     filters: {
       showAllyActions: true,
       showEnemyActions: true,
@@ -241,8 +230,8 @@ export const useBattleStore = defineStore('battle', {
     /**
      * 获取战斗日志
      */
-    getBattleLogs: (state): BattleLogEntry[] => {
-      return state.logs
+    getBattleLogs: (): BattleLogEntry[] => {
+      return battleLogManager.getAllLogs()
     },
 
     /**
@@ -274,48 +263,21 @@ export const useBattleStore = defineStore('battle', {
     },
 
     /**
-     * 获取过滤后的战斗日志
+     * 获取日志列表（从 battleLogManager 获取）
      */
-    filteredLogs(): BattleLogEntry[] {
-      return this.logs.filter((log) => {
-        const category = log.category
+    logs(): BattleLogEntry[] {
+      return battleLogManager.getAllLogs()
+    },
 
-        if (category === 'system' && !this.filters.showSystemMessages) {
-          return false
-        }
-        if (
-          category === 'action' &&
-          log.source !== '系统' &&
-          !log.source.includes(PARTICIPANT_SIDE.ENEMY) &&
-          !this.filters.showAllyActions
-        ) {
-          return false
-        }
-        if (
-          category === 'action' &&
-          log.source.includes(PARTICIPANT_SIDE.ENEMY) &&
-          !this.filters.showEnemyActions
-        ) {
-          return false
-        }
-        if (!this.filters.showDamage && category === 'damage') {
-          return false
-        }
-        if (!this.filters.showHealing && category === 'heal') {
-          return false
-        }
-        if (!this.filters.showBuffs && category === 'status') {
-          return false
-        }
-        return true
-      })
+    filteredLogs(): BattleLogEntry[] {
+      return battleLogManager.getFilteredLogs()
     },
 
     /**
      * 获取日志数量
      */
-    logCount: (state): number => {
-      return state.logs.length
+    logCount(): number {
+      return this.logs.length
     },
   },
 
@@ -411,17 +373,6 @@ export const useBattleStore = defineStore('battle', {
      */
     addSystemLog(message: string) {
       battleLogManager.addSystemLog(message, 'info')
-      const log: BattleLogEntry = {
-        turn: '系统',
-        source: '系统',
-        action: '通知',
-        target: '',
-        result: message,
-        level: 'info',
-        category: 'system',
-        htmlResult: message,
-      }
-      this.logs.push(log)
     },
 
     /**
@@ -429,17 +380,6 @@ export const useBattleStore = defineStore('battle', {
      */
     addWarningLog(message: string) {
       battleLogManager.addSystemBattleLog(message, 'warning')
-      const log: BattleLogEntry = {
-        turn: '系统',
-        source: '系统',
-        action: '警告',
-        target: '',
-        result: message,
-        level: 'warning',
-        category: 'system',
-        htmlResult: message,
-      }
-      this.logs.push(log)
     },
 
     /**
@@ -454,17 +394,6 @@ export const useBattleStore = defineStore('battle', {
      */
     addSystemBattleLog(message: string, level: BattleLogLevel = 'info') {
       battleLogManager.addSystemBattleLog(message, level)
-      const log: BattleLogEntry = {
-        turn: '系统',
-        source: '系统',
-        action: '系统消息',
-        target: '',
-        result: message,
-        level,
-        category: 'system',
-        htmlResult: message,
-      }
-      this.logs.push(log)
     },
 
     /**
@@ -472,17 +401,6 @@ export const useBattleStore = defineStore('battle', {
      */
     addErrorLog(message: string) {
       battleLogManager.addErrorLog(message)
-      const log: BattleLogEntry = {
-        turn: '系统',
-        source: '系统',
-        action: '错误',
-        target: '',
-        result: message,
-        level: 'error',
-        category: 'system',
-        htmlResult: message,
-      }
-      this.logs.push(log)
     },
 
     /**
@@ -493,32 +411,19 @@ export const useBattleStore = defineStore('battle', {
       source: string,
       action: string,
       target: string,
-      result: string,
+      segments: LogSegment[],
       category: BattleLogCategory = 'system',
       level?: BattleLogLevel,
-      htmlResult?: string,
     ) {
       battleLogManager.addLog(
         turn,
         source,
         action,
         target,
-        result,
+        segments,
         category,
         level,
-        htmlResult,
       )
-      const log: BattleLogEntry = {
-        turn,
-        source,
-        action,
-        target,
-        result,
-        level: level || 'info',
-        category,
-        htmlResult,
-      }
-      this.logs.push(log)
     },
 
     /**
@@ -531,17 +436,6 @@ export const useBattleStore = defineStore('battle', {
       result: string,
     ) {
       battleLogManager.addActionLog(source, action, target, result, 'info')
-      const log: BattleLogEntry = {
-        turn: '当前回合',
-        source,
-        action,
-        target,
-        result,
-        level: 'info',
-        category: 'action',
-        htmlResult: result,
-      }
-      this.logs.push(log)
     },
 
     /**
@@ -562,7 +456,6 @@ export const useBattleStore = defineStore('battle', {
      */
     clearLogs() {
       battleLogManager.clearLogs()
-      this.logs = []
       this.processedActionIds.clear()
     },
 
@@ -674,7 +567,6 @@ export const useBattleStore = defineStore('battle', {
         log.level,
         log.htmlResult,
       )
-      this.logs.push(log)
     },
 
     /**
@@ -682,7 +574,6 @@ export const useBattleStore = defineStore('battle', {
      */
     clearBattleLogs() {
       battleLogManager.clearLogs()
-      this.logs = []
       this.processedActionIds.clear()
     },
 
@@ -1027,27 +918,6 @@ export const useBattleStore = defineStore('battle', {
       }
       this.processedActionIds.add(action.id)
 
-      let sourceName = action.sourceId
-      let targetName = action.targetId
-
-      if (action.sourceId === 'system') {
-        sourceName = '系统'
-      } else {
-        const sourceParticipant = battleState.participants.get(action.sourceId)
-        if (sourceParticipant) {
-          sourceName = sourceParticipant.name
-        }
-      }
-
-      if (action.targetId === 'system') {
-        targetName = ''
-      } else {
-        const targetParticipant = battleState.participants.get(action.targetId)
-        if (targetParticipant) {
-          targetName = targetParticipant.name
-        }
-      }
-
       const sourceIsAlly =
         action.sourceId !== 'system'
           ? battleState.participants.get(action.sourceId)?.team === PARTICIPANT_SIDE.ALLY
@@ -1056,72 +926,15 @@ export const useBattleStore = defineStore('battle', {
         ? battleState.participants.get(action.targetId)?.team === PARTICIPANT_SIDE.ALLY
         : undefined
 
-      const turn = action.turn || 1
-      const options = {
-        turn,
-        source: sourceName,
-        target: targetName,
-        damage: action.damage,
-        heal: action.heal,
-        skillName: (await this.getSkillName(action.skillId)) || '',
-        damageType: '物理',
-        sourceIsAlly,
-        targetIsAlly,
-      }
-
-      let actionType:
-        | 'normal_attack'
-        | 'battle_start'
-        | 'battle_end'
-        | 'heal_skill'
-        | 'skill_attack' = 'normal_attack'
-      let logCategory: BattleLogCategory = 'action'
-
-      if (action.sourceId === 'system') {
-        if (action.effects?.some((e) => e.description.includes('战斗开始'))) {
-          actionType = 'battle_start'
-          logCategory = 'system'
-          const match = action.effects[0].description.match(
-            /参战角色: (\d+) 人，参战敌人: (\d+) 人/,
-          )
-          if (match) {
-            options.source = match[1]
-            options.target = match[2]
-          }
-        } else if (
-          action.effects?.some((e) => e.description.includes('战斗结束'))
-        ) {
-          actionType = 'battle_end'
-          logCategory = 'system'
-          const match = action.effects[0].description.match(/胜利者: (.+)/)
-          if (match) {
-            options.source = match[1] === '角色方' ? '我方' : '敌方'
-          }
-        }
-      } else if (action.type === 'skill') {
-        if (action.heal && action.heal > 0) {
-          actionType = 'heal_skill'
-        } else if (action.damage && action.damage > 0) {
-          actionType = 'skill_attack'
-        }
-      }
-
-      const formattedLog = BattleLogFormatter.createBattleLogHTML(
-        actionType,
-        options,
-        logCategory,
+      const fullLog = battleActionToLogEntry(
+        action,
+        battleState.participants,
+        {
+          turnNumber: action.turn,
+          sourceIsAlly,
+          targetIsAlly,
+        },
       )
-
-      const fullLog: BattleLogEntry = {
-        turn: formattedLog.turn,
-        source: sourceName,
-        action: '对',
-        target: targetName,
-        result: formattedLog.htmlResult || '',
-        level: formattedLog.level,
-        category: formattedLog.category,
-        htmlResult: formattedLog.htmlResult,
-      }
 
       const shouldDisplay = this.shouldDisplayLog(fullLog)
 
@@ -1159,10 +972,9 @@ export const useBattleStore = defineStore('battle', {
           log.source,
           log.action,
           log.target,
-          log.result || '',
+          log.segments,
           log.category,
           log.level,
-          log.htmlResult,
         )
       }
     },
@@ -1185,10 +997,11 @@ export const useBattleStore = defineStore('battle', {
     shouldDisplayLog(log: BattleLogEntry): boolean {
       const category = log.category
 
+      const logText = log.segments.map(s => s.text).join('')
       const isLogExists = this.logs.some(
         (existingLog) =>
           existingLog.turn === log.turn &&
-          existingLog.htmlResult === log.htmlResult,
+          existingLog.segments.map(s => s.text).join('') === logText,
       )
 
       if (isLogExists) {

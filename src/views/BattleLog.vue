@@ -1,7 +1,7 @@
 <template>
   <div class="battle-log-section">
     <div class="log-header">
-      <span>战斗日志 (最新在上)</span>
+      <span>战斗日志</span>
       <div class="log-filters">
         <label class="filter-check">
           <input type="checkbox" v-model="logFilters.damage">伤害
@@ -20,20 +20,16 @@
       </div>
     </div>
     <div class="log-content">
+      {{ filteredLogs }}
       <div v-for="(log, index) in filteredLogs" :key="index" class="log-entry" :class="log.category">
         <span class="log-turn">[{{ log.turn }}]</span>
-        <span class="log-result" v-if="log.segments">
+        <span class="log-result">
           <span 
             v-for="(segment, segIndex) in log.segments" 
             :key="segIndex"
             :class="getSegmentClass(segment.color)"
           >{{ segment.text }}</span>
         </span>
-        <span class="log-result" v-else v-html="log.htmlResult || log.result"></span>
-        <div v-if="log.subEffects && log.subEffects.length" class="sub-effects">
-          <div v-for="(effect, ei) in log.subEffects" :key="ei" class="sub-effect" v-html="effect">
-          </div>
-        </div>
       </div>
       <div v-if="filteredLogs.length === 0" class="no-logs">暂无战斗日志</div>
     </div>
@@ -69,22 +65,17 @@ function getSegmentClass(color?: string): string {
 const filteredLogs = computed(() => {
   let logs = [...props.logs].reverse();
 
-  if (!logFilters.damage) {
-    logs = logs.filter((l) => l.category !== "damage" && l.category !== "crit");
+  if (logKeyword.value) {
+    const keyword = logKeyword.value.toLowerCase()
+    logs = logs.filter((log) => {
+      const text = log.segments.map(s => s.text).join('').toLowerCase()
+      return text.includes(keyword) ||
+             log.source.toLowerCase().includes(keyword) ||
+             log.target.toLowerCase().includes(keyword)
+    })
   }
 
-  if (!logFilters.status) {
-    logs = logs.filter((l) => l.category !== "status");
-  }
-
-  if (!logFilters.crit) {
-    logs = logs.filter((l) => l.category !== "crit");
-  }
-
-  if (!logFilters.heal) {
-    logs = logs.filter((l) => l.category !== "heal");
-  }
-  return logs;
+  return logs
 });
 
 const applyFilters = () => {

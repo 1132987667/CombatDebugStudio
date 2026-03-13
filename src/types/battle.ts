@@ -252,18 +252,55 @@ export interface StatusEffect {
  * 用于记录战斗过程中的所有行动，支持战斗回放和日志功能
  */
 export interface BattleAction {
+  /** 动作唯一标识符 */
   id: string
+
+  /** 动作类型：attack-普通攻击, skill-技能, buff-增益/减益, item-物品, status-状态 */
   type: 'attack' | 'skill' | 'buff' | 'item' | 'status'
+
+  /** 执行动作的角色ID */
   sourceId: string
+
+  /** 目标角色ID */
   targetId: string
+
+  /** 使用的技能ID（type为skill时有效） */
   skillId?: string
+
+  /** 技能名称（type为skill时有效，用于日志展示） */
+  skillName?: string
+
+  /** 使用的物品ID（type为item时有效） */
   itemId?: string
+
+  /** 引用的Buff ID（type为buff时有效） */
   buffId?: string
+
+  /** 造成的伤害值（type为attack/skill时有效） */
   damage?: number
+
+  /** 治疗值（type为skill且为治疗技能时有效） */
   heal?: number
+
+  /** 动作是否成功执行 */
   success: boolean
+
+  /** 是否命中（type为attack/skill时有效） */
+  isHit?: boolean
+
+  /** 是否暴击（type为attack/skill时有效） */
+  isCrit?: boolean
+
+  /** 暴击伤害值（isCrit为true时有效，表示本次暴击造成的额外伤害） */
+  critDamage?: number
+
+  /** 动作执行时间戳（毫秒） */
   timestamp: number
+
+  /** 所在回合号 */
   turn?: number
+
+  /** 动作产生的效果列表 */
   effects: BattleEffect[]
 }
 
@@ -485,19 +522,6 @@ export interface BattleRound {
   startSnapshot?: BattleStateSnapshot
   endSnapshot?: BattleStateSnapshot
   events: BattleEvent[]
-}
-
-/** 战斗日志条目 */
-export interface BattleLogEntry {
-  eventId: string
-  type: BattleEventType
-  timestamp: number
-  turn: number
-  roundNumber: number
-  sourceId?: string
-  targetId?: string
-  message: string
-  details?: Record<string, any>
 }
 
 /** 战斗结果 */

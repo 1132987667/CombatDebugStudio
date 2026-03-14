@@ -27,10 +27,14 @@ import type { BattleAI } from '@/core/BattleAI'
 export interface IBattleSystem {
   /**
    * 初始化战斗
-   * @param participantsInfo - 参与者数组
+   * @param allyParticipants - 参与者数组
+   * @param enemyParticipants - 参与者数组
    * @returns BattleState - 初始化后的战斗状态
    */
-  initialize(participantsInfo: BattleParticipant[]): BattleState
+  initialize(
+    allyParticipants: BattleParticipant[],
+    enemyParticipants: BattleParticipant[],
+  ): BattleState
 
   /**
    * 处理战斗回合
@@ -83,16 +87,39 @@ export interface IBattleSystem {
   stopAutoBattle(): void
 
   /**
-   * 检查是否处于自动战斗状态
-   * @returns boolean - 是否处于自动战斗状态
-   */
-  isAutoBattleActive(): boolean
-
-  /**
    * 设置自动战斗速度
    * @param speed - 新的自动战斗速度（1-10）
    */
   setBattleSpeed(speed: number): void
+
+  /**
+   * 获取当前是否处于自动战斗状态
+   * @returns 是否处于自动战斗状态
+   */
+  getAutoBattle(): boolean
+
+  /**
+   * 获取当前是否处于暂停状态
+   * @returns 是否处于暂停状态
+   */
+  getIsPaused(): boolean
+
+  /**
+   * 获取当前战斗速度倍率
+   * @returns 战斗速度倍率
+   */
+  getBattleSpeed(): number
+
+  /**
+   * 设置战斗速度倍率
+   * @param speed 战斗速度倍率
+   */
+  setSpeed(speed: number): void
+
+  /**
+   * 切换暂停状态
+   */
+  togglePause(): void
 
   /**
    * 获取当前战斗数据
@@ -111,6 +138,12 @@ export interface IBattleSystem {
    * @param skillConfigs 技能配置数组
    */
   loadSkillConfigs(skillConfigs: any[]): void
+
+  /**
+   * 获取当前回合数
+   * @returns 当前回合数（从1开始）
+   */
+  getTurn(): number
 }
 
 /**

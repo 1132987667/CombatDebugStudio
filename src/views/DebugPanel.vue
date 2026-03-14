@@ -3,207 +3,189 @@
     <div class="section">
       <div class="section-header">
         <span>属性监控</span>
-        <span class="selected-info">(当前选中: {{ characterStore.selectedCharName }})</span>
+        <span class="selected-info">(当前选中: {{ selectedCharName }})</span>
       </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">基础属性</div>
         <div class="monitor-grid">
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '气血', characterStore.currentCharacter?.maxHp?.options || [], typeof characterStore.currentCharacter?.maxHp === 'object' ? characterStore.currentCharacter.maxHp.value : characterStore.currentCharacter?.maxHp || 0, '数值')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '气血', currentCharacter?.maxHp?.options || [], typeof currentCharacter?.maxHp === 'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
-            <span class="monitor-value">{{ characterStore.currentCharacter?.currentHp || 0 }}/{{ typeof characterStore.currentCharacter?.maxHp === 'object' ? characterStore.currentCharacter.maxHp.value : characterStore.currentCharacter?.maxHp || 0 }}</span>
+            <span class="monitor-value">{{ typeof currentCharacter?.currentHp === 'object' ?
+              currentCharacter.currentHp.value : currentCharacter?.currentHp || 0 }}/{{ typeof currentCharacter?.maxHp
+                ===
+                'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0 }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '能量', [], characterStore.currentCharacter?.currentEnergy || 0, '数值')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '能量', [], typeof currentCharacter?.currentEnergy === 'object' ? currentCharacter.currentEnergy.value : (currentCharacter?.currentEnergy || 0), '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">能量:</span>
-            <span class="monitor-value">{{ characterStore.currentCharacter?.currentEnergy || 0 }}/{{ characterStore.currentCharacter?.maxEnergy || 150 }}</span>
+            <span class="monitor-value">{{ typeof currentCharacter?.currentEnergy === 'object' ?
+              currentCharacter.currentEnergy.value : (currentCharacter?.currentEnergy || 0) }}/{{ typeof
+                currentCharacter?.maxEnergy === 'object' ? currentCharacter.maxEnergy.value : (currentCharacter?.maxEnergy
+                  || 150)
+              }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '攻击', characterStore.currentCharacter?.attack?.options || [], characterStore.attackRange.min, '数值')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '攻击', currentCharacter?.attack?.options || [], attackRange.min, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击:</span>
-            <span class="monitor-value">{{ characterStore.attackRange.min }}-{{ characterStore.attackRange.max }}</span>
+            <span class="monitor-value">{{ attackRange.min }}-{{ attackRange.max }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '防御', characterStore.currentCharacter?.defense?.options || [], typeof characterStore.currentCharacter?.defense === 'object' ? characterStore.currentCharacter.defense.value : characterStore.currentCharacter?.defense || 0, '数值')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '防御', currentCharacter?.defense?.options || [], typeof currentCharacter?.defense === 'object' ? currentCharacter.defense.value : currentCharacter?.defense || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御:</span>
-            <span class="monitor-value">{{ typeof characterStore.currentCharacter?.defense === 'object' ? characterStore.currentCharacter.defense.value : characterStore.currentCharacter?.defense || 0 }}</span>
+            <span class="monitor-value">{{ typeof currentCharacter?.defense === 'object' ?
+              currentCharacter.defense.value : currentCharacter?.defense || 0 }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '速度', characterStore.currentCharacter?.speed?.options || [], typeof characterStore.currentCharacter?.speed === 'object' ? characterStore.currentCharacter.speed.value : characterStore.currentCharacter?.speed || 0, '数值')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '速度', currentCharacter?.speed?.options || [], typeof currentCharacter?.speed === 'object' ? currentCharacter.speed.value : currentCharacter?.speed || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度:</span>
-            <span class="monitor-value">{{ typeof characterStore.currentCharacter?.speed === 'object' ? characterStore.currentCharacter.speed.value : characterStore.currentCharacter?.speed || 0 }}</span>
+            <span class="monitor-value">{{ typeof currentCharacter?.speed === 'object' ? currentCharacter.speed.value :
+              currentCharacter?.speed || 0 }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '暴击率', characterStore.currentCharacter?.critRate?.options || [], typeof characterStore.currentCharacter?.critRate === 'object' ? characterStore.currentCharacter.critRate.value : characterStore.currentCharacter?.critRate || 10, '百分比')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '暴击率', currentCharacter?.critRate?.options || [], typeof currentCharacter?.critRate === 'object' ? currentCharacter.critRate.value : currentCharacter?.critRate || 10, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">暴击率:</span>
-            <span class="monitor-value">{{ typeof characterStore.currentCharacter?.critRate === 'object' ? characterStore.currentCharacter.critRate.value : characterStore.currentCharacter?.critRate || 10 }}%</span>
+            <span class="monitor-value">{{ typeof currentCharacter?.critRate === 'object' ?
+              currentCharacter.critRate.value : currentCharacter?.critRate || 10 }}%</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '暴击伤害', characterStore.currentCharacter?.critDamage?.options || [], typeof characterStore.currentCharacter?.critDamage === 'object' ? characterStore.currentCharacter.critDamage.value : characterStore.currentCharacter?.critDamage || 125, '百分比')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '暴击伤害', currentCharacter?.critDamage?.options || [], typeof currentCharacter?.critDamage === 'object' ? currentCharacter.critDamage.value : currentCharacter?.critDamage || 125, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">暴击伤害:</span>
-            <span class="monitor-value">{{ typeof characterStore.currentCharacter?.critDamage === 'object' ? characterStore.currentCharacter.critDamage.value : characterStore.currentCharacter?.critDamage || 125 }}%</span>
+            <span class="monitor-value">{{ typeof currentCharacter?.critDamage === 'object' ?
+              currentCharacter.critDamage.value : currentCharacter?.critDamage || 125 }}%</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '免伤率', characterStore.currentCharacter?.damageReduction?.options || [], typeof characterStore.currentCharacter?.damageReduction === 'object' ? characterStore.currentCharacter.damageReduction.value : characterStore.currentCharacter?.damageReduction || 0, '百分比')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '免伤率', currentCharacter?.damageReduction?.options || [], typeof currentCharacter?.damageReduction === 'object' ? currentCharacter.damageReduction.value : currentCharacter?.damageReduction || 0, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">免伤率:</span>
-            <span class="monitor-value">{{ typeof characterStore.currentCharacter?.damageReduction === 'object' ? characterStore.currentCharacter.damageReduction.value : characterStore.currentCharacter?.damageReduction || 0 }}%</span>
+            <span class="monitor-value">{{ typeof currentCharacter?.damageReduction === 'object' ?
+              currentCharacter.damageReduction.value : currentCharacter?.damageReduction || 0 }}%</span>
           </div>
         </div>
       </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">属性加成</div>
         <div class="monitor-grid">
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '气血加成', characterStore.currentCharacter?.healthBonus?.options || [], getBonusValue(characterStore.currentCharacter?.healthBonus), '百分比')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '气血加成', currentCharacter?.healthBonus?.options || [], getBonusValue(currentCharacter?.healthBonus), '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(characterStore.currentCharacter?.healthBonus) }}</span>
+            <span class="monitor-value bonus">{{ formatBonus(currentCharacter?.healthBonus) }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '攻击加成', characterStore.currentCharacter?.attackBonus?.options || [], getBonusValue(characterStore.currentCharacter?.attackBonus), '百分比')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '攻击加成', currentCharacter?.attackBonus?.options || [], getBonusValue(currentCharacter?.attackBonus), '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(characterStore.currentCharacter?.attackBonus) }}</span>
+            <span class="monitor-value bonus">{{ formatBonus(currentCharacter?.attackBonus) }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '防御加成', characterStore.currentCharacter?.defenseBonus?.options || [], getBonusValue(characterStore.currentCharacter?.defenseBonus), '百分比')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '防御加成', currentCharacter?.defenseBonus?.options || [], getBonusValue(currentCharacter?.defenseBonus), '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(characterStore.currentCharacter?.defenseBonus) }}</span>
+            <span class="monitor-value bonus">{{ formatBonus(currentCharacter?.defenseBonus) }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '速度加成', characterStore.currentCharacter?.speedBonus?.options || [], getBonusValue(characterStore.currentCharacter?.speedBonus), '百分比')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '速度加成', currentCharacter?.speedBonus?.options || [], getBonusValue(currentCharacter?.speedBonus), '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(characterStore.currentCharacter?.speedBonus) }}</span>
+            <span class="monitor-value bonus">{{ formatBonus(currentCharacter?.speedBonus) }}</span>
           </div>
         </div>
       </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">最终属性</div>
         <div class="monitor-grid">
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '最终攻击', characterStore.currentCharacter?.attack?.options || [], characterStore.attackRange.min, '数值')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '最终攻击', currentCharacter?.attack?.options || [], attackRange.min, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终攻击:</span>
-            <span class="monitor-value final">{{ characterStore.attackRange.min }}-{{ characterStore.attackRange.max }}</span>
+            <span class="monitor-value final">{{ attackRange.min }}-{{ attackRange.max }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '最终防御', characterStore.currentCharacter?.defense?.options || [], typeof characterStore.currentCharacter?.defense === 'object' ? characterStore.currentCharacter.defense.value : characterStore.currentCharacter?.defense || 0, '数值')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '最终防御', currentCharacter?.defense?.options || [], typeof currentCharacter?.defense === 'object' ? currentCharacter.defense.value : currentCharacter?.defense || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终防御:</span>
-            <span class="monitor-value final">{{ typeof characterStore.currentCharacter?.defense === 'object' ? characterStore.currentCharacter.defense.value : characterStore.currentCharacter?.defense || 0 }}</span>
+            <span class="monitor-value final">{{ typeof currentCharacter?.defense === 'object' ?
+              currentCharacter.defense.value : currentCharacter?.defense || 0 }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '最终速度', characterStore.currentCharacter?.speed?.options || [], typeof characterStore.currentCharacter?.speed === 'object' ? characterStore.currentCharacter.speed.value : characterStore.currentCharacter?.speed || 0, '数值')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '最终速度', currentCharacter?.speed?.options || [], typeof currentCharacter?.speed === 'object' ? currentCharacter.speed.value : currentCharacter?.speed || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终速度:</span>
-            <span class="monitor-value final">{{ typeof characterStore.currentCharacter?.speed === 'object' ? characterStore.currentCharacter.speed.value : characterStore.currentCharacter?.speed || 0 }}</span>
+            <span class="monitor-value final">{{ typeof currentCharacter?.speed === 'object' ?
+              currentCharacter.speed.value : currentCharacter?.speed || 0 }}</span>
           </div>
-          <div class="monitor-item" 
-            @mouseenter="showAttrTooltip($event, '最终气血', characterStore.currentCharacter?.maxHp?.options || [], typeof characterStore.currentCharacter?.maxHp === 'object' ? characterStore.currentCharacter.maxHp.value : characterStore.currentCharacter?.maxHp || 0, '数值')"
-            @mousemove="updateTooltipPosition"
-            @mouseleave="hideAttrTooltip">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '最终气血', currentCharacter?.maxHp?.options || [], typeof currentCharacter?.maxHp === 'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终气血:</span>
-            <span class="monitor-value final">{{ typeof characterStore.currentCharacter?.maxHp === 'object' ? characterStore.currentCharacter.maxHp.value : characterStore.currentCharacter?.maxHp || 0 }}</span>
+            <span class="monitor-value final">{{ typeof currentCharacter?.maxHp === 'object' ?
+              currentCharacter.maxHp.value : currentCharacter?.maxHp || 0 }}</span>
           </div>
         </div>
       </div>
       <div class="monitor-group">
-          <div class="monitor-subtitle">技能信息</div>
-          <div class="skills-display">
-            <div
-              v-if="!characterStore.currentCharacter?.skills"
-              class="no-skills"
-            >
-              暂未配置技能
+        <div class="monitor-subtitle">技能信息</div>
+        <div class="skills-display">
+          <div v-if="!currentCharacter?.skills" class="no-skills">
+            暂未配置技能
+          </div>
+          <div v-else class="skills-list">
+            <div class="skill-category"
+              v-if="currentCharacter.skills.passive && currentCharacter.skills.passive.length > 0">
+              <div class="skill-category-title">被动技能</div>
+              <div class="skill-items">
+                <div class="skill-item passive" v-for="(skill, index) in currentCharacter.skills.passive" :key="index"
+                  @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                  @mouseleave="hideSkillTooltip">
+                  {{ skill.name || '未知技能' }}
+                </div>
+              </div>
             </div>
-            <div v-else class="skills-list">
-              <div class="skill-category" v-if="characterStore.currentCharacter.skills.passive && characterStore.currentCharacter.skills.passive.length > 0">
-                <div class="skill-category-title">被动技能</div>
-                <div class="skill-items">
-                  <div 
-                    class="skill-item passive" 
-                    v-for="(skill, index) in characterStore.currentCharacter.skills.passive" 
-                    :key="index"
-                    @mouseenter="showSkillTooltip($event, skill)"
-                    @mousemove="updateTooltipPosition"
-                    @mouseleave="hideSkillTooltip"
-                  >
-                    {{ skill.name || '未知技能' }}
-                  </div>
+            <div class="skill-category"
+              v-if="currentCharacter.skills.small && currentCharacter.skills.small.length > 0">
+              <div class="skill-category-title">小技能</div>
+              <div class="skill-items">
+                <div class="skill-item small" v-for="(skill, index) in currentCharacter.skills.small" :key="index"
+                  @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                  @mouseleave="hideSkillTooltip">
+                  {{ skill.name || '未知技能' }}
                 </div>
               </div>
-              <div class="skill-category" v-if="characterStore.currentCharacter.skills.small && characterStore.currentCharacter.skills.small.length > 0">
-                <div class="skill-category-title">小技能</div>
-                <div class="skill-items">
-                  <div 
-                    class="skill-item small" 
-                    v-for="(skill, index) in characterStore.currentCharacter.skills.small" 
-                    :key="index"
-                    @mouseenter="showSkillTooltip($event, skill)"
-                    @mousemove="updateTooltipPosition"
-                    @mouseleave="hideSkillTooltip"
-                  >
-                    {{ skill.name || '未知技能' }}
-                  </div>
+            </div>
+            <div class="skill-category"
+              v-if="currentCharacter.skills.ultimate && currentCharacter.skills.ultimate.length > 0">
+              <div class="skill-category-title">终极技能</div>
+              <div class="skill-items">
+                <div class="skill-item ultimate" v-for="(skill, index) in currentCharacter.skills.ultimate" :key="index"
+                  @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                  @mouseleave="hideSkillTooltip">
+                  {{ skill.name || '未知技能' }}
                 </div>
               </div>
-              <div class="skill-category" v-if="characterStore.currentCharacter.skills.ultimate && characterStore.currentCharacter.skills.ultimate.length > 0">
-                <div class="skill-category-title">终极技能</div>
-                <div class="skill-items">
-                  <div 
-                    class="skill-item ultimate" 
-                    v-for="(skill, index) in characterStore.currentCharacter.skills.ultimate" 
-                    :key="index"
-                    @mouseenter="showSkillTooltip($event, skill)"
-                    @mousemove="updateTooltipPosition"
-                    @mouseleave="hideSkillTooltip"
-                  >
-                    {{ skill.name || '未知技能' }}
-                  </div>
-                </div>
-              </div>
-              <div v-if="(!characterStore.currentCharacter.skills.passive || characterStore.currentCharacter.skills.passive.length === 0) && (!characterStore.currentCharacter.skills.small || characterStore.currentCharacter.skills.small.length === 0) && (!characterStore.currentCharacter.skills.ultimate || characterStore.currentCharacter.skills.ultimate.length === 0)" class="no-skills">
-                暂未配置技能
-              </div>
+            </div>
+            <div
+              v-if="(!currentCharacter.skills.passive || currentCharacter.skills.passive.length === 0) && (!currentCharacter.skills.small || currentCharacter.skills.small.length === 0) && (!currentCharacter.skills.ultimate || currentCharacter.skills.ultimate.length === 0)"
+              class="no-skills">
+              暂未配置技能
             </div>
           </div>
         </div>
       </div>
+    </div>
 
     <!-- 技能悬浮提示 -->
-    <div 
-      v-if="tooltipVisible && tooltipContent" 
-      class="skill-tooltip"
-      :style="{
-        left: tooltipPosition.x + 'px',
-        top: tooltipPosition.y + 'px'
-      }"
-    >
+    <div v-if="tooltipVisible && tooltipContent" class="skill-tooltip" :style="{
+      left: tooltipPosition.x + 'px',
+      top: tooltipPosition.y + 'px'
+    }">
       <div class="tooltip-header">
         <div class="tooltip-name">{{ tooltipContent.name || '未知技能' }}</div>
         <div class="tooltip-type" :class="getSkillTypeClass(tooltipContent)">
@@ -213,12 +195,12 @@
       <div class="tooltip-description">
         {{ tooltipContent.description || '无描述' }}
       </div>
-      
+
       <!-- 技能基础信息 -->
       <div class="tooltip-stats">
         <div class="stat-item">
           <div class="stat-label">能量消耗</div>
-          <div class="stat-value">{{ tooltipContent.mpCost || 0 }}</div>
+          <div class="stat-value">{{ tooltipContent.energyCost || 0 }}</div>
         </div>
         <div class="stat-item">
           <div class="stat-label">冷却时间</div>
@@ -233,7 +215,7 @@
           <div class="stat-value">{{ getScopeName(tooltipContent.scope) }}</div>
         </div>
       </div>
-      
+
       <!-- 技能效果 -->
       <div v-if="tooltipContent.steps && tooltipContent.steps.length > 0" class="tooltip-effects">
         <div class="effects-title">技能效果</div>
@@ -243,15 +225,16 @@
           <span class="effect-duration" v-if="step.duration">{{ step.duration }}回合</span>
         </div>
       </div>
-      
+
       <!-- 施放条件 -->
       <div v-if="tooltipContent.condition" class="tooltip-condition">
         <span class="condition-label">施放条件:</span>
         <span class="condition-value">{{ tooltipContent.condition }}</span>
       </div>
-      
+
       <!-- 技能可用性 -->
-      <div class="tooltip-availability" :class="{ 'available': isSkillAvailable(tooltipContent), 'unavailable': !isSkillAvailable(tooltipContent) }">
+      <div class="tooltip-availability"
+        :class="{ 'available': isSkillAvailable(tooltipContent), 'unavailable': !isSkillAvailable(tooltipContent) }">
         {{ isSkillAvailable(tooltipContent) ? '当前可用' : '当前不可用' }}
       </div>
     </div>
@@ -286,33 +269,45 @@
     </div>
 
     <!-- 属性悬浮提示 -->
-    <AttributeTooltip 
-      :visible="attrTooltipVisible" 
-      :title="attrTooltipData.title"
-      :options="attrTooltipData.options"
-      :final-value="attrTooltipData.finalValue"
-      :value-type="attrTooltipData.valueType"
-      :trigger-rect="attrTooltipData.triggerRect"
-    />
+    <AttributeTooltip :visible="attrTooltipVisible" :title="attrTooltipData.title" :options="attrTooltipData.options"
+      :final-value="attrTooltipData.finalValue" :value-type="attrTooltipData.valueType"
+      :trigger-rect="attrTooltipData.triggerRect" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useCharacterStore, useDebugStore } from "@/stores";
+import { ref, computed } from "vue";
+import { container } from '@/core/di/Container';
+import { useDebugStore } from "@/stores";
 import AttributeTooltip from "@/components/AttributeTooltip.vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import type { AttributeValue } from "@/types";
 import type { AttributeOption, AttributeValueType } from "@/types/UI/UIBattleCharacter";
 import type { SkillConfig } from "@/types/skill";
+import type { BattleManager } from '@/core/battle/BattleManager';
 
-// 使用Pinia stores
-const characterStore = useCharacterStore();
+// 获取 BattleManager
+const battleManager = container.resolve<BattleManager>('BattleManager');
 const debugStore = useDebugStore();
 
 const props = defineProps<{
   battleSystem?: any;
 }>();
+
+// 响应式获取选中角色数据
+const currentCharacter = computed(() => battleManager.getSelectedCharacter());
+const selectedCharName = computed(() => currentCharacter.value?.name || "未选择");
+
+// 计算攻击范围
+const attackRange = computed(() => {
+  const char = currentCharacter.value;
+  if (!char) return { min: 0, max: 0 };
+
+  const minAttack = typeof char.minAttack === 'object' ? char.minAttack.value : char.minAttack || 0;
+  const maxAttack = typeof char.maxAttack === 'object' ? char.maxAttack.value : char.maxAttack || 0;
+
+  return { min: minAttack, max: maxAttack };
+});
 
 // 手动干预表单数据
 const manualSkillName = ref("");
@@ -334,12 +329,12 @@ const tooltipPosition = ref({ x: 0, y: 0 });
 const updateTooltipPosition = (event: MouseEvent) => {
   const x = event.clientX + 15;
   const y = event.clientY + 15;
-  
+
   const tooltipWidth = 320;
   const tooltipHeight = 200;
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
-  
+
   tooltipPosition.value = {
     x: x + tooltipWidth > windowWidth ? windowWidth - tooltipWidth - 15 : x,
     y: y + tooltipHeight > windowHeight ? windowHeight - tooltipHeight - 15 : y,
@@ -466,7 +461,9 @@ const getStepTypeName = (stepType?: string): string => {
 const isSkillAvailable = (skill: SkillConfig): boolean => {
   // 简单检查：能量消耗是否为0或角色有足够能量
   // 实际项目中需要检查角色当前能量和技能冷却
-  return (skill.mpCost || 0) === 0 || (characterStore.currentCharacter?.currentEnergy || 0) >= (skill.mpCost || 0);
+  const currentEnergy = currentCharacter.value?.currentEnergy;
+  const energyValue = typeof currentEnergy === 'object' ? currentEnergy.value : (currentEnergy || 0);
+  return (skill.energyCost || 0) === 0 || energyValue >= (skill.energyCost || 0);
 };
 
 // 属性悬浮提示状态
@@ -539,9 +536,9 @@ const endTurn = () => {
 };
 
 const executeSkill = (skillName: string) => {
-  if (props.battleSystem && characterStore.currentCharacter) {
+  if (props.battleSystem && currentCharacter.value) {
     try {
-      props.battleSystem.executeSkill(characterStore.currentCharacter.id, skillName);
+      props.battleSystem.executeSkill(currentCharacter.value.id, skillName);
     } catch (error) {
       console.warn('执行技能失败:', error);
     }
@@ -554,9 +551,9 @@ interface StatusData {
 }
 
 const addStatus = (status: StatusData) => {
-  if (props.battleSystem && characterStore.currentCharacter) {
+  if (props.battleSystem && currentCharacter.value) {
     try {
-      props.battleSystem.addStatus(characterStore.currentCharacter.id, status.name, status.turns);
+      props.battleSystem.addStatus(currentCharacter.value.id, status.name, status.turns);
     } catch (error) {
       console.warn('添加状态失败:', error);
     }
@@ -569,9 +566,9 @@ interface StatsData {
 }
 
 const adjustStats = (stats: StatsData) => {
-  if (props.battleSystem && characterStore.currentCharacter) {
+  if (props.battleSystem && currentCharacter.value) {
     try {
-      props.battleSystem.adjustStats(characterStore.currentCharacter.id, stats.hp, stats.mp);
+      props.battleSystem.adjustStats(currentCharacter.value.id, stats.hp, stats.mp);
     } catch (error) {
       console.warn('调整属性失败:', error);
     }
@@ -579,9 +576,9 @@ const adjustStats = (stats: StatsData) => {
 };
 
 const clearStatuses = () => {
-  if (props.battleSystem && characterStore.currentCharacter) {
+  if (props.battleSystem && currentCharacter.value) {
     try {
-      props.battleSystem.clearStatuses(characterStore.currentCharacter.id);
+      props.battleSystem.clearStatuses(currentCharacter.value.id);
     } catch (error) {
       console.warn('清除状态失败:', error);
     }
@@ -592,7 +589,7 @@ const resetBattle = () => {
   if (props.battleSystem) {
     try {
       props.battleSystem.resetBattle();
-      characterStore.resetBattle();
+      battleManager.clearParticipants();
     } catch (error) {
       console.warn('重置战斗失败:', error);
     }
@@ -602,14 +599,17 @@ const resetBattle = () => {
 // 数据快照方法
 const exportState = () => {
   try {
-    // 这里需要获取当前战斗状态的数据
-    // 由于debugStore.exportState需要参数，我们需要从characterStore中获取队伍数据
-    const allyTeam = characterStore.allyTeam;
-    const enemyTeam = characterStore.enemyTeam;
-    const currentTurn = characterStore.getCurrentTurn;
-    const rules = {}; // 这里需要从battleStore中获取规则
-    const battleLogs = []; // 这里需要从battleStore中获取战斗日志
-    
+    const allyTeam = battleManager.getAllyTeam();
+    const enemyTeam = battleManager.getEnemyTeam();
+    const currentTurn = battleManager.getCurrentTurn();
+    const rules = {
+      speedFirst: true,
+      fixedTurns: false,
+      critEnabled: true,
+      dodgeEnabled: false,
+    };
+    const battleLogs: never[] = [];
+
     debugStore.exportState(allyTeam, enemyTeam, currentTurn, rules, battleLogs);
   } catch (error) {
     console.warn('导出状态失败:', error);
@@ -719,7 +719,6 @@ const reloadExport = () => {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
 }
-
 </style>
 
 <style>
@@ -927,7 +926,7 @@ const reloadExport = () => {
     max-width: 280px;
     font-size: 12px;
   }
-  
+
   .tooltip-stats {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -940,7 +939,7 @@ const reloadExport = () => {
     right: 10px !important;
     font-size: 11px;
   }
-  
+
   .tooltip-stats {
     grid-template-columns: 1fr;
   }

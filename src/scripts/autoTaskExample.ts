@@ -18,8 +18,8 @@ import { BATTLE_SYSTEM_TOKEN } from '@/core/battle/interfaces'
 function createExampleBattle() {
   const battleSystem = container.resolve<any>(BATTLE_SYSTEM_TOKEN.toString())
   
-  // 创建示例参与者
-  const participants = [
+  // 创建示例我方参与者
+  const allyParticipants = [
     {
       id: 'char1',
       name: '测试角色1',
@@ -129,6 +129,10 @@ function createExampleBattle() {
         return this.getSkillIds().includes(skillId)
       },
     },
+  ]
+
+  // 创建示例敌方参与者
+  const enemyParticipants = [
     {
       id: 'enemy1',
       name: '测试敌人1',
@@ -242,7 +246,7 @@ function createExampleBattle() {
 
   console.log('auto task example')
   // 创建战斗
-  const battleState = battleSystem.initialize(participants)
+  const battleState = battleSystem.initialize(allyParticipants, enemyParticipants)
   return battleState.battleId
 }
 

@@ -5,8 +5,6 @@ import { AutoBattleManager } from '@/core/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/core/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager'
 import type { UIBattleCharacter } from '@/types'
-import { GameDataProcessor } from '@/utils/GameDataProcessor'
-import type { BattleEventName, BattleEvents } from '@/types/battle-events'
 import {
   PARTICIPANT_SIDE,
   BattleParticipant,
@@ -14,20 +12,21 @@ import {
 } from '@/types/battle'
 import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
 import type {
+  BattleEvents,
   BattleEventName,
   BattleEventCallback,
   BattleEndedEventData,
 } from '@/types/battle-events'
 import { LocalStorage } from '@/utils/storage'
 import { eventBus } from '@/main'
-import { useCharacterStore } from '@/stores/characterStore'
+import { GameDataProcessor } from '@/utils/GameDataProcessor'
+import skillsData from '@configs/skills/skills.json'
 
 /**
  * 战斗管理器
  * 负责协调各个子管理器，提供统一的接口给UI组件
  */
 export class BattleManager {
-  private battleLogManager = battleLogManager
   /**
    * 构造函数
    * @param battleSystem 战斗系统实例
@@ -43,6 +42,14 @@ export class BattleManager {
     private interventionManager: InterventionManager,
     private battleReplayManager: BattleReplayManager,
   ) {}
+
+  /**
+   * 获取当前回合数
+   * @returns 当前回合数（从1开始）
+   */
+  getTurn(): number {
+    return this.battleSystem.getTurn()
+  }
 
   /**
    * 触发事件
@@ -75,13 +82,6 @@ export class BattleManager {
    */
   getBattleStateManager() {
     return this.battleStateManager
-  }
-
-  /**
-   * 获取战斗日志管理器
-   */
-  getBattleLogManager() {
-    return this.battleLogManager
   }
 
   /**
@@ -119,50 +119,351 @@ export class BattleManager {
       if (!allyTeam || !enemyTeam) {
         throw new Error('队伍数据不能为空')
       }
-      if (allyTeam.length === 0 && enemyTeam.length === 0) {
-        throw new Error('至少需要一个角色或敌人参战')
-      }
-      // 从 characterStore 获取队伍数据初始化
-      this.battleStateManager.initializeTeams()
 
       // 使用工厂方法转换队伍
       const allyParticipants = allyTeam.map((char, index) => {
-        if (!char) {
-          throw new Error(`我方队伍中第${index + 1}个角色数据无效`)
-        }
         return BattleParticipantImpl.fromUICharacter(char, true, index)
       })
 
       const enemyParticipants = enemyTeam.map((char, index) => {
-        if (!char) {
-          throw new Error(`敌方队伍中第${index + 1}个角色数据无效`)
-        }
         return BattleParticipantImpl.fromUICharacter(char, false, index)
       })
 
-      // 合并所有参与者
-      const allParticipants = [
-        ...allyParticipants,
-        ...enemyParticipants,
-      ] as BattleParticipant[]
-
       // 验证参与者数据
-      if (allParticipants.length === 0) {
+      if (allyParticipants.length === 0 && enemyParticipants.length === 0) {
         throw new Error('没有有效的参与者数据')
       }
 
+      // 初始化队伍映射关系
+      this.battleStateManager.initializeTeams(allyTeam, enemyTeam)
+
       // 创建战斗状态
-      const battleState = this.battleSystem.initialize(allParticipants)
+      const battleState = this.battleSystem.initialize(
+        allyParticipants as BattleParticipant[],
+        enemyParticipants as BattleParticipant[],
+      )
       const battleId = battleState.battleId
       this.setBattleId(battleId)
 
-      return {
-        battleId,
-      }
+      return { battleId }
     } catch (error) {
       console.error('初始化队伍数据时出错:', error)
       throw error
     }
+  }
+
+  /**
+   * 获取我方队伍（响应式）
+   */
+  getAllyTeam(): UIBattleCharacter[] {
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) {
+      return []
+    }
+    return Array.from(battleState.participants.values())
+      .filter((p) => p.type === PARTICIPANT_SIDE.ALLY)
+      .map((p) => this.participantToUICharacter(p))
+  }
+
+  /**
+   * 获取敌方队伍（响应式）
+   */
+  getEnemyTeam(): UIBattleCharacter[] {
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) {
+      return []
+    }
+    return Array.from(battleState.participants.values())
+      .filter((p) => p.type === PARTICIPANT_SIDE.ENEMY)
+      .map((p) => this.participantToUICharacter(p))
+  }
+
+  /**
+   * 获取所有参与者
+   */
+  getAllParticipants(): UIBattleCharacter[] {
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) {
+      return []
+    }
+    return Array.from(battleState.participants.values()).map((p) =>
+      this.participantToUICharacter(p),
+    )
+  }
+
+  /**
+   * 选择角色
+   */
+  selectCharacter(characterId: string) {
+    this.battleStateManager.selectCharacter(characterId)
+  }
+
+  /**
+   * 获取选中的角色ID
+   */
+  getSelectedCharacterId(): string | null {
+    return this.battleStateManager.getSelectedCharacterId()
+  }
+
+  /**
+   * 获取选中的角色
+   */
+  getSelectedCharacter(): UIBattleCharacter | null {
+    const selectedId = this.getSelectedCharacterId()
+    if (!selectedId) return null
+
+    const allParticipants = this.getAllParticipants()
+    return allParticipants.find((p) => p.id === selectedId) || null
+  }
+
+  /**
+   * 设置角色启用状态
+   */
+  setCharacterEnabled(characterId: string, enabled: boolean) {
+    const participant = this.findParticipant(characterId)
+    if (participant) {
+      participant.enabled = enabled
+      this.syncBattleState()
+      eventBus.emit('teamDataChanged', {
+        allyTeam: this.getAllyTeam(),
+        enemyTeam: this.getEnemyTeam(),
+      })
+    }
+  }
+
+  /**
+   * 移动角色位置
+   */
+  moveCharacter(characterId: string, direction: number) {
+    const team = this.findParticipantTeam(characterId)
+    if (!team) return
+
+    const teamArray = Array.from(team.values())
+    const enabledChars = teamArray.filter((c) => c.enabled)
+    const currentIndex = enabledChars.findIndex((c) => c.id === characterId)
+
+    if (currentIndex < 0) return
+
+    const newIndex = currentIndex + direction
+    if (newIndex < 0 || newIndex >= enabledChars.length) return
+
+    // 交换位置
+    const targetChar = enabledChars[newIndex]
+    const currentChar = enabledChars[currentIndex]
+
+    const idx1 = teamArray.indexOf(currentChar)
+    const idx2 = teamArray.indexOf(targetChar)
+    ;[teamArray[idx1], teamArray[idx2]] = [teamArray[idx2], teamArray[idx1]]
+
+    this.syncBattleState()
+    eventBus.emit('teamDataChanged', {
+      allyTeam: this.getAllyTeam(),
+      enemyTeam: this.getEnemyTeam(),
+    })
+  }
+
+  /**
+   * 清空所有参与者
+   */
+  clearParticipants() {
+    this.battleSystem.resetBattle()
+    this.battleStateManager.resetState()
+    eventBus.emit('teamDataChanged', {
+      allyTeam: [],
+      enemyTeam: [],
+    })
+  }
+
+  /**
+   * 添加角色到队伍
+   */
+  addCharacterToTeam(character: UIBattleCharacter, side: PARTICIPANT_SIDE) {
+    const participant = BattleParticipantImpl.fromUICharacter(
+      character,
+      side === PARTICIPANT_SIDE.ALLY,
+      0,
+    )
+    const battleState = this.battleSystem.getBattleState()
+    if (battleState) {
+      battleState.participants.set(participant.id, participant)
+      this.syncBattleState()
+      eventBus.emit('teamDataChanged', {
+        allyTeam: this.getAllyTeam(),
+        enemyTeam: this.getEnemyTeam(),
+      })
+    }
+  }
+
+  /**
+   * 从队伍移除角色
+   */
+  removeCharacter(characterId: string) {
+    const battleState = this.battleSystem.getBattleState()
+    if (battleState) {
+      battleState.participants.delete(characterId)
+      this.syncBattleState()
+      eventBus.emit('teamDataChanged', {
+        allyTeam: this.getAllyTeam(),
+        enemyTeam: this.getEnemyTeam(),
+      })
+    }
+  }
+
+  /**
+   * 获取当前回合数
+   */
+  getCurrentTurn(): number {
+    return this.battleStateManager.getCurrentTurn()
+  }
+
+  /**
+   * 获取最大回合数
+   */
+  getMaxTurns(): number {
+    return 999
+  }
+
+  /**
+   * 更新角色状态
+   */
+  updateCharacterState(
+    characterId: string,
+    updates: Partial<UIBattleCharacter>,
+  ) {
+    this.battleStateManager.updateCharacterManually(characterId, updates)
+  }
+
+  /**
+   * 重置角色状态到初始值
+   */
+  resetCharacterStates() {
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) return
+
+    battleState.participants.forEach((participant) => {
+      participant.currentHp = participant.maxHp
+      participant.currentEnergy = 25
+    })
+
+    this.syncBattleState()
+    eventBus.emit('teamDataChanged', {
+      allyTeam: this.getAllyTeam(),
+      enemyTeam: this.getEnemyTeam(),
+    })
+  }
+
+  /**
+   * 获取队伍成员数量
+   */
+  getTeamCounts(): { ally: number; enemy: number } {
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) {
+      return { ally: 0, enemy: 0 }
+    }
+
+    const allyCount = Array.from(battleState.participants.values()).filter(
+      (p) => p.type === PARTICIPANT_SIDE.ALLY && p.enabled,
+    ).length
+    const enemyCount = Array.from(battleState.participants.values()).filter(
+      (p) => p.type === PARTICIPANT_SIDE.ENEMY && p.enabled,
+    ).length
+
+    return { ally: allyCount, enemy: enemyCount }
+  }
+
+  /**
+   * 根据ID获取角色
+   */
+  getCharacterById(characterId: string): UIBattleCharacter | undefined {
+    const allParticipants = this.getAllParticipants()
+    return allParticipants.find((p) => p.id === characterId)
+  }
+
+  /**
+   * 批量更新角色状态
+   */
+  updateMultipleCharacters(
+    updates: Array<{ id: string; data: Partial<UIBattleCharacter> }>,
+  ) {
+    updates.forEach(({ id, data }) => {
+      this.updateCharacterState(id, data)
+    })
+  }
+
+  /**
+   * 批量设置角色启用状态
+   */
+  setMultipleCharactersEnabled(characterIds: string[], enabled: boolean) {
+    characterIds.forEach((id) => {
+      this.setCharacterEnabled(id, enabled)
+    })
+  }
+
+  /**
+   * 增加回合数
+   */
+  incrementTurn() {
+    this.battleStateManager.incrementTurn()
+  }
+
+  /**
+   * 减少回合数
+   */
+  decrementTurn() {
+    this.battleStateManager.decrementTurn()
+  }
+
+  /**
+   * 更新回合数
+   */
+  updateTurn(turn: number) {
+    this.battleStateManager.updateTurn(turn)
+  }
+
+  /**
+   * 查找参与者
+   */
+  private findParticipant(characterId: string): BattleParticipant | undefined {
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) return undefined
+    return battleState.participants.get(characterId)
+  }
+
+  /**
+   * 查找参与者所在队伍
+   */
+  private findParticipantTeam(
+    characterId: string,
+  ): Map<string, BattleParticipant> | undefined {
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) return undefined
+
+    const participant = battleState.participants.get(characterId)
+    if (!participant) return undefined
+
+    const team =
+      participant.type === PARTICIPANT_SIDE.ALLY
+        ? new Map(
+            Array.from(battleState.participants.entries()).filter(
+              ([_, p]) => p.type === PARTICIPANT_SIDE.ALLY,
+            ),
+          )
+        : new Map(
+            Array.from(battleState.participants.entries()).filter(
+              ([_, p]) => p.type === PARTICIPANT_SIDE.ENEMY,
+            ),
+          )
+
+    return team
+  }
+
+  /**
+   * 参与者转换为UI角色
+   */
+  private participantToUICharacter(
+    participant: BattleParticipant,
+  ): UIBattleCharacter {
+    return GameDataProcessor.participantToUIBattleCharacter(participant)
   }
 
   /**
@@ -187,14 +488,13 @@ export class BattleManager {
    * @param battleState 战斗状态
    */
   async syncBattleLogs(battleState: any) {
-    await this.battleLogManager.syncBattleLogs(battleState)
+    await battleLogManager.syncBattleLogs(battleState)
   }
 
   /**
    * 加载技能配置
-   * @param skillsData 技能配置数据
    */
-  loadSkillConfigs(skillsData: any) {
+  loadSkillConfigs() {
     if (this.battleSystem) {
       this.battleSystem.loadSkillConfigs(skillsData)
     }
@@ -202,46 +502,42 @@ export class BattleManager {
 
   /**
    * 开始战斗
-   * 从 characterStore 获取启用的角色数据
+   * 从 BattleData 获取启用的角色数据
    */
   async startBattle(): Promise<string | null> {
     if (!this.battleSystem) {
       throw new Error('战斗系统未初始化')
     }
 
-    const characterStore = useCharacterStore()
-    const enabledAllyTeam = Array.from(characterStore.allyTeam.values()).filter(
-      (c) => c.enabled,
-    )
-    const enabledEnemyTeam = Array.from(
-      characterStore.enemyTeam.values(),
-    ).filter((e) => e.enabled)
+    const allyTeam = this.getAllyTeam().filter((c) => c.enabled)
+    const enemyTeam = this.getEnemyTeam().filter((e) => e.enabled)
 
-    if (enabledAllyTeam.length === 0 || enabledEnemyTeam.length === 0) {
-      this.battleLogManager.addErrorLog('队伍数据未初始化，请先添加角色到队伍')
+    if (allyTeam.length === 0 || enemyTeam.length === 0) {
+      battleLogManager.addDebugLog('队伍数据未初始化，请先添加角色到队伍')
       return null
     }
 
-    // 建立映射关系（从 characterStore 获取队伍数据）
-    this.battleStateManager.initializeTeams()
-
     // 转换为战斗参与者
-    const allyParticipants = enabledAllyTeam.map((char, index) => {
+    const allyParticipants = allyTeam.map((char, index) => {
       return BattleParticipantImpl.fromUICharacter(char, true, index)
     })
-    const enemyParticipants = enabledEnemyTeam.map((char, index) => {
+    const enemyParticipants = enemyTeam.map((char, index) => {
       return BattleParticipantImpl.fromUICharacter(char, false, index)
     })
-    const allParticipants: BattleParticipantImpl[] = [
-      ...allyParticipants,
-      ...enemyParticipants,
-    ]
-    const battleState = this.battleSystem.initialize(allParticipants)
+    const battleState = this.battleSystem.initialize(
+      allyParticipants,
+      enemyParticipants,
+    )
     this.battleStateManager.setBattleId(battleState.battleId)
     this.autoBattleManager.setBattleId(battleState.battleId)
-    this.battleLogManager.clearLogs()
-    this.battleLogManager.addSystemLog('战斗已创建')
+    battleLogManager.clearLogs()
+    battleLogManager.addSystemLog('战斗已创建')
     this.syncBattleState()
+
+    // 自动开始战斗
+    if (this.battleSystem.getAutoBattle()) {
+      await this.autoBattleManager.startAutoBattle(battleState.battleId)
+    }
 
     return battleState.battleId
   }
@@ -250,16 +546,23 @@ export class BattleManager {
    * 开始自动战斗
    * @param battleId 战斗ID
    */
-  startAutoBattle(battleId: string) {
-    return this.autoBattleManager.startAutoBattle(battleId)
+  startAutoBattle() {
+    return this.battleSystem.startAutoBattle()
+  }
+
+  /**
+   * 获取自动战斗状态
+   */
+  getAutoBattle(): boolean {
+    return this.battleSystem.getAutoBattle()
   }
 
   /**
    * 停止自动战斗
    * @param battleId 战斗ID
    */
-  stopAutoBattle(battleId: string) {
-    return this.autoBattleManager.stopAutoBattle(battleId)
+  stopAutoBattle() {
+    return this.battleSystem.stopAutoBattle()
   }
 
   /**
@@ -269,7 +572,7 @@ export class BattleManager {
   endBattle(winner: any) {
     const battleId = this.battleStateManager.getBattleId()?.value
     if (battleId) {
-      this.autoBattleManager.stopAutoBattle(battleId)
+      this.battleSystem.stopAutoBattle()
     }
     // 触发战斗结束事件
     const eventData: any = { winner }
@@ -282,7 +585,7 @@ export class BattleManager {
   resetBattle() {
     this.battleStateManager.resetState()
     this.autoBattleManager.resetState()
-    this.battleLogManager.clearLogs()
+    battleLogManager.clearLogs()
   }
 
   /**
@@ -300,139 +603,112 @@ export class BattleManager {
   }
 
   /**
-   * 切换自动战斗状态
+   * 设置战斗速度
+   * @param speed 速度倍率
    */
-  async toggleAutoPlay() {
-    await this.autoBattleManager.toggleAutoPlay()
+  setBattleSpeed(speed: number) {
+    this.battleSystem.setSpeed(speed)
+  }
+
+  /**
+   * 获取战斗速度
+   * @returns 当前战斗速度
+   */
+  getBattleSpeed(): number {
+    return this.battleSystem.getBattleSpeed()
   }
 
   /**
    * 切换暂停状态
    */
   togglePause() {
-    this.autoBattleManager.togglePause()
+    this.battleSystem.togglePause()
   }
 
   /**
-   * 设置战斗速度
-   * @param speed 速度倍率
+   * 获取暂停状态
+   * @returns 是否暂停
    */
-  setBattleSpeed(speed: number) {
-    this.autoBattleManager.setSpeed(speed)
+  isPaused(): boolean {
+    return this.battleSystem.getIsPaused()
   }
 
   /**
-   * 选择角色
-   * @param charId 角色ID
+   * 获取当前战斗状态
+   * @returns 战斗状态对象
    */
-  selectCharacter(charId: string) {
-    this.interventionManager.selectCharacter(charId)
+  getBattleState() {
+    return this.battleSystem.getBattleState()
   }
 
   /**
-   * 开始回放
-   * @param recording 回放记录
+   * 获取战斗ID
+   * @returns 战斗ID
    */
-  startReplay(recording: any) {
-    this.battleReplayManager.startReplay(recording)
+  getBattleId(): string | null {
+    return this.battleStateManager.getBattleId()?.value ?? null
   }
 
   /**
-   * 暂停回放
+   * 保存战斗状态
    */
-  pauseReplay() {
-    this.battleReplayManager.pauseReplay()
+  saveBattleState(): boolean {
+    try {
+      const battleState = this.getBattleState()
+      if (!battleState) {
+        return false
+      }
+      LocalStorage.set('battleState', battleState)
+      return true
+    } catch (error) {
+      console.error('保存战斗状态时出错:', error)
+      return false
+    }
   }
 
   /**
-   * 继续回放
+   * 加载战斗状态
    */
-  resumeReplay() {
-    this.battleReplayManager.resumeReplay()
+  loadBattleState(): any | null {
+    try {
+      const battleState = LocalStorage.get('battleState')
+      if (battleState) {
+        this.battleSystem.restoreBattleState(battleState)
+        this.syncBattleState()
+        return battleState
+      }
+      return null
+    } catch (error) {
+      console.error('加载战斗状态时出错:', error)
+      return null
+    }
   }
 
   /**
-   * 停止回放
+   * 导出战斗记录
+   * @returns 战斗记录JSON字符串
    */
-  stopReplay() {
-    this.battleReplayManager.stopReplay()
+  exportBattleRecord(): string {
+    const battleState = this.getBattleState()
+    return JSON.stringify(battleState, null, 2)
   }
 
   /**
-   * 设置回放速度
-   * @param speed 速度倍率
+   * 获取战斗统计信息
+   * @returns 战斗统计对象
    */
-  setReplaySpeed(speed: number) {
-    this.battleReplayManager.setReplaySpeed(speed)
-  }
+  getBattleStats() {
+    const battleState = this.getBattleState()
+    if (!battleState) {
+      return null
+    }
 
-  /**
-   * 获取战斗数据
-   * 用于UI组件获取战斗状态信息
-   */
-  getBattleData() {
     return {
-      isPaused: this.autoBattleManager.getIsPaused() || false,
-      isAutoPlaying: this.autoBattleManager.getIsAutoPlaying() || false,
-      currentTurn: this.battleStateManager.getCurrentTurn()?.value || 1,
-      maxTurns: 999, // 默认最大回合数
-      battleSpeed: this.autoBattleManager.getBattleSpeed() || 1,
-      battleId: this.battleStateManager.getBattleId()?.value || null,
+      turn: this.getTurn(),
+      participants: battleState.participants?.length || 0,
+      autoBattle: this.battleSystem.getAutoBattle(),
+      isPaused: this.isPaused(),
+      battleSpeed: this.getBattleSpeed(),
     }
-  }
-
-  /**
-   * 获取保存的战斗记录列表
-   */
-  getSavedBattleRecordingsList() {
-    // 从localStorage获取保存的战斗记录列表
-    return LocalStorage.get<string[]>('battle_recordings_list', [])
-  }
-
-  /**
-   * 加载战斗记录
-   * @param key 记录键名
-   */
-  loadBattleRecording(key: string) {
-    // 从localStorage加载战斗记录
-    return LocalStorage.get(key)
-  }
-
-  /**
-   * 保存战斗记录
-   * @param battleId 战斗ID
-   * @param name 记录名称
-   */
-  saveBattleRecording(battleId: string) {
-    // 生成记录键名
-    const saveKey = `battle_recording_${battleId}`
-
-    // 这里可以添加保存战斗记录的逻辑
-    // 例如：从战斗系统获取当前战斗状态并保存
-
-    // 更新保存的记录列表
-    const savedList = this.getSavedBattleRecordingsList()
-    if (!savedList.includes(saveKey)) {
-      savedList.push(saveKey)
-      LocalStorage.set('battle_recordings_list', savedList)
-    }
-
-    return saveKey
-  }
-
-  /**
-   * 删除战斗记录
-   * @param key 记录键名
-   */
-  deleteBattleRecording(key: string) {
-    // 从localStorage删除战斗记录
-    const removeResult = LocalStorage.remove(key)
-
-    // 更新保存的记录列表
-    const savedList = this.getSavedBattleRecordingsList()
-    const updatedList = savedList.filter((item: string) => item !== key)
-    LocalStorage.set('battle_recordings_list', updatedList)
-
-    return removeResult
   }
 }

@@ -17,24 +17,14 @@
             <button class="dialog-close" @click="handleClose">&times;</button>
           </div>
           <div class="dialog-content">
-            <div 
-              v-for="module in debugModules" 
-              :key="module.name" 
-              class="debug-module"
-            >
+            <div v-for="module in debugModules" :key="module.name" class="debug-module">
               <div class="module-header">
                 <span class="module-icon">{{ module.icon }}</span>
                 <span class="module-name">{{ module.name }}</span>
               </div>
               <div class="module-buttons">
-                <button 
-                  v-for="btn in module.buttons" 
-                  :key="btn.label"
-                  class="debug-btn"
-                  :class="btn.class"
-                  @click="handleButtonClick(btn.action)"
-                  :title="btn.description"
-                >
+                <button v-for="btn in module.buttons" :key="btn.label" class="debug-btn" :class="btn.class"
+                  @click="handleButtonClick(btn.action)" :title="btn.description">
                   {{ btn.label }}
                 </button>
               </div>
@@ -129,9 +119,12 @@ const debugModules: DebugModule[] = [
     name: '日志调试',
     icon: '📝',
     buttons: [
-      { label: 'BattleStore', action: 'log_battle_store', description: '调用 battleStore.addLog', class: 'btn-info' },
-      { label: 'BattleManager', action: 'log_battle_manager', description: '调用 battleLogManager.addLog', class: 'btn-info' }
-    ]
+      { label: '战斗日志', action: 'log_battle', description: '调用 addBattleLog', class: 'btn-info' },
+      { label: '系统日志', action: 'log_system', description: '调用 addSystemLog', class: 'btn-info' },
+      { label: '物品日志', action: 'log_item', description: '调用 addItemLog', class: 'btn-info' },
+      { label: '行为日志', action: 'log_action', description: '调用 addActionLog', class: 'btn-info' },
+      { label: '调试日志', action: 'log_debug', description: '调用 addDebugLog', class: 'btn-info' },
+    ],
   }
 ]
 
@@ -323,6 +316,7 @@ const handleButtonClick = (action: string) => {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -334,6 +328,7 @@ const handleButtonClick = (action: string) => {
     transform: translateX(0);
     opacity: 1;
   }
+
   to {
     transform: translateX(100%);
     opacity: 0;

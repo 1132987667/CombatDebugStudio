@@ -12,806 +12,32 @@ import type {
   BattleLogEntry,
   LogFilters,
   BattleLogManagerOptions,
-  LogFormatOptions,
-  HTMLFormatOptions,
   BattleLogCategory,
   BattleLogLevel,
   BattleLogMessageType,
-  ActionType,
   LogEntry,
   LogHandler,
   LogSegment,
 } from '@/types/battle-log'
-import { LogLevel, LogLevelLabel } from '@/types/battle-log'
+import {
+  LogLevel,
+  LogLevelLabel,
+  LogType,
+  LogLevelClass,
+  newLogSegment,
+} from '@/types/battle-log'
+import { reactive } from 'vue'
+import { Counter } from '@/utils/Counter'
+import type { Item } from '@/types/Item'
 
-/**
- * 战斗日志格式化模块
- * 提供战斗日志的文本和HTML格式化功能
- */
-/**
- * 格式化普通攻击日志
- */
-export function formatNormalAttack(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { source, target, damage } = options
-  return {
-    result: `${source} 对 ${target} 发动普通攻击，造成 ${damage} 点物理伤害。`,
-    level: 'damage',
-  }
-}
-
-/**
- * 格式化技能攻击日志
- */
-export function formatSkillAttack(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { source, target, skillName, damage, damageType } = options
-  return {
-    result: `${source} 对 ${target} 发动终极技能【${skillName}】，造成 ${damage} 点${damageType || '魔法'}伤害。`,
-    level: 'damage',
-  }
-}
-
-/**
- * 格式化治疗技能日志
- */
-export function formatHealSkill(options: LogFormatOptions): {
-  result: string
-  level: BattleLogMessageType
-} {
-  const { source, target, skillName, heal } = options
-  return {
-    result: `${source} 对 ${target} 施放【${skillName}】，为其恢复 ${heal} 点生命值。`,
-    level: 'heal',
-  }
-}
-
-/**
- * 格式化施加增益日志
- */
-export function formatBuffSkill(options: LogFormatOptions): {
-  result: string
-  level: BattleLogMessageType
-} {
-  const { source, targetScope, skillName, effect, duration } = options
-  return {
-    result: `${source} 对 ${targetScope} 施加【${skillName}】，使${effect}，持续${duration}回合。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化施加减益日志
- */
-export function formatDebuffSkill(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { source, target, skillName, effect, duration } = options
-  return {
-    result: `${source} 对 ${target} 施放【${skillName}】，成功使${effect}，持续${duration}回合。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化状态生效日志
- */
-export function formatStatusEffect(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { triggerTime, source, target, statusName, damage, damageType } =
-    options
-  return {
-    result: `[${triggerTime}] ${source}的【${statusName}】效果对 ${target} 生效，造成 ${damage} 点${damageType || '持续'}伤害。`,
-    level: 'damage',
-  }
-}
-
-/**
- * 格式化控制效果日志
- */
-export function formatControlEffect(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { source, target, skillName, statusName } = options
-  return {
-    result: `${source} 对 ${target} 发动【${skillName}】，成功使目标陷入【${statusName}】状态，无法行动。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化暴击日志
- */
-export function formatCriticalHit(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { source, target, skillName, damage, damageType } = options
-  return {
-    result: `${source} 对 ${target} 发动【${skillName}】，触发会心一击，造成 ${damage} 点${damageType || '魔法'}伤害。`,
-    level: 'crit',
-  }
-}
-
-/**
- * 格式化未命中日志
- */
-export function formatMissedAttack(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { source, target, skillName } = options
-  const attackType = skillName ? `【${skillName}】` : '普通攻击'
-  return {
-    result: `${source} 对 ${target} 发动${attackType}，攻击被闪避，未命中。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化格挡日志
- */
-export function formatBlockedAttack(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { source, target, skillName, damage } = options
-  return {
-    result: `${source} 对 ${target} 发动【${skillName}】，攻击被格挡，最终造成 ${damage} 点伤害。`,
-    level: 'damage',
-  }
-}
-
-/**
- * 格式化防御动作日志
- */
-export function formatDefenseAction(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { source, stanceName, effect } = options
-  return {
-    result: `${source} 采取了【${stanceName}】姿态，${effect}。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化蓄力动作日志
- */
-export function formatChargeAction(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { source, chargeDescription, skillName } = options
-  return {
-    result: `${source} 开始${chargeDescription}，将在下回合释放【${skillName}】。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化单位死亡日志
- */
-export function formatUnitDeath(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { source, target } = options
-  return {
-    result: `${source} 对 ${target} 造成了致命一击，${target} 被击败。`,
-    level: 'info',
-  }
-}
-
-/**
- * 格式化战斗胜利日志
- */
-export function formatBattleVictory(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  const { exp, gold } = options
-  return {
-    result: `【战斗结束】我方取得了胜利，获得经验值${exp}点，金币${gold}枚。`,
-    level: 'info',
-  }
-}
-
-/**
- * 格式化战斗失败日志
- */
-export function formatBattleDefeat(_options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  return {
-    result: `【战斗结束】我方已全军覆没，战斗失败。`,
-    level: 'info',
-  }
-}
-
-/**
- * 格式化战斗开始日志
- */
-export function formatBattleStart(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  return {
-    result: `【战斗开始】战斗开始！参战角色: ${options.source} 人，参战敌人: ${options.target} 人`,
-    level: 'info',
-  }
-}
-
-/**
- * 格式化战斗结束日志
- */
-export function formatBattleEnd(options: LogFormatOptions): {
-  result: string
-  level: BattleLogCategory
-} {
-  return {
-    result: `【战斗结束】战斗结束！胜利者: ${options.source}`,
-    level: 'info',
-  }
-}
-
-/**
- * 智能格式化函数 - 根据动作类型自动选择合适的格式化方法
- */
-export function formatBattleLog(
-  actionType: ActionType,
-  options: LogFormatOptions,
-): { result: string; level: BattleLogCategory } {
-  switch (actionType) {
-    case 'normal_attack':
-      return formatNormalAttack(options)
-    case 'skill_attack':
-      return formatSkillAttack(options)
-    case 'heal_skill':
-      return formatHealSkill(options)
-    case 'buff_skill':
-      return formatBuffSkill(options)
-    case 'debuff_skill':
-      return formatDebuffSkill(options)
-    case 'status_effect':
-      return formatStatusEffect(options)
-    case 'control_effect':
-      return formatControlEffect(options)
-    case 'critical_hit':
-      return formatCriticalHit(options)
-    case 'missed_attack':
-      return formatMissedAttack(options)
-    case 'blocked_attack':
-      return formatBlockedAttack(options)
-    case 'defense_action':
-      return formatDefenseAction(options)
-    case 'charge_action':
-      return formatChargeAction(options)
-    case 'unit_death':
-      return formatUnitDeath(options)
-    case 'battle_victory':
-      return formatBattleVictory(options)
-    case 'battle_defeat':
-      return formatBattleDefeat(options)
-    case 'battle_start':
-      return formatBattleStart(options)
-    case 'battle_end':
-      return formatBattleEnd(options)
-    default:
-      return {
-        result: `${options.source} 对 ${options.target} 执行了未知动作。`,
-        level: 'info',
-      }
-  }
-}
-
-/**
- * 获取日志颜色映射
- */
-export function getLogLevelColor(level: BattleLogCategory): string {
-  const colorMap: Record<BattleLogCategory, string> = {
-    system: '#9e9e9e',
-    action: '#4fc3f7',
-    damage: '#f44336',
-    heal: '#4caf50',
-    crit: '#ff9800',
-    status: '#2196f3',
-    debug: '#9e9e9e',
-    info: '#2196f3',
-    warning: '#ff9800',
-    error: '#f44336',
-  }
-  return colorMap[level] || '#9e9e9e'
-}
-
-/**
- * 生成完整的战斗日志对象
- */
-export function createBattleLog(
-  actionType: ActionType,
-  options: LogFormatOptions,
-  customLevel?: BattleLogCategory,
-): BattleLogEntry {
-  const formatted = formatBattleLog(actionType, options)
-  const category = customLevel || formatted.level
-  const level: BattleLogLevel = getLevelFromCategory(category)
-
-  return {
-    turn:
-      typeof options.turn === 'number' ? `回合${options.turn}` : options.turn,
-    source: options.source,
-    action: '对',
-    target: options.target,
-    result: formatted.result,
-    level: level,
-    category,
-  }
-}
-
-function getLevelFromCategory(category: BattleLogCategory): BattleLogLevel {
-  if (category === 'system') return 'info'
-  if (category === 'action') return 'info'
-  if (category === 'damage') return 'info'
-  if (category === 'heal') return 'info'
-  if (category === 'crit') return 'info'
-  if (category === 'status') return 'info'
-  return 'info'
-}
-
-function formatSource(source: string, isAlly?: boolean): string {
-  if (isAlly === true) {
-    return `<span class="source-ally">${source}</span>`
-  }
-  return source
-}
-
-function formatTarget(target: string, isAlly?: boolean): string {
-  if (isAlly === true) {
-    return `<span class="source-ally">${target}</span>`
-  }
-  if (isAlly === false) {
-    return `<span class="source-enemy">${target}</span>`
-  }
-  return target
-}
-
-/**
- * 格式化普通攻击日志（HTML版本）
- */
-export function formatNormalAttackHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const {
-    source,
-    target,
-    damage,
-    isCritical,
-    forceCritical,
-    sourceIsAlly,
-    targetIsAlly,
-  } = options
-  const isCrit = isCritical || forceCritical
-  const damageHtml = isCrit
-    ? `<span class="crit-value">${damage}</span>`
-    : `<span class="damage-value">${damage}</span>`
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动<span class="normal-attack">普通攻击</span>，造成 ${damageHtml} 点物理伤害。`,
-    level: isCrit ? 'crit' : 'damage',
-  }
-}
-
-/**
- * 格式化技能攻击日志（HTML版本）
- */
-export function formatSkillAttackHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const {
-    source,
-    target,
-    skillName,
-    damage,
-    damageType,
-    isCritical,
-    forceCritical,
-    sourceIsAlly,
-    targetIsAlly,
-  } = options
-  const isCrit = isCritical || forceCritical
-  const damageHtml = isCrit
-    ? `<span class="crit-value">${damage}</span>`
-    : `<span class="damage-value">${damage}</span>`
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动<span class="skill-attack">【${skillName}】</span>，造成 ${damageHtml} 点${damageType || '魔法'}伤害。`,
-    level: isCrit ? 'crit' : 'damage',
-  }
-}
-
-/**
- * 格式化治疗技能日志（HTML版本）
- */
-export function formatHealSkillHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const { source, target, skillName, heal, sourceIsAlly, targetIsAlly } =
-    options
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 施放<span class="skill-heal">【${skillName}】</span>，为其恢复 <span class="heal-value">${heal}</span> 点生命值。`,
-    level: 'heal',
-  }
-}
-
-/**
- * 格式化增益技能日志（HTML版本）
- */
-export function formatBuffSkillHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const { source, targetScope, skillName, effect, duration, sourceIsAlly } =
-    options
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${targetScope} 施加<span class="skill-heal">【${skillName}】</span>，使<span class="buff">${effect}</span>，持续${duration}回合。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化减益技能日志（HTML版本）
- */
-export function formatDebuffSkillHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const {
-    source,
-    target,
-    skillName,
-    effect,
-    duration,
-    sourceIsAlly,
-    targetIsAlly,
-  } = options
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 施放<span class="skill-debuff">【${skillName}】</span>，成功使<span class="debuff">${effect}</span>，持续${duration}回合。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化状态生效日志（HTML版本）
- */
-export function formatStatusEffectHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const {
-    triggerTime,
-    source,
-    target,
-    statusName,
-    damage,
-    damageType,
-    isCritical,
-    forceCritical,
-    sourceIsAlly,
-    targetIsAlly,
-  } = options
-  const isCrit = isCritical || forceCritical
-  const damageHtml = isCrit
-    ? `<span class="crit-value">${damage}</span>`
-    : `<span class="damage-value">${damage}</span>`
-  return {
-    htmlResult: `[${triggerTime}] ${formatSource(source, sourceIsAlly)}的<span class="debuff">【${statusName}】</span>效果对 ${formatTarget(target, targetIsAlly)} 生效，造成 ${damageHtml} 点${damageType || '持续'}伤害。`,
-    level: isCrit ? 'crit' : 'damage',
-  }
-}
-
-/**
- * 格式化控制效果日志（HTML版本）
- */
-export function formatControlEffectHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const { source, target, skillName, statusName, sourceIsAlly, targetIsAlly } =
-    options
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动<span class="skill-debuff">【${skillName}】</span>，成功使目标陷入<span class="debuff">【${statusName}】</span>状态，无法行动。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化暴击日志（HTML版本）
- */
-export function formatCriticalHitHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const {
-    source,
-    target,
-    skillName,
-    damage,
-    damageType,
-    sourceIsAlly,
-    targetIsAlly,
-  } = options
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动<span class="skill-attack">【${skillName}】</span>，触发会心一击，造成 <span class="crit-value">${damage}</span> 点${damageType || '魔法'}伤害。`,
-    level: 'crit',
-  }
-}
-
-/**
- * 格式化闪避日志（HTML版本）
- */
-export function formatMissedAttackHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const { source, target, skillName, sourceIsAlly, targetIsAlly } = options
-  const attackType = skillName
-    ? `<span class="skill-attack">【${skillName}】</span>`
-    : '普通攻击'
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动${attackType}，攻击被<span class="evade">闪避</span>，未命中。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化格挡日志（HTML版本）
- */
-export function formatBlockedAttackHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const { source, target, skillName, damage, sourceIsAlly, targetIsAlly } =
-    options
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 发动<span class="skill-attack">【${skillName}】</span>，攻击被<span class="evade">格挡</span>，最终造成 <span class="damage-value">${damage}</span> 点伤害。`,
-    level: 'damage',
-  }
-}
-
-/**
- * 格式化防御动作日志（HTML版本）
- */
-export function formatDefenseActionHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const { source, stanceName, effect, sourceIsAlly } = options
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 采取了<span class="skill-heal">【${stanceName}】</span>姿态，${effect}。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化蓄力动作日志（HTML版本）
- */
-export function formatChargeActionHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const { source, chargeDescription, skillName, sourceIsAlly } = options
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 开始${chargeDescription}，将在下回合释放<span class="skill-attack">【${skillName}】</span>。`,
-    level: 'status',
-  }
-}
-
-/**
- * 格式化单位死亡日志（HTML版本）
- */
-export function formatUnitDeathHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const { source, target, sourceIsAlly, targetIsAlly } = options
-  return {
-    htmlResult: `${formatSource(source, sourceIsAlly)} 对 ${formatTarget(target, targetIsAlly)} 造成了致命一击，${formatTarget(target, targetIsAlly)} 被击败。`,
-    level: 'info',
-  }
-}
-
-/**
- * 格式化战斗胜利日志（HTML版本）
- */
-export function formatBattleVictoryHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  const { exp, gold } = options
-  return {
-    htmlResult: `【战斗结束】我方取得了胜利，获得<span class="resource">${exp}</span>点经验值，<span class="resource">${gold}</span>枚金币。`,
-    level: 'info',
-  }
-}
-
-/**
- * 格式化战斗失败日志（HTML版本）
- */
-export function formatBattleDefeatHTML(_options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  return {
-    htmlResult: `【战斗结束】我方已全军覆没，战斗失败。`,
-    level: 'info',
-  }
-}
-
-/**
- * 格式化战斗开始日志（HTML版本）
- */
-export function formatBattleStartHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  return {
-    htmlResult: `【战斗开始】战斗开始！参战角色: ${options.source} 人，参战敌人: ${options.target} 人`,
-    level: 'info',
-  }
-}
-
-/**
- * 格式化战斗结束日志（HTML版本）
- */
-export function formatBattleEndHTML(options: HTMLFormatOptions): {
-  htmlResult: string
-  level: BattleLogCategory
-} {
-  return {
-    htmlResult: `【战斗结束】战斗结束！胜利者: ${options.source}`,
-    level: 'info',
-  }
-}
-
-/**
- * 智能HTML格式化函数 - 根据动作类型自动选择合适的HTML格式化方法
- */
-export function formatBattleLogHTML(
-  actionType: ActionType,
-  options: HTMLFormatOptions,
-): { htmlResult: string; level: BattleLogCategory } {
-  switch (actionType) {
-    case 'normal_attack':
-      return formatNormalAttackHTML(options)
-    case 'skill_attack':
-      return formatSkillAttackHTML(options)
-    case 'heal_skill':
-      return formatHealSkillHTML(options)
-    case 'buff_skill':
-      return formatBuffSkillHTML(options)
-    case 'debuff_skill':
-      return formatDebuffSkillHTML(options)
-    case 'status_effect':
-      return formatStatusEffectHTML(options)
-    case 'control_effect':
-      return formatControlEffectHTML(options)
-    case 'critical_hit':
-      return formatCriticalHitHTML(options)
-    case 'missed_attack':
-      return formatMissedAttackHTML(options)
-    case 'blocked_attack':
-      return formatBlockedAttackHTML(options)
-    case 'defense_action':
-      return formatDefenseActionHTML(options)
-    case 'charge_action':
-      return formatChargeActionHTML(options)
-    case 'unit_death':
-      return formatUnitDeathHTML(options)
-    case 'battle_victory':
-      return formatBattleVictoryHTML(options)
-    case 'battle_defeat':
-      return formatBattleDefeatHTML(options)
-    case 'battle_start':
-      return formatBattleStartHTML(options)
-    case 'battle_end':
-      return formatBattleEndHTML(options)
-    default:
-      return {
-        htmlResult: `${formatSource(options.source, options.sourceIsAlly)} 对 ${formatTarget(options.target, options.targetIsAlly)} 执行了未知动作。`,
-        level: 'system',
-      }
-  }
-}
-
-/**
- * 生成完整的战斗日志对象（HTML版本）
- */
-export function createBattleLogHTML(
-  actionType: ActionType,
-  options: HTMLFormatOptions,
-  customLevel?: BattleLogCategory,
-): BattleLogEntry {
-  const formatted = formatBattleLogHTML(actionType, options)
-  const category = customLevel || formatted.level
-  const level = getLevelFromCategory(category)
-
-  return {
-    turn:
-      typeof options.turn === 'number' ? `回合${options.turn}` : options.turn,
-    source: options.source,
-    action: '对',
-    target: options.target,
-    result: formatted.htmlResult,
-    level,
-    category,
-    htmlResult: formatted.htmlResult,
-  }
-}
-
-// 最后，导出一个聚合对象，名字与原来相同
-export const BattleLogFormatter = {
-  formatNormalAttack,
-  formatSkillAttack,
-  formatHealSkill,
-  formatBuffSkill,
-  formatDebuffSkill,
-  formatStatusEffect,
-  formatControlEffect,
-  formatCriticalHit,
-  formatMissedAttack,
-  formatBlockedAttack,
-  formatDefenseAction,
-  formatChargeAction,
-  formatUnitDeath,
-  formatBattleVictory,
-  formatBattleDefeat,
-  formatBattleStart,
-  formatBattleEnd,
-  formatBattleLog,
-  getLogLevelColor,
-  createBattleLog,
-  formatNormalAttackHTML,
-  formatSkillAttackHTML,
-  formatHealSkillHTML,
-  formatBuffSkillHTML,
-  formatDebuffSkillHTML,
-  formatStatusEffectHTML,
-  formatControlEffectHTML,
-  formatCriticalHitHTML,
-  formatMissedAttackHTML,
-  formatBlockedAttackHTML,
-  formatDefenseActionHTML,
-  formatChargeActionHTML,
-  formatUnitDeathHTML,
-  formatBattleVictoryHTML,
-  formatBattleDefeatHTML,
-  formatBattleStartHTML,
-  formatBattleEndHTML,
-  formatBattleLogHTML,
-  createBattleLogHTML,
-}
-/**
- * 控制台日志处理器
- */
 export class ConsoleLogHandler implements LogHandler {
   handle(entry: LogEntry): void {
-    const timestamp = new Date(entry.timestamp).toISOString()
+    const index = entry.index
     const levelName = LogLevelLabel[entry.level]
     const contextStr = entry.context ? JSON.stringify(entry.context) : ''
     const errorStr = entry.error ? `\nError: ${entry.error.message}` : ''
 
-    const logMessage = `[${timestamp}] ${levelName}: ${entry.message} ${contextStr}${errorStr}`
+    const logMessage = `[${index}] ${levelName}: ${entry.message} ${contextStr}${errorStr}`
 
     switch (entry.level) {
       case LogLevel.ERROR:
@@ -834,30 +60,6 @@ export class ConsoleLogHandler implements LogHandler {
 }
 
 /**
- * 文件日志处理器（内存存储）
- */
-export class FileLogHandler implements LogHandler {
-  private logs: LogEntry[] = []
-  private maxSize = 1000
-
-  handle(entry: LogEntry): void {
-    this.logs.push(entry)
-
-    if (this.logs.length > this.maxSize) {
-      this.logs = this.logs.slice(-this.maxSize)
-    }
-  }
-
-  getLogs(): LogEntry[] {
-    return [...this.logs]
-  }
-
-  clear(): void {
-    this.logs = []
-  }
-}
-
-/**
  * 统一日志管理器
  *
  */
@@ -865,28 +67,41 @@ export class BattleLogManager {
   /** 单例实例 */
   private static instance: BattleLogManager | null = null
 
+  /** 战斗、系统、物品、动作和调试五种类别 */
+
   /** 战斗日志条目数组 */
-  private logs: BattleLogEntry[] = []
+  private battleLogs: BattleLogEntry[] = []
+  /** 战斗日志最大数量 */
+  private battleMaxLogs: number = 200
+
   /** 系统日志条目数组 */
   private systemLogs: LogEntry[] = []
+  /** 系统日志最大数量，默认200条 */
+  private maxSystemLogs: number = 200
+
+  private itemLogs: LogEntry[] = []
+  /** 物品日志最大数量，默认200条 */
+  private maxItemLogs: number = 200
+
+  private actionLogs: LogEntry[] = []
+  /** 动作日志最大数量，默认200条 */
+  private maxActionLogs: number = 200
+
   /** 调试日志条目数组 */
   private debugLogs: LogEntry[] = []
   /** 调试日志最大数量 */
   private maxDebugLogs: number = 500
-  /** 战斗日志最大数量 */
-  private maxLogs: number = 200
-  /** 系统日志最大数量，默认1000条 */
-  private maxSystemLogs: number = 200
+
+  private indexCounter = new Counter()
+
   /** 是否启用自动清理 */
-  private autoCleanup: boolean
+  private autoCleanup: boolean = true
   /** 日志过滤器配置 */
   private filters: LogFilters
-  /** 当前日志级别，默认INFO */
+  /** 当前调试日志级别，默认INFO */
   private level: LogLevel = LogLevel.DEBUG
   /** 日志处理器数组 */
   private handlers: LogHandler[] = []
-  /** 日志来源标识 */
-  private source?: string
 
   /**
    * 获取单例实例
@@ -901,35 +116,28 @@ export class BattleLogManager {
   }
 
   private constructor(options: BattleLogManagerOptions = {}) {
-    this.maxLogs = options.maxLogs || 100
+    this.battleMaxLogs = options.battleMaxLogs ?? 200
+    this.maxSystemLogs = options.maxSystemLogs ?? 200
+    this.maxItemLogs = options.maxItemLogs ?? 200
+    this.maxActionLogs = options.maxActionLogs ?? 200
+    this.maxDebugLogs = options.maxDebugLogs ?? 500
     this.autoCleanup = options.autoCleanup ?? true
-    this.source = options.source
+    this.level = options.level ?? LogLevel.DEBUG
 
     this.filters = {
-      damage: true,
-      status: true,
-      crit: true,
-      heal: false,
+      battle: true,
+      system: true,
+      item: true,
+      action: true,
+      debug: true,
       ...options.filters,
     }
 
+    if (options.handlers) {
+      options.handlers.forEach((handler) => this.addHandler(handler))
+    }
+
     // this.addHandler(new ConsoleLogHandler())
-  }
-
-  // ==================== 系统日志功能 ====================
-
-  /**
-   * 设置日志级别
-   */
-  setLevel(level: LogLevel): void {
-    this.level = level
-  }
-
-  /**
-   * 获取当前日志级别
-   */
-  getLevel(): LogLevel {
-    return this.level
   }
 
   /**
@@ -950,52 +158,6 @@ export class BattleLogManager {
   }
 
   /**
-   * 设置日志来源标识
-   */
-  setSource(source: string): void {
-    this.source = source
-  }
-
-  /**
-   * 记录调试级别日志
-   */
-  debug(message: string, context?: Record<string, unknown>): void {
-    this.log(LogLevel.DEBUG, message, context)
-  }
-
-  /**
-   * 记录信息级别日志
-   */
-  info(message: string, context?: Record<string, unknown>): void {
-    this.log(LogLevel.INFO, message, context)
-  }
-
-  /**
-   * 记录警告级别日志
-   */
-  warn(message: string, context?: Record<string, unknown>): void {
-    this.log(LogLevel.WARN, message, context)
-  }
-
-  /**
-   * 记录错误级别日志
-   */
-  error(
-    message: string,
-    context?: Record<string, unknown>,
-    error?: Error,
-  ): void {
-    this.log(LogLevel.ERROR, message, context, error)
-  }
-
-  /**
-   * 记录跟踪级别日志
-   */
-  trace(message: string, context?: Record<string, unknown>): void {
-    this.log(LogLevel.TRACE, message, context)
-  }
-
-  /**
    * 内部日志记录方法
    */
   private log(
@@ -1003,18 +165,22 @@ export class BattleLogManager {
     message: string,
     context?: Record<string, unknown>,
     error?: Error,
+    source?: string,
+    segments?: LogSegment[],
   ): void {
     if (level > this.level) {
       return
     }
 
     const entry: LogEntry = {
-      timestamp: Date.now(),
+      index: this.indexCounter.next(),
+      type: LogType.SYSTEM,
       level,
       message,
       context,
-      source: this.source,
+      source,
       error,
+      segments: segments || [],
     }
 
     this.systemLogs.push(entry)
@@ -1064,150 +230,236 @@ export class BattleLogManager {
     this.debugLogs = []
   }
 
-  /**
-   * 创建子日志器
-   */
-  createChild(source: string): BattleLogManager {
-    const childLogger = new BattleLogManager({
-      source,
-      maxLogs: this.maxLogs,
-      autoCleanup: this.autoCleanup,
-      filters: this.filters,
-    })
-    childLogger.level = this.level
-    childLogger.handlers = [...this.handlers]
-    return childLogger
-  }
-
-  // ==================== 战斗日志功能 ====================
+  // ==================== 添加日志功能 ====================
 
   /**
-   * 添加战斗日志
+   * 添加【战斗】类型日志
    */
-  addLog(
-    turn: string,
-    source: string,
-    action: string,
-    target: string,
-    segments: LogSegment[],
-    category: BattleLogCategory = 'system',
-    level?: BattleLogMessageType,
+  addBattleLog(
+    turn: number,
+    message: string,
+    segments?: LogSegment[],
+    category?: BattleLogCategory,
+    detailCategory?: string,
   ): void {
     const logEntry: BattleLogEntry = {
+      index: this.indexCounter.next(),
+      type: LogType.BATTLE,
       turn,
-      source,
-      action,
-      target,
+      message,
       category,
-      level: level || getLevelFromCategory(category),
+      detailCategory,
       segments,
+      level: LogLevel.INFO,
+      action: undefined,
     }
 
-    this.logs.unshift(logEntry)
+    this.battleLogs.unshift(logEntry)
 
-    if (this.autoCleanup && this.logs.length > this.maxLogs) {
-      this.logs.pop()
+    if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
+      this.battleLogs.pop()
+    }
+
+    this.emitLogUpdate()
+  }
+
+  recordBattleLog(battleLog: BattleLogEntry): void {
+    this.battleLogs.unshift(battleLog)
+
+    if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
+      this.battleLogs.pop()
     }
 
     this.emitLogUpdate()
   }
 
   /**
-   * 添加系统战斗日志
+   * 添加【系统】类型日志
    */
-  addSystemBattleLog(message: string, level: BattleLogLevel = 'info'): void {
-    this.addLog('系统', '系统', '系统消息', '', [{ text: message }], 'system', level)
-  }
-
-  /**
-   * 添加系统日志（兼容旧接口）
-   */
-  addSystemLog(message: string, level: BattleLogLevel = 'info'): void {
-    this.addSystemBattleLog(message, level)
-  }
-
-  /**
-   * 添加动作日志
-   */
-  addActionLog(
-    source: string,
-    action: string,
-    target: string,
-    result: string,
-    level: BattleLogLevel = 'info',
+  addSystemLog(
+    message: string,
+    options: {
+      level?: LogLevel
+      segments?: LogSegment[]
+    } = {
+      level: LogLevel.INFO,
+      segments: [],
+    },
   ): void {
-    this.addLog('当前回合', source, action, target, [{ text: result }], 'action', level)
+    const logEntry: LogEntry = {
+      index: this.indexCounter.next(),
+      type: LogType.SYSTEM,
+    }
+    if (options.segments.length > 0) {
+      logEntry.segments = options.segments
+    } else {
+      if (options.level) {
+        logEntry.segments = [
+          newLogSegment(message, LogLevelClass[options.level]),
+        ]
+      } else {
+        logEntry.segments = [newLogSegment(message)]
+      }
+    }
+
+    this.systemLogs.unshift(logEntry)
+    if (this.autoCleanup && this.systemLogs.length > this.maxSystemLogs) {
+      this.systemLogs.pop()
+    }
+    this.emitLogUpdate()
   }
 
   /**
-   * 添加错误日志
+   * 添加【物品】类型日志
    */
-  addErrorLog(message: string): void {
-    this.addSystemBattleLog(message, 'error')
+  addItemLog(segments: LogSegment[]): void {
+    const logEntry: LogEntry = {
+      index: this.indexCounter.next(),
+      type: LogType.ITEM,
+      segments: segments,
+    }
+    this.itemLogs.unshift(logEntry)
+    if (this.autoCleanup && this.itemLogs.length > this.maxItemLogs) {
+      this.itemLogs.pop()
+    }
+    this.emitLogUpdate()
+  }
+
+  /**
+   * 添加【动作】类型日志
+   */
+  addActionLog(source: string, action: string, message: string): void {
+    const logEntry: LogEntry = {
+      index: this.indexCounter.next(),
+      type: LogType.SYSTEM,
+      level: LogLevel.INFO,
+      message,
+      context: {},
+      source,
+      error: undefined,
+      segments: [{ text: message }],
+      action,
+    }
+    this.actionLogs.unshift(logEntry)
+    if (this.autoCleanup && this.actionLogs.length > this.maxActionLogs) {
+      this.actionLogs.pop()
+    }
+    this.emitLogUpdate()
+  }
+
+  /**
+   * 记录【调试】类型日志
+   */
+  addDebugLog(
+    message: string,
+    level: LogLevel = LogLevel.INFO,
+    context?: Record<string, unknown>,
+    source?: string,
+    error?: Error,
+  ): void {
+    const entry: LogEntry = {
+      index: this.indexCounter.next(),
+      type: LogType.DEBUG,
+      level,
+      message,
+      context,
+      source,
+      error,
+      segments: [],
+      action: undefined,
+    }
+
+    this.debugLogs.push(entry)
+    if (this.debugLogs.length > this.maxSystemLogs) {
+      this.debugLogs = this.debugLogs.slice(-this.maxSystemLogs)
+    }
+
+    for (const handler of this.handlers) {
+      try {
+        handler.handle(entry)
+      } catch {
+        console.error('Logger handler error:', handler)
+      }
+    }
+  }
+
+  // ==================== 添加便捷日志功能 ====================
+
+  // 格式:
+
+  // 获得单个：获得了 [物品名称] x[数量]
+
+  // 获得批量：获得了 [物品名称] x[数量]、[物品名称] x[数量] 等 [总数量] 件物品
+
+  // 失去单个：失去了 [物品名称] x[数量]
+
+  // 失去批量：失去了 [物品名称] x[数量]、[物品名称] x[数量] 等 [总数量] 件物品
+
+  addGainItemLog(items: Item[]) {
+    const segments = [{ text: '获得了:' }]
+    items.forEach((item, index) => {
+      segments.push({ text: `${item.name} x${item.quantity}` })
+      if (index < items.length - 1) {
+        segments.push({ text: '、' })
+      }
+    })
+    this.addItemLog(segments)
+  }
+
+  addLossItemLog(items: Item[]) {
+    const segments = [{ text: '失去了:' }]
+    items.forEach((item, index) => {
+      segments.push({ text: `${item.name} x${item.quantity}` })
+      if (index < items.length - 1) {
+        segments.push({ text: '、' })
+      }
+    })
+    this.addItemLog(segments)
   }
 
   /**
    * 添加回合开始日志
    */
   addTurnStartLog(turn: number): void {
-    this.addLog(
-      `回合${turn}`,
-      '系统',
-      '回合开始',
-      '',
-      [{ text: `第${turn}回合开始` }],
-      'system',
-      'info',
-    )
+    this.addBattleLog(turn, '回合开始', [{ text: `第${turn}回合开始` }])
   }
 
   /**
    * 添加回合结束日志
    */
   addTurnEndLog(turn: number): void {
-    this.addLog(
-      `回合${turn}`,
-      '系统',
-      '回合结束',
-      '',
-      [{ text: `第${turn}回合结束` }],
-      'system',
-      'info',
-    )
+    this.addBattleLog(turn, '回合结束', [{ text: `第${turn}回合结束` }])
   }
 
   /**
    * 获取所有战斗日志
    */
-  getAllLogs(): BattleLogEntry[] {
-    return [...this.logs]
+  getAllLogs(): LogEntry[] {
+    const array = [
+      ...this.battleLogs,
+      ...this.actionLogs,
+      ...this.systemLogs,
+      ...this.itemLogs,
+    ]
+    return array.sort((a, b) => b.index - a.index)
   }
 
   /**
    * 获取过滤后的战斗日志
    */
-  getFilteredLogs(): BattleLogEntry[] {
-    return this.logs.filter((log) => this.shouldDisplayLog(log))
-  }
-
-  /**
-   * 按级别获取战斗日志
-   */
-  getLogsByLevel(level: string): BattleLogEntry[] {
-    return this.logs.filter((log) => log.level === level)
+  getFilteredLogs(): LogEntry[] {
+    return this.getAllLogs().filter((log) => this.shouldDisplayLog(log))
   }
 
   /**
    * 搜索战斗日志
    */
-  searchLogs(keyword: string): BattleLogEntry[] {
+  searchBattleLogs(keyword: string): BattleLogEntry[] {
     const lowerKeyword = keyword.toLowerCase()
-    return this.logs.filter(
+    return this.battleLogs.filter(
       (log) =>
         log.source.toLowerCase().includes(lowerKeyword) ||
-        log.action.toLowerCase().includes(lowerKeyword) ||
-        log.target.toLowerCase().includes(lowerKeyword) ||
-        log.result.toLowerCase().includes(lowerKeyword),
+        log.target.toLowerCase().includes(lowerKeyword),
     )
   }
 
@@ -1215,7 +467,7 @@ export class BattleLogManager {
    * 清除战斗日志
    */
   clearLogs(): void {
-    this.logs = []
+    this.battleLogs = []
     this.emitLogUpdate()
   }
 
@@ -1223,7 +475,7 @@ export class BattleLogManager {
    * 导出战斗日志
    */
   exportLogs(): string {
-    return JSON.stringify(this.logs, null, 2)
+    return JSON.stringify(this.battleLogs, null, 2)
   }
 
   /**
@@ -1232,10 +484,10 @@ export class BattleLogManager {
   importLogs(logsData: string): void {
     try {
       const importedLogs = JSON.parse(logsData) as BattleLogEntry[]
-      this.logs = importedLogs
+      this.battleLogs = importedLogs
       this.emitLogUpdate()
     } catch (error) {
-      this.addErrorLog(`导入日志失败: ${error}`)
+      this.addDebugLog(`导入日志失败: ${error}`)
     }
   }
 
@@ -1255,47 +507,21 @@ export class BattleLogManager {
   }
 
   /**
-   * 设置最大日志数量
-   */
-  setMaxLogs(max: number): void {
-    this.maxLogs = max
-    if (this.autoCleanup && this.logs.length > max) {
-      this.logs = this.logs.slice(0, max)
-      this.emitLogUpdate()
-    }
-  }
-
-  /**
-   * 获取日志统计信息
-   */
-  getStats(): { total: number; byLevel: Record<string, number> } {
-    const byLevel: Record<string, number> = {}
-
-    this.logs.forEach((log) => {
-      byLevel[log.level] = (byLevel[log.level] || 0) + 1
-    })
-
-    return {
-      total: this.logs.length,
-      byLevel,
-    }
-  }
-
-  /**
    * 判断日志是否应该显示
    */
-  private shouldDisplayLog(log: BattleLogEntry): boolean {
-    const category = log.category
-
-    switch (category) {
-      case 'damage':
-        return this.filters.damage
-      case 'heal':
-        return this.filters.heal
-      case 'crit':
-        return this.filters.crit
-      case 'status':
-        return this.filters.status
+  private shouldDisplayLog(log: LogEntry): boolean {
+    const type = log.type || 'battle'
+    switch (type) {
+      case 'battle':
+        return this.filters.battle !== false
+      case 'system':
+        return this.filters.system !== false
+      case 'item':
+        return this.filters.item !== false
+      case 'action':
+        return this.filters.action !== false
+      case 'debug':
+        return this.filters.debug !== false
       default:
         return true
     }
@@ -1303,12 +529,12 @@ export class BattleLogManager {
 
   // ==================== 监听器功能 ====================
 
-  private listeners: Set<(logs: BattleLogEntry[]) => void> = new Set()
+  private listeners: Set<(logs: LogEntry[]) => void> = new Set()
 
   /**
    * 添加日志更新监听器
    */
-  addListener(callback: (logs: BattleLogEntry[]) => void): void {
+  addListener(callback: (logs: LogEntry[]) => void): void {
     this.listeners.add(callback)
     callback(this.getFilteredLogs())
   }
@@ -1316,7 +542,7 @@ export class BattleLogManager {
   /**
    * 移除日志更新监听器
    */
-  removeListener(callback: (logs: BattleLogEntry[]) => void): void {
+  removeListener(callback: (logs: LogEntry[]) => void): void {
     this.listeners.delete(callback)
   }
 
@@ -1405,4 +631,4 @@ export class BattleLogManager {
 /**
  * 默认日志管理器单例实例
  */
-export const battleLogManager = BattleLogManager.getInstance({ maxLogs: 100 })
+export const battleLogManager = reactive(BattleLogManager.getInstance({}))

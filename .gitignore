@@ -25,6 +25,8 @@ dist
 dist-ssr
 *.local
 
+package-lock.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -46,6 +48,12 @@ dist-ssr
 # Temporary files
 *.tmp
 *.temp
+
+# Output files
+output.txt
+
+# .trae directory
+.trae/
 .cache
 
 # OS generated files

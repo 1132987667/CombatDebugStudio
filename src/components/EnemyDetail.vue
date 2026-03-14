@@ -57,7 +57,7 @@
             <div class="skill-meta">
               <span v-if="skill.category === 'passive'" class="skill-tag passive">被动</span>
               <span v-else-if="skill.category === 'ultimate'" class="skill-tag ultimate">大招</span>
-              <span v-if="skill.mpCost > 0" class="skill-cost">消耗: {{ skill.mpCost }}能量</span>
+              <span v-if="skill.energyCost > 0" class="skill-cost">消耗: {{ skill.energyCost }}能量</span>
             </div>
           </div>
           <div class="skill-body">

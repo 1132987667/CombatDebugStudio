@@ -5,7 +5,7 @@
         <span>参战管理</span>
         <div class="expand-collapse-controls">
           <button class="btn-small" @click="clearParticipants"
-            :disabled="characterStore.allyTeam.length === 0 && characterStore.enemyTeam.length === 0">
+            :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
             <span class="icon">−</span>清空
           </button>
         </div>
@@ -13,13 +13,14 @@
       <div class="section-content">
         <div class="character-field">
           <div class="character-party our-party">
-            <div class="party-header">我方 ({{Array.from(characterStore.allyTeam.values()).filter(c => c.enabled).length}}人)</div>
+            <div class="party-header">我方 ({{allyTeam.filter(c => c.enabled).length}}人)</div>
             <div class="party-members">
-              <div v-for="char in Array.from(characterStore.allyTeam.values())" :key="char.id" class="character-item"
-                :class="{ selected: characterStore.selectedCharacterId === char.id, disabled: !char.enabled }"
+              <div v-for="char in allyTeam" :key="char.id" class="character-item"
+                :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
                 @click="selectCharacter(char.id)">
                 <div class="char-check">
-                  <input type="checkbox" :checked="char.enabled" @change="toggleCharacterEnabled(char.id, $event.target.checked)" @click.stop>
+                  <input type="checkbox" :checked="char.enabled"
+                    @change="toggleCharacterEnabled(char.id, ($event.target as HTMLInputElement).checked)" @click.stop>
                 </div>
                 <div class="char-info">
                   <span class="char-name">{{ char.name }}({{ char.level }})</span>
@@ -38,13 +39,14 @@
           </div>
 
           <div class="character-party enemy-party">
-            <div class="party-header">敌方 ({{Array.from(characterStore.enemyTeam.values()).filter(c => c.enabled).length}}人)</div>
+            <div class="party-header">敌方 ({{enemyTeam.filter(c => c.enabled).length}}人)</div>
             <div class="party-members">
-              <div v-for="char in Array.from(characterStore.enemyTeam.values())" :key="char.id" class="character-item"
-                :class="{ selected: characterStore.selectedCharacterId === char.id, disabled: !char.enabled }"
+              <div v-for="char in enemyTeam" :key="char.id" class="character-item"
+                :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
                 @click="selectCharacter(char.id)">
                 <div class="char-check">
-                  <input type="checkbox" :checked="char.enabled" @change="toggleCharacterEnabled(char.id, $event.target.checked)" @click.stop>
+                  <input type="checkbox" :checked="char.enabled"
+                    @change="toggleCharacterEnabled(char.id, ($event.target as HTMLInputElement).checked)" @click.stop>
                 </div>
                 <div class="char-info">
                   <span class="char-name">{{ char.name }}({{ char.level }})</span>
@@ -56,7 +58,7 @@
                   <span class="first-badge">状态</span>
                 </div>
               </div>
-              <div v-if="characterStore.enemyTeam.length === 0" class="empty-party">(空位)</div>
+              <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
             </div>
           </div>
         </div>
@@ -119,17 +121,19 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
-import { useCharacterStore } from "@/stores";
+import { container } from '@/core/di/Container';
 import type { Enemy, SceneData } from "@/types";
-import { PARTICIPANT_SIDE } from "@/types/battle";
+import { PARTICIPANT_SIDE, type ParticipantSide } from "@/types/battle";
+import type { BattleManager } from '@/core/battle/BattleManager';
+import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter';
 
 interface GroupedEnemies {
   scene: SceneData;
   enemies: Enemy[];
 }
 
-// 使用Pinia store
-const characterStore = useCharacterStore();
+// 获取 BattleManager
+const battleManager = container.resolve<BattleManager>('BattleManager');
 
 // 初始化 GameDataProcessor
 const enemySearch = ref("");
@@ -141,6 +145,11 @@ const expandedScenes = reactive<Record<string, boolean>>({});
 
 // 默认展开所有场景
 scenesData.value.forEach((s) => (expandedScenes[s.id] = true));
+
+// 响应式获取队伍数据
+const allyTeam = computed(() => battleManager.getAllyTeam());
+const enemyTeam = computed(() => battleManager.getEnemyTeam());
+const selectedCharacterId = computed(() => battleManager.getSelectedCharacterId());
 
 const toggleSceneExpand = (sceneId: string) => {
   expandedScenes[sceneId] = !expandedScenes[sceneId];
@@ -210,8 +219,8 @@ const groupedEnemies = computed<GroupedEnemies[]>(() => {
 
 const getOrderIndex = (charId: string) => {
   const ordered = [
-    ...Array.from(characterStore.allyTeam.values()),
-    ...Array.from(characterStore.enemyTeam.values()),
+    ...allyTeam.value,
+    ...enemyTeam.value,
   ].filter((char) => char.enabled)
 
   const index = ordered.findIndex((char) => char.id === charId)
@@ -219,34 +228,33 @@ const getOrderIndex = (charId: string) => {
 };
 
 const selectCharacter = (charId: string) => {
-  characterStore.selectCharacter(charId);
+  battleManager.selectCharacter(charId);
 };
 
-const addEnemyToBattle = (enemy: Enemy, side: string = PARTICIPANT_SIDE.ALLY) => {
+const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY = PARTICIPANT_SIDE.ALLY) => {
   const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive || [])
-  
+
   let attackBonusValue = 0
   let defenseBonusValue = 0
   let speedBonusValue = 0
   let healthBonusValue = 0
-  
+
   if (passiveSkills.length > 0) {
     passiveSkills.forEach(skill => {
-      if (skill.effects) {
-        skill.effects.forEach(effect => {
-          if (effect.type === 'stat_boost' || effect.type === 'attribute_modify') {
-            if (effect.attribute === 'attack' || effect.attribute === 'ATK') {
-              attackBonusValue += effect.value || 0
-            } else if (effect.attribute === 'defense' || effect.attribute === 'DEF') {
-              defenseBonusValue += effect.value || 0
-            } else if (effect.attribute === 'speed' || effect.attribute === 'SPD') {
-              speedBonusValue += effect.value || 0
-            } else if (effect.attribute === 'health' || effect.attribute === 'HP' || effect.attribute === 'maxHp') {
-              healthBonusValue += effect.value || 0
-            }
+      const skillEffects = (skill as any).effects || []
+      skillEffects.forEach((effect: any) => {
+        if (effect.type === 'stat_boost' || effect.type === 'attribute_modify') {
+          if (effect.attribute === 'attack' || effect.attribute === 'ATK') {
+            attackBonusValue += effect.value || 0
+          } else if (effect.attribute === 'defense' || effect.attribute === 'DEF') {
+            defenseBonusValue += effect.value || 0
+          } else if (effect.attribute === 'speed' || effect.attribute === 'SPD') {
+            speedBonusValue += effect.value || 0
+          } else if (effect.attribute === 'health' || effect.attribute === 'HP' || effect.attribute === 'maxHp') {
+            healthBonusValue += effect.value || 0
           }
-        })
-      }
+        }
+      })
     })
   }
 
@@ -257,7 +265,7 @@ const addEnemyToBattle = (enemy: Enemy, side: string = PARTICIPANT_SIDE.ALLY) =>
     name: enemy.name,
     level: enemy.level,
     maxHp: GameDataProcessor.createAttributeValue(enemy.stats.health + Math.floor(enemy.stats.health * healthBonusValue), {}, 'health'),
-    currentHp: enemy.stats.health + Math.floor(enemy.stats.health * healthBonusValue),
+    currentHp: GameDataProcessor.createAttributeValue(enemy.stats.health + Math.floor(enemy.stats.health * healthBonusValue), {}, 'health'),
     maxEnergy: GameDataProcessor.createAttributeValue(150, {}, 'maxEnergy'),
     currentEnergy: GameDataProcessor.createAttributeValue(25, {}, 'currentEnergy'),
     minAttack: GameDataProcessor.createAttributeValue(enemy.stats.minAttack + Math.floor(enemy.stats.minAttack * attackBonusValue), {}, 'minAttack'),
@@ -280,21 +288,25 @@ const addEnemyToBattle = (enemy: Enemy, side: string = PARTICIPANT_SIDE.ALLY) =>
       passive: passiveSkills,
       ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate || []),
     },
-  };
-  
-  characterStore.addEnemyToBattle(newCharacter, side);
+  } as unknown as UIBattleCharacter;
+
+  battleManager.addCharacterToTeam(newCharacter, side as ParticipantSide);
+  battleManager.selectCharacter(newCharacter.id);
 };
 
 const moveCharacter = (direction: number) => {
-  characterStore.moveCharacter(direction);
+  const selectedId = selectedCharacterId.value;
+  if (selectedId) {
+    battleManager.moveCharacter(selectedId, direction);
+  }
 };
 
 const clearParticipants = () => {
-  characterStore.clearParticipants();
+  battleManager.clearParticipants();
 };
 
 const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
-  characterStore.setCharacterEnabled(characterId, enabled);
+  battleManager.setCharacterEnabled(characterId, enabled);
 };
 </script>
 

@@ -5,7 +5,7 @@ export * from '@/core/BuffScriptLoader'
 export * from '@/core/ModifierStack'
 export * from '@/core/BuffContext'
 export * from '@/core/BuffErrorBoundary'
-export { GameBattleSystem as BattleSystem } from '@/core/BattleSystem'
+export { BattleSystem as BattleSystem } from '@/core/BattleSystem'
 
 // 类型定义导出
 export * from '@/types/buff'

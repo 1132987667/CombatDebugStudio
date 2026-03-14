@@ -61,14 +61,11 @@ export class BuffScriptRegistry {
   private registry = new Map<string, RegistryEntry>()
   /** Buff配置数据缓存，以buffId为键 */
   private buffConfigs = new Map<string, BuffConfigData>()
-  /** 日志记录器 */
-  private readonly logger = battleLogManager
 
   /**
-   * 私有构造函数
-   * 防止外部直接实例化
+   * 构造函数
    */
-  private constructor() {
+  public constructor() {
     this.loadBuffConfigs()
   }
 
@@ -84,10 +81,12 @@ export class BuffScriptRegistry {
             this.buffConfigs.set(buff.id, buff as BuffConfigData)
           }
         }
-        this.logger.info(`已加载 ${this.buffConfigs.size} 个Buff配置`)
+        battleLogManager.addDebugLog(
+          `已加载 ${this.buffConfigs.size} 个Buff配置`,
+        )
       }
     } catch (error) {
-      this.logger.error('加载Buff配置失败:', error)
+      battleLogManager.addDebugLog('加载Buff配置失败:', error)
     }
   }
 
@@ -116,7 +115,10 @@ export class BuffScriptRegistry {
    * @param value 属性值字符串，如 "+10", "-0.15", "0.2"
    * @returns 包含数值和修饰类型的对象
    */
-  public parseAttributeValue(value: string): { value: number; type: 'ADDITIVE' | 'PERCENTAGE' } {
+  public parseAttributeValue(value: string): {
+    value: number
+    type: 'ADDITIVE' | 'PERCENTAGE'
+  } {
     const trimmed = value.trim()
     if (trimmed.startsWith('+') || trimmed.startsWith('-')) {
       const numValue = parseFloat(trimmed)
@@ -143,32 +145,32 @@ export class BuffScriptRegistry {
    */
   public normalizeAttributeName(attribute: string): string {
     const attributeMap: Record<string, string> = {
-      'speed': 'SPD',
-      'attack': 'ATK',
-      'defense': 'DEF',
-      'health': 'HP',
-      'critRate': 'CRIT_RATE',
-      'critDamage': 'CRIT_DMG',
-      'physicalDamageTaken': 'PHYSICAL_DMG_TAKEN',
-      'magicDamageTaken': 'MAGIC_DMG_TAKEN',
-      'fireDamageTaken': 'FIRE_DMG_TAKEN',
-      'waterDamageTaken': 'WATER_DMG_TAKEN',
-      'lightningDamageTaken': 'LIGHTNING_DMG_TAKEN',
-      'demonDamage': 'DEMON_DMG',
-      'buddhistDamage': 'BUDDHIST_DMG',
-      'slowImmune': 'SLOW_IMMUNE',
-      'stunResist': 'STUN_RESIST',
-      'knockbackResist': 'KNOCKBACK_RESIST',
-      'poisonResist': 'POISON_RESIST',
-      'bleedResist': 'BLEED_RESIST',
-      'burnImmune': 'BURN_IMMUNE',
-      'fireDamage': 'FIRE_DMG',
-      'poisonChance': 'POISON_CHANCE',
-      'webSuccessRate': 'WEB_SUCCESS_RATE',
-      'debuffDuration': 'DEBUFF_DURATION',
-      'hitRate': 'HIT_RATE',
-      'dodge': 'DODGE',
-      'skillCooldown': 'SKILL_CD',
+      speed: 'SPD',
+      attack: 'ATK',
+      defense: 'DEF',
+      health: 'HP',
+      critRate: 'CRIT_RATE',
+      critDamage: 'CRIT_DMG',
+      physicalDamageTaken: 'PHYSICAL_DMG_TAKEN',
+      magicDamageTaken: 'MAGIC_DMG_TAKEN',
+      fireDamageTaken: 'FIRE_DMG_TAKEN',
+      waterDamageTaken: 'WATER_DMG_TAKEN',
+      lightningDamageTaken: 'LIGHTNING_DMG_TAKEN',
+      demonDamage: 'DEMON_DMG',
+      buddhistDamage: 'BUDDHIST_DMG',
+      slowImmune: 'SLOW_IMMUNE',
+      stunResist: 'STUN_RESIST',
+      knockbackResist: 'KNOCKBACK_RESIST',
+      poisonResist: 'POISON_RESIST',
+      bleedResist: 'BLEED_RESIST',
+      burnImmune: 'BURN_IMMUNE',
+      fireDamage: 'FIRE_DMG',
+      poisonChance: 'POISON_CHANCE',
+      webSuccessRate: 'WEB_SUCCESS_RATE',
+      debuffDuration: 'DEBUFF_DURATION',
+      hitRate: 'HIT_RATE',
+      dodge: 'DODGE',
+      skillCooldown: 'SKILL_CD',
     }
     return attributeMap[attribute.toLowerCase()] || attribute.toUpperCase()
   }
@@ -193,8 +195,6 @@ export class BuffScriptRegistry {
     this.loadBuffConfigs()
   }
 
-
-
   /**
    * 注册Buff脚本
    * @param scriptId 脚本ID
@@ -207,7 +207,9 @@ export class BuffScriptRegistry {
     metadata?: Partial<RegistryEntry['metadata']>,
   ): void {
     if (this.registry.has(scriptId)) {
-      this.logger.warn(`Script "${scriptId}" already registered, overwriting`)
+      battleLogManager.addDebugLog(
+        `Script "${scriptId}" already registered, overwriting`,
+      )
     }
 
     this.registry.set(scriptId, {
@@ -220,7 +222,7 @@ export class BuffScriptRegistry {
       },
     })
 
-    this.logger.info(`Registered buff script: ${scriptId}`)
+    battleLogManager.addDebugLog(`Registered buff script: ${scriptId}`)
   }
 
   /**
@@ -231,7 +233,7 @@ export class BuffScriptRegistry {
   public registerScript(scriptId: string, script: any): void {
     this.register(scriptId, () => script, {
       filePath: 'test',
-      version: 'test'
+      version: 'test',
     })
   }
 
@@ -243,14 +245,17 @@ export class BuffScriptRegistry {
   public get<TParams = any>(scriptId: string): IBuffScript<TParams> | null {
     const entry = this.registry.get(scriptId)
     if (!entry) {
-      this.logger.error(`Buff script not found: ${scriptId}`)
+      battleLogManager.addDebugLog(`Buff script not found: ${scriptId}`)
       return null
     }
 
     try {
       return entry.factory()
     } catch (e) {
-      this.logger.error(`Failed to instantiate script "${scriptId}":`, e)
+      battleLogManager.addDebugLog(
+        `Failed to instantiate script "${scriptId}":`,
+        e,
+      )
       return null
     }
   }

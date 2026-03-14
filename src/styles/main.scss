@@ -640,7 +640,8 @@
 }
 
 @keyframes castingGlow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(156, 136, 255, 0.3);
     background: #2a2a4e;
   }
@@ -656,7 +657,8 @@
 }
 
 @keyframes buffedGlow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
   }
   50% {
@@ -801,16 +803,18 @@
 
 .energy-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ffeb3b, #fbc02d);
-  transition: width 0.3s, background 0.3s;
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
+  transition:
+    width 0.3s,
+    background 0.3s;
 }
 
 .energy-fill.low {
-  background: linear-gradient(90deg, #f44336, #c62828);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
 }
 
 .energy-fill.medium {
-  background: linear-gradient(90deg, #ffeb3b, #fbc02d);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
 }
 
 .energy-fill.full {
@@ -819,20 +823,20 @@
 }
 
 .energy-fill.enemy-fill {
-  background: linear-gradient(90deg, #ff5722, #e64a19);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
 }
 
 .energy-fill.enemy-fill.low {
-  background: linear-gradient(90deg, #f44336, #c62828);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
 }
 
 .energy-fill.enemy-fill.medium {
-  background: linear-gradient(90deg, #ff9800, #e65100);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
 }
 
 .energy-fill.enemy-fill.full {
-  background: linear-gradient(90deg, #ef4444, #b91c1c);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
 }
 
 .member-status {
@@ -1099,7 +1103,7 @@
   color: #a5d6a7;
 }
 
-.log-turn {
+.log-type {
   color: #4fc3f7;
   margin-right: 0.5rem;
 }

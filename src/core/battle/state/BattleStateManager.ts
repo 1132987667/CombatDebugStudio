@@ -1,9 +1,20 @@
 import type { IBattleSystem } from '@/core/battle/interfaces'
 import type { BattleState, BattleParticipant } from '@/types/battle'
-import type { UIBattleCharacter } from '@/types'
+import type { UIBattleCharacter, AttributeValue } from '@/types'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
-import { useCharacterStore } from '@/stores/characterStore'
 import { eventBus } from '@/main'
+
+/**
+ * 更新 AttributeValue 类型属性的内部字段
+ * 保持响应式引用不变，仅更新内部值
+ * @param target 目标属性对象
+ * @param source 源属性对象
+ */
+function updateAttributeValue(target: AttributeValue, source: AttributeValue) {
+  target.value = source.value
+  target.valueType = source.valueType
+  target.options = source.options
+}
 
 /**
  * 战斗状态管理器
@@ -19,6 +30,7 @@ export class BattleStateManager {
   private currentActorId: string | null = null
   private battleId: string | null = null
   private isBattleActive = false
+  private selectedCharacterId: string | null = null
   // 参与者ID到UI角色的映射表
   private participantToUICharacterMap = new Map<string, UIBattleCharacter>()
   // UI角色ID到参与者ID的映射表
@@ -33,7 +45,7 @@ export class BattleStateManager {
   constructor(private battleSystem: IBattleSystem) {
     this.teamDataChangedHandler = () => {
       // 重新初始化队伍映射关系
-      this.initializeTeams()
+      this.refreshMappings()
     }
 
     // 监听队伍数据变化事件
@@ -80,26 +92,34 @@ export class BattleStateManager {
   }
 
   /**
-   * 初始化队伍数据
-   * 从 characterStore 获取启用的队伍数据
+   * 选择角色
    */
-  initializeTeams() {
+  selectCharacter(characterId: string) {
+    this.selectedCharacterId = characterId
+  }
+
+  /**
+   * 获取选中的角色ID
+   */
+  getSelectedCharacterId(): string | null {
+    return this.selectedCharacterId
+  }
+
+  /**
+   * 初始化队伍数据
+   * @param allyTeam 我方队伍
+   * @param enemyTeam 敌方队伍
+   */
+  initializeTeams(
+    allyTeam: UIBattleCharacter[],
+    enemyTeam: UIBattleCharacter[],
+  ) {
     // 清空映射表
     this.participantToUICharacterMap.clear()
     this.uiCharacterToParticipantMap.clear()
 
-    // 从 characterStore 获取启用的队伍数据
-    const characterStore = useCharacterStore()
-    const allyTeam = Array.from(characterStore.allyTeam.values()).filter(
-      (c) => c.enabled,
-    )
-    const enemyTeam = Array.from(characterStore.enemyTeam.values()).filter(
-      (e) => e.enabled,
-    )
-
     // 建立我方队伍的映射关系
     allyTeam.forEach((char, index) => {
-      // 从原始ID构建参与者ID
       const participantId = char.originalId || `character_${index}`
       this.participantToUICharacterMap.set(participantId, char)
       this.uiCharacterToParticipantMap.set(char.id, participantId)
@@ -107,7 +127,6 @@ export class BattleStateManager {
 
     // 建立敌方队伍的映射关系
     enemyTeam.forEach((char, index) => {
-      // 从原始ID构建参与者ID
       const participantId = char.originalId || `enemy_${index}`
       this.participantToUICharacterMap.set(participantId, char)
       this.uiCharacterToParticipantMap.set(char.id, participantId)
@@ -142,10 +161,23 @@ export class BattleStateManager {
 
   /**
    * 刷新映射表
-   * 重新从characterStore加载最新的映射关系
+   * 重新从战斗状态加载最新的映射关系
    */
   refreshMappings(): void {
-    this.initializeTeams()
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) return
+
+    // 清空映射表
+    this.participantToUICharacterMap.clear()
+    this.uiCharacterToParticipantMap.clear()
+
+    // 从战斗状态重建映射关系
+    battleState.participants.forEach((participant: BattleParticipant) => {
+      const character =
+        GameDataProcessor.participantToUIBattleCharacter(participant)
+      this.participantToUICharacterMap.set(participant.id, character)
+      this.uiCharacterToParticipantMap.set(character.id, participant.id)
+    })
   }
 
   /**
@@ -225,29 +257,13 @@ export class BattleStateManager {
   private findUICharacter(
     participantId: string,
   ): UIBattleCharacter | undefined {
-    // 首先通过映射表查找
-    let character = this.participantToUICharacterMap.get(participantId)
-
-    // 如果映射表中找不到，直接从 characterStore 查找
-    if (!character) {
-      const characterStore = useCharacterStore()
-      // 尝试在 allyTeam 中查找
-      character = characterStore.allyTeam.get(participantId)
-      // 尝试在 enemyTeam 中查找
-      if (!character) {
-        character = characterStore.enemyTeam.get(participantId)
-      }
-      // 如果找到，更新映射表
-      if (character) {
-        this.participantToUICharacterMap.set(participantId, character)
-      }
-    }
-
-    return character
+    // 通过映射表查找
+    return this.participantToUICharacterMap.get(participantId)
   }
 
   /**
    * 更新角色状态
+   * 逐个更新属性，保持响应式引用不变
    * @param character UI角色
    * @param participant 战斗参与者
    */
@@ -256,17 +272,40 @@ export class BattleStateManager {
     participant: BattleParticipant,
   ) {
     // 使用新的转换方法创建更新后的UI角色
-    const updatedCharacter =
-      GameDataProcessor.participantToUIBattleCharacter(participant)
+    const updated = GameDataProcessor.participantToUIBattleCharacter(participant)
+
+    // 基础属性（非 AttributeValue 类型）
+    character.level = updated.level
+    character.name = updated.name
+    character.team = updated.team
 
     // 保留原有的UI特定属性
-    updatedCharacter.enabled = character.enabled
-    updatedCharacter.isFirst = character.isFirst
-    updatedCharacter.originalId = character.originalId
-    updatedCharacter.id = character.id
+    character.enabled = character.enabled
+    character.isFirst = character.isFirst
+    character.originalId = character.originalId
+    character.id = character.id
 
-    // 更新角色属性
-    Object.assign(character, updatedCharacter)
+    // AttributeValue 属性逐个更新，保持响应式引用
+    updateAttributeValue(character.currentHp, updated.currentHp)
+    updateAttributeValue(character.maxHp, updated.maxHp)
+    updateAttributeValue(character.currentEnergy, updated.currentEnergy)
+    updateAttributeValue(character.maxEnergy, updated.maxEnergy)
+    updateAttributeValue(character.minAttack, updated.minAttack)
+    updateAttributeValue(character.maxAttack, updated.maxAttack)
+    updateAttributeValue(character.attack, updated.attack)
+    updateAttributeValue(character.defense, updated.defense)
+    updateAttributeValue(character.speed, updated.speed)
+    updateAttributeValue(character.critRate, updated.critRate)
+    updateAttributeValue(character.critDamage, updated.critDamage)
+    updateAttributeValue(character.damageReduction, updated.damageReduction)
+    updateAttributeValue(character.healthBonus, updated.healthBonus)
+    updateAttributeValue(character.attackBonus, updated.attackBonus)
+    updateAttributeValue(character.defenseBonus, updated.defenseBonus)
+    updateAttributeValue(character.speedBonus, updated.speedBonus)
+
+    // 数组类型可以直接赋值，reactive 会处理数组引用变化
+    character.buffs = updated.buffs
+    character.skills = updated.skills
   }
 
   /**
@@ -284,6 +323,32 @@ export class BattleStateManager {
     this.currentActorId = null
     this.currentTurn = 1
     this.isBattleActive = false
+    this.selectedCharacterId = null
+    this.participantToUICharacterMap.clear()
+    this.uiCharacterToParticipantMap.clear()
+  }
+
+  /**
+   * 增加回合数
+   */
+  incrementTurn() {
+    this.currentTurn++
+  }
+
+  /**
+   * 减少回合数
+   */
+  decrementTurn() {
+    if (this.currentTurn > 1) {
+      this.currentTurn--
+    }
+  }
+
+  /**
+   * 更新回合数
+   */
+  updateTurn(turn: number) {
+    this.currentTurn = turn
   }
 
   /**

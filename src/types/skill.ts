@@ -447,7 +447,7 @@ export interface SkillConfig {
    * 施放技能所需的法力值
    * 0表示不消耗法力值
    */
-  mpCost: number
+  energyCost: number
 
   /**
    * 冷却时间(回合数)
@@ -769,7 +769,7 @@ export function convertSkillConfigToSkill(
     id: config.id,
     name: config.name,
     type: inferSkillType(config),
-    energyCost: config.mpCost || 0,
+    energyCost: config.energyCost || 0,
     cooldown: config.cooldown || 0,
     lastUsed,
     description: config.description || '',

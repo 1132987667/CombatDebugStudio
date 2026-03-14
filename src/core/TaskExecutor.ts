@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import { GameBattleSystem } from '@/core/BattleSystem'
+import { BattleSystem } from '@/core/BattleSystem'
 import { RAFTimer } from '@/utils/RAF'
 import { battleLogManager } from '@/utils/logging'
 
@@ -72,22 +72,19 @@ export class TaskExecutor {
   private timer: RAFTimer
   private heartbeats: Map<string, symbol> = new Map()
   private progressTimers: Map<string, symbol> = new Map()
-  private battleSystem: GameBattleSystem
-  private logger = battleLogManager
+  private battleSystem: BattleSystem
+  private config: TaskConfig
 
   /**
    * 私有构造函数
    * @param battleSystem 战斗系统实例（通过构造函数注入）
    */
-  private constructor(battleSystem: GameBattleSystem) {
+  public constructor(battleSystem: BattleSystem) {
     this.battleSystem = battleSystem
     this.timer = new RAFTimer()
-    this.logger = battleLogManager
     this.config = this.loadConfig()
     this.initialize()
   }
-
-
 
   private loadConfig(): TaskConfig {
     try {
@@ -98,36 +95,40 @@ export class TaskExecutor {
           enabled: true,
           max_execution_time: 3600000,
           grace_period: 300000,
-          heartbeat_interval: 60000
+          heartbeat_interval: 60000,
         },
         error_handling: {
           enabled: true,
           max_retries: 3,
           retry_delay: 5000,
           error_logging: true,
-          continue_on_error: false
+          continue_on_error: false,
         },
         progress: {
           enabled: true,
           save_interval: 300000,
           save_path: '.trae/task_progress',
-          auto_resume: true
+          auto_resume: true,
         },
         notification: {
           enabled: true,
           on_completion: true,
           on_error: true,
           on_timeout: true,
-          notification_method: 'console'
+          notification_method: 'console',
         },
         resource_management: {
           memory_limit: '2GB',
           cpu_limit: 80,
-          cleanup_on_finish: true
-        }
+          cleanup_on_finish: true,
+        },
       }
     } catch (error) {
-      this.logger.error('加载配置文件失败:', undefined, error as Error)
+      battleLogManager.addDebugLog(
+        '加载配置文件失败:',
+        undefined,
+        error as Error,
+      )
       // 返回默认配置
       return this.getDefaultConfig()
     }
@@ -139,33 +140,33 @@ export class TaskExecutor {
         enabled: true,
         max_execution_time: 3600000,
         grace_period: 300000,
-        heartbeat_interval: 60000
+        heartbeat_interval: 60000,
       },
       error_handling: {
         enabled: true,
         max_retries: 3,
         retry_delay: 5000,
         error_logging: true,
-        continue_on_error: false
+        continue_on_error: false,
       },
       progress: {
         enabled: true,
         save_interval: 300000,
         save_path: '.trae/task_progress',
-        auto_resume: true
+        auto_resume: true,
       },
       notification: {
         enabled: true,
         on_completion: true,
         on_error: true,
         on_timeout: true,
-        notification_method: 'console'
+        notification_method: 'console',
       },
       resource_management: {
         memory_limit: '2GB',
         cpu_limit: 80,
-        cleanup_on_finish: true
-      }
+        cleanup_on_finish: true,
+      },
     }
   }
 
@@ -179,7 +180,7 @@ export class TaskExecutor {
   private resumePendingTasks(): void {
     // 在实际环境中，这里应该从存储中加载未完成的任务
     // 由于当前环境限制，我们暂时不实现此功能
-    this.logger.info('检查未完成的任务...')
+    battleLogManager.addDebugLog('检查未完成的任务...')
   }
 
   /**
@@ -198,10 +199,10 @@ export class TaskExecutor {
       status: 'pending',
       progress: 0,
       retries: 0,
-      config
+      config,
     }
     this.tasks.set(taskId, task)
-    this.logger.info(`创建任务: ${name} (${taskId})`)
+    battleLogManager.addDebugLog(`创建任务: ${name} (${taskId})`)
     return taskId
   }
 
@@ -216,7 +217,7 @@ export class TaskExecutor {
     }
 
     if (task.status === 'running') {
-      this.logger.warn(`任务已经在运行中: ${taskId}`)
+      battleLogManager.addDebugLog(`任务已经在运行中: ${taskId}`)
       return
     }
 
@@ -273,7 +274,9 @@ export class TaskExecutor {
         task.result = {
           winner: battleData.winner,
           rounds: battleData.currentRound,
-          duration: battleData.endTime ? battleData.endTime - battleData.startTime : 0
+          duration: battleData.endTime
+            ? battleData.endTime - battleData.startTime
+            : 0,
         }
         this.stopHeartbeat(task.id)
         this.stopProgressSaving(task.id)
@@ -281,12 +284,15 @@ export class TaskExecutor {
         this.cleanupTask(task.id)
       } else {
         // 更新任务进度
-        task.progress = Math.min(100, (battleData.currentRound / maxRounds) * 100)
+        task.progress = Math.min(
+          100,
+          (battleData.currentRound / maxRounds) * 100,
+        )
         this.saveTaskProgress(task.id, {
           battleId,
           battleState: battleData.battleState,
           currentRound: battleData.currentRound,
-          currentTurn: battleData.currentTurn
+          currentTurn: battleData.currentTurn,
         })
       }
     }, 1000)
@@ -299,12 +305,12 @@ export class TaskExecutor {
   public stopTask(taskId: string): void {
     const task = this.tasks.get(taskId)
     if (!task) {
-      this.logger.warn(`任务不存在: ${taskId}`)
+      battleLogManager.addDebugLog(`任务不存在: ${taskId}`)
       return
     }
 
     if (task.status !== 'running') {
-      this.logger.warn(`任务不在运行中: ${taskId}`)
+      battleLogManager.addDebugLog(`任务不在运行中: ${taskId}`)
       return
     }
 
@@ -317,7 +323,7 @@ export class TaskExecutor {
     this.notifyTaskCompletion(taskId)
     this.cleanupTask(taskId)
 
-    this.logger.info(`任务已停止: ${taskId}`)
+    battleLogManager.addDebugLog(`任务已停止: ${taskId}`)
   }
 
   /**
@@ -327,12 +333,12 @@ export class TaskExecutor {
   public pauseTask(taskId: string): void {
     const task = this.tasks.get(taskId)
     if (!task) {
-      this.logger.warn(`任务不存在: ${taskId}`)
+      battleLogManager.addDebugLog(`任务不存在: ${taskId}`)
       return
     }
 
     if (task.status !== 'running') {
-      this.logger.warn(`任务不在运行中: ${taskId}`)
+      battleLogManager.addDebugLog(`任务不在运行中: ${taskId}`)
       return
     }
 
@@ -342,7 +348,7 @@ export class TaskExecutor {
     this.stopHeartbeat(taskId)
     this.stopProgressSaving(taskId)
 
-    this.logger.info(`任务已暂停: ${taskId}`)
+    battleLogManager.addDebugLog(`任务已暂停: ${taskId}`)
   }
 
   /**
@@ -352,12 +358,12 @@ export class TaskExecutor {
   public resumeTask(taskId: string): void {
     const task = this.tasks.get(taskId)
     if (!task) {
-      this.logger.warn(`任务不存在: ${taskId}`)
+      battleLogManager.addDebugLog(`任务不存在: ${taskId}`)
       return
     }
 
     if (task.status !== 'pending') {
-      this.logger.warn(`任务状态不正确: ${taskId}`)
+      battleLogManager.addDebugLog(`任务状态不正确: ${taskId}`)
       return
     }
 
@@ -368,7 +374,7 @@ export class TaskExecutor {
     // 恢复任务执行
     this.startTask(taskId)
 
-    this.logger.info(`任务已恢复: ${taskId}`)
+    battleLogManager.addDebugLog(`任务已恢复: ${taskId}`)
   }
 
   /**
@@ -464,16 +470,20 @@ export class TaskExecutor {
       taskId,
       progress: task.progress,
       state,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
 
     try {
       // 在实际环境中，这里应该将进度保存到文件系统或数据库
       // 由于当前环境限制，我们使用localStorage
       localStorage.setItem(`task_progress_${taskId}`, JSON.stringify(progress))
-      this.logger.debug(`保存任务进度: ${taskId}, ${task.progress}%`)
+      battleLogManager.addDebugLog(`保存任务进度: ${taskId}, ${task.progress}%`)
     } catch (error) {
-      this.logger.error('保存任务进度失败:', undefined, error as Error)
+      battleLogManager.addDebugLog(
+        '保存任务进度失败:',
+        undefined,
+        error as Error,
+      )
     }
   }
 
@@ -492,14 +502,18 @@ export class TaskExecutor {
     task.retries++
 
     if (this.config.error_handling.error_logging) {
-      this.logger.error(`任务执行错误: ${taskId}`, error)
+      battleLogManager.addDebugLog(`任务执行错误: ${taskId}`, error)
     }
 
     if (task.retries <= this.config.error_handling.max_retries) {
-      this.logger.info(`任务将在 ${this.config.error_handling.retry_delay}ms 后重试 (${task.retries}/${this.config.error_handling.max_retries})`)
-      
+      battleLogManager.addDebugLog(
+        `任务将在 ${this.config.error_handling.retry_delay}ms 后重试 (${task.retries}/${this.config.error_handling.max_retries})`,
+      )
+
       // 延迟后重试
-      await new Promise(resolve => setTimeout(resolve, this.config.error_handling.retry_delay))
+      await new Promise((resolve) =>
+        setTimeout(resolve, this.config.error_handling.retry_delay),
+      )
       await this.startTask(taskId)
     } else {
       task.status = 'failed'
@@ -510,7 +524,9 @@ export class TaskExecutor {
       this.notifyTaskError(taskId, error)
       this.cleanupTask(taskId)
 
-      this.logger.error(`任务执行失败，已达到最大重试次数: ${taskId}`)
+      battleLogManager.addDebugLog(
+        `任务执行失败，已达到最大重试次数: ${taskId}`,
+      )
     }
   }
 
@@ -533,7 +549,7 @@ export class TaskExecutor {
     this.notifyTaskTimeout(taskId)
     this.cleanupTask(taskId)
 
-    this.logger.error(`任务执行超时: ${taskId}`)
+    battleLogManager.addDebugLog(`任务执行超时: ${taskId}`)
   }
 
   /**
@@ -541,7 +557,10 @@ export class TaskExecutor {
    * @param taskId 任务ID
    */
   private notifyTaskCompletion(taskId: string): void {
-    if (!this.config.notification.enabled || !this.config.notification.on_completion) {
+    if (
+      !this.config.notification.enabled ||
+      !this.config.notification.on_completion
+    ) {
       return
     }
 
@@ -555,7 +574,7 @@ export class TaskExecutor {
       taskId,
       taskName: task.name,
       timestamp: Date.now(),
-      result: task.result
+      result: task.result,
     }
 
     this.sendNotification(notification)
@@ -567,7 +586,10 @@ export class TaskExecutor {
    * @param error 错误对象
    */
   private notifyTaskError(taskId: string, error: any): void {
-    if (!this.config.notification.enabled || !this.config.notification.on_error) {
+    if (
+      !this.config.notification.enabled ||
+      !this.config.notification.on_error
+    ) {
       return
     }
 
@@ -581,7 +603,7 @@ export class TaskExecutor {
       taskId,
       taskName: task.name,
       timestamp: Date.now(),
-      error: error.message || String(error)
+      error: error.message || String(error),
     }
 
     this.sendNotification(notification)
@@ -592,7 +614,10 @@ export class TaskExecutor {
    * @param taskId 任务ID
    */
   private notifyTaskTimeout(taskId: string): void {
-    if (!this.config.notification.enabled || !this.config.notification.on_timeout) {
+    if (
+      !this.config.notification.enabled ||
+      !this.config.notification.on_timeout
+    ) {
       return
     }
 
@@ -606,7 +631,7 @@ export class TaskExecutor {
       taskId,
       taskName: task.name,
       timestamp: Date.now(),
-      maxExecutionTime: this.config.timeout.max_execution_time
+      maxExecutionTime: this.config.timeout.max_execution_time,
     }
 
     this.sendNotification(notification)
@@ -623,14 +648,16 @@ export class TaskExecutor {
         break
       case 'file':
         // 在实际环境中，这里应该将通知写入文件
-        this.logger.info('任务通知:', notification)
+        battleLogManager.addDebugLog('任务通知:', notification)
         break
       case 'webhook':
         // 在实际环境中，这里应该通过webhook发送通知
-        this.logger.info('任务通知:', notification)
+        battleLogManager.addDebugLog('任务通知:', notification)
         break
       default:
-        this.logger.warn(`未知的通知方式: ${this.config.notification.notification_method}`)
+        battleLogManager.addDebugLog(
+          `未知的通知方式: ${this.config.notification.notification_method}`,
+        )
     }
   }
 
@@ -647,13 +674,17 @@ export class TaskExecutor {
     try {
       localStorage.removeItem(`task_progress_${taskId}`)
     } catch (error) {
-      this.logger.error('清理任务进度失败:', undefined, error as Error)
+      battleLogManager.addDebugLog(
+        '清理任务进度失败:',
+        undefined,
+        error as Error,
+      )
     }
 
     // 从任务列表中移除
     this.tasks.delete(taskId)
 
-    this.logger.info(`任务资源已清理: ${taskId}`)
+    battleLogManager.addDebugLog(`任务资源已清理: ${taskId}`)
   }
 
   /**
@@ -678,7 +709,9 @@ export class TaskExecutor {
    * @returns 运行中的任务列表
    */
   public getRunningTasks(): Task[] {
-    return Array.from(this.tasks.values()).filter(task => task.status === 'running')
+    return Array.from(this.tasks.values()).filter(
+      (task) => task.status === 'running',
+    )
   }
 
   /**
@@ -693,6 +726,6 @@ export class TaskExecutor {
       this.cleanupTask(taskId)
     }
 
-    this.logger.info('任务执行器已销毁')
+    battleLogManager.addDebugLog('任务执行器已销毁')
   }
 }

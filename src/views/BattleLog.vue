@@ -4,46 +4,44 @@
       <span>战斗日志</span>
       <div class="log-filters">
         <label class="filter-check">
-          <input type="checkbox" v-model="logFilters.damage">伤害
+          <input type="checkbox" v-model="logFilters.battle">战斗
         </label>
         <label class="filter-check">
-          <input type="checkbox" v-model="logFilters.status">状态
+          <input type="checkbox" v-model="logFilters.system">系统
         </label>
         <label class="filter-check">
-          <input type="checkbox" v-model="logFilters.crit">暴击
+          <input type="checkbox" v-model="logFilters.action">操作
         </label>
         <label class="filter-check">
-          <input type="checkbox" v-model="logFilters.heal">治疗
+          <input type="checkbox" v-model="logFilters.debug">调试
         </label>
         <input type="text" v-model="logKeyword" placeholder="关键字" class="log-keyword">
         <button class="btn-small" @click="applyFilters">[F]过滤</button>
       </div>
     </div>
     <div class="log-content">
-      {{ filteredLogs }}
-      <div v-for="(log, index) in filteredLogs" :key="index" class="log-entry" :class="log.category">
-        <span class="log-turn">[{{ log.turn }}]</span>
+      <div v-for="(log, index) in logs" :key="index" class="log-entry" :class="log.type">
+        <span class="log-type">[{{ LogTypeLabel[log.type] }}]</span>
         <span class="log-result">
-          <span 
-            v-for="(segment, segIndex) in log.segments" 
-            :key="segIndex"
-            :class="getSegmentClass(segment.color)"
-          >{{ segment.text }}</span>
+          <span v-for="(segment, segIndex) in log.segments" :key="segIndex" :class="segment.classStr">{{
+            segment.text }}</span>
         </span>
       </div>
-      <div v-if="filteredLogs.length === 0" class="no-logs">暂无战斗日志</div>
+      <div v-if="logs.length === 0" class="no-logs">暂无战斗日志</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 import type { BattleLogEntry, LogFilters } from '@/types/battle-log';
-import { LogSegmentColorClass } from '@/types/battle-log';
+import { LogTypeLabel } from '@/types/battle-log';
+import { battleLogManager } from '@/utils/logging'
 
 interface Props {
-  logs: BattleLogEntry[];
 }
+
+
 
 const props = defineProps<Props>();
 
@@ -55,32 +53,9 @@ const logFilters = reactive<LogFilters>({
   heal: false,
 });
 
-function getSegmentClass(color?: string): string {
-  if (!color || color === 'default') {
-    return ''
-  }
-  return LogSegmentColorClass[color as keyof typeof LogSegmentColorClass] || ''
-}
-
-const filteredLogs = computed(() => {
-  let logs = [...props.logs].reverse();
-
-  if (logKeyword.value) {
-    const keyword = logKeyword.value.toLowerCase()
-    logs = logs.filter((log) => {
-      const text = log.segments.map(s => s.text).join('').toLowerCase()
-      return text.includes(keyword) ||
-             log.source.toLowerCase().includes(keyword) ||
-             log.target.toLowerCase().includes(keyword)
-    })
-  }
-
-  return logs
-});
+const logs = computed(() => battleLogManager.getFilteredLogs())
 
 const applyFilters = () => {
-  // 触发过滤逻辑，这里可以添加额外的过滤逻辑
-  console.log("应用过滤器", logFilters, logKeyword.value);
 };
 </script>
 

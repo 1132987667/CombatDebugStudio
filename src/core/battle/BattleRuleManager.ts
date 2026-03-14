@@ -70,7 +70,6 @@ export interface BattleRulesConfig {
  * 负责加载、管理和应用战斗规则配置
  */
 export class BattleRuleManager {
-  private logger = battleLogManager
   private config: BattleRulesConfig | null = null
 
   /**
@@ -78,7 +77,7 @@ export class BattleRuleManager {
    */
   public async loadConfig(): Promise<BattleRulesConfig> {
     this.config = this.getDefaultConfig()
-    this.logger.info('战斗规则配置加载成功', { version: this.config.version })
+    battleLogManager.addSystemLog('战斗规则配置加载成功')
     return this.config
   }
 
@@ -206,7 +205,7 @@ export class BattleRuleManager {
 
     // 深度合并配置
     this.config = this.deepMerge(this.config, updates)
-    this.logger.info('战斗规则配置已更新', { version: this.config.version })
+    battleLogManager.addDebugLog('战斗规则配置已更新')
   }
 
   /**
@@ -344,7 +343,7 @@ export class BattleRuleManager {
       }
 
       this.config = newConfig
-      this.logger.info('战斗规则配置导入成功')
+      battleLogManager.addDebugLog('战斗规则配置导入成功')
       return { success: true }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误'
@@ -360,6 +359,6 @@ export class BattleRuleManager {
    */
   public resetToDefault(): void {
     this.config = this.getDefaultConfig()
-    this.logger.info('战斗规则配置已重置为默认值')
+    battleLogManager.addDebugLog('战斗规则配置已重置为默认值')
   }
 }

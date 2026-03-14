@@ -49,7 +49,7 @@ export interface CompendiumSkill {
   id: string
   name: string
   description: string
-  mpCost: number
+  energyCost: number
   cooldown: number
   selector: string
 }
@@ -76,28 +76,28 @@ export function useCompendium() {
   const isLoading = ref(false)
 
   const getEnemyById = (id: string): CompendiumEnemy | undefined => {
-    return enemies.value.find(e => e.id === id)
+    return enemies.value.find((e) => e.id === id)
   }
 
   const getBuffById = (id: string): CompendiumBuff | undefined => {
-    return buffs.value.find(b => b.id === id)
+    return buffs.value.find((b) => b.id === id)
   }
 
   const getItemById = (id: string): CompendiumItem | undefined => {
-    return items.value.find(i => i.id === id)
+    return items.value.find((i) => i.id === id)
   }
 
   const getSkillById = (id: string): CompendiumSkill | undefined => {
-    return skills.value.find(s => s.id === id)
+    return skills.value.find((s) => s.id === id)
   }
 
   const getEnemySkills = (enemy: CompendiumEnemy): CompendiumSkill[] => {
     const skillIds = [
       ...(enemy.skills.small || []),
-      ...(enemy.skills.passive || [])
+      ...(enemy.skills.passive || []),
     ]
     return skillIds
-      .map(id => getSkillById(id))
+      .map((id) => getSkillById(id))
       .filter((s): s is CompendiumSkill => s !== undefined)
   }
 
@@ -118,6 +118,6 @@ export function useCompendium() {
     getEnemySkills,
     enemyCount,
     buffCount,
-    itemCount
+    itemCount,
   }
 }

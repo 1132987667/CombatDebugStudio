@@ -14,7 +14,6 @@
  * - BattleLogManager: 统一日志管理器（融合系统日志和战斗日志）
  * - BattleLogFormatter: 战斗日志格式化工具
  * - ConsoleLogHandler: 控制台日志处理器
- * - FileLogHandler: 文件日志处理器
  *
  * @module logging
  */
@@ -24,14 +23,13 @@ export type {
   BattleLogEntry,
   LogFilters,
   BattleLogManagerOptions,
-  LogFormatOptions,
-  HTMLFormatOptions,
   BattleLogLevel,
   ActionType,
-  LogLevel,
   LogEntry,
   LogHandler,
 } from '@/types/battle-log'
+
+export { LogLevel } from '@/types/battle-log'
 
 // 导出 BattleLogManager 和相关功能
 export {
@@ -40,10 +38,7 @@ export {
 } from '@/utils/logging/BattleLogManager'
 
 // 导出 BattleLogFormatter 命名空间
-export { BattleLogFormatter } from '@/utils/logging/BattleLogManager'
+export { BattleLogFormatter } from './BattleLogFormatter'
 
 // 导出日志处理器
-export {
-  ConsoleLogHandler,
-  FileLogHandler,
-} from '@/utils/logging/BattleLogManager'
+export { ConsoleLogHandler } from '@/utils/logging/BattleLogManager'

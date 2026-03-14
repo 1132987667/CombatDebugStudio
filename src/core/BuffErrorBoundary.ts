@@ -8,6 +8,7 @@
  */
 
 import { useBattleStore } from '@/stores/battleStore'
+import { battleLogManager } from '@/utils/logging'
 
 /**
  * 错误类型枚举
@@ -20,7 +21,7 @@ export enum BuffErrorType {
   /** 依赖错误 */
   DEPENDENCY_ERROR = 'dependency_error',
   /** 未知错误 */
-  UNKNOWN_ERROR = 'unknown_error'
+  UNKNOWN_ERROR = 'unknown_error',
 }
 
 /**
@@ -54,7 +55,7 @@ export class BuffErrorBoundary {
    */
   public static wrap<T>(
     fn: () => T,
-    options?: { buffId?: string; scriptPath?: string }
+    options?: { buffId?: string; scriptPath?: string },
   ): T | null {
     try {
       return fn()
@@ -72,7 +73,7 @@ export class BuffErrorBoundary {
    */
   public static wrapAsync<T>(
     fn: () => Promise<T>,
-    options?: { buffId?: string; scriptPath?: string }
+    options?: { buffId?: string; scriptPath?: string },
   ): Promise<T | null> {
     return fn().catch((error) => {
       BuffErrorBoundary.handleError(error, options)
@@ -87,7 +88,7 @@ export class BuffErrorBoundary {
    */
   private static handleError(
     error: unknown,
-    options?: { buffId?: string; scriptPath?: string }
+    options?: { buffId?: string; scriptPath?: string },
   ): void {
     const battleStore = useBattleStore()
     const buffError = BuffErrorBoundary.parseError(error, options)
@@ -95,22 +96,30 @@ export class BuffErrorBoundary {
     // 根据错误类型记录不同级别的日志
     switch (buffError.type) {
       case BuffErrorType.CONFIG_ERROR:
-        battleStore.addErrorLog(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogManager.addDebugLog(
+          `Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`,
+        )
         break
       case BuffErrorType.RUNTIME_ERROR:
-        battleStore.addErrorLog(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogManager.addDebugLog(
+          `Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`,
+        )
         break
       case BuffErrorType.DEPENDENCY_ERROR:
-        battleStore.addWarningLog(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogManager.addDebugLog(
+          `Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`,
+        )
         break
       default:
-        battleStore.addErrorLog(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogManager.addDebugLog(
+          `Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`,
+        )
         break
     }
 
     // 记录详细的错误信息（如堆栈）
     if (buffError.stack) {
-      battleStore.addDebugLog(`Buff error stack: ${buffError.stack}`)
+      battleLogManager.addDebugLog(`Buff error stack: ${buffError.stack}`)
     }
   }
 
@@ -122,7 +131,7 @@ export class BuffErrorBoundary {
    */
   private static parseError(
     error: unknown,
-    options?: { buffId?: string; scriptPath?: string }
+    options?: { buffId?: string; scriptPath?: string },
   ): BuffError {
     let type = BuffErrorType.UNKNOWN_ERROR
     let message = 'Unknown error'
@@ -135,7 +144,11 @@ export class BuffErrorBoundary {
       // 根据错误消息判断错误类型
       if (message.includes('config') || message.includes('Config')) {
         type = BuffErrorType.CONFIG_ERROR
-      } else if (message.includes('dependency') || message.includes('import') || message.includes('require')) {
+      } else if (
+        message.includes('dependency') ||
+        message.includes('import') ||
+        message.includes('require')
+      ) {
         type = BuffErrorType.DEPENDENCY_ERROR
       } else {
         type = BuffErrorType.RUNTIME_ERROR
@@ -150,7 +163,7 @@ export class BuffErrorBoundary {
       message,
       stack,
       buffId: options?.buffId,
-      scriptPath: options?.scriptPath
+      scriptPath: options?.scriptPath,
     }
   }
 
@@ -164,7 +177,7 @@ export class BuffErrorBoundary {
   public static executeWithRetry<T>(
     fn: () => T,
     maxRetries: number = 3,
-    options?: { buffId?: string; scriptPath?: string }
+    options?: { buffId?: string; scriptPath?: string },
   ): T | null {
     let retries = 0
     const battleStore = useBattleStore()
@@ -178,7 +191,10 @@ export class BuffErrorBoundary {
           BuffErrorBoundary.handleError(error, options)
           return null
         }
-        battleStore.addSystemBattleLog(`Retrying buff script execution (${retries}/${maxRetries})`, 'info')
+        battleLogManager.addDebugLog(
+          `Retrying buff script execution (${retries}/${maxRetries})`,
+          'info',
+        )
       }
     }
 
@@ -193,7 +209,7 @@ export class BuffErrorBoundary {
    */
   public static createConfigError(
     message: string,
-    options?: { buffId?: string; scriptPath?: string }
+    options?: { buffId?: string; scriptPath?: string },
   ): Error {
     const error = new Error(`[CONFIG_ERROR] ${message}`)
     ;(error as any).buffId = options?.buffId
@@ -209,7 +225,7 @@ export class BuffErrorBoundary {
    */
   public static createRuntimeError(
     message: string,
-    options?: { buffId?: string; scriptPath?: string }
+    options?: { buffId?: string; scriptPath?: string },
   ): Error {
     const error = new Error(`[RUNTIME_ERROR] ${message}`)
     ;(error as any).buffId = options?.buffId
@@ -225,7 +241,7 @@ export class BuffErrorBoundary {
    */
   public static createDependencyError(
     message: string,
-    options?: { buffId?: string; scriptPath?: string }
+    options?: { buffId?: string; scriptPath?: string },
   ): Error {
     const error = new Error(`[DEPENDENCY_ERROR] ${message}`)
     ;(error as any).buffId = options?.buffId

@@ -29,8 +29,6 @@ import { ControlType } from '@/types/buff'
  * 推荐通过容器注入使用
  */
 export class ActionExecutor {
-  /** 日志记录器实例，用于记录动作执行过程中的信息 */
-  private logger = battleLogManager
   /** 战斗数据存储映射，以battleId为键 */
   private battles = new Map<string, BattleData>()
   /** 参与者到战斗的映射，用于通过参与者ID快速查找所属战斗 */
@@ -237,7 +235,7 @@ export class ActionExecutor {
         this.processHeal(action, source, target)
         break
       default:
-        this.logger.warn(`Unknown action type: ${action.type}`)
+        battleLogManager.addDebugLog(`Unknown action type: ${action.type}`)
     }
   }
 
@@ -278,7 +276,7 @@ export class ActionExecutor {
     target: BattleParticipant,
   ): void {
     if (!action.skillId) {
-      this.logger.error('技能动作缺少skillId')
+      battleLogManager.addDebugLog('技能动作缺少skillId')
       return
     }
 
@@ -286,7 +284,7 @@ export class ActionExecutor {
     const battle = battleId ? this.battles.get(battleId) : null
 
     if (!battle) {
-      this.logger.error(`无法找到参与者 ${source.id} 所属的战斗`)
+      battleLogManager.addDebugLog(`无法找到参与者 ${source.id} 所属的战斗`)
       action.type = ACTION_TYPES.ATTACK
       action.damage =
         Math.floor(
@@ -304,7 +302,7 @@ export class ActionExecutor {
 
     try {
       if (!battle.skillManager) {
-        this.logger.error(`战斗数据中缺少技能管理器`)
+        battleLogManager.addDebugLog(`战斗数据中缺少技能管理器`)
         action.type = ACTION_TYPES.ATTACK
         action.damage =
           Math.floor(
@@ -357,9 +355,9 @@ export class ActionExecutor {
         this.finalizeRecord(record, action)
       }
 
-      this.logger.debug(`技能执行成功: ${action.skillId}`)
+      battleLogManager.addDebugLog(`技能执行成功: ${action.skillId}`)
     } catch (error) {
-      this.logger.error(`技能执行失败: ${action.skillId}`, error)
+      battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error)
       action.type = ACTION_TYPES.ATTACK
       action.damage =
         Math.floor(
@@ -467,7 +465,7 @@ export class ActionExecutor {
    */
   private finalizeRecord(record: CombatRecord, action: BattleAction): void {
     record.message = this.generateRecordMessage(record, action)
-    this.logger.debug('技能记录已生成', record)
+    battleLogManager.addDebugLog('技能记录已生成', record)
   }
 
   /**

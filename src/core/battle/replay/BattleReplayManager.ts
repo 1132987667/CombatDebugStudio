@@ -1,6 +1,10 @@
-import type { BattleSystemAction, BattleState, BattleReplay } from '@/types/battle'
+import type { BattleState, BattleReplay } from '@/types/battle'
 import { battleLogManager } from '@/utils/logging'
-import { ReplayEngine, type ReplayState, type ReplayEvent } from './ReplayEngine'
+import {
+  ReplayEngine,
+  type ReplayState,
+  type ReplayEvent,
+} from './ReplayEngine'
 
 /**
  * 战斗回放管理器
@@ -77,11 +81,6 @@ export class BattleReplayManager {
    * @param recording 回放记录
    */
   startReplay(recording: BattleReplay) {
-    if (!recording || !recording.events || recording.events.length === 0) {
-      this.battleLogManager.addSystemLog('没有找到回放记录')
-      return
-    }
-
     this.resetReplayState()
 
     this.replayEngine = new ReplayEngine()
@@ -93,11 +92,13 @@ export class BattleReplayManager {
       return
     }
 
-    this.stateUnsubscribe = this.replayEngine.onStateChange((state: ReplayState) => {
-      this.isReplaying = state.isPlaying
-      this.isPaused = state.isPaused
-      this.currentReplayIndex = state.currentIndex
-    })
+    this.stateUnsubscribe = this.replayEngine.onStateChange(
+      (state: ReplayState) => {
+        this.isReplaying = state.isPlaying
+        this.isPaused = state.isPaused
+        this.currentReplayIndex = state.currentIndex
+      },
+    )
 
     this.eventUnsubscribe = this.replayEngine.onEvent((event: ReplayEvent) => {
       this.handleReplayEvent(event)

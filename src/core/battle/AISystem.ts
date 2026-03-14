@@ -165,6 +165,7 @@ export class AISystem {
         success: false,
         timestamp: Date.now(),
         turn: battle.currentTurn + 1,
+        effects: [],
       }
     }
 
@@ -179,6 +180,7 @@ export class AISystem {
       success: true,
       timestamp: Date.now(),
       turn: battle.currentTurn + 1,
+      effects: [],
     }
   }
 

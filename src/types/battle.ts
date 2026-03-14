@@ -10,6 +10,7 @@ import type { BattleAI } from '@/core/BattleAI'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import type { SkillConfig } from '@/types/skill'
 import type { UISkills } from '@/types/UI/UIBattleCharacter'
+import type { BattleLogEntry } from '@/types/battle-log'
 
 /**
  * 战斗状态常量
@@ -305,13 +306,6 @@ export interface BattleAction {
 }
 
 /**
- * 战斗系统动作类型
- * 用于战斗回放和日志记录
- * @deprecated 与 BattleAction 相同，请使用 BattleAction
- */
-export type BattleSystemAction = BattleAction
-
-/**
  * 战斗效果接口
  * 表示战斗中产生的单一效果
  * 包含效果的类型、数值、关联的Buff以及效果描述
@@ -463,10 +457,10 @@ export interface BattleData {
   battleState?: BattleStatus
   /** 回合状态 */
   roundState?: RoundStatus
+  /** 是否开启自动战斗 */
+  autoBattle: boolean
   /** 自动战斗定时器ID */
   autoBattleIntervalId?: symbol
-  /** 是否自动播放 */
-  autoPlaying: boolean
   /** 战斗是否处于活跃状态 */
   isActive: boolean
   /** 技能管理器实例（可选，用于技能执行） */

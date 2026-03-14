@@ -17,7 +17,6 @@ import type {
   ParticipantSnapshot,
   BuffInstanceSnapshot,
   BattleRound,
-  BattleLogEntry,
   BattleResult,
   BattleEventType,
   BattleEvent,
@@ -25,7 +24,7 @@ import type {
   SnapshotIndexItem,
 } from '@/types/battle'
 import { BATTLE_REPLAY_VERSION } from '@/types/battle'
-import { battleLogManager } from '@/utils/logging'
+import { battleLogManager, LogLevel } from '@/utils/logging'
 import { SeededRandom } from '@/utils/SeededRandom'
 import { calculateChecksum, generateReplayId } from '@/utils/Checksum'
 
@@ -60,7 +59,6 @@ type RecordingData = RecordedBattle | EnhancedRecordedBattle
 
 export class BattleRecorder {
   private recordings = new Map<string, EnhancedRecordedBattle>()
-  private battleLogger = battleLogManager
   private maxRecordings = 10
   private cleanupScheduled = false
   private randomSeeds = new Map<string, string>()
@@ -103,15 +101,18 @@ export class BattleRecorder {
     this.recordings.set(battleId, recording)
     this.currentRoundNumbers.set(battleId, 0)
 
-    this.recordEvent(battleId, 'battle_start', {
-      timestamp: Date.now(),
-      participants: initialState.participants,
-    }, 0, 0)
+    this.recordEvent(
+      battleId,
+      'battle_start',
+      {
+        timestamp: Date.now(),
+        participants: initialState.participants,
+      },
+      0,
+      0,
+    )
 
-    this.battleLogger.info(`开始记录战斗: ${battleId}`, {
-      participantCount: initialState.participants.length,
-      randomSeed: seed,
-    })
+    battleLogManager.addSystemLog(`开始记录战斗: ${battleId}`)
 
     this.scheduleCleanup()
   }
@@ -120,7 +121,10 @@ export class BattleRecorder {
     return this.randomSeeds.get(battleId)
   }
 
-  public recordInitialSnapshot(battleId: string, snapshot: BattleStateSnapshot) {
+  public recordInitialSnapshot(
+    battleId: string,
+    snapshot: BattleStateSnapshot,
+  ) {
     const recording = this.recordings.get(battleId)
     if (recording) {
       recording.initialSnapshot = snapshot
@@ -134,7 +138,11 @@ export class BattleRecorder {
     }
   }
 
-  public startRound(battleId: string, roundNumber: number, snapshot?: BattleStateSnapshot) {
+  public startRound(
+    battleId: string,
+    roundNumber: number,
+    snapshot?: BattleStateSnapshot,
+  ) {
     this.currentRoundNumbers.set(battleId, roundNumber)
     const recording = this.recordings.get(battleId)
     if (recording) {
@@ -146,10 +154,16 @@ export class BattleRecorder {
       recording.rounds.push(round)
     }
 
-    this.recordEvent(battleId, 'turn_start', {
+    this.recordEvent(
+      battleId,
+      'turn_start',
+      {
+        roundNumber,
+        snapshot,
+      },
       roundNumber,
-      snapshot,
-    }, roundNumber, roundNumber)
+      roundNumber,
+    )
   }
 
   public endRound(battleId: string, snapshot?: BattleStateSnapshot) {
@@ -162,18 +176,30 @@ export class BattleRecorder {
       }
     }
 
-    this.recordEvent(battleId, 'turn_end', {
+    this.recordEvent(
+      battleId,
+      'turn_end',
+      {
+        roundNumber,
+        snapshot,
+      },
       roundNumber,
-      snapshot,
-    }, roundNumber, roundNumber)
+      roundNumber,
+    )
   }
 
   public recordAction(battleId: string, action: BattleAction, turn: number) {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
-    this.recordEvent(battleId, 'action', {
-      action,
+    this.recordEvent(
+      battleId,
+      'action',
+      {
+        action,
+        turn,
+      },
       turn,
-    }, turn, roundNumber)
+      roundNumber,
+    )
 
     const recording = this.recordings.get(battleId)
     if (recording && recording.rounds.length > 0) {
@@ -197,12 +223,18 @@ export class BattleRecorder {
     turn: number,
   ) {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
-    this.recordEvent(battleId, 'buff_add', {
-      targetId,
-      buffId,
-      instanceId,
+    this.recordEvent(
+      battleId,
+      'buff_add',
+      {
+        targetId,
+        buffId,
+        instanceId,
+        turn,
+      },
       turn,
-    }, turn, roundNumber)
+      roundNumber,
+    )
   }
 
   public recordBuffRemove(
@@ -212,11 +244,17 @@ export class BattleRecorder {
     turn: number,
   ) {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
-    this.recordEvent(battleId, 'buff_remove', {
-      targetId,
-      instanceId,
+    this.recordEvent(
+      battleId,
+      'buff_remove',
+      {
+        targetId,
+        instanceId,
+        turn,
+      },
       turn,
-    }, turn, roundNumber)
+      roundNumber,
+    )
   }
 
   public recordBuffUpdate(
@@ -228,13 +266,19 @@ export class BattleRecorder {
     turn: number,
   ) {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
-    this.recordEvent(battleId, 'buff_update', {
-      targetId,
-      instanceId,
-      remainingTurns,
-      stacks,
+    this.recordEvent(
+      battleId,
+      'buff_update',
+      {
+        targetId,
+        instanceId,
+        remainingTurns,
+        stacks,
+        turn,
+      },
       turn,
-    }, turn, roundNumber)
+      roundNumber,
+    )
   }
 
   public recordStateChange(
@@ -243,10 +287,16 @@ export class BattleRecorder {
     turn: number,
   ) {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
-    this.recordEvent(battleId, 'state_change', {
-      state,
+    this.recordEvent(
+      battleId,
+      'state_change',
+      {
+        state,
+        turn,
+      },
       turn,
-    }, turn, roundNumber)
+      roundNumber,
+    )
   }
 
   public recordTurnStart(
@@ -255,20 +305,36 @@ export class BattleRecorder {
     participantId: string,
   ) {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
-    this.recordEvent(battleId, 'turn_start', {
+    this.recordEvent(
+      battleId,
+      'turn_start',
+      {
+        turn,
+        participantId,
+      },
       turn,
-      participantId,
-    }, turn, roundNumber)
+      roundNumber,
+    )
   }
 
   public recordTurnEnd(battleId: string, turn: number) {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
-    this.recordEvent(battleId, 'turn_end', {
+    this.recordEvent(
+      battleId,
+      'turn_end',
+      {
+        turn,
+      },
       turn,
-    }, turn, roundNumber)
+      roundNumber,
+    )
   }
 
-  public endRecording(battleId: string, winner?: ParticipantSide, result?: BattleResult) {
+  public endRecording(
+    battleId: string,
+    winner?: ParticipantSide,
+    result?: BattleResult,
+  ) {
     const recording = this.recordings.get(battleId)
     if (!recording) {
       return
@@ -286,15 +352,23 @@ export class BattleRecorder {
     }
 
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
-    this.recordEvent(battleId, 'battle_end', {
-      timestamp: Date.now(),
-      winner,
-    }, roundNumber, roundNumber)
+    this.recordEvent(
+      battleId,
+      'battle_end',
+      {
+        timestamp: Date.now(),
+        winner,
+      },
+      roundNumber,
+      roundNumber,
+    )
 
-    this.battleLogger.info(`结束记录战斗: ${battleId}`, {
-      winner,
-      eventCount: recording.events.length,
-      duration,
+    battleLogManager.addSystemLog(`结束记录战斗: ${battleId}`, {
+      segments: [
+        {
+          text: `战斗结束，${winner}获胜，耗时 ${duration}ms`,
+        },
+      ],
     })
   }
 
@@ -337,7 +411,7 @@ export class BattleRecorder {
       )
     }
 
-    this.battleLogger.info(`保存战斗记录: ${battleId}`, {
+    battleLogManager.addDebugLog(`保存战斗记录: ${battleId}`, {
       saveKey,
       checksum: checksumValue,
     })
@@ -358,7 +432,13 @@ export class BattleRecorder {
         const { checksum, ...dataWithoutChecksum } = recording
         const calculatedChecksum = calculateChecksum(dataWithoutChecksum)
         if (calculatedChecksum !== checksum) {
-          this.battleLogger.error('战斗记录校验失败:', { saveKey })
+          battleLogManager.addDebugLog(
+            '战斗记录校验失败:',
+            LogLevel.ERROR,
+            null,
+            '',
+            { saveKey },
+          )
           return null
         }
       }
@@ -369,7 +449,13 @@ export class BattleRecorder {
       }
       return recording
     } catch (error) {
-      this.battleLogger.error('加载战斗记录失败:', error)
+      battleLogManager.addDebugLog(
+        '加载战斗记录失败:',
+        LogLevel.ERROR,
+        null,
+        '',
+        error,
+      )
       return null
     }
   }
@@ -414,7 +500,7 @@ export class BattleRecorder {
     const updatedList = recordingsList.filter((key) => key !== saveKey)
     localStorage.setItem('battle_recordings_list', JSON.stringify(updatedList))
 
-    this.battleLogger.info(`删除战斗记录: ${saveKey}`)
+    battleLogManager.addDebugLog(`删除战斗记录: ${saveKey}`)
     return true
   }
 
@@ -483,7 +569,7 @@ export class BattleRecorder {
     this.recordings.clear()
     this.randomSeeds.clear()
     this.currentRoundNumbers.clear()
-    this.battleLogger.info('清空所有战斗记录')
+    battleLogManager.addDebugLog('清空所有战斗记录')
   }
 
   public clearRecording(battleId: string): void {
@@ -491,7 +577,7 @@ export class BattleRecorder {
       this.recordings.delete(battleId)
       this.randomSeeds.delete(battleId)
       this.currentRoundNumbers.delete(battleId)
-      this.battleLogger.info(`清理战斗记录: ${battleId}`)
+      battleLogManager.addDebugLog(`清理战斗记录: ${battleId}`)
     }
   }
 
@@ -523,7 +609,7 @@ export class BattleRecorder {
       this.recordings.delete(battleId)
       this.randomSeeds.delete(battleId)
       this.currentRoundNumbers.delete(battleId)
-      this.battleLogger.info(`清理过期战斗记录: ${battleId}`)
+      battleLogManager.addDebugLog(`清理过期战斗记录: ${battleId}`)
     }
   }
 }

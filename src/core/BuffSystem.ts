@@ -38,17 +38,12 @@ export class BuffSystem {
   private readonly logger = battleLogManager
 
   /**
-   * 私有构造函数
-   * 防止外部直接实例化
+   * 构造函数
    * @param scriptRegistry Buff脚本注册表实例
    */
-  private constructor(scriptRegistry: BuffScriptRegistry) {
+  public constructor(scriptRegistry: BuffScriptRegistry) {
     this.scriptRegistry = scriptRegistry
   }
-
-
-
-
 
   /**
    * 添加Buff
@@ -74,14 +69,14 @@ export class BuffSystem {
 
     // 检查是否已存在同类型Buff，根据叠加规则处理
     const existingBuffs = this.getBuffInstances(characterId).filter(
-      instance => instance.buffId === buffId
+      (instance) => instance.buffId === buffId,
     )
 
     // 根据叠加规则处理
     switch (config.stackRule) {
       case StackRule.REFRESH:
         // 刷新模式：移除旧Buff，添加新Buff
-        existingBuffs.forEach(instance => this.removeBuff(instance.id))
+        existingBuffs.forEach((instance) => this.removeBuff(instance.id))
         break
       case StackRule.LIMITED:
         // 限制层数模式：检查是否达到最大层数
@@ -97,7 +92,12 @@ export class BuffSystem {
     // 生成唯一的实例ID，添加随机数以防止在快速循环中重复
     const instanceId = `${characterId}_${buffId}_${currentTurn}_${Math.floor(Math.random() * 10000)}`
     // 从对象池获取 BuffContext
-    const context = BuffContextPool.borrow(characterId, instanceId, config, this)
+    const context = BuffContextPool.borrow(
+      characterId,
+      instanceId,
+      config,
+      this,
+    )
 
     const buffInstance: BuffInstance = {
       id: instanceId,
@@ -147,7 +147,11 @@ export class BuffSystem {
    * @param instanceId Buff实例ID
    * @param buffId Buff ID
    */
-  private applyAttributeModifiers(characterId: string, instanceId: string, buffId: string): void {
+  private applyAttributeModifiers(
+    characterId: string,
+    instanceId: string,
+    buffId: string,
+  ): void {
     const attributes = this.scriptRegistry.getBuffAttributes(buffId)
     if (!attributes || Object.keys(attributes).length === 0) {
       return
@@ -159,9 +163,16 @@ export class BuffSystem {
       const normalizedAttr = this.scriptRegistry.normalizeAttributeName(attr)
       const parsed = this.scriptRegistry.parseAttributeValue(valueStr)
 
-      modifierStack.addModifier(instanceId, normalizedAttr as any, parsed.value, parsed.type)
+      modifierStack.addModifier(
+        instanceId,
+        normalizedAttr as any,
+        parsed.value,
+        parsed.type,
+      )
 
-      this.logger.debug(`应用属性修饰符: ${attr} = ${valueStr} (${parsed.type}) 到角色 ${characterId}`)
+      this.logger.addDebugLog(
+        `应用属性修饰符: ${attr} = ${valueStr} (${parsed.type}) 到角色 ${characterId}`,
+      )
     }
   }
 
@@ -306,7 +317,10 @@ export class BuffSystem {
       if (!instance.isActive || instance.characterId !== characterId) return
 
       const config = instance.context.getConfig()
-      if (config.controlType !== ControlType.NONE && config.controlPriority > highestPriority) {
+      if (
+        config.controlType !== ControlType.NONE &&
+        config.controlPriority > highestPriority
+      ) {
         highestPriority = config.controlPriority
         highestControlType = config.controlType
       }
@@ -332,7 +346,9 @@ export class BuffSystem {
    */
   public canUseSkill(characterId: string): boolean {
     const controlType = this.getHighestPriorityControlEffect(characterId)
-    return controlType !== ControlType.STUN && controlType !== ControlType.SILENCE
+    return (
+      controlType !== ControlType.STUN && controlType !== ControlType.SILENCE
+    )
   }
 
   /**

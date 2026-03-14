@@ -17,6 +17,7 @@ import {
   EFFECT_TYPES,
 } from '@/types/battle'
 import { useBattleStore } from '@/stores/battleStore'
+import { battleLogManager } from '@/utils/logging'
 import type { BuffSystem } from '@/core/BuffSystem'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import {
@@ -127,7 +128,7 @@ export class BaseBattleAI implements BattleAI {
     const battleStore = useBattleStore()
     try {
       if (!battleState || !participant) {
-        battleStore.addErrorLog('AI决策参数无效')
+        battleLogManager.addDebugLog('AI决策参数无效')
         return this.selectAttack(participant)
       }
 
@@ -143,7 +144,7 @@ export class BaseBattleAI implements BattleAI {
           try {
             return this.createSkillStep(battleState, participant, skillId)
           } catch (skillError) {
-            battleStore.addErrorLog('技能执行出错')
+            battleLogManager.addDebugLog('技能执行出错')
             return this.selectAttack(participant)
           }
         }
@@ -151,12 +152,12 @@ export class BaseBattleAI implements BattleAI {
 
       return this.selectAttack(participant)
     } catch (error) {
-      battleStore.addErrorLog('AI决策出错')
+      battleLogManager.addDebugLog('AI决策出错')
       console.log('AI决策出错')
       try {
         return this.selectAttack(participant)
       } catch (attackError) {
-        battleStore.addErrorLog('攻击执行出错')
+        battleLogManager.addDebugLog('攻击执行出错')
         return {
           id: `fallback_${Date.now()}`,
           type: ACTION_TYPES.ATTACK,

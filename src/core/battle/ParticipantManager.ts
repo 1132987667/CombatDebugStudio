@@ -14,7 +14,7 @@ import {
   type ParticipantInitData,
 } from '@/core/battle/BattleParticipantImpl'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
-import { battleLogManager } from '@/utils/logging'
+import { battleLogManager, LogLevel } from '@/utils/logging'
 
 /**
  * 参与者状态变化事件接口
@@ -54,8 +54,6 @@ export class ParticipantManager {
   ) => void)[] = []
   /** 状态快照历史记录 */
   private stateSnapshots = new Map<string, ParticipantStateSnapshot[]>()
-  /** 日志记录器 */
-  private logger = battleLogManager
 
   /**
    * 创建单个参与者
@@ -125,11 +123,11 @@ export class ParticipantManager {
         )
         participants.push(participant)
       } else {
-        this.logger.warn(`未找到ID为 ${id} 的角色数据`)
+        battleLogManager.addDebugLog(`未找到ID为 ${id} 的角色数据`)
       }
     })
 
-    this.logger.info(`根据ID创建参与者完成: ${ids.join(', ')}`, {
+    battleLogManager.addDebugLog(`根据ID创建参与者完成: ${ids.join(', ')}`, {
       count: participants.length,
       type,
     })
@@ -192,7 +190,7 @@ export class ParticipantManager {
       // 应用更新
       Object.assign(participant, updates)
 
-      this.logger.debug(`参与者状态更新: ${participantId}`, {
+      battleLogManager.addDebugLog(`参与者状态更新: ${participantId}`, {
         battleId,
         updates,
       })
@@ -211,7 +209,7 @@ export class ParticipantManager {
     updates.forEach((participantUpdates, participantId) => {
       this.updateParticipant(battleId, participantId, participantUpdates)
     })
-    this.logger.info(`批量更新参与者状态完成: ${battleId}`, {
+    battleLogManager.addDebugLog(`批量更新参与者状态完成: ${battleId}`, {
       updatedCount: updates.size,
     })
   }
@@ -251,7 +249,13 @@ export class ParticipantManager {
       try {
         listener(event)
       } catch (error) {
-        this.logger.error('状态变化事件监听器执行出错:', error)
+        battleLogManager.addDebugLog(
+          '状态变化事件监听器执行出错:',
+          LogLevel.ERROR,
+          null,
+          '',
+          error,
+        )
       }
     })
   }
@@ -263,7 +267,7 @@ export class ParticipantManager {
     listener: (event: ParticipantStateChangeEvent) => void,
   ): void {
     this.stateChangeListeners.push(listener)
-    this.logger.debug('添加状态变化监听器')
+    battleLogManager.addDebugLog('添加状态变化监听器')
   }
 
   /**
@@ -275,7 +279,7 @@ export class ParticipantManager {
     const index = this.stateChangeListeners.indexOf(listener)
     if (index !== -1) {
       this.stateChangeListeners.splice(index, 1)
-      this.logger.debug('移除状态变化监听器')
+      battleLogManager.addDebugLog('移除状态变化监听器')
     }
   }
 
@@ -317,7 +321,9 @@ export class ParticipantManager {
       this.stateSnapshots.set(participantId, snapshots.slice(-10))
     }
 
-    this.logger.debug(`创建参与者状态快照: ${participantId}`, { battleId })
+    battleLogManager.addDebugLog(`创建参与者状态快照: ${participantId}`, {
+      battleId,
+    })
     return snapshot
   }
 
@@ -356,7 +362,7 @@ export class ParticipantManager {
       }
     })
 
-    this.logger.info(`恢复参与者状态: ${snapshot.participantId}`, {
+    battleLogManager.addDebugLog(`恢复参与者状态: ${snapshot.participantId}`, {
       battleId: snapshot.battleId,
       snapshotTime: new Date(snapshot.timestamp).toISOString(),
     })
@@ -374,7 +380,7 @@ export class ParticipantManager {
    */
   public clearStateSnapshots(participantId: string): void {
     this.stateSnapshots.delete(participantId)
-    this.logger.debug(`清空参与者状态快照: ${participantId}`)
+    battleLogManager.addDebugLog(`清空参与者状态快照: ${participantId}`)
   }
 
   /**

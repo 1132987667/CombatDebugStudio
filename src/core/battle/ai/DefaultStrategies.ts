@@ -13,7 +13,12 @@ import {
   type BattleContext,
   type BattleAnalysis,
 } from './StrategyInterfaces'
-import { BATTLE_CONSTANTS, ACTION_TYPES, EFFECT_TYPES } from '@/types/battle'
+import {
+  BATTLE_CONSTANTS,
+  ACTION_TYPES,
+  EFFECT_TYPES,
+  BattleAction,
+} from '@/types/battle'
 import type { Skill } from '@/types/skill'
 
 /**
@@ -37,10 +42,7 @@ export class DefaultThreatCalculationStrategy implements IThreatCalculationStrat
     const energyPercent = target.currentEnergy / target.maxEnergy
     threat += energyPercent * BATTLE_CONSTANTS.THREAT_ENERGY_WEIGHT
 
-    if (
-      target.type === 'ally' &&
-      participant.type === 'enemy'
-    ) {
+    if (target.type === 'ally' && participant.type === 'enemy') {
       threat += BATTLE_CONSTANTS.THREAT_TYPE_WEIGHT
     }
 
@@ -60,14 +62,18 @@ export class AggressiveTargetStrategy implements ITargetSelectionStrategy {
   private threatStrategy: IThreatCalculationStrategy
 
   constructor(threatStrategy?: IThreatCalculationStrategy) {
-    this.threatStrategy = threatStrategy || new DefaultThreatCalculationStrategy()
+    this.threatStrategy =
+      threatStrategy || new DefaultThreatCalculationStrategy()
   }
 
   getName(): string {
     return 'AggressiveTarget'
   }
 
-  selectTarget(context: BattleContext, participant: ParticipantSnapshot): string {
+  selectTarget(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): string {
     const enemies = context.getEnemies(participant)
 
     if (enemies.length === 0) {
@@ -93,14 +99,18 @@ export class DefensiveTargetStrategy implements ITargetSelectionStrategy {
   private threatStrategy: IThreatCalculationStrategy
 
   constructor(threatStrategy?: IThreatCalculationStrategy) {
-    this.threatStrategy = threatStrategy || new DefaultThreatCalculationStrategy()
+    this.threatStrategy =
+      threatStrategy || new DefaultThreatCalculationStrategy()
   }
 
   getName(): string {
     return 'DefensiveTarget'
   }
 
-  selectTarget(context: BattleContext, participant: ParticipantSnapshot): string {
+  selectTarget(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): string {
     const enemies = context.getEnemies(participant)
 
     if (enemies.length === 0) {
@@ -121,7 +131,10 @@ export class CharacterTargetStrategy implements ITargetSelectionStrategy {
     return 'CharacterTarget'
   }
 
-  selectTarget(context: BattleContext, participant: ParticipantSnapshot): string {
+  selectTarget(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): string {
     const enemies = context.getEnemies(participant)
 
     if (enemies.length === 0) {
@@ -142,13 +155,18 @@ export class EnemyTargetStrategy implements ITargetSelectionStrategy {
     return 'EnemyTarget'
   }
 
-  selectTarget(context: BattleContext, participant: ParticipantSnapshot): string {
-    const characters = context.getAllies({ ...participant, type: 'enemy' } as ParticipantSnapshot).filter(
-      (p) => p.type === 'ally' && p.isAlive(),
-    )
+  selectTarget(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): string {
+    const characters = context
+      .getAllies({ ...participant, type: 'enemy' } as ParticipantSnapshot)
+      .filter((p) => p.type === 'ally' && p.isAlive())
 
     const allParticipants = Array.from(context.participants.values())
-    const allies = allParticipants.filter((p) => p.type === 'ally' && p.isAlive())
+    const allies = allParticipants.filter(
+      (p) => p.type === 'ally' && p.isAlive(),
+    )
 
     if (allies.length === 0) {
       throw new Error('No characters found')
@@ -174,7 +192,10 @@ export class DefaultSkillSelectionStrategy implements ISkillSelectionStrategy {
     return 'DefaultSkillSelection'
   }
 
-  shouldUseSkill(context: BattleContext, participant: ParticipantSnapshot): boolean {
+  shouldUseSkill(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): boolean {
     const energyPercent = participant.getEnergyPercent()
     return energyPercent >= BATTLE_CONSTANTS.AI_SKILL_ENERGY_THRESHOLD
   }
@@ -234,7 +255,10 @@ export class CharacterSkillSelectionStrategy extends DefaultSkillSelectionStrate
     return 'CharacterSkillSelection'
   }
 
-  shouldUseSkill(context: BattleContext, participant: ParticipantSnapshot): boolean {
+  shouldUseSkill(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): boolean {
     const healthPercent = participant.getHealthPercent()
 
     if (healthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD) {
@@ -270,9 +294,13 @@ export class CharacterSkillSelectionStrategy extends DefaultSkillSelectionStrate
       }
     }
 
-    if (participant.currentEnergy >= BATTLE_CONSTANTS.ULTIMATE_ENERGY_THRESHOLD) {
+    if (
+      participant.currentEnergy >= BATTLE_CONSTANTS.ULTIMATE_ENERGY_THRESHOLD
+    ) {
       const allSkills = Array.from(context.participants.values())
-      const ultimateSkill = allSkills.find((s) => (s as any).type === 'ultimate')
+      const ultimateSkill = allSkills.find(
+        (s) => (s as any).type === 'ultimate',
+      )
       if (ultimateSkill) {
         return (ultimateSkill as any).id
       }
@@ -291,8 +319,13 @@ export class EnemySkillSelectionStrategy extends DefaultSkillSelectionStrategy {
     return 'EnemySkillSelection'
   }
 
-  shouldUseSkill(context: BattleContext, participant: ParticipantSnapshot): boolean {
-    return participant.currentEnergy >= BATTLE_CONSTANTS.ENEMY_SKILL_ENERGY_THRESHOLD
+  shouldUseSkill(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): boolean {
+    return (
+      participant.currentEnergy >= BATTLE_CONSTANTS.ENEMY_SKILL_ENERGY_THRESHOLD
+    )
   }
 }
 
@@ -324,7 +357,12 @@ export class DefaultBattleDecisionStrategy implements IBattleDecisionStrategy {
       if (this.skillStrategy.shouldUseSkill(context, participant)) {
         const skillId = this.skillStrategy.selectSkill(context, participant)
         if (skillId && availableSkills.has(skillId)) {
-          return this.createSkillAction(participant, skillId, context, availableSkills)
+          return this.createSkillAction(
+            participant,
+            skillId,
+            context,
+            availableSkills,
+          )
         }
       }
 
@@ -378,7 +416,9 @@ export class DefaultBattleDecisionStrategy implements IBattleDecisionStrategy {
     let targetId: string
     if (skill.heal) {
       const allies = context.getAllies(participant)
-      allies.sort((a, b) => a.currentHealth / a.maxHealth - b.currentHealth / b.maxHealth)
+      allies.sort(
+        (a, b) => a.currentHealth / a.maxHealth - b.currentHealth / b.maxHealth,
+      )
       targetId = allies[0]?.id || participant.id
     } else {
       targetId = this.targetStrategy.selectTarget(context, participant)

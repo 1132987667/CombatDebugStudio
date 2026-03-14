@@ -29,7 +29,10 @@ export class ObjectPool<T> {
     if (this.pool.length > 0) {
       const obj = this.pool.pop()!
       if (this.options.validate && !this.options.validate(obj)) {
-        battleLogManager.addSystemBattleLog('Object pool validation failed, creating new instance', 'info')
+        battleLogManager.addDebugLog(
+          'Object pool validation failed, creating new instance',
+          'info',
+        )
         return this.options.create()
       }
       this.borrowedCount++
@@ -37,7 +40,10 @@ export class ObjectPool<T> {
     }
 
     if (this.borrowedCount >= this.options.maxSize) {
-      battleLogManager.addSystemBattleLog('Object pool max size reached, creating new instance', 'warning')
+      battleLogManager.addDebugLog(
+        'Object pool max size reached, creating new instance',
+        'warning',
+      )
     }
 
     this.borrowedCount++
@@ -46,7 +52,10 @@ export class ObjectPool<T> {
 
   public return(obj: T): void {
     if (this.pool.length >= this.options.maxSize) {
-      battleLogManager.addSystemBattleLog('Object pool full, discarding instance', 'warning')
+      battleLogManager.addDebugLog(
+        'Object pool full, discarding instance',
+        'warning',
+      )
       return
     }
 
@@ -55,7 +64,7 @@ export class ObjectPool<T> {
       this.pool.push(obj)
       this.borrowedCount = Math.max(0, this.borrowedCount - 1)
     } catch (error) {
-      battleLogManager.addErrorLog('Failed to reset object in pool')
+      battleLogManager.addDebugLog('Failed to reset object in pool')
     }
   }
 
@@ -70,14 +79,16 @@ export class ObjectPool<T> {
   public clear(): void {
     this.pool = []
     this.borrowedCount = 0
-    battleLogManager.addSystemBattleLog('Object pool cleared')
+    battleLogManager.addDebugLog('Object pool cleared')
   }
 
   public prewarm(count: number): void {
     for (let i = 0; i < count && this.pool.length < this.options.maxSize; i++) {
       this.pool.push(this.options.create())
     }
-    battleLogManager.addSystemBattleLog(`Object pool prewarmed with ${count} instances`)
+    battleLogManager.addDebugLog(
+      `Object pool prewarmed with ${count} instances`,
+    )
   }
 }
 
@@ -95,6 +106,6 @@ export const createBuffContextPool = () => {
       if (context.variables) {
         context.variables.clear()
       }
-    }
+    },
   })
 }

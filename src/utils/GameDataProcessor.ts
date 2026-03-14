@@ -375,15 +375,18 @@ export class GameDataProcessor {
       level: enemy.level,
       maxHp: enemy.stats.health,
       currentHp: enemy.stats.health,
-      maxMp: 100,
-      currentMp: 100,
-      currentEnergy: 0,
       maxEnergy: 150,
+      currentEnergy: 0,
       attack: Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2),
       defense: enemy.stats.defense,
       speed: enemy.stats.speed,
       enabled: index < 3,
-      isFirst: index === 0,
+      critRate: 0.05,
+      critDamage: 1.25,
+      accuracy: 0.75,
+      evade: 0.05,
+      lifeSteal: 0,
+      regeneration: 0,
       buffs:
         index === 0
           ? [
@@ -687,16 +690,6 @@ export class GameDataProcessor {
         passiveBonuses,
         'health',
       ),
-      maxMp: GameDataProcessor.createAttributeValue(
-        100,
-        passiveBonuses,
-        'maxMp',
-      ),
-      currentMp: GameDataProcessor.createAttributeValue(
-        100,
-        passiveBonuses,
-        'currentMp',
-      ),
       currentEnergy: GameDataProcessor.createAttributeValue(
         0,
         passiveBonuses,
@@ -863,8 +856,6 @@ export class GameDataProcessor {
       level: participant.level,
       maxHp: createAttributeValue(participant.maxHealth, 'health'),
       currentHp: createAttributeValue(participant.currentHealth, 'health'),
-      maxMp: createAttributeValue(100, 'maxMp'),
-      currentMp: createAttributeValue(100, 'currentMp'),
       currentEnergy: createAttributeValue(
         participant.currentEnergy,
         'currentEnergy',

@@ -15,13 +15,13 @@ export interface CharacterStats {
   /** 角色等级 */
   level: number
   /** 当前生命值 */
-  hp: number
+  currentHp: number
   /** 最大生命值 */
   maxHp: number
   /** 当前魔法值 */
-  mp: number
+  currentEnergy: number
   /** 最大魔法值 */
-  maxMp: number
+  maxEnergy: number
   /** 攻击力 */
   attack: number
   /** 防御力 */
@@ -48,10 +48,6 @@ export interface CharacterStats {
   damageReduce: number
   /** 是否启用 */
   enabled: boolean
-  /** 当前能量 */
-  currentEnergy?: number
-  /** 最大能量 */
-  maxEnergy?: number
   /** buff列表 */
   buffs?: any[]
 }

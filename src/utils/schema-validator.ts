@@ -21,7 +21,7 @@ export interface ValidationResult {
  */
 const skillSchema = {
   type: 'object',
-  required: ['id', 'name', 'mpCost', 'cooldown', 'steps'],
+  required: ['id', 'name', 'energyCost', 'cooldown', 'steps'],
   properties: {
     id: {
       type: 'string',
@@ -34,7 +34,7 @@ const skillSchema = {
     description: {
       type: 'string',
     },
-    mpCost: {
+    energyCost: {
       type: 'number',
       minimum: 0,
     },

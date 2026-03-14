@@ -2,11 +2,6 @@
  * 战斗日志系统 - 统一类型定义
  *
  * 整合了以下文件中的类型定义：
- * - src/utils/BattleLogFormatter.ts
- * - src/utils/BattleLogManager.ts
- * - src/framework/utils/Logger.ts
- * - src/utils/logger.ts
- * - src/types/battle-log.ts
  *
  * 确保系统中所有战斗日志相关的类型引用保持一致
  */
@@ -24,7 +19,15 @@ export const LogLevel = {
   TRACE: 4,
 } as const
 
-export type LogLevel = typeof LogLevel[keyof typeof LogLevel]
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel]
+
+export const LogLevelClass: Record<LogLevel, string> = {
+  [LogLevel.ERROR]: 'log-error',
+  [LogLevel.WARN]: 'log-warn',
+  [LogLevel.INFO]: 'log-info',
+  [LogLevel.DEBUG]: 'log-debug',
+  [LogLevel.TRACE]: 'log-trace',
+}
 
 export const LogLevelLabel: Record<LogLevel, string> = {
   [LogLevel.ERROR]: '错误',
@@ -32,6 +35,28 @@ export const LogLevelLabel: Record<LogLevel, string> = {
   [LogLevel.INFO]: '信息',
   [LogLevel.DEBUG]: '调试',
   [LogLevel.TRACE]: '跟踪',
+}
+
+/**
+ * 日志类别 - 用于业务过滤和展示分组
+ * 包含战斗、系统、物品、动作和调试五种类别
+ */
+export const LogType = {
+  BATTLE: 'battle',
+  SYSTEM: 'system',
+  ITEM: 'item',
+  ACTION: 'action',
+  DEBUG: 'debug',
+} as const
+
+export type LogType = (typeof LogType)[keyof typeof LogType]
+
+export const LogTypeLabel: Record<LogType, string> = {
+  [LogType.BATTLE]: '战斗',
+  [LogType.SYSTEM]: '系统',
+  [LogType.ITEM]: '物品',
+  [LogType.ACTION]: '动作',
+  [LogType.DEBUG]: '调试',
 }
 
 /**
@@ -44,16 +69,11 @@ export type BattleLogLevel = 'debug' | 'info' | 'warning' | 'error'
  * 注意: 此类型扩展为包含日志级别值，以兼容现有代码
  */
 export type BattleLogCategory =
+  | 'battle'
   | 'system'
+  | 'item'
   | 'action'
-  | 'damage'
-  | 'heal'
-  | 'crit'
-  | 'status'
   | 'debug'
-  | 'info'
-  | 'warning'
-  | 'error'
 
 /**
  * 统一日志消息类型 - 合并级别和类别
@@ -92,39 +112,49 @@ export type ActionType =
  * 通用日志条目接口 - 用于框架日志系统
  */
 export interface LogEntry {
-  timestamp: number
-  level: LogLevel
-  message: string
+  /** 日志索引 */
+  index: number
+  /** 日志类型（顶级分类） */
+  type: LogType
+  /** 日志级别 */
+  level?: LogLevel
+  /** 日志消息 */
+  message?: string
+  /** 操作 */
+  action?: string
+  /** 额外的上下文数据 */
   context?: Record<string, any>
+  /** 日志来源标识 */
   source?: string
+  /** 错误对象 */
   error?: Error
+  /** 日志片段数组 */
+  segments?: LogSegment[]
 }
 
 /**
  * 战斗日志条目接口 - 统一所有战斗日志条目定义
  * 精简版本：移除冗余字段，仅保留核心数据
  */
-export interface BattleLogEntry {
-  /** 回合号，如 '回合1' 或 '回合开始' */
-  turn: string
-
-  /** 来源（角色名或"系统"） */
-  source: string
-
-  /** 动作描述 */
-  action: string
-
+export interface BattleLogEntry extends LogEntry {
+  /** 日志索引 */
+  index: number
+  /** 日志类型 */
+  type: LogType
+  /** 新 回合号，如 '回合1' 或 '回合开始' */
+  turn: number
+  /** 日志消息 */
+  message: string
   /** 目标 */
-  target: string
-
-  /** 日志级别/类别（统一类型） */
-  level: BattleLogMessageType
-
+  target?: string
+  /** 来源（角色名或"系统"） */
+  source?: string
   /** 日志类别（业务维度） */
-  category: BattleLogCategory
-
+  category?: BattleLogCategory
+  /** 日志详细类别 */
+  detailCategory?: string
   /** 日志片段列表，用于结构化渲染（必需） */
-  segments: LogSegment[]
+  segments?: LogSegment[]
 }
 
 /**
@@ -153,18 +183,20 @@ export interface LogFormatOptions {
 }
 
 /**
- * 日志片段颜色类型
- */
-export type LogSegmentColor = 'friendly' | 'hostile' | 'damage' | 'heal' | 'crit' | 'default'
-
-/**
  * 日志片段接口 - 用于结构化渲染日志内容
  */
 export interface LogSegment {
   /** 片段文本内容 */
   text: string
-  /** 片段颜色类型 */
-  color?: LogSegmentColor
+  /** 片段CSS类名 */
+  classStr?: string
+}
+
+export function newLogSegment(text: string, classStr?: string): LogSegment {
+  return {
+    text,
+    classStr,
+  }
 }
 
 /**
@@ -180,14 +212,16 @@ export interface HTMLFormatOptions extends LogFormatOptions {
  * 日志过滤器配置 - 控制各类战斗日志在界面上的显示状态
  */
 export interface LogFilters {
-  /** 是否显示伤害类日志 */
-  damage: boolean
-  /** 是否显示状态类日志（增益、减益、控制等） */
-  status: boolean
-  /** 是否显示暴击类日志 */
-  crit: boolean
-  /** 是否显示治疗类日志 */
-  heal: boolean
+  /** 是否显示战斗日志（攻击、技能、治疗、暴击等） */
+  battle: boolean
+  /** 是否显示系统日志（规则变更、速度调整等） */
+  system: boolean
+  /** 是否显示物品日志（物品使用、获得等） */
+  item: boolean
+  /** 是否显示操作日志（玩家点击、调试操作等） */
+  action: boolean
+  /** 是否显示调试日志（开发信息、错误等，默认隐藏） */
+  debug: boolean
 }
 
 /**
@@ -201,12 +235,24 @@ export interface LogHandler {
  * 日志管理器选项接口
  */
 export interface BattleLogManagerOptions {
-  /** 最大日志数量，默认100 */
-  maxLogs?: number
+  /** 战斗日志最大数量，默认200 */
+  battleMaxLogs?: number
+  /** 系统日志最大数量，默认200 */
+  maxSystemLogs?: number
+  /** 物品日志最大数量，默认200 */
+  maxItemLogs?: number
+  /** 动作日志最大数量，默认200 */
+  maxActionLogs?: number
+  /** 调试日志最大数量，默认500 */
+  maxDebugLogs?: number
   /** 初始过滤器配置 */
   filters?: Partial<LogFilters>
-  /** 是否启用自动清理 */
+  /** 是否启用自动清理，默认true */
   autoCleanup?: boolean
+  /** 当前调试日志级别，默认DEBUG */
+  level?: LogLevel
+  /** 日志处理器数组 */
+  handlers?: LogHandler[]
   /** 日志来源标识 */
   source?: string
 }
@@ -257,54 +303,11 @@ export const ActionTypeDisplayNames: Record<ActionType, string> = {
  * 默认日志过滤器配置
  */
 export const DefaultLogFilters: LogFilters = {
-  damage: true,
-  status: true,
-  crit: true,
-  heal: false,
-}
-
-/**
- * 日志级别优先级映射
- */
-export const LogLevelPriority: Record<BattleLogLevel, number> = {
-  debug: 0,
-  info: 1,
-  warning: 2,
-  error: 3,
-}
-
-/**
- * 判断日志是否应该显示（基于过滤器）
- */
-export function shouldDisplayLog(
-  log: BattleLogEntry,
-  filters: LogFilters,
-): boolean {
-  // 根据日志类别和过滤器进行判断
-  switch (log.category) {
-    case 'damage':
-      return filters.damage
-    case 'heal':
-      return filters.heal
-    case 'crit':
-      return filters.crit
-    case 'status':
-      return filters.status
-    default:
-      return true
-  }
-}
-
-/**
- * 日志片段颜色映射到CSS类名
- */
-export const LogSegmentColorClass: Record<LogSegmentColor, string> = {
-  friendly: 'log-friendly',
-  hostile: 'log-hostile',
-  damage: 'log-damage',
-  heal: 'log-heal',
-  crit: 'log-crit',
-  default: '',
+  battle: true,
+  system: true,
+  item: true,
+  action: true,
+  debug: false,
 }
 
 /**
@@ -324,11 +327,17 @@ export function createAttackLogSegments(
   isFriendlyTarget: boolean,
 ): LogSegment[] {
   return [
-    { text: attacker, color: isFriendlyAttacker ? 'friendly' : 'hostile' },
+    {
+      text: attacker,
+      classStr: isFriendlyAttacker ? 'log-friendly' : 'log-hostile',
+    },
     { text: ' 对 ' },
-    { text: target, color: isFriendlyTarget ? 'friendly' : 'hostile' },
+    {
+      text: target,
+      classStr: isFriendlyTarget ? 'log-friendly' : 'log-hostile',
+    },
     { text: ' 发动普通攻击，造成 ' },
-    { text: damage.toString(), color: 'damage' },
+    { text: damage.toString(), classStr: 'log-damage' },
     { text: ' 点伤害' },
   ]
 }
@@ -350,11 +359,17 @@ export function createHealLogSegments(
   isFriendlyTarget: boolean,
 ): LogSegment[] {
   return [
-    { text: healer, color: isFriendlyHealer ? 'friendly' : 'hostile' },
+    {
+      text: healer,
+      classStr: isFriendlyHealer ? 'log-friendly' : 'log-hostile',
+    },
     { text: ' 对 ' },
-    { text: target, color: isFriendlyTarget ? 'friendly' : 'hostile' },
+    {
+      text: target,
+      classStr: isFriendlyTarget ? 'log-friendly' : 'log-hostile',
+    },
     { text: ' 恢复 ' },
-    { text: healAmount.toString(), color: 'heal' },
+    { text: healAmount.toString(), classStr: 'log-heal' },
     { text: ' 点生命值' },
   ]
 }
@@ -376,11 +391,17 @@ export function createCritAttackLogSegments(
   isFriendlyTarget: boolean,
 ): LogSegment[] {
   return [
-    { text: attacker, color: isFriendlyAttacker ? 'friendly' : 'hostile' },
+    {
+      text: attacker,
+      classStr: isFriendlyAttacker ? 'log-friendly' : 'log-hostile',
+    },
     { text: ' 对 ' },
-    { text: target, color: isFriendlyTarget ? 'friendly' : 'hostile' },
+    {
+      text: target,
+      classStr: isFriendlyTarget ? 'log-friendly' : 'log-hostile',
+    },
     { text: ' 发动暴击，造成 ' },
-    { text: damage.toString(), color: 'crit' },
+    { text: damage.toString(), classStr: 'log-crit' },
     { text: ' 点暴击伤害！' },
   ]
 }
@@ -459,13 +480,6 @@ export const LogUtils = {
       action: '动作',
     }
     return displayNames[level] || '未知'
-  },
-
-  /**
-   * 比较两个日志级别的重要性
-   */
-  compareLevels(level1: BattleLogLevel, level2: BattleLogLevel): number {
-    return LogLevelPriority[level1] - LogLevelPriority[level2]
   },
 }
 
@@ -580,8 +594,16 @@ export function battleActionToLogEntry(
     }
   }
 
-  const sourceIsAlly = options?.sourceIsAlly ?? (action.sourceId !== 'system' ? participants.get(action.sourceId)?.team === 'ally' : false)
-  const targetIsAlly = options?.targetIsAlly ?? (action.targetId ? participants.get(action.targetId)?.team === 'ally' : undefined)
+  const sourceIsAlly =
+    options?.sourceIsAlly ??
+    (action.sourceId !== 'system'
+      ? participants.get(action.sourceId)?.team === 'ally'
+      : false)
+  const targetIsAlly =
+    options?.targetIsAlly ??
+    (action.targetId
+      ? participants.get(action.targetId)?.team === 'ally'
+      : undefined)
 
   const { category, level, segments } = generateLogSegments(
     action,
@@ -621,30 +643,58 @@ function generateLogSegments(
   }
 
   if (!action.success || action.isHit === false) {
-    return generateMissLogSegments(action, sourceName, targetName, sourceIsAlly, targetIsAlly)
+    return generateMissLogSegments(
+      action,
+      sourceName,
+      targetName,
+      sourceIsAlly,
+      targetIsAlly,
+    )
   }
 
   if (action.isCrit) {
-    return generateCritLogSegments(action, sourceName, targetName, sourceIsAlly, targetIsAlly)
+    return generateCritLogSegments(
+      action,
+      sourceName,
+      targetName,
+      sourceIsAlly,
+      targetIsAlly,
+    )
   }
 
   if (action.heal && action.heal > 0) {
-    return generateHealLogSegments(action, sourceName, targetName, sourceIsAlly, targetIsAlly)
+    return generateHealLogSegments(
+      action,
+      sourceName,
+      targetName,
+      sourceIsAlly,
+      targetIsAlly,
+    )
   }
 
   if (action.damage && action.damage > 0) {
-    return generateDamageLogSegments(action, sourceName, targetName, sourceIsAlly, targetIsAlly)
+    return generateDamageLogSegments(
+      action,
+      sourceName,
+      targetName,
+      sourceIsAlly,
+      targetIsAlly,
+    )
   }
 
-  return generateDefaultLogSegments(action, sourceName, targetName, sourceIsAlly, targetIsAlly)
+  return generateDefaultLogSegments(
+    action,
+    sourceName,
+    targetName,
+    sourceIsAlly,
+    targetIsAlly,
+  )
 }
 
 /**
  * 生成系统日志片段
  */
-function generateSystemLogSegments(
-  action: BattleAction,
-): {
+function generateSystemLogSegments(action: BattleAction): {
   category: BattleLogCategory
   level: BattleLogMessageType
   segments: LogSegment[]
@@ -659,7 +709,11 @@ function generateSystemLogSegments(
     }
   }
 
-  if (description.includes('战斗结束') || description.includes('胜利') || description.includes('失败')) {
+  if (
+    description.includes('战斗结束') ||
+    description.includes('胜利') ||
+    description.includes('失败')
+  ) {
     return {
       category: 'system',
       level: description.includes('胜利') ? 'info' : 'warning',
@@ -695,9 +749,15 @@ function generateMissLogSegments(
     category: 'status',
     level: 'info',
     segments: [
-      { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+      {
+        text: sourceName,
+        classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
+      },
       { text: ' 对 ' },
-      { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+      {
+        text: targetName,
+        classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
+      },
       { text: ` 发动${isSkill ? `【${skillName}】` : ''}，攻击被闪避，未命中` },
     ],
   }
@@ -725,11 +785,19 @@ function generateCritLogSegments(
     category: 'crit',
     level: 'info',
     segments: [
-      { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+      {
+        text: sourceName,
+        classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
+      },
       { text: ' 对 ' },
-      { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
-      { text: ` 发动${isSkill ? `【${skillName}】` : ''}，触发会心一击，造成 ` },
-      { text: damage.toString(), color: 'crit' },
+      {
+        text: targetName,
+        classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
+      },
+      {
+        text: ` 发动${isSkill ? `【${skillName}】` : ''}，触发会心一击，造成 `,
+      },
+      { text: damage.toString(), classStr: 'log-crit' },
       { text: ' 点暴击伤害！' },
     ],
   }
@@ -756,11 +824,17 @@ function generateHealLogSegments(
     category: 'heal',
     level: 'info',
     segments: [
-      { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+      {
+        text: sourceName,
+        classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
+      },
       { text: ' 对 ' },
-      { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+      {
+        text: targetName,
+        classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
+      },
       { text: ` 施放【${skillName}】，为其恢复 ` },
-      { text: healAmount.toString(), color: 'heal' },
+      { text: healAmount.toString(), classStr: 'log-heal' },
       { text: ' 点生命值' },
     ],
   }
@@ -789,11 +863,17 @@ function generateDamageLogSegments(
       category: 'damage',
       level: 'info',
       segments: [
-        { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+        {
+          text: sourceName,
+          classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
+        },
         { text: ' 对 ' },
-        { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+        {
+          text: targetName,
+          classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
+        },
         { text: ` 发动终极技能【${skillName}】，造成 ` },
-        { text: damage.toString(), color: 'damage' },
+        { text: damage.toString(), classStr: 'log-damage' },
         { text: ' 点魔法伤害' },
       ],
     }
@@ -803,11 +883,17 @@ function generateDamageLogSegments(
     category: 'damage',
     level: 'info',
     segments: [
-      { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+      {
+        text: sourceName,
+        classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
+      },
       { text: ' 对 ' },
-      { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+      {
+        text: targetName,
+        classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
+      },
       { text: ' 发动普通攻击，造成 ' },
-      { text: damage.toString(), color: 'damage' },
+      { text: damage.toString(), classStr: 'log-damage' },
       { text: ' 点物理伤害' },
     ],
   }
@@ -833,9 +919,15 @@ function generateDefaultLogSegments(
     category: 'action',
     level: 'info',
     segments: [
-      { text: sourceName, color: sourceIsAlly ? 'friendly' : 'hostile' },
+      {
+        text: sourceName,
+        classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
+      },
       { text: ' 对 ' },
-      { text: targetName, color: targetIsAlly ? 'friendly' : 'hostile' },
+      {
+        text: targetName,
+        classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
+      },
       { text: ` ${effectDescription}` },
     ],
   }

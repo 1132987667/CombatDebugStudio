@@ -77,7 +77,7 @@ export class Container {
   }
 }
 
-export const container = Container.getInstance()
+export const container = reactive(Container.getInstance())
 
 // 导入所有必要的服务和令牌
 import {
@@ -90,7 +90,7 @@ import {
   BATTLE_RULE_MANAGER_TOKEN,
 } from '@/core/battle/interfaces'
 
-import { GameBattleSystem } from '@/core/BattleSystem'
+import { BattleSystem } from '@/core/BattleSystem'
 import { TurnManager } from '@/core/battle/TurnManager'
 import { ActionExecutor } from '@/core/battle/ActionExecutor'
 import { ParticipantManager } from '@/core/battle/ParticipantManager'
@@ -114,6 +114,7 @@ import { PassiveSkillManager } from '@/core/skill/PassiveSkillManager'
 import { TaskExecutor } from '@/core/TaskExecutor'
 import { BattleService } from '@/services/BattleService'
 import { battleEventManager } from '@/core/battle/events/BattleEventManager'
+import { reactive } from 'vue'
 
 /**
  * 初始化依赖注入容器
@@ -146,7 +147,7 @@ export function initializeContainer(): void {
   const skillManager = container.resolve<SkillManager>('SkillManager')
   container.register(
     'PassiveSkillManager',
-    new PassiveSkillManager(skillManager, buffSystem),
+    PassiveSkillManager.create(skillManager, buffSystem),
   )
 
   // 5. 注册计算服务
@@ -175,7 +176,7 @@ export function initializeContainer(): void {
   container.registerFactory(
     BATTLE_SYSTEM_TOKEN.toString(),
     () => {
-      return GameBattleSystem.createInstanceWithContainer(container)
+      return BattleSystem.createInstanceWithContainer(container)
     },
     true,
   )

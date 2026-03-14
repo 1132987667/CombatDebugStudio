@@ -12,7 +12,6 @@ import type {
 import { useBattleStore } from '@/stores/battleStore'
 import { BattleStateManager } from '@/core/battle/state/BattleStateManager'
 import type { IBattleSystem } from '@/core/battle/interfaces'
-import { BattleLogFormatter } from '@/utils/logging/BattleLogManager'
 import { PARTICIPANT_SIDE } from '@/types/battle'
 
 /**
@@ -122,82 +121,91 @@ export class BattleEventManager {
       if (data && data.log) {
         const log = data.log
         // 如果没有 htmlResult，尝试生成 HTML 格式
-          if (!log.htmlResult && log.result) {
-            let htmlResult = log.result
-            
-            // 判断来源和目标是否是敌方
-            const sourceIsAlly = !log.source.includes('敌方') && log.source !== '系统'
-            const targetIsAlly = log.target && !log.target.includes('敌方') && log.target !== '系统' && log.target !== '控制'
-            
-            // 替换角色名称颜色
-            if (log.source && log.source !== '系统') {
-              const sourceClass = sourceIsAlly ? 'source-ally' : 'source-enemy'
-              htmlResult = htmlResult.replace(
-                log.source,
-                `<span class="${sourceClass}">${log.source}</span>`
-              )
-            }
-            if (log.target && log.target !== '控制') {
-              const targetClass = targetIsAlly ? 'source-ally' : 'source-enemy'
-              htmlResult = htmlResult.replace(
-                log.target,
-                `<span class="${targetClass}">${log.target}</span>`
-              )
-            }
-            
-            // 添加普通攻击颜色
-            if (htmlResult.includes('普通攻击')) {
-              htmlResult = htmlResult.replace(
-                /普通攻击/g,
-                '<span class="normal-attack">普通攻击</span>'
-              )
-            }
-            
-            // 添加技能攻击颜色 (匹配【技能名】格式)
+        if (!log.htmlResult && log.result) {
+          let htmlResult = log.result
+
+          // 判断来源和目标是否是敌方
+          const sourceIsAlly =
+            !log.source.includes('敌方') && log.source !== '系统'
+          const targetIsAlly =
+            log.target &&
+            !log.target.includes('敌方') &&
+            log.target !== '系统' &&
+            log.target !== '控制'
+
+          // 替换角色名称颜色
+          if (log.source && log.source !== '系统') {
+            const sourceClass = sourceIsAlly ? 'source-ally' : 'source-enemy'
             htmlResult = htmlResult.replace(
-              /【([^】]+)】/g,
-              (match, skillName) => {
-                const isHeal = skillName.includes('治疗') || skillName.includes('恢复')
-                const isDebuff = skillName.includes('毒') || skillName.includes('虚弱')
-                if (isHeal) return `<span class="skill-heal">【${skillName}】</span>`
-                if (isDebuff) return `<span class="skill-debuff">【${skillName}】</span>`
-                return `<span class="skill-attack">【${skillName}】</span>`
-              }
+              log.source,
+              `<span class="${sourceClass}">${log.source}</span>`,
             )
-            
-            // 添加伤害数字颜色 - 匹配各种伤害格式
-            htmlResult = htmlResult.replace(
-              /(\d+)(?=点(物理|魔法|持续)?伤害)/g,
-              '<span class="damage-value">$1</span>'
-            )
-            
-            // 添加暴击标记
-            if (htmlResult.includes('暴击')) {
-              htmlResult = htmlResult.replace(
-                /暴击！?/g,
-                '<span class="crit-value">暴击</span>'
-              )
-            }
-            
-            // 添加闪避标记
-            if (htmlResult.includes('闪避')) {
-              htmlResult = htmlResult.replace(
-                /闪避/g,
-                '<span class="evade">闪避</span>'
-              )
-            }
-            
-            // 添加格挡标记
-            if (htmlResult.includes('格挡')) {
-              htmlResult = htmlResult.replace(
-                /格挡/g,
-                '<span class="evade">格挡</span>'
-              )
-            }
-            
-            log.htmlResult = htmlResult
           }
-        
+          if (log.target && log.target !== '控制') {
+            const targetClass = targetIsAlly ? 'source-ally' : 'source-enemy'
+            htmlResult = htmlResult.replace(
+              log.target,
+              `<span class="${targetClass}">${log.target}</span>`,
+            )
+          }
+
+          // 添加普通攻击颜色
+          if (htmlResult.includes('普通攻击')) {
+            htmlResult = htmlResult.replace(
+              /普通攻击/g,
+              '<span class="normal-attack">普通攻击</span>',
+            )
+          }
+
+          // 添加技能攻击颜色 (匹配【技能名】格式)
+          htmlResult = htmlResult.replace(
+            /【([^】]+)】/g,
+            (match, skillName) => {
+              const isHeal =
+                skillName.includes('治疗') || skillName.includes('恢复')
+              const isDebuff =
+                skillName.includes('毒') || skillName.includes('虚弱')
+              if (isHeal)
+                return `<span class="skill-heal">【${skillName}】</span>`
+              if (isDebuff)
+                return `<span class="skill-debuff">【${skillName}】</span>`
+              return `<span class="skill-attack">【${skillName}】</span>`
+            },
+          )
+
+          // 添加伤害数字颜色 - 匹配各种伤害格式
+          htmlResult = htmlResult.replace(
+            /(\d+)(?=点(物理|魔法|持续)?伤害)/g,
+            '<span class="damage-value">$1</span>',
+          )
+
+          // 添加暴击标记
+          if (htmlResult.includes('暴击')) {
+            htmlResult = htmlResult.replace(
+              /暴击！?/g,
+              '<span class="crit-value">暴击</span>',
+            )
+          }
+
+          // 添加闪避标记
+          if (htmlResult.includes('闪避')) {
+            htmlResult = htmlResult.replace(
+              /闪避/g,
+              '<span class="evade">闪避</span>',
+            )
+          }
+
+          // 添加格挡标记
+          if (htmlResult.includes('格挡')) {
+            htmlResult = htmlResult.replace(
+              /格挡/g,
+              '<span class="evade">格挡</span>',
+            )
+          }
+
+          log.htmlResult = htmlResult
+        }
+
         this.getBattleStore().addBattleLog(log)
       }
     } catch (error) {

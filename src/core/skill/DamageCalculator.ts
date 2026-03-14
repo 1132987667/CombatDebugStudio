@@ -14,7 +14,7 @@ import type {
   EffectRecord,
   CalculationStep,
 } from '@/types/combat-record'
-import { battleLogManager } from '@/utils/logging'
+import { battleLogManager, LogLevel } from '@/utils/logging'
 
 /**
  * 伤害计算配置接口
@@ -67,7 +67,6 @@ export interface DamageCalculationResult {
  * 负责实现复杂的伤害计算逻辑
  */
 export class DamageCalculator {
-  private logger = battleLogManager
   private calculationLogs: CalculationLog[] = []
   private modifiers: DamageModifier[] = []
   private config: DamageCalculationConfig = {
@@ -84,7 +83,7 @@ export class DamageCalculator {
    */
   public setConfig(config: Partial<DamageCalculationConfig>): void {
     this.config = { ...this.config, ...config }
-    this.logger.info('伤害计算配置已更新', this.config)
+    battleLogManager.addDebugLog('伤害计算配置已更新', this.config)
   }
 
   /**
@@ -101,7 +100,7 @@ export class DamageCalculator {
     this.modifiers.push(modifier)
     // 按优先级排序
     this.modifiers.sort((a, b) => b.priority - a.priority)
-    this.logger.debug(
+    battleLogManager.addDebugLog(
       `添加伤害修饰器: ${modifier.name}, 优先级: ${modifier.priority}`,
     )
   }
@@ -111,7 +110,7 @@ export class DamageCalculator {
    */
   public removeModifier(modifierName: string): void {
     this.modifiers = this.modifiers.filter((m) => m.name !== modifierName)
-    this.logger.debug(`移除伤害修饰器: ${modifierName}`)
+    battleLogManager.addDebugLog(`移除伤害修饰器: ${modifierName}`)
   }
 
   /**
@@ -155,7 +154,13 @@ export class DamageCalculator {
 
       return typeof result === 'number' ? result : 0
     } catch (error) {
-      this.logger.error('公式解析出错:', error)
+      battleLogManager.addDebugLog(
+        '公式解析出错:',
+        LogLevel.ERROR,
+        null,
+        '',
+        error,
+      )
       return 0
     }
   }
@@ -266,7 +271,7 @@ export class DamageCalculator {
           output: result,
         })
       } else {
-        this.logger.warn('伤害步骤缺少计算配置和公式')
+        battleLogManager.addDebugLog('伤害步骤缺少计算配置和公式')
         return { damage: 0, isMiss: false, isCritical: false }
       }
 
@@ -292,8 +297,14 @@ export class DamageCalculator {
           // 优先使用 source 的暴击属性，否则使用默认配置
           const sourceCritRate = this.getAttributeValue(source, 'CRIT_RATE')
           const sourceCritDamage = this.getAttributeValue(source, 'CRIT_DMG')
-          const critRate = sourceCritRate > 0 ? sourceCritRate : this.config.defaultCriticalRate
-          const critDamage = sourceCritDamage > 0 ? sourceCritDamage : this.config.defaultCriticalMultiplier
+          const critRate =
+            sourceCritRate > 0
+              ? sourceCritRate
+              : this.config.defaultCriticalRate
+          const critDamage =
+            sourceCritDamage > 0
+              ? sourceCritDamage
+              : this.config.defaultCriticalMultiplier
 
           isCritical = Math.random() < critRate / 100
           criticalMultiplier = isCritical ? critDamage / 100 : 1
@@ -359,7 +370,13 @@ export class DamageCalculator {
 
       return { damage: finalValue, isMiss: false, isCritical }
     } catch (error) {
-      this.logger.error('伤害计算出错:', error)
+      battleLogManager.addDebugLog(
+        '伤害计算出错:',
+        LogLevel.ERROR,
+        null,
+        '',
+        error,
+      )
       return { damage: 0, isMiss: false, isCritical: false }
     }
   }
@@ -422,7 +439,7 @@ export class DamageCalculator {
     try {
       return participant.getAttribute(attribute) || 0
     } catch (error) {
-      this.logger.warn(`获取属性值失败: ${attribute}`, error)
+      battleLogManager.addDebugLog(`获取属性值失败: ${attribute}`, error)
       return 0
     }
   }
@@ -432,7 +449,7 @@ export class DamageCalculator {
    */
   private recordCalculationLog(log: CalculationLog): void {
     this.calculationLogs.push(log)
-    this.logger.debug('伤害计算完成:', log)
+    battleLogManager.addDebugLog('伤害计算完成:', log)
   }
 
   /**
@@ -469,12 +486,14 @@ export class DamageCalculator {
    */
   public applyDamage(target: BattleParticipant, damage: number): number {
     if (!target.isAlive()) {
-      this.logger.warn('目标已死亡，无法造成伤害')
+      battleLogManager.addDebugLog('目标已死亡，无法造成伤害')
       return 0
     }
 
     const actualDamage = target.takeDamage(damage)
-    this.logger.info(`应用伤害: ${target.name} 受到 ${actualDamage} 伤害`)
+    battleLogManager.addDebugLog(
+      `应用伤害: ${target.name} 受到 ${actualDamage} 伤害`,
+    )
     return actualDamage
   }
 
@@ -521,6 +540,6 @@ export class DamageCalculator {
   public initializeBuiltinModifiers(): void {
     const builtinModifiers = DamageCalculator.createBuiltinModifiers()
     builtinModifiers.forEach((modifier) => this.addModifier(modifier))
-    this.logger.info('内置伤害修饰器初始化完成')
+    battleLogManager.addDebugLog('内置伤害修饰器初始化完成')
   }
 }

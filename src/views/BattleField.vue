@@ -4,8 +4,9 @@
       <div class="battle-header">
         <div class="turn-info">
           <span class="turn-label">当前回合:</span>
-          <span class="turn-num">{{ characterStore.currentTurn }}/{{ characterStore.maxTurns }}</span>
-          <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} (SPD:{{ getMemberSpeed(currentActor) }})</span>
+          <span class="turn-num">{{ currentTurn }}/{{ maxTurns }}</span>
+          <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} (SPD:{{ getMemberSpeed(currentActor)
+          }})</span>
         </div>
       </div>
 
@@ -14,10 +15,12 @@
           <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
             <div v-for="member in filterAllyTeam" :key="member.id" class="member-card"
-            :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: characterStore.selectedCharacterId === member.id, hit: getAnimationState(member.id).isHit, casting: getAnimationState(member.id).isCasting, buffed: getAnimationState(member.id).isBuffed }"
-            @click="selectCharacter(member.id)">
-              <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)" :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
-              <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)" :skill-name="getCharacterSkillName(member.id)" />
+              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id, hit: getAnimationState(member.id).isHit, casting: getAnimationState(member.id).isCasting, buffed: getAnimationState(member.id).isBuffed }"
+              @click="selectCharacter(member.id)">
+              <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)"
+                :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
+              <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)"
+                :skill-name="getCharacterSkillName(member.id)" />
               <div class="member-info">
                 <div class="member-name">
                   Lv.{{ member.level }} {{ member.name }}
@@ -41,7 +44,9 @@
                       <div class="tick"></div>
                       <div class="tick"></div>
                     </div>
-                    <div class="energy-fill" :class="getEnergyColorClass(member)" :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }"></div>
+                    <div class="energy-fill" :class="getEnergyColorClass(member)"
+                      :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }">
+                    </div>
                   </div>
                 </div>
                 <!-- 角色状态标签列表 -->
@@ -66,10 +71,12 @@
           <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
             <div v-for="member in filterEnemyTeam" :key="member.id" class="member-card"
-              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: characterStore.selectedCharacterId === member.id, hit: getAnimationState(member.id).isHit, casting: getAnimationState(member.id).isCasting, buffed: getAnimationState(member.id).isBuffed }"
+              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id, hit: getAnimationState(member.id).isHit, casting: getAnimationState(member.id).isCasting, buffed: getAnimationState(member.id).isBuffed }"
               @click="selectCharacter(member.id)">
-              <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)" :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
-              <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)" :skill-name="getCharacterSkillName(member.id)" />
+              <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)"
+                :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
+              <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)"
+                :skill-name="getCharacterSkillName(member.id)" />
               <div class="member-info">
                 <div class="member-name">
                   Lv.{{ member.level }} {{ member.name }}
@@ -78,14 +85,15 @@
                   </div>
                 </div>
                 <div class="member-hp">
-                  <span class="hp-text">HP: {{ getMemberHp(member) }}</span>
+                  <span class="hp-text">{{ getMemberHp(member) }}</span>
                   <div class="hp-bar">
                     <div class="hp-fill enemy-fill" :class="getHpColorClass(member)"
                       :style="{ width: getHpPercent(member) + '%' }"></div>
                   </div>
                 </div>
                 <div class="member-energy">
-                  <span class="energy-text">能量: {{ toNumber(member.currentEnergy) }}/{{ toNumber(member.maxEnergy) }}</span>
+                  <span class="energy-text">{{ toNumber(member.currentEnergy) }}/{{ toNumber(member.maxEnergy)
+                  }}</span>
                   <div class="energy-bar">
                     <div class="energy-ticks">
                       <div class="tick"></div>
@@ -94,7 +102,8 @@
                       <div class="tick"></div>
                     </div>
                     <div class="energy-fill enemy-fill" :class="getEnergyColorClass(member)"
-                      :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }"></div>
+                      :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }">
+                    </div>
                   </div>
                 </div>
                 <div class="member-status">
@@ -107,13 +116,13 @@
                 </div>
               </div>
             </div>
-            <div v-if="characterStore.enemyTeam.size === 0" class="empty-party">(空位)</div>
+            <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>
       </div>
     </div>
 
-    <BattleLog :logs="battleStore.filteredLogs" />
+    <BattleLog />
 
     <!-- 状态工具提示 -->
     <div v-if="statusTooltip.visible" class="status-tooltip" :style="{
@@ -152,16 +161,16 @@
 <script setup lang="ts">
 import { computed, ref, onUnmounted } from "vue";
 import { raf } from '@/utils/RAF';
-import { useCharacterStore, useBattleStore } from "@/stores";
+import { container } from '@/core/di/Container';
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
 import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter';
 import type { AttributeValue } from '@/types';
+import type { BattleManager } from '@/core/battle/BattleManager';
 
-// 使用Pinia stores
-const characterStore = useCharacterStore();
-const battleStore = useBattleStore();
+// 获取 BattleManager
+const battleManager = container.resolve<BattleManager>('BattleManager');
 
 const props = defineProps<{
   currentActorId: string | null;
@@ -173,6 +182,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   "select-character": [characterId: string];
 }>();
+
+// 响应式获取队伍数据
+const allyTeam = computed(() => battleManager.getAllyTeam());
+const enemyTeam = computed(() => battleManager.getEnemyTeam());
+const selectedCharacterId = computed(() => battleManager.getSelectedCharacterId());
+const currentTurn = computed(() => battleManager.getCurrentTurn());
+const maxTurns = computed(() => battleManager.getMaxTurns());
 
 // 角色效果状态
 const characterEffects = ref<{
@@ -250,7 +266,7 @@ function getAnimationState(characterId: string): { isHit: boolean; isCasting: bo
 
 // 根据回合顺序排序角色列表
 const filterAllyTeam = computed(() => {
-  const enabledAllies = Array.from(characterStore.allyTeam.values()).filter((c) => c.enabled);
+  const enabledAllies = allyTeam.value.filter((c) => c.enabled);
   if (props.turnOrder) {
     // 如果有回合顺序，按照回合顺序排序
     return enabledAllies.sort((a, b) => {
@@ -268,7 +284,7 @@ const filterAllyTeam = computed(() => {
 });
 
 const filterEnemyTeam = computed(() => {
-  const enabledEnemies = Array.from(characterStore.enemyTeam.values()).filter((c) => c.enabled);
+  const enabledEnemies = enemyTeam.value.filter((c) => c.enabled);
   if (props.turnOrder) {
     // 如果有回合顺序，按照回合顺序排序
     return enabledEnemies.sort((a, b) => {
@@ -287,15 +303,12 @@ const filterEnemyTeam = computed(() => {
 
 const currentActor = computed(() => {
   if (!props.currentActorId) return null;
-  return (
-    characterStore.allyTeam.get(props.currentActorId) ||
-    characterStore.enemyTeam.get(props.currentActorId) ||
-    null
-  );
+  const allParticipants = [...allyTeam.value, ...enemyTeam.value];
+  return allParticipants.find((p) => p.id === props.currentActorId) || null;
 });
 
 const selectCharacter = (charId: string) => {
-  characterStore.selectCharacter(charId);
+  battleManager.selectCharacter(charId);
   emit('select-character', charId);
 };
 
@@ -442,10 +455,10 @@ function getCharacterSkillName(characterId: string): string | undefined {
 // 显示伤害效果
 function showDamage(characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) {
   characterEffects.value.damage[characterId] = { value, type, isCritical };
-  
+
   // 触发 hit 效果
   triggerHitEffect(characterId);
-  
+
   // 3秒后清除效果
   const timeoutId = raf.setTimeout(() => {
     delete characterEffects.value.damage[characterId];
@@ -456,7 +469,7 @@ function showDamage(characterId: string, value: number, type: 'damage' | 'heal' 
 // 显示Miss效果
 function showMiss(characterId: string) {
   characterEffects.value.damage[characterId] = { value: 0, type: 'miss', isCritical: false };
-  
+
   // 3秒后清除效果
   const timeoutId = raf.setTimeout(() => {
     delete characterEffects.value.damage[characterId];
@@ -467,10 +480,10 @@ function showMiss(characterId: string) {
 // 显示技能效果
 function showSkillEffect(characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) {
   characterEffects.value.skill[characterId] = { type, name };
-  
+
   // 触发施法效果
   triggerCastingEffect(characterId);
-  
+
   // 3秒后清除效果
   const timeoutId = raf.setTimeout(() => {
     delete characterEffects.value.skill[characterId];
@@ -490,7 +503,7 @@ function triggerHitEffect(characterId: string) {
   if (!characterEffects.value.animation[characterId]) {
     characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
   }
-  
+
   // 触发hit效果
   characterEffects.value.animation[characterId].isHit = true;
   const timeoutId = raf.setTimeout(() => {
@@ -507,7 +520,7 @@ function triggerCastingEffect(characterId: string, duration: number = 1000) {
   if (!characterEffects.value.animation[characterId]) {
     characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
   }
-  
+
   // 触发casting效果
   characterEffects.value.animation[characterId].isCasting = true;
   const timeoutId = raf.setTimeout(() => {
@@ -524,7 +537,7 @@ function triggerBuffEffect(characterId: string) {
   if (!characterEffects.value.animation[characterId]) {
     characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
   }
-  
+
   // 触发buffed效果
   characterEffects.value.animation[characterId].isBuffed = true;
   const timeoutId = raf.setTimeout(() => {
@@ -565,12 +578,12 @@ onUnmounted(() => {
   if (tooltipTimeout) {
     raf.clearTimeout(tooltipTimeout);
   }
-  
+
   // 清理所有其他定时器
   timeouts.value.forEach(timeoutId => {
     raf.clearTimeout(timeoutId);
   });
-  
+
   // 清理所有动画效果
   cleanupAnimations();
 });
@@ -588,10 +601,12 @@ onUnmounted(() => {
     box-shadow: 0 0 0 rgba(100, 200, 255, 0);
     filter: brightness(1);
   }
+
   50% {
     box-shadow: 0 0 20px rgba(100, 200, 255, 0.8);
     filter: brightness(1.2);
   }
+
   100% {
     box-shadow: 0 0 0 rgba(100, 200, 255, 0);
     filter: brightness(1);
@@ -606,9 +621,11 @@ onUnmounted(() => {
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.1);
   }
+
   100% {
     transform: scale(1);
   }
@@ -623,13 +640,16 @@ onUnmounted(() => {
   0% {
     transform: translateX(0);
   }
+
   25% {
     transform: translateX(-5px);
     filter: brightness(0.8);
   }
+
   75% {
     transform: translateX(5px);
   }
+
   100% {
     transform: translateX(0);
     filter: brightness(1);
@@ -646,10 +666,12 @@ onUnmounted(() => {
     box-shadow: 0 0 0 rgba(200, 150, 255, 0);
     filter: brightness(1);
   }
+
   50% {
     box-shadow: 0 0 15px rgba(200, 150, 255, 0.6);
     filter: brightness(1.1);
   }
+
   100% {
     box-shadow: 0 0 0 rgba(200, 150, 255, 0);
     filter: brightness(1);
@@ -657,7 +679,9 @@ onUnmounted(() => {
 }
 
 /* 确保动画只播放一次 */
-.member-card.hit, .member-card.casting, .member-card.buffed {
+.member-card.hit,
+.member-card.casting,
+.member-card.buffed {
   animation-iteration-count: 1;
 }
 </style>

@@ -7,10 +7,7 @@
  * 版本: 1.0.0
  */
 
-/**
- * 效果条目类型
- */
-export type EffectType = 'damage' | 'heal' | 'buff' | 'debuff' | 'miss' | 'critical' | 'status'
+import type { EffectType } from './effect'
 
 /**
  * 动作类型

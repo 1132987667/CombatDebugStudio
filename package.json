@@ -13,6 +13,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix"
   },
   "dependencies": {
+    "gsap": "^3.14.2",
     "mitt": "^3.0.1",
     "pinia": "^3.0.4",
     "vue": "^3.2.47"

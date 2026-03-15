@@ -1,5 +1,6 @@
 import type { IBattleSystem } from '@/core/battle/interfaces'
 import type { BattleState, BattleParticipant } from '@/types/battle'
+import { BATTLE_STATUS } from '@/types/battle'
 import type { UIBattleCharacter, AttributeValue } from '@/types'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { eventBus } from '@/main'
@@ -205,7 +206,7 @@ export class BattleStateManager {
       }
 
       // 同步战斗活跃状态
-      this.isBattleActive = battleState.isActive
+      this.isBattleActive = battleState.battleState === BATTLE_STATUS.ACTIVE
 
       // 同步回合数
       if (battleState.currentTurn !== undefined) {
@@ -223,7 +224,7 @@ export class BattleStateManager {
       this.syncParticipantsState(battleState)
 
       // 检查战斗是否结束
-      if (!battleState.isActive) {
+      if (battleState.battleState === BATTLE_STATUS.ENDED) {
         this.handleBattleEnd()
       }
     } catch (error) {
@@ -272,7 +273,8 @@ export class BattleStateManager {
     participant: BattleParticipant,
   ) {
     // 使用新的转换方法创建更新后的UI角色
-    const updated = GameDataProcessor.participantToUIBattleCharacter(participant)
+    const updated =
+      GameDataProcessor.participantToUIBattleCharacter(participant)
 
     // 基础属性（非 AttributeValue 类型）
     character.level = updated.level

@@ -5,6 +5,7 @@
  */
 
 import type { BattleParticipant, BattleState, BattleAction } from '@/types/battle'
+import { BATTLE_STATUS, type BattleStatus } from '@/types/battle'
 import type { Skill } from '@/types/skill'
 
 /**
@@ -159,8 +160,8 @@ export interface IBattleContext {
   participants: Map<string, ParticipantSnapshot>
   /** 当前回合 */
   currentTurn: number
-  /** 是否活跃 */
-  isActive: boolean
+  /** 战斗状态 */
+  battleState: BattleStatus
 
   /**
    * 获取所有友方参与者
@@ -195,12 +196,12 @@ export class BattleContext implements IBattleContext {
   public battleId: string
   public participants: Map<string, ParticipantSnapshot>
   public currentTurn: number
-  public isActive: boolean
+  public battleState: BattleStatus
 
   constructor(battleState: BattleState, currentParticipantId?: string) {
     this.battleId = battleState.battleId
     this.currentTurn = battleState.currentTurn
-    this.isActive = battleState.isActive
+    this.battleState = battleState.battleState
     this.participants = new Map()
 
     battleState.participants.forEach((p, id) => {

@@ -14,8 +14,8 @@ import {
   BATTLE_CONSTANTS,
   SKILL_EFFECT_CONSTANTS,
   ACTION_TYPES,
-  EFFECT_TYPES,
 } from '@/types/battle'
+import { EFFECT_TYPES } from '@/types/effect'
 import { useBattleStore } from '@/stores/battleStore'
 import { battleLogManager } from '@/utils/logging'
 import type { BuffSystem } from '@/core/BuffSystem'

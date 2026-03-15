@@ -65,15 +65,29 @@ export const LogTypeLabel: Record<LogType, string> = {
 export type BattleLogLevel = 'debug' | 'info' | 'warning' | 'error'
 
 /**
+ * 战斗日志类别常量
+ * 统一的日志类别定义，供全项目使用
+ */
+export const BATTLE_LOG_CATEGORIES = {
+  SYSTEM: 'system',
+  ACTION: 'action',
+  DAMAGE: 'damage',
+  HEAL: 'heal',
+  CRIT: 'crit',
+  STATUS: 'status',
+  BATTLE: 'battle',
+  ITEM: 'item',
+  DEBUG: 'debug',
+  INFO: 'info',
+  WARNING: 'warning',
+  ERROR: 'error',
+} as const
+
+/**
  * 战斗日志类别类型 - 用于业务过滤和展示分组
- * 注意: 此类型扩展为包含日志级别值，以兼容现有代码
  */
 export type BattleLogCategory =
-  | 'battle'
-  | 'system'
-  | 'item'
-  | 'action'
-  | 'debug'
+  (typeof BATTLE_LOG_CATEGORIES)[keyof typeof BATTLE_LOG_CATEGORIES]
 
 /**
  * 统一日志消息类型 - 合并级别和类别
@@ -267,6 +281,12 @@ export const LogLevelColors: Record<BattleLogCategory, string> = {
   heal: '#4caf50',
   crit: '#ff9800',
   status: '#2196f3',
+  battle: '#9c27b0',
+  item: '#8bc34a',
+  debug: '#607d8b',
+  info: '#2196f3',
+  warning: '#ff9800',
+  error: '#f44336',
 }
 
 /**
@@ -449,14 +469,7 @@ export const LogUtils = {
   },
 
   isValidLogCategory(category: string): boolean {
-    const validCategories: BattleLogCategory[] = [
-      'system',
-      'action',
-      'damage',
-      'heal',
-      'crit',
-      'status',
-    ]
+    const validCategories = Object.values(BATTLE_LOG_CATEGORIES)
     return validCategories.includes(category as BattleLogCategory)
   },
 

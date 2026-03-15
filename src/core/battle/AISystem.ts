@@ -13,6 +13,7 @@ import type {
   BattleAction,
   BattleData,
 } from '@/types/battle'
+import { BATTLE_STATUS } from '@/types/battle'
 import { BATTLE_CONSTANTS } from '@/types/battle'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import { BattleAIFactory, BattleAI } from '@/core/BattleAI'
@@ -215,7 +216,7 @@ export class AISystem {
       actions: [...battle.actions],
       turnOrder: [...battle.turnOrder],
       currentTurn: battle.currentTurn,
-      isActive: battle.isActive,
+      battleState: battle.battleState ?? BATTLE_STATUS.ACTIVE,
       startTime: 0,
       endTime: undefined,
       winner: undefined,

@@ -26,10 +26,12 @@ import {
   type SkillConfigLoader,
 } from '@/core/BattleAI'
 import type { BattleParticipant, BattleState, BattleAction } from '@/types/battle'
+import { BATTLE_STATUS } from '@/types/battle'
 import type { Skill } from '@/types/skill'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import type { BuffSystem } from '@/core/BuffSystem'
-import { ACTION_TYPES, EFFECT_TYPES, BATTLE_CONSTANTS } from '@/types/battle'
+import { ACTION_TYPES, BATTLE_CONSTANTS } from '@/types/battle'
+import { EFFECT_TYPES } from '@/types/effect'
 
 /**
  * 策略模式AI类
@@ -190,7 +192,7 @@ export class StrategyBattleAI implements IBattleAI {
       actions: [],
       turnOrder: [],
       currentTurn: 0,
-      isActive: false,
+      battleState: BATTLE_STATUS.ACTIVE,
       startTime: 0,
     })
 
@@ -212,7 +214,7 @@ export class StrategyBattleAI implements IBattleAI {
       actions: [],
       turnOrder: [],
       currentTurn: 0,
-      isActive: false,
+      battleState: BATTLE_STATUS.ACTIVE,
       startTime: 0,
     })
 

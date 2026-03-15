@@ -349,22 +349,43 @@ export class BattleLogManager {
 
   /**
    * 记录【调试】类型日志
+   * @param message 日志消息
+   * @param contextOrLevelOrError 上下文对象、日志级别（数字或字符串）或错误对象
+   * @param error 错误对象
    */
   addDebugLog(
     message: string,
-    level: LogLevel = LogLevel.INFO,
-    context?: Record<string, unknown>,
-    source?: string,
+    contextOrLevelOrError?: Record<string, unknown> | LogLevel | string | Error,
     error?: Error,
   ): void {
+    let context: Record<string, unknown> | null = null
+    let level: LogLevel = LogLevel.INFO
+    let finalError: Error | undefined = undefined
+
+    if (!contextOrLevelOrError) {
+      // 只有消息
+    } else if (contextOrLevelOrError instanceof Error) {
+      // 第二个参数是 Error 对象
+      finalError = contextOrLevelOrError
+    } else if (typeof contextOrLevelOrError === 'number') {
+      // 第二个参数是数字日志级别
+      level = contextOrLevelOrError
+    } else if (typeof contextOrLevelOrError === 'string') {
+      // 第二个参数是字符串日志级别
+      level = this.parseLogLevel(contextOrLevelOrError)
+    } else if (typeof contextOrLevelOrError === 'object') {
+      // 第二个参数是上下文对象
+      context = contextOrLevelOrError
+    }
+
     const entry: LogEntry = {
       index: this.indexCounter.next(),
       type: LogType.DEBUG,
       level,
       message,
       context,
-      source,
-      error,
+      source: null,
+      error: finalError || error,
       segments: [],
       action: undefined,
     }
@@ -381,6 +402,21 @@ export class BattleLogManager {
         console.error('Logger handler error:', handler)
       }
     }
+  }
+
+  /**
+   * 解析字符串日志级别为 LogLevel 枚举
+   */
+  private parseLogLevel(levelStr: string): LogLevel {
+    const levelMap: Record<string, LogLevel> = {
+      error: LogLevel.ERROR,
+      warn: LogLevel.WARN,
+      warning: LogLevel.WARN,
+      info: LogLevel.INFO,
+      debug: LogLevel.DEBUG,
+      trace: LogLevel.TRACE,
+    }
+    return levelMap[levelStr.toLowerCase()] || LogLevel.INFO
   }
 
   // ==================== 添加便捷日志功能 ====================

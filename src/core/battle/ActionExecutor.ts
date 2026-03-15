@@ -14,9 +14,9 @@ import {
   BattleData,
   ACTION_TYPES,
   VALID_ACTION_TYPES,
-  EFFECT_TYPES,
 } from '@/types/battle'
 import { PARTICIPANT_SIDE, BATTLE_CONSTANTS } from '@/types/battle'
+import { EFFECT_TYPES } from '@/types/effect'
 import { CombatRecord, createEmptyRecord } from '@/types/combat-record'
 import { battleLogManager } from '@/utils/logging'
 import { BuffSystem } from '@/core/BuffSystem'

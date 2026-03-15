@@ -30,10 +30,6 @@ export class AutoBattleManager {
    * 当前战斗ID，用于标识一场战斗
    */
   private battleId: string | null = null
-  /**
-   * 自动战斗任务ID，用于取消或管理异步任务
-   */
-  private autoBattleTaskId: symbol | null = null
 
   /**
    * 构造函数
@@ -71,6 +67,8 @@ export class AutoBattleManager {
       })
       return false
     }
+
+    this.battleId = battleId
 
     try {
       // 启动自动战斗
@@ -134,8 +132,6 @@ export class AutoBattleManager {
    * 通常在开始新战斗前调用，以确保状态干净
    */
   resetState() {
-    if (this.autoBattleTaskId) {
-      this.autoBattleTaskId = null
-    }
+    this.battleId = null
   }
 }

@@ -11,7 +11,7 @@ import type { SkillManager } from '@/core/skill/SkillManager'
 import type { SkillConfig } from '@/types/skill'
 import type { UISkills } from '@/types/UI/UIBattleCharacter'
 import type { BattleLogEntry } from '@/types/battle-log'
-
+import { EffectType } from '@/types/effect'
 /**
  * 战斗状态常量
  * 控制战斗的宏观生命周期
@@ -135,15 +135,6 @@ export const VALID_ACTION_TYPES = Object.freeze([
   ACTION_TYPES.BUFF,
   ACTION_TYPES.ITEM,
 ]) as readonly (typeof ACTION_TYPES)[keyof typeof ACTION_TYPES][]
-
-/** 战斗效果类型常量 */
-export const EFFECT_TYPES = {
-  DAMAGE: 'damage',
-  HEAL: 'heal',
-  BUFF: 'buff',
-  DEBUFF: 'debuff',
-  STATUS: 'status',
-} as const
 
 export type ParticipantSide =
   (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
@@ -312,9 +303,11 @@ export interface BattleAction {
  * 用于描述战斗动作产生的具体效果（如伤害、治疗、Buff等）
  */
 export interface BattleEffect {
-  type: 'damage' | 'heal' | 'buff' | 'debuff' | 'status'
+  type: EffectType
   value?: number
   buffId?: string
+  instanceId?: string
+  targetId?: string
   duration?: number
   description: string
 }
@@ -332,7 +325,8 @@ export interface BattleState {
   /** 回合顺序，按速度规则排序 */
   turnOrder: string[]
   currentTurn: number
-  isActive: boolean
+  /** 战斗状态 */
+  battleState: BattleStatus
   startTime: number
   endTime?: number
   winner?: ParticipantSide
@@ -461,8 +455,6 @@ export interface BattleData {
   autoBattle: boolean
   /** 自动战斗定时器ID */
   autoBattleIntervalId?: symbol
-  /** 战斗是否处于活跃状态 */
-  isActive: boolean
   /** 技能管理器实例（可选，用于技能执行） */
   skillManager?: import('@/core/skill/SkillManager').SkillManager
 }

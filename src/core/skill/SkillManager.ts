@@ -231,6 +231,7 @@ export class SkillManager {
       action.damage = actualDamage
       action.effects.push({
         type: 'damage',
+        targetId: target.id,
         value: actualDamage,
         description: `${source.name} 使用 ${skillConfig.name || skillId} 造成 ${actualDamage} 伤害`,
       })
@@ -248,6 +249,7 @@ export class SkillManager {
         action.heal = actualHeal
         action.effects.push({
           type: 'heal',
+          targetId: source.id,
           value: actualHeal,
           description: `${source.name} 使用 ${skillConfig.name || skillId} 恢复 ${actualHeal} 生命值`,
         })
@@ -287,6 +289,7 @@ export class SkillManager {
 
           action.effects.push({
             type: 'buff',
+            targetId: target.id,
             buffId: buffId,
             instanceId,
             description: `${source.name} 使用 ${skillConfig.name || skillId} 对 ${target.name} 施加 ${buffId}`,
@@ -330,6 +333,7 @@ export class SkillManager {
 
           action.effects.push({
             type: 'debuff',
+            targetId: target.id,
             buffId: debuffId,
             instanceId,
             description: `${source.name} 使用 ${skillConfig.name || skillId} 对 ${target.name} 施加 ${debuffId}`,
@@ -443,6 +447,7 @@ export class SkillManager {
       // 处理闪避情况
       battleAction.effects.push({
         type: 'miss',
+        targetId: target.id,
         value: 0,
         description: `${target.name} 闪避了攻击`,
       })
@@ -460,6 +465,7 @@ export class SkillManager {
       battleAction.damage += actualDamage
       battleAction.effects.push({
         type: 'damage',
+        targetId: target.id,
         value: actualDamage,
         description: `${source.name} 造成 ${actualDamage} 伤害`,
         isCritical: damageResult.isCritical,
@@ -493,6 +499,7 @@ export class SkillManager {
     battleAction.heal += actualHeal
     battleAction.effects.push({
       type: 'heal',
+      targetId: target.id,
       value: actualHeal,
       description: `${source.name} 恢复 ${actualHeal} 生命值`,
     })
@@ -572,6 +579,7 @@ export class SkillManager {
 
     battleAction.effects.push({
       type: 'buff',
+      targetId: buffTarget.id,
       buffId: skillStep.buffId,
       instanceId,
       description: `${source.name} 施加 ${skillStep.buffId} 给 ${buffTarget.name}`,
@@ -595,6 +603,7 @@ export class SkillManager {
     battleLogManager.addDebugLog(`护盾步骤: ${skillStep.formula}`)
     battleAction.effects.push({
       type: 'status',
+      targetId: target.id,
       description: '护盾效果（待实现）',
     })
   }
@@ -645,6 +654,7 @@ export class SkillManager {
     )
     battleAction.effects.push({
       type: 'status',
+      targetId: target.id,
       buffId: controlBuffId,
       description: `${source.name} 对 ${target.name} 施加了${controlType === ControlType.STUN ? '眩晕' : '沉默'}`,
     })

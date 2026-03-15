@@ -15,7 +15,8 @@
           <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
             <div v-for="member in filterAllyTeam" :key="member.id" class="member-card"
-              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id, hit: getAnimationState(member.id).isHit, casting: getAnimationState(member.id).isCasting, buffed: getAnimationState(member.id).isBuffed }"
+              :ref="(el: any) => setMemberCardRef(el, member.id)"
+              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id }"
               @click="selectCharacter(member.id)">
               <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)"
                 :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
@@ -71,7 +72,8 @@
           <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
             <div v-for="member in filterEnemyTeam" :key="member.id" class="member-card"
-              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id, hit: getAnimationState(member.id).isHit, casting: getAnimationState(member.id).isCasting, buffed: getAnimationState(member.id).isBuffed }"
+              :ref="(el: any) => setMemberCardRef(el, member.id)"
+              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id }"
               @click="selectCharacter(member.id)">
               <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)"
                 :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
@@ -159,9 +161,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onUnmounted } from "vue";
+import { computed, ref, onUnmounted, watch, nextTick } from "vue";
 import { raf } from '@/utils/RAF';
 import { container } from '@/core/di/Container';
+import { useBattleAnimation } from '@/composables/useBattleAnimation';
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
@@ -169,7 +172,6 @@ import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter';
 import type { AttributeValue } from '@/types';
 import type { BattleManager } from '@/core/battle/BattleManager';
 
-// 获取 BattleManager
 const battleManager = container.resolve<BattleManager>('BattleManager');
 
 const props = defineProps<{
@@ -177,11 +179,41 @@ const props = defineProps<{
   turnOrder?: string[];
   damageEffects?: Record<string, { value: number; type: 'damage' | 'heal' | 'critical' | 'miss'; isCritical: boolean }>;
   skillEffects?: Record<string, { type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate'; name?: string }>;
+  battleSpeed?: number;
 }>();
 
 const emit = defineEmits<{
   "select-character": [characterId: string];
 }>();
+
+const {
+  registerElement,
+  unregisterElement,
+  playAttackAnimation,
+  playHitAnimation,
+  playBuffAnimation,
+  playDeathAnimation,
+  setBattleSpeed,
+  stopAllAnimations,
+} = useBattleAnimation();
+
+const memberCardRefs = new Map<string, HTMLElement>();
+
+function setMemberCardRef(el: HTMLElement | null, memberId: string) {
+  if (el) {
+    memberCardRefs.set(memberId, el);
+    registerElement(memberId, ref(el));
+  } else {
+    memberCardRefs.delete(memberId);
+    unregisterElement(memberId);
+  }
+}
+
+watch(() => props.battleSpeed, (newSpeed) => {
+  if (newSpeed) {
+    setBattleSpeed(newSpeed);
+  }
+}, { immediate: true });
 
 // 响应式获取队伍数据
 const allyTeam = computed(() => battleManager.getAllyTeam());
@@ -257,11 +289,7 @@ function isCurrentActor(memberId: string): boolean {
 }
 
 function isMemberDead(member: UIBattleCharacter): boolean {
-  return getNumericValue(member.currentHp) <= 0;
-}
-
-function getAnimationState(characterId: string): { isHit: boolean; isCasting: boolean; isBuffed: boolean } {
-  return characterEffects.value.animation[characterId] || { isHit: false, isCasting: false, isBuffed: false };
+  return getNumericValue(member.currentHp) <= 0
 }
 
 // 根据回合顺序排序角色列表
@@ -452,115 +480,87 @@ function getCharacterSkillName(characterId: string): string | undefined {
   return props.skillEffects?.[characterId]?.name || characterEffects.value.skill[characterId]?.name;
 }
 
-// 显示伤害效果
+function getCharacterSide(characterId: string): 'left' | 'right' {
+  const isAlly = allyTeam.value.some((c) => c.id === characterId)
+  return isAlly ? 'left' : 'right'
+}
+
 function showDamage(characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) {
-  characterEffects.value.damage[characterId] = { value, type, isCritical };
+  characterEffects.value.damage[characterId] = { value, type, isCritical }
 
-  // 触发 hit 效果
-  triggerHitEffect(characterId);
-
-  // 3秒后清除效果
-  const timeoutId = raf.setTimeout(() => {
-    delete characterEffects.value.damage[characterId];
-  }, 3000);
-  timeouts.value.push(timeoutId);
+  playHitAnimation(characterId, {
+    damage: value,
+    damageType: type,
+    isCritical,
+  })
 }
 
-// 显示Miss效果
 function showMiss(characterId: string) {
-  characterEffects.value.damage[characterId] = { value: 0, type: 'miss', isCritical: false };
+  characterEffects.value.damage[characterId] = { value: 0, type: 'miss', isCritical: false }
 
-  // 3秒后清除效果
-  const timeoutId = raf.setTimeout(() => {
-    delete characterEffects.value.damage[characterId];
-  }, 3000);
-  timeouts.value.push(timeoutId);
+  playHitAnimation(characterId, {
+    damageType: 'miss',
+  })
 }
 
-// 显示技能效果
-function showSkillEffect(characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) {
-  characterEffects.value.skill[characterId] = { type, name };
+async function showSkillEffect(characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) {
+  characterEffects.value.skill[characterId] = { type, name }
 
-  // 触发施法效果
-  triggerCastingEffect(characterId);
-
-  // 3秒后清除效果
-  const timeoutId = raf.setTimeout(() => {
-    delete characterEffects.value.skill[characterId];
-  }, 3000);
-  timeouts.value.push(timeoutId);
+  const side = getCharacterSide(characterId)
+  await playAttackAnimation(characterId, side, name)
 }
 
-// 显示Buff效果
-function showBuffEffect(characterId: string, _buffName: string, _isPositive: boolean) {
-  // 触发Buff效果动画
-  triggerBuffEffect(characterId);
+function showBuffEffect(characterId: string, _buffName: string, isPositive: boolean) {
+  playBuffAnimation(characterId, isPositive)
 }
 
-// 触发Hit效果
 function triggerHitEffect(characterId: string) {
-  // 初始化角色动画状态
-  if (!characterEffects.value.animation[characterId]) {
-    characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
-  }
-
-  // 触发hit效果
-  characterEffects.value.animation[characterId].isHit = true;
-  const timeoutId = raf.setTimeout(() => {
-    if (characterEffects.value.animation[characterId]) {
-      characterEffects.value.animation[characterId].isHit = false;
-    }
-  }, 300);
-  timeouts.value.push(timeoutId);
+  playHitAnimation(characterId, {
+    damageType: 'damage',
+  })
 }
 
-// 触发施法效果
-function triggerCastingEffect(characterId: string, duration: number = 1000) {
-  // 初始化角色动画状态
-  if (!characterEffects.value.animation[characterId]) {
-    characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
-  }
-
-  // 触发casting效果
-  characterEffects.value.animation[characterId].isCasting = true;
-  const timeoutId = raf.setTimeout(() => {
-    if (characterEffects.value.animation[characterId]) {
-      characterEffects.value.animation[characterId].isCasting = false;
-    }
-  }, duration);
-  timeouts.value.push(timeoutId);
+function triggerCastingEffect(characterId: string, _duration: number = 1000) {
+  const side = getCharacterSide(characterId)
+  playAttackAnimation(characterId, side)
 }
 
-// 触发Buff效果
 function triggerBuffEffect(characterId: string) {
-  // 初始化角色动画状态
-  if (!characterEffects.value.animation[characterId]) {
-    characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
-  }
-
-  // 触发buffed效果
-  characterEffects.value.animation[characterId].isBuffed = true;
-  const timeoutId = raf.setTimeout(() => {
-    if (characterEffects.value.animation[characterId]) {
-      characterEffects.value.animation[characterId].isBuffed = false;
-    }
-  }, 500);
-  timeouts.value.push(timeoutId);
+  playBuffAnimation(characterId, true)
 }
 
-// 清理所有动画效果
 function cleanupAnimations() {
-  // 清理所有伤害效果
-  characterEffects.value.damage = {};
-  // 清理所有技能效果
-  characterEffects.value.skill = {};
-  // 清理所有动画状态
-  characterEffects.value.animation = {};
-  // 清理工具提示
-  hideStatusTooltip();
+  characterEffects.value.damage = {}
+  characterEffects.value.skill = {}
+  characterEffects.value.animation = {}
+  hideStatusTooltip()
+  stopAllAnimations()
 }
 
-// 暴露方法供父组件调用
+function playAttackSequence(
+  attackerId: string,
+  targetId: string,
+  skillName?: string,
+  damage?: number,
+  damageType: 'damage' | 'heal' | 'critical' | 'miss' = 'damage',
+  isCritical?: boolean
+): Promise<void> {
+  return new Promise(async (resolve) => {
+    const attackerSide = getCharacterSide(attackerId)
+
+    await playAttackAnimation(attackerId, attackerSide, skillName)
+
+    await playHitAnimation(targetId, {
+      damage,
+      damageType,
+      isCritical,
+      skillName,
+    })
+
+    resolve()
+  })
+}
+
 defineExpose({
   showDamage,
   showMiss,
@@ -569,119 +569,28 @@ defineExpose({
   triggerHitEffect,
   triggerCastingEffect,
   triggerBuffEffect,
-  cleanupAnimations
-});
+  cleanupAnimations,
+  playAttackSequence,
+  playAttackAnimation,
+  playHitAnimation,
+  playBuffAnimation,
+  playDeathAnimation,
+})
 
-// 组件卸载时清理所有定时器
 onUnmounted(() => {
-  // 清理工具提示定时器
   if (tooltipTimeout) {
-    raf.clearTimeout(tooltipTimeout);
+    raf.clearTimeout(tooltipTimeout)
   }
 
-  // 清理所有其他定时器
-  timeouts.value.forEach(timeoutId => {
-    raf.clearTimeout(timeoutId);
-  });
+  timeouts.value.forEach((timeoutId) => {
+    raf.clearTimeout(timeoutId)
+  })
 
-  // 清理所有动画效果
-  cleanupAnimations();
-});
+  cleanupAnimations()
+  memberCardRefs.clear()
+})
 </script>
 
 <style scoped lang="scss">
 @use'@/styles/main.scss';
-
-.member-card.buffed {
-  animation: buffGlow 0.5s ease-out;
-}
-
-@keyframes buffGlow {
-  0% {
-    box-shadow: 0 0 0 rgba(100, 200, 255, 0);
-    filter: brightness(1);
-  }
-
-  50% {
-    box-shadow: 0 0 20px rgba(100, 200, 255, 0.8);
-    filter: brightness(1.2);
-  }
-
-  100% {
-    box-shadow: 0 0 0 rgba(100, 200, 255, 0);
-    filter: brightness(1);
-  }
-}
-
-.member-card.buffed .member-status {
-  animation: statusPulse 0.5s ease-out;
-}
-
-@keyframes statusPulse {
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.1);
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Hit效果动画 */
-.member-card.hit {
-  animation: hitEffect 0.3s ease-out;
-}
-
-@keyframes hitEffect {
-  0% {
-    transform: translateX(0);
-  }
-
-  25% {
-    transform: translateX(-5px);
-    filter: brightness(0.8);
-  }
-
-  75% {
-    transform: translateX(5px);
-  }
-
-  100% {
-    transform: translateX(0);
-    filter: brightness(1);
-  }
-}
-
-/* 施法效果动画 */
-.member-card.casting {
-  animation: castingEffect 1s ease-out;
-}
-
-@keyframes castingEffect {
-  0% {
-    box-shadow: 0 0 0 rgba(200, 150, 255, 0);
-    filter: brightness(1);
-  }
-
-  50% {
-    box-shadow: 0 0 15px rgba(200, 150, 255, 0.6);
-    filter: brightness(1.1);
-  }
-
-  100% {
-    box-shadow: 0 0 0 rgba(200, 150, 255, 0);
-    filter: brightness(1);
-  }
-}
-
-/* 确保动画只播放一次 */
-.member-card.hit,
-.member-card.casting,
-.member-card.buffed {
-  animation-iteration-count: 1;
-}
 </style>

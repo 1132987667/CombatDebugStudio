@@ -49,9 +49,12 @@ import {
   PARTICIPANT_SIDE,
   ROUND_STATUS,
 } from '@/types/battle'
-import type { BattleLogCategory, BattleLogEntry } from '@/types/battle-log'
-import { newLogSegment } from '@/types/battle-log'
-import type { EffectType } from '@/types/effect'
+import {
+  newLogSegment,
+  LogLevel,
+  BATTLE_LOG_CATEGORIES,
+} from '@/types/battle-log'
+import { EFFECT_TYPES } from '@/types/effect'
 import type { ExtendedSkillStep } from '@/types/skill'
 import { RAFTimer } from '@/utils/RAF'
 import { battleLogManager } from '@/utils/logging'
@@ -76,34 +79,6 @@ import { battleLogManager } from '@/utils/logging'
  * - 支持战斗录像与回放。
  * - 自动战斗与手动战斗模式切换。
  */
-
-/**
- * 效果类型常量
- */
-const EFFECT_TYPE: Record<string, EffectType> = {
-  DAMAGE: 'damage',
-  HEAL: 'heal',
-  BUFF: 'buff',
-  DEBUFF: 'debuff',
-  MISS: 'miss',
-  SPECIAL: 'special',
-} as const
-
-/**
- * 战斗日志类别常量
- */
-const BATTLE_LOG_CATEGORY: Record<string, BattleLogCategory> = {
-  SYSTEM: 'system',
-  ACTION: 'action',
-  DAMAGE: 'damage',
-  HEAL: 'heal',
-  CRIT: 'crit',
-  STATUS: 'status',
-  DEBUG: 'debug',
-  INFO: 'info',
-  WARNING: 'warning',
-  ERROR: 'error',
-} as const
 
 export class BattleSystem implements IBattleSystem {
   private battleData: BattleData
@@ -138,6 +113,7 @@ export class BattleSystem implements IBattleSystem {
    * @param ms 等待毫秒数
    */
   private wait(ms: number): Promise<void> {
+    console.log('等待', ms, '毫秒')
     return new Promise((resolve) => {
       this.rafTimer.setTimeout(resolve, ms)
     })
@@ -235,7 +211,6 @@ export class BattleSystem implements IBattleSystem {
       battleSpeed: 1,
       battleState: BATTLE_STATUS.CREATED,
       roundState: ROUND_STATUS.NONE,
-      isActive: false,
       skillManager: this.skillManager,
     }
   }
@@ -340,7 +315,6 @@ export class BattleSystem implements IBattleSystem {
 
     battleData.battleState = BATTLE_STATUS.ACTIVE
     battleData.roundState = ROUND_STATUS.START
-    battleData.isActive = true
 
     const autoBattleRules = this.ruleManager.getAutoBattleRules()
     this.autoBattle = autoBattleRules.enabled
@@ -373,7 +347,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private async processTurnInternal(): Promise<void> {
     const battle = this.battleData
-    if (!battle || !battle.isActive) {
+    if (battle.battleState !== BATTLE_STATUS.ACTIVE) {
       return
     }
 
@@ -417,19 +391,19 @@ export class BattleSystem implements IBattleSystem {
       battle.turnOrder = currentTurnOrder
       battle.currentTurn = 0
 
-      battleLogManager.addBattleLog(battle.currentTurn, '本回合出手顺序', {
-        turnOrder: currentTurnOrder.map((id) => {
-          const participant = battle.participants.get(id)
-          const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(
-            participant!,
-          )
-          return {
-            id,
-            name: participant?.name,
-            effectiveSpeed,
-          }
-        }),
-      })
+      // battleLogManager.addBattleLog(battle.currentTurn, '本回合出手顺序', {
+      //   turnOrder: currentTurnOrder.map((id) => {
+      //     const participant = battle.participants.get(id)
+      //     const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(
+      //       participant!,
+      //     )
+      //     return {
+      //       id,
+      //       name: participant?.name,
+      //       effectiveSpeed,
+      //     }
+      //   }),
+      // })
 
       const battleId = battle.battleId
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0])
@@ -469,7 +443,7 @@ export class BattleSystem implements IBattleSystem {
 
         this.checkBattleEndCondition()
 
-        if (!battle.isActive) {
+        if (battle.battleState !== BATTLE_STATUS.ACTIVE) {
           return
         }
       }
@@ -495,7 +469,7 @@ export class BattleSystem implements IBattleSystem {
 
       battle.roundState = ROUND_STATUS.START
     } catch (error) {
-      battleLogManager.addDebugLog('处理回合时出错:', error)
+      battleLogManager.addDebugLog('处理回合时出错:', LogLevel.ERROR, error)
     } finally {
       this.syncBattleStateUpdate()
       this.cleanupAnimationState()
@@ -556,16 +530,12 @@ export class BattleSystem implements IBattleSystem {
         this.recordBattleAction(action)
 
         // 添加战斗日志
-        const logEntry: BattleLogEntry = {
-          turn: `回合${this.turnManager.getTurnNumber(battle)}`,
-          source: participant.name,
-          action: '被',
-          target: '控制',
-          level: 'info',
-          category: 'status',
-          segments: [{ text: `${participant.name} 被控制，无法行动` }],
-        }
-        this.syncBattleLog(logEntry)
+        battleLogManager.addBattleLog(
+          this.turnManager.getTurnNumber(battle),
+          `${participant.name} 被控制，无法行动`,
+          [{ text: `${participant.name} 被控制，无法行动` }],
+          BATTLE_LOG_CATEGORIES.STATUS,
+        )
 
         battleLogManager.addDebugLog(
           `角色[${participant.name}]被控制，无法行动`,
@@ -605,9 +575,13 @@ export class BattleSystem implements IBattleSystem {
         // 使用AI系统决策
         const action = aiInstance.makeDecision(
           {
+            battleId: battle.battleId,
             participants: battle.participants,
+            actions: battle.actions,
             turnOrder: battle.turnOrder,
             currentTurn: battle.currentTurn,
+            battleState: battle.battleState!,
+            startTime: battle.startTime,
           },
           participant,
         )
@@ -706,19 +680,19 @@ export class BattleSystem implements IBattleSystem {
       action.heal = skillAction.heal
       action.effects = skillAction.effects
 
-      battleLogManager.addDebugLog(`技能执行成功: ${skill.id}`, {
-        source: source.name,
-        target: targetId,
-        damage: action.damage,
-        heal: action.heal,
-      })
+      battleLogManager.addBattleLog(
+        battle.currentTurn,
+        `技能执行成功: ${skill.id}`,
+        [{ text: `技能执行成功: ${skill.id}` }],
+        BATTLE_LOG_CATEGORIES.ACTION,
+      )
     } catch (error) {
       battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error)
       action.type = 'attack'
       action.damage = Math.floor(Math.random() * 20) + 10
       action.effects = [
         {
-          type: EFFECT_TYPE.DAMAGE,
+          type: EFFECT_TYPES.DAMAGE,
           value: action.damage,
           description: `${source.name} 普通攻击 (技能执行失败)`,
         },
@@ -733,6 +707,245 @@ export class BattleSystem implements IBattleSystem {
   }
 
   /**
+   * 构造普通攻击的技能步骤配置
+   * @param source 攻击者
+   * @param targetId 目标ID
+   * @returns 技能步骤配置
+   */
+  private buildNormalAttackStep(
+    source: BattleParticipant,
+    targetId: string,
+  ): ExtendedSkillStep {
+    return {
+      type: 'DAMAGE',
+      id: 'normal_attack',
+      targetId,
+      calculation: {
+        baseValue: 0,
+        extraValues: [{ attribute: 'ATK', ratio: 1.0 }],
+      },
+      attackType: 'physical',
+      targetModifiers: { DEF: 1 },
+      criticalConfig: {
+        rate: (source.getAttribute('critRate') || 10) / 100,
+        multiplier: (source.getAttribute('critDamage') || 125) / 100,
+      },
+    }
+  }
+
+  /**
+   * 创建战斗动作对象
+   * @param sourceId 攻击者ID
+   * @param targetId 目标ID
+   * @param turnNumber 当前回合数
+   * @returns 战斗动作对象
+   */
+  private createBattleAction(
+    sourceId: string,
+    targetId: string,
+    turnNumber: number,
+  ): BattleAction {
+    return {
+      id: `attack_${Date.now()}`,
+      type: 'attack',
+      sourceId,
+      targetId,
+      damage: 0,
+      heal: 0,
+      success: true,
+      timestamp: Date.now(),
+      turn: turnNumber,
+      effects: [],
+    }
+  }
+
+  /**
+   * 生成攻击日志参数
+   * @param source 攻击者
+   * @param target 目标
+   * @param turnNumber 当前回合数
+   * @param options 日志选项
+   * @returns 日志参数对象
+   */
+  private generateAttackLogParams(
+    source: BattleParticipant,
+    target: BattleParticipant,
+    turnNumber: number,
+    options: {
+      isMiss?: boolean
+      damage?: number
+      isCritical?: boolean
+    },
+  ): {
+    turn: number
+    message: string
+    segments: import('@/types/battle-log').LogSegment[]
+    category: import('@/types/battle-log').BattleLogCategory
+  } {
+    const { isMiss = false, damage = 0, isCritical = false } = options
+
+    if (isMiss) {
+      return {
+        turn: turnNumber,
+        message: `${source.name} 对 ${target.name} 发动普通攻击，但是被闪避了！`,
+        segments: [
+          { text: source.name, classStr: 'log-hostile' },
+          { text: ' 对 ' },
+          { text: target.name, classStr: 'log-friendly' },
+          { text: ' 发动普通攻击，但是被闪避了！' },
+        ],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+      }
+    }
+
+    return {
+      turn: turnNumber,
+      message: `${source.name} 对 ${target.name} 发动普通攻击，${isCritical ? '暴击！' : ''}造成 ${damage} 点物理伤害`,
+      segments: [
+        {
+          text: source.name,
+          classStr:
+            source.type === PARTICIPANT_SIDE.ALLY
+              ? 'log-friendly'
+              : 'log-hostile',
+        },
+        { text: ' 对 ' },
+        {
+          text: target.name,
+          classStr:
+            target.type === PARTICIPANT_SIDE.ALLY
+              ? 'log-friendly'
+              : 'log-hostile',
+        },
+        { text: ` 发动普通攻击，${isCritical ? '暴击！' : ''}造成 ` },
+        {
+          text: damage.toString(),
+          classStr: isCritical ? 'log-crit' : 'log-damage',
+        },
+        { text: ' 点物理伤害' },
+      ],
+      category: isCritical
+        ? BATTLE_LOG_CATEGORIES.CRIT
+        : BATTLE_LOG_CATEGORIES.DAMAGE,
+    }
+  }
+
+  /**
+   * 对目标应用伤害并触发相关被动技能
+   * @param source 攻击者
+   * @param target 目标
+   * @param damage 伤害值
+   */
+  private applyDamageToTarget(
+    source: BattleParticipant,
+    target: BattleParticipant,
+    damage: number,
+  ): void {
+    target.takeDamage(damage)
+
+    this.passiveSkillManager.triggerPassiveSkills(
+      PassiveSkillTrigger.ON_HIT,
+      target,
+      { sourceId: source.id, damage },
+    )
+
+    if (!target.isAlive()) {
+      this.passiveSkillManager.triggerPassiveSkills(
+        PassiveSkillTrigger.ON_DEATH,
+        target,
+        { sourceId: source.id, cause: 'damage' },
+      )
+    }
+  }
+
+  /**
+   * 处理攻击被闪避的情况
+   * @param action 战斗动作
+   * @param source 攻击者
+   * @param target 目标
+   * @param turnNumber 当前回合数
+   */
+  private async handleMissAttack(
+    action: BattleAction,
+    source: BattleParticipant,
+    target: BattleParticipant,
+    turnNumber: number,
+  ): Promise<void> {
+    action.effects.push({
+      type: EFFECT_TYPES.MISS,
+      value: 0,
+      description: `${target.name} 闪避了攻击`,
+    })
+
+    await this.triggerMissAnimationAndWait({ targetId: target.id })
+
+    const logParams = this.generateAttackLogParams(source, target, turnNumber, {
+      isMiss: true,
+    })
+    battleLogManager.addBattleLog(
+      logParams.turn,
+      logParams.message,
+      logParams.segments,
+      logParams.category,
+    )
+
+    battleLogManager.addDebugLog(
+      `普通攻击: ${source.name} → ${target.name}，被闪避`,
+    )
+  }
+
+  /**
+   * 处理攻击命中的情况
+   * @param action 战斗动作
+   * @param source 攻击者
+   * @param target 目标
+   * @param damageResult 伤害计算结果
+   * @param turnNumber 当前回合数
+   */
+  private async handleHitAttack(
+    action: BattleAction,
+    source: BattleParticipant,
+    target: BattleParticipant,
+    damageResult: { damage: number; isCritical: boolean },
+    turnNumber: number,
+  ): Promise<void> {
+    const { damage, isCritical } = damageResult
+    action.damage = damage
+
+    this.applyDamageToTarget(source, target, damage)
+
+    action.effects.push({
+      type: EFFECT_TYPES.DAMAGE,
+      value: damage,
+      description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
+    })
+
+    await this.triggerDamageAnimationAndWait({
+      targetId: target.id,
+      damage,
+      damageType: 'physical',
+      isCritical,
+      isHeal: false,
+    })
+
+    const logParams = this.generateAttackLogParams(source, target, turnNumber, {
+      damage,
+      isCritical,
+    })
+    battleLogManager.addBattleLog(
+      logParams.turn,
+      logParams.message,
+      logParams.segments,
+      logParams.category,
+    )
+
+    battleLogManager.addDebugLog(
+      `普通攻击: ${source.name} → ${target.name}`,
+      LogLevel.INFO,
+    )
+  }
+
+  /**
    * 选择并执行普通攻击
    * @param battle 战斗数据
    * @param source 攻击者
@@ -742,165 +955,54 @@ export class BattleSystem implements IBattleSystem {
     battle: BattleData,
     source: BattleParticipant,
   ): Promise<BattleAction> {
-    const target = this.selectTarget(battle, source)
+    const targetId = this.selectTarget(battle, source)
+    const target = battle.participants.get(targetId)
 
-    const targetParticipant = battle.participants.get(target)
+    if (!target) {
+      battleLogManager.addDebugLog(`攻击失败: 未找到目标 ${targetId}`)
+      return this.createBattleAction(
+        source.id,
+        source.id,
+        this.turnManager.getTurnNumber(battle),
+      )
+    }
 
-    // 触发攻击前的被动技能
+    const turnNumber = this.turnManager.getTurnNumber(battle)
+
     this.passiveSkillManager.triggerPassiveSkills(
       PassiveSkillTrigger.BEFORE_ATTACK,
       source,
-      { targetId: target },
+      { targetId, battle },
     )
 
-    // 构造普通攻击的技能步骤配置
-    const attackStep: ExtendedSkillStep = {
-      type: 'DAMAGE',
-      id: 'normal_attack',
-      targetId: target,
-      calculation: {
-        baseValue: 0,
-        extraValues: [{ attribute: 'ATK', ratio: 1.0 }],
-      },
-      attackType: 'physical',
-      targetModifiers: {
-        DEF: 1,
-      },
-      criticalConfig: {
-        rate: (source.getAttribute('critRate') || 10) / 100,
-        multiplier: (source.getAttribute('critDamage') || 125) / 100,
-      },
-    }
-
-    // 使用DamageCalculator统一计算伤害
+    const attackStep = this.buildNormalAttackStep(source, targetId)
     const damageResult = this.damageCalculator.calculateDamage(
       attackStep,
       source,
-      targetParticipant!,
+      target,
     )
 
-    const action: BattleAction = {
-      id: `attack_${Date.now()}`,
-      type: 'attack',
-      sourceId: source.id,
-      targetId: target,
-      damage: 0,
-      heal: 0,
-      success: true,
-      timestamp: Date.now(),
-      turn: this.turnManager.getTurnNumber(battle),
-      effects: [],
-    }
+    const action = this.createBattleAction(source.id, targetId, turnNumber)
 
     if (damageResult.isMiss) {
-      // 处理闪避情况
-      action.effects.push({
-        type: EFFECT_TYPE.MISS,
-        value: 0,
-        description: `${targetParticipant!.name} 闪避了攻击`,
-      })
-
-      // 触发闪避动画并等待完成
-      await this.triggerMissAnimationAndWait({
-        targetId: target,
-      })
-
-      const logEntry: BattleLogEntry = {
-        turn: `回合${this.turnManager.getTurnNumber(battle)}`,
-        source: source.name,
-        action: '对',
-        target: targetParticipant!.name,
-        level: 'info',
-        category: 'status',
-        segments: [
-          { text: source.name, classStr: 'log-hostile' },
-          { text: ' 对 ' },
-          { text: targetParticipant!.name, classStr: 'log-friendly' },
-          { text: ' 发动普通攻击，但是被闪避了！' },
-        ],
-      }
-      this.syncBattleLog(logEntry)
-
-      battleLogManager.addDebugLog(
-        `普通攻击: ${source.name} → ${targetParticipant!.name}，被闪避`,
-      )
+      await this.handleMissAttack(action, source, target, turnNumber)
     } else {
-      // 应用伤害
-      const damage = damageResult.damage
-      action.damage = damage
-
-      targetParticipant!.takeDamage(damage)
-
-      action.effects.push({
-        type: EFFECT_TYPE.DAMAGE,
-        value: damage,
-        description: `${source.name} 普通攻击 造成 ${damage} 伤害${damageResult.isCritical ? ' (暴击)' : ''}`,
-      })
-
-      // 触发伤害动画并等待完成
-      await this.triggerDamageAnimationAndWait({
-        targetId: target,
-        damage,
-        damageType: 'physical',
-        isCritical: damageResult.isCritical,
-        isHeal: false,
-      })
-
-      const logEntry: BattleLogEntry = {
-        turn: `回合${this.turnManager.getTurnNumber(battle)}`,
-        source: source.name,
-        action: '对',
-        target: targetParticipant!.name,
-        level: 'info',
-        category: damageResult.isCritical
-          ? BATTLE_LOG_CATEGORY.CRIT
-          : BATTLE_LOG_CATEGORY.DAMAGE,
-        segments: [
-          {
-            text: source.name,
-            classStr:
-              source.type === PARTICIPANT_SIDE.ALLY
-                ? 'log-friendly'
-                : 'log-hostile',
-          },
-          { text: ' 对 ' },
-          {
-            text: targetParticipant!.name,
-            classStr:
-              targetParticipant!.type === PARTICIPANT_SIDE.ALLY
-                ? 'log-friendly'
-                : 'log-hostile',
-          },
-          {
-            text: ` 发动普通攻击，${damageResult.isCritical ? '暴击！' : ''}造成 `,
-          },
-          {
-            text: damage.toString(),
-            classStr: damageResult.isCritical ? 'log-crit' : 'log-damage',
-          },
-          { text: ' 点物理伤害' },
-        ],
-      }
-      this.syncBattleLog(logEntry)
-
-      battleLogManager.addDebugLog(
-        `普通攻击: ${source.name} → ${targetParticipant!.name}`,
-        {
-          damage,
-          isCritical: damageResult.isCritical,
-          targetHealth: targetParticipant!.currentHealth,
-        },
+      await this.handleHitAttack(
+        action,
+        source,
+        target,
+        damageResult,
+        turnNumber,
       )
     }
 
-    // 触发攻击后的被动技能
     this.passiveSkillManager.triggerPassiveSkills(
       PassiveSkillTrigger.AFTER_ATTACK,
       source,
       {
-        targetId: target,
+        targetId,
         damage: action.damage,
-        isCritical: action.effects.some((e) => e.description?.includes('暴击')),
+        isCritical: damageResult.isCritical,
       },
     )
 
@@ -999,7 +1101,7 @@ export class BattleSystem implements IBattleSystem {
       turn: this.turnManager.getTurnNumber(battle),
       effects: [
         {
-          type: EFFECT_TYPE.DAMAGE,
+          type: EFFECT_TYPES.DAMAGE,
           value: damage,
           description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
         },
@@ -1042,7 +1144,7 @@ export class BattleSystem implements IBattleSystem {
 
         // 检查是否有闪避效果
         const hasMissEffect = skillAction.effects.some(
-          (effect) => effect.type === EFFECT_TYPE.MISS,
+          (effect) => effect.type === EFFECT_TYPES.MISS,
         )
         if (hasMissEffect) {
           // 触发闪避动画并等待完成
@@ -1054,12 +1156,12 @@ export class BattleSystem implements IBattleSystem {
         // 检查是否有buff效果并触发相应事件
         for (const effect of skillAction.effects) {
           if (
-            effect.type === EFFECT_TYPE.BUFF ||
-            effect.type === EFFECT_TYPE.DEBUFF
+            effect.type === EFFECT_TYPES.BUFF ||
+            effect.type === EFFECT_TYPES.DEBUFF
           ) {
-            // 确定buff目标
+            // 确定buff目标 - 通过 targetId 判断作用目标
             let buffTarget = target
-            if (effect.target === 'self') {
+            if (effect.targetId === source.id) {
               buffTarget = source
             }
 
@@ -1067,7 +1169,7 @@ export class BattleSystem implements IBattleSystem {
             await this.triggerBuffEffectAndWait({
               targetId: buffTarget.id,
               buffName: effect.buffId || 'unknown',
-              isPositive: effect.type === EFFECT_TYPE.BUFF,
+              isPositive: effect.type === EFFECT_TYPES.BUFF,
             })
           }
         }
@@ -1095,7 +1197,7 @@ export class BattleSystem implements IBattleSystem {
         action.damage = Math.floor(Math.random() * 20) + 10
         action.effects = [
           {
-            type: EFFECT_TYPE.DAMAGE,
+            type: EFFECT_TYPES.DAMAGE,
             value: action.damage,
             description: `${source.name} 普通攻击 (技能执行失败)`,
           },
@@ -1272,20 +1374,16 @@ export class BattleSystem implements IBattleSystem {
     this.endBattle(winner)
 
     // 添加回合上限到达的日志
-    const logEntry: BattleLogEntry = {
-      turn: `回合${battle.currentRound}`,
-      source: '系统',
-      action: '战斗结束',
-      target: '系统',
-      level: 'warn',
-      category: 'status',
-      segments: [
+    battleLogManager.addBattleLog(
+      battle.currentRound,
+      `回合数达到上限(${battle.maxTurns})，${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}以血量优势获胜`,
+      [
         {
           text: `回合数达到上限(${battle.maxTurns})，${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}以血量优势获胜`,
         },
       ],
-    }
-    this.syncBattleLog(logEntry)
+      BATTLE_LOG_CATEGORIES.STATUS,
+    )
   }
 
   /**
@@ -1311,7 +1409,7 @@ export class BattleSystem implements IBattleSystem {
     battle.battleState = BATTLE_STATUS.SETTLEMENT
     battle.roundState = ROUND_STATUS.NONE
 
-    battle.isActive = false
+    battle.battleState = BATTLE_STATUS.ENDED
     battle.winner = winner
     battle.endTime = Date.now()
 
@@ -1352,7 +1450,7 @@ export class BattleSystem implements IBattleSystem {
 
     battle.battleState = BATTLE_STATUS.ENDED
 
-    this.emit(BattleSystemEvent.BATTLE_END, {
+    eventBus.emit(BattleSystemEvent.BATTLE_END, {
       battleId,
       winner,
     })
@@ -1402,10 +1500,6 @@ export class BattleSystem implements IBattleSystem {
 
     const battleId = battle.battleId
     this.battleRecorder.clearRecording(battleId)
-
-    this.emit(BattleSystemEvent.BATTLE_RESET, {
-      battleId,
-    })
 
     battleLogManager.addDebugLog(`战斗已重置: ${battleId}`)
   }
@@ -1506,11 +1600,11 @@ export class BattleSystem implements IBattleSystem {
   private convertToBattleState(battleData: BattleData): BattleState {
     return {
       battleId: battleData.battleId,
-      participants: new Map(battleData.participants), // 保持为Map类型
+      participants: new Map(battleData.participants),
       actions: [...battleData.actions],
       turnOrder: [...battleData.turnOrder],
       currentTurn: battleData.currentTurn,
-      isActive: battleData.isActive,
+      battleState: battleData.battleState!,
       startTime: battleData.startTime,
       endTime: battleData.endTime,
       winner: battleData.winner,
@@ -1537,16 +1631,23 @@ export class BattleSystem implements IBattleSystem {
     battleLogManager.addDebugLog(`自动战斗开始: ${this.battleData.battleId}`)
     const autoBattleLoop = async () => {
       let battle = this.battleData
-      if (!battle.autoBattle || !battle.isActive) {
+      console.log('自动战斗循环开始:', battle.autoBattle, battle.battleState)
+      if (!battle.autoBattle || battle.battleState !== BATTLE_STATUS.ACTIVE) {
         return
       }
       try {
+        console.log('processTurnInternal开始')
         await this.processTurnInternal()
+        console.log('processTurnInternal结束')
+        console.log(
+          '自动战斗循环开始processTurnInternal:',
+          battle.autoBattle,
+          battle.battleState,
+        )
         battle = this.battleData
         if (
           battle.battleState === BATTLE_STATUS.ENDED ||
-          battle.battleState === BATTLE_STATUS.PAUSED ||
-          !battle.isActive
+          battle.battleState === BATTLE_STATUS.PAUSED
         ) {
           this.stopAutoBattle()
           return
@@ -1556,7 +1657,7 @@ export class BattleSystem implements IBattleSystem {
         const timerId = this.rafTimer.setTimeout(autoBattleLoop, delay)
         this.autoBattleTimerId = timerId
       } catch (error) {
-        battleLogManager.addDebugLog('自动战斗出错:', error)
+        battleLogManager.addDebugLog('自动战斗出错:', LogLevel.ERROR, error)
         this.stopAutoBattle()
       }
     }
@@ -1717,32 +1818,13 @@ export class BattleSystem implements IBattleSystem {
   }
 
   /**
-   * 事件系统方法
-   */
-  private emit(event: string, data: any): void {
-    battleLogManager.addDebugLog(`发射事件: ${event}`, {
-      data: JSON.stringify(data, null, 2).substring(0, 1000), // 限制日志长度
-    })
-    eventBus.emit(event, data)
-  }
-
-  /**
-   * 同步战斗日志到外部系统
-   */
-  private syncBattleLog(logEntry: BattleLogEntry): void {
-    const battleId = this.battleData?.battleId
-    battleLogManager.addDebugLog('syncBattleLog called', { battleId, logEntry })
-    this.emit(BattleSystemEvent.BATTLE_LOG, { battleId, log: logEntry })
-  }
-
-  /**
    * 同步战斗状态更新
    */
   private syncBattleStateUpdate(): void {
     const battle = this.battleData
     if (!battle) return
 
-    this.emit(BattleSystemEvent.BATTLE_STATE_UPDATE, {
+    eventBus.emit(BattleSystemEvent.BATTLE_STATE_UPDATE, {
       battleId: battle.battleId,
       participants: Array.from(battle.participants.values()).map((p) => {
         const activeBuffIds = this.buffSystem
@@ -1775,14 +1857,14 @@ export class BattleSystem implements IBattleSystem {
     isCritical: boolean
     isHeal: boolean
   }): void {
-    this.emit(BattleSystemEvent.DAMAGE_ANIMATION, data)
+    eventBus.emit(BattleSystemEvent.DAMAGE_ANIMATION, data)
   }
 
   /**
    * 触发闪避动画
    */
   private triggerMissAnimation(data: { targetId: string }): void {
-    this.emit(BattleSystemEvent.MISS_ANIMATION, data)
+    eventBus.emit(BattleSystemEvent.MISS_ANIMATION, data)
   }
 
   /**
@@ -1793,7 +1875,7 @@ export class BattleSystem implements IBattleSystem {
     buffName: string
     isPositive: boolean
   }): void {
-    this.emit(BattleSystemEvent.BUFF_EFFECT, data)
+    eventBus.emit(BattleSystemEvent.BUFF_EFFECT, data)
   }
 
   /**
@@ -1849,7 +1931,7 @@ export class BattleSystem implements IBattleSystem {
       return
     }
 
-    this.emit(animation.type, animation.data)
+    eventBus.emit(animation.type, animation.data)
 
     const duration = this.getAnimationDuration()
 

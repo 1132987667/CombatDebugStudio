@@ -46,6 +46,7 @@ src/
         SkillEffect.vue
     composables/
         index.ts
+        useBattleAnimation.ts
         useBattleLifecycle.ts
         useCompendium.ts
     core/
@@ -81,6 +82,7 @@ src/
         battleLog/
         calculations/
             index.ts
+        config/
         di/
             Container.ts
         errors/
@@ -164,6 +166,7 @@ src/
             index.ts
             LocalStorage.ts
         BattleActionPool.ts
+        BattleAnimationService.ts
         BuffContextPool.ts
         Checksum.ts
         Counter.ts
@@ -8669,6 +8672,7 @@ export default [
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix"
   },
   "dependencies": {
+    "gsap": "^3.14.2",
     "mitt": "^3.0.1",
     "pinia": "^3.0.4",
     "vue": "^3.2.47"
@@ -8693,45 +8697,52 @@ export default [
 
 
 --- scripts/tools/update_energy_cost.js ---
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 // 获取当前文件的目录路径
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // 技能配置文件路径
-const skillsConfigPath = path.join(__dirname, '../../configs/skills/skills.json');
+const skillsConfigPath = path.join(
+  __dirname,
+  '../../configs/skills/skills.json',
+)
 
 // 读取技能配置文件
-const skillsData = JSON.parse(fs.readFileSync(skillsConfigPath, 'utf8'));
+const skillsData = JSON.parse(fs.readFileSync(skillsConfigPath, 'utf8'))
 
 // 更新技能能量消耗
-const updatedSkillsData = skillsData.map(skill => {
-  const skillId = skill.id;
-  
+const updatedSkillsData = skillsData.map((skill) => {
+  const skillId = skill.id
+
   if (skillId.includes('small')) {
     // 小技能能量消耗改为50
-    return { ...skill, mpCost: 50 };
+    return { ...skill, energyCost: 50 }
   } else if (skillId.includes('ultimate')) {
     // 大技能能量消耗改为150
-    return { ...skill, mpCost: 150 };
+    return { ...skill, energyCost: 150 }
   } else if (skillId.includes('passive')) {
     // 被动技能能量消耗保持为0
-    return { ...skill, mpCost: 0 };
+    return { ...skill, energyCost: 0 }
   }
-  
-  return skill;
-});
+
+  return skill
+})
 
 // 写入更新后的技能配置文件
-fs.writeFileSync(skillsConfigPath, JSON.stringify(updatedSkillsData, null, 2), 'utf8');
+fs.writeFileSync(
+  skillsConfigPath,
+  JSON.stringify(updatedSkillsData, null, 2),
+  'utf8',
+)
 
-console.log('技能能量消耗更新完成！');
-console.log('小技能能量消耗已统一设置为50');
-console.log('大技能能量消耗已统一设置为150');
-console.log('被动技能能量消耗保持为0');
+console.log('技能能量消耗更新完成！')
+console.log('小技能能量消耗已统一设置为50')
+console.log('大技能能量消耗已统一设置为150')
+console.log('被动技能能量消耗保持为0')
 
 --- scripts/tools/update_skills_config.js ---
 import fs from 'fs'
@@ -11294,7 +11305,7 @@ watch(
             <div class="skill-meta">
               <span v-if="skill.category === 'passive'" class="skill-tag passive">被动</span>
               <span v-else-if="skill.category === 'ultimate'" class="skill-tag ultimate">大招</span>
-              <span v-if="skill.mpCost > 0" class="skill-cost">消耗: {{ skill.mpCost }}能量</span>
+              <span v-if="skill.energyCost > 0" class="skill-cost">消耗: {{ skill.energyCost }}能量</span>
             </div>
           </div>
           <div class="skill-body">
@@ -13386,6 +13397,191 @@ defineExpose({
 export { useBattleLifecycle, useRafTimer } from './useBattleLifecycle'
 export type { TimerResource, LifecycleOptions } from './useBattleLifecycle'
 
+--- src/composables/useBattleAnimation.ts ---
+/**
+ * 文件: useBattleAnimation.ts
+ * 功能: 战斗动画 Vue Composable
+ * 描述: 封装 BattleAnimationService，提供 Vue 组件可用的动画接口
+ */
+
+import { ref, onUnmounted, watch, type Ref } from 'vue'
+import {
+  BattleAnimationService,
+  battleAnimationService,
+  type AttackAnimationData,
+  type HitAnimationData,
+} from '@/utils/BattleAnimationService'
+
+export interface UseBattleAnimationOptions {
+  battleSpeed?: Ref<number>
+}
+
+export interface AnimationState {
+  isPlaying: boolean
+  currentAnimation: string | null
+}
+
+export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
+  const animationService = ref<BattleAnimationService>(battleAnimationService)
+  const state = ref<AnimationState>({
+    isPlaying: false,
+    currentAnimation: null,
+  })
+
+  const elementRefs = new Map<string, Ref<HTMLElement | null>>()
+
+  if (options.battleSpeed) {
+    watch(options.battleSpeed, (newSpeed) => {
+      animationService.value.setBattleSpeed(newSpeed)
+    }, { immediate: true })
+  }
+
+  function registerElement(id: string, elementRef: Ref<HTMLElement | null>): void {
+    elementRefs.set(id, elementRef)
+  }
+
+  function unregisterElement(id: string): void {
+    elementRefs.delete(id)
+  }
+
+  function getElement(id: string): HTMLElement | null {
+    const ref = elementRefs.get(id)
+    return ref?.value || null
+  }
+
+  async function playAttackAnimation(
+    attackerId: string,
+    attackerSide: 'left' | 'right',
+    skillName?: string
+  ): Promise<void> {
+    const attackerElement = getElement(attackerId)
+    if (!attackerElement) {
+      console.warn(`[useBattleAnimation] 未找到攻击方元素: ${attackerId}`)
+      return
+    }
+
+    state.value.isPlaying = true
+    state.value.currentAnimation = 'attack'
+
+    try {
+      await animationService.value.playAttackAnimation({
+        attackerId,
+        attackerElement,
+        attackerSide,
+        skillName,
+      })
+    } finally {
+      state.value.isPlaying = false
+      state.value.currentAnimation = null
+    }
+  }
+
+  async function playHitAnimation(
+    targetId: string,
+    data: {
+      damage?: number
+      damageType: 'damage' | 'heal' | 'critical' | 'miss'
+      isCritical?: boolean
+      skillName?: string
+      passiveName?: string
+    }
+  ): Promise<void> {
+    const targetElement = getElement(targetId)
+    if (!targetElement) {
+      console.warn(`[useBattleAnimation] 未找到目标元素: ${targetId}`)
+      return
+    }
+
+    state.value.isPlaying = true
+    state.value.currentAnimation = 'hit'
+
+    try {
+      await animationService.value.playHitAnimation({
+        targetId,
+        targetElement,
+        ...data,
+      })
+    } finally {
+      state.value.isPlaying = false
+      state.value.currentAnimation = null
+    }
+  }
+
+  async function playBuffAnimation(
+    targetId: string,
+    isPositive: boolean
+  ): Promise<void> {
+    const targetElement = getElement(targetId)
+    if (!targetElement) {
+      console.warn(`[useBattleAnimation] 未找到目标元素: ${targetId}`)
+      return
+    }
+
+    state.value.isPlaying = true
+    state.value.currentAnimation = 'buff'
+
+    try {
+      await animationService.value.playBuffAnimation(targetElement, isPositive)
+    } finally {
+      state.value.isPlaying = false
+      state.value.currentAnimation = null
+    }
+  }
+
+  async function playDeathAnimation(targetId: string): Promise<void> {
+    const targetElement = getElement(targetId)
+    if (!targetElement) {
+      console.warn(`[useBattleAnimation] 未找到目标元素: ${targetId}`)
+      return
+    }
+
+    state.value.isPlaying = true
+    state.value.currentAnimation = 'death'
+
+    try {
+      await animationService.value.playDeathAnimation(targetElement)
+    } finally {
+      state.value.isPlaying = false
+      state.value.currentAnimation = null
+    }
+  }
+
+  function setBattleSpeed(speed: number): void {
+    animationService.value.setBattleSpeed(speed)
+  }
+
+  function getAnimationDuration(): number {
+    return animationService.value.getAnimationDuration()
+  }
+
+  function stopAllAnimations(): void {
+    animationService.value.stopAllAnimations()
+    state.value.isPlaying = false
+    state.value.currentAnimation = null
+  }
+
+  onUnmounted(() => {
+    stopAllAnimations()
+    elementRefs.clear()
+  })
+
+  return {
+    animationService,
+    state,
+    registerElement,
+    unregisterElement,
+    playAttackAnimation,
+    playHitAnimation,
+    playBuffAnimation,
+    playDeathAnimation,
+    setBattleSpeed,
+    getAnimationDuration,
+    stopAllAnimations,
+  }
+}
+
+export type UseBattleAnimationReturn = ReturnType<typeof useBattleAnimation>
+
 --- src/composables/useBattleLifecycle.ts ---
 /**
  * 战斗资源生命周期管理 Hook
@@ -13683,7 +13879,7 @@ export interface CompendiumSkill {
   id: string
   name: string
   description: string
-  mpCost: number
+  energyCost: number
   cooldown: number
   selector: string
 }
@@ -13710,28 +13906,28 @@ export function useCompendium() {
   const isLoading = ref(false)
 
   const getEnemyById = (id: string): CompendiumEnemy | undefined => {
-    return enemies.value.find(e => e.id === id)
+    return enemies.value.find((e) => e.id === id)
   }
 
   const getBuffById = (id: string): CompendiumBuff | undefined => {
-    return buffs.value.find(b => b.id === id)
+    return buffs.value.find((b) => b.id === id)
   }
 
   const getItemById = (id: string): CompendiumItem | undefined => {
-    return items.value.find(i => i.id === id)
+    return items.value.find((i) => i.id === id)
   }
 
   const getSkillById = (id: string): CompendiumSkill | undefined => {
-    return skills.value.find(s => s.id === id)
+    return skills.value.find((s) => s.id === id)
   }
 
   const getEnemySkills = (enemy: CompendiumEnemy): CompendiumSkill[] => {
     const skillIds = [
       ...(enemy.skills.small || []),
-      ...(enemy.skills.passive || [])
+      ...(enemy.skills.passive || []),
     ]
     return skillIds
-      .map(id => getSkillById(id))
+      .map((id) => getSkillById(id))
       .filter((s): s is CompendiumSkill => s !== undefined)
   }
 
@@ -13752,7 +13948,7 @@ export function useCompendium() {
     getEnemySkills,
     enemyCount,
     buffCount,
-    itemCount
+    itemCount,
   }
 }
 
@@ -14464,7 +14660,12 @@ import {
   type BattleContext,
   type BattleAnalysis,
 } from './StrategyInterfaces'
-import { BATTLE_CONSTANTS, ACTION_TYPES, EFFECT_TYPES } from '@/types/battle'
+import {
+  BATTLE_CONSTANTS,
+  ACTION_TYPES,
+  EFFECT_TYPES,
+  BattleAction,
+} from '@/types/battle'
 import type { Skill } from '@/types/skill'
 
 /**
@@ -14488,10 +14689,7 @@ export class DefaultThreatCalculationStrategy implements IThreatCalculationStrat
     const energyPercent = target.currentEnergy / target.maxEnergy
     threat += energyPercent * BATTLE_CONSTANTS.THREAT_ENERGY_WEIGHT
 
-    if (
-      target.type === 'ally' &&
-      participant.type === 'enemy'
-    ) {
+    if (target.type === 'ally' && participant.type === 'enemy') {
       threat += BATTLE_CONSTANTS.THREAT_TYPE_WEIGHT
     }
 
@@ -14511,14 +14709,18 @@ export class AggressiveTargetStrategy implements ITargetSelectionStrategy {
   private threatStrategy: IThreatCalculationStrategy
 
   constructor(threatStrategy?: IThreatCalculationStrategy) {
-    this.threatStrategy = threatStrategy || new DefaultThreatCalculationStrategy()
+    this.threatStrategy =
+      threatStrategy || new DefaultThreatCalculationStrategy()
   }
 
   getName(): string {
     return 'AggressiveTarget'
   }
 
-  selectTarget(context: BattleContext, participant: ParticipantSnapshot): string {
+  selectTarget(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): string {
     const enemies = context.getEnemies(participant)
 
     if (enemies.length === 0) {
@@ -14544,14 +14746,18 @@ export class DefensiveTargetStrategy implements ITargetSelectionStrategy {
   private threatStrategy: IThreatCalculationStrategy
 
   constructor(threatStrategy?: IThreatCalculationStrategy) {
-    this.threatStrategy = threatStrategy || new DefaultThreatCalculationStrategy()
+    this.threatStrategy =
+      threatStrategy || new DefaultThreatCalculationStrategy()
   }
 
   getName(): string {
     return 'DefensiveTarget'
   }
 
-  selectTarget(context: BattleContext, participant: ParticipantSnapshot): string {
+  selectTarget(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): string {
     const enemies = context.getEnemies(participant)
 
     if (enemies.length === 0) {
@@ -14572,7 +14778,10 @@ export class CharacterTargetStrategy implements ITargetSelectionStrategy {
     return 'CharacterTarget'
   }
 
-  selectTarget(context: BattleContext, participant: ParticipantSnapshot): string {
+  selectTarget(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): string {
     const enemies = context.getEnemies(participant)
 
     if (enemies.length === 0) {
@@ -14593,13 +14802,18 @@ export class EnemyTargetStrategy implements ITargetSelectionStrategy {
     return 'EnemyTarget'
   }
 
-  selectTarget(context: BattleContext, participant: ParticipantSnapshot): string {
-    const characters = context.getAllies({ ...participant, type: 'enemy' } as ParticipantSnapshot).filter(
-      (p) => p.type === 'ally' && p.isAlive(),
-    )
+  selectTarget(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): string {
+    const characters = context
+      .getAllies({ ...participant, type: 'enemy' } as ParticipantSnapshot)
+      .filter((p) => p.type === 'ally' && p.isAlive())
 
     const allParticipants = Array.from(context.participants.values())
-    const allies = allParticipants.filter((p) => p.type === 'ally' && p.isAlive())
+    const allies = allParticipants.filter(
+      (p) => p.type === 'ally' && p.isAlive(),
+    )
 
     if (allies.length === 0) {
       throw new Error('No characters found')
@@ -14625,7 +14839,10 @@ export class DefaultSkillSelectionStrategy implements ISkillSelectionStrategy {
     return 'DefaultSkillSelection'
   }
 
-  shouldUseSkill(context: BattleContext, participant: ParticipantSnapshot): boolean {
+  shouldUseSkill(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): boolean {
     const energyPercent = participant.getEnergyPercent()
     return energyPercent >= BATTLE_CONSTANTS.AI_SKILL_ENERGY_THRESHOLD
   }
@@ -14685,7 +14902,10 @@ export class CharacterSkillSelectionStrategy extends DefaultSkillSelectionStrate
     return 'CharacterSkillSelection'
   }
 
-  shouldUseSkill(context: BattleContext, participant: ParticipantSnapshot): boolean {
+  shouldUseSkill(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): boolean {
     const healthPercent = participant.getHealthPercent()
 
     if (healthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD) {
@@ -14721,9 +14941,13 @@ export class CharacterSkillSelectionStrategy extends DefaultSkillSelectionStrate
       }
     }
 
-    if (participant.currentEnergy >= BATTLE_CONSTANTS.ULTIMATE_ENERGY_THRESHOLD) {
+    if (
+      participant.currentEnergy >= BATTLE_CONSTANTS.ULTIMATE_ENERGY_THRESHOLD
+    ) {
       const allSkills = Array.from(context.participants.values())
-      const ultimateSkill = allSkills.find((s) => (s as any).type === 'ultimate')
+      const ultimateSkill = allSkills.find(
+        (s) => (s as any).type === 'ultimate',
+      )
       if (ultimateSkill) {
         return (ultimateSkill as any).id
       }
@@ -14742,8 +14966,13 @@ export class EnemySkillSelectionStrategy extends DefaultSkillSelectionStrategy {
     return 'EnemySkillSelection'
   }
 
-  shouldUseSkill(context: BattleContext, participant: ParticipantSnapshot): boolean {
-    return participant.currentEnergy >= BATTLE_CONSTANTS.ENEMY_SKILL_ENERGY_THRESHOLD
+  shouldUseSkill(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): boolean {
+    return (
+      participant.currentEnergy >= BATTLE_CONSTANTS.ENEMY_SKILL_ENERGY_THRESHOLD
+    )
   }
 }
 
@@ -14775,7 +15004,12 @@ export class DefaultBattleDecisionStrategy implements IBattleDecisionStrategy {
       if (this.skillStrategy.shouldUseSkill(context, participant)) {
         const skillId = this.skillStrategy.selectSkill(context, participant)
         if (skillId && availableSkills.has(skillId)) {
-          return this.createSkillAction(participant, skillId, context, availableSkills)
+          return this.createSkillAction(
+            participant,
+            skillId,
+            context,
+            availableSkills,
+          )
         }
       }
 
@@ -14829,7 +15063,9 @@ export class DefaultBattleDecisionStrategy implements IBattleDecisionStrategy {
     let targetId: string
     if (skill.heal) {
       const allies = context.getAllies(participant)
-      allies.sort((a, b) => a.currentHealth / a.maxHealth - b.currentHealth / b.maxHealth)
+      allies.sort(
+        (a, b) => a.currentHealth / a.maxHealth - b.currentHealth / b.maxHealth,
+      )
       targetId = allies[0]?.id || participant.id
     } else {
       targetId = this.targetStrategy.selectTarget(context, participant)
@@ -16159,6 +16395,7 @@ export class AISystem {
         success: false,
         timestamp: Date.now(),
         turn: battle.currentTurn + 1,
+        effects: [],
       }
     }
 
@@ -16173,6 +16410,7 @@ export class AISystem {
       success: true,
       timestamp: Date.now(),
       turn: battle.currentTurn + 1,
+      effects: [],
     }
   }
 
@@ -16317,7 +16555,10 @@ export class AutoBattleManager {
     }
 
     try {
-      this.isPaused = false
+      // 确保不是暂停状态
+      if (this.battleSystem.getIsPaused()) {
+        this.battleSystem.togglePause()
+      }
 
       await this.battleSystem.processTurn()
 
@@ -16328,18 +16569,24 @@ export class AutoBattleManager {
         await this.battleLogManager.syncBattleLogs(battleState)
       }
 
-      this.isPaused = true
+      // 执行完成后暂停
+      if (!this.battleSystem.getIsPaused()) {
+        this.battleSystem.togglePause()
+      }
     } catch (error) {
       console.error('执行回合时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
       this.battleLogManager.addDebugLog(`执行回合时出错: ${errorMsg}`)
-      this.isPaused = true
+      // 出错时也暂停
+      if (!this.battleSystem.getIsPaused()) {
+        this.battleSystem.togglePause()
+      }
     }
   }
 
   /**
    * 重置自动战斗状态
-   * 将所有状态重置为初始值，包括isAutoPlaying、isPaused、battleSpeed和autoBattleTaskId
+   * 将所有状态重置为初始值
    * 通常在开始新战斗前调用，以确保状态干净
    */
   resetState() {
@@ -16474,27 +16721,15 @@ export class BattleManager {
 
       // 使用工厂方法转换队伍
       const allyParticipants = allyTeam.map((char, index) => {
-        if (!char) {
-          throw new Error(`我方队伍中第${index + 1}个角色数据无效`)
-        }
         return BattleParticipantImpl.fromUICharacter(char, true, index)
       })
 
       const enemyParticipants = enemyTeam.map((char, index) => {
-        if (!char) {
-          throw new Error(`敌方队伍中第${index + 1}个角色数据无效`)
-        }
         return BattleParticipantImpl.fromUICharacter(char, false, index)
       })
 
-      // 合并所有参与者
-      const allParticipants = [
-        ...allyParticipants,
-        ...enemyParticipants,
-      ] as BattleParticipant[]
-
       // 验证参与者数据
-      if (allParticipants.length === 0) {
+      if (allyParticipants.length === 0 && enemyParticipants.length === 0) {
         throw new Error('没有有效的参与者数据')
       }
 
@@ -16502,7 +16737,10 @@ export class BattleManager {
       this.battleStateManager.initializeTeams(allyTeam, enemyTeam)
 
       // 创建战斗状态
-      const battleState = this.battleSystem.initialize(allParticipants)
+      const battleState = this.battleSystem.initialize(
+        allyParticipants as BattleParticipant[],
+        enemyParticipants as BattleParticipant[],
+      )
       const battleId = battleState.battleId
       this.setBattleId(battleId)
 
@@ -16885,11 +17123,10 @@ export class BattleManager {
     const enemyParticipants = enemyTeam.map((char, index) => {
       return BattleParticipantImpl.fromUICharacter(char, false, index)
     })
-    const allParticipants: BattleParticipantImpl[] = [
-      ...allyParticipants,
-      ...enemyParticipants,
-    ]
-    const battleState = this.battleSystem.initialize(allParticipants)
+    const battleState = this.battleSystem.initialize(
+      allyParticipants,
+      enemyParticipants,
+    )
     this.battleStateManager.setBattleId(battleState.battleId)
     this.autoBattleManager.setBattleId(battleState.battleId)
     battleLogManager.clearLogs()
@@ -17692,7 +17929,6 @@ import type {
   ParticipantSnapshot,
   BuffInstanceSnapshot,
   BattleRound,
-  BattleLogEntry,
   BattleResult,
   BattleEventType,
   BattleEvent,
@@ -17788,10 +18024,7 @@ export class BattleRecorder {
       0,
     )
 
-    battleLogManager.addDebugLog(`开始记录战斗: ${battleId}`, {
-      participantCount: initialState.participants.length,
-      randomSeed: seed,
-    })
+    battleLogManager.addSystemLog(`开始记录战斗: ${battleId}`)
 
     this.scheduleCleanup()
   }
@@ -18042,10 +18275,12 @@ export class BattleRecorder {
       roundNumber,
     )
 
-    battleLogManager.addDebugLog(`结束记录战斗: ${battleId}`, {
-      winner,
-      eventCount: recording.events.length,
-      duration,
+    battleLogManager.addSystemLog(`结束记录战斗: ${battleId}`, {
+      segments: [
+        {
+          text: `战斗结束，${winner}获胜，耗时 ${duration}ms`,
+        },
+      ],
     })
   }
 
@@ -18364,7 +18599,6 @@ export interface BattleRulesConfig {
  * 负责加载、管理和应用战斗规则配置
  */
 export class BattleRuleManager {
-  private logger = battleLogManager
   private config: BattleRulesConfig | null = null
 
   /**
@@ -18372,7 +18606,7 @@ export class BattleRuleManager {
    */
   public async loadConfig(): Promise<BattleRulesConfig> {
     this.config = this.getDefaultConfig()
-    this.logger.info('战斗规则配置加载成功', { version: this.config.version })
+    battleLogManager.addSystemLog('战斗规则配置加载成功')
     return this.config
   }
 
@@ -18500,7 +18734,7 @@ export class BattleRuleManager {
 
     // 深度合并配置
     this.config = this.deepMerge(this.config, updates)
-    this.logger.info('战斗规则配置已更新', { version: this.config.version })
+    battleLogManager.addDebugLog('战斗规则配置已更新')
   }
 
   /**
@@ -18638,7 +18872,7 @@ export class BattleRuleManager {
       }
 
       this.config = newConfig
-      this.logger.info('战斗规则配置导入成功')
+      battleLogManager.addDebugLog('战斗规则配置导入成功')
       return { success: true }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误'
@@ -18654,7 +18888,7 @@ export class BattleRuleManager {
    */
   public resetToDefault(): void {
     this.config = this.getDefaultConfig()
-    this.logger.info('战斗规则配置已重置为默认值')
+    battleLogManager.addDebugLog('战斗规则配置已重置为默认值')
   }
 }
 
@@ -18749,7 +18983,6 @@ import type {
 import { useBattleStore } from '@/stores/battleStore'
 import { BattleStateManager } from '@/core/battle/state/BattleStateManager'
 import type { IBattleSystem } from '@/core/battle/interfaces'
-import { BattleLogFormatter } from '@/utils/logging/BattleLogManager'
 import { PARTICIPANT_SIDE } from '@/types/battle'
 
 /**
@@ -18859,82 +19092,91 @@ export class BattleEventManager {
       if (data && data.log) {
         const log = data.log
         // 如果没有 htmlResult，尝试生成 HTML 格式
-          if (!log.htmlResult && log.result) {
-            let htmlResult = log.result
-            
-            // 判断来源和目标是否是敌方
-            const sourceIsAlly = !log.source.includes('敌方') && log.source !== '系统'
-            const targetIsAlly = log.target && !log.target.includes('敌方') && log.target !== '系统' && log.target !== '控制'
-            
-            // 替换角色名称颜色
-            if (log.source && log.source !== '系统') {
-              const sourceClass = sourceIsAlly ? 'source-ally' : 'source-enemy'
-              htmlResult = htmlResult.replace(
-                log.source,
-                `<span class="${sourceClass}">${log.source}</span>`
-              )
-            }
-            if (log.target && log.target !== '控制') {
-              const targetClass = targetIsAlly ? 'source-ally' : 'source-enemy'
-              htmlResult = htmlResult.replace(
-                log.target,
-                `<span class="${targetClass}">${log.target}</span>`
-              )
-            }
-            
-            // 添加普通攻击颜色
-            if (htmlResult.includes('普通攻击')) {
-              htmlResult = htmlResult.replace(
-                /普通攻击/g,
-                '<span class="normal-attack">普通攻击</span>'
-              )
-            }
-            
-            // 添加技能攻击颜色 (匹配【技能名】格式)
+        if (!log.htmlResult && log.result) {
+          let htmlResult = log.result
+
+          // 判断来源和目标是否是敌方
+          const sourceIsAlly =
+            !log.source.includes('敌方') && log.source !== '系统'
+          const targetIsAlly =
+            log.target &&
+            !log.target.includes('敌方') &&
+            log.target !== '系统' &&
+            log.target !== '控制'
+
+          // 替换角色名称颜色
+          if (log.source && log.source !== '系统') {
+            const sourceClass = sourceIsAlly ? 'source-ally' : 'source-enemy'
             htmlResult = htmlResult.replace(
-              /【([^】]+)】/g,
-              (match, skillName) => {
-                const isHeal = skillName.includes('治疗') || skillName.includes('恢复')
-                const isDebuff = skillName.includes('毒') || skillName.includes('虚弱')
-                if (isHeal) return `<span class="skill-heal">【${skillName}】</span>`
-                if (isDebuff) return `<span class="skill-debuff">【${skillName}】</span>`
-                return `<span class="skill-attack">【${skillName}】</span>`
-              }
+              log.source,
+              `<span class="${sourceClass}">${log.source}</span>`,
             )
-            
-            // 添加伤害数字颜色 - 匹配各种伤害格式
-            htmlResult = htmlResult.replace(
-              /(\d+)(?=点(物理|魔法|持续)?伤害)/g,
-              '<span class="damage-value">$1</span>'
-            )
-            
-            // 添加暴击标记
-            if (htmlResult.includes('暴击')) {
-              htmlResult = htmlResult.replace(
-                /暴击！?/g,
-                '<span class="crit-value">暴击</span>'
-              )
-            }
-            
-            // 添加闪避标记
-            if (htmlResult.includes('闪避')) {
-              htmlResult = htmlResult.replace(
-                /闪避/g,
-                '<span class="evade">闪避</span>'
-              )
-            }
-            
-            // 添加格挡标记
-            if (htmlResult.includes('格挡')) {
-              htmlResult = htmlResult.replace(
-                /格挡/g,
-                '<span class="evade">格挡</span>'
-              )
-            }
-            
-            log.htmlResult = htmlResult
           }
-        
+          if (log.target && log.target !== '控制') {
+            const targetClass = targetIsAlly ? 'source-ally' : 'source-enemy'
+            htmlResult = htmlResult.replace(
+              log.target,
+              `<span class="${targetClass}">${log.target}</span>`,
+            )
+          }
+
+          // 添加普通攻击颜色
+          if (htmlResult.includes('普通攻击')) {
+            htmlResult = htmlResult.replace(
+              /普通攻击/g,
+              '<span class="normal-attack">普通攻击</span>',
+            )
+          }
+
+          // 添加技能攻击颜色 (匹配【技能名】格式)
+          htmlResult = htmlResult.replace(
+            /【([^】]+)】/g,
+            (match, skillName) => {
+              const isHeal =
+                skillName.includes('治疗') || skillName.includes('恢复')
+              const isDebuff =
+                skillName.includes('毒') || skillName.includes('虚弱')
+              if (isHeal)
+                return `<span class="skill-heal">【${skillName}】</span>`
+              if (isDebuff)
+                return `<span class="skill-debuff">【${skillName}】</span>`
+              return `<span class="skill-attack">【${skillName}】</span>`
+            },
+          )
+
+          // 添加伤害数字颜色 - 匹配各种伤害格式
+          htmlResult = htmlResult.replace(
+            /(\d+)(?=点(物理|魔法|持续)?伤害)/g,
+            '<span class="damage-value">$1</span>',
+          )
+
+          // 添加暴击标记
+          if (htmlResult.includes('暴击')) {
+            htmlResult = htmlResult.replace(
+              /暴击！?/g,
+              '<span class="crit-value">暴击</span>',
+            )
+          }
+
+          // 添加闪避标记
+          if (htmlResult.includes('闪避')) {
+            htmlResult = htmlResult.replace(
+              /闪避/g,
+              '<span class="evade">闪避</span>',
+            )
+          }
+
+          // 添加格挡标记
+          if (htmlResult.includes('格挡')) {
+            htmlResult = htmlResult.replace(
+              /格挡/g,
+              '<span class="evade">格挡</span>',
+            )
+          }
+
+          log.htmlResult = htmlResult
+        }
+
         this.getBattleStore().addBattleLog(log)
       }
     } catch (error) {
@@ -19062,10 +19304,14 @@ import type { BattleAI } from '@/core/BattleAI'
 export interface IBattleSystem {
   /**
    * 初始化战斗
-   * @param participantsInfo - 参与者数组
+   * @param allyParticipants - 参与者数组
+   * @param enemyParticipants - 参与者数组
    * @returns BattleState - 初始化后的战斗状态
    */
-  initialize(participantsInfo: BattleParticipant[]): BattleState
+  initialize(
+    allyParticipants: BattleParticipant[],
+    enemyParticipants: BattleParticipant[],
+  ): BattleState
 
   /**
    * 处理战斗回合
@@ -20184,11 +20430,6 @@ export class BattleReplayManager {
    * @param recording 回放记录
    */
   startReplay(recording: BattleReplay) {
-    if (!recording || !recording.events || recording.events.length === 0) {
-      this.battleLogManager.addSystemLog('没有找到回放记录')
-      return
-    }
-
     this.resetReplayState()
 
     this.replayEngine = new ReplayEngine()
@@ -21065,9 +21306,21 @@ export class ReplayEngine {
 --- src/core/battle/state/BattleStateManager.ts ---
 import type { IBattleSystem } from '@/core/battle/interfaces'
 import type { BattleState, BattleParticipant } from '@/types/battle'
-import type { UIBattleCharacter } from '@/types'
+import type { UIBattleCharacter, AttributeValue } from '@/types'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { eventBus } from '@/main'
+
+/**
+ * 更新 AttributeValue 类型属性的内部字段
+ * 保持响应式引用不变，仅更新内部值
+ * @param target 目标属性对象
+ * @param source 源属性对象
+ */
+function updateAttributeValue(target: AttributeValue, source: AttributeValue) {
+  target.value = source.value
+  target.valueType = source.valueType
+  target.options = source.options
+}
 
 /**
  * 战斗状态管理器
@@ -21316,6 +21569,7 @@ export class BattleStateManager {
 
   /**
    * 更新角色状态
+   * 逐个更新属性，保持响应式引用不变
    * @param character UI角色
    * @param participant 战斗参与者
    */
@@ -21324,17 +21578,40 @@ export class BattleStateManager {
     participant: BattleParticipant,
   ) {
     // 使用新的转换方法创建更新后的UI角色
-    const updatedCharacter =
-      GameDataProcessor.participantToUIBattleCharacter(participant)
+    const updated = GameDataProcessor.participantToUIBattleCharacter(participant)
+
+    // 基础属性（非 AttributeValue 类型）
+    character.level = updated.level
+    character.name = updated.name
+    character.team = updated.team
 
     // 保留原有的UI特定属性
-    updatedCharacter.enabled = character.enabled
-    updatedCharacter.isFirst = character.isFirst
-    updatedCharacter.originalId = character.originalId
-    updatedCharacter.id = character.id
+    character.enabled = character.enabled
+    character.isFirst = character.isFirst
+    character.originalId = character.originalId
+    character.id = character.id
 
-    // 更新角色属性
-    Object.assign(character, updatedCharacter)
+    // AttributeValue 属性逐个更新，保持响应式引用
+    updateAttributeValue(character.currentHp, updated.currentHp)
+    updateAttributeValue(character.maxHp, updated.maxHp)
+    updateAttributeValue(character.currentEnergy, updated.currentEnergy)
+    updateAttributeValue(character.maxEnergy, updated.maxEnergy)
+    updateAttributeValue(character.minAttack, updated.minAttack)
+    updateAttributeValue(character.maxAttack, updated.maxAttack)
+    updateAttributeValue(character.attack, updated.attack)
+    updateAttributeValue(character.defense, updated.defense)
+    updateAttributeValue(character.speed, updated.speed)
+    updateAttributeValue(character.critRate, updated.critRate)
+    updateAttributeValue(character.critDamage, updated.critDamage)
+    updateAttributeValue(character.damageReduction, updated.damageReduction)
+    updateAttributeValue(character.healthBonus, updated.healthBonus)
+    updateAttributeValue(character.attackBonus, updated.attackBonus)
+    updateAttributeValue(character.defenseBonus, updated.defenseBonus)
+    updateAttributeValue(character.speedBonus, updated.speedBonus)
+
+    // 数组类型可以直接赋值，reactive 会处理数组引用变化
+    character.buffs = updated.buffs
+    character.skills = updated.skills
   }
 
   /**
@@ -22658,14 +22935,20 @@ export class BattleSystem implements IBattleSystem {
 
   /**
    * 初始化战斗
-   * @param {BattleParticipant[]} participantsInfo - 参与者数组
+   * @param {BattleParticipant[]} allyParticipants - 我方参与者数组
+   * @param {BattleParticipant[]} enemyParticipants - 敌方参与者数组
    * @returns {BattleState} 初始化后的战斗状态
    */
-  public initialize(participantsInfo: BattleParticipant[]): BattleState {
-    console.log('participantsInfo', participantsInfo)
+  public initialize(
+    allyParticipants: BattleParticipant[],
+    enemyParticipants: BattleParticipant[],
+  ): BattleState {
+    const allParticipants = [...allyParticipants, ...enemyParticipants]
+    console.log('allyParticipants', allyParticipants)
+    console.log('enemyParticipants', enemyParticipants)
 
     const participants =
-      this.participantManager.createParticipants(participantsInfo)
+      this.participantManager.createParticipants(allParticipants)
     const battleData = this.battleData
     battleData.participants = participants
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
@@ -22684,11 +22967,11 @@ export class BattleSystem implements IBattleSystem {
     )
     const battleId = this.battleData.battleId
     this.battleRecorder.startRecording(battleId, {
-      participants: participantsInfo,
+      participants: allParticipants,
     })
 
     battleLogManager.addSystemLog(
-      `战斗双方人员情况: 我方 ${participantsInfo.filter((p) => p.type === PARTICIPANT_SIDE.ALLY).length} 人 | 敌方 ${participantsInfo.filter((p) => p.type === PARTICIPANT_SIDE.ENEMY).length} 人`,
+      `战斗双方人员情况: 我方 ${allyParticipants.length} 人 | 敌方 ${enemyParticipants.length} 人`,
     )
 
     const initAction: BattleAction = {
@@ -22704,7 +22987,7 @@ export class BattleSystem implements IBattleSystem {
       effects: [
         {
           type: 'status',
-          description: `战斗开始！参战角色: ${participantsInfo.filter((p) => p.type === PARTICIPANT_SIDE.ALLY).length} 人，参战敌人: ${participantsInfo.filter((p) => p.type === PARTICIPANT_SIDE.ENEMY).length} 人`,
+          description: `战斗开始！参战角色: ${allyParticipants.length} 人，参战敌人: ${enemyParticipants.length} 人`,
           duration: 0,
         },
       ],
@@ -22717,6 +23000,11 @@ export class BattleSystem implements IBattleSystem {
     battleData.battleState = BATTLE_STATUS.ACTIVE
     battleData.roundState = ROUND_STATUS.START
     battleData.isActive = true
+
+    const autoBattleRules = this.ruleManager.getAutoBattleRules()
+    this.autoBattle = autoBattleRules.enabled
+    battleData.autoBattle = autoBattleRules.enabled
+    battleData.battleSpeed = autoBattleRules.defaultSpeed
 
     this.applyPassiveSkills(participants)
 
@@ -23171,7 +23459,8 @@ export class BattleSystem implements IBattleSystem {
         description: `${targetParticipant!.name} 闪避了攻击`,
       })
 
-      this.triggerMissAnimation({
+      // 触发闪避动画并等待完成
+      await this.triggerMissAnimationAndWait({
         targetId: target,
       })
 
@@ -23207,7 +23496,8 @@ export class BattleSystem implements IBattleSystem {
         description: `${source.name} 普通攻击 造成 ${damage} 伤害${damageResult.isCritical ? ' (暴击)' : ''}`,
       })
 
-      this.triggerDamageAnimation({
+      // 触发伤害动画并等待完成
+      await this.triggerDamageAnimationAndWait({
         targetId: target,
         damage,
         damageType: 'physical',
@@ -23303,8 +23593,8 @@ export class BattleSystem implements IBattleSystem {
    */
   private getSkillEnergyCost(skillId: string): number {
     const skillConfig = this.skillManager.getSkillConfig(skillId)
-    if (skillConfig && skillConfig.mpCost !== undefined) {
-      return skillConfig.mpCost
+    if (skillConfig && skillConfig.energyCost !== undefined) {
+      return skillConfig.energyCost
     }
     if (skillId.includes('ultimate') || skillId.includes('大招')) {
       return 150
@@ -23901,6 +24191,8 @@ export class BattleSystem implements IBattleSystem {
    * 开始自动战斗
    */
   public startAutoBattle(): void {
+    this.autoBattle = true
+    this.battleData.autoBattle = true
     battleLogManager.addDebugLog(`自动战斗开始: ${this.battleData.battleId}`)
     const autoBattleLoop = async () => {
       let battle = this.battleData
@@ -23955,6 +24247,7 @@ export class BattleSystem implements IBattleSystem {
     }
 
     this.autoBattle = false
+    this.battleData.autoBattle = false
 
     if (this.autoBattleTimerId) {
       this.rafTimer.clearTimeout(this.autoBattleTimerId)
@@ -24163,16 +24456,28 @@ export class BattleSystem implements IBattleSystem {
   }
 
   /**
+   * 获取动画时长（根据战斗速度动态调整）
+   * 确保动画时间与角色行动间隔一致
+   * @returns 动画时长（毫秒）
+   */
+  private getAnimationDuration(): number {
+    const delay = this.getBattleDelay()
+    return delay
+  }
+
+  /**
    * 触发动画并等待完成
    * @param animationType 动画类型
    * @param data 动画数据
-   * @param duration 动画持续时间（毫秒）
+   * @param duration 动画持续时间（毫秒），如果为0则使用战斗速度对应的默认时长
    */
   private async triggerAnimationAndWait(
     animationType: string,
     data: any,
-    duration: number = 1000,
+    duration: number = 0,
   ): Promise<void> {
+    const actualDuration = duration > 0 ? duration : this.getAnimationDuration()
+
     return new Promise<void>((resolve) => {
       this.animationQueue.push({
         type: animationType,
@@ -24205,10 +24510,15 @@ export class BattleSystem implements IBattleSystem {
 
     this.emit(animation.type, animation.data)
 
-    this.rafTimer.setTimeout(() => {
-      animation.resolve()
-      this.processAnimationQueue()
-    }, 1000)
+    const duration = this.getAnimationDuration()
+
+    await new Promise<void>((resolve) => {
+      this.rafTimer.setTimeout(() => {
+        animation.resolve()
+        this.processAnimationQueue()
+        resolve()
+      }, duration)
+    })
   }
 
   /**
@@ -24238,7 +24548,8 @@ export class BattleSystem implements IBattleSystem {
     damageType: string
   }): Promise<void> {
     if (this.battleData) {
-      await this.triggerAnimationAndWait('skill-effect', data, 1500)
+      const duration = Math.floor(this.getAnimationDuration() * 1.5)
+      await this.triggerAnimationAndWait('skill-effect', data, duration)
     }
   }
 
@@ -24253,10 +24564,14 @@ export class BattleSystem implements IBattleSystem {
     isHeal: boolean
   }): Promise<void> {
     if (this.battleData) {
+      const baseDuration = this.getAnimationDuration()
+      const duration = data.isCritical
+        ? Math.floor(baseDuration * 1.5)
+        : baseDuration
       await this.triggerAnimationAndWait(
         BattleSystemEvent.DAMAGE_ANIMATION,
         data,
-        data.isCritical ? 1500 : 1000,
+        duration,
       )
     }
   }
@@ -24271,7 +24586,7 @@ export class BattleSystem implements IBattleSystem {
       await this.triggerAnimationAndWait(
         BattleSystemEvent.MISS_ANIMATION,
         data,
-        1000,
+        this.getAnimationDuration(),
       )
     }
   }
@@ -27897,7 +28212,7 @@ export class SkillManager {
     }
 
     // 检查能量是否足够
-    const energyCost = skillConfig.mpCost || 0
+    const energyCost = skillConfig.energyCost || 0
     if (source.currentEnergy < energyCost) {
       return false
     }
@@ -29401,8 +29716,8 @@ import { BATTLE_SYSTEM_TOKEN } from '@/core/battle/interfaces'
 function createExampleBattle() {
   const battleSystem = container.resolve<any>(BATTLE_SYSTEM_TOKEN.toString())
   
-  // 创建示例参与者
-  const participants = [
+  // 创建示例我方参与者
+  const allyParticipants = [
     {
       id: 'char1',
       name: '测试角色1',
@@ -29512,6 +29827,10 @@ function createExampleBattle() {
         return this.getSkillIds().includes(skillId)
       },
     },
+  ]
+
+  // 创建示例敌方参与者
+  const enemyParticipants = [
     {
       id: 'enemy1',
       name: '测试敌人1',
@@ -29625,7 +29944,7 @@ function createExampleBattle() {
 
   console.log('auto task example')
   // 创建战斗
-  const battleState = battleSystem.initialize(participants)
+  const battleState = battleSystem.initialize(allyParticipants, enemyParticipants)
   return battleState.battleId
 }
 
@@ -31752,10 +32071,26 @@ export const useBattleStore = defineStore('battle', {
       data: AnimationState[keyof AnimationState],
     ) {
       this.animationState[type] = data
-      // 动画状态自动清除
+      const animationDuration = this.getAnimationDuration()
       setTimeout(() => {
         this.animationState[type] = null
-      }, 1000)
+      }, animationDuration)
+    },
+
+    /**
+     * 获取动画时长（根据战斗速度动态调整）
+     * 确保动画时间与角色行动间隔一致
+     * @returns 动画时长（毫秒）
+     */
+    getAnimationDuration(): number {
+      const speed = this.battleSpeed
+      const delayMap: Record<number, number> = {
+        1: 1000,
+        2: 500,
+        3: 330,
+        5: 200,
+      }
+      return delayMap[speed] || 500
     },
 
     /**
@@ -33590,18 +33925,18 @@ body {
 
 .energy-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ffeb3b, #fbc02d);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
   transition:
     width 0.3s,
     background 0.3s;
 }
 
 .energy-fill.low {
-  background: linear-gradient(90deg, #f44336, #c62828);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
 }
 
 .energy-fill.medium {
-  background: linear-gradient(90deg, #ffeb3b, #fbc02d);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
 }
 
 .energy-fill.full {
@@ -33610,20 +33945,20 @@ body {
 }
 
 .energy-fill.enemy-fill {
-  background: linear-gradient(90deg, #ff5722, #e64a19);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
 }
 
 .energy-fill.enemy-fill.low {
-  background: linear-gradient(90deg, #f44336, #c62828);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
 }
 
 .energy-fill.enemy-fill.medium {
-  background: linear-gradient(90deg, #ff9800, #e65100);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
 }
 
 .energy-fill.enemy-fill.full {
-  background: linear-gradient(90deg, #ef4444, #b91c1c);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(90deg, #22d3ee, #0891b2);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
 }
 
 .member-status {
@@ -36566,6 +36901,7 @@ import type { BattleAI } from '@/core/BattleAI'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import type { SkillConfig } from '@/types/skill'
 import type { UISkills } from '@/types/UI/UIBattleCharacter'
+import type { BattleLogEntry } from '@/types/battle-log'
 
 /**
  * 战斗状态常量
@@ -37483,13 +37819,13 @@ export interface CharacterStats {
   /** 角色等级 */
   level: number
   /** 当前生命值 */
-  hp: number
+  currentHp: number
   /** 最大生命值 */
   maxHp: number
   /** 当前魔法值 */
-  mp: number
+  currentEnergy: number
   /** 最大魔法值 */
-  maxMp: number
+  maxEnergy: number
   /** 攻击力 */
   attack: number
   /** 防御力 */
@@ -37516,10 +37852,6 @@ export interface CharacterStats {
   damageReduce: number
   /** 是否启用 */
   enabled: boolean
-  /** 当前能量 */
-  currentEnergy?: number
-  /** 最大能量 */
-  maxEnergy?: number
   /** buff列表 */
   buffs?: any[]
 }
@@ -38520,7 +38852,7 @@ export interface SkillConfig {
    * 施放技能所需的法力值
    * 0表示不消耗法力值
    */
-  mpCost: number
+  energyCost: number
 
   /**
    * 冷却时间(回合数)
@@ -38842,7 +39174,7 @@ export function convertSkillConfigToSkill(
     id: config.id,
     name: config.name,
     type: inferSkillType(config),
-    energyCost: config.mpCost || 0,
+    energyCost: config.energyCost || 0,
     cooldown: config.cooldown || 0,
     lastUsed,
     description: config.description || '',
@@ -39084,6 +39416,495 @@ class BattleActionPoolClass {
 }
 
 export const BattleActionPool = new BattleActionPoolClass()
+
+--- src/utils/BattleAnimationService.ts ---
+/**
+ * 文件: BattleAnimationService.ts
+ * 功能: 战斗动画服务
+ * 描述: 使用 GSAP 实现战斗动画效果，支持倍速控制
+ */
+
+import gsap from 'gsap'
+
+export interface AnimationConfig {
+  battleSpeed: number
+}
+
+export interface AttackAnimationData {
+  attackerId: string
+  attackerElement: HTMLElement
+  attackerSide: 'left' | 'right'
+  skillName?: string
+}
+
+export interface HitAnimationData {
+  targetId: string
+  targetElement: HTMLElement
+  damage?: number
+  damageType: 'damage' | 'heal' | 'critical' | 'miss'
+  isCritical?: boolean
+  skillName?: string
+  passiveName?: string
+}
+
+export interface ShakeAnimationData {
+  targetElement: HTMLElement
+  intensity?: 'light' | 'medium' | 'heavy'
+}
+
+export interface FloatingTextData {
+  element: HTMLElement
+  text: string
+  type: 'skill' | 'damage' | 'passive' | 'miss'
+  startY?: number
+}
+
+export class BattleAnimationService {
+  private battleSpeed: number = 1
+  private activeAnimations: gsap.core.Timeline[] = []
+  private activeTweens: gsap.core.Tween[] = []
+
+  private readonly BASE_ATTACK_DURATION = 900
+  private readonly SKILL_NAME_DELAY = 180
+  private readonly SKILL_NAME_MOVE_DURATION = 180
+  private readonly SKILL_NAME_FADE_DURATION = 360
+  private readonly HIT_SHAKE_DELAY = 180
+
+  constructor(config?: AnimationConfig) {
+    if (config) {
+      this.battleSpeed = config.battleSpeed
+    }
+  }
+
+  setBattleSpeed(speed: number): void {
+    this.battleSpeed = Math.max(1, Math.min(5, speed))
+  }
+
+  getBattleSpeed(): number {
+    return this.battleSpeed
+  }
+
+  private getScaledDuration(baseDuration: number): number {
+    return baseDuration / this.battleSpeed
+  }
+
+  private createTimeline(): gsap.core.Timeline {
+    const timeline = gsap.timeline()
+    this.activeAnimations.push(timeline)
+    return timeline
+  }
+
+  private createTween(target: gsap.TweenTarget, vars: gsap.TweenVars): gsap.core.Tween {
+    const tween = gsap.to(target, vars)
+    this.activeTweens.push(tween)
+    return tween
+  }
+
+  playAttackAnimation(data: AttackAnimationData): Promise<void> {
+    return new Promise((resolve) => {
+      const timeline = this.createTimeline()
+      const moveDistance = 30
+      const direction = data.attackerSide === 'left' ? 1 : -1
+
+      const attackDuration = this.getScaledDuration(this.BASE_ATTACK_DURATION)
+      const halfDuration = attackDuration / 2
+
+      timeline
+        .to(data.attackerElement, {
+          x: moveDistance * direction,
+          duration: halfDuration / 1000,
+          ease: 'power2.out',
+        })
+        .to(data.attackerElement, {
+          x: 0,
+          duration: halfDuration / 1000,
+          ease: 'power2.in',
+          onComplete: () => {
+            resolve()
+          },
+        })
+
+      if (data.skillName) {
+        this.playSkillNameAnimation(data.attackerElement, data.skillName, data.attackerSide)
+      }
+    })
+  }
+
+  private playSkillNameAnimation(
+    targetElement: HTMLElement,
+    skillName: string,
+    side: 'left' | 'right'
+  ): void {
+    let skillElement: HTMLElement | null = targetElement.querySelector('.floating-skill-name')
+
+    if (!skillElement) {
+      skillElement = document.createElement('div')
+      skillElement.className = 'floating-skill-name'
+      skillElement.style.cssText = `
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 14px;
+        font-weight: bold;
+        color: #22d3ee;
+        text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+        pointer-events: none;
+        z-index: 100;
+        white-space: nowrap;
+      `
+      targetElement.style.position = 'relative'
+      targetElement.appendChild(skillElement)
+    }
+
+    skillElement.textContent = skillName
+    skillElement.style.opacity = '1'
+    skillElement.style.transform = 'translate(-50%, -50%) scale(1)'
+
+    const timeline = this.createTimeline()
+    const delayMs = this.getScaledDuration(this.SKILL_NAME_DELAY)
+    const moveDurationMs = this.getScaledDuration(this.SKILL_NAME_MOVE_DURATION)
+    const fadeDurationMs = this.getScaledDuration(this.SKILL_NAME_FADE_DURATION)
+
+    const direction = side === 'left' ? -1 : 1
+
+    timeline
+      .set(skillElement, { opacity: 1, scale: 1, y: 0 })
+      .to(skillElement, {
+        y: -30 * direction,
+        scale: 0.8,
+        duration: moveDurationMs / 1000,
+        ease: 'power2.out',
+        delay: delayMs / 1000,
+      })
+      .to(skillElement, {
+        opacity: 0,
+        scale: 0.3,
+        duration: fadeDurationMs / 1000,
+        ease: 'power2.in',
+        onComplete: () => {
+          if (skillElement && skillElement.parentNode) {
+            skillElement.parentNode.removeChild(skillElement)
+          }
+        },
+      })
+  }
+
+  playHitAnimation(data: HitAnimationData): Promise<void> {
+    return new Promise((resolve) => {
+      const timeline = this.createTimeline()
+
+      this.playShakeAnimation({
+        targetElement: data.targetElement,
+        intensity: data.isCritical ? 'heavy' : 'medium',
+      })
+
+      this.playFlashAnimation(data.targetElement, data.damageType)
+
+      const delayMs = this.getScaledDuration(this.HIT_SHAKE_DELAY)
+
+      if (data.damageType === 'miss') {
+        this.playMissTextAnimation(data.targetElement, delayMs)
+      } else if (data.passiveName) {
+        this.playPassiveTextAnimation(data.targetElement, data.passiveName, delayMs)
+      } else if (data.damage !== undefined) {
+        this.playDamageTextAnimation(
+          data.targetElement,
+          data.damage,
+          data.damageType,
+          data.isCritical,
+          delayMs
+        )
+      }
+
+      const totalDuration = this.getScaledDuration(
+        this.HIT_SHAKE_DELAY + this.SKILL_NAME_MOVE_DURATION + this.SKILL_NAME_FADE_DURATION
+      )
+
+      timeline.to({}, {
+        duration: totalDuration / 1000,
+        onComplete: resolve,
+      })
+    })
+  }
+
+  playShakeAnimation(data: ShakeAnimationData): void {
+    const intensityMap = {
+      light: { distance: 3, times: 3 },
+      medium: { distance: 5, times: 5 },
+      heavy: { distance: 8, times: 7 },
+    }
+
+    const { distance, times } = intensityMap[data.intensity || 'medium']
+    const shakeDuration = this.getScaledDuration(50)
+
+    gsap.to(data.targetElement, {
+      x: `+=${distance}`,
+      duration: shakeDuration / 1000,
+      repeat: times * 2 - 1,
+      yoyo: true,
+      ease: 'power1.inOut',
+    })
+  }
+
+  private playFlashAnimation(
+    targetElement: HTMLElement,
+    damageType: 'damage' | 'heal' | 'critical' | 'miss'
+  ): void {
+    const flashColor = damageType === 'heal' ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'
+
+    const hpBar = targetElement.querySelector('.hp-fill') as HTMLElement
+    if (hpBar) {
+      const timeline = this.createTimeline()
+      timeline
+        .to(hpBar, {
+          boxShadow: `0 0 15px ${flashColor}`,
+          duration: this.getScaledDuration(50) / 1000,
+        })
+        .to(hpBar, {
+          boxShadow: 'none',
+          duration: this.getScaledDuration(100) / 1000,
+        })
+    }
+
+    const timeline = this.createTimeline()
+    timeline
+      .to(targetElement, {
+        backgroundColor: flashColor,
+        duration: this.getScaledDuration(50) / 1000,
+      })
+      .to(targetElement, {
+        backgroundColor: 'transparent',
+        duration: this.getScaledDuration(100) / 1000,
+      })
+  }
+
+  private playDamageTextAnimation(
+    targetElement: HTMLElement,
+    damage: number,
+    type: 'damage' | 'heal' | 'critical',
+    isCritical?: boolean,
+    delayMs: number = 0
+  ): void {
+    const textElement = document.createElement('div')
+    textElement.className = 'floating-damage-text'
+
+    const colorMap = {
+      damage: '#ef4444',
+      heal: '#22c55e',
+      critical: '#f59e0b',
+    }
+
+    const prefix = type === 'heal' ? '+' : '-'
+    const suffix = isCritical ? '!' : ''
+
+    textElement.style.cssText = `
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: ${isCritical ? '24px' : '18px'};
+      font-weight: bold;
+      color: ${colorMap[type]};
+      text-shadow: 0 0 10px ${colorMap[type]};
+      pointer-events: none;
+      z-index: 100;
+    `
+    textElement.textContent = `${prefix}${Math.abs(damage)}${suffix}`
+
+    targetElement.style.position = 'relative'
+    targetElement.appendChild(textElement)
+
+    const timeline = this.createTimeline()
+    const moveDurationMs = this.getScaledDuration(this.SKILL_NAME_MOVE_DURATION)
+    const fadeDurationMs = this.getScaledDuration(this.SKILL_NAME_FADE_DURATION)
+
+    timeline
+      .set(textElement, { opacity: 1, scale: 1, y: 0 })
+      .to(textElement, {
+        y: -40,
+        scale: 0.8,
+        duration: moveDurationMs / 1000,
+        ease: 'power2.out',
+        delay: delayMs / 1000,
+      })
+      .to(textElement, {
+        opacity: 0,
+        scale: 0.3,
+        duration: fadeDurationMs / 1000,
+        ease: 'power2.in',
+        onComplete: () => {
+          if (textElement.parentNode) {
+            textElement.parentNode.removeChild(textElement)
+          }
+        },
+      })
+  }
+
+  private playMissTextAnimation(targetElement: HTMLElement, delayMs: number): void {
+    const textElement = document.createElement('div')
+    textElement.className = 'floating-miss-text'
+
+    textElement.style.cssText = `
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 16px;
+      font-weight: bold;
+      color: #9ca3af;
+      text-shadow: 0 0 5px rgba(156, 163, 175, 0.5);
+      pointer-events: none;
+      z-index: 100;
+    `
+    textElement.textContent = '闪避'
+
+    targetElement.style.position = 'relative'
+    targetElement.appendChild(textElement)
+
+    const timeline = this.createTimeline()
+    const moveDurationMs = this.getScaledDuration(this.SKILL_NAME_MOVE_DURATION)
+    const fadeDurationMs = this.getScaledDuration(this.SKILL_NAME_FADE_DURATION)
+
+    timeline
+      .set(textElement, { opacity: 1, scale: 1, y: 0 })
+      .to(textElement, {
+        y: -40,
+        scale: 0.8,
+        duration: moveDurationMs / 1000,
+        ease: 'power2.out',
+        delay: delayMs / 1000,
+      })
+      .to(textElement, {
+        opacity: 0,
+        scale: 0.3,
+        duration: fadeDurationMs / 1000,
+        ease: 'power2.in',
+        onComplete: () => {
+          if (textElement.parentNode) {
+            textElement.parentNode.removeChild(textElement)
+          }
+        },
+      })
+  }
+
+  private playPassiveTextAnimation(
+    targetElement: HTMLElement,
+    passiveName: string,
+    delayMs: number
+  ): void {
+    const textElement = document.createElement('div')
+    textElement.className = 'floating-passive-text'
+
+    textElement.style.cssText = `
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 14px;
+      font-weight: bold;
+      color: #a855f7;
+      text-shadow: 0 0 10px rgba(168, 85, 247, 0.8);
+      pointer-events: none;
+      z-index: 100;
+    `
+    textElement.textContent = passiveName
+
+    targetElement.style.position = 'relative'
+    targetElement.appendChild(textElement)
+
+    const timeline = this.createTimeline()
+    const moveDurationMs = this.getScaledDuration(this.SKILL_NAME_MOVE_DURATION)
+    const fadeDurationMs = this.getScaledDuration(this.SKILL_NAME_FADE_DURATION)
+
+    timeline
+      .set(textElement, { opacity: 1, scale: 1, y: 0 })
+      .to(textElement, {
+        y: -40,
+        scale: 0.8,
+        duration: moveDurationMs / 1000,
+        ease: 'power2.out',
+        delay: delayMs / 1000,
+      })
+      .to(textElement, {
+        opacity: 0,
+        scale: 0.3,
+        duration: fadeDurationMs / 1000,
+        ease: 'power2.in',
+        onComplete: () => {
+          if (textElement.parentNode) {
+            textElement.parentNode.removeChild(textElement)
+          }
+        },
+      })
+  }
+
+  playBuffAnimation(targetElement: HTMLElement, isPositive: boolean): Promise<void> {
+    return new Promise((resolve) => {
+      const timeline = this.createTimeline()
+      const color = isPositive ? 'rgba(34, 211, 238, 0.8)' : 'rgba(239, 68, 68, 0.8)'
+      const duration = this.getScaledDuration(500)
+
+      timeline
+        .to(targetElement, {
+          boxShadow: `0 0 20px ${color}`,
+          filter: 'brightness(1.2)',
+          duration: duration / 2000,
+          ease: 'power2.out',
+        })
+        .to(targetElement, {
+          boxShadow: 'none',
+          filter: 'brightness(1)',
+          duration: duration / 2000,
+          ease: 'power2.in',
+          onComplete: resolve,
+        })
+    })
+  }
+
+  playDeathAnimation(targetElement: HTMLElement): Promise<void> {
+    return new Promise((resolve) => {
+      const timeline = this.createTimeline()
+
+      timeline
+        .to(targetElement, {
+          opacity: 0.3,
+          scale: 0.95,
+          filter: 'grayscale(1)',
+          duration: this.getScaledDuration(300) / 1000,
+          ease: 'power2.out',
+          onComplete: resolve,
+        })
+    })
+  }
+
+  stopAllAnimations(): void {
+    this.activeAnimations.forEach((timeline) => {
+      timeline.kill()
+    })
+    this.activeTweens.forEach((tween) => {
+      tween.kill()
+    })
+    this.activeAnimations = []
+    this.activeTweens = []
+
+    document.querySelectorAll('.floating-skill-name, .floating-damage-text, .floating-miss-text, .floating-passive-text').forEach((el) => {
+      el.remove()
+    })
+  }
+
+  getAnimationDuration(): number {
+    return this.getScaledDuration(this.BASE_ATTACK_DURATION)
+  }
+
+  getTotalAttackSequenceDuration(): number {
+    return this.getScaledDuration(
+      this.BASE_ATTACK_DURATION + this.SKILL_NAME_DELAY + this.SKILL_NAME_MOVE_DURATION + this.SKILL_NAME_FADE_DURATION
+    )
+  }
+}
+
+export const battleAnimationService = new BattleAnimationService()
 
 --- src/utils/BuffContextPool.ts ---
 /**
@@ -40089,15 +40910,18 @@ export class GameDataProcessor {
       level: enemy.level,
       maxHp: enemy.stats.health,
       currentHp: enemy.stats.health,
-      maxMp: 100,
-      currentMp: 100,
-      currentEnergy: 0,
       maxEnergy: 150,
+      currentEnergy: 0,
       attack: Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2),
       defense: enemy.stats.defense,
       speed: enemy.stats.speed,
       enabled: index < 3,
-      isFirst: index === 0,
+      critRate: 0.05,
+      critDamage: 1.25,
+      accuracy: 0.75,
+      evade: 0.05,
+      lifeSteal: 0,
+      regeneration: 0,
       buffs:
         index === 0
           ? [
@@ -40401,16 +41225,6 @@ export class GameDataProcessor {
         passiveBonuses,
         'health',
       ),
-      maxMp: GameDataProcessor.createAttributeValue(
-        100,
-        passiveBonuses,
-        'maxMp',
-      ),
-      currentMp: GameDataProcessor.createAttributeValue(
-        100,
-        passiveBonuses,
-        'currentMp',
-      ),
       currentEnergy: GameDataProcessor.createAttributeValue(
         0,
         passiveBonuses,
@@ -40577,8 +41391,6 @@ export class GameDataProcessor {
       level: participant.level,
       maxHp: createAttributeValue(participant.maxHealth, 'health'),
       currentHp: createAttributeValue(participant.currentHealth, 'health'),
-      maxMp: createAttributeValue(100, 'maxMp'),
-      currentMp: createAttributeValue(100, 'currentMp'),
       currentEnergy: createAttributeValue(
         participant.currentEnergy,
         'currentEnergy',
@@ -42546,7 +43358,7 @@ export interface ValidationResult {
  */
 const skillSchema = {
   type: 'object',
-  required: ['id', 'name', 'mpCost', 'cooldown', 'steps'],
+  required: ['id', 'name', 'energyCost', 'cooldown', 'steps'],
   properties: {
     id: {
       type: 'string',
@@ -42559,7 +43371,7 @@ const skillSchema = {
     description: {
       type: 'string',
     },
-    mpCost: {
+    energyCost: {
       type: 'number',
       minimum: 0,
     },
@@ -43800,7 +44612,8 @@ onUnmounted(() => {
           <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
             <div v-for="member in filterAllyTeam" :key="member.id" class="member-card"
-              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id, hit: getAnimationState(member.id).isHit, casting: getAnimationState(member.id).isCasting, buffed: getAnimationState(member.id).isBuffed }"
+              :ref="(el: any) => setMemberCardRef(el, member.id)"
+              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id }"
               @click="selectCharacter(member.id)">
               <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)"
                 :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
@@ -43856,7 +44669,8 @@ onUnmounted(() => {
           <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
             <div v-for="member in filterEnemyTeam" :key="member.id" class="member-card"
-              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id, hit: getAnimationState(member.id).isHit, casting: getAnimationState(member.id).isCasting, buffed: getAnimationState(member.id).isBuffed }"
+              :ref="(el: any) => setMemberCardRef(el, member.id)"
+              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id }"
               @click="selectCharacter(member.id)">
               <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)"
                 :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
@@ -43870,14 +44684,14 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <div class="member-hp">
-                  <span class="hp-text">HP: {{ getMemberHp(member) }}</span>
+                  <span class="hp-text">{{ getMemberHp(member) }}</span>
                   <div class="hp-bar">
                     <div class="hp-fill enemy-fill" :class="getHpColorClass(member)"
                       :style="{ width: getHpPercent(member) + '%' }"></div>
                   </div>
                 </div>
                 <div class="member-energy">
-                  <span class="energy-text">能量: {{ toNumber(member.currentEnergy) }}/{{ toNumber(member.maxEnergy)
+                  <span class="energy-text">{{ toNumber(member.currentEnergy) }}/{{ toNumber(member.maxEnergy)
                   }}</span>
                   <div class="energy-bar">
                     <div class="energy-ticks">
@@ -43944,9 +44758,10 @@ onUnmounted(() => {
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onUnmounted } from "vue";
+import { computed, ref, onUnmounted, watch, nextTick } from "vue";
 import { raf } from '@/utils/RAF';
 import { container } from '@/core/di/Container';
+import { useBattleAnimation } from '@/composables/useBattleAnimation';
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
@@ -43954,7 +44769,6 @@ import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter';
 import type { AttributeValue } from '@/types';
 import type { BattleManager } from '@/core/battle/BattleManager';
 
-// 获取 BattleManager
 const battleManager = container.resolve<BattleManager>('BattleManager');
 
 const props = defineProps<{
@@ -43962,11 +44776,41 @@ const props = defineProps<{
   turnOrder?: string[];
   damageEffects?: Record<string, { value: number; type: 'damage' | 'heal' | 'critical' | 'miss'; isCritical: boolean }>;
   skillEffects?: Record<string, { type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate'; name?: string }>;
+  battleSpeed?: number;
 }>();
 
 const emit = defineEmits<{
   "select-character": [characterId: string];
 }>();
+
+const {
+  registerElement,
+  unregisterElement,
+  playAttackAnimation,
+  playHitAnimation,
+  playBuffAnimation,
+  playDeathAnimation,
+  setBattleSpeed,
+  stopAllAnimations,
+} = useBattleAnimation();
+
+const memberCardRefs = new Map<string, HTMLElement>();
+
+function setMemberCardRef(el: HTMLElement | null, memberId: string) {
+  if (el) {
+    memberCardRefs.set(memberId, el);
+    registerElement(memberId, ref(el));
+  } else {
+    memberCardRefs.delete(memberId);
+    unregisterElement(memberId);
+  }
+}
+
+watch(() => props.battleSpeed, (newSpeed) => {
+  if (newSpeed) {
+    setBattleSpeed(newSpeed);
+  }
+}, { immediate: true });
 
 // 响应式获取队伍数据
 const allyTeam = computed(() => battleManager.getAllyTeam());
@@ -44042,11 +44886,7 @@ function isCurrentActor(memberId: string): boolean {
 }
 
 function isMemberDead(member: UIBattleCharacter): boolean {
-  return getNumericValue(member.currentHp) <= 0;
-}
-
-function getAnimationState(characterId: string): { isHit: boolean; isCasting: boolean; isBuffed: boolean } {
-  return characterEffects.value.animation[characterId] || { isHit: false, isCasting: false, isBuffed: false };
+  return getNumericValue(member.currentHp) <= 0
 }
 
 // 根据回合顺序排序角色列表
@@ -44237,115 +45077,87 @@ function getCharacterSkillName(characterId: string): string | undefined {
   return props.skillEffects?.[characterId]?.name || characterEffects.value.skill[characterId]?.name;
 }
 
-// 显示伤害效果
+function getCharacterSide(characterId: string): 'left' | 'right' {
+  const isAlly = allyTeam.value.some((c) => c.id === characterId)
+  return isAlly ? 'left' : 'right'
+}
+
 function showDamage(characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) {
-  characterEffects.value.damage[characterId] = { value, type, isCritical };
+  characterEffects.value.damage[characterId] = { value, type, isCritical }
 
-  // 触发 hit 效果
-  triggerHitEffect(characterId);
-
-  // 3秒后清除效果
-  const timeoutId = raf.setTimeout(() => {
-    delete characterEffects.value.damage[characterId];
-  }, 3000);
-  timeouts.value.push(timeoutId);
+  playHitAnimation(characterId, {
+    damage: value,
+    damageType: type,
+    isCritical,
+  })
 }
 
-// 显示Miss效果
 function showMiss(characterId: string) {
-  characterEffects.value.damage[characterId] = { value: 0, type: 'miss', isCritical: false };
+  characterEffects.value.damage[characterId] = { value: 0, type: 'miss', isCritical: false }
 
-  // 3秒后清除效果
-  const timeoutId = raf.setTimeout(() => {
-    delete characterEffects.value.damage[characterId];
-  }, 3000);
-  timeouts.value.push(timeoutId);
+  playHitAnimation(characterId, {
+    damageType: 'miss',
+  })
 }
 
-// 显示技能效果
-function showSkillEffect(characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) {
-  characterEffects.value.skill[characterId] = { type, name };
+async function showSkillEffect(characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) {
+  characterEffects.value.skill[characterId] = { type, name }
 
-  // 触发施法效果
-  triggerCastingEffect(characterId);
-
-  // 3秒后清除效果
-  const timeoutId = raf.setTimeout(() => {
-    delete characterEffects.value.skill[characterId];
-  }, 3000);
-  timeouts.value.push(timeoutId);
+  const side = getCharacterSide(characterId)
+  await playAttackAnimation(characterId, side, name)
 }
 
-// 显示Buff效果
-function showBuffEffect(characterId: string, _buffName: string, _isPositive: boolean) {
-  // 触发Buff效果动画
-  triggerBuffEffect(characterId);
+function showBuffEffect(characterId: string, _buffName: string, isPositive: boolean) {
+  playBuffAnimation(characterId, isPositive)
 }
 
-// 触发Hit效果
 function triggerHitEffect(characterId: string) {
-  // 初始化角色动画状态
-  if (!characterEffects.value.animation[characterId]) {
-    characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
-  }
-
-  // 触发hit效果
-  characterEffects.value.animation[characterId].isHit = true;
-  const timeoutId = raf.setTimeout(() => {
-    if (characterEffects.value.animation[characterId]) {
-      characterEffects.value.animation[characterId].isHit = false;
-    }
-  }, 300);
-  timeouts.value.push(timeoutId);
+  playHitAnimation(characterId, {
+    damageType: 'damage',
+  })
 }
 
-// 触发施法效果
-function triggerCastingEffect(characterId: string, duration: number = 1000) {
-  // 初始化角色动画状态
-  if (!characterEffects.value.animation[characterId]) {
-    characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
-  }
-
-  // 触发casting效果
-  characterEffects.value.animation[characterId].isCasting = true;
-  const timeoutId = raf.setTimeout(() => {
-    if (characterEffects.value.animation[characterId]) {
-      characterEffects.value.animation[characterId].isCasting = false;
-    }
-  }, duration);
-  timeouts.value.push(timeoutId);
+function triggerCastingEffect(characterId: string, _duration: number = 1000) {
+  const side = getCharacterSide(characterId)
+  playAttackAnimation(characterId, side)
 }
 
-// 触发Buff效果
 function triggerBuffEffect(characterId: string) {
-  // 初始化角色动画状态
-  if (!characterEffects.value.animation[characterId]) {
-    characterEffects.value.animation[characterId] = { isHit: false, isCasting: false, isBuffed: false };
-  }
-
-  // 触发buffed效果
-  characterEffects.value.animation[characterId].isBuffed = true;
-  const timeoutId = raf.setTimeout(() => {
-    if (characterEffects.value.animation[characterId]) {
-      characterEffects.value.animation[characterId].isBuffed = false;
-    }
-  }, 500);
-  timeouts.value.push(timeoutId);
+  playBuffAnimation(characterId, true)
 }
 
-// 清理所有动画效果
 function cleanupAnimations() {
-  // 清理所有伤害效果
-  characterEffects.value.damage = {};
-  // 清理所有技能效果
-  characterEffects.value.skill = {};
-  // 清理所有动画状态
-  characterEffects.value.animation = {};
-  // 清理工具提示
-  hideStatusTooltip();
+  characterEffects.value.damage = {}
+  characterEffects.value.skill = {}
+  characterEffects.value.animation = {}
+  hideStatusTooltip()
+  stopAllAnimations()
 }
 
-// 暴露方法供父组件调用
+function playAttackSequence(
+  attackerId: string,
+  targetId: string,
+  skillName?: string,
+  damage?: number,
+  damageType: 'damage' | 'heal' | 'critical' | 'miss' = 'damage',
+  isCritical?: boolean
+): Promise<void> {
+  return new Promise(async (resolve) => {
+    const attackerSide = getCharacterSide(attackerId)
+
+    await playAttackAnimation(attackerId, attackerSide, skillName)
+
+    await playHitAnimation(targetId, {
+      damage,
+      damageType,
+      isCritical,
+      skillName,
+    })
+
+    resolve()
+  })
+}
+
 defineExpose({
   showDamage,
   showMiss,
@@ -44354,121 +45166,30 @@ defineExpose({
   triggerHitEffect,
   triggerCastingEffect,
   triggerBuffEffect,
-  cleanupAnimations
-});
+  cleanupAnimations,
+  playAttackSequence,
+  playAttackAnimation,
+  playHitAnimation,
+  playBuffAnimation,
+  playDeathAnimation,
+})
 
-// 组件卸载时清理所有定时器
 onUnmounted(() => {
-  // 清理工具提示定时器
   if (tooltipTimeout) {
-    raf.clearTimeout(tooltipTimeout);
+    raf.clearTimeout(tooltipTimeout)
   }
 
-  // 清理所有其他定时器
-  timeouts.value.forEach(timeoutId => {
-    raf.clearTimeout(timeoutId);
-  });
+  timeouts.value.forEach((timeoutId) => {
+    raf.clearTimeout(timeoutId)
+  })
 
-  // 清理所有动画效果
-  cleanupAnimations();
-});
+  cleanupAnimations()
+  memberCardRefs.clear()
+})
 </script>
 
 <style scoped lang="scss">
 @use'@/styles/main.scss';
-
-.member-card.buffed {
-  animation: buffGlow 0.5s ease-out;
-}
-
-@keyframes buffGlow {
-  0% {
-    box-shadow: 0 0 0 rgba(100, 200, 255, 0);
-    filter: brightness(1);
-  }
-
-  50% {
-    box-shadow: 0 0 20px rgba(100, 200, 255, 0.8);
-    filter: brightness(1.2);
-  }
-
-  100% {
-    box-shadow: 0 0 0 rgba(100, 200, 255, 0);
-    filter: brightness(1);
-  }
-}
-
-.member-card.buffed .member-status {
-  animation: statusPulse 0.5s ease-out;
-}
-
-@keyframes statusPulse {
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.1);
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Hit效果动画 */
-.member-card.hit {
-  animation: hitEffect 0.3s ease-out;
-}
-
-@keyframes hitEffect {
-  0% {
-    transform: translateX(0);
-  }
-
-  25% {
-    transform: translateX(-5px);
-    filter: brightness(0.8);
-  }
-
-  75% {
-    transform: translateX(5px);
-  }
-
-  100% {
-    transform: translateX(0);
-    filter: brightness(1);
-  }
-}
-
-/* 施法效果动画 */
-.member-card.casting {
-  animation: castingEffect 1s ease-out;
-}
-
-@keyframes castingEffect {
-  0% {
-    box-shadow: 0 0 0 rgba(200, 150, 255, 0);
-    filter: brightness(1);
-  }
-
-  50% {
-    box-shadow: 0 0 15px rgba(200, 150, 255, 0.6);
-    filter: brightness(1.1);
-  }
-
-  100% {
-    box-shadow: 0 0 0 rgba(200, 150, 255, 0);
-    filter: brightness(1);
-  }
-}
-
-/* 确保动画只播放一次 */
-.member-card.hit,
-.member-card.casting,
-.member-card.buffed {
-  animation-iteration-count: 1;
-}
 </style>
 
 --- src/views/BattleLog.vue ---
@@ -45721,7 +46442,6 @@ const handleButtonClick = (action: string) => {
       </div>
       <div class="log-list" ref="logListRef">
         <div v-for="(log, index) in localLogs" :key="index" class="log-item" :class="'level-' + log.level">
-          <span class="log-time">{{ formatTime(log.timestamp) }}</span>
           <span class="log-level" :class="'level-' + log.level">{{ logLevelName(log.level) }}</span>
           <span class="log-source" v-if="log.source">[{{ log.source }}]</span>
           <span class="log-message">{{ log.message }}</span>
@@ -46653,15 +47373,20 @@ const battleStateDisplay = computed(() => {
             @mouseenter="showAttrTooltip($event, '气血', currentCharacter?.maxHp?.options || [], typeof currentCharacter?.maxHp === 'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
-            <span class="monitor-value">{{ currentCharacter?.currentHp || 0 }}/{{ typeof currentCharacter?.maxHp ===
-              'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0 }}</span>
+            <span class="monitor-value">{{ typeof currentCharacter?.currentHp === 'object' ?
+              currentCharacter.currentHp.value : currentCharacter?.currentHp || 0 }}/{{ typeof currentCharacter?.maxHp
+                ===
+                'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0 }}</span>
           </div>
           <div class="monitor-item"
             @mouseenter="showAttrTooltip($event, '能量', [], typeof currentCharacter?.currentEnergy === 'object' ? currentCharacter.currentEnergy.value : (currentCharacter?.currentEnergy || 0), '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">能量:</span>
-            <span class="monitor-value">{{ typeof currentCharacter?.currentEnergy === 'object' ? currentCharacter.currentEnergy.value : (currentCharacter?.currentEnergy || 0) }}/{{ typeof currentCharacter?.maxEnergy === 'object' ? currentCharacter.maxEnergy.value : (currentCharacter?.maxEnergy || 150)
-            }}</span>
+            <span class="monitor-value">{{ typeof currentCharacter?.currentEnergy === 'object' ?
+              currentCharacter.currentEnergy.value : (currentCharacter?.currentEnergy || 0) }}/{{ typeof
+                currentCharacter?.maxEnergy === 'object' ? currentCharacter.maxEnergy.value : (currentCharacter?.maxEnergy
+                  || 150)
+              }}</span>
           </div>
           <div class="monitor-item"
             @mouseenter="showAttrTooltip($event, '攻击', currentCharacter?.attack?.options || [], attackRange.min, '数值')"
@@ -46836,7 +47561,7 @@ const battleStateDisplay = computed(() => {
       <div class="tooltip-stats">
         <div class="stat-item">
           <div class="stat-label">能量消耗</div>
-          <div class="stat-value">{{ tooltipContent.mpCost || 0 }}</div>
+          <div class="stat-value">{{ tooltipContent.energyCost || 0 }}</div>
         </div>
         <div class="stat-item">
           <div class="stat-label">冷却时间</div>
@@ -47099,7 +47824,7 @@ const isSkillAvailable = (skill: SkillConfig): boolean => {
   // 实际项目中需要检查角色当前能量和技能冷却
   const currentEnergy = currentCharacter.value?.currentEnergy;
   const energyValue = typeof currentEnergy === 'object' ? currentEnergy.value : (currentEnergy || 0);
-  return (skill.mpCost || 0) === 0 || energyValue >= (skill.mpCost || 0);
+  return (skill.energyCost || 0) === 0 || energyValue >= (skill.energyCost || 0);
 };
 
 // 属性悬浮提示状态
@@ -49615,13 +50340,13 @@ export default defineConfig({
 
 ## 文档信息
 
-| 属性 | 内容 |
-|------|------|
+| 属性     | 内容                                  |
+| -------- | ------------------------------------- |
 | 项目名称 | 战斗调试工作室（Combat Debug Studio） |
-| 版本号 | 1.0.0 |
-| 项目类型 | Web前端游戏系统 |
-| 技术栈 | Vue 3 + TypeScript + Vite + Pinia |
-| 创建日期 | 2026-02-28 |
+| 版本号   | 1.0.0                                 |
+| 项目类型 | Web前端游戏系统                       |
+| 技术栈   | Vue 3 + TypeScript + Vite + Pinia     |
+| 创建日期 | 2026-02-28                            |
 
 ---
 
@@ -49680,18 +50405,18 @@ export default defineConfig({
 
 ### 2.2 核心模块清单
 
-| 模块名称 | 文件路径 | 功能描述 |
-|---------|---------|---------|
-| 战斗系统 | `src/core/BattleSystem.ts` | 战斗核心实现，管理战斗生命周期 |
-| 回合管理 | `src/core/battle/TurnManager.ts` | 回合顺序计算和管理 |
-| 动作执行 | `src/core/battle/ActionExecutor.ts` | 技能和攻击的执行 |
-| AI系统 | `src/core/battle/AISystem.ts` | 敌人AI决策 |
-| Buff系统 | `src/core/BuffSystem.ts` | 状态效果管理 |
-| 技能管理 | `src/core/skill/SkillManager.ts` | 技能执行和管理 |
-| 战斗录制 | `src/core/battle/BattleRecorder.ts` | 战斗过程记录 |
-| 战斗回放 | `src/core/battle/replay/BattleReplayManager.ts` | 战斗回放功能 |
-| 自动战斗 | `src/core/battle/auto/AutoBattleManager.ts` | 自动战斗控制 |
-| 干预管理 | `src/core/battle/intervention/InterventionManager.ts` | 手动干预机制 |
+| 模块名称 | 文件路径                                              | 功能描述                       |
+| -------- | ----------------------------------------------------- | ------------------------------ |
+| 战斗系统 | `src/core/BattleSystem.ts`                            | 战斗核心实现，管理战斗生命周期 |
+| 回合管理 | `src/core/battle/TurnManager.ts`                      | 回合顺序计算和管理             |
+| 动作执行 | `src/core/battle/ActionExecutor.ts`                   | 技能和攻击的执行               |
+| AI系统   | `src/core/battle/AISystem.ts`                         | 敌人AI决策                     |
+| Buff系统 | `src/core/BuffSystem.ts`                              | 状态效果管理                   |
+| 技能管理 | `src/core/skill/SkillManager.ts`                      | 技能执行和管理                 |
+| 战斗录制 | `src/core/battle/BattleRecorder.ts`                   | 战斗过程记录                   |
+| 战斗回放 | `src/core/battle/replay/BattleReplayManager.ts`       | 战斗回放功能                   |
+| 自动战斗 | `src/core/battle/auto/AutoBattleManager.ts`           | 自动战斗控制                   |
+| 干预管理 | `src/core/battle/intervention/InterventionManager.ts` | 手动干预机制                   |
 
 ---
 
@@ -49701,16 +50426,17 @@ export default defineConfig({
 
 #### 3.1.1 战斗生命周期管理
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-BATTLE-001 | 创建新的战斗实例 | 高 |
-| F-BATTLE-002 | 初始化战斗参与者 | 高 |
-| F-BATTLE-003 | 执行回合制战斗流程 | 高 |
-| F-BATTLE-004 | 暂停和恢复战斗 | 中 |
-| F-BATTLE-005 | 战斗结算和结果判定 | 高 |
-| F-BATTLE-006 | 战斗状态查询 | 中 |
+| 需求ID       | 功能描述           | 优先级 |
+| ------------ | ------------------ | ------ |
+| F-BATTLE-001 | 创建新的战斗实例   | 高     |
+| F-BATTLE-002 | 初始化战斗参与者   | 高     |
+| F-BATTLE-003 | 执行回合制战斗流程 | 高     |
+| F-BATTLE-004 | 暂停和恢复战斗     | 中     |
+| F-BATTLE-005 | 战斗结算和结果判定 | 高     |
+| F-BATTLE-006 | 战斗状态查询       | 中     |
 
 **战斗状态定义：**
+
 - `CREATED`：已创建，等待参与者加入
 - `PREPARING`：战前准备，初始化技能和Buff
 - `ACTIVE`：战斗进行中
@@ -49720,74 +50446,74 @@ export default defineConfig({
 
 #### 3.1.2 回合管理
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-TURN-001 | 按速度属性计算回合顺序 | 高 |
-| F-TURN-002 | 检测速度变化并重新排序 | 高 |
-| F-TURN-003 | 管理回合内行动顺序 | 高 |
-| F-TURN-004 | 回合开始/结束事件触发 | 中 |
+| 需求ID     | 功能描述               | 优先级 |
+| ---------- | ---------------------- | ------ |
+| F-TURN-001 | 按速度属性计算回合顺序 | 高     |
+| F-TURN-002 | 检测速度变化并重新排序 | 高     |
+| F-TURN-003 | 管理回合内行动顺序     | 高     |
+| F-TURN-004 | 回合开始/结束事件触发  | 中     |
 
 #### 3.1.3 动作执行
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-ACTION-001 | 普通攻击执行 | 高 |
-| F-ACTION-002 | 技能释放执行 | 高 |
-| F-ACTION-003 | 伤害计算和应用 | 高 |
-| F-ACTION-004 | 治疗效果计算和应用 | 高 |
-| F-ACTION-005 | 闪避判定 | 高 |
-| F-ACTION-006 | 暴击判定和伤害倍率 | 高 |
+| 需求ID       | 功能描述           | 优先级 |
+| ------------ | ------------------ | ------ |
+| F-ACTION-001 | 普通攻击执行       | 高     |
+| F-ACTION-002 | 技能释放执行       | 高     |
+| F-ACTION-003 | 伤害计算和应用     | 高     |
+| F-ACTION-004 | 治疗效果计算和应用 | 高     |
+| F-ACTION-005 | 闪避判定           | 高     |
+| F-ACTION-006 | 暴击判定和伤害倍率 | 高     |
 
 ### 3.2 角色战斗属性系统
 
 #### 3.2.1 基础属性
 
-| 属性名称 | 属性编码 | 数据类型 | 数值范围 | 默认值 | 说明 |
-|---------|---------|---------|---------|-------|------|
-| 等级 | level | integer | 1-99 | 1 | 影响基础属性和技能解锁 |
-| 名称 | name | string | - | - | 角色标识 |
-| 当前能量 | currentEnergy | integer | 0-100 | 25 | 用于释放技能 |
-| 最大能量 | maxEnergy | integer | 100 | 100 | 能量上限 |
-| 当前气血 | currentHp | integer | 0-最大值 | - | 生命值，为0时死亡 |
-| 最大气血 | maxHp | integer | 1-99999 | - | 气血上限 |
-| 最小攻击 | minAttack | integer | 1-9999 | - | 攻击伤害下限 |
-| 最大攻击 | maxAttack | integer | 1-9999 | - | 攻击伤害上限 |
-| 防御 | defense | integer | 0-9999 | 0 | 减少受到的伤害 |
-| 速度 | speed | integer | 1-9999 | - | 决定行动顺序 |
-| 暴击率 | critRate | float | 0-1 | 0.1 | 10%默认暴击率 |
-| 暴击伤害 | critDamage | float | 1-5 | 1.25 | 125%默认暴击伤害 |
-| 气血加成 | healthBonus | float | 0-5 | 0 | 气血百分比加成 |
-| 攻击加成 | attackBonus | float | 0-5 | 0 | 攻击百分比加成 |
-| 防御加成 | defenseBonus | float | 0-5 | 0 | 防御百分比加成 |
-| 速度加成 | speedBonus | float | 0-5 | 0 | 速度百分比加成 |
+| 属性名称 | 属性编码      | 数据类型 | 数值范围 | 默认值 | 说明                   |
+| -------- | ------------- | -------- | -------- | ------ | ---------------------- |
+| 等级     | level         | integer  | 1-99     | 1      | 影响基础属性和技能解锁 |
+| 名称     | name          | string   | -        | -      | 角色标识               |
+| 当前能量 | currentEnergy | integer  | 0-100    | 25     | 用于释放技能           |
+| 最大能量 | maxEnergy     | integer  | 100      | 100    | 能量上限               |
+| 当前气血 | currentHp     | integer  | 0-最大值 | -      | 生命值，为0时死亡      |
+| 最大气血 | maxHp         | integer  | 1-99999  | -      | 气血上限               |
+| 最小攻击 | minAttack     | integer  | 1-9999   | -      | 攻击伤害下限           |
+| 最大攻击 | maxAttack     | integer  | 1-9999   | -      | 攻击伤害上限           |
+| 防御     | defense       | integer  | 0-9999   | 0      | 减少受到的伤害         |
+| 速度     | speed         | integer  | 1-9999   | -      | 决定行动顺序           |
+| 暴击率   | critRate      | float    | 0-1      | 0.1    | 10%默认暴击率          |
+| 暴击伤害 | critDamage    | float    | 1-5      | 1.25   | 125%默认暴击伤害       |
+| 气血加成 | healthBonus   | float    | 0-5      | 0      | 气血百分比加成         |
+| 攻击加成 | attackBonus   | float    | 0-5      | 0      | 攻击百分比加成         |
+| 防御加成 | defenseBonus  | float    | 0-5      | 0      | 防御百分比加成         |
+| 速度加成 | speedBonus    | float    | 0-5      | 0      | 速度百分比加成         |
 
 #### 3.2.2 能量系统
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-ENERGY-001 | 初始能量为25点 | 高 |
-| F-ENERGY-002 | 每回合结束恢复25点能量 | 高 |
-| F-ENERGY-003 | 小技能消耗50点能量 | 高 |
-| F-ENERGY-004 | 大技能消耗100点能量 | 高 |
-| F-ENERGY-005 | 能量达到上限时停止恢复 | 高 |
+| 需求ID       | 功能描述               | 优先级 |
+| ------------ | ---------------------- | ------ |
+| F-ENERGY-001 | 初始能量为25点         | 高     |
+| F-ENERGY-002 | 每回合结束恢复25点能量 | 高     |
+| F-ENERGY-003 | 小技能消耗50点能量     | 高     |
+| F-ENERGY-004 | 大技能消耗100点能量    | 高     |
+| F-ENERGY-005 | 能量达到上限时停止恢复 | 高     |
 
 ### 3.3 战斗计算公式
 
 #### 3.3.1 伤害计算
 
-| 需求ID | 计算公式 | 优先级 |
-|--------|---------|--------|
-| F-DAMAGE-001 | 基础伤害 = 随机(minAttack, maxAttack) | 高 |
-| F-DAMAGE-002 | 伤害减免 = 目标防御 × 0.01 | 高 |
-| F-DAMAGE-003 | 最终伤害 = 基础伤害 × (1 - 伤害减免) | 高 |
-| F-DAMAGE-004 | 暴击伤害 = 最终伤害 × 暴击伤害倍率 | 高 |
+| 需求ID       | 计算公式                              | 优先级 |
+| ------------ | ------------------------------------- | ------ |
+| F-DAMAGE-001 | 基础伤害 = 随机(minAttack, maxAttack) | 高     |
+| F-DAMAGE-002 | 伤害减免 = 目标防御 × 0.01            | 高     |
+| F-DAMAGE-003 | 最终伤害 = 基础伤害 × (1 - 伤害减免)  | 高     |
+| F-DAMAGE-004 | 暴击伤害 = 最终伤害 × 暴击伤害倍率    | 高     |
 
 #### 3.3.2 命中与闪避
 
-| 需求ID | 计算公式 | 优先级 |
-|--------|---------|--------|
-| F-CRIT-001 | 暴击判定：随机数 < 暴击率 | 高 |
-| F-DODGE-001 | 闪避判定：随机数 < 目标闪避率 | 高 |
+| 需求ID      | 计算公式                      | 优先级 |
+| ----------- | ----------------------------- | ------ |
+| F-CRIT-001  | 暴击判定：随机数 < 暴击率     | 高     |
+| F-DODGE-001 | 闪避判定：随机数 < 目标闪避率 | 高     |
 
 ### 3.4 Buff系统功能
 
@@ -49795,156 +50521,156 @@ export default defineConfig({
 
 **增益效果（Buff）：**
 
-| Buff名称 | Buff ID | 效果描述 | 持续时间 | 叠加规则 |
-|---------|---------|---------|---------|---------|
-| 攻击力提升 | buff_attack_up | 提高角色攻击力20% | 3回合 | 刷新 |
-| 防御力提升 | buff_defense_up | 提高角色防御力30% | 4回合 | 刷新 |
-| 速度提升 | buff_speed_up | 提高角色速度25% | 3回合 | 刷新 |
-| 护盾 | buff_shield | 吸收100点伤害 | 2回合 | 覆盖 |
-| 生命回复 | buff_heal_ot | 每回合回复50点生命 | 3回合 | 独立叠加 |
-| 狂暴 | buff_berserk | 攻击+50%，防御-20% | 2回合 | 覆盖 |
-| 山神祝福 | buff_mountain_god | 受伤减少50%，免疫控制 | 3回合 | 覆盖 |
-| 闪避提升 | buff_dodge_up | 闪避率提升20% | 3回合 | 刷新 |
+| Buff名称   | Buff ID           | 效果描述              | 持续时间 | 叠加规则 |
+| ---------- | ----------------- | --------------------- | -------- | -------- |
+| 攻击力提升 | buff_attack_up    | 提高角色攻击力20%     | 3回合    | 刷新     |
+| 防御力提升 | buff_defense_up   | 提高角色防御力30%     | 4回合    | 刷新     |
+| 速度提升   | buff_speed_up     | 提高角色速度25%       | 3回合    | 刷新     |
+| 护盾       | buff_shield       | 吸收100点伤害         | 2回合    | 覆盖     |
+| 生命回复   | buff_heal_ot      | 每回合回复50点生命    | 3回合    | 独立叠加 |
+| 狂暴       | buff_berserk      | 攻击+50%，防御-20%    | 2回合    | 覆盖     |
+| 山神祝福   | buff_mountain_god | 受伤减少50%，免疫控制 | 3回合    | 覆盖     |
+| 闪避提升   | buff_dodge_up     | 闪避率提升20%         | 3回合    | 刷新     |
 
 **减益效果（Debuff）：**
 
-| Buff名称 | Buff ID | 效果描述 | 持续时间 | 叠加规则 |
-|---------|---------|---------|---------|---------|
-| 中毒 | poison | 每回合受到20点伤害 | 4回合 | 独立叠加 |
-| 眩晕 | stun | 无法进行任何行动 | 1回合 | 刷新 |
-| 速度降低 | buff_speed_reduction | 速度降低30% | 2回合 | 刷新 |
-| 命中率降低 | buff_hit_reduction | 命中率降低25% | 2回合 | 刷新 |
-| 暴击伤害降低 | buff_crit_damage_reduction | 暴击伤害降低30% | 2回合 | 刷新 |
-| 重伤 | buff_injury | 受伤增加20% | 3回合 | 刷新 |
+| Buff名称     | Buff ID                    | 效果描述           | 持续时间 | 叠加规则 |
+| ------------ | -------------------------- | ------------------ | -------- | -------- |
+| 中毒         | poison                     | 每回合受到20点伤害 | 4回合    | 独立叠加 |
+| 眩晕         | stun                       | 无法进行任何行动   | 1回合    | 刷新     |
+| 速度降低     | buff_speed_reduction       | 速度降低30%        | 2回合    | 刷新     |
+| 命中率降低   | buff_hit_reduction         | 命中率降低25%      | 2回合    | 刷新     |
+| 暴击伤害降低 | buff_crit_damage_reduction | 暴击伤害降低30%    | 2回合    | 刷新     |
+| 重伤         | buff_injury                | 受伤增加20%        | 3回合    | 刷新     |
 
 #### 3.4.2 Buff叠加规则
 
-| 规则类型 | 说明 | 应用场景 |
-|---------|------|---------|
-| 刷新(REFRESH) | 新Buff覆盖旧Buff，重置持续时间 | 攻击力提升、防御力提升等 |
-| 限制层数(LIMITED) | 达到最大层数后无法叠加 | 特殊Buff |
-| 独立叠加(INDEPENDENT) | 每层Buff独立计算效果 | 中毒、生命回复等 |
+| 规则类型              | 说明                           | 应用场景                 |
+| --------------------- | ------------------------------ | ------------------------ |
+| 刷新(REFRESH)         | 新Buff覆盖旧Buff，重置持续时间 | 攻击力提升、防御力提升等 |
+| 限制层数(LIMITED)     | 达到最大层数后无法叠加         | 特殊Buff                 |
+| 独立叠加(INDEPENDENT) | 每层Buff独立计算效果           | 中毒、生命回复等         |
 
 #### 3.4.3 Buff生命周期
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-BUFF-001 | Buff添加和应用 | 高 |
-| F-BUFF-002 | Buff持续时间更新 | 高 |
-| F-BUFF-003 | Buff移除和效果清理 | 高 |
-| F-BUFF-004 | Buff效果刷新 | 中 |
-| F-BUFF-005 | Buff脚本动态加载 | 中 |
+| 需求ID     | 功能描述           | 优先级 |
+| ---------- | ------------------ | ------ |
+| F-BUFF-001 | Buff添加和应用     | 高     |
+| F-BUFF-002 | Buff持续时间更新   | 高     |
+| F-BUFF-003 | Buff移除和效果清理 | 高     |
+| F-BUFF-004 | Buff效果刷新       | 中     |
+| F-BUFF-005 | Buff脚本动态加载   | 中     |
 
 ### 3.5 技能系统功能
 
 #### 3.5.1 技能配置
 
-| 技能属性 | 说明 | 数据类型 |
-|---------|------|---------|
-| 技能ID | 唯一标识 | string |
-| 技能名称 | 显示名称 | string |
-| 技能描述 | 详细说明 | string |
-| 能量消耗 | 释放所需能量 | integer |
-| 冷却时间 | 冷却回合数 | integer |
-| 目标选择 | 技能目标类型 | enum |
-| 技能步骤 | 技能效果列表 | array |
+| 技能属性 | 说明         | 数据类型 |
+| -------- | ------------ | -------- |
+| 技能ID   | 唯一标识     | string   |
+| 技能名称 | 显示名称     | string   |
+| 技能描述 | 详细说明     | string   |
+| 能量消耗 | 释放所需能量 | integer  |
+| 冷却时间 | 冷却回合数   | integer  |
+| 目标选择 | 技能目标类型 | enum     |
+| 技能步骤 | 技能效果列表 | array    |
 
 #### 3.5.2 技能类型
 
-| 技能类型 | 说明 |
-|---------|------|
-| 伤害技能 | 对目标造成伤害 |
-| 治疗技能 | 恢复目标生命 |
-| Buff技能 | 为目标添加增益效果 |
+| 技能类型   | 说明               |
+| ---------- | ------------------ |
+| 伤害技能   | 对目标造成伤害     |
+| 治疗技能   | 恢复目标生命       |
+| Buff技能   | 为目标添加增益效果 |
 | Debuff技能 | 为目标添加减益效果 |
 
 #### 3.5.3 技能效果类型
 
-| 效果类型 | 说明 |
-|---------|------|
-| damage | 造成伤害 |
-| heal | 恢复生命 |
-| buff | 添加增益效果 |
-| debuff | 添加减益效果 |
+| 效果类型 | 说明         |
+| -------- | ------------ |
+| damage   | 造成伤害     |
+| heal     | 恢复生命     |
+| buff     | 添加增益效果 |
+| debuff   | 添加减益效果 |
 
 ### 3.6 AI系统功能
 
 #### 3.6.1 AI决策逻辑
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-AI-001 | 评估战场态势 | 高 |
-| F-AI-002 | 选择最优技能 | 高 |
-| F-AI-003 | 选择攻击目标 | 高 |
-| F-AI-004 | 能量管理策略 | 中 |
-| F-AI-005 | 威胁值计算 | 中 |
+| 需求ID   | 功能描述     | 优先级 |
+| -------- | ------------ | ------ |
+| F-AI-001 | 评估战场态势 | 高     |
+| F-AI-002 | 选择最优技能 | 高     |
+| F-AI-003 | 选择攻击目标 | 高     |
+| F-AI-004 | 能量管理策略 | 中     |
+| F-AI-005 | 威胁值计算   | 中     |
 
 #### 3.6.2 AI优先级策略
 
-| 优先级 | 技能类型 |
-|-------|---------|
-| 1 | 治疗技能 |
-| 2 | 攻击技能 |
-| 3 | Buff技能 |
-| 4 | Debuff技能 |
+| 优先级 | 技能类型   |
+| ------ | ---------- |
+| 1      | 治疗技能   |
+| 2      | 攻击技能   |
+| 3      | Buff技能   |
+| 4      | Debuff技能 |
 
 #### 3.6.3 AI能量阈值
 
-| 能量状态 | 阈值 | 行为 |
-|---------|------|------|
-| 高能量 | ≥70% | 优先使用大技能 |
-| 中能量 | 50%-70% | 均衡使用技能 |
-| 低能量 | <50% | 优先普通攻击 |
+| 能量状态 | 阈值    | 行为           |
+| -------- | ------- | -------------- |
+| 高能量   | ≥70%    | 优先使用大技能 |
+| 中能量   | 50%-70% | 均衡使用技能   |
+| 低能量   | <50%    | 优先普通攻击   |
 
 ### 3.7 战斗控制功能
 
 #### 3.7.1 自动战斗
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-AUTO-001 | 开启/关闭自动战斗 | 高 |
-| F-AUTO-002 | 设置自动战斗速度(1/2/3/5倍) | 高 |
-| F-AUTO-003 | 战斗加速控制 | 高 |
+| 需求ID     | 功能描述                    | 优先级 |
+| ---------- | --------------------------- | ------ |
+| F-AUTO-001 | 开启/关闭自动战斗           | 高     |
+| F-AUTO-002 | 设置自动战斗速度(1/2/3/5倍) | 高     |
+| F-AUTO-003 | 战斗加速控制                | 高     |
 
 #### 3.7.2 手动干预
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-INTER-001 | 暂停战斗 | 高 |
-| F-INTER-002 | 中断AI行动 | 中 |
-| F-INTER-003 | 手动选择技能和目标 | 高 |
+| 需求ID      | 功能描述           | 优先级 |
+| ----------- | ------------------ | ------ |
+| F-INTER-001 | 暂停战斗           | 高     |
+| F-INTER-002 | 中断AI行动         | 中     |
+| F-INTER-003 | 手动选择技能和目标 | 高     |
 
 #### 3.7.3 战斗重置
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-RESET-001 | 重置当前战斗 | 中 |
-| F-REPLAY-001 | 战斗回放 | 中 |
+| 需求ID       | 功能描述     | 优先级 |
+| ------------ | ------------ | ------ |
+| F-RESET-001  | 重置当前战斗 | 中     |
+| F-REPLAY-001 | 战斗回放     | 中     |
 
 ### 3.8 调试功能
 
 #### 3.8.1 属性监控
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-DEBUG-001 | 实时显示角色属性 | 高 |
-| F-DEBUG-002 | 属性变化追踪 | 中 |
-| F-DEBUG-003 | Buff状态显示 | 高 |
+| 需求ID      | 功能描述         | 优先级 |
+| ----------- | ---------------- | ------ |
+| F-DEBUG-001 | 实时显示角色属性 | 高     |
+| F-DEBUG-002 | 属性变化追踪     | 中     |
+| F-DEBUG-003 | Buff状态显示     | 高     |
 
 #### 3.8.2 战斗日志
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-LOG-001 | 战斗事件记录 | 高 |
-| F-LOG-002 | 伤害数值显示 | 高 |
-| F-LOG-003 | 日志过滤和搜索 | 中 |
+| 需求ID    | 功能描述       | 优先级 |
+| --------- | -------------- | ------ |
+| F-LOG-001 | 战斗事件记录   | 高     |
+| F-LOG-002 | 伤害数值显示   | 高     |
+| F-LOG-003 | 日志过滤和搜索 | 中     |
 
 #### 3.8.3 场景管理
 
-| 需求ID | 功能描述 | 优先级 |
-|--------|---------|--------|
-| F-SCENE-001 | 场景切换 | 中 |
-| F-SCENE-002 | 敌人配置加载 | 中 |
+| 需求ID      | 功能描述     | 优先级 |
+| ----------- | ------------ | ------ |
+| F-SCENE-001 | 场景切换     | 中     |
+| F-SCENE-002 | 敌人配置加载 | 中     |
 
 ---
 
@@ -49954,18 +50680,18 @@ export default defineConfig({
 
 #### 4.1.1 视觉风格
 
-| 设计属性 | 规范 |
-|---------|------|
-| 主题 | 深色系专业数据仪表盘 |
-| 设计理念 | 严谨克制的极简主义 |
-| 布局 | 精密网格布局 |
-| 文字颜色 | 白色高对比度（透明度85%） |
+| 设计属性 | 规范                         |
+| -------- | ---------------------------- |
+| 主题     | 深色系专业数据仪表盘         |
+| 设计理念 | 严谨克制的极简主义           |
+| 布局     | 精密网格布局                 |
+| 文字颜色 | 白色高对比度（透明度85%）    |
 | 辅助线条 | 浅蓝色（#60a5fa，透明度40%） |
-| 交互强调 | 青色（#22d3ee） |
-| 警告标识 | 橙红色（#f97316） |
-| 面板效果 | 微磨砂玻璃质感+微妙投影 |
-| 字体 | 无衬线等宽字体 |
-| 渲染 | 4K超清渲染，锐利边缘 |
+| 交互强调 | 青色（#22d3ee）              |
+| 警告标识 | 橙红色（#f97316）            |
+| 面板效果 | 微磨砂玻璃质感+微妙投影      |
+| 字体     | 无衬线等宽字体               |
+| 渲染     | 4K超清渲染，锐利边缘         |
 
 #### 4.1.2 界面布局
 
@@ -49989,44 +50715,44 @@ export default defineConfig({
 
 ### 4.2 界面组件清单
 
-| 组件名称 | 文件路径 | 功能描述 |
-|---------|---------|---------|
-| 战斗场 | `src/views/BattleArena.vue` | 主战斗界面容器 |
-| 战场 | `src/views/BattleField.vue` | 战斗场景渲染 |
-| 参战面板 | `src/views/ParticipantPanel.vue` | 角色管理 |
-| 调试面板 | `src/views/DebugPanel.vue` | 属性监控和调试 |
-| 战斗日志 | `src/views/BattleLog.vue` | 战斗事件记录 |
-| 控制栏 | `src/views/ControlBar.vue` | 战斗控制按钮 |
-| 战斗回放 | `src/views/BattleReplay.vue` | 战斗回放界面 |
-| 快捷键设置 | `src/views/KeybindSettings.vue` | 按键配置 |
-| 快捷键提示 | `src/views/KeybindHintPanel.vue` | 按键提示显示 |
-| 新手引导 | `src/views/NewbieGuide.vue` | 教程引导 |
-| 属性提示 | `src/components/AttributeTooltip.vue` | 属性信息提示 |
-| Buff图标 | `src/components/BuffIcon.vue` | Buff状态图标 |
-| Buff列表 | `src/components/BuffList.vue` | Buff效果列表 |
-| 伤害数字 | `src/components/DamageNumber.vue` | 伤害数值动画 |
-| 技能效果 | `src/components/SkillEffect.vue` | 技能特效显示 |
+| 组件名称   | 文件路径                              | 功能描述       |
+| ---------- | ------------------------------------- | -------------- |
+| 战斗场     | `src/views/BattleArena.vue`           | 主战斗界面容器 |
+| 战场       | `src/views/BattleField.vue`           | 战斗场景渲染   |
+| 参战面板   | `src/views/ParticipantPanel.vue`      | 角色管理       |
+| 调试面板   | `src/views/DebugPanel.vue`            | 属性监控和调试 |
+| 战斗日志   | `src/views/BattleLog.vue`             | 战斗事件记录   |
+| 控制栏     | `src/views/ControlBar.vue`            | 战斗控制按钮   |
+| 战斗回放   | `src/views/BattleReplay.vue`          | 战斗回放界面   |
+| 快捷键设置 | `src/views/KeybindSettings.vue`       | 按键配置       |
+| 快捷键提示 | `src/views/KeybindHintPanel.vue`      | 按键提示显示   |
+| 新手引导   | `src/views/NewbieGuide.vue`           | 教程引导       |
+| 属性提示   | `src/components/AttributeTooltip.vue` | 属性信息提示   |
+| Buff图标   | `src/components/BuffIcon.vue`         | Buff状态图标   |
+| Buff列表   | `src/components/BuffList.vue`         | Buff效果列表   |
+| 伤害数字   | `src/components/DamageNumber.vue`     | 伤害数值动画   |
+| 技能效果   | `src/components/SkillEffect.vue`      | 技能特效显示   |
 
 ### 4.3 交互功能
 
 #### 4.3.1 键盘快捷键
 
-| 按键 | 功能 |
-|-----|------|
-| 空格 | 暂停/继续战斗 |
-| 1-5 | 切换自动战斗速度 |
-| R | 重置战斗 |
-| H | 显示/隐藏快捷键提示 |
-| Esc | 关闭对话框 |
+| 按键 | 功能                |
+| ---- | ------------------- |
+| 空格 | 暂停/继续战斗       |
+| 1-5  | 切换自动战斗速度    |
+| R    | 重置战斗            |
+| H    | 显示/隐藏快捷键提示 |
+| Esc  | 关闭对话框          |
 
 #### 4.3.2 鼠标交互
 
-| 操作 | 功能 |
-|-----|------|
+| 操作         | 功能         |
+| ------------ | ------------ |
 | 点击角色头像 | 选择行动角色 |
 | 点击技能图标 | 选择释放技能 |
-| 点击目标 | 选择技能目标 |
-| 右键点击 | 查看角色详情 |
+| 点击目标     | 选择技能目标 |
+| 右键点击     | 查看角色详情 |
 
 ---
 
@@ -50034,14 +50760,14 @@ export default defineConfig({
 
 ### 5.1 配置文件清单
 
-| 配置文件 | 路径 | 用途 |
-|---------|------|------|
-| 技能配置 | `configs/skills/skills.json` | 技能定义和效果 |
-| 敌人配置 | `configs/enemies/enemies.json` | 敌人属性和技能 |
-| Buff配置 | `configs/buffs/buffs.json` | Buff效果定义 |
-| 效果配置 | `configs/effects/effects.json` | 战斗特效 |
-| 场景配置 | `configs/scenes/scenes.json` | 战斗场景 |
-| 全局参数 | `configs/params/buff-global-params.json` | Buff全局参数 |
+| 配置文件 | 路径                                     | 用途           |
+| -------- | ---------------------------------------- | -------------- |
+| 技能配置 | `configs/skills/skills.json`             | 技能定义和效果 |
+| 敌人配置 | `configs/enemies/enemies.json`           | 敌人属性和技能 |
+| Buff配置 | `configs/buffs/buffs.json`               | Buff效果定义   |
+| 效果配置 | `configs/effects/effects.json`           | 战斗特效       |
+| 场景配置 | `configs/scenes/scenes.json`             | 战斗场景       |
+| 全局参数 | `configs/params/buff-global-params.json` | Buff全局参数   |
 
 ### 5.2 敌人数据模型
 
@@ -50070,7 +50796,7 @@ export default defineConfig({
   "id": "skill_enemy_001_small",
   "name": "花粉迷雾",
   "description": "对单个敌人造成80%攻击力的普通伤害",
-  "mpCost": 50,
+  "enemyCost": 50,
   "cooldown": 2,
   "selector": "single_enemy",
   "steps": [
@@ -50091,30 +50817,30 @@ export default defineConfig({
 
 ### 6.1 性能需求
 
-| 指标 | 要求 |
-|-----|------|
-| 页面加载时间 | < 3秒 |
-| 战斗帧率 | ≥ 30 FPS |
-| 动画延迟 | < 100ms |
-| 内存占用 | < 200MB |
+| 指标         | 要求     |
+| ------------ | -------- |
+| 页面加载时间 | < 3秒    |
+| 战斗帧率     | ≥ 30 FPS |
+| 动画延迟     | < 100ms  |
+| 内存占用     | < 200MB  |
 
 ### 6.2 兼容性需求
 
-| 浏览器 | 最低版本 |
-|-------|---------|
-| Chrome | 90+ |
-| Firefox | 88+ |
-| Edge | 90+ |
-| Safari | 14+ |
+| 浏览器  | 最低版本 |
+| ------- | -------- |
+| Chrome  | 90+      |
+| Firefox | 88+      |
+| Edge    | 90+      |
+| Safari  | 14+      |
 
 ### 6.3 可维护性需求
 
-| 需求 | 说明 |
-|-----|------|
+| 需求       | 说明             |
+| ---------- | ---------------- |
 | 模块化设计 | 核心功能独立模块 |
-| 配置驱动 | 战斗规则可配置 |
-| 日志系统 | 完整的日志记录 |
-| 错误处理 | 健壮的异常捕获 |
+| 配置驱动   | 战斗规则可配置   |
+| 日志系统   | 完整的日志记录   |
+| 错误处理   | 健壮的异常捕获   |
 
 ---
 
@@ -50122,23 +50848,23 @@ export default defineConfig({
 
 ### 7.1 功能验收
 
-| 验收项 | 验收标准 |
-|-------|---------|
+| 验收项   | 验收标准               |
+| -------- | ---------------------- |
 | 战斗流程 | 完整执行回合制战斗流程 |
-| 伤害计算 | 伤害符合数值公式计算 |
-| Buff系统 | Buff正确应用和移除 |
-| AI决策 | 敌人能够自主决策行动 |
-| 调试功能 | 实时显示战斗数据 |
-| 战斗回放 | 能够回放历史战斗 |
+| 伤害计算 | 伤害符合数值公式计算   |
+| Buff系统 | Buff正确应用和移除     |
+| AI决策   | 敌人能够自主决策行动   |
+| 调试功能 | 实时显示战斗数据       |
+| 战斗回放 | 能够回放历史战斗       |
 
 ### 7.2 界面验收
 
-| 验收项 | 验收标准 |
-|-------|---------|
+| 验收项   | 验收标准         |
+| -------- | ---------------- |
 | 布局显示 | 界面元素正确显示 |
 | 交互响应 | 点击操作正常响应 |
 | 动画效果 | 技能动画平滑播放 |
-| 主题风格 | 符合设计规范 |
+| 主题风格 | 符合设计规范     |
 
 ---
 
@@ -50146,13 +50872,13 @@ export default defineConfig({
 
 ### 8.1 术语表
 
-| 术语 | 定义 |
-|-----|------|
-| Buff | 增益效果 |
-| Debuff | 减益效果 |
-| 回合 | 所有人行动一次为一个回合 |
-| 行动 | 单个角色的行动 |
-| 技能冷却 | 技能释放后的等待时间 |
+| 术语     | 定义                     |
+| -------- | ------------------------ |
+| Buff     | 增益效果                 |
+| Debuff   | 减益效果                 |
+| 回合     | 所有人行动一次为一个回合 |
+| 行动     | 单个角色的行动           |
+| 技能冷却 | 技能释放后的等待时间     |
 
 ### 8.2 参考资料
 
@@ -50162,4 +50888,4 @@ export default defineConfig({
 
 ---
 
-*文档结束*
+_文档结束_

@@ -16,9 +16,9 @@ import {
 import {
   BATTLE_CONSTANTS,
   ACTION_TYPES,
-  EFFECT_TYPES,
   BattleAction,
 } from '@/types/battle'
+import { EFFECT_TYPES } from '@/types/effect'
 import type { Skill } from '@/types/skill'
 
 /**

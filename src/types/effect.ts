@@ -9,16 +9,25 @@ import type { SkillStep, SkillConfig } from '@/types/skill'
  */
 
 /**
- * 效果类型枚举
+ * 效果类型常量
+ * 统一的效果类型定义，供全项目使用
+ */
+export const EFFECT_TYPES = {
+  DAMAGE: 'damage',
+  HEAL: 'heal',
+  BUFF: 'buff',
+  DEBUFF: 'debuff',
+  MISS: 'miss',
+  STATUS: 'status',
+  CRITICAL: 'critical',
+  SPECIAL: 'special',
+} as const
+
+/**
+ * 效果类型
  * 定义技能和Buff的效果类型
  */
-export type EffectType =
-  | 'damage' // 伤害效果
-  | 'heal' // 治疗效果
-  | 'buff' // Buff效果
-  | 'debuff' // 减益效果
-  | 'miss' // 闪避效果
-  | 'special' // 特殊效果
+export type EffectType = (typeof EFFECT_TYPES)[keyof typeof EFFECT_TYPES]
 
 /**
  * 效果接口

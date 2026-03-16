@@ -12,14 +12,6 @@ export interface BattleLogEventData {
   log: BattleLogEntry;
 }
 
-// 战斗状态更新事件数据类型
-export interface BattleStateUpdateEventData {
-  battleId: string;
-  participants: BattleParticipant[];
-  turnOrder: string[];
-  currentTurn: number;
-}
-
 // 伤害动画事件数据类型
 export interface DamageAnimationEventData {
   targetId: string;
@@ -39,7 +31,7 @@ export interface BattleEndedEventData {
   winner: ParticipantSide;
 }
 
-// Buff效果事件数据类型
+// Buff 效果事件数据类型
 export interface BuffEffectEventData {
   targetId: string;
   buffName: string;
@@ -58,7 +50,6 @@ export interface SkillEffectEventData {
 // 战斗事件类型映射
 export interface BattleEvents {
   'battle-log': BattleLogEventData;
-  'battle-state-update': BattleStateUpdateEventData;
   'damage-animation': DamageAnimationEventData;
   'miss-animation': MissAnimationEventData;
   'battle-ended': BattleEndedEventData;

@@ -6,7 +6,6 @@ import { eventBus } from '@/main'
 import { BattleSystemEvent } from '@/types/battle'
 import type {
   BattleLogEventData,
-  BattleStateUpdateEventData,
   BattleEndedEventData,
 } from '@/types/battle-events'
 import { useBattleStore } from '@/stores/battleStore'
@@ -70,15 +69,6 @@ export class BattleEventManager {
     eventBus.on(BattleSystemEvent.BATTLE_LOG, battleLogHandler)
     this.boundHandlers.set(BattleSystemEvent.BATTLE_LOG, battleLogHandler)
 
-    // 订阅战斗状态更新事件
-    const stateUpdateHandler = (data: any) =>
-      this.handleBattleStateUpdateEvent(data)
-    eventBus.on(BattleSystemEvent.BATTLE_STATE_UPDATE, stateUpdateHandler)
-    this.boundHandlers.set(
-      BattleSystemEvent.BATTLE_STATE_UPDATE,
-      stateUpdateHandler,
-    )
-
     // 订阅战斗结束事件
     const battleEndHandler = (data: any) => this.handleBattleEndEvent(data)
     eventBus.on(BattleSystemEvent.BATTLE_END, battleEndHandler)
@@ -103,7 +93,6 @@ export class BattleEventManager {
   stopListening() {
     // 取消订阅所有战斗事件
     eventBus.off(BattleSystemEvent.BATTLE_LOG)
-    eventBus.off(BattleSystemEvent.BATTLE_STATE_UPDATE)
     eventBus.off(BattleSystemEvent.BATTLE_END)
     eventBus.off(BattleSystemEvent.TURN_START)
     eventBus.off(BattleSystemEvent.TURN_END)
@@ -210,22 +199,6 @@ export class BattleEventManager {
       }
     } catch (error) {
       this.getBattleStore().addErrorLog(`处理战斗日志事件时出错: ${error}`)
-    }
-  }
-
-  /**
-   * 处理战斗状态更新事件
-   * 只更新 BattleStore 的战斗状态，不直接操作角色数据
-   */
-  private handleBattleStateUpdateEvent(data: BattleStateUpdateEventData) {
-    try {
-      if (data) {
-        this.getBattleStore().currentBattleId = data.battleId
-        this.getBattleStore().turnOrder = data.turnOrder || []
-        this.getBattleStore().setBattleActive(true)
-      }
-    } catch (error) {
-      this.getBattleStore().addErrorLog(`处理战斗状态更新事件时出错: ${error}`)
     }
   }
 

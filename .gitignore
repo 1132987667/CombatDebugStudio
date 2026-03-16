@@ -147,3 +147,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# 文档
+.trae/documents/
+.trae/scripts/
+tools/

@@ -273,22 +273,13 @@ export const useBattleStore = defineStore('battle', {
         }
       })
 
-      battleManager.on(BattleSystemEvent.BATTLE_STATE_UPDATE, (data: any) => {
-        if (data) {
-          this.currentBattleId = data.battleId
-          this.turnOrder = data.turnOrder || []
-          this.setBattleActive(true)
-          this.battleManager?.syncBattleState()
-        }
-      })
-
       battleManager.on(BattleSystemEvent.BATTLE_END, (data: any) => {
         this.setBattleActive(false)
         this.setAutoPlayMode(false)
         if (data && data.winner) {
           battleLogManager.addBattleLog(
             battleManager.getTurn(),
-            `战斗结束！胜利者: ${data.winner === 'ALLY' ? '我方' : '敌方'}`,
+            `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`,
           )
         }
       })
@@ -773,7 +764,6 @@ export const useBattleStore = defineStore('battle', {
 
         // 移除所有事件监听器
         this.battleManager.off(BattleSystemEvent.BATTLE_LOG)
-        this.battleManager.off(BattleSystemEvent.BATTLE_STATE_UPDATE)
         this.battleManager.off(BattleSystemEvent.DAMAGE_ANIMATION)
         this.battleManager.off(BattleSystemEvent.MISS_ANIMATION)
         this.battleManager.off(BattleSystemEvent.BATTLE_END)

@@ -1,5 +1,6 @@
 项目文件夹架构:
 CombatDebugStudio/
+.vscode/
 configs/
     buffs/
         combat/
@@ -22,13 +23,7 @@ configs/
         scenes.json
     skills/
         skills.json
-docs/
 scripts/
-    tools/
-        test.js
-        update_energy_cost.js
-        update_skills_config.js
-        validate_skills.cjs
 src/
     components/
         AttributeTooltip.vue
@@ -79,10 +74,8 @@ src/
             interfaces.ts
             ParticipantManager.ts
             TurnManager.ts
-        battleLog/
         calculations/
             index.ts
-        config/
         di/
             Container.ts
         errors/
@@ -94,6 +87,7 @@ src/
             HealCalculator.ts
             PassiveSkillManager.ts
             SkillManager.ts
+        task/
         BattleAI.ts
         BattleSystem.ts
         BuffContext.ts
@@ -196,9 +190,6 @@ src/
         ParticipantPanel.vue
     index.ts
     main.ts
-tools/
-    arena-version-1.html
-    test.html
 .gitattributes
 .gitignore
 eslint.config.js
@@ -208,8 +199,6 @@ package.json
 tsconfig.json
 tsconfig.node.json
 vite.config.ts
-功能介绍.md
-需求规格说明书.md
 
 ============================================================
 文件内容:
@@ -368,6 +357,11 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# 文档
+.trae/documents/
+.trae/scripts/
+tools/
 
 --- configs/buffs/buffs.json ---
 [
@@ -8693,252 +8687,6 @@ export default [
   }
 }
 
---- scripts/tools/test.js ---
-
-
---- scripts/tools/update_energy_cost.js ---
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-
-// 获取当前文件的目录路径
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-// 技能配置文件路径
-const skillsConfigPath = path.join(
-  __dirname,
-  '../../configs/skills/skills.json',
-)
-
-// 读取技能配置文件
-const skillsData = JSON.parse(fs.readFileSync(skillsConfigPath, 'utf8'))
-
-// 更新技能能量消耗
-const updatedSkillsData = skillsData.map((skill) => {
-  const skillId = skill.id
-
-  if (skillId.includes('small')) {
-    // 小技能能量消耗改为50
-    return { ...skill, energyCost: 50 }
-  } else if (skillId.includes('ultimate')) {
-    // 大技能能量消耗改为150
-    return { ...skill, energyCost: 150 }
-  } else if (skillId.includes('passive')) {
-    // 被动技能能量消耗保持为0
-    return { ...skill, energyCost: 0 }
-  }
-
-  return skill
-})
-
-// 写入更新后的技能配置文件
-fs.writeFileSync(
-  skillsConfigPath,
-  JSON.stringify(updatedSkillsData, null, 2),
-  'utf8',
-)
-
-console.log('技能能量消耗更新完成！')
-console.log('小技能能量消耗已统一设置为50')
-console.log('大技能能量消耗已统一设置为150')
-console.log('被动技能能量消耗保持为0')
-
---- scripts/tools/update_skills_config.js ---
-import fs from 'fs'
-import path from 'path'
-
-// 读取skills.json文件
-const skillsPath = path.join('configs', 'skills', 'skills.json')
-const skillsData = JSON.parse(fs.readFileSync(skillsPath, 'utf8'))
-
-// 修改buffId为effectId
-function updateSkillsConfig(skills) {
-  if (Array.isArray(skills)) {
-    skills.forEach(skill => {
-      if (skill.steps) {
-        skill.steps.forEach(step => {
-          if (step.buffId) {
-            // 替换buffId为effectId
-            step.effectId = step.buffId
-            delete step.buffId
-            
-            // 添加effectParams（如果需要）
-            if (!step.effectParams) {
-              step.effectParams = {}
-            }
-            
-            // 保留其他参数
-            if (step.duration) {
-              step.effectParams.duration = step.duration
-            }
-            if (step.stacks) {
-              step.effectParams.stacks = step.stacks
-            }
-          }
-        })
-      }
-    })
-  }
-  return skills
-}
-
-// 执行修改
-const updatedSkillsData = updateSkillsConfig(skillsData)
-
-// 写回文件
-fs.writeFileSync(skillsPath, JSON.stringify(updatedSkillsData, null, 2), 'utf8')
-
-console.log('Skills configuration updated successfully!')
-console.log('All buffId fields have been replaced with effectId.')
-
---- scripts/tools/validate_skills.cjs ---
-/**
- * 文件: validate_skills.js
- * 功能: 技能与Buff配置验证工具
- * 描述: 检查 skills.json 中引用的 Buff ID 是否在已实现的脚本中存在
- * 用法: node scripts/tools/validate_skills.js
- */
-
-const fs = require('fs');
-const path = require('path');
-
-// 路径配置
-const SKILLS_CONFIG_PATH = path.join(__dirname, '../../configs/skills/skills.json');
-const SCRIPTS_DIR = path.join(__dirname, '../../src/scripts');
-
-// 读取JSON文件
-function readJson(filePath) {
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(content);
-  } catch (error) {
-    console.error(`Failed to read ${filePath}:`, error.message);
-    process.exit(1);
-  }
-}
-
-// 扫描Buff脚本目录，获取所有已实现的Buff ID
-function getImplementedBuffIds() {
-  const buffIds = new Set();
-  
-  // 扫描所有子目录
-  const subdirs = ['combat', 'support'];
-  
-  for (const subdir of subdirs) {
-    const dirPath = path.join(SCRIPTS_DIR, subdir);
-    if (!fs.existsSync(dirPath)) continue;
-    
-    const files = fs.readdirSync(dirPath);
-    for (const file of files) {
-      if (!file.endsWith('.ts')) continue;
-      
-      const filePath = path.join(dirPath, file);
-      const content = fs.readFileSync(filePath, 'utf-8');
-      
-      // 查找 BUFF_ID 定义
-      const match = content.match(/BUFF_ID\s*=\s*['"]([^'"]+)['"]/);
-      if (match) {
-        buffIds.add(match[1]);
-      }
-    }
-  }
-  
-  return buffIds;
-}
-
-// 从skills.json中提取所有使用的Buff ID
-function getUsedBuffIds(skills) {
-  const buffIds = new Set();
-  
-  function extractBuffIds(obj) {
-    if (!obj) return;
-    
-    if (Array.isArray(obj)) {
-      obj.forEach(item => extractBuffIds(item));
-    } else if (typeof obj === 'object') {
-      // 检查 effectId 字段（技能配置中使用此字段）
-      if (obj.effectId) {
-        buffIds.add(obj.effectId);
-      }
-      // 也检查 buffId 字段（兼容）
-      if (obj.buffId) {
-        buffIds.add(obj.buffId);
-      }
-      // 递归检查所有属性
-      for (const key in obj) {
-        extractBuffIds(obj[key]);
-      }
-    }
-  }
-  
-  extractBuffIds(skills);
-  return buffIds;
-}
-
-// 主函数
-function validate() {
-  console.log('=== Skill & Buff Configuration Validator ===\n');
-  
-  // 读取技能配置
-  console.log('Reading skills config...');
-  const skills = readJson(SKILLS_CONFIG_PATH);
-  console.log(`Found ${skills.length} skills\n`);
-  
-  // 获取已实现的Buff ID
-  console.log('Scanning implemented Buff scripts...');
-  const implementedBuffIds = getImplementedBuffIds();
-  console.log(`Found ${implementedBuffIds.size} implemented Buff scripts\n`);
-  
-  // 获取使用的Buff ID
-  console.log('Extracting used Buff IDs from skills config...');
-  const usedBuffIds = getUsedBuffIds(skills);
-  console.log(`Found ${usedBuffIds.size} Buff IDs referenced in skills\n`);
-  
-  // 检查未实现的Buff
-  console.log('=== Validation Results ===\n');
-  
-  const missingBuffs = [];
-  for (const buffId of usedBuffIds) {
-    if (!implementedBuffIds.has(buffId)) {
-      missingBuffs.push(buffId);
-    }
-  }
-  
-  if (missingBuffs.length > 0) {
-    console.log('❌ Missing Buff implementations:');
-    missingBuffs.forEach(id => console.log(`   - ${id}`));
-    console.log('');
-  } else {
-    console.log('✅ All Buff IDs are properly implemented!\n');
-  }
-  
-  // 列出已实现但未使用的Buff（可选信息）
-  const unusedBuffs = [];
-  for (const buffId of implementedBuffIds) {
-    if (!usedBuffIds.has(buffId)) {
-      unusedBuffs.push(buffId);
-    }
-  }
-  
-  if (unusedBuffs.length > 0) {
-    console.log('ℹ️  Implemented but unused Buffs:');
-    unusedBuffs.forEach(id => console.log(`   - ${id}`));
-    console.log('');
-  }
-  
-  // 返回状态码
-  if (missingBuffs.length > 0) {
-    console.log(`Validation FAILED: ${missingBuffs.length} missing Buff implementation(s)`);
-    process.exit(1);
-  } else {
-    console.log('Validation PASSED');
-    process.exit(0);
-  }
-}
-
-validate();
-
 --- src/components/AttributeTooltip.vue ---
 <!--
  * 文件: AttributeTooltip.vue
@@ -13969,9 +13717,9 @@ import {
   BattleData,
   ACTION_TYPES,
   VALID_ACTION_TYPES,
-  EFFECT_TYPES,
 } from '@/types/battle'
 import { PARTICIPANT_SIDE, BATTLE_CONSTANTS } from '@/types/battle'
+import { EFFECT_TYPES } from '@/types/effect'
 import { CombatRecord, createEmptyRecord } from '@/types/combat-record'
 import { battleLogManager } from '@/utils/logging'
 import { BuffSystem } from '@/core/BuffSystem'
@@ -14663,9 +14411,9 @@ import {
 import {
   BATTLE_CONSTANTS,
   ACTION_TYPES,
-  EFFECT_TYPES,
   BattleAction,
 } from '@/types/battle'
+import { EFFECT_TYPES } from '@/types/effect'
 import type { Skill } from '@/types/skill'
 
 /**
@@ -15215,10 +14963,12 @@ import {
   type SkillConfigLoader,
 } from '@/core/BattleAI'
 import type { BattleParticipant, BattleState, BattleAction } from '@/types/battle'
+import { BATTLE_STATUS } from '@/types/battle'
 import type { Skill } from '@/types/skill'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import type { BuffSystem } from '@/core/BuffSystem'
-import { ACTION_TYPES, EFFECT_TYPES, BATTLE_CONSTANTS } from '@/types/battle'
+import { ACTION_TYPES, BATTLE_CONSTANTS } from '@/types/battle'
+import { EFFECT_TYPES } from '@/types/effect'
 
 /**
  * 策略模式AI类
@@ -15379,7 +15129,7 @@ export class StrategyBattleAI implements IBattleAI {
       actions: [],
       turnOrder: [],
       currentTurn: 0,
-      isActive: false,
+      battleState: BATTLE_STATUS.ACTIVE,
       startTime: 0,
     })
 
@@ -15401,7 +15151,7 @@ export class StrategyBattleAI implements IBattleAI {
       actions: [],
       turnOrder: [],
       currentTurn: 0,
-      isActive: false,
+      battleState: BATTLE_STATUS.ACTIVE,
       startTime: 0,
     })
 
@@ -15609,6 +15359,7 @@ export class StrategyAIFactory {
  */
 
 import type { BattleParticipant, BattleState, BattleAction } from '@/types/battle'
+import { BATTLE_STATUS, type BattleStatus } from '@/types/battle'
 import type { Skill } from '@/types/skill'
 
 /**
@@ -15763,8 +15514,8 @@ export interface IBattleContext {
   participants: Map<string, ParticipantSnapshot>
   /** 当前回合 */
   currentTurn: number
-  /** 是否活跃 */
-  isActive: boolean
+  /** 战斗状态 */
+  battleState: BattleStatus
 
   /**
    * 获取所有友方参与者
@@ -15799,12 +15550,12 @@ export class BattleContext implements IBattleContext {
   public battleId: string
   public participants: Map<string, ParticipantSnapshot>
   public currentTurn: number
-  public isActive: boolean
+  public battleState: BattleStatus
 
   constructor(battleState: BattleState, currentParticipantId?: string) {
     this.battleId = battleState.battleId
     this.currentTurn = battleState.currentTurn
-    this.isActive = battleState.isActive
+    this.battleState = battleState.battleState
     this.participants = new Map()
 
     battleState.participants.forEach((p, id) => {
@@ -16243,6 +15994,7 @@ import type {
   BattleAction,
   BattleData,
 } from '@/types/battle'
+import { BATTLE_STATUS } from '@/types/battle'
 import { BATTLE_CONSTANTS } from '@/types/battle'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import { BattleAIFactory, BattleAI } from '@/core/BattleAI'
@@ -16445,7 +16197,7 @@ export class AISystem {
       actions: [...battle.actions],
       turnOrder: [...battle.turnOrder],
       currentTurn: battle.currentTurn,
-      isActive: battle.isActive,
+      battleState: battle.battleState ?? BATTLE_STATUS.ACTIVE,
       startTime: 0,
       endTime: undefined,
       winner: undefined,
@@ -16486,10 +16238,6 @@ export class AutoBattleManager {
    * 当前战斗ID，用于标识一场战斗
    */
   private battleId: string | null = null
-  /**
-   * 自动战斗任务ID，用于取消或管理异步任务
-   */
-  private autoBattleTaskId: symbol | null = null
 
   /**
    * 构造函数
@@ -16527,6 +16275,8 @@ export class AutoBattleManager {
       })
       return false
     }
+
+    this.battleId = battleId
 
     try {
       // 启动自动战斗
@@ -16590,9 +16340,7 @@ export class AutoBattleManager {
    * 通常在开始新战斗前调用，以确保状态干净
    */
   resetState() {
-    if (this.autoBattleTaskId) {
-      this.autoBattleTaskId = null
-    }
+    this.battleId = null
   }
 }
 
@@ -21306,6 +21054,7 @@ export class ReplayEngine {
 --- src/core/battle/state/BattleStateManager.ts ---
 import type { IBattleSystem } from '@/core/battle/interfaces'
 import type { BattleState, BattleParticipant } from '@/types/battle'
+import { BATTLE_STATUS } from '@/types/battle'
 import type { UIBattleCharacter, AttributeValue } from '@/types'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { eventBus } from '@/main'
@@ -21511,7 +21260,7 @@ export class BattleStateManager {
       }
 
       // 同步战斗活跃状态
-      this.isBattleActive = battleState.isActive
+      this.isBattleActive = battleState.battleState === BATTLE_STATUS.ACTIVE
 
       // 同步回合数
       if (battleState.currentTurn !== undefined) {
@@ -21529,7 +21278,7 @@ export class BattleStateManager {
       this.syncParticipantsState(battleState)
 
       // 检查战斗是否结束
-      if (!battleState.isActive) {
+      if (battleState.battleState === BATTLE_STATUS.ENDED) {
         this.handleBattleEnd()
       }
     } catch (error) {
@@ -21578,7 +21327,8 @@ export class BattleStateManager {
     participant: BattleParticipant,
   ) {
     // 使用新的转换方法创建更新后的UI角色
-    const updated = GameDataProcessor.participantToUIBattleCharacter(participant)
+    const updated =
+      GameDataProcessor.participantToUIBattleCharacter(participant)
 
     // 基础属性（非 AttributeValue 类型）
     character.level = updated.level
@@ -21923,8 +21673,8 @@ import {
   BATTLE_CONSTANTS,
   SKILL_EFFECT_CONSTANTS,
   ACTION_TYPES,
-  EFFECT_TYPES,
 } from '@/types/battle'
+import { EFFECT_TYPES } from '@/types/effect'
 import { useBattleStore } from '@/stores/battleStore'
 import { battleLogManager } from '@/utils/logging'
 import type { BuffSystem } from '@/core/BuffSystem'
@@ -22708,9 +22458,12 @@ import {
   PARTICIPANT_SIDE,
   ROUND_STATUS,
 } from '@/types/battle'
-import type { BattleLogCategory, BattleLogEntry } from '@/types/battle-log'
-import { newLogSegment } from '@/types/battle-log'
-import type { EffectType } from '@/types/effect'
+import {
+  newLogSegment,
+  LogLevel,
+  BATTLE_LOG_CATEGORIES,
+} from '@/types/battle-log'
+import { EFFECT_TYPES } from '@/types/effect'
 import type { ExtendedSkillStep } from '@/types/skill'
 import { RAFTimer } from '@/utils/RAF'
 import { battleLogManager } from '@/utils/logging'
@@ -22735,34 +22488,6 @@ import { battleLogManager } from '@/utils/logging'
  * - 支持战斗录像与回放。
  * - 自动战斗与手动战斗模式切换。
  */
-
-/**
- * 效果类型常量
- */
-const EFFECT_TYPE: Record<string, EffectType> = {
-  DAMAGE: 'damage',
-  HEAL: 'heal',
-  BUFF: 'buff',
-  DEBUFF: 'debuff',
-  MISS: 'miss',
-  SPECIAL: 'special',
-} as const
-
-/**
- * 战斗日志类别常量
- */
-const BATTLE_LOG_CATEGORY: Record<string, BattleLogCategory> = {
-  SYSTEM: 'system',
-  ACTION: 'action',
-  DAMAGE: 'damage',
-  HEAL: 'heal',
-  CRIT: 'crit',
-  STATUS: 'status',
-  DEBUG: 'debug',
-  INFO: 'info',
-  WARNING: 'warning',
-  ERROR: 'error',
-} as const
 
 export class BattleSystem implements IBattleSystem {
   private battleData: BattleData
@@ -22797,9 +22522,19 @@ export class BattleSystem implements IBattleSystem {
    * @param ms 等待毫秒数
    */
   private wait(ms: number): Promise<void> {
+    console.log('等待', ms, '毫秒')
     return new Promise((resolve) => {
       this.rafTimer.setTimeout(resolve, ms)
     })
+  }
+
+  /**
+   * 等待当前动画播放完成
+   */
+  private async waitForAnimation(): Promise<void> {
+    while (this.isAnimating()) {
+      await this.wait(100)
+    }
   }
 
   // 私有构造函数，防止外部直接实例化
@@ -22894,7 +22629,6 @@ export class BattleSystem implements IBattleSystem {
       battleSpeed: 1,
       battleState: BATTLE_STATUS.CREATED,
       roundState: ROUND_STATUS.NONE,
-      isActive: false,
       skillManager: this.skillManager,
     }
   }
@@ -22999,7 +22733,6 @@ export class BattleSystem implements IBattleSystem {
 
     battleData.battleState = BATTLE_STATUS.ACTIVE
     battleData.roundState = ROUND_STATUS.START
-    battleData.isActive = true
 
     const autoBattleRules = this.ruleManager.getAutoBattleRules()
     this.autoBattle = autoBattleRules.enabled
@@ -23032,7 +22765,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private async processTurnInternal(): Promise<void> {
     const battle = this.battleData
-    if (!battle || !battle.isActive) {
+    if (battle.battleState !== BATTLE_STATUS.ACTIVE) {
       return
     }
 
@@ -23076,19 +22809,19 @@ export class BattleSystem implements IBattleSystem {
       battle.turnOrder = currentTurnOrder
       battle.currentTurn = 0
 
-      battleLogManager.addBattleLog(battle.currentTurn, '本回合出手顺序', {
-        turnOrder: currentTurnOrder.map((id) => {
-          const participant = battle.participants.get(id)
-          const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(
-            participant!,
-          )
-          return {
-            id,
-            name: participant?.name,
-            effectiveSpeed,
-          }
-        }),
-      })
+      // battleLogManager.addBattleLog(battle.currentTurn, '本回合出手顺序', {
+      //   turnOrder: currentTurnOrder.map((id) => {
+      //     const participant = battle.participants.get(id)
+      //     const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(
+      //       participant!,
+      //     )
+      //     return {
+      //       id,
+      //       name: participant?.name,
+      //       effectiveSpeed,
+      //     }
+      //   }),
+      // })
 
       const battleId = battle.battleId
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0])
@@ -23096,13 +22829,9 @@ export class BattleSystem implements IBattleSystem {
       this.syncBattleStateUpdate()
 
       for (let i = 0; i < currentTurnOrder.length; i++) {
-        while (this.isAnimating()) {
-          await this.wait(100)
-        }
-
+        await this.waitForAnimation()
         const participantId = currentTurnOrder[i]
         const participant = battle.participants.get(participantId)
-
         if (!participant || !participant.isAlive()) {
           continue
         }
@@ -23118,9 +22847,7 @@ export class BattleSystem implements IBattleSystem {
           await this.executeDefaultAction(battle, participant)
         }
 
-        while (this.isAnimating()) {
-          await this.wait(100)
-        }
+        await this.waitForAnimation()
 
         this.buffSystem.updatePerTurn(participant.id, battle.currentRound || 1)
 
@@ -23128,14 +22855,12 @@ export class BattleSystem implements IBattleSystem {
 
         this.checkBattleEndCondition()
 
-        if (!battle.isActive) {
+        if (battle.battleState !== BATTLE_STATUS.ACTIVE) {
           return
         }
       }
 
-      while (this.isAnimating()) {
-        await this.wait(100)
-      }
+      await this.waitForAnimation()
 
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         PassiveSkillTrigger.TURN_END,
@@ -23154,7 +22879,7 @@ export class BattleSystem implements IBattleSystem {
 
       battle.roundState = ROUND_STATUS.START
     } catch (error) {
-      battleLogManager.addDebugLog('处理回合时出错:', error)
+      battleLogManager.addDebugLog('处理回合时出错:', LogLevel.ERROR, error)
     } finally {
       this.syncBattleStateUpdate()
       this.cleanupAnimationState()
@@ -23215,16 +22940,12 @@ export class BattleSystem implements IBattleSystem {
         this.recordBattleAction(action)
 
         // 添加战斗日志
-        const logEntry: BattleLogEntry = {
-          turn: `回合${this.turnManager.getTurnNumber(battle)}`,
-          source: participant.name,
-          action: '被',
-          target: '控制',
-          level: 'info',
-          category: 'status',
-          segments: [{ text: `${participant.name} 被控制，无法行动` }],
-        }
-        this.syncBattleLog(logEntry)
+        battleLogManager.addBattleLog(
+          this.turnManager.getTurnNumber(battle),
+          `${participant.name} 被控制，无法行动`,
+          [{ text: `${participant.name} 被控制，无法行动` }],
+          BATTLE_LOG_CATEGORIES.STATUS,
+        )
 
         battleLogManager.addDebugLog(
           `角色[${participant.name}]被控制，无法行动`,
@@ -23264,9 +22985,13 @@ export class BattleSystem implements IBattleSystem {
         // 使用AI系统决策
         const action = aiInstance.makeDecision(
           {
+            battleId: battle.battleId,
             participants: battle.participants,
+            actions: battle.actions,
             turnOrder: battle.turnOrder,
             currentTurn: battle.currentTurn,
+            battleState: battle.battleState!,
+            startTime: battle.startTime,
           },
           participant,
         )
@@ -23365,19 +23090,19 @@ export class BattleSystem implements IBattleSystem {
       action.heal = skillAction.heal
       action.effects = skillAction.effects
 
-      battleLogManager.addDebugLog(`技能执行成功: ${skill.id}`, {
-        source: source.name,
-        target: targetId,
-        damage: action.damage,
-        heal: action.heal,
-      })
+      battleLogManager.addBattleLog(
+        battle.currentTurn,
+        `技能执行成功: ${skill.id}`,
+        [{ text: `技能执行成功: ${skill.id}` }],
+        BATTLE_LOG_CATEGORIES.ACTION,
+      )
     } catch (error) {
       battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error)
       action.type = 'attack'
       action.damage = Math.floor(Math.random() * 20) + 10
       action.effects = [
         {
-          type: EFFECT_TYPE.DAMAGE,
+          type: EFFECT_TYPES.DAMAGE,
           value: action.damage,
           description: `${source.name} 普通攻击 (技能执行失败)`,
         },
@@ -23392,6 +23117,245 @@ export class BattleSystem implements IBattleSystem {
   }
 
   /**
+   * 构造普通攻击的技能步骤配置
+   * @param source 攻击者
+   * @param targetId 目标ID
+   * @returns 技能步骤配置
+   */
+  private buildNormalAttackStep(
+    source: BattleParticipant,
+    targetId: string,
+  ): ExtendedSkillStep {
+    return {
+      type: 'DAMAGE',
+      id: 'normal_attack',
+      targetId,
+      calculation: {
+        baseValue: 0,
+        extraValues: [{ attribute: 'ATK', ratio: 1.0 }],
+      },
+      attackType: 'physical',
+      targetModifiers: { DEF: 1 },
+      criticalConfig: {
+        rate: (source.getAttribute('critRate') || 10) / 100,
+        multiplier: (source.getAttribute('critDamage') || 125) / 100,
+      },
+    }
+  }
+
+  /**
+   * 创建战斗动作对象
+   * @param sourceId 攻击者ID
+   * @param targetId 目标ID
+   * @param turnNumber 当前回合数
+   * @returns 战斗动作对象
+   */
+  private createBattleAction(
+    sourceId: string,
+    targetId: string,
+    turnNumber: number,
+  ): BattleAction {
+    return {
+      id: `attack_${Date.now()}`,
+      type: 'attack',
+      sourceId,
+      targetId,
+      damage: 0,
+      heal: 0,
+      success: true,
+      timestamp: Date.now(),
+      turn: turnNumber,
+      effects: [],
+    }
+  }
+
+  /**
+   * 生成攻击日志参数
+   * @param source 攻击者
+   * @param target 目标
+   * @param turnNumber 当前回合数
+   * @param options 日志选项
+   * @returns 日志参数对象
+   */
+  private generateAttackLogParams(
+    source: BattleParticipant,
+    target: BattleParticipant,
+    turnNumber: number,
+    options: {
+      isMiss?: boolean
+      damage?: number
+      isCritical?: boolean
+    },
+  ): {
+    turn: number
+    message: string
+    segments: import('@/types/battle-log').LogSegment[]
+    category: import('@/types/battle-log').BattleLogCategory
+  } {
+    const { isMiss = false, damage = 0, isCritical = false } = options
+
+    if (isMiss) {
+      return {
+        turn: turnNumber,
+        message: `${source.name} 对 ${target.name} 发动普通攻击，但是被闪避了！`,
+        segments: [
+          { text: source.name, classStr: 'log-hostile' },
+          { text: ' 对 ' },
+          { text: target.name, classStr: 'log-friendly' },
+          { text: ' 发动普通攻击，但是被闪避了！' },
+        ],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+      }
+    }
+
+    return {
+      turn: turnNumber,
+      message: `${source.name} 对 ${target.name} 发动普通攻击，${isCritical ? '暴击！' : ''}造成 ${damage} 点物理伤害`,
+      segments: [
+        {
+          text: source.name,
+          classStr:
+            source.type === PARTICIPANT_SIDE.ALLY
+              ? 'log-friendly'
+              : 'log-hostile',
+        },
+        { text: ' 对 ' },
+        {
+          text: target.name,
+          classStr:
+            target.type === PARTICIPANT_SIDE.ALLY
+              ? 'log-friendly'
+              : 'log-hostile',
+        },
+        { text: ` 发动普通攻击，${isCritical ? '暴击！' : ''}造成 ` },
+        {
+          text: damage.toString(),
+          classStr: isCritical ? 'log-crit' : 'log-damage',
+        },
+        { text: ' 点物理伤害' },
+      ],
+      category: isCritical
+        ? BATTLE_LOG_CATEGORIES.CRIT
+        : BATTLE_LOG_CATEGORIES.DAMAGE,
+    }
+  }
+
+  /**
+   * 对目标应用伤害并触发相关被动技能
+   * @param source 攻击者
+   * @param target 目标
+   * @param damage 伤害值
+   */
+  private applyDamageToTarget(
+    source: BattleParticipant,
+    target: BattleParticipant,
+    damage: number,
+  ): void {
+    target.takeDamage(damage)
+
+    this.passiveSkillManager.triggerPassiveSkills(
+      PassiveSkillTrigger.ON_HIT,
+      target,
+      { sourceId: source.id, damage },
+    )
+
+    if (!target.isAlive()) {
+      this.passiveSkillManager.triggerPassiveSkills(
+        PassiveSkillTrigger.ON_DEATH,
+        target,
+        { sourceId: source.id, cause: 'damage' },
+      )
+    }
+  }
+
+  /**
+   * 处理攻击被闪避的情况
+   * @param action 战斗动作
+   * @param source 攻击者
+   * @param target 目标
+   * @param turnNumber 当前回合数
+   */
+  private async handleMissAttack(
+    action: BattleAction,
+    source: BattleParticipant,
+    target: BattleParticipant,
+    turnNumber: number,
+  ): Promise<void> {
+    action.effects.push({
+      type: EFFECT_TYPES.MISS,
+      value: 0,
+      description: `${target.name} 闪避了攻击`,
+    })
+
+    await this.triggerMissAnimationAndWait({ targetId: target.id })
+
+    const logParams = this.generateAttackLogParams(source, target, turnNumber, {
+      isMiss: true,
+    })
+    battleLogManager.addBattleLog(
+      logParams.turn,
+      logParams.message,
+      logParams.segments,
+      logParams.category,
+    )
+
+    battleLogManager.addDebugLog(
+      `普通攻击: ${source.name} → ${target.name}，被闪避`,
+    )
+  }
+
+  /**
+   * 处理攻击命中的情况
+   * @param action 战斗动作
+   * @param source 攻击者
+   * @param target 目标
+   * @param damageResult 伤害计算结果
+   * @param turnNumber 当前回合数
+   */
+  private async handleHitAttack(
+    action: BattleAction,
+    source: BattleParticipant,
+    target: BattleParticipant,
+    damageResult: { damage: number; isCritical: boolean },
+    turnNumber: number,
+  ): Promise<void> {
+    const { damage, isCritical } = damageResult
+    action.damage = damage
+
+    this.applyDamageToTarget(source, target, damage)
+
+    action.effects.push({
+      type: EFFECT_TYPES.DAMAGE,
+      value: damage,
+      description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
+    })
+
+    await this.triggerDamageAnimationAndWait({
+      targetId: target.id,
+      damage,
+      damageType: 'physical',
+      isCritical,
+      isHeal: false,
+    })
+
+    const logParams = this.generateAttackLogParams(source, target, turnNumber, {
+      damage,
+      isCritical,
+    })
+    battleLogManager.addBattleLog(
+      logParams.turn,
+      logParams.message,
+      logParams.segments,
+      logParams.category,
+    )
+
+    battleLogManager.addDebugLog(
+      `普通攻击: ${source.name} → ${target.name}`,
+      LogLevel.INFO,
+    )
+  }
+
+  /**
    * 选择并执行普通攻击
    * @param battle 战斗数据
    * @param source 攻击者
@@ -23401,165 +23365,54 @@ export class BattleSystem implements IBattleSystem {
     battle: BattleData,
     source: BattleParticipant,
   ): Promise<BattleAction> {
-    const target = this.selectTarget(battle, source)
+    const targetId = this.selectTarget(battle, source)
+    const target = battle.participants.get(targetId)
 
-    const targetParticipant = battle.participants.get(target)
+    if (!target) {
+      battleLogManager.addDebugLog(`攻击失败: 未找到目标 ${targetId}`)
+      return this.createBattleAction(
+        source.id,
+        source.id,
+        this.turnManager.getTurnNumber(battle),
+      )
+    }
 
-    // 触发攻击前的被动技能
+    const turnNumber = this.turnManager.getTurnNumber(battle)
+
     this.passiveSkillManager.triggerPassiveSkills(
       PassiveSkillTrigger.BEFORE_ATTACK,
       source,
-      { targetId: target },
+      { targetId, battle },
     )
 
-    // 构造普通攻击的技能步骤配置
-    const attackStep: ExtendedSkillStep = {
-      type: 'DAMAGE',
-      id: 'normal_attack',
-      targetId: target,
-      calculation: {
-        baseValue: 0,
-        extraValues: [{ attribute: 'ATK', ratio: 1.0 }],
-      },
-      attackType: 'physical',
-      targetModifiers: {
-        DEF: 1,
-      },
-      criticalConfig: {
-        rate: (source.getAttribute('critRate') || 10) / 100,
-        multiplier: (source.getAttribute('critDamage') || 125) / 100,
-      },
-    }
-
-    // 使用DamageCalculator统一计算伤害
+    const attackStep = this.buildNormalAttackStep(source, targetId)
     const damageResult = this.damageCalculator.calculateDamage(
       attackStep,
       source,
-      targetParticipant!,
+      target,
     )
 
-    const action: BattleAction = {
-      id: `attack_${Date.now()}`,
-      type: 'attack',
-      sourceId: source.id,
-      targetId: target,
-      damage: 0,
-      heal: 0,
-      success: true,
-      timestamp: Date.now(),
-      turn: this.turnManager.getTurnNumber(battle),
-      effects: [],
-    }
+    const action = this.createBattleAction(source.id, targetId, turnNumber)
 
     if (damageResult.isMiss) {
-      // 处理闪避情况
-      action.effects.push({
-        type: EFFECT_TYPE.MISS,
-        value: 0,
-        description: `${targetParticipant!.name} 闪避了攻击`,
-      })
-
-      // 触发闪避动画并等待完成
-      await this.triggerMissAnimationAndWait({
-        targetId: target,
-      })
-
-      const logEntry: BattleLogEntry = {
-        turn: `回合${this.turnManager.getTurnNumber(battle)}`,
-        source: source.name,
-        action: '对',
-        target: targetParticipant!.name,
-        level: 'info',
-        category: 'status',
-        segments: [
-          { text: source.name, classStr: 'log-hostile' },
-          { text: ' 对 ' },
-          { text: targetParticipant!.name, classStr: 'log-friendly' },
-          { text: ' 发动普通攻击，但是被闪避了！' },
-        ],
-      }
-      this.syncBattleLog(logEntry)
-
-      battleLogManager.addDebugLog(
-        `普通攻击: ${source.name} → ${targetParticipant!.name}，被闪避`,
-      )
+      await this.handleMissAttack(action, source, target, turnNumber)
     } else {
-      // 应用伤害
-      const damage = damageResult.damage
-      action.damage = damage
-
-      targetParticipant!.takeDamage(damage)
-
-      action.effects.push({
-        type: EFFECT_TYPE.DAMAGE,
-        value: damage,
-        description: `${source.name} 普通攻击 造成 ${damage} 伤害${damageResult.isCritical ? ' (暴击)' : ''}`,
-      })
-
-      // 触发伤害动画并等待完成
-      await this.triggerDamageAnimationAndWait({
-        targetId: target,
-        damage,
-        damageType: 'physical',
-        isCritical: damageResult.isCritical,
-        isHeal: false,
-      })
-
-      const logEntry: BattleLogEntry = {
-        turn: `回合${this.turnManager.getTurnNumber(battle)}`,
-        source: source.name,
-        action: '对',
-        target: targetParticipant!.name,
-        level: 'info',
-        category: damageResult.isCritical
-          ? BATTLE_LOG_CATEGORY.CRIT
-          : BATTLE_LOG_CATEGORY.DAMAGE,
-        segments: [
-          {
-            text: source.name,
-            classStr:
-              source.type === PARTICIPANT_SIDE.ALLY
-                ? 'log-friendly'
-                : 'log-hostile',
-          },
-          { text: ' 对 ' },
-          {
-            text: targetParticipant!.name,
-            classStr:
-              targetParticipant!.type === PARTICIPANT_SIDE.ALLY
-                ? 'log-friendly'
-                : 'log-hostile',
-          },
-          {
-            text: ` 发动普通攻击，${damageResult.isCritical ? '暴击！' : ''}造成 `,
-          },
-          {
-            text: damage.toString(),
-            classStr: damageResult.isCritical ? 'log-crit' : 'log-damage',
-          },
-          { text: ' 点物理伤害' },
-        ],
-      }
-      this.syncBattleLog(logEntry)
-
-      battleLogManager.addDebugLog(
-        `普通攻击: ${source.name} → ${targetParticipant!.name}`,
-        {
-          damage,
-          isCritical: damageResult.isCritical,
-          targetHealth: targetParticipant!.currentHealth,
-        },
+      await this.handleHitAttack(
+        action,
+        source,
+        target,
+        damageResult,
+        turnNumber,
       )
     }
 
-    // 触发攻击后的被动技能
     this.passiveSkillManager.triggerPassiveSkills(
       PassiveSkillTrigger.AFTER_ATTACK,
       source,
       {
-        targetId: target,
+        targetId,
         damage: action.damage,
-        isCritical: action.effects.some((e) => e.description?.includes('暴击')),
+        isCritical: damageResult.isCritical,
       },
     )
 
@@ -23658,7 +23511,7 @@ export class BattleSystem implements IBattleSystem {
       turn: this.turnManager.getTurnNumber(battle),
       effects: [
         {
-          type: EFFECT_TYPE.DAMAGE,
+          type: EFFECT_TYPES.DAMAGE,
           value: damage,
           description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
         },
@@ -23701,7 +23554,7 @@ export class BattleSystem implements IBattleSystem {
 
         // 检查是否有闪避效果
         const hasMissEffect = skillAction.effects.some(
-          (effect) => effect.type === EFFECT_TYPE.MISS,
+          (effect) => effect.type === EFFECT_TYPES.MISS,
         )
         if (hasMissEffect) {
           // 触发闪避动画并等待完成
@@ -23713,12 +23566,12 @@ export class BattleSystem implements IBattleSystem {
         // 检查是否有buff效果并触发相应事件
         for (const effect of skillAction.effects) {
           if (
-            effect.type === EFFECT_TYPE.BUFF ||
-            effect.type === EFFECT_TYPE.DEBUFF
+            effect.type === EFFECT_TYPES.BUFF ||
+            effect.type === EFFECT_TYPES.DEBUFF
           ) {
-            // 确定buff目标
+            // 确定buff目标 - 通过 targetId 判断作用目标
             let buffTarget = target
-            if (effect.target === 'self') {
+            if (effect.targetId === source.id) {
               buffTarget = source
             }
 
@@ -23726,7 +23579,7 @@ export class BattleSystem implements IBattleSystem {
             await this.triggerBuffEffectAndWait({
               targetId: buffTarget.id,
               buffName: effect.buffId || 'unknown',
-              isPositive: effect.type === EFFECT_TYPE.BUFF,
+              isPositive: effect.type === EFFECT_TYPES.BUFF,
             })
           }
         }
@@ -23754,7 +23607,7 @@ export class BattleSystem implements IBattleSystem {
         action.damage = Math.floor(Math.random() * 20) + 10
         action.effects = [
           {
-            type: EFFECT_TYPE.DAMAGE,
+            type: EFFECT_TYPES.DAMAGE,
             value: action.damage,
             description: `${source.name} 普通攻击 (技能执行失败)`,
           },
@@ -23931,20 +23784,16 @@ export class BattleSystem implements IBattleSystem {
     this.endBattle(winner)
 
     // 添加回合上限到达的日志
-    const logEntry: BattleLogEntry = {
-      turn: `回合${battle.currentRound}`,
-      source: '系统',
-      action: '战斗结束',
-      target: '系统',
-      level: 'warn',
-      category: 'status',
-      segments: [
+    battleLogManager.addBattleLog(
+      battle.currentRound,
+      `回合数达到上限(${battle.maxTurns})，${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}以血量优势获胜`,
+      [
         {
           text: `回合数达到上限(${battle.maxTurns})，${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}以血量优势获胜`,
         },
       ],
-    }
-    this.syncBattleLog(logEntry)
+      BATTLE_LOG_CATEGORIES.STATUS,
+    )
   }
 
   /**
@@ -23970,7 +23819,7 @@ export class BattleSystem implements IBattleSystem {
     battle.battleState = BATTLE_STATUS.SETTLEMENT
     battle.roundState = ROUND_STATUS.NONE
 
-    battle.isActive = false
+    battle.battleState = BATTLE_STATUS.ENDED
     battle.winner = winner
     battle.endTime = Date.now()
 
@@ -24011,7 +23860,7 @@ export class BattleSystem implements IBattleSystem {
 
     battle.battleState = BATTLE_STATUS.ENDED
 
-    this.emit(BattleSystemEvent.BATTLE_END, {
+    eventBus.emit(BattleSystemEvent.BATTLE_END, {
       battleId,
       winner,
     })
@@ -24061,10 +23910,6 @@ export class BattleSystem implements IBattleSystem {
 
     const battleId = battle.battleId
     this.battleRecorder.clearRecording(battleId)
-
-    this.emit(BattleSystemEvent.BATTLE_RESET, {
-      battleId,
-    })
 
     battleLogManager.addDebugLog(`战斗已重置: ${battleId}`)
   }
@@ -24165,11 +24010,11 @@ export class BattleSystem implements IBattleSystem {
   private convertToBattleState(battleData: BattleData): BattleState {
     return {
       battleId: battleData.battleId,
-      participants: new Map(battleData.participants), // 保持为Map类型
+      participants: new Map(battleData.participants),
       actions: [...battleData.actions],
       turnOrder: [...battleData.turnOrder],
       currentTurn: battleData.currentTurn,
-      isActive: battleData.isActive,
+      battleState: battleData.battleState!,
       startTime: battleData.startTime,
       endTime: battleData.endTime,
       winner: battleData.winner,
@@ -24196,16 +24041,23 @@ export class BattleSystem implements IBattleSystem {
     battleLogManager.addDebugLog(`自动战斗开始: ${this.battleData.battleId}`)
     const autoBattleLoop = async () => {
       let battle = this.battleData
-      if (!battle.autoBattle || !battle.isActive) {
+      console.log('自动战斗循环开始:', battle.autoBattle, battle.battleState)
+      if (!battle.autoBattle || battle.battleState !== BATTLE_STATUS.ACTIVE) {
         return
       }
       try {
+        console.log('processTurnInternal开始')
         await this.processTurnInternal()
+        console.log('processTurnInternal结束')
+        console.log(
+          '自动战斗循环开始processTurnInternal:',
+          battle.autoBattle,
+          battle.battleState,
+        )
         battle = this.battleData
         if (
           battle.battleState === BATTLE_STATUS.ENDED ||
-          battle.battleState === BATTLE_STATUS.PAUSED ||
-          !battle.isActive
+          battle.battleState === BATTLE_STATUS.PAUSED
         ) {
           this.stopAutoBattle()
           return
@@ -24215,7 +24067,7 @@ export class BattleSystem implements IBattleSystem {
         const timerId = this.rafTimer.setTimeout(autoBattleLoop, delay)
         this.autoBattleTimerId = timerId
       } catch (error) {
-        battleLogManager.addDebugLog('自动战斗出错:', error)
+        battleLogManager.addDebugLog('自动战斗出错:', LogLevel.ERROR, error)
         this.stopAutoBattle()
       }
     }
@@ -24376,32 +24228,13 @@ export class BattleSystem implements IBattleSystem {
   }
 
   /**
-   * 事件系统方法
-   */
-  private emit(event: string, data: any): void {
-    battleLogManager.addDebugLog(`发射事件: ${event}`, {
-      data: JSON.stringify(data, null, 2).substring(0, 1000), // 限制日志长度
-    })
-    eventBus.emit(event, data)
-  }
-
-  /**
-   * 同步战斗日志到外部系统
-   */
-  private syncBattleLog(logEntry: BattleLogEntry): void {
-    const battleId = this.battleData?.battleId
-    battleLogManager.addDebugLog('syncBattleLog called', { battleId, logEntry })
-    this.emit(BattleSystemEvent.BATTLE_LOG, { battleId, log: logEntry })
-  }
-
-  /**
    * 同步战斗状态更新
    */
   private syncBattleStateUpdate(): void {
     const battle = this.battleData
     if (!battle) return
 
-    this.emit(BattleSystemEvent.BATTLE_STATE_UPDATE, {
+    eventBus.emit(BattleSystemEvent.BATTLE_STATE_UPDATE, {
       battleId: battle.battleId,
       participants: Array.from(battle.participants.values()).map((p) => {
         const activeBuffIds = this.buffSystem
@@ -24434,14 +24267,14 @@ export class BattleSystem implements IBattleSystem {
     isCritical: boolean
     isHeal: boolean
   }): void {
-    this.emit(BattleSystemEvent.DAMAGE_ANIMATION, data)
+    eventBus.emit(BattleSystemEvent.DAMAGE_ANIMATION, data)
   }
 
   /**
    * 触发闪避动画
    */
   private triggerMissAnimation(data: { targetId: string }): void {
-    this.emit(BattleSystemEvent.MISS_ANIMATION, data)
+    eventBus.emit(BattleSystemEvent.MISS_ANIMATION, data)
   }
 
   /**
@@ -24452,7 +24285,7 @@ export class BattleSystem implements IBattleSystem {
     buffName: string
     isPositive: boolean
   }): void {
-    this.emit(BattleSystemEvent.BUFF_EFFECT, data)
+    eventBus.emit(BattleSystemEvent.BUFF_EFFECT, data)
   }
 
   /**
@@ -24508,7 +24341,7 @@ export class BattleSystem implements IBattleSystem {
       return
     }
 
-    this.emit(animation.type, animation.data)
+    eventBus.emit(animation.type, animation.data)
 
     const duration = this.getAnimationDuration()
 
@@ -28290,6 +28123,7 @@ export class SkillManager {
       action.damage = actualDamage
       action.effects.push({
         type: 'damage',
+        targetId: target.id,
         value: actualDamage,
         description: `${source.name} 使用 ${skillConfig.name || skillId} 造成 ${actualDamage} 伤害`,
       })
@@ -28307,6 +28141,7 @@ export class SkillManager {
         action.heal = actualHeal
         action.effects.push({
           type: 'heal',
+          targetId: source.id,
           value: actualHeal,
           description: `${source.name} 使用 ${skillConfig.name || skillId} 恢复 ${actualHeal} 生命值`,
         })
@@ -28346,6 +28181,7 @@ export class SkillManager {
 
           action.effects.push({
             type: 'buff',
+            targetId: target.id,
             buffId: buffId,
             instanceId,
             description: `${source.name} 使用 ${skillConfig.name || skillId} 对 ${target.name} 施加 ${buffId}`,
@@ -28389,6 +28225,7 @@ export class SkillManager {
 
           action.effects.push({
             type: 'debuff',
+            targetId: target.id,
             buffId: debuffId,
             instanceId,
             description: `${source.name} 使用 ${skillConfig.name || skillId} 对 ${target.name} 施加 ${debuffId}`,
@@ -28502,6 +28339,7 @@ export class SkillManager {
       // 处理闪避情况
       battleAction.effects.push({
         type: 'miss',
+        targetId: target.id,
         value: 0,
         description: `${target.name} 闪避了攻击`,
       })
@@ -28519,6 +28357,7 @@ export class SkillManager {
       battleAction.damage += actualDamage
       battleAction.effects.push({
         type: 'damage',
+        targetId: target.id,
         value: actualDamage,
         description: `${source.name} 造成 ${actualDamage} 伤害`,
         isCritical: damageResult.isCritical,
@@ -28552,6 +28391,7 @@ export class SkillManager {
     battleAction.heal += actualHeal
     battleAction.effects.push({
       type: 'heal',
+      targetId: target.id,
       value: actualHeal,
       description: `${source.name} 恢复 ${actualHeal} 生命值`,
     })
@@ -28631,6 +28471,7 @@ export class SkillManager {
 
     battleAction.effects.push({
       type: 'buff',
+      targetId: buffTarget.id,
       buffId: skillStep.buffId,
       instanceId,
       description: `${source.name} 施加 ${skillStep.buffId} 给 ${buffTarget.name}`,
@@ -28654,6 +28495,7 @@ export class SkillManager {
     battleLogManager.addDebugLog(`护盾步骤: ${skillStep.formula}`)
     battleAction.effects.push({
       type: 'status',
+      targetId: target.id,
       description: '护盾效果（待实现）',
     })
   }
@@ -28704,6 +28546,7 @@ export class SkillManager {
     )
     battleAction.effects.push({
       type: 'status',
+      targetId: target.id,
       buffId: controlBuffId,
       description: `${source.name} 对 ${target.name} 施加了${controlType === ControlType.STUN ? '眩晕' : '沉默'}`,
     })
@@ -28891,6 +28734,7 @@ export class SkillManager {
  */
 
 import { BattleSystem } from '@/core/BattleSystem'
+import { BATTLE_STATUS } from '@/types/battle'
 import { RAFTimer } from '@/utils/RAF'
 import { battleLogManager } from '@/utils/logging'
 
@@ -29149,7 +28993,10 @@ export class TaskExecutor {
       }
 
       // 检查战斗是否结束
-      if (battleData.battleState === 'ENDED' || !battleData.isActive) {
+      if (
+        battleData.battleState === BATTLE_STATUS.ENDED ||
+        battleData.battleState !== BATTLE_STATUS.ACTIVE
+      ) {
         this.timer.clearInterval(monitorInterval)
         task.progress = 100
         task.status = 'completed'
@@ -36020,15 +35867,29 @@ export const LogTypeLabel: Record<LogType, string> = {
 export type BattleLogLevel = 'debug' | 'info' | 'warning' | 'error'
 
 /**
+ * 战斗日志类别常量
+ * 统一的日志类别定义，供全项目使用
+ */
+export const BATTLE_LOG_CATEGORIES = {
+  SYSTEM: 'system',
+  ACTION: 'action',
+  DAMAGE: 'damage',
+  HEAL: 'heal',
+  CRIT: 'crit',
+  STATUS: 'status',
+  BATTLE: 'battle',
+  ITEM: 'item',
+  DEBUG: 'debug',
+  INFO: 'info',
+  WARNING: 'warning',
+  ERROR: 'error',
+} as const
+
+/**
  * 战斗日志类别类型 - 用于业务过滤和展示分组
- * 注意: 此类型扩展为包含日志级别值，以兼容现有代码
  */
 export type BattleLogCategory =
-  | 'battle'
-  | 'system'
-  | 'item'
-  | 'action'
-  | 'debug'
+  (typeof BATTLE_LOG_CATEGORIES)[keyof typeof BATTLE_LOG_CATEGORIES]
 
 /**
  * 统一日志消息类型 - 合并级别和类别
@@ -36222,6 +36083,12 @@ export const LogLevelColors: Record<BattleLogCategory, string> = {
   heal: '#4caf50',
   crit: '#ff9800',
   status: '#2196f3',
+  battle: '#9c27b0',
+  item: '#8bc34a',
+  debug: '#607d8b',
+  info: '#2196f3',
+  warning: '#ff9800',
+  error: '#f44336',
 }
 
 /**
@@ -36404,14 +36271,7 @@ export const LogUtils = {
   },
 
   isValidLogCategory(category: string): boolean {
-    const validCategories: BattleLogCategory[] = [
-      'system',
-      'action',
-      'damage',
-      'heal',
-      'crit',
-      'status',
-    ]
+    const validCategories = Object.values(BATTLE_LOG_CATEGORIES)
     return validCategories.includes(category as BattleLogCategory)
   },
 
@@ -36902,7 +36762,7 @@ import type { SkillManager } from '@/core/skill/SkillManager'
 import type { SkillConfig } from '@/types/skill'
 import type { UISkills } from '@/types/UI/UIBattleCharacter'
 import type { BattleLogEntry } from '@/types/battle-log'
-
+import { EffectType } from '@/types/effect'
 /**
  * 战斗状态常量
  * 控制战斗的宏观生命周期
@@ -37026,15 +36886,6 @@ export const VALID_ACTION_TYPES = Object.freeze([
   ACTION_TYPES.BUFF,
   ACTION_TYPES.ITEM,
 ]) as readonly (typeof ACTION_TYPES)[keyof typeof ACTION_TYPES][]
-
-/** 战斗效果类型常量 */
-export const EFFECT_TYPES = {
-  DAMAGE: 'damage',
-  HEAL: 'heal',
-  BUFF: 'buff',
-  DEBUFF: 'debuff',
-  STATUS: 'status',
-} as const
 
 export type ParticipantSide =
   (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
@@ -37203,9 +37054,11 @@ export interface BattleAction {
  * 用于描述战斗动作产生的具体效果（如伤害、治疗、Buff等）
  */
 export interface BattleEffect {
-  type: 'damage' | 'heal' | 'buff' | 'debuff' | 'status'
+  type: EffectType
   value?: number
   buffId?: string
+  instanceId?: string
+  targetId?: string
   duration?: number
   description: string
 }
@@ -37223,7 +37076,8 @@ export interface BattleState {
   /** 回合顺序，按速度规则排序 */
   turnOrder: string[]
   currentTurn: number
-  isActive: boolean
+  /** 战斗状态 */
+  battleState: BattleStatus
   startTime: number
   endTime?: number
   winner?: ParticipantSide
@@ -37352,8 +37206,6 @@ export interface BattleData {
   autoBattle: boolean
   /** 自动战斗定时器ID */
   autoBattleIntervalId?: symbol
-  /** 战斗是否处于活跃状态 */
-  isActive: boolean
   /** 技能管理器实例（可选，用于技能执行） */
   skillManager?: import('@/core/skill/SkillManager').SkillManager
 }
@@ -37907,10 +37759,7 @@ export interface CharacterManager {
  * 版本: 1.0.0
  */
 
-/**
- * 效果条目类型
- */
-export type EffectType = 'damage' | 'heal' | 'buff' | 'debuff' | 'miss' | 'critical' | 'status'
+import type { EffectType } from './effect'
 
 /**
  * 动作类型
@@ -38028,16 +37877,25 @@ import type { SkillStep, SkillConfig } from '@/types/skill'
  */
 
 /**
- * 效果类型枚举
+ * 效果类型常量
+ * 统一的效果类型定义，供全项目使用
+ */
+export const EFFECT_TYPES = {
+  DAMAGE: 'damage',
+  HEAL: 'heal',
+  BUFF: 'buff',
+  DEBUFF: 'debuff',
+  MISS: 'miss',
+  STATUS: 'status',
+  CRITICAL: 'critical',
+  SPECIAL: 'special',
+} as const
+
+/**
+ * 效果类型
  * 定义技能和Buff的效果类型
  */
-export type EffectType =
-  | 'damage' // 伤害效果
-  | 'heal' // 治疗效果
-  | 'buff' // Buff效果
-  | 'debuff' // 减益效果
-  | 'miss' // 闪避效果
-  | 'special' // 特殊效果
+export type EffectType = (typeof EFFECT_TYPES)[keyof typeof EFFECT_TYPES]
 
 /**
  * 效果接口
@@ -42533,22 +42391,43 @@ export class BattleLogManager {
 
   /**
    * 记录【调试】类型日志
+   * @param message 日志消息
+   * @param contextOrLevelOrError 上下文对象、日志级别（数字或字符串）或错误对象
+   * @param error 错误对象
    */
   addDebugLog(
     message: string,
-    level: LogLevel = LogLevel.INFO,
-    context?: Record<string, unknown>,
-    source?: string,
+    contextOrLevelOrError?: Record<string, unknown> | LogLevel | string | Error,
     error?: Error,
   ): void {
+    let context: Record<string, unknown> | null = null
+    let level: LogLevel = LogLevel.INFO
+    let finalError: Error | undefined = undefined
+
+    if (!contextOrLevelOrError) {
+      // 只有消息
+    } else if (contextOrLevelOrError instanceof Error) {
+      // 第二个参数是 Error 对象
+      finalError = contextOrLevelOrError
+    } else if (typeof contextOrLevelOrError === 'number') {
+      // 第二个参数是数字日志级别
+      level = contextOrLevelOrError
+    } else if (typeof contextOrLevelOrError === 'string') {
+      // 第二个参数是字符串日志级别
+      level = this.parseLogLevel(contextOrLevelOrError)
+    } else if (typeof contextOrLevelOrError === 'object') {
+      // 第二个参数是上下文对象
+      context = contextOrLevelOrError
+    }
+
     const entry: LogEntry = {
       index: this.indexCounter.next(),
       type: LogType.DEBUG,
       level,
       message,
       context,
-      source,
-      error,
+      source: null,
+      error: finalError || error,
       segments: [],
       action: undefined,
     }
@@ -42565,6 +42444,21 @@ export class BattleLogManager {
         console.error('Logger handler error:', handler)
       }
     }
+  }
+
+  /**
+   * 解析字符串日志级别为 LogLevel 枚举
+   */
+  private parseLogLevel(levelStr: string): LogLevel {
+    const levelMap: Record<string, LogLevel> = {
+      error: LogLevel.ERROR,
+      warn: LogLevel.WARN,
+      warning: LogLevel.WARN,
+      info: LogLevel.INFO,
+      debug: LogLevel.DEBUG,
+      trace: LogLevel.TRACE,
+    }
+    return levelMap[levelStr.toLowerCase()] || LogLevel.INFO
   }
 
   // ==================== 添加便捷日志功能 ====================
@@ -49351,676 +49245,6 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 }
 </style>
 
---- tools/arena-version-1.html ---
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>传统工具界面</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
-        }
-
-        body {
-            background: linear-gradient(to bottom, #0a1628, #1a365d);
-            color: rgba(255, 255, 255, 0.85);
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* ============ 顶部菜单栏 ============ */
-        .toolbar {
-            background: rgba(26, 54, 93, 0.9);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 8px 16px;
-            display: flex;
-            gap: 24px;
-        }
-
-        .menu-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .menu-btn {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.85);
-            padding: 6px 12px;
-            cursor: pointer;
-            border-radius: 2px;
-            font-size: 13px;
-            transition: all 0.2s;
-        }
-
-        .menu-btn:hover {
-            background: rgba(96, 165, 250, 0.15);
-            border-color: rgba(96, 165, 250, 0.4);
-        }
-
-        .menu-btn.active {
-            background: rgba(34, 211, 238, 0.15);
-            border-color: #22d3ee;
-            color: #22d3ee;
-        }
-
-        /* ============ 主容器 ============ */
-        .main-container {
-            display: flex;
-            height: calc(100vh - 36px - 24px);
-        }
-
-        /* ============ 左侧工具栏 ============ */
-        .sidebar {
-            width: 60px;
-            background: rgba(16, 32, 56, 0.8);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 16px 0;
-            gap: 8px;
-        }
-
-        .tool-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 2px;
-            background: rgba(255, 255, 255, 0.05);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s;
-            border: 1px solid transparent;
-        }
-
-        .tool-icon:hover {
-            background: rgba(96, 165, 250, 0.15);
-            border-color: rgba(96, 165, 250, 0.3);
-        }
-
-        .tool-icon.active {
-            background: rgba(34, 211, 238, 0.15);
-            border-color: #22d3ee;
-            color: #22d3ee;
-        }
-
-        /* ============ 左侧折叠面板 ============ */
-        .left-panel {
-            width: 200px;
-            background: rgba(16, 32, 56, 0.7);
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 16px;
-            overflow-y: auto;
-        }
-
-        .panel-title {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 12px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid rgba(96, 165, 250, 0.3);
-        }
-
-        .tree-node {
-            padding: 6px 8px;
-            margin: 4px 0;
-            border-radius: 2px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.2s;
-            border-left: 2px solid transparent;
-        }
-
-        .tree-node:hover {
-            background: rgba(96, 165, 250, 0.1);
-        }
-
-        .tree-node.selected {
-            background: rgba(34, 211, 238, 0.15);
-            border-left-color: #22d3ee;
-            color: #22d3ee;
-        }
-
-        /* ============ 中央工作区 ============ */
-        .workspace {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: rgba(20, 38, 68, 0.6);
-            border-left: 1px solid rgba(255, 255, 255, 0.05);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .tab-bar {
-            height: 36px;
-            background: rgba(26, 54, 93, 0.8);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            gap: 8px;
-        }
-
-        .tab {
-            padding: 6px 16px;
-            font-size: 13px;
-            cursor: pointer;
-            border-radius: 2px 2px 0 0;
-            transition: all 0.2s;
-            border: 1px solid transparent;
-            border-bottom: none;
-        }
-
-        .tab:hover {
-            background: rgba(96, 165, 250, 0.1);
-        }
-
-        .tab.active {
-            background: rgba(30, 41, 59, 0.95);
-            border-color: rgba(255, 255, 255, 0.1);
-            border-bottom-color: transparent;
-            color: #22d3ee;
-        }
-
-        .editor {
-            flex: 1;
-            padding: 16px;
-            overflow: auto;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .editor-line {
-            display: flex;
-            margin-bottom: 4px;
-        }
-
-        .line-number {
-            color: rgba(96, 165, 250, 0.6);
-            width: 40px;
-            text-align: right;
-            padding-right: 12px;
-            user-select: none;
-            font-size: 12px;
-        }
-
-        .line-content {
-            flex: 1;
-        }
-
-        .line-content .keyword {
-            color: #22d3ee;
-        }
-
-        .line-content .string {
-            color: #86efac;
-        }
-
-        .line-content .comment {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .line-content .function {
-            color: #a78bfa;
-        }
-
-        .editor-line.active {
-            background: rgba(34, 211, 238, 0.08);
-            border-left: 2px solid #22d3ee;
-            padding-left: 4px;
-        }
-
-        /* ============ 右侧属性面板 ============ */
-        .right-panel {
-            width: 240px;
-            background: rgba(16, 32, 56, 0.7);
-            border-left: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 16px;
-            overflow-y: auto;
-        }
-
-        .property-group {
-            margin-bottom: 16px;
-        }
-
-        .property-title {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .property-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .property-label {
-            width: 90px;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .property-value {
-            flex: 1;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.85);
-            border-radius: 2px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-        }
-
-        .btn:hover {
-            background: rgba(96, 165, 250, 0.2);
-            border-color: rgba(96, 165, 250, 0.5);
-        }
-
-        .btn.primary {
-            background: rgba(34, 211, 238, 0.15);
-            border-color: #22d3ee;
-            color: #22d3ee;
-        }
-
-        .btn.primary:hover {
-            background: rgba(34, 211, 238, 0.25);
-        }
-
-        .btn.danger {
-            background: rgba(249, 115, 22, 0.1);
-            border-color: #f97316;
-            color: #f97316;
-        }
-
-        .btn.danger:hover {
-            background: rgba(249, 115, 22, 0.2);
-        }
-
-        .checkbox {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
-        }
-
-        .checkbox input {
-            width: 14px;
-            height: 14px;
-            cursor: pointer;
-        }
-
-        .select {
-            width: 100%;
-            padding: 4px 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.85);
-            border-radius: 2px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        /* ============ 底部状态栏 ============ */
-        .status-bar {
-            height: 24px;
-            background: rgba(26, 54, 93, 0.9);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .status-left {
-            display: flex;
-            gap: 16px;
-        }
-
-        .status-right {
-            display: flex;
-            gap: 16px;
-        }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-        }
-
-        .status-dot.online {
-            background: #22d3ee;
-            box-shadow: 0 0 6px rgba(34, 211, 238, 0.5);
-        }
-
-        .status-dot.offline {
-            background: rgba(255, 255, 255, 0.2);
-        }
-    </style>
-</head>
-<body>
-    <!-- 顶部菜单栏 -->
-    <div class="toolbar">
-        <div class="menu-group">
-            <button class="menu-btn active">文件</button>
-            <button class="menu-btn">编辑</button>
-            <button class="menu-btn">视图</button>
-            <button class="menu-btn">工具</button>
-            <button class="menu-btn">帮助</button>
-        </div>
-        <div class="menu-group">
-            <button class="menu-btn">保存</button>
-            <button class="menu-btn">运行</button>
-            <button class="menu-btn danger">停止</button>
-        </div>
-    </div>
-
-    <!-- 主容器 -->
-    <div class="main-container">
-        <!-- 左侧工具栏 -->
-        <div class="sidebar">
-            <div class="tool-icon active">📁</div>
-            <div class="tool-icon">🔍</div>
-            <div class="tool-icon">⚙️</div>
-            <div class="tool-icon">📊</div>
-            <div class="tool-icon">🔧</div>
-            <div class="tool-icon">⚙️</div>
-        </div>
-
-        <!-- 左侧折叠面板 -->
-        <div class="left-panel">
-            <div class="panel-title">项目结构</div>
-            <div class="tree-node selected">main.js</div>
-            <div class="tree-node">config.json</div>
-            <div class="tree-node">styles.css</div>
-            <div class="tree-node">utils/</div>
-            <div class="tree-node">  └─ helpers.js</div>
-            <div class="tree-node">  └─ validators.js</div>
-            <div class="tree-node">components/</div>
-            <div class="tree-node">  └─ header.vue</div>
-            <div class="tree-node">  └─ footer.vue</div>
-        </div>
-
-        <!-- 中央工作区 -->
-        <div class="workspace">
-            <div class="tab-bar">
-                <div class="tab active">main.js</div>
-                <div class="tab">config.json</div>
-                <div class="tab">控制台</div>
-            </div>
-            <div class="editor">
-                <div class="editor-line">
-                    <div class="line-number">1</div>
-                    <div class="line-content"><span class="comment">// 系统配置文件</span></div>
-                </div>
-                <div class="editor-line">
-                    <div class="line-number">2</div>
-                    <div class="line-content"><span class="keyword">const</span> config = {</div>
-                </div>
-                <div class="editor-line active">
-                    <div class="line-number">3</div>
-                    <div class="line-content">  <span class="keyword">host</span>: <span class="string">'localhost'</span>,</div>
-                </div>
-                <div class="editor-line">
-                    <div class="line-number">4</div>
-                    <div class="line-content">  <span class="keyword">port</span>: <span class="number">3000</span>,</div>
-                </div>
-                <div class="editor-line">
-                    <div class="line-number">5</div>
-                    <div class="line-content">  <span class="keyword">debug</span>: <span class="keyword">true</span>,</div>
-                </div>
-                <div class="editor-line">
-                    <div class="line-number">6</div>
-                    <div class="line-content">  <span class="keyword">timeout</span>: <span class="number">30000</span></div>
-                </div>
-                <div class="editor-line">
-                    <div class="line-number">7</div>
-                    <div class="line-content">};</div>
-                </div>
-                <div class="editor-line">
-                    <div class="line-number">8</div>
-                    <div class="line-content"></div>
-                </div>
-                <div class="editor-line">
-                    <div class="line-number">9</div>
-                    <div class="line-content"><span class="keyword">function</span> <span class="function">initialize</span>() {</div>
-                </div>
-                <div class="editor-line">
-                    <div class="line-number">10</div>
-                    <div class="line-content">  <span class="keyword">console</span>.<span class="function">log</span>(<span class="string">'Starting server...'</span>);</div>
-                </div>
-                <div class="editor-line">
-                    <div class="line-number">11</div>
-                    <div class="line-content">  <span class="comment">// 启动服务</span></div>
-                </div>
-                <div class="editor-line">
-                    <div class="line-number">12</div>
-                    <div class="line-content">}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 右侧属性面板 -->
-        <div class="right-panel">
-            <div class="property-group">
-                <div class="property-title">文件信息</div>
-                <div class="property-item">
-                    <div class="property-label">文件名</div>
-                    <div class="property-value">main.js</div>
-                </div>
-                <div class="property-item">
-                    <div class="property-label">大小</div>
-                    <div class="property-value">2.4 KB</div>
-                </div>
-                <div class="property-item">
-                    <div class="property-label">修改时间</div>
-                    <div class="property-value">2026-02-04 14:30</div>
-                </div>
-            </div>
-
-            <div class="property-group">
-                <div class="property-title">运行配置</div>
-                <div class="property-item">
-                    <div class="property-label">环境</div>
-                    <select class="select">
-                        <option>开发环境</option>
-                        <option>测试环境</option>
-                        <option>生产环境</option>
-                    </select>
-                </div>
-                <div class="checkbox">
-                    <input type="checkbox" id="autoReload">
-                    <label for="autoReload">自动重载</label>
-                </div>
-                <div class="checkbox">
-                    <input type="checkbox" id="debugMode" checked>
-                    <label for="debugMode">调试模式</label>
-                </div>
-            </div>
-
-            <div class="property-group">
-                <div class="property-title">操作</div>
-                <button class="btn primary">保存文件</button>
-                <button class="btn">格式化代码</button>
-                <button class="btn danger">删除文件</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 底部状态栏 -->
-    <div class="status-bar">
-        <div class="status-left">
-            <div class="status-item">
-                <span>行 3, 列 15</span>
-            </div>
-            <div class="status-item">
-                <span>UTF-8</span>
-            </div>
-            <div class="status-item">
-                <span>JavaScript</span>
-            </div>
-        </div>
-        <div class="status-right">
-            <div class="status-item">
-                <div class="status-dot online"></div>
-                <span>已连接</span>
-            </div>
-            <div class="status-item">
-                <span>内存: 128.5 MB</span>
-            </div>
-            <div class="status-item">
-                <span>运行中</span>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // 简单的交互效果
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-            });
-        });
-
-        document.querySelectorAll('.tree-node').forEach(node => {
-            node.addEventListener('click', () => {
-                document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
-                node.classList.add('selected');
-            });
-        });
-
-        document.querySelectorAll('.tool-icon').forEach(icon => {
-            icon.addEventListener('click', () => {
-                document.querySelectorAll('.tool-icon').forEach(i => i.classList.remove('active'));
-                icon.classList.add('active');
-            });
-        });
-    </script>
-</body>
-</html>
-
---- tools/test.html ---
-<!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>传统工具界面</title>
-    <style>
-      .main-layout {
-        display: grid;
-        grid-template-columns: 30% 1fr 30%;
-        gap: 0;
-        height: calc(100vh - 140px);
-        margin-top: 80px;
-        overflow: auto;
-      }
-
-      .config-panel {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        overflow: hidden;
-      }
-
-      .panel-section {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        background: #1a1a2e;
-        border: 1px solid #0f3460;
-        border-radius: 4px;
-        padding: 0.75rem;
-        margin-bottom: 0.75rem;
-        overflow-y: auto;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- 顶部菜单栏 -->
-    <div class="main-layout">
-      <div class="config-panel">
-        <div class="panel-section">
-          <div style="height: 1000px"></div>
-        </div>
-        <div class="panel-section">
-          <div style="height: 1000px"></div>
-        </div>
-      </div>
-      <div class="config-panel">
-        <div class="panel-section">
-          <div style="height: 1000px"></div>
-        </div>
-        <div class="panel-section">
-          <div style="height: 1000px"></div>
-        </div>
-      </div>
-      <div class="config-panel">
-        <div class="panel-section"></div>
-        <div class="panel-section"></div>
-      </div>
-    </div>
-
-    <script>
-      // 简单的交互效果
-      document.querySelectorAll('.tab').forEach((tab) => {
-        tab.addEventListener('click', () => {
-          document
-            .querySelectorAll('.tab')
-            .forEach((t) => t.classList.remove('active'))
-          tab.classList.add('active')
-        })
-      })
-
-      document.querySelectorAll('.tree-node').forEach((node) => {
-        node.addEventListener('click', () => {
-          document
-            .querySelectorAll('.tree-node')
-            .forEach((n) => n.classList.remove('selected'))
-          node.classList.add('selected')
-        })
-      })
-
-      document.querySelectorAll('.tool-icon').forEach((icon) => {
-        icon.addEventListener('click', () => {
-          document
-            .querySelectorAll('.tool-icon')
-            .forEach((i) => i.classList.remove('active'))
-          icon.classList.add('active')
-        })
-      })
-    </script>
-  </body>
-</html>
-
 --- tsconfig.json ---
 {
   "compilerOptions": {
@@ -50108,784 +49332,3 @@ export default defineConfig({
     globals: true,
   },
 })
-
---- 功能介绍.md ---
-# 游戏功能介绍
-
-## 1. 角色属性系统
-
-### 1.1 基础属性列表
-
-| 属性名称          | 编码                | 定义                   | 数值范围 | 对游戏体验的影响                                   |
-| ----------------- | ------------------- | ---------------------- | -------- | -------------------------------------------------- |
-| 等级              | level               | 角色的等级             | 1-99     | 影响角色基础属性值和技能解锁                       |
-| 名称              | name                | 角色的名字             | -        | 用于识别和区分不同角色                             |
-| 能量              | currentEnergy       | 角色当前能量值         | 0-100    | 用于施放技能，影响技能释放频率，初始值为25         |
-| 气血              | currentHp           | 角色当前生命值         | 0-最大值 | 直接影响角色生存能力，为0时角色死亡                |
-| 最小攻击-最大攻击 | minAttack/maxAttack | 角色攻击伤害范围       | 1-9999   | 直接影响伤害输出，范围越大伤害波动越大             |
-| 防御              | defense             | 角色抵抗伤害的能力     | 0-9999   | 减少受到的伤害，值越高减伤越多                     |
-| 速度              | speed               | 角色行动顺序的决定因素 | 1-9999   | 速度越高，行动顺序越靠前，回合内行动次数可能增加   |
-| 暴击率            | critRate            | 攻击产生暴击的概率     | 0-100%   | 提高暴击触发几率，增加伤害爆发能力，默认为10%      |
-| 暴击伤害          | critDamage          | 暴击时的伤害倍率       | 100-500% | 暴击时造成的额外伤害，值越高暴击伤害越高，默认125% |
-| 气血%             | healthBonus         | 气血加成百分比         | 0-500%   | 提高角色气血上限，增强生存能力                     |
-| 攻击%             | attackBonus         | 攻击加成百分比         | 0-500%   | 提高角色攻击力，增强伤害输出                       |
-| 防御%             | defenseBonus        | 防御加成百分比         | 0-500%   | 提高角色防御力，增强生存能力                       |
-| 速度%             | speedBonus          | 速度加成百分比         | 0-500%   | 提高角色速度，增强行动能力                         |
-
-### 1.2 能量系统详解
-
-#### 1.2.1 能量获取与消耗
-
-- **能量获取**：角色每回合结束时自动恢复25点能量
-- **能量消耗**：施放技能需要消耗对应能量值
-  - 小技能：固定消耗50点能量，默认冷却回合2回合
-  - 大技能（终极技能）：固定消耗150点能量，默认冷却回合5回合
-  - 被动技能：无能量消耗
-
-#### 1.2.2 能量策略
-
-- **能量管理**：合理规划技能释放顺序，确保关键技能在需要时能够释放
-- **爆发时机**：积累足够能量后，可选择释放高伤害的大技能
-- **持续输出**：通过小技能的循环使用，保持稳定的伤害输出
-
-#### 1.2.3 能量上限与特性
-
-- **能量上限**：角色能量值上限为100点
-- **能量溢出**：当能量恢复后超过上限时，会自动保持为100点
-- **初始能量**：角色初始能量值为25点，第一回合即可释放小技能
-
-### 1.3 属性影响机制
-
-- **属性相互关系**：某些属性会相互影响，例如高防御会降低受到的伤害，高速度会增加行动次数
-- **属性上限**：部分属性存在理论上限，如暴击率最高为100%
-- **属性成长**：角色等级提升时，基础属性会相应增长
-- **属性加成**：通过装备、技能、Buff等方式可以临时或永久提升属性
-
-## 2. 战斗计算公式
-
-### 2.1 伤害计算公式
-
-#### 基础伤害计算
-
-```
-基础伤害 = 随机值(最小攻击-最大攻击) × 各种伤害修正系数
-```
-
-#### 防御减免计算
-
-```
-伤害减免 = 目标防御值 × 0.01
-最终伤害 = 基础伤害 × (1 - 伤害减免)
-```
-
-#### 暴击伤害计算
-
-```
-暴击伤害 = 最终伤害 × 暴击伤害倍率
-```
-
-### 2.2 命中与闪避计算
-
-#### 命中概率计算
-
-```
-实际命中概率 = 攻击者命中率 - 目标闪避率
-```
-
-#### 闪避判定
-
-```
-是否闪避 = 随机数 < 目标闪避率
-```
-
-### 2.3 暴击概率计算
-
-```
-实际暴击概率 = 角色基础暴击率 + 技能/Buff加成
-```
-
-## 3. 游戏核心机制
-
-### 3.1 基础玩法
-
-- **回合制战斗**：游戏采用回合制战斗系统，角色按照速度顺序行动
-- **技能释放**：角色拥有多种技能，消耗能量值释放
-- **策略搭配**：玩家需要根据敌人特点和战场形势，合理搭配角色和技能
-- **资源管理**：管理角色的能量和生命值，确保战斗持续能力
-
-### 3.2 操作方式
-
-- **角色选择**：在参战面板中选择需要出战的角色
-- **技能释放**：在战斗界面中点击角色头像，然后选择要释放的技能
-- **目标选择**：释放技能时选择目标敌人或友军
-- **战斗控制**：可暂停、加速或重置战斗
-
-### 3.3 胜利条件
-
-- **全歼敌人**：击败所有敌方角色
-- **目标达成**：完成特定任务目标（如保护特定角色存活）
-- **时间限制**：在规定回合数内达成目标
-
-### 3.4 失败判定规则
-
-- **我方全灭**：所有我方角色生命值降至0
-- **任务失败**：未能在规定条件下完成任务目标
-- **时间耗尽**：超过规定回合数仍未达成胜利条件
-
-## 4. 游戏内Buff系统
-
-### 4.1 Buff分类
-
-#### 4.1.1 增益效果（Buff）
-
-| Buff名称   | 图标 | 效果描述                      | 持续时间 | 获取途径               | 叠加规则                   |
-| ---------- | ---- | ----------------------------- | -------- | ---------------------- | -------------------------- |
-| 攻击力提升 | 🔺   | 提高角色攻击力20%             | 3回合    | 技能释放、装备效果     | 刷新持续时间               |
-| 防御力提升 | 🛡️   | 提高角色防御力30%             | 4回合    | 技能释放、装备效果     | 刷新持续时间               |
-| 速度提升   | ⚡   | 提高角色速度25%               | 3回合    | 技能释放、装备效果     | 刷新持续时间               |
-| 护盾       | 🛡️   | 吸收100点伤害                 | 2回合    | 技能释放               | 不可叠加，新护盾覆盖旧护盾 |
-| 生命回复   | 💚   | 每回合回复50点生命值          | 3回合    | 技能释放、装备效果     | 独立叠加，每层单独计算     |
-| 狂暴       | 🔥   | 攻击力提升50%，防御力降低20%  | 2回合    | 技能释放、特定条件触发 | 不可叠加                   |
-| 山神祝福   | ⛰️   | 受到伤害减少50%，免疫控制效果 | 3回合    | 特定技能释放           | 不可叠加                   |
-
-#### 4.1.2 减益效果（Debuff）
-
-| Buff名称     | 图标 | 效果描述           | 持续时间 | 获取途径           | 叠加规则               |
-| ------------ | ---- | ------------------ | -------- | ------------------ | ---------------------- |
-| 中毒         | 🟢   | 每回合受到20点伤害 | 4回合    | 技能释放、敌人攻击 | 独立叠加，每层单独计算 |
-| 眩晕         | ⭕   | 无法进行任何行动   | 1回合    | 技能释放、敌人攻击 | 不可叠加，刷新持续时间 |
-| 速度降低     | 🐌   | 速度降低30%        | 2回合    | 技能释放、敌人攻击 | 刷新持续时间           |
-| 命中率降低   | 🎯   | 命中率降低25%      | 2回合    | 技能释放、敌人攻击 | 刷新持续时间           |
-| 暴击伤害降低 | 💥   | 暴击伤害降低30%    | 2回合    | 技能释放、敌人攻击 | 刷新持续时间           |
-| 重伤         | 💔   | 受到伤害增加20%    | 3回合    | 技能释放、敌人攻击 | 刷新持续时间           |
-
-### 4.2 Buff叠加规则
-
-- **独立叠加**：每层Buff独立计算效果，如中毒效果每层单独造成伤害
-- **刷新持续时间**：新Buff覆盖旧Buff并重置持续时间，如攻击力提升
-- **限制层数**：达到最大层数后无法继续叠加，如某些特殊Buff最多叠加3层
-
-### 4.3 Buff系统特性
-
-- **可驱散性**：部分Buff可被驱散技能移除
-- **免疫性**：某些角色或状态对特定Buff免疫
-- **控制效果**：部分Debuff带有控制效果，如眩晕、沉默等
-- **持续时间**：Buff通常有明确的持续回合数，回合结束后自动消失
-
-## 5. 游戏功能模块
-
-### 5.1 参战面板
-
-- **入口位置**：游戏主界面左侧
-- **核心作用**：管理出战角色，调整队伍配置
-- **使用方法**：
-  1. 勾选角色前方的复选框以启用/禁用角色
-  2. 点击角色头像查看详细属性
-  3. 通过拖拽调整角色出战顺序
-
-### 5.2 战斗界面
-
-- **入口位置**：游戏主界面中央
-- **核心作用**：进行战斗操作，观察战斗过程
-- **使用方法**：
-  1. 点击角色头像选择要行动的角色
-  2. 从技能列表中选择要释放的技能
-  3. 点击目标敌人或友军确定技能目标
-  4. 使用界面下方的控制按钮调整战斗速度或暂停
-
-### 5.3 调试面板
-
-- **入口位置**：游戏主界面右侧
-- **核心作用**：实时监控角色属性变化，查看详细战斗数据
-- **使用方法**：
-  1. 选择要查看的角色
-  2. 观察属性监控区域的实时数据变化
-  3. 查看技能信息和Buff效果
-
-### 5.4 战斗日志
-
-- **入口位置**：游戏主界面底部
-- **核心作用**：记录战斗过程中的所有事件和数据
-- **使用方法**：
-  1. 滚动查看详细战斗记录
-  2. 分析伤害数据和Buff效果
-  3. 排查战斗中的异常情况
-
-### 5.5 场景管理
-
-- **入口位置**：游戏主界面顶部菜单
-- **核心作用**：切换不同战斗场景，调整战斗环境
-- **使用方法**：
-  1. 从场景列表中选择要进入的场景
-  2. 查看场景描述和敌人配置
-  3. 点击"进入场景"开始战斗
-
-### 5.6 战斗规则设置
-
-- **入口位置**：游戏主界面顶部菜单
-- **核心作用**：调整战斗规则和参数，自定义游戏体验
-- **使用方法**：
-  1. 修改战斗参数如伤害倍率、暴击概率等
-  2. 启用或禁用特定战斗机制
-  3. 保存设置并应用到战斗中
-
-## 6. 总结
-
-本游戏是一款策略性回合制战斗游戏，玩家通过合理搭配角色、技能和Buff，利用战斗策略击败敌人。游戏拥有丰富的属性系统、深度的战斗计算机制和多样的游戏功能模块，为玩家提供了极具策略性和可玩性的游戏体验。
-
-通过本功能介绍文档，玩家可以快速了解游戏的核心内容和玩法机制，为游戏体验打下良好的基础。随着游戏的不断更新和扩展，本文档也将持续完善，为玩家提供最新、最全面的游戏信息。
-
---- 需求规格说明书.md ---
-# 战斗调试工作室需求规格说明书
-
-## 文档信息
-
-| 属性     | 内容                                  |
-| -------- | ------------------------------------- |
-| 项目名称 | 战斗调试工作室（Combat Debug Studio） |
-| 版本号   | 1.0.0                                 |
-| 项目类型 | Web前端游戏系统                       |
-| 技术栈   | Vue 3 + TypeScript + Vite + Pinia     |
-| 创建日期 | 2026-02-28                            |
-
----
-
-## 1. 项目概述
-
-### 1.1 项目背景
-
-战斗调试工作室是一个基于Web的回合制战斗系统调试工具，旨在为游戏开发者提供一个可视化、可调试的战斗系统测试环境。该系统支持多种战斗场景配置、智能敌人AI、完整的Buff/减益效果系统，以及战斗回放和调试功能。
-
-### 1.2 项目目标
-
-1. 提供完整的回合制战斗系统核心实现
-2. 支持多种战斗场景和敌人配置
-3. 实现智能战斗AI决策系统
-4. 提供可视化调试和监控界面
-5. 支持战斗过程回放和分析
-
-### 1.3 目标用户
-
-- 游戏开发人员
-- 战斗系统测试工程师
-- 游戏设计师
-- 独立游戏开发者
-
----
-
-## 2. 系统功能架构
-
-### 2.1 系统架构图
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         用户界面层 (Vue 3)                       │
-├─────────────────────────────────────────────────────────────────┤
-│  BattleArena  │  DebugPanel  │  ParticipantPanel  │  ControlBar│
-├─────────────────────────────────────────────────────────────────┤
-│                         状态管理层 (Pinia)                        │
-├─────────────────────────────────────────────────────────────────┤
-│  battleStore  │  debugStore  │  characterStore  │  sceneStore  │
-├─────────────────────────────────────────────────────────────────┤
-│                         核心业务层                                │
-├──────────────┬──────────────┬──────────────┬────────────────────┤
-│  战斗系统    │  AI系统       │  Buff系统     │   技能系统         │
-│  BattleSystem│  BattleAI    │  BuffSystem  │   SkillManager    │
-├──────────────┴──────────────┴──────────────┴────────────────────┤
-│                         辅助功能层                                │
-├──────────────┬──────────────┬──────────────┬────────────────────┤
-│  回合管理    │  动作执行     │  战斗录制     │   战斗规则         │
-│  TurnManager │  ActionExec  │  BattleRec.  │   BattleRules     │
-├──────────────┴──────────────┴──────────────┴────────────────────┤
-│                         数据配置层                                │
-├─────────────────────────────────────────────────────────────────┤
-│  skills.json  │  enemies.json  │  buffs.json  │  scenes.json   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 2.2 核心模块清单
-
-| 模块名称 | 文件路径                                              | 功能描述                       |
-| -------- | ----------------------------------------------------- | ------------------------------ |
-| 战斗系统 | `src/core/BattleSystem.ts`                            | 战斗核心实现，管理战斗生命周期 |
-| 回合管理 | `src/core/battle/TurnManager.ts`                      | 回合顺序计算和管理             |
-| 动作执行 | `src/core/battle/ActionExecutor.ts`                   | 技能和攻击的执行               |
-| AI系统   | `src/core/battle/AISystem.ts`                         | 敌人AI决策                     |
-| Buff系统 | `src/core/BuffSystem.ts`                              | 状态效果管理                   |
-| 技能管理 | `src/core/skill/SkillManager.ts`                      | 技能执行和管理                 |
-| 战斗录制 | `src/core/battle/BattleRecorder.ts`                   | 战斗过程记录                   |
-| 战斗回放 | `src/core/battle/replay/BattleReplayManager.ts`       | 战斗回放功能                   |
-| 自动战斗 | `src/core/battle/auto/AutoBattleManager.ts`           | 自动战斗控制                   |
-| 干预管理 | `src/core/battle/intervention/InterventionManager.ts` | 手动干预机制                   |
-
----
-
-## 3. 功能需求
-
-### 3.1 战斗系统功能
-
-#### 3.1.1 战斗生命周期管理
-
-| 需求ID       | 功能描述           | 优先级 |
-| ------------ | ------------------ | ------ |
-| F-BATTLE-001 | 创建新的战斗实例   | 高     |
-| F-BATTLE-002 | 初始化战斗参与者   | 高     |
-| F-BATTLE-003 | 执行回合制战斗流程 | 高     |
-| F-BATTLE-004 | 暂停和恢复战斗     | 中     |
-| F-BATTLE-005 | 战斗结算和结果判定 | 高     |
-| F-BATTLE-006 | 战斗状态查询       | 中     |
-
-**战斗状态定义：**
-
-- `CREATED`：已创建，等待参与者加入
-- `PREPARING`：战前准备，初始化技能和Buff
-- `ACTIVE`：战斗进行中
-- `PAUSED`：战斗暂停
-- `SETTLEMENT`：战斗结算
-- `ENDED`：战斗结束
-
-#### 3.1.2 回合管理
-
-| 需求ID     | 功能描述               | 优先级 |
-| ---------- | ---------------------- | ------ |
-| F-TURN-001 | 按速度属性计算回合顺序 | 高     |
-| F-TURN-002 | 检测速度变化并重新排序 | 高     |
-| F-TURN-003 | 管理回合内行动顺序     | 高     |
-| F-TURN-004 | 回合开始/结束事件触发  | 中     |
-
-#### 3.1.3 动作执行
-
-| 需求ID       | 功能描述           | 优先级 |
-| ------------ | ------------------ | ------ |
-| F-ACTION-001 | 普通攻击执行       | 高     |
-| F-ACTION-002 | 技能释放执行       | 高     |
-| F-ACTION-003 | 伤害计算和应用     | 高     |
-| F-ACTION-004 | 治疗效果计算和应用 | 高     |
-| F-ACTION-005 | 闪避判定           | 高     |
-| F-ACTION-006 | 暴击判定和伤害倍率 | 高     |
-
-### 3.2 角色战斗属性系统
-
-#### 3.2.1 基础属性
-
-| 属性名称 | 属性编码      | 数据类型 | 数值范围 | 默认值 | 说明                   |
-| -------- | ------------- | -------- | -------- | ------ | ---------------------- |
-| 等级     | level         | integer  | 1-99     | 1      | 影响基础属性和技能解锁 |
-| 名称     | name          | string   | -        | -      | 角色标识               |
-| 当前能量 | currentEnergy | integer  | 0-100    | 25     | 用于释放技能           |
-| 最大能量 | maxEnergy     | integer  | 100      | 100    | 能量上限               |
-| 当前气血 | currentHp     | integer  | 0-最大值 | -      | 生命值，为0时死亡      |
-| 最大气血 | maxHp         | integer  | 1-99999  | -      | 气血上限               |
-| 最小攻击 | minAttack     | integer  | 1-9999   | -      | 攻击伤害下限           |
-| 最大攻击 | maxAttack     | integer  | 1-9999   | -      | 攻击伤害上限           |
-| 防御     | defense       | integer  | 0-9999   | 0      | 减少受到的伤害         |
-| 速度     | speed         | integer  | 1-9999   | -      | 决定行动顺序           |
-| 暴击率   | critRate      | float    | 0-1      | 0.1    | 10%默认暴击率          |
-| 暴击伤害 | critDamage    | float    | 1-5      | 1.25   | 125%默认暴击伤害       |
-| 气血加成 | healthBonus   | float    | 0-5      | 0      | 气血百分比加成         |
-| 攻击加成 | attackBonus   | float    | 0-5      | 0      | 攻击百分比加成         |
-| 防御加成 | defenseBonus  | float    | 0-5      | 0      | 防御百分比加成         |
-| 速度加成 | speedBonus    | float    | 0-5      | 0      | 速度百分比加成         |
-
-#### 3.2.2 能量系统
-
-| 需求ID       | 功能描述               | 优先级 |
-| ------------ | ---------------------- | ------ |
-| F-ENERGY-001 | 初始能量为25点         | 高     |
-| F-ENERGY-002 | 每回合结束恢复25点能量 | 高     |
-| F-ENERGY-003 | 小技能消耗50点能量     | 高     |
-| F-ENERGY-004 | 大技能消耗100点能量    | 高     |
-| F-ENERGY-005 | 能量达到上限时停止恢复 | 高     |
-
-### 3.3 战斗计算公式
-
-#### 3.3.1 伤害计算
-
-| 需求ID       | 计算公式                              | 优先级 |
-| ------------ | ------------------------------------- | ------ |
-| F-DAMAGE-001 | 基础伤害 = 随机(minAttack, maxAttack) | 高     |
-| F-DAMAGE-002 | 伤害减免 = 目标防御 × 0.01            | 高     |
-| F-DAMAGE-003 | 最终伤害 = 基础伤害 × (1 - 伤害减免)  | 高     |
-| F-DAMAGE-004 | 暴击伤害 = 最终伤害 × 暴击伤害倍率    | 高     |
-
-#### 3.3.2 命中与闪避
-
-| 需求ID      | 计算公式                      | 优先级 |
-| ----------- | ----------------------------- | ------ |
-| F-CRIT-001  | 暴击判定：随机数 < 暴击率     | 高     |
-| F-DODGE-001 | 闪避判定：随机数 < 目标闪避率 | 高     |
-
-### 3.4 Buff系统功能
-
-#### 3.4.1 Buff分类
-
-**增益效果（Buff）：**
-
-| Buff名称   | Buff ID           | 效果描述              | 持续时间 | 叠加规则 |
-| ---------- | ----------------- | --------------------- | -------- | -------- |
-| 攻击力提升 | buff_attack_up    | 提高角色攻击力20%     | 3回合    | 刷新     |
-| 防御力提升 | buff_defense_up   | 提高角色防御力30%     | 4回合    | 刷新     |
-| 速度提升   | buff_speed_up     | 提高角色速度25%       | 3回合    | 刷新     |
-| 护盾       | buff_shield       | 吸收100点伤害         | 2回合    | 覆盖     |
-| 生命回复   | buff_heal_ot      | 每回合回复50点生命    | 3回合    | 独立叠加 |
-| 狂暴       | buff_berserk      | 攻击+50%，防御-20%    | 2回合    | 覆盖     |
-| 山神祝福   | buff_mountain_god | 受伤减少50%，免疫控制 | 3回合    | 覆盖     |
-| 闪避提升   | buff_dodge_up     | 闪避率提升20%         | 3回合    | 刷新     |
-
-**减益效果（Debuff）：**
-
-| Buff名称     | Buff ID                    | 效果描述           | 持续时间 | 叠加规则 |
-| ------------ | -------------------------- | ------------------ | -------- | -------- |
-| 中毒         | poison                     | 每回合受到20点伤害 | 4回合    | 独立叠加 |
-| 眩晕         | stun                       | 无法进行任何行动   | 1回合    | 刷新     |
-| 速度降低     | buff_speed_reduction       | 速度降低30%        | 2回合    | 刷新     |
-| 命中率降低   | buff_hit_reduction         | 命中率降低25%      | 2回合    | 刷新     |
-| 暴击伤害降低 | buff_crit_damage_reduction | 暴击伤害降低30%    | 2回合    | 刷新     |
-| 重伤         | buff_injury                | 受伤增加20%        | 3回合    | 刷新     |
-
-#### 3.4.2 Buff叠加规则
-
-| 规则类型              | 说明                           | 应用场景                 |
-| --------------------- | ------------------------------ | ------------------------ |
-| 刷新(REFRESH)         | 新Buff覆盖旧Buff，重置持续时间 | 攻击力提升、防御力提升等 |
-| 限制层数(LIMITED)     | 达到最大层数后无法叠加         | 特殊Buff                 |
-| 独立叠加(INDEPENDENT) | 每层Buff独立计算效果           | 中毒、生命回复等         |
-
-#### 3.4.3 Buff生命周期
-
-| 需求ID     | 功能描述           | 优先级 |
-| ---------- | ------------------ | ------ |
-| F-BUFF-001 | Buff添加和应用     | 高     |
-| F-BUFF-002 | Buff持续时间更新   | 高     |
-| F-BUFF-003 | Buff移除和效果清理 | 高     |
-| F-BUFF-004 | Buff效果刷新       | 中     |
-| F-BUFF-005 | Buff脚本动态加载   | 中     |
-
-### 3.5 技能系统功能
-
-#### 3.5.1 技能配置
-
-| 技能属性 | 说明         | 数据类型 |
-| -------- | ------------ | -------- |
-| 技能ID   | 唯一标识     | string   |
-| 技能名称 | 显示名称     | string   |
-| 技能描述 | 详细说明     | string   |
-| 能量消耗 | 释放所需能量 | integer  |
-| 冷却时间 | 冷却回合数   | integer  |
-| 目标选择 | 技能目标类型 | enum     |
-| 技能步骤 | 技能效果列表 | array    |
-
-#### 3.5.2 技能类型
-
-| 技能类型   | 说明               |
-| ---------- | ------------------ |
-| 伤害技能   | 对目标造成伤害     |
-| 治疗技能   | 恢复目标生命       |
-| Buff技能   | 为目标添加增益效果 |
-| Debuff技能 | 为目标添加减益效果 |
-
-#### 3.5.3 技能效果类型
-
-| 效果类型 | 说明         |
-| -------- | ------------ |
-| damage   | 造成伤害     |
-| heal     | 恢复生命     |
-| buff     | 添加增益效果 |
-| debuff   | 添加减益效果 |
-
-### 3.6 AI系统功能
-
-#### 3.6.1 AI决策逻辑
-
-| 需求ID   | 功能描述     | 优先级 |
-| -------- | ------------ | ------ |
-| F-AI-001 | 评估战场态势 | 高     |
-| F-AI-002 | 选择最优技能 | 高     |
-| F-AI-003 | 选择攻击目标 | 高     |
-| F-AI-004 | 能量管理策略 | 中     |
-| F-AI-005 | 威胁值计算   | 中     |
-
-#### 3.6.2 AI优先级策略
-
-| 优先级 | 技能类型   |
-| ------ | ---------- |
-| 1      | 治疗技能   |
-| 2      | 攻击技能   |
-| 3      | Buff技能   |
-| 4      | Debuff技能 |
-
-#### 3.6.3 AI能量阈值
-
-| 能量状态 | 阈值    | 行为           |
-| -------- | ------- | -------------- |
-| 高能量   | ≥70%    | 优先使用大技能 |
-| 中能量   | 50%-70% | 均衡使用技能   |
-| 低能量   | <50%    | 优先普通攻击   |
-
-### 3.7 战斗控制功能
-
-#### 3.7.1 自动战斗
-
-| 需求ID     | 功能描述                    | 优先级 |
-| ---------- | --------------------------- | ------ |
-| F-AUTO-001 | 开启/关闭自动战斗           | 高     |
-| F-AUTO-002 | 设置自动战斗速度(1/2/3/5倍) | 高     |
-| F-AUTO-003 | 战斗加速控制                | 高     |
-
-#### 3.7.2 手动干预
-
-| 需求ID      | 功能描述           | 优先级 |
-| ----------- | ------------------ | ------ |
-| F-INTER-001 | 暂停战斗           | 高     |
-| F-INTER-002 | 中断AI行动         | 中     |
-| F-INTER-003 | 手动选择技能和目标 | 高     |
-
-#### 3.7.3 战斗重置
-
-| 需求ID       | 功能描述     | 优先级 |
-| ------------ | ------------ | ------ |
-| F-RESET-001  | 重置当前战斗 | 中     |
-| F-REPLAY-001 | 战斗回放     | 中     |
-
-### 3.8 调试功能
-
-#### 3.8.1 属性监控
-
-| 需求ID      | 功能描述         | 优先级 |
-| ----------- | ---------------- | ------ |
-| F-DEBUG-001 | 实时显示角色属性 | 高     |
-| F-DEBUG-002 | 属性变化追踪     | 中     |
-| F-DEBUG-003 | Buff状态显示     | 高     |
-
-#### 3.8.2 战斗日志
-
-| 需求ID    | 功能描述       | 优先级 |
-| --------- | -------------- | ------ |
-| F-LOG-001 | 战斗事件记录   | 高     |
-| F-LOG-002 | 伤害数值显示   | 高     |
-| F-LOG-003 | 日志过滤和搜索 | 中     |
-
-#### 3.8.3 场景管理
-
-| 需求ID      | 功能描述     | 优先级 |
-| ----------- | ------------ | ------ |
-| F-SCENE-001 | 场景切换     | 中     |
-| F-SCENE-002 | 敌人配置加载 | 中     |
-
----
-
-## 4. 用户界面需求
-
-### 4.1 界面设计规范
-
-#### 4.1.1 视觉风格
-
-| 设计属性 | 规范                         |
-| -------- | ---------------------------- |
-| 主题     | 深色系专业数据仪表盘         |
-| 设计理念 | 严谨克制的极简主义           |
-| 布局     | 精密网格布局                 |
-| 文字颜色 | 白色高对比度（透明度85%）    |
-| 辅助线条 | 浅蓝色（#60a5fa，透明度40%） |
-| 交互强调 | 青色（#22d3ee）              |
-| 警告标识 | 橙红色（#f97316）            |
-| 面板效果 | 微磨砂玻璃质感+微妙投影      |
-| 字体     | 无衬线等宽字体               |
-| 渲染     | 4K超清渲染，锐利边缘         |
-
-#### 4.1.2 界面布局
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  顶部：场景选择栏 (SceneManagementDialog)                         │
-├────────────────────┬─────────────────────────┬─────────────────┤
-│                    │                         │                 │
-│  左侧：参战面板     │   中央：战斗Arena       │  右侧：调试面板  │
-│  ParticipantPanel  │     BattleArena         │   DebugPanel    │
-│                    │                         │                 │
-│  - 角色列表        │   - 战场区域            │  - 属性监控     │
-│  - 角色选择        │   - 技能选择            │  - Buff显示     │
-│  - 角色属性        │   - 目标选择            │  - 技能信息     │
-│                    │                         │                 │
-├────────────────────┴─────────────────────────┴─────────────────┤
-│  底部：战斗日志 (BattleLog) / 控制栏 (ControlBar)                  │
-│  - 战斗事件记录  - 战斗控制按钮  - 快捷键提示                       │
-└──────────────────────────────────────────────────────────────────┘
-```
-
-### 4.2 界面组件清单
-
-| 组件名称   | 文件路径                              | 功能描述       |
-| ---------- | ------------------------------------- | -------------- |
-| 战斗场     | `src/views/BattleArena.vue`           | 主战斗界面容器 |
-| 战场       | `src/views/BattleField.vue`           | 战斗场景渲染   |
-| 参战面板   | `src/views/ParticipantPanel.vue`      | 角色管理       |
-| 调试面板   | `src/views/DebugPanel.vue`            | 属性监控和调试 |
-| 战斗日志   | `src/views/BattleLog.vue`             | 战斗事件记录   |
-| 控制栏     | `src/views/ControlBar.vue`            | 战斗控制按钮   |
-| 战斗回放   | `src/views/BattleReplay.vue`          | 战斗回放界面   |
-| 快捷键设置 | `src/views/KeybindSettings.vue`       | 按键配置       |
-| 快捷键提示 | `src/views/KeybindHintPanel.vue`      | 按键提示显示   |
-| 新手引导   | `src/views/NewbieGuide.vue`           | 教程引导       |
-| 属性提示   | `src/components/AttributeTooltip.vue` | 属性信息提示   |
-| Buff图标   | `src/components/BuffIcon.vue`         | Buff状态图标   |
-| Buff列表   | `src/components/BuffList.vue`         | Buff效果列表   |
-| 伤害数字   | `src/components/DamageNumber.vue`     | 伤害数值动画   |
-| 技能效果   | `src/components/SkillEffect.vue`      | 技能特效显示   |
-
-### 4.3 交互功能
-
-#### 4.3.1 键盘快捷键
-
-| 按键 | 功能                |
-| ---- | ------------------- |
-| 空格 | 暂停/继续战斗       |
-| 1-5  | 切换自动战斗速度    |
-| R    | 重置战斗            |
-| H    | 显示/隐藏快捷键提示 |
-| Esc  | 关闭对话框          |
-
-#### 4.3.2 鼠标交互
-
-| 操作         | 功能         |
-| ------------ | ------------ |
-| 点击角色头像 | 选择行动角色 |
-| 点击技能图标 | 选择释放技能 |
-| 点击目标     | 选择技能目标 |
-| 右键点击     | 查看角色详情 |
-
----
-
-## 5. 数据配置需求
-
-### 5.1 配置文件清单
-
-| 配置文件 | 路径                                     | 用途           |
-| -------- | ---------------------------------------- | -------------- |
-| 技能配置 | `configs/skills/skills.json`             | 技能定义和效果 |
-| 敌人配置 | `configs/enemies/enemies.json`           | 敌人属性和技能 |
-| Buff配置 | `configs/buffs/buffs.json`               | Buff效果定义   |
-| 效果配置 | `configs/effects/effects.json`           | 战斗特效       |
-| 场景配置 | `configs/scenes/scenes.json`             | 战斗场景       |
-| 全局参数 | `configs/params/buff-global-params.json` | Buff全局参数   |
-
-### 5.2 敌人数据模型
-
-```json
-{
-  "id": "enemy_001",
-  "name": "花妖",
-  "level": 1,
-  "stats": {
-    "health": 57,
-    "minAttack": 6,
-    "maxAttack": 9,
-    "defense": 3,
-    "speed": 11
-  },
-  "skills": {
-    "small": ["skill_enemy_001_small"]
-  }
-}
-```
-
-### 5.3 技能数据模型
-
-```json
-{
-  "id": "skill_enemy_001_small",
-  "name": "花粉迷雾",
-  "description": "对单个敌人造成80%攻击力的普通伤害",
-  "enemyCost": 50,
-  "cooldown": 2,
-  "selector": "single_enemy",
-  "steps": [
-    {
-      "type": "damage",
-      "target": "enemy",
-      "scope": "single",
-      "formula": "attack*0.8",
-      "attackType": "normal"
-    }
-  ]
-}
-```
-
----
-
-## 6. 非功能需求
-
-### 6.1 性能需求
-
-| 指标         | 要求     |
-| ------------ | -------- |
-| 页面加载时间 | < 3秒    |
-| 战斗帧率     | ≥ 30 FPS |
-| 动画延迟     | < 100ms  |
-| 内存占用     | < 200MB  |
-
-### 6.2 兼容性需求
-
-| 浏览器  | 最低版本 |
-| ------- | -------- |
-| Chrome  | 90+      |
-| Firefox | 88+      |
-| Edge    | 90+      |
-| Safari  | 14+      |
-
-### 6.3 可维护性需求
-
-| 需求       | 说明             |
-| ---------- | ---------------- |
-| 模块化设计 | 核心功能独立模块 |
-| 配置驱动   | 战斗规则可配置   |
-| 日志系统   | 完整的日志记录   |
-| 错误处理   | 健壮的异常捕获   |
-
----
-
-## 7. 验收标准
-
-### 7.1 功能验收
-
-| 验收项   | 验收标准               |
-| -------- | ---------------------- |
-| 战斗流程 | 完整执行回合制战斗流程 |
-| 伤害计算 | 伤害符合数值公式计算   |
-| Buff系统 | Buff正确应用和移除     |
-| AI决策   | 敌人能够自主决策行动   |
-| 调试功能 | 实时显示战斗数据       |
-| 战斗回放 | 能够回放历史战斗       |
-
-### 7.2 界面验收
-
-| 验收项   | 验收标准         |
-| -------- | ---------------- |
-| 布局显示 | 界面元素正确显示 |
-| 交互响应 | 点击操作正常响应 |
-| 动画效果 | 技能动画平滑播放 |
-| 主题风格 | 符合设计规范     |
-
----
-
-## 8. 附录
-
-### 8.1 术语表
-
-| 术语     | 定义                     |
-| -------- | ------------------------ |
-| Buff     | 增益效果                 |
-| Debuff   | 减益效果                 |
-| 回合     | 所有人行动一次为一个回合 |
-| 行动     | 单个角色的行动           |
-| 技能冷却 | 技能释放后的等待时间     |
-
-### 8.2 参考资料
-
-- 项目源码：`src/` 目录
-- 配置文件：`configs/` 目录
-- 现有文档：`功能介绍.md`
-
----
-
-_文档结束_

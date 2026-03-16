@@ -12,6 +12,10 @@ import type { SkillConfig } from '@/types/skill'
 import type { UISkills } from '@/types/UI/UIBattleCharacter'
 import type { BattleLogEntry } from '@/types/battle-log'
 import { EffectType } from '@/types/effect'
+import { Counter } from '@/utils/Counter'
+
+const counter = new Counter()
+
 /**
  * 战斗状态常量
  * 控制战斗的宏观生命周期
@@ -296,6 +300,135 @@ export interface BattleAction {
   effects: BattleEffect[]
 }
 
+export const BattleActionHelper = {
+  /**
+   * 生成唯一动作ID
+   * @param prefix ID前缀
+   * @returns 唯一ID字符串
+   */
+  generateId(prefix: string = 'action'): string {
+    return `${prefix}_${counter.next()}`
+  },
+
+  /**
+   * 创建基础战斗动作
+   * @param options 动作选项
+   * @returns 战斗动作对象
+   */
+  create(options: {
+    type: BattleAction['type']
+    sourceId: string
+    targetId: string
+    skillId?: string
+    skillName?: string
+    itemId?: string
+    buffId?: string
+    damage?: number
+    heal?: number
+    success?: boolean
+    isHit?: boolean
+    isCrit?: boolean
+    critDamage?: number
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return {
+      id: this.generateId(options.type),
+      type: options.type,
+      sourceId: options.sourceId,
+      targetId: options.targetId,
+      skillId: options.skillId,
+      skillName: options.skillName,
+      itemId: options.itemId,
+      buffId: options.buffId,
+      damage: options.damage ?? 0,
+      heal: options.heal ?? 0,
+      success: options.success ?? true,
+      isHit: options.isHit,
+      isCrit: options.isCrit,
+      critDamage: options.critDamage,
+      timestamp: Date.now(),
+      turn: options.turn,
+      effects: options.effects ?? [],
+    }
+  },
+
+  /**
+   * 创建攻击动作
+   */
+  createAttack(options: {
+    sourceId: string
+    targetId: string
+    damage?: number
+    isHit?: boolean
+    isCrit?: boolean
+    critDamage?: number
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return this.create({ type: 'attack', ...options })
+  },
+
+  /**
+   * 创建技能动作
+   */
+  createSkill(options: {
+    sourceId: string
+    targetId: string
+    skillId: string
+    skillName?: string
+    damage?: number
+    heal?: number
+    isHit?: boolean
+    isCrit?: boolean
+    critDamage?: number
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return this.create({ type: 'skill', ...options })
+  },
+
+  /**
+   * 创建Buff/DeBuff动作
+   */
+  createBuff(options: {
+    sourceId: string
+    targetId: string
+    buffId: string
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return this.create({ type: 'buff', ...options })
+  },
+
+  /**
+   * 创建物品动作
+   */
+  createItem(options: {
+    sourceId: string
+    targetId: string
+    itemId: string
+    heal?: number
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return this.create({ type: 'item', ...options })
+  },
+
+  /**
+   * 创建状态动作
+   */
+  createStatus(options: {
+    sourceId: string
+    targetId: string
+    success?: boolean
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return this.create({ type: 'status', ...options })
+  },
+}
+
 /**
  * 战斗效果接口
  * 表示战斗中产生的单一效果
@@ -396,13 +529,11 @@ export interface ParticipantInfo {
 export enum BattleSystemEvent {
   /** 战斗日志事件 */
   BATTLE_LOG = 'battleLog',
-  /** 战斗状态更新事件 */
-  BATTLE_STATE_UPDATE = 'battleStateUpdate',
   /** 伤害动画事件 */
   DAMAGE_ANIMATION = 'damageAnimation',
   /** 闪避动画事件 */
   MISS_ANIMATION = 'missAnimation',
-  /** Buff效果事件 */
+  /** Buff 效果事件 */
   BUFF_EFFECT = 'buffEffect',
   /** 技能效果事件 */
   SKILL_EFFECT = 'skillEffect',

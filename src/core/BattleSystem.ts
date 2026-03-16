@@ -16,6 +16,7 @@ import type {
   ParticipantSide,
   RoundStatus,
 } from '@/types/battle'
+import { BattleActionHelper } from '@/types/battle'
 
 import type { BattleAI } from '@/core/BattleAI'
 import { BuffSystem } from '@/core/BuffSystem'
@@ -117,6 +118,15 @@ export class BattleSystem implements IBattleSystem {
     return new Promise((resolve) => {
       this.rafTimer.setTimeout(resolve, ms)
     })
+  }
+
+  /**
+   * 等待当前动画播放完成
+   */
+  private async waitForAnimation(): Promise<void> {
+    while (this.isAnimating()) {
+      await this.wait(100)
+    }
   }
 
   // 私有构造函数，防止外部直接实例化
@@ -408,23 +418,15 @@ export class BattleSystem implements IBattleSystem {
       const battleId = battle.battleId
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0])
 
-      this.syncBattleStateUpdate()
-
       for (let i = 0; i < currentTurnOrder.length; i++) {
-        while (this.isAnimating()) {
-          await this.wait(100)
-        }
-
+        await this.waitForAnimation()
         const participantId = currentTurnOrder[i]
         const participant = battle.participants.get(participantId)
-
         if (!participant || !participant.isAlive()) {
           continue
         }
 
         battle.currentTurn = i
-
-        this.syncBattleStateUpdate()
 
         try {
           await this.executeParticipantAction(battle, participant)
@@ -433,13 +435,9 @@ export class BattleSystem implements IBattleSystem {
           await this.executeDefaultAction(battle, participant)
         }
 
-        while (this.isAnimating()) {
-          await this.wait(100)
-        }
+        await this.waitForAnimation()
 
         this.buffSystem.updatePerTurn(participant.id, battle.currentRound || 1)
-
-        this.syncBattleStateUpdate()
 
         this.checkBattleEndCondition()
 
@@ -448,9 +446,7 @@ export class BattleSystem implements IBattleSystem {
         }
       }
 
-      while (this.isAnimating()) {
-        await this.wait(100)
-      }
+      await this.waitForAnimation()
 
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         PassiveSkillTrigger.TURN_END,
@@ -471,7 +467,6 @@ export class BattleSystem implements IBattleSystem {
     } catch (error) {
       battleLogManager.addDebugLog('处理回合时出错:', LogLevel.ERROR, error)
     } finally {
-      this.syncBattleStateUpdate()
       this.cleanupAnimationState()
     }
   }
@@ -507,15 +502,9 @@ export class BattleSystem implements IBattleSystem {
       // 检查是否被控制
       if (this.isParticipantControlled(participant)) {
         // 被控制，无法行动
-        const action: BattleAction = {
-          id: `control_${Date.now()}`,
-          type: 'status',
+        const action = BattleActionHelper.createStatus({
           sourceId: participant.id,
           targetId: participant.id,
-          damage: 0,
-          heal: 0,
-          success: true,
-          timestamp: Date.now(),
           turn: this.turnManager.getTurnNumber(battle),
           effects: [
             {
@@ -524,7 +513,7 @@ export class BattleSystem implements IBattleSystem {
               duration: 0,
             },
           ],
-        }
+        })
 
         // 添加控制行动到战斗记录
         this.recordBattleAction(action)
@@ -655,19 +644,13 @@ export class BattleSystem implements IBattleSystem {
 
     const targetId = this.selectTarget(battle, source)
 
-    const action: BattleAction = {
-      id: `skill_${skill.id}_${Date.now()}`,
-      type: 'skill',
-      skillId: skill.id,
+    const action = BattleActionHelper.createSkill({
       sourceId: source.id,
       targetId: targetId,
-      damage: 0,
-      heal: 0,
-      success: true,
-      timestamp: Date.now(),
+      skillId: skill.id,
+      skillName: skill.name,
       turn: this.turnManager.getTurnNumber(battle),
-      effects: [],
-    }
+    })
 
     try {
       const skillAction = this.skillManager.executeSkill(
@@ -700,8 +683,6 @@ export class BattleSystem implements IBattleSystem {
     }
 
     this.recordBattleAction(action)
-
-    this.syncBattleStateUpdate()
 
     return action
   }
@@ -745,18 +726,11 @@ export class BattleSystem implements IBattleSystem {
     targetId: string,
     turnNumber: number,
   ): BattleAction {
-    return {
-      id: `attack_${Date.now()}`,
-      type: 'attack',
+    return BattleActionHelper.createAttack({
       sourceId,
       targetId,
-      damage: 0,
-      heal: 0,
-      success: true,
-      timestamp: Date.now(),
       turn: turnNumber,
-      effects: [],
-    }
+    })
   }
 
   /**
@@ -1815,36 +1789,6 @@ export class BattleSystem implements IBattleSystem {
     if (battle) {
       battle.battleSpeed = speed
     }
-  }
-
-  /**
-   * 同步战斗状态更新
-   */
-  private syncBattleStateUpdate(): void {
-    const battle = this.battleData
-    if (!battle) return
-
-    eventBus.emit(BattleSystemEvent.BATTLE_STATE_UPDATE, {
-      battleId: battle.battleId,
-      participants: Array.from(battle.participants.values()).map((p) => {
-        const activeBuffIds = this.buffSystem
-          .getBuffInstances(p.id)
-          .map((buff) => buff.id)
-        p.buffs = activeBuffIds
-
-        return {
-          id: p.id,
-          name: p.name,
-          currentHp: p.getAttribute('HP'),
-          maxHp: p.getAttribute('MAX_HP'),
-          currentEnergy: p.currentEnergy,
-          buffs: activeBuffIds,
-        }
-      }),
-      turnOrder: battle.turnOrder,
-      currentTurn: battle.currentTurn,
-      currentRound: battle.currentRound,
-    })
   }
 
   /**

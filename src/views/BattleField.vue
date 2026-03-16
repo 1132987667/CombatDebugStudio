@@ -161,7 +161,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onUnmounted, watch, nextTick } from "vue";
+import { computed, ref, reactive, onUnmounted, watch, nextTick } from "vue";
 import { raf } from '@/utils/RAF';
 import { container } from '@/core/di/Container';
 import { useBattleAnimation } from '@/composables/useBattleAnimation';

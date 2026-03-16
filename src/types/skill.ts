@@ -499,7 +499,7 @@ export interface SkillConfig {
    * 技能类型
    * 可选,用于标识技能的类型,如主动技能、被动技能、终极技能等
    */
-  skillType?: 'passive' | 'ultimate' | 'reaction'
+  skillType?: 'active' | 'passive' | 'ultimate' | 'reaction'
 
   /**
    * 触发时机

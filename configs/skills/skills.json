@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "id": "skill_enemy_001_small",
     "name": "花粉迷雾",
@@ -35,6 +35,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.85",
         "attackType": "normal"
       },
@@ -60,6 +61,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.9",
         "attackType": "normal"
       },
@@ -81,6 +83,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.85",
         "attackType": "normal"
       },
@@ -106,6 +109,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.1",
         "attackType": "normal"
       }
@@ -122,11 +126,13 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.6",
         "attackType": "normal"
       },
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.6",
         "attackType": "normal"
       }
@@ -203,6 +209,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.9",
         "attackType": "normal"
       },
@@ -228,6 +235,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.1",
         "attackType": "normal"
       },
@@ -253,6 +261,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.95",
         "attackType": "normal"
       },
@@ -340,6 +349,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.2",
         "attackType": "normal"
       },
@@ -366,6 +376,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.8",
         "attackType": "normal"
       }
@@ -406,6 +417,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.85",
         "attackType": "normal"
       },
@@ -431,6 +443,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.95",
         "attackType": "normal"
       }
@@ -447,6 +460,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.8",
         "attackType": "normal"
       },
@@ -473,11 +487,13 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.65",
         "attackType": "normal"
       },
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.65",
         "attackType": "normal"
       }
@@ -494,6 +510,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.0",
         "attackType": "normal"
       },
@@ -520,6 +537,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.9",
         "attackType": "normal"
       },
@@ -605,6 +623,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.05",
         "attackType": "normal"
       }
@@ -621,6 +640,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.95",
         "attackType": "normal"
       },
@@ -647,6 +667,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.9",
         "attackType": "normal"
       },
@@ -729,6 +750,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.1",
         "attackType": "normal"
       },
@@ -755,6 +777,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.9",
         "attackType": "normal"
       },
@@ -781,6 +804,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.3",
         "attackType": "normal"
       },
@@ -806,6 +830,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.9",
         "attackType": "normal"
       },
@@ -831,6 +856,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.85",
         "attackType": "normal"
       },
@@ -853,6 +879,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.95",
         "attackType": "normal"
       },
@@ -879,6 +906,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.1",
         "attackType": "normal"
       },
@@ -904,6 +932,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.2",
         "attackType": "normal"
       }
@@ -914,12 +943,13 @@
   {
     "id": "skill_enemy_022_small",
     "name": "地裂术",
-    "description": "对单个敌人造成100%攻击力的普通伤害，并使其速度降低100%，持续2回合",
+    "description": "对单个敌人造成 100% 攻击力的普通伤害，并使其速度降低 100%，持续 2 回合",
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.0",
         "attackType": "normal"
       },
@@ -1005,6 +1035,7 @@
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.3",
         "attackType": "normal"
       },
@@ -1024,12 +1055,13 @@
   {
     "id": "skill_enemy_024_small",
     "name": "金刚破",
-    "description": "对单个敌人造成115%攻击力的普通伤害",
+    "description": "对单个敌人造成 115% 攻击力的普通伤害",
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.15",
         "attackType": "normal"
       }
@@ -1040,12 +1072,13 @@
   {
     "id": "skill_boss_003_small",
     "name": "地脉涌动",
-    "description": "对单个敌人造成100%攻击力的普通伤害，并为所有友方单位恢复30%攻击力的生命值",
+    "description": "对单个敌人造成 100% 攻击力的普通伤害，并为所有友方单位恢复 30% 攻击力的生命值",
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.0",
         "attackType": "normal"
       },

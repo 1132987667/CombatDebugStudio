@@ -448,7 +448,7 @@ export interface BattleEffect {
 /**
  * 战斗状态接口
  * 表示战斗的完整运行时状态
- * 包含战斗ID、所有参与者、战斗动作记录、回合顺序、当前回合等核心信息
+ * 包含战斗 ID、所有参与者、战斗动作记录、回合顺序、当前回合等核心信息
  * 用于在战斗过程中实时跟踪和更新战斗状态
  */
 export interface BattleState {
@@ -457,7 +457,10 @@ export interface BattleState {
   actions: BattleAction[]
   /** 回合顺序，按速度规则排序 */
   turnOrder: string[]
+  /** 当前行动次序索引（0-based，表示当前回合内的第几个行动） */
   currentTurn: number
+  /** 当前回合数（1-based，从 1 开始） */
+  currentRound: number
   /** 战斗状态 */
   battleState: BattleStatus
   startTime: number

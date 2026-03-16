@@ -48,7 +48,7 @@ export class BattleManager {
    * @returns 当前回合数（从1开始）
    */
   getTurn(): number {
-    return this.battleSystem.getTurn()
+    return this.battleSystem.getRound()
   }
 
   /**

@@ -17,6 +17,7 @@ import type {
   RoundStatus,
 } from '@/types/battle'
 import { BattleActionHelper } from '@/types/battle'
+import type { SkillConfig } from '@/types/skill'
 
 import type { BattleAI } from '@/core/BattleAI'
 import { BuffSystem } from '@/core/BuffSystem'
@@ -201,8 +202,8 @@ export class BattleSystem implements IBattleSystem {
    * 获取当前回合数
    * @returns 当前回合数（从1开始）
    */
-  public getTurn(): number {
-    return this.battleData.currentTurn
+  public getRound(): number {
+    return this.battleData.currentRound
   }
 
   public getDefBattleData(): BattleData {
@@ -280,10 +281,11 @@ export class BattleSystem implements IBattleSystem {
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
     battleData.skillManager = this.skillManager
 
-    this.turnManager.initializeBattle(
-      battleData,
-      this.turnManager.createTurnOrder(Array.from(participants.values())),
+    battleData.turnOrder = this.turnManager.createTurnOrder(
+      Array.from(participants.values()),
     )
+    battleData.currentTurn = 0
+    battleData.currentRound = 1
 
     battleData.battleState = BATTLE_STATUS.PREPARING
 
@@ -458,7 +460,7 @@ export class BattleSystem implements IBattleSystem {
 
       this.battleRecorder.recordTurnEnd(
         battleId,
-        this.turnManager.getTurnNumber(battle),
+        battle.currentRound || 1,
       )
 
       battle.currentRound++
@@ -505,7 +507,7 @@ export class BattleSystem implements IBattleSystem {
         const action = BattleActionHelper.createStatus({
           sourceId: participant.id,
           targetId: participant.id,
-          turn: this.turnManager.getTurnNumber(battle),
+          turn: battle.currentRound || 1,
           effects: [
             {
               type: 'status',
@@ -520,7 +522,7 @@ export class BattleSystem implements IBattleSystem {
 
         // 添加战斗日志
         battleLogManager.addBattleLog(
-          this.turnManager.getTurnNumber(battle),
+          battle.currentRound || 1,
           `${participant.name} 被控制，无法行动`,
           [{ text: `${participant.name} 被控制，无法行动` }],
           BATTLE_LOG_CATEGORIES.STATUS,
@@ -558,33 +560,24 @@ export class BattleSystem implements IBattleSystem {
         return !skillId.includes('passive')
       })
 
-      // 检查是否使用AI系统进行决策
+      // 检查是否使用 AI 系统进行决策
       const aiInstance = battle.aiInstances?.get(participant.id)
       if (aiInstance) {
-        // 使用AI系统决策
+        // 使用 AI 系统决策
         const action = aiInstance.makeDecision(
-          {
-            battleId: battle.battleId,
-            participants: battle.participants,
-            actions: battle.actions,
-            turnOrder: battle.turnOrder,
-            currentTurn: battle.currentTurn,
-            battleState: battle.battleState!,
-            startTime: battle.startTime,
-          },
+          this.convertToBattleState(battle),
           participant,
         )
 
         battleLogManager.addDebugLog(
-          `AI决策[${participant.name}]: ${action.type === 'skill' ? '使用技能' : '普通攻击'}`,
+          `AI 决策 [${participant.name}]: ${action.type === 'skill' ? '使用技能' : '普通攻击'}`,
         )
 
         if (action.type === 'skill' && action.skillId) {
           const skillId = action.skillId
-          if (allSkillIds.includes(skillId)) {
-            await this.selectAndExecuteSkill(battle, participant, {
-              id: skillId,
-            })
+          const skill = this.skillManager.getSkillConfig(skillId)
+          if (skill && allSkillIds.includes(skillId)) {
+            await this.selectAndExecuteSkill(battle, participant, skill)
           } else {
             await this.selectAndExecuteAttack(battle, participant)
           }
@@ -596,12 +589,15 @@ export class BattleSystem implements IBattleSystem {
         Math.random() < BATTLE_CONSTANTS.SKILL_USE_CHANCE &&
         availableSkills[0]
       ) {
-        // 没有AI实例时使用原来的随机选择逻辑（也过滤了被动技能）
+        // 没有 AI 实例时使用原来的随机选择逻辑（也过滤了被动技能）
         const selectedSkillId =
           availableSkills[Math.floor(Math.random() * availableSkills.length)]
-        await this.selectAndExecuteSkill(battle, participant, {
-          id: selectedSkillId,
-        })
+        const skill = this.skillManager.getSkillConfig(selectedSkillId)
+        if (skill) {
+          await this.selectAndExecuteSkill(battle, participant, skill)
+        } else {
+          await this.selectAndExecuteAttack(battle, participant)
+        }
       } else {
         await this.selectAndExecuteAttack(battle, participant)
       }
@@ -620,13 +616,13 @@ export class BattleSystem implements IBattleSystem {
    * 选择并执行技能
    * @param battle 战斗数据
    * @param source 技能使用者
-   * @param skill 技能对象
+   * @param skill 技能配置对象
    * @returns 战斗动作
    */
   private async selectAndExecuteSkill(
     battle: BattleData,
     source: BattleParticipant,
-    skill: any,
+    skill: SkillConfig,
   ): Promise<BattleAction> {
     // 检查技能是否可用
     if (
@@ -639,17 +635,19 @@ export class BattleSystem implements IBattleSystem {
       }
     }
 
-    const energyCost = this.getSkillEnergyCost(skill.id)
+    // 使用技能配置中的能量消耗
+    const energyCost = skill.energyCost ?? 0
     source.spendEnergy(energyCost)
 
-    const targetId = this.selectTarget(battle, source)
+    // 根据技能配置选择目标
+    const targetId = this.selectTargetForSkill(battle, source, skill)
 
     const action = BattleActionHelper.createSkill({
       sourceId: source.id,
       targetId: targetId,
       skillId: skill.id,
       skillName: skill.name,
-      turn: this.turnManager.getTurnNumber(battle),
+      turn: battle.currentRound || 1,
     })
 
     try {
@@ -688,9 +686,60 @@ export class BattleSystem implements IBattleSystem {
   }
 
   /**
+   * 根据技能配置选择目标
+   * @param battle 战斗数据
+   * @param source 技能使用者
+   * @param skill 技能配置
+   * @returns 选中的目标 ID
+   */
+  private selectTargetForSkill(
+    battle: BattleData,
+    source: BattleParticipant,
+    skill: SkillConfig,
+  ): string {
+    const selector = skill.selector || 'single_enemy'
+    const participants = Array.from(battle.participants.values())
+
+    // 根据选择器类型选择目标
+    if (selector.includes('self')) {
+      return source.id
+    }
+
+    if (selector.includes('all')) {
+      // 群体技能返回第一个目标（实际执行时会作用于所有目标）
+      return participants.find((p) => p.isAlive())?.id || source.id
+    }
+
+    // 默认选择单个敌人
+    const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
+    const targets = participants.filter(
+      (p) => p.isAlive() && p.team === (isEnemy ? PARTICIPANT_SIDE.ALLY : PARTICIPANT_SIDE.ENEMY),
+    )
+
+    if (targets.length === 0) {
+      return source.id
+    }
+
+    // 根据技能类型选择最优目标
+    if (skill.steps.some((step) => step.type === 'HEAL' || step.type === 'BUFF')) {
+      // 治疗/Buff 技能：选择血量百分比最低的友方
+      const lowestHpTarget = targets.reduce((min, p) => {
+        const hpRatio = p.currentHealth / p.maxHealth
+        const minHpRatio = min.currentHealth / min.maxHealth
+        return hpRatio < minHpRatio ? p : min
+      })
+      return lowestHpTarget.id
+    } else {
+      // 伤害技能：随机选择或使用威胁值选择
+      const randomIndex = Math.floor(Math.random() * targets.length)
+      return targets[randomIndex].id
+    }
+  }
+
+  /**
    * 构造普通攻击的技能步骤配置
    * @param source 攻击者
-   * @param targetId 目标ID
+   * @param targetId 目标 ID
    * @returns 技能步骤配置
    */
   private buildNormalAttackStep(
@@ -937,11 +986,11 @@ export class BattleSystem implements IBattleSystem {
       return this.createBattleAction(
         source.id,
         source.id,
-        this.turnManager.getTurnNumber(battle),
+        battle.currentRound || 1,
       )
     }
 
-    const turnNumber = this.turnManager.getTurnNumber(battle)
+    const turnNumber = battle.currentRound || 1
 
     this.passiveSkillManager.triggerPassiveSkills(
       PassiveSkillTrigger.BEFORE_ATTACK,
@@ -1072,7 +1121,7 @@ export class BattleSystem implements IBattleSystem {
       damage,
       success: true,
       timestamp: Date.now(),
-      turn: this.turnManager.getTurnNumber(battle),
+      turn: battle.currentRound || 1,
       effects: [
         {
           type: EFFECT_TYPES.DAMAGE,
@@ -1282,7 +1331,7 @@ export class BattleSystem implements IBattleSystem {
     this.battleRecorder.recordAction(
       battleId,
       action,
-      this.turnManager.getTurnNumber(this.battleData),
+      this.battleData.currentRound || 1,
     )
   }
 
@@ -1401,7 +1450,7 @@ export class BattleSystem implements IBattleSystem {
       targetId: 'system',
       success: true,
       timestamp: Date.now(),
-      turn: this.turnManager.getTurnNumber(battle),
+      turn: battle.currentRound || 1,
       effects: [
         {
           type: 'status',
@@ -1416,7 +1465,7 @@ export class BattleSystem implements IBattleSystem {
     this.battleRecorder.recordAction(
       battleId,
       endAction,
-      this.turnManager.getTurnNumber(battle),
+      battle.currentRound || 1,
     )
 
     this.battleRecorder.endRecording(battleId, winner)
@@ -1578,6 +1627,7 @@ export class BattleSystem implements IBattleSystem {
       actions: [...battleData.actions],
       turnOrder: [...battleData.turnOrder],
       currentTurn: battleData.currentTurn,
+      currentRound: battleData.currentRound || 1,
       battleState: battleData.battleState!,
       startTime: battleData.startTime,
       endTime: battleData.endTime,

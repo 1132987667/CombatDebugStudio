@@ -204,8 +204,8 @@ export class AISystem {
 
   /**
    * 转换为战斗状态
-   * 将内部BattleData转换为BattleState，用于AI决策
-   * 私有方法，仅在AI决策过程中调用
+   * 将内部 BattleData 转换为 BattleState，用于 AI 决策
+   * 私有方法，仅在 AI 决策过程中调用
    * @param battle - 战斗数据对象
    * @returns BattleState - 转换后的战斗状态对象
    */
@@ -216,8 +216,9 @@ export class AISystem {
       actions: [...battle.actions],
       turnOrder: [...battle.turnOrder],
       currentTurn: battle.currentTurn,
+      currentRound: battle.currentRound || 1,
       battleState: battle.battleState ?? BATTLE_STATUS.ACTIVE,
-      startTime: 0,
+      startTime: battle.startTime,
       endTime: undefined,
       winner: undefined,
     }

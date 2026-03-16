@@ -143,7 +143,7 @@ export interface IBattleSystem {
    * 获取当前回合数
    * @returns 当前回合数（从1开始）
    */
-  getTurn(): number
+  getRound(): number
 }
 
 /**

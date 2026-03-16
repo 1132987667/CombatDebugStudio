@@ -176,7 +176,7 @@ export function initializeContainer(): void {
   container.registerFactory(
     BATTLE_SYSTEM_TOKEN.toString(),
     () => {
-      return BattleSystem.createInstanceWithContainer(container)
+      return BattleSystem.createInstanceWithContainer(container as Container)
     },
     true,
   )

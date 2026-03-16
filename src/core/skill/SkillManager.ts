@@ -487,21 +487,25 @@ export class SkillManager {
     target: BattleParticipant,
     record?: CombatRecord,
   ): void {
-    // 使用新的治疗计算器
+    const healTarget =
+      skillStep.target === 'self' || skillStep.targetType === 'self'
+        ? source
+        : target
+
     const heal = this.healCalculator.calculateHeal(
       skillStep,
       source,
-      target,
+      healTarget,
       record,
     )
-    const actualHeal = this.healCalculator.applyHeal(target, heal)
+    const actualHeal = this.healCalculator.applyHeal(healTarget, heal)
 
     battleAction.heal += actualHeal
     battleAction.effects.push({
       type: 'heal',
-      targetId: target.id,
+      targetId: healTarget.id,
       value: actualHeal,
-      description: `${source.name} 恢复 ${actualHeal} 生命值`,
+      description: `${healTarget.name} 恢复 ${actualHeal} 生命值`,
     })
 
     // 检查是否为单回合效果
@@ -527,33 +531,36 @@ export class SkillManager {
     target: BattleParticipant,
     record?: CombatRecord,
   ): void {
-    if (!skillStep.buffId) {
-      battleLogManager.addDebugLog(`buff步骤缺少buffId: ${skillStep.type}`)
+    const buffId = skillStep.buffId || skillStep.effectId
+    if (!buffId) {
+      battleLogManager.addDebugLog(
+        `buff步骤缺少buffId或effectId: ${skillStep.type}`,
+      )
       return
     }
 
-    // 检查 Buff 脚本是否已注册
     const scriptRegistry = this.buffSystem.getScriptRegistry()
 
-    if (!scriptRegistry.has(skillStep.buffId)) {
+    if (!scriptRegistry.has(buffId)) {
       battleLogManager.addDebugLog(
-        `Buff脚本未找到: ${skillStep.buffId}，跳过buff效果`,
+        `Buff脚本未找到: ${buffId}，跳过buff效果`,
       )
       battleAction.effects.push({
         type: 'buff',
-        buffId: skillStep.buffId,
-        description: `${source.name} 尝试施加 ${skillStep.buffId} 失败（脚本未注册）`,
+        buffId: buffId,
+        description: `${source.name} 尝试施加 ${buffId} 失败（脚本未注册）`,
       })
       return
     }
 
-    // 确定buff目标
-    const buffTarget = skillStep.targetType === 'self' ? source : target
+    const buffTarget =
+      skillStep.target === 'self' || skillStep.targetType === 'self'
+        ? source
+        : target
 
-    // 创建buff配置
     const buffConfig = {
-      id: skillStep.buffId,
-      name: skillStep.buffId,
+      id: buffId,
+      name: buffId,
       description: `来自技能 ${battleAction.skillId} 的效果`,
       duration: skillStep.duration ?? 1,
       maxStacks: skillStep.stacks || 1,
@@ -562,13 +569,12 @@ export class SkillManager {
       controlType: ControlType.NONE,
       controlPriority: 0,
       isDebuff: skillStep.type === 'DEBUFF',
-      parameters: skillStep.parameters || {},
+      parameters: skillStep.parameters || skillStep.effectParams || {},
     }
 
-    // 添加buff
     const instanceId = this.buffSystem.addBuff(
       buffTarget.id,
-      skillStep.buffId,
+      buffId,
       buffConfig,
       0,
       record,
@@ -580,13 +586,13 @@ export class SkillManager {
     battleAction.effects.push({
       type: 'buff',
       targetId: buffTarget.id,
-      buffId: skillStep.buffId,
+      buffId: buffId,
       instanceId,
-      description: `${source.name} 施加 ${skillStep.buffId} 给 ${buffTarget.name}`,
+      description: `${source.name} 施加 ${buffId} 给 ${buffTarget.name}`,
     })
 
     battleLogManager.addDebugLog(
-      `buff步骤执行完成: ${skillStep.buffId} 施加给 ${buffTarget.name}`,
+      `buff步骤执行完成: ${buffId} 施加给 ${buffTarget.name}`,
     )
   }
 

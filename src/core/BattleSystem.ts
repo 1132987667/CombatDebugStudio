@@ -59,6 +59,7 @@ import {
 import { EFFECT_TYPES } from '@/types/effect'
 import type { ExtendedSkillStep } from '@/types/skill'
 import { RAFTimer } from '@/utils/RAF'
+import { Counter } from '@/utils/Counter'
 import { battleLogManager } from '@/utils/logging'
 
 /**
@@ -83,16 +84,33 @@ import { battleLogManager } from '@/utils/logging'
  */
 
 export class BattleSystem implements IBattleSystem {
+  /**
+   * 战斗ID计数器
+   */
+  private static battleIdCounter = new Counter(1)
+
+  /**
+   * 当前战斗数据
+   */
   private battleData: BattleData
 
-  private isProcessingTurn = false
-
+  /**
+   * 动画队列，存储待播放的动画事件
+   * @property type - 动画类型
+   * @property data - 动画数据
+   * @property duration - 动画持续时间（毫秒）
+   * @property resolve - Promise 解析函数，动画完成时调用
+   */
   private animationQueue: Array<{
     type: string
     data: any
+    duration: number
     resolve: () => void
   }> = []
 
+  /**
+   * 是否有动画正在播放
+   */
   private isAnimationPlaying = false
 
   /**
@@ -108,14 +126,21 @@ export class BattleSystem implements IBattleSystem {
    */
   private battleSpeed = 1
 
+  /**
+   * 自动战斗定时器标识，用于取消自动战斗
+   */
   private autoBattleTimerId?: symbol
+
+  /**
+   * 自动战斗循环函数引用
+   */
+  private autoBattleLoop?: () => Promise<void>
 
   /**
    * 等待指定时间（使用 RAFTimer）
    * @param ms 等待毫秒数
    */
   private wait(ms: number): Promise<void> {
-    console.log('等待', ms, '毫秒')
     return new Promise((resolve) => {
       this.rafTimer.setTimeout(resolve, ms)
     })
@@ -130,7 +155,20 @@ export class BattleSystem implements IBattleSystem {
     }
   }
 
-  // 私有构造函数，防止外部直接实例化
+  /**
+   * 私有构造函数，防止外部直接实例化
+   * @param turnManager 回合管理器
+   * @param actionExecutor 动作执行器
+   * @param participantManager 参与者管理器
+   * @param aiSystem AI系统
+   * @param battleRecorder 战斗录像器
+   * @param ruleManager 规则管理器
+   * @param damageCalculator 伤害计算器
+   * @param rafTimer RAF定时器
+   * @param skillManager 技能管理器
+   * @param buffSystem Buff系统
+   * @param passiveSkillManager 被动技能管理器
+   */
   private constructor(
     private readonly turnManager: TurnManager,
     private readonly actionExecutor: ActionExecutor,
@@ -194,8 +232,12 @@ export class BattleSystem implements IBattleSystem {
     )
   }
 
+  /**
+   * 生成战斗唯一标识符
+   * @returns 战斗ID字符串，格式为 battle_counter.next
+   */
   public generateBattleId(): string {
-    return `battle_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+    return `battle_${BattleSystem.battleIdCounter.next()}`
   }
 
   /**
@@ -206,6 +248,10 @@ export class BattleSystem implements IBattleSystem {
     return this.battleData.currentRound
   }
 
+  /**
+   * 获取默认战斗数据对象
+   * @returns 初始化的战斗数据对象
+   */
   public getDefBattleData(): BattleData {
     return {
       battleId: this.generateBattleId(),
@@ -214,7 +260,7 @@ export class BattleSystem implements IBattleSystem {
       turnOrder: [],
       currentTurn: 0,
       currentRound: 1,
-      maxTurns: 999,
+      maxTurns: 100,
       startTime: Date.now(),
       winner: undefined,
       aiInstances: new Map<string, BattleAI>(),
@@ -224,40 +270,6 @@ export class BattleSystem implements IBattleSystem {
       roundState: ROUND_STATUS.NONE,
       skillManager: this.skillManager,
     }
-  }
-
-  /**
-   * 初始化规则管理器
-   */
-  private async initializeRuleManager(): Promise<void> {
-    try {
-      await this.ruleManager.loadConfig()
-      battleLogManager.addDebugLog('战斗规则管理器初始化完成')
-
-      // 配置伤害计算器
-      this.configureDamageCalculator()
-    } catch (error) {
-      battleLogManager.addDebugLog('战斗规则管理器初始化失败', error)
-    }
-  }
-
-  /**
-   * 配置伤害计算器
-   */
-  private configureDamageCalculator(): void {
-    const damageRules = this.ruleManager.getDamageRules()
-
-    this.skillManager.getDamageCalculator().setConfig({
-      criticalEnabled: damageRules.critical.enabled,
-      defaultCriticalRate: damageRules.critical.defaultRate,
-      defaultCriticalMultiplier: damageRules.critical.defaultMultiplier,
-      defenseEnabled: damageRules.defense.enabled,
-      minDamageThreshold: damageRules.thresholds.minDamage,
-      maxDamageThreshold: damageRules.thresholds.maxDamage,
-    })
-
-    // 初始化内置修饰器
-    this.skillManager.getDamageCalculator().initializeBuiltinModifiers()
   }
 
   /**
@@ -271,8 +283,6 @@ export class BattleSystem implements IBattleSystem {
     enemyParticipants: BattleParticipant[],
   ): BattleState {
     const allParticipants = [...allyParticipants, ...enemyParticipants]
-    console.log('allyParticipants', allyParticipants)
-    console.log('enemyParticipants', enemyParticipants)
 
     const participants =
       this.participantManager.createParticipants(allParticipants)
@@ -286,7 +296,6 @@ export class BattleSystem implements IBattleSystem {
     )
     battleData.currentTurn = 0
     battleData.currentRound = 1
-
     battleData.battleState = BATTLE_STATUS.PREPARING
 
     this.actionExecutor.registerBattle(
@@ -358,6 +367,10 @@ export class BattleSystem implements IBattleSystem {
    * 实现每回合重新计算出手顺序，并按顺序执行所有角色行动
    */
   private async processTurnInternal(): Promise<void> {
+    if (this.isPaused) {
+      return
+    }
+
     const battle = this.battleData
     if (battle.battleState !== BATTLE_STATUS.ACTIVE) {
       return
@@ -403,20 +416,6 @@ export class BattleSystem implements IBattleSystem {
       battle.turnOrder = currentTurnOrder
       battle.currentTurn = 0
 
-      // battleLogManager.addBattleLog(battle.currentTurn, '本回合出手顺序', {
-      //   turnOrder: currentTurnOrder.map((id) => {
-      //     const participant = battle.participants.get(id)
-      //     const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(
-      //       participant!,
-      //     )
-      //     return {
-      //       id,
-      //       name: participant?.name,
-      //       effectiveSpeed,
-      //     }
-      //   }),
-      // })
-
       const battleId = battle.battleId
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0])
 
@@ -427,9 +426,7 @@ export class BattleSystem implements IBattleSystem {
         if (!participant || !participant.isAlive()) {
           continue
         }
-
         battle.currentTurn = i
-
         try {
           await this.executeParticipantAction(battle, participant)
         } catch (error) {
@@ -458,14 +455,9 @@ export class BattleSystem implements IBattleSystem {
 
       battle.roundState = ROUND_STATUS.END
 
-      this.battleRecorder.recordTurnEnd(
-        battleId,
-        battle.currentRound || 1,
-      )
+      this.battleRecorder.recordTurnEnd(battleId, battle.currentRound || 1)
 
       battle.currentRound++
-
-      battle.roundState = ROUND_STATUS.START
     } catch (error) {
       battleLogManager.addDebugLog('处理回合时出错:', LogLevel.ERROR, error)
     } finally {
@@ -536,7 +528,6 @@ export class BattleSystem implements IBattleSystem {
 
       // 获取所有可用技能并过滤掉被动技能
       const allSkillIds = participant.getSkillIds()
-      console.log('allSkillIds', participant, participant.skills, allSkillIds)
       const allAvailableSkills = allSkillIds.filter((skillId) => {
         const energyCost = this.getSkillEnergyCost(skillId)
         // 检查能量是否足够
@@ -624,47 +615,67 @@ export class BattleSystem implements IBattleSystem {
     source: BattleParticipant,
     skill: SkillConfig,
   ): Promise<BattleAction> {
-    // 检查技能是否可用
     if (
       'isSkillAvailable' in source &&
       typeof source.isSkillAvailable === 'function'
     ) {
       if (!source.isSkillAvailable(skill.id)) {
-        // 技能冷却中，执行普通攻击
         return this.selectAndExecuteAttack(battle, source)
       }
     }
 
-    // 使用技能配置中的能量消耗
     const energyCost = skill.energyCost ?? 0
     source.spendEnergy(energyCost)
 
-    // 根据技能配置选择目标
-    const targetId = this.selectTargetForSkill(battle, source, skill)
-
     const action = BattleActionHelper.createSkill({
       sourceId: source.id,
-      targetId: targetId,
+      targetId: '',
       skillId: skill.id,
       skillName: skill.name,
       turn: battle.currentRound || 1,
     })
 
+    const targets = this.getSkillTargets(battle, source, skill)
+
+    if (targets.length === 0) {
+      battleLogManager.addDebugLog(`技能执行失败: 未找到有效目标 ${skill.id}`)
+      return this.selectAndExecuteAttack(battle, source)
+    }
+
+    action.targetId = targets[0].id
+
     try {
-      const skillAction = this.skillManager.executeSkill(
-        skill.id,
-        source,
-        battle.participants.get(targetId)!,
-      )
+      let totalDamage = 0
+      let totalHeal = 0
+      const allEffects: any[] = []
 
-      action.damage = skillAction.damage
-      action.heal = skillAction.heal
-      action.effects = skillAction.effects
+      for (const target of targets) {
+        if (!target.isAlive()) continue
 
+        const skillAction = this.skillManager.executeSkill(
+          skill.id,
+          source,
+          target,
+        )
+
+        totalDamage += skillAction.damage
+        totalHeal += skillAction.heal
+        allEffects.push(...skillAction.effects)
+      }
+
+      action.damage = totalDamage
+      action.heal = totalHeal
+      action.effects = allEffects
+
+      const targetNames = targets.map((t) => t.name).join(', ')
       battleLogManager.addBattleLog(
         battle.currentTurn,
         `技能执行成功: ${skill.id}`,
-        [{ text: `技能执行成功: ${skill.id}` }],
+        [
+          {
+            text: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}`,
+          },
+        ],
         BATTLE_LOG_CATEGORIES.ACTION,
       )
     } catch (error) {
@@ -686,6 +697,44 @@ export class BattleSystem implements IBattleSystem {
   }
 
   /**
+   * 获取技能的所有目标
+   * @param battle 战斗数据
+   * @param source 技能使用者
+   * @param skill 技能配置
+   * @returns 目标参与者数组
+   */
+  private getSkillTargets(
+    battle: BattleData,
+    source: BattleParticipant,
+    skill: SkillConfig,
+  ): BattleParticipant[] {
+    const selector = skill.selector || 'single_enemy'
+    const participants = Array.from(battle.participants.values())
+
+    if (selector === 'self') {
+      return [source]
+    }
+
+    const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
+
+    if (selector.includes('all_enemies')) {
+      return participants.filter(
+        (p) =>
+          p.isAlive() &&
+          p.team === (isEnemy ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY),
+      )
+    }
+
+    if (selector.includes('all_allies')) {
+      return participants.filter((p) => p.isAlive() && p.team === source.team)
+    }
+
+    const targetId = this.selectTargetForSkill(battle, source, skill)
+    const target = battle.participants.get(targetId)
+    return target ? [target] : []
+  }
+
+  /**
    * 根据技能配置选择目标
    * @param battle 战斗数据
    * @param source 技能使用者
@@ -700,29 +749,24 @@ export class BattleSystem implements IBattleSystem {
     const selector = skill.selector || 'single_enemy'
     const participants = Array.from(battle.participants.values())
 
-    // 根据选择器类型选择目标
     if (selector.includes('self')) {
       return source.id
     }
 
-    if (selector.includes('all')) {
-      // 群体技能返回第一个目标（实际执行时会作用于所有目标）
-      return participants.find((p) => p.isAlive())?.id || source.id
-    }
-
-    // 默认选择单个敌人
     const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
     const targets = participants.filter(
-      (p) => p.isAlive() && p.team === (isEnemy ? PARTICIPANT_SIDE.ALLY : PARTICIPANT_SIDE.ENEMY),
+      (p) =>
+        p.isAlive() &&
+        p.team === (isEnemy ? PARTICIPANT_SIDE.ALLY : PARTICIPANT_SIDE.ENEMY),
     )
 
     if (targets.length === 0) {
       return source.id
     }
 
-    // 根据技能类型选择最优目标
-    if (skill.steps.some((step) => step.type === 'HEAL' || step.type === 'BUFF')) {
-      // 治疗/Buff 技能：选择血量百分比最低的友方
+    if (
+      skill.steps.some((step) => step.type === 'HEAL' || step.type === 'BUFF')
+    ) {
       const lowestHpTarget = targets.reduce((min, p) => {
         const hpRatio = p.currentHealth / p.maxHealth
         const minHpRatio = min.currentHealth / min.maxHealth
@@ -730,7 +774,6 @@ export class BattleSystem implements IBattleSystem {
       })
       return lowestHpTarget.id
     } else {
-      // 伤害技能：随机选择或使用威胁值选择
       const randomIndex = Math.floor(Math.random() * targets.length)
       return targets[randomIndex].id
     }
@@ -990,7 +1033,7 @@ export class BattleSystem implements IBattleSystem {
       )
     }
 
-    const turnNumber = battle.currentRound || 1
+    const roundNumber = battle.currentRound || 1
 
     this.passiveSkillManager.triggerPassiveSkills(
       PassiveSkillTrigger.BEFORE_ATTACK,
@@ -1005,17 +1048,17 @@ export class BattleSystem implements IBattleSystem {
       target,
     )
 
-    const action = this.createBattleAction(source.id, targetId, turnNumber)
+    const action = this.createBattleAction(source.id, targetId, roundNumber)
 
     if (damageResult.isMiss) {
-      await this.handleMissAttack(action, source, target, turnNumber)
+      await this.handleMissAttack(action, source, target, roundNumber)
     } else {
       await this.handleHitAttack(
         action,
         source,
         target,
         damageResult,
-        turnNumber,
+        roundNumber,
       )
     }
 
@@ -1302,11 +1345,6 @@ export class BattleSystem implements IBattleSystem {
   }
 
   /**
-   * 获取技能能量消耗
-   * @param {string} skillId - 技能ID
-   * @returns {number} 能量消耗
-   */
-  /**
    * 添加战斗动作到记录
    * @param action - 战斗动作
    */
@@ -1335,11 +1373,6 @@ export class BattleSystem implements IBattleSystem {
     )
   }
 
-  /**
-   * 根据参与者ID查找战斗
-   * @param {string} participantId - 参与者ID
-   * @returns {BattleData | undefined} 战斗数据
-   */
   /**
    * 检查战斗结束条件
    */
@@ -1429,9 +1462,7 @@ export class BattleSystem implements IBattleSystem {
       participant.buffs = []
     })
 
-    battle.battleState = BATTLE_STATUS.SETTLEMENT
     battle.roundState = ROUND_STATUS.NONE
-
     battle.battleState = BATTLE_STATUS.ENDED
     battle.winner = winner
     battle.endTime = Date.now()
@@ -1600,9 +1631,44 @@ export class BattleSystem implements IBattleSystem {
 
   /**
    * 切换暂停状态
+   * 暂停时会停止自动战斗，恢复时会重新启动自动战斗
    */
   public togglePause(): void {
     this.isPaused = !this.isPaused
+    if (this.isPaused) {
+      this.pauseAutoBattle()
+    } else {
+      this.resumeAutoBattle()
+    }
+  }
+
+  /**
+   * 暂停自动战斗
+   * 清除定时器但保持自动战斗标志
+   */
+  private pauseAutoBattle(): void {
+    if (this.autoBattleTimerId) {
+      this.rafTimer.clearTimeout(this.autoBattleTimerId)
+      this.autoBattleTimerId = undefined
+    }
+    battleLogManager.addDebugLog(`自动战斗已暂停`)
+  }
+
+  /**
+   * 恢复自动战斗
+   * 如果自动战斗标志为true，重新启动自动战斗循环
+   */
+  private resumeAutoBattle(): void {
+    if (
+      this.autoBattle &&
+      this.battleData.battleState === BATTLE_STATUS.ACTIVE &&
+      this.autoBattleLoop
+    ) {
+      const delay = this.getBattleDelay()
+      const timerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
+      this.autoBattleTimerId = timerId
+      battleLogManager.addDebugLog(`自动战斗已恢复`)
+    }
   }
 
   /**
@@ -1652,22 +1718,20 @@ export class BattleSystem implements IBattleSystem {
   public startAutoBattle(): void {
     this.autoBattle = true
     this.battleData.autoBattle = true
+    this.isPaused = false
     battleLogManager.addDebugLog(`自动战斗开始: ${this.battleData.battleId}`)
-    const autoBattleLoop = async () => {
+
+    this.autoBattleLoop = async () => {
+      if (this.isPaused) {
+        return
+      }
+
       let battle = this.battleData
-      console.log('自动战斗循环开始:', battle.autoBattle, battle.battleState)
       if (!battle.autoBattle || battle.battleState !== BATTLE_STATUS.ACTIVE) {
         return
       }
       try {
-        console.log('processTurnInternal开始')
         await this.processTurnInternal()
-        console.log('processTurnInternal结束')
-        console.log(
-          '自动战斗循环开始processTurnInternal:',
-          battle.autoBattle,
-          battle.battleState,
-        )
         battle = this.battleData
         if (
           battle.battleState === BATTLE_STATUS.ENDED ||
@@ -1677,9 +1741,11 @@ export class BattleSystem implements IBattleSystem {
           return
         }
 
-        const delay = this.getBattleDelay()
-        const timerId = this.rafTimer.setTimeout(autoBattleLoop, delay)
-        this.autoBattleTimerId = timerId
+        if (!this.isPaused) {
+          const delay = this.getBattleDelay()
+          const timerId = this.rafTimer.setTimeout(this.autoBattleLoop!, delay)
+          this.autoBattleTimerId = timerId
+        }
       } catch (error) {
         battleLogManager.addDebugLog('自动战斗出错:', LogLevel.ERROR, error)
         this.stopAutoBattle()
@@ -1687,10 +1753,14 @@ export class BattleSystem implements IBattleSystem {
     }
 
     const delay = this.getBattleDelay()
-    const timerId = this.rafTimer.setTimeout(autoBattleLoop, delay)
+    const timerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
     this.autoBattleTimerId = timerId
   }
 
+  /**
+   * 获取战斗延迟时间（根据战斗速度）
+   * @returns 延迟时间（毫秒）
+   */
   private getBattleDelay(): number {
     const battle = this.battleData
     if (!battle) {
@@ -1714,6 +1784,8 @@ export class BattleSystem implements IBattleSystem {
 
     this.autoBattle = false
     this.battleData.autoBattle = false
+    this.isPaused = true
+    this.autoBattleLoop = undefined
 
     if (this.autoBattleTimerId) {
       this.rafTimer.clearTimeout(this.autoBattleTimerId)
@@ -1823,6 +1895,10 @@ export class BattleSystem implements IBattleSystem {
     return this.participantManager
   }
 
+  /**
+   * 获取当前所有参与者信息
+   * @returns 参与者数组
+   */
   public getCurParticipantsInfo(): BattleParticipant[] {
     return Array.from(this.battleData.participants.values())
   }
@@ -1834,42 +1910,15 @@ export class BattleSystem implements IBattleSystem {
     return this.battleData
   }
 
+  /**
+   * 设置战斗速度
+   * @param speed 速度倍率
+   */
   public setBattleSpeed(speed: number): void {
     const battle = this.battleData
     if (battle) {
       battle.battleSpeed = speed
     }
-  }
-
-  /**
-   * 触发伤害数字动画
-   */
-  private triggerDamageAnimation(data: {
-    targetId: string
-    damage: number
-    damageType: string
-    isCritical: boolean
-    isHeal: boolean
-  }): void {
-    eventBus.emit(BattleSystemEvent.DAMAGE_ANIMATION, data)
-  }
-
-  /**
-   * 触发闪避动画
-   */
-  private triggerMissAnimation(data: { targetId: string }): void {
-    eventBus.emit(BattleSystemEvent.MISS_ANIMATION, data)
-  }
-
-  /**
-   * 触发Buff效果
-   */
-  private triggerBuffEffect(data: {
-    targetId: string
-    buffName: string
-    isPositive: boolean
-  }): void {
-    eventBus.emit(BattleSystemEvent.BUFF_EFFECT, data)
   }
 
   /**
@@ -1899,6 +1948,7 @@ export class BattleSystem implements IBattleSystem {
       this.animationQueue.push({
         type: animationType,
         data,
+        duration: actualDuration,
         resolve,
       })
 
@@ -1927,14 +1977,12 @@ export class BattleSystem implements IBattleSystem {
 
     eventBus.emit(animation.type, animation.data)
 
-    const duration = this.getAnimationDuration()
-
     await new Promise<void>((resolve) => {
       this.rafTimer.setTimeout(() => {
         animation.resolve()
         this.processAnimationQueue()
         resolve()
-      }, duration)
+      }, animation.duration)
     })
   }
 

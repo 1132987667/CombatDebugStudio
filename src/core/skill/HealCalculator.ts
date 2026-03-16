@@ -108,9 +108,6 @@ export class HealCalculator {
           output: result,
         })
 
-        // 调试：检查基础值是否正确
-        console.log(`DEBUG: 基础治疗值 = ${result}`)
-
         // 2. 额外值计算
         step.calculation.extraValues.forEach((extra) => {
           const attributeValue = this.getAttributeValue(source, extra.attribute)
@@ -131,14 +128,10 @@ export class HealCalculator {
             output: result,
           })
         })
-
-        // 调试：检查额外值计算后的结果
-        console.log(`DEBUG: 额外值计算后结果 = ${result}`)
       } else if (step.formula) {
         result = this.parseFormula(step.formula, source, target)
         modifiers['formula'] = 1
         battleLogManager.addDebugLog(`治疗计算开始: 公式计算结果=${result}`)
-        console.log(`DEBUG: 公式计算治疗值 = ${result}`)
         intermediateSteps.push({
           type: 'heal',
           description: '公式计算',
@@ -197,9 +190,6 @@ export class HealCalculator {
       // 确保非负整数
       const finalValue = Math.max(0, Math.floor(result))
       battleLogManager.addDebugLog(`最终治疗值: ${finalValue}`)
-
-      // 调试：检查最终结果
-      console.log(`DEBUG: 最终治疗值 = ${finalValue}`)
 
       // 记录计算日志
       this.recordCalculationLog({

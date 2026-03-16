@@ -7,7 +7,12 @@
  * 版本: 1.0.0
  */
 
-import type { BattleParticipant, StatusEffect, ParticipantSnapshot, BuffInstanceSnapshot } from '@/types/battle'
+import type {
+  BattleParticipant,
+  StatusEffect,
+  ParticipantSnapshot,
+  BuffInstanceSnapshot,
+} from '@/types/battle'
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
 import type { UIBattleCharacter, UISkills } from '@/types/UI/UIBattleCharacter'
@@ -172,15 +177,18 @@ export class BattleParticipantImpl implements BattleParticipant {
     const minAttack = getValue(uiCharacter.minAttack, attack)
     const maxAttack = getValue(uiCharacter.maxAttack, attack)
 
-    const instanceId = uiCharacter.id || `${isAlly ? 'ally' : 'enemy'}_${Date.now()}_${index}`
+    const instanceId =
+      uiCharacter.id || `${isAlly ? 'ally' : 'enemy'}_${Date.now()}_${index}`
 
-    const statusEffects: StatusEffect[] = (uiCharacter.buffs || []).map(buff => ({
-      id: buff.id,
-      name: buff.name,
-      type: buff.isPositive ? 'buff' as const : 'debuff' as const,
-      duration: buff.duration,
-      remainingTurns: buff.duration
-    }))
+    const statusEffects: StatusEffect[] = (uiCharacter.buffs || []).map(
+      (buff) => ({
+        id: buff.id,
+        name: buff.name,
+        type: buff.isPositive ? ('buff' as const) : ('debuff' as const),
+        duration: buff.duration,
+        remainingTurns: buff.duration,
+      }),
+    )
 
     return new BattleParticipantImpl({
       id: instanceId,
@@ -283,7 +291,10 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @returns 随机攻击力
    */
   getRandomAttack(): number {
-    return Math.floor(Math.random() * (this.maxAttack - this.minAttack + 1)) + this.minAttack
+    return (
+      Math.floor(Math.random() * (this.maxAttack - this.minAttack + 1)) +
+      this.minAttack
+    )
   }
 
   /**
@@ -433,6 +444,14 @@ export class BattleParticipantImpl implements BattleParticipant {
    */
   getSkills(): UISkills {
     return this.skills
+  }
+
+  getSkillList(): SkillConfig[] {
+    return [
+      ...this.skills.small,
+      ...this.skills.passive,
+      ...this.skills.ultimate,
+    ]
   }
 
   /**

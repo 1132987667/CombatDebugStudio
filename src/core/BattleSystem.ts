@@ -526,9 +526,9 @@ export class BattleSystem implements IBattleSystem {
         return
       }
 
-      // 获取所有可用技能并过滤掉被动技能
-      const allSkillIds = participant.getSkillIds()
-      const allAvailableSkills = allSkillIds.filter((skillId) => {
+      // 获取所有可用主动技能
+      const activeSkillIds = participant.getSkillIds('active')
+      const availableSkills = activeSkillIds.filter((skillId) => {
         const energyCost = this.getSkillEnergyCost(skillId)
         // 检查能量是否足够
         if (participant.currentEnergy < energyCost) {
@@ -544,11 +544,6 @@ export class BattleSystem implements IBattleSystem {
           }
         }
         return true
-      })
-
-      // 过滤掉被动技能（通过技能ID判断）
-      const availableSkills = allAvailableSkills.filter((skillId) => {
-        return !skillId.includes('passive')
       })
 
       // 检查是否使用 AI 系统进行决策
@@ -567,7 +562,7 @@ export class BattleSystem implements IBattleSystem {
         if (action.type === 'skill' && action.skillId) {
           const skillId = action.skillId
           const skill = this.skillManager.getSkillConfig(skillId)
-          if (skill && allSkillIds.includes(skillId)) {
+          if (skill && activeSkillIds.includes(skillId)) {
             await this.selectAndExecuteSkill(battle, participant, skill)
           } else {
             await this.selectAndExecuteAttack(battle, participant)

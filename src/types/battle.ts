@@ -176,6 +176,7 @@ export interface BattleEntity {
   needsHealing(): boolean
 
   getSkills(): UISkills
+  getSkillList(): SkillConfig[]
   getSkillIds(filter?: 'all' | 'active' | 'passive'): string[]
   hasSkill(skillId: string): boolean
 }

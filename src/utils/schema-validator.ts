@@ -174,8 +174,9 @@ export function validateSkillConfig(skillConfig: any): ValidationResult {
     errors.push('Missing required field: id')
   }
 
-  if (!skillConfig.type) {
-    errors.push('Missing required field: type')
+  // 检查 skillType 字段
+  if (!skillConfig.skillType) {
+    errors.push('Missing required field: skillType')
   }
 
   if (!skillConfig.name) {

@@ -2,9 +2,9 @@
   "id": "berserk",
   "name": "狂暴",
   "description": "陷入狂暴状态，攻击力和暴击属性大幅提升，但防御力降低，且会持续损失生命值",
-  "duration": 20000,
+  "duration": 4,
   "maxStacks": 1,
-  "cooldown": 45000,
+  "cooldown": 9,
   "isPermanent": false,
   "isDebuff": false,
   "parameters": {

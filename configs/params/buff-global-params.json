@@ -1,7 +1,7 @@
 {
   "global": {
     "maxBuffsPerCharacter": 20,
-    "defaultCooldown": 10000,
+    "defaultCooldown": 2,
     "tickInterval": 50,
     "performanceMonitorEnabled": false
   },

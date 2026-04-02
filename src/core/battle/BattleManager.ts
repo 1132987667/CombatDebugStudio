@@ -179,6 +179,24 @@ export class BattleManager {
   }
 
   /**
+   * 获取启用的我方队伍
+   * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
+   */
+  getEnabledAllyTeam(): UIBattleCharacter[] {
+    const allyTeam = this.getAllyTeam()
+    return allyTeam.filter((c) => c.enabled)
+  }
+
+  /**
+   * 获取启用的敌方队伍
+   * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
+   */
+  getEnabledEnemyTeam(): UIBattleCharacter[] {
+    const enemyTeam = this.getEnemyTeam()
+    return enemyTeam.filter((c) => c.enabled)
+  }
+
+  /**
    * 获取所有参与者
    */
   getAllParticipants(): UIBattleCharacter[] {
@@ -509,8 +527,8 @@ export class BattleManager {
       throw new Error('战斗系统未初始化')
     }
 
-    const allyTeam = this.getAllyTeam().filter((c) => c.enabled)
-    const enemyTeam = this.getEnemyTeam().filter((e) => e.enabled)
+    const allyTeam = this.getEnabledAllyTeam()
+    const enemyTeam = this.getEnabledEnemyTeam()
 
     if (allyTeam.length === 0 || enemyTeam.length === 0) {
       battleLogManager.addDebugLog('队伍数据未初始化，请先添加角色到队伍')
@@ -538,16 +556,20 @@ export class BattleManager {
     if (this.battleSystem.getAutoBattle()) {
       await this.autoBattleManager.startAutoBattle(battleState.battleId)
     }
-
     return battleState.battleId
   }
 
   /**
    * 开始自动战斗
-   * @param battleId 战斗ID
+   * 统一通过 AutoBattleManager 启动，确保日志和状态同步
    */
-  startAutoBattle() {
-    return this.battleSystem.startAutoBattle()
+  async startAutoBattle(): Promise<boolean> {
+    const battleId = this.battleStateManager.getBattleId()?.value
+    if (!battleId) {
+      battleLogManager.addSystemLog('请先创建战斗')
+      return false
+    }
+    return this.autoBattleManager.startAutoBattle(battleId)
   }
 
   /**
@@ -559,10 +581,10 @@ export class BattleManager {
 
   /**
    * 停止自动战斗
-   * @param battleId 战斗ID
+   * 统一通过 AutoBattleManager 停止，确保日志和状态同步
    */
-  stopAutoBattle() {
-    return this.battleSystem.stopAutoBattle()
+  stopAutoBattle(): boolean {
+    return this.autoBattleManager.stopAutoBattle()
   }
 
   /**
@@ -572,7 +594,7 @@ export class BattleManager {
   endBattle(winner: any) {
     const battleId = this.battleStateManager.getBattleId()?.value
     if (battleId) {
-      this.battleSystem.stopAutoBattle()
+      this.autoBattleManager.stopAutoBattle()
     }
     // 触发战斗结束事件
     const eventData: any = { winner }

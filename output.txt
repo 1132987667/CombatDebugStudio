@@ -1,6 +1,5 @@
 项目文件夹架构:
 CombatDebugStudio/
-.vscode/
 configs/
     buffs/
         combat/
@@ -23,6 +22,14 @@ configs/
         scenes.json
     skills/
         skills.json
+docs/
+documents/
+    combat-record-plan.md
+    修改.md
+    功能介绍.md
+    战斗回放系统.md
+    日志管理.md
+    需求规格说明书.md
 scripts/
 src/
     components/
@@ -74,8 +81,10 @@ src/
             interfaces.ts
             ParticipantManager.ts
             TurnManager.ts
+        battleLog/
         calculations/
             index.ts
+        config/
         di/
             Container.ts
         errors/
@@ -87,7 +96,6 @@ src/
             HealCalculator.ts
             PassiveSkillManager.ts
             SkillManager.ts
-        task/
         BattleAI.ts
         BattleSystem.ts
         BuffContext.ts
@@ -1089,9 +1097,9 @@ tools/
   "id": "berserk",
   "name": "狂暴",
   "description": "陷入狂暴状态，攻击力和暴击属性大幅提升，但防御力降低，且会持续损失生命值",
-  "duration": 20000,
+  "duration": 4,
   "maxStacks": 1,
-  "cooldown": 45000,
+  "cooldown": 9,
   "isPermanent": false,
   "isDebuff": false,
   "parameters": {
@@ -1107,9 +1115,9 @@ tools/
   "id": "mountain_god",
   "name": "山神降临",
   "description": "获得山神的祝福，大幅提升攻击力和防御力，同时提高暴击率",
-  "duration": 30000,
+  "duration": 6,
   "maxStacks": 1,
-  "cooldown": 60000,
+  "cooldown": 12,
   "isPermanent": false,
   "isDebuff": false,
   "parameters": {
@@ -1125,9 +1133,9 @@ tools/
   "id": "poison",
   "name": "毒素",
   "description": "中毒效果，持续造成伤害并降低移动速度，伤害随时间递增",
-  "duration": 10000,
+  "duration": 2,
   "maxStacks": 3,
-  "cooldown": 5000,
+  "cooldown": 1,
   "isPermanent": false,
   "isDebuff": true,
   "parameters": {
@@ -1143,9 +1151,9 @@ tools/
   "id": "heal_over_time",
   "name": "持续治疗",
   "description": "获得持续治疗效果，每秒钟恢复一定量的生命值",
-  "duration": 15000,
+  "duration": 3,
   "maxStacks": 2,
-  "cooldown": 30000,
+  "cooldown": 6,
   "isPermanent": false,
   "isDebuff": false,
   "parameters": {
@@ -1161,9 +1169,9 @@ tools/
   "id": "shield",
   "name": "护盾",
   "description": "获得护盾保护，能够吸收一定量的伤害，并且会缓慢恢复",
-  "duration": 25000,
+  "duration": 5,
   "maxStacks": 1,
-  "cooldown": 40000,
+  "cooldown": 8,
   "isPermanent": false,
   "isDebuff": false,
   "parameters": {
@@ -4367,7 +4375,7 @@ tools/
 {
   "global": {
     "maxBuffsPerCharacter": 20,
-    "defaultCooldown": 10000,
+    "defaultCooldown": 2,
     "tickInterval": 50,
     "performanceMonitorEnabled": false
   },
@@ -4603,7 +4611,7 @@ tools/
 ]
 
 --- configs/skills/skills.json ---
-[
+﻿[
   {
     "id": "skill_enemy_001_small",
     "name": "花粉迷雾",
@@ -4629,7 +4637,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_002_small",
@@ -4640,6 +4648,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.85",
         "attackType": "normal"
       },
@@ -4654,7 +4663,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_003_small",
@@ -4665,6 +4674,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.9",
         "attackType": "normal"
       },
@@ -4675,7 +4685,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_004_small",
@@ -4686,6 +4696,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.85",
         "attackType": "normal"
       },
@@ -4700,7 +4711,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_005_small",
@@ -4711,12 +4722,13 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.1",
         "attackType": "normal"
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_006_small",
@@ -4727,17 +4739,19 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.6",
         "attackType": "normal"
       },
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.6",
         "attackType": "normal"
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_004_passive",
@@ -4757,7 +4771,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_005_passive",
@@ -4777,7 +4791,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_006_passive",
@@ -4797,7 +4811,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_007_small",
@@ -4808,6 +4822,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.9",
         "attackType": "normal"
       },
@@ -4822,7 +4837,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_008_small",
@@ -4833,6 +4848,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.1",
         "attackType": "normal"
       },
@@ -4847,7 +4863,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_001_small",
@@ -4858,6 +4874,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.95",
         "attackType": "normal"
       },
@@ -4873,7 +4890,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_007_passive",
@@ -4893,7 +4910,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_008_passive",
@@ -4913,7 +4930,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_boss_001_passive",
@@ -4933,7 +4950,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_007_ultimate",
@@ -4945,6 +4962,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.2",
         "attackType": "normal"
       },
@@ -4959,7 +4977,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_008_ultimate",
@@ -4971,13 +4989,14 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.8",
         "attackType": "normal"
       }
     ],
     "condition": "target.hasBuff('buff_stun')",
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_boss_001_ultimate",
@@ -5000,7 +5019,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_009_small",
@@ -5011,6 +5030,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.85",
         "attackType": "normal"
       },
@@ -5025,7 +5045,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_010_small",
@@ -5036,12 +5056,13 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.95",
         "attackType": "normal"
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_011_small",
@@ -5052,6 +5073,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.8",
         "attackType": "normal"
       },
@@ -5067,7 +5089,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_012_small",
@@ -5078,17 +5100,19 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.65",
         "attackType": "normal"
       },
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.65",
         "attackType": "normal"
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_013_small",
@@ -5099,6 +5123,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.0",
         "attackType": "normal"
       },
@@ -5114,7 +5139,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_014_small",
@@ -5125,6 +5150,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.9",
         "attackType": "normal"
       },
@@ -5139,7 +5165,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_012_passive",
@@ -5159,7 +5185,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_013_passive",
@@ -5179,7 +5205,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_014_passive",
@@ -5199,7 +5225,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_015_small",
@@ -5210,12 +5236,13 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.05",
         "attackType": "normal"
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_016_small",
@@ -5226,6 +5253,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.95",
         "attackType": "normal"
       },
@@ -5241,7 +5269,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_002_small",
@@ -5252,6 +5280,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.9",
         "attackType": "normal"
       },
@@ -5262,7 +5291,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_015_passive",
@@ -5282,7 +5311,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_016_passive",
@@ -5302,7 +5331,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_boss_002_passive",
@@ -5322,7 +5351,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_015_ultimate",
@@ -5334,6 +5363,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.1",
         "attackType": "normal"
       },
@@ -5348,7 +5378,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_016_ultimate",
@@ -5360,6 +5390,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.9",
         "attackType": "normal"
       },
@@ -5374,7 +5405,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_boss_002_ultimate",
@@ -5386,6 +5417,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.3",
         "attackType": "normal"
       },
@@ -5400,7 +5432,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_017_small",
@@ -5411,6 +5443,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.9",
         "attackType": "normal"
       },
@@ -5425,7 +5458,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_018_small",
@@ -5436,6 +5469,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.85",
         "attackType": "normal"
       },
@@ -5447,7 +5481,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_019_small",
@@ -5458,6 +5492,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*0.95",
         "attackType": "normal"
       },
@@ -5473,7 +5508,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_020_small",
@@ -5484,6 +5519,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.1",
         "attackType": "normal"
       },
@@ -5498,7 +5534,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_021_small",
@@ -5509,22 +5545,24 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.2",
         "attackType": "normal"
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_022_small",
     "name": "地裂术",
-    "description": "对单个敌人造成100%攻击力的普通伤害，并使其速度降低100%，持续2回合",
+    "description": "对单个敌人造成 100% 攻击力的普通伤害，并使其速度降低 100%，持续 2 回合",
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.0",
         "attackType": "normal"
       },
@@ -5539,7 +5577,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_020_passive",
@@ -5559,7 +5597,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_021_passive",
@@ -5579,7 +5617,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_022_passive",
@@ -5599,7 +5637,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_023_small",
@@ -5610,6 +5648,7 @@ tools/
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.3",
         "attackType": "normal"
       },
@@ -5624,33 +5663,35 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_024_small",
     "name": "金刚破",
-    "description": "对单个敌人造成115%攻击力的普通伤害",
+    "description": "对单个敌人造成 115% 攻击力的普通伤害",
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.15",
         "attackType": "normal"
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_003_small",
     "name": "地脉涌动",
-    "description": "对单个敌人造成100%攻击力的普通伤害，并为所有友方单位恢复30%攻击力的生命值",
+    "description": "对单个敌人造成 100% 攻击力的普通伤害，并为所有友方单位恢复 30% 攻击力的生命值",
     "cooldown": 2,
     "selector": "single_enemy",
     "steps": [
       {
         "type": "damage",
+        "target": "enemy",
         "formula": "attack*1.0",
         "attackType": "normal"
       },
@@ -5661,7 +5702,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_023_small",
@@ -5681,7 +5722,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_024_small",
@@ -5701,7 +5742,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_003_passive",
@@ -5721,7 +5762,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_023_small",
@@ -5747,7 +5788,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_024_small",
@@ -5773,7 +5814,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_003_ultimate",
@@ -5799,7 +5840,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_025_small",
@@ -5824,7 +5865,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_026_small",
@@ -5849,7 +5890,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_027_small",
@@ -5865,7 +5906,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_028_small",
@@ -5890,7 +5931,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_029_small",
@@ -5915,7 +5956,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_030_small",
@@ -5931,7 +5972,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_028_passive",
@@ -5951,7 +5992,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_029_passive",
@@ -5971,7 +6012,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_030_passive",
@@ -5991,7 +6032,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_031_small",
@@ -6016,7 +6057,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_032_small",
@@ -6041,7 +6082,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_004_small",
@@ -6067,7 +6108,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_031_passive",
@@ -6087,7 +6128,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_032_passive",
@@ -6107,7 +6148,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_boss_004_passive",
@@ -6127,7 +6168,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_031_ultimate",
@@ -6154,7 +6195,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_032_ultimate",
@@ -6180,7 +6221,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_boss_004_ultimate",
@@ -6201,7 +6242,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_033_small",
@@ -6226,7 +6267,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_034_small",
@@ -6251,7 +6292,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_035_small",
@@ -6273,7 +6314,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_036_small",
@@ -6298,7 +6339,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_037_small",
@@ -6323,7 +6364,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_038_small",
@@ -6344,7 +6385,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_036_passive",
@@ -6364,7 +6405,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_037_passive",
@@ -6384,7 +6425,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_038_passive",
@@ -6404,7 +6445,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_039_small",
@@ -6429,7 +6470,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_040_small",
@@ -6454,7 +6495,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_005_small",
@@ -6479,7 +6520,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_039_passive",
@@ -6499,7 +6540,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_040_passive",
@@ -6519,7 +6560,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_boss_005_passive",
@@ -6539,7 +6580,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_039_ultimate",
@@ -6565,7 +6606,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_040_ultimate",
@@ -6582,7 +6623,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_boss_005_ultimate",
@@ -6608,7 +6649,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_041_small",
@@ -6633,7 +6674,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_042_small",
@@ -6655,7 +6696,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_043_small",
@@ -6671,7 +6712,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_044_small",
@@ -6696,7 +6737,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_045_small",
@@ -6721,7 +6762,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_046_small",
@@ -6742,7 +6783,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_044_passive",
@@ -6762,7 +6803,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_045_passive",
@@ -6782,7 +6823,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_046_passive",
@@ -6802,7 +6843,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_047_small",
@@ -6827,7 +6868,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_048_small",
@@ -6852,7 +6893,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_006_small",
@@ -6873,7 +6914,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_047_passive",
@@ -6893,7 +6934,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_048_passive",
@@ -6913,7 +6954,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_boss_006_passive",
@@ -6933,7 +6974,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_047_ultimate",
@@ -6959,7 +7000,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_048_ultimate",
@@ -6985,7 +7026,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_boss_006_ultimate",
@@ -7011,7 +7052,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_049_small",
@@ -7036,7 +7077,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_050_small",
@@ -7061,7 +7102,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_051_small",
@@ -7082,7 +7123,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_052_small",
@@ -7103,7 +7144,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_053_small",
@@ -7128,7 +7169,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_054_small",
@@ -7153,7 +7194,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_052_passive",
@@ -7173,7 +7214,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_053_passive",
@@ -7193,7 +7234,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_054_passive",
@@ -7213,7 +7254,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_055_small",
@@ -7238,7 +7279,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_056_small",
@@ -7263,7 +7304,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_007_small",
@@ -7283,7 +7324,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_055_passive",
@@ -7303,7 +7344,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_056_passive",
@@ -7323,7 +7364,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_boss_007_passive",
@@ -7343,7 +7384,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_055_ultimate",
@@ -7369,7 +7410,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_056_ultimate",
@@ -7386,7 +7427,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_boss_007_ultimate",
@@ -7412,7 +7453,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_057_small",
@@ -7437,7 +7478,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_058_small",
@@ -7453,7 +7494,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_059_small",
@@ -7479,7 +7520,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_060_small",
@@ -7505,7 +7546,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_061_small",
@@ -7521,7 +7562,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_062_small",
@@ -7546,7 +7587,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_060_passive",
@@ -7566,7 +7607,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_061_passive",
@@ -7586,7 +7627,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_062_passive",
@@ -7606,7 +7647,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_063_small",
@@ -7622,7 +7663,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_064_small",
@@ -7647,7 +7688,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_008_small",
@@ -7667,7 +7708,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_063_passive",
@@ -7687,7 +7728,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_064_passive",
@@ -7707,7 +7748,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_boss_008_passive",
@@ -7727,7 +7768,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_063_ultimate",
@@ -7753,7 +7794,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_064_ultimate",
@@ -7770,7 +7811,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_boss_008_ultimate",
@@ -7796,7 +7837,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_065_small",
@@ -7821,7 +7862,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_066_small",
@@ -7846,7 +7887,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_067_small",
@@ -7867,7 +7908,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_068_small",
@@ -7892,7 +7933,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_069_small",
@@ -7913,7 +7954,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_070_small",
@@ -7939,7 +7980,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_068_passive",
@@ -7959,7 +8000,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_069_passive",
@@ -7979,7 +8020,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_070_passive",
@@ -7999,7 +8040,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_071_small",
@@ -8015,7 +8056,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_072_small",
@@ -8040,7 +8081,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_009_small",
@@ -8056,7 +8097,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_071_passive",
@@ -8076,7 +8117,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_072_passive",
@@ -8096,7 +8137,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_boss_009_passive",
@@ -8116,7 +8157,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_071_ultimate",
@@ -8142,7 +8183,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_072_ultimate",
@@ -8159,7 +8200,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_boss_009_ultimate",
@@ -8185,7 +8226,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_073_small",
@@ -8201,7 +8242,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_074_small",
@@ -8217,7 +8258,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_075_small",
@@ -8242,7 +8283,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_076_small",
@@ -8258,7 +8299,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_077_small",
@@ -8283,7 +8324,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_078_small",
@@ -8304,7 +8345,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_076_passive",
@@ -8324,7 +8365,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_077_passive",
@@ -8344,7 +8385,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_078_passive",
@@ -8364,7 +8405,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_079_small",
@@ -8389,7 +8430,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_080_small",
@@ -8414,7 +8455,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_boss_010_small",
@@ -8440,7 +8481,7 @@ tools/
       }
     ],
     "energyCost": 25,
-    "type": "small"
+    "skillType": "small"
   },
   {
     "id": "skill_enemy_079_passive",
@@ -8460,7 +8501,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_080_passive",
@@ -8480,7 +8521,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_boss_010_passive",
@@ -8500,7 +8541,7 @@ tools/
       }
     ],
     "energyCost": 0,
-    "type": "passive"
+    "skillType": "passive"
   },
   {
     "id": "skill_enemy_079_ultimate",
@@ -8526,7 +8567,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_enemy_080_ultimate",
@@ -8543,7 +8584,7 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   },
   {
     "id": "skill_boss_010_ultimate",
@@ -8569,9 +8610,1744 @@ tools/
       }
     ],
     "energyCost": 150,
-    "type": "ultimate"
+    "skillType": "ultimate"
   }
 ]
+
+--- documents/combat-record-plan.md ---
+# 战斗记录系统实施计划
+
+## 概述
+
+根据方案 `output.txt` 的设计，实现统一的战斗记录系统，贯穿整个动作生命周期，在各个处理阶段逐步填充记录对象。
+
+---
+
+## 实施步骤
+
+### 阶段一：创建核心类型定义
+
+**任务 1.1** - 创建 `src/types/combat-record.ts` 文件，定义以下接口：
+- `EffectRecord` - 效果条目接口（伤害、治疗、Buff、Debuff、闪避、暴击等）
+- `CalculationStep` - 计算步骤细节接口
+- `CalculationDetail` - 计算详情接口（调试模式）
+- `CombatRecord` - 统一动作记录核心接口
+
+**产出文件**：`src/types/combat-record.ts`
+
+---
+
+### 阶段二：修改伤害/治疗计算器
+
+**任务 2.1** - 修改 `src/core/skill/DamageCalculator.ts`：
+- 在 `calculateDamage` 方法中添加可选的 `record?: CombatRecord` 参数
+- 当 `record` 传入且 `record.hasDetail === true` 时：
+  - 初始化 `record.detail` 对象
+  - 记录每个计算步骤（基础值、属性加成、暴击判定等）
+  - 记录暴击/闪避状态、修正系数、最终值
+- 无论是否开启调试模式，都将效果添加到 `record.effects` 列表
+- 累加总伤害到 `record.damage`
+
+**任务 2.2** - 修改 `src/core/skill/HealCalculator.ts`：
+- 在 `calculateHeal` 方法中添加可选的 `record?: CombatRecord` 参数
+- 实现与 DamageCalculator类似的记录逻辑
+- 记录治疗计算步骤到 `record.detail`
+- 将治疗效果添加到 `record.effects` 并累加 `record.heal`
+
+---
+
+### 阶段三：修改 BuffSystem
+
+**任务 3.1** - 修改 `src/core/BuffSystem.ts`：
+- 在 `addBuff` 方法中添加可选的 `record?: CombatRecord` 参数
+- 当 `record` 传入时，向 `record.effects` 添加 Buff 效果记录
+- 记录内容包含：buffId、instanceId、目标角色ID、效果描述
+
+---
+
+### 阶段四：修改 SkillManager
+
+**任务 4.1** - 修改 `src/core/skill/SkillManager.ts`：
+- 在 `executeSkill` 方法中添加可选的 `record?: CombatRecord` 参数
+- 在遍历步骤时，将 `record` 传递给 `executeSkillStep`
+- 修改 `executeDamageStep`：接收 record 参数并传递给 DamageCalculator
+- 修改 `executeHealStep`：接收 record 参数并传递给 HealCalculator
+- 修改 `executeBuffStep`：接收 record 参数并传递给 BuffSystem.addBuff
+
+---
+
+### 阶段五：修改 ActionExecutor
+
+**任务 5.1** - 修改 `src/core/battle/ActionExecutor.ts`：
+- 添加 `shouldRecordDetail()` 方法判断是否需要记录调试详情
+- 添加 `createEmptyRecord()` 方法创建空的记录对象
+- 添加 `finalizeRecord()` 方法完成记录的最终处理
+- 在 `processSkill` 方法中：
+  - 根据调试模式决定是否创建详细记录对象
+  - 将 record 传递给 `skillManager.executeSkill`
+  - 记录完成后调用 `battleRecorder.addRecord`（如已集成）
+  - 发送日志事件（如已集成）
+
+---
+
+### 阶段六：集成与测试
+
+**任务 6.1** - 确保与现有 BattleRecorder 系统集成：
+- 在 ActionExecutor 中获取或注入 BattleRecorder 实例
+- 战斗记录添加到 BattleRecorder 的事件系统中
+
+**任务 6.2** - 验证数据流完整性：
+- 从 ActionExecutor -> SkillManager -> DamageCalculator/HealCalculator/BuffSystem
+- 确认 record 对象在各个阶段被正确填充
+
+---
+
+## 关键文件清单
+
+| 文件路径 | 修改类型 | 说明 |
+|---------|---------|------|
+| `src/types/combat-record.ts` | 新建 | 核心类型定义 |
+| `src/core/skill/DamageCalculator.ts` | 修改 | 添加 record 参数 |
+| `src/core/skill/HealCalculator.ts` | 修改 | 添加 record 参数 |
+| `src/core/BuffSystem.ts` | 修改 | addBuff 添加 record 参数 |
+| `src/core/skill/SkillManager.ts` | 修改 | 传递 record 参数 |
+| `src/core/battle/ActionExecutor.ts` | 修改 | 创建和传递 record |
+
+---
+
+## 实施顺序
+
+1. 任务 1.1 - 创建类型定义文件
+2. 任务 2.1 - 修改 DamageCalculator
+3. 任务 2.2 - 修改 HealCalculator
+4. 任务 3.1 - 修改 BuffSystem
+5. 任务 4.1 - 修改 SkillManager
+6. 任务 5.1 - 修改 ActionExecutor
+7. 任务 6.1 - 集成测试
+
+--- documents/修改.md ---
+根据代码分析，我来详细解释技能系统中 `selector` 和 `target` 的设计原理、优先级和判断逻辑：
+
+## 📊 两个字段的定义和区别
+
+### **1. `selector` 字段**
+- **作用**：定义技能的**初始目标选择范围**（即技能整体的目标范围）
+- **位置**：在技能配置的根级别
+- **值类型**：字符串
+- **常见值**：
+  - `"single_enemy"` - 选择单个敌人
+  - `"all_enemies"` - 选择所有敌人
+  - `"self"` - 选择自身
+  - `"all_allies"` - 选择所有友方
+  - `"lowest_ally"` - 选择生命值最低的友方
+  - `"all"` - 选择所有单位
+
+### **2. `target` 字段**
+- **作用**：定义**单个步骤的具体目标**
+- **位置**：在 `steps` 数组中的每个步骤对象中
+- **值类型**：字符串
+- **常见值**：
+  - `"enemy"` - 敌人
+  - `"self"` - 自己
+  - `"allies"` - 所有友方
+  - `"lowest_ally"` - 生命值最低的友方
+  - `"all"` - 所有单位
+
+## ⚖️ 优先级和判断逻辑
+
+### **优先级规则**
+```
+步骤中的 target > 技能中的 selector
+```
+
+### **详细判断逻辑流程**
+
+```typescript
+// 伪代码：动作执行器处理技能的逻辑
+async executeSkill(skillConfig, caster) {
+    // 1. 使用 selector 确定技能的整体目标范围
+    let skillTargets = this.selectTargetsBySelector(caster, skillConfig.selector);
+    
+    // 2. 遍历技能的每个步骤
+    for (const step of skillConfig.steps) {
+        // 3. 确定当前步骤的目标
+        let stepTarget;
+        
+        if (step.target) {
+            // 如果步骤有 target 字段，使用步骤的 target
+            stepTarget = this.selectTargetsByStepTarget(caster, step.target, skillTargets);
+        } else {
+            // 如果步骤没有 target 字段，使用技能的 selector 结果
+            stepTarget = skillTargets;
+        }
+        
+        // 4. 执行步骤
+        await this.executeStep(step, caster, stepTarget);
+    }
+}
+```
+
+## 🔍 具体示例分析
+
+### **示例1：简单技能（只有 selector，没有 step.target）**
+```json
+{
+  "id": "skill_enemy_001_small",
+  "selector": "single_enemy",
+  "steps": [
+    {
+      "type": "damage",
+      "formula": "attack*0.8"
+      // 注意：这里没有 target 字段
+    }
+  ]
+}
+```
+- **执行逻辑**：
+  1. 技能选择器选择一个敌人（`single_enemy`）
+  2. 伤害步骤没有指定 target，使用技能选择的目标（那个敌人）
+  3. 对该敌人造成伤害
+
+### **示例2：混合技能（有 step.target）**
+```json
+{
+  "id": "skill_enemy_003_small",
+  "selector": "single_enemy",
+  "steps": [
+    {
+      "type": "damage",
+      "formula": "attack*0.9"
+      // 没有 target，使用技能的 selector（敌人）
+    },
+    {
+      "type": "heal",
+      "formula": "damage*0.15",
+      "target": "self"  // 指定了 target
+    }
+  ]
+}
+```
+- **执行逻辑**：
+  1. 技能选择器选择一个敌人
+  2. 第一步：对敌人造成伤害（使用技能选择的目标）
+  3. 第二步：治疗自己（使用步骤指定的 `target: "self"`）
+
+### **示例3：复杂技能（多步骤，不同目标）**
+```json
+{
+  "id": "skill_boss_002_small",
+  "selector": "single_enemy",
+  "steps": [
+    {
+      "type": "damage",
+      "formula": "attack*0.9"
+      // 没有 target，使用技能的 selector（敌人）
+    },
+    {
+      "type": "heal",
+      "formula": "attack*0.5",
+      "target": "lowest_ally"  // 指定了 target
+    }
+  ]
+}
+```
+- **执行逻辑**：
+  1. 技能选择器选择一个敌人
+  2. 第一步：对敌人造成伤害（使用技能选择的目标）
+  3. 第二步：治疗生命值最低的友方（使用步骤指定的 `target: "lowest_ally"`）
+
+## 🎯 目标选择器的工作原理
+
+### **1. `selector` 的选择逻辑**
+```typescript
+// 伪代码：根据 selector 选择目标
+function selectTargetsBySelector(caster, selector) {
+    switch (selector) {
+        case "single_enemy":
+            // 从敌人列表中选择一个目标（自动战斗AI选择或随机选择）
+            return [selectRandomEnemy()];
+        case "all_enemies":
+            // 返回所有敌人
+            return getAllEnemies();
+        case "self":
+            // 返回施法者自己
+            return [caster];
+        case "all_allies":
+            // 返回所有友方单位
+            return getAllAllies();
+        case "lowest_ally":
+            // 返回生命值最低的友方
+            return [getLowestHealthAlly()];
+        default:
+            // 默认返回空或错误
+            return [];
+    }
+}
+```
+
+### **2. `target` 的选择逻辑**
+```typescript
+// 伪代码：根据步骤的 target 选择目标
+function selectTargetsByStepTarget(caster, target, skillTargets) {
+    switch (target) {
+        case "enemy":
+            // 使用技能选择的目标（敌人）
+            return skillTargets;
+        case "self":
+            // 使用施法者自己
+            return [caster];
+        case "allies":
+            // 使用所有友方
+            return getAllAllies();
+        case "lowest_ally":
+            // 使用生命值最低的友方
+            return [getLowestHealthAlly()];
+        case "all":
+            // 使用所有单位
+            return getAllUnits();
+        default:
+            // 默认使用技能选择的目标
+            return skillTargets;
+    }
+}
+```
+
+## 📝 设计原则和最佳实践
+
+### **1. 一致性原则**
+```json
+// ✅ 好的设计：selector 和 step.target 一致
+{
+  "selector": "single_enemy",
+  "steps": [
+    {
+      "type": "damage",
+      "target": "enemy"  // 明确指定，与 selector 一致
+    }
+  ]
+}
+
+// ✅ 也可以：不指定 step.target，依赖 selector
+{
+  "selector": "single_enemy",
+  "steps": [
+    {
+      "type": "damage"  // 不指定 target，使用 selector
+    }
+  ]
+}
+```
+
+### **2. 差异化设计**
+```json
+// ✅ 好的设计：不同步骤使用不同目标
+{
+  "selector": "single_enemy",
+  "steps": [
+    {
+      "type": "damage",
+      "target": "enemy"  // 对敌人造成伤害
+    },
+    {
+      "type": "buff",
+      "target": "self"   // 给自己加Buff
+    }
+  ]
+}
+```
+
+### **3. 被动技能的特殊处理**
+```json
+// 被动技能通常 selector 为 "self"
+{
+  "id": "skill_enemy_012_passive",
+  "selector": "self",
+  "type": "passive",
+  "steps": [
+    {
+      "type": "buff",
+      "target": "allies",  // 给所有友方加Buff
+      "effectId": "buff_commander"
+    }
+  ]
+}
+```
+
+## ⚠️ 常见问题和错误
+
+### **1. 目标不匹配**
+```json
+// ❌ 错误：selector 选择敌人，但步骤 target 是 "self"，可能导致逻辑混乱
+{
+  "selector": "single_enemy",
+  "steps": [
+    {
+      "type": "heal",
+      "target": "self"  // 治疗自己，但技能选择的是敌人
+    }
+  ]
+}
+```
+
+### **2. 缺少关键字段**
+```json
+// ❌ 错误：缺少 selector 字段（这正是自动战斗卡住的可能原因）
+{
+  "id": "skill_example",
+  "name": "示例技能",
+  // 缺少 "selector": "single_enemy"
+  "steps": [
+    {
+      "type": "damage",
+      "target": "enemy"
+    }
+  ]
+}
+```
+
+### **3. 目标类型不明确**
+```json
+// ❌ 错误：target 值不明确
+{
+  "steps": [
+    {
+      "type": "damage",
+      "target": "enemy"  // 这个 enemy 是哪个敌人？需要 selector 或其他机制确定
+    }
+  ]
+}
+```
+
+## 🔧 针对自动战斗卡住的解决方案
+
+根据您的项目代码，我建议：
+
+### **1. 确保所有技能都有有效的 `selector`**
+```typescript
+// 在技能解析时添加验证
+function validateSkill(skill) {
+    if (!skill.selector) {
+        console.error(`技能 ${skill.id} 缺少 selector 字段`);
+        // 根据技能类型自动设置
+        if (skill.type === "passive") {
+            skill.selector = "self";
+        } else if (skill.type === "small") {
+            skill.selector = "single_enemy";
+        } else if (skill.type === "ultimate") {
+            skill.selector = "all_enemies";
+        }
+    }
+}
+```
+
+### **2. 检查第一个出场角色的技能配置**
+```json
+// 确保 enemy_001 的技能配置完整
+{
+  "id": "enemy_001",
+  "skills": {
+    "small": ["skill_enemy_001_small"]
+  }
+}
+
+// 确保 skill_enemy_001_small 有 selector
+{
+  "id": "skill_enemy_001_small",
+  "selector": "single_enemy",  // 必须有这个字段
+  "steps": [
+    {
+      "type": "damage",
+      "target": "enemy"  // 可选，但建议明确指定
+    }
+  ]
+}
+```
+
+### **3. 在动作执行器中添加防御性代码**
+```typescript
+// ActionExecutor.ts
+async executeSkill(skillConfig, caster) {
+    // 防御性检查：确保 selector 存在
+    if (!skillConfig.selector) {
+        console.error(`技能 ${skillConfig.id} 缺少 selector 字段`);
+        // 使用默认值
+        skillConfig.selector = "single_enemy";
+    }
+    
+    // 选择目标
+    let targets = this.selectTargets(skillConfig.selector, caster);
+    
+    if (!targets || targets.length === 0) {
+        console.error(`无法为技能 ${skillConfig.id} 选择目标`);
+        return;
+    }
+    
+    // 执行步骤
+    for (const step of skillConfig.steps) {
+        // 确定步骤目标
+        let stepTarget = step.target ? 
+            this.selectTargets(step.target, caster) : 
+            targets;
+        
+        await this.executeStep(step, caster, stepTarget);
+    }
+}
+```
+
+## 📋 总结：设计建议
+
+1. **必须为所有技能配置 `selector` 字段**，这是技能系统的基础
+2. **步骤中的 `target` 是可选的**，用于覆盖技能的默认目标选择
+3. **优先级：步骤 target > 技能 selector**
+4. **被动技能**通常使用 `"selector": "self"`
+5. **攻击技能**通常使用 `"selector": "single_enemy"` 或 `"all_enemies"`
+6. **辅助技能**可能使用 `"selector": "all_allies"` 或 `"lowest_ally"`
+
+**针对您的自动战斗卡住问题**，最可能的原因是：
+1. 第一个角色的技能缺少 `selector` 字段
+2. 或者 `selector` 值无效，导致无法选择目标
+3. 动作执行器在解析技能时出错，但没有正确处理异常
+
+**建议立即检查 `configs/skills/skills.json` 中所有技能的 `selector` 字段是否完整有效**，特别是第一个出场角色的技能。
+
+--- documents/功能介绍.md ---
+# 游戏功能介绍
+
+## 1. 角色属性系统
+
+### 1.1 基础属性列表
+
+| 属性名称          | 编码                | 定义                   | 数值范围 | 对游戏体验的影响                                   |
+| ----------------- | ------------------- | ---------------------- | -------- | -------------------------------------------------- |
+| 等级              | level               | 角色的等级             | 1-99     | 影响角色基础属性值和技能解锁                       |
+| 名称              | name                | 角色的名字             | -        | 用于识别和区分不同角色                             |
+| 能量              | currentEnergy       | 角色当前能量值         | 0-100    | 用于施放技能，影响技能释放频率，初始值为25         |
+| 气血              | currentHp           | 角色当前生命值         | 0-最大值 | 直接影响角色生存能力，为0时角色死亡                |
+| 最小攻击-最大攻击 | minAttack/maxAttack | 角色攻击伤害范围       | 1-9999   | 直接影响伤害输出，范围越大伤害波动越大             |
+| 防御              | defense             | 角色抵抗伤害的能力     | 0-9999   | 减少受到的伤害，值越高减伤越多                     |
+| 速度              | speed               | 角色行动顺序的决定因素 | 1-9999   | 速度越高，行动顺序越靠前，回合内行动次数可能增加   |
+| 暴击率            | critRate            | 攻击产生暴击的概率     | 0-100%   | 提高暴击触发几率，增加伤害爆发能力，默认为10%      |
+| 暴击伤害          | critDamage          | 暴击时的伤害倍率       | 100-500% | 暴击时造成的额外伤害，值越高暴击伤害越高，默认125% |
+| 气血%             | healthBonus         | 气血加成百分比         | 0-500%   | 提高角色气血上限，增强生存能力                     |
+| 攻击%             | attackBonus         | 攻击加成百分比         | 0-500%   | 提高角色攻击力，增强伤害输出                       |
+| 防御%             | defenseBonus        | 防御加成百分比         | 0-500%   | 提高角色防御力，增强生存能力                       |
+| 速度%             | speedBonus          | 速度加成百分比         | 0-500%   | 提高角色速度，增强行动能力                         |
+
+### 1.2 能量系统详解
+
+#### 1.2.1 能量获取与消耗
+
+- **能量获取**：角色每回合结束时自动恢复25点能量
+- **能量消耗**：施放技能需要消耗对应能量值
+  - 小技能：固定消耗50点能量，默认冷却回合2回合
+  - 大技能（终极技能）：固定消耗150点能量，默认冷却回合5回合
+  - 被动技能：无能量消耗
+
+#### 1.2.2 能量策略
+
+- **能量管理**：合理规划技能释放顺序，确保关键技能在需要时能够释放
+- **爆发时机**：积累足够能量后，可选择释放高伤害的大技能
+- **持续输出**：通过小技能的循环使用，保持稳定的伤害输出
+
+#### 1.2.3 能量上限与特性
+
+- **能量上限**：角色能量值上限为100点
+- **能量溢出**：当能量恢复后超过上限时，会自动保持为100点
+- **初始能量**：角色初始能量值为25点，第一回合即可释放小技能
+
+### 1.3 属性影响机制
+
+- **属性相互关系**：某些属性会相互影响，例如高防御会降低受到的伤害，高速度会增加行动次数
+- **属性上限**：部分属性存在理论上限，如暴击率最高为100%
+- **属性成长**：角色等级提升时，基础属性会相应增长
+- **属性加成**：通过装备、技能、Buff等方式可以临时或永久提升属性
+
+## 2. 战斗计算公式
+
+### 2.1 伤害计算公式
+
+#### 基础伤害计算
+
+```
+基础伤害 = 随机值(最小攻击-最大攻击) × 各种伤害修正系数
+```
+
+#### 防御减免计算
+
+```
+伤害减免 = 目标防御值 × 0.01
+最终伤害 = 基础伤害 × (1 - 伤害减免)
+```
+
+#### 暴击伤害计算
+
+```
+暴击伤害 = 最终伤害 × 暴击伤害倍率
+```
+
+### 2.2 命中与闪避计算
+
+#### 命中概率计算
+
+```
+实际命中概率 = 攻击者命中率 - 目标闪避率
+```
+
+#### 闪避判定
+
+```
+是否闪避 = 随机数 < 目标闪避率
+```
+
+### 2.3 暴击概率计算
+
+```
+实际暴击概率 = 角色基础暴击率 + 技能/Buff加成
+```
+
+## 3. 游戏核心机制
+
+### 3.1 基础玩法
+
+- **回合制战斗**：游戏采用回合制战斗系统，角色按照速度顺序行动
+- **技能释放**：角色拥有多种技能，消耗能量值释放
+- **策略搭配**：玩家需要根据敌人特点和战场形势，合理搭配角色和技能
+- **资源管理**：管理角色的能量和生命值，确保战斗持续能力
+
+### 3.2 操作方式
+
+- **角色选择**：在参战面板中选择需要出战的角色
+- **技能释放**：在战斗界面中点击角色头像，然后选择要释放的技能
+- **目标选择**：释放技能时选择目标敌人或友军
+- **战斗控制**：可暂停、加速或重置战斗
+
+### 3.3 胜利条件
+
+- **全歼敌人**：击败所有敌方角色
+- **目标达成**：完成特定任务目标（如保护特定角色存活）
+- **时间限制**：在规定回合数内达成目标
+
+### 3.4 失败判定规则
+
+- **我方全灭**：所有我方角色生命值降至0
+- **任务失败**：未能在规定条件下完成任务目标
+- **时间耗尽**：超过规定回合数仍未达成胜利条件
+
+## 4. 游戏内Buff系统
+
+### 4.1 Buff分类
+
+#### 4.1.1 增益效果（Buff）
+
+| Buff名称   | 图标 | 效果描述                      | 持续时间 | 获取途径               | 叠加规则                   |
+| ---------- | ---- | ----------------------------- | -------- | ---------------------- | -------------------------- |
+| 攻击力提升 | 🔺   | 提高角色攻击力20%             | 3回合    | 技能释放、装备效果     | 刷新持续时间               |
+| 防御力提升 | 🛡️   | 提高角色防御力30%             | 4回合    | 技能释放、装备效果     | 刷新持续时间               |
+| 速度提升   | ⚡   | 提高角色速度25%               | 3回合    | 技能释放、装备效果     | 刷新持续时间               |
+| 护盾       | 🛡️   | 吸收100点伤害                 | 2回合    | 技能释放               | 不可叠加，新护盾覆盖旧护盾 |
+| 生命回复   | 💚   | 每回合回复50点生命值          | 3回合    | 技能释放、装备效果     | 独立叠加，每层单独计算     |
+| 狂暴       | 🔥   | 攻击力提升50%，防御力降低20%  | 2回合    | 技能释放、特定条件触发 | 不可叠加                   |
+| 山神祝福   | ⛰️   | 受到伤害减少50%，免疫控制效果 | 3回合    | 特定技能释放           | 不可叠加                   |
+
+#### 4.1.2 减益效果（Debuff）
+
+| Buff名称     | 图标 | 效果描述           | 持续时间 | 获取途径           | 叠加规则               |
+| ------------ | ---- | ------------------ | -------- | ------------------ | ---------------------- |
+| 中毒         | 🟢   | 每回合受到20点伤害 | 4回合    | 技能释放、敌人攻击 | 独立叠加，每层单独计算 |
+| 眩晕         | ⭕   | 无法进行任何行动   | 1回合    | 技能释放、敌人攻击 | 不可叠加，刷新持续时间 |
+| 速度降低     | 🐌   | 速度降低30%        | 2回合    | 技能释放、敌人攻击 | 刷新持续时间           |
+| 命中率降低   | 🎯   | 命中率降低25%      | 2回合    | 技能释放、敌人攻击 | 刷新持续时间           |
+| 暴击伤害降低 | 💥   | 暴击伤害降低30%    | 2回合    | 技能释放、敌人攻击 | 刷新持续时间           |
+| 重伤         | 💔   | 受到伤害增加20%    | 3回合    | 技能释放、敌人攻击 | 刷新持续时间           |
+
+### 4.2 Buff叠加规则
+
+- **独立叠加**：每层Buff独立计算效果，如中毒效果每层单独造成伤害
+- **刷新持续时间**：新Buff覆盖旧Buff并重置持续时间，如攻击力提升
+- **限制层数**：达到最大层数后无法继续叠加，如某些特殊Buff最多叠加3层
+
+### 4.3 Buff系统特性
+
+- **可驱散性**：部分Buff可被驱散技能移除
+- **免疫性**：某些角色或状态对特定Buff免疫
+- **控制效果**：部分Debuff带有控制效果，如眩晕、沉默等
+- **持续时间**：Buff通常有明确的持续回合数，回合结束后自动消失
+
+## 5. 游戏功能模块
+
+### 5.1 参战面板
+
+- **入口位置**：游戏主界面左侧
+- **核心作用**：管理出战角色，调整队伍配置
+- **使用方法**：
+  1. 勾选角色前方的复选框以启用/禁用角色
+  2. 点击角色头像查看详细属性
+  3. 通过拖拽调整角色出战顺序
+
+### 5.2 战斗界面
+
+- **入口位置**：游戏主界面中央
+- **核心作用**：进行战斗操作，观察战斗过程
+- **使用方法**：
+  1. 点击角色头像选择要行动的角色
+  2. 从技能列表中选择要释放的技能
+  3. 点击目标敌人或友军确定技能目标
+  4. 使用界面下方的控制按钮调整战斗速度或暂停
+
+### 5.3 调试面板
+
+- **入口位置**：游戏主界面右侧
+- **核心作用**：实时监控角色属性变化，查看详细战斗数据
+- **使用方法**：
+  1. 选择要查看的角色
+  2. 观察属性监控区域的实时数据变化
+  3. 查看技能信息和Buff效果
+
+### 5.4 战斗日志
+
+- **入口位置**：游戏主界面底部
+- **核心作用**：记录战斗过程中的所有事件和数据
+- **使用方法**：
+  1. 滚动查看详细战斗记录
+  2. 分析伤害数据和Buff效果
+  3. 排查战斗中的异常情况
+
+### 5.5 场景管理
+
+- **入口位置**：游戏主界面顶部菜单
+- **核心作用**：切换不同战斗场景，调整战斗环境
+- **使用方法**：
+  1. 从场景列表中选择要进入的场景
+  2. 查看场景描述和敌人配置
+  3. 点击"进入场景"开始战斗
+
+### 5.6 战斗规则设置
+
+- **入口位置**：游戏主界面顶部菜单
+- **核心作用**：调整战斗规则和参数，自定义游戏体验
+- **使用方法**：
+  1. 修改战斗参数如伤害倍率、暴击概率等
+  2. 启用或禁用特定战斗机制
+  3. 保存设置并应用到战斗中
+
+## 6. 总结
+
+本游戏是一款策略性回合制战斗游戏，玩家通过合理搭配角色、技能和Buff，利用战斗策略击败敌人。游戏拥有丰富的属性系统、深度的战斗计算机制和多样的游戏功能模块，为玩家提供了极具策略性和可玩性的游戏体验。
+
+通过本功能介绍文档，玩家可以快速了解游戏的核心内容和玩法机制，为游戏体验打下良好的基础。随着游戏的不断更新和扩展，本文档也将持续完善，为玩家提供最新、最全面的游戏信息。
+
+--- documents/战斗回放系统.md ---
+1. 概述
+当前战斗回放系统（战斗回放系统.md）提供了基础的数据结构、录制流程、控制功能和UI布局，但在实际实现（BattleRecorder.ts、BattleReplayManager.ts）中存在若干不足，例如：未记录完整的初始/最终状态、无法实现真正的状态回退、回放仅能播放事件序列而非模拟战斗过程、缺乏数据校验和版本兼容机制等。本设计方案旨在完善战斗回放系统，使其具备确定性回放、状态快照跳转、高性能回放、数据完整性校验等核心能力，并与现有战斗系统深度集成。
+
+2. 当前系统分析
+2.1 已实现的功能
+录制：记录战斗开始、结束、回合开始/结束、动作等事件，存储于RecordedBattle结构中。
+
+存储：支持保存到localStorage和加载。
+
+回放控制：基本的播放、暂停、停止、速度调节、滑块跳转。
+
+UI：事件列表、时间轴、控制按钮。
+
+2.2 存在的问题
+状态缺失：仅记录事件，未保存初始/最终完整状态快照，导致回放时无法还原准确的战斗上下文。
+
+确定性不足：未记录随机数种子，导致回放时无法保证与原始战斗完全一致（如暴击、闪避）。
+
+跳转能力有限：滑块跳转基于帧索引，但无法直接恢复到特定时刻的完整状态，需重放所有历史事件，效率低且依赖事件重播的正确性。
+
+数据校验缺失：没有checksum或版本字段，无法保证回放文件的完整性和跨版本兼容性。
+
+录制内容不全：未记录技能释放的详细参数、Buff的变化、属性值的动态变化等。
+
+性能隐患：长时间战斗可能产生大量事件，内存占用和回放效率有待优化。
+
+与战斗系统耦合度：回放逻辑依赖外部事件触发，而非真正的战斗模拟，导致回放行为可能与实际战斗不符（如受实时随机数影响）。
+
+3. 完善目标
+确定性：通过记录随机数种子和初始状态，确保回放结果与原始战斗完全一致。
+
+可跳转性：支持基于回合/行动的任意跳转，并能快速恢复到指定时刻的状态。
+
+完整性：包含初始/最终快照、每回合快照、详细的动作数据。
+
+健壮性：加入数据校验、版本控制，保证文件可移植和向后兼容。
+
+性能优化：支持懒加载、事件压缩、虚拟滚动，适应长时间战斗。
+
+用户体验：增强UI，提供状态追踪、伤害统计、行动分析等高级功能。
+
+4. 修改点及修改思路
+4.1 数据结构增强
+修改点	当前设计	修改建议	修改思路
+确定性字段	无	增加 randomSeed: string、version: string、checksum: string	随机种子用于初始化伪随机数生成器，确保每次回放随机结果一致；版本号用于处理未来配置变化；checksum 用于校验文件完整性。
+初始/最终状态	仅记录初始参与者列表	增加 initialState: BattleStateSnapshot 和 finalState: BattleStateSnapshot	完整快照包含所有参与者的全部属性（生命、能量、Buff列表、技能冷却等），便于直接恢复到战斗开始或结束时刻。
+回合快照	无	在 BattleRound 中增加 startSnapshot 和 endSnapshot（可选）	允许跳转到特定回合开始时，无需重放之前所有回合。可按需存储，如每 5 回合存储一次，平衡空间与跳转精度。
+事件数据丰富	仅记录动作基本信息	扩展 BattleAction 记录详细效果：实际伤害/治疗值、是否暴击/闪避、触发的Buff实例ID等。	便于在回放时准确展示伤害数字、状态变化，同时为数据统计提供基础。
+Buff变化记录	无	增加独立的事件类型 buff_add、buff_remove、buff_update	详细记录Buff的完整生命周期，支持状态追踪面板显示任意时刻的Buff详情。
+数据压缩	无	对大量相同类型的事件（如连续普通攻击）进行合并存储，保留计数。	减少存储体积和内存占用，提升加载性能。
+改进后的接口示例
+typescript
+interface BattleReplay {
+  version: string;                // 战斗系统版本
+  replayId: string;               // 唯一标识
+  randomSeed: string;             // 随机种子
+  checksum: string;               // 数据完整性校验
+  
+  startTime: number;              // 战斗开始时间戳
+  duration: number;               // 总时长（毫秒）
+  
+  initialState: BattleStateSnapshot;   // 初始状态快照
+  finalState: BattleStateSnapshot;     // 最终状态快照
+  rounds: BattleRound[];               // 回合数据（含可选快照）
+  logs: BattleLogEntry[];              // 完整战斗日志（仅用于展示，不用于状态恢复）
+  result: BattleResult;                // 战斗结果
+}
+
+interface BattleStateSnapshot {
+  timestamp: number;              // 快照时间
+  turn: number;                   // 对应回合数
+  participants: ParticipantSnapshot[];
+}
+
+interface ParticipantSnapshot {
+  id: string;
+  hp: number;
+  energy: number;
+  buffInstances: BuffInstanceSnapshot[];  // Buff实例快照（含剩余回合、层数等）
+  skillCooldowns: Record<string, number>; // 技能冷却剩余回合
+}
+4.2 录制流程优化
+修改点	当前流程	修改建议	修改思路
+初始状态录制	仅记录参与者基础信息	在 startRecording 时，调用 createStateSnapshot() 保存完整快照。	确保回放时能从完全相同的基础开始。
+随机种子捕获	无	在战斗开始前生成一个随机种子，并注入到随机数生成器，同时保存到回放文件。	通过种子控制所有随机事件，实现确定性回放。
+回合快照录制	无	在 recordRoundStart 和 recordRoundEnd 中，可选地保存该回合的快照（可配置频率）。	为跳转提供中间状态点，避免重放过多事件。
+Buff变化录制	无	在Buff系统（BuffSystem）中添加钩子，每当Buff添加、移除、层数变化、回合更新时，调用recorder.recordBuffChange。	精确记录Buff动态，支持状态追踪面板。
+最终状态录制	无	在 endRecording 时，再次调用 createStateSnapshot() 保存最终快照。	用于快速跳转到战斗结束，或展示战后数据。
+4.3 回放控制与状态恢复
+修改点	当前设计	修改建议	修改思路
+状态回退机制	无，仅播放事件	基于快照和事件日志实现“时间旅行”。	跳转到某个时刻时，先恢复最近的前一个快照，然后重放该快照之后的事件，直到目标时刻。
+快照索引	无	构建快照索引数组，每个快照包含对应的回合/行动索引，用于快速定位。	优化跳转性能，避免线性搜索。
+回放核心重构	依赖外部事件驱动	将回放引擎独立为 ReplayEngine，它接收回放数据，维护当前状态，并能根据指令（播放到某事件、步进等）更新状态，同时派发事件供UI渲染。	解耦回放逻辑与UI，便于测试和复用；支持静默状态计算。
+随机数重放	无	在回放引擎中，使用保存的随机种子初始化伪随机数生成器，后续所有随机判断（暴击、闪避等）都使用该生成器产生一致的结果。	确保回放时随机行为与原始战斗完全相同。
+速度调节	支持倍速	结合 requestAnimationFrame 或 setTimeout，根据速度系数调整事件间隔。	保持动画流畅，同时支持高速跳帧。
+回放引擎接口示例
+typescript
+class ReplayEngine {
+  constructor(private replayData: BattleReplay) {
+    this.random = new SeededRandom(replayData.randomSeed);
+    this.currentState = this.applySnapshot(replayData.initialState);
+  }
+  
+  // 跳转到指定事件索引
+  seekToEvent(index: number): void {
+    const { snapshotIndex, events } = this.findNearestSnapshot(index);
+    this.currentState = this.applySnapshot(snapshotIndex);
+    for (let i = snapshotIndex.eventIndex + 1; i <= index; i++) {
+      this.applyEvent(events[i]);
+    }
+    this.emitStateUpdate();
+  }
+  
+  // 步进一个事件
+  stepForward(): void { /* ... */ }
+  
+  // 应用事件到当前状态
+  private applyEvent(event: BattleEvent): void { /* ... */ }
+}
+4.4 UI/UX 增强
+修改点	当前UI	修改建议	修改思路
+时间轴增强	仅显示事件点	添加回合分隔标记、关键事件（如角色死亡、Buff爆发）高亮；支持缩放、拖拽定位。	提升可视化体验，便于快速定位重要时刻。
+状态追踪面板	无	在查看器右侧增加可折叠面板，显示当前选中时刻任意角色的详细属性、Buff列表、技能冷却。	提供深度分析能力，满足调试需求。
+数据统计	无	增加统计面板：总伤害/治疗量、暴击次数、闪避次数、各技能使用次数等。	帮助评估战斗平衡性和角色表现。
+回放文件管理	仅保存/加载	增加文件列表、重命名、删除、导入/导出功能；支持按战斗ID、时间排序。	方便管理多个回放记录。
+键盘快捷键	无	支持空格（播放/暂停）、左右方向键（步进/后退）、Ctrl+左右（跳转回合）等。	提高操作效率。
+4.5 性能与兼容性
+修改点	当前设计	修改建议	修改思路
+事件压缩	无	对连续相同类型的普通攻击进行合并存储，在回放时展开或合并显示。	减少存储体积和内存占用，尤其适用于长战斗。
+懒加载	一次性加载全部事件	对于大型回放文件，采用分页或流式加载，仅加载当前视图附近的事件。	避免界面卡顿，提升首屏加载速度。
+版本兼容	无	在回放文件中保存战斗系统版本号，加载时检查版本，若版本不同则尝试使用迁移函数转换数据。	确保未来系统升级后仍能播放旧版回放。
+数据校验	无	在保存时计算整个回放数据的 checksum（如 MD5 或 CRC32），加载时重新计算并比对，若不一致则提示文件损坏。	防止数据篡改或传输错误导致异常。
+5. 实施优先级建议
+优先级	任务	预估工作量	说明
+P0（核心必做）	完善数据结构（版本、种子、快照）	2人日	这是确定性回放的基础。
+实现随机种子捕获与注入	1人日	需改造随机数使用方式。
+录制初始/最终快照	1人日	简单改造录制器。
+重构回放引擎，支持状态恢复	3人日	核心重写，需与战斗系统解耦。
+增加数据校验	1人日	保证文件完整性。
+P1（体验提升）	回合快照存储与跳转优化	2人日	实现快照索引和定位。
+状态追踪面板	2人日	UI 开发与数据绑定。
+时间轴增强（缩放、标记）	2人日	提升可视化。
+P2（高级功能）	Buff变化录制	1人日	需在 BuffSystem 添加钩子。
+数据统计面板	2人日	收集并展示统计数据。
+事件压缩与懒加载	2人日	性能优化。
+版本兼容迁移	1人日	长远考虑。
+6. 与现有系统的集成要点
+随机数生成器：统一使用可注入的随机数生成器（如 SeededRandom 类），在战斗开始时根据传入种子初始化，录制时保存种子，回放时使用相同种子。
+
+快照生成：在 BattleParticipantImpl 中增加 toSnapshot() 方法，返回可序列化的纯对象；在 BuffSystem 中提供 getBuffInstancesSnapshot(characterId) 方法。
+
+事件钩子：在 ActionExecutor、BuffSystem、TurnManager 等关键位置埋点，调用 BattleRecorder 的相应方法记录事件。
+
+回放模式：新增 ReplayMode，战斗系统进入该模式后，不再执行真实逻辑，而是根据回放引擎的状态更新展示，同时屏蔽用户干预（除非是调试回放中的干预，可选功能）。
+
+存储适配器：将 localStorage 存储替换为更通用的接口，便于未来迁移到 IndexedDB 或文件系统。
+
+7. 总结
+通过上述完善，战斗回放系统将从“事件记录播放器”进化为“确定性战斗模拟器”，支持任意时刻跳转、状态分析、性能优化和长期兼容。该设计紧密结合项目现有架构，最小化侵入式修改，同时为未来扩展（如多人观战、战斗录像分享）奠定基础。
+
+--- documents/日志管理.md ---
+## 战斗日志管理系统需求规格说明书
+
+### 1. 引言
+
+#### 1.1 目的
+
+本文档旨在详细定义基于 Vue3 + TypeScript 实现的战斗日志管理系统的功能、界面、数据及性能需求，为开发、测试及项目验收提供依据。
+
+#### 1.2 范围
+
+本系统为前端独立模块，负责实时记录、展示和筛选战斗中发生的各类事件，提供直观的日志视图，并支持浅色/暗色主题切换。
+
+#### 1.3 术语表
+
+- **日志条目**：记录一次具体事件的最小单元。
+- **回合**：战斗中的一轮行动周期，日志按回合分组。
+- **连续事件合并**：将同一来源对同一目标连续发生的同类事件合并为一条汇总日志。
+
+***
+
+### 2. 总体描述
+
+#### 2.1 用户场景
+
+- 玩家在战斗过程中实时查看战斗日志，了解战斗细节。
+- 战斗结束后可回溯日志，分析战斗过程。
+- 通过筛选快速聚焦特定类型的事件（战利品、系统、战斗）。
+
+#### 2.2 假设与依赖
+
+- 战斗逻辑与日志生成均在前端完成，日志数据由战斗系统实时推送。
+- 不使用第三方UI组件库，样式完全自定义。
+- 支持现代浏览器（Chrome、Firefox、Edge最新版）。
+
+***
+
+### 3. 功能需求
+
+#### 3.1 日志展示
+
+- **列表形式**：日志按时间顺序垂直排列，最新日志在底部（或顶部，需配置），支持滚动查看。
+- **时间戳**：每条日志内部存储精确时间戳（用于排序），但界面不显示具体时间。
+- **回合分组**：
+  - 同一回合内的日志使用相同的背景色（浅色/暗色模式下有区别）或左侧缩进线条标识。
+  - 回合切换时，在分组顶部显示“第 X 回合开始”的标识行。
+- **事件合并**：
+  - 对同一来源（如“张三”）对同一目标（如“李四”）连续造成的多次同类型事件（如普通攻击、暴击）进行合并。
+  - 合并后显示格式示例：“张三对李四连续造成5次伤害（共320点）”，并可展开查看每次详情（展开功能暂不实现，但保留数据结构）。
+  - 合并规则：
+    - 事件类型相同（如均为“伤害”）
+    - 来源和目标相同
+    - 中间无其他类型事件打断
+    - 连续发生（按时间顺序相邻）
+- **颜色标识**：
+  - 我方角色名称：绿色（#2ecc71 浅色 / #27ae60 暗色）
+  - 敌方角色名称：红色（#e74c3c 浅色 / #c0392b 暗色）
+  - 伤害数值：红色（#e74c3c）
+  - 治疗数值：绿色（#2ecc71）
+  - 暴击数值：黄色（#f1c40f）
+  - 技能名称：统一使用蓝色（#3498db 浅色 / #2980b9 暗色）
+  - 其他文字（如“闪避”、“添加buff”等）：默认文本色
+- **回合数统计**：在日志区域顶部显示当前战斗的总回合数（实时更新）。
+
+#### 3.2 事件类型与内容
+
+系统需记录并展示以下事件类型，每种类型有对应的文本模板：
+
+| 事件类型     | 模板示例                                   | 说明                          |
+| -------- | -------------------------------------- | --------------------------- |
+| 战斗开始     | 战斗开始                                   | <br />                      |
+| 战斗结束     | 战斗结束，结果：胜利/失败                          | <br />                      |
+| 回合开始     | 第3回合开始                                 | 作为分组标识                      |
+| 回合结束     | 第3回合结束                                 | 可选，若需明确回合边界                 |
+| 角色进场     | \[角色名] 进入战场                            | 角色名按敌我颜色                    |
+| 角色倒下     | \[角色名] 倒下了                             | <br />                      |
+| 普通攻击     | \[攻击方] 对 \[目标] 发动普通攻击，造成 \[数值] 点伤害     | 数值颜色为伤害红；若暴击则额外标注“暴击！”且数值变黄 |
+| 暴击       | \[攻击方] 对 \[目标] 造成暴击！\[数值] 点伤害          | 单独事件或合并到攻击中，根据设计选择          |
+| 闪避       | \[目标] 闪避了 \[攻击方] 的攻击                   | <br />                      |
+| 释放小技能    | \[施法者] 释放 \[技能名称]，对 \[目标] 造成 \[数值] 点伤害 | 技能名称用技能色                    |
+| 释放大招     | \[施法者] 释放大招 \[技能名称]，对全体敌人造成 \[数值] 点伤害  | 技能名称用技能色                    |
+| 添加buff   | \[目标] 获得 \[buff名称]，持续 \[X] 回合          | buff名称用技能色，显示持续回合           |
+| debuff扣血 | \[目标] 受到 \[debuff名称] 影响，损失 \[数值] 点生命   | 数值用伤害红，可注明来源                |
+| buff加血   | \[目标] 受到 \[buff名称] 恢复，获得 \[数值] 点生命     | 数值用治疗绿                      |
+| 获得物品     | \[角色] 获得 \[物品名称] x \[数量]               | <br />                      |
+| 打开宝箱     | \[角色] 打开宝箱，获得 \[物品列表]                  | <br />                      |
+| 获得战利品    | 战斗胜利，获得 \[物品列表]                        | <br />                      |
+
+> **建议**：为避免日志过长，可对连续同类事件合并后显示汇总信息，并在数据结构中保留原始事件列表以便未来扩展。
+
+#### 3.3 筛选功能
+
+- **筛选方式**：提供三个按钮（标签样式），分别对应“战利品”、“系统”、“战斗”，按钮之间用竖线“|”分隔。
+- **筛选逻辑**：
+  - 点击“战利品”：只显示与物品、宝箱、战利品相关的事件。
+  - 点击“系统”：只显示战斗开始/结束、回合开始/结束、角色进场/倒下等系统类事件。
+  - 点击“战斗”：只显示攻击、技能、buff、闪避等战斗交互事件。
+  - 默认显示全部日志。
+  - 支持多选？目前设计为单选（三个互斥），但可考虑扩展为多选（如按钮组支持多选）。建议先实现单选，后续按需调整。
+- **筛选状态**：被选中的按钮高亮显示。
+
+#### 3.4 清空日志
+
+- 提供一个“清空日志”按钮，点击后清空当前日志列表，并重置回合计数。
+
+#### 3.5 主题切换
+
+- 支持浅色和暗色两种主题，通过全局切换（如顶部开关）改变颜色变量。
+- 颜色变量需按上述规范定义，确保在不同主题下可读性。
+
+***
+
+### 4. 数据需求
+
+#### 4.1 日志数据结构
+
+建议采用以下 TypeScript 接口定义：
+
+```typescript
+// 日志条目基础接口
+interface LogEntry {
+  id: string // 唯一ID，可使用 uuid 或时间戳+随机数
+  timestamp: number // 时间戳（毫秒），用于排序
+  round: number // 所属回合数
+  type: LogType // 事件类型（用于筛选）
+  category: 'loot' | 'system' | 'combat' // 筛选分类
+  content: string // 渲染用的纯文本（或使用模板+数据，见下）
+  rawData?: any // 原始数据，用于扩展（如合并事件的详情）
+  mergeKey?: string // 用于合并的键值（如 "source_target_type"）
+}
+
+// 事件类型枚举（可根据需要扩展）
+type LogType =
+  | 'combatStart'
+  | 'combatEnd'
+  | 'roundStart'
+  | 'roundEnd'
+  | 'enter'
+  | 'die'
+  | 'normalAttack'
+  | 'critical'
+  | 'dodge'
+  | 'skill'
+  | 'ultimate'
+  | 'buffAdd'
+  | 'debuffDamage'
+  | 'buffHeal'
+  | 'itemGet'
+  | 'chestOpen'
+  | 'lootGet'
+
+// 为支持结构化数据，可定义更具体的接口，例如：
+interface AttackLogData {
+  source: string
+  target: string
+  value: number
+  isCritical?: boolean
+  skillName?: string
+}
+```
+
+**合并事件建议**：\
+在生成日志时，若检测到符合合并条件的事件，可将其合并为一条特殊日志，其 `content` 为汇总文本，并在 `rawData` 中存储子事件列表。例如：
+
+```typescript
+{
+  id: 'merged-xxx',
+  timestamp: 1680000000000,
+  round: 3,
+  type: 'normalAttack',
+  category: 'combat',
+  content: '张三 对 李四 连续造成 5 次伤害（共 320 点）',
+  rawData: {
+    events: [/* 原始事件数组 */],
+    source: '张三',
+    target: '李四',
+    totalDamage: 320,
+    count: 5
+  }
+}
+```
+
+#### 4.2 数据流
+
+- 战斗系统每产生一个事件，调用日志模块的 `addLog(entry)` 方法。
+- 日志模块内部维护一个响应式数组 `logs`，并处理合并逻辑（可在添加时检查上一条日志是否可合并）。
+- 筛选和清空操作基于该数组进行过滤或重置。
+
+***
+
+### 5. 界面需求
+
+#### 5.1 布局
+
+- 日志区域占据独立面板，高度固定或可调整，内部滚动。
+- 顶部工具栏包含：
+  - 回合数统计：显示“当前回合：X”
+  - 筛选按钮组：“战利品 | 系统 | 战斗”
+  - “清空日志”按钮
+  - 主题切换开关（图标或文字）
+
+#### 5.2 样式细节（浅色/暗色示例）
+
+- **浅色主题**：
+  - 背景色：#f8f9fa
+  - 文字默认色：#2c3e50
+  - 回合分组背景色：#ecf0f1（交替或仅标识行）
+  - 按钮边框：#bdc3c7
+- **暗色主题**：
+  - 背景色：#2c3e50
+  - 文字默认色：#ecf0f1
+  - 回合分组背景色：#34495e
+  - 按钮边框：#7f8c8d
+
+具体颜色值可在实现时定义 CSS 变量，便于切换。
+
+#### 5.3 交互
+
+- 日志条目不支持点击展开详情（按需求）。
+- 筛选按钮点击立即更新视图。
+- 清空日志按钮需二次确认？目前无要求，可直接清空，但为避免误操作可增加简单确认弹窗（可选）。
+
+***
+
+### 6. 非功能需求
+
+#### 6.1 性能
+
+- 单场战斗日志条目数预估不超过 1000 条，无需虚拟滚动，但需保证渲染流畅。
+- 合并连续事件可有效减少条目数。
+- 使用 `keyed` 列表渲染，避免不必要的 DOM 更新。
+
+#### 6.2 可维护性
+
+- 日志数据结构清晰，类型定义完整。
+- 颜色、文本模板等配置化，便于修改。
+- 合并逻辑独立为可配置模块。
+
+#### 6.3 兼容性
+
+- 遵循 Vue3 组合式 API 和 TypeScript 严格模式。
+- 不使用 deprecated API。
+
+***
+
+### 7. 开发建议（来自需求提出者）
+
+1. **数据结构设计**：建议将 `content` 字段设计为纯文本，同时保留结构化数据在 `rawData` 中，便于后续扩展（如点击显示详情）。合并事件应单独处理，避免丢失原始信息。
+2. **合并策略**：定义清晰的合并规则，并在日志模块中实现合并检测函数。可考虑将合并功能设为可配置（是否开启）。
+3. **筛选分类**：为每个事件预先分配 `category`，避免筛选时动态判断类型，提高性能。
+4. **主题切换**：使用 CSS 变量定义颜色，通过切换根节点类名实现主题变更。
+5. **回合分组 UI**：可使用 `:style` 或 `:class` 为每个回合的第一个日志添加特殊样式（如顶部边距和背景色），或使用伪元素标识。
+6. **清空日志**：清空后应重置回合计数，并通知战斗系统（如重置日志模块状态）。
+
+***
+
+### 8. 附录
+
+#### 8.1 事件分类参考
+
+| 分类  | 包含事件类型                                                                          |
+| --- | ------------------------------------------------------------------------------- |
+| 战利品 | itemGet, chestOpen, lootGet                                                     |
+| 系统  | combatStart, combatEnd, roundStart, roundEnd, enter, die                        |
+| 战斗  | normalAttack, critical, dodge, skill, ultimate, buffAdd, debuffDamage, buffHeal |
+
+#### 8.2 颜色定义（CSS变量示例）
+
+```css
+:root {
+  --color-friendly: #2ecc71;
+  --color-hostile: #e74c3c;
+  --color-damage: #e74c3c;
+  --color-heal: #2ecc71;
+  --color-critical: #f1c40f;
+  --color-skill: #3498db;
+  --bg-default: #f8f9fa;
+  --text-default: #2c3e50;
+  --bg-round-group: #ecf0f1;
+}
+.dark {
+  --color-friendly: #27ae60;
+  --color-hostile: #c0392b;
+  --color-damage: #c0392b;
+  --color-heal: #27ae60;
+  --color-critical: #f39c12;
+  --color-skill: #2980b9;
+  --bg-default: #2c3e50;
+  --text-default: #ecf0f1;
+  --bg-round-group: #34495e;
+}
+```
+
+***
+
+文档编写完毕。如有任何疑问或需要调整，请随时提出。
+
+--- documents/需求规格说明书.md ---
+# 战斗调试工作室需求规格说明书
+
+## 文档信息
+
+| 属性     | 内容                                  |
+| -------- | ------------------------------------- |
+| 项目名称 | 战斗调试工作室（Combat Debug Studio） |
+| 版本号   | 1.0.0                                 |
+| 项目类型 | Web前端游戏系统                       |
+| 技术栈   | Vue 3 + TypeScript + Vite + Pinia     |
+| 创建日期 | 2026-02-28                            |
+
+---
+
+## 1. 项目概述
+
+### 1.1 项目背景
+
+战斗调试工作室是一个基于Web的回合制战斗系统调试工具，旨在为游戏开发者提供一个可视化、可调试的战斗系统测试环境。该系统支持多种战斗场景配置、智能敌人AI、完整的Buff/减益效果系统，以及战斗回放和调试功能。
+
+### 1.2 项目目标
+
+1. 提供完整的回合制战斗系统核心实现
+2. 支持多种战斗场景和敌人配置
+3. 实现智能战斗AI决策系统
+4. 提供可视化调试和监控界面
+5. 支持战斗过程回放和分析
+
+### 1.3 目标用户
+
+- 游戏开发人员
+- 战斗系统测试工程师
+- 游戏设计师
+- 独立游戏开发者
+
+---
+
+## 2. 系统功能架构
+
+### 2.1 系统架构图
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         用户界面层 (Vue 3)                       │
+├─────────────────────────────────────────────────────────────────┤
+│  BattleArena  │  DebugPanel  │  ParticipantPanel  │  ControlBar│
+├─────────────────────────────────────────────────────────────────┤
+│                         状态管理层 (Pinia)                        │
+├─────────────────────────────────────────────────────────────────┤
+│  battleStore  │  debugStore  │  characterStore  │  sceneStore  │
+├─────────────────────────────────────────────────────────────────┤
+│                         核心业务层                                │
+├──────────────┬──────────────┬──────────────┬────────────────────┤
+│  战斗系统    │  AI系统       │  Buff系统     │   技能系统         │
+│  BattleSystem│  BattleAI    │  BuffSystem  │   SkillManager    │
+├──────────────┴──────────────┴──────────────┴────────────────────┤
+│                         辅助功能层                                │
+├──────────────┬──────────────┬──────────────┬────────────────────┤
+│  回合管理    │  动作执行     │  战斗录制     │   战斗规则         │
+│  TurnManager │  ActionExec  │  BattleRec.  │   BattleRules     │
+├──────────────┴──────────────┴──────────────┴────────────────────┤
+│                         数据配置层                                │
+├─────────────────────────────────────────────────────────────────┤
+│  skills.json  │  enemies.json  │  buffs.json  │  scenes.json   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 2.2 核心模块清单
+
+| 模块名称 | 文件路径                                              | 功能描述                       |
+| -------- | ----------------------------------------------------- | ------------------------------ |
+| 战斗系统 | `src/core/BattleSystem.ts`                            | 战斗核心实现，管理战斗生命周期 |
+| 回合管理 | `src/core/battle/TurnManager.ts`                      | 回合顺序计算和管理             |
+| 动作执行 | `src/core/battle/ActionExecutor.ts`                   | 技能和攻击的执行               |
+| AI系统   | `src/core/battle/AISystem.ts`                         | 敌人AI决策                     |
+| Buff系统 | `src/core/BuffSystem.ts`                              | 状态效果管理                   |
+| 技能管理 | `src/core/skill/SkillManager.ts`                      | 技能执行和管理                 |
+| 战斗录制 | `src/core/battle/BattleRecorder.ts`                   | 战斗过程记录                   |
+| 战斗回放 | `src/core/battle/replay/BattleReplayManager.ts`       | 战斗回放功能                   |
+| 自动战斗 | `src/core/battle/auto/AutoBattleManager.ts`           | 自动战斗控制                   |
+| 干预管理 | `src/core/battle/intervention/InterventionManager.ts` | 手动干预机制                   |
+
+---
+
+## 3. 功能需求
+
+### 3.1 战斗系统功能
+
+#### 3.1.1 战斗生命周期管理
+
+| 需求ID       | 功能描述           | 优先级 |
+| ------------ | ------------------ | ------ |
+| F-BATTLE-001 | 创建新的战斗实例   | 高     |
+| F-BATTLE-002 | 初始化战斗参与者   | 高     |
+| F-BATTLE-003 | 执行回合制战斗流程 | 高     |
+| F-BATTLE-004 | 暂停和恢复战斗     | 中     |
+| F-BATTLE-005 | 战斗结算和结果判定 | 高     |
+| F-BATTLE-006 | 战斗状态查询       | 中     |
+
+**战斗状态定义：**
+
+- `CREATED`：已创建，等待参与者加入
+- `PREPARING`：战前准备，初始化技能和Buff
+- `ACTIVE`：战斗进行中
+- `PAUSED`：战斗暂停
+- `SETTLEMENT`：战斗结算
+- `ENDED`：战斗结束
+
+#### 3.1.2 回合管理
+
+| 需求ID     | 功能描述               | 优先级 |
+| ---------- | ---------------------- | ------ |
+| F-TURN-001 | 按速度属性计算回合顺序 | 高     |
+| F-TURN-002 | 检测速度变化并重新排序 | 高     |
+| F-TURN-003 | 管理回合内行动顺序     | 高     |
+| F-TURN-004 | 回合开始/结束事件触发  | 中     |
+
+#### 3.1.3 动作执行
+
+| 需求ID       | 功能描述           | 优先级 |
+| ------------ | ------------------ | ------ |
+| F-ACTION-001 | 普通攻击执行       | 高     |
+| F-ACTION-002 | 技能释放执行       | 高     |
+| F-ACTION-003 | 伤害计算和应用     | 高     |
+| F-ACTION-004 | 治疗效果计算和应用 | 高     |
+| F-ACTION-005 | 闪避判定           | 高     |
+| F-ACTION-006 | 暴击判定和伤害倍率 | 高     |
+
+### 3.2 角色战斗属性系统
+
+#### 3.2.1 基础属性
+
+| 属性名称 | 属性编码      | 数据类型 | 数值范围 | 默认值 | 说明                   |
+| -------- | ------------- | -------- | -------- | ------ | ---------------------- |
+| 等级     | level         | integer  | 1-99     | 1      | 影响基础属性和技能解锁 |
+| 名称     | name          | string   | -        | -      | 角色标识               |
+| 当前能量 | currentEnergy | integer  | 0-100    | 25     | 用于释放技能           |
+| 最大能量 | maxEnergy     | integer  | 100      | 100    | 能量上限               |
+| 当前气血 | currentHp     | integer  | 0-最大值 | -      | 生命值，为0时死亡      |
+| 最大气血 | maxHp         | integer  | 1-99999  | -      | 气血上限               |
+| 最小攻击 | minAttack     | integer  | 1-9999   | -      | 攻击伤害下限           |
+| 最大攻击 | maxAttack     | integer  | 1-9999   | -      | 攻击伤害上限           |
+| 防御     | defense       | integer  | 0-9999   | 0      | 减少受到的伤害         |
+| 速度     | speed         | integer  | 1-9999   | -      | 决定行动顺序           |
+| 暴击率   | critRate      | float    | 0-1      | 0.1    | 10%默认暴击率          |
+| 暴击伤害 | critDamage    | float    | 1-5      | 1.25   | 125%默认暴击伤害       |
+| 气血加成 | healthBonus   | float    | 0-5      | 0      | 气血百分比加成         |
+| 攻击加成 | attackBonus   | float    | 0-5      | 0      | 攻击百分比加成         |
+| 防御加成 | defenseBonus  | float    | 0-5      | 0      | 防御百分比加成         |
+| 速度加成 | speedBonus    | float    | 0-5      | 0      | 速度百分比加成         |
+
+#### 3.2.2 能量系统
+
+| 需求ID       | 功能描述               | 优先级 |
+| ------------ | ---------------------- | ------ |
+| F-ENERGY-001 | 初始能量为25点         | 高     |
+| F-ENERGY-002 | 每回合结束恢复25点能量 | 高     |
+| F-ENERGY-003 | 小技能消耗50点能量     | 高     |
+| F-ENERGY-004 | 大技能消耗100点能量    | 高     |
+| F-ENERGY-005 | 能量达到上限时停止恢复 | 高     |
+
+### 3.3 战斗计算公式
+
+#### 3.3.1 伤害计算
+
+| 需求ID       | 计算公式                              | 优先级 |
+| ------------ | ------------------------------------- | ------ |
+| F-DAMAGE-001 | 基础伤害 = 随机(minAttack, maxAttack) | 高     |
+| F-DAMAGE-002 | 伤害减免 = 目标防御 × 0.01            | 高     |
+| F-DAMAGE-003 | 最终伤害 = 基础伤害 × (1 - 伤害减免)  | 高     |
+| F-DAMAGE-004 | 暴击伤害 = 最终伤害 × 暴击伤害倍率    | 高     |
+
+#### 3.3.2 命中与闪避
+
+| 需求ID      | 计算公式                      | 优先级 |
+| ----------- | ----------------------------- | ------ |
+| F-CRIT-001  | 暴击判定：随机数 < 暴击率     | 高     |
+| F-DODGE-001 | 闪避判定：随机数 < 目标闪避率 | 高     |
+
+### 3.4 Buff系统功能
+
+#### 3.4.1 Buff分类
+
+**增益效果（Buff）：**
+
+| Buff名称   | Buff ID           | 效果描述              | 持续时间 | 叠加规则 |
+| ---------- | ----------------- | --------------------- | -------- | -------- |
+| 攻击力提升 | buff_attack_up    | 提高角色攻击力20%     | 3回合    | 刷新     |
+| 防御力提升 | buff_defense_up   | 提高角色防御力30%     | 4回合    | 刷新     |
+| 速度提升   | buff_speed_up     | 提高角色速度25%       | 3回合    | 刷新     |
+| 护盾       | buff_shield       | 吸收100点伤害         | 2回合    | 覆盖     |
+| 生命回复   | buff_heal_ot      | 每回合回复50点生命    | 3回合    | 独立叠加 |
+| 狂暴       | buff_berserk      | 攻击+50%，防御-20%    | 2回合    | 覆盖     |
+| 山神祝福   | buff_mountain_god | 受伤减少50%，免疫控制 | 3回合    | 覆盖     |
+| 闪避提升   | buff_dodge_up     | 闪避率提升20%         | 3回合    | 刷新     |
+
+**减益效果（Debuff）：**
+
+| Buff名称     | Buff ID                    | 效果描述           | 持续时间 | 叠加规则 |
+| ------------ | -------------------------- | ------------------ | -------- | -------- |
+| 中毒         | poison                     | 每回合受到20点伤害 | 4回合    | 独立叠加 |
+| 眩晕         | stun                       | 无法进行任何行动   | 1回合    | 刷新     |
+| 速度降低     | buff_speed_reduction       | 速度降低30%        | 2回合    | 刷新     |
+| 命中率降低   | buff_hit_reduction         | 命中率降低25%      | 2回合    | 刷新     |
+| 暴击伤害降低 | buff_crit_damage_reduction | 暴击伤害降低30%    | 2回合    | 刷新     |
+| 重伤         | buff_injury                | 受伤增加20%        | 3回合    | 刷新     |
+
+#### 3.4.2 Buff叠加规则
+
+| 规则类型              | 说明                           | 应用场景                 |
+| --------------------- | ------------------------------ | ------------------------ |
+| 刷新(REFRESH)         | 新Buff覆盖旧Buff，重置持续时间 | 攻击力提升、防御力提升等 |
+| 限制层数(LIMITED)     | 达到最大层数后无法叠加         | 特殊Buff                 |
+| 独立叠加(INDEPENDENT) | 每层Buff独立计算效果           | 中毒、生命回复等         |
+
+#### 3.4.3 Buff生命周期
+
+| 需求ID     | 功能描述           | 优先级 |
+| ---------- | ------------------ | ------ |
+| F-BUFF-001 | Buff添加和应用     | 高     |
+| F-BUFF-002 | Buff持续时间更新   | 高     |
+| F-BUFF-003 | Buff移除和效果清理 | 高     |
+| F-BUFF-004 | Buff效果刷新       | 中     |
+| F-BUFF-005 | Buff脚本动态加载   | 中     |
+
+### 3.5 技能系统功能
+
+#### 3.5.1 技能配置
+
+| 技能属性 | 说明         | 数据类型 |
+| -------- | ------------ | -------- |
+| 技能ID   | 唯一标识     | string   |
+| 技能名称 | 显示名称     | string   |
+| 技能描述 | 详细说明     | string   |
+| 能量消耗 | 释放所需能量 | integer  |
+| 冷却时间 | 冷却回合数   | integer  |
+| 目标选择 | 技能目标类型 | enum     |
+| 技能步骤 | 技能效果列表 | array    |
+
+#### 3.5.2 技能类型
+
+| 技能类型   | 说明               |
+| ---------- | ------------------ |
+| 伤害技能   | 对目标造成伤害     |
+| 治疗技能   | 恢复目标生命       |
+| Buff技能   | 为目标添加增益效果 |
+| Debuff技能 | 为目标添加减益效果 |
+
+#### 3.5.3 技能效果类型
+
+| 效果类型 | 说明         |
+| -------- | ------------ |
+| damage   | 造成伤害     |
+| heal     | 恢复生命     |
+| buff     | 添加增益效果 |
+| debuff   | 添加减益效果 |
+
+### 3.6 AI系统功能
+
+#### 3.6.1 AI决策逻辑
+
+| 需求ID   | 功能描述     | 优先级 |
+| -------- | ------------ | ------ |
+| F-AI-001 | 评估战场态势 | 高     |
+| F-AI-002 | 选择最优技能 | 高     |
+| F-AI-003 | 选择攻击目标 | 高     |
+| F-AI-004 | 能量管理策略 | 中     |
+| F-AI-005 | 威胁值计算   | 中     |
+
+#### 3.6.2 AI优先级策略
+
+| 优先级 | 技能类型   |
+| ------ | ---------- |
+| 1      | 治疗技能   |
+| 2      | 攻击技能   |
+| 3      | Buff技能   |
+| 4      | Debuff技能 |
+
+#### 3.6.3 AI能量阈值
+
+| 能量状态 | 阈值    | 行为           |
+| -------- | ------- | -------------- |
+| 高能量   | ≥70%    | 优先使用大技能 |
+| 中能量   | 50%-70% | 均衡使用技能   |
+| 低能量   | <50%    | 优先普通攻击   |
+
+### 3.7 战斗控制功能
+
+#### 3.7.1 自动战斗
+
+| 需求ID     | 功能描述                    | 优先级 |
+| ---------- | --------------------------- | ------ |
+| F-AUTO-001 | 开启/关闭自动战斗           | 高     |
+| F-AUTO-002 | 设置自动战斗速度(1/2/3/5倍) | 高     |
+| F-AUTO-003 | 战斗加速控制                | 高     |
+
+#### 3.7.2 手动干预
+
+| 需求ID      | 功能描述           | 优先级 |
+| ----------- | ------------------ | ------ |
+| F-INTER-001 | 暂停战斗           | 高     |
+| F-INTER-002 | 中断AI行动         | 中     |
+| F-INTER-003 | 手动选择技能和目标 | 高     |
+
+#### 3.7.3 战斗重置
+
+| 需求ID       | 功能描述     | 优先级 |
+| ------------ | ------------ | ------ |
+| F-RESET-001  | 重置当前战斗 | 中     |
+| F-REPLAY-001 | 战斗回放     | 中     |
+
+### 3.8 调试功能
+
+#### 3.8.1 属性监控
+
+| 需求ID      | 功能描述         | 优先级 |
+| ----------- | ---------------- | ------ |
+| F-DEBUG-001 | 实时显示角色属性 | 高     |
+| F-DEBUG-002 | 属性变化追踪     | 中     |
+| F-DEBUG-003 | Buff状态显示     | 高     |
+
+#### 3.8.2 战斗日志
+
+| 需求ID    | 功能描述       | 优先级 |
+| --------- | -------------- | ------ |
+| F-LOG-001 | 战斗事件记录   | 高     |
+| F-LOG-002 | 伤害数值显示   | 高     |
+| F-LOG-003 | 日志过滤和搜索 | 中     |
+
+#### 3.8.3 场景管理
+
+| 需求ID      | 功能描述     | 优先级 |
+| ----------- | ------------ | ------ |
+| F-SCENE-001 | 场景切换     | 中     |
+| F-SCENE-002 | 敌人配置加载 | 中     |
+
+---
+
+## 4. 用户界面需求
+
+### 4.1 界面设计规范
+
+#### 4.1.1 视觉风格
+
+| 设计属性 | 规范                         |
+| -------- | ---------------------------- |
+| 主题     | 深色系专业数据仪表盘         |
+| 设计理念 | 严谨克制的极简主义           |
+| 布局     | 精密网格布局                 |
+| 文字颜色 | 白色高对比度（透明度85%）    |
+| 辅助线条 | 浅蓝色（#60a5fa，透明度40%） |
+| 交互强调 | 青色（#22d3ee）              |
+| 警告标识 | 橙红色（#f97316）            |
+| 面板效果 | 微磨砂玻璃质感+微妙投影      |
+| 字体     | 无衬线等宽字体               |
+| 渲染     | 4K超清渲染，锐利边缘         |
+
+#### 4.1.2 界面布局
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  顶部：场景选择栏 (SceneManagementDialog)                         │
+├────────────────────┬─────────────────────────┬─────────────────┤
+│                    │                         │                 │
+│  左侧：参战面板     │   中央：战斗Arena       │  右侧：调试面板  │
+│  ParticipantPanel  │     BattleArena         │   DebugPanel    │
+│                    │                         │                 │
+│  - 角色列表        │   - 战场区域            │  - 属性监控     │
+│  - 角色选择        │   - 技能选择            │  - Buff显示     │
+│  - 角色属性        │   - 目标选择            │  - 技能信息     │
+│                    │                         │                 │
+├────────────────────┴─────────────────────────┴─────────────────┤
+│  底部：战斗日志 (BattleLog) / 控制栏 (ControlBar)                  │
+│  - 战斗事件记录  - 战斗控制按钮  - 快捷键提示                       │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### 4.2 界面组件清单
+
+| 组件名称   | 文件路径                              | 功能描述       |
+| ---------- | ------------------------------------- | -------------- |
+| 战斗场     | `src/views/BattleArena.vue`           | 主战斗界面容器 |
+| 战场       | `src/views/BattleField.vue`           | 战斗场景渲染   |
+| 参战面板   | `src/views/ParticipantPanel.vue`      | 角色管理       |
+| 调试面板   | `src/views/DebugPanel.vue`            | 属性监控和调试 |
+| 战斗日志   | `src/views/BattleLog.vue`             | 战斗事件记录   |
+| 控制栏     | `src/views/ControlBar.vue`            | 战斗控制按钮   |
+| 战斗回放   | `src/views/BattleReplay.vue`          | 战斗回放界面   |
+| 快捷键设置 | `src/views/KeybindSettings.vue`       | 按键配置       |
+| 快捷键提示 | `src/views/KeybindHintPanel.vue`      | 按键提示显示   |
+| 新手引导   | `src/views/NewbieGuide.vue`           | 教程引导       |
+| 属性提示   | `src/components/AttributeTooltip.vue` | 属性信息提示   |
+| Buff图标   | `src/components/BuffIcon.vue`         | Buff状态图标   |
+| Buff列表   | `src/components/BuffList.vue`         | Buff效果列表   |
+| 伤害数字   | `src/components/DamageNumber.vue`     | 伤害数值动画   |
+| 技能效果   | `src/components/SkillEffect.vue`      | 技能特效显示   |
+
+### 4.3 交互功能
+
+#### 4.3.1 键盘快捷键
+
+| 按键 | 功能                |
+| ---- | ------------------- |
+| 空格 | 暂停/继续战斗       |
+| 1-5  | 切换自动战斗速度    |
+| R    | 重置战斗            |
+| H    | 显示/隐藏快捷键提示 |
+| Esc  | 关闭对话框          |
+
+#### 4.3.2 鼠标交互
+
+| 操作         | 功能         |
+| ------------ | ------------ |
+| 点击角色头像 | 选择行动角色 |
+| 点击技能图标 | 选择释放技能 |
+| 点击目标     | 选择技能目标 |
+| 右键点击     | 查看角色详情 |
+
+---
+
+## 5. 数据配置需求
+
+### 5.1 配置文件清单
+
+| 配置文件 | 路径                                     | 用途           |
+| -------- | ---------------------------------------- | -------------- |
+| 技能配置 | `configs/skills/skills.json`             | 技能定义和效果 |
+| 敌人配置 | `configs/enemies/enemies.json`           | 敌人属性和技能 |
+| Buff配置 | `configs/buffs/buffs.json`               | Buff效果定义   |
+| 效果配置 | `configs/effects/effects.json`           | 战斗特效       |
+| 场景配置 | `configs/scenes/scenes.json`             | 战斗场景       |
+| 全局参数 | `configs/params/buff-global-params.json` | Buff全局参数   |
+
+### 5.2 敌人数据模型
+
+```json
+{
+  "id": "enemy_001",
+  "name": "花妖",
+  "level": 1,
+  "stats": {
+    "health": 57,
+    "minAttack": 6,
+    "maxAttack": 9,
+    "defense": 3,
+    "speed": 11
+  },
+  "skills": {
+    "small": ["skill_enemy_001_small"]
+  }
+}
+```
+
+### 5.3 技能数据模型
+
+```json
+{
+  "id": "skill_enemy_001_small",
+  "name": "花粉迷雾",
+  "description": "对单个敌人造成80%攻击力的普通伤害",
+  "enemyCost": 50,
+  "cooldown": 2,
+  "selector": "single_enemy",
+  "steps": [
+    {
+      "type": "damage",
+      "target": "enemy",
+      "scope": "single",
+      "formula": "attack*0.8",
+      "attackType": "normal"
+    }
+  ]
+}
+```
+
+---
+
+## 6. 非功能需求
+
+### 6.1 性能需求
+
+| 指标         | 要求     |
+| ------------ | -------- |
+| 页面加载时间 | < 3秒    |
+| 战斗帧率     | ≥ 30 FPS |
+| 动画延迟     | < 100ms  |
+| 内存占用     | < 200MB  |
+
+### 6.2 兼容性需求
+
+| 浏览器  | 最低版本 |
+| ------- | -------- |
+| Chrome  | 90+      |
+| Firefox | 88+      |
+| Edge    | 90+      |
+| Safari  | 14+      |
+
+### 6.3 可维护性需求
+
+| 需求       | 说明             |
+| ---------- | ---------------- |
+| 模块化设计 | 核心功能独立模块 |
+| 配置驱动   | 战斗规则可配置   |
+| 日志系统   | 完整的日志记录   |
+| 错误处理   | 健壮的异常捕获   |
+
+---
+
+## 7. 验收标准
+
+### 7.1 功能验收
+
+| 验收项   | 验收标准               |
+| -------- | ---------------------- |
+| 战斗流程 | 完整执行回合制战斗流程 |
+| 伤害计算 | 伤害符合数值公式计算   |
+| Buff系统 | Buff正确应用和移除     |
+| AI决策   | 敌人能够自主决策行动   |
+| 调试功能 | 实时显示战斗数据       |
+| 战斗回放 | 能够回放历史战斗       |
+
+### 7.2 界面验收
+
+| 验收项   | 验收标准         |
+| -------- | ---------------- |
+| 布局显示 | 界面元素正确显示 |
+| 交互响应 | 点击操作正常响应 |
+| 动画效果 | 技能动画平滑播放 |
+| 主题风格 | 符合设计规范     |
+
+---
+
+## 8. 附录
+
+### 8.1 术语表
+
+| 术语     | 定义                     |
+| -------- | ------------------------ |
+| Buff     | 增益效果                 |
+| Debuff   | 减益效果                 |
+| 回合     | 所有人行动一次为一个回合 |
+| 行动     | 单个角色的行动           |
+| 技能冷却 | 技能释放后的等待时间     |
+
+### 8.2 参考资料
+
+- 项目源码：`src/` 目录
+- 配置文件：`configs/` 目录
+- 现有文档：`功能介绍.md`
+
+---
+
+_文档结束_
 
 --- eslint.config.js ---
 import js from '@eslint/js'
@@ -16185,8 +17961,8 @@ export class AISystem {
 
   /**
    * 转换为战斗状态
-   * 将内部BattleData转换为BattleState，用于AI决策
-   * 私有方法，仅在AI决策过程中调用
+   * 将内部 BattleData 转换为 BattleState，用于 AI 决策
+   * 私有方法，仅在 AI 决策过程中调用
    * @param battle - 战斗数据对象
    * @returns BattleState - 转换后的战斗状态对象
    */
@@ -16197,8 +17973,9 @@ export class AISystem {
       actions: [...battle.actions],
       turnOrder: [...battle.turnOrder],
       currentTurn: battle.currentTurn,
+      currentRound: battle.currentRound || 1,
       battleState: battle.battleState ?? BATTLE_STATUS.ACTIVE,
-      startTime: 0,
+      startTime: battle.startTime,
       endTime: undefined,
       winner: undefined,
     }
@@ -16395,7 +18172,7 @@ export class BattleManager {
    * @returns 当前回合数（从1开始）
    */
   getTurn(): number {
-    return this.battleSystem.getTurn()
+    return this.battleSystem.getRound()
   }
 
   /**
@@ -16522,6 +18299,34 @@ export class BattleManager {
     }
     return Array.from(battleState.participants.values())
       .filter((p) => p.type === PARTICIPANT_SIDE.ENEMY)
+      .map((p) => this.participantToUICharacter(p))
+  }
+
+  /**
+   * 获取启用的我方队伍（优化版本，避免重复过滤）
+   * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
+   */
+  getEnabledAllyTeam(): UIBattleCharacter[] {
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) {
+      return []
+    }
+    return Array.from(battleState.participants.values())
+      .filter((p) => p.type === PARTICIPANT_SIDE.ALLY && p.enabled)
+      .map((p) => this.participantToUICharacter(p))
+  }
+
+  /**
+   * 获取启用的敌方队伍（优化版本，避免重复过滤）
+   * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
+   */
+  getEnabledEnemyTeam(): UIBattleCharacter[] {
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) {
+      return []
+    }
+    return Array.from(battleState.participants.values())
+      .filter((p) => p.type === PARTICIPANT_SIDE.ENEMY && p.enabled)
       .map((p) => this.participantToUICharacter(p))
   }
 
@@ -16856,8 +18661,8 @@ export class BattleManager {
       throw new Error('战斗系统未初始化')
     }
 
-    const allyTeam = this.getAllyTeam().filter((c) => c.enabled)
-    const enemyTeam = this.getEnemyTeam().filter((e) => e.enabled)
+    const allyTeam = this.getEnabledAllyTeam()
+    const enemyTeam = this.getEnabledEnemyTeam()
 
     if (allyTeam.length === 0 || enemyTeam.length === 0) {
       battleLogManager.addDebugLog('队伍数据未初始化，请先添加角色到队伍')
@@ -17070,7 +18875,12 @@ export class BattleManager {
  * 版本: 1.0.0
  */
 
-import type { BattleParticipant, StatusEffect, ParticipantSnapshot, BuffInstanceSnapshot } from '@/types/battle'
+import type {
+  BattleParticipant,
+  StatusEffect,
+  ParticipantSnapshot,
+  BuffInstanceSnapshot,
+} from '@/types/battle'
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
 import type { UIBattleCharacter, UISkills } from '@/types/UI/UIBattleCharacter'
@@ -17235,15 +19045,18 @@ export class BattleParticipantImpl implements BattleParticipant {
     const minAttack = getValue(uiCharacter.minAttack, attack)
     const maxAttack = getValue(uiCharacter.maxAttack, attack)
 
-    const instanceId = uiCharacter.id || `${isAlly ? 'ally' : 'enemy'}_${Date.now()}_${index}`
+    const instanceId =
+      uiCharacter.id || `${isAlly ? 'ally' : 'enemy'}_${Date.now()}_${index}`
 
-    const statusEffects: StatusEffect[] = (uiCharacter.buffs || []).map(buff => ({
-      id: buff.id,
-      name: buff.name,
-      type: buff.isPositive ? 'buff' as const : 'debuff' as const,
-      duration: buff.duration,
-      remainingTurns: buff.duration
-    }))
+    const statusEffects: StatusEffect[] = (uiCharacter.buffs || []).map(
+      (buff) => ({
+        id: buff.id,
+        name: buff.name,
+        type: buff.isPositive ? ('buff' as const) : ('debuff' as const),
+        duration: buff.duration,
+        remainingTurns: buff.duration,
+      }),
+    )
 
     return new BattleParticipantImpl({
       id: instanceId,
@@ -17346,7 +19159,10 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @returns 随机攻击力
    */
   getRandomAttack(): number {
-    return Math.floor(Math.random() * (this.maxAttack - this.minAttack + 1)) + this.minAttack
+    return (
+      Math.floor(Math.random() * (this.maxAttack - this.minAttack + 1)) +
+      this.minAttack
+    )
   }
 
   /**
@@ -17496,6 +19312,14 @@ export class BattleParticipantImpl implements BattleParticipant {
    */
   getSkills(): UISkills {
     return this.skills
+  }
+
+  getSkillList(): SkillConfig[] {
+    return [
+      ...this.skills.small,
+      ...this.skills.passive,
+      ...this.skills.ultimate,
+    ]
   }
 
   /**
@@ -18725,7 +20549,6 @@ import { eventBus } from '@/main'
 import { BattleSystemEvent } from '@/types/battle'
 import type {
   BattleLogEventData,
-  BattleStateUpdateEventData,
   BattleEndedEventData,
 } from '@/types/battle-events'
 import { useBattleStore } from '@/stores/battleStore'
@@ -18789,15 +20612,6 @@ export class BattleEventManager {
     eventBus.on(BattleSystemEvent.BATTLE_LOG, battleLogHandler)
     this.boundHandlers.set(BattleSystemEvent.BATTLE_LOG, battleLogHandler)
 
-    // 订阅战斗状态更新事件
-    const stateUpdateHandler = (data: any) =>
-      this.handleBattleStateUpdateEvent(data)
-    eventBus.on(BattleSystemEvent.BATTLE_STATE_UPDATE, stateUpdateHandler)
-    this.boundHandlers.set(
-      BattleSystemEvent.BATTLE_STATE_UPDATE,
-      stateUpdateHandler,
-    )
-
     // 订阅战斗结束事件
     const battleEndHandler = (data: any) => this.handleBattleEndEvent(data)
     eventBus.on(BattleSystemEvent.BATTLE_END, battleEndHandler)
@@ -18822,7 +20636,6 @@ export class BattleEventManager {
   stopListening() {
     // 取消订阅所有战斗事件
     eventBus.off(BattleSystemEvent.BATTLE_LOG)
-    eventBus.off(BattleSystemEvent.BATTLE_STATE_UPDATE)
     eventBus.off(BattleSystemEvent.BATTLE_END)
     eventBus.off(BattleSystemEvent.TURN_START)
     eventBus.off(BattleSystemEvent.TURN_END)
@@ -18929,22 +20742,6 @@ export class BattleEventManager {
       }
     } catch (error) {
       this.getBattleStore().addErrorLog(`处理战斗日志事件时出错: ${error}`)
-    }
-  }
-
-  /**
-   * 处理战斗状态更新事件
-   * 只更新 BattleStore 的战斗状态，不直接操作角色数据
-   */
-  private handleBattleStateUpdateEvent(data: BattleStateUpdateEventData) {
-    try {
-      if (data) {
-        this.getBattleStore().currentBattleId = data.battleId
-        this.getBattleStore().turnOrder = data.turnOrder || []
-        this.getBattleStore().setBattleActive(true)
-      }
-    } catch (error) {
-      this.getBattleStore().addErrorLog(`处理战斗状态更新事件时出错: ${error}`)
     }
   }
 
@@ -19168,7 +20965,7 @@ export interface IBattleSystem {
    * 获取当前回合数
    * @returns 当前回合数（从1开始）
    */
-  getTurn(): number
+  getRound(): number
 }
 
 /**
@@ -21481,74 +23278,6 @@ export class TurnManager {
   }
 
   /**
-   * 获取当前回合数
-   * @param battle 战斗数据
-   * @returns 当前回合索引（从0开始）
-   */
-  public getCurrentTurn(battle: BattleData): number {
-    return battle.currentTurn
-  }
-
-  /**
-   * 获取当前回合编号（从1开始，供显示用）
-   * @param battle 战斗数据
-   * @returns 当前回合编号
-   */
-  public getTurnNumber(battle: BattleData): number {
-    return battle.currentRound || 1
-  }
-
-  /**
-   * 获取当前回合的参与者ID
-   * 自动跳过死亡角色，直到找到存活的参与者或回到起点
-   * @param battle 战斗数据
-   * @param participants 参与者映射
-   * @returns 当前回合参与者的ID，如果没有存活参与者则返回null
-   */
-  public getCurrentParticipantId(
-    battle: BattleData,
-    participants: Map<string, BattleParticipant>,
-  ): string | null {
-    if (battle.turnOrder.length === 0) {
-      return null
-    }
-
-    const startIndex = battle.currentTurn % battle.turnOrder.length
-    let checkedCount = 0
-
-    while (checkedCount < battle.turnOrder.length) {
-      const index = (startIndex + checkedCount) % battle.turnOrder.length
-      const participantId = battle.turnOrder[index]
-      const participant = participants.get(participantId)
-
-      if (participant && participant.isAlive()) {
-        return participantId
-      }
-
-      checkedCount++
-    }
-
-    return null
-  }
-
-  /**
- * 推进到下一回合
- * @param battle 战斗数据
- */
-  public advanceTurn(battle: BattleData): void {
-    if (battle.turnOrder.length === 0) {
-      return
-    }
-
-    battle.currentTurn = (battle.currentTurn + 1) % battle.turnOrder.length
-    
-    // 检查是否进入新的回合
-    if (battle.currentTurn === 0) {
-      battle.currentRound = (battle.currentRound || 0) + 1
-    }
-  }
-
-  /**
    * 根据参与者有效速度创建回合顺序
    * 速度高的参与者排在前面，相同速度时随机排序
    * @param participants 参与者数组
@@ -21607,52 +23336,6 @@ export class TurnManager {
     const modifierStack = this.buffSystem.getModifierStack(participant.id)
 
     return modifierStack.calculate('SPD' as AttributeType, baseSpeed)
-  }
-
-  /**
-   * 获取当前回合顺序数组
-   * @param battle 战斗数据
-   * @returns 参与者ID数组
-   */
-  public getTurnOrder(battle: BattleData): string[] {
-    return [...battle.turnOrder]
-  }
-
-  /**
-   * 设置回合顺序
-   * @param battle 战斗数据
-   * @param turnOrder 新的回合顺序
-   */
-  public setTurnOrder(battle: BattleData, turnOrder: string[]): void {
-    battle.turnOrder = turnOrder
-    battle.currentTurn = 0
-  }
-
-  /**
-   * 初始化战斗的回合信息
-   * @param battle 战斗数据
-   * @param turnOrder 参与者ID数组，按速度从高到低排序
-   */
-  public initializeBattle(battle: BattleData, turnOrder: string[]): void {
-    battle.turnOrder = turnOrder
-    battle.currentTurn = 0
-  }
-
-  /**
-   * 比较两个参与者的速度
-   * @param a 第一个参与者
-   * @param b 第二个参与者
-   * @returns 正数表示b速度更高，负数表示a速度更高，0表示速度相同
-   */
-  private compareSpeed(a: BattleParticipant, b: BattleParticipant): number {
-    const speedA = a.getAttribute('SPD') || 0
-    const speedB = b.getAttribute('SPD') || 0
-
-    if (speedA !== speedB) {
-      return speedB - speedA
-    }
-
-    return Math.random() - 0.5
   }
 }
 
@@ -22425,6 +24108,8 @@ import type {
   ParticipantSide,
   RoundStatus,
 } from '@/types/battle'
+import { BattleActionHelper } from '@/types/battle'
+import type { SkillConfig } from '@/types/skill'
 
 import type { BattleAI } from '@/core/BattleAI'
 import { BuffSystem } from '@/core/BuffSystem'
@@ -22466,6 +24151,7 @@ import {
 import { EFFECT_TYPES } from '@/types/effect'
 import type { ExtendedSkillStep } from '@/types/skill'
 import { RAFTimer } from '@/utils/RAF'
+import { Counter } from '@/utils/Counter'
 import { battleLogManager } from '@/utils/logging'
 
 /**
@@ -22490,16 +24176,33 @@ import { battleLogManager } from '@/utils/logging'
  */
 
 export class BattleSystem implements IBattleSystem {
+  /**
+   * 战斗ID计数器
+   */
+  private static battleIdCounter = new Counter(1)
+
+  /**
+   * 当前战斗数据
+   */
   private battleData: BattleData
 
-  private isProcessingTurn = false
-
+  /**
+   * 动画队列，存储待播放的动画事件
+   * @property type - 动画类型
+   * @property data - 动画数据
+   * @property duration - 动画持续时间（毫秒）
+   * @property resolve - Promise 解析函数，动画完成时调用
+   */
   private animationQueue: Array<{
     type: string
     data: any
+    duration: number
     resolve: () => void
   }> = []
 
+  /**
+   * 是否有动画正在播放
+   */
   private isAnimationPlaying = false
 
   /**
@@ -22515,14 +24218,21 @@ export class BattleSystem implements IBattleSystem {
    */
   private battleSpeed = 1
 
+  /**
+   * 自动战斗定时器标识，用于取消自动战斗
+   */
   private autoBattleTimerId?: symbol
+
+  /**
+   * 自动战斗循环函数引用
+   */
+  private autoBattleLoop?: () => Promise<void>
 
   /**
    * 等待指定时间（使用 RAFTimer）
    * @param ms 等待毫秒数
    */
   private wait(ms: number): Promise<void> {
-    console.log('等待', ms, '毫秒')
     return new Promise((resolve) => {
       this.rafTimer.setTimeout(resolve, ms)
     })
@@ -22537,7 +24247,20 @@ export class BattleSystem implements IBattleSystem {
     }
   }
 
-  // 私有构造函数，防止外部直接实例化
+  /**
+   * 私有构造函数，防止外部直接实例化
+   * @param turnManager 回合管理器
+   * @param actionExecutor 动作执行器
+   * @param participantManager 参与者管理器
+   * @param aiSystem AI系统
+   * @param battleRecorder 战斗录像器
+   * @param ruleManager 规则管理器
+   * @param damageCalculator 伤害计算器
+   * @param rafTimer RAF定时器
+   * @param skillManager 技能管理器
+   * @param buffSystem Buff系统
+   * @param passiveSkillManager 被动技能管理器
+   */
   private constructor(
     private readonly turnManager: TurnManager,
     private readonly actionExecutor: ActionExecutor,
@@ -22601,18 +24324,26 @@ export class BattleSystem implements IBattleSystem {
     )
   }
 
+  /**
+   * 生成战斗唯一标识符
+   * @returns 战斗ID字符串，格式为 battle_counter.next
+   */
   public generateBattleId(): string {
-    return `battle_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+    return `battle_${BattleSystem.battleIdCounter.next()}`
   }
 
   /**
    * 获取当前回合数
    * @returns 当前回合数（从1开始）
    */
-  public getTurn(): number {
-    return this.battleData.currentTurn
+  public getRound(): number {
+    return this.battleData.currentRound
   }
 
+  /**
+   * 获取默认战斗数据对象
+   * @returns 初始化的战斗数据对象
+   */
   public getDefBattleData(): BattleData {
     return {
       battleId: this.generateBattleId(),
@@ -22621,7 +24352,7 @@ export class BattleSystem implements IBattleSystem {
       turnOrder: [],
       currentTurn: 0,
       currentRound: 1,
-      maxTurns: 999,
+      maxTurns: 100,
       startTime: Date.now(),
       winner: undefined,
       aiInstances: new Map<string, BattleAI>(),
@@ -22631,40 +24362,6 @@ export class BattleSystem implements IBattleSystem {
       roundState: ROUND_STATUS.NONE,
       skillManager: this.skillManager,
     }
-  }
-
-  /**
-   * 初始化规则管理器
-   */
-  private async initializeRuleManager(): Promise<void> {
-    try {
-      await this.ruleManager.loadConfig()
-      battleLogManager.addDebugLog('战斗规则管理器初始化完成')
-
-      // 配置伤害计算器
-      this.configureDamageCalculator()
-    } catch (error) {
-      battleLogManager.addDebugLog('战斗规则管理器初始化失败', error)
-    }
-  }
-
-  /**
-   * 配置伤害计算器
-   */
-  private configureDamageCalculator(): void {
-    const damageRules = this.ruleManager.getDamageRules()
-
-    this.skillManager.getDamageCalculator().setConfig({
-      criticalEnabled: damageRules.critical.enabled,
-      defaultCriticalRate: damageRules.critical.defaultRate,
-      defaultCriticalMultiplier: damageRules.critical.defaultMultiplier,
-      defenseEnabled: damageRules.defense.enabled,
-      minDamageThreshold: damageRules.thresholds.minDamage,
-      maxDamageThreshold: damageRules.thresholds.maxDamage,
-    })
-
-    // 初始化内置修饰器
-    this.skillManager.getDamageCalculator().initializeBuiltinModifiers()
   }
 
   /**
@@ -22678,8 +24375,6 @@ export class BattleSystem implements IBattleSystem {
     enemyParticipants: BattleParticipant[],
   ): BattleState {
     const allParticipants = [...allyParticipants, ...enemyParticipants]
-    console.log('allyParticipants', allyParticipants)
-    console.log('enemyParticipants', enemyParticipants)
 
     const participants =
       this.participantManager.createParticipants(allParticipants)
@@ -22688,11 +24383,11 @@ export class BattleSystem implements IBattleSystem {
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
     battleData.skillManager = this.skillManager
 
-    this.turnManager.initializeBattle(
-      battleData,
-      this.turnManager.createTurnOrder(Array.from(participants.values())),
+    battleData.turnOrder = this.turnManager.createTurnOrder(
+      Array.from(participants.values()),
     )
-
+    battleData.currentTurn = 0
+    battleData.currentRound = 1
     battleData.battleState = BATTLE_STATUS.PREPARING
 
     this.actionExecutor.registerBattle(
@@ -22764,6 +24459,10 @@ export class BattleSystem implements IBattleSystem {
    * 实现每回合重新计算出手顺序，并按顺序执行所有角色行动
    */
   private async processTurnInternal(): Promise<void> {
+    if (this.isPaused) {
+      return
+    }
+
     const battle = this.battleData
     if (battle.battleState !== BATTLE_STATUS.ACTIVE) {
       return
@@ -22809,24 +24508,8 @@ export class BattleSystem implements IBattleSystem {
       battle.turnOrder = currentTurnOrder
       battle.currentTurn = 0
 
-      // battleLogManager.addBattleLog(battle.currentTurn, '本回合出手顺序', {
-      //   turnOrder: currentTurnOrder.map((id) => {
-      //     const participant = battle.participants.get(id)
-      //     const effectiveSpeed = this.turnManager.calculateEffectiveSpeed(
-      //       participant!,
-      //     )
-      //     return {
-      //       id,
-      //       name: participant?.name,
-      //       effectiveSpeed,
-      //     }
-      //   }),
-      // })
-
       const battleId = battle.battleId
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0])
-
-      this.syncBattleStateUpdate()
 
       for (let i = 0; i < currentTurnOrder.length; i++) {
         await this.waitForAnimation()
@@ -22835,11 +24518,7 @@ export class BattleSystem implements IBattleSystem {
         if (!participant || !participant.isAlive()) {
           continue
         }
-
         battle.currentTurn = i
-
-        this.syncBattleStateUpdate()
-
         try {
           await this.executeParticipantAction(battle, participant)
         } catch (error) {
@@ -22850,8 +24529,6 @@ export class BattleSystem implements IBattleSystem {
         await this.waitForAnimation()
 
         this.buffSystem.updatePerTurn(participant.id, battle.currentRound || 1)
-
-        this.syncBattleStateUpdate()
 
         this.checkBattleEndCondition()
 
@@ -22870,18 +24547,12 @@ export class BattleSystem implements IBattleSystem {
 
       battle.roundState = ROUND_STATUS.END
 
-      this.battleRecorder.recordTurnEnd(
-        battleId,
-        this.turnManager.getTurnNumber(battle),
-      )
+      this.battleRecorder.recordTurnEnd(battleId, battle.currentRound || 1)
 
       battle.currentRound++
-
-      battle.roundState = ROUND_STATUS.START
     } catch (error) {
       battleLogManager.addDebugLog('处理回合时出错:', LogLevel.ERROR, error)
     } finally {
-      this.syncBattleStateUpdate()
       this.cleanupAnimationState()
     }
   }
@@ -22917,16 +24588,10 @@ export class BattleSystem implements IBattleSystem {
       // 检查是否被控制
       if (this.isParticipantControlled(participant)) {
         // 被控制，无法行动
-        const action: BattleAction = {
-          id: `control_${Date.now()}`,
-          type: 'status',
+        const action = BattleActionHelper.createStatus({
           sourceId: participant.id,
           targetId: participant.id,
-          damage: 0,
-          heal: 0,
-          success: true,
-          timestamp: Date.now(),
-          turn: this.turnManager.getTurnNumber(battle),
+          turn: battle.currentRound || 1,
           effects: [
             {
               type: 'status',
@@ -22934,14 +24599,14 @@ export class BattleSystem implements IBattleSystem {
               duration: 0,
             },
           ],
-        }
+        })
 
         // 添加控制行动到战斗记录
         this.recordBattleAction(action)
 
         // 添加战斗日志
         battleLogManager.addBattleLog(
-          this.turnManager.getTurnNumber(battle),
+          battle.currentRound || 1,
           `${participant.name} 被控制，无法行动`,
           [{ text: `${participant.name} 被控制，无法行动` }],
           BATTLE_LOG_CATEGORIES.STATUS,
@@ -22953,10 +24618,9 @@ export class BattleSystem implements IBattleSystem {
         return
       }
 
-      // 获取所有可用技能并过滤掉被动技能
-      const allSkillIds = participant.getSkillIds()
-      console.log('allSkillIds', participant, participant.skills, allSkillIds)
-      const allAvailableSkills = allSkillIds.filter((skillId) => {
+      // 获取所有可用主动技能
+      const activeSkillIds = participant.getSkillIds('active')
+      const availableSkills = activeSkillIds.filter((skillId) => {
         const energyCost = this.getSkillEnergyCost(skillId)
         // 检查能量是否足够
         if (participant.currentEnergy < energyCost) {
@@ -22974,38 +24638,24 @@ export class BattleSystem implements IBattleSystem {
         return true
       })
 
-      // 过滤掉被动技能（通过技能ID判断）
-      const availableSkills = allAvailableSkills.filter((skillId) => {
-        return !skillId.includes('passive')
-      })
-
-      // 检查是否使用AI系统进行决策
+      // 检查是否使用 AI 系统进行决策
       const aiInstance = battle.aiInstances?.get(participant.id)
       if (aiInstance) {
-        // 使用AI系统决策
+        // 使用 AI 系统决策
         const action = aiInstance.makeDecision(
-          {
-            battleId: battle.battleId,
-            participants: battle.participants,
-            actions: battle.actions,
-            turnOrder: battle.turnOrder,
-            currentTurn: battle.currentTurn,
-            battleState: battle.battleState!,
-            startTime: battle.startTime,
-          },
+          this.convertToBattleState(battle),
           participant,
         )
 
         battleLogManager.addDebugLog(
-          `AI决策[${participant.name}]: ${action.type === 'skill' ? '使用技能' : '普通攻击'}`,
+          `AI 决策 [${participant.name}]: ${action.type === 'skill' ? '使用技能' : '普通攻击'}`,
         )
 
         if (action.type === 'skill' && action.skillId) {
           const skillId = action.skillId
-          if (allSkillIds.includes(skillId)) {
-            await this.selectAndExecuteSkill(battle, participant, {
-              id: skillId,
-            })
+          const skill = this.skillManager.getSkillConfig(skillId)
+          if (skill && activeSkillIds.includes(skillId)) {
+            await this.selectAndExecuteSkill(battle, participant, skill)
           } else {
             await this.selectAndExecuteAttack(battle, participant)
           }
@@ -23017,12 +24667,15 @@ export class BattleSystem implements IBattleSystem {
         Math.random() < BATTLE_CONSTANTS.SKILL_USE_CHANCE &&
         availableSkills[0]
       ) {
-        // 没有AI实例时使用原来的随机选择逻辑（也过滤了被动技能）
+        // 没有 AI 实例时使用原来的随机选择逻辑（也过滤了被动技能）
         const selectedSkillId =
           availableSkills[Math.floor(Math.random() * availableSkills.length)]
-        await this.selectAndExecuteSkill(battle, participant, {
-          id: selectedSkillId,
-        })
+        const skill = this.skillManager.getSkillConfig(selectedSkillId)
+        if (skill) {
+          await this.selectAndExecuteSkill(battle, participant, skill)
+        } else {
+          await this.selectAndExecuteAttack(battle, participant)
+        }
       } else {
         await this.selectAndExecuteAttack(battle, participant)
       }
@@ -23041,59 +24694,75 @@ export class BattleSystem implements IBattleSystem {
    * 选择并执行技能
    * @param battle 战斗数据
    * @param source 技能使用者
-   * @param skill 技能对象
+   * @param skill 技能配置对象
    * @returns 战斗动作
    */
   private async selectAndExecuteSkill(
     battle: BattleData,
     source: BattleParticipant,
-    skill: any,
+    skill: SkillConfig,
   ): Promise<BattleAction> {
-    // 检查技能是否可用
     if (
       'isSkillAvailable' in source &&
       typeof source.isSkillAvailable === 'function'
     ) {
       if (!source.isSkillAvailable(skill.id)) {
-        // 技能冷却中，执行普通攻击
         return this.selectAndExecuteAttack(battle, source)
       }
     }
 
-    const energyCost = this.getSkillEnergyCost(skill.id)
+    const energyCost = skill.energyCost ?? 0
     source.spendEnergy(energyCost)
 
-    const targetId = this.selectTarget(battle, source)
-
-    const action: BattleAction = {
-      id: `skill_${skill.id}_${Date.now()}`,
-      type: 'skill',
-      skillId: skill.id,
+    const action = BattleActionHelper.createSkill({
       sourceId: source.id,
-      targetId: targetId,
-      damage: 0,
-      heal: 0,
-      success: true,
-      timestamp: Date.now(),
-      turn: this.turnManager.getTurnNumber(battle),
-      effects: [],
+      targetId: '',
+      skillId: skill.id,
+      skillName: skill.name,
+      turn: battle.currentRound || 1,
+    })
+
+    const targets = this.getSkillTargets(battle, source, skill)
+
+    if (targets.length === 0) {
+      battleLogManager.addDebugLog(`技能执行失败: 未找到有效目标 ${skill.id}`)
+      return this.selectAndExecuteAttack(battle, source)
     }
 
+    action.targetId = targets[0].id
+
     try {
-      const skillAction = this.skillManager.executeSkill(
-        skill.id,
-        source,
-        battle.participants.get(targetId)!,
-      )
+      let totalDamage = 0
+      let totalHeal = 0
+      const allEffects: any[] = []
 
-      action.damage = skillAction.damage
-      action.heal = skillAction.heal
-      action.effects = skillAction.effects
+      for (const target of targets) {
+        if (!target.isAlive()) continue
 
+        const skillAction = this.skillManager.executeSkill(
+          skill.id,
+          source,
+          target,
+        )
+
+        totalDamage += skillAction.damage
+        totalHeal += skillAction.heal
+        allEffects.push(...skillAction.effects)
+      }
+
+      action.damage = totalDamage
+      action.heal = totalHeal
+      action.effects = allEffects
+
+      const targetNames = targets.map((t) => t.name).join(', ')
       battleLogManager.addBattleLog(
         battle.currentTurn,
         `技能执行成功: ${skill.id}`,
-        [{ text: `技能执行成功: ${skill.id}` }],
+        [
+          {
+            text: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}`,
+          },
+        ],
         BATTLE_LOG_CATEGORIES.ACTION,
       )
     } catch (error) {
@@ -23111,15 +24780,96 @@ export class BattleSystem implements IBattleSystem {
 
     this.recordBattleAction(action)
 
-    this.syncBattleStateUpdate()
-
     return action
+  }
+
+  /**
+   * 获取技能的所有目标
+   * @param battle 战斗数据
+   * @param source 技能使用者
+   * @param skill 技能配置
+   * @returns 目标参与者数组
+   */
+  private getSkillTargets(
+    battle: BattleData,
+    source: BattleParticipant,
+    skill: SkillConfig,
+  ): BattleParticipant[] {
+    const selector = skill.selector || 'single_enemy'
+    const participants = Array.from(battle.participants.values())
+
+    if (selector === 'self') {
+      return [source]
+    }
+
+    const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
+
+    if (selector.includes('all_enemies')) {
+      return participants.filter(
+        (p) =>
+          p.isAlive() &&
+          p.team === (isEnemy ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY),
+      )
+    }
+
+    if (selector.includes('all_allies')) {
+      return participants.filter((p) => p.isAlive() && p.team === source.team)
+    }
+
+    const targetId = this.selectTargetForSkill(battle, source, skill)
+    const target = battle.participants.get(targetId)
+    return target ? [target] : []
+  }
+
+  /**
+   * 根据技能配置选择目标
+   * @param battle 战斗数据
+   * @param source 技能使用者
+   * @param skill 技能配置
+   * @returns 选中的目标 ID
+   */
+  private selectTargetForSkill(
+    battle: BattleData,
+    source: BattleParticipant,
+    skill: SkillConfig,
+  ): string {
+    const selector = skill.selector || 'single_enemy'
+    const participants = Array.from(battle.participants.values())
+
+    if (selector.includes('self')) {
+      return source.id
+    }
+
+    const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
+    const targets = participants.filter(
+      (p) =>
+        p.isAlive() &&
+        p.team === (isEnemy ? PARTICIPANT_SIDE.ALLY : PARTICIPANT_SIDE.ENEMY),
+    )
+
+    if (targets.length === 0) {
+      return source.id
+    }
+
+    if (
+      skill.steps.some((step) => step.type === 'HEAL' || step.type === 'BUFF')
+    ) {
+      const lowestHpTarget = targets.reduce((min, p) => {
+        const hpRatio = p.currentHealth / p.maxHealth
+        const minHpRatio = min.currentHealth / min.maxHealth
+        return hpRatio < minHpRatio ? p : min
+      })
+      return lowestHpTarget.id
+    } else {
+      const randomIndex = Math.floor(Math.random() * targets.length)
+      return targets[randomIndex].id
+    }
   }
 
   /**
    * 构造普通攻击的技能步骤配置
    * @param source 攻击者
-   * @param targetId 目标ID
+   * @param targetId 目标 ID
    * @returns 技能步骤配置
    */
   private buildNormalAttackStep(
@@ -23155,18 +24905,11 @@ export class BattleSystem implements IBattleSystem {
     targetId: string,
     turnNumber: number,
   ): BattleAction {
-    return {
-      id: `attack_${Date.now()}`,
-      type: 'attack',
+    return BattleActionHelper.createAttack({
       sourceId,
       targetId,
-      damage: 0,
-      heal: 0,
-      success: true,
-      timestamp: Date.now(),
       turn: turnNumber,
-      effects: [],
-    }
+    })
   }
 
   /**
@@ -23373,11 +25116,11 @@ export class BattleSystem implements IBattleSystem {
       return this.createBattleAction(
         source.id,
         source.id,
-        this.turnManager.getTurnNumber(battle),
+        battle.currentRound || 1,
       )
     }
 
-    const turnNumber = this.turnManager.getTurnNumber(battle)
+    const roundNumber = battle.currentRound || 1
 
     this.passiveSkillManager.triggerPassiveSkills(
       PassiveSkillTrigger.BEFORE_ATTACK,
@@ -23392,17 +25135,17 @@ export class BattleSystem implements IBattleSystem {
       target,
     )
 
-    const action = this.createBattleAction(source.id, targetId, turnNumber)
+    const action = this.createBattleAction(source.id, targetId, roundNumber)
 
     if (damageResult.isMiss) {
-      await this.handleMissAttack(action, source, target, turnNumber)
+      await this.handleMissAttack(action, source, target, roundNumber)
     } else {
       await this.handleHitAttack(
         action,
         source,
         target,
         damageResult,
-        turnNumber,
+        roundNumber,
       )
     }
 
@@ -23508,7 +25251,7 @@ export class BattleSystem implements IBattleSystem {
       damage,
       success: true,
       timestamp: Date.now(),
-      turn: this.turnManager.getTurnNumber(battle),
+      turn: battle.currentRound || 1,
       effects: [
         {
           type: EFFECT_TYPES.DAMAGE,
@@ -23689,11 +25432,6 @@ export class BattleSystem implements IBattleSystem {
   }
 
   /**
-   * 获取技能能量消耗
-   * @param {string} skillId - 技能ID
-   * @returns {number} 能量消耗
-   */
-  /**
    * 添加战斗动作到记录
    * @param action - 战斗动作
    */
@@ -23718,15 +25456,10 @@ export class BattleSystem implements IBattleSystem {
     this.battleRecorder.recordAction(
       battleId,
       action,
-      this.turnManager.getTurnNumber(this.battleData),
+      this.battleData.currentRound || 1,
     )
   }
 
-  /**
-   * 根据参与者ID查找战斗
-   * @param {string} participantId - 参与者ID
-   * @returns {BattleData | undefined} 战斗数据
-   */
   /**
    * 检查战斗结束条件
    */
@@ -23816,9 +25549,7 @@ export class BattleSystem implements IBattleSystem {
       participant.buffs = []
     })
 
-    battle.battleState = BATTLE_STATUS.SETTLEMENT
     battle.roundState = ROUND_STATUS.NONE
-
     battle.battleState = BATTLE_STATUS.ENDED
     battle.winner = winner
     battle.endTime = Date.now()
@@ -23837,7 +25568,7 @@ export class BattleSystem implements IBattleSystem {
       targetId: 'system',
       success: true,
       timestamp: Date.now(),
-      turn: this.turnManager.getTurnNumber(battle),
+      turn: battle.currentRound || 1,
       effects: [
         {
           type: 'status',
@@ -23852,7 +25583,7 @@ export class BattleSystem implements IBattleSystem {
     this.battleRecorder.recordAction(
       battleId,
       endAction,
-      this.turnManager.getTurnNumber(battle),
+      battle.currentRound || 1,
     )
 
     this.battleRecorder.endRecording(battleId, winner)
@@ -23987,9 +25718,44 @@ export class BattleSystem implements IBattleSystem {
 
   /**
    * 切换暂停状态
+   * 暂停时会停止自动战斗，恢复时会重新启动自动战斗
    */
   public togglePause(): void {
     this.isPaused = !this.isPaused
+    if (this.isPaused) {
+      this.pauseAutoBattle()
+    } else {
+      this.resumeAutoBattle()
+    }
+  }
+
+  /**
+   * 暂停自动战斗
+   * 清除定时器但保持自动战斗标志
+   */
+  private pauseAutoBattle(): void {
+    if (this.autoBattleTimerId) {
+      this.rafTimer.clearTimeout(this.autoBattleTimerId)
+      this.autoBattleTimerId = undefined
+    }
+    battleLogManager.addDebugLog(`自动战斗已暂停`)
+  }
+
+  /**
+   * 恢复自动战斗
+   * 如果自动战斗标志为true，重新启动自动战斗循环
+   */
+  private resumeAutoBattle(): void {
+    if (
+      this.autoBattle &&
+      this.battleData.battleState === BATTLE_STATUS.ACTIVE &&
+      this.autoBattleLoop
+    ) {
+      const delay = this.getBattleDelay()
+      const timerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
+      this.autoBattleTimerId = timerId
+      battleLogManager.addDebugLog(`自动战斗已恢复`)
+    }
   }
 
   /**
@@ -24014,6 +25780,7 @@ export class BattleSystem implements IBattleSystem {
       actions: [...battleData.actions],
       turnOrder: [...battleData.turnOrder],
       currentTurn: battleData.currentTurn,
+      currentRound: battleData.currentRound || 1,
       battleState: battleData.battleState!,
       startTime: battleData.startTime,
       endTime: battleData.endTime,
@@ -24038,22 +25805,20 @@ export class BattleSystem implements IBattleSystem {
   public startAutoBattle(): void {
     this.autoBattle = true
     this.battleData.autoBattle = true
+    this.isPaused = false
     battleLogManager.addDebugLog(`自动战斗开始: ${this.battleData.battleId}`)
-    const autoBattleLoop = async () => {
+
+    this.autoBattleLoop = async () => {
+      if (this.isPaused) {
+        return
+      }
+
       let battle = this.battleData
-      console.log('自动战斗循环开始:', battle.autoBattle, battle.battleState)
       if (!battle.autoBattle || battle.battleState !== BATTLE_STATUS.ACTIVE) {
         return
       }
       try {
-        console.log('processTurnInternal开始')
         await this.processTurnInternal()
-        console.log('processTurnInternal结束')
-        console.log(
-          '自动战斗循环开始processTurnInternal:',
-          battle.autoBattle,
-          battle.battleState,
-        )
         battle = this.battleData
         if (
           battle.battleState === BATTLE_STATUS.ENDED ||
@@ -24063,9 +25828,11 @@ export class BattleSystem implements IBattleSystem {
           return
         }
 
-        const delay = this.getBattleDelay()
-        const timerId = this.rafTimer.setTimeout(autoBattleLoop, delay)
-        this.autoBattleTimerId = timerId
+        if (!this.isPaused) {
+          const delay = this.getBattleDelay()
+          const timerId = this.rafTimer.setTimeout(this.autoBattleLoop!, delay)
+          this.autoBattleTimerId = timerId
+        }
       } catch (error) {
         battleLogManager.addDebugLog('自动战斗出错:', LogLevel.ERROR, error)
         this.stopAutoBattle()
@@ -24073,10 +25840,14 @@ export class BattleSystem implements IBattleSystem {
     }
 
     const delay = this.getBattleDelay()
-    const timerId = this.rafTimer.setTimeout(autoBattleLoop, delay)
+    const timerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
     this.autoBattleTimerId = timerId
   }
 
+  /**
+   * 获取战斗延迟时间（根据战斗速度）
+   * @returns 延迟时间（毫秒）
+   */
   private getBattleDelay(): number {
     const battle = this.battleData
     if (!battle) {
@@ -24100,6 +25871,8 @@ export class BattleSystem implements IBattleSystem {
 
     this.autoBattle = false
     this.battleData.autoBattle = false
+    this.isPaused = true
+    this.autoBattleLoop = undefined
 
     if (this.autoBattleTimerId) {
       this.rafTimer.clearTimeout(this.autoBattleTimerId)
@@ -24209,6 +25982,10 @@ export class BattleSystem implements IBattleSystem {
     return this.participantManager
   }
 
+  /**
+   * 获取当前所有参与者信息
+   * @returns 参与者数组
+   */
   public getCurParticipantsInfo(): BattleParticipant[] {
     return Array.from(this.battleData.participants.values())
   }
@@ -24220,72 +25997,15 @@ export class BattleSystem implements IBattleSystem {
     return this.battleData
   }
 
+  /**
+   * 设置战斗速度
+   * @param speed 速度倍率
+   */
   public setBattleSpeed(speed: number): void {
     const battle = this.battleData
     if (battle) {
       battle.battleSpeed = speed
     }
-  }
-
-  /**
-   * 同步战斗状态更新
-   */
-  private syncBattleStateUpdate(): void {
-    const battle = this.battleData
-    if (!battle) return
-
-    eventBus.emit(BattleSystemEvent.BATTLE_STATE_UPDATE, {
-      battleId: battle.battleId,
-      participants: Array.from(battle.participants.values()).map((p) => {
-        const activeBuffIds = this.buffSystem
-          .getBuffInstances(p.id)
-          .map((buff) => buff.id)
-        p.buffs = activeBuffIds
-
-        return {
-          id: p.id,
-          name: p.name,
-          currentHp: p.getAttribute('HP'),
-          maxHp: p.getAttribute('MAX_HP'),
-          currentEnergy: p.currentEnergy,
-          buffs: activeBuffIds,
-        }
-      }),
-      turnOrder: battle.turnOrder,
-      currentTurn: battle.currentTurn,
-      currentRound: battle.currentRound,
-    })
-  }
-
-  /**
-   * 触发伤害数字动画
-   */
-  private triggerDamageAnimation(data: {
-    targetId: string
-    damage: number
-    damageType: string
-    isCritical: boolean
-    isHeal: boolean
-  }): void {
-    eventBus.emit(BattleSystemEvent.DAMAGE_ANIMATION, data)
-  }
-
-  /**
-   * 触发闪避动画
-   */
-  private triggerMissAnimation(data: { targetId: string }): void {
-    eventBus.emit(BattleSystemEvent.MISS_ANIMATION, data)
-  }
-
-  /**
-   * 触发Buff效果
-   */
-  private triggerBuffEffect(data: {
-    targetId: string
-    buffName: string
-    isPositive: boolean
-  }): void {
-    eventBus.emit(BattleSystemEvent.BUFF_EFFECT, data)
   }
 
   /**
@@ -24315,6 +26035,7 @@ export class BattleSystem implements IBattleSystem {
       this.animationQueue.push({
         type: animationType,
         data,
+        duration: actualDuration,
         resolve,
       })
 
@@ -24343,14 +26064,12 @@ export class BattleSystem implements IBattleSystem {
 
     eventBus.emit(animation.type, animation.data)
 
-    const duration = this.getAnimationDuration()
-
     await new Promise<void>((resolve) => {
       this.rafTimer.setTimeout(() => {
         animation.resolve()
         this.processAnimationQueue()
         resolve()
-      }, duration)
+      }, animation.duration)
     })
   }
 
@@ -25884,7 +27603,7 @@ export function initializeContainer(): void {
   container.registerFactory(
     BATTLE_SYSTEM_TOKEN.toString(),
     () => {
-      return BattleSystem.createInstanceWithContainer(container)
+      return BattleSystem.createInstanceWithContainer(container as Container)
     },
     true,
   )
@@ -27493,9 +29212,6 @@ export class HealCalculator {
           output: result,
         })
 
-        // 调试：检查基础值是否正确
-        console.log(`DEBUG: 基础治疗值 = ${result}`)
-
         // 2. 额外值计算
         step.calculation.extraValues.forEach((extra) => {
           const attributeValue = this.getAttributeValue(source, extra.attribute)
@@ -27516,14 +29232,10 @@ export class HealCalculator {
             output: result,
           })
         })
-
-        // 调试：检查额外值计算后的结果
-        console.log(`DEBUG: 额外值计算后结果 = ${result}`)
       } else if (step.formula) {
         result = this.parseFormula(step.formula, source, target)
         modifiers['formula'] = 1
         battleLogManager.addDebugLog(`治疗计算开始: 公式计算结果=${result}`)
-        console.log(`DEBUG: 公式计算治疗值 = ${result}`)
         intermediateSteps.push({
           type: 'heal',
           description: '公式计算',
@@ -27582,9 +29294,6 @@ export class HealCalculator {
       // 确保非负整数
       const finalValue = Math.max(0, Math.floor(result))
       battleLogManager.addDebugLog(`最终治疗值: ${finalValue}`)
-
-      // 调试：检查最终结果
-      console.log(`DEBUG: 最终治疗值 = ${finalValue}`)
 
       // 记录计算日志
       this.recordCalculationLog({
@@ -28379,21 +30088,25 @@ export class SkillManager {
     target: BattleParticipant,
     record?: CombatRecord,
   ): void {
-    // 使用新的治疗计算器
+    const healTarget =
+      skillStep.target === 'self' || skillStep.targetType === 'self'
+        ? source
+        : target
+
     const heal = this.healCalculator.calculateHeal(
       skillStep,
       source,
-      target,
+      healTarget,
       record,
     )
-    const actualHeal = this.healCalculator.applyHeal(target, heal)
+    const actualHeal = this.healCalculator.applyHeal(healTarget, heal)
 
     battleAction.heal += actualHeal
     battleAction.effects.push({
       type: 'heal',
-      targetId: target.id,
+      targetId: healTarget.id,
       value: actualHeal,
-      description: `${source.name} 恢复 ${actualHeal} 生命值`,
+      description: `${healTarget.name} 恢复 ${actualHeal} 生命值`,
     })
 
     // 检查是否为单回合效果
@@ -28419,33 +30132,36 @@ export class SkillManager {
     target: BattleParticipant,
     record?: CombatRecord,
   ): void {
-    if (!skillStep.buffId) {
-      battleLogManager.addDebugLog(`buff步骤缺少buffId: ${skillStep.type}`)
+    const buffId = skillStep.buffId || skillStep.effectId
+    if (!buffId) {
+      battleLogManager.addDebugLog(
+        `buff步骤缺少buffId或effectId: ${skillStep.type}`,
+      )
       return
     }
 
-    // 检查 Buff 脚本是否已注册
     const scriptRegistry = this.buffSystem.getScriptRegistry()
 
-    if (!scriptRegistry.has(skillStep.buffId)) {
+    if (!scriptRegistry.has(buffId)) {
       battleLogManager.addDebugLog(
-        `Buff脚本未找到: ${skillStep.buffId}，跳过buff效果`,
+        `Buff脚本未找到: ${buffId}，跳过buff效果`,
       )
       battleAction.effects.push({
         type: 'buff',
-        buffId: skillStep.buffId,
-        description: `${source.name} 尝试施加 ${skillStep.buffId} 失败（脚本未注册）`,
+        buffId: buffId,
+        description: `${source.name} 尝试施加 ${buffId} 失败（脚本未注册）`,
       })
       return
     }
 
-    // 确定buff目标
-    const buffTarget = skillStep.targetType === 'self' ? source : target
+    const buffTarget =
+      skillStep.target === 'self' || skillStep.targetType === 'self'
+        ? source
+        : target
 
-    // 创建buff配置
     const buffConfig = {
-      id: skillStep.buffId,
-      name: skillStep.buffId,
+      id: buffId,
+      name: buffId,
       description: `来自技能 ${battleAction.skillId} 的效果`,
       duration: skillStep.duration ?? 1,
       maxStacks: skillStep.stacks || 1,
@@ -28454,13 +30170,12 @@ export class SkillManager {
       controlType: ControlType.NONE,
       controlPriority: 0,
       isDebuff: skillStep.type === 'DEBUFF',
-      parameters: skillStep.parameters || {},
+      parameters: skillStep.parameters || skillStep.effectParams || {},
     }
 
-    // 添加buff
     const instanceId = this.buffSystem.addBuff(
       buffTarget.id,
-      skillStep.buffId,
+      buffId,
       buffConfig,
       0,
       record,
@@ -28472,13 +30187,13 @@ export class SkillManager {
     battleAction.effects.push({
       type: 'buff',
       targetId: buffTarget.id,
-      buffId: skillStep.buffId,
+      buffId: buffId,
       instanceId,
-      description: `${source.name} 施加 ${skillStep.buffId} 给 ${buffTarget.name}`,
+      description: `${source.name} 施加 ${buffId} 给 ${buffTarget.name}`,
     })
 
     battleLogManager.addDebugLog(
-      `buff步骤执行完成: ${skillStep.buffId} 施加给 ${buffTarget.name}`,
+      `buff步骤执行完成: ${buffId} 施加给 ${buffTarget.name}`,
     )
   }
 
@@ -31723,22 +33438,13 @@ export const useBattleStore = defineStore('battle', {
         }
       })
 
-      battleManager.on(BattleSystemEvent.BATTLE_STATE_UPDATE, (data: any) => {
-        if (data) {
-          this.currentBattleId = data.battleId
-          this.turnOrder = data.turnOrder || []
-          this.setBattleActive(true)
-          this.battleManager?.syncBattleState()
-        }
-      })
-
       battleManager.on(BattleSystemEvent.BATTLE_END, (data: any) => {
         this.setBattleActive(false)
         this.setAutoPlayMode(false)
         if (data && data.winner) {
           battleLogManager.addBattleLog(
             battleManager.getTurn(),
-            `战斗结束！胜利者: ${data.winner === 'ALLY' ? '我方' : '敌方'}`,
+            `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`,
           )
         }
       })
@@ -31951,11 +33657,8 @@ export const useBattleStore = defineStore('battle', {
         if (!this.battleManager) {
           throw new Error('战斗管理器未初始化')
         }
-
-        const allyTeam = this.battleManager.getAllyTeam()
-        const enemyTeam = this.battleManager.getEnemyTeam()
-        const enabledAllyTeam = allyTeam.filter((c) => c.enabled)
-        const enabledEnemyTeam = enemyTeam.filter((e) => e.enabled)
+        const enabledAllyTeam = this.battleManager.getEnabledAllyTeam()
+        const enabledEnemyTeam = this.battleManager.getEnabledEnemyTeam()
 
         // 直接调用合并后的 startBattle 方法，自动启动战斗
         const battleId = await this.battleManager.startBattle()
@@ -31969,15 +33672,12 @@ export const useBattleStore = defineStore('battle', {
         this.autoPlayMode = this.battleManager.getAutoBattle()
         battleLogManager.addSystemLog(`战斗已开始`)
 
-        battleLogManager.addSystemLog({
-          turn: '战斗开始',
-          source: '系统',
-          action: '宣布',
-          target: '',
-          result: `战斗开始！参战角色: ${enabledAllyTeam.length}人 | 参战敌人: ${enabledEnemyTeam.length}人`,
-          level: 'info',
-          type: 'battle',
-        })
+        battleLogManager.addSystemLog(
+          `战斗开始！参战角色: ${enabledAllyTeam.length}人 | 参战敌人: ${enabledEnemyTeam.length}人`,
+          {
+            segments: [],
+          },
+        )
 
         return true
       } catch (error) {
@@ -32223,7 +33923,6 @@ export const useBattleStore = defineStore('battle', {
 
         // 移除所有事件监听器
         this.battleManager.off(BattleSystemEvent.BATTLE_LOG)
-        this.battleManager.off(BattleSystemEvent.BATTLE_STATE_UPDATE)
         this.battleManager.off(BattleSystemEvent.DAMAGE_ANIMATION)
         this.battleManager.off(BattleSystemEvent.MISS_ANIMATION)
         this.battleManager.off(BattleSystemEvent.BATTLE_END)
@@ -35739,14 +37438,6 @@ export interface BattleLogEventData {
   log: BattleLogEntry;
 }
 
-// 战斗状态更新事件数据类型
-export interface BattleStateUpdateEventData {
-  battleId: string;
-  participants: BattleParticipant[];
-  turnOrder: string[];
-  currentTurn: number;
-}
-
 // 伤害动画事件数据类型
 export interface DamageAnimationEventData {
   targetId: string;
@@ -35766,7 +37457,7 @@ export interface BattleEndedEventData {
   winner: ParticipantSide;
 }
 
-// Buff效果事件数据类型
+// Buff 效果事件数据类型
 export interface BuffEffectEventData {
   targetId: string;
   buffName: string;
@@ -35785,7 +37476,6 @@ export interface SkillEffectEventData {
 // 战斗事件类型映射
 export interface BattleEvents {
   'battle-log': BattleLogEventData;
-  'battle-state-update': BattleStateUpdateEventData;
   'damage-animation': DamageAnimationEventData;
   'miss-animation': MissAnimationEventData;
   'battle-ended': BattleEndedEventData;
@@ -36763,6 +38453,10 @@ import type { SkillConfig } from '@/types/skill'
 import type { UISkills } from '@/types/UI/UIBattleCharacter'
 import type { BattleLogEntry } from '@/types/battle-log'
 import { EffectType } from '@/types/effect'
+import { Counter } from '@/utils/Counter'
+
+const counter = new Counter()
+
 /**
  * 战斗状态常量
  * 控制战斗的宏观生命周期
@@ -36923,6 +38617,7 @@ export interface BattleEntity {
   needsHealing(): boolean
 
   getSkills(): UISkills
+  getSkillList(): SkillConfig[]
   getSkillIds(filter?: 'all' | 'active' | 'passive'): string[]
   hasSkill(skillId: string): boolean
 }
@@ -37047,6 +38742,135 @@ export interface BattleAction {
   effects: BattleEffect[]
 }
 
+export const BattleActionHelper = {
+  /**
+   * 生成唯一动作ID
+   * @param prefix ID前缀
+   * @returns 唯一ID字符串
+   */
+  generateId(prefix: string = 'action'): string {
+    return `${prefix}_${counter.next()}`
+  },
+
+  /**
+   * 创建基础战斗动作
+   * @param options 动作选项
+   * @returns 战斗动作对象
+   */
+  create(options: {
+    type: BattleAction['type']
+    sourceId: string
+    targetId: string
+    skillId?: string
+    skillName?: string
+    itemId?: string
+    buffId?: string
+    damage?: number
+    heal?: number
+    success?: boolean
+    isHit?: boolean
+    isCrit?: boolean
+    critDamage?: number
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return {
+      id: this.generateId(options.type),
+      type: options.type,
+      sourceId: options.sourceId,
+      targetId: options.targetId,
+      skillId: options.skillId,
+      skillName: options.skillName,
+      itemId: options.itemId,
+      buffId: options.buffId,
+      damage: options.damage ?? 0,
+      heal: options.heal ?? 0,
+      success: options.success ?? true,
+      isHit: options.isHit,
+      isCrit: options.isCrit,
+      critDamage: options.critDamage,
+      timestamp: Date.now(),
+      turn: options.turn,
+      effects: options.effects ?? [],
+    }
+  },
+
+  /**
+   * 创建攻击动作
+   */
+  createAttack(options: {
+    sourceId: string
+    targetId: string
+    damage?: number
+    isHit?: boolean
+    isCrit?: boolean
+    critDamage?: number
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return this.create({ type: 'attack', ...options })
+  },
+
+  /**
+   * 创建技能动作
+   */
+  createSkill(options: {
+    sourceId: string
+    targetId: string
+    skillId: string
+    skillName?: string
+    damage?: number
+    heal?: number
+    isHit?: boolean
+    isCrit?: boolean
+    critDamage?: number
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return this.create({ type: 'skill', ...options })
+  },
+
+  /**
+   * 创建Buff/DeBuff动作
+   */
+  createBuff(options: {
+    sourceId: string
+    targetId: string
+    buffId: string
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return this.create({ type: 'buff', ...options })
+  },
+
+  /**
+   * 创建物品动作
+   */
+  createItem(options: {
+    sourceId: string
+    targetId: string
+    itemId: string
+    heal?: number
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return this.create({ type: 'item', ...options })
+  },
+
+  /**
+   * 创建状态动作
+   */
+  createStatus(options: {
+    sourceId: string
+    targetId: string
+    success?: boolean
+    effects?: BattleEffect[]
+    turn: number
+  }): BattleAction {
+    return this.create({ type: 'status', ...options })
+  },
+}
+
 /**
  * 战斗效果接口
  * 表示战斗中产生的单一效果
@@ -37066,7 +38890,7 @@ export interface BattleEffect {
 /**
  * 战斗状态接口
  * 表示战斗的完整运行时状态
- * 包含战斗ID、所有参与者、战斗动作记录、回合顺序、当前回合等核心信息
+ * 包含战斗 ID、所有参与者、战斗动作记录、回合顺序、当前回合等核心信息
  * 用于在战斗过程中实时跟踪和更新战斗状态
  */
 export interface BattleState {
@@ -37075,7 +38899,10 @@ export interface BattleState {
   actions: BattleAction[]
   /** 回合顺序，按速度规则排序 */
   turnOrder: string[]
+  /** 当前行动次序索引（0-based，表示当前回合内的第几个行动） */
   currentTurn: number
+  /** 当前回合数（1-based，从 1 开始） */
+  currentRound: number
   /** 战斗状态 */
   battleState: BattleStatus
   startTime: number
@@ -37147,13 +38974,11 @@ export interface ParticipantInfo {
 export enum BattleSystemEvent {
   /** 战斗日志事件 */
   BATTLE_LOG = 'battleLog',
-  /** 战斗状态更新事件 */
-  BATTLE_STATE_UPDATE = 'battleStateUpdate',
   /** 伤害动画事件 */
   DAMAGE_ANIMATION = 'damageAnimation',
   /** 闪避动画事件 */
   MISS_ANIMATION = 'missAnimation',
-  /** Buff效果事件 */
+  /** Buff 效果事件 */
   BUFF_EFFECT = 'buffEffect',
   /** 技能效果事件 */
   SKILL_EFFECT = 'skillEffect',
@@ -43405,8 +45230,9 @@ export function validateSkillConfig(skillConfig: any): ValidationResult {
     errors.push('Missing required field: id')
   }
 
-  if (!skillConfig.type) {
-    errors.push('Missing required field: type')
+  // 检查 skillType 字段
+  if (!skillConfig.skillType) {
+    errors.push('Missing required field: skillType')
   }
 
   if (!skillConfig.name) {
@@ -44652,7 +46478,7 @@ onUnmounted(() => {
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onUnmounted, watch, nextTick } from "vue";
+import { computed, ref, reactive, onUnmounted, watch, nextTick } from "vue";
 import { raf } from '@/utils/RAF';
 import { container } from '@/core/di/Container';
 import { useBattleAnimation } from '@/composables/useBattleAnimation';

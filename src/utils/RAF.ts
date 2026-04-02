@@ -1,93 +1,110 @@
 type TimerType = 'timeout' | 'interval'
-type TimerCallback = () => void
+type TimerCallback = () => void | Promise<void>
 
 interface Timer {
   id: symbol
   type: TimerType
   callback: TimerCallback
   interval: number
-  startTime: number
-  lastRunTime: number
+  lastRunTime: number // 上次理论运行时间（用于补偿）
   paused: boolean
   pausedAt: number | null
 }
 
 export class RAFTimer {
-  private timers: Map<symbol, Timer>
-  private rafId: number | null
-  private isRunning: boolean
+  private readonly timers: Map<symbol, Timer> = new Map()
+  private rafId: number | null = null
+  private isRunning: boolean = false
 
   constructor() {
-    this.timers = new Map()
-    this.rafId = null
-    this.isRunning = false
-    this.startLoop = this.startLoop.bind(this)
+    // 使用箭头函数绑定 loop，避免在 startLoop 中反复 bind
+    this.loop = this.loop.bind(this)
   }
 
   /**
-   * 启动主循环
+   * 启动循环
    */
   private startLoop(): void {
     if (!this.isRunning && this.timers.size > 0) {
       this.isRunning = true
-      this.loop()
+      this.rafId = requestAnimationFrame(this.loop)
     }
   }
 
   /**
-   * 主动画帧循环
+   * 高性能主循环
+   * 移除 async 关键字，防止阻塞帧更新
    */
-  private loop = async (): Promise<void> => {
-    const now = performance.now()
-    // 遍历所有定时器
-    for (const timer of this.timers.values()) {
+  private loop(now: number): void {
+    if (this.timers.size === 0) {
+      this.stop()
+      return
+    }
+
+    // 使用迭代器减少内存开销
+    for (const [id, timer] of this.timers) {
       if (timer.paused) continue
 
       const elapsed = now - timer.lastRunTime
 
       if (elapsed >= timer.interval) {
-        try {
-          // 处理异步回调函数
-          await Promise.resolve(timer.callback())
-        } catch (error) {
-          console.error('Timer callback error:', error)
-        }
+        // 执行回调：使用 try-catch 包裹，并支持异步但不阻塞循环
+        this.executeCallback(timer)
 
-        timer.lastRunTime = now
-
-        // 单次定时器执行后移除
         if (timer.type === 'timeout') {
-          this.clear(timer.id)
+          this.clear(id)
+        } else {
+          // 补偿算法：防止时间偏移累积
+          // 如果是关键动画，建议使用 timer.lastRunTime += timer.interval
+          // 如果是普通定时器，建议使用 now 以防极端卡顿时连续触发
+          timer.lastRunTime = now - (elapsed % timer.interval)
         }
       }
     }
 
-    // 如果还有定时器，继续循环
-    if (this.timers.size > 0) {
+    if (this.isRunning && this.timers.size > 0) {
       this.rafId = requestAnimationFrame(this.loop)
     } else {
-      this.isRunning = false
+      this.stop()
+    }
+  }
+
+  private executeCallback(timer: Timer): void {
+    try {
+      const result = timer.callback()
+      // 如果是异步函数，静默处理其 catch，不影响主循环
+      if (result instanceof Promise) {
+        result.catch((err) =>
+          console.error('[RAFTimer] Async Callback Error:', err),
+        )
+      }
+    } catch (error) {
+      console.error('[RAFTimer] Callback Error:', error)
+    }
+  }
+
+  private stop(): void {
+    this.isRunning = false
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId)
       this.rafId = null
     }
   }
 
-  /**
-   * 创建定时器
-   */
   private createTimer(
     type: TimerType,
     callback: TimerCallback,
     interval: number,
   ): symbol {
-    const id = Symbol(`raf-${type}`)
+    const id = Symbol(`raf_${type}`)
+    const now = performance.now()
 
     this.timers.set(id, {
       id,
       type,
       callback,
       interval,
-      startTime: performance.now(),
-      lastRunTime: performance.now(),
+      lastRunTime: now,
       paused: false,
       pausedAt: null,
     })
@@ -96,47 +113,22 @@ export class RAFTimer {
     return id
   }
 
-  /**
-   * 设置延时定时器
-   */
-  setTimeout(callback: TimerCallback, interval: number): symbol {
-    return this.createTimer('timeout', callback, interval)
+  setTimeout(callback: TimerCallback, delay: number): symbol {
+    return this.createTimer('timeout', callback, delay)
   }
 
-  /**
-   * 设置间隔定时器
-   */
   setInterval(callback: TimerCallback, interval: number): symbol {
     return this.createTimer('interval', callback, interval)
   }
 
-  /**
-   * 清除定时器
-   */
   clear(timerId: symbol): boolean {
-    const existed = this.timers.delete(timerId)
-
-    // 如果没有定时器了，停止循环
-    if (this.timers.size === 0 && this.rafId) {
-      cancelAnimationFrame(this.rafId)
-      this.rafId = null
-      this.isRunning = false
+    const deleted = this.timers.delete(timerId)
+    if (this.timers.size === 0) {
+      this.stop()
     }
-
-    return existed
+    return deleted
   }
 
-  clearTimeout(timerId: symbol): boolean {
-    return this.clear(timerId)
-  }
-
-  clearInterval(timerId: symbol): boolean {
-    return this.clear(timerId)
-  }
-
-  /**
-   * 暂停定时器
-   */
   pause(timerId: symbol): boolean {
     const timer = this.timers.get(timerId)
     if (!timer || timer.paused) return false
@@ -146,16 +138,14 @@ export class RAFTimer {
     return true
   }
 
-  /**
-   * 恢复定时器
-   */
   resume(timerId: symbol): boolean {
     const timer = this.timers.get(timerId)
-    if (!timer || !timer.paused) return false
+    if (!timer || !timer.paused || timer.pausedAt === null) return false
 
-    // 调整最后运行时间，补偿暂停期间的时间
-    const pauseDuration = performance.now() - (timer.pausedAt || 0)
+    // 补偿暂停时长，确保恢复后逻辑时间线正确
+    const pauseDuration = performance.now() - timer.pausedAt
     timer.lastRunTime += pauseDuration
+
     timer.paused = false
     timer.pausedAt = null
 
@@ -163,90 +153,10 @@ export class RAFTimer {
     return true
   }
 
-  /**
-   * 重置定时器
-   */
-  reset(timerId: symbol): boolean {
-    const timer = this.timers.get(timerId)
-    if (!timer) return false
-
-    timer.lastRunTime = performance.now()
-    timer.startTime = performance.now()
-    timer.paused = false
-    timer.pausedAt = null
-
-    this.startLoop()
-    return true
-  }
-
-  /**
-   * 调整定时器间隔
-   */
-  setIntervalTime(timerId: symbol, newInterval: number): boolean {
-    const timer = this.timers.get(timerId)
-    if (!timer) return false
-
-    timer.interval = newInterval
-    timer.lastRunTime = performance.now()
-    return true
-  }
-
-  /**
-   * 获取剩余时间（仅对timeout有效）
-   */
-  getRemainingTime(timerId: symbol): number | null {
-    const timer = this.timers.get(timerId)
-    if (!timer || timer.type !== 'timeout') return null
-
-    const elapsed = performance.now() - timer.startTime
-    return Math.max(0, timer.interval - elapsed)
-  }
-
-  /**
-   * 销毁所有定时器
-   */
   destroy(): void {
-    if (this.rafId) {
-      cancelAnimationFrame(this.rafId)
-      this.rafId = null
-    }
+    this.stop()
     this.timers.clear()
-    this.isRunning = false
-  }
-
-  /**
-   * 获取活跃定时器数量
-   */
-  getActiveCount(): number {
-    return this.timers.size
   }
 }
 
-// 提供全局实例（可选）
 export const raf = new RAFTimer()
-
-// const timer = new RAFTimer()
-
-// // 设置定时器
-// const timeoutId = timer.setTimeout(() => {
-//   console.log('Timeout executed')
-// }, 1000)
-
-// const intervalId = timer.setInterval(() => {
-//   console.log('Interval executed')
-// }, 500)
-
-// // 暂停定时器
-// timer.pause(intervalId)
-
-// // 恢复定时器
-// setTimeout(() => {
-//   timer.resume(intervalId)
-// }, 2000)
-
-// // 查询剩余时间
-// const remaining = timer.getRemainingTime(timeoutId)
-
-// // 清理
-// timer.clearTimeout(timeoutId)
-// timer.clearInterval(intervalId)

@@ -346,7 +346,7 @@ export class BattleReplayManager {
 
     if (this.replayTimer) {
       import('@/utils/RAF').then(({ raf }) => {
-        raf.clearTimeout(this.replayTimer!)
+        raf.clear(this.replayTimer!)
       })
       this.replayTimer = null
     }

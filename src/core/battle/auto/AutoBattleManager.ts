@@ -72,7 +72,7 @@ export class AutoBattleManager {
 
     try {
       // 启动自动战斗
-      this.battleSystem.startAutoBattle()
+      this.battleSystem.startBattle()
       this.battleLogManager.addSystemLog('开始自动战斗')
       // 同步战斗状态
       this.battleStateManager.syncBattleState()
@@ -81,6 +81,25 @@ export class AutoBattleManager {
       console.error('开始自动战斗时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
       this.battleLogManager.addDebugLog(`开始自动战斗时出错: ${errorMsg}`)
+      return false
+    }
+  }
+
+  /**
+   * 停止自动战斗
+   * 停止当前的自动战斗模式
+   * @returns boolean 是否成功停止
+   */
+  stopAutoBattle(): boolean {
+    try {
+      this.battleSystem.stopAutoBattle()
+      this.battleLogManager.addSystemLog('停止自动战斗')
+      this.battleStateManager.syncBattleState()
+      return true
+    } catch (error) {
+      console.error('停止自动战斗时出错:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      this.battleLogManager.addDebugLog(`停止自动战斗时出错: ${errorMsg}`)
       return false
     }
   }

@@ -257,7 +257,7 @@ export class TaskExecutor {
     this.battleSystem.setBattleSpeed(speed)
 
     // 开始自动战斗
-    this.battleSystem.startAutoBattle()
+    this.battleSystem.startBattle()
 
     // 监控战斗状态
     const monitorInterval = this.timer.setInterval(async () => {

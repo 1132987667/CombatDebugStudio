@@ -79,7 +79,7 @@ export interface IBattleSystem {
   /**
    * 开始自动战斗
    */
-  startAutoBattle(): void
+  startBattle(): void
 
   /**
    * 停止自动战斗

@@ -493,11 +493,6 @@ export const useBattleStore = defineStore('battle', {
           throw new Error('战斗管理器未初始化')
         }
 
-        const allyTeam = this.battleManager.getAllyTeam()
-        const enemyTeam = this.battleManager.getEnemyTeam()
-        const enabledAllyTeam = allyTeam.filter((c) => c.enabled)
-        const enabledEnemyTeam = enemyTeam.filter((e) => e.enabled)
-
         // 直接调用合并后的 startBattle 方法，自动启动战斗
         const battleId = await this.battleManager.startBattle()
         if (!battleId) {
@@ -509,17 +504,6 @@ export const useBattleStore = defineStore('battle', {
         this.setBattleActive(true)
         this.autoPlayMode = this.battleManager.getAutoBattle()
         battleLogManager.addSystemLog(`战斗已开始`)
-
-        battleLogManager.addSystemLog({
-          turn: '战斗开始',
-          source: '系统',
-          action: '宣布',
-          target: '',
-          result: `战斗开始！参战角色: ${enabledAllyTeam.length}人 | 参战敌人: ${enabledEnemyTeam.length}人`,
-          level: 'info',
-          type: 'battle',
-        })
-
         return true
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
@@ -647,17 +631,13 @@ export const useBattleStore = defineStore('battle', {
         const isActive = this.battleManager.getAutoBattle()
         if (isActive) {
           // 停止自动播放
-          if (this.currentBattleId) {
-            this.battleManager.stopAutoBattle(this.currentBattleId)
-          }
+          this.battleManager.stopAutoBattle()
           this.autoPlayMode = false
           this.isBattleActive = false
           battleLogManager.addSystemLog('停止自动战斗')
         } else {
           // 开始自动播放
-          if (this.currentBattleId) {
-            await this.battleManager.startAutoBattle(this.currentBattleId)
-          }
+          await this.battleManager.startAutoBattle()
           this.autoPlayMode = true
           this.isBattleActive = true
           this.battleManager.syncBattleState()

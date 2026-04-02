@@ -51,6 +51,11 @@ import {
   PARTICIPANT_SIDE,
   ROUND_STATUS,
 } from '@/types/battle'
+import type {
+  AnimationData,
+  AnimationQueueItem,
+  AnimationType,
+} from '@/types/battle'
 import {
   newLogSegment,
   LogLevel,
@@ -96,31 +101,15 @@ export class BattleSystem implements IBattleSystem {
 
   /**
    * 动画队列，存储待播放的动画事件
-   * @property type - 动画类型
-   * @property data - 动画数据
-   * @property duration - 动画持续时间（毫秒）
-   * @property resolve - Promise 解析函数，动画完成时调用
+   * @see AnimationQueueItem
    */
-  private animationQueue: Array<{
-    type: string
-    data: any
-    duration: number
-    resolve: () => void
-  }> = []
+  private animationQueue: AnimationQueueItem[] = []
 
   /**
    * 是否有动画正在播放
    */
   private isAnimationPlaying = false
 
-  /**
-   * 当前开启【自动战斗】模式
-   */
-  private autoBattle = false
-  /**
-   * 当前是否处于暂停状态
-   */
-  private isPaused = true
   /**
    * 当前战斗速度倍率，默认为1
    */
@@ -338,7 +327,6 @@ export class BattleSystem implements IBattleSystem {
     battleData.roundState = ROUND_STATUS.START
 
     const autoBattleRules = this.ruleManager.getAutoBattleRules()
-    this.autoBattle = autoBattleRules.enabled
     battleData.autoBattle = autoBattleRules.enabled
     battleData.battleSpeed = autoBattleRules.defaultSpeed
 
@@ -367,17 +355,27 @@ export class BattleSystem implements IBattleSystem {
    * 实现每回合重新计算出手顺序，并按顺序执行所有角色行动
    */
   private async processTurnInternal(): Promise<void> {
-    if (this.isPaused) {
+    const battle = this.battleData
+    if (
+      battle.battleState === BATTLE_STATUS.PAUSED ||
+      battle.battleState !== BATTLE_STATUS.ACTIVE
+    ) {
       return
     }
 
-    const battle = this.battleData
-    if (battle.battleState !== BATTLE_STATUS.ACTIVE) {
+    battle.roundState = ROUND_STATUS.START
+
+    const aliveParticipants = Array.from(battle.participants.values()).filter(
+      (p) => p.isAlive(),
+    )
+
+    if (aliveParticipants.length === 0) {
+      battle.roundState = ROUND_STATUS.END
+      this.checkBattleEndCondition()
       return
     }
 
     try {
-      battle.roundState = ROUND_STATUS.START
       // 触发回合开始时的被动技能
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         PassiveSkillTrigger.TURN_START,
@@ -397,20 +395,11 @@ export class BattleSystem implements IBattleSystem {
       })
 
       // 为所有存活角色增加回合开始能量
-      const aliveParticipants = Array.from(battle.participants.values()).filter(
-        (p) => p.isAlive(),
-      )
       const combatRules = this.ruleManager.getCombatRules()
       this.participantManager.gainEnergyToAliveParticipants(
         aliveParticipants,
         combatRules.energyGainPerTurn,
       )
-
-      if (aliveParticipants.length === 0) {
-        battle.roundState = ROUND_STATUS.END
-        this.checkBattleEndCondition()
-        return
-      }
 
       let currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
       battle.turnOrder = currentTurnOrder
@@ -492,9 +481,13 @@ export class BattleSystem implements IBattleSystem {
     battle: BattleData,
     participant: BattleParticipant,
   ): Promise<void> {
+    console.log(
+      `[DEBUG] ===== executeParticipantAction 开始: ${participant.name} =====`,
+    )
     try {
       // 检查是否被控制
       if (this.isParticipantControlled(participant)) {
+        console.log(`[DEBUG] ${participant.name} 被控制，无法行动`)
         // 被控制，无法行动
         const action = BattleActionHelper.createStatus({
           sourceId: participant.id,
@@ -523,11 +516,20 @@ export class BattleSystem implements IBattleSystem {
         battleLogManager.addDebugLog(
           `角色[${participant.name}]被控制，无法行动`,
         )
+        console.log(
+          `[DEBUG] ===== executeParticipantAction 结束(被控制): ${participant.name} =====`,
+        )
         return
       }
 
+      console.log(`[DEBUG] ${participant.name} 未被控制，继续执行...`)
+
       // 获取所有可用主动技能
       const activeSkillIds = participant.getSkillIds('active')
+      console.log(
+        `[DEBUG] ${participant.name} 主动技能: ${activeSkillIds.join(',') || '无'}`,
+      )
+
       const availableSkills = activeSkillIds.filter((skillId) => {
         const energyCost = this.getSkillEnergyCost(skillId)
         // 检查能量是否足够
@@ -546,13 +548,26 @@ export class BattleSystem implements IBattleSystem {
         return true
       })
 
+      console.log(
+        `[DEBUG] ${participant.name} 可用技能: ${availableSkills.join(',') || '无'}, 当前能量: ${participant.currentEnergy}`,
+      )
+
       // 检查是否使用 AI 系统进行决策
       const aiInstance = battle.aiInstances?.get(participant.id)
+      console.log(
+        `[DEBUG] ${participant.name} AI实例: ${aiInstance ? '存在' : '不存在'}`,
+      )
+
       if (aiInstance) {
+        console.log(`[DEBUG] ${participant.name} 使用AI决策...`)
         // 使用 AI 系统决策
         const action = aiInstance.makeDecision(
           this.convertToBattleState(battle),
           participant,
+        )
+
+        console.log(
+          `[DEBUG] AI决策结果: type=${action.type}, skillId=${action.skillId || '无'}, targetId=${action.targetId || '无'}`,
         )
 
         battleLogManager.addDebugLog(
@@ -562,12 +577,18 @@ export class BattleSystem implements IBattleSystem {
         if (action.type === 'skill' && action.skillId) {
           const skillId = action.skillId
           const skill = this.skillManager.getSkillConfig(skillId)
+          console.log(
+            `[DEBUG] 尝试执行技能: ${skillId}, 技能配置: ${skill ? '存在' : '不存在'}`,
+          )
           if (skill && activeSkillIds.includes(skillId)) {
+            console.log(`[DEBUG] 调用 selectAndExecuteSkill`)
             await this.selectAndExecuteSkill(battle, participant, skill)
           } else {
+            console.log(`[DEBUG] 技能不可用，改为普通攻击`)
             await this.selectAndExecuteAttack(battle, participant)
           }
         } else {
+          console.log(`[DEBUG] AI选择普通攻击`)
           await this.selectAndExecuteAttack(battle, participant)
         }
       } else if (
@@ -575,6 +596,7 @@ export class BattleSystem implements IBattleSystem {
         Math.random() < BATTLE_CONSTANTS.SKILL_USE_CHANCE &&
         availableSkills[0]
       ) {
+        console.log(`[DEBUG] ${participant.name} 无AI实例，随机选择技能`)
         // 没有 AI 实例时使用原来的随机选择逻辑（也过滤了被动技能）
         const selectedSkillId =
           availableSkills[Math.floor(Math.random() * availableSkills.length)]
@@ -610,16 +632,23 @@ export class BattleSystem implements IBattleSystem {
     source: BattleParticipant,
     skill: SkillConfig,
   ): Promise<BattleAction> {
+    console.log(
+      `[DEBUG] ===== selectAndExecuteSkill 开始: ${source.name} 使用 ${skill.id} =====`,
+    )
     if (
       'isSkillAvailable' in source &&
       typeof source.isSkillAvailable === 'function'
     ) {
       if (!source.isSkillAvailable(skill.id)) {
+        console.log(`[DEBUG] 技能 ${skill.id} 不可用，改为普通攻击`)
         return this.selectAndExecuteAttack(battle, source)
       }
     }
 
     const energyCost = skill.energyCost ?? 0
+    console.log(
+      `[DEBUG] 技能消耗能量: ${energyCost}, 当前能量: ${source.currentEnergy}`,
+    )
     source.spendEnergy(energyCost)
 
     const action = BattleActionHelper.createSkill({
@@ -630,27 +659,40 @@ export class BattleSystem implements IBattleSystem {
       turn: battle.currentRound || 1,
     })
 
+    console.log(`[DEBUG] 获取技能目标...`)
     const targets = this.getSkillTargets(battle, source, skill)
+    console.log(
+      `[DEBUG] 技能目标: ${targets.map((t) => t.name).join(',') || '无'}`,
+    )
 
     if (targets.length === 0) {
       battleLogManager.addDebugLog(`技能执行失败: 未找到有效目标 ${skill.id}`)
+      console.log(`[DEBUG] 未找到有效目标，改为普通攻击`)
       return this.selectAndExecuteAttack(battle, source)
     }
 
     action.targetId = targets[0].id
 
     try {
+      console.log(`[DEBUG] 开始执行技能效果...`)
       let totalDamage = 0
       let totalHeal = 0
       const allEffects: any[] = []
 
       for (const target of targets) {
-        if (!target.isAlive()) continue
+        if (!target.isAlive()) {
+          console.log(`[DEBUG] 目标 ${target.name} 已死亡，跳过`)
+          continue
+        }
 
+        console.log(`[DEBUG] 对 ${target.name} 执行技能 ${skill.id}`)
         const skillAction = this.skillManager.executeSkill(
           skill.id,
           source,
           target,
+        )
+        console.log(
+          `[DEBUG] 技能执行结果: damage=${skillAction.damage}, heal=${skillAction.heal}`,
         )
 
         totalDamage += skillAction.damage
@@ -673,8 +715,12 @@ export class BattleSystem implements IBattleSystem {
         ],
         BATTLE_LOG_CATEGORIES.ACTION,
       )
+      console.log(
+        `[DEBUG] 技能执行成功: ${skill.id}, 总伤害=${totalDamage}, 总治疗=${totalHeal}`,
+      )
     } catch (error) {
       battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error)
+      console.log(`[DEBUG] 技能执行失败: ${error}`)
       action.type = 'attack'
       action.damage = Math.floor(Math.random() * 20) + 10
       action.effects = [
@@ -687,6 +733,9 @@ export class BattleSystem implements IBattleSystem {
     }
 
     this.recordBattleAction(action)
+    console.log(
+      `[DEBUG] ===== selectAndExecuteSkill 结束: ${source.name} =====`,
+    )
 
     return action
   }
@@ -970,10 +1019,19 @@ export class BattleSystem implements IBattleSystem {
     damageResult: { damage: number; isCritical: boolean },
     turnNumber: number,
   ): Promise<void> {
+    console.log(
+      `[DEBUG] handleHitAttack: ${source.name} -> ${target.name}, damage=${damageResult.damage}, isCritical=${damageResult.isCritical}`,
+    )
     const { damage, isCritical } = damageResult
     action.damage = damage
 
+    console.log(
+      `[DEBUG] 应用伤害前: ${target.name} HP=${target.currentHealth}/${target.maxHealth}`,
+    )
     this.applyDamageToTarget(source, target, damage)
+    console.log(
+      `[DEBUG] 应用伤害后: ${target.name} HP=${target.currentHealth}/${target.maxHealth}`,
+    )
 
     action.effects.push({
       type: EFFECT_TYPES.DAMAGE,
@@ -981,6 +1039,7 @@ export class BattleSystem implements IBattleSystem {
       description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
     })
 
+    console.log(`[DEBUG] 触发伤害动画...`)
     await this.triggerDamageAnimationAndWait({
       targetId: target.id,
       damage,
@@ -988,6 +1047,7 @@ export class BattleSystem implements IBattleSystem {
       isCritical,
       isHeal: false,
     })
+    console.log(`[DEBUG] 伤害动画完成`)
 
     const logParams = this.generateAttackLogParams(source, target, turnNumber, {
       damage,
@@ -1176,6 +1236,7 @@ export class BattleSystem implements IBattleSystem {
    * @returns {Promise<BattleAction>} 执行后的战斗动作（包含实际效果）
    */
   public async executeAction(action: BattleAction): Promise<BattleAction> {
+    console.log(`[DEBUG] ===== executeAction 开始: type=${action.type} =====`)
     const battle = this.battleData
     if (!battle) {
       throw new Error('No active battle found')
@@ -1184,18 +1245,26 @@ export class BattleSystem implements IBattleSystem {
     const source = battle.participants.get(action.sourceId)
     const target = battle.participants.get(action.targetId)
 
+    console.log(
+      `[DEBUG] 执行动作: ${source?.name || action.sourceId} -> ${target?.name || action.targetId}`,
+    )
+
     if (!source || !target) {
       throw new Error(`Invalid source or target in action`)
     }
 
     // 处理技能执行
     if (action.type === 'skill' && action.skillId) {
+      console.log(`[DEBUG] 执行技能: ${action.skillId}`)
       try {
         // 使用新的技能管理器执行技能
         const skillAction = this.skillManager.executeSkill(
           action.skillId,
           source,
           target,
+        )
+        console.log(
+          `[DEBUG] 技能执行完成: damage=${skillAction.damage}, heal=${skillAction.heal}`,
         )
 
         // 合并技能执行结果
@@ -1208,6 +1277,7 @@ export class BattleSystem implements IBattleSystem {
           (effect) => effect.type === EFFECT_TYPES.MISS,
         )
         if (hasMissEffect) {
+          console.log(`[DEBUG] 检测到闪避效果`)
           // 触发闪避动画并等待完成
           await this.triggerMissAnimationAndWait({
             targetId: target.id,
@@ -1220,6 +1290,7 @@ export class BattleSystem implements IBattleSystem {
             effect.type === EFFECT_TYPES.BUFF ||
             effect.type === EFFECT_TYPES.DEBUFF
           ) {
+            console.log(`[DEBUG] 检测到buff效果: ${effect.buffId}`)
             // 确定buff目标 - 通过 targetId 判断作用目标
             let buffTarget = target
             if (effect.targetId === source.id) {
@@ -1382,11 +1453,20 @@ export class BattleSystem implements IBattleSystem {
       (p) => p.type === PARTICIPANT_SIDE.ENEMY && p.isAlive(),
     )
 
+    console.log(
+      `[DEBUG] 战斗结束检查: 我方存活 ${aliveCharacters.length} (${aliveCharacters.map((p) => p.name).join(',')}), 敌方存活 ${aliveEnemies.length} (${aliveEnemies.map((p) => p.name).join(',')})`,
+    )
+
     if (aliveCharacters.length === 0) {
+      console.log('[DEBUG] 触发战斗结束: 我方全灭，敌方获胜')
       this.endBattle(PARTICIPANT_SIDE.ENEMY)
     } else if (aliveEnemies.length === 0) {
+      console.log('[DEBUG] 触发战斗结束: 敌方全灭，我方获胜')
       this.endBattle(PARTICIPANT_SIDE.ALLY)
     } else if (battle.currentRound >= battle.maxTurns) {
+      console.log(
+        `[DEBUG] 触发战斗结束: 回合数达到上限 ${battle.currentRound}/${battle.maxTurns}`,
+      )
       this.handleMaxTurnsReached(aliveCharacters, aliveEnemies)
     }
   }
@@ -1442,11 +1522,21 @@ export class BattleSystem implements IBattleSystem {
    * @param winner - 胜利者类型
    */
   public async endBattle(winner: ParticipantSide): Promise<void> {
+    console.log(`[DEBUG] ===== endBattle 被调用 =====`)
+    console.log(
+      `[DEBUG] 战斗结束，胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`,
+    )
+
     const battle = this.battleData
     if (!battle) {
       battleLogManager.addDebugLog(`战斗不存在`)
+      console.log('[DEBUG] 战斗数据不存在，无法结束战斗')
       return
     }
+
+    console.log(
+      `[DEBUG] 当前回合: ${battle.currentRound}, 战斗状态: ${battle.battleState}`,
+    )
 
     this.stopAutoBattle()
 
@@ -1510,7 +1600,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private cleanupBattleTimers(): void {
     if (this.autoBattleTimerId) {
-      this.rafTimer.clearTimeout(this.autoBattleTimerId)
+      this.rafTimer.clear(this.autoBattleTimerId)
       this.autoBattleTimerId = undefined
     }
 
@@ -1591,7 +1681,7 @@ export class BattleSystem implements IBattleSystem {
    * @returns 是否处于自动战斗状态
    */
   public getAutoBattle(): boolean {
-    return this.autoBattle
+    return this.battleData.autoBattle
   }
 
   /**
@@ -1599,7 +1689,7 @@ export class BattleSystem implements IBattleSystem {
    * @returns 是否处于暂停状态
    */
   public getIsPaused(): boolean {
-    return this.isPaused
+    return this.battleData.battleState === BATTLE_STATUS.PAUSED
   }
 
   /**
@@ -1617,11 +1707,14 @@ export class BattleSystem implements IBattleSystem {
   public setSpeed(speed: number): void {
     this.battleSpeed = speed
     this.battleData.battleSpeed = speed
-    battleLogManager.addSystemLog(`战斗速度已调整为: ${speed}倍`, [
-      newLogSegment(`战斗速度已调整为: `),
-      newLogSegment(`${speed}`, 'number'),
-      newLogSegment(`倍`, 'number'),
-    ])
+    battleLogManager.addSystemLog(`战斗速度已调整为: ${speed}倍`, {
+      level: LogLevel.INFO,
+      segments: [
+        newLogSegment(`战斗速度已调整为: `),
+        newLogSegment(`${speed}`, 'number'),
+        newLogSegment(`倍`, 'number'),
+      ],
+    })
   }
 
   /**
@@ -1629,8 +1722,11 @@ export class BattleSystem implements IBattleSystem {
    * 暂停时会停止自动战斗，恢复时会重新启动自动战斗
    */
   public togglePause(): void {
-    this.isPaused = !this.isPaused
-    if (this.isPaused) {
+    this.battleData.battleState =
+      this.battleData.battleState === BATTLE_STATUS.PAUSED
+        ? BATTLE_STATUS.ACTIVE
+        : BATTLE_STATUS.PAUSED
+    if (this.getIsPaused()) {
       this.pauseAutoBattle()
     } else {
       this.resumeAutoBattle()
@@ -1643,7 +1739,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private pauseAutoBattle(): void {
     if (this.autoBattleTimerId) {
-      this.rafTimer.clearTimeout(this.autoBattleTimerId)
+      this.rafTimer.clear(this.autoBattleTimerId)
       this.autoBattleTimerId = undefined
     }
     battleLogManager.addDebugLog(`自动战斗已暂停`)
@@ -1655,7 +1751,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private resumeAutoBattle(): void {
     if (
-      this.autoBattle &&
+      this.battleData.autoBattle &&
       this.battleData.battleState === BATTLE_STATUS.ACTIVE &&
       this.autoBattleLoop
     ) {
@@ -1710,14 +1806,13 @@ export class BattleSystem implements IBattleSystem {
   /**
    * 开始自动战斗
    */
-  public startAutoBattle(): void {
-    this.autoBattle = true
+  public startBattle(): void {
     this.battleData.autoBattle = true
-    this.isPaused = false
+    this.battleData.battleState = BATTLE_STATUS.ACTIVE
     battleLogManager.addDebugLog(`自动战斗开始: ${this.battleData.battleId}`)
 
     this.autoBattleLoop = async () => {
-      if (this.isPaused) {
+      if (this.getIsPaused()) {
         return
       }
 
@@ -1736,7 +1831,7 @@ export class BattleSystem implements IBattleSystem {
           return
         }
 
-        if (!this.isPaused) {
+        if (!this.getIsPaused()) {
           const delay = this.getBattleDelay()
           const timerId = this.rafTimer.setTimeout(this.autoBattleLoop!, delay)
           this.autoBattleTimerId = timerId
@@ -1777,13 +1872,12 @@ export class BattleSystem implements IBattleSystem {
       return
     }
 
-    this.autoBattle = false
     this.battleData.autoBattle = false
-    this.isPaused = true
+    this.battleData.battleState = BATTLE_STATUS.PAUSED
     this.autoBattleLoop = undefined
 
     if (this.autoBattleTimerId) {
-      this.rafTimer.clearTimeout(this.autoBattleTimerId)
+      this.rafTimer.clear(this.autoBattleTimerId)
       this.autoBattleTimerId = undefined
     }
 
@@ -1933,11 +2027,14 @@ export class BattleSystem implements IBattleSystem {
    * @param duration 动画持续时间（毫秒），如果为0则使用战斗速度对应的默认时长
    */
   private async triggerAnimationAndWait(
-    animationType: string,
-    data: any,
+    animationType: AnimationType,
+    data: AnimationData,
     duration: number = 0,
   ): Promise<void> {
     const actualDuration = duration > 0 ? duration : this.getAnimationDuration()
+    console.log(
+      `[DEBUG] triggerAnimationAndWait: type=${animationType}, duration=${actualDuration}, queue.length=${this.animationQueue.length}, isPlaying=${this.isAnimationPlaying}`,
+    )
 
     return new Promise<void>((resolve) => {
       this.animationQueue.push({
@@ -1947,8 +2044,14 @@ export class BattleSystem implements IBattleSystem {
         resolve,
       })
 
+      console.log(
+        `[DEBUG] 动画已加入队列, 当前队列长度: ${this.animationQueue.length}`,
+      )
       if (!this.isAnimationPlaying) {
+        console.log(`[DEBUG] 当前无动画播放，开始处理队列`)
         this.processAnimationQueue()
+      } else {
+        console.log(`[DEBUG] 当前有动画播放中，等待队列处理`)
       }
     })
   }
@@ -1957,28 +2060,53 @@ export class BattleSystem implements IBattleSystem {
    * 处理动画队列
    */
   private async processAnimationQueue(): Promise<void> {
+    console.log(
+      `[DEBUG] processAnimationQueue: queue.length=${this.animationQueue.length}`,
+    )
     if (this.animationQueue.length === 0) {
       this.isAnimationPlaying = false
+      console.log(`[DEBUG] 动画队列已空，设置 isAnimationPlaying=false`)
       return
     }
 
     this.isAnimationPlaying = true
-
-    const animation = this.animationQueue.shift()
-    if (!animation) {
-      this.isAnimationPlaying = false
-      return
-    }
-
+    const animation: AnimationQueueItem = this.animationQueue.shift()
     eventBus.emit(animation.type, animation.data)
+    console.log(
+      `[DEBUG] 开始播放动画: type=${animation.type}, duration=${animation.duration}`,
+    )
+    console.log(`[DEBUG] animation 对象详情:`, {
+      type: animation.type,
+      duration: animation.duration,
+      hasResolve: !!animation.resolve,
+      resolveType: typeof animation.resolve,
+    })
 
     await new Promise<void>((resolve) => {
       this.rafTimer.setTimeout(() => {
-        animation.resolve()
+        console.log(`[DEBUG] this.rafTimer.setTimeout(() => {`)
+        try {
+          if (animation && typeof animation.resolve === 'function') {
+            animation.resolve()
+          } else {
+            console.error('[Animation] resolve is not a function', animation)
+            // 手动创建一个 resolve 以避免卡死
+            if (animation && animation.resolve === undefined) {
+              // 无法恢复，至少继续队列
+            }
+          }
+        } catch (err) {
+          console.error('[Animation] error in resolve:', err)
+        }
+        // 无论成功与否，继续处理下一个动画
+        console.log(`[DEBUG] processAnimationQueue start`)
         this.processAnimationQueue()
+        console.log(`[DEBUG] processAnimationQueue end`)
         resolve()
       }, animation.duration)
     })
+
+    console.log(`[DEBUG] await new Promise<void> end`)
   }
 
   /**
@@ -1993,8 +2121,15 @@ export class BattleSystem implements IBattleSystem {
    * 清理动画状态
    */
   private cleanupAnimationState(): void {
+    console.log(`[DEBUG] ===== cleanupAnimationState 被调用 =====`)
+    console.log(
+      `[DEBUG] 清空前: animationQueue.length=${this.animationQueue.length}, isAnimationPlaying=${this.isAnimationPlaying}`,
+    )
     this.animationQueue = []
     this.isAnimationPlaying = false
+    console.log(
+      `[DEBUG] 清空后: animationQueue.length=${this.animationQueue.length}, isAnimationPlaying=${this.isAnimationPlaying}`,
+    )
   }
 
   /**
@@ -2009,7 +2144,11 @@ export class BattleSystem implements IBattleSystem {
   }): Promise<void> {
     if (this.battleData) {
       const duration = Math.floor(this.getAnimationDuration() * 1.5)
-      await this.triggerAnimationAndWait('skill-effect', data, duration)
+      await this.triggerAnimationAndWait(
+        BattleSystemEvent.SKILL_EFFECT,
+        data,
+        duration,
+      )
     }
   }
 

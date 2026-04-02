@@ -356,7 +356,7 @@ const timeouts = ref<symbol[]>([]);
 // 显示状态工具提示
 const showStatusTooltip = (event: MouseEvent, status: any) => {
   if (tooltipTimeout) {
-    raf.clearTimeout(tooltipTimeout);
+    raf.clear(tooltipTimeout);
   }
 
   tooltipTimeout = raf.setTimeout(() => {
@@ -380,7 +380,7 @@ const showStatusTooltip = (event: MouseEvent, status: any) => {
 // 隐藏状态工具提示
 const hideStatusTooltip = () => {
   if (tooltipTimeout) {
-    raf.clearTimeout(tooltipTimeout);
+    raf.clear(tooltipTimeout);
     tooltipTimeout = null;
   }
 
@@ -579,11 +579,11 @@ defineExpose({
 
 onUnmounted(() => {
   if (tooltipTimeout) {
-    raf.clearTimeout(tooltipTimeout)
+    raf.clear(tooltipTimeout)
   }
 
   timeouts.value.forEach((timeoutId) => {
-    raf.clearTimeout(timeoutId)
+    raf.clear(timeoutId)
   })
 
   cleanupAnimations()

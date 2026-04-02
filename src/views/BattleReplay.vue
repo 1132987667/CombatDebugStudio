@@ -348,7 +348,7 @@ function startReplay() {
 function pauseReplay() {
   isPlaying.value = false;
   if (playInterval.value) {
-    raf.clearTimeout(playInterval.value);
+    raf.clear(playInterval.value);
     playInterval.value = null;
   }
   if (currentRecording.value) {
@@ -601,7 +601,7 @@ function isKeyEvent(event: BattleEvent): boolean {
 
 function cleanup() {
   if (playInterval.value) {
-    raf.clearTimeout(playInterval.value);
+    raf.clear(playInterval.value);
     playInterval.value = null;
   }
 }

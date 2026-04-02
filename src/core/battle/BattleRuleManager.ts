@@ -12,56 +12,100 @@ import { battleLogManager } from '@/utils/logging'
 /**
  * 战斗规则配置接口
  */
+/**
+ * 战斗规则配置接口
+ * 定义了游戏战斗系统的全部可配置参数
+ */
 export interface BattleRulesConfig {
+  /** 配置版本号 */
   version: string
+  /** 战斗规则集合 */
   rules: {
+    /** 回合制系统配置 */
     turnSystem: {
+      /** 是否启用速度优先（决定行动顺序） */
       speedFirst: boolean
+      /** 是否使用固定回合数（超过最大回合则结束战斗） */
       fixedTurns: boolean
+      /** 最大回合数，当 fixedTurns 为 true 时生效 */
       maxTurns: number
+      /** 单回合超时时间（毫秒） */
       turnTimeout: number
     }
+    /** 基础战斗机制配置 */
     combat: {
+      /** 是否启用暴击机制 */
       critEnabled: boolean
+      /** 是否启用闪避机制 */
       dodgeEnabled: boolean
+      /** 单次攻击的最小伤害值 */
       minDamage: number
+      /** 单次攻击的最大伤害值 */
       maxDamage: number
+      /** 每回合自动回复的能量值 */
       energyGainPerTurn: number
+      /** 命中敌人时获得的额外能量值 */
       energyGainOnHit: number
     }
+    /** 伤害计算详细规则 */
     damage: {
+      /** 暴击相关配置 */
       critical: {
+        /** 是否启用暴击（通常与 combat.critEnabled 保持一致） */
         enabled: boolean
+        /** 默认暴击率（百分比，如 0.15 表示 15%） */
         defaultRate: number
+        /** 默认暴击倍率（如 2.0 表示双倍伤害） */
         defaultMultiplier: number
       }
+      /** 防御减伤配置 */
       defense: {
+        /** 是否启用防御减伤机制 */
         enabled: boolean
+        /** 物理防御减伤系数（0~1，数值越小减免越多） */
         physicalDefenseFactor: number
+        /** 魔法防御减伤系数（0~1，数值越小减免越多） */
         magicDefenseFactor: number
+        /** 普通防御减伤系数（0~1，用于无属性攻击） */
         normalDefenseFactor: number
       }
+      /** 伤害上下限阈值（最终伤害会被限制在此范围内） */
       thresholds: {
+        /** 最终伤害最小值 */
         minDamage: number
+        /** 最终伤害最大值 */
         maxDamage: number
       }
     }
+    /** AI 行为配置 */
     ai: {
+      /** AI 做出决策前的延迟时间（毫秒） */
       decisionDelay: number
+      /** 技能优先级权重（数值越高越倾向于使用该类型技能） */
       skillPriority: {
+        /** 治疗技能的优先级权重 */
         heal: number
+        /** 攻击技能的优先级权重 */
         attack: number
+        /** 增益技能的优先级权重 */
         buff: number
+        /** 减益技能的优先级权重 */
         debuff: number
       }
     }
+    /** 自动战斗配置 */
     autoBattle: {
+      /** 是否允许自动战斗功能 */
       enabled: boolean
+      /** 自动战斗的默认播放速度（倍率） */
       defaultSpeed: number
+      /** 可供用户选择的播放速度列表 */
       availableSpeeds: number[]
+      /** 自动战斗时每回合的间隔时间（毫秒） */
       turnInterval: number
     }
   }
+  /** 场景相关配置（键为场景标识，值为该场景的自定义规则） */
   scenes: Record<string, any>
 }
 

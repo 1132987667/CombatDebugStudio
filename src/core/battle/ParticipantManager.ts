@@ -4,7 +4,7 @@
  * 作者: CombatDebugStudio
  * 功能: 参与者管理器
  * 描述: 负责创建、查询、更新和清理战斗参与者，处理参与者的全生命周期管理
- * 版本: 1.0.0
+ * 版本: 2.0.0 - 支持 IModifierProvider 接口
  */
 
 import type { BattleParticipant, ParticipantSide } from '@/types/battle'
@@ -15,6 +15,7 @@ import {
 } from '@/core/battle/BattleParticipantImpl'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { battleLogManager, LogLevel } from '@/utils/logging'
+import type { IModifierProvider } from '@/types/attribute'
 
 /**
  * 参与者状态变化事件接口
@@ -54,6 +55,27 @@ export class ParticipantManager {
   ) => void)[] = []
   /** 状态快照历史记录 */
   private stateSnapshots = new Map<string, ParticipantStateSnapshot[]>()
+  /** 修饰符提供者引用（用于属性计算，解耦 BuffSystem） */
+  private modifierProvider: IModifierProvider | null = null
+
+  /**
+   * 设置修饰符提供者引用
+   * @param provider 修饰符提供者实例
+   */
+  public setModifierProvider(provider: IModifierProvider): void {
+    this.modifierProvider = provider
+  }
+
+  /**
+   * 设置Buff系统引用（向后兼容）
+   * @param buffSystem Buff系统实例
+   * @deprecated 请使用 setModifierProvider 方法
+   */
+  public setBuffSystem(buffSystem: any): void {
+    if (buffSystem && typeof buffSystem.getModifierStack === 'function') {
+      this.modifierProvider = buffSystem as IModifierProvider
+    }
+  }
 
   /**
    * 创建单个参与者
@@ -76,6 +98,10 @@ export class ParticipantManager {
         ...info,
         id: newId,
       })
+    }
+
+    if (this.modifierProvider && participant instanceof BattleParticipantImpl) {
+      participant.setModifierProvider(this.modifierProvider)
     }
 
     this.participants.set(participant.id, participant)
@@ -252,9 +278,7 @@ export class ParticipantManager {
         battleLogManager.addDebugLog(
           '状态变化事件监听器执行出错:',
           LogLevel.ERROR,
-          null,
-          '',
-          error,
+          error as Error,
         )
       }
     })

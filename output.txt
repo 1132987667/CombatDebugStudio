@@ -198,6 +198,8 @@ src/
         ParticipantPanel.vue
     index.ts
     main.ts
+文档/
+    技能.md
 .gitattributes
 .gitignore
 eslint.config.js
@@ -18057,7 +18059,7 @@ export class AutoBattleManager {
 
     try {
       // 启动自动战斗
-      this.battleSystem.startAutoBattle()
+      this.battleSystem.startBattle()
       this.battleLogManager.addSystemLog('开始自动战斗')
       // 同步战斗状态
       this.battleStateManager.syncBattleState()
@@ -18066,6 +18068,25 @@ export class AutoBattleManager {
       console.error('开始自动战斗时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
       this.battleLogManager.addDebugLog(`开始自动战斗时出错: ${errorMsg}`)
+      return false
+    }
+  }
+
+  /**
+   * 停止自动战斗
+   * 停止当前的自动战斗模式
+   * @returns boolean 是否成功停止
+   */
+  stopAutoBattle(): boolean {
+    try {
+      this.battleSystem.stopAutoBattle()
+      this.battleLogManager.addSystemLog('停止自动战斗')
+      this.battleStateManager.syncBattleState()
+      return true
+    } catch (error) {
+      console.error('停止自动战斗时出错:', error)
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      this.battleLogManager.addDebugLog(`停止自动战斗时出错: ${errorMsg}`)
       return false
     }
   }
@@ -18303,31 +18324,21 @@ export class BattleManager {
   }
 
   /**
-   * 获取启用的我方队伍（优化版本，避免重复过滤）
+   * 获取启用的我方队伍
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
   getEnabledAllyTeam(): UIBattleCharacter[] {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) {
-      return []
-    }
-    return Array.from(battleState.participants.values())
-      .filter((p) => p.type === PARTICIPANT_SIDE.ALLY && p.enabled)
-      .map((p) => this.participantToUICharacter(p))
+    const allyTeam = this.getAllyTeam()
+    return allyTeam.filter((c) => c.enabled)
   }
 
   /**
-   * 获取启用的敌方队伍（优化版本，避免重复过滤）
+   * 获取启用的敌方队伍
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
   getEnabledEnemyTeam(): UIBattleCharacter[] {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) {
-      return []
-    }
-    return Array.from(battleState.participants.values())
-      .filter((p) => p.type === PARTICIPANT_SIDE.ENEMY && p.enabled)
-      .map((p) => this.participantToUICharacter(p))
+    const enemyTeam = this.getEnemyTeam()
+    return enemyTeam.filter((c) => c.enabled)
   }
 
   /**
@@ -18690,16 +18701,20 @@ export class BattleManager {
     if (this.battleSystem.getAutoBattle()) {
       await this.autoBattleManager.startAutoBattle(battleState.battleId)
     }
-
     return battleState.battleId
   }
 
   /**
    * 开始自动战斗
-   * @param battleId 战斗ID
+   * 统一通过 AutoBattleManager 启动，确保日志和状态同步
    */
-  startAutoBattle() {
-    return this.battleSystem.startAutoBattle()
+  async startAutoBattle(): Promise<boolean> {
+    const battleId = this.battleStateManager.getBattleId()?.value
+    if (!battleId) {
+      battleLogManager.addSystemLog('请先创建战斗')
+      return false
+    }
+    return this.autoBattleManager.startAutoBattle(battleId)
   }
 
   /**
@@ -18711,10 +18726,10 @@ export class BattleManager {
 
   /**
    * 停止自动战斗
-   * @param battleId 战斗ID
+   * 统一通过 AutoBattleManager 停止，确保日志和状态同步
    */
-  stopAutoBattle() {
-    return this.battleSystem.stopAutoBattle()
+  stopAutoBattle(): boolean {
+    return this.autoBattleManager.stopAutoBattle()
   }
 
   /**
@@ -18724,7 +18739,7 @@ export class BattleManager {
   endBattle(winner: any) {
     const battleId = this.battleStateManager.getBattleId()?.value
     if (battleId) {
-      this.battleSystem.stopAutoBattle()
+      this.autoBattleManager.stopAutoBattle()
     }
     // 触发战斗结束事件
     const eventData: any = { winner }
@@ -20113,56 +20128,100 @@ import { battleLogManager } from '@/utils/logging'
 /**
  * 战斗规则配置接口
  */
+/**
+ * 战斗规则配置接口
+ * 定义了游戏战斗系统的全部可配置参数
+ */
 export interface BattleRulesConfig {
+  /** 配置版本号 */
   version: string
+  /** 战斗规则集合 */
   rules: {
+    /** 回合制系统配置 */
     turnSystem: {
+      /** 是否启用速度优先（决定行动顺序） */
       speedFirst: boolean
+      /** 是否使用固定回合数（超过最大回合则结束战斗） */
       fixedTurns: boolean
+      /** 最大回合数，当 fixedTurns 为 true 时生效 */
       maxTurns: number
+      /** 单回合超时时间（毫秒） */
       turnTimeout: number
     }
+    /** 基础战斗机制配置 */
     combat: {
+      /** 是否启用暴击机制 */
       critEnabled: boolean
+      /** 是否启用闪避机制 */
       dodgeEnabled: boolean
+      /** 单次攻击的最小伤害值 */
       minDamage: number
+      /** 单次攻击的最大伤害值 */
       maxDamage: number
+      /** 每回合自动回复的能量值 */
       energyGainPerTurn: number
+      /** 命中敌人时获得的额外能量值 */
       energyGainOnHit: number
     }
+    /** 伤害计算详细规则 */
     damage: {
+      /** 暴击相关配置 */
       critical: {
+        /** 是否启用暴击（通常与 combat.critEnabled 保持一致） */
         enabled: boolean
+        /** 默认暴击率（百分比，如 0.15 表示 15%） */
         defaultRate: number
+        /** 默认暴击倍率（如 2.0 表示双倍伤害） */
         defaultMultiplier: number
       }
+      /** 防御减伤配置 */
       defense: {
+        /** 是否启用防御减伤机制 */
         enabled: boolean
+        /** 物理防御减伤系数（0~1，数值越小减免越多） */
         physicalDefenseFactor: number
+        /** 魔法防御减伤系数（0~1，数值越小减免越多） */
         magicDefenseFactor: number
+        /** 普通防御减伤系数（0~1，用于无属性攻击） */
         normalDefenseFactor: number
       }
+      /** 伤害上下限阈值（最终伤害会被限制在此范围内） */
       thresholds: {
+        /** 最终伤害最小值 */
         minDamage: number
+        /** 最终伤害最大值 */
         maxDamage: number
       }
     }
+    /** AI 行为配置 */
     ai: {
+      /** AI 做出决策前的延迟时间（毫秒） */
       decisionDelay: number
+      /** 技能优先级权重（数值越高越倾向于使用该类型技能） */
       skillPriority: {
+        /** 治疗技能的优先级权重 */
         heal: number
+        /** 攻击技能的优先级权重 */
         attack: number
+        /** 增益技能的优先级权重 */
         buff: number
+        /** 减益技能的优先级权重 */
         debuff: number
       }
     }
+    /** 自动战斗配置 */
     autoBattle: {
+      /** 是否允许自动战斗功能 */
       enabled: boolean
+      /** 自动战斗的默认播放速度（倍率） */
       defaultSpeed: number
+      /** 可供用户选择的播放速度列表 */
       availableSpeeds: number[]
+      /** 自动战斗时每回合的间隔时间（毫秒） */
       turnInterval: number
     }
   }
+  /** 场景相关配置（键为场景标识，值为该场景的自定义规则） */
   scenes: Record<string, any>
 }
 
@@ -20901,7 +20960,7 @@ export interface IBattleSystem {
   /**
    * 开始自动战斗
    */
-  startAutoBattle(): void
+  startBattle(): void
 
   /**
    * 停止自动战斗
@@ -22240,7 +22299,7 @@ export class BattleReplayManager {
 
     if (this.replayTimer) {
       import('@/utils/RAF').then(({ raf }) => {
-        raf.clearTimeout(this.replayTimer!)
+        raf.clear(this.replayTimer!)
       })
       this.replayTimer = null
     }
@@ -24143,6 +24202,11 @@ import {
   PARTICIPANT_SIDE,
   ROUND_STATUS,
 } from '@/types/battle'
+import type {
+  AnimationData,
+  AnimationQueueItem,
+  AnimationType,
+} from '@/types/battle'
 import {
   newLogSegment,
   LogLevel,
@@ -24188,31 +24252,15 @@ export class BattleSystem implements IBattleSystem {
 
   /**
    * 动画队列，存储待播放的动画事件
-   * @property type - 动画类型
-   * @property data - 动画数据
-   * @property duration - 动画持续时间（毫秒）
-   * @property resolve - Promise 解析函数，动画完成时调用
+   * @see AnimationQueueItem
    */
-  private animationQueue: Array<{
-    type: string
-    data: any
-    duration: number
-    resolve: () => void
-  }> = []
+  private animationQueue: AnimationQueueItem[] = []
 
   /**
    * 是否有动画正在播放
    */
   private isAnimationPlaying = false
 
-  /**
-   * 当前开启【自动战斗】模式
-   */
-  private autoBattle = false
-  /**
-   * 当前是否处于暂停状态
-   */
-  private isPaused = true
   /**
    * 当前战斗速度倍率，默认为1
    */
@@ -24430,7 +24478,6 @@ export class BattleSystem implements IBattleSystem {
     battleData.roundState = ROUND_STATUS.START
 
     const autoBattleRules = this.ruleManager.getAutoBattleRules()
-    this.autoBattle = autoBattleRules.enabled
     battleData.autoBattle = autoBattleRules.enabled
     battleData.battleSpeed = autoBattleRules.defaultSpeed
 
@@ -24459,17 +24506,27 @@ export class BattleSystem implements IBattleSystem {
    * 实现每回合重新计算出手顺序，并按顺序执行所有角色行动
    */
   private async processTurnInternal(): Promise<void> {
-    if (this.isPaused) {
+    const battle = this.battleData
+    if (
+      battle.battleState === BATTLE_STATUS.PAUSED ||
+      battle.battleState !== BATTLE_STATUS.ACTIVE
+    ) {
       return
     }
 
-    const battle = this.battleData
-    if (battle.battleState !== BATTLE_STATUS.ACTIVE) {
+    battle.roundState = ROUND_STATUS.START
+
+    const aliveParticipants = Array.from(battle.participants.values()).filter(
+      (p) => p.isAlive(),
+    )
+
+    if (aliveParticipants.length === 0) {
+      battle.roundState = ROUND_STATUS.END
+      this.checkBattleEndCondition()
       return
     }
 
     try {
-      battle.roundState = ROUND_STATUS.START
       // 触发回合开始时的被动技能
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         PassiveSkillTrigger.TURN_START,
@@ -24489,20 +24546,11 @@ export class BattleSystem implements IBattleSystem {
       })
 
       // 为所有存活角色增加回合开始能量
-      const aliveParticipants = Array.from(battle.participants.values()).filter(
-        (p) => p.isAlive(),
-      )
       const combatRules = this.ruleManager.getCombatRules()
       this.participantManager.gainEnergyToAliveParticipants(
         aliveParticipants,
         combatRules.energyGainPerTurn,
       )
-
-      if (aliveParticipants.length === 0) {
-        battle.roundState = ROUND_STATUS.END
-        this.checkBattleEndCondition()
-        return
-      }
 
       let currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
       battle.turnOrder = currentTurnOrder
@@ -24584,9 +24632,13 @@ export class BattleSystem implements IBattleSystem {
     battle: BattleData,
     participant: BattleParticipant,
   ): Promise<void> {
+    console.log(
+      `[DEBUG] ===== executeParticipantAction 开始: ${participant.name} =====`,
+    )
     try {
       // 检查是否被控制
       if (this.isParticipantControlled(participant)) {
+        console.log(`[DEBUG] ${participant.name} 被控制，无法行动`)
         // 被控制，无法行动
         const action = BattleActionHelper.createStatus({
           sourceId: participant.id,
@@ -24615,11 +24667,20 @@ export class BattleSystem implements IBattleSystem {
         battleLogManager.addDebugLog(
           `角色[${participant.name}]被控制，无法行动`,
         )
+        console.log(
+          `[DEBUG] ===== executeParticipantAction 结束(被控制): ${participant.name} =====`,
+        )
         return
       }
 
+      console.log(`[DEBUG] ${participant.name} 未被控制，继续执行...`)
+
       // 获取所有可用主动技能
       const activeSkillIds = participant.getSkillIds('active')
+      console.log(
+        `[DEBUG] ${participant.name} 主动技能: ${activeSkillIds.join(',') || '无'}`,
+      )
+
       const availableSkills = activeSkillIds.filter((skillId) => {
         const energyCost = this.getSkillEnergyCost(skillId)
         // 检查能量是否足够
@@ -24638,13 +24699,26 @@ export class BattleSystem implements IBattleSystem {
         return true
       })
 
+      console.log(
+        `[DEBUG] ${participant.name} 可用技能: ${availableSkills.join(',') || '无'}, 当前能量: ${participant.currentEnergy}`,
+      )
+
       // 检查是否使用 AI 系统进行决策
       const aiInstance = battle.aiInstances?.get(participant.id)
+      console.log(
+        `[DEBUG] ${participant.name} AI实例: ${aiInstance ? '存在' : '不存在'}`,
+      )
+
       if (aiInstance) {
+        console.log(`[DEBUG] ${participant.name} 使用AI决策...`)
         // 使用 AI 系统决策
         const action = aiInstance.makeDecision(
           this.convertToBattleState(battle),
           participant,
+        )
+
+        console.log(
+          `[DEBUG] AI决策结果: type=${action.type}, skillId=${action.skillId || '无'}, targetId=${action.targetId || '无'}`,
         )
 
         battleLogManager.addDebugLog(
@@ -24654,12 +24728,18 @@ export class BattleSystem implements IBattleSystem {
         if (action.type === 'skill' && action.skillId) {
           const skillId = action.skillId
           const skill = this.skillManager.getSkillConfig(skillId)
+          console.log(
+            `[DEBUG] 尝试执行技能: ${skillId}, 技能配置: ${skill ? '存在' : '不存在'}`,
+          )
           if (skill && activeSkillIds.includes(skillId)) {
+            console.log(`[DEBUG] 调用 selectAndExecuteSkill`)
             await this.selectAndExecuteSkill(battle, participant, skill)
           } else {
+            console.log(`[DEBUG] 技能不可用，改为普通攻击`)
             await this.selectAndExecuteAttack(battle, participant)
           }
         } else {
+          console.log(`[DEBUG] AI选择普通攻击`)
           await this.selectAndExecuteAttack(battle, participant)
         }
       } else if (
@@ -24667,6 +24747,7 @@ export class BattleSystem implements IBattleSystem {
         Math.random() < BATTLE_CONSTANTS.SKILL_USE_CHANCE &&
         availableSkills[0]
       ) {
+        console.log(`[DEBUG] ${participant.name} 无AI实例，随机选择技能`)
         // 没有 AI 实例时使用原来的随机选择逻辑（也过滤了被动技能）
         const selectedSkillId =
           availableSkills[Math.floor(Math.random() * availableSkills.length)]
@@ -24702,16 +24783,23 @@ export class BattleSystem implements IBattleSystem {
     source: BattleParticipant,
     skill: SkillConfig,
   ): Promise<BattleAction> {
+    console.log(
+      `[DEBUG] ===== selectAndExecuteSkill 开始: ${source.name} 使用 ${skill.id} =====`,
+    )
     if (
       'isSkillAvailable' in source &&
       typeof source.isSkillAvailable === 'function'
     ) {
       if (!source.isSkillAvailable(skill.id)) {
+        console.log(`[DEBUG] 技能 ${skill.id} 不可用，改为普通攻击`)
         return this.selectAndExecuteAttack(battle, source)
       }
     }
 
     const energyCost = skill.energyCost ?? 0
+    console.log(
+      `[DEBUG] 技能消耗能量: ${energyCost}, 当前能量: ${source.currentEnergy}`,
+    )
     source.spendEnergy(energyCost)
 
     const action = BattleActionHelper.createSkill({
@@ -24722,27 +24810,40 @@ export class BattleSystem implements IBattleSystem {
       turn: battle.currentRound || 1,
     })
 
+    console.log(`[DEBUG] 获取技能目标...`)
     const targets = this.getSkillTargets(battle, source, skill)
+    console.log(
+      `[DEBUG] 技能目标: ${targets.map((t) => t.name).join(',') || '无'}`,
+    )
 
     if (targets.length === 0) {
       battleLogManager.addDebugLog(`技能执行失败: 未找到有效目标 ${skill.id}`)
+      console.log(`[DEBUG] 未找到有效目标，改为普通攻击`)
       return this.selectAndExecuteAttack(battle, source)
     }
 
     action.targetId = targets[0].id
 
     try {
+      console.log(`[DEBUG] 开始执行技能效果...`)
       let totalDamage = 0
       let totalHeal = 0
       const allEffects: any[] = []
 
       for (const target of targets) {
-        if (!target.isAlive()) continue
+        if (!target.isAlive()) {
+          console.log(`[DEBUG] 目标 ${target.name} 已死亡，跳过`)
+          continue
+        }
 
+        console.log(`[DEBUG] 对 ${target.name} 执行技能 ${skill.id}`)
         const skillAction = this.skillManager.executeSkill(
           skill.id,
           source,
           target,
+        )
+        console.log(
+          `[DEBUG] 技能执行结果: damage=${skillAction.damage}, heal=${skillAction.heal}`,
         )
 
         totalDamage += skillAction.damage
@@ -24765,8 +24866,12 @@ export class BattleSystem implements IBattleSystem {
         ],
         BATTLE_LOG_CATEGORIES.ACTION,
       )
+      console.log(
+        `[DEBUG] 技能执行成功: ${skill.id}, 总伤害=${totalDamage}, 总治疗=${totalHeal}`,
+      )
     } catch (error) {
       battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error)
+      console.log(`[DEBUG] 技能执行失败: ${error}`)
       action.type = 'attack'
       action.damage = Math.floor(Math.random() * 20) + 10
       action.effects = [
@@ -24779,6 +24884,9 @@ export class BattleSystem implements IBattleSystem {
     }
 
     this.recordBattleAction(action)
+    console.log(
+      `[DEBUG] ===== selectAndExecuteSkill 结束: ${source.name} =====`,
+    )
 
     return action
   }
@@ -25062,10 +25170,19 @@ export class BattleSystem implements IBattleSystem {
     damageResult: { damage: number; isCritical: boolean },
     turnNumber: number,
   ): Promise<void> {
+    console.log(
+      `[DEBUG] handleHitAttack: ${source.name} -> ${target.name}, damage=${damageResult.damage}, isCritical=${damageResult.isCritical}`,
+    )
     const { damage, isCritical } = damageResult
     action.damage = damage
 
+    console.log(
+      `[DEBUG] 应用伤害前: ${target.name} HP=${target.currentHealth}/${target.maxHealth}`,
+    )
     this.applyDamageToTarget(source, target, damage)
+    console.log(
+      `[DEBUG] 应用伤害后: ${target.name} HP=${target.currentHealth}/${target.maxHealth}`,
+    )
 
     action.effects.push({
       type: EFFECT_TYPES.DAMAGE,
@@ -25073,6 +25190,7 @@ export class BattleSystem implements IBattleSystem {
       description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
     })
 
+    console.log(`[DEBUG] 触发伤害动画...`)
     await this.triggerDamageAnimationAndWait({
       targetId: target.id,
       damage,
@@ -25080,6 +25198,7 @@ export class BattleSystem implements IBattleSystem {
       isCritical,
       isHeal: false,
     })
+    console.log(`[DEBUG] 伤害动画完成`)
 
     const logParams = this.generateAttackLogParams(source, target, turnNumber, {
       damage,
@@ -25268,6 +25387,7 @@ export class BattleSystem implements IBattleSystem {
    * @returns {Promise<BattleAction>} 执行后的战斗动作（包含实际效果）
    */
   public async executeAction(action: BattleAction): Promise<BattleAction> {
+    console.log(`[DEBUG] ===== executeAction 开始: type=${action.type} =====`)
     const battle = this.battleData
     if (!battle) {
       throw new Error('No active battle found')
@@ -25276,18 +25396,26 @@ export class BattleSystem implements IBattleSystem {
     const source = battle.participants.get(action.sourceId)
     const target = battle.participants.get(action.targetId)
 
+    console.log(
+      `[DEBUG] 执行动作: ${source?.name || action.sourceId} -> ${target?.name || action.targetId}`,
+    )
+
     if (!source || !target) {
       throw new Error(`Invalid source or target in action`)
     }
 
     // 处理技能执行
     if (action.type === 'skill' && action.skillId) {
+      console.log(`[DEBUG] 执行技能: ${action.skillId}`)
       try {
         // 使用新的技能管理器执行技能
         const skillAction = this.skillManager.executeSkill(
           action.skillId,
           source,
           target,
+        )
+        console.log(
+          `[DEBUG] 技能执行完成: damage=${skillAction.damage}, heal=${skillAction.heal}`,
         )
 
         // 合并技能执行结果
@@ -25300,6 +25428,7 @@ export class BattleSystem implements IBattleSystem {
           (effect) => effect.type === EFFECT_TYPES.MISS,
         )
         if (hasMissEffect) {
+          console.log(`[DEBUG] 检测到闪避效果`)
           // 触发闪避动画并等待完成
           await this.triggerMissAnimationAndWait({
             targetId: target.id,
@@ -25312,6 +25441,7 @@ export class BattleSystem implements IBattleSystem {
             effect.type === EFFECT_TYPES.BUFF ||
             effect.type === EFFECT_TYPES.DEBUFF
           ) {
+            console.log(`[DEBUG] 检测到buff效果: ${effect.buffId}`)
             // 确定buff目标 - 通过 targetId 判断作用目标
             let buffTarget = target
             if (effect.targetId === source.id) {
@@ -25474,11 +25604,20 @@ export class BattleSystem implements IBattleSystem {
       (p) => p.type === PARTICIPANT_SIDE.ENEMY && p.isAlive(),
     )
 
+    console.log(
+      `[DEBUG] 战斗结束检查: 我方存活 ${aliveCharacters.length} (${aliveCharacters.map((p) => p.name).join(',')}), 敌方存活 ${aliveEnemies.length} (${aliveEnemies.map((p) => p.name).join(',')})`,
+    )
+
     if (aliveCharacters.length === 0) {
+      console.log('[DEBUG] 触发战斗结束: 我方全灭，敌方获胜')
       this.endBattle(PARTICIPANT_SIDE.ENEMY)
     } else if (aliveEnemies.length === 0) {
+      console.log('[DEBUG] 触发战斗结束: 敌方全灭，我方获胜')
       this.endBattle(PARTICIPANT_SIDE.ALLY)
     } else if (battle.currentRound >= battle.maxTurns) {
+      console.log(
+        `[DEBUG] 触发战斗结束: 回合数达到上限 ${battle.currentRound}/${battle.maxTurns}`,
+      )
       this.handleMaxTurnsReached(aliveCharacters, aliveEnemies)
     }
   }
@@ -25534,11 +25673,21 @@ export class BattleSystem implements IBattleSystem {
    * @param winner - 胜利者类型
    */
   public async endBattle(winner: ParticipantSide): Promise<void> {
+    console.log(`[DEBUG] ===== endBattle 被调用 =====`)
+    console.log(
+      `[DEBUG] 战斗结束，胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`,
+    )
+
     const battle = this.battleData
     if (!battle) {
       battleLogManager.addDebugLog(`战斗不存在`)
+      console.log('[DEBUG] 战斗数据不存在，无法结束战斗')
       return
     }
+
+    console.log(
+      `[DEBUG] 当前回合: ${battle.currentRound}, 战斗状态: ${battle.battleState}`,
+    )
 
     this.stopAutoBattle()
 
@@ -25602,7 +25751,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private cleanupBattleTimers(): void {
     if (this.autoBattleTimerId) {
-      this.rafTimer.clearTimeout(this.autoBattleTimerId)
+      this.rafTimer.clear(this.autoBattleTimerId)
       this.autoBattleTimerId = undefined
     }
 
@@ -25683,7 +25832,7 @@ export class BattleSystem implements IBattleSystem {
    * @returns 是否处于自动战斗状态
    */
   public getAutoBattle(): boolean {
-    return this.autoBattle
+    return this.battleData.autoBattle
   }
 
   /**
@@ -25691,7 +25840,7 @@ export class BattleSystem implements IBattleSystem {
    * @returns 是否处于暂停状态
    */
   public getIsPaused(): boolean {
-    return this.isPaused
+    return this.battleData.battleState === BATTLE_STATUS.PAUSED
   }
 
   /**
@@ -25709,11 +25858,14 @@ export class BattleSystem implements IBattleSystem {
   public setSpeed(speed: number): void {
     this.battleSpeed = speed
     this.battleData.battleSpeed = speed
-    battleLogManager.addSystemLog(`战斗速度已调整为: ${speed}倍`, [
-      newLogSegment(`战斗速度已调整为: `),
-      newLogSegment(`${speed}`, 'number'),
-      newLogSegment(`倍`, 'number'),
-    ])
+    battleLogManager.addSystemLog(`战斗速度已调整为: ${speed}倍`, {
+      level: LogLevel.INFO,
+      segments: [
+        newLogSegment(`战斗速度已调整为: `),
+        newLogSegment(`${speed}`, 'number'),
+        newLogSegment(`倍`, 'number'),
+      ],
+    })
   }
 
   /**
@@ -25721,8 +25873,11 @@ export class BattleSystem implements IBattleSystem {
    * 暂停时会停止自动战斗，恢复时会重新启动自动战斗
    */
   public togglePause(): void {
-    this.isPaused = !this.isPaused
-    if (this.isPaused) {
+    this.battleData.battleState =
+      this.battleData.battleState === BATTLE_STATUS.PAUSED
+        ? BATTLE_STATUS.ACTIVE
+        : BATTLE_STATUS.PAUSED
+    if (this.getIsPaused()) {
       this.pauseAutoBattle()
     } else {
       this.resumeAutoBattle()
@@ -25735,7 +25890,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private pauseAutoBattle(): void {
     if (this.autoBattleTimerId) {
-      this.rafTimer.clearTimeout(this.autoBattleTimerId)
+      this.rafTimer.clear(this.autoBattleTimerId)
       this.autoBattleTimerId = undefined
     }
     battleLogManager.addDebugLog(`自动战斗已暂停`)
@@ -25747,7 +25902,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private resumeAutoBattle(): void {
     if (
-      this.autoBattle &&
+      this.battleData.autoBattle &&
       this.battleData.battleState === BATTLE_STATUS.ACTIVE &&
       this.autoBattleLoop
     ) {
@@ -25802,14 +25957,13 @@ export class BattleSystem implements IBattleSystem {
   /**
    * 开始自动战斗
    */
-  public startAutoBattle(): void {
-    this.autoBattle = true
+  public startBattle(): void {
     this.battleData.autoBattle = true
-    this.isPaused = false
+    this.battleData.battleState = BATTLE_STATUS.ACTIVE
     battleLogManager.addDebugLog(`自动战斗开始: ${this.battleData.battleId}`)
 
     this.autoBattleLoop = async () => {
-      if (this.isPaused) {
+      if (this.getIsPaused()) {
         return
       }
 
@@ -25828,7 +25982,7 @@ export class BattleSystem implements IBattleSystem {
           return
         }
 
-        if (!this.isPaused) {
+        if (!this.getIsPaused()) {
           const delay = this.getBattleDelay()
           const timerId = this.rafTimer.setTimeout(this.autoBattleLoop!, delay)
           this.autoBattleTimerId = timerId
@@ -25869,13 +26023,12 @@ export class BattleSystem implements IBattleSystem {
       return
     }
 
-    this.autoBattle = false
     this.battleData.autoBattle = false
-    this.isPaused = true
+    this.battleData.battleState = BATTLE_STATUS.PAUSED
     this.autoBattleLoop = undefined
 
     if (this.autoBattleTimerId) {
-      this.rafTimer.clearTimeout(this.autoBattleTimerId)
+      this.rafTimer.clear(this.autoBattleTimerId)
       this.autoBattleTimerId = undefined
     }
 
@@ -26025,11 +26178,14 @@ export class BattleSystem implements IBattleSystem {
    * @param duration 动画持续时间（毫秒），如果为0则使用战斗速度对应的默认时长
    */
   private async triggerAnimationAndWait(
-    animationType: string,
-    data: any,
+    animationType: AnimationType,
+    data: AnimationData,
     duration: number = 0,
   ): Promise<void> {
     const actualDuration = duration > 0 ? duration : this.getAnimationDuration()
+    console.log(
+      `[DEBUG] triggerAnimationAndWait: type=${animationType}, duration=${actualDuration}, queue.length=${this.animationQueue.length}, isPlaying=${this.isAnimationPlaying}`,
+    )
 
     return new Promise<void>((resolve) => {
       this.animationQueue.push({
@@ -26039,8 +26195,14 @@ export class BattleSystem implements IBattleSystem {
         resolve,
       })
 
+      console.log(
+        `[DEBUG] 动画已加入队列, 当前队列长度: ${this.animationQueue.length}`,
+      )
       if (!this.isAnimationPlaying) {
+        console.log(`[DEBUG] 当前无动画播放，开始处理队列`)
         this.processAnimationQueue()
+      } else {
+        console.log(`[DEBUG] 当前有动画播放中，等待队列处理`)
       }
     })
   }
@@ -26049,28 +26211,53 @@ export class BattleSystem implements IBattleSystem {
    * 处理动画队列
    */
   private async processAnimationQueue(): Promise<void> {
+    console.log(
+      `[DEBUG] processAnimationQueue: queue.length=${this.animationQueue.length}`,
+    )
     if (this.animationQueue.length === 0) {
       this.isAnimationPlaying = false
+      console.log(`[DEBUG] 动画队列已空，设置 isAnimationPlaying=false`)
       return
     }
 
     this.isAnimationPlaying = true
-
-    const animation = this.animationQueue.shift()
-    if (!animation) {
-      this.isAnimationPlaying = false
-      return
-    }
-
+    const animation: AnimationQueueItem = this.animationQueue.shift()
     eventBus.emit(animation.type, animation.data)
+    console.log(
+      `[DEBUG] 开始播放动画: type=${animation.type}, duration=${animation.duration}`,
+    )
+    console.log(`[DEBUG] animation 对象详情:`, {
+      type: animation.type,
+      duration: animation.duration,
+      hasResolve: !!animation.resolve,
+      resolveType: typeof animation.resolve,
+    })
 
     await new Promise<void>((resolve) => {
       this.rafTimer.setTimeout(() => {
-        animation.resolve()
+        console.log(`[DEBUG] this.rafTimer.setTimeout(() => {`)
+        try {
+          if (animation && typeof animation.resolve === 'function') {
+            animation.resolve()
+          } else {
+            console.error('[Animation] resolve is not a function', animation)
+            // 手动创建一个 resolve 以避免卡死
+            if (animation && animation.resolve === undefined) {
+              // 无法恢复，至少继续队列
+            }
+          }
+        } catch (err) {
+          console.error('[Animation] error in resolve:', err)
+        }
+        // 无论成功与否，继续处理下一个动画
+        console.log(`[DEBUG] processAnimationQueue start`)
         this.processAnimationQueue()
+        console.log(`[DEBUG] processAnimationQueue end`)
         resolve()
       }, animation.duration)
     })
+
+    console.log(`[DEBUG] await new Promise<void> end`)
   }
 
   /**
@@ -26085,8 +26272,15 @@ export class BattleSystem implements IBattleSystem {
    * 清理动画状态
    */
   private cleanupAnimationState(): void {
+    console.log(`[DEBUG] ===== cleanupAnimationState 被调用 =====`)
+    console.log(
+      `[DEBUG] 清空前: animationQueue.length=${this.animationQueue.length}, isAnimationPlaying=${this.isAnimationPlaying}`,
+    )
     this.animationQueue = []
     this.isAnimationPlaying = false
+    console.log(
+      `[DEBUG] 清空后: animationQueue.length=${this.animationQueue.length}, isAnimationPlaying=${this.isAnimationPlaying}`,
+    )
   }
 
   /**
@@ -26101,7 +26295,11 @@ export class BattleSystem implements IBattleSystem {
   }): Promise<void> {
     if (this.battleData) {
       const duration = Math.floor(this.getAnimationDuration() * 1.5)
-      await this.triggerAnimationAndWait('skill-effect', data, duration)
+      await this.triggerAnimationAndWait(
+        BattleSystemEvent.SKILL_EFFECT,
+        data,
+        duration,
+      )
     }
   }
 
@@ -30698,7 +30896,7 @@ export class TaskExecutor {
     this.battleSystem.setBattleSpeed(speed)
 
     // 开始自动战斗
-    this.battleSystem.startAutoBattle()
+    this.battleSystem.startBattle()
 
     // 监控战斗状态
     const monitorInterval = this.timer.setInterval(async () => {
@@ -33657,8 +33855,6 @@ export const useBattleStore = defineStore('battle', {
         if (!this.battleManager) {
           throw new Error('战斗管理器未初始化')
         }
-        const enabledAllyTeam = this.battleManager.getEnabledAllyTeam()
-        const enabledEnemyTeam = this.battleManager.getEnabledEnemyTeam()
 
         // 直接调用合并后的 startBattle 方法，自动启动战斗
         const battleId = await this.battleManager.startBattle()
@@ -33671,14 +33867,6 @@ export const useBattleStore = defineStore('battle', {
         this.setBattleActive(true)
         this.autoPlayMode = this.battleManager.getAutoBattle()
         battleLogManager.addSystemLog(`战斗已开始`)
-
-        battleLogManager.addSystemLog(
-          `战斗开始！参战角色: ${enabledAllyTeam.length}人 | 参战敌人: ${enabledEnemyTeam.length}人`,
-          {
-            segments: [],
-          },
-        )
-
         return true
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
@@ -33806,17 +33994,13 @@ export const useBattleStore = defineStore('battle', {
         const isActive = this.battleManager.getAutoBattle()
         if (isActive) {
           // 停止自动播放
-          if (this.currentBattleId) {
-            this.battleManager.stopAutoBattle(this.currentBattleId)
-          }
+          this.battleManager.stopAutoBattle()
           this.autoPlayMode = false
           this.isBattleActive = false
           battleLogManager.addSystemLog('停止自动战斗')
         } else {
           // 开始自动播放
-          if (this.currentBattleId) {
-            await this.battleManager.startAutoBattle(this.currentBattleId)
-          }
+          await this.battleManager.startAutoBattle()
           this.autoPlayMode = true
           this.isBattleActive = true
           this.battleManager.syncBattleState()
@@ -35446,7 +35630,7 @@ body {
 .energy-bar {
   flex: 1;
   height: 6px;
-  background: #0f0f1a;
+  background: #5f5f5f;
   border-radius: 3px;
   overflow: hidden;
   position: relative;
@@ -38991,6 +39175,95 @@ export enum BattleSystemEvent {
   /** 回合结束事件 */
   TURN_END = 'turnEnd',
 }
+
+/**
+ * 动画类型联合类型
+ * 定义所有支持的动画事件类型
+ */
+export type AnimationType =
+  | BattleSystemEvent.DAMAGE_ANIMATION
+  | BattleSystemEvent.MISS_ANIMATION
+  | BattleSystemEvent.BUFF_EFFECT
+  | BattleSystemEvent.SKILL_EFFECT
+
+/**
+ * 动画队列项接口
+ * 定义动画队列中每个动画项的结构
+ */
+export interface AnimationQueueItem {
+  /** 动画类型 */
+  type: AnimationType
+  /** 动画数据 */
+  data: AnimationData
+  /** 动画持续时间（毫秒） */
+  duration: number
+  /** Promise 解析函数，动画完成时调用 */
+  resolve: () => void
+}
+
+/**
+ * 动画数据基础接口
+ * 所有动画数据的公共属性
+ */
+export interface BaseAnimationData {
+  /** 动作来源ID（可选） */
+  sourceId?: string
+  /** 目标ID */
+  targetId: string
+}
+
+/**
+ * 伤害动画数据
+ */
+export interface DamageAnimationData extends BaseAnimationData {
+  /** 伤害/治疗值 */
+  damage: number
+  /** 是否暴击 */
+  isCritical: boolean
+  /** 伤害类型 */
+  damageType: string
+  /** 是否为治疗 */
+  isHeal: boolean
+}
+
+/**
+ * 闪避动画数据
+ */
+export interface MissAnimationData extends BaseAnimationData {
+  /** 闪避原因描述（可选） */
+  reason?: string
+}
+
+/**
+ * Buff效果动画数据
+ */
+export interface BuffEffectAnimationData extends BaseAnimationData {
+  /** Buff名称 */
+  buffName: string
+  /** 是否为正面Buff */
+  isPositive: boolean
+}
+
+/**
+ * 技能效果动画数据
+ */
+export interface SkillEffectAnimationData extends BaseAnimationData {
+  /** 技能名称 */
+  skillName: string
+  /** 效果类型 */
+  effectType: string
+  /** 伤害类型 */
+  damageType: string
+}
+
+/**
+ * 动画数据联合类型
+ */
+export type AnimationData =
+  | DamageAnimationData
+  | MissAnimationData
+  | BuffEffectAnimationData
+  | SkillEffectAnimationData
 
 /**
  * 战斗数据接口
@@ -44801,95 +45074,112 @@ export const measure = (name: string, fn: () => any) => {
 
 --- src/utils/RAF.ts ---
 type TimerType = 'timeout' | 'interval'
-type TimerCallback = () => void
+type TimerCallback = () => void | Promise<void>
 
 interface Timer {
   id: symbol
   type: TimerType
   callback: TimerCallback
   interval: number
-  startTime: number
-  lastRunTime: number
+  lastRunTime: number // 上次理论运行时间（用于补偿）
   paused: boolean
   pausedAt: number | null
 }
 
 export class RAFTimer {
-  private timers: Map<symbol, Timer>
-  private rafId: number | null
-  private isRunning: boolean
+  private readonly timers: Map<symbol, Timer> = new Map()
+  private rafId: number | null = null
+  private isRunning: boolean = false
 
   constructor() {
-    this.timers = new Map()
-    this.rafId = null
-    this.isRunning = false
-    this.startLoop = this.startLoop.bind(this)
+    // 使用箭头函数绑定 loop，避免在 startLoop 中反复 bind
+    this.loop = this.loop.bind(this)
   }
 
   /**
-   * 启动主循环
+   * 启动循环
    */
   private startLoop(): void {
     if (!this.isRunning && this.timers.size > 0) {
       this.isRunning = true
-      this.loop()
+      this.rafId = requestAnimationFrame(this.loop)
     }
   }
 
   /**
-   * 主动画帧循环
+   * 高性能主循环
+   * 移除 async 关键字，防止阻塞帧更新
    */
-  private loop = async (): Promise<void> => {
-    const now = performance.now()
-    // 遍历所有定时器
-    for (const timer of this.timers.values()) {
+  private loop(now: number): void {
+    if (this.timers.size === 0) {
+      this.stop()
+      return
+    }
+
+    // 使用迭代器减少内存开销
+    for (const [id, timer] of this.timers) {
       if (timer.paused) continue
 
       const elapsed = now - timer.lastRunTime
 
       if (elapsed >= timer.interval) {
-        try {
-          // 处理异步回调函数
-          await Promise.resolve(timer.callback())
-        } catch (error) {
-          console.error('Timer callback error:', error)
-        }
+        // 执行回调：使用 try-catch 包裹，并支持异步但不阻塞循环
+        this.executeCallback(timer)
 
-        timer.lastRunTime = now
-
-        // 单次定时器执行后移除
         if (timer.type === 'timeout') {
-          this.clear(timer.id)
+          this.clear(id)
+        } else {
+          // 补偿算法：防止时间偏移累积
+          // 如果是关键动画，建议使用 timer.lastRunTime += timer.interval
+          // 如果是普通定时器，建议使用 now 以防极端卡顿时连续触发
+          timer.lastRunTime = now - (elapsed % timer.interval)
         }
       }
     }
 
-    // 如果还有定时器，继续循环
-    if (this.timers.size > 0) {
+    if (this.isRunning && this.timers.size > 0) {
       this.rafId = requestAnimationFrame(this.loop)
     } else {
-      this.isRunning = false
+      this.stop()
+    }
+  }
+
+  private executeCallback(timer: Timer): void {
+    try {
+      const result = timer.callback()
+      // 如果是异步函数，静默处理其 catch，不影响主循环
+      if (result instanceof Promise) {
+        result.catch((err) =>
+          console.error('[RAFTimer] Async Callback Error:', err),
+        )
+      }
+    } catch (error) {
+      console.error('[RAFTimer] Callback Error:', error)
+    }
+  }
+
+  private stop(): void {
+    this.isRunning = false
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId)
       this.rafId = null
     }
   }
 
-  /**
-   * 创建定时器
-   */
   private createTimer(
     type: TimerType,
     callback: TimerCallback,
     interval: number,
   ): symbol {
-    const id = Symbol(`raf-${type}`)
+    const id = Symbol(`raf_${type}`)
+    const now = performance.now()
 
     this.timers.set(id, {
       id,
       type,
       callback,
       interval,
-      startTime: performance.now(),
-      lastRunTime: performance.now(),
+      lastRunTime: now,
       paused: false,
       pausedAt: null,
     })
@@ -44898,47 +45188,22 @@ export class RAFTimer {
     return id
   }
 
-  /**
-   * 设置延时定时器
-   */
-  setTimeout(callback: TimerCallback, interval: number): symbol {
-    return this.createTimer('timeout', callback, interval)
+  setTimeout(callback: TimerCallback, delay: number): symbol {
+    return this.createTimer('timeout', callback, delay)
   }
 
-  /**
-   * 设置间隔定时器
-   */
   setInterval(callback: TimerCallback, interval: number): symbol {
     return this.createTimer('interval', callback, interval)
   }
 
-  /**
-   * 清除定时器
-   */
   clear(timerId: symbol): boolean {
-    const existed = this.timers.delete(timerId)
-
-    // 如果没有定时器了，停止循环
-    if (this.timers.size === 0 && this.rafId) {
-      cancelAnimationFrame(this.rafId)
-      this.rafId = null
-      this.isRunning = false
+    const deleted = this.timers.delete(timerId)
+    if (this.timers.size === 0) {
+      this.stop()
     }
-
-    return existed
+    return deleted
   }
 
-  clearTimeout(timerId: symbol): boolean {
-    return this.clear(timerId)
-  }
-
-  clearInterval(timerId: symbol): boolean {
-    return this.clear(timerId)
-  }
-
-  /**
-   * 暂停定时器
-   */
   pause(timerId: symbol): boolean {
     const timer = this.timers.get(timerId)
     if (!timer || timer.paused) return false
@@ -44948,16 +45213,14 @@ export class RAFTimer {
     return true
   }
 
-  /**
-   * 恢复定时器
-   */
   resume(timerId: symbol): boolean {
     const timer = this.timers.get(timerId)
-    if (!timer || !timer.paused) return false
+    if (!timer || !timer.paused || timer.pausedAt === null) return false
 
-    // 调整最后运行时间，补偿暂停期间的时间
-    const pauseDuration = performance.now() - (timer.pausedAt || 0)
+    // 补偿暂停时长，确保恢复后逻辑时间线正确
+    const pauseDuration = performance.now() - timer.pausedAt
     timer.lastRunTime += pauseDuration
+
     timer.paused = false
     timer.pausedAt = null
 
@@ -44965,93 +45228,13 @@ export class RAFTimer {
     return true
   }
 
-  /**
-   * 重置定时器
-   */
-  reset(timerId: symbol): boolean {
-    const timer = this.timers.get(timerId)
-    if (!timer) return false
-
-    timer.lastRunTime = performance.now()
-    timer.startTime = performance.now()
-    timer.paused = false
-    timer.pausedAt = null
-
-    this.startLoop()
-    return true
-  }
-
-  /**
-   * 调整定时器间隔
-   */
-  setIntervalTime(timerId: symbol, newInterval: number): boolean {
-    const timer = this.timers.get(timerId)
-    if (!timer) return false
-
-    timer.interval = newInterval
-    timer.lastRunTime = performance.now()
-    return true
-  }
-
-  /**
-   * 获取剩余时间（仅对timeout有效）
-   */
-  getRemainingTime(timerId: symbol): number | null {
-    const timer = this.timers.get(timerId)
-    if (!timer || timer.type !== 'timeout') return null
-
-    const elapsed = performance.now() - timer.startTime
-    return Math.max(0, timer.interval - elapsed)
-  }
-
-  /**
-   * 销毁所有定时器
-   */
   destroy(): void {
-    if (this.rafId) {
-      cancelAnimationFrame(this.rafId)
-      this.rafId = null
-    }
+    this.stop()
     this.timers.clear()
-    this.isRunning = false
-  }
-
-  /**
-   * 获取活跃定时器数量
-   */
-  getActiveCount(): number {
-    return this.timers.size
   }
 }
 
-// 提供全局实例（可选）
 export const raf = new RAFTimer()
-
-// const timer = new RAFTimer()
-
-// // 设置定时器
-// const timeoutId = timer.setTimeout(() => {
-//   console.log('Timeout executed')
-// }, 1000)
-
-// const intervalId = timer.setInterval(() => {
-//   console.log('Interval executed')
-// }, 500)
-
-// // 暂停定时器
-// timer.pause(intervalId)
-
-// // 恢复定时器
-// setTimeout(() => {
-//   timer.resume(intervalId)
-// }, 2000)
-
-// // 查询剩余时间
-// const remaining = timer.getRemainingTime(timeoutId)
-
-// // 清理
-// timer.clearTimeout(timeoutId)
-// timer.clearInterval(intervalId)
 
 --- src/utils/schema-validator.ts ---
 /**
@@ -45820,7 +46003,7 @@ const logManager = {
 // 初始化战斗
 function initBattle() {
   // 完成 敌我ParticipantInfo的初始化
-  const allyIds = ["enemy_063", "enemy_056"];
+  const allyIds = ["enemy_063", "enemy_056", "enemy_062"];
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
   const enemyIds = ["enemy_064", "enemy_055"];
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
@@ -46673,7 +46856,7 @@ const timeouts = ref<symbol[]>([]);
 // 显示状态工具提示
 const showStatusTooltip = (event: MouseEvent, status: any) => {
   if (tooltipTimeout) {
-    raf.clearTimeout(tooltipTimeout);
+    raf.clear(tooltipTimeout);
   }
 
   tooltipTimeout = raf.setTimeout(() => {
@@ -46697,7 +46880,7 @@ const showStatusTooltip = (event: MouseEvent, status: any) => {
 // 隐藏状态工具提示
 const hideStatusTooltip = () => {
   if (tooltipTimeout) {
-    raf.clearTimeout(tooltipTimeout);
+    raf.clear(tooltipTimeout);
     tooltipTimeout = null;
   }
 
@@ -46896,11 +47079,11 @@ defineExpose({
 
 onUnmounted(() => {
   if (tooltipTimeout) {
-    raf.clearTimeout(tooltipTimeout)
+    raf.clear(tooltipTimeout)
   }
 
   timeouts.value.forEach((timeoutId) => {
-    raf.clearTimeout(timeoutId)
+    raf.clear(timeoutId)
   })
 
   cleanupAnimations()
@@ -47329,7 +47512,7 @@ function startReplay() {
 function pauseReplay() {
   isPlaying.value = false;
   if (playInterval.value) {
-    raf.clearTimeout(playInterval.value);
+    raf.clear(playInterval.value);
     playInterval.value = null;
   }
   if (currentRecording.value) {
@@ -47582,7 +47765,7 @@ function isKeyEvent(event: BattleEvent): boolean {
 
 function cleanup() {
   if (playInterval.value) {
-    raf.clearTimeout(playInterval.value);
+    raf.clear(playInterval.value);
     playInterval.value = null;
   }
 }
@@ -51158,3 +51341,12 @@ export default defineConfig({
     globals: true,
   },
 })
+
+--- 文档/技能.md ---
+selector
+SkillScope
+target
+
+angular.element(document.querySelector('body')).scope().game.gameSpeed = 50
+
+MS4xLjEz|Q2hlYXRlciA6KAoKN4IgrgdglgLjCeAHApgZxALlFCA3KqUARgDbIAWAhjAMbnIBO8mIAjCADQgC2y1LrAHQAOAKwBOVgDZxAFgDsrVgCYAzMNbDlw5AGo1qziBKUGuSgMHLxUgAyyprectkK5o21PV7rRmgHsA/wgWWyMYRgZYfyYWVStVcTFhdVtheSk3W3lPPVZxeSNkCEYAc2YMNhlRQQd8zIUM2WEUowY0FBoAURKGctCjbhgADx6yirZxDzCuEuGwdErRPyZUGEoSAWVbHcGwddLiga5Edu59ykOQyuFBW1EFTXlxZVFtUVVReWEbHykjSioGjFQjBFiyIwAM3ayAASh1kDQWMsuAATBjBZAsKR3Z5SB7CWxJLyiN4pbI+bJGACOYGQR0qyhEojsSlEwky8hywlkrFULjyrVmaBgcUE7K5Py5qkSUw+TkkeUcRlK7WojFp9OuIHisnU4kSqj5fL1qjssjeeV5RnIUFwWMq8S+UjEvNNtlYEk9XjyymUNrtyE1DLYIlknj94ijUmULqmcnkqjyniK3FOaEWocUTi8CmyLnDHmsUj0kiMp38iHoosdtTxtlUDY0zg52w9sj0XJV/lRqIzLHEIljRp2GWlSVkBR0uky5coEBg9DBtf5mkkjYMLWUrF53z0HznC6XEH9lSEUfkEnSUm5O/x6leemtJ3ni+QwUMZ7uFs+ie59nkRoVHkPRVAhF8j3fCAIUqOR8jkF5lG+GMWnuQ832CZZKhmEB/HtBhuBwVFjlw/DCIgVFTxAHC8MYcjUU/aijFogiiJgpiuBY+isI40i6KI/5sKMVAAHdTG4EgcFKFh5EEPlSQlaxnlkbZVGcAUZxwtYpMYSxtgNQlnWLF0djNJNdHZYTECgPsGBYJkXQyRI3kSRQPnED1LQslEeH8VBaWiSwZTUPFCTNKNmh+WN90MLgSECBYa1DSM7Bcfk/VMsQWXEfccIxSg6GRQQbwUM0tEcJIfkydJlCfYQVSgV9UGs2zsUERMpDsSQiS+bdG0yJ9Ci4YEFygFA+xIsTmpIvtcH8MB2jsoSuFKfxl146BSnIGAiDAaSzxZf0uG4fxF3s3YuCIfhGQungLiPag6EYCYmR3CQphcWMJG+exXg7fQfPOdYFyupKcKB18aHikoSIhhdRPEsSGEQAQfHAu7gZgBgFnISwdnx/HpgJj0GzRvZMb4QqzzJ477pgaEgzx4mdlEGmMdfOYFiZ5miYJ2r9HRuH1gIiYhGZlm2aF3hrqYgBfNF1UwUA1lMCJiJu2MAFoG01o0ABUPQwHcMESOTPAALTaEVVeQdWQG2LX7G11Q9eN2MjdkKwXEtrhUEoe07YdqRtdkbX5AN0QjdYDAWUEBMfZAdooEhKBbfOx3Q+yCOo5jnEY1UBOob8tONeDnX9cN43TdYC2AV7ABVaAYD1qBeFRTWaFWdZNlLkOw4N2Rc4wD0zYLkB5dwxAYCgYJFmV8h/BEgBhKgGBgRYsbpWZTuoGftSBVPRpTmhNaxLhKFOKASAAMTWkhUD1+heEwSENlQZAuDfXgumGLGLEqceXAwCIFVJQPsc8QDokxBWO2iYbSPXoLERk/IjBQJKDAESOABA8mEtPCAhw16YO1PkYSSMJJSQwVgs84gijDEQPOUE2oPA+WDBAGB2IfIFVtMge0vAQbBC5ksKyNlGCUOITQrgrCxECBjEYEoax2FLCGr5fyYBojSOoXI5A8xUDsDPEYEwZhTA4ziBI4wCU1gaLYPVYUliiECBUm0fwXCrGaC0Toqi7AVpqgiAwVhiiQAeD8MUae41kCuJsSAUojV4YtVEfYs8kSppTwSdYlUPiNR0hCaklQsUQC2ntAE1wqCeHzUWhE7swRXHKIRgRSS+DkBpkXrpSoyjOaoEYl4kA7T2JdICEEaA+CBC4J0mcRAzSlogGUQU8JOSqSf0iNEJg2NUC4yEVwGZ/iMR23UMI2yjTxkiRaVMwYfkAowH8AciZMkDEWIiE0o5kzlHS03qsrYTiuFXMeTc4a0NkCGPMA6Xi0SmpxLGdc1p7iFg8S6ZsrJC5UkvGCaNMJXzjnKIOe0VAzVtlxCOiAIuJRxITD1OjCsVZwkBKQt2XsGYqV5PoZBYIASSEQQwieFlPlGXstUCy/F3LjyyACf8Nlx5RABJomRIiErmJSoosoGVnE5UMUVXxViFEhW4uWmq7iqquICVVZijMVjvjlgxBSuAqT8Q0vAWsVJDx0LHisY40VUFlBWM+I6qCqhqleuCLIKxOEBVQVEIG2V/EKJhqVRGyiUadVER9akyVMaA1JvDeq1Eoa03RozVIONyS0VPJKXNBajBC0/KiWtEoDz0WkMRqYFGyDIkQwiFQWgiDRbk3VLaWl2pnkXF8SY/RtN1gRHacMkd6piUTvZhEBm1IZ0trQGQpGja2BdoiJTNZ66J4q2ntpGgECiDwEbrAJWkCMQwywASySNAADWixNCyFmGAbgA5vwRg9EkJynxYwyH5tSz+RCICvvsiIF4UYxA2FEEoBQ+kXg+DMf8i+79UTXygAwNYmARxtgnqw89UMoD3sWEhVgL632VGaA4AoKgiQ7AtC8B4sigM4BAxR0MKRYO8k0PiJCGRSOsB8F05DiBUPocwzWAoXwzS7rIfU/aoBCPEcwJ1cjlhGhGmQnINIkhAI/B8PisRbGwMqXsOoFQLhbzWBsNOWMRQTCidtuJrDRtbB+hNLuvBBCCO3ofSp0QambjtTNNZlwNgGyFlM+ZP04RgOgaWO1TwYE/2OB+DsA0zhWb6AxQ5sTGGXOwfuPyXdYKfNEb8xgRwgWQA4g0CyaQPJPDODkJZmUbMjPxZAJ7BwnUNAXhUGybIl4QL6CQ7lpz+Wax3kg7YCe8iayKd84sXc1X8jMJlCkDy6MOvsbAr+BQEhXCEkAyAETeWJOYGkDsV4wgJ4nVUYFa9SmKtvFW4IGUHl0jqDUp6Vw4YowAbyTtlgtwuTsj1Ndmw/2+T9R8DllDE2LsYG0K8TQogJ7xRoIlMrynKvPu6Z124bmxAeg0DGZoMpEjWFs104HCXYyenZO4bcnVuo8hLPoEVp3xtocm5gXkHgVKyAnqqPgvj8NPaW5gZ44hqtqGaPiC0DwnCGbi+xgX3wMhfDgpIHBXAzuI5c80Z4N2J75Spot8riwYPVZUjyfIOQ3jbFdJeCQ2xYusc6zicMRJPsU6SwLprbMDe86R/iSQ2hZvDRCWNW2DpLe44UHL97nozT4j058SnSQ1A+B8nTnUdwwKJjUH1NS2QGxpBG42ezCPQ8Fb/OyBsIuYnr1K5Lq3/PbBvZ3KRlCGgOSeAMjlTnHuIDGa/JOaU4YzLl+3DxjnRoa+Obr1NxMKReTiAnsknHL3VBvY2zsFo9vPCmemCNtQo/x9TPakoMc0Z+T8imGBJwcOl/nZc68BSMGpATxmTv636Q1WVOvuFofou41qLGY+nWrw1gk4LwZmGUSEHoXOIezmNYrwdgWgeoE8s0ZSLSCeFWDg1WTGKQzYe2G4l4k4eYl+nWQgMo0ong6QF4OmHknoueb+hu6BLw0gU4IuVa/+/OUgq2rwaQaQKOhIcYNgSQt0+eNQ0g1UJUMGHI6gGQbmHOMW+uPOaB2GBoEg5ed2p0ayBBj6QhBO7G24zWNB5hKuY2te2hGAjWak4OE8/S/B7eieq2LwiYKgUwW4WgOQbmdmkBV++QSERo1g7IWg/h12QR3OdhfODh4YLoPIm+cUpg5gAhJsnhYRPhkRKOARfoXO+eoR3hERfhSBgRKBWhCRroLI+oc2UAW0O0e0mR2wQBmQakVhcQHR8Oy+9hHIN4aWygv+gYEuxhghXeZhA4agmg6WbwjwbwKgXRtYzgTw8B1UTYcBUwQmHBK+mA3BZUUYE8oMmR8gq2zQOExRFxux9hOYEWpIUep2aYWKECz2iwTQtucknwA2TYTgLkbwA0+gtOauRUTgigFoMgKE9wRI4R0WvR7+q+f4MongE8gII0jCmR+OV+22IJlGNxCR+Q9GdQt2k6C4KyRhN6HeDhb24s0JzMNc0WOJnu7GYs4svM+MDJwe1RSOhJnowEqR7MD07az0mRSgyeb0UY8xX0U4v0Dw7BwR0BckDGH0Kk4eP0KkcpAM+JPJrBjg4RE85K1YmRIWb2juTwLQh2mQnUnIgm+gquzJYoA22g/GRIFobmHk5OPgkSqBCRLOgExIrAfBtK2KxpGQ1WskFoPwR+24ZmUw9wDG7WuJoYu4iQAxDYbIY47ItpKCmh8RSOFhDxKgJJgpMA467hhBNJbJ4sAGTJUBLJdwVZzMNZ2pH+PGkRXgE8xQ4wopnh0wyxkwfZuZfRvp+QV2SgApway44xyOGgyelOPwFxjgJMzQ70C+lxSZsk9wHkBQKk1mjYWgqQC+thw5+ZJINGbmBpr4x4p405YEWJnW3WUmnow4EgMYNg+I9goE9pdZYorOX6akxu/IgEYEWWLqcRJ5H+XgUY9gLod2dM065ZJGlZPMiZDpX4tJWWLgLZ6BVpig6QjxQs86rRyFxMmFtZIRDZKFAs2FmAsYDgYgFUl5TKEAn405A2yesZBo4Yf63wGB9g/0vgCp5h72DgbmsG1pdgjYwFWWYENFM5HwLgXw6Orq/qrRAWUxZ4fINGEgh2eoGQ36/ZSgrkno8YrgakMg6Qcl/U+IFpgZpJEQXCPZGlbAqFP51M1FQ5CJ2GTWpGKkcFmMtS3Aq6TlIRrloVHl4FXlJsTWIWKgssxxJ6ICDAYC8eF60CWqbFrwnh8JnBKmqUN4nlnBAAyljKEIAPA6gAb6ZKDDy2BWA3iAL5IIIimIW0XfDVadTCbckuYmQU6FUr4lWTK2CVXVXbC1CtA4GXqzJUJsUWi27u59X2HQUfCmE+kSYDXlVVVSDRXihmgNXaQNKELTWUmJ7KDtU+SrUFYejaAugLWTbrXYTDVbVvAiAuh7VyYUIJLTl6jtVVF5mXX5DfG3VrWlUPWbUxyDjfENXaKMoYktUmwcirbvRyUMlqAeBA1rD3XUTDXyBGxMifBhB4bwqKJsV8irZwLo1TaaBk6TEXUwCY1DVVXiAYDNByR2ANVcKpy8IhJEACKvFS5Gyy7OWvDI1mg7ifAU302VV+jM1CB6jLAlYiKHXXBfXqVX6zgU2XamhRiC202S0VVqAxzxDa0NVSKfXHUVY7hnHOUhbI2YGZBkaRXFUg1Y361bUs320NXzbE3m2PpEjnHeldXoG95yAS3O0M1qQxxCAyAQgGEPYXIaJfX3nsYQGO17HI7Wk96h2DWVWuDp1Kn+hzbaILB6LTmq2dbnWB3YambWAO261h2VVfA1VWBlgY7pHGJvJw2JBJ3ghKBWVy3zFZ0bWN2ejihYUY53IJ0+386nXOUp203847hyC8iD1niVVEjDyDiuDsCF12JHVvGa0z1X4jhyXNByguAr1sBS3RyfCj0x1cDm7bRm373M176z3ozz0xzOCKBmgX2sCVWfDI6yR8j/CF0eKZFl3sYV1/U1hKUNji2p1oGY1/0VUAMeDvaeoi4ZJ+JE0ZVT2uYO0hHaByVfDPDfa/3/1bX5DvbjXR4opx6T3P3qBnXI1/gC4rWB2Y2yA51M1gRyQsgNUgqxKK0MP83hjtV5If1OAPjjkX1cMVWTjM2vQkJb6AgpJ7383wNq0SOV3I7bgpFo0IN3XO1SBr1M2uBxxBKYNi6ZJagiNUnANy71Ua3I51H0Yz111PJr0401zfgF0bKBje3P02CrZ8hyWxhEjPm10cPO3yDDWDwwaj3b1oilKlpK3GnCDiNhMpDaDyQX2xMVVvDDy3DyQCNVp2O46aNe74of3IkbE03ROTLiDDXRz2AiC7CybiTyblpw35CeEn3bmvBRi/2qD/3CC43ihRie1F0dLgPEFyWNYYEFWGPA2TJqBS22AuPFT1WgMLAwSl1zPOOOFKA8gX1rP60bNGhyQ4IuGBBVpSSzPOVQMQU1iNakhmhW0eP2QjPnMxw1DvN7VeZlo1pLRsWC0hHHlRX24yBGhRPQOY1nPS2Tgp5JP5KBjlMW2Nhy6dHOPcEwZmjqWfNniACUmsg6g3QdahPL4lEBcsskOirbbk81FQaMkUSBk8sxjc7awES8oGvdHNoHcEkA1XClqIE/zW1c5XIMjQ2J1H9my4S2wES3IwoMzd1s0HtWCt02xWyyEQHdA5dvcIUaIb/US6IMNaoMzTiKIQ1fducpcsC6Kdq7Qbq885diZaZAY/K1y8IM08zbVfjQ1ZjolJq3g5oKts61FU4PJBkFVuy3TZy9y986g7JB1da2LuSaca/VfuTbG5duCTmCpMa2c2aJ/cVI4mbs4k9Paz046yyeG7lUbOCTXcvbG0gwm//TjUSEqSi4SshkYqlc/YfdASw9IBtpOM3qCorcG8/U4GTSw28B5NMDs6gFhPs48yw6lCBY8cK9kuo/Y6G0LfMjmw23+DGGoC4THqilW2xVbSETlWnU4C0CpGpKoJ2c8XSrg8/TkOGXe7cc8KSA7sLr8piAhTNTe7QauCw1Ic7spbOhQE1UgmxatsjR5NkJnsMZOoOh3Yh85Z1XqwLR6GBNGB0wRMFT00M0LR5Mh6Rn6I2Co81FO/zdIKtr9S68jmJc0LRjgSk4tAx/Y6YSESx1FQ7IvaqXwZiFeyGxAwIIy/W/pLMTXOh08emNiui77YOyyZeGE9IE5OVAaeatWKK1SeyJk84yzv3iXnp5WNWKp5gCkOcdo3hwWQ8R2StD2LaoZ4njW8iLh6x3o1eNuf5eqGWdhyEVpxyBCRyExeyh5xVmpLbjhB/cOHYHAzB6tMGXaru7jhICE+/To0l5UROVeW6jFyRmB+YRC7J1BQaDsHZSAJOQipl4Qd3TcD50J1V/KPIIFw5SLCFbQWE1ab+KSF18gERT00h6ZwNzYOoFF9eTZybGC+XYJ7J2IEBaSMWfV7yh+4x155oqZwxU+t8DN96nN/u1fhoUe9ZaewaEd/6iV9LuGVZZ4C6J/i+xh8uvWsjL1yyY9zePGRoMN1ul9zOjU01myNNy4Yx4fp1+fHQJzY0iEhAmgsgHojhjsGiJNaeDeGLfjqwnolJh1L7O9fgnogp31PjtDQwnvCTw2KjZMTAPsDEI1D3DXJxkkJIvCqeMaJPg7ftQQiTzKI4F+90iKCT8lzdr7GCnotsDBk4JMUj5+NoB5CjvrnQpT8EKeOEeyKSMdGcmohcij56J4A8MKDoij9XZILYjAKeLyI2JODPawp+LyB1dkHFHcnoiuYZILaLuqNg1qO70weLwSlQA0vFPtNJjKK9onBW+QHos4GpN8JmyKJ+FI/RUwwShe3HiTw3mFCtC3s1IrVn99hvt4tY778UJz4ZPjKYcklL1/t/v4/aLX5gWlPfdH6eLGJQWIFbYFfJu314Z1NlyALz4wH39oI/jPfn7ZKP1FFlSora6Py8BZVwK3OMmvNhpbVRoLbgakyj9sLyMWCrzDXvJ+MiQBa4K71jmsBr3qGLfu8khry6LyPcKYSNKEnHg/zyM+1bYI63orR/5FPyBL4+8HeOhZ/KQVc7BAUeuhDyELxmSngncpUGdpWnV62dv8ZIdStv0WingxAfxPkg3yDDwo8efUSQvgOT45BYwx+E3gsE56qF5cBjbdieFzZ5sfc+uN9tiiz5Il+oh/NXtBFzZRhNMzbNEiCCp6XYUOrgVLBhxEH4dUOClfASALY5QVCQngVgcp1QDt8msiYaDCcH07hIpe2nScByFrpsCZmyOFXIYILZ1cdBVvWik4DgIuRXO6XPQa7iupssW0e8dvjxgi4rVVeEARhFhGHCfBISr9Q0uEgV5eBUydQBwbanb65g1A3UFShACl5nlFAbmKIRmDCFmRHgVtZJBkI0DwRX6r/WPH2FyHAMLBP/SfowBKGQlBaD9EoekAsGYDKhtFLwFoBRzqVVoH4ZoQ+D1AvAEhMQ9QF8GyD456u24LodBXoqE9OmUkMIXqDsD/sL+iUGYc5Cd46846/gJYVISY5D8wUGw7Sr7EBYMAZh4YHcJOHPhAhhBkApIaJTsB2AEhCvFIPbV1x9D2+OA3QjuDuFS8VuilS8H0PuGEg5AXgB2htw16BE4yXwBIdaGioD9bK3A3wXvEEjWUtAbzSQZ0KhGO4OOdwz8KlkrwD8IRmPJ4DeByCvcQAYkYUurGAC7o70Y0caAAFkr4kkEjJIAuJqQDIXAfCLDWVjCw1YlgIQKE19j+wS4oYXkYYFRKw8eE8PeGEVQXgiRlap2UwCUHVivx74H8cAESgYAKjMAm8FUdwEBB3oS4WoziAwFaiVA+wr8MACQFFD31xRmGB0FqPipAA

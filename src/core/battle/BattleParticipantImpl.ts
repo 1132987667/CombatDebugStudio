@@ -4,7 +4,7 @@
  * 作者: CombatDebugStudio
  * 功能: 战斗参与者实现类
  * 描述: 使用 Class 替代对象字面量，方法在原型上共享，提升内存效率和代码可维护性
- * 版本: 1.0.0
+ * 版本: 2.0.0 - 添加属性缓存系统
  */
 
 import type {
@@ -16,6 +16,16 @@ import type {
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
 import type { UIBattleCharacter, UISkills } from '@/types/UI/UIBattleCharacter'
+import type {
+  AttributeValue,
+  ModifierDetail,
+  AttributeName,
+  IModifierProvider,
+  IModifierStack,
+  ModifierSourceType,
+} from '@/types/attribute'
+import { AttributeNames } from '@/types/attribute'
+import type { Modifier, ModifierType, AttributeType } from '@/types/modifier'
 
 /**
  * 参与者初始化数据接口
@@ -79,6 +89,7 @@ export interface ParticipantInitData {
 /**
  * 战斗参与者实现类
  * 使用 Class 替代对象字面量，方法在原型上共享
+ * 使用属性缓存系统管理属性值
  */
 export class BattleParticipantImpl implements BattleParticipant {
   /** 参与者唯一标识符 */
@@ -91,51 +102,25 @@ export class BattleParticipantImpl implements BattleParticipant {
   type: ParticipantSide
   /** 队伍归属 */
   team: ParticipantSide
-  /** 当前生命值 */
-  currentHealth: number
-  /** 最大生命值 */
-  maxHealth: number
-  /** 当前能量值 */
-  currentEnergy: number
-  /** 最大能量值 */
-  maxEnergy: number
   /** Buff列表 */
   buffs: string[]
 
-  /** 速度值 */
-  speed: number
-  /** 最小攻击力 */
-  minAttack: number
-  /** 最大攻击力 */
-  maxAttack: number
-  /** 平均攻击力 */
-  attack: number
-  /** 防御力 */
-  defense: number
-  /** 暴击率 */
-  critRate: number
-  /** 暴击伤害 */
-  critDamage: number
-  /** 免伤率 */
-  damageReduction: number
-  /** 气血加成 */
-  healthBonus: number
-  /** 攻击加成 */
-  attackBonus: number
-  /** 防御加成 */
-  defenseBonus: number
-  /** 速度加成 */
-  speedBonus: number
-  /** 状态效果列表 */
-  statusEffects?: StatusEffect[]
   /** 技能配置 */
   skills: {
     small?: SkillConfig[]
     passive?: SkillConfig[]
     ultimate?: SkillConfig[]
   }
+  /** 状态效果列表 */
+  statusEffects?: StatusEffect[]
   /** 技能冷却状态映射，key为技能ID，value为剩余冷却回合数 */
   skillCooldowns: Map<string, number>
+
+  /** 属性缓存 Map */
+  private attributes: Map<AttributeName, AttributeValue> = new Map()
+
+  /** 修饰符提供者引用（用于属性计算，解耦 BuffSystem） */
+  private _modifierProvider: IModifierProvider | null = null
 
   /**
    * 从UI角色创建战斗参与者实例
@@ -226,27 +211,467 @@ export class BattleParticipantImpl implements BattleParticipant {
     this.level = data.level
     this.type = data.type
     this.team = data.team
-    this.maxHealth = data.maxHealth
-    this.currentHealth = data.currentHealth ?? data.maxHealth
-    this.maxEnergy = data.maxEnergy ?? 100
-    this.currentEnergy = data.currentEnergy ?? 25
     this.buffs = data.buffs ?? []
-
-    this.speed = data.speed
-    this.minAttack = data.minAttack
-    this.maxAttack = data.maxAttack
-    this.attack = (data.minAttack + data.maxAttack) / 2
-    this.defense = data.defense
-    this.critRate = data.critRate ?? 10
-    this.critDamage = data.critDamage ?? 125
-    this.damageReduction = data.damageReduction ?? 0
-    this.healthBonus = data.healthBonus ?? 0
-    this.attackBonus = data.attackBonus ?? 0
-    this.defenseBonus = data.defenseBonus ?? 0
-    this.speedBonus = data.speedBonus ?? 0
     this.statusEffects = data.statusEffects
     this.skills = data.skills ?? {}
     this.skillCooldowns = new Map<string, number>()
+
+    this.initAttribute(AttributeNames.MAX_HP, data.maxHealth)
+    this.initAttribute(AttributeNames.HP, data.currentHealth ?? data.maxHealth)
+    this.initAttribute(AttributeNames.MAX_ENERGY, data.maxEnergy ?? 100)
+    this.initAttribute(AttributeNames.ENERGY, data.currentEnergy ?? 25)
+    this.initAttribute(
+      AttributeNames.ATK,
+      (data.minAttack + data.maxAttack) / 2,
+    )
+    this.initAttribute(AttributeNames.MIN_ATK, data.minAttack)
+    this.initAttribute(AttributeNames.MAX_ATK, data.maxAttack)
+    this.initAttribute(AttributeNames.DEF, data.defense)
+    this.initAttribute(AttributeNames.SPD, data.speed)
+    this.initAttribute(AttributeNames.CRIT_RATE, data.critRate ?? 10, true)
+    this.initAttribute(AttributeNames.CRIT_DMG, data.critDamage ?? 125, true)
+    this.initAttribute(AttributeNames.DMG_RED, data.damageReduction ?? 0, true)
+
+    this.markAllDirty()
+  }
+
+  /**
+   * 设置修饰符提供者引用
+   * @param provider 修饰符提供者实例
+   */
+  setModifierProvider(provider: IModifierProvider): void {
+    this._modifierProvider = provider
+    this.markAllDirty()
+  }
+
+  /**
+   * 设置Buff系统引用（向后兼容）
+   * @param buffSystem Buff系统实例
+   * @deprecated 请使用 setModifierProvider 方法
+   */
+  setBuffSystem(buffSystem: any): void {
+    if (buffSystem && typeof buffSystem.getModifierStack === 'function') {
+      this._modifierProvider = buffSystem as IModifierProvider
+      this.markAllDirty()
+    }
+  }
+
+  /**
+   * 初始化属性基础值
+   * @param attr 属性名称
+   * @param baseValue 基础值
+   * @param isPercentage 是否为百分比属性
+   */
+  private initAttribute(
+    attr: AttributeName,
+    baseValue: number,
+    isPercentage: boolean = false,
+  ): void {
+    this.attributes.set(attr, {
+      value: baseValue,
+      base: baseValue,
+      modifiers: [],
+      isPercentage,
+      dirty: true,
+    })
+  }
+
+  /**
+   * 标记单个属性为脏（需要重新计算）
+   * @param attr 属性名称
+   */
+  markDirty(attr: AttributeName): void {
+    const attrData = this.attributes.get(attr)
+    if (attrData) {
+      attrData.dirty = true
+    }
+  }
+
+  /**
+   * 标记所有属性为脏（需要重新计算）
+   */
+  markAllDirty(): void {
+    for (const attrData of this.attributes.values()) {
+      attrData.dirty = true
+    }
+  }
+
+  /**
+   * 重新计算单个属性（应用所有修饰符）
+   * @param attr 属性名称
+   */
+  private recalcAttribute(attr: AttributeName): void {
+    const attrData = this.attributes.get(attr)
+    if (!attrData || !attrData.dirty) return
+
+    const baseValue = attrData.base
+    let finalValue = baseValue
+    const modifierDetails: ModifierDetail[] = []
+
+    if (this._modifierProvider) {
+      const modifierStack = this._modifierProvider.getModifierStack(this.id)
+      if (modifierStack) {
+        const modifiers = modifierStack.getModifiers(attr as AttributeType)
+
+        let percentSum = 0
+        for (const mod of modifiers) {
+          if (mod.type === 'PERCENTAGE') {
+            percentSum += mod.value
+            modifierDetails.push({
+              source:
+                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
+                mod.buffInstanceId,
+              sourceType: this._modifierProvider.getSourceType(
+                mod.buffInstanceId,
+              ),
+              value: mod.value,
+              type: 'percent',
+            })
+          }
+        }
+        if (percentSum !== 0) {
+          finalValue += baseValue * percentSum
+        }
+
+        let addSum = 0
+        for (const mod of modifiers) {
+          if (mod.type === 'ADDITIVE') {
+            addSum += mod.value
+            modifierDetails.push({
+              source:
+                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
+                mod.buffInstanceId,
+              sourceType: this._modifierProvider.getSourceType(
+                mod.buffInstanceId,
+              ),
+              value: mod.value,
+              type: 'add',
+            })
+          }
+        }
+        finalValue += addSum
+
+        let multiplyFactor = 1
+        for (const mod of modifiers) {
+          if (mod.type === 'MULTIPLICATIVE') {
+            multiplyFactor *= 1 + mod.value
+            modifierDetails.push({
+              source:
+                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
+                mod.buffInstanceId,
+              sourceType: this._modifierProvider.getSourceType(
+                mod.buffInstanceId,
+              ),
+              value: mod.value,
+              type: 'multiply',
+            })
+          }
+        }
+        finalValue *= multiplyFactor
+      }
+    }
+
+    if (attr === AttributeNames.HP) {
+      const maxHp = this.getAttributeValue(AttributeNames.MAX_HP)
+      finalValue = Math.max(0, Math.min(finalValue, maxHp))
+    }
+    if (attr === AttributeNames.ENERGY) {
+      const maxEnergy = this.getAttributeValue(AttributeNames.MAX_ENERGY)
+      finalValue = Math.max(0, Math.min(finalValue, maxEnergy))
+    }
+
+    attrData.value = finalValue
+    attrData.modifiers = modifierDetails
+    attrData.dirty = false
+  }
+
+  /**
+   * 获取属性最终值（自动触发重新计算）
+   * @param attr 属性名称
+   * @returns 属性最终值
+   */
+  getAttributeValue(attr: AttributeName): number {
+    const attrData = this.attributes.get(attr)
+    if (!attrData) return 0
+
+    if (attrData.dirty) {
+      this.recalcAttribute(attr)
+    }
+
+    return attrData.value
+  }
+
+  /**
+   * 获取属性值对象（包含详细信息）
+   * @param attr 属性名称
+   * @returns 属性值对象
+   */
+  getAttributeValueObject(attr: AttributeName): AttributeValue | undefined {
+    const attrData = this.attributes.get(attr)
+    if (!attrData) return undefined
+
+    if (attrData.dirty) {
+      this.recalcAttribute(attr)
+    }
+
+    return attrData
+  }
+
+  /**
+   * 获取属性基础值
+   * @param attr 属性名称
+   * @returns 属性基础值
+   */
+  getAttributeBase(attr: AttributeName): number {
+    const attrData = this.attributes.get(attr)
+    return attrData?.base ?? 0
+  }
+
+  /**
+   * 设置属性基础值
+   * @param attr 属性名称
+   * @param value 基础值
+   */
+  setAttributeBase(attr: AttributeName, value: number): void {
+    const attrData = this.attributes.get(attr)
+    if (attrData) {
+      attrData.base = value
+      attrData.dirty = true
+    }
+  }
+
+  /**
+   * 获取当前生命值
+   */
+  get currentHealth(): number {
+    return this.getAttributeValue(AttributeNames.HP)
+  }
+
+  /**
+   * 设置当前生命值
+   */
+  set currentHealth(value: number) {
+    const attrData = this.attributes.get(AttributeNames.HP)
+    if (attrData) {
+      const maxHp = this.getAttributeValue(AttributeNames.MAX_HP)
+      attrData.value = Math.max(0, Math.min(value, maxHp))
+      attrData.dirty = false
+    }
+  }
+
+  /**
+   * 获取最大生命值
+   */
+  get maxHealth(): number {
+    return this.getAttributeValue(AttributeNames.MAX_HP)
+  }
+
+  /**
+   * 设置最大生命值
+   */
+  set maxHealth(value: number) {
+    this.setAttributeBase(AttributeNames.MAX_HP, value)
+  }
+
+  /**
+   * 获取当前能量值
+   */
+  get currentEnergy(): number {
+    return this.getAttributeValue(AttributeNames.ENERGY)
+  }
+
+  /**
+   * 设置当前能量值
+   */
+  set currentEnergy(value: number) {
+    const attrData = this.attributes.get(AttributeNames.ENERGY)
+    if (attrData) {
+      const maxEnergy = this.getAttributeValue(AttributeNames.MAX_ENERGY)
+      attrData.value = Math.max(0, Math.min(value, maxEnergy))
+      attrData.dirty = false
+    }
+  }
+
+  /**
+   * 获取最大能量值
+   */
+  get maxEnergy(): number {
+    return this.getAttributeValue(AttributeNames.MAX_ENERGY)
+  }
+
+  /**
+   * 设置最大能量值
+   */
+  set maxEnergy(value: number) {
+    this.setAttributeBase(AttributeNames.MAX_ENERGY, value)
+  }
+
+  /**
+   * 获取速度值
+   */
+  get speed(): number {
+    return this.getAttributeValue(AttributeNames.SPD)
+  }
+
+  /**
+   * 设置速度值
+   */
+  set speed(value: number) {
+    this.setAttributeBase(AttributeNames.SPD, value)
+  }
+
+  /**
+   * 获取最小攻击力
+   */
+  get minAttack(): number {
+    return this.getAttributeValue(AttributeNames.MIN_ATK)
+  }
+
+  /**
+   * 设置最小攻击力
+   */
+  set minAttack(value: number) {
+    this.setAttributeBase(AttributeNames.MIN_ATK, value)
+  }
+
+  /**
+   * 获取最大攻击力
+   */
+  get maxAttack(): number {
+    return this.getAttributeValue(AttributeNames.MAX_ATK)
+  }
+
+  /**
+   * 设置最大攻击力
+   */
+  set maxAttack(value: number) {
+    this.setAttributeBase(AttributeNames.MAX_ATK, value)
+  }
+
+  /**
+   * 获取平均攻击力
+   */
+  get attack(): number {
+    return this.getAttributeValue(AttributeNames.ATK)
+  }
+
+  /**
+   * 设置平均攻击力
+   */
+  set attack(value: number) {
+    this.setAttributeBase(AttributeNames.ATK, value)
+  }
+
+  /**
+   * 获取防御力
+   */
+  get defense(): number {
+    return this.getAttributeValue(AttributeNames.DEF)
+  }
+
+  /**
+   * 设置防御力
+   */
+  set defense(value: number) {
+    this.setAttributeBase(AttributeNames.DEF, value)
+  }
+
+  /**
+   * 获取暴击率
+   */
+  get critRate(): number {
+    return this.getAttributeValue(AttributeNames.CRIT_RATE)
+  }
+
+  /**
+   * 设置暴击率
+   */
+  set critRate(value: number) {
+    this.setAttributeBase(AttributeNames.CRIT_RATE, value)
+  }
+
+  /**
+   * 获取暴击伤害
+   */
+  get critDamage(): number {
+    return this.getAttributeValue(AttributeNames.CRIT_DMG)
+  }
+
+  /**
+   * 设置暴击伤害
+   */
+  set critDamage(value: number) {
+    this.setAttributeBase(AttributeNames.CRIT_DMG, value)
+  }
+
+  /**
+   * 获取免伤率
+   */
+  get damageReduction(): number {
+    return this.getAttributeValue(AttributeNames.DMG_RED)
+  }
+
+  /**
+   * 设置免伤率
+   */
+  set damageReduction(value: number) {
+    this.setAttributeBase(AttributeNames.DMG_RED, value)
+  }
+
+  /**
+   * 获取气血加成
+   */
+  get healthBonus(): number {
+    return 0
+  }
+
+  /**
+   * 设置气血加成
+   */
+  set healthBonus(value: number) {
+    // 保留兼容性
+  }
+
+  /**
+   * 获取攻击加成
+   */
+  get attackBonus(): number {
+    return 0
+  }
+
+  /**
+   * 设置攻击加成
+   */
+  set attackBonus(value: number) {
+    // 保留兼容性
+  }
+
+  /**
+   * 获取防御加成
+   */
+  get defenseBonus(): number {
+    return 0
+  }
+
+  /**
+   * 设置防御加成
+   */
+  set defenseBonus(value: number) {
+    // 保留兼容性
+  }
+
+  /**
+   * 获取速度加成
+   */
+  get speedBonus(): number {
+    return 0
+  }
+
+  /**
+   * 设置速度加成
+   */
+  set speedBonus(value: number) {
+    // 保留兼容性
   }
 
   /**
@@ -255,34 +680,37 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @returns 属性值
    */
   getAttribute(attribute: string): number {
-    switch (attribute) {
-      case 'HP':
-        return this.currentHealth
-      case 'MAX_HP':
-        return this.maxHealth
-      case 'ATK':
-        return this.getRandomAttack()
-      case 'MIN_ATK':
-        return this.minAttack
-      case 'MAX_ATK':
-        return this.maxAttack
-      case 'DEF':
-        return this.defense
-      case 'SPD':
-        return this.speed
-      case 'CRIT_RATE':
-        return this.critRate
-      case 'CRIT_DMG':
-        return this.critDamage
-      case 'DMG_RED':
-        return this.damageReduction
-      case 'energy':
-        return this.currentEnergy
-      case 'max_energy':
-        return this.maxEnergy
-      default:
-        return 0
+    const attrName = this.normalizeAttributeName(attribute)
+    return this.getAttributeValue(attrName)
+  }
+
+  /**
+   * 标准化属性名称
+   * @param attribute 原始属性名称
+   * @returns 标准化后的属性名称
+   */
+  private normalizeAttributeName(attribute: string): AttributeName {
+    const mapping: Record<string, AttributeName> = {
+      HP: AttributeNames.HP,
+      MAX_HP: AttributeNames.MAX_HP,
+      ATK: AttributeNames.ATK,
+      MIN_ATK: AttributeNames.MIN_ATK,
+      MAX_ATK: AttributeNames.MAX_ATK,
+      DEF: AttributeNames.DEF,
+      SPD: AttributeNames.SPD,
+      CRIT_RATE: AttributeNames.CRIT_RATE,
+      CRIT_DMG: AttributeNames.CRIT_DMG,
+      DMG_RED: AttributeNames.DMG_RED,
+      energy: AttributeNames.ENERGY,
+      max_energy: AttributeNames.MAX_ENERGY,
+      attack: AttributeNames.ATK,
+      defense: AttributeNames.DEF,
+      speed: AttributeNames.SPD,
+      critRate: AttributeNames.CRIT_RATE,
+      critDamage: AttributeNames.CRIT_DMG,
+      damageReduction: AttributeNames.DMG_RED,
     }
+    return mapping[attribute] || (attribute as AttributeName)
   }
 
   /**
@@ -291,10 +719,9 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @returns 随机攻击力
    */
   getRandomAttack(): number {
-    return (
-      Math.floor(Math.random() * (this.maxAttack - this.minAttack + 1)) +
-      this.minAttack
-    )
+    const minAtk = this.getAttributeValue(AttributeNames.MIN_ATK)
+    const maxAtk = this.getAttributeValue(AttributeNames.MAX_ATK)
+    return Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
   }
 
   /**
@@ -303,48 +730,47 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @param value - 属性值
    */
   setAttribute(attribute: string, value: number): void {
-    switch (attribute) {
-      case 'HP':
-        this.currentHealth = Math.max(0, Math.min(value, this.maxHealth))
+    const attrName = this.normalizeAttributeName(attribute)
+
+    switch (attrName) {
+      case AttributeNames.HP:
+        this.currentHealth = value
         break
-      case 'energy':
-        this.currentEnergy = Math.max(0, Math.min(value, this.maxEnergy))
+      case AttributeNames.ENERGY:
+        this.currentEnergy = value
         break
-      case 'MAX_HP':
-        this.maxHealth = Math.max(0, value)
+      case AttributeNames.MAX_HP:
+        this.maxHealth = value
         break
-      case 'max_energy':
-        this.maxEnergy = Math.max(0, value)
+      case AttributeNames.MAX_ENERGY:
+        this.maxEnergy = value
         break
-      case 'ATK':
-      case 'attack':
+      case AttributeNames.ATK:
         this.attack = value
         break
-      case 'MIN_ATK':
+      case AttributeNames.MIN_ATK:
         this.minAttack = value
         break
-      case 'MAX_ATK':
+      case AttributeNames.MAX_ATK:
         this.maxAttack = value
         break
-      case 'DEF':
-      case 'defense':
+      case AttributeNames.DEF:
         this.defense = value
         break
-      case 'SPD':
-      case 'speed':
+      case AttributeNames.SPD:
         this.speed = value
         break
-      case 'CRIT_RATE':
-      case 'critRate':
+      case AttributeNames.CRIT_RATE:
         this.critRate = value
         break
-      case 'CRIT_DMG':
-      case 'critDamage':
+      case AttributeNames.CRIT_DMG:
         this.critDamage = value
         break
-      case 'DMG_RED':
-      case 'damageReduction':
+      case AttributeNames.DMG_RED:
         this.damageReduction = value
+        break
+      default:
+        this.setAttributeBase(attrName, value)
         break
     }
   }
@@ -386,11 +812,6 @@ export class BattleParticipantImpl implements BattleParticipant {
     const damage = Math.max(0, amount)
     this.currentHealth = Math.max(0, this.currentHealth - damage)
     this.gainEnergy(15)
-
-    // 触发受击时的被动技能
-    // 注意：这里需要通过某种方式获取PassiveSkillManager实例
-    // 由于依赖注入的限制，我们暂时不在这里直接触发
-    // 而是在BattleSystem的伤害处理中触发
 
     return damage
   }
@@ -448,9 +869,9 @@ export class BattleParticipantImpl implements BattleParticipant {
 
   getSkillList(): SkillConfig[] {
     return [
-      ...this.skills.small,
-      ...this.skills.passive,
-      ...this.skills.ultimate,
+      ...(this.skills.small || []),
+      ...(this.skills.passive || []),
+      ...(this.skills.ultimate || []),
     ]
   }
 
@@ -506,6 +927,7 @@ export class BattleParticipantImpl implements BattleParticipant {
   addBuff(buffInstanceId: string): void {
     if (!this.buffs.includes(buffInstanceId)) {
       this.buffs.push(buffInstanceId)
+      this.markAllDirty()
     }
   }
 
@@ -514,7 +936,11 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @param buffInstanceId - Buff实例ID
    */
   removeBuff(buffInstanceId: string): void {
-    this.buffs = this.buffs.filter((id) => id !== buffInstanceId)
+    const index = this.buffs.indexOf(buffInstanceId)
+    if (index !== -1) {
+      this.buffs.splice(index, 1)
+      this.markAllDirty()
+    }
   }
 
   /**

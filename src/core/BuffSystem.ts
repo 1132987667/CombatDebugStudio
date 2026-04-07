@@ -4,11 +4,16 @@
  * 作者: CombatDebugStudio
  * 功能: Buff系统
  * 描述: 负责管理Buff实例的生命周期、状态更新和修饰符堆栈，使用单例模式确保系统全局唯一
- * 版本: 1.0.0
+ * 版本: 2.0.0 - 实现 IModifierProvider 接口
  */
 
 import type { BuffConfig, BuffInstance } from '@/types/buff'
 import type { CombatRecord } from '@/types/combat-record'
+import type {
+  IModifierProvider,
+  IModifierStack,
+  ModifierSourceType,
+} from '@/types/attribute'
 import { StackRule, ControlType } from '@/types/buff'
 import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
 import { BuffContext } from '@/core/BuffContext'
@@ -21,9 +26,10 @@ import { battleLogManager } from '@/utils/logging'
  * Buff系统类
  * 负责管理Buff实例的生命周期、状态更新和修饰符堆栈
  * 使用单例模式确保系统全局唯一
+ * 实现 IModifierProvider 接口，支持依赖解耦
  * 注意：不再使用Vue的reactive，避免在纯业务逻辑层引入不必要的响应式开销
  */
-export class BuffSystem {
+export class BuffSystem implements IModifierProvider {
   /** Buff实例映射，以实例ID为键 */
   private buffInstances = new Map<string, BuffInstance>()
   /** 需要更新的Buff实例ID集合，只包含有实际更新逻辑的Buff */
@@ -36,6 +42,8 @@ export class BuffSystem {
   private readonly scriptRegistry: BuffScriptRegistry
   /** 日志记录器 */
   private readonly logger = battleLogManager
+  /** 调试模式标志 */
+  private _debugMode: boolean = false
 
   /**
    * 构造函数
@@ -368,5 +376,74 @@ export class BuffSystem {
   public update(deltaTime: number): void {
     // 向后兼容，实际逻辑已移至updatePerTurn
     // 这里可以留空，或者添加警告信息
+  }
+
+  /**
+   * 根据Buff实例ID获取Buff名称
+   * @param instanceId Buff实例ID
+   * @returns Buff名称，如果不存在则返回null
+   */
+  public getBuffNameByInstanceId(instanceId: string): string | null {
+    const instance = this.buffInstances.get(instanceId)
+    if (!instance) {
+      return null
+    }
+    const config = this.scriptRegistry.getBuffConfig(instance.buffId)
+    return config?.name || instance.buffId
+  }
+
+  /**
+   * 根据Buff实例ID获取Buff配置
+   * @param instanceId Buff实例ID
+   * @returns Buff配置，如果不存在则返回null
+   */
+  public getBuffConfigByInstanceId(instanceId: string): BuffConfig | null {
+    const instance = this.buffInstances.get(instanceId)
+    if (!instance) {
+      return null
+    }
+    return this.scriptRegistry.getBuffConfig(instance.buffId) || null
+  }
+
+  /**
+   * 获取修饰符来源名称（IModifierProvider 接口实现）
+   * @param sourceId 来源ID（如 buffInstanceId）
+   * @returns 来源名称，不存在则返回 null
+   */
+  public getSourceName(sourceId: string): string | null {
+    return this.getBuffNameByInstanceId(sourceId)
+  }
+
+  /**
+   * 获取修饰符来源类型（IModifierProvider 接口实现）
+   * @param sourceId 来源ID
+   * @returns 来源类型
+   */
+  public getSourceType(sourceId: string): ModifierSourceType {
+    const instance = this.buffInstances.get(sourceId)
+    if (instance) {
+      const config = this.scriptRegistry.getBuffConfig(instance.buffId)
+      if (config?.isDebuff) {
+        return 'buff'
+      }
+      return 'buff'
+    }
+    return 'buff'
+  }
+
+  /**
+   * 检查是否处于调试模式（IModifierProvider 接口实现）
+   * @returns 是否处于调试模式
+   */
+  public isDebugMode(): boolean {
+    return this._debugMode
+  }
+
+  /**
+   * 设置调试模式
+   * @param enabled 是否启用调试模式
+   */
+  public setDebugMode(enabled: boolean): void {
+    this._debugMode = enabled
   }
 }

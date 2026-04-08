@@ -132,17 +132,13 @@ export class InterventionManager {
    */
   adjustStats(stats: { hp: number; energy: number }) {
     if (this.selectedChar) {
-      const maxHp = GameDataProcessor.getAttributeValue(this.selectedChar.maxHp)
-      const maxEnergy = GameDataProcessor.getAttributeValue(
-        this.selectedChar.maxEnergy,
-      )
-      const currentEnergy = GameDataProcessor.getAttributeValue(
-        this.selectedChar.currentEnergy,
-      )
+      const maxHp = this.selectedChar.maxHealth
+      const maxEnergy = this.selectedChar.maxEnergy
+      const currentEnergy = this.selectedChar.currentEnergy
 
       const newHp = Math.max(
         0,
-        Math.min(maxHp, this.selectedChar.currentHp + stats.hp),
+        Math.min(maxHp, this.selectedChar.currentHealth + stats.hp),
       )
       const newEnergy = Math.max(
         0,
@@ -150,7 +146,7 @@ export class InterventionManager {
       )
 
       this.battleStateManager.updateCharacterManually(this.selectedChar.id, {
-        currentHp: newHp,
+        currentHealth: newHp,
         currentEnergy: newEnergy,
       })
 

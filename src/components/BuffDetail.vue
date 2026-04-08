@@ -96,8 +96,6 @@ const attributes = computed((): AttributeDisplay[] => {
     'health': '生命值',
     'critRate': '暴击率',
     'critDamage': '暴击伤害',
-    'physicalDamageTaken': '物理伤害',
-    'magicDamageTaken': '魔法伤害',
     'slowImmune': '减速抗性',
     'demonDamage': '对恶魔伤害',
     'buddhistDamage': '对佛系伤害'

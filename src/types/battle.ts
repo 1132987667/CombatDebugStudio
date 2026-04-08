@@ -155,14 +155,75 @@ export interface BattleEntity {
   name: string
   level: number
   type: ParticipantSide
-  currentHealth: number
-  maxHealth: number
-  currentEnergy: number
-  maxEnergy: number
+  /** 队伍归属 */
+  team: ParticipantSide
+  /** 是否启用 */
+  enabled: boolean
+  /** Buff列表 */
   buffs: string[]
+  /** 状态效果列表 */
+  statusEffects?: StatusEffect[]
+  /** 技能配置 */
+  skills: {
+    small?: SkillConfig[]
+    passive?: SkillConfig[]
+    ultimate?: SkillConfig[]
+  }
 
-  getAttribute(attribute: string): number
+  /** 当前生命值 */
+  currentHealth: AttributeValue
+  /** 最大生命值 */
+  maxHealth: AttributeValue
+  /** 当前能量值 */
+  currentEnergy: AttributeValue
+  /** 最大能量值 */
+  maxEnergy: AttributeValue
+  /** 最小攻击力 */
+  minAttack: AttributeValue
+  /** 最大攻击力 */
+  maxAttack: AttributeValue
+  /** 平均攻击力（计算值） */
+  attack: AttributeValue
+  /** 防御力 */
+  defense: AttributeValue
+  /** 速度值（用于回合顺序计算） */
+  speed: AttributeValue
+  /** 暴击率（百分比，0-100） */
+  critRate: AttributeValue
+  /** 暴击伤害（百分比，≥100） */
+  critDamage: AttributeValue
+  /** 免伤率（百分比，0-100） */
+  damageReduction: AttributeValue
+  /** 气血加成（百分比） */
+  healthBonus: AttributeValue
+  /** 攻击加成（百分比） */
+  attackBonus: AttributeValue
+  /** 防御加成（百分比） */
+  defenseBonus: AttributeValue
+  /** 速度加成（百分比） */
+  speedBonus: AttributeValue
+
+  /** 获取属性值对象（包含详细信息） */
+  getAttributeValue(attribute: AttributeType | string): AttributeValue | undefined
+  /** 获取属性最终值（快捷方法） */
+  getAttribute(attribute: AttributeType | string): number
+  /** 快捷获取属性最终值（number） */
+  getAttr(attr: AttributeType): number
+  /** 快捷获取属性值对象（包含基础值、修饰符等） */
+  getAttrValue(attr: AttributeType): AttributeValue | undefined
+  /** 批量预计算所有属性（回合开始时调用） */
+  recalcAll(): void
+  /** 设置属性值 */
   setAttribute(attribute: string, value: number): void
+  /** 标记属性为脏（需要重新计算） */
+  markDirty(attribute: AttributeType | string): void
+  /** 标记所有属性为脏 */
+  markAllDirty(): void
+  /** 重新计算所有属性 */
+  recalculateAll(): void
+  /** 设置修饰符提供者 */
+  setModifierProvider(provider: IModifierProvider): void
+
   addBuff(buffInstanceId: string): void
   removeBuff(buffInstanceId: string): void
   hasBuff(buffId: string): boolean
@@ -182,58 +243,11 @@ export interface BattleEntity {
 }
 
 /**
- * 战斗参与者接口
- * 表示参与战斗的实体（角色或敌人）
- * 扩展 BattleEntity 接口，添加战斗相关属性和属性系统方法
+ * 战斗参与者类型别名
+ * 为了向后兼容，保留 BattleParticipant 作为 BattleEntity 的别名
+ * @deprecated 请使用 BattleEntity 代替
  */
-export interface BattleParticipant extends BattleEntity {
-  /** 队伍归属 */
-  team: ParticipantSide
-  /** 速度值（用于回合顺序计算） */
-  speed: number
-  /** 最小攻击力 */
-  minAttack: number
-  /** 最大攻击力 */
-  maxAttack: number
-  /** 平均攻击力（计算值） */
-  attack: number
-  /** 防御力 */
-  defense: number
-  /** 暴击率（百分比，0-100） */
-  critRate: number
-  /** 暴击伤害（百分比，≥100） */
-  critDamage: number
-  /** 免伤率（百分比，0-100） */
-  damageReduction: number
-  /** 气血加成（百分比） */
-  healthBonus: number
-  /** 攻击加成（百分比） */
-  attackBonus: number
-  /** 防御加成（百分比） */
-  defenseBonus: number
-  /** 速度加成（百分比） */
-  speedBonus: number
-  /** 状态效果列表 */
-  statusEffects?: StatusEffect[]
-  /** 技能配置 */
-  skills: {
-    small?: SkillConfig[]
-    passive?: SkillConfig[]
-    ultimate?: SkillConfig[]
-  }
-  /** 获取属性值对象（包含详细信息） */
-  getAttributeValue(attribute: AttributeType | string): AttributeValue | undefined
-  /** 获取属性最终值（快捷方法） */
-  getAttribute(attribute: AttributeType | string): number
-  /** 标记属性为脏（需要重新计算） */
-  markDirty(attribute: AttributeType | string): void
-  /** 标记所有属性为脏 */
-  markAllDirty(): void
-  /** 重新计算所有属性 */
-  recalculateAll(): void
-  /** 设置修饰符提供者 */
-  setModifierProvider(provider: IModifierProvider): void
-}
+export type BattleParticipant = BattleEntity
 
 /**
  * 状态效果接口

@@ -10,7 +10,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
    * 获取属性名称
    * @returns 属性名称（如 'ATK', 'DEF', 'SPD' 等）
    */
-  protected abstract getAttributeName(): string
+  protected abstract getAttributeCode(): string
 
   /**
    * 获取修饰符类型
@@ -50,7 +50,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
    * @returns 变量名前缀
    */
   protected getVariablePrefix(): string {
-    return this.getAttributeName().toLowerCase()
+    return this.getAttributeCode().toLowerCase()
   }
 
   /**
@@ -79,19 +79,19 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
    * @param bonus bonus 值
    */
   protected applyModifier(context: BuffContext, bonus: number): void {
-    context.removeModifiers(this.getAttributeName())
-    this.addModifier(context, this.getAttributeName(), bonus, this.getModifierType())
+    context.removeModifiers(this.getAttributeCode())
+    this.addModifier(context, this.getAttributeCode(), bonus, this.getModifierType())
   }
 
   protected _onApply(context: BuffContext): void {
     const baseBonus = this.getBaseBonus(context)
     this.applyModifier(context, baseBonus)
     this.setCurrentBonus(context, baseBonus)
-    this.log(context, `${this.getAttributeName()}提升`)  
+    this.log(context, `${this.getAttributeCode()}提升`)  
   }
 
   protected _onRemove(context: BuffContext): void {
-    this.log(context, `${this.getAttributeName()}提升效果结束`)
+    this.log(context, `${this.getAttributeCode()}提升效果结束`)
   }
 
   protected _onUpdate(context: BuffContext, deltaTime: number): void {
@@ -106,7 +106,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
       if (newBonus > currentBonus) {
         this.applyModifier(context, newBonus)
         this.setCurrentBonus(context, newBonus)
-        this.log(context, `${this.getAttributeName()}逐渐增强，当前提升：${newBonus}`)
+        this.log(context, `${this.getAttributeCode()}逐渐增强，当前提升：${newBonus}`)
       }
     }
   }
@@ -114,7 +114,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
   protected _onRefresh(context: BuffContext): void {
     const refreshBonus = this.getRefreshBonus(context)
     if (refreshBonus <= 0) {
-      this.log(context, `${this.getAttributeName()}提升效果刷新`)
+      this.log(context, `${this.getAttributeCode()}提升效果刷新`)
       return
     }
 
@@ -123,7 +123,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     
     this.applyModifier(context, newBonus)
     this.setCurrentBonus(context, newBonus)
-    this.log(context, `${this.getAttributeName()}进一步提升至 ${newBonus}`)
+    this.log(context, `${this.getAttributeCode()}进一步提升至 ${newBonus}`)
   }
 
   /**

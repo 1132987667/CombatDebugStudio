@@ -7,8 +7,8 @@
 
 import { computed, type ComputedRef } from 'vue'
 import type { BattleParticipant } from '@/types/battle'
-import type { AttributeValue, AttributeName } from '@/types/attribute'
-import { AttributeNames } from '@/types/attribute'
+import type { AttributeValue, AttributeCode } from '@/types/attribute'
+import { AttributeCodes } from '@/types/attribute'
 
 /**
  * 格式化后的属性值
@@ -29,13 +29,13 @@ export interface FormattedAttribute {
  */
 export interface UseParticipantStatsReturn {
   /** 获取格式化属性 */
-  getFormatted: (type: AttributeName) => FormattedAttribute
+  getFormatted: (type: AttributeCode) => FormattedAttribute
   /** 获取属性值 */
-  getValue: (type: AttributeName) => number
+  getValue: (type: AttributeCode) => number
   /** 获取属性对象 */
-  getAttribute: (type: AttributeName) => AttributeValue | undefined
+  getAttribute: (type: AttributeCode) => AttributeValue | undefined
   /** 获取计算拆解 */
-  getBreakdown: (type: AttributeName) => any
+  getBreakdown: (type: AttributeCode) => any
   /** 生命值 */
   hp: ComputedRef<FormattedAttribute>
   /** 最大生命值 */
@@ -88,7 +88,7 @@ export function useParticipantStats(
   participant: BattleParticipant,
 ): UseParticipantStatsReturn {
   // 获取格式化属性
-  const getFormatted = (type: AttributeName): FormattedAttribute => {
+  const getFormatted = (type: AttributeCode): FormattedAttribute => {
     const attrValue = participant.getAttributeValue(type)
     if (!attrValue) {
       return {
@@ -101,31 +101,31 @@ export function useParticipantStats(
   }
 
   // 获取属性值
-  const getValue = (type: AttributeName): number => {
+  const getValue = (type: AttributeCode): number => {
     return participant.getAttributeValue(type)?.value ?? 0
   }
 
   // 获取属性对象
-  const getAttribute = (type: AttributeName): AttributeValue | undefined => {
+  const getAttribute = (type: AttributeCode): AttributeValue | undefined => {
     return participant.getAttributeValue(type)
   }
 
   // 获取计算拆解
-  const getBreakdown = (type: AttributeName): any => {
+  const getBreakdown = (type: AttributeCode): any => {
     return getAttribute(type)?.breakdown || null
   }
 
   // 常用属性的计算属性
-  const hp = computed(() => getFormatted(AttributeNames.HP))
-  const maxHp = computed(() => getFormatted(AttributeNames.MAX_HP))
-  const energy = computed(() => getFormatted(AttributeNames.ENERGY))
-  const maxEnergy = computed(() => getFormatted(AttributeNames.MAX_ENERGY))
-  const atk = computed(() => getFormatted(AttributeNames.ATK))
-  const def = computed(() => getFormatted(AttributeNames.DEF))
-  const spd = computed(() => getFormatted(AttributeNames.SPD))
-  const critRate = computed(() => getFormatted(AttributeNames.CRIT_RATE))
-  const critDmg = computed(() => getFormatted(AttributeNames.CRIT_DMG))
-  const dmgReduction = computed(() => getFormatted(AttributeNames.DMG_REDUCTION))
+  const hp = computed(() => getFormatted(AttributeCodes.HP))
+  const maxHp = computed(() => getFormatted(AttributeCodes.MAX_HP))
+  const energy = computed(() => getFormatted(AttributeCodes.ENERGY))
+  const maxEnergy = computed(() => getFormatted(AttributeCodes.MAX_ENERGY))
+  const atk = computed(() => getFormatted(AttributeCodes.ATK))
+  const def = computed(() => getFormatted(AttributeCodes.DEF))
+  const spd = computed(() => getFormatted(AttributeCodes.SPD))
+  const critRate = computed(() => getFormatted(AttributeCodes.CRIT_RATE))
+  const critDmg = computed(() => getFormatted(AttributeCodes.CRIT_DMG))
+  const dmgReduction = computed(() => getFormatted(AttributeCodes.DMG_REDUCTIONUCTION))
 
   return {
     getFormatted,

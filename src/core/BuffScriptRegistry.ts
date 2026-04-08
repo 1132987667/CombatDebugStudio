@@ -138,44 +138,6 @@ export class BuffScriptRegistry {
   }
 
   /**
-   * 标准化属性名称
-   * 将不同格式的属性名称转换为统一的内部格式
-   * @param attribute 属性名称
-   * @returns 标准化后的属性名称
-   */
-  public normalizeAttributeName(attribute: string): string {
-    const attributeMap: Record<string, string> = {
-      speed: 'SPD',
-      attack: 'ATK',
-      defense: 'DEF',
-      health: 'HP',
-      critRate: 'CRIT_RATE',
-      critDamage: 'CRIT_DMG',
-      physicalDamageTaken: 'PHYSICAL_DMG_TAKEN',
-      magicDamageTaken: 'MAGIC_DMG_TAKEN',
-      fireDamageTaken: 'FIRE_DMG_TAKEN',
-      waterDamageTaken: 'WATER_DMG_TAKEN',
-      lightningDamageTaken: 'LIGHTNING_DMG_TAKEN',
-      demonDamage: 'DEMON_DMG',
-      buddhistDamage: 'BUDDHIST_DMG',
-      slowImmune: 'SLOW_IMMUNE',
-      stunResist: 'STUN_RESIST',
-      knockbackResist: 'KNOCKBACK_RESIST',
-      poisonResist: 'POISON_RESIST',
-      bleedResist: 'BLEED_RESIST',
-      burnImmune: 'BURN_IMMUNE',
-      fireDamage: 'FIRE_DMG',
-      poisonChance: 'POISON_CHANCE',
-      webSuccessRate: 'WEB_SUCCESS_RATE',
-      debuffDuration: 'DEBUFF_DURATION',
-      hitRate: 'HIT_RATE',
-      dodge: 'DODGE',
-      skillCooldown: 'SKILL_CD',
-    }
-    return attributeMap[attribute.toLowerCase()] || attribute.toUpperCase()
-  }
-
-  /**
    * 批量加载Buff配置（用于动态刷新配置）
    * @param configs Buff配置数组
    */

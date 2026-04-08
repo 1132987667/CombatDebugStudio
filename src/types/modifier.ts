@@ -1,4 +1,4 @@
-export type ModifierType = 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE'
+export type ModifierType = 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' | 'FINAL'
 
 export type AttributeType = 
   | 'HP'             // 生命值

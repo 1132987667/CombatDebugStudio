@@ -7,8 +7,8 @@
 
 import { computed, shallowReactive, type ShallowReactive } from 'vue'
 import type { BattleParticipant } from '@/types/battle'
-import type { AttributeValue, AttributeName } from '@/types/attribute'
-import { AttributeNames } from '@/types/attribute'
+import type { AttributeValue, AttributeCode } from '@/types/attribute'
+import { AttributeCodes } from '@/types/attribute'
 
 /**
  * 战斗参与者属性集合
@@ -65,9 +65,9 @@ export interface UseBattleParticipantReturn {
   /** 能量百分比 */
   energyPercent: Readonly<number>
   /** 获取指定属性（直接访问缓存） */
-  getAttribute: (type: AttributeName) => AttributeValue | undefined
+  getAttribute: (type: AttributeCode) => AttributeValue | undefined
   /** 获取属性计算拆解（仅调试模式） */
-  getBreakdown: (type: AttributeName) => any
+  getBreakdown: (type: AttributeCode) => any
 }
 
 /**
@@ -85,22 +85,22 @@ export function useBattleParticipant(
 
   // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue
   const stats = computed<ParticipantStats>(() => ({
-    hp: shallowParticipant.getAttributeValue(AttributeNames.HP)!,
-    maxHp: shallowParticipant.getAttributeValue(AttributeNames.MAX_HP)!,
-    energy: shallowParticipant.getAttributeValue(AttributeNames.ENERGY)!,
-    maxEnergy: shallowParticipant.getAttributeValue(AttributeNames.MAX_ENERGY)!,
-    atk: shallowParticipant.getAttributeValue(AttributeNames.ATK)!,
-    def: shallowParticipant.getAttributeValue(AttributeNames.DEF)!,
-    spd: shallowParticipant.getAttributeValue(AttributeNames.SPD)!,
-    critRate: shallowParticipant.getAttributeValue(AttributeNames.CRIT_RATE)!,
-    critDmg: shallowParticipant.getAttributeValue(AttributeNames.CRIT_DMG)!,
-    dmgReduction: shallowParticipant.getAttributeValue(AttributeNames.DMG_REDUCTION)!,
-    hpBonus: shallowParticipant.getAttributeValue(AttributeNames.HP_BONUS)!,
-    atkBonus: shallowParticipant.getAttributeValue(AttributeNames.ATK_BONUS)!,
-    defBonus: shallowParticipant.getAttributeValue(AttributeNames.DEF_BONUS)!,
-    spdBonus: shallowParticipant.getAttributeValue(AttributeNames.SPD_BONUS)!,
-    minAtk: shallowParticipant.getAttributeValue(AttributeNames.MIN_ATK)!,
-    maxAtk: shallowParticipant.getAttributeValue(AttributeNames.MAX_ATK)!,
+    hp: shallowParticipant.getAttributeValue(AttributeCodes.HP)!,
+    maxHp: shallowParticipant.getAttributeValue(AttributeCodes.MAX_HP)!,
+    energy: shallowParticipant.getAttributeValue(AttributeCodes.ENERGY)!,
+    maxEnergy: shallowParticipant.getAttributeValue(AttributeCodes.MAX_ENERGY)!,
+    atk: shallowParticipant.getAttributeValue(AttributeCodes.ATK)!,
+    def: shallowParticipant.getAttributeValue(AttributeCodes.DEF)!,
+    spd: shallowParticipant.getAttributeValue(AttributeCodes.SPD)!,
+    critRate: shallowParticipant.getAttributeValue(AttributeCodes.CRIT_RATE)!,
+    critDmg: shallowParticipant.getAttributeValue(AttributeCodes.CRIT_DMG)!,
+    dmgReduction: shallowParticipant.getAttributeValue(AttributeCodes.DMG_REDUCTION)!,
+    hpBonus: shallowParticipant.getAttributeValue(AttributeCodes.HP_BONUS)!,
+    atkBonus: shallowParticipant.getAttributeValue(AttributeCodes.ATK_BONUS)!,
+    defBonus: shallowParticipant.getAttributeValue(AttributeCodes.DEF_BONUS)!,
+    spdBonus: shallowParticipant.getAttributeValue(AttributeCodes.SPD_BONUS)!,
+    minAtk: shallowParticipant.getAttributeValue(AttributeCodes.MIN_ATK)!,
+    maxAtk: shallowParticipant.getAttributeValue(AttributeCodes.MAX_ATK)!,
   }))
 
   // 派生状态
@@ -121,12 +121,12 @@ export function useBattleParticipant(
   })
 
   // 直接访问属性的方法
-  const getAttribute = (type: AttributeName): AttributeValue | undefined => {
+  const getAttribute = (type: AttributeCode): AttributeValue | undefined => {
     return shallowParticipant.getAttributeValue(type)
   }
 
   // 获取属性计算拆解（仅调试模式）
-  const getBreakdown = (type: AttributeName): any => {
+  const getBreakdown = (type: AttributeCode): any => {
     const attrValue = getAttribute(type)
     return attrValue?.breakdown || null
   }

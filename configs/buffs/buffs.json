@@ -30,7 +30,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "physicalDamageTaken": "-0.2"
+      "dmgReduction": "0.2"
     }
   },
   {
@@ -352,7 +352,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "physicalDamageTaken": "-0.15"
+      "dmgReduction": "0.15"
     }
   },
   {

@@ -4,7 +4,7 @@ import type { BuffContext } from '@/core/BuffContext'
 export class SpeedUpBuff extends AttributeBuffTemplate {
   public static readonly BUFF_ID = 'buff_speed_up'
 
-  protected getAttributeName(): string {
+  protected getAttributeCode(): string {
     return 'SPD'
   }
 

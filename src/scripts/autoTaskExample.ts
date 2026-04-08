@@ -53,7 +53,7 @@ function createExampleBattle() {
           case 'SPD': return this.speed
           case 'CRIT_RATE': return this.critRate
           case 'CRIT_DMG': return this.critDamage
-          case 'DMG_RED': return this.damageReduction
+          case 'DMG_REDUCTION': return this.damageReduction
           case 'energy': return this.currentEnergy
           case 'max_energy': return this.maxEnergy
           default: return 0
@@ -166,7 +166,7 @@ function createExampleBattle() {
           case 'SPD': return this.speed
           case 'CRIT_RATE': return this.critRate
           case 'CRIT_DMG': return this.critDamage
-          case 'DMG_RED': return this.damageReduction
+          case 'DMG_REDUCTION': return this.damageReduction
           case 'energy': return this.currentEnergy
           case 'max_energy': return this.maxEnergy
           default: return 0

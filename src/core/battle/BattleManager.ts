@@ -380,7 +380,7 @@ export class BattleManager {
     if (!battleState) return
 
     battleState.participants.forEach((participant) => {
-      participant.currentHp = participant.maxHp
+      participant.currentHealth = participant.maxHealth
       participant.currentEnergy = 25
     })
 

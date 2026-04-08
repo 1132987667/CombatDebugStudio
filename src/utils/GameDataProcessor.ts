@@ -15,7 +15,10 @@ import buffsData from '@configs/buffs/buffs.json'
 import type { Enemy, SkillConfig, SceneData, CharacterStats, AttributeValueType } from '@/types'
 import type { ParticipantSide } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
+import type { IModifierProvider } from '@/types/attribute'
 import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
+import { container } from '@/core/di/Container'
+import { BuffSystem } from '@/core/BuffSystem'
 import { toArray } from '@/utils/Utils'
 
 /**
@@ -113,12 +116,18 @@ export class GameDataProcessor {
    * 将 Enemy 转换为 BattleParticipant
    * @param enemy - 敌人数据
    * @param type - 参与者类型
+   * @param modifierProvider - 修饰符提供者（可选，通常为 BuffSystem 实例）
    * @returns BattleParticipantImpl - 包含完整战斗属性的参与者实例
    */
   static enemyToParticipant(
     enemy: Enemy,
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
+    modifierProvider?: IModifierProvider,
   ): BattleParticipantImpl {
+    // 如果没有传入 modifierProvider，则从容器获取（单例）
+    const buffSystem =
+      modifierProvider || container.resolve<BuffSystem>('BuffSystem')
+
     const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive)
     const smallSkills = GameDataProcessor.getSkillByIds(enemy.skills?.small)
     const ultimateSkills = GameDataProcessor.getSkillByIds(enemy.skills?.ultimate)
@@ -135,31 +144,34 @@ export class GameDataProcessor {
     const finalDefense = Math.floor(baseDefense * (1 + bonuses.defenseBonus))
     const finalSpeed = Math.floor(baseSpeed * (1 + bonuses.speedBonus))
 
-    return new BattleParticipantImpl({
-      id: enemy.id,
-      name: enemy.name,
-      type: type,
-      team: type,
-      level: enemy.level,
-      maxHealth: finalHealth,
-      currentHealth: finalHealth,
-      minAttack: enemy.stats.minAttack,
-      maxAttack: enemy.stats.maxAttack,
-      defense: finalDefense,
-      speed: finalSpeed,
-      critRate: bonuses.critRate,
-      critDamage: bonuses.critDamage,
-      damageReduction: bonuses.damageReduction,
-      healthBonus: bonuses.healthBonus * 100,
-      attackBonus: bonuses.attackBonus * 100,
-      defenseBonus: bonuses.defenseBonus * 100,
-      speedBonus: bonuses.speedBonus * 100,
-      skills: {
-        small: smallSkills,
-        passive: passiveSkills,
-        ultimate: ultimateSkills,
+    return new BattleParticipantImpl(
+      {
+        id: enemy.id,
+        name: enemy.name,
+        type: type,
+        team: type,
+        level: enemy.level,
+        maxHealth: finalHealth,
+        currentHealth: finalHealth,
+        minAttack: enemy.stats.minAttack,
+        maxAttack: enemy.stats.maxAttack,
+        defense: finalDefense,
+        speed: finalSpeed,
+        critRate: bonuses.critRate,
+        critDamage: bonuses.critDamage,
+        damageReduction: bonuses.damageReduction,
+        healthBonus: bonuses.healthBonus * 100,
+        attackBonus: bonuses.attackBonus * 100,
+        defenseBonus: bonuses.defenseBonus * 100,
+        speedBonus: bonuses.speedBonus * 100,
+        skills: {
+          small: smallSkills,
+          passive: passiveSkills,
+          ultimate: ultimateSkills,
+        },
       },
-    })
+      buffSystem,
+    )
   }
 
   /**
@@ -507,12 +519,12 @@ export class GameDataProcessor {
    * 计算角色属性加成
    */
   static calculateStatBonus(character: CharacterStats, stat: string): number {
-    if (!character.buffs) return 0
+    if (!character.buffs) return 0                                                                                                                                                                                                        
 
     const bonuses = character.buffs.filter((buff) => !buff.isPositive)
-    if (stat === 'attack') return bonuses.length * 10
-    if (stat === 'defense') return bonuses.length * 5
-    return 0
+    if (stat === AttributeCode.atkBonus) return bonuses.length * 10
+    if (stat === AttributeCode.defBonus) return bonuses.length *                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            5
+              return 0    
   }
 
   /**

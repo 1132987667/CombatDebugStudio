@@ -4,7 +4,7 @@ import type { BuffContext } from '@/core/BuffContext'
 export class AttackUpBuff extends AttributeBuffTemplate {
   public static readonly BUFF_ID = 'buff_atk_up'
 
-  protected getAttributeName(): string {
+  protected getAttributeCode(): string {
     return 'ATK'
   }
 

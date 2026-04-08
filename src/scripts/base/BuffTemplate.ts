@@ -6,13 +6,13 @@ import type { BuffContext } from '@/core/BuffContext'
  * 用于快速创建属性加成类buff
  */
 export abstract class AttributeBuffTemplate extends BaseBuffScript {
-  protected abstract getAttributeName(): string
+  protected abstract getAttributeCode(): string
   protected abstract getBaseBonus(): number
   protected abstract getBonusType(): 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE'
   protected abstract getBuffName(): string
 
   protected _onApply(context: BuffContext): void {
-    const attributeName = this.getAttributeName()
+    const attributeName = this.getAttributeCode()
     const baseBonus = this.getBaseBonus()
     const bonusType = this.getBonusType()
     const buffName = this.getBuffName()
@@ -39,8 +39,8 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
       const newBonus = Math.floor(currentBonus * (1 + growthRate))
       
       if (newBonus > currentBonus) {
-        context.removeModifiers(this.getAttributeName())
-        this.addModifier(context, this.getAttributeName(), newBonus, this.getBonusType())
+        context.removeModifiers(this.getAttributeCode())
+        this.addModifier(context, this.getAttributeCode(), newBonus, this.getBonusType())
         context.setVariable('baseBonus', newBonus)
         this.log(context, `${this.getBuffName()}效果增强，当前加成：${newBonus}`)
       }
@@ -54,8 +54,8 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     const refreshBonus = this.getConfigValue(context, 'refreshBonus', this.getBaseBonus() * 0.1)
     const newBonus = currentBonus + refreshBonus
     
-    context.removeModifiers(this.getAttributeName())
-    this.addModifier(context, this.getAttributeName(), newBonus, this.getBonusType())
+    context.removeModifiers(this.getAttributeCode())
+    this.addModifier(context, this.getAttributeCode(), newBonus, this.getBonusType())
     context.setVariable('baseBonus', newBonus)
     
     this.log(context, `${this.getBuffName()}加成提升至 ${newBonus}`)
@@ -190,7 +190,7 @@ export class BuffTemplateGenerator {
   ): typeof BaseBuffScript {
     return class extends AttributeBuffTemplate {
       public static readonly BUFF_ID = buffId
-      protected getAttributeName(): string { return attributeName }
+      protected getAttributeCode(): string { return attributeName }
       protected getBaseBonus(): number { return baseBonus }
       protected getBonusType(): 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' { return bonusType }
       protected getBuffName(): string { return buffName }

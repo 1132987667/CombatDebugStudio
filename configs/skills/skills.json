@@ -864,7 +864,8 @@
         "type": "damage",
         "formula": "attack*0.5",
         "attackType": "normal",
-        "target": "random_adjacent"
+        "target": "enemy",
+        "targetType": "random_adjacent"
       }
     ],
     "energyCost": 25,
@@ -1697,7 +1698,8 @@
         "type": "damage",
         "formula": "attack*0.5",
         "attackType": "normal",
-        "target": "random_adjacent"
+        "target": "enemy",
+        "targetType": "random_adjacent"
       }
     ],
     "energyCost": 25,
@@ -2079,7 +2081,8 @@
         "type": "damage",
         "formula": "attack*0.5",
         "attackType": "normal",
-        "target": "random_adjacent"
+        "target": "enemy",
+        "targetType": "random_adjacent"
       }
     ],
     "energyCost": 25,

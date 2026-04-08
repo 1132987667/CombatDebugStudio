@@ -401,6 +401,13 @@ export class BattleSystem implements IBattleSystem {
         combatRules.energyGainPerTurn,
       )
 
+      // 【脏标记流控】回合开始前批量预计算所有参与者属性
+      aliveParticipants.forEach((participant) => {
+        if ('recalculateAll' in participant && typeof participant.recalculateAll === 'function') {
+          participant.recalculateAll()
+        }
+      })
+
       let currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
       battle.turnOrder = currentTurnOrder
       battle.currentTurn = 0
@@ -690,6 +697,8 @@ export class BattleSystem implements IBattleSystem {
           skill.id,
           source,
           target,
+          undefined,
+          Array.from(battle.participants.values()),
         )
         console.log(
           `[DEBUG] 技能执行结果: damage=${skillAction.damage}, heal=${skillAction.heal}`,
@@ -757,6 +766,41 @@ export class BattleSystem implements IBattleSystem {
 
     if (selector === 'self') {
       return [source]
+    }
+
+    // 添加：选择生命值最低的友方
+    if (selector === 'lowest_ally') {
+      const allies = participants.filter(
+        (p) => p.isAlive() && p.team === source.team && p.id !== source.id,
+      )
+      if (allies.length === 0) {
+        return [source]
+      }
+      const lowest = allies.reduce((min, p) => {
+        const hpRatio = p.currentHealth / p.maxHealth
+        const minHpRatio = min.currentHealth / min.maxHealth
+        return hpRatio < minHpRatio ? p : min
+      })
+      return [lowest]
+    }
+
+    // 添加：选择生命值最低的敌人
+    if (selector === 'lowest_enemy') {
+      const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
+      const enemies = participants.filter(
+        (p) =>
+          p.isAlive() &&
+          p.team === (isEnemy ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY),
+      )
+      if (enemies.length === 0) {
+        return [source]
+      }
+      const lowest = enemies.reduce((min, p) => {
+        const hpRatio = p.currentHealth / p.maxHealth
+        const minHpRatio = min.currentHealth / min.maxHealth
+        return hpRatio < minHpRatio ? p : min
+      })
+      return [lowest]
     }
 
     const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
@@ -1262,6 +1306,8 @@ export class BattleSystem implements IBattleSystem {
           action.skillId,
           source,
           target,
+          undefined,
+          Array.from(battle.participants.values()),
         )
         console.log(
           `[DEBUG] 技能执行完成: damage=${skillAction.damage}, heal=${skillAction.heal}`,

@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import type { AttributeOption, AttributeValueType, AttributeSourceType } from '@/types/UI/UIBattleCharacter'
+import type { AttributeOption, AttributeValueType, AttributeSourceType } from '@/types/attribute'
 import { getAttributeMeta, getAttributeCodeByName } from '@/types/attribute-meta'
 
 interface Props {

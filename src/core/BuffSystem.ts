@@ -44,13 +44,33 @@ export class BuffSystem implements IModifierProvider {
   private readonly logger = battleLogManager
   /** 调试模式标志 */
   private _debugMode: boolean = false
+  /** 属性变化回调（用于触发参与者的 markDirty） */
+  private onAttributeChange?: (characterId: string) => void
 
   /**
    * 构造函数
-   * @param scriptRegistry Buff脚本注册表实例
+   * @param scriptRegistry Buff 脚本注册表实例
    */
   public constructor(scriptRegistry: BuffScriptRegistry) {
     this.scriptRegistry = scriptRegistry
+  }
+
+  /**
+   * 设置属性变化回调（用于触发参与者的 markDirty）
+   * @param callback 回调函数，接收 characterId 参数
+   */
+  public setAttributeChangeCallback(callback: (characterId: string) => void): void {
+    this.onAttributeChange = callback
+  }
+
+  /**
+   * 触发属性变化回调
+   * @param characterId 角色 ID
+   */
+  private triggerAttributeChange(characterId: string): void {
+    if (this.onAttributeChange) {
+      this.onAttributeChange(characterId)
+    }
   }
 
   /**
@@ -135,6 +155,9 @@ export class BuffSystem implements IModifierProvider {
     // 解析并应用属性修饰符
     this.applyAttributeModifiers(characterId, instanceId, buffId)
 
+    // 【脏标记流控】触发属性变化回调，通知参与者标记为脏
+    this.triggerAttributeChange(characterId)
+
     if (record) {
       record.effects.push({
         type: config.isDebuff ? 'debuff' : 'buff',
@@ -206,6 +229,9 @@ export class BuffSystem implements IModifierProvider {
     modifierStack.removeModifier(instanceId)
 
     BuffContextPool.return(instance.context)
+
+    // 【脏标记流控】触发属性变化回调，通知参与者标记为脏
+    this.triggerAttributeChange(instance.characterId)
 
     return true
   }

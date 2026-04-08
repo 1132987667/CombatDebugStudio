@@ -67,13 +67,22 @@ export class ParticipantManager {
   }
 
   /**
-   * 设置Buff系统引用（向后兼容）
-   * @param buffSystem Buff系统实例
+   * 设置 Buff 系统引用（向后兼容）
+   * @param buffSystem Buff 系统实例
    * @deprecated 请使用 setModifierProvider 方法
    */
   public setBuffSystem(buffSystem: any): void {
     if (buffSystem && typeof buffSystem.getModifierStack === 'function') {
       this.modifierProvider = buffSystem as IModifierProvider
+      // 【脏标记流控】设置 BuffSystem 的属性变化回调
+      if (typeof buffSystem.setAttributeChangeCallback === 'function') {
+        buffSystem.setAttributeChangeCallback((characterId: string) => {
+          const participant = this.participants.get(characterId)
+          if (participant && 'markDirty' in participant) {
+            (participant as any).markAllDirty()
+          }
+        })
+      }
     }
   }
 

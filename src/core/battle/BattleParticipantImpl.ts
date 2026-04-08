@@ -15,7 +15,6 @@ import type {
 } from '@/types/battle'
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
-import type { UIBattleCharacter, UISkills } from '@/types/UI/UIBattleCharacter'
 import type {
   AttributeValue,
   ModifierDetail,
@@ -121,85 +120,6 @@ export class BattleParticipantImpl implements BattleParticipant {
 
   /** 修饰符提供者引用（用于属性计算，解耦 BuffSystem） */
   private _modifierProvider: IModifierProvider | null = null
-
-  /**
-   * 从UI角色创建战斗参与者实例
-   * @param uiCharacter - UI角色数据
-   * @param isAlly - 是否为我方角色
-   * @param index - 角色在队伍中的索引
-   * @returns BattleParticipantImpl 实例
-   */
-  static fromUICharacter(
-    uiCharacter: UIBattleCharacter,
-    isAlly: boolean,
-    index: number,
-  ): BattleParticipantImpl {
-    const side = isAlly ? PARTICIPANT_SIDE.ALLY : PARTICIPANT_SIDE.ENEMY
-
-    const getValue = (
-      attr: { value?: number } | number | undefined,
-      defaultValue: number,
-    ): number => {
-      if (attr === undefined || attr === null) return defaultValue
-      if (typeof attr === 'number') return attr
-      if (typeof attr === 'object' && 'value' in attr)
-        return attr.value ?? defaultValue
-      return defaultValue
-    }
-
-    const maxHp = getValue(uiCharacter.maxHp, 0)
-    const maxEnergy = getValue(uiCharacter.maxEnergy, 100)
-    const currentEnergy = getValue(uiCharacter.currentEnergy, 25)
-    const attack = getValue(uiCharacter.attack, 0)
-    const defense = getValue(uiCharacter.defense, 0)
-    const speed = getValue(uiCharacter.speed, 0)
-    const critRate = getValue(uiCharacter.critRate, 10)
-    const critDamage = getValue(uiCharacter.critDamage, 125)
-    const damageReduction = getValue(uiCharacter.damageReduction, 0)
-    const healthBonus = getValue(uiCharacter.healthBonus, 0)
-    const attackBonus = getValue(uiCharacter.attackBonus, 0)
-    const speedBonus = getValue(uiCharacter.speedBonus, 0)
-    const minAttack = getValue(uiCharacter.minAttack, attack)
-    const maxAttack = getValue(uiCharacter.maxAttack, attack)
-
-    const instanceId =
-      uiCharacter.id || `${isAlly ? 'ally' : 'enemy'}_${Date.now()}_${index}`
-
-    const statusEffects: StatusEffect[] = (uiCharacter.buffs || []).map(
-      (buff) => ({
-        id: buff.id,
-        name: buff.name,
-        type: buff.isPositive ? ('buff' as const) : ('debuff' as const),
-        duration: buff.duration,
-        remainingTurns: buff.duration,
-      }),
-    )
-
-    return new BattleParticipantImpl({
-      id: instanceId,
-      name: uiCharacter.name || `${isAlly ? 'Ally' : 'Enemy'} ${index + 1}`,
-      type: side,
-      team: side,
-      level: uiCharacter.level || 1,
-      maxHealth: maxHp,
-      currentHealth: getValue(uiCharacter.currentHp, maxHp),
-      maxEnergy,
-      currentEnergy,
-      minAttack,
-      maxAttack,
-      attack,
-      defense,
-      speed,
-      critRate,
-      critDamage,
-      damageReduction,
-      healthBonus,
-      attackBonus,
-      speedBonus,
-      skills: uiCharacter.skills || {},
-      statusEffects,
-    })
-  }
 
   /**
    * 构造函数
@@ -308,6 +228,11 @@ export class BattleParticipantImpl implements BattleParticipant {
     let finalValue = baseValue
     const modifierDetails: ModifierDetail[] = []
 
+    let additive = 0
+    let percentMultiplier = 1
+    let independentMultiplier = 1
+    let finalMultiplier = 1
+
     if (this._modifierProvider) {
       const modifierStack = this._modifierProvider.getModifierStack(this.id)
       if (modifierStack) {
@@ -330,6 +255,7 @@ export class BattleParticipantImpl implements BattleParticipant {
           }
         }
         if (percentSum !== 0) {
+          percentMultiplier = 1 + percentSum
           finalValue += baseValue * percentSum
         }
 
@@ -349,6 +275,7 @@ export class BattleParticipantImpl implements BattleParticipant {
             })
           }
         }
+        additive = addSum
         finalValue += addSum
 
         let multiplyFactor = 1
@@ -367,7 +294,27 @@ export class BattleParticipantImpl implements BattleParticipant {
             })
           }
         }
+        independentMultiplier = multiplyFactor
         finalValue *= multiplyFactor
+
+        let finalMulti = 1
+        for (const mod of modifiers) {
+          if (mod.type === 'FINAL') {
+            finalMulti *= 1 + mod.value
+            modifierDetails.push({
+              source:
+                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
+                mod.buffInstanceId,
+              sourceType: this._modifierProvider.getSourceType(
+                mod.buffInstanceId,
+              ),
+              value: mod.value,
+              type: 'final',
+            })
+          }
+        }
+        finalMultiplier = finalMulti
+        finalValue *= finalMulti
       }
     }
 
@@ -383,6 +330,18 @@ export class BattleParticipantImpl implements BattleParticipant {
     attrData.value = finalValue
     attrData.modifiers = modifierDetails
     attrData.dirty = false
+
+    if (this._modifierProvider?.isDebugMode()) {
+      attrData.breakdown = {
+        base: baseValue,
+        additive,
+        percentMultiplier,
+        independentMultiplier,
+        finalMultiplier,
+      }
+    } else {
+      delete attrData.breakdown
+    }
   }
 
   /**
@@ -390,15 +349,9 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @param attr 属性名称
    * @returns 属性最终值
    */
-  getAttributeValue(attr: AttributeName): number {
-    const attrData = this.attributes.get(attr)
-    if (!attrData) return 0
-
-    if (attrData.dirty) {
-      this.recalcAttribute(attr)
-    }
-
-    return attrData.value
+  getAttribute(attr: AttributeType | string): number {
+    const attrValue = this.getAttributeValue(attr)
+    return attrValue?.value ?? 0
   }
 
   /**
@@ -406,15 +359,24 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @param attr 属性名称
    * @returns 属性值对象
    */
-  getAttributeValueObject(attr: AttributeName): AttributeValue | undefined {
-    const attrData = this.attributes.get(attr)
+  getAttributeValue(attr: AttributeType | string): AttributeValue | undefined {
+    const attrName = this.normalizeAttributeName(attr as string)
+    const attrData = this.attributes.get(attrName)
     if (!attrData) return undefined
 
     if (attrData.dirty) {
-      this.recalcAttribute(attr)
+      this.recalcAttribute(attrName)
     }
 
     return attrData
+  }
+
+  /**
+   * 批量预计算所有属性（推荐在回合开始前/战斗结算前调用）
+   * 集中遍历所有 dirty 属性，计算复杂度与属性数量线性相关
+   */
+  recalculateAll(): void {
+    this.attributes.forEach((_, type) => this.recalcAttribute(type))
   }
 
   /**

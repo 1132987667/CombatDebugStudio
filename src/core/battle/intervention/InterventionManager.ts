@@ -1,19 +1,19 @@
 import type { IBattleSystem } from '@/core/battle/interfaces'
 import { BattleStateManager } from '@/core/battle/state/BattleStateManager'
 import { battleLogManager } from '@/utils/logging'
-import type { UIBattleCharacter } from '@/types'
+import type { BattleParticipant } from '@/types/battle'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 
 /**
  * 手动干预管理器
- * 负责处理DebugPanel的事件和手动修改
+ * 负责处理 DebugPanel 的事件和手动修改
  */
 export class InterventionManager {
   private battleSystem: IBattleSystem
   private battleStateManager: BattleStateManager
   private battleLogManager = battleLogManager
   private selectedCharacterId: string | null = null
-  private selectedChar: UIBattleCharacter | null = null
+  private selectedChar: BattleParticipant | null = null
 
   /**
    * 构造函数

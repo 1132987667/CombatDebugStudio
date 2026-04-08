@@ -345,6 +345,7 @@ export class ActionExecutor {
         source,
         target,
         record,
+        Array.from(battle.participants.values()),
       )
 
       action.damage = skillAction.damage

@@ -1,30 +1,16 @@
 import type { IBattleSystem } from '@/core/battle/interfaces'
 import type { BattleState, BattleParticipant } from '@/types/battle'
 import { BATTLE_STATUS } from '@/types/battle'
-import type { UIBattleCharacter, AttributeValue } from '@/types'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { eventBus } from '@/main'
 
 /**
- * 更新 AttributeValue 类型属性的内部字段
- * 保持响应式引用不变，仅更新内部值
- * @param target 目标属性对象
- * @param source 源属性对象
- */
-function updateAttributeValue(target: AttributeValue, source: AttributeValue) {
-  target.value = source.value
-  target.valueType = source.valueType
-  target.options = source.options
-}
-
-/**
  * 战斗状态管理器
- * 负责UI层与核心战斗系统之间的状态同步与转换
+ * 负责 UI 层与核心战斗系统之间的状态同步与转换
  * 核心功能：
- * - 从BattleSystem获取战斗状态（回合数、当前行动者、参与者状态等）
- * - 将战斗参与者状态转换为UI角色状态
- * - 通过映射表关联参与者和UI角色，不直接存储队伍数据
- * - 提供手动更新接口，同步UI更改到核心战斗系统
+ * - 从 BattleSystem 获取战斗状态（回合数、当前行动者、参与者状态等）
+ * - 直接使用 BattleParticipant，不再维护 UI 角色映射
+ * - 提供手动更新接口，同步 UI 更改到核心战斗系统
  */
 export class BattleStateManager {
   private currentTurn = 1
@@ -32,10 +18,6 @@ export class BattleStateManager {
   private battleId: string | null = null
   private isBattleActive = false
   private selectedCharacterId: string | null = null
-  // 参与者ID到UI角色的映射表
-  private participantToUICharacterMap = new Map<string, UIBattleCharacter>()
-  // UI角色ID到参与者ID的映射表
-  private uiCharacterToParticipantMap = new Map<string, string>()
   // 保存事件回调引用，用于清理
   private teamDataChangedHandler: (() => void) | null = null
 
@@ -108,56 +90,23 @@ export class BattleStateManager {
 
   /**
    * 初始化队伍数据
-   * @param allyTeam 我方队伍
-   * @param enemyTeam 敌方队伍
+   * @param allyTeam 我方队伍（BattleParticipant 数组）
+   * @param enemyTeam 敌方队伍（BattleParticipant 数组）
    */
   initializeTeams(
-    allyTeam: UIBattleCharacter[],
-    enemyTeam: UIBattleCharacter[],
+    allyTeam: BattleParticipant[],
+    enemyTeam: BattleParticipant[],
   ) {
-    // 清空映射表
-    this.participantToUICharacterMap.clear()
-    this.uiCharacterToParticipantMap.clear()
-
-    // 建立我方队伍的映射关系
-    allyTeam.forEach((char, index) => {
-      const participantId = char.originalId || `character_${index}`
-      this.participantToUICharacterMap.set(participantId, char)
-      this.uiCharacterToParticipantMap.set(char.id, participantId)
-    })
-
-    // 建立敌方队伍的映射关系
-    enemyTeam.forEach((char, index) => {
-      const participantId = char.originalId || `enemy_${index}`
-      this.participantToUICharacterMap.set(participantId, char)
-      this.uiCharacterToParticipantMap.set(char.id, participantId)
-    })
-  }
-
-  /**
-   * 更新单个参与者映射
-   * 当参与者与UI角色的映射关系发生变化时调用
-   * @param participantId 参与者ID
-   * @param character UI角色
-   */
-  updateParticipantMapping(
-    participantId: string,
-    character: UIBattleCharacter,
-  ): void {
-    this.participantToUICharacterMap.set(participantId, character)
-    this.uiCharacterToParticipantMap.set(character.id, participantId)
+    // 不再需要维护映射表，直接使用 BattleParticipant
+    // 映射关系由 BattleSystem 管理
   }
 
   /**
    * 移除参与者映射
-   * @param participantId 参与者ID
+   * @param participantId 参与者 ID
    */
   removeParticipantMapping(participantId: string): void {
-    const character = this.participantToUICharacterMap.get(participantId)
-    if (character) {
-      this.uiCharacterToParticipantMap.delete(character.id)
-    }
-    this.participantToUICharacterMap.delete(participantId)
+    // 不再需要维护映射表
   }
 
   /**
@@ -165,20 +114,7 @@ export class BattleStateManager {
    * 重新从战斗状态加载最新的映射关系
    */
   refreshMappings(): void {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) return
-
-    // 清空映射表
-    this.participantToUICharacterMap.clear()
-    this.uiCharacterToParticipantMap.clear()
-
-    // 从战斗状态重建映射关系
-    battleState.participants.forEach((participant: BattleParticipant) => {
-      const character =
-        GameDataProcessor.participantToUIBattleCharacter(participant)
-      this.participantToUICharacterMap.set(participant.id, character)
-      this.uiCharacterToParticipantMap.set(character.id, participant.id)
-    })
+    // 不再需要维护映射表，直接使用 BattleParticipant
   }
 
   /**
@@ -210,7 +146,7 @@ export class BattleStateManager {
 
       // 同步回合数
       if (battleState.currentTurn !== undefined) {
-        this.currentTurn = battleState.currentTurn + 1 // 转换为从1开始的回合数
+        this.currentTurn = battleState.currentTurn + 1 // 转换为从 1 开始的回合数
       }
 
       // 同步当前行动者
@@ -235,79 +171,25 @@ export class BattleStateManager {
   }
 
   /**
+   * 查找参与者
+   * @param participantId 参与者 ID
+   * @returns BattleParticipant 或 undefined
+   */
+  private findParticipant(
+    participantId: string,
+  ): BattleParticipant | undefined {
+    const battleState = this.battleSystem.getBattleState()
+    if (!battleState) return undefined
+    return battleState.participants.get(participantId)
+  }
+
+  /**
    * 同步参与者状态
    * @param battleState 战斗状态
    */
   private syncParticipantsState(battleState: BattleState) {
-    // 遍历所有参与者
-    battleState.participants.forEach((participant: BattleParticipant) => {
-      // 查找对应的UI角色
-      const character = this.findUICharacter(participant.id)
-      if (character) {
-        // 更新角色状态
-        this.updateCharacterState(character, participant)
-      }
-    })
-  }
-
-  /**
-   * 查找UI角色
-   * @param participantId 参与者ID
-   * @returns UI角色或undefined
-   */
-  private findUICharacter(
-    participantId: string,
-  ): UIBattleCharacter | undefined {
-    // 通过映射表查找
-    return this.participantToUICharacterMap.get(participantId)
-  }
-
-  /**
-   * 更新角色状态
-   * 逐个更新属性，保持响应式引用不变
-   * @param character UI角色
-   * @param participant 战斗参与者
-   */
-  private updateCharacterState(
-    character: UIBattleCharacter,
-    participant: BattleParticipant,
-  ) {
-    // 使用新的转换方法创建更新后的UI角色
-    const updated =
-      GameDataProcessor.participantToUIBattleCharacter(participant)
-
-    // 基础属性（非 AttributeValue 类型）
-    character.level = updated.level
-    character.name = updated.name
-    character.team = updated.team
-
-    // 保留原有的UI特定属性
-    character.enabled = character.enabled
-    character.isFirst = character.isFirst
-    character.originalId = character.originalId
-    character.id = character.id
-
-    // AttributeValue 属性逐个更新，保持响应式引用
-    updateAttributeValue(character.currentHp, updated.currentHp)
-    updateAttributeValue(character.maxHp, updated.maxHp)
-    updateAttributeValue(character.currentEnergy, updated.currentEnergy)
-    updateAttributeValue(character.maxEnergy, updated.maxEnergy)
-    updateAttributeValue(character.minAttack, updated.minAttack)
-    updateAttributeValue(character.maxAttack, updated.maxAttack)
-    updateAttributeValue(character.attack, updated.attack)
-    updateAttributeValue(character.defense, updated.defense)
-    updateAttributeValue(character.speed, updated.speed)
-    updateAttributeValue(character.critRate, updated.critRate)
-    updateAttributeValue(character.critDamage, updated.critDamage)
-    updateAttributeValue(character.damageReduction, updated.damageReduction)
-    updateAttributeValue(character.healthBonus, updated.healthBonus)
-    updateAttributeValue(character.attackBonus, updated.attackBonus)
-    updateAttributeValue(character.defenseBonus, updated.defenseBonus)
-    updateAttributeValue(character.speedBonus, updated.speedBonus)
-
-    // 数组类型可以直接赋值，reactive 会处理数组引用变化
-    character.buffs = updated.buffs
-    character.skills = updated.skills
+    // 不再需要同步 UI 角色状态，BattleParticipant 直接管理自己的状态
+    // 属性计算通过脏标记系统自动更新
   }
 
   /**
@@ -326,8 +208,6 @@ export class BattleStateManager {
     this.currentTurn = 1
     this.isBattleActive = false
     this.selectedCharacterId = null
-    this.participantToUICharacterMap.clear()
-    this.uiCharacterToParticipantMap.clear()
   }
 
   /**
@@ -355,29 +235,26 @@ export class BattleStateManager {
 
   /**
    * 手动更新角色状态
-   * @param characterId 角色ID
+   * @param characterId 角色 ID
    * @param updates 更新内容
    */
   updateCharacterManually(
     characterId: string,
-    updates: Partial<UIBattleCharacter>,
+    updates: Partial<BattleParticipant>,
   ) {
-    const character = this.findUICharacter(characterId)
-    if (character) {
-      // 更新角色属性
-      Object.assign(character, updates)
+    const participant = this.findParticipant(characterId)
+    if (participant) {
+      // 更新参与者属性
+      Object.assign(participant, updates)
 
       // 同步到核心战斗系统
       if (this.battleId) {
         try {
-          const participantId = this.getParticipantId(characterId)
-          if (participantId) {
-            this.battleSystem.updateParticipant(
-              this.battleId,
-              participantId,
-              updates,
-            )
-          }
+          this.battleSystem.updateParticipant(
+            this.battleId,
+            characterId,
+            updates,
+          )
         } catch (error) {
           console.error('同步手动更新到战斗系统时出错:', error)
         }

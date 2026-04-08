@@ -3,7 +3,6 @@ import type { AttributeType } from '@/types/modifier'
 /**
  * 角色属性接口
  * 定义角色的基础属性值
- * 注意：使用小驼峰命名以与 UIBattleCharacter 保持一致
  */
 export interface CharacterStats {
   /** 原始角色ID */

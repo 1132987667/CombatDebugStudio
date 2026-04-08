@@ -31,7 +31,6 @@ import {
   SkillType,
   convertSkillConfigToSkill,
 } from '@/types/skill'
-import type { UISkills } from '@/types/UI/UIBattleCharacter'
 
 /** 战斗AI接口 */
 export interface BattleAI {
@@ -683,10 +682,14 @@ export class BattleAIFactory {
     return ai
   }
 
-  /** 创建带技能的AI实例 */
+  /** 创建带技能的 AI 实例 */
   public static createAIWithSkills(
     type: ParticipantSide,
-    uiSkills: UISkills,
+    uiSkills: {
+      small?: SkillConfig[]
+      passive?: SkillConfig[]
+      ultimate?: SkillConfig[]
+    },
     strategyConfig?: AIStrategyConfig,
     skillLoader?: SkillConfigLoader,
   ): BattleAI {

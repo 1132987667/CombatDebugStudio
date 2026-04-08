@@ -282,7 +282,7 @@ import { useDebugStore } from "@/stores";
 import AttributeTooltip from "@/components/AttributeTooltip.vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import type { AttributeValue } from "@/types";
-import type { AttributeOption, AttributeValueType } from "@/types/UI/UIBattleCharacter";
+import type { AttributeOption, AttributeValueType } from "@/types/attribute";
 import type { SkillConfig } from "@/types/skill";
 import type { BattleManager } from '@/core/battle/BattleManager';
 

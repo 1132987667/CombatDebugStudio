@@ -1,3 +1,5 @@
+import { type BuffScriptLoader } from '@/core/BuffScriptLoader'
+
 // 核心引擎导出
 export * from '@/core/BuffSystem'
 export * from '@/core/BuffScriptRegistry'
@@ -16,7 +18,6 @@ export * from '@/types/battle'
 
 // 工具函数导出
 export * from '@/utils/logging'
-export * from '@/utils/perf-monitor'
 export * from '@/utils/object-pool'
 export * from '@/utils/schema-validator'
 
@@ -28,7 +29,7 @@ export async function initializeBuffSystem(): Promise<void> {
   try {
     // 加载所有 Buff 脚本
     const { container } = await import('@/core/di/Container')
-    const loader = container.resolve('BuffScriptLoader')
+    const loader: BuffScriptLoader = container.resolve('BuffScriptLoader')
     await loader.loadScripts()
 
     console.log('Buff system initialized successfully')

@@ -123,9 +123,9 @@ import { computed, reactive, ref } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import { container } from '@/core/di/Container';
 import type { Enemy, SceneData } from "@/types";
-import { PARTICIPANT_SIDE, type ParticipantSide } from "@/types/battle";
+import { PARTICIPANT_SIDE, type ParticipantSide, type BattleParticipant } from "@/types/battle";
 import type { BattleManager } from '@/core/battle/BattleManager';
-import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter';
+import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl';
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -232,66 +232,52 @@ const selectCharacter = (charId: string) => {
 };
 
 const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY = PARTICIPANT_SIDE.ALLY) => {
-  const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive || [])
+  const passiveSkillIds = GameDataProcessor.normalizeSkillIds(
+    enemy.skills?.passive || [],
+  )
+  const passiveSkills = GameDataProcessor.getSkillByIds(passiveSkillIds)
 
-  let attackBonusValue = 0
-  let defenseBonusValue = 0
-  let speedBonusValue = 0
-  let healthBonusValue = 0
+  const bonuses =
+    GameDataProcessor.calculatePassiveSkillBonuses(passiveSkills)
 
-  if (passiveSkills.length > 0) {
-    passiveSkills.forEach(skill => {
-      const skillEffects = (skill as any).effects || []
-      skillEffects.forEach((effect: any) => {
-        if (effect.type === 'stat_boost' || effect.type === 'attribute_modify') {
-          if (effect.attribute === 'attack' || effect.attribute === 'ATK') {
-            attackBonusValue += effect.value || 0
-          } else if (effect.attribute === 'defense' || effect.attribute === 'DEF') {
-            defenseBonusValue += effect.value || 0
-          } else if (effect.attribute === 'speed' || effect.attribute === 'SPD') {
-            speedBonusValue += effect.value || 0
-          } else if (effect.attribute === 'health' || effect.attribute === 'HP' || effect.attribute === 'maxHp') {
-            healthBonusValue += effect.value || 0
-          }
-        }
-      })
-    })
-  }
+  const baseHealth = enemy.stats.health
+  const baseAttack = (enemy.stats.minAttack + enemy.stats.maxAttack) / 2
+  const baseDefense = enemy.stats.defense
+  const baseSpeed = enemy.stats.speed
 
-  const newCharacter = {
-    originalId: enemy.id,
+  const finalHealth = Math.floor(baseHealth * (1 + bonuses.healthBonus))
+  const finalAttack = Math.floor(baseAttack * (1 + bonuses.attackBonus))
+  const finalDefense = Math.floor(baseDefense * (1 + bonuses.defenseBonus))
+  const finalSpeed = Math.floor(baseSpeed * (1 + bonuses.speedBonus))
+
+  const newCharacter = new BattleParticipantImpl({
     id: `enemy_${Date.now()}_${enemy.id}`,
-    team: side,
     name: enemy.name,
+    type: side as ParticipantSide,
+    team: side as ParticipantSide,
     level: enemy.level,
-    maxHp: GameDataProcessor.createAttributeValue(enemy.stats.health + Math.floor(enemy.stats.health * healthBonusValue), {}, 'health'),
-    currentHp: GameDataProcessor.createAttributeValue(enemy.stats.health + Math.floor(enemy.stats.health * healthBonusValue), {}, 'health'),
-    maxEnergy: GameDataProcessor.createAttributeValue(150, {}, 'maxEnergy'),
-    currentEnergy: GameDataProcessor.createAttributeValue(25, {}, 'currentEnergy'),
-    minAttack: GameDataProcessor.createAttributeValue(enemy.stats.minAttack + Math.floor(enemy.stats.minAttack * attackBonusValue), {}, 'minAttack'),
-    maxAttack: GameDataProcessor.createAttributeValue(enemy.stats.maxAttack + Math.floor(enemy.stats.maxAttack * attackBonusValue), {}, 'maxAttack'),
-    attack: GameDataProcessor.createAttributeValue(Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2) + Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2 * attackBonusValue), {}, 'attack'),
-    defense: GameDataProcessor.createAttributeValue(enemy.stats.defense + Math.floor(enemy.stats.defense * defenseBonusValue), {}, 'defense'),
-    speed: GameDataProcessor.createAttributeValue(enemy.stats.speed + Math.floor(enemy.stats.speed * speedBonusValue), {}, 'speed'),
-    critRate: GameDataProcessor.createPercentAttributeValue(10, {}, 'critRate'),
-    critDamage: GameDataProcessor.createPercentAttributeValue(125, {}, 'critDamage'),
-    damageReduction: GameDataProcessor.createPercentAttributeValue(0, {}, 'damageReduction'),
-    healthBonus: GameDataProcessor.createPercentAttributeValue(healthBonusValue * 100, {}, 'healthBonus'),
-    attackBonus: GameDataProcessor.createPercentAttributeValue(attackBonusValue * 100, {}, 'attackBonus'),
-    defenseBonus: GameDataProcessor.createPercentAttributeValue(defenseBonusValue * 100, {}, 'defenseBonus'),
-    speedBonus: GameDataProcessor.createPercentAttributeValue(speedBonusValue * 100, {}, 'speedBonus'),
-    enabled: true,
-    isFirst: false,
-    buffs: [],
+    maxHealth: finalHealth,
+    currentHealth: finalHealth,
+    minAttack: enemy.stats.minAttack,
+    maxAttack: enemy.stats.maxAttack,
+    defense: finalDefense,
+    speed: finalSpeed,
+    critRate: bonuses.critRate,
+    critDamage: bonuses.critDamage,
+    damageReduction: bonuses.damageReduction,
+    healthBonus: bonuses.healthBonus * 100,
+    attackBonus: bonuses.attackBonus * 100,
+    defenseBonus: bonuses.defenseBonus * 100,
+    speedBonus: bonuses.speedBonus * 100,
     skills: {
       small: GameDataProcessor.getSkillByIds(enemy.skills?.small || []),
       passive: passiveSkills,
       ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate || []),
     },
-  } as unknown as UIBattleCharacter;
+  })
 
-  battleManager.addCharacterToTeam(newCharacter, side as ParticipantSide);
-  battleManager.selectCharacter(newCharacter.id);
+  battleManager.addCharacterToTeam(newCharacter, side as ParticipantSide)
+  battleManager.selectCharacter(newCharacter.id)
 };
 
 const moveCharacter = (direction: number) => {

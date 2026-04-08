@@ -76,15 +76,12 @@ export class TurnManager {
   }
 
   /**
-   * 计算考虑Buff修饰符后的实际速度
+   * 计算考虑 Buff 修饰符后的实际速度
    * @param participant 参与者
    * @returns 考虑所有修饰符后的实际速度值
    */
   public calculateEffectiveSpeed(participant: BattleParticipant): number {
-    const baseSpeed = participant.getAttribute('SPD')
-
-    const modifierStack = this.buffSystem.getModifierStack(participant.id)
-
-    return modifierStack.calculate('SPD' as AttributeType, baseSpeed)
+    // 【脏标记流控】直接使用参与者的属性缓存系统，确保读取的是最新计算结果
+    return participant.getAttribute('SPD')
   }
 }

@@ -151,4 +151,8 @@ dist
 # 文档
 .trae/documents/
 .trae/scripts/
+documents/
 tools/
+.gitattributes
+.git
+.nuxt

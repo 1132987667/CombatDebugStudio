@@ -1,5 +1,6 @@
 项目文件夹架构:
 CombatDebugStudio/
+.vscode/
 configs/
     buffs/
         combat/
@@ -22,14 +23,6 @@ configs/
         scenes.json
     skills/
         skills.json
-docs/
-documents/
-    combat-record-plan.md
-    修改.md
-    功能介绍.md
-    战斗回放系统.md
-    日志管理.md
-    需求规格说明书.md
 scripts/
 src/
     components/
@@ -44,13 +37,16 @@ src/
         HitFeedback.vue
         ItemDetail.vue
         Notification.vue
+        ParticipantCard.vue
         RadioButtonGroup.vue
         SkillEffect.vue
     composables/
         index.ts
         useBattleAnimation.ts
         useBattleLifecycle.ts
+        useBattleParticipant.ts
         useCompendium.ts
+        useParticipantStats.ts
     core/
         battle/
             ai/
@@ -81,10 +77,8 @@ src/
             interfaces.ts
             ParticipantManager.ts
             TurnManager.ts
-        battleLog/
         calculations/
             index.ts
-        config/
         di/
             Container.ts
         errors/
@@ -96,6 +90,7 @@ src/
             HealCalculator.ts
             PassiveSkillManager.ts
             SkillManager.ts
+        task/
         BattleAI.ts
         BattleSystem.ts
         BuffContext.ts
@@ -145,6 +140,7 @@ src/
         UI/
             UIBattleCharacter.ts
         attribute-meta.ts
+        attribute.ts
         battle-events.ts
         battle-log.ts
         battle.ts
@@ -175,7 +171,6 @@ src/
         DataProcessor.ts
         GameDataProcessor.ts
         object-pool.ts
-        perf-monitor.ts
         RAF.ts
         schema-validator.ts
         SeededRandom.ts
@@ -194,13 +189,11 @@ src/
         DebugPanel.vue
         KeybindHintPanel.vue
         KeybindSettings.vue
-        NewbieGuide.vue
         ParticipantPanel.vue
     index.ts
     main.ts
 文档/
     技能.md
-.gitattributes
 .gitignore
 eslint.config.js
 index.html
@@ -212,10 +205,6 @@ vite.config.ts
 
 ============================================================
 文件内容:
-
---- .gitattributes ---
-# Auto detect text files and perform LF normalization
-* text=auto
 
 --- .gitignore ---
 # Logs
@@ -371,7 +360,11 @@ dist
 # 文档
 .trae/documents/
 .trae/scripts/
+documents/
 tools/
+.gitattributes
+.git
+.nuxt
 
 --- configs/buffs/buffs.json ---
 [
@@ -5479,7 +5472,8 @@ tools/
         "type": "damage",
         "formula": "attack*0.5",
         "attackType": "normal",
-        "target": "random_adjacent"
+        "target": "enemy",
+        "targetType": "random_adjacent"
       }
     ],
     "energyCost": 25,
@@ -6312,7 +6306,8 @@ tools/
         "type": "damage",
         "formula": "attack*0.5",
         "attackType": "normal",
-        "target": "random_adjacent"
+        "target": "enemy",
+        "targetType": "random_adjacent"
       }
     ],
     "energyCost": 25,
@@ -6694,7 +6689,8 @@ tools/
         "type": "damage",
         "formula": "attack*0.5",
         "attackType": "normal",
-        "target": "random_adjacent"
+        "target": "enemy",
+        "targetType": "random_adjacent"
       }
     ],
     "energyCost": 25,
@@ -8615,1741 +8611,6 @@ tools/
     "skillType": "ultimate"
   }
 ]
-
---- documents/combat-record-plan.md ---
-# 战斗记录系统实施计划
-
-## 概述
-
-根据方案 `output.txt` 的设计，实现统一的战斗记录系统，贯穿整个动作生命周期，在各个处理阶段逐步填充记录对象。
-
----
-
-## 实施步骤
-
-### 阶段一：创建核心类型定义
-
-**任务 1.1** - 创建 `src/types/combat-record.ts` 文件，定义以下接口：
-- `EffectRecord` - 效果条目接口（伤害、治疗、Buff、Debuff、闪避、暴击等）
-- `CalculationStep` - 计算步骤细节接口
-- `CalculationDetail` - 计算详情接口（调试模式）
-- `CombatRecord` - 统一动作记录核心接口
-
-**产出文件**：`src/types/combat-record.ts`
-
----
-
-### 阶段二：修改伤害/治疗计算器
-
-**任务 2.1** - 修改 `src/core/skill/DamageCalculator.ts`：
-- 在 `calculateDamage` 方法中添加可选的 `record?: CombatRecord` 参数
-- 当 `record` 传入且 `record.hasDetail === true` 时：
-  - 初始化 `record.detail` 对象
-  - 记录每个计算步骤（基础值、属性加成、暴击判定等）
-  - 记录暴击/闪避状态、修正系数、最终值
-- 无论是否开启调试模式，都将效果添加到 `record.effects` 列表
-- 累加总伤害到 `record.damage`
-
-**任务 2.2** - 修改 `src/core/skill/HealCalculator.ts`：
-- 在 `calculateHeal` 方法中添加可选的 `record?: CombatRecord` 参数
-- 实现与 DamageCalculator类似的记录逻辑
-- 记录治疗计算步骤到 `record.detail`
-- 将治疗效果添加到 `record.effects` 并累加 `record.heal`
-
----
-
-### 阶段三：修改 BuffSystem
-
-**任务 3.1** - 修改 `src/core/BuffSystem.ts`：
-- 在 `addBuff` 方法中添加可选的 `record?: CombatRecord` 参数
-- 当 `record` 传入时，向 `record.effects` 添加 Buff 效果记录
-- 记录内容包含：buffId、instanceId、目标角色ID、效果描述
-
----
-
-### 阶段四：修改 SkillManager
-
-**任务 4.1** - 修改 `src/core/skill/SkillManager.ts`：
-- 在 `executeSkill` 方法中添加可选的 `record?: CombatRecord` 参数
-- 在遍历步骤时，将 `record` 传递给 `executeSkillStep`
-- 修改 `executeDamageStep`：接收 record 参数并传递给 DamageCalculator
-- 修改 `executeHealStep`：接收 record 参数并传递给 HealCalculator
-- 修改 `executeBuffStep`：接收 record 参数并传递给 BuffSystem.addBuff
-
----
-
-### 阶段五：修改 ActionExecutor
-
-**任务 5.1** - 修改 `src/core/battle/ActionExecutor.ts`：
-- 添加 `shouldRecordDetail()` 方法判断是否需要记录调试详情
-- 添加 `createEmptyRecord()` 方法创建空的记录对象
-- 添加 `finalizeRecord()` 方法完成记录的最终处理
-- 在 `processSkill` 方法中：
-  - 根据调试模式决定是否创建详细记录对象
-  - 将 record 传递给 `skillManager.executeSkill`
-  - 记录完成后调用 `battleRecorder.addRecord`（如已集成）
-  - 发送日志事件（如已集成）
-
----
-
-### 阶段六：集成与测试
-
-**任务 6.1** - 确保与现有 BattleRecorder 系统集成：
-- 在 ActionExecutor 中获取或注入 BattleRecorder 实例
-- 战斗记录添加到 BattleRecorder 的事件系统中
-
-**任务 6.2** - 验证数据流完整性：
-- 从 ActionExecutor -> SkillManager -> DamageCalculator/HealCalculator/BuffSystem
-- 确认 record 对象在各个阶段被正确填充
-
----
-
-## 关键文件清单
-
-| 文件路径 | 修改类型 | 说明 |
-|---------|---------|------|
-| `src/types/combat-record.ts` | 新建 | 核心类型定义 |
-| `src/core/skill/DamageCalculator.ts` | 修改 | 添加 record 参数 |
-| `src/core/skill/HealCalculator.ts` | 修改 | 添加 record 参数 |
-| `src/core/BuffSystem.ts` | 修改 | addBuff 添加 record 参数 |
-| `src/core/skill/SkillManager.ts` | 修改 | 传递 record 参数 |
-| `src/core/battle/ActionExecutor.ts` | 修改 | 创建和传递 record |
-
----
-
-## 实施顺序
-
-1. 任务 1.1 - 创建类型定义文件
-2. 任务 2.1 - 修改 DamageCalculator
-3. 任务 2.2 - 修改 HealCalculator
-4. 任务 3.1 - 修改 BuffSystem
-5. 任务 4.1 - 修改 SkillManager
-6. 任务 5.1 - 修改 ActionExecutor
-7. 任务 6.1 - 集成测试
-
---- documents/修改.md ---
-根据代码分析，我来详细解释技能系统中 `selector` 和 `target` 的设计原理、优先级和判断逻辑：
-
-## 📊 两个字段的定义和区别
-
-### **1. `selector` 字段**
-- **作用**：定义技能的**初始目标选择范围**（即技能整体的目标范围）
-- **位置**：在技能配置的根级别
-- **值类型**：字符串
-- **常见值**：
-  - `"single_enemy"` - 选择单个敌人
-  - `"all_enemies"` - 选择所有敌人
-  - `"self"` - 选择自身
-  - `"all_allies"` - 选择所有友方
-  - `"lowest_ally"` - 选择生命值最低的友方
-  - `"all"` - 选择所有单位
-
-### **2. `target` 字段**
-- **作用**：定义**单个步骤的具体目标**
-- **位置**：在 `steps` 数组中的每个步骤对象中
-- **值类型**：字符串
-- **常见值**：
-  - `"enemy"` - 敌人
-  - `"self"` - 自己
-  - `"allies"` - 所有友方
-  - `"lowest_ally"` - 生命值最低的友方
-  - `"all"` - 所有单位
-
-## ⚖️ 优先级和判断逻辑
-
-### **优先级规则**
-```
-步骤中的 target > 技能中的 selector
-```
-
-### **详细判断逻辑流程**
-
-```typescript
-// 伪代码：动作执行器处理技能的逻辑
-async executeSkill(skillConfig, caster) {
-    // 1. 使用 selector 确定技能的整体目标范围
-    let skillTargets = this.selectTargetsBySelector(caster, skillConfig.selector);
-    
-    // 2. 遍历技能的每个步骤
-    for (const step of skillConfig.steps) {
-        // 3. 确定当前步骤的目标
-        let stepTarget;
-        
-        if (step.target) {
-            // 如果步骤有 target 字段，使用步骤的 target
-            stepTarget = this.selectTargetsByStepTarget(caster, step.target, skillTargets);
-        } else {
-            // 如果步骤没有 target 字段，使用技能的 selector 结果
-            stepTarget = skillTargets;
-        }
-        
-        // 4. 执行步骤
-        await this.executeStep(step, caster, stepTarget);
-    }
-}
-```
-
-## 🔍 具体示例分析
-
-### **示例1：简单技能（只有 selector，没有 step.target）**
-```json
-{
-  "id": "skill_enemy_001_small",
-  "selector": "single_enemy",
-  "steps": [
-    {
-      "type": "damage",
-      "formula": "attack*0.8"
-      // 注意：这里没有 target 字段
-    }
-  ]
-}
-```
-- **执行逻辑**：
-  1. 技能选择器选择一个敌人（`single_enemy`）
-  2. 伤害步骤没有指定 target，使用技能选择的目标（那个敌人）
-  3. 对该敌人造成伤害
-
-### **示例2：混合技能（有 step.target）**
-```json
-{
-  "id": "skill_enemy_003_small",
-  "selector": "single_enemy",
-  "steps": [
-    {
-      "type": "damage",
-      "formula": "attack*0.9"
-      // 没有 target，使用技能的 selector（敌人）
-    },
-    {
-      "type": "heal",
-      "formula": "damage*0.15",
-      "target": "self"  // 指定了 target
-    }
-  ]
-}
-```
-- **执行逻辑**：
-  1. 技能选择器选择一个敌人
-  2. 第一步：对敌人造成伤害（使用技能选择的目标）
-  3. 第二步：治疗自己（使用步骤指定的 `target: "self"`）
-
-### **示例3：复杂技能（多步骤，不同目标）**
-```json
-{
-  "id": "skill_boss_002_small",
-  "selector": "single_enemy",
-  "steps": [
-    {
-      "type": "damage",
-      "formula": "attack*0.9"
-      // 没有 target，使用技能的 selector（敌人）
-    },
-    {
-      "type": "heal",
-      "formula": "attack*0.5",
-      "target": "lowest_ally"  // 指定了 target
-    }
-  ]
-}
-```
-- **执行逻辑**：
-  1. 技能选择器选择一个敌人
-  2. 第一步：对敌人造成伤害（使用技能选择的目标）
-  3. 第二步：治疗生命值最低的友方（使用步骤指定的 `target: "lowest_ally"`）
-
-## 🎯 目标选择器的工作原理
-
-### **1. `selector` 的选择逻辑**
-```typescript
-// 伪代码：根据 selector 选择目标
-function selectTargetsBySelector(caster, selector) {
-    switch (selector) {
-        case "single_enemy":
-            // 从敌人列表中选择一个目标（自动战斗AI选择或随机选择）
-            return [selectRandomEnemy()];
-        case "all_enemies":
-            // 返回所有敌人
-            return getAllEnemies();
-        case "self":
-            // 返回施法者自己
-            return [caster];
-        case "all_allies":
-            // 返回所有友方单位
-            return getAllAllies();
-        case "lowest_ally":
-            // 返回生命值最低的友方
-            return [getLowestHealthAlly()];
-        default:
-            // 默认返回空或错误
-            return [];
-    }
-}
-```
-
-### **2. `target` 的选择逻辑**
-```typescript
-// 伪代码：根据步骤的 target 选择目标
-function selectTargetsByStepTarget(caster, target, skillTargets) {
-    switch (target) {
-        case "enemy":
-            // 使用技能选择的目标（敌人）
-            return skillTargets;
-        case "self":
-            // 使用施法者自己
-            return [caster];
-        case "allies":
-            // 使用所有友方
-            return getAllAllies();
-        case "lowest_ally":
-            // 使用生命值最低的友方
-            return [getLowestHealthAlly()];
-        case "all":
-            // 使用所有单位
-            return getAllUnits();
-        default:
-            // 默认使用技能选择的目标
-            return skillTargets;
-    }
-}
-```
-
-## 📝 设计原则和最佳实践
-
-### **1. 一致性原则**
-```json
-// ✅ 好的设计：selector 和 step.target 一致
-{
-  "selector": "single_enemy",
-  "steps": [
-    {
-      "type": "damage",
-      "target": "enemy"  // 明确指定，与 selector 一致
-    }
-  ]
-}
-
-// ✅ 也可以：不指定 step.target，依赖 selector
-{
-  "selector": "single_enemy",
-  "steps": [
-    {
-      "type": "damage"  // 不指定 target，使用 selector
-    }
-  ]
-}
-```
-
-### **2. 差异化设计**
-```json
-// ✅ 好的设计：不同步骤使用不同目标
-{
-  "selector": "single_enemy",
-  "steps": [
-    {
-      "type": "damage",
-      "target": "enemy"  // 对敌人造成伤害
-    },
-    {
-      "type": "buff",
-      "target": "self"   // 给自己加Buff
-    }
-  ]
-}
-```
-
-### **3. 被动技能的特殊处理**
-```json
-// 被动技能通常 selector 为 "self"
-{
-  "id": "skill_enemy_012_passive",
-  "selector": "self",
-  "type": "passive",
-  "steps": [
-    {
-      "type": "buff",
-      "target": "allies",  // 给所有友方加Buff
-      "effectId": "buff_commander"
-    }
-  ]
-}
-```
-
-## ⚠️ 常见问题和错误
-
-### **1. 目标不匹配**
-```json
-// ❌ 错误：selector 选择敌人，但步骤 target 是 "self"，可能导致逻辑混乱
-{
-  "selector": "single_enemy",
-  "steps": [
-    {
-      "type": "heal",
-      "target": "self"  // 治疗自己，但技能选择的是敌人
-    }
-  ]
-}
-```
-
-### **2. 缺少关键字段**
-```json
-// ❌ 错误：缺少 selector 字段（这正是自动战斗卡住的可能原因）
-{
-  "id": "skill_example",
-  "name": "示例技能",
-  // 缺少 "selector": "single_enemy"
-  "steps": [
-    {
-      "type": "damage",
-      "target": "enemy"
-    }
-  ]
-}
-```
-
-### **3. 目标类型不明确**
-```json
-// ❌ 错误：target 值不明确
-{
-  "steps": [
-    {
-      "type": "damage",
-      "target": "enemy"  // 这个 enemy 是哪个敌人？需要 selector 或其他机制确定
-    }
-  ]
-}
-```
-
-## 🔧 针对自动战斗卡住的解决方案
-
-根据您的项目代码，我建议：
-
-### **1. 确保所有技能都有有效的 `selector`**
-```typescript
-// 在技能解析时添加验证
-function validateSkill(skill) {
-    if (!skill.selector) {
-        console.error(`技能 ${skill.id} 缺少 selector 字段`);
-        // 根据技能类型自动设置
-        if (skill.type === "passive") {
-            skill.selector = "self";
-        } else if (skill.type === "small") {
-            skill.selector = "single_enemy";
-        } else if (skill.type === "ultimate") {
-            skill.selector = "all_enemies";
-        }
-    }
-}
-```
-
-### **2. 检查第一个出场角色的技能配置**
-```json
-// 确保 enemy_001 的技能配置完整
-{
-  "id": "enemy_001",
-  "skills": {
-    "small": ["skill_enemy_001_small"]
-  }
-}
-
-// 确保 skill_enemy_001_small 有 selector
-{
-  "id": "skill_enemy_001_small",
-  "selector": "single_enemy",  // 必须有这个字段
-  "steps": [
-    {
-      "type": "damage",
-      "target": "enemy"  // 可选，但建议明确指定
-    }
-  ]
-}
-```
-
-### **3. 在动作执行器中添加防御性代码**
-```typescript
-// ActionExecutor.ts
-async executeSkill(skillConfig, caster) {
-    // 防御性检查：确保 selector 存在
-    if (!skillConfig.selector) {
-        console.error(`技能 ${skillConfig.id} 缺少 selector 字段`);
-        // 使用默认值
-        skillConfig.selector = "single_enemy";
-    }
-    
-    // 选择目标
-    let targets = this.selectTargets(skillConfig.selector, caster);
-    
-    if (!targets || targets.length === 0) {
-        console.error(`无法为技能 ${skillConfig.id} 选择目标`);
-        return;
-    }
-    
-    // 执行步骤
-    for (const step of skillConfig.steps) {
-        // 确定步骤目标
-        let stepTarget = step.target ? 
-            this.selectTargets(step.target, caster) : 
-            targets;
-        
-        await this.executeStep(step, caster, stepTarget);
-    }
-}
-```
-
-## 📋 总结：设计建议
-
-1. **必须为所有技能配置 `selector` 字段**，这是技能系统的基础
-2. **步骤中的 `target` 是可选的**，用于覆盖技能的默认目标选择
-3. **优先级：步骤 target > 技能 selector**
-4. **被动技能**通常使用 `"selector": "self"`
-5. **攻击技能**通常使用 `"selector": "single_enemy"` 或 `"all_enemies"`
-6. **辅助技能**可能使用 `"selector": "all_allies"` 或 `"lowest_ally"`
-
-**针对您的自动战斗卡住问题**，最可能的原因是：
-1. 第一个角色的技能缺少 `selector` 字段
-2. 或者 `selector` 值无效，导致无法选择目标
-3. 动作执行器在解析技能时出错，但没有正确处理异常
-
-**建议立即检查 `configs/skills/skills.json` 中所有技能的 `selector` 字段是否完整有效**，特别是第一个出场角色的技能。
-
---- documents/功能介绍.md ---
-# 游戏功能介绍
-
-## 1. 角色属性系统
-
-### 1.1 基础属性列表
-
-| 属性名称          | 编码                | 定义                   | 数值范围 | 对游戏体验的影响                                   |
-| ----------------- | ------------------- | ---------------------- | -------- | -------------------------------------------------- |
-| 等级              | level               | 角色的等级             | 1-99     | 影响角色基础属性值和技能解锁                       |
-| 名称              | name                | 角色的名字             | -        | 用于识别和区分不同角色                             |
-| 能量              | currentEnergy       | 角色当前能量值         | 0-100    | 用于施放技能，影响技能释放频率，初始值为25         |
-| 气血              | currentHp           | 角色当前生命值         | 0-最大值 | 直接影响角色生存能力，为0时角色死亡                |
-| 最小攻击-最大攻击 | minAttack/maxAttack | 角色攻击伤害范围       | 1-9999   | 直接影响伤害输出，范围越大伤害波动越大             |
-| 防御              | defense             | 角色抵抗伤害的能力     | 0-9999   | 减少受到的伤害，值越高减伤越多                     |
-| 速度              | speed               | 角色行动顺序的决定因素 | 1-9999   | 速度越高，行动顺序越靠前，回合内行动次数可能增加   |
-| 暴击率            | critRate            | 攻击产生暴击的概率     | 0-100%   | 提高暴击触发几率，增加伤害爆发能力，默认为10%      |
-| 暴击伤害          | critDamage          | 暴击时的伤害倍率       | 100-500% | 暴击时造成的额外伤害，值越高暴击伤害越高，默认125% |
-| 气血%             | healthBonus         | 气血加成百分比         | 0-500%   | 提高角色气血上限，增强生存能力                     |
-| 攻击%             | attackBonus         | 攻击加成百分比         | 0-500%   | 提高角色攻击力，增强伤害输出                       |
-| 防御%             | defenseBonus        | 防御加成百分比         | 0-500%   | 提高角色防御力，增强生存能力                       |
-| 速度%             | speedBonus          | 速度加成百分比         | 0-500%   | 提高角色速度，增强行动能力                         |
-
-### 1.2 能量系统详解
-
-#### 1.2.1 能量获取与消耗
-
-- **能量获取**：角色每回合结束时自动恢复25点能量
-- **能量消耗**：施放技能需要消耗对应能量值
-  - 小技能：固定消耗50点能量，默认冷却回合2回合
-  - 大技能（终极技能）：固定消耗150点能量，默认冷却回合5回合
-  - 被动技能：无能量消耗
-
-#### 1.2.2 能量策略
-
-- **能量管理**：合理规划技能释放顺序，确保关键技能在需要时能够释放
-- **爆发时机**：积累足够能量后，可选择释放高伤害的大技能
-- **持续输出**：通过小技能的循环使用，保持稳定的伤害输出
-
-#### 1.2.3 能量上限与特性
-
-- **能量上限**：角色能量值上限为100点
-- **能量溢出**：当能量恢复后超过上限时，会自动保持为100点
-- **初始能量**：角色初始能量值为25点，第一回合即可释放小技能
-
-### 1.3 属性影响机制
-
-- **属性相互关系**：某些属性会相互影响，例如高防御会降低受到的伤害，高速度会增加行动次数
-- **属性上限**：部分属性存在理论上限，如暴击率最高为100%
-- **属性成长**：角色等级提升时，基础属性会相应增长
-- **属性加成**：通过装备、技能、Buff等方式可以临时或永久提升属性
-
-## 2. 战斗计算公式
-
-### 2.1 伤害计算公式
-
-#### 基础伤害计算
-
-```
-基础伤害 = 随机值(最小攻击-最大攻击) × 各种伤害修正系数
-```
-
-#### 防御减免计算
-
-```
-伤害减免 = 目标防御值 × 0.01
-最终伤害 = 基础伤害 × (1 - 伤害减免)
-```
-
-#### 暴击伤害计算
-
-```
-暴击伤害 = 最终伤害 × 暴击伤害倍率
-```
-
-### 2.2 命中与闪避计算
-
-#### 命中概率计算
-
-```
-实际命中概率 = 攻击者命中率 - 目标闪避率
-```
-
-#### 闪避判定
-
-```
-是否闪避 = 随机数 < 目标闪避率
-```
-
-### 2.3 暴击概率计算
-
-```
-实际暴击概率 = 角色基础暴击率 + 技能/Buff加成
-```
-
-## 3. 游戏核心机制
-
-### 3.1 基础玩法
-
-- **回合制战斗**：游戏采用回合制战斗系统，角色按照速度顺序行动
-- **技能释放**：角色拥有多种技能，消耗能量值释放
-- **策略搭配**：玩家需要根据敌人特点和战场形势，合理搭配角色和技能
-- **资源管理**：管理角色的能量和生命值，确保战斗持续能力
-
-### 3.2 操作方式
-
-- **角色选择**：在参战面板中选择需要出战的角色
-- **技能释放**：在战斗界面中点击角色头像，然后选择要释放的技能
-- **目标选择**：释放技能时选择目标敌人或友军
-- **战斗控制**：可暂停、加速或重置战斗
-
-### 3.3 胜利条件
-
-- **全歼敌人**：击败所有敌方角色
-- **目标达成**：完成特定任务目标（如保护特定角色存活）
-- **时间限制**：在规定回合数内达成目标
-
-### 3.4 失败判定规则
-
-- **我方全灭**：所有我方角色生命值降至0
-- **任务失败**：未能在规定条件下完成任务目标
-- **时间耗尽**：超过规定回合数仍未达成胜利条件
-
-## 4. 游戏内Buff系统
-
-### 4.1 Buff分类
-
-#### 4.1.1 增益效果（Buff）
-
-| Buff名称   | 图标 | 效果描述                      | 持续时间 | 获取途径               | 叠加规则                   |
-| ---------- | ---- | ----------------------------- | -------- | ---------------------- | -------------------------- |
-| 攻击力提升 | 🔺   | 提高角色攻击力20%             | 3回合    | 技能释放、装备效果     | 刷新持续时间               |
-| 防御力提升 | 🛡️   | 提高角色防御力30%             | 4回合    | 技能释放、装备效果     | 刷新持续时间               |
-| 速度提升   | ⚡   | 提高角色速度25%               | 3回合    | 技能释放、装备效果     | 刷新持续时间               |
-| 护盾       | 🛡️   | 吸收100点伤害                 | 2回合    | 技能释放               | 不可叠加，新护盾覆盖旧护盾 |
-| 生命回复   | 💚   | 每回合回复50点生命值          | 3回合    | 技能释放、装备效果     | 独立叠加，每层单独计算     |
-| 狂暴       | 🔥   | 攻击力提升50%，防御力降低20%  | 2回合    | 技能释放、特定条件触发 | 不可叠加                   |
-| 山神祝福   | ⛰️   | 受到伤害减少50%，免疫控制效果 | 3回合    | 特定技能释放           | 不可叠加                   |
-
-#### 4.1.2 减益效果（Debuff）
-
-| Buff名称     | 图标 | 效果描述           | 持续时间 | 获取途径           | 叠加规则               |
-| ------------ | ---- | ------------------ | -------- | ------------------ | ---------------------- |
-| 中毒         | 🟢   | 每回合受到20点伤害 | 4回合    | 技能释放、敌人攻击 | 独立叠加，每层单独计算 |
-| 眩晕         | ⭕   | 无法进行任何行动   | 1回合    | 技能释放、敌人攻击 | 不可叠加，刷新持续时间 |
-| 速度降低     | 🐌   | 速度降低30%        | 2回合    | 技能释放、敌人攻击 | 刷新持续时间           |
-| 命中率降低   | 🎯   | 命中率降低25%      | 2回合    | 技能释放、敌人攻击 | 刷新持续时间           |
-| 暴击伤害降低 | 💥   | 暴击伤害降低30%    | 2回合    | 技能释放、敌人攻击 | 刷新持续时间           |
-| 重伤         | 💔   | 受到伤害增加20%    | 3回合    | 技能释放、敌人攻击 | 刷新持续时间           |
-
-### 4.2 Buff叠加规则
-
-- **独立叠加**：每层Buff独立计算效果，如中毒效果每层单独造成伤害
-- **刷新持续时间**：新Buff覆盖旧Buff并重置持续时间，如攻击力提升
-- **限制层数**：达到最大层数后无法继续叠加，如某些特殊Buff最多叠加3层
-
-### 4.3 Buff系统特性
-
-- **可驱散性**：部分Buff可被驱散技能移除
-- **免疫性**：某些角色或状态对特定Buff免疫
-- **控制效果**：部分Debuff带有控制效果，如眩晕、沉默等
-- **持续时间**：Buff通常有明确的持续回合数，回合结束后自动消失
-
-## 5. 游戏功能模块
-
-### 5.1 参战面板
-
-- **入口位置**：游戏主界面左侧
-- **核心作用**：管理出战角色，调整队伍配置
-- **使用方法**：
-  1. 勾选角色前方的复选框以启用/禁用角色
-  2. 点击角色头像查看详细属性
-  3. 通过拖拽调整角色出战顺序
-
-### 5.2 战斗界面
-
-- **入口位置**：游戏主界面中央
-- **核心作用**：进行战斗操作，观察战斗过程
-- **使用方法**：
-  1. 点击角色头像选择要行动的角色
-  2. 从技能列表中选择要释放的技能
-  3. 点击目标敌人或友军确定技能目标
-  4. 使用界面下方的控制按钮调整战斗速度或暂停
-
-### 5.3 调试面板
-
-- **入口位置**：游戏主界面右侧
-- **核心作用**：实时监控角色属性变化，查看详细战斗数据
-- **使用方法**：
-  1. 选择要查看的角色
-  2. 观察属性监控区域的实时数据变化
-  3. 查看技能信息和Buff效果
-
-### 5.4 战斗日志
-
-- **入口位置**：游戏主界面底部
-- **核心作用**：记录战斗过程中的所有事件和数据
-- **使用方法**：
-  1. 滚动查看详细战斗记录
-  2. 分析伤害数据和Buff效果
-  3. 排查战斗中的异常情况
-
-### 5.5 场景管理
-
-- **入口位置**：游戏主界面顶部菜单
-- **核心作用**：切换不同战斗场景，调整战斗环境
-- **使用方法**：
-  1. 从场景列表中选择要进入的场景
-  2. 查看场景描述和敌人配置
-  3. 点击"进入场景"开始战斗
-
-### 5.6 战斗规则设置
-
-- **入口位置**：游戏主界面顶部菜单
-- **核心作用**：调整战斗规则和参数，自定义游戏体验
-- **使用方法**：
-  1. 修改战斗参数如伤害倍率、暴击概率等
-  2. 启用或禁用特定战斗机制
-  3. 保存设置并应用到战斗中
-
-## 6. 总结
-
-本游戏是一款策略性回合制战斗游戏，玩家通过合理搭配角色、技能和Buff，利用战斗策略击败敌人。游戏拥有丰富的属性系统、深度的战斗计算机制和多样的游戏功能模块，为玩家提供了极具策略性和可玩性的游戏体验。
-
-通过本功能介绍文档，玩家可以快速了解游戏的核心内容和玩法机制，为游戏体验打下良好的基础。随着游戏的不断更新和扩展，本文档也将持续完善，为玩家提供最新、最全面的游戏信息。
-
---- documents/战斗回放系统.md ---
-1. 概述
-当前战斗回放系统（战斗回放系统.md）提供了基础的数据结构、录制流程、控制功能和UI布局，但在实际实现（BattleRecorder.ts、BattleReplayManager.ts）中存在若干不足，例如：未记录完整的初始/最终状态、无法实现真正的状态回退、回放仅能播放事件序列而非模拟战斗过程、缺乏数据校验和版本兼容机制等。本设计方案旨在完善战斗回放系统，使其具备确定性回放、状态快照跳转、高性能回放、数据完整性校验等核心能力，并与现有战斗系统深度集成。
-
-2. 当前系统分析
-2.1 已实现的功能
-录制：记录战斗开始、结束、回合开始/结束、动作等事件，存储于RecordedBattle结构中。
-
-存储：支持保存到localStorage和加载。
-
-回放控制：基本的播放、暂停、停止、速度调节、滑块跳转。
-
-UI：事件列表、时间轴、控制按钮。
-
-2.2 存在的问题
-状态缺失：仅记录事件，未保存初始/最终完整状态快照，导致回放时无法还原准确的战斗上下文。
-
-确定性不足：未记录随机数种子，导致回放时无法保证与原始战斗完全一致（如暴击、闪避）。
-
-跳转能力有限：滑块跳转基于帧索引，但无法直接恢复到特定时刻的完整状态，需重放所有历史事件，效率低且依赖事件重播的正确性。
-
-数据校验缺失：没有checksum或版本字段，无法保证回放文件的完整性和跨版本兼容性。
-
-录制内容不全：未记录技能释放的详细参数、Buff的变化、属性值的动态变化等。
-
-性能隐患：长时间战斗可能产生大量事件，内存占用和回放效率有待优化。
-
-与战斗系统耦合度：回放逻辑依赖外部事件触发，而非真正的战斗模拟，导致回放行为可能与实际战斗不符（如受实时随机数影响）。
-
-3. 完善目标
-确定性：通过记录随机数种子和初始状态，确保回放结果与原始战斗完全一致。
-
-可跳转性：支持基于回合/行动的任意跳转，并能快速恢复到指定时刻的状态。
-
-完整性：包含初始/最终快照、每回合快照、详细的动作数据。
-
-健壮性：加入数据校验、版本控制，保证文件可移植和向后兼容。
-
-性能优化：支持懒加载、事件压缩、虚拟滚动，适应长时间战斗。
-
-用户体验：增强UI，提供状态追踪、伤害统计、行动分析等高级功能。
-
-4. 修改点及修改思路
-4.1 数据结构增强
-修改点	当前设计	修改建议	修改思路
-确定性字段	无	增加 randomSeed: string、version: string、checksum: string	随机种子用于初始化伪随机数生成器，确保每次回放随机结果一致；版本号用于处理未来配置变化；checksum 用于校验文件完整性。
-初始/最终状态	仅记录初始参与者列表	增加 initialState: BattleStateSnapshot 和 finalState: BattleStateSnapshot	完整快照包含所有参与者的全部属性（生命、能量、Buff列表、技能冷却等），便于直接恢复到战斗开始或结束时刻。
-回合快照	无	在 BattleRound 中增加 startSnapshot 和 endSnapshot（可选）	允许跳转到特定回合开始时，无需重放之前所有回合。可按需存储，如每 5 回合存储一次，平衡空间与跳转精度。
-事件数据丰富	仅记录动作基本信息	扩展 BattleAction 记录详细效果：实际伤害/治疗值、是否暴击/闪避、触发的Buff实例ID等。	便于在回放时准确展示伤害数字、状态变化，同时为数据统计提供基础。
-Buff变化记录	无	增加独立的事件类型 buff_add、buff_remove、buff_update	详细记录Buff的完整生命周期，支持状态追踪面板显示任意时刻的Buff详情。
-数据压缩	无	对大量相同类型的事件（如连续普通攻击）进行合并存储，保留计数。	减少存储体积和内存占用，提升加载性能。
-改进后的接口示例
-typescript
-interface BattleReplay {
-  version: string;                // 战斗系统版本
-  replayId: string;               // 唯一标识
-  randomSeed: string;             // 随机种子
-  checksum: string;               // 数据完整性校验
-  
-  startTime: number;              // 战斗开始时间戳
-  duration: number;               // 总时长（毫秒）
-  
-  initialState: BattleStateSnapshot;   // 初始状态快照
-  finalState: BattleStateSnapshot;     // 最终状态快照
-  rounds: BattleRound[];               // 回合数据（含可选快照）
-  logs: BattleLogEntry[];              // 完整战斗日志（仅用于展示，不用于状态恢复）
-  result: BattleResult;                // 战斗结果
-}
-
-interface BattleStateSnapshot {
-  timestamp: number;              // 快照时间
-  turn: number;                   // 对应回合数
-  participants: ParticipantSnapshot[];
-}
-
-interface ParticipantSnapshot {
-  id: string;
-  hp: number;
-  energy: number;
-  buffInstances: BuffInstanceSnapshot[];  // Buff实例快照（含剩余回合、层数等）
-  skillCooldowns: Record<string, number>; // 技能冷却剩余回合
-}
-4.2 录制流程优化
-修改点	当前流程	修改建议	修改思路
-初始状态录制	仅记录参与者基础信息	在 startRecording 时，调用 createStateSnapshot() 保存完整快照。	确保回放时能从完全相同的基础开始。
-随机种子捕获	无	在战斗开始前生成一个随机种子，并注入到随机数生成器，同时保存到回放文件。	通过种子控制所有随机事件，实现确定性回放。
-回合快照录制	无	在 recordRoundStart 和 recordRoundEnd 中，可选地保存该回合的快照（可配置频率）。	为跳转提供中间状态点，避免重放过多事件。
-Buff变化录制	无	在Buff系统（BuffSystem）中添加钩子，每当Buff添加、移除、层数变化、回合更新时，调用recorder.recordBuffChange。	精确记录Buff动态，支持状态追踪面板。
-最终状态录制	无	在 endRecording 时，再次调用 createStateSnapshot() 保存最终快照。	用于快速跳转到战斗结束，或展示战后数据。
-4.3 回放控制与状态恢复
-修改点	当前设计	修改建议	修改思路
-状态回退机制	无，仅播放事件	基于快照和事件日志实现“时间旅行”。	跳转到某个时刻时，先恢复最近的前一个快照，然后重放该快照之后的事件，直到目标时刻。
-快照索引	无	构建快照索引数组，每个快照包含对应的回合/行动索引，用于快速定位。	优化跳转性能，避免线性搜索。
-回放核心重构	依赖外部事件驱动	将回放引擎独立为 ReplayEngine，它接收回放数据，维护当前状态，并能根据指令（播放到某事件、步进等）更新状态，同时派发事件供UI渲染。	解耦回放逻辑与UI，便于测试和复用；支持静默状态计算。
-随机数重放	无	在回放引擎中，使用保存的随机种子初始化伪随机数生成器，后续所有随机判断（暴击、闪避等）都使用该生成器产生一致的结果。	确保回放时随机行为与原始战斗完全相同。
-速度调节	支持倍速	结合 requestAnimationFrame 或 setTimeout，根据速度系数调整事件间隔。	保持动画流畅，同时支持高速跳帧。
-回放引擎接口示例
-typescript
-class ReplayEngine {
-  constructor(private replayData: BattleReplay) {
-    this.random = new SeededRandom(replayData.randomSeed);
-    this.currentState = this.applySnapshot(replayData.initialState);
-  }
-  
-  // 跳转到指定事件索引
-  seekToEvent(index: number): void {
-    const { snapshotIndex, events } = this.findNearestSnapshot(index);
-    this.currentState = this.applySnapshot(snapshotIndex);
-    for (let i = snapshotIndex.eventIndex + 1; i <= index; i++) {
-      this.applyEvent(events[i]);
-    }
-    this.emitStateUpdate();
-  }
-  
-  // 步进一个事件
-  stepForward(): void { /* ... */ }
-  
-  // 应用事件到当前状态
-  private applyEvent(event: BattleEvent): void { /* ... */ }
-}
-4.4 UI/UX 增强
-修改点	当前UI	修改建议	修改思路
-时间轴增强	仅显示事件点	添加回合分隔标记、关键事件（如角色死亡、Buff爆发）高亮；支持缩放、拖拽定位。	提升可视化体验，便于快速定位重要时刻。
-状态追踪面板	无	在查看器右侧增加可折叠面板，显示当前选中时刻任意角色的详细属性、Buff列表、技能冷却。	提供深度分析能力，满足调试需求。
-数据统计	无	增加统计面板：总伤害/治疗量、暴击次数、闪避次数、各技能使用次数等。	帮助评估战斗平衡性和角色表现。
-回放文件管理	仅保存/加载	增加文件列表、重命名、删除、导入/导出功能；支持按战斗ID、时间排序。	方便管理多个回放记录。
-键盘快捷键	无	支持空格（播放/暂停）、左右方向键（步进/后退）、Ctrl+左右（跳转回合）等。	提高操作效率。
-4.5 性能与兼容性
-修改点	当前设计	修改建议	修改思路
-事件压缩	无	对连续相同类型的普通攻击进行合并存储，在回放时展开或合并显示。	减少存储体积和内存占用，尤其适用于长战斗。
-懒加载	一次性加载全部事件	对于大型回放文件，采用分页或流式加载，仅加载当前视图附近的事件。	避免界面卡顿，提升首屏加载速度。
-版本兼容	无	在回放文件中保存战斗系统版本号，加载时检查版本，若版本不同则尝试使用迁移函数转换数据。	确保未来系统升级后仍能播放旧版回放。
-数据校验	无	在保存时计算整个回放数据的 checksum（如 MD5 或 CRC32），加载时重新计算并比对，若不一致则提示文件损坏。	防止数据篡改或传输错误导致异常。
-5. 实施优先级建议
-优先级	任务	预估工作量	说明
-P0（核心必做）	完善数据结构（版本、种子、快照）	2人日	这是确定性回放的基础。
-实现随机种子捕获与注入	1人日	需改造随机数使用方式。
-录制初始/最终快照	1人日	简单改造录制器。
-重构回放引擎，支持状态恢复	3人日	核心重写，需与战斗系统解耦。
-增加数据校验	1人日	保证文件完整性。
-P1（体验提升）	回合快照存储与跳转优化	2人日	实现快照索引和定位。
-状态追踪面板	2人日	UI 开发与数据绑定。
-时间轴增强（缩放、标记）	2人日	提升可视化。
-P2（高级功能）	Buff变化录制	1人日	需在 BuffSystem 添加钩子。
-数据统计面板	2人日	收集并展示统计数据。
-事件压缩与懒加载	2人日	性能优化。
-版本兼容迁移	1人日	长远考虑。
-6. 与现有系统的集成要点
-随机数生成器：统一使用可注入的随机数生成器（如 SeededRandom 类），在战斗开始时根据传入种子初始化，录制时保存种子，回放时使用相同种子。
-
-快照生成：在 BattleParticipantImpl 中增加 toSnapshot() 方法，返回可序列化的纯对象；在 BuffSystem 中提供 getBuffInstancesSnapshot(characterId) 方法。
-
-事件钩子：在 ActionExecutor、BuffSystem、TurnManager 等关键位置埋点，调用 BattleRecorder 的相应方法记录事件。
-
-回放模式：新增 ReplayMode，战斗系统进入该模式后，不再执行真实逻辑，而是根据回放引擎的状态更新展示，同时屏蔽用户干预（除非是调试回放中的干预，可选功能）。
-
-存储适配器：将 localStorage 存储替换为更通用的接口，便于未来迁移到 IndexedDB 或文件系统。
-
-7. 总结
-通过上述完善，战斗回放系统将从“事件记录播放器”进化为“确定性战斗模拟器”，支持任意时刻跳转、状态分析、性能优化和长期兼容。该设计紧密结合项目现有架构，最小化侵入式修改，同时为未来扩展（如多人观战、战斗录像分享）奠定基础。
-
---- documents/日志管理.md ---
-## 战斗日志管理系统需求规格说明书
-
-### 1. 引言
-
-#### 1.1 目的
-
-本文档旨在详细定义基于 Vue3 + TypeScript 实现的战斗日志管理系统的功能、界面、数据及性能需求，为开发、测试及项目验收提供依据。
-
-#### 1.2 范围
-
-本系统为前端独立模块，负责实时记录、展示和筛选战斗中发生的各类事件，提供直观的日志视图，并支持浅色/暗色主题切换。
-
-#### 1.3 术语表
-
-- **日志条目**：记录一次具体事件的最小单元。
-- **回合**：战斗中的一轮行动周期，日志按回合分组。
-- **连续事件合并**：将同一来源对同一目标连续发生的同类事件合并为一条汇总日志。
-
-***
-
-### 2. 总体描述
-
-#### 2.1 用户场景
-
-- 玩家在战斗过程中实时查看战斗日志，了解战斗细节。
-- 战斗结束后可回溯日志，分析战斗过程。
-- 通过筛选快速聚焦特定类型的事件（战利品、系统、战斗）。
-
-#### 2.2 假设与依赖
-
-- 战斗逻辑与日志生成均在前端完成，日志数据由战斗系统实时推送。
-- 不使用第三方UI组件库，样式完全自定义。
-- 支持现代浏览器（Chrome、Firefox、Edge最新版）。
-
-***
-
-### 3. 功能需求
-
-#### 3.1 日志展示
-
-- **列表形式**：日志按时间顺序垂直排列，最新日志在底部（或顶部，需配置），支持滚动查看。
-- **时间戳**：每条日志内部存储精确时间戳（用于排序），但界面不显示具体时间。
-- **回合分组**：
-  - 同一回合内的日志使用相同的背景色（浅色/暗色模式下有区别）或左侧缩进线条标识。
-  - 回合切换时，在分组顶部显示“第 X 回合开始”的标识行。
-- **事件合并**：
-  - 对同一来源（如“张三”）对同一目标（如“李四”）连续造成的多次同类型事件（如普通攻击、暴击）进行合并。
-  - 合并后显示格式示例：“张三对李四连续造成5次伤害（共320点）”，并可展开查看每次详情（展开功能暂不实现，但保留数据结构）。
-  - 合并规则：
-    - 事件类型相同（如均为“伤害”）
-    - 来源和目标相同
-    - 中间无其他类型事件打断
-    - 连续发生（按时间顺序相邻）
-- **颜色标识**：
-  - 我方角色名称：绿色（#2ecc71 浅色 / #27ae60 暗色）
-  - 敌方角色名称：红色（#e74c3c 浅色 / #c0392b 暗色）
-  - 伤害数值：红色（#e74c3c）
-  - 治疗数值：绿色（#2ecc71）
-  - 暴击数值：黄色（#f1c40f）
-  - 技能名称：统一使用蓝色（#3498db 浅色 / #2980b9 暗色）
-  - 其他文字（如“闪避”、“添加buff”等）：默认文本色
-- **回合数统计**：在日志区域顶部显示当前战斗的总回合数（实时更新）。
-
-#### 3.2 事件类型与内容
-
-系统需记录并展示以下事件类型，每种类型有对应的文本模板：
-
-| 事件类型     | 模板示例                                   | 说明                          |
-| -------- | -------------------------------------- | --------------------------- |
-| 战斗开始     | 战斗开始                                   | <br />                      |
-| 战斗结束     | 战斗结束，结果：胜利/失败                          | <br />                      |
-| 回合开始     | 第3回合开始                                 | 作为分组标识                      |
-| 回合结束     | 第3回合结束                                 | 可选，若需明确回合边界                 |
-| 角色进场     | \[角色名] 进入战场                            | 角色名按敌我颜色                    |
-| 角色倒下     | \[角色名] 倒下了                             | <br />                      |
-| 普通攻击     | \[攻击方] 对 \[目标] 发动普通攻击，造成 \[数值] 点伤害     | 数值颜色为伤害红；若暴击则额外标注“暴击！”且数值变黄 |
-| 暴击       | \[攻击方] 对 \[目标] 造成暴击！\[数值] 点伤害          | 单独事件或合并到攻击中，根据设计选择          |
-| 闪避       | \[目标] 闪避了 \[攻击方] 的攻击                   | <br />                      |
-| 释放小技能    | \[施法者] 释放 \[技能名称]，对 \[目标] 造成 \[数值] 点伤害 | 技能名称用技能色                    |
-| 释放大招     | \[施法者] 释放大招 \[技能名称]，对全体敌人造成 \[数值] 点伤害  | 技能名称用技能色                    |
-| 添加buff   | \[目标] 获得 \[buff名称]，持续 \[X] 回合          | buff名称用技能色，显示持续回合           |
-| debuff扣血 | \[目标] 受到 \[debuff名称] 影响，损失 \[数值] 点生命   | 数值用伤害红，可注明来源                |
-| buff加血   | \[目标] 受到 \[buff名称] 恢复，获得 \[数值] 点生命     | 数值用治疗绿                      |
-| 获得物品     | \[角色] 获得 \[物品名称] x \[数量]               | <br />                      |
-| 打开宝箱     | \[角色] 打开宝箱，获得 \[物品列表]                  | <br />                      |
-| 获得战利品    | 战斗胜利，获得 \[物品列表]                        | <br />                      |
-
-> **建议**：为避免日志过长，可对连续同类事件合并后显示汇总信息，并在数据结构中保留原始事件列表以便未来扩展。
-
-#### 3.3 筛选功能
-
-- **筛选方式**：提供三个按钮（标签样式），分别对应“战利品”、“系统”、“战斗”，按钮之间用竖线“|”分隔。
-- **筛选逻辑**：
-  - 点击“战利品”：只显示与物品、宝箱、战利品相关的事件。
-  - 点击“系统”：只显示战斗开始/结束、回合开始/结束、角色进场/倒下等系统类事件。
-  - 点击“战斗”：只显示攻击、技能、buff、闪避等战斗交互事件。
-  - 默认显示全部日志。
-  - 支持多选？目前设计为单选（三个互斥），但可考虑扩展为多选（如按钮组支持多选）。建议先实现单选，后续按需调整。
-- **筛选状态**：被选中的按钮高亮显示。
-
-#### 3.4 清空日志
-
-- 提供一个“清空日志”按钮，点击后清空当前日志列表，并重置回合计数。
-
-#### 3.5 主题切换
-
-- 支持浅色和暗色两种主题，通过全局切换（如顶部开关）改变颜色变量。
-- 颜色变量需按上述规范定义，确保在不同主题下可读性。
-
-***
-
-### 4. 数据需求
-
-#### 4.1 日志数据结构
-
-建议采用以下 TypeScript 接口定义：
-
-```typescript
-// 日志条目基础接口
-interface LogEntry {
-  id: string // 唯一ID，可使用 uuid 或时间戳+随机数
-  timestamp: number // 时间戳（毫秒），用于排序
-  round: number // 所属回合数
-  type: LogType // 事件类型（用于筛选）
-  category: 'loot' | 'system' | 'combat' // 筛选分类
-  content: string // 渲染用的纯文本（或使用模板+数据，见下）
-  rawData?: any // 原始数据，用于扩展（如合并事件的详情）
-  mergeKey?: string // 用于合并的键值（如 "source_target_type"）
-}
-
-// 事件类型枚举（可根据需要扩展）
-type LogType =
-  | 'combatStart'
-  | 'combatEnd'
-  | 'roundStart'
-  | 'roundEnd'
-  | 'enter'
-  | 'die'
-  | 'normalAttack'
-  | 'critical'
-  | 'dodge'
-  | 'skill'
-  | 'ultimate'
-  | 'buffAdd'
-  | 'debuffDamage'
-  | 'buffHeal'
-  | 'itemGet'
-  | 'chestOpen'
-  | 'lootGet'
-
-// 为支持结构化数据，可定义更具体的接口，例如：
-interface AttackLogData {
-  source: string
-  target: string
-  value: number
-  isCritical?: boolean
-  skillName?: string
-}
-```
-
-**合并事件建议**：\
-在生成日志时，若检测到符合合并条件的事件，可将其合并为一条特殊日志，其 `content` 为汇总文本，并在 `rawData` 中存储子事件列表。例如：
-
-```typescript
-{
-  id: 'merged-xxx',
-  timestamp: 1680000000000,
-  round: 3,
-  type: 'normalAttack',
-  category: 'combat',
-  content: '张三 对 李四 连续造成 5 次伤害（共 320 点）',
-  rawData: {
-    events: [/* 原始事件数组 */],
-    source: '张三',
-    target: '李四',
-    totalDamage: 320,
-    count: 5
-  }
-}
-```
-
-#### 4.2 数据流
-
-- 战斗系统每产生一个事件，调用日志模块的 `addLog(entry)` 方法。
-- 日志模块内部维护一个响应式数组 `logs`，并处理合并逻辑（可在添加时检查上一条日志是否可合并）。
-- 筛选和清空操作基于该数组进行过滤或重置。
-
-***
-
-### 5. 界面需求
-
-#### 5.1 布局
-
-- 日志区域占据独立面板，高度固定或可调整，内部滚动。
-- 顶部工具栏包含：
-  - 回合数统计：显示“当前回合：X”
-  - 筛选按钮组：“战利品 | 系统 | 战斗”
-  - “清空日志”按钮
-  - 主题切换开关（图标或文字）
-
-#### 5.2 样式细节（浅色/暗色示例）
-
-- **浅色主题**：
-  - 背景色：#f8f9fa
-  - 文字默认色：#2c3e50
-  - 回合分组背景色：#ecf0f1（交替或仅标识行）
-  - 按钮边框：#bdc3c7
-- **暗色主题**：
-  - 背景色：#2c3e50
-  - 文字默认色：#ecf0f1
-  - 回合分组背景色：#34495e
-  - 按钮边框：#7f8c8d
-
-具体颜色值可在实现时定义 CSS 变量，便于切换。
-
-#### 5.3 交互
-
-- 日志条目不支持点击展开详情（按需求）。
-- 筛选按钮点击立即更新视图。
-- 清空日志按钮需二次确认？目前无要求，可直接清空，但为避免误操作可增加简单确认弹窗（可选）。
-
-***
-
-### 6. 非功能需求
-
-#### 6.1 性能
-
-- 单场战斗日志条目数预估不超过 1000 条，无需虚拟滚动，但需保证渲染流畅。
-- 合并连续事件可有效减少条目数。
-- 使用 `keyed` 列表渲染，避免不必要的 DOM 更新。
-
-#### 6.2 可维护性
-
-- 日志数据结构清晰，类型定义完整。
-- 颜色、文本模板等配置化，便于修改。
-- 合并逻辑独立为可配置模块。
-
-#### 6.3 兼容性
-
-- 遵循 Vue3 组合式 API 和 TypeScript 严格模式。
-- 不使用 deprecated API。
-
-***
-
-### 7. 开发建议（来自需求提出者）
-
-1. **数据结构设计**：建议将 `content` 字段设计为纯文本，同时保留结构化数据在 `rawData` 中，便于后续扩展（如点击显示详情）。合并事件应单独处理，避免丢失原始信息。
-2. **合并策略**：定义清晰的合并规则，并在日志模块中实现合并检测函数。可考虑将合并功能设为可配置（是否开启）。
-3. **筛选分类**：为每个事件预先分配 `category`，避免筛选时动态判断类型，提高性能。
-4. **主题切换**：使用 CSS 变量定义颜色，通过切换根节点类名实现主题变更。
-5. **回合分组 UI**：可使用 `:style` 或 `:class` 为每个回合的第一个日志添加特殊样式（如顶部边距和背景色），或使用伪元素标识。
-6. **清空日志**：清空后应重置回合计数，并通知战斗系统（如重置日志模块状态）。
-
-***
-
-### 8. 附录
-
-#### 8.1 事件分类参考
-
-| 分类  | 包含事件类型                                                                          |
-| --- | ------------------------------------------------------------------------------- |
-| 战利品 | itemGet, chestOpen, lootGet                                                     |
-| 系统  | combatStart, combatEnd, roundStart, roundEnd, enter, die                        |
-| 战斗  | normalAttack, critical, dodge, skill, ultimate, buffAdd, debuffDamage, buffHeal |
-
-#### 8.2 颜色定义（CSS变量示例）
-
-```css
-:root {
-  --color-friendly: #2ecc71;
-  --color-hostile: #e74c3c;
-  --color-damage: #e74c3c;
-  --color-heal: #2ecc71;
-  --color-critical: #f1c40f;
-  --color-skill: #3498db;
-  --bg-default: #f8f9fa;
-  --text-default: #2c3e50;
-  --bg-round-group: #ecf0f1;
-}
-.dark {
-  --color-friendly: #27ae60;
-  --color-hostile: #c0392b;
-  --color-damage: #c0392b;
-  --color-heal: #27ae60;
-  --color-critical: #f39c12;
-  --color-skill: #2980b9;
-  --bg-default: #2c3e50;
-  --text-default: #ecf0f1;
-  --bg-round-group: #34495e;
-}
-```
-
-***
-
-文档编写完毕。如有任何疑问或需要调整，请随时提出。
-
---- documents/需求规格说明书.md ---
-# 战斗调试工作室需求规格说明书
-
-## 文档信息
-
-| 属性     | 内容                                  |
-| -------- | ------------------------------------- |
-| 项目名称 | 战斗调试工作室（Combat Debug Studio） |
-| 版本号   | 1.0.0                                 |
-| 项目类型 | Web前端游戏系统                       |
-| 技术栈   | Vue 3 + TypeScript + Vite + Pinia     |
-| 创建日期 | 2026-02-28                            |
-
----
-
-## 1. 项目概述
-
-### 1.1 项目背景
-
-战斗调试工作室是一个基于Web的回合制战斗系统调试工具，旨在为游戏开发者提供一个可视化、可调试的战斗系统测试环境。该系统支持多种战斗场景配置、智能敌人AI、完整的Buff/减益效果系统，以及战斗回放和调试功能。
-
-### 1.2 项目目标
-
-1. 提供完整的回合制战斗系统核心实现
-2. 支持多种战斗场景和敌人配置
-3. 实现智能战斗AI决策系统
-4. 提供可视化调试和监控界面
-5. 支持战斗过程回放和分析
-
-### 1.3 目标用户
-
-- 游戏开发人员
-- 战斗系统测试工程师
-- 游戏设计师
-- 独立游戏开发者
-
----
-
-## 2. 系统功能架构
-
-### 2.1 系统架构图
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         用户界面层 (Vue 3)                       │
-├─────────────────────────────────────────────────────────────────┤
-│  BattleArena  │  DebugPanel  │  ParticipantPanel  │  ControlBar│
-├─────────────────────────────────────────────────────────────────┤
-│                         状态管理层 (Pinia)                        │
-├─────────────────────────────────────────────────────────────────┤
-│  battleStore  │  debugStore  │  characterStore  │  sceneStore  │
-├─────────────────────────────────────────────────────────────────┤
-│                         核心业务层                                │
-├──────────────┬──────────────┬──────────────┬────────────────────┤
-│  战斗系统    │  AI系统       │  Buff系统     │   技能系统         │
-│  BattleSystem│  BattleAI    │  BuffSystem  │   SkillManager    │
-├──────────────┴──────────────┴──────────────┴────────────────────┤
-│                         辅助功能层                                │
-├──────────────┬──────────────┬──────────────┬────────────────────┤
-│  回合管理    │  动作执行     │  战斗录制     │   战斗规则         │
-│  TurnManager │  ActionExec  │  BattleRec.  │   BattleRules     │
-├──────────────┴──────────────┴──────────────┴────────────────────┤
-│                         数据配置层                                │
-├─────────────────────────────────────────────────────────────────┤
-│  skills.json  │  enemies.json  │  buffs.json  │  scenes.json   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 2.2 核心模块清单
-
-| 模块名称 | 文件路径                                              | 功能描述                       |
-| -------- | ----------------------------------------------------- | ------------------------------ |
-| 战斗系统 | `src/core/BattleSystem.ts`                            | 战斗核心实现，管理战斗生命周期 |
-| 回合管理 | `src/core/battle/TurnManager.ts`                      | 回合顺序计算和管理             |
-| 动作执行 | `src/core/battle/ActionExecutor.ts`                   | 技能和攻击的执行               |
-| AI系统   | `src/core/battle/AISystem.ts`                         | 敌人AI决策                     |
-| Buff系统 | `src/core/BuffSystem.ts`                              | 状态效果管理                   |
-| 技能管理 | `src/core/skill/SkillManager.ts`                      | 技能执行和管理                 |
-| 战斗录制 | `src/core/battle/BattleRecorder.ts`                   | 战斗过程记录                   |
-| 战斗回放 | `src/core/battle/replay/BattleReplayManager.ts`       | 战斗回放功能                   |
-| 自动战斗 | `src/core/battle/auto/AutoBattleManager.ts`           | 自动战斗控制                   |
-| 干预管理 | `src/core/battle/intervention/InterventionManager.ts` | 手动干预机制                   |
-
----
-
-## 3. 功能需求
-
-### 3.1 战斗系统功能
-
-#### 3.1.1 战斗生命周期管理
-
-| 需求ID       | 功能描述           | 优先级 |
-| ------------ | ------------------ | ------ |
-| F-BATTLE-001 | 创建新的战斗实例   | 高     |
-| F-BATTLE-002 | 初始化战斗参与者   | 高     |
-| F-BATTLE-003 | 执行回合制战斗流程 | 高     |
-| F-BATTLE-004 | 暂停和恢复战斗     | 中     |
-| F-BATTLE-005 | 战斗结算和结果判定 | 高     |
-| F-BATTLE-006 | 战斗状态查询       | 中     |
-
-**战斗状态定义：**
-
-- `CREATED`：已创建，等待参与者加入
-- `PREPARING`：战前准备，初始化技能和Buff
-- `ACTIVE`：战斗进行中
-- `PAUSED`：战斗暂停
-- `SETTLEMENT`：战斗结算
-- `ENDED`：战斗结束
-
-#### 3.1.2 回合管理
-
-| 需求ID     | 功能描述               | 优先级 |
-| ---------- | ---------------------- | ------ |
-| F-TURN-001 | 按速度属性计算回合顺序 | 高     |
-| F-TURN-002 | 检测速度变化并重新排序 | 高     |
-| F-TURN-003 | 管理回合内行动顺序     | 高     |
-| F-TURN-004 | 回合开始/结束事件触发  | 中     |
-
-#### 3.1.3 动作执行
-
-| 需求ID       | 功能描述           | 优先级 |
-| ------------ | ------------------ | ------ |
-| F-ACTION-001 | 普通攻击执行       | 高     |
-| F-ACTION-002 | 技能释放执行       | 高     |
-| F-ACTION-003 | 伤害计算和应用     | 高     |
-| F-ACTION-004 | 治疗效果计算和应用 | 高     |
-| F-ACTION-005 | 闪避判定           | 高     |
-| F-ACTION-006 | 暴击判定和伤害倍率 | 高     |
-
-### 3.2 角色战斗属性系统
-
-#### 3.2.1 基础属性
-
-| 属性名称 | 属性编码      | 数据类型 | 数值范围 | 默认值 | 说明                   |
-| -------- | ------------- | -------- | -------- | ------ | ---------------------- |
-| 等级     | level         | integer  | 1-99     | 1      | 影响基础属性和技能解锁 |
-| 名称     | name          | string   | -        | -      | 角色标识               |
-| 当前能量 | currentEnergy | integer  | 0-100    | 25     | 用于释放技能           |
-| 最大能量 | maxEnergy     | integer  | 100      | 100    | 能量上限               |
-| 当前气血 | currentHp     | integer  | 0-最大值 | -      | 生命值，为0时死亡      |
-| 最大气血 | maxHp         | integer  | 1-99999  | -      | 气血上限               |
-| 最小攻击 | minAttack     | integer  | 1-9999   | -      | 攻击伤害下限           |
-| 最大攻击 | maxAttack     | integer  | 1-9999   | -      | 攻击伤害上限           |
-| 防御     | defense       | integer  | 0-9999   | 0      | 减少受到的伤害         |
-| 速度     | speed         | integer  | 1-9999   | -      | 决定行动顺序           |
-| 暴击率   | critRate      | float    | 0-1      | 0.1    | 10%默认暴击率          |
-| 暴击伤害 | critDamage    | float    | 1-5      | 1.25   | 125%默认暴击伤害       |
-| 气血加成 | healthBonus   | float    | 0-5      | 0      | 气血百分比加成         |
-| 攻击加成 | attackBonus   | float    | 0-5      | 0      | 攻击百分比加成         |
-| 防御加成 | defenseBonus  | float    | 0-5      | 0      | 防御百分比加成         |
-| 速度加成 | speedBonus    | float    | 0-5      | 0      | 速度百分比加成         |
-
-#### 3.2.2 能量系统
-
-| 需求ID       | 功能描述               | 优先级 |
-| ------------ | ---------------------- | ------ |
-| F-ENERGY-001 | 初始能量为25点         | 高     |
-| F-ENERGY-002 | 每回合结束恢复25点能量 | 高     |
-| F-ENERGY-003 | 小技能消耗50点能量     | 高     |
-| F-ENERGY-004 | 大技能消耗100点能量    | 高     |
-| F-ENERGY-005 | 能量达到上限时停止恢复 | 高     |
-
-### 3.3 战斗计算公式
-
-#### 3.3.1 伤害计算
-
-| 需求ID       | 计算公式                              | 优先级 |
-| ------------ | ------------------------------------- | ------ |
-| F-DAMAGE-001 | 基础伤害 = 随机(minAttack, maxAttack) | 高     |
-| F-DAMAGE-002 | 伤害减免 = 目标防御 × 0.01            | 高     |
-| F-DAMAGE-003 | 最终伤害 = 基础伤害 × (1 - 伤害减免)  | 高     |
-| F-DAMAGE-004 | 暴击伤害 = 最终伤害 × 暴击伤害倍率    | 高     |
-
-#### 3.3.2 命中与闪避
-
-| 需求ID      | 计算公式                      | 优先级 |
-| ----------- | ----------------------------- | ------ |
-| F-CRIT-001  | 暴击判定：随机数 < 暴击率     | 高     |
-| F-DODGE-001 | 闪避判定：随机数 < 目标闪避率 | 高     |
-
-### 3.4 Buff系统功能
-
-#### 3.4.1 Buff分类
-
-**增益效果（Buff）：**
-
-| Buff名称   | Buff ID           | 效果描述              | 持续时间 | 叠加规则 |
-| ---------- | ----------------- | --------------------- | -------- | -------- |
-| 攻击力提升 | buff_attack_up    | 提高角色攻击力20%     | 3回合    | 刷新     |
-| 防御力提升 | buff_defense_up   | 提高角色防御力30%     | 4回合    | 刷新     |
-| 速度提升   | buff_speed_up     | 提高角色速度25%       | 3回合    | 刷新     |
-| 护盾       | buff_shield       | 吸收100点伤害         | 2回合    | 覆盖     |
-| 生命回复   | buff_heal_ot      | 每回合回复50点生命    | 3回合    | 独立叠加 |
-| 狂暴       | buff_berserk      | 攻击+50%，防御-20%    | 2回合    | 覆盖     |
-| 山神祝福   | buff_mountain_god | 受伤减少50%，免疫控制 | 3回合    | 覆盖     |
-| 闪避提升   | buff_dodge_up     | 闪避率提升20%         | 3回合    | 刷新     |
-
-**减益效果（Debuff）：**
-
-| Buff名称     | Buff ID                    | 效果描述           | 持续时间 | 叠加规则 |
-| ------------ | -------------------------- | ------------------ | -------- | -------- |
-| 中毒         | poison                     | 每回合受到20点伤害 | 4回合    | 独立叠加 |
-| 眩晕         | stun                       | 无法进行任何行动   | 1回合    | 刷新     |
-| 速度降低     | buff_speed_reduction       | 速度降低30%        | 2回合    | 刷新     |
-| 命中率降低   | buff_hit_reduction         | 命中率降低25%      | 2回合    | 刷新     |
-| 暴击伤害降低 | buff_crit_damage_reduction | 暴击伤害降低30%    | 2回合    | 刷新     |
-| 重伤         | buff_injury                | 受伤增加20%        | 3回合    | 刷新     |
-
-#### 3.4.2 Buff叠加规则
-
-| 规则类型              | 说明                           | 应用场景                 |
-| --------------------- | ------------------------------ | ------------------------ |
-| 刷新(REFRESH)         | 新Buff覆盖旧Buff，重置持续时间 | 攻击力提升、防御力提升等 |
-| 限制层数(LIMITED)     | 达到最大层数后无法叠加         | 特殊Buff                 |
-| 独立叠加(INDEPENDENT) | 每层Buff独立计算效果           | 中毒、生命回复等         |
-
-#### 3.4.3 Buff生命周期
-
-| 需求ID     | 功能描述           | 优先级 |
-| ---------- | ------------------ | ------ |
-| F-BUFF-001 | Buff添加和应用     | 高     |
-| F-BUFF-002 | Buff持续时间更新   | 高     |
-| F-BUFF-003 | Buff移除和效果清理 | 高     |
-| F-BUFF-004 | Buff效果刷新       | 中     |
-| F-BUFF-005 | Buff脚本动态加载   | 中     |
-
-### 3.5 技能系统功能
-
-#### 3.5.1 技能配置
-
-| 技能属性 | 说明         | 数据类型 |
-| -------- | ------------ | -------- |
-| 技能ID   | 唯一标识     | string   |
-| 技能名称 | 显示名称     | string   |
-| 技能描述 | 详细说明     | string   |
-| 能量消耗 | 释放所需能量 | integer  |
-| 冷却时间 | 冷却回合数   | integer  |
-| 目标选择 | 技能目标类型 | enum     |
-| 技能步骤 | 技能效果列表 | array    |
-
-#### 3.5.2 技能类型
-
-| 技能类型   | 说明               |
-| ---------- | ------------------ |
-| 伤害技能   | 对目标造成伤害     |
-| 治疗技能   | 恢复目标生命       |
-| Buff技能   | 为目标添加增益效果 |
-| Debuff技能 | 为目标添加减益效果 |
-
-#### 3.5.3 技能效果类型
-
-| 效果类型 | 说明         |
-| -------- | ------------ |
-| damage   | 造成伤害     |
-| heal     | 恢复生命     |
-| buff     | 添加增益效果 |
-| debuff   | 添加减益效果 |
-
-### 3.6 AI系统功能
-
-#### 3.6.1 AI决策逻辑
-
-| 需求ID   | 功能描述     | 优先级 |
-| -------- | ------------ | ------ |
-| F-AI-001 | 评估战场态势 | 高     |
-| F-AI-002 | 选择最优技能 | 高     |
-| F-AI-003 | 选择攻击目标 | 高     |
-| F-AI-004 | 能量管理策略 | 中     |
-| F-AI-005 | 威胁值计算   | 中     |
-
-#### 3.6.2 AI优先级策略
-
-| 优先级 | 技能类型   |
-| ------ | ---------- |
-| 1      | 治疗技能   |
-| 2      | 攻击技能   |
-| 3      | Buff技能   |
-| 4      | Debuff技能 |
-
-#### 3.6.3 AI能量阈值
-
-| 能量状态 | 阈值    | 行为           |
-| -------- | ------- | -------------- |
-| 高能量   | ≥70%    | 优先使用大技能 |
-| 中能量   | 50%-70% | 均衡使用技能   |
-| 低能量   | <50%    | 优先普通攻击   |
-
-### 3.7 战斗控制功能
-
-#### 3.7.1 自动战斗
-
-| 需求ID     | 功能描述                    | 优先级 |
-| ---------- | --------------------------- | ------ |
-| F-AUTO-001 | 开启/关闭自动战斗           | 高     |
-| F-AUTO-002 | 设置自动战斗速度(1/2/3/5倍) | 高     |
-| F-AUTO-003 | 战斗加速控制                | 高     |
-
-#### 3.7.2 手动干预
-
-| 需求ID      | 功能描述           | 优先级 |
-| ----------- | ------------------ | ------ |
-| F-INTER-001 | 暂停战斗           | 高     |
-| F-INTER-002 | 中断AI行动         | 中     |
-| F-INTER-003 | 手动选择技能和目标 | 高     |
-
-#### 3.7.3 战斗重置
-
-| 需求ID       | 功能描述     | 优先级 |
-| ------------ | ------------ | ------ |
-| F-RESET-001  | 重置当前战斗 | 中     |
-| F-REPLAY-001 | 战斗回放     | 中     |
-
-### 3.8 调试功能
-
-#### 3.8.1 属性监控
-
-| 需求ID      | 功能描述         | 优先级 |
-| ----------- | ---------------- | ------ |
-| F-DEBUG-001 | 实时显示角色属性 | 高     |
-| F-DEBUG-002 | 属性变化追踪     | 中     |
-| F-DEBUG-003 | Buff状态显示     | 高     |
-
-#### 3.8.2 战斗日志
-
-| 需求ID    | 功能描述       | 优先级 |
-| --------- | -------------- | ------ |
-| F-LOG-001 | 战斗事件记录   | 高     |
-| F-LOG-002 | 伤害数值显示   | 高     |
-| F-LOG-003 | 日志过滤和搜索 | 中     |
-
-#### 3.8.3 场景管理
-
-| 需求ID      | 功能描述     | 优先级 |
-| ----------- | ------------ | ------ |
-| F-SCENE-001 | 场景切换     | 中     |
-| F-SCENE-002 | 敌人配置加载 | 中     |
-
----
-
-## 4. 用户界面需求
-
-### 4.1 界面设计规范
-
-#### 4.1.1 视觉风格
-
-| 设计属性 | 规范                         |
-| -------- | ---------------------------- |
-| 主题     | 深色系专业数据仪表盘         |
-| 设计理念 | 严谨克制的极简主义           |
-| 布局     | 精密网格布局                 |
-| 文字颜色 | 白色高对比度（透明度85%）    |
-| 辅助线条 | 浅蓝色（#60a5fa，透明度40%） |
-| 交互强调 | 青色（#22d3ee）              |
-| 警告标识 | 橙红色（#f97316）            |
-| 面板效果 | 微磨砂玻璃质感+微妙投影      |
-| 字体     | 无衬线等宽字体               |
-| 渲染     | 4K超清渲染，锐利边缘         |
-
-#### 4.1.2 界面布局
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  顶部：场景选择栏 (SceneManagementDialog)                         │
-├────────────────────┬─────────────────────────┬─────────────────┤
-│                    │                         │                 │
-│  左侧：参战面板     │   中央：战斗Arena       │  右侧：调试面板  │
-│  ParticipantPanel  │     BattleArena         │   DebugPanel    │
-│                    │                         │                 │
-│  - 角色列表        │   - 战场区域            │  - 属性监控     │
-│  - 角色选择        │   - 技能选择            │  - Buff显示     │
-│  - 角色属性        │   - 目标选择            │  - 技能信息     │
-│                    │                         │                 │
-├────────────────────┴─────────────────────────┴─────────────────┤
-│  底部：战斗日志 (BattleLog) / 控制栏 (ControlBar)                  │
-│  - 战斗事件记录  - 战斗控制按钮  - 快捷键提示                       │
-└──────────────────────────────────────────────────────────────────┘
-```
-
-### 4.2 界面组件清单
-
-| 组件名称   | 文件路径                              | 功能描述       |
-| ---------- | ------------------------------------- | -------------- |
-| 战斗场     | `src/views/BattleArena.vue`           | 主战斗界面容器 |
-| 战场       | `src/views/BattleField.vue`           | 战斗场景渲染   |
-| 参战面板   | `src/views/ParticipantPanel.vue`      | 角色管理       |
-| 调试面板   | `src/views/DebugPanel.vue`            | 属性监控和调试 |
-| 战斗日志   | `src/views/BattleLog.vue`             | 战斗事件记录   |
-| 控制栏     | `src/views/ControlBar.vue`            | 战斗控制按钮   |
-| 战斗回放   | `src/views/BattleReplay.vue`          | 战斗回放界面   |
-| 快捷键设置 | `src/views/KeybindSettings.vue`       | 按键配置       |
-| 快捷键提示 | `src/views/KeybindHintPanel.vue`      | 按键提示显示   |
-| 新手引导   | `src/views/NewbieGuide.vue`           | 教程引导       |
-| 属性提示   | `src/components/AttributeTooltip.vue` | 属性信息提示   |
-| Buff图标   | `src/components/BuffIcon.vue`         | Buff状态图标   |
-| Buff列表   | `src/components/BuffList.vue`         | Buff效果列表   |
-| 伤害数字   | `src/components/DamageNumber.vue`     | 伤害数值动画   |
-| 技能效果   | `src/components/SkillEffect.vue`      | 技能特效显示   |
-
-### 4.3 交互功能
-
-#### 4.3.1 键盘快捷键
-
-| 按键 | 功能                |
-| ---- | ------------------- |
-| 空格 | 暂停/继续战斗       |
-| 1-5  | 切换自动战斗速度    |
-| R    | 重置战斗            |
-| H    | 显示/隐藏快捷键提示 |
-| Esc  | 关闭对话框          |
-
-#### 4.3.2 鼠标交互
-
-| 操作         | 功能         |
-| ------------ | ------------ |
-| 点击角色头像 | 选择行动角色 |
-| 点击技能图标 | 选择释放技能 |
-| 点击目标     | 选择技能目标 |
-| 右键点击     | 查看角色详情 |
-
----
-
-## 5. 数据配置需求
-
-### 5.1 配置文件清单
-
-| 配置文件 | 路径                                     | 用途           |
-| -------- | ---------------------------------------- | -------------- |
-| 技能配置 | `configs/skills/skills.json`             | 技能定义和效果 |
-| 敌人配置 | `configs/enemies/enemies.json`           | 敌人属性和技能 |
-| Buff配置 | `configs/buffs/buffs.json`               | Buff效果定义   |
-| 效果配置 | `configs/effects/effects.json`           | 战斗特效       |
-| 场景配置 | `configs/scenes/scenes.json`             | 战斗场景       |
-| 全局参数 | `configs/params/buff-global-params.json` | Buff全局参数   |
-
-### 5.2 敌人数据模型
-
-```json
-{
-  "id": "enemy_001",
-  "name": "花妖",
-  "level": 1,
-  "stats": {
-    "health": 57,
-    "minAttack": 6,
-    "maxAttack": 9,
-    "defense": 3,
-    "speed": 11
-  },
-  "skills": {
-    "small": ["skill_enemy_001_small"]
-  }
-}
-```
-
-### 5.3 技能数据模型
-
-```json
-{
-  "id": "skill_enemy_001_small",
-  "name": "花粉迷雾",
-  "description": "对单个敌人造成80%攻击力的普通伤害",
-  "enemyCost": 50,
-  "cooldown": 2,
-  "selector": "single_enemy",
-  "steps": [
-    {
-      "type": "damage",
-      "target": "enemy",
-      "scope": "single",
-      "formula": "attack*0.8",
-      "attackType": "normal"
-    }
-  ]
-}
-```
-
----
-
-## 6. 非功能需求
-
-### 6.1 性能需求
-
-| 指标         | 要求     |
-| ------------ | -------- |
-| 页面加载时间 | < 3秒    |
-| 战斗帧率     | ≥ 30 FPS |
-| 动画延迟     | < 100ms  |
-| 内存占用     | < 200MB  |
-
-### 6.2 兼容性需求
-
-| 浏览器  | 最低版本 |
-| ------- | -------- |
-| Chrome  | 90+      |
-| Firefox | 88+      |
-| Edge    | 90+      |
-| Safari  | 14+      |
-
-### 6.3 可维护性需求
-
-| 需求       | 说明             |
-| ---------- | ---------------- |
-| 模块化设计 | 核心功能独立模块 |
-| 配置驱动   | 战斗规则可配置   |
-| 日志系统   | 完整的日志记录   |
-| 错误处理   | 健壮的异常捕获   |
-
----
-
-## 7. 验收标准
-
-### 7.1 功能验收
-
-| 验收项   | 验收标准               |
-| -------- | ---------------------- |
-| 战斗流程 | 完整执行回合制战斗流程 |
-| 伤害计算 | 伤害符合数值公式计算   |
-| Buff系统 | Buff正确应用和移除     |
-| AI决策   | 敌人能够自主决策行动   |
-| 调试功能 | 实时显示战斗数据       |
-| 战斗回放 | 能够回放历史战斗       |
-
-### 7.2 界面验收
-
-| 验收项   | 验收标准         |
-| -------- | ---------------- |
-| 布局显示 | 界面元素正确显示 |
-| 交互响应 | 点击操作正常响应 |
-| 动画效果 | 技能动画平滑播放 |
-| 主题风格 | 符合设计规范     |
-
----
-
-## 8. 附录
-
-### 8.1 术语表
-
-| 术语     | 定义                     |
-| -------- | ------------------------ |
-| Buff     | 增益效果                 |
-| Debuff   | 减益效果                 |
-| 回合     | 所有人行动一次为一个回合 |
-| 行动     | 单个角色的行动           |
-| 技能冷却 | 技能释放后的等待时间     |
-
-### 8.2 参考资料
-
-- 项目源码：`src/` 目录
-- 配置文件：`configs/` 目录
-- 现有文档：`功能介绍.md`
-
----
-
-_文档结束_
 
 --- eslint.config.js ---
 import js from '@eslint/js'
@@ -14249,6 +12510,378 @@ defineExpose({
 }
 </style>
 
+--- src/components/ParticipantCard.vue ---
+<!--
+  参与者卡片组件
+  显示参与者的属性和状态信息
+-->
+<template>
+  <div class="member-card" ref="cardRef" :class="cardClasses" @click="handleClick">
+    <!-- 内部浮动数字列表 -->
+    <div class="floating-numbers">
+      <div v-for="num in damageNumbers" :key="num.id" class="damage-number"
+        :class="[num.type, { critical: num.isCritical }]" :style="{
+          left: num.x + 'px',
+          top: num.y + 'px',
+          animationDuration: num.duration + 'ms',
+        }" @animationend="removeDamageNumber(num.id)">
+        {{ num.text }}
+      </div>
+    </div>
+
+    <div class="member-info">
+      <!-- 名称和行动标识 -->
+      <div class="member-name">
+        Lv.{{ participant.level }} {{ participant.name }}
+        <div class="member-action" v-if="isActive">
+          <span :class="['acting-badge', { 'enemy-acting': isEnemy }]">←操作中</span>
+        </div>
+      </div>
+
+      <!-- 生命值条 -->
+      <div class="member-hp">
+        <span class="hp-text">{{ hpText }}</span>
+        <div class="hp-bar">
+          <div class="hp-fill" :class="hpColorClass" :style="{ width: hpPercent + '%' }"></div>
+        </div>
+      </div>
+
+      <!-- 能量条 -->
+      <div class="member-energy">
+        <span class="energy-text">{{ energyText }}</span>
+        <div class="energy-bar">
+          <div class="energy-ticks">
+            <div class="tick"></div>
+            <div class="tick"></div>
+            <div class="tick"></div>
+            <div class="tick"></div>
+          </div>
+          <div class="energy-fill" :class="energyColorClass" :style="{ width: energyPercent + '%' }"></div>
+        </div>
+      </div>
+
+      <!-- 状态标签 -->
+      <div class="member-status">
+        <span v-for="status in statusEffects" :key="status.id" class="status-tag"
+          :class="status.isPositive ? 'positive' : 'negative'" @mouseenter="showStatusTooltip($event, status)"
+          @mouseleave="hideStatusTooltip">
+          {{ status.name }}:{{ status.duration }}
+        </span>
+        <span v-if="statusEffects.length === 0" class="no-status">无</span>
+      </div>
+
+      <!-- 调试信息（可选） -->
+      <div v-if="showDebug" class="debug-info">
+        <div class="debug-row">
+          <span class="label">ATK:</span>
+          <span class="value">{{ stats.atk.value.displayValue }}</span>
+          <span v-if="stats.atk.value.breakdown" class="breakdown" @click="toggleBreakdown">🔍</span>
+        </div>
+        <div v-if="showBreakdown" class="breakdown-details">
+          <div v-for="(value, key) in stats.atk.value.breakdown" :key="key" class="breakdown-item">
+            <span class="key">{{ formatBreakdownKey(key) }}:</span>
+            <span class="value">{{ typeof value === 'number' ? value.toFixed(2) : value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, ref, type Ref } from 'vue'
+import type { BattleParticipant } from '@/types/battle'
+import type { StatusEffect } from '@/types/battle'
+import { useBattleParticipant } from '@/composables/useBattleParticipant'
+import { useParticipantStats } from '@/composables/useParticipantStats'
+
+// 浮动数字接口
+interface FloatingNumber {
+  id: number
+  x: number
+  y: number
+  text: string
+  type: 'damage' | 'heal' | 'critical' | 'miss'
+  isCritical: boolean
+  duration: number
+}
+
+const props = defineProps<{
+  /** 战斗参与者实例 */
+  participant: BattleParticipant
+  /** 是否当前行动者 */
+  isActive?: boolean
+  /** 是否选中 */
+  isSelected?: boolean
+  /** 是否敌方 */
+  isEnemy?: boolean
+  /** 显示调试信息 */
+  showDebug?: boolean
+  /** 卡片引用 ID（用于动画） */
+  cardRefId?: string
+}>()
+
+const emit = defineEmits<{
+  click: [participantId: string]
+  statusTooltipShow: [event: MouseEvent, status: StatusEffect]
+  statusTooltipHide: []
+}>()
+
+// 使用 composable 包装参与者
+const { participant: shallowParticipant, stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(props.participant)
+
+// 使用属性访问 composable
+const participantStats = useParticipantStats(props.participant)
+
+// 卡片引用
+const cardRef = ref<HTMLElement | null>(null)
+
+// 浮动数字管理
+const damageNumbers = ref<FloatingNumber[]>([])
+const nextNumberId = ref(0)
+
+/**
+ * 添加浮动数字
+ * @param value 伤害/治疗值
+ * @param type 类型：damage | heal | critical | miss
+ * @param isCritical 是否暴击
+ * @param x 横坐标（百分比，0-100）
+ * @param y 纵坐标（百分比，0-100）
+ */
+function addDamageNumber(
+  value: number,
+  type: 'damage' | 'heal' | 'critical' | 'miss',
+  isCritical: boolean = false,
+  x: number = 50,
+  y: number = 20
+) {
+  const id = nextNumberId.value++
+  const text = type === 'miss' ? '闪避' : (type === 'heal' ? `+${value}` : `-${value}`)
+  const duration = isCritical ? 1500 : 1000 // 暴击动画更长
+
+  damageNumbers.value.push({
+    id,
+    x,
+    y,
+    text,
+    type,
+    isCritical,
+    duration
+  })
+}
+
+/**
+ * 移除浮动数字（动画结束后调用）
+ */
+function removeDamageNumber(id: number) {
+  const index = damageNumbers.value.findIndex(n => n.id === id)
+  if (index !== -1) {
+    damageNumbers.value.splice(index, 1)
+  }
+}
+
+// 计算属性
+const isDead = computed(() => !isAlive.value)
+const cardClasses = computed(() => ({
+  'active': props.isActive,
+  'dead': isDead.value,
+  'selected': props.isSelected,
+}))
+
+const hpText = computed(() => {
+  const hp = Math.max(0, Math.floor(stats.value.hp.value))
+  const maxHp = Math.max(0, Math.floor(stats.value.maxHp.value))
+  return `${hp}/${maxHp}`
+})
+
+const hpColorClass = computed(() => {
+  const hpPct = hpPercent
+  if (hpPct <= 25) return 'low'
+  if (hpPct <= 50) return 'medium'
+  return 'high'
+})
+
+const energyText = computed(() => {
+  const energy = Math.floor(stats.value.energy.value)
+  const maxEnergy = Math.floor(stats.value.maxEnergy.value)
+  return `${energy}/${maxEnergy}`
+})
+
+const energyColorClass = computed(() => {
+  const energyPct = energyPercent.value
+  if (energyPct >= 80) return 'full'
+  if (energyPct >= 50) return 'medium'
+  return 'low'
+})
+
+const statusEffects = computed(() => {
+  return (props.participant as any).statusEffects || []
+})
+
+// 调试信息
+const showBreakdown = ref(false)
+
+const toggleBreakdown = () => {
+  showBreakdown.value = !showBreakdown.value
+}
+
+const formatBreakdownKey = (key: string) => {
+  const keyMap: Record<string, string> = {
+    base: '基础值',
+    additive: '加法修正',
+    percentMultiplier: '百分比乘区',
+    independentMultiplier: '独立乘区',
+    finalMultiplier: '最终修正',
+  }
+  return keyMap[key] || key
+}
+
+// 事件处理
+const handleClick = () => {
+  emit('click', props.participant.id)
+}
+
+const showStatusTooltip = (event: MouseEvent, status: StatusEffect) => {
+  emit('statusTooltipShow', event, status)
+}
+
+const hideStatusTooltip = () => {
+  emit('statusTooltipHide')
+}
+
+// 暴露卡片引用给父组件（用于动画）
+defineExpose({
+  cardRef,
+  participantId: props.participant.id,
+  addDamageNumber
+})
+
+</script>
+
+<style scoped>
+/* 浮动数字容器 */
+.floating-numbers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* 浮动数字样式 */
+.damage-number {
+  position: absolute;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  animation: float-up v-bind(duration) ease-out forwards;
+  white-space: nowrap;
+}
+
+.damage-number.damage {
+  color: #ef4444;
+  /* 红色伤害 */
+}
+
+.damage-number.heal {
+  color: #22c55e;
+  /* 绿色治疗 */
+}
+
+.damage-number.critical {
+  color: #f97316;
+  /* 橙色暴击 */
+  font-size: 32px;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+}
+
+.damage-number.miss {
+  color: #9ca3af;
+  /* 灰色闪避 */
+  font-size: 20px;
+}
+
+/* 浮动动画 */
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.8);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.2);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(1);
+  }
+}
+
+/* 复用原有 member-card 样式 */
+.debug-info {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.debug-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.debug-row .label {
+  color: #9ca3af;
+  min-width: 40px;
+}
+
+.debug-row .value {
+  color: #e5e7eb;
+  font-family: 'Courier New', monospace;
+}
+
+.debug-row .breakdown {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.debug-row .breakdown:hover {
+  opacity: 1;
+}
+
+.breakdown-details {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border-left: 2px solid #22d3ee;
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  font-family: 'Courier New', monospace;
+}
+
+.breakdown-item .key {
+  color: #9ca3af;
+}
+
+.breakdown-item .value {
+  color: #22d3ee;
+}
+</style>
+
 --- src/components/RadioButtonGroup.vue ---
 <!--
  * 文件: RadioButtonGroup.vue
@@ -14920,8 +13553,18 @@ defineExpose({
  * Composables 统一导出
  */
 
+// 战斗生命周期
 export { useBattleLifecycle, useRafTimer } from './useBattleLifecycle'
 export type { TimerResource, LifecycleOptions } from './useBattleLifecycle'
+
+// 战斗参与者绑定
+export { useBattleParticipant, useBattleParticipants } from './useBattleParticipant'
+export type { UseBattleParticipantReturn, ParticipantStats } from './useBattleParticipant'
+
+// 参与者属性访问
+export { useParticipantStats } from './useParticipantStats'
+export type { UseParticipantStatsReturn, FormattedAttribute, CombatStatType } from './useParticipantStats'
+export { getStatName, getStatIcon } from './useParticipantStats'
 
 --- src/composables/useBattleAnimation.ts ---
 /**
@@ -15353,6 +13996,163 @@ export function useRafTimer() {
   }
 }
 
+--- src/composables/useBattleParticipant.ts ---
+/**
+ * 文件：useBattleParticipant.ts
+ * 创建日期：2026-04-08
+ * 功能：战斗参与者 UI 绑定 Composable
+ * 描述：提供 shallowReactive + computed 方案，实现 UI 层直接绑定 BattleParticipant
+ */
+
+import { computed, shallowReactive, type ShallowReactive } from 'vue'
+import type { BattleParticipant } from '@/types/battle'
+import type { AttributeValue, AttributeName } from '@/types/attribute'
+import { AttributeNames } from '@/types/attribute'
+
+/**
+ * 战斗参与者属性集合
+ */
+export interface ParticipantStats {
+  /** 当前生命值 */
+  hp: AttributeValue
+  /** 最大生命值 */
+  maxHp: AttributeValue
+  /** 当前能量 */
+  energy: AttributeValue
+  /** 最大能量 */
+  maxEnergy: AttributeValue
+  /** 攻击力 */
+  atk: AttributeValue
+  /** 防御力 */
+  def: AttributeValue
+  /** 速度 */
+  spd: AttributeValue
+  /** 暴击率 */
+  critRate: AttributeValue
+  /** 暴击伤害 */
+  critDmg: AttributeValue
+  /** 伤害减免 */
+  dmgReduction: AttributeValue
+  /** 生命加成 */
+  hpBonus: AttributeValue
+  /** 攻击加成 */
+  atkBonus: AttributeValue
+  /** 防御加成 */
+  defBonus: AttributeValue
+  /** 速度加成 */
+  spdBonus: AttributeValue
+  /** 最小攻击 */
+  minAtk: AttributeValue
+  /** 最大攻击 */
+  maxAtk: AttributeValue
+}
+
+/**
+ * 战斗参与者 Composable 返回值
+ */
+export interface UseBattleParticipantReturn {
+  /** 参与者实例（浅代理） */
+  participant: ShallowReactive<BattleParticipant>
+  /** 属性集合（计算属性缓存） */
+  stats: Readonly<ParticipantStats>
+  /** 是否存活 */
+  isAlive: Readonly<boolean>
+  /** 是否死亡 */
+  isDead: Readonly<boolean>
+  /** 生命百分比 */
+  hpPercent: Readonly<number>
+  /** 能量百分比 */
+  energyPercent: Readonly<number>
+  /** 获取指定属性（直接访问缓存） */
+  getAttribute: (type: AttributeName) => AttributeValue | undefined
+  /** 获取属性计算拆解（仅调试模式） */
+  getBreakdown: (type: AttributeName) => any
+}
+
+/**
+ * 战斗参与者 Composable
+ * 使用 shallowReactive 避免深层代理开销，computed 缓存属性引用
+ * @param participant BattleParticipant 实例
+ * @returns 响应式包装的参与者数据和属性
+ */
+export function useBattleParticipant(
+  participant: BattleParticipant,
+): UseBattleParticipantReturn {
+  console.log('useBattleParticipant', participant)
+  // 使用浅代理，避免 Map 深层代理开销
+  const shallowParticipant = shallowReactive<BattleParticipant>(participant)
+
+  // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue
+  const stats = computed<ParticipantStats>(() => ({
+    hp: shallowParticipant.getAttributeValue(AttributeNames.HP)!,
+    maxHp: shallowParticipant.getAttributeValue(AttributeNames.MAX_HP)!,
+    energy: shallowParticipant.getAttributeValue(AttributeNames.ENERGY)!,
+    maxEnergy: shallowParticipant.getAttributeValue(AttributeNames.MAX_ENERGY)!,
+    atk: shallowParticipant.getAttributeValue(AttributeNames.ATK)!,
+    def: shallowParticipant.getAttributeValue(AttributeNames.DEF)!,
+    spd: shallowParticipant.getAttributeValue(AttributeNames.SPD)!,
+    critRate: shallowParticipant.getAttributeValue(AttributeNames.CRIT_RATE)!,
+    critDmg: shallowParticipant.getAttributeValue(AttributeNames.CRIT_DMG)!,
+    dmgReduction: shallowParticipant.getAttributeValue(AttributeNames.DMG_REDUCTION)!,
+    hpBonus: shallowParticipant.getAttributeValue(AttributeNames.HP_BONUS)!,
+    atkBonus: shallowParticipant.getAttributeValue(AttributeNames.ATK_BONUS)!,
+    defBonus: shallowParticipant.getAttributeValue(AttributeNames.DEF_BONUS)!,
+    spdBonus: shallowParticipant.getAttributeValue(AttributeNames.SPD_BONUS)!,
+    minAtk: shallowParticipant.getAttributeValue(AttributeNames.MIN_ATK)!,
+    maxAtk: shallowParticipant.getAttributeValue(AttributeNames.MAX_ATK)!,
+  }))
+
+  // 派生状态
+  const isAlive = computed(() => shallowParticipant.isAlive())
+  const isDead = computed(() => !isAlive.value)
+
+  // 百分比计算
+  const hpPercent = computed(() => {
+    const hp = stats.value.hp.value
+    const maxHp = stats.value.maxHp.value
+    return maxHp > 0 ? (hp / maxHp) * 100 : 0
+  })
+
+  const energyPercent = computed(() => {
+    const energy = stats.value.energy.value
+    const maxEnergy = stats.value.maxEnergy.value
+    return maxEnergy > 0 ? (energy / maxEnergy) * 100 : 0
+  })
+
+  // 直接访问属性的方法
+  const getAttribute = (type: AttributeName): AttributeValue | undefined => {
+    return shallowParticipant.getAttributeValue(type)
+  }
+
+  // 获取属性计算拆解（仅调试模式）
+  const getBreakdown = (type: AttributeName): any => {
+    const attrValue = getAttribute(type)
+    return attrValue?.breakdown || null
+  }
+
+  return {
+    participant: shallowParticipant,
+    stats,
+    isAlive,
+    isDead,
+    hpPercent,
+    energyPercent,
+    getAttribute,
+    getBreakdown,
+  }
+}
+
+/**
+ * 批量包装多个参与者
+ * @param participants 参与者数组
+ * @returns 包装后的参与者数组
+ */
+export function useBattleParticipants(
+  participants: BattleParticipant[],
+): UseBattleParticipantReturn[] {
+  return participants.map((p) => useBattleParticipant(p))
+}
+
 --- src/composables/useCompendium.ts ---
 /**
  * 文件: useCompendium.ts
@@ -15476,6 +14276,189 @@ export function useCompendium() {
     buffCount,
     itemCount,
   }
+}
+
+--- src/composables/useParticipantStats.ts ---
+/**
+ * 文件：useParticipantStats.ts
+ * 创建日期：2026-04-08
+ * 功能：参与者属性访问 Composable
+ * 描述：提供便捷的属性访问和格式化功能
+ */
+
+import { computed, type ComputedRef } from 'vue'
+import type { BattleParticipant } from '@/types/battle'
+import type { AttributeValue, AttributeName } from '@/types/attribute'
+import { AttributeNames } from '@/types/attribute'
+
+/**
+ * 格式化后的属性值
+ */
+export interface FormattedAttribute {
+  /** 显示值（格式化后） */
+  displayValue: string
+  /** 原始值 */
+  value: number
+  /** 是否为百分比 */
+  isPercentage: boolean
+  /** 计算拆解（调试模式） */
+  breakdown?: any
+}
+
+/**
+ * 属性访问 Composable 返回值
+ */
+export interface UseParticipantStatsReturn {
+  /** 获取格式化属性 */
+  getFormatted: (type: AttributeName) => FormattedAttribute
+  /** 获取属性值 */
+  getValue: (type: AttributeName) => number
+  /** 获取属性对象 */
+  getAttribute: (type: AttributeName) => AttributeValue | undefined
+  /** 获取计算拆解 */
+  getBreakdown: (type: AttributeName) => any
+  /** 生命值 */
+  hp: ComputedRef<FormattedAttribute>
+  /** 最大生命值 */
+  maxHp: ComputedRef<FormattedAttribute>
+  /** 能量 */
+  energy: ComputedRef<FormattedAttribute>
+  /** 最大能量 */
+  maxEnergy: ComputedRef<FormattedAttribute>
+  /** 攻击力 */
+  atk: ComputedRef<FormattedAttribute>
+  /** 防御力 */
+  def: ComputedRef<FormattedAttribute>
+  /** 速度 */
+  spd: ComputedRef<FormattedAttribute>
+  /** 暴击率 */
+  critRate: ComputedRef<FormattedAttribute>
+  /** 暴击伤害 */
+  critDmg: ComputedRef<FormattedAttribute>
+  /** 伤害减免 */
+  dmgReduction: ComputedRef<FormattedAttribute>
+}
+
+/**
+ * 格式化属性值
+ */
+function formatAttributeValue(
+  attrValue: AttributeValue,
+  displayValue?: number,
+): FormattedAttribute {
+  const value = displayValue ?? attrValue.value
+  const displayValueStr = attrValue.isPercentage
+    ? `${value.toFixed(1)}%`
+    : Math.round(value).toString()
+
+  return {
+    displayValue: displayValueStr,
+    value,
+    isPercentage: attrValue.isPercentage,
+    breakdown: attrValue.breakdown,
+  }
+}
+
+/**
+ * 参与者属性访问 Composable
+ * 提供便捷的属性访问和格式化功能
+ * @param participant BattleParticipant 实例
+ * @returns 属性访问方法集合
+ */
+export function useParticipantStats(
+  participant: BattleParticipant,
+): UseParticipantStatsReturn {
+  // 获取格式化属性
+  const getFormatted = (type: AttributeName): FormattedAttribute => {
+    const attrValue = participant.getAttributeValue(type)
+    if (!attrValue) {
+      return {
+        displayValue: '0',
+        value: 0,
+        isPercentage: false,
+      }
+    }
+    return formatAttributeValue(attrValue)
+  }
+
+  // 获取属性值
+  const getValue = (type: AttributeName): number => {
+    return participant.getAttributeValue(type)?.value ?? 0
+  }
+
+  // 获取属性对象
+  const getAttribute = (type: AttributeName): AttributeValue | undefined => {
+    return participant.getAttributeValue(type)
+  }
+
+  // 获取计算拆解
+  const getBreakdown = (type: AttributeName): any => {
+    return getAttribute(type)?.breakdown || null
+  }
+
+  // 常用属性的计算属性
+  const hp = computed(() => getFormatted(AttributeNames.HP))
+  const maxHp = computed(() => getFormatted(AttributeNames.MAX_HP))
+  const energy = computed(() => getFormatted(AttributeNames.ENERGY))
+  const maxEnergy = computed(() => getFormatted(AttributeNames.MAX_ENERGY))
+  const atk = computed(() => getFormatted(AttributeNames.ATK))
+  const def = computed(() => getFormatted(AttributeNames.DEF))
+  const spd = computed(() => getFormatted(AttributeNames.SPD))
+  const critRate = computed(() => getFormatted(AttributeNames.CRIT_RATE))
+  const critDmg = computed(() => getFormatted(AttributeNames.CRIT_DMG))
+  const dmgReduction = computed(() => getFormatted(AttributeNames.DMG_REDUCTION))
+
+  return {
+    getFormatted,
+    getValue,
+    getAttribute,
+    getBreakdown,
+    hp,
+    maxHp,
+    energy,
+    maxEnergy,
+    atk,
+    def,
+    spd,
+    critRate,
+    critDmg,
+    dmgReduction,
+  }
+}
+
+/**
+ * 战斗属性类型（用于 UI 显示）
+ */
+export type CombatStatType = 'hp' | 'energy' | 'atk' | 'def' | 'spd' | 'crit'
+
+/**
+ * 获取战斗属性显示名称
+ */
+export function getStatName(type: CombatStatType): string {
+  const names: Record<CombatStatType, string> = {
+    hp: '生命',
+    energy: '能量',
+    atk: '攻击',
+    def: '防御',
+    spd: '速度',
+    crit: '暴击',
+  }
+  return names[type]
+}
+
+/**
+ * 获取战斗属性图标
+ */
+export function getStatIcon(type: CombatStatType): string {
+  const icons: Record<CombatStatType, string> = {
+    hp: '❤️',
+    energy: '⚡',
+    atk: '⚔️',
+    def: '🛡️',
+    spd: '💨',
+    crit: '🎯',
+  }
+  return icons[type]
 }
 
 --- src/core/battle/ActionExecutor.ts ---
@@ -15826,6 +14809,7 @@ export class ActionExecutor {
         source,
         target,
         record,
+        Array.from(battle.participants.values()),
       )
 
       action.damage = skillAction.damage
@@ -18298,36 +17282,54 @@ export class BattleManager {
   }
 
   /**
-   * 获取我方队伍（响应式）
+   * 获取我方队伍（BattleParticipant 实例）
+   * @returns 我方参与者数组
    */
-  getAllyTeam(): UIBattleCharacter[] {
+  getAllyTeam(): BattleParticipant[] {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) {
       return []
     }
-    return Array.from(battleState.participants.values())
-      .filter((p) => p.type === PARTICIPANT_SIDE.ALLY)
-      .map((p) => this.participantToUICharacter(p))
+    return Array.from(battleState.participants.values()).filter(
+      (p) => p.type === PARTICIPANT_SIDE.ALLY,
+    )
   }
 
   /**
-   * 获取敌方队伍（响应式）
+   * 获取敌方队伍（BattleParticipant 实例）
+   * @returns 敌方参与者数组
    */
-  getEnemyTeam(): UIBattleCharacter[] {
+  getEnemyTeam(): BattleParticipant[] {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) {
       return []
     }
-    return Array.from(battleState.participants.values())
-      .filter((p) => p.type === PARTICIPANT_SIDE.ENEMY)
-      .map((p) => this.participantToUICharacter(p))
+    return Array.from(battleState.participants.values()).filter(
+      (p) => p.type === PARTICIPANT_SIDE.ENEMY,
+    )
+  }
+
+  /**
+   * 获取我方队伍（UIBattleCharacter，已废弃，请使用 getAllyTeam）
+   * @deprecated 使用 getAllyTeam() 代替
+   */
+  getAllyTeamUI(): UIBattleCharacter[] {
+    return this.getAllyTeam().map((p) => this.participantToUICharacter(p))
+  }
+
+  /**
+   * 获取敌方队伍（UIBattleCharacter，已废弃，请使用 getEnemyTeam）
+   * @deprecated 使用 getEnemyTeam() 代替
+   */
+  getEnemyTeamUI(): UIBattleCharacter[] {
+    return this.getEnemyTeam().map((p) => this.participantToUICharacter(p))
   }
 
   /**
    * 获取启用的我方队伍
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
-  getEnabledAllyTeam(): UIBattleCharacter[] {
+  getEnabledAllyTeam(): BattleParticipant[] {
     const allyTeam = this.getAllyTeam()
     return allyTeam.filter((c) => c.enabled)
   }
@@ -18336,22 +17338,28 @@ export class BattleManager {
    * 获取启用的敌方队伍
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
-  getEnabledEnemyTeam(): UIBattleCharacter[] {
+  getEnabledEnemyTeam(): BattleParticipant[] {
     const enemyTeam = this.getEnemyTeam()
     return enemyTeam.filter((c) => c.enabled)
   }
 
   /**
-   * 获取所有参与者
+   * 获取所有参与者（BattleParticipant 实例）
    */
-  getAllParticipants(): UIBattleCharacter[] {
+  getAllParticipants(): BattleParticipant[] {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) {
       return []
     }
-    return Array.from(battleState.participants.values()).map((p) =>
-      this.participantToUICharacter(p),
-    )
+    return Array.from(battleState.participants.values())
+  }
+
+  /**
+   * 获取所有参与者（UIBattleCharacter，已废弃）
+   * @deprecated 使用 getAllParticipants() 代替
+   */
+  getAllParticipantsUI(): UIBattleCharacter[] {
+    return this.getAllParticipants().map((p) => this.participantToUICharacter(p))
   }
 
   /**
@@ -18369,14 +17377,23 @@ export class BattleManager {
   }
 
   /**
-   * 获取选中的角色
+   * 获取选中的角色（BattleParticipant 实例）
    */
-  getSelectedCharacter(): UIBattleCharacter | null {
+  getSelectedCharacter(): BattleParticipant | null {
     const selectedId = this.getSelectedCharacterId()
     if (!selectedId) return null
 
     const allParticipants = this.getAllParticipants()
     return allParticipants.find((p) => p.id === selectedId) || null
+  }
+
+  /**
+   * 获取选中的角色（UIBattleCharacter，已废弃）
+   * @deprecated 使用 getSelectedCharacter() 代替
+   */
+  getSelectedCharacterUI(): UIBattleCharacter | null {
+    const selected = this.getSelectedCharacter()
+    return selected ? this.participantToUICharacter(selected) : null
   }
 
   /**
@@ -18887,7 +17904,7 @@ export class BattleManager {
  * 作者: CombatDebugStudio
  * 功能: 战斗参与者实现类
  * 描述: 使用 Class 替代对象字面量，方法在原型上共享，提升内存效率和代码可维护性
- * 版本: 1.0.0
+ * 版本: 2.0.0 - 添加属性缓存系统
  */
 
 import type {
@@ -18899,6 +17916,16 @@ import type {
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
 import type { UIBattleCharacter, UISkills } from '@/types/UI/UIBattleCharacter'
+import type {
+  AttributeValue,
+  ModifierDetail,
+  AttributeName,
+  IModifierProvider,
+  IModifierStack,
+  ModifierSourceType,
+} from '@/types/attribute'
+import { AttributeNames } from '@/types/attribute'
+import type { Modifier, ModifierType, AttributeType } from '@/types/modifier'
 
 /**
  * 参与者初始化数据接口
@@ -18962,6 +17989,7 @@ export interface ParticipantInitData {
 /**
  * 战斗参与者实现类
  * 使用 Class 替代对象字面量，方法在原型上共享
+ * 使用属性缓存系统管理属性值
  */
 export class BattleParticipantImpl implements BattleParticipant {
   /** 参与者唯一标识符 */
@@ -18974,51 +18002,25 @@ export class BattleParticipantImpl implements BattleParticipant {
   type: ParticipantSide
   /** 队伍归属 */
   team: ParticipantSide
-  /** 当前生命值 */
-  currentHealth: number
-  /** 最大生命值 */
-  maxHealth: number
-  /** 当前能量值 */
-  currentEnergy: number
-  /** 最大能量值 */
-  maxEnergy: number
   /** Buff列表 */
   buffs: string[]
 
-  /** 速度值 */
-  speed: number
-  /** 最小攻击力 */
-  minAttack: number
-  /** 最大攻击力 */
-  maxAttack: number
-  /** 平均攻击力 */
-  attack: number
-  /** 防御力 */
-  defense: number
-  /** 暴击率 */
-  critRate: number
-  /** 暴击伤害 */
-  critDamage: number
-  /** 免伤率 */
-  damageReduction: number
-  /** 气血加成 */
-  healthBonus: number
-  /** 攻击加成 */
-  attackBonus: number
-  /** 防御加成 */
-  defenseBonus: number
-  /** 速度加成 */
-  speedBonus: number
-  /** 状态效果列表 */
-  statusEffects?: StatusEffect[]
   /** 技能配置 */
   skills: {
     small?: SkillConfig[]
     passive?: SkillConfig[]
     ultimate?: SkillConfig[]
   }
+  /** 状态效果列表 */
+  statusEffects?: StatusEffect[]
   /** 技能冷却状态映射，key为技能ID，value为剩余冷却回合数 */
   skillCooldowns: Map<string, number>
+
+  /** 属性缓存 Map */
+  private attributes: Map<AttributeName, AttributeValue> = new Map()
+
+  /** 修饰符提供者引用（用于属性计算，解耦 BuffSystem） */
+  private _modifierProvider: IModifierProvider | null = null
 
   /**
    * 从UI角色创建战斗参与者实例
@@ -19109,27 +18111,514 @@ export class BattleParticipantImpl implements BattleParticipant {
     this.level = data.level
     this.type = data.type
     this.team = data.team
-    this.maxHealth = data.maxHealth
-    this.currentHealth = data.currentHealth ?? data.maxHealth
-    this.maxEnergy = data.maxEnergy ?? 100
-    this.currentEnergy = data.currentEnergy ?? 25
     this.buffs = data.buffs ?? []
-
-    this.speed = data.speed
-    this.minAttack = data.minAttack
-    this.maxAttack = data.maxAttack
-    this.attack = (data.minAttack + data.maxAttack) / 2
-    this.defense = data.defense
-    this.critRate = data.critRate ?? 10
-    this.critDamage = data.critDamage ?? 125
-    this.damageReduction = data.damageReduction ?? 0
-    this.healthBonus = data.healthBonus ?? 0
-    this.attackBonus = data.attackBonus ?? 0
-    this.defenseBonus = data.defenseBonus ?? 0
-    this.speedBonus = data.speedBonus ?? 0
     this.statusEffects = data.statusEffects
     this.skills = data.skills ?? {}
     this.skillCooldowns = new Map<string, number>()
+
+    this.initAttribute(AttributeNames.MAX_HP, data.maxHealth)
+    this.initAttribute(AttributeNames.HP, data.currentHealth ?? data.maxHealth)
+    this.initAttribute(AttributeNames.MAX_ENERGY, data.maxEnergy ?? 100)
+    this.initAttribute(AttributeNames.ENERGY, data.currentEnergy ?? 25)
+    this.initAttribute(
+      AttributeNames.ATK,
+      (data.minAttack + data.maxAttack) / 2,
+    )
+    this.initAttribute(AttributeNames.MIN_ATK, data.minAttack)
+    this.initAttribute(AttributeNames.MAX_ATK, data.maxAttack)
+    this.initAttribute(AttributeNames.DEF, data.defense)
+    this.initAttribute(AttributeNames.SPD, data.speed)
+    this.initAttribute(AttributeNames.CRIT_RATE, data.critRate ?? 10, true)
+    this.initAttribute(AttributeNames.CRIT_DMG, data.critDamage ?? 125, true)
+    this.initAttribute(AttributeNames.DMG_RED, data.damageReduction ?? 0, true)
+
+    this.markAllDirty()
+  }
+
+  /**
+   * 设置修饰符提供者引用
+   * @param provider 修饰符提供者实例
+   */
+  setModifierProvider(provider: IModifierProvider): void {
+    this._modifierProvider = provider
+    this.markAllDirty()
+  }
+
+  /**
+   * 设置Buff系统引用（向后兼容）
+   * @param buffSystem Buff系统实例
+   * @deprecated 请使用 setModifierProvider 方法
+   */
+  setBuffSystem(buffSystem: any): void {
+    if (buffSystem && typeof buffSystem.getModifierStack === 'function') {
+      this._modifierProvider = buffSystem as IModifierProvider
+      this.markAllDirty()
+    }
+  }
+
+  /**
+   * 初始化属性基础值
+   * @param attr 属性名称
+   * @param baseValue 基础值
+   * @param isPercentage 是否为百分比属性
+   */
+  private initAttribute(
+    attr: AttributeName,
+    baseValue: number,
+    isPercentage: boolean = false,
+  ): void {
+    this.attributes.set(attr, {
+      value: baseValue,
+      base: baseValue,
+      modifiers: [],
+      isPercentage,
+      dirty: true,
+    })
+  }
+
+  /**
+   * 标记单个属性为脏（需要重新计算）
+   * @param attr 属性名称
+   */
+  markDirty(attr: AttributeName): void {
+    const attrData = this.attributes.get(attr)
+    if (attrData) {
+      attrData.dirty = true
+    }
+  }
+
+  /**
+   * 标记所有属性为脏（需要重新计算）
+   */
+  markAllDirty(): void {
+    for (const attrData of this.attributes.values()) {
+      attrData.dirty = true
+    }
+  }
+
+  /**
+   * 重新计算单个属性（应用所有修饰符）
+   * @param attr 属性名称
+   */
+  private recalcAttribute(attr: AttributeName): void {
+    const attrData = this.attributes.get(attr)
+    if (!attrData || !attrData.dirty) return
+
+    const baseValue = attrData.base
+    let finalValue = baseValue
+    const modifierDetails: ModifierDetail[] = []
+
+    let additive = 0
+    let percentMultiplier = 1
+    let independentMultiplier = 1
+    let finalMultiplier = 1
+
+    if (this._modifierProvider) {
+      const modifierStack = this._modifierProvider.getModifierStack(this.id)
+      if (modifierStack) {
+        const modifiers = modifierStack.getModifiers(attr as AttributeType)
+
+        let percentSum = 0
+        for (const mod of modifiers) {
+          if (mod.type === 'PERCENTAGE') {
+            percentSum += mod.value
+            modifierDetails.push({
+              source:
+                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
+                mod.buffInstanceId,
+              sourceType: this._modifierProvider.getSourceType(
+                mod.buffInstanceId,
+              ),
+              value: mod.value,
+              type: 'percent',
+            })
+          }
+        }
+        if (percentSum !== 0) {
+          percentMultiplier = 1 + percentSum
+          finalValue += baseValue * percentSum
+        }
+
+        let addSum = 0
+        for (const mod of modifiers) {
+          if (mod.type === 'ADDITIVE') {
+            addSum += mod.value
+            modifierDetails.push({
+              source:
+                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
+                mod.buffInstanceId,
+              sourceType: this._modifierProvider.getSourceType(
+                mod.buffInstanceId,
+              ),
+              value: mod.value,
+              type: 'add',
+            })
+          }
+        }
+        additive = addSum
+        finalValue += addSum
+
+        let multiplyFactor = 1
+        for (const mod of modifiers) {
+          if (mod.type === 'MULTIPLICATIVE') {
+            multiplyFactor *= 1 + mod.value
+            modifierDetails.push({
+              source:
+                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
+                mod.buffInstanceId,
+              sourceType: this._modifierProvider.getSourceType(
+                mod.buffInstanceId,
+              ),
+              value: mod.value,
+              type: 'multiply',
+            })
+          }
+        }
+        independentMultiplier = multiplyFactor
+        finalValue *= multiplyFactor
+
+        let finalMulti = 1
+        for (const mod of modifiers) {
+          if (mod.type === 'FINAL') {
+            finalMulti *= 1 + mod.value
+            modifierDetails.push({
+              source:
+                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
+                mod.buffInstanceId,
+              sourceType: this._modifierProvider.getSourceType(
+                mod.buffInstanceId,
+              ),
+              value: mod.value,
+              type: 'final',
+            })
+          }
+        }
+        finalMultiplier = finalMulti
+        finalValue *= finalMulti
+      }
+    }
+
+    if (attr === AttributeNames.HP) {
+      const maxHp = this.getAttributeValue(AttributeNames.MAX_HP)
+      finalValue = Math.max(0, Math.min(finalValue, maxHp))
+    }
+    if (attr === AttributeNames.ENERGY) {
+      const maxEnergy = this.getAttributeValue(AttributeNames.MAX_ENERGY)
+      finalValue = Math.max(0, Math.min(finalValue, maxEnergy))
+    }
+
+    attrData.value = finalValue
+    attrData.modifiers = modifierDetails
+    attrData.dirty = false
+
+    if (this._modifierProvider?.isDebugMode()) {
+      attrData.breakdown = {
+        base: baseValue,
+        additive,
+        percentMultiplier,
+        independentMultiplier,
+        finalMultiplier,
+      }
+    } else {
+      delete attrData.breakdown
+    }
+  }
+
+  /**
+   * 获取属性最终值（自动触发重新计算）
+   * @param attr 属性名称
+   * @returns 属性最终值
+   */
+  getAttributeValue(attr: AttributeName): number {
+    const attrData = this.attributes.get(attr)
+    if (!attrData) return 0
+
+    if (attrData.dirty) {
+      this.recalcAttribute(attr)
+    }
+
+    return attrData.value
+  }
+
+  /**
+   * 获取属性值对象（包含详细信息）
+   * @param attr 属性名称
+   * @returns 属性值对象
+   */
+  getAttributeValueObject(attr: AttributeName): AttributeValue | undefined {
+    const attrData = this.attributes.get(attr)
+    if (!attrData) return undefined
+
+    if (attrData.dirty) {
+      this.recalcAttribute(attr)
+    }
+
+    return attrData
+  }
+
+  /**
+   * 批量预计算所有属性（推荐在回合开始前/战斗结算前调用）
+   * 集中遍历所有 dirty 属性，计算复杂度与属性数量线性相关
+   */
+  recalculateAll(): void {
+    this.attributes.forEach((_, type) => this.recalcAttribute(type))
+  }
+
+  /**
+   * 获取属性基础值
+   * @param attr 属性名称
+   * @returns 属性基础值
+   */
+  getAttributeBase(attr: AttributeName): number {
+    const attrData = this.attributes.get(attr)
+    return attrData?.base ?? 0
+  }
+
+  /**
+   * 设置属性基础值
+   * @param attr 属性名称
+   * @param value 基础值
+   */
+  setAttributeBase(attr: AttributeName, value: number): void {
+    const attrData = this.attributes.get(attr)
+    if (attrData) {
+      attrData.base = value
+      attrData.dirty = true
+    }
+  }
+
+  /**
+   * 获取当前生命值
+   */
+  get currentHealth(): number {
+    return this.getAttributeValue(AttributeNames.HP)
+  }
+
+  /**
+   * 设置当前生命值
+   */
+  set currentHealth(value: number) {
+    const attrData = this.attributes.get(AttributeNames.HP)
+    if (attrData) {
+      const maxHp = this.getAttributeValue(AttributeNames.MAX_HP)
+      attrData.value = Math.max(0, Math.min(value, maxHp))
+      attrData.dirty = false
+    }
+  }
+
+  /**
+   * 获取最大生命值
+   */
+  get maxHealth(): number {
+    return this.getAttributeValue(AttributeNames.MAX_HP)
+  }
+
+  /**
+   * 设置最大生命值
+   */
+  set maxHealth(value: number) {
+    this.setAttributeBase(AttributeNames.MAX_HP, value)
+  }
+
+  /**
+   * 获取当前能量值
+   */
+  get currentEnergy(): number {
+    return this.getAttributeValue(AttributeNames.ENERGY)
+  }
+
+  /**
+   * 设置当前能量值
+   */
+  set currentEnergy(value: number) {
+    const attrData = this.attributes.get(AttributeNames.ENERGY)
+    if (attrData) {
+      const maxEnergy = this.getAttributeValue(AttributeNames.MAX_ENERGY)
+      attrData.value = Math.max(0, Math.min(value, maxEnergy))
+      attrData.dirty = false
+    }
+  }
+
+  /**
+   * 获取最大能量值
+   */
+  get maxEnergy(): number {
+    return this.getAttributeValue(AttributeNames.MAX_ENERGY)
+  }
+
+  /**
+   * 设置最大能量值
+   */
+  set maxEnergy(value: number) {
+    this.setAttributeBase(AttributeNames.MAX_ENERGY, value)
+  }
+
+  /**
+   * 获取速度值
+   */
+  get speed(): number {
+    return this.getAttributeValue(AttributeNames.SPD)
+  }
+
+  /**
+   * 设置速度值
+   */
+  set speed(value: number) {
+    this.setAttributeBase(AttributeNames.SPD, value)
+  }
+
+  /**
+   * 获取最小攻击力
+   */
+  get minAttack(): number {
+    return this.getAttributeValue(AttributeNames.MIN_ATK)
+  }
+
+  /**
+   * 设置最小攻击力
+   */
+  set minAttack(value: number) {
+    this.setAttributeBase(AttributeNames.MIN_ATK, value)
+  }
+
+  /**
+   * 获取最大攻击力
+   */
+  get maxAttack(): number {
+    return this.getAttributeValue(AttributeNames.MAX_ATK)
+  }
+
+  /**
+   * 设置最大攻击力
+   */
+  set maxAttack(value: number) {
+    this.setAttributeBase(AttributeNames.MAX_ATK, value)
+  }
+
+  /**
+   * 获取平均攻击力
+   */
+  get attack(): number {
+    return this.getAttributeValue(AttributeNames.ATK)
+  }
+
+  /**
+   * 设置平均攻击力
+   */
+  set attack(value: number) {
+    this.setAttributeBase(AttributeNames.ATK, value)
+  }
+
+  /**
+   * 获取防御力
+   */
+  get defense(): number {
+    return this.getAttributeValue(AttributeNames.DEF)
+  }
+
+  /**
+   * 设置防御力
+   */
+  set defense(value: number) {
+    this.setAttributeBase(AttributeNames.DEF, value)
+  }
+
+  /**
+   * 获取暴击率
+   */
+  get critRate(): number {
+    return this.getAttributeValue(AttributeNames.CRIT_RATE)
+  }
+
+  /**
+   * 设置暴击率
+   */
+  set critRate(value: number) {
+    this.setAttributeBase(AttributeNames.CRIT_RATE, value)
+  }
+
+  /**
+   * 获取暴击伤害
+   */
+  get critDamage(): number {
+    return this.getAttributeValue(AttributeNames.CRIT_DMG)
+  }
+
+  /**
+   * 设置暴击伤害
+   */
+  set critDamage(value: number) {
+    this.setAttributeBase(AttributeNames.CRIT_DMG, value)
+  }
+
+  /**
+   * 获取免伤率
+   */
+  get damageReduction(): number {
+    return this.getAttributeValue(AttributeNames.DMG_RED)
+  }
+
+  /**
+   * 设置免伤率
+   */
+  set damageReduction(value: number) {
+    this.setAttributeBase(AttributeNames.DMG_RED, value)
+  }
+
+  /**
+   * 获取气血加成
+   */
+  get healthBonus(): number {
+    return 0
+  }
+
+  /**
+   * 设置气血加成
+   */
+  set healthBonus(value: number) {
+    // 保留兼容性
+  }
+
+  /**
+   * 获取攻击加成
+   */
+  get attackBonus(): number {
+    return 0
+  }
+
+  /**
+   * 设置攻击加成
+   */
+  set attackBonus(value: number) {
+    // 保留兼容性
+  }
+
+  /**
+   * 获取防御加成
+   */
+  get defenseBonus(): number {
+    return 0
+  }
+
+  /**
+   * 设置防御加成
+   */
+  set defenseBonus(value: number) {
+    // 保留兼容性
+  }
+
+  /**
+   * 获取速度加成
+   */
+  get speedBonus(): number {
+    return 0
+  }
+
+  /**
+   * 设置速度加成
+   */
+  set speedBonus(value: number) {
+    // 保留兼容性
   }
 
   /**
@@ -19138,34 +18627,37 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @returns 属性值
    */
   getAttribute(attribute: string): number {
-    switch (attribute) {
-      case 'HP':
-        return this.currentHealth
-      case 'MAX_HP':
-        return this.maxHealth
-      case 'ATK':
-        return this.getRandomAttack()
-      case 'MIN_ATK':
-        return this.minAttack
-      case 'MAX_ATK':
-        return this.maxAttack
-      case 'DEF':
-        return this.defense
-      case 'SPD':
-        return this.speed
-      case 'CRIT_RATE':
-        return this.critRate
-      case 'CRIT_DMG':
-        return this.critDamage
-      case 'DMG_RED':
-        return this.damageReduction
-      case 'energy':
-        return this.currentEnergy
-      case 'max_energy':
-        return this.maxEnergy
-      default:
-        return 0
+    const attrName = this.normalizeAttributeName(attribute)
+    return this.getAttributeValue(attrName)
+  }
+
+  /**
+   * 标准化属性名称
+   * @param attribute 原始属性名称
+   * @returns 标准化后的属性名称
+   */
+  private normalizeAttributeName(attribute: string): AttributeName {
+    const mapping: Record<string, AttributeName> = {
+      HP: AttributeNames.HP,
+      MAX_HP: AttributeNames.MAX_HP,
+      ATK: AttributeNames.ATK,
+      MIN_ATK: AttributeNames.MIN_ATK,
+      MAX_ATK: AttributeNames.MAX_ATK,
+      DEF: AttributeNames.DEF,
+      SPD: AttributeNames.SPD,
+      CRIT_RATE: AttributeNames.CRIT_RATE,
+      CRIT_DMG: AttributeNames.CRIT_DMG,
+      DMG_RED: AttributeNames.DMG_RED,
+      energy: AttributeNames.ENERGY,
+      max_energy: AttributeNames.MAX_ENERGY,
+      attack: AttributeNames.ATK,
+      defense: AttributeNames.DEF,
+      speed: AttributeNames.SPD,
+      critRate: AttributeNames.CRIT_RATE,
+      critDamage: AttributeNames.CRIT_DMG,
+      damageReduction: AttributeNames.DMG_RED,
     }
+    return mapping[attribute] || (attribute as AttributeName)
   }
 
   /**
@@ -19174,10 +18666,9 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @returns 随机攻击力
    */
   getRandomAttack(): number {
-    return (
-      Math.floor(Math.random() * (this.maxAttack - this.minAttack + 1)) +
-      this.minAttack
-    )
+    const minAtk = this.getAttributeValue(AttributeNames.MIN_ATK)
+    const maxAtk = this.getAttributeValue(AttributeNames.MAX_ATK)
+    return Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
   }
 
   /**
@@ -19186,48 +18677,47 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @param value - 属性值
    */
   setAttribute(attribute: string, value: number): void {
-    switch (attribute) {
-      case 'HP':
-        this.currentHealth = Math.max(0, Math.min(value, this.maxHealth))
+    const attrName = this.normalizeAttributeName(attribute)
+
+    switch (attrName) {
+      case AttributeNames.HP:
+        this.currentHealth = value
         break
-      case 'energy':
-        this.currentEnergy = Math.max(0, Math.min(value, this.maxEnergy))
+      case AttributeNames.ENERGY:
+        this.currentEnergy = value
         break
-      case 'MAX_HP':
-        this.maxHealth = Math.max(0, value)
+      case AttributeNames.MAX_HP:
+        this.maxHealth = value
         break
-      case 'max_energy':
-        this.maxEnergy = Math.max(0, value)
+      case AttributeNames.MAX_ENERGY:
+        this.maxEnergy = value
         break
-      case 'ATK':
-      case 'attack':
+      case AttributeNames.ATK:
         this.attack = value
         break
-      case 'MIN_ATK':
+      case AttributeNames.MIN_ATK:
         this.minAttack = value
         break
-      case 'MAX_ATK':
+      case AttributeNames.MAX_ATK:
         this.maxAttack = value
         break
-      case 'DEF':
-      case 'defense':
+      case AttributeNames.DEF:
         this.defense = value
         break
-      case 'SPD':
-      case 'speed':
+      case AttributeNames.SPD:
         this.speed = value
         break
-      case 'CRIT_RATE':
-      case 'critRate':
+      case AttributeNames.CRIT_RATE:
         this.critRate = value
         break
-      case 'CRIT_DMG':
-      case 'critDamage':
+      case AttributeNames.CRIT_DMG:
         this.critDamage = value
         break
-      case 'DMG_RED':
-      case 'damageReduction':
+      case AttributeNames.DMG_RED:
         this.damageReduction = value
+        break
+      default:
+        this.setAttributeBase(attrName, value)
         break
     }
   }
@@ -19269,11 +18759,6 @@ export class BattleParticipantImpl implements BattleParticipant {
     const damage = Math.max(0, amount)
     this.currentHealth = Math.max(0, this.currentHealth - damage)
     this.gainEnergy(15)
-
-    // 触发受击时的被动技能
-    // 注意：这里需要通过某种方式获取PassiveSkillManager实例
-    // 由于依赖注入的限制，我们暂时不在这里直接触发
-    // 而是在BattleSystem的伤害处理中触发
 
     return damage
   }
@@ -19331,9 +18816,9 @@ export class BattleParticipantImpl implements BattleParticipant {
 
   getSkillList(): SkillConfig[] {
     return [
-      ...this.skills.small,
-      ...this.skills.passive,
-      ...this.skills.ultimate,
+      ...(this.skills.small || []),
+      ...(this.skills.passive || []),
+      ...(this.skills.ultimate || []),
     ]
   }
 
@@ -19389,6 +18874,7 @@ export class BattleParticipantImpl implements BattleParticipant {
   addBuff(buffInstanceId: string): void {
     if (!this.buffs.includes(buffInstanceId)) {
       this.buffs.push(buffInstanceId)
+      this.markAllDirty()
     }
   }
 
@@ -19397,7 +18883,11 @@ export class BattleParticipantImpl implements BattleParticipant {
    * @param buffInstanceId - Buff实例ID
    */
   removeBuff(buffInstanceId: string): void {
-    this.buffs = this.buffs.filter((id) => id !== buffInstanceId)
+    const index = this.buffs.indexOf(buffInstanceId)
+    if (index !== -1) {
+      this.buffs.splice(index, 1)
+      this.markAllDirty()
+    }
   }
 
   /**
@@ -21447,7 +20937,7 @@ export class InterventionManager {
  * 作者: CombatDebugStudio
  * 功能: 参与者管理器
  * 描述: 负责创建、查询、更新和清理战斗参与者，处理参与者的全生命周期管理
- * 版本: 1.0.0
+ * 版本: 2.0.0 - 支持 IModifierProvider 接口
  */
 
 import type { BattleParticipant, ParticipantSide } from '@/types/battle'
@@ -21458,6 +20948,7 @@ import {
 } from '@/core/battle/BattleParticipantImpl'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { battleLogManager, LogLevel } from '@/utils/logging'
+import type { IModifierProvider } from '@/types/attribute'
 
 /**
  * 参与者状态变化事件接口
@@ -21497,6 +20988,36 @@ export class ParticipantManager {
   ) => void)[] = []
   /** 状态快照历史记录 */
   private stateSnapshots = new Map<string, ParticipantStateSnapshot[]>()
+  /** 修饰符提供者引用（用于属性计算，解耦 BuffSystem） */
+  private modifierProvider: IModifierProvider | null = null
+
+  /**
+   * 设置修饰符提供者引用
+   * @param provider 修饰符提供者实例
+   */
+  public setModifierProvider(provider: IModifierProvider): void {
+    this.modifierProvider = provider
+  }
+
+  /**
+   * 设置 Buff 系统引用（向后兼容）
+   * @param buffSystem Buff 系统实例
+   * @deprecated 请使用 setModifierProvider 方法
+   */
+  public setBuffSystem(buffSystem: any): void {
+    if (buffSystem && typeof buffSystem.getModifierStack === 'function') {
+      this.modifierProvider = buffSystem as IModifierProvider
+      // 【脏标记流控】设置 BuffSystem 的属性变化回调
+      if (typeof buffSystem.setAttributeChangeCallback === 'function') {
+        buffSystem.setAttributeChangeCallback((characterId: string) => {
+          const participant = this.participants.get(characterId)
+          if (participant && 'markDirty' in participant) {
+            (participant as any).markAllDirty()
+          }
+        })
+      }
+    }
+  }
 
   /**
    * 创建单个参与者
@@ -21519,6 +21040,10 @@ export class ParticipantManager {
         ...info,
         id: newId,
       })
+    }
+
+    if (this.modifierProvider && participant instanceof BattleParticipantImpl) {
+      participant.setModifierProvider(this.modifierProvider)
     }
 
     this.participants.set(participant.id, participant)
@@ -21695,9 +21220,7 @@ export class ParticipantManager {
         battleLogManager.addDebugLog(
           '状态变化事件监听器执行出错:',
           LogLevel.ERROR,
-          null,
-          '',
-          error,
+          error as Error,
         )
       }
     })
@@ -23385,16 +22908,13 @@ export class TurnManager {
   }
 
   /**
-   * 计算考虑Buff修饰符后的实际速度
+   * 计算考虑 Buff 修饰符后的实际速度
    * @param participant 参与者
    * @returns 考虑所有修饰符后的实际速度值
    */
   public calculateEffectiveSpeed(participant: BattleParticipant): number {
-    const baseSpeed = participant.getAttribute('SPD')
-
-    const modifierStack = this.buffSystem.getModifierStack(participant.id)
-
-    return modifierStack.calculate('SPD' as AttributeType, baseSpeed)
+    // 【脏标记流控】直接使用参与者的属性缓存系统，确保读取的是最新计算结果
+    return participant.getAttribute('SPD')
   }
 }
 
@@ -24552,6 +24072,13 @@ export class BattleSystem implements IBattleSystem {
         combatRules.energyGainPerTurn,
       )
 
+      // 【脏标记流控】回合开始前批量预计算所有参与者属性
+      aliveParticipants.forEach((participant) => {
+        if ('recalculateAll' in participant && typeof participant.recalculateAll === 'function') {
+          participant.recalculateAll()
+        }
+      })
+
       let currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
       battle.turnOrder = currentTurnOrder
       battle.currentTurn = 0
@@ -24841,6 +24368,8 @@ export class BattleSystem implements IBattleSystem {
           skill.id,
           source,
           target,
+          undefined,
+          Array.from(battle.participants.values()),
         )
         console.log(
           `[DEBUG] 技能执行结果: damage=${skillAction.damage}, heal=${skillAction.heal}`,
@@ -24908,6 +24437,41 @@ export class BattleSystem implements IBattleSystem {
 
     if (selector === 'self') {
       return [source]
+    }
+
+    // 添加：选择生命值最低的友方
+    if (selector === 'lowest_ally') {
+      const allies = participants.filter(
+        (p) => p.isAlive() && p.team === source.team && p.id !== source.id,
+      )
+      if (allies.length === 0) {
+        return [source]
+      }
+      const lowest = allies.reduce((min, p) => {
+        const hpRatio = p.currentHealth / p.maxHealth
+        const minHpRatio = min.currentHealth / min.maxHealth
+        return hpRatio < minHpRatio ? p : min
+      })
+      return [lowest]
+    }
+
+    // 添加：选择生命值最低的敌人
+    if (selector === 'lowest_enemy') {
+      const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
+      const enemies = participants.filter(
+        (p) =>
+          p.isAlive() &&
+          p.team === (isEnemy ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY),
+      )
+      if (enemies.length === 0) {
+        return [source]
+      }
+      const lowest = enemies.reduce((min, p) => {
+        const hpRatio = p.currentHealth / p.maxHealth
+        const minHpRatio = min.currentHealth / min.maxHealth
+        return hpRatio < minHpRatio ? p : min
+      })
+      return [lowest]
     }
 
     const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
@@ -25413,6 +24977,8 @@ export class BattleSystem implements IBattleSystem {
           action.skillId,
           source,
           target,
+          undefined,
+          Array.from(battle.participants.values()),
         )
         console.log(
           `[DEBUG] 技能执行完成: damage=${skillAction.damage}, heal=${skillAction.heal}`,
@@ -27238,11 +26804,16 @@ export class BuffScriptRegistry {
  * 作者: CombatDebugStudio
  * 功能: Buff系统
  * 描述: 负责管理Buff实例的生命周期、状态更新和修饰符堆栈，使用单例模式确保系统全局唯一
- * 版本: 1.0.0
+ * 版本: 2.0.0 - 实现 IModifierProvider 接口
  */
 
 import type { BuffConfig, BuffInstance } from '@/types/buff'
 import type { CombatRecord } from '@/types/combat-record'
+import type {
+  IModifierProvider,
+  IModifierStack,
+  ModifierSourceType,
+} from '@/types/attribute'
 import { StackRule, ControlType } from '@/types/buff'
 import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
 import { BuffContext } from '@/core/BuffContext'
@@ -27255,9 +26826,10 @@ import { battleLogManager } from '@/utils/logging'
  * Buff系统类
  * 负责管理Buff实例的生命周期、状态更新和修饰符堆栈
  * 使用单例模式确保系统全局唯一
+ * 实现 IModifierProvider 接口，支持依赖解耦
  * 注意：不再使用Vue的reactive，避免在纯业务逻辑层引入不必要的响应式开销
  */
-export class BuffSystem {
+export class BuffSystem implements IModifierProvider {
   /** Buff实例映射，以实例ID为键 */
   private buffInstances = new Map<string, BuffInstance>()
   /** 需要更新的Buff实例ID集合，只包含有实际更新逻辑的Buff */
@@ -27270,13 +26842,35 @@ export class BuffSystem {
   private readonly scriptRegistry: BuffScriptRegistry
   /** 日志记录器 */
   private readonly logger = battleLogManager
+  /** 调试模式标志 */
+  private _debugMode: boolean = false
+  /** 属性变化回调（用于触发参与者的 markDirty） */
+  private onAttributeChange?: (characterId: string) => void
 
   /**
    * 构造函数
-   * @param scriptRegistry Buff脚本注册表实例
+   * @param scriptRegistry Buff 脚本注册表实例
    */
   public constructor(scriptRegistry: BuffScriptRegistry) {
     this.scriptRegistry = scriptRegistry
+  }
+
+  /**
+   * 设置属性变化回调（用于触发参与者的 markDirty）
+   * @param callback 回调函数，接收 characterId 参数
+   */
+  public setAttributeChangeCallback(callback: (characterId: string) => void): void {
+    this.onAttributeChange = callback
+  }
+
+  /**
+   * 触发属性变化回调
+   * @param characterId 角色 ID
+   */
+  private triggerAttributeChange(characterId: string): void {
+    if (this.onAttributeChange) {
+      this.onAttributeChange(characterId)
+    }
   }
 
   /**
@@ -27361,6 +26955,9 @@ export class BuffSystem {
     // 解析并应用属性修饰符
     this.applyAttributeModifiers(characterId, instanceId, buffId)
 
+    // 【脏标记流控】触发属性变化回调，通知参与者标记为脏
+    this.triggerAttributeChange(characterId)
+
     if (record) {
       record.effects.push({
         type: config.isDebuff ? 'debuff' : 'buff',
@@ -27432,6 +27029,9 @@ export class BuffSystem {
     modifierStack.removeModifier(instanceId)
 
     BuffContextPool.return(instance.context)
+
+    // 【脏标记流控】触发属性变化回调，通知参与者标记为脏
+    this.triggerAttributeChange(instance.characterId)
 
     return true
   }
@@ -27602,6 +27202,75 @@ export class BuffSystem {
   public update(deltaTime: number): void {
     // 向后兼容，实际逻辑已移至updatePerTurn
     // 这里可以留空，或者添加警告信息
+  }
+
+  /**
+   * 根据Buff实例ID获取Buff名称
+   * @param instanceId Buff实例ID
+   * @returns Buff名称，如果不存在则返回null
+   */
+  public getBuffNameByInstanceId(instanceId: string): string | null {
+    const instance = this.buffInstances.get(instanceId)
+    if (!instance) {
+      return null
+    }
+    const config = this.scriptRegistry.getBuffConfig(instance.buffId)
+    return config?.name || instance.buffId
+  }
+
+  /**
+   * 根据Buff实例ID获取Buff配置
+   * @param instanceId Buff实例ID
+   * @returns Buff配置，如果不存在则返回null
+   */
+  public getBuffConfigByInstanceId(instanceId: string): BuffConfig | null {
+    const instance = this.buffInstances.get(instanceId)
+    if (!instance) {
+      return null
+    }
+    return this.scriptRegistry.getBuffConfig(instance.buffId) || null
+  }
+
+  /**
+   * 获取修饰符来源名称（IModifierProvider 接口实现）
+   * @param sourceId 来源ID（如 buffInstanceId）
+   * @returns 来源名称，不存在则返回 null
+   */
+  public getSourceName(sourceId: string): string | null {
+    return this.getBuffNameByInstanceId(sourceId)
+  }
+
+  /**
+   * 获取修饰符来源类型（IModifierProvider 接口实现）
+   * @param sourceId 来源ID
+   * @returns 来源类型
+   */
+  public getSourceType(sourceId: string): ModifierSourceType {
+    const instance = this.buffInstances.get(sourceId)
+    if (instance) {
+      const config = this.scriptRegistry.getBuffConfig(instance.buffId)
+      if (config?.isDebuff) {
+        return 'buff'
+      }
+      return 'buff'
+    }
+    return 'buff'
+  }
+
+  /**
+   * 检查是否处于调试模式（IModifierProvider 接口实现）
+   * @returns 是否处于调试模式
+   */
+  public isDebugMode(): boolean {
+    return this._debugMode
+  }
+
+  /**
+   * 设置调试模式
+   * @param enabled 是否启用调试模式
+   */
+  public setDebugMode(enabled: boolean): void {
+    this._debugMode = enabled
   }
 }
 
@@ -27787,10 +27456,9 @@ export function initializeContainer(): void {
     new ActionExecutor(buffSystem),
   )
   container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
-  container.register(
-    PARTICIPANT_MANAGER_TOKEN.toString(),
-    new ParticipantManager(),
-  )
+  const participantManager = new ParticipantManager()
+  participantManager.setModifierProvider(buffSystem)
+  container.register(PARTICIPANT_MANAGER_TOKEN.toString(), participantManager)
   container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder())
   container.register(
     BATTLE_RULE_MANAGER_TOKEN.toString(),
@@ -28763,10 +28431,9 @@ export class ModifierStack {
  */
 
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
-import type { BattleParticipant } from '@/types/battle'
+import type { BattleParticipant, BattleEffect } from '@/types/battle'
 import type {
   CombatRecord,
-  EffectRecord,
   CalculationStep,
 } from '@/types/combat-record'
 import { battleLogManager, LogLevel } from '@/utils/logging'
@@ -29864,7 +29531,6 @@ export interface SkillCalculator {
  * 推荐通过容器注入使用
  */
 export class SkillManager {
-  private battleLogManager = battleLogManager
   private skillConfigs = new Map<string, SkillConfig>()
   private buffSystem: BuffSystem
   private damageCalculator: DamageCalculator
@@ -29892,9 +29558,8 @@ export class SkillManager {
     if (!validationResult.valid) {
       // 记录验证错误
       validationResult.errors.forEach((error) => {
-        battleLogManager.addDebugLog(
+        console.error(
           `技能配置验证失败: ${error}`,
-          LogLevel.ERROR,
         )
       })
 
@@ -29962,10 +29627,11 @@ export class SkillManager {
 
   /**
    * 执行技能动作
-   * @param skillId 技能ID
+   * @param skillId 技能 ID
    * @param source 施放者
-   * @param target 目标
+   * @param target 目标（由 selector 选择的初始目标）
    * @param record 战斗记录对象（可选）
+   * @param allParticipants 所有参与者列表（用于步骤目标选择，可选）
    * @returns 战斗动作
    */
   public executeSkill(
@@ -29973,6 +29639,7 @@ export class SkillManager {
     source: BattleParticipant,
     target: BattleParticipant,
     record?: CombatRecord,
+    allParticipants?: BattleParticipant[],
   ): BattleAction {
     const skillConfig = this.getSkillConfig(skillId)
     if (!skillConfig) {
@@ -30005,8 +29672,16 @@ export class SkillManager {
       )
 
       for (const skillStep of sortedSteps) {
+        // 根据 step.target 重新选择目标（优先级：step.target > skill.selector）
+        const stepTarget = this.selectStepTarget(
+          skillStep.target,
+          source,
+          target,
+          allParticipants,
+        )
+
         // 每段伤害前检查目标是否存活
-        if (!target.isAlive()) {
+        if (!stepTarget.isAlive()) {
           break
         }
 
@@ -30014,7 +29689,7 @@ export class SkillManager {
           skillStep as ExtendedSkillStep,
           action,
           source,
-          target,
+          stepTarget,
           record,
         )
 
@@ -30172,6 +29847,64 @@ export class SkillManager {
    */
   private normalizeSkillStepType(type: string): string {
     return type.toUpperCase()
+  }
+
+  /**
+   * 根据步骤的 target 字段重新选择目标
+   * 优先级规则：step.target > skill.selector
+   * @param stepTarget 步骤目标类型
+   * @param source 施放者
+   * @param defaultTarget 默认目标（由 selector 选择的目标）
+   * @param allParticipants 所有参与者列表
+   * @returns 选中的目标
+   */
+  private selectStepTarget(
+    stepTarget: string | undefined,
+    source: BattleParticipant,
+    defaultTarget: BattleParticipant,
+    allParticipants?: BattleParticipant[],
+  ): BattleParticipant {
+    // 如果没有指定 step.target 或为 'enemy'，使用默认目标
+    if (!stepTarget || stepTarget === 'enemy') {
+      return defaultTarget
+    }
+
+    // 根据 target 类型选择目标
+    switch (stepTarget) {
+      case 'self':
+        return source
+
+      case 'lowest_ally':
+        if (!allParticipants || allParticipants.length === 0) {
+          return source
+        }
+        // 选择生命值百分比最低的友方
+        const allies = allParticipants.filter(
+          (p) => p.isAlive() && p.team === source.team && p.id !== source.id,
+        )
+        if (allies.length === 0) {
+          return source
+        }
+        return allies.reduce((min, p) => {
+          const hpRatio = p.currentHealth / p.maxHealth
+          const minHpRatio = min.currentHealth / min.maxHealth
+          return hpRatio < minHpRatio ? p : min
+        })
+
+      case 'allies':
+      case 'all_allies':
+        // 对于群体目标，暂时返回施法者（需要在步骤执行中特殊处理）
+        // TODO: 未来可以扩展为返回多个目标
+        return source
+
+      case 'all':
+        // 所有单位，暂时返回默认目标
+        return defaultTarget
+
+      default:
+        // 未知类型，返回默认目标
+        return defaultTarget
+    }
   }
 
   /**
@@ -31374,6 +31107,8 @@ export class TaskExecutor {
 }
 
 --- src/index.ts ---
+import { type BuffScriptLoader } from '@/core/BuffScriptLoader'
+
 // 核心引擎导出
 export * from '@/core/BuffSystem'
 export * from '@/core/BuffScriptRegistry'
@@ -31392,7 +31127,6 @@ export * from '@/types/battle'
 
 // 工具函数导出
 export * from '@/utils/logging'
-export * from '@/utils/perf-monitor'
 export * from '@/utils/object-pool'
 export * from '@/utils/schema-validator'
 
@@ -31404,7 +31138,7 @@ export async function initializeBuffSystem(): Promise<void> {
   try {
     // 加载所有 Buff 脚本
     const { container } = await import('@/core/di/Container')
-    const loader = container.resolve('BuffScriptLoader')
+    const loader: BuffScriptLoader = container.resolve('BuffScriptLoader')
     await loader.loadScripts()
 
     console.log('Buff system initialized successfully')
@@ -37607,6 +37341,240 @@ export const getAttributeCodeByName = (name: string): string | undefined => {
     ?.[0]
 }
 
+--- src/types/attribute.ts ---
+/**
+ * 文件: attribute.ts
+ * 创建日期: 2026-04-07
+ * 作者: CombatDebugStudio
+ * 功能: 属性系统类型定义
+ * 描述: 定义属性值对象、修饰符详情和属性名称常量
+ * 版本: 2.0.0 - 添加 IModifierProvider 接口
+ */
+
+import type { Modifier, AttributeType } from '@/types/modifier'
+
+/** 修饰符来源类型 */
+export type ModifierSourceType =
+  | 'buff'
+  | 'equipment'
+  | 'skill'
+  | 'terrain'
+  | 'formation'
+  | 'base'
+
+/** 修饰符计算类型 */
+export type ModifierCalcType = 'add' | 'multiply' | 'percent'
+
+/**
+ * 修饰符详情（用于调试和UI展示）
+ */
+export interface ModifierDetail {
+  /** 来源标识，如 "buff_attack_up" 或 "装备:铁剑" */
+  source: string
+  /** 来源类型 */
+  sourceType: ModifierSourceType
+  /** 加成值（原始值） */
+  value: number
+  /** 加成类型：加法/乘法/百分比加成 */
+  type: ModifierCalcType
+  /** 可选描述 */
+  description?: string
+}
+
+/**
+ * 属性计算拆解（仅调试模式填充）
+ */
+export interface CalculationBreakdown {
+  /** 基础值 */
+  base: number
+  /** 加法修正总和 */
+  additive: number
+  /** 百分比乘区系数（1 + 百分比总和） */
+  percentMultiplier: number
+  /** 独立乘区系数 */
+  independentMultiplier: number
+  /** 最终修正系数 */
+  finalMultiplier: number
+}
+
+/**
+ * 属性值对象（缓存最终值和来源）
+ */
+export interface AttributeValue {
+  /** 最终计算值（缓存） */
+  value: number
+  /** 基础值（未加任何修饰符） */
+  base: number
+  /** 修饰符列表（用于调试和 UI） */
+  modifiers: ModifierDetail[]
+  /** 是否为百分比属性（用于 UI 格式化） */
+  isPercentage: boolean
+  /** 是否需要重新计算（脏标记） */
+  dirty: boolean
+  /** 计算拆解（可选，仅 Debug 开启时记录） */
+  breakdown?: CalculationBreakdown
+}
+
+/**
+ * 修饰符堆栈接口（抽象 ModifierStack 的核心能力）
+ * 用于解耦 BattleParticipantImpl 与具体实现
+ */
+export interface IModifierStack {
+  /** 获取指定属性的修饰符列表 */
+  getModifiers(attribute: AttributeType): Modifier[]
+  /** 计算属性最终值 */
+  calculate(attribute: AttributeType, baseValue: number): number
+  /** 获取修饰符总数 */
+  getModifierCount(): number
+}
+
+/**
+ * 修饰符提供者接口（核心抽象）
+ * 用于解耦 BattleParticipantImpl 与 BuffSystem 的直接依赖
+ * 支持单元测试、回放模式、多战斗实例隔离
+ */
+export interface IModifierProvider {
+  /**
+   * 获取参与者的修饰符堆栈
+   * @param participantId 参与者ID
+   * @returns 修饰符堆栈实例，不存在则返回 null
+   */
+  getModifierStack(participantId: string): IModifierStack | null
+
+  /**
+   * 获取修饰符来源名称
+   * @param sourceId 来源ID（如 buffInstanceId）
+   * @returns 来源名称，不存在则返回 null
+   */
+  getSourceName(sourceId: string): string | null
+
+  /**
+   * 获取修饰符来源类型
+   * @param sourceId 来源ID
+   * @returns 来源类型
+   */
+  getSourceType(sourceId: string): ModifierSourceType
+
+  /**
+   * 检查是否处于调试模式
+   * @returns 是否处于调试模式
+   */
+  isDebugMode(): boolean
+}
+
+/**
+ * 属性名称常量（便于类型提示）
+ */
+export const AttributeNames = {
+  HP: 'HP',
+  MAX_HP: 'MAX_HP',
+  ATK: 'ATK',
+  MIN_ATK: 'MIN_ATK',
+  MAX_ATK: 'MAX_ATK',
+  DEF: 'DEF',
+  SPD: 'SPD',
+  CRIT_RATE: 'CRIT_RATE',
+  CRIT_DMG: 'CRIT_DMG',
+  DMG_RED: 'DMG_RED',
+  ENERGY: 'energy',
+  MAX_ENERGY: 'max_energy',
+} as const
+
+/** 属性名称类型 */
+export type AttributeName = (typeof AttributeNames)[keyof typeof AttributeNames]
+
+/**
+ * 属性元数据（用于UI展示）
+ */
+export interface AttributeMeta {
+  /** 属性名称 */
+  name: AttributeName
+  /** 显示名称 */
+  displayName: string
+  /** 是否为百分比属性 */
+  isPercentage: boolean
+  /** 描述 */
+  description?: string
+}
+
+/**
+ * 属性元数据映射
+ */
+export const AttributeMetaMap: Record<AttributeName, AttributeMeta> = {
+  HP: {
+    name: 'HP',
+    displayName: '生命值',
+    isPercentage: false,
+    description: '当前生命值',
+  },
+  MAX_HP: {
+    name: 'MAX_HP',
+    displayName: '最大生命值',
+    isPercentage: false,
+    description: '最大生命值上限',
+  },
+  ATK: {
+    name: 'ATK',
+    displayName: '攻击力',
+    isPercentage: false,
+    description: '攻击力',
+  },
+  MIN_ATK: {
+    name: 'MIN_ATK',
+    displayName: '最小攻击力',
+    isPercentage: false,
+    description: '最小攻击力',
+  },
+  MAX_ATK: {
+    name: 'MAX_ATK',
+    displayName: '最大攻击力',
+    isPercentage: false,
+    description: '最大攻击力',
+  },
+  DEF: {
+    name: 'DEF',
+    displayName: '防御力',
+    isPercentage: false,
+    description: '防御力',
+  },
+  SPD: {
+    name: 'SPD',
+    displayName: '速度',
+    isPercentage: false,
+    description: '速度值',
+  },
+  CRIT_RATE: {
+    name: 'CRIT_RATE',
+    displayName: '暴击率',
+    isPercentage: true,
+    description: '暴击率',
+  },
+  CRIT_DMG: {
+    name: 'CRIT_DMG',
+    displayName: '暴击伤害',
+    isPercentage: true,
+    description: '暴击伤害加成',
+  },
+  DMG_RED: {
+    name: 'DMG_RED',
+    displayName: '免伤率',
+    isPercentage: true,
+    description: '伤害减免比例',
+  },
+  energy: {
+    name: 'energy',
+    displayName: '能量',
+    isPercentage: false,
+    description: '当前能量值',
+  },
+  max_energy: {
+    name: 'max_energy',
+    displayName: '最大能量',
+    isPercentage: false,
+    description: '最大能量上限',
+  },
+}
+
 --- src/types/battle-events.ts ---
 /**
  * 战斗事件类型定义
@@ -38634,7 +38602,7 @@ import type { EnemyInstance } from '@/types/enemy'
 import type { BattleAI } from '@/core/BattleAI'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import type { SkillConfig } from '@/types/skill'
-import type { UISkills } from '@/types/UI/UIBattleCharacter'
+import type { AttributeValue, UISkills } from '@/types/UI/UIBattleCharacter'
 import type { BattleLogEntry } from '@/types/battle-log'
 import { EffectType } from '@/types/effect'
 import { Counter } from '@/utils/Counter'
@@ -38846,6 +38814,7 @@ export interface BattleParticipant extends BattleEntity {
     passive?: SkillConfig[]
     ultimate?: SkillConfig[]
   }
+  getAttributeValue(attribute: string): AttributeValue
 }
 
 /**
@@ -39058,17 +39027,18 @@ export const BattleActionHelper = {
 /**
  * 战斗效果接口
  * 表示战斗中产生的单一效果
- * 包含效果的类型、数值、关联的Buff以及效果描述
- * 用于描述战斗动作产生的具体效果（如伤害、治疗、Buff等）
+ * 包含效果的类型、数值、关联的 Buff 以及效果描述
+ * 用于描述战斗动作产生的具体效果（如伤害、治疗、Buff 等）
  */
 export interface BattleEffect {
   type: EffectType
+  targetId?: string
   value?: number
   buffId?: string
   instanceId?: string
-  targetId?: string
   duration?: number
   description: string
+  isCritical?: boolean
 }
 
 /**
@@ -39849,33 +39819,21 @@ export interface CharacterManager {
 
 --- src/types/combat-record.ts ---
 /**
- * 文件: combat-record.ts
- * 创建日期: 2026-03-08
- * 作者: CombatDebugStudio
- * 功能: 战斗记录核心类型定义
- * 描述: 定义统一的战斗记录数据结构，用于贯穿整个动作生命周期的记录
- * 版本: 1.0.0
+ * 文件：combat-record.ts
+ * 创建日期：2026-03-08
+ * 作者：CombatDebugStudio
+ * 功能：战斗记录核心类型定义
+ * 描述：定义统一的战斗记录数据结构，用于贯穿整个动作生命周期的记录
+ * 版本：1.0.0
  */
 
 import type { EffectType } from './effect'
+import type { BattleEffect } from './battle'
 
 /**
  * 动作类型
  */
 export type ActionType = 'attack' | 'skill' | 'heal' | 'buff' | 'item' | 'system'
-
-/**
- * 效果条目 - 用于记录每一步产生的具体效果
- */
-export interface EffectRecord {
-  type: EffectType
-  targetId: string
-  value?: number
-  buffId?: string
-  instanceId?: string
-  description?: string
-  isCritical?: boolean
-}
 
 /**
  * 计算步骤详情 - 用于调试
@@ -39917,7 +39875,7 @@ export interface CombatRecord {
 
   damage: number
   heal: number
-  effects: EffectRecord[]
+  effects: BattleEffect[]
 
   energyCost?: number
   energyGain?: number
@@ -41950,21 +41908,17 @@ export function generateReplayId(): string {
 --- src/utils/Counter.ts ---
 export class Counter {
   private _value: number
-
   constructor(initialValue: number = 0) {
     this._value = initialValue
   }
-
   /** 当前计数值（即将分配的下一个索引） */
   get current(): number {
     return this._value
   }
-
   /** 返回当前值并递增 */
   next(): number {
     return this._value++
   }
-
   /** 重置计数器为指定值（默认0） */
   reset(value: number = 0): void {
     this._value = value
@@ -44968,110 +44922,6 @@ export const createBuffContextPool = () => {
   })
 }
 
---- src/utils/perf-monitor.ts ---
-/**
- * 文件: perf-monitor.ts
- * 创建日期: 2026-02-09
- * 作者: CombatDebugStudio
- * 功能: 性能监控器
- * 描述: 提供性能监控功能，记录和报告代码执行时间和性能指标
- * 版本: 1.0.0
- */
-
-import { battleLogManager } from '@/utils/logging'
-
-interface PerformanceMetric {
-  name: string
-  calls: number
-  totalTime: number
-  avgTime: number
-  maxTime: number
-  minTime: number
-}
-
-class PerformanceMonitor {
-  private metrics = new Map<string, PerformanceMetric>()
-  private enabled = false
-
-  public enable(): void {
-    this.enabled = true
-    battleLogManager.addDebugLog('Performance monitoring enabled')
-  }
-
-  public disable(): void {
-    this.enabled = false
-    battleLogManager.addDebugLog('Performance monitoring disabled')
-  }
-
-  public measure<T>(name: string, fn: () => T): T {
-    if (!this.enabled) {
-      return fn()
-    }
-
-    const start = performance.now()
-    const result = fn()
-    const end = performance.now()
-    const duration = end - start
-
-    this.recordMetric(name, duration)
-
-    return result
-  }
-
-  private recordMetric(name: string, duration: number): void {
-    if (!this.metrics.has(name)) {
-      this.metrics.set(name, {
-        name,
-        calls: 0,
-        totalTime: 0,
-        avgTime: 0,
-        maxTime: 0,
-        minTime: Infinity,
-      })
-    }
-
-    const metric = this.metrics.get(name)!
-    metric.calls++
-    metric.totalTime += duration
-    metric.avgTime = metric.totalTime / metric.calls
-    metric.maxTime = Math.max(metric.maxTime, duration)
-    metric.minTime = Math.min(metric.minTime, duration)
-  }
-
-  public getMetrics(): PerformanceMetric[] {
-    return Array.from(this.metrics.values())
-  }
-
-  public getMetric(name: string): PerformanceMetric | undefined {
-    return this.metrics.get(name)
-  }
-
-  public reset(): void {
-    this.metrics.clear()
-    battleLogManager.addDebugLog('Performance metrics reset')
-  }
-
-  public printReport(): void {
-    if (!this.enabled || this.metrics.size === 0) {
-      battleLogManager.addDebugLog('No performance metrics to report')
-      return
-    }
-
-    battleLogManager.addDebugLog('=== Performance Report ===')
-    this.getMetrics().forEach((metric) => {
-      battleLogManager.addDebugLog(
-        `${metric.name}: calls=${metric.calls}, avg=${metric.avgTime.toFixed(2)}ms, max=${metric.maxTime.toFixed(2)}ms, min=${metric.minTime.toFixed(2)}ms, total=${metric.totalTime.toFixed(2)}ms`,
-      )
-    })
-    battleLogManager.addDebugLog('========================')
-  }
-}
-
-export const perfMonitor = new PerformanceMonitor()
-export const measure = (name: string, fn: () => any) => {
-  return perfMonitor.measure(name, fn)
-}
-
 --- src/utils/RAF.ts ---
 type TimerType = 'timeout' | 'interval'
 type TimerCallback = () => void | Promise<void>
@@ -45245,6 +45095,8 @@ export const raf = new RAFTimer()
  * 描述: 使用JSON Schema验证技能和Effect配置的完整性和正确性
  */
 
+import { SkillConfig, SkillStep } from "@/types"
+
 /**
  * 验证结果接口
  */
@@ -45405,7 +45257,7 @@ const effectSchema = {
  * @param skillConfig 技能配置对象
  * @returns 验证结果
  */
-export function validateSkillConfig(skillConfig: any): ValidationResult {
+export function validateSkillConfig(skillConfig: SkillConfig): ValidationResult {
   const errors: string[] = []
 
   // 检查必填字段
@@ -45430,6 +45282,26 @@ export function validateSkillConfig(skillConfig: any): ValidationResult {
     errors.push('Missing required field: cooldown')
   }
 
+  // ✅ 添加：验证 selector 字段
+  if (!skillConfig.selector) {
+    errors.push('Missing required field: selector')
+  } else {
+    const validSelectors = [
+      'single_enemy',
+      'all_enemies',
+      'self',
+      'all_allies',
+      'lowest_ally',
+      'lowest_enemy',
+      'all',
+    ]
+    if (!validSelectors.includes(skillConfig.selector)) {
+      errors.push(
+        `Invalid selector: ${skillConfig.selector}. Must be one of: ${validSelectors.join(', ')}`,
+      )
+    }
+  }
+
   if (
     !skillConfig.steps ||
     !Array.isArray(skillConfig.steps) ||
@@ -45438,7 +45310,7 @@ export function validateSkillConfig(skillConfig: any): ValidationResult {
     errors.push('Missing required field: steps (must be a non-empty array)')
   } else {
     // 验证每个步骤
-    skillConfig.steps.forEach((step: any, index: number) => {
+    skillConfig.steps.forEach((step: SkillStep, index: number) => {
       if (!step.type) {
         errors.push(`Step ${index}: Missing required field: type`)
       }
@@ -45447,7 +45319,25 @@ export function validateSkillConfig(skillConfig: any): ValidationResult {
         errors.push(`Step ${index}: Missing required field: formula`)
       }
 
-      // 检查effectId（如果是buff或debuff类型）
+      // ✅ 添加：验证 step.target 字段
+      if (step.target) {
+        const validTargets = [
+          'enemy',
+          'self',
+          'allies',
+          'all_allies',
+          'lowest_ally',
+          'lowest_enemy',
+          'all',
+        ]
+        if (!validTargets.includes(step.target)) {
+          errors.push(
+            `Step ${index}: Invalid target: ${step.target}. Must be one of: ${validTargets.join(', ')}`,
+          )
+        }
+      }
+
+      // 检查 effectId（如果是 buff 或 debuff 类型）
       if ((step.type === 'buff' || step.type === 'debuff') && !step.effectId) {
         errors.push(
           `Step ${index}: Missing required field: effectId for ${step.type} type`,
@@ -45500,7 +45390,7 @@ export function validateEffectConfig(effectConfig: any): ValidationResult {
  * @param skillConfigs 技能配置数组
  * @returns 验证结果
  */
-export function validateSkillConfigs(skillConfigs: any[]): ValidationResult {
+export function validateSkillConfigs(skillConfigs: SkillConfig[]): ValidationResult {
   const errors: string[] = []
   let validCount = 0
 
@@ -45823,9 +45713,6 @@ export class LocalStorage {
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
 
-    <!-- 新手引导 -->
-    <!-- <NewbieGuide /> -->
-
     <!-- 通知组件 -->
     <Notification ref="notification" />
   </div>
@@ -45853,7 +45740,6 @@ import { PARTICIPANT_SIDE } from "@/types/battle";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 import type { BattleManager } from '@/core/battle/BattleManager';
 import type { LogEntry } from '@/types/battle-log';
-import type { UIBattleCharacter } from '@/types';
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -46505,7 +46391,7 @@ onUnmounted(() => {
         <div class="turn-info">
           <span class="turn-label">当前回合:</span>
           <span class="turn-num">{{ currentTurn }}/{{ maxTurns }}</span>
-          <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} (SPD:{{ getMemberSpeed(currentActor)
+          <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} ( 速度:{{ getMemberSpeed(currentActor)
           }})</span>
         </div>
       </div>
@@ -46514,53 +46400,19 @@ onUnmounted(() => {
         <div class="field-party our-party">
           <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
-            <div v-for="member in filterAllyTeam" :key="member.id" class="member-card"
-              :ref="(el: any) => setMemberCardRef(el, member.id)"
-              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id }"
-              @click="selectCharacter(member.id)">
-              <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)"
-                :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
-              <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)"
-                :skill-name="getCharacterSkillName(member.id)" />
-              <div class="member-info">
-                <div class="member-name">
-                  Lv.{{ member.level }} {{ member.name }}
-                  <div class="member-action" v-if="isCurrentActor(member.id)">
-                    <span class="acting-badge">←操作中</span>
-                  </div>
-                </div>
-                <div class="member-hp">
-                  <span class="hp-text">{{ getMemberHp(member) }}</span>
-                  <div class="hp-bar">
-                    <div class="hp-fill" :class="getHpColorClass(member)"
-                      :style="{ width: getHpPercent(member) + '%' }"></div>
-                  </div>
-                </div>
-                <div class="member-energy">
-                  <span class="energy-text">{{ toNumber(member.currentEnergy) }}/{{ toNumber(member.maxEnergy) }}</span>
-                  <div class="energy-bar">
-                    <div class="energy-ticks">
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                    </div>
-                    <div class="energy-fill" :class="getEnergyColorClass(member)"
-                      :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }">
-                    </div>
-                  </div>
-                </div>
-                <!-- 角色状态标签列表 -->
-                <div class="member-status">
-                  <span v-for="status in getMemberStatuses(member)" :key="status.id" class="status-tag"
-                    :class="status.isPositive ? 'positive' : 'negative'" @mouseenter="showStatusTooltip($event, status)"
-                    @mouseleave="hideStatusTooltip">
-                    {{ status.name }}:{{ status.duration }}
-                  </span>
-                  <span v-if="getMemberStatuses(member).length === 0" class="no-status">无</span>
-                </div>
-              </div>
-            </div>
+            <ParticipantCard
+              v-for="member in filterAllyTeam"
+              :key="member.id"
+              :ref="el => participantCardRefs[member.id] = el"
+              :participant="member"
+              :is-active="isCurrentActor(member.id)"
+              :is-selected="selectedCharacterId === member.id"
+              :is-enemy="false"
+              :show-debug="false"
+              @click="selectCharacter(member.id)"
+              @status-tooltip-show="showStatusTooltip"
+              @status-tooltip-hide="hideStatusTooltip"
+            />
           </div>
         </div>
 
@@ -46571,53 +46423,19 @@ onUnmounted(() => {
         <div class="field-party enemy-party">
           <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
-            <div v-for="member in filterEnemyTeam" :key="member.id" class="member-card"
-              :ref="(el: any) => setMemberCardRef(el, member.id)"
-              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id }"
-              @click="selectCharacter(member.id)">
-              <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)"
-                :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
-              <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)"
-                :skill-name="getCharacterSkillName(member.id)" />
-              <div class="member-info">
-                <div class="member-name">
-                  Lv.{{ member.level }} {{ member.name }}
-                  <div class="member-action" v-if="isCurrentActor(member.id)">
-                    <span class="acting-badge enemy-acting">←操作中</span>
-                  </div>
-                </div>
-                <div class="member-hp">
-                  <span class="hp-text">{{ getMemberHp(member) }}</span>
-                  <div class="hp-bar">
-                    <div class="hp-fill enemy-fill" :class="getHpColorClass(member)"
-                      :style="{ width: getHpPercent(member) + '%' }"></div>
-                  </div>
-                </div>
-                <div class="member-energy">
-                  <span class="energy-text">{{ toNumber(member.currentEnergy) }}/{{ toNumber(member.maxEnergy)
-                  }}</span>
-                  <div class="energy-bar">
-                    <div class="energy-ticks">
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                    </div>
-                    <div class="energy-fill enemy-fill" :class="getEnergyColorClass(member)"
-                      :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }">
-                    </div>
-                  </div>
-                </div>
-                <div class="member-status">
-                  <span v-for="status in getMemberStatuses(member)" :key="status.id" class="status-tag"
-                    :class="status.isPositive ? 'positive' : 'negative'" @mouseenter="showStatusTooltip($event, status)"
-                    @mouseleave="hideStatusTooltip">
-                    {{ status.name }}:{{ status.duration }}
-                  </span>
-                  <span v-if="getMemberStatuses(member).length === 0" class="no-status">无</span>
-                </div>
-              </div>
-            </div>
+            <ParticipantCard
+              v-for="member in filterEnemyTeam"
+              :key="member.id"
+              :ref="el => participantCardRefs[member.id] = el"
+              :participant="member"
+              :is-active="isCurrentActor(member.id)"
+              :is-selected="selectedCharacterId === member.id"
+              :is-enemy="true"
+              :show-debug="false"
+              @click="selectCharacter(member.id)"
+              @status-tooltip-show="showStatusTooltip"
+              @status-tooltip-hide="hideStatusTooltip"
+            />
             <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>
@@ -46668,9 +46486,10 @@ import { useBattleAnimation } from '@/composables/useBattleAnimation';
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
-import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter';
+import ParticipantCard from "@/components/ParticipantCard.vue";
 import type { AttributeValue } from '@/types';
 import type { BattleManager } from '@/core/battle/BattleManager';
+import type { BattleParticipant, StatusEffect } from '@/types/battle';
 
 const battleManager = container.resolve<BattleManager>('BattleManager');
 
@@ -46686,6 +46505,15 @@ const emit = defineEmits<{
   "select-character": [characterId: string];
 }>();
 
+// 状态工具提示
+const statusTooltip = ref({
+  visible: false,
+  x: 0,
+  y: 0,
+  opacity: 0,
+  status: null as StatusEffect | null
+});
+
 const {
   registerElement,
   unregisterElement,
@@ -46697,17 +46525,8 @@ const {
   stopAllAnimations,
 } = useBattleAnimation();
 
-const memberCardRefs = new Map<string, HTMLElement>();
-
-function setMemberCardRef(el: HTMLElement | null, memberId: string) {
-  if (el) {
-    memberCardRefs.set(memberId, el);
-    registerElement(memberId, ref(el));
-  } else {
-    memberCardRefs.delete(memberId);
-    unregisterElement(memberId);
-  }
-}
+// ParticipantCard 组件引用映射
+const participantCardRefs = ref<Record<string, InstanceType<typeof ParticipantCard>>>({})
 
 watch(() => props.battleSpeed, (newSpeed) => {
   if (newSpeed) {
@@ -46722,17 +46541,7 @@ const selectedCharacterId = computed(() => battleManager.getSelectedCharacterId(
 const currentTurn = computed(() => battleManager.getCurrentTurn());
 const maxTurns = computed(() => battleManager.getMaxTurns());
 
-// 角色效果状态
-const characterEffects = ref<{
-  damage: Record<string, { value: number; type: 'damage' | 'heal' | 'critical' | 'miss'; isCritical: boolean }>;
-  skill: Record<string, { type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate'; name?: string }>;
-  animation: Record<string, { isHit: boolean; isCasting: boolean; isBuffed: boolean }>;
-}>({
-  damage: {},
-  skill: {},
-  animation: {}
-});
-
+// 辅助函数：转换为数字（兼容 AttributeValue 和 number）
 function toNumber(value: number | AttributeValue | undefined): number {
   if (typeof value === 'number') return value;
   if (value && typeof value === 'object' && 'value' in value) {
@@ -46741,63 +46550,26 @@ function toNumber(value: number | AttributeValue | undefined): number {
   return 0;
 }
 
-function getMemberSpeed(member: UIBattleCharacter | null): number {
+/**
+ * 获取参与者速度
+ * 直接使用 BattleParticipant 的 getAttributeValue 方法
+ */
+function getMemberSpeed(member: BattleParticipant | null): number {
   if (!member) return 0;
-  return toNumber(member.speed);
-}
-
-function getHpPercent(member: UIBattleCharacter): number {
-  const maxHp = toNumber(member.maxHp);
-  const currentHp = toNumber(member.currentHp);
-  if (maxHp <= 0) return 0;
-  return Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
-}
-
-function getHpColorClass(member: UIBattleCharacter): string {
-  const hpPercent = getHpPercent(member);
-  if (hpPercent <= 25) return 'high';
-  if (hpPercent <= 50) return 'medium';
-  return 'low';
-}
-
-function getEnergyPercent(member: UIBattleCharacter): number {
-  const maxEnergy = toNumber(member.maxEnergy);
-  const currentEnergy = toNumber(member.currentEnergy);
-  if (maxEnergy <= 0) return 0;
-  return Math.max(0, Math.min(100, (currentEnergy / maxEnergy) * 100));
-}
-
-function getEnergyColorClass(member: UIBattleCharacter): string {
-  const energyPercent = getEnergyPercent(member);
-  if (energyPercent >= 80) return 'full';
-  if (energyPercent >= 50) return 'medium';
-  return 'low';
-}
-
-function getMemberHp(member: UIBattleCharacter): string {
-  const currentHp = Math.max(0, Math.floor(toNumber(member.currentHp)));
-  const maxHp = Math.max(0, Math.floor(toNumber(member.maxHp)));
-  return `${currentHp}/${maxHp}`;
-}
-
-function getNumericValue(value: number | AttributeValue | undefined): number {
-  return toNumber(value);
+  const spdValue = member.getAttributeValue('SPD')
+  return toNumber(spdValue?.value)
 }
 
 function isCurrentActor(memberId: string): boolean {
   return currentActor.value?.id === memberId || props.currentActorId === memberId;
 }
 
-function isMemberDead(member: UIBattleCharacter): boolean {
-  return getNumericValue(member.currentHp) <= 0
-}
-
 // 根据回合顺序排序角色列表
 const filterAllyTeam = computed(() => {
-  const enabledAllies = allyTeam.value.filter((c) => c.enabled);
+  const aliveAllies = allyTeam.value.filter((c) => c.isAlive());
   if (props.turnOrder) {
     // 如果有回合顺序，按照回合顺序排序
-    return enabledAllies.sort((a, b) => {
+    return aliveAllies.sort((a, b) => {
       const indexA = props.turnOrder!.indexOf(a.id);
       const indexB = props.turnOrder!.indexOf(b.id);
       // 不在回合顺序中的角色放在最后
@@ -46807,15 +46579,15 @@ const filterAllyTeam = computed(() => {
     });
   } else {
     // 否则按速度排序
-    return enabledAllies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
+    return aliveAllies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
   }
 });
 
 const filterEnemyTeam = computed(() => {
-  const enabledEnemies = enemyTeam.value.filter((c) => c.enabled);
+  const aliveEnemies = enemyTeam.value.filter((c) => c.isAlive());
   if (props.turnOrder) {
     // 如果有回合顺序，按照回合顺序排序
-    return enabledEnemies.sort((a, b) => {
+    return aliveEnemies.sort((a, b) => {
       const indexA = props.turnOrder!.indexOf(a.id);
       const indexB = props.turnOrder!.indexOf(b.id);
       // 不在回合顺序中的角色放在最后
@@ -46825,7 +46597,7 @@ const filterEnemyTeam = computed(() => {
     });
   } else {
     // 否则按速度排序
-    return enabledEnemies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
+    return aliveEnemies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
   }
 });
 
@@ -46841,20 +46613,12 @@ const selectCharacter = (charId: string) => {
 };
 
 // 状态工具提示相关逻辑
-const statusTooltip = ref({
-  visible: false,
-  x: 0,
-  y: 0,
-  opacity: 0,
-  status: null as any
-});
-
 let tooltipTimeout: symbol | null = null;
 // 跟踪所有定时器，用于组件卸载时清理
 const timeouts = ref<symbol[]>([]);
 
 // 显示状态工具提示
-const showStatusTooltip = (event: MouseEvent, status: any) => {
+const showStatusTooltip = (event: MouseEvent, status: StatusEffect) => {
   if (tooltipTimeout) {
     raf.clear(tooltipTimeout);
   }
@@ -46889,7 +46653,7 @@ const hideStatusTooltip = () => {
 };
 
 // 获取状态描述
-const getStatusDescription = (status: any) => {
+const getStatusDescription = (status: StatusEffect) => {
   if (!status) return '';
 
   const descriptions: { [key: string]: string } = {
@@ -46914,29 +46678,29 @@ const getStatusDescription = (status: any) => {
 };
 
 // 获取状态效果数值
-const getStatusEffectValue = (status: any) => {
+const getStatusEffectValue = (status: StatusEffect) => {
   if (!status) return '';
 
   const effectValues: { [key: string]: string } = {
-    '攻击提升': '攻击力+20%',
-    '防御提升': '防御力+20%',
-    '速度提升': '速度+15%',
-    '暴击提升': '暴击率+10%',
-    '攻击降低': '攻击力-20%',
-    '防御降低': '防御力-20%',
-    '速度降低': '速度-15%',
-    '中毒': '每回合损失5%最大生命值',
-    '流血': '每回合损失3%最大生命值',
-    '灼烧': '每回合损失4%最大生命值',
-    '护盾': '吸收相当于最大生命值20%的伤害',
-    '治疗': '每回合恢复5%最大生命值'
+    '攻击提升': '攻击力 +20%',
+    '防御提升': '防御力 +20%',
+    '速度提升': '速度 +15%',
+    '暴击提升': '暴击率 +10%',
+    '攻击降低': '攻击力 -20%',
+    '防御降低': '防御力 -20%',
+    '速度降低': '速度 -15%',
+    '中毒': '每回合损失 5% 最大生命值',
+    '流血': '每回合损失 3% 最大生命值',
+    '灼烧': '每回合损失 4% 最大生命值',
+    '护盾': '吸收相当于最大生命值 20% 的伤害',
+    '治疗': '每回合恢复 5% 最大生命值'
   };
 
   return effectValues[status.name] || '';
 };
 
 // 获取状态增益效果
-const getStatusBuffEffect = (status: any) => {
+const getStatusBuffEffect = (status: StatusEffect) => {
   if (!status) return '';
 
   const buffEffects: { [key: string]: string } = {
@@ -46951,42 +46715,21 @@ const getStatusBuffEffect = (status: any) => {
   return buffEffects[status.name] || '';
 };
 
-const getMemberStatuses = (char: any) => {
-  return char.buffs || [];
-};
-
-// 获取角色伤害信息
-function getCharacterDamage(characterId: string): number {
-  return props.damageEffects?.[characterId]?.value || characterEffects.value.damage[characterId]?.value || 0;
-}
-
-// 获取角色伤害类型
-function getCharacterDamageType(characterId: string): 'damage' | 'heal' | 'critical' | 'miss' {
-  return props.damageEffects?.[characterId]?.type || characterEffects.value.damage[characterId]?.type || 'damage';
-}
-
-// 获取角色是否暴击
-function getCharacterIsCritical(characterId: string): boolean {
-  return props.damageEffects?.[characterId]?.isCritical || characterEffects.value.damage[characterId]?.isCritical || false;
-}
-
-// 获取角色技能效果类型
-function getCharacterSkillEffect(characterId: string): 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate' | null {
-  return props.skillEffects?.[characterId]?.type || characterEffects.value.skill[characterId]?.type || null;
-}
-
-// 获取角色技能名称
-function getCharacterSkillName(characterId: string): string | undefined {
-  return props.skillEffects?.[characterId]?.name || characterEffects.value.skill[characterId]?.name;
-}
-
 function getCharacterSide(characterId: string): 'left' | 'right' {
   const isAlly = allyTeam.value.some((c) => c.id === characterId)
   return isAlly ? 'left' : 'right'
 }
 
+/**
+ * 显示伤害数字
+ * 通过 ParticipantCard 组件的 addDamageNumber 方法调用
+ */
 function showDamage(characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) {
-  characterEffects.value.damage[characterId] = { value, type, isCritical }
+  // 调用 ParticipantCard 组件的 addDamageNumber 方法
+  const cardRef = participantCardRefs.value[characterId]
+  if (cardRef && typeof cardRef.addDamageNumber === 'function') {
+    cardRef.addDamageNumber(value, type, isCritical)
+  }
 
   playHitAnimation(characterId, {
     damage: value,
@@ -46995,8 +46738,15 @@ function showDamage(characterId: string, value: number, type: 'damage' | 'heal' 
   })
 }
 
+/**
+ * 显示闪避
+ */
 function showMiss(characterId: string) {
-  characterEffects.value.damage[characterId] = { value: 0, type: 'miss', isCritical: false }
+  // 调用 ParticipantCard 组件的 addDamageNumber 方法
+  const cardRef = participantCardRefs.value[characterId]
+  if (cardRef && typeof cardRef.addDamageNumber === 'function') {
+    cardRef.addDamageNumber(0, 'miss', false)
+  }
 
   playHitAnimation(characterId, {
     damageType: 'miss',
@@ -47029,10 +46779,10 @@ function triggerBuffEffect(characterId: string) {
   playBuffAnimation(characterId, true)
 }
 
+/**
+ * 清理动画效果
+ */
 function cleanupAnimations() {
-  characterEffects.value.damage = {}
-  characterEffects.value.skill = {}
-  characterEffects.value.animation = {}
   hideStatusTooltip()
   stopAllAnimations()
 }
@@ -47087,7 +46837,7 @@ onUnmounted(() => {
   })
 
   cleanupAnimations()
-  memberCardRefs.clear()
+  participantCardRefs.value = {}
 })
 </script>
 
@@ -50443,368 +50193,6 @@ onUnmounted(() => {
 @use'@/styles/main.scss';
 </style>
 
---- src/views/NewbieGuide.vue ---
-<template>
-  <div class="newbie-guide" :class="{ 'active': isActive }">
-    <div class="guide-overlay" @click="nextStep"></div>
-
-    <div class="guide-content" :class="'step-' + currentStep">
-      <div class="step-indicator">
-        <span class="step-number">{{ currentStep }}/{{ totalSteps }}</span>
-        <div class="step-progress">
-          <div class="step-progress-bar" :style="{ width: (currentStep / totalSteps) * 100 + '%' }"></div>
-        </div>
-      </div>
-
-      <div class="guide-step" v-if="currentStep === 1">
-        <h3>欢迎来到战斗调试工作室！</h3>
-        <p>本教程将帮助你快速了解游戏的基本操作和战斗系统。</p>
-        <div class="guide-image">
-        </div>
-        <div class="guide-actions">
-          <button class="action-btn primary" @click="nextStep">开始教程</button>
-          <button class="action-btn" @click="skipGuide">跳过</button>
-        </div>
-      </div>
-
-      <div class="guide-step" v-else-if="currentStep === 2">
-        <h3>基本攻击操作</h3>
-        <p>使用 <span class="key-hint">{{ attackKey }}</span> 键进行普通攻击，这是最基础的攻击方式。</p>
-        <div class="guide-image">
-        </div>
-        <div class="guide-actions">
-          <button class="action-btn primary" @click="nextStep">下一步</button>
-          <button class="action-btn" @click="prevStep">上一步</button>
-        </div>
-      </div>
-
-      <div class="guide-step" v-else-if="currentStep === 3">
-        <h3>技能释放</h3>
-        <p>使用 <span class="key-hint">{{ skillKey }}</span> 键释放技能，技能会造成更多伤害或提供特殊效果。</p>
-        <div class="guide-image">
-        </div>
-        <div class="guide-actions">
-          <button class="action-btn primary" @click="nextStep">下一步</button>
-          <button class="action-btn" @click="prevStep">上一步</button>
-        </div>
-      </div>
-
-      <div class="guide-step" v-else-if="currentStep === 4">
-        <h3>防御与物品</h3>
-        <p>使用 <span class="key-hint">{{ defendKey }}</span> 键进行防御，减少受到的伤害。</p>
-        <p>使用 <span class="key-hint">{{ itemKey }}</span> 键使用物品，恢复生命值或提供增益效果。</p>
-        <div class="guide-image">
-        </div>
-        <div class="guide-actions">
-          <button class="action-btn primary" @click="nextStep">下一步</button>
-          <button class="action-btn" @click="prevStep">上一步</button>
-        </div>
-      </div>
-
-      <div class="guide-step" v-else-if="currentStep === 5">
-        <h3>战斗回放与调试</h3>
-        <p>使用 <span class="key-hint">{{ replayKey }}</span> 键打开战斗回放界面，查看战斗过程。</p>
-        <p>使用 <span class="key-hint">{{ debugKey }}</span> 键进入调试模式，逐帧分析战斗。</p>
-        <div class="guide-image">
-        </div>
-        <div class="guide-actions">
-          <button class="action-btn primary" @click="nextStep">下一步</button>
-          <button class="action-btn" @click="prevStep">上一步</button>
-        </div>
-      </div>
-
-      <div class="guide-step" v-else-if="currentStep === 6">
-        <h3>快捷键设置</h3>
-        <p>使用 <span class="key-hint">H</span> 键打开快捷键提示面板，查看当前的快捷键设置。</p>
-        <p>你可以在设置中自定义快捷键，以适应你的操作习惯。</p>
-        <div class="guide-image">
-        </div>
-        <div class="guide-actions">
-          <button class="action-btn primary" @click="nextStep">下一步</button>
-          <button class="action-btn" @click="prevStep">上一步</button>
-        </div>
-      </div>
-
-      <div class="guide-step" v-else-if="currentStep === 7">
-        <h3>教程完成！</h3>
-        <p>你已经了解了游戏的基本操作和战斗系统。现在可以开始你的战斗调试之旅了！</p>
-        <div class="guide-image">
-        </div>
-        <div class="guide-actions">
-          <button class="action-btn primary" @click="finishGuide">开始游戏</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { keybindManager } from '@/core/input/KeybindManager';
-import { raf } from '@/utils/RAF';
-
-const isActive = ref(false);
-const currentStep = ref(1);
-const totalSteps = ref(7);
-
-// 计算当前的快捷键
-const attackKey = computed(() => keybindManager.getKeybind('attack'));
-const skillKey = computed(() => keybindManager.getKeybind('skill'));
-const defendKey = computed(() => keybindManager.getKeybind('defend'));
-const itemKey = computed(() => keybindManager.getKeybind('item'));
-const replayKey = computed(() => keybindManager.getKeybind('replay'));
-const debugKey = computed(() => keybindManager.getKeybind('debug'));
-
-// 开始教程
-function startGuide() {
-  isActive.value = true;
-  currentStep.value = 1;
-  // 保存教程完成状态
-  localStorage.setItem('newbieGuideCompleted', 'false');
-}
-
-// 下一步
-function nextStep() {
-  if (currentStep.value < totalSteps.value) {
-    currentStep.value++;
-  } else {
-    finishGuide();
-  }
-}
-
-// 上一步
-function prevStep() {
-  if (currentStep.value > 1) {
-    currentStep.value--;
-  }
-}
-
-// 跳过教程
-function skipGuide() {
-  finishGuide();
-}
-
-// 完成教程
-function finishGuide() {
-  isActive.value = false;
-  // 保存教程完成状态
-  localStorage.setItem('newbieGuideCompleted', 'true');
-}
-
-// 检查是否需要显示教程
-function checkShowGuide() {
-  const guideCompleted = localStorage.getItem('newbieGuideCompleted');
-  if (guideCompleted !== 'true') {
-    // 延迟显示，确保页面加载完成
-    raf.setTimeout(() => {
-      startGuide();
-    }, 1000);
-  }
-}
-
-onMounted(() => {
-  checkShowGuide();
-});
-
-// 暴露方法给父组件
-defineExpose({
-  startGuide,
-  finishGuide
-});
-</script>
-
-<style scoped>
-.newbie-guide {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 10000;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-}
-
-.newbie-guide.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.guide-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  cursor: pointer;
-}
-
-.guide-content {
-  position: relative;
-  z-index: 1;
-  max-width: 800px;
-  margin: 50px auto;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  animation: slideIn 0.5s ease;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-50px);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.step-indicator {
-  padding: 15px 20px;
-  background: #f5f5f5;
-  border-bottom: 1px solid #ddd;
-}
-
-.step-number {
-  display: block;
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 10px;
-}
-
-.step-progress {
-  width: 100%;
-  height: 6px;
-  background: #ddd;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.step-progress-bar {
-  height: 100%;
-  background: #2196F3;
-  border-radius: 3px;
-  transition: width 0.5s ease;
-}
-
-.guide-step {
-  padding: 30px;
-  text-align: center;
-}
-
-.guide-step h3 {
-  margin: 0 0 20px 0;
-  color: #333;
-}
-
-.guide-step p {
-  margin: 0 0 15px 0;
-  color: #666;
-  line-height: 1.5;
-}
-
-.key-hint {
-  display: inline-block;
-  padding: 2px 8px;
-  background: #2196F3;
-  color: white;
-  border-radius: 4px;
-  font-weight: bold;
-  margin: 0 2px;
-}
-
-.guide-image {
-  margin: 20px 0;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.guide-image img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.guide-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.action-btn {
-  padding: 10px 20px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  background: #f0f0f0;
-}
-
-.action-btn.primary {
-  background: #2196F3;
-  color: white;
-  border-color: #2196F3;
-}
-
-.action-btn.primary:hover {
-  background: #1976D2;
-}
-
-.close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-  padding: 5px;
-  border-radius: 50%;
-  transition: all 0.2s;
-}
-
-.close-btn:hover {
-  background: #f0f0f0;
-  color: #333;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .guide-content {
-    margin: 20px;
-    max-width: none;
-  }
-
-  .guide-step {
-    padding: 20px;
-  }
-
-  .guide-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .action-btn {
-    width: 100%;
-    max-width: 200px;
-  }
-}
-</style>
-
 --- src/views/ParticipantPanel.vue ---
 <template>
   <div class="panel-left">
@@ -51343,10 +50731,319 @@ export default defineConfig({
 })
 
 --- 文档/技能.md ---
-selector
-SkillScope
-target
+基于您提供的《修改方案.md》与项目现有架构，我对该方案进行了系统性完善与重构。核心目标：**彻底移除 `UIBattleCharacter` 中间层、实现多乘区精准计算、通过脏标记机制杜绝战斗中重复计算、确保 Vue3 响应式高效绑定**。
 
-angular.element(document.querySelector('body')).scope().game.gameSpeed = 50
+以下为可直接落地的生产级重构方案：
 
-MS4xLjEz|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
+---
+### 📐 一、 架构优化原则
+| 维度 | 优化策略 | 收益 |
+|------|----------|------|
+| **依赖解耦** | `BattleParticipant` 不再直接依赖 `BuffSystem` 单例，改为注入 `IModifierProvider` 接口 | 支持单元测试、回放模式、多战斗实例隔离 |
+| **计算时序** | 采用 `预计算(Pre-Calc) + 脏标记(Dirty-Flag)` 机制 | 战斗期间属性读取复杂度降至 `O(1)`，零重复计算 |
+| **多乘区设计** | 标准化公式：`最终值 = ((基础 + 固定) × (1 + 百分比) × 独立乘区) × 最终修正` | 兼容装备、功法、地形、站位等任意来源的线性/乘区叠加 |
+| **UI 响应式** | 使用 `shallowReactive` + `computed` 代理，避免深层递归监听 | 降低 Vue 响应式开销，属性变化精准触发局部更新 |
+
+---
+### 📦 二、 类型系统完善 (`src/types/attribute.ts`)
+```typescript
+/** 修饰符来源类型 */
+export type ModifierSourceType = 'base' | 'equipment' | 'buff' | 'skill' | 'terrain' | 'formation' | 'passive'
+
+/** 单个修饰符详情（供UI提示/调试面板使用） */
+export interface ModifierDetail {
+  sourceId: string
+  sourceType: ModifierSourceType
+  sourceName: string
+  value: number
+  type: 'ADDITIVE' | 'PERCENTAGE' | 'MULTIPLICATIVE' | 'FINAL'
+}
+
+/** 属性计算拆解（仅调试模式填充） */
+export interface CalculationBreakdown {
+  base: number
+  additive: number
+  percentMultiplier: number
+  independentMultiplier: number
+  finalMultiplier: number
+}
+
+/** 属性缓存对象 */
+export interface AttributeValue {
+  /** 最终生效值（UI/战斗读取此值） */
+  value: number
+  /** 基础值（角色成长/初始设定） */
+  base: number
+  /** 修饰符明细列表 */
+  modifiers: ModifierDetail[]
+  /** 是否为百分比属性（影响UI显示格式） */
+  isPercentage: boolean
+  /** 脏标记：true表示需重新计算 */
+  dirty: boolean
+  /** 计算拆解（可选，仅Debug开启时记录） */
+  breakdown?: CalculationBreakdown
+}
+
+/** 属性枚举（与 modifier.ts 保持一致） */
+export const ATTRIBUTES = {
+  HP: 'HP', MAX_HP: 'MAX_HP',
+  ATK: 'ATK', MIN_ATK: 'MIN_ATK', MAX_ATK: 'MAX_ATK',
+  DEF: 'DEF', SPD: 'SPD',
+  CRIT_RATE: 'CRIT_RATE', CRIT_DMG: 'CRIT_DMG',
+  DMG_RED: 'DMG_RED', ENERGY: 'ENERGY', MAX_ENERGY: 'MAX_ENERGY',
+} as const
+export type AttributeType = typeof ATTRIBUTES[keyof typeof ATTRIBUTES]
+```
+
+---
+### ⚙️ 三、 `BattleParticipantImpl` 完整重构
+```typescript
+// src/core/battle/BattleParticipantImpl.ts
+import type { BattleParticipant, AttributeValue, ModifierDetail, AttributeType } from '@/types/battle'
+import type { ParticipantInitData } from '@/core/battle/BattleParticipantImpl'
+import type { ModifierStack } from '@/core/ModifierStack'
+
+/** 修饰符提供者接口（解耦Buff/装备/地形系统） */
+export interface IModifierProvider {
+  getModifierStack(participantId: string): ModifierStack | null
+  isDebugMode(): boolean
+}
+
+export class BattleParticipantImpl implements BattleParticipant {
+  // ... 原有基础字段保持不变
+  public id: string
+  public name: string
+  public level: number
+  public type: ParticipantSide
+  public team: ParticipantSide
+  public currentHealth: number
+  public maxHealth: number
+  public currentEnergy: number
+  public maxEnergy: number
+  public buffs: string[] = []
+  public skillCooldowns: Map<string, number> = new Map()
+
+  /** 属性缓存池 */
+  private attributes = new Map<AttributeType, AttributeValue>()
+  private modifierProvider: IModifierProvider
+
+  constructor( ParticipantInitData, modifierProvider: IModifierProvider) {
+    this.modifierProvider = modifierProvider
+    this.id = data.id
+    this.name = data.name
+    this.level = data.level
+    this.type = data.type
+    this.team = data.team
+    this.maxHealth = data.maxHealth
+    this.currentHealth = data.currentHealth ?? data.maxHealth
+    this.maxEnergy = data.maxEnergy ?? 150
+    this.currentEnergy = data.currentEnergy ?? 25
+    this.buffs = data.buffs ?? []
+
+    this.initAttribute('MAX_HP', data.maxHealth)
+    this.initAttribute('HP', this.currentHealth)
+    this.initAttribute('MAX_ENERGY', this.maxEnergy)
+    this.initAttribute('ENERGY', this.currentEnergy)
+    this.initAttribute('ATK', (data.minAttack + data.maxAttack) / 2)
+    this.initAttribute('DEF', data.defense)
+    this.initAttribute('SPD', data.speed)
+    this.initAttribute('CRIT_RATE', data.critRate ?? 10)
+    this.initAttribute('CRIT_DMG', data.critDamage ?? 125)
+    this.initAttribute('DMG_RED', data.damageReduction ?? 0)
+    
+    // 初始标记所有属性为脏
+    this.markAllDirty()
+  }
+
+  private initAttribute(type: AttributeType, base: number, isPercentage: boolean = false): void {
+    this.attributes.set(type, {
+      value: base,
+      base,
+      modifiers: [],
+      isPercentage,
+      dirty: true,
+      breakdown: undefined
+    })
+  }
+
+  /** 标记单个属性为脏 */
+  markDirty(type: AttributeType): void {
+    const attr = this.attributes.get(type)
+    if (attr) attr.dirty = true
+  }
+
+  /** 标记所有属性为脏 */
+  markAllDirty(): void {
+    this.attributes.forEach(attr => attr.dirty = true)
+  }
+
+  /** 
+   * 重新计算单个属性（核心多乘区逻辑）
+   * 公式: Final = ((Base + Additive) * (1 + Percent/100) * IndependentMulti) * FinalMulti
+   */
+  private recalcAttribute(type: AttributeType): void {
+    const attr = this.attributes.get(type)
+    if (!attr || !attr.dirty) return
+
+    const stack = this.modifierProvider.getModifierStack(this.id)
+    const modifiers = stack?.getModifiers(type) ?? []
+    
+    // 分类聚合
+    let additive = 0
+    let percentSum = 0
+    let independentMulti = 1
+    let finalMulti = 1
+    const details: ModifierDetail[] = []
+
+    for (const mod of modifiers) {
+      details.push({
+        sourceId: mod.buffInstanceId,
+        sourceType: mod.buffInstanceId.startsWith('buff_') ? 'buff' : 'skill',
+        sourceName: mod.buffInstanceId, // 可替换为 BuffConfig.name
+        value: mod.value,
+        type: mod.type
+      })
+
+      switch (mod.type) {
+        case 'ADDITIVE': additive += mod.value; break
+        case 'PERCENTAGE': percentSum += mod.value; break
+        case 'MULTIPLICATIVE': independentMulti *= (1 + mod.value); break
+        case 'FINAL': finalMulti *= (1 + mod.value); break
+      }
+    }
+
+    // 执行计算
+    const prePercentValue = attr.base + additive
+    const afterPercentValue = prePercentValue * (1 + percentSum / 100)
+    let finalValue = afterPercentValue * independentMulti * finalMulti
+
+    // 特殊边界处理
+    if (type === 'HP') finalValue = Math.max(0, Math.min(finalValue, this.getAttributeValue('MAX_HP')?.value ?? 0))
+    if (type === 'ENERGY') finalValue = Math.max(0, Math.min(finalValue, this.getAttributeValue('MAX_ENERGY')?.value ?? 0))
+
+    // 更新缓存
+    attr.value = Math.floor(finalValue)
+    attr.modifiers = details
+    attr.dirty = false
+
+    if (this.modifierProvider.isDebugMode()) {
+      attr.breakdown = {
+        base: attr.base,
+        additive,
+        percentMultiplier: 1 + percentSum / 100,
+        independentMultiplier: independentMulti,
+        finalMultiplier: finalMulti
+      }
+    }
+  }
+
+  /** 获取属性最终值（自动触发懒计算） */
+  getAttribute(type: AttributeType): number {
+    return this.getAttributeValue(type)?.value ?? 0
+  }
+
+  /** 获取完整属性对象（供UI/调试使用） */
+  getAttributeValue(type: AttributeType): AttributeValue | undefined {
+    const attr = this.attributes.get(type)
+    if (attr?.dirty) this.recalcAttribute(type)
+    return attr
+  }
+
+  /** 批量预计算（推荐在回合开始前/战斗结算前调用） */
+  recalculateAll(): void {
+    this.attributes.forEach((_, type) => this.recalcAttribute(type))
+  }
+
+  // ... 其余方法 (takeDamage, heal, addBuff 等) 保持不变
+}
+```
+
+---
+### 🎯 四、 UI 直连与 Vue3 响应式绑定
+移除 `UIBattleCharacter` 后，Store 直接持有 `BattleParticipant[]`。为保证 Vue 响应式且避免 `Map` 深层代理开销，采用 **浅代理 + 计算属性** 方案：
+
+```vue
+<!-- src/components/CharacterCard.vue -->
+<template>
+  <div class="char-card" :class="{ dead: participant.currentHealth <= 0 }">
+    <h3>{{ participant.name }} Lv.{{ participant.level }}</h3>
+    
+    <!-- 直接读取 .value，性能极高 -->
+    <div class="stats">
+      <span>HP: {{ stats.hp.value }} / {{ stats.maxHp.value }}</span>
+      <span>ATK: {{ stats.atk.value }}</span>
+      <span>SPD: {{ stats.spd.value }}</span>
+    </div>
+
+    <!-- 悬浮提示可直接遍历 modifiers -->
+    <div v-if="showDebug" class="debug-info">
+      <div v-for="mod in stats.atk.modifiers" :key="mod.sourceId">
+        {{ mod.sourceName }}: {{ mod.value }}({{ mod.type }})
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, type ShallowReactive } from 'vue'
+import type { BattleParticipant } from '@/types/battle'
+import { ATTRIBUTES } from '@/types/attribute'
+
+const props = defineProps<{
+  participant: ShallowReactive<BattleParticipant>
+  showDebug?: boolean
+}>()
+
+// 使用 computed 缓存属性引用，避免重复调用 getAttributeValue
+const stats = computed(() => ({
+  hp: props.participant.getAttributeValue(ATTRIBUTES.HP)!,
+  maxHp: props.participant.getAttributeValue(ATTRIBUTES.MAX_HP)!,
+  atk: props.participant.getAttributeValue(ATTRIBUTES.ATK)!,
+  spd: props.participant.getAttributeValue(ATTRIBUTES.SPD)!,
+}))
+</script>
+```
+
+---
+### ⚡ 五、 性能优化：脏标记流控机制
+**绝对不要在每次攻击/受击时触发计算**。采用 **事件驱动 + 阶段预计算**：
+
+1. **标记阶段（O(1)）**  
+   `BuffSystem` / `EquipmentSystem` / `TerrainSystem` 状态变更时，仅调用：
+   ```ts
+   participant.markDirty('ATK')
+   participant.markDirty('SPD')
+   // 不执行任何数学运算
+   ```
+
+2. **预计算阶段（回合/动作前批量执行）**  
+   在 `TurnManager` 推进回合或 `ActionExecutor` 执行伤害前，统一调用：
+   ```ts
+   // 战斗系统调用
+   actor.recalculateAll() 
+   target.recalculateAll()
+   ```
+   此时集中遍历所有 `dirty` 属性，计算复杂度与属性数量线性相关，单次调用开销极低。
+
+3. **执行阶段（O(1) 读取）**  
+   伤害公式、AI决策、UI渲染直接读取 `participant.getAttribute('ATK')`，返回已缓存的 `value`，**零计算开销**。
+
+---
+### 🔄 六、 迁移实施清单
+| 阶段 | 任务 | 关键文件 | 验收标准 |
+|------|------|----------|----------|
+| **1** | 替换类型定义 | `types/attribute.ts`, `types/battle.ts` | `AttributeValue` 替代原数值类型，接口兼容 |
+| **2** | 重构实体类 | `BattleParticipantImpl.ts` | 完成 `IModifierProvider` 注入与多乘区计算 |
+| **3** | 改造数据工厂 | `GameDataProcessor.ts`, `BattleSystem.ts` | 移除 `UIBattleCharacter` 转换，直接实例化 `BattleParticipantImpl` |
+| **4** | 同步状态层 | `battleStore.ts`, `BattleStateManager.ts` | Store 直接存储 `BattleParticipant[]`，移除映射表 |
+| **5** | UI 组件迁移 | `BattleField.vue`, `DebugPanel.vue` | 模板直接绑定 `.value`，性能监控无波动 |
+| **6** | 接入脏标记 | `BuffSystem.ts`, `TurnManager.ts` | Buff添加/地形切换仅触发 `markDirty`，回合前调用 `recalculateAll` |
+
+---
+### ⚠️ 七、 关键注意事项
+1. **序列化与回放**：`AttributeValue.modifiers` 数组体积较大。保存战斗回放前，需剥离 `modifiers` 仅保留 `value` 与 `base`。加载时重建基础结构。
+2. **响应式边界**：`BattleParticipantImpl` 本身为 Class，Vue 无法自动代理 `Map`。务必使用 `shallowReactive(instance)` 包裹，或通过 `computed` 暴露属性。
+3. **乘区扩展性**：后续若引入 `真实伤害(无视防御)`、`伤害上限/下限`，可在 `recalcAttribute` 末尾追加 `clamp` 逻辑，无需改动外部调用。
+4. **调试模式开关**：`breakdown` 字段仅在 `isDebugMode() === true` 时生成，生产环境彻底跳过，保障极致性能。
+
+如需我提供 `IModifierProvider` 的具体实现适配代码（对接现有 `BuffSystem`），或 Vue 组件批量替换的正则脚本，请告知。

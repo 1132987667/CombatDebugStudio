@@ -9,7 +9,8 @@ import type { EnemyInstance } from '@/types/enemy'
 import type { BattleAI } from '@/core/BattleAI'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import type { SkillConfig } from '@/types/skill'
-import type { UISkills } from '@/types/UI/UIBattleCharacter'
+import type { AttributeValue, IModifierProvider } from '@/types/attribute'
+import type { AttributeType } from '@/types/modifier'
 import type { BattleLogEntry } from '@/types/battle-log'
 import { EffectType } from '@/types/effect'
 import { Counter } from '@/utils/Counter'
@@ -146,7 +147,7 @@ export type ParticipantSide =
 /**
  * 战斗实体接口
  * 定义战斗中最基础的实体结构
- * 包含实体的基本属性（ID、名称、等级、阵营等）和核心方法（生命值、能量、Buff等）
+ * 包含实体的基本属性（ID、名称、等级、阵营等）和核心方法（生命值、能量、Buff 等）
  * 所有参与战斗的角色和敌人都应实现此接口
  */
 export interface BattleEntity {
@@ -175,7 +176,6 @@ export interface BattleEntity {
   isFullHealth(): boolean
   needsHealing(): boolean
 
-  getSkills(): UISkills
   getSkillList(): SkillConfig[]
   getSkillIds(filter?: 'all' | 'active' | 'passive'): string[]
   hasSkill(skillId: string): boolean
@@ -184,7 +184,7 @@ export interface BattleEntity {
 /**
  * 战斗参与者接口
  * 表示参与战斗的实体（角色或敌人）
- * 扩展 BattleEntity 接口，添加战斗相关属性
+ * 扩展 BattleEntity 接口，添加战斗相关属性和属性系统方法
  */
 export interface BattleParticipant extends BattleEntity {
   /** 队伍归属 */
@@ -221,6 +221,18 @@ export interface BattleParticipant extends BattleEntity {
     passive?: SkillConfig[]
     ultimate?: SkillConfig[]
   }
+  /** 获取属性值对象（包含详细信息） */
+  getAttributeValue(attribute: AttributeType | string): AttributeValue | undefined
+  /** 获取属性最终值（快捷方法） */
+  getAttribute(attribute: AttributeType | string): number
+  /** 标记属性为脏（需要重新计算） */
+  markDirty(attribute: AttributeType | string): void
+  /** 标记所有属性为脏 */
+  markAllDirty(): void
+  /** 重新计算所有属性 */
+  recalculateAll(): void
+  /** 设置修饰符提供者 */
+  setModifierProvider(provider: IModifierProvider): void
 }
 
 /**
@@ -433,17 +445,18 @@ export const BattleActionHelper = {
 /**
  * 战斗效果接口
  * 表示战斗中产生的单一效果
- * 包含效果的类型、数值、关联的Buff以及效果描述
- * 用于描述战斗动作产生的具体效果（如伤害、治疗、Buff等）
+ * 包含效果的类型、数值、关联的 Buff 以及效果描述
+ * 用于描述战斗动作产生的具体效果（如伤害、治疗、Buff 等）
  */
 export interface BattleEffect {
   type: EffectType
+  targetId?: string
   value?: number
   buffId?: string
   instanceId?: string
-  targetId?: string
   duration?: number
   description: string
+  isCritical?: boolean
 }
 
 /**

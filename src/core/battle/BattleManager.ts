@@ -4,7 +4,6 @@ import { battleLogManager } from '@/utils/logging'
 import { AutoBattleManager } from '@/core/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/core/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager'
-import type { UIBattleCharacter } from '@/types'
 import {
   PARTICIPANT_SIDE,
   BattleParticipant,
@@ -107,12 +106,12 @@ export class BattleManager {
 
   /**
    * 初始化队伍数据
-   * @param allyTeam 我方队伍
-   * @param enemyTeam 敌方队伍
+   * @param allyTeam 我方队伍（BattleParticipant 数组）
+   * @param enemyTeam 敌方队伍（BattleParticipant 数组）
    */
   initializeTeams(
-    allyTeam: UIBattleCharacter[],
-    enemyTeam: UIBattleCharacter[],
+    allyTeam: BattleParticipant[],
+    enemyTeam: BattleParticipant[],
   ) {
     try {
       // 验证队伍数据
@@ -120,17 +119,8 @@ export class BattleManager {
         throw new Error('队伍数据不能为空')
       }
 
-      // 使用工厂方法转换队伍
-      const allyParticipants = allyTeam.map((char, index) => {
-        return BattleParticipantImpl.fromUICharacter(char, true, index)
-      })
-
-      const enemyParticipants = enemyTeam.map((char, index) => {
-        return BattleParticipantImpl.fromUICharacter(char, false, index)
-      })
-
       // 验证参与者数据
-      if (allyParticipants.length === 0 && enemyParticipants.length === 0) {
+      if (allyTeam.length === 0 && enemyTeam.length === 0) {
         throw new Error('没有有效的参与者数据')
       }
 
@@ -139,8 +129,8 @@ export class BattleManager {
 
       // 创建战斗状态
       const battleState = this.battleSystem.initialize(
-        allyParticipants as BattleParticipant[],
-        enemyParticipants as BattleParticipant[],
+        allyTeam,
+        enemyTeam,
       )
       const battleId = battleState.battleId
       this.setBattleId(battleId)
@@ -153,36 +143,54 @@ export class BattleManager {
   }
 
   /**
-   * 获取我方队伍（响应式）
+   * 获取我方队伍（BattleParticipant 实例）
+   * @returns 我方参与者数组
    */
-  getAllyTeam(): UIBattleCharacter[] {
+  getAllyTeam(): BattleParticipant[] {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) {
       return []
     }
-    return Array.from(battleState.participants.values())
-      .filter((p) => p.type === PARTICIPANT_SIDE.ALLY)
-      .map((p) => this.participantToUICharacter(p))
+    return Array.from(battleState.participants.values()).filter(
+      (p) => p.type === PARTICIPANT_SIDE.ALLY,
+    )
   }
 
   /**
-   * 获取敌方队伍（响应式）
+   * 获取敌方队伍（BattleParticipant 实例）
+   * @returns 敌方参与者数组
    */
-  getEnemyTeam(): UIBattleCharacter[] {
+  getEnemyTeam(): BattleParticipant[] {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) {
       return []
     }
-    return Array.from(battleState.participants.values())
-      .filter((p) => p.type === PARTICIPANT_SIDE.ENEMY)
-      .map((p) => this.participantToUICharacter(p))
+    return Array.from(battleState.participants.values()).filter(
+      (p) => p.type === PARTICIPANT_SIDE.ENEMY,
+    )
+  }
+
+  /**
+   * 获取我方队伍（已废弃）
+   * @deprecated 使用 getAllyTeam() 代替
+   */
+  getAllyTeamUI(): BattleParticipant[] {
+    return this.getAllyTeam()
+  }
+
+  /**
+   * 获取敌方队伍（已废弃）
+   * @deprecated 使用 getEnemyTeam() 代替
+   */
+  getEnemyTeamUI(): BattleParticipant[] {
+    return this.getEnemyTeam()
   }
 
   /**
    * 获取启用的我方队伍
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
-  getEnabledAllyTeam(): UIBattleCharacter[] {
+  getEnabledAllyTeam(): BattleParticipant[] {
     const allyTeam = this.getAllyTeam()
     return allyTeam.filter((c) => c.enabled)
   }
@@ -191,22 +199,28 @@ export class BattleManager {
    * 获取启用的敌方队伍
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
-  getEnabledEnemyTeam(): UIBattleCharacter[] {
+  getEnabledEnemyTeam(): BattleParticipant[] {
     const enemyTeam = this.getEnemyTeam()
     return enemyTeam.filter((c) => c.enabled)
   }
 
   /**
-   * 获取所有参与者
+   * 获取所有参与者（BattleParticipant 实例）
    */
-  getAllParticipants(): UIBattleCharacter[] {
+  getAllParticipants(): BattleParticipant[] {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) {
       return []
     }
-    return Array.from(battleState.participants.values()).map((p) =>
-      this.participantToUICharacter(p),
-    )
+    return Array.from(battleState.participants.values())
+  }
+
+  /**
+   * 获取所有参与者（已废弃）
+   * @deprecated 使用 getAllParticipants() 代替
+   */
+  getAllParticipantsUI(): BattleParticipant[] {
+    return this.getAllParticipants()
   }
 
   /**
@@ -224,14 +238,22 @@ export class BattleManager {
   }
 
   /**
-   * 获取选中的角色
+   * 获取选中的角色（BattleParticipant 实例）
    */
-  getSelectedCharacter(): UIBattleCharacter | null {
+  getSelectedCharacter(): BattleParticipant | null {
     const selectedId = this.getSelectedCharacterId()
     if (!selectedId) return null
 
     const allParticipants = this.getAllParticipants()
     return allParticipants.find((p) => p.id === selectedId) || null
+  }
+
+  /**
+   * 获取选中的角色（已废弃）
+   * @deprecated 使用 getSelectedCharacter() 代替
+   */
+  getSelectedCharacterUI(): BattleParticipant | null {
+    return this.getSelectedCharacter()
   }
 
   /**
@@ -294,16 +316,13 @@ export class BattleManager {
 
   /**
    * 添加角色到队伍
+   * @param character - 角色数据（BattleParticipant）
+   * @param side - 队伍类型
    */
-  addCharacterToTeam(character: UIBattleCharacter, side: PARTICIPANT_SIDE) {
-    const participant = BattleParticipantImpl.fromUICharacter(
-      character,
-      side === PARTICIPANT_SIDE.ALLY,
-      0,
-    )
+  addCharacterToTeam(character: BattleParticipant, side: PARTICIPANT_SIDE) {
     const battleState = this.battleSystem.getBattleState()
     if (battleState) {
-      battleState.participants.set(participant.id, participant)
+      battleState.participants.set(character.id, character)
       this.syncBattleState()
       eventBus.emit('teamDataChanged', {
         allyTeam: this.getAllyTeam(),
@@ -343,10 +362,12 @@ export class BattleManager {
 
   /**
    * 更新角色状态
+   * @param characterId - 角色 ID
+   * @param updates - 更新数据
    */
   updateCharacterState(
     characterId: string,
-    updates: Partial<UIBattleCharacter>,
+    updates: Partial<BattleParticipant>,
   ) {
     this.battleStateManager.updateCharacterManually(characterId, updates)
   }
@@ -390,18 +411,21 @@ export class BattleManager {
   }
 
   /**
-   * 根据ID获取角色
+   * 根据 ID 获取角色
+   * @param characterId - 角色 ID
+   * @returns BattleParticipant 或 undefined
    */
-  getCharacterById(characterId: string): UIBattleCharacter | undefined {
+  getCharacterById(characterId: string): BattleParticipant | undefined {
     const allParticipants = this.getAllParticipants()
     return allParticipants.find((p) => p.id === characterId)
   }
 
   /**
    * 批量更新角色状态
+   * @param updates - 更新数组
    */
   updateMultipleCharacters(
-    updates: Array<{ id: string; data: Partial<UIBattleCharacter> }>,
+    updates: Array<{ id: string; data: Partial<BattleParticipant> }>,
   ) {
     updates.forEach(({ id, data }) => {
       this.updateCharacterState(id, data)
@@ -476,17 +500,8 @@ export class BattleManager {
   }
 
   /**
-   * 参与者转换为UI角色
-   */
-  private participantToUICharacter(
-    participant: BattleParticipant,
-  ): UIBattleCharacter {
-    return GameDataProcessor.participantToUIBattleCharacter(participant)
-  }
-
-  /**
-   * 设置战斗ID
-   * @param battleId 战斗ID
+   * 设置战斗 ID
+   * @param battleId 战斗 ID
    */
   setBattleId(battleId: string) {
     console.log('BattleManager setBattleId', battleId)
@@ -535,16 +550,10 @@ export class BattleManager {
       return null
     }
 
-    // 转换为战斗参与者
-    const allyParticipants = allyTeam.map((char, index) => {
-      return BattleParticipantImpl.fromUICharacter(char, true, index)
-    })
-    const enemyParticipants = enemyTeam.map((char, index) => {
-      return BattleParticipantImpl.fromUICharacter(char, false, index)
-    })
+    // 直接使用 BattleParticipant 数组
     const battleState = this.battleSystem.initialize(
-      allyParticipants,
-      enemyParticipants,
+      allyTeam,
+      enemyTeam,
     )
     this.battleStateManager.setBattleId(battleState.battleId)
     this.autoBattleManager.setBattleId(battleState.battleId)

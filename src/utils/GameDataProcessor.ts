@@ -7,76 +7,22 @@
  * 版本: 1.0.0
  */
 
-/**
- * 游戏数据处理工具类
- * 专门处理游戏相关的数据操作，提供游戏特定的API接口
- */
-
 import { DataProcessor } from '@/utils/DataProcessor'
-import { reactive } from 'vue'
 import enemiesData from '@configs/enemies/enemies.json'
 import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
 import buffsData from '@configs/buffs/buffs.json'
-import type { Enemy, SkillConfig, SceneData, CharacterStats } from '@/types'
-import type {
-  UIBattleCharacter,
-  AttributeValue,
-  AttributeOption,
-  AttributeValueType,
-} from '@/types/UI/UIBattleCharacter'
+import type { Enemy, SkillConfig, SceneData, CharacterStats, AttributeValueType } from '@/types'
 import type { ParticipantSide } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
-import { AttributeMetaMap, getAttributeMeta } from '@/types/attribute-meta'
 import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
+import { toArray } from '@/utils/Utils'
 
 /**
  * 游戏数据处理工具类
  * 提供纯静态方法和模块级缓存
  */
 export class GameDataProcessor {
-  /**
-   * 获取属性值
-   * 兼容 AttributeValue 对象和普通数字两种格式
-   * @param value - 属性值（可能是 AttributeValue 或 number）
-   * @returns number - 数值
-   */
-  static getAttributeValue(value: number | AttributeValue | undefined): number {
-    if (value === undefined || value === null) return 0
-    if (typeof value === 'number') return value
-    if (typeof value === 'object' && 'value' in value) return value.value
-    return 0
-  }
-
-  /**
-   * 获取属性值类型
-   * @param value - 属性值
-   * @returns string - '数值' | '百分比'
-   */
-  static getAttributeValueType(
-    value: number | AttributeValue | undefined,
-  ): string {
-    if (value === undefined || value === null) return '数值'
-    if (typeof value === 'number') return '数值'
-    if (typeof value === 'object' && 'valueType' in value)
-      return value.valueType || '数值'
-    return '数值'
-  }
-
-  /**
-   * 获取属性来源选项
-   * @param value - 属性值
-   * @returns AttributeOption[] - 属性来源数组
-   */
-  static getAttributeOptions(
-    value: number | AttributeValue | undefined,
-  ): AttributeOption[] {
-    if (value === undefined || value === null) return []
-    if (typeof value === 'number') return []
-    if (typeof value === 'object' && 'options' in value)
-      return value.options || []
-    return []
-  }
   /**
    * 获取所有敌人数据
    */
@@ -145,7 +91,7 @@ export class GameDataProcessor {
     const bonuses = GameDataProcessor.parsePassiveSkillBonuses(passiveSkills)
 
     const calcBonus = (
-      attrBonuses: { value: number; valueType: AttributeValueType }[],
+      attrBonuses: { value: number; valueType: string }[],
     ): number => {
       return attrBonuses.reduce((sum, b) => {
         return b.valueType === '百分比' ? sum + b.value : sum + b.value / 100
@@ -164,28 +110,18 @@ export class GameDataProcessor {
   }
 
   /**
-   * 将Enemy转换为BattleParticipant
-   * 复用enemyToBattleCharacter的属性计算逻辑，避免重复计算
+   * 将 Enemy 转换为 BattleParticipant
    * @param enemy - 敌人数据
    * @param type - 参与者类型
-   * @returns BattleParticipant - 包含完整战斗属性的参与者实例
+   * @returns BattleParticipantImpl - 包含完整战斗属性的参与者实例
    */
-  static enemyToParticipantInfo(
+  static enemyToParticipant(
     enemy: Enemy,
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
   ): BattleParticipantImpl {
-    const passiveSkillIds = GameDataProcessor.normalizeSkillIds(
-      enemy.skills?.passive || [],
-    )
-    const passiveSkills = GameDataProcessor.getSkillByIds(passiveSkillIds)
-
-    const smallSkills = GameDataProcessor.getSkillByIds(
-      GameDataProcessor.normalizeSkillIds(enemy.skills?.small || []),
-    )
-    const ultimateSkills = GameDataProcessor.getSkillByIds(
-      GameDataProcessor.normalizeSkillIds(enemy.skills?.ultimate || []),
-    )
-
+    const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive)
+    const smallSkills = GameDataProcessor.getSkillByIds(enemy.skills?.small)
+    const ultimateSkills = GameDataProcessor.getSkillByIds(enemy.skills?.ultimate)
     const bonuses =
       GameDataProcessor.calculatePassiveSkillBonuses(passiveSkills)
 
@@ -224,6 +160,17 @@ export class GameDataProcessor {
         ultimate: ultimateSkills,
       },
     })
+  }
+
+  /**
+   * 将 Enemy 转换为 BattleParticipant（已废弃，请使用 enemyToParticipant）
+   * @deprecated 请使用 enemyToParticipant 方法
+   */
+  static enemyToParticipantInfo(
+    enemy: Enemy,
+    type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
+  ): BattleParticipantImpl {
+    return GameDataProcessor.enemyToParticipant(enemy, type)
   }
 
   /**
@@ -336,7 +283,7 @@ export class GameDataProcessor {
       DataProcessor.setCachedData(enemyCacheKey, enemy)
     }
 
-    const skills: any = {}
+    const skills: Record<string, SkillConfig | undefined> = {}
 
     const smallIds = GameDataProcessor.normalizeSkillIds(enemy.skills?.small)
     const passiveIds = GameDataProcessor.normalizeSkillIds(
@@ -360,46 +307,6 @@ export class GameDataProcessor {
     return skills
   }
 
-  /**
-   * 转换敌人数据为战斗角色
-   */
-  static createBattleCharacter(
-    enemy: Enemy,
-    index: number,
-    isEnemyParty: boolean = false,
-  ): CharacterStats {
-    return {
-      originalId: enemy.id,
-      id: isEnemyParty ? `enemy_${index + 1}` : `char_${index + 1}`,
-      name: enemy.name,
-      level: enemy.level,
-      maxHp: enemy.stats.health,
-      currentHp: enemy.stats.health,
-      maxEnergy: 150,
-      currentEnergy: 0,
-      attack: Math.floor((enemy.stats.minAttack + enemy.stats.maxAttack) / 2),
-      defense: enemy.stats.defense,
-      speed: enemy.stats.speed,
-      enabled: index < 3,
-      critRate: 0.05,
-      critDamage: 1.25,
-      accuracy: 0.75,
-      evade: 0.05,
-      lifeSteal: 0,
-      regeneration: 0,
-      buffs:
-        index === 0
-          ? [
-              {
-                id: isEnemyParty ? 'debuff_1' : 'buff_1',
-                name: isEnemyParty ? '灼烧' : '力量祝福',
-                remainingTurns: isEnemyParty ? 2 : 5,
-                isPositive: !isEnemyParty,
-              },
-            ]
-          : [],
-    }
-  }
 
   /**
    * 根据buff ID查找buff配置
@@ -504,127 +411,12 @@ export class GameDataProcessor {
   }
 
   /**
-   * 创建属性对象
-   * @param baseValue - 基础值
-   * @param passiveBonuses - 被动技能加成
-   * @param attributeKey - 属性键名
-   * @returns AttributeValue - 包含最终值和来源详情的属性对象
-   */
-  static createAttributeValue(
-    baseValue: number,
-    passiveBonuses: Record<
-      string,
-      { value: number; source: string; valueType: AttributeValueType }[]
-    > = {},
-    attributeKey: string = 'attack',
-  ): AttributeValue {
-    // 获取属性元数据
-    const attributeMeta = getAttributeMeta(attributeKey)
-    const isPercentage = attributeMeta?.isPercentage || false
-    const valueType = isPercentage ? '百分比' : '数值'
-
-    const options: AttributeOption[] = [
-      {
-        from: '基础',
-        value: baseValue,
-        valueType: valueType,
-      },
-    ]
-
-    const bonuses = passiveBonuses[attributeKey] || []
-
-    const percentBonuses = bonuses.filter((b) => b.valueType === '百分比')
-    const numericBonuses = bonuses.filter((b) => b.valueType === '数值')
-
-    const totalPercentBonus = percentBonuses.reduce(
-      (sum, b) => sum + b.value,
-      0,
-    )
-    const totalNumericBonus = numericBonuses.reduce(
-      (sum, b) => sum + b.value,
-      0,
-    )
-
-    for (const bonus of bonuses) {
-      options.push({
-        from: '被动技能',
-        sourceName: bonus.source,
-        value: bonus.value,
-        valueType: bonus.valueType,
-      })
-    }
-
-    let finalValue: number
-    if (totalPercentBonus !== 0 || totalNumericBonus !== 0) {
-      const percentValue = Math.floor(baseValue * (totalPercentBonus / 100))
-      finalValue = baseValue + percentValue + totalNumericBonus
-    } else {
-      finalValue = baseValue
-    }
-
-    return {
-      value: finalValue,
-      valueType: valueType,
-      options,
-    }
-  }
-
-  /**
-   * 创建百分比属性对象
-   * @param basePercent - 基础百分比值
-   * @param passiveBonuses - 被动技能加成
-   * @param attributeKey - 属性键名
-   * @returns AttributeValue
-   */
-  static createPercentAttributeValue(
-    basePercent: number,
-    passiveBonuses: Record<
-      string,
-      { value: number; source: string; valueType: AttributeValueType }[]
-    > = {},
-    attributeKey: string = 'attack',
-  ): AttributeValue {
-    // 获取属性元数据
-    const attributeMeta = getAttributeMeta(attributeKey)
-    const isPercentage = attributeMeta?.isPercentage || true
-    const valueType = isPercentage ? '百分比' : '数值'
-
-    const options: AttributeOption[] = [
-      {
-        from: '基础',
-        value: basePercent,
-        valueType: valueType,
-      },
-    ]
-
-    const bonuses = passiveBonuses[attributeKey] || []
-
-    for (const bonus of bonuses) {
-      options.push({
-        from: '被动技能',
-        sourceName: bonus.source,
-        value: bonus.value,
-        valueType: bonus.valueType,
-      })
-    }
-
-    const totalBonus = bonuses.reduce((sum, b) => sum + b.value, 0)
-    const finalValue = basePercent + totalBonus
-
-    return {
-      value: finalValue,
-      valueType: valueType,
-      options,
-    }
-  }
-
-  /**
-   * 根据技能ID数组获取技能配置
-   * @param skillIds - 技能ID数组
+   * 根据技能 ID 数组获取技能配置
+   * @param skillIds - 技能 ID 数组
    * @returns SkillConfig[] - 技能配置数组
    */
   static getSkillByIds(skillIds: string[]): SkillConfig[] {
-    return skillIds
+    return toArray(skillIds)
       .map((id) => {
         const skillCacheKey = `skill_${id}`
         const cachedSkill =
@@ -647,254 +439,9 @@ export class GameDataProcessor {
   }
 
   /**
-   * 转换敌人数据为UI角色
-   * @param enemy - 敌人数据
-   * @param index - 队伍中的索引位置
-   * @param isEnemy - 是否为敌方队伍
-   * @returns UIBattleCharacter - UI层可用的角色对象
-   */
-  static enemyToBattleCharacter(
-    enemy: Enemy,
-    index: number,
-    isEnemy: boolean = false,
-  ): UIBattleCharacter {
-    const passiveSkillIds = GameDataProcessor.normalizeSkillIds(
-      enemy.skills?.passive || [],
-    )
-    const passiveSkills = GameDataProcessor.getSkillByIds(passiveSkillIds)
-    const passiveBonuses =
-      GameDataProcessor.parsePassiveSkillBonuses(passiveSkills)
-
-    const baseHealth = enemy.stats.health
-    const baseAttack = Math.floor(
-      (enemy.stats.minAttack + enemy.stats.maxAttack) / 2,
-    )
-    const baseDefense = enemy.stats.defense
-    const baseSpeed = enemy.stats.speed
-
-    return reactive({
-      originalId: enemy.id,
-      id: isEnemy
-        ? `${PARTICIPANT_SIDE.ENEMY}_${index + 1}`
-        : `${PARTICIPANT_SIDE.ALLY}_${index + 1}`,
-      team: isEnemy ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY,
-      name: enemy.name,
-      level: enemy.level,
-      maxHp: GameDataProcessor.createAttributeValue(
-        baseHealth,
-        passiveBonuses,
-        'health',
-      ),
-      currentHp: GameDataProcessor.createAttributeValue(
-        baseHealth,
-        passiveBonuses,
-        'health',
-      ),
-      currentEnergy: GameDataProcessor.createAttributeValue(
-        0,
-        passiveBonuses,
-        'currentEnergy',
-      ),
-      maxEnergy: GameDataProcessor.createAttributeValue(
-        150,
-        passiveBonuses,
-        'maxEnergy',
-      ),
-      minAttack: GameDataProcessor.createAttributeValue(
-        enemy.stats.minAttack,
-        passiveBonuses,
-        'minAttack',
-      ),
-      maxAttack: GameDataProcessor.createAttributeValue(
-        enemy.stats.maxAttack,
-        passiveBonuses,
-        'maxAttack',
-      ),
-      attack: GameDataProcessor.createAttributeValue(
-        baseAttack,
-        passiveBonuses,
-        'attack',
-      ),
-      defense: GameDataProcessor.createAttributeValue(
-        baseDefense,
-        passiveBonuses,
-        'defense',
-      ),
-      speed: GameDataProcessor.createAttributeValue(
-        baseSpeed,
-        passiveBonuses,
-        'speed',
-      ),
-      critRate: GameDataProcessor.createPercentAttributeValue(
-        10,
-        passiveBonuses,
-        'critRate',
-      ),
-      critDamage: GameDataProcessor.createPercentAttributeValue(
-        125,
-        passiveBonuses,
-        'critDamage',
-      ),
-      damageReduction: GameDataProcessor.createPercentAttributeValue(
-        0,
-        passiveBonuses,
-        'damageReduction',
-      ),
-      healthBonus: GameDataProcessor.createPercentAttributeValue(
-        0,
-        passiveBonuses,
-        'health',
-      ),
-      attackBonus: GameDataProcessor.createPercentAttributeValue(
-        0,
-        passiveBonuses,
-        'attack',
-      ),
-      defenseBonus: GameDataProcessor.createPercentAttributeValue(
-        0,
-        passiveBonuses,
-        'defense',
-      ),
-      speedBonus: GameDataProcessor.createPercentAttributeValue(
-        0,
-        passiveBonuses,
-        'speed',
-      ),
-      enabled: index < 3,
-      isFirst: index === 0,
-      buffs: [],
-      skills: {
-        small: GameDataProcessor.getSkillByIds(
-          GameDataProcessor.normalizeSkillIds(enemy.skills?.small || []),
-        ),
-        passive: passiveSkills,
-        ultimate: GameDataProcessor.getSkillByIds(
-          GameDataProcessor.normalizeSkillIds(enemy.skills?.ultimate || []),
-        ),
-      },
-    }) as UIBattleCharacter
-  }
-
-  /**
-   * 转换战斗参与者为UI角色
-   * @param participant - 战斗参与者
-   * @param index - 队伍中的索引位置
-   * @returns UIBattleCharacter - UI层可用的角色对象
-   */
-  static participantToUIBattleCharacter(
-    participant: BattleParticipantImpl,
-    index: number = 0,
-  ): UIBattleCharacter {
-    const buffSignature = Array.isArray(participant.buffs)
-      ? participant.buffs.slice().sort().join(',')
-      : ''
-
-    // 生成缓存键
-    const cacheKey = `ui_character_${participant.id}_${participant.currentHealth}_${participant.currentEnergy}_${participant.maxEnergy}_${participant.attack}_${participant.defense}_${participant.speed}_${participant.critRate}_${participant.critDamage}_${participant.damageReduction}_${participant.healthBonus}_${participant.attackBonus}_${participant.defenseBonus}_${participant.speedBonus}_${buffSignature}`
-
-    // 尝试从缓存获取
-    const cachedCharacter =
-      DataProcessor.getCachedData<UIBattleCharacter>(cacheKey)
-    if (cachedCharacter) {
-      // 保留原有的UI特定属性
-      cachedCharacter.enabled = index < 3
-      cachedCharacter.isFirst = index === 0
-      return cachedCharacter
-    }
-
-    // 创建属性值对象
-    const createAttributeValue = (
-      value: number,
-      type: string,
-    ): AttributeValue => {
-      // 映射属性键名到 attribute-meta.ts 中定义的键名
-      const attributeKeyMap: Record<string, string> = {
-        health: 'currentHp',
-        attack: 'attack',
-        defense: 'defense',
-        speed: 'speed',
-        critRate: 'critRate',
-        critDamage: 'critDamage',
-        damageReduction: 'damageReduction',
-        healthBonus: 'healthBonus',
-        attackBonus: 'attackBonus',
-        defenseBonus: 'defenseBonus',
-        speedBonus: 'speedBonus',
-      }
-
-      const mappedKey = attributeKeyMap[type] || type
-
-      // 获取属性元数据
-      const attributeMeta = getAttributeMeta(mappedKey)
-      const isPercentage =
-        attributeMeta?.isPercentage ||
-        (type !== 'health' &&
-          type !== 'attack' &&
-          type !== 'defense' &&
-          type !== 'speed')
-      const valueType = isPercentage ? '百分比' : '数值'
-
-      return {
-        value,
-        valueType: valueType,
-        options: [
-          {
-            from: '基础',
-            sourceName: '基础属性',
-            value,
-            valueType: valueType,
-          },
-        ],
-      }
-    }
-
-    const character = reactive({
-      originalId: participant.id,
-      id: participant.id,
-      team: participant.team,
-      name: participant.name,
-      level: participant.level,
-      maxHp: createAttributeValue(participant.maxHealth, 'health'),
-      currentHp: createAttributeValue(participant.currentHealth, 'health'),
-      currentEnergy: createAttributeValue(
-        participant.currentEnergy,
-        'currentEnergy',
-      ),
-      maxEnergy: createAttributeValue(participant.maxEnergy, 'maxEnergy'),
-      minAttack: createAttributeValue(participant.minAttack, 'minAttack'),
-      maxAttack: createAttributeValue(participant.maxAttack, 'maxAttack'),
-      attack: createAttributeValue(participant.attack, 'attack'),
-      defense: createAttributeValue(participant.defense, 'defense'),
-      speed: createAttributeValue(participant.speed, 'speed'),
-      critRate: createAttributeValue(participant.critRate, 'critRate'),
-      critDamage: createAttributeValue(participant.critDamage, 'critDamage'),
-      damageReduction: createAttributeValue(
-        participant.damageReduction,
-        'damageReduction',
-      ),
-      healthBonus: createAttributeValue(participant.healthBonus, 'healthBonus'),
-      attackBonus: createAttributeValue(participant.attackBonus, 'attackBonus'),
-      defenseBonus: createAttributeValue(
-        participant.defenseBonus,
-        'defenseBonus',
-      ),
-      speedBonus: createAttributeValue(participant.speedBonus, 'speedBonus'),
-      enabled: index < 3,
-      isFirst: index === 0,
-      buffs: [...(participant.buffs || [])],
-      skills: participant.skills,
-    }) as UIBattleCharacter
-
-    // 缓存结果
-    DataProcessor.setCachedData(cacheKey, character)
-
-    return character
-  }
-
-  /**
-   * 将技能ID标准化为数组格式
-   * @param skillIds - 技能ID（字符串、字符串数组或对象）
-   * @returns 标准化后的技能ID数组
+   * 将技能 ID 标准化为数组格式
+   * @param skillIds - 技能 ID（字符串、字符串数组或对象）
+   * @returns 标准化后的技能 ID 数组
    */
   static normalizeSkillIds(
     skillIds: string | string[] | object | undefined,
@@ -913,23 +460,6 @@ export class GameDataProcessor {
       skillIds,
     )
     return []
-  }
-
-  /**
-   * 批量创建战斗角色
-   */
-  static createBattleCharacters(
-    enemies: Enemy[],
-    startIndex: number = 0,
-    isEnemyParty: boolean = false,
-  ): CharacterStats[] {
-    return enemies.map((enemy, index) =>
-      GameDataProcessor.createBattleCharacter(
-        enemy,
-        startIndex + index,
-        isEnemyParty,
-      ),
-    )
   }
 
   /**
@@ -1002,23 +532,6 @@ export class GameDataProcessor {
     const base = stat === 'attack' ? character.attack : character.defense
     const bonus = GameDataProcessor.calculateStatBonus(character, stat)
     return Math.floor(base * (1 + bonus / 100))
-  }
-
-  /**
-   * 获取角色生命值百分比
-   */
-  static getHpPercent(character: CharacterStats): number {
-    return Math.max(0, (character.currentHp / character.maxHp) * 100)
-  }
-
-  /**
-   * 获取角色生命值颜色类别
-   */
-  static getHpColorClass(character: CharacterStats): string {
-    const percent = GameDataProcessor.getHpPercent(character)
-    if (percent <= 25) return 'low'
-    if (percent <= 50) return 'medium'
-    return 'high'
   }
 
   /**
@@ -1155,54 +668,6 @@ export class GameDataProcessor {
       .filter((group) => group.enemies.length > 0)
 
     return { grouped, all: allEnemies }
-  }
-
-  /**
-   * 获取所有可用的状态效果
-   */
-  static getInjectableStatuses(): any[] {
-    return [
-      {
-        id: 'burn',
-        name: '灼烧',
-        duration: 3,
-        effect: '伤害:15/回合',
-        active: false,
-        isPositive: false,
-      },
-      {
-        id: 'power',
-        name: '力量祝福',
-        duration: 5,
-        effect: 'ATK+20%',
-        active: true,
-        isPositive: true,
-      },
-      {
-        id: 'weak',
-        name: '虚弱',
-        duration: 2,
-        effect: 'DEF-30%',
-        active: false,
-        isPositive: false,
-      },
-      {
-        id: 'poison',
-        name: '中毒',
-        duration: 4,
-        effect: '伤害:20/回合',
-        active: false,
-        isPositive: false,
-      },
-      {
-        id: 'shield',
-        name: '护盾',
-        duration: 3,
-        effect: '吸收100伤害',
-        active: false,
-        isPositive: true,
-      },
-    ]
   }
 
   /**

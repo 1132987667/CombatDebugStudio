@@ -75,9 +75,6 @@
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
 
-    <!-- 新手引导 -->
-    <!-- <NewbieGuide /> -->
-
     <!-- 通知组件 -->
     <Notification ref="notification" />
   </div>
@@ -105,7 +102,6 @@ import { PARTICIPANT_SIDE } from "@/types/battle";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 import type { BattleManager } from '@/core/battle/BattleManager';
 import type { LogEntry } from '@/types/battle-log';
-import type { UIBattleCharacter } from '@/types';
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -259,9 +255,11 @@ function initBattle() {
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
   const enemyIds = ["enemy_064", "enemy_055"];
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
+  console.log('allyList', allyList)
+  console.log('enemyList', enemyList)
 
-  const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToBattleCharacter(ally, index));
-  const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToBattleCharacter(enemy, index, true));
+  const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, PARTICIPANT_SIDE.ALLY));
+  const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY));
 
   // 使用BattleManager初始化队伍数据
   battleManager.initializeTeams(allyTeamData, enemyTeamData);

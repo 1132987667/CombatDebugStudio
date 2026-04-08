@@ -5,7 +5,7 @@
         <div class="turn-info">
           <span class="turn-label">当前回合:</span>
           <span class="turn-num">{{ currentTurn }}/{{ maxTurns }}</span>
-          <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} (SPD:{{ getMemberSpeed(currentActor)
+          <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} ( 速度:{{ getMemberSpeed(currentActor)
           }})</span>
         </div>
       </div>
@@ -14,53 +14,19 @@
         <div class="field-party our-party">
           <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
-            <div v-for="member in filterAllyTeam" :key="member.id" class="member-card"
-              :ref="(el: any) => setMemberCardRef(el, member.id)"
-              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id }"
-              @click="selectCharacter(member.id)">
-              <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)"
-                :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
-              <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)"
-                :skill-name="getCharacterSkillName(member.id)" />
-              <div class="member-info">
-                <div class="member-name">
-                  Lv.{{ member.level }} {{ member.name }}
-                  <div class="member-action" v-if="isCurrentActor(member.id)">
-                    <span class="acting-badge">←操作中</span>
-                  </div>
-                </div>
-                <div class="member-hp">
-                  <span class="hp-text">{{ getMemberHp(member) }}</span>
-                  <div class="hp-bar">
-                    <div class="hp-fill" :class="getHpColorClass(member)"
-                      :style="{ width: getHpPercent(member) + '%' }"></div>
-                  </div>
-                </div>
-                <div class="member-energy">
-                  <span class="energy-text">{{ toNumber(member.currentEnergy) }}/{{ toNumber(member.maxEnergy) }}</span>
-                  <div class="energy-bar">
-                    <div class="energy-ticks">
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                    </div>
-                    <div class="energy-fill" :class="getEnergyColorClass(member)"
-                      :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }">
-                    </div>
-                  </div>
-                </div>
-                <!-- 角色状态标签列表 -->
-                <div class="member-status">
-                  <span v-for="status in getMemberStatuses(member)" :key="status.id" class="status-tag"
-                    :class="status.isPositive ? 'positive' : 'negative'" @mouseenter="showStatusTooltip($event, status)"
-                    @mouseleave="hideStatusTooltip">
-                    {{ status.name }}:{{ status.duration }}
-                  </span>
-                  <span v-if="getMemberStatuses(member).length === 0" class="no-status">无</span>
-                </div>
-              </div>
-            </div>
+            <ParticipantCard
+              v-for="member in filterAllyTeam"
+              :key="member.id"
+              :ref="el => participantCardRefs[member.id] = el"
+              :participant="member"
+              :is-active="isCurrentActor(member.id)"
+              :is-selected="selectedCharacterId === member.id"
+              :is-enemy="false"
+              :show-debug="false"
+              @click="selectCharacter(member.id)"
+              @status-tooltip-show="showStatusTooltip"
+              @status-tooltip-hide="hideStatusTooltip"
+            />
           </div>
         </div>
 
@@ -71,53 +37,19 @@
         <div class="field-party enemy-party">
           <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
-            <div v-for="member in filterEnemyTeam" :key="member.id" class="member-card"
-              :ref="(el: any) => setMemberCardRef(el, member.id)"
-              :class="{ active: isCurrentActor(member.id), dead: isMemberDead(member), selected: selectedCharacterId === member.id }"
-              @click="selectCharacter(member.id)">
-              <DamageNumber :position="{ x: 50, y: 20 }" :damage="getCharacterDamage(member.id)"
-                :type="getCharacterDamageType(member.id)" :is-critical="getCharacterIsCritical(member.id)" />
-              <SkillEffect :position="{ x: 50, y: 50 }" :effect-type="getCharacterSkillEffect(member.id)"
-                :skill-name="getCharacterSkillName(member.id)" />
-              <div class="member-info">
-                <div class="member-name">
-                  Lv.{{ member.level }} {{ member.name }}
-                  <div class="member-action" v-if="isCurrentActor(member.id)">
-                    <span class="acting-badge enemy-acting">←操作中</span>
-                  </div>
-                </div>
-                <div class="member-hp">
-                  <span class="hp-text">{{ getMemberHp(member) }}</span>
-                  <div class="hp-bar">
-                    <div class="hp-fill enemy-fill" :class="getHpColorClass(member)"
-                      :style="{ width: getHpPercent(member) + '%' }"></div>
-                  </div>
-                </div>
-                <div class="member-energy">
-                  <span class="energy-text">{{ toNumber(member.currentEnergy) }}/{{ toNumber(member.maxEnergy)
-                  }}</span>
-                  <div class="energy-bar">
-                    <div class="energy-ticks">
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                      <div class="tick"></div>
-                    </div>
-                    <div class="energy-fill enemy-fill" :class="getEnergyColorClass(member)"
-                      :style="{ width: (toNumber(member.currentEnergy) / toNumber(member.maxEnergy)) * 100 + '%' }">
-                    </div>
-                  </div>
-                </div>
-                <div class="member-status">
-                  <span v-for="status in getMemberStatuses(member)" :key="status.id" class="status-tag"
-                    :class="status.isPositive ? 'positive' : 'negative'" @mouseenter="showStatusTooltip($event, status)"
-                    @mouseleave="hideStatusTooltip">
-                    {{ status.name }}:{{ status.duration }}
-                  </span>
-                  <span v-if="getMemberStatuses(member).length === 0" class="no-status">无</span>
-                </div>
-              </div>
-            </div>
+            <ParticipantCard
+              v-for="member in filterEnemyTeam"
+              :key="member.id"
+              :ref="el => participantCardRefs[member.id] = el"
+              :participant="member"
+              :is-active="isCurrentActor(member.id)"
+              :is-selected="selectedCharacterId === member.id"
+              :is-enemy="true"
+              :show-debug="false"
+              @click="selectCharacter(member.id)"
+              @status-tooltip-show="showStatusTooltip"
+              @status-tooltip-hide="hideStatusTooltip"
+            />
             <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>
@@ -168,9 +100,10 @@ import { useBattleAnimation } from '@/composables/useBattleAnimation';
 import DamageNumber from "@/components/DamageNumber.vue";
 import SkillEffect from "@/components/SkillEffect.vue";
 import BattleLog from "@/views/BattleLog.vue";
-import type { UIBattleCharacter } from '@/types/UI/UIBattleCharacter';
+import ParticipantCard from "@/components/ParticipantCard.vue";
 import type { AttributeValue } from '@/types';
 import type { BattleManager } from '@/core/battle/BattleManager';
+import type { BattleParticipant, StatusEffect } from '@/types/battle';
 
 const battleManager = container.resolve<BattleManager>('BattleManager');
 
@@ -186,6 +119,15 @@ const emit = defineEmits<{
   "select-character": [characterId: string];
 }>();
 
+// 状态工具提示
+const statusTooltip = ref({
+  visible: false,
+  x: 0,
+  y: 0,
+  opacity: 0,
+  status: null as StatusEffect | null
+});
+
 const {
   registerElement,
   unregisterElement,
@@ -197,17 +139,8 @@ const {
   stopAllAnimations,
 } = useBattleAnimation();
 
-const memberCardRefs = new Map<string, HTMLElement>();
-
-function setMemberCardRef(el: HTMLElement | null, memberId: string) {
-  if (el) {
-    memberCardRefs.set(memberId, el);
-    registerElement(memberId, ref(el));
-  } else {
-    memberCardRefs.delete(memberId);
-    unregisterElement(memberId);
-  }
-}
+// ParticipantCard 组件引用映射
+const participantCardRefs = ref<Record<string, InstanceType<typeof ParticipantCard>>>({})
 
 watch(() => props.battleSpeed, (newSpeed) => {
   if (newSpeed) {
@@ -222,17 +155,7 @@ const selectedCharacterId = computed(() => battleManager.getSelectedCharacterId(
 const currentTurn = computed(() => battleManager.getCurrentTurn());
 const maxTurns = computed(() => battleManager.getMaxTurns());
 
-// 角色效果状态
-const characterEffects = ref<{
-  damage: Record<string, { value: number; type: 'damage' | 'heal' | 'critical' | 'miss'; isCritical: boolean }>;
-  skill: Record<string, { type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate'; name?: string }>;
-  animation: Record<string, { isHit: boolean; isCasting: boolean; isBuffed: boolean }>;
-}>({
-  damage: {},
-  skill: {},
-  animation: {}
-});
-
+// 辅助函数：转换为数字（兼容 AttributeValue 和 number）
 function toNumber(value: number | AttributeValue | undefined): number {
   if (typeof value === 'number') return value;
   if (value && typeof value === 'object' && 'value' in value) {
@@ -241,63 +164,26 @@ function toNumber(value: number | AttributeValue | undefined): number {
   return 0;
 }
 
-function getMemberSpeed(member: UIBattleCharacter | null): number {
+/**
+ * 获取参与者速度
+ * 直接使用 BattleParticipant 的 getAttributeValue 方法
+ */
+function getMemberSpeed(member: BattleParticipant | null): number {
   if (!member) return 0;
-  return toNumber(member.speed);
-}
-
-function getHpPercent(member: UIBattleCharacter): number {
-  const maxHp = toNumber(member.maxHp);
-  const currentHp = toNumber(member.currentHp);
-  if (maxHp <= 0) return 0;
-  return Math.max(0, Math.min(100, (currentHp / maxHp) * 100));
-}
-
-function getHpColorClass(member: UIBattleCharacter): string {
-  const hpPercent = getHpPercent(member);
-  if (hpPercent <= 25) return 'high';
-  if (hpPercent <= 50) return 'medium';
-  return 'low';
-}
-
-function getEnergyPercent(member: UIBattleCharacter): number {
-  const maxEnergy = toNumber(member.maxEnergy);
-  const currentEnergy = toNumber(member.currentEnergy);
-  if (maxEnergy <= 0) return 0;
-  return Math.max(0, Math.min(100, (currentEnergy / maxEnergy) * 100));
-}
-
-function getEnergyColorClass(member: UIBattleCharacter): string {
-  const energyPercent = getEnergyPercent(member);
-  if (energyPercent >= 80) return 'full';
-  if (energyPercent >= 50) return 'medium';
-  return 'low';
-}
-
-function getMemberHp(member: UIBattleCharacter): string {
-  const currentHp = Math.max(0, Math.floor(toNumber(member.currentHp)));
-  const maxHp = Math.max(0, Math.floor(toNumber(member.maxHp)));
-  return `${currentHp}/${maxHp}`;
-}
-
-function getNumericValue(value: number | AttributeValue | undefined): number {
-  return toNumber(value);
+  const spdValue = member.getAttributeValue('SPD')
+  return toNumber(spdValue?.value)
 }
 
 function isCurrentActor(memberId: string): boolean {
   return currentActor.value?.id === memberId || props.currentActorId === memberId;
 }
 
-function isMemberDead(member: UIBattleCharacter): boolean {
-  return getNumericValue(member.currentHp) <= 0
-}
-
 // 根据回合顺序排序角色列表
 const filterAllyTeam = computed(() => {
-  const enabledAllies = allyTeam.value.filter((c) => c.enabled);
+  const aliveAllies = allyTeam.value.filter((c) => c.isAlive());
   if (props.turnOrder) {
     // 如果有回合顺序，按照回合顺序排序
-    return enabledAllies.sort((a, b) => {
+    return aliveAllies.sort((a, b) => {
       const indexA = props.turnOrder!.indexOf(a.id);
       const indexB = props.turnOrder!.indexOf(b.id);
       // 不在回合顺序中的角色放在最后
@@ -307,15 +193,15 @@ const filterAllyTeam = computed(() => {
     });
   } else {
     // 否则按速度排序
-    return enabledAllies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
+    return aliveAllies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
   }
 });
 
 const filterEnemyTeam = computed(() => {
-  const enabledEnemies = enemyTeam.value.filter((c) => c.enabled);
+  const aliveEnemies = enemyTeam.value.filter((c) => c.isAlive());
   if (props.turnOrder) {
     // 如果有回合顺序，按照回合顺序排序
-    return enabledEnemies.sort((a, b) => {
+    return aliveEnemies.sort((a, b) => {
       const indexA = props.turnOrder!.indexOf(a.id);
       const indexB = props.turnOrder!.indexOf(b.id);
       // 不在回合顺序中的角色放在最后
@@ -325,7 +211,7 @@ const filterEnemyTeam = computed(() => {
     });
   } else {
     // 否则按速度排序
-    return enabledEnemies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
+    return aliveEnemies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
   }
 });
 
@@ -341,20 +227,12 @@ const selectCharacter = (charId: string) => {
 };
 
 // 状态工具提示相关逻辑
-const statusTooltip = ref({
-  visible: false,
-  x: 0,
-  y: 0,
-  opacity: 0,
-  status: null as any
-});
-
 let tooltipTimeout: symbol | null = null;
 // 跟踪所有定时器，用于组件卸载时清理
 const timeouts = ref<symbol[]>([]);
 
 // 显示状态工具提示
-const showStatusTooltip = (event: MouseEvent, status: any) => {
+const showStatusTooltip = (event: MouseEvent, status: StatusEffect) => {
   if (tooltipTimeout) {
     raf.clear(tooltipTimeout);
   }
@@ -389,7 +267,7 @@ const hideStatusTooltip = () => {
 };
 
 // 获取状态描述
-const getStatusDescription = (status: any) => {
+const getStatusDescription = (status: StatusEffect) => {
   if (!status) return '';
 
   const descriptions: { [key: string]: string } = {
@@ -414,29 +292,29 @@ const getStatusDescription = (status: any) => {
 };
 
 // 获取状态效果数值
-const getStatusEffectValue = (status: any) => {
+const getStatusEffectValue = (status: StatusEffect) => {
   if (!status) return '';
 
   const effectValues: { [key: string]: string } = {
-    '攻击提升': '攻击力+20%',
-    '防御提升': '防御力+20%',
-    '速度提升': '速度+15%',
-    '暴击提升': '暴击率+10%',
-    '攻击降低': '攻击力-20%',
-    '防御降低': '防御力-20%',
-    '速度降低': '速度-15%',
-    '中毒': '每回合损失5%最大生命值',
-    '流血': '每回合损失3%最大生命值',
-    '灼烧': '每回合损失4%最大生命值',
-    '护盾': '吸收相当于最大生命值20%的伤害',
-    '治疗': '每回合恢复5%最大生命值'
+    '攻击提升': '攻击力 +20%',
+    '防御提升': '防御力 +20%',
+    '速度提升': '速度 +15%',
+    '暴击提升': '暴击率 +10%',
+    '攻击降低': '攻击力 -20%',
+    '防御降低': '防御力 -20%',
+    '速度降低': '速度 -15%',
+    '中毒': '每回合损失 5% 最大生命值',
+    '流血': '每回合损失 3% 最大生命值',
+    '灼烧': '每回合损失 4% 最大生命值',
+    '护盾': '吸收相当于最大生命值 20% 的伤害',
+    '治疗': '每回合恢复 5% 最大生命值'
   };
 
   return effectValues[status.name] || '';
 };
 
 // 获取状态增益效果
-const getStatusBuffEffect = (status: any) => {
+const getStatusBuffEffect = (status: StatusEffect) => {
   if (!status) return '';
 
   const buffEffects: { [key: string]: string } = {
@@ -451,42 +329,21 @@ const getStatusBuffEffect = (status: any) => {
   return buffEffects[status.name] || '';
 };
 
-const getMemberStatuses = (char: any) => {
-  return char.buffs || [];
-};
-
-// 获取角色伤害信息
-function getCharacterDamage(characterId: string): number {
-  return props.damageEffects?.[characterId]?.value || characterEffects.value.damage[characterId]?.value || 0;
-}
-
-// 获取角色伤害类型
-function getCharacterDamageType(characterId: string): 'damage' | 'heal' | 'critical' | 'miss' {
-  return props.damageEffects?.[characterId]?.type || characterEffects.value.damage[characterId]?.type || 'damage';
-}
-
-// 获取角色是否暴击
-function getCharacterIsCritical(characterId: string): boolean {
-  return props.damageEffects?.[characterId]?.isCritical || characterEffects.value.damage[characterId]?.isCritical || false;
-}
-
-// 获取角色技能效果类型
-function getCharacterSkillEffect(characterId: string): 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate' | null {
-  return props.skillEffects?.[characterId]?.type || characterEffects.value.skill[characterId]?.type || null;
-}
-
-// 获取角色技能名称
-function getCharacterSkillName(characterId: string): string | undefined {
-  return props.skillEffects?.[characterId]?.name || characterEffects.value.skill[characterId]?.name;
-}
-
 function getCharacterSide(characterId: string): 'left' | 'right' {
   const isAlly = allyTeam.value.some((c) => c.id === characterId)
   return isAlly ? 'left' : 'right'
 }
 
+/**
+ * 显示伤害数字
+ * 通过 ParticipantCard 组件的 addDamageNumber 方法调用
+ */
 function showDamage(characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) {
-  characterEffects.value.damage[characterId] = { value, type, isCritical }
+  // 调用 ParticipantCard 组件的 addDamageNumber 方法
+  const cardRef = participantCardRefs.value[characterId]
+  if (cardRef && typeof cardRef.addDamageNumber === 'function') {
+    cardRef.addDamageNumber(value, type, isCritical)
+  }
 
   playHitAnimation(characterId, {
     damage: value,
@@ -495,8 +352,15 @@ function showDamage(characterId: string, value: number, type: 'damage' | 'heal' 
   })
 }
 
+/**
+ * 显示闪避
+ */
 function showMiss(characterId: string) {
-  characterEffects.value.damage[characterId] = { value: 0, type: 'miss', isCritical: false }
+  // 调用 ParticipantCard 组件的 addDamageNumber 方法
+  const cardRef = participantCardRefs.value[characterId]
+  if (cardRef && typeof cardRef.addDamageNumber === 'function') {
+    cardRef.addDamageNumber(0, 'miss', false)
+  }
 
   playHitAnimation(characterId, {
     damageType: 'miss',
@@ -529,10 +393,10 @@ function triggerBuffEffect(characterId: string) {
   playBuffAnimation(characterId, true)
 }
 
+/**
+ * 清理动画效果
+ */
 function cleanupAnimations() {
-  characterEffects.value.damage = {}
-  characterEffects.value.skill = {}
-  characterEffects.value.animation = {}
   hideStatusTooltip()
   stopAllAnimations()
 }
@@ -587,7 +451,7 @@ onUnmounted(() => {
   })
 
   cleanupAnimations()
-  memberCardRefs.clear()
+  participantCardRefs.value = {}
 })
 </script>
 

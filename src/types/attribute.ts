@@ -4,7 +4,7 @@
  * 作者: CombatDebugStudio
  * 功能: 属性系统类型定义
  * 描述: 定义属性值对象、修饰符详情和属性名称常量
- * 版本: 2.0.0 - 添加 IModifierProvider 接口
+ * 版本: 
  */
 
 import type { Modifier, AttributeType } from '@/types/modifier'
@@ -17,8 +17,19 @@ export type ModifierSourceType =
   | 'terrain'
   | 'formation'
   | 'base'
+  | 'talent'
 
-/** 修饰符计算类型 */
+export const ModifierSourceTypeNames = {
+  buff: 'buff',
+  equipment: '装备',
+  skill: '技能',
+  terrain: '地形',
+  formation: '阵型',
+  base: '基础',
+  talent: '天赋',
+}  
+
+/** 修饰符计算类型，依次为: 加法/乘法/百分比加成 */
 export type ModifierCalcType = 'add' | 'multiply' | 'percent'
 
 /**
@@ -38,6 +49,22 @@ export interface ModifierDetail {
 }
 
 /**
+ * 属性计算拆解（仅调试模式填充）
+ */
+export interface CalculationBreakdown {
+  /** 基础值 */
+  base: number
+  /** 加法修正总和 */
+  additive: number
+  /** 百分比乘区系数（1 + 百分比总和） */
+  percentMultiplier: number
+  /** 独立乘区系数 */
+  independentMultiplier: number
+  /** 最终修正系数 */
+  finalMultiplier: number
+}
+
+/**
  * 属性值对象（缓存最终值和来源）
  */
 export interface AttributeValue {
@@ -45,12 +72,14 @@ export interface AttributeValue {
   value: number
   /** 基础值（未加任何修饰符） */
   base: number
-  /** 修饰符列表（用于调试和UI） */
+  /** 修饰符列表（用于调试和 UI） */
   modifiers: ModifierDetail[]
-  /** 是否为百分比属性（用于UI格式化） */
+  /** 是否为百分比属性（用于 UI 格式化） */
   isPercentage: boolean
   /** 是否需要重新计算（脏标记） */
   dirty: boolean
+  /** 计算拆解（可选，仅 Debug 开启时记录） */
+  breakdown?: CalculationBreakdown
 }
 
 /**

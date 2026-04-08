@@ -8,10 +8,9 @@
  */
 
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
-import type { BattleParticipant } from '@/types/battle'
+import type { BattleParticipant, BattleEffect } from '@/types/battle'
 import type {
   CombatRecord,
-  EffectRecord,
   CalculationStep,
 } from '@/types/combat-record'
 import { battleLogManager, LogLevel } from '@/utils/logging'

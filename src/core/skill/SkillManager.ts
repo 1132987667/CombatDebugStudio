@@ -65,7 +65,6 @@ export interface SkillCalculator {
  * 推荐通过容器注入使用
  */
 export class SkillManager {
-  private battleLogManager = battleLogManager
   private skillConfigs = new Map<string, SkillConfig>()
   private buffSystem: BuffSystem
   private damageCalculator: DamageCalculator
@@ -93,9 +92,8 @@ export class SkillManager {
     if (!validationResult.valid) {
       // 记录验证错误
       validationResult.errors.forEach((error) => {
-        battleLogManager.addDebugLog(
+        console.error(
           `技能配置验证失败: ${error}`,
-          LogLevel.ERROR,
         )
       })
 
@@ -163,10 +161,11 @@ export class SkillManager {
 
   /**
    * 执行技能动作
-   * @param skillId 技能ID
+   * @param skillId 技能 ID
    * @param source 施放者
-   * @param target 目标
+   * @param target 目标（由 selector 选择的初始目标）
    * @param record 战斗记录对象（可选）
+   * @param allParticipants 所有参与者列表（用于步骤目标选择，可选）
    * @returns 战斗动作
    */
   public executeSkill(
@@ -174,6 +173,7 @@ export class SkillManager {
     source: BattleParticipant,
     target: BattleParticipant,
     record?: CombatRecord,
+    allParticipants?: BattleParticipant[],
   ): BattleAction {
     const skillConfig = this.getSkillConfig(skillId)
     if (!skillConfig) {
@@ -206,8 +206,16 @@ export class SkillManager {
       )
 
       for (const skillStep of sortedSteps) {
+        // 根据 step.target 重新选择目标（优先级：step.target > skill.selector）
+        const stepTarget = this.selectStepTarget(
+          skillStep.target,
+          source,
+          target,
+          allParticipants,
+        )
+
         // 每段伤害前检查目标是否存活
-        if (!target.isAlive()) {
+        if (!stepTarget.isAlive()) {
           break
         }
 
@@ -215,7 +223,7 @@ export class SkillManager {
           skillStep as ExtendedSkillStep,
           action,
           source,
-          target,
+          stepTarget,
           record,
         )
 
@@ -373,6 +381,64 @@ export class SkillManager {
    */
   private normalizeSkillStepType(type: string): string {
     return type.toUpperCase()
+  }
+
+  /**
+   * 根据步骤的 target 字段重新选择目标
+   * 优先级规则：step.target > skill.selector
+   * @param stepTarget 步骤目标类型
+   * @param source 施放者
+   * @param defaultTarget 默认目标（由 selector 选择的目标）
+   * @param allParticipants 所有参与者列表
+   * @returns 选中的目标
+   */
+  private selectStepTarget(
+    stepTarget: string | undefined,
+    source: BattleParticipant,
+    defaultTarget: BattleParticipant,
+    allParticipants?: BattleParticipant[],
+  ): BattleParticipant {
+    // 如果没有指定 step.target 或为 'enemy'，使用默认目标
+    if (!stepTarget || stepTarget === 'enemy') {
+      return defaultTarget
+    }
+
+    // 根据 target 类型选择目标
+    switch (stepTarget) {
+      case 'self':
+        return source
+
+      case 'lowest_ally':
+        if (!allParticipants || allParticipants.length === 0) {
+          return source
+        }
+        // 选择生命值百分比最低的友方
+        const allies = allParticipants.filter(
+          (p) => p.isAlive() && p.team === source.team && p.id !== source.id,
+        )
+        if (allies.length === 0) {
+          return source
+        }
+        return allies.reduce((min, p) => {
+          const hpRatio = p.currentHealth / p.maxHealth
+          const minHpRatio = min.currentHealth / min.maxHealth
+          return hpRatio < minHpRatio ? p : min
+        })
+
+      case 'allies':
+      case 'all_allies':
+        // 对于群体目标，暂时返回施法者（需要在步骤执行中特殊处理）
+        // TODO: 未来可以扩展为返回多个目标
+        return source
+
+      case 'all':
+        // 所有单位，暂时返回默认目标
+        return defaultTarget
+
+      default:
+        // 未知类型，返回默认目标
+        return defaultTarget
+    }
   }
 
   /**

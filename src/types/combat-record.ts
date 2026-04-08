@@ -1,31 +1,19 @@
 /**
- * 文件: combat-record.ts
- * 创建日期: 2026-03-08
- * 作者: CombatDebugStudio
- * 功能: 战斗记录核心类型定义
- * 描述: 定义统一的战斗记录数据结构，用于贯穿整个动作生命周期的记录
- * 版本: 1.0.0
+ * 文件：combat-record.ts
+ * 创建日期：2026-03-08
+ * 作者：CombatDebugStudio
+ * 功能：战斗记录核心类型定义
+ * 描述：定义统一的战斗记录数据结构，用于贯穿整个动作生命周期的记录
+ * 版本：1.0.0
  */
 
 import type { EffectType } from './effect'
+import type { BattleEffect } from './battle'
 
 /**
  * 动作类型
  */
 export type ActionType = 'attack' | 'skill' | 'heal' | 'buff' | 'item' | 'system'
-
-/**
- * 效果条目 - 用于记录每一步产生的具体效果
- */
-export interface EffectRecord {
-  type: EffectType
-  targetId: string
-  value?: number
-  buffId?: string
-  instanceId?: string
-  description?: string
-  isCritical?: boolean
-}
 
 /**
  * 计算步骤详情 - 用于调试
@@ -67,7 +55,7 @@ export interface CombatRecord {
 
   damage: number
   heal: number
-  effects: EffectRecord[]
+  effects: BattleEffect[]
 
   energyCost?: number
   energyGain?: number

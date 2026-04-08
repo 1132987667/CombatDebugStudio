@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia';
-import type { UIBattleCharacter } from '@/types';
+import type { BattleParticipant } from '@/types/battle';
 import type { BattleRules } from '@/stores/battleStore';
 import type { BattleLogEntry } from '@/types/battle-log';
 import type { InjectableStatus } from '@/views/components/StatusInjectionDialog.vue';
 
 interface ExportedBattleState {
-  battleCharacters: UIBattleCharacter[];
-  enemyParty: UIBattleCharacter[];
+  battleCharacters: BattleParticipant[];
+  enemyParty: BattleParticipant[];
   currentTurn: number;
   rules: BattleRules;
   battleLogs: BattleLogEntry[];
@@ -64,7 +64,7 @@ export const useDebugStore = defineStore('debug', {
     /**
      * 导出战斗状态
      */
-    exportState(allyTeam: UIBattleCharacter[], enemyTeam: UIBattleCharacter[], currentTurn: number, rules: BattleRules, battleLogs: BattleLogEntry[]) {
+    exportState(allyTeam: BattleParticipant[], enemyTeam: BattleParticipant[], currentTurn: number, rules: BattleRules, battleLogs: BattleLogEntry[]) {
       const state = {
         battleCharacters: allyTeam,
         enemyParty: enemyTeam,

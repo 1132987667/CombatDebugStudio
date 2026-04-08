@@ -6,6 +6,8 @@
  * 描述: 使用JSON Schema验证技能和Effect配置的完整性和正确性
  */
 
+import { SkillConfig, SkillStep } from "@/types"
+
 /**
  * 验证结果接口
  */
@@ -166,7 +168,7 @@ const effectSchema = {
  * @param skillConfig 技能配置对象
  * @returns 验证结果
  */
-export function validateSkillConfig(skillConfig: any): ValidationResult {
+export function validateSkillConfig(skillConfig: SkillConfig): ValidationResult {
   const errors: string[] = []
 
   // 检查必填字段
@@ -191,6 +193,26 @@ export function validateSkillConfig(skillConfig: any): ValidationResult {
     errors.push('Missing required field: cooldown')
   }
 
+  // ✅ 添加：验证 selector 字段
+  if (!skillConfig.selector) {
+    errors.push('Missing required field: selector')
+  } else {
+    const validSelectors = [
+      'single_enemy',
+      'all_enemies',
+      'self',
+      'all_allies',
+      'lowest_ally',
+      'lowest_enemy',
+      'all',
+    ]
+    if (!validSelectors.includes(skillConfig.selector)) {
+      errors.push(
+        `Invalid selector: ${skillConfig.selector}. Must be one of: ${validSelectors.join(', ')}`,
+      )
+    }
+  }
+
   if (
     !skillConfig.steps ||
     !Array.isArray(skillConfig.steps) ||
@@ -199,7 +221,7 @@ export function validateSkillConfig(skillConfig: any): ValidationResult {
     errors.push('Missing required field: steps (must be a non-empty array)')
   } else {
     // 验证每个步骤
-    skillConfig.steps.forEach((step: any, index: number) => {
+    skillConfig.steps.forEach((step: SkillStep, index: number) => {
       if (!step.type) {
         errors.push(`Step ${index}: Missing required field: type`)
       }
@@ -208,7 +230,25 @@ export function validateSkillConfig(skillConfig: any): ValidationResult {
         errors.push(`Step ${index}: Missing required field: formula`)
       }
 
-      // 检查effectId（如果是buff或debuff类型）
+      // ✅ 添加：验证 step.target 字段
+      if (step.target) {
+        const validTargets = [
+          'enemy',
+          'self',
+          'allies',
+          'all_allies',
+          'lowest_ally',
+          'lowest_enemy',
+          'all',
+        ]
+        if (!validTargets.includes(step.target)) {
+          errors.push(
+            `Step ${index}: Invalid target: ${step.target}. Must be one of: ${validTargets.join(', ')}`,
+          )
+        }
+      }
+
+      // 检查 effectId（如果是 buff 或 debuff 类型）
       if ((step.type === 'buff' || step.type === 'debuff') && !step.effectId) {
         errors.push(
           `Step ${index}: Missing required field: effectId for ${step.type} type`,
@@ -261,7 +301,7 @@ export function validateEffectConfig(effectConfig: any): ValidationResult {
  * @param skillConfigs 技能配置数组
  * @returns 验证结果
  */
-export function validateSkillConfigs(skillConfigs: any[]): ValidationResult {
+export function validateSkillConfigs(skillConfigs: SkillConfig[]): ValidationResult {
   const errors: string[] = []
   let validCount = 0
 

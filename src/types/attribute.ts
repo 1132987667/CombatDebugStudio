@@ -2,12 +2,32 @@
  * 文件: attribute.ts
  * 创建日期: 2026-04-07
  * 作者: CombatDebugStudio
- * 功能: 属性系统类型定义
- * 描述: 定义属性值对象、修饰符详情和属性名称常量
- * 版本: 
+ * 功能: 属性系统类型定义与计算核心
+ * 描述: 定义属性类型、修饰符、属性值对象、修饰符详情和属性名称常量
+ * 版本: 2.0.0 (优化版)
  */
 
-import type { Modifier, AttributeType } from '@/types/modifier'
+// ========== 类型定义 ==========
+
+/** 属性类型枚举（统一使用大写蛇形命名） */
+export type AttributeType =
+  | 'HP'
+  | 'MP'
+  | 'ATK'
+  | 'DEF'
+  | 'SPD'
+  | 'CRIT_RATE'
+  | 'CRIT_DMG'
+  | 'ACCURACY'
+  | 'EVADE'
+  | 'LIFESTEAL'
+  | 'REGENERATION'
+  | 'MANA_REGEN'
+  | 'DAMAGE_BOOST'
+  | 'DAMAGE_REDUCE'
+
+/** 修饰符计算类型（严格联合类型） */
+export type ModifierType = 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' | 'FINAL'
 
 /** 修饰符来源类型 */
 export type ModifierSourceType =
@@ -19,8 +39,9 @@ export type ModifierSourceType =
   | 'base'
   | 'talent'
 
-export const ModifierSourceTypeNames = {
-  buff: 'buff',
+/** 修饰符来源类型显示名称映射 */
+export const ModifierSourceTypeNames: Record<ModifierSourceType, string> = {
+  buff: '增益',
   equipment: '装备',
   skill: '技能',
   terrain: '地形',
@@ -29,27 +50,53 @@ export const ModifierSourceTypeNames = {
   talent: '天赋',
 }
 
-/** 修饰符计算类型，依次为: 加法/乘法/百分比加成/最终乘区 */
-export type ModifierCalcType = 'add' | 'multiply' | 'percent' | 'final'
+// ========== 核心接口 ==========
 
 /**
- * 修饰符详情（用于调试和UI展示）
+ * 原始修饰符实例（与 Buff 系统关联）
+ */
+export interface Modifier {
+  /** Buff 实例唯一标识 */
+  buffInstanceId: string
+  /** 目标属性 */
+  attribute: AttributeType
+  /** 修饰数值 */
+  value: number
+  /** 修饰类型 */
+  type: ModifierType
+}
+
+/**
+ * 修饰符配置（用于创建 Buff/装备等）
+ */
+export interface ModifierConfig {
+  attribute: AttributeType
+  value: number
+  type: ModifierType
+  /** 持续时间（回合数） */
+  duration?: number
+  /** 最大可叠加层数 */
+  maxStacks?: number
+}
+
+/**
+ * 修饰符详情（用于 UI 展示与调试）
  */
 export interface ModifierDetail {
   /** 来源标识，如 "buff_attack_up" 或 "装备:铁剑" */
   source: string
   /** 来源类型 */
   sourceType: ModifierSourceType
-  /** 加成值（原始值） */
+  /** 加成原始值 */
   value: number
-  /** 加成类型：加法/乘法/百分比加成 */
-  type: ModifierCalcType
-  /** 可选描述 */
+  /** 加成类型 */
+  type: ModifierType
+  /** 可选描述文本 */
   description?: string
 }
 
 /**
- * 属性计算拆解（仅调试模式填充）
+ * 属性计算拆解（仅在调试模式填充）
  */
 export interface CalculationBreakdown {
   /** 基础值 */
@@ -65,14 +112,14 @@ export interface CalculationBreakdown {
 }
 
 /**
- * 属性值对象（缓存最终值和来源）
+ * 属性值对象（缓存最终值及来源）
  */
 export interface AttributeValue {
   /** 最终计算值（缓存） */
   value: number
   /** 基础值（未加任何修饰符） */
   base: number
-  /** 修饰符列表（用于调试和 UI） */
+  /** 修饰符详情列表（用于调试和 UI） */
   modifiers: ModifierDetail[]
   /** 是否为百分比属性（用于 UI 格式化） */
   isPercentage: boolean
@@ -83,22 +130,37 @@ export interface AttributeValue {
 }
 
 /**
+ * 修饰符计算结果
+ */
+export interface ModifierResult {
+  baseValue: number
+  finalValue: number
+  modifiers: Modifier[]
+  breakdown: {
+    additive: number
+    multiplicative: number
+    percentage: number
+  }
+}
+
+// ========== 抽象接口（依赖倒置） ==========
+
+/**
  * 修饰符堆栈接口（抽象 ModifierStack 的核心能力）
  * 用于解耦 BattleParticipantImpl 与具体实现
  */
 export interface IModifierStack {
-  /** 获取指定属性的修饰符列表 */
+  /** 获取指定属性的原始修饰符列表 */
   getModifiers(attribute: AttributeType): Modifier[]
   /** 计算属性最终值 */
   calculate(attribute: AttributeType, baseValue: number): number
-  /** 获取修饰符总数 */
+  /** 获取当前堆栈中修饰符总数 */
   getModifierCount(): number
 }
 
 /**
  * 修饰符提供者接口（核心抽象）
  * 用于解耦 BattleParticipantImpl 与 BuffSystem 的直接依赖
- * 支持单元测试、回放模式、多战斗实例隔离
  */
 export interface IModifierProvider {
   /**
@@ -109,29 +171,24 @@ export interface IModifierProvider {
   getModifierStack(participantId: string): IModifierStack | null
 
   /**
-   * 获取修饰符来源名称
+   * 获取修饰符来源显示名称
    * @param sourceId 来源ID（如 buffInstanceId）
-   * @returns 来源名称，不存在则返回 null
    */
   getSourceName(sourceId: string): string | null
 
   /**
    * 获取修饰符来源类型
    * @param sourceId 来源ID
-   * @returns 来源类型
    */
   getSourceType(sourceId: string): ModifierSourceType
 
-  /**
-   * 检查是否处于调试模式
-   * @returns 是否处于调试模式
-   */
+  /** 是否处于调试模式 */
   isDebugMode(): boolean
 }
 
-/**
- * 属性名称常量（便于类型提示）
- */
+// ========== 属性代码常量 ==========
+
+/** 属性代码常量（用于类型提示） */
 export const AttributeCodes = {
   HP: 'HP',
   MAX_HP: 'MAX_HP',
@@ -151,7 +208,10 @@ export const AttributeCodes = {
   SPD_BONUS: 'SPD_BONUS',
 } as const
 
-export const AttributeCodeNames = {
+export type AttributeCode = (typeof AttributeCodes)[keyof typeof AttributeCodes]
+
+/** 属性代码显示名称映射 */
+export const AttributeCodeNames: Record<AttributeCode, string> = {
   HP: '生命值',
   MAX_HP: '最大生命值',
   ATK: '攻击力',
@@ -170,137 +230,136 @@ export const AttributeCodeNames = {
   SPD_BONUS: '速度加成',
 }
 
+// ========== 辅助函数 ==========
+
 /**
- * 标准化属性名称
- * 将不同格式的属性名称转换为统一的内部格式
- * @param attribute 属性名称
- * @returns 标准化后的属性名称
+ * 标准化属性名称（将不同格式转换为内部统一格式）
+ * @param attribute 属性名称（如 'speed', 'attack', 'hpBonus'）
+ * @returns 标准化后的属性代码
  */
 export function normalizeAttributeCode(attribute: string): string {
-  const attributeMap: Record<string, string> = {
+  const lower = attribute.toLowerCase()
+  const map: Record<string, string> = {
     // 基础属性
-    speed: 'SPD',           // 速度 → 标准化为 SPD
-    attack: 'ATK',          // 攻击力 → 标准化为 ATK
-    defense: 'DEF',         // 防御力 → 标准化为 DEF
-    health: 'HP',           // 生命值 → 标准化为 HP
-
-    hpBonus: 'HP_BONUS',    // 生命值加成 → 标准化为 HP_BONUS
-    atkBonus: 'ATK_BONUS',  // 攻击力加成 → 标准化为 ATK_BONUS
-    defBonus: 'DEF_BONUS',  // 防御力加成 → 标准化为 DEF_BONUS
-    spdBonus: 'SPD_BONUS',  // 速度加成 → 标准化为 SPD_BONUS
-    
+    speed: 'SPD',
+    attack: 'ATK',
+    defense: 'DEF',
+    health: 'HP',
+    // 加成属性
+    hpbonus: 'HP_BONUS',
+    atkbonus: 'ATK_BONUS',
+    defbonus: 'DEF_BONUS',
+    spdbonus: 'SPD_BONUS',
     // 战斗属性
-    critRate: 'CRIT_RATE',  // 暴击率 → 标准化为 CRIT_RATE
-    critDamage: 'CRIT_DMG', // 暴击伤害 → 标准化为 CRIT_DMG
-    
+    critrate: 'CRIT_RATE',
+    critdamage: 'CRIT_DMG',
     // 元素伤害承受
-    magicDamageTaken: 'MAGIC_DMG_TAKEN',        // 魔法伤害承受 → 标准化为 MAGIC_DMG_TAKEN
-    fireDamageTaken: 'FIRE_DMG_TAKEN',          // 火焰伤害承受 → 标准化为 FIRE_DMG_TAKEN
-    waterDamageTaken: 'WATER_DMG_TAKEN',        // 水元素伤害承受 → 标准化为 WATER_DMG_TAKEN
-    lightningDamageTaken: 'LIGHTNING_DMG_TAKEN', // 雷元素伤害承受 → 标准化为 LIGHTNING_DMG_TAKEN
-    
+    magicdamagetaken: 'MAGIC_DMG_TAKEN',
+    firedamagetaken: 'FIRE_DMG_TAKEN',
+    waterdamagetaken: 'WATER_DMG_TAKEN',
+    lightningdamagetaken: 'LIGHTNING_DMG_TAKEN',
     // 元素伤害
-    demonDamage: 'DEMON_DMG',     // 魔系伤害 → 标准化为 DEMON_DMG
-    buddhistDamage: 'BUDDHIST_DMG', // 佛系伤害 → 标准化为 BUDDHIST_DMG
-    fireDamage: 'FIRE_DMG',        // 火焰伤害 → 标准化为 FIRE_DMG
-    
-    // 状态免疫与抗性
-    slowImmune: 'SLOW_IMMUNE',         // 减速免疫 → 标准化为 SLOW_IMMUNE
-    stunResist: 'STUN_RESIST',         // 眩晕抗性 → 标准化为 STUN_RESIST
-    knockbackResist: 'KNOCKBACK_RESIST', // 击退抗性 → 标准化为 KNOCKBACK_RESIST
-    poisonResist: 'POISON_RESIST',      // 中毒抗性 → 标准化为 POISON_RESIST
-    bleedResist: 'BLEED_RESIST',        // 流血抗性 → 标准化为 BLEED_RESIST
-    burnImmune: 'BURN_IMMUNE',          // 燃烧免疫 → 标准化为 BURN_IMMUNE
-    
+    demondamage: 'DEMON_DMG',
+    buddhistdamage: 'BUDDHIST_DMG',
+    firedamage: 'FIRE_DMG',
+    // 免疫与抗性
+    slowimmune: 'SLOW_IMMUNE',
+    stunresist: 'STUN_RESIST',
+    knockbackresist: 'KNOCKBACK_RESIST',
+    poisonresist: 'POISON_RESIST',
+    bleedresist: 'BLEED_RESIST',
+    burnimmune: 'BURN_IMMUNE',
     // 特殊属性
-    poisonChance: 'POISON_CHANCE',     // 中毒几率 → 标准化为 POISON_CHANCE
-    webSuccessRate: 'WEB_SUCCESS_RATE', // 缠绕成功率 → 标准化为 WEB_SUCCESS_RATE
-    debuffDuration: 'DEBUFF_DURATION',  //  debuff 持续时间 → 标准化为 DEBUFF_DURATION
-    hitRate: 'HIT_RATE',                // 命中率 → 标准化为 HIT_RATE
-    dodge: 'DODGE',                     // 闪避率 → 标准化为 DODGE
-    skillCooldown: 'SKILL_CD',          // 技能冷却 → 标准化为 SKILL_CD
+    poisonchance: 'POISON_CHANCE',
+    websuccessrate: 'WEB_SUCCESS_RATE',
+    debuffduration: 'DEBUFF_DURATION',
+    hitrate: 'HIT_RATE',
+    dodge: 'DODGE',
+    skillcooldown: 'SKILL_CD',
   }
-  return attributeMap[attribute.toLowerCase()] || attribute.toUpperCase()
+  return map[lower] || attribute.toUpperCase()
 }
 
+// ========== 工厂函数 ==========
+
 /**
- * 创建默认 AttributeValue
- * @param base 基础值
- * @param isPercentage 是否为百分比属性
- * @returns AttributeValue 对象
+ * 创建 AttributeValue 对象（推荐使用此工厂）
+ * @param base 基础值（必填）
+ * @param value 最终计算值（初次创建时通常与 base 相同）
+ * @param options 可选配置项
  */
 export function createAttributeValue(
   base: number,
-  isPercentage: boolean = false,
+  value: number,
+  options?: Partial<{
+    modifiers: ModifierDetail[]
+    isPercentage: boolean
+    dirty: boolean
+    breakdown: CalculationBreakdown
+  }>
 ): AttributeValue {
   return {
-    value: base,
     base,
-    modifiers: [],
-    isPercentage,
-    dirty: false,
+    value,
+    modifiers: options?.modifiers ?? [],
+    isPercentage: options?.isPercentage ?? false,
+    dirty: options?.dirty ?? true, // 新建属性默认标记为脏，需首次计算
+    breakdown: options?.breakdown,
   }
 }
 
 /**
- * 应用修饰符计算最终值
+ * 创建基础 AttributeValue（仅提供 base，value 与 base 相同）
+ * @deprecated 请使用 createAttributeValue 以获得更灵活的配置
+ */
+export function createBaseAttributeValue(
+  base: number,
+  isPercentage: boolean = false
+): AttributeValue {
+  return createAttributeValue(base, base, { isPercentage, dirty: false })
+}
+
+// ========== 属性计算核心 ==========
+
+/**
+ * 根据修饰符类型计算最终值
  * @param base 基础值
- * @param modifiers 修饰符列表
- * @returns 最终值和计算拆解
+ * @param modifiers 修饰符详情列表
+ * @returns 最终值及计算拆解
  */
 export function calculateFinalValue(
   base: number,
-  modifiers: ModifierDetail[],
+  modifiers: ModifierDetail[]
 ): { value: number; breakdown: CalculationBreakdown } {
   let additive = 0
-  let percentMultiplier = 1
+  let percentSum = 0
   let independentMultiplier = 1
   let finalMultiplier = 1
-  let finalValue = base
 
-  // 计算百分比加成
-  let percentSum = 0
   for (const mod of modifiers) {
-    if (mod.type === 'percent') {
-      percentSum += mod.value
+    switch (mod.type) {
+      case 'ADDITIVE':
+        additive += mod.value
+        break
+      case 'PERCENTAGE':
+        percentSum += mod.value
+        break
+      case 'MULTIPLICATIVE':
+        independentMultiplier *= 1 + mod.value
+        break
+      case 'FINAL':
+        finalMultiplier *= 1 + mod.value
+        break
+      default:
+        // 防御性编程：如果传入无效类型，静默忽略
+        console.warn(`[calculateFinalValue] 未知修饰符类型: ${(mod as any).type}`)
     }
   }
-  if (percentSum !== 0) {
-    percentMultiplier = 1 + percentSum
-    finalValue += base * percentSum
-  }
 
-  // 计算加法加成
-  for (const mod of modifiers) {
-    if (mod.type === 'add') {
-      additive += mod.value
-      finalValue += mod.value
-    }
-  }
-
-  // 计算独立乘区
-  let multiplyFactor = 1
-  for (const mod of modifiers) {
-    if (mod.type === 'multiply') {
-      multiplyFactor *= 1 + mod.value
-    }
-  }
-  if (multiplyFactor !== 1) {
-    independentMultiplier = multiplyFactor
-    finalValue *= multiplyFactor
-  }
-
-  // 计算最终乘区
-  let finalMulti = 1
-  for (const mod of modifiers) {
-    if (mod.type === 'final') {
-      finalMulti *= 1 + mod.value
-    }
-  }
-  if (finalMulti !== 1) {
-    finalMultiplier = finalMulti
-    finalValue *= finalMulti
-  }
+  const percentMultiplier = 1 + percentSum
+  const afterPercent = base * percentMultiplier + additive
+  const afterIndependent = afterPercent * independentMultiplier
+  const finalValue = afterIndependent * finalMultiplier
 
   return {
     value: finalValue,
@@ -314,121 +373,315 @@ export function calculateFinalValue(
   }
 }
 
-/** 属性名称类型 */
-export type AttributeCode = (typeof AttributeCodes)[keyof typeof AttributeCodes]
+// ========== 属性元数据 ==========
 
 /**
- * 属性元数据（用于UI展示）
+ * 属性元数据（用于 UI 展示）
  */
 export interface AttributeMeta {
-  /** 属性名称 */
-  name: AttributeCode
-  /** 显示名称 */
+  code: string
+  name: string
   displayName: string
-  /** 是否为百分比属性 */
+  description: string
+  range: string
+  impact: string
+  iconPath?: string
   isPercentage: boolean
-  /** 描述 */
-  description?: string
+}
+
+/** 属性元数据映射表 */
+export const AttributeMetaMap: Record<string, AttributeMeta> = {
+  level: {
+    code: 'level',
+    name: '等级',
+    displayName: '等级',
+    description: '角色的等级',
+    range: '1-99',
+    impact: '影响角色基础属性值和技能解锁',
+    isPercentage: false,
+  },
+  name: {
+    code: 'name',
+    name: '名称',
+    displayName: '名称',
+    description: '角色的名字',
+    range: '-',
+    impact: '用于识别和区分不同角色',
+    isPercentage: false,
+  },
+  currentEnergy: {
+    code: 'currentEnergy',
+    name: '能量',
+    displayName: '能量',
+    description: '角色当前能量值',
+    range: '0-100',
+    impact: '用于施放技能，影响技能释放频率，初始值为25',
+    isPercentage: false,
+  },
+  currentHp: {
+    code: 'currentHp',
+    name: '气血',
+    displayName: '生命值',
+    description: '角色当前生命值',
+    range: '0-最大值',
+    impact: '直接影响角色生存能力，为0时角色死亡',
+    isPercentage: false,
+  },
+  minAttack: {
+    code: 'minAttack',
+    name: '最小攻击',
+    displayName: '最小攻击力',
+    description: '角色最小攻击伤害',
+    range: '1-9999',
+    impact: '直接影响伤害输出下限',
+    isPercentage: false,
+  },
+  maxAttack: {
+    code: 'maxAttack',
+    name: '最大攻击',
+    displayName: '最大攻击力',
+    description: '角色最大攻击伤害',
+    range: '1-9999',
+    impact: '直接影响伤害输出上限',
+    isPercentage: false,
+  },
+  defense: {
+    code: 'defense',
+    name: '防御',
+    displayName: '防御力',
+    description: '角色抵抗伤害的能力',
+    range: '0-9999',
+    impact: '减少受到的伤害，值越高减伤越多',
+    isPercentage: false,
+  },
+  speed: {
+    code: 'speed',
+    name: '速度',
+    displayName: '速度',
+    description: '角色行动顺序的决定因素',
+    range: '1-9999',
+    impact: '速度越高，行动顺序越靠前，回合内行动次数可能增加',
+    isPercentage: false,
+  },
+  critRate: {
+    code: 'critRate',
+    name: '暴击率',
+    displayName: '暴击率',
+    description: '攻击产生暴击的概率',
+    range: '0-100%',
+    impact: '提高暴击触发几率，增加伤害爆发能力，默认为10%',
+    isPercentage: true,
+  },
+  critDamage: {
+    code: 'critDamage',
+    name: '暴击伤害',
+    displayName: '暴击伤害',
+    description: '暴击时的伤害倍率',
+    range: '100-500%',
+    impact: '暴击时造成的额外伤害，值越高暴击伤害越高，默认125%',
+    isPercentage: true,
+  },
+  damageReduction: {
+    code: 'damageReduction',
+    name: '免伤率',
+    displayName: '免伤率',
+    description: '受到伤害的减免比例',
+    range: '0-100%',
+    impact: '减少受到的所有伤害',
+    isPercentage: true,
+  },
+  healthBonus: {
+    code: 'healthBonus',
+    name: '气血加成',
+    displayName: '生命值加成',
+    description: '气血加成百分比',
+    range: '0-500%',
+    impact: '提高角色气血上限，增强生存能力',
+    isPercentage: true,
+  },
+  attackBonus: {
+    code: 'attackBonus',
+    name: '攻击加成',
+    displayName: '攻击力加成',
+    description: '攻击加成百分比',
+    range: '0-500%',
+    impact: '提高角色攻击力，增强伤害输出',
+    isPercentage: true,
+  },
+  defenseBonus: {
+    code: 'defenseBonus',
+    name: '防御加成',
+    displayName: '防御力加成',
+    description: '防御加成百分比',
+    range: '0-500%',
+    impact: '提高角色防御力，增强生存能力',
+    isPercentage: true,
+  },
+  speedBonus: {
+    code: 'speedBonus',
+    name: '速度加成',
+    displayName: '速度加成',
+    description: '速度加成百分比',
+    range: '0-500%',
+    impact: '提高角色速度，增强行动能力',
+    isPercentage: true,
+  },
+  HP: {
+    code: 'HP',
+    name: '生命值',
+    displayName: '生命值',
+    description: '当前生命值',
+    range: '0-最大值',
+    impact: '直接影响角色生存能力，为0时角色死亡',
+    isPercentage: false,
+  },
+  MAX_HP: {
+    code: 'MAX_HP',
+    name: '最大生命值',
+    displayName: '最大生命值',
+    description: '最大生命值上限',
+    range: '1-99999',
+    impact: '决定角色的生命值上限',
+    isPercentage: false,
+  },
+  ATK: {
+    code: 'ATK',
+    name: '攻击力',
+    displayName: '攻击力',
+    description: '攻击力',
+    range: '1-9999',
+    impact: '直接影响伤害输出',
+    isPercentage: false,
+  },
+  MIN_ATK: {
+    code: 'MIN_ATK',
+    name: '最小攻击力',
+    displayName: '最小攻击力',
+    description: '最小攻击力',
+    range: '1-9999',
+    impact: '直接影响伤害输出下限',
+    isPercentage: false,
+  },
+  MAX_ATK: {
+    code: 'MAX_ATK',
+    name: '最大攻击力',
+    displayName: '最大攻击力',
+    description: '最大攻击力',
+    range: '1-9999',
+    impact: '直接影响伤害输出上限',
+    isPercentage: false,
+  },
+  DEF: {
+    code: 'DEF',
+    name: '防御力',
+    displayName: '防御力',
+    description: '防御力',
+    range: '0-9999',
+    impact: '减少受到的伤害',
+    isPercentage: false,
+  },
+  SPD: {
+    code: 'SPD',
+    name: '速度',
+    displayName: '速度',
+    description: '速度值',
+    range: '1-9999',
+    impact: '决定行动顺序',
+    isPercentage: false,
+  },
+  CRIT_RATE: {
+    code: 'CRIT_RATE',
+    name: '暴击率',
+    displayName: '暴击率',
+    description: '暴击率',
+    range: '0-100%',
+    impact: '提高暴击触发几率',
+    isPercentage: true,
+  },
+  CRIT_DMG: {
+    code: 'CRIT_DMG',
+    name: '暴击伤害',
+    displayName: '暴击伤害',
+    description: '暴击伤害加成',
+    range: '100-500%',
+    impact: '暴击时造成的额外伤害',
+    isPercentage: true,
+  },
+  DMG_REDUCTION: {
+    code: 'DMG_REDUCTION',
+    name: '免伤率',
+    displayName: '免伤率',
+    description: '伤害减免比例',
+    range: '0-100%',
+    impact: '减少受到的所有伤害',
+    isPercentage: true,
+  },
+  ENERGY: {
+    code: 'ENERGY',
+    name: '能量',
+    displayName: '能量',
+    description: '当前能量值',
+    range: '0-100',
+    impact: '用于施放技能',
+    isPercentage: false,
+  },
+  MAX_ENERGY: {
+    code: 'MAX_ENERGY',
+    name: '最大能量值',
+    displayName: '最大能量值',
+    description: '最大能量上限',
+    range: '100',
+    impact: '决定能量上限',
+    isPercentage: false,
+  },
+  HP_BONUS: {
+    code: 'HP_BONUS',
+    name: '生命值加成',
+    displayName: '生命值加成',
+    description: '生命值加成',
+    range: '0-500%',
+    impact: '提高角色生命值上限',
+    isPercentage: true,
+  },
+  ATK_BONUS: {
+    code: 'ATK_BONUS',
+    name: '攻击力加成',
+    displayName: '攻击力加成',
+    description: '攻击力加成',
+    range: '0-500%',
+    impact: '提高角色攻击力',
+    isPercentage: true,
+  },
+  DEF_BONUS: {
+    code: 'DEF_BONUS',
+    name: '防御力加成',
+    displayName: '防御力加成',
+    description: '防御力加成',
+    range: '0-500%',
+    impact: '提高角色防御力',
+    isPercentage: true,
+  },
+  SPD_BONUS: {
+    code: 'SPD_BONUS',
+    name: '速度加成',
+    displayName: '速度加成',
+    description: '速度加成',
+    range: '0-500%',
+    impact: '提高角色速度',
+    isPercentage: true,
+  },
 }
 
 /**
- * 属性元数据映射
+ * 根据属性编码获取属性元数据
  */
-export const AttributeMetaMap: Record<AttributeCode, AttributeMeta> = {
-  HP: {
-    name: 'HP',
-    displayName: '生命值',
-    isPercentage: false,
-    description: '当前生命值',
-  },
-  MAX_HP: {
-    name: 'MAX_HP',
-    displayName: '最大生命值',
-    isPercentage: false,
-    description: '最大生命值上限',
-  },
-  ATK: {
-    name: 'ATK',
-    displayName: '攻击力',
-    isPercentage: false,
-    description: '攻击力',
-  },
-  MIN_ATK: {
-    name: 'MIN_ATK',
-    displayName: '最小攻击力',
-    isPercentage: false,
-    description: '最小攻击力',
-  },
-  MAX_ATK: {
-    name: 'MAX_ATK',
-    displayName: '最大攻击力',
-    isPercentage: false,
-    description: '最大攻击力',
-  },
-  DEF: {
-    name: 'DEF',
-    displayName: '防御力',
-    isPercentage: false,
-    description: '防御力',
-  },
-  SPD: {
-    name: 'SPD',
-    displayName: '速度',
-    isPercentage: false,
-    description: '速度值',
-  },
-  CRIT_RATE: {
-    name: 'CRIT_RATE',
-    displayName: '暴击率',
-    isPercentage: true,
-    description: '暴击率',
-  },
-  CRIT_DMG: {
-    name: 'CRIT_DMG',
-    displayName: '暴击伤害',
-    isPercentage: true,
-    description: '暴击伤害加成',
-  },
-  DMG_REDUCTION: {
-    name: 'DMG_REDUCTION',
-    displayName: '免伤率',
-    isPercentage: true,
-    description: '伤害减免比例',
-  },
-  ENERGY: {
-    name: 'ENERGY',
-    displayName: '能量',
-    isPercentage: false,
-    description: '当前能量值',
-  },
-  MAX_ENERGY: {
-    name: 'MAX_ENERGY',
-    displayName: '最大能量值',
-    isPercentage: false,
-    description: '最大能量上限',
-  },
-  HP_BONUS: {
-    name: 'HP_BONUS',
-    displayName: '生命值加成',
-    isPercentage: true,
-    description: '生命值加成',
-  },
-  ATK_BONUS: {
-    name: 'ATK_BONUS',
-    displayName: '攻击力加成',
-    isPercentage: true,
-    description: '攻击力加成',
-  },
-  DEF_BONUS: {
-    name: 'DEF_BONUS',
-    displayName: '防御力加成',
-    isPercentage: true,
-    description: '防御力加成',
-  },
-  SPD_BONUS: {
-    name: 'SPD_BONUS',
-    displayName: '速度加成',
-    isPercentage: true,
-    description: '速度加成',
-  },
+export function getAttributeMeta(code: string): AttributeMeta | undefined {
+  return AttributeMetaMap[code]
+}
+
+/**
+ * 根据属性名称获取属性编码
+ */
+export function getAttributeCodeByName(name: string): string | undefined {
+  return Object.entries(AttributeMetaMap).find(([_, meta]) => meta.name === name)?.[0]
 }

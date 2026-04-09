@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { AttributeOption, AttributeValueType, AttributeSourceType } from '@/types/attribute'
-import { getAttributeMeta, getAttributeCodeByName } from '@/types/attribute-meta'
+import { getAttributeMeta, getAttributeCodeByName } from '@/types/attribute'
 
 interface Props {
   visible: boolean

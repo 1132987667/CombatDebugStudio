@@ -12,7 +12,6 @@ export { BattleSystem as BattleSystem } from '@/core/BattleSystem'
 // 类型定义导出
 export * from '@/types/buff'
 export * from '@/types/character'
-export * from '@/types/modifier'
 export * from '@/types/enemy'
 export * from '@/types/battle'
 

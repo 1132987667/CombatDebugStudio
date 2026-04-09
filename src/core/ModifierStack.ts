@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import type { Modifier, ModifierType, AttributeType } from '@/types/modifier'
+import type { Modifier, ModifierType, AttributeType } from '@/types/attribute'
 
 /**
  * 修饰符堆栈类

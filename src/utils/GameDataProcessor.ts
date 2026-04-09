@@ -20,6 +20,7 @@ import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
 import { container } from '@/core/di/Container'
 import { BuffSystem } from '@/core/BuffSystem'
 import { toArray } from '@/utils/Utils'
+import { Counter } from '@/utils/Counter'
 
 /**
  * 游戏数据处理工具类
@@ -124,6 +125,7 @@ export class GameDataProcessor {
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
     modifierProvider?: IModifierProvider,
   ): BattleParticipantImpl {
+    const counter = new Counter()
     // 如果没有传入 modifierProvider，则从容器获取（单例）
     const buffSystem =
       modifierProvider || container.resolve<BuffSystem>('BuffSystem')
@@ -146,7 +148,7 @@ export class GameDataProcessor {
 
     return new BattleParticipantImpl(
       {
-        id: enemy.id,
+        id: type + counter.next(),
         name: enemy.name,
         type: type,
         team: type,

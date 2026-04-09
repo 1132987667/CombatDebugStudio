@@ -1,4 +1,4 @@
-import type { AttributeType } from '@/types/modifier'
+import type { AttributeType } from '@/types/attribute'
 
 /**
  * 角色属性接口

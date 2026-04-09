@@ -23,12 +23,14 @@ import type {
   IModifierProvider,
   IModifierStack,
   ModifierSourceType,
+  Modifier,
+  ModifierType,
+  AttributeType,
 } from '@/types/attribute'
 import {
   AttributeCodes,
   normalizeAttributeCode,
 } from '@/types/attribute'
-import type { Modifier, ModifierType, AttributeType } from '@/types/modifier'
 
 /**
  * 参与者初始化数据接口

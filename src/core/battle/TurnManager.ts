@@ -8,7 +8,7 @@
 import type { BattleParticipant, BattleData } from '@/types/battle'
 import { BuffSystem } from '@/core/BuffSystem'
 import { ModifierStack } from '@/core/ModifierStack'
-import type { AttributeType } from '@/types/modifier'
+import type { AttributeType } from '@/types/attribute'
 
 /**
  * 回合管理器类

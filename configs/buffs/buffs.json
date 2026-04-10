@@ -1,23 +1,5 @@
 [
   {
-    "id": "buff_speed_up",
-    "name": "速度提升",
-    "maxStacks": 1,
-    "duration": 1,
-    "attributes": {
-      "speed": "+10"
-    }
-  },
-  {
-    "id": "buff_ally_atk_up",
-    "name": "同伴攻击提升",
-    "maxStacks": 1,
-    "duration": 2,
-    "attributes": {
-      "attack": "+0.05"
-    }
-  },
-  {
     "id": "buff_commander_aura",
     "name": "统领光环",
     "duration": -1,
@@ -240,28 +222,10 @@
     ]
   },
   {
-    "id": "buff_atk_up",
-    "name": "攻击提升",
-    "maxStacks": 1,
-    "duration": 2,
-    "attributes": {
-      "attack": "+0.1"
-    }
-  },
-  {
     "id": "buff_bleed",
     "name": "流血",
     "maxStacks": 1,
     "duration": 2
-  },
-  {
-    "id": "buff_atk_reduction",
-    "name": "攻击降低",
-    "maxStacks": 1,
-    "duration": 2,
-    "attributes": {
-      "attack": "-0.15"
-    }
   },
   {
     "id": "buff_stone_flesh",
@@ -701,48 +665,6 @@
     ]
   },
   {
-    "id": "buff_bind",
-    "name": "束缚",
-    "maxStacks": 1,
-    "duration": 2
-  },
-  {
-    "id": "buff_hit_reduction",
-    "name": "命中率下降",
-    "maxStacks": 1,
-    "duration": 1,
-    "attributes": {
-      "hitRate": "-0.1"
-    }
-  },
-  {
-    "id": "buff_speed_reduction",
-    "name": "速度降低",
-    "maxStacks": 1,
-    "duration": 1,
-    "attributes": {
-      "speed": "-5"
-    }
-  },
-  {
-    "id": "buff_poison",
-    "name": "中毒",
-    "maxStacks": 1,
-    "duration": 2
-  },
-  {
-    "id": "buff_strong_poison",
-    "name": "剧毒",
-    "maxStacks": 1,
-    "duration": 2
-  },
-  {
-    "id": "buff_stun",
-    "name": "眩晕",
-    "maxStacks": 1,
-    "duration": 1
-  },
-  {
     "id": "buff_crit_damage_reduction",
     "name": "坚韧表皮",
     "maxStacks": 1,
@@ -827,12 +749,6 @@
         }
       ]
     }
-  },
-  {
-    "id": "buff_shield",
-    "name": "护盾",
-    "maxStacks": 1,
-    "duration": 1
   },
   {
     "id": "buff_mountain_god",
@@ -930,6 +846,190 @@
     "duration": 3,
     "attributes": {
       "lightningDamageTaken": "+0.3"
+    }
+  },
+  {
+    "id": "buff_def_reduction",
+    "name": "防御降低",
+    "maxStacks": 1,
+    "duration": 1,
+    "modifiers": [
+      {
+        "id": "def_reduction_mod",
+        "targetAttribute": "DEF",
+        "type": "PERCENTAGE",
+        "value": -0.10,
+        "levelValue": -0.10
+      }
+    ]
+  },
+  {
+    "id": "buff_dodge_up",
+    "name": "闪避提升",
+    "maxStacks": 1,
+    "duration": 1,
+    "modifiers": [
+      {
+        "id": "dodge_up_mod",
+        "targetAttribute": "DODGE",
+        "type": "ADDITIVE",
+        "value": 0.15
+      }
+    ]
+  },
+  {
+    "id": "buff_def_up",
+    "name": "防御提升",
+    "maxStacks": 1,
+    "duration": 1,
+    "modifiers": [
+      {
+        "id": "def_up_mod",
+        "targetAttribute": "DEF",
+        "type": "PERCENTAGE",
+        "value": 0.10
+      }
+    ]
+  },
+  {
+    "id": "buff_speed_up",
+    "name": "速度提升",
+    "maxStacks": 1,
+    "duration": 1,
+    "modifiers": [
+      {
+        "id": "speed_up_mod",
+        "targetAttribute": "SPD",
+        "type": "ADDITIVE",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "id": "buff_ally_atk_up",
+    "name": "同伴攻击提升",
+    "maxStacks": 1,
+    "duration": 2,
+    "modifiers": [
+      {
+        "id": "ally_atk_up_mod",
+        "targetAttribute": "ATK",
+        "type": "PERCENTAGE",
+        "value": 0.05
+      }
+    ]
+  },
+  {
+    "id": "buff_atk_up",
+    "name": "攻击提升",
+    "maxStacks": 1,
+    "duration": 2,
+    "modifiers": [
+      {
+        "id": "atk_up_mod",
+        "targetAttribute": "ATK",
+        "type": "PERCENTAGE",
+        "value": 0.10
+      }
+    ]
+  },
+  {
+    "id": "buff_atk_reduction",
+    "name": "攻击降低",
+    "maxStacks": 1,
+    "duration": 2,
+    "modifiers": [
+      {
+        "id": "atk_reduction_mod",
+        "targetAttribute": "ATK",
+        "type": "PERCENTAGE",
+        "value": -0.15
+      }
+    ]
+  },
+  {
+    "id": "buff_speed_reduction",
+    "name": "速度降低",
+    "maxStacks": 1,
+    "duration": 1,
+    "modifiers": [
+      {
+        "id": "speed_reduction_mod",
+        "targetAttribute": "SPD",
+        "type": "ADDITIVE",
+        "value": -0.10,
+        "levelValue": -0.10
+      }
+    ]
+  },
+  {
+    "id": "buff_bind",
+    "name": "束缚",
+    "maxStacks": 1,
+    "duration": 2,
+    "statusType": "bind"
+  },
+  {
+    "id": "buff_hit_reduction",
+    "name": "命中率下降",
+    "maxStacks": 1,
+    "duration": 1,
+    "modifiers": [
+      {
+        "id": "hit_reduction_mod",
+        "targetAttribute": "HIT_RATE",
+        "type": "ADDITIVE",
+        "value": -0.10
+      }
+    ]
+  },
+  {
+    "id": "buff_poison",
+    "name": "中毒",
+    "maxStacks": 1,
+    "duration": 2,
+    "triggers": [
+      {
+        "phase": "ON_TURN_START",
+        "scriptId": "deal_dot_damage",
+        "params": {
+          "damageType": "poison",
+          "baseDamageFormula": "target.maxHp * 0.03"
+        }
+      }
+    ]
+  },
+  {
+    "id": "buff_strong_poison",
+    "name": "剧毒",
+    "maxStacks": 1,
+    "duration": 2,
+    "triggers": [
+      {
+        "phase": "ON_TURN_START",
+        "scriptId": "deal_dot_damage",
+        "params": {
+          "damageType": "poison",
+          "baseDamageFormula": "target.maxHp * 0.05"
+        }
+      }
+    ]
+  },
+  {
+    "id": "buff_stun",
+    "name": "眩晕",
+    "maxStacks": 1,
+    "duration": 1,
+    "statusType": "stun"
+  },
+  {
+    "id": "buff_shield",
+    "name": "护盾",
+    "maxStacks": 1,
+    "duration": 1,
+    "shield": {
+      "valueFormula": "source.maxHp * 0.10",
+      "damageTypeAbsorb": "all"
     }
   }
 ]

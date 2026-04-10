@@ -242,19 +242,60 @@ export const AttributeCodes = {
   SPD: 'SPD',
   CRIT_RATE: 'CRIT_RATE',
   CRIT_DMG: 'CRIT_DMG',
-  DMG_REDUCTION: 'DMG_REDUCTION',
+  // 伤害减免细分
+  DMG_REDUCTION: 'DMG_REDUCTION',                            // 免伤率
+  NORMAL_ATK_DMG_REDUCTION: 'NORMAL_ATK_DMG_REDUCTION',     // 普通攻击伤害减免
+  SKILL_DMG_REDUCTION: 'SKILL_DMG_REDUCTION',               // 技能伤害减免
+  CRIT_DMG_TAKEN_REDUCTION: 'CRIT_DMG_TAKEN_REDUCTION',     // 受到暴击伤害减免
+
+  // 再生属性
+  HP_REGEN_PERCENT: 'HP_REGEN_PERCENT',   // 每回合恢复最大生命百分比
+  HP_REGEN_FLAT: 'HP_REGEN_FLAT',         // 每回合恢复固定生命
+
   ENERGY: 'ENERGY',
   MAX_ENERGY: 'MAX_ENERGY',
   HP_BONUS: 'HP_BONUS',
   ATK_BONUS: 'ATK_BONUS',
   DEF_BONUS: 'DEF_BONUS',
   SPD_BONUS: 'SPD_BONUS',
+
+  // ========== 元素属性 ==========
+  // ========== 五行属性攻击力 ==========
+  METAL_ATK: 'METAL_ATK',                     // 金属性攻击力
+  WOOD_ATK: 'WOOD_ATK',                       // 木属性攻击力
+  WATER_ATK: 'WATER_ATK',                     // 水属性攻击力
+  FIRE_ATK: 'FIRE_ATK',                       // 火属性攻击力
+  EARTH_ATK: 'EARTH_ATK',                     // 土属性攻击力
+  // ========== 五行属性抗性 ==========
+  METAL_RES: 'METAL_RES',                     // 金属性抗性
+  WOOD_RES: 'WOOD_RES',                       // 木属性抗性
+  WATER_RES: 'WATER_RES',                     // 水属性抗性
+  FIRE_RES: 'FIRE_RES',                       // 火属性抗性
+  EARTH_RES: 'EARTH_RES',                     // 土属性抗性
+
+  // ========== 特殊战斗属性 ==========
+  DODGE: 'DODGE',                                 // 闪避率
+  HIT: 'HIT',                                     // 命中率
+  CONTROL_SUCCESS_RATE: 'CONTROL_SUCCESS_RATE',   // 控制技能成功率
+  CONTROL_DURATION_REDUCTION: 'CONTROL_DURATION_REDUCTION', // 受控制时间减免
+  DAMAGE_TAKEN_INCREASE: 'DAMAGE_TAKEN_INCREASE', // 受到的伤害增加（易伤）
+
+  // ========== 反弹/反伤 ==========
+  REFLECT_DAMAGE_PERCENT: 'REFLECT_DAMAGE_PERCENT', // 反弹伤害比例
+
+  // ========== 抗性 ==========
+  POISON_RES: 'POISON_RES',                 // 毒素抗性
+
+
+
+
 } as const
 
 export type AttributeCode = (typeof AttributeCodes)[keyof typeof AttributeCodes]
 
 /** 属性代码显示名称映射 */
 export const AttributeCodeNames: Record<AttributeCode, string> = {
+  // ========== 基础属性 ==========
   HP: '生命值',
   MAX_HP: '最大生命值',
   ATK: '攻击力',
@@ -264,63 +305,206 @@ export const AttributeCodeNames: Record<AttributeCode, string> = {
   SPD: '速度',
   CRIT_RATE: '暴击率',
   CRIT_DMG: '暴击伤害',
-  DMG_REDUCTION: '免伤率',
   ENERGY: '能量',
-  MAX_ENERGY: '最大能量值',
+  MAX_ENERGY: '最大能量',
+
+  // ========== 伤害减免细分 ==========
+  DMG_REDUCTION: '免伤率',
+  NORMAL_ATK_DMG_REDUCTION: '普攻伤害减免',
+  SKILL_DMG_REDUCTION: '技能伤害减免',
+  CRIT_DMG_TAKEN_REDUCTION: '暴击承伤减免',
+
+  // ========== 再生属性 ==========
+  HP_REGEN_PERCENT: '生命回复(%)',
+  HP_REGEN_FLAT: '生命回复(固定)',
+
+  // ========== 属性加成 ==========
   HP_BONUS: '生命值加成',
   ATK_BONUS: '攻击力加成',
   DEF_BONUS: '防御力加成',
   SPD_BONUS: '速度加成',
+
+  // ========== 五行属性攻击力 ==========
+  METAL_ATK: '金属性攻击',
+  WOOD_ATK: '木属性攻击',
+  WATER_ATK: '水属性攻击',
+  FIRE_ATK: '火属性攻击',
+  EARTH_ATK: '土属性攻击',
+
+  // ========== 五行属性抗性 ==========
+  METAL_RES: '金属性抗性',
+  WOOD_RES: '木属性抗性',
+  WATER_RES: '水属性抗性',
+  FIRE_RES: '火属性抗性',
+  EARTH_RES: '土属性抗性',
+
+  // ========== 特殊战斗属性 ==========
+  DODGE: '闪避率',
+  HIT: '命中率',
+  CONTROL_SUCCESS_RATE: '控制成功率',
+  CONTROL_DURATION_REDUCTION: '受控时间减免',
+  DAMAGE_TAKEN_INCREASE: '易伤系数',
+
+  // ========== 反弹/反伤 ==========
+  REFLECT_DAMAGE_PERCENT: '伤害反弹比例',
+
+  // ========== 抗性 ==========
+  POISON_RES: '毒素抗性',
 }
 
 // ========== 辅助函数 ==========
 
 /**
  * 标准化属性名称（将不同格式转换为内部统一格式）
- * @param attribute 属性名称（如 'speed', 'attack', 'hpBonus'）
+ * @param attribute 属性名称（如 'speed', 'attack', 'hpBonus', 'metal_atk'）
  * @returns 标准化后的属性代码
  */
 export function normalizeAttributeCode(attribute: string): string {
-  const lower = attribute.toLowerCase()
+  if (!attribute) return attribute
+  const lower = attribute.trim().toLowerCase()
+
   const map: Record<string, string> = {
-    // 基础属性
+    // ========== 基础属性 ==========
     speed: 'SPD',
     attack: 'ATK',
     defense: 'DEF',
     health: 'HP',
-    // 加成属性
+    hp: 'HP',
+    maxhp: 'MAX_HP',
+    max_health: 'MAX_HP',
+    energy: 'ENERGY',
+    maxenergy: 'MAX_ENERGY',
+    minattack: 'MIN_ATK',
+    maxattack: 'MAX_ATK',
+    critrate: 'CRIT_RATE',
+    critdamage: 'CRIT_DMG',
+    crit_rate: 'CRIT_RATE',
+    crit_damage: 'CRIT_DMG',
+
+    // ========== 加成属性 ==========
     hpbonus: 'HP_BONUS',
     atkbonus: 'ATK_BONUS',
     defbonus: 'DEF_BONUS',
     spdbonus: 'SPD_BONUS',
-    // 战斗属性
-    critrate: 'CRIT_RATE',
-    critdamage: 'CRIT_DMG',
-    // 元素伤害承受
-    magicdamagetaken: 'MAGIC_DMG_TAKEN',
-    firedamagetaken: 'FIRE_DMG_TAKEN',
-    waterdamagetaken: 'WATER_DMG_TAKEN',
-    lightningdamagetaken: 'LIGHTNING_DMG_TAKEN',
-    // 元素伤害
-    demondamage: 'DEMON_DMG',
-    buddhistdamage: 'BUDDHIST_DMG',
-    firedamage: 'FIRE_DMG',
-    // 免疫与抗性
-    slowimmune: 'SLOW_IMMUNE',
-    stunresist: 'STUN_RESIST',
-    knockbackresist: 'KNOCKBACK_RESIST',
-    poisonresist: 'POISON_RESIST',
-    bleedresist: 'BLEED_RESIST',
-    burnimmune: 'BURN_IMMUNE',
-    // 特殊属性
-    poisonchance: 'POISON_CHANCE',
-    websuccessrate: 'WEB_SUCCESS_RATE',
-    debuffduration: 'DEBUFF_DURATION',
-    hitrate: 'HIT_RATE',
+    hp_bonus: 'HP_BONUS',
+    atk_bonus: 'ATK_BONUS',
+    def_bonus: 'DEF_BONUS',
+    spd_bonus: 'SPD_BONUS',
+
+    // ========== 伤害减免 ==========
+    dmgreduction: 'DMG_REDUCTION',
+    damage_reduction: 'DMG_REDUCTION',
+    normalatkdmgreduction: 'NORMAL_ATK_DMG_REDUCTION',
+    skilldmgreduction: 'SKILL_DMG_REDUCTION',
+    critdmgtakenreduction: 'CRIT_DMG_TAKEN_REDUCTION',
+
+    // ========== 再生属性 ==========
+    hpregenpercent: 'HP_REGEN_PERCENT',
+    hpregenflat: 'HP_REGEN_FLAT',
+    hp_regen_percent: 'HP_REGEN_PERCENT',
+    hp_regen_flat: 'HP_REGEN_FLAT',
+
+    // ========== 五行属性 - 攻击力（英文别名） ==========
+    metalatk: 'METAL_ATK',
+    metal_attack: 'METAL_ATK',
+    metal_dmg: 'METAL_ATK',
+    metal_damage: 'METAL_ATK',
+    woodatk: 'WOOD_ATK',
+    wood_attack: 'WOOD_ATK',
+    wood_dmg: 'WOOD_ATK',
+    wood_damage: 'WOOD_ATK',
+    wateratk: 'WATER_ATK',
+    water_attack: 'WATER_ATK',
+    water_dmg: 'WATER_ATK',
+    water_damage: 'WATER_ATK',
+    fireatk: 'FIRE_ATK',
+    fire_attack: 'FIRE_ATK',
+    fire_dmg: 'FIRE_ATK',
+    fire_damage: 'FIRE_ATK',
+    earthatk: 'EARTH_ATK',
+    earth_attack: 'EARTH_ATK',
+    earth_dmg: 'EARTH_ATK',
+    earth_damage: 'EARTH_ATK',
+
+    // ========== 五行属性 - 抗性（英文别名） ==========
+    metalres: 'METAL_RES',
+    metal_resist: 'METAL_RES',
+    metal_resistance: 'METAL_RES',
+    woodres: 'WOOD_RES',
+    wood_resist: 'WOOD_RES',
+    wood_resistance: 'WOOD_RES',
+    waterres: 'WATER_RES',
+    water_resist: 'WATER_RES',
+    water_resistance: 'WATER_RES',
+    fireres: 'FIRE_RES',
+    fire_resist: 'FIRE_RES',
+    fire_resistance: 'FIRE_RES',
+    earthres: 'EARTH_RES',
+    earth_resist: 'EARTH_RES',
+    earth_resistance: 'EARTH_RES',
+
+    // ========== 五行属性 - 中文拼音别名（攻击） ==========
+    jin: 'METAL_ATK',
+    jinatk: 'METAL_ATK',
+    jin_attack: 'METAL_ATK',
+    mu: 'WOOD_ATK',
+    muatk: 'WOOD_ATK',
+    mu_attack: 'WOOD_ATK',
+    shui: 'WATER_ATK',
+    shuiatk: 'WATER_ATK',
+    shui_attack: 'WATER_ATK',
+    huo: 'FIRE_ATK',
+    huoatk: 'FIRE_ATK',
+    huo_attack: 'FIRE_ATK',
+    tu: 'EARTH_ATK',
+    tuatk: 'EARTH_ATK',
+    tu_attack: 'EARTH_ATK',
+
+    // ========== 五行属性 - 中文拼音别名（抗性） ==========
+    jinres: 'METAL_RES',
+    jin_res: 'METAL_RES',
+    mures: 'WOOD_RES',
+    mu_res: 'WOOD_RES',
+    shuires: 'WATER_RES',
+    shui_res: 'WATER_RES',
+    huores: 'FIRE_RES',
+    huo_res: 'FIRE_RES',
+    tures: 'EARTH_RES',
+    tu_res: 'EARTH_RES',
+
+    // ========== 特殊战斗属性 ==========
     dodge: 'DODGE',
-    skillcooldown: 'SKILL_CD',
+    hit: 'HIT',
+    hitrate: 'HIT',
+    hit_rate: 'HIT',
+    controlsuccessrate: 'CONTROL_SUCCESS_RATE',
+    control_success_rate: 'CONTROL_SUCCESS_RATE',
+    controldurationreduction: 'CONTROL_DURATION_REDUCTION',
+    control_duration_reduction: 'CONTROL_DURATION_REDUCTION',
+    damagetakenincrease: 'DAMAGE_TAKEN_INCREASE',
+    damage_taken_increase: 'DAMAGE_TAKEN_INCREASE',
+    vulnerability: 'DAMAGE_TAKEN_INCREASE', // 易伤别名
+
+    // ========== 反弹/反伤 ==========
+    reflectdamagepercent: 'REFLECT_DAMAGE_PERCENT',
+    reflect_damage_percent: 'REFLECT_DAMAGE_PERCENT',
+    reflect_dmg: 'REFLECT_DAMAGE_PERCENT',
+    counterattack: 'REFLECT_DAMAGE_PERCENT', // 反伤别名
+
+    // ========== 抗性 ==========
+    poisonres: 'POISON_RES',
+    poison_res: 'POISON_RES',
+    poison_resist: 'POISON_RES',
+    poison_resistance: 'POISON_RES',
   }
-  return map[lower] || attribute.toUpperCase()
+
+  // 优先精确匹配映射表
+  if (map[lower]) {
+    return map[lower]
+  }
+
+  // 兜底：转大写并移除非法字符（兼容配置文件中可能的格式）
+  return attribute.toUpperCase().replace(/[^A-Z0-9_]/g, '_')
 }
 
 // ========== 工厂函数 ==========

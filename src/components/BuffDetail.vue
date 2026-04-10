@@ -70,7 +70,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { AttributeCodeNames } from '@/types/attribute'
 import type { CompendiumBuff } from '@/composables/useCompendium'
+
 
 interface Props {
   buff: CompendiumBuff
@@ -88,23 +90,11 @@ const isPermanent = computed(() => props.buff.duration === -1)
 
 const attributes = computed((): AttributeDisplay[] => {
   if (!props.buff.attributes) return []
-  
-  const attrMap: Record<string, string> = {
-    'attack': '攻击力',
-    'defense': '防御力',
-    'speed': '速度',
-    'health': '生命值',
-    'critRate': '暴击率',
-    'critDamage': '暴击伤害',
-    'slowImmune': '减速抗性',
-    'demonDamage': '对恶魔伤害',
-    'buddhistDamage': '对佛系伤害'
-  }
 
   return Object.entries(props.buff.attributes).map(([key, value]) => {
     let displayValue = value
     let valueType = 'numeric'
-    
+
     if (value.startsWith('+') || value.startsWith('-')) {
       if (value.includes('%')) {
         displayValue = value
@@ -116,9 +106,9 @@ const attributes = computed((): AttributeDisplay[] => {
     } else if (value.includes('%')) {
       valueType = 'percent'
     }
-    
+
     return {
-      key: attrMap[key] || key,
+      key: AttributeCodeNames[key] || key,
       value: displayValue,
       valueType
     }
@@ -146,7 +136,7 @@ const effectTypeClass = computed(() => {
 
 const getBuffDescription = (buff: CompendiumBuff): string => {
   if (buff.description) return buff.description
-  
+
   const descriptions: Record<string, string> = {
     'buff_speed_up': '提升角色10点速度，持续1回合。',
     'buff_ally_atk_up': '提升同伴5%攻击力，持续2回合。',
@@ -155,7 +145,7 @@ const getBuffDescription = (buff: CompendiumBuff): string => {
     'buff_poison': '中毒状态，每回合损失一定生命值。',
     'buff_shield': '获得护盾保护，可吸收一定伤害。'
   }
-  
+
   return descriptions[buff.id] || `获得${buff.name}效果。`
 }
 
@@ -168,7 +158,7 @@ const getPossibleSources = (buffId: string): string[] => {
     'buff_shield': ['技能: 护盾术'],
     'buff_stun': ['技能: 眩晕打击']
   }
-  
+
   return sources[buffId] || []
 }
 </script>

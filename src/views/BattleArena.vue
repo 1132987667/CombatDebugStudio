@@ -251,9 +251,9 @@ const logManager = {
 // 初始化战斗
 function initBattle() {
   // 完成 敌我ParticipantInfo的初始化
-  const allyIds = ["enemy_063", "enemy_056", "enemy_062"];
+  const allyIds = ["enemy_062", "enemy_063", "enemy_064"];
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
-  const enemyIds = ["enemy_064", "enemy_055"];
+  const enemyIds = ["enemy_062", "enemy_063", "enemy_064"];
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
   console.log('allyList', allyList)
   console.log('enemyList', enemyList)

@@ -529,7 +529,7 @@ export class BattleManager {
    */
   loadSkillConfigs() {
     if (this.battleSystem) {
-      this.battleSystem.loadSkillConfigs(skillsData)
+      this.battleSystem.loadSkillConfigs(GameDataProcessor.getSkillsData())
     }
   }
 

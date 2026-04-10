@@ -83,7 +83,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import type { AttributeOption, AttributeValueType, AttributeSourceType } from '@/types/attribute'
+import type { AttributeOption, AttributeValueType, ModifierSourceType } from '@/types/attribute'
+import {ModifierSourceTypeNames} from '@/types/attribute'
 import { getAttributeMeta, getAttributeCodeByName } from '@/types/attribute'
 
 interface Props {
@@ -114,23 +115,7 @@ const attributeMeta = computed(() => {
     
     // 如果没有找到，尝试使用常见的属性名称映射
     if (!attributeCode) {
-      const nameMap: Record<string, string> = {
-        '生命值': 'currentHp',
-        '气血': 'currentHp',
-        '攻击力': 'attack',
-        '攻击': 'attack',
-        '防御力': 'defense',
-        '防御': 'defense',
-        '速度': 'speed',
-        '暴击率': 'critRate',
-        '暴击伤害': 'critDamage',
-        '免伤率': 'damageReduction',
-        '气血加成': 'healthBonus',
-        '攻击加成': 'attackBonus',
-        '防御加成': 'defenseBonus',
-        '速度加成': 'speedBonus'
-      }
-      attributeCode = nameMap[props.title] || props.title.toLowerCase()
+      attributeCode = props.title.toLowerCase()
     }
     
     return getAttributeMeta(attributeCode)
@@ -140,16 +125,8 @@ const attributeMeta = computed(() => {
   }
 })
 
-const getSourceLabel = (source: AttributeSourceType): string => {
-  const labels: Record<AttributeSourceType, string> = {
-    '基础': '基础属性',
-    '装备': '装备加成',
-    '天赋': '天赋',
-    '被动技能': '被动技能',
-    'buff': 'Buff效果',
-    '其他': '其他'
-  }
-  return labels[source] || source
+const getSourceLabel = (source: ModifierSourceType): string => {
+  return ModifierSourceTypeNames[source] || source
 }
 
 const formatValue = (value: number, valueType: AttributeValueType): string => {

@@ -60,6 +60,8 @@ export interface EquipmentStats {
   [key: string]: number | undefined
 }
 
+export const rarityNames = ['普通', '稀有', '史诗', '传说']
+
 /**
  * 物品基础接口
  * 所有物品都应包含以下字段

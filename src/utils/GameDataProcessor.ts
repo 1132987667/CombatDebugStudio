@@ -11,6 +11,8 @@ import { DataProcessor } from '@/utils/DataProcessor'
 import enemiesData from '@configs/enemies/enemies.json'
 import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
+import passiveSkillsData from '@configs/skills/skill_passive.json'
+import newSkillsData from '@configs/skills/skills_new.json'
 import buffsData from '@configs/buffs/buffs.json'
 import type { Enemy, SkillConfig, SceneData, CharacterStats, AttributeValueType } from '@/types'
 import type { ParticipantSide } from '@/types/battle'
@@ -39,6 +41,10 @@ export class GameDataProcessor {
    */
   static getEnemiesData(): Enemy[] {
     return enemiesData
+  }
+
+  static getSkillsData(): SkillConfig[] {
+    return skillsData.concat(passiveSkillsData, newSkillsData)
   }
 
   /**
@@ -329,7 +335,7 @@ export class GameDataProcessor {
     if (cached) return cached
 
     // 只进行精确匹配
-    const skill = DataProcessor.find(skillsData, (s) => s.id === skillId) as
+    const skill = DataProcessor.find(GameDataProcessor.getSkillsData(), (s) => s.id === skillId) as
       | SkillConfig
       | undefined
 
@@ -504,12 +510,8 @@ export class GameDataProcessor {
         const cachedSkill =
           DataProcessor.getCachedData<SkillConfig>(skillCacheKey)
         if (cachedSkill) return cachedSkill
-
-        // 只进行精确匹配
-        const skill = DataProcessor.find(skillsData, (s) => s.id === id) as
-          | SkillConfig
-          | undefined
-
+        // 更新技能查找位置，包含新技能
+        const skill = GameDataProcessor.findSkillById(id)
         if (skill) {
           DataProcessor.setCachedData(skillCacheKey, skill)
         } else {

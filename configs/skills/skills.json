@@ -2157,72 +2157,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_062_small",
-    "name": "狂风之翼",
-    "description": "对所有敌人造成80%攻击力的普通伤害，并降低其速度30%，持续2回合",
-    "cooldown": 2,
-    "selector": "all_enemies",
-    "steps": [
-      {
-        "type": "damage",
-        "formula": "attack*0.8",
-        "attackType": "normal"
-      },
-      {
-        "type": "debuff",
-        "formula": "0.3",
-        "duration": 2,
-        "effectId": "buff_speed_reduction",
-        "effectParams": {
-          "duration": 2
-        }
-      }
-    ],
-    "energyCost": 25,
-    "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_063_small",
-    "name": "近卫之怒",
-    "description": "对单个敌人造成120%攻击力的普通伤害",
-    "cooldown": 2,
-    "selector": "single_enemy",
-    "steps": [
-      {
-        "type": "damage",
-        "formula": "attack*1.2",
-        "attackType": "normal"
-      }
-    ],
-    "energyCost": 25,
-    "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_064_small",
-    "name": "战争践踏",
-    "description": "对所有敌人造成100%攻击力的普通伤害，并降低其防御力30%，持续2回合",
-    "cooldown": 2,
-    "selector": "all_enemies",
-    "steps": [
-      {
-        "type": "damage",
-        "formula": "attack*1.0",
-        "attackType": "normal"
-      },
-      {
-        "type": "debuff",
-        "formula": "0.3",
-        "duration": 2,
-        "effectId": "buff_def_reduction",
-        "effectParams": {
-          "duration": 2
-        }
-      }
-    ],
-    "energyCost": 25,
-    "skillType": "small"
-  },
-  {
     "id": "skill_boss_008_small",
     "name": "风之护盾",
     "description": "为所有友方单位施加风之护盾，提升防御力20%，持续2回合",
@@ -2241,50 +2175,6 @@
     ],
     "energyCost": 25,
     "skillType": "small"
-  },
-  
-  {
-    "id": "skill_enemy_063_ultimate",
-    "name": "狮王咆哮",
-    "description": "终极技能：对所有敌人造成140%攻击力的普通伤害，并有40%几率使目标眩晕1回合",
-    "cooldown": 5,
-    "maxUses": 2,
-    "selector": "all_enemies",
-    "steps": [
-      {
-        "type": "damage",
-        "formula": "attack*1.4",
-        "attackType": "normal"
-      },
-      {
-        "type": "debuff",
-        "formula": "0.4",
-        "duration": 1,
-        "effectId": "buff_stun",
-        "effectParams": {
-          "duration": 1
-        }
-      }
-    ],
-    "energyCost": 150,
-    "skillType": "ultimate"
-  },
-  {
-    "id": "skill_enemy_064_ultimate",
-    "name": "象阵冲锋",
-    "description": "终极技能：对单个敌人造成230%攻击力的普通伤害",
-    "cooldown": 5,
-    "maxUses": 2,
-    "selector": "single_enemy",
-    "steps": [
-      {
-        "type": "damage",
-        "formula": "attack*2.3",
-        "attackType": "normal"
-      }
-    ],
-    "energyCost": 150,
-    "skillType": "ultimate"
   },
   {
     "id": "skill_boss_008_ultimate",

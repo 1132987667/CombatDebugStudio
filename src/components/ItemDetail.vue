@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import type { CompendiumItem } from '@/composables/useCompendium'
+import { rarityNames } from '@/types/Item'
 
 interface Props {
   item: CompendiumItem
@@ -87,13 +88,7 @@ const getItemTypeText = (type: string): string => {
 }
 
 const getRarityText = (rarity: number): string => {
-  const rarityMap: Record<number, string> = {
-    1: '普通',
-    2: '稀有',
-    3: '史诗',
-    4: '传说'
-  }
-  return rarityMap[rarity] || '普通'
+  return rarityNames[rarity] || '普通'
 }
 
 const getStatLabel = (key: string): string => {

@@ -284,6 +284,7 @@ import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import type { AttributeValue } from "@/types";
 import type { AttributeOption, AttributeValueType } from "@/types/attribute";
 import type { SkillConfig } from "@/types/skill";
+import { SKILL_SCOPE_NAMES, SKILL_TARGET_TYPE_NAMES } from "@/types/skill";
 import type { BattleManager } from '@/core/battle/BattleManager';
 
 // 获取 BattleManager
@@ -388,14 +389,8 @@ const getSkillTypeName = (skill: SkillConfig): string => {
  * @returns 目标类型中文名称
  */
 const getTargetTypeName = (targetType?: string): string => {
-  const targetTypes: Record<string, string> = {
-    'single': '单个目标',
-    'multiple': '多个目标',
-    'area': '区域目标',
-    'chain': '连锁目标',
-    'all': '所有目标'
-  };
-  return targetTypes[targetType || ''] || '未知';
+  if (!targetType) return '未知';
+  return SKILL_TARGET_TYPE_NAMES[targetType as keyof typeof SKILL_TARGET_TYPE_NAMES] || '未知';
 };
 
 /**
@@ -404,22 +399,8 @@ const getTargetTypeName = (targetType?: string): string => {
  * @returns 作用范围中文名称
  */
 const getScopeName = (scope?: string): string => {
-  const scopes: Record<string, string> = {
-    'enemy': '敌人',
-    'ally': '友方',
-    'self': '自己',
-    'all': '所有单位',
-    'enemy_front': '敌人前排',
-    'enemy_back': '敌人后排',
-    'ally_front': '友方前排',
-    'ally_back': '友方后排',
-    'adjacent': '相邻目标',
-    'lowest_hp_ally': '生命值最低友方',
-    'lowest_hp_enemy': '生命值最低敌人',
-    'random_enemy': '随机敌人',
-    'random_ally': '随机友方'
-  };
-  return scopes[scope || ''] || '未知';
+  if (!scope) return '未知';
+  return SKILL_SCOPE_NAMES[scope as keyof typeof SKILL_SCOPE_NAMES] || '未知';
 };
 
 /**

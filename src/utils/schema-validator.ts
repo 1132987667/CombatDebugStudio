@@ -7,6 +7,7 @@
  */
 
 import { SkillConfig, SkillStep } from "@/types"
+import { isValidSkillScope, isValidSkillTargetType, SELECTOR_TO_SCOPE } from "@/types/skill"
 
 /**
  * 验证结果接口
@@ -197,18 +198,10 @@ export function validateSkillConfig(skillConfig: SkillConfig): ValidationResult 
   if (!skillConfig.selector) {
     errors.push('Missing required field: selector')
   } else {
-    const validSelectors = [
-      'single_enemy',
-      'all_enemies',
-      'self',
-      'all_allies',
-      'lowest_ally',
-      'lowest_enemy',
-      'all',
-    ]
+    const validSelectors = Object.keys(SELECTOR_TO_SCOPE)
     if (!validSelectors.includes(skillConfig.selector)) {
       errors.push(
-        `Invalid selector: ${skillConfig.selector}. Must be one of: ${validSelectors.join(', ')}`,
+        `Invalid selector: ${skillConfig.selector}. Must be a valid selector value.`,
       )
     }
   }
@@ -226,24 +219,11 @@ export function validateSkillConfig(skillConfig: SkillConfig): ValidationResult 
         errors.push(`Step ${index}: Missing required field: type`)
       }
 
-      if (!step.formula) {
-        errors.push(`Step ${index}: Missing required field: formula`)
-      }
-
       // ✅ 添加：验证 step.target 字段
       if (step.target) {
-        const validTargets = [
-          'enemy',
-          'self',
-          'allies',
-          'all_allies',
-          'lowest_ally',
-          'lowest_enemy',
-          'all',
-        ]
-        if (!validTargets.includes(step.target)) {
+        if (!isValidSkillScope(step.target)) {
           errors.push(
-            `Step ${index}: Invalid target: ${step.target}. Must be one of: ${validTargets.join(', ')}`,
+            `Step ${index}: Invalid target: ${step.target}. Must be a valid SkillScope value.`,
           )
         }
       }

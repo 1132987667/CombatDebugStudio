@@ -10,8 +10,8 @@
 import { ref, computed } from 'vue'
 import enemiesData from '@configs/enemies/enemies.json'
 import buffsData from '@configs/buffs/buffs.json'
-import skillsData from '@configs/skills/skills.json'
 import materialsData from '@configs/materials/materials.json'
+import { GameDataProcessor } from '@/utils/GameDataProcessor'
 
 export interface CompendiumEnemy {
   id: string
@@ -70,7 +70,7 @@ export type CompendiumTabType = 'enemy' | 'buff' | 'item'
 export function useCompendium() {
   const enemies = ref<CompendiumEnemy[]>(enemiesData as CompendiumEnemy[])
   const buffs = ref<CompendiumBuff[]>(buffsData as CompendiumBuff[])
-  const skills = ref<CompendiumSkill[]>(skillsData as CompendiumSkill[])
+  const skills = ref<CompendiumSkill[]>(GameDataProcessor.getSkillsData() as CompendiumSkill[])
   const items = ref<CompendiumItem[]>(materialsData as CompendiumItem[])
 
   const isLoading = ref(false)

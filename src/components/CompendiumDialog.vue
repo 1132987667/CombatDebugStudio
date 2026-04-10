@@ -81,6 +81,7 @@ import { useCompendium, type CompendiumTabType } from '@/composables/useCompendi
 import EnemyDetail from './EnemyDetail.vue'
 import BuffDetail from './BuffDetail.vue'
 import ItemDetail from './ItemDetail.vue'
+import { rarityNames } from '@/types/Item'
 
 interface Props {
   modelValue: boolean
@@ -163,13 +164,7 @@ const getItemName = (item: any): string => {
 }
 
 const getRarityText = (rarity: number): string => {
-  const rarityMap: Record<number, string> = {
-    1: '普通',
-    2: '稀有',
-    3: '史诗',
-    4: '传说'
-  }
-  return rarityMap[rarity] || '普通'
+  return rarityNames[rarity] || '普通'
 }
 
 const selectItem = (id: string) => {

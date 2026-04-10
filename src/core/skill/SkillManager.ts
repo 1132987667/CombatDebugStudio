@@ -25,22 +25,14 @@
 // export const AttributeCodes = {
 //   // ... 原有
   
-//   // 伤害减免细分
-//   NORMAL_ATK_DMG_REDUCTION: 'NORMAL_ATK_DMG_REDUCTION',     // 普通攻击伤害减免
-//   SKILL_DMG_REDUCTION: 'SKILL_DMG_REDUCTION',               // 技能伤害减免
-//   PHYSICAL_DMG_REDUCTION: 'PHYSICAL_DMG_REDUCTION',         // 物理伤害减免
-//   CRIT_DMG_TAKEN_REDUCTION: 'CRIT_DMG_TAKEN_REDUCTION',     // 受到暴击伤害减免
-  
+
 //   // 免疫标记（值 0/1）
 //   IMMUNE_SLOW: 'IMMUNE_SLOW',
 //   IMMUNE_STUN: 'IMMUNE_STUN',
 //   IMMUNE_POISON: 'IMMUNE_POISON',
 //   IMMUNE_BLEED: 'IMMUNE_BLEED',
   
-//   // 再生属性
-//   HP_REGEN_PERCENT: 'HP_REGEN_PERCENT',   // 每回合恢复最大生命百分比
-//   HP_REGEN_FLAT: 'HP_REGEN_FLAT',         // 每回合恢复固定生命
-  
+
 //   // 光环相关（用于传递效果）
 //   AURA_ATK_BONUS: 'AURA_ATK_BONUS',
 //   AURA_DEF_BONUS: 'AURA_DEF_BONUS',
@@ -52,61 +44,30 @@
 // export const AttributeCodes = {
 //   // ... 原有属性（HP, ATK, DEF, SPD, CRIT_RATE, CRIT_DMG 等）
 
-//   // ========== 伤害减免细分 ==========
-//   PHYSICAL_DMG_REDUCTION: 'PHYSICAL_DMG_REDUCTION',   // 物理伤害减免
-//   MAGICAL_DMG_REDUCTION: 'MAGICAL_DMG_REDUCTION',     // 魔法伤害减免
-//   NORMAL_ATK_DMG_REDUCTION: 'NORMAL_ATK_DMG_REDUCTION', // 普通攻击伤害减免
-//   CRIT_DMG_TAKEN_REDUCTION: 'CRIT_DMG_TAKEN_REDUCTION', // 受到暴击伤害减免
 
-//   // ========== 元素属性 ==========
-//   WATER_ATK: 'WATER_ATK',                   // 水属性攻击力
-//   WATER_RES: 'WATER_RES',                   // 水属性抗性
-//   FIRE_ATK: 'FIRE_ATK',                     // 火属性攻击力
-//   FIRE_RES: 'FIRE_RES',                     // 火属性抗性
-//   EARTH_ATK: 'EARTH_ATK',                   // 地属性攻击力
-//   EARTH_RES: 'EARTH_RES',                   // 地属性抗性
-//   WIND_ATK: 'WIND_ATK',                     // 风属性攻击力
-//   WIND_RES: 'WIND_RES',                     // 风属性抗性
 
-//   // 元素技能伤害加成
-//   WATER_SKILL_DMG_BONUS: 'WATER_SKILL_DMG_BONUS',
-//   FIRE_SKILL_DMG_BONUS: 'FIRE_SKILL_DMG_BONUS',
-//   PHYSICAL_SKILL_DMG_BONUS: 'PHYSICAL_SKILL_DMG_BONUS',
 
-//   // ========== 特殊战斗属性 ==========
-//   DODGE: 'DODGE',                           // 闪避率
-//   HIT: 'HIT',                               // 命中率
-//   CONTROL_SUCCESS_RATE: 'CONTROL_SUCCESS_RATE', // 控制技能成功率
-//   CONTROL_DURATION_REDUCTION: 'CONTROL_DURATION_REDUCTION', // 受控制时间减免
+
+
 
 //   // ========== 种族/条件伤害加成 ==========
 //   DAMAGE_TO_DEMON: 'DAMAGE_TO_DEMON',       // 对妖魔鬼怪伤害加成
 //   DAMAGE_TO_LOW_HP: 'DAMAGE_TO_LOW_HP',     // 对低血量目标伤害加成
-
-//   // ========== 反弹/反伤 ==========
-//   REFLECT_DAMAGE_PERCENT: 'REFLECT_DAMAGE_PERCENT', // 反弹伤害比例
-
-//   // ========== 再生属性 ==========
-//   HP_REGEN_PERCENT: 'HP_REGEN_PERCENT',     // 每回合恢复最大生命百分比
-//   HP_REGEN_FLAT: 'HP_REGEN_FLAT',           // 每回合恢复固定生命
 
 //   // ========== 免疫标记（值 0/1） ==========
 //   IMMUNE_ALL_CONTROL: 'IMMUNE_ALL_CONTROL', // 免疫所有控制效果
 //   IMMUNE_SLOW: 'IMMUNE_SLOW',
 //   IMMUNE_POISON: 'IMMUNE_POISON',
 
-//   // ========== 抗性 ==========
-//   POISON_RES: 'POISON_RES',                 // 毒素抗性
 
-//   // ========== 光环属性（用于间接计算） ==========
-//   AURA_ATK_BONUS: 'AURA_ATK_BONUS',
-//   AURA_DEF_BONUS: 'AURA_DEF_BONUS',
-//   AURA_DODGE_BONUS: 'AURA_DODGE_BONUS',
-//   AURA_CRIT_RATE: 'AURA_CRIT_RATE',
-//   AURA_WATER_ATK_BONUS: 'AURA_WATER_ATK_BONUS',
 // } as const
-// HIT_RATE: 'HIT_RATE',                     // 命中率（百分比）
-//   DAMAGE_TAKEN_INCREASE: 'DAMAGE_TAKEN_INCREASE', // 受到的伤害增加（易伤）
+// interface ApplyBuffStep {
+//   type: 'apply_buff'
+//   target: 'selected' | 'all_enemies' | 'all_allies' | 'self'
+//   buffId: string
+//   probability?: number  // 0-1，默认 1
+// }
+
 
 import type {
   SkillConfig,

@@ -4,7 +4,7 @@
  * 作者: CombatDebugStudio
  * 功能: 游戏数据处理工具类
  * 描述: 专门处理游戏相关的数据操作，提供敌人、技能、场景等数据的加载和查询功能
- * 版本: 1.0.0
+ * 版本: 3.0.0 (重构版 - 支持结构化修饰符模板)
  */
 
 import { DataProcessor } from '@/utils/DataProcessor'
@@ -15,7 +15,14 @@ import buffsData from '@configs/buffs/buffs.json'
 import type { Enemy, SkillConfig, SceneData, CharacterStats, AttributeValueType } from '@/types'
 import type { ParticipantSide } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
-import type { IModifierProvider } from '@/types/attribute'
+import type {
+  IModifierProvider,
+  AttributeType,
+  ModifierType,
+  ModifierSourceType,
+} from '@/types/attribute'
+import { normalizeAttributeCode } from '@/types/attribute'
+import type { ModifierTemplate, StructuredBuffConfig } from '@/types/modifier-template'
 import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
 import { container } from '@/core/di/Container'
 import { BuffSystem } from '@/core/BuffSystem'
@@ -114,11 +121,17 @@ export class GameDataProcessor {
   }
 
   /**
-   * 将 Enemy 转换为 BattleParticipant
+   * 将 Enemy 转换为 BattleParticipant（重构版）
+   * 
+   * 改进点：
+   * - 不再预先计算最终属性，只传入基础值
+   * - 被动技能加成作为永久修饰符添加到参与者的 ModifierStack
+   * - 支持属性组成追踪和调试拆解
+   * 
    * @param enemy - 敌人数据
    * @param type - 参与者类型
    * @param modifierProvider - 修饰符提供者（可选，通常为 BuffSystem 实例）
-   * @returns BattleParticipantImpl - 包含完整战斗属性的参与者实例
+   * @returns BattleParticipantImpl - 包含基础属性的参与者实例
    */
   static enemyToParticipant(
     enemy: Enemy,
@@ -126,54 +139,109 @@ export class GameDataProcessor {
     modifierProvider?: IModifierProvider,
   ): BattleParticipantImpl {
     const counter = new Counter()
-    // 如果没有传入 modifierProvider，则从容器获取（单例）
     const buffSystem =
-      modifierProvider || container.resolve<BuffSystem>('BuffSystem')
+      modifierProvider ?? container.resolve<BuffSystem>('BuffSystem')
 
+    // 1. 解析被动技能并生成修饰符模板列表
     const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive)
-    const smallSkills = GameDataProcessor.getSkillByIds(enemy.skills?.small)
-    const ultimateSkills = GameDataProcessor.getSkillByIds(enemy.skills?.ultimate)
-    const bonuses =
-      GameDataProcessor.calculatePassiveSkillBonuses(passiveSkills)
+    const passiveModifierTemplates = GameDataProcessor.buildPassiveModifiers(passiveSkills)
 
+    // 2. 基础属性（未加任何修饰符）
     const baseHealth = enemy.stats.health
     const baseAttack = (enemy.stats.minAttack + enemy.stats.maxAttack) / 2
     const baseDefense = enemy.stats.defense
     const baseSpeed = enemy.stats.speed
 
-    const finalHealth = Math.floor(baseHealth * (1 + bonuses.healthBonus))
-    const finalAttack = Math.floor(baseAttack * (1 + bonuses.attackBonus))
-    const finalDefense = Math.floor(baseDefense * (1 + bonuses.defenseBonus))
-    const finalSpeed = Math.floor(baseSpeed * (1 + bonuses.speedBonus))
-
-    return new BattleParticipantImpl(
+    // 3. 创建参与者实例（传入基础值，不预先计算最终值）
+    const participant = new BattleParticipantImpl(
       {
-        id: type + counter.next(),
+        id: `${type}_${enemy.id}_${counter.next()}`,
         name: enemy.name,
-        type: type,
+        type,
         team: type,
         level: enemy.level,
-        maxHealth: finalHealth,
-        currentHealth: finalHealth,
-        minAttack: enemy.stats.minAttack,
-        maxAttack: enemy.stats.maxAttack,
-        defense: finalDefense,
-        speed: finalSpeed,
-        critRate: bonuses.critRate,
-        critDamage: bonuses.critDamage,
-        damageReduction: bonuses.damageReduction,
-        healthBonus: bonuses.healthBonus * 100,
-        attackBonus: bonuses.attackBonus * 100,
-        defenseBonus: bonuses.defenseBonus * 100,
-        speedBonus: bonuses.speedBonus * 100,
+        // 基础属性值
+        baseHealth,
+        baseAttack,
+        baseDefense,
+        baseSpeed,
+        // 其他战斗属性默认值
+        critRate: 10,
+        critDamage: 125,
+        damageReduction: 0,
+        // 技能列表
         skills: {
-          small: smallSkills,
+          small: GameDataProcessor.getSkillByIds(enemy.skills?.small),
           passive: passiveSkills,
-          ultimate: ultimateSkills,
+          ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate),
         },
       },
       buffSystem,
     )
+
+    // 4. 将被动技能修饰符注册到参与者的修饰符堆栈
+    const modifierStack = buffSystem.getModifierStack(participant.id)
+    if (modifierStack) {
+      for (const template of passiveModifierTemplates) {
+        modifierStack.addModifier({
+          buffInstanceId: `passive_${participant.id}_${template.id}`,
+          attribute: template.targetAttribute,
+          value: typeof template.value === 'number' ? template.value : 0,
+          type: template.type,
+        })
+      }
+      // 标记所有属性为脏，触发重新计算
+      participant.markAllAttributesDirty()
+    } else {
+      console.warn(`[GameDataProcessor] 无法获取参与者 ${participant.id} 的修饰符堆栈`)
+    }
+
+    return participant
+  }
+
+  /**
+   * 从被动技能构建结构化修饰符模板列表
+   * @param passiveSkills 被动技能配置数组
+   * @returns 修饰符模板数组
+   */
+  static buildPassiveModifiers(passiveSkills: SkillConfig[]): ModifierTemplate[] {
+    const templates: ModifierTemplate[] = []
+
+    for (const skill of passiveSkills) {
+      if (!skill.steps) continue
+
+      for (const step of skill.steps) {
+        // 处理直接定义的修饰符（新结构）
+        if (step.modifiers) {
+          templates.push(...step.modifiers)
+        }
+
+        // 处理通过 Buff 间接添加的修饰符
+        if (step.buffId) {
+          const buff = GameDataProcessor.findBuffById(step.buffId) as StructuredBuffConfig | undefined
+          if (buff?.modifiers) {
+            // 将 Buff 的修饰符模板复制并附加来源信息
+            for (const mod of buff.modifiers) {
+              templates.push({
+                ...mod,
+                id: `buff_${buff.id}_${mod.id}`,
+                sourceName: buff.name || step.buffId,
+                sourceType: 'buff',
+              })
+            }
+          }
+        }
+      }
+    }
+
+    return templates
+  }
+
+  /**
+   * 根据 Buff ID 查找 Buff 配置
+   */
+  static findBuffById(buffId: string): StructuredBuffConfig | undefined {
+    return (buffsData as StructuredBuffConfig[]).find((b) => b.id === buffId)
   }
 
   /**

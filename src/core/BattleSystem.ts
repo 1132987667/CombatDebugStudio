@@ -4,7 +4,7 @@
  * 作者: CombatDebugStudio
  * 功能: 战斗系统核心实现
  * 描述: 实现战斗系统的核心功能，包括战斗创建、参与者管理、回合处理、动作执行等，集成AI系统和技能系统
- * 版本: 1.0.0
+ * 版本: 2.0.0 - 集成触发器事件系统
  */
 
 import type { IBattleSystem } from '@/core/battle/interfaces.ts'
@@ -18,6 +18,7 @@ import type {
 } from '@/types/battle'
 import { BattleActionHelper } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
+import type { TriggerPhase, TriggerEventContext } from '@/types/buff'
 
 import type { BattleAI } from '@/core/BattleAI'
 import { BuffSystem } from '@/core/BuffSystem'
@@ -43,6 +44,7 @@ import {
 } from '@/core/skill/PassiveSkillManager'
 import { SkillManager } from '@/core/skill/SkillManager'
 import { eventBus } from '@/main'
+import { TriggerEventBus } from '@/core/TriggerEventBus'
 import {
   AUTO_BATTLE_CONFIG,
   BATTLE_CONSTANTS,
@@ -172,6 +174,36 @@ export class BattleSystem implements IBattleSystem {
     private readonly passiveSkillManager: PassiveSkillManager,
   ) {
     this.battleData = this.getDefBattleData()
+  }
+
+  /**
+   * 获取触发器事件总线实例
+   * @returns 触发器事件总线实例
+   */
+  private getTriggerEventBus(): TriggerEventBus {
+    return this.buffSystem.getEventBus()
+  }
+
+  /**
+   * 触发战斗事件
+   * @param phase 触发阶段
+   * @param context 事件上下文
+   */
+  private emitTriggerEvent(
+    phase: TriggerPhase,
+    context: Partial<TriggerEventContext>,
+  ): void {
+    const eventBus = this.getTriggerEventBus()
+    const fullContext: TriggerEventContext = {
+      phase,
+      sourceId: context.sourceId ?? '',
+      targetId: context.targetId,
+      value: context.value,
+      currentTurn: context.currentTurn ?? this.battleData.currentRound,
+      battleData: this.battleData,
+      ...context,
+    }
+    eventBus.emit(phase, fullContext)
   }
 
   /**
@@ -343,6 +375,13 @@ export class BattleSystem implements IBattleSystem {
   private applyPassiveSkills(
     participants: Map<string, BattleParticipant>,
   ): void {
+    // 触发战斗开始事件
+    participants.forEach((participant) => {
+      this.emitTriggerEvent('ON_BATTLE_START', {
+        sourceId: participant.id,
+      })
+    })
+
     // 使用PassiveSkillManager触发战斗开始时的被动技能
     this.passiveSkillManager.triggerPassiveSkillsForAll(
       PassiveSkillTrigger.BATTLE_START,
@@ -376,6 +415,14 @@ export class BattleSystem implements IBattleSystem {
     }
 
     try {
+      // 触发回合开始事件
+      aliveParticipants.forEach((participant) => {
+        this.emitTriggerEvent('ON_TURN_START', {
+          sourceId: participant.id,
+          currentTurn: battle.currentRound,
+        })
+      })
+
       // 触发回合开始时的被动技能
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         PassiveSkillTrigger.TURN_START,
@@ -442,6 +489,17 @@ export class BattleSystem implements IBattleSystem {
       }
 
       await this.waitForAnimation()
+
+      // 触发回合结束事件
+      const endParticipants = Array.from(battle.participants.values()).filter(
+        (p) => p.isAlive(),
+      )
+      endParticipants.forEach((participant) => {
+        this.emitTriggerEvent('ON_TURN_END', {
+          sourceId: participant.id,
+          currentTurn: battle.currentRound,
+        })
+      })
 
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         PassiveSkillTrigger.TURN_END,

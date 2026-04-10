@@ -1,0 +1,1401 @@
+[
+  {
+    "id": "skill_enemy_004_passive",
+    "name": "坚韧表皮",
+    "description": "被动效果：永久降低受到的暴击伤害15%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "tough_skin_crit_dmg_reduce",
+            "targetAttribute": "CRIT_DMG_TAKEN_REDUCTION",
+            "type": "ADDITIVE",
+            "value": 0.15,
+            "sourceName": "坚韧表皮"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_005_passive",
+    "name": "石化皮肤",
+    "description": "被动效果：受到普通攻击时，伤害降低20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "stone_skin_normal_dmg_reduce",
+            "targetAttribute": "NORMAL_ATK_DMG_REDUCTION",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "石化皮肤"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_006_passive",
+    "name": "山林之子",
+    "description": "被动效果：免疫减速效果",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "mountain_child_slow_immune",
+            "targetAttribute": "IMMUNE_SLOW",
+            "type": "ADDITIVE",
+            "value": 1,
+            "sourceName": "山林之子"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_007_passive",
+    "name": "花之再生",
+    "description": "被动效果：每回合结束时，恢复自身最大生命值5%的生命值",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "flower_regen_percent",
+            "targetAttribute": "HP_REGEN_PERCENT",
+            "type": "ADDITIVE",
+            "value": 0.05,
+            "sourceName": "花之再生"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_008_passive",
+    "name": "首领威严",
+    "description": "被动效果：为所有友方单位施加光环，提升15%攻击力和10%防御力",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "aura",
+        "auraId": "aura_leader_awe"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_boss_001_passive",
+    "name": "山灵庇护",
+    "description": "被动效果：受到攻击时，有15%几率使攻击者减速，持续2回合；永久提升自身防御力20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "mountain_protection_def",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.20,
+            "sourceName": "山灵庇护"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_mountain_protection_trigger"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_012_passive",
+    "name": "队长指挥",
+    "description": "被动效果：为所有友方单位施加光环，提升暴击率10%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "aura",
+        "auraId": "aura_commander_crit"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_013_passive",
+    "name": "甲壳防御",
+    "description": "被动效果：永久降低受到的物理伤害15%",
+    "skillType": "passive",
+    "cooldown": 0,
+    "energyCost": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "shell_defense_phys_dmg_reduce",
+            "targetAttribute": "DAMAGE_REDUCE_PHYSICAL",
+            "type": "ADDITIVE",
+            "value": 0.15,
+            "sourceName": "甲壳防御"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "skill_enemy_014_passive",
+    "name": "鱼群之怒",
+    "description": "被动效果：每回合结束时，有30%几率清除自身一个负面状态",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_fish_rage"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_boss_002_passive",
+    "name": "水之共鸣",
+    "description": "被动效果：每回合开始时，为生命值最低的友方单位恢复5%最大生命值；永久提升自身生命值15%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "water_resonance_hp",
+            "targetAttribute": "MAX_HP",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "水之共鸣"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_water_resonance_trigger"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_015_passive",
+    "name": "统御水域",
+    "description": "被动效果：为所有友方单位施加水元素共鸣光环，提升水属性攻击力",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "aura",
+        "auraId": "aura_water_dominance"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_016_passive",
+    "name": "黄金甲壳",
+    "description": "被动效果：永久降低受到的魔法伤害20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "gold_shell_magic_reduce",
+            "targetAttribute": "MAGICAL_DMG_REDUCTION",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "黄金甲壳"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_020_passive",
+    "name": "岩石肌肤",
+    "description": "被动效果：受到普通攻击时，伤害降低10%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "stone_flesh_normal_reduce",
+            "targetAttribute": "NORMAL_ATK_DMG_REDUCTION",
+            "type": "ADDITIVE",
+            "value": 0.10,
+            "sourceName": "岩石肌肤"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_021_passive",
+    "name": "金属化",
+    "description": "被动效果：受到魔法攻击时，有20%几率使攻击者受到30%反弹伤害",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_metallization"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_022_passive",
+    "name": "土灵加护",
+    "description": "被动效果：受到攻击时，有15%几率为自身施加护盾",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_earth_protection"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_boss_003_passive",
+    "name": "大地恩赐",
+    "description": "被动效果：生命值低于50%时，每回合结束时恢复10%最大生命值；永久提升自身生命值20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "earth_gift_hp",
+            "targetAttribute": "MAX_HP",
+            "type": "PERCENTAGE",
+            "value": 0.20,
+            "sourceName": "大地恩赐"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_earth_gift_trigger"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_028_passive",
+    "name": "老树盘根",
+    "description": "被动效果：受到攻击时，有20%几率使攻击者减速，持续2回合",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_old_tree_roots"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_029_passive",
+    "name": "妖气弥漫",
+    "description": "被动效果：为所有友方单位施加光环，提升闪避率",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "aura",
+        "auraId": "aura_demon_aura"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_030_passive",
+    "name": "厚皮",
+    "description": "被动效果：永久降低受到的暴击伤害25%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "thick_skin_crit_reduce",
+            "targetAttribute": "CRIT_DMG_TAKEN_REDUCTION",
+            "type": "ADDITIVE",
+            "value": 0.25,
+            "sourceName": "厚皮"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_031_passive",
+    "name": "千年树龄",
+    "description": "被动效果：每回合结束时，恢复自身最大生命值5%的生命值",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_thousand_year"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_032_passive",
+    "name": "老谋深算",
+    "description": "被动效果：受到的负面状态持续时间减少1回合",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "scheming_duration_reduce",
+            "targetAttribute": "CONTROL_DURATION_REDUCTION",
+            "type": "ADDITIVE",
+            "value": 1,
+            "sourceName": "老谋深算"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_boss_004_passive",
+    "name": "迷雾笼罩",
+    "description": "被动效果：为所有友方单位施加光环，提升全体闪避率；永久提升自身速度20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "mist_coverage_spd",
+            "targetAttribute": "SPD",
+            "type": "PERCENTAGE",
+            "value": 0.20,
+            "sourceName": "迷雾笼罩"
+          }
+        ]
+      },
+      {
+        "type": "aura",
+        "auraId": "aura_mist_coverage"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_036_passive",
+    "name": "流沙之体",
+    "description": "被动技能,自身获得流沙之体效果,永久提升防御力和闪避率",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "quicksand_def",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "流沙之体"
+          },
+          {
+            "id": "quicksand_dodge",
+            "targetAttribute": "DODGE",
+            "type": "ADDITIVE",
+            "value": 0.10,
+            "sourceName": "流沙之体"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_037_passive",
+    "name": "蛇皮",
+    "description": "被动技能,自身获得蛇皮效果,永久提升物理防御力和毒素抗性",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "snake_skin_def",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.10,
+            "sourceName": "蛇皮"
+          },
+          {
+            "id": "snake_skin_poison_res",
+            "targetAttribute": "POISON_RES",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "蛇皮"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_038_passive",
+    "name": "水之加护",
+    "description": "被动技能,自身获得水之加护效果,永久提升魔法防御力和水属性抗性",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "water_protection_mdef",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.10,
+            "sourceName": "水之加护"
+          },
+          {
+            "id": "water_protection_res",
+            "targetAttribute": "WATER_RES",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "水之加护"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_039_passive",
+    "name": "沙之化身",
+    "description": "被动技能,自身获得沙之化身效果,永久大幅提升防御力和闪避率,并对物理伤害有额外减免",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "sand_avatar_def",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.25,
+            "sourceName": "沙之化身"
+          },
+          {
+            "id": "sand_avatar_dodge",
+            "targetAttribute": "DODGE",
+            "type": "ADDITIVE",
+            "value": 0.15,
+            "sourceName": "沙之化身"
+          },
+          {
+            "id": "sand_avatar_phys_reduce",
+            "targetAttribute": "PHYSICAL_DMG_REDUCTION",
+            "type": "ADDITIVE",
+            "value": 0.10,
+            "sourceName": "沙之化身"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_040_passive",
+    "name": "蛇王威严",
+    "description": "被动技能,自身获得蛇王威严效果,永久提升攻击力和毒素抗性,攻击时有概率使敌人中毒",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "snake_king_atk",
+            "targetAttribute": "ATK",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "蛇王威严"
+          },
+          {
+            "id": "snake_king_poison_res",
+            "targetAttribute": "POISON_RES",
+            "type": "ADDITIVE",
+            "value": 0.25,
+            "sourceName": "蛇王威严"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_snake_king_awe_trigger"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_boss_005_passive",
+    "name": "水之守护",
+    "description": "被动技能,自身获得水之守护效果,永久提升魔法防御力和水属性抗性,受到攻击时有概率回复生命值;永久提升自身攻击力15%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "water_guardian_mdef",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "水之守护"
+          },
+          {
+            "id": "water_guardian_res",
+            "targetAttribute": "WATER_RES",
+            "type": "ADDITIVE",
+            "value": 0.25,
+            "sourceName": "水之守护"
+          },
+          {
+            "id": "water_guardian_atk",
+            "targetAttribute": "ATK",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "水之守护"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_water_guardian_trigger"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_044_passive",
+    "name": "熔岩皮肤",
+    "description": "被动技能,自身获得熔岩皮肤效果,永久提升物理防御力和火属性抗性,受到攻击时有概率反弹火属性伤害",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "lava_skin_def",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "熔岩皮肤"
+          },
+          {
+            "id": "lava_skin_fire_res",
+            "targetAttribute": "FIRE_RES",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "熔岩皮肤"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_lava_skin_trigger"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_045_passive",
+    "name": "火元素共鸣",
+    "description": "被动技能,自身获得火元素共鸣效果,永久提升火属性攻击力和火属性抗性",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "fire_resonance_atk",
+            "targetAttribute": "FIRE_ATK",
+            "type": "PERCENTAGE",
+            "value": 0.20,
+            "sourceName": "火元素共鸣"
+          },
+          {
+            "id": "fire_resonance_res",
+            "targetAttribute": "FIRE_RES",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "火元素共鸣"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_046_passive",
+    "name": "火焰掌控",
+    "description": "被动技能,自身获得火焰掌控效果,永久提升暴击率和暴击伤害",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "fire_control_crit",
+            "targetAttribute": "CRIT_RATE",
+            "type": "ADDITIVE",
+            "value": 0.10,
+            "sourceName": "火焰掌控"
+          },
+          {
+            "id": "fire_control_critdmg",
+            "targetAttribute": "CRIT_DMG",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "火焰掌控"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_047_passive",
+    "name": "火焰领主",
+    "description": "被动技能,自身获得火焰领主效果,永久大幅提升火属性攻击力和火属性抗性,火属性技能伤害提升50%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "fire_lord_atk",
+            "targetAttribute": "FIRE_ATK",
+            "type": "PERCENTAGE",
+            "value": 0.30,
+            "sourceName": "火焰领主"
+          },
+          {
+            "id": "fire_lord_res",
+            "targetAttribute": "FIRE_RES",
+            "type": "ADDITIVE",
+            "value": 0.30,
+            "sourceName": "火焰领主"
+          },
+          {
+            "id": "fire_lord_skill_dmg",
+            "targetAttribute": "FIRE_SKILL_DMG_BONUS",
+            "type": "ADDITIVE",
+            "value": 0.50,
+            "sourceName": "火焰领主"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_048_passive",
+    "name": "巨人之力",
+    "description": "被动技能,自身获得巨人之力效果,永久大幅提升攻击力和暴击伤害,物理技能伤害提升30%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "giant_power_atk",
+            "targetAttribute": "ATK",
+            "type": "PERCENTAGE",
+            "value": 0.25,
+            "sourceName": "巨人之力"
+          },
+          {
+            "id": "giant_power_critdmg",
+            "targetAttribute": "CRIT_DMG",
+            "type": "ADDITIVE",
+            "value": 0.30,
+            "sourceName": "巨人之力"
+          },
+          {
+            "id": "giant_power_phys_skill_dmg",
+            "targetAttribute": "PHYSICAL_SKILL_DMG_BONUS",
+            "type": "ADDITIVE",
+            "value": 0.30,
+            "sourceName": "巨人之力"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_boss_006_passive",
+    "name": "地火之心",
+    "description": "被动技能,自身获得地火之心效果,永久提升所有属性,受到火属性伤害时回复生命值;永久提升自身攻击力20%和防御力15%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "earth_fire_heart_atk",
+            "targetAttribute": "ATK",
+            "type": "PERCENTAGE",
+            "value": 0.20,
+            "sourceName": "地火之心"
+          },
+          {
+            "id": "earth_fire_heart_def",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "地火之心"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_earth_fire_heart_trigger"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_052_passive",
+    "name": "蛛网大师",
+    "description": "被动效果：提升自身控制技能的成功率20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "web_master_control_rate",
+            "targetAttribute": "CONTROL_SUCCESS_RATE",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "蛛网大师"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_053_passive",
+    "name": "毒蛾粉",
+    "description": "被动效果：受到攻击时，有25%几率使攻击者中毒，每回合造成攻击者攻击力5%的伤害，持续2回合",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_moth_powder"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_054_passive",
+    "name": "亲卫之忠",
+    "description": "被动效果：当友方单位受到攻击时，有15%几率为其分担30%的伤害",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_guard_loyalty"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_055_passive",
+    "name": "蛛后之母",
+    "description": "被动效果：每回合结束时，有30%几率召唤一只小蜘蛛协助战斗",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_spider_queen"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_056_passive",
+    "name": "女王威严",
+    "description": "被动效果：降低所有敌方单位的攻击力15%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_queen_awe"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_boss_007_passive",
+    "name": "谷中霸主",
+    "description": "被动效果：提升自身所有属性10%，并免疫所有控制效果;永久提升自身生命值25%与攻击力15%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "valley_overlord_all",
+            "targetAttribute": "MAX_HP",
+            "type": "PERCENTAGE",
+            "value": 0.25,
+            "sourceName": "谷中霸主"
+          },
+          {
+            "id": "valley_overlord_atk",
+            "targetAttribute": "ATK",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "谷中霸主"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_valley_overlord"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_060_passive",
+    "name": "统领光环",
+    "description": "被动效果：提升所有友方单位的攻击力10%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_commander_aura"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_061_passive",
+    "name": "铁甲护体",
+    "description": "被动效果：提升自身防御力25%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "iron_armor_def",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.25,
+            "sourceName": "铁甲护体"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_062_passive",
+    "name": "天空霸主",
+    "description": "被动效果：提升自身速度20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "sky_overlord_spd",
+            "targetAttribute": "SPD",
+            "type": "PERCENTAGE",
+            "value": 0.20,
+            "sourceName": "天空霸主"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_063_passive",
+    "name": "近卫之盾",
+    "description": "被动效果：当友方单位受到致命伤害时，有30%几率为其抵挡50%的伤害",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_guard_shield"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_064_passive",
+    "name": "将军之威",
+    "description": "被动效果：提升所有友方单位的防御力15%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_general_awe"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_boss_008_passive",
+    "name": "风之灵",
+    "description": "被动效果：提升自身速度30%，并在每回合开始时恢复5%最大生命值;永久提升自身速度额外15%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "wind_spirit_spd",
+            "targetAttribute": "SPD",
+            "type": "PERCENTAGE",
+            "value": 0.45,
+            "sourceName": "风之灵"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_wind_spirit_trigger"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_068_passive",
+    "name": "力士之躯",
+    "description": "被动技能，自身获得力士之躯效果，永久提升攻击力和生命值上限",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "strong_body_atk",
+            "targetAttribute": "ATK",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "力士之躯"
+          },
+          {
+            "id": "strong_body_hp",
+            "targetAttribute": "MAX_HP",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "力士之躯"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_069_passive",
+    "name": "尊者之威",
+    "description": "被动技能，自身获得尊者之威效果，永久提升防御力和闪避率",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "revered_awe_def",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "尊者之威"
+          },
+          {
+            "id": "revered_awe_dodge",
+            "targetAttribute": "DODGE",
+            "type": "ADDITIVE",
+            "value": 0.10,
+            "sourceName": "尊者之威"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_070_passive",
+    "name": "金刚之怒",
+    "description": "被动技能，自身获得金刚之怒效果，永久提升攻击力和暴击率",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "diamond_rage_atk",
+            "targetAttribute": "ATK",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "金刚之怒"
+          },
+          {
+            "id": "diamond_rage_crit",
+            "targetAttribute": "CRIT_RATE",
+            "type": "ADDITIVE",
+            "value": 0.10,
+            "sourceName": "金刚之怒"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_071_passive",
+    "name": "伏魔之力",
+    "description": "被动效果：对妖魔鬼怪类敌人造成的伤害提升20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "demon_subduing_dmg",
+            "targetAttribute": "DAMAGE_TO_DEMON",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "伏魔之力"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_072_passive",
+    "name": "龙威",
+    "description": "被动效果：提升自身暴击伤害20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "dragon_awe_critdmg",
+            "targetAttribute": "CRIT_DMG",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "龙威"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_boss_009_passive",
+    "name": "禅心",
+    "description": "被动效果：每回合开始时，为生命值最低的友方单位恢复5%最大生命值;永久提升自身生命值20%与防御力15%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "zen_heart_hp",
+            "targetAttribute": "MAX_HP",
+            "type": "PERCENTAGE",
+            "value": 0.20,
+            "sourceName": "禅心"
+          },
+          {
+            "id": "zen_heart_def",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.15,
+            "sourceName": "禅心"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_zen_heart_trigger"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_076_passive",
+    "name": "叛徒之谋",
+    "description": "被动效果：对生命值低于50%的敌人造成的伤害提升30%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_traitor_scheme"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_077_passive",
+    "name": "将领之勇",
+    "description": "被动效果：提升自身攻击力20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "general_bravery_atk",
+            "targetAttribute": "ATK",
+            "type": "PERCENTAGE",
+            "value": 0.20,
+            "sourceName": "将领之勇"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_078_passive",
+    "name": "长老之智",
+    "description": "被动效果：提升自身技能暴击率20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "elder_wisdom_crit",
+            "targetAttribute": "CRIT_RATE",
+            "type": "ADDITIVE",
+            "value": 0.20,
+            "sourceName": "长老之智"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_079_passive",
+    "name": "首领光环",
+    "description": "被动效果：提升所有友方单位的攻击力15%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "buff_leader_aura"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_enemy_080_passive",
+    "name": "统帅之威",
+    "description": "被动效果：提升自身防御力20%，并降低受到的控制效果持续时间50%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "commander_awe_def",
+            "targetAttribute": "DEF",
+            "type": "PERCENTAGE",
+            "value": 0.20,
+            "sourceName": "统帅之威"
+          },
+          {
+            "id": "commander_awe_ctrl_reduce",
+            "targetAttribute": "CONTROL_DURATION_REDUCTION",
+            "type": "ADDITIVE",
+            "value": 0.50,
+            "sourceName": "统帅之威"
+          }
+        ]
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  },
+  {
+    "id": "skill_boss_010_passive",
+    "name": "灵山祝福",
+    "description": "被动效果：每回合开始时，为所有友方单位恢复3%最大生命值;永久提升自身生命值30%与攻击力20%",
+    "cooldown": 0,
+    "selector": "self",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "sacred_blessing_hp",
+            "targetAttribute": "MAX_HP",
+            "type": "PERCENTAGE",
+            "value": 0.30,
+            "sourceName": "灵山祝福"
+          },
+          {
+            "id": "sacred_blessing_atk",
+            "targetAttribute": "ATK",
+            "type": "PERCENTAGE",
+            "value": 0.20,
+            "sourceName": "灵山祝福"
+          }
+        ]
+      },
+      {
+        "type": "apply_buff",
+        "buffId": "buff_sacred_blessing_trigger"
+      }
+    ],
+    "energyCost": 0,
+    "skillType": "passive"
+  }
+]

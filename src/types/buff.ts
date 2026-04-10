@@ -310,3 +310,73 @@ export interface BuffScriptMetadata {
    */
   isLoaded: boolean
 }
+
+// ========== 触发器系统类型定义 ==========
+
+/**
+ * 触发阶段枚举
+ * 定义Buff触发行为的触发时机
+ */
+export type TriggerPhase =
+  | 'ON_BATTLE_START'      // 战斗开始时
+  | 'ON_TURN_START'        // 回合开始时（每个参与者的回合开始）
+  | 'ON_TURN_END'          // 回合结束时
+  | 'ON_ATTACK_BEFORE'     // 攻击前（伤害计算前）
+  | 'ON_ATTACK_HIT'        // 攻击命中时（伤害计算后、实际扣血前）
+  | 'ON_ATTACK_AFTER'      // 攻击后（伤害结算完成）
+  | 'ON_DAMAGE_TAKEN'      // 受到伤害后
+  | 'ON_KILL'              // 击杀目标时
+  | 'ON_DEATH'             // 自身死亡时
+  | 'ON_HEAL_RECEIVED'     // 受到治疗时
+  | 'ON_ENERGY_GAINED'     // 获得能量时
+
+/**
+ * 触发行为定义
+ * 定义Buff在特定阶段触发的行为
+ */
+export interface TriggerAction {
+  /** 触发的阶段 */
+  phase: TriggerPhase
+  /** 执行脚本ID（如 "deal_damage", "apply_buff", "heal"） */
+  scriptId: string
+  /** 执行参数（传递给脚本） */
+  params?: Record<string, unknown>
+  /** 触发概率（0-1），默认1 */
+  probability?: number
+  /** 冷却回合数（同一Buff实例的内部冷却） */
+  cooldown?: number
+  /** 最大触发次数（-1表示无限制） */
+  maxTriggers?: number
+}
+
+/**
+ * 触发事件上下文
+ * 触发事件发生时的上下文信息
+ */
+export interface TriggerEventContext {
+  /** 事件发生时的战斗实例ID */
+  battleId: string
+  /** 事件相关的源参与者ID（如攻击者） */
+  sourceId?: string
+  /** 事件相关的目标参与者ID（如受击者） */
+  targetId?: string
+  /** 技能ID（如果事件由技能触发） */
+  skillId?: string
+  /** 伤害/治疗数值 */
+  value?: number
+  /** 其他自定义数据 */
+  extra?: Record<string, unknown>
+}
+
+/**
+ * 触发器运行时状态
+ * 追踪Buff实例中每个触发器的运行时状态
+ */
+export interface TriggerRuntimeState {
+  /** 当前冷却回合数 */
+  currentCooldown: number
+  /** 已触发次数 */
+  triggerCount: number
+  /** 注册的监听器ID */
+  listenerId: string
+}

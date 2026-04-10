@@ -39,6 +39,13 @@ export type ModifierSourceType =
   | 'base'
   | 'talent'
 
+export const ATTRIBUTE_VALUE_TYPE = {
+  "VALUE": "数值",
+  "PERCENT": "百分比",
+}
+
+export type AttributeValueType = (typeof ATTRIBUTE_VALUE_TYPE)[keyof typeof ATTRIBUTE_VALUE_TYPE]
+
 /** 修饰符来源类型显示名称映射 */
 export const ModifierSourceTypeNames: Record<ModifierSourceType, string> = {
   buff: '增益',
@@ -127,6 +134,42 @@ export interface AttributeValue {
   dirty: boolean
   /** 计算拆解（可选，仅 Debug 开启时记录） */
   breakdown?: CalculationBreakdown
+  /** 最近一次计算的详细追踪数据（可选，用于调试面板） */
+  trace?: AttributeComputeResult
+}
+
+/**
+ * 属性计算追踪结果（从 AttributeEngine 导入类型）
+ * 注意：此类型定义用于类型提示，实际类型来自 AttributeEngine
+ */
+export interface AttributeComputeResult {
+  /** 最终计算值 */
+  finalValue: number
+  /** 基础值 */
+  baseValue: number
+  /** 所有步骤记录（按计算顺序） */
+  steps: Array<{
+    modifierId: string
+    sourceName: string
+    type: ModifierType
+    appliedValue: number
+    previousValue: number
+    intermediateResult: number
+  }>
+  /** 按来源分组的贡献值（便于 UI 展示） */
+  sourceContributions: Array<{
+    sourceId: string
+    sourceName: string
+    sourceType?: string
+    contribution: number
+  }>
+  /** 计算拆解 */
+  breakdown: {
+    additive: number
+    percentMultiplier: number
+    independentMultiplier: number
+    finalMultiplier: number
+  }
 }
 
 /**

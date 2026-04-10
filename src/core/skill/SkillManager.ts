@@ -5,7 +5,108 @@
  * 功能: 技能管理器
  * 描述: 负责技能配置的加载、解析和执行，集成完整的伤害/治疗计算系统，支持插件化的计算器注册
  * 版本: 1.0.0
+ * 
+ * 
+ * 
+
+类别	特征	实现方式
+纯常驻属性	永久生效的数值修正	steps 中使用 modify_attribute，直接内嵌 modifiers
+纯触发行为	特定时机执行动作，无常驻属性	steps 中使用 apply_buff，Buff 中配置 triggers
+混合型	既有常驻属性，又有触发行为	分开配置：常驻部分用 modifiers，触发部分用 triggers
+光环/免疫	影响友方或免疫负面状态	通过事件系统 + 范围选择实现，配置中定义 aura 或 immunity 标记
+
  */
+
+// 伤害计算时：最终伤害 = 基础伤害 * (1 - normalAtkDmgReduction)（仅当攻击类型为普通攻击时应用）
+// todo 新增属性 CRIT_DMG_TAKEN_REDUCTION（受到的暴击伤害减免）
+// todo immunities 数组中的状态类型在应用 Buff/状态时被检查，若存在则阻止添加。
+// Buff 应用检查时：如果 IMMUNE_SLOW > 0，则阻止任何减速效果添加。
+// // 新增属性代码常量
+// export const AttributeCodes = {
+//   // ... 原有
+  
+//   // 伤害减免细分
+//   NORMAL_ATK_DMG_REDUCTION: 'NORMAL_ATK_DMG_REDUCTION',     // 普通攻击伤害减免
+//   SKILL_DMG_REDUCTION: 'SKILL_DMG_REDUCTION',               // 技能伤害减免
+//   PHYSICAL_DMG_REDUCTION: 'PHYSICAL_DMG_REDUCTION',         // 物理伤害减免
+//   CRIT_DMG_TAKEN_REDUCTION: 'CRIT_DMG_TAKEN_REDUCTION',     // 受到暴击伤害减免
+  
+//   // 免疫标记（值 0/1）
+//   IMMUNE_SLOW: 'IMMUNE_SLOW',
+//   IMMUNE_STUN: 'IMMUNE_STUN',
+//   IMMUNE_POISON: 'IMMUNE_POISON',
+//   IMMUNE_BLEED: 'IMMUNE_BLEED',
+  
+//   // 再生属性
+//   HP_REGEN_PERCENT: 'HP_REGEN_PERCENT',   // 每回合恢复最大生命百分比
+//   HP_REGEN_FLAT: 'HP_REGEN_FLAT',         // 每回合恢复固定生命
+  
+//   // 光环相关（用于传递效果）
+//   AURA_ATK_BONUS: 'AURA_ATK_BONUS',
+//   AURA_DEF_BONUS: 'AURA_DEF_BONUS',
+//   AURA_CRIT_RATE: 'AURA_CRIT_RATE',
+// } as const
+// 回合结束时：引擎自动遍历所有参与者，根据 HP_REGEN_PERCENT 执行治疗。
+// 光环系统：当携带者存活时，自动为符合条件的友方添加对应的修饰符；死亡或离场时移除。
+// attribute.ts 中 AttributeCodes 对象的新增部分
+// export const AttributeCodes = {
+//   // ... 原有属性（HP, ATK, DEF, SPD, CRIT_RATE, CRIT_DMG 等）
+
+//   // ========== 伤害减免细分 ==========
+//   PHYSICAL_DMG_REDUCTION: 'PHYSICAL_DMG_REDUCTION',   // 物理伤害减免
+//   MAGICAL_DMG_REDUCTION: 'MAGICAL_DMG_REDUCTION',     // 魔法伤害减免
+//   NORMAL_ATK_DMG_REDUCTION: 'NORMAL_ATK_DMG_REDUCTION', // 普通攻击伤害减免
+//   CRIT_DMG_TAKEN_REDUCTION: 'CRIT_DMG_TAKEN_REDUCTION', // 受到暴击伤害减免
+
+//   // ========== 元素属性 ==========
+//   WATER_ATK: 'WATER_ATK',                   // 水属性攻击力
+//   WATER_RES: 'WATER_RES',                   // 水属性抗性
+//   FIRE_ATK: 'FIRE_ATK',                     // 火属性攻击力
+//   FIRE_RES: 'FIRE_RES',                     // 火属性抗性
+//   EARTH_ATK: 'EARTH_ATK',                   // 地属性攻击力
+//   EARTH_RES: 'EARTH_RES',                   // 地属性抗性
+//   WIND_ATK: 'WIND_ATK',                     // 风属性攻击力
+//   WIND_RES: 'WIND_RES',                     // 风属性抗性
+
+//   // 元素技能伤害加成
+//   WATER_SKILL_DMG_BONUS: 'WATER_SKILL_DMG_BONUS',
+//   FIRE_SKILL_DMG_BONUS: 'FIRE_SKILL_DMG_BONUS',
+//   PHYSICAL_SKILL_DMG_BONUS: 'PHYSICAL_SKILL_DMG_BONUS',
+
+//   // ========== 特殊战斗属性 ==========
+//   DODGE: 'DODGE',                           // 闪避率
+//   HIT: 'HIT',                               // 命中率
+//   CONTROL_SUCCESS_RATE: 'CONTROL_SUCCESS_RATE', // 控制技能成功率
+//   CONTROL_DURATION_REDUCTION: 'CONTROL_DURATION_REDUCTION', // 受控制时间减免
+
+//   // ========== 种族/条件伤害加成 ==========
+//   DAMAGE_TO_DEMON: 'DAMAGE_TO_DEMON',       // 对妖魔鬼怪伤害加成
+//   DAMAGE_TO_LOW_HP: 'DAMAGE_TO_LOW_HP',     // 对低血量目标伤害加成
+
+//   // ========== 反弹/反伤 ==========
+//   REFLECT_DAMAGE_PERCENT: 'REFLECT_DAMAGE_PERCENT', // 反弹伤害比例
+
+//   // ========== 再生属性 ==========
+//   HP_REGEN_PERCENT: 'HP_REGEN_PERCENT',     // 每回合恢复最大生命百分比
+//   HP_REGEN_FLAT: 'HP_REGEN_FLAT',           // 每回合恢复固定生命
+
+//   // ========== 免疫标记（值 0/1） ==========
+//   IMMUNE_ALL_CONTROL: 'IMMUNE_ALL_CONTROL', // 免疫所有控制效果
+//   IMMUNE_SLOW: 'IMMUNE_SLOW',
+//   IMMUNE_POISON: 'IMMUNE_POISON',
+
+//   // ========== 抗性 ==========
+//   POISON_RES: 'POISON_RES',                 // 毒素抗性
+
+//   // ========== 光环属性（用于间接计算） ==========
+//   AURA_ATK_BONUS: 'AURA_ATK_BONUS',
+//   AURA_DEF_BONUS: 'AURA_DEF_BONUS',
+//   AURA_DODGE_BONUS: 'AURA_DODGE_BONUS',
+//   AURA_CRIT_RATE: 'AURA_CRIT_RATE',
+//   AURA_WATER_ATK_BONUS: 'AURA_WATER_ATK_BONUS',
+// } as const
+// HIT_RATE: 'HIT_RATE',                     // 命中率（百分比）
+//   DAMAGE_TAKEN_INCREASE: 'DAMAGE_TAKEN_INCREASE', // 受到的伤害增加（易伤）
 
 import type {
   SkillConfig,

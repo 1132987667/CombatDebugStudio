@@ -4,10 +4,15 @@
  * 作者: CombatDebugStudio
  * 功能: Buff系统
  * 描述: 负责管理Buff实例的生命周期、状态更新和修饰符堆栈，使用单例模式确保系统全局唯一
- * 版本: 2.0.0 - 实现 IModifierProvider 接口
+ * 版本: 3.0.0 - 集成触发器事件系统
  */
 
 import type { BuffConfig, BuffInstance } from '@/types/buff'
+import type {
+  TriggerAction,
+  TriggerEventContext,
+  TriggerRuntimeState,
+} from '@/types/buff'
 import type { CombatRecord } from '@/types/combat-record'
 import type {
   IModifierProvider,
@@ -21,13 +26,30 @@ import { BuffContext } from '@/core/BuffContext'
 import { BuffContextPool } from '@/utils/BuffContextPool'
 import { ModifierStack } from '@/core/ModifierStack'
 import { BuffErrorBoundary } from '@/core/BuffErrorBoundary'
+import { TriggerEventBus, triggerEventBus } from '@/core/TriggerEventBus'
 import { battleLogManager } from '@/utils/logging'
+
+/**
+ * 触发器执行上下文
+ * 触发器行为脚本执行时的上下文信息
+ */
+export interface TriggerExecutionContext extends TriggerEventContext {
+  /** Buff实例ID */
+  instanceId?: string
+  /** Buff系统实例 */
+  buffSystem?: BuffSystem
+  /** 触发器参数 */
+  params?: Record<string, unknown>
+  /** 当前回合数 */
+  currentTurn?: number
+}
 
 /**
  * Buff系统类
  * 负责管理Buff实例的生命周期、状态更新和修饰符堆栈
  * 使用单例模式确保系统全局唯一
  * 实现 IModifierProvider 接口，支持依赖解耦
+ * 集成触发器事件系统，支持阶段触发行为
  * 注意：不再使用Vue的reactive，避免在纯业务逻辑层引入不必要的响应式开销
  */
 export class BuffSystem implements IModifierProvider {
@@ -47,13 +69,54 @@ export class BuffSystem implements IModifierProvider {
   private _debugMode: boolean = false
   /** 属性变化回调（用于触发参与者的 markDirty） */
   private onAttributeChange?: (characterId: string) => void
+  /** 触发器事件总线实例 */
+  private readonly eventBus: TriggerEventBus
+  /** 触发器运行时状态映射：Buff实例ID -> 触发器索引 -> 状态 */
+  private triggerStates = new Map<string, Map<number, TriggerRuntimeState>>()
+  /** 触发器行为脚本映射 */
+  private triggerScripts = new Map<string, (context: TriggerExecutionContext) => void>()
 
   /**
    * 构造函数
    * @param scriptRegistry Buff 脚本注册表实例
+   * @param eventBus 触发器事件总线实例（可选，默认使用全局实例）
    */
-  public constructor(scriptRegistry: BuffScriptRegistry) {
+  public constructor(scriptRegistry: BuffScriptRegistry, eventBus?: TriggerEventBus) {
     this.scriptRegistry = scriptRegistry
+    this.eventBus = eventBus ?? triggerEventBus
+    this.registerDefaultTriggerScripts()
+  }
+
+  /**
+   * 注册默认的触发器行为脚本
+   */
+  private registerDefaultTriggerScripts(): void {
+    this.registerTriggerScript('deal_damage', (ctx) => {
+      this.dealDirectDamage(ctx.targetId ?? '', ctx.params?.damage ?? 0)
+    })
+    this.registerTriggerScript('apply_buff', (ctx) => {
+      if (ctx.params?.buffId) {
+        const config = this.scriptRegistry.getBuffConfig(ctx.params.buffId as string)
+        if (config) {
+          this.addBuff(ctx.targetId ?? '', ctx.params.buffId as string, config, ctx.currentTurn ?? 0)
+        }
+      }
+    })
+    this.registerTriggerScript('heal', (ctx) => {
+      this.healTarget(ctx.targetId ?? '', ctx.params?.amount ?? 0)
+    })
+  }
+
+  /**
+   * 注册触发器行为脚本
+   * @param scriptId 脚本ID
+   * @param handler 处理函数
+   */
+  public registerTriggerScript(
+    scriptId: string,
+    handler: (context: TriggerExecutionContext) => void,
+  ): void {
+    this.triggerScripts.set(scriptId, handler)
   }
 
   /**
@@ -72,6 +135,14 @@ export class BuffSystem implements IModifierProvider {
     if (this.onAttributeChange) {
       this.onAttributeChange(characterId)
     }
+  }
+
+  /**
+   * 获取触发器事件总线实例
+   * @returns 触发器事件总线实例
+   */
+  public getEventBus(): TriggerEventBus {
+    return this.eventBus
   }
 
   /**

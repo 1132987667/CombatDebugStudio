@@ -141,66 +141,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_004_passive",
-    "name": "坚韧表皮",
-    "description": "被动效果：永久降低受到的暴击伤害15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_crit_damage_reduction",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_005_passive",
-    "name": "石化皮肤",
-    "description": "被动效果：受到普通攻击时，伤害降低10%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_stone_skin",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_006_passive",
-    "name": "山林之子",
-    "description": "被动效果：免疫减速效果",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_mountain_child",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
     "id": "skill_enemy_007_small",
     "name": "剧毒荆棘",
     "description": "对单个敌人造成90%攻击力的普通伤害，并施加强效中毒效果，每回合造成攻击者攻击力15%的伤害，持续2回合",
@@ -278,66 +218,6 @@
     ],
     "energyCost": 25,
     "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_007_passive",
-    "name": "花之再生",
-    "description": "被动效果：每回合结束时，恢复自身最大生命值5%的生命值",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_flower_regeneration",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_008_passive",
-    "name": "首领威严",
-    "description": "被动效果：为所有友方单位施加光环，提升攻击力和防御力",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_leader_awe",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_boss_001_passive",
-    "name": "山灵庇护",
-    "description": "被动效果：受到攻击时，有15%几率使攻击者减速，持续2回合；永久提升自身防御力20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_mountain_protection",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
   },
   {
     "id": "skill_enemy_007_ultimate",
@@ -555,66 +435,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_012_passive",
-    "name": "队长指挥",
-    "description": "被动效果：为所有友方单位施加光环，提升暴击率",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_commander",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_013_passive",
-    "name": "甲壳防御",
-    "description": "被动效果：永久降低受到的物理伤害15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_shell_defense",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_014_passive",
-    "name": "鱼群之怒",
-    "description": "被动效果：每回合结束时，有30%几率清除自身一个负面状态",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_fish_rage",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
     "id": "skill_enemy_015_small",
     "name": "统领之击",
     "description": "对单个敌人造成105%攻击力的普通伤害",
@@ -679,66 +499,6 @@
     ],
     "energyCost": 25,
     "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_015_passive",
-    "name": "统御水域",
-    "description": "被动效果：为所有友方单位施加水元素共鸣光环，提升水属性攻击力",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_water_dominance",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_016_passive",
-    "name": "黄金甲壳",
-    "description": "被动效果：永久降低受到的魔法伤害20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_gold_shell",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_boss_002_passive",
-    "name": "水之共鸣",
-    "description": "被动效果：每回合开始时，为生命值最低的友方单位恢复5%最大生命值；永久提升自身生命值15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_water_resonance",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
   },
   {
     "id": "skill_enemy_015_ultimate",
@@ -968,66 +728,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_020_passive",
-    "name": "岩石肌肤",
-    "description": "被动效果：受到普通攻击时，伤害降低10%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_stone_flesh",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_021_passive",
-    "name": "金属化",
-    "description": "被动效果：受到魔法攻击时，有20%几率使攻击者受到30%反弹伤害",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_metallization",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_022_passive",
-    "name": "土灵加护",
-    "description": "被动效果：受到攻击时，有15%几率为自身施加护盾",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_earth_protection",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
     "id": "skill_enemy_023_small",
     "name": "山崩",
     "description": "对单个敌人造成130%攻击力的普通伤害，并有30%几率使目标眩晕1回合",
@@ -1131,26 +831,6 @@
     ],
     "energyCost": 25,
     "skillType": "small"
-  },
-  {
-    "id": "skill_boss_003_passive",
-    "name": "大地恩赐",
-    "description": "被动效果：生命值低于50%时，每回合结束时恢复10%最大生命值；永久提升自身生命值20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_earth_gift",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
   },
   {
     "id": "skill_enemy_023_small",
@@ -1363,66 +1043,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_028_passive",
-    "name": "老树盘根",
-    "description": "被动效果：受到攻击时，有20%几率使攻击者减速，持续2回合",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_old_tree_roots",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_029_passive",
-    "name": "妖气弥漫",
-    "description": "被动效果：为所有友方单位施加光环，提升闪避率",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_demon_aura",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_030_passive",
-    "name": "厚皮",
-    "description": "被动效果：永久降低受到的暴击伤害25%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_thick_skin",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
     "id": "skill_enemy_031_small",
     "name": "毒雾弥漫",
     "description": "对所有敌人造成80%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续3回合",
@@ -1498,66 +1118,7 @@
     "energyCost": 25,
     "skillType": "small"
   },
-  {
-    "id": "skill_enemy_031_passive",
-    "name": "千年树龄",
-    "description": "被动效果：每回合结束时，恢复自身最大生命值5%的生命值",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_thousand_year",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_032_passive",
-    "name": "老谋深算",
-    "description": "被动效果：受到的负面状态持续时间减少1回合",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_scheming",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_boss_004_passive",
-    "name": "迷雾笼罩",
-    "description": "被动效果：为所有友方单位施加光环，提升全体闪避率；永久提升自身速度20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_mist_coverage",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
+  
   {
     "id": "skill_enemy_031_ultimate",
     "name": "森林之怒",
@@ -1777,66 +1338,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_036_passive",
-    "name": "流沙之体",
-    "description": "被动技能,自身获得流沙之体效果,永久提升防御力和闪避率",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_quicksand_body",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_037_passive",
-    "name": "蛇皮",
-    "description": "被动技能,自身获得蛇皮效果,永久提升物理防御力和毒素抗性",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_snake_skin",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_038_passive",
-    "name": "水之加护",
-    "description": "被动技能,自身获得水之加护效果,永久提升魔法防御力和水属性抗性",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_water_protection",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
     "id": "skill_enemy_039_small",
     "name": "沙尘暴",
     "description": "对所有敌人造成90%攻击力的普通伤害,并有40%概率使敌人命中率降低持续2回合",
@@ -1911,66 +1412,7 @@
     "energyCost": 25,
     "skillType": "small"
   },
-  {
-    "id": "skill_enemy_039_passive",
-    "name": "沙之化身",
-    "description": "被动技能,自身获得沙之化身效果,永久大幅提升防御力和闪避率,并对物理伤害有额外减免",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_sand_avatar",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_040_passive",
-    "name": "蛇王威严",
-    "description": "被动技能,自身获得蛇王威严效果,永久提升攻击力和毒素抗性,攻击时有概率使敌人中毒",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_snake_king_awe",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_boss_005_passive",
-    "name": "水之守护",
-    "description": "被动技能,自身获得水之守护效果,永久提升魔法防御力和水属性抗性,受到攻击时有概率回复生命值;永久提升自身攻击力15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_water_guardian",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
+  
   {
     "id": "skill_enemy_039_ultimate",
     "name": "流沙地狱",
@@ -2176,66 +1618,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_044_passive",
-    "name": "熔岩皮肤",
-    "description": "被动技能,自身获得熔岩皮肤效果,永久提升物理防御力和火属性抗性,受到攻击时有概率反弹火属性伤害",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_lava_skin",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_045_passive",
-    "name": "火元素共鸣",
-    "description": "被动技能,自身获得火元素共鸣效果,永久提升火属性攻击力和火属性抗性",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_fire_resonance",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_046_passive",
-    "name": "火焰掌控",
-    "description": "被动技能,自身获得火焰掌控效果,永久提升暴击率和暴击伤害",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_fire_control",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
     "id": "skill_enemy_047_small",
     "name": "火山喷发",
     "description": "对所有敌人造成100%攻击力的普通伤害,并有40%概率使敌人燃烧持续3回合",
@@ -2305,66 +1687,6 @@
     ],
     "energyCost": 25,
     "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_047_passive",
-    "name": "火焰领主",
-    "description": "被动技能,自身获得火焰领主效果,永久大幅提升火属性攻击力和火属性抗性,火属性技能伤害提升50%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_fire_lord",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_048_passive",
-    "name": "巨人之力",
-    "description": "被动技能,自身获得巨人之力效果,永久大幅提升攻击力和暴击伤害,物理技能伤害提升30%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_giant_power",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_boss_006_passive",
-    "name": "地火之心",
-    "description": "被动技能,自身获得地火之心效果,永久提升所有属性,受到火属性伤害时回复生命值;永久提升自身攻击力20%和防御力15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_earth_fire_heart",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
   },
   {
     "id": "skill_enemy_047_ultimate",
@@ -2587,66 +1909,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_052_passive",
-    "name": "蛛网大师",
-    "description": "被动效果：提升自身控制技能的成功率20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_web_master",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_053_passive",
-    "name": "毒蛾粉",
-    "description": "被动效果：受到攻击时，有25%几率使攻击者中毒，每回合造成攻击者攻击力5%的伤害，持续2回合",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_moth_powder",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_054_passive",
-    "name": "亲卫之忠",
-    "description": "被动效果：当友方单位受到攻击时，有15%几率为其分担30%的伤害",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_guard_loyalty",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
     "id": "skill_enemy_055_small",
     "name": "千丝万缕",
     "description": "对所有敌人造成90%攻击力的普通伤害，并有40%几率使目标眩晕1回合",
@@ -2715,66 +1977,6 @@
     ],
     "energyCost": 25,
     "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_055_passive",
-    "name": "蛛后之母",
-    "description": "被动效果：每回合结束时，有30%几率召唤一只小蜘蛛协助战斗",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_spider_queen",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_056_passive",
-    "name": "女王威严",
-    "description": "被动效果：降低所有敌方单位的攻击力15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_queen_awe",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_boss_007_passive",
-    "name": "谷中霸主",
-    "description": "被动效果：提升自身所有属性10%，并免疫所有控制效果;永久提升自身生命值25%与攻击力15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_valley_overlord",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
   },
   {
     "id": "skill_enemy_055_ultimate",
@@ -2980,66 +2182,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_060_passive",
-    "name": "统领光环",
-    "description": "被动效果：提升所有友方单位的攻击力10%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_commander_aura",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_061_passive",
-    "name": "铁甲护体",
-    "description": "被动效果：提升自身防御力25%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_iron_armor",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_062_passive",
-    "name": "天空霸主",
-    "description": "被动效果：提升自身速度20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_sky_overlord",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
     "id": "skill_enemy_063_small",
     "name": "近卫之怒",
     "description": "对单个敌人造成120%攻击力的普通伤害",
@@ -3100,66 +2242,7 @@
     "energyCost": 25,
     "skillType": "small"
   },
-  {
-    "id": "skill_enemy_063_passive",
-    "name": "近卫之盾",
-    "description": "被动效果：当友方单位受到致命伤害时，有30%几率为其抵挡50%的伤害",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_guard_shield",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_064_passive",
-    "name": "将军之威",
-    "description": "被动效果：提升所有友方单位的防御力15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_general_awe",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_boss_008_passive",
-    "name": "风之灵",
-    "description": "被动效果：提升自身速度30%，并在每回合开始时恢复5%最大生命值;永久提升自身速度额外15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_wind_spirit",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
+  
   {
     "id": "skill_enemy_063_ultimate",
     "name": "狮王咆哮",
@@ -3373,66 +2456,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_068_passive",
-    "name": "力士之躯",
-    "description": "被动技能，自身获得力士之躯效果，永久提升攻击力和生命值上限",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_strong_body",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_069_passive",
-    "name": "尊者之威",
-    "description": "被动技能，自身获得尊者之威效果，永久提升防御力和闪避率",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_revered_awe",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_070_passive",
-    "name": "金刚之怒",
-    "description": "被动技能，自身获得金刚之怒效果，永久提升攻击力和暴击率",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_diamond_rage",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
     "id": "skill_enemy_071_small",
     "name": "罗汉伏魔",
     "description": "对单个敌人造成130%攻击力的普通伤害",
@@ -3488,66 +2511,6 @@
     ],
     "energyCost": 25,
     "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_071_passive",
-    "name": "伏魔之力",
-    "description": "被动效果：对妖魔鬼怪类敌人造成的伤害提升20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_demon_subduing",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_072_passive",
-    "name": "龙威",
-    "description": "被动效果：提升自身暴击伤害20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_dragon_awe",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_boss_009_passive",
-    "name": "禅心",
-    "description": "被动效果：每回合开始时，为生命值最低的友方单位恢复5%最大生命值;永久提升自身生命值20%与防御力15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_zen_heart",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
   },
   {
     "id": "skill_enemy_071_ultimate",
@@ -3738,66 +2701,6 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_076_passive",
-    "name": "叛徒之谋",
-    "description": "被动效果：对生命值低于50%的敌人造成的伤害提升30%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_traitor_scheme",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_077_passive",
-    "name": "将领之勇",
-    "description": "被动效果：提升自身攻击力20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_general_bravery",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_078_passive",
-    "name": "长老之智",
-    "description": "被动效果：提升自身技能暴击率20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_elder_wisdom",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
     "id": "skill_enemy_079_small",
     "name": "首领之怒",
     "description": "对所有敌人造成100%攻击力的普通伤害，并降低其攻击力40%，持续2回合",
@@ -3872,66 +2775,6 @@
     ],
     "energyCost": 25,
     "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_079_passive",
-    "name": "首领光环",
-    "description": "被动效果：提升所有友方单位的攻击力15%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_leader_aura",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_enemy_080_passive",
-    "name": "统帅之威",
-    "description": "被动效果：提升自身防御力20%，并降低受到的控制效果持续时间50%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_commander_awe",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
-  },
-  {
-    "id": "skill_boss_010_passive",
-    "name": "灵山祝福",
-    "description": "被动效果：每回合开始时，为所有友方单位恢复3%最大生命值;永久提升自身生命值30%与攻击力20%",
-    "cooldown": 0,
-    "selector": "self",
-    "steps": [
-      {
-        "type": "buff",
-        "formula": "1.0",
-        "duration": -1,
-        "effectId": "buff_sacred_blessing",
-        "effectParams": {
-          "duration": -1
-        }
-      }
-    ],
-    "energyCost": 0,
-    "skillType": "passive"
   },
   {
     "id": "skill_enemy_079_ultimate",

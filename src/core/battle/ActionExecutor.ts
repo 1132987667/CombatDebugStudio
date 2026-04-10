@@ -4,7 +4,7 @@
  * 作者: CombatDebugStudio
  * 功能: 动作执行器
  * 描述: 负责执行战斗中的各种动作，包括攻击、技能、治疗等，实现了IActionExecutor接口，处理动作的验证和执行逻辑
- * 版本: 1.0.0
+ * 版本: 2.0.0 - 集成触发器事件系统
  */
 
 import {
@@ -20,12 +20,14 @@ import { EFFECT_TYPES } from '@/types/effect'
 import { CombatRecord, createEmptyRecord } from '@/types/combat-record'
 import { battleLogManager } from '@/utils/logging'
 import { BuffSystem } from '@/core/BuffSystem'
-import { ControlType } from '@/types/buff'
+import { ControlType, type TriggerPhase, type TriggerEventContext } from '@/types/buff'
+import { TriggerEventBus } from '@/core/TriggerEventBus'
 
 /**
  * 动作执行器类
  * 负责执行战斗中的各种动作，包括攻击、技能、治疗等
  * 实现了IActionExecutor接口，处理动作的验证和执行逻辑
+ * 集成触发器事件系统，支持攻击相关事件触发
  * 推荐通过容器注入使用
  */
 export class ActionExecutor {
@@ -42,6 +44,35 @@ export class ActionExecutor {
    */
   constructor(buffSystem: BuffSystem) {
     this.buffSystem = buffSystem
+  }
+
+  /**
+   * 获取触发器事件总线实例
+   * @returns 触发器事件总线实例
+   */
+  private getTriggerEventBus(): TriggerEventBus {
+    return this.buffSystem.getEventBus()
+  }
+
+  /**
+   * 触发战斗事件
+   * @param phase 触发阶段
+   * @param context 事件上下文
+   */
+  private emitTriggerEvent(
+    phase: TriggerPhase,
+    context: Partial<TriggerEventContext>,
+  ): void {
+    const eventBus = this.getTriggerEventBus()
+    const fullContext: TriggerEventContext = {
+      phase,
+      sourceId: context.sourceId ?? '',
+      targetId: context.targetId,
+      value: context.value,
+      currentTurn: context.currentTurn ?? 0,
+      ...context,
+    }
+    eventBus.emit(phase, fullContext)
   }
 
   /**
@@ -242,6 +273,7 @@ export class ActionExecutor {
   /**
    * 处理攻击动作
    * 对目标造成伤害，计算实际伤害值并更新目标生命值
+   * 集成触发器事件系统，触发攻击相关事件
    * @param action - 攻击动作对象
    * @param source - 攻击发起者
    * @param target - 攻击承受者
@@ -252,14 +284,65 @@ export class ActionExecutor {
     target: BattleParticipant,
   ): void {
     if (action.damage) {
+      // 触发攻击前事件
+      this.emitTriggerEvent('ON_ATTACK_BEFORE', {
+        sourceId: source.id,
+        targetId: target.id,
+        value: action.damage,
+        currentTurn: action.turn,
+      })
+
       const actualDamage = target.takeDamage(action.damage)
       action.damage = actualDamage
+
+      // 触发攻击命中事件
+      this.emitTriggerEvent('ON_ATTACK_HIT', {
+        sourceId: source.id,
+        targetId: target.id,
+        value: actualDamage,
+        currentTurn: action.turn,
+      })
+
+      // 触发受到伤害事件
+      this.emitTriggerEvent('ON_DAMAGE_TAKEN', {
+        sourceId: target.id,
+        targetId: source.id,
+        value: actualDamage,
+        currentTurn: action.turn,
+      })
 
       action.effects.push({
         type: EFFECT_TYPES.DAMAGE,
         value: actualDamage,
         description: `${source.name} 攻击 ${target.name} 造成 ${actualDamage} 伤害`,
       })
+
+      // 触发攻击后事件
+      this.emitTriggerEvent('ON_ATTACK_AFTER', {
+        sourceId: source.id,
+        targetId: target.id,
+        value: actualDamage,
+        currentTurn: action.turn,
+      })
+
+      // 检查目标是否死亡
+      if (!target.isAlive()) {
+        // 触发击杀事件
+        this.emitTriggerEvent('ON_KILL', {
+          sourceId: source.id,
+          targetId: target.id,
+          value: actualDamage,
+          currentTurn: action.turn,
+        })
+
+        // 触发死亡事件
+        this.emitTriggerEvent('ON_DEATH', {
+          sourceId: target.id,
+          targetId: source.id,
+          value: actualDamage,
+          currentTurn: action.turn,
+        })
+      }
     }
   }
 
@@ -377,6 +460,7 @@ export class ActionExecutor {
   /**
    * 处理治疗动作
    * 为目标恢复生命值，计算实际恢复量并更新
+   * 集成触发器事件系统，触发治疗相关事件
    * @param action - 治疗动作对象
    * @param source - 治疗发起者
    * @param target - 治疗承受者
@@ -389,6 +473,15 @@ export class ActionExecutor {
     if (action.heal) {
       const actualHeal = target.heal(action.heal)
       action.heal = actualHeal
+
+      // 触发受到治疗事件
+      this.emitTriggerEvent('ON_HEAL_RECEIVED', {
+        sourceId: target.id,
+        targetId: source.id,
+        value: actualHeal,
+        currentTurn: action.turn,
+      })
+
       action.effects.push({
         type: EFFECT_TYPES.HEAL,
         value: actualHeal,

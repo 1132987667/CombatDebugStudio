@@ -4,7 +4,7 @@
  * 作者: CombatDebugStudio
  * 功能: 战斗参与者实现类
  * 描述: 使用 Class 替代对象字面量，方法在原型上共享，提升内存效率和代码可维护性
- * 版本: 2.0.0 - 添加属性缓存系统
+ * 版本: 3.1.0 - 集成触发器事件系统
  */
 
 import type {
@@ -31,6 +31,9 @@ import {
   AttributeCodes,
   normalizeAttributeCode,
 } from '@/types/attribute'
+import { AttributeEngine } from '@/core/AttributeEngine'
+import type { ModifierTemplate } from '@/types/modifier-template'
+import { triggerEventBus } from '@/core/TriggerEventBus'
 
 /**
  * 参与者初始化数据接口
@@ -232,6 +235,12 @@ export class BattleParticipantImpl implements BattleEntity {
 
   /**
    * 重新计算单个属性（应用所有修饰符）
+   * 
+   * 重构说明：
+   * - 使用 AttributeEngine.compute() 统一计算逻辑
+   * - 自动记录 trace 信息用于调试面板
+   * - 保持与原有 ModifierProvider 的兼容性
+   * 
    * @param attr 属性名称
    */
   private recalcAttribute(attr: AttributeCode): void {
@@ -239,99 +248,36 @@ export class BattleParticipantImpl implements BattleEntity {
     if (!attrData || !attrData.dirty) return
 
     const baseValue = attrData.base
-    let finalValue = baseValue
-    const modifierDetails: ModifierDetail[] = []
 
-    let additive = 0
-    let percentMultiplier = 1
-    let independentMultiplier = 1
-    let finalMultiplier = 1
-
+    // 从 ModifierProvider 获取修饰符并转换为 ModifierTemplate 格式
+    const templates: ModifierTemplate[] = []
     if (this._modifierProvider) {
       const modifierStack = this._modifierProvider.getModifierStack(this.id)
       if (modifierStack) {
         const modifiers = modifierStack.getModifiers(attr as AttributeType)
-
-        let percentSum = 0
         for (const mod of modifiers) {
-          if (mod.type === 'PERCENTAGE') {
-            percentSum += mod.value
-            modifierDetails.push({
-              source:
-                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
-                mod.buffInstanceId,
-              sourceType: this._modifierProvider.getSourceType(
-                mod.buffInstanceId,
-              ),
-              value: mod.value,
-              type: 'percent',
-            })
-          }
+          templates.push({
+            id: mod.buffInstanceId,
+            sourceName: this._modifierProvider.getSourceName(mod.buffInstanceId) || mod.buffInstanceId,
+            sourceType: this._modifierProvider.getSourceType(mod.buffInstanceId),
+            targetAttribute: attr as AttributeType,
+            type: mod.type,
+            value: mod.value,
+          })
         }
-        if (percentSum !== 0) {
-          percentMultiplier = 1 + percentSum
-          finalValue += baseValue * percentSum
-        }
-
-        let addSum = 0
-        for (const mod of modifiers) {
-          if (mod.type === 'ADDITIVE') {
-            addSum += mod.value
-            modifierDetails.push({
-              source:
-                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
-                mod.buffInstanceId,
-              sourceType: this._modifierProvider.getSourceType(
-                mod.buffInstanceId,
-              ),
-              value: mod.value,
-              type: 'add',
-            })
-          }
-        }
-        additive = addSum
-        finalValue += addSum
-
-        let multiplyFactor = 1
-        for (const mod of modifiers) {
-          if (mod.type === 'MULTIPLICATIVE') {
-            multiplyFactor *= 1 + mod.value
-            modifierDetails.push({
-              source:
-                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
-                mod.buffInstanceId,
-              sourceType: this._modifierProvider.getSourceType(
-                mod.buffInstanceId,
-              ),
-              value: mod.value,
-              type: 'multiply',
-            })
-          }
-        }
-        independentMultiplier = multiplyFactor
-        finalValue *= multiplyFactor
-
-        let finalMulti = 1
-        for (const mod of modifiers) {
-          if (mod.type === 'FINAL') {
-            finalMulti *= 1 + mod.value
-            modifierDetails.push({
-              source:
-                this._modifierProvider.getSourceName(mod.buffInstanceId) ||
-                mod.buffInstanceId,
-              sourceType: this._modifierProvider.getSourceType(
-                mod.buffInstanceId,
-              ),
-              value: mod.value,
-              type: 'final',
-            })
-          }
-        }
-        finalMultiplier = finalMulti
-        finalValue *= finalMulti
       }
     }
 
+    // 使用 AttributeEngine 计算属性值
+    const result = AttributeEngine.compute(baseValue, templates, {
+      attributes: this.getAllBaseAttributes(),
+      params: { participantId: this.id },
+    })
+
+    // 应用计算结果
+    let finalValue = result.finalValue
+
+    // 特殊属性约束
     if (attr === AttributeCodes.HP) {
       const maxHp = this.getAttribute(AttributeCodes.MAX_HP)
       finalValue = Math.max(0, Math.min(finalValue, maxHp))
@@ -341,21 +287,38 @@ export class BattleParticipantImpl implements BattleEntity {
       finalValue = Math.max(0, Math.min(finalValue, maxEnergy))
     }
 
+    // 更新属性数据
     attrData.value = finalValue
-    attrData.modifiers = modifierDetails
+    attrData.modifiers = result.steps.map((step) => ({
+      source: step.sourceName,
+      sourceType: 'buff' as ModifierSourceType,
+      value: step.appliedValue,
+      type: step.type === 'ADDITIVE' ? 'add' : 
+            step.type === 'PERCENTAGE' ? 'percent' : 
+            step.type === 'MULTIPLICATIVE' ? 'multiply' : 'final' as ModifierDetail['type'],
+    }))
     attrData.dirty = false
 
+    // 记录调试信息
     if (this._modifierProvider?.isDebugMode()) {
-      attrData.breakdown = {
-        base: baseValue,
-        additive,
-        percentMultiplier,
-        independentMultiplier,
-        finalMultiplier,
-      }
+      attrData.breakdown = result.breakdown
+      attrData.trace = result
     } else {
       delete attrData.breakdown
+      delete attrData.trace
     }
+  }
+
+  /**
+   * 获取所有基础属性值（用于动态值计算上下文）
+   * @returns 属性名到基础值的映射
+   */
+  private getAllBaseAttributes(): Record<string, number> {
+    const result: Record<string, number> = {}
+    this.attributes.forEach((attrData, attrCode) => {
+      result[attrCode] = attrData.base
+    })
+    return result
   }
 
   /**
@@ -804,10 +767,22 @@ export class BattleParticipantImpl implements BattleEntity {
 
   /**
    * 获得能量
+   * 集成触发器事件系统，触发能量获取事件
    * @param amount - 能量值
    */
   gainEnergy(amount: number): void {
+    const previousEnergy = this.currentEnergy
     this.currentEnergy = Math.min(this.currentEnergy + amount, this.maxEnergy)
+    const actualGain = this.currentEnergy - previousEnergy
+
+    // 触发能量获取事件
+    if (actualGain > 0) {
+      triggerEventBus.emit('ON_ENERGY_GAINED', {
+        phase: 'ON_ENERGY_GAINED',
+        sourceId: this.id,
+        value: actualGain,
+      })
+    }
   }
 
   /**
@@ -1011,5 +986,15 @@ export class BattleParticipantImpl implements BattleEntity {
         critDamage: this.critDamage,
       },
     }
+  }
+
+  public markAllAttributesDirty(): void {
+    for (const attr of Object.values(AttributeCodes)) {
+      const valueObj = this.attributes.get(attr)
+      if (valueObj) {
+        valueObj.dirty = true
+      }
+    }
+    // 触发重新计算（可延迟至下次获取属性时）
   }
 }

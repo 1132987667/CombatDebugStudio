@@ -5,10 +5,10 @@
  * 描述: 负责管理战斗回合的初始化、推进和查询，实现了ITurnManager接口，处理回合顺序和回合计数
  */
 
-import type { BattleParticipant, BattleData } from '@/types/battle'
+import type { BattleEntity, BattleData } from '@/types/battle'
 import { BuffSystem } from '@/core/BuffSystem'
 import { ModifierStack } from '@/core/ModifierStack'
-import type { AttributeType } from '@/types/attribute'
+import type { AttributeCodes } from '@/types/attribute'
 
 /**
  * 回合管理器类
@@ -33,7 +33,7 @@ export class TurnManager {
    * @param participants 参与者数组
    * @returns 按速度排序的参与者ID数组
    */
-  public createTurnOrder(participants: BattleParticipant[]): string[] {
+  public createTurnOrder(participants: BattleEntity[]): string[] {
     return participants
       .filter((p) => p.isAlive())
       .sort((a, b) => {
@@ -57,8 +57,8 @@ export class TurnManager {
    * @returns 按实际速度排序的参与者ID数组
    */
   public recalculateTurnOrder(battle: BattleData): string[] {
-    const participants = Array.from(battle.participants.values()).filter(
-      (p) => p.isAlive(),
+    const participants = Array.from(battle.participants.values()).filter((p) =>
+      p.isAlive(),
     )
 
     return participants
@@ -80,7 +80,7 @@ export class TurnManager {
    * @param participant 参与者
    * @returns 考虑所有修饰符后的实际速度值
    */
-  public calculateEffectiveSpeed(participant: BattleParticipant): number {
+  public calculateEffectiveSpeed(participant: BattleEntity): number {
     // 【脏标记流控】直接使用参与者的属性缓存系统，确保读取的是最新计算结果
     return participant.getAttribute('SPD')
   }

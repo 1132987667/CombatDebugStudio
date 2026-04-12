@@ -9,7 +9,7 @@
     "steps": [
       {
         "type": "deal_damage",
-        "target": "selected",
+        "target": "random_enemy",
         "damageType": "physical",
         "formula": "attack * 2.3"
       }
@@ -35,7 +35,7 @@
         "type": "apply_buff",
         "target": "all_enemies",
         "buffId": "buff_stun",
-        "probability": 0.40
+        "probability": 0.4
       }
     ],
     "energyCost": 150,
@@ -72,7 +72,7 @@
     "steps": [
       {
         "type": "deal_damage",
-        "target": "selected",
+        "target": "random_enemy",
         "damageType": "physical",
         "formula": "attack * 1.2"
       }

@@ -6,7 +6,7 @@
  * 描述: 根据角色类型和战场分析结果计算技能权重，支持动态调整技能优先级
  */
 
-import type { BattleState, BattleParticipant } from '@/types/battle'
+import type { BattleState, BattleEntity } from '@/types/battle'
 import type { Skill } from '@/core/BattleAI'
 import { BATTLE_CONSTANTS } from '@/types/battle'
 
@@ -28,7 +28,7 @@ export interface AIPriorityStrategy {
    */
   calculateSkillWeights(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
     skills: Skill[],
   ): SkillWeight[]
 
@@ -48,37 +48,37 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
    */
   public calculateSkillWeights(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
     skills: Skill[],
   ): SkillWeight[] {
     const weights: SkillWeight[] = []
-    
+
     // 分析战场形势
     const battleAnalysis = this.analyzeBattleState(battleState, participant)
-    
+
     // 计算每个技能的权重
     for (const skill of skills) {
       let weight = 0
       let reason = ''
-      
+
       // 基础权重
       weight += this.getBaseWeight(skill)
       reason += '基础权重'
-      
+
       // 根据战场形势调整权重
       weight += this.adjustWeightByBattleState(skill, battleAnalysis)
       reason += ', 战场形势调整'
-      
+
       // 根据角色状态调整权重
       weight += this.adjustWeightByParticipantState(skill, participant)
       reason += ', 角色状态调整'
-      
+
       // 确保权重为正数
       weight = Math.max(0, weight)
-      
+
       weights.push({ skillId: skill.id, weight, reason })
     }
-    
+
     // 按权重排序
     return weights.sort((a, b) => b.weight - a.weight)
   }
@@ -95,7 +95,7 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
    */
   protected analyzeBattleState(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): any {
     const allies = Array.from(battleState.participants.values()).filter(
       (p) => p.type === participant.type && p.isAlive(),
@@ -109,16 +109,29 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
     const teamMaxHealth = allies.reduce((sum, p) => sum + p.maxHealth, 0)
     const teamHealthPercent = teamMaxHealth > 0 ? teamHealth / teamMaxHealth : 0
 
-    const highestThreatEnemy = enemies.reduce<{ enemy: BattleParticipant | null; threat: number }>(
+    const highestThreatEnemy = enemies.reduce<{
+      enemy: BattleEntity | null
+      threat: number
+    }>(
       (max, enemy) => {
-        const threat = this.calculateEnemyThreat(enemy, participant, battleState)
+        const threat = this.calculateEnemyThreat(
+          enemy,
+          participant,
+          battleState,
+        )
         return threat > max.threat ? { enemy, threat } : max
       },
       { enemy: null, threat: 0 },
     )
 
-    const needsHealing = allies.some((p) => p.currentHealth / p.maxHealth < BATTLE_CONSTANTS.HEAL_THRESHOLD)
-    const hasLowHealthAlly = allies.some((p) => p.currentHealth / p.maxHealth < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD)
+    const needsHealing = allies.some(
+      (p) => p.currentHealth / p.maxHealth < BATTLE_CONSTANTS.HEAL_THRESHOLD,
+    )
+    const hasLowHealthAlly = allies.some(
+      (p) =>
+        p.currentHealth / p.maxHealth <
+        BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD,
+    )
 
     return {
       allies,
@@ -134,8 +147,8 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
    * 计算敌人威胁值
    */
   protected calculateEnemyThreat(
-    enemy: BattleParticipant,
-    participant: BattleParticipant,
+    enemy: BattleEntity,
+    participant: BattleEntity,
     battleState: BattleState,
   ): number {
     let threat = 0
@@ -158,7 +171,7 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
    */
   protected getBaseWeight(skill: Skill): number {
     let weight = 50 // 基础权重
-    
+
     // 根据技能类型调整
     switch (skill.type) {
       case 'ultimate':
@@ -171,16 +184,19 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
         weight = 0 // 被动技能不主动使用
         break
     }
-    
+
     return weight
   }
 
   /**
    * 根据战场形势调整权重
    */
-  protected adjustWeightByBattleState(skill: Skill, battleAnalysis: any): number {
+  protected adjustWeightByBattleState(
+    skill: Skill,
+    battleAnalysis: any,
+  ): number {
     let adjustment = 0
-    
+
     // 治疗技能调整
     if (skill.heal && skill.heal > 0) {
       if (battleAnalysis.hasLowHealthAlly) {
@@ -189,36 +205,49 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
         adjustment += 20
       }
     }
-    
+
     // 伤害技能调整
     if (skill.damage && skill.damage > 0) {
-      if (battleAnalysis.highestThreatEnemy.threat > BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD) {
+      if (
+        battleAnalysis.highestThreatEnemy.threat >
+        BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD
+      ) {
         adjustment += 30
       }
     }
-    
+
     return adjustment
   }
 
   /**
    * 根据角色状态调整权重
    */
-  protected adjustWeightByParticipantState(skill: Skill, participant: BattleParticipant): number {
+  protected adjustWeightByParticipantState(
+    skill: Skill,
+    participant: BattleEntity,
+  ): number {
     let adjustment = 0
-    
+
     const healthPercent = participant.currentHealth / participant.maxHealth
     const energyPercent = participant.currentEnergy / participant.maxEnergy
-    
+
     // 能量不足时降低技能权重
-    if (skill.energyCost && energyPercent < skill.energyCost / participant.maxEnergy) {
+    if (
+      skill.energyCost &&
+      energyPercent < skill.energyCost / participant.maxEnergy
+    ) {
       adjustment -= 50
     }
-    
+
     // 生命值过低时优先使用治疗技能
-    if (skill.heal && skill.heal > 0 && healthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD) {
+    if (
+      skill.heal &&
+      skill.heal > 0 &&
+      healthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD
+    ) {
       adjustment += 30
     }
-    
+
     return adjustment
   }
 }
@@ -240,12 +269,12 @@ export class AggressiveAIPriorityStrategy extends BaseAIPriorityStrategy {
    */
   protected getBaseWeight(skill: Skill): number {
     let weight = super.getBaseWeight(skill)
-    
+
     // 增加伤害技能的权重
     if (skill.damage && skill.damage > 0) {
       weight += 20
     }
-    
+
     return weight
   }
 }
@@ -267,28 +296,31 @@ export class DefensiveAIPriorityStrategy extends BaseAIPriorityStrategy {
    */
   protected getBaseWeight(skill: Skill): number {
     let weight = super.getBaseWeight(skill)
-    
+
     // 增加治疗技能的权重
     if (skill.heal && skill.heal > 0) {
       weight += 30
     }
-    
+
     return weight
   }
 
   /**
    * 根据角色状态调整权重
    */
-  protected adjustWeightByParticipantState(skill: Skill, participant: BattleParticipant): number {
+  protected adjustWeightByParticipantState(
+    skill: Skill,
+    participant: BattleEntity,
+  ): number {
     let adjustment = super.adjustWeightByParticipantState(skill, participant)
-    
+
     const healthPercent = participant.currentHealth / participant.maxHealth
-    
+
     // 生命值越低，治疗技能权重越高
     if (skill.heal && skill.heal > 0 && healthPercent < 0.5) {
       adjustment += (0.5 - healthPercent) * 100
     }
-    
+
     return adjustment
   }
 }

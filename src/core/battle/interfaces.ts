@@ -13,7 +13,7 @@
 import type {
   BattleState,
   BattleAction,
-  BattleParticipant,
+  BattleEntity,
   BattleData,
   ParticipantSide,
 } from '@/types/battle'
@@ -32,8 +32,8 @@ export interface IBattleSystem {
    * @returns BattleState - 初始化后的战斗状态
    */
   initialize(
-    allyParticipants: BattleParticipant[],
-    enemyParticipants: BattleParticipant[],
+    allyParticipants: BattleEntity[],
+    enemyParticipants: BattleEntity[],
   ): BattleState
 
   /**
@@ -129,9 +129,9 @@ export interface IBattleSystem {
 
   /**
    * 获取当前战斗的参与者信息
-   * @returns BattleParticipant[] - 当前战斗的参与者数组
+   * @returns BattleEntity[] - 当前战斗的参与者数组
    */
-  getCurParticipantsInfo(): BattleParticipant[]
+  getCurParticipantsInfo(): BattleEntity[]
 
   /**
    * 加载技能配置
@@ -174,7 +174,7 @@ export interface ITurnManager {
    */
   getCurrentParticipantId(
     battle: BattleData,
-    participants: Map<string, BattleParticipant>,
+    participants: Map<string, BattleEntity>,
   ): string | null
 
   /**
@@ -188,7 +188,7 @@ export interface ITurnManager {
    * @param participants 参与者数组
    * @returns 按速度排序的参与者ID数组
    */
-  createTurnOrder(participants: BattleParticipant[]): string[]
+  createTurnOrder(participants: BattleEntity[]): string[]
 
   /**
    * 初始化战斗的回合信息
@@ -226,7 +226,7 @@ export interface IActionExecutor {
    */
   executeDefaultAction(
     battle: BattleData,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): Promise<void>
 }
 
@@ -241,7 +241,7 @@ export interface IAISystem {
    * @returns Map<string, BattleAI> - AI实例映射表
    */
   createAIInstances(
-    participants: Map<string, BattleParticipant>,
+    participants: Map<string, BattleEntity>,
   ): Map<string, BattleAI>
 
   /**
@@ -252,7 +252,7 @@ export interface IAISystem {
    */
   makeDecision(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): BattleAction
 
   /**
@@ -265,7 +265,7 @@ export interface IAISystem {
    */
   executeAIAction(
     battle: BattleData,
-    participant: BattleParticipant,
+    participant: BattleEntity,
     actionExecutor: IActionExecutor,
   ): Promise<void>
 }

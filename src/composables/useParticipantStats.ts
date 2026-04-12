@@ -6,8 +6,8 @@
  */
 
 import { computed, type ComputedRef } from 'vue'
-import type { BattleParticipant } from '@/types/battle'
-import type { AttributeValue, AttributeCode } from '@/types/attribute'
+import type { BattleEntity } from '@/types/battle'
+import type { AttributeValue, AttributeCodes } from '@/types/attribute'
 import { AttributeCodes } from '@/types/attribute'
 
 /**
@@ -29,13 +29,13 @@ export interface FormattedAttribute {
  */
 export interface UseParticipantStatsReturn {
   /** 获取格式化属性 */
-  getFormatted: (type: AttributeCode) => FormattedAttribute
+  getFormatted: (type: AttributeCodes) => FormattedAttribute
   /** 获取属性值 */
-  getValue: (type: AttributeCode) => number
+  getValue: (type: AttributeCodes) => number
   /** 获取属性对象 */
-  getAttribute: (type: AttributeCode) => AttributeValue | undefined
+  getAttribute: (type: AttributeCodes) => AttributeValue | undefined
   /** 获取计算拆解 */
-  getBreakdown: (type: AttributeCode) => any
+  getBreakdown: (type: AttributeCodes) => any
   /** 生命值 */
   hp: ComputedRef<FormattedAttribute>
   /** 最大生命值 */
@@ -81,14 +81,14 @@ function formatAttributeValue(
 /**
  * 参与者属性访问 Composable
  * 提供便捷的属性访问和格式化功能
- * @param participant BattleParticipant 实例
+ * @param participant BattleEntity 实例
  * @returns 属性访问方法集合
  */
 export function useParticipantStats(
-  participant: BattleParticipant,
+  participant: BattleEntity,
 ): UseParticipantStatsReturn {
   // 获取格式化属性
-  const getFormatted = (type: AttributeCode): FormattedAttribute => {
+  const getFormatted = (type: AttributeCodes): FormattedAttribute => {
     const attrValue = participant.getAttributeValue(type)
     if (!attrValue) {
       return {
@@ -101,17 +101,17 @@ export function useParticipantStats(
   }
 
   // 获取属性值
-  const getValue = (type: AttributeCode): number => {
+  const getValue = (type: AttributeCodes): number => {
     return participant.getAttributeValue(type)?.value ?? 0
   }
 
   // 获取属性对象
-  const getAttribute = (type: AttributeCode): AttributeValue | undefined => {
+  const getAttribute = (type: AttributeCodes): AttributeValue | undefined => {
     return participant.getAttributeValue(type)
   }
 
   // 获取计算拆解
-  const getBreakdown = (type: AttributeCode): any => {
+  const getBreakdown = (type: AttributeCodes): any => {
     return getAttribute(type)?.breakdown || null
   }
 
@@ -125,7 +125,9 @@ export function useParticipantStats(
   const spd = computed(() => getFormatted(AttributeCodes.SPD))
   const critRate = computed(() => getFormatted(AttributeCodes.CRIT_RATE))
   const critDmg = computed(() => getFormatted(AttributeCodes.CRIT_DMG))
-  const dmgReduction = computed(() => getFormatted(AttributeCodes.DMG_REDUCTIONUCTION))
+  const dmgReduction = computed(() =>
+    getFormatted(AttributeCodes.DMG_REDUCTIONUCTION),
+  )
 
   return {
     getFormatted,

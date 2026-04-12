@@ -14,19 +14,11 @@
         <div class="field-party our-party">
           <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
-            <ParticipantCard
-              v-for="member in filterAllyTeam"
-              :key="member.id"
-              :ref="el => participantCardRefs[member.id] = el"
-              :participant="member"
-              :is-active="isCurrentActor(member.id)"
-              :is-selected="selectedCharacterId === member.id"
-              :is-enemy="false"
-              :show-debug="false"
-              @click="selectCharacter(member.id)"
-              @status-tooltip-show="showStatusTooltip"
-              @status-tooltip-hide="hideStatusTooltip"
-            />
+            <ParticipantCard v-for="member in filterAllyTeam" :key="member.id"
+              :ref="el => participantCardRefs[member.id] = el" :participant="member"
+              :is-active="isCurrentActor(member.id)" :is-selected="selectedCharacterId === member.id" :is-enemy="false"
+              :show-debug="false" @click="selectCharacter(member.id)" @status-tooltip-show="showStatusTooltip"
+              @status-tooltip-hide="hideStatusTooltip" />
           </div>
         </div>
 
@@ -37,19 +29,11 @@
         <div class="field-party enemy-party">
           <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
-            <ParticipantCard
-              v-for="member in filterEnemyTeam"
-              :key="member.id"
-              :ref="el => participantCardRefs[member.id] = el"
-              :participant="member"
-              :is-active="isCurrentActor(member.id)"
-              :is-selected="selectedCharacterId === member.id"
-              :is-enemy="true"
-              :show-debug="false"
-              @click="selectCharacter(member.id)"
-              @status-tooltip-show="showStatusTooltip"
-              @status-tooltip-hide="hideStatusTooltip"
-            />
+            <ParticipantCard v-for="member in filterEnemyTeam" :key="member.id"
+              :ref="el => participantCardRefs[member.id] = el" :participant="member"
+              :is-active="isCurrentActor(member.id)" :is-selected="selectedCharacterId === member.id" :is-enemy="true"
+              :show-debug="false" @click="selectCharacter(member.id)" @status-tooltip-show="showStatusTooltip"
+              @status-tooltip-hide="hideStatusTooltip" />
             <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>
@@ -103,7 +87,7 @@ import BattleLog from "@/views/BattleLog.vue";
 import ParticipantCard from "@/components/ParticipantCard.vue";
 import type { AttributeValue } from '@/types';
 import type { BattleManager } from '@/core/battle/BattleManager';
-import type { BattleParticipant, StatusEffect } from '@/types/battle';
+import type { BattleEntity, StatusEffect } from '@/types/battle';
 
 const battleManager = container.resolve<BattleManager>('BattleManager');
 
@@ -166,9 +150,9 @@ function toNumber(value: number | AttributeValue | undefined): number {
 
 /**
  * 获取参与者速度
- * 直接使用 BattleParticipant 的 getAttributeValue 方法
+ * 直接使用 BattleEntity 的 getAttributeValue 方法
  */
-function getMemberSpeed(member: BattleParticipant | null): number {
+function getMemberSpeed(member: BattleEntity | null): number {
   if (!member) return 0;
   const spdValue = member.getAttributeValue('SPD')
   return toNumber(spdValue?.value)

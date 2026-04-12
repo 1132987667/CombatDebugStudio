@@ -24,14 +24,12 @@
 // // 新增属性代码常量
 // export const AttributeCodes = {
 //   // ... 原有
-  
 
 //   // 免疫标记（值 0/1）
 //   IMMUNE_SLOW: 'IMMUNE_SLOW',
 //   IMMUNE_STUN: 'IMMUNE_STUN',
 //   IMMUNE_POISON: 'IMMUNE_POISON',
 //   IMMUNE_BLEED: 'IMMUNE_BLEED',
-  
 
 //   // 光环相关（用于传递效果）
 //   AURA_ATK_BONUS: 'AURA_ATK_BONUS',
@@ -44,12 +42,6 @@
 // export const AttributeCodes = {
 //   // ... 原有属性（HP, ATK, DEF, SPD, CRIT_RATE, CRIT_DMG 等）
 
-
-
-
-
-
-
 //   // ========== 种族/条件伤害加成 ==========
 //   DAMAGE_TO_DEMON: 'DAMAGE_TO_DEMON',       // 对妖魔鬼怪伤害加成
 //   DAMAGE_TO_LOW_HP: 'DAMAGE_TO_LOW_HP',     // 对低血量目标伤害加成
@@ -59,7 +51,6 @@
 //   IMMUNE_SLOW: 'IMMUNE_SLOW',
 //   IMMUNE_POISON: 'IMMUNE_POISON',
 
-
 // } as const
 // interface ApplyBuffStep {
 //   type: 'apply_buff'
@@ -68,14 +59,13 @@
 //   probability?: number  // 0-1，默认 1
 // }
 
-
 import type {
   SkillConfig,
   SkillStep,
   ExtendedSkillStep,
   CalculationLog,
 } from '@/types/skill'
-import type { BattleAction, BattleParticipant } from '@/types/battle'
+import type { BattleAction, BattleEntity } from '@/types/battle'
 import type { CombatRecord } from '@/types/combat-record'
 import { BuffSystem } from '@/core/BuffSystem'
 import { StackRule, ControlType } from '@/types/buff'
@@ -89,8 +79,8 @@ import { validateSkillConfigs } from '@/utils/schema-validator'
  * 借鉴framework的CalculationSystem设计
  */
 export interface CalculationContext {
-  source: BattleParticipant
-  target: BattleParticipant
+  source: BattleEntity
+  target: BattleEntity
   skill?: SkillConfig
 }
 
@@ -154,9 +144,7 @@ export class SkillManager {
     if (!validationResult.valid) {
       // 记录验证错误
       validationResult.errors.forEach((error) => {
-        console.error(
-          `技能配置验证失败: ${error}`,
-        )
+        console.error(`技能配置验证失败: ${error}`)
       })
 
       // 拒绝无效配置
@@ -196,7 +184,7 @@ export class SkillManager {
    * @param source 施放者
    * @returns 是否可用
    */
-  public isSkillAvailable(skillId: string, source: BattleParticipant): boolean {
+  public isSkillAvailable(skillId: string, source: BattleEntity): boolean {
     const skillConfig = this.getSkillConfig(skillId)
     if (!skillConfig) {
       return false
@@ -232,10 +220,10 @@ export class SkillManager {
    */
   public executeSkill(
     skillId: string,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     record?: CombatRecord,
-    allParticipants?: BattleParticipant[],
+    allParticipants?: BattleEntity[],
   ): BattleAction {
     const skillConfig = this.getSkillConfig(skillId)
     if (!skillConfig) {
@@ -456,10 +444,10 @@ export class SkillManager {
    */
   private selectStepTarget(
     stepTarget: string | undefined,
-    source: BattleParticipant,
-    defaultTarget: BattleParticipant,
-    allParticipants?: BattleParticipant[],
-  ): BattleParticipant {
+    source: BattleEntity,
+    defaultTarget: BattleEntity,
+    allParticipants?: BattleEntity[],
+  ): BattleEntity {
     // 如果没有指定 step.target 或为 'enemy'，使用默认目标
     if (!stepTarget || stepTarget === 'enemy') {
       return defaultTarget
@@ -514,8 +502,8 @@ export class SkillManager {
   private executeSkillStep(
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     record?: CombatRecord,
   ): void {
     // 标准化技能步骤类型，处理大小写差异
@@ -559,8 +547,8 @@ export class SkillManager {
   private executeDamageStep(
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     record?: CombatRecord,
   ): void {
     // 使用新的伤害计算器
@@ -611,8 +599,8 @@ export class SkillManager {
   private executeHealStep(
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     record?: CombatRecord,
   ): void {
     const healTarget =
@@ -655,8 +643,8 @@ export class SkillManager {
   private executeBuffStep(
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     record?: CombatRecord,
   ): void {
     const buffId = skillStep.buffId || skillStep.effectId
@@ -670,9 +658,7 @@ export class SkillManager {
     const scriptRegistry = this.buffSystem.getScriptRegistry()
 
     if (!scriptRegistry.has(buffId)) {
-      battleLogManager.addDebugLog(
-        `Buff脚本未找到: ${buffId}，跳过buff效果`,
-      )
+      battleLogManager.addDebugLog(`Buff脚本未找到: ${buffId}，跳过buff效果`)
       battleAction.effects.push({
         type: 'buff',
         buffId: buffId,
@@ -730,8 +716,8 @@ export class SkillManager {
   private executeShieldStep(
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
   ): void {
     // 护盾逻辑待实现
     battleLogManager.addDebugLog(`护盾步骤: ${skillStep.formula}`)
@@ -748,8 +734,8 @@ export class SkillManager {
   private executeControlStep(
     skillStep: ExtendedSkillStep,
     battleAction: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     normalizedType: string = 'CONTROL',
   ): void {
     const controlType =

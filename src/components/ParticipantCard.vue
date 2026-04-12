@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { computed, ref, type Ref } from 'vue'
-import type { BattleParticipant } from '@/types/battle'
+import type { BattleEntity } from '@/types/battle'
 import type { StatusEffect } from '@/types/battle'
 import { useBattleParticipant } from '@/composables/useBattleParticipant'
 import { useParticipantStats } from '@/composables/useParticipantStats'
@@ -95,7 +95,7 @@ interface FloatingNumber {
 
 const props = defineProps<{
   /** 战斗参与者实例 */
-  participant: BattleParticipant
+  participant: BattleEntity
   /** 是否当前行动者 */
   isActive?: boolean
   /** 是否选中 */

@@ -7,8 +7,11 @@
  * 版本: 1.0.0
  */
 
-import type { AttributeType, ModifierType } from '@/types/attribute'
-import type { ModifierTemplate, DynamicValueContext } from '@/types/modifier-template'
+import type { AttributeCodes, ModifierType } from '@/types/attribute'
+import type {
+  ModifierTemplate,
+  DynamicValueContext,
+} from '@/types/modifier-template'
 
 // ========== 计算追踪数据结构 ==========
 
@@ -93,7 +96,9 @@ export class AttributeEngine {
     // 按类型分组
     const additiveMods = templates.filter((t) => t.type === 'ADDITIVE')
     const percentageMods = templates.filter((t) => t.type === 'PERCENTAGE')
-    const multiplicativeMods = templates.filter((t) => t.type === 'MULTIPLICATIVE')
+    const multiplicativeMods = templates.filter(
+      (t) => t.type === 'MULTIPLICATIVE',
+    )
     const finalMods = templates.filter((t) => t.type === 'FINAL')
 
     // 辅助函数：解析数值
@@ -172,7 +177,11 @@ export class AttributeEngine {
     }
 
     // 5. 计算来源贡献
-    const sourceContributions = this.calculateSourceContributions(baseValue, steps, templates)
+    const sourceContributions = this.calculateSourceContributions(
+      baseValue,
+      steps,
+      templates,
+    )
 
     return {
       finalValue: current,
@@ -199,7 +208,10 @@ export class AttributeEngine {
     steps: CalculationStep[],
     templates: ModifierTemplate[],
   ): SourceContribution[] {
-    const contributions = new Map<string, { sourceName: string; contribution: number; sourceType?: string }>()
+    const contributions = new Map<
+      string,
+      { sourceName: string; contribution: number; sourceType?: string }
+    >()
 
     // 构建模板 ID 到来源类型的映射
     const templateTypeMap = new Map<string, string>()
@@ -237,7 +249,12 @@ export class AttributeEngine {
    * @param sourceType 来源类型
    */
   static toTemplate(
-    modifier: { buffInstanceId: string; attribute: AttributeType; value: number; type: ModifierType },
+    modifier: {
+      buffInstanceId: string
+      attribute: AttributeCodes
+      value: number
+      type: ModifierType
+    },
     sourceName: string,
     sourceType: ModifierSourceType = 'buff',
   ): ModifierTemplate {
@@ -258,12 +275,21 @@ export class AttributeEngine {
    * @param getSourceType 获取来源类型的函数
    */
   static toTemplates(
-    modifiers: Array<{ buffInstanceId: string; attribute: AttributeType; value: number; type: ModifierType }>,
+    modifiers: Array<{
+      buffInstanceId: string
+      attribute: AttributeCodes
+      value: number
+      type: ModifierType
+    }>,
     getSourceName: (id: string) => string,
     getSourceType: (id: string) => ModifierSourceType,
   ): ModifierTemplate[] {
     return modifiers.map((mod) =>
-      this.toTemplate(mod, getSourceName(mod.buffInstanceId), getSourceType(mod.buffInstanceId)),
+      this.toTemplate(
+        mod,
+        getSourceName(mod.buffInstanceId),
+        getSourceType(mod.buffInstanceId),
+      ),
     )
   }
 }

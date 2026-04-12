@@ -220,10 +220,6 @@ const currentTurn = computed(() => {
   return battleManager.getCurrentTurn() || 1
 });
 
-const maxTurns = computed(() => {
-  return battleManager.getMaxTurns() || 999
-});
-
 const allyTeam = computed(() => {
   return battleManager.getAllyTeam() || []
 });
@@ -240,9 +236,6 @@ const teamCounts = computed(() => {
 const logManager = {
   addSystemLog: (msg: string) => battleLogManager.addSystemLog(msg),
   addErrorLog: (msg: string) => battleLogManager.addDebugLog(msg),
-  addLog: (turn: number, source: string, action: string, target: string, result: string, level: string, htmlResult?: string) => {
-    battleLogManager.addSystemLog(String(turn), source, action, target, result, 'action', level as any, htmlResult)
-  },
   addActionLog: (source: string, action: string, target: string, result: string) => {
     battleLogManager.addActionLog(source, action, target, result)
   }

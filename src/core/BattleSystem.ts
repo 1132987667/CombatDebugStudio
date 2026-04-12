@@ -11,10 +11,9 @@ import type { IBattleSystem } from '@/core/battle/interfaces.ts'
 import type {
   BattleAction,
   BattleData,
-  BattleParticipant,
+  BattleEntity,
   BattleState,
   ParticipantSide,
-  RoundStatus,
 } from '@/types/battle'
 import { BattleActionHelper } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
@@ -48,10 +47,10 @@ import { TriggerEventBus } from '@/core/TriggerEventBus'
 import {
   AUTO_BATTLE_CONFIG,
   BATTLE_CONSTANTS,
-  BATTLE_STATUS,
+  BattleStatus,
   BattleSystemEvent,
   PARTICIPANT_SIDE,
-  ROUND_STATUS,
+  RoundStatus,
 } from '@/types/battle'
 import type {
   AnimationData,
@@ -276,7 +275,7 @@ export class BattleSystem implements IBattleSystem {
   public getDefBattleData(): BattleData {
     return {
       battleId: this.generateBattleId(),
-      participants: new Map<string, BattleParticipant>(),
+      participants: new Map<string, BattleEntity>(),
       actions: [],
       turnOrder: [],
       currentTurn: 0,
@@ -287,21 +286,21 @@ export class BattleSystem implements IBattleSystem {
       aiInstances: new Map<string, BattleAI>(),
       autoBattle: false,
       battleSpeed: 1,
-      battleState: BATTLE_STATUS.CREATED,
-      roundState: ROUND_STATUS.NONE,
+      battleState: BattleStatus.CREATED,
+      roundState: RoundStatus.NONE,
       skillManager: this.skillManager,
     }
   }
 
   /**
    * 初始化战斗
-   * @param {BattleParticipant[]} allyParticipants - 我方参与者数组
-   * @param {BattleParticipant[]} enemyParticipants - 敌方参与者数组
+   * @param {BattleEntity[]} allyParticipants - 我方参与者数组
+   * @param {BattleEntity[]} enemyParticipants - 敌方参与者数组
    * @returns {BattleState} 初始化后的战斗状态
    */
   public initialize(
-    allyParticipants: BattleParticipant[],
-    enemyParticipants: BattleParticipant[],
+    allyParticipants: BattleEntity[],
+    enemyParticipants: BattleEntity[],
   ): BattleState {
     const allParticipants = [...allyParticipants, ...enemyParticipants]
 
@@ -317,7 +316,7 @@ export class BattleSystem implements IBattleSystem {
     )
     battleData.currentTurn = 0
     battleData.currentRound = 1
-    battleData.battleState = BATTLE_STATUS.PREPARING
+    battleData.battleState = BattleStatus.PREPARING
 
     this.actionExecutor.registerBattle(
       this.battleData.battleId,
@@ -355,8 +354,8 @@ export class BattleSystem implements IBattleSystem {
 
     this.battleRecorder.recordAction(battleId, initAction, 0)
 
-    battleData.battleState = BATTLE_STATUS.ACTIVE
-    battleData.roundState = ROUND_STATUS.START
+    battleData.battleState = BattleStatus.ACTIVE
+    battleData.roundState = RoundStatus.START
 
     const autoBattleRules = this.ruleManager.getAutoBattleRules()
     battleData.autoBattle = autoBattleRules.enabled
@@ -372,9 +371,7 @@ export class BattleSystem implements IBattleSystem {
    * 被动技能在战斗开始时自动生效
    * @param participants 参与者映射
    */
-  private applyPassiveSkills(
-    participants: Map<string, BattleParticipant>,
-  ): void {
+  private applyPassiveSkills(participants: Map<string, BattleEntity>): void {
     // 触发战斗开始事件
     participants.forEach((participant) => {
       this.emitTriggerEvent('ON_BATTLE_START', {
@@ -396,20 +393,20 @@ export class BattleSystem implements IBattleSystem {
   private async processTurnInternal(): Promise<void> {
     const battle = this.battleData
     if (
-      battle.battleState === BATTLE_STATUS.PAUSED ||
-      battle.battleState !== BATTLE_STATUS.ACTIVE
+      battle.battleState === BattleStatus.PAUSED ||
+      battle.battleState !== BattleStatus.ACTIVE
     ) {
       return
     }
 
-    battle.roundState = ROUND_STATUS.START
+    battle.roundState = RoundStatus.START
 
     const aliveParticipants = Array.from(battle.participants.values()).filter(
       (p) => p.isAlive(),
     )
 
     if (aliveParticipants.length === 0) {
-      battle.roundState = ROUND_STATUS.END
+      battle.roundState = RoundStatus.END
       this.checkBattleEndCondition()
       return
     }
@@ -443,6 +440,7 @@ export class BattleSystem implements IBattleSystem {
 
       // 为所有存活角色增加回合开始能量
       const combatRules = this.ruleManager.getCombatRules()
+
       this.participantManager.gainEnergyToAliveParticipants(
         aliveParticipants,
         combatRules.energyGainPerTurn,
@@ -450,7 +448,10 @@ export class BattleSystem implements IBattleSystem {
 
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
-        if ('recalculateAll' in participant && typeof participant.recalculateAll === 'function') {
+        if (
+          'recalculateAll' in participant &&
+          typeof participant.recalculateAll === 'function'
+        ) {
           participant.recalculateAll()
         }
       })
@@ -483,7 +484,7 @@ export class BattleSystem implements IBattleSystem {
 
         this.checkBattleEndCondition()
 
-        if (battle.battleState !== BATTLE_STATUS.ACTIVE) {
+        if (battle.battleState !== BattleStatus.ACTIVE) {
           return
         }
       }
@@ -507,7 +508,7 @@ export class BattleSystem implements IBattleSystem {
         { round: battle.currentRound },
       )
 
-      battle.roundState = ROUND_STATUS.END
+      battle.roundState = RoundStatus.END
 
       this.battleRecorder.recordTurnEnd(battleId, battle.currentRound || 1)
 
@@ -524,7 +525,7 @@ export class BattleSystem implements IBattleSystem {
    * @param participant 参与者
    * @returns 是否被控制
    */
-  private isParticipantControlled(participant: BattleParticipant): boolean {
+  private isParticipantControlled(participant: BattleEntity): boolean {
     // 检查是否有眩晕Buff
     if (participant.hasBuff('buff_stun')) {
       return true
@@ -544,7 +545,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private async executeParticipantAction(
     battle: BattleData,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): Promise<void> {
     console.log(
       `[DEBUG] ===== executeParticipantAction 开始: ${participant.name} =====`,
@@ -694,7 +695,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private async selectAndExecuteSkill(
     battle: BattleData,
-    source: BattleParticipant,
+    source: BattleEntity,
     skill: SkillConfig,
   ): Promise<BattleAction> {
     console.log(
@@ -816,9 +817,9 @@ export class BattleSystem implements IBattleSystem {
    */
   private getSkillTargets(
     battle: BattleData,
-    source: BattleParticipant,
+    source: BattleEntity,
     skill: SkillConfig,
-  ): BattleParticipant[] {
+  ): BattleEntity[] {
     const selector = skill.selector || 'single_enemy'
     const participants = Array.from(battle.participants.values())
 
@@ -889,7 +890,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private selectTargetForSkill(
     battle: BattleData,
-    source: BattleParticipant,
+    source: BattleEntity,
     skill: SkillConfig,
   ): string {
     const selector = skill.selector || 'single_enemy'
@@ -932,7 +933,7 @@ export class BattleSystem implements IBattleSystem {
    * @returns 技能步骤配置
    */
   private buildNormalAttackStep(
-    source: BattleParticipant,
+    source: BattleEntity,
     targetId: string,
   ): ExtendedSkillStep {
     return {
@@ -980,8 +981,8 @@ export class BattleSystem implements IBattleSystem {
    * @returns 日志参数对象
    */
   private generateAttackLogParams(
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     turnNumber: number,
     options: {
       isMiss?: boolean
@@ -1049,8 +1050,8 @@ export class BattleSystem implements IBattleSystem {
    * @param damage 伤害值
    */
   private applyDamageToTarget(
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     damage: number,
   ): void {
     target.takeDamage(damage)
@@ -1079,8 +1080,8 @@ export class BattleSystem implements IBattleSystem {
    */
   private async handleMissAttack(
     action: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     turnNumber: number,
   ): Promise<void> {
     action.effects.push({
@@ -1116,8 +1117,8 @@ export class BattleSystem implements IBattleSystem {
    */
   private async handleHitAttack(
     action: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     damageResult: { damage: number; isCritical: boolean },
     turnNumber: number,
   ): Promise<void> {
@@ -1176,7 +1177,7 @@ export class BattleSystem implements IBattleSystem {
    */
   private async selectAndExecuteAttack(
     battle: BattleData,
-    source: BattleParticipant,
+    source: BattleEntity,
   ): Promise<BattleAction> {
     const targetId = this.selectTarget(battle, source)
     const target = battle.participants.get(targetId)
@@ -1240,7 +1241,7 @@ export class BattleSystem implements IBattleSystem {
    * @param source 行动者
    * @returns 目标参与者ID
    */
-  private selectTarget(battle: BattleData, source: BattleParticipant): string {
+  private selectTarget(battle: BattleData, source: BattleEntity): string {
     const enemies = Array.from(battle.participants.values()).filter(
       (p) => p.type !== source.type && p.isAlive(),
     )
@@ -1280,11 +1281,11 @@ export class BattleSystem implements IBattleSystem {
   /**
    * 执行默认行动（当AI决策失败或无效时使用）
    * @param {BattleData} battle - 战斗数据
-   * @param {BattleParticipant} participant - 当前行动者
+   * @param {BattleEntity} participant - 当前行动者
    */
   private async executeDefaultAction(
     battle: BattleData,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): Promise<void> {
     // 获取所有存活的敌人和角色
     const enemies = Array.from(battle.participants.values())
@@ -1581,8 +1582,8 @@ export class BattleSystem implements IBattleSystem {
    * @param aliveEnemies 存活的敌人
    */
   private handleMaxTurnsReached(
-    aliveCharacters: BattleParticipant[],
-    aliveEnemies: BattleParticipant[],
+    aliveCharacters: BattleEntity[],
+    aliveEnemies: BattleEntity[],
   ): void {
     const battle = this.battleData
     if (!battle) return
@@ -1651,8 +1652,8 @@ export class BattleSystem implements IBattleSystem {
       participant.buffs = []
     })
 
-    battle.roundState = ROUND_STATUS.NONE
-    battle.battleState = BATTLE_STATUS.ENDED
+    battle.roundState = RoundStatus.NONE
+    battle.battleState = BattleStatus.ENDED
     battle.winner = winner
     battle.endTime = Date.now()
 
@@ -1691,7 +1692,7 @@ export class BattleSystem implements IBattleSystem {
     this.battleRecorder.endRecording(battleId, winner)
     this.battleRecorder.saveRecording(battleId)
 
-    battle.battleState = BATTLE_STATUS.ENDED
+    battle.battleState = BattleStatus.ENDED
 
     eventBus.emit(BattleSystemEvent.BATTLE_END, {
       battleId,
@@ -1729,8 +1730,8 @@ export class BattleSystem implements IBattleSystem {
     battle.endTime = undefined
     battle.turnOrder = []
     battle.currentTurn = 0
-    battle.battleState = BATTLE_STATUS.CREATED
-    battle.roundState = ROUND_STATUS.NONE
+    battle.battleState = BattleStatus.CREATED
+    battle.roundState = RoundStatus.NONE
 
     battle.actions = []
 
@@ -1777,7 +1778,7 @@ export class BattleSystem implements IBattleSystem {
    * @returns 是否已结束
    */
   public isBattleEnded(): boolean {
-    return this.isBattleInState(BATTLE_STATUS.ENDED)
+    return this.isBattleInState(BattleStatus.ENDED)
   }
 
   /**
@@ -1793,7 +1794,7 @@ export class BattleSystem implements IBattleSystem {
    * @returns 是否处于暂停状态
    */
   public getIsPaused(): boolean {
-    return this.battleData.battleState === BATTLE_STATUS.PAUSED
+    return this.battleData.battleState === BattleStatus.PAUSED
   }
 
   /**
@@ -1827,9 +1828,9 @@ export class BattleSystem implements IBattleSystem {
    */
   public togglePause(): void {
     this.battleData.battleState =
-      this.battleData.battleState === BATTLE_STATUS.PAUSED
-        ? BATTLE_STATUS.ACTIVE
-        : BATTLE_STATUS.PAUSED
+      this.battleData.battleState === BattleStatus.PAUSED
+        ? BattleStatus.ACTIVE
+        : BattleStatus.PAUSED
     if (this.getIsPaused()) {
       this.pauseAutoBattle()
     } else {
@@ -1856,7 +1857,7 @@ export class BattleSystem implements IBattleSystem {
   private resumeAutoBattle(): void {
     if (
       this.battleData.autoBattle &&
-      this.battleData.battleState === BATTLE_STATUS.ACTIVE &&
+      this.battleData.battleState === BattleStatus.ACTIVE &&
       this.autoBattleLoop
     ) {
       const delay = this.getBattleDelay()
@@ -1873,7 +1874,7 @@ export class BattleSystem implements IBattleSystem {
   public isBattleInProgress(): boolean {
     const battle = this.battleData
     if (!battle) return false
-    return battle.battleState === BATTLE_STATUS.ACTIVE
+    return battle.battleState === BattleStatus.ACTIVE
   }
 
   /**
@@ -1912,7 +1913,7 @@ export class BattleSystem implements IBattleSystem {
    */
   public startBattle(): void {
     this.battleData.autoBattle = true
-    this.battleData.battleState = BATTLE_STATUS.ACTIVE
+    this.battleData.battleState = BattleStatus.ACTIVE
     battleLogManager.addDebugLog(`自动战斗开始: ${this.battleData.battleId}`)
 
     this.autoBattleLoop = async () => {
@@ -1921,15 +1922,15 @@ export class BattleSystem implements IBattleSystem {
       }
 
       let battle = this.battleData
-      if (!battle.autoBattle || battle.battleState !== BATTLE_STATUS.ACTIVE) {
+      if (!battle.autoBattle || battle.battleState !== BattleStatus.ACTIVE) {
         return
       }
       try {
         await this.processTurnInternal()
         battle = this.battleData
         if (
-          battle.battleState === BATTLE_STATUS.ENDED ||
-          battle.battleState === BATTLE_STATUS.PAUSED
+          battle.battleState === BattleStatus.ENDED ||
+          battle.battleState === BattleStatus.PAUSED
         ) {
           this.stopAutoBattle()
           return
@@ -1977,7 +1978,7 @@ export class BattleSystem implements IBattleSystem {
     }
 
     this.battleData.autoBattle = false
-    this.battleData.battleState = BATTLE_STATUS.PAUSED
+    this.battleData.battleState = BattleStatus.PAUSED
     this.autoBattleLoop = undefined
 
     if (this.autoBattleTimerId) {
@@ -2092,7 +2093,7 @@ export class BattleSystem implements IBattleSystem {
    * 获取当前所有参与者信息
    * @returns 参与者数组
    */
-  public getCurParticipantsInfo(): BattleParticipant[] {
+  public getCurParticipantsInfo(): BattleEntity[] {
     return Array.from(this.battleData.participants.values())
   }
 

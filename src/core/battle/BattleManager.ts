@@ -6,10 +6,9 @@ import { InterventionManager } from '@/core/battle/intervention/InterventionMana
 import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager'
 import {
   PARTICIPANT_SIDE,
-  BattleParticipant,
+  BattleEntity,
   BattleSystemEvent,
 } from '@/types/battle'
-import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
 import type {
   BattleEvents,
   BattleEventName,
@@ -104,34 +103,29 @@ export class BattleManager {
     return this.battleReplayManager
   }
 
+  validateTeams(allyTeam: BattleEntity[], enemyTeam: BattleEntity[]) {
+    // 验证队伍数据
+    if (!allyTeam || !enemyTeam) {
+      throw new Error('队伍数据不能为空')
+    }
+
+    // 验证参与者数据
+    if (allyTeam.length === 0 && enemyTeam.length === 0) {
+      throw new Error('没有有效的参与者数据')
+    }
+  }
+
   /**
    * 初始化队伍数据
-   * @param allyTeam 我方队伍（BattleParticipant 数组）
-   * @param enemyTeam 敌方队伍（BattleParticipant 数组）
+   * @param allyTeam 我方队伍（BattleEntity 数组）
+   * @param enemyTeam 敌方队伍（BattleEntity 数组）
    */
-  initializeTeams(
-    allyTeam: BattleParticipant[],
-    enemyTeam: BattleParticipant[],
-  ) {
+  initializeTeams(allyTeam: BattleEntity[], enemyTeam: BattleEntity[]) {
     try {
-      // 验证队伍数据
-      if (!allyTeam || !enemyTeam) {
-        throw new Error('队伍数据不能为空')
-      }
-
-      // 验证参与者数据
-      if (allyTeam.length === 0 && enemyTeam.length === 0) {
-        throw new Error('没有有效的参与者数据')
-      }
-
-      // 初始化队伍映射关系
-      this.battleStateManager.initializeTeams(allyTeam, enemyTeam)
+      this.validateTeams(allyTeam, enemyTeam)
 
       // 创建战斗状态
-      const battleState = this.battleSystem.initialize(
-        allyTeam,
-        enemyTeam,
-      )
+      const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
       const battleId = battleState.battleId
       this.setBattleId(battleId)
 
@@ -143,10 +137,10 @@ export class BattleManager {
   }
 
   /**
-   * 获取我方队伍（BattleParticipant 实例）
+   * 获取我方队伍（BattleEntity 实例）
    * @returns 我方参与者数组
    */
-  getAllyTeam(): BattleParticipant[] {
+  getAllyTeam(): BattleEntity[] {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) {
       return []
@@ -157,10 +151,10 @@ export class BattleManager {
   }
 
   /**
-   * 获取敌方队伍（BattleParticipant 实例）
+   * 获取敌方队伍（BattleEntity 实例）
    * @returns 敌方参与者数组
    */
-  getEnemyTeam(): BattleParticipant[] {
+  getEnemyTeam(): BattleEntity[] {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) {
       return []
@@ -171,26 +165,10 @@ export class BattleManager {
   }
 
   /**
-   * 获取我方队伍（已废弃）
-   * @deprecated 使用 getAllyTeam() 代替
-   */
-  getAllyTeamUI(): BattleParticipant[] {
-    return this.getAllyTeam()
-  }
-
-  /**
-   * 获取敌方队伍（已废弃）
-   * @deprecated 使用 getEnemyTeam() 代替
-   */
-  getEnemyTeamUI(): BattleParticipant[] {
-    return this.getEnemyTeam()
-  }
-
-  /**
    * 获取启用的我方队伍
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
-  getEnabledAllyTeam(): BattleParticipant[] {
+  getEnabledAllyTeam(): BattleEntity[] {
     const allyTeam = this.getAllyTeam()
     return allyTeam.filter((c) => c.enabled)
   }
@@ -199,28 +177,20 @@ export class BattleManager {
    * 获取启用的敌方队伍
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
-  getEnabledEnemyTeam(): BattleParticipant[] {
+  getEnabledEnemyTeam(): BattleEntity[] {
     const enemyTeam = this.getEnemyTeam()
     return enemyTeam.filter((c) => c.enabled)
   }
 
   /**
-   * 获取所有参与者（BattleParticipant 实例）
+   * 获取所有参与者（BattleEntity 实例）
    */
-  getAllParticipants(): BattleParticipant[] {
+  getAllParticipants(): BattleEntity[] {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) {
       return []
     }
     return Array.from(battleState.participants.values())
-  }
-
-  /**
-   * 获取所有参与者（已废弃）
-   * @deprecated 使用 getAllParticipants() 代替
-   */
-  getAllParticipantsUI(): BattleParticipant[] {
-    return this.getAllParticipants()
   }
 
   /**
@@ -238,22 +208,14 @@ export class BattleManager {
   }
 
   /**
-   * 获取选中的角色（BattleParticipant 实例）
+   * 获取选中的角色（BattleEntity 实例）
    */
-  getSelectedCharacter(): BattleParticipant | null {
+  getSelectedCharacter(): BattleEntity | null {
     const selectedId = this.getSelectedCharacterId()
     if (!selectedId) return null
 
     const allParticipants = this.getAllParticipants()
     return allParticipants.find((p) => p.id === selectedId) || null
-  }
-
-  /**
-   * 获取选中的角色（已废弃）
-   * @deprecated 使用 getSelectedCharacter() 代替
-   */
-  getSelectedCharacterUI(): BattleParticipant | null {
-    return this.getSelectedCharacter()
   }
 
   /**
@@ -316,10 +278,10 @@ export class BattleManager {
 
   /**
    * 添加角色到队伍
-   * @param character - 角色数据（BattleParticipant）
+   * @param character - 角色数据（BattleEntity）
    * @param side - 队伍类型
    */
-  addCharacterToTeam(character: BattleParticipant, side: PARTICIPANT_SIDE) {
+  addCharacterToTeam(character: BattleEntity, side: PARTICIPANT_SIDE) {
     const battleState = this.battleSystem.getBattleState()
     if (battleState) {
       battleState.participants.set(character.id, character)
@@ -365,10 +327,7 @@ export class BattleManager {
    * @param characterId - 角色 ID
    * @param updates - 更新数据
    */
-  updateCharacterState(
-    characterId: string,
-    updates: Partial<BattleParticipant>,
-  ) {
+  updateCharacterState(characterId: string, updates: Partial<BattleEntity>) {
     this.battleStateManager.updateCharacterManually(characterId, updates)
   }
 
@@ -413,9 +372,9 @@ export class BattleManager {
   /**
    * 根据 ID 获取角色
    * @param characterId - 角色 ID
-   * @returns BattleParticipant 或 undefined
+   * @returns BattleEntity 或 undefined
    */
-  getCharacterById(characterId: string): BattleParticipant | undefined {
+  getCharacterById(characterId: string): BattleEntity | undefined {
     const allParticipants = this.getAllParticipants()
     return allParticipants.find((p) => p.id === characterId)
   }
@@ -425,7 +384,7 @@ export class BattleManager {
    * @param updates - 更新数组
    */
   updateMultipleCharacters(
-    updates: Array<{ id: string; data: Partial<BattleParticipant> }>,
+    updates: Array<{ id: string; data: Partial<BattleEntity> }>,
   ) {
     updates.forEach(({ id, data }) => {
       this.updateCharacterState(id, data)
@@ -465,7 +424,7 @@ export class BattleManager {
   /**
    * 查找参与者
    */
-  private findParticipant(characterId: string): BattleParticipant | undefined {
+  private findParticipant(characterId: string): BattleEntity | undefined {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) return undefined
     return battleState.participants.get(characterId)
@@ -476,7 +435,7 @@ export class BattleManager {
    */
   private findParticipantTeam(
     characterId: string,
-  ): Map<string, BattleParticipant> | undefined {
+  ): Map<string, BattleEntity> | undefined {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) return undefined
 
@@ -550,11 +509,8 @@ export class BattleManager {
       return null
     }
 
-    // 直接使用 BattleParticipant 数组
-    const battleState = this.battleSystem.initialize(
-      allyTeam,
-      enemyTeam,
-    )
+    // 直接使用 BattleEntity 数组
+    const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
     this.battleStateManager.setBattleId(battleState.battleId)
     this.autoBattleManager.setBattleId(battleState.battleId)
     battleLogManager.clearLogs()

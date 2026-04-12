@@ -9,7 +9,11 @@ import type { EnemyInstance } from '@/types/enemy'
 import type { BattleAI } from '@/core/BattleAI'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import type { SkillConfig } from '@/types/skill'
-import type { AttributeValue, IModifierProvider, AttributeType } from '@/types/attribute'
+import type {
+  AttributeValue,
+  IModifierProvider,
+  AttributeCodes,
+} from '@/types/attribute'
 import type { BattleLogEntry } from '@/types/battle-log'
 import { EffectType } from '@/types/effect'
 import { Counter } from '@/utils/Counter'
@@ -20,7 +24,7 @@ const counter = new Counter()
  * 战斗状态常量
  * 控制战斗的宏观生命周期
  */
-export const BATTLE_STATUS = {
+export const BattleStatus = {
   /** 已创建 - 战斗实例已创建，等待参与者加入 */
   CREATED: 'CREATED',
   /** 战前准备 - 初始化技能、buff等 */
@@ -35,13 +39,13 @@ export const BATTLE_STATUS = {
   ENDED: 'ENDED',
 } as const
 
-export type BattleStatus = (typeof BATTLE_STATUS)[keyof typeof BATTLE_STATUS]
+export type BattleStatus = (typeof BattleStatus)[keyof typeof BattleStatus]
 
 /**
  * 回合状态常量
  * 控制回合内的子阶段
  */
-export const ROUND_STATUS = {
+export const RoundStatus = {
   /** 无回合 - 不在回合中 */
   NONE: 'NONE',
   /** 回合开始 */
@@ -54,7 +58,7 @@ export const ROUND_STATUS = {
   END: 'END',
 } as const
 
-export type RoundStatus = (typeof ROUND_STATUS)[keyof typeof ROUND_STATUS]
+export type RoundStatus = (typeof RoundStatus)[keyof typeof RoundStatus]
 
 /**
  * 参与方常量
@@ -123,7 +127,7 @@ export const SKILL_EFFECT_CONSTANTS = {
 } as const
 
 /** 动作类型常量 */
-export const ACTION_TYPES = {
+export const ActionTypes = {
   ATTACK: 'attack',
   SKILL: 'skill',
   HEAL: 'heal',
@@ -132,13 +136,13 @@ export const ACTION_TYPES = {
 } as const
 
 /** 动作类型数组 - 从 ACTION_TYPES 自动生成 */
-export const VALID_ACTION_TYPES = Object.freeze([
-  ACTION_TYPES.ATTACK,
-  ACTION_TYPES.SKILL,
-  ACTION_TYPES.HEAL,
-  ACTION_TYPES.BUFF,
-  ACTION_TYPES.ITEM,
-]) as readonly (typeof ACTION_TYPES)[keyof typeof ACTION_TYPES][]
+export const ValidActionTypes = Object.freeze([
+  ActionTypes.ATTACK,
+  ActionTypes.SKILL,
+  ActionTypes.HEAL,
+  ActionTypes.BUFF,
+  ActionTypes.ITEM,
+]) as readonly (typeof ActionTypes)[keyof typeof ActionTypes][]
 
 export type ParticipantSide =
   (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
@@ -203,19 +207,21 @@ export interface BattleEntity {
   speedBonus: AttributeValue
 
   /** 获取属性值对象（包含详细信息） */
-  getAttributeValue(attribute: AttributeType | string): AttributeValue | undefined
+  getAttributeValue(
+    attribute: AttributeCodes | string,
+  ): AttributeValue | undefined
   /** 获取属性最终值（快捷方法） */
-  getAttribute(attribute: AttributeType | string): number
-  /** 快捷获取属性最终值（number） */
-  getAttr(attr: AttributeType): number
+  getAttribute(attribute: AttributeCodes | string): AttributeValue
+  /** 快捷获取属性最终值（AttributeValue） */
+  getAttr(attr: AttributeCodes): AttributeValue
   /** 快捷获取属性值对象（包含基础值、修饰符等） */
-  getAttrValue(attr: AttributeType): AttributeValue | undefined
+  getAttrValue(attr: AttributeCodes): AttributeValue | undefined
   /** 批量预计算所有属性（回合开始时调用） */
   recalcAll(): void
   /** 设置属性值 */
-  setAttribute(attribute: string, value: number): void
+  setAttribute(attribute: string, value: AttributeValue): void
   /** 标记属性为脏（需要重新计算） */
-  markDirty(attribute: AttributeType | string): void
+  markDirty(attribute: AttributeCodes | string): void
   /** 标记所有属性为脏 */
   markAllDirty(): void
   /** 重新计算所有属性 */
@@ -240,13 +246,6 @@ export interface BattleEntity {
   getSkillIds(filter?: 'all' | 'active' | 'passive'): string[]
   hasSkill(skillId: string): boolean
 }
-
-/**
- * 战斗参与者类型别名
- * 为了向后兼容，保留 BattleParticipant 作为 BattleEntity 的别名
- * @deprecated 请使用 BattleEntity 代替
- */
-export type BattleParticipant = BattleEntity
 
 /**
  * 状态效果接口
@@ -480,7 +479,7 @@ export interface BattleEffect {
  */
 export interface BattleState {
   battleId: string
-  participants: Map<string, BattleParticipant>
+  participants: Map<string, BattleEntity>
   actions: BattleAction[]
   /** 回合顺序，按速度规则排序 */
   turnOrder: string[]
@@ -676,7 +675,7 @@ export interface BattleData {
   /** 战斗唯一标识符 */
   battleId: string
   /** 参与者映射，以参与者ID为键 */
-  participants: Map<string, BattleParticipant>
+  participants: Map<string, BattleEntity>
   /** 战斗行动记录 */
   actions: BattleAction[]
   /** 回合顺序，按速度规则排序 */

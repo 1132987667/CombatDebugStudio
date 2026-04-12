@@ -19,18 +19,15 @@ import type { SkillConfig } from '@/types/skill'
 import type {
   AttributeValue,
   ModifierDetail,
-  AttributeCode,
+  AttributeCodes,
   IModifierProvider,
   IModifierStack,
   ModifierSourceType,
   Modifier,
   ModifierType,
-  AttributeType,
-} from '@/types/attribute'
-import {
   AttributeCodes,
-  normalizeAttributeCode,
 } from '@/types/attribute'
+import { AttributeCodes, normalizeAttributeCode } from '@/types/attribute'
 import { AttributeEngine } from '@/core/AttributeEngine'
 import type { ModifierTemplate } from '@/types/modifier-template'
 import { triggerEventBus } from '@/core/TriggerEventBus'
@@ -127,7 +124,7 @@ export class BattleParticipantImpl implements BattleEntity {
   skillCooldowns: Map<string, number>
 
   /** 属性缓存 Map */
-  private attributes: Map<AttributeCode, AttributeValue> = new Map()
+  private attributes: Map<AttributeCodes, AttributeValue> = new Map()
 
   /** 修饰符提供者引用（用于属性计算，解耦 BuffSystem） */
   private _modifierProvider: IModifierProvider | null = null
@@ -137,7 +134,10 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param data - 初始化数据
    * @param modifierProvider - 修饰符提供者（可选，通常为 BuffSystem 实例）
    */
-  constructor(data: ParticipantInitData, modifierProvider?: IModifierProvider) {
+  constructor(
+    data: BattleParticipantImpl,
+    modifierProvider?: IModifierProvider,
+  ) {
     this.id = data.id
     this.name = data.name
     this.level = data.level
@@ -167,7 +167,11 @@ export class BattleParticipantImpl implements BattleEntity {
     this.initAttribute(AttributeCodes.SPD, data.speed)
     this.initAttribute(AttributeCodes.CRIT_RATE, data.critRate ?? 10, true)
     this.initAttribute(AttributeCodes.CRIT_DMG, data.critDamage ?? 125, true)
-    this.initAttribute(AttributeCodes.DMG_REDUCTION, data.damageReduction ?? 0, true)
+    this.initAttribute(
+      AttributeCodes.DMG_REDUCTION,
+      data.damageReduction ?? 0,
+      true,
+    )
 
     this.markAllDirty()
   }
@@ -200,7 +204,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param isPercentage 是否为百分比属性
    */
   private initAttribute(
-    attr: AttributeCode,
+    attr: AttributeCodes,
     baseValue: number,
     isPercentage: boolean = false,
   ): void {
@@ -217,7 +221,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * 标记单个属性为脏（需要重新计算）
    * @param attr 属性名称
    */
-  markDirty(attr: AttributeCode): void {
+  markDirty(attr: AttributeCodes): void {
     const attrData = this.attributes.get(attr)
     if (attrData) {
       attrData.dirty = true
@@ -235,15 +239,15 @@ export class BattleParticipantImpl implements BattleEntity {
 
   /**
    * 重新计算单个属性（应用所有修饰符）
-   * 
+   *
    * 重构说明：
    * - 使用 AttributeEngine.compute() 统一计算逻辑
    * - 自动记录 trace 信息用于调试面板
    * - 保持与原有 ModifierProvider 的兼容性
-   * 
+   *
    * @param attr 属性名称
    */
-  private recalcAttribute(attr: AttributeCode): void {
+  private recalcAttribute(attr: AttributeCodes): void {
     const attrData = this.attributes.get(attr)
     if (!attrData || !attrData.dirty) return
 
@@ -254,13 +258,17 @@ export class BattleParticipantImpl implements BattleEntity {
     if (this._modifierProvider) {
       const modifierStack = this._modifierProvider.getModifierStack(this.id)
       if (modifierStack) {
-        const modifiers = modifierStack.getModifiers(attr as AttributeType)
+        const modifiers = modifierStack.getModifiers(attr as AttributeCodes)
         for (const mod of modifiers) {
           templates.push({
             id: mod.buffInstanceId,
-            sourceName: this._modifierProvider.getSourceName(mod.buffInstanceId) || mod.buffInstanceId,
-            sourceType: this._modifierProvider.getSourceType(mod.buffInstanceId),
-            targetAttribute: attr as AttributeType,
+            sourceName:
+              this._modifierProvider.getSourceName(mod.buffInstanceId) ||
+              mod.buffInstanceId,
+            sourceType: this._modifierProvider.getSourceType(
+              mod.buffInstanceId,
+            ),
+            targetAttribute: attr as AttributeCodes,
             type: mod.type,
             value: mod.value,
           })
@@ -293,9 +301,14 @@ export class BattleParticipantImpl implements BattleEntity {
       source: step.sourceName,
       sourceType: 'buff' as ModifierSourceType,
       value: step.appliedValue,
-      type: step.type === 'ADDITIVE' ? 'add' : 
-            step.type === 'PERCENTAGE' ? 'percent' : 
-            step.type === 'MULTIPLICATIVE' ? 'multiply' : 'final' as ModifierDetail['type'],
+      type:
+        step.type === 'ADDITIVE'
+          ? 'add'
+          : step.type === 'PERCENTAGE'
+            ? 'percent'
+            : step.type === 'MULTIPLICATIVE'
+              ? 'multiply'
+              : ('final' as ModifierDetail['type']),
     }))
     attrData.dirty = false
 
@@ -326,7 +339,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param attr 属性名称
    * @returns 属性最终值
    */
-  getAttribute(attr: AttributeType | string): number {
+  getAttribute(attr: AttributeCodes | string): number {
     const attrValue = this.getAttributeValue(attr)
     return attrValue?.value ?? 0
   }
@@ -336,7 +349,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param attr 属性名称（如 'HP', 'ATK'）
    * @returns 属性最终值
    */
-  getAttr(attr: AttributeType): number {
+  getAttr(attr: AttributeCodes): number {
     return this.getAttribute(attr)
   }
 
@@ -345,7 +358,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param attr 属性名称
    * @returns 属性值对象
    */
-  getAttrValue(attr: AttributeType): AttributeValue | undefined {
+  getAttrValue(attr: AttributeCodes): AttributeValue | undefined {
     return this.getAttributeValue(attr)
   }
 
@@ -361,7 +374,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param attr 属性名称
    * @returns 属性值对象
    */
-  getAttributeValue(attr: AttributeType | string): AttributeValue | undefined {
+  getAttributeValue(attr: AttributeCodes | string): AttributeValue | undefined {
     const attrName = this.normalizeAttributeCode(attr as string)
     const attrData = this.attributes.get(attrName)
     if (!attrData) return undefined
@@ -386,7 +399,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param attr 属性名称
    * @returns 属性基础值
    */
-  getAttributeBase(attr: AttributeCode): number {
+  getAttributeBase(attr: AttributeCodes): number {
     const attrData = this.attributes.get(attr)
     return attrData?.base ?? 0
   }
@@ -396,7 +409,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param attr 属性名称
    * @param value 基础值
    */
-  setAttributeBase(attr: AttributeCode, value: number): void {
+  setAttributeBase(attr: AttributeCodes, value: number): void {
     const attrData = this.attributes.get(attr)
     if (attrData) {
       attrData.base = value
@@ -643,8 +656,8 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param attribute 原始属性名称
    * @returns 标准化后的属性名称
    */
-  private normalizeAttributeCode(attribute: string): AttributeCode {
-    return normalizeAttributeCode(attribute) as AttributeCode
+  private normalizeAttributeCode(attribute: string): AttributeCodes {
+    return normalizeAttributeCode(attribute) as AttributeCodes
   }
 
   /**

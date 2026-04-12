@@ -13,7 +13,7 @@
       <div class="section-content">
         <div class="character-field">
           <div class="character-party our-party">
-            <div class="party-header">我方 ({{allyTeam.filter(c => c.enabled).length}}人)</div>
+            <div class="party-header">我方 ({{ allyTeamCount }}人)</div>
             <div class="party-members">
               <div v-for="char in allyTeam" :key="char.id" class="character-item"
                 :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
@@ -31,15 +31,15 @@
                 <div class="char-status" v-if="char.buffs && char.buffs.length > 0">
                   <span class="first-badge">状态</span>
                 </div>
-                <div class="char-status" v-if="char.isFirst">
+                <!-- <div class="char-status" v-if="char.isFirst">
                   <span class="first-badge">先手</span>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
 
           <div class="character-party enemy-party">
-            <div class="party-header">敌方 ({{enemyTeam.filter(c => c.enabled).length}}人)</div>
+            <div class="party-header">敌方 ({{ enemyTeamCount }}人)</div>
             <div class="party-members">
               <div v-for="char in enemyTeam" :key="char.id" class="character-item"
                 :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
@@ -123,7 +123,7 @@ import { computed, reactive, ref } from "vue";
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import { container } from '@/core/di/Container';
 import type { Enemy, SceneData } from "@/types";
-import { PARTICIPANT_SIDE, type ParticipantSide, type BattleParticipant } from "@/types/battle";
+import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/types/battle";
 import type { BattleManager } from '@/core/battle/BattleManager';
 import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl';
 
@@ -149,6 +149,11 @@ scenesData.value.forEach((s) => (expandedScenes[s.id] = true));
 // 响应式获取队伍数据
 const allyTeam = computed(() => battleManager.getAllyTeam());
 const enemyTeam = computed(() => battleManager.getEnemyTeam());
+// 我方参战人数
+const allyTeamCount = computed(() => allyTeam.value.filter(c => c.enabled).length);
+// 敌方参战人数
+const enemyTeamCount = computed(() => enemyTeam.value.filter(c => c.enabled).length);
+
 const selectedCharacterId = computed(() => battleManager.getSelectedCharacterId());
 
 const toggleSceneExpand = (sceneId: string) => {

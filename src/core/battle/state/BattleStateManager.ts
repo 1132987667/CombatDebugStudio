@@ -1,6 +1,6 @@
 import type { IBattleSystem } from '@/core/battle/interfaces'
-import type { BattleState, BattleParticipant } from '@/types/battle'
-import { BATTLE_STATUS } from '@/types/battle'
+import type { BattleState, BattleEntity } from '@/types/battle'
+import { BattleStatus } from '@/types/battle'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 import { eventBus } from '@/main'
 
@@ -9,7 +9,7 @@ import { eventBus } from '@/main'
  * 负责 UI 层与核心战斗系统之间的状态同步与转换
  * 核心功能：
  * - 从 BattleSystem 获取战斗状态（回合数、当前行动者、参与者状态等）
- * - 直接使用 BattleParticipant，不再维护 UI 角色映射
+ * - 直接使用 BattleEntity，不再维护 UI 角色映射
  * - 提供手动更新接口，同步 UI 更改到核心战斗系统
  */
 export class BattleStateManager {
@@ -26,10 +26,7 @@ export class BattleStateManager {
    * @param battleSystem 战斗系统实例
    */
   constructor(private battleSystem: IBattleSystem) {
-    this.teamDataChangedHandler = () => {
-      // 重新初始化队伍映射关系
-      this.refreshMappings()
-    }
+    this.teamDataChangedHandler = () => {}
 
     // 监听队伍数据变化事件
     eventBus.on('teamDataChanged', this.teamDataChangedHandler)
@@ -89,35 +86,6 @@ export class BattleStateManager {
   }
 
   /**
-   * 初始化队伍数据
-   * @param allyTeam 我方队伍（BattleParticipant 数组）
-   * @param enemyTeam 敌方队伍（BattleParticipant 数组）
-   */
-  initializeTeams(
-    allyTeam: BattleParticipant[],
-    enemyTeam: BattleParticipant[],
-  ) {
-    // 不再需要维护映射表，直接使用 BattleParticipant
-    // 映射关系由 BattleSystem 管理
-  }
-
-  /**
-   * 移除参与者映射
-   * @param participantId 参与者 ID
-   */
-  removeParticipantMapping(participantId: string): void {
-    // 不再需要维护映射表
-  }
-
-  /**
-   * 刷新映射表
-   * 重新从战斗状态加载最新的映射关系
-   */
-  refreshMappings(): void {
-    // 不再需要维护映射表，直接使用 BattleParticipant
-  }
-
-  /**
    * 设置战斗ID
    * @param battleId 战斗ID
    */
@@ -142,7 +110,7 @@ export class BattleStateManager {
       }
 
       // 同步战斗活跃状态
-      this.isBattleActive = battleState.battleState === BATTLE_STATUS.ACTIVE
+      this.isBattleActive = battleState.battleState === BattleStatus.ACTIVE
 
       // 同步回合数
       if (battleState.currentTurn !== undefined) {
@@ -160,7 +128,7 @@ export class BattleStateManager {
       this.syncParticipantsState(battleState)
 
       // 检查战斗是否结束
-      if (battleState.battleState === BATTLE_STATUS.ENDED) {
+      if (battleState.battleState === BattleStatus.ENDED) {
         this.handleBattleEnd()
       }
     } catch (error) {
@@ -173,11 +141,9 @@ export class BattleStateManager {
   /**
    * 查找参与者
    * @param participantId 参与者 ID
-   * @returns BattleParticipant 或 undefined
+   * @returns BattleEntity 或 undefined
    */
-  private findParticipant(
-    participantId: string,
-  ): BattleParticipant | undefined {
+  private findParticipant(participantId: string): BattleEntity | undefined {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) return undefined
     return battleState.participants.get(participantId)
@@ -188,7 +154,7 @@ export class BattleStateManager {
    * @param battleState 战斗状态
    */
   private syncParticipantsState(battleState: BattleState) {
-    // 不再需要同步 UI 角色状态，BattleParticipant 直接管理自己的状态
+    // 不再需要同步 UI 角色状态，BattleEntity 直接管理自己的状态
     // 属性计算通过脏标记系统自动更新
   }
 
@@ -238,10 +204,7 @@ export class BattleStateManager {
    * @param characterId 角色 ID
    * @param updates 更新内容
    */
-  updateCharacterManually(
-    characterId: string,
-    updates: Partial<BattleParticipant>,
-  ) {
+  updateCharacterManually(characterId: string, updates: Partial<BattleEntity>) {
     const participant = this.findParticipant(characterId)
     if (participant) {
       // 更新参与者属性

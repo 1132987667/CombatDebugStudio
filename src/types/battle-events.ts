@@ -4,7 +4,7 @@
  */
 
 import type { BattleLogEntry } from '@/types/battle-log';
-import type { BattleParticipant, ParticipantSide } from '@/types/battle';
+import type { BattleEntity, ParticipantSide } from '@/types/battle';
 
 // 战斗日志事件数据类型
 export interface BattleLogEventData {

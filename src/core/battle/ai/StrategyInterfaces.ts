@@ -4,8 +4,8 @@
  * 描述: 采用策略模式，将AI决策逻辑抽象为独立接口，支持运行时动态替换策略
  */
 
-import type { BattleParticipant, BattleState, BattleAction } from '@/types/battle'
-import { BATTLE_STATUS, type BattleStatus } from '@/types/battle'
+import type { BattleEntity, BattleState, BattleAction } from '@/types/battle'
+import { BattleStatus, type BattleStatus } from '@/types/battle'
 import type { Skill } from '@/types/skill'
 
 /**
@@ -83,7 +83,10 @@ export interface ISkillSelectionStrategy {
    * @param participant 当前参与者快照
    * @returns 是否使用技能
    */
-  shouldUseSkill(context: BattleContext, participant: ParticipantSnapshot): boolean
+  shouldUseSkill(
+    context: BattleContext,
+    participant: ParticipantSnapshot,
+  ): boolean
 
   /**
    * 选择要使用的技能
@@ -212,7 +215,7 @@ export class BattleContext implements IBattleContext {
   /**
    * 创建参与者快照
    */
-  private createSnapshot(participant: BattleParticipant): ParticipantSnapshot {
+  private createSnapshot(participant: BattleEntity): ParticipantSnapshot {
     return {
       id: participant.id,
       name: participant.name,
@@ -277,9 +280,7 @@ export class BattleContext implements IBattleContext {
       lowestHealthAlly: sortedAllies[0] || null,
       lowestHealthEnemy: sortedEnemies[0] || null,
       highestThreatEnemy: { enemy: null, threat: 0 },
-      needsHealing: allies.some(
-        (p) => p.currentHealth / p.maxHealth < 0.3,
-      ),
+      needsHealing: allies.some((p) => p.currentHealth / p.maxHealth < 0.3),
       hasLowHealthCharacter: allies.some(
         (p) => p.currentHealth / p.maxHealth < 0.5,
       ),

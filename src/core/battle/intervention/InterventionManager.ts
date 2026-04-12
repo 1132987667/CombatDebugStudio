@@ -1,7 +1,7 @@
 import type { IBattleSystem } from '@/core/battle/interfaces'
 import { BattleStateManager } from '@/core/battle/state/BattleStateManager'
 import { battleLogManager } from '@/utils/logging'
-import type { BattleParticipant } from '@/types/battle'
+import type { BattleEntity } from '@/types/battle'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
 
 /**
@@ -13,7 +13,7 @@ export class InterventionManager {
   private battleStateManager: BattleStateManager
   private battleLogManager = battleLogManager
   private selectedCharacterId: string | null = null
-  private selectedChar: BattleParticipant | null = null
+  private selectedChar: BattleEntity | null = null
 
   /**
    * 构造函数

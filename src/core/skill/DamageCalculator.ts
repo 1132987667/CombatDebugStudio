@@ -8,11 +8,8 @@
  */
 
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
-import type { BattleParticipant, BattleEffect } from '@/types/battle'
-import type {
-  CombatRecord,
-  CalculationStep,
-} from '@/types/combat-record'
+import type { BattleEntity, BattleEffect } from '@/types/battle'
+import type { CombatRecord, CalculationStep } from '@/types/combat-record'
 import { battleLogManager, LogLevel } from '@/utils/logging'
 
 /**
@@ -40,11 +37,7 @@ export interface DamageModifier {
   /** 修饰器名称 */
   name: string
   /** 应用修饰器 */
-  apply(
-    source: BattleParticipant,
-    target: BattleParticipant,
-    baseDamage: number,
-  ): number
+  apply(source: BattleEntity, target: BattleEntity, baseDamage: number): number
   /** 修饰器优先级 */
   priority: number
 }
@@ -121,8 +114,8 @@ export class DamageCalculator {
    */
   private parseFormula(
     formula: string,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
   ): number {
     try {
       // 简单的公式解析和计算
@@ -169,8 +162,8 @@ export class DamageCalculator {
    */
   public calculateDamage(
     step: ExtendedSkillStep,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     record?: CombatRecord,
   ): DamageCalculationResult {
     const intermediateSteps: CalculationStep[] = []
@@ -385,7 +378,7 @@ export class DamageCalculator {
    */
   private calculateDefenseEffect(
     attackType: 'normal' | 'magic' | 'physical' | 'true',
-    target: BattleParticipant,
+    target: BattleEntity,
   ): number {
     switch (attackType) {
       case 'true':
@@ -409,7 +402,7 @@ export class DamageCalculator {
    */
   private getDefenseValue(
     attackType: 'normal' | 'magic' | 'physical' | 'true',
-    target: BattleParticipant,
+    target: BattleEntity,
   ): number {
     switch (attackType) {
       case 'true':
@@ -432,7 +425,7 @@ export class DamageCalculator {
    * 获取属性值
    */
   private getAttributeValue(
-    participant: BattleParticipant,
+    participant: BattleEntity,
     attribute: string,
   ): number {
     try {
@@ -483,7 +476,7 @@ export class DamageCalculator {
   /**
    * 应用伤害到目标
    */
-  public applyDamage(target: BattleParticipant, damage: number): number {
+  public applyDamage(target: BattleEntity, damage: number): number {
     if (!target.isAlive()) {
       battleLogManager.addDebugLog('目标已死亡，无法造成伤害')
       return 0

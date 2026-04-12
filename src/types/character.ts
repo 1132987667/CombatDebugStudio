@@ -1,4 +1,4 @@
-import type { AttributeType } from '@/types/attribute'
+import type { AttributeCodes } from '@/types/attribute'
 
 /**
  * 角色属性接口
@@ -60,11 +60,11 @@ export interface Character {
   id: string
   name: string
   level: number
-  attributes: Record<AttributeType, number>
+  attributes: Record<AttributeCodes, number>
   buffs: string[]
 
-  getAttribute(attribute: AttributeType): number
-  setAttribute(attribute: AttributeType, value: number): void
+  getAttribute(attribute: AttributeCodes): number
+  setAttribute(attribute: AttributeCodes, value: number): void
   addBuff(buffInstanceId: string): void
   removeBuff(buffInstanceId: string): void
   hasBuff(buffId: string): boolean
@@ -73,14 +73,14 @@ export interface Character {
 export interface AttributeSystem {
   calculateFinalValue(
     characterId: string,
-    attribute: AttributeType,
+    attribute: AttributeCodes,
     baseValue: number,
   ): number
 
-  getBaseValue(characterId: string, attribute: AttributeType): number
+  getBaseValue(characterId: string, attribute: AttributeCodes): number
   setBaseValue(
     characterId: string,
-    attribute: AttributeType,
+    attribute: AttributeCodes,
     value: number,
   ): void
 }

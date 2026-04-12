@@ -13,11 +13,7 @@ import {
   type BattleContext,
   type BattleAnalysis,
 } from './StrategyInterfaces'
-import {
-  BATTLE_CONSTANTS,
-  ACTION_TYPES,
-  BattleAction,
-} from '@/types/battle'
+import { BATTLE_CONSTANTS, ActionTypes, BattleAction } from '@/types/battle'
 import { EFFECT_TYPES } from '@/types/effect'
 import type { Skill } from '@/types/skill'
 
@@ -386,7 +382,7 @@ export class DefaultBattleDecisionStrategy implements IBattleDecisionStrategy {
 
     return {
       id: `attack_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type: ACTION_TYPES.ATTACK,
+      type: ActionTypes.ATTACK,
       sourceId: participant.id,
       targetId,
       damage,
@@ -426,7 +422,7 @@ export class DefaultBattleDecisionStrategy implements IBattleDecisionStrategy {
 
     const action: BattleAction = {
       id: `skill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type: ACTION_TYPES.SKILL,
+      type: ActionTypes.SKILL,
       sourceId: participant.id,
       targetId,
       skillId,

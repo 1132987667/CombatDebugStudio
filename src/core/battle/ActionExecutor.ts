@@ -9,18 +9,22 @@
 
 import {
   BattleAction,
-  BattleParticipant,
+  BattleEntity,
   ParticipantSide,
   BattleData,
-  ACTION_TYPES,
-  VALID_ACTION_TYPES,
+  ActionTypes,
+  ValidActionTypes,
 } from '@/types/battle'
 import { PARTICIPANT_SIDE, BATTLE_CONSTANTS } from '@/types/battle'
 import { EFFECT_TYPES } from '@/types/effect'
 import { CombatRecord, createEmptyRecord } from '@/types/combat-record'
 import { battleLogManager } from '@/utils/logging'
 import { BuffSystem } from '@/core/BuffSystem'
-import { ControlType, type TriggerPhase, type TriggerEventContext } from '@/types/buff'
+import {
+  ControlType,
+  type TriggerPhase,
+  type TriggerEventContext,
+} from '@/types/buff'
 import { TriggerEventBus } from '@/core/TriggerEventBus'
 
 /**
@@ -127,10 +131,10 @@ export class ActionExecutor {
       return
     } else if (
       controlType === ControlType.SILENCE &&
-      action.type === ACTION_TYPES.SKILL
+      action.type === ActionTypes.SKILL
     ) {
       // 沉默状态：无法使用技能，改为普通攻击
-      action.type = ACTION_TYPES.ATTACK
+      action.type = ActionTypes.ATTACK
       action.damage =
         Math.floor(
           Math.random() *
@@ -157,7 +161,7 @@ export class ActionExecutor {
     if (!action.sourceId || !action.targetId || !action.type) {
       return false
     }
-    if (!VALID_ACTION_TYPES.includes(action.type as any)) {
+    if (!ValidActionTypes.includes(action.type as any)) {
       return false
     }
     return true
@@ -172,7 +176,7 @@ export class ActionExecutor {
    */
   public async executeDefaultAction(
     battle: BattleData,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): Promise<void> {
     const enemies = this.getAliveParticipantsByType(
       battle,
@@ -211,7 +215,7 @@ export class ActionExecutor {
 
     await this.executeAction({
       id: `action_${Date.now()}`,
-      type: ACTION_TYPES.ATTACK,
+      type: ActionTypes.ATTACK,
       sourceId: participant.id,
       targetId,
       damage,
@@ -252,17 +256,17 @@ export class ActionExecutor {
    */
   private processActionType(
     action: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
   ): void {
     switch (action.type) {
-      case ACTION_TYPES.ATTACK:
+      case ActionTypes.ATTACK:
         this.processAttack(action, source, target)
         break
-      case ACTION_TYPES.SKILL:
+      case ActionTypes.SKILL:
         this.processSkill(action, source, target)
         break
-      case ACTION_TYPES.HEAL:
+      case ActionTypes.HEAL:
         this.processHeal(action, source, target)
         break
       default:
@@ -280,8 +284,8 @@ export class ActionExecutor {
    */
   private processAttack(
     action: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
   ): void {
     if (action.damage) {
       // 触发攻击前事件
@@ -355,8 +359,8 @@ export class ActionExecutor {
    */
   private processSkill(
     action: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
   ): void {
     if (!action.skillId) {
       battleLogManager.addDebugLog('技能动作缺少skillId')
@@ -368,7 +372,7 @@ export class ActionExecutor {
 
     if (!battle) {
       battleLogManager.addDebugLog(`无法找到参与者 ${source.id} 所属的战斗`)
-      action.type = ACTION_TYPES.ATTACK
+      action.type = ActionTypes.ATTACK
       action.damage =
         Math.floor(
           Math.random() *
@@ -386,7 +390,7 @@ export class ActionExecutor {
     try {
       if (!battle.skillManager) {
         battleLogManager.addDebugLog(`战斗数据中缺少技能管理器`)
-        action.type = ACTION_TYPES.ATTACK
+        action.type = ActionTypes.ATTACK
         action.damage =
           Math.floor(
             Math.random() *
@@ -405,7 +409,7 @@ export class ActionExecutor {
       if (energyCost > 0) {
         const success = source.spendEnergy(energyCost)
         if (!success) {
-          action.type = ACTION_TYPES.ATTACK
+          action.type = ActionTypes.ATTACK
           action.damage =
             Math.floor(
               Math.random() *
@@ -442,7 +446,7 @@ export class ActionExecutor {
       battleLogManager.addDebugLog(`技能执行成功: ${action.skillId}`)
     } catch (error) {
       battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error)
-      action.type = ACTION_TYPES.ATTACK
+      action.type = ActionTypes.ATTACK
       action.damage =
         Math.floor(
           Math.random() *
@@ -467,8 +471,8 @@ export class ActionExecutor {
    */
   private processHeal(
     action: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
   ): void {
     if (action.heal) {
       const actualHeal = target.heal(action.heal)
@@ -534,8 +538,8 @@ export class ActionExecutor {
    */
   private createSkillRecord(
     action: BattleAction,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     battle: BattleData,
   ): CombatRecord | undefined {
     if (!this.shouldRecordDetail()) {

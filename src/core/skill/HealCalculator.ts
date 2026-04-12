@@ -8,7 +8,7 @@
  */
 
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
-import type { BattleParticipant } from '@/types/battle'
+import type { BattleEntity } from '@/types/battle'
 import type { CombatRecord } from '@/types/combat-record'
 import { battleLogManager, LogLevel } from '@/utils/logging'
 
@@ -28,8 +28,8 @@ export class HealCalculator {
    */
   private parseFormula(
     formula: string,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
   ): number {
     try {
       // 简单的公式解析和计算
@@ -76,8 +76,8 @@ export class HealCalculator {
    */
   public calculateHeal(
     step: ExtendedSkillStep,
-    source: BattleParticipant,
-    target: BattleParticipant,
+    source: BattleEntity,
+    target: BattleEntity,
     record?: CombatRecord,
   ): number {
     const intermediateSteps: Array<{
@@ -239,7 +239,7 @@ export class HealCalculator {
   /**
    * 计算负面状态影响
    */
-  private calculateDebuffEffect(target: BattleParticipant): number {
+  private calculateDebuffEffect(target: BattleEntity): number {
     // 检查目标是否有降低治疗效果的debuff
     const healingReductionBuffs = [
       'buff_heal_reduction',
@@ -261,7 +261,7 @@ export class HealCalculator {
    * 获取属性值
    */
   private getAttributeValue(
-    participant: BattleParticipant,
+    participant: BattleEntity,
     attribute: string,
   ): number {
     try {
@@ -297,7 +297,7 @@ export class HealCalculator {
   /**
    * 应用治疗到目标
    */
-  public applyHeal(target: BattleParticipant, heal: number): number {
+  public applyHeal(target: BattleEntity, heal: number): number {
     if (!target.isAlive()) {
       battleLogManager.addDebugLog('目标已死亡，无法进行治疗')
       return 0

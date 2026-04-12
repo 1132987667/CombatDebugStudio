@@ -9,7 +9,7 @@
 
 import type {
   BattleState,
-  BattleParticipant,
+  BattleEntity,
   BattleAction,
   ParticipantSide,
   BattleReplay,

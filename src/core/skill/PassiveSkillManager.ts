@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import type { BattleParticipant } from '@/types/battle'
+import type { BattleEntity } from '@/types/battle'
 import { SkillManager } from '@/core/skill/SkillManager'
 import { BuffSystem } from '@/core/BuffSystem'
 import { StackRule, ControlType } from '@/types/buff'
@@ -29,7 +29,7 @@ export enum PassiveSkillTrigger {
   /** 攻击后触发 */
   AFTER_ATTACK = 'after_attack',
   /** 死亡时触发 */
-  ON_DEATH = 'on_death'
+  ON_DEATH = 'on_death',
 }
 
 /**
@@ -58,7 +58,10 @@ export class PassiveSkillManager {
    * @param buffSystem Buff系统实例
    * @returns PassiveSkillManager实例
    */
-  public static create(skillManager: SkillManager, buffSystem: BuffSystem): PassiveSkillManager {
+  public static create(
+    skillManager: SkillManager,
+    buffSystem: BuffSystem,
+  ): PassiveSkillManager {
     return new PassiveSkillManager(skillManager, buffSystem)
   }
   /**
@@ -69,8 +72,8 @@ export class PassiveSkillManager {
    */
   public triggerPassiveSkills(
     trigger: PassiveSkillTrigger,
-    participant: BattleParticipant,
-    context: any = {}
+    participant: BattleEntity,
+    context: any = {},
   ): void {
     if (!participant.isAlive() && trigger !== PassiveSkillTrigger.ON_DEATH) {
       return
@@ -87,7 +90,9 @@ export class PassiveSkillManager {
         }
 
         // 检查技能是否配置了当前触发时机
-        const triggerTimes = skillConfig.triggerTimes || [PassiveSkillTrigger.BATTLE_START]
+        const triggerTimes = skillConfig.triggerTimes || [
+          PassiveSkillTrigger.BATTLE_START,
+        ]
         if (!triggerTimes.includes(trigger)) {
           continue
         }
@@ -95,7 +100,10 @@ export class PassiveSkillManager {
         // 执行被动技能效果
         this.executePassiveSkill(skillConfig, participant, context)
       } catch (error) {
-        console.error(`触发被动技能失败[${participant.name} - ${skillId}]:`, error)
+        console.error(
+          `触发被动技能失败[${participant.name} - ${skillId}]:`,
+          error,
+        )
       }
     }
   }
@@ -108,24 +116,28 @@ export class PassiveSkillManager {
    */
   private executePassiveSkill(
     skillConfig: any,
-    participant: BattleParticipant,
-    context: any
+    participant: BattleEntity,
+    context: any,
   ): void {
     if (skillConfig.steps) {
       for (const step of skillConfig.steps) {
         if (step.type === 'buff' && step.buffId) {
-          const instanceId = this.buffSystem.addBuff(participant.id, step.buffId, {
-            id: step.buffId,
-            name: skillConfig.name,
-            duration: step.duration ?? -1,
-            maxStacks: step.stacks || 1,
-            cooldown: 0,
-            stackRule: StackRule.LIMITED,
-            controlType: ControlType.NONE,
-            controlPriority: 0,
-            description: skillConfig.description,
-            sourceId: participant.id
-          })
+          const instanceId = this.buffSystem.addBuff(
+            participant.id,
+            step.buffId,
+            {
+              id: step.buffId,
+              name: skillConfig.name,
+              duration: step.duration ?? -1,
+              maxStacks: step.stacks || 1,
+              cooldown: 0,
+              stackRule: StackRule.LIMITED,
+              controlType: ControlType.NONE,
+              controlPriority: 0,
+              description: skillConfig.description,
+              sourceId: participant.id,
+            },
+          )
           if (instanceId) {
             participant.addBuff(instanceId)
           }
@@ -144,8 +156,8 @@ export class PassiveSkillManager {
    */
   public triggerPassiveSkillsForAll(
     trigger: PassiveSkillTrigger,
-    participants: Map<string, BattleParticipant>,
-    context: any = {}
+    participants: Map<string, BattleEntity>,
+    context: any = {},
   ): void {
     for (const participant of participants.values()) {
       this.triggerPassiveSkills(trigger, participant, context)

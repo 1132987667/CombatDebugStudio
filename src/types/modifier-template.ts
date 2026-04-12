@@ -7,14 +7,18 @@
  * 版本: 1.0.0
  */
 
-import type { AttributeType, ModifierType, ModifierSourceType } from './attribute'
+import type {
+  AttributeCodes,
+  ModifierType,
+  ModifierSourceType,
+} from './attribute'
 
 /**
  * 动态数值计算上下文
  */
 export interface DynamicValueContext {
   /** 参与者当前属性快照 */
-  attributes: Partial<Record<AttributeType, number>>
+  attributes: Partial<Record<AttributeCodes, number>>
   /** 自定义参数（如技能等级、层数等） */
   params: Record<string, number>
 }
@@ -41,7 +45,7 @@ export interface ModifierTemplate {
   /** 来源类型 */
   sourceType: ModifierSourceType
   /** 目标属性 */
-  targetAttribute: AttributeType
+  targetAttribute: AttributeCodes
   /** 修饰类型 */
   type: ModifierType
   /** 修饰数值（固定值或动态计算函数） */

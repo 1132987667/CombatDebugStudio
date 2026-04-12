@@ -4,7 +4,7 @@
  */
 
 import type {
-  BattleParticipant,
+  BattleEntity,
   BattleAction,
   BattleState,
   ParticipantSide,
@@ -13,7 +13,7 @@ import {
   PARTICIPANT_SIDE,
   BATTLE_CONSTANTS,
   SKILL_EFFECT_CONSTANTS,
-  ACTION_TYPES,
+  ActionTypes,
 } from '@/types/battle'
 import { EFFECT_TYPES } from '@/types/effect'
 import { useBattleStore } from '@/stores/battleStore'
@@ -40,20 +40,20 @@ export interface BattleAI {
   /** 做出战斗决策 */
   makeDecision(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): BattleAction
 
   /** 选择攻击目标 */
-  selectTarget(battleState: BattleState, participant: BattleParticipant): string
+  selectTarget(battleState: BattleState, participant: BattleEntity): string
 
   /** 判断是否应该使用技能 */
-  shouldUseSkill(participant: BattleParticipant): boolean
+  shouldUseSkill(participant: BattleEntity): boolean
 
   /** 选择要使用的技能 */
-  selectSkill(participant: BattleParticipant): string | null
+  selectSkill(participant: BattleEntity): string | null
 
   /** 选择普通攻击 */
-  selectAttack(participant: BattleParticipant): BattleAction
+  selectAttack(participant: BattleEntity): BattleAction
 }
 
 /** 技能配置加载器类型 */
@@ -61,10 +61,10 @@ export type SkillConfigLoader = (skillIds: string[]) => Skill[]
 
 /** 战场分析结果接口 */
 interface BattleAnalysis {
-  allies: BattleParticipant[]
-  enemies: BattleParticipant[]
+  allies: BattleEntity[]
+  enemies: BattleEntity[]
   teamHealthPercent: number
-  highestThreatEnemy: { enemy: BattleParticipant | null; threat: number }
+  highestThreatEnemy: { enemy: BattleEntity | null; threat: number }
   needsHealing: boolean
   shouldUseSkill: boolean
 }
@@ -122,7 +122,7 @@ export class BaseBattleAI implements BattleAI {
   /** 做出战斗决策 */
   public makeDecision(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): BattleAction {
     const battleStore = useBattleStore()
     try {
@@ -159,7 +159,7 @@ export class BaseBattleAI implements BattleAI {
         battleLogManager.addDebugLog('攻击执行出错')
         return {
           id: `fallback_${Date.now()}`,
-          type: ACTION_TYPES.ATTACK,
+          type: ActionTypes.ATTACK,
           sourceId: participant?.id || 'unknown',
           targetId: 'unknown',
           damage: SKILL_EFFECT_CONSTANTS.DEFAULT_SKILL_DAMAGE,
@@ -180,7 +180,7 @@ export class BaseBattleAI implements BattleAI {
   /** 分析战场态势 */
   protected analyzeBattleState(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): BattleAnalysis {
     const allies = Array.from(battleState.participants.values()).filter(
       (p) => p.type === participant.type && p.isAlive(),
@@ -195,7 +195,7 @@ export class BaseBattleAI implements BattleAI {
     const teamHealthPercent = teamMaxHealth > 0 ? teamHealth / teamMaxHealth : 0
 
     const highestThreatEnemy = enemies.reduce<{
-      enemy: BattleParticipant | null
+      enemy: BattleEntity | null
       threat: number
     }>(
       (max, enemy) => {
@@ -222,7 +222,7 @@ export class BaseBattleAI implements BattleAI {
   /** 选择目标（优先选择血量最少的角色） */
   public selectTarget(
     battleState: BattleState,
-    _participant: BattleParticipant,
+    _participant: BattleEntity,
   ): string {
     const enemies = Array.from(battleState.participants.values())
       .filter((p) => p.type !== _participant.type && p.isAlive())
@@ -244,8 +244,8 @@ export class BaseBattleAI implements BattleAI {
 
   /** 计算目标威胁值 */
   protected calculateThreat(
-    target: BattleParticipant,
-    participant: BattleParticipant,
+    target: BattleEntity,
+    participant: BattleEntity,
     _battleState: BattleState,
   ): number {
     let threat = 0
@@ -270,7 +270,7 @@ export class BaseBattleAI implements BattleAI {
     return threat
   }
 
-  public shouldUseSkill(participant: BattleParticipant): boolean {
+  public shouldUseSkill(participant: BattleEntity): boolean {
     const energy =
       participant.getAttribute('energy') || participant.currentEnergy || 0
     const maxEnergy =
@@ -282,7 +282,7 @@ export class BaseBattleAI implements BattleAI {
 
   /** 选择要使用的技能 */
   public selectSkill(
-    participant: BattleParticipant,
+    participant: BattleEntity,
     battleState?: BattleState,
     analysis?: BattleAnalysis,
   ): string | null {
@@ -375,10 +375,10 @@ export class BaseBattleAI implements BattleAI {
   }
 
   /** 选择普通攻击 */
-  public selectAttack(participant: BattleParticipant): BattleAction {
+  public selectAttack(participant: BattleEntity): BattleAction {
     return {
       id: `attack_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type: ACTION_TYPES.ATTACK,
+      type: ActionTypes.ATTACK,
       sourceId: participant.id,
       targetId: '',
       damage:
@@ -407,9 +407,9 @@ export class BaseBattleAI implements BattleAI {
   /** 选择治疗目标 */
   protected selectHealTarget(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): string {
-    const allies: { target: BattleParticipant; healthPercent: number }[] = []
+    const allies: { target: BattleEntity; healthPercent: number }[] = []
 
     battleState.participants.forEach((target) => {
       if (target.type === participant.type && target.isAlive()) {
@@ -426,7 +426,7 @@ export class BaseBattleAI implements BattleAI {
   /** 创建技能行动 */
   protected createSkillStep(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
     skillId: string,
   ): BattleAction {
     const skill = this.skills.get(skillId)
@@ -444,7 +444,7 @@ export class BaseBattleAI implements BattleAI {
 
     const action: BattleAction = {
       id: `skill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type: ACTION_TYPES.SKILL,
+      type: ActionTypes.SKILL,
       sourceId: participant.id,
       targetId,
       skillId,
@@ -510,7 +510,7 @@ export class BaseBattleAI implements BattleAI {
   }
 
   /** 检查是否可以使用技能 */
-  protected canUseSkill(participant: BattleParticipant): boolean {
+  protected canUseSkill(participant: BattleEntity): boolean {
     if (this.buffSystem) {
       return this.buffSystem.canUseSkill(participant.id)
     }
@@ -525,7 +525,7 @@ export class CharacterAI extends BaseBattleAI {
   }
 
   /** 判断是否使用技能（生命低于临界值时触发） */
-  public shouldUseSkill(participant: BattleParticipant): boolean {
+  public shouldUseSkill(participant: BattleEntity): boolean {
     const healthPercent = participant.currentHealth / participant.maxHealth
 
     if (healthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD) {
@@ -537,7 +537,7 @@ export class CharacterAI extends BaseBattleAI {
 
   /** 选择技能（角色AI优先使用真实技能） */
   public selectSkill(
-    participant: BattleParticipant,
+    participant: BattleEntity,
     analysis?: BattleAnalysis,
   ): string | null {
     const participantSkills = participant.getSkillIds('active')
@@ -591,7 +591,7 @@ export class CharacterAI extends BaseBattleAI {
   /** 选择目标（优先选择血量最少的敌人） */
   public selectTarget(
     battleState: BattleState,
-    _participant: BattleParticipant,
+    _participant: BattleEntity,
   ): string {
     const enemies = Array.from(battleState.participants.values())
       .filter((p) => p.type === PARTICIPANT_SIDE.ENEMY && p.isAlive())
@@ -613,7 +613,7 @@ export class EnemyAI extends BaseBattleAI {
   }
 
   /** 判断是否使用技能（能量足够时触发） */
-  public shouldUseSkill(participant: BattleParticipant): boolean {
+  public shouldUseSkill(participant: BattleEntity): boolean {
     return (
       participant.currentEnergy >= BATTLE_CONSTANTS.ENEMY_SKILL_ENERGY_THRESHOLD
     )
@@ -621,7 +621,7 @@ export class EnemyAI extends BaseBattleAI {
 
   /** 选择技能（敌人AI优先使用真实技能） */
   public selectSkill(
-    participant: BattleParticipant,
+    participant: BattleEntity,
     analysis?: BattleAnalysis,
   ): string | null {
     const participantSkills = participant.getSkillIds('active')
@@ -640,7 +640,7 @@ export class EnemyAI extends BaseBattleAI {
   /** 选择目标（优先选择血量最少的角色） */
   public selectTarget(
     battleState: BattleState,
-    _participant: BattleParticipant,
+    _participant: BattleEntity,
   ): string {
     const characters = Array.from(battleState.participants.values())
       .filter((p) => p.type === PARTICIPANT_SIDE.ALLY && p.isAlive())

@@ -14,7 +14,7 @@ import type {
   BattleEventType,
   BattleEvent,
   SnapshotIndexItem,
-  BattleParticipant,
+  BattleEntity,
   ParticipantSide,
 } from '@/types/battle'
 import { battleLogManager } from '@/utils/logging'

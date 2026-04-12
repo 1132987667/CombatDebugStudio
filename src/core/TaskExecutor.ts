@@ -8,7 +8,7 @@
  */
 
 import { BattleSystem } from '@/core/BattleSystem'
-import { BATTLE_STATUS } from '@/types/battle'
+import { BattleStatus } from '@/types/battle'
 import { RAFTimer } from '@/utils/RAF'
 import { battleLogManager } from '@/utils/logging'
 
@@ -268,8 +268,8 @@ export class TaskExecutor {
 
       // 检查战斗是否结束
       if (
-        battleData.battleState === BATTLE_STATUS.ENDED ||
-        battleData.battleState !== BATTLE_STATUS.ACTIVE
+        battleData.battleState === BattleStatus.ENDED ||
+        battleData.battleState !== BattleStatus.ACTIVE
       ) {
         this.timer.clearInterval(monitorInterval)
         task.progress = 100

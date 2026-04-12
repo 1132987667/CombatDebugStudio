@@ -8,12 +8,12 @@
  */
 
 import type {
-  BattleParticipant,
+  BattleEntity,
   BattleState,
   BattleAction,
   BattleData,
 } from '@/types/battle'
-import { BATTLE_STATUS } from '@/types/battle'
+import { BattleStatus } from '@/types/battle'
 import { BATTLE_CONSTANTS } from '@/types/battle'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import { BattleAIFactory, BattleAI } from '@/core/BattleAI'
@@ -47,7 +47,7 @@ export class AISystem {
    * @returns Map<string, BattleAI> - 以参与者ID为键的AI实例映射表
    */
   public createAIInstances(
-    participants: Map<string, BattleParticipant>,
+    participants: Map<string, BattleEntity>,
   ): Map<string, BattleAI> {
     const aiInstances = new Map<string, BattleAI>()
     participants.forEach((participant) => {
@@ -68,7 +68,7 @@ export class AISystem {
    * @param participant - 需要AI实例的参与者
    * @returns BattleAI | null - AI实例，如果无法创建返回null
    */
-  private getOrCreateAI(participant: BattleParticipant): BattleAI | null {
+  private getOrCreateAI(participant: BattleEntity): BattleAI | null {
     let ai = this.aiInstances.get(participant.id)
 
     if (!ai) {
@@ -91,7 +91,7 @@ export class AISystem {
    */
   public makeDecision(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): BattleAction {
     const ai = this.getOrCreateAI(participant)
     if (!ai) {
@@ -111,7 +111,7 @@ export class AISystem {
    */
   public async executeAIAction(
     battle: BattleData,
-    participant: BattleParticipant,
+    participant: BattleEntity,
     actionExecutor: IActionExecutor,
   ): Promise<void> {
     const ai = this.getOrCreateAI(participant)
@@ -144,7 +144,7 @@ export class AISystem {
    */
   private async selectValidTarget(
     battle: BattleData,
-    participant: BattleParticipant,
+    participant: BattleEntity,
     actionExecutor: IActionExecutor,
   ): Promise<BattleAction> {
     // 获取所有有效目标（活着的目标）
@@ -217,7 +217,7 @@ export class AISystem {
       turnOrder: [...battle.turnOrder],
       currentTurn: battle.currentTurn,
       currentRound: battle.currentRound || 1,
-      battleState: battle.battleState ?? BATTLE_STATUS.ACTIVE,
+      battleState: battle.battleState ?? BattleStatus.ACTIVE,
       startTime: battle.startTime,
       endTime: undefined,
       winner: undefined,

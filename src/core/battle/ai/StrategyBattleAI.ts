@@ -25,12 +25,12 @@ import {
   type BattleAI as IBattleAI,
   type SkillConfigLoader,
 } from '@/core/BattleAI'
-import type { BattleParticipant, BattleState, BattleAction } from '@/types/battle'
-import { BATTLE_STATUS } from '@/types/battle'
+import type { BattleEntity, BattleState, BattleAction } from '@/types/battle'
+import { BattleStatus } from '@/types/battle'
 import type { Skill } from '@/types/skill'
 import type { SkillManager } from '@/core/skill/SkillManager'
 import type { BuffSystem } from '@/core/BuffSystem'
-import { ACTION_TYPES, BATTLE_CONSTANTS } from '@/types/battle'
+import { ActionTypes, BATTLE_CONSTANTS } from '@/types/battle'
 import { EFFECT_TYPES } from '@/types/effect'
 
 /**
@@ -78,7 +78,7 @@ export class StrategyBattleAI implements IBattleAI {
   public setTargetStrategy(strategy: ITargetSelectionStrategy): void {
     this.targetStrategy = strategy
     if ((this.battleDecisionStrategy as any).targetStrategy) {
-      (this.battleDecisionStrategy as any).targetStrategy = strategy
+      ;(this.battleDecisionStrategy as any).targetStrategy = strategy
     }
   }
 
@@ -88,7 +88,7 @@ export class StrategyBattleAI implements IBattleAI {
   public setSkillStrategy(strategy: ISkillSelectionStrategy): void {
     this.skillStrategy = strategy
     if ((this.battleDecisionStrategy as any).skillStrategy) {
-      (this.battleDecisionStrategy as any).skillStrategy = strategy
+      ;(this.battleDecisionStrategy as any).skillStrategy = strategy
     }
   }
 
@@ -98,7 +98,7 @@ export class StrategyBattleAI implements IBattleAI {
   public setThreatStrategy(strategy: IThreatCalculationStrategy): void {
     this.threatStrategy = strategy
     if ((this.battleDecisionStrategy as any).threatStrategy) {
-      (this.battleDecisionStrategy as any).threatStrategy = strategy
+      ;(this.battleDecisionStrategy as any).threatStrategy = strategy
     }
   }
 
@@ -143,7 +143,7 @@ export class StrategyBattleAI implements IBattleAI {
    */
   public makeDecision(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): BattleAction {
     const context = new BattleContext(battleState)
     const participantSnapshot = context.getParticipant(participant.id)
@@ -161,7 +161,11 @@ export class StrategyBattleAI implements IBattleAI {
       return action
     } catch (error) {
       console.error('AI决策出错:', error)
-      return this.createFallbackAction(participant, context, participantSnapshot)
+      return this.createFallbackAction(
+        participant,
+        context,
+        participantSnapshot,
+      )
     }
   }
 
@@ -170,7 +174,7 @@ export class StrategyBattleAI implements IBattleAI {
    */
   public selectTarget(
     battleState: BattleState,
-    participant: BattleParticipant,
+    participant: BattleEntity,
   ): string {
     const context = new BattleContext(battleState)
     const participantSnapshot = context.getParticipant(participant.id)
@@ -185,14 +189,14 @@ export class StrategyBattleAI implements IBattleAI {
   /**
    * 判断是否应该使用技能
    */
-  public shouldUseSkill(participant: BattleParticipant): boolean {
+  public shouldUseSkill(participant: BattleEntity): boolean {
     const context = new BattleContext({
       battleId: '',
       participants: new Map([[participant.id, participant]]),
       actions: [],
       turnOrder: [],
       currentTurn: 0,
-      battleState: BATTLE_STATUS.ACTIVE,
+      battleState: BattleStatus.ACTIVE,
       startTime: 0,
     })
 
@@ -207,14 +211,14 @@ export class StrategyBattleAI implements IBattleAI {
   /**
    * 选择要使用的技能
    */
-  public selectSkill(participant: BattleParticipant): string | null {
+  public selectSkill(participant: BattleEntity): string | null {
     const context = new BattleContext({
       battleId: '',
       participants: new Map([[participant.id, participant]]),
       actions: [],
       turnOrder: [],
       currentTurn: 0,
-      battleState: BATTLE_STATUS.ACTIVE,
+      battleState: BattleStatus.ACTIVE,
       startTime: 0,
     })
 
@@ -229,7 +233,7 @@ export class StrategyBattleAI implements IBattleAI {
   /**
    * 选择普通攻击
    */
-  public selectAttack(participant: BattleParticipant): BattleAction {
+  public selectAttack(participant: BattleEntity): BattleAction {
     const targetId = participant.id
 
     const damage =
@@ -241,7 +245,7 @@ export class StrategyBattleAI implements IBattleAI {
 
     return {
       id: `attack_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type: ACTION_TYPES.ATTACK,
+      type: ActionTypes.ATTACK,
       sourceId: participant.id,
       targetId,
       damage,
@@ -261,16 +265,19 @@ export class StrategyBattleAI implements IBattleAI {
    * 创建回退动作
    */
   private createFallbackAction(
-    participant: BattleParticipant,
+    participant: BattleEntity,
     context?: BattleContext,
     participantSnapshot?: ParticipantSnapshot,
   ): BattleAction {
     if (context && participantSnapshot) {
       try {
-        const targetId = this.targetStrategy.selectTarget(context, participantSnapshot)
+        const targetId = this.targetStrategy.selectTarget(
+          context,
+          participantSnapshot,
+        )
         return {
           id: `fallback_${Date.now()}`,
-          type: ACTION_TYPES.ATTACK,
+          type: ActionTypes.ATTACK,
           sourceId: participant.id,
           targetId,
           damage: BATTLE_CONSTANTS.DEFAULT_SKILL_DAMAGE,
@@ -291,7 +298,7 @@ export class StrategyBattleAI implements IBattleAI {
 
     return {
       id: `fallback_${Date.now()}`,
-      type: ACTION_TYPES.ATTACK,
+      type: ActionTypes.ATTACK,
       sourceId: participant?.id || 'unknown',
       targetId: 'unknown',
       damage: BATTLE_CONSTANTS.DEFAULT_SKILL_DAMAGE,
@@ -352,7 +359,7 @@ export class StrategyBattleAI implements IBattleAI {
   /**
    * 检查是否可以使用技能
    */
-  protected canUseSkill(participant: BattleParticipant): boolean {
+  protected canUseSkill(participant: BattleEntity): boolean {
     if (this.buffSystem) {
       return this.buffSystem.canUseSkill(participant.id)
     }
@@ -367,7 +374,10 @@ export class CharacterStrategyAI extends StrategyBattleAI {
   constructor() {
     const targetStrategy = new CharacterTargetStrategy()
     const skillStrategy = new CharacterSkillSelectionStrategy()
-    const strategy = new DefaultBattleDecisionStrategy(targetStrategy, skillStrategy)
+    const strategy = new DefaultBattleDecisionStrategy(
+      targetStrategy,
+      skillStrategy,
+    )
     super(strategy)
   }
 }
@@ -379,7 +389,10 @@ export class EnemyStrategyAI extends StrategyBattleAI {
   constructor() {
     const targetStrategy = new EnemyTargetStrategy()
     const skillStrategy = new EnemySkillSelectionStrategy()
-    const strategy = new DefaultBattleDecisionStrategy(targetStrategy, skillStrategy)
+    const strategy = new DefaultBattleDecisionStrategy(
+      targetStrategy,
+      skillStrategy,
+    )
     super(strategy)
   }
 }

@@ -162,9 +162,7 @@ export function initializeContainer(): void {
     new ActionExecutor(buffSystem),
   )
   container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
-  const participantManager = new ParticipantManager()
-  participantManager.setModifierProvider(buffSystem)
-  container.register(PARTICIPANT_MANAGER_TOKEN.toString(), participantManager)
+
   container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder())
   container.register(
     BATTLE_RULE_MANAGER_TOKEN.toString(),

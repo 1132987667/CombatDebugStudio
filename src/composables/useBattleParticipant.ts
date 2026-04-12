@@ -2,12 +2,12 @@
  * 文件：useBattleParticipant.ts
  * 创建日期：2026-04-08
  * 功能：战斗参与者 UI 绑定 Composable
- * 描述：提供 shallowReactive + computed 方案，实现 UI 层直接绑定 BattleParticipant
+ * 描述：提供 shallowReactive + computed 方案，实现 UI 层直接绑定 BattleEntity
  */
 
 import { computed, shallowReactive, type ShallowReactive } from 'vue'
-import type { BattleParticipant } from '@/types/battle'
-import type { AttributeValue, AttributeCode } from '@/types/attribute'
+import type { BattleEntity } from '@/types/battle'
+import type { AttributeValue } from '@/types/attribute'
 import { AttributeCodes } from '@/types/attribute'
 
 /**
@@ -53,7 +53,7 @@ export interface ParticipantStats {
  */
 export interface UseBattleParticipantReturn {
   /** 参与者实例（浅代理） */
-  participant: ShallowReactive<BattleParticipant>
+  participant: ShallowReactive<BattleEntity>
   /** 属性集合（计算属性缓存） */
   stats: Readonly<ParticipantStats>
   /** 是否存活 */
@@ -65,23 +65,23 @@ export interface UseBattleParticipantReturn {
   /** 能量百分比 */
   energyPercent: Readonly<number>
   /** 获取指定属性（直接访问缓存） */
-  getAttribute: (type: AttributeCode) => AttributeValue | undefined
+  getAttribute: (type: AttributeCodes) => AttributeValue | undefined
   /** 获取属性计算拆解（仅调试模式） */
-  getBreakdown: (type: AttributeCode) => any
+  getBreakdown: (type: AttributeCodes) => any
 }
 
 /**
  * 战斗参与者 Composable
  * 使用 shallowReactive 避免深层代理开销，computed 缓存属性引用
- * @param participant BattleParticipant 实例
+ * @param participant BattleEntity 实例
  * @returns 响应式包装的参与者数据和属性
  */
 export function useBattleParticipant(
-  participant: BattleParticipant,
+  participant: BattleEntity,
 ): UseBattleParticipantReturn {
   console.log('useBattleParticipant', participant)
   // 使用浅代理，避免 Map 深层代理开销
-  const shallowParticipant = shallowReactive<BattleParticipant>(participant)
+  const shallowParticipant = shallowReactive<BattleEntity>(participant)
 
   // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue
   const stats = computed<ParticipantStats>(() => ({
@@ -94,7 +94,9 @@ export function useBattleParticipant(
     spd: shallowParticipant.getAttributeValue(AttributeCodes.SPD)!,
     critRate: shallowParticipant.getAttributeValue(AttributeCodes.CRIT_RATE)!,
     critDmg: shallowParticipant.getAttributeValue(AttributeCodes.CRIT_DMG)!,
-    dmgReduction: shallowParticipant.getAttributeValue(AttributeCodes.DMG_REDUCTION)!,
+    dmgReduction: shallowParticipant.getAttributeValue(
+      AttributeCodes.DMG_REDUCTION,
+    )!,
     hpBonus: shallowParticipant.getAttributeValue(AttributeCodes.HP_BONUS)!,
     atkBonus: shallowParticipant.getAttributeValue(AttributeCodes.ATK_BONUS)!,
     defBonus: shallowParticipant.getAttributeValue(AttributeCodes.DEF_BONUS)!,
@@ -121,12 +123,12 @@ export function useBattleParticipant(
   })
 
   // 直接访问属性的方法
-  const getAttribute = (type: AttributeCode): AttributeValue | undefined => {
+  const getAttribute = (type: AttributeCodes): AttributeValue | undefined => {
     return shallowParticipant.getAttributeValue(type)
   }
 
   // 获取属性计算拆解（仅调试模式）
-  const getBreakdown = (type: AttributeCode): any => {
+  const getBreakdown = (type: AttributeCodes): any => {
     const attrValue = getAttribute(type)
     return attrValue?.breakdown || null
   }
@@ -149,7 +151,7 @@ export function useBattleParticipant(
  * @returns 包装后的参与者数组
  */
 export function useBattleParticipants(
-  participants: BattleParticipant[],
+  participants: BattleEntity[],
 ): UseBattleParticipantReturn[] {
   return participants.map((p) => useBattleParticipant(p))
 }

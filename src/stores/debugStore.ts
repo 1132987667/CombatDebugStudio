@@ -1,20 +1,20 @@
-import { defineStore } from 'pinia';
-import type { BattleParticipant } from '@/types/battle';
-import type { BattleRules } from '@/stores/battleStore';
-import type { BattleLogEntry } from '@/types/battle-log';
-import type { InjectableStatus } from '@/views/components/StatusInjectionDialog.vue';
+import { defineStore } from 'pinia'
+import type { BattleEntity } from '@/types/battle'
+import type { BattleRules } from '@/stores/battleStore'
+import type { BattleLogEntry } from '@/types/battle-log'
+import type { InjectableStatus } from '@/views/components/StatusInjectionDialog.vue'
 
 interface ExportedBattleState {
-  battleCharacters: BattleParticipant[];
-  enemyParty: BattleParticipant[];
-  currentTurn: number;
-  rules: BattleRules;
-  battleLogs: BattleLogEntry[];
+  battleCharacters: BattleEntity[]
+  enemyParty: BattleEntity[]
+  currentTurn: number
+  rules: BattleRules
+  battleLogs: BattleLogEntry[]
 }
 
 interface DebugState {
-  injectableStatuses: InjectableStatus[];
-  lastExportTime: string | null;
+  injectableStatuses: InjectableStatus[]
+  lastExportTime: string | null
 }
 
 export const useDebugStore = defineStore('debug', {
@@ -28,14 +28,14 @@ export const useDebugStore = defineStore('debug', {
      * 获取可注入的状态列表
      */
     getInjectableStatuses: (state): InjectableStatus[] => {
-      return state.injectableStatuses;
+      return state.injectableStatuses
     },
 
     /**
      * 获取最后导出时间
      */
     getLastExportTime: (state): string | null => {
-      return state.lastExportTime;
+      return state.lastExportTime
     },
   },
 
@@ -44,37 +44,43 @@ export const useDebugStore = defineStore('debug', {
      * 设置可注入的状态列表
      */
     setInjectableStatuses(statuses: InjectableStatus[]) {
-      this.injectableStatuses = statuses;
+      this.injectableStatuses = statuses
     },
 
     /**
      * 设置最后导出时间
      */
     setLastExportTime(time: string | null) {
-      this.lastExportTime = time;
+      this.lastExportTime = time
     },
 
     /**
      * 更新可注入的状态
      */
     updateStatuses(statuses: InjectableStatus[]) {
-      this.injectableStatuses = statuses;
+      this.injectableStatuses = statuses
     },
 
     /**
      * 导出战斗状态
      */
-    exportState(allyTeam: BattleParticipant[], enemyTeam: BattleParticipant[], currentTurn: number, rules: BattleRules, battleLogs: BattleLogEntry[]) {
+    exportState(
+      allyTeam: BattleEntity[],
+      enemyTeam: BattleEntity[],
+      currentTurn: number,
+      rules: BattleRules,
+      battleLogs: BattleLogEntry[],
+    ) {
       const state = {
         battleCharacters: allyTeam,
         enemyParty: enemyTeam,
         currentTurn,
         rules,
-        battleLogs
-      };
-      const json = JSON.stringify(state, null, 2);
-      localStorage.setItem('battleState', json);
-      this.setLastExportTime(new Date().toLocaleString());
+        battleLogs,
+      }
+      const json = JSON.stringify(state, null, 2)
+      localStorage.setItem('battleState', json)
+      this.setLastExportTime(new Date().toLocaleString())
     },
 
     /**
@@ -82,14 +88,14 @@ export const useDebugStore = defineStore('debug', {
      */
     importState(): ExportedBattleState | null {
       try {
-        const savedState = localStorage.getItem('battleState');
+        const savedState = localStorage.getItem('battleState')
         if (savedState) {
-          return JSON.parse(savedState) as ExportedBattleState;
+          return JSON.parse(savedState) as ExportedBattleState
         }
-        return null;
+        return null
       } catch (error) {
-        console.error('导入状态失败:', error);
-        return null;
+        console.error('导入状态失败:', error)
+        return null
       }
     },
 
@@ -98,14 +104,14 @@ export const useDebugStore = defineStore('debug', {
      */
     viewExport(): ExportedBattleState | null {
       try {
-        const savedState = localStorage.getItem('battleState');
+        const savedState = localStorage.getItem('battleState')
         if (savedState) {
-          return JSON.parse(savedState) as ExportedBattleState;
+          return JSON.parse(savedState) as ExportedBattleState
         }
-        return null;
+        return null
       } catch (error) {
-        console.error('查看导出状态失败:', error);
-        return null;
+        console.error('查看导出状态失败:', error)
+        return null
       }
     },
 
@@ -113,7 +119,7 @@ export const useDebugStore = defineStore('debug', {
      * 重置导出时间
      */
     resetExportTime() {
-      this.setLastExportTime(null);
+      this.setLastExportTime(null)
     },
 
     /**
@@ -121,7 +127,7 @@ export const useDebugStore = defineStore('debug', {
      */
     reloadExport() {
       // 重载导出状态的逻辑
-      return this.importState();
+      return this.importState()
     },
   },
-});
+})

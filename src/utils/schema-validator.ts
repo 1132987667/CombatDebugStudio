@@ -6,8 +6,8 @@
  * 描述: 使用JSON Schema验证技能和Effect配置的完整性和正确性
  */
 
-import { SkillConfig, SkillStep } from "@/types"
-import { isValidSkillScope, isValidSkillTargetType, SELECTOR_TO_SCOPE } from "@/types/skill"
+import { SkillConfig, SkillStep } from '@/types'
+import { isValidselectorTarget } from '@/types/skill'
 
 /**
  * 验证结果接口
@@ -169,7 +169,9 @@ const effectSchema = {
  * @param skillConfig 技能配置对象
  * @returns 验证结果
  */
-export function validateSkillConfig(skillConfig: SkillConfig): ValidationResult {
+export function validateSkillConfig(
+  skillConfig: SkillConfig,
+): ValidationResult {
   const errors: string[] = []
 
   // 检查必填字段
@@ -194,18 +196,6 @@ export function validateSkillConfig(skillConfig: SkillConfig): ValidationResult 
     errors.push('Missing required field: cooldown')
   }
 
-  // ✅ 添加：验证 selector 字段
-  if (!skillConfig.selector) {
-    errors.push('Missing required field: selector')
-  } else {
-    const validSelectors = Object.keys(SELECTOR_TO_SCOPE)
-    if (!validSelectors.includes(skillConfig.selector)) {
-      errors.push(
-        `Invalid selector: ${skillConfig.selector}. Must be a valid selector value.`,
-      )
-    }
-  }
-
   if (
     !skillConfig.steps ||
     !Array.isArray(skillConfig.steps) ||
@@ -221,9 +211,9 @@ export function validateSkillConfig(skillConfig: SkillConfig): ValidationResult 
 
       // ✅ 添加：验证 step.target 字段
       if (step.target) {
-        if (!isValidSkillScope(step.target)) {
+        if (!isValidselectorTarget(step.target)) {
           errors.push(
-            `Step ${index}: Invalid target: ${step.target}. Must be a valid SkillScope value.`,
+            `Step ${index}: Invalid target: ${step.target}. Must be a valid selectorTarget value.`,
           )
         }
       }
@@ -281,7 +271,9 @@ export function validateEffectConfig(effectConfig: any): ValidationResult {
  * @param skillConfigs 技能配置数组
  * @returns 验证结果
  */
-export function validateSkillConfigs(skillConfigs: SkillConfig[]): ValidationResult {
+export function validateSkillConfigs(
+  skillConfigs: SkillConfig[],
+): ValidationResult {
   const errors: string[] = []
   let validCount = 0
 

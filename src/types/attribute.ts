@@ -9,42 +9,22 @@
 
 // ========== 类型定义 ==========
 
-/** 属性类型枚举（统一使用大写蛇形命名） */
-export type AttributeType =
-  | 'HP'
-  | 'MP'
-  | 'ATK'
-  | 'DEF'
-  | 'SPD'
-  | 'CRIT_RATE'
-  | 'CRIT_DMG'
-  | 'ACCURACY'
-  | 'EVADE'
-  | 'LIFESTEAL'
-  | 'REGENERATION'
-  | 'MANA_REGEN'
-  | 'DAMAGE_BOOST'
-  | 'DAMAGE_REDUCE'
-
 /** 修饰符计算类型（严格联合类型） */
-export type ModifierType = 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' | 'FINAL'
+export type ModifierType =
+  | 'ADDITIVE' // 加法修正
+  | 'MULTIPLICATIVE' // 独立乘区
+  | 'PERCENTAGE' // 百分比修正
+  | 'FINAL' // 最终修正
 
 /** 修饰符来源类型 */
 export type ModifierSourceType =
-  | 'buff'
-  | 'equipment'
-  | 'skill'
-  | 'terrain'
-  | 'formation'
-  | 'base'
-  | 'talent'
-
-export const ATTRIBUTE_VALUE_TYPE = {
-  "VALUE": "数值",
-  "PERCENT": "百分比",
-}
-
-export type AttributeValueType = (typeof ATTRIBUTE_VALUE_TYPE)[keyof typeof ATTRIBUTE_VALUE_TYPE]
+  | 'buff' // 增益
+  | 'equipment' // 装备
+  | 'skill' // 技能
+  | 'terrain' // 地形
+  | 'formation' // 阵型
+  | 'base' // 基础值
+  | 'talent' // 天赋
 
 /** 修饰符来源类型显示名称映射 */
 export const ModifierSourceTypeNames: Record<ModifierSourceType, string> = {
@@ -57,6 +37,15 @@ export const ModifierSourceTypeNames: Record<ModifierSourceType, string> = {
   talent: '天赋',
 }
 
+/** 属性值类型 */
+export const AttributeValueType = {
+  VALUE: 'value', // 数值
+  PERCENT: 'percent', // 百分比
+} as const
+/** 属性值类型 */
+export type AttributeValueType =
+  (typeof AttributeValueType)[keyof typeof AttributeValueType]
+
 // ========== 核心接口 ==========
 
 /**
@@ -66,7 +55,7 @@ export interface Modifier {
   /** Buff 实例唯一标识 */
   buffInstanceId: string
   /** 目标属性 */
-  attribute: AttributeType
+  attribute: AttributeCodes
   /** 修饰数值 */
   value: number
   /** 修饰类型 */
@@ -77,7 +66,7 @@ export interface Modifier {
  * 修饰符配置（用于创建 Buff/装备等）
  */
 export interface ModifierConfig {
-  attribute: AttributeType
+  attribute: AttributeCodes
   value: number
   type: ModifierType
   /** 持续时间（回合数） */
@@ -194,9 +183,9 @@ export interface ModifierResult {
  */
 export interface IModifierStack {
   /** 获取指定属性的原始修饰符列表 */
-  getModifiers(attribute: AttributeType): Modifier[]
+  getModifiers(attribute: AttributeCodes): Modifier[]
   /** 计算属性最终值 */
-  calculate(attribute: AttributeType, baseValue: number): number
+  calculate(attribute: AttributeCodes, baseValue: number): number
   /** 获取当前堆栈中修饰符总数 */
   getModifierCount(): number
 }
@@ -243,14 +232,14 @@ export const AttributeCodes = {
   CRIT_RATE: 'CRIT_RATE',
   CRIT_DMG: 'CRIT_DMG',
   // 伤害减免细分
-  DMG_REDUCTION: 'DMG_REDUCTION',                            // 免伤率
-  NORMAL_ATK_DMG_REDUCTION: 'NORMAL_ATK_DMG_REDUCTION',     // 普通攻击伤害减免
-  SKILL_DMG_REDUCTION: 'SKILL_DMG_REDUCTION',               // 技能伤害减免
-  CRIT_DMG_TAKEN_REDUCTION: 'CRIT_DMG_TAKEN_REDUCTION',     // 受到暴击伤害减免
+  DMG_REDUCTION: 'DMG_REDUCTION', // 免伤率
+  NORMAL_ATK_DMG_REDUCTION: 'NORMAL_ATK_DMG_REDUCTION', // 普通攻击伤害减免
+  SKILL_DMG_REDUCTION: 'SKILL_DMG_REDUCTION', // 技能伤害减免
+  CRIT_DMG_TAKEN_REDUCTION: 'CRIT_DMG_TAKEN_REDUCTION', // 受到暴击伤害减免
 
   // 再生属性
-  HP_REGEN_PERCENT: 'HP_REGEN_PERCENT',   // 每回合恢复最大生命百分比
-  HP_REGEN_FLAT: 'HP_REGEN_FLAT',         // 每回合恢复固定生命
+  HP_REGEN_PERCENT: 'HP_REGEN_PERCENT', // 每回合恢复最大生命百分比
+  HP_REGEN_FLAT: 'HP_REGEN_FLAT', // 每回合恢复固定生命
 
   ENERGY: 'ENERGY',
   MAX_ENERGY: 'MAX_ENERGY',
@@ -261,22 +250,22 @@ export const AttributeCodes = {
 
   // ========== 元素属性 ==========
   // ========== 五行属性攻击力 ==========
-  METAL_ATK: 'METAL_ATK',                     // 金属性攻击力
-  WOOD_ATK: 'WOOD_ATK',                       // 木属性攻击力
-  WATER_ATK: 'WATER_ATK',                     // 水属性攻击力
-  FIRE_ATK: 'FIRE_ATK',                       // 火属性攻击力
-  EARTH_ATK: 'EARTH_ATK',                     // 土属性攻击力
+  METAL_ATK: 'METAL_ATK', // 金属性攻击力
+  WOOD_ATK: 'WOOD_ATK', // 木属性攻击力
+  WATER_ATK: 'WATER_ATK', // 水属性攻击力
+  FIRE_ATK: 'FIRE_ATK', // 火属性攻击力
+  EARTH_ATK: 'EARTH_ATK', // 土属性攻击力
   // ========== 五行属性抗性 ==========
-  METAL_RES: 'METAL_RES',                     // 金属性抗性
-  WOOD_RES: 'WOOD_RES',                       // 木属性抗性
-  WATER_RES: 'WATER_RES',                     // 水属性抗性
-  FIRE_RES: 'FIRE_RES',                       // 火属性抗性
-  EARTH_RES: 'EARTH_RES',                     // 土属性抗性
+  METAL_RES: 'METAL_RES', // 金属性抗性
+  WOOD_RES: 'WOOD_RES', // 木属性抗性
+  WATER_RES: 'WATER_RES', // 水属性抗性
+  FIRE_RES: 'FIRE_RES', // 火属性抗性
+  EARTH_RES: 'EARTH_RES', // 土属性抗性
 
   // ========== 特殊战斗属性 ==========
-  DODGE: 'DODGE',                                 // 闪避率
-  HIT: 'HIT',                                     // 命中率
-  CONTROL_SUCCESS_RATE: 'CONTROL_SUCCESS_RATE',   // 控制技能成功率
+  DODGE: 'DODGE', // 闪避率
+  HIT: 'HIT', // 命中率
+  CONTROL_SUCCESS_RATE: 'CONTROL_SUCCESS_RATE', // 控制技能成功率
   CONTROL_DURATION_REDUCTION: 'CONTROL_DURATION_REDUCTION', // 受控制时间减免
   DAMAGE_TAKEN_INCREASE: 'DAMAGE_TAKEN_INCREASE', // 受到的伤害增加（易伤）
 
@@ -284,17 +273,14 @@ export const AttributeCodes = {
   REFLECT_DAMAGE_PERCENT: 'REFLECT_DAMAGE_PERCENT', // 反弹伤害比例
 
   // ========== 抗性 ==========
-  POISON_RES: 'POISON_RES',                 // 毒素抗性
-
-
-
-
+  POISON_RES: 'POISON_RES', // 毒素抗性
 } as const
 
-export type AttributeCode = (typeof AttributeCodes)[keyof typeof AttributeCodes]
+export type AttributeCodes =
+  (typeof AttributeCodes)[keyof typeof AttributeCodes]
 
 /** 属性代码显示名称映射 */
-export const AttributeCodeNames: Record<AttributeCode, string> = {
+export const AttributeCodeNames: Record<AttributeCodes, string> = {
   // ========== 基础属性 ==========
   HP: '生命值',
   MAX_HP: '最大生命值',
@@ -523,7 +509,7 @@ export function createAttributeValue(
     isPercentage: boolean
     dirty: boolean
     breakdown: CalculationBreakdown
-  }>
+  }>,
 ): AttributeValue {
   return {
     base,
@@ -541,7 +527,7 @@ export function createAttributeValue(
  */
 export function createBaseAttributeValue(
   base: number,
-  isPercentage: boolean = false
+  isPercentage: boolean = false,
 ): AttributeValue {
   return createAttributeValue(base, base, { isPercentage, dirty: false })
 }
@@ -556,7 +542,7 @@ export function createBaseAttributeValue(
  */
 export function calculateFinalValue(
   base: number,
-  modifiers: ModifierDetail[]
+  modifiers: ModifierDetail[],
 ): { value: number; breakdown: CalculationBreakdown } {
   let additive = 0
   let percentSum = 0
@@ -579,7 +565,9 @@ export function calculateFinalValue(
         break
       default:
         // 防御性编程：如果传入无效类型，静默忽略
-        console.warn(`[calculateFinalValue] 未知修饰符类型: ${(mod as any).type}`)
+        console.warn(
+          `[calculateFinalValue] 未知修饰符类型: ${(mod as any).type}`,
+        )
     }
   }
 
@@ -910,5 +898,7 @@ export function getAttributeMeta(code: string): AttributeMeta | undefined {
  * 根据属性名称获取属性编码
  */
 export function getAttributeCodeByName(name: string): string | undefined {
-  return Object.entries(AttributeMetaMap).find(([_, meta]) => meta.name === name)?.[0]
+  return Object.entries(AttributeMetaMap).find(
+    ([_, meta]) => meta.name === name,
+  )?.[0]
 }

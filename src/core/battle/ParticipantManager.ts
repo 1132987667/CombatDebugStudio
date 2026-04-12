@@ -7,7 +7,7 @@
  * 版本: 2.0.0 - 支持 IModifierProvider 接口
  */
 
-import type { BattleParticipant, ParticipantSide } from '@/types/battle'
+import type { BattleEntity, ParticipantSide } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
 import {
   BattleParticipantImpl,
@@ -35,7 +35,7 @@ export interface ParticipantStateChangeEvent {
 export interface ParticipantStateSnapshot {
   participantId: string
   battleId: string
-  state: Partial<BattleParticipant>
+  state: Partial<BattleEntity>
   timestamp: number
 }
 
@@ -46,7 +46,7 @@ export interface ParticipantStateSnapshot {
  */
 export class ParticipantManager {
   /** 参与者存储映射，以参与者ID为键 */
-  private participants = new Map<string, BattleParticipant>()
+  private participants = new Map<string, BattleEntity>()
   /** 战斗参与者关联映射，以battleId为键，值为该战斗的参与者ID集合 */
   private battleParticipants = new Map<string, Set<string>>()
   /** 状态变化事件监听器 */
@@ -67,22 +67,13 @@ export class ParticipantManager {
   }
 
   /**
-   * 设置 Buff 系统引用（向后兼容）
-   * @param buffSystem Buff 系统实例
+   * 设置Buff系统引用（向后兼容）
+   * @param buffSystem Buff系统实例
    * @deprecated 请使用 setModifierProvider 方法
    */
   public setBuffSystem(buffSystem: any): void {
     if (buffSystem && typeof buffSystem.getModifierStack === 'function') {
       this.modifierProvider = buffSystem as IModifierProvider
-      // 【脏标记流控】设置 BuffSystem 的属性变化回调
-      if (typeof buffSystem.setAttributeChangeCallback === 'function') {
-        buffSystem.setAttributeChangeCallback((characterId: string) => {
-          const participant = this.participants.get(characterId)
-          if (participant && 'markDirty' in participant) {
-            (participant as any).markAllDirty()
-          }
-        })
-      }
     }
   }
 
@@ -90,11 +81,11 @@ export class ParticipantManager {
    * 创建单个参与者
    * 使用 BattleParticipantImpl 类创建参与者实例
    * @param info - 参与者初始化数据或 BattleParticipantImpl 实例
-   * @returns BattleParticipant - 创建的参与者实例
+   * @returns BattleEntity - 创建的参与者实例
    */
   public createParticipant(
     info: ParticipantInitData | BattleParticipantImpl,
-  ): BattleParticipant {
+  ): BattleEntity {
     const prefix = info.type === PARTICIPANT_SIDE.ALLY ? 'character_' : 'enemy_'
     const newId = `${prefix}${info.id}`
 
@@ -121,12 +112,12 @@ export class ParticipantManager {
    * 批量创建参与者
    * 根据参与者初始化数据数组创建多个参与者对象
    * @param participantsInfo - 参与者初始化数据数组
-   * @returns Map<string, BattleParticipant> - 以参与者ID为键的映射表
+   * @returns Map<string, BattleEntity> - 以参与者ID为键的映射表
    */
   public createParticipants(
     participantsInfo: (ParticipantInitData | BattleParticipantImpl)[],
-  ): Map<string, BattleParticipant> {
-    const participants = new Map<string, BattleParticipant>()
+  ): Map<string, BattleEntity> {
+    const participants = new Map<string, BattleEntity>()
 
     participantsInfo.forEach((info) => {
       const participant = this.createParticipant(info)
@@ -174,11 +165,11 @@ export class ParticipantManager {
    * 创建角色类型参与者
    * 包装createParticipant方法，明确表示创建角色
    * @param info - 角色参与者初始化数据
-   * @returns BattleParticipant - 创建的角色参与者对象
+   * @returns BattleEntity - 创建的角色参与者对象
    */
   public createCharacter(
     info: ParticipantInitData | BattleParticipantImpl,
-  ): BattleParticipant {
+  ): BattleEntity {
     return this.createParticipant(info)
   }
 
@@ -186,11 +177,11 @@ export class ParticipantManager {
    * 创建敌人类型参与者
    * 包装createParticipant方法，明确表示创建敌人
    * @param info - 敌人参与者初始化数据
-   * @returns BattleParticipant - 创建的敌人参与者对象
+   * @returns BattleEntity - 创建的敌人参与者对象
    */
   public createEnemy(
     info: ParticipantInitData | BattleParticipantImpl,
-  ): BattleParticipant {
+  ): BattleEntity {
     return this.createParticipant(info)
   }
 
@@ -199,9 +190,9 @@ export class ParticipantManager {
    * 根据参与者ID查找并返回参与者对象
    * @param battleId - 战斗ID（当前未使用，预留参数）
    * @param participantId - 参与者的唯一标识符
-   * @returns BattleParticipant | undefined - 找到返回参与者对象，未找到返回undefined
+   * @returns BattleEntity | undefined - 找到返回参与者对象，未找到返回undefined
    */
-  public getParticipant(participantId: string): BattleParticipant | undefined {
+  public getParticipant(participantId: string): BattleEntity | undefined {
     return this.participants.get(participantId)
   }
 
@@ -215,7 +206,7 @@ export class ParticipantManager {
   public updateParticipant(
     battleId: string,
     participantId: string,
-    updates: Partial<BattleParticipant>,
+    updates: Partial<BattleEntity>,
   ): void {
     const participant = this.participants.get(participantId)
     if (participant) {
@@ -239,7 +230,7 @@ export class ParticipantManager {
    */
   public batchUpdateParticipants(
     battleId: string,
-    updates: Map<string, Partial<BattleParticipant>>,
+    updates: Map<string, Partial<BattleEntity>>,
   ): void {
     updates.forEach((participantUpdates, participantId) => {
       this.updateParticipant(battleId, participantId, participantUpdates)
@@ -255,8 +246,8 @@ export class ParticipantManager {
   private recordStateChanges(
     battleId: string,
     participantId: string,
-    participant: BattleParticipant,
-    updates: Partial<BattleParticipant>,
+    participant: BattleEntity,
+    updates: Partial<BattleEntity>,
   ): void {
     Object.entries(updates).forEach(([field, newValue]) => {
       const oldValue = (participant as any)[field]
@@ -436,7 +427,7 @@ export class ParticipantManager {
    * @param amount - 要增加的能量值
    */
   public gainEnergyToAliveParticipants(
-    participants: BattleParticipant[],
+    participants: BattleEntity[],
     amount: number,
   ): void {
     participants.forEach((participant) => {
@@ -448,11 +439,11 @@ export class ParticipantManager {
    * 获取所有存活参与者
    * 从参与者集合中筛选出生命值大于0的参与者
    * @param participants - 参与者映射表
-   * @returns BattleParticipant[] - 存活参与者数组
+   * @returns BattleEntity[] - 存活参与者数组
    */
   public getAliveParticipants(
-    participants: Map<string, BattleParticipant>,
-  ): BattleParticipant[] {
+    participants: Map<string, BattleEntity>,
+  ): BattleEntity[] {
     return Array.from(participants.values()).filter((p) => p.isAlive())
   }
 
@@ -461,12 +452,12 @@ export class ParticipantManager {
    * 从参与者集合中筛选出指定类型的存活参与者
    * @param participants - 参与者映射表
    * @param type - 参与者类型，ALLY或ENEMY
-   * @returns BattleParticipant[] - 符合条件的参与者数组
+   * @returns BattleEntity[] - 符合条件的参与者数组
    */
   public getAliveParticipantsByType(
-    participants: Map<string, BattleParticipant>,
+    participants: Map<string, BattleEntity>,
     type: ParticipantSide,
-  ): BattleParticipant[] {
+  ): BattleEntity[] {
     return this.getAliveParticipants(participants).filter(
       (p) => p.type === type,
     )
@@ -477,12 +468,12 @@ export class ParticipantManager {
    * 从参与者映射表中查找指定ID的参与者
    * @param participants - 参与者映射表
    * @param id - 要查找的参与者ID
-   * @returns BattleParticipant | undefined - 找到返回参与者对象，未找到返回undefined
+   * @returns BattleEntity | undefined - 找到返回参与者对象，未找到返回undefined
    */
   public getParticipantById(
-    participants: Map<string, BattleParticipant>,
+    participants: Map<string, BattleEntity>,
     id: string,
-  ): BattleParticipant | undefined {
+  ): BattleEntity | undefined {
     return participants.get(id)
   }
 
@@ -493,7 +484,7 @@ export class ParticipantManager {
    * @returns boolean - 有存活参与者返回true，否则返回false
    */
   public hasAliveParticipants(
-    participants: Map<string, BattleParticipant>,
+    participants: Map<string, BattleEntity>,
   ): boolean {
     return this.getAliveParticipants(participants).length > 0
   }
@@ -506,7 +497,7 @@ export class ParticipantManager {
    * @returns boolean - 有符合条件的存活参与者返回true，否则返回false
    */
   public hasAliveParticipantsByType(
-    participants: Map<string, BattleParticipant>,
+    participants: Map<string, BattleEntity>,
     type: ParticipantSide,
   ): boolean {
     return this.getAliveParticipantsByType(participants, type).length > 0

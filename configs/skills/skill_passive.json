@@ -36,7 +36,7 @@
             "id": "stone_skin_normal_dmg_reduce",
             "targetAttribute": "NORMAL_ATK_DMG_REDUCTION",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "石化皮肤"
           }
         ]
@@ -120,7 +120,7 @@
             "id": "mountain_protection_def",
             "targetAttribute": "DEF",
             "type": "PERCENTAGE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "山灵庇护"
           }
         ]
@@ -242,7 +242,7 @@
             "id": "gold_shell_magic_reduce",
             "targetAttribute": "MAGICAL_DMG_REDUCTION",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "黄金甲壳"
           }
         ]
@@ -265,7 +265,7 @@
             "id": "stone_flesh_normal_reduce",
             "targetAttribute": "NORMAL_ATK_DMG_REDUCTION",
             "type": "ADDITIVE",
-            "value": 0.10,
+            "value": 0.1,
             "sourceName": "岩石肌肤"
           }
         ]
@@ -318,7 +318,7 @@
             "id": "earth_gift_hp",
             "targetAttribute": "MAX_HP",
             "type": "PERCENTAGE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "大地恩赐"
           }
         ]
@@ -436,7 +436,7 @@
             "id": "mist_coverage_spd",
             "targetAttribute": "SPD",
             "type": "PERCENTAGE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "迷雾笼罩"
           }
         ]
@@ -470,7 +470,7 @@
             "id": "quicksand_dodge",
             "targetAttribute": "DODGE",
             "type": "ADDITIVE",
-            "value": 0.10,
+            "value": 0.1,
             "sourceName": "流沙之体"
           }
         ]
@@ -493,14 +493,14 @@
             "id": "snake_skin_def",
             "targetAttribute": "DEF",
             "type": "PERCENTAGE",
-            "value": 0.10,
+            "value": 0.1,
             "sourceName": "蛇皮"
           },
           {
             "id": "snake_skin_poison_res",
             "targetAttribute": "POISON_RES",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "蛇皮"
           }
         ]
@@ -523,14 +523,14 @@
             "id": "water_protection_mdef",
             "targetAttribute": "DEF",
             "type": "PERCENTAGE",
-            "value": 0.10,
+            "value": 0.1,
             "sourceName": "水之加护"
           },
           {
             "id": "water_protection_res",
             "targetAttribute": "WATER_RES",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "水之加护"
           }
         ]
@@ -567,7 +567,7 @@
             "id": "sand_avatar_phys_reduce",
             "targetAttribute": "PHYSICAL_DMG_REDUCTION",
             "type": "ADDITIVE",
-            "value": 0.10,
+            "value": 0.1,
             "sourceName": "沙之化身"
           }
         ]
@@ -672,7 +672,7 @@
             "id": "lava_skin_fire_res",
             "targetAttribute": "FIRE_RES",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "熔岩皮肤"
           }
         ]
@@ -699,14 +699,14 @@
             "id": "fire_resonance_atk",
             "targetAttribute": "FIRE_ATK",
             "type": "PERCENTAGE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "火元素共鸣"
           },
           {
             "id": "fire_resonance_res",
             "targetAttribute": "FIRE_RES",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "火元素共鸣"
           }
         ]
@@ -729,14 +729,14 @@
             "id": "fire_control_crit",
             "targetAttribute": "CRIT_RATE",
             "type": "ADDITIVE",
-            "value": 0.10,
+            "value": 0.1,
             "sourceName": "火焰掌控"
           },
           {
             "id": "fire_control_critdmg",
             "targetAttribute": "CRIT_DMG",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "火焰掌控"
           }
         ]
@@ -759,21 +759,21 @@
             "id": "fire_lord_atk",
             "targetAttribute": "FIRE_ATK",
             "type": "PERCENTAGE",
-            "value": 0.30,
+            "value": 0.3,
             "sourceName": "火焰领主"
           },
           {
             "id": "fire_lord_res",
             "targetAttribute": "FIRE_RES",
             "type": "ADDITIVE",
-            "value": 0.30,
+            "value": 0.3,
             "sourceName": "火焰领主"
           },
           {
             "id": "fire_lord_skill_dmg",
             "targetAttribute": "FIRE_SKILL_DMG_BONUS",
             "type": "ADDITIVE",
-            "value": 0.50,
+            "value": 0.5,
             "sourceName": "火焰领主"
           }
         ]
@@ -803,14 +803,14 @@
             "id": "giant_power_critdmg",
             "targetAttribute": "CRIT_DMG",
             "type": "ADDITIVE",
-            "value": 0.30,
+            "value": 0.3,
             "sourceName": "巨人之力"
           },
           {
             "id": "giant_power_phys_skill_dmg",
             "targetAttribute": "PHYSICAL_SKILL_DMG_BONUS",
             "type": "ADDITIVE",
-            "value": 0.30,
+            "value": 0.3,
             "sourceName": "巨人之力"
           }
         ]
@@ -833,7 +833,7 @@
             "id": "earth_fire_heart_atk",
             "targetAttribute": "ATK",
             "type": "PERCENTAGE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "地火之心"
           },
           {
@@ -867,7 +867,7 @@
             "id": "web_master_control_rate",
             "targetAttribute": "CONTROL_SUCCESS_RATE",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "蛛网大师"
           }
         ]
@@ -1022,7 +1022,7 @@
             "id": "sky_overlord_spd",
             "targetAttribute": "SPD",
             "type": "PERCENTAGE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "天空霸主"
           }
         ]
@@ -1139,7 +1139,7 @@
             "id": "revered_awe_dodge",
             "targetAttribute": "DODGE",
             "type": "ADDITIVE",
-            "value": 0.10,
+            "value": 0.1,
             "sourceName": "尊者之威"
           }
         ]
@@ -1169,7 +1169,7 @@
             "id": "diamond_rage_crit",
             "targetAttribute": "CRIT_RATE",
             "type": "ADDITIVE",
-            "value": 0.10,
+            "value": 0.1,
             "sourceName": "金刚之怒"
           }
         ]
@@ -1192,7 +1192,7 @@
             "id": "demon_subduing_dmg",
             "targetAttribute": "DAMAGE_TO_DEMON",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "伏魔之力"
           }
         ]
@@ -1215,7 +1215,7 @@
             "id": "dragon_awe_critdmg",
             "targetAttribute": "CRIT_DMG",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "龙威"
           }
         ]
@@ -1238,7 +1238,7 @@
             "id": "zen_heart_hp",
             "targetAttribute": "MAX_HP",
             "type": "PERCENTAGE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "禅心"
           },
           {
@@ -1287,7 +1287,7 @@
             "id": "general_bravery_atk",
             "targetAttribute": "ATK",
             "type": "PERCENTAGE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "将领之勇"
           }
         ]
@@ -1310,7 +1310,7 @@
             "id": "elder_wisdom_crit",
             "targetAttribute": "CRIT_RATE",
             "type": "ADDITIVE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "长老之智"
           }
         ]
@@ -1348,14 +1348,14 @@
             "id": "commander_awe_def",
             "targetAttribute": "DEF",
             "type": "PERCENTAGE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "统帅之威"
           },
           {
             "id": "commander_awe_ctrl_reduce",
             "targetAttribute": "CONTROL_DURATION_REDUCTION",
             "type": "ADDITIVE",
-            "value": 0.50,
+            "value": 0.5,
             "sourceName": "统帅之威"
           }
         ]
@@ -1378,14 +1378,14 @@
             "id": "sacred_blessing_hp",
             "targetAttribute": "MAX_HP",
             "type": "PERCENTAGE",
-            "value": 0.30,
+            "value": 0.3,
             "sourceName": "灵山祝福"
           },
           {
             "id": "sacred_blessing_atk",
             "targetAttribute": "ATK",
             "type": "PERCENTAGE",
-            "value": 0.20,
+            "value": 0.2,
             "sourceName": "灵山祝福"
           }
         ]

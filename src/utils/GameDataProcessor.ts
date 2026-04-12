@@ -14,17 +14,26 @@ import skillsData from '@configs/skills/skills.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
 import newSkillsData from '@configs/skills/skills_new.json'
 import buffsData from '@configs/buffs/buffs.json'
-import type { Enemy, SkillConfig, SceneData, CharacterStats, AttributeValueType } from '@/types'
+import type {
+  Enemy,
+  SkillConfig,
+  SceneData,
+  CharacterStats,
+  AttributeValueType,
+} from '@/types'
 import type { ParticipantSide } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
 import type {
   IModifierProvider,
-  AttributeType,
+  AttributeCodes,
   ModifierType,
   ModifierSourceType,
 } from '@/types/attribute'
 import { normalizeAttributeCode } from '@/types/attribute'
-import type { ModifierTemplate, StructuredBuffConfig } from '@/types/modifier-template'
+import type {
+  ModifierTemplate,
+  StructuredBuffConfig,
+} from '@/types/modifier-template'
 import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
 import { container } from '@/core/di/Container'
 import { BuffSystem } from '@/core/BuffSystem'
@@ -128,12 +137,12 @@ export class GameDataProcessor {
 
   /**
    * 将 Enemy 转换为 BattleParticipant（重构版）
-   * 
+   *
    * 改进点：
    * - 不再预先计算最终属性，只传入基础值
    * - 被动技能加成作为永久修饰符添加到参与者的 ModifierStack
    * - 支持属性组成追踪和调试拆解
-   * 
+   *
    * @param enemy - 敌人数据
    * @param type - 参与者类型
    * @param modifierProvider - 修饰符提供者（可选，通常为 BuffSystem 实例）
@@ -150,7 +159,8 @@ export class GameDataProcessor {
 
     // 1. 解析被动技能并生成修饰符模板列表
     const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive)
-    const passiveModifierTemplates = GameDataProcessor.buildPassiveModifiers(passiveSkills)
+    const passiveModifierTemplates =
+      GameDataProcessor.buildPassiveModifiers(passiveSkills)
 
     // 2. 基础属性（未加任何修饰符）
     const baseHealth = enemy.stats.health
@@ -199,7 +209,9 @@ export class GameDataProcessor {
       // 标记所有属性为脏，触发重新计算
       participant.markAllAttributesDirty()
     } else {
-      console.warn(`[GameDataProcessor] 无法获取参与者 ${participant.id} 的修饰符堆栈`)
+      console.warn(
+        `[GameDataProcessor] 无法获取参与者 ${participant.id} 的修饰符堆栈`,
+      )
     }
 
     return participant
@@ -210,7 +222,9 @@ export class GameDataProcessor {
    * @param passiveSkills 被动技能配置数组
    * @returns 修饰符模板数组
    */
-  static buildPassiveModifiers(passiveSkills: SkillConfig[]): ModifierTemplate[] {
+  static buildPassiveModifiers(
+    passiveSkills: SkillConfig[],
+  ): ModifierTemplate[] {
     const templates: ModifierTemplate[] = []
 
     for (const skill of passiveSkills) {
@@ -224,7 +238,9 @@ export class GameDataProcessor {
 
         // 处理通过 Buff 间接添加的修饰符
         if (step.buffId) {
-          const buff = GameDataProcessor.findBuffById(step.buffId) as StructuredBuffConfig | undefined
+          const buff = GameDataProcessor.findBuffById(step.buffId) as
+            | StructuredBuffConfig
+            | undefined
           if (buff?.modifiers) {
             // 将 Buff 的修饰符模板复制并附加来源信息
             for (const mod of buff.modifiers) {
@@ -248,17 +264,6 @@ export class GameDataProcessor {
    */
   static findBuffById(buffId: string): StructuredBuffConfig | undefined {
     return (buffsData as StructuredBuffConfig[]).find((b) => b.id === buffId)
-  }
-
-  /**
-   * 将 Enemy 转换为 BattleParticipant（已废弃，请使用 enemyToParticipant）
-   * @deprecated 请使用 enemyToParticipant 方法
-   */
-  static enemyToParticipantInfo(
-    enemy: Enemy,
-    type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
-  ): BattleParticipantImpl {
-    return GameDataProcessor.enemyToParticipant(enemy, type)
   }
 
   /**
@@ -335,9 +340,10 @@ export class GameDataProcessor {
     if (cached) return cached
 
     // 只进行精确匹配
-    const skill = DataProcessor.find(GameDataProcessor.getSkillsData(), (s) => s.id === skillId) as
-      | SkillConfig
-      | undefined
+    const skill = DataProcessor.find(
+      GameDataProcessor.getSkillsData(),
+      (s) => s.id === skillId,
+    ) as SkillConfig | undefined
 
     if (skill) {
       DataProcessor.setCachedData(cacheKey, skill)
@@ -394,7 +400,6 @@ export class GameDataProcessor {
     DataProcessor.setCachedData(cacheKey, skills)
     return skills
   }
-
 
   /**
    * 根据buff ID查找buff配置
@@ -591,12 +596,12 @@ export class GameDataProcessor {
    * 计算角色属性加成
    */
   static calculateStatBonus(character: CharacterStats, stat: string): number {
-    if (!character.buffs) return 0                                                                                                                                                                                                        
+    if (!character.buffs) return 0
 
     const bonuses = character.buffs.filter((buff) => !buff.isPositive)
     if (stat === AttributeCode.atkBonus) return bonuses.length * 10
-    if (stat === AttributeCode.defBonus) return bonuses.length *                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            5
-              return 0    
+    if (stat === AttributeCode.defBonus) return bonuses.length * 5
+    return 0
   }
 
   /**

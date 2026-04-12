@@ -284,7 +284,7 @@ import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import type { AttributeValue } from "@/types";
 import type { AttributeOption, AttributeValueType } from "@/types/attribute";
 import type { SkillConfig } from "@/types/skill";
-import { SKILL_SCOPE_NAMES, SKILL_TARGET_TYPE_NAMES } from "@/types/skill";
+import { SELECTOR_TARGET_NAMES } from "@/types/skill";
 import type { BattleManager } from '@/core/battle/BattleManager';
 
 // 获取 BattleManager
@@ -390,7 +390,7 @@ const getSkillTypeName = (skill: SkillConfig): string => {
  */
 const getTargetTypeName = (targetType?: string): string => {
   if (!targetType) return '未知';
-  return SKILL_TARGET_TYPE_NAMES[targetType as keyof typeof SKILL_TARGET_TYPE_NAMES] || '未知';
+  return SELECTOR_TARGET_NAMES[targetType as keyof typeof SELECTOR_TARGET_NAMES] || '未知';
 };
 
 /**
@@ -400,7 +400,7 @@ const getTargetTypeName = (targetType?: string): string => {
  */
 const getScopeName = (scope?: string): string => {
   if (!scope) return '未知';
-  return SKILL_SCOPE_NAMES[scope as keyof typeof SKILL_SCOPE_NAMES] || '未知';
+  return SELECTOR_TARGET_NAMES[scope as keyof typeof SELECTOR_TARGET_NAMES] || '未知';
 };
 
 /**

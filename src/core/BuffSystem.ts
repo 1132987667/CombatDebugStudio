@@ -74,14 +74,20 @@ export class BuffSystem implements IModifierProvider {
   /** 触发器运行时状态映射：Buff实例ID -> 触发器索引 -> 状态 */
   private triggerStates = new Map<string, Map<number, TriggerRuntimeState>>()
   /** 触发器行为脚本映射 */
-  private triggerScripts = new Map<string, (context: TriggerExecutionContext) => void>()
+  private triggerScripts = new Map<
+    string,
+    (context: TriggerExecutionContext) => void
+  >()
 
   /**
    * 构造函数
    * @param scriptRegistry Buff 脚本注册表实例
    * @param eventBus 触发器事件总线实例（可选，默认使用全局实例）
    */
-  public constructor(scriptRegistry: BuffScriptRegistry, eventBus?: TriggerEventBus) {
+  public constructor(
+    scriptRegistry: BuffScriptRegistry,
+    eventBus?: TriggerEventBus,
+  ) {
     this.scriptRegistry = scriptRegistry
     this.eventBus = eventBus ?? triggerEventBus
     this.registerDefaultTriggerScripts()
@@ -96,9 +102,16 @@ export class BuffSystem implements IModifierProvider {
     })
     this.registerTriggerScript('apply_buff', (ctx) => {
       if (ctx.params?.buffId) {
-        const config = this.scriptRegistry.getBuffConfig(ctx.params.buffId as string)
+        const config = this.scriptRegistry.getBuffConfig(
+          ctx.params.buffId as string,
+        )
         if (config) {
-          this.addBuff(ctx.targetId ?? '', ctx.params.buffId as string, config, ctx.currentTurn ?? 0)
+          this.addBuff(
+            ctx.targetId ?? '',
+            ctx.params.buffId as string,
+            config,
+            ctx.currentTurn ?? 0,
+          )
         }
       }
     })
@@ -123,7 +136,9 @@ export class BuffSystem implements IModifierProvider {
    * 设置属性变化回调（用于触发参与者的 markDirty）
    * @param callback 回调函数，接收 characterId 参数
    */
-  public setAttributeChangeCallback(callback: (characterId: string) => void): void {
+  public setAttributeChangeCallback(
+    callback: (characterId: string) => void,
+  ): void {
     this.onAttributeChange = callback
   }
 

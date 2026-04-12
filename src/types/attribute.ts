@@ -183,11 +183,22 @@ export interface ModifierResult {
  */
 export interface IModifierStack {
   /** 获取指定属性的原始修饰符列表 */
-  getModifiers(attribute: AttributeCodes): Modifier[]
+  getModifiers(attribute?: AttributeCodes): Modifier[]
   /** 计算属性最终值 */
   calculate(attribute: AttributeCodes, baseValue: number): number
   /** 获取当前堆栈中修饰符总数 */
   getModifierCount(): number
+  /** 添加修饰符 */
+  addModifier(
+    buffInstanceId: string,
+    attribute: AttributeCodes,
+    value: number,
+    type: ModifierType,
+  ): void
+  /** 移除修饰符 */
+  removeModifier(buffInstanceId: string): void
+  /** 清空所有修饰符 */
+  clear(): void
 }
 
 /**
@@ -523,7 +534,7 @@ export function createAttributeValue(
 
 /**
  * 创建基础 AttributeValue（仅提供 base，value 与 base 相同）
- * @deprecated 请使用 createAttributeValue 以获得更灵活的配置
+ * 请使用 createAttributeValue 以获得更灵活的配置
  */
 export function createBaseAttributeValue(
   base: number,

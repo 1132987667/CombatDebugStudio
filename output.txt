@@ -75,7 +75,6 @@ src/
             BattleParticipantImpl.ts
             BattleRecorder.ts
             BattleRuleManager.ts
-            BattleSystemFactory.ts
             interfaces.ts
             ParticipantManager.ts
             TurnManager.ts
@@ -18260,22 +18259,6 @@ export class BattleManager {
   }
 
   /**
-   * 获取我方队伍（已废弃）
-   * @deprecated 使用 getAllyTeam() 代替
-   */
-  getAllyTeamUI(): BattleEntity[] {
-    return this.getAllyTeam()
-  }
-
-  /**
-   * 获取敌方队伍（已废弃）
-   * @deprecated 使用 getEnemyTeam() 代替
-   */
-  getEnemyTeamUI(): BattleEntity[] {
-    return this.getEnemyTeam()
-  }
-
-  /**
    * 获取启用的我方队伍
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
@@ -18305,14 +18288,6 @@ export class BattleManager {
   }
 
   /**
-   * 获取所有参与者（已废弃）
-   * @deprecated 使用 getAllParticipants() 代替
-   */
-  getAllParticipantsUI(): BattleEntity[] {
-    return this.getAllParticipants()
-  }
-
-  /**
    * 选择角色
    */
   selectCharacter(characterId: string) {
@@ -18335,14 +18310,6 @@ export class BattleManager {
 
     const allParticipants = this.getAllParticipants()
     return allParticipants.find((p) => p.id === selectedId) || null
-  }
-
-  /**
-   * 获取选中的角色（已废弃）
-   * @deprecated 使用 getSelectedCharacter() 代替
-   */
-  getSelectedCharacterUI(): BattleEntity | null {
-    return this.getSelectedCharacter()
   }
 
   /**
@@ -18964,7 +18931,10 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param data - 初始化数据
    * @param modifierProvider - 修饰符提供者（可选，通常为 BuffSystem 实例）
    */
-  constructor(data: ParticipantInitData, modifierProvider?: IModifierProvider) {
+  constructor(
+    data: BattleParticipantImpl,
+    modifierProvider?: IModifierProvider,
+  ) {
     this.id = data.id
     this.name = data.name
     this.level = data.level
@@ -20863,82 +20833,6 @@ export class BattleRuleManager {
   public resetToDefault(): void {
     this.config = this.getDefaultConfig()
     battleLogManager.addDebugLog('战斗规则配置已重置为默认值')
-  }
-}
-
---- src/core/battle/BattleSystemFactory.ts ---
-/**
- * 文件: BattleSystemFactory.ts
- * 创建日期: 2026-02-09
- * 作者: CombatDebugStudio
- * 功能: 战斗系统工厂
- * 描述: 负责创建和初始化战斗系统的各个组件，使用依赖注入容器管理服务实例
- * 版本: 1.0.0
- */
-
-import { container, resetContainer } from '@/core/di/Container'
-import {
-  IBattleSystem,
-  ITurnManager,
-  IActionExecutor,
-  IAISystem,
-  BATTLE_SYSTEM_TOKEN,
-  TURN_MANAGER_TOKEN,
-  ACTION_EXECUTOR_TOKEN,
-  AI_SYSTEM_TOKEN,
-} from '@/core/battle/interfaces'
-
-export class BattleSystemFactory {
-  /**
-   * 初始化战斗系统
-   * 现在使用统一的容器初始化函数
-   * 注意：此方法已废弃，容器初始化应在 main.ts 中完成
-   * @deprecated
-   */
-  public static initialize(): void {
-    console.warn('BattleSystemFactory.initialize() 已废弃，容器初始化已在 main.ts 中完成')
-  }
-
-  /**
-   * 创建战斗系统实例
-   * @returns IBattleSystem - 战斗系统实例
-   */
-  public static createBattleSystem(): IBattleSystem {
-    return container.resolve<IBattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
-  }
-
-  /**
-   * 获取回合管理器实例
-   * @returns ITurnManager - 回合管理器实例
-   */
-  public static getTurnManager(): ITurnManager {
-    return container.resolve<ITurnManager>(TURN_MANAGER_TOKEN.toString())
-  }
-
-  /**
-   * 获取动作执行器实例
-   * @returns IActionExecutor - 动作执行器实例
-   */
-  public static getActionExecutor(): IActionExecutor {
-    return container.resolve<IActionExecutor>(
-      ACTION_EXECUTOR_TOKEN.toString(),
-    )
-  }
-
-  /**
-   * 获取AI系统实例
-   * @returns IAISystem - AI系统实例
-   */
-  public static getAISystem(): IAISystem {
-    return container.resolve<IAISystem>(AI_SYSTEM_TOKEN.toString())
-  }
-
-  /**
-   * 重置战斗系统
-   * 用于测试场景
-   */
-  public static reset(): void {
-    resetContainer()
   }
 }
 
@@ -24794,11 +24688,11 @@ export class BattleSystem implements IBattleSystem {
 
       // 为所有存活角色增加回合开始能量
       const combatRules = this.ruleManager.getCombatRules()
-      aliveParticipants.forEach((participant) => {
-        participant.gainEnergy(combatRules.energyGainPerTurn)
-      })
 
-      this.participantManager.gainEnergyToAliveParticipants(aliveParticipants)
+      this.participantManager.gainEnergyToAliveParticipants(
+        aliveParticipants,
+        combatRules.energyGainPerTurn,
+      )
 
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
@@ -28232,9 +28126,7 @@ export function initializeContainer(): void {
     new ActionExecutor(buffSystem),
   )
   container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
-  const participantManager = new ParticipantManager()
-  participantManager.setModifierProvider(buffSystem)
-  container.register(PARTICIPANT_MANAGER_TOKEN.toString(), participantManager)
+
   container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder())
   container.register(
     BATTLE_RULE_MANAGER_TOKEN.toString(),
@@ -40295,52 +40187,52 @@ export interface BattleEntity {
   }
 
   /** 当前生命值 */
-  currentHealth: number
+  currentHealth: AttributeValue
   /** 最大生命值 */
-  maxHealth: number
+  maxHealth: AttributeValue
   /** 当前能量值 */
-  currentEnergy: number
+  currentEnergy: AttributeValue
   /** 最大能量值 */
-  maxEnergy: number
+  maxEnergy: AttributeValue
   /** 最小攻击力 */
-  minAttack: number
+  minAttack: AttributeValue
   /** 最大攻击力 */
-  maxAttack: number
+  maxAttack: AttributeValue
   /** 平均攻击力（计算值） */
-  attack: number
+  attack: AttributeValue
   /** 防御力 */
-  defense: number
+  defense: AttributeValue
   /** 速度值（用于回合顺序计算） */
-  speed: number
+  speed: AttributeValue
   /** 暴击率（百分比，0-100） */
-  critRate: number
+  critRate: AttributeValue
   /** 暴击伤害（百分比，≥100） */
-  critDamage: number
+  critDamage: AttributeValue
   /** 免伤率（百分比，0-100） */
-  damageReduction: number
+  damageReduction: AttributeValue
   /** 气血加成（百分比） */
-  healthBonus: number
+  healthBonus: AttributeValue
   /** 攻击加成（百分比） */
-  attackBonus: number
+  attackBonus: AttributeValue
   /** 防御加成（百分比） */
-  defenseBonus: number
+  defenseBonus: AttributeValue
   /** 速度加成（百分比） */
-  speedBonus: number
+  speedBonus: AttributeValue
 
   /** 获取属性值对象（包含详细信息） */
   getAttributeValue(
     attribute: AttributeCodes | string,
   ): AttributeValue | undefined
   /** 获取属性最终值（快捷方法） */
-  getAttribute(attribute: AttributeCodes | string): number
-  /** 快捷获取属性最终值（number） */
-  getAttr(attr: AttributeCodes): number
+  getAttribute(attribute: AttributeCodes | string): AttributeValue
+  /** 快捷获取属性最终值（AttributeValue） */
+  getAttr(attr: AttributeCodes): AttributeValue
   /** 快捷获取属性值对象（包含基础值、修饰符等） */
   getAttrValue(attr: AttributeCodes): AttributeValue | undefined
   /** 批量预计算所有属性（回合开始时调用） */
   recalcAll(): void
   /** 设置属性值 */
-  setAttribute(attribute: string, value: number): void
+  setAttribute(attribute: string, value: AttributeValue): void
   /** 标记属性为脏（需要重新计算） */
   markDirty(attribute: AttributeCodes | string): void
   /** 标记所有属性为脏 */
@@ -43894,17 +43786,6 @@ export class GameDataProcessor {
    */
   static findBuffById(buffId: string): StructuredBuffConfig | undefined {
     return (buffsData as StructuredBuffConfig[]).find((b) => b.id === buffId)
-  }
-
-  /**
-   * 将 Enemy 转换为 BattleParticipant（已废弃，请使用 enemyToParticipant）
-   * @deprecated 请使用 enemyToParticipant 方法
-   */
-  static enemyToParticipantInfo(
-    enemy: Enemy,
-    type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
-  ): BattleParticipantImpl {
-    return GameDataProcessor.enemyToParticipant(enemy, type)
   }
 
   /**

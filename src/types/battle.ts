@@ -174,52 +174,52 @@ export interface BattleEntity {
   }
 
   /** 当前生命值 */
-  currentHealth: AttributeValue
+  currentHealth: number
   /** 最大生命值 */
-  maxHealth: AttributeValue
+  maxHealth: number
   /** 当前能量值 */
-  currentEnergy: AttributeValue
+  currentEnergy: number
   /** 最大能量值 */
-  maxEnergy: AttributeValue
+  maxEnergy: number
   /** 最小攻击力 */
-  minAttack: AttributeValue
+  minAttack: number
   /** 最大攻击力 */
-  maxAttack: AttributeValue
+  maxAttack: number
   /** 平均攻击力（计算值） */
-  attack: AttributeValue
+  attack: number
   /** 防御力 */
-  defense: AttributeValue
+  defense: number
   /** 速度值（用于回合顺序计算） */
-  speed: AttributeValue
+  speed: number
   /** 暴击率（百分比，0-100） */
-  critRate: AttributeValue
+  critRate: number
   /** 暴击伤害（百分比，≥100） */
-  critDamage: AttributeValue
+  critDamage: number
   /** 免伤率（百分比，0-100） */
-  damageReduction: AttributeValue
+  damageReduction: number
   /** 气血加成（百分比） */
-  healthBonus: AttributeValue
+  healthBonus: number
   /** 攻击加成（百分比） */
-  attackBonus: AttributeValue
+  attackBonus: number
   /** 防御加成（百分比） */
-  defenseBonus: AttributeValue
+  defenseBonus: number
   /** 速度加成（百分比） */
-  speedBonus: AttributeValue
+  speedBonus: number
 
   /** 获取属性值对象（包含详细信息） */
   getAttributeValue(
     attribute: AttributeCodes | string,
   ): AttributeValue | undefined
   /** 获取属性最终值（快捷方法） */
-  getAttribute(attribute: AttributeCodes | string): AttributeValue
-  /** 快捷获取属性最终值（AttributeValue） */
-  getAttr(attr: AttributeCodes): AttributeValue
+  getAttribute(attribute: AttributeCodes | string): number
+  /** 快捷获取属性最终值（number） */
+  getAttr(attr: AttributeCodes): number
   /** 快捷获取属性值对象（包含基础值、修饰符等） */
   getAttrValue(attr: AttributeCodes): AttributeValue | undefined
   /** 批量预计算所有属性（回合开始时调用） */
   recalcAll(): void
   /** 设置属性值 */
-  setAttribute(attribute: string, value: AttributeValue): void
+  setAttribute(attribute: string, value: number): void
   /** 标记属性为脏（需要重新计算） */
   markDirty(attribute: AttributeCodes | string): void
   /** 标记所有属性为脏 */

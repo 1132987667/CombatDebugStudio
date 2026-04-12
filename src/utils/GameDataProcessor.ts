@@ -28,13 +28,18 @@ import type {
   AttributeCodes,
   ModifierType,
   ModifierSourceType,
+  createAttributeValue,
+  createBaseAttributeValue,
 } from '@/types/attribute'
 import { normalizeAttributeCode } from '@/types/attribute'
 import type {
   ModifierTemplate,
   StructuredBuffConfig,
 } from '@/types/modifier-template'
-import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
+import {
+  BattleParticipantImpl,
+  type ParticipantInitData,
+} from '@/core/battle/BattleParticipantImpl'
 import { container } from '@/core/di/Container'
 import { BuffSystem } from '@/core/BuffSystem'
 import { toArray } from '@/utils/Utils'
@@ -162,52 +167,47 @@ export class GameDataProcessor {
     const passiveModifierTemplates =
       GameDataProcessor.buildPassiveModifiers(passiveSkills)
 
-    // 2. 基础属性（未加任何修饰符）
-    const baseHealth = enemy.stats.health
-    const baseAttack = (enemy.stats.minAttack + enemy.stats.maxAttack) / 2
-    const baseDefense = enemy.stats.defense
-    const baseSpeed = enemy.stats.speed
-
-    // 3. 创建参与者实例（传入基础值，不预先计算最终值）
-    const participant = new BattleParticipantImpl(
-      {
-        id: `${type}_${enemy.id}_${counter.next()}`,
-        name: enemy.name,
-        type,
-        team: type,
-        level: enemy.level,
-        // 基础属性值
-        baseHealth,
-        baseAttack,
-        baseDefense,
-        baseSpeed,
-        // 其他战斗属性默认值
-        critRate: 10,
-        critDamage: 125,
-        damageReduction: 0,
-        // 技能列表
-        skills: {
-          small: GameDataProcessor.getSkillByIds(enemy.skills?.small),
-          passive: passiveSkills,
-          ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate),
-        },
+    // 2. 构造标准初始化 DTO
+    const initData: ParticipantInitData = {
+      id: `${type}_${enemy.id}_${counter.next()}`,
+      name: enemy.name,
+      type,
+      team: type,
+      level: enemy.level,
+      maxHealth: enemy.stats.health,
+      currentHealth: enemy.stats.health,
+      maxEnergy: 100,
+      currentEnergy: 25,
+      minAttack: enemy.stats.minAttack,
+      maxAttack: enemy.stats.maxAttack,
+      defense: enemy.stats.defense,
+      speed: enemy.stats.speed,
+      critRate: 10,
+      critDamage: 125,
+      damageReduction: 0,
+      skills: {
+        small: GameDataProcessor.getSkillByIds(enemy.skills?.small),
+        passive: passiveSkills,
+        ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate),
       },
-      buffSystem,
-    )
+    }
+
+    // 3. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
+    const participant = new BattleParticipantImpl(initData, buffSystem)
 
     // 4. 将被动技能修饰符注册到参与者的修饰符堆栈
     const modifierStack = buffSystem.getModifierStack(participant.id)
     if (modifierStack) {
       for (const template of passiveModifierTemplates) {
-        modifierStack.addModifier({
-          buffInstanceId: `passive_${participant.id}_${template.id}`,
-          attribute: template.targetAttribute,
-          value: typeof template.value === 'number' ? template.value : 0,
-          type: template.type,
-        })
+        modifierStack.addModifier(
+          `passive_${participant.id}_${template.id}`,
+          template.targetAttribute,
+          typeof template.value === 'number' ? template.value : 0,
+          template.type,
+        )
       }
       // 标记所有属性为脏，触发重新计算
-      participant.markAllAttributesDirty()
+      participant.markAllDirty()
     } else {
       console.warn(
         `[GameDataProcessor] 无法获取参与者 ${participant.id} 的修饰符堆栈`,

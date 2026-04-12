@@ -16,18 +16,14 @@ import type {
 } from '@/types/battle'
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
-import type {
+import { type IModifierProvider } from '@/types/attribute'
+import {
   AttributeValue,
-  ModifierDetail,
+  createAttributeValue,
+  createBaseAttributeValue,
   AttributeCodes,
-  IModifierProvider,
-  IModifierStack,
-  ModifierSourceType,
-  Modifier,
-  ModifierType,
-  AttributeCodes,
+  normalizeAttributeCode,
 } from '@/types/attribute'
-import { AttributeCodes, normalizeAttributeCode } from '@/types/attribute'
 import { AttributeEngine } from '@/core/AttributeEngine'
 import type { ModifierTemplate } from '@/types/modifier-template'
 import { triggerEventBus } from '@/core/TriggerEventBus'
@@ -134,10 +130,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param data - 初始化数据
    * @param modifierProvider - 修饰符提供者（可选，通常为 BuffSystem 实例）
    */
-  constructor(
-    data: BattleParticipantImpl,
-    modifierProvider?: IModifierProvider,
-  ) {
+  constructor(data: ParticipantInitData, modifierProvider?: IModifierProvider) {
     this.id = data.id
     this.name = data.name
     this.level = data.level
@@ -208,13 +201,12 @@ export class BattleParticipantImpl implements BattleEntity {
     baseValue: number,
     isPercentage: boolean = false,
   ): void {
-    this.attributes.set(attr, {
-      value: baseValue,
-      base: baseValue,
-      modifiers: [],
+    const attrObj = createAttributeValue(baseValue, baseValue, {
       isPercentage,
       dirty: true,
+      modifiers: [],
     })
+    this.attributes.set(attr, attrObj)
   }
 
   /**

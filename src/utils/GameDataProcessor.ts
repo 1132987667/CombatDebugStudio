@@ -31,7 +31,6 @@ import type {
   createAttributeValue,
   createBaseAttributeValue,
 } from '@/types/attribute'
-import { normalizeAttributeCode } from '@/types/attribute'
 import type {
   ModifierTemplate,
   StructuredBuffConfig,
@@ -44,6 +43,7 @@ import { container } from '@/core/di/Container'
 import { BuffSystem } from '@/core/BuffSystem'
 import { toArray } from '@/utils/Utils'
 import { Counter } from '@/utils/Counter'
+const counter = new Counter()
 
 /**
  * 游戏数据处理工具类
@@ -158,7 +158,6 @@ export class GameDataProcessor {
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
     modifierProvider?: IModifierProvider,
   ): BattleParticipantImpl {
-    const counter = new Counter()
     const buffSystem =
       modifierProvider ?? container.resolve<BuffSystem>('BuffSystem')
 
@@ -169,7 +168,7 @@ export class GameDataProcessor {
 
     // 2. 构造标准初始化 DTO
     const initData: ParticipantInitData = {
-      id: `${type}_${enemy.id}_${counter.next()}`,
+      id: `[${type}]_${enemy.id}_${counter.next()}`,
       name: enemy.name,
       type,
       team: type,

@@ -18,7 +18,6 @@ import type {
 import { LocalStorage } from '@/utils/storage'
 import { eventBus } from '@/main'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
-import skillsData from '@configs/skills/skills.json'
 
 /**
  * 战斗管理器

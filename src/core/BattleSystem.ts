@@ -25,14 +25,12 @@ import { AISystem } from '@/core/battle/AISystem'
 import { ActionExecutor } from '@/core/battle/ActionExecutor'
 import { BattleRecorder } from '@/core/battle/BattleRecorder'
 import { BattleRuleManager } from '@/core/battle/BattleRuleManager'
-import { ParticipantManager } from '@/core/battle/ParticipantManager'
 import { TurnManager } from '@/core/battle/TurnManager'
 import {
   ACTION_EXECUTOR_TOKEN,
   AI_SYSTEM_TOKEN,
   BATTLE_RECORDER_TOKEN,
   BATTLE_RULE_MANAGER_TOKEN,
-  PARTICIPANT_MANAGER_TOKEN,
   TURN_MANAGER_TOKEN,
 } from '@/core/battle/interfaces'
 import type { Container } from '@/core/di/Container'
@@ -67,6 +65,7 @@ import type { ExtendedSkillStep } from '@/types/skill'
 import { RAFTimer } from '@/utils/RAF'
 import { Counter } from '@/utils/Counter'
 import { battleLogManager } from '@/utils/logging'
+import { reactive } from 'vue'
 
 /**
  * 战斗系统核心管理类
@@ -149,7 +148,6 @@ export class BattleSystem implements IBattleSystem {
    * 私有构造函数，防止外部直接实例化
    * @param turnManager 回合管理器
    * @param actionExecutor 动作执行器
-   * @param participantManager 参与者管理器
    * @param aiSystem AI系统
    * @param battleRecorder 战斗录像器
    * @param ruleManager 规则管理器
@@ -162,7 +160,6 @@ export class BattleSystem implements IBattleSystem {
   private constructor(
     private readonly turnManager: TurnManager,
     private readonly actionExecutor: ActionExecutor,
-    private readonly participantManager: ParticipantManager,
     private readonly aiSystem: AISystem,
     private readonly battleRecorder: BattleRecorder,
     private readonly ruleManager: BattleRuleManager,
@@ -218,9 +215,7 @@ export class BattleSystem implements IBattleSystem {
     const actionExecutor = container.resolve<ActionExecutor>(
       ACTION_EXECUTOR_TOKEN.toString(),
     )
-    const participantManager = container.resolve<ParticipantManager>(
-      PARTICIPANT_MANAGER_TOKEN.toString(),
-    )
+
     const aiSystem = container.resolve<AISystem>(AI_SYSTEM_TOKEN.toString())
     const battleRecorder = container.resolve<BattleRecorder>(
       BATTLE_RECORDER_TOKEN.toString(),
@@ -240,7 +235,6 @@ export class BattleSystem implements IBattleSystem {
     return new BattleSystem(
       turnManager,
       actionExecutor,
-      participantManager,
       aiSystem,
       battleRecorder,
       ruleManager,
@@ -303,11 +297,12 @@ export class BattleSystem implements IBattleSystem {
     enemyParticipants: BattleEntity[],
   ): BattleState {
     const allParticipants = [...allyParticipants, ...enemyParticipants]
-
-    const participants =
-      this.participantManager.createParticipants(allParticipants)
+    const participants = new Map<string, BattleEntity>()
+    allParticipants.forEach((participant) => {
+      participants.set(participant.id, participant)
+    })
     const battleData = this.battleData
-    battleData.participants = participants
+    battleData.participants = reactive(participants)
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
     battleData.skillManager = this.skillManager
 
@@ -440,11 +435,9 @@ export class BattleSystem implements IBattleSystem {
 
       // 为所有存活角色增加回合开始能量
       const combatRules = this.ruleManager.getCombatRules()
-
-      this.participantManager.gainEnergyToAliveParticipants(
-        aliveParticipants,
-        combatRules.energyGainPerTurn,
-      )
+      aliveParticipants.forEach((participant) => {
+        participant.gainEnergy(combatRules.energyGainPerTurn)
+      })
 
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
@@ -1904,7 +1897,6 @@ export class BattleSystem implements IBattleSystem {
   public getBattleState(): BattleState | undefined {
     const battle = this.battleData
     if (!battle) return undefined
-
     return this.convertToBattleState(battle)
   }
 
@@ -2080,13 +2072,6 @@ export class BattleSystem implements IBattleSystem {
    */
   public onTurnExecuted(turnNumber: number): void {
     battleLogManager.addDebugLog(`回合 ${turnNumber} 执行完成`)
-  }
-
-  /**
-   * 获取参与者管理器实例
-   */
-  public getParticipantManager(): ParticipantManager {
-    return this.participantManager
   }
 
   /**

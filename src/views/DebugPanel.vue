@@ -12,10 +12,10 @@
             @mouseenter="showAttrTooltip($event, '气血', currentCharacter?.maxHp?.options || [], typeof currentCharacter?.maxHp === 'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
-            <span class="monitor-value">{{ typeof currentCharacter?.currentHp === 'object' ?
-              currentCharacter.currentHp.value : currentCharacter?.currentHp || 0 }}/{{ typeof currentCharacter?.maxHp
+            <span class="monitor-value">{{ typeof currentCharacter?.currentHealth === 'object' ?
+              currentCharacter.currentHealth.value : currentCharacter?.currentHealth || 0 }}/{{ typeof currentCharacter?.maxHealth
                 ===
-                'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0 }}</span>
+                'object' ? currentCharacter.maxHealth.value : currentCharacter?.maxHealth || 0 }}</span>
           </div>
           <div class="monitor-item"
             @mouseenter="showAttrTooltip($event, '能量', [], typeof currentCharacter?.currentEnergy === 'object' ? currentCharacter.currentEnergy.value : (currentCharacter?.currentEnergy || 0), '数值')"

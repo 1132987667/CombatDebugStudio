@@ -253,7 +253,8 @@ function initBattle() {
 
   const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, PARTICIPANT_SIDE.ALLY));
   const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY));
-
+  console.log('allyTeamData', allyTeamData)
+  console.log('enemyTeamData', enemyTeamData)
   // 使用BattleManager初始化队伍数据
   battleManager.initializeTeams(allyTeamData, enemyTeamData);
 }

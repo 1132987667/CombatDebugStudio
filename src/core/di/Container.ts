@@ -17,7 +17,7 @@ export class Container {
   private static instance: Container
   private services = new Map<string, ServiceDefinition<any>>()
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): Container {
     if (!Container.instance) {
@@ -93,7 +93,6 @@ import {
 import { BattleSystem } from '@/core/BattleSystem'
 import { TurnManager } from '@/core/battle/TurnManager'
 import { ActionExecutor } from '@/core/battle/ActionExecutor'
-import { ParticipantManager } from '@/core/battle/ParticipantManager'
 import { AISystem } from '@/core/battle/AISystem'
 import { BattleRecorder } from '@/core/battle/BattleRecorder'
 import { BattleRuleManager } from '@/core/battle/BattleRuleManager'
@@ -162,7 +161,6 @@ export function initializeContainer(): void {
     new ActionExecutor(buffSystem),
   )
   container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
-
   container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder())
   container.register(
     BATTLE_RULE_MANAGER_TOKEN.toString(),

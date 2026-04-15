@@ -116,17 +116,17 @@ export function useParticipantStats(
   }
 
   // 常用属性的计算属性
-  const hp = computed(() => getFormatted(AttributeCodes.HP))
-  const maxHp = computed(() => getFormatted(AttributeCodes.MAX_HP))
-  const energy = computed(() => getFormatted(AttributeCodes.ENERGY))
-  const maxEnergy = computed(() => getFormatted(AttributeCodes.MAX_ENERGY))
-  const atk = computed(() => getFormatted(AttributeCodes.ATK))
-  const def = computed(() => getFormatted(AttributeCodes.DEF))
-  const spd = computed(() => getFormatted(AttributeCodes.SPD))
-  const critRate = computed(() => getFormatted(AttributeCodes.CRIT_RATE))
-  const critDmg = computed(() => getFormatted(AttributeCodes.CRIT_DMG))
+  const hp = computed(() => getFormatted(AttributeCodes.currentHealth))
+  const maxHp = computed(() => getFormatted(AttributeCodes.maxHealth))
+  const energy = computed(() => getFormatted(AttributeCodes.energy))
+  const maxEnergy = computed(() => getFormatted(AttributeCodes.maxEnergy))
+  const atk = computed(() => getFormatted(AttributeCodes.attack))
+  const def = computed(() => getFormatted(AttributeCodes.defense))
+  const spd = computed(() => getFormatted(AttributeCodes.speed))
+  const critRate = computed(() => getFormatted(AttributeCodes.critRate))
+  const critDmg = computed(() => getFormatted(AttributeCodes.critDamage))
   const dmgReduction = computed(() =>
-    getFormatted(AttributeCodes.DMG_REDUCTIONUCTION),
+    getFormatted(AttributeCodes.damageReduction),
   )
 
   return {

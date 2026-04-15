@@ -85,24 +85,24 @@ export function useBattleParticipant(
 
   // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue
   const stats = computed<ParticipantStats>(() => ({
-    hp: shallowParticipant.getAttributeValue(AttributeCodes.HP)!,
-    maxHp: shallowParticipant.getAttributeValue(AttributeCodes.MAX_HP)!,
-    energy: shallowParticipant.getAttributeValue(AttributeCodes.ENERGY)!,
-    maxEnergy: shallowParticipant.getAttributeValue(AttributeCodes.MAX_ENERGY)!,
-    atk: shallowParticipant.getAttributeValue(AttributeCodes.ATK)!,
-    def: shallowParticipant.getAttributeValue(AttributeCodes.DEF)!,
-    spd: shallowParticipant.getAttributeValue(AttributeCodes.SPD)!,
-    critRate: shallowParticipant.getAttributeValue(AttributeCodes.CRIT_RATE)!,
-    critDmg: shallowParticipant.getAttributeValue(AttributeCodes.CRIT_DMG)!,
+    hp: shallowParticipant.getAttributeValue(AttributeCodes.currentHealth)!,
+    maxHp: shallowParticipant.getAttributeValue(AttributeCodes.maxHealth)!,
+    energy: shallowParticipant.getAttributeValue(AttributeCodes.energy)!,
+    maxEnergy: shallowParticipant.getAttributeValue(AttributeCodes.maxEnergy)!,
+    atk: shallowParticipant.getAttributeValue(AttributeCodes.attack)!,
+    def: shallowParticipant.getAttributeValue(AttributeCodes.defense)!,
+    spd: shallowParticipant.getAttributeValue(AttributeCodes.speed)!,
+    critRate: shallowParticipant.getAttributeValue(AttributeCodes.critRate)!,
+    critDmg: shallowParticipant.getAttributeValue(AttributeCodes.critDamage)!,
     dmgReduction: shallowParticipant.getAttributeValue(
-      AttributeCodes.DMG_REDUCTION,
+      AttributeCodes.damageReduction,
     )!,
-    hpBonus: shallowParticipant.getAttributeValue(AttributeCodes.HP_BONUS)!,
-    atkBonus: shallowParticipant.getAttributeValue(AttributeCodes.ATK_BONUS)!,
-    defBonus: shallowParticipant.getAttributeValue(AttributeCodes.DEF_BONUS)!,
-    spdBonus: shallowParticipant.getAttributeValue(AttributeCodes.SPD_BONUS)!,
-    minAtk: shallowParticipant.getAttributeValue(AttributeCodes.MIN_ATK)!,
-    maxAtk: shallowParticipant.getAttributeValue(AttributeCodes.MAX_ATK)!,
+    hpBonus: shallowParticipant.getAttributeValue(AttributeCodes.healthBonus)!,
+    atkBonus: shallowParticipant.getAttributeValue(AttributeCodes.attackBonus)!,
+    defBonus: shallowParticipant.getAttributeValue(AttributeCodes.defenseBonus)!,
+    spdBonus: shallowParticipant.getAttributeValue(AttributeCodes.speedBonus)!,
+    minAtk: shallowParticipant.getAttributeValue(AttributeCodes.minAttack)!,
+    maxAtk: shallowParticipant.getAttributeValue(AttributeCodes.maxAttack)!,
   }))
 
   // 派生状态

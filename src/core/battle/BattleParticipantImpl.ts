@@ -146,22 +146,25 @@ export class BattleParticipantImpl implements BattleEntity {
       this._modifierProvider = modifierProvider
     }
 
-    this.initAttribute(AttributeCodes.MAX_HP, data.maxHealth)
-    this.initAttribute(AttributeCodes.HP, data.currentHealth ?? data.maxHealth)
-    this.initAttribute(AttributeCodes.MAX_ENERGY, data.maxEnergy ?? 100)
-    this.initAttribute(AttributeCodes.ENERGY, data.currentEnergy ?? 25)
+    this.initAttribute(AttributeCodes.maxHealth, data.maxHealth)
     this.initAttribute(
-      AttributeCodes.ATK,
+      AttributeCodes.currentHealth,
+      data.currentHealth ?? data.maxHealth,
+    )
+    this.initAttribute(AttributeCodes.maxEnergy, data.maxEnergy ?? 100)
+    this.initAttribute(AttributeCodes.energy, data.currentEnergy ?? 25)
+    this.initAttribute(
+      AttributeCodes.attack,
       (data.minAttack + data.maxAttack) / 2,
     )
-    this.initAttribute(AttributeCodes.MIN_ATK, data.minAttack)
-    this.initAttribute(AttributeCodes.MAX_ATK, data.maxAttack)
-    this.initAttribute(AttributeCodes.DEF, data.defense)
-    this.initAttribute(AttributeCodes.SPD, data.speed)
-    this.initAttribute(AttributeCodes.CRIT_RATE, data.critRate ?? 10, true)
-    this.initAttribute(AttributeCodes.CRIT_DMG, data.critDamage ?? 125, true)
+    this.initAttribute(AttributeCodes.minAttack, data.minAttack)
+    this.initAttribute(AttributeCodes.maxAttack, data.maxAttack)
+    this.initAttribute(AttributeCodes.defense, data.defense)
+    this.initAttribute(AttributeCodes.speed, data.speed)
+    this.initAttribute(AttributeCodes.critRate, data.critRate ?? 10, true)
+    this.initAttribute(AttributeCodes.critDamage, data.critDamage ?? 125, true)
     this.initAttribute(
-      AttributeCodes.DMG_REDUCTION,
+      AttributeCodes.damageReduction,
       data.damageReduction ?? 0,
       true,
     )
@@ -201,12 +204,13 @@ export class BattleParticipantImpl implements BattleEntity {
     baseValue: number,
     isPercentage: boolean = false,
   ): void {
-    const attrObj = createAttributeValue(baseValue, baseValue, {
+    this.attributes.set(attr, {
+      value: baseValue,
+      base: baseValue,
+      modifiers: [],
       isPercentage,
       dirty: true,
-      modifiers: [],
     })
-    this.attributes.set(attr, attrObj)
   }
 
   /**
@@ -278,12 +282,12 @@ export class BattleParticipantImpl implements BattleEntity {
     let finalValue = result.finalValue
 
     // 特殊属性约束
-    if (attr === AttributeCodes.HP) {
-      const maxHp = this.getAttribute(AttributeCodes.MAX_HP)
+    if (attr === AttributeCodes.currentHealth) {
+      const maxHp = this.getAttribute(AttributeCodes.maxHealth)
       finalValue = Math.max(0, Math.min(finalValue, maxHp))
     }
-    if (attr === AttributeCodes.ENERGY) {
-      const maxEnergy = this.getAttribute(AttributeCodes.MAX_ENERGY)
+    if (attr === AttributeCodes.energy) {
+      const maxEnergy = this.getAttribute(AttributeCodes.maxEnergy)
       finalValue = Math.max(0, Math.min(finalValue, maxEnergy))
     }
 
@@ -413,16 +417,16 @@ export class BattleParticipantImpl implements BattleEntity {
    * 获取当前生命值
    */
   get currentHealth(): number {
-    return this.getAttribute(AttributeCodes.HP)
+    return this.getAttribute(AttributeCodes.currentHealth)
   }
 
   /**
    * 设置当前生命值
    */
   set currentHealth(value: number) {
-    const attrData = this.attributes.get(AttributeCodes.HP)
+    const attrData = this.attributes.get(AttributeCodes.currentHealth)
     if (attrData) {
-      const maxHp = this.getAttribute(AttributeCodes.MAX_HP)
+      const maxHp = this.getAttribute(AttributeCodes.maxHealth)
       attrData.value = Math.max(0, Math.min(value, maxHp))
       attrData.dirty = false
     }
@@ -432,30 +436,30 @@ export class BattleParticipantImpl implements BattleEntity {
    * 获取最大生命值
    */
   get maxHealth(): number {
-    return this.getAttribute(AttributeCodes.MAX_HP)
+    return this.getAttribute(AttributeCodes.maxHealth)
   }
 
   /**
    * 设置最大生命值
    */
   set maxHealth(value: number) {
-    this.setAttributeBase(AttributeCodes.MAX_HP, value)
+    this.setAttributeBase(AttributeCodes.maxHealth, value)
   }
 
   /**
    * 获取当前能量值
    */
   get currentEnergy(): number {
-    return this.getAttribute(AttributeCodes.ENERGY)
+    return this.getAttribute(AttributeCodes.energy)
   }
 
   /**
    * 设置当前能量值
    */
   set currentEnergy(value: number) {
-    const attrData = this.attributes.get(AttributeCodes.ENERGY)
+    const attrData = this.attributes.get(AttributeCodes.energy)
     if (attrData) {
-      const maxEnergy = this.getAttribute(AttributeCodes.MAX_ENERGY)
+      const maxEnergy = this.getAttribute(AttributeCodes.maxEnergy)
       attrData.value = Math.max(0, Math.min(value, maxEnergy))
       attrData.dirty = false
     }
@@ -465,126 +469,126 @@ export class BattleParticipantImpl implements BattleEntity {
    * 获取最大能量值
    */
   get maxEnergy(): number {
-    return this.getAttribute(AttributeCodes.MAX_ENERGY)
+    return this.getAttribute(AttributeCodes.maxEnergy)
   }
 
   /**
    * 设置最大能量值
    */
   set maxEnergy(value: number) {
-    this.setAttributeBase(AttributeCodes.MAX_ENERGY, value)
+    this.setAttributeBase(AttributeCodes.maxEnergy, value)
   }
 
   /**
    * 获取速度值
    */
   get speed(): number {
-    return this.getAttribute(AttributeCodes.SPD)
+    return this.getAttribute(AttributeCodes.speed)
   }
 
   /**
    * 设置速度值
    */
   set speed(value: number) {
-    this.setAttributeBase(AttributeCodes.SPD, value)
+    this.setAttributeBase(AttributeCodes.speed, value)
   }
 
   /**
    * 获取最小攻击力
    */
   get minAttack(): number {
-    return this.getAttribute(AttributeCodes.MIN_ATK)
+    return this.getAttribute(AttributeCodes.minAttack)
   }
 
   /**
    * 设置最小攻击力
    */
   set minAttack(value: number) {
-    this.setAttributeBase(AttributeCodes.MIN_ATK, value)
+    this.setAttributeBase(AttributeCodes.minAttack, value)
   }
 
   /**
    * 获取最大攻击力
    */
   get maxAttack(): number {
-    return this.getAttribute(AttributeCodes.MAX_ATK)
+    return this.getAttribute(AttributeCodes.maxAttack)
   }
 
   /**
    * 设置最大攻击力
    */
   set maxAttack(value: number) {
-    this.setAttributeBase(AttributeCodes.MAX_ATK, value)
+    this.setAttributeBase(AttributeCodes.maxAttack, value)
   }
 
   /**
    * 获取平均攻击力
    */
   get attack(): number {
-    return this.getAttribute(AttributeCodes.ATK)
+    return this.getAttribute(AttributeCodes.attack)
   }
 
   /**
    * 设置平均攻击力
    */
   set attack(value: number) {
-    this.setAttributeBase(AttributeCodes.ATK, value)
+    this.setAttributeBase(AttributeCodes.attack, value)
   }
 
   /**
    * 获取防御力
    */
   get defense(): number {
-    return this.getAttribute(AttributeCodes.DEF)
+    return this.getAttribute(AttributeCodes.defense)
   }
 
   /**
    * 设置防御力
    */
   set defense(value: number) {
-    this.setAttributeBase(AttributeCodes.DEF, value)
+    this.setAttributeBase(AttributeCodes.defense, value)
   }
 
   /**
    * 获取暴击率
    */
   get critRate(): number {
-    return this.getAttribute(AttributeCodes.CRIT_RATE)
+    return this.getAttribute(AttributeCodes.critRate)
   }
 
   /**
    * 设置暴击率
    */
   set critRate(value: number) {
-    this.setAttributeBase(AttributeCodes.CRIT_RATE, value)
+    this.setAttributeBase(AttributeCodes.critRate, value)
   }
 
   /**
    * 获取暴击伤害
    */
   get critDamage(): number {
-    return this.getAttribute(AttributeCodes.CRIT_DMG)
+    return this.getAttribute(AttributeCodes.critDamage)
   }
 
   /**
    * 设置暴击伤害
    */
   set critDamage(value: number) {
-    this.setAttributeBase(AttributeCodes.CRIT_DMG, value)
+    this.setAttributeBase(AttributeCodes.critDamage, value)
   }
 
   /**
    * 获取免伤率
    */
   get damageReduction(): number {
-    return this.getAttribute(AttributeCodes.DMG_REDUCTION)
+    return this.getAttribute(AttributeCodes.damageReduction)
   }
 
   /**
    * 设置免伤率
    */
   set damageReduction(value: number) {
-    this.setAttributeBase(AttributeCodes.DMG_REDUCTION, value)
+    this.setAttributeBase(AttributeCodes.damageReduction, value)
   }
 
   /**
@@ -658,8 +662,8 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 随机攻击力
    */
   getRandomAttack(): number {
-    const minAtk = this.getAttribute(AttributeCodes.MIN_ATK)
-    const maxAtk = this.getAttribute(AttributeCodes.MAX_ATK)
+    const minAtk = this.getAttribute(AttributeCodes.minAttack)
+    const maxAtk = this.getAttribute(AttributeCodes.maxAttack)
     return Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
   }
 
@@ -672,40 +676,40 @@ export class BattleParticipantImpl implements BattleEntity {
     const attrName = this.normalizeAttributeCode(attribute)
 
     switch (attrName) {
-      case AttributeCodes.HP:
+      case AttributeCodes.currentHealth:
         this.currentHealth = value
         break
-      case AttributeCodes.ENERGY:
+      case AttributeCodes.energy:
         this.currentEnergy = value
         break
-      case AttributeCodes.MAX_HP:
+      case AttributeCodes.maxHealth:
         this.maxHealth = value
         break
-      case AttributeCodes.MAX_ENERGY:
+      case AttributeCodes.maxEnergy:
         this.maxEnergy = value
         break
-      case AttributeCodes.ATK:
+      case AttributeCodes.attack:
         this.attack = value
         break
-      case AttributeCodes.MIN_ATK:
+      case AttributeCodes.minAttack:
         this.minAttack = value
         break
-      case AttributeCodes.MAX_ATK:
+      case AttributeCodes.maxAttack:
         this.maxAttack = value
         break
-      case AttributeCodes.DEF:
+      case AttributeCodes.defense:
         this.defense = value
         break
-      case AttributeCodes.SPD:
+      case AttributeCodes.speed:
         this.speed = value
         break
-      case AttributeCodes.CRIT_RATE:
+      case AttributeCodes.critRate:
         this.critRate = value
         break
-      case AttributeCodes.CRIT_DMG:
+      case AttributeCodes.critDamage:
         this.critDamage = value
         break
-      case AttributeCodes.DMG_REDUCTION:
+      case AttributeCodes.damageReduction:
         this.damageReduction = value
         break
       default:

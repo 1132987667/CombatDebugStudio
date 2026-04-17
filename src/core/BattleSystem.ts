@@ -42,11 +42,11 @@ import {
 import { SkillManager } from '@/core/skill/SkillManager'
 import { eventBus } from '@/main'
 import { TriggerEventBus } from '@/core/TriggerEventBus'
+import { BattleEventCodes } from '@/types/battle-events'
 import {
   AUTO_BATTLE_CONFIG,
   BATTLE_CONSTANTS,
   BattleStatus,
-  BattleSystemEvent,
   PARTICIPANT_SIDE,
   RoundStatus,
 } from '@/types/battle'
@@ -65,7 +65,7 @@ import type { ExtendedSkillStep } from '@/types/skill'
 import { RAFTimer } from '@/utils/RAF'
 import { Counter } from '@/utils/Counter'
 import { battleLogManager } from '@/utils/logging'
-import { reactive } from 'vue'
+import { ref, Reactive, reactive } from 'vue'
 
 /**
  * 战斗系统核心管理类
@@ -302,7 +302,11 @@ export class BattleSystem implements IBattleSystem {
       participants.set(participant.id, participant)
     })
     const battleData = this.battleData
-    battleData.participants = reactive(participants)
+    battleData.participants = participants
+    console.log('初始化战斗数据', battleData)
+    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED)
+
+
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
     battleData.skillManager = this.skillManager
 
@@ -1687,7 +1691,7 @@ export class BattleSystem implements IBattleSystem {
 
     battle.battleState = BattleStatus.ENDED
 
-    eventBus.emit(BattleSystemEvent.BATTLE_END, {
+    eventBus.emit(BattleEventCodes.BATTLE_ENDED, {
       battleId,
       winner,
     })
@@ -2235,7 +2239,7 @@ export class BattleSystem implements IBattleSystem {
     if (this.battleData) {
       const duration = Math.floor(this.getAnimationDuration() * 1.5)
       await this.triggerAnimationAndWait(
-        BattleSystemEvent.SKILL_EFFECT,
+        BattleEventCodes.SKILL_EFFECT,
         data,
         duration,
       )
@@ -2258,7 +2262,7 @@ export class BattleSystem implements IBattleSystem {
         ? Math.floor(baseDuration * 1.5)
         : baseDuration
       await this.triggerAnimationAndWait(
-        BattleSystemEvent.DAMAGE_ANIMATION,
+        BattleEventCodes.DAMAGE_ANIMATION,
         data,
         duration,
       )
@@ -2273,7 +2277,7 @@ export class BattleSystem implements IBattleSystem {
   }): Promise<void> {
     if (this.battleData) {
       await this.triggerAnimationAndWait(
-        BattleSystemEvent.MISS_ANIMATION,
+        BattleEventCodes.MISS_ANIMATION,
         data,
         this.getAnimationDuration(),
       )
@@ -2290,7 +2294,7 @@ export class BattleSystem implements IBattleSystem {
   }): Promise<void> {
     if (this.battleData) {
       await this.triggerAnimationAndWait(
-        BattleSystemEvent.BUFF_EFFECT,
+        BattleEventCodes.BUFF_EFFECT,
         data,
         800,
       )

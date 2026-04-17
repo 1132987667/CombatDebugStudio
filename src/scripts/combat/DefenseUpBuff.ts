@@ -1,5 +1,6 @@
 import { AttributeBuffTemplate } from '@/scripts/base/AttributeBuffTemplate'
 import type { BuffContext } from '@/core/BuffContext'
+import { AttributeCodes } from '@/types/attribute'
 
 /**
  * 防御力提升buff脚本
@@ -9,7 +10,7 @@ export class DefenseUpBuff extends AttributeBuffTemplate {
   public static readonly BUFF_ID = 'buff_def_up'
 
   protected getAttributeCode(): string {
-    return 'DEF'
+    return AttributeCodes.defense
   }
 
   protected getModifierType(): 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' {

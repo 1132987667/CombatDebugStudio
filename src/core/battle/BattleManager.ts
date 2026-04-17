@@ -7,8 +7,10 @@ import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager'
 import {
   PARTICIPANT_SIDE,
   BattleEntity,
-  BattleSystemEvent,
 } from '@/types/battle'
+import {
+  BattleEventCodes,
+} from '@/types/battle-events'
 import type {
   BattleEvents,
   BattleEventName,
@@ -140,11 +142,12 @@ export class BattleManager {
    * @returns 我方参与者数组
    */
   getAllyTeam(): BattleEntity[] {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) {
+    const battleData = this.battleSystem.getBattleData()
+    if (!battleData) {
       return []
     }
-    return Array.from(battleState.participants.values()).filter(
+    const participantList = battleData.participants.values()
+    return Array.from(participantList).filter(
       (p) => p.type === PARTICIPANT_SIDE.ALLY,
     )
   }
@@ -154,11 +157,12 @@ export class BattleManager {
    * @returns 敌方参与者数组
    */
   getEnemyTeam(): BattleEntity[] {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) {
+    const battleData = this.battleSystem.getBattleData()
+    if (!battleData) {
       return []
     }
-    return Array.from(battleState.participants.values()).filter(
+    const participantList = battleData.participants.values()
+    return Array.from(participantList).filter(
       (p) => p.type === PARTICIPANT_SIDE.ENEMY,
     )
   }
@@ -562,7 +566,7 @@ export class BattleManager {
     }
     // 触发战斗结束事件
     const eventData: any = { winner }
-    this.emit(BattleSystemEvent.BATTLE_END, eventData)
+    this.emit(BattleEventCodes.BATTLE_ENDED, eventData)
   }
 
   /**

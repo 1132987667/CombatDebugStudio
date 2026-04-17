@@ -351,166 +351,6 @@ export const AttributeCodeNames: Record<AttributeCodes, string> = {
 
 // ========== 辅助函数 ==========
 
-/**
- * 标准化属性名称（将不同格式转换为内部统一格式）
- * @param attribute 属性名称（如 'speed', 'attack', 'hpBonus', 'metal_atk'）
- * @returns 标准化后的属性代码
- */
-export function normalizeAttributeCode(attribute: string): string {
-  if (!attribute) return attribute
-  const lower = attribute.trim().toLowerCase()
-
-  const map: Record<string, string> = {
-    // ========== 基础属性 ==========
-    speed: 'speed',
-    attack: 'attack',
-    defense: 'defense',
-    health: 'maxHealth',
-    hp: 'maxHealth',
-    maxhp: 'maxHealth',
-    max_health: 'maxHealth',
-    energy: 'energy',
-    maxenergy: 'maxEnergy',
-    minattack: 'minAttack',
-    maxattack: 'maxAttack',
-    critrate: 'critRate',
-    critdamage: 'critDamage',
-    crit_rate: 'critRate',
-    crit_damage: 'critDamage',
-    currenthealth: 'currentHealth',
-    current_health: 'currentHealth',
-
-    // ========== 加成属性 ==========
-    hpbonus: 'healthBonus',
-    atkbonus: 'attackBonus',
-    defbonus: 'defenseBonus',
-    spdbonus: 'speedBonus',
-    hp_bonus: 'healthBonus',
-    atk_bonus: 'attackBonus',
-    def_bonus: 'defenseBonus',
-    spd_bonus: 'speedBonus',
-    healthbonus: 'healthBonus',
-    attackbonus: 'attackBonus',
-    defensebonus: 'defenseBonus',
-    speedbonus: 'speedBonus',
-
-    // ========== 伤害减免 ==========
-    dmgreduction: 'damageReduction',
-    damage_reduction: 'damageReduction',
-    damagereduction: 'damageReduction',
-    normalatkdmgreduction: 'normalAtkDmgReduction',
-    skilldmgreduction: 'skillDmgReduction',
-    critdmgtakenreduction: 'critDmgTakenReduction',
-
-    // ========== 再生属性 ==========
-    hpregenpercent: 'hpRegenPercent',
-    hpregenflat: 'hpRegenFlat',
-    hp_regen_percent: 'hpRegenPercent',
-    hp_regen_flat: 'hpRegenFlat',
-
-    // ========== 五行属性 - 攻击力（英文别名） ==========
-    metalatk: 'metalAtk',
-    metal_attack: 'metalAtk',
-    metal_dmg: 'metalAtk',
-    metal_damage: 'metalAtk',
-    woodatk: 'woodAtk',
-    wood_attack: 'woodAtk',
-    wood_dmg: 'woodAtk',
-    wood_damage: 'woodAtk',
-    wateratk: 'waterAtk',
-    water_attack: 'waterAtk',
-    water_dmg: 'waterAtk',
-    water_damage: 'waterAtk',
-    fireatk: 'fireAtk',
-    fire_attack: 'fireAtk',
-    fire_dmg: 'fireAtk',
-    fire_damage: 'fireAtk',
-    earthatk: 'earthAtk',
-    earth_attack: 'earthAtk',
-    earth_dmg: 'earthAtk',
-    earth_damage: 'earthAtk',
-
-    // ========== 五行属性 - 抗性（英文别名） ==========
-    metalres: 'metalRes',
-    metal_resist: 'metalRes',
-    metal_resistance: 'metalRes',
-    woodres: 'woodRes',
-    wood_resist: 'woodRes',
-    wood_resistance: 'woodRes',
-    waterres: 'waterRes',
-    water_resist: 'waterRes',
-    water_resistance: 'waterRes',
-    fireres: 'fireRes',
-    fire_resist: 'fireRes',
-    fire_resistance: 'fireRes',
-    earthres: 'earthRes',
-    earth_resist: 'earthRes',
-    earth_resistance: 'earthRes',
-
-    // ========== 五行属性 - 中文拼音别名（攻击） ==========
-    jin: 'metalAtk',
-    jinatk: 'metalAtk',
-    jin_attack: 'metalAtk',
-    mu: 'woodAtk',
-    muatk: 'woodAtk',
-    mu_attack: 'woodAtk',
-    shui: 'waterAtk',
-    shuiatk: 'waterAtk',
-    shui_attack: 'waterAtk',
-    huo: 'fireAtk',
-    huoatk: 'fireAtk',
-    huo_attack: 'fireAtk',
-    tu: 'earthAtk',
-    tuatk: 'earthAtk',
-    tu_attack: 'earthAtk',
-
-    // ========== 五行属性 - 中文拼音别名（抗性） ==========
-    jinres: 'metalRes',
-    jin_res: 'metalRes',
-    mures: 'woodRes',
-    mu_res: 'woodRes',
-    shuires: 'waterRes',
-    shui_res: 'waterRes',
-    huores: 'fireRes',
-    huo_res: 'fireRes',
-    tures: 'earthRes',
-    tu_res: 'earthRes',
-
-    // ========== 特殊战斗属性 ==========
-    dodge: 'dodge',
-    hit: 'hit',
-    hitrate: 'hit',
-    hit_rate: 'hit',
-    controlsuccessrate: 'controlSuccessRate',
-    control_success_rate: 'controlSuccessRate',
-    controldurationreduction: 'controlDurationReduction',
-    control_duration_reduction: 'controlDurationReduction',
-    damagetakenincrease: 'damageTakenIncrease',
-    damage_taken_increase: 'damageTakenIncrease',
-    vulnerability: 'damageTakenIncrease', // 易伤别名
-
-    // ========== 反弹/反伤 ==========
-    reflectdamagepercent: 'reflectDamagePercent',
-    reflect_damage_percent: 'reflectDamagePercent',
-    reflect_dmg: 'reflectDamagePercent',
-    counterattack: 'reflectDamagePercent', // 反伤别名
-
-    // ========== 抗性 ==========
-    poisonres: 'poisonRes',
-    poison_res: 'poisonRes',
-    poison_resist: 'poisonRes',
-    poison_resistance: 'poisonRes',
-  }
-
-  // 优先精确匹配映射表
-  if (map[lower]) {
-    return map[lower]
-  }
-
-  // 兜底：转为 camelCase 格式
-  return attribute.toLowerCase().replace(/_([a-z])/g, (_, c) => c.toUpperCase())
-}
-
 // ========== 工厂函数 ==========
 
 /**
@@ -622,47 +462,39 @@ export interface AttributeMeta {
   isPercentage: boolean
 }
 
-/** 属性元数据映射表 */
+/** 属性元数据映射表（与 AttributeCodes 标准编码完全同步） */
 export const AttributeMetaMap: Record<string, AttributeMeta> = {
-  level: {
-    code: 'level',
-    name: '等级',
-    displayName: '等级',
-    description: '角色的等级',
-    range: '1-99',
-    impact: '影响角色基础属性值和技能解锁',
-    isPercentage: false,
-  },
-  name: {
-    code: 'name',
-    name: '名称',
-    displayName: '名称',
-    description: '角色的名字',
-    range: '-',
-    impact: '用于识别和区分不同角色',
-    isPercentage: false,
-  },
-  currentEnergy: {
-    code: 'currentEnergy',
-    name: '能量',
-    displayName: '能量',
-    description: '角色当前能量值',
-    range: '0-100',
-    impact: '用于施放技能，影响技能释放频率，初始值为25',
-    isPercentage: false,
-  },
-  currentHp: {
-    code: 'currentHp',
-    name: '气血',
-    displayName: '生命值',
+  // ========== 基础属性 ==========
+  currentHealth: {
+    code: 'currentHealth',
+    name: '当前生命值',
+    displayName: '当前生命值',
     description: '角色当前生命值',
     range: '0-最大值',
     impact: '直接影响角色生存能力，为0时角色死亡',
     isPercentage: false,
   },
+  maxHealth: {
+    code: 'maxHealth',
+    name: '最大生命值',
+    displayName: '最大生命值',
+    description: '最大生命值上限',
+    range: '1-99999',
+    impact: '决定角色的生命值上限，影响生存能力',
+    isPercentage: false,
+  },
+  attack: {
+    code: 'attack',
+    name: '攻击力',
+    displayName: '攻击力',
+    description: '角色基础攻击力（最小和最大攻击的平均值）',
+    range: '1-9999',
+    impact: '直接影响伤害输出，是计算最终伤害的基础',
+    isPercentage: false,
+  },
   minAttack: {
     code: 'minAttack',
-    name: '最小攻击',
+    name: '最小攻击力',
     displayName: '最小攻击力',
     description: '角色最小攻击伤害',
     range: '1-9999',
@@ -671,7 +503,7 @@ export const AttributeMetaMap: Record<string, AttributeMeta> = {
   },
   maxAttack: {
     code: 'maxAttack',
-    name: '最大攻击',
+    name: '最大攻击力',
     displayName: '最大攻击力',
     description: '角色最大攻击伤害',
     range: '1-9999',
@@ -680,7 +512,7 @@ export const AttributeMetaMap: Record<string, AttributeMeta> = {
   },
   defense: {
     code: 'defense',
-    name: '防御',
+    name: '防御力',
     displayName: '防御力',
     description: '角色抵抗伤害的能力',
     range: '0-9999',
@@ -714,193 +546,283 @@ export const AttributeMetaMap: Record<string, AttributeMeta> = {
     impact: '暴击时造成的额外伤害，值越高暴击伤害越高，默认125%',
     isPercentage: true,
   },
+
+  // ========== 能量属性 ==========
+  energy: {
+    code: 'energy',
+    name: '能量',
+    displayName: '能量',
+    description: '角色当前能量值',
+    range: '0-100',
+    impact: '用于施放技能，影响技能释放频率，初始值为25',
+    isPercentage: false,
+  },
+  maxEnergy: {
+    code: 'maxEnergy',
+    name: '最大能量',
+    displayName: '最大能量',
+    description: '最大能量上限',
+    range: '100',
+    impact: '决定能量上限，通常固定为100',
+    isPercentage: false,
+  },
+
+  // ========== 伤害减免细分 ==========
   damageReduction: {
     code: 'damageReduction',
     name: '免伤率',
     displayName: '免伤率',
-    description: '受到伤害的减免比例',
+    description: '受到伤害的通用减免比例',
     range: '0-100%',
-    impact: '减少受到的所有伤害',
+    impact: '减少受到的所有类型伤害',
     isPercentage: true,
   },
+  normalAtkDmgReduction: {
+    code: 'normalAtkDmgReduction',
+    name: '普攻伤害减免',
+    displayName: '普攻伤害减免',
+    description: '仅对普通攻击有效的伤害减免',
+    range: '0-100%',
+    impact: '专门减少普通攻击造成的伤害',
+    isPercentage: true,
+  },
+  skillDmgReduction: {
+    code: 'skillDmgReduction',
+    name: '技能伤害减免',
+    displayName: '技能伤害减免',
+    description: '仅对技能攻击有效的伤害减免',
+    range: '0-100%',
+    impact: '专门减少技能攻击造成的伤害',
+    isPercentage: true,
+  },
+  critDmgTakenReduction: {
+    code: 'critDmgTakenReduction',
+    name: '暴击承伤减免',
+    displayName: '暴击承伤减免',
+    description: '受到暴击时的额外伤害减免',
+    range: '0-100%',
+    impact: '减少暴击时受到的额外伤害，提高抗暴能力',
+    isPercentage: true,
+  },
+
+  // ========== 再生属性 ==========
+  hpRegenPercent: {
+    code: 'hpRegenPercent',
+    name: '生命回复(%)',
+    displayName: '百分比生命回复',
+    description: '每回合恢复最大生命的百分比',
+    range: '0-50%',
+    impact: '按最大生命值百分比回复生命，适合高血量角色',
+    isPercentage: true,
+  },
+  hpRegenFlat: {
+    code: 'hpRegenFlat',
+    name: '生命回复(固定)',
+    displayName: '固定生命回复',
+    description: '每回合恢复固定的生命值',
+    range: '0-9999',
+    impact: '每回合回复固定数值的生命值',
+    isPercentage: false,
+  },
+
+  // ========== 属性加成 ==========
   healthBonus: {
     code: 'healthBonus',
-    name: '气血加成',
+    name: '生命值加成',
     displayName: '生命值加成',
-    description: '气血加成百分比',
+    description: '基于基础生命值的加成百分比',
     range: '0-500%',
-    impact: '提高角色气血上限，增强生存能力',
+    impact: '按百分比提高最大生命值上限',
     isPercentage: true,
   },
   attackBonus: {
     code: 'attackBonus',
-    name: '攻击加成',
+    name: '攻击力加成',
     displayName: '攻击力加成',
-    description: '攻击加成百分比',
+    description: '基于基础攻击力的加成百分比',
     range: '0-500%',
-    impact: '提高角色攻击力，增强伤害输出',
+    impact: '按百分比提高攻击力',
     isPercentage: true,
   },
   defenseBonus: {
     code: 'defenseBonus',
-    name: '防御加成',
+    name: '防御力加成',
     displayName: '防御力加成',
-    description: '防御加成百分比',
+    description: '基于基础防御力的加成百分比',
     range: '0-500%',
-    impact: '提高角色防御力，增强生存能力',
+    impact: '按百分比提高防御力',
     isPercentage: true,
   },
   speedBonus: {
     code: 'speedBonus',
     name: '速度加成',
     displayName: '速度加成',
-    description: '速度加成百分比',
+    description: '基于基础速度的加成百分比',
     range: '0-500%',
-    impact: '提高角色速度，增强行动能力',
+    impact: '按百分比提高速度',
     isPercentage: true,
   },
-  HP: {
-    code: 'HP',
-    name: '生命值',
-    displayName: '生命值',
-    description: '当前生命值',
-    range: '0-最大值',
-    impact: '直接影响角色生存能力，为0时角色死亡',
-    isPercentage: false,
-  },
-  MAX_HP: {
-    code: 'MAX_HP',
-    name: '最大生命值',
-    displayName: '最大生命值',
-    description: '最大生命值上限',
-    range: '1-99999',
-    impact: '决定角色的生命值上限',
-    isPercentage: false,
-  },
-  ATK: {
-    code: 'ATK',
-    name: '攻击力',
-    displayName: '攻击力',
-    description: '攻击力',
-    range: '1-9999',
-    impact: '直接影响伤害输出',
-    isPercentage: false,
-  },
-  MIN_ATK: {
-    code: 'MIN_ATK',
-    name: '最小攻击力',
-    displayName: '最小攻击力',
-    description: '最小攻击力',
-    range: '1-9999',
-    impact: '直接影响伤害输出下限',
-    isPercentage: false,
-  },
-  MAX_ATK: {
-    code: 'MAX_ATK',
-    name: '最大攻击力',
-    displayName: '最大攻击力',
-    description: '最大攻击力',
-    range: '1-9999',
-    impact: '直接影响伤害输出上限',
-    isPercentage: false,
-  },
-  DEF: {
-    code: 'DEF',
-    name: '防御力',
-    displayName: '防御力',
-    description: '防御力',
+
+  // ========== 五行属性 - 攻击力 ==========
+  metalAtk: {
+    code: 'metalAtk',
+    name: '金属性攻击',
+    displayName: '金属性攻击力',
+    description: '金元素属性攻击力',
     range: '0-9999',
-    impact: '减少受到的伤害',
+    impact: '对木属性敌人造成额外伤害',
     isPercentage: false,
   },
-  SPD: {
-    code: 'SPD',
-    name: '速度',
-    displayName: '速度',
-    description: '速度值',
-    range: '1-9999',
-    impact: '决定行动顺序',
+  woodAtk: {
+    code: 'woodAtk',
+    name: '木属性攻击',
+    displayName: '木属性攻击力',
+    description: '木元素属性攻击力',
+    range: '0-9999',
+    impact: '对土属性敌人造成额外伤害',
     isPercentage: false,
   },
-  CRIT_RATE: {
-    code: 'CRIT_RATE',
-    name: '暴击率',
-    displayName: '暴击率',
-    description: '暴击率',
+  waterAtk: {
+    code: 'waterAtk',
+    name: '水属性攻击',
+    displayName: '水属性攻击力',
+    description: '水元素属性攻击力',
+    range: '0-9999',
+    impact: '对火属性敌人造成额外伤害',
+    isPercentage: false,
+  },
+  fireAtk: {
+    code: 'fireAtk',
+    name: '火属性攻击',
+    displayName: '火属性攻击力',
+    description: '火元素属性攻击力',
+    range: '0-9999',
+    impact: '对金属性敌人造成额外伤害',
+    isPercentage: false,
+  },
+  earthAtk: {
+    code: 'earthAtk',
+    name: '土属性攻击',
+    displayName: '土属性攻击力',
+    description: '土元素属性攻击力',
+    range: '0-9999',
+    impact: '对水属性敌人造成额外伤害',
+    isPercentage: false,
+  },
+
+  // ========== 五行属性 - 抗性 ==========
+  metalRes: {
+    code: 'metalRes',
+    name: '金属性抗性',
+    displayName: '金属性抗性',
+    description: '对金元素攻击的抗性',
     range: '0-100%',
-    impact: '提高暴击触发几率',
+    impact: '减少受到的金属性伤害',
     isPercentage: true,
   },
-  CRIT_DMG: {
-    code: 'CRIT_DMG',
-    name: '暴击伤害',
-    displayName: '暴击伤害',
-    description: '暴击伤害加成',
-    range: '100-500%',
-    impact: '暴击时造成的额外伤害',
-    isPercentage: true,
-  },
-  DMG_REDUCTION: {
-    code: 'DMG_REDUCTION',
-    name: '免伤率',
-    displayName: '免伤率',
-    description: '伤害减免比例',
+  woodRes: {
+    code: 'woodRes',
+    name: '木属性抗性',
+    displayName: '木属性抗性',
+    description: '对木元素攻击的抗性',
     range: '0-100%',
-    impact: '减少受到的所有伤害',
+    impact: '减少受到的木属性伤害',
     isPercentage: true,
   },
-  ENERGY: {
-    code: 'ENERGY',
-    name: '能量',
-    displayName: '能量',
-    description: '当前能量值',
-    range: '0-100',
-    impact: '用于施放技能',
-    isPercentage: false,
-  },
-  MAX_ENERGY: {
-    code: 'MAX_ENERGY',
-    name: '最大能量值',
-    displayName: '最大能量值',
-    description: '最大能量上限',
-    range: '100',
-    impact: '决定能量上限',
-    isPercentage: false,
-  },
-  HP_BONUS: {
-    code: 'HP_BONUS',
-    name: '生命值加成',
-    displayName: '生命值加成',
-    description: '生命值加成',
-    range: '0-500%',
-    impact: '提高角色生命值上限',
+  waterRes: {
+    code: 'waterRes',
+    name: '水属性抗性',
+    displayName: '水属性抗性',
+    description: '对水元素攻击的抗性',
+    range: '0-100%',
+    impact: '减少受到的水属性伤害',
     isPercentage: true,
   },
-  ATK_BONUS: {
-    code: 'ATK_BONUS',
-    name: '攻击力加成',
-    displayName: '攻击力加成',
-    description: '攻击力加成',
-    range: '0-500%',
-    impact: '提高角色攻击力',
+  fireRes: {
+    code: 'fireRes',
+    name: '火属性抗性',
+    displayName: '火属性抗性',
+    description: '对火元素攻击的抗性',
+    range: '0-100%',
+    impact: '减少受到的火属性伤害',
     isPercentage: true,
   },
-  DEF_BONUS: {
-    code: 'DEF_BONUS',
-    name: '防御力加成',
-    displayName: '防御力加成',
-    description: '防御力加成',
-    range: '0-500%',
-    impact: '提高角色防御力',
+  earthRes: {
+    code: 'earthRes',
+    name: '土属性抗性',
+    displayName: '土属性抗性',
+    description: '对土元素攻击的抗性',
+    range: '0-100%',
+    impact: '减少受到的土属性伤害',
     isPercentage: true,
   },
-  SPD_BONUS: {
-    code: 'SPD_BONUS',
-    name: '速度加成',
-    displayName: '速度加成',
-    description: '速度加成',
-    range: '0-500%',
-    impact: '提高角色速度',
+
+  // ========== 特殊战斗属性 ==========
+  dodge: {
+    code: 'dodge',
+    name: '闪避率',
+    displayName: '闪避率',
+    description: '完全躲避攻击的概率',
+    range: '0-75%',
+    impact: '有概率完全避免受到伤害',
+    isPercentage: true,
+  },
+  hit: {
+    code: 'hit',
+    name: '命中率',
+    displayName: '命中率',
+    description: '攻击命中目标的概率',
+    range: '0-100%',
+    impact: '提高攻击命中率，对抗敌方闪避',
+    isPercentage: true,
+  },
+  controlSuccessRate: {
+    code: 'controlSuccessRate',
+    name: '控制成功率',
+    displayName: '控制技能成功率',
+    description: '控制类技能（眩晕、沉默等）的成功率',
+    range: '0-100%',
+    impact: '提高控制效果施加成功的概率',
+    isPercentage: true,
+  },
+  controlDurationReduction: {
+    code: 'controlDurationReduction',
+    name: '控制时间减免',
+    displayName: '受控制时间减免',
+    description: '减少被控制状态影响的持续时间',
+    range: '0-100%',
+    impact: '降低被眩晕、沉默等控制的持续时间',
+    isPercentage: true,
+  },
+  damageTakenIncrease: {
+    code: 'damageTakenIncrease',
+    name: '易伤',
+    displayName: '受到伤害增加',
+    description: '受到的所有伤害增加的比例（易伤状态）',
+    range: '0-200%',
+    impact: '增加受到的伤害，通常由debuff引起',
+    isPercentage: true,
+  },
+
+  // ========== 反弹/反伤 ==========
+  reflectDamagePercent: {
+    code: 'reflectDamagePercent',
+    name: '伤害反弹',
+    displayName: '反弹伤害比例',
+    description: '将受到的伤害按比例反弹给攻击者',
+    range: '0-100%',
+    impact: '受到伤害时反弹部分伤害给攻击者',
+    isPercentage: true,
+  },
+
+  // ========== 特殊抗性 ==========
+  poisonRes: {
+    code: 'poisonRes',
+    name: '毒素抗性',
+    displayName: '毒素抗性',
+    description: '对毒素效果的抵抗力',
+    range: '0-100%',
+    impact: '减少中毒效果的持续时间和伤害',
     isPercentage: true,
   },
 }

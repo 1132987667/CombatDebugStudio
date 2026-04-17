@@ -22,7 +22,6 @@ import {
   createAttributeValue,
   createBaseAttributeValue,
   AttributeCodes,
-  normalizeAttributeCode,
 } from '@/types/attribute'
 import { AttributeEngine } from '@/core/AttributeEngine'
 import type { ModifierTemplate } from '@/types/modifier-template'
@@ -186,9 +185,9 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param buffSystem Buff系统实例
    * @deprecated 请使用 setModifierProvider 方法
    */
-  setBuffSystem(buffSystem: any): void {
+  setBuffSystem(buffSystem: IModifierProvider): void {
     if (buffSystem && typeof buffSystem.getModifierStack === 'function') {
-      this._modifierProvider = buffSystem as IModifierProvider
+      this._modifierProvider = buffSystem
       this.markAllDirty()
     }
   }
@@ -370,13 +369,12 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param attr 属性名称
    * @returns 属性值对象
    */
-  getAttributeValue(attr: AttributeCodes | string): AttributeValue | undefined {
-    const attrName = this.normalizeAttributeCode(attr as string)
-    const attrData = this.attributes.get(attrName)
+  getAttributeValue(attr: AttributeCodes): AttributeValue | undefined {
+    const attrData = this.attributes.get(attr)
     if (!attrData) return undefined
 
     if (attrData.dirty) {
-      this.recalcAttribute(attrName)
+      this.recalcAttribute(attr)
     }
 
     return attrData
@@ -648,15 +646,6 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 标准化属性名称
-   * @param attribute 原始属性名称
-   * @returns 标准化后的属性名称
-   */
-  private normalizeAttributeCode(attribute: string): AttributeCodes {
-    return normalizeAttributeCode(attribute) as AttributeCodes
-  }
-
-  /**
    * 获取随机攻击力（用于伤害计算）
    * 在minAttack和maxAttack之间随机取值
    * @returns 随机攻击力
@@ -672,10 +661,9 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param attribute - 属性名称
    * @param value - 属性值
    */
-  setAttribute(attribute: string, value: number): void {
-    const attrName = this.normalizeAttributeCode(attribute)
+  setAttribute(attribute: AttributeCodes, value: number): void {
 
-    switch (attrName) {
+    switch (attribute) {
       case AttributeCodes.currentHealth:
         this.currentHealth = value
         break
@@ -713,7 +701,7 @@ export class BattleParticipantImpl implements BattleEntity {
         this.damageReduction = value
         break
       default:
-        this.setAttributeBase(attrName, value)
+        this.setAttributeBase(attribute, value)
         break
     }
   }

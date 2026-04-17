@@ -61,11 +61,11 @@
       <div v-if="showDebug" class="debug-info">
         <div class="debug-row">
           <span class="label">ATK:</span>
-          <span class="value">{{ stats.atk.value.displayValue }}</span>
-          <span v-if="stats.atk.value.breakdown" class="breakdown" @click="toggleBreakdown">🔍</span>
+          <span class="value">{{ stats.attack.value.displayValue }}</span>
+          <span v-if="stats.attack.value.breakdown" class="breakdown" @click="toggleBreakdown">🔍</span>
         </div>
         <div v-if="showBreakdown" class="breakdown-details">
-          <div v-for="(value, key) in stats.atk.value.breakdown" :key="key" class="breakdown-item">
+          <div v-for="(value, key) in stats.attack.value.breakdown" :key="key" class="breakdown-item">
             <span class="key">{{ formatBreakdownKey(key) }}:</span>
             <span class="value">{{ typeof value === 'number' ? value.toFixed(2) : value }}</span>
           </div>
@@ -176,9 +176,9 @@ const cardClasses = computed(() => ({
 }))
 
 const hpText = computed(() => {
-  const hp = Math.max(0, Math.floor(stats.value.hp.value))
-  const maxHp = Math.max(0, Math.floor(stats.value.maxHp.value))
-  return `${hp}/${maxHp}`
+  const currentHealth = Math.max(0, Math.floor(stats.value.currentHealth.value))
+  const maxHealth = Math.max(0, Math.floor(stats.value.maxHealth.value))
+  return `${currentHealth}/${maxHealth}`
 })
 
 const hpColorClass = computed(() => {

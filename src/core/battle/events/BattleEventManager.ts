@@ -3,7 +3,7 @@
  * 负责统一管理战斗相关的事件订阅和分发
  */
 import { eventBus } from '@/main'
-import { BattleSystemEvent } from '@/types/battle'
+import { BattleEventCodes } from '@/types/battle-events'
 import type {
   BattleLogEventData,
   BattleEndedEventData,
@@ -66,23 +66,23 @@ export class BattleEventManager {
 
     // 订阅战斗日志事件
     const battleLogHandler = (data: any) => this.handleBattleLogEvent(data)
-    eventBus.on(BattleSystemEvent.BATTLE_LOG, battleLogHandler)
-    this.boundHandlers.set(BattleSystemEvent.BATTLE_LOG, battleLogHandler)
+    eventBus.on(BattleEventCodes.BATTLE_LOG, battleLogHandler)
+    this.boundHandlers.set(BattleEventCodes.BATTLE_LOG, battleLogHandler)
 
     // 订阅战斗结束事件
     const battleEndHandler = (data: any) => this.handleBattleEndEvent(data)
-    eventBus.on(BattleSystemEvent.BATTLE_END, battleEndHandler)
-    this.boundHandlers.set(BattleSystemEvent.BATTLE_END, battleEndHandler)
+    eventBus.on(BattleEventCodes.BATTLE_ENDED, battleEndHandler)
+    this.boundHandlers.set(BattleEventCodes.BATTLE_ENDED, battleEndHandler)
 
     // 订阅回合开始事件
     const turnStartHandler = (data: any) => this.handleTurnStartEvent(data)
-    eventBus.on(BattleSystemEvent.TURN_START, turnStartHandler)
-    this.boundHandlers.set(BattleSystemEvent.TURN_START, turnStartHandler)
+    eventBus.on(BattleEventCodes.TURN_START, turnStartHandler)
+    this.boundHandlers.set(BattleEventCodes.TURN_START, turnStartHandler)
 
     // 订阅回合结束事件
     const turnEndHandler = (data: any) => this.handleTurnEndEvent(data)
-    eventBus.on(BattleSystemEvent.TURN_END, turnEndHandler)
-    this.boundHandlers.set(BattleSystemEvent.TURN_END, turnEndHandler)
+    eventBus.on(BattleEventCodes.TURN_END, turnEndHandler)
+    this.boundHandlers.set(BattleEventCodes.TURN_END, turnEndHandler)
 
     this.isListening = true
   }
@@ -92,10 +92,10 @@ export class BattleEventManager {
    */
   stopListening() {
     // 取消订阅所有战斗事件
-    eventBus.off(BattleSystemEvent.BATTLE_LOG)
-    eventBus.off(BattleSystemEvent.BATTLE_END)
-    eventBus.off(BattleSystemEvent.TURN_START)
-    eventBus.off(BattleSystemEvent.TURN_END)
+    eventBus.off(BattleEventCodes.BATTLE_LOG)
+    eventBus.off(BattleEventCodes.BATTLE_ENDED)
+    eventBus.off(BattleEventCodes.TURN_START)
+    eventBus.off(BattleEventCodes.TURN_END)
 
     // 清除回调引用
     this.boundHandlers.clear()

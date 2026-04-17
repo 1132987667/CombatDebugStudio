@@ -1,4 +1,5 @@
 import type { BuffContext } from '@/core/BuffContext'
+import { BattleData } from '.'
 
 // [
 //   {
@@ -354,6 +355,8 @@ export interface TriggerAction {
  * 触发事件发生时的上下文信息
  */
 export interface TriggerEventContext {
+  /** 触发事件的阶段 */
+  phase: TriggerPhase
   /** 事件发生时的战斗实例ID */
   battleId: string
   /** 事件相关的源参与者ID（如攻击者） */
@@ -366,6 +369,10 @@ export interface TriggerEventContext {
   value?: number
   /** 其他自定义数据 */
   extra?: Record<string, unknown>
+  /** 当前回合数 */
+  currentTurn?: number
+  /** 战斗数据（包含所有角色、状态等） */
+  battleData?: BattleData
 }
 
 /**

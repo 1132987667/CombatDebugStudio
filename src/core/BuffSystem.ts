@@ -19,7 +19,7 @@ import type {
   IModifierStack,
   ModifierSourceType,
 } from '@/types/attribute'
-import { normalizeAttributeCode } from '@/types/attribute'
+import { AttributeCodes } from '@/types/attribute'
 import { StackRule, ControlType } from '@/types/buff'
 import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
 import { BuffContext } from '@/core/BuffContext'
@@ -278,12 +278,11 @@ export class BuffSystem implements IModifierProvider {
     const modifierStack = this.getModifierStack(characterId)
 
     for (const [attr, valueStr] of Object.entries(attributes)) {
-      const normalizedAttr = normalizeAttributeCode(attr)
       const parsed = this.scriptRegistry.parseAttributeValue(valueStr)
 
       modifierStack.addModifier(
         instanceId,
-        normalizedAttr as any,
+        attr as AttributeCodes,
         parsed.value,
         parsed.type,
       )

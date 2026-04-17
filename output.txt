@@ -1,5 +1,6 @@
 项目文件夹架构:
 CombatDebugStudio/
+.vscode/
 configs/
     buffs/
         combat/
@@ -24,7 +25,6 @@ configs/
         skill_passive.json
         skills.json
         skills_new.json
-docs/
 scripts/
 src/
     components/
@@ -76,12 +76,9 @@ src/
             BattleRecorder.ts
             BattleRuleManager.ts
             interfaces.ts
-            ParticipantManager.ts
             TurnManager.ts
-        battleLog/
         calculations/
             index.ts
-        config/
         di/
             Container.ts
         errors/
@@ -93,6 +90,7 @@ src/
             HealCalculator.ts
             PassiveSkillManager.ts
             SkillManager.ts
+        task/
         AttributeEngine.ts
         BattleAI.ts
         BattleSystem.ts
@@ -141,6 +139,7 @@ src/
         global.css
         main.scss
     types/
+        UI/
         attribute.ts
         battle-events.ts
         battle-log.ts
@@ -14609,24 +14608,24 @@ export function useBattleParticipant(
 
   // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue
   const stats = computed<ParticipantStats>(() => ({
-    hp: shallowParticipant.getAttributeValue(AttributeCodes.HP)!,
-    maxHp: shallowParticipant.getAttributeValue(AttributeCodes.MAX_HP)!,
-    energy: shallowParticipant.getAttributeValue(AttributeCodes.ENERGY)!,
-    maxEnergy: shallowParticipant.getAttributeValue(AttributeCodes.MAX_ENERGY)!,
-    atk: shallowParticipant.getAttributeValue(AttributeCodes.ATK)!,
-    def: shallowParticipant.getAttributeValue(AttributeCodes.DEF)!,
-    spd: shallowParticipant.getAttributeValue(AttributeCodes.SPD)!,
-    critRate: shallowParticipant.getAttributeValue(AttributeCodes.CRIT_RATE)!,
-    critDmg: shallowParticipant.getAttributeValue(AttributeCodes.CRIT_DMG)!,
+    hp: shallowParticipant.getAttributeValue(AttributeCodes.currentHealth)!,
+    maxHp: shallowParticipant.getAttributeValue(AttributeCodes.maxHealth)!,
+    energy: shallowParticipant.getAttributeValue(AttributeCodes.energy)!,
+    maxEnergy: shallowParticipant.getAttributeValue(AttributeCodes.maxEnergy)!,
+    atk: shallowParticipant.getAttributeValue(AttributeCodes.attack)!,
+    def: shallowParticipant.getAttributeValue(AttributeCodes.defense)!,
+    spd: shallowParticipant.getAttributeValue(AttributeCodes.speed)!,
+    critRate: shallowParticipant.getAttributeValue(AttributeCodes.critRate)!,
+    critDmg: shallowParticipant.getAttributeValue(AttributeCodes.critDamage)!,
     dmgReduction: shallowParticipant.getAttributeValue(
-      AttributeCodes.DMG_REDUCTION,
+      AttributeCodes.damageReduction,
     )!,
-    hpBonus: shallowParticipant.getAttributeValue(AttributeCodes.HP_BONUS)!,
-    atkBonus: shallowParticipant.getAttributeValue(AttributeCodes.ATK_BONUS)!,
-    defBonus: shallowParticipant.getAttributeValue(AttributeCodes.DEF_BONUS)!,
-    spdBonus: shallowParticipant.getAttributeValue(AttributeCodes.SPD_BONUS)!,
-    minAtk: shallowParticipant.getAttributeValue(AttributeCodes.MIN_ATK)!,
-    maxAtk: shallowParticipant.getAttributeValue(AttributeCodes.MAX_ATK)!,
+    hpBonus: shallowParticipant.getAttributeValue(AttributeCodes.healthBonus)!,
+    atkBonus: shallowParticipant.getAttributeValue(AttributeCodes.attackBonus)!,
+    defBonus: shallowParticipant.getAttributeValue(AttributeCodes.defenseBonus)!,
+    spdBonus: shallowParticipant.getAttributeValue(AttributeCodes.speedBonus)!,
+    minAtk: shallowParticipant.getAttributeValue(AttributeCodes.minAttack)!,
+    maxAtk: shallowParticipant.getAttributeValue(AttributeCodes.maxAttack)!,
   }))
 
   // 派生状态
@@ -14924,17 +14923,17 @@ export function useParticipantStats(
   }
 
   // 常用属性的计算属性
-  const hp = computed(() => getFormatted(AttributeCodes.HP))
-  const maxHp = computed(() => getFormatted(AttributeCodes.MAX_HP))
-  const energy = computed(() => getFormatted(AttributeCodes.ENERGY))
-  const maxEnergy = computed(() => getFormatted(AttributeCodes.MAX_ENERGY))
-  const atk = computed(() => getFormatted(AttributeCodes.ATK))
-  const def = computed(() => getFormatted(AttributeCodes.DEF))
-  const spd = computed(() => getFormatted(AttributeCodes.SPD))
-  const critRate = computed(() => getFormatted(AttributeCodes.CRIT_RATE))
-  const critDmg = computed(() => getFormatted(AttributeCodes.CRIT_DMG))
+  const hp = computed(() => getFormatted(AttributeCodes.currentHealth))
+  const maxHp = computed(() => getFormatted(AttributeCodes.maxHealth))
+  const energy = computed(() => getFormatted(AttributeCodes.energy))
+  const maxEnergy = computed(() => getFormatted(AttributeCodes.maxEnergy))
+  const atk = computed(() => getFormatted(AttributeCodes.attack))
+  const def = computed(() => getFormatted(AttributeCodes.defense))
+  const spd = computed(() => getFormatted(AttributeCodes.speed))
+  const critRate = computed(() => getFormatted(AttributeCodes.critRate))
+  const critDmg = computed(() => getFormatted(AttributeCodes.critDamage))
   const dmgReduction = computed(() =>
-    getFormatted(AttributeCodes.DMG_REDUCTIONUCTION),
+    getFormatted(AttributeCodes.damageReduction),
   )
 
   return {
@@ -15450,8 +15449,8 @@ export class ActionExecutor {
   public validateAction(action: BattleAction): boolean {
     if (!action.sourceId || !action.targetId || !action.type) {
       return false
-    }
-    if (!ValidActionTypes.includes(action.type as any)) {
+    } 
+    if (!ValidActionTypes.includes(action.type)) {
       return false
     }
     return true
@@ -18112,7 +18111,6 @@ import type {
 import { LocalStorage } from '@/utils/storage'
 import { eventBus } from '@/main'
 import { GameDataProcessor } from '@/utils/GameDataProcessor'
-import skillsData from '@configs/skills/skills.json'
 
 /**
  * 战斗管理器
@@ -18235,11 +18233,12 @@ export class BattleManager {
    * @returns 我方参与者数组
    */
   getAllyTeam(): BattleEntity[] {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) {
+    const battleData = this.battleSystem.getBattleData()
+    if (!battleData) {
       return []
     }
-    return Array.from(battleState.participants.values()).filter(
+    const participantList = battleData.participants.values()
+    return Array.from(participantList).filter(
       (p) => p.type === PARTICIPANT_SIDE.ALLY,
     )
   }
@@ -18249,11 +18248,12 @@ export class BattleManager {
    * @returns 敌方参与者数组
    */
   getEnemyTeam(): BattleEntity[] {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) {
+    const battleData = this.battleSystem.getBattleData()
+    if (!battleData) {
       return []
     }
-    return Array.from(battleState.participants.values()).filter(
+    const participantList = battleData.participants.values()
+    return Array.from(participantList).filter(
       (p) => p.type === PARTICIPANT_SIDE.ENEMY,
     )
   }
@@ -18813,18 +18813,14 @@ import type {
 } from '@/types/battle'
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
 import type { SkillConfig } from '@/types/skill'
-import type {
+import { type IModifierProvider } from '@/types/attribute'
+import {
   AttributeValue,
-  ModifierDetail,
+  createAttributeValue,
+  createBaseAttributeValue,
   AttributeCodes,
-  IModifierProvider,
-  IModifierStack,
-  ModifierSourceType,
-  Modifier,
-  ModifierType,
-  AttributeCodes,
+  normalizeAttributeCode,
 } from '@/types/attribute'
-import { AttributeCodes, normalizeAttributeCode } from '@/types/attribute'
 import { AttributeEngine } from '@/core/AttributeEngine'
 import type { ModifierTemplate } from '@/types/modifier-template'
 import { triggerEventBus } from '@/core/TriggerEventBus'
@@ -18931,10 +18927,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param data - 初始化数据
    * @param modifierProvider - 修饰符提供者（可选，通常为 BuffSystem 实例）
    */
-  constructor(
-    data: BattleParticipantImpl,
-    modifierProvider?: IModifierProvider,
-  ) {
+  constructor(data: ParticipantInitData, modifierProvider?: IModifierProvider) {
     this.id = data.id
     this.name = data.name
     this.level = data.level
@@ -18950,22 +18943,25 @@ export class BattleParticipantImpl implements BattleEntity {
       this._modifierProvider = modifierProvider
     }
 
-    this.initAttribute(AttributeCodes.MAX_HP, data.maxHealth)
-    this.initAttribute(AttributeCodes.HP, data.currentHealth ?? data.maxHealth)
-    this.initAttribute(AttributeCodes.MAX_ENERGY, data.maxEnergy ?? 100)
-    this.initAttribute(AttributeCodes.ENERGY, data.currentEnergy ?? 25)
+    this.initAttribute(AttributeCodes.maxHealth, data.maxHealth)
     this.initAttribute(
-      AttributeCodes.ATK,
+      AttributeCodes.currentHealth,
+      data.currentHealth ?? data.maxHealth,
+    )
+    this.initAttribute(AttributeCodes.maxEnergy, data.maxEnergy ?? 100)
+    this.initAttribute(AttributeCodes.energy, data.currentEnergy ?? 25)
+    this.initAttribute(
+      AttributeCodes.attack,
       (data.minAttack + data.maxAttack) / 2,
     )
-    this.initAttribute(AttributeCodes.MIN_ATK, data.minAttack)
-    this.initAttribute(AttributeCodes.MAX_ATK, data.maxAttack)
-    this.initAttribute(AttributeCodes.DEF, data.defense)
-    this.initAttribute(AttributeCodes.SPD, data.speed)
-    this.initAttribute(AttributeCodes.CRIT_RATE, data.critRate ?? 10, true)
-    this.initAttribute(AttributeCodes.CRIT_DMG, data.critDamage ?? 125, true)
+    this.initAttribute(AttributeCodes.minAttack, data.minAttack)
+    this.initAttribute(AttributeCodes.maxAttack, data.maxAttack)
+    this.initAttribute(AttributeCodes.defense, data.defense)
+    this.initAttribute(AttributeCodes.speed, data.speed)
+    this.initAttribute(AttributeCodes.critRate, data.critRate ?? 10, true)
+    this.initAttribute(AttributeCodes.critDamage, data.critDamage ?? 125, true)
     this.initAttribute(
-      AttributeCodes.DMG_REDUCTION,
+      AttributeCodes.damageReduction,
       data.damageReduction ?? 0,
       true,
     )
@@ -18987,9 +18983,9 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param buffSystem Buff系统实例
    * @deprecated 请使用 setModifierProvider 方法
    */
-  setBuffSystem(buffSystem: any): void {
+  setBuffSystem(buffSystem: IModifierProvider): void {
     if (buffSystem && typeof buffSystem.getModifierStack === 'function') {
-      this._modifierProvider = buffSystem as IModifierProvider
+      this._modifierProvider = buffSystem
       this.markAllDirty()
     }
   }
@@ -19083,12 +19079,12 @@ export class BattleParticipantImpl implements BattleEntity {
     let finalValue = result.finalValue
 
     // 特殊属性约束
-    if (attr === AttributeCodes.HP) {
-      const maxHp = this.getAttribute(AttributeCodes.MAX_HP)
+    if (attr === AttributeCodes.currentHealth) {
+      const maxHp = this.getAttribute(AttributeCodes.maxHealth)
       finalValue = Math.max(0, Math.min(finalValue, maxHp))
     }
-    if (attr === AttributeCodes.ENERGY) {
-      const maxEnergy = this.getAttribute(AttributeCodes.MAX_ENERGY)
+    if (attr === AttributeCodes.energy) {
+      const maxEnergy = this.getAttribute(AttributeCodes.maxEnergy)
       finalValue = Math.max(0, Math.min(finalValue, maxEnergy))
     }
 
@@ -19218,16 +19214,16 @@ export class BattleParticipantImpl implements BattleEntity {
    * 获取当前生命值
    */
   get currentHealth(): number {
-    return this.getAttribute(AttributeCodes.HP)
+    return this.getAttribute(AttributeCodes.currentHealth)
   }
 
   /**
    * 设置当前生命值
    */
   set currentHealth(value: number) {
-    const attrData = this.attributes.get(AttributeCodes.HP)
+    const attrData = this.attributes.get(AttributeCodes.currentHealth)
     if (attrData) {
-      const maxHp = this.getAttribute(AttributeCodes.MAX_HP)
+      const maxHp = this.getAttribute(AttributeCodes.maxHealth)
       attrData.value = Math.max(0, Math.min(value, maxHp))
       attrData.dirty = false
     }
@@ -19237,30 +19233,30 @@ export class BattleParticipantImpl implements BattleEntity {
    * 获取最大生命值
    */
   get maxHealth(): number {
-    return this.getAttribute(AttributeCodes.MAX_HP)
+    return this.getAttribute(AttributeCodes.maxHealth)
   }
 
   /**
    * 设置最大生命值
    */
   set maxHealth(value: number) {
-    this.setAttributeBase(AttributeCodes.MAX_HP, value)
+    this.setAttributeBase(AttributeCodes.maxHealth, value)
   }
 
   /**
    * 获取当前能量值
    */
   get currentEnergy(): number {
-    return this.getAttribute(AttributeCodes.ENERGY)
+    return this.getAttribute(AttributeCodes.energy)
   }
 
   /**
    * 设置当前能量值
    */
   set currentEnergy(value: number) {
-    const attrData = this.attributes.get(AttributeCodes.ENERGY)
+    const attrData = this.attributes.get(AttributeCodes.energy)
     if (attrData) {
-      const maxEnergy = this.getAttribute(AttributeCodes.MAX_ENERGY)
+      const maxEnergy = this.getAttribute(AttributeCodes.maxEnergy)
       attrData.value = Math.max(0, Math.min(value, maxEnergy))
       attrData.dirty = false
     }
@@ -19270,126 +19266,126 @@ export class BattleParticipantImpl implements BattleEntity {
    * 获取最大能量值
    */
   get maxEnergy(): number {
-    return this.getAttribute(AttributeCodes.MAX_ENERGY)
+    return this.getAttribute(AttributeCodes.maxEnergy)
   }
 
   /**
    * 设置最大能量值
    */
   set maxEnergy(value: number) {
-    this.setAttributeBase(AttributeCodes.MAX_ENERGY, value)
+    this.setAttributeBase(AttributeCodes.maxEnergy, value)
   }
 
   /**
    * 获取速度值
    */
   get speed(): number {
-    return this.getAttribute(AttributeCodes.SPD)
+    return this.getAttribute(AttributeCodes.speed)
   }
 
   /**
    * 设置速度值
    */
   set speed(value: number) {
-    this.setAttributeBase(AttributeCodes.SPD, value)
+    this.setAttributeBase(AttributeCodes.speed, value)
   }
 
   /**
    * 获取最小攻击力
    */
   get minAttack(): number {
-    return this.getAttribute(AttributeCodes.MIN_ATK)
+    return this.getAttribute(AttributeCodes.minAttack)
   }
 
   /**
    * 设置最小攻击力
    */
   set minAttack(value: number) {
-    this.setAttributeBase(AttributeCodes.MIN_ATK, value)
+    this.setAttributeBase(AttributeCodes.minAttack, value)
   }
 
   /**
    * 获取最大攻击力
    */
   get maxAttack(): number {
-    return this.getAttribute(AttributeCodes.MAX_ATK)
+    return this.getAttribute(AttributeCodes.maxAttack)
   }
 
   /**
    * 设置最大攻击力
    */
   set maxAttack(value: number) {
-    this.setAttributeBase(AttributeCodes.MAX_ATK, value)
+    this.setAttributeBase(AttributeCodes.maxAttack, value)
   }
 
   /**
    * 获取平均攻击力
    */
   get attack(): number {
-    return this.getAttribute(AttributeCodes.ATK)
+    return this.getAttribute(AttributeCodes.attack)
   }
 
   /**
    * 设置平均攻击力
    */
   set attack(value: number) {
-    this.setAttributeBase(AttributeCodes.ATK, value)
+    this.setAttributeBase(AttributeCodes.attack, value)
   }
 
   /**
    * 获取防御力
    */
   get defense(): number {
-    return this.getAttribute(AttributeCodes.DEF)
+    return this.getAttribute(AttributeCodes.defense)
   }
 
   /**
    * 设置防御力
    */
   set defense(value: number) {
-    this.setAttributeBase(AttributeCodes.DEF, value)
+    this.setAttributeBase(AttributeCodes.defense, value)
   }
 
   /**
    * 获取暴击率
    */
   get critRate(): number {
-    return this.getAttribute(AttributeCodes.CRIT_RATE)
+    return this.getAttribute(AttributeCodes.critRate)
   }
 
   /**
    * 设置暴击率
    */
   set critRate(value: number) {
-    this.setAttributeBase(AttributeCodes.CRIT_RATE, value)
+    this.setAttributeBase(AttributeCodes.critRate, value)
   }
 
   /**
    * 获取暴击伤害
    */
   get critDamage(): number {
-    return this.getAttribute(AttributeCodes.CRIT_DMG)
+    return this.getAttribute(AttributeCodes.critDamage)
   }
 
   /**
    * 设置暴击伤害
    */
   set critDamage(value: number) {
-    this.setAttributeBase(AttributeCodes.CRIT_DMG, value)
+    this.setAttributeBase(AttributeCodes.critDamage, value)
   }
 
   /**
    * 获取免伤率
    */
   get damageReduction(): number {
-    return this.getAttribute(AttributeCodes.DMG_REDUCTION)
+    return this.getAttribute(AttributeCodes.damageReduction)
   }
 
   /**
    * 设置免伤率
    */
   set damageReduction(value: number) {
-    this.setAttributeBase(AttributeCodes.DMG_REDUCTION, value)
+    this.setAttributeBase(AttributeCodes.damageReduction, value)
   }
 
   /**
@@ -19463,8 +19459,8 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 随机攻击力
    */
   getRandomAttack(): number {
-    const minAtk = this.getAttribute(AttributeCodes.MIN_ATK)
-    const maxAtk = this.getAttribute(AttributeCodes.MAX_ATK)
+    const minAtk = this.getAttribute(AttributeCodes.minAttack)
+    const maxAtk = this.getAttribute(AttributeCodes.maxAttack)
     return Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
   }
 
@@ -19477,40 +19473,40 @@ export class BattleParticipantImpl implements BattleEntity {
     const attrName = this.normalizeAttributeCode(attribute)
 
     switch (attrName) {
-      case AttributeCodes.HP:
+      case AttributeCodes.currentHealth:
         this.currentHealth = value
         break
-      case AttributeCodes.ENERGY:
+      case AttributeCodes.energy:
         this.currentEnergy = value
         break
-      case AttributeCodes.MAX_HP:
+      case AttributeCodes.maxHealth:
         this.maxHealth = value
         break
-      case AttributeCodes.MAX_ENERGY:
+      case AttributeCodes.maxEnergy:
         this.maxEnergy = value
         break
-      case AttributeCodes.ATK:
+      case AttributeCodes.attack:
         this.attack = value
         break
-      case AttributeCodes.MIN_ATK:
+      case AttributeCodes.minAttack:
         this.minAttack = value
         break
-      case AttributeCodes.MAX_ATK:
+      case AttributeCodes.maxAttack:
         this.maxAttack = value
         break
-      case AttributeCodes.DEF:
+      case AttributeCodes.defense:
         this.defense = value
         break
-      case AttributeCodes.SPD:
+      case AttributeCodes.speed:
         this.speed = value
         break
-      case AttributeCodes.CRIT_RATE:
+      case AttributeCodes.critRate:
         this.critRate = value
         break
-      case AttributeCodes.CRIT_DMG:
+      case AttributeCodes.critDamage:
         this.critDamage = value
         break
-      case AttributeCodes.DMG_REDUCTION:
+      case AttributeCodes.damageReduction:
         this.damageReduction = value
         break
       default:
@@ -21394,7 +21390,6 @@ export const BATTLE_SYSTEM_TOKEN = Symbol('BattleSystem')
 export const TURN_MANAGER_TOKEN = Symbol('TurnManager')
 export const ACTION_EXECUTOR_TOKEN = Symbol('ActionExecutor')
 export const AI_SYSTEM_TOKEN = Symbol('AISystem')
-export const PARTICIPANT_MANAGER_TOKEN = Symbol('ParticipantManager')
 export const BATTLE_RECORDER_TOKEN = Symbol('BattleRecorder')
 export const BATTLE_RULE_MANAGER_TOKEN = Symbol('BattleRuleManager')
 
@@ -21670,540 +21665,6 @@ export class InterventionManager {
     this.selectedChar = null
 
     this.battleLogManager.addSystemLog('所有参战角色已清空')
-  }
-}
-
---- src/core/battle/ParticipantManager.ts ---
-/**
- * 文件: ParticipantManager.ts
- * 创建日期: 2026-02-09
- * 作者: CombatDebugStudio
- * 功能: 参与者管理器
- * 描述: 负责创建、查询、更新和清理战斗参与者，处理参与者的全生命周期管理
- * 版本: 2.0.0 - 支持 IModifierProvider 接口
- */
-
-import type { BattleEntity, ParticipantSide } from '@/types/battle'
-import { PARTICIPANT_SIDE } from '@/types/battle'
-import {
-  BattleParticipantImpl,
-  type ParticipantInitData,
-} from '@/core/battle/BattleParticipantImpl'
-import { GameDataProcessor } from '@/utils/GameDataProcessor'
-import { battleLogManager, LogLevel } from '@/utils/logging'
-import type { IModifierProvider } from '@/types/attribute'
-
-/**
- * 参与者状态变化事件接口
- */
-export interface ParticipantStateChangeEvent {
-  participantId: string
-  battleId: string
-  field: string
-  oldValue: any
-  newValue: any
-  timestamp: number
-}
-
-/**
- * 参与者状态快照接口
- */
-export interface ParticipantStateSnapshot {
-  participantId: string
-  battleId: string
-  state: Partial<BattleEntity>
-  timestamp: number
-}
-
-/**
- * 参与者管理器类
- * 负责创建、查询、更新和清理战斗参与者
- * 处理参与者的全生命周期管理
- */
-export class ParticipantManager {
-  /** 参与者存储映射，以参与者ID为键 */
-  private participants = new Map<string, BattleEntity>()
-  /** 战斗参与者关联映射，以battleId为键，值为该战斗的参与者ID集合 */
-  private battleParticipants = new Map<string, Set<string>>()
-  /** 状态变化事件监听器 */
-  private stateChangeListeners: ((
-    event: ParticipantStateChangeEvent,
-  ) => void)[] = []
-  /** 状态快照历史记录 */
-  private stateSnapshots = new Map<string, ParticipantStateSnapshot[]>()
-  /** 修饰符提供者引用（用于属性计算，解耦 BuffSystem） */
-  private modifierProvider: IModifierProvider | null = null
-
-  /**
-   * 设置修饰符提供者引用
-   * @param provider 修饰符提供者实例
-   */
-  public setModifierProvider(provider: IModifierProvider): void {
-    this.modifierProvider = provider
-  }
-
-  /**
-   * 设置Buff系统引用（向后兼容）
-   * @param buffSystem Buff系统实例
-   * @deprecated 请使用 setModifierProvider 方法
-   */
-  public setBuffSystem(buffSystem: any): void {
-    if (buffSystem && typeof buffSystem.getModifierStack === 'function') {
-      this.modifierProvider = buffSystem as IModifierProvider
-    }
-  }
-
-  /**
-   * 创建单个参与者
-   * 使用 BattleParticipantImpl 类创建参与者实例
-   * @param info - 参与者初始化数据或 BattleParticipantImpl 实例
-   * @returns BattleEntity - 创建的参与者实例
-   */
-  public createParticipant(
-    info: ParticipantInitData | BattleParticipantImpl,
-  ): BattleEntity {
-    const prefix = info.type === PARTICIPANT_SIDE.ALLY ? 'character_' : 'enemy_'
-    const newId = `${prefix}${info.id}`
-
-    let participant: BattleParticipantImpl
-    if (info instanceof BattleParticipantImpl) {
-      participant = info
-      participant.id = newId
-    } else {
-      participant = new BattleParticipantImpl({
-        ...info,
-        id: newId,
-      })
-    }
-
-    if (this.modifierProvider && participant instanceof BattleParticipantImpl) {
-      participant.setModifierProvider(this.modifierProvider)
-    }
-
-    this.participants.set(participant.id, participant)
-    return participant
-  }
-
-  /**
-   * 批量创建参与者
-   * 根据参与者初始化数据数组创建多个参与者对象
-   * @param participantsInfo - 参与者初始化数据数组
-   * @returns Map<string, BattleEntity> - 以参与者ID为键的映射表
-   */
-  public createParticipants(
-    participantsInfo: (ParticipantInitData | BattleParticipantImpl)[],
-  ): Map<string, BattleEntity> {
-    const participants = new Map<string, BattleEntity>()
-
-    participantsInfo.forEach((info) => {
-      const participant = this.createParticipant(info)
-      participants.set(participant.id, participant)
-    })
-
-    return participants
-  }
-
-  /**
-   * 根据角色ID数组创建参与者
-   * 从游戏数据中查找对应的敌人数据，转换为参与者实例数组
-   * @param ids - 角色ID字符串数组
-   * @param type - 参与者类型，默认为ENEMY
-   * @returns BattleParticipantImpl[] - 参与者实例数组
-   */
-  public createParticipantByIds(
-    ids: string[],
-    type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
-  ): BattleParticipantImpl[] {
-    const participants: BattleParticipantImpl[] = []
-
-    ids.forEach((id) => {
-      const enemy = GameDataProcessor.findEnemyById(id)
-      if (enemy) {
-        const participant = GameDataProcessor.enemyToParticipantInfo(
-          enemy,
-          type,
-        )
-        participants.push(participant)
-      } else {
-        battleLogManager.addDebugLog(`未找到ID为 ${id} 的角色数据`)
-      }
-    })
-
-    battleLogManager.addDebugLog(`根据ID创建参与者完成: ${ids.join(', ')}`, {
-      count: participants.length,
-      type,
-    })
-
-    return participants
-  }
-
-  /**
-   * 创建角色类型参与者
-   * 包装createParticipant方法，明确表示创建角色
-   * @param info - 角色参与者初始化数据
-   * @returns BattleEntity - 创建的角色参与者对象
-   */
-  public createCharacter(
-    info: ParticipantInitData | BattleParticipantImpl,
-  ): BattleEntity {
-    return this.createParticipant(info)
-  }
-
-  /**
-   * 创建敌人类型参与者
-   * 包装createParticipant方法，明确表示创建敌人
-   * @param info - 敌人参与者初始化数据
-   * @returns BattleEntity - 创建的敌人参与者对象
-   */
-  public createEnemy(
-    info: ParticipantInitData | BattleParticipantImpl,
-  ): BattleEntity {
-    return this.createParticipant(info)
-  }
-
-  /**
-   * 获取参与者
-   * 根据参与者ID查找并返回参与者对象
-   * @param battleId - 战斗ID（当前未使用，预留参数）
-   * @param participantId - 参与者的唯一标识符
-   * @returns BattleEntity | undefined - 找到返回参与者对象，未找到返回undefined
-   */
-  public getParticipant(participantId: string): BattleEntity | undefined {
-    return this.participants.get(participantId)
-  }
-
-  /**
-   * 更新参与者
-   * 根据参与者ID和更新数据修改参与者属性
-   * @param battleId - 战斗ID
-   * @param participantId - 要更新的参与者ID
-   * @param updates - 部分更新数据，包含需要修改的属性
-   */
-  public updateParticipant(
-    battleId: string,
-    participantId: string,
-    updates: Partial<BattleEntity>,
-  ): void {
-    const participant = this.participants.get(participantId)
-    if (participant) {
-      // 记录状态变化
-      this.recordStateChanges(battleId, participantId, participant, updates)
-
-      // 应用更新
-      Object.assign(participant, updates)
-
-      battleLogManager.addDebugLog(`参与者状态更新: ${participantId}`, {
-        battleId,
-        updates,
-      })
-    }
-  }
-
-  /**
-   * 批量更新参与者状态
-   * @param battleId - 战斗ID
-   * @param updates - 参与者ID到更新数据的映射
-   */
-  public batchUpdateParticipants(
-    battleId: string,
-    updates: Map<string, Partial<BattleEntity>>,
-  ): void {
-    updates.forEach((participantUpdates, participantId) => {
-      this.updateParticipant(battleId, participantId, participantUpdates)
-    })
-    battleLogManager.addDebugLog(`批量更新参与者状态完成: ${battleId}`, {
-      updatedCount: updates.size,
-    })
-  }
-
-  /**
-   * 记录状态变化事件
-   */
-  private recordStateChanges(
-    battleId: string,
-    participantId: string,
-    participant: BattleEntity,
-    updates: Partial<BattleEntity>,
-  ): void {
-    Object.entries(updates).forEach(([field, newValue]) => {
-      const oldValue = (participant as any)[field]
-      if (oldValue !== newValue) {
-        const event: ParticipantStateChangeEvent = {
-          participantId,
-          battleId,
-          field,
-          oldValue,
-          newValue,
-          timestamp: Date.now(),
-        }
-
-        // 触发状态变化事件
-        this.triggerStateChange(event)
-      }
-    })
-  }
-
-  /**
-   * 触发状态变化事件
-   */
-  private triggerStateChange(event: ParticipantStateChangeEvent): void {
-    this.stateChangeListeners.forEach((listener) => {
-      try {
-        listener(event)
-      } catch (error) {
-        battleLogManager.addDebugLog(
-          '状态变化事件监听器执行出错:',
-          LogLevel.ERROR,
-          error as Error,
-        )
-      }
-    })
-  }
-
-  /**
-   * 添加状态变化监听器
-   */
-  public onStateChange(
-    listener: (event: ParticipantStateChangeEvent) => void,
-  ): void {
-    this.stateChangeListeners.push(listener)
-    battleLogManager.addDebugLog('添加状态变化监听器')
-  }
-
-  /**
-   * 移除状态变化监听器
-   */
-  public offStateChange(
-    listener: (event: ParticipantStateChangeEvent) => void,
-  ): void {
-    const index = this.stateChangeListeners.indexOf(listener)
-    if (index !== -1) {
-      this.stateChangeListeners.splice(index, 1)
-      battleLogManager.addDebugLog('移除状态变化监听器')
-    }
-  }
-
-  /**
-   * 创建参与者状态快照
-   */
-  public createStateSnapshot(
-    battleId: string,
-    participantId: string,
-  ): ParticipantStateSnapshot {
-    const participant = this.participants.get(participantId)
-    if (!participant) {
-      throw new Error(`参与者不存在: ${participantId}`)
-    }
-
-    const snapshot: ParticipantStateSnapshot = {
-      participantId,
-      battleId,
-      state: {
-        currentHealth: participant.currentHealth,
-        maxHealth: participant.maxHealth,
-        currentEnergy: participant.currentEnergy,
-        maxEnergy: participant.maxEnergy,
-        buffs: [...participant.buffs],
-        level: participant.level,
-      },
-      timestamp: Date.now(),
-    }
-
-    // 保存快照
-    if (!this.stateSnapshots.has(participantId)) {
-      this.stateSnapshots.set(participantId, [])
-    }
-    this.stateSnapshots.get(participantId)!.push(snapshot)
-
-    // 限制快照数量（最多保留10个）
-    const snapshots = this.stateSnapshots.get(participantId)!
-    if (snapshots.length > 10) {
-      this.stateSnapshots.set(participantId, snapshots.slice(-10))
-    }
-
-    battleLogManager.addDebugLog(`创建参与者状态快照: ${participantId}`, {
-      battleId,
-    })
-    return snapshot
-  }
-
-  /**
-   * 恢复参与者状态到指定快照
-   */
-  public restoreStateFromSnapshot(snapshot: ParticipantStateSnapshot): void {
-    const participant = this.participants.get(snapshot.participantId)
-    if (!participant) {
-      throw new Error(`参与者不存在: ${snapshot.participantId}`)
-    }
-
-    // 记录恢复前的状态
-    const oldState = {
-      currentHealth: participant.currentHealth,
-      currentEnergy: participant.currentEnergy,
-      buffs: [...participant.buffs],
-    }
-
-    // 应用快照状态
-    Object.assign(participant, snapshot.state)
-
-    // 触发状态变化事件
-    Object.entries(snapshot.state).forEach(([field, newValue]) => {
-      const oldValue = (oldState as any)[field]
-      if (oldValue !== newValue) {
-        const event: ParticipantStateChangeEvent = {
-          participantId: snapshot.participantId,
-          battleId: snapshot.battleId,
-          field,
-          oldValue,
-          newValue,
-          timestamp: Date.now(),
-        }
-        this.triggerStateChange(event)
-      }
-    })
-
-    battleLogManager.addDebugLog(`恢复参与者状态: ${snapshot.participantId}`, {
-      battleId: snapshot.battleId,
-      snapshotTime: new Date(snapshot.timestamp).toISOString(),
-    })
-  }
-
-  /**
-   * 获取参与者状态快照历史
-   */
-  public getStateSnapshots(participantId: string): ParticipantStateSnapshot[] {
-    return this.stateSnapshots.get(participantId) || []
-  }
-
-  /**
-   * 清空参与者状态快照历史
-   */
-  public clearStateSnapshots(participantId: string): void {
-    this.stateSnapshots.delete(participantId)
-    battleLogManager.addDebugLog(`清空参与者状态快照: ${participantId}`)
-  }
-
-  /**
-   * 将参与者添加到战斗
-   * 建立参与者与战斗的关联关系
-   * @param battleId - 战斗ID
-   * @param participantId - 参与者ID
-   */
-  public addParticipantToBattle(battleId: string, participantId: string): void {
-    if (!this.battleParticipants.has(battleId)) {
-      this.battleParticipants.set(battleId, new Set())
-    }
-    this.battleParticipants.get(battleId)?.add(participantId)
-  }
-
-  /**
-   * 为存活的参与者数组增加能量值
-   * 直接遍历参与者数组，无需再检查存活状态
-   * @param participants - 存活的参与者数组
-   * @param amount - 要增加的能量值
-   */
-  public gainEnergyToAliveParticipants(
-    participants: BattleEntity[],
-    amount: number,
-  ): void {
-    participants.forEach((participant) => {
-      participant.gainEnergy(amount)
-    })
-  }
-
-  /**
-   * 获取所有存活参与者
-   * 从参与者集合中筛选出生命值大于0的参与者
-   * @param participants - 参与者映射表
-   * @returns BattleEntity[] - 存活参与者数组
-   */
-  public getAliveParticipants(
-    participants: Map<string, BattleEntity>,
-  ): BattleEntity[] {
-    return Array.from(participants.values()).filter((p) => p.isAlive())
-  }
-
-  /**
-   * 按类型获取存活参与者
-   * 从参与者集合中筛选出指定类型的存活参与者
-   * @param participants - 参与者映射表
-   * @param type - 参与者类型，ALLY或ENEMY
-   * @returns BattleEntity[] - 符合条件的参与者数组
-   */
-  public getAliveParticipantsByType(
-    participants: Map<string, BattleEntity>,
-    type: ParticipantSide,
-  ): BattleEntity[] {
-    return this.getAliveParticipants(participants).filter(
-      (p) => p.type === type,
-    )
-  }
-
-  /**
-   * 根据ID获取参与者
-   * 从参与者映射表中查找指定ID的参与者
-   * @param participants - 参与者映射表
-   * @param id - 要查找的参与者ID
-   * @returns BattleEntity | undefined - 找到返回参与者对象，未找到返回undefined
-   */
-  public getParticipantById(
-    participants: Map<string, BattleEntity>,
-    id: string,
-  ): BattleEntity | undefined {
-    return participants.get(id)
-  }
-
-  /**
-   * 检查是否有存活参与者
-   * 判断参与者集合中是否存在生命值大于0的参与者
-   * @param participants - 参与者映射表
-   * @returns boolean - 有存活参与者返回true，否则返回false
-   */
-  public hasAliveParticipants(
-    participants: Map<string, BattleEntity>,
-  ): boolean {
-    return this.getAliveParticipants(participants).length > 0
-  }
-
-  /**
-   * 按类型检查是否有存活参与者
-   * 判断参与者集合中是否存在指定类型的存活参与者
-   * @param participants - 参与者映射表
-   * @param type - 参与者类型
-   * @returns boolean - 有符合条件的存活参与者返回true，否则返回false
-   */
-  public hasAliveParticipantsByType(
-    participants: Map<string, BattleEntity>,
-    type: ParticipantSide,
-  ): boolean {
-    return this.getAliveParticipantsByType(participants, type).length > 0
-  }
-
-  /**
-   * 移除参与者
-   * 从参与者存储和所有战斗关联中删除指定参与者
-   * @param participantId - 要移除的参与者ID
-   */
-  public removeParticipant(participantId: string): void {
-    this.participants.delete(participantId)
-    this.battleParticipants.forEach((participants) => {
-      participants.delete(participantId)
-    })
-  }
-
-  /**
-   * 清理战斗的所有参与者
-   * 移除指定战斗关联的所有参与者数据
-   * @param battleId - 要清理的战斗ID
-   */
-  public clearBattle(battleId: string): void {
-    const participantIds = this.battleParticipants.get(battleId)
-    if (participantIds) {
-      participantIds.forEach((participantId) => {
-        this.participants.delete(participantId)
-      })
-    }
-    this.battleParticipants.delete(battleId)
   }
 }
 
@@ -24273,14 +23734,12 @@ import { AISystem } from '@/core/battle/AISystem'
 import { ActionExecutor } from '@/core/battle/ActionExecutor'
 import { BattleRecorder } from '@/core/battle/BattleRecorder'
 import { BattleRuleManager } from '@/core/battle/BattleRuleManager'
-import { ParticipantManager } from '@/core/battle/ParticipantManager'
 import { TurnManager } from '@/core/battle/TurnManager'
 import {
   ACTION_EXECUTOR_TOKEN,
   AI_SYSTEM_TOKEN,
   BATTLE_RECORDER_TOKEN,
   BATTLE_RULE_MANAGER_TOKEN,
-  PARTICIPANT_MANAGER_TOKEN,
   TURN_MANAGER_TOKEN,
 } from '@/core/battle/interfaces'
 import type { Container } from '@/core/di/Container'
@@ -24315,6 +23774,7 @@ import type { ExtendedSkillStep } from '@/types/skill'
 import { RAFTimer } from '@/utils/RAF'
 import { Counter } from '@/utils/Counter'
 import { battleLogManager } from '@/utils/logging'
+import { ref, Reactive, reactive } from 'vue'
 
 /**
  * 战斗系统核心管理类
@@ -24346,7 +23806,7 @@ export class BattleSystem implements IBattleSystem {
   /**
    * 当前战斗数据
    */
-  private battleData: BattleData
+  private battleData: Reactive<BattleData>
 
   /**
    * 动画队列，存储待播放的动画事件
@@ -24397,7 +23857,6 @@ export class BattleSystem implements IBattleSystem {
    * 私有构造函数，防止外部直接实例化
    * @param turnManager 回合管理器
    * @param actionExecutor 动作执行器
-   * @param participantManager 参与者管理器
    * @param aiSystem AI系统
    * @param battleRecorder 战斗录像器
    * @param ruleManager 规则管理器
@@ -24410,7 +23869,6 @@ export class BattleSystem implements IBattleSystem {
   private constructor(
     private readonly turnManager: TurnManager,
     private readonly actionExecutor: ActionExecutor,
-    private readonly participantManager: ParticipantManager,
     private readonly aiSystem: AISystem,
     private readonly battleRecorder: BattleRecorder,
     private readonly ruleManager: BattleRuleManager,
@@ -24420,7 +23878,7 @@ export class BattleSystem implements IBattleSystem {
     private readonly buffSystem: BuffSystem,
     private readonly passiveSkillManager: PassiveSkillManager,
   ) {
-    this.battleData = this.getDefBattleData()
+    this.battleData = reactive(this.getDefBattleData())
   }
 
   /**
@@ -24466,9 +23924,7 @@ export class BattleSystem implements IBattleSystem {
     const actionExecutor = container.resolve<ActionExecutor>(
       ACTION_EXECUTOR_TOKEN.toString(),
     )
-    const participantManager = container.resolve<ParticipantManager>(
-      PARTICIPANT_MANAGER_TOKEN.toString(),
-    )
+
     const aiSystem = container.resolve<AISystem>(AI_SYSTEM_TOKEN.toString())
     const battleRecorder = container.resolve<BattleRecorder>(
       BATTLE_RECORDER_TOKEN.toString(),
@@ -24488,7 +23944,6 @@ export class BattleSystem implements IBattleSystem {
     return new BattleSystem(
       turnManager,
       actionExecutor,
-      participantManager,
       aiSystem,
       battleRecorder,
       ruleManager,
@@ -24551,11 +24006,12 @@ export class BattleSystem implements IBattleSystem {
     enemyParticipants: BattleEntity[],
   ): BattleState {
     const allParticipants = [...allyParticipants, ...enemyParticipants]
-
-    const participants =
-      this.participantManager.createParticipants(allParticipants)
+    const participants = new Map<string, BattleEntity>()
+    allParticipants.forEach((participant) => {
+      participants.set(participant.id, participant)
+    })
     const battleData = this.battleData
-    battleData.participants = participants
+    battleData.participants = reactive(participants)
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
     battleData.skillManager = this.skillManager
 
@@ -24688,11 +24144,9 @@ export class BattleSystem implements IBattleSystem {
 
       // 为所有存活角色增加回合开始能量
       const combatRules = this.ruleManager.getCombatRules()
-
-      this.participantManager.gainEnergyToAliveParticipants(
-        aliveParticipants,
-        combatRules.energyGainPerTurn,
-      )
+      aliveParticipants.forEach((participant) => {
+        participant.gainEnergy(combatRules.energyGainPerTurn)
+      })
 
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
@@ -26152,7 +25606,6 @@ export class BattleSystem implements IBattleSystem {
   public getBattleState(): BattleState | undefined {
     const battle = this.battleData
     if (!battle) return undefined
-
     return this.convertToBattleState(battle)
   }
 
@@ -26328,13 +25781,6 @@ export class BattleSystem implements IBattleSystem {
    */
   public onTurnExecuted(turnNumber: number): void {
     battleLogManager.addDebugLog(`回合 ${turnNumber} 执行完成`)
-  }
-
-  /**
-   * 获取参与者管理器实例
-   */
-  public getParticipantManager(): ParticipantManager {
-    return this.participantManager
   }
 
   /**
@@ -27472,14 +26918,20 @@ export class BuffSystem implements IModifierProvider {
   /** 触发器运行时状态映射：Buff实例ID -> 触发器索引 -> 状态 */
   private triggerStates = new Map<string, Map<number, TriggerRuntimeState>>()
   /** 触发器行为脚本映射 */
-  private triggerScripts = new Map<string, (context: TriggerExecutionContext) => void>()
+  private triggerScripts = new Map<
+    string,
+    (context: TriggerExecutionContext) => void
+  >()
 
   /**
    * 构造函数
    * @param scriptRegistry Buff 脚本注册表实例
    * @param eventBus 触发器事件总线实例（可选，默认使用全局实例）
    */
-  public constructor(scriptRegistry: BuffScriptRegistry, eventBus?: TriggerEventBus) {
+  public constructor(
+    scriptRegistry: BuffScriptRegistry,
+    eventBus?: TriggerEventBus,
+  ) {
     this.scriptRegistry = scriptRegistry
     this.eventBus = eventBus ?? triggerEventBus
     this.registerDefaultTriggerScripts()
@@ -27494,9 +26946,16 @@ export class BuffSystem implements IModifierProvider {
     })
     this.registerTriggerScript('apply_buff', (ctx) => {
       if (ctx.params?.buffId) {
-        const config = this.scriptRegistry.getBuffConfig(ctx.params.buffId as string)
+        const config = this.scriptRegistry.getBuffConfig(
+          ctx.params.buffId as string,
+        )
         if (config) {
-          this.addBuff(ctx.targetId ?? '', ctx.params.buffId as string, config, ctx.currentTurn ?? 0)
+          this.addBuff(
+            ctx.targetId ?? '',
+            ctx.params.buffId as string,
+            config,
+            ctx.currentTurn ?? 0,
+          )
         }
       }
     })
@@ -27521,7 +26980,9 @@ export class BuffSystem implements IModifierProvider {
    * 设置属性变化回调（用于触发参与者的 markDirty）
    * @param callback 回调函数，接收 characterId 参数
    */
-  public setAttributeChangeCallback(callback: (characterId: string) => void): void {
+  public setAttributeChangeCallback(
+    callback: (characterId: string) => void,
+  ): void {
     this.onAttributeChange = callback
   }
 
@@ -27981,7 +27442,7 @@ export class Container {
   private static instance: Container
   private services = new Map<string, ServiceDefinition<any>>()
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): Container {
     if (!Container.instance) {
@@ -28057,7 +27518,6 @@ import {
 import { BattleSystem } from '@/core/BattleSystem'
 import { TurnManager } from '@/core/battle/TurnManager'
 import { ActionExecutor } from '@/core/battle/ActionExecutor'
-import { ParticipantManager } from '@/core/battle/ParticipantManager'
 import { AISystem } from '@/core/battle/AISystem'
 import { BattleRecorder } from '@/core/battle/BattleRecorder'
 import { BattleRuleManager } from '@/core/battle/BattleRuleManager'
@@ -28126,7 +27586,6 @@ export function initializeContainer(): void {
     new ActionExecutor(buffSystem),
   )
   container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
-
   container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder())
   container.register(
     BATTLE_RULE_MANAGER_TOKEN.toString(),
@@ -38275,11 +37734,22 @@ export interface ModifierResult {
  */
 export interface IModifierStack {
   /** 获取指定属性的原始修饰符列表 */
-  getModifiers(attribute: AttributeCodes): Modifier[]
+  getModifiers(attribute?: AttributeCodes): Modifier[]
   /** 计算属性最终值 */
   calculate(attribute: AttributeCodes, baseValue: number): number
   /** 获取当前堆栈中修饰符总数 */
   getModifierCount(): number
+  /** 添加修饰符 */
+  addModifier(
+    buffInstanceId: string,
+    attribute: AttributeCodes,
+    value: number,
+    type: ModifierType,
+  ): void
+  /** 移除修饰符 */
+  removeModifier(buffInstanceId: string): void
+  /** 清空所有修饰符 */
+  clear(): void
 }
 
 /**
@@ -38314,58 +37784,58 @@ export interface IModifierProvider {
 
 /** 属性代码常量（用于类型提示） */
 export const AttributeCodes = {
-  HP: 'HP',
-  MAX_HP: 'MAX_HP',
-  ATK: 'ATK',
-  MIN_ATK: 'MIN_ATK',
-  MAX_ATK: 'MAX_ATK',
-  DEF: 'DEF',
-  SPD: 'SPD',
-  CRIT_RATE: 'CRIT_RATE',
-  CRIT_DMG: 'CRIT_DMG',
+  currentHealth: 'currentHealth',
+  maxHealth: 'maxHealth',
+  attack: 'attack',
+  minAttack: 'minAttack',
+  maxAttack: 'maxAttack',
+  defense: 'defense',
+  speed: 'speed',
+  critRate: 'critRate',
+  critDamage: 'critDamage',
   // 伤害减免细分
-  DMG_REDUCTION: 'DMG_REDUCTION', // 免伤率
-  NORMAL_ATK_DMG_REDUCTION: 'NORMAL_ATK_DMG_REDUCTION', // 普通攻击伤害减免
-  SKILL_DMG_REDUCTION: 'SKILL_DMG_REDUCTION', // 技能伤害减免
-  CRIT_DMG_TAKEN_REDUCTION: 'CRIT_DMG_TAKEN_REDUCTION', // 受到暴击伤害减免
+  damageReduction: 'damageReduction', // 免伤率
+  normalAtkDmgReduction: 'normalAtkDmgReduction', // 普通攻击伤害减免
+  skillDmgReduction: 'skillDmgReduction', // 技能伤害减免
+  critDmgTakenReduction: 'critDmgTakenReduction', // 受到暴击伤害减免
 
   // 再生属性
-  HP_REGEN_PERCENT: 'HP_REGEN_PERCENT', // 每回合恢复最大生命百分比
-  HP_REGEN_FLAT: 'HP_REGEN_FLAT', // 每回合恢复固定生命
+  hpRegenPercent: 'hpRegenPercent', // 每回合恢复最大生命百分比
+  hpRegenFlat: 'hpRegenFlat', // 每回合恢复固定生命
 
-  ENERGY: 'ENERGY',
-  MAX_ENERGY: 'MAX_ENERGY',
-  HP_BONUS: 'HP_BONUS',
-  ATK_BONUS: 'ATK_BONUS',
-  DEF_BONUS: 'DEF_BONUS',
-  SPD_BONUS: 'SPD_BONUS',
+  energy: 'energy',
+  maxEnergy: 'maxEnergy',
+  healthBonus: 'healthBonus',
+  attackBonus: 'attackBonus',
+  defenseBonus: 'defenseBonus',
+  speedBonus: 'speedBonus',
 
   // ========== 元素属性 ==========
   // ========== 五行属性攻击力 ==========
-  METAL_ATK: 'METAL_ATK', // 金属性攻击力
-  WOOD_ATK: 'WOOD_ATK', // 木属性攻击力
-  WATER_ATK: 'WATER_ATK', // 水属性攻击力
-  FIRE_ATK: 'FIRE_ATK', // 火属性攻击力
-  EARTH_ATK: 'EARTH_ATK', // 土属性攻击力
+  metalAtk: 'metalAtk', // 金属性攻击力
+  woodAtk: 'woodAtk', // 木属性攻击力
+  waterAtk: 'waterAtk', // 水属性攻击力
+  fireAtk: 'fireAtk', // 火属性攻击力
+  earthAtk: 'earthAtk', // 土属性攻击力
   // ========== 五行属性抗性 ==========
-  METAL_RES: 'METAL_RES', // 金属性抗性
-  WOOD_RES: 'WOOD_RES', // 木属性抗性
-  WATER_RES: 'WATER_RES', // 水属性抗性
-  FIRE_RES: 'FIRE_RES', // 火属性抗性
-  EARTH_RES: 'EARTH_RES', // 土属性抗性
+  metalRes: 'metalRes', // 金属性抗性
+  woodRes: 'woodRes', // 木属性抗性
+  waterRes: 'waterRes', // 水属性抗性
+  fireRes: 'fireRes', // 火属性抗性
+  earthRes: 'earthRes', // 土属性抗性
 
   // ========== 特殊战斗属性 ==========
-  DODGE: 'DODGE', // 闪避率
-  HIT: 'HIT', // 命中率
-  CONTROL_SUCCESS_RATE: 'CONTROL_SUCCESS_RATE', // 控制技能成功率
-  CONTROL_DURATION_REDUCTION: 'CONTROL_DURATION_REDUCTION', // 受控制时间减免
-  DAMAGE_TAKEN_INCREASE: 'DAMAGE_TAKEN_INCREASE', // 受到的伤害增加（易伤）
+  dodge: 'dodge', // 闪避率
+  hit: 'hit', // 命中率
+  controlSuccessRate: 'controlSuccessRate', // 控制技能成功率
+  controlDurationReduction: 'controlDurationReduction', // 受控制时间减免
+  damageTakenIncrease: 'damageTakenIncrease', // 受到的伤害增加（易伤）
 
   // ========== 反弹/反伤 ==========
-  REFLECT_DAMAGE_PERCENT: 'REFLECT_DAMAGE_PERCENT', // 反弹伤害比例
+  reflectDamagePercent: 'reflectDamagePercent', // 反弹伤害比例
 
   // ========== 抗性 ==========
-  POISON_RES: 'POISON_RES', // 毒素抗性
+  poisonRes: 'poisonRes', // 毒素抗性
 } as const
 
 export type AttributeCodes =
@@ -38374,60 +37844,60 @@ export type AttributeCodes =
 /** 属性代码显示名称映射 */
 export const AttributeCodeNames: Record<AttributeCodes, string> = {
   // ========== 基础属性 ==========
-  HP: '生命值',
-  MAX_HP: '最大生命值',
-  ATK: '攻击力',
-  MIN_ATK: '最小攻击力',
-  MAX_ATK: '最大攻击力',
-  DEF: '防御力',
-  SPD: '速度',
-  CRIT_RATE: '暴击率',
-  CRIT_DMG: '暴击伤害',
-  ENERGY: '能量',
-  MAX_ENERGY: '最大能量',
+  currentHealth: '当前生命值',
+  maxHealth: '最大生命值',
+  attack: '攻击力',
+  minAttack: '最小攻击力',
+  maxAttack: '最大攻击力',
+  defense: '防御力',
+  speed: '速度',
+  critRate: '暴击率',
+  critDamage: '暴击伤害',
+  energy: '能量',
+  maxEnergy: '最大能量',
 
   // ========== 伤害减免细分 ==========
-  DMG_REDUCTION: '免伤率',
-  NORMAL_ATK_DMG_REDUCTION: '普攻伤害减免',
-  SKILL_DMG_REDUCTION: '技能伤害减免',
-  CRIT_DMG_TAKEN_REDUCTION: '暴击承伤减免',
+  damageReduction: '免伤率',
+  normalAtkDmgReduction: '普攻伤害减免',
+  skillDmgReduction: '技能伤害减免',
+  critDmgTakenReduction: '暴击承伤减免',
 
   // ========== 再生属性 ==========
-  HP_REGEN_PERCENT: '生命回复(%)',
-  HP_REGEN_FLAT: '生命回复(固定)',
+  hpRegenPercent: '生命回复(%)',
+  hpRegenFlat: '生命回复(固定)',
 
   // ========== 属性加成 ==========
-  HP_BONUS: '生命值加成',
-  ATK_BONUS: '攻击力加成',
-  DEF_BONUS: '防御力加成',
-  SPD_BONUS: '速度加成',
+  healthBonus: '生命值加成',
+  attackBonus: '攻击力加成',
+  defenseBonus: '防御力加成',
+  speedBonus: '速度加成',
 
   // ========== 五行属性攻击力 ==========
-  METAL_ATK: '金属性攻击',
-  WOOD_ATK: '木属性攻击',
-  WATER_ATK: '水属性攻击',
-  FIRE_ATK: '火属性攻击',
-  EARTH_ATK: '土属性攻击',
+  metalAtk: '金属性攻击',
+  woodAtk: '木属性攻击',
+  waterAtk: '水属性攻击',
+  fireAtk: '火属性攻击',
+  earthAtk: '土属性攻击',
 
   // ========== 五行属性抗性 ==========
-  METAL_RES: '金属性抗性',
-  WOOD_RES: '木属性抗性',
-  WATER_RES: '水属性抗性',
-  FIRE_RES: '火属性抗性',
-  EARTH_RES: '土属性抗性',
+  metalRes: '金属性抗性',
+  woodRes: '木属性抗性',
+  waterRes: '水属性抗性',
+  fireRes: '火属性抗性',
+  earthRes: '土属性抗性',
 
   // ========== 特殊战斗属性 ==========
-  DODGE: '闪避率',
-  HIT: '命中率',
-  CONTROL_SUCCESS_RATE: '控制成功率',
-  CONTROL_DURATION_REDUCTION: '受控时间减免',
-  DAMAGE_TAKEN_INCREASE: '易伤系数',
+  dodge: '闪避率',
+  hit: '命中率',
+  controlSuccessRate: '控制成功率',
+  controlDurationReduction: '受控时间减免',
+  damageTakenIncrease: '易伤系数',
 
   // ========== 反弹/反伤 ==========
-  REFLECT_DAMAGE_PERCENT: '伤害反弹比例',
+  reflectDamagePercent: '伤害反弹比例',
 
   // ========== 抗性 ==========
-  POISON_RES: '毒素抗性',
+  poisonRes: '毒素抗性',
 }
 
 // ========== 辅助函数 ==========
@@ -38443,137 +37913,144 @@ export function normalizeAttributeCode(attribute: string): string {
 
   const map: Record<string, string> = {
     // ========== 基础属性 ==========
-    speed: 'SPD',
-    attack: 'ATK',
-    defense: 'DEF',
-    health: 'HP',
-    hp: 'HP',
-    maxhp: 'MAX_HP',
-    max_health: 'MAX_HP',
-    energy: 'ENERGY',
-    maxenergy: 'MAX_ENERGY',
-    minattack: 'MIN_ATK',
-    maxattack: 'MAX_ATK',
-    critrate: 'CRIT_RATE',
-    critdamage: 'CRIT_DMG',
-    crit_rate: 'CRIT_RATE',
-    crit_damage: 'CRIT_DMG',
+    speed: 'speed',
+    attack: 'attack',
+    defense: 'defense',
+    health: 'maxHealth',
+    hp: 'maxHealth',
+    maxhp: 'maxHealth',
+    max_health: 'maxHealth',
+    energy: 'energy',
+    maxenergy: 'maxEnergy',
+    minattack: 'minAttack',
+    maxattack: 'maxAttack',
+    critrate: 'critRate',
+    critdamage: 'critDamage',
+    crit_rate: 'critRate',
+    crit_damage: 'critDamage',
+    currenthealth: 'currentHealth',
+    current_health: 'currentHealth',
 
     // ========== 加成属性 ==========
-    hpbonus: 'HP_BONUS',
-    atkbonus: 'ATK_BONUS',
-    defbonus: 'DEF_BONUS',
-    spdbonus: 'SPD_BONUS',
-    hp_bonus: 'HP_BONUS',
-    atk_bonus: 'ATK_BONUS',
-    def_bonus: 'DEF_BONUS',
-    spd_bonus: 'SPD_BONUS',
+    hpbonus: 'healthBonus',
+    atkbonus: 'attackBonus',
+    defbonus: 'defenseBonus',
+    spdbonus: 'speedBonus',
+    hp_bonus: 'healthBonus',
+    atk_bonus: 'attackBonus',
+    def_bonus: 'defenseBonus',
+    spd_bonus: 'speedBonus',
+    healthbonus: 'healthBonus',
+    attackbonus: 'attackBonus',
+    defensebonus: 'defenseBonus',
+    speedbonus: 'speedBonus',
 
     // ========== 伤害减免 ==========
-    dmgreduction: 'DMG_REDUCTION',
-    damage_reduction: 'DMG_REDUCTION',
-    normalatkdmgreduction: 'NORMAL_ATK_DMG_REDUCTION',
-    skilldmgreduction: 'SKILL_DMG_REDUCTION',
-    critdmgtakenreduction: 'CRIT_DMG_TAKEN_REDUCTION',
+    dmgreduction: 'damageReduction',
+    damage_reduction: 'damageReduction',
+    damagereduction: 'damageReduction',
+    normalatkdmgreduction: 'normalAtkDmgReduction',
+    skilldmgreduction: 'skillDmgReduction',
+    critdmgtakenreduction: 'critDmgTakenReduction',
 
     // ========== 再生属性 ==========
-    hpregenpercent: 'HP_REGEN_PERCENT',
-    hpregenflat: 'HP_REGEN_FLAT',
-    hp_regen_percent: 'HP_REGEN_PERCENT',
-    hp_regen_flat: 'HP_REGEN_FLAT',
+    hpregenpercent: 'hpRegenPercent',
+    hpregenflat: 'hpRegenFlat',
+    hp_regen_percent: 'hpRegenPercent',
+    hp_regen_flat: 'hpRegenFlat',
 
     // ========== 五行属性 - 攻击力（英文别名） ==========
-    metalatk: 'METAL_ATK',
-    metal_attack: 'METAL_ATK',
-    metal_dmg: 'METAL_ATK',
-    metal_damage: 'METAL_ATK',
-    woodatk: 'WOOD_ATK',
-    wood_attack: 'WOOD_ATK',
-    wood_dmg: 'WOOD_ATK',
-    wood_damage: 'WOOD_ATK',
-    wateratk: 'WATER_ATK',
-    water_attack: 'WATER_ATK',
-    water_dmg: 'WATER_ATK',
-    water_damage: 'WATER_ATK',
-    fireatk: 'FIRE_ATK',
-    fire_attack: 'FIRE_ATK',
-    fire_dmg: 'FIRE_ATK',
-    fire_damage: 'FIRE_ATK',
-    earthatk: 'EARTH_ATK',
-    earth_attack: 'EARTH_ATK',
-    earth_dmg: 'EARTH_ATK',
-    earth_damage: 'EARTH_ATK',
+    metalatk: 'metalAtk',
+    metal_attack: 'metalAtk',
+    metal_dmg: 'metalAtk',
+    metal_damage: 'metalAtk',
+    woodatk: 'woodAtk',
+    wood_attack: 'woodAtk',
+    wood_dmg: 'woodAtk',
+    wood_damage: 'woodAtk',
+    wateratk: 'waterAtk',
+    water_attack: 'waterAtk',
+    water_dmg: 'waterAtk',
+    water_damage: 'waterAtk',
+    fireatk: 'fireAtk',
+    fire_attack: 'fireAtk',
+    fire_dmg: 'fireAtk',
+    fire_damage: 'fireAtk',
+    earthatk: 'earthAtk',
+    earth_attack: 'earthAtk',
+    earth_dmg: 'earthAtk',
+    earth_damage: 'earthAtk',
 
     // ========== 五行属性 - 抗性（英文别名） ==========
-    metalres: 'METAL_RES',
-    metal_resist: 'METAL_RES',
-    metal_resistance: 'METAL_RES',
-    woodres: 'WOOD_RES',
-    wood_resist: 'WOOD_RES',
-    wood_resistance: 'WOOD_RES',
-    waterres: 'WATER_RES',
-    water_resist: 'WATER_RES',
-    water_resistance: 'WATER_RES',
-    fireres: 'FIRE_RES',
-    fire_resist: 'FIRE_RES',
-    fire_resistance: 'FIRE_RES',
-    earthres: 'EARTH_RES',
-    earth_resist: 'EARTH_RES',
-    earth_resistance: 'EARTH_RES',
+    metalres: 'metalRes',
+    metal_resist: 'metalRes',
+    metal_resistance: 'metalRes',
+    woodres: 'woodRes',
+    wood_resist: 'woodRes',
+    wood_resistance: 'woodRes',
+    waterres: 'waterRes',
+    water_resist: 'waterRes',
+    water_resistance: 'waterRes',
+    fireres: 'fireRes',
+    fire_resist: 'fireRes',
+    fire_resistance: 'fireRes',
+    earthres: 'earthRes',
+    earth_resist: 'earthRes',
+    earth_resistance: 'earthRes',
 
     // ========== 五行属性 - 中文拼音别名（攻击） ==========
-    jin: 'METAL_ATK',
-    jinatk: 'METAL_ATK',
-    jin_attack: 'METAL_ATK',
-    mu: 'WOOD_ATK',
-    muatk: 'WOOD_ATK',
-    mu_attack: 'WOOD_ATK',
-    shui: 'WATER_ATK',
-    shuiatk: 'WATER_ATK',
-    shui_attack: 'WATER_ATK',
-    huo: 'FIRE_ATK',
-    huoatk: 'FIRE_ATK',
-    huo_attack: 'FIRE_ATK',
-    tu: 'EARTH_ATK',
-    tuatk: 'EARTH_ATK',
-    tu_attack: 'EARTH_ATK',
+    jin: 'metalAtk',
+    jinatk: 'metalAtk',
+    jin_attack: 'metalAtk',
+    mu: 'woodAtk',
+    muatk: 'woodAtk',
+    mu_attack: 'woodAtk',
+    shui: 'waterAtk',
+    shuiatk: 'waterAtk',
+    shui_attack: 'waterAtk',
+    huo: 'fireAtk',
+    huoatk: 'fireAtk',
+    huo_attack: 'fireAtk',
+    tu: 'earthAtk',
+    tuatk: 'earthAtk',
+    tu_attack: 'earthAtk',
 
     // ========== 五行属性 - 中文拼音别名（抗性） ==========
-    jinres: 'METAL_RES',
-    jin_res: 'METAL_RES',
-    mures: 'WOOD_RES',
-    mu_res: 'WOOD_RES',
-    shuires: 'WATER_RES',
-    shui_res: 'WATER_RES',
-    huores: 'FIRE_RES',
-    huo_res: 'FIRE_RES',
-    tures: 'EARTH_RES',
-    tu_res: 'EARTH_RES',
+    jinres: 'metalRes',
+    jin_res: 'metalRes',
+    mures: 'woodRes',
+    mu_res: 'woodRes',
+    shuires: 'waterRes',
+    shui_res: 'waterRes',
+    huores: 'fireRes',
+    huo_res: 'fireRes',
+    tures: 'earthRes',
+    tu_res: 'earthRes',
 
     // ========== 特殊战斗属性 ==========
-    dodge: 'DODGE',
-    hit: 'HIT',
-    hitrate: 'HIT',
-    hit_rate: 'HIT',
-    controlsuccessrate: 'CONTROL_SUCCESS_RATE',
-    control_success_rate: 'CONTROL_SUCCESS_RATE',
-    controldurationreduction: 'CONTROL_DURATION_REDUCTION',
-    control_duration_reduction: 'CONTROL_DURATION_REDUCTION',
-    damagetakenincrease: 'DAMAGE_TAKEN_INCREASE',
-    damage_taken_increase: 'DAMAGE_TAKEN_INCREASE',
-    vulnerability: 'DAMAGE_TAKEN_INCREASE', // 易伤别名
+    dodge: 'dodge',
+    hit: 'hit',
+    hitrate: 'hit',
+    hit_rate: 'hit',
+    controlsuccessrate: 'controlSuccessRate',
+    control_success_rate: 'controlSuccessRate',
+    controldurationreduction: 'controlDurationReduction',
+    control_duration_reduction: 'controlDurationReduction',
+    damagetakenincrease: 'damageTakenIncrease',
+    damage_taken_increase: 'damageTakenIncrease',
+    vulnerability: 'damageTakenIncrease', // 易伤别名
 
     // ========== 反弹/反伤 ==========
-    reflectdamagepercent: 'REFLECT_DAMAGE_PERCENT',
-    reflect_damage_percent: 'REFLECT_DAMAGE_PERCENT',
-    reflect_dmg: 'REFLECT_DAMAGE_PERCENT',
-    counterattack: 'REFLECT_DAMAGE_PERCENT', // 反伤别名
+    reflectdamagepercent: 'reflectDamagePercent',
+    reflect_damage_percent: 'reflectDamagePercent',
+    reflect_dmg: 'reflectDamagePercent',
+    counterattack: 'reflectDamagePercent', // 反伤别名
 
     // ========== 抗性 ==========
-    poisonres: 'POISON_RES',
-    poison_res: 'POISON_RES',
-    poison_resist: 'POISON_RES',
-    poison_resistance: 'POISON_RES',
+    poisonres: 'poisonRes',
+    poison_res: 'poisonRes',
+    poison_resist: 'poisonRes',
+    poison_resistance: 'poisonRes',
   }
 
   // 优先精确匹配映射表
@@ -38581,8 +38058,8 @@ export function normalizeAttributeCode(attribute: string): string {
     return map[lower]
   }
 
-  // 兜底：转大写并移除非法字符（兼容配置文件中可能的格式）
-  return attribute.toUpperCase().replace(/[^A-Z0-9_]/g, '_')
+  // 兜底：转为 camelCase 格式
+  return attribute.toLowerCase().replace(/_([a-z])/g, (_, c) => c.toUpperCase())
 }
 
 // ========== 工厂函数 ==========
@@ -38615,7 +38092,7 @@ export function createAttributeValue(
 
 /**
  * 创建基础 AttributeValue（仅提供 base，value 与 base 相同）
- * @deprecated 请使用 createAttributeValue 以获得更灵活的配置
+ * 请使用 createAttributeValue 以获得更灵活的配置
  */
 export function createBaseAttributeValue(
   base: number,
@@ -40017,10 +39494,7 @@ function generateDefaultLogSegments(
  * 提供战斗实体、参与者、动作、效果等核心数据结构
  */
 
-import type { Character } from '@/types/character'
-import type { EnemyInstance } from '@/types/enemy'
 import type { BattleAI } from '@/core/BattleAI'
-import type { SkillManager } from '@/core/skill/SkillManager'
 import type { SkillConfig } from '@/types/skill'
 import type {
   AttributeValue,
@@ -40030,6 +39504,7 @@ import type {
 import type { BattleLogEntry } from '@/types/battle-log'
 import { EffectType } from '@/types/effect'
 import { Counter } from '@/utils/Counter'
+import { Ref } from 'vue'
 
 const counter = new Counter()
 
@@ -40146,7 +39621,10 @@ export const ActionTypes = {
   HEAL: 'heal',
   BUFF: 'buff',
   ITEM: 'item',
+  STATUS: 'status',
 } as const
+
+export type ActionTypes = (typeof ActionTypes)[keyof typeof ActionTypes]
 
 /** 动作类型数组 - 从 ACTION_TYPES 自动生成 */
 export const ValidActionTypes = Object.freeze([
@@ -40187,52 +39665,52 @@ export interface BattleEntity {
   }
 
   /** 当前生命值 */
-  currentHealth: AttributeValue
+  currentHealth: number
   /** 最大生命值 */
-  maxHealth: AttributeValue
+  maxHealth: number
   /** 当前能量值 */
-  currentEnergy: AttributeValue
+  currentEnergy: number
   /** 最大能量值 */
-  maxEnergy: AttributeValue
+  maxEnergy: number
   /** 最小攻击力 */
-  minAttack: AttributeValue
+  minAttack: number
   /** 最大攻击力 */
-  maxAttack: AttributeValue
+  maxAttack: number
   /** 平均攻击力（计算值） */
-  attack: AttributeValue
+  attack: number
   /** 防御力 */
-  defense: AttributeValue
+  defense: number
   /** 速度值（用于回合顺序计算） */
-  speed: AttributeValue
+  speed: number
   /** 暴击率（百分比，0-100） */
-  critRate: AttributeValue
+  critRate: number
   /** 暴击伤害（百分比，≥100） */
-  critDamage: AttributeValue
+  critDamage: number
   /** 免伤率（百分比，0-100） */
-  damageReduction: AttributeValue
+  damageReduction: number
   /** 气血加成（百分比） */
-  healthBonus: AttributeValue
+  healthBonus: number
   /** 攻击加成（百分比） */
-  attackBonus: AttributeValue
+  attackBonus: number
   /** 防御加成（百分比） */
-  defenseBonus: AttributeValue
+  defenseBonus: number
   /** 速度加成（百分比） */
-  speedBonus: AttributeValue
+  speedBonus: number
 
   /** 获取属性值对象（包含详细信息） */
   getAttributeValue(
     attribute: AttributeCodes | string,
   ): AttributeValue | undefined
   /** 获取属性最终值（快捷方法） */
-  getAttribute(attribute: AttributeCodes | string): AttributeValue
-  /** 快捷获取属性最终值（AttributeValue） */
-  getAttr(attr: AttributeCodes): AttributeValue
+  getAttribute(attribute: AttributeCodes | string): number
+  /** 快捷获取属性最终值（number） */
+  getAttr(attr: AttributeCodes): number
   /** 快捷获取属性值对象（包含基础值、修饰符等） */
   getAttrValue(attr: AttributeCodes): AttributeValue | undefined
   /** 批量预计算所有属性（回合开始时调用） */
   recalcAll(): void
   /** 设置属性值 */
-  setAttribute(attribute: string, value: AttributeValue): void
+  setAttribute(attribute: string, value: number): void
   /** 标记属性为脏（需要重新计算） */
   markDirty(attribute: AttributeCodes | string): void
   /** 标记所有属性为脏 */
@@ -40290,7 +39768,7 @@ export interface BattleAction {
   id: string
 
   /** 动作类型：attack-普通攻击, skill-技能, buff-增益/减益, item-物品, status-状态 */
-  type: 'attack' | 'skill' | 'buff' | 'item' | 'status'
+  type: ActionTypes
 
   /** 执行动作的角色ID */
   sourceId: string
@@ -40852,6 +40330,7 @@ export interface SnapshotIndexItem {
 
 --- src/types/buff.ts ---
 import type { BuffContext } from '@/core/BuffContext'
+import { BattleData } from '.'
 
 // [
 //   {
@@ -41207,6 +40686,8 @@ export interface TriggerAction {
  * 触发事件发生时的上下文信息
  */
 export interface TriggerEventContext {
+  /** 触发事件的阶段 */
+  phase: TriggerPhase
   /** 事件发生时的战斗实例ID */
   battleId: string
   /** 事件相关的源参与者ID（如攻击者） */
@@ -41219,6 +40700,10 @@ export interface TriggerEventContext {
   value?: number
   /** 其他自定义数据 */
   extra?: Record<string, unknown>
+  /** 当前回合数 */
+  currentTurn?: number
+  /** 战斗数据（包含所有角色、状态等） */
+  battleData?: BattleData
 }
 
 /**
@@ -43550,17 +43035,22 @@ import type {
   AttributeCodes,
   ModifierType,
   ModifierSourceType,
+  createAttributeValue,
+  createBaseAttributeValue,
 } from '@/types/attribute'
-import { normalizeAttributeCode } from '@/types/attribute'
 import type {
   ModifierTemplate,
   StructuredBuffConfig,
 } from '@/types/modifier-template'
-import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
+import {
+  BattleParticipantImpl,
+  type ParticipantInitData,
+} from '@/core/battle/BattleParticipantImpl'
 import { container } from '@/core/di/Container'
 import { BuffSystem } from '@/core/BuffSystem'
 import { toArray } from '@/utils/Utils'
 import { Counter } from '@/utils/Counter'
+const counter = new Counter()
 
 /**
  * 游戏数据处理工具类
@@ -43675,7 +43165,6 @@ export class GameDataProcessor {
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
     modifierProvider?: IModifierProvider,
   ): BattleParticipantImpl {
-    const counter = new Counter()
     const buffSystem =
       modifierProvider ?? container.resolve<BuffSystem>('BuffSystem')
 
@@ -43684,52 +43173,47 @@ export class GameDataProcessor {
     const passiveModifierTemplates =
       GameDataProcessor.buildPassiveModifiers(passiveSkills)
 
-    // 2. 基础属性（未加任何修饰符）
-    const baseHealth = enemy.stats.health
-    const baseAttack = (enemy.stats.minAttack + enemy.stats.maxAttack) / 2
-    const baseDefense = enemy.stats.defense
-    const baseSpeed = enemy.stats.speed
-
-    // 3. 创建参与者实例（传入基础值，不预先计算最终值）
-    const participant = new BattleParticipantImpl(
-      {
-        id: `${type}_${enemy.id}_${counter.next()}`,
-        name: enemy.name,
-        type,
-        team: type,
-        level: enemy.level,
-        // 基础属性值
-        baseHealth,
-        baseAttack,
-        baseDefense,
-        baseSpeed,
-        // 其他战斗属性默认值
-        critRate: 10,
-        critDamage: 125,
-        damageReduction: 0,
-        // 技能列表
-        skills: {
-          small: GameDataProcessor.getSkillByIds(enemy.skills?.small),
-          passive: passiveSkills,
-          ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate),
-        },
+    // 2. 构造标准初始化 DTO
+    const initData: ParticipantInitData = {
+      id: `[${type}]_${enemy.id}_${counter.next()}`,
+      name: enemy.name,
+      type,
+      team: type,
+      level: enemy.level,
+      maxHealth: enemy.stats.health,
+      currentHealth: enemy.stats.health,
+      maxEnergy: 100,
+      currentEnergy: 25,
+      minAttack: enemy.stats.minAttack,
+      maxAttack: enemy.stats.maxAttack,
+      defense: enemy.stats.defense,
+      speed: enemy.stats.speed,
+      critRate: 10,
+      critDamage: 125,
+      damageReduction: 0,
+      skills: {
+        small: GameDataProcessor.getSkillByIds(enemy.skills?.small),
+        passive: passiveSkills,
+        ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate),
       },
-      buffSystem,
-    )
+    }
+
+    // 3. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
+    const participant = new BattleParticipantImpl(initData, buffSystem)
 
     // 4. 将被动技能修饰符注册到参与者的修饰符堆栈
     const modifierStack = buffSystem.getModifierStack(participant.id)
     if (modifierStack) {
       for (const template of passiveModifierTemplates) {
-        modifierStack.addModifier({
-          buffInstanceId: `passive_${participant.id}_${template.id}`,
-          attribute: template.targetAttribute,
-          value: typeof template.value === 'number' ? template.value : 0,
-          type: template.type,
-        })
+        modifierStack.addModifier(
+          `passive_${participant.id}_${template.id}`,
+          template.targetAttribute,
+          typeof template.value === 'number' ? template.value : 0,
+          template.type,
+        )
       }
       // 标记所有属性为脏，触发重新计算
-      participant.markAllAttributesDirty()
+      participant.markAllDirty()
     } else {
       console.warn(
         `[GameDataProcessor] 无法获取参与者 ${participant.id} 的修饰符堆栈`,
@@ -46511,7 +45995,8 @@ function initBattle() {
 
   const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, PARTICIPANT_SIDE.ALLY));
   const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY));
-
+  console.log('allyTeamData', allyTeamData)
+  console.log('enemyTeamData', enemyTeamData)
   // 使用BattleManager初始化队伍数据
   battleManager.initializeTeams(allyTeamData, enemyTeamData);
 }
@@ -49625,10 +49110,10 @@ const battleStateDisplay = computed(() => {
             @mouseenter="showAttrTooltip($event, '气血', currentCharacter?.maxHp?.options || [], typeof currentCharacter?.maxHp === 'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
-            <span class="monitor-value">{{ typeof currentCharacter?.currentHp === 'object' ?
-              currentCharacter.currentHp.value : currentCharacter?.currentHp || 0 }}/{{ typeof currentCharacter?.maxHp
+            <span class="monitor-value">{{ typeof currentCharacter?.currentHealth === 'object' ?
+              currentCharacter.currentHealth.value : currentCharacter?.currentHealth || 0 }}/{{ typeof currentCharacter?.maxHealth
                 ===
-                'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0 }}</span>
+                'object' ? currentCharacter.maxHealth.value : currentCharacter?.maxHealth || 0 }}</span>
           </div>
           <div class="monitor-item"
             @mouseenter="showAttrTooltip($event, '能量', [], typeof currentCharacter?.currentEnergy === 'object' ? currentCharacter.currentEnergy.value : (currentCharacter?.currentEnergy || 0), '数值')"

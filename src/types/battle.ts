@@ -4,10 +4,7 @@
  * 提供战斗实体、参与者、动作、效果等核心数据结构
  */
 
-import type { Character } from '@/types/character'
-import type { EnemyInstance } from '@/types/enemy'
 import type { BattleAI } from '@/core/BattleAI'
-import type { SkillManager } from '@/core/skill/SkillManager'
 import type { SkillConfig } from '@/types/skill'
 import type {
   AttributeValue,
@@ -17,6 +14,8 @@ import type {
 import type { BattleLogEntry } from '@/types/battle-log'
 import { EffectType } from '@/types/effect'
 import { Counter } from '@/utils/Counter'
+import { Ref } from 'vue'
+import { BattleEventCodes } from './battle-events'
 
 const counter = new Counter()
 
@@ -133,7 +132,10 @@ export const ActionTypes = {
   HEAL: 'heal',
   BUFF: 'buff',
   ITEM: 'item',
+  STATUS: 'status',
 } as const
+
+export type ActionTypes = (typeof ActionTypes)[keyof typeof ActionTypes]
 
 /** 动作类型数组 - 从 ACTION_TYPES 自动生成 */
 export const ValidActionTypes = Object.freeze([
@@ -277,7 +279,7 @@ export interface BattleAction {
   id: string
 
   /** 动作类型：attack-普通攻击, skill-技能, buff-增益/减益, item-物品, status-状态 */
-  type: 'attack' | 'skill' | 'buff' | 'item' | 'status'
+  type: ActionTypes
 
   /** 执行动作的角色ID */
   sourceId: string
@@ -551,40 +553,14 @@ export interface ParticipantInfo {
 }
 
 /**
- * 战斗系统事件类型枚举
- * 定义所有战斗系统支持的事件名称
- * 注意：所有事件必须使用此枚举，禁止使用字符串字面量
- */
-export enum BattleSystemEvent {
-  /** 战斗日志事件 */
-  BATTLE_LOG = 'battleLog',
-  /** 伤害动画事件 */
-  DAMAGE_ANIMATION = 'damageAnimation',
-  /** 闪避动画事件 */
-  MISS_ANIMATION = 'missAnimation',
-  /** Buff 效果事件 */
-  BUFF_EFFECT = 'buffEffect',
-  /** 技能效果事件 */
-  SKILL_EFFECT = 'skillEffect',
-  /** 战斗结束事件 */
-  BATTLE_END = 'battleEnd',
-  /** 战斗重置事件 */
-  BATTLE_RESET = 'battle-reset',
-  /** 回合开始事件 */
-  TURN_START = 'turnStart',
-  /** 回合结束事件 */
-  TURN_END = 'turnEnd',
-}
-
-/**
  * 动画类型联合类型
  * 定义所有支持的动画事件类型
  */
 export type AnimationType =
-  | BattleSystemEvent.DAMAGE_ANIMATION
-  | BattleSystemEvent.MISS_ANIMATION
-  | BattleSystemEvent.BUFF_EFFECT
-  | BattleSystemEvent.SKILL_EFFECT
+  | typeof BattleEventCodes.DAMAGE_ANIMATION
+  | typeof BattleEventCodes.MISS_ANIMATION
+  | typeof BattleEventCodes.BUFF_EFFECT
+  | typeof BattleEventCodes.SKILL_EFFECT
 
 /**
  * 动画队列项接口

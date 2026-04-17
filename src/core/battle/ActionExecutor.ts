@@ -160,8 +160,8 @@ export class ActionExecutor {
   public validateAction(action: BattleAction): boolean {
     if (!action.sourceId || !action.targetId || !action.type) {
       return false
-    }
-    if (!ValidActionTypes.includes(action.type as any)) {
+    } 
+    if (!ValidActionTypes.includes(action.type)) {
       return false
     }
     return true

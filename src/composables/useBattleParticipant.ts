@@ -11,41 +11,41 @@ import type { AttributeValue } from '@/types/attribute'
 import { AttributeCodes } from '@/types/attribute'
 
 /**
- * 战斗参与者属性集合
+ * 战斗参与者属性集合（使用官方 AttributeCodes 标准编码）
  */
 export interface ParticipantStats {
   /** 当前生命值 */
-  hp: AttributeValue
+  currentHealth: AttributeValue
   /** 最大生命值 */
-  maxHp: AttributeValue
+  maxHealth: AttributeValue
   /** 当前能量 */
   energy: AttributeValue
   /** 最大能量 */
   maxEnergy: AttributeValue
   /** 攻击力 */
-  atk: AttributeValue
+  attack: AttributeValue
   /** 防御力 */
-  def: AttributeValue
+  defense: AttributeValue
   /** 速度 */
-  spd: AttributeValue
+  speed: AttributeValue
   /** 暴击率 */
   critRate: AttributeValue
   /** 暴击伤害 */
-  critDmg: AttributeValue
+  critDamage: AttributeValue
   /** 伤害减免 */
-  dmgReduction: AttributeValue
+  damageReduction: AttributeValue
   /** 生命加成 */
-  hpBonus: AttributeValue
+  healthBonus: AttributeValue
   /** 攻击加成 */
-  atkBonus: AttributeValue
+  attackBonus: AttributeValue
   /** 防御加成 */
-  defBonus: AttributeValue
+  defenseBonus: AttributeValue
   /** 速度加成 */
-  spdBonus: AttributeValue
+  speedBonus: AttributeValue
   /** 最小攻击 */
-  minAtk: AttributeValue
+  minAttack: AttributeValue
   /** 最大攻击 */
-  maxAtk: AttributeValue
+  maxAttack: AttributeValue
 }
 
 /**
@@ -83,37 +83,37 @@ export function useBattleParticipant(
   // 使用浅代理，避免 Map 深层代理开销
   const shallowParticipant = shallowReactive<BattleEntity>(participant)
 
-  // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue
+  // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue（使用官方 AttributeCodes 标准编码）
   const stats = computed<ParticipantStats>(() => ({
-    hp: shallowParticipant.getAttributeValue(AttributeCodes.currentHealth)!,
-    maxHp: shallowParticipant.getAttributeValue(AttributeCodes.maxHealth)!,
+    currentHealth: shallowParticipant.getAttributeValue(AttributeCodes.currentHealth)!,
+    maxHealth: shallowParticipant.getAttributeValue(AttributeCodes.maxHealth)!,
     energy: shallowParticipant.getAttributeValue(AttributeCodes.energy)!,
     maxEnergy: shallowParticipant.getAttributeValue(AttributeCodes.maxEnergy)!,
-    atk: shallowParticipant.getAttributeValue(AttributeCodes.attack)!,
-    def: shallowParticipant.getAttributeValue(AttributeCodes.defense)!,
-    spd: shallowParticipant.getAttributeValue(AttributeCodes.speed)!,
+    attack: shallowParticipant.getAttributeValue(AttributeCodes.attack)!,
+    defense: shallowParticipant.getAttributeValue(AttributeCodes.defense)!,
+    speed: shallowParticipant.getAttributeValue(AttributeCodes.speed)!,
     critRate: shallowParticipant.getAttributeValue(AttributeCodes.critRate)!,
-    critDmg: shallowParticipant.getAttributeValue(AttributeCodes.critDamage)!,
-    dmgReduction: shallowParticipant.getAttributeValue(
+    critDamage: shallowParticipant.getAttributeValue(AttributeCodes.critDamage)!,
+    damageReduction: shallowParticipant.getAttributeValue(
       AttributeCodes.damageReduction,
     )!,
-    hpBonus: shallowParticipant.getAttributeValue(AttributeCodes.healthBonus)!,
-    atkBonus: shallowParticipant.getAttributeValue(AttributeCodes.attackBonus)!,
-    defBonus: shallowParticipant.getAttributeValue(AttributeCodes.defenseBonus)!,
-    spdBonus: shallowParticipant.getAttributeValue(AttributeCodes.speedBonus)!,
-    minAtk: shallowParticipant.getAttributeValue(AttributeCodes.minAttack)!,
-    maxAtk: shallowParticipant.getAttributeValue(AttributeCodes.maxAttack)!,
+    healthBonus: shallowParticipant.getAttributeValue(AttributeCodes.healthBonus)!,
+    attackBonus: shallowParticipant.getAttributeValue(AttributeCodes.attackBonus)!,
+    defenseBonus: shallowParticipant.getAttributeValue(AttributeCodes.defenseBonus)!,
+    speedBonus: shallowParticipant.getAttributeValue(AttributeCodes.speedBonus)!,
+    minAttack: shallowParticipant.getAttributeValue(AttributeCodes.minAttack)!,
+    maxAttack: shallowParticipant.getAttributeValue(AttributeCodes.maxAttack)!,
   }))
 
   // 派生状态
   const isAlive = computed(() => shallowParticipant.isAlive())
   const isDead = computed(() => !isAlive.value)
 
-  // 百分比计算
+  // 百分比计算（使用官方 AttributeCodes 标准编码）
   const hpPercent = computed(() => {
-    const hp = stats.value.hp.value
-    const maxHp = stats.value.maxHp.value
-    return maxHp > 0 ? (hp / maxHp) * 100 : 0
+    const currentHealth = stats.value.currentHealth.value
+    const maxHealth = stats.value.maxHealth.value
+    return maxHealth > 0 ? (currentHealth / maxHealth) * 100 : 0
   })
 
   const energyPercent = computed(() => {

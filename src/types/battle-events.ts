@@ -47,14 +47,50 @@ export interface SkillEffectEventData {
   damageType: string;
 }
 
+// 团队数据变更事件数据类型
+export interface TeamDataChangedEventData {
+  allyTeam: BattleEntity[];
+  enemyTeam: BattleEntity[];
+}
+
+
+export const BattleEventCodes = {
+  /** 战斗日志事件 */
+  BATTLE_LOG: 'battle-log',
+  /** 伤害动画事件 */
+  DAMAGE_ANIMATION: 'damage-animation',
+  /** 闪避动画事件 */
+  MISS_ANIMATION: 'miss-animation',
+  /** 战斗结束事件 */
+  BATTLE_ENDED: 'battle-ended',
+  /** Buff 效果事件 */
+  BUFF_EFFECT: 'buff-effect',
+  /** 技能效果事件 */
+  SKILL_EFFECT: 'skill-effect',
+  /** 团队数据变更事件 */
+  TEAM_DATA_CHANGED: 'team-data-changed',
+  /** 战斗重置事件 */
+  BATTLE_RESET: 'battle-reset',
+  /** 回合开始事件 */
+  TURN_START: 'turnStart',
+  /** 回合结束事件 */
+  TURN_END: 'turnEnd',
+} as const
+
+export type BattleEventCode = (typeof BattleEventCodes)[keyof typeof BattleEventCodes]
+
 // 战斗事件类型映射
 export interface BattleEvents {
-  'battle-log': BattleLogEventData;
-  'damage-animation': DamageAnimationEventData;
-  'miss-animation': MissAnimationEventData;
-  'battle-ended': BattleEndedEventData;
-  'buff-effect': BuffEffectEventData;
-  'skill-effect': SkillEffectEventData;
+  [BattleEventCodes.BATTLE_LOG]: BattleLogEventData;
+  [BattleEventCodes.DAMAGE_ANIMATION]: DamageAnimationEventData;
+  [BattleEventCodes.MISS_ANIMATION]: MissAnimationEventData;
+  [BattleEventCodes.BATTLE_ENDED]: BattleEndedEventData;
+  [BattleEventCodes.BUFF_EFFECT]: BuffEffectEventData;
+  [BattleEventCodes.SKILL_EFFECT]: SkillEffectEventData;
+  [BattleEventCodes.TEAM_DATA_CHANGED]: void;
+  [BattleEventCodes.BATTLE_RESET]: void;
+  [BattleEventCodes.TURN_START]: void;
+  [BattleEventCodes.TURN_END]: void;
 }
 
 // 战斗事件名称类型

@@ -4,7 +4,7 @@
       <div class="battle-header">
         <div class="turn-info">
           <span class="turn-label">当前回合:</span>
-          <span class="turn-num">{{ currentTurn }}/{{ maxTurns }}</span>
+          <span class="turn-num">{{ store.currentTurn }}/{{ store.maxTurns }}</span>
           <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} ( 速度:{{ getMemberSpeed(currentActor)
           }})</span>
         </div>
@@ -16,9 +16,9 @@
           <div class="party-members">
             <ParticipantCard v-for="member in filterAllyTeam" :key="member.id"
               :ref="el => participantCardRefs[member.id] = el" :participant="member"
-              :is-active="isCurrentActor(member.id)" :is-selected="selectedCharacterId === member.id" :is-enemy="false"
-              :show-debug="false" @click="selectCharacter(member.id)" @status-tooltip-show="showStatusTooltip"
-              @status-tooltip-hide="hideStatusTooltip" />
+              :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
+              :is-enemy="false" :show-debug="false" @click="selectCharacter(member.id)"
+              @status-tooltip-show="showStatusTooltip" @status-tooltip-hide="hideStatusTooltip" />
           </div>
         </div>
 
@@ -31,9 +31,9 @@
           <div class="party-members">
             <ParticipantCard v-for="member in filterEnemyTeam" :key="member.id"
               :ref="el => participantCardRefs[member.id] = el" :participant="member"
-              :is-active="isCurrentActor(member.id)" :is-selected="selectedCharacterId === member.id" :is-enemy="true"
-              :show-debug="false" @click="selectCharacter(member.id)" @status-tooltip-show="showStatusTooltip"
-              @status-tooltip-hide="hideStatusTooltip" />
+              :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
+              :is-enemy="true" :show-debug="false" @click="selectCharacter(member.id)"
+              @status-tooltip-show="showStatusTooltip" @status-tooltip-hide="hideStatusTooltip" />
             <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>
@@ -88,7 +88,9 @@ import ParticipantCard from "@/components/ParticipantCard.vue";
 import type { AttributeValue } from '@/types';
 import type { BattleManager } from '@/core/battle/BattleManager';
 import type { BattleEntity, StatusEffect } from '@/types/battle';
+import { useBattleStore } from '@/stores/battleStore'
 
+const store = useBattleStore()
 const battleManager = container.resolve<BattleManager>('BattleManager');
 
 const props = defineProps<{
@@ -133,11 +135,8 @@ watch(() => props.battleSpeed, (newSpeed) => {
 }, { immediate: true });
 
 // 响应式获取队伍数据
-const allyTeam = computed(() => battleManager.getAllyTeam());
-const enemyTeam = computed(() => battleManager.getEnemyTeam());
-const selectedCharacterId = computed(() => battleManager.getSelectedCharacterId());
-const currentTurn = computed(() => battleManager.getCurrentTurn());
-const maxTurns = computed(() => battleManager.getMaxTurns());
+const allyTeam = computed(() => store.allyTeam)
+const enemyTeam = computed(() => store.enemyTeam)
 
 // 辅助函数：转换为数字（兼容 AttributeValue 和 number）
 function toNumber(value: number | AttributeValue | undefined): number {
@@ -164,39 +163,27 @@ function isCurrentActor(memberId: string): boolean {
 
 // 根据回合顺序排序角色列表
 const filterAllyTeam = computed(() => {
-  const aliveAllies = allyTeam.value.filter((c) => c.isAlive());
-  if (props.turnOrder) {
-    // 如果有回合顺序，按照回合顺序排序
-    return aliveAllies.sort((a, b) => {
-      const indexA = props.turnOrder!.indexOf(a.id);
-      const indexB = props.turnOrder!.indexOf(b.id);
-      // 不在回合顺序中的角色放在最后
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
-  } else {
-    // 否则按速度排序
-    return aliveAllies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
-  }
+  return allyTeam.value;
+
 });
 
+// const aliveEnemies = enemyTeam.value.filter((c) => c.isAlive());
+//   if (props.turnOrder) {
+//     // 如果有回合顺序，按照回合顺序排序
+//     return aliveEnemies.sort((a, b) => {
+//       const indexA = props.turnOrder!.indexOf(a.id);
+//       const indexB = props.turnOrder!.indexOf(b.id);
+//       // 不在回合顺序中的角色放在最后
+//       if (indexA === -1) return 1;
+//       if (indexB === -1) return -1;
+//       return indexA - indexB;
+//     });
+//   } else {
+//     // 否则按速度排序
+//     return aliveEnemies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
+//   }
 const filterEnemyTeam = computed(() => {
-  const aliveEnemies = enemyTeam.value.filter((c) => c.isAlive());
-  if (props.turnOrder) {
-    // 如果有回合顺序，按照回合顺序排序
-    return aliveEnemies.sort((a, b) => {
-      const indexA = props.turnOrder!.indexOf(a.id);
-      const indexB = props.turnOrder!.indexOf(b.id);
-      // 不在回合顺序中的角色放在最后
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
-  } else {
-    // 否则按速度排序
-    return aliveEnemies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
-  }
+  return enemyTeam.value;
 });
 
 const currentActor = computed(() => {

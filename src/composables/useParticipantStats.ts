@@ -25,7 +25,7 @@ export interface FormattedAttribute {
 }
 
 /**
- * 属性访问 Composable 返回值
+ * 属性访问 Composable 返回值（使用官方 AttributeCodes 标准编码）
  */
 export interface UseParticipantStatsReturn {
   /** 获取格式化属性 */
@@ -36,26 +36,26 @@ export interface UseParticipantStatsReturn {
   getAttribute: (type: AttributeCodes) => AttributeValue | undefined
   /** 获取计算拆解 */
   getBreakdown: (type: AttributeCodes) => any
-  /** 生命值 */
-  hp: ComputedRef<FormattedAttribute>
+  /** 当前生命值 */
+  currentHealth: ComputedRef<FormattedAttribute>
   /** 最大生命值 */
-  maxHp: ComputedRef<FormattedAttribute>
+  maxHealth: ComputedRef<FormattedAttribute>
   /** 能量 */
   energy: ComputedRef<FormattedAttribute>
   /** 最大能量 */
   maxEnergy: ComputedRef<FormattedAttribute>
   /** 攻击力 */
-  atk: ComputedRef<FormattedAttribute>
+  attack: ComputedRef<FormattedAttribute>
   /** 防御力 */
-  def: ComputedRef<FormattedAttribute>
+  defense: ComputedRef<FormattedAttribute>
   /** 速度 */
-  spd: ComputedRef<FormattedAttribute>
+  speed: ComputedRef<FormattedAttribute>
   /** 暴击率 */
   critRate: ComputedRef<FormattedAttribute>
   /** 暴击伤害 */
-  critDmg: ComputedRef<FormattedAttribute>
+  critDamage: ComputedRef<FormattedAttribute>
   /** 伤害减免 */
-  dmgReduction: ComputedRef<FormattedAttribute>
+  damageReduction: ComputedRef<FormattedAttribute>
 }
 
 /**
@@ -115,17 +115,17 @@ export function useParticipantStats(
     return getAttribute(type)?.breakdown || null
   }
 
-  // 常用属性的计算属性
-  const hp = computed(() => getFormatted(AttributeCodes.currentHealth))
-  const maxHp = computed(() => getFormatted(AttributeCodes.maxHealth))
+  // 常用属性的计算属性（使用官方 AttributeCodes 标准编码）
+  const currentHealth = computed(() => getFormatted(AttributeCodes.currentHealth))
+  const maxHealth = computed(() => getFormatted(AttributeCodes.maxHealth))
   const energy = computed(() => getFormatted(AttributeCodes.energy))
   const maxEnergy = computed(() => getFormatted(AttributeCodes.maxEnergy))
-  const atk = computed(() => getFormatted(AttributeCodes.attack))
-  const def = computed(() => getFormatted(AttributeCodes.defense))
-  const spd = computed(() => getFormatted(AttributeCodes.speed))
+  const attack = computed(() => getFormatted(AttributeCodes.attack))
+  const defense = computed(() => getFormatted(AttributeCodes.defense))
+  const speed = computed(() => getFormatted(AttributeCodes.speed))
   const critRate = computed(() => getFormatted(AttributeCodes.critRate))
-  const critDmg = computed(() => getFormatted(AttributeCodes.critDamage))
-  const dmgReduction = computed(() =>
+  const critDamage = computed(() => getFormatted(AttributeCodes.critDamage))
+  const damageReduction = computed(() =>
     getFormatted(AttributeCodes.damageReduction),
   )
 
@@ -134,34 +134,34 @@ export function useParticipantStats(
     getValue,
     getAttribute,
     getBreakdown,
-    hp,
-    maxHp,
+    currentHealth,
+    maxHealth,
     energy,
     maxEnergy,
-    atk,
-    def,
-    spd,
+    attack,
+    defense,
+    speed,
     critRate,
-    critDmg,
-    dmgReduction,
+    critDamage,
+    damageReduction,
   }
 }
 
 /**
- * 战斗属性类型（用于 UI 显示）
+ * 战斗属性类型（用于 UI 显示，使用官方 AttributeCodes 标准编码）
  */
-export type CombatStatType = 'hp' | 'energy' | 'atk' | 'def' | 'spd' | 'crit'
+export type CombatStatType = 'currentHealth' | 'energy' | 'attack' | 'defense' | 'speed' | 'crit'
 
 /**
  * 获取战斗属性显示名称
  */
 export function getStatName(type: CombatStatType): string {
   const names: Record<CombatStatType, string> = {
-    hp: '生命',
+    currentHealth: '生命',
     energy: '能量',
-    atk: '攻击',
-    def: '防御',
-    spd: '速度',
+    attack: '攻击',
+    defense: '防御',
+    speed: '速度',
     crit: '暴击',
   }
   return names[type]
@@ -172,11 +172,11 @@ export function getStatName(type: CombatStatType): string {
  */
 export function getStatIcon(type: CombatStatType): string {
   const icons: Record<CombatStatType, string> = {
-    hp: '❤️',
+    currentHealth: '❤️',
     energy: '⚡',
-    atk: '⚔️',
-    def: '🛡️',
-    spd: '💨',
+    attack: '⚔️',
+    defense: '🛡️',
+    speed: '💨',
     crit: '🎯',
   }
   return icons[type]

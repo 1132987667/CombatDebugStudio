@@ -598,8 +598,8 @@ export class GameDataProcessor {
     if (!character.buffs) return 0
 
     const bonuses = character.buffs.filter((buff) => !buff.isPositive)
-    if (stat === AttributeCode.atkBonus) return bonuses.length * 10
-    if (stat === AttributeCode.defBonus) return bonuses.length * 5
+    if (stat === AttributeCodes.attackBonus) return bonuses.length * 10
+    if (stat === AttributeCodes.defenseBonus) return bonuses.length * 5
     return 0
   }
 

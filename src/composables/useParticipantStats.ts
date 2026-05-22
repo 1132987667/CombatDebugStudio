@@ -7,7 +7,7 @@
 
 import { computed, type ComputedRef } from 'vue'
 import type { BattleEntity } from '@/types/battle'
-import type { AttributeValue, AttributeCodes } from '@/types/attribute'
+import type { AttributeValue, CalculationBreakdown } from '@/types/attribute'
 import { AttributeCodes } from '@/types/attribute'
 
 /**
@@ -35,7 +35,7 @@ export interface UseParticipantStatsReturn {
   /** 获取属性对象 */
   getAttribute: (type: AttributeCodes) => AttributeValue | undefined
   /** 获取计算拆解 */
-  getBreakdown: (type: AttributeCodes) => any
+  getBreakdown: (type: AttributeCodes) => CalculationBreakdown | undefined
   /** 当前生命值 */
   currentHealth: ComputedRef<FormattedAttribute>
   /** 最大生命值 */
@@ -111,7 +111,7 @@ export function useParticipantStats(
   }
 
   // 获取计算拆解
-  const getBreakdown = (type: AttributeCodes): any => {
+  const getBreakdown = (type: AttributeCodes): CalculationBreakdown | null => {
     return getAttribute(type)?.breakdown || null
   }
 

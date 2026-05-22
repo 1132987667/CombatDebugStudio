@@ -28,6 +28,8 @@ import { BattleRecorder } from '@/core/battle/BattleRecorder'
 import { BattleRuleManager } from '@/core/battle/BattleRuleManager'
 import { SkillManager } from '@/core/skill/SkillManager'
 import { PassiveSkillManager, PassiveSkillTrigger } from '@/core/skill/PassiveSkillManager'
+import type { BuffSystem } from '@/core/BuffSystem'
+import type { DamageCalculator } from '@/core/skill/DamageCalculator'
 import type { BattleLogEntry } from '@/types/battle-log'
 
 /**
@@ -56,18 +58,17 @@ export class GameBattleSystem implements IBattleSystem {
   // 事件系统使用全局事件总线
 
   // 技能管理器实例
-  private skillManager
-  private passiveSkillManager
+  private skillManager: SkillManager
+  private passiveSkillManager: PassiveSkillManager
   private ruleManager: BattleRuleManager
-  private buffSystem
-  private damageCalculator
+  private buffSystem: BuffSystem
   private turnManager: TurnManager
   private actionExecutor: ActionExecutor
   private participantManager: ParticipantManager
   private aiSystem: AISystem
   private battleRecorder: BattleRecorder
   private curParticipantsInfo: BattleParticipant[] = []
-  private rafTimer
+  private rafTimer: number | null = null
   /** 动画播放状态管理 */
   private animationState = new Map<string, {
     isPlaying: boolean
@@ -80,18 +81,25 @@ export class GameBattleSystem implements IBattleSystem {
 
   // 私有构造函数，防止外部直接实例化
   private constructor(
-    private turnManager: TurnManager,
-    private actionExecutor: ActionExecutor,
-    private participantManager: ParticipantManager,
-    private aiSystem: AISystem,
-    private battleRecorder: BattleRecorder,
-    private ruleManager: BattleRuleManager,
-    private damageCalculator,
-    private rafTimer,
-    private skillManager,
-    private buffSystem,
-    private passiveSkillManager
+    turnManager: TurnManager,
+    actionExecutor: ActionExecutor,
+    participantManager: ParticipantManager,
+    aiSystem: AISystem,
+    battleRecorder: BattleRecorder,
+    ruleManager: BattleRuleManager,
+    skillManager: SkillManager,
+    buffSystem: BuffSystem,
+    passiveSkillManager: PassiveSkillManager
   ) {
+    this.turnManager = turnManager
+    this.actionExecutor = actionExecutor
+    this.participantManager = participantManager
+    this.aiSystem = aiSystem
+    this.battleRecorder = battleRecorder
+    this.ruleManager = ruleManager
+    this.skillManager = skillManager
+    this.buffSystem = buffSystem
+    this.passiveSkillManager = passiveSkillManager
     this.curBattleData = this.getDefBattleData()
     this.curBattleId = this.curBattleData.battleId
   }
@@ -108,11 +116,9 @@ export class GameBattleSystem implements IBattleSystem {
     aiSystem: AISystem,
     battleRecorder: BattleRecorder,
     ruleManager: BattleRuleManager,
-    damageCalculator: any,
-    rafTimer: any,
-    skillManager: any,
-    buffSystem: any,
-    passiveSkillManager: any
+    skillManager: SkillManager,
+    buffSystem: BuffSystem,
+    passiveSkillManager: PassiveSkillManager
   ): GameBattleSystem {
     return new GameBattleSystem(
       turnManager,
@@ -121,8 +127,6 @@ export class GameBattleSystem implements IBattleSystem {
       aiSystem,
       battleRecorder,
       ruleManager,
-      damageCalculator,
-      rafTimer,
       skillManager,
       buffSystem,
       passiveSkillManager
@@ -1253,7 +1257,7 @@ export class GameBattleSystem implements IBattleSystem {
 
     // 清理自动战斗定时器
     if (battle.autoBattleIntervalId) {
-      this.rafTimer.clearTimeout(battle.autoBattleIntervalId)
+      clearTimeout(battle.autoBattleIntervalId)
       battle.autoBattleIntervalId = undefined
     }
 
@@ -1453,7 +1457,7 @@ export class GameBattleSystem implements IBattleSystem {
         }
         // 继续下一回合
         const delay = this.getBattleDelay(battleId)
-        const intervalId = this.rafTimer.setTimeout(autoBattleLoop, delay)
+        const intervalId = setTimeout(autoBattleLoop, delay)
         battle.autoBattleIntervalId = intervalId
       } catch (error) {
         this.battleLogger.error('自动战斗出错:', error)
@@ -1462,7 +1466,7 @@ export class GameBattleSystem implements IBattleSystem {
     }
     // 初始延迟
     const delay = this.getBattleDelay(battleId)
-    const intervalId = this.rafTimer.setTimeout(autoBattleLoop, delay)
+    const intervalId = setTimeout(autoBattleLoop, delay)
     curBattleData.autoBattleIntervalId = intervalId
     this.battleLogger.info(`自动战斗开始: ${this.curBattleId}`)
   }

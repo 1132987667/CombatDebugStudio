@@ -100,6 +100,12 @@ export class BattleSystem implements IBattleSystem {
   private battleData: BattleData
 
   /**
+   * 当前活跃的战斗 ID（用于防止跨战斗污染）
+   * 在 initialize 时设置，在 resetBattle 时清空
+   */
+  private activeBattleId: string | null = null
+
+  /**
    * 动画队列，存储待播放的动画事件
    * @see AnimationQueueItem
    */
@@ -302,6 +308,10 @@ export class BattleSystem implements IBattleSystem {
       participants.set(participant.id, participant)
     })
     const battleData = this.battleData
+    
+    // 【防止跨战斗污染】设置当前活跃战斗 ID
+    this.activeBattleId = battleData.battleId
+    
     battleData.participants = participants
     console.log('初始化战斗数据', battleData)
     eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED)
@@ -466,6 +476,12 @@ export class BattleSystem implements IBattleSystem {
 
       for (let i = 0; i < currentTurnOrder.length; i++) {
         await this.waitForAnimation()
+        
+        // 【竞态条件防护】检查战斗状态是否仍然有效
+        if (battle.battleState !== BattleStatus.ACTIVE) {
+          return
+        }
+        
         const participantId = currentTurnOrder[i]
         const participant = battle.participants.get(participantId)
         if (!participant || !participant.isAlive()) {
@@ -483,6 +499,11 @@ export class BattleSystem implements IBattleSystem {
           await this.executeDefaultAction(battle, participant)
         }
 
+        // 【竞态条件防护】检查战斗状态是否仍然有效
+        if (battle.battleState !== BattleStatus.ACTIVE) {
+          return
+        }
+        
         await this.waitForAnimation()
 
         this.buffSystem.updatePerTurn(participant.id, battle.currentRound || 1)
@@ -495,6 +516,11 @@ export class BattleSystem implements IBattleSystem {
       }
 
       await this.waitForAnimation()
+
+      // 【竞态条件防护】检查战斗状态是否仍然有效
+      if (battle.battleState !== BattleStatus.ACTIVE) {
+        return
+      }
 
       // 发送回合结束事件到 UI 层
       eventBus.emit(BattleEventCodes.TURN_END, {})
@@ -2175,45 +2201,65 @@ export class BattleSystem implements IBattleSystem {
     }
 
     this.isAnimationPlaying = true
-    const animation: AnimationQueueItem = this.animationQueue.shift()
+    const animation: AnimationQueueItem = this.animationQueue.shift()!
+    
+    // 【动画状态脱节防护】检查目标是否仍然存在且存活
+    if (animation.data && 'targetId' in animation.data) {
+      const targetId = (animation.data as any).targetId
+      const target = this.battleData.participants.get(targetId)
+      if (!target || !target.isAlive()) {
+        console.warn(`[Animation] 跳过已死亡或不存在的目标动画：${animation.type} for ${targetId}`)
+        // 继续处理下一个动画
+        this.processAnimationQueue()
+        return
+      }
+    }
+    
     eventBus.emit(animation.type, animation.data)
     console.log(
-      `[DEBUG] 开始播放动画: type=${animation.type}, duration=${animation.duration}`,
+      `[DEBUG] 开始播放动画：type=${animation.type}, duration=${animation.duration}`,
     )
-    console.log(`[DEBUG] animation 对象详情:`, {
-      type: animation.type,
-      duration: animation.duration,
-      hasResolve: !!animation.resolve,
-      resolveType: typeof animation.resolve,
-    })
 
+    // 【超时保护】防止动画永久卡住
+    const TIMEOUT_MS = Math.max(animation.duration + 2000, 5000)
+    
     await new Promise<void>((resolve) => {
-      this.rafTimer.setTimeout(() => {
-        console.log(`[DEBUG] this.rafTimer.setTimeout(() => {`)
+      let resolved = false
+      
+      const safeResolve = () => {
+        if (resolved) return
+        resolved = true
+        clearTimeout(timeoutId)
+        this.rafTimer.clearTimeout(timerId)
+        
         try {
-          if (animation && typeof animation.resolve === 'function') {
+          if (typeof animation.resolve === 'function') {
             animation.resolve()
-          } else {
-            console.error('[Animation] resolve is not a function', animation)
-            // 手动创建一个 resolve 以避免卡死
-            if (animation && animation.resolve === undefined) {
-              // 无法恢复，至少继续队列
-            }
           }
         } catch (err) {
           console.error('[Animation] error in resolve:', err)
         }
+        
         // 无论成功与否，继续处理下一个动画
-        console.log(`[DEBUG] processAnimationQueue start`)
         this.processAnimationQueue()
-        console.log(`[DEBUG] processAnimationQueue end`)
         resolve()
+      }
+      
+      // 正常超时（基于动画时长）
+      const timerId = this.rafTimer.setTimeout(() => {
+        console.log(`[DEBUG] 动画定时器触发：${animation.type}`)
+        safeResolve()
       }, animation.duration)
+      
+      // 安全超时（额外缓冲时间，防止卡死）
+      const timeoutId = setTimeout(() => {
+        console.warn(`[Animation] 动画超时强制继续：${animation.type} (${TIMEOUT_MS}ms)`);
+        safeResolve()
+      }, TIMEOUT_MS)
     })
 
     console.log(`[DEBUG] await new Promise<void> end`)
   }
-
   /**
    * 检查是否有动画正在播放
    * @returns 是否有动画正在播放

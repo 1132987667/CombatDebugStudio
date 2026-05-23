@@ -711,6 +711,8 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 是否存活
    */
   isAlive(): boolean {
+    // 使用严格比较确保死亡判定准确
+    // HP <= 0 即视为死亡，避免 epsilon 导致的"锁血"问题
     return this.currentHealth > 0
   }
 

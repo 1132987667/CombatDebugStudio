@@ -132,18 +132,26 @@ export interface LogEntry {
   type: LogType
   /** 日志级别 */
   level?: LogLevel
-  /** 日志消息 */
+  /** 日志消息（已废弃，推荐使用 segments） */
   message?: string
-  /** 操作 */
+  /** 操作类型 */
   action?: string
   /** 额外的上下文数据 */
   context?: Record<string, any>
   /** 日志来源标识 */
   source?: string
+  /** 目标标识 */
+  target?: string
   /** 错误对象 */
   error?: Error
-  /** 日志片段数组 */
+  /** 日志片段数组（推荐使用的结构化日志格式） */
   segments?: LogSegment[]
+  /** 回合号（仅战斗日志使用） */
+  turn?: number | string
+  /** 日志类别（业务维度） */
+  category?: BattleLogCategory
+  /** 日志详细类别 */
+  detailCategory?: string
 }
 
 /**
@@ -151,49 +159,10 @@ export interface LogEntry {
  * 精简版本：移除冗余字段，仅保留核心数据
  */
 export interface BattleLogEntry extends LogEntry {
-  /** 日志索引 */
-  index: number
-  /** 日志类型 */
-  type: LogType
-  /** 新 回合号，如 '回合1' 或 '回合开始' */
-  turn: number
-  /** 日志消息 */
-  message: string
-  /** 目标 */
-  target?: string
-  /** 来源（角色名或"系统"） */
-  source?: string
-  /** 日志类别（业务维度） */
-  category?: BattleLogCategory
-  /** 日志详细类别 */
-  detailCategory?: string
-  /** 日志片段列表，用于结构化渲染（必需） */
-  segments?: LogSegment[]
-}
-
-/**
- * 战斗日志格式化选项 - 统一格式化参数
- */
-export interface LogFormatOptions {
+  /** 回合号（必需） */
   turn: number | string
-  source: string
-  target: string
-  skillName?: string
-  damage?: number
-  damageType?: string
-  heal?: number
-  effect?: string
-  duration?: number
-  targetScope?: string
-  triggerTime?: string
-  statusName?: string
-  isCritical?: boolean
-  isMissed?: boolean
-  isBlocked?: boolean
-  stanceName?: string
-  chargeDescription?: string
-  exp?: number
-  gold?: number
+  /** 日志消息（必需） */
+  message: string
 }
 
 /**

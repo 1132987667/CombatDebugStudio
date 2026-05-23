@@ -122,7 +122,8 @@ export const useBattleStore = defineStore('battle', () => {
     allyTeam.value = battleManager.value.getAllyTeam()
     enemyTeam.value = battleManager.value.getEnemyTeam()
     currentTurn.value = battleManager.value.getCurrentTurn()
-    isBattleActive.value = battleManager.value.getBattleState()?.battleState === 'ACTIVE'
+    const battleState = battleManager.value.getBattleState()
+    isBattleActive.value = battleState?.battleState === 'ACTIVE' || false
   }
 
   /**
@@ -149,6 +150,10 @@ export const useBattleStore = defineStore('battle', () => {
   const handleBattleEndEvent = (data: any) => {
     isBattleActive.value = false
     autoPlayMode.value = false
+    // 同步 BattleStateManager 的状态
+    if (battleManager.value) {
+      battleManager.value.syncBattleState()
+    }
     if (data?.winner) {
       battleLogManager.addBattleLog(
         battleManager.value?.getTurn() ?? 1,
@@ -656,6 +661,16 @@ export const useBattleStore = defineStore('battle', () => {
     enemyTeam,                // 敌方队伍
     currentTurn,              // 当前回合数
     isBattleActive,           // 战斗激活状态
+
+    // ========== Computed Getters (用于模板访问) ==========
+    getCurrentActorId: () => currentActorId.value,
+    getIsBattleActive: () => isBattleActive.value,
+    getAnimationState: () => animationState,
+    getCurrentTurn: () => currentTurn.value,
+    getAllyTeam: () => allyTeam.value,
+    getEnemyTeam: () => enemyTeam.value,
+    getTurnOrder: () => turnOrder.value,
+    getBattleSpeed: () => battleSpeed.value,
 
     // ========== 同步方法（Sync） ==========
     syncTeams,                // 同步队伍数据

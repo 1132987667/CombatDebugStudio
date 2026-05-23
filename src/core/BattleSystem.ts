@@ -411,6 +411,10 @@ export class BattleSystem implements IBattleSystem {
     }
 
     try {
+      // 发送回合开始事件到 UI 层
+      const firstActorId = currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
+      eventBus.emit(BattleEventCodes.TURN_START, { actorId: firstActorId })
+
       // 触发回合开始事件
       aliveParticipants.forEach((participant) => {
         this.emitTriggerEvent('ON_TURN_START', {
@@ -468,6 +472,10 @@ export class BattleSystem implements IBattleSystem {
           continue
         }
         battle.currentTurn = i
+        
+        // 在每个角色行动前，发送当前行动者更新事件到 UI 层
+        eventBus.emit(BattleEventCodes.TURN_START, { actorId: participantId })
+        
         try {
           await this.executeParticipantAction(battle, participant)
         } catch (error) {
@@ -487,6 +495,9 @@ export class BattleSystem implements IBattleSystem {
       }
 
       await this.waitForAnimation()
+
+      // 发送回合结束事件到 UI 层
+      eventBus.emit(BattleEventCodes.TURN_END, {})
 
       // 触发回合结束事件
       const endParticipants = Array.from(battle.participants.values()).filter(

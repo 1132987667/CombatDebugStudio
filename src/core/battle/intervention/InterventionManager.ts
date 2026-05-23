@@ -65,12 +65,12 @@ export class InterventionManager {
   endTurn() {
     // 结束当前回合的逻辑
     if (this.selectedCharacterId) {
-      this.battleLogManager.addActionLog(
-        '系统',
-        '结束回合',
-        this.selectedChar?.name || '',
-        '回合结束',
-      )
+      this.battleLogManager.addActionLog({
+        source: '系统',
+        action: '结束回合',
+        target: this.selectedChar?.name || '',
+        message: '回合结束',
+      })
       this.selectedCharacterId = null
     }
   }
@@ -81,12 +81,12 @@ export class InterventionManager {
    */
   executeSkill(skillName: string) {
     if (this.selectedChar) {
-      this.battleLogManager.addActionLog(
-        this.selectedChar.name,
-        '使用技能',
-        '',
-        skillName,
-      )
+      this.battleLogManager.addActionLog({
+        source: this.selectedChar.name,
+        action: '使用技能',
+        target: '',
+        message: skillName,
+      })
     }
   }
 
@@ -117,12 +117,12 @@ export class InterventionManager {
         buffs: [...this.selectedChar.buffs],
       })
 
-      this.battleLogManager.addActionLog(
-        '系统',
-        '添加状态',
-        this.selectedChar.name,
-        `${status.name} (${status.turns}回合)`,
-      )
+      this.battleLogManager.addActionLog({
+        source: '系统',
+        action: '添加状态',
+        target: this.selectedChar.name,
+        message: `${status.name} (${status.turns}回合)`,
+      })
     }
   }
 
@@ -150,12 +150,12 @@ export class InterventionManager {
         currentEnergy: newEnergy,
       })
 
-      this.battleLogManager.addActionLog(
-        '系统',
-        '调整属性',
-        this.selectedChar.name,
-        `HP:${stats.hp}, 能量:${stats.energy}`,
-      )
+      this.battleLogManager.addActionLog({
+        source: '系统',
+        action: '调整属性',
+        target: this.selectedChar.name,
+        message: `HP:${stats.hp}, 能量:${stats.energy}`,
+      })
     }
   }
 
@@ -168,12 +168,12 @@ export class InterventionManager {
         buffs: [],
       })
 
-      this.battleLogManager.addActionLog(
-        '系统',
-        '清除状态',
-        this.selectedChar.name,
-        '所有状态已清除',
-      )
+      this.battleLogManager.addActionLog({
+        source: '系统',
+        action: '清除状态',
+        target: this.selectedChar.name,
+        message: '所有状态已清除',
+      })
     }
   }
 

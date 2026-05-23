@@ -30,14 +30,43 @@ import { reactive } from 'vue'
 import { Counter } from '@/utils/Counter'
 import type { Item } from '@/types/Item'
 
+/**
+ * 统一的日志参数接口 - 所有日志方法都使用此接口
+ */
+export interface UnifiedLogParams {
+  /** 日志消息（可选，与 segments 二选一） */
+  message?: string
+  /** 日志片段数组（推荐使用的结构化格式） */
+  segments?: LogSegment[]
+  /** 日志级别 */
+  level?: LogLevel
+  /** 日志来源 */
+  source?: string
+  /** 日志目标 */
+  target?: string
+  /** 操作类型 */
+  action?: string
+  /** 回合号 */
+  turn?: number | string
+  /** 日志类别 */
+  category?: BattleLogCategory
+  /** 日志详细类别 */
+  detailCategory?: string
+  /** 上下文数据 */
+  context?: Record<string, unknown>
+  /** 错误对象 */
+  error?: Error
+}
+
+
 export class ConsoleLogHandler implements LogHandler {
   handle(entry: LogEntry): void {
     const index = entry.index
-    const levelName = LogLevelLabel[entry.level]
+    const levelName = LogLevelLabel[entry.level ?? LogLevel.INFO]
     const contextStr = entry.context ? JSON.stringify(entry.context) : ''
     const errorStr = entry.error ? `\nError: ${entry.error.message}` : ''
 
-    const logMessage = `[${index}] ${levelName}: ${entry.message} ${contextStr}${errorStr}`
+    const logMessage = `[${index}] ${levelName}: ${entry.message || ''} ${contextStr}${errorStr}`
 
     switch (entry.level) {
       case LogLevel.ERROR:
@@ -234,14 +263,18 @@ export class BattleLogManager {
 
   /**
    * 添加【战斗】类型日志
+   * @param params 统一日志参数
    */
-  addBattleLog(
-    turn: number,
-    message: string,
-    segments?: LogSegment[],
-    category?: BattleLogCategory,
-    detailCategory?: string,
-  ): void {
+  addBattleLog(params: UnifiedLogParams & { turn: number | string }): void {
+    const {
+      turn,
+      message = '',
+      segments = [],
+      category = 'battle',
+      detailCategory,
+      level = LogLevel.INFO,
+    } = params
+
     const logEntry: BattleLogEntry = {
       index: this.indexCounter.next(),
       type: LogType.BATTLE,
@@ -249,8 +282,8 @@ export class BattleLogManager {
       message,
       category,
       detailCategory,
-      segments,
-      level: LogLevel.INFO,
+      segments: segments.length > 0 ? segments : [{ text: message }],
+      level,
       action: undefined,
     }
 
@@ -275,31 +308,23 @@ export class BattleLogManager {
 
   /**
    * 添加【系统】类型日志
+   * @param params 统一日志参数
    */
-  addSystemLog(
-    message: string,
-    options: {
-      level?: LogLevel
-      segments?: LogSegment[]
-    } = {
-      level: LogLevel.INFO,
-      segments: [],
-    },
-  ): void {
+  addSystemLog(params: UnifiedLogParams): void {
+    const {
+      message = '',
+      segments = [],
+      level = LogLevel.INFO,
+    } = params
+
     const logEntry: LogEntry = {
       index: this.indexCounter.next(),
       type: LogType.SYSTEM,
     }
-    if (options.segments.length > 0) {
-      logEntry.segments = options.segments
+    if (segments.length > 0) {
+      logEntry.segments = segments
     } else {
-      if (options.level) {
-        logEntry.segments = [
-          newLogSegment(message, LogLevelClass[options.level]),
-        ]
-      } else {
-        logEntry.segments = [newLogSegment(message)]
-      }
+      logEntry.segments = [newLogSegment(message, LogLevelClass[level])]
     }
 
     this.systemLogs.unshift(logEntry)
@@ -311,12 +336,15 @@ export class BattleLogManager {
 
   /**
    * 添加【物品】类型日志
+   * @param params 统一日志参数
    */
-  addItemLog(segments: LogSegment[]): void {
+  addItemLog(params: UnifiedLogParams): void {
+    const { segments = [] } = params
+
     const logEntry: LogEntry = {
       index: this.indexCounter.next(),
       type: LogType.ITEM,
-      segments: segments,
+      segments,
     }
     this.itemLogs.unshift(logEntry)
     if (this.autoCleanup && this.itemLogs.length > this.maxItemLogs) {
@@ -327,18 +355,29 @@ export class BattleLogManager {
 
   /**
    * 添加【动作】类型日志
+   * @param params 统一日志参数
    */
-  addActionLog(source: string, action: string, message: string): void {
+  addActionLog(params: UnifiedLogParams): void {
+    const {
+      source = '',
+      target = '',
+      action = '',
+      message = '',
+      segments = [],
+      level = LogLevel.INFO,
+      category = 'action',
+    } = params
+
     const logEntry: LogEntry = {
       index: this.indexCounter.next(),
-      type: LogType.SYSTEM,
-      level: LogLevel.INFO,
-      message,
-      context: {},
+      type: LogType.ACTION,
+      level,
+      message: message || (segments.length > 0 ? segments.map(s => s.text).join('') : ''),
       source,
-      error: undefined,
-      segments: [{ text: message }],
+      target,
       action,
+      category,
+      segments: segments.length > 0 ? segments : [{ text: message }],
     }
     this.actionLogs.unshift(logEntry)
     if (this.autoCleanup && this.actionLogs.length > this.maxActionLogs) {
@@ -439,7 +478,7 @@ export class BattleLogManager {
         segments.push({ text: '、' })
       }
     })
-    this.addItemLog(segments)
+    this.addItemLog({ segments })
   }
 
   addLossItemLog(items: Item[]) {
@@ -450,21 +489,29 @@ export class BattleLogManager {
         segments.push({ text: '、' })
       }
     })
-    this.addItemLog(segments)
+    this.addItemLog({ segments })
   }
 
   /**
    * 添加回合开始日志
    */
   addTurnStartLog(turn: number): void {
-    this.addBattleLog(turn, '回合开始', [{ text: `第${turn}回合开始` }])
+    this.addBattleLog({ 
+      turn, 
+      message: `第${turn}回合开始`,
+      segments: [{ text: `第${turn}回合开始` }]
+    })
   }
 
   /**
    * 添加回合结束日志
    */
   addTurnEndLog(turn: number): void {
-    this.addBattleLog(turn, '回合结束', [{ text: `第${turn}回合结束` }])
+    this.addBattleLog({ 
+      turn, 
+      message: `第${turn}回合结束`,
+      segments: [{ text: `第${turn}回合结束` }]
+    })
   }
 
   /**
@@ -636,31 +683,42 @@ export class BattleLogManager {
       }
 
       if (damage > 0) {
-        this.addActionLog(
-          sourceId,
-          '攻击',
-          targetId,
-          `造成 ${damage} 伤害`,
-          'info',
-        )
+        this.addActionLog({
+          source: sourceId,
+          action: '攻击',
+          target: targetId,
+          message: `造成 ${damage} 伤害`,
+          level: LogLevel.INFO,
+        })
       }
 
       if (heal > 0) {
-        this.addActionLog(
-          sourceId,
-          '治疗',
-          targetId,
-          `恢复 ${heal} 生命值`,
-          'info',
-        )
+        this.addActionLog({
+          source: sourceId,
+          action: '治疗',
+          target: targetId,
+          message: `恢复 ${heal} 生命值`,
+          level: LogLevel.INFO,
+        })
       }
 
       for (const effect of effects) {
         if (effect.type === 'status' && effect.description) {
-          this.addSystemBattleLog(effect.description, 'info')
+          this.addSystemLog({ 
+            message: effect.description, 
+            level: LogLevel.INFO 
+          })
         }
       }
     }
+  }
+
+  /**
+   * 添加系统战斗日志（已废弃，请使用 addSystemLog）
+   * @deprecated 使用 addSystemLog 代替
+   */
+  addSystemBattleLog(message: string, level: string = 'info'): void {
+    this.addSystemLog({ message, level: this.parseLogLevel(level) })
   }
 }
 

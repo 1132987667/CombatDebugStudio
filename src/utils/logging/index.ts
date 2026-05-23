@@ -42,3 +42,24 @@ export { BattleLogFormatter } from './BattleLogFormatter'
 
 // 导出日志处理器
 export { ConsoleLogHandler } from '@/utils/logging/BattleLogManager'
+
+// ==================== 新增高级功能 ====================
+
+// 结构化处理器 (JSON/CSV)
+export { JsonLogHandler, CsvLogHandler } from './StructuredLogHandlers'
+
+// 采样机制
+export { LogSampler, PresetSamplingConfigs } from './LogSampling'
+export type { SamplingConfig, SamplingStrategy, SamplingStats } from './LogSampling'
+
+// 上下文追踪
+export { LogContextManager, createReactiveContextManager, defaultContextManager } from './LogContext'
+export type { LogContext, ContextManagerConfig } from './LogContext'
+
+// 异步写入和环形缓冲区
+export { AsyncLogWriter, RingBuffer } from './AsyncLogWriter'
+export type { AsyncWriterConfig } from './AsyncLogWriter'
+
+// 远程日志服务
+export { RemoteLogHandler } from './RemoteLogHandler'
+export type { RemoteLogConfig } from './RemoteLogHandler'

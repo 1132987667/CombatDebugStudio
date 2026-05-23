@@ -189,7 +189,7 @@ const handleDebugAction = (action: string) => {
       battleLogManager.addGainItemLog([])
       break
     case 'log_action':
-      battleLogManager.addActionLog('调试角色', '普通攻击', '测试行为日志')
+      battleLogManager.addActionLog({ source: '调试角色', action: '普通攻击', message: '测试行为日志' })
       break
     case 'log_debug':
       battleLogManager.addDebugLog('测试调试日志')
@@ -237,7 +237,7 @@ const logManager = {
   addSystemLog: (msg: string) => battleLogManager.addSystemLog(msg),
   addErrorLog: (msg: string) => battleLogManager.addDebugLog(msg),
   addActionLog: (source: string, action: string, target: string, result: string) => {
-    battleLogManager.addActionLog(source, action, target, result)
+    battleLogManager.addActionLog({ source, action, target, message: result })
   }
 }
 
@@ -401,8 +401,12 @@ const handleAddStatus = () => {
       });
     });
     if (activeStatuses.length > 0) {
-      logManager.addActionLog("系统", "添加状态", selectedChar.name,
-        `${activeStatuses.map(s => s.name).join(', ')} (${activeStatuses.length}个状态)`);
+      logManager.addActionLog({ 
+        source: "系统", 
+        action: "添加状态", 
+        target: selectedChar.name, 
+        message: `${activeStatuses.map(s => s.name).join(', ')} (${activeStatuses.length}个状态)`
+      });
     }
   }
 };
@@ -411,7 +415,7 @@ const handleClearStatuses = () => {
   const selectedChar = selectedCharacter.value;
   if (selectedChar) {
     selectedChar.buffs = [];
-    logManager.addActionLog("系统", "清除状态", selectedChar.name, "所有状态已清除");
+    logManager.addActionLog({ source: "系统", action: "清除状态", target: selectedChar.name, message: "所有状态已清除" });
   }
 };
 

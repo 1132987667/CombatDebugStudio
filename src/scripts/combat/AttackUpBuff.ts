@@ -1,12 +1,12 @@
 import { AttributeBuffTemplate } from '@/scripts/base/AttributeBuffTemplate'
 import type { BuffContext } from '@/core/BuffContext'
-import { AttributeCodes } from '@/types/attribute'
+import { ATTRIBUTE_CODE } from '@/types/attribute'
 
 export class AttackUpBuff extends AttributeBuffTemplate {
   public static readonly BUFF_ID = 'buff_atk_up'
 
   protected getAttributeCode(): string {
-    return AttributeCodes.attack
+    return ATTRIBUTE_CODE.attack
   }
 
   protected getModifierType(): 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' {

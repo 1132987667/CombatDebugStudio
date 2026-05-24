@@ -20,7 +20,7 @@
       <div class="monitor-grid">
         <div class="monitor-item">
           <span class="monitor-label">气血</span>
-          <span class="monitor-value">{{ enemy.stats.health }}</span>
+          <span class="monitor-value">{{ enemy.stats.maxHealth }}</span>
         </div>
         <div class="monitor-item">
           <span class="monitor-label">攻击</span>

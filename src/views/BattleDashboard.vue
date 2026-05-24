@@ -9,11 +9,12 @@
         <div class="monitor-subtitle">基础属性</div>
         <div class="monitor-grid">
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '气血', currentCharacter?.maxHp?.options || [], typeof currentCharacter?.maxHp === 'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0, '数值')"
+            @mouseenter="showAttrTooltip($event, '气血', currentCharacter?.maxHealth?.modifiers || [], typeof currentCharacter?.maxHealth === 'object' ? currentCharacter.maxHealth.value : currentCharacter?.maxHealth || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
             <span class="monitor-value">{{ typeof currentCharacter?.currentHealth === 'object' ?
-              currentCharacter.currentHealth.value : currentCharacter?.currentHealth || 0 }}/{{ typeof currentCharacter?.maxHealth
+              currentCharacter.currentHealth.value : currentCharacter?.currentHealth || 0 }}/{{ typeof
+                currentCharacter?.maxHealth
                 ===
                 'object' ? currentCharacter.maxHealth.value : currentCharacter?.maxHealth || 0 }}</span>
           </div>
@@ -253,7 +254,7 @@
         <button class="intervention-btn" @click="importState">[I] 导入状态数据</button>
       </div>
       <div class="last-export">
-        <span>最近导出: {{ debugStore.lastExportTime || '无' }}</span>
+        <span>最近导出: {{ dashboardStore.lastExportTime || '无' }}</span>
         <div class="snapshot-btns">
           <button class="btn-small" @click="viewExport">[查看]</button>
           <button class="btn-small" @click="reloadExport">[重载]</button>
@@ -269,9 +270,12 @@
     </div>
 
     <!-- 属性悬浮提示 -->
-    <AttributeTooltip :visible="attrTooltipVisible" :title="attrTooltipData.title" :options="attrTooltipData.options"
-      :final-value="attrTooltipData.finalValue" :value-type="attrTooltipData.valueType"
-      :trigger-rect="attrTooltipData.triggerRect" />
+    <AttributeTooltip :visible="attrTooltipVisible" :title="attrTooltipData.title"
+      :modifiers="attrTooltipData.modifiers" :final-value="attrTooltipData.finalValue"
+      :value-type="attrTooltipData.valueType" :trigger-rect="attrTooltipData.triggerRect" />
+
+    <!-- 通知组件 -->
+    <Notification ref="notificationRef" />
   </div>
 </template>
 
@@ -280,9 +284,8 @@ import { ref, computed } from "vue";
 import { container } from '@/core/di/Container';
 import { useDebugStore } from "@/stores";
 import AttributeTooltip from "@/components/AttributeTooltip.vue";
-import { GameDataProcessor } from "@/utils/GameDataProcessor";
-import type { AttributeValue } from "@/types";
-import type { AttributeOption, AttributeValueType } from "@/types/attribute";
+import Notification from "@/components/Notification.vue";
+import type { Modifier, AttributeValueType } from "@/types/attribute";
 import type { SkillConfig } from "@/types/skill";
 import { SELECTOR_TARGET_NAMES } from "@/types/skill";
 import type { BattleManager } from '@/core/battle/BattleManager';
@@ -294,6 +297,9 @@ const debugStore = useDebugStore();
 const props = defineProps<{
   battleSystem?: any;
 }>();
+
+// 通知组件引用
+const notificationRef = ref<InstanceType<typeof Notification> | null>(null);
 
 // 响应式获取选中角色数据
 const currentCharacter = computed(() => battleManager.getSelectedCharacter());
@@ -451,22 +457,22 @@ const isSkillAvailable = (skill: SkillConfig): boolean => {
 const attrTooltipVisible = ref(false)
 const attrTooltipData = ref<{
   title: string
-  options: AttributeOption[]
+  modifiers: Modifier[]
   finalValue: number
   valueType: AttributeValueType
   triggerRect: DOMRect | null
 }>({
   title: '',
-  options: [],
+  modifiers: [],
   finalValue: 0,
   valueType: '数值',
   triggerRect: null
 })
 
-const showAttrTooltip = (event: MouseEvent, title: string, options: AttributeOption[], finalValue: number, valueType: AttributeValueType) => {
+const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType) => {
   attrTooltipData.value = {
     title,
-    options,
+    modifiers,
     finalValue,
     valueType,
     triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect()
@@ -578,22 +584,185 @@ const resetBattle = () => {
 };
 
 // 数据快照方法
-const exportState = () => {
+const exportState = async () => {
   try {
-    const allyTeam = battleManager.getAllyTeam();
-    const enemyTeam = battleManager.getEnemyTeam();
-    const currentTurn = battleManager.getCurrentTurn();
-    const rules = {
-      speedFirst: true,
-      fixedTurns: false,
-      critEnabled: true,
-      dodgeEnabled: false,
-    };
-    const battleLogs: never[] = [];
+    if (!currentCharacter.value) {
+      notificationRef.value?.addNotification(
+        '导出失败',
+        '请先选择一个角色',
+        'warning',
+        3000
+      );
+      return;
+    }
 
-    debugStore.exportState(allyTeam, enemyTeam, currentTurn, rules, battleLogs);
+    const char = currentCharacter.value;
+    const currentTurn = battleManager.getCurrentTurn();
+
+    // 定义要导出的属性列表
+    const attributeCodes = [
+      'currentHealth',
+      'maxHealth',
+      'energy',
+      'maxEnergy',
+      'attack',
+      'minAttack',
+      'maxAttack',
+      'defense',
+      'speed',
+      'critRate',
+      'critDamage',
+      'damageReduction',
+      'healthBonus',
+      'attackBonus',
+      'defenseBonus',
+      'speedBonus',
+    ];
+
+    // 定义属性详细信息类型
+    interface AttributeDetail {
+      finalValue: number;
+      baseValue: number;
+      isPercentage: boolean;
+      modifiers: Array<{
+        source: string;
+        sourceType: string;
+        value: number;
+        type: string;
+        description?: string;
+      }>;
+      breakdown: {
+        base: number;
+        additive: number;
+        percentMultiplier: number;
+        independentMultiplier: number;
+        finalMultiplier: number;
+      } | null;
+      trace: {
+        finalValue: number;
+        baseValue: number;
+        steps: Array<{
+          modifierId: string;
+          sourceName: string;
+          type: string;
+          appliedValue: number;
+          previousValue: number;
+          intermediateResult: number;
+        }>;
+        sourceContributions: Array<{
+          sourceId: string;
+          sourceName: string;
+          sourceType?: string;
+          contribution: number;
+        }>;
+      } | null;
+    }
+
+    // 收集所有属性的详细信息
+    const attributesDetail: Record<string, AttributeDetail> = {};
+
+    for (const attrCode of attributeCodes) {
+      const attrValue = char.getAttributeValue(attrCode);
+
+      if (attrValue) {
+        attributesDetail[attrCode] = {
+          // 最终值
+          finalValue: attrValue.value,
+          // 基础值
+          baseValue: attrValue.base,
+          // 是否为百分比属性
+          isPercentage: attrValue.isPercentage,
+          // 修饰符列表
+          modifiers: attrValue.modifiers.map(mod => ({
+            source: mod.source,
+            sourceType: mod.sourceType,
+            value: mod.value,
+            type: mod.type,
+            description: mod.description,
+          })),
+          // 计算拆解（如果有）
+          breakdown: attrValue.breakdown ? {
+            base: attrValue.breakdown.base,
+            additive: attrValue.breakdown.additive,
+            percentMultiplier: attrValue.breakdown.percentMultiplier,
+            independentMultiplier: attrValue.breakdown.independentMultiplier,
+            finalMultiplier: attrValue.breakdown.finalMultiplier,
+          } : null,
+          // 详细追踪信息（如果有）
+          trace: attrValue.trace ? {
+            finalValue: attrValue.trace.finalValue,
+            baseValue: attrValue.trace.baseValue,
+            steps: attrValue.trace.steps.map(step => ({
+              modifierId: step.modifierId,
+              sourceName: step.sourceName,
+              type: step.type,
+              appliedValue: step.appliedValue,
+              previousValue: step.previousValue,
+              intermediateResult: step.intermediateResult,
+            })),
+            sourceContributions: attrValue.trace.sourceContributions.map(contrib => ({
+              sourceId: contrib.sourceId,
+              sourceName: contrib.sourceName,
+              sourceType: contrib.sourceType,
+              contribution: contrib.contribution,
+            })),
+          } : null,
+        };
+      }
+    }
+
+    // 准备导出数据
+    const exportData = {
+      exportTime: new Date().toISOString(),
+      currentTurn,
+      character: {
+        // 基本信息
+        id: char.id,
+        name: char.name,
+        level: char.level,
+        type: char.type,
+        team: char.team,
+        enabled: char.enabled,
+
+        // Buff列表
+        buffs: char.buffs,
+
+        // 技能配置
+        skills: char.skills,
+
+        // 状态效果
+        statusEffects: char.statusEffects,
+
+        // 属性详细信息（包含计算过程）
+        attributes: attributesDetail,
+      },
+    };
+
+    // 序列化为 JSON
+    const jsonString = JSON.stringify(exportData, null, 2);
+
+    // 写入剪贴板
+    await navigator.clipboard.writeText(jsonString);
+
+    // 显示成功通知
+    notificationRef.value?.addNotification(
+      '导出成功',
+      `角色 "${char.name}" 的详细数据已复制到剪贴板`,
+      'success',
+      3000
+    );
+
+    console.log('导出角色状态成功，数据已写入剪贴板');
   } catch (error) {
     console.warn('导出状态失败:', error);
+
+    // 显示失败通知
+    notificationRef.value?.addNotification(
+      '导出失败',
+      `导出状态失败: ${error instanceof Error ? error.message : '未知错误'}`,
+      'error',
+      5000
+    );
   }
 };
 
@@ -611,7 +780,7 @@ const importState = () => {
 
 const viewExport = () => {
   try {
-    const state = debugStore.viewExport();
+    const state = dashboardStore.viewExport();
     if (state) {
       console.log('导出状态:', state);
       // 这里可以显示导出的状态

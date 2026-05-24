@@ -8,10 +8,10 @@
 import { computed, shallowReactive, type ShallowReactive } from 'vue'
 import type { BattleEntity } from '@/types/battle'
 import type { AttributeValue } from '@/types/attribute'
-import { AttributeCodes } from '@/types/attribute'
+import { ATTRIBUTE_CODE } from '@/types/attribute'
 
 /**
- * 战斗参与者属性集合（使用官方 AttributeCodes 标准编码）
+ * 战斗参与者属性集合（使用官方 ATTRIBUTE_CODE 标准编码）
  */
 export interface ParticipantStats {
   /** 当前生命值 */
@@ -65,9 +65,9 @@ export interface UseBattleParticipantReturn {
   /** 能量百分比 */
   energyPercent: Readonly<number>
   /** 获取指定属性（直接访问缓存） */
-  getAttribute: (type: AttributeCodes) => AttributeValue | undefined
+  getAttribute: (type: ATTRIBUTE_CODE) => AttributeValue | undefined
   /** 获取属性计算拆解（仅调试模式） */
-  getBreakdown: (type: AttributeCodes) => any
+  getBreakdown: (type: ATTRIBUTE_CODE) => any
 }
 
 /**
@@ -83,33 +83,45 @@ export function useBattleParticipant(
   // 使用浅代理，避免 Map 深层代理开销
   const shallowParticipant = shallowReactive<BattleEntity>(participant)
 
-  // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue（使用官方 AttributeCodes 标准编码）
+  // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue（使用官方 ATTRIBUTE_CODE 标准编码）
   const stats = computed<ParticipantStats>(() => ({
-    currentHealth: shallowParticipant.getAttributeValue(AttributeCodes.currentHealth)!,
-    maxHealth: shallowParticipant.getAttributeValue(AttributeCodes.maxHealth)!,
-    energy: shallowParticipant.getAttributeValue(AttributeCodes.energy)!,
-    maxEnergy: shallowParticipant.getAttributeValue(AttributeCodes.maxEnergy)!,
-    attack: shallowParticipant.getAttributeValue(AttributeCodes.attack)!,
-    defense: shallowParticipant.getAttributeValue(AttributeCodes.defense)!,
-    speed: shallowParticipant.getAttributeValue(AttributeCodes.speed)!,
-    critRate: shallowParticipant.getAttributeValue(AttributeCodes.critRate)!,
-    critDamage: shallowParticipant.getAttributeValue(AttributeCodes.critDamage)!,
-    damageReduction: shallowParticipant.getAttributeValue(
-      AttributeCodes.damageReduction,
+    currentHealth: shallowParticipant.getAttributeValue(
+      ATTRIBUTE_CODE.currentHealth,
     )!,
-    healthBonus: shallowParticipant.getAttributeValue(AttributeCodes.healthBonus)!,
-    attackBonus: shallowParticipant.getAttributeValue(AttributeCodes.attackBonus)!,
-    defenseBonus: shallowParticipant.getAttributeValue(AttributeCodes.defenseBonus)!,
-    speedBonus: shallowParticipant.getAttributeValue(AttributeCodes.speedBonus)!,
-    minAttack: shallowParticipant.getAttributeValue(AttributeCodes.minAttack)!,
-    maxAttack: shallowParticipant.getAttributeValue(AttributeCodes.maxAttack)!,
+    maxHealth: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxHealth)!,
+    energy: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.energy)!,
+    maxEnergy: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)!,
+    attack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.attack)!,
+    defense: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.defense)!,
+    speed: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.speed)!,
+    critRate: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.critRate)!,
+    critDamage: shallowParticipant.getAttributeValue(
+      ATTRIBUTE_CODE.critDamage,
+    )!,
+    damageReduction: shallowParticipant.getAttributeValue(
+      ATTRIBUTE_CODE.damageReduction,
+    )!,
+    healthBonus: shallowParticipant.getAttributeValue(
+      ATTRIBUTE_CODE.healthBonus,
+    )!,
+    attackBonus: shallowParticipant.getAttributeValue(
+      ATTRIBUTE_CODE.attackBonus,
+    )!,
+    defenseBonus: shallowParticipant.getAttributeValue(
+      ATTRIBUTE_CODE.defenseBonus,
+    )!,
+    speedBonus: shallowParticipant.getAttributeValue(
+      ATTRIBUTE_CODE.speedBonus,
+    )!,
+    minAttack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.minAttack)!,
+    maxAttack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxAttack)!,
   }))
 
   // 派生状态
   const isAlive = computed(() => shallowParticipant.isAlive())
   const isDead = computed(() => !isAlive.value)
 
-  // 百分比计算（使用官方 AttributeCodes 标准编码）
+  // 百分比计算（使用官方 ATTRIBUTE_CODE 标准编码）
   const hpPercent = computed(() => {
     const currentHealth = stats.value.currentHealth.value
     const maxHealth = stats.value.maxHealth.value
@@ -123,12 +135,12 @@ export function useBattleParticipant(
   })
 
   // 直接访问属性的方法
-  const getAttribute = (type: AttributeCodes): AttributeValue | undefined => {
+  const getAttribute = (type: ATTRIBUTE_CODE): AttributeValue | undefined => {
     return shallowParticipant.getAttributeValue(type)
   }
 
   // 获取属性计算拆解（仅调试模式）
-  const getBreakdown = (type: AttributeCodes): any => {
+  const getBreakdown = (type: ATTRIBUTE_CODE): any => {
     const attrValue = getAttribute(type)
     return attrValue?.breakdown || null
   }

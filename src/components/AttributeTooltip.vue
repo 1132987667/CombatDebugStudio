@@ -10,17 +10,12 @@
 <template>
   <Teleport to="body">
     <transition name="tooltip-fade">
-      <div
-        v-if="visible"
-        ref="tooltipRef"
-        class="attribute-tooltip"
-        :style="tooltipStyle"
-      >
+      <div v-if="visible" ref="tooltipRef" class="attribute-tooltip" :style="tooltipStyle">
         <div class="tooltip-header">
           <span class="tooltip-title">{{ title }}</span>
           <span class="tooltip-value">{{ displayValue }}</span>
         </div>
-        
+
         <!-- 属性描述部分 -->
         <div v-if="attributeMeta" class="tooltip-description">
           <div class="description-item">
@@ -36,35 +31,31 @@
             <span class="description-text">{{ attributeMeta.range }}</span>
           </div>
         </div>
-        
+
         <div class="tooltip-divider"></div>
-        
+
         <div class="tooltip-content">
           <div class="source-list">
-            <div 
-              v-for="(option, index) in options" 
-              :key="index"
-              class="source-item"
-              :class="{ 'is-bonus': option.from !== '基础' }"
-            >
+            <div v-for="(modifier, index) in modifiers" :key="index" class="source-item"
+              :class="{ 'is-bonus': modifier.sourceType !== 'base' }">
               <div class="source-header">
-                <span class="source-from">{{ getSourceLabel(option.from) }}</span>
-                <span class="source-name" v-if="option.sourceName">({{ option.sourceName }})</span>
+                <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                <span class="source-name" v-if="modifier.source">({{ modifier.source }})</span>
               </div>
               <div class="source-value">
-                <span class="source-type">({{ option.valueType }})</span>
-                <span class="source-amount" :class="{ 'positive': option.value > 0, 'negative': option.value < 0 }">
-                  {{ formatValue(option.value, option.valueType) }}
+                <span class="source-type">({{ modifier.type }})</span>
+                <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                  {{ formatModifierValue(modifier.value, modifier.type) }}
                 </span>
               </div>
             </div>
-            <div v-if="options.length === 0" class="no-sources">
+            <div v-if="modifiers.length === 0" class="no-sources">
               无详细来源信息
             </div>
           </div>
-          
+
           <div class="tooltip-divider"></div>
-          
+
           <div class="calculation-section">
             <div class="calculation-title">计算过程</div>
             <div class="calculation-formula">{{ formula }}</div>
@@ -74,7 +65,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="tooltip-arrow" :class="arrowClass"></div>
       </div>
     </transition>
@@ -83,14 +74,14 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import type { AttributeOption, AttributeValueType, ModifierSourceType } from '@/types/attribute'
-import {ModifierSourceTypeNames} from '@/types/attribute'
+import type { Modifier, AttributeValueType, ModifierSourceType } from '@/types/attribute'
+import { ModifierSourceTypeNames } from '@/types/attribute'
 import { getAttributeMeta, getAttributeCodeByName } from '@/types/attribute'
 
 interface Props {
   visible: boolean
   title: string
-  options: AttributeOption[]
+  modifiers: Modifier[]
   finalValue: number
   valueType: AttributeValueType
   triggerRect?: DOMRect | null
@@ -99,7 +90,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   visible: false,
   title: '',
-  options: () => [],
+  modifiers: () => [],
   finalValue: 0,
   valueType: '数值',
   triggerRect: null
@@ -112,12 +103,12 @@ const attributeMeta = computed(() => {
   try {
     // 尝试根据属性名称获取属性编码
     let attributeCode = getAttributeCodeByName(props.title)
-    
+
     // 如果没有找到，尝试使用常见的属性名称映射
     if (!attributeCode) {
       attributeCode = props.title.toLowerCase()
     }
-    
+
     return getAttributeMeta(attributeCode)
   } catch (error) {
     console.error('获取属性元数据时出错:', error)
@@ -137,45 +128,51 @@ const formatValue = (value: number, valueType: AttributeValueType): string => {
   return rounded > 0 ? `+${rounded}` : `${rounded}`
 }
 
+const formatModifierValue = (value: number, type: string): string => {
+  const rounded = Math.round(value * 100) / 100
+  if (type === 'PERCENTAGE') {
+    return rounded > 0 ? `+${rounded}%` : `${rounded}%`
+  }
+  return rounded > 0 ? `+${rounded}` : `${rounded}`
+}
+
 const displayValue = computed(() => {
   return formatValue(props.finalValue, props.valueType)
 })
 
 const formula = computed(() => {
-  if (props.options.length === 0) return '无'
-  
-  const baseOption = props.options.find(o => o.from === '基础')
-  const bonusOptions = props.options.filter(o => o.from !== '基础')
-  
-  if (!baseOption) return '无基础值'
-  
+  if (props.modifiers.length === 0) return '无'
+
   const parts: string[] = []
-  parts.push(formatValue(baseOption.value, baseOption.valueType))
-  
-  for (const bonus of bonusOptions) {
-    if (bonus.valueType === '百分比') {
-      parts.push(`${bonus.value > 0 ? '+' : ''}${bonus.value}%`)
-    } else {
-      parts.push(`${bonus.value > 0 ? '+' : ''}${bonus.value}`)
+
+  for (const modifier of props.modifiers) {
+    if (modifier.type === 'PERCENTAGE') {
+      parts.push(`${modifier.value > 0 ? '+' : ''}${modifier.value}%`)
+    } else if (modifier.type === 'ADDITIVE') {
+      parts.push(`${modifier.value > 0 ? '+' : ''}${modifier.value}`)
+    } else if (modifier.type === 'MULTIPLICATIVE') {
+      parts.push(`×${1 + modifier.value}`)
+    } else if (modifier.type === 'FINAL') {
+      parts.push(`×${1 + modifier.value}`)
     }
   }
-  
-  return parts.join(' ')
+
+  return parts.length > 0 ? parts.join(' ') : '无'
 })
 
 const arrowClass = computed(() => {
   if (!props.triggerRect) return 'arrow-bottom'
-  
+
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
   const tooltipWidth = 320
   const tooltipHeight = 350 // 增加高度以容纳属性描述
-  
+
   const rightSpace = viewportWidth - props.triggerRect.right
   const leftSpace = props.triggerRect.left
   const bottomSpace = viewportHeight - props.triggerRect.bottom
   const topSpace = props.triggerRect.top
-  
+
   if (rightSpace > leftSpace && rightSpace > 320) {
     return 'arrow-left'
   } else if (leftSpace > 320) {
@@ -195,21 +192,21 @@ const tooltipStyle = computed(() => {
       transform: 'translate(-50%, -50%)'
     }
   }
-  
+
   const tooltipWidth = 320
   const tooltipHeight = 350 // 增加高度以容纳属性描述
   const offset = 12
-  
+
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
   const rightSpace = viewportWidth - props.triggerRect.right
   const leftSpace = props.triggerRect.left
   const bottomSpace = viewportHeight - props.triggerRect.bottom
   const topSpace = props.triggerRect.top
-  
+
   let left = props.triggerRect.left
   let top = props.triggerRect.top
-  
+
   if (rightSpace > leftSpace && rightSpace > tooltipWidth + offset) {
     left = props.triggerRect.right + offset
   } else if (leftSpace > tooltipWidth + offset) {
@@ -217,7 +214,7 @@ const tooltipStyle = computed(() => {
   } else {
     left = Math.max(10, Math.min(props.triggerRect.left, viewportWidth - tooltipWidth - 10))
   }
-  
+
   if (bottomSpace > tooltipHeight + offset) {
     top = props.triggerRect.top
   } else if (topSpace > tooltipHeight + offset) {
@@ -225,7 +222,7 @@ const tooltipStyle = computed(() => {
   } else {
     top = Math.max(10, Math.min(props.triggerRect.top, viewportHeight - tooltipHeight - 10))
   }
-  
+
   return {
     left: `${left}px`,
     top: `${top}px`
@@ -258,7 +255,7 @@ onUnmounted(() => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(8px);
   pointer-events: none;
-  
+
   .tooltip-header {
     display: flex;
     justify-content: space-between;
@@ -266,14 +263,14 @@ onUnmounted(() => {
     margin-bottom: 12px;
     padding-bottom: 8px;
     border-bottom: 1px solid rgba(96, 165, 250, 0.3);
-    
+
     .tooltip-title {
       font-size: 15px;
       font-weight: 600;
       color: #22d3ee;
       text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
     }
-    
+
     .tooltip-value {
       font-size: 18px;
       font-weight: 700;
@@ -281,21 +278,21 @@ onUnmounted(() => {
       font-family: 'JetBrains Mono', monospace;
     }
   }
-  
+
   .tooltip-description {
     background: rgba(34, 211, 238, 0.05);
     border-radius: 6px;
     padding: 10px;
     margin-bottom: 12px;
-    
+
     .description-item {
       display: flex;
       margin-bottom: 6px;
-      
+
       &:last-child {
         margin-bottom: 0;
       }
-      
+
       .description-label {
         font-size: 11px;
         color: rgba(255, 255, 255, 0.5);
@@ -304,7 +301,7 @@ onUnmounted(() => {
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }
-      
+
       .description-text {
         font-size: 12px;
         color: rgba(255, 255, 255, 0.7);
@@ -313,74 +310,74 @@ onUnmounted(() => {
       }
     }
   }
-  
+
   .tooltip-divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
     margin: 12px 0;
   }
-  
+
   .tooltip-content {
     .source-list {
       .source-item {
         padding: 8px 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        
+
         &:last-child {
           border-bottom: none;
         }
-        
+
         &.is-bonus {
           .source-from {
             color: #f97316;
           }
         }
-        
+
         .source-header {
           display: flex;
           align-items: center;
           gap: 6px;
           margin-bottom: 4px;
-          
+
           .source-from {
             font-size: 13px;
             font-weight: 500;
             color: #60a5fa;
           }
-          
+
           .source-name {
             font-size: 12px;
             color: rgba(255, 255, 255, 0.5);
           }
         }
-        
+
         .source-value {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          
+
           .source-type {
             font-size: 11px;
             color: rgba(255, 255, 255, 0.4);
           }
-          
+
           .source-amount {
             font-size: 14px;
             font-weight: 600;
             font-family: 'JetBrains Mono', monospace;
             color: rgba(255, 255, 255, 0.85);
-            
+
             &.positive {
               color: #22d3ee;
             }
-            
+
             &.negative {
               color: #f97316;
             }
           }
         }
       }
-      
+
       .no-sources {
         text-align: center;
         padding: 12px;
@@ -389,13 +386,13 @@ onUnmounted(() => {
         font-style: italic;
       }
     }
-    
+
     .calculation-section {
       background: rgba(34, 211, 238, 0.05);
       border-radius: 8px;
       padding: 12px;
       margin-top: 8px;
-      
+
       .calculation-title {
         font-size: 11px;
         color: rgba(255, 255, 255, 0.5);
@@ -403,7 +400,7 @@ onUnmounted(() => {
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }
-      
+
       .calculation-formula {
         font-size: 13px;
         color: rgba(255, 255, 255, 0.7);
@@ -411,7 +408,7 @@ onUnmounted(() => {
         line-height: 1.6;
         word-break: break-all;
       }
-      
+
       .calculation-result {
         display: flex;
         align-items: center;
@@ -419,12 +416,12 @@ onUnmounted(() => {
         margin-top: 8px;
         padding-top: 8px;
         border-top: 1px dashed rgba(96, 165, 250, 0.3);
-        
+
         .result-label {
           font-size: 14px;
           color: rgba(255, 255, 255, 0.5);
         }
-        
+
         .result-value {
           font-size: 16px;
           font-weight: 700;
@@ -434,7 +431,7 @@ onUnmounted(() => {
       }
     }
   }
-  
+
   .tooltip-arrow {
     position: absolute;
     width: 12px;
@@ -442,28 +439,28 @@ onUnmounted(() => {
     background: rgba(15, 23, 42, 0.95);
     border: 1px solid rgba(96, 165, 250, 0.4);
     transform: rotate(45deg);
-    
+
     &.arrow-top {
       top: -7px;
       left: 20px;
       border-bottom: none;
       border-right: none;
     }
-    
+
     &.arrow-bottom {
       bottom: -7px;
       left: 20px;
       border-top: none;
       border-left: none;
     }
-    
+
     &.arrow-left {
       left: -7px;
       top: 20px;
       border-top: none;
       border-right: none;
     }
-    
+
     &.arrow-right {
       right: -7px;
       top: 20px;

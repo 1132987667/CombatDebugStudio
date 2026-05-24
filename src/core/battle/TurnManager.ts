@@ -8,7 +8,7 @@
 import type { BattleEntity, BattleData } from '@/types/battle'
 import { BuffSystem } from '@/core/BuffSystem'
 import { ModifierStack } from '@/core/ModifierStack'
-import type { AttributeCodes } from '@/types/attribute'
+import type { ATTRIBUTE_CODE } from '@/types/attribute'
 
 /**
  * 回合管理器类

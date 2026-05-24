@@ -35,7 +35,7 @@
       <ParticipantPanel />
 
       <!-- 中间：战斗战场和日志 -->
-      <BattleField ref="battleFieldRef" :current-actor-id="battleStore.getCurrentActorId"
+      <BattleField ref="battleFieldRef" :current-actor-id="battleStore.currentActorId"
         @select-character="selectCharacter" />
 
       <!-- 右侧：调试面板 -->
@@ -48,7 +48,7 @@
     </div>
 
     <!-- 对话框组件 -->
-    <BattleRulesDialog v-model="showRulesDialog" :rules="battleStore.getRules" :speed="battleStore.getBattleSpeed"
+    <BattleRulesDialog v-model="showRulesDialog" :rules="battleStore.rules" :speed="battleStore.battleSpeed"
       @update:rules="battleStore.updateRules" @update:speed="updateSpeed" @rule-change="handleRuleChange" />
 
     <SceneManagementDialog v-model="showSceneDialog" :scene-name="sceneName" :selected-scene="selectedScene"
@@ -67,8 +67,8 @@
     <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
 
     <!-- 底部控制栏 -->
-    <ControlBar :is-battle-active="battleStore.getIsBattleActive" :is-paused="false"
-      :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.getBattleSpeed" @start-battle="startBattle"
+    <ControlBar :is-battle-active="battleStore.isBattleActive" :is-paused="false"
+      :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
       @end-battle="endBattle" @reset-battle="resetBattle" @step-back="stepBack" @single-step="singleStep"
       @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange" />
 
@@ -85,7 +85,7 @@ import { ref, computed, onMounted, onUnmounted, watch, shallowReactive } from "v
 import { GameDataProcessor } from "@/utils/GameDataProcessor";
 import ParticipantPanel from "./ParticipantPanel.vue";
 import BattleField from "./BattleField.vue";
-import DebugPanel from "./DebugPanel.vue";
+import BattleDashboard from "./BattleDashboard.vue";
 import ControlBar from "./ControlBar.vue";
 import BattleReplay from "./BattleReplay.vue";
 import Notification from "@/components/Notification.vue";
@@ -401,10 +401,10 @@ const handleAddStatus = () => {
       });
     });
     if (activeStatuses.length > 0) {
-      logManager.addActionLog({ 
-        source: "系统", 
-        action: "添加状态", 
-        target: selectedChar.name, 
+      logManager.addActionLog({
+        source: "系统",
+        action: "添加状态",
+        target: selectedChar.name,
         message: `${activeStatuses.map(s => s.name).join(', ')} (${activeStatuses.length}个状态)`
       });
     }

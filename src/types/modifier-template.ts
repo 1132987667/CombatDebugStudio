@@ -8,7 +8,7 @@
  */
 
 import type {
-  AttributeCodes,
+  ATTRIBUTE_CODE,
   ModifierType,
   ModifierSourceType,
 } from './attribute'
@@ -18,7 +18,7 @@ import type {
  */
 export interface DynamicValueContext {
   /** 参与者当前属性快照 */
-  attributes: Partial<Record<AttributeCodes, number>>
+  attributes: Partial<Record<ATTRIBUTE_CODE, number>>
   /** 自定义参数（如技能等级、层数等） */
   params: Record<string, number>
 }
@@ -45,7 +45,7 @@ export interface ModifierTemplate {
   /** 来源类型 */
   sourceType: ModifierSourceType
   /** 目标属性 */
-  targetAttribute: AttributeCodes
+  targetAttribute: ATTRIBUTE_CODE
   /** 修饰类型 */
   type: ModifierType
   /** 修饰数值（固定值或动态计算函数） */

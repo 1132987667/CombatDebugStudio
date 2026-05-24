@@ -25,7 +25,7 @@ import type { ParticipantSide } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
 import type {
   IModifierProvider,
-  AttributeCodes,
+  ATTRIBUTE_CODE,
   ModifierType,
   ModifierSourceType,
   createAttributeValue,
@@ -35,10 +35,7 @@ import type {
   ModifierTemplate,
   StructuredBuffConfig,
 } from '@/types/modifier-template'
-import {
-  BattleParticipantImpl,
-  type ParticipantInitData,
-} from '@/core/battle/BattleParticipantImpl'
+import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
 import { container } from '@/core/di/Container'
 import { BuffSystem } from '@/core/BuffSystem'
 import { toArray } from '@/utils/Utils'
@@ -167,23 +164,12 @@ export class GameDataProcessor {
       GameDataProcessor.buildPassiveModifiers(passiveSkills)
 
     // 2. 构造标准初始化 DTO
-    const initData: ParticipantInitData = {
+    const initData: BattleParticipantImpl = {
       id: `[${type}]_${enemy.id}_${counter.next()}`,
       name: enemy.name,
       type,
       team: type,
       level: enemy.level,
-      maxHealth: enemy.stats.health,
-      currentHealth: enemy.stats.health,
-      maxEnergy: 100,
-      currentEnergy: 25,
-      minAttack: enemy.stats.minAttack,
-      maxAttack: enemy.stats.maxAttack,
-      defense: enemy.stats.defense,
-      speed: enemy.stats.speed,
-      critRate: 10,
-      critDamage: 125,
-      damageReduction: 0,
       skills: {
         small: GameDataProcessor.getSkillByIds(enemy.skills?.small),
         passive: passiveSkills,
@@ -598,8 +584,8 @@ export class GameDataProcessor {
     if (!character.buffs) return 0
 
     const bonuses = character.buffs.filter((buff) => !buff.isPositive)
-    if (stat === AttributeCodes.attackBonus) return bonuses.length * 10
-    if (stat === AttributeCodes.defenseBonus) return bonuses.length * 5
+    if (stat === ATTRIBUTE_CODE.attackBonus) return bonuses.length * 10
+    if (stat === ATTRIBUTE_CODE.defenseBonus) return bonuses.length * 5
     return 0
   }
 

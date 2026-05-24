@@ -1,12 +1,12 @@
 import { AttributeBuffTemplate } from '@/scripts/base/AttributeBuffTemplate'
 import type { BuffContext } from '@/core/BuffContext'
-import { AttributeCodes } from '@/types/attribute'
+import { ATTRIBUTE_CODE } from '@/types/attribute'
 
 export class SpeedUpBuff extends AttributeBuffTemplate {
   public static readonly BUFF_ID = 'buff_speed_up'
 
   protected getAttributeCode(): string {
-    return AttributeCodes.speed
+    return ATTRIBUTE_CODE.speed
   }
 
   protected getModifierType(): 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' {

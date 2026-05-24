@@ -7,70 +7,19 @@
  * 版本: 1.0.0
  */
 
-import type { AttributeCodes, ModifierType } from '@/types/attribute'
+import type {
+  ATTRIBUTE_CODE,
+  ModifierType,
+  AttributeComputeResult,
+  CalculationStep,
+  SourceContribution,
+} from '@/types/attribute'
 import type {
   ModifierTemplate,
   DynamicValueContext,
 } from '@/types/modifier-template'
 
 // ========== 计算追踪数据结构 ==========
-
-/**
- * 单步计算记录
- */
-export interface CalculationStep {
-  /** 修饰符模板 ID */
-  modifierId: string
-  /** 来源名称 */
-  sourceName: string
-  /** 修饰类型 */
-  type: ModifierType
-  /** 解析后的实际数值 */
-  appliedValue: number
-  /** 该步骤执行前的中间结果 */
-  previousValue: number
-  /** 该步骤执行后的中间结果 */
-  intermediateResult: number
-}
-
-/**
- * 来源贡献记录
- */
-export interface SourceContribution {
-  /** 来源 ID */
-  sourceId: string
-  /** 来源名称 */
-  sourceName: string
-  /** 来源类型 */
-  sourceType?: string
-  /** 对最终值的净贡献 */
-  contribution: number
-}
-
-/**
- * 属性计算最终结果（包含追踪）
- */
-export interface AttributeComputeResult {
-  /** 最终计算值 */
-  finalValue: number
-  /** 基础值 */
-  baseValue: number
-  /** 所有步骤记录（按计算顺序） */
-  steps: CalculationStep[]
-  /** 按来源分组的贡献值（便于 UI 展示） */
-  sourceContributions: SourceContribution[]
-  /** 计算拆解（用于调试） */
-  breakdown: {
-    /** 加法修正总和 */
-    additive: number
-    /** 百分比乘区系数 */
-    percentMultiplier: number
-    /** 独立乘区系数 */
-    independentMultiplier: number
-    /** 最终乘区系数 */
-    finalMultiplier: number
-  }
-}
 
 // ========== 计算引擎实现 ==========
 
@@ -251,7 +200,7 @@ export class AttributeEngine {
   static toTemplate(
     modifier: {
       buffInstanceId: string
-      attribute: AttributeCodes
+      attribute: ATTRIBUTE_CODE
       value: number
       type: ModifierType
     },
@@ -277,7 +226,7 @@ export class AttributeEngine {
   static toTemplates(
     modifiers: Array<{
       buffInstanceId: string
-      attribute: AttributeCodes
+      attribute: ATTRIBUTE_CODE
       value: number
       type: ModifierType
     }>,

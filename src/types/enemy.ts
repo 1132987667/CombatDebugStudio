@@ -1,10 +1,7 @@
-export interface EnemyStats {
-  health: number
-  minAttack: number
-  maxAttack: number
-  defense: number
-  speed: number
-}
+import { ATTRIBUTE_CODE } from '@/types/attribute'
+
+/** 敌人属性统计（使用 ATTRIBUTE_CODE 作为键） */
+export type EnemyStats = Partial<Record<ATTRIBUTE_CODE, number>>
 
 export interface EnemyDrop {
   itemId: string
@@ -40,7 +37,7 @@ export interface EnemyInstance extends Enemy {
   activeSkills: Set<string>
   lastActionTime: number
   isDefeated: boolean
-  
+
   // Character-like interface for battle compatibility
   getAttribute(attribute: string): number
   setAttribute(attribute: string, value: number): void

@@ -9,22 +9,17 @@
 
 import type { EffectType } from './effect'
 import type { BattleEffect } from './battle'
-
+import type { CalculationStep } from '@/types/attribute'
 /**
  * 动作类型
  */
-export type ActionType = 'attack' | 'skill' | 'heal' | 'buff' | 'item' | 'system'
-
-/**
- * 计算步骤详情 - 用于调试
- */
-export interface CalculationStep {
-  type: 'damage' | 'heal'
-  description: string
-  input?: Record<string, any>
-  output: number
-  formula?: string
-}
+export type ActionType =
+  | 'attack'
+  | 'skill'
+  | 'heal'
+  | 'buff'
+  | 'item'
+  | 'system'
 
 /**
  * 计算详情 - 调试模式开启时填充
@@ -80,7 +75,7 @@ export function createEmptyRecord(
   targetId: string,
   targetName: string,
   turn: number,
-  skillId?: string
+  skillId?: string,
 ): CombatRecord {
   return {
     id: `record_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

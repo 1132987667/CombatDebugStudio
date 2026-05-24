@@ -142,6 +142,44 @@ export class PassiveSkillManager {
             participant.addBuff(instanceId)
           }
           console.log(`被动技能生效[${participant.name}]: ${skillConfig.name}`)
+        } else if (step.type === 'modify_attribute' && step.modifiers) {
+          // 处理 modify_attribute 类型的被动技能
+          for (const modifier of step.modifiers) {
+            // 创建虚拟 Buff 配置来代表被动技能的修饰符
+            const virtualBuffId = `passive_${skillConfig.id}_${modifier.id}`
+            
+            // 创建虚拟 Buff 配置
+            const virtualBuffConfig = {
+              id: virtualBuffId,
+              name: modifier.sourceName || skillConfig.name,
+              duration: -1, // 永久性
+              maxStacks: 1,
+              cooldown: 0,
+              stackRule: StackRule.LIMITED,
+              controlType: ControlType.NONE,
+              controlPriority: 0,
+              description: skillConfig.description,
+              sourceId: participant.id,
+              attributes: {
+                [modifier.targetAttribute.toLowerCase()]: `${modifier.value}`,
+              },
+            }
+            
+            // 添加虚拟 Buff
+            const instanceId = this.buffSystem.addBuff(
+              participant.id,
+              virtualBuffId,
+              virtualBuffConfig,
+            )
+            
+            if (instanceId) {
+              participant.addBuff(instanceId)
+            }
+            
+            console.log(
+              `被动技能属性修饰生效[${participant.name}]: ${skillConfig.name} -> ${modifier.targetAttribute} +${modifier.value * 100}%`,
+            )
+          }
         }
         // 可以根据需要扩展其他类型的效果
       }

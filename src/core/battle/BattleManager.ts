@@ -4,13 +4,8 @@ import { battleLogManager } from '@/utils/logging'
 import { AutoBattleManager } from '@/core/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/core/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager'
-import {
-  PARTICIPANT_SIDE,
-  BattleEntity,
-} from '@/types/battle'
-import {
-  BattleEventCodes,
-} from '@/types/battle-events'
+import { PARTICIPANT_SIDE, BattleEntity } from '@/types/battle'
+import { BattleEventCodes } from '@/types/battle-events'
 import type {
   BattleEvents,
   BattleEventName,
@@ -216,7 +211,6 @@ export class BattleManager {
   getSelectedCharacter(): BattleEntity | null {
     const selectedId = this.getSelectedCharacterId()
     if (!selectedId) return null
-
     const allParticipants = this.getAllParticipants()
     return allParticipants.find((p) => p.id === selectedId) || null
   }
@@ -230,8 +224,8 @@ export class BattleManager {
       participant.enabled = enabled
       this.syncBattleState()
       eventBus.emit('teamDataChanged', {
-        allyTeam: this.getAllyTeam(),
-        enemyTeam: this.getEnemyTeam(),
+        allyTeam: this.getEnabledAllyTeam(),
+        enemyTeam: this.getEnabledEnemyTeam(),
       })
     }
   }
@@ -262,8 +256,8 @@ export class BattleManager {
 
     this.syncBattleState()
     eventBus.emit('teamDataChanged', {
-      allyTeam: this.getAllyTeam(),
-      enemyTeam: this.getEnemyTeam(),
+      allyTeam: this.getEnabledAllyTeam(),
+      enemyTeam: this.getEnabledEnemyTeam(),
     })
   }
 
@@ -287,11 +281,21 @@ export class BattleManager {
   addCharacterToTeam(character: BattleEntity, side: PARTICIPANT_SIDE) {
     const battleState = this.battleSystem.getBattleState()
     if (battleState) {
+      // 设置角色的修饰符提供者（BuffSystem）
+      const buffSystem = this.battleSystem.getBuffSystem()
+      if (buffSystem && typeof character.setModifierProvider === 'function') {
+        character.setModifierProvider(buffSystem)
+      }
+
       battleState.participants.set(character.id, character)
+
+      // 触发角色的被动技能
+      this.battleSystem.triggerPassiveSkillsForCharacter(character)
+
       this.syncBattleState()
       eventBus.emit('teamDataChanged', {
-        allyTeam: this.getAllyTeam(),
-        enemyTeam: this.getEnemyTeam(),
+        allyTeam: this.getEnabledAllyTeam(),
+        enemyTeam: this.getEnabledEnemyTeam(),
       })
     }
   }
@@ -305,8 +309,8 @@ export class BattleManager {
       battleState.participants.delete(characterId)
       this.syncBattleState()
       eventBus.emit('teamDataChanged', {
-        allyTeam: this.getAllyTeam(),
-        enemyTeam: this.getEnemyTeam(),
+        allyTeam: this.getEnabledAllyTeam(),
+        enemyTeam: this.getEnabledEnemyTeam(),
       })
     }
   }
@@ -348,8 +352,8 @@ export class BattleManager {
 
     this.syncBattleState()
     eventBus.emit('teamDataChanged', {
-      allyTeam: this.getAllyTeam(),
-      enemyTeam: this.getEnemyTeam(),
+      allyTeam: this.getEnabledAllyTeam(),
+      enemyTeam: this.getEnabledEnemyTeam(),
     })
   }
 

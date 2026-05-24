@@ -8,7 +8,7 @@
 import { computed, type ComputedRef } from 'vue'
 import type { BattleEntity } from '@/types/battle'
 import type { AttributeValue, CalculationBreakdown } from '@/types/attribute'
-import { AttributeCodes } from '@/types/attribute'
+import { ATTRIBUTE_CODE } from '@/types/attribute'
 
 /**
  * 格式化后的属性值
@@ -25,17 +25,17 @@ export interface FormattedAttribute {
 }
 
 /**
- * 属性访问 Composable 返回值（使用官方 AttributeCodes 标准编码）
+ * 属性访问 Composable 返回值（使用官方 ATTRIBUTE_CODE 标准编码）
  */
 export interface UseParticipantStatsReturn {
   /** 获取格式化属性 */
-  getFormatted: (type: AttributeCodes) => FormattedAttribute
+  getFormatted: (type: ATTRIBUTE_CODE) => FormattedAttribute
   /** 获取属性值 */
-  getValue: (type: AttributeCodes) => number
+  getValue: (type: ATTRIBUTE_CODE) => number
   /** 获取属性对象 */
-  getAttribute: (type: AttributeCodes) => AttributeValue | undefined
+  getAttribute: (type: ATTRIBUTE_CODE) => AttributeValue | undefined
   /** 获取计算拆解 */
-  getBreakdown: (type: AttributeCodes) => CalculationBreakdown | undefined
+  getBreakdown: (type: ATTRIBUTE_CODE) => CalculationBreakdown | undefined
   /** 当前生命值 */
   currentHealth: ComputedRef<FormattedAttribute>
   /** 最大生命值 */
@@ -88,7 +88,7 @@ export function useParticipantStats(
   participant: BattleEntity,
 ): UseParticipantStatsReturn {
   // 获取格式化属性
-  const getFormatted = (type: AttributeCodes): FormattedAttribute => {
+  const getFormatted = (type: ATTRIBUTE_CODE): FormattedAttribute => {
     const attrValue = participant.getAttributeValue(type)
     if (!attrValue) {
       return {
@@ -101,32 +101,34 @@ export function useParticipantStats(
   }
 
   // 获取属性值
-  const getValue = (type: AttributeCodes): number => {
+  const getValue = (type: ATTRIBUTE_CODE): number => {
     return participant.getAttributeValue(type)?.value ?? 0
   }
 
   // 获取属性对象
-  const getAttribute = (type: AttributeCodes): AttributeValue | undefined => {
+  const getAttribute = (type: ATTRIBUTE_CODE): AttributeValue | undefined => {
     return participant.getAttributeValue(type)
   }
 
   // 获取计算拆解
-  const getBreakdown = (type: AttributeCodes): CalculationBreakdown | null => {
+  const getBreakdown = (type: ATTRIBUTE_CODE): CalculationBreakdown | null => {
     return getAttribute(type)?.breakdown || null
   }
 
-  // 常用属性的计算属性（使用官方 AttributeCodes 标准编码）
-  const currentHealth = computed(() => getFormatted(AttributeCodes.currentHealth))
-  const maxHealth = computed(() => getFormatted(AttributeCodes.maxHealth))
-  const energy = computed(() => getFormatted(AttributeCodes.energy))
-  const maxEnergy = computed(() => getFormatted(AttributeCodes.maxEnergy))
-  const attack = computed(() => getFormatted(AttributeCodes.attack))
-  const defense = computed(() => getFormatted(AttributeCodes.defense))
-  const speed = computed(() => getFormatted(AttributeCodes.speed))
-  const critRate = computed(() => getFormatted(AttributeCodes.critRate))
-  const critDamage = computed(() => getFormatted(AttributeCodes.critDamage))
+  // 常用属性的计算属性（使用官方 ATTRIBUTE_CODE 标准编码）
+  const currentHealth = computed(() =>
+    getFormatted(ATTRIBUTE_CODE.currentHealth),
+  )
+  const maxHealth = computed(() => getFormatted(ATTRIBUTE_CODE.maxHealth))
+  const energy = computed(() => getFormatted(ATTRIBUTE_CODE.energy))
+  const maxEnergy = computed(() => getFormatted(ATTRIBUTE_CODE.maxEnergy))
+  const attack = computed(() => getFormatted(ATTRIBUTE_CODE.attack))
+  const defense = computed(() => getFormatted(ATTRIBUTE_CODE.defense))
+  const speed = computed(() => getFormatted(ATTRIBUTE_CODE.speed))
+  const critRate = computed(() => getFormatted(ATTRIBUTE_CODE.critRate))
+  const critDamage = computed(() => getFormatted(ATTRIBUTE_CODE.critDamage))
   const damageReduction = computed(() =>
-    getFormatted(AttributeCodes.damageReduction),
+    getFormatted(ATTRIBUTE_CODE.damageReduction),
   )
 
   return {
@@ -148,9 +150,15 @@ export function useParticipantStats(
 }
 
 /**
- * 战斗属性类型（用于 UI 显示，使用官方 AttributeCodes 标准编码）
+ * 战斗属性类型（用于 UI 显示，使用官方 ATTRIBUTE_CODE 标准编码）
  */
-export type CombatStatType = 'currentHealth' | 'energy' | 'attack' | 'defense' | 'speed' | 'crit'
+export type CombatStatType =
+  | 'currentHealth'
+  | 'energy'
+  | 'attack'
+  | 'defense'
+  | 'speed'
+  | 'crit'
 
 /**
  * 获取战斗属性显示名称

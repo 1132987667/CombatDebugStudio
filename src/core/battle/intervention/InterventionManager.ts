@@ -6,7 +6,7 @@ import { GameDataProcessor } from '@/utils/GameDataProcessor'
 
 /**
  * 手动干预管理器
- * 负责处理 DebugPanel 的事件和手动修改
+ * 负责处理 BattleDashboard 的事件和手动修改
  */
 export class InterventionManager {
   private battleSystem: IBattleSystem
@@ -50,8 +50,8 @@ export class InterventionManager {
     this.selectedCharacterId = charId
 
     // 查找并设置选中的角色
-    const allyTeam = this.battleStateManager.getAllyTeam()
-    const enemyTeam = this.battleStateManager.getEnemyTeam()
+    const allyTeam = this.battleSystem.getEnabledAllyTeam()
+    const enemyTeam = this.battleSystem.getEnabledEnemyTeam()
 
     this.selectedChar =
       allyTeam.find((c) => c.id === charId) ||
@@ -183,10 +183,10 @@ export class InterventionManager {
    */
   exportState() {
     const state = {
-      battleCharacters: this.battleStateManager.getAllyTeam(),
-      enemyParty: this.battleStateManager.getEnemyTeam(),
+      battleCharacters: this.battleSystem.getEnabledAllyTeam(),
+      enemyParty: this.battleSystem.getEnabledEnemyTeam(),
       currentTurn: this.battleStateManager.getCurrentTurn(),
-      battleLogs: this.battleLogManager.getLogs(),
+      battleLogs: this.battleLogManager.getSystemLogs(),
     }
 
     // 保存到本地存储

@@ -22,7 +22,7 @@
 // todo immunities 数组中的状态类型在应用 Buff/状态时被检查，若存在则阻止添加。
 // Buff 应用检查时：如果 IMMUNE_SLOW > 0，则阻止任何减速效果添加。
 // // 新增属性代码常量
-// export const AttributeCodes = {
+// export const ATTRIBUTE_CODE = {
 //   // ... 原有
 
 //   // 免疫标记（值 0/1）
@@ -38,8 +38,8 @@
 // } as const
 // 回合结束时：引擎自动遍历所有参与者，根据 HP_REGEN_PERCENT 执行治疗。
 // 光环系统：当携带者存活时，自动为符合条件的友方添加对应的修饰符；死亡或离场时移除。
-// attribute.ts 中 AttributeCodes 对象的新增部分
-// export const AttributeCodes = {
+// attribute.ts 中 ATTRIBUTE_CODE 对象的新增部分
+// export const ATTRIBUTE_CODE = {
 //   // ... 原有属性（HP, ATK, DEF, SPD, CRIT_RATE, CRIT_DMG 等）
 
 //   // ========== 种族/条件伤害加成 ==========

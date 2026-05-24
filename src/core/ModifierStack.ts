@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import type { Modifier, ModifierType, AttributeCodes } from '@/types/attribute'
+import type { Modifier, ModifierType, ATTRIBUTE_CODE } from '@/types/attribute'
 
 /**
  * 修饰符堆栈类
@@ -29,7 +29,7 @@ export class ModifierStack {
    */
   public addModifier(
     buffInstanceId: string,
-    attribute: AttributeCodes,
+    attribute: ATTRIBUTE_CODE,
     value: number,
     type: ModifierType,
   ): void {
@@ -75,7 +75,7 @@ export class ModifierStack {
    * @param baseValue 基础属性值
    * @returns 计算后的属性值
    */
-  public calculate(attribute: AttributeCodes, baseValue: number): number {
+  public calculate(attribute: ATTRIBUTE_CODE, baseValue: number): number {
     const modifiers = this.modifiers.get(attribute)
     const modifierCount = modifiers?.length ?? 0
 
@@ -122,7 +122,7 @@ export class ModifierStack {
    * @param attribute 属性名称（可选），不指定则返回所有修饰符
    * @returns 修饰符数组
    */
-  public getModifiers(attribute?: AttributeCodes): Modifier[] {
+  public getModifiers(attribute?: ATTRIBUTE_CODE): Modifier[] {
     if (attribute) {
       return this.modifiers.get(attribute) || []
     }

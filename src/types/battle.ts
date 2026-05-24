@@ -9,7 +9,9 @@ import type { SkillConfig } from '@/types/skill'
 import type {
   AttributeValue,
   IModifierProvider,
-  AttributeCodes,
+  ATTRIBUTE_CODE,
+  AttributeValues,
+  Modifier,
 } from '@/types/attribute'
 import type { BattleLogEntry } from '@/types/battle-log'
 import { EffectType } from '@/types/effect'
@@ -156,16 +158,14 @@ export type ParticipantSide =
  * 所有参与战斗的角色和敌人都应实现此接口
  */
 export interface BattleEntity {
-  id: string
-  name: string
-  level: number
-  type: ParticipantSide
-  /** 队伍归属 */
-  team: ParticipantSide
-  /** 是否启用 */
-  enabled: boolean
+  id: string // 实体唯一标识
+  name: string // 实体名称
+  level: number // 实体等级
+  type: ParticipantSide // 实体类型
+  team: ParticipantSide // 实体阵营
+  enabled: boolean // 实体是否启用
   /** Buff列表 */
-  buffs: string[]
+  buffs: Modifier[]
   /** 状态效果列表 */
   statusEffects?: StatusEffect[]
   /** 技能配置 */
@@ -174,56 +174,25 @@ export interface BattleEntity {
     passive?: SkillConfig[]
     ultimate?: SkillConfig[]
   }
-
-  /** 当前生命值 */
-  currentHealth: number
-  /** 最大生命值 */
-  maxHealth: number
-  /** 当前能量值 */
-  currentEnergy: number
-  /** 最大能量值 */
-  maxEnergy: number
-  /** 最小攻击力 */
-  minAttack: number
-  /** 最大攻击力 */
-  maxAttack: number
-  /** 平均攻击力（计算值） */
-  attack: number
-  /** 防御力 */
-  defense: number
-  /** 速度值（用于回合顺序计算） */
-  speed: number
-  /** 暴击率（百分比，0-100） */
-  critRate: number
-  /** 暴击伤害（百分比，≥100） */
-  critDamage: number
-  /** 免伤率（百分比，0-100） */
-  damageReduction: number
-  /** 气血加成（百分比） */
-  healthBonus: number
-  /** 攻击加成（百分比） */
-  attackBonus: number
-  /** 防御加成（百分比） */
-  defenseBonus: number
-  /** 速度加成（百分比） */
-  speedBonus: number
+  /** 属性值缓存 */
+  attributeValues: AttributeValues
 
   /** 获取属性值对象（包含详细信息） */
   getAttributeValue(
-    attribute: AttributeCodes | string,
+    attribute: ATTRIBUTE_CODE | string,
   ): AttributeValue | undefined
   /** 获取属性最终值（快捷方法） */
-  getAttribute(attribute: AttributeCodes | string): number
+  getAttribute(attribute: ATTRIBUTE_CODE | string): number
   /** 快捷获取属性最终值（number） */
-  getAttr(attr: AttributeCodes): number
+  getAttr(attr: ATTRIBUTE_CODE): number
   /** 快捷获取属性值对象（包含基础值、修饰符等） */
-  getAttrValue(attr: AttributeCodes): AttributeValue | undefined
+  getAttrValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined
   /** 批量预计算所有属性（回合开始时调用） */
   recalcAll(): void
   /** 设置属性值 */
   setAttribute(attribute: string, value: number): void
   /** 标记属性为脏（需要重新计算） */
-  markDirty(attribute: AttributeCodes | string): void
+  markDirty(attribute: ATTRIBUTE_CODE | string): void
   /** 标记所有属性为脏 */
   markAllDirty(): void
   /** 重新计算所有属性 */

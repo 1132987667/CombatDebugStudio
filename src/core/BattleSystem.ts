@@ -269,6 +269,14 @@ export class BattleSystem implements IBattleSystem {
   }
 
   /**
+   * 获取Buff系统实例
+   * @returns Buff系统实例
+   */
+  public getBuffSystem(): BuffSystem {
+    return this.buffSystem
+  }
+
+  /**
    * 获取默认战斗数据对象
    * @returns 初始化的战斗数据对象
    */
@@ -392,6 +400,25 @@ export class BattleSystem implements IBattleSystem {
     this.passiveSkillManager.triggerPassiveSkillsForAll(
       PassiveSkillTrigger.BATTLE_START,
       participants,
+    )
+  }
+
+  /**
+   * 触发单个角色的被动技能
+   * 用于在调试面板中动态添加角色时触发被动技能
+   * @param participant 参与者
+   */
+  public triggerPassiveSkillsForCharacter(participant: BattleEntity): void {
+    // 触发战斗开始事件
+    this.emitTriggerEvent('ON_BATTLE_START', {
+      sourceId: participant.id,
+    })
+
+    // 使用PassiveSkillManager触发战斗开始时的被动技能
+    this.passiveSkillManager.triggerPassiveSkills(
+      PassiveSkillTrigger.BATTLE_START,
+      participant,
+      {},
     )
   }
 

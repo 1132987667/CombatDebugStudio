@@ -19,7 +19,7 @@ import type {
   IModifierStack,
   ModifierSourceType,
 } from '@/types/attribute'
-import { AttributeCodes } from '@/types/attribute'
+import { ATTRIBUTE_CODE } from '@/types/attribute'
 import { StackRule, ControlType } from '@/types/buff'
 import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
 import { BuffContext } from '@/core/BuffContext'
@@ -66,7 +66,7 @@ export class BuffSystem implements IModifierProvider {
   /** 日志记录器 */
   private readonly logger = battleLogManager
   /** 调试模式标志 */
-  private _debugMode: boolean = false
+  private _debugMode: boolean = true
   /** 属性变化回调（用于触发参与者的 markDirty） */
   private onAttributeChange?: (characterId: string) => void
   /** 触发器事件总线实例 */
@@ -282,7 +282,7 @@ export class BuffSystem implements IModifierProvider {
 
       modifierStack.addModifier(
         instanceId,
-        attr as AttributeCodes,
+        attr as ATTRIBUTE_CODE,
         parsed.value,
         parsed.type,
       )

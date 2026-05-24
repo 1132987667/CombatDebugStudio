@@ -49,40 +49,15 @@ export type AttributeValueType =
 // ========== 核心接口 ==========
 
 /**
- * 原始修饰符实例（与 Buff 系统关联）
- */
-export interface Modifier {
-  /** Buff 实例唯一标识 */
-  buffInstanceId: string
-  /** 目标属性 */
-  attribute: AttributeCodes
-  /** 修饰数值 */
-  value: number
-  /** 修饰类型 */
-  type: ModifierType
-}
-
-/**
- * 修饰符配置（用于创建 Buff/装备等）
- */
-export interface ModifierConfig {
-  attribute: AttributeCodes
-  value: number
-  type: ModifierType
-  /** 持续时间（回合数） */
-  duration?: number
-  /** 最大可叠加层数 */
-  maxStacks?: number
-}
-
-/**
  * 修饰符详情（用于 UI 展示与调试）
  */
-export interface ModifierDetail {
+export interface Modifier {
   /** 来源标识，如 "buff_attack_up" 或 "装备:铁剑" */
-  source: string
+  sourceKey: string
   /** 来源类型 */
   sourceType: ModifierSourceType
+  /** 目标属性 */
+  attribute: ATTRIBUTE_CODE
   /** 加成原始值 */
   value: number
   /** 加成类型 */
@@ -92,7 +67,7 @@ export interface ModifierDetail {
 }
 
 /**
- * 属性计算拆解（仅在调试模式填充）
+ * 属性计算拆解（用于查看计算过程）
  */
 export interface CalculationBreakdown {
   /** 基础值 */
@@ -108,6 +83,24 @@ export interface CalculationBreakdown {
 }
 
 /**
+ * 单步计算记录
+ */
+export interface CalculationStep {
+  /** 修饰符模板 ID */
+  modifierId: string
+  /** 来源名称 */
+  sourceName: string
+  /** 修饰类型 */
+  type: ModifierType
+  /** 解析后的实际数值 */
+  appliedValue: number
+  /** 该步骤执行前的中间结果 */
+  previousValue: number
+  /** 该步骤执行后的中间结果 */
+  intermediateResult: number
+}
+
+/**
  * 属性值对象（缓存最终值及来源）
  */
 export interface AttributeValue {
@@ -116,7 +109,7 @@ export interface AttributeValue {
   /** 基础值（未加任何修饰符） */
   base: number
   /** 修饰符详情列表（用于调试和 UI） */
-  modifiers: ModifierDetail[]
+  modifiers: Modifier[]
   /** 是否为百分比属性（用于 UI 格式化） */
   isPercentage: boolean
   /** 是否需要重新计算（脏标记） */
@@ -128,8 +121,7 @@ export interface AttributeValue {
 }
 
 /**
- * 属性计算追踪结果（从 AttributeEngine 导入类型）
- * 注意：此类型定义用于类型提示，实际类型来自 AttributeEngine
+ * 属性计算最终结果（包含追踪）
  */
 export interface AttributeComputeResult {
   /** 最终计算值 */
@@ -137,42 +129,11 @@ export interface AttributeComputeResult {
   /** 基础值 */
   baseValue: number
   /** 所有步骤记录（按计算顺序） */
-  steps: Array<{
-    modifierId: string
-    sourceName: string
-    type: ModifierType
-    appliedValue: number
-    previousValue: number
-    intermediateResult: number
-  }>
+  steps: CalculationStep[]
   /** 按来源分组的贡献值（便于 UI 展示） */
-  sourceContributions: Array<{
-    sourceId: string
-    sourceName: string
-    sourceType?: string
-    contribution: number
-  }>
-  /** 计算拆解 */
-  breakdown: {
-    additive: number
-    percentMultiplier: number
-    independentMultiplier: number
-    finalMultiplier: number
-  }
-}
-
-/**
- * 修饰符计算结果
- */
-export interface ModifierResult {
-  baseValue: number
-  finalValue: number
-  modifiers: Modifier[]
-  breakdown: {
-    additive: number
-    multiplicative: number
-    percentage: number
-  }
+  sourceContributions: Modifier[]
+  /** 计算拆解（用于查看计算过程） */
+  breakdown: CalculationBreakdown
 }
 
 // ========== 抽象接口（依赖倒置） ==========
@@ -183,15 +144,15 @@ export interface ModifierResult {
  */
 export interface IModifierStack {
   /** 获取指定属性的原始修饰符列表 */
-  getModifiers(attribute?: AttributeCodes): Modifier[]
+  getModifiers(attribute?: ATTRIBUTE_CODE): Modifier[]
   /** 计算属性最终值 */
-  calculate(attribute: AttributeCodes, baseValue: number): number
+  calculate(attribute: ATTRIBUTE_CODE, baseValue: number): number
   /** 获取当前堆栈中修饰符总数 */
   getModifierCount(): number
   /** 添加修饰符 */
   addModifier(
     buffInstanceId: string,
-    attribute: AttributeCodes,
+    attribute: ATTRIBUTE_CODE,
     value: number,
     type: ModifierType,
   ): void
@@ -229,10 +190,13 @@ export interface IModifierProvider {
   isDebugMode(): boolean
 }
 
+/** 所有属性的值对象映射（键为属性代码，值为属性值对象） */
+export type AttributeValues = Record<ATTRIBUTE_CODE, AttributeValue>
+
 // ========== 属性代码常量 ==========
 
 /** 属性代码常量（用于类型提示） */
-export const AttributeCodes = {
+export const ATTRIBUTE_CODE = {
   currentHealth: 'currentHealth',
   maxHealth: 'maxHealth',
   attack: 'attack',
@@ -287,67 +251,8 @@ export const AttributeCodes = {
   poisonRes: 'poisonRes', // 毒素抗性
 } as const
 
-export type AttributeCodes =
-  (typeof AttributeCodes)[keyof typeof AttributeCodes]
-
-/** 属性代码显示名称映射 */
-export const AttributeCodeNames: Record<AttributeCodes, string> = {
-  // ========== 基础属性 ==========
-  currentHealth: '当前生命值',
-  maxHealth: '最大生命值',
-  attack: '攻击力',
-  minAttack: '最小攻击力',
-  maxAttack: '最大攻击力',
-  defense: '防御力',
-  speed: '速度',
-  critRate: '暴击率',
-  critDamage: '暴击伤害',
-  energy: '能量',
-  maxEnergy: '最大能量',
-
-  // ========== 伤害减免细分 ==========
-  damageReduction: '免伤率',
-  normalAtkDmgReduction: '普攻伤害减免',
-  skillDmgReduction: '技能伤害减免',
-  critDmgTakenReduction: '暴击承伤减免',
-
-  // ========== 再生属性 ==========
-  hpRegenPercent: '生命回复(%)',
-  hpRegenFlat: '生命回复(固定)',
-
-  // ========== 属性加成 ==========
-  healthBonus: '生命值加成',
-  attackBonus: '攻击力加成',
-  defenseBonus: '防御力加成',
-  speedBonus: '速度加成',
-
-  // ========== 五行属性攻击力 ==========
-  metalAtk: '金属性攻击',
-  woodAtk: '木属性攻击',
-  waterAtk: '水属性攻击',
-  fireAtk: '火属性攻击',
-  earthAtk: '土属性攻击',
-
-  // ========== 五行属性抗性 ==========
-  metalRes: '金属性抗性',
-  woodRes: '木属性抗性',
-  waterRes: '水属性抗性',
-  fireRes: '火属性抗性',
-  earthRes: '土属性抗性',
-
-  // ========== 特殊战斗属性 ==========
-  dodge: '闪避率',
-  hit: '命中率',
-  controlSuccessRate: '控制成功率',
-  controlDurationReduction: '受控时间减免',
-  damageTakenIncrease: '易伤系数',
-
-  // ========== 反弹/反伤 ==========
-  reflectDamagePercent: '伤害反弹比例',
-
-  // ========== 抗性 ==========
-  poisonRes: '毒素抗性',
-}
+export type ATTRIBUTE_CODE =
+  (typeof ATTRIBUTE_CODE)[keyof typeof ATTRIBUTE_CODE]
 
 // ========== 辅助函数 ==========
 
@@ -363,7 +268,7 @@ export function createAttributeValue(
   base: number,
   value: number,
   options?: Partial<{
-    modifiers: ModifierDetail[]
+    modifiers: Modifier[]
     isPercentage: boolean
     dirty: boolean
     breakdown: CalculationBreakdown
@@ -400,7 +305,7 @@ export function createBaseAttributeValue(
  */
 export function calculateFinalValue(
   base: number,
-  modifiers: ModifierDetail[],
+  modifiers: Modifier[],
 ): { value: number; breakdown: CalculationBreakdown } {
   let additive = 0
   let percentSum = 0
@@ -452,7 +357,7 @@ export function calculateFinalValue(
  * 属性元数据（用于 UI 展示）
  */
 export interface AttributeMeta {
-  code: string
+  code: ATTRIBUTE_CODE
   name: string
   displayName: string
   description: string
@@ -460,10 +365,11 @@ export interface AttributeMeta {
   impact: string
   iconPath?: string
   isPercentage: boolean
+  defaultValue?: number
 }
 
-/** 属性元数据映射表（与 AttributeCodes 标准编码完全同步） */
-export const AttributeMetaMap: Record<string, AttributeMeta> = {
+/** 属性元数据映射表（键为属性代码，与 ATTRIBUTE_CODE 完全同步） */
+export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   // ========== 基础属性 ==========
   currentHealth: {
     code: 'currentHealth',
@@ -536,6 +442,7 @@ export const AttributeMetaMap: Record<string, AttributeMeta> = {
     range: '0-100%',
     impact: '提高暴击触发几率，增加伤害爆发能力，默认为10%',
     isPercentage: true,
+    defaultValue: 10,
   },
   critDamage: {
     code: 'critDamage',
@@ -545,6 +452,7 @@ export const AttributeMetaMap: Record<string, AttributeMeta> = {
     range: '100-500%',
     impact: '暴击时造成的额外伤害，值越高暴击伤害越高，默认125%',
     isPercentage: true,
+    defaultValue: 125,
   },
 
   // ========== 能量属性 ==========
@@ -826,6 +734,15 @@ export const AttributeMetaMap: Record<string, AttributeMeta> = {
     isPercentage: true,
   },
 }
+
+/** 从元数据派生的属性显示名称映射 */
+export const AttributeCodeNames: Record<ATTRIBUTE_CODE, string> =
+  Object.fromEntries(
+    Object.entries(AttributeMetaMap).map(([key, meta]) => [
+      key,
+      meta.displayName,
+    ]),
+  ) as Record<ATTRIBUTE_CODE, string>
 
 /**
  * 根据属性编码获取属性元数据

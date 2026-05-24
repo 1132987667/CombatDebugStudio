@@ -98,7 +98,7 @@
                 <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item">
                   <div class="char-info">
                     <span class="char-name">{{ enemy.name }} (Lv.{{ enemy.level }})</span>
-                    <span class="char-stats">气血:{{ enemy.stats.health }} 攻击:{{ enemy.stats.minAttack
+                    <span class="char-stats">气血:{{ enemy.stats.maxHealth }} 攻击:{{ enemy.stats.minAttack
                     }}-{{ enemy.stats.maxAttack }}</span>
                   </div>
                   <div class="char-actions">
@@ -245,7 +245,7 @@ const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typ
   const bonuses =
     GameDataProcessor.calculatePassiveSkillBonuses(passiveSkills)
 
-  const baseHealth = enemy.stats.health
+  const baseHealth = enemy.stats.maxHealth
   const baseAttack = (enemy.stats.minAttack + enemy.stats.maxAttack) / 2
   const baseDefense = enemy.stats.defense
   const baseSpeed = enemy.stats.speed

@@ -30,13 +30,25 @@ export interface BattleRules {
 
 export interface AnimationState {
   /** 伤害动画数据（目标ID、伤害值、类型、是否暴击/治疗） */
-  damage: { targetId: string; damage: number; damageType: string; isCritical: boolean; isHeal: boolean } | null
+  damage: {
+    targetId: string
+    damage: number
+    damageType: string
+    isCritical: boolean
+    isHeal: boolean
+  } | null
   /** 闪避动画数据（目标ID） */
   miss: { targetId: string } | null
   /** Buff效果动画数据（目标ID、Buff名称、正面/负面） */
   buff: { targetId: string; buffName: string; isPositive: boolean } | null
   /** 技能特效动画数据（施法者、目标、技能名、效果类型、伤害类型） */
-  skill: { sourceId: string; targetId: string; skillName: string; effectType: string; damageType: string } | null
+  skill: {
+    sourceId: string
+    targetId: string
+    skillName: string
+    effectType: string
+    damageType: string
+  } | null
 }
 
 export interface LoadingState {
@@ -72,13 +84,27 @@ export const useBattleStore = defineStore('battle', () => {
   /** 当前行动者角色ID（用于高亮显示当前行动方） */
   const currentActorId = ref<string | null>(null)
   /** 全局加载状态（控制 Loading 遮罩层显示与进度反馈） */
-  const loading = reactive<LoadingState>({ isLoading: false, operation: null, progress: null })
+  const loading = reactive<LoadingState>({
+    isLoading: false,
+    operation: null,
+    progress: null,
+  })
   /** 全局错误状态（统一捕获并展示异常信息） */
-  const error = reactive<ErrorState>({ hasError: false, message: null, details: null, field: null })
+  const error = reactive<ErrorState>({
+    hasError: false,
+    message: null,
+    details: null,
+    field: null,
+  })
   /** 自动播放模式开关（启用后自动执行回合无需手动操作） */
   const autoPlayMode = ref(false)
   /** 动画效果状态管理（伤害数字/闪避/Buff图标/技能特效的触发与清除） */
-  const animationState = reactive<AnimationState>({ damage: null, miss: null, buff: null, skill: null })
+  const animationState = reactive<AnimationState>({
+    damage: null,
+    miss: null,
+    buff: null,
+    skill: null,
+  })
   /** 当前战斗会话唯一标识（用于区分不同战斗实例和日志关联） */
   const currentBattleId = ref<string | null>(null)
   /** 回合行动顺序队列（按速度排序后的角色ID列表） */
@@ -87,7 +113,11 @@ export const useBattleStore = defineStore('battle', () => {
   const battleSpeed = ref(1)
   /** 日志过滤器配置（按类别控制日志面板的显示范围） */
   const filters = reactive<LogFilters>({
-    battle: true, system: true, item: true, action: true, debug: false,
+    battle: true,
+    system: true,
+    item: true,
+    action: true,
+    debug: false,
   })
   /** 已处理过的战斗动作ID集合（防止重复解析和显示同一动作） */
   const processedActionIds = ref(new Set<string>())
@@ -102,7 +132,9 @@ export const useBattleStore = defineStore('battle', () => {
 
   // 🔹 2. 业务层引用（适配器桥接，使用 shallowRef 避免深层 Proxy 开销）
   /** 战斗管理器实例（核心业务逻辑入口，通过依赖注入获取） */
-  const battleManager = shallowRef<BattleManager>(container.resolve<BattleManager>('BattleManager'))
+  const battleManager = shallowRef<BattleManager>(
+    container.resolve<BattleManager>('BattleManager'),
+  )
 
   /** 我方队伍成员列表（响应式同步 BattleManager 内部状态） */
   const allyTeam = shallowRef<BattleEntity[]>([])
@@ -119,8 +151,8 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const syncTeams = () => {
     console.log('接收队伍数据更新')
-    allyTeam.value = battleManager.value.getAllyTeam()
-    enemyTeam.value = battleManager.value.getEnemyTeam()
+    allyTeam.value = battleManager.value.getEnabledAllyTeam()
+    enemyTeam.value = battleManager.value.getEnabledEnemyTeam()
     currentTurn.value = battleManager.value.getCurrentTurn()
     const battleState = battleManager.value.getBattleState()
     isBattleActive.value = battleState?.battleState === 'ACTIVE' || false
@@ -134,7 +166,6 @@ export const useBattleStore = defineStore('battle', () => {
     battleManager.value.on(BattleEventCodes.TEAM_DATA_CHANGED, syncTeams)
   }
   setupSubscriptions()
-
 
   // 🔹 4. 事件处理器（仅负责同步业务数据到响应式状态）
 
@@ -157,7 +188,7 @@ export const useBattleStore = defineStore('battle', () => {
     if (data?.winner) {
       battleLogManager.addBattleLog(
         battleManager.value?.getTurn() ?? 1,
-        `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`
+        `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`,
       )
     }
   }
@@ -176,9 +207,11 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /** 处理伤害动画事件（触发伤害数字飘字效果） */
-  const handleDamageAnimationEvent = (data: any) => setAnimationState('damage', data)
+  const handleDamageAnimationEvent = (data: any) =>
+    setAnimationState('damage', data)
   /** 处理闪避动画事件（触发闪避提示效果） */
-  const handleMissAnimationEvent = (data: any) => setAnimationState('miss', data)
+  const handleMissAnimationEvent = (data: any) =>
+    setAnimationState('miss', data)
   /** 处理Buff效果事件（触发Buff图标显示/隐藏） */
   const handleBuffEffectEvent = (data: any) => setAnimationState('buff', data)
   /** 处理技能特效事件（触发技能释放动画） */
@@ -221,7 +254,11 @@ export const useBattleStore = defineStore('battle', () => {
    * @param operation 当前操作描述（如"开始战斗"、"执行回合"）
    * @param progress 加载进度百分比（0-100）
    */
-  const setLoading = (isLoading: boolean, operation: string | null = null, progress: number | null = null) => {
+  const setLoading = (
+    isLoading: boolean,
+    operation: string | null = null,
+    progress: number | null = null,
+  ) => {
     loading.isLoading = isLoading
     loading.operation = operation
     loading.progress = progress
@@ -238,12 +275,17 @@ export const useBattleStore = defineStore('battle', () => {
    * @param details 详细错误堆栈信息
    * @param field 出错的字段名（用于表单验证错误定位）
    */
-  const setError = (message: string | null, details: string | null = null, field: string | null = null) => {
+  const setError = (
+    message: string | null,
+    details: string | null = null,
+    field: string | null = null,
+  ) => {
     error.hasError = !!message
     error.message = message
     error.details = details
     error.field = field
-    if (message && details) console.error(`[Battle Error] ${message}: ${details}`)
+    if (message && details)
+      console.error(`[Battle Error] ${message}: ${details}`)
     else if (message) console.error(`[Battle Error] ${message}`)
   }
 
@@ -262,9 +304,13 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /** 设置自动播放模式开关 */
-  const setAutoPlayMode = (mode: boolean) => { autoPlayMode.value = mode }
+  const setAutoPlayMode = (mode: boolean) => {
+    autoPlayMode.value = mode
+  }
   /** 设置战斗激活状态（控制UI交互可用性） */
-  const setBattleActive = (active: boolean) => { isBattleActive.value = active }
+  const setBattleActive = (active: boolean) => {
+    isBattleActive.value = active
+  }
   /** 清空所有战斗日志和已处理动作记录 */
   const clearBattleLogs = () => {
     battleLogManager.clearLogs()
@@ -299,9 +345,7 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const updateRules = (newRules: Partial<BattleRules>) => {
     Object.assign(rules.value, newRules)
-    battleLogManager.addSystemLog(
-      `战斗规则已更新: ${JSON.stringify(newRules)}`,
-    )
+    battleLogManager.addSystemLog(`战斗规则已更新: ${JSON.stringify(newRules)}`)
   }
 
   /**
@@ -313,7 +357,9 @@ export const useBattleStore = defineStore('battle', () => {
   const setAnimationState = (type: keyof AnimationState, data: any) => {
     animationState[type] = data
     const duration = getAnimationDuration()
-    setTimeout(() => { animationState[type] = null }, duration)
+    setTimeout(() => {
+      animationState[type] = null
+    }, duration)
   }
 
   /** 根据当前战斗速度计算动画持续时间（速度越快，持续时间越短） */
@@ -348,7 +394,9 @@ export const useBattleStore = defineStore('battle', () => {
       setError(errorMsg, err instanceof Error ? err.stack : null)
       battleLogManager.addDebugLog(`开始战斗失败: ${errorMsg}`)
       return false
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
 
   /**
@@ -357,7 +405,9 @@ export const useBattleStore = defineStore('battle', () => {
    * @returns Promise<boolean> 操作是否成功
    * @description 终止战斗会话，记录胜负结果，清理相关状态
    */
-  const endBattle = async (winner: typeof PARTICIPANT_SIDE.ALLY = PARTICIPANT_SIDE.ALLY) => {
+  const endBattle = async (
+    winner: typeof PARTICIPANT_SIDE.ALLY = PARTICIPANT_SIDE.ALLY,
+  ) => {
     setLoading(true, '结束战斗')
     clearError()
     try {
@@ -371,7 +421,9 @@ export const useBattleStore = defineStore('battle', () => {
       setError(errorMsg, err instanceof Error ? err.stack : null)
       battleLogManager.addDebugLog(`结束战斗失败: ${errorMsg}`)
       return false
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
 
   /**
@@ -397,7 +449,9 @@ export const useBattleStore = defineStore('battle', () => {
       setError(errorMsg, err instanceof Error ? err.stack : null)
       battleLogManager.addDebugLog(`重置战斗失败: ${errorMsg}`)
       return false
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
 
   /**
@@ -418,7 +472,9 @@ export const useBattleStore = defineStore('battle', () => {
       setError(errorMsg, err instanceof Error ? err.stack : null)
       battleLogManager.addDebugLog(`执行回合时出错: ${errorMsg}`)
       return false
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
 
   /**
@@ -451,7 +507,9 @@ export const useBattleStore = defineStore('battle', () => {
       battleLogManager.addDebugLog(`切换自动战斗状态失败: ${errorMsg}`)
       autoPlayMode.value = !autoPlayMode.value // 恢复原状态
       return false
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
 
   /**
@@ -474,7 +532,9 @@ export const useBattleStore = defineStore('battle', () => {
       const errorMsg = err instanceof Error ? err.message : String(err)
       setError(errorMsg, err instanceof Error ? err.stack : null)
       return false
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
 
   /**
@@ -485,14 +545,14 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const exportState = (currentTurn: number) => {
     try {
-      const allyTeam = battleManager.value?.getAllyTeam() || []
-      const enemyTeam = battleManager.value?.getEnemyTeam() || []
+      const allyTeam = battleManager.value?.getEnabledAllyTeam() || []
+      const enemyTeam = battleManager.value?.getEnabledEnemyTeam() || []
       const state = {
         battleCharacters: allyTeam,
         enemyParty: enemyTeam,
         currentTurn,
         rules: rules.value,
-        battleLogs: [] // 按需替换为实际日志获取逻辑
+        battleLogs: battleLogManager.getSystemLogs(), // 按需替换为实际日志获取逻辑
       }
       localStorage.setItem('battleState', JSON.stringify(state, null, 2))
       battleLogManager.addSystemLog('战斗状态已导出')
@@ -532,7 +592,7 @@ export const useBattleStore = defineStore('battle', () => {
   const destroy = () => {
     try {
       if (!battleManager.value) return
-      cleanupEvents.forEach(key => battleManager.value.off(key))
+      cleanupEvents.forEach((key) => battleManager.value.off(key))
       cleanupEvents.length = 0
       currentActorId.value = null
       isBattleActive.value = false
@@ -558,12 +618,28 @@ export const useBattleStore = defineStore('battle', () => {
    * @returns 解析结果（日志条目和是否需要显示）
    * @description 将原始战斗动作数据转换为格式化的日志条目，并处理去重逻辑
    */
-  const parseBattleAction = async (action: BattleAction, battleState: BattleState): Promise<{ log: BattleLogEntry | null; shouldDisplay: boolean }> => {
-    if (processedActionIds.value.has(action.id)) return { log: null, shouldDisplay: false }
+  const parseBattleAction = async (
+    action: BattleAction,
+    battleState: BattleState,
+  ): Promise<{ log: BattleLogEntry | null; shouldDisplay: boolean }> => {
+    if (processedActionIds.value.has(action.id))
+      return { log: null, shouldDisplay: false }
     processedActionIds.value.add(action.id)
-    const sourceIsAlly = action.sourceId !== 'system' ? battleState.participants.get(action.sourceId)?.team === PARTICIPANT_SIDE.ALLY : false
-    const targetIsAlly = action.targetId && action.targetId !== 'system' ? battleState.participants.get(action.targetId)?.team === PARTICIPANT_SIDE.ALLY : undefined
-    const fullLog = battleActionToLogEntry(action, battleState.participants, { turnNumber: action.turn, sourceIsAlly, targetIsAlly })
+    const sourceIsAlly =
+      action.sourceId !== 'system'
+        ? battleState.participants.get(action.sourceId)?.team ===
+          PARTICIPANT_SIDE.ALLY
+        : false
+    const targetIsAlly =
+      action.targetId && action.targetId !== 'system'
+        ? battleState.participants.get(action.targetId)?.team ===
+          PARTICIPANT_SIDE.ALLY
+        : undefined
+    const fullLog = battleActionToLogEntry(action, battleState.participants, {
+      turnNumber: action.turn,
+      sourceIsAlly,
+      targetIsAlly,
+    })
     return { log: fullLog, shouldDisplay: shouldDisplayLog(fullLog) }
   }
 
@@ -581,9 +657,20 @@ export const useBattleStore = defineStore('battle', () => {
       return a.id.localeCompare(b.id)
     })
     for (const action of sortedActions) {
-      const { log, shouldDisplay } = await parseBattleAction(action, battleState)
+      const { log, shouldDisplay } = await parseBattleAction(
+        action,
+        battleState,
+      )
       if (!shouldDisplay || !log) continue
-      battleLogManager.addSystemLog(log.turn, log.source, log.action, log.target, log.segments, log.category, log.level)
+      battleLogManager.addSystemLog(
+        log.turn,
+        log.source,
+        log.action,
+        log.target,
+        log.segments,
+        log.category,
+        log.level,
+      )
     }
   }
 
@@ -609,8 +696,19 @@ export const useBattleStore = defineStore('battle', () => {
     const logText = log.segments.map((s) => s.text).join('')
     const isLogExists = false // 简化逻辑，实际可按需接入日志去重
     if (category === 'system' && !filters.system) return false
-    if (category === 'action' && log.source !== '系统' && !log.source.includes(PARTICIPANT_SIDE.ENEMY) && !filters.action) return false
-    if (category === 'action' && log.source.includes(PARTICIPANT_SIDE.ENEMY) && !filters.action) return false
+    if (
+      category === 'action' &&
+      log.source !== '系统' &&
+      !log.source.includes(PARTICIPANT_SIDE.ENEMY) &&
+      !filters.action
+    )
+      return false
+    if (
+      category === 'action' &&
+      log.source.includes(PARTICIPANT_SIDE.ENEMY) &&
+      !filters.action
+    )
+      return false
     if (!filters.battle && category === 'damage') return false
     if (!filters.battle && category === 'heal') return false
     if (!filters.battle && category === 'status') return false
@@ -642,77 +740,77 @@ export const useBattleStore = defineStore('battle', () => {
   // 🔹 暴露给外部
   return {
     // ========== 状态属性（State） ==========
-    rules,                    // 战斗规则配置
-    currentActorId,           // 当前行动者ID
-    loading,                  // 加载状态
-    error,                    // 错误状态
-    autoPlayMode,             // 自动播放模式
-    animationState,           // 动画效果状态
-    currentBattleId,          // 当前战斗ID
-    turnOrder,                // 回合行动顺序
-    battleSpeed,              // 战斗速度
-    filters,                  // 日志过滤器
-    processedActionIds,       // 已处理动作ID集合
-    battleManager,            // 战斗管理器实例
-    selectedCharacterId,      // 选中角色ID
+    rules, // 战斗规则配置
+    currentActorId, // 当前行动者ID
+    loading, // 加载状态
+    error, // 错误状态
+    autoPlayMode, // 自动播放模式
+    animationState, // 动画效果状态
+    currentBattleId, // 当前战斗ID
+    turnOrder, // 回合行动顺序
+    battleSpeed, // 战斗速度
+    filters, // 日志过滤器
+    processedActionIds, // 已处理动作ID集合
+    battleManager, // 战斗管理器实例
+    selectedCharacterId, // 选中角色ID
 
     // ========== 业务数据（Data） ==========
-    allyTeam,                 // 我方队伍
-    enemyTeam,                // 敌方队伍
-    currentTurn,              // 当前回合数
-    isBattleActive,           // 战斗激活状态
+    allyTeam, // 我方队伍
+    enemyTeam, // 敌方队伍
+    currentTurn, // 当前回合数
+    isBattleActive, // 战斗激活状态
 
     // ========== Computed Getters (用于模板访问) ==========
     getCurrentActorId: () => currentActorId.value,
     getIsBattleActive: () => isBattleActive.value,
     getAnimationState: () => animationState,
     getCurrentTurn: () => currentTurn.value,
-    getAllyTeam: () => allyTeam.value,
-    getEnemyTeam: () => enemyTeam.value,
+    getEnabledAllyTeam: () => allyTeam.value,
+    getEnabledEnemyTeam: () => enemyTeam.value,
     getTurnOrder: () => turnOrder.value,
     getBattleSpeed: () => battleSpeed.value,
 
     // ========== 同步方法（Sync） ==========
-    syncTeams,                // 同步队伍数据
+    syncTeams, // 同步队伍数据
 
     // ========== 核心操作（Actions） ==========
-    initializeBattleManager,  // 初始化战斗管理器
-    setLoading,               // 设置加载状态
-    updateLoadingProgress,    // 更新加载进度
-    setError,                 // 设置错误状态
-    clearError,               // 清除错误
-    clearState,               // 重置所有状态
-    setAutoPlayMode,          // 设置自动播放
-    setBattleActive,          // 设置战斗激活状态
-    clearBattleLogs,          // 清空日志
-    setAnimationState,        // 设置动画状态
-    getAnimationDuration,     // 获取动画持续时间
+    initializeBattleManager, // 初始化战斗管理器
+    setLoading, // 设置加载状态
+    updateLoadingProgress, // 更新加载进度
+    setError, // 设置错误状态
+    clearError, // 清除错误状态
+    clearState, // 重置所有状态
+    setAutoPlayMode, // 设置自动播放
+    setBattleActive, // 设置战斗激活状态
+    clearBattleLogs, // 清空日志
+    setAnimationState, // 设置动画状态
+    getAnimationDuration, // 获取动画持续时间
 
     // ========== 战斗流程控制 ==========
-    startBattle,              // 开始战斗
-    endBattle,                // 结束战斗
-    resetBattle,              // 重置战斗
-    processSingleTurn,        // 执行单回合
-    toggleAutoPlay,           // 切换自动播放
+    startBattle, // 开始战斗
+    endBattle, // 结束战斗
+    resetBattle, // 重置战斗
+    processSingleTurn, // 执行单回合
+    toggleAutoPlay, // 切换自动播放
 
     // ========== 数据导入导出 ==========
-    importState,              // 导入状态
-    exportState,              // 导出状态
+    importState, // 导入状态
+    exportState, // 导出状态
 
     // ========== 配置与清理 ==========
-    setBattleSpeed,           // 设置战斗速度
-    destroy,                  // 销毁并清理资源
+    setBattleSpeed, // 设置战斗速度
+    destroy, // 销毁并清理资源
 
     // ========== 日志处理 ==========
-    parseBattleAction,        // 解析战斗动作
-    syncBattleLogs,           // 同步战斗日志
-    getSkillName,             // 获取技能名称
-    shouldDisplayLog,         // 判断是否显示日志
-    addLog,                   // 添加系统日志
-    updateRules,              // 更新战斗规则
+    parseBattleAction, // 解析战斗动作
+    syncBattleLogs, // 同步战斗日志
+    getSkillName, // 获取技能名称
+    shouldDisplayLog, // 判断是否显示日志
+    addLog, // 添加系统日志
+    updateRules, // 更新战斗规则
 
     // ========== 角色操作 ==========
-    selectCharacter,          // 选中角色
-    setCharacterEnabled,      // 设置角色启用/禁用
+    selectCharacter, // 选中角色
+    setCharacterEnabled, // 设置角色启用/禁用
   }
 })

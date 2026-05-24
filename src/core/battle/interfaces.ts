@@ -19,6 +19,7 @@ import type {
 } from '@/types/battle'
 
 import type { BattleAI } from '@/core/BattleAI'
+import type { BuffSystem } from '@/core/BuffSystem'
 
 /**
  * 战斗系统接口
@@ -144,6 +145,19 @@ export interface IBattleSystem {
    * @returns 当前回合数（从1开始）
    */
   getRound(): number
+
+  /**
+   * 获取Buff系统实例
+   * @returns Buff系统实例
+   */
+  getBuffSystem(): BuffSystem
+
+  /**
+   * 触发单个角色的被动技能
+   * 用于在调试面板中动态添加角色时触发被动技能
+   * @param participant 参与者
+   */
+  triggerPassiveSkillsForCharacter(participant: BattleEntity): void
 }
 
 /**

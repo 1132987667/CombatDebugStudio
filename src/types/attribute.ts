@@ -295,6 +295,35 @@ export function createBaseAttributeValue(
   return createAttributeValue(base, base, { isPercentage, dirty: false })
 }
 
+/**
+ * 根据 EnemyStats 创建 AttributeValues 对象
+ * 如果 EnemyStats 中没有某个属性，则从 AttributeMetaMap 获取默认值
+ * @param stats 部分属性数值（来自敌人配置）
+ * @returns 完整的 AttributeValues 对象
+ */
+export function createAttributeValuesFromEnemyStats(
+  stats: Partial<Record<ATTRIBUTE_CODE, number>>,
+): AttributeValues {
+  const result: Partial<AttributeValues> = {}
+
+  for (const code of Object.values(ATTRIBUTE_CODE)) {
+    const meta = AttributeMetaMap[code]
+
+    let baseValue: number
+    if (stats[code] !== undefined) {
+      baseValue = stats[code] as number
+    } else if (meta.defaultValue !== undefined) {
+      baseValue = meta.defaultValue
+    } else {
+      baseValue = 0
+    }
+
+    result[code] = createBaseAttributeValue(baseValue, meta.isPercentage)
+  }
+
+  return result as AttributeValues
+}
+
 // ========== 属性计算核心 ==========
 
 /**
@@ -464,6 +493,7 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100',
     impact: '用于施放技能，影响技能释放频率，初始值为25',
     isPercentage: false,
+    defaultValue: 25,
   },
   maxEnergy: {
     code: 'maxEnergy',
@@ -473,6 +503,7 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '100',
     impact: '决定能量上限，通常固定为100',
     isPercentage: false,
+    defaultValue: 100,
   },
 
   // ========== 伤害减免细分 ==========
@@ -749,6 +780,15 @@ export const AttributeCodeNames: Record<ATTRIBUTE_CODE, string> =
  */
 export function getAttributeMeta(code: string): AttributeMeta | undefined {
   return AttributeMetaMap[code]
+}
+
+/**
+ * 根据属性编码获取属性默认值
+ * @param code 属性编码
+ * @returns 默认值，未定义时返回 0
+ */
+export function getAttributeDefaultValue(code: string): number {
+  return AttributeMetaMap[code]?.defaultValue ?? 0
 }
 
 /**

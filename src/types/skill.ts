@@ -518,6 +518,12 @@ export interface SkillConfig {
   parameters?: Record<string, any> // 自定义参数
 }
 
+export interface SkillSet {
+  small: SkillConfig[]
+  passive: SkillConfig[]
+  ultimate: SkillConfig[]
+}
+
 /**
  * 技能脚本接口
  */

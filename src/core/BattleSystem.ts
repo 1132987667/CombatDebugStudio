@@ -448,10 +448,6 @@ export class BattleSystem implements IBattleSystem {
     }
 
     try {
-      // 发送回合开始事件到 UI 层
-      const firstActorId = currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
-      eventBus.emit(BattleEventCodes.TURN_START, { actorId: firstActorId })
-
       // 触发回合开始事件
       aliveParticipants.forEach((participant) => {
         this.emitTriggerEvent('ON_TURN_START', {
@@ -494,9 +490,14 @@ export class BattleSystem implements IBattleSystem {
         }
       })
 
-      let currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
+      // 计算出手顺序（必须在属性刷新之后，以使用最新的速度值）
+      const currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
       battle.turnOrder = currentTurnOrder
       battle.currentTurn = 0
+
+      // 发送回合开始事件到 UI 层（此时拥有正确的出手顺序）
+      const firstActorId = currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
+      eventBus.emit(BattleEventCodes.TURN_START, { actorId: firstActorId })
 
       const battleId = battle.battleId
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0])

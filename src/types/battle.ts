@@ -5,7 +5,7 @@
  */
 
 import type { BattleAI } from '@/core/BattleAI'
-import type { SkillConfig } from '@/types/skill'
+import type { SkillConfig, SkillSet } from '@/types/skill'
 import type {
   AttributeValue,
   IModifierProvider,
@@ -169,11 +169,7 @@ export interface BattleEntity {
   /** 状态效果列表 */
   statusEffects?: StatusEffect[]
   /** 技能配置 */
-  skills: {
-    small?: SkillConfig[]
-    passive?: SkillConfig[]
-    ultimate?: SkillConfig[]
-  }
+  skills: SkillSet
   /** 属性值缓存 */
   attributeValues: AttributeValues
 
@@ -514,11 +510,7 @@ export interface ParticipantInfo {
   /** Buff实例ID列表 */
   buffs?: string[]
   /** 技能配置 */
-  skills?: {
-    small?: SkillConfig[]
-    passive?: SkillConfig[]
-    ultimate?: SkillConfig[]
-  }
+  skills?: SkillSet
 }
 
 /**

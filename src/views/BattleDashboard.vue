@@ -9,65 +9,60 @@
         <div class="monitor-subtitle">基础属性</div>
         <div class="monitor-grid">
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '气血', currentCharacter?.maxHealth?.modifiers || [], typeof currentCharacter?.maxHealth === 'object' ? currentCharacter.maxHealth.value : currentCharacter?.maxHealth || 0, '数值')"
+            @mouseenter="showAttrTooltip($event, '最大生命值', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
-            <span class="monitor-value">{{ typeof currentCharacter?.currentHealth === 'object' ?
-              currentCharacter.currentHealth.value : currentCharacter?.currentHealth || 0 }}/{{ typeof
-                currentCharacter?.maxHealth
-                ===
-                'object' ? currentCharacter.maxHealth.value : currentCharacter?.maxHealth || 0 }}</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentHealth)?.value || 0
+            }}/{{
+                currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0 }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '能量', [], typeof currentCharacter?.currentEnergy === 'object' ? currentCharacter.currentEnergy.value : (currentCharacter?.currentEnergy || 0), '数值')"
+            @mouseenter="showAttrTooltip($event, '能量', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.energy)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.energy)?.value || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">能量:</span>
-            <span class="monitor-value">{{ typeof currentCharacter?.currentEnergy === 'object' ?
-              currentCharacter.currentEnergy.value : (currentCharacter?.currentEnergy || 0) }}/{{ typeof
-                currentCharacter?.maxEnergy === 'object' ? currentCharacter.maxEnergy.value : (currentCharacter?.maxEnergy
-                  || 150)
-              }}</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.energy)?.value || 0 }}/{{
+              currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 150 }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '攻击', currentCharacter?.attack?.options || [], attackRange.min, '数值')"
+            @mouseenter="showAttrTooltip($event, '攻击力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attack)?.modifiers || [], attackRange.min, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击:</span>
             <span class="monitor-value">{{ attackRange.min }}-{{ attackRange.max }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '防御', currentCharacter?.defense?.options || [], typeof currentCharacter?.defense === 'object' ? currentCharacter.defense.value : currentCharacter?.defense || 0, '数值')"
+            @mouseenter="showAttrTooltip($event, '防御力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御:</span>
-            <span class="monitor-value">{{ typeof currentCharacter?.defense === 'object' ?
-              currentCharacter.defense.value : currentCharacter?.defense || 0 }}</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0
+            }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '速度', currentCharacter?.speed?.options || [], typeof currentCharacter?.speed === 'object' ? currentCharacter.speed.value : currentCharacter?.speed || 0, '数值')"
+            @mouseenter="showAttrTooltip($event, '速度', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度:</span>
-            <span class="monitor-value">{{ typeof currentCharacter?.speed === 'object' ? currentCharacter.speed.value :
-              currentCharacter?.speed || 0 }}</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0
+            }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '暴击率', currentCharacter?.critRate?.options || [], typeof currentCharacter?.critRate === 'object' ? currentCharacter.critRate.value : currentCharacter?.critRate || 10, '百分比')"
+            @mouseenter="showAttrTooltip($event, '暴击率', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critRate)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critRate)?.value || 10, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">暴击率:</span>
-            <span class="monitor-value">{{ typeof currentCharacter?.critRate === 'object' ?
-              currentCharacter.critRate.value : currentCharacter?.critRate || 10 }}%</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critRate)?.value || 10
+            }}%</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '暴击伤害', currentCharacter?.critDamage?.options || [], typeof currentCharacter?.critDamage === 'object' ? currentCharacter.critDamage.value : currentCharacter?.critDamage || 125, '百分比')"
+            @mouseenter="showAttrTooltip($event, '暴击伤害', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critDamage)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critDamage)?.value || 125, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">暴击伤害:</span>
-            <span class="monitor-value">{{ typeof currentCharacter?.critDamage === 'object' ?
-              currentCharacter.critDamage.value : currentCharacter?.critDamage || 125 }}%</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critDamage)?.value || 125
+            }}%</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '免伤率', currentCharacter?.damageReduction?.options || [], typeof currentCharacter?.damageReduction === 'object' ? currentCharacter.damageReduction.value : currentCharacter?.damageReduction || 0, '百分比')"
+            @mouseenter="showAttrTooltip($event, '免伤率', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.value || 0, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">免伤率:</span>
-            <span class="monitor-value">{{ typeof currentCharacter?.damageReduction === 'object' ?
-              currentCharacter.damageReduction.value : currentCharacter?.damageReduction || 0 }}%</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.value ||
+              0 }}%</span>
           </div>
         </div>
       </div>
@@ -75,28 +70,36 @@
         <div class="monitor-subtitle">属性加成</div>
         <div class="monitor-grid">
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '气血加成', currentCharacter?.healthBonus?.options || [], getBonusValue(currentCharacter?.healthBonus), '百分比')"
+            @mouseenter="showAttrTooltip($event, '生命值加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.value || 0, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(currentCharacter?.healthBonus) }}</span>
+            <span class="monitor-value bonus">{{
+              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.value ||
+                0) }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '攻击加成', currentCharacter?.attackBonus?.options || [], getBonusValue(currentCharacter?.attackBonus), '百分比')"
+            @mouseenter="showAttrTooltip($event, '攻击力加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.value || 0, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(currentCharacter?.attackBonus) }}</span>
+            <span class="monitor-value bonus">{{
+              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.value ||
+                0) }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '防御加成', currentCharacter?.defenseBonus?.options || [], getBonusValue(currentCharacter?.defenseBonus), '百分比')"
+            @mouseenter="showAttrTooltip($event, '防御力加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.value || 0, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(currentCharacter?.defenseBonus) }}</span>
+            <span class="monitor-value bonus">{{
+              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.value ||
+                0) }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '速度加成', currentCharacter?.speedBonus?.options || [], getBonusValue(currentCharacter?.speedBonus), '百分比')"
+            @mouseenter="showAttrTooltip($event, '速度加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.value || 0, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度加成:</span>
-            <span class="monitor-value bonus">{{ formatBonus(currentCharacter?.speedBonus) }}</span>
+            <span class="monitor-value bonus">{{
+              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.value ||
+                0) }}</span>
           </div>
         </div>
       </div>
@@ -104,31 +107,31 @@
         <div class="monitor-subtitle">最终属性</div>
         <div class="monitor-grid">
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '最终攻击', currentCharacter?.attack?.options || [], attackRange.min, '数值')"
+            @mouseenter="showAttrTooltip($event, '攻击力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attack)?.modifiers || [], attackRange.min, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终攻击:</span>
             <span class="monitor-value final">{{ attackRange.min }}-{{ attackRange.max }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '最终防御', currentCharacter?.defense?.options || [], typeof currentCharacter?.defense === 'object' ? currentCharacter.defense.value : currentCharacter?.defense || 0, '数值')"
+            @mouseenter="showAttrTooltip($event, '防御力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终防御:</span>
-            <span class="monitor-value final">{{ typeof currentCharacter?.defense === 'object' ?
-              currentCharacter.defense.value : currentCharacter?.defense || 0 }}</span>
+            <span class="monitor-value final">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0
+              }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '最终速度', currentCharacter?.speed?.options || [], typeof currentCharacter?.speed === 'object' ? currentCharacter.speed.value : currentCharacter?.speed || 0, '数值')"
+            @mouseenter="showAttrTooltip($event, '速度', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终速度:</span>
-            <span class="monitor-value final">{{ typeof currentCharacter?.speed === 'object' ?
-              currentCharacter.speed.value : currentCharacter?.speed || 0 }}</span>
+            <span class="monitor-value final">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0
+              }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '最终气血', currentCharacter?.maxHp?.options || [], typeof currentCharacter?.maxHp === 'object' ? currentCharacter.maxHp.value : currentCharacter?.maxHp || 0, '数值')"
+            @mouseenter="showAttrTooltip($event, '最大生命值', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">最终气血:</span>
-            <span class="monitor-value final">{{ typeof currentCharacter?.maxHp === 'object' ?
-              currentCharacter.maxHp.value : currentCharacter?.maxHp || 0 }}</span>
+            <span class="monitor-value final">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value ||
+              0 }}</span>
           </div>
         </div>
       </div>
@@ -254,7 +257,7 @@
         <button class="intervention-btn" @click="importState">[I] 导入状态数据</button>
       </div>
       <div class="last-export">
-        <span>最近导出: {{ dashboardStore.lastExportTime || '无' }}</span>
+        <span>最近导出: {{ debugStore.lastExportTime || '无' }}</span>
         <div class="snapshot-btns">
           <button class="btn-small" @click="viewExport">[查看]</button>
           <button class="btn-small" @click="reloadExport">[重载]</button>
@@ -285,7 +288,7 @@ import { container } from '@/core/di/Container';
 import { useDebugStore } from "@/stores";
 import AttributeTooltip from "@/components/AttributeTooltip.vue";
 import Notification from "@/components/Notification.vue";
-import type { Modifier, AttributeValueType } from "@/types/attribute";
+import { ATTRIBUTE_CODE, type Modifier, type AttributeValueType } from "@/types/attribute";
 import type { SkillConfig } from "@/types/skill";
 import { SELECTOR_TARGET_NAMES } from "@/types/skill";
 import type { BattleManager } from '@/core/battle/BattleManager';
@@ -780,7 +783,7 @@ const importState = () => {
 
 const viewExport = () => {
   try {
-    const state = dashboardStore.viewExport();
+    const state = debugStore.viewExport();
     if (state) {
       console.log('导出状态:', state);
       // 这里可以显示导出的状态

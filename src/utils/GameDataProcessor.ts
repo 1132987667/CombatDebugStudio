@@ -8,7 +8,8 @@
  */
 
 import { DataProcessor } from '@/utils/DataProcessor'
-import enemiesData from '@configs/enemies/enemies.json'
+import enemiesDataRaw from '@configs/enemies/enemies.json'
+const enemiesData = enemiesDataRaw as Enemy[]
 import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
@@ -23,9 +24,10 @@ import type {
 } from '@/types'
 import type { ParticipantSide } from '@/types/battle'
 import { PARTICIPANT_SIDE } from '@/types/battle'
-import type {
+import {
   IModifierProvider,
   ATTRIBUTE_CODE,
+  createAttributeValuesFromEnemyStats,
   ModifierType,
   ModifierSourceType,
   createAttributeValue,
@@ -35,7 +37,10 @@ import type {
   ModifierTemplate,
   StructuredBuffConfig,
 } from '@/types/modifier-template'
-import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
+import {
+  BattleParticipantImpl,
+  type BattleParticipantInitData,
+} from '@/core/battle/BattleParticipantImpl'
 import { container } from '@/core/di/Container'
 import { BuffSystem } from '@/core/BuffSystem'
 import { toArray } from '@/utils/Utils'
@@ -97,6 +102,7 @@ export class GameDataProcessor {
         if (enemy) {
           DataProcessor.setCachedData(cacheKey, enemy)
         }
+        enemy.stats.maxHealth = enemy.stats.currentHealth
         return enemy
       })
       .filter((enemy) => enemy !== undefined) as Enemy[]
@@ -164,17 +170,19 @@ export class GameDataProcessor {
       GameDataProcessor.buildPassiveModifiers(passiveSkills)
 
     // 2. 构造标准初始化 DTO
-    const initData: BattleParticipantImpl = {
+    const initData: BattleParticipantInitData = {
       id: `[${type}]_${enemy.id}_${counter.next()}`,
       name: enemy.name,
       type,
       team: type,
       level: enemy.level,
+      enabled: true,
       skills: {
         small: GameDataProcessor.getSkillByIds(enemy.skills?.small),
         passive: passiveSkills,
         ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate),
       },
+      attributeValues: createAttributeValuesFromEnemyStats(enemy.stats),
     }
 
     // 3. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
@@ -242,13 +250,6 @@ export class GameDataProcessor {
     }
 
     return templates
-  }
-
-  /**
-   * 根据 Buff ID 查找 Buff 配置
-   */
-  static findBuffById(buffId: string): StructuredBuffConfig | undefined {
-    return (buffsData as StructuredBuffConfig[]).find((b) => b.id === buffId)
   }
 
   /**
@@ -387,10 +388,10 @@ export class GameDataProcessor {
   }
 
   /**
-   * 根据buff ID查找buff配置
+   * 根据 Buff ID 查找 Buff 配置
    */
-  static findBuffById(buffId: string): any {
-    return buffsData.find((b: any) => b.id === buffId)
+  static findBuffById(buffId: string): StructuredBuffConfig | undefined {
+    return (buffsData as StructuredBuffConfig[]).find((b) => b.id === buffId)
   }
 
   /**

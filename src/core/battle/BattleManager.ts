@@ -125,6 +125,12 @@ export class BattleManager {
       const battleId = battleState.battleId
       this.setBattleId(battleId)
 
+      this.syncBattleState()
+      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
+        allyTeam: this.getEnabledAllyTeam(),
+        enemyTeam: this.getEnabledEnemyTeam(),
+      })
+
       return { battleId }
     } catch (error) {
       console.error('初始化队伍数据时出错:', error)
@@ -223,7 +229,7 @@ export class BattleManager {
     if (participant) {
       participant.enabled = enabled
       this.syncBattleState()
-      eventBus.emit('teamDataChanged', {
+      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
         allyTeam: this.getEnabledAllyTeam(),
         enemyTeam: this.getEnabledEnemyTeam(),
       })
@@ -255,7 +261,7 @@ export class BattleManager {
     ;[teamArray[idx1], teamArray[idx2]] = [teamArray[idx2], teamArray[idx1]]
 
     this.syncBattleState()
-    eventBus.emit('teamDataChanged', {
+    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
       allyTeam: this.getEnabledAllyTeam(),
       enemyTeam: this.getEnabledEnemyTeam(),
     })
@@ -267,7 +273,7 @@ export class BattleManager {
   clearParticipants() {
     this.battleSystem.resetBattle()
     this.battleStateManager.resetState()
-    eventBus.emit('teamDataChanged', {
+    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
       allyTeam: [],
       enemyTeam: [],
     })
@@ -293,7 +299,7 @@ export class BattleManager {
       this.battleSystem.triggerPassiveSkillsForCharacter(character)
 
       this.syncBattleState()
-      eventBus.emit('teamDataChanged', {
+      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
         allyTeam: this.getEnabledAllyTeam(),
         enemyTeam: this.getEnabledEnemyTeam(),
       })
@@ -308,7 +314,7 @@ export class BattleManager {
     if (battleState) {
       battleState.participants.delete(characterId)
       this.syncBattleState()
-      eventBus.emit('teamDataChanged', {
+      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
         allyTeam: this.getEnabledAllyTeam(),
         enemyTeam: this.getEnabledEnemyTeam(),
       })
@@ -351,7 +357,7 @@ export class BattleManager {
     })
 
     this.syncBattleState()
-    eventBus.emit('teamDataChanged', {
+    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
       allyTeam: this.getEnabledAllyTeam(),
       enemyTeam: this.getEnabledEnemyTeam(),
     })

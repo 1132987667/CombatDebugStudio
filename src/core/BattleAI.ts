@@ -26,6 +26,7 @@ import {
 } from '@/core/battle/AIPriorityStrategy'
 import {
   SkillConfig,
+  SkillSet,
   ExtendedSkillStep,
   Skill,
   SkillType,
@@ -685,11 +686,7 @@ export class BattleAIFactory {
   /** 创建带技能的 AI 实例 */
   public static createAIWithSkills(
     type: ParticipantSide,
-    uiSkills: {
-      small?: SkillConfig[]
-      passive?: SkillConfig[]
-      ultimate?: SkillConfig[]
-    },
+    uiSkills: SkillSet,
     strategyConfig?: AIStrategyConfig,
     skillLoader?: SkillConfigLoader,
   ): BattleAI {

@@ -40,7 +40,7 @@
 
       <!-- 右侧：调试面板 -->
       <div class="right-panel">
-        <DebugPanel />
+        <BattleDashboard />
 
         <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart" @replay-end="handleReplayEnd"
           @replay-pause="handleReplayPause" />

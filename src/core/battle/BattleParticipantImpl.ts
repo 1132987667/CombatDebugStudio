@@ -15,11 +15,12 @@ import type {
   BattleEntity,
 } from '@/types/battle'
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
-import type { SkillConfig } from '@/types/skill'
+import type { SkillConfig, SkillSet } from '@/types/skill'
 import {
   AttributeValues,
   Modifier,
   type IModifierProvider,
+  getAttributeDefaultValue,
 } from '@/types/attribute'
 import {
   AttributeValue,
@@ -32,6 +33,32 @@ import {
 import { AttributeEngine } from '@/core/AttributeEngine'
 import type { ModifierTemplate } from '@/types/modifier-template'
 import { triggerEventBus } from '@/core/TriggerEventBus'
+
+export type BaseBattleParticipant = {
+  id: string
+  name: string
+  level: number
+  type: ParticipantSide
+  team: ParticipantSide
+  enabled?: boolean
+  skills: SkillSet
+  statusEffects?: StatusEffect[]
+  buffs: Modifier[]
+  attributeValues?: AttributeValues
+}
+
+export type BattleParticipantInitData = {
+  id: string
+  name: string
+  level: number
+  type: ParticipantSide
+  team: ParticipantSide
+  enabled: boolean
+  skills: SkillSet
+  statusEffects?: StatusEffect[]
+  buffs?: Modifier[]
+  attributeValues?: AttributeValues
+}
 
 /**
  * 战斗参与者实现类
@@ -47,11 +74,7 @@ export class BattleParticipantImpl implements BattleEntity {
   enabled: boolean
   buffs: Modifier[]
   statusEffects?: StatusEffect[]
-  skills: {
-    small?: SkillConfig[]
-    passive?: SkillConfig[]
-    ultimate?: SkillConfig[]
-  }
+  skills: SkillSet
   attributeValues: AttributeValues
 
   /** 技能冷却状态映射，key为技能ID，value为剩余冷却回合数 */
@@ -69,17 +92,18 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param modifierProvider - 修饰符提供者（可选，通常为 BuffSystem 实例）
    */
   constructor(
-    data: BattleParticipantImpl,
-    modifierProvider?: IModifierProvider,
+    data: BattleParticipantInitData,
+    modifierProvider?: IModifierProvider
   ) {
     this.id = data.id
     this.name = data.name
     this.level = data.level
     this.type = data.type
     this.team = data.team
+    this.enabled = data.enabled ?? true
     this.buffs = data.buffs ?? []
     this.statusEffects = data.statusEffects
-    this.skills = data.skills ?? {}
+    this.skills = data.skills
     this.skillCooldowns = new Map<string, number>()
 
     // 如果传入了 modifierProvider，则设置引用
@@ -87,29 +111,14 @@ export class BattleParticipantImpl implements BattleEntity {
       this._modifierProvider = modifierProvider
     }
 
-    // 初始化属性基础值
-    this.initAttribute(ATTRIBUTE_CODE.maxHealth, data.maxHealth)
-    this.initAttribute(
-      ATTRIBUTE_CODE.currentHealth,
-      data.currentHealth ?? data.maxHealth,
-    )
-    this.initAttribute(ATTRIBUTE_CODE.maxEnergy, data.maxEnergy ?? 100)
-    this.initAttribute(ATTRIBUTE_CODE.energy, data.currentEnergy ?? 25)
-    this.initAttribute(
-      ATTRIBUTE_CODE.attack,
-      (data.minAttack + data.maxAttack) / 2,
-    )
-    this.initAttribute(ATTRIBUTE_CODE.minAttack, data.minAttack)
-    this.initAttribute(ATTRIBUTE_CODE.maxAttack, data.maxAttack)
-    this.initAttribute(ATTRIBUTE_CODE.defense, data.defense)
-    this.initAttribute(ATTRIBUTE_CODE.speed, data.speed)
-    this.initAttribute(ATTRIBUTE_CODE.critRate, data.critRate ?? 10, true)
-    this.initAttribute(ATTRIBUTE_CODE.critDamage, data.critDamage ?? 125, true)
-    this.initAttribute(
-      ATTRIBUTE_CODE.damageReduction,
-      data.damageReduction ?? 0,
-      true,
-    )
+    const avs = data.attributeValues
+    // 遍历所有属性编码初始化属性基础值
+    for (const code of Object.values(ATTRIBUTE_CODE)) {
+      const meta = AttributeMetaMap[code]
+      const av = avs[code]
+      const baseValue = av?.value ?? getAttributeDefaultValue(code)
+      this.initAttribute(code, baseValue, meta.isPercentage)
+    }
 
     this.markAllDirty()
   }
@@ -144,7 +153,7 @@ export class BattleParticipantImpl implements BattleEntity {
   private initAttribute(
     attr: ATTRIBUTE_CODE,
     baseValue: number,
-    isPercentage: boolean = false,
+    isPercentage: boolean = false
   ): void {
     this.attributes.set(attr, {
       value: baseValue,
@@ -204,7 +213,7 @@ export class BattleParticipantImpl implements BattleEntity {
               this._modifierProvider.getSourceName(mod.buffInstanceId) ||
               mod.buffInstanceId,
             sourceType: this._modifierProvider.getSourceType(
-              mod.buffInstanceId,
+              mod.buffInstanceId
             ),
             targetAttribute: attr as ATTRIBUTE_CODE,
             type: mod.type,
@@ -694,7 +703,7 @@ export class BattleParticipantImpl implements BattleEntity {
     const originalHealth = this.currentHealth
     this.currentHealth = Math.min(
       this.currentHealth + healAmount,
-      this.maxHealth,
+      this.maxHealth
     )
     return this.currentHealth - originalHealth
   }
@@ -743,11 +752,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * 获取所有技能配置
    * @returns 技能配置对象
    */
-  getSkills(): {
-    small?: SkillConfig[]
-    passive?: SkillConfig[]
-    ultimate?: SkillConfig[]
-  } {
+  getSkills(): SkillSet {
     return this.skills
   }
 

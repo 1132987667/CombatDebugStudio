@@ -237,51 +237,8 @@ const selectCharacter = (charId: string) => {
 };
 
 const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY = PARTICIPANT_SIDE.ALLY) => {
-  const passiveSkillIds = GameDataProcessor.normalizeSkillIds(
-    enemy.skills?.passive || [],
-  )
-  const passiveSkills = GameDataProcessor.getSkillByIds(passiveSkillIds)
-
-  const bonuses =
-    GameDataProcessor.calculatePassiveSkillBonuses(passiveSkills)
-
-  const baseHealth = enemy.stats.maxHealth
-  const baseAttack = (enemy.stats.minAttack + enemy.stats.maxAttack) / 2
-  const baseDefense = enemy.stats.defense
-  const baseSpeed = enemy.stats.speed
-
-  const finalHealth = Math.floor(baseHealth * (1 + bonuses.healthBonus))
-  const finalAttack = Math.floor(baseAttack * (1 + bonuses.attackBonus))
-  const finalDefense = Math.floor(baseDefense * (1 + bonuses.defenseBonus))
-  const finalSpeed = Math.floor(baseSpeed * (1 + bonuses.speedBonus))
-
-  const newCharacter = new BattleParticipantImpl({
-    id: `enemy_${Date.now()}_${enemy.id}`,
-    name: enemy.name,
-    type: side as ParticipantSide,
-    team: side as ParticipantSide,
-    level: enemy.level,
-    maxHealth: finalHealth,
-    currentHealth: finalHealth,
-    minAttack: enemy.stats.minAttack,
-    maxAttack: enemy.stats.maxAttack,
-    defense: finalDefense,
-    speed: finalSpeed,
-    critRate: bonuses.critRate,
-    critDamage: bonuses.critDamage,
-    damageReduction: bonuses.damageReduction,
-    healthBonus: bonuses.healthBonus * 100,
-    attackBonus: bonuses.attackBonus * 100,
-    defenseBonus: bonuses.defenseBonus * 100,
-    speedBonus: bonuses.speedBonus * 100,
-    skills: {
-      small: GameDataProcessor.getSkillByIds(enemy.skills?.small || []),
-      passive: passiveSkills,
-      ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate || []),
-    },
-  })
-
-  battleManager.addCharacterToTeam(newCharacter, side as ParticipantSide)
+  const newCharacter = GameDataProcessor.enemyToParticipant(enemy, side)
+  battleManager.addCharacterToTeam(newCharacter, side)
   battleManager.selectCharacter(newCharacter.id)
 };
 

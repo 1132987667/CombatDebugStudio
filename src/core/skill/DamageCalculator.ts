@@ -10,6 +10,7 @@
 import type { ExtendedSkillStep, CalculationLog } from '@/types/skill'
 import type { BattleEntity, BattleEffect } from '@/types/battle'
 import type { CombatRecord, CalculationStep } from '@/types/combat-record'
+import { ATTRIBUTE_CODE } from '@/types/attribute'
 import { battleLogManager, LogLevel } from '@/utils/logging'
 
 /**
@@ -422,14 +423,41 @@ export class DamageCalculator {
   }
 
   /**
+   * 旧版大写属性码到 ATTRIBUTE_CODE 的映射
+   * 用于兼容旧数据中使用的 'ATK', 'DEF', 'MAX_HP' 等大写属性码
+   */
+  private static readonly LEGACY_ATTR_MAP: Record<string, ATTRIBUTE_CODE> = {
+    ATK: ATTRIBUTE_CODE.attack,
+    DEF: ATTRIBUTE_CODE.defense,
+    SPD: ATTRIBUTE_CODE.speed,
+    HP: ATTRIBUTE_CODE.currentHealth,
+    MAX_HP: ATTRIBUTE_CODE.maxHealth,
+    ENERGY: ATTRIBUTE_CODE.energy,
+    MAX_ENERGY: ATTRIBUTE_CODE.maxEnergy,
+    CRIT_RATE: ATTRIBUTE_CODE.critRate,
+    CRIT_DMG: ATTRIBUTE_CODE.critDamage,
+    DMG_RED: ATTRIBUTE_CODE.damageReduction,
+    MDEF: ATTRIBUTE_CODE.defense,
+    HP_BONUS: ATTRIBUTE_CODE.healthBonus,
+    ATK_BONUS: ATTRIBUTE_CODE.attackBonus,
+    DEF_BONUS: ATTRIBUTE_CODE.defenseBonus,
+    SPD_BONUS: ATTRIBUTE_CODE.speedBonus,
+    CRIT_DAMAGE: ATTRIBUTE_CODE.critDamage,
+  }
+
+  /**
    * 获取属性值
+   * 支持新旧两种属性码格式：'ATK'/'attack'/'maxHealth'/'MAX_HP' 等
    */
   private getAttributeValue(
     participant: BattleEntity,
     attribute: string,
   ): number {
     try {
-      return participant.getAttribute(attribute) || 0
+      // 尝试将旧版大写属性码映射为 ATTRIBUTE_CODE
+      const mappedCode = DamageCalculator.LEGACY_ATTR_MAP[attribute]
+      const resolvedAttr = mappedCode || attribute
+      return participant.getAttribute(resolvedAttr) || 0
     } catch (error) {
       battleLogManager.addDebugLog(`获取属性值失败: ${attribute}`, error)
       return 0

@@ -4,7 +4,7 @@
  * 作者: CombatDebugStudio
  * 功能: 游戏数据处理工具类
  * 描述: 专门处理游戏相关的数据操作，提供敌人、技能、场景等数据的加载和查询功能
- * 版本: 3.0.0 (重构版 - 支持结构化修饰符模板)
+ * 版本: 3.0.0
  */
 
 import { DataProcessor } from '@/utils/DataProcessor'
@@ -59,9 +59,7 @@ export class GameDataProcessor {
     return enemiesData
   }
 
-  static getSkillsData(): SkillConfig[] {
-    return skillsData.concat(passiveSkillsData, newSkillsData)
-  }
+
 
   /**
    * 根据ID查找敌人
@@ -80,14 +78,7 @@ export class GameDataProcessor {
     return enemy
   }
 
-  /**
-   * 获取所有场景数据
-   */
-  static getScenesData(): SceneData[] {
-    return scenesData
-  }
-
-  /**
+    /**
    * 根据ID数组批量查找敌人
    * @param enemyIds - 敌人ID数组
    * @returns Enemy[] - 找到的敌人数组
@@ -107,6 +98,19 @@ export class GameDataProcessor {
       })
       .filter((enemy) => enemy !== undefined) as Enemy[]
   }
+
+  static getSkillsData(): SkillConfig[] {
+    return skillsData.concat(passiveSkillsData, newSkillsData)
+  }
+
+  /**
+   * 获取所有场景数据
+   */
+  static getScenesData(): SceneData[] {
+    return scenesData
+  }
+
+
 
   /**
    * 根据被动技能计算属性加成

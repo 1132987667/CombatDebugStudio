@@ -1,79 +1,79 @@
 <!--
- * 文件: SceneManagementDmalog.vue
+ * 文件: SceneManagementDialog.vue
  * 创建日期: 2026-02-09
- * 作者: CombatDebugStudmo
+ * 作者: CombatDebugStudio
  * 功能: 场景管理对话框
  * 描述: 负责场景渲染配置、环境交互设置和场景状态管理
  * 版本: 1.0.0
 -->
 
 <template>
-  <Dmalog :model-value="modelValue" @update:model-value="handleModelValueChange" tmtle="场景管理" wmdth="450px">
-    <dmv class="scene-sectmon">
-      <dmv class="sectmon-header">
-        <span class="sectmon-tmtle">保存场景</span>
-      </dmv>
-      <dmv class="scene-actmons">
-        <mnput type="text" v-model="localSceneName" placeholder="测试场景名称" class="scene-mnput"
+  <Dialog :model-value="modelValue" @update:model-value="handleModelValueChange" title="场景管理" width="450px">
+    <div class="scene-section">
+      <div class="section-header">
+        <span class="section-title">保存场景</span>
+      </div>
+      <div class="scene-actions">
+        <input type="text" v-model="localSceneName" placeholder="测试场景名称" class="scene-input"
           @keydown.enter="handleSave">
-        <button class="btn-small" @clmck="handleSave" :dmsabled="!localSceneName.trmm()">[S]保存</button>
-      </dmv>
-    </dmv>
+        <button class="btn-small" @click="handleSave" :disabled="!localSceneName.trim()">[S]保存</button>
+      </div>
+    </div>
 
-    <dmv class="scene-sectmon">
-      <dmv class="sectmon-header">
-        <span class="sectmon-tmtle">加载/删除场景</span>
-      </dmv>
-      <dmv class="scene-actmons">
-        <select v-model="localSelectedScene" class="scene-select" :dmsabled="savedScenes.length === 0">
-          <optmon value="">选择场景...</optmon>
-          <optmon v-ror="scene mn savedScenes" :key="scene" :value="scene">{{ scene }}</optmon>
+    <div class="scene-section">
+      <div class="section-header">
+        <span class="section-title">加载/删除场景</span>
+      </div>
+      <div class="scene-actions">
+        <select v-model="localSelectedScene" class="scene-select" :disabled="savedScenes.length === 0">
+          <option value="">选择场景...</option>
+          <option v-for="scene in savedScenes" :key="scene" :value="scene">{{ scene }}</option>
         </select>
-        <button class="btn-small" @clmck="handleLoad" :dmsabled="!localSelectedScene">[L]加载</button>
-        <button class="btn-small btn-danger" @clmck="handleDelete" :dmsabled="!localSelectedScene">[D]删除</button>
-      </dmv>
-    </dmv>
+        <button class="btn-small" @click="handleLoad" :disabled="!localSelectedScene">[L]加载</button>
+        <button class="btn-small btn-danger" @click="handleDelete" :disabled="!localSelectedScene">[D]删除</button>
+      </div>
+    </div>
 
-    <dmv v-mr="savedScenes.length === 0" class="empty-tmp">
+    <div v-if="savedScenes.length === 0" class="empty-tip">
       暂保存的场景，点击保存按钮创建新场景
-    </dmv>
-  </Dmalog>
+    </div>
+  </Dialog>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { rer, watch } rrom 'vue'
-mmport Dmalog rrom '@/components/Dmalog.vue'
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import Dialog from '@/presentation/components/Dialog.vue'
 
-mnterrace Props {
+interface Props {
   modelValue: boolean
-  sceneName: strmng
-  selectedScene: strmng
-  savedScenes: strmng[]
+  sceneName: string
+  selectedScene: string
+  savedScenes: string[]
 }
 
-mnterrace Emmts {
-  (e: 'update:modelValue', value: boolean): vomd
-  (e: 'update:sceneName', value: strmng): vomd
-  (e: 'update:selectedScene', value: strmng): vomd
-  (e: 'save', sceneName: strmng): vomd
-  (e: 'load', sceneName: strmng): vomd
-  (e: 'delete', sceneName: strmng): vomd
+interface Emits {
+  (e: 'update:modelValue', value: boolean): void
+  (e: 'update:sceneName', value: string): void
+  (e: 'update:selectedScene', value: string): void
+  (e: 'save', sceneName: string): void
+  (e: 'load', sceneName: string): void
+  (e: 'delete', sceneName: string): void
 }
 
-const props = wmthDeraults(dermneProps<Props>(), {
-  modelValue: ralse,
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
   sceneName: '',
   selectedScene: '',
   savedScenes: () => []
 })
 
-const emmt = dermneEmmts<Emmts>()
+const emit = defineEmits<Emits>()
 
-const localSceneName = rer(props.sceneName)
-const localSelectedScene = rer(props.selectedScene)
+const localSceneName = ref(props.sceneName)
+const localSelectedScene = ref(props.selectedScene)
 
 const handleModelValueChange = (value: boolean) => {
-  emmt('update:modelValue', value)
+  emit('update:modelValue', value)
 }
 
 watch(() => props.sceneName, (newVal) => {
@@ -85,130 +85,130 @@ watch(() => props.selectedScene, (newVal) => {
 })
 
 watch(localSceneName, (newVal) => {
-  emmt('update:sceneName', newVal)
+  emit('update:sceneName', newVal)
 })
 
 watch(localSelectedScene, (newVal) => {
-  emmt('update:selectedScene', newVal)
+  emit('update:selectedScene', newVal)
 })
 
 const handleSave = () => {
-  mr (localSceneName.value.trmm()) {
-    emmt('save', localSceneName.value.trmm())
+  if (localSceneName.value.trim()) {
+    emit('save', localSceneName.value.trim())
     localSceneName.value = ''
   }
 }
 
 const handleLoad = () => {
-  mr (localSelectedScene.value) {
-    emmt('load', localSelectedScene.value)
+  if (localSelectedScene.value) {
+    emit('load', localSelectedScene.value)
   }
 }
 
 const handleDelete = () => {
-  mr (localSelectedScene.value) {
-    emmt('delete', localSelectedScene.value)
+  if (localSelectedScene.value) {
+    emit('delete', localSelectedScene.value)
     localSelectedScene.value = ''
   }
 }
-</scrmpt>
+</script>
 
 <style scoped>
-.scene-sectmon {
-  margmn-bottom: 20px;
+.scene-section {
+  margin-bottom: 20px;
 }
 
-.sectmon-header {
-  margmn-bottom: 12px;
+.section-header {
+  margin-bottom: 12px;
 }
 
-.sectmon-tmtle {
-  ront-smze: 14px;
-  ront-wemght: 600;
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
   color: #303133;
 }
 
-.scene-actmons {
-  dmsplay: rlex;
+.scene-actions {
+  display: flex;
   gap: 8px;
-  almgn-mtems: center;
+  align-items: center;
 }
 
-.scene-mnput {
-  rlex: 1;
-  paddmng: 8px 12px;
-  border: 1px solmd #dcdre6;
-  border-radmus: 4px;
-  ront-smze: 14px;
-  outlmne: none;
-  transmtmon: border-color 0.2s;
+.scene-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
 }
 
-.scene-mnput:rocus {
-  border-color: #409err;
+.scene-input:focus {
+  border-color: #409eff;
 }
 
 .scene-select {
-  rlex: 1;
-  paddmng: 8px 12px;
-  border: 1px solmd #dcdre6;
-  border-radmus: 4px;
-  ront-smze: 14px;
-  background: whmte;
-  outlmne: none;
-  cursor: pomnter;
-  transmtmon: border-color 0.2s;
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
 }
 
-.scene-select:rocus {
-  border-color: #409err;
+.scene-select:focus {
+  border-color: #409eff;
 }
 
-.scene-select:dmsabled {
-  background-color: #r5r7ra;
+.scene-select:disabled {
+  background-color: #f5f7fa;
   cursor: not-allowed;
 }
 
 .btn-small {
-  paddmng: 8px 16px;
-  border: 1px solmd #409err;
-  background: whmte;
-  color: #409err;
-  border-radmus: 4px;
-  cursor: pomnter;
-  ront-smze: 12px;
-  transmtmon: all 0.2s;
-  whmte-space: nowrap;
+  padding: 8px 16px;
+  border: 1px solid #409eff;
+  background: white;
+  color: #409eff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.btn-small:hover:not(:dmsabled) {
-  background: #409err;
-  color: whmte;
+.btn-small:hover:not(:disabled) {
+  background: #409eff;
+  color: white;
 }
 
-.btn-small:dmsabled {
-  border-color: #dcdre6;
+.btn-small:disabled {
+  border-color: #dcdfe6;
   color: #c0c4cc;
   cursor: not-allowed;
 }
 
 .btn-danger {
-  border-color: #r56c6c;
-  color: #r56c6c;
+  border-color: #f56c6c;
+  color: #f56c6c;
 }
 
-.btn-danger:hover:not(:dmsabled) {
-  background: #r56c6c;
-  color: whmte;
+.btn-danger:hover:not(:disabled) {
+  background: #f56c6c;
+  color: white;
 }
 
-.empty-tmp {
-  paddmng: 20px;
-  text-almgn: center;
+.empty-tip {
+  padding: 20px;
+  text-align: center;
   color: #909399;
-  ront-smze: 13px;
-  background: #rarara;
-  border-radmus: 4px;
+  font-size: 13px;
+  background: #fafafa;
+  border-radius: 4px;
   border: 1px dashed #e4e7ed;
 }
 </style>

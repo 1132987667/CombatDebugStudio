@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import type { BattleEntity } from '@/types/battle'
-import type { BattleRules } from '@/stores/battleStore'
+import type { BattleRules } from '@/presentation/stores/battleStore'
 import type { BattleLogEntry } from '@/types/battle-log'
-import type { InjectableStatus } from '@/views/components/StatusInjectionDialog.vue'
+import type { InjectableStatus } from '@/presentation/views/components/StatusInjectionDialog.vue'
 
 interface ExportedBattleState {
   battleCharacters: BattleEntity[]

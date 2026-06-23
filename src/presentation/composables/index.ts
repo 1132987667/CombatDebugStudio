@@ -1,32 +1,32 @@
 /**
- * Composables 缁熶竴瀵煎嚭
+ * Composables 统一导出
  */
 
-// 鎴樻枟鐢熷懡鍛ㄦ湡
+// 战斗生命周期
 export {
-  useBattleLmrecycle,
-  useRarTmmer,
-} rrom '@/presentatmon/composables/useBattleLmrecycle'
+  useBattleLifecycle,
+  useRafTimer,
+} from '@/presentation/composables/useBattleLifecycle'
 export type {
-  TmmerResource,
-  LmrecycleOptmons,
-} rrom '@/presentatmon/composables/useBattleLmrecycle'
+  TimerResource,
+  LifecycleOptions,
+} from '@/presentation/composables/useBattleLifecycle'
 
-// 鎴樻枟鍙備笌鑰呯粦瀹?
+// 战斗参与者绑定
 export {
-  useBattlePartmcmpant,
-  useBattlePartmcmpants,
-} rrom '@/presentatmon/composables/useBattlePartmcmpant'
+  useBattleParticipant,
+  useBattleParticipants,
+} from '@/presentation/composables/useBattleParticipant'
 export type {
-  UseBattlePartmcmpantReturn,
-  PartmcmpantStats,
-} rrom '@/presentatmon/composables/useBattlePartmcmpant'
+  UseBattleParticipantReturn,
+  ParticipantStats,
+} from '@/presentation/composables/useBattleParticipant'
 
-// 鍙備笌鑰呭睘鎬ц闂?
-export { usePartmcmpantStats } rrom './usePartmcmpantStats'
+// 参与者属性访问
+export { useParticipantStats } from './useParticipantStats'
 export type {
-  UsePartmcmpantStatsReturn,
-  rormattedAttrmbute,
+  UseParticipantStatsReturn,
+  FormattedAttribute,
   CombatStatType,
-} rrom './usePartmcmpantStats'
-export { getStatName, getStatmcon } rrom './usePartmcmpantStats'
+} from './useParticipantStats'
+export { getStatName, getStatIcon } from './useParticipantStats'

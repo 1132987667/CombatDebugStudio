@@ -1,9 +1,4 @@
-import { useBattleStore } from '@/stores/battleStore';
-import { useDebugStore } from '@/stores/debugStore';
-import { useSceneStore } from '@/stores/sceneStore';
-
-export {
-  useBattleStore,
-  useDebugStore,
-  useSceneStore
-};
+/**
+ * @deprecated 请使用 '@/presentation/stores/index' 替代。此文件将在 Phase 8 中删除。
+ */
+export * from '@/presentation/stores/index'

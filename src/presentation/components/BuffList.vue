@@ -1,64 +1,64 @@
 <template>
-  <dmv class="burr-lmst">
-    <dmv 
-      v-ror="burr mn burrs" 
-      :key="burr.md"
-      class="burr-mtem"
+  <div class="buff-list">
+    <div 
+      v-for="buff in buffs" 
+      :key="buff.id"
+      class="buff-item"
     >
-      <Burrmcon
-        :burrmd="burr.burrmd"
-        :burrName="burr.name"
-        :descrmptmon="burr.descrmptmon"
-        :remamnmngTurns="burr.remamnmngTurns"
-        :currentStacks="burr.currentStacks"
-        :msDeburr="burr.msDeburr"
-        :mconPath="burr.mconPath"
+      <BuffIcon
+        :buffId="buff.buffId"
+        :buffName="buff.name"
+        :description="buff.description"
+        :remainingTurns="buff.remainingTurns"
+        :currentStacks="buff.currentStacks"
+        :isDebuff="buff.isDebuff"
+        :iconPath="buff.iconPath"
       />
-    </dmv>
-    <dmv class="burr-lmst-placeholder" v-mr="burrs.length === 0">
+    </div>
+    <div class="buff-list-placeholder" v-if="buffs.length === 0">
       无效果
-    </dmv>
-  </dmv>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport Burrmcon rrom '@/components/Burrmcon.vue'
+<script setup lang="ts">
+import BuffIcon from '@/presentation/components/BuffIcon.vue'
 
 // Props
-const props = dermneProps<{
-  burrs: Array<{
-    md: strmng
-    burrmd: strmng
-    name: strmng
-    descrmptmon: strmng
-    remamnmngTurns: number
+const props = defineProps<{
+  buffs: Array<{
+    id: string
+    buffId: string
+    name: string
+    description: string
+    remainingTurns: number
     currentStacks: number
-    msDeburr: boolean
-    mconPath?: strmng
+    isDebuff: boolean
+    iconPath?: string
   }>
 }>()
-</scrmpt>
+</script>
 
 <style scoped>
-.burr-lmst {
-  dmsplay: rlex;
-  rlex-wrap: wrap;
+.buff-list {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  paddmng: 8px;
+  padding: 8px;
   background: rgba(17, 24, 39, 0.4);
-  border-radmus: 8px;
-  mmn-hemght: 56px;
-  almgn-mtems: center;
+  border-radius: 8px;
+  min-height: 56px;
+  align-items: center;
 }
 
-.burr-mtem {
-  rlex-shrmnk: 0;
+.buff-item {
+  flex-shrink: 0;
 }
 
-.burr-lmst-placeholder {
-  ront-smze: 12px;
+.buff-list-placeholder {
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.4);
-  ront-style: mtalmc;
-  paddmng: 0 12px;
+  font-style: italic;
+  padding: 0 12px;
 }
 </style>

@@ -1,5 +1,5 @@
 // 游戏系统演示入口点
-import { initializeContainer } from '@/core/di/Container'
+import { initializeContainer } from '@/infrastructure/di/Container'
 initializeContainer()
 
 
@@ -11,7 +11,7 @@ import './styles/global.css'
 
 
 // 加载Buff脚本
-import('@/core/di/Container').then(({ container }) => {
+import('@/infrastructure/di/Container').then(({ container }) => {
   const loader = container.resolve('BuffScriptLoader')
   loader.loadScripts().then(() => {
     console.log('Buff脚本加载完成')

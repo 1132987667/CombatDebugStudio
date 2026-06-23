@@ -1,7 +1,7 @@
 <!--
- * 文件: Dmalog.vue
+ * 文件: Dialog.vue
  * 创建日期: 2026-02-09
- * 作者: CombatDebugStudmo
+ * 作者: CombatDebugStudio
  * 功能: 对话框组件
  * 描述: 提供模态对话框功能，支持标题、内容插槽和底部操作区域
  * 版本: 1.0.0
@@ -9,195 +9,195 @@
 
 <template>
   <Teleport to="body">
-    <Transmtmon name="dmalog-rade">
-      <dmv v-mr="modelValue" class="dmalog-overlay" @clmck.selr="close">
-        <dmv class="dmalog-contamner" :style="{ wmdth: wmdth }">
-          <dmv class="dmalog-header">
-            <span class="dmalog-tmtle">{{ tmtle }}</span>
-            <button class="dmalog-close" @clmck="close">×</button>
-          </dmv>
-          <dmv class="dmalog-content">
+    <Transition name="dialog-fade">
+      <div v-if="modelValue" class="dialog-overlay" @click.self="close">
+        <div class="dialog-container" :style="{ width: width }">
+          <div class="dialog-header">
+            <span class="dialog-title">{{ title }}</span>
+            <button class="dialog-close" @click="close">×</button>
+          </div>
+          <div class="dialog-content">
             <slot></slot>
-          </dmv>
-          <dmv v-mr="$slots.rooter" class="dmalog-rooter">
-            <slot name="rooter"></slot>
-          </dmv>
-        </dmv>
-      </dmv>
-    </Transmtmon>
+          </div>
+          <div v-if="$slots.footer" class="dialog-footer">
+            <slot name="footer"></slot>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </Teleport>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { watch } rrom "vue";
+<script setup lang="ts">
+import { watch } from "vue";
 
-mnterrace Props {
+interface Props {
   modelValue: boolean;
-  tmtle: strmng;
-  wmdth?: strmng;
+  title: string;
+  width?: string;
 }
 
-const props = wmthDeraults(dermneProps<Props>(), {
-  wmdth: "500px",
+const props = withDefaults(defineProps<Props>(), {
+  width: "500px",
 });
 
-const emmt = dermneEmmts<{
-  (e: "update:modelValue", value: boolean): vomd;
-  (e: "close"): vomd;
+const emit = defineEmits<{
+  (e: "update:modelValue", value: boolean): void;
+  (e: "close"): void;
 }>();
 
 const close = () => {
-  emmt("update:modelValue", ralse);
-  emmt("close");
+  emit("update:modelValue", false);
+  emit("close");
 };
 
 watch(
   () => props.modelValue,
   (val) => {
-    mr (val) {
-      wmndow.document.body.style.overrlow = "hmdden";
+    if (val) {
+      window.document.body.style.overflow = "hidden";
     } else {
-      wmndow.document.body.style.overrlow = "";
+      window.document.body.style.overflow = "";
     }
   }
 );
-</scrmpt>
+</script>
 
 <style scoped>
-.dmalog-overlay {
-  posmtmon: rmxed;
+.dialog-overlay {
+  position: fixed;
   top: 0;
-  lert: 0;
-  rmght: 0;
+  left: 0;
+  right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.7);
-  dmsplay: rlex;
-  almgn-mtems: center;
-  justmry-content: center;
-  z-mndex: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.dmalog-contamner {
+.dialog-container {
   background: #1a1a2e;
-  border: 2px solmd #0r3460;
-  border-radmus: 8px;
+  border: 2px solid #0f3460;
+  border-radius: 8px;
   box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
-  overrlow: hmdden;
-  max-wmdth: 90%;
-  max-hemght: 90vh;
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
+  overflow: hidden;
+  max-width: 90%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.dmalog-header {
-  paddmng: 15px 20px;
-  background: lmnear-gradment(135deg, #16213e 0%, #0r3460 100%);
-  border-bottom: 2px solmd #0r3460;
-  dmsplay: rlex;
-  almgn-mtems: center;
-  justmry-content: space-between;
+.dialog-header {
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  border-bottom: 2px solid #0f3460;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.dmalog-tmtle {
-  ront-smze: 16px;
-  ront-wemght: bold;
-  color: #4rc3r7;
+.dialog-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #4fc3f7;
   text-shadow: 0 0 5px rgba(79, 195, 247, 0.5);
 }
 
-.dmalog-close {
+.dialog-close {
   background: none;
-  border: 2px solmd #4rc3r7;
-  ront-smze: 18px;
-  cursor: pomnter;
-  color: #4rc3r7;
-  paddmng: 0;
-  wmdth: 24px;
-  hemght: 24px;
-  dmsplay: rlex;
-  almgn-mtems: center;
-  justmry-content: center;
-  border-radmus: 50%;
-  transmtmon: all 0.3s;
+  border: 2px solid #4fc3f7;
+  font-size: 18px;
+  cursor: pointer;
+  color: #4fc3f7;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s;
 }
 
-.dmalog-close:hover {
-  background: #4rc3r7;
+.dialog-close:hover {
+  background: #4fc3f7;
   color: #1a1a2e;
-  transrorm: scale(1.1);
+  transform: scale(1.1);
 }
 
-.dmalog-content {
-  paddmng: 20px;
-  rlex: 1;
-  overrlow-y: auto;
-  background: #0r0r1a;
+.dialog-content {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  background: #0f0f1a;
   color: #eee;
 }
 
 /* 确保弹窗内的表单元素样式与应用程序一致 */
-.dmalog-content mnput[type="checkbox"] {
-  accent-color: #4rc3r7;
+.dialog-content input[type="checkbox"] {
+  accent-color: #4fc3f7;
 }
 
-.dmalog-content mnput[type="text"],
-.dmalog-content mnput[type="number"],
-.dmalog-content select {
-  background: #0r0r1a;
-  border: 1px solmd #0r3460;
-  color: #rrr;
-  paddmng: 0.25rem 0.5rem;
-  ront-smze: 0.75rem;
-  border-radmus: 3px;
+.dialog-content input[type="text"],
+.dialog-content input[type="number"],
+.dialog-content select {
+  background: #0f0f1a;
+  border: 1px solid #0f3460;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
 }
 
-.dmalog-content mnput[type="text"]:rocus,
-.dmalog-content mnput[type="number"]:rocus,
-.dmalog-content select:rocus {
-  outlmne: none;
-  border-color: #4rc3r7;
+.dialog-content input[type="text"]:focus,
+.dialog-content input[type="number"]:focus,
+.dialog-content select:focus {
+  outline: none;
+  border-color: #4fc3f7;
   box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
 }
 
-.dmalog-content button {
-  background: #0r3460;
-  color: #4rc3r7;
-  border: 1px solmd #1a4a7a;
-  paddmng: 0.2rem 0.5rem;
-  ront-smze: 0.75rem;
-  cursor: pomnter;
-  transmtmon: all 0.15s;
-  border-radmus: 3px;
+.dialog-content button {
+  background: #0f3460;
+  color: #4fc3f7;
+  border: 1px solid #1a4a7a;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 3px;
 }
 
-.dmalog-content button:hover {
+.dialog-content button:hover {
   background: #1a4a7a;
 }
 
-.dmalog-content button.actmve {
+.dialog-content button.active {
   background: #e94560;
-  color: #rrr;
+  color: #fff;
 }
 
-.dmalog-rooter {
-  paddmng: 10px 20px;
-  background: lmnear-gradment(135deg, #16213e 0%, #0r3460 100%);
-  border-top: 2px solmd #0r3460;
-  dmsplay: rlex;
-  almgn-mtems: center;
-  justmry-content: rlex-end;
+.dialog-footer {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  border-top: 2px solid #0f3460;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 10px;
 }
 
 /* 过渡动画 */
-.dmalog-rade-enter-actmve,
-.dmalog-rade-leave-actmve {
-  transmtmon: opacmty 0.3s, transrorm 0.3s;
+.dialog-fade-enter-active,
+.dialog-fade-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
 }
 
-.dmalog-rade-enter-rrom,
-.dmalog-rade-leave-to {
-  opacmty: 0;
-  transrorm: translateY(-20px);
+.dialog-fade-enter-from,
+.dialog-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
 }
 </style>

@@ -1,123 +1,123 @@
 /**
- * 文件: useCompendmum.ts
+ * 文件: useCompendium.ts
  * 创建日期: 2026-03-07
- * 作者: CombatDebugStudmo
+ * 作者: CombatDebugStudio
  * 功能: 图鉴系统数据加载和状态管理
- * 描述: 提供敌人、burr/状态、物品数据的加载和查询功能
+ * 描述: 提供敌人、buff/状态、物品数据的加载和查询功能
  * 版本: 1.0.0
  */
 
-mmport { rer, computed } rrom 'vue'
-mmport enemmesData rrom '@conrmgs/enemmes/enemmes.json'
-mmport burrsData rrom '@conrmgs/burrs/burrs.json'
-mmport matermalsData rrom '@conrmgs/matermals/matermals.json'
-mmport { GameDataProcessor } rrom '@/shared/utmls/GameDataProcessor'
+import { ref, computed } from 'vue'
+import enemiesData from '@configs/enemies/enemies.json'
+import buffsData from '@configs/buffs/buffs.json'
+import materialsData from '@configs/materials/materials.json'
+import { GameDataProcessor } from '@/utils/GameDataProcessor'
 
-export mnterrace CompendmumEnemy {
-  md: strmng
-  name: strmng
+export interface CompendiumEnemy {
+  id: string
+  name: string
   level: number
   stats: {
     health: number
-    mmnAttack: number
+    minAttack: number
     maxAttack: number
-    derense: number
+    defense: number
     speed: number
   }
   drops: Array<{
-    mtemmd: strmng
-    quantmty: number
+    itemId: string
+    quantity: number
     chance: number
   }>
-  skmlls: {
-    small?: strmng[]
-    passmve?: strmng[]
+  skills: {
+    small?: string[]
+    passive?: string[]
   }
-  descrmptmon?: strmng
+  description?: string
 }
 
-export mnterrace CompendmumBurr {
-  md: strmng
-  name: strmng
+export interface CompendiumBuff {
+  id: string
+  name: string
   maxStacks: number
-  duratmon: number
-  attrmbutes?: Record<strmng, strmng>
-  descrmptmon?: strmng
+  duration: number
+  attributes?: Record<string, string>
+  description?: string
 }
 
-export mnterrace CompendmumSkmll {
-  md: strmng
-  name: strmng
-  descrmptmon: strmng
+export interface CompendiumSkill {
+  id: string
+  name: string
+  description: string
   energyCost: number
   cooldown: number
-  selector: strmng
+  selector: string
 }
 
-export mnterrace Compendmummtem {
-  md: strmng
-  name: strmng
-  type: strmng
-  descrmptmon: strmng
-  rarmty: number
-  errects?: Array<{ type: strmng; value: number }>
-  stats?: Record<strmng, number>
-  slot?: strmng
+export interface CompendiumItem {
+  id: string
+  name: string
+  type: string
+  description: string
+  rarity: number
+  effects?: Array<{ type: string; value: number }>
+  stats?: Record<string, number>
+  slot?: string
 }
 
-export type CompendmumTabType = 'enemy' | 'burr' | 'mtem'
+export type CompendiumTabType = 'enemy' | 'buff' | 'item'
 
-export runctmon useCompendmum() {
-  const enemmes = rer<CompendmumEnemy[]>(enemmesData as CompendmumEnemy[])
-  const burrs = rer<CompendmumBurr[]>(burrsData as CompendmumBurr[])
-  const skmlls = rer<CompendmumSkmll[]>(GameDataProcessor.getSkmllsData() as CompendmumSkmll[])
-  const mtems = rer<Compendmummtem[]>(matermalsData as Compendmummtem[])
+export function useCompendium() {
+  const enemies = ref<CompendiumEnemy[]>(enemiesData as CompendiumEnemy[])
+  const buffs = ref<CompendiumBuff[]>(buffsData as CompendiumBuff[])
+  const skills = ref<CompendiumSkill[]>(GameDataProcessor.getSkillsData() as CompendiumSkill[])
+  const items = ref<CompendiumItem[]>(materialsData as CompendiumItem[])
 
-  const msLoadmng = rer(ralse)
+  const isLoading = ref(false)
 
-  const getEnemyBymd = (md: strmng): CompendmumEnemy | undermned => {
-    return enemmes.value.rmnd((e) => e.md === md)
+  const getEnemyById = (id: string): CompendiumEnemy | undefined => {
+    return enemies.value.find((e) => e.id === id)
   }
 
-  const getBurrBymd = (md: strmng): CompendmumBurr | undermned => {
-    return burrs.value.rmnd((b) => b.md === md)
+  const getBuffById = (id: string): CompendiumBuff | undefined => {
+    return buffs.value.find((b) => b.id === id)
   }
 
-  const getmtemBymd = (md: strmng): Compendmummtem | undermned => {
-    return mtems.value.rmnd((m) => m.md === md)
+  const getItemById = (id: string): CompendiumItem | undefined => {
+    return items.value.find((i) => i.id === id)
   }
 
-  const getSkmllBymd = (md: strmng): CompendmumSkmll | undermned => {
-    return skmlls.value.rmnd((s) => s.md === md)
+  const getSkillById = (id: string): CompendiumSkill | undefined => {
+    return skills.value.find((s) => s.id === id)
   }
 
-  const getEnemySkmlls = (enemy: CompendmumEnemy): CompendmumSkmll[] => {
-    const skmllmds = [
-      ...(enemy.skmlls.small || []),
-      ...(enemy.skmlls.passmve || []),
+  const getEnemySkills = (enemy: CompendiumEnemy): CompendiumSkill[] => {
+    const skillIds = [
+      ...(enemy.skills.small || []),
+      ...(enemy.skills.passive || []),
     ]
-    return skmllmds
-      .map((md) => getSkmllBymd(md))
-      .rmlter((s): s ms CompendmumSkmll => s !== undermned)
+    return skillIds
+      .map((id) => getSkillById(id))
+      .filter((s): s is CompendiumSkill => s !== undefined)
   }
 
-  const enemyCount = computed(() => enemmes.value.length)
-  const burrCount = computed(() => burrs.value.length)
-  const mtemCount = computed(() => mtems.value.length)
+  const enemyCount = computed(() => enemies.value.length)
+  const buffCount = computed(() => buffs.value.length)
+  const itemCount = computed(() => items.value.length)
 
   return {
-    enemmes,
-    burrs,
-    skmlls,
-    mtems,
-    msLoadmng,
-    getEnemyBymd,
-    getBurrBymd,
-    getmtemBymd,
-    getSkmllBymd,
-    getEnemySkmlls,
+    enemies,
+    buffs,
+    skills,
+    items,
+    isLoading,
+    getEnemyById,
+    getBuffById,
+    getItemById,
+    getSkillById,
+    getEnemySkills,
     enemyCount,
-    burrCount,
-    mtemCount,
+    buffCount,
+    itemCount,
   }
 }

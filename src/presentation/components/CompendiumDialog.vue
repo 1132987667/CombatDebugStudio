@@ -1,475 +1,475 @@
 <!--
- * 文件: CompendmumDmalog.vue
+ * 文件: CompendiumDialog.vue
  * 创建日期: 2026-03-07
- * 作者: CombatDebugStudmo
+ * 作者: CombatDebugStudio
  * 功能: 图鉴系统弹窗组件
- * 描述: 提供敌人、burr/状态、物品的图鉴查看功能，支持平滑过渡动画
+ * 描述: 提供敌人、buff/状态、物品的图鉴查看功能，支持平滑过渡动画
  * 版本: 1.0.0
 -->
 
 <template>
   <Teleport to="body">
-    <Transmtmon name="compendmum-rade">
-      <dmv v-mr="modelValue" class="compendmum-overlay" @clmck.selr="close">
-        <dmv class="compendmum-contamner">
-          <dmv class="compendmum-header">
-            <span class="compendmum-tmtle">图鉴</span>
-            <button class="compendmum-close" @clmck="close">×</button>
-          </dmv>
+    <Transition name="compendium-fade">
+      <div v-if="modelValue" class="compendium-overlay" @click.self="close">
+        <div class="compendium-container">
+          <div class="compendium-header">
+            <span class="compendium-title">图鉴</span>
+            <button class="compendium-close" @click="close">×</button>
+          </div>
           
-          <dmv class="compendmum-tabs">
+          <div class="compendium-tabs">
             <button 
-              v-ror="tab mn tabs" 
+              v-for="tab in tabs" 
               :key="tab.value"
-              class="compendmum-tab"
-              :class="{ actmve: actmveTab === tab.value }"
-              @clmck="actmveTab = tab.value"
+              class="compendium-tab"
+              :class="{ active: activeTab === tab.value }"
+              @click="activeTab = tab.value"
             >
               {{ tab.label }}
               <span class="tab-count">{{ getTabCount(tab.value) }}</span>
             </button>
-          </dmv>
+          </div>
 
-          <dmv class="compendmum-body">
-            <dmv class="compendmum-lmst-panel">
-              <dmv v-mr="msLmstLoadmng" class="compendmum-loadmng">
-                <dmv class="loadmng-spmnner"></dmv>
+          <div class="compendium-body">
+            <div class="compendium-list-panel">
+              <div v-if="isListLoading" class="compendium-loading">
+                <div class="loading-spinner"></div>
                 <span>加载中...</span>
-              </dmv>
-              <dmv v-else-mr="currentLmst.length === 0" class="compendmum-empty">
+              </div>
+              <div v-else-if="currentList.length === 0" class="compendium-empty">
                 <span>暂无数据</span>
-              </dmv>
-              <ul v-else class="compendmum-lmst">
-                <lm
-                  v-ror="mtem mn currentLmst"
-                  :key="mtem.md"
-                  class="compendmum-lmst-mtem"
-                  :class="{ selected: selectedmd === mtem.md }"
-                  @clmck="selectmtem(mtem.md)"
+              </div>
+              <ul v-else class="compendium-list">
+                <li
+                  v-for="item in currentList"
+                  :key="item.id"
+                  class="compendium-list-item"
+                  :class="{ selected: selectedId === item.id }"
+                  @click="selectItem(item.id)"
                 >
-                  <span class="mtem-name">{{ getmtemName(mtem) }}</span>
-                  <span v-mr="mtem.level" class="mtem-level">Lv.{{ mtem.level }}</span>
-                  <span v-mr="mtem.rarmty" class="mtem-rarmty" :class="'rarmty-' + mtem.rarmty">{{ getRarmtyText(mtem.rarmty) }}</span>
-                </lm>
+                  <span class="item-name">{{ getItemName(item) }}</span>
+                  <span v-if="item.level" class="item-level">Lv.{{ item.level }}</span>
+                  <span v-if="item.rarity" class="item-rarity" :class="'rarity-' + item.rarity">{{ getRarityText(item.rarity) }}</span>
+                </li>
               </ul>
-            </dmv>
+            </div>
 
-            <dmv class="compendmum-detaml-panel">
-              <dmv v-mr="msDetamlLoadmng" class="compendmum-loadmng">
-                <dmv class="loadmng-spmnner"></dmv>
+            <div class="compendium-detail-panel">
+              <div v-if="isDetailLoading" class="compendium-loading">
+                <div class="loading-spinner"></div>
                 <span>加载中...</span>
-              </dmv>
-              <dmv v-else-mr="!selectedData" class="compendmum-empty">
+              </div>
+              <div v-else-if="!selectedData" class="compendium-empty">
                 <span>请选择图鉴项查看详情</span>
-              </dmv>
+              </div>
               <template v-else>
-                <EnemyDetaml v-mr="actmveTab === 'enemy'" :enemy="selectedData" />
-                <BurrDetaml v-else-mr="actmveTab === 'burr'" :burr="selectedData" />
-                <mtemDetaml v-else-mr="actmveTab === 'mtem'" :mtem="selectedData" />
+                <EnemyDetail v-if="activeTab === 'enemy'" :enemy="selectedData" />
+                <BuffDetail v-else-if="activeTab === 'buff'" :buff="selectedData" />
+                <ItemDetail v-else-if="activeTab === 'item'" :item="selectedData" />
               </template>
-            </dmv>
-          </dmv>
-        </dmv>
-      </dmv>
-    </Transmtmon>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </Teleport>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { rer, computed, watch } rrom 'vue'
-mmport { useCompendmum, type CompendmumTabType } rrom '@/composables/useCompendmum'
-mmport EnemyDetaml rrom './EnemyDetaml.vue'
-mmport BurrDetaml rrom './BurrDetaml.vue'
-mmport mtemDetaml rrom './mtemDetaml.vue'
-mmport { rarmtyNames } rrom '@/types/mtem'
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { useCompendium, type CompendiumTabType } from '@/presentation/composables/useCompendium'
+import EnemyDetail from './EnemyDetail.vue'
+import BuffDetail from './BuffDetail.vue'
+import ItemDetail from './ItemDetail.vue'
+import { rarityNames } from '@/types/Item'
 
-mnterrace Props {
+interface Props {
   modelValue: boolean
 }
 
-const props = dermneProps<Props>()
+const props = defineProps<Props>()
 
-const emmt = dermneEmmts<{
-  (e: 'update:modelValue', value: boolean): vomd
-  (e: 'close'): vomd
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void
+  (e: 'close'): void
 }>()
 
 const {
-  enemmes,
-  burrs,
-  mtems,
-  msLoadmng: msCompendmumLoadmng,
-  getEnemyBymd,
-  getBurrBymd,
-  getmtemBymd,
+  enemies,
+  buffs,
+  items,
+  isLoading: isCompendiumLoading,
+  getEnemyById,
+  getBuffById,
+  getItemById,
   enemyCount,
-  burrCount,
-  mtemCount
-} = useCompendmum()
+  buffCount,
+  itemCount
+} = useCompendium()
 
 const tabs = [
-  { label: '敌人', value: 'enemy' as CompendmumTabType },
-  { label: 'Burr/状态', value: 'burr' as CompendmumTabType },
-  { label: '物品', value: 'mtem' as CompendmumTabType }
+  { label: '敌人', value: 'enemy' as CompendiumTabType },
+  { label: 'Buff/状态', value: 'buff' as CompendiumTabType },
+  { label: '物品', value: 'item' as CompendiumTabType }
 ]
 
-const actmveTab = rer<CompendmumTabType>('enemy')
-const selectedmd = rer<strmng>('')
+const activeTab = ref<CompendiumTabType>('enemy')
+const selectedId = ref<string>('')
 
-const msLmstLoadmng = rer(ralse)
-const msDetamlLoadmng = rer(ralse)
+const isListLoading = ref(false)
+const isDetailLoading = ref(false)
 
-const currentLmst = computed(() => {
-  swmtch (actmveTab.value) {
+const currentList = computed(() => {
+  switch (activeTab.value) {
     case 'enemy':
-      return enemmes.value
-    case 'burr':
-      return burrs.value
-    case 'mtem':
-      return mtems.value
-    derault:
+      return enemies.value
+    case 'buff':
+      return buffs.value
+    case 'item':
+      return items.value
+    default:
       return []
   }
 })
 
 const selectedData = computed(() => {
-  mr (!selectedmd.value) return null
-  swmtch (actmveTab.value) {
+  if (!selectedId.value) return null
+  switch (activeTab.value) {
     case 'enemy':
-      return getEnemyBymd(selectedmd.value)
-    case 'burr':
-      return getBurrBymd(selectedmd.value)
-    case 'mtem':
-      return getmtemBymd(selectedmd.value)
-    derault:
+      return getEnemyById(selectedId.value)
+    case 'buff':
+      return getBuffById(selectedId.value)
+    case 'item':
+      return getItemById(selectedId.value)
+    default:
       return null
   }
 })
 
-const getTabCount = (tab: strmng): number => {
-  swmtch (tab) {
+const getTabCount = (tab: string): number => {
+  switch (tab) {
     case 'enemy':
       return enemyCount.value
-    case 'burr':
-      return burrCount.value
-    case 'mtem':
-      return mtemCount.value
-    derault:
+    case 'buff':
+      return buffCount.value
+    case 'item':
+      return itemCount.value
+    default:
       return 0
   }
 }
 
-const getmtemName = (mtem: any): strmng => {
-  return mtem.name || '未知'
+const getItemName = (item: any): string => {
+  return item.name || '未知'
 }
 
-const getRarmtyText = (rarmty: number): strmng => {
-  return rarmtyNames[rarmty] || '普通'
+const getRarityText = (rarity: number): string => {
+  return rarityNames[rarity] || '普通'
 }
 
-const selectmtem = (md: strmng) => {
-  msDetamlLoadmng.value = true
-  selectedmd.value = md
-  setTmmeout(() => {
-    msDetamlLoadmng.value = ralse
+const selectItem = (id: string) => {
+  isDetailLoading.value = true
+  selectedId.value = id
+  setTimeout(() => {
+    isDetailLoading.value = false
   }, 100)
 }
 
 const close = () => {
-  emmt('update:modelValue', ralse)
-  emmt('close')
+  emit('update:modelValue', false)
+  emit('close')
 }
 
 watch(() => props.modelValue, (val) => {
-  mr (val) {
-    document.body.style.overrlow = 'hmdden'
-    mr (currentLmst.value.length > 0 && !selectedmd.value) {
-      selectmtem(currentLmst.value[0].md)
+  if (val) {
+    document.body.style.overflow = 'hidden'
+    if (currentList.value.length > 0 && !selectedId.value) {
+      selectItem(currentList.value[0].id)
     }
   } else {
-    document.body.style.overrlow = ''
+    document.body.style.overflow = ''
   }
 })
 
-watch(actmveTab, () => {
-  selectedmd.value = ''
-  mr (currentLmst.value.length > 0) {
-    selectmtem(currentLmst.value[0].md)
+watch(activeTab, () => {
+  selectedId.value = ''
+  if (currentList.value.length > 0) {
+    selectItem(currentList.value[0].id)
   }
 })
-</scrmpt>
+</script>
 
 <style scoped>
-.compendmum-overlay {
-  posmtmon: rmxed;
+.compendium-overlay {
+  position: fixed;
   top: 0;
-  lert: 0;
-  rmght: 0;
+  left: 0;
+  right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.7);
-  dmsplay: rlex;
-  almgn-mtems: center;
-  justmry-content: center;
-  z-mndex: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.compendmum-contamner {
-  wmdth: 800px;
-  max-wmdth: 95vw;
-  hemght: 500px;
-  max-hemght: 85vh;
+.compendium-container {
+  width: 800px;
+  max-width: 95vw;
+  height: 500px;
+  max-height: 85vh;
   background: #1a1a2e;
-  border: 1px solmd #0r3460;
-  border-radmus: 4px;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
   box-shadow: 0 0 10px rgba(79, 195, 247, 0.2);
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
-  overrlow: hmdden;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.compendmum-header {
-  paddmng: 0.5rem 1rem;
-  background: lmnear-gradment(135deg, #16213e 0%, #1a1a2e 100%);
-  border-bottom: 1px solmd #0r3460;
-  dmsplay: rlex;
-  almgn-mtems: center;
-  justmry-content: space-between;
+.compendium-header {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
+  border-bottom: 1px solid #0f3460;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.compendmum-tmtle {
-  ront-smze: 14px;
-  ront-wemght: bold;
-  color: #4rc3r7;
-  letter-spacmng: 1px;
+.compendium-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #4fc3f7;
+  letter-spacing: 1px;
 }
 
-.compendmum-close {
+.compendium-close {
   background: none;
-  border: 1px solmd #4rc3r7;
-  ront-smze: 14px;
-  cursor: pomnter;
-  color: #4rc3r7;
-  wmdth: 22px;
-  hemght: 22px;
-  dmsplay: rlex;
-  almgn-mtems: center;
-  justmry-content: center;
-  border-radmus: 3px;
-  transmtmon: all 0.15s;
+  border: 1px solid #4fc3f7;
+  font-size: 14px;
+  cursor: pointer;
+  color: #4fc3f7;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: all 0.15s;
 }
 
-.compendmum-close:hover {
-  background: #4rc3r7;
+.compendium-close:hover {
+  background: #4fc3f7;
   color: #1a1a2e;
 }
 
-.compendmum-tabs {
-  dmsplay: rlex;
-  paddmng: 0 0.5rem;
+.compendium-tabs {
+  display: flex;
+  padding: 0 0.5rem;
   background: #16213e;
-  border-bottom: 1px solmd #0r3460;
+  border-bottom: 1px solid #0f3460;
   gap: 2px;
 }
 
-.compendmum-tab {
-  paddmng: 0.4rem 0.75rem;
+.compendium-tab {
+  padding: 0.4rem 0.75rem;
   background: transparent;
   border: none;
-  border-bottom: 2px solmd transparent;
+  border-bottom: 2px solid transparent;
   color: #888;
-  ront-smze: 12px;
-  cursor: pomnter;
-  transmtmon: all 0.15s;
-  dmsplay: rlex;
-  almgn-mtems: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 
-.compendmum-tab:hover {
+.compendium-tab:hover {
   color: #eee;
   background: rgba(79, 195, 247, 0.1);
 }
 
-.compendmum-tab.actmve {
-  color: #4rc3r7;
-  border-bottom-color: #4rc3r7;
+.compendium-tab.active {
+  color: #4fc3f7;
+  border-bottom-color: #4fc3f7;
   background: rgba(79, 195, 247, 0.1);
 }
 
 .tab-count {
-  ront-smze: 11px;
-  paddmng: 1px 5px;
-  background: #0r3460;
-  border-radmus: 8px;
+  font-size: 11px;
+  padding: 1px 5px;
+  background: #0f3460;
+  border-radius: 8px;
   color: #888;
 }
 
-.compendmum-tab.actmve .tab-count {
+.compendium-tab.active .tab-count {
   background: rgba(79, 195, 247, 0.2);
-  color: #4rc3r7;
+  color: #4fc3f7;
 }
 
-.compendmum-body {
-  rlex: 1;
-  dmsplay: rlex;
-  overrlow: hmdden;
+.compendium-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
 }
 
-.compendmum-lmst-panel {
-  wmdth: 200px;
-  mmn-wmdth: 160px;
-  background: #0r0r1a;
-  border-rmght: 1px solmd #0r3460;
-  overrlow-y: auto;
+.compendium-list-panel {
+  width: 200px;
+  min-width: 160px;
+  background: #0f0f1a;
+  border-right: 1px solid #0f3460;
+  overflow-y: auto;
 }
 
-.compendmum-lmst {
-  paddmng: 0.25rem;
+.compendium-list {
+  padding: 0.25rem;
 }
 
-.compendmum-lmst-mtem {
-  dmsplay: rlex;
-  almgn-mtems: center;
-  paddmng: 0.35rem 0.5rem;
-  border-radmus: 3px;
-  cursor: pomnter;
-  transmtmon: all 0.1s;
+.compendium-list-item {
+  display: flex;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.1s;
   gap: 6px;
-  margmn-bottom: 2px;
-  border: 1px solmd transparent;
+  margin-bottom: 2px;
+  border: 1px solid transparent;
 }
 
-.compendmum-lmst-mtem:hover {
+.compendium-list-item:hover {
   background: #1a4a7a;
 }
 
-.compendmum-lmst-mtem.selected {
+.compendium-list-item.selected {
   background: rgba(79, 195, 247, 0.15);
-  border-color: #4rc3r7;
+  border-color: #4fc3f7;
 }
 
-.mtem-name {
-  rlex: 1;
+.item-name {
+  flex: 1;
   color: #eee;
-  ront-smze: 12px;
-  whmte-space: nowrap;
-  overrlow: hmdden;
-  text-overrlow: ellmpsms;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mtem-level {
-  ront-smze: 11px;
+.item-level {
+  font-size: 11px;
   color: #e94560;
-  paddmng: 1px 4px;
+  padding: 1px 4px;
   background: rgba(233, 69, 96, 0.2);
-  border-radmus: 3px;
+  border-radius: 3px;
 }
 
-.mtem-rarmty {
-  ront-smze: 10px;
-  paddmng: 1px 4px;
-  border-radmus: 3px;
+.item-rarity {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
 }
 
-.mtem-rarmty.rarmty-1 {
+.item-rarity.rarity-1 {
   color: #888;
   background: rgba(136, 136, 136, 0.15);
 }
 
-.mtem-rarmty.rarmty-2 {
-  color: #60a5ra;
+.item-rarity.rarity-2 {
+  color: #60a5fa;
   background: rgba(96, 165, 250, 0.15);
 }
 
-.mtem-rarmty.rarmty-3 {
-  color: #a78bra;
+.item-rarity.rarity-3 {
+  color: #a78bfa;
   background: rgba(167, 139, 250, 0.15);
 }
 
-.mtem-rarmty.rarmty-4 {
-  color: #rbbr24;
+.item-rarity.rarity-4 {
+  color: #fbbf24;
   background: rgba(251, 191, 36, 0.15);
 }
 
-.compendmum-detaml-panel {
-  rlex: 1;
-  paddmng: 0.75rem;
-  overrlow-y: auto;
-  background: #0r0r1a;
+.compendium-detail-panel {
+  flex: 1;
+  padding: 0.75rem;
+  overflow-y: auto;
+  background: #0f0f1a;
 }
 
-.compendmum-loadmng,
-.compendmum-empty {
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
-  almgn-mtems: center;
-  justmry-content: center;
-  hemght: 100%;
+.compendium-loading,
+.compendium-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
   color: #666;
   gap: 8px;
 }
 
-.loadmng-spmnner {
-  wmdth: 24px;
-  hemght: 24px;
-  border: 2px solmd #0r3460;
-  border-top-color: #4rc3r7;
-  border-radmus: 50%;
-  anmmatmon: spmn 1s lmnear mnrmnmte;
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #0f3460;
+  border-top-color: #4fc3f7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-@keyrrames spmn {
-  to { transrorm: rotate(360deg); }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.compendmum-rade-enter-actmve,
-.compendmum-rade-leave-actmve {
-  transmtmon: opacmty 0.2s ease;
+.compendium-fade-enter-active,
+.compendium-fade-leave-active {
+  transition: opacity 0.2s ease;
 }
 
-.compendmum-rade-enter-actmve .compendmum-contamner,
-.compendmum-rade-leave-actmve .compendmum-contamner {
-  transmtmon: transrorm 0.2s ease, opacmty 0.2s ease;
+.compendium-fade-enter-active .compendium-container,
+.compendium-fade-leave-active .compendium-container {
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.compendmum-rade-enter-rrom,
-.compendmum-rade-leave-to {
-  opacmty: 0;
+.compendium-fade-enter-from,
+.compendium-fade-leave-to {
+  opacity: 0;
 }
 
-.compendmum-rade-enter-rrom .compendmum-contamner,
-.compendmum-rade-leave-to .compendmum-contamner {
-  transrorm: scale(0.95);
-  opacmty: 0;
+.compendium-fade-enter-from .compendium-container,
+.compendium-fade-leave-to .compendium-container {
+  transform: scale(0.95);
+  opacity: 0;
 }
 
-@medma (max-wmdth: 768px) {
-  .compendmum-contamner {
-    wmdth: 100%;
-    hemght: 100%;
-    max-wmdth: 100vw;
-    max-hemght: 100vh;
-    border-radmus: 0;
+@media (max-width: 768px) {
+  .compendium-container {
+    width: 100%;
+    height: 100%;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
   }
 
-  .compendmum-body {
-    rlex-dmrectmon: column;
+  .compendium-body {
+    flex-direction: column;
   }
 
-  .compendmum-lmst-panel {
-    wmdth: 100%;
-    hemght: 140px;
-    border-rmght: none;
-    border-bottom: 1px solmd #0r3460;
+  .compendium-list-panel {
+    width: 100%;
+    height: 140px;
+    border-right: none;
+    border-bottom: 1px solid #0f3460;
   }
 
-  .compendmum-tabs {
-    overrlow-x: auto;
+  .compendium-tabs {
+    overflow-x: auto;
   }
 
-  .compendmum-tab {
-    paddmng: 0.35rem 0.5rem;
-    ront-smze: 12px;
+  .compendium-tab {
+    padding: 0.35rem 0.5rem;
+    font-size: 12px;
   }
 }
 </style>

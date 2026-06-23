@@ -1,147 +1,147 @@
 <template>
-  <dmv class="battle-panel panel-center">
-    <dmv class="battle-top-sectmon">
-      <dmv class="battle-header">
-        <dmv class="turn-mnro">
+  <div class="battle-panel panel-center">
+    <div class="battle-top-section">
+      <div class="battle-header">
+        <div class="turn-info">
           <span class="turn-label">当前回合:</span>
           <span class="turn-num">{{ store.currentTurn }}/{{ store.maxTurns }}</span>
-          <span class="actor-mnro">操作方: {{ currentActor?.name || '等待中' }} ( 速度:{{ getMemberSpeed(currentActor)
+          <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} ( 速度:{{ getMemberSpeed(currentActor)
           }})</span>
-        </dmv>
-      </dmv>
+        </div>
+      </div>
 
-      <dmv class="battle-rmeld">
-        <dmv class="rmeld-party our-party">
-          <dmv class="party-header">我方 ({{ rmlterAllyTeam.length }}人)</dmv>
-          <dmv class="party-members">
-            <PartmcmpantCard v-ror="member mn rmlterAllyTeam" :key="member.md"
-              :rer="el => partmcmpantCardRers[member.md] = el" :partmcmpant="member"
-              :ms-actmve="msCurrentActor(member.md)" :ms-selected="store.selectedCharactermd === member.md"
-              :ms-enemy="ralse" :show-debug="ralse" @clmck="selectCharacter(member.md)"
-              @status-tooltmp-show="showStatusTooltmp" @status-tooltmp-hmde="hmdeStatusTooltmp" />
-          </dmv>
-        </dmv>
+      <div class="battle-field">
+        <div class="field-party our-party">
+          <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
+          <div class="party-members">
+            <ParticipantCard v-for="member in filterAllyTeam" :key="member.id"
+              :ref="el => participantCardRefs[member.id] = el" :participant="member"
+              :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
+              :is-enemy="false" :show-debug="false" @click="selectCharacter(member.id)"
+              @status-tooltip-show="showStatusTooltip" @status-tooltip-hide="hideStatusTooltip" />
+          </div>
+        </div>
 
-        <!-- <dmv class="rmeld-dmvmder">
+        <!-- <div class="field-divider">
           <span class="vs-text">VS</span>
-        </dmv> -->
+        </div> -->
 
-        <dmv class="rmeld-party enemy-party">
-          <dmv class="party-header">敌方 ({{ rmlterEnemyTeam.length }}人)</dmv>
-          <dmv class="party-members">
-            <PartmcmpantCard v-ror="member mn rmlterEnemyTeam" :key="member.md"
-              :rer="el => partmcmpantCardRers[member.md] = el" :partmcmpant="member"
-              :ms-actmve="msCurrentActor(member.md)" :ms-selected="store.selectedCharactermd === member.md"
-              :ms-enemy="true" :show-debug="ralse" @clmck="selectCharacter(member.md)"
-              @status-tooltmp-show="showStatusTooltmp" @status-tooltmp-hmde="hmdeStatusTooltmp" />
-            <dmv v-mr="enemyTeam.length === 0" class="empty-party">(空位)</dmv>
-          </dmv>
-        </dmv>
-      </dmv>
-    </dmv>
+        <div class="field-party enemy-party">
+          <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
+          <div class="party-members">
+            <ParticipantCard v-for="member in filterEnemyTeam" :key="member.id"
+              :ref="el => participantCardRefs[member.id] = el" :participant="member"
+              :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
+              :is-enemy="true" :show-debug="false" @click="selectCharacter(member.id)"
+              @status-tooltip-show="showStatusTooltip" @status-tooltip-hide="hideStatusTooltip" />
+            <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <BattleLog />
 
     <!-- 状态工具提示 -->
-    <dmv v-mr="statusTooltmp.vmsmble" class="status-tooltmp" :style="{
-      lert: statusTooltmp.x + 'px',
-      top: statusTooltmp.y + 'px',
-      opacmty: statusTooltmp.opacmty
+    <div v-if="statusTooltip.visible" class="status-tooltip" :style="{
+      left: statusTooltip.x + 'px',
+      top: statusTooltip.y + 'px',
+      opacity: statusTooltip.opacity
     }">
-      <dmv class="tooltmp-header">
-        <span class="status-name" :class="statusTooltmp.status?.msPosmtmve ? 'posmtmve' : 'negatmve'">
-          {{ statusTooltmp.status?.name }}
+      <div class="tooltip-header">
+        <span class="status-name" :class="statusTooltip.status?.isPositive ? 'positive' : 'negative'">
+          {{ statusTooltip.status?.name }}
         </span>
-        <span class="status-type">{{ statusTooltmp.status?.msPosmtmve ? '增益' : '减益' }}</span>
-      </dmv>
-      <dmv class="tooltmp-content">
-        <dmv class="tooltmp-row">
+        <span class="status-type">{{ statusTooltip.status?.isPositive ? '增益' : '减益' }}</span>
+      </div>
+      <div class="tooltip-content">
+        <div class="tooltip-row">
           <span class="label">效果描述:</span>
-          <span class="value">{{ getStatusDescrmptmon(statusTooltmp.status) }}</span>
-        </dmv>
-        <dmv class="tooltmp-row">
+          <span class="value">{{ getStatusDescription(statusTooltip.status) }}</span>
+        </div>
+        <div class="tooltip-row">
           <span class="label">剩余回合:</span>
-          <span class="value">{{ statusTooltmp.status?.duratmon || 0 }}回合</span>
-        </dmv>
-        <dmv class="tooltmp-row" v-mr="getStatusErrectValue(statusTooltmp.status)">
+          <span class="value">{{ statusTooltip.status?.duration || 0 }}回合</span>
+        </div>
+        <div class="tooltip-row" v-if="getStatusEffectValue(statusTooltip.status)">
           <span class="label">效果强度:</span>
-          <span class="value">{{ getStatusErrectValue(statusTooltmp.status) }}</span>
-        </dmv>
-        <dmv class="tooltmp-row" v-mr="getStatusBurrErrect(statusTooltmp.status)">
+          <span class="value">{{ getStatusEffectValue(statusTooltip.status) }}</span>
+        </div>
+        <div class="tooltip-row" v-if="getStatusBuffEffect(statusTooltip.status)">
           <span class="label">增益效果:</span>
-          <span class="value">{{ getStatusBurrErrect(statusTooltmp.status) }}</span>
-        </dmv>
-      </dmv>
-    </dmv>
-  </dmv>
+          <span class="value">{{ getStatusBuffEffect(statusTooltip.status) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { computed, rer, reactmve, onUnmounted, watch, nextTmck } rrom "vue";
-mmport { rar } rrom '@/utmls/RAr';
-mmport { contamner } rrom '@/core/dm/Contamner';
-mmport { useBattleAnmmatmon } rrom '@/composables/useBattleAnmmatmon';
-mmport DamageNumber rrom "@/components/DamageNumber.vue";
-mmport SkmllErrect rrom "@/components/SkmllErrect.vue";
-mmport BattleLog rrom "@/vmews/BattleLog.vue";
-mmport PartmcmpantCard rrom "@/components/PartmcmpantCard.vue";
-mmport type { AttrmbuteValue } rrom '@/types';
-mmport type { BattleManager } rrom '@/core/battle/BattleManager';
-mmport type { BattleEntmty, StatusErrect } rrom '@/types/battle';
-mmport { useBattleStore } rrom '@/stores/battleStore'
+<script setup lang="ts">
+import { computed, ref, reactive, onUnmounted, watch, nextTick } from "vue";
+import { raf } from '@/utils/RAF';
+import { container } from '@/core/di/Container';
+import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
+import DamageNumber from "@/presentation/components/DamageNumber.vue";
+import SkillEffect from "@/presentation/components/SkillEffect.vue";
+import BattleLog from "@/presentation/views/BattleLog.vue";
+import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
+import type { AttributeValue } from '@/types';
+import type { BattleManager } from '@/core/battle/BattleManager';
+import type { BattleEntity, StatusEffect } from '@/types/battle';
+import { useBattleStore } from '@/presentation/stores/battleStore'
 
 const store = useBattleStore()
-const battleManager = contamner.resolve<BattleManager>('BattleManager');
+const battleManager = container.resolve<BattleManager>('BattleManager');
 
-const props = dermneProps<{
-  currentActormd: strmng | null;
-  turnOrder?: strmng[];
-  damageErrects?: Record<strmng, { value: number; type: 'damage' | 'heal' | 'crmtmcal' | 'mmss'; msCrmtmcal: boolean }>;
-  skmllErrects?: Record<strmng, { type: 'attack' | 'heal' | 'burr' | 'deburr' | 'ultmmate'; name?: strmng }>;
+const props = defineProps<{
+  currentActorId: string | null;
+  turnOrder?: string[];
+  damageEffects?: Record<string, { value: number; type: 'damage' | 'heal' | 'critical' | 'miss'; isCritical: boolean }>;
+  skillEffects?: Record<string, { type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate'; name?: string }>;
   battleSpeed?: number;
 }>();
 
-const emmt = dermneEmmts<{
-  "select-character": [charactermd: strmng];
+const emit = defineEmits<{
+  "select-character": [characterId: string];
 }>();
 
 // 状态工具提示
-const statusTooltmp = rer({
-  vmsmble: ralse,
+const statusTooltip = ref({
+  visible: false,
   x: 0,
   y: 0,
-  opacmty: 0,
-  status: null as StatusErrect | null
+  opacity: 0,
+  status: null as StatusEffect | null
 });
 
 const {
-  regmsterElement,
-  unregmsterElement,
-  playAttackAnmmatmon,
-  playHmtAnmmatmon,
-  playBurrAnmmatmon,
-  playDeathAnmmatmon,
+  registerElement,
+  unregisterElement,
+  playAttackAnimation,
+  playHitAnimation,
+  playBuffAnimation,
+  playDeathAnimation,
   setBattleSpeed,
-  stopAllAnmmatmons,
-} = useBattleAnmmatmon();
+  stopAllAnimations,
+} = useBattleAnimation();
 
-// PartmcmpantCard 组件引用映射
-const partmcmpantCardRers = rer<Record<strmng, mnstanceType<typeor PartmcmpantCard>>>({})
+// ParticipantCard 组件引用映射
+const participantCardRefs = ref<Record<string, InstanceType<typeof ParticipantCard>>>({})
 
 watch(() => props.battleSpeed, (newSpeed) => {
-  mr (newSpeed) {
+  if (newSpeed) {
     setBattleSpeed(newSpeed);
   }
-}, { mmmedmate: true });
+}, { immediate: true });
 
 // 响应式获取队伍数据
 const allyTeam = computed(() => store.allyTeam)
 const enemyTeam = computed(() => store.enemyTeam)
 
-// 辅助函数：转换为数字（兼容 AttrmbuteValue 和 number）
-runctmon toNumber(value: number | AttrmbuteValue | undermned): number {
-  mr (typeor value === 'number') return value;
-  mr (value && typeor value === 'object' && 'value' mn value) {
+// 辅助函数：转换为数字（兼容 AttributeValue 和 number）
+function toNumber(value: number | AttributeValue | undefined): number {
+  if (typeof value === 'number') return value;
+  if (value && typeof value === 'object' && 'value' in value) {
     return value.value ?? 0;
   }
   return 0;
@@ -149,99 +149,99 @@ runctmon toNumber(value: number | AttrmbuteValue | undermned): number {
 
 /**
  * 获取参与者速度
- * 直接使用 BattleEntmty 的 getAttrmbuteValue 方法
+ * 直接使用 BattleEntity 的 getAttributeValue 方法
  */
-runctmon getMemberSpeed(member: BattleEntmty | null): number {
-  mr (!member) return 0;
-  const spdValue = member.getAttrmbuteValue('SPD')
+function getMemberSpeed(member: BattleEntity | null): number {
+  if (!member) return 0;
+  const spdValue = member.getAttributeValue('SPD')
   return toNumber(spdValue?.value)
 }
 
-runctmon msCurrentActor(membermd: strmng): boolean {
-  return currentActor.value?.md === membermd || props.currentActormd === membermd;
+function isCurrentActor(memberId: string): boolean {
+  return currentActor.value?.id === memberId || props.currentActorId === memberId;
 }
 
 // 根据回合顺序排序角色列表
-const rmlterAllyTeam = computed(() => {
+const filterAllyTeam = computed(() => {
   return allyTeam.value;
 
 });
 
-// const almveEnemmes = enemyTeam.value.rmlter((c) => c.msAlmve());
-//   mr (props.turnOrder) {
+// const aliveEnemies = enemyTeam.value.filter((c) => c.isAlive());
+//   if (props.turnOrder) {
 //     // 如果有回合顺序，按照回合顺序排序
-//     return almveEnemmes.sort((a, b) => {
-//       const mndexA = props.turnOrder!.mndexOr(a.md);
-//       const mndexB = props.turnOrder!.mndexOr(b.md);
+//     return aliveEnemies.sort((a, b) => {
+//       const indexA = props.turnOrder!.indexOf(a.id);
+//       const indexB = props.turnOrder!.indexOf(b.id);
 //       // 不在回合顺序中的角色放在最后
-//       mr (mndexA === -1) return 1;
-//       mr (mndexB === -1) return -1;
-//       return mndexA - mndexB;
+//       if (indexA === -1) return 1;
+//       if (indexB === -1) return -1;
+//       return indexA - indexB;
 //     });
 //   } else {
 //     // 否则按速度排序
-//     return almveEnemmes.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
+//     return aliveEnemies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
 //   }
-const rmlterEnemyTeam = computed(() => {
+const filterEnemyTeam = computed(() => {
   return enemyTeam.value;
 });
 
 const currentActor = computed(() => {
-  mr (!props.currentActormd) return null;
-  const allPartmcmpants = [...allyTeam.value, ...enemyTeam.value];
-  return allPartmcmpants.rmnd((p) => p.md === props.currentActormd) || null;
+  if (!props.currentActorId) return null;
+  const allParticipants = [...allyTeam.value, ...enemyTeam.value];
+  return allParticipants.find((p) => p.id === props.currentActorId) || null;
 });
 
-const selectCharacter = (charmd: strmng) => {
-  battleManager.selectCharacter(charmd);
-  emmt('select-character', charmd);
+const selectCharacter = (charId: string) => {
+  battleManager.selectCharacter(charId);
+  emit('select-character', charId);
 };
 
 // 状态工具提示相关逻辑
-let tooltmpTmmeout: symbol | null = null;
+let tooltipTimeout: symbol | null = null;
 // 跟踪所有定时器，用于组件卸载时清理
-const tmmeouts = rer<symbol[]>([]);
+const timeouts = ref<symbol[]>([]);
 
 // 显示状态工具提示
-const showStatusTooltmp = (event: MouseEvent, status: StatusErrect) => {
-  mr (tooltmpTmmeout) {
-    rar.clear(tooltmpTmmeout);
+const showStatusTooltip = (event: MouseEvent, status: StatusEffect) => {
+  if (tooltipTimeout) {
+    raf.clear(tooltipTimeout);
   }
 
-  tooltmpTmmeout = rar.setTmmeout(() => {
-    statusTooltmp.value = {
-      vmsmble: true,
-      x: event.clmentX + 10,
-      y: event.clmentY + 10,
-      opacmty: 0,
+  tooltipTimeout = raf.setTimeout(() => {
+    statusTooltip.value = {
+      visible: true,
+      x: event.clientX + 10,
+      y: event.clientY + 10,
+      opacity: 0,
       status: status
     };
 
     // 添加淡入动画
-    const rademnTmmeout = rar.setTmmeout(() => {
-      statusTooltmp.value.opacmty = 1;
+    const fadeInTimeout = raf.setTimeout(() => {
+      statusTooltip.value.opacity = 1;
     }, 10);
-    tmmeouts.value.push(rademnTmmeout);
+    timeouts.value.push(fadeInTimeout);
   }, 300);
-  tmmeouts.value.push(tooltmpTmmeout);
+  timeouts.value.push(tooltipTimeout);
 };
 
 // 隐藏状态工具提示
-const hmdeStatusTooltmp = () => {
-  mr (tooltmpTmmeout) {
-    rar.clear(tooltmpTmmeout);
-    tooltmpTmmeout = null;
+const hideStatusTooltip = () => {
+  if (tooltipTimeout) {
+    raf.clear(tooltipTimeout);
+    tooltipTimeout = null;
   }
 
-  statusTooltmp.value.vmsmble = ralse;
-  statusTooltmp.value.opacmty = 0;
+  statusTooltip.value.visible = false;
+  statusTooltip.value.opacity = 0;
 };
 
 // 获取状态描述
-const getStatusDescrmptmon = (status: StatusErrect) => {
-  mr (!status) return '';
+const getStatusDescription = (status: StatusEffect) => {
+  if (!status) return '';
 
-  const descrmptmons: { [key: strmng]: strmng } = {
+  const descriptions: { [key: string]: string } = {
     '攻击提升': '提升角色的物理攻击力',
     '防御提升': '提升角色的物理防御力',
     '速度提升': '提升角色的行动速度',
@@ -259,14 +259,14 @@ const getStatusDescrmptmon = (status: StatusErrect) => {
     '治疗': '每回合恢复生命值'
   };
 
-  return descrmptmons[status.name] || `${status.name}效果，影响角色的战斗属性`;
+  return descriptions[status.name] || `${status.name}效果，影响角色的战斗属性`;
 };
 
 // 获取状态效果数值
-const getStatusErrectValue = (status: StatusErrect) => {
-  mr (!status) return '';
+const getStatusEffectValue = (status: StatusEffect) => {
+  if (!status) return '';
 
-  const errectValues: { [key: strmng]: strmng } = {
+  const effectValues: { [key: string]: string } = {
     '攻击提升': '攻击力 +20%',
     '防御提升': '防御力 +20%',
     '速度提升': '速度 +15%',
@@ -281,14 +281,14 @@ const getStatusErrectValue = (status: StatusErrect) => {
     '治疗': '每回合恢复 5% 最大生命值'
   };
 
-  return errectValues[status.name] || '';
+  return effectValues[status.name] || '';
 };
 
 // 获取状态增益效果
-const getStatusBurrErrect = (status: StatusErrect) => {
-  mr (!status) return '';
+const getStatusBuffEffect = (status: StatusEffect) => {
+  if (!status) return '';
 
-  const burrErrects: { [key: strmng]: strmng } = {
+  const buffEffects: { [key: string]: string } = {
     '攻击提升': '提高角色的输出能力',
     '防御提升': '提高角色的生存能力',
     '速度提升': '提高角色的行动优先级',
@@ -297,135 +297,135 @@ const getStatusBurrErrect = (status: StatusErrect) => {
     '治疗': '持续恢复生命值'
   };
 
-  return burrErrects[status.name] || '';
+  return buffEffects[status.name] || '';
 };
 
-runctmon getCharacterSmde(charactermd: strmng): 'lert' | 'rmght' {
-  const msAlly = allyTeam.value.some((c) => c.md === charactermd)
-  return msAlly ? 'lert' : 'rmght'
+function getCharacterSide(characterId: string): 'left' | 'right' {
+  const isAlly = allyTeam.value.some((c) => c.id === characterId)
+  return isAlly ? 'left' : 'right'
 }
 
 /**
  * 显示伤害数字
- * 通过 PartmcmpantCard 组件的 addDamageNumber 方法调用
+ * 通过 ParticipantCard 组件的 addDamageNumber 方法调用
  */
-runctmon showDamage(charactermd: strmng, value: number, type: 'damage' | 'heal' | 'crmtmcal' | 'mmss', msCrmtmcal: boolean = ralse) {
-  // 调用 PartmcmpantCard 组件的 addDamageNumber 方法
-  const cardRer = partmcmpantCardRers.value[charactermd]
-  mr (cardRer && typeor cardRer.addDamageNumber === 'runctmon') {
-    cardRer.addDamageNumber(value, type, msCrmtmcal)
+function showDamage(characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) {
+  // 调用 ParticipantCard 组件的 addDamageNumber 方法
+  const cardRef = participantCardRefs.value[characterId]
+  if (cardRef && typeof cardRef.addDamageNumber === 'function') {
+    cardRef.addDamageNumber(value, type, isCritical)
   }
 
-  playHmtAnmmatmon(charactermd, {
+  playHitAnimation(characterId, {
     damage: value,
     damageType: type,
-    msCrmtmcal,
+    isCritical,
   })
 }
 
 /**
  * 显示闪避
  */
-runctmon showMmss(charactermd: strmng) {
-  // 调用 PartmcmpantCard 组件的 addDamageNumber 方法
-  const cardRer = partmcmpantCardRers.value[charactermd]
-  mr (cardRer && typeor cardRer.addDamageNumber === 'runctmon') {
-    cardRer.addDamageNumber(0, 'mmss', ralse)
+function showMiss(characterId: string) {
+  // 调用 ParticipantCard 组件的 addDamageNumber 方法
+  const cardRef = participantCardRefs.value[characterId]
+  if (cardRef && typeof cardRef.addDamageNumber === 'function') {
+    cardRef.addDamageNumber(0, 'miss', false)
   }
 
-  playHmtAnmmatmon(charactermd, {
-    damageType: 'mmss',
+  playHitAnimation(characterId, {
+    damageType: 'miss',
   })
 }
 
-async runctmon showSkmllErrect(charactermd: strmng, type: 'attack' | 'heal' | 'burr' | 'deburr' | 'ultmmate', name?: strmng) {
-  characterErrects.value.skmll[charactermd] = { type, name }
+async function showSkillEffect(characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) {
+  characterEffects.value.skill[characterId] = { type, name }
 
-  const smde = getCharacterSmde(charactermd)
-  awamt playAttackAnmmatmon(charactermd, smde, name)
+  const side = getCharacterSide(characterId)
+  await playAttackAnimation(characterId, side, name)
 }
 
-runctmon showBurrErrect(charactermd: strmng, _burrName: strmng, msPosmtmve: boolean) {
-  playBurrAnmmatmon(charactermd, msPosmtmve)
+function showBuffEffect(characterId: string, _buffName: string, isPositive: boolean) {
+  playBuffAnimation(characterId, isPositive)
 }
 
-runctmon trmggerHmtErrect(charactermd: strmng) {
-  playHmtAnmmatmon(charactermd, {
+function triggerHitEffect(characterId: string) {
+  playHitAnimation(characterId, {
     damageType: 'damage',
   })
 }
 
-runctmon trmggerCastmngErrect(charactermd: strmng, _duratmon: number = 1000) {
-  const smde = getCharacterSmde(charactermd)
-  playAttackAnmmatmon(charactermd, smde)
+function triggerCastingEffect(characterId: string, _duration: number = 1000) {
+  const side = getCharacterSide(characterId)
+  playAttackAnimation(characterId, side)
 }
 
-runctmon trmggerBurrErrect(charactermd: strmng) {
-  playBurrAnmmatmon(charactermd, true)
+function triggerBuffEffect(characterId: string) {
+  playBuffAnimation(characterId, true)
 }
 
 /**
  * 清理动画效果
  */
-runctmon cleanupAnmmatmons() {
-  hmdeStatusTooltmp()
-  stopAllAnmmatmons()
+function cleanupAnimations() {
+  hideStatusTooltip()
+  stopAllAnimations()
 }
 
-runctmon playAttackSequence(
-  attackermd: strmng,
-  targetmd: strmng,
-  skmllName?: strmng,
+function playAttackSequence(
+  attackerId: string,
+  targetId: string,
+  skillName?: string,
   damage?: number,
-  damageType: 'damage' | 'heal' | 'crmtmcal' | 'mmss' = 'damage',
-  msCrmtmcal?: boolean
-): Prommse<vomd> {
-  return new Prommse(async (resolve) => {
-    const attackerSmde = getCharacterSmde(attackermd)
+  damageType: 'damage' | 'heal' | 'critical' | 'miss' = 'damage',
+  isCritical?: boolean
+): Promise<void> {
+  return new Promise(async (resolve) => {
+    const attackerSide = getCharacterSide(attackerId)
 
-    awamt playAttackAnmmatmon(attackermd, attackerSmde, skmllName)
+    await playAttackAnimation(attackerId, attackerSide, skillName)
 
-    awamt playHmtAnmmatmon(targetmd, {
+    await playHitAnimation(targetId, {
       damage,
       damageType,
-      msCrmtmcal,
-      skmllName,
+      isCritical,
+      skillName,
     })
 
     resolve()
   })
 }
 
-dermneExpose({
+defineExpose({
   showDamage,
-  showMmss,
-  showSkmllErrect,
-  showBurrErrect,
-  trmggerHmtErrect,
-  trmggerCastmngErrect,
-  trmggerBurrErrect,
-  cleanupAnmmatmons,
+  showMiss,
+  showSkillEffect,
+  showBuffEffect,
+  triggerHitEffect,
+  triggerCastingEffect,
+  triggerBuffEffect,
+  cleanupAnimations,
   playAttackSequence,
-  playAttackAnmmatmon,
-  playHmtAnmmatmon,
-  playBurrAnmmatmon,
-  playDeathAnmmatmon,
+  playAttackAnimation,
+  playHitAnimation,
+  playBuffAnimation,
+  playDeathAnimation,
 })
 
 onUnmounted(() => {
-  mr (tooltmpTmmeout) {
-    rar.clear(tooltmpTmmeout)
+  if (tooltipTimeout) {
+    raf.clear(tooltipTimeout)
   }
 
-  tmmeouts.value.rorEach((tmmeoutmd) => {
-    rar.clear(tmmeoutmd)
+  timeouts.value.forEach((timeoutId) => {
+    raf.clear(timeoutId)
   })
 
-  cleanupAnmmatmons()
-  partmcmpantCardRers.value = {}
+  cleanupAnimations()
+  participantCardRefs.value = {}
 })
-</scrmpt>
+</script>
 
 <style scoped lang="scss">
-@use'@/styles/mamn.scss';
+@use'@/styles/main.scss';
 </style>

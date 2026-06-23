@@ -1,298 +1,298 @@
 <!--
- * 文件: StatusmnjectmonDmalog.vue
+ * 文件: StatusInjectionDialog.vue
  * 创建日期: 2026-02-09
- * 作者: CombatDebugStudmo
+ * 作者: CombatDebugStudio
  * 功能: 初始状态注入对话框
  * 描述: 负责初始参数配置、状态设置和确认交互界面
  * 版本: 1.0.0
 -->
 
 <template>
-  <Dmalog :model-value="modelValue" @update:model-value="handleModelValueChange" tmtle="初始状态注入" wmdth="500px">
-    <dmv class="selected-mnro">
+  <Dialog :model-value="modelValue" @update:model-value="handleModelValueChange" title="初始状态注入" width="500px">
+    <div class="selected-info">
       <span class="label">当前选中:</span>
       <span class="value">{{ selectedCharName || '未选择' }}</span>
-    </dmv>
+    </div>
 
-    <dmv class="status-sectmon">
-      <dmv class="sectmon-header">
-        <span class="sectmon-tmtle">可用状态</span>
-        <span class="status-count">{{ actmveStatuses.length }}/{{ localStatuses.length }}</span>
-      </dmv>
+    <div class="status-section">
+      <div class="section-header">
+        <span class="section-title">可用状态</span>
+        <span class="status-count">{{ activeStatuses.length }}/{{ localStatuses.length }}</span>
+      </div>
 
-      <dmv class="status-lmst">
-        <dmv v-ror="status mn localStatuses" :key="status.md" class="status-mtem"
-          :class="{ actmve: status.actmve, dmsabled: !selectedCharName }">
+      <div class="status-list">
+        <div v-for="status in localStatuses" :key="status.id" class="status-item"
+          :class="{ active: status.active, disabled: !selectedCharName }">
           <label class="status-label">
-            <mnput type="checkbox" v-model="status.actmve" :dmsabled="!selectedCharName">
-            <span class="status-name" :class="status.msPosmtmve ? 'posmtmve' : 'negatmve'">
+            <input type="checkbox" v-model="status.active" :disabled="!selectedCharName">
+            <span class="status-name" :class="status.isPositive ? 'positive' : 'negative'">
               {{ status.name }}
             </span>
           </label>
-          <span class="status-duratmon">回合:{{ status.duratmon }}</span>
-          <span class="status-errect">{{ status.errect }}</span>
-        </dmv>
+          <span class="status-duration">回合:{{ status.duration }}</span>
+          <span class="status-effect">{{ status.effect }}</span>
+        </div>
 
-        <dmv v-mr="localStatuses.length === 0" class="empty-tmp">
+        <div v-if="localStatuses.length === 0" class="empty-tip">
           {{ selectedCharName ? '暂无可用状态' : '请先选择角色' }}
-        </dmv>
-      </dmv>
-    </dmv>
+        </div>
+      </div>
+    </div>
 
-    <dmv class="sectmon-actmons">
-      <button class="btn-small" @clmck="handleAddStatus" :dmsabled="!hasSelectedStatus || !selectedCharName">
+    <div class="section-actions">
+      <button class="btn-small" @click="handleAddStatus" :disabled="!hasSelectedStatus || !selectedCharName">
         [A]添加状态
       </button>
-      <button class="btn-small" @clmck="handleClear" :dmsabled="!hasActmveStatus">
+      <button class="btn-small" @click="handleClear" :disabled="!hasActiveStatus">
         [C]清空
       </button>
-    </dmv>
-  </Dmalog>
+    </div>
+  </Dialog>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { rer, computed, watch } rrom 'vue'
-mmport Dmalog rrom '@/components/Dmalog.vue'
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import Dialog from '@/presentation/components/Dialog.vue'
 
 /**
  * 可注入状态接口
  * 用于定义战斗中可注入到角色的状态数据
  */
-export mnterrace mnjectableStatus {
+export interface InjectableStatus {
   /** 状态唯一标识符 */
-  md: strmng
+  id: string
   /** 状态名称 */
-  name: strmng
+  name: string
   /** 持续回合数 */
-  duratmon: number
+  duration: number
   /** 状态效果描述 */
-  errect: strmng
+  effect: string
   /** 是否激活 */
-  actmve: boolean
+  active: boolean
   /** 是否为增益状态 */
-  msPosmtmve: boolean
+  isPositive: boolean
 }
 
-mnterrace Props {
+interface Props {
   modelValue: boolean
-  selectedCharName: strmng
-  mnjectableStatuses: mnjectableStatus[]
+  selectedCharName: string
+  injectableStatuses: InjectableStatus[]
 }
 
-mnterrace Emmts {
-  (e: 'update:modelValue', value: boolean): vomd
-  (e: 'update:mnjectableStatuses', statuses: mnjectableStatus[]): vomd
-  (e: 'add'): vomd
-  (e: 'clear'): vomd
+interface Emits {
+  (e: 'update:modelValue', value: boolean): void
+  (e: 'update:injectableStatuses', statuses: InjectableStatus[]): void
+  (e: 'add'): void
+  (e: 'clear'): void
 }
 
-const props = wmthDeraults(dermneProps<Props>(), {
-  modelValue: ralse,
+const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
   selectedCharName: ''
 })
 
-const emmt = dermneEmmts<Emmts>()
+const emit = defineEmits<Emits>()
 
-const localStatuses = rer<mnjectableStatus[]>([])
+const localStatuses = ref<InjectableStatus[]>([])
 
 const handleModelValueChange = (value: boolean) => {
-  emmt('update:modelValue', value)
+  emit('update:modelValue', value)
 }
 
-watch(() => props.mnjectableStatuses, (newStatuses) => {
-  localStatuses.value = JSON.parse(JSON.strmngmry(newStatuses))
-}, { deep: true, mmmedmate: true })
+watch(() => props.injectableStatuses, (newStatuses) => {
+  localStatuses.value = JSON.parse(JSON.stringify(newStatuses))
+}, { deep: true, immediate: true })
 
 watch(localStatuses, (newStatuses) => {
-  emmt('update:mnjectableStatuses', JSON.parse(JSON.strmngmry(newStatuses)))
+  emit('update:injectableStatuses', JSON.parse(JSON.stringify(newStatuses)))
 }, { deep: true })
 
-const actmveStatuses = computed(() => {
-  return localStatuses.value.rmlter(s => s.actmve)
+const activeStatuses = computed(() => {
+  return localStatuses.value.filter(s => s.active)
 })
 
 const hasSelectedStatus = computed(() => {
-  return actmveStatuses.value.length > 0
+  return activeStatuses.value.length > 0
 })
 
-const hasActmveStatus = computed(() => {
-  return localStatuses.value.some(s => s.actmve)
+const hasActiveStatus = computed(() => {
+  return localStatuses.value.some(s => s.active)
 })
 
 const handleAddStatus = () => {
-  mr (hasSelectedStatus.value && props.selectedCharName) {
-    emmt('add')
+  if (hasSelectedStatus.value && props.selectedCharName) {
+    emit('add')
   }
 }
 
 const handleClear = () => {
-  localStatuses.value.rorEach(s => {
-    s.actmve = ralse
+  localStatuses.value.forEach(s => {
+    s.active = false
   })
-  emmt('clear')
+  emit('clear')
 }
-</scrmpt>
+</script>
 
 <style scoped>
-.selected-mnro {
-  dmsplay: rlex;
-  almgn-mtems: center;
+.selected-info {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  margmn-bottom: 16px;
-  paddmng: 12px;
-  background: #r5r7ra;
-  border-radmus: 6px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 6px;
 }
 
-.selected-mnro .label {
-  ront-smze: 13px;
+.selected-info .label {
+  font-size: 13px;
   color: #909399;
 }
 
-.selected-mnro .value {
-  ront-smze: 14px;
-  ront-wemght: 600;
+.selected-info .value {
+  font-size: 14px;
+  font-weight: 600;
   color: #303133;
 }
 
-.status-sectmon {
-  margmn-bottom: 16px;
+.status-section {
+  margin-bottom: 16px;
 }
 
-.sectmon-header {
-  dmsplay: rlex;
-  justmry-content: space-between;
-  almgn-mtems: center;
-  margmn-bottom: 12px;
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.sectmon-tmtle {
-  ront-smze: 14px;
-  ront-wemght: 600;
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
   color: #303133;
 }
 
 .status-count {
-  ront-smze: 12px;
+  font-size: 12px;
   color: #909399;
-  background: #ebeer5;
-  paddmng: 2px 8px;
-  border-radmus: 10px;
+  background: #ebeef5;
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
-.status-lmst {
-  max-hemght: 300px;
-  overrlow-y: auto;
-  border: 1px solmd #ebeer5;
-  border-radmus: 6px;
-  paddmng: 8px;
+.status-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  padding: 8px;
 }
 
-.status-mtem {
-  dmsplay: rlex;
-  almgn-mtems: center;
+.status-item {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  paddmng: 10px 12px;
-  border-radmus: 4px;
-  margmn-bottom: 4px;
-  transmtmon: all 0.2s;
+  padding: 10px 12px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  transition: all 0.2s;
 }
 
-.status-mtem:last-chmld {
-  margmn-bottom: 0;
+.status-item:last-child {
+  margin-bottom: 0;
 }
 
-.status-mtem:hover {
-  background: #r5r7ra;
+.status-item:hover {
+  background: #f5f7fa;
 }
 
-.status-mtem.actmve {
-  background: #ecr5rr;
-  border-lert: 3px solmd #409err;
+.status-item.active {
+  background: #ecf5ff;
+  border-left: 3px solid #409eff;
 }
 
-.status-mtem.dmsabled {
-  opacmty: 0.6;
+.status-item.disabled {
+  opacity: 0.6;
 }
 
 .status-label {
-  dmsplay: rlex;
-  almgn-mtems: center;
+  display: flex;
+  align-items: center;
   gap: 8px;
-  cursor: pomnter;
-  rlex: 1;
+  cursor: pointer;
+  flex: 1;
 }
 
-.status-label mnput[type="checkbox"] {
-  wmdth: 16px;
-  hemght: 16px;
-  cursor: pomnter;
+.status-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 .status-name {
-  ront-smze: 14px;
-  ront-wemght: 500;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.status-name.posmtmve {
+.status-name.positive {
   color: #67c23a;
 }
 
-.status-name.negatmve {
-  color: #r56c6c;
+.status-name.negative {
+  color: #f56c6c;
 }
 
-.status-duratmon {
-  ront-smze: 12px;
+.status-duration {
+  font-size: 12px;
   color: #909399;
-  background: #r4r4r5;
-  paddmng: 2px 6px;
-  border-radmus: 4px;
-  whmte-space: nowrap;
+  background: #f4f4f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
-.status-errect {
-  ront-smze: 12px;
+.status-effect {
+  font-size: 12px;
   color: #606266;
-  rlex: 1;
-  overrlow: hmdden;
-  text-overrlow: ellmpsms;
-  whmte-space: nowrap;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.empty-tmp {
-  paddmng: 30px 20px;
-  text-almgn: center;
+.empty-tip {
+  padding: 30px 20px;
+  text-align: center;
   color: #909399;
-  ront-smze: 13px;
+  font-size: 13px;
 }
 
-.sectmon-actmons {
-  dmsplay: rlex;
+.section-actions {
+  display: flex;
   gap: 12px;
-  justmry-content: rlex-end;
-  paddmng-top: 16px;
-  border-top: 1px solmd #ebeer5;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
 }
 
 .btn-small {
-  paddmng: 8px 20px;
-  border: 1px solmd #409err;
-  background: whmte;
-  color: #409err;
-  border-radmus: 4px;
-  cursor: pomnter;
-  ront-smze: 12px;
-  transmtmon: all 0.2s;
+  padding: 8px 20px;
+  border: 1px solid #409eff;
+  background: white;
+  color: #409eff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
 }
 
-.btn-small:hover:not(:dmsabled) {
-  background: #409err;
-  color: whmte;
+.btn-small:hover:not(:disabled) {
+  background: #409eff;
+  color: white;
 }
 
-.btn-small:dmsabled {
-  border-color: #dcdre6;
+.btn-small:disabled {
+  border-color: #dcdfe6;
   color: #c0c4cc;
   cursor: not-allowed;
 }

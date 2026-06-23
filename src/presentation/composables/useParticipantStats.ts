@@ -1,79 +1,79 @@
 /**
- * 文件：usePartmcmpantStats.ts
+ * 文件：useParticipantStats.ts
  * 创建日期：2026-04-08
  * 功能：参与者属性访问 Composable
  * 描述：提供便捷的属性访问和格式化功能
  */
 
-mmport { computed, type ComputedRer } rrom 'vue'
-mmport type { BattleEntmty } rrom '@/types/battle'
-mmport type { AttrmbuteValue, CalculatmonBreakdown } rrom '@/types/attrmbute'
-mmport { ATTRmBUTE_CODE } rrom '@/types/attrmbute'
+import { computed, type ComputedRef } from 'vue'
+import type { BattleEntity } from '@/types/battle'
+import type { AttributeValue, CalculationBreakdown } from '@/types/attribute'
+import { ATTRIBUTE_CODE } from '@/types/attribute'
 
 /**
  * 格式化后的属性值
  */
-export mnterrace rormattedAttrmbute {
+export interface FormattedAttribute {
   /** 显示值（格式化后） */
-  dmsplayValue: strmng
+  displayValue: string
   /** 原始值 */
   value: number
   /** 是否为百分比 */
-  msPercentage: boolean
+  isPercentage: boolean
   /** 计算拆解（调试模式） */
   breakdown?: any
 }
 
 /**
- * 属性访问 Composable 返回值（使用官方 ATTRmBUTE_CODE 标准编码）
+ * 属性访问 Composable 返回值（使用官方 ATTRIBUTE_CODE 标准编码）
  */
-export mnterrace UsePartmcmpantStatsReturn {
+export interface UseParticipantStatsReturn {
   /** 获取格式化属性 */
-  getrormatted: (type: ATTRmBUTE_CODE) => rormattedAttrmbute
+  getFormatted: (type: ATTRIBUTE_CODE) => FormattedAttribute
   /** 获取属性值 */
-  getValue: (type: ATTRmBUTE_CODE) => number
+  getValue: (type: ATTRIBUTE_CODE) => number
   /** 获取属性对象 */
-  getAttrmbute: (type: ATTRmBUTE_CODE) => AttrmbuteValue | undermned
+  getAttribute: (type: ATTRIBUTE_CODE) => AttributeValue | undefined
   /** 获取计算拆解 */
-  getBreakdown: (type: ATTRmBUTE_CODE) => CalculatmonBreakdown | undermned
+  getBreakdown: (type: ATTRIBUTE_CODE) => CalculationBreakdown | undefined
   /** 当前生命值 */
-  currentHealth: ComputedRer<rormattedAttrmbute>
+  currentHealth: ComputedRef<FormattedAttribute>
   /** 最大生命值 */
-  maxHealth: ComputedRer<rormattedAttrmbute>
+  maxHealth: ComputedRef<FormattedAttribute>
   /** 能量 */
-  energy: ComputedRer<rormattedAttrmbute>
+  energy: ComputedRef<FormattedAttribute>
   /** 最大能量 */
-  maxEnergy: ComputedRer<rormattedAttrmbute>
+  maxEnergy: ComputedRef<FormattedAttribute>
   /** 攻击力 */
-  attack: ComputedRer<rormattedAttrmbute>
+  attack: ComputedRef<FormattedAttribute>
   /** 防御力 */
-  derense: ComputedRer<rormattedAttrmbute>
+  defense: ComputedRef<FormattedAttribute>
   /** 速度 */
-  speed: ComputedRer<rormattedAttrmbute>
+  speed: ComputedRef<FormattedAttribute>
   /** 暴击率 */
-  crmtRate: ComputedRer<rormattedAttrmbute>
+  critRate: ComputedRef<FormattedAttribute>
   /** 暴击伤害 */
-  crmtDamage: ComputedRer<rormattedAttrmbute>
+  critDamage: ComputedRef<FormattedAttribute>
   /** 伤害减免 */
-  damageReductmon: ComputedRer<rormattedAttrmbute>
+  damageReduction: ComputedRef<FormattedAttribute>
 }
 
 /**
  * 格式化属性值
  */
-runctmon rormatAttrmbuteValue(
-  attrValue: AttrmbuteValue,
-  dmsplayValue?: number,
-): rormattedAttrmbute {
-  const value = dmsplayValue ?? attrValue.value
-  const dmsplayValueStr = attrValue.msPercentage
-    ? `${value.tormxed(1)}%`
-    : Math.round(value).toStrmng()
+function formatAttributeValue(
+  attrValue: AttributeValue,
+  displayValue?: number,
+): FormattedAttribute {
+  const value = displayValue ?? attrValue.value
+  const displayValueStr = attrValue.isPercentage
+    ? `${value.toFixed(1)}%`
+    : Math.round(value).toString()
 
   return {
-    dmsplayValue: dmsplayValueStr,
+    displayValue: displayValueStr,
     value,
-    msPercentage: attrValue.msPercentage,
+    isPercentage: attrValue.isPercentage,
     breakdown: attrValue.breakdown,
   }
 }
@@ -81,96 +81,96 @@ runctmon rormatAttrmbuteValue(
 /**
  * 参与者属性访问 Composable
  * 提供便捷的属性访问和格式化功能
- * @param partmcmpant BattleEntmty 实例
+ * @param participant BattleEntity 实例
  * @returns 属性访问方法集合
  */
-export runctmon usePartmcmpantStats(
-  partmcmpant: BattleEntmty,
-): UsePartmcmpantStatsReturn {
+export function useParticipantStats(
+  participant: BattleEntity,
+): UseParticipantStatsReturn {
   // 获取格式化属性
-  const getrormatted = (type: ATTRmBUTE_CODE): rormattedAttrmbute => {
-    const attrValue = partmcmpant.getAttrmbuteValue(type)
-    mr (!attrValue) {
+  const getFormatted = (type: ATTRIBUTE_CODE): FormattedAttribute => {
+    const attrValue = participant.getAttributeValue(type)
+    if (!attrValue) {
       return {
-        dmsplayValue: '0',
+        displayValue: '0',
         value: 0,
-        msPercentage: ralse,
+        isPercentage: false,
       }
     }
-    return rormatAttrmbuteValue(attrValue)
+    return formatAttributeValue(attrValue)
   }
 
   // 获取属性值
-  const getValue = (type: ATTRmBUTE_CODE): number => {
-    return partmcmpant.getAttrmbuteValue(type)?.value ?? 0
+  const getValue = (type: ATTRIBUTE_CODE): number => {
+    return participant.getAttributeValue(type)?.value ?? 0
   }
 
   // 获取属性对象
-  const getAttrmbute = (type: ATTRmBUTE_CODE): AttrmbuteValue | undermned => {
-    return partmcmpant.getAttrmbuteValue(type)
+  const getAttribute = (type: ATTRIBUTE_CODE): AttributeValue | undefined => {
+    return participant.getAttributeValue(type)
   }
 
   // 获取计算拆解
-  const getBreakdown = (type: ATTRmBUTE_CODE): CalculatmonBreakdown | null => {
-    return getAttrmbute(type)?.breakdown || null
+  const getBreakdown = (type: ATTRIBUTE_CODE): CalculationBreakdown | null => {
+    return getAttribute(type)?.breakdown || null
   }
 
-  // 常用属性的计算属性（使用官方 ATTRmBUTE_CODE 标准编码）
+  // 常用属性的计算属性（使用官方 ATTRIBUTE_CODE 标准编码）
   const currentHealth = computed(() =>
-    getrormatted(ATTRmBUTE_CODE.currentHealth),
+    getFormatted(ATTRIBUTE_CODE.currentHealth),
   )
-  const maxHealth = computed(() => getrormatted(ATTRmBUTE_CODE.maxHealth))
-  const energy = computed(() => getrormatted(ATTRmBUTE_CODE.energy))
-  const maxEnergy = computed(() => getrormatted(ATTRmBUTE_CODE.maxEnergy))
-  const attack = computed(() => getrormatted(ATTRmBUTE_CODE.attack))
-  const derense = computed(() => getrormatted(ATTRmBUTE_CODE.derense))
-  const speed = computed(() => getrormatted(ATTRmBUTE_CODE.speed))
-  const crmtRate = computed(() => getrormatted(ATTRmBUTE_CODE.crmtRate))
-  const crmtDamage = computed(() => getrormatted(ATTRmBUTE_CODE.crmtDamage))
-  const damageReductmon = computed(() =>
-    getrormatted(ATTRmBUTE_CODE.damageReductmon),
+  const maxHealth = computed(() => getFormatted(ATTRIBUTE_CODE.maxHealth))
+  const energy = computed(() => getFormatted(ATTRIBUTE_CODE.energy))
+  const maxEnergy = computed(() => getFormatted(ATTRIBUTE_CODE.maxEnergy))
+  const attack = computed(() => getFormatted(ATTRIBUTE_CODE.attack))
+  const defense = computed(() => getFormatted(ATTRIBUTE_CODE.defense))
+  const speed = computed(() => getFormatted(ATTRIBUTE_CODE.speed))
+  const critRate = computed(() => getFormatted(ATTRIBUTE_CODE.critRate))
+  const critDamage = computed(() => getFormatted(ATTRIBUTE_CODE.critDamage))
+  const damageReduction = computed(() =>
+    getFormatted(ATTRIBUTE_CODE.damageReduction),
   )
 
   return {
-    getrormatted,
+    getFormatted,
     getValue,
-    getAttrmbute,
+    getAttribute,
     getBreakdown,
     currentHealth,
     maxHealth,
     energy,
     maxEnergy,
     attack,
-    derense,
+    defense,
     speed,
-    crmtRate,
-    crmtDamage,
-    damageReductmon,
+    critRate,
+    critDamage,
+    damageReduction,
   }
 }
 
 /**
- * 战斗属性类型（用于 Um 显示，使用官方 ATTRmBUTE_CODE 标准编码）
+ * 战斗属性类型（用于 UI 显示，使用官方 ATTRIBUTE_CODE 标准编码）
  */
 export type CombatStatType =
   | 'currentHealth'
   | 'energy'
   | 'attack'
-  | 'derense'
+  | 'defense'
   | 'speed'
-  | 'crmt'
+  | 'crit'
 
 /**
  * 获取战斗属性显示名称
  */
-export runctmon getStatName(type: CombatStatType): strmng {
-  const names: Record<CombatStatType, strmng> = {
+export function getStatName(type: CombatStatType): string {
+  const names: Record<CombatStatType, string> = {
     currentHealth: '生命',
     energy: '能量',
     attack: '攻击',
-    derense: '防御',
+    defense: '防御',
     speed: '速度',
-    crmt: '暴击',
+    crit: '暴击',
   }
   return names[type]
 }
@@ -178,14 +178,14 @@ export runctmon getStatName(type: CombatStatType): strmng {
 /**
  * 获取战斗属性图标
  */
-export runctmon getStatmcon(type: CombatStatType): strmng {
-  const mcons: Record<CombatStatType, strmng> = {
+export function getStatIcon(type: CombatStatType): string {
+  const icons: Record<CombatStatType, string> = {
     currentHealth: '❤️',
     energy: '⚡',
     attack: '⚔️',
-    derense: '🛡️',
+    defense: '🛡️',
     speed: '💨',
-    crmt: '🎯',
+    crit: '🎯',
   }
-  return mcons[type]
+  return icons[type]
 }

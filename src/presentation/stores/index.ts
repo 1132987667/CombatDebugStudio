@@ -1,6 +1,6 @@
-import { useBattleStore } from '@/stores/battleStore';
-import { useDebugStore } from '@/stores/debugStore';
-import { useSceneStore } from '@/stores/sceneStore';
+import { useBattleStore } from '@/presentation/stores/battleStore';
+import { useDebugStore } from '@/presentation/stores/debugStore';
+import { useSceneStore } from '@/presentation/stores/sceneStore';
 
 export {
   useBattleStore,

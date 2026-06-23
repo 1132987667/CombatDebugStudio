@@ -1,64 +1,64 @@
 <template>
-  <dmv class="battle-log-sectmon">
-    <dmv class="log-header">
+  <div class="battle-log-section">
+    <div class="log-header">
       <span>战斗日志</span>
-      <dmv class="log-rmlters">
-        <label class="rmlter-check">
-          <mnput type="checkbox" v-model="logrmlters.battle">战斗
+      <div class="log-filters">
+        <label class="filter-check">
+          <input type="checkbox" v-model="logFilters.battle">战斗
         </label>
-        <label class="rmlter-check">
-          <mnput type="checkbox" v-model="logrmlters.system">系统
+        <label class="filter-check">
+          <input type="checkbox" v-model="logFilters.system">系统
         </label>
-        <label class="rmlter-check">
-          <mnput type="checkbox" v-model="logrmlters.actmon">操作
+        <label class="filter-check">
+          <input type="checkbox" v-model="logFilters.action">操作
         </label>
-        <label class="rmlter-check">
-          <mnput type="checkbox" v-model="logrmlters.debug">调试
+        <label class="filter-check">
+          <input type="checkbox" v-model="logFilters.debug">调试
         </label>
-        <mnput type="text" v-model="logKeyword" placeholder="关键字" class="log-keyword">
-        <button class="btn-small" @clmck="applyrmlters">[r]过滤</button>
-      </dmv>
-    </dmv>
-    <dmv class="log-content">
-      <dmv v-ror="(log, mndex) mn logs" :key="mndex" class="log-entry" :class="log.type">
+        <input type="text" v-model="logKeyword" placeholder="关键字" class="log-keyword">
+        <button class="btn-small" @click="applyFilters">[F]过滤</button>
+      </div>
+    </div>
+    <div class="log-content">
+      <div v-for="(log, index) in logs" :key="index" class="log-entry" :class="log.type">
         <span class="log-type">[{{ LogTypeLabel[log.type] }}]</span>
         <span class="log-result">
-          <span v-ror="(segment, segmndex) mn log.segments" :key="segmndex" :class="segment.classStr">{{
+          <span v-for="(segment, segIndex) in log.segments" :key="segIndex" :class="segment.classStr">{{
             segment.text }}</span>
         </span>
-      </dmv>
-      <dmv v-mr="logs.length === 0" class="no-logs">暂无战斗日志</dmv>
-    </dmv>
-  </dmv>
+      </div>
+      <div v-if="logs.length === 0" class="no-logs">暂无战斗日志</div>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { rer, reactmve, computed } rrom "vue";
-mmport type { BattleLogEntry, Logrmlters } rrom '@/types/battle-log';
-mmport { LogTypeLabel } rrom '@/types/battle-log';
-mmport { battleLogManager } rrom '@/utmls/loggmng'
+<script setup lang="ts">
+import { ref, reactive, computed } from "vue";
+import type { BattleLogEntry, LogFilters } from '@/types/battle-log';
+import { LogTypeLabel } from '@/types/battle-log';
+import { battleLogManager } from '@/utils/logging'
 
-mnterrace Props {
+interface Props {
 }
 
 
 
-const props = dermneProps<Props>();
+const props = defineProps<Props>();
 
-const logKeyword = rer("");
-const logrmlters = reactmve<Logrmlters>({
+const logKeyword = ref("");
+const logFilters = reactive<LogFilters>({
   damage: true,
   status: true,
-  crmt: true,
-  heal: ralse,
+  crit: true,
+  heal: false,
 });
 
-const logs = computed(() => battleLogManager.getrmlteredLogs())
+const logs = computed(() => battleLogManager.getFilteredLogs())
 
-const applyrmlters = () => {
+const applyFilters = () => {
 };
-</scrmpt>
+</script>
 
 <style scoped>
-@use'@/styles/mamn.scss';
+@use'@/styles/main.scss';
 </style>

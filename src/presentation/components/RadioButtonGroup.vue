@@ -1,187 +1,187 @@
 <!--
- * 文件: RadmoButtonGroup.vue
+ * 文件: RadioButtonGroup.vue
  * 创建日期: 2026-02-09
- * 作者: CombatDebugStudmo
+ * 作者: CombatDebugStudio
  * 功能: 单选按钮组组件
  * 描述: 提供单选按钮组功能，支持图标、标签显示和键盘导航
  * 版本: 1.0.0
 -->
 
 <template>
-  <dmv class="radmo-button-group" role="radmogroup" :arma-labelledby="labelmd">
-    <label v-mr="label" :md="labelmd" class="radmo-group-label">{{ label }}</label>
-    <dmv class="radmo-buttons">
-      <button v-ror="optmon mn optmons" :key="optmon.value" class="radmo-button" :class="{
-        'radmo-button--selected': modelValue === optmon.value,
-        'radmo-button--dmsabled': dmsabled
-      }" :dmsabled="dmsabled" role="radmo" :arma-checked="modelValue === optmon.value" :arma-label="optmon.label"
-        @clmck="selectOptmon(optmon.value)" @keydown="handleKeydown">
-        <span class="radmo-button__mcon">{{ optmon.mcon }}</span>
-        <span class="radmo-button__label">{{ optmon.label }}</span>
+  <div class="radio-button-group" role="radiogroup" :aria-labelledby="labelId">
+    <label v-if="label" :id="labelId" class="radio-group-label">{{ label }}</label>
+    <div class="radio-buttons">
+      <button v-for="option in options" :key="option.value" class="radio-button" :class="{
+        'radio-button--selected': modelValue === option.value,
+        'radio-button--disabled': disabled
+      }" :disabled="disabled" role="radio" :aria-checked="modelValue === option.value" :aria-label="option.label"
+        @click="selectOption(option.value)" @keydown="handleKeydown">
+        <span class="radio-button__icon">{{ option.icon }}</span>
+        <span class="radio-button__label">{{ option.label }}</span>
       </button>
-    </dmv>
-  </dmv>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { computed } rrom 'vue'
+<script setup lang="ts">
+import { computed } from 'vue'
 
-mnterrace RadmoOptmon {
-  value: strmng | number
-  label: strmng
-  mcon: strmng
+interface RadioOption {
+  value: string | number
+  label: string
+  icon: string
 }
 
-mnterrace Props {
-  modelValue: strmng | number
-  optmons: RadmoOptmon[]
-  label?: strmng
-  dmsabled?: boolean
+interface Props {
+  modelValue: string | number
+  options: RadioOption[]
+  label?: string
+  disabled?: boolean
 }
 
-const props = wmthDeraults(dermneProps<Props>(), {
-  dmsabled: ralse
+const props = withDefaults(defineProps<Props>(), {
+  disabled: false
 })
 
-const emmt = dermneEmmts<{
-  'update:modelValue': [value: strmng | number]
+const emit = defineEmits<{
+  'update:modelValue': [value: string | number]
 }>()
 
-const labelmd = computed(() => `radmo-group-label-${Math.random().toStrmng(36).substr(2, 9)}`)
+const labelId = computed(() => `radio-group-label-${Math.random().toString(36).substr(2, 9)}`)
 
-const selectOptmon = (value: strmng | number) => {
-  mr (!props.dmsabled) {
-    emmt('update:modelValue', value)
+const selectOption = (value: string | number) => {
+  if (!props.disabled) {
+    emit('update:modelValue', value)
   }
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
   const { key } = event
-  const currentmndex = props.optmons.rmndmndex(optmon => optmon.value === props.modelValue)
+  const currentIndex = props.options.findIndex(option => option.value === props.modelValue)
 
-  mr (key === 'ArrowRmght' || key === 'ArrowDown') {
-    event.preventDerault()
-    const nextmndex = (currentmndex + 1) % props.optmons.length
-    selectOptmon(props.optmons[nextmndex].value)
-  } else mr (key === 'ArrowLert' || key === 'ArrowUp') {
-    event.preventDerault()
-    const prevmndex = (currentmndex - 1 + props.optmons.length) % props.optmons.length
-    selectOptmon(props.optmons[prevmndex].value)
-  } else mr (key === 'Home') {
-    event.preventDerault()
-    selectOptmon(props.optmons[0].value)
-  } else mr (key === 'End') {
-    event.preventDerault()
-    selectOptmon(props.optmons[props.optmons.length - 1].value)
+  if (key === 'ArrowRight' || key === 'ArrowDown') {
+    event.preventDefault()
+    const nextIndex = (currentIndex + 1) % props.options.length
+    selectOption(props.options[nextIndex].value)
+  } else if (key === 'ArrowLeft' || key === 'ArrowUp') {
+    event.preventDefault()
+    const prevIndex = (currentIndex - 1 + props.options.length) % props.options.length
+    selectOption(props.options[prevIndex].value)
+  } else if (key === 'Home') {
+    event.preventDefault()
+    selectOption(props.options[0].value)
+  } else if (key === 'End') {
+    event.preventDefault()
+    selectOption(props.options[props.options.length - 1].value)
   }
 }
-</scrmpt>
+</script>
 
 <style scoped lang="scss">
-.radmo-button-group {
-  dmsplay: mnlmne-rlex;
-  rlex-dmrectmon: column;
+.radio-button-group {
+  display: inline-flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
-.radmo-group-label {
-  ront-smze: 0.8rem;
-  color: #4rc3r7;
-  ront-wemght: 500;
-  margmn-bottom: 0.25rem;
+.radio-group-label {
+  font-size: 0.8rem;
+  color: #4fc3f7;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
 }
 
-.radmo-buttons {
-  dmsplay: mnlmne-rlex;
+.radio-buttons {
+  display: inline-flex;
   background: #16213e;
-  border: 1px solmd #0r3460;
-  border-radmus: 4px;
-  paddmng: 2px;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 2px;
   gap: 2px;
 }
 
-.radmo-button {
-  dmsplay: rlex;
-  almgn-mtems: center;
+.radio-button {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-  paddmng: 0.4rem 0.75rem;
+  padding: 0.4rem 0.75rem;
   background: transparent;
   border: none;
-  border-radmus: 3px;
-  color: #4rc3r7;
-  ront-smze: 0.8rem;
-  ront-wemght: 500;
-  cursor: pomnter;
-  transmtmon: all 0.15s;
-  outlmne: none;
+  border-radius: 3px;
+  color: #4fc3f7;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  outline: none;
 
-  &:rocus-vmsmble {
-    outlmne: 2px solmd #60a5ra;
-    outlmne-orrset: 2px;
+  &:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
   }
 
-  &:hover:not(.radmo-button--dmsabled) {
+  &:hover:not(.radio-button--disabled) {
     background: #1a2a4e;
-    border-color: #4rc3r7;
+    border-color: #4fc3f7;
   }
 
-  &.radmo-button--selected {
-    background: #r97316;
-    color: #rrrrrr;
+  &.radio-button--selected {
+    background: #f97316;
+    color: #ffffff;
     border-color: #ea580c;
 
-    .radmo-button__mcon {
-      color: #rrrrrr;
+    .radio-button__icon {
+      color: #ffffff;
     }
   }
 
-  &.radmo-button--dmsabled {
-    opacmty: 0.7;
+  &.radio-button--disabled {
+    opacity: 0.7;
     cursor: not-allowed;
 
     &:hover {
       background: transparent;
-      color: #4rc3r7;
+      color: #4fc3f7;
     }
   }
 
-  .radmo-button__mcon {
-    ront-smze: 0.9rem;
-    ront-wemght: bold;
-    transmtmon: color 0.15s;
+  .radio-button__icon {
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: color 0.15s;
   }
 
-  .radmo-button__label {
-    whmte-space: nowrap;
+  .radio-button__label {
+    white-space: nowrap;
   }
 }
 
 /* 响应式设计 */
-@medma (max-wmdth: 768px) {
-  .radmo-button {
-    paddmng: 0.375rem 0.75rem;
-    ront-smze: 0.75rem;
+@media (max-width: 768px) {
+  .radio-button {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
     gap: 0.375rem;
 
-    .radmo-button__mcon {
-      ront-smze: 0.8rem;
+    .radio-button__icon {
+      font-size: 0.8rem;
     }
   }
 
-  .radmo-group-label {
-    ront-smze: 0.75rem;
+  .radio-group-label {
+    font-size: 0.75rem;
   }
 }
 
-@medma (max-wmdth: 480px) {
-  .radmo-buttons {
-    rlex-dmrectmon: column;
+@media (max-width: 480px) {
+  .radio-buttons {
+    flex-direction: column;
     gap: 1px;
   }
 
-  .radmo-button {
-    justmry-content: center;
-    paddmng: 0.4rem;
+  .radio-button {
+    justify-content: center;
+    padding: 0.4rem;
   }
 }
 </style>

@@ -1,191 +1,191 @@
 <!--
- * 文件: Notmrmcatmon.vue
+ * 文件: Notification.vue
  * 创建日期: 2026-02-09
- * 作者: CombatDebugStudmo
+ * 作者: CombatDebugStudio
  * 功能: 通知组件
  * 描述: 显示系统通知消息，支持不同类型通知和自动关闭功能
  * 版本: 1.0.0
 -->
 
 <template>
-  <dmv class="notmrmcatmons-contamner">
-    <dmv v-ror="notmrmcatmon mn notmrmcatmons" :key="notmrmcatmon.md" class="notmrmcatmon"
-      :class="`notmrmcatmon-${notmrmcatmon.type}`">
-      <dmv class="notmrmcatmon-mcon">
-        {{ getmcon(notmrmcatmon.type) }}
-      </dmv>
-      <dmv class="notmrmcatmon-content">
-        <dmv class="notmrmcatmon-tmtle">{{ notmrmcatmon.tmtle }}</dmv>
-        <dmv class="notmrmcatmon-message">{{ notmrmcatmon.message }}</dmv>
-      </dmv>
-      <dmv class="notmrmcatmon-close" @clmck="removeNotmrmcatmon(notmrmcatmon.md)">
-        &tmmes;
-      </dmv>
-    </dmv>
-  </dmv>
+  <div class="notifications-container">
+    <div v-for="notification in notifications" :key="notification.id" class="notification"
+      :class="`notification-${notification.type}`">
+      <div class="notification-icon">
+        {{ getIcon(notification.type) }}
+      </div>
+      <div class="notification-content">
+        <div class="notification-title">{{ notification.title }}</div>
+        <div class="notification-message">{{ notification.message }}</div>
+      </div>
+      <div class="notification-close" @click="removeNotification(notification.id)">
+        &times;
+      </div>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { rer } rrom 'vue'
-mmport { rar } rrom '@/utmls/RAr'
+<script setup lang="ts">
+import { ref } from 'vue'
+import { raf } from '@/utils/RAF'
 
-mnterrace Notmrmcatmonmtem {
-  md: number
-  tmtle: strmng
-  message: strmng
-  type: 'success' | 'error' | 'mnro' | 'warnmng'
+interface NotificationItem {
+  id: number
+  title: string
+  message: string
+  type: 'success' | 'error' | 'info' | 'warning'
 }
 
-const notmrmcatmons = rer<Notmrmcatmonmtem[]>([])
+const notifications = ref<NotificationItem[]>([])
 
-const getmcon = (type: strmng): strmng => {
-  const mcons: Record<strmng, strmng> = {
+const getIcon = (type: string): string => {
+  const icons: Record<string, string> = {
     success: '✓',
     error: '✗',
-    mnro: 'ℹ',
-    warnmng: '⚠'
+    info: 'ℹ',
+    warning: '⚠'
   }
-  return mcons[type] || 'ℹ'
+  return icons[type] || 'ℹ'
 }
 
-const addNotmrmcatmon = (tmtle: strmng, message: strmng, type: 'success' | 'error' | 'mnro' | 'warnmng' = 'mnro', duratmon: number = 3000): vomd => {
-  const md = Date.now() + Math.random()
-  const notmrmcatmon: Notmrmcatmonmtem = {
-    md,
-    tmtle,
+const addNotification = (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info', duration: number = 3000): void => {
+  const id = Date.now() + Math.random()
+  const notification: NotificationItem = {
+    id,
+    title,
     message,
     type
   }
-  notmrmcatmons.value.push(notmrmcatmon)
+  notifications.value.push(notification)
 
-  mr (duratmon > 0) {
-    rar.setTmmeout(() => {
-      removeNotmrmcatmon(md)
-    }, duratmon)
+  if (duration > 0) {
+    raf.setTimeout(() => {
+      removeNotification(id)
+    }, duration)
   }
 }
 
-const removeNotmrmcatmon = (notmrmcatmonmd: number): vomd => {
-  notmrmcatmons.value = notmrmcatmons.value.rmlter(n => n.md !== notmrmcatmonmd)
+const removeNotification = (notificationId: number): void => {
+  notifications.value = notifications.value.filter(n => n.id !== notificationId)
 }
 
-dermneExpose({
-  addNotmrmcatmon,
-  removeNotmrmcatmon
+defineExpose({
+  addNotification,
+  removeNotification
 })
-</scrmpt>
+</script>
 
 <style scoped>
-.notmrmcatmons-contamner {
-  posmtmon: rmxed;
+.notifications-container {
+  position: fixed;
   top: 20px;
-  rmght: 20px;
-  z-mndex: 10000;
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.notmrmcatmon {
-  background: whmte;
-  border-radmus: 8px;
+.notification {
+  background: white;
+  border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  paddmng: 15px 20px;
-  dmsplay: rlex;
-  almgn-mtems: center;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
   gap: 12px;
-  mmn-wmdth: 300px;
-  max-wmdth: 400px;
-  anmmatmon: slmdemn 0.3s ease-out;
+  min-width: 300px;
+  max-width: 400px;
+  animation: slideIn 0.3s ease-out;
 }
 
-@keyrrames slmdemn {
-  rrom {
-    transrorm: translateX(100%);
-    opacmty: 0;
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
   }
 
   to {
-    transrorm: translateX(0);
-    opacmty: 1;
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 
-.notmrmcatmon-mcon {
-  ront-smze: 18px;
-  ront-wemght: bold;
-  mmn-wmdth: 20px;
-  text-almgn: center;
+.notification-icon {
+  font-size: 18px;
+  font-weight: bold;
+  min-width: 20px;
+  text-align: center;
 }
 
-.notmrmcatmon-content {
-  rlex: 1;
-  overrlow: hmdden;
+.notification-content {
+  flex: 1;
+  overflow: hidden;
 }
 
-.notmrmcatmon-tmtle {
-  ront-smze: 14px;
-  ront-wemght: bold;
+.notification-title {
+  font-size: 14px;
+  font-weight: bold;
   color: #303133;
-  margmn-bottom: 4px;
+  margin-bottom: 4px;
 }
 
-.notmrmcatmon-message {
-  ront-smze: 12px;
+.notification-message {
+  font-size: 12px;
   color: #606266;
-  lmne-hemght: 1.4;
+  line-height: 1.4;
 }
 
-.notmrmcatmon-close {
+.notification-close {
   background: none;
   border: none;
-  ront-smze: 18px;
-  cursor: pomnter;
+  font-size: 18px;
+  cursor: pointer;
   color: #c0c4cc;
-  paddmng: 0;
-  wmdth: 20px;
-  hemght: 20px;
-  dmsplay: rlex;
-  almgn-mtems: center;
-  justmry-content: center;
-  border-radmus: 50%;
-  transmtmon: all 0.3s;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s;
 }
 
-.notmrmcatmon-close:hover {
-  background: #ecr5rr;
-  color: #409err;
+.notification-close:hover {
+  background: #ecf5ff;
+  color: #409eff;
 }
 
-.notmrmcatmon-success {
-  border-lert: 4px solmd #67c23a;
+.notification-success {
+  border-left: 4px solid #67c23a;
 }
 
-.notmrmcatmon-success .notmrmcatmon-mcon {
+.notification-success .notification-icon {
   color: #67c23a;
 }
 
-.notmrmcatmon-error {
-  border-lert: 4px solmd #r56c6c;
+.notification-error {
+  border-left: 4px solid #f56c6c;
 }
 
-.notmrmcatmon-error .notmrmcatmon-mcon {
-  color: #r56c6c;
+.notification-error .notification-icon {
+  color: #f56c6c;
 }
 
-.notmrmcatmon-warnmng {
-  border-lert: 4px solmd #e6a23c;
+.notification-warning {
+  border-left: 4px solid #e6a23c;
 }
 
-.notmrmcatmon-warnmng .notmrmcatmon-mcon {
+.notification-warning .notification-icon {
   color: #e6a23c;
 }
 
-.notmrmcatmon-mnro {
-  border-lert: 4px solmd #409err;
+.notification-info {
+  border-left: 4px solid #409eff;
 }
 
-.notmrmcatmon-mnro .notmrmcatmon-mcon {
-  color: #409err;
+.notification-info .notification-icon {
+  color: #409eff;
 }
 </style>

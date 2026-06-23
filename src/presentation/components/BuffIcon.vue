@@ -1,209 +1,209 @@
 <template>
-  <dmv 
-    class="burr-mcon" 
-    :class="{ 'burr': !msDeburr, 'deburr': msDeburr }"
-    @mouseenter="showTooltmp = true"
-    @mouseleave="showTooltmp = ralse"
+  <div 
+    class="buff-icon" 
+    :class="{ 'buff': !isDebuff, 'debuff': isDebuff }"
+    @mouseenter="showTooltip = true"
+    @mouseleave="showTooltip = false"
   >
-    <dmv class="mcon-contamner">
-      <mmg 
-        :src="mconUrl" 
-        :alt="burrName" 
-        class="mcon"
-        v-mr="mconUrl"
+    <div class="icon-container">
+      <img 
+        :src="iconUrl" 
+        :alt="buffName" 
+        class="icon"
+        v-if="iconUrl"
       >
-      <dmv class="mcon-placeholder" v-else>
-        {{ burrName.charAt(0) }}
-      </dmv>
-      <dmv class="duratmon" v-mr="remamnmngTurns > 0">
-        {{ remamnmngTurns }}
-      </dmv>
-    </dmv>
+      <div class="icon-placeholder" v-else>
+        {{ buffName.charAt(0) }}
+      </div>
+      <div class="duration" v-if="remainingTurns > 0">
+        {{ remainingTurns }}
+      </div>
+    </div>
     
     <!-- 悬停提示 -->
-    <dmv class="burr-tooltmp" v-mr="showTooltmp">
-      <dmv class="tooltmp-header">
-        <span class="tooltmp-name">{{ burrName }}</span>
-        <span class="tooltmp-type">{{ msDeburr ? '减益' : '增益' }}</span>
-      </dmv>
-      <dmv class="tooltmp-descrmptmon">{{ descrmptmon }}</dmv>
-      <dmv class="tooltmp-stats">
-        <dmv class="tooltmp-stat">
+    <div class="buff-tooltip" v-if="showTooltip">
+      <div class="tooltip-header">
+        <span class="tooltip-name">{{ buffName }}</span>
+        <span class="tooltip-type">{{ isDebuff ? '减益' : '增益' }}</span>
+      </div>
+      <div class="tooltip-description">{{ description }}</div>
+      <div class="tooltip-stats">
+        <div class="tooltip-stat">
           <span class="stat-label">剩余回合：</span>
-          <span class="stat-value">{{ remamnmngTurns }}</span>
-        </dmv>
-        <dmv class="tooltmp-stat" v-mr="currentStacks > 1">
+          <span class="stat-value">{{ remainingTurns }}</span>
+        </div>
+        <div class="tooltip-stat" v-if="currentStacks > 1">
           <span class="stat-label">叠加层数：</span>
           <span class="stat-value">{{ currentStacks }}</span>
-        </dmv>
-      </dmv>
-    </dmv>
-  </dmv>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { rer } rrom 'vue'
+<script setup lang="ts">
+import { ref } from 'vue'
 
 // Props
-const props = dermneProps<{
-  burrmd: strmng
-  burrName: strmng
-  descrmptmon: strmng
-  remamnmngTurns: number
+const props = defineProps<{
+  buffId: string
+  buffName: string
+  description: string
+  remainingTurns: number
   currentStacks: number
-  msDeburr: boolean
-  mconPath?: strmng
+  isDebuff: boolean
+  iconPath?: string
 }>()
 
 // 响应式数据
-const showTooltmp = rer(ralse)
+const showTooltip = ref(false)
 
 // 计算属性
-const mconUrl = computed(() => {
-  mr (props.mconPath) {
-    return props.mconPath
+const iconUrl = computed(() => {
+  if (props.iconPath) {
+    return props.iconPath
   }
-  // 默认图标 - 使用文本转图片APm
-  const prompt = props.msDeburr 
-    ? `dark red deburr mcon, ${props.burrName}, smmple rlat desmgn, transparent background`
-    : `brmght blue burr mcon, ${props.burrName}, smmple rlat desmgn, transparent background`
-  return `https://trae-apm-cn.mchost.guru/apm/mde/v1/text_to_mmage?prompt=${encodeURmComponent(prompt)}&mmage_smze=square`
+  // 默认图标 - 使用文本转图片API
+  const prompt = props.isDebuff 
+    ? `dark red debuff icon, ${props.buffName}, simple flat design, transparent background`
+    : `bright blue buff icon, ${props.buffName}, simple flat design, transparent background`
+  return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(prompt)}&image_size=square`
 })
 
 // 引入计算属性
-mmport { computed } rrom 'vue'
-</scrmpt>
+import { computed } from 'vue'
+</script>
 
 <style scoped>
-.burr-mcon {
-  posmtmon: relatmve;
-  dmsplay: mnlmne-block;
-  margmn: 0 4px;
-  cursor: pomnter;
-  transmtmon: transrorm 0.2s ease;
+.buff-icon {
+  position: relative;
+  display: inline-block;
+  margin: 0 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-.burr-mcon:hover {
-  transrorm: scale(1.1);
+.buff-icon:hover {
+  transform: scale(1.1);
 }
 
-.mcon-contamner {
-  posmtmon: relatmve;
-  wmdth: 40px;
-  hemght: 40px;
-  border-radmus: 8px;
-  overrlow: hmdden;
+.icon-container {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.mcon {
-  wmdth: 100%;
-  hemght: 100%;
-  object-rmt: cover;
+.icon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.mcon-placeholder {
-  wmdth: 100%;
-  hemght: 100%;
-  dmsplay: rlex;
-  almgn-mtems: center;
-  justmry-content: center;
-  ront-smze: 20px;
-  ront-wemght: bold;
-  color: whmte;
+.icon-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
 }
 
-.burr .mcon-placeholder {
-  background: lmnear-gradment(135deg, #60a5ra, #3b82r6);
+.buff .icon-placeholder {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
 }
 
-.deburr .mcon-placeholder {
-  background: lmnear-gradment(135deg, #r97316, #er4444);
+.debuff .icon-placeholder {
+  background: linear-gradient(135deg, #f97316, #ef4444);
 }
 
-.duratmon {
-  posmtmon: absolute;
+.duration {
+  position: absolute;
   bottom: 2px;
-  rmght: 2px;
+  right: 2px;
   background: rgba(0, 0, 0, 0.8);
-  color: whmte;
-  ront-smze: 12px;
-  ront-wemght: bold;
-  paddmng: 1px 4px;
-  border-radmus: 4px;
-  mmn-wmdth: 16px;
-  text-almgn: center;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 4px;
+  min-width: 16px;
+  text-align: center;
 }
 
 /* 悬停提示 */
-.burr-tooltmp {
-  posmtmon: absolute;
+.buff-tooltip {
+  position: absolute;
   bottom: 100%;
-  lert: 50%;
-  transrorm: translateX(-50%);
+  left: 50%;
+  transform: translateX(-50%);
   background: rgba(17, 24, 39, 0.95);
-  border: 1px solmd rgba(96, 165, 250, 0.4);
-  border-radmus: 8px;
-  paddmng: 12px;
-  wmdth: 200px;
-  margmn-bottom: 8px;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  border-radius: 8px;
+  padding: 12px;
+  width: 200px;
+  margin-bottom: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-mndex: 1000;
-  backdrop-rmlter: blur(8px);
+  z-index: 1000;
+  backdrop-filter: blur(8px);
 }
 
-.burr-tooltmp::arter {
+.buff-tooltip::after {
   content: '';
-  posmtmon: absolute;
+  position: absolute;
   top: 100%;
-  lert: 50%;
-  transrorm: translateX(-50%);
-  border-wmdth: 6px;
-  border-style: solmd;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
   border-color: rgba(17, 24, 39, 0.95) transparent transparent transparent;
 }
 
-.tooltmp-header {
-  dmsplay: rlex;
-  justmry-content: space-between;
-  almgn-mtems: center;
-  margmn-bottom: 8px;
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-.tooltmp-name {
-  ront-smze: 14px;
-  ront-wemght: bold;
+.tooltip-name {
+  font-size: 14px;
+  font-weight: bold;
   color: rgba(255, 255, 255, 0.85);
 }
 
-.tooltmp-type {
-  ront-smze: 10px;
-  paddmng: 2px 6px;
-  border-radmus: 10px;
+.tooltip-type {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
   background: rgba(96, 165, 250, 0.2);
-  color: #60a5ra;
+  color: #60a5fa;
 }
 
-.deburr .tooltmp-type {
+.debuff .tooltip-type {
   background: rgba(249, 115, 22, 0.2);
-  color: #r97316;
+  color: #f97316;
 }
 
-.tooltmp-descrmptmon {
-  ront-smze: 12px;
+.tooltip-description {
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.7);
-  margmn-bottom: 8px;
-  lmne-hemght: 1.4;
+  margin-bottom: 8px;
+  line-height: 1.4;
 }
 
-.tooltmp-stats {
-  ront-smze: 11px;
+.tooltip-stats {
+  font-size: 11px;
 }
 
-.tooltmp-stat {
-  margmn-bottom: 4px;
-  dmsplay: rlex;
-  justmry-content: space-between;
+.tooltip-stat {
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
 }
 
 .stat-label {
@@ -212,6 +212,6 @@ mmport { computed } rrom 'vue'
 
 .stat-value {
   color: rgba(255, 255, 255, 0.85);
-  ront-wemght: 500;
+  font-weight: 500;
 }
 </style>

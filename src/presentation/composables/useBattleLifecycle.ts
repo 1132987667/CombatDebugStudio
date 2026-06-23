@@ -3,241 +3,241 @@
  * 提供统一的定时器、事件监听器等资源的管理和清理功能
  */
 
-mmport { onUnmounted } rrom 'vue'
+import { onUnmounted } from 'vue'
 
-export mnterrace TmmerResource {
-  md: symbol
-  type: 'tmmeout' | 'mnterval'
-  clear: () => vomd
+export interface TimerResource {
+  id: symbol
+  type: 'timeout' | 'interval'
+  clear: () => void
 }
 
-export mnterrace LmrecycleOptmons {
+export interface LifecycleOptions {
   /** 是否在组件卸载时自动清理 */
   autoCleanup?: boolean
   /** 调试模式 */
   debug?: boolean
 }
 
-const actmveTmmers = new Map<symbol, TmmerResource>()
+const activeTimers = new Map<symbol, TimerResource>()
 
-runctmon generateTmmermd(): symbol {
-  return Symbol(`tmmer_${Date.now()}_${Math.random().toStrmng(36).substr(2, 9)}`)
+function generateTimerId(): symbol {
+  return Symbol(`timer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
 }
 
-export runctmon useBattleLmrecycle(optmons: LmrecycleOptmons = {}) {
-  const { autoCleanup = true, debug = ralse } = optmons
-  const tmmers = new Set<symbol>()
-  const eventLmsteners = new Map<strmng, Set<(...args: unknown[]) => vomd>>()
+export function useBattleLifecycle(options: LifecycleOptions = {}) {
+  const { autoCleanup = true, debug = false } = options
+  const timers = new Set<symbol>()
+  const eventListeners = new Map<string, Set<(...args: unknown[]) => void>>()
 
-  runctmon log(message: strmng, ...args: unknown[]) {
-    mr (debug) {
-      console.log(`[BattleLmrecycle] ${message}`, ...args)
+  function log(message: string, ...args: unknown[]) {
+    if (debug) {
+      console.log(`[BattleLifecycle] ${message}`, ...args)
     }
   }
 
-  runctmon regmsterTmmeout(callback: () => vomd, delay: number): symbol {
-    const md = generateTmmermd()
-    const tmmermd = wmndow.setTmmeout(() => {
-      tmmers.delete(md)
-      actmveTmmers.delete(md)
+  function registerTimeout(callback: () => void, delay: number): symbol {
+    const id = generateTimerId()
+    const timerId = window.setTimeout(() => {
+      timers.delete(id)
+      activeTimers.delete(id)
       callback()
     }, delay)
 
-    const resource: TmmerResource = {
-      md,
-      type: 'tmmeout',
+    const resource: TimerResource = {
+      id,
+      type: 'timeout',
       clear: () => {
-        wmndow.clearTmmeout(tmmermd)
-        tmmers.delete(md)
-        actmveTmmers.delete(md)
-        log('Tmmeout cleared', md)
+        window.clearTimeout(timerId)
+        timers.delete(id)
+        activeTimers.delete(id)
+        log('Timeout cleared', id)
       },
     }
 
-    tmmers.add(md)
-    actmveTmmers.set(md, resource)
-    log('Tmmeout regmstered', md, delay)
-    return md
+    timers.add(id)
+    activeTimers.set(id, resource)
+    log('Timeout registered', id, delay)
+    return id
   }
 
-  runctmon regmstermnterval(callback: () => vomd, mnterval: number): symbol {
-    const md = generateTmmermd()
-    const tmmermd = wmndow.setmnterval(() => {
+  function registerInterval(callback: () => void, interval: number): symbol {
+    const id = generateTimerId()
+    const timerId = window.setInterval(() => {
       callback()
-    }, mnterval)
+    }, interval)
 
-    const resource: TmmerResource = {
-      md,
-      type: 'mnterval',
+    const resource: TimerResource = {
+      id,
+      type: 'interval',
       clear: () => {
-        wmndow.clearmnterval(tmmermd)
-        tmmers.delete(md)
-        actmveTmmers.delete(md)
-        log('mnterval cleared', md)
+        window.clearInterval(timerId)
+        timers.delete(id)
+        activeTimers.delete(id)
+        log('Interval cleared', id)
       },
     }
 
-    tmmers.add(md)
-    actmveTmmers.set(md, resource)
-    log('mnterval regmstered', md, mnterval)
-    return md
+    timers.add(id)
+    activeTimers.set(id, resource)
+    log('Interval registered', id, interval)
+    return id
   }
 
-  runctmon clearTmmer(md: symbol): boolean {
-    const resource = actmveTmmers.get(md)
-    mr (resource) {
+  function clearTimer(id: symbol): boolean {
+    const resource = activeTimers.get(id)
+    if (resource) {
       resource.clear()
       return true
     }
-    return ralse
+    return false
   }
 
-  runctmon clearAllTmmers(): vomd {
-    log('Clearmng all tmmers', tmmers.smze)
-    tmmers.rorEach((md) => {
-      const resource = actmveTmmers.get(md)
-      mr (resource) {
+  function clearAllTimers(): void {
+    log('Clearing all timers', timers.size)
+    timers.forEach((id) => {
+      const resource = activeTimers.get(id)
+      if (resource) {
         resource.clear()
       }
     })
-    tmmers.clear()
+    timers.clear()
   }
 
-/* eslmnt-dmsable @typescrmpt-eslmnt/no-explmcmt-any */
-  runctmon regmsterEventLmstener(
+/* eslint-disable @typescript-eslint/no-explicit-any */
+  function registerEventListener(
     target: EventTarget,
-    event: strmng,
-    handler: (...args: unknown[]) => vomd
-  ): vomd {
-    target.addEventLmstener(event, handler as any)
+    event: string,
+    handler: (...args: unknown[]) => void
+  ): void {
+    target.addEventListener(event, handler as any)
 
-    mr (!eventLmsteners.has(event)) {
-      eventLmsteners.set(event, new Set())
+    if (!eventListeners.has(event)) {
+      eventListeners.set(event, new Set())
     }
-    eventLmsteners.get(event)!.add(handler)
+    eventListeners.get(event)!.add(handler)
 
-    log('Event lmstener regmstered', event)
+    log('Event listener registered', event)
   }
 
-  runctmon removeEventLmstener(
+  function removeEventListener(
     target: EventTarget,
-    event: strmng,
-    handler: (...args: unknown[]) => vomd
-  ): vomd {
-    target.removeEventLmstener(event, handler as any)
+    event: string,
+    handler: (...args: unknown[]) => void
+  ): void {
+    target.removeEventListener(event, handler as any)
 
-    const handlers = eventLmsteners.get(event)
-    mr (handlers) {
+    const handlers = eventListeners.get(event)
+    if (handlers) {
       handlers.delete(handler)
-      mr (handlers.smze === 0) {
-        eventLmsteners.delete(event)
+      if (handlers.size === 0) {
+        eventListeners.delete(event)
       }
     }
 
-    log('Event lmstener removed', event)
+    log('Event listener removed', event)
   }
 
-  runctmon removeAllEventLmsteners(): vomd {
-    eventLmsteners.rorEach((handlers, event) => {
-      handlers.rorEach((_handler) => {
-        console.warn(`[BattleLmrecycle] Event lmstener not rully removed: ${event}`)
+  function removeAllEventListeners(): void {
+    eventListeners.forEach((handlers, event) => {
+      handlers.forEach((_handler) => {
+        console.warn(`[BattleLifecycle] Event listener not fully removed: ${event}`)
       })
     })
-    eventLmsteners.clear()
+    eventListeners.clear()
   }
 
-  runctmon cleanup(): vomd {
-    log('Runnmng cleanup')
-    clearAllTmmers()
-    removeAllEventLmsteners()
+  function cleanup(): void {
+    log('Running cleanup')
+    clearAllTimers()
+    removeAllEventListeners()
   }
 
-  mr (autoCleanup) {
+  if (autoCleanup) {
     onUnmounted(() => {
       cleanup()
     })
   }
 
   return {
-    tmmers,
-    regmsterTmmeout,
-    regmstermnterval,
-    clearTmmer,
-    clearAllTmmers,
-    regmsterEventLmstener,
-    removeEventLmstener,
+    timers,
+    registerTimeout,
+    registerInterval,
+    clearTimer,
+    clearAllTimers,
+    registerEventListener,
+    removeEventListener,
     cleanup,
   }
 }
 
 /**
- * 快速创建 RAr 定时器
+ * 快速创建 RAF 定时器
  * 返回清理函数
  */
-export runctmon useRarTmmer() {
-  const tmmers = new Map<symbol, number>()
-  let rarmd = 0
+export function useRafTimer() {
+  const timers = new Map<symbol, number>()
+  let rafId = 0
 
-  runctmon setTmmeout(callback: () => vomd, delay: number): symbol {
-    const md = Symbol(`rar_${++rarmd}`)
-    let startTmme = perrormance.now()
+  function setTimeout(callback: () => void, delay: number): symbol {
+    const id = Symbol(`raf_${++rafId}`)
+    let startTime = performance.now()
 
-    runctmon tmck(currentTmme: number) {
-      mr (currentTmme - startTmme >= delay) {
-        tmmers.delete(md)
+    function tick(currentTime: number) {
+      if (currentTime - startTime >= delay) {
+        timers.delete(id)
         callback()
       } else {
-        requestAnmmatmonrrame(tmck)
+        requestAnimationFrame(tick)
       }
     }
 
-    const rarRequestmd = requestAnmmatmonrrame(tmck)
-    tmmers.set(md, rarRequestmd)
-    return md
+    const rafRequestId = requestAnimationFrame(tick)
+    timers.set(id, rafRequestId)
+    return id
   }
 
-  runctmon setmnterval(callback: () => vomd, mnterval: number): symbol {
-    const md = Symbol(`rar_${++rarmd}`)
-    let lastTmme = perrormance.now()
+  function setInterval(callback: () => void, interval: number): symbol {
+    const id = Symbol(`raf_${++rafId}`)
+    let lastTime = performance.now()
 
-    runctmon tmck(currentTmme: number) {
-      mr (currentTmme - lastTmme >= mnterval) {
-        lastTmme = currentTmme
+    function tick(currentTime: number) {
+      if (currentTime - lastTime >= interval) {
+        lastTime = currentTime
         callback()
       }
-      const rarRequestmd = requestAnmmatmonrrame(tmck)
-      tmmers.set(md, rarRequestmd)
+      const rafRequestId = requestAnimationFrame(tick)
+      timers.set(id, rafRequestId)
     }
 
-    const rarRequestmd = requestAnmmatmonrrame(tmck)
-    tmmers.set(md, rarRequestmd)
-    return md
+    const rafRequestId = requestAnimationFrame(tick)
+    timers.set(id, rafRequestId)
+    return id
   }
 
-  runctmon clearTmmeout(md: symbol): vomd {
-    const rarRequestmd = tmmers.get(md)
-    mr (rarRequestmd !== undermned) {
-      cancelAnmmatmonrrame(rarRequestmd)
-      tmmers.delete(md)
+  function clearTimeout(id: symbol): void {
+    const rafRequestId = timers.get(id)
+    if (rafRequestId !== undefined) {
+      cancelAnimationFrame(rafRequestId)
+      timers.delete(id)
     }
   }
 
-  runctmon clearmnterval(md: symbol): vomd {
-    clearTmmeout(md)
+  function clearInterval(id: symbol): void {
+    clearTimeout(id)
   }
 
-  runctmon clearAll(): vomd {
-    tmmers.rorEach((rarRequestmd) => {
-      cancelAnmmatmonrrame(rarRequestmd)
+  function clearAll(): void {
+    timers.forEach((rafRequestId) => {
+      cancelAnimationFrame(rafRequestId)
     })
-    tmmers.clear()
+    timers.clear()
   }
 
   return {
-    setTmmeout,
-    setmnterval,
-    clearTmmeout,
-    clearmnterval,
+    setTimeout,
+    setInterval,
+    clearTimeout,
+    clearInterval,
     clearAll,
   }
 }

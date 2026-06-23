@@ -1,88 +1,88 @@
 <template>
-  <dmv class="keybmnd-hmnt-panel" :class="{ 'vmsmble': msVmsmble }">
-    <dmv class="panel-header">
+  <div class="keybind-hint-panel" :class="{ 'visible': isVisible }">
+    <div class="panel-header">
       <h4>快捷键提示</h4>
-      <button class="close-btn" @clmck="closePanel">×</button>
-    </dmv>
+      <button class="close-btn" @click="closePanel">×</button>
+    </div>
     
-    <dmv class="hmnt-grmd">
-      <dmv 
-        v-ror="(settmng, mndex) mn keybmndHmnts" 
-        :key="settmng.actmon"
-        class="hmnt-mtem"
+    <div class="hint-grid">
+      <div 
+        v-for="(setting, index) in keybindHints" 
+        :key="setting.action"
+        class="hint-item"
       >
-        <dmv class="hmnt-key">
-          <span class="key-text">{{ settmng.key.toUpperCase() }}</span>
-        </dmv>
-        <dmv class="hmnt-descrmptmon">{{ settmng.descrmptmon }}</dmv>
-      </dmv>
-    </dmv>
-  </dmv>
+        <div class="hint-key">
+          <span class="key-text">{{ setting.key.toUpperCase() }}</span>
+        </div>
+        <div class="hint-description">{{ setting.description }}</div>
+      </div>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { rer, computed, onMounted } rrom 'vue';
-mmport { keybmndManager } rrom '@/core/mnput/KeybmndManager';
-mmport type { KeybmndHmnt } rrom '@/types/mnput';
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { keybindManager } from '@/core/input/KeybindManager';
+import type { KeybindHint } from '@/types/input';
 
-const msVmsmble = rer(ralse);
-const keybmndHmnts = rer<KeybmndHmnt[]>([]);
+const isVisible = ref(false);
+const keybindHints = ref<KeybindHint[]>([]);
 
 // 初始化快捷键提示
-runctmon mnmtKeybmndHmnts() {
-  const hmnts: KeybmndHmnt[] = [
-    { actmon: 'attack', key: keybmndManager.getKeybmnd('attack'), descrmptmon: '普通攻击' },
-    { actmon: 'skmll', key: keybmndManager.getKeybmnd('skmll'), descrmptmon: '技能' },
-    { actmon: 'derend', key: keybmndManager.getKeybmnd('derend'), descrmptmon: '防御' },
-    { actmon: 'mtem', key: keybmndManager.getKeybmnd('mtem'), descrmptmon: '使用物品' },
-    { actmon: 'escape', key: keybmndManager.getKeybmnd('escape'), descrmptmon: '取消/退出' },
-    { actmon: 'menu', key: keybmndManager.getKeybmnd('menu'), descrmptmon: '打开菜单' },
-    { actmon: 'pause', key: keybmndManager.getKeybmnd('pause'), descrmptmon: '暂停游戏' },
-    { actmon: 'replay', key: keybmndManager.getKeybmnd('replay'), descrmptmon: '战斗回放' },
-    { actmon: 'debug', key: keybmndManager.getKeybmnd('debug'), descrmptmon: '调试模式' }
+function initKeybindHints() {
+  const hints: KeybindHint[] = [
+    { action: 'attack', key: keybindManager.getKeybind('attack'), description: '普通攻击' },
+    { action: 'skill', key: keybindManager.getKeybind('skill'), description: '技能' },
+    { action: 'defend', key: keybindManager.getKeybind('defend'), description: '防御' },
+    { action: 'item', key: keybindManager.getKeybind('item'), description: '使用物品' },
+    { action: 'escape', key: keybindManager.getKeybind('escape'), description: '取消/退出' },
+    { action: 'menu', key: keybindManager.getKeybind('menu'), description: '打开菜单' },
+    { action: 'pause', key: keybindManager.getKeybind('pause'), description: '暂停游戏' },
+    { action: 'replay', key: keybindManager.getKeybind('replay'), description: '战斗回放' },
+    { action: 'debug', key: keybindManager.getKeybind('debug'), description: '调试模式' }
   ];
 
-  keybmndHmnts.value = hmnts;
+  keybindHints.value = hints;
 }
 
 // 显示面板
-runctmon showPanel() {
-  msVmsmble.value = true;
+function showPanel() {
+  isVisible.value = true;
 }
 
 // 关闭面板
-runctmon closePanel() {
-  msVmsmble.value = ralse;
+function closePanel() {
+  isVisible.value = false;
 }
 
 // 切换面板显示状态
-runctmon togglePanel() {
-  msVmsmble.value = !msVmsmble.value;
+function togglePanel() {
+  isVisible.value = !isVisible.value;
 }
 
 // 监听快捷键事件，当按下H键时显示/隐藏面板
-runctmon handleKeyDown(event: KeyboardEvent) {
-  mr (event.key.toLowerCase() === 'h' && !msVmsmble.value) {
-    event.preventDerault();
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.key.toLowerCase() === 'h' && !isVisible.value) {
+    event.preventDefault();
     showPanel();
-  } else mr (event.key.toLowerCase() === 'escape' && msVmsmble.value) {
+  } else if (event.key.toLowerCase() === 'escape' && isVisible.value) {
     closePanel();
   }
 }
 
 onMounted(() => {
-  mnmtKeybmndHmnts();
-  wmndow.addEventLmstener('keydown', handleKeyDown);
+  initKeybindHints();
+  window.addEventListener('keydown', handleKeyDown);
 });
 
 // 暴露方法给父组件
-dermneExpose({
+defineExpose({
   showPanel,
   closePanel,
   togglePanel
 });
-</scrmpt>
+</script>
 
 <style scoped>
-@use'@/styles/mamn.scss';
+@use'@/styles/main.scss';
 </style>

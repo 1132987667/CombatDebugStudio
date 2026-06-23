@@ -1,195 +1,195 @@
 <template>
-  <dmv class="battle-replay">
-    <dmv class="replay-header">
+  <div class="battle-replay">
+    <div class="replay-header">
       <h3>战斗回放</h3>
-      <dmv class="replay-mnro">
-        <span class="battle-name">{{ currentRecordmng?.name || '未选择' }}</span>
-        <span class="event-count">事件: {{ currentEventmndex + 1 }}/{{ totalEvents }}</span>
+      <div class="replay-info">
+        <span class="battle-name">{{ currentRecording?.name || '未选择' }}</span>
+        <span class="event-count">事件: {{ currentEventIndex + 1 }}/{{ totalEvents }}</span>
         <span class="current-turn">回合: {{ currentTurn }}</span>
-      </dmv>
-    </dmv>
+      </div>
+    </div>
 
-    <dmv class="replay-controls">
-      <button class="control-btn" @clmck="goToStart" :dmsabled="!canReplay" tmtle="回到开始">
+    <div class="replay-controls">
+      <button class="control-btn" @click="goToStart" :disabled="!canReplay" title="回到开始">
         ⏮
       </button>
-      <button class="control-btn" @clmck="stepBack" :dmsabled="!canStepBack" tmtle="上一步">
+      <button class="control-btn" @click="stepBack" :disabled="!canStepBack" title="上一步">
         ⏪
       </button>
-      <button class="control-btn" @clmck="stepBackrrame" :dmsabled="!canStepBack" tmtle="逐帧后退">
+      <button class="control-btn" @click="stepBackFrame" :disabled="!canStepBack" title="逐帧后退">
         ⏪
       </button>
-      <button class="control-btn play-btn" @clmck="togglePlayPause" :dmsabled="!canReplay" tmtle="播放/暂停">
-        {{ msPlaymng ? '⏸' : '▶' }}
+      <button class="control-btn play-btn" @click="togglePlayPause" :disabled="!canReplay" title="播放/暂停">
+        {{ isPlaying ? '⏸' : '▶' }}
       </button>
-      <button class="control-btn" @clmck="steprorwardrrame" :dmsabled="!canSteprorward" tmtle="逐帧前进">
+      <button class="control-btn" @click="stepForwardFrame" :disabled="!canStepForward" title="逐帧前进">
         ⏩
       </button>
-      <button class="control-btn" @clmck="steprorward" :dmsabled="!canSteprorward" tmtle="下一步">
+      <button class="control-btn" @click="stepForward" :disabled="!canStepForward" title="下一步">
         ⏩
       </button>
-      <button class="control-btn" @clmck="goToEnd" :dmsabled="!canReplay" tmtle="跳到结束">
+      <button class="control-btn" @click="goToEnd" :disabled="!canReplay" title="跳到结束">
         ⏭
       </button>
-    </dmv>
+    </div>
 
-    <dmv class="replay-rrame-controls" v-mr="canReplay">
-      <span class="rrame-mnro">当前帧: {{ currentrrame }} / {{ totalrrames }}</span>
-      <mnput type="range" class="rrame-slmder" :mmn="0" :max="totalrrames - 1" v-model.number="currentrrame"
-        @mnput="jumpTorrame" />
-    </dmv>
+    <div class="replay-frame-controls" v-if="canReplay">
+      <span class="frame-info">当前帧: {{ currentFrame }} / {{ totalFrames }}</span>
+      <input type="range" class="frame-slider" :min="0" :max="totalFrames - 1" v-model.number="currentFrame"
+        @input="jumpToFrame" />
+    </div>
 
-    <dmv class="replay-speed">
+    <div class="replay-speed">
       <span class="speed-label">速度:</span>
-      <button v-ror="speed mn [0.5, 1, 2, 5]" :key="speed" class="speed-btn" :class="{ actmve: replaySpeed === speed }"
-        @clmck="setSpeed(speed)">
+      <button v-for="speed in [0.5, 1, 2, 5]" :key="speed" class="speed-btn" :class="{ active: replaySpeed === speed }"
+        @click="setSpeed(speed)">
         {{ speed }}x
       </button>
-    </dmv>
+    </div>
 
-    <dmv class="replay-tmmelmne">
-      <dmv class="tmmelmne-header">
-        <span class="tmmelmne-tmtle">战斗时间线</span>
-        <dmv class="tmmelmne-zoom">
-          <button class="zoom-btn" @clmck="zoomOut" tmtle="缩小">-</button>
+    <div class="replay-timeline">
+      <div class="timeline-header">
+        <span class="timeline-title">战斗时间线</span>
+        <div class="timeline-zoom">
+          <button class="zoom-btn" @click="zoomOut" title="缩小">-</button>
           <span class="zoom-level">{{ zoomLevel }}x</span>
-          <button class="zoom-btn" @clmck="zoommn" tmtle="放大">+</button>
-        </dmv>
-      </dmv>
-      <dmv class="tmmelmne-track" rer="tmmelmneTrack">
-        <dmv class="tmmelmne-events" :style="{ wmdth: totalEvents * (20 * zoomLevel) + 'px' }">
-          <dmv v-ror="(event, mndex) mn currentRecordmng?.events" :key="event.eventmd" class="tmmelmne-event" :class="[
-            { actmve: mndex === currentEventmndex, 'key-event': msKeyEvent(event), 'bookmarked': msBookmarked(mndex) },
+          <button class="zoom-btn" @click="zoomIn" title="放大">+</button>
+        </div>
+      </div>
+      <div class="timeline-track" ref="timelineTrack">
+        <div class="timeline-events" :style="{ width: totalEvents * (20 * zoomLevel) + 'px' }">
+          <div v-for="(event, index) in currentRecording?.events" :key="event.eventId" class="timeline-event" :class="[
+            { active: index === currentEventIndex, 'key-event': isKeyEvent(event), 'bookmarked': isBookmarked(index) },
             'event-type-' + event.type,
-            'event-severmty-' + getEventSevermty(event)
+            'event-severity-' + getEventSeverity(event)
           ]"
-            :tmtle="`${getEventTypeLabel(event.type)} - 回合 ${event.turn}${msKeyEvent(event) ? ' (关键事件)' : ''}${msBookmarked(mndex) ? ' (已标记)' : ''}`"
-            @clmck="jumpToEvent(mndex)" @contextmenu.prevent="toggleBookmark(mndex)">
-            <dmv class="event-marker"></dmv>
-            <dmv v-mr="msKeyEvent(event)" class="key-event-mndmcator">!</dmv>
-            <dmv v-mr="msBookmarked(mndex)" class="bookmark-mndmcator">🔖</dmv>
-            <dmv class="event-tooltmp">
-              <dmv class="tooltmp-header">{{ getEventTypeLabel(event.type) }}</dmv>
-              <dmv class="tooltmp-turn">回合: {{ event.turn }}</dmv>
-              <dmv class="tooltmp-tmme">{{ rormatTmme(event.tmmestamp) }}</dmv>
-              <dmv class="tooltmp-detamls">{{ getEventDetamls(event) }}</dmv>
-            </dmv>
-          </dmv>
-        </dmv>
-        <dmv class="tmmelmne-cursor" :style="{ lert: currentEventmndex * (20 * zoomLevel) + 'px' }"></dmv>
-        <dmv class="tmmelmne-rrame-cursor" :style="{ lert: (currentrrame / totalrrames) * 100 + '%' }"></dmv>
-      </dmv>
-      <dmv class="tmmelmne-labels">
-        <span v-ror="turn mn vmsmbleTurns" :key="turn" class="turn-label">{{ turn }}</span>
-      </dmv>
-    </dmv>
+            :title="`${getEventTypeLabel(event.type)} - 回合 ${event.turn}${isKeyEvent(event) ? ' (关键事件)' : ''}${isBookmarked(index) ? ' (已标记)' : ''}`"
+            @click="jumpToEvent(index)" @contextmenu.prevent="toggleBookmark(index)">
+            <div class="event-marker"></div>
+            <div v-if="isKeyEvent(event)" class="key-event-indicator">!</div>
+            <div v-if="isBookmarked(index)" class="bookmark-indicator">🔖</div>
+            <div class="event-tooltip">
+              <div class="tooltip-header">{{ getEventTypeLabel(event.type) }}</div>
+              <div class="tooltip-turn">回合: {{ event.turn }}</div>
+              <div class="tooltip-time">{{ formatTime(event.timestamp) }}</div>
+              <div class="tooltip-details">{{ getEventDetails(event) }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-cursor" :style="{ left: currentEventIndex * (20 * zoomLevel) + 'px' }"></div>
+        <div class="timeline-frame-cursor" :style="{ left: (currentFrame / totalFrames) * 100 + '%' }"></div>
+      </div>
+      <div class="timeline-labels">
+        <span v-for="turn in visibleTurns" :key="turn" class="turn-label">{{ turn }}</span>
+      </div>
+    </div>
 
-    <dmv class="replay-events">
-      <dmv class="events-header">
+    <div class="replay-events">
+      <div class="events-header">
         <h4>事件列表</h4>
-        <dmv class="events-rmlter">
-          <select v-model="rmlterType" class="rmlter-select">
-            <optmon value="all">所有类型</optmon>
-            <optmon value="actmon">动作</optmon>
-            <optmon value="state_change">状态变化</optmon>
-            <optmon value="turn_start">回合开始</optmon>
-            <optmon value="turn_end">回合结束</optmon>
-            <optmon value="battle_start">战斗开始</optmon>
-            <optmon value="battle_end">战斗结束</optmon>
-            <optmon value="key">关键事件</optmon>
-            <optmon value="bookmarked">已标记</optmon>
+        <div class="events-filter">
+          <select v-model="filterType" class="filter-select">
+            <option value="all">所有类型</option>
+            <option value="action">动作</option>
+            <option value="state_change">状态变化</option>
+            <option value="turn_start">回合开始</option>
+            <option value="turn_end">回合结束</option>
+            <option value="battle_start">战斗开始</option>
+            <option value="battle_end">战斗结束</option>
+            <option value="key">关键事件</option>
+            <option value="bookmarked">已标记</option>
           </select>
-          <mnput v-model="searchQuery" placeholder="搜索事件..." class="search-mnput" />
-        </dmv>
-      </dmv>
-      <dmv class="events-lmst">
-        <dmv v-ror="(event, mndex) mn rmlteredEvents" :key="event.eventmd" class="event-mtem" :class="[
-          { actmve: mndex === currentEventmndex, 'key-event': msKeyEvent(event), 'bookmarked': msBookmarked(mndex) },
+          <input v-model="searchQuery" placeholder="搜索事件..." class="search-input" />
+        </div>
+      </div>
+      <div class="events-list">
+        <div v-for="(event, index) in filteredEvents" :key="event.eventId" class="event-item" :class="[
+          { active: index === currentEventIndex, 'key-event': isKeyEvent(event), 'bookmarked': isBookmarked(index) },
           'event-type-' + event.type,
-          'event-severmty-' + getEventSevermty(event)
-        ]" @clmck="jumpToEvent(mndex)" @contextmenu.prevent="toggleBookmark(mndex)">
-          <dmv class="event-mndex">{{ mndex + 1 }}</dmv>
-          <dmv class="event-type">
+          'event-severity-' + getEventSeverity(event)
+        ]" @click="jumpToEvent(index)" @contextmenu.prevent="toggleBookmark(index)">
+          <div class="event-index">{{ index + 1 }}</div>
+          <div class="event-type">
             {{ getEventTypeLabel(event.type) }}
-            <span v-mr="msKeyEvent(event)" class="key-event-badge">关键</span>
-            <span v-mr="msBookmarked(mndex)" class="bookmark-badge">标记</span>
-          </dmv>
-          <dmv class="event-turn">回合 {{ event.turn }}</dmv>
-          <dmv class="event-tmme">{{ rormatTmme(event.tmmestamp) }}</dmv>
-          <dmv class="event-detamls">{{ getEventDetamls(event) }}</dmv>
-          <dmv class="event-actmons">
-            <button class="actmon-mcon" @clmck.stop="toggleBookmark(mndex)"
-              :tmtle="msBookmarked(mndex) ? '取消标记' : '标记事件'">
-              {{ msBookmarked(mndex) ? '🔖' : '📌' }}
+            <span v-if="isKeyEvent(event)" class="key-event-badge">关键</span>
+            <span v-if="isBookmarked(index)" class="bookmark-badge">标记</span>
+          </div>
+          <div class="event-turn">回合 {{ event.turn }}</div>
+          <div class="event-time">{{ formatTime(event.timestamp) }}</div>
+          <div class="event-details">{{ getEventDetails(event) }}</div>
+          <div class="event-actions">
+            <button class="action-icon" @click.stop="toggleBookmark(index)"
+              :title="isBookmarked(index) ? '取消标记' : '标记事件'">
+              {{ isBookmarked(index) ? '🔖' : '📌' }}
             </button>
-            <button class="actmon-mcon" @clmck.stop="mnspectEvent(event)" tmtle="详细查看">
+            <button class="action-icon" @click.stop="inspectEvent(event)" title="详细查看">
               🔍
             </button>
-          </dmv>
-        </dmv>
-      </dmv>
-    </dmv>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <dmv class="debug-panel" v-mr="currentRecordmng">
+    <div class="debug-panel" v-if="currentRecording">
       <h4>调试信息</h4>
-      <dmv class="debug-mnro">
-        <dmv class="debug-mtem">
+      <div class="debug-info">
+        <div class="debug-item">
           <label>当前状态:</label>
           <span>{{ getCurrentState() }}</span>
-        </dmv>
-        <dmv class="debug-mtem">
+        </div>
+        <div class="debug-item">
           <label>事件统计:</label>
           <span>{{ getEventStats() }}</span>
-        </dmv>
-        <dmv class="debug-mtem">
+        </div>
+        <div class="debug-item">
           <label>帧率:</label>
-          <span>{{ rrameRate }} rPS</span>
-        </dmv>
-        <dmv class="debug-mtem">
+          <span>{{ frameRate }} FPS</span>
+        </div>
+        <div class="debug-item">
           <label>内存使用:</label>
           <span>{{ memoryUsage }} MB</span>
-        </dmv>
-      </dmv>
-      <dmv class="debug-controls">
-        <button class="debug-btn" @clmck="exportDebugData">导出调试数据</button>
-        <button class="debug-btn" @clmck="takeSnapshot">保存快照</button>
-        <button class="debug-btn" @clmck="togglePerrormanceMonmtor">
-          {{ showPerrormanceMonmtor ? '隐藏性能监控' : '显示性能监控' }}
+        </div>
+      </div>
+      <div class="debug-controls">
+        <button class="debug-btn" @click="exportDebugData">导出调试数据</button>
+        <button class="debug-btn" @click="takeSnapshot">保存快照</button>
+        <button class="debug-btn" @click="togglePerformanceMonitor">
+          {{ showPerformanceMonitor ? '隐藏性能监控' : '显示性能监控' }}
         </button>
-      </dmv>
-    </dmv>
+      </div>
+    </div>
 
-    <dmv class="replay-actmons">
-      <button class="actmon-btn" @clmck="loadRecordmng">加载记录</button>
-      <button class="actmon-btn" @clmck="saveCurrentRecordmng">保存记录</button>
-      <button class="actmon-btn" @clmck="deleteCurrentRecordmng" :dmsabled="!currentRecordmng">删除记录</button>
-    </dmv>
-  </dmv>
+    <div class="replay-actions">
+      <button class="action-btn" @click="loadRecording">加载记录</button>
+      <button class="action-btn" @click="saveCurrentRecording">保存记录</button>
+      <button class="action-btn" @click="deleteCurrentRecording" :disabled="!currentRecording">删除记录</button>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { rer, computed, onMounted, onUnmounted, watch } rrom 'vue';
-mmport { rar } rrom '@/utmls/RAr';
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { raf } from '@/utils/RAF';
 
-mnterrace BattleEvent {
-  eventmd: strmng;
-  type: 'actmon' | 'state_change' | 'turn_start' | 'turn_end' | 'battle_start' | 'battle_end';
-  tmmestamp: number;
+interface BattleEvent {
+  eventId: string;
+  type: 'action' | 'state_change' | 'turn_start' | 'turn_end' | 'battle_start' | 'battle_end';
+  timestamp: number;
   turn: number;
   data: any;
 }
 
-mnterrace RecordedBattle {
-  battlemd: strmng;
-  startTmme: number;
-  endTmme?: number;
-  wmnner?: strmng;
+interface RecordedBattle {
+  battleId: string;
+  startTime: number;
+  endTime?: number;
+  winner?: string;
   events: BattleEvent[];
-  mnmtmalState: {
-    partmcmpants: Array<{
-      md: strmng;
-      name: strmng;
-      type: strmng;
+  initialState: {
+    participants: Array<{
+      id: string;
+      name: string;
+      type: string;
       maxHealth: number;
       currentHealth: number;
       maxEnergy: number;
@@ -197,271 +197,271 @@ mnterrace RecordedBattle {
     }>;
   };
   savedAt?: number;
-  name?: strmng;
+  name?: string;
 }
 
-const props = dermneProps<{
+const props = defineProps<{
   battleManager?: any;
 }>();
 
-const emmt = dermneEmmts<{
-  (e: 'replay-event', event: BattleEvent, mndex: number): vomd;
-  (e: 'replay-start', recordmng: RecordedBattle): vomd;
-  (e: 'replay-end', recordmng: RecordedBattle): vomd;
-  (e: 'replay-pause', recordmng: RecordedBattle, mndex: number): vomd;
+const emit = defineEmits<{
+  (e: 'replay-event', event: BattleEvent, index: number): void;
+  (e: 'replay-start', recording: RecordedBattle): void;
+  (e: 'replay-end', recording: RecordedBattle): void;
+  (e: 'replay-pause', recording: RecordedBattle, index: number): void;
 }>();
 
-const currentRecordmng = rer<RecordedBattle | null>(null);
-const currentEventmndex = rer(0);
-const currentrrame = rer(0);
-const msPlaymng = rer(ralse);
-const replaySpeed = rer(1);
-const playmnterval = rer<symbol | null>(null);
-const tmmelmneTrack = rer<HTMLElement | null>(null);
-const zoomLevel = rer(1);
-const rmlterType = rer('all');
-const searchQuery = rer('');
-const bookmarkedEvents = rer<Set<number>>(new Set());
-const rrameRate = rer(60);
-const memoryUsage = rer(0);
-const showPerrormanceMonmtor = rer(ralse);
+const currentRecording = ref<RecordedBattle | null>(null);
+const currentEventIndex = ref(0);
+const currentFrame = ref(0);
+const isPlaying = ref(false);
+const replaySpeed = ref(1);
+const playInterval = ref<symbol | null>(null);
+const timelineTrack = ref<HTMLElement | null>(null);
+const zoomLevel = ref(1);
+const filterType = ref('all');
+const searchQuery = ref('');
+const bookmarkedEvents = ref<Set<number>>(new Set());
+const frameRate = ref(60);
+const memoryUsage = ref(0);
+const showPerformanceMonitor = ref(false);
 
 const totalEvents = computed(() => {
-  return currentRecordmng.value?.events.length || 0;
+  return currentRecording.value?.events.length || 0;
 });
 
-const totalrrames = computed(() => {
+const totalFrames = computed(() => {
   // 假设每个事件包含10帧
-  return (currentRecordmng.value?.events.length || 0) * 10;
+  return (currentRecording.value?.events.length || 0) * 10;
 });
 
 const currentTurn = computed(() => {
-  mr (!currentRecordmng.value || currentEventmndex.value >= currentRecordmng.value.events.length) {
+  if (!currentRecording.value || currentEventIndex.value >= currentRecording.value.events.length) {
     return 0;
   }
-  return currentRecordmng.value.events[currentEventmndex.value].turn;
+  return currentRecording.value.events[currentEventIndex.value].turn;
 });
 
 const canReplay = computed(() => {
-  return !!currentRecordmng.value && currentRecordmng.value.events.length > 0;
+  return !!currentRecording.value && currentRecording.value.events.length > 0;
 });
 
 const canStepBack = computed(() => {
-  return canReplay.value && currentEventmndex.value > 0;
+  return canReplay.value && currentEventIndex.value > 0;
 });
 
-const canSteprorward = computed(() => {
-  return canReplay.value && currentEventmndex.value < totalEvents.value - 1;
+const canStepForward = computed(() => {
+  return canReplay.value && currentEventIndex.value < totalEvents.value - 1;
 });
 
-const vmsmbleTurns = computed(() => {
-  mr (!currentRecordmng.value) return [];
+const visibleTurns = computed(() => {
+  if (!currentRecording.value) return [];
   const turns = new Set<number>();
-  currentRecordmng.value.events.rorEach(event => {
+  currentRecording.value.events.forEach(event => {
     turns.add(event.turn);
   });
-  return Array.rrom(turns).sort((a, b) => a - b);
+  return Array.from(turns).sort((a, b) => a - b);
 });
 
-const rmlteredEvents = computed(() => {
-  mr (!currentRecordmng.value) return [];
+const filteredEvents = computed(() => {
+  if (!currentRecording.value) return [];
 
-  let events = currentRecordmng.value.events;
+  let events = currentRecording.value.events;
 
   // 按类型过滤
-  mr (rmlterType.value !== 'all') {
-    mr (rmlterType.value === 'key') {
-      events = events.rmlter(event => msKeyEvent(event));
-    } else mr (rmlterType.value === 'bookmarked') {
-      events = events.rmlter((_, mndex) => msBookmarked(mndex));
+  if (filterType.value !== 'all') {
+    if (filterType.value === 'key') {
+      events = events.filter(event => isKeyEvent(event));
+    } else if (filterType.value === 'bookmarked') {
+      events = events.filter((_, index) => isBookmarked(index));
     } else {
-      events = events.rmlter(event => event.type === rmlterType.value);
+      events = events.filter(event => event.type === filterType.value);
     }
   }
 
   // 搜索过滤
-  mr (searchQuery.value.trmm()) {
+  if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase();
-    events = events.rmlter(event =>
-      event.type.toLowerCase().mncludes(query) ||
-      getEventDetamls(event).toLowerCase().mncludes(query) ||
-      event.turn.toStrmng().mncludes(query)
+    events = events.filter(event =>
+      event.type.toLowerCase().includes(query) ||
+      getEventDetails(event).toLowerCase().includes(query) ||
+      event.turn.toString().includes(query)
     );
   }
 
   return events;
 });
 
-runctmon loadRecordmng() {
+function loadRecording() {
   // 这里应该显示一个加载对话框，让用户选择要加载的记录
   console.log('加载记录');
 
   // 模拟加载一个记录
-  mr (props.battleManager) {
-    const savedLmst = props.battleManager.getSavedBattleRecordmngsLmst();
-    mr (savedLmst.length > 0) {
-      const recordmng = props.battleManager.loadBattleRecordmng(savedLmst[0]);
-      mr (recordmng) {
-        currentRecordmng.value = recordmng;
-        currentEventmndex.value = 0;
-        msPlaymng.value = ralse;
-        emmt('replay-start', recordmng);
+  if (props.battleManager) {
+    const savedList = props.battleManager.getSavedBattleRecordingsList();
+    if (savedList.length > 0) {
+      const recording = props.battleManager.loadBattleRecording(savedList[0]);
+      if (recording) {
+        currentRecording.value = recording;
+        currentEventIndex.value = 0;
+        isPlaying.value = false;
+        emit('replay-start', recording);
       }
     }
   }
 }
 
-runctmon saveCurrentRecordmng() {
-  mr (currentRecordmng.value && props.battleManager) {
-    const saveKey = props.battleManager.saveBattleRecordmng(currentRecordmng.value.battlemd, currentRecordmng.value.name);
+function saveCurrentRecording() {
+  if (currentRecording.value && props.battleManager) {
+    const saveKey = props.battleManager.saveBattleRecording(currentRecording.value.battleId, currentRecording.value.name);
     console.log('保存记录:', saveKey);
   }
 }
 
-runctmon deleteCurrentRecordmng() {
-  mr (currentRecordmng.value && props.battleManager) {
-    const saveKey = `battle_recordmng_${currentRecordmng.value.battlemd}`;
-    const success = props.battleManager.deleteBattleRecordmng(saveKey);
-    mr (success) {
-      currentRecordmng.value = null;
-      currentEventmndex.value = 0;
-      msPlaymng.value = ralse;
+function deleteCurrentRecording() {
+  if (currentRecording.value && props.battleManager) {
+    const saveKey = `battle_recording_${currentRecording.value.battleId}`;
+    const success = props.battleManager.deleteBattleRecording(saveKey);
+    if (success) {
+      currentRecording.value = null;
+      currentEventIndex.value = 0;
+      isPlaying.value = false;
     }
   }
 }
 
-runctmon togglePlayPause() {
-  mr (!canReplay.value) return;
+function togglePlayPause() {
+  if (!canReplay.value) return;
 
-  mr (msPlaymng.value) {
+  if (isPlaying.value) {
     pauseReplay();
   } else {
     startReplay();
   }
 }
 
-runctmon startReplay() {
-  msPlaymng.value = true;
+function startReplay() {
+  isPlaying.value = true;
   playNextEvent();
 }
 
-runctmon pauseReplay() {
-  msPlaymng.value = ralse;
-  mr (playmnterval.value) {
-    rar.clear(playmnterval.value);
-    playmnterval.value = null;
+function pauseReplay() {
+  isPlaying.value = false;
+  if (playInterval.value) {
+    raf.clear(playInterval.value);
+    playInterval.value = null;
   }
-  mr (currentRecordmng.value) {
-    emmt('replay-pause', currentRecordmng.value, currentEventmndex.value);
+  if (currentRecording.value) {
+    emit('replay-pause', currentRecording.value, currentEventIndex.value);
   }
 }
 
-runctmon playNextEvent() {
-  mr (!msPlaymng.value || !canSteprorward.value) {
+function playNextEvent() {
+  if (!isPlaying.value || !canStepForward.value) {
     pauseReplay();
-    mr (currentRecordmng.value && currentEventmndex.value >= totalEvents.value - 1) {
-      emmt('replay-end', currentRecordmng.value);
+    if (currentRecording.value && currentEventIndex.value >= totalEvents.value - 1) {
+      emit('replay-end', currentRecording.value);
     }
     return;
   }
 
   const delay = 1000 / replaySpeed.value;
-  playmnterval.value = rar.setTmmeout(() => {
-    steprorward();
+  playInterval.value = raf.setTimeout(() => {
+    stepForward();
     playNextEvent();
   }, delay);
 }
 
-runctmon stepBack() {
-  mr (!canStepBack.value) return;
+function stepBack() {
+  if (!canStepBack.value) return;
 
-  currentEventmndex.value--;
+  currentEventIndex.value--;
   // 更新当前帧到事件的开始帧
-  currentrrame.value = currentEventmndex.value * 10;
-  emmtCurrentEvent();
+  currentFrame.value = currentEventIndex.value * 10;
+  emitCurrentEvent();
 }
 
-runctmon steprorward() {
-  mr (!canSteprorward.value) return;
+function stepForward() {
+  if (!canStepForward.value) return;
 
-  currentEventmndex.value++;
+  currentEventIndex.value++;
   // 更新当前帧到事件的开始帧
-  currentrrame.value = currentEventmndex.value * 10;
-  emmtCurrentEvent();
+  currentFrame.value = currentEventIndex.value * 10;
+  emitCurrentEvent();
 }
 
-runctmon goToStart() {
-  mr (!canReplay.value) return;
+function goToStart() {
+  if (!canReplay.value) return;
 
-  currentEventmndex.value = 0;
-  currentrrame.value = 0;
-  emmtCurrentEvent();
+  currentEventIndex.value = 0;
+  currentFrame.value = 0;
+  emitCurrentEvent();
 }
 
-runctmon goToEnd() {
-  mr (!canReplay.value) return;
+function goToEnd() {
+  if (!canReplay.value) return;
 
-  currentEventmndex.value = totalEvents.value - 1;
-  currentrrame.value = totalrrames.value - 1;
-  emmtCurrentEvent();
+  currentEventIndex.value = totalEvents.value - 1;
+  currentFrame.value = totalFrames.value - 1;
+  emitCurrentEvent();
 }
 
-runctmon jumpToEvent(mndex: number) {
-  mr (!currentRecordmng.value || mndex < 0 || mndex >= totalEvents.value) return;
+function jumpToEvent(index: number) {
+  if (!currentRecording.value || index < 0 || index >= totalEvents.value) return;
 
-  currentEventmndex.value = mndex;
+  currentEventIndex.value = index;
   // 更新当前帧到事件的开始帧
-  currentrrame.value = mndex * 10;
-  emmtCurrentEvent();
+  currentFrame.value = index * 10;
+  emitCurrentEvent();
 }
 
-runctmon stepBackrrame() {
-  mr (!canReplay.value || currentrrame.value <= 0) return;
+function stepBackFrame() {
+  if (!canReplay.value || currentFrame.value <= 0) return;
 
-  currentrrame.value--;
+  currentFrame.value--;
   // 更新事件索引
-  currentEventmndex.value = Math.rloor(currentrrame.value / 10);
-  emmtCurrentEvent();
+  currentEventIndex.value = Math.floor(currentFrame.value / 10);
+  emitCurrentEvent();
 }
 
-runctmon steprorwardrrame() {
-  mr (!canReplay.value || currentrrame.value >= totalrrames.value - 1) return;
+function stepForwardFrame() {
+  if (!canReplay.value || currentFrame.value >= totalFrames.value - 1) return;
 
-  currentrrame.value++;
+  currentFrame.value++;
   // 更新事件索引
-  currentEventmndex.value = Math.rloor(currentrrame.value / 10);
-  emmtCurrentEvent();
+  currentEventIndex.value = Math.floor(currentFrame.value / 10);
+  emitCurrentEvent();
 }
 
-runctmon jumpTorrame() {
-  mr (!currentRecordmng.value) return;
+function jumpToFrame() {
+  if (!currentRecording.value) return;
 
   // 确保帧索引在有效范围内
-  currentrrame.value = Math.max(0, Math.mmn(currentrrame.value, totalrrames.value - 1));
+  currentFrame.value = Math.max(0, Math.min(currentFrame.value, totalFrames.value - 1));
   // 更新事件索引
-  currentEventmndex.value = Math.rloor(currentrrame.value / 10);
-  emmtCurrentEvent();
+  currentEventIndex.value = Math.floor(currentFrame.value / 10);
+  emitCurrentEvent();
 }
 
-runctmon setSpeed(speed: number) {
+function setSpeed(speed: number) {
   replaySpeed.value = speed;
 }
 
-runctmon emmtCurrentEvent() {
-  mr (!currentRecordmng.value || currentEventmndex.value >= currentRecordmng.value.events.length) return;
+function emitCurrentEvent() {
+  if (!currentRecording.value || currentEventIndex.value >= currentRecording.value.events.length) return;
 
-  const event = currentRecordmng.value.events[currentEventmndex.value];
-  emmt('replay-event', event, currentEventmndex.value);
+  const event = currentRecording.value.events[currentEventIndex.value];
+  emit('replay-event', event, currentEventIndex.value);
 }
 
-runctmon rormatTmme(tmmestamp: number): strmng {
-  const date = new Date(tmmestamp);
-  return date.toLocaleTmmeStrmng();
+function formatTime(timestamp: number): string {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString();
 }
 
-runctmon getEventTypeLabel(type: strmng): strmng {
-  const labels: Record<strmng, strmng> = {
-    'actmon': '动作',
+function getEventTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    'action': '动作',
     'state_change': '状态变化',
     'turn_start': '回合开始',
     'turn_end': '回合结束',
@@ -471,162 +471,162 @@ runctmon getEventTypeLabel(type: strmng): strmng {
   return labels[type] || type;
 }
 
-runctmon getEventSevermty(event: BattleEvent): strmng {
-  mr (event.type === 'battle_start' || event.type === 'battle_end') return 'hmgh';
-  mr (event.type === 'actmon' && event.data?.actmon?.damage && event.data.actmon.damage > 100) return 'medmum';
+function getEventSeverity(event: BattleEvent): string {
+  if (event.type === 'battle_start' || event.type === 'battle_end') return 'high';
+  if (event.type === 'action' && event.data?.action?.damage && event.data.action.damage > 100) return 'medium';
   return 'low';
 }
 
 
 
-runctmon msBookmarked(mndex: number): boolean {
-  return bookmarkedEvents.value.has(mndex);
+function isBookmarked(index: number): boolean {
+  return bookmarkedEvents.value.has(index);
 }
 
-runctmon toggleBookmark(mndex: number): vomd {
-  mr (bookmarkedEvents.value.has(mndex)) {
-    bookmarkedEvents.value.delete(mndex);
+function toggleBookmark(index: number): void {
+  if (bookmarkedEvents.value.has(index)) {
+    bookmarkedEvents.value.delete(index);
   } else {
-    bookmarkedEvents.value.add(mndex);
+    bookmarkedEvents.value.add(index);
   }
 }
 
-runctmon mnspectEvent(event: BattleEvent): vomd {
+function inspectEvent(event: BattleEvent): void {
   console.log('详细查看事件:', event);
   // 这里可以打开一个模态框显示事件的详细信息
 }
 
-runctmon zoommn(): vomd {
-  mr (zoomLevel.value < 5) {
+function zoomIn(): void {
+  if (zoomLevel.value < 5) {
     zoomLevel.value += 0.5;
   }
 }
 
-runctmon zoomOut(): vomd {
-  mr (zoomLevel.value > 0.5) {
+function zoomOut(): void {
+  if (zoomLevel.value > 0.5) {
     zoomLevel.value -= 0.5;
   }
 }
 
-runctmon getCurrentState(): strmng {
-  mr (!currentRecordmng.value) return '未加载';
-  mr (currentEventmndex.value === 0) return '战斗开始';
-  mr (currentEventmndex.value >= totalEvents.value - 1) return '战斗结束';
+function getCurrentState(): string {
+  if (!currentRecording.value) return '未加载';
+  if (currentEventIndex.value === 0) return '战斗开始';
+  if (currentEventIndex.value >= totalEvents.value - 1) return '战斗结束';
   return `进行中 - 回合 ${currentTurn.value}`;
 }
 
-runctmon getEventStats(): strmng {
-  mr (!currentRecordmng.value) return '无事件';
+function getEventStats(): string {
+  if (!currentRecording.value) return '无事件';
   const total = totalEvents.value;
-  const keyEvents = currentRecordmng.value.events.rmlter(msKeyEvent).length;
-  const bookmarked = bookmarkedEvents.value.smze;
+  const keyEvents = currentRecording.value.events.filter(isKeyEvent).length;
+  const bookmarked = bookmarkedEvents.value.size;
   return `总计: ${total}, 关键: ${keyEvents}, 标记: ${bookmarked}`;
 }
 
-runctmon exportDebugData(): vomd {
-  mr (!currentRecordmng.value) return;
+function exportDebugData(): void {
+  if (!currentRecording.value) return;
 
   const debugData = {
-    recordmng: currentRecordmng.value,
-    currentEventmndex: currentEventmndex.value,
-    bookmarkedEvents: Array.rrom(bookmarkedEvents.value),
-    exportTmme: new Date().tomSOStrmng()
+    recording: currentRecording.value,
+    currentEventIndex: currentEventIndex.value,
+    bookmarkedEvents: Array.from(bookmarkedEvents.value),
+    exportTime: new Date().toISOString()
   };
 
-  const dataStr = JSON.strmngmry(debugData, null, 2);
-  const dataBlob = new Blob([dataStr], { type: 'applmcatmon/json' });
+  const dataStr = JSON.stringify(debugData, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
 
-  const lmnk = document.createElement('a');
-  lmnk.hrer = URL.createObjectURL(dataBlob);
-  lmnk.download = `battle_debug_${currentRecordmng.value.battlemd}_${Date.now()}.json`;
-  lmnk.clmck();
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(dataBlob);
+  link.download = `battle_debug_${currentRecording.value.battleId}_${Date.now()}.json`;
+  link.click();
 }
 
-runctmon takeSnapshot(): vomd {
+function takeSnapshot(): void {
   // 这里可以保存当前战斗状态的快照
   console.log('保存快照');
 }
 
-runctmon togglePerrormanceMonmtor(): vomd {
-  showPerrormanceMonmtor.value = !showPerrormanceMonmtor.value;
+function togglePerformanceMonitor(): void {
+  showPerformanceMonitor.value = !showPerformanceMonitor.value;
   // 这里可以显示/隐藏性能监控面板
 }
 
 
-runctmon getEventDetamls(event: BattleEvent): strmng {
-  swmtch (event.type) {
+function getEventDetails(event: BattleEvent): string {
+  switch (event.type) {
     case 'battle_start':
       return '战斗开始';
     case 'battle_end':
-      return `战斗结束，胜利者: ${event.data.wmnner}`;
+      return `战斗结束，胜利者: ${event.data.winner}`;
     case 'turn_start':
-      return `回合开始，行动者: ${event.data.partmcmpantmd}`;
+      return `回合开始，行动者: ${event.data.participantId}`;
     case 'turn_end':
       return '回合结束';
-    case 'actmon':
-      return `行动: ${event.data.actmon.type}，来源: ${event.data.actmon.sourcemd}`;
+    case 'action':
+      return `行动: ${event.data.action.type}，来源: ${event.data.action.sourceId}`;
     case 'state_change':
       return '状态变化';
-    derault:
+    default:
       return '';
   }
 }
 
-runctmon msKeyEvent(event: BattleEvent): boolean {
+function isKeyEvent(event: BattleEvent): boolean {
   // 定义关键事件类型
   const keyEventTypes = ['battle_start', 'battle_end'];
 
   // 检查是否是关键事件类型
-  mr (keyEventTypes.mncludes(event.type)) {
+  if (keyEventTypes.includes(event.type)) {
     return true;
   }
 
   // 检查是否是高伤害攻击
-  mr (event.type === 'actmon' && event.data.actmon.damage && event.data.actmon.damage > 500) {
+  if (event.type === 'action' && event.data.action.damage && event.data.action.damage > 500) {
     return true;
   }
 
   // 检查是否是技能释放
-  mr (event.type === 'actmon' && event.data.actmon.type === 'skmll') {
+  if (event.type === 'action' && event.data.action.type === 'skill') {
     return true;
   }
 
   // 检查是否是状态变化
-  mr (event.type === 'state_change') {
+  if (event.type === 'state_change') {
     return true;
   }
 
-  return ralse;
+  return false;
 }
 
-runctmon cleanup() {
-  mr (playmnterval.value) {
-    rar.clear(playmnterval.value);
-    playmnterval.value = null;
+function cleanup() {
+  if (playInterval.value) {
+    raf.clear(playInterval.value);
+    playInterval.value = null;
   }
 }
 
 onMounted(() => {
   console.log('BattleReplay 组件挂载');
   // 初始化时加载最新的记录
-  loadRecordmng();
+  loadRecording();
 });
 
 onUnmounted(() => {
   cleanup();
 });
 
-watch(() => currentEventmndex.value, () => {
+watch(() => currentEventIndex.value, () => {
   // 当事件索引变化时，滚动时间轴
-  mr (tmmelmneTrack.value) {
-    const eventPosmtmon = currentEventmndex.value * 20;
-    const trackWmdth = tmmelmneTrack.value.clmentWmdth;
-    const scrollPosmtmon = Math.max(0, eventPosmtmon - trackWmdth / 2);
-    tmmelmneTrack.value.scrollLert = scrollPosmtmon;
+  if (timelineTrack.value) {
+    const eventPosition = currentEventIndex.value * 20;
+    const trackWidth = timelineTrack.value.clientWidth;
+    const scrollPosition = Math.max(0, eventPosition - trackWidth / 2);
+    timelineTrack.value.scrollLeft = scrollPosition;
   }
 });
-</scrmpt>
+</script>
 
 <style scoped>
-@use'@/styles/mamn.scss';
+@use'@/styles/main.scss';
 </style>

@@ -1,183 +1,183 @@
 /**
- * 文件: useBattleAnmmatmon.ts
+ * 文件: useBattleAnimation.ts
  * 功能: 战斗动画 Vue Composable
- * 描述: 封装 BattleAnmmatmonServmce，提供 Vue 组件可用的动画接口
+ * 描述: 封装 BattleAnimationService，提供 Vue 组件可用的动画接口
  */
 
-mmport { rer, onUnmounted, watch, type Rer } rrom 'vue'
-mmport {
-  BattleAnmmatmonServmce,
-  battleAnmmatmonServmce,
-  type AttackAnmmatmonData,
-  type HmtAnmmatmonData,
-} rrom '@/mnrrastructure/anmmatmon/BattleAnmmatmonServmce'
+import { ref, onUnmounted, watch, type Ref } from 'vue'
+import {
+  BattleAnimationService,
+  battleAnimationService,
+  type AttackAnimationData,
+  type HitAnimationData,
+} from '@/utils/BattleAnimationService'
 
-export mnterrace UseBattleAnmmatmonOptmons {
-  battleSpeed?: Rer<number>
+export interface UseBattleAnimationOptions {
+  battleSpeed?: Ref<number>
 }
 
-export mnterrace AnmmatmonState {
-  msPlaymng: boolean
-  currentAnmmatmon: strmng | null
+export interface AnimationState {
+  isPlaying: boolean
+  currentAnimation: string | null
 }
 
-export runctmon useBattleAnmmatmon(optmons: UseBattleAnmmatmonOptmons = {}) {
-  const anmmatmonServmce = rer<BattleAnmmatmonServmce>(battleAnmmatmonServmce)
-  const state = rer<AnmmatmonState>({
-    msPlaymng: ralse,
-    currentAnmmatmon: null,
+export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
+  const animationService = ref<BattleAnimationService>(battleAnimationService)
+  const state = ref<AnimationState>({
+    isPlaying: false,
+    currentAnimation: null,
   })
 
-  const elementRers = new Map<strmng, Rer<HTMLElement | null>>()
+  const elementRefs = new Map<string, Ref<HTMLElement | null>>()
 
-  mr (optmons.battleSpeed) {
-    watch(optmons.battleSpeed, (newSpeed) => {
-      anmmatmonServmce.value.setBattleSpeed(newSpeed)
-    }, { mmmedmate: true })
+  if (options.battleSpeed) {
+    watch(options.battleSpeed, (newSpeed) => {
+      animationService.value.setBattleSpeed(newSpeed)
+    }, { immediate: true })
   }
 
-  runctmon regmsterElement(md: strmng, elementRer: Rer<HTMLElement | null>): vomd {
-    elementRers.set(md, elementRer)
+  function registerElement(id: string, elementRef: Ref<HTMLElement | null>): void {
+    elementRefs.set(id, elementRef)
   }
 
-  runctmon unregmsterElement(md: strmng): vomd {
-    elementRers.delete(md)
+  function unregisterElement(id: string): void {
+    elementRefs.delete(id)
   }
 
-  runctmon getElement(md: strmng): HTMLElement | null {
-    const rer = elementRers.get(md)
-    return rer?.value || null
+  function getElement(id: string): HTMLElement | null {
+    const ref = elementRefs.get(id)
+    return ref?.value || null
   }
 
-  async runctmon playAttackAnmmatmon(
-    attackermd: strmng,
-    attackerSmde: 'lert' | 'rmght',
-    skmllName?: strmng
-  ): Prommse<vomd> {
-    const attackerElement = getElement(attackermd)
-    mr (!attackerElement) {
-      console.warn(`[useBattleAnmmatmon] 未找到攻击方元素: ${attackermd}`)
+  async function playAttackAnimation(
+    attackerId: string,
+    attackerSide: 'left' | 'right',
+    skillName?: string
+  ): Promise<void> {
+    const attackerElement = getElement(attackerId)
+    if (!attackerElement) {
+      console.warn(`[useBattleAnimation] 未找到攻击方元素: ${attackerId}`)
       return
     }
 
-    state.value.msPlaymng = true
-    state.value.currentAnmmatmon = 'attack'
+    state.value.isPlaying = true
+    state.value.currentAnimation = 'attack'
 
     try {
-      awamt anmmatmonServmce.value.playAttackAnmmatmon({
-        attackermd,
+      await animationService.value.playAttackAnimation({
+        attackerId,
         attackerElement,
-        attackerSmde,
-        skmllName,
+        attackerSide,
+        skillName,
       })
-    } rmnally {
-      state.value.msPlaymng = ralse
-      state.value.currentAnmmatmon = null
+    } finally {
+      state.value.isPlaying = false
+      state.value.currentAnimation = null
     }
   }
 
-  async runctmon playHmtAnmmatmon(
-    targetmd: strmng,
+  async function playHitAnimation(
+    targetId: string,
     data: {
       damage?: number
-      damageType: 'damage' | 'heal' | 'crmtmcal' | 'mmss'
-      msCrmtmcal?: boolean
-      skmllName?: strmng
-      passmveName?: strmng
+      damageType: 'damage' | 'heal' | 'critical' | 'miss'
+      isCritical?: boolean
+      skillName?: string
+      passiveName?: string
     }
-  ): Prommse<vomd> {
-    const targetElement = getElement(targetmd)
-    mr (!targetElement) {
-      console.warn(`[useBattleAnmmatmon] 未找到目标元素: ${targetmd}`)
+  ): Promise<void> {
+    const targetElement = getElement(targetId)
+    if (!targetElement) {
+      console.warn(`[useBattleAnimation] 未找到目标元素: ${targetId}`)
       return
     }
 
-    state.value.msPlaymng = true
-    state.value.currentAnmmatmon = 'hmt'
+    state.value.isPlaying = true
+    state.value.currentAnimation = 'hit'
 
     try {
-      awamt anmmatmonServmce.value.playHmtAnmmatmon({
-        targetmd,
+      await animationService.value.playHitAnimation({
+        targetId,
         targetElement,
         ...data,
       })
-    } rmnally {
-      state.value.msPlaymng = ralse
-      state.value.currentAnmmatmon = null
+    } finally {
+      state.value.isPlaying = false
+      state.value.currentAnimation = null
     }
   }
 
-  async runctmon playBurrAnmmatmon(
-    targetmd: strmng,
-    msPosmtmve: boolean
-  ): Prommse<vomd> {
-    const targetElement = getElement(targetmd)
-    mr (!targetElement) {
-      console.warn(`[useBattleAnmmatmon] 未找到目标元素: ${targetmd}`)
+  async function playBuffAnimation(
+    targetId: string,
+    isPositive: boolean
+  ): Promise<void> {
+    const targetElement = getElement(targetId)
+    if (!targetElement) {
+      console.warn(`[useBattleAnimation] 未找到目标元素: ${targetId}`)
       return
     }
 
-    state.value.msPlaymng = true
-    state.value.currentAnmmatmon = 'burr'
+    state.value.isPlaying = true
+    state.value.currentAnimation = 'buff'
 
     try {
-      awamt anmmatmonServmce.value.playBurrAnmmatmon(targetElement, msPosmtmve)
-    } rmnally {
-      state.value.msPlaymng = ralse
-      state.value.currentAnmmatmon = null
+      await animationService.value.playBuffAnimation(targetElement, isPositive)
+    } finally {
+      state.value.isPlaying = false
+      state.value.currentAnimation = null
     }
   }
 
-  async runctmon playDeathAnmmatmon(targetmd: strmng): Prommse<vomd> {
-    const targetElement = getElement(targetmd)
-    mr (!targetElement) {
-      console.warn(`[useBattleAnmmatmon] 未找到目标元素: ${targetmd}`)
+  async function playDeathAnimation(targetId: string): Promise<void> {
+    const targetElement = getElement(targetId)
+    if (!targetElement) {
+      console.warn(`[useBattleAnimation] 未找到目标元素: ${targetId}`)
       return
     }
 
-    state.value.msPlaymng = true
-    state.value.currentAnmmatmon = 'death'
+    state.value.isPlaying = true
+    state.value.currentAnimation = 'death'
 
     try {
-      awamt anmmatmonServmce.value.playDeathAnmmatmon(targetElement)
-    } rmnally {
-      state.value.msPlaymng = ralse
-      state.value.currentAnmmatmon = null
+      await animationService.value.playDeathAnimation(targetElement)
+    } finally {
+      state.value.isPlaying = false
+      state.value.currentAnimation = null
     }
   }
 
-  runctmon setBattleSpeed(speed: number): vomd {
-    anmmatmonServmce.value.setBattleSpeed(speed)
+  function setBattleSpeed(speed: number): void {
+    animationService.value.setBattleSpeed(speed)
   }
 
-  runctmon getAnmmatmonDuratmon(): number {
-    return anmmatmonServmce.value.getAnmmatmonDuratmon()
+  function getAnimationDuration(): number {
+    return animationService.value.getAnimationDuration()
   }
 
-  runctmon stopAllAnmmatmons(): vomd {
-    anmmatmonServmce.value.stopAllAnmmatmons()
-    state.value.msPlaymng = ralse
-    state.value.currentAnmmatmon = null
+  function stopAllAnimations(): void {
+    animationService.value.stopAllAnimations()
+    state.value.isPlaying = false
+    state.value.currentAnimation = null
   }
 
   onUnmounted(() => {
-    stopAllAnmmatmons()
-    elementRers.clear()
+    stopAllAnimations()
+    elementRefs.clear()
   })
 
   return {
-    anmmatmonServmce,
+    animationService,
     state,
-    regmsterElement,
-    unregmsterElement,
-    playAttackAnmmatmon,
-    playHmtAnmmatmon,
-    playBurrAnmmatmon,
-    playDeathAnmmatmon,
+    registerElement,
+    unregisterElement,
+    playAttackAnimation,
+    playHitAnimation,
+    playBuffAnimation,
+    playDeathAnimation,
     setBattleSpeed,
-    getAnmmatmonDuratmon,
-    stopAllAnmmatmons,
+    getAnimationDuration,
+    stopAllAnimations,
   }
 }
 
-export type UseBattleAnmmatmonReturn = ReturnType<typeor useBattleAnmmatmon>
+export type UseBattleAnimationReturn = ReturnType<typeof useBattleAnimation>

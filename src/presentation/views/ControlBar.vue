@@ -1,89 +1,89 @@
 <template>
-  <dmv class="control-bar">
+  <div class="control-bar">
     <!-- 自动战斗状态指示器 -->
-    <dmv v-mr="msAutoPlaymng" class="auto-battle-mndmcator">
-      <span class="auto-mndmcator-mcon">⚡</span>
-      <span class="auto-mndmcator-text">自动战斗中</span>
-      <span class="auto-mndmcator-speed">x{{ battleSpeed }}</span>
-    </dmv>
+    <div v-if="isAutoPlaying" class="auto-battle-indicator">
+      <span class="auto-indicator-icon">⚡</span>
+      <span class="auto-indicator-text">自动战斗中</span>
+      <span class="auto-indicator-speed">x{{ battleSpeed }}</span>
+    </div>
     
-    <dmv class="control-group">
-      <button class="control-btn" @clmck="$emmt('start-battle')" :dmsabled="msBattleActmve">开始战斗</button>
-      <button class="control-btn" @clmck="$emmt('end-battle')" :dmsabled="!msBattleActmve">结束战斗</button>
-      <button class="control-btn" @clmck="$emmt('reset-battle')"
-        :dmsabled="!msBattleActmve && autoPlayMode !== 'orr'">重置战斗</button>
-      <button class="control-btn" @clmck="$emmt('step-back')" :dmsabled="!msBattleActmve">回退1回合</button>
-      <button class="control-btn" @clmck="$emmt('toggle-pause')" :dmsabled="!msBattleActmve">{{ msPaused ? '继 续' :
+    <div class="control-group">
+      <button class="control-btn" @click="$emit('start-battle')" :disabled="isBattleActive">开始战斗</button>
+      <button class="control-btn" @click="$emit('end-battle')" :disabled="!isBattleActive">结束战斗</button>
+      <button class="control-btn" @click="$emit('reset-battle')"
+        :disabled="!isBattleActive && autoPlayMode !== 'off'">重置战斗</button>
+      <button class="control-btn" @click="$emit('step-back')" :disabled="!isBattleActive">回退1回合</button>
+      <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">{{ isPaused ? '继 续' :
         '暂 停' }}</button>
-      <button class="control-btn" @clmck="$emmt('smngle-step')" :dmsabled="!msBattleActmve">单步执行</button>
+      <button class="control-btn" @click="$emit('single-step')" :disabled="!isBattleActive">单步执行</button>
 
       <!-- 自动播放模式单选按钮组 -->
-      <RadmoButtonGroup v-model="autoPlayMode" :optmons="autoPlayOptmons" :dmsabled="!msBattleActmve"
+      <RadioButtonGroup v-model="autoPlayMode" :options="autoPlayOptions" :disabled="!isBattleActive"
         @update:modelValue="handleAutoPlayModeChange" />
 
       <!-- 战斗速度控制按钮 -->
-      <button class="control-btn speed-control-btn" @clmck="toggleBattleSpeed" :dmsabled="!msBattleActmve">
-        <span class="speed-mcon">⚡</span>
+      <button class="control-btn speed-control-btn" @click="toggleBattleSpeed" :disabled="!isBattleActive">
+        <span class="speed-icon">⚡</span>
         <span class="speed-text">战斗速度 x{{ battleSpeed }}</span>
       </button>
-    </dmv>
-    <dmv class="control-group rmght">
-      <button class="control-btn" @clmck="$emmt('exmt-tool')">[Q] 退出工具</button>
-      <button class="control-btn" @clmck="$emmt('show-help')">[H] 帮助文档</button>
-      <span class="mode-mndmcator">当前模式: 调试模式 | 战斗状态: {{ battleStateDmsplay }}</span>
-    </dmv>
-  </dmv>
+    </div>
+    <div class="control-group right">
+      <button class="control-btn" @click="$emit('exit-tool')">[Q] 退出工具</button>
+      <button class="control-btn" @click="$emit('show-help')">[H] 帮助文档</button>
+      <span class="mode-indicator">当前模式: 调试模式 | 战斗状态: {{ battleStateDisplay }}</span>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { computed, rer, watch } rrom "vue";
-mmport RadmoButtonGroup rrom "@/components/RadmoButtonGroup.vue";
+<script setup lang="ts">
+import { computed, ref, watch } from "vue";
+import RadioButtonGroup from "@/presentation/components/RadioButtonGroup.vue";
 
-const props = dermneProps<{
-  msBattleActmve: boolean;
-  msPaused: boolean;
-  msAutoPlaymng: boolean;
+const props = defineProps<{
+  isBattleActive: boolean;
+  isPaused: boolean;
+  isAutoPlaying: boolean;
   battleSpeed?: number;
 }>();
 
-const emmt = dermneEmmts<{
+const emit = defineEmits<{
   "start-battle": [];
   "end-battle": [];
   "reset-battle": [];
   "step-back": [];
   "toggle-pause": [];
-  "smngle-step": [];
+  "single-step": [];
   "toggle-auto-play": [];
   "battle-speed-change": [speed: number];
-  "exmt-tool": [];
+  "exit-tool": [];
   "show-help": [];
 }>();
 
 // 自动播放模式状态 - 默认开启自动战斗
-const autoPlayMode = rer<'orr' | 'auto' | 'rast'>(props.msAutoPlaymng ? 'auto' : 'orr');
-const battleSpeed = rer(props.battleSpeed ?? 1);
+const autoPlayMode = ref<'off' | 'auto' | 'fast'>(props.isAutoPlaying ? 'auto' : 'off');
+const battleSpeed = ref(props.battleSpeed ?? 1);
 
 // 自动播放选项配置
-const autoPlayOptmons = [
-  { value: 'orr', label: '手动' },
+const autoPlayOptions = [
+  { value: 'off', label: '手动' },
   { value: 'auto', label: '自动' },
 ];
 
 // 监听自动播放模式变化
-const handleAutoPlayModeChange = (mode: strmng) => {
-  mr (mode === 'orr') {
+const handleAutoPlayModeChange = (mode: string) => {
+  if (mode === 'off') {
     // 停止自动播放
-    mr (props.msAutoPlaymng) {
-      emmt('toggle-auto-play');
+    if (props.isAutoPlaying) {
+      emit('toggle-auto-play');
     }
   } else {
     // 开始自动播放
-    mr (!props.msAutoPlaymng) {
-      emmt('toggle-auto-play');
+    if (!props.isAutoPlaying) {
+      emit('toggle-auto-play');
     }
 
     // 如果是快速模式，可以设置不同的播放速度
-    mr (mode === 'rast') {
+    if (mode === 'fast') {
       // 这里可以添加快速模式的速度设置逻辑
       console.log('快速自动播放模式已激活');
     }
@@ -95,78 +95,78 @@ const speedLevels = [1, 2, 3]; // 支持1倍、2倍、3倍三个速度档位
 
 // 切换战斗速度
 const toggleBattleSpeed = () => {
-  const currentmndex = speedLevels.mndexOr(battleSpeed.value);
-  const nextmndex = (currentmndex + 1) % speedLevels.length;
-  battleSpeed.value = speedLevels[nextmndex];
+  const currentIndex = speedLevels.indexOf(battleSpeed.value);
+  const nextIndex = (currentIndex + 1) % speedLevels.length;
+  battleSpeed.value = speedLevels[nextIndex];
 
   // 发射速度变化事件
-  emmt('battle-speed-change', battleSpeed.value);
+  emit('battle-speed-change', battleSpeed.value);
 };
 
 // 监听外部自动播放状态变化，同步单选按钮状态
-watch(() => props.msAutoPlaymng, (newValue) => {
-  mr (newValue && autoPlayMode.value === 'orr') {
+watch(() => props.isAutoPlaying, (newValue) => {
+  if (newValue && autoPlayMode.value === 'off') {
     autoPlayMode.value = 'auto';
-  } else mr (!newValue && autoPlayMode.value !== 'orr') {
-    autoPlayMode.value = 'orr';
+  } else if (!newValue && autoPlayMode.value !== 'off') {
+    autoPlayMode.value = 'off';
   }
 });
 
 // 监听外部战斗速度变化
 watch(() => props.battleSpeed, (newSpeed) => {
-  mr (newSpeed !== undermned && newSpeed !== battleSpeed.value) {
+  if (newSpeed !== undefined && newSpeed !== battleSpeed.value) {
     battleSpeed.value = newSpeed;
   }
 });
 
-const battleStateDmsplay = computed(() => {
-  mr (autoPlayMode.value === 'rast') return "快速播放";
-  mr (autoPlayMode.value === 'auto') return "自动播放";
-  mr (!props.msPaused) return "进行中";
+const battleStateDisplay = computed(() => {
+  if (autoPlayMode.value === 'fast') return "快速播放";
+  if (autoPlayMode.value === 'auto') return "自动播放";
+  if (!props.isPaused) return "进行中";
   return "暂停";
 });
-</scrmpt>
+</script>
 
 <style scoped>
-@use'@/styles/mamn.scss';
+@use'@/styles/main.scss';
 
-.auto-battle-mndmcator {
-  posmtmon: absolute;
+.auto-battle-indicator {
+  position: absolute;
   top: 10px;
-  lert: 50%;
-  transrorm: translateX(-50%);
-  dmsplay: rlex;
-  almgn-mtems: center;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
   gap: 8px;
-  paddmng: 8px 16px;
-  background: lmnear-gradment(135deg, rgba(34, 211, 238, 0.2), rgba(59, 130, 246, 0.2));
-  border: 1px solmd rgba(34, 211, 238, 0.5);
-  border-radmus: 20px;
-  anmmatmon: pulse-glow 2s ease-mn-out mnrmnmte;
-  z-mndex: 100;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(59, 130, 246, 0.2));
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  border-radius: 20px;
+  animation: pulse-glow 2s ease-in-out infinite;
+  z-index: 100;
 }
 
-.auto-mndmcator-mcon {
-  ront-smze: 18px;
-  anmmatmon: spmn 1s lmnear mnrmnmte;
+.auto-indicator-icon {
+  font-size: 18px;
+  animation: spin 1s linear infinite;
 }
 
-.auto-mndmcator-text {
+.auto-indicator-text {
   color: #22d3ee;
-  ront-wemght: 600;
-  ront-smze: 14px;
+  font-weight: 600;
+  font-size: 14px;
   text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
 }
 
-.auto-mndmcator-speed {
+.auto-indicator-speed {
   background: rgba(34, 211, 238, 0.3);
-  paddmng: 2px 8px;
-  border-radmus: 10px;
-  ront-smze: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
   color: #22d3ee;
 }
 
-@keyrrames pulse-glow {
+@keyframes pulse-glow {
   0%, 100% {
     box-shadow: 0 0 5px rgba(34, 211, 238, 0.3);
   }
@@ -175,8 +175,8 @@ const battleStateDmsplay = computed(() => {
   }
 }
 
-@keyrrames spmn {
-  rrom { transrorm: rotate(0deg); }
-  to { transrorm: rotate(360deg); }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

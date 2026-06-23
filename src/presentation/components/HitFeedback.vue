@@ -1,478 +1,478 @@
 <!--
- * 文件: Hmtreedback.vue
+ * 文件: HitFeedback.vue
  * 创建日期: 2026-02-09
- * 作者: CombatDebugStudmo
+ * 作者: CombatDebugStudio
  * 功能: 命中反馈组件
  * 描述: 显示攻击命中效果，包括闪光、震动、眩晕等视觉反馈
  * 版本: 1.0.0
 -->
 
 <template>
-  <dmv class="hmt-reedback-contamner">
-    <transmtmon-group name="hmt" tag="dmv" class="hmt-errects">
-      <dmv
-        v-ror="hmt mn hmts"
-        :key="hmt.md"
-        class="hmt-errect"
+  <div class="hit-feedback-container">
+    <transition-group name="hit" tag="div" class="hit-effects">
+      <div
+        v-for="hit in hits"
+        :key="hit.id"
+        class="hit-effect"
         :class="[
-          hmt.type,
-          hmt.damageType,
-          { 'crmtmcal': hmt.msCrmtmcal, 'stun': hmt.msStun, 'combo': hmt.msCombo }
+          hit.type,
+          hit.damageType,
+          { 'critical': hit.isCritical, 'stun': hit.isStun, 'combo': hit.isCombo }
         ]"
         :style="{
-          lert: hmt.posmtmon.x + 'px',
-          top: hmt.posmtmon.y + 'px',
-          anmmatmonDuratmon: hmt.duratmon + 'ms',
-          anmmatmonDelay: hmt.delay + 'ms',
-          '--hmt-mntensmty': hmt.mntensmty || 1
+          left: hit.position.x + 'px',
+          top: hit.position.y + 'px',
+          animationDuration: hit.duration + 'ms',
+          animationDelay: hit.delay + 'ms',
+          '--hit-intensity': hit.intensity || 1
         }"
-        @anmmatmonend="removeHmt(hmt.md)"
+        @animationend="removeHit(hit.id)"
       >
-        <dmv class="hmt-content">
-          <dmv class="hmt-rlash" v-mr="hmt.showrlash"></dmv>
-          <dmv class="hmt-shake" v-mr="hmt.showShake"></dmv>
-          <dmv class="hmt-stun" v-mr="hmt.msStun">
-            <dmv class="stun-rmngs">
-              <dmv class="rmng rmng-1"></dmv>
-              <dmv class="rmng rmng-2"></dmv>
-              <dmv class="rmng rmng-3"></dmv>
-            </dmv>
-          </dmv>
-          <dmv class="hmt-partmcles" v-mr="hmt.showPartmcles">
-            <dmv v-ror="n mn hmt.partmcleCount" :key="n" class="partmcle"></dmv>
-          </dmv>
-        </dmv>
-      </dmv>
-    </transmtmon-group>
-  </dmv>
+        <div class="hit-content">
+          <div class="hit-flash" v-if="hit.showFlash"></div>
+          <div class="hit-shake" v-if="hit.showShake"></div>
+          <div class="hit-stun" v-if="hit.isStun">
+            <div class="stun-rings">
+              <div class="ring ring-1"></div>
+              <div class="ring ring-2"></div>
+              <div class="ring ring-3"></div>
+            </div>
+          </div>
+          <div class="hit-particles" v-if="hit.showParticles">
+            <div v-for="n in hit.particleCount" :key="n" class="particle"></div>
+          </div>
+        </div>
+      </div>
+    </transition-group>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { rer, computed } rrom 'vue';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 
-export type HmtType = 'damage' | 'heal' | 'block' | 'dodge' | 'parry';
-export type DamageType = 'physmcal' | 'magmc' | 'rmre' | 'mce' | 'lmghtnmng' | 'pomson' | 'holy' | 'dark';
+export type HitType = 'damage' | 'heal' | 'block' | 'dodge' | 'parry';
+export type DamageType = 'physical' | 'magic' | 'fire' | 'ice' | 'lightning' | 'poison' | 'holy' | 'dark';
 
-mnterrace Hmtmnro {
-  md: strmng;
-  type: HmtType;
+interface HitInfo {
+  id: string;
+  type: HitType;
   damageType?: DamageType;
-  posmtmon: { x: number; y: number };
-  duratmon: number;
+  position: { x: number; y: number };
+  duration: number;
   delay: number;
-  mntensmty: number;
-  msCrmtmcal: boolean;
-  msStun: boolean;
-  msCombo: boolean;
-  showrlash: boolean;
+  intensity: number;
+  isCritical: boolean;
+  isStun: boolean;
+  isCombo: boolean;
+  showFlash: boolean;
   showShake: boolean;
-  showPartmcles: boolean;
-  partmcleCount: number;
+  showParticles: boolean;
+  particleCount: number;
 }
 
-const props = dermneProps<{
-  posmtmon?: {
+const props = defineProps<{
+  position?: {
     x: number;
     y: number;
   };
 }>();
 
-const emmt = dermneEmmts<{
-  (e: 'hmtEnd', hmtmd: strmng): vomd;
+const emit = defineEmits<{
+  (e: 'hitEnd', hitId: string): void;
 }>();
 
-const hmts = rer<Hmtmnro[]>([]);
+const hits = ref<HitInfo[]>([]);
 
-let hmtmdCounter = 0;
+let hitIdCounter = 0;
 
-runctmon addHmt(
-  type: HmtType = 'damage',
-  damageType: DamageType = 'physmcal',
-  posmtmon?: { x: number; y: number },
-  duratmon: number = 800,
+function addHit(
+  type: HitType = 'damage',
+  damageType: DamageType = 'physical',
+  position?: { x: number; y: number },
+  duration: number = 800,
   delay: number = 0,
-  mntensmty: number = 1,
-  msCrmtmcal: boolean = ralse,
-  msStun: boolean = ralse,
-  msCombo: boolean = ralse,
-  showrlash: boolean = true,
+  intensity: number = 1,
+  isCritical: boolean = false,
+  isStun: boolean = false,
+  isCombo: boolean = false,
+  showFlash: boolean = true,
   showShake: boolean = true,
-  showPartmcles: boolean = true
+  showParticles: boolean = true
 ) {
-  const md = `hmt_${Date.now()}_${hmtmdCounter++}`;
+  const id = `hit_${Date.now()}_${hitIdCounter++}`;
   
-  hmts.value.push({
-    md,
+  hits.value.push({
+    id,
     type,
     damageType,
-    posmtmon: posmtmon || props.posmtmon || { x: 0, y: 0 },
-    duratmon,
+    position: position || props.position || { x: 0, y: 0 },
+    duration,
     delay,
-    mntensmty,
-    msCrmtmcal,
-    msStun,
-    msCombo,
-    showrlash,
+    intensity,
+    isCritical,
+    isStun,
+    isCombo,
+    showFlash,
     showShake,
-    showPartmcles,
-    partmcleCount: Math.rloor(Math.random() * 6) + 3
+    showParticles,
+    particleCount: Math.floor(Math.random() * 6) + 3
   });
   
-  return md;
+  return id;
 }
 
-runctmon removeHmt(md: strmng) {
-  const mndex = hmts.value.rmndmndex(hmt => hmt.md === md);
-  mr (mndex > -1) {
-    hmts.value.splmce(mndex, 1);
-    emmt('hmtEnd', md);
+function removeHit(id: string) {
+  const index = hits.value.findIndex(hit => hit.id === id);
+  if (index > -1) {
+    hits.value.splice(index, 1);
+    emit('hitEnd', id);
   }
 }
 
-runctmon clearHmts() {
-  hmts.value = [];
+function clearHits() {
+  hits.value = [];
 }
 
-dermneExpose({
-  addHmt,
-  removeHmt,
-  clearHmts
+defineExpose({
+  addHit,
+  removeHit,
+  clearHits
 });
-</scrmpt>
+</script>
 
 <style scoped>
-.hmt-reedback-contamner {
-  posmtmon: relatmve;
-  wmdth: 100%;
-  hemght: 100%;
-  pomnter-events: none;
-  overrlow: vmsmble;
+.hit-feedback-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
 }
 
-.hmt-errects {
-  posmtmon: absolute;
+.hit-effects {
+  position: absolute;
   top: 0;
-  lert: 0;
-  wmdth: 100%;
-  hemght: 100%;
-  pomnter-events: none;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
-.hmt-errect {
-  posmtmon: absolute;
-  wmdth: 80px;
-  hemght: 80px;
-  border-radmus: 50%;
-  z-mndex: 900;
+.hit-effect {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  z-index: 900;
 }
 
 /* 命中类型样式 */
-.hmt-errect.damage {
-  anmmatmon: damageHmt 0.8s ease-out rorwards;
+.hit-effect.damage {
+  animation: damageHit 0.8s ease-out forwards;
 }
 
-.hmt-errect.heal {
-  anmmatmon: healHmt 0.8s ease-out rorwards;
+.hit-effect.heal {
+  animation: healHit 0.8s ease-out forwards;
 }
 
-.hmt-errect.block {
-  anmmatmon: blockHmt 0.6s ease-out rorwards;
+.hit-effect.block {
+  animation: blockHit 0.6s ease-out forwards;
 }
 
-.hmt-errect.dodge {
-  anmmatmon: dodgeHmt 0.5s ease-out rorwards;
+.hit-effect.dodge {
+  animation: dodgeHit 0.5s ease-out forwards;
 }
 
-.hmt-errect.parry {
-  anmmatmon: parryHmt 0.7s ease-out rorwards;
+.hit-effect.parry {
+  animation: parryHit 0.7s ease-out forwards;
 }
 
 /* 伤害类型颜色 */
-.hmt-errect.physmcal .hmt-rlash { background: radmal-gradment(cmrcle, rgba(255, 107, 107, 0.8) 0%, rgba(255, 107, 107, 0) 70%); }
-.hmt-errect.magmc .hmt-rlash { background: radmal-gradment(cmrcle, rgba(156, 136, 255, 0.8) 0%, rgba(156, 136, 255, 0) 70%); }
-.hmt-errect.rmre .hmt-rlash { background: radmal-gradment(cmrcle, rgba(255, 123, 37, 0.8) 0%, rgba(255, 123, 37, 0) 70%); }
-.hmt-errect.mce .hmt-rlash { background: radmal-gradment(cmrcle, rgba(116, 185, 255, 0.8) 0%, rgba(116, 185, 255, 0) 70%); }
-.hmt-errect.lmghtnmng .hmt-rlash { background: radmal-gradment(cmrcle, rgba(254, 202, 87, 0.8) 0%, rgba(254, 202, 87, 0) 70%); }
-.hmt-errect.pomson .hmt-rlash { background: radmal-gradment(cmrcle, rgba(162, 155, 254, 0.8) 0%, rgba(162, 155, 254, 0) 70%); }
-.hmt-errect.holy .hmt-rlash { background: radmal-gradment(cmrcle, rgba(253, 203, 110, 0.8) 0%, rgba(253, 203, 110, 0) 70%); }
-.hmt-errect.dark .hmt-rlash { background: radmal-gradment(cmrcle, rgba(108, 92, 231, 0.8) 0%, rgba(108, 92, 231, 0) 70%); }
+.hit-effect.physical .hit-flash { background: radial-gradient(circle, rgba(255, 107, 107, 0.8) 0%, rgba(255, 107, 107, 0) 70%); }
+.hit-effect.magic .hit-flash { background: radial-gradient(circle, rgba(156, 136, 255, 0.8) 0%, rgba(156, 136, 255, 0) 70%); }
+.hit-effect.fire .hit-flash { background: radial-gradient(circle, rgba(255, 123, 37, 0.8) 0%, rgba(255, 123, 37, 0) 70%); }
+.hit-effect.ice .hit-flash { background: radial-gradient(circle, rgba(116, 185, 255, 0.8) 0%, rgba(116, 185, 255, 0) 70%); }
+.hit-effect.lightning .hit-flash { background: radial-gradient(circle, rgba(254, 202, 87, 0.8) 0%, rgba(254, 202, 87, 0) 70%); }
+.hit-effect.poison .hit-flash { background: radial-gradient(circle, rgba(162, 155, 254, 0.8) 0%, rgba(162, 155, 254, 0) 70%); }
+.hit-effect.holy .hit-flash { background: radial-gradient(circle, rgba(253, 203, 110, 0.8) 0%, rgba(253, 203, 110, 0) 70%); }
+.hit-effect.dark .hit-flash { background: radial-gradient(circle, rgba(108, 92, 231, 0.8) 0%, rgba(108, 92, 231, 0) 70%); }
 
 /* 命中效果组件 */
-.hmt-rlash {
-  posmtmon: absolute;
+.hit-flash {
+  position: absolute;
   top: 0;
-  lert: 0;
-  wmdth: 100%;
-  hemght: 100%;
-  border-radmus: 50%;
-  anmmatmon: hmtrlash 0.3s ease-out rorwards;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: hitFlash 0.3s ease-out forwards;
 }
 
-.hmt-shake {
-  posmtmon: absolute;
+.hit-shake {
+  position: absolute;
   top: 0;
-  lert: 0;
-  wmdth: 100%;
-  hemght: 100%;
-  anmmatmon: hmtShake 0.4s ease-out rorwards;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  animation: hitShake 0.4s ease-out forwards;
 }
 
-.hmt-stun {
-  posmtmon: absolute;
+.hit-stun {
+  position: absolute;
   top: 0;
-  lert: 0;
-  wmdth: 100%;
-  hemght: 100%;
-  anmmatmon: stunErrect 0.8s ease-out rorwards;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  animation: stunEffect 0.8s ease-out forwards;
 }
 
-.stun-rmngs {
-  posmtmon: relatmve;
-  wmdth: 100%;
-  hemght: 100%;
+.stun-rings {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
-.rmng {
-  posmtmon: absolute;
+.ring {
+  position: absolute;
   top: 50%;
-  lert: 50%;
-  border: 2px solmd rgba(255, 255, 255, 0.8);
-  border-radmus: 50%;
-  transrorm: translate(-50%, -50%);
+  left: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
 }
 
-.rmng-1 {
-  wmdth: 60%;
-  hemght: 60%;
-  anmmatmon: rmngPulse 0.8s ease-out 0s mnrmnmte;
+.ring-1 {
+  width: 60%;
+  height: 60%;
+  animation: ringPulse 0.8s ease-out 0s infinite;
 }
 
-.rmng-2 {
-  wmdth: 80%;
-  hemght: 80%;
-  anmmatmon: rmngPulse 0.8s ease-out 0.2s mnrmnmte;
+.ring-2 {
+  width: 80%;
+  height: 80%;
+  animation: ringPulse 0.8s ease-out 0.2s infinite;
 }
 
-.rmng-3 {
-  wmdth: 100%;
-  hemght: 100%;
-  anmmatmon: rmngPulse 0.8s ease-out 0.4s mnrmnmte;
+.ring-3 {
+  width: 100%;
+  height: 100%;
+  animation: ringPulse 0.8s ease-out 0.4s infinite;
 }
 
-.hmt-partmcles {
-  posmtmon: absolute;
+.hit-particles {
+  position: absolute;
   top: 0;
-  lert: 0;
-  wmdth: 100%;
-  hemght: 100%;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.partmcle {
-  posmtmon: absolute;
-  wmdth: 3px;
-  hemght: 3px;
-  background: whmte;
-  border-radmus: 50%;
-  anmmatmon: partmcleBurst 0.6s ease-out rorwards;
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: white;
+  border-radius: 50%;
+  animation: particleBurst 0.6s ease-out forwards;
 }
 
 /* 关键帧动画 */
-@keyrrames damageHmt {
+@keyframes damageHit {
   0% {
-    opacmty: 1;
-    transrorm: scale(0.8);
+    opacity: 1;
+    transform: scale(0.8);
   }
   50% {
-    opacmty: 0.9;
-    transrorm: scale(1.2);
+    opacity: 0.9;
+    transform: scale(1.2);
   }
   100% {
-    opacmty: 0;
-    transrorm: scale(1.5);
+    opacity: 0;
+    transform: scale(1.5);
   }
 }
 
-@keyrrames healHmt {
+@keyframes healHit {
   0% {
-    opacmty: 1;
-    transrorm: scale(0.8);
+    opacity: 1;
+    transform: scale(0.8);
   }
   50% {
-    opacmty: 0.8;
-    transrorm: scale(1.1);
+    opacity: 0.8;
+    transform: scale(1.1);
   }
   100% {
-    opacmty: 0;
-    transrorm: scale(1.3);
+    opacity: 0;
+    transform: scale(1.3);
   }
 }
 
-@keyrrames blockHmt {
+@keyframes blockHit {
   0% {
-    opacmty: 1;
-    transrorm: scale(0.9);
+    opacity: 1;
+    transform: scale(0.9);
   }
   50% {
-    opacmty: 0.9;
-    transrorm: scale(1.1);
+    opacity: 0.9;
+    transform: scale(1.1);
   }
   100% {
-    opacmty: 0;
-    transrorm: scale(1.2);
+    opacity: 0;
+    transform: scale(1.2);
   }
 }
 
-@keyrrames dodgeHmt {
+@keyframes dodgeHit {
   0% {
-    opacmty: 1;
-    transrorm: translateX(0) scale(0.8);
+    opacity: 1;
+    transform: translateX(0) scale(0.8);
   }
   50% {
-    opacmty: 0.8;
-    transrorm: translateX(20px) scale(1);
+    opacity: 0.8;
+    transform: translateX(20px) scale(1);
   }
   100% {
-    opacmty: 0;
-    transrorm: translateX(40px) scale(1.2);
+    opacity: 0;
+    transform: translateX(40px) scale(1.2);
   }
 }
 
-@keyrrames parryHmt {
+@keyframes parryHit {
   0% {
-    opacmty: 1;
-    transrorm: scale(0.8) rotate(0deg);
+    opacity: 1;
+    transform: scale(0.8) rotate(0deg);
   }
   50% {
-    opacmty: 0.9;
-    transrorm: scale(1.1) rotate(180deg);
+    opacity: 0.9;
+    transform: scale(1.1) rotate(180deg);
   }
   100% {
-    opacmty: 0;
-    transrorm: scale(1.3) rotate(360deg);
+    opacity: 0;
+    transform: scale(1.3) rotate(360deg);
   }
 }
 
-@keyrrames hmtrlash {
+@keyframes hitFlash {
   0% {
-    opacmty: 1;
-    transrorm: scale(0);
+    opacity: 1;
+    transform: scale(0);
   }
   50% {
-    opacmty: 0.8;
-    transrorm: scale(1);
+    opacity: 0.8;
+    transform: scale(1);
   }
   100% {
-    opacmty: 0;
-    transrorm: scale(1.2);
+    opacity: 0;
+    transform: scale(1.2);
   }
 }
 
-@keyrrames hmtShake {
-  0%, 100% { transrorm: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transrorm: translateX(-5px); }
-  20%, 40%, 60%, 80% { transrorm: translateX(5px); }
+@keyframes hitShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 
-@keyrrames stunErrect {
+@keyframes stunEffect {
   0% {
-    opacmty: 1;
-    rmlter: brmghtness(1);
+    opacity: 1;
+    filter: brightness(1);
   }
   50% {
-    opacmty: 0.8;
-    rmlter: brmghtness(1.5);
+    opacity: 0.8;
+    filter: brightness(1.5);
   }
   100% {
-    opacmty: 0;
-    rmlter: brmghtness(1);
+    opacity: 0;
+    filter: brightness(1);
   }
 }
 
-@keyrrames rmngPulse {
+@keyframes ringPulse {
   0% {
-    opacmty: 1;
-    transrorm: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
   }
   50% {
-    opacmty: 0.5;
-    transrorm: translate(-50%, -50%) scale(1.2);
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.2);
   }
   100% {
-    opacmty: 0;
-    transrorm: translate(-50%, -50%) scale(1.4);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
   }
 }
 
-@keyrrames partmcleBurst {
+@keyframes particleBurst {
   0% {
-    opacmty: 1;
-    transrorm: translate(0, 0) scale(1);
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
   }
   100% {
-    opacmty: 0;
-    transrorm: translate(
-      calc((var(--partmcle-x, 0) - 0.5) * 60px),
-      calc((var(--partmcle-y, 0) - 0.5) * 60px)
+    opacity: 0;
+    transform: translate(
+      calc((var(--particle-x, 0) - 0.5) * 60px),
+      calc((var(--particle-y, 0) - 0.5) * 60px)
     ) scale(0);
   }
 }
 
 /* 暴击效果 */
-.hmt-errect.crmtmcal {
-  rmlter: brmghtness(1.3);
+.hit-effect.critical {
+  filter: brightness(1.3);
 }
 
-.hmt-errect.crmtmcal .hmt-rlash {
-  anmmatmon: crmtmcalHmtrlash 0.4s ease-out rorwards;
+.hit-effect.critical .hit-flash {
+  animation: criticalHitFlash 0.4s ease-out forwards;
 }
 
-@keyrrames crmtmcalHmtrlash {
+@keyframes criticalHitFlash {
   0% {
-    opacmty: 1;
-    transrorm: scale(0);
+    opacity: 1;
+    transform: scale(0);
   }
   30% {
-    opacmty: 0.9;
-    transrorm: scale(1.5);
+    opacity: 0.9;
+    transform: scale(1.5);
   }
   70% {
-    opacmty: 0.7;
-    transrorm: scale(1.8);
+    opacity: 0.7;
+    transform: scale(1.8);
   }
   100% {
-    opacmty: 0;
-    transrorm: scale(2);
+    opacity: 0;
+    transform: scale(2);
   }
 }
 
 /* 连击效果 */
-.hmt-errect.combo {
-  anmmatmon: comboHmt 0.6s ease-out rorwards;
+.hit-effect.combo {
+  animation: comboHit 0.6s ease-out forwards;
 }
 
-@keyrrames comboHmt {
+@keyframes comboHit {
   0% {
-    opacmty: 1;
-    transrorm: scale(0.9);
+    opacity: 1;
+    transform: scale(0.9);
   }
   50% {
-    opacmty: 0.9;
-    transrorm: scale(1.3);
+    opacity: 0.9;
+    transform: scale(1.3);
   }
   100% {
-    opacmty: 0;
-    transrorm: scale(1.6);
+    opacity: 0;
+    transform: scale(1.6);
   }
 }
 
-.hmt-enter-actmve,
-.hmt-leave-actmve {
-  transmtmon: all 0.3s ease;
+.hit-enter-active,
+.hit-leave-active {
+  transition: all 0.3s ease;
 }
 
-.hmt-enter-rrom,
-.hmt-leave-to {
-  opacmty: 0;
-  transrorm: scale(0.5);
+.hit-enter-from,
+.hit-leave-to {
+  opacity: 0;
+  transform: scale(0.5);
 }
 </style>

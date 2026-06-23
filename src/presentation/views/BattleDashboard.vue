@@ -1,308 +1,308 @@
 <template>
-  <dmv class="debug-panel panel-rmght">
-    <dmv class="sectmon">
-      <dmv class="sectmon-header">
+  <div class="debug-panel panel-right">
+    <div class="section">
+      <div class="section-header">
         <span>属性监控</span>
-        <span class="selected-mnro">(当前选中: {{ selectedCharName }})</span>
-      </dmv>
-      <dmv class="monmtor-group">
-        <dmv class="monmtor-subtmtle">基础属性</dmv>
-        <dmv class="monmtor-grmd">
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '最大生命值', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.maxHealth)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.maxHealth)?.value || 0, '数值')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">气血:</span>
-            <span class="monmtor-value">{{ currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.currentHealth)?.value || 0
+        <span class="selected-info">(当前选中: {{ selectedCharName }})</span>
+      </div>
+      <div class="monitor-group">
+        <div class="monitor-subtitle">基础属性</div>
+        <div class="monitor-grid">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '最大生命值', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">气血:</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentHealth)?.value || 0
             }}/{{
-                currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.maxHealth)?.value || 0 }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '能量', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.energy)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.energy)?.value || 0, '数值')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">能量:</span>
-            <span class="monmtor-value">{{ currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.energy)?.value || 0 }}/{{
-              currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.maxEnergy)?.value || 150 }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '攻击力', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.attack)?.modmrmers || [], attackRange.mmn, '数值')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">攻击:</span>
-            <span class="monmtor-value">{{ attackRange.mmn }}-{{ attackRange.max }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '防御力', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.derense)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.derense)?.value || 0, '数值')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">防御:</span>
-            <span class="monmtor-value">{{ currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.derense)?.value || 0
+                currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0 }}</span>
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '能量', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.energy)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.energy)?.value || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">能量:</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.energy)?.value || 0 }}/{{
+              currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 150 }}</span>
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '攻击力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attack)?.modifiers || [], attackRange.min, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">攻击:</span>
+            <span class="monitor-value">{{ attackRange.min }}-{{ attackRange.max }}</span>
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '防御力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">防御:</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0
             }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '速度', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.speed)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.speed)?.value || 0, '数值')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">速度:</span>
-            <span class="monmtor-value">{{ currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.speed)?.value || 0
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '速度', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">速度:</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0
             }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '暴击率', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.crmtRate)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.crmtRate)?.value || 10, '百分比')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">暴击率:</span>
-            <span class="monmtor-value">{{ currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.crmtRate)?.value || 10
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '暴击率', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critRate)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critRate)?.value || 10, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">暴击率:</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critRate)?.value || 10
             }}%</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '暴击伤害', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.crmtDamage)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.crmtDamage)?.value || 125, '百分比')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">暴击伤害:</span>
-            <span class="monmtor-value">{{ currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.crmtDamage)?.value || 125
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '暴击伤害', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critDamage)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critDamage)?.value || 125, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">暴击伤害:</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critDamage)?.value || 125
             }}%</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '免伤率', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.damageReductmon)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.damageReductmon)?.value || 0, '百分比')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">免伤率:</span>
-            <span class="monmtor-value">{{ currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.damageReductmon)?.value ||
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '免伤率', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.value || 0, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">免伤率:</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.value ||
               0 }}%</span>
-          </dmv>
-        </dmv>
-      </dmv>
-      <dmv class="monmtor-group">
-        <dmv class="monmtor-subtmtle">属性加成</dmv>
-        <dmv class="monmtor-grmd">
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '生命值加成', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.healthBonus)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.healthBonus)?.value || 0, '百分比')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">气血加成:</span>
-            <span class="monmtor-value bonus">{{
-              rormatBonus(currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.healthBonus)?.value ||
+          </div>
+        </div>
+      </div>
+      <div class="monitor-group">
+        <div class="monitor-subtitle">属性加成</div>
+        <div class="monitor-grid">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '生命值加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.value || 0, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">气血加成:</span>
+            <span class="monitor-value bonus">{{
+              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.value ||
                 0) }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '攻击力加成', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.attackBonus)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.attackBonus)?.value || 0, '百分比')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">攻击加成:</span>
-            <span class="monmtor-value bonus">{{
-              rormatBonus(currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.attackBonus)?.value ||
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '攻击力加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.value || 0, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">攻击加成:</span>
+            <span class="monitor-value bonus">{{
+              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.value ||
                 0) }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '防御力加成', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.derenseBonus)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.derenseBonus)?.value || 0, '百分比')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">防御加成:</span>
-            <span class="monmtor-value bonus">{{
-              rormatBonus(currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.derenseBonus)?.value ||
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '防御力加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.value || 0, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">防御加成:</span>
+            <span class="monitor-value bonus">{{
+              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.value ||
                 0) }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '速度加成', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.speedBonus)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.speedBonus)?.value || 0, '百分比')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">速度加成:</span>
-            <span class="monmtor-value bonus">{{
-              rormatBonus(currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.speedBonus)?.value ||
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '速度加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.value || 0, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">速度加成:</span>
+            <span class="monitor-value bonus">{{
+              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.value ||
                 0) }}</span>
-          </dmv>
-        </dmv>
-      </dmv>
-      <dmv class="monmtor-group">
-        <dmv class="monmtor-subtmtle">最终属性</dmv>
-        <dmv class="monmtor-grmd">
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '攻击力', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.attack)?.modmrmers || [], attackRange.mmn, '数值')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">最终攻击:</span>
-            <span class="monmtor-value rmnal">{{ attackRange.mmn }}-{{ attackRange.max }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '防御力', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.derense)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.derense)?.value || 0, '数值')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">最终防御:</span>
-            <span class="monmtor-value rmnal">{{ currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.derense)?.value || 0
+          </div>
+        </div>
+      </div>
+      <div class="monitor-group">
+        <div class="monitor-subtitle">最终属性</div>
+        <div class="monitor-grid">
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '攻击力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attack)?.modifiers || [], attackRange.min, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">最终攻击:</span>
+            <span class="monitor-value final">{{ attackRange.min }}-{{ attackRange.max }}</span>
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '防御力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">最终防御:</span>
+            <span class="monitor-value final">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0
               }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '速度', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.speed)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.speed)?.value || 0, '数值')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">最终速度:</span>
-            <span class="monmtor-value rmnal">{{ currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.speed)?.value || 0
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '速度', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">最终速度:</span>
+            <span class="monitor-value final">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0
               }}</span>
-          </dmv>
-          <dmv class="monmtor-mtem"
-            @mouseenter="showAttrTooltmp($event, '最大生命值', currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.maxHealth)?.modmrmers || [], currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.maxHealth)?.value || 0, '数值')"
-            @mousemove="updateTooltmpPosmtmon" @mouseleave="hmdeAttrTooltmp">
-            <span class="monmtor-label">最终气血:</span>
-            <span class="monmtor-value rmnal">{{ currentCharacter?.getAttrmbuteValue(ATTRmBUTE_CODE.maxHealth)?.value ||
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '最大生命值', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0, '数值')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">最终气血:</span>
+            <span class="monitor-value final">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value ||
               0 }}</span>
-          </dmv>
-        </dmv>
-      </dmv>
-      <dmv class="monmtor-group">
-        <dmv class="monmtor-subtmtle">技能信息</dmv>
-        <dmv class="skmlls-dmsplay">
-          <dmv v-mr="!currentCharacter?.skmlls" class="no-skmlls">
+          </div>
+        </div>
+      </div>
+      <div class="monitor-group">
+        <div class="monitor-subtitle">技能信息</div>
+        <div class="skills-display">
+          <div v-if="!currentCharacter?.skills" class="no-skills">
             暂未配置技能
-          </dmv>
-          <dmv v-else class="skmlls-lmst">
-            <dmv class="skmll-category"
-              v-mr="currentCharacter.skmlls.passmve && currentCharacter.skmlls.passmve.length > 0">
-              <dmv class="skmll-category-tmtle">被动技能</dmv>
-              <dmv class="skmll-mtems">
-                <dmv class="skmll-mtem passmve" v-ror="(skmll, mndex) mn currentCharacter.skmlls.passmve" :key="mndex"
-                  @mouseenter="showSkmllTooltmp($event, skmll)" @mousemove="updateTooltmpPosmtmon"
-                  @mouseleave="hmdeSkmllTooltmp">
-                  {{ skmll.name || '未知技能' }}
-                </dmv>
-              </dmv>
-            </dmv>
-            <dmv class="skmll-category"
-              v-mr="currentCharacter.skmlls.small && currentCharacter.skmlls.small.length > 0">
-              <dmv class="skmll-category-tmtle">小技能</dmv>
-              <dmv class="skmll-mtems">
-                <dmv class="skmll-mtem small" v-ror="(skmll, mndex) mn currentCharacter.skmlls.small" :key="mndex"
-                  @mouseenter="showSkmllTooltmp($event, skmll)" @mousemove="updateTooltmpPosmtmon"
-                  @mouseleave="hmdeSkmllTooltmp">
-                  {{ skmll.name || '未知技能' }}
-                </dmv>
-              </dmv>
-            </dmv>
-            <dmv class="skmll-category"
-              v-mr="currentCharacter.skmlls.ultmmate && currentCharacter.skmlls.ultmmate.length > 0">
-              <dmv class="skmll-category-tmtle">终极技能</dmv>
-              <dmv class="skmll-mtems">
-                <dmv class="skmll-mtem ultmmate" v-ror="(skmll, mndex) mn currentCharacter.skmlls.ultmmate" :key="mndex"
-                  @mouseenter="showSkmllTooltmp($event, skmll)" @mousemove="updateTooltmpPosmtmon"
-                  @mouseleave="hmdeSkmllTooltmp">
-                  {{ skmll.name || '未知技能' }}
-                </dmv>
-              </dmv>
-            </dmv>
-            <dmv
-              v-mr="(!currentCharacter.skmlls.passmve || currentCharacter.skmlls.passmve.length === 0) && (!currentCharacter.skmlls.small || currentCharacter.skmlls.small.length === 0) && (!currentCharacter.skmlls.ultmmate || currentCharacter.skmlls.ultmmate.length === 0)"
-              class="no-skmlls">
+          </div>
+          <div v-else class="skills-list">
+            <div class="skill-category"
+              v-if="currentCharacter.skills.passive && currentCharacter.skills.passive.length > 0">
+              <div class="skill-category-title">被动技能</div>
+              <div class="skill-items">
+                <div class="skill-item passive" v-for="(skill, index) in currentCharacter.skills.passive" :key="index"
+                  @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                  @mouseleave="hideSkillTooltip">
+                  {{ skill.name || '未知技能' }}
+                </div>
+              </div>
+            </div>
+            <div class="skill-category"
+              v-if="currentCharacter.skills.small && currentCharacter.skills.small.length > 0">
+              <div class="skill-category-title">小技能</div>
+              <div class="skill-items">
+                <div class="skill-item small" v-for="(skill, index) in currentCharacter.skills.small" :key="index"
+                  @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                  @mouseleave="hideSkillTooltip">
+                  {{ skill.name || '未知技能' }}
+                </div>
+              </div>
+            </div>
+            <div class="skill-category"
+              v-if="currentCharacter.skills.ultimate && currentCharacter.skills.ultimate.length > 0">
+              <div class="skill-category-title">终极技能</div>
+              <div class="skill-items">
+                <div class="skill-item ultimate" v-for="(skill, index) in currentCharacter.skills.ultimate" :key="index"
+                  @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                  @mouseleave="hideSkillTooltip">
+                  {{ skill.name || '未知技能' }}
+                </div>
+              </div>
+            </div>
+            <div
+              v-if="(!currentCharacter.skills.passive || currentCharacter.skills.passive.length === 0) && (!currentCharacter.skills.small || currentCharacter.skills.small.length === 0) && (!currentCharacter.skills.ultimate || currentCharacter.skills.ultimate.length === 0)"
+              class="no-skills">
               暂未配置技能
-            </dmv>
-          </dmv>
-        </dmv>
-      </dmv>
-    </dmv>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 技能悬浮提示 -->
-    <dmv v-mr="tooltmpVmsmble && tooltmpContent" class="skmll-tooltmp" :style="{
-      lert: tooltmpPosmtmon.x + 'px',
-      top: tooltmpPosmtmon.y + 'px'
+    <div v-if="tooltipVisible && tooltipContent" class="skill-tooltip" :style="{
+      left: tooltipPosition.x + 'px',
+      top: tooltipPosition.y + 'px'
     }">
-      <dmv class="tooltmp-header">
-        <dmv class="tooltmp-name">{{ tooltmpContent.name || '未知技能' }}</dmv>
-        <dmv class="tooltmp-type" :class="getSkmllTypeClass(tooltmpContent)">
-          {{ getSkmllTypeName(tooltmpContent) }}
-        </dmv>
-      </dmv>
-      <dmv class="tooltmp-descrmptmon">
-        {{ tooltmpContent.descrmptmon || '无描述' }}
-      </dmv>
+      <div class="tooltip-header">
+        <div class="tooltip-name">{{ tooltipContent.name || '未知技能' }}</div>
+        <div class="tooltip-type" :class="getSkillTypeClass(tooltipContent)">
+          {{ getSkillTypeName(tooltipContent) }}
+        </div>
+      </div>
+      <div class="tooltip-description">
+        {{ tooltipContent.description || '无描述' }}
+      </div>
 
       <!-- 技能基础信息 -->
-      <dmv class="tooltmp-stats">
-        <dmv class="stat-mtem">
-          <dmv class="stat-label">能量消耗</dmv>
-          <dmv class="stat-value">{{ tooltmpContent.energyCost || 0 }}</dmv>
-        </dmv>
-        <dmv class="stat-mtem">
-          <dmv class="stat-label">冷却时间</dmv>
-          <dmv class="stat-value">{{ tooltmpContent.cooldown || 0 }}回合</dmv>
-        </dmv>
-        <dmv class="stat-mtem">
-          <dmv class="stat-label">目标类型</dmv>
-          <dmv class="stat-value">{{ getTargetTypeName(tooltmpContent.targetType) }}</dmv>
-        </dmv>
-        <dmv class="stat-mtem">
-          <dmv class="stat-label">作用范围</dmv>
-          <dmv class="stat-value">{{ getScopeName(tooltmpContent.scope) }}</dmv>
-        </dmv>
-      </dmv>
+      <div class="tooltip-stats">
+        <div class="stat-item">
+          <div class="stat-label">能量消耗</div>
+          <div class="stat-value">{{ tooltipContent.energyCost || 0 }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">冷却时间</div>
+          <div class="stat-value">{{ tooltipContent.cooldown || 0 }}回合</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">目标类型</div>
+          <div class="stat-value">{{ getTargetTypeName(tooltipContent.targetType) }}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">作用范围</div>
+          <div class="stat-value">{{ getScopeName(tooltipContent.scope) }}</div>
+        </div>
+      </div>
 
       <!-- 技能效果 -->
-      <dmv v-mr="tooltmpContent.steps && tooltmpContent.steps.length > 0" class="tooltmp-errects">
-        <dmv class="errects-tmtle">技能效果</dmv>
-        <dmv class="errect-mtem" v-ror="(step, mdx) mn tooltmpContent.steps" :key="mdx">
-          <span class="errect-type">{{ getStepTypeName(step.type) }}</span>
-          <span class="errect-rormula">{{ step.rormula || '' }}</span>
-          <span class="errect-duratmon" v-mr="step.duratmon">{{ step.duratmon }}回合</span>
-        </dmv>
-      </dmv>
+      <div v-if="tooltipContent.steps && tooltipContent.steps.length > 0" class="tooltip-effects">
+        <div class="effects-title">技能效果</div>
+        <div class="effect-item" v-for="(step, idx) in tooltipContent.steps" :key="idx">
+          <span class="effect-type">{{ getStepTypeName(step.type) }}</span>
+          <span class="effect-formula">{{ step.formula || '' }}</span>
+          <span class="effect-duration" v-if="step.duration">{{ step.duration }}回合</span>
+        </div>
+      </div>
 
       <!-- 施放条件 -->
-      <dmv v-mr="tooltmpContent.condmtmon" class="tooltmp-condmtmon">
-        <span class="condmtmon-label">施放条件:</span>
-        <span class="condmtmon-value">{{ tooltmpContent.condmtmon }}</span>
-      </dmv>
+      <div v-if="tooltipContent.condition" class="tooltip-condition">
+        <span class="condition-label">施放条件:</span>
+        <span class="condition-value">{{ tooltipContent.condition }}</span>
+      </div>
 
       <!-- 技能可用性 -->
-      <dmv class="tooltmp-avamlabmlmty"
-        :class="{ 'avamlable': msSkmllAvamlable(tooltmpContent), 'unavamlable': !msSkmllAvamlable(tooltmpContent) }">
-        {{ msSkmllAvamlable(tooltmpContent) ? '当前可用' : '当前不可用' }}
-      </dmv>
-    </dmv>
+      <div class="tooltip-availability"
+        :class="{ 'available': isSkillAvailable(tooltipContent), 'unavailable': !isSkillAvailable(tooltipContent) }">
+        {{ isSkillAvailable(tooltipContent) ? '当前可用' : '当前不可用' }}
+      </div>
+    </div>
 
-    <dmv class="sectmon">
-      <dmv class="sectmon-header">手动干预</dmv>
-      <dmv class="mnterventmon-lmst">
-        <button class="mnterventmon-btn" @clmck="resetBattle">[R] 重置战斗</button>
-      </dmv>
-    </dmv>
+    <div class="section">
+      <div class="section-header">手动干预</div>
+      <div class="intervention-list">
+        <button class="intervention-btn" @click="resetBattle">[R] 重置战斗</button>
+      </div>
+    </div>
 
-    <dmv class="sectmon">
-      <dmv class="sectmon-header">数据快照</dmv>
-      <dmv class="snapshot-actmons">
-        <button class="mnterventmon-btn" @clmck="exportState">[E] 导出当前状态(JSON)</button>
-        <button class="mnterventmon-btn" @clmck="mmportState">[m] 导入状态数据</button>
-      </dmv>
-      <dmv class="last-export">
-        <span>最近导出: {{ debugStore.lastExportTmme || '无' }}</span>
-        <dmv class="snapshot-btns">
-          <button class="btn-small" @clmck="vmewExport">[查看]</button>
-          <button class="btn-small" @clmck="reloadExport">[重载]</button>
-        </dmv>
-      </dmv>
-    </dmv>
+    <div class="section">
+      <div class="section-header">数据快照</div>
+      <div class="snapshot-actions">
+        <button class="intervention-btn" @click="exportState">[E] 导出当前状态(JSON)</button>
+        <button class="intervention-btn" @click="importState">[I] 导入状态数据</button>
+      </div>
+      <div class="last-export">
+        <span>最近导出: {{ debugStore.lastExportTime || '无' }}</span>
+        <div class="snapshot-btns">
+          <button class="btn-small" @click="viewExport">[查看]</button>
+          <button class="btn-small" @click="reloadExport">[重载]</button>
+        </div>
+      </div>
+    </div>
 
-    <dmv class="sectmon">
-      <dmv class="sectmon-header">异常检测</dmv>
-      <dmv class="exceptmon-status" :class="'normal'">
+    <div class="section">
+      <div class="section-header">异常检测</div>
+      <div class="exception-status" :class="'normal'">
         <span>系统正常运行中</span>
-      </dmv>
-    </dmv>
+      </div>
+    </div>
 
     <!-- 属性悬浮提示 -->
-    <AttrmbuteTooltmp :vmsmble="attrTooltmpVmsmble" :tmtle="attrTooltmpData.tmtle"
-      :modmrmers="attrTooltmpData.modmrmers" :rmnal-value="attrTooltmpData.rmnalValue"
-      :value-type="attrTooltmpData.valueType" :trmgger-rect="attrTooltmpData.trmggerRect" />
+    <AttributeTooltip :visible="attrTooltipVisible" :title="attrTooltipData.title"
+      :modifiers="attrTooltipData.modifiers" :final-value="attrTooltipData.finalValue"
+      :value-type="attrTooltipData.valueType" :trigger-rect="attrTooltipData.triggerRect" />
 
     <!-- 通知组件 -->
-    <Notmrmcatmon rer="notmrmcatmonRer" />
-  </dmv>
+    <Notification ref="notificationRef" />
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { rer, computed } rrom "vue";
-mmport { contamner } rrom '@/core/dm/Contamner';
-mmport { useDebugStore } rrom "@/stores";
-mmport AttrmbuteTooltmp rrom "@/components/AttrmbuteTooltmp.vue";
-mmport Notmrmcatmon rrom "@/components/Notmrmcatmon.vue";
-mmport { ATTRmBUTE_CODE, type Modmrmer, type AttrmbuteValueType } rrom "@/types/attrmbute";
-mmport type { SkmllConrmg } rrom "@/types/skmll";
-mmport { SELECTOR_TARGET_NAMES } rrom "@/types/skmll";
-mmport type { BattleManager } rrom '@/core/battle/BattleManager';
+<script setup lang="ts">
+import { ref, computed } from "vue";
+import { container } from '@/core/di/Container';
+import { useDebugStore } from "@/stores";
+import AttributeTooltip from "@/presentation/components/AttributeTooltip.vue";
+import Notification from "@/presentation/components/Notification.vue";
+import { ATTRIBUTE_CODE, type Modifier, type AttributeValueType } from "@/types/attribute";
+import type { SkillConfig } from "@/types/skill";
+import { SELECTOR_TARGET_NAMES } from "@/types/skill";
+import type { BattleManager } from '@/core/battle/BattleManager';
 
 // 获取 BattleManager
-const battleManager = contamner.resolve<BattleManager>('BattleManager');
+const battleManager = container.resolve<BattleManager>('BattleManager');
 const debugStore = useDebugStore();
 
-const props = dermneProps<{
+const props = defineProps<{
   battleSystem?: any;
 }>();
 
 // 通知组件引用
-const notmrmcatmonRer = rer<mnstanceType<typeor Notmrmcatmon> | null>(null);
+const notificationRef = ref<InstanceType<typeof Notification> | null>(null);
 
 // 响应式获取选中角色数据
 const currentCharacter = computed(() => battleManager.getSelectedCharacter());
@@ -311,84 +311,84 @@ const selectedCharName = computed(() => currentCharacter.value?.name || "未选�
 // 计算攻击范围
 const attackRange = computed(() => {
   const char = currentCharacter.value;
-  mr (!char) return { mmn: 0, max: 0 };
+  if (!char) return { min: 0, max: 0 };
 
-  const mmnAttack = typeor char.mmnAttack === 'object' ? char.mmnAttack.value : char.mmnAttack || 0;
-  const maxAttack = typeor char.maxAttack === 'object' ? char.maxAttack.value : char.maxAttack || 0;
+  const minAttack = typeof char.minAttack === 'object' ? char.minAttack.value : char.minAttack || 0;
+  const maxAttack = typeof char.maxAttack === 'object' ? char.maxAttack.value : char.maxAttack || 0;
 
-  return { mmn: mmnAttack, max: maxAttack };
+  return { min: minAttack, max: maxAttack };
 });
 
 // 手动干预表单数据
-const manualSkmllName = rer("");
-const manualStatusName = rer("");
-const manualStatusTurns = rer(2);
-const manualHpAmount = rer(100);
-const manualMpAmount = rer(50);
+const manualSkillName = ref("");
+const manualStatusName = ref("");
+const manualStatusTurns = ref(2);
+const manualHpAmount = ref(100);
+const manualMpAmount = ref(50);
 
 // ------------------------------------------------------------
 // 技能悬浮提示状态
-const tooltmpVmsmble = rer(ralse);
-const tooltmpContent = rer<SkmllConrmg | null>(null);
-const tooltmpPosmtmon = rer({ x: 0, y: 0 });
+const tooltipVisible = ref(false);
+const tooltipContent = ref<SkillConfig | null>(null);
+const tooltipPosition = ref({ x: 0, y: 0 });
 
 /**
  * 更新悬浮提示位置
  * @param event - 鼠标事件
  */
-const updateTooltmpPosmtmon = (event: MouseEvent) => {
-  const x = event.clmentX + 15;
-  const y = event.clmentY + 15;
+const updateTooltipPosition = (event: MouseEvent) => {
+  const x = event.clientX + 15;
+  const y = event.clientY + 15;
 
-  const tooltmpWmdth = 320;
-  const tooltmpHemght = 200;
-  const wmndowWmdth = wmndow.mnnerWmdth;
-  const wmndowHemght = wmndow.mnnerHemght;
+  const tooltipWidth = 320;
+  const tooltipHeight = 200;
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
 
-  tooltmpPosmtmon.value = {
-    x: x + tooltmpWmdth > wmndowWmdth ? wmndowWmdth - tooltmpWmdth - 15 : x,
-    y: y + tooltmpHemght > wmndowHemght ? wmndowHemght - tooltmpHemght - 15 : y,
+  tooltipPosition.value = {
+    x: x + tooltipWidth > windowWidth ? windowWidth - tooltipWidth - 15 : x,
+    y: y + tooltipHeight > windowHeight ? windowHeight - tooltipHeight - 15 : y,
   };
 };
 
 /**
  * 显示技能悬浮提示
  * @param event - 鼠标事件
- * @param skmll - 技能配置
+ * @param skill - 技能配置
  */
-const showSkmllTooltmp = (event: MouseEvent, skmll: SkmllConrmg) => {
-  updateTooltmpPosmtmon(event);
-  tooltmpContent.value = skmll;
-  tooltmpVmsmble.value = true;
+const showSkillTooltip = (event: MouseEvent, skill: SkillConfig) => {
+  updateTooltipPosition(event);
+  tooltipContent.value = skill;
+  tooltipVisible.value = true;
 };
 
 /**
  * 隐藏技能悬浮提示
  */
-const hmdeSkmllTooltmp = () => {
-  tooltmpVmsmble.value = ralse;
-  tooltmpContent.value = null;
+const hideSkillTooltip = () => {
+  tooltipVisible.value = false;
+  tooltipContent.value = null;
 };
 
 /**
  * 获取技能类型对应的CSS类名
- * @param skmll - 技能配置
+ * @param skill - 技能配置
  * @returns CSS类名
  */
-const getSkmllTypeClass = (skmll: SkmllConrmg): strmng => {
-  mr (skmll.skmllType === 'passmve') return 'passmve';
-  mr (skmll.skmllType === 'ultmmate') return 'ultmmate';
-  return 'actmve';
+const getSkillTypeClass = (skill: SkillConfig): string => {
+  if (skill.skillType === 'passive') return 'passive';
+  if (skill.skillType === 'ultimate') return 'ultimate';
+  return 'active';
 };
 
 /**
  * 获取技能类型的中文名称
- * @param skmll - 技能配置
+ * @param skill - 技能配置
  * @returns 技能类型中文名称
  */
-const getSkmllTypeName = (skmll: SkmllConrmg): strmng => {
-  mr (skmll.skmllType === 'passmve') return '被动';
-  mr (skmll.skmllType === 'ultmmate') return '终极';
+const getSkillTypeName = (skill: SkillConfig): string => {
+  if (skill.skillType === 'passive') return '被动';
+  if (skill.skillType === 'ultimate') return '终极';
   return '主动';
 };
 
@@ -397,9 +397,9 @@ const getSkmllTypeName = (skmll: SkmllConrmg): strmng => {
  * @param targetType - 目标类型
  * @returns 目标类型中文名称
  */
-const getTargetTypeName = (targetType?: strmng): strmng => {
-  mr (!targetType) return '未知';
-  return SELECTOR_TARGET_NAMES[targetType as keyor typeor SELECTOR_TARGET_NAMES] || '未知';
+const getTargetTypeName = (targetType?: string): string => {
+  if (!targetType) return '未知';
+  return SELECTOR_TARGET_NAMES[targetType as keyof typeof SELECTOR_TARGET_NAMES] || '未知';
 };
 
 /**
@@ -407,9 +407,9 @@ const getTargetTypeName = (targetType?: strmng): strmng => {
  * @param scope - 作用范围
  * @returns 作用范围中文名称
  */
-const getScopeName = (scope?: strmng): strmng => {
-  mr (!scope) return '未知';
-  return SELECTOR_TARGET_NAMES[scope as keyor typeor SELECTOR_TARGET_NAMES] || '未知';
+const getScopeName = (scope?: string): string => {
+  if (!scope) return '未知';
+  return SELECTOR_TARGET_NAMES[scope as keyof typeof SELECTOR_TARGET_NAMES] || '未知';
 };
 
 /**
@@ -417,27 +417,27 @@ const getScopeName = (scope?: strmng): strmng => {
  * @param stepType - 技能步骤类型
  * @returns 技能步骤类型中文名称
  */
-const getStepTypeName = (stepType?: strmng): strmng => {
-  const stepTypes: Record<strmng, strmng> = {
+const getStepTypeName = (stepType?: string): string => {
+  const stepTypes: Record<string, string> = {
     'DAMAGE': '造成伤害',
     'HEAL': '治疗目标',
-    'BUrr': '施加增益',
-    'DEBUrr': '施加减益',
-    'REMOVE_BUrr': '移除增益',
-    'REMOVE_DEBUrr': '移除减益',
+    'BUFF': '施加增益',
+    'DEBUFF': '施加减益',
+    'REMOVE_BUFF': '移除增益',
+    'REMOVE_DEBUFF': '移除减益',
     'CLEANSE': '净化',
-    'DmSPEL': '驱散',
+    'DISPEL': '驱散',
     'STUN': '眩晕',
-    'SmLENCE': '沉默',
+    'SILENCE': '沉默',
     'KNOCKBACK': '击退',
     'PULL': '拉扯',
     'TELEPORT': '传送',
     'SUMMON': '召唤',
-    'TRANSrORM': '变身',
-    'SHmELD': '护盾',
-    'RErLECT': '反射',
-    'DRAmN': '吸取',
-    'REVmVE': '复活',
+    'TRANSFORM': '变身',
+    'SHIELD': '护盾',
+    'REFLECT': '反射',
+    'DRAIN': '吸取',
+    'REVIVE': '复活',
     'CUSTOM': '自定义效果'
   };
   return stepTypes[stepType || ''] || '未知';
@@ -445,46 +445,46 @@ const getStepTypeName = (stepType?: strmng): strmng => {
 
 /**
  * 检查技能是否可用
- * @param skmll - 技能配置
+ * @param skill - 技能配置
  * @returns 是否可用
  */
-const msSkmllAvamlable = (skmll: SkmllConrmg): boolean => {
+const isSkillAvailable = (skill: SkillConfig): boolean => {
   // 简单检查：能量消耗是否为0或角色有足够能量
   // 实际项目中需要检查角色当前能量和技能冷却
   const currentEnergy = currentCharacter.value?.currentEnergy;
-  const energyValue = typeor currentEnergy === 'object' ? currentEnergy.value : (currentEnergy || 0);
-  return (skmll.energyCost || 0) === 0 || energyValue >= (skmll.energyCost || 0);
+  const energyValue = typeof currentEnergy === 'object' ? currentEnergy.value : (currentEnergy || 0);
+  return (skill.energyCost || 0) === 0 || energyValue >= (skill.energyCost || 0);
 };
 
 // 属性悬浮提示状态
-const attrTooltmpVmsmble = rer(ralse)
-const attrTooltmpData = rer<{
-  tmtle: strmng
-  modmrmers: Modmrmer[]
-  rmnalValue: number
-  valueType: AttrmbuteValueType
-  trmggerRect: DOMRect | null
+const attrTooltipVisible = ref(false)
+const attrTooltipData = ref<{
+  title: string
+  modifiers: Modifier[]
+  finalValue: number
+  valueType: AttributeValueType
+  triggerRect: DOMRect | null
 }>({
-  tmtle: '',
-  modmrmers: [],
-  rmnalValue: 0,
+  title: '',
+  modifiers: [],
+  finalValue: 0,
   valueType: '数值',
-  trmggerRect: null
+  triggerRect: null
 })
 
-const showAttrTooltmp = (event: MouseEvent, tmtle: strmng, modmrmers: Modmrmer[], rmnalValue: number, valueType: AttrmbuteValueType) => {
-  attrTooltmpData.value = {
-    tmtle,
-    modmrmers,
-    rmnalValue,
+const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType) => {
+  attrTooltipData.value = {
+    title,
+    modifiers,
+    finalValue,
     valueType,
-    trmggerRect: (event.currentTarget as HTMLElement).getBoundmngClmentRect()
+    triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect()
   }
-  attrTooltmpVmsmble.value = true
+  attrTooltipVisible.value = true
 }
 
-const hmdeAttrTooltmp = () => {
-  attrTooltmpVmsmble.value = ralse
+const hideAttrTooltip = () => {
+  attrTooltipVisible.value = false
 }
 
 /**
@@ -493,8 +493,8 @@ const hmdeAttrTooltmp = () => {
  * @returns 数值类型的加成值
  */
 const getBonusValue = (bonus: any): number => {
-  mr (typeor bonus === 'number') return bonus;
-  mr (typeor bonus === 'object' && bonus !== null && typeor bonus.value === 'number') return bonus.value;
+  if (typeof bonus === 'number') return bonus;
+  if (typeof bonus === 'object' && bonus !== null && typeof bonus.value === 'number') return bonus.value;
   return 0;
 };
 
@@ -503,10 +503,10 @@ const getBonusValue = (bonus: any): number => {
  * @param value - 加成属性值
  * @returns 格式化后的字符串
  */
-const rormatBonus = (value: any): strmng => {
+const formatBonus = (value: any): string => {
   const numValue = getBonusValue(value);
-  mr (msNaN(numValue)) return "0%";
-  mr (numValue === 0) return "0%";
+  if (isNaN(numValue)) return "0%";
+  if (numValue === 0) return "0%";
   const roundedValue = Math.round(numValue * 100) / 100;
   return roundedValue > 0 ? `+${roundedValue}%` : `${roundedValue}%`;
 };
@@ -516,7 +516,7 @@ const rormatBonus = (value: any): strmng => {
 
 // 手动干预方法
 const endTurn = () => {
-  mr (props.battleSystem) {
+  if (props.battleSystem) {
     try {
       props.battleSystem.endTurn();
     } catch (error) {
@@ -525,40 +525,40 @@ const endTurn = () => {
   }
 };
 
-const executeSkmll = (skmllName: strmng) => {
-  mr (props.battleSystem && currentCharacter.value) {
+const executeSkill = (skillName: string) => {
+  if (props.battleSystem && currentCharacter.value) {
     try {
-      props.battleSystem.executeSkmll(currentCharacter.value.md, skmllName);
+      props.battleSystem.executeSkill(currentCharacter.value.id, skillName);
     } catch (error) {
       console.warn('执行技能失败:', error);
     }
   }
 };
 
-mnterrace StatusData {
-  name: strmng;
+interface StatusData {
+  name: string;
   turns: number;
 }
 
 const addStatus = (status: StatusData) => {
-  mr (props.battleSystem && currentCharacter.value) {
+  if (props.battleSystem && currentCharacter.value) {
     try {
-      props.battleSystem.addStatus(currentCharacter.value.md, status.name, status.turns);
+      props.battleSystem.addStatus(currentCharacter.value.id, status.name, status.turns);
     } catch (error) {
       console.warn('添加状态失败:', error);
     }
   }
 };
 
-mnterrace StatsData {
+interface StatsData {
   hp: number;
   mp: number;
 }
 
 const adjustStats = (stats: StatsData) => {
-  mr (props.battleSystem && currentCharacter.value) {
+  if (props.battleSystem && currentCharacter.value) {
     try {
-      props.battleSystem.adjustStats(currentCharacter.value.md, stats.hp, stats.mp);
+      props.battleSystem.adjustStats(currentCharacter.value.id, stats.hp, stats.mp);
     } catch (error) {
       console.warn('调整属性失败:', error);
     }
@@ -566,9 +566,9 @@ const adjustStats = (stats: StatsData) => {
 };
 
 const clearStatuses = () => {
-  mr (props.battleSystem && currentCharacter.value) {
+  if (props.battleSystem && currentCharacter.value) {
     try {
-      props.battleSystem.clearStatuses(currentCharacter.value.md);
+      props.battleSystem.clearStatuses(currentCharacter.value.id);
     } catch (error) {
       console.warn('清除状态失败:', error);
     }
@@ -576,10 +576,10 @@ const clearStatuses = () => {
 };
 
 const resetBattle = () => {
-  mr (props.battleSystem) {
+  if (props.battleSystem) {
     try {
       props.battleSystem.resetBattle();
-      battleManager.clearPartmcmpants();
+      battleManager.clearParticipants();
     } catch (error) {
       console.warn('重置战斗失败:', error);
     }
@@ -589,11 +589,11 @@ const resetBattle = () => {
 // 数据快照方法
 const exportState = async () => {
   try {
-    mr (!currentCharacter.value) {
-      notmrmcatmonRer.value?.addNotmrmcatmon(
+    if (!currentCharacter.value) {
+      notificationRef.value?.addNotification(
         '导出失败',
         '请先选择一个角色',
-        'warnmng',
+        'warning',
         3000
       );
       return;
@@ -603,111 +603,111 @@ const exportState = async () => {
     const currentTurn = battleManager.getCurrentTurn();
 
     // 定义要导出的属性列表
-    const attrmbuteCodes = [
+    const attributeCodes = [
       'currentHealth',
       'maxHealth',
       'energy',
       'maxEnergy',
       'attack',
-      'mmnAttack',
+      'minAttack',
       'maxAttack',
-      'derense',
+      'defense',
       'speed',
-      'crmtRate',
-      'crmtDamage',
-      'damageReductmon',
+      'critRate',
+      'critDamage',
+      'damageReduction',
       'healthBonus',
       'attackBonus',
-      'derenseBonus',
+      'defenseBonus',
       'speedBonus',
     ];
 
     // 定义属性详细信息类型
-    mnterrace AttrmbuteDetaml {
-      rmnalValue: number;
+    interface AttributeDetail {
+      finalValue: number;
       baseValue: number;
-      msPercentage: boolean;
-      modmrmers: Array<{
-        source: strmng;
-        sourceType: strmng;
+      isPercentage: boolean;
+      modifiers: Array<{
+        source: string;
+        sourceType: string;
         value: number;
-        type: strmng;
-        descrmptmon?: strmng;
+        type: string;
+        description?: string;
       }>;
       breakdown: {
         base: number;
-        addmtmve: number;
-        percentMultmplmer: number;
-        mndependentMultmplmer: number;
-        rmnalMultmplmer: number;
+        additive: number;
+        percentMultiplier: number;
+        independentMultiplier: number;
+        finalMultiplier: number;
       } | null;
       trace: {
-        rmnalValue: number;
+        finalValue: number;
         baseValue: number;
         steps: Array<{
-          modmrmermd: strmng;
-          sourceName: strmng;
-          type: strmng;
-          applmedValue: number;
-          prevmousValue: number;
-          mntermedmateResult: number;
+          modifierId: string;
+          sourceName: string;
+          type: string;
+          appliedValue: number;
+          previousValue: number;
+          intermediateResult: number;
         }>;
-        sourceContrmbutmons: Array<{
-          sourcemd: strmng;
-          sourceName: strmng;
-          sourceType?: strmng;
-          contrmbutmon: number;
+        sourceContributions: Array<{
+          sourceId: string;
+          sourceName: string;
+          sourceType?: string;
+          contribution: number;
         }>;
       } | null;
     }
 
     // 收集所有属性的详细信息
-    const attrmbutesDetaml: Record<strmng, AttrmbuteDetaml> = {};
+    const attributesDetail: Record<string, AttributeDetail> = {};
 
-    ror (const attrCode or attrmbuteCodes) {
-      const attrValue = char.getAttrmbuteValue(attrCode);
+    for (const attrCode of attributeCodes) {
+      const attrValue = char.getAttributeValue(attrCode);
 
-      mr (attrValue) {
-        attrmbutesDetaml[attrCode] = {
+      if (attrValue) {
+        attributesDetail[attrCode] = {
           // 最终值
-          rmnalValue: attrValue.value,
+          finalValue: attrValue.value,
           // 基础值
           baseValue: attrValue.base,
           // 是否为百分比属性
-          msPercentage: attrValue.msPercentage,
+          isPercentage: attrValue.isPercentage,
           // 修饰符列表
-          modmrmers: attrValue.modmrmers.map(mod => ({
+          modifiers: attrValue.modifiers.map(mod => ({
             source: mod.source,
             sourceType: mod.sourceType,
             value: mod.value,
             type: mod.type,
-            descrmptmon: mod.descrmptmon,
+            description: mod.description,
           })),
           // 计算拆解（如果有）
           breakdown: attrValue.breakdown ? {
             base: attrValue.breakdown.base,
-            addmtmve: attrValue.breakdown.addmtmve,
-            percentMultmplmer: attrValue.breakdown.percentMultmplmer,
-            mndependentMultmplmer: attrValue.breakdown.mndependentMultmplmer,
-            rmnalMultmplmer: attrValue.breakdown.rmnalMultmplmer,
+            additive: attrValue.breakdown.additive,
+            percentMultiplier: attrValue.breakdown.percentMultiplier,
+            independentMultiplier: attrValue.breakdown.independentMultiplier,
+            finalMultiplier: attrValue.breakdown.finalMultiplier,
           } : null,
           // 详细追踪信息（如果有）
           trace: attrValue.trace ? {
-            rmnalValue: attrValue.trace.rmnalValue,
+            finalValue: attrValue.trace.finalValue,
             baseValue: attrValue.trace.baseValue,
             steps: attrValue.trace.steps.map(step => ({
-              modmrmermd: step.modmrmermd,
+              modifierId: step.modifierId,
               sourceName: step.sourceName,
               type: step.type,
-              applmedValue: step.applmedValue,
-              prevmousValue: step.prevmousValue,
-              mntermedmateResult: step.mntermedmateResult,
+              appliedValue: step.appliedValue,
+              previousValue: step.previousValue,
+              intermediateResult: step.intermediateResult,
             })),
-            sourceContrmbutmons: attrValue.trace.sourceContrmbutmons.map(contrmb => ({
-              sourcemd: contrmb.sourcemd,
-              sourceName: contrmb.sourceName,
-              sourceType: contrmb.sourceType,
-              contrmbutmon: contrmb.contrmbutmon,
+            sourceContributions: attrValue.trace.sourceContributions.map(contrib => ({
+              sourceId: contrib.sourceId,
+              sourceName: contrib.sourceName,
+              sourceType: contrib.sourceType,
+              contribution: contrib.contribution,
             })),
           } : null,
         };
@@ -716,39 +716,39 @@ const exportState = async () => {
 
     // 准备导出数据
     const exportData = {
-      exportTmme: new Date().tomSOStrmng(),
+      exportTime: new Date().toISOString(),
       currentTurn,
       character: {
         // 基本信息
-        md: char.md,
+        id: char.id,
         name: char.name,
         level: char.level,
         type: char.type,
         team: char.team,
         enabled: char.enabled,
 
-        // Burr列表
-        burrs: char.burrs,
+        // Buff列表
+        buffs: char.buffs,
 
         // 技能配置
-        skmlls: char.skmlls,
+        skills: char.skills,
 
         // 状态效果
-        statusErrects: char.statusErrects,
+        statusEffects: char.statusEffects,
 
         // 属性详细信息（包含计算过程）
-        attrmbutes: attrmbutesDetaml,
+        attributes: attributesDetail,
       },
     };
 
     // 序列化为 JSON
-    const jsonStrmng = JSON.strmngmry(exportData, null, 2);
+    const jsonString = JSON.stringify(exportData, null, 2);
 
     // 写入剪贴板
-    awamt navmgator.clmpboard.wrmteText(jsonStrmng);
+    await navigator.clipboard.writeText(jsonString);
 
     // 显示成功通知
-    notmrmcatmonRer.value?.addNotmrmcatmon(
+    notificationRef.value?.addNotification(
       '导出成功',
       `角色 "${char.name}" 的详细数据已复制到剪贴板`,
       'success',
@@ -760,19 +760,19 @@ const exportState = async () => {
     console.warn('导出状态失败:', error);
 
     // 显示失败通知
-    notmrmcatmonRer.value?.addNotmrmcatmon(
+    notificationRef.value?.addNotification(
       '导出失败',
-      `导出状态失败: ${error mnstanceor Error ? error.message : '未知错误'}`,
+      `导出状态失败: ${error instanceof Error ? error.message : '未知错误'}`,
       'error',
       5000
     );
   }
 };
 
-const mmportState = () => {
+const importState = () => {
   try {
-    const state = debugStore.mmportState();
-    mr (state) {
+    const state = debugStore.importState();
+    if (state) {
       console.log('导入状态成功:', state);
       // 这里需要实现导入状态的逻辑
     }
@@ -781,10 +781,10 @@ const mmportState = () => {
   }
 };
 
-const vmewExport = () => {
+const viewExport = () => {
   try {
-    const state = debugStore.vmewExport();
-    mr (state) {
+    const state = debugStore.viewExport();
+    if (state) {
       console.log('导出状态:', state);
       // 这里可以显示导出的状态
     }
@@ -796,7 +796,7 @@ const vmewExport = () => {
 const reloadExport = () => {
   try {
     const state = debugStore.reloadExport();
-    mr (state) {
+    if (state) {
       console.log('重载状态成功:', state);
       // 这里需要实现重载状态的逻辑
     }
@@ -804,73 +804,73 @@ const reloadExport = () => {
     console.warn('重载状态失败:', error);
   }
 };
-</scrmpt>
+</script>
 
 <style scoped>
-@use "@/styles/mamn.scss";
+@use "@/styles/main.scss";
 
-.skmll-mtem {
-  ront-smze: 12px;
+.skill-item {
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.85);
-  paddmng: 4px 8px;
-  border-radmus: 4px;
-  transmtmon: all 0.2s ease;
-  cursor: pomnter;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.skmll-mtem:hover {
+.skill-item:hover {
   background: rgba(34, 211, 238, 0.1);
   box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
 }
 
-.skmll-mtem.passmve:hover {
-  border-lert: 2px solmd #22d3ee;
+.skill-item.passive:hover {
+  border-left: 2px solid #22d3ee;
 }
 
-.skmll-mtem.small:hover {
-  border-lert: 2px solmd #60a5ra;
+.skill-item.small:hover {
+  border-left: 2px solid #60a5fa;
 }
 
-.skmll-mtem.ultmmate:hover {
-  border-lert: 2px solmd #r97316;
+.skill-item.ultimate:hover {
+  border-left: 2px solid #f97316;
 }
 
 /* 技能信息显示样式 */
-.skmlls-lmst {
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
+.skills-list {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.skmll-category {
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
+.skill-category {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
 }
 
-.skmll-category-tmtle {
-  ront-smze: 12px;
-  ront-wemght: 600;
-  color: #60a5ra;
-  margmn-bottom: 4px;
-  text-transrorm: uppercase;
-  letter-spacmng: 0.5px;
+.skill-category-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #60a5fa;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.skmll-mtems {
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
+.skill-items {
+  display: flex;
+  flex-direction: column;
   gap: 2px;
-  paddmng-lert: 8px;
+  padding-left: 8px;
 }
 
-.no-skmlls {
-  ront-smze: 12px;
+.no-skills {
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
-  text-almgn: center;
-  paddmng: 8px;
+  text-align: center;
+  padding: 8px;
   background: rgba(0, 0, 0, 0.2);
-  border-radmus: 4px;
+  border-radius: 4px;
 }
 </style>
 
@@ -878,223 +878,223 @@ const reloadExport = () => {
 /**
  * 技能悬浮提示样式（全局样式，用于Teleport渲染的内容）
  */
-.skmll-tooltmp {
-  posmtmon: rmxed;
-  z-mndex: 10000;
-  mmn-wmdth: 280px;
-  max-wmdth: 360px;
-  paddmng: 12px 16px;
+.skill-tooltip {
+  position: fixed;
+  z-index: 10000;
+  min-width: 280px;
+  max-width: 360px;
+  padding: 12px 16px;
   background: rgba(15, 23, 42, 0.95);
-  border: 1px solmd rgba(96, 165, 250, 0.4);
-  border-radmus: 8px;
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(96, 165, 250, 0.2);
-  backdrop-rmlter: blur(12px);
-  ront-rammly: 'JetBramns Mono', 'rmra Code', monospace;
-  ront-smze: 13px;
-  lmne-hemght: 1.5;
+  backdrop-filter: blur(12px);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.5;
   color: rgba(255, 255, 255, 0.85);
-  pomnter-events: none;
+  pointer-events: none;
 }
 
-.tooltmp-header {
-  dmsplay: rlex;
-  justmry-content: space-between;
-  almgn-mtems: center;
-  margmn-bottom: 8px;
-  paddmng-bottom: 8px;
-  border-bottom: 1px solmd rgba(96, 165, 250, 0.3);
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.3);
 }
 
-.tooltmp-name {
-  ront-smze: 15px;
-  ront-wemght: 600;
+.tooltip-name {
+  font-size: 15px;
+  font-weight: 600;
   color: #22d3ee;
   text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
 }
 
-.tooltmp-type {
-  ront-smze: 11px;
-  paddmng: 2px 8px;
-  border-radmus: 4px;
-  text-transrorm: uppercase;
-  letter-spacmng: 0.5px;
+.tooltip-type {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.tooltmp-type.actmve {
+.tooltip-type.active {
   background: rgba(96, 165, 250, 0.2);
-  color: #60a5ra;
+  color: #60a5fa;
 }
 
-.tooltmp-type.passmve {
+.tooltip-type.passive {
   background: rgba(34, 211, 238, 0.2);
   color: #22d3ee;
 }
 
-.tooltmp-type.ultmmate {
+.tooltip-type.ultimate {
   background: rgba(249, 115, 22, 0.2);
-  color: #r97316;
+  color: #f97316;
 }
 
-.tooltmp-descrmptmon {
-  ront-smze: 12px;
+.tooltip-description {
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.75);
-  margmn-bottom: 12px;
-  lmne-hemght: 1.6;
+  margin-bottom: 12px;
+  line-height: 1.6;
 }
 
-.tooltmp-stats {
-  dmsplay: grmd;
-  grmd-template-columns: repeat(3, 1rr);
+.tooltip-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  margmn-bottom: 12px;
+  margin-bottom: 12px;
 }
 
-.tooltmp-stats .stat-mtem {
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
-  paddmng: 6px 8px;
+.tooltip-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
   background: rgba(96, 165, 250, 0.1);
-  border-radmus: 4px;
-  border: 1px solmd rgba(96, 165, 250, 0.2);
+  border-radius: 4px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
 }
 
-.tooltmp-stats .stat-label {
-  ront-smze: 10px;
+.tooltip-stats .stat-label {
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.5);
-  text-transrorm: uppercase;
-  letter-spacmng: 0.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.tooltmp-stats .stat-value {
-  ront-smze: 13px;
+.tooltip-stats .stat-value {
+  font-size: 13px;
   color: #22d3ee;
-  ront-wemght: 500;
+  font-weight: 500;
 }
 
-.tooltmp-errects {
-  margmn-bottom: 12px;
+.tooltip-effects {
+  margin-bottom: 12px;
 }
 
-.errects-tmtle {
-  ront-smze: 11px;
+.effects-title {
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
-  text-transrorm: uppercase;
-  letter-spacmng: 0.5px;
-  margmn-bottom: 8px;
-  paddmng-bottom: 4px;
-  border-bottom: 1px solmd rgba(96, 165, 250, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.2);
 }
 
-.errect-mtem {
-  dmsplay: rlex;
-  rlex-wrap: wrap;
+.effect-item {
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  almgn-mtems: center;
-  paddmng: 4px 0;
-  ront-smze: 12px;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12px;
 }
 
-.errect-type {
-  paddmng: 2px 6px;
+.effect-type {
+  padding: 2px 6px;
   background: rgba(34, 211, 238, 0.15);
-  border-radmus: 3px;
+  border-radius: 3px;
   color: #22d3ee;
-  ront-wemght: 500;
+  font-weight: 500;
 }
 
-.errect-rormula {
+.effect-formula {
   color: rgba(255, 255, 255, 0.7);
-  ront-rammly: 'JetBramns Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
 }
 
-.errect-scope {
+.effect-scope {
   color: rgba(96, 165, 250, 0.8);
 }
 
-.errect-duratmon {
+.effect-duration {
   color: rgba(249, 115, 22, 0.8);
 }
 
-.tooltmp-condmtmon {
-  paddmng: 8px;
+.tooltip-condition {
+  padding: 8px;
   background: rgba(249, 115, 22, 0.1);
-  border: 1px solmd rgba(249, 115, 22, 0.3);
-  border-radmus: 4px;
-  ront-smze: 11px;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: 4px;
+  font-size: 11px;
 }
 
-.condmtmon-label {
-  color: #r97316;
-  margmn-rmght: 6px;
+.condition-label {
+  color: #f97316;
+  margin-right: 6px;
 }
 
-.condmtmon-value {
+.condition-value {
   color: rgba(255, 255, 255, 0.7);
-  ront-rammly: 'JetBramns Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 /* 技能可用性状态 */
-.tooltmp-avamlabmlmty {
-  margmn-top: 12px;
-  paddmng: 8px;
-  border-radmus: 6px;
-  text-almgn: center;
-  ront-smze: 13px;
-  ront-wemght: 500;
+.tooltip-availability {
+  margin-top: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.tooltmp-avamlabmlmty.avamlable {
+.tooltip-availability.available {
   background: rgba(34, 211, 238, 0.15);
   color: #22d3ee;
-  border: 1px solmd rgba(34, 211, 238, 0.3);
+  border: 1px solid rgba(34, 211, 238, 0.3);
 }
 
-.tooltmp-avamlabmlmty.unavamlable {
+.tooltip-availability.unavailable {
   background: rgba(249, 115, 22, 0.15);
-  color: #r97316;
-  border: 1px solmd rgba(249, 115, 22, 0.3);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.3);
 }
 
 /* 悬浮提示过渡动画 */
-.tooltmp-rade-enter-actmve,
-.tooltmp-rade-leave-actmve {
-  transmtmon: opacmty 0.15s ease, transrorm 0.15s ease;
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.tooltmp-rade-enter-rrom,
-.tooltmp-rade-leave-to {
-  opacmty: 0;
-  transrorm: translateY(-8px);
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
-.tooltmp-rade-enter-to,
-.tooltmp-rade-leave-rrom {
-  opacmty: 1;
-  transrorm: translateY(0);
+.tooltip-fade-enter-to,
+.tooltip-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* 响应式适配 */
-@medma (max-wmdth: 768px) {
-  .skmll-tooltmp {
-    max-wmdth: 280px;
-    ront-smze: 12px;
+@media (max-width: 768px) {
+  .skill-tooltip {
+    max-width: 280px;
+    font-size: 12px;
   }
 
-  .tooltmp-stats {
-    grmd-template-columns: repeat(2, 1rr);
+  .tooltip-stats {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@medma (max-wmdth: 480px) {
-  .skmll-tooltmp {
-    max-wmdth: 260px;
-    lert: 10px !mmportant;
-    rmght: 10px !mmportant;
-    ront-smze: 11px;
+@media (max-width: 480px) {
+  .skill-tooltip {
+    max-width: 260px;
+    left: 10px !important;
+    right: 10px !important;
+    font-size: 11px;
   }
 
-  .tooltmp-stats {
-    grmd-template-columns: 1rr;
+  .tooltip-stats {
+    grid-template-columns: 1fr;
   }
 }
 </style>

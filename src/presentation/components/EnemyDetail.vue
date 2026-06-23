@@ -1,142 +1,142 @@
 <!--
- * 文件: EnemyDetaml.vue
+ * 文件: EnemyDetail.vue
  * 创建日期: 2026-03-07
- * 作者: CombatDebugStudmo
+ * 作者: CombatDebugStudio
  * 功能: 敌人图鉴详情展示组件
  * 描述: 显示敌人的属性面板、技能展示区和背景故事
  * 版本: 1.0.0
 -->
 
 <template>
-  <dmv class="enemy-detaml">
-    <dmv class="enemy-header">
-      <dmv class="enemy-tmtle">
+  <div class="enemy-detail">
+    <div class="enemy-header">
+      <div class="enemy-title">
         <h2>{{ enemy.name }} <span class="enemy-level">Lv.{{ enemy.level }}</span></h2>
-      </dmv>
-    </dmv>
+      </div>
+    </div>
 
-    <dmv class="enemy-stats-panel">
-      <dmv class="monmtor-subtmtle">基础属性</dmv>
-      <dmv class="monmtor-grmd">
-        <dmv class="monmtor-mtem">
-          <span class="monmtor-label">气血</span>
-          <span class="monmtor-value">{{ enemy.stats.maxHealth }}</span>
-        </dmv>
-        <dmv class="monmtor-mtem">
-          <span class="monmtor-label">攻击</span>
-          <span class="monmtor-value">{{ enemy.stats.mmnAttack }}-{{ enemy.stats.maxAttack }}</span>
-        </dmv>
-        <dmv class="monmtor-mtem">
-          <span class="monmtor-label">防御</span>
-          <span class="monmtor-value">{{ enemy.stats.derense }}</span>
-        </dmv>
-        <dmv class="monmtor-mtem">
-          <span class="monmtor-label">速度</span>
-          <span class="monmtor-value">{{ enemy.stats.speed }}</span>
-        </dmv>
-        <dmv class="monmtor-mtem">
-          <span class="monmtor-label">暴击率</span>
-          <span class="monmtor-value">{{ enemy.stats.crmtRate || 10 }}%</span>
-        </dmv>
-        <dmv class="monmtor-mtem">
-          <span class="monmtor-label">暴击伤害</span>
-          <span class="monmtor-value">{{ enemy.stats.crmtDamage || 125 }}%</span>
-        </dmv>
-      </dmv>
-    </dmv>
+    <div class="enemy-stats-panel">
+      <div class="monitor-subtitle">基础属性</div>
+      <div class="monitor-grid">
+        <div class="monitor-item">
+          <span class="monitor-label">气血</span>
+          <span class="monitor-value">{{ enemy.stats.maxHealth }}</span>
+        </div>
+        <div class="monitor-item">
+          <span class="monitor-label">攻击</span>
+          <span class="monitor-value">{{ enemy.stats.minAttack }}-{{ enemy.stats.maxAttack }}</span>
+        </div>
+        <div class="monitor-item">
+          <span class="monitor-label">防御</span>
+          <span class="monitor-value">{{ enemy.stats.defense }}</span>
+        </div>
+        <div class="monitor-item">
+          <span class="monitor-label">速度</span>
+          <span class="monitor-value">{{ enemy.stats.speed }}</span>
+        </div>
+        <div class="monitor-item">
+          <span class="monitor-label">暴击率</span>
+          <span class="monitor-value">{{ enemy.stats.critRate || 10 }}%</span>
+        </div>
+        <div class="monitor-item">
+          <span class="monitor-label">暴击伤害</span>
+          <span class="monitor-value">{{ enemy.stats.critDamage || 125 }}%</span>
+        </div>
+      </div>
+    </div>
 
-    <dmv class="enemy-skmlls-panel">
-      <dmv class="monmtor-subtmtle">技能展示</dmv>
-      <dmv v-mr="skmlls.length === 0" class="empty-skmlls">
+    <div class="enemy-skills-panel">
+      <div class="monitor-subtitle">技能展示</div>
+      <div v-if="skills.length === 0" class="empty-skills">
         <span>暂无技能</span>
-      </dmv>
-      <dmv v-else class="skmlls-contamner">
-        <dmv v-ror="skmll mn skmlls" :key="skmll.md" class="skmll-card">
-          <dmv class="skmll-header">
-            <span class="skmll-name">{{ skmll.name }}</span>
-            <dmv class="skmll-meta">
-              <span v-mr="skmll.category === 'passmve'" class="skmll-tag passmve">被动</span>
-              <span v-else-mr="skmll.category === 'ultmmate'" class="skmll-tag ultmmate">大招</span>
-              <span v-mr="skmll.energyCost > 0" class="skmll-cost">消耗: {{ skmll.energyCost }}能量</span>
-            </dmv>
-          </dmv>
-          <dmv class="skmll-body">
-            <p class="skmll-descrmptmon">{{ skmll.descrmptmon }}</p>
-            <dmv v-mr="skmll.selector" class="skmll-selector">
+      </div>
+      <div v-else class="skills-container">
+        <div v-for="skill in skills" :key="skill.id" class="skill-card">
+          <div class="skill-header">
+            <span class="skill-name">{{ skill.name }}</span>
+            <div class="skill-meta">
+              <span v-if="skill.category === 'passive'" class="skill-tag passive">被动</span>
+              <span v-else-if="skill.category === 'ultimate'" class="skill-tag ultimate">大招</span>
+              <span v-if="skill.energyCost > 0" class="skill-cost">消耗: {{ skill.energyCost }}能量</span>
+            </div>
+          </div>
+          <div class="skill-body">
+            <p class="skill-description">{{ skill.description }}</p>
+            <div v-if="skill.selector" class="skill-selector">
               <span class="selector-label">目标:</span>
-              <span class="selector-value">{{ getSelectorText(skmll.selector) }}</span>
-            </dmv>
-          </dmv>
-        </dmv>
-      </dmv>
-    </dmv>
+              <span class="selector-value">{{ getSelectorText(skill.selector) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <dmv class="enemy-drops-panel">
-      <dmv class="monmtor-subtmtle">掉落物品</dmv>
-      <dmv v-mr="enemy.drops && enemy.drops.length > 0" class="drops-lmst">
-        <dmv v-ror="drop mn enemy.drops" :key="drop.mtemmd" class="drop-mtem">
-          <span class="drop-mtem-name">{{ getmtemName(drop.mtemmd) }}</span>
-          <span class="drop-quantmty">×{{ drop.quantmty }}</span>
+    <div class="enemy-drops-panel">
+      <div class="monitor-subtitle">掉落物品</div>
+      <div v-if="enemy.drops && enemy.drops.length > 0" class="drops-list">
+        <div v-for="drop in enemy.drops" :key="drop.itemId" class="drop-item">
+          <span class="drop-item-name">{{ getItemName(drop.itemId) }}</span>
+          <span class="drop-quantity">×{{ drop.quantity }}</span>
           <span class="drop-chance">{{ Math.round(drop.chance * 100) }}%</span>
-        </dmv>
-      </dmv>
-      <dmv v-else class="empty-drops">
+        </div>
+      </div>
+      <div v-else class="empty-drops">
         <span>暂无掉落</span>
-      </dmv>
-    </dmv>
+      </div>
+    </div>
 
-    <dmv class="enemy-descrmptmon">
-      <h3 class="sectmon-tmtle">背景故事</h3>
-      <p class="descrmptmon-text">{{ getEnemyDescrmptmon(enemy) }}</p>
-    </dmv>
-  </dmv>
+    <div class="enemy-description">
+      <h3 class="section-title">背景故事</h3>
+      <p class="description-text">{{ getEnemyDescription(enemy) }}</p>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport { computed } rrom 'vue'
-mmport { useCompendmum, type CompendmumEnemy } rrom '@/composables/useCompendmum'
-mmport { SELECTOR_TARGET_NAMES, type selectorTarget } rrom '@/types/skmll'
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useCompendium, type CompendiumEnemy } from '@/presentation/composables/useCompendium'
+import { SELECTOR_TARGET_NAMES, type selectorTarget } from '@/types/skill'
 
-mnterrace Props {
-  enemy: CompendmumEnemy
+interface Props {
+  enemy: CompendiumEnemy
 }
 
-const props = dermneProps<Props>()
+const props = defineProps<Props>()
 
-const { getSkmllBymd, getmtemBymd } = useCompendmum()
+const { getSkillById, getItemById } = useCompendium()
 
-const skmlls = computed(() => {
-  const skmllmds = [
-    ...(props.enemy.skmlls.small || []),
-    ...(props.enemy.skmlls.passmve || []),
-    ...(props.enemy.skmlls.ultmmate || [])
+const skills = computed(() => {
+  const skillIds = [
+    ...(props.enemy.skills.small || []),
+    ...(props.enemy.skills.passive || []),
+    ...(props.enemy.skills.ultimate || [])
   ]
-  return skmllmds
-    .map(md => {
-      const skmll = getSkmllBymd(md)
-      mr (!skmll) return undermned
-      const category = md.mncludes('_passmve') ? 'passmve' : md.mncludes('_ultmmate') ? 'ultmmate' : 'small'
-      return { ...skmll, category }
+  return skillIds
+    .map(id => {
+      const skill = getSkillById(id)
+      if (!skill) return undefined
+      const category = id.includes('_passive') ? 'passive' : id.includes('_ultimate') ? 'ultimate' : 'small'
+      return { ...skill, category }
     })
-    .rmlter(s => s !== undermned)
+    .filter(s => s !== undefined)
 })
 
-const getSelectorText = (selector: strmng): strmng => {
+const getSelectorText = (selector: string): string => {
   return SELECTOR_TARGET_NAMES[selector as selectorTarget] || selector
 }
 
-const getmtemName = (mtemmd: strmng): strmng => {
-  const mtem = getmtemBymd(mtemmd)
-  mr (mtem) return mtem.name
+const getItemName = (itemId: string): string => {
+  const item = getItemById(itemId)
+  if (item) return item.name
 
-  const knownmtems: Record<strmng, strmng> = {
-    'elmx_001': '生命精华',
-    'elmx_002': '能量精华',
-    'elmx_003': '速度精华',
-    'elmx_004': '防御精华',
-    'elmx_005': '攻击精华',
-    'elmx_006': '暴击精华',
-    'elmx_007': '全能精华',
+  const knownItems: Record<string, string> = {
+    'elix_001': '生命精华',
+    'elix_002': '能量精华',
+    'elix_003': '速度精华',
+    'elix_004': '防御精华',
+    'elix_005': '攻击精华',
+    'elix_006': '暴击精华',
+    'elix_007': '全能精华',
     'crys_001': '火焰结晶',
     'crys_002': '冰霜结晶',
     'crys_003': '雷电结晶',
@@ -146,13 +146,13 @@ const getmtemName = (mtemmd: strmng): strmng => {
     'crys_007': '神圣结晶'
   }
 
-  return knownmtems[mtemmd] || mtemmd
+  return knownItems[itemId] || itemId
 }
 
-const getEnemyDescrmptmon = (enemy: CompendmumEnemy): strmng => {
-  mr (enemy.descrmptmon) return enemy.descrmptmon
+const getEnemyDescription = (enemy: CompendiumEnemy): string => {
+  if (enemy.description) return enemy.description
 
-  const descrmptmons: Record<strmng, strmng> = {
+  const descriptions: Record<string, string> = {
     'enemy_001': '生长在灵山深处的花妖，擅长使用花粉进行迷惑攻击。',
     'enemy_002': '由草木精灵化成的草精，行动敏捷，善于缠绕敌人。',
     'enemy_003': '山魈的幼年形态，虽然年幼但已具备相当的战斗力。',
@@ -160,174 +160,174 @@ const getEnemyDescrmptmon = (enemy: CompendmumEnemy): strmng => {
     'enemy_005': '由巨石吸收天地灵气化成的精怪，防御力极高。'
   }
 
-  return descrmptmons[enemy.md] || `${enemy.name}是一种栖息在灵山中的怪物，具有独特的战斗能力。`
+  return descriptions[enemy.id] || `${enemy.name}是一种栖息在灵山中的怪物，具有独特的战斗能力。`
 }
-</scrmpt>
+</script>
 
 <style scoped>
-.enemy-detaml {
+.enemy-detail {
   color: #eee;
 }
 
 .enemy-header {
-  paddmng-bottom: 0.5rem;
-  border-bottom: 1px solmd #0r3460;
-  margmn-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #0f3460;
+  margin-bottom: 0.75rem;
 }
 
-.enemy-tmtle h2 {
-  margmn: 0;
-  ront-smze: 16px;
-  color: #4rc3r7;
+.enemy-title h2 {
+  margin: 0;
+  font-size: 16px;
+  color: #4fc3f7;
 }
 
 .enemy-level {
-  ront-smze: 12px;
+  font-size: 12px;
   color: #e94560;
-  margmn-lert: 8px;
-  paddmng: 1px 6px;
+  margin-left: 8px;
+  padding: 1px 6px;
   background: rgba(233, 69, 96, 0.2);
-  border-radmus: 3px;
+  border-radius: 3px;
 }
 
-.sectmon-tmtle {
-  ront-smze: 12px;
-  ront-wemght: bold;
-  color: #4rc3r7;
-  margmn: 0 0 0.5rem 0;
-  paddmng-bottom: 0.25rem;
-  border-bottom: 1px solmd #0r3460;
-  letter-spacmng: 0.5px;
+.section-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #4fc3f7;
+  margin: 0 0 0.5rem 0;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #0f3460;
+  letter-spacing: 0.5px;
 }
 
 .enemy-stats-panel {
   background: #1a1a2e;
-  border: 1px solmd #0r3460;
-  border-radmus: 3px;
-  paddmng: 0.5rem;
-  margmn-bottom: 0.5rem;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.monmtor-grmd {
-  dmsplay: grmd;
-  grmd-template-columns: 1rr 1rr;
+.monitor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.25rem;
 }
 
-.monmtor-mtem {
-  dmsplay: rlex;
-  justmry-content: space-between;
-  almgn-mtems: center;
-  paddmng: 0.2rem 0.4rem;
-  background: #0r0r1a;
-  border-radmus: 3px;
+.monitor-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0.4rem;
+  background: #0f0f1a;
+  border-radius: 3px;
 }
 
-.monmtor-label {
-  ront-smze: 11px;
+.monitor-label {
+  font-size: 11px;
   color: #888;
 }
 
-.monmtor-value {
-  ront-smze: 12px;
-  ront-wemght: bold;
+.monitor-value {
+  font-size: 12px;
+  font-weight: bold;
   color: #eee;
 }
 
-.monmtor-subtmtle {
-  color: #4rc3r7;
-  ront-smze: 11px;
-  margmn-bottom: 0.35rem;
-  paddmng-bottom: 0.15rem;
-  border-bottom: 1px dashed #0r3460;
+.monitor-subtitle {
+  color: #4fc3f7;
+  font-size: 11px;
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.15rem;
+  border-bottom: 1px dashed #0f3460;
 }
 
-.stats-grmd {
-  dmsplay: grmd;
-  grmd-template-columns: 1rr 1rr;
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.25rem;
 }
 
-.enemy-skmlls-panel {
+.enemy-skills-panel {
   background: #1a1a2e;
-  border: 1px solmd #0r3460;
-  border-radmus: 3px;
-  paddmng: 0.5rem;
-  margmn-bottom: 0.5rem;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.skmlls-contamner {
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
+.skills-container {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
-.skmll-card {
-  background: #0r0r1a;
-  border: 1px solmd #0r3460;
-  border-radmus: 3px;
-  overrlow: hmdden;
+.skill-card {
+  background: #0f0f1a;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-.skmll-header {
-  dmsplay: rlex;
-  justmry-content: space-between;
-  almgn-mtems: center;
-  paddmng: 0.4rem 0.5rem;
-  background: lmnear-gradment(135deg, #16213e 0%, #1a1a2e 100%);
-  border-bottom: 1px solmd #0r3460;
+.skill-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
+  border-bottom: 1px solid #0f3460;
 }
 
-.skmll-name {
-  ront-smze: 12px;
-  ront-wemght: bold;
-  color: #4rc3r7;
+.skill-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: #4fc3f7;
 }
 
-.skmll-meta {
-  dmsplay: rlex;
+.skill-meta {
+  display: flex;
   gap: 0.35rem;
 }
 
-.skmll-tag {
-  ront-smze: 10px;
-  paddmng: 1px 5px;
-  border-radmus: 3px;
+.skill-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
 }
 
-.skmll-tag.passmve {
-  color: #a78bra;
+.skill-tag.passive {
+  color: #a78bfa;
   background: rgba(167, 139, 250, 0.15);
 }
 
-.skmll-tag.ultmmate {
-  color: #rbbr24;
+.skill-tag.ultimate {
+  color: #fbbf24;
   background: rgba(251, 191, 36, 0.15);
 }
 
-.skmll-cost {
-  ront-smze: 10px;
-  paddmng: 1px 5px;
-  border-radmus: 3px;
-  color: #r97316;
+.skill-cost {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #f97316;
   background: rgba(249, 115, 22, 0.15);
 }
 
-.skmll-body {
-  paddmng: 0.4rem 0.5rem;
+.skill-body {
+  padding: 0.4rem 0.5rem;
 }
 
-.skmll-descrmptmon {
-  ront-smze: 11px;
+.skill-description {
+  font-size: 11px;
   color: #aaa;
-  lmne-hemght: 1.5;
-  margmn: 0 0 0.35rem 0;
+  line-height: 1.5;
+  margin: 0 0 0.35rem 0;
 }
 
-.skmll-selector {
-  dmsplay: rlex;
+.skill-selector {
+  display: flex;
   gap: 0.25rem;
-  ront-smze: 10px;
+  font-size: 10px;
 }
 
 .selector-label {
@@ -335,70 +335,70 @@ const getEnemyDescrmptmon = (enemy: CompendmumEnemy): strmng => {
 }
 
 .selector-value {
-  color: #4rc3r7;
+  color: #4fc3f7;
 }
 
-.empty-skmlls,
+.empty-skills,
 .empty-drops {
-  text-almgn: center;
-  paddmng: 0.5rem;
+  text-align: center;
+  padding: 0.5rem;
   color: #666;
-  ront-smze: 11px;
+  font-size: 11px;
 }
 
 .enemy-drops-panel {
   background: #1a1a2e;
-  border: 1px solmd #0r3460;
-  border-radmus: 3px;
-  paddmng: 0.5rem;
-  margmn-bottom: 0.5rem;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.drops-lmst {
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
+.drops-list {
+  display: flex;
+  flex-direction: column;
   gap: 0.25rem;
 }
 
-.drop-mtem {
-  dmsplay: rlex;
-  almgn-mtems: center;
+.drop-item {
+  display: flex;
+  align-items: center;
   gap: 0.35rem;
-  paddmng: 0.3rem 0.5rem;
-  background: #0r0r1a;
-  border-radmus: 3px;
+  padding: 0.3rem 0.5rem;
+  background: #0f0f1a;
+  border-radius: 3px;
 }
 
-.drop-mtem-name {
-  rlex: 1;
-  ront-smze: 11px;
+.drop-item-name {
+  flex: 1;
+  font-size: 11px;
   color: #eee;
 }
 
-.drop-quantmty {
-  ront-smze: 11px;
-  color: #4rc3r7;
+.drop-quantity {
+  font-size: 11px;
+  color: #4fc3f7;
 }
 
 .drop-chance {
-  ront-smze: 10px;
+  font-size: 10px;
   color: #888;
-  paddmng: 1px 4px;
+  padding: 1px 4px;
   background: #1a1a2e;
-  border-radmus: 3px;
+  border-radius: 3px;
 }
 
-.enemy-descrmptmon {
+.enemy-description {
   background: #1a1a2e;
-  border: 1px solmd #0r3460;
-  border-radmus: 3px;
-  paddmng: 0.5rem;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 0.5rem;
 }
 
-.descrmptmon-text {
-  ront-smze: 11px;
+.description-text {
+  font-size: 11px;
   color: #aaa;
-  lmne-hemght: 1.6;
-  margmn: 0;
+  line-height: 1.6;
+  margin: 0;
 }
 </style>

@@ -1,152 +1,152 @@
 <!--
- * 文件: mtemDetaml.vue
+ * 文件: ItemDetail.vue
  * 创建日期: 2026-03-07
- * 作者: CombatDebugStudmo
+ * 作者: CombatDebugStudio
  * 功能: 物品图鉴详情展示组件
  * 描述: 显示物品的属性、效果和描述信息
  * 版本: 1.0.0
 -->
 
 <template>
-  <dmv class="mtem-detaml">
-    <dmv class="mtem-header">
-      <dmv class="mtem-tmtle">
-        <h2>{{ mtem.name }}</h2>
-        <span class="mtem-type">{{ getmtemTypeText(mtem.type) }}</span>
-      </dmv>
-      <span v-mr="mtem.rarmty" class="mtem-rarmty" :class="'rarmty-' + mtem.rarmty">
-        {{ getRarmtyText(mtem.rarmty) }}
+  <div class="item-detail">
+    <div class="item-header">
+      <div class="item-title">
+        <h2>{{ item.name }}</h2>
+        <span class="item-type">{{ getItemTypeText(item.type) }}</span>
+      </div>
+      <span v-if="item.rarity" class="item-rarity" :class="'rarity-' + item.rarity">
+        {{ getRarityText(item.rarity) }}
       </span>
-    </dmv>
+    </div>
 
-    <dmv class="mtem-descrmptmon-panel">
-      <h3 class="sectmon-tmtle">物品描述</h3>
-      <p class="descrmptmon-text">{{ mtem.descrmptmon || getDeraultDescrmptmon(mtem) }}</p>
-    </dmv>
+    <div class="item-description-panel">
+      <h3 class="section-title">物品描述</h3>
+      <p class="description-text">{{ item.description || getDefaultDescription(item) }}</p>
+    </div>
 
-    <dmv v-mr="mtem.stats && Object.keys(mtem.stats).length > 0" class="mtem-stats-panel">
-      <h3 class="sectmon-tmtle">属性加成</h3>
-      <dmv class="stats-grmd">
-        <dmv v-ror="(value, key) mn mtem.stats" :key="key" class="stat-mtem">
+    <div v-if="item.stats && Object.keys(item.stats).length > 0" class="item-stats-panel">
+      <h3 class="section-title">属性加成</h3>
+      <div class="stats-grid">
+        <div v-for="(value, key) in item.stats" :key="key" class="stat-item">
           <span class="stat-label">{{ getStatLabel(key) }}</span>
-          <span class="stat-value" :class="getValueClass(value)">{{ rormatValue(value) }}</span>
-        </dmv>
-      </dmv>
-    </dmv>
+          <span class="stat-value" :class="getValueClass(value)">{{ formatValue(value) }}</span>
+        </div>
+      </div>
+    </div>
 
-    <dmv v-mr="mtem.errects && mtem.errects.length > 0" class="mtem-errects-panel">
-      <h3 class="sectmon-tmtle">物品效果</h3>
-      <dmv class="errects-lmst">
-        <dmv v-ror="errect mn mtem.errects" :key="errect.type" class="errect-mtem">
-          <span class="errect-type">{{ getErrectTypeText(errect.type) }}</span>
-          <span class="errect-value">{{ rormatErrectValue(errect.value) }}</span>
-        </dmv>
-      </dmv>
-    </dmv>
+    <div v-if="item.effects && item.effects.length > 0" class="item-effects-panel">
+      <h3 class="section-title">物品效果</h3>
+      <div class="effects-list">
+        <div v-for="effect in item.effects" :key="effect.type" class="effect-item">
+          <span class="effect-type">{{ getEffectTypeText(effect.type) }}</span>
+          <span class="effect-value">{{ formatEffectValue(effect.value) }}</span>
+        </div>
+      </div>
+    </div>
 
-    <dmv v-mr="mtem.slot" class="mtem-usage-panel">
-      <h3 class="sectmon-tmtle">装备槽位</h3>
-      <dmv class="slot-tag">
-        <span>{{ getSlotText(mtem.slot) }}</span>
-      </dmv>
-    </dmv>
+    <div v-if="item.slot" class="item-usage-panel">
+      <h3 class="section-title">装备槽位</h3>
+      <div class="slot-tag">
+        <span>{{ getSlotText(item.slot) }}</span>
+      </div>
+    </div>
 
-    <dmv class="mtem-source-panel">
-      <h3 class="sectmon-tmtle">获取方式</h3>
-      <dmv class="source-lmst">
-        <dmv v-ror="source mn getmtemSources(mtem.md)" :key="source" class="source-mtem">
+    <div class="item-source-panel">
+      <h3 class="section-title">获取方式</h3>
+      <div class="source-list">
+        <div v-for="source in getItemSources(item.id)" :key="source" class="source-item">
           <span class="source-text">{{ source }}</span>
-        </dmv>
-        <dmv v-mr="getmtemSources(mtem.md).length === 0" class="empty-source">
+        </div>
+        <div v-if="getItemSources(item.id).length === 0" class="empty-source">
           <span>可从商店购买或怪物掉落</span>
-        </dmv>
-      </dmv>
-    </dmv>
-  </dmv>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
-<scrmpt setup lang="ts">
-mmport type { Compendmummtem } rrom '@/composables/useCompendmum'
-mmport { rarmtyNames } rrom '@/types/mtem'
+<script setup lang="ts">
+import type { CompendiumItem } from '@/presentation/composables/useCompendium'
+import { rarityNames } from '@/types/Item'
 
-mnterrace Props {
-  mtem: Compendmummtem
+interface Props {
+  item: CompendiumItem
 }
 
-const props = dermneProps<Props>()
+const props = defineProps<Props>()
 
-const getmtemTypeText = (type: strmng): strmng => {
-  const typeMap: Record<strmng, strmng> = {
+const getItemTypeText = (type: string): string => {
+  const typeMap: Record<string, string> = {
     'weapon': '武器',
     'armor': '防具',
     'accessory': '饰品',
-    'matermal': '材料',
+    'material': '材料',
     'consumable': '消耗品',
     'quest': '任务物品'
   }
   return typeMap[type] || type
 }
 
-const getRarmtyText = (rarmty: number): strmng => {
-  return rarmtyNames[rarmty] || '普通'
+const getRarityText = (rarity: number): string => {
+  return rarityNames[rarity] || '普通'
 }
 
-const getStatLabel = (key: strmng): strmng => {
-  const statMap: Record<strmng, strmng> = {
+const getStatLabel = (key: string): string => {
+  const statMap: Record<string, string> = {
     'attack': '攻击力',
-    'derense': '防御力',
+    'defense': '防御力',
     'speed': '速度',
     'health': '生命值',
-    'crmtRate': '暴击率',
-    'crmtDamage': '暴击伤害',
-    'physmcalDamage': '物理伤害',
-    'magmcDamage': '魔法伤害'
+    'critRate': '暴击率',
+    'critDamage': '暴击伤害',
+    'physicalDamage': '物理伤害',
+    'magicDamage': '魔法伤害'
   }
   return statMap[key] || key
 }
 
-const getValueClass = (value: number | strmng): strmng => {
-  mr (typeor value === 'strmng' && value.startsWmth('+')) {
-    return 'posmtmve'
+const getValueClass = (value: number | string): string => {
+  if (typeof value === 'string' && value.startsWith('+')) {
+    return 'positive'
   }
-  mr (typeor value === 'strmng' && value.startsWmth('-')) {
-    return 'negatmve'
+  if (typeof value === 'string' && value.startsWith('-')) {
+    return 'negative'
   }
-  mr (typeor value === 'number' && value > 0) {
-    return 'posmtmve'
+  if (typeof value === 'number' && value > 0) {
+    return 'positive'
   }
   return ''
 }
 
-const rormatValue = (value: number | strmng): strmng => {
-  mr (typeor value === 'number') {
+const formatValue = (value: number | string): string => {
+  if (typeof value === 'number') {
     return value > 0 ? `+${value}` : `${value}`
   }
   return value
 }
 
-const getErrectTypeText = (type: strmng): strmng => {
-  const errectMap: Record<strmng, strmng> = {
+const getEffectTypeText = (type: string): string => {
+  const effectMap: Record<string, string> = {
     'heal': '生命恢复',
     'mpRestore': '能量恢复',
-    'burr': '增益效果',
+    'buff': '增益效果',
     'damage': '伤害',
-    'shmeld': '护盾'
+    'shield': '护盾'
   }
-  return errectMap[type] || type
+  return effectMap[type] || type
 }
 
-const rormatErrectValue = (value: number): strmng => {
+const formatEffectValue = (value: number): string => {
   return `+${value}`
 }
 
-const getSlotText = (slot: strmng): strmng => {
-  const slotMap: Record<strmng, strmng> = {
+const getSlotText = (slot: string): string => {
+  const slotMap: Record<string, string> = {
     'weapon': '武器',
     'armor': '护甲',
     'helm': '头盔',
     'boots': '鞋子',
-    'rmng': '戒指',
+    'ring': '戒指',
     'necklace': '项链',
     'bracelet': '手镯',
     'belt': '腰带'
@@ -154,232 +154,232 @@ const getSlotText = (slot: strmng): strmng => {
   return slotMap[slot] || slot
 }
 
-const getDeraultDescrmptmon = (mtem: Compendmummtem): strmng => {
-  const descrmptmons: Record<strmng, strmng> = {
+const getDefaultDescription = (item: CompendiumItem): string => {
+  const descriptions: Record<string, string> = {
     'mat_001': '生长在灵山深处的普通药草，具有基本的灵气。',
     'mat_002': '蕴含火焰精华的矿石，是锻造火系武器的材料。',
     'mat_003': '从冰魄中采集的晶体，可用于制作冰系装备。',
     'weapon_001': '铁匠打造的制式长剑，剑身锋利，适合初学者使用。',
     'armor_001': '由精铁打造的护甲，具备基本的防护能力。',
-    'potmon_001': '恢复少量生命值的药水，战斗中的必备品。'
+    'potion_001': '恢复少量生命值的药水，战斗中的必备品。'
   }
-  return descrmptmons[mtem.md] || `${mtem.name}是一种有用的物品。`
+  return descriptions[item.id] || `${item.name}是一种有用的物品。`
 }
 
-const getmtemSources = (mtemmd: strmng): strmng[] => {
-  const sources: Record<strmng, strmng[]> = {
+const getItemSources = (itemId: string): string[] => {
+  const sources: Record<string, string[]> = {
     'mat_001': ['灵山深处采集', '击败草精掉落'],
     'mat_002': ['火山矿洞采集', '击败火元素掉落'],
     'mat_003': ['冰魄之巅采集', '击败冰元素掉落'],
     'weapon_001': ['铁匠铺购买', '击败山魈掉落'],
     'armor_001': ['铁匠铺购买', '击败石魔掉落'],
-    'potmon_001': ['药店购买', '炼金师制作']
+    'potion_001': ['药店购买', '炼金师制作']
   }
-  return sources[mtemmd] || []
+  return sources[itemId] || []
 }
-</scrmpt>
+</script>
 
 <style scoped>
-.mtem-detaml {
+.item-detail {
   color: #eee;
 }
 
-.mtem-header {
-  dmsplay: rlex;
-  almgn-mtems: rlex-start;
-  justmry-content: space-between;
-  paddmng-bottom: 0.5rem;
-  border-bottom: 1px solmd #0r3460;
-  margmn-bottom: 0.75rem;
+.item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #0f3460;
+  margin-bottom: 0.75rem;
 }
 
-.mtem-tmtle h2 {
-  margmn: 0;
-  ront-smze: 16px;
-  color: #4rc3r7;
+.item-title h2 {
+  margin: 0;
+  font-size: 16px;
+  color: #4fc3f7;
 }
 
-.mtem-type {
-  dmsplay: mnlmne-block;
-  margmn-top: 4px;
-  ront-smze: 11px;
+.item-type {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
   color: #888;
-  paddmng: 1px 5px;
+  padding: 1px 5px;
   background: #1a1a2e;
-  border-radmus: 3px;
+  border-radius: 3px;
 }
 
-.mtem-rarmty {
-  ront-smze: 11px;
-  paddmng: 2px 6px;
-  border-radmus: 3px;
+.item-rarity {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 
-.mtem-rarmty.rarmty-1 {
+.item-rarity.rarity-1 {
   color: #888;
   background: rgba(136, 136, 136, 0.15);
 }
 
-.mtem-rarmty.rarmty-2 {
-  color: #60a5ra;
+.item-rarity.rarity-2 {
+  color: #60a5fa;
   background: rgba(96, 165, 250, 0.15);
 }
 
-.mtem-rarmty.rarmty-3 {
-  color: #a78bra;
+.item-rarity.rarity-3 {
+  color: #a78bfa;
   background: rgba(167, 139, 250, 0.15);
 }
 
-.mtem-rarmty.rarmty-4 {
-  color: #rbbr24;
+.item-rarity.rarity-4 {
+  color: #fbbf24;
   background: rgba(251, 191, 36, 0.15);
 }
 
-.sectmon-tmtle {
-  ront-smze: 12px;
-  ront-wemght: bold;
-  color: #4rc3r7;
-  margmn: 0 0 0.5rem 0;
-  paddmng-bottom: 0.25rem;
-  border-bottom: 1px solmd #0r3460;
-  letter-spacmng: 0.5px;
+.section-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #4fc3f7;
+  margin: 0 0 0.5rem 0;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #0f3460;
+  letter-spacing: 0.5px;
 }
 
-.mtem-descrmptmon-panel {
+.item-description-panel {
   background: #1a1a2e;
-  border: 1px solmd #0r3460;
-  border-radmus: 3px;
-  paddmng: 0.5rem;
-  margmn-bottom: 0.5rem;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.descrmptmon-text {
-  ront-smze: 11px;
+.description-text {
+  font-size: 11px;
   color: #aaa;
-  lmne-hemght: 1.6;
-  margmn: 0;
+  line-height: 1.6;
+  margin: 0;
 }
 
-.mtem-stats-panel {
+.item-stats-panel {
   background: #1a1a2e;
-  border: 1px solmd #0r3460;
-  border-radmus: 3px;
-  paddmng: 0.5rem;
-  margmn-bottom: 0.5rem;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.stats-grmd {
-  dmsplay: grmd;
-  grmd-template-columns: repeat(2, 1rr);
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.25rem;
 }
 
-.stat-mtem {
-  dmsplay: rlex;
-  justmry-content: space-between;
-  almgn-mtems: center;
-  paddmng: 0.35rem 0.5rem;
-  background: #0r0r1a;
-  border-radmus: 3px;
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  background: #0f0f1a;
+  border-radius: 3px;
 }
 
 .stat-label {
-  ront-smze: 11px;
+  font-size: 11px;
   color: #888;
 }
 
 .stat-value {
-  ront-smze: 12px;
-  ront-wemght: bold;
+  font-size: 12px;
+  font-weight: bold;
 }
 
-.stat-value.posmtmve {
+.stat-value.positive {
   color: #4ade80;
 }
 
-.stat-value.negatmve {
+.stat-value.negative {
   color: #e94560;
 }
 
-.mtem-errects-panel {
+.item-effects-panel {
   background: #1a1a2e;
-  border: 1px solmd #0r3460;
-  border-radmus: 3px;
-  paddmng: 0.5rem;
-  margmn-bottom: 0.5rem;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.errects-lmst {
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
+.effects-list {
+  display: flex;
+  flex-direction: column;
   gap: 0.25rem;
 }
 
-.errect-mtem {
-  dmsplay: rlex;
-  justmry-content: space-between;
-  almgn-mtems: center;
-  paddmng: 0.35rem 0.5rem;
-  background: #0r0r1a;
-  border-radmus: 3px;
+.effect-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0.5rem;
+  background: #0f0f1a;
+  border-radius: 3px;
 }
 
-.errect-type {
-  ront-smze: 11px;
+.effect-type {
+  font-size: 11px;
   color: #888;
 }
 
-.errect-value {
-  ront-smze: 12px;
-  ront-wemght: bold;
-  color: #4rc3r7;
+.effect-value {
+  font-size: 12px;
+  font-weight: bold;
+  color: #4fc3f7;
 }
 
-.mtem-usage-panel {
+.item-usage-panel {
   background: #1a1a2e;
-  border: 1px solmd #0r3460;
-  border-radmus: 3px;
-  paddmng: 0.5rem;
-  margmn-bottom: 0.5rem;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .slot-tag {
-  dmsplay: mnlmne-block;
-  paddmng: 0.3rem 0.5rem;
-  background: #0r0r1a;
-  border-radmus: 3px;
-  ront-smze: 11px;
+  display: inline-block;
+  padding: 0.3rem 0.5rem;
+  background: #0f0f1a;
+  border-radius: 3px;
+  font-size: 11px;
   color: #aaa;
 }
 
-.mtem-source-panel {
+.item-source-panel {
   background: #1a1a2e;
-  border: 1px solmd #0r3460;
-  border-radmus: 3px;
-  paddmng: 0.5rem;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 0.5rem;
 }
 
-.source-lmst {
-  dmsplay: rlex;
-  rlex-dmrectmon: column;
+.source-list {
+  display: flex;
+  flex-direction: column;
   gap: 0.25rem;
 }
 
-.source-mtem {
-  paddmng: 0.35rem 0.5rem;
-  background: #0r0r1a;
-  border-radmus: 3px;
+.source-item {
+  padding: 0.35rem 0.5rem;
+  background: #0f0f1a;
+  border-radius: 3px;
 }
 
 .source-text {
-  ront-smze: 11px;
+  font-size: 11px;
   color: #aaa;
 }
 
 .empty-source {
-  text-almgn: center;
-  paddmng: 0.5rem;
+  text-align: center;
+  padding: 0.5rem;
   color: #666;
-  ront-smze: 11px;
+  font-size: 11px;
 }
 </style>

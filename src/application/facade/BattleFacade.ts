@@ -1,31 +1,31 @@
 ﻿import { BattleManager } from '@/core/battle/BattleManager';
 
 /**
- * 鎴樻枟鍙搁潰
- * 璐熻矗绠＄悊BattleManager瀹炰緥
- * 鎺ㄨ崘閫氳繃瀹瑰櫒娉ㄥ叆浣跨敤
+ * 战斗门面
+ * 负责管理BattleManager实例
+ * 推荐通过容器注入使用
  */
 export class BattleFacade {
   private battleManager: BattleManager;
 
   /**
-   * 鏋勯€犲嚱鏁?
-   * @param battleManager BattleManager瀹炰緥锛堥€氳繃鏋勯€犲嚱鏁版敞鍏ワ級
+   * 构造函数
+   * @param battleManager BattleManager实例（通过构造函数注入）
    */
   constructor(battleManager: BattleManager) {
     this.battleManager = battleManager;
   }
 
   /**
-   * 鑾峰彇BattleManager瀹炰緥
+   * 获取BattleManager实例
    */
   public getBattleManager(): BattleManager {
     return this.battleManager;
   }
 
   /**
-   * 閲嶇疆鎴樻枟鍙搁潰
-   * @param battleManager 鏂扮殑BattleManager瀹炰緥锛堝彲閫夛級
+   * 重置战斗门面
+   * @param battleManager 新的BattleManager实例（可选）
    */
   public reset(battleManager?: BattleManager): void {
     this.battleManager = battleManager || new BattleManager();

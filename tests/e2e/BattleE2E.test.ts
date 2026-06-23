@@ -1,0 +1,63 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { initializeContainer, container } from '@/core/di/Container'
+import { BATTLE_SYSTEM_TOKEN } from '@/core/battle/interfaces'
+import type { IBattleSystem } from '@/core/battle/interfaces'
+import { BattleStatus } from '@/types/battle'
+import { createTestBattleParticipants } from '../factories/ParticipantFactory'
+
+vi.mock('@/main', () => ({
+  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
+  default: {},
+}))
+
+vi.mock('@/utils/RAF', () => ({
+  RAFTimer: class {
+    setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
+      fn()
+      return Symbol('mock')
+    }
+    setInterval = () => Symbol('mock')
+    clearTimeout = () => {}
+    clearInterval = () => {}
+  },
+}))
+
+describe('BattleSystem E2E', () => {
+  beforeEach(() => {
+    container.clear()
+    initializeContainer()
+  })
+
+  it('should create battle with correct participant count', () => {
+    const battleSystem = container.resolve<IBattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    const { allies, enemies } = createTestBattleParticipants()
+
+    const state = battleSystem.initialize(allies, enemies)
+
+    expect(state).toBeDefined()
+    expect(state.participants.size).toBe(4)
+    expect(state.battleState).toBe(BattleStatus.ACTIVE)
+  })
+
+  it('should set turn order based on speed', () => {
+    const battleSystem = container.resolve<IBattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    const { allies, enemies } = createTestBattleParticipants()
+
+    battleSystem.initialize(allies, enemies)
+    const battleData = battleSystem.getBattleData()!
+
+    expect(battleData.participants.size).toBe(4)
+    expect(battleData.turnOrder.length).toBe(4)
+  })
+
+  it('should have all participants alive after initialization', () => {
+    const battleSystem = container.resolve<IBattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    const { allies, enemies } = createTestBattleParticipants()
+
+    battleSystem.initialize(allies, enemies)
+
+    const participants = battleSystem.getCurParticipantsInfo()
+    const alive = participants.filter(p => p.isAlive())
+    expect(alive.length).toBe(4)
+  })
+})

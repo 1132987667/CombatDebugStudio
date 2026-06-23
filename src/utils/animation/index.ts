@@ -1,18 +1,13 @@
 /**
- * 文件：animation.ts
- * 功能：动画系统统一导出
- * 描述：提供动画系统的完整 API 导出
+ * @deprecated 请使用 '@/infrastructure/animation' 替代。此文件将在 Phase 8 中删除。
  */
-
-// 策略层
 export {
   AnimationStrategy,
   AnimationContext,
   BaseAnimationStrategy,
   NoopAnimationStrategy,
-} from './AnimationStrategy'
+} from '@/infrastructure/animation/AnimationStrategy'
 
-// GSAP 引擎适配层
 export {
   BaseGsapStrategy,
   MoveStrategy,
@@ -23,27 +18,19 @@ export {
   SequenceStrategy,
   ParallelStrategy,
   GsapAnimationConfig,
-} from './GsapAnimationEngine'
+} from '@/infrastructure/animation/GsapAnimationEngine'
 
-// 编排层
 export {
   AnimationOrchestrator,
   AnimationSequence,
   AnimationTask,
   OrchestratorConfig,
   AnimationSequenceBuilder,
-} from './AnimationOrchestrator'
+} from '@/infrastructure/animation/AnimationOrchestrator'
 
-// 资源管理层
 export {
   AnimationElementManager,
   PoolConfig,
   PooledElement,
   animationElementManager,
-} from './AnimationElementManager'
-
-// 具体策略实现（待创建）
-// export { AttackAnimationStrategy } from './strategies/AttackAnimationStrategy'
-// export { HitAnimationStrategy } from './strategies/HitAnimationStrategy'
-// export { BuffAnimationStrategy } from './strategies/BuffAnimationStrategy'
-// export { DeathAnimationStrategy } from './strategies/DeathAnimationStrategy'
+} from '@/infrastructure/animation/AnimationElementManager'

@@ -1,6 +1,7 @@
 /**
  * 文件: BattleAI.ts
  * 功能: 战斗AI接口和实现
+ * @deprecated 域层新设计尚未与 core 版本 API 兼容，暂缓迁移。
  */
 
 import type {

@@ -1,24 +1,6 @@
 /**
- * 文件: index.ts (logging模块)
- * 创建日期: 2026-02-09
- * 作者: CombatDebugStudio
- * 功能: 统一日志系统导出入口
- * 描述: 提供统一的日志接口，BattleLogManager 作为唯一日志管理器
- * 版本: 2.0.0
+ * @deprecated 请使用 '@/infrastructure/adapters/logging' 替代。此文件将在 Phase 8 中删除。
  */
-
-/**
- * 统一日志系统 - 导出入口
- *
- * 提供统一的日志接口：
- * - BattleLogManager: 统一日志管理器（融合系统日志和战斗日志）
- * - BattleLogFormatter: 战斗日志格式化工具
- * - ConsoleLogHandler: 控制台日志处理器
- *
- * @module logging
- */
-
-// 重新导出类型定义
 export type {
   BattleLogEntry,
   LogFilters,
@@ -31,35 +13,25 @@ export type {
 
 export { LogLevel } from '@/types/battle-log'
 
-// 导出 BattleLogManager 和相关功能
 export {
   BattleLogManager,
   battleLogManager,
-} from '@/utils/logging/BattleLogManager'
+} from '@/infrastructure/adapters/logging/BattleLogManager'
 
-// 导出 BattleLogFormatter 命名空间
-export { BattleLogFormatter } from './BattleLogFormatter'
+export { BattleLogFormatter } from '@/infrastructure/adapters/logging/BattleLogFormatter'
 
-// 导出日志处理器
-export { ConsoleLogHandler } from '@/utils/logging/BattleLogManager'
+export { ConsoleLogHandler } from '@/infrastructure/adapters/logging/BattleLogManager'
 
-// ==================== 新增高级功能 ====================
+export { JsonLogHandler, CsvLogHandler } from '@/infrastructure/adapters/logging/StructuredLogHandlers'
 
-// 结构化处理器 (JSON/CSV)
-export { JsonLogHandler, CsvLogHandler } from './StructuredLogHandlers'
+export { LogSampler, PresetSamplingConfigs } from '@/infrastructure/adapters/logging/LogSampling'
+export type { SamplingConfig, SamplingStrategy, SamplingStats } from '@/infrastructure/adapters/logging/LogSampling'
 
-// 采样机制
-export { LogSampler, PresetSamplingConfigs } from './LogSampling'
-export type { SamplingConfig, SamplingStrategy, SamplingStats } from './LogSampling'
+export { LogContextManager, createReactiveContextManager, defaultContextManager } from '@/infrastructure/adapters/logging/LogContext'
+export type { LogContext, ContextManagerConfig } from '@/infrastructure/adapters/logging/LogContext'
 
-// 上下文追踪
-export { LogContextManager, createReactiveContextManager, defaultContextManager } from './LogContext'
-export type { LogContext, ContextManagerConfig } from './LogContext'
+export { AsyncLogWriter, RingBuffer } from '@/infrastructure/adapters/logging/AsyncLogWriter'
+export type { AsyncWriterConfig } from '@/infrastructure/adapters/logging/AsyncLogWriter'
 
-// 异步写入和环形缓冲区
-export { AsyncLogWriter, RingBuffer } from './AsyncLogWriter'
-export type { AsyncWriterConfig } from './AsyncLogWriter'
-
-// 远程日志服务
-export { RemoteLogHandler } from './RemoteLogHandler'
-export type { RemoteLogConfig } from './RemoteLogHandler'
+export { RemoteLogHandler } from '@/infrastructure/adapters/logging/RemoteLogHandler'
+export type { RemoteLogConfig } from '@/infrastructure/adapters/logging/RemoteLogHandler'

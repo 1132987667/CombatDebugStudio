@@ -1,6 +1,4 @@
 /**
- * 存储工具模块入口
- * 导出所有存储相关的工具类和函数
+ * @deprecated 请使用 '@/infrastructure/adapters/storage' 替代。此文件将在 Phase 8 中删除。
  */
-
-export * from '@/utils/storage/LocalStorage';
+export * from '@/infrastructure/adapters/storage/LocalStorage';

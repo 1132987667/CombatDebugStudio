@@ -1,0 +1,120 @@
+import type { BattleEntity } from '@/types/battle'
+import { SkillManager } from '@/domain/skill/SkillManager'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { StackRule, ControlType } from '@/types/buff'
+
+export enum PassiveSkillTrigger {
+  BATTLE_START = 'battle_start',
+  ON_HIT = 'on_hit',
+  TURN_START = 'turn_start',
+  TURN_END = 'turn_end',
+  BEFORE_ATTACK = 'before_attack',
+  AFTER_ATTACK = 'after_attack',
+  ON_KILL = 'on_kill',
+  ON_DEATH = 'on_death',
+  HP_LOWER_THAN = 'hp_lower_than',
+}
+
+export interface PassiveSkillConfig {
+  id: string
+  name: string
+  description: string
+  trigger: PassiveSkillTrigger
+  condition?: string
+  skillId: string
+  cooldown: number
+  lastTriggeredTurn?: number
+  triggerCount?: number
+  maxTriggerCount?: number
+  triggerProbability?: number
+  hpThreshold?: number
+}
+
+export class PassiveSkillManager {
+  private passives: Map<string, PassiveSkillConfig[]> = new Map()
+  private skillManager: SkillManager
+  private buffSystem: BuffSystem
+
+  constructor(skillManager: SkillManager, buffSystem: BuffSystem) {
+    this.skillManager = skillManager
+    this.buffSystem = buffSystem
+  }
+
+  registerPassive(characterId: string, config: PassiveSkillConfig): void {
+    const list = this.passives.get(characterId) || []
+    list.push(config)
+    this.passives.set(characterId, list)
+  }
+
+  triggerPassives(
+    trigger: PassiveSkillTrigger,
+    source: BattleEntity,
+    target?: BattleEntity,
+    context?: Record<string, any>,
+  ): void {
+    const characterPassives = this.passives.get(source.id)
+    if (!characterPassives) return
+
+    for (const config of characterPassives) {
+      if (config.trigger !== trigger) continue
+      if (config.cooldown > 0 && config.lastTriggeredTurn) {
+        const currentTurn = context?.currentTurn as number || 0
+        if (currentTurn - config.lastTriggeredTurn < config.cooldown) continue
+      }
+      if (config.maxTriggerCount && config.triggerCount && config.triggerCount >= config.maxTriggerCount) continue
+      if (config.triggerProbability && Math.random() > config.triggerProbability) continue
+      if (config.trigger === PassiveSkillTrigger.HP_LOWER_THAN && config.hpThreshold) {
+        const hpPercent = source.getAttribute('currentHealth' as any) / Math.max(1, source.getAttribute('maxHealth' as any))
+        if (hpPercent > config.hpThreshold / 100) continue
+      }
+      if (config.condition && !this.evaluateCondition(config.condition, source, target, context)) continue
+
+      this.skillManager.executeSkill(config.skillId, source, target, context?.currentTurn as number || 0)
+      config.lastTriggeredTurn = context?.currentTurn as number || 0
+      config.triggerCount = (config.triggerCount || 0) + 1
+    }
+  }
+
+  private evaluateCondition(
+    condition: string,
+    source: BattleEntity,
+    target?: BattleEntity,
+    context?: Record<string, any>,
+  ): boolean {
+    try {
+      switch (condition) {
+        case 'target_has_buff':
+          return target ? target.buffs.length > 0 : false
+        case 'source_has_buff':
+          return source.buffs.length > 0
+        case 'target_low_hp':
+          return target ? (target.getAttribute('currentHealth' as any) / Math.max(1, target.getAttribute('maxHealth' as any))) < 0.3 : false
+        default:
+          return true
+      }
+    } catch {
+      return true
+    }
+  }
+
+  getPassives(characterId: string): PassiveSkillConfig[] {
+    return this.passives.get(characterId) || []
+  }
+
+  removePassive(characterId: string, passiveId: string): boolean {
+    const list = this.passives.get(characterId)
+    if (!list) return false
+    const index = list.findIndex((p) => p.id === passiveId)
+    if (index === -1) return false
+    list.splice(index, 1)
+    return true
+  }
+
+  clearPassives(characterId: string): void {
+    this.passives.delete(characterId)
+  }
+
+  clearAll(): void {
+    this.passives.clear()
+  }
+}

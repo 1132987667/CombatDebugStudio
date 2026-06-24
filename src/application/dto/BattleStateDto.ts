@@ -9,13 +9,13 @@ export interface BattleState {
   battleId: string
   participants: Map<string, BattleEntity>
   actions: BattleAction[]
-  /** 鍥炲悎椤哄簭锛屾寜閫熷害瑙勫垯鎺掑簭 */
+  /** 回合顺序，按速度规则排序 */
   turnOrder: string[]
-  /** 褰撳墠琛屽姩娆″簭绱㈠紩锛?-based锛岃〃绀哄綋鍓嶅洖鍚堝唴鐨勭鍑犱釜琛屽姩锛?*/
+  /** 当前行动次序索引，0-based，表示当前回合内的第几个行动 */
   currentTurn: number
-  /** 褰撳墠鍥炲悎鏁帮紙1-based锛屼粠 1 寮€濮嬶級 */
+  /** 当前回合数（1-based，从 1 开始） */
   currentRound: number
-  /** 鎴樻枟鐘舵€?*/
+  /** 战斗状态 */
   battleState: BattleStatus
   startTime: number
   endTime?: number

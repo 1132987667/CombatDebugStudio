@@ -18,7 +18,7 @@ import type {
   ParticipantSide,
 } from '@/domain/battle/types'
 
-import type { BattleAI } from '@/domain/battle/BattleAI'
+import type { BattleAI } from '@/domain/battle/ai/BattleAI'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 
 /**

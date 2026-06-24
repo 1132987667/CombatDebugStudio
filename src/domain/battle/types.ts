@@ -4,7 +4,7 @@
  * 提供战斗实体、参与者、动作、效果等核心数据结构
  */
 
-import type { BattleAI } from '@/domain/battle/BattleAI'
+import type { BattleAI } from '@/domain/battle/ai/BattleAI'
 import type { SkillConfig, SkillSet } from '@/domain/skill/types'
 import type {
   AttributeValue,

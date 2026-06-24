@@ -5,48 +5,48 @@
 import type { ParticipantSide, SkillSet } from '@/domain/battle/types';
 
 export interface ParticipantInfo {
-  /** 鍙備笌鑰呭敮涓€鏍囪瘑绗?*/
+  /** 参与者唯一标识符 */
   id: string
-  /** 鍙備笌鑰呭悕绉?*/
+  /** 参与者名称 */
   name: string
-  /** 鍙備笌鑰呯被鍨嬶紙鎴戞柟/鏁屾柟锛?*/
+  /** 参与者类型（我方/敌方） */
   type: ParticipantSide
-  /** 闃熶紞褰掑睘 */
+  /** 队伍归属 */
   team: ParticipantSide
-  /** 鏈€澶х敓鍛藉€?*/
+  /** 最大生命值 */
   maxHealth: number
-  /** 褰撳墠鐢熷懡鍊?*/
+  /** 当前生命值 */
   currentHealth?: number
-  /** 鏈€澶ц兘閲忓€?*/
+  /** 最大能量值 */
   maxEnergy?: number
-  /** 褰撳墠鑳介噺鍊硷紙鍒濆鍊?5锛?*/
+  /** 当前能量值（初始值5） */
   currentEnergy?: number
-  /** 绛夌骇锛堚墺1锛?*/
+  /** 等级（≥1） */
   level: number
-  /** 鏈€灏忔敾鍑诲姏锛堚墹鏈€澶ф敾鍑伙級 */
+  /** 最小攻击力（≤最大攻击） */
   minAttack: number
-  /** 鏈€澶ф敾鍑诲姏锛堚墺鏈€灏忔敾鍑伙級 */
+  /** 最大攻击力（≥最小攻击） */
   maxAttack: number
-  /** 闃插尽鍔涳紙鈮?锛?*/
+  /** 防御力（≥0） */
   defense: number
-  /** 閫熷害锛堚墺1锛?*/
+  /** 速度（≥1） */
   speed: number
-  /** 鏆村嚮鐜囷紙鐧惧垎姣旓紝0-100锛岄粯璁?0锛?*/
+  /** 暴击率（百分比，0-100，默认0） */
   critRate?: number
-  /** 鏆村嚮浼ゅ锛堢櫨鍒嗘瘮锛屸墺100锛岄粯璁?25锛?*/
+  /** 暴击伤害（百分比，≥100，默认25） */
   critDamage?: number
-  /** 鍏嶄激鐜囷紙鐧惧垎姣旓紝0-100锛?*/
+  /** 免伤率（百分比，0-100） */
   damageReduction?: number
-  /** 姘旇鍔犳垚锛堢櫨鍒嗘瘮锛屽彲姝ｅ彲璐燂級 */
+  /** 气血加成（百分比，可正可负） */
   healthBonus?: number
-  /** 鏀诲嚮鍔犳垚锛堢櫨鍒嗘瘮锛屽彲姝ｅ彲璐燂級 */
+  /** 攻击加成（百分比，可正可负） */
   attackBonus?: number
-  /** 闃插尽鍔犳垚锛堢櫨鍒嗘瘮锛屽彲姝ｅ彲璐燂級 */
+  /** 防御加成（百分比，可正可负） */
   defenseBonus?: number
-  /** 閫熷害鍔犳垚锛堢櫨鍒嗘瘮锛屽彲姝ｅ彲璐燂級 */
+  /** 速度加成（百分比，可正可负） */
   speedBonus?: number
-  /** Buff瀹炰緥ID鍒楄〃 */
+  /** Buff实例ID列表 */
   buffs?: string[]
-  /** 鎶€鑳介厤缃?*/
+  /** 技能配置 */
   skills?: SkillSet
 }

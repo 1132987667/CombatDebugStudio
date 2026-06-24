@@ -7,7 +7,7 @@
  */
 
 import type { BattleState, BattleEntity } from '@/domain/battle/types'
-import type { Skill } from '@/domain/battle/BattleAI'
+import type { Skill } from '@/domain/battle/ai/BattleAI'
 import { BATTLE_CONSTANTS } from '@/domain/battle/types'
 
 /**

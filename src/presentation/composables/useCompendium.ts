@@ -11,7 +11,7 @@ import { ref, computed } from 'vue'
 import enemiesData from '@configs/enemies/enemies.json'
 import buffsData from '@configs/buffs/buffs.json'
 import materialsData from '@configs/materials/materials.json'
-import { GameDataProcessor } from '@/utils/GameDataProcessor'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 
 export interface CompendiumEnemy {
   id: string

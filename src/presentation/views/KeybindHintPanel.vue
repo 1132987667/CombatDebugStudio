@@ -22,8 +22,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { keybindManager } from '@/core/input/KeybindManager';
-import type { KeybindHint } from '@/types/input';
+import { keybindManager } from '@/infrastructure/input/KeybindManager';
+import type { KeybindHint } from '@/shared/types/input';
 
 const isVisible = ref(false);
 const keybindHints = ref<KeybindHint[]>([]);
@@ -84,5 +84,5 @@ defineExpose({
 </script>
 
 <style scoped>
-@use'@/styles/main.scss';
+@use'@/presentation/styles/main.scss';
 </style>

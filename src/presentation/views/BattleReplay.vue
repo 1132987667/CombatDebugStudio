@@ -169,7 +169,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { raf } from '@/utils/RAF';
+import { raf } from '@/shared/utils/RAF';
 
 interface BattleEvent {
   eventId: string;
@@ -628,5 +628,5 @@ watch(() => currentEventIndex.value, () => {
 </script>
 
 <style scoped>
-@use'@/styles/main.scss';
+@use'@/presentation/styles/main.scss';
 </style>

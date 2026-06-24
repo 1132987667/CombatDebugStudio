@@ -22,8 +22,8 @@ import type {
   BattleEvent,
   ReplayBattleEvent,
   SnapshotIndexItem,
-} from '@/types/battle'
-import { BATTLE_REPLAY_VERSION } from '@/types/battle'
+} from '@/domain/battle/types'
+import { BATTLE_REPLAY_VERSION } from '@/domain/battle/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { calculateChecksum, generateReplayId } from '@/shared/utils/Checksum'

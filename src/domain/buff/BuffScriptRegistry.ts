@@ -1,4 +1,4 @@
-import { IBuffScript } from '@/types/buff'
+import { IBuffScript } from '@/domain/buff/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import buffsData from '@configs/buffs/buffs.json'
 

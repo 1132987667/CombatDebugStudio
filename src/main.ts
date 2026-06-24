@@ -6,8 +6,8 @@ initializeContainer()
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import mitt from 'mitt'
-import BattleArena from '@/views/BattleArena.vue'
-import './styles/global.css'
+import BattleArena from '@/presentation/views/BattleArena.vue'
+import './presentation/styles/global.css'
 
 
 // 加载Buff脚本

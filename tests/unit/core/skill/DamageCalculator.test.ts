@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DamageCalculator } from '@/core/skill/DamageCalculator'
+import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { createMockEntity, defaultAttrs } from '../../../mocks/MockEntity'
-import { ATTRIBUTE_CODE } from '@/types/attribute'
-import type { ExtendedSkillStep } from '@/types/skill'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import type { ExtendedSkillStep } from '@/domain/skill/types'
 
-vi.mock('@/utils/logging', () => ({
+vi.mock('@/infrastructure/adapters/logging', () => ({
   battleLogManager: { addDebugLog: () => {} },
   LogLevel: { DEBUG: 'DEBUG', INFO: 'INFO', WARN: 'WARN', ERROR: 'ERROR' },
 }))

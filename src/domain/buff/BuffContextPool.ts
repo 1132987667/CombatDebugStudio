@@ -1,6 +1,6 @@
 import { ObjectPool } from '@/shared/utils/object-pool'
 import { BuffContext } from '@/domain/buff/BuffContext'
-import type { BuffConfig } from '@/types/buff'
+import type { BuffConfig } from '@/domain/buff/types'
 
 const MAX_POOL_SIZE = 200
 

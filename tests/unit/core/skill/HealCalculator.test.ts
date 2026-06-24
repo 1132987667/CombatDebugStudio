@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { HealCalculator } from '@/core/skill/HealCalculator'
+import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { createMockEntity } from '../../../mocks/MockEntity'
-import type { ExtendedSkillStep } from '@/types/skill'
+import type { ExtendedSkillStep } from '@/domain/skill/types'
 
-vi.mock('@/utils/logging', () => ({
+vi.mock('@/infrastructure/adapters/logging', () => ({
   battleLogManager: { addDebugLog: () => {} },
   LogLevel: { DEBUG: 'DEBUG', INFO: 'INFO', WARN: 'WARN', ERROR: 'ERROR' },
 }))

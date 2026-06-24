@@ -81,7 +81,7 @@ import { useCompendium, type CompendiumTabType } from '@/presentation/composable
 import EnemyDetail from './EnemyDetail.vue'
 import BuffDetail from './BuffDetail.vue'
 import ItemDetail from './ItemDetail.vue'
-import { rarityNames } from '@/types/Item'
+import { rarityNames } from '@/shared/types/Item'
 
 interface Props {
   modelValue: boolean

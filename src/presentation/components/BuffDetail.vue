@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AttributeCodeNames } from '@/types/attribute'
+import { AttributeCodeNames } from '@/domain/attribute/types'
 import type { CompendiumBuff } from '@/presentation/composables/useCompendium'
 
 

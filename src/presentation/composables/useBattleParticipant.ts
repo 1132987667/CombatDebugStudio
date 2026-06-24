@@ -6,9 +6,9 @@
  */
 
 import { computed, shallowReactive, type ShallowReactive } from 'vue'
-import type { BattleEntity } from '@/types/battle'
-import type { AttributeValue } from '@/types/attribute'
-import { ATTRIBUTE_CODE } from '@/types/attribute'
+import type { BattleEntity } from '@/domain/battle/types'
+import type { AttributeValue } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /**
  * 战斗参与者属性集合（使用官方 ATTRIBUTE_CODE 标准编码）

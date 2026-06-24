@@ -1,5 +1,5 @@
-import type { AnimationQueueItem, AnimationType, AnimationData, BattleEntity } from '@/types/battle'
-import { BattleEventCodes } from '@/types/battle-events'
+import type { AnimationQueueItem, AnimationType, AnimationData, BattleEntity } from '@/domain/battle/types'
+import { BattleEventCodes } from '@/shared/types/battle-events'
 import { eventBus } from '@/main'
 import type { RAFTimer } from '@/shared/utils/RAF'
 

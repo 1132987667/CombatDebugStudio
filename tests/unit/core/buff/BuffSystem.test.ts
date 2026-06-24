@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { BuffSystem } from '@/core/BuffSystem'
-import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
-import { StackRule, ControlType } from '@/types/buff'
-import type { BuffConfig } from '@/types/buff'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { StackRule, ControlType } from '@/domain/buff/types'
+import type { BuffConfig } from '@/domain/buff/types'
 
 vi.mock('@/main', () => ({
   eventBus: { emit: () => {}, on: () => {}, off: () => {} },
   default: {},
 }))
 
-vi.mock('@/utils/logging', () => ({
+vi.mock('@/infrastructure/adapters/logging', () => ({
   battleLogManager: { addDebugLog: () => {}, addSystemLog: () => {} },
   LogLevel: { DEBUG: 'DEBUG', INFO: 'INFO', WARN: 'WARN', ERROR: 'ERROR' },
 }))

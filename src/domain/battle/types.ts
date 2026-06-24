@@ -5,16 +5,16 @@
  */
 
 import type { BattleAI } from '@/domain/battle/BattleAI'
-import type { SkillConfig, SkillSet } from '@/types/skill'
+import type { SkillConfig, SkillSet } from '@/domain/skill/types'
 import type {
   AttributeValue,
   IModifierProvider,
   ATTRIBUTE_CODE,
   AttributeValues,
   Modifier,
-} from '@/types/attribute'
-import type { BattleLogEntry } from '@/types/battle-log'
-import { EffectType } from '@/types/effect'
+} from '@/domain/attribute/types'
+import type { BattleLogEntry } from '@/application/dto/battle-log'
+import { EffectType } from '@/shared/types/effect'
 import { Counter } from '@/shared/utils/Counter'
 import { Ref } from 'vue'
 import { BattleEventCodes } from './battle-events'
@@ -642,7 +642,7 @@ export interface BattleData {
   /** 自动战斗定时器ID */
   autoBattleIntervalId?: symbol
   /** 技能管理器实例（可选，用于技能执行） */
-  skillManager?: import('@/core/skill/SkillManager').SkillManager
+  skillManager?: import('@/domain/skill/SkillManager').SkillManager
 }
 
 /** 战斗回放系统版本号 */

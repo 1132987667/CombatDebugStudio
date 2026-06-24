@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { initializeContainer, container } from '@/core/di/Container'
-import { BATTLE_SYSTEM_TOKEN } from '@/core/battle/interfaces'
-import type { IBattleSystem } from '@/core/battle/interfaces'
-import { BattleStatus } from '@/types/battle'
+import { initializeContainer, container } from '@/infrastructure/di/Container'
+import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
+import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
+import { BattleStatus } from '@/domain/battle/types'
 import { createTestBattleParticipants } from '../factories/ParticipantFactory'
 
 vi.mock('@/main', () => ({
@@ -10,7 +10,7 @@ vi.mock('@/main', () => ({
   default: {},
 }))
 
-vi.mock('@/utils/RAF', () => ({
+vi.mock('@/shared/utils/RAF', () => ({
   RAFTimer: class {
     setTimeout(fn: (...args: unknown[]) => void, _ms?: number): symbol {
       fn()

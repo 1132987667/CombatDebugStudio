@@ -14,17 +14,17 @@ import {
   BattleData,
   ActionTypes,
   ValidActionTypes,
-} from '@/types/battle'
-import { PARTICIPANT_SIDE, BATTLE_CONSTANTS } from '@/types/battle'
-import { EFFECT_TYPES } from '@/types/effect'
-import { CombatRecord, createEmptyRecord } from '@/types/combat-record'
+} from '@/domain/battle/types'
+import { PARTICIPANT_SIDE, BATTLE_CONSTANTS } from '@/domain/battle/types'
+import { EFFECT_TYPES } from '@/shared/types/effect'
+import { CombatRecord, createEmptyRecord } from '@/domain/battle/combat-record'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import {
   ControlType,
   type TriggerPhase,
   type TriggerEventContext,
-} from '@/types/buff'
+} from '@/domain/buff/types'
 import { TriggerEventBus } from '@/domain/buff/TriggerEventBus'
 
 /**

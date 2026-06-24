@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { AttributeEngine } from '@/core/AttributeEngine'
-import type { ModifierTemplate } from '@/types/modifier-template'
+import { AttributeEngine } from '@/domain/attribute/AttributeEngine'
+import type { ModifierTemplate } from '@/domain/attribute/modifier-template'
 
 describe('AttributeEngine', () => {
   describe('compute', () => {

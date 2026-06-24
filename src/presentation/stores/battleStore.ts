@@ -1,21 +1,21 @@
 import { defineStore } from 'pinia'
 import { ref, shallowRef, computed, reactive, onScopeDispose } from 'vue'
-import { PARTICIPANT_SIDE } from '@/types/battle'
-import { BattleEventCodes, BattleEventCode } from '@/types/battle-events'
-import { container } from '@/core/di/Container'
+import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { BattleEventCodes, BattleEventCode } from '@/shared/types/battle-events'
+import { container } from '@/infrastructure/di/Container'
 import type {
   BattleLogEntry,
   BattleLogCategory,
   BattleLogLevel,
   LogSegment,
   LogFilters,
-} from '@/types/battle-log'
-import { battleActionToLogEntry, LogType } from '@/types/battle-log'
-import type { BattleManager } from '@/core/battle/BattleManager'
-import type { BattleAction, BattleState } from '@/types/battle'
-import { battleLogManager } from '@/utils/logging'
-import { GameDataProcessor } from '@/utils/GameDataProcessor'
-import type { BattleEntity } from '@/types/battle'
+} from '@/application/dto/battle-log'
+import { battleActionToLogEntry, LogType } from '@/application/dto/battle-log'
+import type { BattleManager } from '@/domain/battle/BattleManager'
+import type { BattleAction, BattleState } from '@/domain/battle/types'
+import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import type { BattleEntity } from '@/domain/battle/types'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */

@@ -5,7 +5,7 @@
  */
 
 import { ObjectPool } from '@/shared/utils/object-pool'
-import type { BattleAction, BattleEffect } from '@/types/battle'
+import type { BattleAction, BattleEffect } from '@/domain/battle/types'
 
 const MAX_POOL_SIZE = 500
 

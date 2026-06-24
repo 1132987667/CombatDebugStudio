@@ -88,31 +88,33 @@ import {
   PARTICIPANT_MANAGER_TOKEN,
   BATTLE_RECORDER_TOKEN,
   BATTLE_RULE_MANAGER_TOKEN,
-} from '@/core/battle/interfaces'
+} from '@/domain/battle/entity/BattleInterfaces'
 
-import { BattleSystem } from '@/core/BattleSystem'
-import { TurnManager } from '@/core/battle/TurnManager'
-import { ActionExecutor } from '@/core/battle/ActionExecutor'
-import { AISystem } from '@/core/battle/AISystem'
-import { BattleRecorder } from '@/core/battle/BattleRecorder'
-import { BattleRuleManager } from '@/core/battle/BattleRuleManager'
-import { BattleManager } from '@/core/battle/BattleManager'
-import { BattleStateManager } from '@/core/battle/state/BattleStateManager'
-import { AutoBattleManager } from '@/core/battle/auto/AutoBattleManager'
-import type { IBattleSystem } from '@/core/battle/interfaces'
-import { InterventionManager } from '@/core/battle/intervention/InterventionManager'
-import { BattleReplayManager } from '@/core/battle/replay/BattleReplayManager'
-import { DamageCalculator } from '@/core/skill/DamageCalculator'
-import { HealCalculator } from '@/core/skill/HealCalculator'
+import { BattleSystem } from '@/domain/battle/BattleSystem'
+import { TurnManager } from '@/domain/battle/service/TurnManager'
+import { ActionExecutor } from '@/domain/battle/service/ActionExecutor'
+import { AISystem } from '@/domain/battle/ai/AISystem'
+import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
+import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
+import { BattleManager } from '@/domain/battle/BattleManager'
+import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
+import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
+import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
+import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
+import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
+import { DamageCalculator } from '@/domain/skill/DamageCalculator'
+import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { RAFTimer } from '@/shared/utils/RAF'
-import { SkillManager } from '@/core/skill/SkillManager'
-import { BuffSystem } from '@/core/BuffSystem'
-import { BuffScriptRegistry } from '@/core/BuffScriptRegistry'
-import { BuffScriptLoader } from '@/core/BuffScriptLoader'
-import { PassiveSkillManager } from '@/core/skill/PassiveSkillManager'
-import { TaskExecutor } from '@/core/TaskExecutor'
+import { SkillManager } from '@/domain/skill/SkillManager'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
+import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
+import { TaskExecutor } from '@/infrastructure/task/TaskExecutor'
 import { BattleService } from '@/application/facade/BattleFacade'
-import { battleEventManager } from '@/core/battle/events/BattleEventManager'
+import { battleEventManager } from '@/domain/battle/events/BattleEventManager'
+import { setLogger } from '@/domain/port/logging'
+import { LoggerAdapter } from '@/infrastructure/adapters/logging/LoggerAdapter'
 import { reactive } from 'vue'
 
 /**
@@ -121,7 +123,9 @@ import { reactive } from 'vue'
  * 娉ㄦ剰锛氭湇鍔℃敞鍐岄『搴忓緢閲嶈锛岄渶瑕佸厛娉ㄥ唽琚緷璧栫殑鏈嶅姟
  */
 export function initializeContainer(): void {
-  // 鍏堟竻闄ゅ鍣紝閬垮厤閲嶅娉ㄥ唽
+  // 0. init logger via port (domain does not depend on infra)
+  setLogger(new LoggerAdapter())
+
   container.clear()
 
   // 1. 娉ㄥ唽鍩虹鏈嶅姟锛堟棤渚濊禆鎴栧彧渚濊禆澶栭儴锛?

@@ -16,7 +16,7 @@ import type {
   BattleEntity,
   BattleData,
   ParticipantSide,
-} from '@/types/battle'
+} from '@/domain/battle/types'
 
 import type { BattleAI } from '@/domain/battle/BattleAI'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'

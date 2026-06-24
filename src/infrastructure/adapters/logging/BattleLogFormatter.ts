@@ -1,4 +1,4 @@
-import type { LogSegment } from '@/types/battle-log'
+import type { LogSegment } from '@/application/dto/battle-log'
 
 export const BattleLogFormatter = {
   formatNormalAttack: (options: {

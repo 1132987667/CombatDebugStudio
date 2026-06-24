@@ -1,5 +1,5 @@
 ﻿import { useBattleStore } from '@/presentation/stores/battleStore'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { getLogger } from '@/domain/port/logging'
 
 export enum BuffErrorType {
   CONFIG_ERROR = 'config_error',
@@ -47,19 +47,19 @@ export class BuffErrorBoundary {
     const buffError = BuffErrorBoundary.parseError(error, options)
     switch (buffError.type) {
       case BuffErrorType.CONFIG_ERROR:
-        battleLogManager.addDebugLog(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        getLogger().debug(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       case BuffErrorType.RUNTIME_ERROR:
-        battleLogManager.addDebugLog(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        getLogger().debug(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       case BuffErrorType.DEPENDENCY_ERROR:
-        battleLogManager.addDebugLog(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        getLogger().debug(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       default:
-        battleLogManager.addDebugLog(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        getLogger().debug(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
     }
-    if (buffError.stack) battleLogManager.addDebugLog(`Buff error stack: ${buffError.stack}`)
+    if (buffError.stack) getLogger().debug(`Buff error stack: ${buffError.stack}`)
   }
 
   private static parseError(
@@ -93,7 +93,7 @@ export class BuffErrorBoundary {
       try { return fn() } catch (error) {
         retries++
         if (retries >= maxRetries) { BuffErrorBoundary.handleError(error, options); return null }
-        battleLogManager.addDebugLog(`Retrying buff script execution (${retries}/${maxRetries})`, 'info')
+        getLogger().info(`Retrying buff script execution (${retries}/${maxRetries})`)
       }
     }
     return null

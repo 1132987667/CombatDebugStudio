@@ -120,12 +120,13 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
-import { GameDataProcessor } from "@/utils/GameDataProcessor";
-import { container } from '@/core/di/Container';
-import type { Enemy, SceneData } from "@/types";
-import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/types/battle";
-import type { BattleManager } from '@/core/battle/BattleManager';
-import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl';
+import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
+import { container } from '@/infrastructure/di/Container';
+import type { Enemy } from '@/shared/types/enemy'
+import type { SceneData } from '@/shared/types/scene';
+import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/domain/battle/types";
+import type { BattleManager } from '@/domain/battle/BattleManager';
+import { BattleParticipantImpl } from '@/domain/battle/BattleParticipantImpl';
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -259,7 +260,7 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 </script>
 
 <style scoped>
-@use'@/styles/main.scss';
+@use'@/presentation/styles/main.scss';
 
 .section-header {
   display: flex;

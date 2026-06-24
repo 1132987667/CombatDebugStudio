@@ -128,7 +128,7 @@ const battleStateDisplay = computed(() => {
 </script>
 
 <style scoped>
-@use'@/styles/main.scss';
+@use'@/presentation/styles/main.scss';
 
 .auto-battle-indicator {
   position: absolute;

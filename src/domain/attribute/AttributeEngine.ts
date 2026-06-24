@@ -1,11 +1,11 @@
 import type {
   ATTRIBUTE_CODE,
   ModifierType,
-} from '@/types/attribute'
+} from '@/domain/attribute/types'
 import type {
   ModifierTemplate,
   DynamicValueContext,
-} from '@/types/modifier-template'
+} from '@/domain/attribute/modifier-template'
 import type {
   AttributeComputeResult,
   CalculationStep,

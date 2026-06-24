@@ -4,10 +4,10 @@
  * 版本:
  */
 
-import type { BuffContext } from '@/core/BuffContext'
+import type { BuffContext } from '@/domain/buff/BuffContext'
 
 // ========== 导入修饰符模板类型（实际项目中应从正确路径导入） ==========
-import type { ModifierTemplate } from '@/types/modifier-template'
+import type { ModifierTemplate } from '@/domain/attribute/modifier-template'
 
 /**
  * 技能类型枚举

@@ -7,9 +7,9 @@
  * 版本：1.0.0
  */
 
-import type { EffectType } from './effect'
-import type { BattleEffect } from './battle'
-import type { CalculationStep } from '@/types/attribute'
+import type { EffectType } from '@/shared/types/effect'
+import type { BattleEffect } from '@/domain/battle/types'
+import type { CalculationStep } from '@/domain/attribute/types'
 /**
  * 动作类型
  */

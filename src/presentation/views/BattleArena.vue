@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, shallowReactive } from "vue";
-import { GameDataProcessor } from "@/utils/GameDataProcessor";
+import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import ParticipantPanel from "./ParticipantPanel.vue";
 import BattleField from "./BattleField.vue";
 import BattleDashboard from "./BattleDashboard.vue";
@@ -95,13 +95,13 @@ import StatusInjectionDialog from "./components/StatusInjectionDialog.vue";
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import DebugLogDialog from "./components/DebugLogDialog.vue";
 import DebugControlDialog from "./components/DebugControlDialog.vue";
-import { useBattleStore } from '@/stores';
-import { container } from '@/core/di/Container';
-import { battleLogManager } from '@/utils/logging/BattleLogManager';
-import { PARTICIPANT_SIDE } from "@/types/battle";
+import { useBattleStore } from '@/presentation/stores';
+import { container } from '@/infrastructure/di/Container';
+import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
+import { PARTICIPANT_SIDE } from "@/domain/battle/types";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
-import type { BattleManager } from '@/core/battle/BattleManager';
-import type { LogEntry } from '@/types/battle-log';
+import type { BattleManager } from '@/domain/battle/BattleManager';
+import type { LogEntry } from '@/application/dto/battle-log';
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -634,7 +634,7 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss">
-@use '@/styles/main.scss';
+@use '@/presentation/styles/main.scss';
 
 // 加载指示器样式
 .loading-overlay {

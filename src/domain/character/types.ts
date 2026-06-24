@@ -1,4 +1,4 @@
-import type { ATTRIBUTE_CODE } from '@/types/attribute'
+import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /**
  * 角色属性接口

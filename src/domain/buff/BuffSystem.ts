@@ -1,17 +1,17 @@
-import type { BuffConfig, BuffInstance } from '@/types/buff'
+import type { BuffConfig, BuffInstance } from '@/domain/buff/types'
 import type {
   TriggerAction,
   TriggerEventContext,
   TriggerRuntimeState,
-} from '@/types/buff'
-import type { CombatRecord } from '@/types/combat-record'
+} from '@/domain/buff/types'
+import type { CombatRecord } from '@/domain/battle/combat-record'
 import type {
   IModifierProvider,
   IModifierStack,
   ModifierSourceType,
-} from '@/types/attribute'
-import { ATTRIBUTE_CODE } from '@/types/attribute'
-import { StackRule, ControlType } from '@/types/buff'
+} from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { StackRule, ControlType } from '@/domain/buff/types'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { BuffContext } from '@/domain/buff/BuffContext'
 import { BuffContextPool } from '@/domain/buff/BuffContextPool'

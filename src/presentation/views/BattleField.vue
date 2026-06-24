@@ -78,16 +78,16 @@
 
 <script setup lang="ts">
 import { computed, ref, reactive, onUnmounted, watch, nextTick } from "vue";
-import { raf } from '@/utils/RAF';
-import { container } from '@/core/di/Container';
+import { raf } from '@/shared/utils/RAF';
+import { container } from '@/infrastructure/di/Container';
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
 import DamageNumber from "@/presentation/components/DamageNumber.vue";
 import SkillEffect from "@/presentation/components/SkillEffect.vue";
 import BattleLog from "@/presentation/views/BattleLog.vue";
 import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
-import type { AttributeValue } from '@/types';
-import type { BattleManager } from '@/core/battle/BattleManager';
-import type { BattleEntity, StatusEffect } from '@/types/battle';
+import type { AttributeValue } from '@/domain/attribute/types';
+import type { BattleManager } from '@/domain/battle/BattleManager';
+import type { BattleEntity, StatusEffect } from '@/domain/battle/types';
 import { useBattleStore } from '@/presentation/stores/battleStore'
 
 const store = useBattleStore()
@@ -427,5 +427,5 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use'@/styles/main.scss';
+@use'@/presentation/styles/main.scss';
 </style>

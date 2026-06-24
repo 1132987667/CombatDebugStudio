@@ -10,7 +10,7 @@ import {
   battleAnimationService,
   type AttackAnimationData,
   type HitAnimationData,
-} from '@/utils/BattleAnimationService'
+} from '@/infrastructure/animation/BattleAnimationService'
 
 export interface UseBattleAnimationOptions {
   battleSpeed?: Ref<number>

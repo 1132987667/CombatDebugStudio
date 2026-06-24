@@ -1,16 +1,16 @@
-﻿/**
+/**
  * 鎴樻枟浜嬩欢绠＄悊鍣? * 璐熻矗缁熶竴绠＄悊鎴樻枟鐩稿叧鐨勪簨浠惰闃呭拰鍒嗗彂
  */
 import { eventBus } from '@/main'
-import { BattleEventCodes } from '@/types/battle-events'
+import { BattleEventCodes } from '@/shared/types/battle-events'
 import type {
   BattleLogEventData,
   BattleEndedEventData,
-} from '@/types/battle-events'
+} from '@/shared/types/battle-events'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
-import { PARTICIPANT_SIDE } from '@/types/battle'
+import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 
 /**
  * 鎴樻枟浜嬩欢绠＄悊鍣ㄧ被

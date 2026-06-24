@@ -284,14 +284,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { container } from '@/core/di/Container';
-import { useDebugStore } from "@/stores";
+import { container } from '@/infrastructure/di/Container';
+import { useDebugStore } from "@/presentation/stores";
 import AttributeTooltip from "@/presentation/components/AttributeTooltip.vue";
 import Notification from "@/presentation/components/Notification.vue";
-import { ATTRIBUTE_CODE, type Modifier, type AttributeValueType } from "@/types/attribute";
-import type { SkillConfig } from "@/types/skill";
-import { SELECTOR_TARGET_NAMES } from "@/types/skill";
-import type { BattleManager } from '@/core/battle/BattleManager';
+import { ATTRIBUTE_CODE, type Modifier, type AttributeValueType } from "@/domain/attribute/types";
+import type { SkillConfig } from "@/domain/skill/types";
+import { SELECTOR_TARGET_NAMES } from "@/domain/skill/types";
+import type { BattleManager } from '@/domain/battle/BattleManager';
 
 // 获取 BattleManager
 const battleManager = container.resolve<BattleManager>('BattleManager');
@@ -807,7 +807,7 @@ const reloadExport = () => {
 </script>
 
 <style scoped>
-@use "@/styles/main.scss";
+@use "@/presentation/styles/main.scss";
 
 .skill-item {
   font-size: 12px;

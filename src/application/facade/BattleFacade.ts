@@ -1,4 +1,4 @@
-﻿import { BattleManager } from '@/core/battle/BattleManager';
+import { BattleManager } from '@/domain/battle/BattleManager';
 
 /**
  * 战斗门面

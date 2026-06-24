@@ -1,9 +1,9 @@
-﻿/**
+/**
  * 战斗状态数据传输对象
  * 用于应用层与表现层之间的数据传递
  */
-import type { BattleEntity, BattleAction } from '@/types/battle';
-import type { BattleStatus, ParticipantSide } from '@/types/battle';
+import type { BattleEntity, BattleAction } from '@/domain/battle/types';
+import type { BattleStatus, ParticipantSide } from '@/domain/battle/types';
 
 export interface BattleState {
   battleId: string

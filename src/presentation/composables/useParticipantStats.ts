@@ -6,9 +6,9 @@
  */
 
 import { computed, type ComputedRef } from 'vue'
-import type { BattleEntity } from '@/types/battle'
-import type { AttributeValue, CalculationBreakdown } from '@/types/attribute'
-import { ATTRIBUTE_CODE } from '@/types/attribute'
+import type { BattleEntity } from '@/domain/battle/types'
+import type { AttributeValue, CalculationBreakdown } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /**
  * 格式化后的属性值

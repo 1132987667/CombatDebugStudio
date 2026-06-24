@@ -17,17 +17,17 @@ import type {
   LogEntry,
   LogHandler,
   LogSegment,
-} from '@/types/battle-log'
+} from '@/application/dto/battle-log'
 import {
   LogLevel,
   LogLevelLabel,
   LogType,
   LogLevelClass,
   newLogSegment,
-} from '@/types/battle-log'
+} from '@/application/dto/battle-log'
 import { reactive } from 'vue'
 import { Counter } from '@/shared/utils/Counter'
-import type { Item } from '@/types/Item'
+import type { Item } from '@/shared/types/Item'
 
 /**
  * 统一的日志参数接口 - 所有日志方法都使用此接口

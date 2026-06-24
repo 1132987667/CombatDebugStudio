@@ -1,7 +1,7 @@
-import type { BattleEntity } from '@/types/battle'
+import type { BattleEntity } from '@/domain/battle/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { StackRule, ControlType } from '@/types/buff'
+import { StackRule, ControlType } from '@/domain/buff/types'
 
 export enum PassiveSkillTrigger {
   BATTLE_START = 'battle_start',
@@ -38,6 +38,11 @@ export class PassiveSkillManager {
   constructor(skillManager: SkillManager, buffSystem: BuffSystem) {
     this.skillManager = skillManager
     this.buffSystem = buffSystem
+  }
+
+  /** Factory method for compatibility with DI Container */
+  static create(skillManager: SkillManager, buffSystem: BuffSystem): PassiveSkillManager {
+    return new PassiveSkillManager(skillManager, buffSystem)
   }
 
   registerPassive(characterId: string, config: PassiveSkillConfig): void {
@@ -116,5 +121,16 @@ export class PassiveSkillManager {
 
   clearAll(): void {
     this.passives.clear()
+  }
+
+  /** 为所有参与者触发指定时机的被动技能 */
+  triggerPassiveSkillsForAll(
+    trigger: PassiveSkillTrigger,
+    participants: Map<string, BattleEntity>,
+    context: any = {},
+  ): void {
+    for (const participant of participants.values()) {
+      this.triggerPassives(trigger, participant, context)
+    }
   }
 }

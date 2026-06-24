@@ -15,15 +15,13 @@ import skillsData from '@configs/skills/skills.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
 import newSkillsData from '@configs/skills/skills_new.json'
 import buffsData from '@configs/buffs/buffs.json'
-import type {
-  Enemy,
-  SkillConfig,
-  SceneData,
-  CharacterStats,
-  AttributeValueType,
-} from '@/types'
-import type { ParticipantSide } from '@/types/battle'
-import { PARTICIPANT_SIDE } from '@/types/battle'
+import type { Enemy } from '@/shared/types/enemy'
+import type { SkillConfig } from '@/domain/skill/types'
+import type { SceneData } from '@/shared/types/scene'
+import type { CharacterStats } from '@/domain/character/types'
+import type { AttributeValueType } from '@/domain/attribute/types'
+import type { ParticipantSide } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 import {
   IModifierProvider,
   ATTRIBUTE_CODE,
@@ -32,17 +30,17 @@ import {
   ModifierSourceType,
   createAttributeValue,
   createBaseAttributeValue,
-} from '@/types/attribute'
+} from '@/domain/attribute/types'
 import type {
   ModifierTemplate,
   StructuredBuffConfig,
-} from '@/types/modifier-template'
+} from '@/domain/attribute/modifier-template'
 import {
   BattleParticipantImpl,
   type BattleParticipantInitData,
-} from '@/core/battle/BattleParticipantImpl'
+} from '@/domain/battle/entity/BattleParticipantImpl'
 import { container } from '@/infrastructure/di/Container'
-import { BuffSystem } from '@/core/BuffSystem'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { toArray } from '@/shared/utils/Utils'
 import { Counter } from '@/shared/utils/Counter'
 const counter = new Counter()

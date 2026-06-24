@@ -13,7 +13,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'build/dist',
-    sourcemap: true,
+    sourcemap: false,
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'BuffSystem',
@@ -33,5 +33,11 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     exclude: ['node_modules', 'build'],
     globals: true,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
   },
 })

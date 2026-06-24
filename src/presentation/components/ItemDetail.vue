@@ -67,7 +67,7 @@
 
 <script setup lang="ts">
 import type { CompendiumItem } from '@/presentation/composables/useCompendium'
-import { rarityNames } from '@/types/Item'
+import { rarityNames } from '@/shared/types/Item'
 
 interface Props {
   item: CompendiumItem

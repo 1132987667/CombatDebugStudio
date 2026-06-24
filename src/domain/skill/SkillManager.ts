@@ -1,11 +1,11 @@
 import type {
   SkillConfig,
   SkillStep,
-} from '@/types/skill'
-import type { BattleEntity } from '@/types/battle'
-import type { CombatRecord } from '@/types/combat-record'
+} from '@/domain/skill/types'
+import type { BattleEntity } from '@/domain/battle/types'
+import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { StackRule, ControlType } from '@/types/buff'
+import { StackRule, ControlType } from '@/domain/buff/types'
 import { SkillExecutor } from '@/domain/skill/SkillExecutor'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
@@ -53,6 +53,22 @@ export class SkillManager {
 
   getExecutor(): SkillExecutor {
     return this.executor
+  }
+
+  /** 获取伤害计算日志 */
+  getDamageCalculationLogs(): any[] {
+    return this.damageCalculator.getCalculationLogs()
+  }
+
+  /** 获取治疗计算日志 */
+  getHealCalculationLogs(): any[] {
+    return this.healCalculator.getCalculationLogs()
+  }
+
+  /** 清空所有计算日�?*/
+  clearCalculationLogs(): void {
+    this.damageCalculator.clearCalculationLogs()
+    this.healCalculator.clearCalculationLogs()
   }
 
   loadSkillConfigs(configs: SkillConfig[]): void {

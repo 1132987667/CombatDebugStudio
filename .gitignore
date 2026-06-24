@@ -152,7 +152,7 @@ dist
 # 文档
 .trae/documents/
 .trae/scripts/
-documents/
+# documents/
 tools/
 .gitattributes
 .git

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 鏂囦欢: BattleAI.ts
  * 鍔熻兘: 鎴樻枟AI鎺ュ彛鍜屽疄鐜? */
 
@@ -7,14 +7,14 @@ import type {
   BattleAction,
   BattleState,
   ParticipantSide,
-} from '@/types/battle'
+} from '@/domain/battle/types'
 import {
   PARTICIPANT_SIDE,
   BATTLE_CONSTANTS,
   SKILL_EFFECT_CONSTANTS,
   ActionTypes,
-} from '@/types/battle'
-import { EFFECT_TYPES } from '@/types/effect'
+} from '@/domain/battle/types'
+import { EFFECT_TYPES } from '@/shared/types/effect'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -30,7 +30,7 @@ import {
   Skill,
   SkillType,
   convertSkillConfigToSkill,
-} from '@/types/skill'
+} from '@/domain/skill/types'
 
 /** 鎴樻枟AI鎺ュ彛 */
 export interface BattleAI {

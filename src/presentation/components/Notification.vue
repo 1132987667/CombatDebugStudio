@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { raf } from '@/utils/RAF'
+import { raf } from '@/shared/utils/RAF'
 
 interface NotificationItem {
   id: number

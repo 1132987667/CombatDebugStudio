@@ -12,7 +12,7 @@
  * 版本: 1.0.0
  */
 
-import type { TriggerPhase, TriggerEventContext } from '@/types/buff'
+import type { TriggerPhase, TriggerEventContext } from '@/domain/buff/types'
 
 /**
  * 事件监听器类型

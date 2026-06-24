@@ -4,8 +4,8 @@
  * 描述：实现基于频率、优先级和上下文的日志采样策略
  */
 
-import type { LogEntry, LogLevel } from '@/types/battle-log'
-import { LogLevel as LogLevelEnum } from '@/types/battle-log'
+import type { LogEntry, LogLevel } from '@/application/dto/battle-log'
+import { LogLevel as LogLevelEnum } from '@/application/dto/battle-log'
 
 /**
  * 采样策略类型

@@ -6,9 +6,9 @@
  * 描述: 根据角色类型和战场分析结果计算技能权重，支持动态调整技能优先级
  */
 
-import type { BattleState, BattleEntity } from '@/types/battle'
+import type { BattleState, BattleEntity } from '@/domain/battle/types'
 import type { Skill } from '@/domain/battle/BattleAI'
-import { BATTLE_CONSTANTS } from '@/types/battle'
+import { BATTLE_CONSTANTS } from '@/domain/battle/types'
 
 /**
  * 技能权重接口

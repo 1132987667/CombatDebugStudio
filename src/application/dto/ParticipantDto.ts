@@ -1,8 +1,8 @@
-﻿/**
+/**
  * 参与者数据传输对象
  * 用于应用层与表现层之间的数据传递
  */
-import type { ParticipantSide, SkillSet } from '@/types/battle';
+import type { ParticipantSide, SkillSet } from '@/domain/battle/types';
 
 export interface ParticipantInfo {
   /** 鍙備笌鑰呭敮涓€鏍囪瘑绗?*/

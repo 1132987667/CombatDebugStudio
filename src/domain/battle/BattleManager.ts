@@ -4,14 +4,14 @@ import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
-import { PARTICIPANT_SIDE, BattleEntity } from '@/types/battle'
-import { BattleEventCodes } from '@/types/battle-events'
+import { PARTICIPANT_SIDE, BattleEntity } from '@/domain/battle/types'
+import { BattleEventCodes } from '@/shared/types/battle-events'
 import type {
   BattleEvents,
   BattleEventName,
   BattleEventCallback,
   BattleEndedEventData,
-} from '@/types/battle-events'
+} from '@/shared/types/battle-events'
 import { LocalStorage } from '@/infrastructure/adapters/storage'
 import { eventBus } from '@/main'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'

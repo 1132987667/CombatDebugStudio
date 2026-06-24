@@ -37,8 +37,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
-import type { LogEntry } from '@/types/battle-log'
-import { LogLevel } from '@/types/battle-log'
+import type { LogEntry } from '@/application/dto/battle-log'
+import { LogLevel } from '@/application/dto/battle-log'
 
 interface Props {
   modelValue: boolean

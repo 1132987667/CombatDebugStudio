@@ -26,9 +26,9 @@ export type {
   ActionType,
   LogEntry,
   LogHandler,
-} from '@/types/battle-log'
+} from '@/application/dto/battle-log'
 
-export { LogLevel } from '@/types/battle-log'
+export { LogLevel } from '@/application/dto/battle-log'
 
 // 导出 BattleLogManager 和相关功能
 export {

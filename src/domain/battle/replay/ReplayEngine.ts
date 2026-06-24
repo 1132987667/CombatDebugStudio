@@ -16,7 +16,7 @@ import type {
   SnapshotIndexItem,
   BattleEntity,
   ParticipantSide,
-} from '@/types/battle'
+} from '@/domain/battle/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 

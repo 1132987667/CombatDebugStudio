@@ -45,8 +45,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { keybindManager } from '@/core/input/KeybindManager';
-import type { KeybindAction, KeybindSetting } from '@/types/input';
+import { keybindManager } from '@/infrastructure/input/KeybindManager';
+import type { KeybindAction, KeybindSetting } from '@/shared/types/input';
 import Notification from '@/presentation/components/Notification.vue';
 
 // 通知组件引用
@@ -137,5 +137,5 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@use'@/styles/main.scss';
+@use'@/presentation/styles/main.scss';
 </style>

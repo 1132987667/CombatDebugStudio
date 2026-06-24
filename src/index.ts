@@ -1,27 +1,27 @@
-import { type BuffScriptLoader } from '@/core/BuffScriptLoader'
+import { type BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 
 // 核心引擎导出
-export * from '@/core/BuffSystem'
-export * from '@/core/BuffScriptRegistry'
-export * from '@/core/BuffScriptLoader'
-export * from '@/core/ModifierStack'
-export * from '@/core/BuffContext'
-export * from '@/core/BuffErrorBoundary'
-export { BattleSystem as BattleSystem } from '@/core/BattleSystem'
+export * from '@/domain/buff/BuffSystem'
+export * from '@/domain/buff/BuffScriptRegistry'
+export * from '@/domain/buff/BuffScriptLoader'
+export * from '@/domain/buff/ModifierStack'
+export * from '@/domain/buff/BuffContext'
+export * from '@/domain/buff/BuffErrorBoundary'
+export { BattleSystem as BattleSystem } from '@/domain/battle/BattleSystem'
 
 // 类型定义导出
-export * from '@/types/buff'
-export * from '@/types/character'
-export * from '@/types/enemy'
-export * from '@/types/battle'
+export * from '@/domain/buff/types'
+export * from '@/domain/character/types'
+export * from '@/shared/types/enemy'
+export * from '@/domain/battle/types'
 
 // 工具函数导出
-export * from '@/utils/logging'
-export * from '@/utils/object-pool'
-export * from '@/utils/schema-validator'
+export * from '@/infrastructure/adapters/logging'
+export * from '@/shared/utils/object-pool'
+export * from '@/shared/utils/schema-validator'
 
 // 业务脚本导出
-export * from '@/scripts'
+export * from '@/domain/buff/scripts'
 
 // 模块初始化函数
 export async function initializeBuffSystem(): Promise<void> {

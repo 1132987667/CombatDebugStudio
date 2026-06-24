@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCompendium, type CompendiumEnemy } from '@/presentation/composables/useCompendium'
-import { SELECTOR_TARGET_NAMES, type selectorTarget } from '@/types/skill'
+import { SELECTOR_TARGET_NAMES, type selectorTarget } from '@/domain/skill/types'
 
 interface Props {
   enemy: CompendiumEnemy

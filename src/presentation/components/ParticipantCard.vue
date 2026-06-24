@@ -77,8 +77,8 @@
 
 <script setup lang="ts">
 import { computed, ref, type Ref } from 'vue'
-import type { BattleEntity } from '@/types/battle'
-import type { StatusEffect } from '@/types/battle'
+import type { BattleEntity } from '@/domain/battle/types'
+import type { StatusEffect } from '@/domain/battle/types'
 import { useBattleParticipant } from '@/presentation/composables/useBattleParticipant'
 import { useParticipantStats } from '@/presentation/composables/useParticipantStats'
 

@@ -1,7 +1,7 @@
-import type { SkillSet } from '@/types/skill'
-import type { AttributeValues } from '@/types/attribute'
-import { ATTRIBUTE_CODE } from '@/types/attribute'
-import { PARTICIPANT_SIDE } from '@/types/battle'
+import type { SkillSet } from '@/domain/skill/types'
+import type { AttributeValues } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 
 export const EMPTY_SKILL_SET: SkillSet = {
   small: [],

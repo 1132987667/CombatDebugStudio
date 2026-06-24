@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { SceneData } from '@/types';
+import type { SceneData } from '@/shared/types/scene';
 
 interface SceneState {
   savedScenes: string[];

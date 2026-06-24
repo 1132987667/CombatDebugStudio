@@ -1,7 +1,7 @@
 import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
-import type { BattleEntity } from '@/types/battle'
+import type { BattleEntity } from '@/domain/battle/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 
 /**

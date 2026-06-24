@@ -3,8 +3,8 @@
  * 为 BattleManager 的事件系统提供类型安全保障
  */
 
-import type { BattleLogEntry } from '@/types/battle-log';
-import type { BattleEntity, ParticipantSide } from '@/types/battle';
+import type { BattleLogEntry } from '@/application/dto/battle-log';
+import type { BattleEntity, ParticipantSide } from '@/domain/battle/types';
 
 // 战斗日志事件数据类型
 export interface BattleLogEventData {

@@ -1,5 +1,5 @@
-import { BattleParticipantImpl } from '@/core/battle/BattleParticipantImpl'
-import type { BattleParticipantInitData } from '@/core/battle/BattleParticipantImpl'
+import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import type { BattleParticipantInitData } from '@/domain/battle/entity/BattleParticipantImpl'
 import {
   allyParticipantData,
   allyParticipantData2,

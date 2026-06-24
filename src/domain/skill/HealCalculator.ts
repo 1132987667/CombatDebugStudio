@@ -1,12 +1,31 @@
-import type { ExtendedSkillStep } from '@/types/skill'
+import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { CalculationLog } from '@/domain/skill/DamageCalculator'
-import type { BattleEntity } from '@/types/battle'
-import type { CombatRecord } from '@/types/combat-record'
-import { ATTRIBUTE_CODE } from '@/types/attribute'
+import type { BattleEntity } from '@/domain/battle/types'
+import type { CombatRecord } from '@/domain/battle/combat-record'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+
+const LEGACY_ATTR_MAP: Record<string, ATTRIBUTE_CODE> = {
+  ATK: ATTRIBUTE_CODE.attack,
+  DEF: ATTRIBUTE_CODE.defense,
+  MAX_HP: ATTRIBUTE_CODE.maxHealth,
+  SPD: ATTRIBUTE_CODE.speed,
+  DODGE: ATTRIBUTE_CODE.dodge,
+  HIT: ATTRIBUTE_CODE.hit,
+}
 
 export class HealCalculator {
   calculationLogs: CalculationLog[] = []
+
+  /** 清空计算日志 */
+  clearCalculationLogs(): void {
+    this.calculationLogs = []
+  }
+
+  /** 获取计算日志 */
+  getCalculationLogs(): CalculationLog[] {
+    return [...this.calculationLogs]
+  }
 
   calculateHeal(
     skillStep: ExtendedSkillStep,
@@ -17,17 +36,56 @@ export class HealCalculator {
     this.calculationLogs = []
     let heal = 0
 
-    if (skillStep.formula) {
+    if (skillStep.calculation) {
+      heal = skillStep.calculation.baseValue
+      // extraValues 处理
+      if (skillStep.calculation.extraValues) {
+        for (const extra of skillStep.calculation.extraValues) {
+          const attrValue = this.getAttrValue(source, extra.attribute)
+          const extraValue = attrValue * extra.ratio
+          heal += extraValue
+          this.logCalculation('extra_value', extraValue, `${extra.attribute} 额外加成: +${extraValue}`)
+        }
+      }
+    } else if (skillStep.formula) {
       heal = this.evaluateFormula(skillStep.formula, source, target, skillStep)
     } else {
       heal = this.calculateBasicHeal(skillStep, source, target)
     }
 
+    // 属性加成�?   
     if ((skillStep as any).attributeCode && (skillStep as any).attackBonus && (skillStep as any).attackBonus > 0) {
       const attrValue = source.getAttribute((skillStep as any).attributeCode as ATTRIBUTE_CODE)
       const bonus = Math.floor(attrValue * (skillStep as any).attackBonus / 100)
       heal += bonus
-      this.logCalculation('attribute_bonus', bonus, `属性加成: +${bonus}`)
+      this.logCalculation('attribute_bonus', bonus, `属性加�? +${bonus}`)
+    }
+
+    // targetModifiers 处理
+    if (skillStep.targetModifiers) {
+      Object.entries(skillStep.targetModifiers).forEach(([attr, modifier]) => {
+        const targetAttrValue = this.getAttrValue(target, attr)
+        const modifierEffect = (modifier * targetAttrValue) / 100
+        heal *= 1 + modifierEffect
+        heal = Math.floor(heal)
+        this.logCalculation('target_modifier', modifierEffect, `${attr} 目标修正: x${1 + modifierEffect}`)
+      })
+    }
+
+    // 治疗上限: 不超过目标最大生命值
+    const maxHp = target.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    const currentHp = target.getAttribute(ATTRIBUTE_CODE.currentHealth)
+    const healCap = Math.max(0, maxHp - currentHp)
+    if (heal > healCap) {
+      this.logCalculation('heal_cap', healCap, `治疗上限限制: ${heal} �?${healCap}`)
+      heal = healCap
+    }
+
+    // 负面状态影响（降低治疗效果�?   
+    const debuffEffect = this.calculateDebuffEffect(target)
+    if (debuffEffect > 0) {
+      heal = Math.floor(heal * (1 - debuffEffect))
+      this.logCalculation('debuff', debuffEffect, `减益效果: -${Math.round(debuffEffect * 100)}%`)
     }
 
     heal = Math.max(0, heal)
@@ -42,6 +100,25 @@ export class HealCalculator {
     }
 
     return heal
+  }
+
+  /**
+   * 计算减益效果对治疗的影响
+   */
+  private calculateDebuffEffect(target: BattleEntity): number {
+    // ponytail: 检查常见减治疗 debuff，可扩展
+    const healingReductionBuffs = [
+      'buff_heal_reduction',
+      'buff_poison',
+      'buff_curse',
+    ]
+    let debuffEffect = 0
+    for (const buffId of healingReductionBuffs) {
+      if (target.hasBuff(buffId)) {
+        debuffEffect += 0.2 // 每个 debuff 降低 20%
+      }
+    }
+    return Math.min(debuffEffect, 0.8) // 最多降�?80%
   }
 
   private calculateBasicHeal(
@@ -73,20 +150,26 @@ export class HealCalculator {
       heal += Math.floor(lostHp * (skillStep as any).lostHpPercent / 100)
     }
 
-    this.logCalculation('basic', heal, `基础治疗量: ${heal}`)
+    this.logCalculation('basic', heal, `基础治疗�? ${heal}`)
     return heal
   }
 
   applyHeal(target: BattleEntity, heal: number): number {
-    const currentHp = target.getAttribute(ATTRIBUTE_CODE.currentHealth)
-    const maxHp = target.getAttribute(ATTRIBUTE_CODE.maxHealth)
-    const newHp = Math.min(maxHp, currentHp + heal)
-    target.setAttribute(ATTRIBUTE_CODE.currentHealth, newHp)
-    return newHp - currentHp
+    if (!target.isAlive()) {
+      battleLogManager.addDebugLog('目标已死亡，无法进行治疗')
+      return 0
+    }
+    if (target.isFullHealth()) {
+      battleLogManager.addDebugLog('目标生命值已满，无需治疗')
+      return 0
+    }
+    const actualHeal = target.heal(heal)
+    return actualHeal
   }
 
   isSingleTurnEffect(skillStep: ExtendedSkillStep): boolean {
-    return !skillStep.duration || skillStep.duration <= 1
+    // ponytail: 同时兼容新旧两种配置方式
+    return skillStep.calculation?.isSingleTurn === true || !skillStep.duration || skillStep.duration <= 1
   }
 
   private evaluateFormula(
@@ -122,6 +205,15 @@ export class HealCalculator {
       return Math.max(1, Math.floor(result))
     } catch {
       return 10
+    }
+  }
+
+  private getAttrValue(participant: BattleEntity, attr: string): number {
+    try {
+      const code = LEGACY_ATTR_MAP[attr] || (attr as ATTRIBUTE_CODE)
+      return participant.getAttribute(code) || 0
+    } catch {
+      return 0
     }
   }
 

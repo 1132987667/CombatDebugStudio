@@ -1,5 +1,5 @@
-import type { BattleData, BattleState, BattleEntity, ParticipantSide } from '@/types/battle'
-import { BattleStatus, RoundStatus, PARTICIPANT_SIDE } from '@/types/battle'
+import type { BattleData, BattleState, BattleEntity, ParticipantSide } from '@/domain/battle/types'
+import { BattleStatus, RoundStatus, PARTICIPANT_SIDE } from '@/domain/battle/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 
 export function createDefaultBattleData(

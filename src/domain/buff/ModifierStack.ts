@@ -1,4 +1,4 @@
-import type { ModifierType, ATTRIBUTE_CODE } from '@/types/attribute'// ponytail: Modifier type from @/types/attribute lacks buffInstanceId; extend locally
+import type { ModifierType, ATTRIBUTE_CODE } from '@/domain/attribute/types'// ponytail: Modifier type from @/domain/attribute/types lacks buffInstanceId; extend locally
 interface LocalModifier {
   buffInstanceId: string
   attribute: ATTRIBUTE_CODE

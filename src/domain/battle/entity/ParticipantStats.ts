@@ -1,5 +1,5 @@
-import { ATTRIBUTE_CODE, type AttributeValue, type IModifierProvider, getAttributeMeta, getAttributeDefaultValue } from '@/types/attribute'
-import type { BattleEntity } from '@/types/battle'
+import { ATTRIBUTE_CODE, type AttributeValue, type IModifierProvider, getAttributeMeta, getAttributeDefaultValue } from '@/domain/attribute/types'
+import type { BattleEntity } from '@/domain/battle/types'
 
 export class ParticipantStats {
   readonly attributes = new Map<ATTRIBUTE_CODE, AttributeValue>()

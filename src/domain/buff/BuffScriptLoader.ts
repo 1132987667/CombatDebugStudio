@@ -11,7 +11,7 @@ export class BuffScriptLoader {
 
   public async loadScripts(): Promise<void> {
     try {
-      const modules = (import.meta as any).glob('@/scripts/**/*.ts', { eager: false })
+      const modules = (import.meta as any).glob('@/domain/buff/scripts/**/*.ts', { eager: false })
       for (const [path, moduleLoader] of Object.entries(modules)) {
         try {
           const module: any = await (moduleLoader as any)()

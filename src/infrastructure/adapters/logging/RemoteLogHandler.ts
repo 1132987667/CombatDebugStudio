@@ -4,7 +4,7 @@
  * 描述：实现 HTTP/WebSocket 方式发送日志到远程日志服务
  */
 
-import type { LogEntry, LogHandler } from '@/types/battle-log'
+import type { LogEntry, LogHandler } from '@/application/dto/battle-log'
 import { AsyncLogWriter } from './AsyncLogWriter'
 import { LogContextManager } from './LogContext'
 

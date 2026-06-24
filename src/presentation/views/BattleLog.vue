@@ -34,9 +34,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed } from "vue";
-import type { BattleLogEntry, LogFilters } from '@/types/battle-log';
-import { LogTypeLabel } from '@/types/battle-log';
-import { battleLogManager } from '@/utils/logging'
+import type { BattleLogEntry, LogFilters } from '@/application/dto/battle-log';
+import { LogTypeLabel } from '@/application/dto/battle-log';
+import { battleLogManager } from '@/infrastructure/adapters/logging'
 
 interface Props {
 }
@@ -60,5 +60,5 @@ const applyFilters = () => {
 </script>
 
 <style scoped>
-@use'@/styles/main.scss';
+@use'@/presentation/styles/main.scss';
 </style>

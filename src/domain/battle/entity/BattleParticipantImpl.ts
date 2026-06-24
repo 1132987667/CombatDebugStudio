@@ -13,15 +13,14 @@ import type {
   ParticipantSnapshot,
   BuffInstanceSnapshot,
   BattleEntity,
-} from '@/types/battle'
-import { PARTICIPANT_SIDE, type ParticipantSide } from '@/types/battle'
-import type { SkillConfig, SkillSet } from '@/types/skill'
+} from '@/domain/battle/types'
+import { PARTICIPANT_SIDE, type ParticipantSide } from '@/domain/battle/types'
+import type { SkillSet } from '@/domain/skill/types'
 import {
   AttributeValues,
   Modifier,
   type IModifierProvider,
-  getAttributeDefaultValue,
-} from '@/types/attribute'
+} from '@/domain/attribute/types'
 import {
   AttributeValue,
   createAttributeValue,
@@ -29,10 +28,10 @@ import {
   ATTRIBUTE_CODE,
   AttributeMetaMap,
   getAttributeMeta,
-} from '@/types/attribute'
+} from '@/domain/attribute/types'
 import { ParticipantStats } from '@/domain/battle/entity/ParticipantStats'
-import { AttributeEngine } from '@/domain/attribute/AttributeEngine'
-import type { ModifierTemplate } from '@/types/modifier-template'
+import { ParticipantBuffs } from '@/domain/battle/entity/ParticipantBuffs'
+import { ParticipantSkills } from '@/domain/battle/entity/ParticipantSkills'
 import { triggerEventBus } from '@/domain/buff/TriggerEventBus'
 
 export type BaseBattleParticipant = {
@@ -78,8 +77,11 @@ export class BattleParticipantImpl implements BattleEntity {
   skills: SkillSet
   attributeValues: AttributeValues
 
-  /** 技能冷却状态映射，key为技能ID，value为剩余冷却回合数 */
-  skillCooldowns: Map<string, number>
+  /** Buff 管理器 */
+  private buffManager: ParticipantBuffs
+
+  /** 技能管理器 */
+  private skillManager: ParticipantSkills
 
   /** 属性缓存 Map */
   private stats = new ParticipantStats()
@@ -102,7 +104,8 @@ export class BattleParticipantImpl implements BattleEntity {
     this.buffs = data.buffs ?? []
     this.statusEffects = data.statusEffects
     this.skills = data.skills
-    this.skillCooldowns = new Map<string, number>()
+    this.buffManager = new ParticipantBuffs(this.buffs as unknown as string[], () => this.markAllDirty())
+    this.skillManager = new ParticipantSkills(this.skills)
 
     if (modifierProvider) {
       this.stats.setModifierProvider(modifierProvider)
@@ -145,116 +148,6 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 标记单个属性为脏（需要重新计算）
-   * @param attr 属性名称
-   */
-  markDirty(attr: ATTRIBUTE_CODE): void {
-    const attrData = this.attributes.get(attr)
-    if (attrData) {
-      attrData.dirty = true
-    }
-  }
-
-  /**
-   * 标记所有属性为脏（需要重新计算）
-   */
-  markAllDirty(): void {
-    for (const attrData of this.attributes.values()) {
-      attrData.dirty = true
-    }
-  }
-
-  /**
-   * 重新计算单个属性（应用所有修饰符）
-   *
-   * 重构说明：
-   * - 使用 AttributeEngine.compute() 统一计算逻辑
-   * - 自动记录 trace 信息用于调试面板
-   * - 保持与原有 ModifierProvider 的兼容性
-   *
-   * @param attr 属性名称
-   */
-  private recalcAttribute(attr: ATTRIBUTE_CODE): void {
-    const attrData = this.attributes.get(attr)
-    if (!attrData || !attrData.dirty) return
-
-    const baseValue = attrData.base
-
-    // 从 ModifierProvider 获取修饰符并转换为 ModifierTemplate 格式
-    const templates: ModifierTemplate[] = []
-    if (this._modifierProvider) {
-      const modifierStack = this._modifierProvider.getModifierStack(this.id)
-      if (modifierStack) {
-        const modifiers = modifierStack.getModifiers(attr as ATTRIBUTE_CODE)
-        for (const mod of modifiers) {
-          templates.push({
-            id: mod.buffInstanceId,
-            sourceName:
-              this._modifierProvider.getSourceName(mod.buffInstanceId) ||
-              mod.buffInstanceId,
-            sourceType: this._modifierProvider.getSourceType(
-              mod.buffInstanceId
-            ),
-            targetAttribute: attr as ATTRIBUTE_CODE,
-            type: mod.type,
-            value: mod.value,
-          })
-        }
-      }
-    }
-
-    // 使用 AttributeEngine 计算属性值
-    const result = AttributeEngine.compute(baseValue, templates, {
-      attributes: this.getAllBaseAttributes(),
-      params: { participantId: this.id },
-    })
-
-    // 应用计算结果
-    let finalValue = result.finalValue
-
-    // 特殊属性约束
-    if (attr === ATTRIBUTE_CODE.currentHealth) {
-      const maxHp = this.getAttribute(ATTRIBUTE_CODE.maxHealth)
-      finalValue = Math.max(0, Math.min(finalValue, maxHp))
-    }
-    if (attr === ATTRIBUTE_CODE.energy) {
-      const maxEnergy = this.getAttribute(ATTRIBUTE_CODE.maxEnergy)
-      finalValue = Math.max(0, Math.min(finalValue, maxEnergy))
-    }
-
-    // 更新属性数据
-    attrData.value = finalValue
-    attrData.modifiers = result.steps.map((step) => ({
-      source: step.sourceName,
-      sourceType: 'buff' as ModifierSourceType,
-      value: step.appliedValue,
-      type: step.type,
-    }))
-    attrData.dirty = false
-
-    // 记录调试信息
-    if (this._modifierProvider?.isDebugMode()) {
-      attrData.breakdown = result.breakdown
-      attrData.trace = result
-    } else {
-      delete attrData.breakdown
-      delete attrData.trace
-    }
-  }
-
-  /**
-   * 获取所有基础属性值（用于动态值计算上下文）
-   * @returns 属性名到基础值的映射
-   */
-  private getAllBaseAttributes(): Record<string, number> {
-    const result: Record<string, number> = {}
-    this.attributes.forEach((attrData, attrCode) => {
-      result[attrCode] = attrData.base
-    })
-    return result
-  }
-
-  /**
    * 获取属性最终值（自动触发重新计算）
    * @param attr 属性名称
    * @returns 属性最终值
@@ -277,14 +170,6 @@ export class BattleParticipantImpl implements BattleEntity {
     return this.stats.getAttributeValue(attr)
   }
 
-  getAttribute(attr: ATTRIBUTE_CODE): number {
-    return this.stats.getAttribute(attr)
-  }
-
-  getAttr(attr: ATTRIBUTE_CODE): number {
-    return this.stats.getAttribute(attr)
-  }
-
   getAttrValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
     return this.stats.getAttrValue(attr)
   }
@@ -301,10 +186,6 @@ export class BattleParticipantImpl implements BattleEntity {
     this.stats.recalculateAll()
   }
 
-  setAttribute(attribute: ATTRIBUTE_CODE, value: number): void {
-    this.stats.setAttributeValue(attribute, value)
-  }
-
   markDirty(attr: ATTRIBUTE_CODE): void {
     this.stats.markDirty(attr)
   }
@@ -315,60 +196,6 @@ export class BattleParticipantImpl implements BattleEntity {
 
   recalculateAll(): void {
     this.stats.recalculateAll()
-  }
-
-  /**
-   * 批量预计算所有属性（回合开始时调用）
-   */
-  recalcAll(): void {
-    this.recalculateAll()
-  }
-
-  /**
-   * 获取属性值对象（包含详细信息）
-   * @param attr 属性名称
-   * @returns 属性值对象
-   */
-  getAttributeValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
-    const attrData = this.attributes.get(attr)
-    if (!attrData) return undefined
-
-    if (attrData.dirty) {
-      this.recalcAttribute(attr)
-    }
-
-    return attrData
-  }
-
-  /**
-   * 批量预计算所有属性（推荐在回合开始前/战斗结算前调用）
-   * 集中遍历所有 dirty 属性，计算复杂度与属性数量线性相关
-   */
-  recalculateAll(): void {
-    this.attributes.forEach((_, type) => this.recalcAttribute(type))
-  }
-
-  /**
-   * 获取属性基础值
-   * @param attr 属性名称
-   * @returns 属性基础值
-   */
-  getAttributeBase(attr: ATTRIBUTE_CODE): number {
-    const attrData = this.attributes.get(attr)
-    return attrData?.base ?? 0
-  }
-
-  /**
-   * 设置属性基础值
-   * @param attr 属性名称
-   * @param value 基础值
-   */
-  setAttributeBase(attr: ATTRIBUTE_CODE, value: number): void {
-    const attrData = this.attributes.get(attr)
-    if (attrData) {
-      attrData.base = value
-      attrData.dirty = true
-    }
   }
 
   /**
@@ -760,15 +587,11 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 技能配置对象
    */
   getSkills(): SkillSet {
-    return this.skills
+    return this.skillManager.getSkills()
   }
 
   getSkillList(): SkillConfig[] {
-    return [
-      ...(this.skills.small || []),
-      ...(this.skills.passive || []),
-      ...(this.skills.ultimate || []),
-    ]
+    return this.skillManager.getSkillList()
   }
 
   /**
@@ -777,34 +600,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 技能ID数组
    */
   getSkillIds(filter: 'all' | 'active' | 'passive' = 'all'): string[] {
-    const allSkills: string[] = []
-    const activeSkills: string[] = []
-    const passiveSkills: string[] = []
-
-    if (this.skills.small) {
-      const smallIds = this.skills.small.map((skill) => skill.id)
-      allSkills.push(...smallIds)
-      activeSkills.push(...smallIds)
-    }
-    if (this.skills.passive) {
-      const passiveIds = this.skills.passive.map((skill) => skill.id)
-      allSkills.push(...passiveIds)
-      passiveSkills.push(...passiveIds)
-    }
-    if (this.skills.ultimate) {
-      const ultimateIds = this.skills.ultimate.map((skill) => skill.id)
-      allSkills.push(...ultimateIds)
-      activeSkills.push(...ultimateIds)
-    }
-
-    switch (filter) {
-      case 'active':
-        return activeSkills
-      case 'passive':
-        return passiveSkills
-      default:
-        return allSkills
-    }
+    return this.skillManager.getSkillIds(filter)
   }
 
   /**
@@ -813,7 +609,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 是否拥有
    */
   hasSkill(skillId: string): boolean {
-    return this.getSkillIds().includes(skillId)
+    return this.skillManager.hasSkill(skillId)
   }
 
   /**
@@ -821,10 +617,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param buffInstanceId - Buff实例ID
    */
   addBuff(buffInstanceId: string): void {
-    if (!this.buffs.includes(buffInstanceId)) {
-      this.buffs.push(buffInstanceId)
-      this.markAllDirty()
-    }
+    this.buffManager.addBuff(buffInstanceId)
   }
 
   /**
@@ -832,11 +625,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param buffInstanceId - Buff实例ID
    */
   removeBuff(buffInstanceId: string): void {
-    const index = this.buffs.indexOf(buffInstanceId)
-    if (index !== -1) {
-      this.buffs.splice(index, 1)
-      this.markAllDirty()
-    }
+    this.buffManager.removeBuff(buffInstanceId)
   }
 
   /**
@@ -845,7 +634,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 是否拥有
    */
   hasBuff(buffId: string): boolean {
-    return this.buffs.some((id) => id.includes(buffId))
+    return this.buffManager.hasBuff(buffId)
   }
 
   /**
@@ -854,8 +643,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 是否可用
    */
   isSkillAvailable(skillId: string): boolean {
-    const cooldown = this.skillCooldowns.get(skillId)
-    return cooldown === undefined || cooldown <= 0
+    return this.skillManager.isSkillAvailable(skillId)
   }
 
   /**
@@ -864,25 +652,14 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param cooldown - 冷却回合数
    */
   setSkillCooldown(skillId: string, cooldown: number): void {
-    if (cooldown > 0) {
-      this.skillCooldowns.set(skillId, cooldown)
-    } else {
-      this.skillCooldowns.delete(skillId)
-    }
+    this.skillManager.setSkillCooldown(skillId, cooldown)
   }
 
   /**
    * 减少所有技能的冷却回合数
    */
   reduceSkillCooldowns(): void {
-    for (const [skillId, cooldown] of this.skillCooldowns.entries()) {
-      const newCooldown = cooldown - 1
-      if (newCooldown <= 0) {
-        this.skillCooldowns.delete(skillId)
-      } else {
-        this.skillCooldowns.set(skillId, newCooldown)
-      }
-    }
+    this.skillManager.reduceSkillCooldowns()
   }
 
   /**
@@ -891,14 +668,14 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 剩余冷却回合数，0表示无冷却
    */
   getSkillCooldown(skillId: string): number {
-    return this.skillCooldowns.get(skillId) || 0
+    return this.skillManager.getSkillCooldown(skillId)
   }
 
   /**
    * 重置所有技能冷却
    */
   resetSkillCooldowns(): void {
-    this.skillCooldowns.clear()
+    this.skillManager.resetSkillCooldowns()
   }
 
   /**
@@ -907,10 +684,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 参与者快照数据
    */
   toSnapshot(buffSnapshots: BuffInstanceSnapshot[] = []): ParticipantSnapshot {
-    const skillCooldowns: Record<string, number> = {}
-    this.skillCooldowns.forEach((value, key) => {
-      skillCooldowns[key] = value
-    })
+    const skillCooldowns = this.skillManager.exportCooldownSnapshot()
 
     return {
       id: this.id,

@@ -1,6 +1,6 @@
 import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
-import type { BattleState, BattleEntity } from '@/types/battle'
-import { BattleStatus } from '@/types/battle'
+import type { BattleState, BattleEntity } from '@/domain/battle/types'
+import { BattleStatus } from '@/domain/battle/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { eventBus } from '@/main'
 

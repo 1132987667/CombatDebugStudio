@@ -6,8 +6,8 @@
  * 描述: 使用JSON Schema验证技能和Effect配置的完整性和正确性
  */
 
-import { SkillConfig, SkillStep } from '@/types'
-import { isValidselectorTarget } from '@/types/skill'
+import { SkillConfig, SkillStep } from '@/domain/skill/types'
+import { isValidselectorTarget } from '@/domain/skill/types'
 
 /**
  * 验证结果接口

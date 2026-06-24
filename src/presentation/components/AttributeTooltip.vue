@@ -74,9 +74,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import type { Modifier, AttributeValueType, ModifierSourceType } from '@/types/attribute'
-import { ModifierSourceTypeNames } from '@/types/attribute'
-import { getAttributeMeta, getAttributeCodeByName } from '@/types/attribute'
+import type { Modifier, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
+import { ModifierSourceTypeNames } from '@/domain/attribute/types'
+import { getAttributeMeta, getAttributeCodeByName } from '@/domain/attribute/types'
 
 interface Props {
   visible: boolean

@@ -1,5 +1,5 @@
-import type { BuffConfig } from '@/types/buff'
-import type { Character } from '@/types/character'
+import type { BuffConfig } from '@/domain/buff/types'
+import type { Character } from '@/domain/character/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 
 export class BuffContext {

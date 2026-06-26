@@ -10,23 +10,23 @@ import type {
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
-import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 
 /**
- * 鎴樻枟浜嬩欢绠＄悊鍣ㄧ被
- * 璐熻矗缁熶竴绠＄悊鎴樻枟鐩稿叧鐨勪簨浠惰闃呭拰鍒嗗彂
+ * 战斗事件管理器
+ * 负责监听和处理战斗事件
  */
 export class BattleEventManager {
   private battleStore = null
   private battleStateManager: BattleStateManager | null = null
   private battleSystem: IBattleSystem | null = null
-  /** 鏍囪鏄惁姝ｅ湪鐩戝惉 */
+  /** 是否正在监听事件 */
   private isListening = false
-  /** 淇濆瓨浜嬩欢鍥炶皟寮曠敤锛岀敤浜庡幓閲嶅垽鏂?*/
+  /** 已绑定的事件处理函数 */
   private boundHandlers: Map<string, Function> = new Map()
 
   /**
-   * 鑾峰彇鎴樻枟store锛堟噿鍔犺浇锛岃В鍐砅inia鏈垵濮嬪寲闂锛?   */
+   * 获取战斗状态
+   */
   private getBattleStore() {
     if (!this.battleStore) {
       this.battleStore = useBattleStore()
@@ -35,7 +35,8 @@ export class BattleEventManager {
   }
 
   /**
-   * 璁剧疆鎴樻枟绯荤粺寮曠敤锛堢敱澶栭儴娉ㄥ叆锛?   */
+   * 设置战斗系统和状态管理器
+   */
   setBattleSystem(
     battleSystem: IBattleSystem,
     battleStateManager: BattleStateManager,
@@ -45,17 +46,19 @@ export class BattleEventManager {
   }
 
   /**
-   * 妫€鏌ユ槸鍚︽鍦ㄧ洃鍚?   */
+   * 是否正在监听事件
+   */
   public isCurrentlyListening(): boolean {
     return this.isListening
   }
 
   /**
-   * 寮€濮嬬洃鍚垬鏂椾簨浠?   */
+   * 开始监听战斗事件
+   */
   startListening() {
     // 闃叉閲嶅璁㈤槄
     if (this.isListening) {
-      console.warn('BattleEventManager: 宸插湪鐩戝惉涓紝璺宠繃閲嶅璁㈤槄')
+      console.warn('BattleEventManager:   ')
       return
     }
 
@@ -83,7 +86,7 @@ export class BattleEventManager {
   }
 
   /**
-   * 鍋滄鐩戝惉鎴樻枟浜嬩欢
+   * 停止监听战斗事件
    */
   stopListening() {
     // Unsubscribe all battle events
@@ -98,7 +101,7 @@ export class BattleEventManager {
   }
 
   /**
-   * 澶勭悊鎴樻枟鏃ュ織浜嬩欢
+   * 处理战斗日志事件
    */
   private handleBattleLogEvent(data: BattleLogEventData) {
     try {
@@ -197,31 +200,32 @@ export class BattleEventManager {
     }
   }
 
-  /**
-   * 澶勭悊鎴樻枟缁撴潫浜嬩欢
+    /**
+     * 处理战斗结束事件
    */
   private handleBattleEndEvent(data: BattleEndedEventData) {
     try {
       this.getBattleStore().setBattleActive(false)
       this.getBattleStore().setAutoPlayMode(false)
-      // 璁板綍鎴樻枟缁撴潫鏃ュ織
+      // 记录战斗结束日志
       if (data && data.winner) {
         this.getBattleStore().addBattleLog({
-          turn: '鎴樻枟缁撴潫',
-          source: '绯荤粺',
-          action: '瀹ｅ竷',
+          turn: '战斗结束',
+          source: 'system',
+          action: 'end',
           target: '',
-          result: `鎴樻枟缁撴潫锛佽儨鍒╄€? ${data.winner === 'ALLY' ? '鎴戞柟' : '鏁屾柟'}`,
+          result: `? ${data.winner === PARTICIPANT_SIDE.ALLY ? '鎴戞柟' : '鏁屾柟'}`,
           level: 'system',
         })
       }
     } catch (error) {
-      this.getBattleStore().addErrorLog(`澶勭悊鎴樻枟缁撴潫浜嬩欢鏃跺嚭閿? ${error}`)
+      this.getBattleStore().addErrorLog(`Error handling battle end: ${error}`)
     }
   }
 
   /**
-   * 澶勭悊鍥炲悎寮€濮嬩簨浠?   */
+   * 处理回合开始事件
+   */
   private handleTurnStartEvent(data: {
     battleId: string
     turn: number
@@ -262,7 +266,7 @@ export class BattleEventManager {
         })
       }
     } catch (error) {
-      this.getBattleStore().addErrorLog(`澶勭悊鍥炲悎缁撴潫浜嬩欢鏃跺嚭閿? ${error}`)
+      this.getBattleStore().addErrorLog(`Error handling turn end: ${error}`)
     }
   }
 }

@@ -6,13 +6,13 @@
 import type { BattleLogEntry } from '@/shared/types/battle-log';
 import type { BattleEntity, ParticipantSide } from '@/domain/battle/types';
 
-// 战斗日志事件数据类型
+/** 战斗日志事件数据类型 */
 export interface BattleLogEventData {
   battleId: string;
   log: BattleLogEntry;
 }
 
-// 伤害动画事件数据类型
+/** 伤害动画事件数据类型 */
 export interface DamageAnimationEventData {
   targetId: string;
   damage: number;
@@ -21,24 +21,24 @@ export interface DamageAnimationEventData {
   isHeal: boolean;
 }
 
-// 闪避动画事件数据类型
+/** 闪避动画事件数据类型 */
 export interface MissAnimationEventData {
   targetId: string;
 }
 
-// 战斗结束事件数据类型
+/** 战斗结束事件数据类型 */
 export interface BattleEndedEventData {
   winner: ParticipantSide;
 }
 
-// Buff 效果事件数据类型
+/** Buff 效果事件数据类型 */
 export interface BuffEffectEventData {
   targetId: string;
   buffName: string;
   isPositive: boolean;
 }
 
-// 技能效果事件数据类型
+/** 技能效果事件数据类型 */
 export interface SkillEffectEventData {
   sourceId: string;
   targetId: string;
@@ -47,7 +47,7 @@ export interface SkillEffectEventData {
   damageType: string;
 }
 
-// 团队数据变更事件数据类型
+/** 团队数据变更事件数据类型 */
 export interface TeamDataChangedEventData {
   allyTeam: BattleEntity[];
   enemyTeam: BattleEntity[];
@@ -87,7 +87,7 @@ export interface BattleEvent {
   data: any;
 }
 
-// 战斗事件类型映射
+/** 战斗事件类型映射 */
 export interface BattleEvents {
   [BattleEventCodes.BATTLE_LOG]: BattleLogEventData;
   [BattleEventCodes.DAMAGE_ANIMATION]: DamageAnimationEventData;
@@ -95,14 +95,14 @@ export interface BattleEvents {
   [BattleEventCodes.BATTLE_ENDED]: BattleEndedEventData;
   [BattleEventCodes.BUFF_EFFECT]: BuffEffectEventData;
   [BattleEventCodes.SKILL_EFFECT]: SkillEffectEventData;
-  [BattleEventCodes.TEAM_DATA_CHANGED]: void;
+  [BattleEventCodes.TEAM_DATA_CHANGED]: TeamDataChangedEventData;
   [BattleEventCodes.BATTLE_RESET]: void;
   [BattleEventCodes.TURN_START]: void;
   [BattleEventCodes.TURN_END]: void;
 }
 
-// 战斗事件名称类型
+/** 战斗事件名称类型 */
 export type BattleEventName = keyof BattleEvents;
 
-// 战斗事件回调类型
+/** 战斗事件回调类型 */
 export type BattleEventCallback<T extends BattleEventName> = (data: BattleEvents[T]) => void;

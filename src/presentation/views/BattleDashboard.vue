@@ -288,7 +288,7 @@ import { container } from '@/infrastructure/di/Container';
 import { useDebugStore } from "@/presentation/stores";
 import AttributeTooltip from "@/presentation/components/AttributeTooltip.vue";
 import Notification from "@/presentation/components/Notification.vue";
-import { ATTRIBUTE_CODE, type Modifier, type AttributeValueType } from "@/domain/attribute/types";
+import { ATTRIBUTE_CODE, type Modifier, AttributeValueType } from "@/domain/attribute/types";
 import type { SkillConfig } from "@/domain/skill/types";
 import { SELECTOR_TARGET_NAMES } from "@/domain/skill/types";
 import type { BattleManager } from '@/domain/battle/BattleManager';
@@ -469,7 +469,7 @@ const attrTooltipData = ref<{
   title: '',
   modifiers: [],
   finalValue: 0,
-  valueType: '数值',
+  valueType: AttributeValueType.VALUE,
   triggerRect: null
 })
 

@@ -3,7 +3,7 @@
  * 为 BattleManager 的事件系统提供类型安全保障
  */
 
-import type { BattleLogEntry } from '@/application/dto/battle-log';
+import type { BattleLogEntry } from '@/shared/types/battle-log';
 import type { BattleEntity, ParticipantSide } from '@/domain/battle/types';
 
 // 战斗日志事件数据类型
@@ -78,6 +78,14 @@ export const BattleEventCodes = {
 } as const
 
 export type BattleEventCode = (typeof BattleEventCodes)[keyof typeof BattleEventCodes]
+
+export interface BattleEvent {
+  eventId: string;
+  type: 'action' | 'state_change' | 'turn_start' | 'turn_end' | 'battle_start' | 'battle_end';
+  timestamp: number;
+  turn: number;
+  data: any;
+}
 
 // 战斗事件类型映射
 export interface BattleEvents {

@@ -1,3 +1,10 @@
+/**
+ ** 文件: BattleAnimationManager.ts
+ ** 创建日期: 2026-02-09
+ ** 作者: CombatDebugStudio
+ ** 功能: 战斗动画管理器
+ ** 描述: 管理战斗动画队列的入队、播放、暂停与清除，协调 RAFTimer 驱动的时序播放
+ **/
 import type { AnimationQueueItem, AnimationType, AnimationData, BattleEntity } from '@/domain/battle/types'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import { eventBus } from '@/main'

@@ -19,6 +19,7 @@ import type {
 } from '@/domain/battle/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 export type ReplayStateCallback = (state: ReplayState) => void
 export type ReplayEventCallback = (event: ReplayEvent) => void
@@ -379,14 +380,20 @@ export class ReplayEngine {
       name: p.name,
       type: p.type,
       team: p.team,
-      hp: p.hp,
-      maxHp: p.maxHp,
-      energy: p.energy,
-      maxEnergy: p.maxEnergy,
+      hp: p.getAttribute(ATTRIBUTE_CODE.currentHealth),
+      maxHp: p.getAttribute(ATTRIBUTE_CODE.maxHealth),
+      energy: p.getAttribute(ATTRIBUTE_CODE.currentEnergy),
+      maxEnergy: p.getAttribute(ATTRIBUTE_CODE.maxEnergy),
       buffs: p.buffs.map(b => ({ ...b })),
       skillCooldowns: { ...p.skillCooldowns },
       statusEffects: p.statusEffects.map(s => ({ ...s })),
-      attributes: { ...p.attributes },
+      attributes: {
+        attack: p.getAttribute(ATTRIBUTE_CODE.attack),
+        defense: p.getAttribute(ATTRIBUTE_CODE.defense),
+        speed: p.getAttribute(ATTRIBUTE_CODE.speed),
+        critRate: p.getAttribute(ATTRIBUTE_CODE.critRate),
+        critDamage: p.getAttribute(ATTRIBUTE_CODE.critDamage),
+      },
     }
   }
 

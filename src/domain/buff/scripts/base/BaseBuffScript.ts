@@ -2,6 +2,7 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { ModifierType } from '@/domain/attribute/types'
 
 export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TParams> {
   params?: TParams
@@ -40,7 +41,7 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
     context: BuffContext,
     attribute: string,
     value: number,
-    type: 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE'
+    type: ModifierType
   ): void {
     context.addModifier(attribute, value, type)
   }

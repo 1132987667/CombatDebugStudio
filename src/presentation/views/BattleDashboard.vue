@@ -17,10 +17,10 @@
                 currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0 }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '能量', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.energy)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.energy)?.value || 0, '数值')"
+            @mouseenter="showAttrTooltip($event, '能量', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">能量:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.energy)?.value || 0 }}/{{
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value || 0 }}/{{
               currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 150 }}</span>
           </div>
           <div class="monitor-item"
@@ -292,6 +292,7 @@ import { ATTRIBUTE_CODE, type Modifier, type AttributeValueType } from "@/domain
 import type { SkillConfig } from "@/domain/skill/types";
 import { SELECTOR_TARGET_NAMES } from "@/domain/skill/types";
 import type { BattleManager } from '@/domain/battle/BattleManager';
+import { SkillType } from '@/domain/skill/types';
 
 // 获取 BattleManager
 const battleManager = container.resolve<BattleManager>('BattleManager');
@@ -374,10 +375,10 @@ const hideSkillTooltip = () => {
  * 获取技能类型对应的CSS类名
  * @param skill - 技能配置
  * @returns CSS类名
- */
+ */ 
 const getSkillTypeClass = (skill: SkillConfig): string => {
-  if (skill.skillType === 'passive') return 'passive';
-  if (skill.skillType === 'ultimate') return 'ultimate';
+  if (skill.skillType === SkillType.PASSIVE) return 'passive';
+  if (skill.skillType === SkillType.ULTIMATE) return 'ultimate';
   return 'active';
 };
 
@@ -677,7 +678,7 @@ const exportState = async () => {
           isPercentage: attrValue.isPercentage,
           // 修饰符列表
           modifiers: attrValue.modifiers.map(mod => ({
-            source: mod.source,
+            source: mod.sourceKey,
             sourceType: mod.sourceType,
             value: mod.value,
             type: mod.type,

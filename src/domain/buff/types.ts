@@ -1,5 +1,5 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { BattleData } from '.'
+import { BattleData } from '@/domain/battle/types'
 
 // [
 //   {

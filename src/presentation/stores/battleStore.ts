@@ -9,8 +9,8 @@ import type {
   BattleLogLevel,
   LogSegment,
   LogFilters,
-} from '@/application/dto/battle-log'
-import { battleActionToLogEntry, LogType } from '@/application/dto/battle-log'
+} from '@/shared/types/battle-log'
+import { battleActionToLogEntry, LogType } from '@/shared/types/battle-log'
 import type { BattleManager } from '@/domain/battle/BattleManager'
 import type { BattleAction, BattleState } from '@/domain/battle/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'

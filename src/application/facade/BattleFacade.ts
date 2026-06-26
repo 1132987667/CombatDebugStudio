@@ -25,10 +25,9 @@ export class BattleFacade {
 
   /**
    * 重置战斗门面
-   * @param battleManager 新的BattleManager实例（可选）
    */
-  public reset(battleManager?: BattleManager): void {
-    this.battleManager = battleManager || new BattleManager();
+  public reset(): void {
+    this.battleManager.resetBattle();
   }
 }
 

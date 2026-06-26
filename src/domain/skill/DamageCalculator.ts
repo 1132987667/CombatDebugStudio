@@ -1,7 +1,7 @@
 ﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, LEGACY_ATTR_MAP } from '@/domain/attribute/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 
 export interface DamageCalculationConfig {
@@ -18,48 +18,11 @@ export interface DamageCalculationConfig {
   maxDamageThreshold?: number
 }
 
-export interface DamageHealCalculationConfig {
-  baseValue: number
-  bonusValue: number
-  attackBonus: number
-  defenseBonus: number
-  levelBonus: number
-  attributeCode: ATTRIBUTE_CODE
-}
-
 export interface DamageResult {
   damage: number
   isCritical: boolean
   isMiss: boolean
   actualDamage: number
-}
-
-export interface CalculationLog {
-  step: string
-  value: number
-  description: string
-  detail?: string
-  isCritical?: boolean
-  baseDamage?: number
-  effectiveDefense?: number
-  damageReduction?: number
-}
-
-const LEGACY_ATTR_MAP: Record<string, ATTRIBUTE_CODE> = {
-  ATK: ATTRIBUTE_CODE.attack,
-  DEF: ATTRIBUTE_CODE.defense,
-  MAX_HP: ATTRIBUTE_CODE.maxHealth,
-  CRIT_RATE: ATTRIBUTE_CODE.critRate,
-  CRIT_DMG: ATTRIBUTE_CODE.critDamage,
-  DMG_REDUCTION: ATTRIBUTE_CODE.damageReduction,
-  DMG_TAKEN_INCREASE: ATTRIBUTE_CODE.damageTakenIncrease,
-  NORMAL_ATK_DMG_REDUCTION: ATTRIBUTE_CODE.normalAtkDmgReduction,
-  SKILL_DMG_REDUCTION: ATTRIBUTE_CODE.skillDmgReduction,
-  CRIT_DMG_TAKEN_REDUCTION: ATTRIBUTE_CODE.critDmgTakenReduction,
-  HP: ATTRIBUTE_CODE.maxHealth,
-  SPD: ATTRIBUTE_CODE.speed,
-  DODGE: ATTRIBUTE_CODE.dodge,
-  HIT: ATTRIBUTE_CODE.hit,
 }
 
 function getAttributeValue(participant: BattleEntity, attr: string): number {

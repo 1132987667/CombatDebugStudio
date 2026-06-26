@@ -13,8 +13,9 @@ import type { PassiveSkillManager, PassiveSkillTrigger } from '@/domain/skill/Pa
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import { EFFECT_TYPES } from '@/shared/types/effect'
-import { newLogSegment, LogLevel, BATTLE_LOG_CATEGORIES } from '@/application/dto/battle-log'
+import { newLogSegment, LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /**
  * 战斗执行器
@@ -220,7 +221,8 @@ export class BattleExecutor {
       )
       if (allies.length === 0) return [source]
       return [allies.reduce((min, p) =>
-        (p.currentHealth / p.maxHealth) < (min.currentHealth / min.maxHealth) ? p : min,
+        (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth)) <
+        (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / min.getAttribute(ATTRIBUTE_CODE.maxHealth)) ? p : min,
       )]
     }
 
@@ -232,7 +234,8 @@ export class BattleExecutor {
       )
       if (enemies.length === 0) return [source]
       return [enemies.reduce((min, p) =>
-        (p.currentHealth / p.maxHealth) < (min.currentHealth / min.maxHealth) ? p : min,
+        (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth)) <
+        (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / min.getAttribute(ATTRIBUTE_CODE.maxHealth)) ? p : min,
       )]
     }
 
@@ -274,7 +277,8 @@ export class BattleExecutor {
 
     if (skill.steps.some((step) => step.type === 'HEAL' || step.type === 'BUFF')) {
       const lowestHpTarget = targets.reduce((min, p) =>
-        (p.currentHealth / p.maxHealth) < (min.currentHealth / min.maxHealth) ? p : min,
+        (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth)) <
+        (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / min.getAttribute(ATTRIBUTE_CODE.maxHealth)) ? p : min,
       )
       return lowestHpTarget.id
     } else {
@@ -323,8 +327,8 @@ export class BattleExecutor {
   ): {
     turn: number
     message: string
-    segments: import('@/application/dto/battle-log').LogSegment[]
-    category: import('@/application/dto/battle-log').BattleLogCategory
+    segments: import('@/shared/types/battle-log').LogSegment[]
+    category: import('@/shared/types/battle-log').BattleLogCategory
   } {
     const { isMiss = false, damage = 0, isCritical = false } = options
 

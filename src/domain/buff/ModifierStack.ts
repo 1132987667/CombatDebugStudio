@@ -1,4 +1,5 @@
-import type { ModifierType, ATTRIBUTE_CODE } from '@/domain/attribute/types'// ponytail: Modifier type from @/domain/attribute/types lacks buffInstanceId; extend locally
+import  { ModifierType, type ATTRIBUTE_CODE } from '@/domain/attribute/types'// ponytail: Modifier type from @/domain/attribute/types lacks buffInstanceId; extend locally
+
 interface LocalModifier {
   buffInstanceId: string
   attribute: ATTRIBUTE_CODE
@@ -54,9 +55,9 @@ export class ModifierStack {
     let multiplicativeSum = 1
     for (const modifier of modifiers) {
       switch (modifier.type) {
-        case 'ADDITIVE': additiveSum += modifier.value; break
-        case 'MULTIPLICATIVE': multiplicativeSum *= 1 + modifier.value; break
-        case 'PERCENTAGE': additiveSum += baseValue * modifier.value; break
+        case ModifierType.ADDITIVE: additiveSum += modifier.value; break
+        case ModifierType.MULTIPLICATIVE: multiplicativeSum *= 1 + modifier.value; break
+        case ModifierType.PERCENTAGE: additiveSum += baseValue * modifier.value; break
       }
     }
     result += additiveSum

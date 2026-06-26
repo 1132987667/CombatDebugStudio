@@ -5,7 +5,7 @@
  * 描述：使用消息队列和批量处理实现高性能异步日志写入
  */
 
-import type { LogEntry, LogHandler } from '@/application/dto/battle-log'
+import type { LogEntry, LogHandler } from '@/shared/types/battle-log'
 
 /**
  * 异步写入器配置

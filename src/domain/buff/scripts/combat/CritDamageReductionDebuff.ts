@@ -1,5 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
 
 /**
  * 暴击伤害降低debuff脚本
@@ -13,7 +14,7 @@ export class CritDamageReductionDebuff extends BaseBuffScript {
     
     // 降低暴击伤害
     const critDamageReduction = this.getConfigValue(context, 'critDamageReduction', 0.2) // 默认降低20%暴击伤害
-    this.addModifier(context, 'CRIT_DAMAGE', -critDamageReduction, 'MULTIPLICATIVE')
+    this.addModifier(context, 'CRIT_DAMAGE', -critDamageReduction, ModifierType.MULTIPLICATIVE)
     
     // 记录初始暴击伤害降低值
     context.setVariable('critDamageReduction', critDamageReduction)
@@ -35,7 +36,7 @@ export class CritDamageReductionDebuff extends BaseBuffScript {
       if (newReduction < currentReduction) {
         // 更新暴击伤害降低效果
         context.removeModifiers('CRIT_DAMAGE')
-        this.addModifier(context, 'CRIT_DAMAGE', -newReduction, 'MULTIPLICATIVE')
+        this.addModifier(context, 'CRIT_DAMAGE', -newReduction, ModifierType.MULTIPLICATIVE)
         context.setVariable('critDamageReduction', newReduction)
         this.log(context, `暴击伤害逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
       }
@@ -52,7 +53,7 @@ export class CritDamageReductionDebuff extends BaseBuffScript {
     
     // 更新效果
     context.removeModifiers('CRIT_DAMAGE')
-    this.addModifier(context, 'CRIT_DAMAGE', -newReduction, 'MULTIPLICATIVE')
+    this.addModifier(context, 'CRIT_DAMAGE', -newReduction, ModifierType.MULTIPLICATIVE)
     context.setVariable('critDamageReduction', newReduction)
     
     this.log(context, `暴击伤害降低提升至 ${(newReduction * 100).toFixed(1)}%`)

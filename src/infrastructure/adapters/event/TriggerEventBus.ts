@@ -1,9 +1,4 @@
 /**
- * @deprecated Import from '@/infrastructure/adapters/event/TriggerEventBus' instead.
- * This file will become a pure re-export shim in Phase 7.
- */
-
-/**
  * 文件: TriggerEventBus.ts
  * 创建日期: 2026-04-10
  * 作者: CombatDebugStudio

@@ -7,7 +7,7 @@
 
 import type { ILogger } from '@/domain/port/logging'
 import { battleLogManager } from './BattleLogManager'
-import { LogLevel } from '@/application/dto/battle-log'
+import { LogLevel } from '@/shared/types/battle-log'
 
 export class LoggerAdapter implements ILogger {
   debug(message: string, context?: Record<string, unknown>): void {

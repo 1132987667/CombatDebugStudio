@@ -17,7 +17,7 @@ import { BuffContext } from '@/domain/buff/BuffContext'
 import { BuffContextPool } from '@/domain/buff/BuffContextPool'
 import { ModifierStack } from '@/domain/buff/ModifierStack'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
-import { TriggerEventBus, triggerEventBus } from '@/domain/buff/TriggerEventBus'
+import { TriggerEventBus, triggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 
 export interface TriggerExecutionContext extends TriggerEventContext {

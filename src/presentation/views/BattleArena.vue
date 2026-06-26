@@ -101,7 +101,7 @@ import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogMan
 import { PARTICIPANT_SIDE } from "@/domain/battle/types";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 import type { BattleManager } from '@/domain/battle/BattleManager';
-import type { LogEntry } from '@/application/dto/battle-log';
+import type { LogEntry } from '@/shared/types/battle-log';
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 

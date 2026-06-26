@@ -1,4 +1,4 @@
-import type { ExtendedSkillStep, CalculationLog } from '@/domain/skill/types'
+import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { BattleAction, BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'

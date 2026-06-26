@@ -8,11 +8,12 @@ import { createPinia } from 'pinia'
 import mitt from 'mitt'
 import BattleArena from '@/presentation/views/BattleArena.vue'
 import './presentation/styles/global.css'
+import { type BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 
 
 // 加载Buff脚本
 import('@/infrastructure/di/Container').then(({ container }) => {
-  const loader = container.resolve('BuffScriptLoader')
+  const loader: BuffScriptLoader = container.resolve('BuffScriptLoader')
   loader.loadScripts().then(() => {
     console.log('Buff脚本加载完成')
   }).catch(err => {

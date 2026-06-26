@@ -12,11 +12,14 @@ import type { ModifierTemplate } from '@/domain/attribute/modifier-template'
 /**
  * 技能类型枚举
  */
-export enum SkillType {
-  PASSIVE = 'passive',
-  SMALL = 'small',
-  ULTIMATE = 'ultimate',
+export const SkillType = {
+  ALL: 'all',
+  PASSIVE: 'passive',
+  SMALL: 'small',
+  ULTIMATE: 'ultimate',
 }
+export type SkillType = (typeof SkillType)[keyof typeof SkillType]
+
 
 /**
  * 技能定义接口（AI系统使用的运行时类型）
@@ -624,14 +627,14 @@ export function convertSkillConfigToSkill(
  * 根据 SkillConfig 推断 SkillType
  */
 function inferSkillType(config: SkillConfig): SkillType {
-  if (config.skillType === 'passive') {
+  if (config.skillType === SkillType.PASSIVE) {
     return SkillType.PASSIVE
   }
-  if (config.skillType === 'ultimate') {
+  if (config.skillType === SkillType.ULTIMATE) {
     return SkillType.ULTIMATE
   }
   // 兼容旧版可能使用 'small' 字符串
-  if ((config as any).skillType === 'small') {
+  if ((config as SkillConfig).skillType === SkillType.SMALL) {
     return SkillType.SMALL
   }
   return SkillType.SMALL

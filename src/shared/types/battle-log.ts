@@ -103,7 +103,7 @@ export type BattleLogType = 'system' | '普通攻击' | '小技能' | '大技能
 /**
  * 战斗动作类型定义 - 统一所有动作类型
  */
-export type ActionType =
+export type DetailActionType =
   | 'normal_attack' // 普通攻击
   | 'skill_attack' // 技能攻击
   | 'heal_skill' // 治疗技能
@@ -268,7 +268,7 @@ export function getLogLevelColor(level: BattleLogCategory): string {
 /**
  * 动作类型映射 - 统一动作类型到显示名称的映射
  */
-export const ActionTypeDisplayNames: Record<ActionType, string> = {
+export const ActionTypeDisplayNames: Record<DetailActionType, string> = {
   normal_attack: '普通攻击',
   skill_attack: '技能攻击',
   heal_skill: '治疗技能',

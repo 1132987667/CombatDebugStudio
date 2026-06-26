@@ -23,13 +23,9 @@ import type { AttributeValueType } from '@/domain/attribute/types'
 import type { ParticipantSide } from '@/domain/battle/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 import {
-  IModifierProvider,
   ATTRIBUTE_CODE,
-  createAttributeValuesFromEnemyStats,
   ModifierType,
   ModifierSourceType,
-  createAttributeValue,
-  createBaseAttributeValue,
 } from '@/domain/attribute/types'
 import type {
   ModifierTemplate,
@@ -39,8 +35,6 @@ import {
   BattleParticipantImpl,
   type BattleParticipantInitData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
-import { container } from '@/infrastructure/di/Container'
-import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { toArray } from '@/shared/utils/Utils'
 import { Counter } from '@/shared/utils/Counter'
 const counter = new Counter()
@@ -155,21 +149,15 @@ export class GameDataProcessor {
    *
    * @param enemy - 敌人数据
    * @param type - 参与者类型
-   * @param modifierProvider - 修饰符提供者（可选，通常为 BuffSystem 实例）
    * @returns BattleParticipantImpl - 包含基础属性的参与者实例
    */
   static enemyToParticipant(
     enemy: Enemy,
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
-    modifierProvider?: IModifierProvider,
   ): BattleParticipantImpl {
-    const buffSystem =
-      modifierProvider ?? container.resolve<BuffSystem>('BuffSystem')
 
     // 1. 解析被动技能并生成修饰符模板列表
     const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive)
-    const passiveModifierTemplates =
-      GameDataProcessor.buildPassiveModifiers(passiveSkills)
 
     // 2. 构造标准初始化 DTO
     const initData: BattleParticipantInitData = {
@@ -184,30 +172,11 @@ export class GameDataProcessor {
         passive: passiveSkills,
         ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate),
       },
-      attributeValues: createAttributeValuesFromEnemyStats(enemy.stats),
+      attributeValues: enemy.stats,
     }
 
     // 3. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
-    const participant = new BattleParticipantImpl(initData, buffSystem)
-
-    // 4. 将被动技能修饰符注册到参与者的修饰符堆栈
-    const modifierStack = buffSystem.getModifierStack(participant.id)
-    if (modifierStack) {
-      for (const template of passiveModifierTemplates) {
-        modifierStack.addModifier(
-          `passive_${participant.id}_${template.id}`,
-          template.targetAttribute,
-          typeof template.value === 'number' ? template.value : 0,
-          template.type,
-        )
-      }
-      // 标记所有属性为脏，触发重新计算
-      participant.markAllDirty()
-    } else {
-      console.warn(
-        `[GameDataProcessor] 无法获取参与者 ${participant.id} 的修饰符堆栈`,
-      )
-    }
+    const participant = new BattleParticipantImpl(initData)
 
     return participant
   }

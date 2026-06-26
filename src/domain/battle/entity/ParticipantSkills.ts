@@ -5,7 +5,7 @@
  */
 
 import type { SkillConfig, SkillSet } from '@/domain/skill/types'
-
+import { SkillType } from '@/domain/skill/types'
 /**
  * 技能管理类
  * 管理参与者的技能配置和冷却状态
@@ -31,32 +31,32 @@ export class ParticipantSkills {
    */
   getSkillList(): SkillConfig[] {
     return [
-      ...(this.skills.small || []),
-      ...(this.skills.passive || []),
-      ...(this.skills.ultimate || []),
+      ...(this.skills[SkillType.SMALL] || []),
+      ...(this.skills[SkillType.PASSIVE] || []),
+      ...(this.skills[SkillType.ULTIMATE] || []),
     ]
   }
 
   /**
    * 获取技能ID
    */
-  getSkillIds(filter: 'all' | 'active' | 'passive' = 'all'): string[] {
+  getSkillIds(filter: 'active' | SkillType.ALL | SkillType.PASSIVE = SkillType.ALL): string[] {
     const allSkills: string[] = []
     const activeSkills: string[] = []
     const passiveSkills: string[] = []
 
-    if (this.skills.small) {
-      const smallIds = this.skills.small.map((skill) => skill.id)
+    if (this.skills[SkillType.SMALL]) {
+      const smallIds = this.skills[SkillType.SMALL].map((skill) => skill.id)
       allSkills.push(...smallIds)
       activeSkills.push(...smallIds)
     }
-    if (this.skills.passive) {
-      const passiveIds = this.skills.passive.map((skill) => skill.id)
+    if (this.skills[SkillType.PASSIVE]) {
+      const passiveIds = this.skills[SkillType.PASSIVE].map((skill) => skill.id)
       allSkills.push(...passiveIds)
       passiveSkills.push(...passiveIds)
     }
-    if (this.skills.ultimate) {
-      const ultimateIds = this.skills.ultimate.map((skill) => skill.id)
+    if (this.skills[SkillType.ULTIMATE]) {
+      const ultimateIds = this.skills[SkillType.ULTIMATE].map((skill) => skill.id)  
       allSkills.push(...ultimateIds)
       activeSkills.push(...ultimateIds)
     }
@@ -64,7 +64,7 @@ export class ParticipantSkills {
     switch (filter) {
       case 'active':
         return activeSkills
-      case 'passive':
+      case SkillType.PASSIVE:
         return passiveSkills
       default:
         return allSkills

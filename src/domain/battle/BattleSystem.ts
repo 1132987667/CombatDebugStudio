@@ -15,6 +15,7 @@ import type {
   BattleState,
   ParticipantSide,
 } from '@/domain/battle/types'
+import type { BattleCommand } from '@/shared/types/battle-commands'
 import { BattleActionHelper } from '@/domain/battle/types'
 import { createDefaultBattleData, convertToBattleState, checkBattleEndCondition as checkEnd } from '@/domain/battle/aggregate/BattleState'
 import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
@@ -28,6 +29,7 @@ import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { TurnManager } from '@/domain/battle/service/TurnManager'
 import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
+import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
 import {
   ACTION_EXECUTOR_TOKEN,
   AI_SYSTEM_TOKEN,
@@ -43,7 +45,7 @@ import {
 } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { eventBus } from '@/main'
-import { TriggerEventBus } from '@/domain/buff/TriggerEventBus'
+import { TriggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import {
   BATTLE_CONSTANTS,
@@ -55,7 +57,7 @@ import {
   newLogSegment,
   LogLevel,
   BATTLE_LOG_CATEGORIES,
-} from '@/application/dto/battle-log'
+} from '@/shared/types/battle-log'
 import { EFFECT_TYPES } from '@/shared/types/effect'
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { RAFTimer } from '@/shared/utils/RAF'
@@ -289,6 +291,10 @@ export class BattleSystem implements IBattleSystem {
     const participants = new Map<string, BattleEntity>()
     allParticipants.forEach((participant) => {
       participants.set(participant.id, participant)
+      // 为 BattleParticipantImpl 实例设置修饰符提供者，打通 ModifierStack → AttributeValue 同步
+      if (participant instanceof BattleParticipantImpl) {
+        participant.setModifierProvider(this.buffSystem)
+      }
     })
     const battleData = this.battleData
     
@@ -355,6 +361,14 @@ export class BattleSystem implements IBattleSystem {
 
     this.applyPassiveSkills(participants)
 
+    // 注册属性变化回调，Buff 修改 ModifierStack 后自动同步到参与者
+    this.buffSystem.setAttributeChangeCallback((characterId: string) => {
+      const participant = battleData.participants.get(characterId)
+      if (participant instanceof BattleParticipantImpl) {
+        participant.recalculateAll()
+      }
+    })
+
     return convertToBattleState(battleData)
   }
 
@@ -390,9 +404,10 @@ export class BattleSystem implements IBattleSystem {
     })
 
     // 使用PassiveSkillManager触发战斗开始时的被动技能
-    this.passiveSkillManager.triggerPassiveSkills(
+    this.passiveSkillManager.triggerPassives(
       PassiveSkillTrigger.BATTLE_START,
       participant,
+      undefined,
       {},
     )
   }
@@ -435,6 +450,7 @@ export class BattleSystem implements IBattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         PassiveSkillTrigger.TURN_START,
         battle.participants,
+        undefined,
         { round: battle.currentRound },
       )
 
@@ -542,6 +558,7 @@ export class BattleSystem implements IBattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         PassiveSkillTrigger.TURN_END,
         battle.participants,
+        undefined,
         { round: battle.currentRound },
       )
 
@@ -813,6 +830,102 @@ export class BattleSystem implements IBattleSystem {
     if (battle) {
       battle.battleSpeed = speed
     }
+  }
+
+  // ===================== 命令生成器（第三阶段） =====================
+
+  /**
+   * 从当前战斗状态生成命令序列
+   * 这是第三阶段核心方法：将 BattleSystem 从"状态修改器"转变为"命令生成器"
+   * @returns BattleCommand[] 命令序列，由调用方（Store）负责执行
+   */
+  public generateCommandsForTurn(): BattleCommand[] {
+    const battle = this.battleData
+    if (
+      !battle ||
+      battle.battleState === BattleStatus.PAUSED ||
+      battle.battleState !== BattleStatus.ACTIVE
+    ) {
+      return []
+    }
+
+    const commands: BattleCommand[] = []
+    const aliveParticipants = Array.from(battle.participants.values()).filter(
+      (p) => p.isAlive(),
+    )
+
+    if (aliveParticipants.length === 0) {
+      const result = checkEnd(battle.participants, battle.currentRound, battle.maxTurns)
+      if (result.winner) {
+        commands.push({
+          type: 'SET_WINNER',
+          payload: { winner: result.winner === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+        })
+      }
+      return commands
+    }
+
+    battle.currentRound++
+    const turnOrder = this.turnManager.recalculateTurnOrder(battle)
+
+    commands.push({
+      type: 'NEXT_TURN',
+      payload: {
+        actorId: turnOrder[0] || '',
+        round: battle.currentRound,
+        turnOrder,
+      },
+    })
+
+    // 为存活角色生成能量增加命令
+    const combatRules = this.ruleManager.getCombatRules()
+    for (const p of aliveParticipants) {
+      commands.push({
+        type: 'GAIN_ENERGY',
+        payload: { targetId: p.id, amount: combatRules.energyGainPerTurn },
+      })
+    }
+
+    // 为每个参与者生成行动命令
+    for (const participantId of turnOrder) {
+      const participant = battle.participants.get(participantId)
+      if (!participant || !participant.isAlive()) continue
+
+      // 检查是否被控制
+      if (participant.hasBuff('buff_stun')) continue
+
+      // AI 决策或默认攻击
+      const aiInstance = battle.aiInstances?.get(participantId)
+      const targetId = this.selectCommandTarget(battle, participant)
+      if (targetId) {
+        const damage = Math.floor(Math.random() * 20) + 10
+        commands.push({
+          type: 'APPLY_DAMAGE',
+          payload: {
+            targetId,
+            amount: damage,
+            sourceId: participantId,
+          },
+        })
+        // ponytail: 简化版 — 仅生成基础伤害命令，技能/Buff命令后续扩展
+      }
+    }
+
+    return commands
+  }
+
+  /**
+   * 选择一个攻击目标
+   */
+  private selectCommandTarget(
+    battle: BattleData,
+    source: BattleEntity,
+  ): string | null {
+    const enemies = Array.from(battle.participants.values()).filter(
+      (p) => p.team !== source.team && p.isAlive(),
+    )
+    if (enemies.length === 0) return null
+    return enemies[Math.floor(Math.random() * enemies.length)].id
   }
 
 }

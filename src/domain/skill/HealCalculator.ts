@@ -1,18 +1,9 @@
 import type { ExtendedSkillStep } from '@/domain/skill/types'
-import type { CalculationLog } from '@/domain/skill/DamageCalculator'
+import type { CalculationLog } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, LEGACY_ATTR_MAP } from '@/domain/attribute/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
-
-const LEGACY_ATTR_MAP: Record<string, ATTRIBUTE_CODE> = {
-  ATK: ATTRIBUTE_CODE.attack,
-  DEF: ATTRIBUTE_CODE.defense,
-  MAX_HP: ATTRIBUTE_CODE.maxHealth,
-  SPD: ATTRIBUTE_CODE.speed,
-  DODGE: ATTRIBUTE_CODE.dodge,
-  HIT: ATTRIBUTE_CODE.hit,
-}
 
 export class HealCalculator {
   calculationLogs: CalculationLog[] = []

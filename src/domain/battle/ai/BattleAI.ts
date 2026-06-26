@@ -1,6 +1,6 @@
 /**
- * 鏂囦欢: BattleAI.ts
- * 鍔熻兘: 鎴樻枟AI鎺ュ彛鍜屽疄鐜? */
+ * 文件: BattleAI.ts
+ * 功能: 战斗AI接口和实现 */
 
 import type {
   BattleEntity,
@@ -10,8 +10,6 @@ import type {
 } from '@/domain/battle/types'
 import {
   PARTICIPANT_SIDE,
-  BATTLE_CONSTANTS,
-  SKILL_EFFECT_CONSTANTS,
   ActionTypes,
 } from '@/domain/battle/types'
 import { EFFECT_TYPES } from '@/shared/types/effect'
@@ -25,42 +23,39 @@ import {
 } from '@/domain/battle/ai/AIPriorityStrategy'
 import {
   SkillConfig,
-  SkillSet,
-  ExtendedSkillStep,
   Skill,
-  SkillType,
   convertSkillConfigToSkill,
 } from '@/domain/skill/types'
 
-/** 鎴樻枟AI鎺ュ彛 */
+/** 战斗AI接口 */
 export interface BattleAI {
-  /** 璁剧疆涓婁笅鏂囷紙Buff绯荤粺銆佹妧鑳界鐞嗗櫒锛?*/
+  /** 设置上下文（Buff系统、技能管理器）*/
   setContext(buffSystem: BuffSystem, skillManager: SkillManager): void
 
-  /** 鍋氬嚭鎴樻枟鍐崇瓥 */
+  /** 做出战斗决策 */
   makeDecision(
     battleState: BattleState,
     participant: BattleEntity,
   ): BattleAction
 
-  /** 閫夋嫨鏀诲嚮鐩爣 */
+  /** 选择攻击目标 */
   selectTarget(battleState: BattleState, participant: BattleEntity): string
 
-  /** 鍒ゆ柇鏄惁搴旇浣跨敤鎶€鑳?*/
+  /** 判断是否应该使用技能 */
   shouldUseSkill(participant: BattleEntity): boolean
 
-  /** 閫夋嫨瑕佷娇鐢ㄧ殑鎶€鑳?*/
+  /** 选择要使用的技能 */
   selectSkill(participant: BattleEntity): string | null
 
-  /** 閫夋嫨鏅€氭敾鍑?*/
+  /** 选择普通攻击 */
   selectAttack(participant: BattleEntity): BattleAction
 }
 
-/** 鎶€鑳介厤缃姞杞藉櫒绫诲瀷 */
+/** 技能配置加载器接口 */
 export type SkillConfigLoader = (skillIds: string[]) => Skill[]
 
-/** 鎴樺満鍒嗘瀽缁撴灉鎺ュ彛 */
-interface BattleAnalysis {
+/** 战场分析结果接口 */
+export interface BattleAnalysis {
   allies: BattleEntity[]
   enemies: BattleEntity[]
   teamHealthPercent: number
@@ -69,7 +64,7 @@ interface BattleAnalysis {
   shouldUseSkill: boolean
 }
 
-/** 鍩虹AI绛栫暐绫?*/
+/** 基础AI策略类 */
 export class BaseBattleAI implements BattleAI {
   protected skills: Map<string, Skill> = new Map()
   protected skillConfigLoader?: SkillConfigLoader
@@ -88,18 +83,18 @@ export class BaseBattleAI implements BattleAI {
     }
   }
 
-  /** 璁剧疆浼樺厛绾х瓥鐣?*/
+  /** 设置优先级策略 */
   public setPriorityStrategy(strategyName: string): void {
     this.priorityStrategy =
       AIPriorityStrategyFactory.createStrategy(strategyName)
   }
 
-  /** 鑾峰彇褰撳墠浼樺厛绾х瓥鐣?*/
+  /** 获取当前优先级策略 */
   public getPriorityStrategy(): AIPriorityStrategy {
     return this.priorityStrategy
   }
 
-  /** 浠庡閮ㄩ厤缃姞杞芥妧鑳?*/
+  /** 从外部配置加载技能 */
   protected loadSkillsFromConfig(skillIds: string[]): void {
     if (this.skillConfigLoader) {
       const loadedSkills = this.skillConfigLoader(skillIds)
@@ -116,10 +111,10 @@ export class BaseBattleAI implements BattleAI {
     this.skillConfigLoader = loader
   }
 
-  /** 鍒濆鍖栨妧鑳斤紙瀛愮被鍙噸鍐欙級 */
+  /** 初始化技能（子类可重写） */
   protected initializeSkills(): void {}
 
-  /** 鍋氬嚭鎴樻枟鍐崇瓥 */
+  /** 做出战斗决策 */
   public makeDecision(
     battleState: BattleState,
     participant: BattleEntity,
@@ -127,7 +122,7 @@ export class BaseBattleAI implements BattleAI {
     const battleStore = useBattleStore()
     try {
       if (!battleState || !participant) {
-        battleLogManager.addDebugLog('AI鍐崇瓥鍙傛暟鏃犳晥')
+        battleLogManager.addDebugLog('AI决策参数无效')
         return this.selectAttack(participant)
       }
 
@@ -151,19 +146,19 @@ export class BaseBattleAI implements BattleAI {
 
       return this.selectAttack(participant)
     } catch (error) {
-      battleLogManager.addDebugLog('AI鍐崇瓥鍑洪敊')
-      console.log('AI鍐崇瓥鍑洪敊')
+      battleLogManager.addDebugLog('AI决策出错')
+      console.log('AI决策出错')
       try {
         return this.selectAttack(participant)
       } catch (attackError) {
-        battleLogManager.addDebugLog('鏀诲嚮鎵ц鍑洪敊')
+        battleLogManager.addDebugLog('攻击执行出错')
       }
     }
 
     return this.selectAttack(participant)
   }
 
-  /** 鍒嗘瀽鎴樺満鐘舵€?*/
+  /** 分析战场状态 */
   protected analyzeBattleState(
     battleState: BattleState,
     participant: BattleEntity,
@@ -181,7 +176,7 @@ export class BaseBattleAI implements BattleAI {
     const teamHealthPercent =
       teamMaxHealth > 0 ? teamHealth / teamMaxHealth : 0
 
-    // 鍒ゆ柇鏄惁搴旇浣跨敤鎶€鑳斤細鏈夊彲鐢ㄦ妧鑳戒笖锛堣兘閲忓厖瓒虫垨鏈夋不鐤楅渶姹傦級
+    // 判断是否应该使用技能：有可用技能且（能量充足或有治疗需求）
     const shouldUseSkill = this.shouldUseSkill(participant)
 
     return {
@@ -194,7 +189,7 @@ export class BaseBattleAI implements BattleAI {
     }
   }
 
-  /** 鑾峰彇娲荤潃鐨勫弬涓庤€?*/
+  /** 获取活着的参与者 */
   private getAliveParticipants(
     battleState: BattleState,
     type: ParticipantSide,
@@ -204,7 +199,7 @@ export class BaseBattleAI implements BattleAI {
     )
   }
 
-  /** 閫夋嫨鏀诲嚮鐩爣 */
+  /** 选择攻击目标 */
   public selectTarget(
     battleState: BattleState,
     participant: BattleEntity,
@@ -215,7 +210,7 @@ export class BaseBattleAI implements BattleAI {
 
     if (enemies.length === 0) return ''
 
-    // 閫夋嫨琛€閲忔渶浣庣殑鏁屼汉
+    // 选择血量最低的敌人
     const target = enemies.reduce((min, p) =>
       p.currentHealth < min.currentHealth ? p : min,
     )
@@ -223,7 +218,7 @@ export class BaseBattleAI implements BattleAI {
     return target.id
   }
 
-  /** 鍒ゆ柇鏄惁搴旇浣跨敤鎶€鑳?*/
+  /** 判断是否应该使用技能 */
   public shouldUseSkill(participant: BattleEntity): boolean {
     if (this.skills.size === 0) return false
 
@@ -245,7 +240,7 @@ export class BaseBattleAI implements BattleAI {
     return false
   }
 
-  /** 閫夋嫨瑕佷娇鐢ㄧ殑鎶€鑳?*/
+  /** 选择要使用的技能 */
   public selectSkill(
     participant: BattleEntity,
     battleState?: BattleState,
@@ -280,7 +275,7 @@ export class BaseBattleAI implements BattleAI {
     return availableSkills[0].id
   }
 
-  /** 妫€鏌ユ槸鍚﹁兘浣跨敤鎶€鑳?*/
+  /** 检查是否能使用技能 */
   private canUseSkill(skill: Skill, participant: BattleEntity): boolean {
     if (skill.energyCost && participant.currentEnergy < skill.energyCost) {
       return false
@@ -317,28 +312,28 @@ export class BaseBattleAI implements BattleAI {
     }
   }
 
-  /** Select normal attack */
+  /** 选择普通攻击 */
   public selectAttack(participant: BattleEntity): BattleAction {
     return {
       id: `attack_${Date.now()}`,
       type: ActionTypes.ATTACK,
       sourceId: participant.id,
       targetId: '',
-      damage: participant.getRandomAttack(),
+      damage: participant.getRandomAttackDemage(),
       success: true,
       timestamp: Date.now(),
       turn: 0,
       effects: [
         {
           type: EFFECT_TYPES.DAMAGE,
-          value: participant.getRandomAttack(),
+          value: participant.getRandomAttackDemage(),
           description: `${participant.name} normal attack`,
         },
       ],
     }
   }
 
-  /** 璁剧疆涓婁笅鏂?*/
+  /** 设置上下文 */
   public setContext(
     buffSystem: BuffSystem,
     skillManager: SkillManager,
@@ -348,9 +343,9 @@ export class BaseBattleAI implements BattleAI {
   }
 }
 
-/** AI宸ュ巶绫?*/
+/** AI工厂类 */
 export class BattleAIFactory {
-  /** 浣跨敤鎶€鑳藉垱寤篈I */
+  /** 使用技能创建AI */
   static createAIWithSkills(
     side: ParticipantSide,
     skills: SkillConfig[],

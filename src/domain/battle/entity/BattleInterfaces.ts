@@ -158,6 +158,13 @@ export interface IBattleSystem {
    * @param participant 参与者
    */
   triggerPassiveSkillsForCharacter(participant: BattleEntity): void
+
+  /**
+   * 从当前战斗状态生成命令序列（第三阶段）
+   * 将 BattleSystem 从状态修改器转变为命令生成器
+   * @returns BattleCommand[] 命令序列
+   */
+  generateCommandsForTurn(): import('@/shared/types/battle-commands').BattleCommand[]
 }
 
 /**

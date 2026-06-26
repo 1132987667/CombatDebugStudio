@@ -1,3 +1,10 @@
+/**
+ ** 文件: BattleManager.ts
+ ** 创建日期: 2026-02-09
+ ** 作者: CombatDebugStudio
+ ** 功能: 战斗管理器
+ ** 描述: 协调子管理器（AutoBattle、Intervention、Replay、State），提供统一的接口给 UI 层控制战斗流程
+ **/
 import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
@@ -6,6 +13,7 @@ import { InterventionManager } from '@/domain/battle/intervention/InterventionMa
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
 import { PARTICIPANT_SIDE, BattleEntity } from '@/domain/battle/types'
 import { BattleEventCodes } from '@/shared/types/battle-events'
+import type { BattleCommand } from '@/shared/types/battle-commands'
 import type {
   BattleEvents,
   BattleEventName,
@@ -29,6 +37,9 @@ export class BattleManager {
    * @param interventionManager 干预管理器实例
    * @param battleReplayManager 战斗回放管理器实例
    */
+  /** 已注册的事件处理器引用（用于 off 时精确移除） */
+  private handlers = new Map<BattleEventName, Function>()
+
   constructor(
     private battleSystem: IBattleSystem,
     private battleStateManager: BattleStateManager,
@@ -60,7 +71,8 @@ export class BattleManager {
    * @param callback 回调函数
    */
   on<T extends BattleEventName>(event: T, callback: (data: T) => void) {
-    eventBus.on(event, callback)
+    this.handlers.set(event, callback as Function)
+    eventBus.on(event, callback as any)
   }
 
   /**
@@ -68,7 +80,57 @@ export class BattleManager {
    * @param event 事件名称
    */
   off<T extends BattleEventName>(event: T) {
-    eventBus.off(event)
+    const handler = this.handlers.get(event)
+    if (handler) {
+      eventBus.off(event, handler as any)
+      this.handlers.delete(event)
+    }
+  }
+
+  /** 清除所有已注册的监听器 */
+  clearAllListeners(): void {
+    for (const [event, handler] of this.handlers) {
+      eventBus.off(event, handler as any)
+    }
+    this.handlers.clear()
+  }
+
+  /**
+   * 获取战斗系统实例
+   */
+  getBattleSystem(): IBattleSystem {
+    return this.battleSystem
+  }
+
+  /**
+   * 统一参与者状态更新接口
+   * 通过 BattleSystem 修改参与者属性，BattleSystem 为唯一数据源
+   * Store 因共享对象引用自动感知变更
+   */
+  updateParticipantState(participantId: string, updates: Partial<BattleEntity>): void {
+    const battleData = this.battleSystem.getBattleData()
+    const participant = battleData?.participants.get(participantId)
+    if (participant) {
+      Object.assign(participant, updates)
+    }
+  }
+
+  /**
+   * 通过命令流处理回合（第三阶段）
+   * 生成 BattleCommand[] 供 Store 执行，不直接修改状态
+   * @returns BattleCommand[] 命令序列
+   */
+  async processTurnAsCommands(): Promise<BattleCommand[]> {
+    if (!this.battleSystem) {
+      return []
+    }
+
+    // ponytail: 兼容适配 — BattleSystem 仍持有内部状态，generateCommandsForTurn 从中读取
+    const commands = this.battleSystem.generateCommandsForTurn()
+    if (commands.length > 0) {
+      this.syncBattleState()
+    }
+    return commands
   }
 
   /**
@@ -287,12 +349,6 @@ export class BattleManager {
   addCharacterToTeam(character: BattleEntity, side: PARTICIPANT_SIDE) {
     const battleState = this.battleSystem.getBattleState()
     if (battleState) {
-      // 设置角色的修饰符提供者（BuffSystem）
-      const buffSystem = this.battleSystem.getBuffSystem()
-      if (buffSystem && typeof character.setModifierProvider === 'function') {
-        character.setModifierProvider(buffSystem)
-      }
-
       battleState.participants.set(character.id, character)
 
       // 触发角色的被动技能

@@ -1,10 +1,5 @@
 /**
- * @deprecated Import from domain/kernel/ or domain/attribute/ instead.
- * This file will become a pure re-export shim in Phase 7.
- */
-
-/**
- * 文件: attribute.ts
+ * 文件: types.ts
  * 创建日期: 2026-04-07
  * 作者: CombatDebugStudio
  * 功能: 属性系统类型定义与计算核心
@@ -14,22 +9,28 @@
 
 // ========== 类型定义 ==========
 
-/** 修饰符计算类型（严格联合类型） */
-export type ModifierType =
-  | 'ADDITIVE' // 加法修正
-  | 'MULTIPLICATIVE' // 独立乘区
-  | 'PERCENTAGE' // 百分比修正
-  | 'FINAL' // 最终修正
+/** 修饰符计算类型 */
+export const ModifierType = {
+  ADDITIVE: 'ADDITIVE',
+  MULTIPLICATIVE: 'MULTIPLICATIVE',
+  PERCENTAGE: 'PERCENTAGE',
+  FINAL: 'FINAL',
+} as const
+/** 修饰符计算类型 */
+export type ModifierType = (typeof ModifierType)[keyof typeof ModifierType]
 
 /** 修饰符来源类型 */
-export type ModifierSourceType =
-  | 'buff' // 增益
-  | 'equipment' // 装备
-  | 'skill' // 技能
-  | 'terrain' // 地形
-  | 'formation' // 阵型
-  | 'base' // 基础值
-  | 'talent' // 天赋
+export const ModifierSourceType = {
+  BUFF: 'buff',
+  EQUIPMENT: 'equipment',
+  SKILL: 'skill',
+  TERRAIN: 'terrain',
+  FORMATION: 'formation',
+  BASE: 'base',
+  TALENT: 'talent',
+} as const
+/** 修饰符来源类型 */
+export type ModifierSourceType = (typeof ModifierSourceType)[keyof typeof ModifierSourceType]
 
 /** 修饰符来源类型显示名称映射 */
 export const ModifierSourceTypeNames: Record<ModifierSourceType, string> = {
@@ -117,8 +118,8 @@ export interface AttributeValue {
   modifiers: Modifier[]
   /** 是否为百分比属性（用于 UI 格式化） */
   isPercentage: boolean
-  /** 是否需要重新计算（脏标记） */
-  dirty: boolean
+  /** 缓存版本戳，与 ParticipantStats.version 比对 */
+  cachedVersion: number
   /** 计算拆解（可选，仅 Debug 开启时记录） */
   breakdown?: CalculationBreakdown
   /** 最近一次计算的详细追踪数据（可选，用于调试面板） */
@@ -136,9 +137,16 @@ export interface AttributeComputeResult {
   /** 所有步骤记录（按计算顺序） */
   steps: CalculationStep[]
   /** 按来源分组的贡献值（便于 UI 展示） */
-  sourceContributions: Modifier[]
+  sourceContributions: SourceContribution[]
   /** 计算拆解（用于查看计算过程） */
   breakdown: CalculationBreakdown
+}
+
+export interface SourceContribution {
+  sourceId: string
+  sourceName: string
+  sourceType?: string
+  contribution: number
 }
 
 // ========== 抽象接口（依赖倒置） ==========
@@ -221,7 +229,7 @@ export const ATTRIBUTE_CODE = {
   hpRegenPercent: 'hpRegenPercent', // 每回合恢复最大生命百分比
   hpRegenFlat: 'hpRegenFlat', // 每回合恢复固定生命
 
-  energy: 'energy',
+  currentEnergy: 'currentEnergy',
   maxEnergy: 'maxEnergy',
   healthBonus: 'healthBonus',
   attackBonus: 'attackBonus',
@@ -259,74 +267,30 @@ export const ATTRIBUTE_CODE = {
 export type ATTRIBUTE_CODE =
   (typeof ATTRIBUTE_CODE)[keyof typeof ATTRIBUTE_CODE]
 
-// ========== 辅助函数 ==========
-
-// ========== 工厂函数 ==========
-
-/**
- * 创建 AttributeValue 对象（推荐使用此工厂）
- * @param base 基础值（必填）
- * @param value 最终计算值（初次创建时通常与 base 相同）
- * @param options 可选配置项
- */
-export function createAttributeValue(
-  base: number,
-  value: number,
-  options?: Partial<{
-    modifiers: Modifier[]
-    isPercentage: boolean
-    dirty: boolean
-    breakdown: CalculationBreakdown
-  }>,
-): AttributeValue {
-  return {
-    base,
-    value,
-    modifiers: options?.modifiers ?? [],
-    isPercentage: options?.isPercentage ?? false,
-    dirty: options?.dirty ?? true, // 新建属性默认标记为脏，需首次计算
-    breakdown: options?.breakdown,
-  }
+export const LEGACY_ATTR_MAP: Record<string, ATTRIBUTE_CODE> = {
+  ATK: ATTRIBUTE_CODE.attack,
+  DEF: ATTRIBUTE_CODE.defense,
+  MAX_HP: ATTRIBUTE_CODE.maxHealth,
+  CRIT_RATE: ATTRIBUTE_CODE.critRate,
+  CRIT_DMG: ATTRIBUTE_CODE.critDamage,
+  DMG_REDUCTION: ATTRIBUTE_CODE.damageReduction,
+  DMG_TAKEN_INCREASE: ATTRIBUTE_CODE.damageTakenIncrease,
+  NORMAL_ATK_DMG_REDUCTION: ATTRIBUTE_CODE.normalAtkDmgReduction,
+  SKILL_DMG_REDUCTION: ATTRIBUTE_CODE.skillDmgReduction,
+  CRIT_DMG_TAKEN_REDUCTION: ATTRIBUTE_CODE.critDmgTakenReduction,
+  HP: ATTRIBUTE_CODE.maxHealth,
+  SPD: ATTRIBUTE_CODE.speed,
+  DODGE: ATTRIBUTE_CODE.dodge,
+  HIT: ATTRIBUTE_CODE.hit,
 }
 
 /**
- * 创建基础 AttributeValue（仅提供 base，value 与 base 相同）
- * 请使用 createAttributeValue 以获得更灵活的配置
+ * 规范化属性代码：将旧版大写缩写（如 'ATK'）转为 ATTRIBUTE_CODE
+ * @param code 属性代码（旧版或新版）
+ * @returns 标准化的 ATTRIBUTE_CODE
  */
-export function createBaseAttributeValue(
-  base: number,
-  isPercentage: boolean = false,
-): AttributeValue {
-  return createAttributeValue(base, base, { isPercentage, dirty: false })
-}
-
-/**
- * 根据 EnemyStats 创建 AttributeValues 对象
- * 如果 EnemyStats 中没有某个属性，则从 AttributeMetaMap 获取默认值
- * @param stats 部分属性数值（来自敌人配置）
- * @returns 完整的 AttributeValues 对象
- */
-export function createAttributeValuesFromEnemyStats(
-  stats: Partial<Record<ATTRIBUTE_CODE, number>>,
-): AttributeValues {
-  const result: Partial<AttributeValues> = {}
-
-  for (const code of Object.values(ATTRIBUTE_CODE)) {
-    const meta = AttributeMetaMap[code]
-
-    let baseValue: number
-    if (stats[code] !== undefined) {
-      baseValue = stats[code] as number
-    } else if (meta.defaultValue !== undefined) {
-      baseValue = meta.defaultValue
-    } else {
-      baseValue = 0
-    }
-
-    result[code] = createBaseAttributeValue(baseValue, meta.isPercentage)
-  }
-
-  return result as AttributeValues
+export function normalizeAttributeCode(code: string): ATTRIBUTE_CODE {
+  return LEGACY_ATTR_MAP[code] ?? (code as ATTRIBUTE_CODE)
 }
 
 // ========== 属性计算核心 ==========
@@ -348,16 +312,16 @@ export function calculateFinalValue(
 
   for (const mod of modifiers) {
     switch (mod.type) {
-      case 'ADDITIVE':
+      case ModifierType.ADDITIVE:
         additive += mod.value
         break
-      case 'PERCENTAGE':
+      case ModifierType.PERCENTAGE:
         percentSum += mod.value
         break
-      case 'MULTIPLICATIVE':
+      case ModifierType.MULTIPLICATIVE:
         independentMultiplier *= 1 + mod.value
         break
-      case 'FINAL':
+      case ModifierType.FINAL:
         finalMultiplier *= 1 + mod.value
         break
       default:

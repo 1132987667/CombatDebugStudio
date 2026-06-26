@@ -1,6 +1,7 @@
 import { IBuffScript } from '@/domain/buff/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import buffsData from '@configs/buffs/buffs.json'
+import { ModifierType } from '@/domain/attribute/types'
 
 interface BuffConfigData {
   id: string
@@ -57,18 +58,18 @@ export class BuffScriptRegistry {
 
   public parseAttributeValue(value: string): {
     value: number
-    type: 'ADDITIVE' | 'PERCENTAGE'
+    type: ModifierType
   } {
     const trimmed = value.trim()
     if (trimmed.startsWith('+') || trimmed.startsWith('-')) {
       const numValue = parseFloat(trimmed)
-      if (Math.abs(numValue) < 1) return { value: numValue, type: 'PERCENTAGE' }
-      return { value: numValue, type: 'ADDITIVE' }
+      if (Math.abs(numValue) < 1) return { value: numValue, type: ModifierType.PERCENTAGE }
+      return { value: numValue, type: ModifierType.ADDITIVE }
     }
     const numValue = parseFloat(trimmed)
-    if (isNaN(numValue)) return { value: 0, type: 'ADDITIVE' }
-    if (Math.abs(numValue) < 1) return { value: numValue, type: 'PERCENTAGE' }
-    return { value: numValue, type: 'ADDITIVE' }
+    if (isNaN(numValue)) return { value: 0, type: ModifierType.ADDITIVE }
+    if (Math.abs(numValue) < 1) return { value: numValue, type: ModifierType.PERCENTAGE }
+    return { value: numValue, type: ModifierType.ADDITIVE }
   }
 
   public loadBuffConfigsFromArray(configs: BuffConfigData[]): void {

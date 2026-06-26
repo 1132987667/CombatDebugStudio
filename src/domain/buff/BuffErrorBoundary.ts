@@ -1,5 +1,4 @@
-﻿import { useBattleStore } from '@/presentation/stores/battleStore'
-import { getLogger } from '@/domain/port/logging'
+﻿import { getLogger } from '@/domain/port/logging'
 
 export enum BuffErrorType {
   CONFIG_ERROR = 'config_error',
@@ -43,23 +42,23 @@ export class BuffErrorBoundary {
     error: unknown,
     options?: { buffId?: string; scriptPath?: string },
   ): void {
-    const battleStore = useBattleStore()
     const buffError = BuffErrorBoundary.parseError(error, options)
+    const logger = getLogger()
     switch (buffError.type) {
       case BuffErrorType.CONFIG_ERROR:
-        getLogger().debug(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        logger.debug(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       case BuffErrorType.RUNTIME_ERROR:
-        getLogger().debug(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        logger.debug(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       case BuffErrorType.DEPENDENCY_ERROR:
-        getLogger().debug(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        logger.debug(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       default:
-        getLogger().debug(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        logger.debug(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
     }
-    if (buffError.stack) getLogger().debug(`Buff error stack: ${buffError.stack}`)
+    if (buffError.stack) logger.debug(`Buff error stack: ${buffError.stack}`)
   }
 
   private static parseError(
@@ -87,7 +86,6 @@ export class BuffErrorBoundary {
     maxRetries: number = 3,
     options?: { buffId?: string; scriptPath?: string },
   ): T | null {
-    const battleStore = useBattleStore()
     let retries = 0
     while (retries < maxRetries) {
       try { return fn() } catch (error) {

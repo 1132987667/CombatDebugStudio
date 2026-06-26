@@ -1,7 +1,7 @@
 import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
-import type { BattleEntity } from '@/domain/battle/types'
+import type { BattleEntity, StatusEffect } from '@/domain/battle/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 
 /**
@@ -98,23 +98,21 @@ export class InterventionManager {
     if (!status.name) return
 
     if (this.selectedChar) {
-      const newStatus = {
+      const newStatus: StatusEffect = {
         id: `status_${Date.now()}`,
         name: status.name,
+        type: 'buff',
         duration: status.turns,
-        maxStacks: 1,
-        cooldown: 0,
-        description: '',
-        isPositive: true,
+        remainingTurns: status.turns,
       }
 
-      if (!this.selectedChar.buffs) {
-        this.selectedChar.buffs = []
+      if (!this.selectedChar.statusEffects) {
+        this.selectedChar.statusEffects = []
       }
-      this.selectedChar.buffs.push(newStatus)
+      this.selectedChar.statusEffects.push(newStatus)
 
       this.battleStateManager.updateCharacterManually(this.selectedChar.id, {
-        buffs: [...this.selectedChar.buffs],
+        statusEffects: [...this.selectedChar.statusEffects],
       })
 
       this.battleLogManager.addActionLog({

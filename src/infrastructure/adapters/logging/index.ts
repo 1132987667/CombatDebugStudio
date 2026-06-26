@@ -23,12 +23,11 @@ export type {
   LogFilters,
   BattleLogManagerOptions,
   BattleLogLevel,
-  ActionType,
   LogEntry,
   LogHandler,
-} from '@/application/dto/battle-log'
+} from '@/shared/types/battle-log'
 
-export { LogLevel } from '@/application/dto/battle-log'
+export { LogLevel } from '@/shared/types/battle-log'
 
 // 导出 BattleLogManager 和相关功能
 export {

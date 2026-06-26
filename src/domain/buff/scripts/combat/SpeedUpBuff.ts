@@ -1,7 +1,7 @@
 import { AttributeBuffTemplate } from '@/domain/buff/scripts/base/AttributeBuffTemplate'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-
+import { ModifierType } from '@/domain/attribute/types'
 export class SpeedUpBuff extends AttributeBuffTemplate {
   public static readonly BUFF_ID = 'buff_speed_up'
 
@@ -9,8 +9,8 @@ export class SpeedUpBuff extends AttributeBuffTemplate {
     return ATTRIBUTE_CODE.speed
   }
 
-  protected getModifierType(): 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' {
-    return 'MULTIPLICATIVE'
+  protected getModifierType(): ModifierType {
+    return ModifierType.MULTIPLICATIVE
   }
 
   protected getBaseBonus(context: BuffContext): number {
@@ -18,6 +18,6 @@ export class SpeedUpBuff extends AttributeBuffTemplate {
   }
 }
 
-// µ¼³ö BUFF_ID ³£Á¿
+// ï¿½ï¿½ï¿½ï¿½ BUFF_ID ï¿½ï¿½ï¿½ï¿½
 export const BUFF_ID = SpeedUpBuff.BUFF_ID
 

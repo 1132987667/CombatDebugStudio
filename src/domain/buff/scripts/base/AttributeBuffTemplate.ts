@@ -1,5 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
 
 /**
  * 属性提升Buff模板
@@ -14,9 +15,9 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
 
   /**
    * 获取修饰符类型
-   * @returns 修饰符类型（'ADDITIVE', 'MULTIPLICATIVE', 'PERCENTAGE'）
+   * @returns 修饰符类型（ModifierType.ADDITIVE, ModifierType.MULTIPLICATIVE, ModifierType.PERCENTAGE）
    */
-  protected abstract getModifierType(): 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE'
+  protected abstract getModifierType(): ModifierType
 
   /**
    * 获取基础提升值

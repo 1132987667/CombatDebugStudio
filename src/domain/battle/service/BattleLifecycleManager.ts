@@ -3,13 +3,14 @@ import { BattleStatus, RoundStatus, PARTICIPANT_SIDE } from '@/domain/battle/typ
 import { AUTO_BATTLE_CONFIG } from '@/domain/battle/types'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import type { BattleAction } from '@/domain/battle/types'
-import { LogLevel } from '@/application/dto/battle-log'
+import { LogLevel } from '@/shared/types/battle-log'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { RAFTimer } from '@/shared/utils/RAF'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { eventBus } from '@/main'
 import { convertToBattleState } from '@/domain/battle/aggregate/BattleState'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 export class BattleLifecycleManager {
   private battleSpeed = 1
@@ -77,8 +78,8 @@ export class BattleLifecycleManager {
     battle.actions = []
 
     battle.participants.forEach((participant) => {
-      participant.currentHealth = participant.maxHealth
-      participant.currentEnergy = 0
+      participant.setAttribute(ATTRIBUTE_CODE.currentHealth, participant.getAttribute(ATTRIBUTE_CODE.maxHealth))
+      participant.setAttribute(ATTRIBUTE_CODE.currentEnergy, 0)
       this.buffSystem.clearAllBuffs(participant.id)
       participant.buffs = []
     })

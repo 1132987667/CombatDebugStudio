@@ -1,5 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
 
 export class PoisonDebuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'poison'
@@ -8,7 +9,7 @@ export class PoisonDebuff extends BaseBuffScript {
     this.log(context, '中毒了！毒素开始侵蚀身体')
     
     // 降低移动速度
-    this.addModifier(context, 'SPD', -0.2, 'MULTIPLICATIVE')
+    this.addModifier(context, 'SPD', -0.2, ModifierType.MULTIPLICATIVE)
     
     // 记录初始伤害值
     const baseDamage = this.getConfigValue(context, 'baseDamage', 10)

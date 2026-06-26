@@ -13,12 +13,12 @@ import type {
   AttributeValues,
   Modifier,
 } from '@/domain/attribute/types'
-import type { BattleLogEntry } from '@/application/dto/battle-log'
+import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
 import { Counter } from '@/shared/utils/Counter'
 import { Ref } from 'vue'
 import { BattleEventCodes } from './battle-events'
-
+import { SkillType } from '@/domain/skill/types'
 const counter = new Counter()
 
 /**
@@ -196,6 +196,8 @@ export interface BattleEntity {
   /** 设置修饰符提供者 */
   setModifierProvider(provider: IModifierProvider): void
 
+  getRandomAttackDemage(): number
+
   addBuff(buffInstanceId: string): void
   removeBuff(buffInstanceId: string): void
   hasBuff(buffId: string): boolean
@@ -210,7 +212,7 @@ export interface BattleEntity {
   needsHealing(): boolean
 
   getSkillList(): SkillConfig[]
-  getSkillIds(filter?: 'all' | 'active' | 'passive'): string[]
+  getSkillIds(filter?: 'active' | SkillType.ALL | SkillType.PASSIVE): string[]
   hasSkill(skillId: string): boolean
 }
 
@@ -743,15 +745,6 @@ export enum BattleEventType {
   HEAL = 'heal',
 }
 
-/** 战斗事件 */
-export interface BattleEvent {
-  eventId: string
-  type: string
-  timestamp: number
-  turn: number
-  roundNumber: number
-  data: any
-}
 
 /** 扩展的战斗事件 */
 export interface ReplayBattleEvent {

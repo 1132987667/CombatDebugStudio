@@ -34,8 +34,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed } from "vue";
-import type { BattleLogEntry, LogFilters } from '@/application/dto/battle-log';
-import { LogTypeLabel } from '@/application/dto/battle-log';
+import type { BattleLogEntry, LogFilters } from '@/shared/types/battle-log';
+import { LogTypeLabel } from '@/shared/types/battle-log';
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 
 interface Props {

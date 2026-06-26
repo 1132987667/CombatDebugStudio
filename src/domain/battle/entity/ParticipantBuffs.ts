@@ -10,11 +10,11 @@
  */
 export class ParticipantBuffs {
   private buffs: string[]
-  private markDirty: () => void
+  private onChange: () => void
 
-  constructor(buffs: string[] = [], markDirty: () => void = () => {}) {
+  constructor(buffs: string[] = [], onChange: () => void = () => {}) {
     this.buffs = buffs
-    this.markDirty = markDirty
+    this.onChange = onChange
   }
 
   /**
@@ -37,7 +37,7 @@ export class ParticipantBuffs {
   addBuff(buffInstanceId: string): void {
     if (!this.buffs.includes(buffInstanceId)) {
       this.buffs.push(buffInstanceId)
-      this.markDirty()
+      this.onChange()
     }
   }
 
@@ -48,14 +48,19 @@ export class ParticipantBuffs {
     const index = this.buffs.indexOf(buffInstanceId)
     if (index !== -1) {
       this.buffs.splice(index, 1)
-      this.markDirty()
+      this.onChange()
     }
   }
 
   /**
    * 判断是否拥有指定 Buff
+   * 存储的是实例ID（如 'buff_stun_123'），通过前缀匹配模板ID（'buff_stun'）
+   * 使用 startsWith(buffId + '_') 避免子串误判（如 'stun' 不会匹配 'buff_stun' 的实例）
+   * @param buffId - Buff 模板ID（如 'buff_stun'）
    */
   hasBuff(buffId: string): boolean {
-    return this.buffs.some((id) => id.includes(buffId))
+    // ponytail: 存储的是实例ID (buff_stun_123)，查询的是模板ID (buff_stun)
+    // 所以用前缀匹配而非 includes 子串匹配
+    return this.buffs.some((id) => id === buffId || id.startsWith(buffId + '_'))
   }
 }

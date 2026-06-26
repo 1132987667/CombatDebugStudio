@@ -1,5 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
 
 /**
  * 石化皮肤buff脚本
@@ -13,11 +14,11 @@ export class StoneSkinBuff extends BaseBuffScript {
     
     // 提供物理伤害减免
     const physicalReduction = this.getConfigValue(context, 'physicalReduction', 0.3) // 默认30%物理减免
-    this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', physicalReduction, 'MULTIPLICATIVE')
+    this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', physicalReduction, ModifierType.MULTIPLICATIVE)
     
     // 降低移动速度作为代价
     const speedPenalty = this.getConfigValue(context, 'speedPenalty', 0.15) // 默认降低15%速度
-    this.addModifier(context, 'SPD', -speedPenalty, 'MULTIPLICATIVE')
+    this.addModifier(context, 'SPD', -speedPenalty, ModifierType.MULTIPLICATIVE)
     
     // 记录初始值
     context.setVariable('physicalReduction', physicalReduction)
@@ -45,8 +46,8 @@ export class StoneSkinBuff extends BaseBuffScript {
         context.removeModifiers('PHYSICAL_DAMAGE_REDUCTION')
         context.removeModifiers('SPD')
         
-        this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', newReduction, 'MULTIPLICATIVE')
-        this.addModifier(context, 'SPD', -newPenalty, 'MULTIPLICATIVE')
+        this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', newReduction, ModifierType.MULTIPLICATIVE)
+        this.addModifier(context, 'SPD', -newPenalty, ModifierType.MULTIPLICATIVE)
         
         context.setVariable('physicalReduction', newReduction)
         context.setVariable('speedPenalty', newPenalty)
@@ -71,8 +72,8 @@ export class StoneSkinBuff extends BaseBuffScript {
     context.removeModifiers('PHYSICAL_DAMAGE_REDUCTION')
     context.removeModifiers('SPD')
     
-    this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', newReduction, 'MULTIPLICATIVE')
-    this.addModifier(context, 'SPD', -newPenalty, 'MULTIPLICATIVE')
+    this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', newReduction, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, 'SPD', -newPenalty, ModifierType.MULTIPLICATIVE)
     
     context.setVariable('physicalReduction', newReduction)
     context.setVariable('speedPenalty', newPenalty)

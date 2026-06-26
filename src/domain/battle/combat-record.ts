@@ -7,19 +7,9 @@
  * 版本：1.0.0
  */
 
-import type { EffectType } from '@/shared/types/effect'
 import type { BattleEffect } from '@/domain/battle/types'
 import type { CalculationStep } from '@/domain/attribute/types'
-/**
- * 动作类型
- */
-export type ActionType =
-  | 'attack'
-  | 'skill'
-  | 'heal'
-  | 'buff'
-  | 'item'
-  | 'system'
+import type { ActionTypes } from '@/domain/battle/types'
 
 /**
  * 计算详情 - 调试模式开启时填充
@@ -43,7 +33,7 @@ export interface CombatRecord {
 
   actorId: string
   actorName: string
-  actionType: ActionType
+  actionType: ActionTypes
   skillId?: string
   targetId: string
   targetName?: string
@@ -71,7 +61,7 @@ export function createEmptyRecord(
   battleId: string,
   actorId: string,
   actorName: string,
-  actionType: ActionType,
+  actionType: ActionTypes,
   targetId: string,
   targetName: string,
   turn: number,

@@ -1,5 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
 
 /**
  * 山林之子buff脚本
@@ -13,7 +14,7 @@ export class MountainChildBuff extends BaseBuffScript {
     
     // 提升自然属性
     const natureBonus = this.getConfigValue(context, 'natureBonus', 0.15) // 默认15%自然属性加成
-    this.addModifier(context, 'NATURE_POWER', natureBonus, 'MULTIPLICATIVE')
+    this.addModifier(context, 'NATURE_POWER', natureBonus, ModifierType.MULTIPLICATIVE)
     
     // 提升生命恢复
     const hpRegen = this.getConfigValue(context, 'hpRegen', 5) // 默认每秒恢复5点生命
@@ -49,7 +50,7 @@ export class MountainChildBuff extends BaseBuffScript {
       
       if (newBonus > currentBonus) {
         context.removeModifiers('NATURE_POWER')
-        this.addModifier(context, 'NATURE_POWER', newBonus, 'MULTIPLICATIVE')
+        this.addModifier(context, 'NATURE_POWER', newBonus, ModifierType.MULTIPLICATIVE)
         context.setVariable('natureBonus', newBonus)
         this.log(context, `自然属性加成增强至 ${(newBonus * 100).toFixed(1)}%`)
       }
@@ -69,7 +70,7 @@ export class MountainChildBuff extends BaseBuffScript {
     
     // 更新效果
     context.removeModifiers('NATURE_POWER')
-    this.addModifier(context, 'NATURE_POWER', newBonus, 'MULTIPLICATIVE')
+    this.addModifier(context, 'NATURE_POWER', newBonus, ModifierType.MULTIPLICATIVE)  
     
     context.setVariable('natureBonus', newBonus)
     context.setVariable('hpRegen', newRegen)

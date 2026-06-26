@@ -1,5 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
 
 /**
  * 命中率降低debuff脚本
@@ -13,7 +14,7 @@ export class HitReductionDebuff extends BaseBuffScript {
     
     // 降低命中率
     const hitReduction = this.getConfigValue(context, 'hitReduction', 0.3) // 默认降低30%命中率
-    this.addModifier(context, 'HIT_RATE', -hitReduction, 'MULTIPLICATIVE')
+    this.addModifier(context, 'HIT_RATE', -hitReduction, ModifierType.MULTIPLICATIVE)
     
     // 记录初始命中率降低值
     context.setVariable('hitReduction', hitReduction)
@@ -35,7 +36,7 @@ export class HitReductionDebuff extends BaseBuffScript {
       if (newReduction < currentReduction) {
         // 更新命中率降低效果
         context.removeModifiers('HIT_RATE')
-        this.addModifier(context, 'HIT_RATE', -newReduction, 'MULTIPLICATIVE')
+        this.addModifier(context, 'HIT_RATE', -newReduction, ModifierType.MULTIPLICATIVE)
         context.setVariable('hitReduction', newReduction)
         this.log(context, `命中率逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
       }
@@ -52,7 +53,7 @@ export class HitReductionDebuff extends BaseBuffScript {
     
     // 更新效果
     context.removeModifiers('HIT_RATE')
-    this.addModifier(context, 'HIT_RATE', -newReduction, 'MULTIPLICATIVE')
+    this.addModifier(context, 'HIT_RATE', -newReduction, ModifierType.MULTIPLICATIVE) 
     context.setVariable('hitReduction', newReduction)
     
     this.log(context, `命中率降低提升至 ${(newReduction * 100).toFixed(1)}%`)

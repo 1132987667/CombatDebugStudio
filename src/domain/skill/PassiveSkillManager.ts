@@ -127,10 +127,11 @@ export class PassiveSkillManager {
   triggerPassiveSkillsForAll(
     trigger: PassiveSkillTrigger,
     participants: Map<string, BattleEntity>,
-    context: any = {},
+    target?: BattleEntity,
+    context?: Record<string, any>,
   ): void {
     for (const participant of participants.values()) {
-      this.triggerPassives(trigger, participant, context)
+      this.triggerPassives(trigger, participant, target, context)
     }
   }
 }

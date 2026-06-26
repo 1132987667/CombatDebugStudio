@@ -120,7 +120,7 @@ export function useParticipantStats(
     getFormatted(ATTRIBUTE_CODE.currentHealth),
   )
   const maxHealth = computed(() => getFormatted(ATTRIBUTE_CODE.maxHealth))
-  const energy = computed(() => getFormatted(ATTRIBUTE_CODE.energy))
+  const energy = computed(() => getFormatted(ATTRIBUTE_CODE.currentEnergy))
   const maxEnergy = computed(() => getFormatted(ATTRIBUTE_CODE.maxEnergy))
   const attack = computed(() => getFormatted(ATTRIBUTE_CODE.attack))
   const defense = computed(() => getFormatted(ATTRIBUTE_CODE.defense))

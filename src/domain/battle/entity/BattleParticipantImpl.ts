@@ -14,25 +14,23 @@ import type {
   BuffInstanceSnapshot,
   BattleEntity,
 } from '@/domain/battle/types'
+import type { IModifierProvider } from '@/domain/attribute/types'
 import { PARTICIPANT_SIDE, type ParticipantSide } from '@/domain/battle/types'
-import type { SkillSet } from '@/domain/skill/types'
+import type { SkillConfig, SkillSet } from '@/domain/skill/types'
 import {
-  AttributeValues,
   Modifier,
-  type IModifierProvider,
-} from '@/domain/attribute/types'
-import {
   AttributeValue,
-  createAttributeValue,
-  createBaseAttributeValue,
   ATTRIBUTE_CODE,
-  AttributeMetaMap,
   getAttributeMeta,
+  type AttributeValues,
+  normalizeAttributeCode,
+  ModifierType,
 } from '@/domain/attribute/types'
 import { ParticipantStats } from '@/domain/battle/entity/ParticipantStats'
 import { ParticipantBuffs } from '@/domain/battle/entity/ParticipantBuffs'
 import { ParticipantSkills } from '@/domain/battle/entity/ParticipantSkills'
-import { triggerEventBus } from '@/domain/buff/TriggerEventBus'
+import { triggerEventBus, TriggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
+import { SkillType } from '@/domain/skill/types'
 
 export type BaseBattleParticipant = {
   id: string
@@ -43,8 +41,8 @@ export type BaseBattleParticipant = {
   enabled?: boolean
   skills: SkillSet
   statusEffects?: StatusEffect[]
-  buffs: Modifier[]
-  attributeValues?: AttributeValues
+  buffs: string[]
+  attributeValues?: Partial<Record<ATTRIBUTE_CODE, number>>
 }
 
 export type BattleParticipantInitData = {
@@ -56,8 +54,8 @@ export type BattleParticipantInitData = {
   enabled: boolean
   skills: SkillSet
   statusEffects?: StatusEffect[]
-  buffs?: Modifier[]
-  attributeValues?: AttributeValues
+  buffs?: string[]
+  attributeValues?: Partial<Record<ATTRIBUTE_CODE, number>>
 }
 
 /**
@@ -72,10 +70,22 @@ export class BattleParticipantImpl implements BattleEntity {
   type: ParticipantSide
   team: ParticipantSide
   enabled: boolean
-  buffs: Modifier[]
   statusEffects?: StatusEffect[]
   skills: SkillSet
-  attributeValues: AttributeValues
+  /** 属性值缓存（满足 BattleEntity 接口） */
+  attributeValues: AttributeValues = {} as AttributeValues
+
+  /**
+   * 获取 Buff 实例 ID 列表
+   * 委托给 buffManager，保证始终同步
+   */
+  get buffs(): string[] {
+    return this.buffManager.getBuffList()
+  }
+
+  set buffs(value: string[]) {
+    this.buffManager.setBuffList(value)
+  }
 
   /** Buff 管理器 */
   private buffManager: ParticipantBuffs
@@ -86,6 +96,9 @@ export class BattleParticipantImpl implements BattleEntity {
   /** 属性缓存 Map */
   private stats = new ParticipantStats()
 
+  /** 修饰符提供者（BuffSystem），用于从 ModifierStack 同步修饰符 */
+  private modifierProvider: IModifierProvider | null = null
+
   /**
    * 构造函数
    * @param data - 初始化数据
@@ -93,7 +106,7 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   constructor(
     data: BattleParticipantInitData,
-    modifierProvider?: IModifierProvider
+    modifierProvider?: IModifierProvider | null,
   ) {
     this.id = data.id
     this.name = data.name
@@ -101,33 +114,21 @@ export class BattleParticipantImpl implements BattleEntity {
     this.type = data.type
     this.team = data.team
     this.enabled = data.enabled ?? true
-    this.buffs = data.buffs ?? []
     this.statusEffects = data.statusEffects
     this.skills = data.skills
-    this.buffManager = new ParticipantBuffs(this.buffs as unknown as string[], () => this.markAllDirty())
+    this.buffManager = new ParticipantBuffs(data.buffs ?? [], () => this.stats.notifyModifiersChanged())
     this.skillManager = new ParticipantSkills(this.skills)
 
-    if (modifierProvider) {
-      this.stats.setModifierProvider(modifierProvider)
-    }
-
     if (data.attributeValues) {
-      this.stats.initAttributes(data.attributeValues as any)
+      this.stats.initAttributes(data.attributeValues)
     }
-  }
+    // 初始化 attributeValues 以满足 BattleEntity 接口要求
+    this.attributeValues = Object.fromEntries(
+      this.stats.attributes.entries()
+    ) as unknown as AttributeValues
 
-  setModifierProvider(provider: IModifierProvider): void {
-    this.stats.setModifierProvider(provider)
-  }
-
-  /**
-   * 设置Buff系统引用（向后兼容）
-   * @param buffSystem Buff系统实例
-   * @deprecated 请使用 setModifierProvider 方法
-   */
-  setBuffSystem(buffSystem: IModifierProvider): void {
-    if (buffSystem && typeof buffSystem.getModifierStack === 'function') {
-      this.stats.setModifierProvider(buffSystem)
+    if (modifierProvider) {
+      this.setModifierProvider(modifierProvider)
     }
   }
 
@@ -137,6 +138,62 @@ export class BattleParticipantImpl implements BattleEntity {
     isPercentage: boolean = false
   ): void {
     this.stats.initAttribute(code, baseValue, isPercentage)
+  }
+
+  /**
+   * 设置修饰符提供者，建立 ModifierStack → AttributeValue 同步桥梁
+   */
+  setModifierProvider(provider: IModifierProvider): void {
+    this.modifierProvider = provider
+    // 立即同步并触发重算
+    this.syncModifiersFromProvider()
+    this.stats.recalculateAll()
+  }
+
+  /**
+   * 从 ModifierStack 同步修饰符到本地 attrData.modifiers
+   * 在每次重新计算属性前调用
+   */
+  private syncModifiersFromProvider(): void {
+    if (!this.modifierProvider) return
+    const stack = this.modifierProvider.getModifierStack(this.id)
+    if (!stack) return
+
+    let hasChanges = false
+
+    for (const code of Object.values(ATTRIBUTE_CODE)) {
+      const attrData = this.stats.getAttrValue(code)
+      if (!attrData) continue
+
+      const stackMods = stack.getModifiers(code)
+      if (stackMods.length === 0) continue
+
+      // 保留 base 修饰符
+      const baseModifier = attrData.modifiers.find(m => m.sourceKey === 'base')
+
+      // ponytail: ModifierStack 返回 LocalModifier[]（含 buffInstanceId），
+      // 但 IModifierStack 接口声明为 Modifier[]。此处通过 as any 桥接运行时类型。
+      const externalModifiers: Modifier[] = (stackMods as any[]).map((lm: any) => ({
+        sourceKey: lm.buffInstanceId || lm.sourceKey || 'unknown',
+        sourceType: this.modifierProvider!.getSourceType(lm.buffInstanceId || lm.sourceKey || ''),
+        attribute: lm.attribute,
+        value: lm.value,
+        type: lm.type,
+        description: `来自: ${this.modifierProvider!.getSourceName(lm.buffInstanceId || lm.sourceKey || '') || lm.buffInstanceId || lm.sourceKey}`,
+      }))
+
+      attrData.modifiers = [
+        ...(baseModifier ? [baseModifier] : []),
+        ...externalModifiers,
+      ]
+      // 标记该属性缓存过期（版本号不匹配）
+      attrData.cachedVersion = this.stats.getCurrentVersion() - 1
+      hasChanges = true
+    }
+
+    if (hasChanges) {
+      this.stats.notifyModifiersChanged()
+    }
   }
 
   private recalcAttribute(attr: ATTRIBUTE_CODE): void {
@@ -153,7 +210,8 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 属性最终值
    */
   getAttribute(attr: ATTRIBUTE_CODE | string): number {
-    const attrValue = this.getAttributeValue(attr)
+    const normalizedAttr = typeof attr === 'string' ? normalizeAttributeCode(attr) : attr
+    const attrValue = this.getAttributeValue(normalizedAttr)
     return attrValue?.value ?? 0
   }
 
@@ -183,18 +241,12 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   recalcAll(): void {
+    this.syncModifiersFromProvider()
     this.stats.recalculateAll()
   }
 
-  markDirty(attr: ATTRIBUTE_CODE): void {
-    this.stats.markDirty(attr)
-  }
-
-  markAllDirty(): void {
-    this.stats.markAllDirty()
-  }
-
   recalculateAll(): void {
+    this.syncModifiersFromProvider()
     this.stats.recalculateAll()
   }
 
@@ -225,13 +277,19 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   set maxHealth(value: number) {
     this.setAttributeBase(ATTRIBUTE_CODE.maxHealth, value)
+    // 设置最大生命值后裁剪当前生命值
+    const maxHp = this.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    const currentHp = this.getAttribute(ATTRIBUTE_CODE.currentHealth)
+    if (currentHp > maxHp) {
+      this.stats.setAttributeValue(ATTRIBUTE_CODE.currentHealth, maxHp)
+    }
   }
 
   /**
    * 获取当前能量值
    */
   get currentEnergy(): number {
-    return this.getAttribute(ATTRIBUTE_CODE.energy)
+    return this.getAttribute(ATTRIBUTE_CODE.currentEnergy)
   }
 
   /**
@@ -239,7 +297,7 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   set currentEnergy(value: number) {
     const maxEnergy = this.getAttribute(ATTRIBUTE_CODE.maxEnergy)
-    this.stats.setAttributeValue(ATTRIBUTE_CODE.energy, Math.max(0, Math.min(value, maxEnergy)))
+    this.stats.setAttributeValue(ATTRIBUTE_CODE.currentEnergy, Math.max(0, Math.min(value, maxEnergy)))
   }
 
   /**
@@ -429,7 +487,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * 在minAttack和maxAttack之间随机取值
    * @returns 随机攻击力
    */
-  getRandomAttack(): number {
+  getRandomAttackDemage(): number {
     const minAtk = this.getAttribute(ATTRIBUTE_CODE.minAttack)
     const maxAtk = this.getAttribute(ATTRIBUTE_CODE.maxAttack)
     return Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
@@ -445,7 +503,7 @@ export class BattleParticipantImpl implements BattleEntity {
       case ATTRIBUTE_CODE.currentHealth:
         this.currentHealth = value
         break
-      case ATTRIBUTE_CODE.energy:
+      case ATTRIBUTE_CODE.currentEnergy:
         this.currentEnergy = value
         break
       case ATTRIBUTE_CODE.maxHealth:
@@ -596,10 +654,10 @@ export class BattleParticipantImpl implements BattleEntity {
 
   /**
    * 获取技能ID
-   * @param filter - 技能类型过滤：'all'返回所有，'active'返回主动技能，'passive'返回被动技能
+   * @param filter - 技能类型过滤：'active'返回主动技能，SkillType.ALL返回所有，SkillType.PASSIVE返回被动技能
    * @returns 技能ID数组
    */
-  getSkillIds(filter: 'all' | 'active' | 'passive' = 'all'): string[] {
+  getSkillIds(filter: 'active' | SkillType.ALL | SkillType.PASSIVE = SkillType.ALL): string[] {
     return this.skillManager.getSkillIds(filter)
   }
 
@@ -708,10 +766,6 @@ export class BattleParticipantImpl implements BattleEntity {
     }
   }
 
-  public markAllAttributesDirty(): void {
-    this.stats.markAllDirty()
-  }
-
   /**
    * 导出所有属性详情（含基础值、最终值、修饰符、计算公式）
    * @returns 属性详情列表
@@ -757,11 +811,11 @@ export class BattleParticipantImpl implements BattleEntity {
         const absVal = Math.abs(mod.value)
         const valStr = isPercentage ? `${absVal}%` : `${absVal}`
         switch (mod.type) {
-          case 'ADDITIVE': parts.push(`${sign}${valStr}[${mod.source}]`); break
-          case 'PERCENTAGE': parts.push(`${sign}${valStr}%[${mod.source}]`); break
-          case 'MULTIPLICATIVE': parts.push(`×${1 + mod.value}[${mod.source}]`); break
-          case 'FINAL': parts.push(`×${1 + mod.value}(最终)[${mod.source}]`); break
-          default: parts.push(`${sign}${valStr}[${mod.source}]`)
+          case ModifierType.ADDITIVE: parts.push(`${sign}${valStr}[${mod.sourceKey}]`); break
+          case ModifierType.PERCENTAGE: parts.push(`${sign}${valStr}%[${mod.sourceKey}]`); break
+          case ModifierType.MULTIPLICATIVE: parts.push(`×${1 + mod.value}[${mod.sourceKey}]`); break
+          case ModifierType.FINAL: parts.push(`×${1 + mod.value}(最终)[${mod.sourceKey}]`); break
+          default: parts.push(`${sign}${valStr}[${mod.sourceKey}]`)
         }
       }
 
@@ -775,8 +829,10 @@ export class BattleParticipantImpl implements BattleEntity {
         isPercentage,
         baseValue: attrValue.base,
         finalValue: attrValue.value,
-        modifiers: attrValue.modifiers.map((m: any) => ({
-          source: m.source, sourceType: m.sourceType, value: m.value, type: m.type, description: m.description,
+        modifiers: attrValue.modifiers.map((m: Modifier) => ({
+          source: m.sourceKey,
+          sourceType: m.sourceType,
+          value: m.value, type: m.type, description: m.description,
         })),
         formula: parts.join(' → '),
         breakdown: attrValue.breakdown,

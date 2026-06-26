@@ -1,6 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-
+import { ModifierType } from '@/domain/attribute/types'
 export class MountainGodBuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'mountain_god'
 
@@ -11,11 +11,11 @@ export class MountainGodBuff extends BaseBuffScript {
     const attackBonus = this.getConfigValue(context, 'attackBonus', 50)
     const defenseBonus = this.getConfigValue(context, 'defenseBonus', 30)
     
-    this.addModifier(context, 'ATK', attackBonus, 'ADDITIVE')
-    this.addModifier(context, 'DEF', defenseBonus, 'ADDITIVE')
+    this.addModifier(context, 'ATK', attackBonus, ModifierType.ADDITIVE)
+    this.addModifier(context, 'DEF', defenseBonus, ModifierType.ADDITIVE)
     
     // 添加暴击率提升
-    this.addModifier(context, 'CRIT_RATE', 0.1, 'ADDITIVE')
+    this.addModifier(context, 'CRIT_RATE', 0.1, ModifierType.ADDITIVE)
     
     context.setVariable('initialAttackBonus', attackBonus)
   }
@@ -40,7 +40,7 @@ export class MountainGodBuff extends BaseBuffScript {
     // 刷新时增加额外的攻击力
     const refreshBonus = this.getConfigValue(context, 'refreshBonus', 10)
     
-    this.addModifier(context, 'ATK', refreshBonus, 'ADDITIVE')
+    this.addModifier(context, 'ATK', refreshBonus, ModifierType.ADDITIVE)
     
     this.log(context, `获得额外 ${refreshBonus} 攻击力`)    
   }

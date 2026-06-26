@@ -1,6 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-
+import { ModifierType } from '@/domain/attribute/types'
 /**
  * 属性加成buff模板
  * 用于快速创建属性加成类buff
@@ -178,7 +178,7 @@ export abstract class StatusEffectTemplate extends BaseBuffScript {
   protected abstract getAffectedAttributes(): Array<{
     name: string
     modifier: number
-    type: 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE'
+    type: ModifierType
   }>
 
   protected _onApply(context: BuffContext): void {
@@ -240,7 +240,7 @@ export class BuffTemplateGenerator {
     buffId: string,
     attributeName: string,
     baseBonus: number,
-    bonusType: 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE',
+    bonusType: ModifierType,
     buffName: string,
   ): typeof BaseBuffScript {
     return class extends AttributeBuffTemplate {
@@ -251,7 +251,7 @@ export class BuffTemplateGenerator {
       protected getBaseBonus(): number {
         return baseBonus
       }
-      protected getBonusType(): 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' {
+      protected getBonusType(): ModifierType {
         return bonusType
       }
       protected getBuffName(): string {
@@ -297,7 +297,7 @@ export class BuffTemplateGenerator {
     affectedAttributes: Array<{
       name: string
       modifier: number
-      type: 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE'
+      type: ModifierType
     }>,
   ): typeof BaseBuffScript {
     return class extends StatusEffectTemplate {

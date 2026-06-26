@@ -25,7 +25,7 @@ import {
   type TriggerPhase,
   type TriggerEventContext,
 } from '@/domain/buff/types'
-import { TriggerEventBus } from '@/domain/buff/TriggerEventBus'
+import { TriggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 
 /**
  * 动作执行器类

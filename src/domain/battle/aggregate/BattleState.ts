@@ -1,6 +1,14 @@
+/**
+ ** 文件: BattleState.ts
+ ** 创建日期: 2026-02-09
+ ** 作者: CombatDebugStudio
+ ** 功能: 战斗聚合工厂
+ ** 描述: 提供 createDefaultBattleData 工厂函数，组装包含 ID、回合、参与者等的规范化 BattleData 聚合对象
+ **/
 import type { BattleData, BattleState, BattleEntity, ParticipantSide } from '@/domain/battle/types'
 import { BattleStatus, RoundStatus, PARTICIPANT_SIDE } from '@/domain/battle/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 export function createDefaultBattleData(
   battleId: string,
@@ -65,10 +73,10 @@ export function checkBattleEndCondition(
   }
   if (currentRound >= maxTurns) {
     const charactersHealth = aliveCharacters.reduce(
-      (sum, p) => sum + p.getAttribute('HP') / p.getAttribute('MAX_HP'), 0,
+      (sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth), 0,
     )
     const enemiesHealth = aliveEnemies.reduce(
-      (sum, p) => sum + p.getAttribute('HP') / p.getAttribute('MAX_HP'), 0,
+      (sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth), 0,
     )
     const winner = charactersHealth >= enemiesHealth
       ? PARTICIPANT_SIDE.ALLY

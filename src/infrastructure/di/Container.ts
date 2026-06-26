@@ -79,7 +79,7 @@ export class Container {
 
 export const container = reactive(Container.getInstance())
 
-// 瀵煎叆鎵€鏈夊繀瑕佺殑鏈嶅姟鍜屼护鐗?
+// 导入所有必要的服务和令牌
 import {
   BATTLE_SYSTEM_TOKEN,
   TURN_MANAGER_TOKEN,
@@ -118,9 +118,9 @@ import { LoggerAdapter } from '@/infrastructure/adapters/logging/LoggerAdapter'
 import { reactive } from 'vue'
 
 /**
- * 鍒濆鍖栦緷璧栨敞鍏ュ鍣?
- * 闆嗕腑绠＄悊鎵€鏈夋湇鍔℃敞鍐?
- * 娉ㄦ剰锛氭湇鍔℃敞鍐岄『搴忓緢閲嶈锛岄渶瑕佸厛娉ㄥ唽琚緷璧栫殑鏈嶅姟
+ * 初始化依赖注入容器
+ * 集中管理所有服务注册
+ * 注意：服务注册顺序很重要，需要先注册被依赖的服务
  */
 export function initializeContainer(): void {
   // 0. init logger via port (domain does not depend on infra)
@@ -128,10 +128,10 @@ export function initializeContainer(): void {
 
   container.clear()
 
-  // 1. 娉ㄥ唽鍩虹鏈嶅姟锛堟棤渚濊禆鎴栧彧渚濊禆澶栭儴锛?
+  // 1. 注册基础服务（无依赖或只依赖外部）
   container.register('BuffScriptRegistry', new BuffScriptRegistry())
 
-  // 1.5 娉ㄥ唽BuffScriptLoader锛堜緷璧朆uffScriptRegistry锛?
+  // 1.5 注册BuffScriptLoader（依赖BuffScriptRegistry）
   const buffScriptRegistry =
     container.resolve<BuffScriptRegistry>('BuffScriptRegistry')
   container.register(
@@ -139,26 +139,26 @@ export function initializeContainer(): void {
     new BuffScriptLoader(buffScriptRegistry),
   )
 
-  // 2. 娉ㄥ唽BuffSystem锛堜緷璧朆uffScriptRegistry锛?
+  // 2. 注册BuffSystem（依赖BuffScriptRegistry）
   container.register('BuffSystem', new BuffSystem(buffScriptRegistry))
 
-  // 3. 娉ㄥ唽SkillManager锛堜緷璧朆uffSystem锛?
+  // 3. 注册SkillManager（依赖BuffSystem）
   const buffSystem = container.resolve<BuffSystem>('BuffSystem')
   container.register('SkillManager', new SkillManager(buffSystem))
 
-  // 4. 娉ㄥ唽PassiveSkillManager锛堜緷璧朣killManager鍜孊uffSystem锛?
+  // 4. 注册PassiveSkillManager（依赖SkillManager和BuffSystem）
   const skillManager = container.resolve<SkillManager>('SkillManager')
   container.register(
     'PassiveSkillManager',
     PassiveSkillManager.create(skillManager, buffSystem),
   )
 
-  // 5. 娉ㄥ唽璁＄畻鏈嶅姟
+  // 5. 注册计算服务
   container.register('DamageCalculator', new DamageCalculator())
   container.register('HealCalculator', new HealCalculator())
   container.register('RAFTimer', new RAFTimer())
 
-  // 6. 娉ㄥ唽鏍稿績鎴樻枟缁勪欢锛堜緷璧栦笂闈㈡敞鍐岀殑鏈嶅姟锛?
+  // 6. 注册核心战斗组件（依赖上面注册的服务）
   container.register(TURN_MANAGER_TOKEN.toString(), new TurnManager(buffSystem))
   container.register(
     ACTION_EXECUTOR_TOKEN.toString(),
@@ -171,7 +171,7 @@ export function initializeContainer(): void {
     new BattleRuleManager(),
   )
 
-  // 7. 娉ㄥ唽鎴樻枟绯荤粺锛堜娇鐢ㄥ鍣ㄨ嚜鍔ㄨВ鏋愪緷璧栵級
+  // 7. 注册战斗系统（使用容器自动解析依赖）
   container.registerFactory(
     BATTLE_SYSTEM_TOKEN.toString(),
     () => {
@@ -180,11 +180,11 @@ export function initializeContainer(): void {
     true,
   )
 
-  // 8. 娉ㄥ唽TaskExecutor锛堜緷璧朑ameBattleSystem锛?
+  // 8. 注册TaskExecutor（依赖GameBattleSystem）
   const battleSystem = container.resolve<any>(BATTLE_SYSTEM_TOKEN.toString())
   container.register('TaskExecutor', new TaskExecutor(battleSystem))
 
-  // 娉ㄥ唽BattleManager
+  // 注册BattleManager
   container.registerFactory(
     'BattleManager',
     () => {
@@ -192,7 +192,7 @@ export function initializeContainer(): void {
         BATTLE_SYSTEM_TOKEN.toString(),
       )
 
-      // 鍒涘缓骞舵敞鍏ユ墍鏈夊瓙绠＄悊鍣?
+      // 创建并注入所有子管理器
       const battleStateManager = new BattleStateManager(battleSystem)
       const autoBattleManager = new AutoBattleManager(
         battleSystem,
@@ -212,7 +212,7 @@ export function initializeContainer(): void {
         battleReplayManager,
       )
 
-      // 娉ㄥ叆鎴樻枟绯荤粺寮曠敤鍒颁簨浠剁鐞嗗櫒
+      // 注入战斗系统引用到事件管理器
       battleEventManager.setBattleSystem(battleSystem, battleStateManager)
 
       return battleManager
@@ -220,7 +220,7 @@ export function initializeContainer(): void {
     true,
   )
 
-  // 娉ㄥ唽BattleService
+  // 注册BattleService
   container.registerFactory(
     'BattleService',
     () => {
@@ -232,7 +232,7 @@ export function initializeContainer(): void {
 }
 
 /**
- * 閲嶇疆瀹瑰櫒锛堢敤浜庢祴璇曪級
+ * 重置容器（用于测试）
  */
 export function resetContainer(): void {
   container.clear()

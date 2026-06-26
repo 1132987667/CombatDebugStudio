@@ -170,14 +170,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { raf } from '@/shared/utils/RAF';
+import { BattleEvent } from '@/shared/types/battle-events';
 
-interface BattleEvent {
-  eventId: string;
-  type: 'action' | 'state_change' | 'turn_start' | 'turn_end' | 'battle_start' | 'battle_end';
-  timestamp: number;
-  turn: number;
-  data: any;
-}
+
 
 interface RecordedBattle {
   battleId: string;

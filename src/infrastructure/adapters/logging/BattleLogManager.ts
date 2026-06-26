@@ -17,14 +17,14 @@ import type {
   LogEntry,
   LogHandler,
   LogSegment,
-} from '@/application/dto/battle-log'
+} from '@/shared/types/battle-log'
 import {
   LogLevel,
   LogLevelLabel,
   LogType,
   LogLevelClass,
   newLogSegment,
-} from '@/application/dto/battle-log'
+} from '@/shared/types/battle-log'
 import { reactive } from 'vue'
 import { Counter } from '@/shared/utils/Counter'
 import type { Item } from '@/shared/types/Item'

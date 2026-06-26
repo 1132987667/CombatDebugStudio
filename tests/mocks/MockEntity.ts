@@ -3,17 +3,17 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 
 export const defaultAttrs = {
-  [ATTRIBUTE_CODE.attack]: { value: 100, base: 100, modifiers: [], dirty: false },
-  [ATTRIBUTE_CODE.defense]: { value: 50, base: 50, modifiers: [], dirty: false },
-  [ATTRIBUTE_CODE.maxHealth]: { value: 1000, base: 1000, modifiers: [], dirty: false },
-  [ATTRIBUTE_CODE.currentHealth]: { value: 800, base: 1000, modifiers: [], dirty: false },
-  [ATTRIBUTE_CODE.speed]: { value: 100, base: 100, modifiers: [], dirty: false },
-  [ATTRIBUTE_CODE.energy]: { value: 100, base: 100, modifiers: [], dirty: false },
-  [ATTRIBUTE_CODE.maxEnergy]: { value: 150, base: 150, modifiers: [], dirty: false },
-  [ATTRIBUTE_CODE.critRate]: { value: 0.05, base: 0.05, modifiers: [], dirty: false },
-  [ATTRIBUTE_CODE.critDamage]: { value: 1.5, base: 1.5, modifiers: [], dirty: false },
-  [ATTRIBUTE_CODE.dodge]: { value: 0, base: 0, modifiers: [], dirty: false },
-  [ATTRIBUTE_CODE.hit]: { value: 1, base: 1, modifiers: [], dirty: false },
+  [ATTRIBUTE_CODE.attack]: { value: 100, base: 100, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.defense]: { value: 50, base: 50, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.maxHealth]: { value: 1000, base: 1000, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.currentHealth]: { value: 800, base: 1000, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.speed]: { value: 100, base: 100, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.energy]: { value: 100, base: 100, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.maxEnergy]: { value: 150, base: 150, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.critRate]: { value: 0.05, base: 0.05, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.critDamage]: { value: 1.5, base: 1.5, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.dodge]: { value: 0, base: 0, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.hit]: { value: 1, base: 1, modifiers: [], cachedVersion: 0 },
 }
 
 export function createMockEntity(overrides?: Partial<Record<string, unknown>>): BattleEntity {
@@ -42,8 +42,6 @@ export function createMockEntity(overrides?: Partial<Record<string, unknown>>): 
     getAttrValue: (attr: string) => attrs[attr as ATTRIBUTE_CODE],
     recalcAll: () => {},
     setAttribute: () => {},
-    markDirty: () => {},
-    markAllDirty: () => {},
     recalculateAll: () => {},
     setModifierProvider: () => {},
     addBuff: () => {},

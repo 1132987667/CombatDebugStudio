@@ -1,5 +1,4 @@
 import type { SkillSet } from '@/domain/skill/types'
-import type { AttributeValues } from '@/domain/attribute/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 
@@ -9,19 +8,19 @@ export const EMPTY_SKILL_SET: SkillSet = {
   ultimate: [],
 }
 
-export function makeDefaultAttributes(overrides?: Partial<AttributeValues>): AttributeValues {
-  const defaults: AttributeValues = {
-    [ATTRIBUTE_CODE.maxHealth]: { value: 1000, base: 1000, modifiers: [], dirty: false },
-    [ATTRIBUTE_CODE.currentHealth]: { value: 1000, base: 1000, modifiers: [], dirty: false },
-    [ATTRIBUTE_CODE.attack]: { value: 100, base: 100, modifiers: [], dirty: false },
-    [ATTRIBUTE_CODE.defense]: { value: 50, base: 50, modifiers: [], dirty: false },
-    [ATTRIBUTE_CODE.speed]: { value: 100, base: 100, modifiers: [], dirty: false },
-    [ATTRIBUTE_CODE.energy]: { value: 100, base: 100, modifiers: [], dirty: false },
-    [ATTRIBUTE_CODE.maxEnergy]: { value: 150, base: 150, modifiers: [], dirty: false },
-    [ATTRIBUTE_CODE.critRate]: { value: 0.05, base: 0.05, modifiers: [], dirty: false },
-    [ATTRIBUTE_CODE.critDamage]: { value: 1.5, base: 1.5, modifiers: [], dirty: false },
-    [ATTRIBUTE_CODE.dodge]: { value: 0, base: 0, modifiers: [], dirty: false },
-    [ATTRIBUTE_CODE.hit]: { value: 1, base: 1, modifiers: [], dirty: false },
+export function makeDefaultAttributes(overrides?: Partial<Record<ATTRIBUTE_CODE, number>>): Partial<Record<ATTRIBUTE_CODE, number>> {
+  const defaults: Partial<Record<ATTRIBUTE_CODE, number>> = {
+    [ATTRIBUTE_CODE.maxHealth]: 1000,
+    [ATTRIBUTE_CODE.currentHealth]: 1000,
+    [ATTRIBUTE_CODE.attack]: 100,
+    [ATTRIBUTE_CODE.defense]: 50,
+    [ATTRIBUTE_CODE.speed]: 100,
+    [ATTRIBUTE_CODE.energy]: 100,
+    [ATTRIBUTE_CODE.maxEnergy]: 150,
+    [ATTRIBUTE_CODE.critRate]: 0.05,
+    [ATTRIBUTE_CODE.critDamage]: 1.5,
+    [ATTRIBUTE_CODE.dodge]: 0,
+    [ATTRIBUTE_CODE.hit]: 1,
   }
   return { ...defaults, ...overrides }
 }
@@ -45,7 +44,7 @@ export const allyParticipantData2 = {
   team: PARTICIPANT_SIDE.ALLY,
   enabled: true,
   skills: EMPTY_SKILL_SET,
-  attributeValues: makeDefaultAttributes({ speed: { value: 80, base: 80, modifiers: [], dirty: false } }),
+  attributeValues: makeDefaultAttributes({ [ATTRIBUTE_CODE.speed]: 80 }),
 }
 
 export const enemyParticipantData = {
@@ -56,7 +55,7 @@ export const enemyParticipantData = {
   team: PARTICIPANT_SIDE.ENEMY,
   enabled: true,
   skills: EMPTY_SKILL_SET,
-  attributeValues: makeDefaultAttributes({ maxHealth: { value: 500, base: 500, modifiers: [], dirty: false }, currentHealth: { value: 500, base: 500, modifiers: [], dirty: false } }),
+  attributeValues: makeDefaultAttributes({ [ATTRIBUTE_CODE.maxHealth]: 500, [ATTRIBUTE_CODE.currentHealth]: 500 }),
 }
 
 export const enemyParticipantData2 = {
@@ -67,5 +66,5 @@ export const enemyParticipantData2 = {
   team: PARTICIPANT_SIDE.ENEMY,
   enabled: true,
   skills: EMPTY_SKILL_SET,
-  attributeValues: makeDefaultAttributes({ maxHealth: { value: 500, base: 500, modifiers: [], dirty: false }, currentHealth: { value: 500, base: 500, modifiers: [], dirty: false } }),
+  attributeValues: makeDefaultAttributes({ [ATTRIBUTE_CODE.maxHealth]: 500, [ATTRIBUTE_CODE.currentHealth]: 500 }),
 }

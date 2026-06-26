@@ -209,19 +209,6 @@ export class BattleStateManager {
     if (participant) {
       // 更新参与者属性
       Object.assign(participant, updates)
-
-      // 同步到核心战斗系统
-      if (this.battleId) {
-        try {
-          this.battleSystem.updateParticipant(
-            this.battleId,
-            characterId,
-            updates,
-          )
-        } catch (error) {
-          console.error('同步手动更新到战斗系统时出错:', error)
-        }
-      }
     }
   }
 

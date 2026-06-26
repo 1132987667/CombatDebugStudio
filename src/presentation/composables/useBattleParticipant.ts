@@ -89,7 +89,7 @@ export function useBattleParticipant(
       ATTRIBUTE_CODE.currentHealth,
     )!,
     maxHealth: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxHealth)!,
-    energy: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.energy)!,
+    energy: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)!,
     maxEnergy: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)!,
     attack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.attack)!,
     defense: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.defense)!,

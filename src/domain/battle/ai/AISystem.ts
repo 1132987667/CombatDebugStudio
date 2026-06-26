@@ -14,11 +14,9 @@ import type {
   BattleData,
 } from '@/domain/battle/types'
 import { BattleStatus } from '@/domain/battle/types'
-import { BATTLE_CONSTANTS } from '@/domain/battle/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { BattleAIFactory, BattleAI } from '@/domain/battle/ai/BattleAI'
 import type { IActionExecutor } from '@/domain/battle/entity/BattleInterfaces'
-import type { SkillConfig } from '@/domain/skill/types'
 
 /**
  * AI系统类

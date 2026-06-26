@@ -4,8 +4,8 @@
  * 描述：实现 JSON 和 CSV 格式的日志导出功能
  */
 
-import type { LogEntry, LogHandler } from '@/application/dto/battle-log'
-import { LogType, LogLevelLabel } from '@/application/dto/battle-log'
+import type { LogEntry, LogHandler } from '@/shared/types/battle-log'
+import { LogType, LogLevelLabel } from '@/shared/types/battle-log'
 
 /**
  * JSON 日志处理器

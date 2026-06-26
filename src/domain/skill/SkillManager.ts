@@ -3,6 +3,9 @@ import type {
   SkillStep,
 } from '@/domain/skill/types'
 import type { BattleEntity } from '@/domain/battle/types'
+import {
+  ATTRIBUTE_CODE,
+} from '@/domain/attribute/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType } from '@/domain/buff/types'
@@ -65,7 +68,7 @@ export class SkillManager {
     return this.healCalculator.getCalculationLogs()
   }
 
-  /** 清空所有计算日�?*/
+  /** 清空所有计算日�?*/
   clearCalculationLogs(): void {
     this.damageCalculator.clearCalculationLogs()
     this.healCalculator.clearCalculationLogs()
@@ -115,7 +118,7 @@ export class SkillManager {
     }
 
     if (source.getAttribute) {
-      const currentEnergy = source.getAttribute('currentEnergy' as any)
+      const currentEnergy = source.getAttribute(ATTRIBUTE_CODE.currentEnergy)
       if (currentEnergy < (config.energyCost || 0)) {
         battleLogManager.addDebugLog(`Insufficient energy for skill ${skillId}`, LogLevel.WARN)
         return null

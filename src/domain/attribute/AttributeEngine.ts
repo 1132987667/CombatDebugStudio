@@ -1,4 +1,4 @@
-import type {
+import {
   ATTRIBUTE_CODE,
   ModifierType,
 } from '@/domain/attribute/types'
@@ -10,7 +10,8 @@ import type {
   AttributeComputeResult,
   CalculationStep,
   SourceContribution,
-} from './AttributeValue'
+  ModifierSourceType,
+} from '@/domain/attribute/types'
 
 export class AttributeEngine {
   static compute(
@@ -21,12 +22,12 @@ export class AttributeEngine {
     const steps: CalculationStep[] = []
     let current = baseValue
 
-    const additiveMods = templates.filter((t) => t.type === 'ADDITIVE')
-    const percentageMods = templates.filter((t) => t.type === 'PERCENTAGE')
+    const additiveMods = templates.filter((t) => t.type === ModifierType.ADDITIVE)
+    const percentageMods = templates.filter((t) => t.type === ModifierType.PERCENTAGE)
     const multiplicativeMods = templates.filter(
-      (t) => t.type === 'MULTIPLICATIVE',
+      (t) => t.type === ModifierType.MULTIPLICATIVE,
     )
-    const finalMods = templates.filter((t) => t.type === 'FINAL')
+    const finalMods = templates.filter((t) => t.type === ModifierType.FINAL)
 
     const resolveValue = (t: ModifierTemplate): number => {
       if (typeof t.value === 'number') return t.value
@@ -68,9 +69,9 @@ export class AttributeEngine {
       current = current * percentMultiplier
       if (percentageMods.length > 0) {
         steps.push({
-          modifierId: 'percent_group',
+          modifierId: 'PERCENTAGE_TOTAL',
           sourceName: 'Percentage total',
-          type: 'PERCENTAGE',
+          type: ModifierType.PERCENTAGE,
           appliedValue: percentSum,
           previousValue: prev,
           intermediateResult: current,
@@ -194,11 +195,3 @@ export class AttributeEngine {
   }
 }
 
-type ModifierSourceType =
-  | 'buff'
-  | 'equipment'
-  | 'skill'
-  | 'terrain'
-  | 'formation'
-  | 'base'
-  | 'talent'

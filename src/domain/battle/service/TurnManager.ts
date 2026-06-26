@@ -7,8 +7,7 @@
 
 import type { BattleEntity, BattleData } from '@/domain/battle/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { ModifierStack } from '@/domain/buff/ModifierStack'
-import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /**
  * 回合管理器类
@@ -82,6 +81,6 @@ export class TurnManager {
    */
   public calculateEffectiveSpeed(participant: BattleEntity): number {
     // 【脏标记流控】直接使用参与者的属性缓存系统，确保读取的是最新计算结果
-    return participant.getAttribute('SPD')
+    return participant.getAttribute(ATTRIBUTE_CODE.speed)
   }
 }

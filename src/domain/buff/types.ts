@@ -330,6 +330,8 @@ export type TriggerPhase =
   | 'ON_DEATH'             // 自身死亡时
   | 'ON_HEAL_RECEIVED'     // 受到治疗时
   | 'ON_ENERGY_GAINED'     // 获得能量时
+  | 'ON_BATTLE_ENDED'      // 战斗结束时
+  | 'ON_SKILL_USE'        // 技能使用时（每个参与者的技能使用）
 
 /**
  * 触发行为定义

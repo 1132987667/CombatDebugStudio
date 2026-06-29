@@ -1,15 +1,12 @@
-import  { ModifierType, type ATTRIBUTE_CODE } from '@/domain/attribute/types'// ponytail: Modifier type from @/domain/attribute/types lacks buffInstanceId; extend locally
+import { ModifierType, ModifierSourceType, type ATTRIBUTE_CODE, type Modifier, type IModifierStack } from '@/domain/attribute/types'
 
-interface LocalModifier {
-  buffInstanceId: string
-  attribute: ATTRIBUTE_CODE
-  value: number
-  type: ModifierType
-}
-
-export class ModifierStack {
-  private modifiers = new Map<string, LocalModifier[]>()
-  private cache = new Map<string, number>()
+/**
+ * 修饰符堆栈 —— 按属性存储修饰符，作为 ParticipantStats 的单一数据源
+ * ponytail: 直接用 Modifier 类型存储（sourceKey = buffInstanceId, sourceType = BUFF），
+ *           消除 LocalModifier 与 Modifier 之间的桥接拷贝。
+ */
+export class ModifierStack implements IModifierStack {
+  private modifiers = new Map<string, Modifier[]>()
 
   public addModifier(
     buffInstanceId: string,
@@ -22,14 +19,19 @@ export class ModifierStack {
       this.modifiers.set(key, [])
     }
     const stack = this.modifiers.get(key)!
-    stack.push({ buffInstanceId, attribute, value, type })
-    this.cache.delete(key)
+    stack.push({
+      sourceKey: buffInstanceId,
+      sourceType: ModifierSourceType.BUFF,
+      attribute,
+      value,
+      type,
+    })
   }
 
   public removeModifier(buffInstanceId: string): void {
     for (const [key, stack] of this.modifiers.entries()) {
       const filtered = stack.filter(
-        (modifier) => modifier.buffInstanceId !== buffInstanceId,
+        (modifier) => modifier.sourceKey !== buffInstanceId,
       )
       if (filtered.length === 0) {
         this.modifiers.delete(key)
@@ -37,38 +39,15 @@ export class ModifierStack {
         this.modifiers.set(key, filtered)
       }
     }
-    this.cache.clear()
   }
 
-  public calculate(attribute: ATTRIBUTE_CODE, baseValue: number): number {
-    const modifiers = this.modifiers.get(attribute)
-    const modifierCount = modifiers?.length ?? 0
-    const cacheKey = `${attribute}_${baseValue}_${modifierCount}`
-    if (this.cache.has(cacheKey)) {
-      return this.cache.get(cacheKey)!
-    }
-    if (!modifiers || modifiers.length === 0) {
-      return baseValue
-    }
-    let result = baseValue
-    let additiveSum = 0
-    let multiplicativeSum = 1
-    for (const modifier of modifiers) {
-      switch (modifier.type) {
-        case ModifierType.ADDITIVE: additiveSum += modifier.value; break
-        case ModifierType.MULTIPLICATIVE: multiplicativeSum *= 1 + modifier.value; break
-        case ModifierType.PERCENTAGE: additiveSum += baseValue * modifier.value; break
-      }
-    }
-    result += additiveSum
-    result *= multiplicativeSum
-    this.cache.set(cacheKey, result)
-    return result
-  }
-
-  public getModifiers(attribute?: ATTRIBUTE_CODE): LocalModifier[] {
+  /**
+   * 获取指定属性的修饰符列表
+   * ponytail: 返回 Modifier[] 而非 LocalModifier[]，消除桥接类型转换
+   */
+  public getModifiers(attribute?: ATTRIBUTE_CODE): Modifier[] {
     if (attribute) return this.modifiers.get(attribute) || []
-    const allModifiers: LocalModifier[] = []
+    const allModifiers: Modifier[] = []
     for (const stack of this.modifiers.values()) {
       allModifiers.push(...stack)
     }
@@ -77,7 +56,6 @@ export class ModifierStack {
 
   public clear(): void {
     this.modifiers.clear()
-    this.cache.clear()
   }
 
   public getModifierCount(): number {
@@ -86,5 +64,27 @@ export class ModifierStack {
       count += stack.length
     }
     return count
+  }
+
+  /**
+   * 计算属性最终值
+   * ponytail: 未被调用（ParticipantStats 自行计算），保留接口契约
+   */
+  public calculate(attribute: ATTRIBUTE_CODE, baseValue: number): number {
+    const mods = this.modifiers.get(attribute)
+    if (!mods || mods.length === 0) return baseValue
+    let result = baseValue
+    let additiveSum = 0
+    let multiplicativeSum = 1
+    for (const modifier of mods) {
+      switch (modifier.type) {
+        case ModifierType.ADDITIVE: additiveSum += modifier.value; break
+        case ModifierType.MULTIPLICATIVE: multiplicativeSum *= 1 + modifier.value; break
+        case ModifierType.PERCENTAGE: additiveSum += baseValue * modifier.value; break
+      }
+    }
+    result += additiveSum
+    result *= multiplicativeSum
+    return result
   }
 }

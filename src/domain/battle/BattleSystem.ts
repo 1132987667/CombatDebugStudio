@@ -24,6 +24,7 @@ import type { SkillConfig } from '@/domain/skill/types'
 import type { TriggerPhase, TriggerEventContext } from '@/domain/buff/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { AISystem } from '@/domain/battle/ai/AISystem'
+import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
 import { ActionExecutor } from '@/domain/battle/service/ActionExecutor'
 import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
@@ -352,7 +353,6 @@ export class BattleSystem implements IBattleSystem {
 
     this.battleRecorder.recordAction(battleId, initAction, 0)
 
-    battleData.battleState = BattleStatus.ACTIVE
     battleData.roundState = RoundStatus.START
 
     const autoBattleRules = this.ruleManager.getAutoBattleRules()
@@ -637,12 +637,12 @@ export class BattleSystem implements IBattleSystem {
       this.endBattle(result.winner)
       if (battle.currentRound >= battle.maxTurns) {
         const winnerLabel = result.winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'
-        battleLogManager.addBattleLog(
-          battle.currentRound,
-          `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜`,
-          [{ text: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜` }],
-          BATTLE_LOG_CATEGORIES.STATUS,
-        )
+        battleLogManager.addBattleLog({
+          turn: battle.currentRound,
+          message: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜`,
+          segments: [{ text: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜` }],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+        })
       }
     }
   }
@@ -835,8 +835,19 @@ export class BattleSystem implements IBattleSystem {
   // ===================== 命令生成器（第三阶段） =====================
 
   /**
+   * 推进到下一回合（递增回合计数器）
+   * ponytail: 从 generateCommandsForTurn 中抽取，消除命令生成器的副作用
+   */
+  public advanceRound(): void {
+    if (this.battleData) {
+      this.battleData.currentRound++
+    }
+  }
+
+  /**
    * 从当前战斗状态生成命令序列
    * 这是第三阶段核心方法：将 BattleSystem 从"状态修改器"转变为"命令生成器"
+   * 调用方须在调用前先调用 advanceRound() 推进回合
    * @returns BattleCommand[] 命令序列，由调用方（Store）负责执行
    */
   public generateCommandsForTurn(): BattleCommand[] {
@@ -865,7 +876,7 @@ export class BattleSystem implements IBattleSystem {
       return commands
     }
 
-    battle.currentRound++
+    // ponytail: 回合递增已由调用方通过 advanceRound() 提前完成
     const turnOrder = this.turnManager.recalculateTurnOrder(battle)
 
     commands.push({
@@ -892,7 +903,7 @@ export class BattleSystem implements IBattleSystem {
       if (!participant || !participant.isAlive()) continue
 
       // 检查是否被控制
-      if (participant.hasBuff('buff_stun')) continue
+      if (participant.hasBuff(STUN_BUFF_ID)) continue
 
       // AI 决策或默认攻击
       const aiInstance = battle.aiInstances?.get(participantId)

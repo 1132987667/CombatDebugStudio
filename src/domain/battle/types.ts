@@ -11,7 +11,6 @@ import type {
   IModifierProvider,
   ATTRIBUTE_CODE,
   AttributeValues,
-  Modifier,
 } from '@/domain/attribute/types'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
@@ -164,14 +163,16 @@ export interface BattleEntity {
   type: ParticipantSide // 实体类型
   team: ParticipantSide // 实体阵营
   enabled: boolean // 实体是否启用
-  /** Buff列表 */
-  buffs: Modifier[]
+  /** Buff列表（buff实例ID字符串数组） */
+  buffs: string[]
   /** 状态效果列表 */
   statusEffects?: StatusEffect[]
   /** 技能配置 */
   skills: SkillSet
   /** 属性值缓存 */
   attributeValues: AttributeValues
+  /** 属性版本戳（每次属性重算后递增，用于 Vue 响应式追踪） */
+  readonly statsVersion: number
 
   /** 获取属性值对象（包含详细信息） */
   getAttributeValue(

@@ -96,6 +96,13 @@ export class BattleParticipantImpl implements BattleEntity {
   /** 属性缓存 Map */
   private stats = new ParticipantStats()
 
+  /** 属性版本戳，每次重算后递增（用于 Vue 响应式追踪） */
+  private _statsVersion = 0
+
+  get statsVersion(): number {
+    return this._statsVersion
+  }
+
   /** 修饰符提供者（BuffSystem），用于从 ModifierStack 同步修饰符 */
   private modifierProvider: IModifierProvider | null = null
 
@@ -171,15 +178,12 @@ export class BattleParticipantImpl implements BattleEntity {
       // 保留 base 修饰符
       const baseModifier = attrData.modifiers.find(m => m.sourceKey === 'base')
 
-      // ponytail: ModifierStack 返回 LocalModifier[]（含 buffInstanceId），
-      // 但 IModifierStack 接口声明为 Modifier[]。此处通过 as any 桥接运行时类型。
-      const externalModifiers: Modifier[] = (stackMods as any[]).map((lm: any) => ({
-        sourceKey: lm.buffInstanceId || lm.sourceKey || 'unknown',
-        sourceType: this.modifierProvider!.getSourceType(lm.buffInstanceId || lm.sourceKey || ''),
-        attribute: lm.attribute,
-        value: lm.value,
-        type: lm.type,
-        description: `来自: ${this.modifierProvider!.getSourceName(lm.buffInstanceId || lm.sourceKey || '') || lm.buffInstanceId || lm.sourceKey}`,
+      // ponytail: ModifierStack 现在直接存储 Modifier[]（sourceKey = buffInstanceId），
+      // 此处仅做富化（sourceType 委托给 provider，添加描述文本），无需类型桥接。
+      const externalModifiers: Modifier[] = stackMods.map((m: Modifier) => ({
+        ...m,
+        sourceType: this.modifierProvider!.getSourceType(m.sourceKey),
+        description: `来自: ${this.modifierProvider!.getSourceName(m.sourceKey) || m.sourceKey}`,
       }))
 
       attrData.modifiers = [
@@ -243,11 +247,13 @@ export class BattleParticipantImpl implements BattleEntity {
   recalcAll(): void {
     this.syncModifiersFromProvider()
     this.stats.recalculateAll()
+    this._statsVersion++
   }
 
   recalculateAll(): void {
     this.syncModifiersFromProvider()
     this.stats.recalculateAll()
+    this._statsVersion++
   }
 
   /**
@@ -581,6 +587,7 @@ export class BattleParticipantImpl implements BattleEntity {
     const damage = Math.max(0, amount)
     this.currentHealth = Math.max(0, this.currentHealth - damage)
     this.gainEnergy(15)
+    this._statsVersion++
 
     return damage
   }
@@ -597,6 +604,7 @@ export class BattleParticipantImpl implements BattleEntity {
       this.currentHealth + healAmount,
       this.maxHealth
     )
+    this._statsVersion++
     return this.currentHealth - originalHealth
   }
 
@@ -609,6 +617,7 @@ export class BattleParticipantImpl implements BattleEntity {
     const previousEnergy = this.currentEnergy
     this.currentEnergy = Math.min(this.currentEnergy + amount, this.maxEnergy)
     const actualGain = this.currentEnergy - previousEnergy
+    this._statsVersion++
 
     // 触发能量获取事件
     if (actualGain > 0) {
@@ -628,6 +637,7 @@ export class BattleParticipantImpl implements BattleEntity {
   spendEnergy(amount: number): boolean {
     if (this.currentEnergy >= amount) {
       this.currentEnergy -= amount
+      this._statsVersion++
       return true
     }
     return false

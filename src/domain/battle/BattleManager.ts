@@ -71,6 +71,10 @@ export class BattleManager {
    * @param callback 回调函数
    */
   on<T extends BattleEventName>(event: T, callback: (data: T) => void) {
+    const existing = this.handlers.get(event)
+    if (existing) {
+      eventBus.off(event, existing as any)
+    }
     this.handlers.set(event, callback as Function)
     eventBus.on(event, callback as any)
   }
@@ -125,7 +129,8 @@ export class BattleManager {
       return []
     }
 
-    // ponytail: 兼容适配 — BattleSystem 仍持有内部状态，generateCommandsForTurn 从中读取
+    // ponytail: 先推进回合，再生成命令 — 消除 generateCommandsForTurn 的副作用
+    this.battleSystem.advanceRound()
     const commands = this.battleSystem.generateCommandsForTurn()
     if (commands.length > 0) {
       this.syncBattleState()

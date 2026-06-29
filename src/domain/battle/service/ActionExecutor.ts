@@ -405,7 +405,8 @@ export class ActionExecutor {
         return
       }
 
-      const energyCost = this.getSkillEnergyCost(action.skillId)
+      const skillConfig = battle.skillManager.getSkillConfig(action.skillId)
+      const energyCost = skillConfig?.energyCost ?? 0
       if (energyCost > 0) {
         const success = source.spendEnergy(energyCost)
         if (!success) {
@@ -492,21 +493,6 @@ export class ActionExecutor {
         description: `${source.name} 治疗 ${target.name} 恢复 ${actualHeal} 生命值`,
       })
     }
-  }
-
-  /**
-   * 获取技能的能量消耗
-   * 根据技能ID判断消耗类型，大招100能量，技能50能量
-   * @param skillId - 技能的唯一标识符
-   * @returns number - 能量消耗值
-   */
-  private getSkillEnergyCost(skillId: string): number {
-    if (skillId.includes('ultimate') || skillId.includes('大招')) {
-      return 150
-    } else if (skillId.includes('skill') || skillId.includes('技能')) {
-      return 50
-    }
-    return 0
   }
 
   /**

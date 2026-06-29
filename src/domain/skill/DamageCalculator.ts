@@ -263,8 +263,14 @@ export class DamageCalculator {
     configKey: string,
   ): number {
     const attrValue = entity.getAttribute(code)
-    if (attrValue && attrValue > 0) return attrValue
-    return (this.config as any)[configKey] || 0
+    if (attrValue > 0) return attrValue
+    // attrValue 为 0 — 回退到配置或合理默认值
+    const configValue = (this.config as any)[configKey]
+    if (configValue !== undefined) return configValue
+    // ponytail: 命中/闪避等战斗关键属性的合理默认值，消除调用侧 || 1 的现场补救
+    if (configKey === 'hit') return 1
+    if (configKey === 'dodge') return 0
+    return 0
   }
 
   private getAttributeSafe(entity: BattleEntity, code: ATTRIBUTE_CODE): number {

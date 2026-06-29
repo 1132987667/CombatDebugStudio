@@ -15,7 +15,7 @@
           <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
             <ParticipantCard v-for="member in filterAllyTeam" :key="member.id"
-              :ref="el => participantCardRefs[member.id] = el" :participant="member"
+              :ref="el => { if (el) participantCardRefs[member.id] = el; else delete participantCardRefs[member.id] }" :participant="member"
               :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
               :is-enemy="false" :show-debug="false" @click="selectCharacter(member.id)"
               @status-tooltip-show="showStatusTooltip" @status-tooltip-hide="hideStatusTooltip" />
@@ -30,7 +30,7 @@
           <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
             <ParticipantCard v-for="member in filterEnemyTeam" :key="member.id"
-              :ref="el => participantCardRefs[member.id] = el" :participant="member"
+              :ref="el => { if (el) participantCardRefs[member.id] = el; else delete participantCardRefs[member.id] }" :participant="member"
               :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
               :is-enemy="true" :show-debug="false" @click="selectCharacter(member.id)"
               @status-tooltip-show="showStatusTooltip" @status-tooltip-hide="hideStatusTooltip" />

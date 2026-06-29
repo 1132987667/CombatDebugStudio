@@ -140,19 +140,20 @@ const handleClear = () => {
   gap: 8px;
   margin-bottom: 16px;
   padding: 12px;
-  background: #f5f7fa;
+  background: #1a1a2e;
+  border: 1px solid #0f3460;
   border-radius: 6px;
 }
 
 .selected-info .label {
   font-size: 13px;
-  color: #909399;
+  color: #8ba4c7;
 }
 
 .selected-info .value {
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: #4fc3f7;
 }
 
 .status-section {
@@ -169,21 +170,22 @@ const handleClear = () => {
 .section-title {
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: #eee;
 }
 
 .status-count {
   font-size: 12px;
-  color: #909399;
-  background: #ebeef5;
+  color: #8ba4c7;
+  background: #1a1a2e;
   padding: 2px 8px;
   border-radius: 10px;
+  border: 1px solid #0f3460;
 }
 
 .status-list {
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #ebeef5;
+  border: 1px solid #0f3460;
   border-radius: 6px;
   padding: 8px;
 }
@@ -203,16 +205,16 @@ const handleClear = () => {
 }
 
 .status-item:hover {
-  background: #f5f7fa;
+  background: #1a1a2e;
 }
 
 .status-item.active {
-  background: #ecf5ff;
-  border-left: 3px solid #409eff;
+  background: #16213e;
+  border-left: 3px solid #4fc3f7;
 }
 
 .status-item.disabled {
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .status-label {
@@ -232,10 +234,11 @@ const handleClear = () => {
 .status-name {
   font-size: 14px;
   font-weight: 500;
+  color: #eee;
 }
 
 .status-name.positive {
-  color: #67c23a;
+  color: #4caf50;
 }
 
 .status-name.negative {
@@ -244,8 +247,8 @@ const handleClear = () => {
 
 .status-duration {
   font-size: 12px;
-  color: #909399;
-  background: #f4f4f5;
+  color: #8ba4c7;
+  background: #0f3460;
   padding: 2px 6px;
   border-radius: 4px;
   white-space: nowrap;
@@ -253,7 +256,7 @@ const handleClear = () => {
 
 .status-effect {
   font-size: 12px;
-  color: #606266;
+  color: #6b7280;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -263,7 +266,7 @@ const handleClear = () => {
 .empty-tip {
   padding: 30px 20px;
   text-align: center;
-  color: #909399;
+  color: #6b7280;
   font-size: 13px;
 }
 
@@ -272,14 +275,14 @@ const handleClear = () => {
   gap: 12px;
   justify-content: flex-end;
   padding-top: 16px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid #0f3460;
 }
 
 .btn-small {
   padding: 8px 20px;
-  border: 1px solid #409eff;
-  background: white;
-  color: #409eff;
+  border: 1px solid #1a4a7a;
+  background: #0f3460;
+  color: #4fc3f7;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
@@ -287,13 +290,11 @@ const handleClear = () => {
 }
 
 .btn-small:hover:not(:disabled) {
-  background: #409eff;
-  color: white;
+  background: #1a4a7a;
 }
 
 .btn-small:disabled {
-  border-color: #dcdfe6;
-  color: #c0c4cc;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 </style>

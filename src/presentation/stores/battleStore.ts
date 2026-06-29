@@ -10,7 +10,7 @@ import type {
   LogSegment,
   LogFilters,
 } from '@/shared/types/battle-log'
-import { battleActionToLogEntry, LogType } from '@/shared/types/battle-log'
+import { battleActionToLogEntry, LogType, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import type { BattleManager } from '@/domain/battle/BattleManager'
 import type { BattleAction, BattleState } from '@/domain/battle/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
@@ -158,14 +158,7 @@ export const useBattleStore = defineStore('battle', () => {
     isBattleActive.value = battleState?.battleState === 'ACTIVE' || false
   }
 
-  /**
-   * 初始化事件订阅（在 Store 创建时自动调用）
-   * @description 注册队伍数据变更监听器，确保 Store 状态与 BattleManager 保持同步
-   */
-  const setupSubscriptions = () => {
-    battleManager.value.on(BattleEventCodes.TEAM_DATA_CHANGED, syncTeams)
-  }
-  setupSubscriptions()
+  // 所有事件订阅在 events Map 创建后统一注册（见下方 🔹 3. 事件订阅管理器）
 
   // 🔹 4. 事件处理器（仅负责同步业务数据到响应式状态）
 
@@ -186,10 +179,12 @@ export const useBattleStore = defineStore('battle', () => {
       battleManager.value.syncBattleState()
     }
     if (data?.winner) {
-      battleLogManager.addBattleLog(
-        battleManager.value?.getTurn() ?? 1,
-        `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`,
-      )
+      battleLogManager.addBattleLog({
+        turn: battleManager.value?.getTurn() ?? 1,
+        message: `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`,
+        segments: [{ text: `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}` }],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+      })
     }
   }
 
@@ -233,8 +228,14 @@ export const useBattleStore = defineStore('battle', () => {
   events.set(BattleEventCodes.MISS_ANIMATION, handleMissAnimationEvent)
   events.set(BattleEventCodes.BUFF_EFFECT, handleBuffEffectEvent)
   events.set(BattleEventCodes.SKILL_EFFECT, handleSkillEffectEvent)
+  events.set(BattleEventCodes.TEAM_DATA_CHANGED, syncTeams)
   /** 需要清理的事件码列表（用于组件卸载时移除监听器） */
   const cleanupEvents = [...events.keys()]
+
+  // 注册所有事件处理器到战斗管理器（桥上 eventBus）
+  for (const [eventCode, handler] of events) {
+    battleManager.value.on(eventCode, handler as any)
+  }
 
   // 🔹 5. 核心 Actions（纯函数，仅更新本地状态或调用 Manager）
 

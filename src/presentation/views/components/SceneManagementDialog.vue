@@ -125,7 +125,7 @@ const handleDelete = () => {
 .section-title {
   font-size: 14px;
   font-weight: 600;
-  color: #303133;
+  color: #eee;
 }
 
 .scene-actions {
@@ -136,44 +136,22 @@ const handleDelete = () => {
 
 .scene-input {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.scene-input:focus {
-  border-color: #409eff;
 }
 
 .scene-select {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  font-size: 14px;
-  background: white;
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.scene-select:focus {
-  border-color: #409eff;
 }
 
 .scene-select:disabled {
-  background-color: #f5f7fa;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .btn-small {
   padding: 8px 16px;
-  border: 1px solid #409eff;
-  background: white;
-  color: #409eff;
+  border: 1px solid #1a4a7a;
+  background: #0f3460;
+  color: #4fc3f7;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
@@ -182,33 +160,32 @@ const handleDelete = () => {
 }
 
 .btn-small:hover:not(:disabled) {
-  background: #409eff;
-  color: white;
+  background: #1a4a7a;
 }
 
 .btn-small:disabled {
-  border-color: #dcdfe6;
-  color: #c0c4cc;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .btn-danger {
-  border-color: #f56c6c;
+  border-color: #e74c3c;
   color: #f56c6c;
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #f56c6c;
-  color: white;
+  background: #5a1a1a;
+  border-color: #f56c6c;
+  color: #f56c6c;
 }
 
 .empty-tip {
   padding: 20px;
   text-align: center;
-  color: #909399;
+  color: #6b7280;
   font-size: 13px;
-  background: #fafafa;
+  background: #0a0a14;
   border-radius: 4px;
-  border: 1px dashed #e4e7ed;
+  border: 1px dashed #1a4a7a;
 }
 </style>

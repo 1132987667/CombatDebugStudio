@@ -72,6 +72,7 @@
 import { computed } from 'vue'
 import { AttributeCodeNames } from '@/domain/attribute/types'
 import type { CompendiumBuff } from '@/presentation/composables/useCompendium'
+import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
 
 
 interface Props {
@@ -156,7 +157,7 @@ const getPossibleSources = (buffId: string): string[] => {
     'buff_iron_armor': ['技能: 铁甲护体'],
     'buff_poison': ['技能: 毒液喷射', '敌人: 食人花妖'],
     'buff_shield': ['技能: 护盾术'],
-    'buff_stun': ['技能: 眩晕打击']
+    [STUN_BUFF_ID]: ['技能: 眩晕打击']
   }
 
   return sources[buffId] || []

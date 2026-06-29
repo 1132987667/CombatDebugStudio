@@ -13,6 +13,7 @@ import {
   ActionTypes,
 } from '@/domain/battle/types'
 import { EFFECT_TYPES } from '@/shared/types/effect'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -179,11 +180,23 @@ export class BaseBattleAI implements BattleAI {
     // 判断是否应该使用技能：有可用技能且（能量充足或有治疗需求）
     const shouldUseSkill = this.shouldUseSkill(participant)
 
+    // 计算最高威胁敌人（以攻击力衡量）
+    const highestThreatEnemy = enemies.reduce<{
+      enemy: BattleEntity | null
+      threat: number
+    }>(
+      (max, enemy) => {
+        const atk = enemy.getAttribute(ATTRIBUTE_CODE.attack)
+        return atk > max.threat ? { enemy, threat: atk } : max
+      },
+      { enemy: null, threat: 0 },
+    )
+
     return {
       allies,
       enemies,
       teamHealthPercent,
-      highestThreatEnemy: { enemy: null, threat: 0 },
+      highestThreatEnemy,
       needsHealing: teamHealthPercent < 0.5,
       shouldUseSkill,
     }

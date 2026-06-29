@@ -124,7 +124,7 @@ const updateCustomSpeed = () => {
 }
 
 .rule-item:hover {
-  background-color: #f5f7fa;
+  background-color: #1a1a2e;
 }
 
 .rule-item input[type="checkbox"] {
@@ -135,7 +135,7 @@ const updateCustomSpeed = () => {
 
 .rule-item span {
   font-size: 14px;
-  color: #303133;
+  color: #eee;
 }
 
 .speed-selector {
@@ -143,48 +143,38 @@ const updateCustomSpeed = () => {
   align-items: center;
   gap: 10px;
   padding-top: 16px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid #0f3460;
 }
 
 .speed-selector span {
   font-size: 14px;
-  color: #606266;
+  color: #8ba4c7;
   font-weight: 500;
 }
 
 .speed-btn {
   padding: 6px 12px;
-  border: 1px solid #dcdfe6;
-  background: white;
+  border: 1px solid #1a4a7a;
+  background: #0f3460;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-  color: #606266;
+  color: #4fc3f7;
   transition: all 0.2s;
 }
 
 .speed-btn:hover {
-  border-color: #409eff;
-  color: #409eff;
+  background: #1a4a7a;
+  color: #4fc3f7;
 }
 
 .speed-btn.active {
-  background: #409eff;
-  border-color: #409eff;
-  color: white;
+  background: #4fc3f7;
+  border-color: #4fc3f7;
+  color: #0f0f1a;
 }
 
 .custom-speed {
   width: 80px;
-  padding: 6px 10px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.custom-speed:focus {
-  border-color: #409eff;
 }
 </style>

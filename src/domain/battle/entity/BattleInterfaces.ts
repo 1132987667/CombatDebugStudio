@@ -165,6 +165,12 @@ export interface IBattleSystem {
    * @returns BattleCommand[] 命令序列
    */
   generateCommandsForTurn(): import('@/shared/types/battle-commands').BattleCommand[]
+
+  /**
+   * 推进到下一回合（递增回合计数器）
+   * ponytail: 从 generateCommandsForTurn 中抽取，消除命令生成器的副作用
+   */
+  advanceRound(): void
 }
 
 /**

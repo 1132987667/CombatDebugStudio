@@ -13,6 +13,7 @@ import type { PassiveSkillManager, PassiveSkillTrigger } from '@/domain/skill/Pa
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import { EFFECT_TYPES } from '@/shared/types/effect'
+import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
 import { newLogSegment, LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -36,7 +37,7 @@ export class BattleExecutor {
    * 检查参与者是否有控制类Buff
    */
   isParticipantControlled(participant: BattleEntity): boolean {
-    if (participant.hasBuff('buff_stun')) return true
+    if (participant.hasBuff(STUN_BUFF_ID)) return true
     if (participant.hasBuff('buff_silence')) return true
     return false
   }
@@ -60,12 +61,12 @@ export class BattleExecutor {
         }],
       })
       this.recordBattleAction(battle, action)
-      battleLogManager.addBattleLog(
-        battle.currentRound || 1,
-        `${participant.name} 被控制，无法行动`,
-        [{ text: `${participant.name} 被控制，无法行动` }],
-        BATTLE_LOG_CATEGORIES.STATUS,
-      )
+      battleLogManager.addBattleLog({
+        turn: battle.currentRound || 1,
+        message: `${participant.name} 被控制，无法行动`,
+        segments: [{ text: `${participant.name} 被控制，无法行动` }],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+      })
       battleLogManager.addDebugLog(`角色[${participant.name}]被控制，无法行动`)
       return
     }
@@ -181,12 +182,12 @@ export class BattleExecutor {
       action.effects = allEffects
 
       const targetNames = targets.map((t) => t.name).join(', ')
-      battleLogManager.addBattleLog(
-        battle.currentTurn,
-        `技能执行成功: ${skill.id}`,
-        [{ text: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}` }],
-        BATTLE_LOG_CATEGORIES.ACTION,
-      )
+      battleLogManager.addBattleLog({
+        turn: battle.currentTurn,
+        message: `技能执行成功: ${skill.id}`,
+        segments: [{ text: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}` }],
+        category: BATTLE_LOG_CATEGORIES.ACTION,
+      })
     } catch (error) {
       battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error)
       action.type = 'attack'
@@ -393,7 +394,7 @@ export class BattleExecutor {
     await this.animationManager.triggerMissAnimationAndWait({ targetId: target.id })
 
     const logParams = this.generateAttackLogParams(source, target, turnNumber, { isMiss: true })
-    battleLogManager.addBattleLog(logParams.turn, logParams.message, logParams.segments, logParams.category)
+    battleLogManager.addBattleLog({ turn: logParams.turn, message: logParams.message, segments: logParams.segments, category: logParams.category })
     battleLogManager.addDebugLog(`普通攻击: ${source.name} → ${target.name}，被闪避`)
   }
 
@@ -423,7 +424,7 @@ export class BattleExecutor {
     })
 
     const logParams = this.generateAttackLogParams(source, target, turnNumber, { damage, isCritical })
-    battleLogManager.addBattleLog(logParams.turn, logParams.message, logParams.segments, logParams.category)
+    battleLogManager.addBattleLog({ turn: logParams.turn, message: logParams.message, segments: logParams.segments, category: logParams.category })
     battleLogManager.addDebugLog(`普通攻击: ${source.name} → ${target.name}`)
   }
 
@@ -486,13 +487,7 @@ export class BattleExecutor {
    * 获取技能能量消耗
    */
   getSkillEnergyCost(skillId: string): number {
-    const skillConfig = this.skillManager.getSkillConfig(skillId)
-    if (skillConfig && skillConfig.energyCost !== undefined) {
-      return skillConfig.energyCost
-    }
-    if (skillId.includes('ultimate') || skillId.includes('大招')) return 150
-    if (skillId.includes('skill') || skillId.includes('技能')) return 50
-    return 0
+    return this.skillManager.getSkillConfig(skillId)?.energyCost ?? 0
   }
 
   /**

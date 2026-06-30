@@ -116,6 +116,7 @@ export class BattleLifecycleManager {
         }
       } catch (error) {
         this.stopAutoBattle()
+        console.error('自动战斗循环出错:', error)
       }
     }
 

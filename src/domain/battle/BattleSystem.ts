@@ -16,11 +16,9 @@ import type {
   ParticipantSide,
 } from '@/domain/battle/types'
 import type { BattleCommand } from '@/shared/types/battle-commands'
-import { BattleActionHelper } from '@/domain/battle/types'
 import { createDefaultBattleData, convertToBattleState, checkBattleEndCondition as checkEnd } from '@/domain/battle/aggregate/BattleState'
 import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
 import { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
-import type { SkillConfig } from '@/domain/skill/types'
 import type { TriggerPhase, TriggerEventContext } from '@/domain/buff/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { AISystem } from '@/domain/battle/ai/AISystem'
@@ -55,6 +53,9 @@ import {
   RoundStatus,
 } from '@/domain/battle/types'
 import {
+  ATTRIBUTE_CODE,
+} from '@/domain/attribute/types'
+import {
   newLogSegment,
   LogLevel,
   BATTLE_LOG_CATEGORIES,
@@ -65,7 +66,7 @@ import { RAFTimer } from '@/shared/utils/RAF'
 import { Counter } from '@/shared/utils/Counter'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { ref, Reactive, reactive } from 'vue'
-
+/**
 /**
  * 战斗系统核心管理类
  *
@@ -470,6 +471,7 @@ export class BattleSystem implements IBattleSystem {
       aliveParticipants.forEach((participant) => {
         participant.gainEnergy(combatRules.energyGainPerTurn)
       })
+      battleLogManager.addDebugLog('角色能量增加: ' + combatRules.energyGainPerTurn)
 
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
@@ -494,6 +496,7 @@ export class BattleSystem implements IBattleSystem {
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0])
 
       for (let i = 0; i < currentTurnOrder.length; i++) {
+        console.log('当前回合 顺序', i, currentTurnOrder)
         await this.animationManager.waitForAnimation()
         
         // 【竞态条件防护】检查战斗状态是否仍然有效
@@ -532,6 +535,11 @@ export class BattleSystem implements IBattleSystem {
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
         }
+
+        // 打印当前所有参战角色气血
+        battle.participants.forEach((participant) => {
+          console.log(`角色 ${participant.name} 当前气血: ${participant.getAttribute(ATTRIBUTE_CODE.currentHealth)}/${participant.getAttribute(ATTRIBUTE_CODE.maxHealth)}`)
+        })
       }
 
       await this.animationManager.waitForAnimation()
@@ -569,6 +577,7 @@ export class BattleSystem implements IBattleSystem {
       battle.currentRound++
     } catch (error) {
       battleLogManager.addDebugLog('处理回合时出错:', LogLevel.ERROR, error)
+      console.error('处理回合时出错:', error)
     } finally {
       this.animationManager.cleanupAnimationState()
     }

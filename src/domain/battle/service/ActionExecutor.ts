@@ -436,15 +436,26 @@ export class ActionExecutor {
         Array.from(battle.participants.values()),
       )
 
-      action.damage = skillAction.damage
-      action.heal = skillAction.heal
-      action.effects.push(...skillAction.effects)
+      if (!skillAction) {
+        battleLogManager.addDebugLog(`技能执行返回空: ${action.skillId}，跳过`)
+        action.type = ActionTypes.ATTACK
+        action.damage = Math.floor(Math.random() * 20) + 10
+        action.effects = [{
+          type: EFFECT_TYPES.DAMAGE,
+          value: action.damage,
+          description: `${source.name} 普通攻击 (技能返回空)`,
+        }]
+      } else {
+        action.damage = skillAction.damage
+        action.heal = skillAction.heal
+        action.effects.push(...skillAction.effects)
 
-      if (record) {
-        this.finalizeRecord(record, action)
+        if (record) {
+          this.finalizeRecord(record, action)
+        }
+
+        battleLogManager.addDebugLog(`技能执行成功: ${action.skillId}`)
       }
-
-      battleLogManager.addDebugLog(`技能执行成功: ${action.skillId}`)
     } catch (error) {
       battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error)
       action.type = ActionTypes.ATTACK

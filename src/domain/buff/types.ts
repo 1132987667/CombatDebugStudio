@@ -360,7 +360,7 @@ export interface TriggerEventContext {
   /** 触发事件的阶段 */
   phase: TriggerPhase
   /** 事件发生时的战斗实例ID */
-  battleId: string
+  battleId?: string
   /** 事件相关的源参与者ID（如攻击者） */
   sourceId?: string
   /** 事件相关的目标参与者ID（如受击者） */

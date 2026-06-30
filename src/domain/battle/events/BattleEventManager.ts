@@ -197,6 +197,7 @@ export class BattleEventManager {
       }
     } catch (error) {
       this.getBattleStore().addErrorLog(`澶勭悊鎴樻枟鏃ュ織浜嬩欢鏃跺嚭閿? ${error}`)
+      console.error('处理战斗日志时出错:', error)
     }
   }
 
@@ -220,6 +221,7 @@ export class BattleEventManager {
       }
     } catch (error) {
       this.getBattleStore().addErrorLog(`Error handling battle end: ${error}`)
+      console.error('处理战斗结束时出错:', error)
     }
   }
 
@@ -246,6 +248,7 @@ export class BattleEventManager {
       }
     } catch (error) {
       this.getBattleStore().addErrorLog(`Error handling turn start: ${error}`)
+      console.error('处理回合开始时出错:', error)
     }
   }
 
@@ -267,6 +270,19 @@ export class BattleEventManager {
       }
     } catch (error) {
       this.getBattleStore().addErrorLog(`Error handling turn end: ${error}`)
+      console.error('处理回合结束时出错:', error)
+    }
+  }
+
+  /**
+   * 处理Buff添加事件
+   */
+  private handleBuffAddEvent(data: any) {
+    try {
+      this.getBattleStore().addBuffLog(data)
+    } catch (error) {
+      this.getBattleStore().addErrorLog(`Error handling buff add: ${error}`)
+      console.error('处理Buff添加时出错:', error)
     }
   }
 }

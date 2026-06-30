@@ -269,6 +269,7 @@ export class BattleParticipantImpl implements BattleEntity {
   set currentHealth(value: number) {
     const maxHp = this.getAttribute(ATTRIBUTE_CODE.maxHealth)
     this.stats.setAttributeValue(ATTRIBUTE_CODE.currentHealth, Math.max(0, Math.min(value, maxHp)))
+    this._statsVersion++
   }
 
   /**
@@ -289,6 +290,7 @@ export class BattleParticipantImpl implements BattleEntity {
     if (currentHp > maxHp) {
       this.stats.setAttributeValue(ATTRIBUTE_CODE.currentHealth, maxHp)
     }
+    this._statsVersion++
   }
 
   /**
@@ -304,6 +306,7 @@ export class BattleParticipantImpl implements BattleEntity {
   set currentEnergy(value: number) {
     const maxEnergy = this.getAttribute(ATTRIBUTE_CODE.maxEnergy)
     this.stats.setAttributeValue(ATTRIBUTE_CODE.currentEnergy, Math.max(0, Math.min(value, maxEnergy)))
+    this._statsVersion++
   }
 
   /**
@@ -587,7 +590,6 @@ export class BattleParticipantImpl implements BattleEntity {
     const damage = Math.max(0, amount)
     this.currentHealth = Math.max(0, this.currentHealth - damage)
     this.gainEnergy(15)
-    this._statsVersion++
 
     return damage
   }
@@ -604,7 +606,6 @@ export class BattleParticipantImpl implements BattleEntity {
       this.currentHealth + healAmount,
       this.maxHealth
     )
-    this._statsVersion++
     return this.currentHealth - originalHealth
   }
 
@@ -617,7 +618,6 @@ export class BattleParticipantImpl implements BattleEntity {
     const previousEnergy = this.currentEnergy
     this.currentEnergy = Math.min(this.currentEnergy + amount, this.maxEnergy)
     const actualGain = this.currentEnergy - previousEnergy
-    this._statsVersion++
 
     // 触发能量获取事件
     if (actualGain > 0) {
@@ -637,7 +637,6 @@ export class BattleParticipantImpl implements BattleEntity {
   spendEnergy(amount: number): boolean {
     if (this.currentEnergy >= amount) {
       this.currentEnergy -= amount
-      this._statsVersion++
       return true
     }
     return false

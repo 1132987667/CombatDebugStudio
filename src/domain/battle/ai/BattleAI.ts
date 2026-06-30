@@ -139,6 +139,7 @@ export class BaseBattleAI implements BattleAI {
           try {
             return this.createSkillStep(battleState, participant, skillId)
           } catch (skillError) {
+            console.error('技能执行出错:', skillError)
             battleLogManager.addDebugLog('Skill execution error')
             return this.selectAttack(participant)
           }
@@ -152,6 +153,7 @@ export class BaseBattleAI implements BattleAI {
       try {
         return this.selectAttack(participant)
       } catch (attackError) {
+        console.error('攻击执行出错:', attackError)
         battleLogManager.addDebugLog('攻击执行出错')
       }
     }

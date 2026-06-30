@@ -15,7 +15,6 @@ import type {
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
 import { Counter } from '@/shared/utils/Counter'
-import { Ref } from 'vue'
 import { BattleEventCodes } from './battle-events'
 import { SkillType } from '@/domain/skill/types'
 const counter = new Counter()
@@ -213,7 +212,7 @@ export interface BattleEntity {
   needsHealing(): boolean
 
   getSkillList(): SkillConfig[]
-  getSkillIds(filter?: 'active' | SkillType.ALL | SkillType.PASSIVE): string[]
+  getSkillIds(filter?: SkillType): string[]
   hasSkill(skillId: string): boolean
 }
 

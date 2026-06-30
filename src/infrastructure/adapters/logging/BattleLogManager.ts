@@ -318,6 +318,8 @@ export class BattleLogManager {
 
     const logEntry: LogEntry = {
       index: this.indexCounter.next(),
+      message,
+      level,
       type: LogType.SYSTEM,
     }
     if (segments.length > 0) {

@@ -475,7 +475,8 @@ export class BattleRecorder {
       const { checksum, ...dataWithoutChecksum } = recording
       const calculatedChecksum = calculateChecksum(dataWithoutChecksum)
       return calculatedChecksum === checksum
-    } catch {
+    } catch (error) {
+      console.error('验证战斗记录时出错:', error)
       return false
     }
   }

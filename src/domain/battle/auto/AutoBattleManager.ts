@@ -62,7 +62,8 @@ export class AutoBattleManager {
   async startAutoBattle(battleId: string): Promise<boolean> {
     console.log('startAutoBattle', battleId)
     if (!battleId) {
-      this.battleLogManager.addSystemLog('请先创建战斗', {
+      this.battleLogManager.addSystemLog({
+        message: '请先创建战斗',
         level: LogLevel.WARN,
       })
       return false
@@ -73,7 +74,7 @@ export class AutoBattleManager {
     try {
       // 启动自动战斗
       this.battleSystem.startBattle()
-      this.battleLogManager.addSystemLog('开始自动战斗')
+      this.battleLogManager.addSystemLog({ message: '开始自动战斗' })
       // 同步战斗状态
       this.battleStateManager.syncBattleState()
       return true
@@ -93,7 +94,7 @@ export class AutoBattleManager {
   stopAutoBattle(): boolean {
     try {
       this.battleSystem.stopAutoBattle()
-      this.battleLogManager.addSystemLog('停止自动战斗')
+      this.battleLogManager.addSystemLog({ message: '停止自动战斗' })
       this.battleStateManager.syncBattleState()
       return true
     } catch (error) {
@@ -111,7 +112,7 @@ export class AutoBattleManager {
    */
   async executeSingleTurn() {
     if (!this.battleId) {
-      this.battleLogManager.addSystemLog('请先开始战斗')
+      this.battleLogManager.addSystemLog({ message: '请先开始战斗', level: LogLevel.WARN })
       return
     }
 

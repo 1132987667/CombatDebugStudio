@@ -13,7 +13,8 @@ import type { ModifierTemplate } from '@/domain/attribute/modifier-template'
  * 技能类型枚举
  */
 export const SkillType = {
-  ALL: 'all',
+  ALL: 'all', // passive + active -> 主动技能 + 被动技能
+  ACTIVE: 'active', // small + ultimate -> 小技能 + 大招
   PASSIVE: 'passive',
   SMALL: 'small',
   ULTIMATE: 'ultimate',

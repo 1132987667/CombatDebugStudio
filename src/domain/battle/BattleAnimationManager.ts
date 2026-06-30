@@ -92,7 +92,7 @@ export class BattleAnimationManager {
         if (resolved) return
         resolved = true
         clearTimeout(timeoutId)
-        this.rafTimer.clearTimeout(timerId)
+        this.rafTimer.clear(timerId)
         if (typeof animation.resolve === 'function') {
           animation.resolve()
         }

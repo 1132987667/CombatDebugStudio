@@ -6,10 +6,11 @@
 
 import type { BattleAction, BattleData, BattleEntity } from '@/domain/battle/types'
 import { BattleActionHelper, BATTLE_CONSTANTS, PARTICIPANT_SIDE } from '@/domain/battle/types'
-import type { SkillConfig, ExtendedSkillStep } from '@/domain/skill/types'
+import { type SkillConfig, type ExtendedSkillStep, SkillType } from '@/domain/skill/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import type { DamageCalculator } from '@/domain/skill/DamageCalculator'
-import type { PassiveSkillManager, PassiveSkillTrigger } from '@/domain/skill/PassiveSkillManager'
+import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
+import { PassiveSkillTrigger } from '@/domain/skill/PassiveSkillManager'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import { EFFECT_TYPES } from '@/shared/types/effect'
@@ -71,10 +72,11 @@ export class BattleExecutor {
       return
     }
 
-    const activeSkillIds = participant.getSkillIds('active')
+    const currentEnergy = participant.getAttribute(ATTRIBUTE_CODE.currentEnergy)
+    const activeSkillIds = participant.getSkillIds(SkillType.ACTIVE)
     const availableSkills = activeSkillIds.filter((skillId) => {
       const energyCost = this.getSkillEnergyCost(skillId)
-      if (participant.currentEnergy < energyCost) return false
+      if (currentEnergy < energyCost) return false
       if (
         'isSkillAvailable' in participant &&
         typeof participant.isSkillAvailable === 'function'
@@ -86,6 +88,7 @@ export class BattleExecutor {
 
     const aiInstance = battle.aiInstances?.get(participant.id)
     if (aiInstance) {
+      console.log('AI决策前', this.convertToBattleState(battle))
       const action = aiInstance.makeDecision(
         this.convertToBattleState(battle),
         participant,
@@ -139,9 +142,6 @@ export class BattleExecutor {
       }
     }
 
-    const energyCost = skill.energyCost ?? 0
-    source.spendEnergy(energyCost)
-
     const action = BattleActionHelper.createSkill({
       sourceId: source.id,
       targetId: '',
@@ -172,6 +172,10 @@ export class BattleExecutor {
           undefined,
           Array.from(battle.participants.values()),
         )
+        if (!skillAction) {
+          battleLogManager.addDebugLog(`技能执行返回空: ${skill.id}，跳过目标 ${target.id}`)
+          continue
+        }
         totalDamage += skillAction.damage
         totalHeal += skillAction.heal
         allEffects.push(...skillAction.effects)
@@ -297,11 +301,7 @@ export class BattleExecutor {
       type: 'DAMAGE',
       id: 'normal_attack',
       targetId,
-      calculation: {
-        baseValue: 0,
-        extraValues: [{ attribute: 'ATK', ratio: 1.0 }],
-      },
-      attackType: 'physical',
+      attackType: 'normal',
       targetModifiers: { DEF: 1 },
       criticalConfig: {
         rate: (source.getAttribute('critRate') || 10) / 100,
@@ -367,12 +367,12 @@ export class BattleExecutor {
    */
   applyDamageToTarget(source: BattleEntity, target: BattleEntity, damage: number): void {
     target.takeDamage(damage)
-    this.passiveSkillManager.triggerPassiveSkills(
-      'ON_HIT' as any, target, { sourceId: source.id, damage },
+    this.passiveSkillManager.triggerPassives(
+      PassiveSkillTrigger.ON_HIT, target, undefined, { sourceId: source.id, damage },
     )
     if (!target.isAlive()) {
-      this.passiveSkillManager.triggerPassiveSkills(
-        'ON_DEATH' as any, target, { sourceId: source.id, cause: 'damage' },
+      this.passiveSkillManager.triggerPassives(
+        PassiveSkillTrigger.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
       )
     }
   }
@@ -445,8 +445,8 @@ export class BattleExecutor {
 
     const roundNumber = battle.currentRound || 1
 
-    this.passiveSkillManager.triggerPassiveSkills(
-      'BEFORE_ATTACK' as any, source, { targetId, battle },
+    this.passiveSkillManager.triggerPassives(
+      PassiveSkillTrigger.BEFORE_ATTACK, source, undefined, { targetId, battle },
     )
 
     const attackStep = this.buildNormalAttackStep(source, targetId)
@@ -460,8 +460,8 @@ export class BattleExecutor {
       await this.handleHitAttack(action, source, target, damageResult, roundNumber)
     }
 
-    this.passiveSkillManager.triggerPassiveSkills(
-      'AFTER_ATTACK' as any, source, {
+    this.passiveSkillManager.triggerPassives(
+      PassiveSkillTrigger.AFTER_ATTACK, source, undefined, {
         targetId, damage: action.damage, isCritical: damageResult.isCritical,
       },
     )
@@ -568,33 +568,44 @@ export class BattleExecutor {
           action.skillId, source, target, undefined,
           Array.from(battle.participants.values()),
         )
-        action.damage = skillAction.damage
-        action.heal = skillAction.heal
-        action.effects = skillAction.effects
+        if (!skillAction) {
+          battleLogManager.addDebugLog(`技能执行返回空: ${action.skillId}，回退为普通攻击`)
+          action.type = 'attack'
+          action.damage = Math.floor(Math.random() * 20) + 10
+          action.effects = [{
+            type: EFFECT_TYPES.DAMAGE,
+            value: action.damage,
+            description: `${source.name} 普通攻击 (技能返回空)`,
+          }]
+        } else {
+          action.damage = skillAction.damage
+          action.heal = skillAction.heal
+          action.effects = skillAction.effects
 
-        const hasMissEffect = skillAction.effects.some(
-          (effect) => effect.type === EFFECT_TYPES.MISS,
-        )
-        if (hasMissEffect) {
-          await this.animationManager.triggerMissAnimationAndWait({ targetId: target.id })
-        }
-
-        for (const effect of skillAction.effects) {
-          if (effect.type === EFFECT_TYPES.BUFF || effect.type === EFFECT_TYPES.DEBUFF) {
-            let buffTarget = target
-            if (effect.targetId === source.id) buffTarget = source
-            await this.animationManager.triggerBuffEffectAndWait({
-              targetId: buffTarget.id,
-              buffName: effect.buffId || 'unknown',
-              isPositive: effect.type === EFFECT_TYPES.BUFF,
-            })
+          const hasMissEffect = skillAction.effects.some(
+            (effect) => effect.type === EFFECT_TYPES.MISS,
+          )
+          if (hasMissEffect) {
+            await this.animationManager.triggerMissAnimationAndWait({ targetId: target.id })
           }
-        }
 
-        await this.animationManager.triggerSkillEffectAnimation({
-          sourceId: source.id, targetId: target.id, skillName: action.skillId,
-          effectType: action.type, damageType: 'skill',
-        })
+          for (const effect of skillAction.effects) {
+            if (effect.type === EFFECT_TYPES.BUFF || effect.type === EFFECT_TYPES.DEBUFF) {
+              let buffTarget = target
+              if (effect.targetId === source.id) buffTarget = source
+              await this.animationManager.triggerBuffEffectAndWait({
+                targetId: buffTarget.id,
+                buffName: effect.buffId || 'unknown',
+                isPositive: effect.type === EFFECT_TYPES.BUFF,
+              })
+            }
+          }
+
+          await this.animationManager.triggerSkillEffectAnimation({
+            sourceId: source.id, targetId: target.id, skillName: action.skillId,
+            effectType: action.type, damageType: 'skill',
+          })
+        }
       } catch (error) {
         battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error)
         action.type = 'attack'
@@ -611,12 +622,12 @@ export class BattleExecutor {
       const actualDamage = target.takeDamage(action.damage)
       action.damage = actualDamage
 
-      this.passiveSkillManager.triggerPassiveSkills(
-        'ON_HIT' as any, target, { sourceId: source.id, damage: actualDamage },
+      this.passiveSkillManager.triggerPassives(
+        PassiveSkillTrigger.ON_HIT, target, undefined, { sourceId: source.id, damage: actualDamage },
       )
       if (!target.isAlive()) {
-        this.passiveSkillManager.triggerPassiveSkills(
-          'ON_DEATH' as any, target, { sourceId: source.id, cause: 'damage' },
+        this.passiveSkillManager.triggerPassives(
+          PassiveSkillTrigger.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
         )
       }
 

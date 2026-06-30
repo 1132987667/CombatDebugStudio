@@ -588,7 +588,7 @@ export class BattleManager {
     this.battleStateManager.setBattleId(battleState.battleId)
     this.autoBattleManager.setBattleId(battleState.battleId)
     battleLogManager.clearLogs()
-    battleLogManager.addSystemLog('战斗已创建')
+    battleLogManager.addSystemLog({ message: '战斗已创建' })
     this.syncBattleState()
 
     // 自动开始战斗

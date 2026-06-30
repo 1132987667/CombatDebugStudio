@@ -214,7 +214,7 @@ export const useBattleStore = defineStore('battle', () => {
 
   /** 处理战斗重置事件（记录系统日志） */
   const handleBattleResetEvent = () => {
-    battleLogManager.addSystemLog('战斗重置')
+    battleLogManager.addSystemLog({ message: '战斗重置' })
   }
   // 🔹 3. 事件订阅管理器（防止内存泄漏）
   /** 事件处理器映射表（将事件码与对应的处理函数关联） */

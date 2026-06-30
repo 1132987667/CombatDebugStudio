@@ -10,7 +10,7 @@
  **   每次属性变化递增全局 version，各属性的 cachedVersion 与之比对决定是否需要重算。
  **   彻底移除手动 markDirty/markAllDirty 调用，降低遗漏风险。
  **/
-import { ATTRIBUTE_CODE, type AttributeValue, getAttributeMeta, getAttributeDefaultValue } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, type AttributeValue, getAttributeMeta, getAttributeDefaultValue, normalizeAttributeCode } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 
 export class ParticipantStats {
@@ -53,9 +53,14 @@ export class ParticipantStats {
   }
 
   initAttributes(attributeValues: Partial<Record<ATTRIBUTE_CODE, number>>): void {
+    // ponytail: normalize keys so legacy JSON keys like 'ATK' → 'attack' work
+    const normalized: Partial<Record<ATTRIBUTE_CODE, number>> = {}
+    for (const [key, value] of Object.entries(attributeValues)) {
+      normalized[normalizeAttributeCode(key)] = value as number
+    }
     for (const code of Object.values(ATTRIBUTE_CODE)) {
       const meta = getAttributeMeta(code)
-      const baseValue = attributeValues[code] ?? getAttributeDefaultValue(code)
+      const baseValue = normalized[code] ?? getAttributeDefaultValue(code)
       this.initAttribute(code, baseValue, meta?.isPercentage ?? false)
     }
     // 初始化后使缓存失效，强制第一次读取时重算

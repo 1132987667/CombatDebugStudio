@@ -61,13 +61,16 @@ export class BuffScriptRegistry {
     type: ModifierType
   } {
     const trimmed = value.trim()
-    if (trimmed.startsWith('+') || trimmed.startsWith('-')) {
-      const numValue = parseFloat(trimmed)
-      if (Math.abs(numValue) < 1) return { value: numValue, type: ModifierType.PERCENTAGE }
-      return { value: numValue, type: ModifierType.ADDITIVE }
-    }
-    const numValue = parseFloat(trimmed)
+    // ponytail: detect explicit % suffix first — "+10%" → PERCENTAGE 0.1
+    const isPercent = trimmed.includes('%')
+    const numericStr = trimmed.replace('%', '')
+    const numValue = parseFloat(numericStr)
     if (isNaN(numValue)) return { value: 0, type: ModifierType.ADDITIVE }
+
+    if (isPercent) {
+      return { value: numValue / 100, type: ModifierType.PERCENTAGE }
+    }
+    // backward compatible: decimal like "+0.1" is also PERCENTAGE (10%)
     if (Math.abs(numValue) < 1) return { value: numValue, type: ModifierType.PERCENTAGE }
     return { value: numValue, type: ModifierType.ADDITIVE }
   }

@@ -172,6 +172,8 @@ export class BattleExecutor {
           undefined,
           Array.from(battle.participants.values()),
         )
+        // ponytail: handle null from executeSkill (config not found / insufficient energy / no target)
+        if (!skillAction) continue
         totalDamage += skillAction.damage
         totalHeal += skillAction.heal
         allEffects.push(...skillAction.effects)
@@ -302,11 +304,9 @@ export class BattleExecutor {
         extraValues: [{ attribute: 'ATK', ratio: 1.0 }],
       },
       attackType: 'physical',
-      targetModifiers: { DEF: 1 },
-      criticalConfig: {
-        rate: (source.getAttribute('critRate') || 10) / 100,
-        multiplier: (source.getAttribute('critDamage') || 125) / 100,
-      },
+      // ponytail: targetModifiers intentionally omitted — { DEF: 1 } inverted the
+      // formula (higher DEF = more damage). Defense is already handled by the
+      // separate defense-degression formula in DamageCalculator.
     }
   }
 
@@ -568,9 +568,16 @@ export class BattleExecutor {
           action.skillId, source, target, undefined,
           Array.from(battle.participants.values()),
         )
-        action.damage = skillAction.damage
-        action.heal = skillAction.heal
-        action.effects = skillAction.effects
+        if (!skillAction) {
+          battleLogManager.addDebugLog(`技能执行返回空: ${action.skillId}`)
+          action.damage = 0
+          action.heal = 0
+          action.effects = []
+        } else {
+          action.damage = skillAction.damage
+          action.heal = skillAction.heal
+          action.effects = skillAction.effects
+        }
 
         const hasMissEffect = skillAction.effects.some(
           (effect) => effect.type === EFFECT_TYPES.MISS,
@@ -607,34 +614,38 @@ export class BattleExecutor {
       }
     }
 
-    if (action.damage && action.damage > 0) {
-      const actualDamage = target.takeDamage(action.damage)
-      action.damage = actualDamage
+    // ponytail: skill actions already apply damage+heal inside SkillExecutor,
+    // so only apply raw damage/heal for non-skill actions (e.g. fallback attack).
+    if (action.type !== 'skill') {
+      if (action.damage && action.damage > 0) {
+        const actualDamage = target.takeDamage(action.damage)
+        action.damage = actualDamage
 
-      this.passiveSkillManager.triggerPassiveSkills(
-        'ON_HIT' as any, target, { sourceId: source.id, damage: actualDamage },
-      )
-      if (!target.isAlive()) {
         this.passiveSkillManager.triggerPassiveSkills(
-          'ON_DEATH' as any, target, { sourceId: source.id, cause: 'damage' },
+          'ON_HIT' as any, target, { sourceId: source.id, damage: actualDamage },
         )
+        if (!target.isAlive()) {
+          this.passiveSkillManager.triggerPassiveSkills(
+            'ON_DEATH' as any, target, { sourceId: source.id, cause: 'damage' },
+          )
+        }
+
+        await this.animationManager.triggerDamageAnimationAndWait({
+          targetId: target.id, damage: actualDamage,
+          damageType: 'physical',
+          isCritical: false, isHeal: false,
+        })
       }
 
-      await this.animationManager.triggerDamageAnimationAndWait({
-        targetId: target.id, damage: actualDamage,
-        damageType: action.type === 'skill' ? 'skill' : 'physical',
-        isCritical: false, isHeal: false,
-      })
-    }
+      if (action.heal && action.heal > 0) {
+        const actualHeal = target.heal(action.heal)
+        action.heal = actualHeal
 
-    if (action.heal && action.heal > 0) {
-      const actualHeal = target.heal(action.heal)
-      action.heal = actualHeal
-
-      await this.animationManager.triggerDamageAnimationAndWait({
-        targetId: target.id, damage: actualHeal, damageType: 'heal',
-        isCritical: false, isHeal: true,
-      })
+        await this.animationManager.triggerDamageAnimationAndWait({
+          targetId: target.id, damage: actualHeal, damageType: 'heal',
+          isCritical: false, isHeal: true,
+        })
+      }
     }
 
     this.recordBattleAction(battle, action)

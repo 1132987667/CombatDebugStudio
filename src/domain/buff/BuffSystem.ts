@@ -10,7 +10,7 @@ import type {
   IModifierStack,
   ModifierSourceType,
 } from '@/domain/attribute/types'
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, normalizeAttributeCode } from '@/domain/attribute/types'
 import { StackRule, ControlType } from '@/domain/buff/types'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { BuffContext } from '@/domain/buff/BuffContext'
@@ -184,8 +184,11 @@ export class BuffSystem implements IModifierProvider {
     const modifierStack = this.getModifierStack(characterId)
     for (const [attr, valueStr] of Object.entries(attributes)) {
       const parsed = this.scriptRegistry.parseAttributeValue(valueStr)
-      modifierStack.addModifier(instanceId, attr as ATTRIBUTE_CODE, parsed.value, parsed.type)
-      this.logger.addDebugLog(`应用属性修饰符: ${attr} = ${valueStr} (${parsed.type}) 到角色 ${characterId}`)
+      // ponytail: normalize the attribute key so JSON keys like 'ATK' → 'attack',
+      // matching the keys used by BattleParticipantImpl.syncModifiersFromProvider
+      const normalizedAttr = normalizeAttributeCode(attr)
+      modifierStack.addModifier(instanceId, normalizedAttr, parsed.value, parsed.type)
+      this.logger.addDebugLog(`应用属性修饰符: ${attr} → ${normalizedAttr} = ${valueStr} (${parsed.type}) 到角色 ${characterId}`)
     }
   }
 

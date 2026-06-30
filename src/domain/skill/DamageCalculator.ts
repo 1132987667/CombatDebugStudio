@@ -158,7 +158,7 @@ export class DamageCalculator {
     // 确保非负整数
     damage = Math.max(0, Math.floor(damage))
 
-    const actualDamage = this.applyDamage(target, damage)
+    const actualDamage = damage
 
     // 日志记录
     this.logCalculation('final', actualDamage, `最终伤�? ${actualDamage}`)

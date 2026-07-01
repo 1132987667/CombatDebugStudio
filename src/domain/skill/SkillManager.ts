@@ -131,6 +131,34 @@ export class SkillManager {
       return null
     }
 
+    // ponytail: check stun BEFORE skill execution and energy spend,
+    // so we don't apply damage + consume energy on a stunned target
+    const targetIsStunned = this.isTargetStunned(target)
+    if (targetIsStunned) {
+      battleLogManager.addDebugLog(`Skill ${skillId} cancelled: target ${target.name} is stunned`, LogLevel.WARN)
+      const action: any = {
+        id: `action_${Date.now()}`,
+        sourceId: source.id,
+        skillId,
+        skillName: config.name || skillId,
+        type: 'skill',
+        damage: 0,
+        heal: 0,
+        effects: [{ type: 'status', targetId: target.id, description: `${target.name} is stunned, skill cancelled` }],
+        targetId: target.id,
+        targets: [],
+        timestamp: Date.now(),
+        currentTurn,
+      }
+      return action
+    }
+
+    // spend energy before execution — if this fails we can't recover, but
+    // the pre-check above ensures enough energy was available
+    if (source.spendEnergy && config.energyCost) {
+      source.spendEnergy(config.energyCost)
+    }
+
     const action: any = {
       id: `action_${Date.now()}`,
       sourceId: source.id,
@@ -166,23 +194,6 @@ export class SkillManager {
           record: undefined,
         }
         this.executeStep(ctx)
-      }
-    }
-
-    if (source.spendEnergy && config.energyCost) {
-      source.spendEnergy(config.energyCost)
-    }
-
-    const buffsOnTarget = target.buffs || []
-    const stunPresent = buffsOnTarget.some((b: any) => {
-      if (typeof b === 'string') return b.includes('stun') || b.includes('STUN')
-      return false
-    })
-    if (!stunPresent) {
-      const controlType = this.buffSystem.getHighestPriorityControlEffect(target.id)
-      if (controlType === ControlType.STUN) {
-        action.effects.push({ type: 'status', targetId: target.id, description: `${target.name} is stunned, action skipped` })
-        return null
       }
     }
 
@@ -236,6 +247,17 @@ export class SkillManager {
       ctx.targets[0],
       ctx.record,
     )
+  }
+
+  private isTargetStunned(target: BattleEntity): boolean {
+    const buffsOnTarget = target.buffs || []
+    const stunPresent = buffsOnTarget.some((b: any) => {
+      if (typeof b === 'string') return b.includes('stun') || b.includes('STUN')
+      return false
+    })
+    if (stunPresent) return true
+    const controlType = this.buffSystem.getHighestPriorityControlEffect(target.id)
+    return controlType === ControlType.STUN
   }
 
   registerCalculator(name: string, calculator: any): void {

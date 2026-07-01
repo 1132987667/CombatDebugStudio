@@ -466,27 +466,6 @@ export const LogUtils = {
 }
 
 /**
- * 计算结果接口
- */
-export interface CalculationResult {
-  value: number
-  isCritical: boolean
-  isMissed: boolean
-  isBlocked: boolean
-  finalMultiplier: number
-}
-
-/**
- * 计算上下文接口
- */
-export interface CalculationContext {
-  source: any
-  target: any
-  skill: any
-  modifiers: Record<string, number>
-}
-
-/**
  * 计算日志接口 - 统一所有计算日志定义
  */
 export interface CalculationLog {
@@ -523,11 +502,6 @@ export interface CalculationLog {
   /** 修正系数（兼容原有系统） */
   modifiers?: Record<string, number>
 
-  /** 计算结果（框架系统） */
-  result?: CalculationResult
-
-  /** 计算上下文（框架系统） */
-  context?: CalculationContext
 }
 
 /**

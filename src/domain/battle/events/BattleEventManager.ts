@@ -10,6 +10,7 @@ import type {
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
+import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 
 /**
  * 战斗事件管理器

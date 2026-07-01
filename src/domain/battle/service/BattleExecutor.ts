@@ -5,6 +5,7 @@
  */
 
 import type { BattleAction, BattleData, BattleEntity } from '@/domain/battle/types'
+import { convertToBattleState } from '@/domain/battle/aggregate/BattleState'
 import { BattleActionHelper, BATTLE_CONSTANTS, PARTICIPANT_SIDE } from '@/domain/battle/types'
 import { type SkillConfig, type ExtendedSkillStep, SkillType } from '@/domain/skill/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
@@ -88,9 +89,9 @@ export class BattleExecutor {
 
     const aiInstance = battle.aiInstances?.get(participant.id)
     if (aiInstance) {
-      console.log('AI决策前', this.convertToBattleState(battle))
+      console.log('AI决策前', convertToBattleState(battle))
       const action = aiInstance.makeDecision(
-        this.convertToBattleState(battle),
+        convertToBattleState(battle),
         participant,
       )
       if (action.type === 'skill' && action.skillId) {
@@ -169,8 +170,7 @@ export class BattleExecutor {
           skill.id,
           source,
           target,
-          undefined,
-          Array.from(battle.participants.values()),
+          battle.currentRound || 1,
         )
 // ponytail: handle null from executeSkill (config not found / insufficient energy / no target)
         if (!skillAction) {
@@ -306,7 +306,7 @@ export class BattleExecutor {
         baseValue: 0,
         extraValues: [{ attribute: 'ATK', ratio: 1.0 }],
       },
-      attackType: 'physical',
+      attackType: 'normal',
       criticalConfig: {
         rate: (source.getAttribute('critRate') || 10) / 100,
         multiplier: (source.getAttribute('critDamage') || 125) / 100,
@@ -569,8 +569,7 @@ export class BattleExecutor {
     if (action.type === 'skill' && action.skillId) {
       try {
         const skillAction = this.skillManager.executeSkill(
-          action.skillId, source, target, undefined,
-          Array.from(battle.participants.values()),
+          action.skillId, source, target, action.turn,
         )
         if (!skillAction) {
           battleLogManager.addDebugLog(`技能执行返回空: ${action.skillId}`)
@@ -581,7 +580,6 @@ export class BattleExecutor {
           action.damage = skillAction.damage
           action.heal = skillAction.heal
           action.effects = skillAction.effects
-        }
 
           const hasMissEffect = skillAction.effects.some(
             (effect) => effect.type === EFFECT_TYPES.MISS,
@@ -655,30 +653,12 @@ export class BattleExecutor {
           isCritical: false, isHeal: true,
         })
       }
+      }
+
     }
 
     this.recordBattleAction(battle, action)
     source.afterAction()
     return action
   }
-
-  /**
-   * 转换为战斗状态（用于AI决策）
-   */
-  private convertToBattleState(battle: BattleData): BattleState {
-    return {
-      participants: Array.from(battle.participants.values()),
-      currentRound: battle.currentRound || 1,
-      turnOrder: battle.turnOrder || [],
-      currentTurn: battle.currentTurn || 0,
-    } as any
-  }
-}
-
-// 用于 AI 决策的简化类型
-interface BattleState {
-  participants: BattleEntity[]
-  currentRound: number
-  turnOrder: string[]
-  currentTurn: number
 }

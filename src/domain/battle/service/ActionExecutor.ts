@@ -405,35 +405,14 @@ export class ActionExecutor {
         return
       }
 
-      const skillConfig = battle.skillManager.getSkillConfig(action.skillId)
-      const energyCost = skillConfig?.energyCost ?? 0
-      if (energyCost > 0) {
-        const success = source.spendEnergy(energyCost)
-        if (!success) {
-          action.type = ActionTypes.ATTACK
-          action.damage =
-            Math.floor(
-              Math.random() *
-                (BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MAX -
-                  BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
-            ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
-          action.effects.push({
-            type: EFFECT_TYPES.STATUS,
-            description: `能量不足，改为普通攻击`,
-          })
-          this.processAttack(action, source, target)
-          return
-        }
-      }
-
+      // ponytail: energy check+spend is handled by SkillManager.executeSkill()
       const record = this.createSkillRecord(action, source, target, battle)
 
       const skillAction = battle.skillManager.executeSkill(
         action.skillId,
         source,
         target,
-        record,
-        Array.from(battle.participants.values()),
+        action.turn,
       )
 
       if (!skillAction) {

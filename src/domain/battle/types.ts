@@ -5,7 +5,7 @@
  */
 
 import type { BattleAI } from '@/domain/battle/ai/BattleAI'
-import type { SkillConfig, SkillSet } from '@/domain/skill/types'
+import type { SkillConfig, SkillSet, DamageType } from '@/domain/skill/types'
 import type {
   AttributeValue,
   IModifierProvider,
@@ -15,7 +15,7 @@ import type {
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
 import { Counter } from '@/shared/utils/Counter'
-import { BattleEventCodes } from './battle-events'
+import { BattleEventCodes } from '@/shared/types/battle-events'
 import { SkillType } from '@/domain/skill/types'
 const counter = new Counter()
 
@@ -162,8 +162,6 @@ export interface BattleEntity {
   type: ParticipantSide // 实体类型
   team: ParticipantSide // 实体阵营
   enabled: boolean // 实体是否启用
-  /** Buff列表（buff实例ID字符串数组） */
-  buffs: string[]
   /** 状态效果列表 */
   statusEffects?: StatusEffect[]
   /** 技能配置 */
@@ -173,24 +171,23 @@ export interface BattleEntity {
   /** 属性版本戳（每次属性重算后递增，用于 Vue 响应式追踪） */
   readonly statsVersion: number
 
+  /** 获取 Buff 实例 ID 列表（派生自 BuffSystem） */
+  getBuffInstanceIds(): string[]
+  /** 检查是否拥有指定 buff */
+  hasBuff(buffId: string): boolean
+
   /** 获取属性值对象（包含详细信息） */
   getAttributeValue(
     attribute: ATTRIBUTE_CODE | string,
   ): AttributeValue | undefined
   /** 获取属性最终值（快捷方法） */
   getAttribute(attribute: ATTRIBUTE_CODE | string): number
-  /** 快捷获取属性最终值（number） */
-  getAttr(attr: ATTRIBUTE_CODE): number
   /** 快捷获取属性值对象（包含基础值、修饰符等） */
   getAttrValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined
   /** 批量预计算所有属性（回合开始时调用） */
   recalcAll(): void
   /** 设置属性值 */
   setAttribute(attribute: string, value: number): void
-  /** 标记属性为脏（需要重新计算） */
-  markDirty(attribute: ATTRIBUTE_CODE | string): void
-  /** 标记所有属性为脏 */
-  markAllDirty(): void
   /** 重新计算所有属性 */
   recalculateAll(): void
   /** 设置修饰符提供者 */
@@ -198,8 +195,6 @@ export interface BattleEntity {
 
   getRandomAttackDemage(): number
 
-  addBuff(buffInstanceId: string): void
-  removeBuff(buffInstanceId: string): void
   hasBuff(buffId: string): boolean
   takeDamage(amount: number): number
   heal(amount: number): number
@@ -559,8 +554,8 @@ export interface DamageAnimationData extends BaseAnimationData {
   damage: number
   /** 是否暴击 */
   isCritical: boolean
-  /** 伤害类型 */
-  damageType: string
+  /** 伤害类型（物理伤害/元素伤害/真实伤害） */
+  damageType: DamageType
   /** 是否为治疗 */
   isHeal: boolean
 }
@@ -591,8 +586,8 @@ export interface SkillEffectAnimationData extends BaseAnimationData {
   skillName: string
   /** 效果类型 */
   effectType: string
-  /** 伤害类型 */
-  damageType: string
+  /** 伤害类型（物理伤害/元素伤害/真实伤害） */
+  damageType: DamageType
 }
 
 /**

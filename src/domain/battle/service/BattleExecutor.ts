@@ -3,11 +3,7 @@
  * 功能: 战斗执行引擎 — 负责参与者行动、技能执行、攻击处理等运行时逻辑
  * 从 BattleSystem.ts 提取，职责单一
  */
-
-import type { BattleAction, BattleData, BattleEntity } from '@/domain/battle/types'
 import { convertToBattleState } from '@/domain/battle/aggregate/BattleState'
-import { BattleActionHelper, BATTLE_CONSTANTS, PARTICIPANT_SIDE } from '@/domain/battle/types'
-import { type SkillConfig, type ExtendedSkillStep, SkillType } from '@/domain/skill/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import type { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
@@ -18,7 +14,11 @@ import { EFFECT_TYPES } from '@/shared/types/effect'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
 import { newLogSegment, LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+
+import { BattleActionHelper, BATTLE_CONSTANTS, PARTICIPANT_SIDE, ActionTypes } from '@/domain/battle/types'
+import { type SkillConfig, type ExtendedSkillStep, SkillType, AttackType, DamageType, TargetFaction, TargetStrategy } from '@/domain/skill/types'
+import type { BattleAction, BattleData, BattleEntity, BattleEffect } from '@/domain/battle/types'
+import { ATTRIBUTE_CODE, getAttributeDefaultValue } from '@/domain/attribute/types'
 
 /**
  * 战斗执行器
@@ -148,12 +148,13 @@ export class BattleExecutor {
       targetId: '',
       skillId: skill.id,
       skillName: skill.name,
-      turn: battle.currentRound || 1,
+      turn: battle.currentRound,
     })
 
     const targets = this.getSkillTargets(battle, source, skill)
     if (targets.length === 0) {
       battleLogManager.addDebugLog(`技能执行失败: 未找到有效目标 ${skill.id}`)
+      console.error(`技能执行失败: 未找到有效目标 ${skill.id}`)
       return this.selectAndExecuteAttack(battle, source)
     }
 
@@ -162,7 +163,7 @@ export class BattleExecutor {
     try {
       let totalDamage = 0
       let totalHeal = 0
-      const allEffects: any[] = []
+      const allEffects: BattleEffect[] = []
 
       for (const target of targets) {
         if (!target.isAlive()) continue
@@ -172,7 +173,7 @@ export class BattleExecutor {
           target,
           battle.currentRound || 1,
         )
-// ponytail: handle null from executeSkill (config not found / insufficient energy / no target)
+        // ponytail: handle null from executeSkill (config not found / insufficient energy / no target)
         if (!skillAction) {
           battleLogManager.addDebugLog(`技能执行返回空: ${skill.id}，跳过目标 ${target.id}`)
           continue
@@ -195,7 +196,7 @@ export class BattleExecutor {
       })
     } catch (error) {
       battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error)
-      action.type = 'attack'
+      action.type = ActionTypes.ATTACK
       action.damage = Math.floor(Math.random() * 20) + 10
       action.effects = [{
         type: EFFECT_TYPES.DAMAGE,
@@ -209,87 +210,81 @@ export class BattleExecutor {
   }
 
   /**
-   * 获取技能的所有目标
+   * 根据 SkillTargetConfig 解析技能的所有目标
    */
   getSkillTargets(
     battle: BattleData,
     source: BattleEntity,
     skill: SkillConfig,
   ): BattleEntity[] {
-    const selector = skill.selector || 'single_enemy'
+    const cfg = skill.selector
     const participants = Array.from(battle.participants.values())
 
-    if (selector === 'self') return [source]
+    // --- self ---
+    if (cfg.faction === TargetFaction.SELF) return [source]
 
-    if (selector === 'lowest_ally') {
-      const allies = participants.filter(
-        (p) => p.isAlive() && p.team === source.team && p.id !== source.id,
-      )
-      if (allies.length === 0) return [source]
-      return [allies.reduce((min, p) =>
-        (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth)) <
-        (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / min.getAttribute(ATTRIBUTE_CODE.maxHealth)) ? p : min,
-      )]
+    const isEnemySide = source.team === PARTICIPANT_SIDE.ALLY
+    const factionFilter = (p: BattleEntity): boolean => {
+      if (!p.isAlive()) return false
+      if (cfg.faction === TargetFaction.ALL) return true
+      if (cfg.faction === TargetFaction.ALLY) return p.team === source.team
+      // 'enemy'
+      return p.team === (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
     }
 
-    if (selector === 'lowest_enemy') {
-      const isEnemySide = source.team === PARTICIPANT_SIDE.ALLY
-      const enemies = participants.filter(
-        (p) => p.isAlive() &&
-          p.team === (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY),
-      )
-      if (enemies.length === 0) return [source]
-      return [enemies.reduce((min, p) =>
-        (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth)) <
-        (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / min.getAttribute(ATTRIBUTE_CODE.maxHealth)) ? p : min,
-      )]
-    }
+    let candidates = participants.filter(factionFilter)
+    if (candidates.length === 0) return [source]
 
-    const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
-    if (selector.includes('all_enemies')) {
-      return participants.filter(
-        (p) => p.isAlive() &&
-          p.team === (isEnemy ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY),
-      )
-    }
-    if (selector.includes('all_allies')) {
-      return participants.filter((p) => p.isAlive() && p.team === source.team)
-    }
+    const take = (arr: BattleEntity[], n: number): BattleEntity[] => arr.slice(0, Math.max(1, n))
 
-    const targetId = this.selectTargetForSkill(battle, source, skill)
-    const target = battle.participants.get(targetId)
-    return target ? [target] : []
+    const strategy = cfg.strategy || TargetStrategy.FIRST
+    switch (strategy) {
+      case TargetStrategy.ALL:
+        return candidates
+      case TargetStrategy.LOWEST_HP: {
+        const target = candidates.reduce((min, p) =>
+          (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) <
+          (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
+        )
+        return [target]
+      }
+      case TargetStrategy.RANDOM:
+        return take(
+          candidates.sort(() => Math.random() - 0.5),
+          cfg.count ?? 1,
+        )
+      case TargetStrategy.FRONT:
+        return [candidates[0]]
+      case TargetStrategy.BACK:
+        return [candidates[candidates.length - 1]]
+      case TargetStrategy.ADJACENT:
+        // ponytail: 相邻目标依赖位置系统，目前降级取第一个
+        return [candidates[0]]
+      case TargetStrategy.FIRST:
+      default: {
+        // 智能默认：如果技能含治疗/增益步骤，选最低血量；否则选第一个
+        if (skill.steps.some((s) => s.type === 'HEAL' || s.type === 'BUFF' || s.type === 'heal' || s.type === 'apply_buff')) {
+          const target = candidates.reduce((min, p) =>
+            (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) <
+            (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
+          )
+          return [target]
+        }
+        return take(candidates, cfg.count ?? 1)
+      }
+    }
   }
 
   /**
-   * 根据技能配置选择目标
+   * 根据技能配置选择单个目标 ID（快捷入口，内部调用 getSkillTargets）
    */
   selectTargetForSkill(
     battle: BattleData,
     source: BattleEntity,
     skill: SkillConfig,
   ): string {
-    const selector = skill.selector || 'single_enemy'
-    const participants = Array.from(battle.participants.values())
-
-    if (selector.includes('self')) return source.id
-
-    const isEnemy = source.team === PARTICIPANT_SIDE.ALLY
-    const targets = participants.filter(
-      (p) => p.isAlive() &&
-        p.team === (isEnemy ? PARTICIPANT_SIDE.ALLY : PARTICIPANT_SIDE.ENEMY),
-    )
-    if (targets.length === 0) return source.id
-
-    if (skill.steps.some((step) => step.type === 'HEAL' || step.type === 'BUFF')) {
-      const lowestHpTarget = targets.reduce((min, p) =>
-        (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth)) <
-        (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / min.getAttribute(ATTRIBUTE_CODE.maxHealth)) ? p : min,
-      )
-      return lowestHpTarget.id
-    } else {
-      return targets[Math.floor(Math.random() * targets.length)].id
-    }
+    const targets = this.getSkillTargets(battle, source, skill)
+    return targets.length > 0 ? targets[0].id : source.id
   }
 
   // ============ 普通攻击 ============
@@ -302,14 +297,11 @@ export class BattleExecutor {
       type: 'DAMAGE',
       id: 'normal_attack',
       targetId,
-      calculation: {
-        baseValue: 0,
-        extraValues: [{ attribute: 'ATK', ratio: 1.0 }],
-      },
-      attackType: 'normal',
+      damageType: DamageType.PHYSICAL,
+      attackType: AttackType.NORMAL_ATTACK,
       criticalConfig: {
-        rate: (source.getAttribute('critRate') || 10) / 100,
-        multiplier: (source.getAttribute('critDamage') || 125) / 100,
+        rate: (source.getAttribute(ATTRIBUTE_CODE.critRate) || getAttributeDefaultValue(ATTRIBUTE_CODE.critRate)),
+        multiplier: (source.getAttribute(ATTRIBUTE_CODE.critDamage) || getAttributeDefaultValue(ATTRIBUTE_CODE.critDamage)),
       },
     }
   }
@@ -424,7 +416,7 @@ export class BattleExecutor {
     })
 
     await this.animationManager.triggerDamageAnimationAndWait({
-      targetId: target.id, damage, damageType: 'physical', isCritical, isHeal: false,
+      targetId: target.id, damage, damageType: DamageType.PHYSICAL, isCritical, isHeal: false,
     })
 
     const logParams = this.generateAttackLogParams(source, target, turnNumber, { damage, isCritical })
@@ -444,13 +436,14 @@ export class BattleExecutor {
 
     if (!target) {
       battleLogManager.addDebugLog(`攻击失败: 未找到目标 ${targetId}`)
+      console.error(`攻击失败: 未找到目标 ${targetId}`)
       return this.createBattleAction(source.id, source.id, battle.currentRound || 1)
     }
 
-    const roundNumber = battle.currentRound || 1
+    const roundNumber = battle.currentRound
 
     this.passiveSkillManager.triggerPassives(
-      PassiveSkillTrigger.BEFORE_ATTACK, source, undefined, { targetId, battle },
+      PassiveSkillTrigger.BEFORE_ATTACK, source, undefined, { targetId, roundNumber },
     )
 
     const attackStep = this.buildNormalAttackStep(source, targetId)
@@ -563,10 +556,12 @@ export class BattleExecutor {
     const target = battle.participants.get(action.targetId)
 
     if (!source || !target) {
-      throw new Error('Invalid source or target in action')
+      battleLogManager.addDebugLog(`执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`)
+      console.error(`执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`)
+      return action
     }
 
-    if (action.type === 'skill' && action.skillId) {
+    if (action.type === ActionTypes.SKILL && action.skillId) {
       try {
         const skillAction = this.skillManager.executeSkill(
           action.skillId, source, target, action.turn,
@@ -602,12 +597,12 @@ export class BattleExecutor {
 
           await this.animationManager.triggerSkillEffectAnimation({
             sourceId: source.id, targetId: target.id, skillName: action.skillId,
-            effectType: action.type, damageType: 'skill',
+            effectType: action.type, damageType: DamageType.PHYSICAL,
           })
         }
       } catch (error) {
         battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error)
-        action.type = 'attack'
+        action.type = ActionTypes.ATTACK
         action.damage = Math.floor(Math.random() * 20) + 10
         action.effects = [{
           type: EFFECT_TYPES.DAMAGE,
@@ -619,7 +614,7 @@ export class BattleExecutor {
 
     // ponytail: skill actions already apply damage+heal inside SkillExecutor,
     // so only apply raw damage/heal for non-skill actions (e.g. fallback attack).
-    if (action.type !== 'skill') {
+    if (action.type !== ActionTypes.SKILL) {
       if (action.damage && action.damage > 0) {
         const actualDamage = target.takeDamage(action.damage)
         action.damage = actualDamage
@@ -639,7 +634,7 @@ export class BattleExecutor {
 
         await this.animationManager.triggerDamageAnimationAndWait({
           targetId: target.id, damage: actualDamage,
-          damageType: 'physical',
+          damageType: DamageType.PHYSICAL,
           isCritical: false, isHeal: false,
         })
       }
@@ -649,7 +644,7 @@ export class BattleExecutor {
         action.heal = actualHeal
 
         await this.animationManager.triggerDamageAnimationAndWait({
-          targetId: target.id, damage: actualHeal, damageType: 'heal',
+          targetId: target.id, damage: actualHeal, damageType: DamageType.PHYSICAL,
           isCritical: false, isHeal: true,
         })
       }

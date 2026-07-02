@@ -267,6 +267,7 @@ export const ATTRIBUTE_CODE = {
 export type ATTRIBUTE_CODE =
   (typeof ATTRIBUTE_CODE)[keyof typeof ATTRIBUTE_CODE]
 
+/** 旧版属性代码映射表 */
 export const LEGACY_ATTR_MAP: Record<string, ATTRIBUTE_CODE> = {
   ATK: ATTRIBUTE_CODE.attack,
   DEF: ATTRIBUTE_CODE.defense,
@@ -747,7 +748,7 @@ export const AttributeCodeNames: Record<ATTRIBUTE_CODE, string> =
 /**
  * 根据属性编码获取属性元数据
  */
-export function getAttributeMeta(code: string): AttributeMeta | undefined {
+export function getAttributeMeta(code: ATTRIBUTE_CODE): AttributeMeta | undefined {
   return AttributeMetaMap[code]
 }
 

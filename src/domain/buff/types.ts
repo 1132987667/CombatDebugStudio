@@ -1,6 +1,15 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BattleData } from '@/domain/battle/types'
 
+/**
+ * buff 查询接口
+ * BattleEntity 通过此接口查询 BuffSystem，不直接存储 buff 数据
+ */
+export interface BuffQuery {
+  getBuffInstanceIds(characterId: string): string[]
+  hasBuff(characterId: string, buffId: string): boolean
+}
+
 // [
 //   {
 //     id: "burn",

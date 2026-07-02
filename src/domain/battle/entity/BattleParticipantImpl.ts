@@ -7,15 +7,9 @@
  * 版本: 3.1.0 - 集成触发器事件系统
  */
 
-import type {
-  BattleParticipant,
-  StatusEffect,
-  ParticipantSnapshot,
-  BuffInstanceSnapshot,
-  BattleEntity,
-} from '@/domain/battle/types'
+import type { StatusEffect, ParticipantSnapshot, BattleEntity } from '@/domain/battle/types'
 import type { IModifierProvider } from '@/domain/attribute/types'
-import { PARTICIPANT_SIDE, type ParticipantSide } from '@/domain/battle/types'
+import { type ParticipantSide } from '@/domain/battle/types'
 import type { SkillConfig, SkillSet } from '@/domain/skill/types'
 import {
   Modifier,
@@ -27,25 +21,12 @@ import {
   ModifierType,
 } from '@/domain/attribute/types'
 import { ParticipantStats } from '@/domain/battle/entity/ParticipantStats'
-import { ParticipantBuffs } from '@/domain/battle/entity/ParticipantBuffs'
+import type { BuffQuery } from '@/domain/buff/types'
 import { ParticipantSkills } from '@/domain/battle/entity/ParticipantSkills'
-import { triggerEventBus, TriggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
+import { triggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 import { SkillType } from '@/domain/skill/types'
 
-export type BaseBattleParticipant = {
-  id: string
-  name: string
-  level: number
-  type: ParticipantSide
-  team: ParticipantSide
-  enabled?: boolean
-  skills: SkillSet
-  statusEffects?: StatusEffect[]
-  buffs: string[]
-  attributeValues?: Partial<Record<ATTRIBUTE_CODE, number>>
-}
-
-export type BattleParticipantInitData = {
+export type BattleParticipantData = {
   id: string
   name: string
   level: number
@@ -54,13 +35,11 @@ export type BattleParticipantInitData = {
   enabled: boolean
   skills: SkillSet
   statusEffects?: StatusEffect[]
-  buffs?: string[]
   attributeValues?: Partial<Record<ATTRIBUTE_CODE, number>>
 }
 
 /**
  * 战斗参与者实现类
- * 使用 Class 替代对象字面量，方法在原型上共享
  * 使用属性缓存系统管理属性值
  */
 export class BattleParticipantImpl implements BattleEntity {
@@ -76,19 +55,23 @@ export class BattleParticipantImpl implements BattleEntity {
   attributeValues: AttributeValues = {} as AttributeValues
 
   /**
-   * 获取 Buff 实例 ID 列表
-   * 委托给 buffManager，保证始终同步
+   * Buff 实例 ID 列表（派生自 BuffSystem)
    */
-  get buffs(): string[] {
-    return this.buffManager.getBuffList()
+  getBuffInstanceIds(): string[] {
+    return this.buffQuery?.getBuffInstanceIds(this.id) ?? []
   }
 
-  set buffs(value: string[]) {
-    this.buffManager.setBuffList(value)
+  hasBuff(buffId: string): boolean {
+    return this.buffQuery?.hasBuff(this.id, buffId) ?? false
   }
 
-  /** Buff 管理器 */
-  private buffManager: ParticipantBuffs
+  /** 设置 BuffSystem 查询接口 */
+  setBuffQuery(query: BuffQuery): void {
+    this.buffQuery = query
+  }
+
+  /** Buff 查询对象（指向 BuffSystem），不直接存储 buff 数据 */
+  private buffQuery: BuffQuery | null = null
 
   /** 技能管理器 */
   private skillManager: ParticipantSkills
@@ -112,7 +95,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param modifierProvider - 修饰符提供者（可选，通常为 BuffSystem 实例）
    */
   constructor(
-    data: BattleParticipantInitData,
+    data: BattleParticipantData,
     modifierProvider?: IModifierProvider | null,
   ) {
     this.id = data.id
@@ -123,7 +106,6 @@ export class BattleParticipantImpl implements BattleEntity {
     this.enabled = data.enabled ?? true
     this.statusEffects = data.statusEffects
     this.skills = data.skills
-    this.buffManager = new ParticipantBuffs(data.buffs ?? [], () => this.stats.notifyModifiersChanged())
     this.skillManager = new ParticipantSkills(this.skills)
 
     if (data.attributeValues) {
@@ -137,14 +119,6 @@ export class BattleParticipantImpl implements BattleEntity {
     if (modifierProvider) {
       this.setModifierProvider(modifierProvider)
     }
-  }
-
-  private initAttribute(
-    code: ATTRIBUTE_CODE,
-    baseValue: number,
-    isPercentage: boolean = false
-  ): void {
-    this.stats.initAttribute(code, baseValue, isPercentage)
   }
 
   /**
@@ -169,7 +143,7 @@ export class BattleParticipantImpl implements BattleEntity {
     let hasChanges = false
 
     for (const code of Object.values(ATTRIBUTE_CODE)) {
-      const attrData = this.stats.getAttrValue(code)
+      const attrData = this.stats.getAttribute(code)
       if (!attrData) continue
 
       const stackMods = stack.getModifiers(code)
@@ -200,14 +174,6 @@ export class BattleParticipantImpl implements BattleEntity {
     }
   }
 
-  private recalcAttribute(attr: ATTRIBUTE_CODE): void {
-    this.stats.getAttributeValue(attr)
-  }
-
-  private getAllBaseAttributes(): Record<string, number> {
-    return this.stats.getAllBaseAttributes()
-  }
-
   /**
    * 获取属性最终值（自动触发重新计算）
    * @param attr 属性名称
@@ -219,25 +185,16 @@ export class BattleParticipantImpl implements BattleEntity {
     return attrValue?.value ?? 0
   }
 
-  /**
-   * 快捷获取属性最终值（number）
-   * @param attr 属性名称（如 'HP', 'ATK'）
-   * @returns 属性最终值
-   */
-  getAttr(attr: ATTRIBUTE_CODE): number {
-    return this.getAttribute(attr)
-  }
-
   getAttributeValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
-    return this.stats.getAttributeValue(attr)
+    return this.stats.reCalAttributeValue(attr)
   }
 
   getAttrValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
-    return this.stats.getAttrValue(attr)
+    return this.stats.getAttribute(attr)
   }
 
   getAttributeBase(attr: ATTRIBUTE_CODE): number {
-    return this.stats.getAttributeBase(attr)
+    return this.stats.getAttributeBaseValue(attr)
   }
 
   setAttributeBase(attr: ATTRIBUTE_CODE, value: number): void {
@@ -680,31 +637,6 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 添加Buff
-   * @param buffInstanceId - Buff实例ID
-   */
-  addBuff(buffInstanceId: string): void {
-    this.buffManager.addBuff(buffInstanceId)
-  }
-
-  /**
-   * 移除Buff
-   * @param buffInstanceId - Buff实例ID
-   */
-  removeBuff(buffInstanceId: string): void {
-    this.buffManager.removeBuff(buffInstanceId)
-  }
-
-  /**
-   * 判断是否拥有指定Buff
-   * @param buffId - Buff ID
-   * @returns 是否拥有
-   */
-  hasBuff(buffId: string): boolean {
-    return this.buffManager.hasBuff(buffId)
-  }
-
-  /**
    * 检查技能是否可用（未冷却）
    * @param skillId - 技能ID
    * @returns 是否可用
@@ -809,7 +741,7 @@ export class BattleParticipantImpl implements BattleEntity {
     const result: any[] = []
 
     for (const attrCode of Object.values(ATTRIBUTE_CODE)) {
-      const attrValue = this.stats.getAttributeValue(attrCode)
+      const attrValue = this.stats.reCalAttributeValue(attrCode)
       if (!attrValue) continue
 
       const meta = getAttributeMeta(attrCode)

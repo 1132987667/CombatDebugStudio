@@ -28,7 +28,7 @@
                 <div class="char-order" v-if="char.enabled">
                   <span class="order-num">{{ getOrderIndex(char.id) }}</span>
                 </div>
-                <div class="char-status" v-if="char.buffs && char.buffs.length > 0">
+                <div class="char-status" v-if="char.getBuffInstanceIds().length > 0">
                   <span class="first-badge">状态</span>
                 </div>
                 <!-- <div class="char-status" v-if="char.isFirst">
@@ -54,7 +54,7 @@
                 <div class="char-order" v-if="char.enabled">
                   <span class="order-num">{{ getOrderIndex(char.id) }}</span>
                 </div>
-                <div class="char-status" v-if="char.buffs && char.buffs.length > 0">
+                <div class="char-status" v-if="char.getBuffInstanceIds().length > 0">
                   <span class="first-badge">状态</span>
                 </div>
               </div>

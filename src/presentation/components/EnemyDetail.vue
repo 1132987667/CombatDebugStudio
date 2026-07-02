@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useCompendium, type CompendiumEnemy } from '@/presentation/composables/useCompendium'
-import { SELECTOR_TARGET_NAMES, type selectorTarget } from '@/domain/skill/types'
+import { formatTargetConfig } from '@/domain/skill/types'
 
 interface Props {
   enemy: CompendiumEnemy
@@ -121,8 +121,8 @@ const skills = computed(() => {
     .filter(s => s !== undefined)
 })
 
-const getSelectorText = (selector: string): string => {
-  return SELECTOR_TARGET_NAMES[selector as selectorTarget] || selector
+const getSelectorText = (selector: any): string => {
+  return formatTargetConfig(selector)
 }
 
 const getItemName = (itemId: string): string => {

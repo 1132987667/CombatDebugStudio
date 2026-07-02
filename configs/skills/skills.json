@@ -4,14 +4,14 @@
     "name": "花粉迷雾",
     "description": "对单个敌人造成80%攻击力的普通伤害，并使其命中率降低30%，持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "scope": "single",
         "formula": "attack*0.8",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -31,13 +31,13 @@
     "name": "缠绕根须",
     "description": "对单个敌人造成85%攻击力的普通伤害，并使其速度降低25%，持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.85",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -57,13 +57,13 @@
     "name": "野性扑击",
     "description": "对单个敌人造成90%攻击力的普通伤害，并恢复造成伤害15%的生命值",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "heal",
@@ -79,13 +79,13 @@
     "name": "毒液喷射",
     "description": "对单个敌人造成85%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.85",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -105,13 +105,13 @@
     "name": "岩石投掷",
     "description": "对单个敌人造成110%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.1",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -122,19 +122,19 @@
     "name": "狂怒连击",
     "description": "对单个敌人进行两次连续攻击，每次造成60%攻击力的普通伤害，总计120%攻击力",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.6",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.6",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -145,13 +145,13 @@
     "name": "剧毒荆棘",
     "description": "对单个敌人造成90%攻击力的普通伤害，并施加强效中毒效果，每回合造成攻击者攻击力15%的伤害，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -171,13 +171,13 @@
     "name": "碎石猛击",
     "description": "对单个敌人造成110%攻击力的普通伤害，并有25%几率使目标眩晕1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.1",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -197,13 +197,13 @@
     "name": "守护之光",
     "description": "对单个敌人造成95%攻击力的普通伤害，并为自身施加护盾，持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "buff",
@@ -225,13 +225,13 @@
     "description": "终极技能：对所有敌人造成120%攻击力的普通伤害，并使其受到30%额外伤害，持续2回合",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.2",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -252,13 +252,13 @@
     "description": "终极技能：对眩晕状态的单个敌人造成180%攻击力的普通伤害（仅对眩晕目标有效）",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.8",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "condition": "target.hasBuff('buff_stun')",
@@ -271,7 +271,7 @@
     "description": "终极技能：使自身进入山神状态，攻击力和防御力大幅提升，持续2回合",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "self",
+    "selector": {"faction": "self", "strategy": "first"},
     "steps": [
       {
         "type": "buff",
@@ -293,13 +293,13 @@
     "name": "水枪射击",
     "description": "对单个敌人造成85%攻击力的普通伤害，并使其防御力降低20%，持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.85",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -319,13 +319,13 @@
     "name": "钳击",
     "description": "对单个敌人造成95%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -336,13 +336,13 @@
     "name": "滑溜闪避",
     "description": "对单个敌人造成80%攻击力的普通伤害，并为自身提升闪避率，持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.8",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "buff",
@@ -363,19 +363,19 @@
     "name": "水刃连斩",
     "description": "对单个敌人进行两次连续攻击，每次造成65%攻击力的普通伤害，总计130%攻击力",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.65",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.65",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -386,13 +386,13 @@
     "name": "铁甲冲击",
     "description": "对单个敌人造成100%攻击力的普通伤害，并为自身提升防御力，持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "buff",
@@ -413,13 +413,13 @@
     "name": "水泡困缚",
     "description": "对单个敌人造成90%攻击力的普通伤害，并使其速度降低30%，持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -439,13 +439,13 @@
     "name": "统领之击",
     "description": "对单个敌人造成105%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.05",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -456,13 +456,13 @@
     "name": "金甲护体",
     "description": "对单个敌人造成95%攻击力的普通伤害，并为自身施加黄金护盾，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "buff",
@@ -483,13 +483,13 @@
     "name": "水疗波",
     "description": "对单个敌人造成90%攻击力的普通伤害，并为生命值最低的友方单位恢复50%攻击力的生命值",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "heal",
@@ -506,13 +506,13 @@
     "description": "终极技能：对所有敌人造成110%攻击力的普通伤害，并使其速度降低40%，持续2回合",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.1",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -533,13 +533,13 @@
     "description": "终极技能：对单个敌人造成190%攻击力的普通伤害，并使其防御力降低100%，持续2回合",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -560,13 +560,13 @@
     "description": "终极技能：对所有敌人造成130%攻击力的普通伤害，并施加潮湿效果，使其受到50%额外伤害，持续3回合",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.3",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -586,13 +586,13 @@
     "name": "岩刺突袭",
     "description": "对单个敌人造成85%攻击力的普通伤害，并有20%几率使目标眩晕1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -612,18 +612,18 @@
     "name": "碎石飞溅",
     "description": "对单个敌人造成85%攻击力的普通伤害，并对随机相邻敌人造成50%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.85",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "damage",
         "formula": "attack*0.5",
-        "attackType": "normal",
+        "attackType": "normal_attack",
         "target": "enemy",
         "targetType": "random_adjacent"
       }
@@ -636,13 +636,13 @@
     "name": "土遁偷袭",
     "description": "对单个敌人造成95%攻击力的普通伤害，并为自身提升闪避率，持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "buff",
@@ -663,13 +663,13 @@
     "name": "巨石碾压",
     "description": "对单个敌人造成110%攻击力的普通伤害，并有25%几率使目标眩晕1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.1",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -689,13 +689,13 @@
     "name": "铁石重击",
     "description": "对单个敌人造成120%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.2",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -706,13 +706,13 @@
     "name": "地裂术",
     "description": "对单个敌人造成 100% 攻击力的普通伤害，并使其速度降低 100%，持续 2 回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -732,13 +732,13 @@
     "name": "山崩",
     "description": "对单个敌人造成130%攻击力的普通伤害，并有30%几率使目标眩晕1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.3",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -758,13 +758,13 @@
     "name": "金刚破",
     "description": "对单个敌人造成 115% 攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.15",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -775,13 +775,13 @@
     "name": "地脉涌动",
     "description": "对单个敌人造成 100% 攻击力的普通伤害，并为所有友方单位恢复 30% 攻击力的生命值",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "target": "enemy",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "heal",
@@ -797,7 +797,7 @@
     "name": "不动如山",
     "description": "被动效果：免疫眩晕和击退效果",
     "cooldown": 2,
-    "selector": "self",
+    "selector": {"faction": "self", "strategy": "first"},
     "steps": [
       {
         "type": "buff",
@@ -817,7 +817,7 @@
     "name": "金刚不坏",
     "description": "被动效果：受到攻击时，有25%几率使自身防御力提升5%（可叠加5层）",
     "cooldown": 2,
-    "selector": "self",
+    "selector": {"faction": "self", "strategy": "first"},
     "steps": [
       {
         "type": "buff",
@@ -838,12 +838,12 @@
     "description": "终极技能：对所有敌人造成140%攻击力的普通伤害，并使其防御力降低40%，持续2回合",
     "cooldown": 2,
     "maxUses": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.4",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -864,12 +864,12 @@
     "description": "终极技能：对单个敌人造成220%攻击力的普通伤害，并使其攻击力降低100%，持续2回合",
     "cooldown": 2,
     "maxUses": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*2.2",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -890,12 +890,12 @@
     "description": "终极技能：对所有敌人造成150%攻击力的普通伤害，并有50%几率使目标石化1回合",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.5",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -915,12 +915,12 @@
     "name": "藤鞭抽打",
     "description": "对单个敌人造成90%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -940,12 +940,12 @@
     "name": "迷幻攻击",
     "description": "对单个敌人造成85%攻击力的普通伤害，并有20%几率使目标混乱1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.85",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -965,12 +965,12 @@
     "name": "野猪冲撞",
     "description": "对单个敌人造成100%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -981,12 +981,12 @@
     "name": "根须缠绕",
     "description": "对单个敌人造成95%攻击力的普通伤害，并有30%几率使目标眩晕1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1006,12 +1006,12 @@
     "name": "迷魂阵",
     "description": "对单个敌人造成90%攻击力的普通伤害，并有35%几率使目标混乱1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1031,12 +1031,12 @@
     "name": "狂暴冲撞",
     "description": "对单个敌人造成120%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.2",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -1047,12 +1047,12 @@
     "name": "毒雾弥漫",
     "description": "对所有敌人造成80%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续3回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.8",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1072,12 +1072,12 @@
     "name": "妖术封印",
     "description": "对单个敌人造成95%攻击力的普通伤害，并有30%几率封印目标技能1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1097,12 +1097,12 @@
     "name": "迷雾之护",
     "description": "对单个敌人造成100%攻击力的普通伤害，并为自身施加迷雾护盾，持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "buff",
@@ -1125,12 +1125,12 @@
     "description": "终极技能：对所有敌人造成130%攻击力的普通伤害，并为所有友方单位提升攻击力20%，持续2回合",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.3",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "buff",
@@ -1152,12 +1152,12 @@
     "description": "终极技能：对所有敌人造成140%攻击力的普通伤害，并使其攻击力降低50%，持续2回合",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.4",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1178,7 +1178,7 @@
     "description": "终极技能：使所有敌人有60%几率陷入混乱状态2回合",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "debuff",
@@ -1198,12 +1198,12 @@
     "name": "流沙陷阱",
     "description": "对单个敌人造成90%攻击力的普通伤害,并有30%概率使其受到重度减速效果持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1223,12 +1223,12 @@
     "name": "毒牙撕咬",
     "description": "对单个敌人造成95%攻击力的普通伤害,并有25%概率使其中毒持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1248,17 +1248,17 @@
     "name": "水波冲击",
     "description": "对单个敌人造成85%攻击力的普通伤害,并有50%概率对随机相邻敌人造成50%攻击力的溅射伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.85",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "damage",
         "formula": "attack*0.5",
-        "attackType": "normal",
+        "attackType": "normal_attack",
         "target": "enemy",
         "targetType": "random_adjacent"
       }
@@ -1271,12 +1271,12 @@
     "name": "沙暴术",
     "description": "对所有敌人造成70%攻击力的普通伤害,并有20%概率使敌人命中率降低持续2回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.7",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1296,12 +1296,12 @@
     "name": "缠绕绞杀",
     "description": "对单个敌人造成110%攻击力的普通伤害,并有30%概率使其眩晕持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.1",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1321,17 +1321,17 @@
     "name": "水刃连斩",
     "description": "对单个敌人造成两次70%攻击力的普通伤害,总共140%攻击力的伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.7",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "damage",
         "formula": "attack*0.7",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -1342,12 +1342,12 @@
     "name": "沙尘暴",
     "description": "对所有敌人造成90%攻击力的普通伤害,并有40%概率使敌人命中率降低持续2回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1367,12 +1367,12 @@
     "name": "剧毒喷射",
     "description": "对所有敌人造成80%攻击力的普通伤害,并有50%概率使敌人受到强效中毒效果持续3回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.8",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1392,12 +1392,12 @@
     "name": "浊浪冲击",
     "description": "对所有敌人造成100%攻击力的普通伤害,并有30%概率使敌人防御力降低持续2回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1419,12 +1419,12 @@
     "description": "终极技能,对所有敌人造成130%攻击力的普通伤害,并有50%概率使敌人受到重度减速效果持续2回合,最多使用2次",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.3",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1445,12 +1445,12 @@
     "description": "终极技能,对单个敌人造成200%攻击力的普通伤害,最多使用2次",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*2.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 150,
@@ -1462,12 +1462,12 @@
     "description": "终极技能,对所有敌人造成150%攻击力的普通伤害,并有40%概率使敌人陷入溺水状态持续3回合,最多使用1次",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.5",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1487,12 +1487,12 @@
     "name": "火焰吐息",
     "description": "对单个敌人造成95%攻击力的普通伤害,并有20%概率使其燃烧持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1512,17 +1512,17 @@
     "name": "熔岩溅射",
     "description": "对单个敌人造成90%攻击力的普通伤害,并有50%概率对随机相邻敌人造成50%攻击力的溅射伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "damage",
         "formula": "attack*0.5",
-        "attackType": "normal",
+        "attackType": "normal_attack",
         "target": "enemy",
         "targetType": "random_adjacent"
       }
@@ -1535,12 +1535,12 @@
     "name": "火球术",
     "description": "对单个敌人造成100%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -1551,12 +1551,12 @@
     "name": "烈焰爪击",
     "description": "对单个敌人造成110%攻击力的普通伤害,并有30%概率使其燃烧持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.1",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1576,12 +1576,12 @@
     "name": "熔岩爆裂",
     "description": "对所有敌人造成80%攻击力的普通伤害,并有25%概率使敌人燃烧持续2回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.8",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1601,17 +1601,17 @@
     "name": "火焰连斩",
     "description": "对单个敌人造成两次75%攻击力的普通伤害,总共150%攻击力的伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.75",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "damage",
         "formula": "attack*0.75",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -1622,12 +1622,12 @@
     "name": "火山喷发",
     "description": "对所有敌人造成100%攻击力的普通伤害,并有40%概率使敌人燃烧持续3回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1647,12 +1647,12 @@
     "name": "熔岩重击",
     "description": "对单个敌人造成130%攻击力的普通伤害,并有25%概率使其眩晕持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.3",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1672,7 +1672,7 @@
     "name": "岩浆护盾",
     "description": "自身获得岩浆护盾效果持续2回合,大幅提升防御力,并对攻击者反弹火属性伤害",
     "cooldown": 2,
-    "selector": "self",
+    "selector": {"faction": "self", "strategy": "first"},
     "steps": [
       {
         "type": "buff",
@@ -1694,12 +1694,12 @@
     "description": "终极技能,对所有敌人造成140%攻击力的普通伤害,并使敌人受到火属性易伤效果持续2回合,最多使用2次",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.4",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1720,12 +1720,12 @@
     "description": "终极技能,对单个敌人造成220%攻击力的普通伤害,并使其防御力降低持续2回合,最多使用2次",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*2.2",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1746,12 +1746,12 @@
     "description": "终极技能,对所有敌人造成160%攻击力的普通伤害,并有50%概率使敌人被熔岩束缚持续1回合,最多使用1次",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.6",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1771,12 +1771,12 @@
     "name": "蛛网缠绕",
     "description": "对单个敌人造成90%攻击力的普通伤害，并有30%几率使目标眩晕1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1796,12 +1796,12 @@
     "name": "毒粉挥洒",
     "description": "对单个敌人造成85%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.85",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1821,12 +1821,12 @@
     "name": "啃噬",
     "description": "对单个敌人造成100%攻击力的普通伤害，并恢复造成伤害20%的生命值",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "heal",
@@ -1842,17 +1842,17 @@
     "name": "毒牙连刺",
     "description": "对单个敌人进行两次连续攻击，每次造成70%攻击力的普通伤害，总计140%攻击力",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.7",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "damage",
         "formula": "attack*0.7",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -1863,12 +1863,12 @@
     "name": "毒雾弥漫",
     "description": "对所有敌人造成75%攻击力的普通伤害，并施加中毒效果，每回合造成攻击者攻击力10%的伤害，持续2回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.75",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1888,12 +1888,12 @@
     "name": "蛛丝束缚",
     "description": "对单个敌人造成95%攻击力的普通伤害，并使其速度大幅降低，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1913,12 +1913,12 @@
     "name": "千丝万缕",
     "description": "对所有敌人造成90%攻击力的普通伤害，并有40%几率使目标眩晕1回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1938,12 +1938,12 @@
     "name": "女王毒粉",
     "description": "对所有敌人造成85%攻击力的普通伤害，并施加强效中毒效果，每回合造成攻击者攻击力15%的伤害，持续3回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.85",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -1963,7 +1963,7 @@
     "name": "守护蛛网",
     "description": "为所有友方单位施加蛛网护盾，提升防御力20%，持续2回合",
     "cooldown": 2,
-    "selector": "all_allies",
+    "selector": {"faction": "ally", "strategy": "all"},
     "steps": [
       {
         "type": "buff",
@@ -1984,12 +1984,12 @@
     "description": "终极技能：对所有敌人造成130%攻击力的普通伤害，并使其被束缚2回合",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.3",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2010,12 +2010,12 @@
     "description": "终极技能：对所有敌人造成200%攻击力的普通伤害",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*2.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 150,
@@ -2027,12 +2027,12 @@
     "description": "终极技能：对所有敌人造成150%攻击力的普通伤害，并降低其攻击力50%，持续2回合",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.5",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2052,12 +2052,12 @@
     "name": "狮吼",
     "description": "对单个敌人造成90%攻击力的普通伤害，并降低其防御力20%，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2077,12 +2077,12 @@
     "name": "象鼻重击",
     "description": "对单个敌人造成110%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.1",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -2093,12 +2093,12 @@
     "name": "疾风爪",
     "description": "对单个敌人造成95%攻击力的普通伤害，并提升自身速度，持续1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "buff",
@@ -2119,12 +2119,12 @@
     "name": "统领之吼",
     "description": "对单个敌人造成100%攻击力的普通伤害，并提升所有友方单位的攻击力，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "buff",
@@ -2145,12 +2145,12 @@
     "name": "铁甲冲撞",
     "description": "对单个敌人造成130%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.3",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -2161,7 +2161,7 @@
     "name": "风之护盾",
     "description": "为所有友方单位施加风之护盾，提升防御力20%，持续2回合",
     "cooldown": 2,
-    "selector": "all_allies",
+    "selector": {"faction": "ally", "strategy": "all"},
     "steps": [
       {
         "type": "buff",
@@ -2182,12 +2182,12 @@
     "description": "终极技能：对所有敌人造成160%攻击力的普通伤害，并使其窒息，持续3回合",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.6",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2207,12 +2207,12 @@
     "name": "金刚拳",
     "description": "对单个敌人造成100%攻击力的普通伤害，并有20%几率使目标眩晕1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2232,12 +2232,12 @@
     "name": "禅音波",
     "description": "对单个敌人造成90%攻击力的普通伤害，并降低其攻击力25%，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.9",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2257,12 +2257,12 @@
     "name": "护法杖击",
     "description": "对单个敌人造成105%攻击力的普通伤害，并根据造成的伤害值为自身恢复10%的生命值",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.05",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "heal",
@@ -2278,12 +2278,12 @@
     "name": "力士之锤",
     "description": "对单个敌人造成120%攻击力的普通伤害，并降低其防御力30%，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.2",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2303,17 +2303,17 @@
     "name": "罗汉掌",
     "description": "对单个敌人造成两次75%攻击力的普通伤害，总共150%攻击力的伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.75",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "damage",
         "formula": "attack*0.75",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -2324,12 +2324,12 @@
     "name": "金刚护体",
     "description": "对单个敌人造成95%攻击力的普通伤害，同时自身获得防御力提升效果持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "buff",
@@ -2350,12 +2350,12 @@
     "name": "罗汉伏魔",
     "description": "对单个敌人造成130%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.3",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -2366,12 +2366,12 @@
     "name": "降龙掌",
     "description": "对单个敌人造成140%攻击力的普通伤害，并有25%几率使目标眩晕1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.4",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2391,7 +2391,7 @@
     "name": "禅音护体",
     "description": "为所有友方单位恢复50%攻击力的生命值",
     "cooldown": 2,
-    "selector": "all_allies",
+    "selector": {"faction": "ally", "strategy": "all"},
     "steps": [
       {
         "type": "heal",
@@ -2408,12 +2408,12 @@
     "description": "终极技能：对所有敌人造成150%攻击力的普通伤害，并使其攻击力降低40%，持续2回合",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.5",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2434,12 +2434,12 @@
     "description": "终极技能：对单个敌人造成240%攻击力的普通伤害",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*2.4",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 150,
@@ -2451,12 +2451,12 @@
     "description": "终极技能：对所有敌人造成170%攻击力的普通伤害，并封印所有技能2回合",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.7",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2476,12 +2476,12 @@
     "name": "叛徒之击",
     "description": "对单个敌人造成100%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -2492,12 +2492,12 @@
     "name": "护法之怒",
     "description": "对单个敌人造成110%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.1",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -2508,12 +2508,12 @@
     "name": "使者之威",
     "description": "对单个敌人造成95%攻击力的普通伤害，并降低其攻击力，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.95",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2533,12 +2533,12 @@
     "name": "精英叛变",
     "description": "对单个敌人造成120%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.2",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -2549,12 +2549,12 @@
     "name": "将领冲锋",
     "description": "对单个敌人造成130%攻击力的普通伤害，并降低其防御力30%，持续2回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.3",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2574,17 +2574,17 @@
     "name": "长老之杖",
     "description": "对单个敌人连续造成两次80%攻击力的普通伤害",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*0.8",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "damage",
         "formula": "attack*0.8",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 25,
@@ -2595,12 +2595,12 @@
     "name": "首领之怒",
     "description": "对所有敌人造成100%攻击力的普通伤害，并降低其攻击力40%，持续2回合",
     "cooldown": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.0",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2620,12 +2620,12 @@
     "name": "统帅之击",
     "description": "对单个敌人造成150%攻击力的普通伤害，并有25%几率使目标眩晕1回合",
     "cooldown": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.5",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2645,7 +2645,7 @@
     "name": "灵霄之光",
     "description": "为所有友方单位恢复60%攻击力的生命值，并提升其攻击力，持续2回合",
     "cooldown": 2,
-    "selector": "all_allies",
+    "selector": {"faction": "ally", "strategy": "all"},
     "steps": [
       {
         "type": "heal",
@@ -2672,12 +2672,12 @@
     "description": "终极技能：对所有敌人造成160%攻击力的普通伤害，并有50%几率使目标混乱2回合",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.6",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",
@@ -2698,12 +2698,12 @@
     "description": "终极技能：对单个敌人造成250%攻击力的普通伤害",
     "cooldown": 5,
     "maxUses": 2,
-    "selector": "single_enemy",
+    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*2.5",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       }
     ],
     "energyCost": 150,
@@ -2715,12 +2715,12 @@
     "description": "终极技能：对所有敌人造成180%攻击力的普通伤害，并封印所有技能2回合",
     "cooldown": 5,
     "maxUses": 1,
-    "selector": "all_enemies",
+    "selector": {"faction": "enemy", "strategy": "all"},
     "steps": [
       {
         "type": "damage",
         "formula": "attack*1.8",
-        "attackType": "normal"
+        "attackType": "normal_attack"
       },
       {
         "type": "debuff",

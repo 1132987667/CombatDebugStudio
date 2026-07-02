@@ -34,7 +34,6 @@ export class BattleLifecycleManager {
 
     battle.participants.forEach((participant) => {
       this.buffSystem.clearAllBuffs(participant.id)
-      participant.buffs = []
     })
 
     battle.roundState = RoundStatus.NONE
@@ -81,7 +80,6 @@ export class BattleLifecycleManager {
       participant.setAttribute(ATTRIBUTE_CODE.currentHealth, participant.getAttribute(ATTRIBUTE_CODE.maxHealth))
       participant.setAttribute(ATTRIBUTE_CODE.currentEnergy, 0)
       this.buffSystem.clearAllBuffs(participant.id)
-      participant.buffs = []
     })
 
     this.battleRecorder.clearRecording(battle.battleId)

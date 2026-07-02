@@ -51,6 +51,9 @@ export class PassiveSkillManager {
     this.passives.set(characterId, list)
   }
 
+  /**
+   * 触发被动技能
+   */
   triggerPassives(
     trigger: PassiveSkillTrigger,
     source: BattleEntity,
@@ -89,9 +92,9 @@ export class PassiveSkillManager {
     try {
       switch (condition) {
         case 'target_has_buff':
-          return target ? target.buffs.length > 0 : false
+          return target ? target.getBuffInstanceIds().length > 0 : false
         case 'source_has_buff':
-          return source.buffs.length > 0
+          return source.getBuffInstanceIds().length > 0
         case 'target_low_hp':
           return target ? (target.getAttribute('currentHealth' as any) / Math.max(1, target.getAttribute('maxHealth' as any))) < 0.3 : false
         default:

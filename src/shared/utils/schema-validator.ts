@@ -7,7 +7,6 @@
  */
 
 import { SkillConfig, SkillStep } from '@/domain/skill/types'
-import { isValidselectorTarget } from '@/domain/skill/types'
 
 /**
  * 验证结果接口
@@ -49,11 +48,14 @@ const skillSchema = {
       type: 'number',
       minimum: 1,
     },
-    targetType: {
-      type: 'string',
-    },
-    scope: {
-      type: 'string',
+    selector: {
+      type: 'object',
+      required: ['faction'],
+      properties: {
+        faction: { type: 'string', enum: ['enemy', 'ally', 'all', 'self'] },
+        strategy: { type: 'string', enum: ['all', 'random', 'lowest_hp', 'highest_hp', 'front', 'back', 'adjacent', 'first'] },
+        count: { type: 'number', minimum: 1 },
+      },
     },
     steps: {
       type: 'array',
@@ -85,11 +87,13 @@ const skillSchema = {
             type: 'number',
             minimum: 1,
           },
-          targetType: {
-            type: 'string',
-          },
-          scope: {
-            type: 'string',
+          targetConfig: {
+            type: 'object',
+            properties: {
+              faction: { type: 'string' },
+              strategy: { type: 'string' },
+              count: { type: 'number' },
+            },
           },
           condition: {
             type: 'string',
@@ -209,12 +213,14 @@ export function validateSkillConfig(
         errors.push(`Step ${index}: Missing required field: type`)
       }
 
-      // ✅ 添加：验证 step.target 字段
-      if (step.target) {
-        if (!isValidselectorTarget(step.target)) {
-          errors.push(
-            `Step ${index}: Invalid target: ${step.target}. Must be a valid selectorTarget value.`,
-          )
+      // 验证 step.targetConfig 字段（新格式）
+      if (step.targetConfig) {
+        const tc = step.targetConfig
+        if (!tc.faction || !['enemy', 'ally', 'all', 'self'].includes(tc.faction)) {
+          errors.push(`Step ${index}: targetConfig.faction must be one of: enemy, ally, all, self`)
+        }
+        if (tc.strategy && !['all', 'random', 'lowest_hp', 'highest_hp', 'front', 'back', 'adjacent', 'first'].includes(tc.strategy)) {
+          errors.push(`Step ${index}: targetConfig.strategy is invalid: ${tc.strategy}`)
         }
       }
 

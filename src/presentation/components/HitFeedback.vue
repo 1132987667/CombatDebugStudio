@@ -51,7 +51,7 @@
 import { ref, computed } from 'vue';
 
 export type HitType = 'damage' | 'heal' | 'block' | 'dodge' | 'parry';
-export type DamageType = 'physical' | 'magic' | 'fire' | 'ice' | 'lightning' | 'poison' | 'holy' | 'dark';
+export type DamageType = 'physical_damage' | 'elemental_damage' | 'true_damage';
 
 interface HitInfo {
   id: string;
@@ -87,7 +87,7 @@ let hitIdCounter = 0;
 
 function addHit(
   type: HitType = 'damage',
-  damageType: DamageType = 'physical',
+  damageType: DamageType = 'physical_damage',
   position?: { x: number; y: number },
   duration: number = 800,
   delay: number = 0,
@@ -187,15 +187,11 @@ defineExpose({
   animation: parryHit 0.7s ease-out forwards;
 }
 
+
 /* 伤害类型颜色 */
-.hit-effect.physical .hit-flash { background: radial-gradient(circle, rgba(255, 107, 107, 0.8) 0%, rgba(255, 107, 107, 0) 70%); }
-.hit-effect.magic .hit-flash { background: radial-gradient(circle, rgba(156, 136, 255, 0.8) 0%, rgba(156, 136, 255, 0) 70%); }
-.hit-effect.fire .hit-flash { background: radial-gradient(circle, rgba(255, 123, 37, 0.8) 0%, rgba(255, 123, 37, 0) 70%); }
-.hit-effect.ice .hit-flash { background: radial-gradient(circle, rgba(116, 185, 255, 0.8) 0%, rgba(116, 185, 255, 0) 70%); }
-.hit-effect.lightning .hit-flash { background: radial-gradient(circle, rgba(254, 202, 87, 0.8) 0%, rgba(254, 202, 87, 0) 70%); }
-.hit-effect.poison .hit-flash { background: radial-gradient(circle, rgba(162, 155, 254, 0.8) 0%, rgba(162, 155, 254, 0) 70%); }
-.hit-effect.holy .hit-flash { background: radial-gradient(circle, rgba(253, 203, 110, 0.8) 0%, rgba(253, 203, 110, 0) 70%); }
-.hit-effect.dark .hit-flash { background: radial-gradient(circle, rgba(108, 92, 231, 0.8) 0%, rgba(108, 92, 231, 0) 70%); }
+.hit-effect.physical_damage .hit-flash { background: radial-gradient(circle, rgba(255, 107, 107, 0.8) 0%, rgba(255, 107, 107, 0) 70%); }
+.hit-effect.elemental_damage .hit-flash { background: radial-gradient(circle, rgba(156, 136, 255, 0.8) 0%, rgba(156, 136, 255, 0) 70%); }
+.hit-effect.true_damage .hit-flash { background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%); }
 
 /* 命中效果组件 */
 .hit-flash {

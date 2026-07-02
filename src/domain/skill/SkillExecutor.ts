@@ -68,7 +68,7 @@ export class SkillExecutor {
     target: BattleEntity,
     record?: CombatRecord,
   ): void {
-    const healTarget = skillStep.target === 'self' || skillStep.targetType === 'self' ? source : target
+    const healTarget = skillStep.targetConfig?.faction === 'self' ? source : target
     const heal = this.healCalculator.calculateHeal(skillStep, source, healTarget, record)
     const actualHeal = this.healCalculator.applyHeal(healTarget, heal)
     action.heal += actualHeal
@@ -85,7 +85,7 @@ export class SkillExecutor {
     target: BattleEntity,
     record?: CombatRecord,
   ): void {
-    const buffId = skillStep.buffId || skillStep.effectId
+    const buffId = skillStep.buffId
     if (!buffId) return
 
     const registry = this.buffSystem.getScriptRegistry()
@@ -94,7 +94,7 @@ export class SkillExecutor {
       return
     }
 
-    const buffTarget = skillStep.target === 'self' || skillStep.targetType === 'self' ? source : target
+    const buffTarget = skillStep.targetConfig?.faction === 'self' ? source : target
     const buffConfig: any = {
       id: buffId, name: buffId, duration: skillStep.duration ?? 1,
       maxStacks: skillStep.stacks || 1, cooldown: 0,
@@ -104,7 +104,6 @@ export class SkillExecutor {
     }
 
     const instanceId = this.buffSystem.addBuff(buffTarget.id, buffId, buffConfig, 0, record)
-    if (instanceId) buffTarget.addBuff(instanceId)
     action.effects.push({ type: 'buff', targetId: buffTarget.id, buffId, instanceId, description: `${source.name} applies ${buffId} to ${buffTarget.name}` })
   }
 
@@ -132,7 +131,6 @@ export class SkillExecutor {
       parameters: skillStep.parameters || {},
     }
     const instanceId = this.buffSystem.addBuff(target.id, buffId, config)
-    if (instanceId) target.addBuff(instanceId)
     action.effects.push({ type: 'status', targetId: target.id, buffId, description: `${source.name} applies ${controlType === ControlType.STUN ? 'stun' : 'silence'} to ${target.name}` })
   }
 }

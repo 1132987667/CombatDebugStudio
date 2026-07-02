@@ -211,12 +211,8 @@
           <div class="stat-value">{{ tooltipContent.cooldown || 0 }}回合</div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">目标类型</div>
-          <div class="stat-value">{{ getTargetTypeName(tooltipContent.targetType) }}</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">作用范围</div>
-          <div class="stat-value">{{ getScopeName(tooltipContent.scope) }}</div>
+          <div class="stat-label">目标</div>
+          <div class="stat-value">{{ formatTargetConfig(tooltipContent.selector) }}</div>
         </div>
       </div>
 
@@ -290,7 +286,7 @@ import AttributeTooltip from "@/presentation/components/AttributeTooltip.vue";
 import Notification from "@/presentation/components/Notification.vue";
 import { ATTRIBUTE_CODE, type Modifier, AttributeValueType } from "@/domain/attribute/types";
 import type { SkillConfig } from "@/domain/skill/types";
-import { SELECTOR_TARGET_NAMES } from "@/domain/skill/types";
+import { formatTargetConfig } from "@/domain/skill/types";
 import type { BattleManager } from '@/domain/battle/BattleManager';
 import { SkillType } from '@/domain/skill/types';
 
@@ -393,31 +389,6 @@ const getSkillTypeName = (skill: SkillConfig): string => {
   return '主动';
 };
 
-/**
- * 获取目标类型的中文名称
- * @param targetType - 目标类型
- * @returns 目标类型中文名称
- */
-const getTargetTypeName = (targetType?: string): string => {
-  if (!targetType) return '未知';
-  return SELECTOR_TARGET_NAMES[targetType as keyof typeof SELECTOR_TARGET_NAMES] || '未知';
-};
-
-/**
- * 获取作用范围的中文名称
- * @param scope - 作用范围
- * @returns 作用范围中文名称
- */
-const getScopeName = (scope?: string): string => {
-  if (!scope) return '未知';
-  return SELECTOR_TARGET_NAMES[scope as keyof typeof SELECTOR_TARGET_NAMES] || '未知';
-};
-
-/**
- * 获取技能步骤类型的中文名称
- * @param stepType - 技能步骤类型
- * @returns 技能步骤类型中文名称
- */
 const getStepTypeName = (stepType?: string): string => {
   const stepTypes: Record<string, string> = {
     'DAMAGE': '造成伤害',
@@ -729,7 +700,7 @@ const exportState = async () => {
         enabled: char.enabled,
 
         // Buff列表
-        buffs: char.buffs,
+        buffs: char.getBuffInstanceIds(),
 
         // 技能配置
         skills: char.skills,

@@ -2,7 +2,8 @@ import type {
   SkillConfig,
   SkillStep,
 } from '@/domain/skill/types'
-import type { BattleEntity } from '@/domain/battle/types'
+import { AttackType } from '@/domain/skill/types'
+import type { BattleAction, BattleEntity } from '@/domain/battle/types'
 import {
   ATTRIBUTE_CODE,
 } from '@/domain/attribute/types'
@@ -78,7 +79,7 @@ export class SkillManager {
     for (const config of configs) {
       this.skillConfigs.set(config.id, config)
     }
-    battleLogManager.addDebugLog(`Loaded ${configs.length} skill configs`, LogLevel.INFO)
+    battleLogManager.addDebugLog(`已加载 ${configs.length} 个技能配置`, LogLevel.INFO)
   }
 
   getSkillConfig(skillId: string): SkillConfig | undefined {
@@ -110,41 +111,48 @@ export class SkillManager {
     source: BattleEntity,
     target: BattleEntity,
     currentTurn: number,
-  ): any {
+  ): BattleAction | null {
     const config = this.skillConfigs.get(skillId)
     if (!config) {
-      battleLogManager.addDebugLog(`Skill ${skillId} not found`, LogLevel.WARN)
+      battleLogManager.addDebugLog(`技能 ${skillId} 不存在配置`, LogLevel.WARN)
+      console.error(`技能 ${skillId} 不存在配置`)
       return null
     }
 
     if (source.getAttribute) {
       const currentEnergy = source.getAttribute(ATTRIBUTE_CODE.currentEnergy)
-      if (currentEnergy < (config.energyCost || 0)) {
-        battleLogManager.addDebugLog(`Insufficient energy for skill ${skillId}`, LogLevel.WARN)
+      if (isNaN(config.energyCost)) {
+        battleLogManager.addDebugLog(`技能 ${skillId} 能量消耗值无效`, LogLevel.WARN)
+        console.error(`技能 ${skillId} 能量消耗值无效`)
+        return null
+      }
+      if (currentEnergy < config.energyCost) {
+        battleLogManager.addDebugLog(`技能 ${skillId} 能量不足`, LogLevel.WARN)
+        console.error(`技能 ${skillId} 能量不足`)
         return null
       }
     }
 
-    const targets = this.resolveTargets(config, source, target)
-    if (targets.length === 0) {
-      battleLogManager.addDebugLog(`No valid targets for skill ${skillId}`, LogLevel.WARN)
+    if (!target) {
+      battleLogManager.addDebugLog(`技能 ${skillId} 无有效目标`, LogLevel.WARN)
+      console.error(`技能 ${skillId} 无有效目标`)
       return null
     }
 
-    // ponytail: check stun BEFORE skill execution and energy spend,
-    // so we don't apply damage + consume energy on a stunned target
+    // 检查目标是否被眩晕
     const targetIsStunned = this.isTargetStunned(target)
     if (targetIsStunned) {
-      battleLogManager.addDebugLog(`Skill ${skillId} cancelled: target ${target.name} is stunned`, LogLevel.WARN)
+      battleLogManager.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, LogLevel.WARN)
+      console.error(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`)
       const action: any = {
         id: `action_${Date.now()}`,
         sourceId: source.id,
         skillId,
         skillName: config.name || skillId,
-        type: 'skill',
+        type: ActionTypes.SKILL,
         damage: 0,
         heal: 0,
-        effects: [{ type: 'status', targetId: target.id, description: `${target.name} is stunned, skill cancelled` }],
+        effects: [{ type: 'status', targetId: target.id, description: `${target.name} 已被眩晕，技能取消` }],
         targetId: target.id,
         targets: [],
         timestamp: Date.now(),
@@ -164,12 +172,12 @@ export class SkillManager {
       sourceId: source.id,
       skillId,
       skillName: config.name || skillId,
-      type: 'skill',
+      type: ActionTypes.SKILL,
       damage: 0,
       heal: 0,
       effects: [],
       targetId: target.id,
-      targets: targets.map((t) => t.id),
+      targets: [target.id],
       timestamp: Date.now(),
       currentTurn,
     }
@@ -185,45 +193,19 @@ export class SkillManager {
 
     const steps = this.normalizeSteps(config.steps || [])
     for (const step of steps) {
-      for (const t of targets) {
-        const ctx: CalculationContext = {
-          skillStep: this.extendStep(step, config),
-          action,
-          source,
-          targets: [t],
-          record: undefined,
-        }
-        this.executeStep(ctx)
+      const ctx: CalculationContext = {
+        skillStep: this.extendStep(step, config),
+        action,
+        source,
+        targets: [target],
+        record: undefined,
       }
+      this.executeStep(ctx)
     }
 
-    battleLogManager.addDebugLog(`Executed skill ${config.name || skillId}`, LogLevel.DEBUG)
+    battleLogManager.addDebugLog(`执行技能 ${config.name || skillId}`, LogLevel.DEBUG)
+    console.error(`执行技能 ${config.name || skillId}`)
     return action
-  }
-
-  private resolveTargets(
-    config: SkillConfig,
-    source: BattleEntity,
-    target: BattleEntity,
-  ): BattleEntity[] {
-    const selector = config.selector || 'single_enemy'
-    switch (selector) {
-      case 'self':
-        return [source]
-      case 'single_enemy':
-      case 'single' as any:
-        return target ? [target] : []
-      case 'all_enemies':
-        return [target]
-      case 'all_allies':
-        return [source]
-      case 'lowest_hp_ally':
-        return [source]
-      case 'random_enemy':
-        return target ? [target] : []
-      default:
-        return target ? [target] : []
-    }
   }
 
   private normalizeSteps(steps: SkillStep[]): SkillStep[] {
@@ -233,9 +215,8 @@ export class SkillManager {
   private extendStep(step: SkillStep, config: SkillConfig): any {
     return {
       ...step,
-      attackType: (config as any).attackType || 'skill',
-      buffId: (step as any).buffId || (step as any).effectId,
-      effectId: (step as any).effectId || (step as any).buffId,
+      attackType: (config as any).attackType || AttackType.SKILL_ATTACK,
+      buffId: step.buffId,
     }
   }
 
@@ -249,13 +230,9 @@ export class SkillManager {
     )
   }
 
+  /** 检查目标是否被眩晕 */
   private isTargetStunned(target: BattleEntity): boolean {
-    const buffsOnTarget = target.buffs || []
-    const stunPresent = buffsOnTarget.some((b: any) => {
-      if (typeof b === 'string') return b.includes('stun') || b.includes('STUN')
-      return false
-    })
-    if (stunPresent) return true
+    if (target.hasBuff('buff_stun')) return true
     const controlType = this.buffSystem.getHighestPriorityControlEffect(target.id)
     return controlType === ControlType.STUN
   }

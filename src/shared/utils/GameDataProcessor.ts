@@ -16,7 +16,7 @@ import passiveSkillsData from '@configs/skills/skill_passive.json'
 import newSkillsData from '@configs/skills/skills_new.json'
 import buffsData from '@configs/buffs/buffs.json'
 import type { Enemy } from '@/shared/types/enemy'
-import type { SkillConfig } from '@/domain/skill/types'
+import { type SkillConfig } from '@/domain/skill/types'
 import type { SceneData } from '@/shared/types/scene'
 import type { CharacterStats } from '@/domain/character/types'
 import type { AttributeValueType } from '@/domain/attribute/types'
@@ -33,7 +33,7 @@ import type {
 } from '@/domain/attribute/modifier-template'
 import {
   BattleParticipantImpl,
-  type BattleParticipantInitData,
+  type BattleParticipantData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
 import { toArray } from '@/shared/utils/Utils'
 import { Counter } from '@/shared/utils/Counter'
@@ -92,7 +92,7 @@ export class GameDataProcessor {
   }
 
   static getSkillsData(): SkillConfig[] {
-    return skillsData.concat(passiveSkillsData, newSkillsData)
+    return skillsData.concat(passiveSkillsData, newSkillsData) as SkillConfig[]
   }
 
   /**
@@ -160,7 +160,7 @@ export class GameDataProcessor {
     const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive)
 
     // 2. 构造标准初始化 DTO
-    const initData: BattleParticipantInitData = {
+    const initData: BattleParticipantData = {
       id: `[${type}]_${enemy.id}_${counter.next()}`,
       name: enemy.name,
       type,

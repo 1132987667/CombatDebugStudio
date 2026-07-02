@@ -1,8 +1,9 @@
 ﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
+import { AttackType } from '@/domain/skill/types'
 import type { CalculationLog } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
-import { ATTRIBUTE_CODE, LEGACY_ATTR_MAP } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, LEGACY_ATTR_MAP, getAttributeDefaultValue } from '@/domain/attribute/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 
 export interface DamageCalculationConfig {
@@ -66,6 +67,17 @@ export class DamageCalculator {
     return [...this.calculationLogs]
   }
 
+  /**
+   *  计算伤害 
+   * 逻辑为:
+   * 1. 命中/闪避判定
+   * 2. 暴击判定
+   * 3. 基础伤害计算
+   * 4. 额外加成处理
+   * 5. 暴击倍率
+   * 6. 防御计算（递减公式）
+   * 7. 最终伤害计算
+  */
   calculateDamage(
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
@@ -73,24 +85,35 @@ export class DamageCalculator {
     record?: CombatRecord,
   ): DamageResult {
     this.calculationLogs = []
-    let isCritical = false
     let isMiss = false
 
-    // 命中/闪避判定 — 默认命中率 1（100%），减去目标闪避率
-    const hitRate = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hit, 'hit') || 1
-    const dodgeRate = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodge, 'dodge') || 0
-    const actualHitRate = Math.min(1, hitRate - dodgeRate)
-    if (Math.random() > actualHitRate) {
+    const damageResult: DamageResult = {
+      damage: 0,
+      isCritical: false,
+      isMiss: false,
+      actualDamage: 0,
+    }
+
+    // 命中/闪避判定 — 默认命中率100%，减去目标闪避率
+    const hitRate = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hit)
+    const dodgeRate = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodge)
+    let actualHitRate = hitRate - dodgeRate
+    if (actualHitRate < 0) {
+      actualHitRate = 0
+    }
+    if (Math.random() * 100 > actualHitRate) {
       isMiss = true
-      battleLogManager.addDebugLog('Attack missed!', LogLevel.INFO)
-      return { damage: 0, isCritical: false, isMiss: true, actualDamage: 0 }
+      damageResult.isMiss = true
+      return damageResult
     }
 
     // 暴击判定
-    const cr = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.critRate, 'critRate')
-    const critRate = cr ?? this.config.critRate
-    if (Math.random() < critRate / 100) {
-      isCritical = true
+    let cr = source.getAttribute(ATTRIBUTE_CODE.critRate)
+    if (Number.isNaN(cr)) {
+      cr = getAttributeDefaultValue(ATTRIBUTE_CODE.critRate)
+    }
+    if (Math.random() * 100 < cr) {
+      damageResult.isCritical = true
     }
 
     // 基础伤害计算
@@ -107,11 +130,11 @@ export class DamageCalculator {
     }
 
     // 暴击倍率
-    if (isCritical) {
-      const cd = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.critDamage, 'critDamage')
+    if (damageResult.isCritical) {
+      const cd = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.critDamage)
       const critMultiplier = (cd ?? this.config.critDamage) / 100
       damage = Math.floor(damage * critMultiplier)
-      battleLogManager.addDebugLog(`Critical hit! Damage x${critMultiplier}`, LogLevel.INFO)
+      battleLogManager.addDebugLog(`暴击！伤害 x${critMultiplier}`, LogLevel.INFO)
     }
 
     // 防御计算（递减公式�?
@@ -121,8 +144,8 @@ export class DamageCalculator {
     damage = Math.floor(damage * defenseMultiplier)
 
     // 攻击类型伤害减免
-    const attackType = (skillStep as any).attackType || 'skill'
-    if (attackType === 'normal') {
+    const atkType = (skillStep as any).attackType || AttackType.SKILL_ATTACK
+    if (atkType === AttackType.NORMAL_ATTACK) {
       const reduction = getAttributeValue(target, 'NORMAL_ATK_DMG_REDUCTION')
       damage = Math.floor(damage * (1 - reduction / 100))
     } else {
@@ -183,7 +206,7 @@ export class DamageCalculator {
       const minAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.minAttack)
       const maxAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.maxAttack)
       const levelBonus = (source.level || 1) * 2
-      if ((skillStep as any).attackType === 'normal' && minAtk > 0 && maxAtk > 0) {
+      if ((skillStep as any).attackType === AttackType.NORMAL_ATTACK && minAtk > 0 && maxAtk > 0) {
         baseDamage = Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
       } else {
         baseDamage = Math.floor(atk + levelBonus)
@@ -261,16 +284,12 @@ export class DamageCalculator {
   private getAttributeOrConfig(
     entity: BattleEntity,
     code: ATTRIBUTE_CODE,
-    configKey: string,
   ): number {
     const attrValue = entity.getAttribute(code)
-    if (attrValue > 0) return attrValue
-    // attrValue 为 0 — 回退到配置或合理默认值
-    const configValue = (this.config as any)[configKey]
-    if (configValue !== undefined) return configValue
-    // ponytail: 命中/闪避等战斗关键属性的合理默认值，消除调用侧 || 1 的现场补救
-    if (configKey === 'hit') return 1
-    if (configKey === 'dodge') return 0
+    // ponytail: 0 是有效的百分数值（如 0% 暴击），不能用 falsy 判断
+    if (attrValue != null) {
+      return attrValue
+    }
     return 0
   }
 

@@ -245,7 +245,7 @@
           "percent": 0.30
         },
         "probability": 0.20,
-        "condition": "damageType == 'magical'"
+        "condition": "damageType == 'elemental_damage'"
       }
     ]
   },
@@ -564,7 +564,7 @@
         "params": {
           "healPercent": 0.20
         },
-        "condition": "damageType == 'fire'"
+        "condition": "damageType == 'elemental_damage'"
       }
     ]
   },
@@ -993,7 +993,7 @@
         "phase": "ON_TURN_START",
         "scriptId": "deal_dot_damage",
         "params": {
-          "damageType": "poison",
+          "damageType": "elemental_damage",
           "baseDamageFormula": "target.maxHp * 0.03"
         }
       }
@@ -1009,7 +1009,7 @@
         "phase": "ON_TURN_START",
         "scriptId": "deal_dot_damage",
         "params": {
-          "damageType": "poison",
+          "damageType": "elemental_damage",
           "baseDamageFormula": "target.maxHp * 0.05"
         }
       }

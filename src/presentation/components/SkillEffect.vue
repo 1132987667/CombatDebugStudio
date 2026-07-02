@@ -44,7 +44,7 @@
 import { ref, computed } from 'vue';
 
 export type SkillEffectType = 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate' | 'area' | 'projectile' | 'channel';
-export type DamageType = 'physical' | 'magic' | 'fire' | 'ice' | 'lightning' | 'poison' | 'holy' | 'dark';
+export type DamageType = 'physical_damage' | 'elemental_damage' | 'true_damage';
 
 interface SkillEffectInfo {
   id: string;
@@ -78,19 +78,14 @@ let effectIdCounter = 0;
 const particleCount = computed(() => Math.floor(Math.random() * 8) + 4);
 
 const effectIcons: Record<DamageType, string> = {
-  physical: '⚔️',
-  magic: '✨',
-  fire: '🔥',
-  ice: '❄️',
-  lightning: '⚡',
-  poison: '☠️',
-  holy: '✨',
-  dark: '💀'
+  physical_damage: '⚔️',
+  elemental_damage: '✨',
+  true_damage: '💥'
 };
 
 function addSkillEffect(
   type: SkillEffectType = 'attack', 
-  damageType: DamageType = 'physical', 
+  damageType: DamageType = 'physical_damage', 
   name?: string, 
   icon?: string, 
   position?: { x: number; y: number }, 
@@ -209,44 +204,19 @@ defineExpose({
 }
 
 /* 伤害类型效果 */
-.skill-effect.physical {
+.skill-effect.physical_damage {
   background: radial-gradient(circle, rgba(255, 107, 107, 0.8) 0%, rgba(255, 107, 107, 0) 70%);
   box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
 }
 
-.skill-effect.magic {
+.skill-effect.elemental_damage {
   background: radial-gradient(circle, rgba(156, 136, 255, 0.8) 0%, rgba(156, 136, 255, 0) 70%);
   box-shadow: 0 0 20px rgba(156, 136, 255, 0.5);
 }
 
-.skill-effect.fire {
-  background: radial-gradient(circle, rgba(255, 123, 37, 0.8) 0%, rgba(255, 123, 37, 0) 70%);
-  box-shadow: 0 0 25px rgba(255, 123, 37, 0.6);
-}
-
-.skill-effect.ice {
-  background: radial-gradient(circle, rgba(116, 185, 255, 0.8) 0%, rgba(116, 185, 255, 0) 70%);
-  box-shadow: 0 0 20px rgba(116, 185, 255, 0.5);
-}
-
-.skill-effect.lightning {
-  background: radial-gradient(circle, rgba(254, 202, 87, 0.8) 0%, rgba(254, 202, 87, 0) 70%);
-  box-shadow: 0 0 30px rgba(254, 202, 87, 0.7);
-}
-
-.skill-effect.poison {
-  background: radial-gradient(circle, rgba(162, 155, 254, 0.8) 0%, rgba(162, 155, 254, 0) 70%);
-  box-shadow: 0 0 20px rgba(162, 155, 254, 0.5);
-}
-
-.skill-effect.holy {
-  background: radial-gradient(circle, rgba(253, 203, 110, 0.8) 0%, rgba(253, 203, 110, 0) 70%);
-  box-shadow: 0 0 25px rgba(253, 203, 110, 0.6);
-}
-
-.skill-effect.dark {
-  background: radial-gradient(circle, rgba(108, 92, 231, 0.8) 0%, rgba(108, 92, 231, 0) 70%);
-  box-shadow: 0 0 20px rgba(108, 92, 231, 0.5);
+.skill-effect.true_damage {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
 }
 
 /* 高强度效果 */

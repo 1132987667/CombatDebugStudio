@@ -6,7 +6,7 @@
  * 确保系统中所有战斗日志相关的类型引用保持一致
  */
 
-import type { BattleAction } from '@/domain/battle/types'
+import type { BattleAction, ActionTypes } from '@/domain/battle/types'
 
 /**
  * 日志级别 - 统一所有日志系统的级别定义
@@ -699,7 +699,7 @@ function generateMissLogSegments(
   segments: LogSegment[]
 } {
   const skillName = action.skillName || '普通攻击'
-  const isSkill = action.type === 'skill'
+  const isSkill = action.type === ActionTypes.SKILL
 
   return {
     category: 'status',

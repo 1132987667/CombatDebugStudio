@@ -99,34 +99,12 @@ export interface CriticalConfig {
  * 扩展的技能步骤接口（DAMAGE/HEAL类型专用）
  */
 export interface ExtendedSkillStep extends SkillStep {
-  /**
-   * 步骤ID (兼容旧版本)
-   * 用于标识步骤的唯一ID
-   */
-  id?: string
-
-  /**
-   * 目标ID (兼容旧版本)
-   * 指定该步骤的目标角色ID
-   */
-  targetId?: string
-
-  /**
-   * 伤害/治疗计算配置
-   * 当type为DAMAGE或HEAL时使用
-   */
-  calculation?: DamageHealCalculationConfig
-
-  /**
-   * 目标属性修正（可选）
-   * 对目标特定属性的修正系数
-   */
-  targetModifiers?: Record<string, number>
-
-  /**
-   * 暴击配置（可选）
-   */
-  criticalConfig?: CriticalConfig
+  id?: string // 步骤ID 用于标识步骤的唯一ID
+  targetId?: string // 目标ID 指定该步骤的目标角色ID
+  calculation?: DamageHealCalculationConfig // 伤害/治疗计算配置 当type为DAMAGE或HEAL时使用
+  targetModifiers?: Record<string, number> // 目标属性修正（可选） 对目标特定属性的修正系数
+  criticalConfig?: CriticalConfig // 暴击配置（可选） 暴击率和倍率
+  attackType?: AttackType // 攻击类型（可选） 指定该步骤的攻击类型（普通攻击、技能攻击）
 }
 
 /**
@@ -165,16 +143,27 @@ export interface CalculationError {
 }
 
 /**
- * 伤害类型枚举
- * 定义伤害的类型（普攻、技能、真实）
+ * 攻击类型枚举
+ * 定义攻击的类型（普通攻击、技能攻击）——用于伤害减免计算
  */
-export const damageType = {
+export const AttackType = {
   NORMAL_ATTACK: 'normal_attack',
   SKILL_ATTACK: 'skill_attack',
-  REAL_ATTACK: 'real_attack',
 }
 
-export type DamageType = (typeof damageType)[keyof typeof damageType]
+export type AttackType = (typeof AttackType)[keyof typeof AttackType]
+
+/**
+ * 伤害类型枚举
+ * 定义伤害的类型（物理伤害、元素伤害、真实伤害）——用于展示/视觉反馈
+ */
+export const DamageType = {
+  PHYSICAL: 'physical_damage',
+  ELEMENTAL: 'elemental_damage',
+  TRUE: 'true_damage',
+}
+
+export type DamageType = (typeof DamageType)[keyof typeof DamageType]
 
 /**
  * 属性类型
@@ -183,82 +172,59 @@ export type DamageType = (typeof damageType)[keyof typeof damageType]
 export type ElementType = 'PHYSICAL' | 'JIN' | 'MU' | 'SHU' | 'HUO' | 'TU'
 
 /**
- * 技能作用范围枚举
- * 定义技能的作用范围（敌人、友方、自己、所有单位等）
+ * 目标阵营
  */
-export type selectorTarget =
-  | 'enemy' // 敌人
-  | 'ally' // 友方
-  | 'self' // 自己
-  | 'all' // 所有单位
-  | 'enemy_front' // 敌人前排
-  | 'enemy_back' // 敌人后排
-  | 'ally_front' // 友方前排
-  | 'ally_back' // 友方后排
-  | 'adjacent' // 相邻目标
-  | 'lowest_hp_ally' // 生命值最低的友方
-  | 'lowest_hp_enemy' // 生命值最低的敌人
-  | 'random_enemy' // 随机敌人
-  | 'random_ally' // 随机友方
-  | 'lowest_ally' // 生命值最低的友方单位
-  | 'random_adjacent' // 随机相邻目标
-  | 'all_allies' // 所有友方单位
-  | 'all_enemies' // 所有敌方单位
+export const TargetFaction = {
+  ENEMY:  'enemy',       // 敌方
+  ALLY:   'ally',       // 友方
+  ALL:    'all',       // 所有单位
+  SELF:   'self'       // 自身
+}
+export type TargetFaction = (typeof TargetFaction)[keyof typeof TargetFaction]
 
 /**
- * 技能作用范围常量数组
- * 用于验证和迭代所有有效的 selectorTarget 值
+ * 目标选择策略
  */
-export const SELECTOR_TARGET: readonly selectorTarget[] = [
-  'enemy',
-  'ally',
-  'self',
-  'all',
-  'enemy_front',
-  'enemy_back',
-  'ally_front',
-  'ally_back',
-  'adjacent',
-  'lowest_hp_ally',
-  'lowest_hp_enemy',
-  'random_enemy',
-  'random_ally',
-  'lowest_ally',
-  'random_adjacent',
-  'all_allies',
-  'all_enemies',
-] as const
+export const TargetStrategy = {
+  ALL:        'all',        // 全部目标
+  RANDOM:     'random',     // 随机
+  LOWEST_HP:  'lowest_hp',  // 最低血量
+  HIGHEST_HP: 'highest_hp', // 最高血量
+  FRONT:      'front',      // 前排
+  BACK:       'back',       // 后排
+  ADJACENT:   'adjacent',   // 相邻
+  FIRST:      'first',      // 第一个（默认）
+} as const
+export type TargetStrategy = (typeof TargetStrategy)[keyof typeof TargetStrategy]
 
 /**
- * 技能作用范围中文映射
+ * 组合式目标配置（新格式，推荐）
  */
-export const SELECTOR_TARGET_NAMES: Record<selectorTarget, string> = {
-  enemy: '敌人',
-  ally: '友方',
-  self: '自己',
-  all: '所有单位',
-  enemy_front: '敌人前排',
-  enemy_back: '敌人后排',
-  ally_front: '友方前排',
-  ally_back: '友方后排',
-  adjacent: '相邻目标',
-  lowest_hp_ally: '生命值最低的友方',
-  lowest_hp_enemy: '生命值最低的敌人',
-  random_enemy: '随机敌人',
-  random_ally: '随机友方',
-  lowest_ally: '生命值最低的友方单位',
-  random_adjacent: '随机相邻目标',
-  all_allies: '所有友方单位',
-  all_enemies: '所有敌方单位',
+export interface SkillTargetConfig {
+  /** 目标阵营 */
+  faction: TargetFaction
+  /** 选择策略（默认 'first'） */
+  strategy?: TargetStrategy
+  /** 选择数量（默认 1，'all' 策略时忽略） */
+  count?: number | typeof TargetStrategy.ALL
 }
 
 /**
- * 检查是否为有效的技能作用范围
- * @param value 待检查的值
- * @returns 是否为有效的 selectorTarget
+ * 将 SkillTargetConfig 转换为人类可读的中文描述
  */
-export function isValidselectorTarget(value: string): value is selectorTarget {
-  return SELECTOR_TARGET.includes(value as selectorTarget)
+export function formatTargetConfig(config: SkillTargetConfig): string {
+  const factionName: Record<string, string> = {
+    enemy: '敌方', ally: '友方', all: '所有单位', self: '自身',
+  }
+  const strategyName: Record<string, string> = {
+    all: '全部', random: '随机', lowest_hp: '最低血量', highest_hp: '最高血量',
+    front: '前排', back: '后排', adjacent: '相邻', first: '',
+  }
+  const f = factionName[config.faction] || config.faction
+  const s = strategyName[config.strategy || 'first']
+  if (!s) return f
+  const count = typeof config.count === 'number' ? `${config.count}个` : ''
+  return `${s}${count}${f}`
 }
 
 /**
@@ -335,10 +301,10 @@ export interface SkillStep {
 
   // ========== 新版字段 ==========
   /**
-   * 目标选择（标准化）
+   * 目标选择配置（标准化，推荐）
    * 用于 deal_damage / heal / apply_buff / modify_attribute 等步骤
    */
-  target?: selectorTarget
+  targetConfig?: SkillTargetConfig
 
   /**
    * 伤害类型
@@ -403,16 +369,6 @@ export interface SkillStep {
   effectParams?: Record<string, any>
 
   /**
-   * 目标类型（旧版）
-   */
-  targetType?: selectorTarget
-
-  /**
-   * 作用范围（旧版）
-   */
-  scope?: selectorTarget
-
-  /**
    * 资源消耗类型（旧版）
    */
   costType?: CostType
@@ -438,7 +394,7 @@ export interface SkillConfig {
   energyCost: number // 能量消耗
   cooldown: number // 冷却时间(回合数)
   maxUses?: number // 最大使用次数
-  selector: selectorTarget // 目标选择器
+  selector: SkillTargetConfig // 目标选择配置
   steps: SkillStep[] // 技能步骤列表
   condition?: string // 施放条件
   skillType?: SkillType // 技能类型
@@ -531,7 +487,7 @@ export function convertSkillConfigToSkill(
   const skill: Skill = {
     id: config.id,
     name: config.name,
-    type: inferSkillType(config),
+    type: config.skillType,
     energyCost: config.energyCost || 0,
     cooldown: config.cooldown || 0,
     lastUsed,
@@ -547,26 +503,8 @@ export function convertSkillConfigToSkill(
   }
 
   if (includeBuffId) {
-    // 优先使用新版的 buffId，其次旧版 effectId
-    skill.buffId = (firstStep as any)?.buffId || firstStep?.effectId
+    skill.buffId = firstStep?.buffId || ''
   }
 
   return skill
-}
-
-/**
- * 根据 SkillConfig 推断 SkillType
- */
-function inferSkillType(config: SkillConfig): SkillType {
-  if (config.skillType === SkillType.PASSIVE) {
-    return SkillType.PASSIVE
-  }
-  if (config.skillType === SkillType.ULTIMATE) {
-    return SkillType.ULTIMATE
-  }
-  // 兼容旧版可能使用 'small' 字符串
-  if ((config as SkillConfig).skillType === SkillType.SMALL) {
-    return SkillType.SMALL
-  }
-  return SkillType.SMALL
 }

@@ -389,17 +389,7 @@ const handleAddStatus = () => {
   const selectedChar = selectedCharacter.value;
   if (selectedChar) {
     const activeStatuses = injectableStatuses.value.filter(s => s.active);
-    activeStatuses.forEach(status => {
-      selectedChar.buffs.push({
-        id: `status_${Date.now()}_${status.id}`,
-        name: status.name,
-        duration: status.duration,
-        maxStacks: 1,
-        cooldown: 0,
-        description: status.effect,
-        isPositive: status.isPositive
-      });
-    });
+    // ponytail: 实体不再存储 buffs，状态注入需通过 BuffSystem 重新实现（待 Step 2）
     if (activeStatuses.length > 0) {
       logManager.addActionLog({
         source: "系统",
@@ -414,7 +404,7 @@ const handleAddStatus = () => {
 const handleClearStatuses = () => {
   const selectedChar = selectedCharacter.value;
   if (selectedChar) {
-    selectedChar.buffs = [];
+    // ponytail: 实体不再存储 buffs，清除状态需通过 BuffSystem 重新实现（待 Step 2）
     logManager.addActionLog({ source: "系统", action: "清除状态", target: selectedChar.name, message: "所有状态已清除" });
   }
 };

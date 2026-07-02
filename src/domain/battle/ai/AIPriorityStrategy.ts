@@ -161,8 +161,8 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
     const energyPercent = enemy.getAttribute(ATTRIBUTE_CODE.currentEnergy) / enemy.getAttribute(ATTRIBUTE_CODE.maxEnergy)
     threat += energyPercent * BATTLE_CONSTANTS.THREAT_ENERGY_WEIGHT
 
-    if (enemy.buffs.length > 0) {
-      threat += enemy.buffs.length * BATTLE_CONSTANTS.THREAT_BUFF_WEIGHT
+    if (enemy.getBuffInstanceIds().length > 0) {
+      threat += enemy.getBuffInstanceIds().length * BATTLE_CONSTANTS.THREAT_BUFF_WEIGHT
     }
 
     return threat

@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 
-export type DamageType = 'physical' | 'magic' | 'fire' | 'ice' | 'lightning' | 'poison' | 'holy' | 'dark';
+export type DamageType = 'physical_damage' | 'elemental_damage' | 'true_damage';
 export type DamageCategory = 'damage' | 'heal' | 'critical' | 'miss' | 'combo' | 'shield';
 
 interface DamageInfo {
@@ -73,31 +73,21 @@ const damages = ref<DamageInfo[]>([]);
 let damageIdCounter = 0;
 
 const damageTypeIcons: Record<DamageType, string> = {
-  physical: '⚔️',
-  magic: '✨',
-  fire: '🔥',
-  ice: '❄️',
-  lightning: '⚡',
-  poison: '☠️',
-  holy: '✨',
-  dark: '💀'
+  physical_damage: '⚔️',
+  elemental_damage: '✨',
+  true_damage: '💥'
 };
 
 const damageTypeColors: Record<DamageType, string> = {
-  physical: '#ff6b6b',
-  magic: '#9c88ff',
-  fire: '#ff7b25',
-  ice: '#74b9ff',
-  lightning: '#feca57',
-  poison: '#a29bfe',
-  holy: '#fdcb6e',
-  dark: '#6c5ce7'
+  physical_damage: '#ff6b6b',
+  elemental_damage: '#9c88ff',
+  true_damage: '#ffffff'
 };
 
 function addDamage(
   value: number | string, 
   type: DamageCategory = 'damage', 
-  damageType: DamageType = 'physical', 
+  damageType: DamageType = 'physical_damage', 
   isCritical: boolean = false, 
   isCombo: boolean = false,
   isShieldDamage: boolean = false,
@@ -192,15 +182,11 @@ defineExpose({
   margin-left: 2px;
 }
 
+
 /* 伤害类型颜色 */
-.damage-number.physical { color: #ff6b6b; }
-.damage-number.magic { color: #9c88ff; }
-.damage-number.fire { color: #ff7b25; }
-.damage-number.ice { color: #74b9ff; }
-.damage-number.lightning { color: #feca57; }
-.damage-number.poison { color: #a29bfe; }
-.damage-number.holy { color: #fdcb6e; }
-.damage-number.dark { color: #6c5ce7; }
+.damage-number.physical_damage { color: #ff6b6b; }
+.damage-number.elemental_damage { color: #9c88ff; }
+.damage-number.true_damage { color: #ffffff; }
 
 /* 伤害类别样式 */
 .damage-number.damage {
@@ -236,11 +222,10 @@ defineExpose({
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
 
-.damage-number.critical.physical { animation: criticalPhysicalFloat 1.8s ease-out forwards; }
-.damage-number.critical.magic { animation: criticalMagicFloat 1.8s ease-out forwards; }
-.damage-number.critical.fire { animation: criticalFireFloat 1.8s ease-out forwards; }
-.damage-number.critical.ice { animation: criticalIceFloat 1.8s ease-out forwards; }
-.damage-number.critical.lightning { animation: criticalLightningFloat 1.8s ease-out forwards; }
+
+.damage-number.critical.physical_damage { animation: criticalPhysicalFloat 1.8s ease-out forwards; }
+.damage-number.critical.elemental_damage { animation: criticalElementalFloat 1.8s ease-out forwards; }
+.damage-number.critical.true_damage { animation: criticalTrueFloat 1.8s ease-out forwards; }
 
 /* 基础浮动动画 */
 @keyframes damageFloat {
@@ -282,7 +267,7 @@ defineExpose({
   }
 }
 
-@keyframes criticalMagicFloat {
+@keyframes criticalElementalFloat {
   0% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -305,72 +290,26 @@ defineExpose({
   }
 }
 
-@keyframes criticalFireFloat {
+@keyframes criticalTrueFloat {
   0% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    text-shadow: 0 0 10px #ff7b25;
+    text-shadow: 0 0 10px #ffffff;
   }
   30% {
     opacity: 1;
     transform: translateY(-10px) scale(1.5);
-    text-shadow: 0 0 20px #ff7b25;
+    text-shadow: 0 0 20px #ffffff;
   }
   60% {
     opacity: 0.9;
     transform: translateY(-25px) scale(1.3);
-    text-shadow: 0 0 15px #ff7b25;
+    text-shadow: 0 0 15px #ffffff;
   }
   100% {
     opacity: 0;
     transform: translateY(-50px) scale(1.1);
-    text-shadow: 0 0 5px #ff7b25;
-  }
-}
-
-@keyframes criticalIceFloat {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    text-shadow: 0 0 10px #74b9ff;
-  }
-  30% {
-    opacity: 1;
-    transform: translateY(-10px) scale(1.5);
-    text-shadow: 0 0 20px #74b9ff;
-  }
-  60% {
-    opacity: 0.9;
-    transform: translateY(-25px) scale(1.3);
-    text-shadow: 0 0 15px #74b9ff;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-50px) scale(1.1);
-    text-shadow: 0 0 5px #74b9ff;
-  }
-}
-
-@keyframes criticalLightningFloat {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    text-shadow: 0 0 10px #feca57;
-  }
-  30% {
-    opacity: 1;
-    transform: translateY(-10px) scale(1.5);
-    text-shadow: 0 0 20px #feca57;
-  }
-  60% {
-    opacity: 0.9;
-    transform: translateY(-25px) scale(1.3);
-    text-shadow: 0 0 15px #feca57;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-50px) scale(1.1);
-    text-shadow: 0 0 5px #feca57;
+    text-shadow: 0 0 5px #ffffff;
   }
 }
 

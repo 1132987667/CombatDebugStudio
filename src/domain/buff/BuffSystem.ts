@@ -1,4 +1,4 @@
-import type { BuffConfig, BuffInstance } from '@/domain/buff/types'
+import type { BuffConfig, BuffInstance, BuffQuery } from '@/domain/buff/types'
 import type {
   TriggerAction,
   TriggerEventContext,
@@ -33,7 +33,7 @@ export interface TriggerExecutionContext extends TriggerEventContext {
  * 实现 IModifierProvider 接口，支持依赖解耦
  * 集成触发器事件系统，支持阶段触发行为
  */
-export class BuffSystem implements IModifierProvider {
+export class BuffSystem implements IModifierProvider, BuffQuery {
   private buffInstances = new Map<string, BuffInstance>()
   private updateRequiredBuffs = new Set<string>()
   private modifierStacks = new Map<string, ModifierStack>()
@@ -249,6 +249,17 @@ export class BuffSystem implements IModifierProvider {
       }
     })
     return instances
+  }
+
+  public getBuffInstanceIds(characterId: string): string[] {
+    return this.getBuffInstances(characterId).map((i) => i.id)
+  }
+
+  public hasBuff(characterId: string, buffId: string): boolean {
+    for (const instance of this.buffInstances.values()) {
+      if (instance.characterId === characterId && instance.isActive && instance.buffId === buffId) return true
+    }
+    return false
   }
 
   public getScriptRegistry(): BuffScriptRegistry {

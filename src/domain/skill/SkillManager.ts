@@ -2,23 +2,23 @@ import type {
   SkillConfig,
   SkillStep,
 } from '@/domain/skill/types'
-import { AttackType } from '@/domain/skill/types'
-import type { BattleAction, BattleEntity } from '@/domain/battle/types'
+import { ActionTypes, BattleActionHelper, type BattleAction, type BattleEntity } from '@/domain/battle/types'
 import {
   ATTRIBUTE_CODE,
 } from '@/domain/attribute/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType } from '@/domain/buff/types'
+import { BattleTriggerPhase } from '@/domain/battle/types'
 import { SkillExecutor } from '@/domain/skill/SkillExecutor'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { validateSkillConfigs } from '@/shared/utils/schema-validator'
-
+import type { CalculationLog } from '@/shared/types/battle-log'
 interface CalculationContext {
-  skillStep: any
-  action: any
+  skillStep: SkillStep
+  action: BattleAction
   source: BattleEntity
   targets: BattleEntity[]
   record?: CombatRecord
@@ -60,12 +60,12 @@ export class SkillManager {
   }
 
   /** 获取伤害计算日志 */
-  getDamageCalculationLogs(): any[] {
+  getDamageCalculationLogs(): CalculationLog[] {
     return this.damageCalculator.getCalculationLogs()
   }
 
   /** 获取治疗计算日志 */
-  getHealCalculationLogs(): any[] {
+  getHealCalculationLogs(): CalculationLog[] {
     return this.healCalculator.getCalculationLogs()
   }
 
@@ -143,58 +143,46 @@ export class SkillManager {
     const targetIsStunned = this.isTargetStunned(target)
     if (targetIsStunned) {
       battleLogManager.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, LogLevel.WARN)
-      console.error(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`)
-      const action: any = {
-        id: `action_${Date.now()}`,
+      const action = BattleActionHelper.createSkill({
         sourceId: source.id,
-        skillId,
-        skillName: config.name || skillId,
-        type: ActionTypes.SKILL,
-        damage: 0,
-        heal: 0,
-        effects: [{ type: 'status', targetId: target.id, description: `${target.name} 已被眩晕，技能取消` }],
         targetId: target.id,
-        targets: [],
-        timestamp: Date.now(),
-        currentTurn,
-      }
+        skillId,
+        skillName: config.name || '',
+        turn: currentTurn,
+        success: false,
+        effects: [{ type: 'status', targetId: target.id, description: `${target.name} 已被眩晕，技能取消` }],
+      })
       return action
     }
 
-    // spend energy before execution — if this fails we can't recover, but
-    // the pre-check above ensures enough energy was available
+    // 在执行前消耗能量——如果失败则无法恢复，但
+    // 上面的预检查确保了有足够的能量可用
     if (source.spendEnergy && config.energyCost) {
       source.spendEnergy(config.energyCost)
     }
 
-    const action: any = {
-      id: `action_${Date.now()}`,
+    const action = BattleActionHelper.createSkill({
       sourceId: source.id,
-      skillId,
-      skillName: config.name || skillId,
-      type: ActionTypes.SKILL,
-      damage: 0,
-      heal: 0,
-      effects: [],
       targetId: target.id,
-      targets: [target.id],
-      timestamp: Date.now(),
-      currentTurn,
-    }
+      skillId,
+      skillName: config.name || '',
+      turn: currentTurn,
+      success: true,
+    })
 
-    this.buffSystem.getEventBus().emit('ON_SKILL_USE' as any, {
-      phase: 'ON_SKILL_USE' as any,
+    this.buffSystem.getEventBus().emit(BattleTriggerPhase.SKILL_USE, {
+      phase: BattleTriggerPhase.SKILL_USE,
       sourceId: source.id,
       targetId: target.id,
       skillId,
       value: 0,
       currentTurn,
-    } as any)
+    })
 
-    const steps = this.normalizeSteps(config.steps || [])
+    const steps = config.steps || []
     for (const step of steps) {
       const ctx: CalculationContext = {
-        skillStep: this.extendStep(step, config),
+        skillStep: step,
         action,
         source,
         targets: [target],
@@ -202,22 +190,8 @@ export class SkillManager {
       }
       this.executeStep(ctx)
     }
-
     battleLogManager.addDebugLog(`执行技能 ${config.name || skillId}`, LogLevel.DEBUG)
-    console.error(`执行技能 ${config.name || skillId}`)
     return action
-  }
-
-  private normalizeSteps(steps: SkillStep[]): SkillStep[] {
-    return steps
-  }
-
-  private extendStep(step: SkillStep, config: SkillConfig): any {
-    return {
-      ...step,
-      attackType: (config as any).attackType || AttackType.SKILL_ATTACK,
-      buffId: step.buffId,
-    }
   }
 
   private executeStep(ctx: CalculationContext): void {

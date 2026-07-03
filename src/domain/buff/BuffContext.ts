@@ -9,19 +9,19 @@ export class BuffContext {
   public config: BuffConfig = {} as BuffConfig
   public startTime: number = 0
   public variables = new Map<string, any>()
-  private _buffSystem: any = null
+  private _buffSystem: BuffSystem | null = null
 
-  constructor(characterId?: string, instanceId?: string, config?: BuffConfig, buffSystem?: any) {
+  constructor(characterId?: string, instanceId?: string, config?: BuffConfig, buffSystem?: BuffSystem) {
     if (buffSystem) this._buffSystem = buffSystem
     if (characterId && instanceId && config) this.initialize(characterId, instanceId, config)
   }
 
-  private get buffSystem(): any {
+  private get buffSystem(): BuffSystem {
     if (!this._buffSystem) console.warn('BuffSystem not injected')
-    return this._buffSystem
+    return this._buffSystem!
   }
 
-  public initialize(characterId: string, instanceId: string, config: BuffConfig, buffSystem?: any): void {
+  public initialize(characterId: string, instanceId: string, config: BuffConfig, buffSystem?: BuffSystem): void {
     this.characterId = characterId
     this.instanceId = instanceId
     this.config = config

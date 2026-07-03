@@ -8,6 +8,7 @@
  */
 
 import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
+import { BattleActionHelper } from '@/domain/battle/types'
 import type {
   BattleAction,
   BattleData,
@@ -19,7 +20,8 @@ import type { BattleCommand } from '@/shared/types/battle-commands'
 import { createDefaultBattleData, convertToBattleState, checkBattleEndCondition as checkEnd } from '@/domain/battle/aggregate/BattleState'
 import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
 import { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
-import type { TriggerPhase, TriggerEventContext } from '@/domain/buff/types'
+import type { TriggerEventContext } from '@/domain/buff/types'
+import type { BattleTriggerPhase } from '@/domain/battle/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { AISystem } from '@/domain/battle/ai/AISystem'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
@@ -38,16 +40,12 @@ import {
 } from '@/domain/battle/entity/BattleInterfaces'
 import type { Container } from '@/infrastructure/di/Container'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
-import {
-  PassiveSkillManager,
-  PassiveSkillTrigger,
-} from '@/domain/skill/PassiveSkillManager'
+import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { eventBus } from '@/main'
 import { TriggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import {
-  BATTLE_CONSTANTS,
   BattleStatus,
   PARTICIPANT_SIDE,
   RoundStatus,
@@ -56,16 +54,14 @@ import {
   ATTRIBUTE_CODE,
 } from '@/domain/attribute/types'
 import {
-  newLogSegment,
   LogLevel,
   BATTLE_LOG_CATEGORIES,
 } from '@/shared/types/battle-log'
-import { EFFECT_TYPES } from '@/shared/types/effect'
-import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { RAFTimer } from '@/shared/utils/RAF'
 import { Counter } from '@/shared/utils/Counter'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
-import { ref, Reactive, reactive } from 'vue'
+import type { SkillConfig } from '@/domain/skill/types'
+
 /**
 /**
  * 战斗系统核心管理类
@@ -89,6 +85,7 @@ import { ref, Reactive, reactive } from 'vue'
  */
 
 export class BattleSystem implements IBattleSystem {
+
   /**
    * 战斗ID计数器
    */
@@ -187,7 +184,7 @@ export class BattleSystem implements IBattleSystem {
    * @param context 事件上下文
    */
   private emitTriggerEvent(
-    phase: TriggerPhase,
+    phase: BattleTriggerPhase,
     context: Partial<TriggerEventContext>,
   ): void {
     const eventBus = this.getTriggerEventBus()
@@ -296,6 +293,7 @@ export class BattleSystem implements IBattleSystem {
       // 为 BattleParticipantImpl 实例设置修饰符提供者，打通 ModifierStack → AttributeValue 同步
       if (participant instanceof BattleParticipantImpl) {
         participant.setModifierProvider(this.buffSystem)
+        participant.setBuffQuery(this.buffSystem)
       }
     })
     const battleData = this.battleData
@@ -331,15 +329,9 @@ export class BattleSystem implements IBattleSystem {
       `战斗双方人员情况: 我方 ${allyParticipants.length} 人 | 敌方 ${enemyParticipants.length} 人`,
     )
 
-    const initAction: BattleAction = {
-      id: `init_${Date.now()}`,
-      type: 'attack',
+    const initAction = BattleActionHelper.createAttack({
       sourceId: 'system',
       targetId: 'system',
-      damage: 0,
-      heal: 0,
-      success: true,
-      timestamp: Date.now(),
       turn: 0,
       effects: [
         {
@@ -348,7 +340,7 @@ export class BattleSystem implements IBattleSystem {
           duration: 0,
         },
       ],
-    }
+    })
 
     this.addBattleAction(initAction)
 
@@ -381,14 +373,14 @@ export class BattleSystem implements IBattleSystem {
   private applyPassiveSkills(participants: Map<string, BattleEntity>): void {
     // 触发战斗开始事件
     participants.forEach((participant) => {
-      this.emitTriggerEvent('ON_BATTLE_START', {
+      this.emitTriggerEvent(BattleTriggerPhase.BATTLE_START, {
         sourceId: participant.id,
       })
     })
 
     // 使用PassiveSkillManager触发战斗开始时的被动技能
     this.passiveSkillManager.triggerPassiveSkillsForAll(
-      PassiveSkillTrigger.BATTLE_START,
+      BattleTriggerPhase.BATTLE_START,
       participants,
     )
   }
@@ -400,13 +392,13 @@ export class BattleSystem implements IBattleSystem {
    */
   public triggerPassiveSkillsForCharacter(participant: BattleEntity): void {
     // 触发战斗开始事件
-    this.emitTriggerEvent('ON_BATTLE_START', {
+    this.emitTriggerEvent(BattleTriggerPhase.BATTLE_START, {
       sourceId: participant.id,
     })
 
     // 使用PassiveSkillManager触发战斗开始时的被动技能
     this.passiveSkillManager.triggerPassives(
-      PassiveSkillTrigger.BATTLE_START,
+      BattleTriggerPhase.BATTLE_START,
       participant,
       undefined,
       {},
@@ -441,7 +433,7 @@ export class BattleSystem implements IBattleSystem {
     try {
       // 触发回合开始事件
       aliveParticipants.forEach((participant) => {
-        this.emitTriggerEvent('ON_TURN_START', {
+        this.emitTriggerEvent(BattleTriggerPhase.TURN_START, {
           sourceId: participant.id,
           currentTurn: battle.currentRound,
         })
@@ -449,7 +441,7 @@ export class BattleSystem implements IBattleSystem {
 
       // 触发回合开始时的被动技能
       this.passiveSkillManager.triggerPassiveSkillsForAll(
-        PassiveSkillTrigger.TURN_START,
+        BattleTriggerPhase.TURN_START,
         battle.participants,
         undefined,
         { round: battle.currentRound },
@@ -528,7 +520,7 @@ export class BattleSystem implements IBattleSystem {
         
         await this.animationManager.waitForAnimation()
 
-        this.buffSystem.updatePerTurn(participant.id, battle.currentRound || 1)
+        this.buffSystem.updatePerTurn(participant.id)
 
         this.checkBattleEndCondition()
 
@@ -557,14 +549,14 @@ export class BattleSystem implements IBattleSystem {
         (p) => p.isAlive(),
       )
       endParticipants.forEach((participant) => {
-        this.emitTriggerEvent('ON_TURN_END', {
+        this.emitTriggerEvent(BattleTriggerPhase.TURN_END, {
           sourceId: participant.id,
           currentTurn: battle.currentRound,
         })
       })
 
       this.passiveSkillManager.triggerPassiveSkillsForAll(
-        PassiveSkillTrigger.TURN_END,
+        BattleTriggerPhase.TURN_END,
         battle.participants,
         undefined,
         { round: battle.currentRound },
@@ -732,7 +724,7 @@ export class BattleSystem implements IBattleSystem {
   /**
    * 加载技能配置
    */
-  public loadSkillConfigs(skillConfigs: any[]): void {
+  public loadSkillConfigs(skillConfigs: SkillConfig[]): void {
     this.skillManager.loadSkillConfigs(skillConfigs)
   }
 

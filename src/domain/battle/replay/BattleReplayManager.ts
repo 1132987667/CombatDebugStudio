@@ -1,4 +1,5 @@
 import type { BattleState, BattleReplay } from '@/domain/battle/types'
+import { BattleEventType } from '@/domain/battle/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import {
   ReplayEngine,
@@ -228,28 +229,28 @@ export class BattleReplayManager {
     console.log('回放事件:', event)
 
     switch (event.type) {
-      case 'action':
+      case BattleEventType.ACTION:
         this.handleActionReplay(event.data?.action)
         break
-      case 'turn_start':
+      case BattleEventType.TURN_START:
         this.handleTurnStartReplay(event.data?.turn, event.data?.participantId)
         break
-      case 'turn_end':
+      case BattleEventType.TURN_END:
         this.handleTurnEndReplay(event.data?.turn)
         break
-      case 'battle_start':
+      case BattleEventType.BATTLE_START:
         this.handleBattleStartReplay()
         break
-      case 'battle_end':
+      case BattleEventType.BATTLE_END:
         this.handleBattleEndReplay(event.data?.winner)
         break
-      case 'buff_add':
+      case BattleEventType.BUFF_ADD:
         this.handleBuffAddReplay(event.data)
         break
-      case 'buff_remove':
+      case BattleEventType.BUFF_REMOVE:
         this.handleBuffRemoveReplay(event.data)
         break
-      case 'buff_update':
+      case BattleEventType.BUFF_UPDATE:
         this.handleBuffUpdateReplay(event.data)
         break
     }

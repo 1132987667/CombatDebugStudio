@@ -1,4 +1,5 @@
 import { ObjectPool } from '@/shared/utils/object-pool'
+import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffContext } from '@/domain/buff/BuffContext'
 import type { BuffConfig } from '@/domain/buff/types'
 
@@ -16,7 +17,7 @@ class BuffContextPoolClass {
     })
   }
 
-  public borrow(characterId: string, instanceId: string, config: BuffConfig, buffSystem?: any): BuffContext {
+  public borrow(characterId: string, instanceId: string, config: BuffConfig, buffSystem?: BuffSystem): BuffContext {
     const context = this.pool.borrow()
     context.initialize(characterId, instanceId, config, buffSystem)
     return context

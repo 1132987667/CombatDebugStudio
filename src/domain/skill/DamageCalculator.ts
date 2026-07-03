@@ -144,7 +144,7 @@ export class DamageCalculator {
     damage = Math.floor(damage * defenseMultiplier)
 
     // 攻击类型伤害减免
-    const atkType = (skillStep as any).attackType || AttackType.SKILL_ATTACK
+    const atkType = skillStep.attackType || AttackType.SKILL_ATTACK
     if (atkType === AttackType.NORMAL_ATTACK) {
       const reduction = getAttributeValue(target, 'NORMAL_ATK_DMG_REDUCTION')
       damage = Math.floor(damage * (1 - reduction / 100))
@@ -206,7 +206,7 @@ export class DamageCalculator {
       const minAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.minAttack)
       const maxAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.maxAttack)
       const levelBonus = (source.level || 1) * 2
-      if ((skillStep as any).attackType === AttackType.NORMAL_ATTACK && minAtk > 0 && maxAtk > 0) {
+      if (skillStep.attackType === AttackType.NORMAL_ATTACK && minAtk > 0 && maxAtk > 0) {
         baseDamage = Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
       } else {
         baseDamage = Math.floor(atk + levelBonus)
@@ -216,9 +216,9 @@ export class DamageCalculator {
     this.logCalculation('base', baseDamage, `基础伤害: ${baseDamage}`)
 
     // attackBonus 加成
-    if ((skillStep as any).attackBonus && (skillStep as any).attackBonus > 0) {
+    if ((skillStep as LegacyStepFields).attackBonus && (skillStep as LegacyStepFields).attackBonus! > 0) {
       const atk = getAttributeValue(source, 'ATK')
-      const bonus = Math.floor(atk * (skillStep as any).attackBonus / 100)
+      const bonus = Math.floor(atk * (skillStep as LegacyStepFields).attackBonus! / 100)
       baseDamage += bonus
       this.logCalculation('attack_bonus', bonus, `攻击加成: +${bonus}`)
     }
@@ -255,11 +255,12 @@ export class DamageCalculator {
       const def = getAttributeValue(target, 'DEF')
       const sourceLevel = source.level || 1
       const targetLevel = target.level || 1
-      const baseValue = (step as any).baseValue || 0
-      const bonusValue = (step as any).bonusValue || 0
-      const attackBonus = (step as any).attackBonus || 0
-      const defenseBonus = (step as any).defenseBonus || 0
-      const levelBonus = (step as any).levelBonus || 0
+      const ls = step as LegacyStepFields
+      const baseValue = ls.baseValue || 0
+      const bonusValue = ls.bonusValue || 0
+      const attackBonus = ls.attackBonus || 0
+      const defenseBonus = ls.defenseBonus || 0
+      const levelBonus = ls.levelBonus || 0
       const processedFormula = formula
         .replace(/ATK/gi, String(atk))
         .replace(/DEF/gi, String(def))

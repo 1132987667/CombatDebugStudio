@@ -6,20 +6,15 @@
  * 描述: 支持确定性回放、状态恢复、时间跳转的回放引擎核心类
  */
 
-import type {
+import {
   BattleReplay,
   BattleStateSnapshot,
   ParticipantSnapshot,
-  BuffInstanceSnapshot,
   BattleEventType,
-  BattleEvent,
+  ReplayBattleEvent,
   SnapshotIndexItem,
-  BattleEntity,
-  ParticipantSide,
 } from '@/domain/battle/types'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 export type ReplayStateCallback = (state: ReplayState) => void
 export type ReplayEventCallback = (event: ReplayEvent) => void
@@ -39,7 +34,7 @@ export interface ReplayEvent {
   index: number
   type: BattleEventType
   timestamp: number
-  data: any
+  data: Record<string, any>
 }
 
 export class ReplayEngine {
@@ -114,7 +109,7 @@ export class ReplayEngine {
     }
 
     if (this.replayData.rounds) {
-      this.replayData.rounds.forEach((round, roundIdx) => {
+      this.replayData.rounds.forEach((round) => {
         if (round.startSnapshot) {
           const snapshotIdx = this.snapshots.length
           this.snapshots.push(round.startSnapshot)
@@ -334,14 +329,14 @@ export class ReplayEngine {
     return this.random
   }
 
-  getEvent(index: number): any {
+  getEvent(index: number): ReplayBattleEvent | null {
     if (!this.replayData || !this.replayData.events) {
       return null
     }
     return this.replayData.events[index]
   }
 
-  getEvents(): any[] {
+  getEvents(): ReplayBattleEvent[] {
     return this.replayData?.events || []
   }
 
@@ -377,57 +372,44 @@ export class ReplayEngine {
 
   private cloneParticipant(p: ParticipantSnapshot): ParticipantSnapshot {
     return {
-      id: p.id,
-      name: p.name,
-      type: p.type,
-      team: p.team,
-      hp: p.getAttribute(ATTRIBUTE_CODE.currentHealth),
-      maxHp: p.getAttribute(ATTRIBUTE_CODE.maxHealth),
-      energy: p.getAttribute(ATTRIBUTE_CODE.currentEnergy),
-      maxEnergy: p.getAttribute(ATTRIBUTE_CODE.maxEnergy),
+      ...p,
       buffs: p.buffs.map(b => ({ ...b })),
       skillCooldowns: { ...p.skillCooldowns },
       statusEffects: p.statusEffects.map(s => ({ ...s })),
-      attributes: {
-        attack: p.getAttribute(ATTRIBUTE_CODE.attack),
-        defense: p.getAttribute(ATTRIBUTE_CODE.defense),
-        speed: p.getAttribute(ATTRIBUTE_CODE.speed),
-        critRate: p.getAttribute(ATTRIBUTE_CODE.critRate),
-        critDamage: p.getAttribute(ATTRIBUTE_CODE.critDamage),
-      },
+      attributes: { ...p.attributes },
     }
   }
 
-  private applyEvent(event: any): void {
+  private applyEvent(event: ReplayBattleEvent): void {
     if (!this.currentState) return
 
     switch (event.type) {
-      case 'action':
+      case BattleEventType.ACTION:
         this.applyActionEvent(event)
         break
-      case 'buff_add':
+      case BattleEventType.BUFF_ADD:
         this.applyBuffAddEvent(event)
         break
-      case 'buff_remove':
+      case BattleEventType.BUFF_REMOVE:
         this.applyBuffRemoveEvent(event)
         break
-      case 'buff_update':
+      case BattleEventType.BUFF_UPDATE:
         this.applyBuffUpdateEvent(event)
         break
-      case 'turn_start':
+      case BattleEventType.TURN_START:
         this.currentState.turn = event.turn
         this.currentState.roundIndex = event.roundNumber
         this.currentState.currentActorId = event.data?.participantId
         break
-      case 'turn_end':
+      case BattleEventType.TURN_END:
         break
-      case 'battle_start':
+      case BattleEventType.BATTLE_START:
         this.currentState.turn = 0
         this.currentState.roundIndex = 0
         break
-      case 'battle_end':
+      case BattleEventType.BATTLE_END:
         break
-      case 'state_change':
+      case BattleEventType.STATE_CHANGE:
         this.applyStateChangeEvent(event)
         break
     }
@@ -440,7 +422,7 @@ export class ReplayEngine {
     })
   }
 
-  private applyActionEvent(event: any): void {
+  private applyActionEvent(event: ReplayBattleEvent): void {
     if (!this.currentState) return
 
     const action = event.data?.action
@@ -476,7 +458,7 @@ export class ReplayEngine {
     return skillCooldowns[skillId] || 3
   }
 
-  private applyBuffAddEvent(event: any): void {
+  private applyBuffAddEvent(event: ReplayBattleEvent): void {
     if (!this.currentState) return
 
     const { targetId, buffId, instanceId } = event.data
@@ -492,7 +474,7 @@ export class ReplayEngine {
     }
   }
 
-  private applyBuffRemoveEvent(event: any): void {
+  private applyBuffRemoveEvent(event: ReplayBattleEvent): void {
     if (!this.currentState) return
 
     const { targetId, instanceId } = event.data
@@ -502,7 +484,7 @@ export class ReplayEngine {
     }
   }
 
-  private applyBuffUpdateEvent(event: any): void {
+  private applyBuffUpdateEvent(event: ReplayBattleEvent): void {
     if (!this.currentState) return
 
     const { targetId, instanceId, remainingTurns, stacks } = event.data
@@ -516,7 +498,7 @@ export class ReplayEngine {
     }
   }
 
-  private applyStateChangeEvent(event: any): void {
+  private applyStateChangeEvent(event: ReplayBattleEvent): void {
     if (!this.currentState) return
 
     const stateChanges = event.data?.state
@@ -559,20 +541,20 @@ export class ReplayEngine {
     })
   }
 
-  private calculateEventDelay(event: any): number {
+  private calculateEventDelay(event: ReplayBattleEvent): number {
     const baseDelay = 500
     const typeDelay: Record<string, number> = {
-      action: 800,
-      buff_add: 200,
-      buff_remove: 200,
-      buff_update: 100,
-      turn_start: 300,
-      turn_end: 200,
-      battle_start: 500,
-      battle_end: 500,
+      [BattleEventType.ACTION]: 800,
+      [BattleEventType.BUFF_ADD]: 200,
+      [BattleEventType.BUFF_REMOVE]: 200,
+      [BattleEventType.BUFF_UPDATE]: 100,
+      [BattleEventType.TURN_START]: 300,
+      [BattleEventType.TURN_END]: 200,
+      [BattleEventType.BATTLE_START]: 500,
+      [BattleEventType.BATTLE_END]: 500,
     }
 
-    const type = event.type || 'action'
+    const type = event.type || BattleEventType.ACTION
     const delay = typeDelay[type] || baseDelay
     return delay / this.speed
   }
@@ -595,6 +577,6 @@ export class ReplayEngine {
 
   private battleLogManager = {
     addSystemLog: (msg: string) => console.log('[ReplayEngine]', msg),
-    error: (msg: string, err: any) => console.error('[ReplayEngine]', msg, err),
+    error: (msg: string, err: unknown) => console.error('[ReplayEngine]', msg, err),
   }
 }

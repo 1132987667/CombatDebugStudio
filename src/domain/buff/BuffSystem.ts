@@ -1,19 +1,16 @@
 import type { BuffConfig, BuffInstance, BuffQuery } from '@/domain/buff/types'
 import type {
-  TriggerAction,
   TriggerEventContext,
-  TriggerRuntimeState,
 } from '@/domain/buff/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import type {
   IModifierProvider,
-  IModifierStack,
   ModifierSourceType,
 } from '@/domain/attribute/types'
-import { ATTRIBUTE_CODE, normalizeAttributeCode } from '@/domain/attribute/types'
+import { normalizeAttributeCode } from '@/domain/attribute/types'
 import { StackRule, ControlType } from '@/domain/buff/types'
+import { SkillStepType } from '@/domain/skill/types'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
-import { BuffContext } from '@/domain/buff/BuffContext'
 import { BuffContextPool } from '@/domain/buff/BuffContextPool'
 import { ModifierStack } from '@/domain/buff/ModifierStack'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
@@ -23,7 +20,7 @@ import { battleLogManager } from '@/infrastructure/adapters/logging'
 export interface TriggerExecutionContext extends TriggerEventContext {
   instanceId?: string
   buffSystem?: BuffSystem
-  params?: Record<string, unknown>
+  params?: Record<string, number | string>
   currentTurn?: number
 }
 
@@ -35,15 +32,12 @@ export interface TriggerExecutionContext extends TriggerEventContext {
  */
 export class BuffSystem implements IModifierProvider, BuffQuery {
   private buffInstances = new Map<string, BuffInstance>()
-  private updateRequiredBuffs = new Set<string>()
   private modifierStacks = new Map<string, ModifierStack>()
-  private characterTurns = new Map<string, number>()
   private readonly scriptRegistry: BuffScriptRegistry
   private readonly logger = battleLogManager
   private _debugMode: boolean = true
   private onAttributeChange?: (characterId: string) => void
   private readonly eventBus: TriggerEventBus
-  private triggerStates = new Map<string, Map<number, TriggerRuntimeState>>()
   private triggerScripts = new Map<string, (context: TriggerExecutionContext) => void>()
 
   public constructor(
@@ -56,33 +50,43 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   }
 
   private registerDefaultTriggerScripts(): void {
-    this.registerTriggerScript('deal_damage', (ctx) => {
-      this.dealDirectDamage(ctx.targetId ?? '', ctx.params?.damage ?? 0)
+    this.registerTriggerScript(SkillStepType.DEAL_DAMAGE, (ctx: TriggerExecutionContext) => {
+      this.dealDirectDamage(ctx.targetId ?? '', ctx.params?.damage as number ?? 0)
     })
-    this.registerTriggerScript('apply_buff', (ctx) => {
+    this.registerTriggerScript(SkillStepType.APPLY_BUFF, (ctx: TriggerExecutionContext) => {
       if (ctx.params?.buffId) {
         const buffId = ctx.params.buffId as string
-        const config = this.scriptRegistry.getBuffConfig(buffId)
-        if (config) {
+        const data = this.scriptRegistry.getBuffConfig(buffId)
+        if (data) {
           this.addBuff(
             ctx.targetId ?? '',
             buffId,
-            config,
+            {
+              id: data.id,
+              name: data.name ?? data.id,
+              description: '',
+              duration: data.duration ?? 1,
+              maxStacks: data.maxStacks ?? 1,
+              cooldown: 0,
+              stackRule: StackRule.LIMITED,
+              controlType: ControlType.NONE,
+              controlPriority: 0,
+            },
             ctx.currentTurn ?? 0,
           )
         }
       }
     })
-    this.registerTriggerScript('heal', (ctx) => {
-      this.healTarget(ctx.targetId ?? '', ctx.params?.amount ?? 0)
+    this.registerTriggerScript(SkillStepType.HEAL, (ctx: TriggerExecutionContext) => {
+      this.healTarget(ctx.targetId ?? '', ctx.params?.amount as number ?? 0)
     })
   }
 
-  // ponytail: stubs for trigger scripts — actual implementation lives in BattleSystem.
-  // core/BuffSystem.ts also lacks real implementations; these are placeholders
-  // until the trigger system is wired to BattleSystem for damage/heal delegation.
-  private dealDirectDamage(targetId: string, damage: number): void {}
-  private healTarget(targetId: string, amount: number): void {}
+  // ponytail: 当前无配置触发 deal_damage/heal 存根。后续如有灼烧/中毒等每回合触发器需要实现，
+  // 应通过 BattleSystem 注册的 onAttributeChange 回调委托到 BattleParticipantImpl.takeDamage。
+  private dealDirectDamage(targetId: string, damage: number): void { }
+  
+  private healTarget(targetId: string, amount: number): void { }
 
   public registerTriggerScript(
     scriptId: string,
@@ -223,7 +227,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return true
   }
 
-  public updatePerTurn(characterId: string, currentTurn: number): void {
+  public updatePerTurn(characterId: string): void {
     const toRemove: string[] = []
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
@@ -237,7 +241,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     })
     toRemove.forEach((instanceId) => {
       this.removeBuff(instanceId)
-      this.updateRequiredBuffs.delete(instanceId)
     })
   }
 
@@ -282,12 +285,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.modifierStacks.delete(characterId)
   }
 
+  /** 获取最高优先级的控制效果 */
   public getHighestPriorityControlEffect(characterId: string): ControlType {
     let highestPriority = -1
     let highestControlType = ControlType.NONE
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
-      const config = instance.context.getConfig()
+      const config = instance.context.config
       if (config.controlType !== ControlType.NONE && config.controlPriority > highestPriority) {
         highestPriority = config.controlPriority
         highestControlType = config.controlType
@@ -309,7 +313,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return this.getHighestPriorityControlEffect(characterId) === ControlType.NONE
   }
 
-  public update(deltaTime: number): void {}
+  public update(deltaTime: number): void { }
 
   public getBuffNameByInstanceId(instanceId: string): string | null {
     const instance = this.buffInstances.get(instanceId)
@@ -321,7 +325,19 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   public getBuffConfigByInstanceId(instanceId: string): BuffConfig | null {
     const instance = this.buffInstances.get(instanceId)
     if (!instance) return null
-    return (this.scriptRegistry.getBuffConfig(instance.buffId) || null) as BuffConfig | null
+    const data = this.scriptRegistry.getBuffConfig(instance.buffId)
+    if (!data) return null
+    return {
+      id: data.id,
+      name: data.name ?? data.id,
+      description: '',
+      duration: data.duration ?? 1,
+      maxStacks: data.maxStacks ?? 1,
+      cooldown: 0,
+      stackRule: StackRule.LIMITED,
+      controlType: ControlType.NONE,
+      controlPriority: 0,
+    }
   }
 
   public getSourceName(sourceId: string): string | null {

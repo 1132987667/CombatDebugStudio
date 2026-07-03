@@ -7,26 +7,22 @@
  * 版本: 2.0.0 - 增强版：支持快照录制、随机种子、状态回退
  */
 
-import type {
+import {
   BattleState,
-  BattleEntity,
   BattleAction,
   ParticipantSide,
-  BattleReplay,
   BattleStateSnapshot,
-  ParticipantSnapshot,
-  BuffInstanceSnapshot,
   BattleRound,
   BattleResult,
   BattleEventType,
-  BattleEvent,
   ReplayBattleEvent,
-  SnapshotIndexItem,
 } from '@/domain/battle/types'
 import { BATTLE_REPLAY_VERSION } from '@/domain/battle/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { calculateChecksum, generateReplayId } from '@/shared/utils/Checksum'
+import type { BattleLogEntry } from '@/shared/types/battle-log'
+
 
 interface EnhancedRecordedBattle {
   battleId: string
@@ -36,7 +32,7 @@ interface EnhancedRecordedBattle {
   startTime: number
   endTime?: number
   winner?: ParticipantSide
-  events: BattleEvent[]
+  events: ReplayBattleEvent[]
   initialState: {
     participants: Array<{
       id: string
@@ -55,8 +51,6 @@ interface EnhancedRecordedBattle {
   result?: BattleResult
 }
 
-type RecordingData = RecordedBattle | EnhancedRecordedBattle
-
 export class BattleRecorder {
   private recordings = new Map<string, EnhancedRecordedBattle>()
   private maxRecordings = 10
@@ -68,6 +62,9 @@ export class BattleRecorder {
     return SeededRandom.generateSeed()
   }
 
+  /**
+   * 开始记录战斗事件
+   */
   public startRecording(
     battleId: string,
     initialState: {
@@ -103,7 +100,7 @@ export class BattleRecorder {
 
     this.recordEvent(
       battleId,
-      'battle_start',
+      BattleEventType.BATTLE_START,
       {
         timestamp: Date.now(),
         participants: initialState.participants,
@@ -156,7 +153,7 @@ export class BattleRecorder {
 
     this.recordEvent(
       battleId,
-      'turn_start',
+      BattleEventType.TURN_START,
       {
         roundNumber,
         snapshot,
@@ -178,7 +175,7 @@ export class BattleRecorder {
 
     this.recordEvent(
       battleId,
-      'turn_end',
+      BattleEventType.TURN_END,
       {
         roundNumber,
         snapshot,
@@ -192,7 +189,7 @@ export class BattleRecorder {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
-      'action',
+      BattleEventType.ACTION,
       {
         action,
         turn,
@@ -206,7 +203,7 @@ export class BattleRecorder {
       const currentRound = recording.rounds[recording.rounds.length - 1]
       currentRound.events.push({
         eventId: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        type: 'action',
+        type: BattleEventType.ACTION,
         timestamp: Date.now(),
         turn,
         roundNumber,
@@ -225,7 +222,7 @@ export class BattleRecorder {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
-      'buff_add',
+      BattleEventType.BUFF_ADD,
       {
         targetId,
         buffId,
@@ -246,7 +243,7 @@ export class BattleRecorder {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
-      'buff_remove',
+      BattleEventType.BUFF_REMOVE,
       {
         targetId,
         instanceId,
@@ -268,7 +265,7 @@ export class BattleRecorder {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
-      'buff_update',
+      BattleEventType.BUFF_UPDATE,
       {
         targetId,
         instanceId,
@@ -289,7 +286,7 @@ export class BattleRecorder {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
-      'state_change',
+      BattleEventType.STATE_CHANGE,
       {
         state,
         turn,
@@ -307,7 +304,7 @@ export class BattleRecorder {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
-      'turn_start',
+      BattleEventType.TURN_START,
       {
         turn,
         participantId,
@@ -321,7 +318,7 @@ export class BattleRecorder {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
-      'turn_end',
+      BattleEventType.TURN_END,
       {
         turn,
       },
@@ -354,7 +351,7 @@ export class BattleRecorder {
     const roundNumber = this.currentRoundNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
-      'battle_end',
+      BattleEventType.BATTLE_END,
       {
         timestamp: Date.now(),
         winner,
@@ -363,7 +360,8 @@ export class BattleRecorder {
       roundNumber,
     )
 
-    battleLogManager.addSystemLog(`结束记录战斗: ${battleId}`, {
+    battleLogManager.addSystemLog({
+      message: `结束记录战斗: ${battleId}`,
       segments: [
         {
           text: `战斗结束，${winner}获胜，耗时 ${duration}ms`,
@@ -436,8 +434,6 @@ export class BattleRecorder {
             '战斗记录校验失败:',
             LogLevel.ERROR,
             null,
-            '',
-            { saveKey },
           )
           return null
         }
@@ -453,8 +449,6 @@ export class BattleRecorder {
         '加载战斗记录失败:',
         LogLevel.ERROR,
         null,
-        '',
-        error,
       )
       return null
     }
@@ -507,7 +501,7 @@ export class BattleRecorder {
 
   private recordEvent(
     battleId: string,
-    type: BattleEvent['type'],
+    type: ReplayBattleEvent['type'],
     data: any,
     turn: number,
     roundNumber: number,
@@ -517,7 +511,7 @@ export class BattleRecorder {
       return
     }
 
-    const event: BattleEvent = {
+    const event: ReplayBattleEvent = {
       eventId: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type,
       timestamp: Date.now(),
@@ -545,21 +539,21 @@ export class BattleRecorder {
 
   private generateLogMessage(type: string, data: any): string {
     switch (type) {
-      case 'battle_start':
+      case BattleEventType.BATTLE_START:
         return '战斗开始'
-      case 'battle_end':
+      case BattleEventType.BATTLE_END:
         return `战斗结束，胜利方: ${data.winner}`
-      case 'turn_start':
+      case BattleEventType.TURN_START:
         return `回合 ${data.roundNumber || data.turn} 开始`
-      case 'turn_end':
+      case BattleEventType.TURN_END:
         return `回合 ${data.roundNumber || data.turn} 结束`
-      case 'action':
+      case BattleEventType.ACTION:
         return `${data.action?.sourceId} 执行了 ${data.action?.type} 动作`
-      case 'buff_add':
+      case BattleEventType.BUFF_ADD:
         return `为目标 ${data.targetId} 添加了 Buff: ${data.buffId}`
-      case 'buff_remove':
+      case BattleEventType.BUFF_REMOVE:
         return `从目标 ${data.targetId} 移除了 Buff: ${data.instanceId}`
-      case 'buff_update':
+      case BattleEventType.BUFF_UPDATE:
         return `更新了目标 ${data.targetId} 的 Buff: ${data.instanceId}`
       default:
         return `事件: ${type}`

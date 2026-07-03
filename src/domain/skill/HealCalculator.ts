@@ -1,4 +1,4 @@
-import type { ExtendedSkillStep } from '@/domain/skill/types'
+import type { ExtendedSkillStep, LegacyStepFields } from '@/domain/skill/types'
 import type { CalculationLog } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
@@ -44,12 +44,12 @@ export class HealCalculator {
       heal = this.calculateBasicHeal(skillStep, source, target)
     }
 
-    // 属性加成�?   
-    if ((skillStep as any).attributeCode && (skillStep as any).attackBonus && (skillStep as any).attackBonus > 0) {
-      const attrValue = source.getAttribute((skillStep as any).attributeCode as ATTRIBUTE_CODE)
-      const bonus = Math.floor(attrValue * (skillStep as any).attackBonus / 100)
+    // 属性加成   
+    if (skillStep.attributeCode && skillStep.attackBonus && skillStep.attackBonus > 0) {
+      const attrValue = source.getAttribute(skillStep.attributeCode as ATTRIBUTE_CODE)
+      const bonus = Math.floor(attrValue * skillStep.attackBonus / 100)
       heal += bonus
-      this.logCalculation('attribute_bonus', bonus, `属性加�? +${bonus}`)
+      this.logCalculation('attribute_bonus', bonus, `属性加成: +${bonus}`)
     }
 
     // targetModifiers 处理
@@ -118,10 +118,11 @@ export class HealCalculator {
     target: BattleEntity,
   ): number {
     let heal = 0
-    const baseValue = (skillStep as any).baseValue || 0
-    const bonusValue = (skillStep as any).bonusValue || 0
-    const attackBonus = (skillStep as any).attackBonus || 0
-    const levelBonus = (skillStep as any).levelBonus || 0
+    const ls = skillStep as LegacyStepFields
+    const baseValue = ls.baseValue || 0
+    const bonusValue = ls.bonusValue || 0
+    const attackBonus = ls.attackBonus || 0
+    const levelBonus = ls.levelBonus || 0
     heal += baseValue
     heal += bonusValue
     if (attackBonus > 0) {
@@ -132,13 +133,13 @@ export class HealCalculator {
       heal += (source.level || 1) * levelBonus
     }
     const targetMaxHp = target.getAttribute(ATTRIBUTE_CODE.maxHealth)
-    if ((skillStep as any).maxHpPercent && (skillStep as any).maxHpPercent > 0) {
-      heal += Math.floor(targetMaxHp * (skillStep as any).maxHpPercent / 100)
+    if (ls.maxHpPercent && ls.maxHpPercent > 0) {
+      heal += Math.floor(targetMaxHp * ls.maxHpPercent / 100)
     }
-    if ((skillStep as any).lostHpPercent && (skillStep as any).lostHpPercent > 0) {
+    if (ls.lostHpPercent && ls.lostHpPercent > 0) {
       const currentHp = target.getAttribute(ATTRIBUTE_CODE.currentHealth)
       const lostHp = Math.max(0, targetMaxHp - currentHp)
-      heal += Math.floor(lostHp * (skillStep as any).lostHpPercent / 100)
+      heal += Math.floor(lostHp * ls.lostHpPercent / 100)
     }
 
     this.logCalculation('basic', heal, `基础治疗�? ${heal}`)
@@ -174,10 +175,11 @@ export class HealCalculator {
       const targetMaxHp = target.getAttribute(ATTRIBUTE_CODE.maxHealth)
       const sourceLevel = source.level || 1
       const targetLevel = target.level || 1
-      const baseValue = (step as any).baseValue || 0
-      const bonusValue = (step as any).bonusValue || 0
-      const attackBonus = (step as any).attackBonus || 0
-      const levelBonus = (step as any).levelBonus || 0
+      const ls2 = step as LegacyStepFields
+      const baseValue = ls2.baseValue || 0
+      const bonusValue = ls2.bonusValue || 0
+      const attackBonus = ls2.attackBonus || 0
+      const levelBonus = ls2.levelBonus || 0
       const processedFormula = formula
         .replace(/ATK/gi, String(atk))
         .replace(/TARGET_MAX_HP/gi, String(targetMaxHp))
@@ -210,5 +212,7 @@ export class HealCalculator {
 
   private logCalculation(step: string, value: number, description: string): void {
     this.calculationLogs.push({ step, value, description } as any)
+    // ponytail: CalculationLog interface needs timestamp/type/sourceId/targetId fields;
+    // the internal log shape is simpler — left as any until proper type alignment
   }
 }

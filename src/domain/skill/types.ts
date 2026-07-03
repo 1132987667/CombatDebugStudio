@@ -240,54 +240,56 @@ export enum CostType {
  * 技能步骤类型枚举（扩展版）
  * 定义技能执行步骤的所有可能类型，支持新旧两种格式
  */
-export type SkillStepType =
+export const SkillStepType = {
   // === 新版步骤类型（推荐） ===
-  | 'deal_damage' // 造成伤害（结构化）
-  | 'heal' // 治疗目标（结构化）
-  | 'apply_buff' // 施加 Buff/Debuff（通过 BuffId 引用）
-  | 'modify_attribute' // 直接修改属性（主要用于被动）
-  | 'aura' // 光环效果
+  DEAL_DAMAGE: 'deal_damage',       // 造成伤害（结构化）
+  HEAL: 'heal',                     // 治疗目标（结构化）
+  APPLY_BUFF: 'apply_buff',         // 施加 Buff/Debuff（通过 BuffId 引用）
+  MODIFY_ATTRIBUTE: 'modify_attribute', // 直接修改属性（主要用于被动）
+  AURA: 'aura',                     // 光环效果
   // === 旧版步骤类型（兼容） ===
-  | 'damage' // 造成伤害（旧版，使用 formula）
-  | 'buff' // 施加增益效果（旧版）
-  | 'debuff' // 施加减益效果（旧版）
-  | 'remove_buff' // 移除增益效果
-  | 'remove_debuff' // 移除减益效果
-  | 'cleanse' // 净化（移除所有负面效果）
-  | 'dispel' // 驱散（移除所有正面效果）
-  | 'stun' // 眩晕
-  | 'silence' // 沉默
-  | 'knockback' // 击退
-  | 'pull' // 拉扯
-  | 'teleport' // 传送
-  | 'summon' // 召唤
-  | 'transform' // 变身
-  | 'shield' // 护盾
-  | 'reflect' // 反射
-  | 'drain' // 吸取
-  | 'revive' // 复活
-  | 'custom' // 自定义效果
+  DAMAGE: 'damage',                 // 造成伤害（旧版，使用 formula）
+  BUFF: 'buff',                     // 施加增益效果（旧版）
+  DEBUFF: 'debuff',                 // 施加减益效果（旧版）
+  REMOVE_BUFF: 'remove_buff',       // 移除增益效果
+  REMOVE_DEBUFF: 'remove_debuff',   // 移除减益效果
+  CLEANSE: 'cleanse',               // 净化（移除所有负面效果）
+  DISPEL: 'dispel',                 // 驱散（移除所有正面效果）
+  STUN: 'stun',                     // 眩晕
+  SILENCE: 'silence',               // 沉默
+  KNOCKBACK: 'knockback',           // 击退
+  PULL: 'pull',                     // 拉扯
+  TELEPORT: 'teleport',             // 传送
+  SUMMON: 'summon',                 // 召唤
+  TRANSFORM: 'transform',           // 变身
+  SHIELD: 'shield',                 // 护盾
+  REFLECT: 'reflect',               // 反射
+  DRAIN: 'drain',                   // 吸取
+  REVIVE: 'revive',                 // 复活
+  CUSTOM: 'custom',                 // 自定义效果
   // === 旧版大写兼容 ===
-  | 'DAMAGE'
-  | 'HEAL'
-  | 'BUFF'
-  | 'DEBUFF'
-  | 'REMOVE_BUFF'
-  | 'REMOVE_DEBUFF'
-  | 'CLEANSE'
-  | 'DISPEL'
-  | 'STUN'
-  | 'SILENCE'
-  | 'KNOCKBACK'
-  | 'PULL'
-  | 'TELEPORT'
-  | 'SUMMON'
-  | 'TRANSFORM'
-  | 'SHIELD'
-  | 'REFLECT'
-  | 'DRAIN'
-  | 'REVIVE'
-  | 'CUSTOM'
+  DAMAGE_UPPER: 'DAMAGE',
+  HEAL_UPPER: 'HEAL',
+  BUFF_UPPER: 'BUFF',
+  DEBUFF_UPPER: 'DEBUFF',
+  REMOVE_BUFF_UPPER: 'REMOVE_BUFF',
+  REMOVE_DEBUFF_UPPER: 'REMOVE_DEBUFF',
+  CLEANSE_UPPER: 'CLEANSE',
+  DISPEL_UPPER: 'DISPEL',
+  STUN_UPPER: 'STUN',
+  SILENCE_UPPER: 'SILENCE',
+  KNOCKBACK_UPPER: 'KNOCKBACK',
+  PULL_UPPER: 'PULL',
+  TELEPORT_UPPER: 'TELEPORT',
+  SUMMON_UPPER: 'SUMMON',
+  TRANSFORM_UPPER: 'TRANSFORM',
+  SHIELD_UPPER: 'SHIELD',
+  REFLECT_UPPER: 'REFLECT',
+  DRAIN_UPPER: 'DRAIN',
+  REVIVE_UPPER: 'REVIVE',
+  CUSTOM_UPPER: 'CUSTOM',
+} as const
+export type SkillStepType = (typeof SkillStepType)[keyof typeof SkillStepType]
 
 /**
  * 技能步骤接口（扩展版）
@@ -412,6 +414,20 @@ export interface SkillSet {
   small: SkillConfig[]
   passive: SkillConfig[]
   ultimate: SkillConfig[]
+}
+
+/**
+ * 旧版技能步骤遗留字段
+ * 用于 JSON 配置直接读取的 legacy 属性，不在 SkillStep 接口中声明
+ */
+export interface LegacyStepFields {
+  baseValue?: number
+  bonusValue?: number
+  attackBonus?: number
+  defenseBonus?: number
+  levelBonus?: number
+  maxHpPercent?: number
+  lostHpPercent?: number
 }
 
 /**

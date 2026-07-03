@@ -1,25 +1,13 @@
-import type { BattleEntity } from '@/domain/battle/types'
+import type { BattleEntity, BattleTriggerPhase } from '@/domain/battle/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType } from '@/domain/buff/types'
-
-export enum PassiveSkillTrigger {
-  BATTLE_START = 'battle_start',
-  ON_HIT = 'on_hit',
-  TURN_START = 'turn_start',
-  TURN_END = 'turn_end',
-  BEFORE_ATTACK = 'before_attack',
-  AFTER_ATTACK = 'after_attack',
-  ON_KILL = 'on_kill',
-  ON_DEATH = 'on_death',
-  HP_LOWER_THAN = 'hp_lower_than',
-}
 
 export interface PassiveSkillConfig {
   id: string
   name: string
   description: string
-  trigger: PassiveSkillTrigger
+  trigger: BattleTriggerPhase
   condition?: string
   skillId: string
   cooldown: number
@@ -55,12 +43,12 @@ export class PassiveSkillManager {
    * 触发被动技能
    */
   triggerPassives(
-    trigger: PassiveSkillTrigger,
-    source: BattleEntity,
+    trigger: BattleTriggerPhase,
+    entity: BattleEntity,
     target?: BattleEntity,
     context?: Record<string, any>,
   ): void {
-    const characterPassives = this.passives.get(source.id)
+    const characterPassives = this.passives.get(entity.id)
     if (!characterPassives) return
 
     for (const config of characterPassives) {
@@ -71,13 +59,13 @@ export class PassiveSkillManager {
       }
       if (config.maxTriggerCount && config.triggerCount && config.triggerCount >= config.maxTriggerCount) continue
       if (config.triggerProbability && Math.random() > config.triggerProbability) continue
-      if (config.trigger === PassiveSkillTrigger.HP_LOWER_THAN && config.hpThreshold) {
-        const hpPercent = source.getAttribute('currentHealth' as any) / Math.max(1, source.getAttribute('maxHealth' as any))
+      if (config.trigger === BattleTriggerPhase.HP_LOWER_THAN && config.hpThreshold) {
+        const hpPercent = entity.getAttribute('currentHealth') / Math.max(1, entity.getAttribute('maxHealth'))
         if (hpPercent > config.hpThreshold / 100) continue
       }
-      if (config.condition && !this.evaluateCondition(config.condition, source, target, context)) continue
+      if (config.condition && !this.evaluateCondition(config.condition, entity, target, context)) continue
 
-      this.skillManager.executeSkill(config.skillId, source, target, context?.currentTurn as number || 0)
+      this.skillManager.executeSkill(config.skillId, entity, target, context?.currentTurn as number || 0)
       config.lastTriggeredTurn = context?.currentTurn as number || 0
       config.triggerCount = (config.triggerCount || 0) + 1
     }
@@ -96,7 +84,7 @@ export class PassiveSkillManager {
         case 'source_has_buff':
           return source.getBuffInstanceIds().length > 0
         case 'target_low_hp':
-          return target ? (target.getAttribute('currentHealth' as any) / Math.max(1, target.getAttribute('maxHealth' as any))) < 0.3 : false
+          return target ? (target.getAttribute('currentHealth') / Math.max(1, target.getAttribute('maxHealth'))) < 0.3 : false
         default:
           return true
       }
@@ -128,7 +116,7 @@ export class PassiveSkillManager {
 
   /** 为所有参与者触发指定时机的被动技能 */
   triggerPassiveSkillsForAll(
-    trigger: PassiveSkillTrigger,
+    trigger: BattleTriggerPhase,
     participants: Map<string, BattleEntity>,
     target?: BattleEntity,
     context?: Record<string, any>,

@@ -2,6 +2,7 @@ import type { BattleData, ParticipantSide } from '@/domain/battle/types'
 import { BattleStatus, RoundStatus, PARTICIPANT_SIDE } from '@/domain/battle/types'
 import { AUTO_BATTLE_CONFIG } from '@/domain/battle/types'
 import { BattleEventCodes } from '@/shared/types/battle-events'
+import { BattleActionHelper } from '@/domain/battle/types'
 import type { BattleAction } from '@/domain/battle/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
@@ -41,16 +42,13 @@ export class BattleLifecycleManager {
     battle.winner = winner
     battle.endTime = Date.now()
 
-    const endAction: BattleAction = {
-      id: `end_${Date.now()}`,
-      type: 'skill',
+    const endAction = BattleActionHelper.createSkill({
       sourceId: 'system',
       targetId: 'system',
-      success: true,
-      timestamp: Date.now(),
+      skillId: '',
       turn: battle.currentRound || 1,
       effects: [{ type: 'status', description: `战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}`, duration: 0 }],
-    }
+    })
 
     battle.actions.push(endAction)
     this.battleRecorder.recordAction(battle.battleId, endAction, battle.currentRound || 1)

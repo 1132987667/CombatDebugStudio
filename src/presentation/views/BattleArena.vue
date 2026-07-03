@@ -98,7 +98,7 @@ import DebugControlDialog from "./components/DebugControlDialog.vue";
 import { useBattleStore } from '@/presentation/stores';
 import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
-import { PARTICIPANT_SIDE } from "@/domain/battle/types";
+import { PARTICIPANT_SIDE, BattleEventType } from "@/domain/battle/types";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 import type { BattleManager } from '@/domain/battle/BattleManager';
 import type { LogEntry } from '@/shared/types/battle-log';
@@ -424,23 +424,23 @@ const handleReplayEvent = (event: any, index: number) => {
 
   // 根据事件类型处理不同的回放逻辑
   switch (event.type) {
-    case 'action':
+    case BattleEventType.ACTION:
       // 处理动作回放
       handleActionReplay(event.data.action);
       break;
-    case 'turn_start':
+    case BattleEventType.TURN_START:
       // 处理回合开始回放
       handleTurnStartReplay(event.data.turn, event.data.participantId);
       break;
-    case 'turn_end':
+    case BattleEventType.TURN_END:
       // 处理回合结束回放
       handleTurnEndReplay(event.data.turn);
       break;
-    case 'battle_start':
+    case BattleEventType.BATTLE_START:
       // 处理战斗开始回放
       handleBattleStartReplay();
       break;
-    case 'battle_end':
+    case BattleEventType.BATTLE_END:
       // 处理战斗结束回放
       handleBattleEndReplay(event.data.winner);
       break;

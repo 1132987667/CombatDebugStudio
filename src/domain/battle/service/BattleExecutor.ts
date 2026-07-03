@@ -7,12 +7,12 @@ import { convertToBattleState } from '@/domain/battle/aggregate/BattleState'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import type { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
-import { PassiveSkillTrigger } from '@/domain/skill/PassiveSkillManager'
+import { BattleTriggerPhase } from '@/domain/battle/types'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import { EFFECT_TYPES } from '@/shared/types/effect'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
-import { newLogSegment, LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 
 import { BattleActionHelper, BATTLE_CONSTANTS, PARTICIPANT_SIDE, ActionTypes } from '@/domain/battle/types'
@@ -251,7 +251,7 @@ export class BattleExecutor {
       case TargetStrategy.RANDOM:
         return take(
           candidates.sort(() => Math.random() - 0.5),
-          cfg.count ?? 1,
+          cfg.count === TargetStrategy.ALL ? candidates.length : cfg.count ?? 1,
         )
       case TargetStrategy.FRONT:
         return [candidates[0]]
@@ -270,7 +270,7 @@ export class BattleExecutor {
           )
           return [target]
         }
-        return take(candidates, cfg.count ?? 1)
+        return take(candidates, cfg.count === TargetStrategy.ALL ? candidates.length : cfg.count ?? 1)
       }
     }
   }
@@ -364,11 +364,11 @@ export class BattleExecutor {
   applyDamageToTarget(source: BattleEntity, target: BattleEntity, damage: number): void {
     target.takeDamage(damage)
     this.passiveSkillManager.triggerPassives(
-      PassiveSkillTrigger.ON_HIT, target, undefined, { sourceId: source.id, damage },
+      BattleTriggerPhase.ON_HIT, target, undefined, { sourceId: source.id, damage },
     )
     if (!target.isAlive()) {
       this.passiveSkillManager.triggerPassives(
-        PassiveSkillTrigger.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
+        BattleTriggerPhase.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
       )
     }
   }
@@ -443,7 +443,7 @@ export class BattleExecutor {
     const roundNumber = battle.currentRound
 
     this.passiveSkillManager.triggerPassives(
-      PassiveSkillTrigger.BEFORE_ATTACK, source, undefined, { targetId, roundNumber },
+      BattleTriggerPhase.BEFORE_ATTACK, source, undefined, { targetId, roundNumber },
     )
 
     const attackStep = this.buildNormalAttackStep(source, targetId)
@@ -458,7 +458,7 @@ export class BattleExecutor {
     }
 
     this.passiveSkillManager.triggerPassives(
-      PassiveSkillTrigger.AFTER_ATTACK, source, undefined, {
+      BattleTriggerPhase.AFTER_ATTACK, source, undefined, {
         targetId, damage: action.damage, isCritical: damageResult.isCritical,
       },
     )
@@ -568,6 +568,7 @@ export class BattleExecutor {
         )
         if (!skillAction) {
           battleLogManager.addDebugLog(`技能执行返回空: ${action.skillId}`)
+          console.error(`技能执行返回空: ${action.skillId}`)
           action.damage = 0
           action.heal = 0
           action.effects = []
@@ -620,17 +621,12 @@ export class BattleExecutor {
         action.damage = actualDamage
 
       this.passiveSkillManager.triggerPassives(
-        PassiveSkillTrigger.ON_HIT, target, undefined, { sourceId: source.id, damage: actualDamage },
+        BattleTriggerPhase.ON_HIT, target, undefined, { sourceId: source.id, damage: actualDamage },
       )
       if (!target.isAlive()) {
         this.passiveSkillManager.triggerPassives(
-          PassiveSkillTrigger.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
+          BattleTriggerPhase.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
         )
-        if (!target.isAlive()) {
-          this.passiveSkillManager.triggerPassiveSkills(
-            'ON_DEATH' as any, target, { sourceId: source.id, cause: 'damage' },
-          )
-        }
 
         await this.animationManager.triggerDamageAnimationAndWait({
           targetId: target.id, damage: actualDamage,
@@ -649,9 +645,7 @@ export class BattleExecutor {
         })
       }
       }
-
     }
-
     this.recordBattleAction(battle, action)
     source.afterAction()
     return action

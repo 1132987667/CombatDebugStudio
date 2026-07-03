@@ -7,7 +7,7 @@
  **/
 import { ATTRIBUTE_CODE, type AttributeValue, getAttributeMeta, getAttributeDefaultValue, normalizeAttributeCode } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
-import Utils from '@/domain/utils/Utils'
+import * as Utils from '@/domain/utils/Utils'
 
 export class ParticipantStats {
   readonly attributes = new Map<ATTRIBUTE_CODE, AttributeValue>()

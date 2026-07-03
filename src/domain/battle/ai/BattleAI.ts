@@ -11,6 +11,7 @@ import type {
 import {
   PARTICIPANT_SIDE,
   ActionTypes,
+  BattleActionHelper,
 } from '@/domain/battle/types'
 import { EFFECT_TYPES } from '@/shared/types/effect'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -307,16 +308,12 @@ export class BaseBattleAI implements BattleAI {
     const targetId = this.selectTarget(battleState, participant)
     const skill = this.skills.get(skillId)
 
-    return {
-      id: `skill_${Date.now()}`,
-      type: ActionTypes.SKILL,
+    return BattleActionHelper.createSkill({
       sourceId: participant.id,
       targetId,
       skillId,
       damage: skill?.damage || 0,
       heal: skill?.heal || 0,
-      success: true,
-      timestamp: Date.now(),
       turn: 0,
       effects: [
         {
@@ -324,19 +321,15 @@ export class BaseBattleAI implements BattleAI {
           description: `${participant.name} uses skill`,
         },
       ],
-    }
+    })
   }
 
   /** 选择普通攻击 */
   public selectAttack(participant: BattleEntity): BattleAction {
-    return {
-      id: `attack_${Date.now()}`,
-      type: ActionTypes.ATTACK,
+    return BattleActionHelper.createAttack({
       sourceId: participant.id,
       targetId: '',
       damage: participant.getRandomAttackDemage(),
-      success: true,
-      timestamp: Date.now(),
       turn: 0,
       effects: [
         {
@@ -345,7 +338,7 @@ export class BaseBattleAI implements BattleAI {
           description: `${participant.name} normal attack`,
         },
       ],
-    }
+    })
   }
 
   /** 设置上下文 */

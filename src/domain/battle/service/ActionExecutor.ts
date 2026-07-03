@@ -14,6 +14,7 @@ import {
   BattleData,
   ActionTypes,
   ValidActionTypes,
+  BattleActionHelper,
 } from '@/domain/battle/types'
 import { PARTICIPANT_SIDE, BATTLE_CONSTANTS } from '@/domain/battle/types'
 import { EFFECT_TYPES } from '@/shared/types/effect'
@@ -22,9 +23,9 @@ import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import {
   ControlType,
-  type TriggerPhase,
   type TriggerEventContext,
 } from '@/domain/buff/types'
+import type { BattleTriggerPhase } from '@/domain/battle/types'
 import { TriggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 
 /**
@@ -64,7 +65,7 @@ export class ActionExecutor {
    * @param context 事件上下文
    */
   private emitTriggerEvent(
-    phase: TriggerPhase,
+    phase: BattleTriggerPhase,
     context: Partial<TriggerEventContext>,
   ): void {
     const eventBus = this.getTriggerEventBus()
@@ -213,14 +214,10 @@ export class ActionExecutor {
       return
     }
 
-    await this.executeAction({
-      id: `action_${Date.now()}`,
-      type: ActionTypes.ATTACK,
+    await this.executeAction(BattleActionHelper.createAttack({
       sourceId: participant.id,
       targetId,
       damage,
-      success: true,
-      timestamp: Date.now(),
       turn: battle.currentTurn + 1,
       effects: [
         {
@@ -229,7 +226,7 @@ export class ActionExecutor {
           description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
         },
       ],
-    })
+    }))
   }
 
   /**
@@ -289,7 +286,7 @@ export class ActionExecutor {
   ): void {
     if (action.damage) {
       // 触发攻击前事件
-      this.emitTriggerEvent('ON_ATTACK_BEFORE', {
+      this.emitTriggerEvent(BattleTriggerPhase.BEFORE_ATTACK, {
         sourceId: source.id,
         targetId: target.id,
         value: action.damage,
@@ -300,7 +297,7 @@ export class ActionExecutor {
       action.damage = actualDamage
 
       // 触发攻击命中事件
-      this.emitTriggerEvent('ON_ATTACK_HIT', {
+      this.emitTriggerEvent(BattleTriggerPhase.ON_HIT, {
         sourceId: source.id,
         targetId: target.id,
         value: actualDamage,
@@ -308,7 +305,7 @@ export class ActionExecutor {
       })
 
       // 触发受到伤害事件
-      this.emitTriggerEvent('ON_DAMAGE_TAKEN', {
+      this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
         sourceId: target.id,
         targetId: source.id,
         value: actualDamage,
@@ -322,7 +319,7 @@ export class ActionExecutor {
       })
 
       // 触发攻击后事件
-      this.emitTriggerEvent('ON_ATTACK_AFTER', {
+      this.emitTriggerEvent(BattleTriggerPhase.AFTER_ATTACK, {
         sourceId: source.id,
         targetId: target.id,
         value: actualDamage,
@@ -332,7 +329,7 @@ export class ActionExecutor {
       // 检查目标是否死亡
       if (!target.isAlive()) {
         // 触发击杀事件
-        this.emitTriggerEvent('ON_KILL', {
+        this.emitTriggerEvent(BattleTriggerPhase.ON_KILL, {
           sourceId: source.id,
           targetId: target.id,
           value: actualDamage,
@@ -340,7 +337,7 @@ export class ActionExecutor {
         })
 
         // 触发死亡事件
-        this.emitTriggerEvent('ON_DEATH', {
+        this.emitTriggerEvent(BattleTriggerPhase.ON_DEATH, {
           sourceId: target.id,
           targetId: source.id,
           value: actualDamage,
@@ -470,7 +467,7 @@ export class ActionExecutor {
       action.heal = actualHeal
 
       // 触发受到治疗事件
-      this.emitTriggerEvent('ON_HEAL_RECEIVED', {
+      this.emitTriggerEvent(BattleTriggerPhase.HEAL_RECEIVED, {
         sourceId: target.id,
         targetId: source.id,
         value: actualHeal,

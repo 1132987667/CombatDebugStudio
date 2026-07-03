@@ -1,5 +1,5 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { BattleData } from '@/domain/battle/types'
+import { BattleData, BattleTriggerPhase } from '@/domain/battle/types'
 
 /**
  * buff 查询接口
@@ -324,31 +324,13 @@ export interface BuffScriptMetadata {
 // ========== 触发器系统类型定义 ==========
 
 /**
- * 触发阶段枚举
- * 定义Buff触发行为的触发时机
- */
-export type TriggerPhase =
-  | 'ON_BATTLE_START'      // 战斗开始时
-  | 'ON_TURN_START'        // 回合开始时（每个参与者的回合开始）
-  | 'ON_TURN_END'          // 回合结束时
-  | 'ON_ATTACK_BEFORE'     // 攻击前（伤害计算前）
-  | 'ON_ATTACK_HIT'        // 攻击命中时（伤害计算后、实际扣血前）
-  | 'ON_ATTACK_AFTER'      // 攻击后（伤害结算完成）
-  | 'ON_DAMAGE_TAKEN'      // 受到伤害后
-  | 'ON_KILL'              // 击杀目标时
-  | 'ON_DEATH'             // 自身死亡时
-  | 'ON_HEAL_RECEIVED'     // 受到治疗时
-  | 'ON_ENERGY_GAINED'     // 获得能量时
-  | 'ON_BATTLE_ENDED'      // 战斗结束时
-  | 'ON_SKILL_USE'        // 技能使用时（每个参与者的技能使用）
-
-/**
+ * 触发行为定义
  * 触发行为定义
  * 定义Buff在特定阶段触发的行为
  */
 export interface TriggerAction {
   /** 触发的阶段 */
-  phase: TriggerPhase
+  phase: BattleTriggerPhase
   /** 执行脚本ID（如 "deal_damage", "apply_buff", "heal"） */
   scriptId: string
   /** 执行参数（传递给脚本） */
@@ -367,7 +349,7 @@ export interface TriggerAction {
  */
 export interface TriggerEventContext {
   /** 触发事件的阶段 */
-  phase: TriggerPhase
+  phase: BattleTriggerPhase
   /** 事件发生时的战斗实例ID */
   battleId?: string
   /** 事件相关的源参与者ID（如攻击者） */

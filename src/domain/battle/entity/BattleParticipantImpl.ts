@@ -7,6 +7,7 @@
  * 版本: 3.1.0 - 集成触发器事件系统
  */
 
+import { BattleTriggerPhase } from '@/domain/battle/types'
 import type { StatusEffect, ParticipantSnapshot, BattleEntity } from '@/domain/battle/types'
 import type { IModifierProvider } from '@/domain/attribute/types'
 import { type ParticipantSide } from '@/domain/battle/types'
@@ -578,8 +579,8 @@ export class BattleParticipantImpl implements BattleEntity {
 
     // 触发能量获取事件
     if (actualGain > 0) {
-      triggerEventBus.emit('ON_ENERGY_GAINED', {
-        phase: 'ON_ENERGY_GAINED',
+      triggerEventBus.emit(BattleTriggerPhase.ENERGY_GAINED, {
+        phase: BattleTriggerPhase.ENERGY_GAINED,
         sourceId: this.id,
         value: actualGain,
       })

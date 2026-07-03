@@ -18,7 +18,6 @@ import { Counter } from '@/shared/utils/Counter'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import { SkillType } from '@/domain/skill/types'
 const counter = new Counter()
-
 /**
  * 战斗状态常量
  * 控制战斗的宏观生命周期
@@ -195,7 +194,6 @@ export interface BattleEntity {
 
   getRandomAttackDemage(): number
 
-  hasBuff(buffId: string): boolean
   takeDamage(amount: number): number
   heal(amount: number): number
   isAlive(): boolean
@@ -349,6 +347,7 @@ export const BattleActionHelper = {
     sourceId: string
     targetId: string
     damage?: number
+    success?: boolean
     isHit?: boolean
     isCrit?: boolean
     critDamage?: number
@@ -368,6 +367,7 @@ export const BattleActionHelper = {
     skillName?: string
     damage?: number
     heal?: number
+    success?: boolean
     isHit?: boolean
     isCrit?: boolean
     critDamage?: number
@@ -690,7 +690,7 @@ export interface BattleRound {
   roundNumber: number
   startSnapshot?: BattleStateSnapshot
   endSnapshot?: BattleStateSnapshot
-  events: BattleEvent[]
+  events: ReplayBattleEvent[]
 }
 
 /** 战斗结果 */
@@ -721,25 +721,46 @@ export interface BattleReplay {
   initialState: BattleStateSnapshot
   finalState?: BattleStateSnapshot
   rounds: BattleRound[]
+  events: ReplayBattleEvent[]
   logs: BattleLogEntry[]
   result?: BattleResult
 }
 
-/** 事件类型枚举 */
-export enum BattleEventType {
-  ACTION = 'action',
-  STATE_CHANGE = 'state_change',
-  TURN_START = 'turn_start',
-  TURN_END = 'turn_end',
-  BATTLE_START = 'battle_start',
-  BATTLE_END = 'battle_end',
-  BUFF_ADD = 'buff_add',
-  BUFF_REMOVE = 'buff_remove',
-  BUFF_UPDATE = 'buff_update',
-  DAMAGE = 'damage',
-  HEAL = 'heal',
-}
+/** 战斗阶段 -- 唯一的事实来源，统一 Buff 触发、被动技能、回放、事件总线的生命周期定义 */
+export const BattleTriggerPhase = {
+  BATTLE_START: 'battle_start',
+  BATTLE_END: 'battle_end',
+  TURN_START: 'turn_start',
+  TURN_END: 'turn_end',
+  BEFORE_ATTACK: 'before_attack',
+  ON_HIT: 'on_hit',
+  AFTER_ATTACK: 'after_attack',
+  DAMAGE_TAKEN: 'damage_taken',
+  ON_KILL: 'on_kill',
+  ON_DEATH: 'on_death',
+  HEAL_RECEIVED: 'heal_received',
+  ENERGY_GAINED: 'energy_gained',
+  SKILL_USE: 'skill_use',
+  HP_LOWER_THAN: 'hp_lower_than',
+} as const
 
+export type BattleTriggerPhase = (typeof BattleTriggerPhase)[keyof typeof BattleTriggerPhase]
+
+/** 事件类型枚举 */
+export const BattleEventType = {
+  ACTION: 'action',
+  STATE_CHANGE: 'state_change',
+  TURN_START: BattleTriggerPhase.TURN_START,
+  TURN_END: BattleTriggerPhase.TURN_END,
+  BATTLE_START: BattleTriggerPhase.BATTLE_START,
+  BATTLE_END: BattleTriggerPhase.BATTLE_END,
+  BUFF_ADD: 'buff_add',
+  BUFF_REMOVE: 'buff_remove',
+  BUFF_UPDATE: 'buff_update',
+  DAMAGE: 'damage',
+  HEAL: 'heal',
+}
+export type BattleEventType = (typeof BattleEventType)[keyof typeof BattleEventType]
 
 /** 扩展的战斗事件 */
 export interface ReplayBattleEvent {

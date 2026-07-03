@@ -328,7 +328,7 @@ export function calculateFinalValue(
       default:
         // 防御性编程：如果传入无效类型，静默忽略
         console.warn(
-          `[calculateFinalValue] 未知修饰符类型: ${(mod as any).type}`,
+          `[calculateFinalValue] 未知修饰符类型: ${(mod as Modifier).type}`,
         )
     }
   }
@@ -455,10 +455,10 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   },
 
   // ========== 能量属性 ==========
-  energy: {
-    code: 'energy',
-    name: '能量',
-    displayName: '能量',
+  currentEnergy: {
+    code: 'currentEnergy',
+    name: '当前能量',
+    displayName: '当前能量',
     description: '角色当前能量值',
     range: '0-100',
     impact: '用于施放技能，影响技能释放频率，初始值为25',

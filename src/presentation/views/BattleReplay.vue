@@ -90,12 +90,12 @@
         <div class="events-filter">
           <select v-model="filterType" class="filter-select">
             <option value="all">所有类型</option>
-            <option value="action">动作</option>
-            <option value="state_change">状态变化</option>
-            <option value="turn_start">回合开始</option>
-            <option value="turn_end">回合结束</option>
-            <option value="battle_start">战斗开始</option>
-            <option value="battle_end">战斗结束</option>
+            <option :value="BattleEventType.ACTION">动作</option>
+            <option :value="BattleEventType.STATE_CHANGE">状态变化</option>
+            <option :value="BattleEventType.TURN_START">回合开始</option>
+            <option :value="BattleEventType.TURN_END">回合结束</option>
+            <option :value="BattleEventType.BATTLE_START">战斗开始</option>
+            <option :value="BattleEventType.BATTLE_END">战斗结束</option>
             <option value="key">关键事件</option>
             <option value="bookmarked">已标记</option>
           </select>
@@ -170,7 +170,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { raf } from '@/shared/utils/RAF';
-import { BattleEvent } from '@/shared/types/battle-events';
+import { ReplayBattleEvent, BattleEventType } from '@/domain/battle/types';
 
 
 
@@ -179,7 +179,7 @@ interface RecordedBattle {
   startTime: number;
   endTime?: number;
   winner?: string;
-  events: BattleEvent[];
+  events: ReplayBattleEvent[];
   initialState: {
     participants: Array<{
       id: string;
@@ -200,7 +200,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'replay-event', event: BattleEvent, index: number): void;
+  (e: 'replay-event', event: ReplayBattleEvent, index: number): void;
   (e: 'replay-start', recording: RecordedBattle): void;
   (e: 'replay-end', recording: RecordedBattle): void;
   (e: 'replay-pause', recording: RecordedBattle, index: number): void;
@@ -456,19 +456,19 @@ function formatTime(timestamp: number): string {
 
 function getEventTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    'action': '动作',
-    'state_change': '状态变化',
-    'turn_start': '回合开始',
-    'turn_end': '回合结束',
-    'battle_start': '战斗开始',
-    'battle_end': '战斗结束'
+    [BattleEventType.ACTION]: '动作',
+    [BattleEventType.STATE_CHANGE]: '状态变化',
+    [BattleEventType.TURN_START]: '回合开始',
+    [BattleEventType.TURN_END]: '回合结束',
+    [BattleEventType.BATTLE_START]: '战斗开始',
+    [BattleEventType.BATTLE_END]: '战斗结束'
   };
   return labels[type] || type;
 }
 
-function getEventSeverity(event: BattleEvent): string {
-  if (event.type === 'battle_start' || event.type === 'battle_end') return 'high';
-  if (event.type === 'action' && event.data?.action?.damage && event.data.action.damage > 100) return 'medium';
+function getEventSeverity(event: ReplayBattleEvent): string {
+  if (event.type === BattleEventType.BATTLE_START || event.type === BattleEventType.BATTLE_END) return 'high';
+  if (event.type === BattleEventType.ACTION && event.data?.action?.damage && event.data.action.damage > 100) return 'medium';
   return 'low';
 }
 
@@ -486,7 +486,7 @@ function toggleBookmark(index: number): void {
   }
 }
 
-function inspectEvent(event: BattleEvent): void {
+function inspectEvent(event: ReplayBattleEvent): void {
   console.log('详细查看事件:', event);
   // 这里可以打开一个模态框显示事件的详细信息
 }
@@ -548,28 +548,28 @@ function togglePerformanceMonitor(): void {
 }
 
 
-function getEventDetails(event: BattleEvent): string {
+function getEventDetails(event: ReplayBattleEvent): string {
   switch (event.type) {
-    case 'battle_start':
+    case BattleEventType.BATTLE_START:
       return '战斗开始';
-    case 'battle_end':
+    case BattleEventType.BATTLE_END:
       return `战斗结束，胜利者: ${event.data.winner}`;
-    case 'turn_start':
+    case BattleEventType.TURN_START:
       return `回合开始，行动者: ${event.data.participantId}`;
-    case 'turn_end':
+    case BattleEventType.TURN_END:
       return '回合结束';
-    case 'action':
+    case BattleEventType.ACTION:
       return `行动: ${event.data.action.type}，来源: ${event.data.action.sourceId}`;
-    case 'state_change':
+    case BattleEventType.STATE_CHANGE:
       return '状态变化';
     default:
       return '';
   }
 }
 
-function isKeyEvent(event: BattleEvent): boolean {
+function isKeyEvent(event: ReplayBattleEvent): boolean {
   // 定义关键事件类型
-  const keyEventTypes = ['battle_start', 'battle_end'];
+  const keyEventTypes = [BattleEventType.BATTLE_START, BattleEventType.BATTLE_END];
 
   // 检查是否是关键事件类型
   if (keyEventTypes.includes(event.type)) {
@@ -577,17 +577,17 @@ function isKeyEvent(event: BattleEvent): boolean {
   }
 
   // 检查是否是高伤害攻击
-  if (event.type === 'action' && event.data.action.damage && event.data.action.damage > 500) {
+  if (event.type === BattleEventType.ACTION && event.data.action.damage && event.data.action.damage > 500) {
     return true;
   }
 
   // 检查是否是技能释放
-  if (event.type === 'action' && event.data.action.type === 'skill') {
+  if (event.type === BattleEventType.ACTION && event.data.action.type === 'skill') {
     return true;
   }
 
   // 检查是否是状态变化
-  if (event.type === 'state_change') {
+  if (event.type === BattleEventType.STATE_CHANGE) {
     return true;
   }
 

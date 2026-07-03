@@ -1,6 +1,15 @@
 import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /**
+ * Buff 简要信息（静态配置数据类型）
+ */
+export interface BuffBrief {
+  id: string
+  isPositive?: boolean
+  isDebuff?: boolean
+}
+
+/**
  * 角色属性接口
  * 定义角色的基础属性值
  */
@@ -48,7 +57,7 @@ export interface CharacterStats {
   /** 是否启用 */
   enabled: boolean
   /** buff列表 */
-  buffs?: any[]
+  buffs?: BuffBrief[]
 }
 
 /**

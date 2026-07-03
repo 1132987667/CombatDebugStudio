@@ -2,7 +2,7 @@ import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { BattleAction, BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { StackRule, ControlType } from '@/domain/buff/types'
+import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
@@ -95,8 +95,8 @@ export class SkillExecutor {
     }
 
     const buffTarget = skillStep.targetConfig?.faction === 'self' ? source : target
-    const buffConfig: any = {
-      id: buffId, name: buffId, duration: skillStep.duration ?? 1,
+    const buffConfig: BuffConfig = {
+      id: buffId, name: buffId, description: '', duration: skillStep.duration ?? 1,
       maxStacks: skillStep.stacks || 1, cooldown: 0,
       stackRule: StackRule.LIMITED, controlType: ControlType.NONE, controlPriority: 0,
       isDebuff: skillStep.type === 'DEBUFF',
@@ -125,8 +125,8 @@ export class SkillExecutor {
   ): void {
     const controlType = normalizedType === 'STUN' ? ControlType.STUN : normalizedType === 'SILENCE' ? ControlType.SILENCE : ControlType.STUN
     const buffId = skillStep.buffId || `control_${controlType}`
-    const config: any = {
-      id: buffId, name: buffId, duration: skillStep.duration ?? 1, maxStacks: 1, cooldown: 0,
+    const config: BuffConfig = {
+      id: buffId, name: buffId, description: '', duration: skillStep.duration ?? 1, maxStacks: 1, cooldown: 0,
       stackRule: StackRule.REFRESH, controlType, controlPriority: 100, isDebuff: true,
       parameters: skillStep.parameters || {},
     }

@@ -1,7 +1,7 @@
 /**
  * 文件: GameDataProcessor.ts
  * 创建日期: 2026-02-09
- * 作者: CombatDebugStudio
+ * 作者:
  * 功能: 游戏数据处理工具类
  * 描述: 专门处理游戏相关的数据操作，提供敌人、技能、场景等数据的加载和查询功能
  * 版本: 3.0.0
@@ -19,13 +19,11 @@ import type { Enemy } from '@/shared/types/enemy'
 import { type SkillConfig } from '@/domain/skill/types'
 import type { SceneData } from '@/shared/types/scene'
 import type { CharacterStats } from '@/domain/character/types'
-import type { AttributeValueType } from '@/domain/attribute/types'
+import { AttributeValueType } from '@/domain/attribute/types'
 import type { ParticipantSide } from '@/domain/battle/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 import {
   ATTRIBUTE_CODE,
-  ModifierType,
-  ModifierSourceType,
 } from '@/domain/attribute/types'
 import type {
   ModifierTemplate,
@@ -124,7 +122,7 @@ export class GameDataProcessor {
       attrBonuses: { value: number; valueType: string }[],
     ): number => {
       return attrBonuses.reduce((sum, b) => {
-        return b.valueType === '百分比' ? sum + b.value : sum + b.value / 100
+        return b.valueType === AttributeValueType.PERCENT ? sum + b.value : sum + b.value / 100
       }, 0)
     }
 
@@ -399,13 +397,13 @@ export class GameDataProcessor {
                   bonuses[attr].push({
                     value: numValue * 100,
                     source: buff.name || step.buffId,
-                    valueType: '百分比',
+                    valueType: AttributeValueType.PERCENT,
                   })
                 }
               }
             }
             if (buff && buff.onAdd) {
-              const onAdd = buff.onAdd
+              const onAdd = buff.onAdd as string
               const attackMatch = onAdd.match(/attack\s*\*\s*([\d.]+)/)
               const defenseMatch = onAdd.match(/defense\s*\*\s*([\d.]+)/)
               const maxHealthMatch = onAdd.match(/maxHealth\s*\*\s*([\d.]+)/)
@@ -417,7 +415,7 @@ export class GameDataProcessor {
                 bonuses.attack.push({
                   value: percent,
                   source: buff.name || step.buffId,
-                  valueType: '百分比',
+                  valueType: AttributeValueType.PERCENT,
                 })
               }
               if (defenseMatch) {
@@ -425,7 +423,7 @@ export class GameDataProcessor {
                 bonuses.defense.push({
                   value: percent,
                   source: buff.name || step.buffId,
-                  valueType: '百分比',
+                  valueType: AttributeValueType.PERCENT,
                 })
               }
               if (maxHealthMatch) {
@@ -433,7 +431,7 @@ export class GameDataProcessor {
                 bonuses.health.push({
                   value: percent,
                   source: buff.name || step.buffId,
-                  valueType: '百分比',
+                  valueType: AttributeValueType.PERCENT,
                 })
               }
               if (speedMatch) {
@@ -448,7 +446,7 @@ export class GameDataProcessor {
                 bonuses.speed.push({
                   value: percent,
                   source: buff.name || step.buffId,
-                  valueType: '百分比',
+                  valueType: AttributeValueType.PERCENT,
                 })
               }
             }

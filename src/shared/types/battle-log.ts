@@ -6,7 +6,7 @@
  * 确保系统中所有战斗日志相关的类型引用保持一致
  */
 
-import type { BattleAction, ActionTypes } from '@/domain/battle/types'
+import { BattleAction, ActionTypes } from '@/domain/battle/types'
 
 /**
  * 日志级别 - 统一所有日志系统的级别定义
@@ -103,24 +103,27 @@ export type BattleLogType = 'system' | '普通攻击' | '小技能' | '大技能
 /**
  * 战斗动作类型定义 - 统一所有动作类型
  */
-export type DetailActionType =
-  | 'normal_attack' // 普通攻击
-  | 'skill_attack' // 技能攻击
-  | 'heal_skill' // 治疗技能
-  | 'buff_skill' // 增益技能
-  | 'debuff_skill' // 减益技能
-  | 'status_effect' // 状态生效
-  | 'control_effect' // 控制效果
-  | 'critical_hit' // 暴击
-  | 'missed_attack' // 未命中
-  | 'blocked_attack' // 格挡
-  | 'defense_action' // 防御动作
-  | 'charge_action' // 蓄力动作
-  | 'unit_death' // 单位死亡
-  | 'battle_victory' // 战斗胜利
-  | 'battle_defeat' // 战斗失败
-  | 'battle_start' // 战斗开始
-  | 'battle_end' // 战斗结束
+export const DetailActionType = {
+  NORMAL_ATTACK: 'normal_attack',
+  SKILL_ATTACK: 'skill_attack',
+  HEAL_SKILL: 'heal_skill',
+  BUFF_SKILL: 'buff_skill',
+  DEBUFF_SKILL: 'debuff_skill',
+  STATUS_EFFECT: 'status_effect',
+  CONTROL_EFFECT: 'control_effect',
+  CRITICAL_HIT: 'critical_hit',
+  MISSED_ATTACK: 'missed_attack',
+  BLOCKED_ATTACK: 'blocked_attack',
+  DEFENSE_ACTION: 'defense_action',
+  CHARGE_ACTION: 'charge_action',
+  UNIT_DEATH: 'unit_death',
+  BATTLE_VICTORY: 'battle_victory',
+  BATTLE_DEFEAT: 'battle_defeat',
+  BATTLE_START: 'battle_start',
+  BATTLE_END: 'battle_end',
+} as const
+
+export type DetailActionType = (typeof DetailActionType)[keyof typeof DetailActionType]
 
 /**
  * 通用日志条目接口 - 用于框架日志系统
@@ -269,23 +272,23 @@ export function getLogLevelColor(level: BattleLogCategory): string {
  * 动作类型映射 - 统一动作类型到显示名称的映射
  */
 export const ActionTypeDisplayNames: Record<DetailActionType, string> = {
-  normal_attack: '普通攻击',
-  skill_attack: '技能攻击',
-  heal_skill: '治疗技能',
-  buff_skill: '增益技能',
-  debuff_skill: '减益技能',
-  status_effect: '状态生效',
-  control_effect: '控制效果',
-  critical_hit: '暴击',
-  missed_attack: '未命中',
-  blocked_attack: '格挡',
-  defense_action: '防御动作',
-  charge_action: '蓄力动作',
-  unit_death: '单位死亡',
-  battle_victory: '战斗胜利',
-  battle_defeat: '战斗失败',
-  battle_start: '战斗开始',
-  battle_end: '战斗结束',
+  [DetailActionType.NORMAL_ATTACK]: '普通攻击',
+  [DetailActionType.SKILL_ATTACK]: '技能攻击',
+  [DetailActionType.HEAL_SKILL]: '治疗技能',
+  [DetailActionType.BUFF_SKILL]: '增益技能',
+  [DetailActionType.DEBUFF_SKILL]: '减益技能',
+  [DetailActionType.STATUS_EFFECT]: '状态生效',
+  [DetailActionType.CONTROL_EFFECT]: '控制效果',
+  [DetailActionType.CRITICAL_HIT]: '暴击',
+  [DetailActionType.MISSED_ATTACK]: '未命中',
+  [DetailActionType.BLOCKED_ATTACK]: '格挡',
+  [DetailActionType.DEFENSE_ACTION]: '防御动作',
+  [DetailActionType.CHARGE_ACTION]: '蓄力动作',
+  [DetailActionType.UNIT_DEATH]: '单位死亡',
+  [DetailActionType.BATTLE_VICTORY]: '战斗胜利',
+  [DetailActionType.BATTLE_DEFEAT]: '战斗失败',
+  [DetailActionType.BATTLE_START]: '战斗开始',
+  [DetailActionType.BATTLE_END]: '战斗结束',
 }
 
 /**

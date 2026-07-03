@@ -5,6 +5,7 @@
 
 import type { BattleLogEntry } from '@/shared/types/battle-log';
 import type { BattleEntity, ParticipantSide } from '@/domain/battle/types';
+import { BattleTriggerPhase } from '@/domain/battle/types';
 
 /** 战斗日志事件数据类型 */
 export interface BattleLogEventData {
@@ -62,7 +63,7 @@ export const BattleEventCodes = {
   /** 闪避动画事件 */
   MISS_ANIMATION: 'miss-animation',
   /** 战斗结束事件 */
-  BATTLE_ENDED: 'battle-ended',
+  BATTLE_ENDED: BattleTriggerPhase.BATTLE_END,
   /** Buff 效果事件 */
   BUFF_EFFECT: 'buff-effect',
   /** 技能效果事件 */
@@ -72,20 +73,12 @@ export const BattleEventCodes = {
   /** 战斗重置事件 */
   BATTLE_RESET: 'battle-reset',
   /** 回合开始事件 */
-  TURN_START: 'turnStart',
+  TURN_START: BattleTriggerPhase.TURN_START,
   /** 回合结束事件 */
-  TURN_END: 'turnEnd',
+  TURN_END: BattleTriggerPhase.TURN_END,
 } as const
 
 export type BattleEventCode = (typeof BattleEventCodes)[keyof typeof BattleEventCodes]
-
-export interface BattleEvent {
-  eventId: string;
-  type: 'action' | 'state_change' | 'turn_start' | 'turn_end' | 'battle_start' | 'battle_end';
-  timestamp: number;
-  turn: number;
-  data: any;
-}
 
 /** 战斗事件类型映射 */
 export interface BattleEvents {

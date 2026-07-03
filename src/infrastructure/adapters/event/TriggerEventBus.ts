@@ -7,7 +7,8 @@
  * 版本: 1.0.0
  */
 
-import type { TriggerPhase, TriggerEventContext } from '@/domain/buff/types'
+import type { BattleTriggerPhase } from '@/domain/battle/types'
+import type { TriggerEventContext } from '@/domain/buff/types'
 
 /**
  * 事件监听器类型
@@ -33,7 +34,7 @@ interface ListenerItem {
  */
 export class TriggerEventBus {
   /** 监听器映射：阶段 -> 监听器集合 */
-  private listeners: Map<TriggerPhase, Set<ListenerItem>> = new Map()
+  private listeners: Map<BattleTriggerPhase, Set<ListenerItem>> = new Map()
   /** 监听器ID计数器 */
   private listenerIdCounter: number = 0
   /** 调试模式标志 */
@@ -47,7 +48,7 @@ export class TriggerEventBus {
    * @returns 监听器ID，用于取消注册
    */
   public on(
-    phase: TriggerPhase,
+    phase: BattleTriggerPhase,
     callback: TriggerEventListener,
     buffInstanceId?: string,
   ): string {
@@ -70,7 +71,7 @@ export class TriggerEventBus {
    * @param listenerId 监听器ID
    * @returns 是否成功移除
    */
-  public off(phase: TriggerPhase, listenerId: string): boolean {
+  public off(phase: BattleTriggerPhase, listenerId: string): boolean {
     const set = this.listeners.get(phase)
     if (!set) return false
 
@@ -118,7 +119,7 @@ export class TriggerEventBus {
    * @param phase 触发阶段
    * @param context 事件上下文
    */
-  public emit(phase: TriggerPhase, context: TriggerEventContext): void {
+  public emit(phase: BattleTriggerPhase, context: TriggerEventContext): void {
     const set = this.listeners.get(phase)
     if (!set || set.size === 0) return
 
@@ -143,7 +144,7 @@ export class TriggerEventBus {
    * @param phase 触发阶段
    * @returns 是否有监听器
    */
-  public hasListeners(phase: TriggerPhase): boolean {
+  public hasListeners(phase: BattleTriggerPhase): boolean {
     const set = this.listeners.get(phase)
     return set !== undefined && set.size > 0
   }
@@ -153,7 +154,7 @@ export class TriggerEventBus {
    * @param phase 触发阶段
    * @returns 监听器数量
    */
-  public getListenerCount(phase: TriggerPhase): number {
+  public getListenerCount(phase: BattleTriggerPhase): number {
     return this.listeners.get(phase)?.size ?? 0
   }
 

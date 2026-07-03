@@ -89,7 +89,10 @@ export class BattleReplayManager {
 
     const success = this.replayEngine.loadReplay(recording)
     if (!success) {
-      this.battleLogManager.addSystemLog('加载回放数据失败')
+      this.battleLogManager.addSystemLog({
+        message: '加载回放数据失败',
+        level: 'ERROR',
+      })
       return
     }
 
@@ -106,8 +109,9 @@ export class BattleReplayManager {
     })
 
     this.replayEngine.play()
-
-    this.battleLogManager.addSystemLog('开始回放')
+    this.battleLogManager.addSystemLog({
+      message: '开始回放',
+    })
   }
 
   /**
@@ -116,7 +120,9 @@ export class BattleReplayManager {
   pauseReplay() {
     if (this.replayEngine) {
       this.replayEngine.pause()
-      this.battleLogManager.addSystemLog('回放已暂停')
+      this.battleLogManager.addSystemLog({
+        message: '回放已暂停',
+      })
     }
   }
 
@@ -126,7 +132,9 @@ export class BattleReplayManager {
   resumeReplay() {
     if (this.replayEngine) {
       this.replayEngine.resume()
-      this.battleLogManager.addSystemLog('回放已继续')
+      this.battleLogManager.addSystemLog({
+        message: '回放已继续',
+      })
     }
   }
 
@@ -135,7 +143,9 @@ export class BattleReplayManager {
    */
   stopReplay() {
     this.resetReplayState()
-    this.battleLogManager.addSystemLog('回放已停止')
+    this.battleLogManager.addSystemLog({
+      message: '回放已停止',
+    })
   }
 
   /**
@@ -147,7 +157,9 @@ export class BattleReplayManager {
     if (this.replayEngine) {
       this.replayEngine.setSpeed(speed)
     }
-    this.battleLogManager.addSystemLog(`回放速度已调整为: ${speed}倍`)
+    this.battleLogManager.addSystemLog({
+      message: `回放速度已调整为: ${speed}倍`,
+      })
   }
 
   /**

@@ -190,7 +190,9 @@ export class InterventionManager {
     // 保存到本地存储
     localStorage.setItem('battleState', JSON.stringify(state, null, 2))
 
-    this.battleLogManager.addSystemLog('战斗状态已导出')
+    this.battleLogManager.addSystemLog({
+      message: '战斗状态已导出',
+    })
     return state
   }
 
@@ -208,7 +210,7 @@ export class InterventionManager {
         // 例如：
         // this.battleStateManager.initializeTeams(state.battleCharacters, state.enemyParty);
 
-        this.battleLogManager.addSystemLog('战斗状态已导入')
+        this.battleLogManager.addSystemLog({message: '战斗状态已导入'})
         return true
       } else {
         this.battleLogManager.addDebugLog('没有找到保存的战斗状态')
@@ -251,7 +253,9 @@ export class InterventionManager {
    * 定位异常
    */
   locateException() {
-    this.battleLogManager.addSystemLog('开始异常检测')
+    this.battleLogManager.addSystemLog({
+      message: '开始异常检测',
+    })
     // 这里可以实现异常检测逻辑
   }
 
@@ -260,12 +264,14 @@ export class InterventionManager {
    */
   clearParticipants() {
     // 使用状态管理器清空队伍
-    this.battleStateManager.initializeTeams([], [])
+    // this.battleStateManager.initializeTeams([], [])
 
     // 重置选中状态
     this.selectedCharacterId = null
     this.selectedChar = null
 
-    this.battleLogManager.addSystemLog('所有参战角色已清空')
+    this.battleLogManager.addSystemLog({
+      message: '所有参战角色已清空',
+    })
   }
 }

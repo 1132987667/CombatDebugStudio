@@ -3,7 +3,7 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ModifierType } from '@/domain/attribute/types'
 
 export class PoisonDebuff extends BaseBuffScript {
-  public static readonly BUFF_ID = 'poison'
+  public static readonly BUFF_ID = 'buff_poison'
 
   protected _onApply(context: BuffContext): void {
     this.log(context, '中毒了！毒素开始侵蚀身体')

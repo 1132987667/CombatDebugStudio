@@ -22,9 +22,12 @@ import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { calculateChecksum, generateReplayId } from '@/shared/utils/Checksum'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
+import type { BattleEntity } from '@/domain/battle/types'
 
-
-interface EnhancedRecordedBattle {
+/**
+ * 战斗记录
+ */
+export interface RecordedBattle {
   battleId: string
   replayId: string
   version: string
@@ -52,7 +55,7 @@ interface EnhancedRecordedBattle {
 }
 
 export class BattleRecorder {
-  private recordings = new Map<string, EnhancedRecordedBattle>()
+  private recordings = new Map<string, RecordedBattle>()
   private maxRecordings = 10
   private cleanupScheduled = false
   private randomSeeds = new Map<string, string>()
@@ -68,22 +71,14 @@ export class BattleRecorder {
   public startRecording(
     battleId: string,
     initialState: {
-      participants: Array<{
-        id: string
-        name: string
-        type: ParticipantSide
-        maxHealth: number
-        currentHealth: number
-        maxEnergy: number
-        currentEnergy: number
-      }>
+      participants: Array<BattleEntity>
     },
     randomSeed?: string,
   ) {
     const seed = randomSeed || this.generateRandomSeed()
     this.randomSeeds.set(battleId, seed)
 
-    const recording: EnhancedRecordedBattle = {
+    const recording: RecordedBattle = {
       battleId,
       replayId: generateReplayId(),
       version: BATTLE_REPLAY_VERSION,
@@ -109,7 +104,10 @@ export class BattleRecorder {
       0,
     )
 
-    battleLogManager.addSystemLog(`开始记录战斗: ${battleId}`)
+    battleLogManager.addSystemLog({
+      level: LogLevel.INFO,
+      message: `开始记录战斗: ${battleId}`,
+    })
 
     this.scheduleCleanup()
   }
@@ -370,11 +368,11 @@ export class BattleRecorder {
     })
   }
 
-  public getRecording(battleId: string): EnhancedRecordedBattle | undefined {
+  public getRecording(battleId: string): RecordedBattle | undefined {
     return this.recordings.get(battleId)
   }
 
-  public getAllRecordings(): EnhancedRecordedBattle[] {
+  public getAllRecordings(): RecordedBattle[] {
     return Array.from(this.recordings.values())
   }
 
@@ -417,14 +415,14 @@ export class BattleRecorder {
     return saveKey
   }
 
-  public loadRecording(saveKey: string): EnhancedRecordedBattle | null {
+  public loadRecording(saveKey: string): RecordedBattle | null {
     const savedData = localStorage.getItem(saveKey)
     if (!savedData) {
       return null
     }
 
     try {
-      const recording = JSON.parse(savedData) as EnhancedRecordedBattle
+      const recording = JSON.parse(savedData) as RecordedBattle
 
       if (recording.checksum) {
         const { checksum, ...dataWithoutChecksum } = recording
@@ -580,9 +578,7 @@ export class BattleRecorder {
     if (this.cleanupScheduled) {
       return
     }
-
     this.cleanupScheduled = true
-
     setTimeout(() => {
       this.cleanupOldRecordings()
       this.cleanupScheduled = false

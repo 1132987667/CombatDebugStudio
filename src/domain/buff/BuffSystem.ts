@@ -1,4 +1,4 @@
-import type { BuffConfig, BuffInstance, BuffQuery } from '@/domain/buff/types'
+import type { BuffConfig, BuffInstance, BuffQuery, IBuffScript } from '@/domain/buff/types'
 import type {
   TriggerEventContext,
 } from '@/domain/buff/types'
@@ -16,6 +16,14 @@ import { ModifierStack } from '@/domain/buff/ModifierStack'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
 import { TriggerEventBus, triggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
+
+/** 无操作脚本占位：用于有配置无脚本的 buff */
+const NOOP_BUFF_SCRIPT: IBuffScript = {
+  onApply: () => {},
+  onRemove: () => {},
+  onUpdate: () => {},
+  onRefresh: () => {},
+}
 
 export interface TriggerExecutionContext extends TriggerEventContext {
   instanceId?: string
@@ -114,10 +122,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     currentTurn: number = 0,
     record?: CombatRecord,
   ): string {
-    const script = this.scriptRegistry.get(buffId)
+    let script = this.scriptRegistry.get(buffId)
     if (!script) {
-      console.warn(`Buff script ${buffId} not found, skipping buff`)
-      return ''
+      const def = this.scriptRegistry.resolve(buffId)
+      if (!def?.config) {
+        console.warn(`Buff ${buffId} not found — no script or config registered, skipping`)
+        return ''
+      }
+      // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
+      // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
+      script = NOOP_BUFF_SCRIPT
     }
 
     const existingBuffs = this.getBuffInstances(characterId).filter(

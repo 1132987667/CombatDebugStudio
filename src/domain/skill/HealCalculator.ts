@@ -126,7 +126,7 @@ export class HealCalculator {
     heal += baseValue
     heal += bonusValue
     if (attackBonus > 0) {
-      const atk = source.getAttribute(ATTRIBUTE_CODE.attack)
+      const atk = source.getRandomAttackDemage()
       heal += Math.floor(atk * attackBonus / 100)
     }
     if (levelBonus > 0) {
@@ -171,7 +171,7 @@ export class HealCalculator {
     step: ExtendedSkillStep,
   ): number {
     try {
-      const atk = source.getAttribute(ATTRIBUTE_CODE.attack)
+      const atk = source.getRandomAttackDemage()
       const targetMaxHp = target.getAttribute(ATTRIBUTE_CODE.maxHealth)
       const sourceLevel = source.level || 1
       const targetLevel = target.level || 1
@@ -181,7 +181,7 @@ export class HealCalculator {
       const attackBonus = ls2.attackBonus || 0
       const levelBonus = ls2.levelBonus || 0
       const processedFormula = formula
-        .replace(/ATK/gi, String(atk))
+        .replace(/\battack\b/gi, String(atk))
         .replace(/TARGET_MAX_HP/gi, String(targetMaxHp))
         .replace(/SOURCE_LEVEL/gi, String(sourceLevel))
         .replace(/TARGET_LEVEL/gi, String(targetLevel))

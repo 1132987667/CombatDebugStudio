@@ -21,7 +21,7 @@ import { createDefaultBattleData, convertToBattleState, checkBattleEndCondition 
 import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
 import { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { TriggerEventContext } from '@/domain/buff/types'
-import type { BattleTriggerPhase } from '@/domain/battle/types'
+import { BattleTriggerPhase } from '@/domain/battle/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { AISystem } from '@/domain/battle/ai/AISystem'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
@@ -60,6 +60,7 @@ import {
 import { RAFTimer } from '@/shared/utils/RAF'
 import { Counter } from '@/shared/utils/Counter'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { debugGate } from '@/domain/battle/debug/DebugGate'
 import type { SkillConfig } from '@/domain/skill/types'
 
 /**
@@ -325,27 +326,11 @@ export class BattleSystem implements IBattleSystem {
       participants: allParticipants,
     })
 
-    battleLogManager.addSystemLog(
-      `战斗双方人员情况: 我方 ${allyParticipants.length} 人 | 敌方 ${enemyParticipants.length} 人`,
+    battleLogManager.addSystemLog({
+      message: `战斗双方人员情况: 我方 ${allyParticipants.length} 人 | 敌方 ${enemyParticipants.length} 人`,
+    }
+      
     )
-
-    const initAction = BattleActionHelper.createAttack({
-      sourceId: 'system',
-      targetId: 'system',
-      turn: 0,
-      effects: [
-        {
-          type: 'status',
-          description: `战斗开始！参战角色: ${allyParticipants.length} 人，参战敌人: ${enemyParticipants.length} 人`,
-          duration: 0,
-        },
-      ],
-    })
-
-    this.addBattleAction(initAction)
-
-    this.battleRecorder.recordAction(battleId, initAction, 0)
-
     battleData.roundState = RoundStatus.START
 
     const autoBattleRules = this.ruleManager.getAutoBattleRules()
@@ -418,6 +403,11 @@ export class BattleSystem implements IBattleSystem {
       return
     }
 
+    // ponytail: 调试模式 — 首回合开始前暂停，让开发者查看初始状态
+    if (battle.currentRound === 1) {
+      await debugGate.waitIfNeeded('BATTLE_START')
+    }
+
     battle.roundState = RoundStatus.START
 
     const aliveParticipants = Array.from(battle.participants.values()).filter(
@@ -484,6 +474,9 @@ export class BattleSystem implements IBattleSystem {
       const firstActorId = currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
       eventBus.emit(BattleEventCodes.TURN_START, { actorId: firstActorId })
 
+      // ponytail: 调试模式 — 回合开始事件已派发后暂停
+      await debugGate.waitIfNeeded('TURN_START')
+
       const battleId = battle.battleId
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0])
 
@@ -543,6 +536,9 @@ export class BattleSystem implements IBattleSystem {
 
       // 发送回合结束事件到 UI 层
       eventBus.emit(BattleEventCodes.TURN_END, {})
+
+      // ponytail: 调试模式 — 回合结束事件已派发后暂停
+      await debugGate.waitIfNeeded('TURN_END')
 
       // 触发回合结束事件
       const endParticipants = Array.from(battle.participants.values()).filter(

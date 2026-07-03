@@ -10,7 +10,7 @@
           "id": "commander_aura_atk",
           "targetAttribute": "ATK",
           "type": "PERCENTAGE",
-          "value": 0.10
+          "value": 0.1
         }
       ]
     }
@@ -21,7 +21,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "dmgReduction": "0.2"
+      "dmgReduction": "+20%"
     }
   },
   {
@@ -42,9 +42,9 @@
         "phase": "ON_ALLY_FATAL_DAMAGE",
         "scriptId": "block_damage_percent",
         "params": {
-          "percent": 0.50
+          "percent": 0.5
         },
-        "probability": 0.30
+        "probability": 0.3
       }
     ]
   },
@@ -97,7 +97,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "critRate": "-0.15"
+      "critRate": "15%"
     }
   },
   {
@@ -106,7 +106,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "magicDamageTaken": "-0.1"
+      "magicDamageTaken": "10%"
     }
   },
   {
@@ -121,7 +121,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "demonDamage": "+0.2"
+      "demonDamage": "+20%"
     }
   },
   {
@@ -130,7 +130,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "critDamage": "+0.2"
+      "critDamage": "+20%"
     }
   },
   {
@@ -162,7 +162,7 @@
         "id": "traitor_scheme_damage_to_low_hp",
         "targetAttribute": "DAMAGE_TO_LOW_HP",
         "type": "ADDITIVE",
-        "value": 0.30,
+        "value": 30,
         "condition": "target.hp_ratio < 0.5"
       }
     ]
@@ -204,7 +204,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "critRate": "+0.1"
+      "critRate": "+10%"
     }
   },
   {
@@ -242,9 +242,9 @@
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "reflect_damage",
         "params": {
-          "percent": 0.30
+          "percent": 0.3
         },
-        "probability": 0.20,
+        "probability": 0.2,
         "condition": "damageType == 'elemental_damage'"
       }
     ]
@@ -258,7 +258,7 @@
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "apply_shield",
         "params": {
-          "shieldPercent": 0.10
+          "shieldPercent": 0.1
         },
         "probability": 0.15
       }
@@ -289,7 +289,7 @@
         "phase": "ON_TURN_END",
         "scriptId": "heal_percent_max_hp",
         "params": {
-          "percent": 0.10
+          "percent": 0.1
         },
         "condition": "self.hp_ratio < 0.5"
       }
@@ -319,7 +319,7 @@
           "buffId": "buff_slow",
           "duration": 2
         },
-        "probability": 0.20
+        "probability": 0.2
       }
     ]
   },
@@ -334,7 +334,7 @@
           "id": "demon_aura_dodge",
           "targetAttribute": "DODGE",
           "type": "ADDITIVE",
-          "value": 0.10
+          "value": 0.1
         }
       ]
     }
@@ -345,7 +345,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "critDamageTaken": "-0.25"
+      "critDamageTaken": "25%"
     }
   },
   {
@@ -410,7 +410,7 @@
     "maxStacks": 1,
     "duration": 2,
     "attributes": {
-      "attack": "+0.2"
+      "attack": "+20%"
     }
   },
   {
@@ -434,7 +434,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "dmgReduction": "0.15"
+      "dmgReduction": "+15%"
     }
   },
   {
@@ -443,7 +443,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "waterDamageTaken": "-0.3"
+      "waterDamageTaken": "30%"
     }
   },
   {
@@ -468,7 +468,7 @@
           "damagePercent": 0.05,
           "duration": 2
         },
-        "probability": 0.20
+        "probability": 0.2
       }
     ]
   },
@@ -481,7 +481,7 @@
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "heal_percent_max_hp",
         "params": {
-          "percent": 0.10,
+          "percent": 0.1,
           "target": "self"
         },
         "probability": 0.15
@@ -509,9 +509,9 @@
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "reflect_fire_damage",
         "params": {
-          "percent": 0.20
+          "percent": 0.2
         },
-        "probability": 0.20
+        "probability": 0.2
       }
     ]
   },
@@ -544,7 +544,7 @@
     "duration": -1,
     "attributes": {
       "burnImmune": "+1.0",
-      "fireDamage": "+0.2"
+      "fireDamage": "+20%"
     }
   },
   {
@@ -562,7 +562,7 @@
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "heal_on_fire_damage",
         "params": {
-          "healPercent": 0.20
+          "healPercent": 0.2
         },
         "condition": "damageType == 'elemental_damage'"
       }
@@ -574,7 +574,7 @@
     "maxStacks": 1,
     "duration": 2,
     "attributes": {
-      "fireDamageTaken": "+0.3"
+      "fireDamageTaken": "+30%"
     }
   },
   {
@@ -589,7 +589,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "webSuccessRate": "+0.1"
+      "webSuccessRate": "+10%"
     }
   },
   {
@@ -617,7 +617,7 @@
         "phase": "ON_ALLY_DAMAGE_TAKEN",
         "scriptId": "share_damage",
         "params": {
-          "percent": 0.30
+          "percent": 0.3
         },
         "probability": 0.15
       }
@@ -647,7 +647,7 @@
         "params": {
           "unitId": "spider_minion"
         },
-        "probability": 0.30
+        "probability": 0.3
       }
     ]
   },
@@ -708,13 +708,13 @@
         "id": "leader_awe_atk",
         "targetAttribute": "ATK",
         "type": "PERCENTAGE",
-        "value": 0.15
+        "value": 15
       },
       {
         "id": "leader_awe_def",
         "targetAttribute": "DEF",
         "type": "PERCENTAGE",
-        "value": 0.10
+        "value": 10
       }
     ]
   },
@@ -768,7 +768,7 @@
           "id": "commander_aura_crit_rate",
           "targetAttribute": "CRIT_RATE",
           "type": "ADDITIVE",
-          "value": 0.10
+          "value": 0.1
         }
       ]
     }
@@ -790,7 +790,7 @@
         "params": {
           "count": 1
         },
-        "probability": 0.30
+        "probability": 0.3
       }
     ]
   },
@@ -822,7 +822,7 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "critRate": "-0.15"
+      "critRate": "15%"
     }
   },
   {
@@ -845,7 +845,7 @@
     "maxStacks": 1,
     "duration": 3,
     "attributes": {
-      "lightningDamageTaken": "+0.3"
+      "lightningDamageTaken": "+30%"
     }
   },
   {
@@ -858,8 +858,8 @@
         "id": "def_reduction_mod",
         "targetAttribute": "DEF",
         "type": "PERCENTAGE",
-        "value": -0.10,
-        "levelValue": -0.10
+        "value": -10,
+        "levelValue": -0.1
       }
     ]
   },
@@ -873,7 +873,7 @@
         "id": "dodge_up_mod",
         "targetAttribute": "DODGE",
         "type": "ADDITIVE",
-        "value": 0.15
+        "value": 15
       }
     ]
   },
@@ -887,7 +887,7 @@
         "id": "def_up_mod",
         "targetAttribute": "DEF",
         "type": "PERCENTAGE",
-        "value": 0.10
+        "value": 10
       }
     ]
   },
@@ -915,7 +915,7 @@
         "id": "ally_atk_up_mod",
         "targetAttribute": "ATK",
         "type": "PERCENTAGE",
-        "value": 0.05
+        "value": 5
       }
     ]
   },
@@ -929,7 +929,7 @@
         "id": "atk_up_mod",
         "targetAttribute": "ATK",
         "type": "PERCENTAGE",
-        "value": 0.10
+        "value": 10
       }
     ]
   },
@@ -943,7 +943,7 @@
         "id": "atk_reduction_mod",
         "targetAttribute": "ATK",
         "type": "PERCENTAGE",
-        "value": -0.15
+        "value": -15
       }
     ]
   },
@@ -957,8 +957,8 @@
         "id": "speed_reduction_mod",
         "targetAttribute": "SPD",
         "type": "ADDITIVE",
-        "value": -0.10,
-        "levelValue": -0.10
+        "value": -10,
+        "levelValue": -0.1
       }
     ]
   },
@@ -979,7 +979,7 @@
         "id": "hit_reduction_mod",
         "targetAttribute": "HIT_RATE",
         "type": "ADDITIVE",
-        "value": -0.10
+        "value": -10
       }
     ]
   },

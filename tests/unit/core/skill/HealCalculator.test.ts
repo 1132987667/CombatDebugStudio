@@ -29,6 +29,7 @@ describe('HealCalculator', () => {
   describe('formula-based heal', () => {
     it('should calculate heal from formula', () => {
       const source = createMockEntity()
+      source.getRandomAttackDemage = () => 100
       const target = createMockEntity({ currentHealth: 500, maxHealth: 1000 })
       const step = createHealStep({ formula: 'attack*0.5' })
 

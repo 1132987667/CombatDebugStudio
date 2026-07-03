@@ -24,6 +24,7 @@ export class SkillExecutor {
     const normalizedType = skillStep.type.toUpperCase()
     switch (normalizedType) {
       case 'DAMAGE':
+      case 'DEAL_DAMAGE':
         this.executeDamage(skillStep, action, source, target, record)
         break
       case 'HEAL':
@@ -31,6 +32,7 @@ export class SkillExecutor {
         break
       case 'BUFF':
       case 'DEBUFF':
+      case 'APPLY_BUFF':
         this.executeBuff(skillStep, action, source, target, record)
         break
       case 'SHIELD':
@@ -85,14 +87,8 @@ export class SkillExecutor {
     target: BattleEntity,
     record?: CombatRecord,
   ): void {
-    const buffId = skillStep.buffId
+    const buffId = skillStep.buffId ?? skillStep.effectId
     if (!buffId) return
-
-    const registry = this.buffSystem.getScriptRegistry()
-    if (!registry.has(buffId)) {
-      action.effects.push({ type: 'buff', buffId, description: `${source.name} failed to apply ${buffId}` })
-      return
-    }
 
     const buffTarget = skillStep.targetConfig?.faction === 'self' ? source : target
     const buffConfig: BuffConfig = {

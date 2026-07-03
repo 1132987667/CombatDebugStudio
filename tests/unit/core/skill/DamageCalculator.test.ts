@@ -31,6 +31,7 @@ describe('DamageCalculator', () => {
     it('should calculate damage based on formula', () => {
       const source = createMockEntity()
       const target = createMockEntity()
+      source.getRandomAttackDemage = () => 100
       const step = createSkillStep({ formula: 'attack*2' })
 
       const result = calculator.calculateDamage(step, source, target)
@@ -45,12 +46,12 @@ describe('DamageCalculator', () => {
       const target = createMockEntity()
       target.getAttributeValue = (attr: string) => {
         if (attr === 'dodgeRate' || attr === ATTRIBUTE_CODE.dodge) {
-          return { value: 1, base: 1, modifiers: [], dirty: false }
+          return { value: 100, base: 100, modifiers: [], dirty: false }
         }
         return defaultAttrs[attr as ATTRIBUTE_CODE]
       }
       target.getAttribute = (attr: string) => {
-        if (attr === 'dodgeRate' || attr === ATTRIBUTE_CODE.dodge) return 1
+        if (attr === 'dodgeRate' || attr === ATTRIBUTE_CODE.dodge) return 100
         return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
       }
 
@@ -68,7 +69,13 @@ describe('DamageCalculator', () => {
       const source = createMockEntity()
       const target = createMockEntity()
       const step = createSkillStep({ formula: 'attack*2' })
-      source.getAttribute = (attr: string) => 0
+      source.getRandomAttackDemage = () => 0
+      const origGetAttr = source.getAttribute
+      source.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.hit) return 100
+        if (attr === ATTRIBUTE_CODE.attack || attr === ATTRIBUTE_CODE.minAttack || attr === ATTRIBUTE_CODE.maxAttack) return 0
+        return origGetAttr(attr)
+      }
 
       const result = calculator.calculateDamage(step, source, target)
 

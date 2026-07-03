@@ -171,29 +171,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { raf } from '@/shared/utils/RAF';
 import { ReplayBattleEvent, BattleEventType } from '@/domain/battle/types';
-
-
-
-interface RecordedBattle {
-  battleId: string;
-  startTime: number;
-  endTime?: number;
-  winner?: string;
-  events: ReplayBattleEvent[];
-  initialState: {
-    participants: Array<{
-      id: string;
-      name: string;
-      type: string;
-      maxHealth: number;
-      currentHealth: number;
-      maxEnergy: number;
-      currentEnergy: number;
-    }>;
-  };
-  savedAt?: number;
-  name?: string;
-}
+import { RecordedBattle } from '@/domain/battle/service/BattleRecorder';
 
 const props = defineProps<{
   battleManager?: any;

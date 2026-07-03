@@ -28,9 +28,13 @@
       </button>
     </div>
     <div class="control-group right">
+      <label class="debug-toggle" :class="{ active: debugMode }">
+        <input type="checkbox" v-model="debugMode" :disabled="!isBattleActive" />
+        调试
+      </label>
       <button class="control-btn" @click="$emit('exit-tool')">[Q] 退出工具</button>
       <button class="control-btn" @click="$emit('show-help')">[H] 帮助文档</button>
-      <span class="mode-indicator">当前模式: 调试模式 | 战斗状态: {{ battleStateDisplay }}</span>
+      <span class="mode-indicator">战斗状态: {{ battleStateDisplay }}</span>
     </div>
   </div>
 </template>
@@ -38,6 +42,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import RadioButtonGroup from "@/presentation/components/RadioButtonGroup.vue";
+import { debugGate } from '@/domain/battle/debug/DebugGate'
 
 const props = defineProps<{
   isBattleActive: boolean;
@@ -125,6 +130,12 @@ const battleStateDisplay = computed(() => {
   if (!props.isPaused) return "进行中";
   return "暂停";
 });
+
+// 调试模式开关 — 与 DebugGate 单例双向同步
+const debugMode = ref(debugGate.enabled)
+watch(debugMode, (v) => {
+  debugGate.setEnabled(v)
+})
 </script>
 
 <style scoped>
@@ -178,5 +189,27 @@ const battleStateDisplay = computed(() => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.debug-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.debug-toggle.active {
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, 0.5);
+  background: rgba(34, 211, 238, 0.1);
+}
+.debug-toggle input {
+  accent-color: #22d3ee;
 }
 </style>

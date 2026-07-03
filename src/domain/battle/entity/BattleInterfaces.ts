@@ -80,7 +80,7 @@ export interface IBattleSystem {
   /**
    * 开始自动战斗
    */
-  startBattle(): void
+  startBattle(): Promise<void>
 
   /**
    * 停止自动战斗

@@ -187,7 +187,7 @@ export class DamageCalculator {
     // 日志记录
     this.logCalculation('final', actualDamage, `最终伤�? ${actualDamage}`)
 
-    return { damage: actualDamage, isCritical, isMiss, actualDamage }
+    return { damage: actualDamage, isCritical: damageResult.isCritical, isMiss, actualDamage }
   }
 
   private calculateBaseDamage(
@@ -202,13 +202,13 @@ export class DamageCalculator {
     } else if (skillStep.calculation) {
       baseDamage = skillStep.calculation.baseValue
     } else {
-      const atk = getAttributeValue(source, 'ATK')
       const minAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.minAttack)
       const maxAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.maxAttack)
       const levelBonus = (source.level || 1) * 2
       if (skillStep.attackType === AttackType.NORMAL_ATTACK && minAtk > 0 && maxAtk > 0) {
         baseDamage = Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
       } else {
+        const atk = source.getRandomAttackDemage()
         baseDamage = Math.floor(atk + levelBonus)
       }
     }
@@ -217,7 +217,7 @@ export class DamageCalculator {
 
     // attackBonus 加成
     if ((skillStep as LegacyStepFields).attackBonus && (skillStep as LegacyStepFields).attackBonus! > 0) {
-      const atk = getAttributeValue(source, 'ATK')
+      const atk = source.getRandomAttackDemage()
       const bonus = Math.floor(atk * (skillStep as LegacyStepFields).attackBonus! / 100)
       baseDamage += bonus
       this.logCalculation('attack_bonus', bonus, `攻击加成: +${bonus}`)
@@ -251,7 +251,7 @@ export class DamageCalculator {
     step: ExtendedSkillStep,
   ): number {
     try {
-      const atk = getAttributeValue(source, 'ATK')
+      const atk = source.getRandomAttackDemage()
       const def = getAttributeValue(target, 'DEF')
       const sourceLevel = source.level || 1
       const targetLevel = target.level || 1
@@ -262,7 +262,7 @@ export class DamageCalculator {
       const defenseBonus = ls.defenseBonus || 0
       const levelBonus = ls.levelBonus || 0
       const processedFormula = formula
-        .replace(/ATK/gi, String(atk))
+        .replace(/\battack\b/gi, String(atk))
         .replace(/DEF/gi, String(def))
         .replace(/SOURCE_LEVEL/gi, String(sourceLevel))
         .replace(/TARGET_LEVEL/gi, String(targetLevel))

@@ -2,7 +2,7 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
 export class ShieldBuff extends BaseBuffScript {
-  public static readonly BUFF_ID = 'shield'
+  public static readonly BUFF_ID = 'buff_shield'
 
   protected _onApply(context: BuffContext): void {
     this.log(context, '获得护盾保护')

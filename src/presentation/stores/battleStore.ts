@@ -246,7 +246,7 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const initializeBattleManager = (manager: BattleManager) => {
     battleManager.value = manager
-    battleLogManager.addSystemLog('战斗管理器已初始化')
+    battleLogManager.addSystemLog({ message: '战斗管理器已初始化' })
   }
 
   /**
@@ -388,7 +388,7 @@ export const useBattleStore = defineStore('battle', () => {
       battleManager.value.syncBattleState()
       setBattleActive(true)
       autoPlayMode.value = battleManager.value.getAutoBattle()
-      battleLogManager.addSystemLog(`战斗已开始`)
+      battleLogManager.addSystemLog({ message: '战斗已开始' })
       return true
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
@@ -443,7 +443,7 @@ export const useBattleStore = defineStore('battle', () => {
       clearBattleLogs()
       currentBattleId.value = null
       turnOrder.value = []
-      battleLogManager.addSystemLog('战斗已重置')
+      battleLogManager.addSystemLog({ message: '战斗已重置' })
       return true
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
@@ -493,13 +493,13 @@ export const useBattleStore = defineStore('battle', () => {
         battleManager.value.stopAutoBattle()
         autoPlayMode.value = false
         isBattleActive.value = false
-        battleLogManager.addSystemLog('停止自动战斗')
+        battleLogManager.addSystemLog({ message: '停止自动战斗' })
       } else {
         await battleManager.value.startAutoBattle()
         autoPlayMode.value = true
         isBattleActive.value = true
         battleManager.value.syncBattleState()
-        battleLogManager.addSystemLog('开始自动战斗')
+        battleLogManager.addSystemLog({ message: '开始自动战斗' })
       }
       return true
     } catch (err) {
@@ -525,7 +525,7 @@ export const useBattleStore = defineStore('battle', () => {
       const savedState = localStorage.getItem('battleState')
       if (savedState) {
         JSON.parse(savedState) // 仅验证格式，实际导入逻辑由外部处理
-        battleLogManager.addSystemLog('战斗状态已导入')
+        battleLogManager.addSystemLog({ message: '战斗状态已导入' })
         return true
       }
       throw new Error('没有找到保存的战斗状态')
@@ -556,7 +556,7 @@ export const useBattleStore = defineStore('battle', () => {
         battleLogs: battleLogManager.getSystemLogs(), // 按需替换为实际日志获取逻辑
       }
       localStorage.setItem('battleState', JSON.stringify(state, null, 2))
-      battleLogManager.addSystemLog('战斗状态已导出')
+      battleLogManager.addSystemLog({ message: '战斗状态已导出' })
       return true
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
@@ -576,7 +576,7 @@ export const useBattleStore = defineStore('battle', () => {
       if (!battleManager.value) throw new Error('战斗管理器未初始化')
       battleManager.value.setBattleSpeed(speed)
       battleSpeed.value = speed
-      battleLogManager.addSystemLog(`战斗速度已调整为: ${speed}倍`)
+      battleLogManager.addSystemLog({ message: `战斗速度已调整为: ${speed}倍` })
       return true
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
@@ -663,15 +663,9 @@ export const useBattleStore = defineStore('battle', () => {
         battleState,
       )
       if (!shouldDisplay || !log) continue
-      battleLogManager.addSystemLog(
-        log.turn,
-        log.source,
-        log.action,
-        log.target,
-        log.segments,
-        log.category,
-        log.level,
-      )
+      battleLogManager.addSystemLog({
+        message: log.segments.map((s) => s.text).join(''),
+      })
     }
   }
 

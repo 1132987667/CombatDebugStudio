@@ -4,16 +4,18 @@ import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 
 export const defaultAttrs = {
   [ATTRIBUTE_CODE.attack]: { value: 100, base: 100, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.minAttack]: { value: 80, base: 80, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.maxAttack]: { value: 120, base: 120, modifiers: [], cachedVersion: 0 },
   [ATTRIBUTE_CODE.defense]: { value: 50, base: 50, modifiers: [], cachedVersion: 0 },
   [ATTRIBUTE_CODE.maxHealth]: { value: 1000, base: 1000, modifiers: [], cachedVersion: 0 },
   [ATTRIBUTE_CODE.currentHealth]: { value: 800, base: 1000, modifiers: [], cachedVersion: 0 },
   [ATTRIBUTE_CODE.speed]: { value: 100, base: 100, modifiers: [], cachedVersion: 0 },
   [ATTRIBUTE_CODE.energy]: { value: 100, base: 100, modifiers: [], cachedVersion: 0 },
   [ATTRIBUTE_CODE.maxEnergy]: { value: 150, base: 150, modifiers: [], cachedVersion: 0 },
-  [ATTRIBUTE_CODE.critRate]: { value: 0.05, base: 0.05, modifiers: [], cachedVersion: 0 },
-  [ATTRIBUTE_CODE.critDamage]: { value: 1.5, base: 1.5, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.critRate]: { value: 10, base: 10, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.critDamage]: { value: 125, base: 125, modifiers: [], cachedVersion: 0 },
   [ATTRIBUTE_CODE.dodge]: { value: 0, base: 0, modifiers: [], cachedVersion: 0 },
-  [ATTRIBUTE_CODE.hit]: { value: 1, base: 1, modifiers: [], cachedVersion: 0 },
+  [ATTRIBUTE_CODE.hit]: { value: 100, base: 100, modifiers: [], cachedVersion: 0 },
 }
 
 export function createMockEntity(overrides?: Partial<Record<string, unknown>>): BattleEntity {
@@ -45,6 +47,7 @@ export function createMockEntity(overrides?: Partial<Record<string, unknown>>): 
     setModifierProvider: () => {},
     getBuffInstanceIds: () => [],
     hasBuff: () => false,
+    getRandomAttackDemage: () => Math.floor(Math.random() * (attrs[ATTRIBUTE_CODE.maxAttack]?.value ?? 0 - attrs[ATTRIBUTE_CODE.minAttack]?.value ?? 0 + 1)) + (attrs[ATTRIBUTE_CODE.minAttack]?.value ?? 0),
     takeDamage: (n: number) => n,
     heal: (n: number) => n,
     isAlive: () => true,

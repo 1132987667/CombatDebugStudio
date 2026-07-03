@@ -2,7 +2,7 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ModifierType } from '@/domain/attribute/types'
 export class MountainGodBuff extends BaseBuffScript {
-  public static readonly BUFF_ID = 'mountain_god'
+  public static readonly BUFF_ID = 'buff_mountain_god'
 
   protected _onApply(context: BuffContext): void {
     this.log(context, '山神降临！获得强大的力量')

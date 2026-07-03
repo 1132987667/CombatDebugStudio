@@ -75,6 +75,9 @@
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
 
+    <!-- 调试模式步进覆盖层 -->
+    <DebugStepOverlay :phase="debugWaitingPhase" />
+
     <!-- 通知组件 -->
     <Notification ref="notification" />
   </div>
@@ -95,9 +98,11 @@ import StatusInjectionDialog from "./components/StatusInjectionDialog.vue";
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import DebugLogDialog from "./components/DebugLogDialog.vue";
 import DebugControlDialog from "./components/DebugControlDialog.vue";
+import DebugStepOverlay from "./components/DebugStepOverlay.vue";
 import { useBattleStore } from '@/presentation/stores';
 import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
+import { eventBus } from '@/main';
 import { PARTICIPANT_SIDE, BattleEventType } from "@/domain/battle/types";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 import type { BattleManager } from '@/domain/battle/BattleManager';
@@ -120,6 +125,9 @@ const showCompendiumDialog = ref(false);
 const showDebugLogDialog = ref(false);
 const showDebugControlDialog = ref(false);
 
+/** 调试模式当前暂停的阶段（null = 未暂停） */
+const debugWaitingPhase = ref<string | null>(null);
+
 const debugLogs = ref<LogEntry[]>([]);
 
 const clearDebugLogs = () => {
@@ -131,59 +139,93 @@ const handleDebugAction = (action: string) => {
   console.log('Debug action:', action)
   switch (action) {
     case 'win_battle':
-      battleLogManager.addSystemLog('调试: 立即胜利')
+      battleLogManager.addSystemLog({
+        message: '调试: 立即胜利',
+      })
       break
     case 'lose_battle':
-      battleLogManager.addSystemLog('调试: 立即失败')
+      battleLogManager.addSystemLog({
+        message: '调试: 立即失败',
+      })
       break
     case 'skip_turn':
-      battleLogManager.addSystemLog('调试: 跳过回合')
+      battleLogManager.addSystemLog({
+        message: '调试: 跳过回合',
+      })
       break
     case 'end_battle':
-      battleLogManager.addSystemLog('调试: 强制结束战斗')
+      battleLogManager.addSystemLog({
+        message: '调试: 强制结束战斗',
+      })
       break
     case 'full_health':
-      battleLogManager.addSystemLog('调试: 满血')
+      battleLogManager.addSystemLog({
+        message: '调试: 满血',
+      })
       break
     case 'full_energy':
-      battleLogManager.addSystemLog('调试: 满能量')
+      battleLogManager.addSystemLog({
+        message: '调试: 满能量',
+      })
       break
     case 'kill_selected':
-      battleLogManager.addSystemLog('调试: 杀死选中')
+      battleLogManager.addSystemLog({
+        message: '调试: 杀死选中',
+      })
       break
     case 'max_skill_cd':
-      battleLogManager.addSystemLog('调试: 满技能CD')
+      battleLogManager.addSystemLog({
+        message: '调试: 满技能CD',
+      })
       break
     case 'force_crit':
-      battleLogManager.addSystemLog('调试: 触发暴击')
+      battleLogManager.addSystemLog({
+        message: '调试: 触发暴击',
+      })
       break
     case 'force_dodge':
-      battleLogManager.addSystemLog('调试: 触发闪避')
+      battleLogManager.addSystemLog({
+        message: '调试: 触发闪避',
+      })
       break
     case 'force_block':
-      battleLogManager.addSystemLog('调试: 触发格挡')
+      battleLogManager.addSystemLog({
+        message: '调试: 触发格挡',
+      })
       break
     case 'add_buff':
-      battleLogManager.addSystemLog('调试: 添加Buff')
+      battleLogManager.addSystemLog({
+        message: '调试: 添加Buff',
+      })
       break
     case 'dump_logs':
       console.log('Current logs:', battleLogManager.getAllLogs())
-      battleLogManager.addSystemLog('日志已输出到控制台')
+      battleLogManager.addSystemLog({
+        message: ' 日志已输出到控制台',
+      })
       break
     case 'export_state':
-      battleLogManager.addSystemLog('调试: 导出状态')
+      battleLogManager.addSystemLog({
+        message: '调试: 导出状态',
+      })
       break
     case 'import_state':
-      battleLogManager.addSystemLog('调试: 导入状态')
+      battleLogManager.addSystemLog({
+        message: '调试: 导入状态',
+      })
       break
     case 'reset_battle':
-      battleLogManager.addSystemLog('调试: 重置战斗')
+      battleLogManager.addSystemLog({
+        message: '调试: 重置战斗',
+      })
       break
     case 'log_battle':
       battleLogManager.addTurnStartLog(1)
       break
     case 'log_system':
-      battleLogManager.addSystemLog('测试系统日志')
+      battleLogManager.addSystemLog({
+        message: '测试系统日志',
+      })
       break
     case 'log_item':
       battleLogManager.addGainItemLog([])
@@ -232,14 +274,7 @@ const teamCounts = computed(() => {
   return battleManager.getTeamCounts() || { ally: 0, enemy: 0 }
 });
 
-// 使用统一的日志管理器store
-const logManager = {
-  addSystemLog: (msg: string) => battleLogManager.addSystemLog(msg),
-  addErrorLog: (msg: string) => battleLogManager.addDebugLog(msg),
-  addActionLog: (source: string, action: string, target: string, result: string) => {
-    battleLogManager.addActionLog({ source, action, target, message: result })
-  }
-}
+
 
 // 初始化战斗
 function initBattle() {
@@ -268,8 +303,12 @@ onMounted(() => {
   // 初始化队伍数据
   initBattle();
 
-  logManager.addSystemLog("测试工具已加载");
-  logManager.addSystemLog(`战斗管理器初始化完成，队伍数据: 我方${teamCounts.value.ally}人 | 敌方${teamCounts.value.enemy}人`);
+  battleLogManager.addSystemLog({
+    message: '测试工具已加载',
+  });
+  battleLogManager.addSystemLog({
+    message: `战斗管理器初始化完成，队伍数据: 我方${teamCounts.value.ally}人 | 敌方${teamCounts.value.enemy}人`,
+  });
 
   // 监听 battleLogManager 的调试日志
   const updateDebugLogs = () => {
@@ -279,6 +318,14 @@ onMounted(() => {
   updateDebugLogs();
   // 定期更新日志 (每秒)
   logUpdateInterval = setInterval(updateDebugLogs, 1000);
+
+  // 调试模式覆盖层事件
+  eventBus.on('debug-pause', (data: any) => {
+    debugWaitingPhase.value = data?.phase ?? null
+  })
+  eventBus.on('debug-pause-resume', () => {
+    debugWaitingPhase.value = null
+  })
 });
 
 // 监听动画状态变化
@@ -344,7 +391,9 @@ const exportState = () => {
   const result = battleStore.exportState(currentTurn.value);
 
   if (result) {
-    logManager.addSystemLog("战斗状态已导出");
+    battleLogManager.addSystemLog({
+      message: '战斗状态已导出',
+    });
   }
 
   return result;
@@ -356,24 +405,32 @@ const updateSpeed = (speed: number) => {
 };
 
 const handleRuleChange = (key: string, value: boolean) => {
-  logManager.addSystemLog(`战斗规则已更新: ${key} = ${value}`);
+  battleLogManager.addSystemLog({
+    message: `战斗规则已更新: ${key} = ${value}`,
+  });
 };
 
 // 场景管理组件事件处理
 const handleSaveScene = (sceneNameValue: string) => {
   savedScenes.value.push(sceneNameValue);
-  logManager.addSystemLog(`保存场景: ${sceneNameValue}`);
+  battleLogManager.addSystemLog({
+    message: `保存场景: ${sceneNameValue}`,
+  });
 };
 
 const handleLoadScene = (sceneNameValue: string) => {
-  logManager.addSystemLog(`加载场景: ${sceneNameValue}`);
+  battleLogManager.addSystemLog({
+    message: `加载场景: ${sceneNameValue}`,
+  });
 };
 
 const handleDeleteScene = (sceneNameValue: string) => {
   const index = savedScenes.value.indexOf(sceneNameValue);
   if (index > -1) {
     savedScenes.value.splice(index, 1);
-    logManager.addSystemLog(`删除场景: ${sceneNameValue}`);
+    battleLogManager.addSystemLog({
+      message: `删除场景: ${sceneNameValue}`,
+    });
   }
 };
 
@@ -391,7 +448,7 @@ const handleAddStatus = () => {
     const activeStatuses = injectableStatuses.value.filter(s => s.active);
     // ponytail: 实体不再存储 buffs，状态注入需通过 BuffSystem 重新实现（待 Step 2）
     if (activeStatuses.length > 0) {
-      logManager.addActionLog({
+      battleLogManager.addActionLog({
         source: "系统",
         action: "添加状态",
         target: selectedChar.name,
@@ -405,7 +462,7 @@ const handleClearStatuses = () => {
   const selectedChar = selectedCharacter.value;
   if (selectedChar) {
     // ponytail: 实体不再存储 buffs，清除状态需通过 BuffSystem 重新实现（待 Step 2）
-    logManager.addActionLog({ source: "系统", action: "清除状态", target: selectedChar.name, message: "所有状态已清除" });
+    battleLogManager.addActionLog({ source: "系统", action: "清除状态", target: selectedChar.name, message: "所有状态已清除" });
   }
 };
 
@@ -413,7 +470,9 @@ const handleClearStatuses = () => {
 watch(
   () => teamCounts.value,
   ({ ally, enemy }) => {
-    logManager.addSystemLog(`当前参战角色: ${ally}人/${enemy}人`);
+    battleLogManager.addSystemLog({
+      message: `当前参战角色: ${ally}人/${enemy}人`,
+    });
   },
   { deep: true }
 );
@@ -522,12 +581,12 @@ const startBattle = async () => {
     if (result) {
       notification.value?.addNotification("成功", "战斗已开始", "success");
     } else {
-      notification.value?.addNotification("错误", battleStore.getErrorMessage || "开始战斗失败", "error");
+      notification.value?.addNotification("错误", "开始战斗失败", "error");
     }
   } catch (error) {
     console.error("开始战斗时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    logManager.addErrorLog(`开始战斗时出错: ${errorMsg}`);
+    battleLogManager.addErrorLog(`开始战斗时出错: ${errorMsg}`);
     notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
@@ -544,7 +603,7 @@ const endBattle = async () => {
   } catch (error) {
     console.error("结束战斗时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    logManager.addErrorLog(`结束战斗时出错: ${errorMsg}`);
+    battleLogManager.addErrorLog(`结束战斗时出错: ${errorMsg}`);
     notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
@@ -562,7 +621,7 @@ const resetBattle = async () => {
   } catch (error) {
     console.error("重置战斗时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    logManager.addErrorLog(`重置战斗时出错: ${errorMsg}`);
+    battleLogManager.addErrorLog(`重置战斗时出错: ${errorMsg}`);
     notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
@@ -578,7 +637,7 @@ const singleStep = async () => {
   } catch (error) {
     console.error("执行回合时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    logManager.addErrorLog(`执行回合时出错: ${errorMsg}`);
+    battleLogManager.addErrorLog(`执行回合时出错: ${errorMsg}`);
     notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
@@ -596,7 +655,7 @@ const toggleAutoPlay = async () => {
   } catch (error) {
     console.error("切换自动战斗状态失败:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    logManager.addErrorLog(`切换自动战斗状态失败: ${errorMsg}`);
+    battleLogManager.addErrorLog(`切换自动战斗状态失败: ${errorMsg}`);
     notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
@@ -615,6 +674,9 @@ onUnmounted(() => {
   // 组件卸载时的清理工作
   // 清理战斗管理器事件监听器，防止内存泄漏
   battleStore.destroy();
+  // 清理调试覆盖层事件监听
+  eventBus.off('debug-pause')
+  eventBus.off('debug-pause-resume')
   // 清理日志更新定时器
   if (logUpdateInterval) {
     clearInterval(logUpdateInterval);

@@ -605,7 +605,7 @@ export class BattleManager {
   async startAutoBattle(): Promise<boolean> {
     const battleId = this.battleStateManager.getBattleId()?.value
     if (!battleId) {
-      battleLogManager.addSystemLog('请先创建战斗')
+      battleLogManager.addSystemLog({message: '请先创建战斗'})
       return false
     }
     return this.autoBattleManager.startAutoBattle(battleId)

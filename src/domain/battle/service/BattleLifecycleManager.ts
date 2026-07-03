@@ -3,14 +3,11 @@ import { BattleStatus, RoundStatus, PARTICIPANT_SIDE } from '@/domain/battle/typ
 import { AUTO_BATTLE_CONFIG } from '@/domain/battle/types'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import { BattleActionHelper } from '@/domain/battle/types'
-import type { BattleAction } from '@/domain/battle/types'
-import { LogLevel } from '@/shared/types/battle-log'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { RAFTimer } from '@/shared/utils/RAF'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { eventBus } from '@/main'
-import { convertToBattleState } from '@/domain/battle/aggregate/BattleState'
+import { debugGate } from '@/domain/battle/debug/DebugGate'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 export class BattleLifecycleManager {
@@ -57,6 +54,9 @@ export class BattleLifecycleManager {
 
     battle.battleState = BattleStatus.ENDED
     eventBus.emit(BattleEventCodes.BATTLE_ENDED, { battleId: battle.battleId, winner })
+
+    // ponytail: 调试模式 — 战斗结束事件已派发后暂停
+    await debugGate.waitIfNeeded('BATTLE_END')
   }
 
   resetBattle(): void {
@@ -92,6 +92,7 @@ export class BattleLifecycleManager {
 
     this.autoBattleLoop = async () => {
       if (this.getIsPaused()) return
+      console.error('自动战斗循环调用 autoBattleLoop')
 
       const current = this.getBattleData()
       if (!current?.autoBattle || current.battleState !== BattleStatus.ACTIVE) return
@@ -117,8 +118,7 @@ export class BattleLifecycleManager {
     }
 
     const delay = this.getBattleDelay()
-    const timerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
-    this.autoBattleTimerId = timerId
+    this.autoBattleTimerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
   }
 
   stopAutoBattle(): void {

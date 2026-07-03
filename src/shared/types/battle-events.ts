@@ -62,6 +62,8 @@ export const BattleEventCodes = {
   DAMAGE_ANIMATION: 'damage-animation',
   /** 闪避动画事件 */
   MISS_ANIMATION: 'miss-animation',
+  /** 战斗开始事件 */
+  BATTLE_START: BattleTriggerPhase.BATTLE_START,
   /** 战斗结束事件 */
   BATTLE_ENDED: BattleTriggerPhase.BATTLE_END,
   /** Buff 效果事件 */
@@ -76,6 +78,10 @@ export const BattleEventCodes = {
   TURN_START: BattleTriggerPhase.TURN_START,
   /** 回合结束事件 */
   TURN_END: BattleTriggerPhase.TURN_END,
+  /** 调试模式暂停 */
+  DEBUG_PAUSE: 'debug-pause',
+  /** 调试模式继续 */
+  DEBUG_PAUSE_RESUME: 'debug-pause-resume',
 } as const
 
 export type BattleEventCode = (typeof BattleEventCodes)[keyof typeof BattleEventCodes]
@@ -85,6 +91,7 @@ export interface BattleEvents {
   [BattleEventCodes.BATTLE_LOG]: BattleLogEventData;
   [BattleEventCodes.DAMAGE_ANIMATION]: DamageAnimationEventData;
   [BattleEventCodes.MISS_ANIMATION]: MissAnimationEventData;
+  [BattleEventCodes.BATTLE_START]: void;
   [BattleEventCodes.BATTLE_ENDED]: BattleEndedEventData;
   [BattleEventCodes.BUFF_EFFECT]: BuffEffectEventData;
   [BattleEventCodes.SKILL_EFFECT]: SkillEffectEventData;
@@ -92,6 +99,8 @@ export interface BattleEvents {
   [BattleEventCodes.BATTLE_RESET]: void;
   [BattleEventCodes.TURN_START]: void;
   [BattleEventCodes.TURN_END]: void;
+  [BattleEventCodes.DEBUG_PAUSE]: { phase: string };
+  [BattleEventCodes.DEBUG_PAUSE_RESUME]: void;
 }
 
 /** 战斗事件名称类型 */

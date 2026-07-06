@@ -1,6 +1,6 @@
 <template>
   <div class="debug-panel panel-right">
-    <div class="section">
+    <div class="section f1">
       <div class="section-header">
         <span>属性监控</span>
         <span class="selected-info">(当前选中: {{ selectedCharName }})</span>
@@ -20,8 +20,9 @@
             @mouseenter="showAttrTooltip($event, '能量', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value || 0, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">能量:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value || 0 }}/{{
-              currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 150 }}</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value || 0
+            }}/{{
+                currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 150 }}</span>
           </div>
           <div class="monitor-item"
             @mouseenter="showAttrTooltip($event, '攻击力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attack)?.modifiers || [], attackRange.min, '数值')"
@@ -100,38 +101,6 @@
             <span class="monitor-value bonus">{{
               formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.value ||
                 0) }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="monitor-group">
-        <div class="monitor-subtitle">最终属性</div>
-        <div class="monitor-grid">
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '攻击力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attack)?.modifiers || [], attackRange.min, '数值')"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">最终攻击:</span>
-            <span class="monitor-value final">{{ attackRange.min }}-{{ attackRange.max }}</span>
-          </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '防御力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0, '数值')"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">最终防御:</span>
-            <span class="monitor-value final">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0
-              }}</span>
-          </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '速度', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0, '数值')"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">最终速度:</span>
-            <span class="monitor-value final">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0
-              }}</span>
-          </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '最大生命值', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0, '数值')"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
-            <span class="monitor-label">最终气血:</span>
-            <span class="monitor-value final">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value ||
-              0 }}</span>
           </div>
         </div>
       </div>
@@ -243,30 +212,31 @@
       :modifiers="attrTooltipData.modifiers" :final-value="attrTooltipData.finalValue"
       :value-type="attrTooltipData.valueType" :trigger-rect="attrTooltipData.triggerRect" />
 
-    <!-- 通知组件 -->
-    <Notification ref="notificationRef" />
+    <!-- 战斗回放 -->
+    <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart" @replay-end="handleReplayEnd"
+      @replay-pause="handleReplayPause" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { container } from '@/infrastructure/di/Container';
 import AttributeTooltip from "@/presentation/components/AttributeTooltip.vue";
-import Notification from "@/presentation/components/Notification.vue";
 import { ATTRIBUTE_CODE, type Modifier, AttributeValueType } from "@/domain/attribute/types";
 import type { SkillConfig } from "@/domain/skill/types";
 import { formatTargetConfig } from "@/domain/skill/types";
+import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { BattleManager } from '@/domain/battle/BattleManager';
 import { SkillType } from '@/domain/skill/types';
+import { BattleEventType } from '@/domain/battle/types';
+import BattleReplay from "@/presentation/views/BattleReplay.vue";
+import { useBattleStore } from '@/presentation/stores';
 
 // 获取 BattleManager
 const battleManager = container.resolve<BattleManager>('BattleManager');
 const props = defineProps<{
   battleSystem?: any;
 }>();
-
-// 通知组件引用
-const notificationRef = ref<InstanceType<typeof Notification> | null>(null);
 
 // 响应式获取选中角色数据
 const currentCharacter = computed(() => battleManager.getSelectedCharacter());
@@ -338,7 +308,7 @@ const hideSkillTooltip = () => {
  * 获取技能类型对应的CSS类名
  * @param skill - 技能配置
  * @returns CSS类名
- */ 
+ */
 const getSkillTypeClass = (skill: SkillConfig): string => {
   if (skill.skillType === SkillType.PASSIVE) return 'passive';
   if (skill.skillType === SkillType.ULTIMATE) return 'ultimate';
@@ -357,29 +327,7 @@ const getSkillTypeName = (skill: SkillConfig): string => {
 };
 
 const getStepTypeName = (stepType?: string): string => {
-  const stepTypes: Record<string, string> = {
-    'DAMAGE': '造成伤害',
-    'HEAL': '治疗目标',
-    'BUFF': '施加增益',
-    'DEBUFF': '施加减益',
-    'REMOVE_BUFF': '移除增益',
-    'REMOVE_DEBUFF': '移除减益',
-    'CLEANSE': '净化',
-    'DISPEL': '驱散',
-    'STUN': '眩晕',
-    'SILENCE': '沉默',
-    'KNOCKBACK': '击退',
-    'PULL': '拉扯',
-    'TELEPORT': '传送',
-    'SUMMON': '召唤',
-    'TRANSFORM': '变身',
-    'SHIELD': '护盾',
-    'REFLECT': '反射',
-    'DRAIN': '吸取',
-    'REVIVE': '复活',
-    'CUSTOM': '自定义效果'
-  };
-  return stepTypes[stepType || ''] || '未知';
+  return getStepTypeDisplayName(stepType);
 };
 
 /**
@@ -397,6 +345,17 @@ const isSkillAvailable = (skill: SkillConfig): boolean => {
 
 // 属性悬浮提示状态
 const attrTooltipVisible = ref(false)
+
+/** Alt 键按下时锁定 tooltip 不隐藏 */
+const altKeyHeld = ref(false)
+
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === 'Alt') altKeyHeld.value = true
+}
+const handleKeyUp = (e: KeyboardEvent) => {
+  if (e.key === 'Alt') altKeyHeld.value = false
+}
+
 const attrTooltipData = ref<{
   title: string
   modifiers: Modifier[]
@@ -423,6 +382,7 @@ const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[]
 }
 
 const hideAttrTooltip = () => {
+  if (altKeyHeld.value) return
   attrTooltipVisible.value = false
 }
 
@@ -512,6 +472,86 @@ const clearStatuses = () => {
       console.warn('清除状态失败:', error);
     }
   }
+};
+
+// Alt 键监听：按住时属性 tooltip 不隐藏
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+  window.addEventListener('keyup', handleKeyUp)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+  window.removeEventListener('keyup', handleKeyUp)
+})
+
+// ------------------------------------------------------------
+// 战斗回放相关方法
+const battleStore = useBattleStore();
+
+const handleReplayEvent = (event: any, index: number) => {
+  console.log('回放事件:', event, '索引:', index);
+
+  // 根据事件类型处理不同的回放逻辑
+  switch (event.type) {
+    case BattleEventType.ACTION:
+      handleActionReplay(event.data.action);
+      break;
+    case BattleEventType.TURN_START:
+      handleTurnStartReplay(event.data.turn, event.data.participantId);
+      break;
+    case BattleEventType.TURN_END:
+      handleTurnEndReplay(event.data.turn);
+      break;
+    case BattleEventType.BATTLE_START:
+      handleBattleStartReplay();
+      break;
+    case BattleEventType.BATTLE_END:
+      handleBattleEndReplay(event.data.winner);
+      break;
+  }
+};
+
+const handleReplayStart = (recording: any) => {
+  console.log('开始回放:', recording);
+  battleStore.resetBattle();
+  if (battleStore.battleManager) {
+    battleStore.battleManager.startReplay(recording);
+  }
+};
+
+const handleReplayEnd = (recording: any) => {
+  console.log('回放结束:', recording);
+  if (battleStore.battleManager) {
+    battleStore.battleManager.stopReplay();
+  }
+};
+
+const handleReplayPause = (recording: any, index: number) => {
+  console.log('回放暂停:', recording, '当前索引:', index);
+  if (battleStore.battleManager) {
+    battleStore.battleManager.pauseReplay();
+  }
+};
+
+// 具体的回放处理方法
+const handleActionReplay = (action: any) => {
+  console.log('回放动作:', action);
+};
+
+const handleTurnStartReplay = (turn: number, participantId: string) => {
+  console.log('回放回合开始:', turn, '行动者:', participantId);
+};
+
+const handleTurnEndReplay = (turn: number) => {
+  console.log('回放回合结束:', turn);
+};
+
+const handleBattleStartReplay = () => {
+  console.log('回放战斗开始');
+};
+
+const handleBattleEndReplay = (winner: string) => {
+  console.log('回放战斗结束:', winner);
 };
 </script>
 

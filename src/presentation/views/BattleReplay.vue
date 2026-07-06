@@ -1,5 +1,5 @@
 <template>
-  <div class="battle-replay">
+  <div class="battle-replay f1">
     <div class="replay-header">
       <h3>战斗回放</h3>
       <div class="replay-info">

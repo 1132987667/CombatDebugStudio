@@ -16,13 +16,14 @@ import passiveSkillsData from '@configs/skills/skill_passive.json'
 import newSkillsData from '@configs/skills/skills_new.json'
 import buffsData from '@configs/buffs/buffs.json'
 import type { Enemy } from '@/shared/types/enemy'
-import { type SkillConfig } from '@/domain/skill/types'
+import type { SkillConfig, SkillStep } from '@/domain/skill/types'
 import type { SceneData } from '@/shared/types/scene'
 import type { CharacterStats } from '@/domain/character/types'
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier, normalizeAttributeCode } from '@/domain/attribute/types'
 import type { StructuredBuffConfig } from '@/domain/attribute/modifier-template'
 import type { ParticipantSide } from '@/domain/battle/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import type { BattleEntity } from '@/domain/battle/types'
 import {
   BattleParticipantImpl,
   type BattleParticipantData,
@@ -102,7 +103,7 @@ export class GameDataProcessor {
    *
    * 改进点：
    * - 不再预先计算最终属性，只传入基础值
-   * - 被动技能加成作为永久修饰符添加到参与者的 ModifierStack
+   * - 被动技能 modify_attribute 步骤的修饰符直接添加到参与者属性中
    * - 支持属性组成追踪和调试拆解
    *
    * @param enemy - 敌人数据
@@ -136,7 +137,233 @@ export class GameDataProcessor {
     // 3. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
     const participant = new BattleParticipantImpl(initData)
 
+    // 4. 应用被动技能中 modify_attribute 步骤的修饰符
+    GameDataProcessor.applyPassiveModifiers(participant, passiveSkills)
+
     return participant
+  }
+
+  private static readonly ATTR_TO_BONUS_MAP: Partial<Record<ATTRIBUTE_CODE, ATTRIBUTE_CODE>> = {
+    [ATTRIBUTE_CODE.speed]: ATTRIBUTE_CODE.speedBonus,
+    [ATTRIBUTE_CODE.attack]: ATTRIBUTE_CODE.attackBonus,
+    [ATTRIBUTE_CODE.defense]: ATTRIBUTE_CODE.defenseBonus,
+    [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
+    [ATTRIBUTE_CODE.minAttack]: ATTRIBUTE_CODE.attackBonus,
+    [ATTRIBUTE_CODE.maxAttack]: ATTRIBUTE_CODE.attackBonus,
+  }
+
+  /**
+   * 正在等待处理的友方光环列表（阶段二使用）
+   */
+  private static pendingAllyAuras: Array<{
+    sourceName: string
+    sourceKey: string
+    teamType: ParticipantSide
+    modifiers: Array<{ targetAttribute: string; type: string; value: number }>
+  }> = []
+
+  /**
+   * 将被动技能中的修饰符应用到参与者属性上
+   * 处理 modify_attribute 和 apply_buff 两种步骤
+   */
+  private static applyPassiveModifiers(
+    participant: BattleParticipantImpl,
+    passiveSkills: SkillConfig[],
+  ): void {
+    for (const skill of passiveSkills) {
+      if (!skill.steps) continue
+      for (const step of skill.steps) {
+        const stepType = step.type
+        if (stepType === 'modify_attribute' || stepType === 'MODIFY_ATTRIBUTE') {
+          GameDataProcessor.applyStepModifiers(participant, skill, step.modifiers)
+        } else if (stepType === 'apply_buff' && step.buffId) {
+          GameDataProcessor.applyBuffStep(participant, skill, step.buffId)
+        }
+      }
+    }
+  }
+
+  /**
+   * 将 modifier 列表应用到参与者属性
+   */
+  private static applyStepModifiers(
+    participant: BattleParticipantImpl,
+    skill: SkillConfig,
+    modifiers: any[] | undefined,
+  ): void {
+    if (!modifiers || modifiers.length === 0) return
+    for (const mod of modifiers) {
+      GameDataProcessor.pushModifier(participant, skill, mod)
+    }
+  }
+
+  /**
+   * 创建并添加一个修饰符到参与者，同时同步加成属性
+   */
+  private static pushModifier(
+    participant: BattleParticipantImpl,
+    skill: SkillConfig,
+    mod: { id?: string; targetAttribute: string; type: string; value: number },
+  ): void {
+    const attrCode = normalizeAttributeCode(mod.targetAttribute)
+    const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
+      : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
+      : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
+      : mod.type === 'FINAL' ? ModifierType.FINAL
+      : ModifierType.ADDITIVE
+
+    // ponytail: buff aura 的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
+    let value = typeof mod.value === 'number' ? mod.value : 0
+    if (modType === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
+      value = Math.round(value * 10000) / 100
+    }
+
+    const sourceKey = `passive:${mod.id || skill.name}`
+    const m: Modifier = {
+      sourceKey,
+      sourceType: ModifierSourceType.SKILL,
+      attribute: attrCode,
+      value,
+      type: modType,
+      description: skill.name,
+    }
+
+    const attrData = participant.getAttrValue(attrCode)
+    if (attrData) {
+      attrData.modifiers.push(m)
+      attrData.cachedVersion = -1
+    }
+
+    // PERCENTAGE → 同步到加成属性
+    if (modType === ModifierType.PERCENTAGE) {
+      const bonusAttrCode = GameDataProcessor.ATTR_TO_BONUS_MAP[attrCode]
+      if (bonusAttrCode) {
+        const bonusMod: Modifier = {
+          sourceKey,
+          sourceType: ModifierSourceType.SKILL,
+          attribute: bonusAttrCode,
+          value,
+          type: ModifierType.ADDITIVE,
+          description: skill.name,
+        }
+        const bonusData = participant.getAttrValue(bonusAttrCode)
+        if (bonusData) {
+          bonusData.modifiers.push(bonusMod)
+          bonusData.cachedVersion = -1
+        }
+      }
+    }
+  }
+
+  /**
+   * 处理 apply_buff 步骤：解析 buff 配置，应用其修饰符
+   * 友方光环存入等待列表由 applyTeamPassiveAuras 处理
+   */
+  private static applyBuffStep(
+    participant: BattleParticipantImpl,
+    skill: SkillConfig,
+    buffId: string,
+  ): void {
+    const buff = GameDataProcessor.findBuffById(buffId)
+    if (!buff) return
+
+    // 处理 aura 修饰符
+    const aura = (buff as any).aura as
+      | { targetSelector?: string; modifiers?: Array<{ targetAttribute: string; type: string; value: number }> }
+      | undefined
+    if (aura?.modifiers) {
+      if (aura.targetSelector === 'allies') {
+        // 全队光环 → 等待阶段二
+        GameDataProcessor.pendingAllyAuras.push({
+          sourceName: skill.name,
+          sourceKey: `passive:${buffId}`,
+          teamType: participant.type,
+          modifiers: aura.modifiers,
+        })
+      } else {
+        // 自目标 → 立即应用
+        GameDataProcessor.applyStepModifiers(participant, skill, aura.modifiers)
+      }
+    }
+
+    // 处理直接 attributes（如 { "dmgReduction": "+20%" }）
+    const attrs = (buff as any).attributes as Record<string, string> | undefined
+    if (attrs) {
+      for (const [attrKey, valueStr] of Object.entries(attrs)) {
+        const attrCode = normalizeAttributeCode(attrKey)
+        const isPercent = valueStr.endsWith('%')
+        const rawValue = parseFloat(valueStr)
+        if (isNaN(rawValue)) continue
+        GameDataProcessor.pushModifier(participant, skill, {
+          targetAttribute: attrCode,
+          type: isPercent ? 'PERCENTAGE' : 'ADDITIVE',
+          value: isPercent ? rawValue : rawValue,
+        })
+      }
+    }
+  }
+
+  /**
+   * 应用所有等待中的友方光环
+   * 在队伍初始化完成后调用
+   */
+  static applyTeamPassiveAuras(
+    allParticipants: Map<string, BattleEntity>,
+  ): void {
+    const pending = GameDataProcessor.pendingAllyAuras
+    if (pending.length === 0) return
+    GameDataProcessor.pendingAllyAuras = []
+
+    for (const aura of pending) {
+      for (const entity of allParticipants.values()) {
+        if (entity.type !== aura.teamType || !(entity instanceof BattleParticipantImpl)) continue
+        for (const mod of aura.modifiers) {
+          const attrCode = normalizeAttributeCode(mod.targetAttribute)
+          let value = typeof mod.value === 'number' ? mod.value : 0
+          if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
+            value = Math.round(value * 10000) / 100
+          }
+          const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
+            : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
+            : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
+            : mod.type === 'FINAL' ? ModifierType.FINAL
+            : ModifierType.ADDITIVE
+          const m: Modifier = {
+            sourceKey: aura.sourceKey,
+            sourceType: ModifierSourceType.SKILL,
+            attribute: attrCode,
+            value,
+            type: modType,
+            description: aura.sourceName,
+          }
+          const attrData = entity.getAttrValue(attrCode)
+          if (attrData) {
+            attrData.modifiers.push(m)
+            attrData.cachedVersion = -1
+          }
+
+          // 同步到加成属性（用于 UI "属性加成" 显示）
+          if (modType === ModifierType.PERCENTAGE) {
+            const bonusAttrCode = GameDataProcessor.ATTR_TO_BONUS_MAP[attrCode]
+            if (bonusAttrCode) {
+              const bonusMod: Modifier = {
+                sourceKey: aura.sourceKey,
+                sourceType: ModifierSourceType.SKILL,
+                attribute: bonusAttrCode,
+                value,
+                type: ModifierType.ADDITIVE,
+                description: aura.sourceName,
+              }
+              const bonusData = entity.getAttrValue(bonusAttrCode)
+              if (bonusData) {
+                bonusData.modifiers.push(bonusMod)
+                bonusData.cachedVersion = -1
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   /**

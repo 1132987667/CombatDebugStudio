@@ -42,9 +42,6 @@
       <!-- 右侧：调试面板 -->
       <div class="right-panel">
         <BattleDashboard />
-
-        <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart" @replay-end="handleReplayEnd"
-          @replay-pause="handleReplayPause" />
       </div>
     </div>
 
@@ -93,7 +90,6 @@ import ParticipantPanel from "./ParticipantPanel.vue";
 import BattleField from "./BattleField.vue";
 import BattleDashboard from "./BattleDashboard.vue";
 import ControlBar from "./ControlBar.vue";
-import BattleReplay from "./BattleReplay.vue";
 import Notification from "@/presentation/components/Notification.vue";
 import BattleRulesDialog from "./components/BattleRulesDialog.vue";
 import SceneManagementDialog from "./components/SceneManagementDialog.vue";
@@ -106,7 +102,7 @@ import DataSnapshotDialog from "./components/DataSnapshotDialog.vue";
 import { useBattleStore } from '@/presentation/stores';
 import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
-import { PARTICIPANT_SIDE, BattleEventType } from "@/domain/battle/types";
+import { PARTICIPANT_SIDE } from "@/domain/battle/types";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 import type { BattleManager } from '@/domain/battle/BattleManager';
 import type { LogEntry } from '@/shared/types/battle-log';
@@ -475,82 +471,6 @@ watch(
 );
 
 // 战斗回放相关方法
-const handleReplayEvent = (event: any, index: number) => {
-  console.log('回放事件:', event, '索引:', index);
-
-  // 根据事件类型处理不同的回放逻辑
-  switch (event.type) {
-    case BattleEventType.ACTION:
-      // 处理动作回放
-      handleActionReplay(event.data.action);
-      break;
-    case BattleEventType.TURN_START:
-      // 处理回合开始回放
-      handleTurnStartReplay(event.data.turn, event.data.participantId);
-      break;
-    case BattleEventType.TURN_END:
-      // 处理回合结束回放
-      handleTurnEndReplay(event.data.turn);
-      break;
-    case BattleEventType.BATTLE_START:
-      // 处理战斗开始回放
-      handleBattleStartReplay();
-      break;
-    case BattleEventType.BATTLE_END:
-      // 处理战斗结束回放
-      handleBattleEndReplay(event.data.winner);
-      break;
-  }
-};
-
-const handleReplayStart = (recording: any) => {
-  console.log('开始回放:', recording);
-  resetBattle();
-  if (battleStore.battleManager) {
-    battleStore.battleManager.startReplay(recording);
-  }
-};
-
-const handleReplayEnd = (recording: any) => {
-  console.log('回放结束:', recording);
-  if (battleStore.battleManager) {
-    battleStore.battleManager.stopReplay();
-  }
-};
-
-const handleReplayPause = (recording: any, index: number) => {
-  console.log('回放暂停:', recording, '当前索引:', index);
-  if (battleStore.battleManager) {
-    battleStore.battleManager.pauseReplay();
-  }
-};
-
-// 具体的回放处理方法
-const handleActionReplay = (action: any) => {
-  console.log('回放动作:', action);
-  // 这里可以添加动作回放的具体逻辑
-};
-
-const handleTurnStartReplay = (turn: number, participantId: string) => {
-  console.log('回放回合开始:', turn, '行动者:', participantId);
-  // 这里可以添加回合开始回放的具体逻辑
-};
-
-const handleTurnEndReplay = (turn: number) => {
-  console.log('回放回合结束:', turn);
-  // 这里可以添加回合结束回放的具体逻辑
-};
-
-const handleBattleStartReplay = () => {
-  console.log('回放战斗开始');
-  // 这里可以添加战斗开始回放的具体逻辑
-};
-
-const handleBattleEndReplay = (winner: string) => {
-  console.log('回放战斗结束:', winner);
-  // 这里可以添加战斗结束回放的具体逻辑
-};
-
 const stepBack = () => {
   if (currentTurn.value > 1) {
     battleManager.decrementTurn();

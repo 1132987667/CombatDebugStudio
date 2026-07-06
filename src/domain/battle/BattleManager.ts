@@ -39,6 +39,18 @@ export class BattleManager {
    */
   /** 已注册的事件处理器引用（用于 off 时精确移除） */
   private handlers = new Map<BattleEventName, Function>()
+  /** 我方队伍编成（参战管理的真实数据源，独立于战斗运行时） */
+  private allyTeam: BattleEntity[] = []
+  /** 敌方队伍编成（参战管理的真实数据源，独立于战斗运行时） */
+  private enemyTeam: BattleEntity[] = []
+
+  /** 发送队伍变更事件 */
+  private emitTeamChanged(): void {
+    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
+      allyTeam: this.getEnabledAllyTeam(),
+      enemyTeam: this.getEnabledEnemyTeam(),
+    })
+  }
 
   constructor(
     private battleSystem: IBattleSystem,
@@ -187,16 +199,20 @@ export class BattleManager {
     try {
       this.validateTeams(allyTeam, enemyTeam)
 
-      // 创建战斗状态
+      // 保存队伍编成到内部数据源
+      this.allyTeam = [...allyTeam]
+      this.enemyTeam = [...enemyTeam]
+
+      // 创建战斗状态（将内部队伍数据写入 battleData.participants）
       const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
       const battleId = battleState.battleId
       this.setBattleId(battleId)
 
+      // 应用被动技能的全队光环（如 +防御光环）
+      GameDataProcessor.applyTeamPassiveAuras(battleState.participants)
+
       this.syncBattleState()
-      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
-        allyTeam: this.getEnabledAllyTeam(),
-        enemyTeam: this.getEnabledEnemyTeam(),
-      })
+      this.emitTeamChanged()
 
       return { battleId }
     } catch (error) {
@@ -210,14 +226,7 @@ export class BattleManager {
    * @returns 我方参与者数组
    */
   getAllyTeam(): BattleEntity[] {
-    const battleData = this.battleSystem.getBattleData()
-    if (!battleData) {
-      return []
-    }
-    const participantList = battleData.participants.values()
-    return Array.from(participantList).filter(
-      (p) => p.type === PARTICIPANT_SIDE.ALLY,
-    )
+    return [...this.allyTeam]
   }
 
   /**
@@ -225,14 +234,7 @@ export class BattleManager {
    * @returns 敌方参与者数组
    */
   getEnemyTeam(): BattleEntity[] {
-    const battleData = this.battleSystem.getBattleData()
-    if (!battleData) {
-      return []
-    }
-    const participantList = battleData.participants.values()
-    return Array.from(participantList).filter(
-      (p) => p.type === PARTICIPANT_SIDE.ENEMY,
-    )
+    return [...this.enemyTeam]
   }
 
   /**
@@ -240,8 +242,7 @@ export class BattleManager {
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
   getEnabledAllyTeam(): BattleEntity[] {
-    const allyTeam = this.getAllyTeam()
-    return allyTeam.filter((c) => c.enabled)
+    return this.allyTeam.filter((c) => c.enabled)
   }
 
   /**
@@ -249,19 +250,14 @@ export class BattleManager {
    * 直接在过滤阶段排除禁用角色，减少不必要的转换操作
    */
   getEnabledEnemyTeam(): BattleEntity[] {
-    const enemyTeam = this.getEnemyTeam()
-    return enemyTeam.filter((c) => c.enabled)
+    return this.enemyTeam.filter((c) => c.enabled)
   }
 
   /**
    * 获取所有参与者（BattleEntity 实例）
    */
   getAllParticipants(): BattleEntity[] {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) {
-      return []
-    }
-    return Array.from(battleState.participants.values())
+    return [...this.allyTeam, ...this.enemyTeam]
   }
 
   /**
@@ -295,11 +291,7 @@ export class BattleManager {
     const participant = this.findParticipant(characterId)
     if (participant) {
       participant.enabled = enabled
-      this.syncBattleState()
-      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
-        allyTeam: this.getEnabledAllyTeam(),
-        enemyTeam: this.getEnabledEnemyTeam(),
-      })
+      this.emitTeamChanged()
     }
   }
 
@@ -307,43 +299,33 @@ export class BattleManager {
    * 移动角色位置
    */
   moveCharacter(characterId: string, direction: number) {
-    const team = this.findParticipantTeam(characterId)
-    if (!team) return
-
-    const teamArray = Array.from(team.values())
-    const enabledChars = teamArray.filter((c) => c.enabled)
+    const team = this.allyTeam.find((p) => p.id === characterId)
+      ? this.allyTeam
+      : this.enemyTeam
+    const enabledChars = team.filter((c) => c.enabled)
     const currentIndex = enabledChars.findIndex((c) => c.id === characterId)
-
     if (currentIndex < 0) return
-
     const newIndex = currentIndex + direction
     if (newIndex < 0 || newIndex >= enabledChars.length) return
 
-    // 交换位置
     const targetChar = enabledChars[newIndex]
     const currentChar = enabledChars[currentIndex]
+    const idx1 = team.indexOf(currentChar)
+    const idx2 = team.indexOf(targetChar)
+    ;[team[idx1], team[idx2]] = [team[idx2], team[idx1]]
 
-    const idx1 = teamArray.indexOf(currentChar)
-    const idx2 = teamArray.indexOf(targetChar)
-    ;[teamArray[idx1], teamArray[idx2]] = [teamArray[idx2], teamArray[idx1]]
-
-    this.syncBattleState()
-    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
-      allyTeam: this.getEnabledAllyTeam(),
-      enemyTeam: this.getEnabledEnemyTeam(),
-    })
+    this.emitTeamChanged()
   }
 
   /**
    * 清空所有参与者
    */
   clearParticipants() {
+    this.allyTeam = []
+    this.enemyTeam = []
     this.battleSystem.resetBattle()
     this.battleStateManager.resetState()
-    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
-      allyTeam: [],
-      enemyTeam: [],
-    })
+    this.emitTeamChanged()
   }
 
   /**
@@ -352,33 +334,32 @@ export class BattleManager {
    * @param side - 队伍类型
    */
   addCharacterToTeam(character: BattleEntity, side: PARTICIPANT_SIDE) {
-    const battleState = this.battleSystem.getBattleState()
-    if (battleState) {
-      battleState.participants.set(character.id, character)
-
-      // 触发角色的被动技能
-      this.battleSystem.triggerPassiveSkillsForCharacter(character)
-
-      this.syncBattleState()
-      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
-        allyTeam: this.getEnabledAllyTeam(),
-        enemyTeam: this.getEnabledEnemyTeam(),
-      })
+    if (side === PARTICIPANT_SIDE.ALLY) {
+      this.allyTeam.push(character)
+    } else {
+      this.enemyTeam.push(character)
     }
+
+    // 触发角色的被动技能
+    this.battleSystem.triggerPassiveSkillsForCharacter(character)
+
+    this.emitTeamChanged()
   }
 
   /**
    * 从队伍移除角色
    */
   removeCharacter(characterId: string) {
-    const battleState = this.battleSystem.getBattleState()
-    if (battleState) {
-      battleState.participants.delete(characterId)
-      this.syncBattleState()
-      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
-        allyTeam: this.getEnabledAllyTeam(),
-        enemyTeam: this.getEnabledEnemyTeam(),
-      })
+    const idxAlly = this.allyTeam.findIndex((p) => p.id === characterId)
+    if (idxAlly >= 0) {
+      this.allyTeam.splice(idxAlly, 1)
+      this.emitTeamChanged()
+      return
+    }
+    const idxEnemy = this.enemyTeam.findIndex((p) => p.id === characterId)
+    if (idxEnemy >= 0) {
+      this.enemyTeam.splice(idxEnemy, 1)
+      this.emitTeamChanged()
     }
   }
 
@@ -409,36 +390,20 @@ export class BattleManager {
    * 重置角色状态到初始值
    */
   resetCharacterStates() {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) return
-
-    battleState.participants.forEach((participant) => {
+    ;[...this.allyTeam, ...this.enemyTeam].forEach((participant) => {
       participant.currentHealth = participant.maxHealth
       participant.currentEnergy = 25
     })
 
-    this.syncBattleState()
-    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
-      allyTeam: this.getEnabledAllyTeam(),
-      enemyTeam: this.getEnabledEnemyTeam(),
-    })
+    this.emitTeamChanged()
   }
 
   /**
    * 获取队伍成员数量
    */
   getTeamCounts(): { ally: number; enemy: number } {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) {
-      return { ally: 0, enemy: 0 }
-    }
-
-    const allyCount = Array.from(battleState.participants.values()).filter(
-      (p) => p.type === PARTICIPANT_SIDE.ALLY && p.enabled,
-    ).length
-    const enemyCount = Array.from(battleState.participants.values()).filter(
-      (p) => p.type === PARTICIPANT_SIDE.ENEMY && p.enabled,
-    ).length
+    const allyCount = this.allyTeam.filter((p) => p.enabled).length
+    const enemyCount = this.enemyTeam.filter((p) => p.enabled).length
 
     return { ally: allyCount, enemy: enemyCount }
   }
@@ -449,8 +414,10 @@ export class BattleManager {
    * @returns BattleEntity 或 undefined
    */
   getCharacterById(characterId: string): BattleEntity | undefined {
-    const allParticipants = this.getAllParticipants()
-    return allParticipants.find((p) => p.id === characterId)
+    return (
+      this.allyTeam.find((p) => p.id === characterId) ||
+      this.enemyTeam.find((p) => p.id === characterId)
+    )
   }
 
   /**
@@ -499,37 +466,10 @@ export class BattleManager {
    * 查找参与者
    */
   private findParticipant(characterId: string): BattleEntity | undefined {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) return undefined
-    return battleState.participants.get(characterId)
-  }
-
-  /**
-   * 查找参与者所在队伍
-   */
-  private findParticipantTeam(
-    characterId: string,
-  ): Map<string, BattleEntity> | undefined {
-    const battleState = this.battleSystem.getBattleState()
-    if (!battleState) return undefined
-
-    const participant = battleState.participants.get(characterId)
-    if (!participant) return undefined
-
-    const team =
-      participant.type === PARTICIPANT_SIDE.ALLY
-        ? new Map(
-            Array.from(battleState.participants.entries()).filter(
-              ([_, p]) => p.type === PARTICIPANT_SIDE.ALLY,
-            ),
-          )
-        : new Map(
-            Array.from(battleState.participants.entries()).filter(
-              ([_, p]) => p.type === PARTICIPANT_SIDE.ENEMY,
-            ),
-          )
-
-    return team
+    return (
+      this.allyTeam.find((p) => p.id === characterId) ||
+      this.enemyTeam.find((p) => p.id === characterId)
+    )
   }
 
   /**

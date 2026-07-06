@@ -150,8 +150,9 @@ export class BattleParticipantImpl implements BattleEntity {
       const stackMods = stack.getModifiers(code)
       if (stackMods.length === 0) continue
 
-      // 保留 base 修饰符
+      // 保留 base 修饰符和被动技能修饰符
       const baseModifier = attrData.modifiers.find(m => m.sourceKey === 'base')
+      const passiveModifiers = attrData.modifiers.filter(m => m.sourceKey.startsWith('passive:'))
 
       // ponytail: ModifierStack 现在直接存储 Modifier[]（sourceKey = buffInstanceId），
       // 此处仅做富化（sourceType 委托给 provider，添加描述文本），无需类型桥接。
@@ -163,6 +164,7 @@ export class BattleParticipantImpl implements BattleEntity {
 
       attrData.modifiers = [
         ...(baseModifier ? [baseModifier] : []),
+        ...passiveModifiers,
         ...externalModifiers,
       ]
       // 标记该属性缓存过期（版本号不匹配）

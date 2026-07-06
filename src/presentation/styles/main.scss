@@ -241,6 +241,8 @@
 .panel-right {
   background: #0f0f1a;
   border-right: none;
+  display: flex;
+  flex-direction: column;
 }
 
 .panel-title {
@@ -2574,3 +2576,8 @@
   font-style: italic;
   padding: 2rem;
 }
+
+.f1 {
+  flex: 1;
+}
+

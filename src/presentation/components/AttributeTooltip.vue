@@ -36,19 +36,70 @@
 
         <div class="tooltip-content">
           <div class="source-list">
-            <div v-for="(modifier, index) in modifiers" :key="index" class="source-item"
-              :class="{ 'is-bonus': modifier.sourceType !== 'base' }">
-              <div class="source-header">
-                <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                <span class="source-name" v-if="modifier.source">({{ modifier.source }})</span>
-              </div>
-              <div class="source-value">
-                <span class="source-type">({{ modifier.type }})</span>
-                <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
-                  {{ formatModifierValue(modifier.value, modifier.type) }}
-                </span>
+            <!-- 基础乘区 -->
+            <div v-if="additiveGroup.length > 0" class="source-section">
+              <div class="section-title">基础乘区</div>
+              <div v-for="(modifier, index) in additiveGroup" :key="'a-'+index" class="source-item">
+                <div class="source-header">
+                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                </div>
+                <div class="source-value">
+                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                    {{ formatModifierValue(modifier.value, modifier.type) }}
+                  </span>
+                </div>
               </div>
             </div>
+
+            <!-- 百分比乘区 -->
+            <div v-if="percentGroup.length > 0" class="source-section">
+              <div class="section-title">百分比乘区</div>
+              <div v-for="(modifier, index) in percentGroup" :key="'p-'+index" class="source-item">
+                <div class="source-header">
+                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                </div>
+                <div class="source-value">
+                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                    {{ formatModifierValue(modifier.value, modifier.type) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 独立乘区 -->
+            <div v-if="multiGroup.length > 0" class="source-section">
+              <div class="section-title">独立乘区</div>
+              <div v-for="(modifier, index) in multiGroup" :key="'m-'+index" class="source-item">
+                <div class="source-header">
+                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                </div>
+                <div class="source-value">
+                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                    {{ formatModifierValue(modifier.value, modifier.type) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 最终乘区 -->
+            <div v-if="finalGroup.length > 0" class="source-section">
+              <div class="section-title">最终乘区</div>
+              <div v-for="(modifier, index) in finalGroup" :key="'f-'+index" class="source-item">
+                <div class="source-header">
+                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                </div>
+                <div class="source-value">
+                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                    {{ formatModifierValue(modifier.value, modifier.type) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div v-if="modifiers.length === 0" class="no-sources">
               无详细来源信息
             </div>
@@ -140,24 +191,72 @@ const displayValue = computed(() => {
   return formatValue(props.finalValue, props.valueType)
 })
 
+// 按乘区分组修饰符
+const additiveGroup = computed(() => {
+  return props.modifiers.filter(m => m.type === 'ADDITIVE')
+})
+const percentGroup = computed(() => {
+  return props.modifiers.filter(m => m.type === 'PERCENTAGE')
+})
+const multiGroup = computed(() => {
+  return props.modifiers.filter(m => m.type === 'MULTIPLICATIVE')
+})
+const finalGroup = computed(() => {
+  return props.modifiers.filter(m => m.type === 'FINAL')
+})
+
 const formula = computed(() => {
   if (props.modifiers.length === 0) return '无'
 
-  const parts: string[] = []
-
-  for (const modifier of props.modifiers) {
-    if (modifier.type === 'PERCENTAGE') {
-      parts.push(`${modifier.value > 0 ? '+' : ''}${modifier.value}%`)
-    } else if (modifier.type === 'ADDITIVE') {
-      parts.push(`${modifier.value > 0 ? '+' : ''}${modifier.value}`)
-    } else if (modifier.type === 'MULTIPLICATIVE') {
-      parts.push(`×${1 + modifier.value}`)
-    } else if (modifier.type === 'FINAL') {
-      parts.push(`×${1 + modifier.value}`)
-    }
+  // 分离 base 修饰符和其他修饰符
+  let baseValue = 0
+  const additiveMods: Modifier[] = []
+  const percentMods: Modifier[] = []
+  const multiMods: Modifier[] = []
+  const finalMods: Modifier[] = []
+  for (const m of props.modifiers) {
+    if (m.sourceKey === 'base') {
+      baseValue = m.value
+    } else if (m.type === 'ADDITIVE') additiveMods.push(m)
+    else if (m.type === 'PERCENTAGE') percentMods.push(m)
+    else if (m.type === 'MULTIPLICATIVE') multiMods.push(m)
+    else if (m.type === 'FINAL') finalMods.push(m)
   }
 
-  return parts.length > 0 ? parts.join(' ') : '无'
+  // 构建乘区表达式
+  const brackets: string[] = []
+
+  // 第1乘区: 基础 + 累加  (base + additive)
+  if (additiveMods.length === 0) {
+    brackets.push(`${baseValue}`)
+  } else {
+    const parts = [`${baseValue}`]
+    for (const m of additiveMods) {
+      parts.push(`${m.value > 0 ? '+' : ''}${m.value}`)
+    }
+    brackets.push(`(${parts.join(' ')})`)
+  }
+
+  // 第2乘区: 百分比  (1 + p1% + p2%)
+  if (percentMods.length > 0) {
+    const parts: string[] = ['1']
+    for (const m of percentMods) {
+      parts.push(`${m.value > 0 ? '+' : ''}${m.value}%`)
+    }
+    brackets.push(`(${parts.join(' ')})`)
+  }
+
+  // 第3乘区: 独立乘法
+  for (const m of multiMods) {
+    brackets.push(`(${1 + m.value})`)
+  }
+
+  // 第4乘区: 最终乘法
+  for (const m of finalMods) {
+    brackets.push(`(${1 + m.value}最终)`)
+  }
+
+  return brackets.length > 0 ? `${brackets.join(' × ')} = ${props.finalValue}` : '无'
 })
 
 const arrowClass = computed(() => {
@@ -319,47 +418,60 @@ onUnmounted(() => {
 
   .tooltip-content {
     .source-list {
+      .source-section {
+        margin-bottom: 12px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .section-title {
+          font-size: 11px;
+          font-weight: 600;
+          color: #60a5fa;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 6px;
+          padding-bottom: 4px;
+          border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+        }
+      }
+
       .source-item {
-        padding: 8px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 
         &:last-child {
           border-bottom: none;
         }
 
-        &.is-bonus {
-          .source-from {
-            color: #f97316;
-          }
-        }
-
         .source-header {
           display: flex;
           align-items: center;
           gap: 6px;
-          margin-bottom: 4px;
+          min-width: 0;
 
           .source-from {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
-            color: #60a5fa;
+            color: rgba(255, 255, 255, 0.65);
+            white-space: nowrap;
           }
 
           .source-name {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.5);
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.45);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
         }
 
         .source-value {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-
-          .source-type {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.4);
-          }
+          flex-shrink: 0;
 
           .source-amount {
             font-size: 14px;
@@ -405,7 +517,8 @@ onUnmounted(() => {
         font-size: 13px;
         color: rgba(255, 255, 255, 0.7);
         font-family: 'JetBrains Mono', monospace;
-        line-height: 1.6;
+        line-height: 1.8;
+        white-space: pre-wrap;
         word-break: break-all;
       }
 

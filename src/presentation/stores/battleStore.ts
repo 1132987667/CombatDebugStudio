@@ -196,6 +196,13 @@ export const useBattleStore = defineStore('battle', () => {
     }
   }
 
+  /** 处理当前行动者切换事件（仅更新 UI，不记录回合开始日志） */
+  const handleCurrentActorChanged = (data: any) => {
+    if (data?.actorId) {
+      currentActorId.value = data.actorId
+    }
+  }
+
   /** 处理回合结束事件（记录回合结束日志） */
   const handleTurnEndEvent = () => {
     battleLogManager.addTurnEndLog(battleManager.value?.getTurn() ?? 1)
@@ -224,6 +231,7 @@ export const useBattleStore = defineStore('battle', () => {
   events.set(BattleEventCodes.BATTLE_RESET, handleBattleResetEvent)
   events.set(BattleEventCodes.TURN_START, handleTurnStartEvent)
   events.set(BattleEventCodes.TURN_END, handleTurnEndEvent)
+  events.set(BattleEventCodes.CURRENT_ACTOR_CHANGED, handleCurrentActorChanged)
   events.set(BattleEventCodes.DAMAGE_ANIMATION, handleDamageAnimationEvent)
   events.set(BattleEventCodes.MISS_ANIMATION, handleMissAnimationEvent)
   events.set(BattleEventCodes.BUFF_EFFECT, handleBuffEffectEvent)

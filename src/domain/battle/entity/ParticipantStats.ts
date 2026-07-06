@@ -113,6 +113,10 @@ export class ParticipantStats {
     const attrData: AttributeValue | undefined = this.attributes.get(attrCode)
     if (!attrData) return
 
+    // ponytail: 跳过运行时状态属性（血量、能量），它们由 setAttributeValue 单独维护，不从公式重算
+    const meta = getAttributeMeta(attrCode)
+    if (meta?.isRuntimeState) return
+
     // 版本号比对：如果缓存是最新的，跳过重算
     if (attrData.cachedVersion === this.version) return
 
@@ -124,6 +128,8 @@ export class ParticipantStats {
     // 4. 最终乘法值[finalMultiplier]
     let additive = 0, percentMultiplier = 100, independentMultiplier = 100, finalMultiplier = 100
     for (const mod of modifiers) {
+      // ponytail: 跳过 sourceKey === 'base' 的修饰符，base 值已通过 attrData.base 计入
+      if (mod.sourceKey === 'base') continue
       switch (mod.type) {
         case ModifierType.ADDITIVE: additive += mod.value; break
         case ModifierType.PERCENTAGE: percentMultiplier += mod.value; break

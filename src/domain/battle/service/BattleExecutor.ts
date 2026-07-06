@@ -173,7 +173,6 @@ export class BattleExecutor {
           target,
           battle.currentRound || 1,
         )
-        // ponytail: handle null from executeSkill (config not found / insufficient energy / no target)
         if (!skillAction) {
           battleLogManager.addDebugLog(`技能执行返回空: ${skill.id}，跳过目标 ${target.id}`)
           continue

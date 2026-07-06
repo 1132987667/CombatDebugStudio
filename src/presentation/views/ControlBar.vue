@@ -40,9 +40,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, onMounted, onUnmounted } from "vue";
 import RadioButtonGroup from "@/presentation/components/RadioButtonGroup.vue";
 import { debugGate } from '@/domain/battle/debug/DebugGate'
+import { eventBus } from '@/main'
 
 const props = defineProps<{
   isBattleActive: boolean;
@@ -135,6 +136,15 @@ const battleStateDisplay = computed(() => {
 const debugMode = ref(debugGate.enabled)
 watch(debugMode, (v) => {
   debugGate.setEnabled(v)
+})
+// 反向同步：通过 eventBus 监听外部调试开关变化
+onMounted(() => {
+  eventBus.on('debug-toggle', (data: any) => {
+    debugMode.value = data?.enabled ?? false
+  })
+})
+onUnmounted(() => {
+  eventBus.off('debug-toggle')
 })
 </script>
 

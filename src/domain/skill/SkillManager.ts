@@ -128,7 +128,7 @@ export class SkillManager {
       }
       if (currentEnergy < config.energyCost) {
         battleLogManager.addDebugLog(`技能 ${skillId} 能量不足`, LogLevel.WARN)
-        console.error(`技能 ${skillId} 能量不足`)
+        console.error(`技能 ${skillId} 能量不足`, config.energyCost)
         return null
       }
     }

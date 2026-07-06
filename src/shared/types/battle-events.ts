@@ -78,6 +78,8 @@ export const BattleEventCodes = {
   TURN_START: BattleTriggerPhase.TURN_START,
   /** 回合结束事件 */
   TURN_END: BattleTriggerPhase.TURN_END,
+  /** 当前行动者切换事件（角色循环内，非回合开始） */
+  CURRENT_ACTOR_CHANGED: 'current-actor-changed',
   /** 调试模式暂停 */
   DEBUG_PAUSE: 'debug-pause',
   /** 调试模式继续 */
@@ -97,8 +99,9 @@ export interface BattleEvents {
   [BattleEventCodes.SKILL_EFFECT]: SkillEffectEventData;
   [BattleEventCodes.TEAM_DATA_CHANGED]: TeamDataChangedEventData;
   [BattleEventCodes.BATTLE_RESET]: void;
-  [BattleEventCodes.TURN_START]: void;
+  [BattleEventCodes.TURN_START]: { actorId: string | null };
   [BattleEventCodes.TURN_END]: void;
+  [BattleEventCodes.CURRENT_ACTOR_CHANGED]: { actorId: string | null };
   [BattleEventCodes.DEBUG_PAUSE]: { phase: string };
   [BattleEventCodes.DEBUG_PAUSE_RESUME]: void;
 }

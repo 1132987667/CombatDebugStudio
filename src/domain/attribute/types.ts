@@ -365,6 +365,8 @@ export interface AttributeMeta {
   iconPath?: string
   isPercentage: boolean
   defaultValue?: number
+  /** 运行时状态属性（血量、能量），不由公式重算，由 setAttributeValue 单独维护 */
+  isRuntimeState?: boolean
 }
 
 /** 属性元数据映射表（键为属性代码，与 ATTRIBUTE_CODE 完全同步） */
@@ -378,6 +380,7 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-最大值',
     impact: '直接影响角色生存能力，为0时角色死亡',
     isPercentage: false,
+    isRuntimeState: true,
   },
   maxHealth: {
     code: 'maxHealth',
@@ -464,6 +467,7 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     impact: '用于施放技能，影响技能释放频率，初始值为25',
     isPercentage: false,
     defaultValue: 25,
+    isRuntimeState: true,
   },
   maxEnergy: {
     code: 'maxEnergy',

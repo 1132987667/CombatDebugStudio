@@ -491,13 +491,14 @@ export class BattleSystem implements IBattleSystem {
         
         const participantId = currentTurnOrder[i]
         const participant = battle.participants.get(participantId)
+        console.error('当前角色的能量', participant.getAttribute(ATTRIBUTE_CODE.currentEnergy))
         if (!participant || !participant.isAlive()) {
           continue
         }
         battle.currentTurn = i
         
         // 在每个角色行动前，发送当前行动者更新事件到 UI 层
-        eventBus.emit(BattleEventCodes.TURN_START, { actorId: participantId })
+        eventBus.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, { actorId: participantId })
         
         try {
           await this.executor.executeParticipantAction(battle, participant)

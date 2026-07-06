@@ -21,6 +21,7 @@
     <div class="tool-header">
       <h1>回合制战斗系统测试工具 v1.0</h1>
       <div class="header-actions">
+        <button class="header-btn" @click="showDataSnapshotDialog = true">数据快照</button>
         <button class="header-btn" @click="showDebugLogDialog = true">调试日志</button>
         <button class="header-btn" @click="showDebugControlDialog = true">调试面板</button>
         <button class="header-btn" @click="showCompendiumDialog = true">图鉴</button>
@@ -62,6 +63,8 @@
 
     <CompendiumDialog v-model="showCompendiumDialog" />
 
+    <DataSnapshotDialog v-model="showDataSnapshotDialog" />
+
     <DebugLogDialog v-model="showDebugLogDialog" :logs="debugLogs" @clear="clearDebugLogs" />
 
     <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
@@ -75,8 +78,8 @@
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
 
-    <!-- 调试模式步进覆盖层 -->
-    <DebugStepOverlay :phase="debugWaitingPhase" />
+    <!-- 调试模式浮动面板 -->
+    <DebugStepOverlay />
 
     <!-- 通知组件 -->
     <Notification ref="notification" />
@@ -99,10 +102,10 @@ import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import DebugLogDialog from "./components/DebugLogDialog.vue";
 import DebugControlDialog from "./components/DebugControlDialog.vue";
 import DebugStepOverlay from "./components/DebugStepOverlay.vue";
+import DataSnapshotDialog from "./components/DataSnapshotDialog.vue";
 import { useBattleStore } from '@/presentation/stores';
 import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
-import { eventBus } from '@/main';
 import { PARTICIPANT_SIDE, BattleEventType } from "@/domain/battle/types";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 import type { BattleManager } from '@/domain/battle/BattleManager';
@@ -122,11 +125,11 @@ const showRulesDialog = ref(false);
 const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
 const showCompendiumDialog = ref(false);
+const showDataSnapshotDialog = ref(false);
 const showDebugLogDialog = ref(false);
 const showDebugControlDialog = ref(false);
 
-/** 调试模式当前暂停的阶段（null = 未暂停） */
-const debugWaitingPhase = ref<string | null>(null);
+// ponytail: 调试面板现在独立监听事件总线，无需 BattleArena 维护 phase 状态
 
 const debugLogs = ref<LogEntry[]>([]);
 
@@ -319,13 +322,7 @@ onMounted(() => {
   // 定期更新日志 (每秒)
   logUpdateInterval = setInterval(updateDebugLogs, 1000);
 
-  // 调试模式覆盖层事件
-  eventBus.on('debug-pause', (data: any) => {
-    debugWaitingPhase.value = data?.phase ?? null
-  })
-  eventBus.on('debug-pause-resume', () => {
-    debugWaitingPhase.value = null
-  })
+  // ponytail: 调试面板现在独立处理事件，无需 BattleArena 中转
 });
 
 // 监听动画状态变化
@@ -674,9 +671,7 @@ onUnmounted(() => {
   // 组件卸载时的清理工作
   // 清理战斗管理器事件监听器，防止内存泄漏
   battleStore.destroy();
-  // 清理调试覆盖层事件监听
-  eventBus.off('debug-pause')
-  eventBus.off('debug-pause-resume')
+  // ponytail: 调试面板内部自行清理事件监听
   // 清理日志更新定时器
   if (logUpdateInterval) {
     clearInterval(logUpdateInterval);

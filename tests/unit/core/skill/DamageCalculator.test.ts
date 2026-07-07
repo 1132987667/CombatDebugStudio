@@ -11,8 +11,8 @@ vi.mock('@/infrastructure/adapters/logging', () => ({
 
 function createSkillStep(overrides?: Partial<ExtendedSkillStep>): ExtendedSkillStep {
   return {
-    type: 'damage',
-    formula: 'attack*2',
+    type: 'deal_damage',
+    calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 2 }] },
     skillId: 'test_skill',
     skillName: 'Test Skill',
     tier: 'small',
@@ -32,7 +32,7 @@ describe('DamageCalculator', () => {
       const source = createMockEntity()
       const target = createMockEntity()
       source.getRandomAttackDemage = () => 100
-      const step = createSkillStep({ formula: 'attack*2' })
+      const step = createSkillStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 2 }] } })
 
       const result = calculator.calculateDamage(step, source, target)
 
@@ -57,7 +57,7 @@ describe('DamageCalculator', () => {
 
       const rand = vi.spyOn(Math, 'random').mockReturnValue(0.5)
 
-      const step = createSkillStep({ formula: 'attack*1' })
+      const step = createSkillStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 1 }] } })
       const result = calculator.calculateDamage(step, source, target)
 
       expect(result.isMiss).toBe(true)
@@ -68,7 +68,7 @@ describe('DamageCalculator', () => {
     it('should apply minimum damage threshold', () => {
       const source = createMockEntity()
       const target = createMockEntity()
-      const step = createSkillStep({ formula: 'attack*2' })
+      const step = createSkillStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 2 }] } })
       source.getRandomAttackDemage = () => 0
       const origGetAttr = source.getAttribute
       source.getAttribute = (attr: string) => {

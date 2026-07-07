@@ -18,7 +18,6 @@ import {
   ATTRIBUTE_CODE,
   getAttributeMeta,
   type AttributeValues,
-  normalizeAttributeCode,
   ModifierType,
 } from '@/domain/attribute/types'
 import { ParticipantStats } from '@/domain/battle/entity/ParticipantStats'
@@ -183,7 +182,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 属性最终值
    */
   getAttribute(attr: ATTRIBUTE_CODE | string): number {
-    const normalizedAttr = typeof attr === 'string' ? normalizeAttributeCode(attr) : attr
+    const normalizedAttr = typeof attr === 'string' ? attr as ATTRIBUTE_CODE : attr
     const attrValue = this.getAttributeValue(normalizedAttr)
     return attrValue?.value ?? 0
   }

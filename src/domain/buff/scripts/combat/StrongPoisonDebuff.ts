@@ -1,6 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 /**
  * 强毒debuff脚本
  * 比普通中毒更强的毒素效果，造成更高的持续伤害
@@ -15,8 +15,8 @@ export class StrongPoisonDebuff extends BaseBuffScript {
     const speedReduction = this.getConfigValue(context, 'speedReduction', 0.2)
     const attackReduction = this.getConfigValue(context, 'attackReduction', 0.15)
     
-    this.addModifier(context, 'SPD', -speedReduction, ModifierType.MULTIPLICATIVE)
-    this.addModifier(context, 'ATK', -attackReduction, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.speed, -speedReduction, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.attack, -attackReduction, ModifierType.MULTIPLICATIVE)
     
     // 记录初始伤害值
     const baseDamage = this.getConfigValue(context, 'baseDamage', 15)
@@ -66,11 +66,11 @@ export class StrongPoisonDebuff extends BaseBuffScript {
     const newBaseDamage = baseDamage + 3
     
     // 更新效果
-    context.removeModifiers('SPD')
-    context.removeModifiers('ATK')
+    context.removeModifiers(ATTRIBUTE_CODE.speed)
+    context.removeModifiers(ATTRIBUTE_CODE.attack)
     
-    this.addModifier(context, 'SPD', -newSpeedReduction, ModifierType.MULTIPLICATIVE)
-    this.addModifier(context, 'ATK', -newAttackReduction, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.speed, -newSpeedReduction, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.attack, -newAttackReduction, ModifierType.MULTIPLICATIVE)
     
     context.setVariable('baseDamage', newBaseDamage)
     context.setVariable('speedReduction', newSpeedReduction)

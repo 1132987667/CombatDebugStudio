@@ -262,7 +262,7 @@ export class BattleExecutor {
       case TargetStrategy.FIRST:
       default: {
         // 智能默认：如果技能含治疗/增益步骤，选最低血量；否则选第一个
-        if (skill.steps.some((s) => s.type === 'HEAL' || s.type === 'BUFF' || s.type === 'heal' || s.type === 'apply_buff')) {
+        if (skill.steps.some((s) => s.type === 'heal' || s.type === 'apply_buff')) {
           const target = candidates.reduce((min, p) =>
             (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) <
             (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,

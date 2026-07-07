@@ -62,7 +62,7 @@ const skillSchema = {
       minItems: 1,
       items: {
         type: 'object',
-        required: ['type', 'formula'],
+        required: ['type'],
         properties: {
           type: {
             type: 'string',
@@ -70,6 +70,30 @@ const skillSchema = {
           formula: {
             type: 'string',
             minLength: 1,
+          },
+          calculation: {
+            type: 'object',
+            properties: {
+              baseValue: { type: 'number' },
+              extraValues: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    attribute: { type: 'string' },
+                    ratio: { type: 'number' },
+                  },
+                },
+              },
+              damageType: { type: 'string' },
+              isSingleTurn: { type: 'boolean' },
+            },
+          },
+          buffId: {
+            type: 'string',
+          },
+          modifiers: {
+            type: 'array',
           },
           attackType: {
             type: 'string',
@@ -224,8 +248,8 @@ export function validateSkillConfig(
         }
       }
 
-      // 检查 effectId（如果是 buff 或 debuff 类型）
-      if ((step.type === 'buff' || step.type === 'debuff') && !step.effectId) {
+      // 检查 effectId（如果是 apply_buff 类型）
+      if ((step.type === 'apply_buff') && !step.effectId && !step.buffId) {
         errors.push(
           `Step ${index}: Missing required field: effectId for ${step.type} type`,
         )

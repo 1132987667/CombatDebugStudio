@@ -1,6 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 
 export class BerserkBuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'berserk'
@@ -10,14 +10,14 @@ export class BerserkBuff extends BaseBuffScript {
     
     // 大幅提升攻击力
     const attackBonus = this.getConfigValue(context, 'attackBonus', 100)
-    this.addModifier(context, 'ATK', attackBonus, ModifierType.ADDITIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.attack, attackBonus, ModifierType.ADDITIVE)
     
     // 大幅提升暴击率和暴击伤害
-    this.addModifier(context, 'CRIT_RATE', 0.2, ModifierType.ADDITIVE)
-    this.addModifier(context, 'CRIT_DMG', 0.5, ModifierType.ADDITIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.critRate, 0.2, ModifierType.ADDITIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.critDamage, 0.5, ModifierType.ADDITIVE)
     
     // 降低防御力
-    this.addModifier(context, 'DEF', -0.3, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.defense, -0.3, ModifierType.MULTIPLICATIVE)
     
     context.setVariable('attackBonus', attackBonus)
   }
@@ -43,8 +43,8 @@ export class BerserkBuff extends BaseBuffScript {
     const attackBonus = this.getConfigValue(context, 'refreshAttackBonus', 20)
     const critRateBonus = this.getConfigValue(context, 'refreshCritRateBonus', 0.05)
     
-    this.addModifier(context, 'ATK', attackBonus, ModifierType.ADDITIVE)
-    this.addModifier(context, 'CRIT_RATE', critRateBonus, ModifierType.ADDITIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.attack, attackBonus, ModifierType.ADDITIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.critRate, critRateBonus, ModifierType.ADDITIVE)
     
     this.log(context, `获得额外 ${attackBonus} 攻击力和 ${(critRateBonus * 100).toFixed(0)}% 暴击率`)
   }

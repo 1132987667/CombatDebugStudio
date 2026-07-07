@@ -1,7 +1,7 @@
 import type { BuffConfig } from '@/domain/buff/types'
 import type { Character } from '@/domain/character/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { normalizeAttributeCode, ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 
 export class BuffContext {
   public characterId: string = ''
@@ -68,8 +68,8 @@ export class BuffContext {
     const system = this.buffSystem
     if (!system) { console.warn('BuffSystem not injected, cannot add modifier'); return }
     const modifierStack = system.getModifierStack(this.characterId)
-    modifierStack.addModifier(this.instanceId, normalizeAttributeCode(attribute), value, type)
-    if (attribute === 'SPD') console.log(`Speed modifier added for character ${this.characterId}`)
+    modifierStack.addModifier(this.instanceId, attribute as ATTRIBUTE_CODE, value, type)
+    if (attribute === 'speed') console.log(`Speed modifier added for character ${this.characterId}`)
   }
 
   public removeModifiers(): void {
@@ -85,7 +85,7 @@ export class BuffContext {
 
   public getAttributeValue(attribute: string): number {
     const character = this.getCharacter()
-    return character ? character.getAttribute(normalizeAttributeCode(attribute)) : 0
+    return character ? character.getAttribute(attribute as ATTRIBUTE_CODE) : 0
   }
 
   public triggerEvent(eventName: string, data?: any): void {

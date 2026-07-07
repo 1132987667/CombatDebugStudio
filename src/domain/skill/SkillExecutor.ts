@@ -1,4 +1,5 @@
 import type { ExtendedSkillStep } from '@/domain/skill/types'
+import { SkillStepType } from '@/domain/skill/types'
 import type { BattleAction, BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -21,27 +22,22 @@ export class SkillExecutor {
     target: BattleEntity,
     record?: CombatRecord,
   ): void {
-    const normalizedType = skillStep.type.toUpperCase()
-    switch (normalizedType) {
-      case 'DAMAGE':
-      case 'DEAL_DAMAGE':
+    switch (skillStep.type) {
+      case SkillStepType.DEAL_DAMAGE:
         this.executeDamage(skillStep, action, source, target, record)
         break
-      case 'HEAL':
+      case SkillStepType.HEAL:
         this.executeHeal(skillStep, action, source, target, record)
         break
-      case 'BUFF':
-      case 'DEBUFF':
-      case 'APPLY_BUFF':
+      case SkillStepType.APPLY_BUFF:
         this.executeBuff(skillStep, action, source, target, record)
         break
-      case 'SHIELD':
+      case SkillStepType.SHIELD:
         this.executeShield(skillStep, action, source, target)
         break
-      case 'CONTROL':
-      case 'STUN':
-      case 'SILENCE':
-        this.executeControl(skillStep, action, source, target, normalizedType)
+      case SkillStepType.STUN:
+      case SkillStepType.SILENCE:
+        this.executeControl(skillStep, action, source, target, skillStep.type)
         break
     }
   }
@@ -95,7 +91,7 @@ export class SkillExecutor {
       id: buffId, name: buffId, description: '', duration: skillStep.duration ?? 1,
       maxStacks: skillStep.stacks || 1, cooldown: 0,
       stackRule: StackRule.LIMITED, controlType: ControlType.NONE, controlPriority: 0,
-      isDebuff: skillStep.type === 'DEBUFF',
+      isDebuff: false,
       parameters: skillStep.parameters || skillStep.effectParams || {},
     }
 
@@ -119,7 +115,7 @@ export class SkillExecutor {
     target: BattleEntity,
     normalizedType: string,
   ): void {
-    const controlType = normalizedType === 'STUN' ? ControlType.STUN : normalizedType === 'SILENCE' ? ControlType.SILENCE : ControlType.STUN
+    const controlType = normalizedType === SkillStepType.STUN ? ControlType.STUN : normalizedType === SkillStepType.SILENCE ? ControlType.SILENCE : ControlType.STUN
     const buffId = skillStep.buffId || `control_${controlType}`
     const config: BuffConfig = {
       id: buffId, name: buffId, description: '', duration: skillStep.duration ?? 1, maxStacks: 1, cooldown: 0,

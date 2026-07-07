@@ -1,6 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 
 /**
  * 石化皮肤buff脚本
@@ -18,7 +18,7 @@ export class StoneSkinBuff extends BaseBuffScript {
     
     // 降低移动速度作为代价
     const speedPenalty = this.getConfigValue(context, 'speedPenalty', 0.15) // 默认降低15%速度
-    this.addModifier(context, 'SPD', -speedPenalty, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.speed, -speedPenalty, ModifierType.MULTIPLICATIVE)
     
     // 记录初始值
     context.setVariable('physicalReduction', physicalReduction)
@@ -44,10 +44,10 @@ export class StoneSkinBuff extends BaseBuffScript {
       if (newReduction > currentReduction) {
         // 更新效果
         context.removeModifiers('PHYSICAL_DAMAGE_REDUCTION')
-        context.removeModifiers('SPD')
+        context.removeModifiers(ATTRIBUTE_CODE.speed)
         
         this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', newReduction, ModifierType.MULTIPLICATIVE)
-        this.addModifier(context, 'SPD', -newPenalty, ModifierType.MULTIPLICATIVE)
+        this.addModifier(context, ATTRIBUTE_CODE.speed, -newPenalty, ModifierType.MULTIPLICATIVE)
         
         context.setVariable('physicalReduction', newReduction)
         context.setVariable('speedPenalty', newPenalty)
@@ -70,10 +70,10 @@ export class StoneSkinBuff extends BaseBuffScript {
     
     // 更新效果
     context.removeModifiers('PHYSICAL_DAMAGE_REDUCTION')
-    context.removeModifiers('SPD')
+    context.removeModifiers(ATTRIBUTE_CODE.speed)
     
     this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', newReduction, ModifierType.MULTIPLICATIVE)
-    this.addModifier(context, 'SPD', -newPenalty, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.speed, -newPenalty, ModifierType.MULTIPLICATIVE)
     
     context.setVariable('physicalReduction', newReduction)
     context.setVariable('speedPenalty', newPenalty)

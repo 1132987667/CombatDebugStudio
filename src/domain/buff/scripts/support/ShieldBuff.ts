@@ -1,6 +1,8 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+
 export class ShieldBuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'buff_shield'
 
@@ -12,7 +14,7 @@ export class ShieldBuff extends BaseBuffScript {
     const shieldScale = this.getConfigValue(context, 'shieldScale', 1)
     
     const character = context.getCharacter()
-    const maxHP = character ? character.getAttribute('HP') : 1000
+    const maxHP = character ? character.getAttribute(ATTRIBUTE_CODE.maxHealth) : 1000
     const shieldValue = Math.floor(baseShield * shieldScale + maxHP * 0.1)
     
     // 记录护盾相关参数

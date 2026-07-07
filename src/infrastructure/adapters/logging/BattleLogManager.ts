@@ -714,13 +714,6 @@ export class BattleLogManager {
     }
   }
 
-  /**
-   * 添加系统战斗日志（已废弃，请使用 addSystemLog）
-   * @deprecated 使用 addSystemLog 代替
-   */
-  addSystemBattleLog(message: string, level: string = 'info'): void {
-    this.addSystemLog({ message, level: this.parseLogLevel(level) })
-  }
 }
 
 /**

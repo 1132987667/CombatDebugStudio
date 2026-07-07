@@ -85,7 +85,7 @@ import DamageNumber from "@/presentation/components/DamageNumber.vue";
 import SkillEffect from "@/presentation/components/SkillEffect.vue";
 import BattleLog from "@/presentation/views/BattleLog.vue";
 import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
-import type { AttributeValue } from '@/domain/attribute/types';
+import { ATTRIBUTE_CODE, type AttributeValue } from '@/domain/attribute/types';
 import type { BattleManager } from '@/domain/battle/BattleManager';
 import type { BattleEntity, StatusEffect } from '@/domain/battle/types';
 import { useBattleStore } from '@/presentation/stores/battleStore'
@@ -153,7 +153,7 @@ function toNumber(value: number | AttributeValue | undefined): number {
  */
 function getMemberSpeed(member: BattleEntity | null): number {
   if (!member) return 0;
-  const spdValue = member.getAttributeValue('SPD')
+  const spdValue = member.getAttributeValue(ATTRIBUTE_CODE.speed)
   return toNumber(spdValue?.value)
 }
 

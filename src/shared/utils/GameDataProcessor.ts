@@ -19,7 +19,7 @@ import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig, SkillStep } from '@/domain/skill/types'
 import type { SceneData } from '@/shared/types/scene'
 import type { CharacterStats } from '@/domain/character/types'
-import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier, normalizeAttributeCode } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 import type { StructuredBuffConfig } from '@/domain/attribute/modifier-template'
 import type { ParticipantSide } from '@/domain/battle/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/types'
@@ -205,7 +205,7 @@ export class GameDataProcessor {
     skill: SkillConfig,
     mod: { id?: string; targetAttribute: string; type: string; value: number },
   ): void {
-    const attrCode = normalizeAttributeCode(mod.targetAttribute)
+    const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
     const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
       : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
       : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
@@ -290,7 +290,7 @@ export class GameDataProcessor {
     const attrs = (buff as any).attributes as Record<string, string> | undefined
     if (attrs) {
       for (const [attrKey, valueStr] of Object.entries(attrs)) {
-        const attrCode = normalizeAttributeCode(attrKey)
+        const attrCode = attrKey as ATTRIBUTE_CODE
         const isPercent = valueStr.endsWith('%')
         const rawValue = parseFloat(valueStr)
         if (isNaN(rawValue)) continue
@@ -318,7 +318,7 @@ export class GameDataProcessor {
       for (const entity of allParticipants.values()) {
         if (entity.type !== aura.teamType || !(entity instanceof BattleParticipantImpl)) continue
         for (const mod of aura.modifiers) {
-          const attrCode = normalizeAttributeCode(mod.targetAttribute)
+          const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
           let value = typeof mod.value === 'number' ? mod.value : 0
           if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
             value = Math.round(value * 10000) / 100

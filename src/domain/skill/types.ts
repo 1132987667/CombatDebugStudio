@@ -238,19 +238,15 @@ export enum CostType {
 
 /**
  * 技能步骤类型枚举（扩展版）
- * 定义技能执行步骤的所有可能类型，支持新旧两种格式
+ * 定义技能执行步骤的所有可能类型
  */
 export const SkillStepType = {
-  // === 新版步骤类型（推荐） ===
+  // === 新版步骤类型 ===
   DEAL_DAMAGE: 'deal_damage',       // 造成伤害（结构化）
   HEAL: 'heal',                     // 治疗目标（结构化）
   APPLY_BUFF: 'apply_buff',         // 施加 Buff/Debuff（通过 BuffId 引用）
   MODIFY_ATTRIBUTE: 'modify_attribute', // 直接修改属性（主要用于被动）
   AURA: 'aura',                     // 光环效果
-  // === 旧版步骤类型（兼容） ===
-  DAMAGE: 'damage',                 // 造成伤害（旧版，使用 formula）
-  BUFF: 'buff',                     // 施加增益效果（旧版）
-  DEBUFF: 'debuff',                 // 施加减益效果（旧版）
   REMOVE_BUFF: 'remove_buff',       // 移除增益效果
   REMOVE_DEBUFF: 'remove_debuff',   // 移除减益效果
   CLEANSE: 'cleanse',               // 净化（移除所有负面效果）
@@ -267,33 +263,12 @@ export const SkillStepType = {
   DRAIN: 'drain',                   // 吸取
   REVIVE: 'revive',                 // 复活
   CUSTOM: 'custom',                 // 自定义效果
-  // === 旧版大写兼容 ===
-  DAMAGE_UPPER: 'DAMAGE',
-  HEAL_UPPER: 'HEAL',
-  BUFF_UPPER: 'BUFF',
-  DEBUFF_UPPER: 'DEBUFF',
-  REMOVE_BUFF_UPPER: 'REMOVE_BUFF',
-  REMOVE_DEBUFF_UPPER: 'REMOVE_DEBUFF',
-  CLEANSE_UPPER: 'CLEANSE',
-  DISPEL_UPPER: 'DISPEL',
-  STUN_UPPER: 'STUN',
-  SILENCE_UPPER: 'SILENCE',
-  KNOCKBACK_UPPER: 'KNOCKBACK',
-  PULL_UPPER: 'PULL',
-  TELEPORT_UPPER: 'TELEPORT',
-  SUMMON_UPPER: 'SUMMON',
-  TRANSFORM_UPPER: 'TRANSFORM',
-  SHIELD_UPPER: 'SHIELD',
-  REFLECT_UPPER: 'REFLECT',
-  DRAIN_UPPER: 'DRAIN',
-  REVIVE_UPPER: 'REVIVE',
-  CUSTOM_UPPER: 'CUSTOM',
 } as const
 export type SkillStepType = (typeof SkillStepType)[keyof typeof SkillStepType]
 
 /**
- * 技能步骤接口（扩展版）
- * 定义技能执行的具体步骤及其参数，兼容新旧配置格式
+ * 技能步骤接口
+ * 定义技能执行的具体步骤及其参数
  */
 export interface SkillStep {
   /**
@@ -313,12 +288,6 @@ export interface SkillStep {
    * 用于 deal_damage 步骤
    */
   damageType?: DamageType
-
-  /**
-   * 计算公式（新版使用更灵活的表达式）
-   * 示例: "attack * 0.8", "target.maxHp * 0.05"
-   */
-  formula?: string
 
   /**
    * 重复次数
@@ -345,7 +314,7 @@ export interface SkillStep {
   modifiers?: ModifierTemplate[]
 
   /**
-   * 效果ID（旧版，用于 buff/debuff 步骤）
+   * 效果ID
    */
   effectId?: string
 
@@ -371,12 +340,12 @@ export interface SkillStep {
   effectParams?: Record<string, any>
 
   /**
-   * 资源消耗类型（旧版）
+   * 资源消耗类型
    */
   costType?: CostType
 
   /**
-   * 自定义参数（旧版）
+   * 自定义参数
    */
   parameters?: Record<string, any>
 
@@ -417,18 +386,6 @@ export interface SkillSet {
 }
 
 /**
- * 旧版技能步骤遗留字段
- * 用于 JSON 配置直接读取的 legacy 属性，不在 SkillStep 接口中声明
- */
-export interface LegacyStepFields {
-  baseValue?: number
-  bonusValue?: number
-  attackBonus?: number
-  defenseBonus?: number
-  levelBonus?: number
-  maxHpPercent?: number
-  lostHpPercent?: number
-}
 
 /**
  * 技能脚本接口

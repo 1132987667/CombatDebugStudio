@@ -11,7 +11,7 @@ vi.mock('@/infrastructure/adapters/logging', () => ({
 function createHealStep(overrides?: Partial<ExtendedSkillStep>): ExtendedSkillStep {
   return {
     type: 'heal',
-    formula: 'attack*0.5',
+    calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 0.5 }] },
     skillId: 'test_heal',
     skillName: 'Test Heal',
     tier: 'small',
@@ -26,12 +26,11 @@ describe('HealCalculator', () => {
     calculator = new HealCalculator()
   })
 
-  describe('formula-based heal', () => {
-    it('should calculate heal from formula', () => {
+  describe('calculation-based heal', () => {
+    it('should calculate heal from calculation extraValues', () => {
       const source = createMockEntity()
-      source.getRandomAttackDemage = () => 100
       const target = createMockEntity({ currentHealth: 500, maxHealth: 1000 })
-      const step = createHealStep({ formula: 'attack*0.5' })
+      const step = createHealStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 0.5 }] } })
 
       const heal = calculator.calculateHeal(step, source, target)
 
@@ -42,7 +41,7 @@ describe('HealCalculator', () => {
     it('should cap heal at max health', () => {
       const source = createMockEntity()
       const target = createMockEntity({ currentHealth: 990, maxHealth: 1000 })
-      const step = createHealStep({ formula: 'attack*100' })
+      const step = createHealStep({ calculation: { baseValue: 200, extraValues: [] } })
 
       const heal = calculator.calculateHeal(step, source, target)
 
@@ -69,7 +68,7 @@ describe('HealCalculator', () => {
       const step = createHealStep({
         calculation: {
           baseValue: 50,
-          extraValues: [{ attribute: 'ATK', ratio: 0.5 }],
+          extraValues: [{ attribute: 'attack', ratio: 0.5 }],
         },
       })
 
@@ -84,7 +83,7 @@ describe('HealCalculator', () => {
       const step = createHealStep({
         calculation: {
           baseValue: 500,
-          extraValues: [{ attribute: 'ATK', ratio: 1 }],
+          extraValues: [{ attribute: 'attack', ratio: 1 }],
         },
       })
 
@@ -95,10 +94,10 @@ describe('HealCalculator', () => {
   })
 
   describe('edge cases', () => {
-    it('should return 0 for step with no formula and no calculation', () => {
+    it('should return 0 for step with no calculation', () => {
       const source = createMockEntity()
       const target = createMockEntity()
-      const step = createHealStep({ formula: undefined, calculation: undefined } as any)
+      const step = createHealStep({ calculation: undefined } as any)
 
       const heal = calculator.calculateHeal(step, source, target)
 
@@ -108,7 +107,7 @@ describe('HealCalculator', () => {
     it('should return 0 when target is at full health', () => {
       const source = createMockEntity()
       const target = createMockEntity({ currentHealth: 1000, maxHealth: 1000 })
-      const step = createHealStep({ formula: 'attack*0.5' })
+      const step = createHealStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 0.5 }] } })
 
       const heal = calculator.calculateHeal(step, source, target)
 

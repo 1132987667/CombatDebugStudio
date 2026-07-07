@@ -72,17 +72,6 @@ export interface EffectConfig {
   effectParams?: Record<string, any>
 }
 
-/**
- * 技能步骤接口扩展
- * 包含效果配置
- * @deprecated 请使用 @/domain/skill/types 中的 ExtendedSkillStep 接口
- */
-export interface SkillStepWithEffect extends SkillStep {
-  /**
-   * 效果配置
-   */
-  effect?: EffectConfig
-}
 
 /**
  * 技能配置接口扩展

@@ -267,33 +267,6 @@ export const ATTRIBUTE_CODE = {
 export type ATTRIBUTE_CODE =
   (typeof ATTRIBUTE_CODE)[keyof typeof ATTRIBUTE_CODE]
 
-/** 旧版属性代码映射表 */
-export const LEGACY_ATTR_MAP: Record<string, ATTRIBUTE_CODE> = {
-  ATK: ATTRIBUTE_CODE.attack,
-  DEF: ATTRIBUTE_CODE.defense,
-  MAX_HP: ATTRIBUTE_CODE.maxHealth,
-  CRIT_RATE: ATTRIBUTE_CODE.critRate,
-  CRIT_DMG: ATTRIBUTE_CODE.critDamage,
-  DMG_REDUCTION: ATTRIBUTE_CODE.damageReduction,
-  DMG_TAKEN_INCREASE: ATTRIBUTE_CODE.damageTakenIncrease,
-  NORMAL_ATK_DMG_REDUCTION: ATTRIBUTE_CODE.normalAtkDmgReduction,
-  SKILL_DMG_REDUCTION: ATTRIBUTE_CODE.skillDmgReduction,
-  CRIT_DMG_TAKEN_REDUCTION: ATTRIBUTE_CODE.critDmgTakenReduction,
-  HP: ATTRIBUTE_CODE.maxHealth,
-  SPD: ATTRIBUTE_CODE.speed,
-  DODGE: ATTRIBUTE_CODE.dodge,
-  HIT: ATTRIBUTE_CODE.hit,
-}
-
-/**
- * 规范化属性代码：将旧版大写缩写（如 'ATK'）转为 ATTRIBUTE_CODE
- * @param code 属性代码（旧版或新版）
- * @returns 标准化的 ATTRIBUTE_CODE
- */
-export function normalizeAttributeCode(code: string): ATTRIBUTE_CODE {
-  return LEGACY_ATTR_MAP[code] ?? (code as ATTRIBUTE_CODE)
-}
-
 // ========== 属性计算核心 ==========
 
 /**

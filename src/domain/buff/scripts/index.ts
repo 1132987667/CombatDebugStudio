@@ -1,6 +1,5 @@
 ﻿// 导出所有 Buff 脚本
 export * from '@/domain/buff/scripts/base/BaseBuffScript'
-export * from '@/domain/buff/scripts/base/BuffScriptUtils'
 export * from '@/domain/buff/scripts/base/BuffTemplate'
 
 // 单独导出类，避免 BUFF_ID 冲突

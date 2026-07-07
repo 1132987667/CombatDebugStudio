@@ -5,7 +5,7 @@
  ** 功能: 参与者属性管理
  ** 描述: 
  **/
-import { ATTRIBUTE_CODE, type AttributeValue, getAttributeMeta, getAttributeDefaultValue, normalizeAttributeCode } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, type AttributeValue, getAttributeMeta, getAttributeDefaultValue } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 import * as Utils from '@/domain/utils/Utils'
 
@@ -51,7 +51,7 @@ export class ParticipantStats {
   initAttributes(attributeValues: Partial<Record<ATTRIBUTE_CODE, number>>): void {
     const normalized: Partial<Record<ATTRIBUTE_CODE, number>> = {}
     for (const [key, value] of Object.entries(attributeValues)) {
-      normalized[normalizeAttributeCode(key)] = value
+      normalized[key as ATTRIBUTE_CODE] = value
     }
     for (const code of Object.values(ATTRIBUTE_CODE)) {
       const meta = getAttributeMeta(code)

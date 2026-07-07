@@ -3,7 +3,7 @@ import { AttackType } from '@/domain/skill/types'
 import type { CalculationLog } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
-import { ATTRIBUTE_CODE, LEGACY_ATTR_MAP, getAttributeDefaultValue } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, getAttributeDefaultValue } from '@/domain/attribute/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 
 export interface DamageCalculationConfig {
@@ -27,9 +27,8 @@ export interface DamageResult {
   actualDamage: number
 }
 
-function getAttributeValue(participant: BattleEntity, attr: string): number {
-  const code = LEGACY_ATTR_MAP[attr] || (attr as ATTRIBUTE_CODE)
-  return participant.getAttribute(code)
+function getAttributeValue(participant: BattleEntity, attr: ATTRIBUTE_CODE): number {
+  return participant.getAttribute(attr)
 }
 
 export class DamageCalculator {
@@ -122,7 +121,7 @@ export class DamageCalculator {
     // extraValues 处理 — 从 skillStep.calculation.extraValues 中读取
     if (skillStep.calculation?.extraValues) {
     for (const extra of skillStep.calculation.extraValues) {
-        const attrValue = getAttributeValue(source, extra.attribute)
+        const attrValue = getAttributeValue(source, extra.attribute as ATTRIBUTE_CODE)
         const extraValue = attrValue * extra.ratio
         damage += extraValue
         this.logCalculation('extra_value', extraValue, `${extra.attribute} 额外加成: +${extraValue}`)
@@ -138,7 +137,7 @@ export class DamageCalculator {
     }
 
     // 防御计算（递减公式�?
-    const defValue = getAttributeValue(target, 'DEF')
+    const defValue = getAttributeValue(target, ATTRIBUTE_CODE.defense)
     const effectiveDefense = defValue * 0.5
     const defenseMultiplier = Math.max(0.1, 1 - effectiveDefense / (effectiveDefense + 500))
     damage = Math.floor(damage * defenseMultiplier)
@@ -146,19 +145,19 @@ export class DamageCalculator {
     // 攻击类型伤害减免
     const atkType = skillStep.attackType || AttackType.SKILL_ATTACK
     if (atkType === AttackType.NORMAL_ATTACK) {
-      const reduction = getAttributeValue(target, 'NORMAL_ATK_DMG_REDUCTION')
+      const reduction = getAttributeValue(target, ATTRIBUTE_CODE.normalAtkDmgReduction)
       damage = Math.floor(damage * (1 - reduction / 100))
     } else {
-      const reduction = getAttributeValue(target, 'SKILL_DMG_REDUCTION')
+      const reduction = getAttributeValue(target, ATTRIBUTE_CODE.skillDmgReduction)
       damage = Math.floor(damage * (1 - reduction / 100))
     }
 
     // 通用伤害减免
-    const dmgReduction = getAttributeValue(target, 'DMG_REDUCTION')
+    const dmgReduction = getAttributeValue(target, ATTRIBUTE_CODE.damageReduction)
     damage = Math.floor(damage * (1 - dmgReduction / 100))
 
     // 受到伤害增加
-    const dmgTakenIncrease = getAttributeValue(target, 'DMG_TAKEN_INCREASE')
+    const dmgTakenIncrease = getAttributeValue(target, ATTRIBUTE_CODE.damageTakenIncrease)
     if (dmgTakenIncrease > 0) {
       damage = Math.floor(damage * (1 + dmgTakenIncrease / 100))
     }
@@ -166,7 +165,7 @@ export class DamageCalculator {
     // targetModifiers 处理 �?目标属性修�?   
     if (skillStep.targetModifiers) {
     Object.entries(skillStep.targetModifiers).forEach(([attr, modifier]) => {
-        const targetAttrValue = getAttributeValue(target, attr)
+        const targetAttrValue = getAttributeValue(target, attr as ATTRIBUTE_CODE)
         const modifierEffect = (modifier * targetAttrValue) / 100
         damage *= 1 + modifierEffect
         damage = Math.floor(damage)
@@ -197,10 +196,9 @@ export class DamageCalculator {
     record?: CombatRecord,
   ): number {
     let baseDamage = 0
-    if (skillStep.formula) {
-      baseDamage = this.evaluateFormula(skillStep.formula, source, target, skillStep)
-    } else if (skillStep.calculation) {
+    if (skillStep.calculation) {
       baseDamage = skillStep.calculation.baseValue
+      // ponytail: extraValues 在主循环 calculateDamage 中通过 getAttributeValue 处理，不在基础伤害阶段重复
     } else {
       const minAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.minAttack)
       const maxAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.maxAttack)
@@ -214,14 +212,6 @@ export class DamageCalculator {
     }
 
     this.logCalculation('base', baseDamage, `基础伤害: ${baseDamage}`)
-
-    // attackBonus 加成
-    if ((skillStep as LegacyStepFields).attackBonus && (skillStep as LegacyStepFields).attackBonus! > 0) {
-      const atk = source.getRandomAttackDemage()
-      const bonus = Math.floor(atk * (skillStep as LegacyStepFields).attackBonus! / 100)
-      baseDamage += bonus
-      this.logCalculation('attack_bonus', bonus, `攻击加成: +${bonus}`)
-    }
 
     if (record) {
       record.effects?.push({
@@ -242,44 +232,6 @@ export class DamageCalculator {
     }
     const actualDamage = target.takeDamage(damage)
     return actualDamage
-  }
-
-  private evaluateFormula(
-    formula: string,
-    source: BattleEntity,
-    target: BattleEntity,
-    step: ExtendedSkillStep,
-  ): number {
-    try {
-      const atk = source.getRandomAttackDemage()
-      const def = getAttributeValue(target, 'DEF')
-      const sourceLevel = source.level || 1
-      const targetLevel = target.level || 1
-      const ls = step as LegacyStepFields
-      const baseValue = ls.baseValue || 0
-      const bonusValue = ls.bonusValue || 0
-      const attackBonus = ls.attackBonus || 0
-      const defenseBonus = ls.defenseBonus || 0
-      const levelBonus = ls.levelBonus || 0
-      const processedFormula = formula
-        .replace(/\battack\b/gi, String(atk))
-        .replace(/DEF/gi, String(def))
-        .replace(/SOURCE_LEVEL/gi, String(sourceLevel))
-        .replace(/TARGET_LEVEL/gi, String(targetLevel))
-        .replace(/BASE_VALUE/gi, String(baseValue))
-        .replace(/BONUS_VALUE/gi, String(bonusValue))
-        .replace(/ATTACK_BONUS/gi, String(attackBonus))
-        .replace(/DEFENSE_BONUS/gi, String(defenseBonus))
-      let result = 0
-      try {
-        result = Function(`"use strict"; return (${processedFormula})`)()
-      } catch {
-        result = atk * 2 - def
-      }
-      return Math.max(1, Math.floor(result))
-    } catch {
-      return 10
-    }
   }
 
   private getAttributeOrConfig(

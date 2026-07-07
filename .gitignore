@@ -157,3 +157,6 @@ tools/
 .gitattributes
 .git
 .nuxt
+.github/
+.vscode/
+prompts/

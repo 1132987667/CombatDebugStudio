@@ -190,7 +190,7 @@
         <div class="effects-title">技能效果</div>
         <div class="effect-item" v-for="(step, idx) in tooltipContent.steps" :key="idx">
           <span class="effect-type">{{ getStepTypeName(step.type) }}</span>
-          <span class="effect-formula">{{ step.formula || '' }}</span>
+          <span class="effect-formula">{{ formatCalculation(step) }}</span>
           <span class="effect-duration" v-if="step.duration">{{ step.duration }}回合</span>
         </div>
       </div>
@@ -328,6 +328,18 @@ const getSkillTypeName = (skill: SkillConfig): string => {
 
 const getStepTypeName = (stepType?: string): string => {
   return getStepTypeDisplayName(stepType);
+};
+
+const formatCalculation = (step: any): string => {
+  if (!step.calculation) return ''
+  const parts: string[] = []
+  if (step.calculation.baseValue) parts.push(String(step.calculation.baseValue))
+  if (step.calculation.extraValues) {
+    for (const ev of step.calculation.extraValues) {
+      parts.push(`${ev.attribute}×${ev.ratio}`)
+    }
+  }
+  return parts.join(' + ') || ''
 };
 
 /**

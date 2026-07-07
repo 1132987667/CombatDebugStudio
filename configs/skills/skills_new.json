@@ -1,105 +1,154 @@
-[
-  {
-    "id": "skill_enemy_064_ultimate",
-    "name": "象阵冲锋",
-    "description": "终极技能：对单个敌人造成230%攻击力的普通伤害",
-    "cooldown": 5,
-    "maxUses": 2,
-    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
-    "steps": [
-      {
-        "type": "deal_damage",
-        "target": "random_enemy",
-        "damageType": "physical_damage",
-        "formula": "attack * 2.3"
-      }
-    ],
-    "energyCost": 150,
-    "skillType": "ultimate"
-  },
-  {
-    "id": "skill_enemy_063_ultimate",
-    "name": "狮王咆哮",
-    "description": "终极技能：对所有敌人造成140%攻击力的普通伤害，并有40%几率使目标眩晕1回合",
-    "cooldown": 5,
-    "maxUses": 2,
-    "selector": {"faction": "enemy", "strategy": "all"},
-    "steps": [
-      {
-        "type": "deal_damage",
-        "target": "all_enemies",
-        "damageType": "physical_damage",
-        "formula": "attack * 1.4"
-      },
-      {
-        "type": "apply_buff",
-        "target": "all_enemies",
-        "buffId": "buff_stun",
-        "probability": 0.4
-      }
-    ],
-    "energyCost": 150,
-    "skillType": "ultimate"
-  },
-  {
-    "id": "skill_enemy_062_small",
-    "name": "狂风之翼",
-    "description": "对所有敌人造成80%攻击力的普通伤害，并降低其速度30%，持续2回合",
-    "cooldown": 2,
-    "selector": {"faction": "enemy", "strategy": "all"},
-    "steps": [
-      {
-        "type": "deal_damage",
-        "target": "all_enemies",
-        "damageType": "physical_damage",
-        "formula": "attack * 0.8"
-      },
-      {
-        "type": "apply_buff",
-        "target": "all_enemies",
-        "buffId": "buff_speed_reduction"
-      }
-    ],
-    "energyCost": 25,
-    "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_063_small",
-    "name": "近卫之怒",
-    "description": "对单个敌人造成120%攻击力的普通伤害",
-    "cooldown": 2,
-    "selector": {"faction": "enemy", "strategy": "first", "count": 1},
-    "steps": [
-      {
-        "type": "deal_damage",
-        "target": "random_enemy",
-        "damageType": "physical_damage",
-        "formula": "attack * 1.2"
-      }
-    ],
-    "energyCost": 25,
-    "skillType": "small"
-  },
-  {
-    "id": "skill_enemy_064_small",
-    "name": "战争践踏",
-    "description": "对所有敌人造成100%攻击力的普通伤害，并降低其防御力30%，持续2回合",
-    "cooldown": 2,
-    "selector": {"faction": "enemy", "strategy": "all"},
-    "steps": [
-      {
-        "type": "deal_damage",
-        "target": "all_enemies",
-        "damageType": "physical_damage",
-        "formula": "attack * 1.0"
-      },
-      {
-        "type": "apply_buff",
-        "target": "all_enemies",
-        "buffId": "buff_def_reduction"
-      }
-    ],
-    "energyCost": 25,
-    "skillType": "small"
-  }
+﻿[
+    {
+        "id":  "skill_enemy_064_ultimate",
+        "name":  "象阵冲锋",
+        "description":  "终极技能：对单个敌人造成230%攻击力的普通伤害",
+        "cooldown":  5,
+        "maxUses":  2,
+        "selector":  {
+                         "faction":  "enemy",
+                         "strategy":  "first",
+                         "count":  1
+                     },
+        "steps":  [
+                      {
+                          "type":  "deal_damage",
+                          "damageType":  "physical_damage",
+                          "calculation":  {
+                                              "baseValue":  0,
+                                              "extraValues":  [
+                                                                  {
+                                                                      "ratio":  2.3,
+                                                                      "attribute":  "attack"
+                                                                  }
+                                                              ]
+                                          }
+                      }
+                  ],
+        "energyCost":  150,
+        "skillType":  "ultimate"
+    },
+    {
+        "id":  "skill_enemy_063_ultimate",
+        "name":  "狮王咆哮",
+        "description":  "终极技能：对所有敌人造成140%攻击力的普通伤害，并有40%几率使目标眩晕1回合",
+        "cooldown":  5,
+        "maxUses":  2,
+        "selector":  {
+                         "faction":  "enemy",
+                         "strategy":  "all"
+                     },
+        "steps":  [
+                      {
+                          "type":  "deal_damage",
+                          "damageType":  "physical_damage",
+                          "calculation":  {
+                                              "baseValue":  0,
+                                              "extraValues":  [
+                                                                  {
+                                                                      "ratio":  1.4,
+                                                                      "attribute":  "attack"
+                                                                  }
+                                                              ]
+                                          }
+                      },
+                      {
+                          "type":  "apply_buff",
+                          "buffId":  "buff_stun",
+                          "probability":  0.4
+                      }
+                  ],
+        "energyCost":  150,
+        "skillType":  "ultimate"
+    },
+    {
+        "id":  "skill_enemy_062_small",
+        "name":  "狂风之翼",
+        "description":  "对所有敌人造成80%攻击力的普通伤害，并降低其速度30%，持续2回合",
+        "cooldown":  2,
+        "selector":  {
+                         "faction":  "enemy",
+                         "strategy":  "all"
+                     },
+        "steps":  [
+                      {
+                          "type":  "deal_damage",
+                          "damageType":  "physical_damage",
+                          "calculation":  {
+                                              "baseValue":  0,
+                                              "extraValues":  [
+                                                                  {
+                                                                      "ratio":  0.8,
+                                                                      "attribute":  "attack"
+                                                                  }
+                                                              ]
+                                          }
+                      },
+                      {
+                          "type":  "apply_buff",
+                          "buffId":  "buff_speed_reduction"
+                      }
+                  ],
+        "energyCost":  25,
+        "skillType":  "small"
+    },
+    {
+        "id":  "skill_enemy_063_small",
+        "name":  "近卫之怒",
+        "description":  "对单个敌人造成120%攻击力的普通伤害",
+        "cooldown":  2,
+        "selector":  {
+                         "faction":  "enemy",
+                         "strategy":  "first",
+                         "count":  1
+                     },
+        "steps":  [
+                      {
+                          "type":  "deal_damage",
+                          "damageType":  "physical_damage",
+                          "calculation":  {
+                                              "baseValue":  0,
+                                              "extraValues":  [
+                                                                  {
+                                                                      "ratio":  1.2,
+                                                                      "attribute":  "attack"
+                                                                  }
+                                                              ]
+                                          }
+                      }
+                  ],
+        "energyCost":  25,
+        "skillType":  "small"
+    },
+    {
+        "id":  "skill_enemy_064_small",
+        "name":  "战争践踏",
+        "description":  "对所有敌人造成100%攻击力的普通伤害，并降低其防御力30%，持续2回合",
+        "cooldown":  2,
+        "selector":  {
+                         "faction":  "enemy",
+                         "strategy":  "all"
+                     },
+        "steps":  [
+                      {
+                          "type":  "deal_damage",
+                          "damageType":  "physical_damage",
+                          "calculation":  {
+                                              "baseValue":  0,
+                                              "extraValues":  [
+                                                                  {
+                                                                      "ratio":  1,
+                                                                      "attribute":  "attack"
+                                                                  }
+                                                              ]
+                                          }
+                      },
+                      {
+                          "type":  "apply_buff",
+                          "buffId":  "buff_def_reduction"
+                      }
+                  ],
+        "energyCost":  25,
+        "skillType":  "small"
+    }
 ]

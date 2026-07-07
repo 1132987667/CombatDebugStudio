@@ -57,16 +57,16 @@ export class BuffScriptRegistry {
 
   /** 效果参数到属性修饰符的映射表 */
   private static readonly EFFECT_PARAM_MAP: Record<string, string> = {
-    attackBonus: 'ATK',
-    defenseBonus: 'DEF',
-    speedBonus: 'SPD',
-    healthBonus: 'MAX_HP',
-    criticalRateBonus: 'CRIT_RATE',
-    criticalDamageBonus: 'CRIT_DMG',
-    teamAttackBonus: 'ATK',
-    teamHealPerTurn: 'HP_REGEN_PERCENT',
-    controlDurationReduction: 'CONTROL_DURATION_REDUCTION',
-    defenseReduction: 'DEF',
+    attackBonus: 'attack',
+    defenseBonus: 'defense',
+    speedBonus: 'speed',
+    healthBonus: 'maxHealth',
+    criticalRateBonus: 'critRate',
+    criticalDamageBonus: 'critDamage',
+    teamAttackBonus: 'attack',
+    teamHealPerTurn: 'hpRegenPercent',
+    controlDurationReduction: 'controlDurationReduction',
+    defenseReduction: 'defense',
   }
 
   /** 将 effects.json 的参数转换为 attributes 格式并加载到注册表 */

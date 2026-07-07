@@ -1,5 +1,5 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
 /**
@@ -12,7 +12,7 @@ export class SpeedReductionDebuff extends BaseBuffScript {
   protected _onApply(context: BuffContext): void {
     const speedReduction = this.getConfigValue(context, 'speedReduction', 0.25)
     this.log(context, '速度被降低了！')
-    this.addModifier(context, 'SPD', -speedReduction, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.speed, -speedReduction, ModifierType.MULTIPLICATIVE)
     
     // 记录初始速度降低值
     context.setVariable('speedReduction', speedReduction)
@@ -33,8 +33,8 @@ export class SpeedReductionDebuff extends BaseBuffScript {
       
       if (newReduction < currentReduction) {
         // 更新速度降低效果
-        context.removeModifiers('SPD')
-        this.addModifier(context, 'SPD', -newReduction, ModifierType.MULTIPLICATIVE)
+        context.removeModifiers(ATTRIBUTE_CODE.speed)
+        this.addModifier(context, ATTRIBUTE_CODE.speed, -newReduction, ModifierType.MULTIPLICATIVE)
         context.setVariable('speedReduction', newReduction)
         this.log(context, `速度逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
       }
@@ -50,8 +50,8 @@ export class SpeedReductionDebuff extends BaseBuffScript {
     const newReduction = Math.min(currentReduction + refreshBonus, 0.6) // 最大降低60%
     
     // 更新效果
-    context.removeModifiers('SPD')
-    this.addModifier(context, 'SPD', -newReduction, ModifierType.MULTIPLICATIVE)
+    context.removeModifiers(ATTRIBUTE_CODE.speed)
+    this.addModifier(context, ATTRIBUTE_CODE.speed, -newReduction, ModifierType.MULTIPLICATIVE)
     context.setVariable('speedReduction', newReduction)
     
     this.log(context, `速度降低提升至 ${(newReduction * 100).toFixed(1)}%`)

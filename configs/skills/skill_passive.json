@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "id": "skill_enemy_004_passive",
     "name": "坚韧表皮",
@@ -14,7 +14,7 @@
         "modifiers": [
           {
             "id": "tough_skin_crit_dmg_reduce",
-            "targetAttribute": "CRIT_DMG_TAKEN_REDUCTION",
+            "targetAttribute": "critDmgTakenReduction",
             "type": "ADDITIVE",
             "value": 15,
             "sourceName": "坚韧表皮"
@@ -40,7 +40,7 @@
         "modifiers": [
           {
             "id": "stone_skin_normal_dmg_reduce",
-            "targetAttribute": "NORMAL_ATK_DMG_REDUCTION",
+            "targetAttribute": "normalAtkDmgReduction",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "石化皮肤"
@@ -136,7 +136,7 @@
         "modifiers": [
           {
             "id": "mountain_protection_def",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "山灵庇护"
@@ -228,7 +228,7 @@
         "modifiers": [
           {
             "id": "water_resonance_hp",
-            "targetAttribute": "MAX_HP",
+            "targetAttribute": "maxHealth",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "水之共鸣"
@@ -302,7 +302,7 @@
         "modifiers": [
           {
             "id": "stone_flesh_normal_reduce",
-            "targetAttribute": "NORMAL_ATK_DMG_REDUCTION",
+            "targetAttribute": "normalAtkDmgReduction",
             "type": "ADDITIVE",
             "value": 10,
             "sourceName": "岩石肌肤"
@@ -364,7 +364,7 @@
         "modifiers": [
           {
             "id": "earth_gift_hp",
-            "targetAttribute": "MAX_HP",
+            "targetAttribute": "maxHealth",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "大地恩赐"
@@ -430,7 +430,7 @@
         "modifiers": [
           {
             "id": "thick_skin_crit_reduce",
-            "targetAttribute": "CRIT_DMG_TAKEN_REDUCTION",
+            "targetAttribute": "critDmgTakenReduction",
             "type": "ADDITIVE",
             "value": 25,
             "sourceName": "厚皮"
@@ -500,7 +500,7 @@
         "modifiers": [
           {
             "id": "mist_coverage_spd",
-            "targetAttribute": "SPD",
+            "targetAttribute": "speed",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "迷雾笼罩"
@@ -530,14 +530,14 @@
         "modifiers": [
           {
             "id": "quicksand_def",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "流沙之体"
           },
           {
             "id": "quicksand_dodge",
-            "targetAttribute": "DODGE",
+            "targetAttribute": "dodge",
             "type": "ADDITIVE",
             "value": 10,
             "sourceName": "流沙之体"
@@ -563,7 +563,7 @@
         "modifiers": [
           {
             "id": "snake_skin_def",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 10,
             "sourceName": "蛇皮"
@@ -596,7 +596,7 @@
         "modifiers": [
           {
             "id": "water_protection_mdef",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 10,
             "sourceName": "水之加护"
@@ -629,14 +629,14 @@
         "modifiers": [
           {
             "id": "sand_avatar_def",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 25,
             "sourceName": "沙之化身"
           },
           {
             "id": "sand_avatar_dodge",
-            "targetAttribute": "DODGE",
+            "targetAttribute": "dodge",
             "type": "ADDITIVE",
             "value": 15,
             "sourceName": "沙之化身"
@@ -669,7 +669,7 @@
         "modifiers": [
           {
             "id": "snake_king_atk",
-            "targetAttribute": "ATK",
+            "targetAttribute": "attack",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "蛇王威严"
@@ -706,7 +706,7 @@
         "modifiers": [
           {
             "id": "water_guardian_mdef",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "水之守护"
@@ -720,7 +720,7 @@
           },
           {
             "id": "water_guardian_atk",
-            "targetAttribute": "ATK",
+            "targetAttribute": "attack",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "水之守护"
@@ -750,7 +750,7 @@
         "modifiers": [
           {
             "id": "lava_skin_def",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "熔岩皮肤"
@@ -820,14 +820,14 @@
         "modifiers": [
           {
             "id": "fire_control_crit",
-            "targetAttribute": "CRIT_RATE",
+            "targetAttribute": "critRate",
             "type": "ADDITIVE",
             "value": 10,
             "sourceName": "火焰掌控"
           },
           {
             "id": "fire_control_critdmg",
-            "targetAttribute": "CRIT_DMG",
+            "targetAttribute": "critDamage",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "火焰掌控"
@@ -893,14 +893,14 @@
         "modifiers": [
           {
             "id": "giant_power_atk",
-            "targetAttribute": "ATK",
+            "targetAttribute": "attack",
             "type": "PERCENTAGE",
             "value": 25,
             "sourceName": "巨人之力"
           },
           {
             "id": "giant_power_critdmg",
-            "targetAttribute": "CRIT_DMG",
+            "targetAttribute": "critDamage",
             "type": "ADDITIVE",
             "value": 30,
             "sourceName": "巨人之力"
@@ -933,14 +933,14 @@
         "modifiers": [
           {
             "id": "earth_fire_heart_atk",
-            "targetAttribute": "ATK",
+            "targetAttribute": "attack",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "地火之心"
           },
           {
             "id": "earth_fire_heart_def",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "地火之心"
@@ -1068,14 +1068,14 @@
         "modifiers": [
           {
             "id": "valley_overlord_all",
-            "targetAttribute": "MAX_HP",
+            "targetAttribute": "maxHealth",
             "type": "PERCENTAGE",
             "value": 25,
             "sourceName": "谷中霸主"
           },
           {
             "id": "valley_overlord_atk",
-            "targetAttribute": "ATK",
+            "targetAttribute": "attack",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "谷中霸主"
@@ -1123,7 +1123,7 @@
         "modifiers": [
           {
             "id": "iron_armor_def",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 25,
             "sourceName": "铁甲护体"
@@ -1149,7 +1149,7 @@
         "modifiers": [
           {
             "id": "sky_overlord_spd",
-            "targetAttribute": "SPD",
+            "targetAttribute": "speed",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "天空霸主"
@@ -1211,7 +1211,7 @@
         "modifiers": [
           {
             "id": "wind_spirit_spd",
-            "targetAttribute": "SPD",
+            "targetAttribute": "speed",
             "type": "PERCENTAGE",
             "value": 45,
             "sourceName": "风之灵"
@@ -1241,14 +1241,14 @@
         "modifiers": [
           {
             "id": "strong_body_atk",
-            "targetAttribute": "ATK",
+            "targetAttribute": "attack",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "力士之躯"
           },
           {
             "id": "strong_body_hp",
-            "targetAttribute": "MAX_HP",
+            "targetAttribute": "maxHealth",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "力士之躯"
@@ -1274,14 +1274,14 @@
         "modifiers": [
           {
             "id": "revered_awe_def",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "尊者之威"
           },
           {
             "id": "revered_awe_dodge",
-            "targetAttribute": "DODGE",
+            "targetAttribute": "dodge",
             "type": "ADDITIVE",
             "value": 10,
             "sourceName": "尊者之威"
@@ -1307,14 +1307,14 @@
         "modifiers": [
           {
             "id": "diamond_rage_atk",
-            "targetAttribute": "ATK",
+            "targetAttribute": "attack",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "金刚之怒"
           },
           {
             "id": "diamond_rage_crit",
-            "targetAttribute": "CRIT_RATE",
+            "targetAttribute": "critRate",
             "type": "ADDITIVE",
             "value": 10,
             "sourceName": "金刚之怒"
@@ -1366,7 +1366,7 @@
         "modifiers": [
           {
             "id": "dragon_awe_critdmg",
-            "targetAttribute": "CRIT_DMG",
+            "targetAttribute": "critDamage",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "龙威"
@@ -1392,14 +1392,14 @@
         "modifiers": [
           {
             "id": "zen_heart_hp",
-            "targetAttribute": "MAX_HP",
+            "targetAttribute": "maxHealth",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "禅心"
           },
           {
             "id": "zen_heart_def",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 15,
             "sourceName": "禅心"
@@ -1447,7 +1447,7 @@
         "modifiers": [
           {
             "id": "general_bravery_atk",
-            "targetAttribute": "ATK",
+            "targetAttribute": "attack",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "将领之勇"
@@ -1473,7 +1473,7 @@
         "modifiers": [
           {
             "id": "elder_wisdom_crit",
-            "targetAttribute": "CRIT_RATE",
+            "targetAttribute": "critRate",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "长老之智"
@@ -1517,7 +1517,7 @@
         "modifiers": [
           {
             "id": "commander_awe_def",
-            "targetAttribute": "DEF",
+            "targetAttribute": "defense",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "统帅之威"
@@ -1550,14 +1550,14 @@
         "modifiers": [
           {
             "id": "sacred_blessing_hp",
-            "targetAttribute": "MAX_HP",
+            "targetAttribute": "maxHealth",
             "type": "PERCENTAGE",
             "value": 30,
             "sourceName": "灵山祝福"
           },
           {
             "id": "sacred_blessing_atk",
-            "targetAttribute": "ATK",
+            "targetAttribute": "attack",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "灵山祝福"

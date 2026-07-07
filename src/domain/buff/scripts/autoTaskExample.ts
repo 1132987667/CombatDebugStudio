@@ -44,25 +44,25 @@ function createExampleBattle() {
       skills: { small: [], passive: [], ultimate: [] },
       getAttribute(attribute: string): number {
         switch (attribute) {
-          case 'HP': return this.currentHealth
-          case 'MAX_HP': return this.maxHealth
-          case 'ATK': return this.minAttack + (this.maxAttack - this.minAttack) / 2
-          case 'MIN_ATK': return this.minAttack
-          case 'MAX_ATK': return this.maxAttack
-          case 'DEF': return this.defense
-          case 'SPD': return this.speed
-          case 'CRIT_RATE': return this.critRate
-          case 'CRIT_DMG': return this.critDamage
-          case 'DMG_REDUCTION': return this.damageReduction
-          case 'energy': return this.currentEnergy
-          case 'max_energy': return this.maxEnergy
+          case 'currentHealth': return this.currentHealth
+          case 'maxHealth': return this.maxHealth
+          case 'attack': return this.minAttack + (this.maxAttack - this.minAttack) / 2
+          case 'minAttack': return this.minAttack
+          case 'maxAttack': return this.maxAttack
+          case 'defense': return this.defense
+          case 'speed': return this.speed
+          case 'critRate': return this.critRate
+          case 'critDamage': return this.critDamage
+          case 'damageReduction': return this.damageReduction
+          case 'currentEnergy': return this.currentEnergy
+          case 'maxEnergy': return this.maxEnergy
           default: return 0
         }
       },
       setAttribute(attribute: string, value: number): void {
-        if (attribute === 'HP') {
+        if (attribute === 'currentHealth') {
           this.currentHealth = Math.max(0, Math.min(value, this.maxHealth))
-        } else if (attribute === 'energy') {
+        } else if (attribute === 'currentEnergy') {
           this.currentEnergy = Math.max(0, Math.min(value, this.maxEnergy))
         }
       },
@@ -157,25 +157,25 @@ function createExampleBattle() {
       skills: { small: [], passive: [], ultimate: [] },
       getAttribute(attribute: string): number {
         switch (attribute) {
-          case 'HP': return this.currentHealth
-          case 'MAX_HP': return this.maxHealth
-          case 'ATK': return this.minAttack + (this.maxAttack - this.minAttack) / 2
-          case 'MIN_ATK': return this.minAttack
-          case 'MAX_ATK': return this.maxAttack
-          case 'DEF': return this.defense
-          case 'SPD': return this.speed
-          case 'CRIT_RATE': return this.critRate
-          case 'CRIT_DMG': return this.critDamage
-          case 'DMG_REDUCTION': return this.damageReduction
-          case 'energy': return this.currentEnergy
-          case 'max_energy': return this.maxEnergy
+          case 'currentHealth': return this.currentHealth
+          case 'maxHealth': return this.maxHealth
+          case 'attack': return this.minAttack + (this.maxAttack - this.minAttack) / 2
+          case 'minAttack': return this.minAttack
+          case 'maxAttack': return this.maxAttack
+          case 'defense': return this.defense
+          case 'speed': return this.speed
+          case 'critRate': return this.critRate
+          case 'critDamage': return this.critDamage
+          case 'damageReduction': return this.damageReduction
+          case 'currentEnergy': return this.currentEnergy
+          case 'maxEnergy': return this.maxEnergy
           default: return 0
         }
       },
       setAttribute(attribute: string, value: number): void {
-        if (attribute === 'HP') {
+        if (attribute === 'currentHealth') {
           this.currentHealth = Math.max(0, Math.min(value, this.maxHealth))
-        } else if (attribute === 'energy') {
+        } else if (attribute === 'currentEnergy') {
           this.currentEnergy = Math.max(0, Math.min(value, this.maxEnergy))
         }
       },

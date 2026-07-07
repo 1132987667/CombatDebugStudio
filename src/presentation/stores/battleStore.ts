@@ -16,6 +16,8 @@ import type { BattleAction, BattleState } from '@/domain/battle/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import type { BattleEntity } from '@/domain/battle/types'
+import type { Enemy } from '@/shared/types/enemy'
+import { BattleParticipantImpl } from '@/domain/battle/BattleParticipantImpl'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -122,13 +124,10 @@ export const useBattleStore = defineStore('battle', () => {
   /** 已处理过的战斗动作ID集合（防止重复解析和显示同一动作） */
   const processedActionIds = ref(new Set<string>())
 
-  // ================= 生命周期清理 =================
-  // 组件卸载或模块热更新时自动执行清理
-  onScopeDispose(() => {
-    battleManager.value.off(BattleEventCodes.TEAM_DATA_CHANGED)
-  })
 
   const selectedCharacterId = ref<string | null>(null)
+  /** 角色库预览实体（未加入队伍，仅供属性监控预览） */
+  const previewEntity = shallowRef<BattleEntity | null>(null)
 
   // 🔹 2. 业务层引用（适配器桥接，使用 shallowRef 避免深层 Proxy 开销）
   /** 战斗管理器实例（核心业务逻辑入口，通过依赖注入获取） */
@@ -725,6 +724,17 @@ export const useBattleStore = defineStore('battle', () => {
   const selectCharacter = (characterId: string) => {
     battleManager.value.selectCharacter(characterId)
     selectedCharacterId.value = characterId
+    previewEntity.value = null // 选中真实参战角色时清除预览
+  }
+
+  /**
+   * 预览角色库中的角色（转为 BattleEntity 存入预览，不加入队伍）
+   * @param enemy 角色库中的敌人数据
+   */
+  const previewRosterCharacter = (enemy: Enemy) => {
+    const entity = GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY)
+    previewEntity.value = entity
+    selectedCharacterId.value = entity.id
   }
 
   /**
@@ -756,6 +766,7 @@ export const useBattleStore = defineStore('battle', () => {
     processedActionIds, // 已处理动作ID集合
     battleManager, // 战斗管理器实例
     selectedCharacterId, // 选中角色ID
+    previewEntity, // 角色库预览实体
 
     // ========== 业务数据（Data） ==========
     allyTeam, // 我方队伍
@@ -814,6 +825,7 @@ export const useBattleStore = defineStore('battle', () => {
 
     // ========== 角色操作 ==========
     selectCharacter, // 选中角色
+    previewRosterCharacter, // 预览角色库角色
     setCharacterEnabled, // 设置角色启用/禁用
   }
 })

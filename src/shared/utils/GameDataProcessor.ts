@@ -118,7 +118,17 @@ export class GameDataProcessor {
     // 1. 解析被动技能并生成修饰符模板列表
     const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive)
 
-    // 2. 构造标准初始化 DTO
+    // 3. 补全派生属性（配置只有 currentHealth/minAttack/maxAttack，但引擎需要 maxHealth）
+    const stats = { ...enemy.stats } as Partial<Record<ATTRIBUTE_CODE, number>>
+    if (!stats[ATTRIBUTE_CODE.maxHealth] && stats[ATTRIBUTE_CODE.currentHealth]) {
+      stats[ATTRIBUTE_CODE.maxHealth] = stats[ATTRIBUTE_CODE.currentHealth]
+    }
+
+    // 将攻击力加成/气血加成的基础值提取出来，后续直接作为 PERCENTAGE 修饰符注入
+    const attackBonusBase = stats[ATTRIBUTE_CODE.attackBonus] || 0
+    const healthBonusBase = stats[ATTRIBUTE_CODE.healthBonus] || 0
+
+    // 3. 构造标准初始化 DTO
     const initData: BattleParticipantData = {
       id: `[${type}]_${enemy.id}_${counter.next()}`,
       name: enemy.name,
@@ -131,14 +141,53 @@ export class GameDataProcessor {
         passive: passiveSkills,
         ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate),
       },
-      attributeValues: enemy.stats,
+      attributeValues: stats,
     }
 
-    // 3. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
+    // 4. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
     const participant = new BattleParticipantImpl(initData)
 
-    // 4. 应用被动技能中 modify_attribute 步骤的修饰符
+    // 5. 应用被动技能中 modify_attribute 步骤的修饰符
     GameDataProcessor.applyPassiveModifiers(participant, passiveSkills)
+
+    // 6. 将配置中的 attackBonus/healthBonus 作为 PERCENTAGE 修饰符注入到对应属性
+    if (attackBonusBase) {
+      for (const attr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
+        const attrData = participant.getAttrValue(attr)
+        if (attrData) {
+          attrData.modifiers.push({
+            sourceKey: 'bonus:attackBonus',
+            sourceType: ModifierSourceType.BASE,
+            attribute: attr,
+            value: attackBonusBase,
+            type: ModifierType.PERCENTAGE,
+            description: '攻击加成',
+          })
+        }
+      }
+    }
+    if (healthBonusBase) {
+      const hpData = participant.getAttrValue(ATTRIBUTE_CODE.maxHealth)
+      if (hpData) {
+        hpData.modifiers.push({
+          sourceKey: 'bonus:healthBonus',
+          sourceType: ModifierSourceType.BASE,
+          attribute: ATTRIBUTE_CODE.maxHealth,
+          value: healthBonusBase,
+          type: ModifierType.PERCENTAGE,
+          description: '气血加成',
+        })
+      }
+    }
+
+    // 7. 重新计算全部属性（使被动技能和配置加成的修饰符生效），初始满血
+    participant.recalcAll()
+    // ponytail: setAttributeBase 只改 base 不改 value，而 currentHealth 是运行时属性
+    // （recalcAttribute 跳过），value 永不会从 base 同步，故直接写 value
+    const curHp = participant.getAttrValue(ATTRIBUTE_CODE.currentHealth)
+    if (curHp) {
+      curHp.value = participant.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    }
 
     return participant
   }
@@ -250,6 +299,23 @@ export class GameDataProcessor {
         if (bonusData) {
           bonusData.modifiers.push(bonusMod)
           bonusData.cachedVersion = -1
+        }
+      }
+      // ponytail: PERCENTAGE 作用于 attack 时同步到 minAttack/maxAttack
+      if (attrCode === ATTRIBUTE_CODE.attack) {
+        for (const targetAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
+          const targetData = participant.getAttrValue(targetAttr)
+          if (targetData) {
+            targetData.modifiers.push({
+              sourceKey,
+              sourceType: ModifierSourceType.SKILL,
+              attribute: targetAttr,
+              value,
+              type: ModifierType.PERCENTAGE,
+              description: skill.name,
+            })
+            targetData.cachedVersion = -1
+          }
         }
       }
     }

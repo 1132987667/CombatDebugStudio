@@ -22,6 +22,67 @@ export interface CalculationDetail {
   modifiers: Record<string, number>
 }
 
+// ===================== 伤害拆分（完整链路） =====================
+
+/** 伤害计算中的一步 */
+export interface DamageStep {
+  stepName: string
+  value: number
+  description: string
+}
+
+/** 额外加成项 */
+export interface ExtraContribution {
+  attribute: string
+  value: number
+  ratio: number
+}
+
+/** 目标修正项 */
+export interface TargetModifierEffect {
+  attribute: string
+  multiplier: number
+  effect: number
+}
+
+/**
+ * 伤害拆分明细
+ * 记录从"基础威力"到"最终伤害"的完整计算链路
+ */
+export interface DamageBreakdown {
+  /** 基础伤害（威力） */
+  baseDamage: number
+  /** 额外加成（属性倍率） */
+  extraContributions: ExtraContribution[]
+  /** 暴击相关 */
+  isCritical: boolean
+  critRate: number
+  critDamage: number
+  critMultiplier: number
+  /** 暴击前伤害（加成后） */
+  preCritDamage: number
+  /** 暴击后伤害 */
+  postCritDamage: number
+  /** 防御相关 */
+  defenseValue: number
+  effectiveDefense: number
+  defenseMultiplier: number
+  /** 各项减免（百分比点，如 20 = 减免 20%） */
+  normalAtkReduction?: number
+  skillDmgReduction?: number
+  generalDamageReduction?: number
+  damageTakenIncrease?: number
+  /** 目标修正 */
+  targetModifierEffects: TargetModifierEffect[]
+  /** 阈值 */
+  minDamageThreshold: number
+  maxDamageThreshold: number
+  /** 最终伤害 */
+  finalDamage: number
+  /** 完整步骤链（用于 UI 逐条展示） */
+  steps: DamageStep[]
+}
+
 /**
  * 统一动作记录 - 贯穿整个动作生命周期的核心记录对象
  */
@@ -35,6 +96,7 @@ export interface CombatRecord {
   actorName: string
   actionType: ActionTypes
   skillId?: string
+  skillName?: string
   targetId: string
   targetName?: string
 
@@ -47,6 +109,9 @@ export interface CombatRecord {
 
   hasDetail?: boolean
   detail?: CalculationDetail
+
+  /** 伤害拆分明细（攻击/技能动作时填充） */
+  damageBreakdown?: DamageBreakdown
 
   message: string
   htmlMessage?: string

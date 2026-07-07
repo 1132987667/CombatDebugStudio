@@ -3,8 +3,8 @@
  * 创建日期: 2026-02-16
  * 作者: CombatDebugStudio
  * 功能: 属性悬浮提示组件
- * 描述: 显示属性的详细来源和计算过程
- * 版本: 1.0.0
+ * 描述: 显示属性的详细来源和计算过程，支持单值属性和攻击力区间属性
+ * 版本: 2.0.0
 -->
 
 <template>
@@ -13,7 +13,7 @@
       <div v-if="visible" ref="tooltipRef" class="attribute-tooltip" :style="tooltipStyle">
         <div class="tooltip-header">
           <span class="tooltip-title">{{ title }}</span>
-          <span class="tooltip-value">{{ displayValue }}</span>
+          <span class="tooltip-value">{{ displayText || displayValue }}</span>
         </div>
 
         <!-- 属性描述部分 -->
@@ -35,86 +35,119 @@
         <div class="tooltip-divider"></div>
 
         <div class="tooltip-content">
-          <div class="source-list">
-            <!-- 基础乘区 -->
-            <div v-if="additiveGroup.length > 0" class="source-section">
-              <div class="section-title">基础乘区</div>
-              <div v-for="(modifier, index) in additiveGroup" :key="'a-'+index" class="source-item">
-                <div class="source-header">
-                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+          <!-- ==================== 区间模式（攻击力） ==================== -->
+          <template v-if="rangeLayers && rangeLayers.length > 0">
+            <div class="source-list">
+              <div v-for="layer in rangeLayers" :key="layer.title" class="source-section">
+                <div class="section-title-row">
+                  <span class="section-title">{{ layer.title }}</span>
+                  <span class="layer-total">{{ formatRangeTotal(layer.minTotal, layer.title) }}-{{ formatRangeTotal(layer.maxTotal, layer.title) }}</span>
                 </div>
-                <div class="source-value">
-                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
-                    {{ formatModifierValue(modifier.value, modifier.type) }}
-                  </span>
+                <div v-for="(row, idx) in layer.rows" :key="layer.title + '-' + idx" class="source-item range-row">
+                  <span class="source-name-label">{{ row.label }}</span>
+                  <span class="source-range-value">{{ formatRangeRow(row) }}</span>
                 </div>
               </div>
             </div>
 
-            <!-- 百分比乘区 -->
-            <div v-if="percentGroup.length > 0" class="source-section">
-              <div class="section-title">百分比乘区</div>
-              <div v-for="(modifier, index) in percentGroup" :key="'p-'+index" class="source-item">
-                <div class="source-header">
-                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+            <div class="tooltip-divider"></div>
+
+            <div class="calculation-section">
+              <div class="calculation-title">计算过程</div>
+              <div class="calculation-formula">
+                <div class="calc-line">[最小] {{ rangeFormulaMin }}</div>
+                <div class="calc-line">[最大] {{ rangeFormulaMax }}</div>
+              </div>
+              <div class="calculation-result">
+                <span class="result-label">→</span>
+                <span class="result-value">{{ rangeResultMin }}-{{ rangeResultMax }}</span>
+              </div>
+            </div>
+          </template>
+
+          <!-- ==================== 标准模式（单值属性） ==================== -->
+          <template v-else>
+            <div class="source-list">
+              <!-- 基础数值 -->
+              <div v-if="additiveGroup.length > 0" class="source-section">
+                <div class="section-title">基础数值</div>
+                <div v-for="(modifier, index) in additiveGroup" :key="'a-'+index" class="source-item">
+                  <div class="source-header">
+                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                  </div>
+                  <div class="source-value">
+                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      {{ formatModifierValue(modifier.value, modifier.type) }}
+                    </span>
+                  </div>
                 </div>
-                <div class="source-value">
-                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
-                    {{ formatModifierValue(modifier.value, modifier.type) }}
-                  </span>
+              </div>
+
+              <!-- 属性加成 -->
+              <div v-if="percentGroup.length > 0" class="source-section">
+                <div class="section-title">属性加成</div>
+                <div v-for="(modifier, index) in percentGroup" :key="'p-'+index" class="source-item">
+                  <div class="source-header">
+                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                  </div>
+                  <div class="source-value">
+                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      {{ formatModifierValue(modifier.value, modifier.type) }}
+                    </span>
+                  </div>
                 </div>
+              </div>
+
+              <!-- 独立乘区 -->
+              <div v-if="multiGroup.length > 0" class="source-section">
+                <div class="section-title">独立乘区</div>
+                <div v-for="(modifier, index) in multiGroup" :key="'m-'+index" class="source-item">
+                  <div class="source-header">
+                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                  </div>
+                  <div class="source-value">
+                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      {{ formatModifierValue(modifier.value, modifier.type) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 最终乘区 -->
+              <div v-if="finalGroup.length > 0" class="source-section">
+                <div class="section-title">最终乘区</div>
+                <div v-for="(modifier, index) in finalGroup" :key="'f-'+index" class="source-item">
+                  <div class="source-header">
+                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                  </div>
+                  <div class="source-value">
+                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      {{ formatModifierValue(modifier.value, modifier.type) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="modifiers.length === 0" class="no-sources">
+                无详细来源信息
               </div>
             </div>
 
-            <!-- 独立乘区 -->
-            <div v-if="multiGroup.length > 0" class="source-section">
-              <div class="section-title">独立乘区</div>
-              <div v-for="(modifier, index) in multiGroup" :key="'m-'+index" class="source-item">
-                <div class="source-header">
-                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
-                </div>
-                <div class="source-value">
-                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
-                    {{ formatModifierValue(modifier.value, modifier.type) }}
-                  </span>
-                </div>
+            <div class="tooltip-divider"></div>
+
+            <div class="calculation-section">
+              <div class="calculation-title">计算过程</div>
+              <div class="calculation-formula">{{ formula }}</div>
+              <div class="calculation-result">
+                <span class="result-label">=</span>
+                <span class="result-value">{{ finalValue }}</span>
               </div>
             </div>
-
-            <!-- 最终乘区 -->
-            <div v-if="finalGroup.length > 0" class="source-section">
-              <div class="section-title">最终乘区</div>
-              <div v-for="(modifier, index) in finalGroup" :key="'f-'+index" class="source-item">
-                <div class="source-header">
-                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
-                </div>
-                <div class="source-value">
-                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
-                    {{ formatModifierValue(modifier.value, modifier.type) }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div v-if="modifiers.length === 0" class="no-sources">
-              无详细来源信息
-            </div>
-          </div>
-
-          <div class="tooltip-divider"></div>
-
-          <div class="calculation-section">
-            <div class="calculation-title">计算过程</div>
-            <div class="calculation-formula">{{ formula }}</div>
-            <div class="calculation-result">
-              <span class="result-label">=</span>
-              <span class="result-value">{{ finalValue }}</span>
-            </div>
-          </div>
+          </template>
         </div>
 
         <div class="tooltip-arrow" :class="arrowClass"></div>
@@ -124,10 +157,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Modifier, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
-import { ModifierSourceTypeNames } from '@/domain/attribute/types'
+import { ModifierSourceTypeNames, ModifierType } from '@/domain/attribute/types'
 import { getAttributeMeta, getAttributeCodeByName } from '@/domain/attribute/types'
+
+// ===================== 区间模式类型导出 =====================
+export interface RangeModifierRow {
+  label: string
+  minValue: number | null
+  maxValue: number | null
+}
+
+export interface RangeLayerData {
+  title: string
+  minTotal: number
+  maxTotal: number
+  rows: RangeModifierRow[]
+}
 
 interface Props {
   visible: boolean
@@ -136,6 +183,10 @@ interface Props {
   finalValue: number
   valueType: AttributeValueType
   triggerRect?: DOMRect | null
+  /** 覆盖值的显示文本（如范围 "25-40"），为空时自动格式化 finalValue */
+  displayText?: string
+  /** 区间模式数据（攻击力使用），存在时切换为区间渲染 */
+  rangeLayers?: RangeLayerData[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -144,7 +195,9 @@ const props = withDefaults(defineProps<Props>(), {
   modifiers: () => [],
   finalValue: 0,
   valueType: '数值',
-  triggerRect: null
+  triggerRect: null,
+  displayText: '',
+  rangeLayers: () => [],
 })
 
 const tooltipRef = ref<HTMLElement | null>(null)
@@ -152,14 +205,10 @@ const tooltipRef = ref<HTMLElement | null>(null)
 // 根据属性名称获取属性元数据
 const attributeMeta = computed(() => {
   try {
-    // 尝试根据属性名称获取属性编码
     let attributeCode = getAttributeCodeByName(props.title)
-
-    // 如果没有找到，尝试使用常见的属性名称映射
     if (!attributeCode) {
       attributeCode = props.title.toLowerCase()
     }
-
     return getAttributeMeta(attributeCode)
   } catch (error) {
     console.error('获取属性元数据时出错:', error)
@@ -191,6 +240,85 @@ const displayValue = computed(() => {
   return formatValue(props.finalValue, props.valueType)
 })
 
+// ===================== 区间模式计算 =====================
+
+/** 格式化区间层的合计值 */
+const formatRangeTotal = (total: number, layerTitle: string): string => {
+  // 基础数值层直接显示数值；其他三层的 total 已经是百分比点（如 20=20%）
+  if (layerTitle === '基础数值') {
+    return Math.round(total * 100) / 100 + ''
+  }
+  return Math.round(total * 100) / 100 + '%'
+}
+
+/** 格式化区间行 */
+const formatRangeRow = (row: RangeModifierRow): string => {
+  const fmt = (v: number) => row.isPercent ? formatModifierValue(v, 'PERCENTAGE') : formatModifierValue(v, 'ADDITIVE')
+
+  if (row.minValue !== null && row.maxValue !== null) {
+    if (row.minValue === row.maxValue) {
+      return fmt(row.minValue)
+    }
+    return `${fmt(row.minValue)} / ${fmt(row.maxValue)}`
+  }
+  if (row.minValue !== null) return fmt(row.minValue)
+  if (row.maxValue !== null) return fmt(row.maxValue)
+  return ''
+}
+
+/** 基础数值层合计（用于计算式起点） */
+const rangeBaseMin = computed(() => props.rangeLayers[0]?.minTotal ?? 0)
+const rangeBaseMax = computed(() => props.rangeLayers[0]?.maxTotal ?? 0)
+
+/** 属性加成/独立/最终三层的合计（百分比点 → 小数，供公式使用） */
+const rangeLayerMultipliers = computed(() => {
+  const layers = props.rangeLayers || []
+  // 跳过第0层（基础数值），后面三层是百分比点（如 20 = 20%），转为小数 1.20
+  const pct = layers[1]  // 属性加成
+  const multi = layers[2] // 独立乘区
+  const final = layers[3] // 最终乘区
+  return {
+    pctMin: pct ? 1 + pct.minTotal / 100 : 1,
+    pctMax: pct ? 1 + pct.maxTotal / 100 : 1,
+    multiMin: multi ? 1 + multi.minTotal / 100 : 1,
+    multiMax: multi ? 1 + multi.maxTotal / 100 : 1,
+    finalMin: final ? 1 + final.minTotal / 100 : 1,
+    finalMax: final ? 1 + final.maxTotal / 100 : 1,
+  }
+})
+
+const rangeFormulaMin = computed(() => {
+  const m = rangeLayerMultipliers.value
+  const base = rangeBaseMin.value
+  const parts = [`${base}`]
+  if (m.pctMin !== 1) parts.push(`${m.pctMin.toFixed(2)}`)
+  if (m.multiMin !== 1) parts.push(`${m.multiMin.toFixed(2)}`)
+  if (m.finalMin !== 1) parts.push(`${m.finalMin.toFixed(2)}`)
+  return parts.join(' × ')
+})
+
+const rangeFormulaMax = computed(() => {
+  const m = rangeLayerMultipliers.value
+  const base = rangeBaseMax.value
+  const parts = [`${base}`]
+  if (m.pctMax !== 1) parts.push(`${m.pctMax.toFixed(2)}`)
+  if (m.multiMax !== 1) parts.push(`${m.multiMax.toFixed(2)}`)
+  if (m.finalMax !== 1) parts.push(`${m.finalMax.toFixed(2)}`)
+  return parts.join(' × ')
+})
+
+const rangeResultMin = computed(() => {
+  const m = rangeLayerMultipliers.value
+  return +(rangeBaseMin.value * m.pctMin * m.multiMin * m.finalMin).toFixed(2)
+})
+
+const rangeResultMax = computed(() => {
+  const m = rangeLayerMultipliers.value
+  return +(rangeBaseMax.value * m.pctMax * m.multiMax * m.finalMax).toFixed(2)
+})
+
+// ===================== 标准模式计算 =====================
+
 // 按乘区分组修饰符
 const additiveGroup = computed(() => {
   return props.modifiers.filter(m => m.type === 'ADDITIVE')
@@ -208,7 +336,6 @@ const finalGroup = computed(() => {
 const formula = computed(() => {
   if (props.modifiers.length === 0) return '无'
 
-  // 分离 base 修饰符和其他修饰符
   let baseValue = 0
   const additiveMods: Modifier[] = []
   const percentMods: Modifier[] = []
@@ -223,10 +350,8 @@ const formula = computed(() => {
     else if (m.type === 'FINAL') finalMods.push(m)
   }
 
-  // 构建乘区表达式
   const brackets: string[] = []
 
-  // 第1乘区: 基础 + 累加  (base + additive)
   if (additiveMods.length === 0) {
     brackets.push(`${baseValue}`)
   } else {
@@ -237,7 +362,6 @@ const formula = computed(() => {
     brackets.push(`(${parts.join(' ')})`)
   }
 
-  // 第2乘区: 百分比  (1 + p1% + p2%)
   if (percentMods.length > 0) {
     const parts: string[] = ['1']
     for (const m of percentMods) {
@@ -246,12 +370,10 @@ const formula = computed(() => {
     brackets.push(`(${parts.join(' ')})`)
   }
 
-  // 第3乘区: 独立乘法
   for (const m of multiMods) {
     brackets.push(`(${1 + m.value})`)
   }
 
-  // 第4乘区: 最终乘法
   for (const m of finalMods) {
     brackets.push(`(${1 + m.value}最终)`)
   }
@@ -259,24 +381,26 @@ const formula = computed(() => {
   return brackets.length > 0 ? `${brackets.join(' × ')} = ${props.finalValue}` : '无'
 })
 
+// ===================== 定位 =====================
+
 const arrowClass = computed(() => {
   if (!props.triggerRect) return 'arrow-bottom'
 
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
   const tooltipWidth = 320
-  const tooltipHeight = 350 // 增加高度以容纳属性描述
+  const tooltipHeight = 400
 
   const rightSpace = viewportWidth - props.triggerRect.right
   const leftSpace = props.triggerRect.left
   const bottomSpace = viewportHeight - props.triggerRect.bottom
   const topSpace = props.triggerRect.top
 
-  if (rightSpace > leftSpace && rightSpace > 320) {
+  if (rightSpace > leftSpace && rightSpace > tooltipWidth) {
     return 'arrow-left'
-  } else if (leftSpace > 320) {
+  } else if (leftSpace > tooltipWidth) {
     return 'arrow-right'
-  } else if (bottomSpace > 350) {
+  } else if (bottomSpace > tooltipHeight) {
     return 'arrow-top'
   } else {
     return 'arrow-bottom'
@@ -293,7 +417,7 @@ const tooltipStyle = computed(() => {
   }
 
   const tooltipWidth = 320
-  const tooltipHeight = 350 // 增加高度以容纳属性描述
+  const tooltipHeight = 400
   const offset = 12
 
   const viewportWidth = window.innerWidth
@@ -425,15 +549,28 @@ onUnmounted(() => {
           margin-bottom: 0;
         }
 
+        .section-title-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 6px;
+          padding-bottom: 4px;
+          border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+        }
+
         .section-title {
           font-size: 11px;
           font-weight: 600;
           color: #60a5fa;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          margin-bottom: 6px;
-          padding-bottom: 4px;
-          border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+        }
+
+        .layer-total {
+          font-size: 13px;
+          font-weight: 700;
+          color: #22d3ee;
+          font-family: 'JetBrains Mono', monospace;
         }
       }
 
@@ -488,6 +625,20 @@ onUnmounted(() => {
             }
           }
         }
+
+        &.range-row {
+          .source-name-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.65);
+          }
+          .source-range-value {
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            color: #22d3ee;
+          }
+        }
       }
 
       .no-sources {
@@ -520,6 +671,10 @@ onUnmounted(() => {
         line-height: 1.8;
         white-space: pre-wrap;
         word-break: break-all;
+
+        .calc-line {
+          margin-bottom: 2px;
+        }
       }
 
       .calculation-result {

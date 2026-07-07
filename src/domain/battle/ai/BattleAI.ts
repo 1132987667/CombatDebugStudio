@@ -12,6 +12,7 @@ import {
   PARTICIPANT_SIDE,
   ActionTypes,
   BattleActionHelper,
+  BATTLE_CONSTANTS,
 } from '@/domain/battle/types'
 import { EFFECT_TYPES } from '@/shared/types/effect'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -237,6 +238,9 @@ export class BaseBattleAI implements BattleAI {
   /** 判断是否应该使用技能 */
   public shouldUseSkill(participant: BattleEntity): boolean {
     if (this.skills.size === 0) return false
+
+    // ponytail: 加入概率检查，与非AI路径的 SKILL_USE_CHANCE 保持一致
+    if (Math.random() >= BATTLE_CONSTANTS.SKILL_USE_CHANCE) return false
 
     // Check if any skill is available and has enough energy
     for (const skillId of this.skills.keys()) {

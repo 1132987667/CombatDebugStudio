@@ -23,6 +23,7 @@ import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { calculateChecksum, generateReplayId } from '@/shared/utils/Checksum'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/types'
+import type { CombatRecord } from '@/domain/battle/combat-record'
 
 /**
  * 战斗记录
@@ -51,6 +52,8 @@ export interface RecordedBattle {
   finalSnapshot?: BattleStateSnapshot
   rounds: BattleRound[]
   logs: BattleLogEntry[]
+  /** 详细战斗记录（含伤害拆分） */
+  combatRecords: CombatRecord[]
   result?: BattleResult
 }
 
@@ -88,6 +91,7 @@ export class BattleRecorder {
       initialState,
       rounds: [],
       logs: [],
+      combatRecords: [],
     }
 
     this.recordings.set(battleId, recording)
@@ -207,6 +211,16 @@ export class BattleRecorder {
         roundNumber,
         data: { action, turn },
       })
+    }
+  }
+
+  /**
+   * 记录详细战斗记录（含伤害拆分）
+   */
+  public recordCombatRecord(battleId: string, record: CombatRecord): void {
+    const recording = this.recordings.get(battleId)
+    if (recording) {
+      recording.combatRecords.push(record)
     }
   }
 

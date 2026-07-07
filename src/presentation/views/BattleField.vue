@@ -15,7 +15,7 @@
           <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
           <div class="party-members">
             <ParticipantCard v-for="member in filterAllyTeam" :key="member.id"
-              :ref="el => { if (el) participantCardRefs[member.id] = el; else delete participantCardRefs[member.id] }" :participant="member"
+              :ref="el => { handleCardRef(member.id, el) }" :participant="member"
               :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
               :is-enemy="false" :show-debug="false" @click="selectCharacter(member.id)"
               @status-tooltip-show="showStatusTooltip" @status-tooltip-hide="hideStatusTooltip" />
@@ -30,7 +30,7 @@
           <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
           <div class="party-members">
             <ParticipantCard v-for="member in filterEnemyTeam" :key="member.id"
-              :ref="el => { if (el) participantCardRefs[member.id] = el; else delete participantCardRefs[member.id] }" :participant="member"
+              :ref="el => { handleCardRef(member.id, el) }" :participant="member"
               :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
               :is-enemy="true" :show-debug="false" @click="selectCharacter(member.id)"
               @status-tooltip-show="showStatusTooltip" @status-tooltip-hide="hideStatusTooltip" />
@@ -41,6 +41,9 @@
     </div>
 
     <BattleLog />
+
+    <!-- 战斗视觉特效层 -->
+    <BattleVisualEffects ref="visualEffectsRef" />
 
     <!-- 状态工具提示 -->
     <div v-if="statusTooltip.visible" class="status-tooltip" :style="{
@@ -77,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, onUnmounted, watch, nextTick } from "vue";
+import { computed, ref, reactive, onUnmounted, watch, nextTick, type Ref } from "vue";
 import { raf } from '@/shared/utils/RAF';
 import { container } from '@/infrastructure/di/Container';
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
@@ -85,9 +88,10 @@ import DamageNumber from "@/presentation/components/DamageNumber.vue";
 import SkillEffect from "@/presentation/components/SkillEffect.vue";
 import BattleLog from "@/presentation/views/BattleLog.vue";
 import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
+import BattleVisualEffects from "@/presentation/components/BattleVisualEffects.vue";
 import { ATTRIBUTE_CODE, type AttributeValue } from '@/domain/attribute/types';
 import type { BattleManager } from '@/domain/battle/BattleManager';
-import type { BattleEntity, StatusEffect } from '@/domain/battle/types';
+import { ActionTypes, type BattleEntity, type StatusEffect } from '@/domain/battle/types';
 import { useBattleStore } from '@/presentation/stores/battleStore'
 
 const store = useBattleStore()
@@ -125,6 +129,9 @@ const {
   stopAllAnimations,
 } = useBattleAnimation();
 
+// BattleVisualEffects 组件引用
+const visualEffectsRef = ref<InstanceType<typeof BattleVisualEffects> | null>(null)
+
 // ParticipantCard 组件引用映射
 const participantCardRefs = ref<Record<string, InstanceType<typeof ParticipantCard>>>({})
 
@@ -133,6 +140,72 @@ watch(() => props.battleSpeed, (newSpeed) => {
     setBattleSpeed(newSpeed);
   }
 }, { immediate: true });
+
+// ponytail: 注册/注销卡片 DOM 元素，供 GSAP 动画和 BattleVisualEffects 查找
+function handleCardRef(characterId: string, el: InstanceType<typeof ParticipantCard> | null) {
+  if (el) {
+    participantCardRefs.value[characterId] = el
+    registerElement(characterId, el.cardRef as Ref<HTMLElement | null>)
+    // ponytail: 同步注册到 BattleVisualEffects 的位置系统
+    nextTick(() => {
+      if (el?.cardRef?.value) {
+        visualEffectsRef.value?.registerCard(characterId, el.cardRef.value)
+      }
+    })
+  } else {
+    delete participantCardRefs.value[characterId]
+    unregisterElement(characterId)
+    visualEffectsRef.value?.unregisterCard(characterId)
+  }
+}
+
+// ponytail: 监听 store 层动画状态变化，编排完整视觉效果
+watch(() => store.animationState, (state) => {
+  if (state.skill) {
+    // 技能释放序列: 攻击者蓄力 + 技能名飞行 + 光弹
+    const card = participantCardRefs.value[state.skill.sourceId]
+    card?.triggerVisualState('casting', 600)
+    const side = getCharacterSide(state.skill.sourceId)
+    visualEffectsRef.value?.playAttackSequence(
+      state.skill.sourceId,
+      state.skill.targetId,
+      state.skill.skillName,
+      0, false,
+      side as 'left' | 'right',
+      // ponytail: effectType 决定颜色（heal=绿，elemental=蓝，其他=火红）
+      state.skill.effectType === ActionTypes.HEAL ? 'heal'
+        : state.skill.damageType === 'elemental_damage' ? 'frost'
+        : 'fire',
+    )
+  }
+  if (state.damage) {
+    const targetCard = participantCardRefs.value[state.damage.targetId]
+    if (state.damage.isHeal) {
+      // 治疗: 目标绿光 + 治疗光环
+      targetCard?.triggerVisualState('healed', 800)
+      targetCard?.flashHpBar()
+      visualEffectsRef.value?.showHealAura(state.damage.targetId)
+      visualEffectsRef.value?.showHealNum(state.damage.targetId, state.damage.damage)
+    } else {
+      // 伤害: 目标受击 + 命中爆炸 + 伤害数字
+      targetCard?.triggerVisualState('hurt', 450)
+      visualEffectsRef.value?.showImpact(state.damage.targetId, 'fire')
+      visualEffectsRef.value?.showDamageNum(state.damage.targetId, state.damage.damage, state.damage.isCritical)
+      if (state.damage.isCritical) {
+        visualEffectsRef.value?.showScreenShake()
+      }
+    }
+  }
+  if (state.miss) {
+    showMiss(state.miss.targetId)
+  }
+  if (state.buff) {
+    showBuffEffect(state.buff.targetId, state.buff.buffName, state.buff.isPositive)
+    if (state.buff.isPositive) {
+      participantCardRefs.value[state.buff.targetId]?.triggerVisualState('shielded', 800)
+    }
+  }
+}, { deep: true })
 
 // 响应式获取队伍数据
 const allyTeam = computed(() => store.allyTeam)
@@ -339,8 +412,6 @@ function showMiss(characterId: string) {
 }
 
 async function showSkillEffect(characterId: string, type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate', name?: string) {
-  characterEffects.value.skill[characterId] = { type, name }
-
   const side = getCharacterSide(characterId)
   await playAttackAnimation(characterId, side, name)
 }

@@ -16,9 +16,10 @@ import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 
 import { BattleActionHelper, BATTLE_CONSTANTS, PARTICIPANT_SIDE, ActionTypes } from '@/domain/battle/types'
-import { type SkillConfig, type ExtendedSkillStep, SkillType, AttackType, DamageType, TargetFaction, TargetStrategy } from '@/domain/skill/types'
+import { type SkillConfig, type ExtendedSkillStep, SkillType, AttackType, DamageType, TargetFaction, TargetStrategy, SkillStepType } from '@/domain/skill/types'
 import type { BattleAction, BattleData, BattleEntity, BattleEffect } from '@/domain/battle/types'
 import { ATTRIBUTE_CODE, getAttributeDefaultValue } from '@/domain/attribute/types'
+import { createEmptyRecord, type CombatRecord } from '@/domain/battle/combat-record'
 
 /**
  * 战斗执行器
@@ -31,7 +32,7 @@ export class BattleExecutor {
     private readonly passiveSkillManager: PassiveSkillManager,
     private readonly battleRecorder: BattleRecorder,
     private readonly animationManager: BattleAnimationManager,
-  ) {}
+  ) { }
 
   // ============ 参与者行动 ============
 
@@ -160,6 +161,9 @@ export class BattleExecutor {
 
     action.targetId = targets[0].id
 
+    // 用于收集每次技能执行的详细记录
+    const records: CombatRecord[] = []
+
     try {
       let totalDamage = 0
       let totalHeal = 0
@@ -167,19 +171,37 @@ export class BattleExecutor {
 
       for (const target of targets) {
         if (!target.isAlive()) continue
+
+        const record = createEmptyRecord(
+          battle.battleId, source.id, source.name, 'skill', target.id, target.name, battle.currentRound ?? 1, skill.id,
+        )
+        record.skillName = skill.name
+
         const skillAction = this.skillManager.executeSkill(
           skill.id,
           source,
           target,
           battle.currentRound || 1,
+          record,
         )
         if (!skillAction) {
           battleLogManager.addDebugLog(`技能执行返回空: ${skill.id}，跳过目标 ${target.id}`)
           continue
         }
+
+        // 回填记录
+        record.damage = skillAction.damage
+        record.message = `${source.name} 对 ${target.name} 使用 ${skill.name || skill.id}，造成 ${skillAction.damage} 伤害`
+        records.push(record)
+
         totalDamage += skillAction.damage
         totalHeal += skillAction.heal
         allEffects.push(...skillAction.effects)
+      }
+
+      // 将所有详细记录存入 BattleRecorder
+      for (const record of records) {
+        this.battleRecorder.recordCombatRecord(battle.battleId, record)
       }
 
       action.damage = totalDamage
@@ -243,7 +265,7 @@ export class BattleExecutor {
       case TargetStrategy.LOWEST_HP: {
         const target = candidates.reduce((min, p) =>
           (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) <
-          (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
+            (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
         )
         return [target]
       }
@@ -265,7 +287,7 @@ export class BattleExecutor {
         if (skill.steps.some((s) => s.type === 'heal' || s.type === 'apply_buff')) {
           const target = candidates.reduce((min, p) =>
             (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) <
-            (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
+              (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
           )
           return [target]
         }
@@ -293,7 +315,7 @@ export class BattleExecutor {
    */
   buildNormalAttackStep(source: BattleEntity, targetId: string): ExtendedSkillStep {
     return {
-      type: 'DAMAGE',
+      type: SkillStepType.DEAL_DAMAGE,
       id: 'normal_attack',
       targetId,
       damageType: DamageType.PHYSICAL,
@@ -445,8 +467,13 @@ export class BattleExecutor {
       BattleTriggerPhase.BEFORE_ATTACK, source, undefined, { targetId, roundNumber },
     )
 
+    // 创建详细记录对象用于捕获伤害拆分
+    const record = createEmptyRecord(
+      battle.battleId, source.id, source.name, 'attack', targetId, target.name, roundNumber ?? 1,
+    )
+
     const attackStep = this.buildNormalAttackStep(source, targetId)
-    const damageResult = this.damageCalculator.calculateDamage(attackStep, source, target)
+    const damageResult = this.damageCalculator.calculateDamage(attackStep, source, target, record)
 
     const action = this.createBattleAction(source.id, targetId, roundNumber)
 
@@ -456,10 +483,15 @@ export class BattleExecutor {
       await this.handleHitAttack(action, source, target, damageResult, roundNumber)
     }
 
+    // 回填最终伤害到记录
+    record.damage = action.damage
+    record.message = `${source.name} 对 ${target.name} 普通攻击，造成 ${action.damage} 伤害`
+    this.battleRecorder.recordCombatRecord(battle.battleId, record)
+
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.AFTER_ATTACK, source, undefined, {
-        targetId, damage: action.damage, isCritical: damageResult.isCritical,
-      },
+      targetId, damage: action.damage, isCritical: damageResult.isCritical,
+    },
     )
 
     this.recordBattleAction(battle, action)
@@ -619,30 +651,30 @@ export class BattleExecutor {
         const actualDamage = target.takeDamage(action.damage)
         action.damage = actualDamage
 
-      this.passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.ON_HIT, target, undefined, { sourceId: source.id, damage: actualDamage },
-      )
-      if (!target.isAlive()) {
         this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
+          BattleTriggerPhase.ON_HIT, target, undefined, { sourceId: source.id, damage: actualDamage },
         )
+        if (!target.isAlive()) {
+          this.passiveSkillManager.triggerPassives(
+            BattleTriggerPhase.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
+          )
 
-        await this.animationManager.triggerDamageAnimationAndWait({
-          targetId: target.id, damage: actualDamage,
-          damageType: DamageType.PHYSICAL,
-          isCritical: false, isHeal: false,
-        })
-      }
+          await this.animationManager.triggerDamageAnimationAndWait({
+            targetId: target.id, damage: actualDamage,
+            damageType: DamageType.PHYSICAL,
+            isCritical: false, isHeal: false,
+          })
+        }
 
-      if (action.heal && action.heal > 0) {
-        const actualHeal = target.heal(action.heal)
-        action.heal = actualHeal
+        if (action.heal && action.heal > 0) {
+          const actualHeal = target.heal(action.heal)
+          action.heal = actualHeal
 
-        await this.animationManager.triggerDamageAnimationAndWait({
-          targetId: target.id, damage: actualHeal, damageType: DamageType.PHYSICAL,
-          isCritical: false, isHeal: true,
-        })
-      }
+          await this.animationManager.triggerDamageAnimationAndWait({
+            targetId: target.id, damage: actualHeal, damageType: DamageType.PHYSICAL,
+            isCritical: false, isHeal: true,
+          })
+        }
       }
     }
     this.recordBattleAction(battle, action)

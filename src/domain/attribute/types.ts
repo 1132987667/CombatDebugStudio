@@ -671,6 +671,7 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '提高攻击命中率，对抗敌方闪避',
     isPercentage: true,
+    defaultValue: 100,
   },
   controlSuccessRate: {
     code: 'controlSuccessRate',

@@ -1,5 +1,10 @@
 项目文件夹架构:
 CombatDebugStudio/
+.reasonix/
+    attachments/
+        clipboard-20260707-151902.449285-000003.png
+        clipboard-20260707-152131.520816-000004.png
+        clipboard-20260707-155427.733276-000001.png
 configs/
     buffs/
         combat/
@@ -25,17 +30,12 @@ configs/
         skills.json
         skills_new.json
 docs/
+    属性监控显示设计.md
 scripts/
 src/
     application/
-        command/
-        event/
         facade/
             BattleFacade.ts
-        query/
-    core/
-        battleLog/
-        config/
     domain/
         attribute/
             AttributeEngine.ts
@@ -124,7 +124,6 @@ src/
                 Side.ts
                 Speed.ts
         port/
-            di/
             logging/
                 ILogger.ts
                 index.ts
@@ -437,6 +436,15 @@ tools/
 .vscode/
 prompts/
 
+--- .reasonix/attachments/clipboard-20260707-151902.449285-000003.png ---
+<二进制文件，内容未显示>
+
+--- .reasonix/attachments/clipboard-20260707-152131.520816-000004.png ---
+<二进制文件，内容未显示>
+
+--- .reasonix/attachments/clipboard-20260707-155427.733276-000001.png ---
+<二进制文件，内容未显示>
+
 --- AGENTS.md ---
 # Ponytail, lazy senior dev mode
 
@@ -713,15 +721,18 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
     "id": "buff_traitor_scheme",
     "name": "叛徒之谋",
     "duration": -1,
-    "modifiers": [
-      {
-        "id": "traitor_scheme_damage_to_low_hp",
-        "targetAttribute": "DAMAGE_TO_LOW_HP",
-        "type": "ADDITIVE",
-        "value": 30,
-        "condition": "target.hp_ratio < 0.5"
-      }
-    ]
+    "aura": {
+      "targetSelector": "self",
+      "modifiers": [
+        {
+          "id": "traitor_scheme_damage_to_low_hp",
+          "targetAttribute": "damageToLowHp",
+          "type": "ADDITIVE",
+          "value": 30,
+          "condition": "target.hp_ratio < 0.5"
+        }
+      ]
+    }
   },
   {
     "id": "buff_general_bravery",
@@ -1211,14 +1222,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
     "id": "buff_valley_overlord",
     "name": "谷中霸主",
     "duration": -1,
-    "modifiers": [
-      {
-        "id": "valley_overlord_immune_all_control",
-        "targetAttribute": "IMMUNE_ALL_CONTROL",
-        "type": "ADDITIVE",
-        "value": 1
-      }
-    ]
+    "immunities": ["slow", "stun", "freeze", "silence", "charm", "fear", "sleep", "confuse"]
   },
   {
     "id": "buff_crit_damage_reduction",
@@ -1258,21 +1262,24 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
   {
     "id": "aura_leader_awe",
     "name": "首领威严",
-    "targetSelector": "allies",
-    "modifiers": [
-      {
-        "id": "leader_awe_atk",
-        "targetAttribute": "attack",
-        "type": "PERCENTAGE",
-        "value": 15
-      },
-      {
-        "id": "leader_awe_def",
-        "targetAttribute": "defense",
-        "type": "PERCENTAGE",
-        "value": 10
-      }
-    ]
+    "duration": -1,
+    "aura": {
+      "targetSelector": "allies",
+      "modifiers": [
+        {
+          "id": "leader_awe_atk",
+          "targetAttribute": "attack",
+          "type": "PERCENTAGE",
+          "value": 15
+        },
+        {
+          "id": "leader_awe_def",
+          "targetAttribute": "defense",
+          "type": "PERCENTAGE",
+          "value": 10
+        }
+      ]
+    }
   },
   {
     "id": "buff_mountain_protection_trigger",
@@ -1365,7 +1372,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       "modifiers": [
         {
           "id": "water_dominance_atk",
-          "targetAttribute": "WATER_ATK",
+          "targetAttribute": "waterAtk",
           "type": "PERCENTAGE",
           "value": 0.15
         }
@@ -9489,16 +9496,8 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
     },
     "steps": [
       {
-        "type": "modify_attribute",
-        "modifiers": [
-          {
-            "id": "mountain_child_slow_immune",
-            "targetAttribute": "IMMUNE_SLOW",
-            "type": "ADDITIVE",
-            "value": 1,
-            "sourceName": "山林之子"
-          }
-        ]
+        "type": "apply_buff",
+        "buffId": "buff_mountain_child"
       }
     ],
     "energyCost": 0,
@@ -9519,7 +9518,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
         "modifiers": [
           {
             "id": "flower_regen_percent",
-            "targetAttribute": "HP_REGEN_PERCENT",
+            "targetAttribute": "hpRegenPercent",
             "type": "ADDITIVE",
             "value": 5,
             "sourceName": "花之再生"
@@ -9541,8 +9540,8 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
     },
     "steps": [
       {
-        "type": "aura",
-        "auraId": "aura_leader_awe"
+        "type": "apply_buff",
+        "buffId": "aura_leader_awe"
       }
     ],
     "energyCost": 0,
@@ -9589,8 +9588,8 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
     },
     "steps": [
       {
-        "type": "aura",
-        "auraId": "aura_commander_crit"
+        "type": "apply_buff",
+        "buffId": "buff_commander"
       }
     ],
     "energyCost": 0,
@@ -9613,7 +9612,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
         "modifiers": [
           {
             "id": "shell_defense_phys_dmg_reduce",
-            "targetAttribute": "DAMAGE_REDUCE_PHYSICAL",
+            "targetAttribute": "physicalDmgReduction",
             "type": "ADDITIVE",
             "value": 15,
             "sourceName": "甲壳防御"
@@ -9681,8 +9680,8 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
     },
     "steps": [
       {
-        "type": "aura",
-        "auraId": "aura_water_dominance"
+        "type": "apply_buff",
+        "buffId": "buff_water_dominance"
       }
     ],
     "energyCost": 0,
@@ -9703,7 +9702,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
         "modifiers": [
           {
             "id": "gold_shell_magic_reduce",
-            "targetAttribute": "MAGICAL_DMG_REDUCTION",
+            "targetAttribute": "magicalDmgReduction",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "黄金甲壳"
@@ -9835,8 +9834,8 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
     },
     "steps": [
       {
-        "type": "aura",
-        "auraId": "aura_demon_aura"
+        "type": "apply_buff",
+        "buffId": "buff_demon_aura"
       }
     ],
     "energyCost": 0,
@@ -9901,7 +9900,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
         "modifiers": [
           {
             "id": "scheming_duration_reduce",
-            "targetAttribute": "CONTROL_DURATION_REDUCTION",
+            "targetAttribute": "controlDurationReduction",
             "type": "ADDITIVE",
             "value": 1,
             "sourceName": "老谋深算"
@@ -9935,8 +9934,8 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
         ]
       },
       {
-        "type": "aura",
-        "auraId": "aura_mist_coverage"
+        "type": "apply_buff",
+        "buffId": "buff_mist_coverage_aura"
       }
     ],
     "energyCost": 0,
@@ -9997,7 +9996,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
           },
           {
             "id": "snake_skin_poison_res",
-            "targetAttribute": "POISON_RES",
+            "targetAttribute": "poisonRes",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "蛇皮"
@@ -10030,7 +10029,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
           },
           {
             "id": "water_protection_res",
-            "targetAttribute": "WATER_RES",
+            "targetAttribute": "waterRes",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "水之加护"
@@ -10070,7 +10069,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
           },
           {
             "id": "sand_avatar_phys_reduce",
-            "targetAttribute": "PHYSICAL_DMG_REDUCTION",
+            "targetAttribute": "physicalDmgReduction",
             "type": "ADDITIVE",
             "value": 10,
             "sourceName": "沙之化身"
@@ -10103,7 +10102,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
           },
           {
             "id": "snake_king_poison_res",
-            "targetAttribute": "POISON_RES",
+            "targetAttribute": "poisonRes",
             "type": "ADDITIVE",
             "value": 25,
             "sourceName": "蛇王威严"
@@ -10140,7 +10139,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
           },
           {
             "id": "water_guardian_res",
-            "targetAttribute": "WATER_RES",
+            "targetAttribute": "waterRes",
             "type": "ADDITIVE",
             "value": 25,
             "sourceName": "水之守护"
@@ -10184,7 +10183,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
           },
           {
             "id": "lava_skin_fire_res",
-            "targetAttribute": "FIRE_RES",
+            "targetAttribute": "fireRes",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "熔岩皮肤"
@@ -10214,14 +10213,14 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
         "modifiers": [
           {
             "id": "fire_resonance_atk",
-            "targetAttribute": "FIRE_ATK",
+            "targetAttribute": "fireAtk",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "火元素共鸣"
           },
           {
             "id": "fire_resonance_res",
-            "targetAttribute": "FIRE_RES",
+            "targetAttribute": "fireRes",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "火元素共鸣"
@@ -10280,21 +10279,21 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
         "modifiers": [
           {
             "id": "fire_lord_atk",
-            "targetAttribute": "FIRE_ATK",
+            "targetAttribute": "fireAtk",
             "type": "PERCENTAGE",
             "value": 30,
             "sourceName": "火焰领主"
           },
           {
             "id": "fire_lord_res",
-            "targetAttribute": "FIRE_RES",
+            "targetAttribute": "fireRes",
             "type": "ADDITIVE",
             "value": 30,
             "sourceName": "火焰领主"
           },
           {
             "id": "fire_lord_skill_dmg",
-            "targetAttribute": "FIRE_SKILL_DMG_BONUS",
+            "targetAttribute": "fireSkillDmgBonus",
             "type": "ADDITIVE",
             "value": 50,
             "sourceName": "火焰领主"
@@ -10334,7 +10333,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
           },
           {
             "id": "giant_power_phys_skill_dmg",
-            "targetAttribute": "PHYSICAL_SKILL_DMG_BONUS",
+            "targetAttribute": "physicalSkillDmgBonus",
             "type": "ADDITIVE",
             "value": 30,
             "sourceName": "巨人之力"
@@ -10397,7 +10396,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
         "modifiers": [
           {
             "id": "web_master_control_rate",
-            "targetAttribute": "CONTROL_SUCCESS_RATE",
+            "targetAttribute": "controlSuccessRate",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "蛛网大师"
@@ -10767,7 +10766,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
         "modifiers": [
           {
             "id": "demon_subduing_dmg",
-            "targetAttribute": "DAMAGE_TO_DEMON",
+            "targetAttribute": "damageToDemon",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "伏魔之力"
@@ -10951,7 +10950,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
           },
           {
             "id": "commander_awe_ctrl_reduce",
-            "targetAttribute": "CONTROL_DURATION_REDUCTION",
+            "targetAttribute": "controlDurationReduction",
             "type": "ADDITIVE",
             "value": 50,
             "sourceName": "统帅之威"
@@ -11000,6 +10999,81 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
     "skillType": "passive"
   }
 ]
+
+--- docs/属性监控显示设计.md ---
+# 属性监控显示设计
+
+## 四层架构
+
+所有属性的修饰符来源按以下四层组织：
+
+| 层级 | 系统类型 | 说明 |
+|------|---------|------|
+| **基础数值** | `base` + `ADDITIVE` | 基础值 + 固定数值加成，不含百分比 |
+| **属性加成** | `PERCENTAGE` | 百分比加成，叠乘计算中的第二乘区 |
+| **独立乘区** | `MULTIPLICATIVE` | 独立乘法，叠乘计算中的第三乘区 |
+| **最终乘区** | `FINAL` | 最终乘法，叠乘计算中的第四乘区 |
+
+## 攻击力（区间属性）
+
+攻击力是范围值，拆分为 **最小攻击力（minAttack）** 和 **最大攻击力（maxAttack）** 两个独立属性各自计算，各层的取值均为区间。
+
+### 显示格式
+
+```
+基础数值            min-max
+基础                minBase-maxBase
+装备                +value
+装备(最小攻击力)    +value
+装备(最大攻击力)    +value
+
+属性加成            min%-max%
+天赋                +value%
+特性(最小攻击力)    +value%
+特性(最大攻击力)    +value%
+
+独立乘区            min%-max%
+...
+
+最终乘区            min%-max%
+...
+```
+
+### 修饰符标注规则
+
+- 同时作用于 **最小+最大** 且值相同的修饰符 → 直接显示 `+value`
+- 仅作用于 **最小攻击力** → 标注 `(最小攻击力)`
+- 仅作用于 **最大攻击力** → 标注 `(最大攻击力)`
+- 同时作用于两者但值不同 → 拆为两行分别标注
+
+### 计算过程
+
+```
+[最小] base × (1 + 增幅合计%) × (1 + 独立合计%) × (1 + 最终合计%) = result
+[最大] base × (1 + 增幅合计%) × (1 + 独立合计%) × (1 + 最终合计%) = result
+→ finalMin-finalMax
+```
+
+## 通用属性（单值属性）
+
+非攻击力的普通属性按现有逻辑计算，显示格式：
+
+```
+基础数值            value
+基础                +baseValue
+装备                +value
+特性                +value
+
+属性加成            total%
+天赋                +value%
+...
+```
+
+## 数据层约定
+
+- `minAttack` 和 `maxAttack` 各自维护独立的 `AttributeValue`（含各自的 `modifiers` 列表）
+- 增幅/独立/最终乘区的修饰符按 `ModifierType`（`PERCENTAGE` / `MULTIPLICATIVE` / `FINAL`）归类
+- 基础数值层包含 `base` 修饰符和所有 `ADDITIVE` 类型的修饰符
 
 --- eslint.config.js ---
 import js from '@eslint/js'
@@ -11713,6 +11787,16 @@ export const ATTRIBUTE_CODE = {
 
   // ========== 抗性 ==========
   poisonRes: 'poisonRes', // 毒素抗性
+
+  // ========== 伤害类型减免 ==========
+  physicalDmgReduction: 'physicalDmgReduction', // 物理伤害减免
+  magicalDmgReduction: 'magicalDmgReduction', // 魔法伤害减免
+
+  // ========== 特殊伤害加成 ==========
+  fireSkillDmgBonus: 'fireSkillDmgBonus', // 火属性技能伤害加成
+  physicalSkillDmgBonus: 'physicalSkillDmgBonus', // 物理技能伤害加成
+  damageToDemon: 'damageToDemon', // 对妖魔鬼怪伤害加成
+  damageToLowHp: 'damageToLowHp', // 对低生命值目标伤害加成
 } as const
 
 export type ATTRIBUTE_CODE =
@@ -12160,6 +12244,64 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     description: '对毒素效果的抵抗力',
     range: '0-100%',
     impact: '减少中毒效果的持续时间和伤害',
+    isPercentage: true,
+  },
+
+  // ========== 伤害类型减免 ==========
+  physicalDmgReduction: {
+    code: 'physicalDmgReduction',
+    name: '物理伤害减免',
+    displayName: '物理伤害减免',
+    description: '对物理类型伤害的减免比例',
+    range: '0-100%',
+    impact: '减少受到的物理属性伤害',
+    isPercentage: true,
+  },
+  magicalDmgReduction: {
+    code: 'magicalDmgReduction',
+    name: '魔法伤害减免',
+    displayName: '魔法伤害减免',
+    description: '对魔法类型伤害的减免比例',
+    range: '0-100%',
+    impact: '减少受到的魔法属性伤害',
+    isPercentage: true,
+  },
+
+  // ========== 特殊伤害加成 ==========
+  fireSkillDmgBonus: {
+    code: 'fireSkillDmgBonus',
+    name: '火系技能伤害加成',
+    displayName: '火系技能伤害加成',
+    description: '火属性技能造成的额外伤害百分比',
+    range: '0-200%',
+    impact: '提高火属性技能的伤害输出',
+    isPercentage: true,
+  },
+  physicalSkillDmgBonus: {
+    code: 'physicalSkillDmgBonus',
+    name: '物理技能伤害加成',
+    displayName: '物理技能伤害加成',
+    description: '物理技能造成的额外伤害百分比',
+    range: '0-200%',
+    impact: '提高物理技能的伤害输出',
+    isPercentage: true,
+  },
+  damageToDemon: {
+    code: 'damageToDemon',
+    name: '对妖伤害加成',
+    displayName: '对妖魔鬼怪伤害加成',
+    description: '对妖魔鬼怪类敌人造成的额外伤害百分比',
+    range: '0-200%',
+    impact: '提高对妖魔鬼怪类敌人的伤害',
+    isPercentage: true,
+  },
+  damageToLowHp: {
+    code: 'damageToLowHp',
+    name: '对低血量伤害加成',
+    displayName: '对低血量目标伤害加成',
+    description: '对生命值低于一定比例的目标造成的额外伤害百分比',
+    range: '0-200%',
+    impact: '提高对低血量目标的伤害输出',
     isPercentage: true,
   },
 }
@@ -15776,6 +15918,17 @@ export class BattleParticipantImpl implements BattleEntity {
   /** 修饰符提供者（BuffSystem），用于从 ModifierStack 同步修饰符 */
   private modifierProvider: IModifierProvider | null = null
 
+  /** 免疫标签集合 */
+  private _immunities: Set<string> = new Set()
+
+  getImmunities(): string[] {
+    return [...this._immunities]
+  }
+
+  addImmunity(tag: string): void {
+    this._immunities.add(tag.toLowerCase())
+  }
+
   /**
    * 构造函数
    * @param data - 初始化数据
@@ -15893,13 +16046,26 @@ export class BattleParticipantImpl implements BattleEntity {
   recalcAll(): void {
     this.syncModifiersFromProvider()
     this.stats.recalculateAll()
+    // ponytail: maxHealth 变化时将 currentHealth 同步到新上限
+    this.clampCurrentHealth()
     this._statsVersion++
   }
 
   recalculateAll(): void {
     this.syncModifiersFromProvider()
     this.stats.recalculateAll()
+    // ponytail: maxHealth 变化时将 currentHealth 同步到新上限
+    this.clampCurrentHealth()
     this._statsVersion++
+  }
+
+  /** 将 currentHealth 限制在 maxHealth 范围内 */
+  private clampCurrentHealth(): void {
+    const maxHp = this.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    if (this.currentHealth > maxHp) {
+      const curHp = this.stats.getAttribute(ATTRIBUTE_CODE.currentHealth)
+      if (curHp) curHp.value = maxHp
+    }
   }
 
   /**
@@ -16820,6 +16986,8 @@ export class ParticipantStats {
         case ModifierType.FINAL: finalMultiplier += mod.value; break
       }
     }
+    // ponytail: 加成属性（attackBonus/healthBonus）已在 enemyToParticipant 中作为
+    // PERCENTAGE 修饰符注入到对应属性，此处不再重复处理。
     const value = ((attrData.base + additive) * percentMultiplier / 100 * independentMultiplier / 100) * finalMultiplier / 100
     attrData.value = Utils.round(value, 2)
     // 更新版本戳，标记为已计算
@@ -18961,7 +19129,7 @@ import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 
 import { BattleActionHelper, BATTLE_CONSTANTS, PARTICIPANT_SIDE, ActionTypes } from '@/domain/battle/types'
-import { type SkillConfig, type ExtendedSkillStep, SkillType, AttackType, DamageType, TargetFaction, TargetStrategy } from '@/domain/skill/types'
+import { type SkillConfig, type ExtendedSkillStep, SkillType, AttackType, DamageType, TargetFaction, TargetStrategy, SkillStepType } from '@/domain/skill/types'
 import type { BattleAction, BattleData, BattleEntity, BattleEffect } from '@/domain/battle/types'
 import { ATTRIBUTE_CODE, getAttributeDefaultValue } from '@/domain/attribute/types'
 
@@ -18976,7 +19144,7 @@ export class BattleExecutor {
     private readonly passiveSkillManager: PassiveSkillManager,
     private readonly battleRecorder: BattleRecorder,
     private readonly animationManager: BattleAnimationManager,
-  ) {}
+  ) { }
 
   // ============ 参与者行动 ============
 
@@ -19188,7 +19356,7 @@ export class BattleExecutor {
       case TargetStrategy.LOWEST_HP: {
         const target = candidates.reduce((min, p) =>
           (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) <
-          (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
+            (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
         )
         return [target]
       }
@@ -19210,7 +19378,7 @@ export class BattleExecutor {
         if (skill.steps.some((s) => s.type === 'heal' || s.type === 'apply_buff')) {
           const target = candidates.reduce((min, p) =>
             (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) <
-            (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
+              (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
           )
           return [target]
         }
@@ -19238,7 +19406,7 @@ export class BattleExecutor {
    */
   buildNormalAttackStep(source: BattleEntity, targetId: string): ExtendedSkillStep {
     return {
-      type: 'DAMAGE',
+      type: SkillStepType.DEAL_DAMAGE,
       id: 'normal_attack',
       targetId,
       damageType: DamageType.PHYSICAL,
@@ -19403,8 +19571,8 @@ export class BattleExecutor {
 
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.AFTER_ATTACK, source, undefined, {
-        targetId, damage: action.damage, isCritical: damageResult.isCritical,
-      },
+      targetId, damage: action.damage, isCritical: damageResult.isCritical,
+    },
     )
 
     this.recordBattleAction(battle, action)
@@ -19564,30 +19732,30 @@ export class BattleExecutor {
         const actualDamage = target.takeDamage(action.damage)
         action.damage = actualDamage
 
-      this.passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.ON_HIT, target, undefined, { sourceId: source.id, damage: actualDamage },
-      )
-      if (!target.isAlive()) {
         this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
+          BattleTriggerPhase.ON_HIT, target, undefined, { sourceId: source.id, damage: actualDamage },
         )
+        if (!target.isAlive()) {
+          this.passiveSkillManager.triggerPassives(
+            BattleTriggerPhase.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
+          )
 
-        await this.animationManager.triggerDamageAnimationAndWait({
-          targetId: target.id, damage: actualDamage,
-          damageType: DamageType.PHYSICAL,
-          isCritical: false, isHeal: false,
-        })
-      }
+          await this.animationManager.triggerDamageAnimationAndWait({
+            targetId: target.id, damage: actualDamage,
+            damageType: DamageType.PHYSICAL,
+            isCritical: false, isHeal: false,
+          })
+        }
 
-      if (action.heal && action.heal > 0) {
-        const actualHeal = target.heal(action.heal)
-        action.heal = actualHeal
+        if (action.heal && action.heal > 0) {
+          const actualHeal = target.heal(action.heal)
+          action.heal = actualHeal
 
-        await this.animationManager.triggerDamageAnimationAndWait({
-          targetId: target.id, damage: actualHeal, damageType: DamageType.PHYSICAL,
-          isCritical: false, isHeal: true,
-        })
-      }
+          await this.animationManager.triggerDamageAnimationAndWait({
+            targetId: target.id, damage: actualHeal, damageType: DamageType.PHYSICAL,
+            isCritical: false, isHeal: true,
+          })
+        }
       }
     }
     this.recordBattleAction(battle, action)
@@ -21341,6 +21509,11 @@ export interface BattleEntity {
   getSkillList(): SkillConfig[]
   getSkillIds(filter?: SkillType): string[]
   hasSkill(skillId: string): boolean
+
+  /** 获取该实体免疫的标签列表 */
+  getImmunities(): string[]
+  /** 添加免疫标签 */
+  addImmunity(tag: string): void
 }
 
 /**
@@ -22503,6 +22676,25 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   private readonly eventBus: TriggerEventBus
   private triggerScripts = new Map<string, (context: TriggerExecutionContext) => void>()
 
+  /** 角色免疫标签注册表（初始化时由被动技能填充，运行时可查询） */
+  private characterImmunities = new Map<string, Set<string>>()
+
+  /** 注册角色的免疫标签 */
+  registerCharacterImmunities(characterId: string, tags: string[]): void {
+    if (!this.characterImmunities.has(characterId)) {
+      this.characterImmunities.set(characterId, new Set())
+    }
+    const set = this.characterImmunities.get(characterId)!
+    for (const tag of tags) {
+      set.add(tag.toLowerCase())
+    }
+  }
+
+  /** 获取角色的免疫标签 */
+  getCharacterImmunities(characterId: string): string[] {
+    return [...(this.characterImmunities.get(characterId) ?? [])]
+  }
+
   public constructor(
     scriptRegistry: BuffScriptRegistry,
     eventBus?: TriggerEventBus,
@@ -22587,6 +22779,18 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
       // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
       script = NOOP_BUFF_SCRIPT
+    }
+
+    // ponytail: 免疫检查 — 若目标对该控制类型或 buffId 免疫则跳过施加
+    const targetImmunities = this.characterImmunities.get(characterId)
+    if (targetImmunities && targetImmunities.size > 0) {
+      const controlTag = config.controlType && config.controlType !== 'NONE'
+        ? config.controlType.toLowerCase()
+        : null
+      const buffTag = buffId.replace(/^buff_/i, '')
+      if ((controlTag && targetImmunities.has(controlTag)) || targetImmunities.has(buffTag)) {
+        return ''
+      }
     }
 
     const existingBuffs = this.getBuffInstances(characterId).filter(
@@ -25193,19 +25397,13 @@ export interface IStorage {
 --- src/domain/skill/constants.ts ---
 /**
  * 技能步骤类型中文显示名称
- * 覆盖新旧两种格式的 type 值（如 'damage' 和 'DAMAGE'）
  */
 export const STEP_TYPE_DISPLAY_NAMES: Record<string, string> = {
-  // 新版（推荐）
   deal_damage: '造成伤害',
   heal: '治疗目标',
   apply_buff: '施加增益',
   modify_attribute: '属性变化',
   aura: '光环效果',
-  // 旧版（兼容）
-  damage: '造成伤害',
-  buff: '施加增益',
-  debuff: '施加减益',
   remove_buff: '移除增益',
   remove_debuff: '移除减益',
   cleanse: '净化',
@@ -25222,27 +25420,6 @@ export const STEP_TYPE_DISPLAY_NAMES: Record<string, string> = {
   drain: '吸取',
   revive: '复活',
   custom: '自定义效果',
-  // 旧版全大写（兼容）
-  DAMAGE: '造成伤害',
-  HEAL: '治疗目标',
-  BUFF: '施加增益',
-  DEBUFF: '施加减益',
-  REMOVE_BUFF: '移除增益',
-  REMOVE_DEBUFF: '移除减益',
-  CLEANSE: '净化',
-  DISPEL: '驱散',
-  STUN: '眩晕',
-  SILENCE: '沉默',
-  KNOCKBACK: '击退',
-  PULL: '拉扯',
-  TELEPORT: '传送',
-  SUMMON: '召唤',
-  TRANSFORM: '变身',
-  SHIELD: '护盾',
-  REFLECT: '反射',
-  DRAIN: '吸取',
-  REVIVE: '复活',
-  CUSTOM: '自定义效果',
 }
 
 /**
@@ -31103,8 +31280,8 @@ export * from '@/index'
  * 创建日期: 2026-02-16
  * 作者: CombatDebugStudio
  * 功能: 属性悬浮提示组件
- * 描述: 显示属性的详细来源和计算过程
- * 版本: 1.0.0
+ * 描述: 显示属性的详细来源和计算过程，支持单值属性和攻击力区间属性
+ * 版本: 2.0.0
 -->
 
 <template>
@@ -31113,7 +31290,7 @@ export * from '@/index'
       <div v-if="visible" ref="tooltipRef" class="attribute-tooltip" :style="tooltipStyle">
         <div class="tooltip-header">
           <span class="tooltip-title">{{ title }}</span>
-          <span class="tooltip-value">{{ displayValue }}</span>
+          <span class="tooltip-value">{{ displayText || displayValue }}</span>
         </div>
 
         <!-- 属性描述部分 -->
@@ -31135,86 +31312,119 @@ export * from '@/index'
         <div class="tooltip-divider"></div>
 
         <div class="tooltip-content">
-          <div class="source-list">
-            <!-- 基础乘区 -->
-            <div v-if="additiveGroup.length > 0" class="source-section">
-              <div class="section-title">基础乘区</div>
-              <div v-for="(modifier, index) in additiveGroup" :key="'a-'+index" class="source-item">
-                <div class="source-header">
-                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+          <!-- ==================== 区间模式（攻击力） ==================== -->
+          <template v-if="rangeLayers && rangeLayers.length > 0">
+            <div class="source-list">
+              <div v-for="layer in rangeLayers" :key="layer.title" class="source-section">
+                <div class="section-title-row">
+                  <span class="section-title">{{ layer.title }}</span>
+                  <span class="layer-total">{{ formatRangeTotal(layer.minTotal, layer.title) }}-{{ formatRangeTotal(layer.maxTotal, layer.title) }}</span>
                 </div>
-                <div class="source-value">
-                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
-                    {{ formatModifierValue(modifier.value, modifier.type) }}
-                  </span>
+                <div v-for="(row, idx) in layer.rows" :key="layer.title + '-' + idx" class="source-item range-row">
+                  <span class="source-name-label">{{ row.label }}</span>
+                  <span class="source-range-value">{{ formatRangeRow(row) }}</span>
                 </div>
               </div>
             </div>
 
-            <!-- 百分比乘区 -->
-            <div v-if="percentGroup.length > 0" class="source-section">
-              <div class="section-title">百分比乘区</div>
-              <div v-for="(modifier, index) in percentGroup" :key="'p-'+index" class="source-item">
-                <div class="source-header">
-                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+            <div class="tooltip-divider"></div>
+
+            <div class="calculation-section">
+              <div class="calculation-title">计算过程</div>
+              <div class="calculation-formula">
+                <div class="calc-line">[最小] {{ rangeFormulaMin }}</div>
+                <div class="calc-line">[最大] {{ rangeFormulaMax }}</div>
+              </div>
+              <div class="calculation-result">
+                <span class="result-label">→</span>
+                <span class="result-value">{{ rangeResultMin }}-{{ rangeResultMax }}</span>
+              </div>
+            </div>
+          </template>
+
+          <!-- ==================== 标准模式（单值属性） ==================== -->
+          <template v-else>
+            <div class="source-list">
+              <!-- 基础数值 -->
+              <div v-if="additiveGroup.length > 0" class="source-section">
+                <div class="section-title">基础数值</div>
+                <div v-for="(modifier, index) in additiveGroup" :key="'a-'+index" class="source-item">
+                  <div class="source-header">
+                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                  </div>
+                  <div class="source-value">
+                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      {{ formatModifierValue(modifier.value, modifier.type) }}
+                    </span>
+                  </div>
                 </div>
-                <div class="source-value">
-                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
-                    {{ formatModifierValue(modifier.value, modifier.type) }}
-                  </span>
+              </div>
+
+              <!-- 属性加成 -->
+              <div v-if="percentGroup.length > 0" class="source-section">
+                <div class="section-title">属性加成</div>
+                <div v-for="(modifier, index) in percentGroup" :key="'p-'+index" class="source-item">
+                  <div class="source-header">
+                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                  </div>
+                  <div class="source-value">
+                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      {{ formatModifierValue(modifier.value, modifier.type) }}
+                    </span>
+                  </div>
                 </div>
+              </div>
+
+              <!-- 独立乘区 -->
+              <div v-if="multiGroup.length > 0" class="source-section">
+                <div class="section-title">独立乘区</div>
+                <div v-for="(modifier, index) in multiGroup" :key="'m-'+index" class="source-item">
+                  <div class="source-header">
+                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                  </div>
+                  <div class="source-value">
+                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      {{ formatModifierValue(modifier.value, modifier.type) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 最终乘区 -->
+              <div v-if="finalGroup.length > 0" class="source-section">
+                <div class="section-title">最终乘区</div>
+                <div v-for="(modifier, index) in finalGroup" :key="'f-'+index" class="source-item">
+                  <div class="source-header">
+                    <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
+                    <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
+                  </div>
+                  <div class="source-value">
+                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      {{ formatModifierValue(modifier.value, modifier.type) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="modifiers.length === 0" class="no-sources">
+                无详细来源信息
               </div>
             </div>
 
-            <!-- 独立乘区 -->
-            <div v-if="multiGroup.length > 0" class="source-section">
-              <div class="section-title">独立乘区</div>
-              <div v-for="(modifier, index) in multiGroup" :key="'m-'+index" class="source-item">
-                <div class="source-header">
-                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
-                </div>
-                <div class="source-value">
-                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
-                    {{ formatModifierValue(modifier.value, modifier.type) }}
-                  </span>
-                </div>
+            <div class="tooltip-divider"></div>
+
+            <div class="calculation-section">
+              <div class="calculation-title">计算过程</div>
+              <div class="calculation-formula">{{ formula }}</div>
+              <div class="calculation-result">
+                <span class="result-label">=</span>
+                <span class="result-value">{{ finalValue }}</span>
               </div>
             </div>
-
-            <!-- 最终乘区 -->
-            <div v-if="finalGroup.length > 0" class="source-section">
-              <div class="section-title">最终乘区</div>
-              <div v-for="(modifier, index) in finalGroup" :key="'f-'+index" class="source-item">
-                <div class="source-header">
-                  <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
-                  <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
-                </div>
-                <div class="source-value">
-                  <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
-                    {{ formatModifierValue(modifier.value, modifier.type) }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div v-if="modifiers.length === 0" class="no-sources">
-              无详细来源信息
-            </div>
-          </div>
-
-          <div class="tooltip-divider"></div>
-
-          <div class="calculation-section">
-            <div class="calculation-title">计算过程</div>
-            <div class="calculation-formula">{{ formula }}</div>
-            <div class="calculation-result">
-              <span class="result-label">=</span>
-              <span class="result-value">{{ finalValue }}</span>
-            </div>
-          </div>
+          </template>
         </div>
 
         <div class="tooltip-arrow" :class="arrowClass"></div>
@@ -31224,10 +31434,24 @@ export * from '@/index'
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Modifier, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
-import { ModifierSourceTypeNames } from '@/domain/attribute/types'
+import { ModifierSourceTypeNames, ModifierType } from '@/domain/attribute/types'
 import { getAttributeMeta, getAttributeCodeByName } from '@/domain/attribute/types'
+
+// ===================== 区间模式类型导出 =====================
+export interface RangeModifierRow {
+  label: string
+  minValue: number | null
+  maxValue: number | null
+}
+
+export interface RangeLayerData {
+  title: string
+  minTotal: number
+  maxTotal: number
+  rows: RangeModifierRow[]
+}
 
 interface Props {
   visible: boolean
@@ -31236,6 +31460,10 @@ interface Props {
   finalValue: number
   valueType: AttributeValueType
   triggerRect?: DOMRect | null
+  /** 覆盖值的显示文本（如范围 "25-40"），为空时自动格式化 finalValue */
+  displayText?: string
+  /** 区间模式数据（攻击力使用），存在时切换为区间渲染 */
+  rangeLayers?: RangeLayerData[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -31244,7 +31472,9 @@ const props = withDefaults(defineProps<Props>(), {
   modifiers: () => [],
   finalValue: 0,
   valueType: '数值',
-  triggerRect: null
+  triggerRect: null,
+  displayText: '',
+  rangeLayers: () => [],
 })
 
 const tooltipRef = ref<HTMLElement | null>(null)
@@ -31252,14 +31482,10 @@ const tooltipRef = ref<HTMLElement | null>(null)
 // 根据属性名称获取属性元数据
 const attributeMeta = computed(() => {
   try {
-    // 尝试根据属性名称获取属性编码
     let attributeCode = getAttributeCodeByName(props.title)
-
-    // 如果没有找到，尝试使用常见的属性名称映射
     if (!attributeCode) {
       attributeCode = props.title.toLowerCase()
     }
-
     return getAttributeMeta(attributeCode)
   } catch (error) {
     console.error('获取属性元数据时出错:', error)
@@ -31291,6 +31517,85 @@ const displayValue = computed(() => {
   return formatValue(props.finalValue, props.valueType)
 })
 
+// ===================== 区间模式计算 =====================
+
+/** 格式化区间层的合计值 */
+const formatRangeTotal = (total: number, layerTitle: string): string => {
+  // 基础数值层直接显示数值；其他三层的 total 已经是百分比点（如 20=20%）
+  if (layerTitle === '基础数值') {
+    return Math.round(total * 100) / 100 + ''
+  }
+  return Math.round(total * 100) / 100 + '%'
+}
+
+/** 格式化区间行 */
+const formatRangeRow = (row: RangeModifierRow): string => {
+  const fmt = (v: number) => row.isPercent ? formatModifierValue(v, 'PERCENTAGE') : formatModifierValue(v, 'ADDITIVE')
+
+  if (row.minValue !== null && row.maxValue !== null) {
+    if (row.minValue === row.maxValue) {
+      return fmt(row.minValue)
+    }
+    return `${fmt(row.minValue)} / ${fmt(row.maxValue)}`
+  }
+  if (row.minValue !== null) return fmt(row.minValue)
+  if (row.maxValue !== null) return fmt(row.maxValue)
+  return ''
+}
+
+/** 基础数值层合计（用于计算式起点） */
+const rangeBaseMin = computed(() => props.rangeLayers[0]?.minTotal ?? 0)
+const rangeBaseMax = computed(() => props.rangeLayers[0]?.maxTotal ?? 0)
+
+/** 属性加成/独立/最终三层的合计（百分比点 → 小数，供公式使用） */
+const rangeLayerMultipliers = computed(() => {
+  const layers = props.rangeLayers || []
+  // 跳过第0层（基础数值），后面三层是百分比点（如 20 = 20%），转为小数 1.20
+  const pct = layers[1]  // 属性加成
+  const multi = layers[2] // 独立乘区
+  const final = layers[3] // 最终乘区
+  return {
+    pctMin: pct ? 1 + pct.minTotal / 100 : 1,
+    pctMax: pct ? 1 + pct.maxTotal / 100 : 1,
+    multiMin: multi ? 1 + multi.minTotal / 100 : 1,
+    multiMax: multi ? 1 + multi.maxTotal / 100 : 1,
+    finalMin: final ? 1 + final.minTotal / 100 : 1,
+    finalMax: final ? 1 + final.maxTotal / 100 : 1,
+  }
+})
+
+const rangeFormulaMin = computed(() => {
+  const m = rangeLayerMultipliers.value
+  const base = rangeBaseMin.value
+  const parts = [`${base}`]
+  if (m.pctMin !== 1) parts.push(`${m.pctMin.toFixed(2)}`)
+  if (m.multiMin !== 1) parts.push(`${m.multiMin.toFixed(2)}`)
+  if (m.finalMin !== 1) parts.push(`${m.finalMin.toFixed(2)}`)
+  return parts.join(' × ')
+})
+
+const rangeFormulaMax = computed(() => {
+  const m = rangeLayerMultipliers.value
+  const base = rangeBaseMax.value
+  const parts = [`${base}`]
+  if (m.pctMax !== 1) parts.push(`${m.pctMax.toFixed(2)}`)
+  if (m.multiMax !== 1) parts.push(`${m.multiMax.toFixed(2)}`)
+  if (m.finalMax !== 1) parts.push(`${m.finalMax.toFixed(2)}`)
+  return parts.join(' × ')
+})
+
+const rangeResultMin = computed(() => {
+  const m = rangeLayerMultipliers.value
+  return +(rangeBaseMin.value * m.pctMin * m.multiMin * m.finalMin).toFixed(2)
+})
+
+const rangeResultMax = computed(() => {
+  const m = rangeLayerMultipliers.value
+  return +(rangeBaseMax.value * m.pctMax * m.multiMax * m.finalMax).toFixed(2)
+})
+
+// ===================== 标准模式计算 =====================
+
 // 按乘区分组修饰符
 const additiveGroup = computed(() => {
   return props.modifiers.filter(m => m.type === 'ADDITIVE')
@@ -31308,7 +31613,6 @@ const finalGroup = computed(() => {
 const formula = computed(() => {
   if (props.modifiers.length === 0) return '无'
 
-  // 分离 base 修饰符和其他修饰符
   let baseValue = 0
   const additiveMods: Modifier[] = []
   const percentMods: Modifier[] = []
@@ -31323,10 +31627,8 @@ const formula = computed(() => {
     else if (m.type === 'FINAL') finalMods.push(m)
   }
 
-  // 构建乘区表达式
   const brackets: string[] = []
 
-  // 第1乘区: 基础 + 累加  (base + additive)
   if (additiveMods.length === 0) {
     brackets.push(`${baseValue}`)
   } else {
@@ -31337,7 +31639,6 @@ const formula = computed(() => {
     brackets.push(`(${parts.join(' ')})`)
   }
 
-  // 第2乘区: 百分比  (1 + p1% + p2%)
   if (percentMods.length > 0) {
     const parts: string[] = ['1']
     for (const m of percentMods) {
@@ -31346,12 +31647,10 @@ const formula = computed(() => {
     brackets.push(`(${parts.join(' ')})`)
   }
 
-  // 第3乘区: 独立乘法
   for (const m of multiMods) {
     brackets.push(`(${1 + m.value})`)
   }
 
-  // 第4乘区: 最终乘法
   for (const m of finalMods) {
     brackets.push(`(${1 + m.value}最终)`)
   }
@@ -31359,24 +31658,26 @@ const formula = computed(() => {
   return brackets.length > 0 ? `${brackets.join(' × ')} = ${props.finalValue}` : '无'
 })
 
+// ===================== 定位 =====================
+
 const arrowClass = computed(() => {
   if (!props.triggerRect) return 'arrow-bottom'
 
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
   const tooltipWidth = 320
-  const tooltipHeight = 350 // 增加高度以容纳属性描述
+  const tooltipHeight = 400
 
   const rightSpace = viewportWidth - props.triggerRect.right
   const leftSpace = props.triggerRect.left
   const bottomSpace = viewportHeight - props.triggerRect.bottom
   const topSpace = props.triggerRect.top
 
-  if (rightSpace > leftSpace && rightSpace > 320) {
+  if (rightSpace > leftSpace && rightSpace > tooltipWidth) {
     return 'arrow-left'
-  } else if (leftSpace > 320) {
+  } else if (leftSpace > tooltipWidth) {
     return 'arrow-right'
-  } else if (bottomSpace > 350) {
+  } else if (bottomSpace > tooltipHeight) {
     return 'arrow-top'
   } else {
     return 'arrow-bottom'
@@ -31393,7 +31694,7 @@ const tooltipStyle = computed(() => {
   }
 
   const tooltipWidth = 320
-  const tooltipHeight = 350 // 增加高度以容纳属性描述
+  const tooltipHeight = 400
   const offset = 12
 
   const viewportWidth = window.innerWidth
@@ -31525,15 +31826,28 @@ onUnmounted(() => {
           margin-bottom: 0;
         }
 
+        .section-title-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 6px;
+          padding-bottom: 4px;
+          border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+        }
+
         .section-title {
           font-size: 11px;
           font-weight: 600;
           color: #60a5fa;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          margin-bottom: 6px;
-          padding-bottom: 4px;
-          border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+        }
+
+        .layer-total {
+          font-size: 13px;
+          font-weight: 700;
+          color: #22d3ee;
+          font-family: 'JetBrains Mono', monospace;
         }
       }
 
@@ -31588,6 +31902,20 @@ onUnmounted(() => {
             }
           }
         }
+
+        &.range-row {
+          .source-name-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.65);
+          }
+          .source-range-value {
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            color: #22d3ee;
+          }
+        }
       }
 
       .no-sources {
@@ -31620,6 +31948,10 @@ onUnmounted(() => {
         line-height: 1.8;
         white-space: pre-wrap;
         word-break: break-all;
+
+        .calc-line {
+          margin-bottom: 2px;
+        }
       }
 
       .calculation-result {
@@ -35092,11 +35424,11 @@ const toggleBreakdown = () => {
 
 const formatBreakdownKey = (key: string) => {
   const keyMap: Record<string, string> = {
-    base: '基础值',
-    additive: '加法修正',
-    percentMultiplier: '百分比乘区',
+    base: '基础数值',
+    additive: '基础数值(固定)',
+    percentMultiplier: '属性加成',
     independentMultiplier: '独立乘区',
-    finalMultiplier: '最终修正',
+    finalMultiplier: '最终乘区',
   }
   return keyMap[key] || key
 }
@@ -36862,6 +37194,8 @@ import type { BattleAction, BattleState } from '@/domain/battle/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import type { BattleEntity } from '@/domain/battle/types'
+import type { Enemy } from '@/shared/types/enemy'
+import { BattleParticipantImpl } from '@/domain/battle/BattleParticipantImpl'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -36968,13 +37302,10 @@ export const useBattleStore = defineStore('battle', () => {
   /** 已处理过的战斗动作ID集合（防止重复解析和显示同一动作） */
   const processedActionIds = ref(new Set<string>())
 
-  // ================= 生命周期清理 =================
-  // 组件卸载或模块热更新时自动执行清理
-  onScopeDispose(() => {
-    battleManager.value.off(BattleEventCodes.TEAM_DATA_CHANGED)
-  })
 
   const selectedCharacterId = ref<string | null>(null)
+  /** 角色库预览实体（未加入队伍，仅供属性监控预览） */
+  const previewEntity = shallowRef<BattleEntity | null>(null)
 
   // 🔹 2. 业务层引用（适配器桥接，使用 shallowRef 避免深层 Proxy 开销）
   /** 战斗管理器实例（核心业务逻辑入口，通过依赖注入获取） */
@@ -37571,6 +37902,17 @@ export const useBattleStore = defineStore('battle', () => {
   const selectCharacter = (characterId: string) => {
     battleManager.value.selectCharacter(characterId)
     selectedCharacterId.value = characterId
+    previewEntity.value = null // 选中真实参战角色时清除预览
+  }
+
+  /**
+   * 预览角色库中的角色（转为 BattleEntity 存入预览，不加入队伍）
+   * @param enemy 角色库中的敌人数据
+   */
+  const previewRosterCharacter = (enemy: Enemy) => {
+    const entity = GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY)
+    previewEntity.value = entity
+    selectedCharacterId.value = entity.id
   }
 
   /**
@@ -37602,6 +37944,7 @@ export const useBattleStore = defineStore('battle', () => {
     processedActionIds, // 已处理动作ID集合
     battleManager, // 战斗管理器实例
     selectedCharacterId, // 选中角色ID
+    previewEntity, // 角色库预览实体
 
     // ========== 业务数据（Data） ==========
     allyTeam, // 我方队伍
@@ -37660,6 +38003,7 @@ export const useBattleStore = defineStore('battle', () => {
 
     // ========== 角色操作 ==========
     selectCharacter, // 选中角色
+    previewRosterCharacter, // 预览角色库角色
     setCharacterEnabled, // 设置角色启用/禁用
   }
 })
@@ -41118,6 +41462,21 @@ function initBattle() {
   console.log('enemyTeamData', enemyTeamData)
   // 使用BattleManager初始化队伍数据
   battleManager.initializeTeams(allyTeamData, enemyTeamData);
+
+  // ponytail: 将实体的免疫标签注册到 BuffSystem
+  const buffSystem = container.resolve<any>('BuffSystem');
+  const allParticipants = [
+    ...battleManager.getAllyTeam(),
+    ...battleManager.getEnemyTeam(),
+  ];
+  for (const entity of allParticipants) {
+    if (entity && typeof (entity as any).getImmunities === 'function') {
+      const tags: string[] = (entity as any).getImmunities();
+      if (tags.length > 0) {
+        buffSystem.registerCharacterImmunities(entity.id, tags);
+      }
+    }
+  }
 }
 
 // 初始化战斗系统和快捷键
@@ -41411,7 +41770,7 @@ const handleBattleSpeedChange = (speed: number) => {
 
 // 选择角色
 const selectCharacter = (characterId: string) => {
-  battleManager.selectCharacter(characterId);
+  battleStore.selectCharacter(characterId);
 };
 
 onUnmounted(() => {
@@ -41567,7 +41926,7 @@ onUnmounted(() => {
                 currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 150 }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '攻击力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attack)?.modifiers || [], attackRange.min, '数值')"
+            @mouseenter="showAttackTooltip($event)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击:</span>
             <span class="monitor-value">{{ attackRange.min }}-{{ attackRange.max }}</span>
@@ -41752,7 +42111,8 @@ onUnmounted(() => {
 
     <AttributeTooltip :visible="attrTooltipVisible" :title="attrTooltipData.title"
       :modifiers="attrTooltipData.modifiers" :final-value="attrTooltipData.finalValue"
-      :value-type="attrTooltipData.valueType" :trigger-rect="attrTooltipData.triggerRect" />
+      :value-type="attrTooltipData.valueType" :trigger-rect="attrTooltipData.triggerRect"
+      :display-text="attrTooltipData.displayText" :range-layers="attrTooltipData.rangeLayers" />
 
     <!-- 战斗回放 -->
     <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart" @replay-end="handleReplayEnd"
@@ -41763,7 +42123,7 @@ onUnmounted(() => {
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { container } from '@/infrastructure/di/Container';
-import AttributeTooltip from "@/presentation/components/AttributeTooltip.vue";
+import AttributeTooltip, { type RangeLayerData, type RangeModifierRow } from "@/presentation/components/AttributeTooltip.vue";
 import { ATTRIBUTE_CODE, type Modifier, AttributeValueType } from "@/domain/attribute/types";
 import type { SkillConfig } from "@/domain/skill/types";
 import { formatTargetConfig } from "@/domain/skill/types";
@@ -41773,6 +42133,7 @@ import { SkillType } from '@/domain/skill/types';
 import { BattleEventType } from '@/domain/battle/types';
 import BattleReplay from "@/presentation/views/BattleReplay.vue";
 import { useBattleStore } from '@/presentation/stores';
+const battleStore = useBattleStore();
 
 // 获取 BattleManager
 const battleManager = container.resolve<BattleManager>('BattleManager');
@@ -41780,8 +42141,13 @@ const props = defineProps<{
   battleSystem?: any;
 }>();
 
-// 响应式获取选中角色数据
-const currentCharacter = computed(() => battleManager.getSelectedCharacter());
+// 响应式获取选中角色数据 — ponytail: 依赖 battleStore.selectedCharacterId 触发 Vue 响应式更新
+const currentCharacter = computed(() => {
+  const id = battleStore.selectedCharacterId;
+  if (!id) return null;
+  // 先找战斗中的参战角色，若未加入队伍则回退到角色库预览实体
+  return battleManager.getSelectedCharacter() || battleStore.previewEntity;
+});
 const selectedCharName = computed(() => currentCharacter.value?.name || "未选择");
 
 // 计算攻击范围
@@ -41916,6 +42282,8 @@ const attrTooltipData = ref<{
   finalValue: number
   valueType: AttributeValueType
   triggerRect: DOMRect | null
+  displayText?: string
+  rangeLayers?: RangeLayerData[]
 }>({
   title: '',
   modifiers: [],
@@ -41924,15 +42292,106 @@ const attrTooltipData = ref<{
   triggerRect: null
 })
 
-const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType) => {
+const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType, displayText?: string, rangeLayers?: RangeLayerData[]) => {
   attrTooltipData.value = {
     title,
     modifiers,
     finalValue,
     valueType,
-    triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect()
+    triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect(),
+    displayText,
+    rangeLayers
   }
   attrTooltipVisible.value = true
+}
+
+/**
+ * 将修饰符列表按类型分组，同 source 的合并为 min/max 区间行
+ */
+const buildRangeLayer = (
+  title: string,
+  minMods: Modifier[],
+  maxMods: Modifier[],
+  modType: string,
+): RangeLayerData => {
+  // 按 sourceKey 聚合 min 和 max 的修饰符值
+  const sourceMap = new Map<string, { label: string; minVal: number; maxVal: number }>()
+
+  for (const m of minMods) {
+    if (m.type !== modType) continue
+    const key = m.sourceKey || m.description || 'unknown'
+    const entry = sourceMap.get(key) || { label: m.description || key, minVal: 0, maxVal: 0 }
+    entry.minVal += m.value
+    sourceMap.set(key, entry)
+  }
+  for (const m of maxMods) {
+    if (m.type !== modType) continue
+    const key = m.sourceKey || m.description || 'unknown'
+    const entry = sourceMap.get(key) || { label: m.description || key, minVal: 0, maxVal: 0 }
+    entry.maxVal += m.value
+    sourceMap.set(key, entry)
+  }
+
+  const rows: RangeModifierRow[] = []
+  let minTotal = 0
+  let maxTotal = 0
+
+  for (const [, entry] of sourceMap) {
+    // 标注仅作用单边的修饰符
+    let label = entry.label
+    if (entry.minVal !== 0 && entry.maxVal === 0) {
+      label += '(最小攻击力)'
+      rows.push({ label, minValue: entry.minVal, maxValue: null, isPercent: modType === 'PERCENTAGE' })
+      minTotal += entry.minVal
+      continue
+    } else if (entry.maxVal !== 0 && entry.minVal === 0) {
+      label += '(最大攻击力)'
+      rows.push({ label, minValue: null, maxValue: entry.maxVal, isPercent: modType === 'PERCENTAGE' })
+      maxTotal += entry.maxVal
+      continue
+    } else if (entry.minVal !== entry.maxVal) {
+      // 两边值不同：分别标注
+      rows.push({ label: entry.label + '(最小攻击力)', minValue: entry.minVal, maxValue: null, isPercent: modType === 'PERCENTAGE' })
+      rows.push({ label: entry.label + '(最大攻击力)', minValue: null, maxValue: entry.maxVal, isPercent: modType === 'PERCENTAGE' })
+      minTotal += entry.minVal
+      maxTotal += entry.maxVal
+      continue
+    }
+    rows.push({ label, minValue: entry.minVal, maxValue: entry.maxVal, isPercent: modType === 'PERCENTAGE' })
+    minTotal += entry.minVal
+    maxTotal += entry.maxVal
+  }
+
+  return { title, minTotal, maxTotal, rows }
+}
+
+/**
+ * 攻击力 tooltip：按四层架构组织 min/max 修饰符，显示区间
+ */
+const showAttackTooltip = (event: MouseEvent) => {
+  const char = currentCharacter.value
+  if (!char) return
+
+  const minAttr = char.getAttributeValue(ATTRIBUTE_CODE.minAttack)
+  const maxAttr = char.getAttributeValue(ATTRIBUTE_CODE.maxAttack)
+  if (!minAttr || !maxAttr) return
+
+  const minMods = minAttr.modifiers
+  const maxMods = maxAttr.modifiers
+
+  const layers: RangeLayerData[] = [
+    buildRangeLayer('基础数值', minMods, maxMods, 'ADDITIVE'),
+    buildRangeLayer('属性加成', minMods, maxMods, 'PERCENTAGE'),
+    buildRangeLayer('独立乘区', minMods, maxMods, 'MULTIPLICATIVE'),
+    buildRangeLayer('最终乘区', minMods, maxMods, 'FINAL'),
+  ]
+
+  showAttrTooltip(
+    event, '攻击力', [],
+    attackRange.value.min, '数值',
+    `${attackRange.value.min}-${attackRange.value.max}`,
+    layers,
+  )
 }
 
 const hideAttrTooltip = () => {
@@ -42040,7 +42499,6 @@ onUnmounted(() => {
 
 // ------------------------------------------------------------
 // 战斗回放相关方法
-const battleStore = useBattleStore();
 
 const handleReplayEvent = (event: any, index: number) => {
   console.log('回放事件:', event, '索引:', index);
@@ -42598,7 +43056,7 @@ const currentActor = computed(() => {
 });
 
 const selectCharacter = (charId: string) => {
-  battleManager.selectCharacter(charId);
+  store.selectCharacter(charId);
   emit('select-character', charId);
 };
 
@@ -45869,7 +46327,9 @@ onUnmounted(() => {
             </div>
             <Transition name="scene-enemies">
               <div class="scene-enemies" v-show="isSceneExpanded(group.scene.id)">
-                <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item">
+                <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item"
+                :class="{ selected: isRosterCharSelected(enemy.id) }"
+                @click="previewRosterCharacter(enemy)">
                   <div class="char-info">
                     <span class="char-name">{{ enemy.name }} (Lv.{{ enemy.level }})</span>
                     <span class="char-stats">气血:{{ enemy.stats.maxHealth }} 攻击:{{ enemy.stats.minAttack
@@ -45900,6 +46360,7 @@ import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene';
 import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/domain/battle/types";
 import type { BattleManager } from '@/domain/battle/BattleManager';
+import { useBattleStore } from '@/presentation/stores';
 import { BattleParticipantImpl } from '@/domain/battle/BattleParticipantImpl';
 
 interface GroupedEnemies {
@@ -45909,6 +46370,7 @@ interface GroupedEnemies {
 
 // 获取 BattleManager
 const battleManager = container.resolve<BattleManager>('BattleManager');
+const battleStore = useBattleStore();
 
 // 初始化 GameDataProcessor
 const enemySearch = ref("");
@@ -45929,7 +46391,7 @@ const allyTeamCount = computed(() => allyTeam.value.filter(c => c.enabled).lengt
 // 敌方参战人数
 const enemyTeamCount = computed(() => enemyTeam.value.filter(c => c.enabled).length);
 
-const selectedCharacterId = computed(() => battleManager.getSelectedCharacterId());
+const selectedCharacterId = computed(() => battleStore.selectedCharacterId);
 
 const toggleSceneExpand = (sceneId: string) => {
   expandedScenes[sceneId] = !expandedScenes[sceneId];
@@ -46008,13 +46470,29 @@ const getOrderIndex = (charId: string) => {
 };
 
 const selectCharacter = (charId: string) => {
-  battleManager.selectCharacter(charId);
+  battleStore.selectCharacter(charId);
+};
+
+const previewRosterCharacter = (enemy: Enemy) => {
+  battleStore.previewRosterCharacter(enemy);
+};
+
+const isRosterCharSelected = (enemyId: string): boolean => {
+  const id = battleStore.selectedCharacterId;
+  if (!id || !battleStore.previewEntity) return false;
+  // ponytail: previewEntity ID 格式是 [ENEMY]_<enemyId>_<counter>
+  return id.startsWith(`[ENEMY]_${enemyId}_`);
 };
 
 const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY = PARTICIPANT_SIDE.ALLY) => {
   const newCharacter = GameDataProcessor.enemyToParticipant(enemy, side)
   battleManager.addCharacterToTeam(newCharacter, side)
-  battleManager.selectCharacter(newCharacter.id)
+  // ponytail: 注册免疫标签到 BuffSystem
+  if (newCharacter.getImmunities().length > 0) {
+    const buffSystem = container.resolve<any>('BuffSystem');
+    buffSystem.registerCharacterImmunities(newCharacter.id, newCharacter.getImmunities());
+  }
+  battleStore.selectCharacter(newCharacter.id)
 };
 
 const moveCharacter = (direction: number) => {
@@ -46968,9 +47446,6 @@ export interface CalculationLog {
 
   /** 计算类型 */
   type: 'damage' | 'heal' | 'buff' | 'debuff'
-
-  /** 步骤类型（兼容原有系统） */
-  stepType?: 'DAMAGE' | 'HEAL'
 
   /** 来源ID */
   sourceId: string
@@ -48225,7 +48700,17 @@ export class GameDataProcessor {
     // 1. 解析被动技能并生成修饰符模板列表
     const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive)
 
-    // 2. 构造标准初始化 DTO
+    // 3. 补全派生属性（配置只有 currentHealth/minAttack/maxAttack，但引擎需要 maxHealth）
+    const stats = { ...enemy.stats } as Partial<Record<ATTRIBUTE_CODE, number>>
+    if (!stats[ATTRIBUTE_CODE.maxHealth] && stats[ATTRIBUTE_CODE.currentHealth]) {
+      stats[ATTRIBUTE_CODE.maxHealth] = stats[ATTRIBUTE_CODE.currentHealth]
+    }
+
+    // 将攻击力加成/气血加成的基础值提取出来，后续直接作为 PERCENTAGE 修饰符注入
+    const attackBonusBase = stats[ATTRIBUTE_CODE.attackBonus] || 0
+    const healthBonusBase = stats[ATTRIBUTE_CODE.healthBonus] || 0
+
+    // 3. 构造标准初始化 DTO
     const initData: BattleParticipantData = {
       id: `[${type}]_${enemy.id}_${counter.next()}`,
       name: enemy.name,
@@ -48238,14 +48723,53 @@ export class GameDataProcessor {
         passive: passiveSkills,
         ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate),
       },
-      attributeValues: enemy.stats,
+      attributeValues: stats,
     }
 
-    // 3. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
+    // 4. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
     const participant = new BattleParticipantImpl(initData)
 
-    // 4. 应用被动技能中 modify_attribute 步骤的修饰符
+    // 5. 应用被动技能中 modify_attribute 步骤的修饰符
     GameDataProcessor.applyPassiveModifiers(participant, passiveSkills)
+
+    // 6. 将配置中的 attackBonus/healthBonus 作为 PERCENTAGE 修饰符注入到对应属性
+    if (attackBonusBase) {
+      for (const attr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
+        const attrData = participant.getAttrValue(attr)
+        if (attrData) {
+          attrData.modifiers.push({
+            sourceKey: 'bonus:attackBonus',
+            sourceType: ModifierSourceType.BASE,
+            attribute: attr,
+            value: attackBonusBase,
+            type: ModifierType.PERCENTAGE,
+            description: '攻击加成',
+          })
+        }
+      }
+    }
+    if (healthBonusBase) {
+      const hpData = participant.getAttrValue(ATTRIBUTE_CODE.maxHealth)
+      if (hpData) {
+        hpData.modifiers.push({
+          sourceKey: 'bonus:healthBonus',
+          sourceType: ModifierSourceType.BASE,
+          attribute: ATTRIBUTE_CODE.maxHealth,
+          value: healthBonusBase,
+          type: ModifierType.PERCENTAGE,
+          description: '气血加成',
+        })
+      }
+    }
+
+    // 7. 重新计算全部属性（使被动技能和配置加成的修饰符生效），初始满血
+    participant.recalcAll()
+    // ponytail: setAttributeBase 只改 base 不改 value，而 currentHealth 是运行时属性
+    // （recalcAttribute 跳过），value 永不会从 base 同步，故直接写 value
+    const curHp = participant.getAttrValue(ATTRIBUTE_CODE.currentHealth)
+    if (curHp) {
+      curHp.value = participant.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    }
 
     return participant
   }
@@ -48359,6 +48883,23 @@ export class GameDataProcessor {
           bonusData.cachedVersion = -1
         }
       }
+      // ponytail: PERCENTAGE 作用于 attack 时同步到 minAttack/maxAttack
+      if (attrCode === ATTRIBUTE_CODE.attack) {
+        for (const targetAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
+          const targetData = participant.getAttrValue(targetAttr)
+          if (targetData) {
+            targetData.modifiers.push({
+              sourceKey,
+              sourceType: ModifierSourceType.SKILL,
+              attribute: targetAttr,
+              value,
+              type: ModifierType.PERCENTAGE,
+              description: skill.name,
+            })
+            targetData.cachedVersion = -1
+          }
+        }
+      }
     }
   }
 
@@ -48390,6 +48931,14 @@ export class GameDataProcessor {
       } else {
         // 自目标 → 立即应用
         GameDataProcessor.applyStepModifiers(participant, skill, aura.modifiers)
+      }
+    }
+
+    // 处理免疫标签（immunities）
+    const immunities = (buff as any).immunities as string[] | undefined
+    if (immunities) {
+      for (const tag of immunities) {
+        participant.addImmunity(tag)
       }
     }
 

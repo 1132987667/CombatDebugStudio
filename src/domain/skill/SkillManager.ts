@@ -111,6 +111,7 @@ export class SkillManager {
     source: BattleEntity,
     target: BattleEntity,
     currentTurn: number,
+    record?: CombatRecord,
   ): BattleAction | null {
     const config = this.skillConfigs.get(skillId)
     if (!config) {
@@ -186,10 +187,18 @@ export class SkillManager {
         action,
         source,
         targets: [target],
-        record: undefined,
+        record,
       }
       this.executeStep(ctx)
     }
+
+    // ponytail: 技能执行成功后设置冷却（如果配置了冷却回合数）
+    if (config.cooldown && config.cooldown > 0) {
+      if ('setSkillCooldown' in source && typeof source.setSkillCooldown === 'function') {
+        source.setSkillCooldown(skillId, config.cooldown)
+      }
+    }
+
     battleLogManager.addDebugLog(`执行技能 ${config.name || skillId}`, LogLevel.DEBUG)
     return action
   }

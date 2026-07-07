@@ -25,7 +25,7 @@
                 currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 150 }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '攻击力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attack)?.modifiers || [], attackRange.min, '数值')"
+            @mouseenter="showAttackTooltip($event)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击:</span>
             <span class="monitor-value">{{ attackRange.min }}-{{ attackRange.max }}</span>
@@ -210,7 +210,8 @@
 
     <AttributeTooltip :visible="attrTooltipVisible" :title="attrTooltipData.title"
       :modifiers="attrTooltipData.modifiers" :final-value="attrTooltipData.finalValue"
-      :value-type="attrTooltipData.valueType" :trigger-rect="attrTooltipData.triggerRect" />
+      :value-type="attrTooltipData.valueType" :trigger-rect="attrTooltipData.triggerRect"
+      :display-text="attrTooltipData.displayText" :range-layers="attrTooltipData.rangeLayers" />
 
     <!-- 战斗回放 -->
     <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart" @replay-end="handleReplayEnd"
@@ -221,7 +222,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { container } from '@/infrastructure/di/Container';
-import AttributeTooltip from "@/presentation/components/AttributeTooltip.vue";
+import AttributeTooltip, { type RangeLayerData, type RangeModifierRow } from "@/presentation/components/AttributeTooltip.vue";
 import { ATTRIBUTE_CODE, type Modifier, AttributeValueType } from "@/domain/attribute/types";
 import type { SkillConfig } from "@/domain/skill/types";
 import { formatTargetConfig } from "@/domain/skill/types";
@@ -242,7 +243,9 @@ const props = defineProps<{
 // 响应式获取选中角色数据 — ponytail: 依赖 battleStore.selectedCharacterId 触发 Vue 响应式更新
 const currentCharacter = computed(() => {
   const id = battleStore.selectedCharacterId;
-  return id ? battleManager.getSelectedCharacter() : null;
+  if (!id) return null;
+  // 先找战斗中的参战角色，若未加入队伍则回退到角色库预览实体
+  return battleManager.getSelectedCharacter() || battleStore.previewEntity;
 });
 const selectedCharName = computed(() => currentCharacter.value?.name || "未选择");
 
@@ -378,6 +381,8 @@ const attrTooltipData = ref<{
   finalValue: number
   valueType: AttributeValueType
   triggerRect: DOMRect | null
+  displayText?: string
+  rangeLayers?: RangeLayerData[]
 }>({
   title: '',
   modifiers: [],
@@ -386,15 +391,106 @@ const attrTooltipData = ref<{
   triggerRect: null
 })
 
-const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType) => {
+const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType, displayText?: string, rangeLayers?: RangeLayerData[]) => {
   attrTooltipData.value = {
     title,
     modifiers,
     finalValue,
     valueType,
-    triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect()
+    triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect(),
+    displayText,
+    rangeLayers
   }
   attrTooltipVisible.value = true
+}
+
+/**
+ * 将修饰符列表按类型分组，同 source 的合并为 min/max 区间行
+ */
+const buildRangeLayer = (
+  title: string,
+  minMods: Modifier[],
+  maxMods: Modifier[],
+  modType: string,
+): RangeLayerData => {
+  // 按 sourceKey 聚合 min 和 max 的修饰符值
+  const sourceMap = new Map<string, { label: string; minVal: number; maxVal: number }>()
+
+  for (const m of minMods) {
+    if (m.type !== modType) continue
+    const key = m.sourceKey || m.description || 'unknown'
+    const entry = sourceMap.get(key) || { label: m.description || key, minVal: 0, maxVal: 0 }
+    entry.minVal += m.value
+    sourceMap.set(key, entry)
+  }
+  for (const m of maxMods) {
+    if (m.type !== modType) continue
+    const key = m.sourceKey || m.description || 'unknown'
+    const entry = sourceMap.get(key) || { label: m.description || key, minVal: 0, maxVal: 0 }
+    entry.maxVal += m.value
+    sourceMap.set(key, entry)
+  }
+
+  const rows: RangeModifierRow[] = []
+  let minTotal = 0
+  let maxTotal = 0
+
+  for (const [, entry] of sourceMap) {
+    // 标注仅作用单边的修饰符
+    let label = entry.label
+    if (entry.minVal !== 0 && entry.maxVal === 0) {
+      label += '(最小攻击力)'
+      rows.push({ label, minValue: entry.minVal, maxValue: null, isPercent: modType === 'PERCENTAGE' })
+      minTotal += entry.minVal
+      continue
+    } else if (entry.maxVal !== 0 && entry.minVal === 0) {
+      label += '(最大攻击力)'
+      rows.push({ label, minValue: null, maxValue: entry.maxVal, isPercent: modType === 'PERCENTAGE' })
+      maxTotal += entry.maxVal
+      continue
+    } else if (entry.minVal !== entry.maxVal) {
+      // 两边值不同：分别标注
+      rows.push({ label: entry.label + '(最小攻击力)', minValue: entry.minVal, maxValue: null, isPercent: modType === 'PERCENTAGE' })
+      rows.push({ label: entry.label + '(最大攻击力)', minValue: null, maxValue: entry.maxVal, isPercent: modType === 'PERCENTAGE' })
+      minTotal += entry.minVal
+      maxTotal += entry.maxVal
+      continue
+    }
+    rows.push({ label, minValue: entry.minVal, maxValue: entry.maxVal, isPercent: modType === 'PERCENTAGE' })
+    minTotal += entry.minVal
+    maxTotal += entry.maxVal
+  }
+
+  return { title, minTotal, maxTotal, rows }
+}
+
+/**
+ * 攻击力 tooltip：按四层架构组织 min/max 修饰符，显示区间
+ */
+const showAttackTooltip = (event: MouseEvent) => {
+  const char = currentCharacter.value
+  if (!char) return
+
+  const minAttr = char.getAttributeValue(ATTRIBUTE_CODE.minAttack)
+  const maxAttr = char.getAttributeValue(ATTRIBUTE_CODE.maxAttack)
+  if (!minAttr || !maxAttr) return
+
+  const minMods = minAttr.modifiers
+  const maxMods = maxAttr.modifiers
+
+  const layers: RangeLayerData[] = [
+    buildRangeLayer('基础数值', minMods, maxMods, 'ADDITIVE'),
+    buildRangeLayer('属性加成', minMods, maxMods, 'PERCENTAGE'),
+    buildRangeLayer('独立乘区', minMods, maxMods, 'MULTIPLICATIVE'),
+    buildRangeLayer('最终乘区', minMods, maxMods, 'FINAL'),
+  ]
+
+  showAttrTooltip(
+    event, '攻击力', [],
+    attackRange.value.min, '数值',
+    `${attackRange.value.min}-${attackRange.value.max}`,
+    layers,
+  )
 }
 
 const hideAttrTooltip = () => {

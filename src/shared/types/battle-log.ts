@@ -478,9 +478,6 @@ export interface CalculationLog {
   /** 计算类型 */
   type: 'damage' | 'heal' | 'buff' | 'debuff'
 
-  /** 步骤类型（兼容原有系统） */
-  stepType?: 'DAMAGE' | 'HEAL'
-
   /** 来源ID */
   sourceId: string
 

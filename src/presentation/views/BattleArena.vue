@@ -22,6 +22,7 @@
       <h1>回合制战斗系统测试工具 v1.0</h1>
       <div class="header-actions">
         <button class="header-btn" @click="showDataSnapshotDialog = true">数据快照</button>
+        <button class="header-btn" @click="showRecordingDialog = true">战斗记录</button>
         <button class="header-btn" @click="showDebugLogDialog = true">调试日志</button>
         <button class="header-btn" @click="showDebugControlDialog = true">调试面板</button>
         <button class="header-btn" @click="showCompendiumDialog = true">图鉴</button>
@@ -62,6 +63,8 @@
 
     <DataSnapshotDialog v-model="showDataSnapshotDialog" />
 
+    <BattleRecordingDialog v-model="showRecordingDialog" />
+
     <DebugLogDialog v-model="showDebugLogDialog" :logs="debugLogs" @clear="clearDebugLogs" />
 
     <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
@@ -99,6 +102,7 @@ import DebugLogDialog from "./components/DebugLogDialog.vue";
 import DebugControlDialog from "./components/DebugControlDialog.vue";
 import DebugStepOverlay from "./components/DebugStepOverlay.vue";
 import DataSnapshotDialog from "./components/DataSnapshotDialog.vue";
+import BattleRecordingDialog from "./components/BattleRecordingDialog.vue";
 import { useBattleStore } from '@/presentation/stores';
 import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
@@ -124,6 +128,7 @@ const showCompendiumDialog = ref(false);
 const showDataSnapshotDialog = ref(false);
 const showDebugLogDialog = ref(false);
 const showDebugControlDialog = ref(false);
+const showRecordingDialog = ref(false);
 
 // ponytail: 调试面板现在独立监听事件总线，无需 BattleArena 维护 phase 状态
 

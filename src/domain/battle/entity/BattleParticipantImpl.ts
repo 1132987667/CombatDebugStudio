@@ -217,13 +217,26 @@ export class BattleParticipantImpl implements BattleEntity {
   recalcAll(): void {
     this.syncModifiersFromProvider()
     this.stats.recalculateAll()
+    // ponytail: maxHealth 变化时将 currentHealth 同步到新上限
+    this.clampCurrentHealth()
     this._statsVersion++
   }
 
   recalculateAll(): void {
     this.syncModifiersFromProvider()
     this.stats.recalculateAll()
+    // ponytail: maxHealth 变化时将 currentHealth 同步到新上限
+    this.clampCurrentHealth()
     this._statsVersion++
+  }
+
+  /** 将 currentHealth 限制在 maxHealth 范围内 */
+  private clampCurrentHealth(): void {
+    const maxHp = this.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    if (this.currentHealth > maxHp) {
+      const curHp = this.stats.getAttribute(ATTRIBUTE_CODE.currentHealth)
+      if (curHp) curHp.value = maxHp
+    }
   }
 
   /**

@@ -137,6 +137,8 @@ export class ParticipantStats {
         case ModifierType.FINAL: finalMultiplier += mod.value; break
       }
     }
+    // ponytail: 加成属性（attackBonus/healthBonus）已在 enemyToParticipant 中作为
+    // PERCENTAGE 修饰符注入到对应属性，此处不再重复处理。
     const value = ((attrData.base + additive) * percentMultiplier / 100 * independentMultiplier / 100) * finalMultiplier / 100
     attrData.value = Utils.round(value, 2)
     // 更新版本戳，标记为已计算

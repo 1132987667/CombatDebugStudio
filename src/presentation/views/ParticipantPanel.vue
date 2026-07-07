@@ -95,7 +95,9 @@
             </div>
             <Transition name="scene-enemies">
               <div class="scene-enemies" v-show="isSceneExpanded(group.scene.id)">
-                <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item">
+                <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item"
+                :class="{ selected: isRosterCharSelected(enemy.id) }"
+                @click="previewRosterCharacter(enemy)">
                   <div class="char-info">
                     <span class="char-name">{{ enemy.name }} (Lv.{{ enemy.level }})</span>
                     <span class="char-stats">气血:{{ enemy.stats.maxHealth }} 攻击:{{ enemy.stats.minAttack
@@ -157,7 +159,7 @@ const allyTeamCount = computed(() => allyTeam.value.filter(c => c.enabled).lengt
 // 敌方参战人数
 const enemyTeamCount = computed(() => enemyTeam.value.filter(c => c.enabled).length);
 
-const selectedCharacterId = computed(() => battleManager.getSelectedCharacterId());
+const selectedCharacterId = computed(() => battleStore.selectedCharacterId);
 
 const toggleSceneExpand = (sceneId: string) => {
   expandedScenes[sceneId] = !expandedScenes[sceneId];
@@ -237,6 +239,17 @@ const getOrderIndex = (charId: string) => {
 
 const selectCharacter = (charId: string) => {
   battleStore.selectCharacter(charId);
+};
+
+const previewRosterCharacter = (enemy: Enemy) => {
+  battleStore.previewRosterCharacter(enemy);
+};
+
+const isRosterCharSelected = (enemyId: string): boolean => {
+  const id = battleStore.selectedCharacterId;
+  if (!id || !battleStore.previewEntity) return false;
+  // ponytail: previewEntity ID 格式是 [ENEMY]_<enemyId>_<counter>
+  return id.startsWith(`[ENEMY]_${enemyId}_`);
 };
 
 const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY = PARTICIPANT_SIDE.ALLY) => {

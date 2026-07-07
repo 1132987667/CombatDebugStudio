@@ -2,7 +2,7 @@
 import { AttackType } from '@/domain/skill/types'
 import type { CalculationLog } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/types'
-import type { CombatRecord } from '@/domain/battle/combat-record'
+import type { CombatRecord, DamageBreakdown } from '@/domain/battle/combat-record'
 import { ATTRIBUTE_CODE, getAttributeDefaultValue } from '@/domain/attribute/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 
@@ -115,76 +115,147 @@ export class DamageCalculator {
       damageResult.isCritical = true
     }
 
+    // ---- 构建伤害拆分对象 ----
+    const breakdown: DamageBreakdown = {
+      baseDamage: 0,
+      extraContributions: [],
+      isCritical: damageResult.isCritical,
+      critRate: cr,
+      critDamage: 0,
+      critMultiplier: 1,
+      preCritDamage: 0,
+      postCritDamage: 0,
+      defenseValue: 0,
+      effectiveDefense: 0,
+      defenseMultiplier: 1,
+      generalDamageReduction: 0,
+      damageTakenIncrease: 0,
+      targetModifierEffects: [],
+      minDamageThreshold: this.config.minDamageThreshold ?? 1,
+      maxDamageThreshold: this.config.maxDamageThreshold ?? 9999,
+      finalDamage: 0,
+      steps: [],
+    }
+
     // 基础伤害计算
     let damage = this.calculateBaseDamage(skillStep, source, target, record)
+    breakdown.baseDamage = damage
+    breakdown.steps.push({ stepName: 'base', value: damage, description: `基础威力: ${damage}` })
 
     // extraValues 处理 — 从 skillStep.calculation.extraValues 中读取
     if (skillStep.calculation?.extraValues) {
-    for (const extra of skillStep.calculation.extraValues) {
-        const attrValue = getAttributeValue(source, extra.attribute as ATTRIBUTE_CODE)
+      for (const extra of skillStep.calculation.extraValues) {
+        // ponytail: attack 是区间属性，每次取 min~max 之间的随机值，而非静态属性值
+        const attrValue = extra.attribute === ATTRIBUTE_CODE.attack
+          ? source.getRandomAttackDemage()
+          : getAttributeValue(source, extra.attribute as ATTRIBUTE_CODE)
         const extraValue = attrValue * extra.ratio
         damage += extraValue
+        breakdown.extraContributions.push({ attribute: extra.attribute, value: extraValue, ratio: extra.ratio })
+        breakdown.steps.push({ stepName: 'extra', value: damage, description: `${extra.attribute} 额外加成: +${extraValue} → ${damage}` })
         this.logCalculation('extra_value', extraValue, `${extra.attribute} 额外加成: +${extraValue}`)
       }
+    }
+    breakdown.preCritDamage = damage
+    if (breakdown.extraContributions.length > 0) {
+      breakdown.steps.push({ stepName: 'preCrit', value: damage, description: `加成后伤害: ${damage}` })
     }
 
     // 暴击倍率
     if (damageResult.isCritical) {
       const cd = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.critDamage)
       const critMultiplier = (cd ?? this.config.critDamage) / 100
+      breakdown.critDamage = cd
+      breakdown.critMultiplier = critMultiplier
       damage = Math.floor(damage * critMultiplier)
+      breakdown.postCritDamage = damage
+      breakdown.steps.push({ stepName: 'crit', value: damage, description: `暴击! x${critMultiplier.toFixed(2)} → ${damage}` })
       battleLogManager.addDebugLog(`暴击！伤害 x${critMultiplier}`, LogLevel.INFO)
+    } else {
+      breakdown.postCritDamage = damage
     }
 
-    // 防御计算（递减公式�?
-    const defValue = getAttributeValue(target, ATTRIBUTE_CODE.defense)
-    const effectiveDefense = defValue * 0.5
-    const defenseMultiplier = Math.max(0.1, 1 - effectiveDefense / (effectiveDefense + 500))
-    damage = Math.floor(damage * defenseMultiplier)
+    // 防御计算（递减公式）
+    breakdown.defenseValue = getAttributeValue(target, ATTRIBUTE_CODE.defense)
+    breakdown.effectiveDefense = breakdown.defenseValue * 0.5
+    breakdown.defenseMultiplier = Math.max(0.1, 1 - breakdown.effectiveDefense / (breakdown.effectiveDefense + 500))
+    const beforeDef = damage
+    damage = Math.floor(damage * breakdown.defenseMultiplier)
+    breakdown.steps.push({ stepName: 'defense', value: damage, description: `防御减免(x${breakdown.defenseMultiplier.toFixed(4)}): ${beforeDef} → ${damage}` })
 
     // 攻击类型伤害减免
     const atkType = skillStep.attackType || AttackType.SKILL_ATTACK
     if (atkType === AttackType.NORMAL_ATTACK) {
       const reduction = getAttributeValue(target, ATTRIBUTE_CODE.normalAtkDmgReduction)
-      damage = Math.floor(damage * (1 - reduction / 100))
+      breakdown.normalAtkReduction = reduction
+      if (reduction > 0) {
+        const before = damage
+        damage = Math.floor(damage * (1 - reduction / 100))
+        breakdown.steps.push({ stepName: 'normalAtkReduction', value: damage, description: `普攻减免(${reduction}%): ${before} → ${damage}` })
+      }
     } else {
       const reduction = getAttributeValue(target, ATTRIBUTE_CODE.skillDmgReduction)
-      damage = Math.floor(damage * (1 - reduction / 100))
+      breakdown.skillDmgReduction = reduction
+      if (reduction > 0) {
+        const before = damage
+        damage = Math.floor(damage * (1 - reduction / 100))
+        breakdown.steps.push({ stepName: 'skillDmgReduction', value: damage, description: `技能减免(${reduction}%): ${before} → ${damage}` })
+      }
     }
 
     // 通用伤害减免
-    const dmgReduction = getAttributeValue(target, ATTRIBUTE_CODE.damageReduction)
-    damage = Math.floor(damage * (1 - dmgReduction / 100))
-
-    // 受到伤害增加
-    const dmgTakenIncrease = getAttributeValue(target, ATTRIBUTE_CODE.damageTakenIncrease)
-    if (dmgTakenIncrease > 0) {
-      damage = Math.floor(damage * (1 + dmgTakenIncrease / 100))
+    breakdown.generalDamageReduction = getAttributeValue(target, ATTRIBUTE_CODE.damageReduction)
+    if (breakdown.generalDamageReduction > 0) {
+      const before = damage
+      damage = Math.floor(damage * (1 - breakdown.generalDamageReduction / 100))
+      breakdown.steps.push({ stepName: 'generalReduction', value: damage, description: `通用减免(${breakdown.generalDamageReduction}%): ${before} → ${damage}` })
     }
 
-    // targetModifiers 处理 �?目标属性修�?   
+    // 受到伤害增加
+    breakdown.damageTakenIncrease = getAttributeValue(target, ATTRIBUTE_CODE.damageTakenIncrease)
+    if (breakdown.damageTakenIncrease > 0) {
+      const before = damage
+      damage = Math.floor(damage * (1 + breakdown.damageTakenIncrease / 100))
+      breakdown.steps.push({ stepName: 'dmgTakenIncrease', value: damage, description: `受伤增加(${breakdown.damageTakenIncrease}%): ${before} → ${damage}` })
+    }
+
+    // targetModifiers 处理 — 目标属性修正
     if (skillStep.targetModifiers) {
-    Object.entries(skillStep.targetModifiers).forEach(([attr, modifier]) => {
+      Object.entries(skillStep.targetModifiers).forEach(([attr, modifier]) => {
         const targetAttrValue = getAttributeValue(target, attr as ATTRIBUTE_CODE)
         const modifierEffect = (modifier * targetAttrValue) / 100
         damage *= 1 + modifierEffect
         damage = Math.floor(damage)
+        breakdown.targetModifierEffects.push({ attribute: attr, multiplier: modifier, effect: modifierEffect })
+        breakdown.steps.push({ stepName: 'targetModifier', value: damage, description: `${attr} 目标修正(x${(1 + modifierEffect).toFixed(4)}): → ${damage}` })
         this.logCalculation('target_modifier', modifierEffect, `${attr} 目标修正: x${1 + modifierEffect}`)
       })
     }
 
-    // 伤害阈值限制（最�?最大伤害）
+    // 伤害阈值限制（最小/最大伤害）
     const minDmg = this.config.minDamageThreshold ?? 1
     const maxDmg = this.config.maxDamageThreshold ?? 9999
+    const beforeClamp = damage
     damage = Math.max(minDmg, Math.min(maxDmg, damage))
+    if (damage !== beforeClamp) {
+      breakdown.steps.push({ stepName: 'clamp', value: damage, description: `阈值限制[${minDmg}, ${maxDmg}]: ${beforeClamp} → ${damage}` })
+    }
 
     // 确保非负整数
     damage = Math.max(0, Math.floor(damage))
 
+    breakdown.finalDamage = damage
+    breakdown.steps.push({ stepName: 'final', value: damage, description: `最终伤害: ${damage}` })
+
+    // 写入 CombatRecord
+    if (record) {
+      record.damageBreakdown = breakdown
+    }
+
     const actualDamage = damage
 
     // 日志记录
-    this.logCalculation('final', actualDamage, `最终伤�? ${actualDamage}`)
+    this.logCalculation('final', actualDamage, `最终伤害: ${actualDamage}`)
 
     return { damage: actualDamage, isCritical: damageResult.isCritical, isMiss, actualDamage }
   }

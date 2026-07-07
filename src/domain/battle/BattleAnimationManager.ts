@@ -77,6 +77,10 @@ export class BattleAnimationManager {
       const targetId = (animation.data as any).targetId
       const target = participants?.get(targetId)
       if (!target || !target.isAlive()) {
+        // ponytail: 目标已死亡/不存在，先 resolve 当前动画 Promise 再处理队列，否则 triggerAnimationAndWait 的 Promise 永不 resolve → 自动战斗卡死
+        if (typeof animation.resolve === 'function') {
+          animation.resolve()
+        }
         this.processAnimationQueue()
         return
       }

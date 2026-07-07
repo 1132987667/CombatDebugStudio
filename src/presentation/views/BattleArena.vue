@@ -532,6 +532,8 @@ const startBattle = async () => {
     const result = await battleStore.startBattle();
 
     if (result) {
+      // ponytail: 开始战斗后同步预设的战斗速度
+      battleStore.setBattleSpeed(battleStore.battleSpeed)
       notification.value?.addNotification("成功", "战斗已开始", "success");
     } else {
       notification.value?.addNotification("错误", "开始战斗失败", "error");

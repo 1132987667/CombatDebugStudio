@@ -22,14 +22,14 @@
         @update:modelValue="handleAutoPlayModeChange" />
 
       <!-- 战斗速度控制按钮 -->
-      <button class="control-btn speed-control-btn" @click="toggleBattleSpeed" :disabled="!isBattleActive">
+      <button class="control-btn speed-control-btn" @click="toggleBattleSpeed">
         <span class="speed-icon">⚡</span>
         <span class="speed-text">战斗速度 x{{ battleSpeed }}</span>
       </button>
     </div>
     <div class="control-group right">
       <label class="debug-toggle" :class="{ active: debugMode }">
-        <input type="checkbox" v-model="debugMode" :disabled="!isBattleActive" />
+        <input type="checkbox" v-model="debugMode" />
         调试
       </label>
       <button class="control-btn" @click="$emit('exit-tool')">[Q] 退出工具</button>
@@ -97,7 +97,7 @@ const handleAutoPlayModeChange = (mode: string) => {
 };
 
 // 战斗速度控制 - 使用传入的 props.battleSpeed
-const speedLevels = [1, 2, 3]; // 支持1倍、2倍、3倍三个速度档位
+const speedLevels = [1, 2, 3, 5]; // 支持1倍、2倍、3倍、5倍四个速度档位
 
 // 切换战斗速度
 const toggleBattleSpeed = () => {

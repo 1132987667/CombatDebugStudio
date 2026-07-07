@@ -135,7 +135,8 @@ const visualEffectsRef = ref<InstanceType<typeof BattleVisualEffects> | null>(nu
 // ParticipantCard 组件引用映射
 const participantCardRefs = ref<Record<string, InstanceType<typeof ParticipantCard>>>({})
 
-watch(() => props.battleSpeed, (newSpeed) => {
+// ponytail: 监听 store.battleSpeed 同步 GSAP 动画速度（props.battleSpeed 从未传值）
+watch(() => store.battleSpeed, (newSpeed) => {
   if (newSpeed) {
     setBattleSpeed(newSpeed);
   }
@@ -220,19 +221,33 @@ watch(store.animationState, (state) => {
     }
   }
   if (state.damage) {
-    // ponytail: 技能序列已由 playAttackSequence/playHealSequence 在内部 setTimeout 中处理伤害显示，
-    // 此处只处理独立伤害（调试面板、被动触发等无配套 skill 事件的情况）
     if (state.damage.isHeal) {
-      if (state.skill) return  // playHealSequence 已在内部定时处理
-      // 治疗: 目标绿光 + 治疗光环
+      if (state.skill) {
+        // ponytail: playHealSequence 已处理了光环，此处只显示治疗数字
+        const targetCard = participantCardRefs.value[state.damage.targetId]
+        targetCard?.triggerVisualState('healed', 800)
+        targetCard?.flashHpBar()
+        visualEffectsRef.value?.showHealNum(state.damage.targetId, state.damage.damage)
+        return
+      }
+      // 独立治疗（无 skill 事件）
       const targetCard = participantCardRefs.value[state.damage.targetId]
       targetCard?.triggerVisualState('healed', 800)
       targetCard?.flashHpBar()
       visualEffectsRef.value?.showHealAura(state.damage.targetId)
       visualEffectsRef.value?.showHealNum(state.damage.targetId, state.damage.damage)
     } else {
-      if (state.skill) return  // playAttackSequence 已在内部定时处理
-      // 伤害: 目标受击 + 命中爆炸 + 伤害数字
+      if (state.skill) {
+        // ponytail: playAttackSequence 已在 1100ms 处理了 impact，此处只显示伤害数字
+        const targetCard = participantCardRefs.value[state.damage.targetId]
+        targetCard?.triggerVisualState('hurt', 450)
+        visualEffectsRef.value?.showDamageNum(state.damage.targetId, state.damage.damage, state.damage.isCritical)
+        if (state.damage.isCritical) {
+          visualEffectsRef.value?.showScreenShake()
+        }
+        return
+      }
+      // 独立伤害（调试面板、被动触发等）
       const targetCard = participantCardRefs.value[state.damage.targetId]
       targetCard?.triggerVisualState('hurt', 450)
       visualEffectsRef.value?.showImpact(state.damage.targetId, 'fire')

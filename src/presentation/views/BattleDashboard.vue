@@ -65,6 +65,20 @@
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.value ||
               0 }}%</span>
           </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '命中率', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.hit)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.hit)?.value || 100, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">命中率:</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.hit)?.value || 100
+            }}%</span>
+          </div>
+          <div class="monitor-item"
+            @mouseenter="showAttrTooltip($event, '闪避率', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.dodge)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.dodge)?.value || 0, '百分比')"
+            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+            <span class="monitor-label">闪避率:</span>
+            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.dodge)?.value || 0
+            }}%</span>
+          </div>
         </div>
       </div>
       <div class="monitor-group">
@@ -372,7 +386,11 @@ const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'Alt') altKeyHeld.value = true
 }
 const handleKeyUp = (e: KeyboardEvent) => {
-  if (e.key === 'Alt') altKeyHeld.value = false
+  if (e.key === 'Alt') {
+    altKeyHeld.value = false
+    // ponytail: Alt 释放时自动隐藏属性悬浮面板，避免 mouseleave 未触发的残留
+    attrTooltipVisible.value = false
+  }
 }
 
 const attrTooltipData = ref<{

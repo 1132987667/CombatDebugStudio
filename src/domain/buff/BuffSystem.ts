@@ -160,7 +160,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     // ponytail: 免疫检查 — 若目标对该控制类型或 buffId 免疫则跳过施加
     const targetImmunities = this.characterImmunities.get(characterId)
     if (targetImmunities && targetImmunities.size > 0) {
-      const controlTag = config.controlType && config.controlType !== 'NONE'
+      const controlTag = config.controlType && config.controlType !== ControlType.NONE
         ? config.controlType.toLowerCase()
         : null
       const buffTag = buffId.replace(/^buff_/i, '')

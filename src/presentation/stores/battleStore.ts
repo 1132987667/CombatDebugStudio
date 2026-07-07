@@ -141,6 +141,8 @@ export const useBattleStore = defineStore('battle', () => {
   const enemyTeam = shallowRef<BattleEntity[]>([])
   /** 当前战斗回合数（从1开始计数，用于日志和UI显示） */
   const currentTurn = ref(1)
+  /** 最大回合数（从 BattleManager 读取） */
+  const maxTurns = ref(999)
   /** 战斗激活状态标识（true表示战斗进行中，false表示未开始或已结束） */
   const isBattleActive = ref(false)
 
@@ -153,6 +155,7 @@ export const useBattleStore = defineStore('battle', () => {
     allyTeam.value = battleManager.value.getEnabledAllyTeam()
     enemyTeam.value = battleManager.value.getEnabledEnemyTeam()
     currentTurn.value = battleManager.value.getCurrentTurn()
+    maxTurns.value = battleManager.value.getMaxTurns?.() ?? 999
     const battleState = battleManager.value.getBattleState()
     isBattleActive.value = battleState?.battleState === 'ACTIVE' || false
   }
@@ -772,6 +775,7 @@ export const useBattleStore = defineStore('battle', () => {
     allyTeam, // 我方队伍
     enemyTeam, // 敌方队伍
     currentTurn, // 当前回合数
+    maxTurns, // 最大回合数
     isBattleActive, // 战斗激活状态
 
     // ========== Computed Getters (用于模板访问) ==========

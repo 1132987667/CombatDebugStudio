@@ -28,7 +28,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
     currentAnimation: null,
   })
 
-  const elementRefs = new Map<string, Ref<HTMLElement | null>>()
+  const elementRefs = new Map<string, HTMLElement | null>()
 
   if (options.battleSpeed) {
     watch(options.battleSpeed, (newSpeed) => {
@@ -36,8 +36,8 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
     }, { immediate: true })
   }
 
-  function registerElement(id: string, elementRef: Ref<HTMLElement | null>): void {
-    elementRefs.set(id, elementRef)
+  function registerElement(id: string, element: HTMLElement | null): void {
+    elementRefs.set(id, element)
   }
 
   function unregisterElement(id: string): void {
@@ -45,8 +45,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
   }
 
   function getElement(id: string): HTMLElement | null {
-    const ref = elementRefs.get(id)
-    return ref?.value || null
+    return elementRefs.get(id) || null
   }
 
   async function playAttackAnimation(

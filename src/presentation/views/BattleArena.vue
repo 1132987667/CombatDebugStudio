@@ -240,6 +240,64 @@ const handleDebugAction = (action: string) => {
     case 'log_debug':
       battleLogManager.addDebugLog('测试调试日志')
       break
+
+    // ========== 动画调试 ==========
+    case 'test_damage_num': {
+      const tId = battleStore.selectedCharacterId || battleStore.enemyTeam[0]?.id || battleStore.allyTeam[0]?.id
+      if (tId) {
+        battleStore.setAnimationState('damage', { targetId: tId, damage: 999, damageType: 'physical', isCritical: false, isHeal: false })
+        battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试伤害数字 999` })
+      } else {
+        battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
+      }
+      break
+    }
+    case 'test_crit_num': {
+      const tId = battleStore.selectedCharacterId || battleStore.enemyTeam[0]?.id || battleStore.allyTeam[0]?.id
+      if (tId) {
+        battleStore.setAnimationState('damage', { targetId: tId, damage: 1999, damageType: 'physical', isCritical: true, isHeal: false })
+        battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试暴击数字 1999` })
+      } else {
+        battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
+      }
+      break
+    }
+    case 'test_heal_num': {
+      const tId = battleStore.selectedCharacterId || battleStore.allyTeam[0]?.id || battleStore.enemyTeam[0]?.id
+      if (tId) {
+        battleStore.setAnimationState('damage', { targetId: tId, damage: 500, damageType: 'heal', isCritical: false, isHeal: true })
+        battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试治疗数字 500` })
+      } else {
+        battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
+      }
+      break
+    }
+    case 'test_skill_fly': {
+      const source = battleStore.allyTeam[0]
+      const target = battleStore.enemyTeam[0]
+      if (source && target) {
+        battleStore.setAnimationState('skill', { sourceId: source.id, targetId: target.id, skillName: '测试技能·裂空斩', effectType: 'attack', damageType: 'physical' })
+        battleLogManager.addSystemLog({ message: `调试: 测试技能飞行 [${source.name}] → [${target.name}]` })
+      } else {
+        battleLogManager.addSystemLog({ message: '调试: 没有足够的角色' })
+      }
+      break
+    }
+    case 'clear_animations':
+      battleFieldRef.value?.cleanupAnimations()
+      battleStore.setAnimationState('damage', null)
+      battleStore.setAnimationState('miss', null)
+      battleStore.setAnimationState('buff', null)
+      battleStore.setAnimationState('skill', null)
+      battleLogManager.addSystemLog({ message: '调试: 清除所有动画效果' })
+      break
+    case 'dump_animation':
+      console.log('[动画调试] animationState:', JSON.parse(JSON.stringify(battleStore.animationState)))
+      console.log('[动画调试] battleSpeed:', battleStore.battleSpeed)
+      console.log('[动画调试] getAnimationDuration:', battleStore.getAnimationDuration())
+      console.log('[动画调试] isBattleActive:', battleStore.isBattleActive)
+      battleLogManager.addSystemLog({ message: '动画状态已输出到控制台' })
+      break
   }
 };
 
@@ -340,48 +398,6 @@ onMounted(() => {
 
   // ponytail: 调试面板现在独立处理事件，无需 BattleArena 中转
 });
-
-// 监听动画状态变化
-watch(
-  () => battleStore.getAnimationState,
-  (newAnimationState) => {
-    if (battleFieldRef.value) {
-      // 处理伤害动画
-      if (newAnimationState.damage) {
-        const { targetId, damage, isHeal, isCritical } = newAnimationState.damage;
-        battleFieldRef.value.showDamage(
-          targetId,
-          damage,
-          isHeal ? 'heal' : 'damage',
-          isCritical
-        );
-      }
-
-      // 处理闪避动画
-      if (newAnimationState.miss) {
-        const { targetId } = newAnimationState.miss;
-        battleFieldRef.value.showMiss(targetId);
-      }
-
-      // 处理Buff效果动画
-      if (newAnimationState.buff) {
-        const { targetId, buffName, isPositive } = newAnimationState.buff;
-        battleFieldRef.value.showBuffEffect(targetId, buffName, isPositive);
-      }
-
-      // 处理技能效果动画
-      if (newAnimationState.skill) {
-        const { targetId, effectType, skillName } = newAnimationState.skill;
-        battleFieldRef.value.showSkillEffect(
-          targetId,
-          effectType as 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate',
-          skillName
-        );
-      }
-    }
-  },
-  { deep: true }
-);
 
 // 监听战斗活跃状态变化
 watch(

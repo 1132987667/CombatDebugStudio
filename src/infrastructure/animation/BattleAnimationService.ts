@@ -44,7 +44,8 @@ export class BattleAnimationService {
   private activeAnimations: gsap.core.Timeline[] = []
   private activeTweens: gsap.core.Tween[] = []
 
-  private readonly BASE_ATTACK_DURATION = 900
+  // ponytail: 突进要快——出去 150ms 回来 150ms，配合 back.out 弹性回位
+  private readonly BASE_ATTACK_DURATION = 300
   private readonly SKILL_NAME_DELAY = 180
   private readonly SKILL_NAME_MOVE_DURATION = 180
   private readonly SKILL_NAME_FADE_DURATION = 360
@@ -93,12 +94,12 @@ export class BattleAnimationService {
         .to(data.attackerElement, {
           x: moveDistance * direction,
           duration: halfDuration / 1000,
-          ease: 'power2.out',
+          ease: 'power3.out',
         })
         .to(data.attackerElement, {
           x: 0,
           duration: halfDuration / 1000,
-          ease: 'power2.in',
+          ease: 'back.out(1.2)',
           onComplete: () => {
             resolve()
           },

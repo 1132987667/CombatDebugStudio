@@ -77,7 +77,8 @@ export class BattleAnimationManager {
       const targetId = (animation.data as any).targetId
       const target = participants?.get(targetId)
       if (!target || !target.isAlive()) {
-        // ponytail: 目标已死亡/不存在，先 resolve 当前动画 Promise 再处理队列，否则 triggerAnimationAndWait 的 Promise 永不 resolve → 自动战斗卡死
+        // ponytail: 目标已死亡/不存在 — 仍发出事件让 UI 显示动画效果（伤害先应用后入队动画），但快速 resolve 避免队列卡死
+        eventBus.emit(animation.type, animation.data)
         if (typeof animation.resolve === 'function') {
           animation.resolve()
         }

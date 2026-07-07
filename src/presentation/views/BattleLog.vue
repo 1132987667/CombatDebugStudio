@@ -21,6 +21,7 @@
     </div>
     <div class="log-content">
       <div v-for="(log, index) in logs" :key="index" class="log-entry" :class="log.type">
+        <span class="log-seq">#{{ log.index }}</span>
         <span class="log-type">[{{ LogTypeLabel[log.type] }}]</span>
         <span class="log-result">
           <span v-for="(segment, segIndex) in log.segments" :key="segIndex" :class="segment.classStr">{{
@@ -61,4 +62,11 @@ const applyFilters = () => {
 
 <style scoped>
 @use'@/presentation/styles/main.scss';
+.log-seq {
+  color: #6b7280;
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+  min-width: 3em;
+  display: inline-block;
+}
 </style>

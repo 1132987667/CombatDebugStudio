@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, onUnmounted, watch, nextTick, type Ref } from "vue";
+import { computed, ref, reactive, onUnmounted, watch } from "vue";
 import { raf } from '@/shared/utils/RAF';
 import { container } from '@/infrastructure/di/Container';
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
@@ -145,13 +145,11 @@ watch(() => props.battleSpeed, (newSpeed) => {
 function handleCardRef(characterId: string, el: InstanceType<typeof ParticipantCard> | null) {
   if (el) {
     participantCardRefs.value[characterId] = el
-    registerElement(characterId, el.cardRef as Ref<HTMLElement | null>)
-    // ponytail: 同步注册到 BattleVisualEffects 的位置系统
-    nextTick(() => {
-      if (el?.cardRef?.value) {
-        visualEffectsRef.value?.registerCard(characterId, el.cardRef.value)
-      }
-    })
+    registerElement(characterId, el.cardRef as HTMLElement | null)
+    // ponytail: defineExpose 自动解包 ref，el.cardRef 直接是 HTMLElement
+    if (el?.cardRef) {
+      visualEffectsRef.value?.registerCard(characterId, el.cardRef as HTMLElement)
+    }
   } else {
     delete participantCardRefs.value[characterId]
     unregisterElement(characterId)
@@ -159,35 +157,83 @@ function handleCardRef(characterId: string, el: InstanceType<typeof ParticipantC
   }
 }
 
-// ponytail: 监听 store 层动画状态变化，编排完整视觉效果
-watch(() => store.animationState, (state) => {
+// ponytail: 当 visualEffectsRef 可用时，补注册所有已存在的卡片（解决渲染时序竞态）
+watch(visualEffectsRef, (vf) => {
+  if (!vf) return
+  for (const [id, card] of Object.entries(participantCardRefs.value)) {
+    // ponytail: defineExpose 自动解包 ref，card.cardRef 直接是 HTMLElement
+    if (card?.cardRef) {
+      vf.registerCard(id, card.cardRef as HTMLElement)
+    }
+  }
+}, { immediate: true })
+
+// ponytail: 防重入 key — 相同的 (source|target|skill) 只处理一次，避免 DAMAGE_ANIMATION 触发时重复播放
+let lastSkillKey = ''
+
+// ponytail: 监听 store 层动画状态变化，编排完整视觉效果 — 直接 watch reactive 对象而非 getter 函数以保证深层变更可追踪
+watch(store.animationState, (state) => {
   if (state.skill) {
-    // 技能释放序列: 攻击者蓄力 + 技能名飞行 + 光弹
+    const key = `${state.skill.sourceId}|${state.skill.targetId}|${state.skill.skillName}`
+    if (key === lastSkillKey) return  // DAMAGE_ANIMATION 触发时 skill 还没清，跳过重复
+    lastSkillKey = key
+
+    // 技能释放序列: 攻击者蓄力 + 技能名飞行 + 突进 + 光弹 + 命中效果
     const card = participantCardRefs.value[state.skill.sourceId]
     card?.triggerVisualState('casting', 600)
     const side = getCharacterSide(state.skill.sourceId)
-    visualEffectsRef.value?.playAttackSequence(
-      state.skill.sourceId,
-      state.skill.targetId,
-      state.skill.skillName,
-      0, false,
-      side as 'left' | 'right',
-      // ponytail: effectType 决定颜色（heal=绿，elemental=蓝，其他=火红）
-      state.skill.effectType === ActionTypes.HEAL ? 'heal'
-        : state.skill.damageType === 'elemental_damage' ? 'frost'
-        : 'fire',
-    )
+    // ponytail: GSAP 前移再回位，配合 casting CSS 动画叠加效果
+    playAttackAnimation(state.skill.sourceId, side)
+    const damageType = state.skill.effectType === ActionTypes.HEAL ? 'heal'
+      : state.skill.damageType === 'elemental_damage' ? 'frost'
+      : 'fire'
+
+    if (state.skill.effectType === ActionTypes.HEAL) {
+      visualEffectsRef.value?.playHealSequence(
+        state.skill.sourceId,
+        state.skill.targetId,
+        state.skill.skillName,
+        0, side as 'left' | 'right',
+      )
+      // ponytail: 配合 playHealSequence 内部 1100ms 定时
+      setTimeout(() => {
+        participantCardRefs.value[state.skill.targetId]?.triggerVisualState('healed', 800)
+        participantCardRefs.value[state.skill.targetId]?.flashHpBar()
+      }, 1100)
+    } else {
+      visualEffectsRef.value?.playAttackSequence(
+        state.skill.sourceId,
+        state.skill.targetId,
+        state.skill.skillName,
+        0, false,
+        side as 'left' | 'right',
+        damageType,
+      )
+      // ponytail: 配合 playAttackSequence 内部 1100ms 定时
+      const isCrit = state.skill.effectType === 'critical'
+      if (isCrit) {
+        setTimeout(() => visualEffectsRef.value?.showScreenShake(), 1100)
+      }
+      setTimeout(() => {
+        participantCardRefs.value[state.skill.targetId]?.triggerVisualState('hurt', 450)
+      }, 1100)
+    }
   }
   if (state.damage) {
-    const targetCard = participantCardRefs.value[state.damage.targetId]
+    // ponytail: 技能序列已由 playAttackSequence/playHealSequence 在内部 setTimeout 中处理伤害显示，
+    // 此处只处理独立伤害（调试面板、被动触发等无配套 skill 事件的情况）
     if (state.damage.isHeal) {
+      if (state.skill) return  // playHealSequence 已在内部定时处理
       // 治疗: 目标绿光 + 治疗光环
+      const targetCard = participantCardRefs.value[state.damage.targetId]
       targetCard?.triggerVisualState('healed', 800)
       targetCard?.flashHpBar()
       visualEffectsRef.value?.showHealAura(state.damage.targetId)
       visualEffectsRef.value?.showHealNum(state.damage.targetId, state.damage.damage)
     } else {
+      if (state.skill) return  // playAttackSequence 已在内部定时处理
       // 伤害: 目标受击 + 命中爆炸 + 伤害数字
+      const targetCard = participantCardRefs.value[state.damage.targetId]
       targetCard?.triggerVisualState('hurt', 450)
       visualEffectsRef.value?.showImpact(state.damage.targetId, 'fire')
       visualEffectsRef.value?.showDamageNum(state.damage.targetId, state.damage.damage, state.damage.isCritical)

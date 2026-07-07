@@ -106,7 +106,8 @@
     "maxStacks": 1,
     "duration": -1,
     "attributes": {
-      "magicDamageTaken": "10%"
+      "defense": "+15%",
+      "dodge": "+10"
     }
   },
   {

@@ -13,6 +13,8 @@ export class BuffScriptLoader {
     try {
       const modules = (import.meta as any).glob('@/domain/buff/scripts/**/*.ts', { eager: false })
       for (const [path, moduleLoader] of Object.entries(modules)) {
+        // ponytail: 跳过 barrel 文件（index.ts），避免每个 buff 被注册两次
+        if (path.endsWith('/index.ts')) continue
         try {
           const module: any = await (moduleLoader as any)()
           for (const [exportName, exportValue] of Object.entries(module)) {

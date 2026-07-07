@@ -410,7 +410,13 @@ export class BattleRecorder {
     }
 
     const saveKey = `battle_recording_${battleId}_${Date.now()}`
-    localStorage.setItem(saveKey, JSON.stringify(saveData))
+    // ponytail: localStorage 约 5MB 限额，超出时跳过保存不阻塞战斗
+    try {
+      localStorage.setItem(saveKey, JSON.stringify(saveData))
+    } catch (e) {
+      battleLogManager.addDebugLog(`保存战斗记录失败: 存储空间不足`, { saveKey, error: e })
+      return saveKey
+    }
 
     const recordingsList = this.getSavedRecordingsList()
     if (!recordingsList.includes(saveKey)) {

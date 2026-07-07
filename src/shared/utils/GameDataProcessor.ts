@@ -434,8 +434,28 @@ export class GameDataProcessor {
                 bonusData.cachedVersion = -1
               }
             }
+            // ponytail: PERCENTAGE 作用于 attack 时同步到 minAttack/maxAttack
+            // 与 pushModifier() 中的逻辑保持一致
+            if (attrCode === ATTRIBUTE_CODE.attack) {
+              for (const targetAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
+                const targetData = entity.getAttrValue(targetAttr)
+                if (targetData) {
+                  targetData.modifiers.push({
+                    sourceKey: aura.sourceKey,
+                    sourceType: ModifierSourceType.SKILL,
+                    attribute: targetAttr,
+                    value,
+                    type: ModifierType.PERCENTAGE,
+                    description: aura.sourceName,
+                  })
+                  targetData.cachedVersion = -1
+                }
+              }
+            }
           }
         }
+        // ponytail: 通知实体重新计算所有属性值，使光环修饰符立即生效
+        entity.recalcAll()
       }
     }
   }

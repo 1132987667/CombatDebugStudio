@@ -584,6 +584,7 @@ export class BattleManager {
    * 重置战斗
    */
   resetBattle() {
+    this.battleSystem.resetBattle()
     this.battleStateManager.resetState()
     this.autoBattleManager.resetState()
     battleLogManager.clearLogs()

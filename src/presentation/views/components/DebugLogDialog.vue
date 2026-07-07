@@ -16,6 +16,7 @@
       </div>
       <div class="log-list" ref="logListRef">
         <div v-for="(log, index) in localLogs" :key="index" class="log-item" :class="'level-' + log.level">
+          <span class="log-seq">#{{ log.index }}</span>
           <span class="log-level" :class="'level-' + log.level">{{ logLevelName(log.level) }}</span>
           <span class="log-source" v-if="log.source">[{{ log.source }}]</span>
           <span class="log-message">{{ log.message }}</span>
@@ -161,6 +162,14 @@ const logLevelName = (level: LogLevel): string => {
   border-radius: 2px;
   margin-right: 0.5rem;
   font-weight: bold;
+}
+
+.log-seq {
+  color: #6b7280;
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+  min-width: 3em;
+  display: inline-block;
 }
 
 .level-DEBUG {

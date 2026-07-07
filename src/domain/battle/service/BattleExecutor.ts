@@ -215,6 +215,43 @@ export class BattleExecutor {
         segments: [{ text: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}` }],
         category: BATTLE_LOG_CATEGORIES.ACTION,
       })
+
+      // ponytail: 技能执行的伤害/治疗动画 — 与 handleHitAttack / executeAction 保持一致
+      if (targets.length > 0 && (totalDamage > 0 || totalHeal > 0)) {
+        const primaryTarget = targets[0]
+        const isCrit = allEffects.some(
+          (e: any) => e.type === 'damage' && e.isCritical,
+        )
+
+        // ponytail: 技能飞行动画只播放一次（无论伤害/治疗/同时都有）
+        await this.animationManager.triggerSkillEffectAnimation({
+          sourceId: source.id,
+          targetId: primaryTarget.id,
+          skillName: skill.name || skill.id,
+          effectType: action.type,
+          damageType: DamageType.PHYSICAL,
+        })
+
+        if (totalDamage > 0) {
+          await this.animationManager.triggerDamageAnimationAndWait({
+            targetId: primaryTarget.id,
+            damage: totalDamage,
+            damageType: DamageType.PHYSICAL,
+            isCritical: isCrit,
+            isHeal: false,
+          })
+        }
+
+        if (totalHeal > 0) {
+          await this.animationManager.triggerDamageAnimationAndWait({
+            targetId: primaryTarget.id,
+            damage: totalHeal,
+            damageType: DamageType.PHYSICAL,
+            isCritical: false,
+            isHeal: true,
+          })
+        }
+      }
     } catch (error) {
       battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error)
       action.type = ActionTypes.ATTACK
@@ -436,6 +473,15 @@ export class BattleExecutor {
       description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
     })
 
+    // ponytail: 普通攻击也发射技能名飞字，保持视觉统一
+    await this.animationManager.triggerSkillEffectAnimation({
+      sourceId: source.id,
+      targetId: target.id,
+      skillName: '普通攻击',
+      effectType: 'attack',
+      damageType: DamageType.PHYSICAL,
+    })
+
     await this.animationManager.triggerDamageAnimationAndWait({
       targetId: target.id, damage, damageType: DamageType.PHYSICAL, isCritical, isHeal: false,
     })
@@ -631,6 +677,25 @@ export class BattleExecutor {
             sourceId: source.id, targetId: target.id, skillName: action.skillId,
             effectType: action.type, damageType: DamageType.PHYSICAL,
           })
+
+          // ponytail: 技能伤害/治疗数值动画
+          if (action.damage > 0) {
+            const isCrit = skillAction.effects.some(
+              (e: any) => e.type === 'damage' && e.isCritical,
+            )
+            await this.animationManager.triggerDamageAnimationAndWait({
+              targetId: target.id, damage: action.damage,
+              damageType: DamageType.PHYSICAL,
+              isCritical: isCrit, isHeal: false,
+            })
+          }
+          if (action.heal > 0) {
+            await this.animationManager.triggerDamageAnimationAndWait({
+              targetId: target.id, damage: action.heal,
+              damageType: DamageType.PHYSICAL,
+              isCritical: false, isHeal: true,
+            })
+          }
         }
       } catch (error) {
         battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error)

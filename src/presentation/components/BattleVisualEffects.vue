@@ -24,11 +24,12 @@
       :style="{ left: aura.x + 'px', top: aura.y + 'px' }"></div>
 
     <!-- 护盾六边形 -->
-    <div v-for="hex in shieldHexes" :key="hex.id" class="shield-hex"
-      :style="{ left: hex.x + 'px', top: hex.y + 'px' }">
+    <div v-for="hex in shieldHexes" :key="hex.id" class="shield-hex" :style="{ left: hex.x + 'px', top: hex.y + 'px' }">
       <svg viewBox="0 0 100 100" fill="none">
-        <polygon points="50,5 90,27 90,73 50,95 10,73 10,27" stroke="#8ee0ff" stroke-width="2" fill="rgba(76,201,240,0.1)"/>
-        <polygon points="50,20 75,35 75,65 50,80 25,65 25,35" stroke="#6affd0" stroke-width="1" fill="none" opacity="0.6"/>
+        <polygon points="50,5 90,27 90,73 50,95 10,73 10,27" stroke="#8ee0ff" stroke-width="2"
+          fill="rgba(76,201,240,0.1)" />
+        <polygon points="50,20 75,35 75,65 50,80 25,65 25,35" stroke="#6affd0" stroke-width="1" fill="none"
+          opacity="0.6" />
       </svg>
     </div>
 
@@ -78,7 +79,7 @@ function spawn(html: string, x: number, y: number, cls: string, duration: number
   el.innerHTML = html
   el.style.left = x + 'px'
   el.style.top = y + 'px'
-  ;(container || document.getElementById('visual-effects-root') || document.body).appendChild(el)
+    ; (container || document.getElementById('visual-effects-root') || document.body).appendChild(el)
   setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el) }, duration + 50)
   return el
 }
@@ -92,7 +93,10 @@ function unregisterCard(id: string) { cardElements.delete(id) }
 
 function cardCenter(id: string): CardPos | null {
   const el = cardElements.get(id)
-  if (!el) return null
+  if (!el) {
+    console.warn('[BattleVisualEffects] 卡片未注册，无法定位:', id, '已有卡片:', Array.from(cardElements.keys()))
+    return null
+  }
   const r = el.getBoundingClientRect()
   return { x: r.left + r.width / 2, y: r.top + r.height / 2, el }
 }
@@ -287,7 +291,8 @@ function playAttackSequence(
   setTimeout(() => showProjectile(attackerId, targetId, damageType), 250)
   setTimeout(() => {
     showImpact(targetId, damageType)
-    showDamageNum(targetId, damage, isCrit)
+    // ponytail: damage=0 时跳过数字，由后续 DAMAGE_ANIMATION 事件显示真实值
+    if (damage > 0) showDamageNum(targetId, damage, isCrit)
     if (isCrit) showScreenShake()
   }, 1100)
 }
@@ -339,8 +344,10 @@ onUnmounted(() => {
 
 <style scoped>
 .battle-visual-effects {
-  position: fixed; inset: 0;
-  pointer-events: none; z-index: 1000;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
 }
 </style>
 
@@ -349,17 +356,43 @@ onUnmounted(() => {
 
 /* 屏幕震动 */
 .screen-shake {
-  animation: visual-shake 0.4s cubic-bezier(.36,.07,.19,.97);
+  animation: visual-shake 0.4s cubic-bezier(.36, .07, .19, .97);
 }
+
 @keyframes visual-shake {
-  0%, 100% { transform: translate(0,0); }
-  10% { transform: translate(-4px, 2px); }
-  20% { transform: translate(4px, -2px); }
-  30% { transform: translate(-3px, 1px); }
-  40% { transform: translate(3px, -1px); }
-  50% { transform: translate(-2px, 1px); }
-  60% { transform: translate(2px, -1px); }
-  70% { transform: translate(-1px, 0); }
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  10% {
+    transform: translate(-4px, 2px);
+  }
+
+  20% {
+    transform: translate(4px, -2px);
+  }
+
+  30% {
+    transform: translate(-3px, 1px);
+  }
+
+  40% {
+    transform: translate(3px, -1px);
+  }
+
+  50% {
+    transform: translate(-2px, 1px);
+  }
+
+  60% {
+    transform: translate(2px, -1px);
+  }
+
+  70% {
+    transform: translate(-1px, 0);
+  }
 }
 
 /* 技能名飞行 */
@@ -373,38 +406,59 @@ onUnmounted(() => {
   pointer-events: none;
   z-index: 1100;
   color: #ffd478;
-  text-shadow: 0 0 12px currentColor, 0 0 24px currentColor, 0 2px 6px rgba(0,0,0,0.95);
+  text-shadow: 0 0 12px currentColor, 0 0 24px currentColor, 0 2px 6px rgba(0, 0, 0, 0.95);
   will-change: transform, opacity;
   animation: skill-fly 1.2s cubic-bezier(0.3, 0.1, 0.6, 1) forwards;
 }
+
 @keyframes skill-fly {
-  0% { transform: translate(-50%, -50%) scale(0.3) rotate(-8deg); opacity: 0; }
-  15% { transform: translate(-50%, -50%) scale(1.25) rotate(-3deg); opacity: 1; }
-  70% { transform: translate(calc(-50% + var(--dx) * 0.85), calc(-50% + var(--dy) * 0.85)) scale(1.05) rotate(2deg); opacity: 1; }
-  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.7) rotate(5deg); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.3) rotate(-8deg);
+    opacity: 0;
+  }
+
+  15% {
+    transform: translate(-50%, -50%) scale(1.25) rotate(-3deg);
+    opacity: 1;
+  }
+
+  70% {
+    transform: translate(calc(-50% + var(--dx) * 0.85), calc(-50% + var(--dy) * 0.85)) scale(1.05) rotate(2deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.7) rotate(5deg);
+    opacity: 0;
+  }
 }
 
 /* 光弹 */
 .projectile {
   position: fixed;
-  width: 14px; height: 14px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   pointer-events: none;
   z-index: 1050;
   will-change: transform, opacity;
 }
+
 .projectile.fire {
   background: radial-gradient(circle, #fff, #ffaa30 30%, #ff4400 70%, transparent);
   box-shadow: 0 0 20px #ff6600, 0 0 40px #ff4400;
 }
+
 .projectile.frost {
   background: radial-gradient(circle, #fff, #8ee0ff 30%, #4cc9f0 70%, transparent);
   box-shadow: 0 0 20px #4cc9f0, 0 0 40px #4cc9f0;
 }
+
 .projectile.heal {
   background: radial-gradient(circle, #fff, #6affd0 30%, #2dd4a8 70%, transparent);
   box-shadow: 0 0 20px #2dd4a8, 0 0 40px #2dd4a8;
 }
+
 .projectile.shield {
   background: radial-gradient(circle, #fff, #8ee0ff 30%, #4cc9f0 70%, transparent);
   box-shadow: 0 0 20px #4cc9f0, 0 0 40px #4cc9f0;
@@ -413,46 +467,73 @@ onUnmounted(() => {
 /* 光弹尾迹 */
 .projectile-trail {
   position: fixed;
-  width: 6px; height: 6px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   pointer-events: none;
   z-index: 1049;
   animation: trail-fade 0.6s ease forwards;
 }
+
 @keyframes trail-fade {
-  0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  0% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
 }
 
 /* 命中爆炸 */
 .impact {
   position: fixed;
-  width: 80px; height: 80px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   pointer-events: none;
   z-index: 1100;
   transform: translate(-50%, -50%);
   animation: impact-burst 0.5s ease-out forwards;
 }
+
 .impact.fire {
   background: radial-gradient(circle, #fff, #ffaa30 20%, #ff4400 50%, transparent 70%);
 }
-.impact.frost, .impact.shield {
+
+.impact.frost,
+.impact.shield {
   background: radial-gradient(circle, #fff, #8ee0ff 20%, #4cc9f0 50%, transparent 70%);
 }
+
 .impact.heal {
   background: radial-gradient(circle, #fff, #6affd0 20%, #2dd4a8 50%, transparent 70%);
 }
+
 @keyframes impact-burst {
-  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
-  50% { transform: translate(-50%, -50%) scale(1.8); opacity: 0.8; }
-  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(2.5);
+    opacity: 0;
+  }
 }
 
 /* 治疗光环 */
 .heal-aura {
   position: fixed;
-  width: 80px; height: 80px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   pointer-events: none;
   z-index: 1100;
@@ -461,9 +542,17 @@ onUnmounted(() => {
   box-shadow: 0 0 24px #2dd4a8, inset 0 0 24px #2dd4a8;
   animation: aura-expand 1s ease-out forwards;
 }
+
 @keyframes aura-expand {
-  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
 }
 
 /* 护盾六边形 */
@@ -474,15 +563,33 @@ onUnmounted(() => {
   transform: translate(-50%, -50%);
   animation: hex-flash 0.9s ease-out forwards;
 }
+
 .shield-hex svg {
-  width: 70px; height: 70px;
+  width: 70px;
+  height: 70px;
   filter: drop-shadow(0 0 8px #8ee0ff) drop-shadow(0 0 16px #4cc9f0);
 }
+
 @keyframes hex-flash {
-  0% { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); opacity: 0; }
-  30% { transform: translate(-50%, -50%) scale(1.1) rotate(15deg); opacity: 1; }
-  70% { transform: translate(-50%, -50%) scale(1) rotate(25deg); opacity: 0.8; }
-  100% { transform: translate(-50%, -50%) scale(1.2) rotate(35deg); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
+    opacity: 0;
+  }
+
+  30% {
+    transform: translate(-50%, -50%) scale(1.1) rotate(15deg);
+    opacity: 1;
+  }
+
+  70% {
+    transform: translate(-50%, -50%) scale(1) rotate(25deg);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1.2) rotate(35deg);
+    opacity: 0;
+  }
 }
 
 /* 浮动数字 */
@@ -495,23 +602,28 @@ onUnmounted(() => {
   z-index: 1100;
   will-change: transform, opacity;
 }
+
 .floating-num.dmg {
-  text-shadow: 0 0 10px currentColor, 0 3px 6px rgba(0,0,0,0.95), 0 0 24px currentColor;
+  text-shadow: 0 0 10px currentColor, 0 3px 6px rgba(0, 0, 0, 0.95), 0 0 24px currentColor;
   animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
 }
+
 .floating-num.dmg.normal {
   font-size: 26px;
   color: #ff8a6a;
 }
+
 .floating-num.dmg.crit {
   font-size: 40px;
   color: #ffd040;
-  text-shadow: 0 0 14px #ff8800, 0 3px 8px rgba(0,0,0,0.95), 0 0 32px #ff6600;
+  text-shadow: 0 0 14px #ff8800, 0 3px 8px rgba(0, 0, 0, 0.95), 0 0 32px #ff6600;
 }
+
 .floating-num.dmg.crit::before {
   content: '破';
   position: absolute;
-  top: -22px; left: 50%;
+  top: -22px;
+  left: 50%;
   transform: translateX(-50%);
   font-family: 'Noto Serif SC', serif;
   font-size: 18px;
@@ -519,43 +631,91 @@ onUnmounted(() => {
   text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
   letter-spacing: 0;
 }
+
 @keyframes dmg-pop {
-  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
-  20% { transform: translate(-50%, -80%) scale(1.4); opacity: 1; }
-  40% { transform: translate(-50%, -90%) scale(1.0); opacity: 1; }
-  100% { transform: translate(-50%, -200%) scale(0.85); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+
+  20% {
+    transform: translate(-50%, -80%) scale(1.4);
+    opacity: 1;
+  }
+
+  40% {
+    transform: translate(-50%, -90%) scale(1.0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -200%) scale(0.85);
+    opacity: 0;
+  }
 }
 
 .floating-num.heal-num {
   font-size: 24px;
   color: #6affd0;
-  text-shadow: 0 0 12px #2dd4a8, 0 3px 6px rgba(0,0,0,0.95), 0 0 28px #6affd0;
+  text-shadow: 0 0 12px #2dd4a8, 0 3px 6px rgba(0, 0, 0, 0.95), 0 0 28px #6affd0;
   animation: heal-rise 1.6s cubic-bezier(0.3, 0.2, 0.5, 1) forwards;
 }
+
 @keyframes heal-rise {
-  0% { transform: translate(-50%, 30%) scale(0.3); opacity: 0; }
-  20% { transform: translate(-50%, -20%) scale(1.3); opacity: 1; }
-  50% { transform: translate(-50%, -90%) scale(1.0); opacity: 1; }
-  100% { transform: translate(-50%, -180%) scale(0.85); opacity: 0; }
+  0% {
+    transform: translate(-50%, 30%) scale(0.3);
+    opacity: 0;
+  }
+
+  20% {
+    transform: translate(-50%, -20%) scale(1.3);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translate(-50%, -90%) scale(1.0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -180%) scale(0.85);
+    opacity: 0;
+  }
 }
 
 .floating-num.shield-num {
   font-size: 22px;
   color: #8ee0ff;
-  text-shadow: 0 0 12px #4cc9f0, 0 3px 6px rgba(0,0,0,0.95), 0 0 28px #8ee0ff;
+  text-shadow: 0 0 12px #4cc9f0, 0 3px 6px rgba(0, 0, 0, 0.95), 0 0 28px #8ee0ff;
   animation: shield-rise 1.4s cubic-bezier(0.3, 0.2, 0.5, 1) forwards;
 }
+
 @keyframes shield-rise {
-  0% { transform: translate(-50%, 20%) scale(0.3); opacity: 0; }
-  25% { transform: translate(-50%, -20%) scale(1.2); opacity: 1; }
-  65% { transform: translate(-50%, -70%) scale(1.0); opacity: 1; }
-  100% { transform: translate(-50%, -110%) scale(0.85); opacity: 0; }
+  0% {
+    transform: translate(-50%, 20%) scale(0.3);
+    opacity: 0;
+  }
+
+  25% {
+    transform: translate(-50%, -20%) scale(1.2);
+    opacity: 1;
+  }
+
+  65% {
+    transform: translate(-50%, -70%) scale(1.0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -110%) scale(0.85);
+    opacity: 0;
+  }
 }
 
 /* 闪避文字（复用 dmg 类动画，灰色） */
 .floating-num.miss {
   font-size: 20px;
   color: #9ca3af;
-  text-shadow: 0 0 8px currentColor, 0 2px 4px rgba(0,0,0,0.9);
+  text-shadow: 0 0 8px currentColor, 0 2px 4px rgba(0, 0, 0, 0.9);
 }
 </style>

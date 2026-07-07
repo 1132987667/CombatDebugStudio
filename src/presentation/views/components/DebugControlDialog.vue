@@ -125,6 +125,18 @@ const debugModules: DebugModule[] = [
       { label: '行为日志', action: 'log_action', description: '调用 addActionLog', class: 'btn-info' },
       { label: '调试日志', action: 'log_debug', description: '调用 addDebugLog', class: 'btn-info' },
     ],
+  },
+  {
+    name: '动画调试',
+    icon: '🎬',
+    buttons: [
+      { label: '测试伤害数字', action: 'test_damage_num', description: '在选中角色上显示伤害飘字', class: 'btn-info' },
+      { label: '测试暴击数字', action: 'test_crit_num', description: '在选中角色上显示暴击飘字', class: 'btn-warning' },
+      { label: '测试治疗数字', action: 'test_heal_num', description: '在选中角色上显示治疗飘字', class: 'btn-success' },
+      { label: '测试技能飞行', action: 'test_skill_fly', description: '从首个友方飞向首个敌方显示技能名', class: 'btn-info' },
+      { label: '清除所有动画', action: 'clear_animations', description: '停止所有动画并重置视觉状态', class: 'btn-danger' },
+      { label: '输出动画状态', action: 'dump_animation', description: '输出当前动画状态到控制台', class: 'btn-default' },
+    ],
   }
 ]
 

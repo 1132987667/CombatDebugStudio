@@ -126,6 +126,7 @@ import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene';
 import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/domain/battle/types";
 import type { BattleManager } from '@/domain/battle/BattleManager';
+import { useBattleStore } from '@/presentation/stores';
 import { BattleParticipantImpl } from '@/domain/battle/BattleParticipantImpl';
 
 interface GroupedEnemies {
@@ -135,6 +136,7 @@ interface GroupedEnemies {
 
 // 获取 BattleManager
 const battleManager = container.resolve<BattleManager>('BattleManager');
+const battleStore = useBattleStore();
 
 // 初始化 GameDataProcessor
 const enemySearch = ref("");
@@ -234,13 +236,18 @@ const getOrderIndex = (charId: string) => {
 };
 
 const selectCharacter = (charId: string) => {
-  battleManager.selectCharacter(charId);
+  battleStore.selectCharacter(charId);
 };
 
 const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY = PARTICIPANT_SIDE.ALLY) => {
   const newCharacter = GameDataProcessor.enemyToParticipant(enemy, side)
   battleManager.addCharacterToTeam(newCharacter, side)
-  battleManager.selectCharacter(newCharacter.id)
+  // ponytail: 注册免疫标签到 BuffSystem
+  if (newCharacter.getImmunities().length > 0) {
+    const buffSystem = container.resolve<any>('BuffSystem');
+    buffSystem.registerCharacterImmunities(newCharacter.id, newCharacter.getImmunities());
+  }
+  battleStore.selectCharacter(newCharacter.id)
 };
 
 const moveCharacter = (direction: number) => {

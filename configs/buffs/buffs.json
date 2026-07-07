@@ -157,15 +157,18 @@
     "id": "buff_traitor_scheme",
     "name": "叛徒之谋",
     "duration": -1,
-    "modifiers": [
-      {
-        "id": "traitor_scheme_damage_to_low_hp",
-        "targetAttribute": "DAMAGE_TO_LOW_HP",
-        "type": "ADDITIVE",
-        "value": 30,
-        "condition": "target.hp_ratio < 0.5"
-      }
-    ]
+    "aura": {
+      "targetSelector": "self",
+      "modifiers": [
+        {
+          "id": "traitor_scheme_damage_to_low_hp",
+          "targetAttribute": "damageToLowHp",
+          "type": "ADDITIVE",
+          "value": 30,
+          "condition": "target.hp_ratio < 0.5"
+        }
+      ]
+    }
   },
   {
     "id": "buff_general_bravery",
@@ -655,14 +658,7 @@
     "id": "buff_valley_overlord",
     "name": "谷中霸主",
     "duration": -1,
-    "modifiers": [
-      {
-        "id": "valley_overlord_immune_all_control",
-        "targetAttribute": "IMMUNE_ALL_CONTROL",
-        "type": "ADDITIVE",
-        "value": 1
-      }
-    ]
+    "immunities": ["slow", "stun", "freeze", "silence", "charm", "fear", "sleep", "confuse"]
   },
   {
     "id": "buff_crit_damage_reduction",
@@ -702,21 +698,24 @@
   {
     "id": "aura_leader_awe",
     "name": "首领威严",
-    "targetSelector": "allies",
-    "modifiers": [
-      {
-        "id": "leader_awe_atk",
-        "targetAttribute": "attack",
-        "type": "PERCENTAGE",
-        "value": 15
-      },
-      {
-        "id": "leader_awe_def",
-        "targetAttribute": "defense",
-        "type": "PERCENTAGE",
-        "value": 10
-      }
-    ]
+    "duration": -1,
+    "aura": {
+      "targetSelector": "allies",
+      "modifiers": [
+        {
+          "id": "leader_awe_atk",
+          "targetAttribute": "attack",
+          "type": "PERCENTAGE",
+          "value": 15
+        },
+        {
+          "id": "leader_awe_def",
+          "targetAttribute": "defense",
+          "type": "PERCENTAGE",
+          "value": 10
+        }
+      ]
+    }
   },
   {
     "id": "buff_mountain_protection_trigger",
@@ -809,7 +808,7 @@
       "modifiers": [
         {
           "id": "water_dominance_atk",
-          "targetAttribute": "WATER_ATK",
+          "targetAttribute": "waterAtk",
           "type": "PERCENTAGE",
           "value": 0.15
         }

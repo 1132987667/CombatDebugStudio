@@ -231,6 +231,7 @@ import { SkillType } from '@/domain/skill/types';
 import { BattleEventType } from '@/domain/battle/types';
 import BattleReplay from "@/presentation/views/BattleReplay.vue";
 import { useBattleStore } from '@/presentation/stores';
+const battleStore = useBattleStore();
 
 // 获取 BattleManager
 const battleManager = container.resolve<BattleManager>('BattleManager');
@@ -238,8 +239,11 @@ const props = defineProps<{
   battleSystem?: any;
 }>();
 
-// 响应式获取选中角色数据
-const currentCharacter = computed(() => battleManager.getSelectedCharacter());
+// 响应式获取选中角色数据 — ponytail: 依赖 battleStore.selectedCharacterId 触发 Vue 响应式更新
+const currentCharacter = computed(() => {
+  const id = battleStore.selectedCharacterId;
+  return id ? battleManager.getSelectedCharacter() : null;
+});
 const selectedCharName = computed(() => currentCharacter.value?.name || "未选择");
 
 // 计算攻击范围
@@ -498,7 +502,6 @@ onUnmounted(() => {
 
 // ------------------------------------------------------------
 // 战斗回放相关方法
-const battleStore = useBattleStore();
 
 const handleReplayEvent = (event: any, index: number) => {
   console.log('回放事件:', event, '索引:', index);

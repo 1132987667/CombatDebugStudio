@@ -193,7 +193,7 @@ const currentActor = computed(() => {
 });
 
 const selectCharacter = (charId: string) => {
-  battleManager.selectCharacter(charId);
+  store.selectCharacter(charId);
   emit('select-character', charId);
 };
 

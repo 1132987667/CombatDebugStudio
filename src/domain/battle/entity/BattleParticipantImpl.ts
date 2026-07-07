@@ -89,6 +89,17 @@ export class BattleParticipantImpl implements BattleEntity {
   /** 修饰符提供者（BuffSystem），用于从 ModifierStack 同步修饰符 */
   private modifierProvider: IModifierProvider | null = null
 
+  /** 免疫标签集合 */
+  private _immunities: Set<string> = new Set()
+
+  getImmunities(): string[] {
+    return [...this._immunities]
+  }
+
+  addImmunity(tag: string): void {
+    this._immunities.add(tag.toLowerCase())
+  }
+
   /**
    * 构造函数
    * @param data - 初始化数据

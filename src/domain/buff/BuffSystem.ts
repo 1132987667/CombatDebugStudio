@@ -52,6 +52,25 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   private readonly eventBus: TriggerEventBus
   private triggerScripts = new Map<string, (context: TriggerExecutionContext) => void>()
 
+  /** 角色免疫标签注册表（初始化时由被动技能填充，运行时可查询） */
+  private characterImmunities = new Map<string, Set<string>>()
+
+  /** 注册角色的免疫标签 */
+  registerCharacterImmunities(characterId: string, tags: string[]): void {
+    if (!this.characterImmunities.has(characterId)) {
+      this.characterImmunities.set(characterId, new Set())
+    }
+    const set = this.characterImmunities.get(characterId)!
+    for (const tag of tags) {
+      set.add(tag.toLowerCase())
+    }
+  }
+
+  /** 获取角色的免疫标签 */
+  getCharacterImmunities(characterId: string): string[] {
+    return [...(this.characterImmunities.get(characterId) ?? [])]
+  }
+
   public constructor(
     scriptRegistry: BuffScriptRegistry,
     eventBus?: TriggerEventBus,
@@ -136,6 +155,18 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
       // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
       script = NOOP_BUFF_SCRIPT
+    }
+
+    // ponytail: 免疫检查 — 若目标对该控制类型或 buffId 免疫则跳过施加
+    const targetImmunities = this.characterImmunities.get(characterId)
+    if (targetImmunities && targetImmunities.size > 0) {
+      const controlTag = config.controlType && config.controlType !== 'NONE'
+        ? config.controlType.toLowerCase()
+        : null
+      const buffTag = buffId.replace(/^buff_/i, '')
+      if ((controlTag && targetImmunities.has(controlTag)) || targetImmunities.has(buffTag)) {
+        return ''
+      }
     }
 
     const existingBuffs = this.getBuffInstances(characterId).filter(

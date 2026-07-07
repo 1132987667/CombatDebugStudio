@@ -286,6 +286,14 @@ export class GameDataProcessor {
       }
     }
 
+    // 处理免疫标签（immunities）
+    const immunities = (buff as any).immunities as string[] | undefined
+    if (immunities) {
+      for (const tag of immunities) {
+        participant.addImmunity(tag)
+      }
+    }
+
     // 处理直接 attributes（如 { "dmgReduction": "+20%" }）
     const attrs = (buff as any).attributes as Record<string, string> | undefined
     if (attrs) {

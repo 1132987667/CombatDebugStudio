@@ -62,16 +62,8 @@
     },
     "steps": [
       {
-        "type": "modify_attribute",
-        "modifiers": [
-          {
-            "id": "mountain_child_slow_immune",
-            "targetAttribute": "IMMUNE_SLOW",
-            "type": "ADDITIVE",
-            "value": 1,
-            "sourceName": "山林之子"
-          }
-        ]
+        "type": "apply_buff",
+        "buffId": "buff_mountain_child"
       }
     ],
     "energyCost": 0,
@@ -92,7 +84,7 @@
         "modifiers": [
           {
             "id": "flower_regen_percent",
-            "targetAttribute": "HP_REGEN_PERCENT",
+            "targetAttribute": "hpRegenPercent",
             "type": "ADDITIVE",
             "value": 5,
             "sourceName": "花之再生"
@@ -114,8 +106,8 @@
     },
     "steps": [
       {
-        "type": "aura",
-        "auraId": "aura_leader_awe"
+        "type": "apply_buff",
+        "buffId": "aura_leader_awe"
       }
     ],
     "energyCost": 0,
@@ -162,8 +154,8 @@
     },
     "steps": [
       {
-        "type": "aura",
-        "auraId": "aura_commander_crit"
+        "type": "apply_buff",
+        "buffId": "buff_commander"
       }
     ],
     "energyCost": 0,
@@ -186,7 +178,7 @@
         "modifiers": [
           {
             "id": "shell_defense_phys_dmg_reduce",
-            "targetAttribute": "DAMAGE_REDUCE_PHYSICAL",
+            "targetAttribute": "physicalDmgReduction",
             "type": "ADDITIVE",
             "value": 15,
             "sourceName": "甲壳防御"
@@ -254,8 +246,8 @@
     },
     "steps": [
       {
-        "type": "aura",
-        "auraId": "aura_water_dominance"
+        "type": "apply_buff",
+        "buffId": "buff_water_dominance"
       }
     ],
     "energyCost": 0,
@@ -276,7 +268,7 @@
         "modifiers": [
           {
             "id": "gold_shell_magic_reduce",
-            "targetAttribute": "MAGICAL_DMG_REDUCTION",
+            "targetAttribute": "magicalDmgReduction",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "黄金甲壳"
@@ -408,8 +400,8 @@
     },
     "steps": [
       {
-        "type": "aura",
-        "auraId": "aura_demon_aura"
+        "type": "apply_buff",
+        "buffId": "buff_demon_aura"
       }
     ],
     "energyCost": 0,
@@ -474,7 +466,7 @@
         "modifiers": [
           {
             "id": "scheming_duration_reduce",
-            "targetAttribute": "CONTROL_DURATION_REDUCTION",
+            "targetAttribute": "controlDurationReduction",
             "type": "ADDITIVE",
             "value": 1,
             "sourceName": "老谋深算"
@@ -508,8 +500,8 @@
         ]
       },
       {
-        "type": "aura",
-        "auraId": "aura_mist_coverage"
+        "type": "apply_buff",
+        "buffId": "buff_mist_coverage_aura"
       }
     ],
     "energyCost": 0,
@@ -570,7 +562,7 @@
           },
           {
             "id": "snake_skin_poison_res",
-            "targetAttribute": "POISON_RES",
+            "targetAttribute": "poisonRes",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "蛇皮"
@@ -603,7 +595,7 @@
           },
           {
             "id": "water_protection_res",
-            "targetAttribute": "WATER_RES",
+            "targetAttribute": "waterRes",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "水之加护"
@@ -643,7 +635,7 @@
           },
           {
             "id": "sand_avatar_phys_reduce",
-            "targetAttribute": "PHYSICAL_DMG_REDUCTION",
+            "targetAttribute": "physicalDmgReduction",
             "type": "ADDITIVE",
             "value": 10,
             "sourceName": "沙之化身"
@@ -676,7 +668,7 @@
           },
           {
             "id": "snake_king_poison_res",
-            "targetAttribute": "POISON_RES",
+            "targetAttribute": "poisonRes",
             "type": "ADDITIVE",
             "value": 25,
             "sourceName": "蛇王威严"
@@ -713,7 +705,7 @@
           },
           {
             "id": "water_guardian_res",
-            "targetAttribute": "WATER_RES",
+            "targetAttribute": "waterRes",
             "type": "ADDITIVE",
             "value": 25,
             "sourceName": "水之守护"
@@ -757,7 +749,7 @@
           },
           {
             "id": "lava_skin_fire_res",
-            "targetAttribute": "FIRE_RES",
+            "targetAttribute": "fireRes",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "熔岩皮肤"
@@ -787,14 +779,14 @@
         "modifiers": [
           {
             "id": "fire_resonance_atk",
-            "targetAttribute": "FIRE_ATK",
+            "targetAttribute": "fireAtk",
             "type": "PERCENTAGE",
             "value": 20,
             "sourceName": "火元素共鸣"
           },
           {
             "id": "fire_resonance_res",
-            "targetAttribute": "FIRE_RES",
+            "targetAttribute": "fireRes",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "火元素共鸣"
@@ -853,21 +845,21 @@
         "modifiers": [
           {
             "id": "fire_lord_atk",
-            "targetAttribute": "FIRE_ATK",
+            "targetAttribute": "fireAtk",
             "type": "PERCENTAGE",
             "value": 30,
             "sourceName": "火焰领主"
           },
           {
             "id": "fire_lord_res",
-            "targetAttribute": "FIRE_RES",
+            "targetAttribute": "fireRes",
             "type": "ADDITIVE",
             "value": 30,
             "sourceName": "火焰领主"
           },
           {
             "id": "fire_lord_skill_dmg",
-            "targetAttribute": "FIRE_SKILL_DMG_BONUS",
+            "targetAttribute": "fireSkillDmgBonus",
             "type": "ADDITIVE",
             "value": 50,
             "sourceName": "火焰领主"
@@ -907,7 +899,7 @@
           },
           {
             "id": "giant_power_phys_skill_dmg",
-            "targetAttribute": "PHYSICAL_SKILL_DMG_BONUS",
+            "targetAttribute": "physicalSkillDmgBonus",
             "type": "ADDITIVE",
             "value": 30,
             "sourceName": "巨人之力"
@@ -970,7 +962,7 @@
         "modifiers": [
           {
             "id": "web_master_control_rate",
-            "targetAttribute": "CONTROL_SUCCESS_RATE",
+            "targetAttribute": "controlSuccessRate",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "蛛网大师"
@@ -1340,7 +1332,7 @@
         "modifiers": [
           {
             "id": "demon_subduing_dmg",
-            "targetAttribute": "DAMAGE_TO_DEMON",
+            "targetAttribute": "damageToDemon",
             "type": "ADDITIVE",
             "value": 20,
             "sourceName": "伏魔之力"
@@ -1524,7 +1516,7 @@
           },
           {
             "id": "commander_awe_ctrl_reduce",
-            "targetAttribute": "CONTROL_DURATION_REDUCTION",
+            "targetAttribute": "controlDurationReduction",
             "type": "ADDITIVE",
             "value": 50,
             "sourceName": "统帅之威"

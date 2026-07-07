@@ -262,6 +262,16 @@ export const ATTRIBUTE_CODE = {
 
   // ========== 抗性 ==========
   poisonRes: 'poisonRes', // 毒素抗性
+
+  // ========== 伤害类型减免 ==========
+  physicalDmgReduction: 'physicalDmgReduction', // 物理伤害减免
+  magicalDmgReduction: 'magicalDmgReduction', // 魔法伤害减免
+
+  // ========== 特殊伤害加成 ==========
+  fireSkillDmgBonus: 'fireSkillDmgBonus', // 火属性技能伤害加成
+  physicalSkillDmgBonus: 'physicalSkillDmgBonus', // 物理技能伤害加成
+  damageToDemon: 'damageToDemon', // 对妖魔鬼怪伤害加成
+  damageToLowHp: 'damageToLowHp', // 对低生命值目标伤害加成
 } as const
 
 export type ATTRIBUTE_CODE =
@@ -709,6 +719,64 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     description: '对毒素效果的抵抗力',
     range: '0-100%',
     impact: '减少中毒效果的持续时间和伤害',
+    isPercentage: true,
+  },
+
+  // ========== 伤害类型减免 ==========
+  physicalDmgReduction: {
+    code: 'physicalDmgReduction',
+    name: '物理伤害减免',
+    displayName: '物理伤害减免',
+    description: '对物理类型伤害的减免比例',
+    range: '0-100%',
+    impact: '减少受到的物理属性伤害',
+    isPercentage: true,
+  },
+  magicalDmgReduction: {
+    code: 'magicalDmgReduction',
+    name: '魔法伤害减免',
+    displayName: '魔法伤害减免',
+    description: '对魔法类型伤害的减免比例',
+    range: '0-100%',
+    impact: '减少受到的魔法属性伤害',
+    isPercentage: true,
+  },
+
+  // ========== 特殊伤害加成 ==========
+  fireSkillDmgBonus: {
+    code: 'fireSkillDmgBonus',
+    name: '火系技能伤害加成',
+    displayName: '火系技能伤害加成',
+    description: '火属性技能造成的额外伤害百分比',
+    range: '0-200%',
+    impact: '提高火属性技能的伤害输出',
+    isPercentage: true,
+  },
+  physicalSkillDmgBonus: {
+    code: 'physicalSkillDmgBonus',
+    name: '物理技能伤害加成',
+    displayName: '物理技能伤害加成',
+    description: '物理技能造成的额外伤害百分比',
+    range: '0-200%',
+    impact: '提高物理技能的伤害输出',
+    isPercentage: true,
+  },
+  damageToDemon: {
+    code: 'damageToDemon',
+    name: '对妖伤害加成',
+    displayName: '对妖魔鬼怪伤害加成',
+    description: '对妖魔鬼怪类敌人造成的额外伤害百分比',
+    range: '0-200%',
+    impact: '提高对妖魔鬼怪类敌人的伤害',
+    isPercentage: true,
+  },
+  damageToLowHp: {
+    code: 'damageToLowHp',
+    name: '对低血量伤害加成',
+    displayName: '对低血量目标伤害加成',
+    description: '对生命值低于一定比例的目标造成的额外伤害百分比',
+    range: '0-200%',
+    impact: '提高对低血量目标的伤害输出',
     isPercentage: true,
   },
 }

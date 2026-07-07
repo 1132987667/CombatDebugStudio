@@ -291,6 +291,21 @@ function initBattle() {
   console.log('enemyTeamData', enemyTeamData)
   // 使用BattleManager初始化队伍数据
   battleManager.initializeTeams(allyTeamData, enemyTeamData);
+
+  // ponytail: 将实体的免疫标签注册到 BuffSystem
+  const buffSystem = container.resolve<any>('BuffSystem');
+  const allParticipants = [
+    ...battleManager.getAllyTeam(),
+    ...battleManager.getEnemyTeam(),
+  ];
+  for (const entity of allParticipants) {
+    if (entity && typeof (entity as any).getImmunities === 'function') {
+      const tags: string[] = (entity as any).getImmunities();
+      if (tags.length > 0) {
+        buffSystem.registerCharacterImmunities(entity.id, tags);
+      }
+    }
+  }
 }
 
 // 初始化战斗系统和快捷键
@@ -584,7 +599,7 @@ const handleBattleSpeedChange = (speed: number) => {
 
 // 选择角色
 const selectCharacter = (characterId: string) => {
-  battleManager.selectCharacter(characterId);
+  battleStore.selectCharacter(characterId);
 };
 
 onUnmounted(() => {

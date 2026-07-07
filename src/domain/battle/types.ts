@@ -207,6 +207,11 @@ export interface BattleEntity {
   getSkillList(): SkillConfig[]
   getSkillIds(filter?: SkillType): string[]
   hasSkill(skillId: string): boolean
+
+  /** 获取该实体免疫的标签列表 */
+  getImmunities(): string[]
+  /** 添加免疫标签 */
+  addImmunity(tag: string): void
 }
 
 /**

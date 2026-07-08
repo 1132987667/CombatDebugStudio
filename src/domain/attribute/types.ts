@@ -446,10 +446,10 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     name: '当前能量',
     displayName: '当前能量',
     description: '角色当前能量值',
-    range: '0-100',
-    impact: '用于施放技能，影响技能释放频率，初始值为25',
+    range: '0-200',
+    impact: '用于施放技能，影响技能释放频率，初始值为30',
     isPercentage: false,
-    defaultValue: 25,
+    defaultValue: 30,
     isRuntimeState: true,
   },
   maxEnergy: {
@@ -457,10 +457,10 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     name: '最大能量',
     displayName: '最大能量',
     description: '最大能量上限',
-    range: '100',
-    impact: '决定能量上限，通常固定为100',
+    range: '200',
+    impact: '决定能量上限，通常固定为200',
     isPercentage: false,
-    defaultValue: 100,
+    defaultValue: 200,
   },
 
   // ========== 伤害减免细分 ==========

@@ -1,6 +1,7 @@
 import type {
   SkillConfig,
   SkillStep,
+  TargetStrategy,
 } from '@/domain/skill/types'
 import { ActionTypes, BattleActionHelper, type BattleAction, type BattleEntity } from '@/domain/battle/types'
 import {
@@ -112,6 +113,8 @@ export class SkillManager {
     target: BattleEntity,
     currentTurn: number,
     record?: CombatRecord,
+    /** 步骤级目标解析回调：给定 targetType 和主目标，返回额外目标列表 */
+    resolveExtraTargets?: (stepTargetType: string, mainTarget: BattleEntity) => BattleEntity[],
   ): BattleAction | null {
     const config = this.skillConfigs.get(skillId)
     if (!config) {
@@ -190,6 +193,23 @@ export class SkillManager {
         record,
       }
       this.executeStep(ctx)
+
+      // 处理步骤级 targetType（如 random_adjacent 溅射伤害）
+      const stepTargetType = (step as any).targetType as string | undefined
+      if (stepTargetType && resolveExtraTargets) {
+        const extraTargets = resolveExtraTargets(stepTargetType, target)
+        for (const extraTarget of extraTargets) {
+          if (!extraTarget.isAlive()) continue
+          const extraCtx: CalculationContext = {
+            skillStep: step,
+            action,
+            source,
+            targets: [extraTarget],
+            record,
+          }
+          this.executeStep(extraCtx)
+        }
+      }
     }
 
     // ponytail: 技能执行成功后设置冷却（如果配置了冷却回合数）

@@ -22,7 +22,7 @@
             <span class="monitor-label">能量:</span>
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value || 0
             }}/{{
-                currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 150 }}</span>
+                currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 200 }}</span>
           </div>
           <div class="monitor-item"
             @mouseenter="showAttackTooltip($event)"

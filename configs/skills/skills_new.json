@@ -89,7 +89,7 @@
                           "buffId":  "buff_speed_reduction"
                       }
                   ],
-        "energyCost":  25,
+        "energyCost":  50,
         "skillType":  "small"
     },
     {
@@ -117,7 +117,7 @@
                                           }
                       }
                   ],
-        "energyCost":  25,
+        "energyCost":  50,
         "skillType":  "small"
     },
     {
@@ -148,7 +148,7 @@
                           "buffId":  "buff_def_reduction"
                       }
                   ],
-        "energyCost":  25,
+        "energyCost":  50,
         "skillType":  "small"
     }
 ]

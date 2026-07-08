@@ -183,6 +183,8 @@ export class BattleExecutor {
           target,
           battle.currentRound || 1,
           record,
+          (stepTargetType, mainTarget) =>
+            this.resolveStepTargets(battle, mainTarget, stepTargetType),
         )
         if (!skillAction) {
           battleLogManager.addDebugLog(`技能执行返回空: ${skill.id}，跳过目标 ${target.id}`)
@@ -315,9 +317,24 @@ export class BattleExecutor {
         return [candidates[0]]
       case TargetStrategy.BACK:
         return [candidates[candidates.length - 1]]
-      case TargetStrategy.ADJACENT:
-        // ponytail: 相邻目标依赖位置系统，目前降级取第一个
-        return [candidates[0]]
+      case TargetStrategy.ADJACENT: {
+        // 根据主目标的 seatIndex 查找同阵营相邻目标
+        // 由于 getSkillTargets 在此上下文中用于技能级目标选择，
+        // 相邻指与 source 相邻的同队角色（用于辅助/治疗技能）
+        const sourceSeat = source.seatIndex
+        return candidates.filter(
+          (p) => Math.abs(p.seatIndex - sourceSeat) === 1 && p.isAlive(),
+        )
+      }
+      case TargetStrategy.RANDOM_ADJACENT: {
+        // 随机相邻目标 — 由步骤级 targetType 使用
+        const sourceSeat = source.seatIndex
+        const adjacent = candidates.filter(
+          (p) => Math.abs(p.seatIndex - sourceSeat) === 1 && p.isAlive(),
+        )
+        if (adjacent.length === 0) return [source]
+        return [adjacent[Math.floor(Math.random() * adjacent.length)]]
+      }
       case TargetStrategy.FIRST:
       default: {
         // 智能默认：如果技能含治疗/增益步骤，选最低血量；否则选第一个
@@ -330,6 +347,40 @@ export class BattleExecutor {
         }
         return take(candidates, cfg.count === TargetStrategy.ALL ? candidates.length : cfg.count ?? 1)
       }
+    }
+  }
+
+  /**
+   * 解析步骤级目标选择
+   * 根据 step.targetType 从主目标的相邻位置中选择额外目标
+   * @param battle 战斗数据
+   * @param mainTarget 主目标（技能级 selector 所选）
+   * @param stepTargetType 步骤目标策略（如 random_adjacent）
+   * @returns 额外目标数组（为空表示无可用目标）
+   */
+  resolveStepTargets(
+    battle: BattleData,
+    mainTarget: BattleEntity,
+    stepTargetType: string,
+  ): BattleEntity[] {
+    const participants = Array.from(battle.participants.values())
+    // 同一队伍中与主目标 seatIndex 差 ±1 的存活角色
+    const teamMates = participants.filter(
+      (p) => p.team === mainTarget.team && p.isAlive(),
+    )
+    const adjacent = teamMates.filter(
+      (p) => Math.abs(p.seatIndex - mainTarget.seatIndex) === 1,
+    )
+
+    if (adjacent.length === 0) return []
+
+    switch (stepTargetType) {
+      case TargetStrategy.RANDOM_ADJACENT:
+        return [adjacent[Math.floor(Math.random() * adjacent.length)]]
+      case TargetStrategy.ADJACENT:
+        return adjacent
+      default:
+        return []
     }
   }
 

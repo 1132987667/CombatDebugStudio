@@ -191,6 +191,15 @@ export class BattleManager {
   }
 
   /**
+   * 为队伍成员分配位置序号（seatIndex）
+   * 按数组顺序分配 0, 1, 2, ...，用于前排/后排/相邻判定
+   */
+  private assignSeatIndices(allyTeam: BattleEntity[], enemyTeam: BattleEntity[]): void {
+    allyTeam.forEach((p, i) => { p.seatIndex = i })
+    enemyTeam.forEach((p, i) => { p.seatIndex = i })
+  }
+
+  /**
    * 初始化队伍数据
    * @param allyTeam 我方队伍（BattleEntity 数组）
    * @param enemyTeam 敌方队伍（BattleEntity 数组）
@@ -198,6 +207,9 @@ export class BattleManager {
   initializeTeams(allyTeam: BattleEntity[], enemyTeam: BattleEntity[]) {
     try {
       this.validateTeams(allyTeam, enemyTeam)
+
+      // 为队伍成员分配位置序号
+      this.assignSeatIndices(allyTeam, enemyTeam)
 
       // 保存队伍编成到内部数据源
       this.allyTeam = [...allyTeam]
@@ -335,8 +347,10 @@ export class BattleManager {
    */
   addCharacterToTeam(character: BattleEntity, side: PARTICIPANT_SIDE) {
     if (side === PARTICIPANT_SIDE.ALLY) {
+      character.seatIndex = this.allyTeam.length
       this.allyTeam.push(character)
     } else {
+      character.seatIndex = this.enemyTeam.length
       this.enemyTeam.push(character)
     }
 
@@ -392,7 +406,7 @@ export class BattleManager {
   resetCharacterStates() {
     ;[...this.allyTeam, ...this.enemyTeam].forEach((participant) => {
       participant.currentHealth = participant.maxHealth
-      participant.currentEnergy = 25
+      participant.currentEnergy = 30
     })
 
     this.emitTeamChanged()
@@ -522,6 +536,9 @@ export class BattleManager {
       battleLogManager.addDebugLog('队伍数据未初始化，请先添加角色到队伍')
       return null
     }
+
+    // 为队伍成员分配位置序号
+    this.assignSeatIndices(allyTeam, enemyTeam)
 
     // 直接使用 BattleEntity 数组
     const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)

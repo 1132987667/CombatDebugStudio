@@ -193,6 +193,7 @@ export const TargetStrategy = {
   FRONT:      'front',      // 前排
   BACK:       'back',       // 后排
   ADJACENT:   'adjacent',   // 相邻
+  RANDOM_ADJACENT: 'random_adjacent', // 随机相邻
   FIRST:      'first',      // 第一个（默认）
 } as const
 export type TargetStrategy = (typeof TargetStrategy)[keyof typeof TargetStrategy]
@@ -245,24 +246,25 @@ export const SkillStepType = {
   DEAL_DAMAGE: 'deal_damage',       // 造成伤害（结构化）
   HEAL: 'heal',                     // 治疗目标（结构化）
   APPLY_BUFF: 'apply_buff',         // 施加 Buff/Debuff（通过 BuffId 引用）
-  MODIFY_ATTRIBUTE: 'modify_attribute', // 直接修改属性（主要用于被动）
+  MODIFY_ATTRIBUTE: 'modify_attribute', // 直接修改属性（仅在被动技能初始化时由 GameDataProcessor 处理）
+  // ponytail: 以下步骤类型为预留定义，当前零个技能配置使用，待需要时在 SkillExecutor 中实现
   AURA: 'aura',                     // 光环效果
   REMOVE_BUFF: 'remove_buff',       // 移除增益效果
   REMOVE_DEBUFF: 'remove_debuff',   // 移除减益效果
   CLEANSE: 'cleanse',               // 净化（移除所有负面效果）
   DISPEL: 'dispel',                 // 驱散（移除所有正面效果）
-  STUN: 'stun',                     // 眩晕
-  SILENCE: 'silence',               // 沉默
+  STUN: 'stun',                     // 眩晕（已通过 apply_buff + buff_stun 实现）
+  SILENCE: 'silence',               // 沉默（已通过 apply_buff 实现）
   KNOCKBACK: 'knockback',           // 击退
   PULL: 'pull',                     // 拉扯
   TELEPORT: 'teleport',             // 传送
   SUMMON: 'summon',                 // 召唤
   TRANSFORM: 'transform',           // 变身
-  SHIELD: 'shield',                 // 护盾
+  SHIELD: 'shield',                 // 护盾（有壳实现，无技能使用）
   REFLECT: 'reflect',               // 反射
   DRAIN: 'drain',                   // 吸取
   REVIVE: 'revive',                 // 复活
-  CUSTOM: 'custom',                 // 自定义效果
+  CUSTOM: 'custom',                 // 自定义效果（通过自定义脚本实现）
 } as const
 export type SkillStepType = (typeof SkillStepType)[keyof typeof SkillStepType]
 
@@ -282,6 +284,13 @@ export interface SkillStep {
    * 用于 deal_damage / heal / apply_buff / modify_attribute 等步骤
    */
   targetConfig?: SkillTargetConfig
+
+  /**
+   * 步骤级目标类型
+   * 默认 undefined 表示复用技能级 selector 选出的主目标
+   * 设置此字段后，该步骤会重新选择目标执行（如溅射/相邻）
+   */
+  targetType?: TargetStrategy
 
   /**
    * 伤害类型

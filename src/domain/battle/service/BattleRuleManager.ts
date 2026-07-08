@@ -161,10 +161,10 @@ export class BattleRuleManager {
           minDamage: 1,
           // maxDamage: 最大伤害上限，任何伤害计算结果不超过此值
           maxDamage: 9999,
-          // energyGainPerTurn: 每回合结束时自动恢复的能量值（初始25，上限100）
-          energyGainPerTurn: 25,
-          // energyGainOnHit: 攻击命中目标时额外获得的能量值
-          energyGainOnHit: 15,
+          // energyGainPerTurn: 每回合开始时自动恢复的能量值（初始30，上限200）
+          energyGainPerTurn: 15,
+          // energyGainOnHit: 受到攻击时获得的能量值（每回合最多3次）
+          energyGainOnHit: 12,
         },
         // 伤害计算规则：控制伤害的各类计算参数
         damage: {

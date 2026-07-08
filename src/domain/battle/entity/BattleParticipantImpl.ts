@@ -33,6 +33,8 @@ export type BattleParticipantData = {
   type: ParticipantSide
   team: ParticipantSide
   enabled: boolean
+  /** 队伍位置序号 */
+  seatIndex: number
   skills: SkillSet
   statusEffects?: StatusEffect[]
   attributeValues?: Partial<Record<ATTRIBUTE_CODE, number>>
@@ -49,6 +51,7 @@ export class BattleParticipantImpl implements BattleEntity {
   type: ParticipantSide
   team: ParticipantSide
   enabled: boolean
+  seatIndex: number
   statusEffects?: StatusEffect[]
   skills: SkillSet
   /** 属性值缓存（满足 BattleEntity 接口） */
@@ -92,6 +95,9 @@ export class BattleParticipantImpl implements BattleEntity {
   /** 免疫标签集合 */
   private _immunities: Set<string> = new Set()
 
+  /** 本回合受击能量获取次数（每回合最多3次） */
+  private _energyHitCountThisRound = 0
+
   getImmunities(): string[] {
     return [...this._immunities]
   }
@@ -115,6 +121,7 @@ export class BattleParticipantImpl implements BattleEntity {
     this.type = data.type
     this.team = data.team
     this.enabled = data.enabled ?? true
+    this.seatIndex = data.seatIndex ?? 0
     this.statusEffects = data.statusEffects
     this.skills = data.skills
     this.skillManager = new ParticipantSkills(this.skills)
@@ -572,7 +579,13 @@ export class BattleParticipantImpl implements BattleEntity {
 
     const damage = Math.max(0, amount)
     this.currentHealth = Math.max(0, this.currentHealth - damage)
-    this.gainEnergy(15)
+
+    // ponytail: 硬编码受击能量 12，与 BattleRuleManager.energyGainOnHit 配置保持一致
+    // 升级路径：由 BattleSystem 传入 combatRules.energyGainOnHit 替代硬编码
+    if (this._energyHitCountThisRound < 3) {
+      this.gainEnergy(12)
+      this._energyHitCountThisRound++
+    }
 
     return damage
   }
@@ -629,13 +642,16 @@ export class BattleParticipantImpl implements BattleEntity {
    * 行动后处理
    */
   afterAction(): void {
-    this.gainEnergy(25)
+    // ponytail: 行动结束不加能量（能量机制改为回合开始+15、受击+12/次/最多3次）
   }
 
   /**
-   * 获取所有技能配置
-   * @returns 技能配置对象
+   * 重置本回合受击能量计数器（每回合开始时调用）
    */
+  resetEnergyHitCount(): void {
+    this._energyHitCountThisRound = 0
+  }
+
   getSkills(): SkillSet {
     return this.skillManager.getSkills()
   }

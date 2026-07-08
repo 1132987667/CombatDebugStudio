@@ -1,10 +1,10 @@
-/**
- * ÎÄ¼ş: autoTaskExample.ts
- * ´´½¨ÈÕÆÚ: 2026-02-17
- * ×÷Õß: CombatDebugStudio
- * ¹¦ÄÜ: ×Ô¶¯ÈÎÎñÖ´ĞĞÊ¾Àı
- * ÃèÊö: Õ¹Ê¾ÈçºÎÊ¹ÓÃTaskExecutorÀ´ÔËĞĞ³¤Ê±¼äµÄ×Ô¶¯Õ½¶·ÈÎÎñ
- * °æ±¾: 1.0.0
+ï»¿/**
+ * æ–‡ä»¶: autoTaskExample.ts
+ * åˆ›å»ºæ—¥æœŸ: 2026-02-17
+ * ä½œè€…: CombatDebugStudio
+ * åŠŸèƒ½: è‡ªåŠ¨ä»»åŠ¡æ‰§è¡Œç¤ºä¾‹
+ * æè¿°: å±•ç¤ºå¦‚ä½•ä½¿ç”¨TaskExecutoræ¥è¿è¡Œé•¿æ—¶é—´çš„è‡ªåŠ¨æˆ˜æ–—ä»»åŠ¡
+ * ç‰ˆæœ¬: 1.0.0
  */
 
 import { container } from '@/infrastructure/di/Container'
@@ -12,22 +12,22 @@ import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 
 /**
- * ´´½¨Ê¾ÀıÕ½¶·
- * @returns Õ½¶·ID
+ * åˆ›å»ºç¤ºä¾‹æˆ˜æ–—
+ * @returns æˆ˜æ–—ID
  */
 function createExampleBattle() {
   const battleSystem = container.resolve<any>(BATTLE_SYSTEM_TOKEN.toString())
   
-  // ´´½¨Ê¾ÀıÎÒ·½²ÎÓëÕß
+  // åˆ›å»ºç¤ºä¾‹æˆ‘æ–¹å‚ä¸è€…
   const allyParticipants = [
     {
       id: 'char1',
-      name: '²âÊÔ½ÇÉ«1',
+      name: 'æµ‹è¯•è§’è‰²1',
       type: PARTICIPANT_SIDE.ALLY,
       maxHealth: 100,
       currentHealth: 100,
-      maxEnergy: 150,
-      currentEnergy: 25,
+      maxEnergy: 200,
+      currentEnergy: 30,
       level: 5,
       minAttack: 15,
       maxAttack: 25,
@@ -80,7 +80,7 @@ function createExampleBattle() {
       takeDamage(amount: number): number {
         const damage = Math.max(0, amount)
         this.currentHealth = Math.max(0, this.currentHealth - damage)
-        this.gainEnergy(15)
+        this.gainEnergy(12) // ponytail: ç¡¬ç¼–ç å—å‡»èƒ½é‡ï¼Œä¸ BattleRuleManager.energyGainOnHit ä¿æŒä¸€è‡´
         return damage
       },
       heal(amount: number): number {
@@ -103,7 +103,7 @@ function createExampleBattle() {
         return false
       },
       afterAction(): void {
-        this.gainEnergy(10)
+        // ponytail: è¡ŒåŠ¨ç»“æŸä¸åŠ èƒ½é‡
       },
       isFullHealth(): boolean {
         return this.currentHealth >= this.maxHealth
@@ -131,16 +131,16 @@ function createExampleBattle() {
     },
   ]
 
-  // ´´½¨Ê¾ÀıµĞ·½²ÎÓëÕß
+  // åˆ›å»ºç¤ºä¾‹æ•Œæ–¹å‚ä¸è€…
   const enemyParticipants = [
     {
       id: 'enemy1',
-      name: '²âÊÔµĞÈË1',
+      name: 'æµ‹è¯•æ•Œäºº1',
       type: PARTICIPANT_SIDE.ENEMY,
       maxHealth: 80,
       currentHealth: 80,
-      maxEnergy: 150,
-      currentEnergy: 25,
+      maxEnergy: 200,
+      currentEnergy: 30,
       level: 5,
       minAttack: 12,
       maxAttack: 24,
@@ -193,7 +193,7 @@ function createExampleBattle() {
       takeDamage(amount: number): number {
         const damage = Math.max(0, amount)
         this.currentHealth = Math.max(0, this.currentHealth - damage)
-        this.gainEnergy(15)
+        this.gainEnergy(12) // ponytail: ç¡¬ç¼–ç å—å‡»èƒ½é‡ï¼Œä¸ BattleRuleManager.energyGainOnHit ä¿æŒä¸€è‡´
         return damage
       },
       heal(amount: number): number {
@@ -216,7 +216,7 @@ function createExampleBattle() {
         return false
       },
       afterAction(): void {
-        this.gainEnergy(10)
+        // ponytail: è¡ŒåŠ¨ç»“æŸä¸åŠ èƒ½é‡
       },
       isFullHealth(): boolean {
         return this.currentHealth >= this.maxHealth
@@ -245,111 +245,111 @@ function createExampleBattle() {
   ]
 
   console.log('auto task example')
-  // ´´½¨Õ½¶·
+  // åˆ›å»ºæˆ˜æ–—
   const battleState = battleSystem.initialize(allyParticipants, enemyParticipants)
   return battleState.battleId
 }
 
 /**
- * ÔËĞĞ×Ô¶¯Õ½¶·ÈÎÎñÊ¾Àı
+ * è¿è¡Œè‡ªåŠ¨æˆ˜æ–—ä»»åŠ¡ç¤ºä¾‹
  */
 async function runAutoBattleTaskExample() {
-  console.log('=== ×Ô¶¯Õ½¶·ÈÎÎñÊ¾Àı ===')
+  console.log('=== è‡ªåŠ¨æˆ˜æ–—ä»»åŠ¡ç¤ºä¾‹ ===')
 
-  // ´ÓÈİÆ÷»ñÈ¡ TaskExecutor
+  // ä»å®¹å™¨è·å– TaskExecutor
   const taskExecutor = container.resolve('TaskExecutor')
 
-  // ´´½¨Ê¾ÀıÕ½¶·
+  // åˆ›å»ºç¤ºä¾‹æˆ˜æ–—
   const battleId = createExampleBattle()
-  console.log(`´´½¨Õ½¶·³É¹¦£¬Õ½¶·ID: ${battleId}`)
+  console.log(`åˆ›å»ºæˆ˜æ–—æˆåŠŸï¼Œæˆ˜æ–—ID: ${battleId}`)
 
-  // ´´½¨×Ô¶¯Õ½¶·ÈÎÎñ
-  const taskId = taskExecutor.createTask('×Ô¶¯Õ½¶·²âÊÔ', 'auto_battle', {
+  // åˆ›å»ºè‡ªåŠ¨æˆ˜æ–—ä»»åŠ¡
+  const taskId = taskExecutor.createTask('è‡ªåŠ¨æˆ˜æ–—æµ‹è¯•', 'auto_battle', {
     battleId,
-    maxRounds: 50, // ×î´ó50»ØºÏ
-    speed: 3, // Õ½¶·ËÙ¶È¼¶±ğ3
+    maxRounds: 50, // æœ€å¤§50å›åˆ
+    speed: 3, // æˆ˜æ–—é€Ÿåº¦çº§åˆ«3
   })
 
-  console.log(`´´½¨ÈÎÎñ³É¹¦£¬ÈÎÎñID: ${taskId}`)
+  console.log(`åˆ›å»ºä»»åŠ¡æˆåŠŸï¼Œä»»åŠ¡ID: ${taskId}`)
 
-  // ¿ªÊ¼Ö´ĞĞÈÎÎñ
+  // å¼€å§‹æ‰§è¡Œä»»åŠ¡
   try {
     await taskExecutor.startTask(taskId)
-    console.log(`ÈÎÎñ¿ªÊ¼Ö´ĞĞ: ${taskId}`)
+    console.log(`ä»»åŠ¡å¼€å§‹æ‰§è¡Œ: ${taskId}`)
 
-    // ¶¨ÆÚ¼ì²éÈÎÎñ×´Ì¬
+    // å®šæœŸæ£€æŸ¥ä»»åŠ¡çŠ¶æ€
     const statusInterval = setInterval(() => {
       const taskStatus = taskExecutor.getTaskStatus(taskId)
       if (taskStatus) {
-        console.log(`ÈÎÎñ×´Ì¬: ${taskStatus.status}, ½ø¶È: ${taskStatus.progress.toFixed(1)}%`)
+        console.log(`ä»»åŠ¡çŠ¶æ€: ${taskStatus.status}, è¿›åº¦: ${taskStatus.progress.toFixed(1)}%`)
 
-        // ÈÎÎñÍê³É»òÊ§°ÜÊ±Í£Ö¹¼ì²é
+        // ä»»åŠ¡å®Œæˆæˆ–å¤±è´¥æ—¶åœæ­¢æ£€æŸ¥
         if (['completed', 'failed', 'timeout'].includes(taskStatus.status)) {
           clearInterval(statusInterval)
-          console.log('=== ÈÎÎñÖ´ĞĞÍê³É ===')
-          console.log(`ÈÎÎñ½á¹û: ${taskStatus.status}`)
+          console.log('=== ä»»åŠ¡æ‰§è¡Œå®Œæˆ ===')
+          console.log(`ä»»åŠ¡ç»“æœ: ${taskStatus.status}`)
           if (taskStatus.result) {
-            console.log(`Õ½¶·½á¹û: ${taskStatus.result.winner}`)
-            console.log(`Õ½¶·»ØºÏ: ${taskStatus.result.rounds}`)
-            console.log(`Õ½¶·Ê±³¤: ${taskStatus.result.duration}ms`)
+            console.log(`æˆ˜æ–—ç»“æœ: ${taskStatus.result.winner}`)
+            console.log(`æˆ˜æ–—å›åˆ: ${taskStatus.result.rounds}`)
+            console.log(`æˆ˜æ–—æ—¶é•¿: ${taskStatus.result.duration}ms`)
           }
           if (taskStatus.error) {
-            console.error(`ÈÎÎñ´íÎó: ${taskStatus.error.message}`)
+            console.error(`ä»»åŠ¡é”™è¯¯: ${taskStatus.error.message}`)
           }
         }
       }
     }, 2000)
   } catch (error) {
-    console.error('ÈÎÎñÖ´ĞĞÊ§°Ü:', error)
+    console.error('ä»»åŠ¡æ‰§è¡Œå¤±è´¥:', error)
   }
 }
 
 /**
- * ÔËĞĞ¶à¸ö×Ô¶¯Õ½¶·ÈÎÎñÊ¾Àı
+ * è¿è¡Œå¤šä¸ªè‡ªåŠ¨æˆ˜æ–—ä»»åŠ¡ç¤ºä¾‹
  */
 async function runMultipleTasksExample() {
-  console.log('=== ¶àÈÎÎñÖ´ĞĞÊ¾Àı ===')
+  console.log('=== å¤šä»»åŠ¡æ‰§è¡Œç¤ºä¾‹ ===')
 
-  // ´ÓÈİÆ÷»ñÈ¡ TaskExecutor
+  // ä»å®¹å™¨è·å– TaskExecutor
   const taskExecutor = container.resolve('TaskExecutor')
 
-  // ´´½¨¶à¸öÕ½¶·ºÍÈÎÎñ
+  // åˆ›å»ºå¤šä¸ªæˆ˜æ–—å’Œä»»åŠ¡
   for (let i = 1; i <= 3; i++) {
     const battleId = createExampleBattle()
-    const taskId = taskExecutor.createTask(`×Ô¶¯Õ½¶·²âÊÔ ${i}`, 'auto_battle', {
+    const taskId = taskExecutor.createTask(`è‡ªåŠ¨æˆ˜æ–—æµ‹è¯• ${i}`, 'auto_battle', {
       battleId,
       maxRounds: 30,
       speed: 2,
     })
 
-    console.log(`´´½¨ÈÎÎñ ${i}: ${taskId}`)
+    console.log(`åˆ›å»ºä»»åŠ¡ ${i}: ${taskId}`)
     await taskExecutor.startTask(taskId)
 
-    // ¶ÌÔİÑÓ³Ù£¬±ÜÃâÍ¬Ê±´´½¨¶à¸öÕ½¶·µ¼ÖÂµÄÎÊÌâ
+    // çŸ­æš‚å»¶è¿Ÿï¼Œé¿å…åŒæ—¶åˆ›å»ºå¤šä¸ªæˆ˜æ–—å¯¼è‡´çš„é—®é¢˜
     await new Promise(resolve => setTimeout(resolve, 1000))
   }
 
-  // ¼à¿ØËùÓĞÈÎÎñ×´Ì¬
+  // ç›‘æ§æ‰€æœ‰ä»»åŠ¡çŠ¶æ€
   const statusInterval = setInterval(() => {
     const allTasks = taskExecutor.getAllTasks()
     const runningTasks = taskExecutor.getRunningTasks()
 
-    console.log(`\n=== ÈÎÎñ×´Ì¬¼à¿Ø ===`)
-    console.log(`×ÜÈÎÎñÊı: ${allTasks.length}`)
-    console.log(`ÔËĞĞÖĞÈÎÎñÊı: ${runningTasks.length}`)
+    console.log(`\n=== ä»»åŠ¡çŠ¶æ€ç›‘æ§ ===`)
+    console.log(`æ€»ä»»åŠ¡æ•°: ${allTasks.length}`)
+    console.log(`è¿è¡Œä¸­ä»»åŠ¡æ•°: ${runningTasks.length}`)
 
     allTasks.forEach(task => {
-      console.log(`${task.name}: ${task.status}, ½ø¶È: ${task.progress.toFixed(1)}%`)
+      console.log(`${task.name}: ${task.status}, è¿›åº¦: ${task.progress.toFixed(1)}%`)
     })
 
-    // ËùÓĞÈÎÎñÍê³ÉÊ±Í£Ö¹¼ì²é
+    // æ‰€æœ‰ä»»åŠ¡å®Œæˆæ—¶åœæ­¢æ£€æŸ¥
     if (runningTasks.length === 0) {
       clearInterval(statusInterval)
-      console.log('\n=== ËùÓĞÈÎÎñÖ´ĞĞÍê³É ===')
+      console.log('\n=== æ‰€æœ‰ä»»åŠ¡æ‰§è¡Œå®Œæˆ ===')
     }
   }, 3000)
 }
 
-// µ¼³öÊ¾Àıº¯Êı
+// å¯¼å‡ºç¤ºä¾‹å‡½æ•°
 export { runAutoBattleTaskExample, runMultipleTasksExample }
 

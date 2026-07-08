@@ -6,7 +6,7 @@ import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 
 export class SkillExecutor {
   constructor(
@@ -39,6 +39,17 @@ export class SkillExecutor {
       case SkillStepType.SILENCE:
         this.executeControl(skillStep, action, source, target, skillStep.type)
         break
+      default: {
+        // ponytail: 未实现的步骤类型 — 当前无任何技能配置使用这些类型
+        // 升级路径：当有技能配置使用它们时，在 switch 中添加对应 case
+        battleLogManager.addDebugLog(`未实现的技能步骤类型: ${skillStep.type}`, LogLevel.WARN)
+        action.effects.push({
+          type: 'status',
+          targetId: target.id,
+          description: `步骤类型 ${skillStep.type} 未实现`,
+        })
+        break
+      }
     }
   }
 

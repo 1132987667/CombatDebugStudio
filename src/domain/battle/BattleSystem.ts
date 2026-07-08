@@ -448,6 +448,11 @@ export class BattleSystem implements IBattleSystem {
         }
       })
 
+      // 重置所有存活角色的受击能量计数器（每回合开始）
+      aliveParticipants.forEach((participant) => {
+        participant.resetEnergyHitCount()
+      })
+
       // 为所有存活角色增加回合开始能量
       const combatRules = this.ruleManager.getCombatRules()
       aliveParticipants.forEach((participant) => {
@@ -885,6 +890,14 @@ export class BattleSystem implements IBattleSystem {
         turnOrder,
       },
     })
+
+    // 重置所有存活角色的受击能量计数器
+    for (const p of aliveParticipants) {
+      commands.push({
+        type: 'RESET_ENERGY_HIT_COUNT',
+        payload: { targetId: p.id },
+      })
+    }
 
     // 为存活角色生成能量增加命令
     const combatRules = this.ruleManager.getCombatRules()

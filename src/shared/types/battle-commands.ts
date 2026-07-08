@@ -82,8 +82,17 @@ export interface RemoveBuffCommand {
 }
 
 /**
- * 推进回合命令
+ * 重置受击能量计数器命令
  */
+export interface ResetEnergyHitCountCommand {
+  type: 'RESET_ENERGY_HIT_COUNT'
+  payload: {
+    targetId: string
+  }
+}
+
+/**
+ * 推进回合命令
 export interface NextTurnCommand {
   type: 'NEXT_TURN'
   payload: {
@@ -169,6 +178,7 @@ export type BattleCommand =
   | ApplyHealCommand
   | GainEnergyCommand
   | SpendEnergyCommand
+  | ResetEnergyHitCountCommand
   | AddBuffCommand
   | RemoveBuffCommand
   | NextTurnCommand

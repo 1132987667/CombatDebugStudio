@@ -78,10 +78,10 @@ export const BATTLE_CONSTANTS = {
   ENEMY_ATTACK_DAMAGE_MIN: 8,
   ENEMY_ATTACK_DAMAGE_MAX: 15,
   /** 默认能量上限 */
-  DEFAULT_MAX_ENERGY: 150,
+  DEFAULT_MAX_ENERGY: 200,
   /** 技能能量消耗阈值 */
   SKILL_ENERGY_THRESHOLD: 50,
-  ULTIMATE_ENERGY_THRESHOLD: 100,
+  ULTIMATE_ENERGY_THRESHOLD: 150,
   /** 技能使用概率 */
   SKILL_USE_CHANCE: 0.4,
   ULTIMATE_USE_CHANCE: 0.3,
@@ -161,6 +161,8 @@ export interface BattleEntity {
   type: ParticipantSide // 实体类型
   team: ParticipantSide // 实体阵营
   enabled: boolean // 实体是否启用
+  /** 队伍位置序号（从0开始，用于前排/后排/相邻判定） */
+  seatIndex: number
   /** 状态效果列表 */
   statusEffects?: StatusEffect[]
   /** 技能配置 */
@@ -201,6 +203,8 @@ export interface BattleEntity {
   gainEnergy(amount: number): void
   spendEnergy(amount: number): boolean
   afterAction(): void
+  /** 重置本回合受击能量计数器 */
+  resetEnergyHitCount(): void
   isFullHealth(): boolean
   needsHealing(): boolean
 

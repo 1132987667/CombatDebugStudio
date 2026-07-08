@@ -59,10 +59,10 @@ export function checkBattleEndCondition(
   maxTurns: number,
 ): BattleEndCheckResult {
   const aliveCharacters = Array.from(participants.values()).filter(
-    (p) => p.type === PARTICIPANT_SIDE.ALLY && p.isAlive(),
+    (p) => p.team === PARTICIPANT_SIDE.ALLY && p.isAlive(),
   )
   const aliveEnemies = Array.from(participants.values()).filter(
-    (p) => p.type === PARTICIPANT_SIDE.ENEMY && p.isAlive(),
+    (p) => p.team === PARTICIPANT_SIDE.ENEMY && p.isAlive(),
   )
 
   if (aliveCharacters.length === 0) {

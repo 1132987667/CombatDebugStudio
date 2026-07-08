@@ -168,10 +168,10 @@ export class BaseBattleAI implements BattleAI {
     battleState: BattleState,
     participant: BattleEntity,
   ): BattleAnalysis {
-    const allies = this.getAliveParticipants(battleState, participant.type)
+    const allies = this.getAliveParticipants(battleState, participant.team)
     const enemies = this.getAliveParticipants(
       battleState,
-      participant.type === PARTICIPANT_SIDE.ALLY
+      participant.team === PARTICIPANT_SIDE.ALLY
         ? PARTICIPANT_SIDE.ENEMY
         : PARTICIPANT_SIDE.ALLY,
     )
@@ -209,10 +209,10 @@ export class BaseBattleAI implements BattleAI {
   /** 获取活着的参与者 */
   private getAliveParticipants(
     battleState: BattleState,
-    type: ParticipantSide,
+    team: ParticipantSide,
   ): BattleEntity[] {
     return Array.from(battleState.participants.values()).filter(
-      (p) => p.type === type && p.isAlive(),
+      (p) => p.team === team && p.isAlive(),
     )
   }
 
@@ -222,7 +222,7 @@ export class BaseBattleAI implements BattleAI {
     participant: BattleEntity,
   ): string {
     const enemies = Array.from(battleState.participants.values()).filter(
-      (p) => p.type !== participant.type && p.isAlive(),
+      (p) => p.team !== participant.team && p.isAlive(),
     )
 
     if (enemies.length === 0) return ''

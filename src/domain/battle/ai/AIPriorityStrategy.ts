@@ -100,11 +100,11 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
     participant: BattleEntity,
   ): BattleAnalysis {
     const allies = Array.from(battleState.participants.values()).filter(
-      (p) => p.type === participant.type && p.isAlive(),
+      (p) => p.team === participant.team && p.isAlive(),
     )
 
     const enemies = Array.from(battleState.participants.values()).filter(
-      (p) => p.type !== participant.type && p.isAlive(),
+      (p) => p.team !== participant.team && p.isAlive(),
     )
 
     const teamHealth = allies.reduce((sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth), 0)

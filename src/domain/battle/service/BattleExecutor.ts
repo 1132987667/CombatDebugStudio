@@ -211,10 +211,12 @@ export class BattleExecutor {
       action.effects = allEffects
 
       const targetNames = targets.map((t) => t.name).join(', ')
+      const damageText = totalDamage > 0 ? `，造成 ${totalDamage} 点伤害` : ''
+      const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点生命` : ''
       battleLogManager.addBattleLog({
         turn: battle.currentTurn,
-        message: `技能执行成功: ${skill.id}`,
-        segments: [{ text: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}` }],
+        message: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}`,
+        segments: [{ text: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}` }],
         category: BATTLE_LOG_CATEGORIES.ACTION,
       })
 
@@ -293,7 +295,7 @@ export class BattleExecutor {
     }
 
     let candidates = participants.filter(factionFilter)
-    if (candidates.length === 0) return [source]
+    if (candidates.length === 0) return []
 
     const take = (arr: BattleEntity[], n: number): BattleEntity[] => arr.slice(0, Math.max(1, n))
 
@@ -393,7 +395,7 @@ export class BattleExecutor {
     skill: SkillConfig,
   ): string {
     const targets = this.getSkillTargets(battle, source, skill)
-    return targets.length > 0 ? targets[0].id : source.id
+    return targets.length > 0 ? targets[0].id : ''
   }
 
   // ============ 普通攻击 ============
@@ -600,9 +602,9 @@ export class BattleExecutor {
    */
   selectTarget(battle: BattleData, source: BattleEntity): string {
     const enemies = Array.from(battle.participants.values()).filter(
-      (p) => p.type !== source.type && p.isAlive(),
+      (p) => p.id !== source.id && p.team !== source.team && p.isAlive(),
     )
-    if (enemies.length === 0) return source.id
+    if (enemies.length === 0) return ''
     return enemies[Math.floor(Math.random() * enemies.length)].id
   }
 
@@ -640,19 +642,19 @@ export class BattleExecutor {
    */
   async executeDefaultAction(battle: BattleData, participant: BattleEntity): Promise<void> {
     const enemies = Array.from(battle.participants.values())
-      .filter((p) => p.type === PARTICIPANT_SIDE.ENEMY && p.isAlive())
+      .filter((p) => p.team === PARTICIPANT_SIDE.ENEMY && p.isAlive())
       .map((p) => p.id)
     const characters = Array.from(battle.participants.values())
-      .filter((p) => p.type === PARTICIPANT_SIDE.ALLY && p.isAlive())
+      .filter((p) => p.team === PARTICIPANT_SIDE.ALLY && p.isAlive())
       .map((p) => p.id)
 
     let targetId: string
     let damage: number
 
-    if (participant.type === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
+    if (participant.team === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
       targetId = enemies[Math.floor(Math.random() * enemies.length)]
       damage = Math.floor(Math.random() * 20) + 10
-    } else if (participant.type === PARTICIPANT_SIDE.ENEMY && characters.length > 0) {
+    } else if (participant.team === PARTICIPANT_SIDE.ENEMY && characters.length > 0) {
       targetId = characters[Math.floor(Math.random() * characters.length)]
       damage = Math.floor(Math.random() * 15) + 8
     } else {

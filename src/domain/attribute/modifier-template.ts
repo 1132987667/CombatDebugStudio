@@ -11,7 +11,7 @@ import type {
   ATTRIBUTE_CODE,
   ModifierType,
   ModifierSourceType,
-} from './types'
+} from '@/domain/attribute/types'
 
 /**
  * 动态数值计算上下文

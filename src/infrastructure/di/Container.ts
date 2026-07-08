@@ -110,7 +110,6 @@ import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
-import { TaskExecutor } from '@/infrastructure/task/TaskExecutor'
 import { BattleService } from '@/application/facade/BattleFacade'
 import { battleEventManager } from '@/domain/battle/events/BattleEventManager'
 import { setLogger } from '@/domain/port/logging'
@@ -179,10 +178,6 @@ export function initializeContainer(): void {
     },
     true,
   )
-
-  // 8. 注册TaskExecutor（依赖GameBattleSystem）
-  const battleSystem = container.resolve<any>(BATTLE_SYSTEM_TOKEN.toString())
-  container.register('TaskExecutor', new TaskExecutor(battleSystem))
 
   // 注册BattleManager
   container.registerFactory(

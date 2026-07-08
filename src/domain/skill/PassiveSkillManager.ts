@@ -1,4 +1,5 @@
 import type { BattleEntity, BattleTriggerPhase } from '@/domain/battle/types'
+import { BATTLE_CONSTANTS } from '@/domain/battle/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType } from '@/domain/buff/types'
@@ -84,7 +85,7 @@ export class PassiveSkillManager {
         case 'source_has_buff':
           return source.getBuffInstanceIds().length > 0
         case 'target_low_hp':
-          return target ? (target.getAttribute('currentHealth') / Math.max(1, target.getAttribute('maxHealth'))) < 0.3 : false
+          return target ? (target.getAttribute('currentHealth') / Math.max(1, target.getAttribute('maxHealth'))) < BATTLE_CONSTANTS.HEAL_THRESHOLD : false
         default:
           return true
       }

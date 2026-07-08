@@ -166,7 +166,7 @@ function formatBattleName(rec: RecordedBattle): string {
 .recording-body {
   display: flex;
   gap: 12px;
-  height: 500px;
+  height: var(--recording-body-height, 500px);
 }
 
 /* ====== 左侧列表 ====== */

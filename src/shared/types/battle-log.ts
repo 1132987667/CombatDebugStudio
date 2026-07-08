@@ -1,8 +1,5 @@
 /**
  * 战斗日志系统 - 统一类型定义
- *
- * 整合了以下文件中的类型定义：
- *
  * 确保系统中所有战斗日志相关的类型引用保持一致
  */
 
@@ -59,10 +56,6 @@ export const LogTypeLabel: Record<LogType, string> = {
   [LogType.DEBUG]: '调试',
 }
 
-/**
- * 战斗日志级别类型 - 用于UI展示和过滤
- */
-export type BattleLogLevel = 'debug' | 'info' | 'warning' | 'error'
 
 /**
  * 战斗日志类别常量
@@ -93,12 +86,7 @@ export type BattleLogCategory =
  * 统一日志消息类型 - 合并级别和类别
  * 用于需要同时表示级别和业务类别的场景
  */
-export type BattleLogMessageType = BattleLogLevel | BattleLogCategory
-
-/**
- * 战斗日志条目类型枚举
- */
-export type BattleLogType = 'system' | '普通攻击' | '小技能' | '大技能'
+export type BattleLogMessageType = LogType | BattleLogCategory
 
 /**
  * 战斗动作类型定义 - 统一所有动作类型
@@ -188,7 +176,7 @@ export function newLogSegment(text: string, classStr?: string): LogSegment {
 /**
  * HTML格式化选项扩展 - 包含HTML特定属性
  */
-export interface HTMLFormatOptions extends LogFormatOptions {
+export interface HTMLFormatOptions {
   forceCritical?: boolean
   sourceIsAlly?: boolean
   targetIsAlly?: boolean
@@ -436,8 +424,8 @@ export const LogUtils = {
    * 检查日志级别是否有效
    */
   isValidLogLevel(level: string): boolean {
-    const validLevels: BattleLogLevel[] = ['debug', 'info', 'warning', 'error']
-    return validLevels.includes(level as BattleLogLevel)
+    const validLevels: LogType[] = ['debug', 'info', 'warning', 'error']
+    return validLevels.includes(level as LogType)
   },
 
   isValidLogCategory(category: string): boolean {
@@ -451,7 +439,7 @@ export const LogUtils = {
    */
   getLevelDisplayName(level: BattleLogMessageType): string {
     const displayNames: Partial<
-      Record<BattleLogLevel | BattleLogCategory, string>
+      Record<LogType | BattleLogCategory, string>
     > = {
       damage: '伤害',
       heal: '治疗',
@@ -659,7 +647,7 @@ function generateSystemLogSegments(action: BattleAction): {
 
   if (description.includes('战斗开始')) {
     return {
-      category: 'system',
+      category: BATTLE_LOG_CATEGORIES.SYSTEM,
       level: 'info',
       segments: [{ text: description }],
     }
@@ -671,14 +659,14 @@ function generateSystemLogSegments(action: BattleAction): {
     description.includes('失败')
   ) {
     return {
-      category: 'system',
+      category: BATTLE_LOG_CATEGORIES.SYSTEM,
       level: description.includes('胜利') ? 'info' : 'warning',
       segments: [{ text: description }],
     }
   }
 
   return {
-    category: 'system',
+    category: BATTLE_LOG_CATEGORIES.SYSTEM,
     level: 'info',
     segments: [{ text: description }],
   }
@@ -702,7 +690,7 @@ function generateMissLogSegments(
   const isSkill = action.type === ActionTypes.SKILL
 
   return {
-    category: 'status',
+    category: BATTLE_LOG_CATEGORIES.STATUS,
     level: 'info',
     segments: [
       {
@@ -738,7 +726,7 @@ function generateCritLogSegments(
   const damage = action.damage || 0
 
   return {
-    category: 'crit',
+    category: BATTLE_LOG_CATEGORIES.CRIT,
     level: 'info',
     segments: [
       {
@@ -777,7 +765,7 @@ function generateHealLogSegments(
   const healAmount = action.heal || 0
 
   return {
-    category: 'heal',
+    category: BATTLE_LOG_CATEGORIES.HEAL,
     level: 'info',
     segments: [
       {
@@ -816,7 +804,7 @@ function generateDamageLogSegments(
 
   if (isSkill && skillName) {
     return {
-      category: 'damage',
+      category: BATTLE_LOG_CATEGORIES.DAMAGE,
       level: 'info',
       segments: [
         {
@@ -836,7 +824,7 @@ function generateDamageLogSegments(
   }
 
   return {
-    category: 'damage',
+    category: BATTLE_LOG_CATEGORIES.DAMAGE,
     level: 'info',
     segments: [
       {
@@ -872,7 +860,7 @@ function generateDefaultLogSegments(
   const effectDescription = action.effects[0]?.description || '执行了动作'
 
   return {
-    category: 'action',
+    category: BATTLE_LOG_CATEGORIES.ACTION,
     level: 'info',
     segments: [
       {

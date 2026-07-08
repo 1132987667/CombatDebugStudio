@@ -80,16 +80,6 @@ const clearLogs = () => {
   emit('clear')
 }
 
-const formatTime = (timestamp: number): string => {
-  const date = new Date(timestamp)
-  return date.toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    fractionalSecondDigits: 3
-  })
-}
-
 const logLevelName = (level: LogLevel): string => {
   const names: Record<LogLevel, string> = {
     [LogLevel.DEBUG]: 'DEBUG',

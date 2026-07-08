@@ -8,8 +8,6 @@ import { ref, onUnmounted, watch, type Ref } from 'vue'
 import {
   BattleAnimationService,
   battleAnimationService,
-  type AttackAnimationData,
-  type HitAnimationData,
 } from '@/infrastructure/animation/BattleAnimationService'
 
 export interface UseBattleAnimationOptions {

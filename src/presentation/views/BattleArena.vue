@@ -108,7 +108,7 @@ import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
 import { PARTICIPANT_SIDE } from "@/domain/battle/types";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
-import type { BattleManager } from '@/domain/battle/BattleManager';
+import type { BattleService } from '@/application/facade/BattleFacade';
 import type { LogEntry } from '@/shared/types/battle-log';
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
@@ -116,8 +116,8 @@ const notification = ref<InstanceType<typeof Notification> | null>(null);
 // 使用Pinia状态管理
 const battleStore = useBattleStore();
 
-// BattleManager 响应式实例
-const battleManager = shallowReactive(container.resolve<BattleManager>('BattleManager'));
+// BattleService 响应式实例
+const battleService = shallowReactive(container.resolve<BattleService>('BattleService'));
 
 const selectedScene = ref("");
 const sceneName = ref("");
@@ -301,39 +301,38 @@ const handleDebugAction = (action: string) => {
   }
 };
 
-let logUpdateInterval: ReturnType<typeof setInterval> | null = null;
 const battleFieldRef = ref<InstanceType<typeof BattleField> | null>(null);
 const savedScenes = ref<string[]>([]);
 const injectableStatuses = ref<InjectableStatus[]>([]);
 
 // 计算属性
 const getSelectedCharName = computed(() => {
-  const selectedChar = battleManager.getSelectedCharacter()
+  const selectedChar = battleService.getSelectedCharacter()
   return selectedChar?.name || "未选择"
 });
 
 const selectedCharacterId = computed(() => {
-  return battleManager.getSelectedCharacterId() || null
+  return battleService.getSelectedCharacterId() || null
 });
 
 const selectedCharacter = computed(() => {
-  return battleManager.getSelectedCharacter()
+  return battleService.getSelectedCharacter()
 });
 
 const currentTurn = computed(() => {
-  return battleManager.getCurrentTurn() || 1
+  return battleService.getCurrentTurn() || 1
 });
 
 const allyTeam = computed(() => {
-  return battleManager.getAllyTeam() || []
+  return battleService.getAllyTeam() || []
 });
 
 const enemyTeam = computed(() => {
-  return battleManager.getEnemyTeam() || []
+  return battleService.getEnemyTeam() || []
 });
 
 const teamCounts = computed(() => {
-  return battleManager.getTeamCounts() || { ally: 0, enemy: 0 }
+  return battleService.getTeamCounts() || { ally: 0, enemy: 0 }
 });
 
 
@@ -352,14 +351,14 @@ function initBattle() {
   const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY));
   console.log('allyTeamData', allyTeamData)
   console.log('enemyTeamData', enemyTeamData)
-  // 使用BattleManager初始化队伍数据
-  battleManager.initializeTeams(allyTeamData, enemyTeamData);
+  // 使用BattleService初始化队伍数据
+  battleService.initializeTeams(allyTeamData, enemyTeamData);
 
   // ponytail: 将实体的免疫标签注册到 BuffSystem
   const buffSystem = container.resolve<any>('BuffSystem');
   const allParticipants = [
-    ...battleManager.getAllyTeam(),
-    ...battleManager.getEnemyTeam(),
+    ...battleService.getAllyTeam(),
+    ...battleService.getEnemyTeam(),
   ];
   for (const entity of allParticipants) {
     if (entity && typeof (entity as any).getImmunities === 'function') {
@@ -374,29 +373,15 @@ function initBattle() {
 // 初始化战斗系统和快捷键
 onMounted(() => {
   // 初始化战斗管理器
-  battleStore.initializeBattleManager(battleManager);
-  battleManager.loadSkillConfigs();
-
+  battleStore.initializeBattleService(battleService);
+  battleService.loadSkillConfigs();
   // 初始化队伍数据
   initBattle();
-
-  battleLogManager.addSystemLog({
-    message: '测试工具已加载',
-  });
-  battleLogManager.addSystemLog({
-    message: `战斗管理器初始化完成，队伍数据: 我方${teamCounts.value.ally}人 | 敌方${teamCounts.value.enemy}人`,
-  });
-
-  // 监听 battleLogManager 的调试日志
-  const updateDebugLogs = () => {
+  // 监听 battleLogManager 的调试日志 — 通过 addListener 订阅而非 setInterval 轮询
+  battleLogManager.addListener(() => {
     debugLogs.value = battleLogManager.getDebugLogs();
-  };
-  // 初始加载
-  updateDebugLogs();
-  // 定期更新日志 (每秒)
-  logUpdateInterval = setInterval(updateDebugLogs, 1000);
-
-  // ponytail: 调试面板现在独立处理事件，无需 BattleArena 中转
+  });
+  debugLogs.value = battleLogManager.getDebugLogs();
 });
 
 // 监听战斗活跃状态变化
@@ -405,7 +390,7 @@ watch(
   (isActive) => {
     if (!isActive) {
       // 清理所有角色的动画状态
-      battleManager.resetCharacterStates();
+      battleService.resetCharacterStates();
 
       // 清理BattleField中的动画效果
       if (battleFieldRef.value) {
@@ -509,7 +494,7 @@ watch(
 // 战斗回放相关方法
 const stepBack = () => {
   if (currentTurn.value > 1) {
-    battleManager.decrementTurn();
+    battleService.decrementTurn();
   }
 };
 
@@ -629,12 +614,8 @@ onUnmounted(() => {
   // 组件卸载时的清理工作
   // 清理战斗管理器事件监听器，防止内存泄漏
   battleStore.destroy();
-  // ponytail: 调试面板内部自行清理事件监听
-  // 清理日志更新定时器
-  if (logUpdateInterval) {
-    clearInterval(logUpdateInterval);
-    logUpdateInterval = null;
-  }
+  // ponytail: 日志订阅由 listener 闭包持有，manager 暂无可移除 listener 的 API，
+  // 组件卸载后继续递增 logVersion 无害；升级路径：给 manager 加上 removeListener 后在此清理
 });
 </script>
 

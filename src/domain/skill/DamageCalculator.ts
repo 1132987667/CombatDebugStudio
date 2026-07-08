@@ -27,6 +27,11 @@ export interface DamageResult {
   actualDamage: number
 }
 
+/** 防御效果系数：每点防御转化为有效防御的比例 */
+const DEFENSE_EFFECTIVENESS = 0.5
+/** 防御递减公式分母：控制防御收益递减曲线 */
+const DEFENSE_DENOMINATOR = 500
+
 function getAttributeValue(participant: BattleEntity, attr: ATTRIBUTE_CODE): number {
   return participant.getAttribute(attr)
 }
@@ -177,8 +182,8 @@ export class DamageCalculator {
 
     // 防御计算（递减公式）
     breakdown.defenseValue = getAttributeValue(target, ATTRIBUTE_CODE.defense)
-    breakdown.effectiveDefense = breakdown.defenseValue * 0.5
-    breakdown.defenseMultiplier = Math.max(0.1, 1 - breakdown.effectiveDefense / (breakdown.effectiveDefense + 500))
+    breakdown.effectiveDefense = breakdown.defenseValue * DEFENSE_EFFECTIVENESS
+    breakdown.defenseMultiplier = Math.max(0.1, 1 - breakdown.effectiveDefense / (breakdown.effectiveDefense + DEFENSE_DENOMINATOR))
     const beforeDef = damage
     damage = Math.floor(damage * breakdown.defenseMultiplier)
     breakdown.steps.push({ stepName: 'defense', value: damage, description: `防御减免(x${breakdown.defenseMultiplier.toFixed(4)}): ${beforeDef} → ${damage}` })

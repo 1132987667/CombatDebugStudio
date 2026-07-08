@@ -275,17 +275,6 @@ export class BattleEventManager {
     }
   }
 
-  /**
-   * 处理Buff添加事件
-   */
-  private handleBuffAddEvent(data: any) {
-    try {
-      this.getBattleStore().addBuffLog(data)
-    } catch (error) {
-      this.getBattleStore().addErrorLog(`Error handling buff add: ${error}`)
-      console.error('处理Buff添加时出错:', error)
-    }
-  }
 }
 
 // 瀵煎嚭鍗曚緥瀹炰緥

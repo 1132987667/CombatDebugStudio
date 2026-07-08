@@ -110,12 +110,14 @@ export class SkillExecutor {
     action.effects.push({ type: 'buff', targetId: buffTarget.id, buffId, instanceId, description: `${source.name} applies ${buffId} to ${buffTarget.name}` })
   }
 
+  // TODO: 实现护盾逻辑（向目标添加 buff_shield 或直接修改属性）
   private executeShield(
     skillStep: ExtendedSkillStep,
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
   ): void {
+    // TODO: 实现护盾添加逻辑
     action.effects.push({ type: 'status', targetId: target.id, description: 'Shield effect (to be implemented)' })
   }
 

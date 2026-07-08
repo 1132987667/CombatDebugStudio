@@ -17,8 +17,7 @@
             <ParticipantCard v-for="member in filterAllyTeam" :key="member.id"
               :ref="el => { handleCardRef(member.id, el) }" :participant="member"
               :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
-              :is-enemy="false" :show-debug="false" @click="selectCharacter(member.id)"
-              @status-tooltip-show="showStatusTooltip" @status-tooltip-hide="hideStatusTooltip" />
+              :is-enemy="false" :show-debug="false" @click="selectCharacter(member.id)" />
           </div>
         </div>
 
@@ -32,8 +31,7 @@
             <ParticipantCard v-for="member in filterEnemyTeam" :key="member.id"
               :ref="el => { handleCardRef(member.id, el) }" :participant="member"
               :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
-              :is-enemy="true" :show-debug="false" @click="selectCharacter(member.id)"
-              @status-tooltip-show="showStatusTooltip" @status-tooltip-hide="hideStatusTooltip" />
+              :is-enemy="true" :show-debug="false" @click="selectCharacter(member.id)" />
             <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>
@@ -44,58 +42,21 @@
 
     <!-- 战斗视觉特效层 -->
     <BattleVisualEffects ref="visualEffectsRef" />
-
-    <!-- 状态工具提示 -->
-    <div v-if="statusTooltip.visible" class="status-tooltip" :style="{
-      left: statusTooltip.x + 'px',
-      top: statusTooltip.y + 'px',
-      opacity: statusTooltip.opacity
-    }">
-      <div class="tooltip-header">
-        <span class="status-name" :class="statusTooltip.status?.isPositive ? 'positive' : 'negative'">
-          {{ statusTooltip.status?.name }}
-        </span>
-        <span class="status-type">{{ statusTooltip.status?.isPositive ? '增益' : '减益' }}</span>
-      </div>
-      <div class="tooltip-content">
-        <div class="tooltip-row">
-          <span class="label">效果描述:</span>
-          <span class="value">{{ getStatusDescription(statusTooltip.status) }}</span>
-        </div>
-        <div class="tooltip-row">
-          <span class="label">剩余回合:</span>
-          <span class="value">{{ statusTooltip.status?.duration || 0 }}回合</span>
-        </div>
-        <div class="tooltip-row" v-if="getStatusEffectValue(statusTooltip.status)">
-          <span class="label">效果强度:</span>
-          <span class="value">{{ getStatusEffectValue(statusTooltip.status) }}</span>
-        </div>
-        <div class="tooltip-row" v-if="getStatusBuffEffect(statusTooltip.status)">
-          <span class="label">增益效果:</span>
-          <span class="value">{{ getStatusBuffEffect(statusTooltip.status) }}</span>
-        </div>
-      </div>
-    </div>
+  </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, reactive, onUnmounted, watch } from "vue";
-import { raf } from '@/shared/utils/RAF';
-import { container } from '@/infrastructure/di/Container';
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
-import DamageNumber from "@/presentation/components/DamageNumber.vue";
-import SkillEffect from "@/presentation/components/SkillEffect.vue";
 import BattleLog from "@/presentation/views/BattleLog.vue";
 import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
 import BattleVisualEffects from "@/presentation/components/BattleVisualEffects.vue";
 import { ATTRIBUTE_CODE, type AttributeValue } from '@/domain/attribute/types';
-import type { BattleManager } from '@/domain/battle/BattleManager';
-import { ActionTypes, type BattleEntity, type StatusEffect } from '@/domain/battle/types';
+import { ActionTypes, type BattleEntity } from '@/domain/battle/types';
 import { useBattleStore } from '@/presentation/stores/battleStore'
 
 const store = useBattleStore()
-const battleManager = container.resolve<BattleManager>('BattleManager');
 
 const props = defineProps<{
   currentActorId: string | null;
@@ -108,15 +69,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   "select-character": [characterId: string];
 }>();
-
-// 状态工具提示
-const statusTooltip = ref({
-  visible: false,
-  x: 0,
-  y: 0,
-  opacity: 0,
-  status: null as StatusEffect | null
-});
 
 const {
   registerElement,
@@ -332,107 +284,7 @@ const selectCharacter = (charId: string) => {
 };
 
 // 状态工具提示相关逻辑
-let tooltipTimeout: symbol | null = null;
-// 跟踪所有定时器，用于组件卸载时清理
-const timeouts = ref<symbol[]>([]);
-
-// 显示状态工具提示
-const showStatusTooltip = (event: MouseEvent, status: StatusEffect) => {
-  if (tooltipTimeout) {
-    raf.clear(tooltipTimeout);
-  }
-
-  tooltipTimeout = raf.setTimeout(() => {
-    statusTooltip.value = {
-      visible: true,
-      x: event.clientX + 10,
-      y: event.clientY + 10,
-      opacity: 0,
-      status: status
-    };
-
-    // 添加淡入动画
-    const fadeInTimeout = raf.setTimeout(() => {
-      statusTooltip.value.opacity = 1;
-    }, 10);
-    timeouts.value.push(fadeInTimeout);
-  }, 300);
-  timeouts.value.push(tooltipTimeout);
-};
-
-// 隐藏状态工具提示
-const hideStatusTooltip = () => {
-  if (tooltipTimeout) {
-    raf.clear(tooltipTimeout);
-    tooltipTimeout = null;
-  }
-
-  statusTooltip.value.visible = false;
-  statusTooltip.value.opacity = 0;
-};
-
-// 获取状态描述
-const getStatusDescription = (status: StatusEffect) => {
-  if (!status) return '';
-
-  const descriptions: { [key: string]: string } = {
-    '攻击提升': '提升角色的物理攻击力',
-    '防御提升': '提升角色的物理防御力',
-    '速度提升': '提升角色的行动速度',
-    '暴击提升': '提升角色的暴击几率',
-    '攻击降低': '降低目标的物理攻击力',
-    '防御降低': '降低目标的物理防御力',
-    '速度降低': '降低目标的行动速度',
-    '中毒': '每回合造成持续伤害',
-    '流血': '每回合造成持续伤害',
-    '灼烧': '每回合造成持续伤害',
-    '冰冻': '使目标无法行动',
-    '眩晕': '使目标无法行动',
-    '沉默': '使目标无法使用技能',
-    '护盾': '为角色提供伤害吸收护盾',
-    '治疗': '每回合恢复生命值'
-  };
-
-  return descriptions[status.name] || `${status.name}效果，影响角色的战斗属性`;
-};
-
-// 获取状态效果数值
-const getStatusEffectValue = (status: StatusEffect) => {
-  if (!status) return '';
-
-  const effectValues: { [key: string]: string } = {
-    '攻击提升': '攻击力 +20%',
-    '防御提升': '防御力 +20%',
-    '速度提升': '速度 +15%',
-    '暴击提升': '暴击率 +10%',
-    '攻击降低': '攻击力 -20%',
-    '防御降低': '防御力 -20%',
-    '速度降低': '速度 -15%',
-    '中毒': '每回合损失 5% 最大生命值',
-    '流血': '每回合损失 3% 最大生命值',
-    '灼烧': '每回合损失 4% 最大生命值',
-    '护盾': '吸收相当于最大生命值 20% 的伤害',
-    '治疗': '每回合恢复 5% 最大生命值'
-  };
-
-  return effectValues[status.name] || '';
-};
-
-// 获取状态增益效果
-const getStatusBuffEffect = (status: StatusEffect) => {
-  if (!status) return '';
-
-  const buffEffects: { [key: string]: string } = {
-    '攻击提升': '提高角色的输出能力',
-    '防御提升': '提高角色的生存能力',
-    '速度提升': '提高角色的行动优先级',
-    '暴击提升': '提高角色的爆发伤害',
-    '护盾': '提供额外的伤害吸收',
-    '治疗': '持续恢复生命值'
-  };
-
-  return buffEffects[status.name] || '';
-};
+// ponytail: 已迁移到 BuffIcon 自带 tooltip，移除父级 tooltip 系统
 
 function getCharacterSide(characterId: string): 'left' | 'right' {
   const isAlly = allyTeam.value.some((c) => c.id === characterId)
@@ -545,14 +397,6 @@ defineExpose({
 })
 
 onUnmounted(() => {
-  if (tooltipTimeout) {
-    raf.clear(tooltipTimeout)
-  }
-
-  timeouts.value.forEach((timeoutId) => {
-    raf.clear(timeoutId)
-  })
-
   cleanupAnimations()
   participantCardRefs.value = {}
 })

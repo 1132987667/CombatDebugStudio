@@ -21,9 +21,11 @@ export class BuffScriptLoader {
             if (typeof exportValue === 'function' && (exportValue as any).BUFF_ID) {
               const BuffClass = exportValue as any
               const buffId = BuffClass.BUFF_ID
-              this.registry.register(buffId, () => new BuffClass(), { filePath: path })
+              // ponytail: 读取脚本类的静态 CONFIG（自包含模式），传给 registry
+              const defaultConfig = BuffClass.CONFIG
+              this.registry.register(buffId, () => new BuffClass(), { filePath: path }, defaultConfig)
               this.loadedScripts.add(exportName)
-              console.log(`Loaded and registered buff script: ${exportName} (${buffId})`)
+              console.log(`Loaded and registered buff script: ${exportName} (${buffId})${defaultConfig ? ' [self-contained]' : ''}`)
             }
           }
         } catch (moduleError) {

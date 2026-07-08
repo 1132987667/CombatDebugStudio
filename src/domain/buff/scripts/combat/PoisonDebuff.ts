@@ -1,6 +1,7 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { SkillStepType } from '@/domain/skill/types'
 
 export class PoisonDebuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'buff_poison'
@@ -36,7 +37,10 @@ export class PoisonDebuff extends BaseBuffScript {
       const currentDamage = Math.floor(baseDamage * Math.pow(damageMultiplier, stacks))
       
       this.log(context, `毒素伤害：${currentDamage}`)
-      // 这里应该调用角色的伤害方法
+      // 通过触发系统造成伤害
+      this.triggerEvent(context, SkillStepType.DEAL_DAMAGE, {
+        damage: currentDamage,
+      })
       
       context.setVariable('lastDamageTime', elapsed)
     }

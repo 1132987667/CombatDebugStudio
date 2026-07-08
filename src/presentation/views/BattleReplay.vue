@@ -41,7 +41,7 @@
 
     <div class="replay-speed">
       <span class="speed-label">速度:</span>
-      <button v-for="speed in [0.5, 1, 2, 5]" :key="speed" class="speed-btn" :class="{ active: replaySpeed === speed }"
+      <button v-for="speed in SPEED_OPTIONS" :key="speed" class="speed-btn" :class="{ active: replaySpeed === speed }"
         @click="setSpeed(speed)">
         {{ speed }}x
       </button>
@@ -172,6 +172,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { raf } from '@/shared/utils/RAF';
 import { ReplayBattleEvent, BattleEventType } from '@/domain/battle/types';
 import { RecordedBattle } from '@/domain/battle/service/BattleRecorder';
+import { SPEED_OPTIONS } from '@/shared/constants/speed';
 
 const props = defineProps<{
   battleManager?: any;

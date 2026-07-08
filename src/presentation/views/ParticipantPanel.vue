@@ -66,6 +66,7 @@
       <div class="section-actions">
         <button class="btn-small" @click="moveCharacter(-1)">[↑]上调</button>
         <button class="btn-small" @click="moveCharacter(1)">[↓]下调</button>
+        <button class="btn-small btn-remove" @click="removeSelectedCharacter">[−]移除</button>
       </div>
     </div>
 
@@ -127,17 +128,16 @@ import { container } from '@/infrastructure/di/Container';
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene';
 import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/domain/battle/types";
-import type { BattleManager } from '@/domain/battle/BattleManager';
+import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
-import { BattleParticipantImpl } from '@/domain/battle/BattleParticipantImpl';
 
 interface GroupedEnemies {
   scene: SceneData;
   enemies: Enemy[];
 }
 
-// 获取 BattleManager
-const battleManager = container.resolve<BattleManager>('BattleManager');
+// 获取 BattleService
+const battleService = container.resolve<BattleService>('BattleService');
 const battleStore = useBattleStore();
 
 // 初始化 GameDataProcessor
@@ -152,8 +152,8 @@ const expandedScenes = reactive<Record<string, boolean>>({});
 scenesData.value.forEach((s) => (expandedScenes[s.id] = true));
 
 // 响应式获取队伍数据
-const allyTeam = computed(() => battleManager.getAllyTeam());
-const enemyTeam = computed(() => battleManager.getEnemyTeam());
+const allyTeam = computed(() => battleService.getAllyTeam());
+const enemyTeam = computed(() => battleService.getEnemyTeam());
 // 我方参战人数
 const allyTeamCount = computed(() => allyTeam.value.filter(c => c.enabled).length);
 // 敌方参战人数
@@ -254,7 +254,7 @@ const isRosterCharSelected = (enemyId: string): boolean => {
 
 const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY = PARTICIPANT_SIDE.ALLY) => {
   const newCharacter = GameDataProcessor.enemyToParticipant(enemy, side)
-  battleManager.addCharacterToTeam(newCharacter, side)
+  battleService.addCharacterToTeam(newCharacter, side)
   // ponytail: 注册免疫标签到 BuffSystem
   if (newCharacter.getImmunities().length > 0) {
     const buffSystem = container.resolve<any>('BuffSystem');
@@ -266,16 +266,23 @@ const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typ
 const moveCharacter = (direction: number) => {
   const selectedId = selectedCharacterId.value;
   if (selectedId) {
-    battleManager.moveCharacter(selectedId, direction);
+    battleService.moveCharacter(selectedId, direction);
+  }
+};
+
+const removeSelectedCharacter = () => {
+  const selectedId = selectedCharacterId.value;
+  if (selectedId) {
+    battleService.removeCharacter(selectedId);
   }
 };
 
 const clearParticipants = () => {
-  battleManager.clearParticipants();
+  battleService.clearParticipants();
 };
 
 const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
-  battleManager.setCharacterEnabled(characterId, enabled);
+  battleService.setCharacterEnabled(characterId, enabled);
 };
 </script>
 
@@ -412,5 +419,23 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
     flex: 1;
     justify-content: center;
   }
+}
+
+.section-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.btn-remove {
+  margin-left: auto;
+  color: #e57373 !important;
+  border-color: #c62828 !important;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: #c62828 !important;
+  color: #fff !important;
+  border-color: #e57373 !important;
 }
 </style>

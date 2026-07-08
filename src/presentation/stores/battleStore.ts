@@ -1,17 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref, shallowRef, computed, reactive, onScopeDispose } from 'vue'
-import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE, BattleStatus } from '@/domain/battle/types'
 import { BattleEventCodes, BattleEventCode } from '@/shared/types/battle-events'
 import { container } from '@/infrastructure/di/Container'
 import type {
   BattleLogEntry,
   BattleLogCategory,
-  BattleLogLevel,
   LogSegment,
   LogFilters,
 } from '@/shared/types/battle-log'
 import { battleActionToLogEntry, LogType, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
-import type { BattleManager } from '@/domain/battle/BattleManager'
+import type { BattleService } from '@/application/facade/BattleFacade'
 import type { BattleAction, BattleState } from '@/domain/battle/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
@@ -130,34 +129,34 @@ export const useBattleStore = defineStore('battle', () => {
   const previewEntity = shallowRef<BattleEntity | null>(null)
 
   // 🔹 2. 业务层引用（适配器桥接，使用 shallowRef 避免深层 Proxy 开销）
-  /** 战斗管理器实例（核心业务逻辑入口，通过依赖注入获取） */
-  const battleManager = shallowRef<BattleManager>(
-    container.resolve<BattleManager>('BattleManager'),
+  /** 战斗应用服务（门面，通过依赖注入获取） */
+  const battleService = shallowRef<BattleService>(
+    container.resolve<BattleService>('BattleService'),
   )
 
-  /** 我方队伍成员列表（响应式同步 BattleManager 内部状态） */
+  /** 我方队伍成员列表（响应式同步 BattleService 内部状态） */
   const allyTeam = shallowRef<BattleEntity[]>([])
-  /** 敌方队伍成员列表（响应式同步 BattleManager 内部状态） */
+  /** 敌方队伍成员列表（响应式同步 BattleService 内部状态） */
   const enemyTeam = shallowRef<BattleEntity[]>([])
   /** 当前战斗回合数（从1开始计数，用于日志和UI显示） */
   const currentTurn = ref(1)
-  /** 最大回合数（从 BattleManager 读取） */
+  /** 最大回合数（从 BattleService 读取） */
   const maxTurns = ref(999)
   /** 战斗激活状态标识（true表示战斗进行中，false表示未开始或已结束） */
   const isBattleActive = ref(false)
 
   /**
-   * 同步队伍数据（从 BattleManager 拉取最新状态）
+   * 同步队伍数据（从 BattleService 拉取最新状态）
    * @description 当收到 TEAM_DATA_CHANGED 事件时调用，更新本地响应式状态
    */
   const syncTeams = () => {
     console.log('接收队伍数据更新')
-    allyTeam.value = battleManager.value.getEnabledAllyTeam()
-    enemyTeam.value = battleManager.value.getEnabledEnemyTeam()
-    currentTurn.value = battleManager.value.getCurrentTurn()
-    maxTurns.value = battleManager.value.getMaxTurns?.() ?? 999
-    const battleState = battleManager.value.getBattleState()
-    isBattleActive.value = battleState?.battleState === 'ACTIVE' || false
+    allyTeam.value = battleService.value.getEnabledAllyTeam()
+    enemyTeam.value = battleService.value.getEnabledEnemyTeam()
+    currentTurn.value = battleService.value.getCurrentTurn()
+    maxTurns.value = battleService.value.getMaxTurns?.() ?? 999
+    const battleState = battleService.value.getBattleState()
+    isBattleActive.value = battleState?.battleState === BattleStatus.ACTIVE || false
   }
 
   // 所有事件订阅在 events Map 创建后统一注册（见下方 🔹 3. 事件订阅管理器）
@@ -177,12 +176,12 @@ export const useBattleStore = defineStore('battle', () => {
     isBattleActive.value = false
     autoPlayMode.value = false
     // 同步 BattleStateManager 的状态
-    if (battleManager.value) {
-      battleManager.value.syncBattleState()
+    if (battleService.value) {
+      battleService.value.syncBattleState()
     }
     if (data?.winner) {
       battleLogManager.addBattleLog({
-        turn: battleManager.value?.getTurn() ?? 1,
+        turn: battleService.value?.getTurn() ?? 1,
         message: `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`,
         segments: [{ text: `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}` }],
         category: BATTLE_LOG_CATEGORIES.STATUS,
@@ -194,7 +193,7 @@ export const useBattleStore = defineStore('battle', () => {
   const handleTurnStartEvent = (data: any) => {
     if (data?.actorId) {
       currentActorId.value = data.actorId
-      battleLogManager.addTurnStartLog(battleManager.value?.getTurn() ?? 1)
+      battleLogManager.addTurnStartLog(battleService.value?.getTurn() ?? 1)
     }
   }
 
@@ -207,7 +206,7 @@ export const useBattleStore = defineStore('battle', () => {
 
   /** 处理回合结束事件（记录回合结束日志） */
   const handleTurnEndEvent = () => {
-    battleLogManager.addTurnEndLog(battleManager.value?.getTurn() ?? 1)
+    battleLogManager.addTurnEndLog(battleService.value?.getTurn() ?? 1)
   }
 
   /** 处理伤害动画事件（触发伤害数字飘字效果） */
@@ -244,18 +243,18 @@ export const useBattleStore = defineStore('battle', () => {
 
   // 注册所有事件处理器到战斗管理器（桥上 eventBus）
   for (const [eventCode, handler] of events) {
-    battleManager.value.on(eventCode, handler as any)
+    battleService.value.on(eventCode, handler as any)
   }
 
   // 🔹 5. 核心 Actions（纯函数，仅更新本地状态或调用 Manager）
 
   /**
    * 初始化战斗管理器
-   * @param manager BattleManager 实例（通常在应用启动时注入）
+   * @param manager BattleService 实例（通常在应用启动时注入）
    * @description 将外部传入的战斗管理器实例绑定到 Store 状态中
    */
-  const initializeBattleManager = (manager: BattleManager) => {
-    battleManager.value = manager
+  const initializeBattleService = (manager: BattleService) => {
+    battleService.value = manager
     battleLogManager.addSystemLog({ message: '战斗管理器已初始化' })
   }
 
@@ -338,7 +337,7 @@ export const useBattleStore = defineStore('battle', () => {
     target: string,
     segments: LogSegment[],
     category: BattleLogCategory = 'system',
-    level?: BattleLogLevel,
+    level?: LogType,
   ) => {
     battleLogManager.addSystemLog(
       turn,
@@ -391,13 +390,13 @@ export const useBattleStore = defineStore('battle', () => {
     setLoading(true, '开始战斗')
     clearError()
     try {
-      if (!battleManager.value) throw new Error('战斗管理器未初始化')
-      const battleId = await battleManager.value.startBattle()
+      if (!battleService.value) throw new Error('战斗管理器未初始化')
+      const battleId = await battleService.value.startBattle()
       if (!battleId) throw new Error('战斗创建失败，请检查参战队伍的配置')
       currentBattleId.value = battleId
-      battleManager.value.syncBattleState()
+      battleService.value.syncBattleState()
       setBattleActive(true)
-      autoPlayMode.value = battleManager.value.getAutoBattle()
+      autoPlayMode.value = battleService.value.getAutoBattle()
       battleLogManager.addSystemLog({ message: '战斗已开始' })
       return true
     } catch (err) {
@@ -422,9 +421,9 @@ export const useBattleStore = defineStore('battle', () => {
     setLoading(true, '结束战斗')
     clearError()
     try {
-      if (!battleManager.value) throw new Error('战斗管理器未初始化')
-      battleManager.value.endBattle(winner)
-      battleManager.value.syncBattleState()
+      if (!battleService.value) throw new Error('战斗管理器未初始化')
+      battleService.value.endBattle(winner)
+      battleService.value.syncBattleState()
       setBattleActive(false)
       return true
     } catch (err) {
@@ -446,8 +445,8 @@ export const useBattleStore = defineStore('battle', () => {
     setLoading(true, '重置战斗')
     clearError()
     try {
-      if (!battleManager.value) throw new Error('战斗管理器未初始化')
-      battleManager.value.resetBattle()
+      if (!battleService.value) throw new Error('战斗管理器未初始化')
+      battleService.value.reset()
       currentActorId.value = null
       setBattleActive(false)
       clearBattleLogs()
@@ -474,9 +473,9 @@ export const useBattleStore = defineStore('battle', () => {
     setLoading(true, '执行回合')
     clearError()
     try {
-      if (!battleManager.value) throw new Error('战斗管理器未初始化')
-      await battleManager.value.processSingleTurn()
-      battleManager.value.syncBattleState()
+      if (!battleService.value) throw new Error('战斗管理器未初始化')
+      await battleService.value.processSingleTurn()
+      battleService.value.syncBattleState()
       return true
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
@@ -497,18 +496,18 @@ export const useBattleStore = defineStore('battle', () => {
     setLoading(true)
     clearError()
     try {
-      if (!battleManager.value) throw new Error('战斗管理器未初始化')
-      const isActive = battleManager.value.getAutoBattle()
+      if (!battleService.value) throw new Error('战斗管理器未初始化')
+      const isActive = battleService.value.getAutoBattle()
       if (isActive) {
-        battleManager.value.stopAutoBattle()
+        battleService.value.stopAutoBattle()
         autoPlayMode.value = false
         isBattleActive.value = false
         battleLogManager.addSystemLog({ message: '停止自动战斗' })
       } else {
-        await battleManager.value.startAutoBattle()
+        await battleService.value.startAutoBattle()
         autoPlayMode.value = true
         isBattleActive.value = true
-        battleManager.value.syncBattleState()
+        battleService.value.syncBattleState()
         battleLogManager.addSystemLog({ message: '开始自动战斗' })
       }
       return true
@@ -556,8 +555,8 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const exportState = (currentTurn: number) => {
     try {
-      const allyTeam = battleManager.value?.getEnabledAllyTeam() || []
-      const enemyTeam = battleManager.value?.getEnabledEnemyTeam() || []
+      const allyTeam = battleService.value?.getEnabledAllyTeam() || []
+      const enemyTeam = battleService.value?.getEnabledEnemyTeam() || []
       const state = {
         battleCharacters: allyTeam,
         enemyParty: enemyTeam,
@@ -583,8 +582,8 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const setBattleSpeed = (speed: number) => {
     try {
-      if (!battleManager.value) throw new Error('战斗管理器未初始化')
-      battleManager.value.setBattleSpeed(speed)
+      if (!battleService.value) throw new Error('战斗管理器未初始化')
+      battleService.value.setBattleSpeed(speed)
       battleSpeed.value = speed
       battleLogManager.addSystemLog({ message: `战斗速度已调整为: ${speed}倍` })
       return true
@@ -602,8 +601,8 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const destroy = () => {
     try {
-      if (!battleManager.value) return
-      cleanupEvents.forEach((key) => battleManager.value.off(key))
+      if (!battleService.value) return
+      cleanupEvents.forEach((key) => battleService.value.off(key))
       cleanupEvents.length = 0
       currentActorId.value = null
       isBattleActive.value = false
@@ -615,7 +614,7 @@ export const useBattleStore = defineStore('battle', () => {
       animationState.miss = null
       animationState.buff = null
       animationState.skill = null
-      battleManager.value = null
+      battleService.value = null
       console.log('战斗管理器事件监听器已清理')
     } catch (err) {
       console.error('清理战斗管理器事件监听器时出错:', err)
@@ -725,7 +724,7 @@ export const useBattleStore = defineStore('battle', () => {
    * @param characterId 角色唯一标识
    */
   const selectCharacter = (characterId: string) => {
-    battleManager.value.selectCharacter(characterId)
+    battleService.value.selectCharacter(characterId)
     selectedCharacterId.value = characterId
     previewEntity.value = null // 选中真实参战角色时清除预览
   }
@@ -746,7 +745,7 @@ export const useBattleStore = defineStore('battle', () => {
    * @param enabled 是否启用（false表示禁用该角色参与战斗）
    */
   const setCharacterEnabled = (characterId: string, enabled: boolean) => {
-    battleManager.value.setCharacterEnabled(characterId, enabled)
+    battleService.value.setCharacterEnabled(characterId, enabled)
   }
   // 🔹 生命周期清理（防止 SPA 路由切换导致内存泄漏）
   onScopeDispose(() => {
@@ -767,7 +766,7 @@ export const useBattleStore = defineStore('battle', () => {
     battleSpeed, // 战斗速度
     filters, // 日志过滤器
     processedActionIds, // 已处理动作ID集合
-    battleManager, // 战斗管理器实例
+    battleService, // 战斗应用服务
     selectedCharacterId, // 选中角色ID
     previewEntity, // 角色库预览实体
 
@@ -792,7 +791,7 @@ export const useBattleStore = defineStore('battle', () => {
     syncTeams, // 同步队伍数据
 
     // ========== 核心操作（Actions） ==========
-    initializeBattleManager, // 初始化战斗管理器
+    initializeBattleService, // 初始化战斗管理器
     setLoading, // 设置加载状态
     updateLoadingProgress, // 更新加载进度
     setError, // 设置错误状态

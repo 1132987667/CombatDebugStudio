@@ -34,30 +34,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from "vue";
-import type { BattleLogEntry, LogFilters } from '@/shared/types/battle-log';
+import { ref, reactive, computed, onMounted, onUnmounted } from "vue";
+import type { LogEntry, LogFilters } from '@/shared/types/battle-log';
 import { LogTypeLabel } from '@/shared/types/battle-log';
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 
 interface Props {
 }
 
-
-
 const props = defineProps<Props>();
 
 const logKeyword = ref("");
 const logFilters = reactive<LogFilters>({
-  damage: true,
-  status: true,
-  crit: true,
-  heal: false,
+  battle: true,
+  system: true,
+  item: true,
+  action: true,
+  debug: false,
 });
 
-const logs = computed(() => battleLogManager.getFilteredLogs())
+// ponytail: battleLogManager 是普通 TS 单例非 Vue 响应式，
+// 用 logVersion ref 作为 reactivity 触发器，addListener 回调递增它驱动 computed 重新求值
+const logVersion = ref(0);
+
+const logs = computed(() => {
+  void logVersion.value;
+  const filtered = battleLogManager.getFilteredLogs();
+  const keyword = logKeyword.value.trim().toLowerCase();
+  if (!keyword) return filtered;
+  return filtered.filter((log: LogEntry) => {
+    if (log.message?.toLowerCase().includes(keyword)) return true;
+    if (log.segments?.some((s) => s.text.toLowerCase().includes(keyword))) return true;
+    return false;
+  });
+});
 
 const applyFilters = () => {
+  battleLogManager.updateFilters(logFilters);
 };
+
+onMounted(() => {
+  battleLogManager.addListener(() => {
+    logVersion.value++;
+  });
+});
+
+onUnmounted(() => {
+  // ponytail: BattleLogManager 暂无可移除 listener 的 API，
+  // listener 持有 logVersion 的闭包引用，组件卸载后继续递增无害但浪费。
+  // 升级路径：给 manager 加上 removeListener 后在此处调用清理
+});
 </script>
 
 <style scoped>

@@ -1,140 +1,157 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import type { ModifierType as ModifierTypeEnum } from '@/domain/attribute/types'
 
 /**
- * 属性提升Buff模板
- * 用于处理通用的属性提升逻辑，支持随时间增长和刷新效果
+ * 属性修饰符声明
+ * 描述一个属性修改操作——支持固定值和动态计算两种模式
+ */
+export interface AttributeModifier {
+  /** 目标属性代码 */
+  attribute: ATTRIBUTE_CODE | string
+  /** 修饰值：固定数值或基于上下文动态计算的函数 */
+  value: number | ((context: BuffContext) => number)
+  /** 修饰类型（ADDITIVE / MULTIPLICATIVE / PERCENTAGE / FINAL） */
+  type: ModifierTypeEnum
+  /** 可选的描述（用于日志/调试） */
+  description?: string
+}
+
+/**
+ * 属性操作模板
+ *
+ * 设计理念：
+ * - 子类通过声明式 getModifiers() 告诉基类"我要改什么"
+ * - 基类负责在正确的时机（施加/刷新/更新）应用这些修饰符
+ * - 支持固定值和动态值两种模式
+ * - 支持单一属性和批量属性
+ * - 不预设成长逻辑——子类在 _onUpdate 中自行实现
+ *
+ * ponytail: 这是一个"工具箱"而非"预制件"。
+ * 简单 Buff（AttackUpBuff）只需 7 行，复杂 Buff（BerserkBuff）也可用它管理修饰符。
+ *
+ * @example
+ * // 简单场景：固定值，单一属性
+ * class AttackUpBuff extends AttributeBuffTemplate {
+ *   protected getModifiers(): AttributeModifier[] {
+ *     return [{ attribute: ATTRIBUTE_CODE.attack, value: 10, type: ModifierType.ADDITIVE }]
+ *   }
+ * }
+ *
+ * @example
+ * // 动态值，多属性
+ * class MountainGodBuff extends AttributeBuffTemplate {
+ *   protected getModifiers(): AttributeModifier[] {
+ *     return [
+ *       { attribute: ATTRIBUTE_CODE.attack, value: (ctx) => this.getConfigValue(ctx, 'attackBonus', 50), type: ModifierType.ADDITIVE },
+ *       { attribute: ATTRIBUTE_CODE.defense, value: (ctx) => this.getConfigValue(ctx, 'defenseBonus', 30), type: ModifierType.ADDITIVE },
+ *     ]
+ *   }
+ * }
  */
 export abstract class AttributeBuffTemplate extends BaseBuffScript {
-  /**
-   * 获取属性名称
-   * @returns 属性名称（如 'ATK', 'DEF', 'SPD' 等）
-   */
-  protected abstract getAttributeCode(): string
+  // ==================== 子类必须实现 ====================
 
-  /**
-   * 获取修饰符类型
-   * @returns 修饰符类型（ModifierType.ADDITIVE, ModifierType.MULTIPLICATIVE, ModifierType.PERCENTAGE）
-   */
-  protected abstract getModifierType(): ModifierType
+  /** 声明该 Buff 需要应用的所有属性修饰符 */
+  protected abstract getModifiers(): AttributeModifier[]
 
-  /**
-   * 获取基础提升值
-   * @param context Buff上下文
-   * @returns 基础提升值
-   */
-  protected getBaseBonus(context: BuffContext): number {
-    return this.getConfigValue(context, 'baseBonus', 0)
+  // ==================== 子类可覆盖的配置点 ====================
+
+  /** 刷新时是否重新应用修饰符（默认 true） */
+  protected shouldReapplyOnRefresh(): boolean {
+    return true
   }
 
-  /**
-   * 获取增长速率
-   * @param context Buff上下文
-   * @returns 增长速率
-   */
-  protected getGrowthRate(context: BuffContext): number {
-    return this.getConfigValue(context, 'growthRate', 0)
+  /** 每回合更新时是否重新应用修饰符（默认 false） */
+  protected shouldReapplyOnUpdate(): boolean {
+    return false
   }
 
-  /**
-   * 获取刷新 bonus
-   * @param context Buff上下文
-   * @returns 刷新 bonus
-   */
-  protected getRefreshBonus(context: BuffContext): number {
-    return this.getConfigValue(context, 'refreshBonus', 0)
-  }
-
-  /**
-   * 获取变量名前缀
-   * @returns 变量名前缀
-   */
-  protected getVariablePrefix(): string {
-    return this.getAttributeCode().toLowerCase()
-  }
-
-  /**
-   * 获取当前 bonus 值
-   * @param context Buff上下文
-   * @returns 当前 bonus 值
-   */
-  protected getCurrentBonus(context: BuffContext): number {
-    const variableName = `${this.getVariablePrefix()}Bonus`
-    return context.getVariable<number>(variableName) || this.getBaseBonus(context)
-  }
-
-  /**
-   * 设置当前 bonus 值
-   * @param context Buff上下文
-   * @param bonus bonus 值
-   */
-  protected setCurrentBonus(context: BuffContext, bonus: number): void {
-    const variableName = `${this.getVariablePrefix()}Bonus`
-    context.setVariable(variableName, bonus)
-  }
-
-  /**
-   * 应用修饰符
-   * @param context Buff上下文
-   * @param bonus bonus 值
-   */
-  protected applyModifier(context: BuffContext, bonus: number): void {
-    context.removeModifiers(this.getAttributeCode())
-    this.addModifier(context, this.getAttributeCode(), bonus, this.getModifierType())
-  }
+  // ==================== 生命周期实现 ====================
 
   protected _onApply(context: BuffContext): void {
-    const baseBonus = this.getBaseBonus(context)
-    this.applyModifier(context, baseBonus)
-    this.setCurrentBonus(context, baseBonus)
-    this.log(context, `${this.getAttributeCode()}提升`)  
+    this.applyModifiers(context)
+    this.log(context, `✅ 效果生效，应用了 ${this.getModifiers().length} 个属性修饰符`)
   }
 
   protected _onRemove(context: BuffContext): void {
-    this.log(context, `${this.getAttributeCode()}提升效果结束`)
+    // ponytail: BaseBuffScript.onRemove 已调用 context.removeModifiers()，无需重复清理
+    // 子类如需清理运行时变量，重写此方法并调用 super._onRemove(context)
   }
 
   protected _onUpdate(context: BuffContext, deltaTime: number): void {
-    const growthRate = this.getGrowthRate(context)
-    if (growthRate <= 0) return
-
-    const elapsed = context.getElapsedTime()
-    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
-      const currentBonus = this.getCurrentBonus(context)
-      const newBonus = this.calculateNewBonus(currentBonus, growthRate)
-      
-      if (newBonus > currentBonus) {
-        this.applyModifier(context, newBonus)
-        this.setCurrentBonus(context, newBonus)
-        this.log(context, `${this.getAttributeCode()}逐渐增强，当前提升：${newBonus}`)
+    if (this.shouldReapplyOnUpdate()) {
+      this.applyModifiers(context, true)
+      if (this._isDebugMode()) {
+        this.log(context, `🔄 属性已更新，重新应用了修饰符`)
       }
     }
   }
 
   protected _onRefresh(context: BuffContext): void {
-    const refreshBonus = this.getRefreshBonus(context)
-    if (refreshBonus <= 0) {
-      this.log(context, `${this.getAttributeCode()}提升效果刷新`)
-      return
+    if (this.shouldReapplyOnRefresh()) {
+      this.applyModifiers(context, true)
+      this.log(context, `♻️ 刷新效果，重新应用了 ${this.getModifiers().length} 个修饰符`)
     }
-
-    const currentBonus = this.getCurrentBonus(context)
-    const newBonus = currentBonus + refreshBonus
-    
-    this.applyModifier(context, newBonus)
-    this.setCurrentBonus(context, newBonus)
-    this.log(context, `${this.getAttributeCode()}进一步提升至 ${newBonus}`)
   }
+
+  // ==================== 核心工具方法 ====================
 
   /**
-   * 计算新的 bonus 值
-   * @param currentBonus 当前 bonus 值
-   * @param growthRate 增长速率
-   * @returns 新的 bonus 值
+   * 应用修饰符列表到 BuffContext
+   * @param context Buff 上下文
+   * @param replace 是否先替换再应用——精确移除每个声明的属性的旧修饰符，再添加新值
    */
-  protected calculateNewBonus(currentBonus: number, growthRate: number): number {
-    return Math.floor(currentBonus * (1 + growthRate))
+  protected applyModifiers(context: BuffContext, replace: boolean = false): void {
+    const modifiers = this.getModifiers()
+
+    if (replace) {
+      // ponytail: 精确移除——只移除本 instance 下每个声明属性的旧修饰符，不影响同 instance 的其他属性
+      for (const mod of modifiers) {
+        context.removeModifiers(mod.attribute as ATTRIBUTE_CODE)
+      }
+    }
+
+    for (const mod of modifiers) {
+      const value = typeof mod.value === 'function' ? mod.value(context) : mod.value
+      context.addModifier(mod.attribute as ATTRIBUTE_CODE, value, mod.type)
+    }
+
+    if (this._isDebugMode()) {
+      for (const mod of modifiers) {
+        const resolvedValue = typeof mod.value === 'function' ? mod.value(context) : mod.value
+        this.log(context, `  ├─ ${mod.description ?? mod.attribute}: ${mod.attribute} ${mod.type} ${resolvedValue}`)
+      }
+    }
+  }
+
+  // ==================== 辅助方法 ====================
+
+  /** 获取参数的便捷方法——优先从 context.config.parameters 读取，否则使用默认值 */
+  protected getParam<T>(context: BuffContext, key: string, defaultValue: T): T {
+    return this.getConfigValue(context, key, defaultValue)
+  }
+
+  /** 批量解析参数：合并默认值和配置值 */
+  protected resolveParams<T extends Record<string, any>>(
+    context: BuffContext,
+    defaults: T,
+  ): T {
+    const result = { ...defaults }
+    const configParams = context.config.parameters || {}
+    for (const key of Object.keys(defaults)) {
+      if (configParams[key] !== undefined) {
+        (result as any)[key] = configParams[key]
+      }
+    }
+    return result
+  }
+
+  // ==================== 调试支持 ====================
+
+  /** 子类可覆盖以开启调试日志 */
+  protected _isDebugMode(): boolean {
+    return false
   }
 }
-

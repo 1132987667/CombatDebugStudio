@@ -1,6 +1,16 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BattleData, BattleTriggerPhase } from '@/domain/battle/types'
 
+/** Buff ID 前缀常量 */
+export const BUFF_ID_PREFIX = 'buff_'
+
+/** 常见 Buff 模板 ID 常量 */
+export const BUFF_IDS = {
+  SILENCE: 'buff_silence',
+  STUN: 'buff_stun',
+  POISON: 'buff_poison',
+} as const
+
 /**
  * buff 查询接口
  * BattleEntity 通过此接口查询 BuffSystem，不直接存储 buff 数据
@@ -229,6 +239,31 @@ export interface BuffConfig {
    * 定义属性加成，使用字符串格式如 "+10"（数值加成）、"+0.05"（百分比加成）、"-0.15"（百分比减成）
    */
   attributes?: Record<string, string>
+}
+
+/**
+ * 自包含脚本 Buff 的默认配置类型
+ * 脚本类通过静态 CONFIG 属性提供这些值，框架在注册时读取并存储。
+ * 所有字段均可选——脚本只需提供需要覆盖的字段，其余从 JSON 或内置默认值填充。
+ */
+export interface ScriptBuffConfig {
+  id: string
+  name?: string
+  description?: string
+  duration?: number
+  maxStacks?: number
+  cooldown?: number
+  isPermanent?: boolean
+  isDebuff?: boolean
+  stackRule?: StackRule
+  controlType?: ControlType
+  controlPriority?: number
+  iconPath?: string
+  dispellable?: boolean
+  isPositive?: boolean
+  parameters?: Record<string, any>
+  /** 标记该脚本完全自包含——框架不再从 JSON 读取 attributes 应用修饰符 */
+  selfContained?: boolean
 }
 
 /**

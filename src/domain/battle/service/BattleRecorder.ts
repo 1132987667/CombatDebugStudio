@@ -7,6 +7,11 @@
  * 版本: 2.0.0 - 增强版：支持快照录制、随机种子、状态回退
  */
 
+/** 单场战斗事件日志上限 */
+const MAX_EVENT_LOG = 1000
+/** 过期记录清理检查间隔（毫秒） */
+const CLEANUP_INTERVAL = 60000
+
 import {
   BattleState,
   BattleAction,
@@ -550,8 +555,8 @@ export class BattleRecorder {
       details: data,
     })
 
-    if (recording.events.length > 1000) {
-      recording.events = recording.events.slice(-1000)
+    if (recording.events.length > MAX_EVENT_LOG) {
+      recording.events = recording.events.slice(-MAX_EVENT_LOG)
     }
   }
 
@@ -602,7 +607,7 @@ export class BattleRecorder {
     setTimeout(() => {
       this.cleanupOldRecordings()
       this.cleanupScheduled = false
-    }, 60000)
+    }, CLEANUP_INTERVAL)
   }
 
   private cleanupOldRecordings(): void {

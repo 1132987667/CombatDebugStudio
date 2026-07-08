@@ -2,27 +2,29 @@
  * 物品类型枚举
  * 对应 materials.json 中的 type 字段
  */
-export enum ItemType {
-  MATERIAL = 'material', // 材料
-  CONSUMABLE = 'consumable', // 消耗品
-  EQUIPMENT = 'equipment', // 装备
-  QUEST = 'quest', // 任务物品
+export const ItemType = {
+  MATERIAL: 'material', // 材料
+  CONSUMABLE: 'consumable', // 消耗品
+  EQUIPMENT: 'equipment', // 装备
+  QUEST: 'quest', // 任务物品
 }
+export type ItemType = (typeof ItemType)[keyof typeof ItemType]
 
 /**
  * 装备槽位枚举
  */
-export enum EquipmentSlot {
-  WEAPON = 'weapon', // 武器
-  ARMOR = 'armor', // 护甲
-  ACCESSORY = 'accessory', // 饰品
-  HELM = 'helm', // 头盔
-  BOOTS = 'boots', // 鞋子
-  RING = 'ring', // 戒指
-  NECKLACE = 'necklace', // 项链
-  BRACELET = 'bracelet', // 手镯
-  BELT = 'belt', // 腰带
+export const EquipmentSlot = {
+  WEAPON : 'weapon', // 武器
+  ARMOR : 'armor', // 护甲
+  ACCESSORY : 'accessory', // 饰品
+  HELM : 'helm', // 头盔
+  BOOTS : 'boots', // 鞋子
+  RING : 'ring', // 戒指
+  NECKLACE : 'necklace', // 项链
+  BRACELET : 'bracelet', // 手镯
+  BELT : 'belt', // 腰带
 }
+export type EquipmentSlot = (typeof EquipmentSlot)[keyof typeof EquipmentSlot]
 
 /**
  * 物品效果定义

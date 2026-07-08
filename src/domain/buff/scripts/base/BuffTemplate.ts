@@ -1,91 +1,8 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
+import { AttributeBuffTemplate } from '@/domain/buff/scripts/base/AttributeBuffTemplate'
+import type { AttributeModifier } from '@/domain/buff/scripts/base/AttributeBuffTemplate'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ModifierType } from '@/domain/attribute/types'
-/**
- * 属性加成buff模板
- * 用于快速创建属性加成类buff
- */
-export abstract class AttributeBuffTemplate extends BaseBuffScript {
-  protected abstract getAttributeCode(): string
-  protected abstract getBaseBonus(): number
-  protected abstract getBonusType():
-    | 'ADDITIVE'
-    | 'MULTIPLICATIVE'
-    | 'PERCENTAGE'
-  protected abstract getBuffName(): string
-
-  protected _onApply(context: BuffContext): void {
-    const attributeName = this.getAttributeCode()
-    const baseBonus = this.getBaseBonus()
-    const bonusType = this.getBonusType()
-    const buffName = this.getBuffName()
-
-    this.log(context, `${buffName}效果生效！`)
-
-    const actualBonus = this.getConfigValue(context, 'bonus', baseBonus)
-    this.addModifier(context, attributeName, actualBonus, bonusType)
-
-    context.setVariable('baseBonus', actualBonus)
-  }
-
-  protected _onRemove(context: BuffContext): void {
-    this.log(context, `${this.getBuffName()}效果消失`)
-  }
-
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
-    // 默认实现：随时间增强效果
-    const elapsed = context.getElapsedTime()
-    const growthRate = this.getConfigValue(context, 'growthRate', 0)
-
-    if (
-      growthRate > 0 &&
-      Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)
-    ) {
-      const currentBonus =
-        context.getVariable<number>('baseBonus') || this.getBaseBonus()
-      const newBonus = Math.floor(currentBonus * (1 + growthRate))
-
-      if (newBonus > currentBonus) {
-        context.removeModifiers(this.getAttributeCode())
-        this.addModifier(
-          context,
-          this.getAttributeCode(),
-          newBonus,
-          this.getBonusType(),
-        )
-        context.setVariable('baseBonus', newBonus)
-        this.log(
-          context,
-          `${this.getBuffName()}效果增强，当前加成：${newBonus}`,
-        )
-      }
-    }
-  }
-
-  protected _onRefresh(context: BuffContext): void {
-    this.log(context, `${this.getBuffName()}效果强化！`)
-
-    const currentBonus =
-      context.getVariable<number>('baseBonus') || this.getBaseBonus()
-    const refreshBonus = this.getConfigValue(
-      context,
-      'refreshBonus',
-      this.getBaseBonus() * 0.1,
-    )
-    const newBonus = currentBonus + refreshBonus
-
-    context.removeModifiers(this.getAttributeCode())
-    this.addModifier(
-      context,
-      this.getAttributeCode(),
-      newBonus,
-      this.getBonusType(),
-    )
-    context.setVariable('baseBonus', newBonus)
-
-    this.log(context, `${this.getBuffName()}加成提升至 ${newBonus}`)
-  }
-}
 
 /**
  * 持续伤害debuff模板
@@ -245,17 +162,8 @@ export class BuffTemplateGenerator {
   ): typeof BaseBuffScript {
     return class extends AttributeBuffTemplate {
       public static readonly BUFF_ID = buffId
-      protected getAttributeCode(): string {
-        return attributeName
-      }
-      protected getBaseBonus(): number {
-        return baseBonus
-      }
-      protected getBonusType(): ModifierType {
-        return bonusType
-      }
-      protected getBuffName(): string {
-        return buffName
+      protected getModifiers(): AttributeModifier[] {
+        return [{ attribute: attributeName, value: baseBonus, type: bonusType, description: buffName }]
       }
     }
   }

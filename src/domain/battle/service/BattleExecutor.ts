@@ -12,6 +12,7 @@ import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import { EFFECT_TYPES } from '@/shared/types/effect'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
+import { BUFF_IDS } from '@/domain/buff/types'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 
@@ -41,7 +42,7 @@ export class BattleExecutor {
    */
   isParticipantControlled(participant: BattleEntity): boolean {
     if (participant.hasBuff(STUN_BUFF_ID)) return true
-    if (participant.hasBuff('buff_silence')) return true
+    if (participant.hasBuff(BUFF_IDS.SILENCE)) return true
     return false
   }
 

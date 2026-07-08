@@ -42,6 +42,7 @@
 <script setup lang="ts">
 import { ref, watch, reactive } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import { SPEED_OPTIONS } from '@/shared/constants/speed'
 
 interface BattleRules {
   speedFirst: boolean
@@ -70,7 +71,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const speedOptions = [0.5, 1, 2, 5]
+const speedOptions = SPEED_OPTIONS
 const localRules = reactive<BattleRules>({ ...props.rules })
 const localSpeed = ref(props.speed)
 const customSpeed = ref<number | null>(null)

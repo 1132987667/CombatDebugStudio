@@ -8,10 +8,19 @@
  */
 
 import { battleLogManager } from '@/infrastructure/adapters/logging'
+import type { BattleEntity, ParticipantSide } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /**
  * 战斗规则配置接口
  */
+/** 物理/魔法防御减伤系数 */
+const PHYSICAL_DEFENSE_FACTOR = 0.01
+const MAGIC_DEFENSE_FACTOR = 0.01
+/** 普通防御减伤系数（用于无属性伤害） */
+const NORMAL_DEFENSE_FACTOR = 0.005
+
 /**
  * 战斗规则配置接口
  * 定义了游戏战斗系统的全部可配置参数
@@ -110,6 +119,14 @@ export interface BattleRulesConfig {
 }
 
 /**
+ * 战斗结束判定结果
+ */
+export interface BattleEndCheckResult {
+  shouldEnd: boolean
+  winner?: ParticipantSide
+}
+
+/**
  * 战斗规则管理器类
  * 负责加载、管理和应用战斗规则配置
  */
@@ -182,11 +199,11 @@ export class BattleRuleManager {
             // enabled: 是否启用防御减伤机制
             enabled: true,
             // physicalDefenseFactor: 物理防御减伤系数，每点防御减少对应比例伤害
-            physicalDefenseFactor: 0.01,
+            physicalDefenseFactor: PHYSICAL_DEFENSE_FACTOR,
             // magicDefenseFactor: 魔法防御减伤系数
-            magicDefenseFactor: 0.01,
+            magicDefenseFactor: MAGIC_DEFENSE_FACTOR,
             // normalDefenseFactor: 普通防御减伤系数（用于无属性伤害）
-            normalDefenseFactor: 0.005,
+            normalDefenseFactor: NORMAL_DEFENSE_FACTOR,
           },
           // thresholds: 伤害值的边界限制
           thresholds: {
@@ -404,5 +421,52 @@ export class BattleRuleManager {
   public resetToDefault(): void {
     this.config = this.getDefaultConfig()
     battleLogManager.addDebugLog('战斗规则配置已重置为默认值')
+  }
+
+  /**
+   * 检查战斗是否应该结束
+   * 这是一个纯业务规则函数，不依赖外部状态
+   * maxTurns 从规则配置中读取，统一配置来源
+   * @param participants 所有参战方
+   * @param currentRound 当前回合数
+   * @returns 判定结果
+   */
+  public checkBattleEndCondition(
+    participants: Map<string, BattleEntity>,
+    currentRound: number,
+  ): BattleEndCheckResult {
+    const { maxTurns } = this.getConfig().rules.turnSystem
+    const aliveCharacters = Array.from(participants.values()).filter(
+      (p) => p.team === PARTICIPANT_SIDE.ALLY && p.isAlive(),
+    )
+    const aliveEnemies = Array.from(participants.values()).filter(
+      (p) => p.team === PARTICIPANT_SIDE.ENEMY && p.isAlive(),
+    )
+
+    // 1. 一方全灭
+    if (aliveCharacters.length === 0) {
+      return { shouldEnd: true, winner: PARTICIPANT_SIDE.ENEMY }
+    }
+    if (aliveEnemies.length === 0) {
+      return { shouldEnd: true, winner: PARTICIPANT_SIDE.ALLY }
+    }
+
+    // 2. 超过最大回合数（按血量比例判定）
+    if (currentRound >= maxTurns) {
+      const charactersHealth = aliveCharacters.reduce(
+        (sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth),
+        0,
+      )
+      const enemiesHealth = aliveEnemies.reduce(
+        (sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth),
+        0,
+      )
+      const winner = charactersHealth >= enemiesHealth
+        ? PARTICIPANT_SIDE.ALLY
+        : PARTICIPANT_SIDE.ENEMY
+      return { shouldEnd: true, winner }
+    }
+
+    return { shouldEnd: false }
   }
 }

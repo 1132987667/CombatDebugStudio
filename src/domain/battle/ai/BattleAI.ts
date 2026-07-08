@@ -23,6 +23,7 @@ import type { SkillManager } from '@/domain/skill/SkillManager'
 import {
   AIPriorityStrategy,
   AIPriorityStrategyFactory,
+  AI_STRATEGY,
 } from '@/domain/battle/ai/AIPriorityStrategy'
 import {
   SkillConfig,
@@ -75,7 +76,7 @@ export class BaseBattleAI implements BattleAI {
   protected skillManager?: SkillManager
   protected priorityStrategy: AIPriorityStrategy
 
-  constructor(skillIds?: string[], strategyName: string = 'balanced') {
+  constructor(skillIds?: string[], strategyName: string = AI_STRATEGY.BALANCED) {
     this.priorityStrategy =
       AIPriorityStrategyFactory.createStrategy(strategyName)
 
@@ -201,7 +202,7 @@ export class BaseBattleAI implements BattleAI {
       enemies,
       teamHealthPercent,
       highestThreatEnemy,
-      needsHealing: teamHealthPercent < 0.5,
+      needsHealing: teamHealthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD,
       shouldUseSkill,
     }
   }

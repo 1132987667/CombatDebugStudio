@@ -1,4 +1,5 @@
-import type { BuffConfig, BuffInstance, BuffQuery, IBuffScript } from '@/domain/buff/types'
+import type { BuffConfig, BuffInstance, BuffQuery, IBuffScript, ScriptBuffConfig } from '@/domain/buff/types'
+import { BUFF_ID_PREFIX } from '@/domain/buff/types'
 import type {
   TriggerEventContext,
 } from '@/domain/buff/types'
@@ -20,6 +21,7 @@ import { ModifierStack } from '@/domain/buff/ModifierStack'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
 import { TriggerEventBus, triggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { Counter } from '@/shared/utils/Counter'
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
 const NOOP_BUFF_SCRIPT: IBuffScript = {
@@ -49,8 +51,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   private readonly logger = battleLogManager
   private _debugMode: boolean = true
   private onAttributeChange?: (characterId: string) => void
+  private onDamageRequest?: (targetId: string, damage: number, damagePercent?: number) => void
+  private onHealRequest?: (targetId: string, amount: number) => void
   private readonly eventBus: TriggerEventBus
   private triggerScripts = new Map<string, (context: TriggerExecutionContext) => void>()
+  private instanceIdCounter = new Counter(1)
 
   /** 角色免疫标签注册表（初始化时由被动技能填充，运行时可查询） */
   private characterImmunities = new Map<string, Set<string>>()
@@ -82,7 +87,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   private registerDefaultTriggerScripts(): void {
     this.registerTriggerScript(SkillStepType.DEAL_DAMAGE, (ctx: TriggerExecutionContext) => {
-      this.dealDirectDamage(ctx.targetId ?? '', ctx.params?.damage as number ?? 0)
+      const damage = ctx.params?.damage as number ?? 0
+      const damagePercent = ctx.params?.damagePercent as number ?? 0
+      if (damagePercent > 0) {
+        this.dealDirectDamage(ctx.targetId ?? '', 0, damagePercent)
+      } else if (damage > 0) {
+        this.dealDirectDamage(ctx.targetId ?? '', damage)
+      }
     })
     this.registerTriggerScript(SkillStepType.APPLY_BUFF, (ctx: TriggerExecutionContext) => {
       if (ctx.params?.buffId) {
@@ -113,11 +124,17 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     })
   }
 
-  // ponytail: 当前无配置触发 deal_damage/heal 存根。后续如有灼烧/中毒等每回合触发器需要实现，
-  // 应通过 BattleSystem 注册的 onAttributeChange 回调委托到 BattleParticipantImpl.takeDamage。
-  private dealDirectDamage(targetId: string, damage: number): void { }
+  private dealDirectDamage(targetId: string, damage: number, damagePercent?: number): void {
+    if (this.onDamageRequest) {
+      this.onDamageRequest(targetId, damage, damagePercent)
+    }
+  }
   
-  private healTarget(targetId: string, amount: number): void { }
+  private healTarget(targetId: string, amount: number): void {
+    if (this.onHealRequest) {
+      this.onHealRequest(targetId, amount)
+    }
+  }
 
   public registerTriggerScript(
     scriptId: string,
@@ -130,6 +147,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.onAttributeChange = callback
   }
 
+  public setDamageCallback(callback: (targetId: string, damage: number, damagePercent?: number) => void): void {
+    this.onDamageRequest = callback
+  }
+
+  public setHealCallback(callback: (targetId: string, amount: number) => void): void {
+    this.onHealRequest = callback
+  }
+
   private triggerAttributeChange(characterId: string): void {
     if (this.onAttributeChange) this.onAttributeChange(characterId)
   }
@@ -138,10 +163,33 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return this.eventBus
   }
 
+  /**
+   * 执行注册的触发器脚本
+   * BuffContext.triggerEvent 委托到此方法
+   */
+  public executeTriggerScript(
+    instanceId: string,
+    targetId: string,
+    eventName: string,
+    data?: Record<string, any>,
+  ): void {
+    const handler = this.triggerScripts.get(eventName)
+    if (handler) {
+      handler({
+        phase: eventName as any,
+        sourceId: '',
+        targetId,
+        instanceId,
+        params: data ?? {},
+        currentTurn: 0,
+      } as TriggerExecutionContext)
+    }
+  }
+
   public addBuff(
     characterId: string,
     buffId: string,
-    config: BuffConfig,
+    config: Partial<BuffConfig> = {},
     currentTurn: number = 0,
     record?: CombatRecord,
   ): string {
@@ -157,13 +205,37 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       script = NOOP_BUFF_SCRIPT
     }
 
+    // ponytail: 自包含脚本的配置合并策略：
+    // 调用方传的配置 > 脚本静态 CONFIG > JSON 配置 > 硬编码默认值
+    const scriptDefaultConfig = this.scriptRegistry.getDefaultConfig(buffId)
+    const jsonConfig = this.scriptRegistry.getBuffConfig(buffId)
+    const resolvedConfig: BuffConfig = {
+      id: config.id ?? scriptDefaultConfig?.id ?? jsonConfig?.id ?? buffId,
+      name: config.name ?? scriptDefaultConfig?.name ?? jsonConfig?.name ?? buffId,
+      description: config.description ?? scriptDefaultConfig?.description ?? '',
+      duration: config.duration ?? scriptDefaultConfig?.duration ?? jsonConfig?.duration ?? 1,
+      maxStacks: config.maxStacks ?? scriptDefaultConfig?.maxStacks ?? jsonConfig?.maxStacks ?? 1,
+      cooldown: config.cooldown ?? scriptDefaultConfig?.cooldown ?? 0,
+      stackRule: config.stackRule ?? scriptDefaultConfig?.stackRule ?? StackRule.LIMITED,
+      controlType: config.controlType ?? scriptDefaultConfig?.controlType ?? ControlType.NONE,
+      controlPriority: config.controlPriority ?? scriptDefaultConfig?.controlPriority ?? 0,
+      isPermanent: config.isPermanent ?? scriptDefaultConfig?.isPermanent ?? false,
+      isDebuff: config.isDebuff ?? scriptDefaultConfig?.isDebuff ?? false,
+      isPositive: config.isPositive ?? scriptDefaultConfig?.isPositive ?? undefined,
+      iconPath: config.iconPath ?? scriptDefaultConfig?.iconPath ?? undefined,
+      dispellable: config.dispellable ?? scriptDefaultConfig?.dispellable ?? undefined,
+      immuneTags: config.immuneTags ?? undefined,
+      parameters: config.parameters ?? scriptDefaultConfig?.parameters ?? undefined,
+      attributes: config.attributes ?? undefined,
+    }
+
     // ponytail: 免疫检查 — 若目标对该控制类型或 buffId 免疫则跳过施加
     const targetImmunities = this.characterImmunities.get(characterId)
     if (targetImmunities && targetImmunities.size > 0) {
-      const controlTag = config.controlType && config.controlType !== ControlType.NONE
-        ? config.controlType.toLowerCase()
+      const controlTag = resolvedConfig.controlType && resolvedConfig.controlType !== ControlType.NONE
+        ? resolvedConfig.controlType.toLowerCase()
         : null
-      const buffTag = buffId.replace(/^buff_/i, '')
+      const buffTag = buffId.startsWith(BUFF_ID_PREFIX) ? buffId.slice(BUFF_ID_PREFIX.length) : buffId
       if ((controlTag && targetImmunities.has(controlTag)) || targetImmunities.has(buffTag)) {
         return ''
       }
@@ -173,19 +245,19 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       (instance) => instance.buffId === buffId,
     )
 
-    switch (config.stackRule) {
+    switch (resolvedConfig.stackRule) {
       case StackRule.REFRESH:
         existingBuffs.forEach((instance) => this.removeBuff(instance.id))
         break
       case StackRule.LIMITED:
-        if (existingBuffs.length >= config.maxStacks) return existingBuffs[0].id
+        if (existingBuffs.length >= resolvedConfig.maxStacks) return existingBuffs[0].id
         break
       case StackRule.INDEPENDENT:
         break
     }
 
-    const instanceId = `${characterId}_${buffId}_${currentTurn}_${Math.floor(Math.random() * 10000)}`
-    const context = BuffContextPool.borrow(characterId, instanceId, config, this)
+    const instanceId = `${characterId}_${buffId}_${currentTurn}_${this.instanceIdCounter.next()}`
+    const context = BuffContextPool.borrow(characterId, instanceId, resolvedConfig, this)
 
     const buffInstance: BuffInstance = {
       id: instanceId,
@@ -194,8 +266,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       script,
       context,
       startTurn: currentTurn,
-      duration: config.duration || -1,
-      remainingTurns: config.duration,
+      duration: resolvedConfig.duration || -1,
+      remainingTurns: resolvedConfig.duration,
       currentStacks: 1,
       isActive: true,
     }
@@ -210,16 +282,19 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       script.onApply(context)
     })
 
-    this.applyAttributeModifiers(characterId, instanceId, buffId)
+    // ponytail: 自包含脚本自己通过 _onApply 管理修饰符，不重复从 JSON 读取
+    if (!this.scriptRegistry.isSelfContained(buffId)) {
+      this.applyAttributeModifiers(characterId, instanceId, buffId)
+    }
     this.triggerAttributeChange(characterId)
 
     if (record) {
       record.effects.push({
-        type: config.isDebuff ? 'debuff' : 'buff',
+        type: resolvedConfig.isDebuff ? 'debuff' : 'buff',
         targetId: characterId,
-        buffId: config.id,
+        buffId: resolvedConfig.id,
         instanceId,
-        description: `${characterId} 获得 ${config.name}`,
+        description: `${characterId} 获得 ${resolvedConfig.name}`,
       })
     }
 

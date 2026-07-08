@@ -1,6 +1,7 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { SkillStepType } from '@/domain/skill/types'
 /**
  * 强毒debuff脚本
  * 比普通中毒更强的毒素效果，造成更高的持续伤害
@@ -45,7 +46,9 @@ export class StrongPoisonDebuff extends BaseBuffScript {
       const currentDamage = Math.floor(baseDamage * Math.pow(damageMultiplier, stacks))
       
       this.log(context, `强毒伤害：${currentDamage}`)
-      // 这里应该调用角色的伤害方法
+      this.triggerEvent(context, SkillStepType.DEAL_DAMAGE, {
+        damage: currentDamage,
+      })
       
       context.setVariable('lastDamageTime', elapsed)
     }

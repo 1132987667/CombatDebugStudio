@@ -89,7 +89,7 @@
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血加成:</span>
             <span class="monitor-value bonus">{{
-              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.value ||
+              formatBonusValue(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.value ||
                 0) }}</span>
           </div>
           <div class="monitor-item"
@@ -97,7 +97,7 @@
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击加成:</span>
             <span class="monitor-value bonus">{{
-              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.value ||
+              formatBonusValue(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.value ||
                 0) }}</span>
           </div>
           <div class="monitor-item"
@@ -105,7 +105,7 @@
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御加成:</span>
             <span class="monitor-value bonus">{{
-              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.value ||
+              formatBonusValue(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.value ||
                 0) }}</span>
           </div>
           <div class="monitor-item"
@@ -113,7 +113,7 @@
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度加成:</span>
             <span class="monitor-value bonus">{{
-              formatBonus(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.value ||
+              formatBonusValue(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.value ||
                 0) }}</span>
           </div>
         </div>
@@ -241,15 +241,16 @@ import { ATTRIBUTE_CODE, type Modifier, AttributeValueType } from "@/domain/attr
 import type { SkillConfig } from "@/domain/skill/types";
 import { formatTargetConfig } from "@/domain/skill/types";
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
-import type { BattleManager } from '@/domain/battle/BattleManager';
+import { formatBonusValue } from '@/shared/utils/format'
+import type { BattleService } from '@/application/facade/BattleFacade';
 import { SkillType } from '@/domain/skill/types';
 import { BattleEventType } from '@/domain/battle/types';
 import BattleReplay from "@/presentation/views/BattleReplay.vue";
 import { useBattleStore } from '@/presentation/stores';
 const battleStore = useBattleStore();
 
-// 获取 BattleManager
-const battleManager = container.resolve<BattleManager>('BattleManager');
+// 获取 BattleService
+const battleService = container.resolve<BattleService>('BattleService');
 const props = defineProps<{
   battleSystem?: any;
 }>();
@@ -259,7 +260,7 @@ const currentCharacter = computed(() => {
   const id = battleStore.selectedCharacterId;
   if (!id) return null;
   // 先找战斗中的参战角色，若未加入队伍则回退到角色库预览实体
-  return battleManager.getSelectedCharacter() || battleStore.previewEntity;
+  return battleService.getSelectedCharacter() || battleStore.previewEntity;
 });
 const selectedCharName = computed(() => currentCharacter.value?.name || "未选择");
 
@@ -516,29 +517,6 @@ const hideAttrTooltip = () => {
   attrTooltipVisible.value = false
 }
 
-/**
- * 获取加成属性的值
- * @param bonus - 加成属性值
- * @returns 数值类型的加成值
- */
-const getBonusValue = (bonus: any): number => {
-  if (typeof bonus === 'number') return bonus;
-  if (typeof bonus === 'object' && bonus !== null && typeof bonus.value === 'number') return bonus.value;
-  return 0;
-};
-
-/**
- * 格式化加成值显示
- * @param value - 加成属性值
- * @returns 格式化后的字符串
- */
-const formatBonus = (value: any): string => {
-  const numValue = getBonusValue(value);
-  if (isNaN(numValue)) return "0%";
-  if (numValue === 0) return "0%";
-  const roundedValue = Math.round(numValue * 100) / 100;
-  return roundedValue > 0 ? `+${roundedValue}%` : `${roundedValue}%`;
-};
 
 // ------------------------------------------------------------
 // 辅助函数（纯展示逻辑，无需缓存）
@@ -643,22 +621,22 @@ const handleReplayEvent = (event: any, index: number) => {
 const handleReplayStart = (recording: any) => {
   console.log('开始回放:', recording);
   battleStore.resetBattle();
-  if (battleStore.battleManager) {
-    battleStore.battleManager.startReplay(recording);
+  if (battleStore.battleService) {
+    battleStore.battleService.startReplay(recording);
   }
 };
 
 const handleReplayEnd = (recording: any) => {
   console.log('回放结束:', recording);
-  if (battleStore.battleManager) {
-    battleStore.battleManager.stopReplay();
+  if (battleStore.battleService) {
+    battleStore.battleService.stopReplay();
   }
 };
 
 const handleReplayPause = (recording: any, index: number) => {
   console.log('回放暂停:', recording, '当前索引:', index);
-  if (battleStore.battleManager) {
-    battleStore.battleManager.pauseReplay();
+  if (battleStore.battleService) {
+    battleStore.battleService.pauseReplay();
   }
 };
 

@@ -1,4 +1,4 @@
-import { IBuffScript } from '@/domain/buff/types'
+import { IBuffScript, ScriptBuffConfig } from '@/domain/buff/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import buffsData from '@configs/buffs/buffs.json'
 import effectsData from '@configs/effects/effects.json'
@@ -34,6 +34,8 @@ interface RegistryEntry<TParams = any> {
 export class BuffScriptRegistry {
   private registry = new Map<string, RegistryEntry>()
   private buffConfigs = new Map<string, BuffConfigData>()
+  /** 脚本自包含的默认配置（由脚本类的静态 CONFIG 提供） */
+  private defaultConfigs = new Map<string, ScriptBuffConfig>()
 
   public constructor() {
     this.loadBuffConfigs()
@@ -164,6 +166,7 @@ export class BuffScriptRegistry {
     scriptId: string,
     factory: ScriptFactory<TParams>,
     metadata?: Partial<RegistryEntry['metadata']>,
+    defaultConfig?: ScriptBuffConfig,
   ): void {
     if (this.registry.has(scriptId)) {
       battleLogManager.addDebugLog(`Script "${scriptId}" already registered, overwriting`)
@@ -177,11 +180,25 @@ export class BuffScriptRegistry {
         version: metadata?.version,
       },
     })
+    if (defaultConfig) {
+      this.defaultConfigs.set(scriptId, defaultConfig)
+      battleLogManager.addDebugLog(`Script "${scriptId}" provides self-contained config (${Object.keys(defaultConfig).length} fields)`)
+    }
     battleLogManager.addDebugLog(`Registered buff script: ${scriptId}`)
   }
 
-  public registerScript(scriptId: string, script: any): void {
-    this.register(scriptId, () => script, { filePath: 'test', version: 'test' })
+  /** 获取脚本自包含的默认配置 */
+  public getDefaultConfig(scriptId: string): ScriptBuffConfig | undefined {
+    return this.defaultConfigs.get(scriptId)
+  }
+
+  /** 检查脚本是否为自包含模式（有 defaultConfig 且标记了 selfContained） */
+  public isSelfContained(scriptId: string): boolean {
+    return this.defaultConfigs.get(scriptId)?.selfContained === true
+  }
+
+  public registerScript(scriptId: string, script: any, defaultConfig?: ScriptBuffConfig): void {
+    this.register(scriptId, () => script, { filePath: 'test', version: 'test' }, defaultConfig)
   }
 
   public get<TParams = any>(scriptId: string): IBuffScript<TParams> | null {

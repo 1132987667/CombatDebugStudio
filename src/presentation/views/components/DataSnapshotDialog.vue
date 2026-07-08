@@ -32,7 +32,7 @@ import { computed } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import { container } from '@/infrastructure/di/Container'
 import { useDebugStore } from '@/presentation/stores'
-import type { BattleManager } from '@/domain/battle/BattleManager'
+import type { BattleService } from '@/application/facade/BattleFacade'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 defineProps<{
@@ -43,10 +43,10 @@ defineEmits<{
   'update:modelValue': [value: boolean]
 }>()
 
-const battleManager = container.resolve<BattleManager>('BattleManager')
+const battleService = container.resolve<BattleService>('BattleService')
 const debugStore = useDebugStore()
 
-const currentCharacter = computed(() => battleManager.getSelectedCharacter())
+const currentCharacter = computed(() => battleService.getSelectedCharacter())
 
 const exportState = async () => {
   try {
@@ -56,7 +56,7 @@ const exportState = async () => {
     }
 
     const char = currentCharacter.value
-    const currentTurn = battleManager.getCurrentTurn()
+    const currentTurn = battleService.getCurrentTurn()
 
     const attributeCodes = [
       'currentHealth', 'maxHealth', 'energy', 'maxEnergy',

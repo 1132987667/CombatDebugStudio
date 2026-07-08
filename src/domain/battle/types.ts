@@ -92,6 +92,12 @@ export const BATTLE_CONSTANTS = {
   /** 治疗血量阈值 */
   HEAL_THRESHOLD: 0.3,
   CRITICAL_HEALTH_THRESHOLD: 0.5,
+  /** 受击获得的能量值 */
+  ENERGY_GAIN_ON_HIT: 12,
+  /** 默认初始能量 */
+  DEFAULT_INITIAL_ENERGY: 30,
+  /** 默认最大回合数 */
+  DEFAULT_MAX_TURNS: 999,
   /** 威胁值计算权重 */
   THREAT_HEALTH_WEIGHT: 50,
   THREAT_ENERGY_WEIGHT: 30,

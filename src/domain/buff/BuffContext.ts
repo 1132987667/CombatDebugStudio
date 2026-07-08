@@ -72,13 +72,14 @@ export class BuffContext {
     if (attribute === 'speed') console.log(`Speed modifier added for character ${this.characterId}`)
   }
 
-  public removeModifiers(): void {
+  public removeModifiers(attribute?: string): void {
     const system = this.buffSystem
     if (!system) { console.warn('BuffSystem not injected, cannot remove modifiers'); return }
     const modifierStack = system.getModifierStack(this.characterId)
-    modifierStack.removeModifier(this.instanceId)
+    modifierStack.removeModifier(this.instanceId, attribute as ATTRIBUTE_CODE | undefined)
   }
 
+  // TODO: 实现从 BuffSystem 或外部注入的 Character 缓存中获取角色实例
   public getCharacter(): Character | undefined {
     return undefined
   }
@@ -89,6 +90,11 @@ export class BuffContext {
   }
 
   public triggerEvent(eventName: string, data?: any): void {
-    console.log(`Buff event triggered: ${eventName}`, data)
+    const system = this._buffSystem
+    if (system) {
+      system.executeTriggerScript(this.instanceId, this.characterId, eventName, data)
+    } else {
+      console.warn(`BuffSystem not injected, cannot trigger event: ${eventName}`, data)
+    }
   }
 }

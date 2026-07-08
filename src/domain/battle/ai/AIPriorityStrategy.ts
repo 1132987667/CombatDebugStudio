@@ -340,6 +340,17 @@ export class BalancedAIPriorityStrategy extends BaseAIPriorityStrategy {
 }
 
 /**
+ * AI 策略名称常量
+ */
+export const AI_STRATEGY = {
+  AGGRESSIVE: 'aggressive',
+  DEFENSIVE: 'defensive',
+  BALANCED: 'balanced',
+} as const
+
+export type AI_STRATEGY = (typeof AI_STRATEGY)[keyof typeof AI_STRATEGY]
+
+/**
  * AI优先级策略工厂
  */
 export class AIPriorityStrategyFactory {
@@ -348,11 +359,11 @@ export class AIPriorityStrategyFactory {
    */
   public static createStrategy(strategyName: string): AIPriorityStrategy {
     switch (strategyName.toLowerCase()) {
-      case 'aggressive':
+      case AI_STRATEGY.AGGRESSIVE:
         return new AggressiveAIPriorityStrategy()
-      case 'defensive':
+      case AI_STRATEGY.DEFENSIVE:
         return new DefensiveAIPriorityStrategy()
-      case 'balanced':
+      case AI_STRATEGY.BALANCED:
       default:
         return new BalancedAIPriorityStrategy()
     }

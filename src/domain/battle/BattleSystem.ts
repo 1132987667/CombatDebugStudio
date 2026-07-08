@@ -17,7 +17,7 @@ import type {
   ParticipantSide,
 } from '@/domain/battle/types'
 import type { BattleCommand } from '@/shared/types/battle-commands'
-import { createDefaultBattleData, convertToBattleState, checkBattleEndCondition as checkEnd } from '@/domain/battle/aggregate/BattleState'
+import { createDefaultBattleData, convertToBattleState } from '@/domain/battle/aggregate/BattleState'
 import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
 import { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { TriggerEventContext } from '@/domain/buff/types'
@@ -84,6 +84,9 @@ import type { SkillConfig } from '@/domain/skill/types'
  * - 支持战斗录像与回放。
  * - 自动战斗与手动战斗模式切换。
  */
+
+/** 动作日志保留上限 */
+const MAX_ACTION_HISTORY = 100
 
 export class BattleSystem implements IBattleSystem {
 
@@ -336,6 +339,7 @@ export class BattleSystem implements IBattleSystem {
     const autoBattleRules = this.ruleManager.getAutoBattleRules()
     battleData.autoBattle = autoBattleRules.enabled
     battleData.battleSpeed = autoBattleRules.defaultSpeed
+    battleData.maxTurns = this.ruleManager.getTurnSystemRules().maxTurns
 
     this.applyPassiveSkills(participants)
 
@@ -344,6 +348,34 @@ export class BattleSystem implements IBattleSystem {
       const participant = battleData.participants.get(characterId)
       if (participant instanceof BattleParticipantImpl) {
         participant.recalculateAll()
+      }
+    })
+
+    // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
+    this.buffSystem.setDamageCallback((targetId: string, damage: number, damagePercent?: number) => {
+      const target = battleData.participants.get(targetId)
+      if (target?.isAlive()) {
+        let actualDamage = damage
+        if (damagePercent && damagePercent > 0) {
+          actualDamage = Math.max(1, Math.floor(target.currentHealth * damagePercent))
+        }
+        target.takeDamage(actualDamage)
+        this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
+          sourceId: '',
+          targetId,
+          value: actualDamage,
+        })
+      }
+    })
+    this.buffSystem.setHealCallback((targetId: string, amount: number) => {
+      const target = battleData.participants.get(targetId)
+      if (target?.isAlive()) {
+        target.heal(amount)
+        this.emitTriggerEvent(BattleTriggerPhase.HEAL_RECEIVED, {
+          sourceId: '',
+          targetId,
+          value: amount,
+        })
       }
     })
 
@@ -416,7 +448,7 @@ export class BattleSystem implements IBattleSystem {
 
     if (aliveParticipants.length === 0) {
       battle.roundState = RoundStatus.END
-      this.checkBattleEndCondition()
+      this.runEndConditionCheck()
       return
     }
 
@@ -521,7 +553,7 @@ export class BattleSystem implements IBattleSystem {
 
         this.buffSystem.updatePerTurn(participant.id)
 
-        this.checkBattleEndCondition()
+        this.runEndConditionCheck()
 
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
@@ -622,20 +654,20 @@ export class BattleSystem implements IBattleSystem {
     if (battle) {
       battle.actions.push(action)
 
-      if (battle.actions.length > 100) {
-        battle.actions = battle.actions.slice(-100)
+      if (battle.actions.length > MAX_ACTION_HISTORY) {
+        battle.actions = battle.actions.slice(-MAX_ACTION_HISTORY)
       }
     }
   }
 
   /**
-   * 记录战斗动作
-   * @param action 战斗动作
+   * 检测战斗结束条件并处理
+   * 委托给 ruleManager 进行规则判定，只负责后续副作用（结束战斗、日志）
    */
-  private checkBattleEndCondition(): void {
+  private runEndConditionCheck(): void {
     const battle = this.battleData
     if (!battle) return
-    const result = checkEnd(battle.participants, battle.currentRound, battle.maxTurns)
+    const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentRound)
     if (result.shouldEnd && result.winner) {
       this.endBattle(result.winner)
       if (battle.currentRound >= battle.maxTurns) {
@@ -670,12 +702,8 @@ export class BattleSystem implements IBattleSystem {
     return this.battleData?.roundState
   }
 
-  public isBattleInState(state: string): boolean {
-    return this.battleData?.battleState === state
-  }
-
   public isBattleEnded(): boolean {
-    return this.isBattleInState(BattleStatus.ENDED)
+    return this.battleData?.battleState === BattleStatus.ENDED
   }
 
   public getAutoBattle(): boolean {
@@ -869,7 +897,7 @@ export class BattleSystem implements IBattleSystem {
     )
 
     if (aliveParticipants.length === 0) {
-      const result = checkEnd(battle.participants, battle.currentRound, battle.maxTurns)
+      const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentRound)
       if (result.winner) {
         commands.push({
           type: 'SET_WINNER',

@@ -47,15 +47,8 @@
         </div>
       </div>
 
-      <!-- 状态标签 -->
-      <div class="member-status">
-        <span v-for="status in statusEffects" :key="status.id" class="status-tag"
-          :class="status.isPositive ? 'positive' : 'negative'" @mouseenter="showStatusTooltip($event, status)"
-          @mouseleave="hideStatusTooltip">
-          {{ status.name }}:{{ status.duration }}
-        </span>
-        <span v-if="statusEffects.length === 0" class="no-status">无</span>
-      </div>
+      <!-- Buff 列表（BuffIcon 自带悬停 tooltip） -->
+      <BuffList :buffs="buffListItems" />
 
       <!-- 调试信息（可选） -->
       <div v-if="showDebug" class="debug-info">
@@ -78,9 +71,9 @@
 <script setup lang="ts">
 import { computed, ref, type Ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/types'
-import type { StatusEffect } from '@/domain/battle/types'
 import { useBattleParticipant } from '@/presentation/composables/useBattleParticipant'
 import { useParticipantStats } from '@/presentation/composables/useParticipantStats'
+import BuffList from '@/presentation/components/BuffList.vue'
 
 // 浮动数字接口
 interface FloatingNumber {
@@ -110,8 +103,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   click: [participantId: string]
-  statusTooltipShow: [event: MouseEvent, status: StatusEffect]
-  statusTooltipHide: []
 }>()
 
 // 使用 composable 包装参与者
@@ -232,6 +223,19 @@ const statusEffects = computed(() => {
   return (props.participant as any).statusEffects || []
 })
 
+/** 转换为 BuffList 所需的数据格式 */
+const buffListItems = computed(() =>
+  statusEffects.value.map((s: any) => ({
+    id: s.id,
+    buffId: s.id,
+    name: s.name,
+    description: s.description || s.name,
+    remainingTurns: s.remainingTurns,
+    currentStacks: s.currentStacks || 1,
+    isDebuff: s.type === 'debuff',
+  }))
+)
+
 // 调试信息
 const showBreakdown = ref(false)
 
@@ -253,14 +257,6 @@ const formatBreakdownKey = (key: string) => {
 // 事件处理
 const handleClick = () => {
   emit('click', props.participant.id)
-}
-
-const showStatusTooltip = (event: MouseEvent, status: StatusEffect) => {
-  emit('statusTooltipShow', event, status)
-}
-
-const hideStatusTooltip = () => {
-  emit('statusTooltipHide')
 }
 
 // 暴露卡片引用给父组件（用于动画）

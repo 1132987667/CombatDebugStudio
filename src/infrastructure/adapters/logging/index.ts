@@ -22,7 +22,6 @@ export type {
   BattleLogEntry,
   LogFilters,
   BattleLogManagerOptions,
-  BattleLogLevel,
   LogEntry,
   LogHandler,
 } from '@/shared/types/battle-log'

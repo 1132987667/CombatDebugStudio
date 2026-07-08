@@ -28,7 +28,23 @@ export class ModifierStack implements IModifierStack {
     })
   }
 
-  public removeModifier(buffInstanceId: string): void {
+  /**
+   * 移除修饰符
+   * @param buffInstanceId 来源实例 ID
+   * @param attribute 可选——指定属性名时仅移除该属性下该 instance 的修饰符
+   */
+  public removeModifier(buffInstanceId: string, attribute?: ATTRIBUTE_CODE): void {
+    if (attribute) {
+      const stack = this.modifiers.get(attribute)
+      if (!stack) return
+      const filtered = stack.filter((m) => m.sourceKey !== buffInstanceId)
+      if (filtered.length === 0) {
+        this.modifiers.delete(attribute)
+      } else {
+        this.modifiers.set(attribute, filtered)
+      }
+      return
+    }
     for (const [key, stack] of this.modifiers.entries()) {
       const filtered = stack.filter(
         (modifier) => modifier.sourceKey !== buffInstanceId,

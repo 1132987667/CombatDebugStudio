@@ -7,6 +7,8 @@
  * 每条命令都是对状态的一次原子变更，支持回放与回溯。
  */
 
+import type { ParticipantSide } from '@/domain/battle/types'
+
 // ===================== 命令定义 =====================
 
 /**
@@ -108,7 +110,7 @@ export interface NextTurnCommand {
 export interface SetWinnerCommand {
   type: 'SET_WINNER'
   payload: {
-    winner: 'ally' | 'enemy'
+    winner: ParticipantSide
   }
 }
 
@@ -121,7 +123,7 @@ export interface InitParticipantsCommand {
     participants: Record<string /* participantId */, {
       id: string
       name: string
-      team: 'ally' | 'enemy'
+      team: ParticipantSide
       maxHealth: number
       currentHealth: number
       maxEnergy: number

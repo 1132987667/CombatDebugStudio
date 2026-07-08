@@ -161,6 +161,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Modifier, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
 import { ModifierSourceTypeNames, ModifierType } from '@/domain/attribute/types'
 import { getAttributeMeta, getAttributeCodeByName } from '@/domain/attribute/types'
+import { formatModifierValue } from '@/shared/utils/format'
 
 // ===================== 区间模式类型导出 =====================
 export interface RangeModifierRow {
@@ -223,14 +224,6 @@ const getSourceLabel = (source: ModifierSourceType): string => {
 const formatValue = (value: number, valueType: AttributeValueType): string => {
   const rounded = Math.round(value * 100) / 100
   if (valueType === '百分比') {
-    return rounded > 0 ? `+${rounded}%` : `${rounded}%`
-  }
-  return rounded > 0 ? `+${rounded}` : `${rounded}`
-}
-
-const formatModifierValue = (value: number, type: string): string => {
-  const rounded = Math.round(value * 100) / 100
-  if (type === 'PERCENTAGE') {
     return rounded > 0 ? `+${rounded}%` : `${rounded}%`
   }
   return rounded > 0 ? `+${rounded}` : `${rounded}`

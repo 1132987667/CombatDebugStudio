@@ -11,7 +11,7 @@ import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
-import { PARTICIPANT_SIDE, BattleEntity } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE, BattleEntity, BATTLE_CONSTANTS } from '@/domain/battle/types'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 import type {
@@ -406,7 +406,7 @@ export class BattleManager {
   resetCharacterStates() {
     ;[...this.allyTeam, ...this.enemyTeam].forEach((participant) => {
       participant.currentHealth = participant.maxHealth
-      participant.currentEnergy = 30
+      participant.currentEnergy = BATTLE_CONSTANTS.DEFAULT_INITIAL_ENERGY
     })
 
     this.emitTeamChanged()

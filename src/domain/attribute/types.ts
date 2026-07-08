@@ -816,8 +816,4 @@ export function getAttributeCodeByName(name: string): string | undefined {
   )?.[0]
 }
 
-// ========== Re-exports from domain kernel (Phase 3 migration) ==========
-export { Health } from '@/domain/kernel/value-objects/Health'
-export { Energy } from '@/domain/kernel/value-objects/Energy'
-export { Speed } from '@/domain/kernel/value-objects/Speed'
-export { Side } from '@/domain/kernel/value-objects/Side'
+// ========== Re-exports from domain kernel (Phase 3 migration — deprecated, values use primitive types) ==========

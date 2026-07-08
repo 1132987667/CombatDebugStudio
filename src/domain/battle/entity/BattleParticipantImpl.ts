@@ -7,7 +7,10 @@
  * 版本: 3.1.0 - 集成触发器事件系统
  */
 
-import { BattleTriggerPhase } from '@/domain/battle/types'
+import {
+  BattleTriggerPhase,
+  BATTLE_CONSTANTS,
+} from '@/domain/battle/types'
 import type { StatusEffect, ParticipantSnapshot, BattleEntity } from '@/domain/battle/types'
 import type { IModifierProvider } from '@/domain/attribute/types'
 import { type ParticipantSide } from '@/domain/battle/types'
@@ -580,10 +583,10 @@ export class BattleParticipantImpl implements BattleEntity {
     const damage = Math.max(0, amount)
     this.currentHealth = Math.max(0, this.currentHealth - damage)
 
-    // ponytail: 硬编码受击能量 12，与 BattleRuleManager.energyGainOnHit 配置保持一致
-    // 升级路径：由 BattleSystem 传入 combatRules.energyGainOnHit 替代硬编码
+    // ponytail: 受击能量从 BATTLE_CONSTANTS 读取，与 BattleRuleManager 配置一致
+    // 升级路径：由 BattleSystem 传入 combatRules.energyGainOnHit 替代常量
     if (this._energyHitCountThisRound < 3) {
-      this.gainEnergy(12)
+      this.gainEnergy(BATTLE_CONSTANTS.ENERGY_GAIN_ON_HIT)
       this._energyHitCountThisRound++
     }
 

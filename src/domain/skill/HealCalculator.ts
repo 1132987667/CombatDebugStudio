@@ -84,6 +84,11 @@ export class HealCalculator {
   /**
    * 计算减益效果对治疗的影响
    */
+  /** 每个 debuff 的减治疗效果（20%） */
+  private static readonly HEAL_REDUCTION_PER_DEBUFF = 0.2
+  /** 最大减治疗效果上限（80%） */
+  private static readonly MAX_HEAL_REDUCTION = 0.8
+
   private calculateDebuffEffect(target: BattleEntity): number {
     // ponytail: 检查常见减治疗 debuff，可扩展
     const healingReductionBuffs = [
@@ -94,10 +99,10 @@ export class HealCalculator {
     let debuffEffect = 0
     for (const buffId of healingReductionBuffs) {
       if (target.hasBuff(buffId)) {
-        debuffEffect += 0.2 // 每个 debuff 降低 20%
+        debuffEffect += HealCalculator.HEAL_REDUCTION_PER_DEBUFF
       }
     }
-    return Math.min(debuffEffect, 0.8) // 最多降�?80%
+    return Math.min(debuffEffect, HealCalculator.MAX_HEAL_REDUCTION)
   }
 
   applyHeal(target: BattleEntity, heal: number): number {

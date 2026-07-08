@@ -12,8 +12,6 @@ import type {
   LogFilters,
   BattleLogManagerOptions,
   BattleLogCategory,
-  BattleLogLevel,
-  BattleLogMessageType,
   LogEntry,
   LogHandler,
   LogSegment,

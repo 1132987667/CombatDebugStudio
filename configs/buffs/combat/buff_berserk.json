@@ -1,16 +1,6 @@
 {
-  "id": "berserk",
+  "id": "buff_berserk",
   "name": "狂暴",
-  "description": "陷入狂暴状态，攻击力和暴击属性大幅提升，但防御力降低，且会持续损失生命值",
-  "duration": 4,
-  "maxStacks": 1,
-  "cooldown": 9,
-  "isPermanent": false,
-  "isDebuff": false,
-  "parameters": {
-    "attackBonus": 100,
-    "selfDamage": 5,
-    "refreshAttackBonus": 20,
-    "refreshCritRateBonus": 0.05
-  }
+  "description": "陷入狂暴状态，攻击力大幅提升，但防御力降低，每回合损失生命值",
+  "icon": "berserk.png"
 }

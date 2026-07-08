@@ -1,0 +1,507 @@
+/* ==========================================================================
+   Component: Layout (_layout.scss)
+   依赖: tokens.scss
+   作用: 主布局、顶栏、三栏面板、控制栏
+   ========================================================================== */
+
+.battle-test-tool {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  overflow: hidden;
+}
+
+/* ----- 顶栏 ----- */
+.tool-header {
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-primary) 100%
+  );
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 2px solid var(--color-border-default);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* ponytail: header-height constant, extract to token if shared elsewhere */
+  height: 80px;
+  box-sizing: border-box;
+}
+
+.tool-header h1 {
+  font-size: var(--font-size-xl);
+  color: var(--color-brand-red);
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.tool-header .subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  margin: var(--space-2) 0 0 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* ----- 三栏主布局 ----- */
+.main-layout {
+  display: grid;
+  grid-template-columns: 30% 1fr 30%;
+  gap: var(--space-4);
+  /* ponytail: 140px = header(80px) + control-bar(~60px), extract to tokens if reused */
+  height: calc(100vh - 140px);
+  margin-top: 80px;
+  overflow: hidden;
+}
+
+.panel-left,
+.panel-center,
+.panel-right {
+  /* ponytail: 140px mirrors .main-layout calc */
+  height: calc(100vh - 140px);
+  padding: var(--space-3);
+}
+
+.panel-left {
+  background: var(--color-bg-secondary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  gap: var(--space-4);
+}
+
+.panel-center {
+  background: var(--color-bg-primary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-right {
+  background: var(--color-bg-secondary);
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  overflow-y: auto;
+  /* ponytail: 140px mirrors .main-layout calc */
+  height: calc((100vh - 140px - var(--space-6)) / 2);
+}
+
+.panel-section:not(:last-child) {
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.panel-title {
+  background: var(--color-bg-tertiary);
+  color: var(--color-brand-red);
+  padding: var(--space-2) var(--space-3);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-base);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.section-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: var(--space-2);
+}
+
+.section {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+  color: var(--color-info);
+  font-size: var(--font-size-sm);
+  border-bottom: 1px dashed var(--color-border-default);
+  padding-bottom: var(--space-1);
+}
+
+/** ponytail: 详情面板通用章节标题 — 从 3 个组件（BuffDetail/EnemyDetail/ItemDetail）提取的公共样式 */
+.section-title {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-info);
+  margin: 0 0 var(--space-2) 0;
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-border-default);
+  letter-spacing: 0.5px;
+}
+
+.section-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.selected-info {
+  display: flex;
+  align-items: center;
+  color: var(--color-warning);
+}
+
+.selected-info .label {
+  color: var(--color-text-secondary);
+}
+
+.selected-info .value {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-info);
+}
+
+/* ----- 底部控制栏 ----- */
+/* ----- 战场头部信息 ----- */
+.battle-header {
+  background: var(--color-bg-tertiary);
+  padding: var(--space-2);
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--color-border-default);
+}
+
+.turn-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.turn-label {
+  color: var(--color-info);
+}
+
+.turn-num {
+  background: var(--color-brand-red);
+  color: var(--color-text-primary);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.actor-info {
+  color: var(--color-warning);
+}
+
+/* ----- 场景/角色列表布局 ----- */
+.character-field {
+  display: flex;
+  gap: var(--space-2);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.character-party {
+  flex: 1;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.party-members {
+  padding: var(--space-2) var(--space-4);
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: visible;
+  min-height: 0;
+}
+
+.scene-enemy-list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.scene-group {
+  margin-bottom: var(--space-3);
+}
+
+.scene-group:last-child {
+  margin-bottom: 0;
+}
+
+.scene-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.4rem 0.5rem;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.35rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition-fast);
+}
+
+.scene-header:hover {
+  background: var(--color-bg-hover);
+}
+
+.scene-header:active {
+  background: var(--color-bg-active);
+}
+
+.scene-name {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-brand-red);
+  font-size: var(--font-size-sm);
+}
+
+.scene-level {
+  color: var(--color-text-tertiary);
+}
+
+.scene-count {
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xxs);
+  margin-left: auto;
+}
+
+.scene-enemies {
+  padding-left: var(--space-2);
+}
+
+.scene-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.scene-input {
+  flex: 1;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+}
+
+.scene-select {
+  flex: 1;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  padding: var(--space-1);
+  font-size: var(--font-size-xs);
+}
+
+/* ----- 空状态 ----- */
+.empty-message {
+  text-align: center;
+  color: var(--color-text-disabled);
+  padding: var(--space-6) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+}
+
+.empty-party {
+  color: var(--color-text-disabled);
+  text-align: center;
+  padding: var(--space-4);
+  font-style: italic;
+}
+
+/* ----- 搜索输入框 ----- */
+.character-search {
+  margin-bottom: var(--space-2);
+}
+
+.search-input {
+  width: 100%;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  padding: 0.4rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+/* ----- VS 分隔 ----- */
+.field-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-1);
+}
+
+.vs-text {
+  color: var(--color-brand-red);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-md);
+  background: var(--color-bg-tertiary);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-xl);
+}
+
+/* ----- 控制栏 ----- */
+.control-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-bg-secondary);
+  border-top: 2px solid var(--color-border-default);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: var(--z-sticky);
+}
+
+.control-group {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.control-group.right {
+  justify-content: flex-end;
+}
+
+.control-btn {
+  background: var(--color-bg-tertiary);
+  color: var(--color-info);
+  border: 1px solid var(--color-border-default);
+  padding: 0.4rem 0.75rem;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.control-btn:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  border-color: var(--color-info);
+}
+
+.control-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.control-btn.stop {
+  color: var(--color-danger);
+  border-color: #7a1a1a;
+}
+
+.control-btn.stop:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  border-color: var(--color-danger);
+}
+
+.auto-play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 120px;
+  transition: all var(--transition-fast);
+}
+
+.auto-play-btn:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  border-color: var(--color-info);
+  transform: translateY(-1px);
+}
+
+.auto-play-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auto-play-btn.auto-playing {
+  background: #f97316;
+  border-color: #ea580c;
+  color: var(--color-text-primary);
+}
+
+.auto-play-btn.auto-playing:hover:not(:disabled) {
+  background: #ea580c;
+  border-color: #c2410c;
+}
+
+.play-icon {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.stop-icon {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-danger);
+}
+
+.auto-text {
+  font-size: var(--font-size-sm);
+}
+
+.speed-control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 120px;
+  transition: all var(--transition-fast);
+}
+
+.speed-control-btn:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  border-color: var(--color-info);
+}
+
+.speed-control-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.speed-icon {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.speed-text {
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.mode-indicator {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  margin-left: var(--space-4);
+}

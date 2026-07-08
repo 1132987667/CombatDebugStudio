@@ -14,7 +14,7 @@
     <!-- 光弹（用 JS 驱动，模板只做容器）-->
 
     <!-- 命中爆炸 -->
-    <div v-for="imp in impacts" :key="imp.id" class="impact" :class="imp.type"
+    <div v-for="imp in impacts" :key="imp.id" class="impact" :class="[imp.colorType, imp.style]"
       :style="{ left: imp.x + 'px', top: imp.y + 'px' }"></div>
 
     <!-- 火花粒子（用 JS 驱动）-->
@@ -26,9 +26,9 @@
     <!-- 护盾六边形 -->
     <div v-for="hex in shieldHexes" :key="hex.id" class="shield-hex" :style="{ left: hex.x + 'px', top: hex.y + 'px' }">
       <svg viewBox="0 0 100 100" fill="none">
-        <polygon points="50,5 90,27 90,73 50,95 10,73 10,27" stroke="#8ee0ff" stroke-width="2"
+        <polygon points="50,5 90,27 90,73 50,95 10,73 10,27" stroke="var(--vfx-frost)" stroke-width="2"
           fill="rgba(76,201,240,0.1)" />
-        <polygon points="50,20 75,35 75,65 50,80 25,65 25,35" stroke="#6affd0" stroke-width="1" fill="none"
+        <polygon points="50,20 75,35 75,65 50,80 25,65 25,35" stroke="var(--vfx-heal)" stroke-width="1" fill="none"
           opacity="0.6" />
       </svg>
     </div>
@@ -43,9 +43,21 @@
 
 <script setup lang="ts">
 import { ref, onUnmounted, nextTick } from 'vue'
+import { useDebugStore } from '@/presentation/stores/debugStore'
+
+const debugStore = useDebugStore()
 
 // ============ 类型 ============
 export interface CardPos { x: number; y: number; el: HTMLElement }
+
+// ============ VFX 颜色映射 ============
+/* ponytail: these match the --vfx-* CSS variables above; keep in sync */
+const VFX_COLORS: Record<string, Record<string, string>> = {
+  fire: { bg: '#ffaa30', glow: '#ff6600' },
+  frost: { bg: '#8ee0ff', glow: '#4cc9f0' },
+  heal: { bg: '#6affd0', glow: '#2dd4a8' },
+  shield: { bg: '#8ee0ff', glow: '#4cc9f0' },
+}
 
 // ============ 响应式数据 ============
 let nextId = 0
@@ -53,7 +65,7 @@ let nextId = 0
 /** 技能名飞行 */
 const skillNames = ref<Array<{ id: number; text: string; x: number; y: number; dx: number; dy: number; fromSide: string }>>([])
 /** 命中爆炸 */
-const impacts = ref<Array<{ id: number; x: number; y: number; type: string }>>([])
+const impacts = ref<Array<{ id: number; x: number; y: number; colorType: string; style: string }>>([])
 /** 治疗光环 */
 const healAuras = ref<Array<{ id: number; x: number; y: number }>>([])
 /** 护盾六边形 */
@@ -150,11 +162,11 @@ function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | '
       trail.style.left = x + 'px'
       trail.style.top = y + 'px'
       if (type === 'fire') {
-        trail.style.background = 'radial-gradient(circle, #ffaa30, transparent)'
-        trail.style.boxShadow = '0 0 10px #ff6600'
+        trail.style.background = `radial-gradient(circle, ${VFX_COLORS[type].bg}, transparent)`
+        trail.style.boxShadow = `0 0 10px ${VFX_COLORS[type].glow}`
       } else {
-        trail.style.background = 'radial-gradient(circle, #8ee0ff, transparent)'
-        trail.style.boxShadow = '0 0 10px #4cc9f0'
+        trail.style.background = `radial-gradient(circle, ${VFX_COLORS.frost.bg}, transparent)`
+        trail.style.boxShadow = `0 0 10px ${VFX_COLORS.frost.glow}`
       }
       root.appendChild(trail)
       setTimeout(() => { if (trail.parentNode) trail.parentNode.removeChild(trail) }, 600)
@@ -169,39 +181,131 @@ function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | '
   requestAnimationFrame(step)
 }
 
-/** 命中爆炸 */
-function showImpact(targetId: string, type: 'fire' | 'frost' | 'heal' | 'shield') {
+/** 命中爆炸 — 根据 debugStore.impactStyle 选择动画变体 */
+function showImpact(targetId: string, colorType: 'fire' | 'frost' | 'heal' | 'shield') {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
-  impacts.value.push({ id, x: pos.x, y: pos.y, type })
-  setRemove(id, impacts, 550)
+  const style = debugStore.impactStyle
+  impacts.value.push({ id, x: pos.x, y: pos.y, colorType, style })
+  setRemove(id, impacts, 650)
 
-  // 火花粒子
-  const sparkCount = type === 'fire' ? 12 : 8
+  // 粒子 — 根据 style 变化
+  const isCrit = false // 只区分颜色，暴击由调用方决定
+  const sparkColors: Record<string, { bg: string; glow: string }> = {
+    fire: { bg: '#ffaa30', glow: '#ff6600' },
+    frost: { bg: '#8ee0ff', glow: '#4cc9f0' },
+    heal: { bg: '#6affd0', glow: '#2dd4a8' },
+    shield: { bg: '#8ee0ff', glow: '#4cc9f0' },
+  }
+  const c = sparkColors[colorType] || sparkColors.fire
+
+  switch (style) {
+    case 'explosion':
+      spawnExplosionParticles(pos, c)
+      break
+    case 'slash':
+      // ponytail: 一刀效果完全由 CSS ::before 实现，无需额外 JS 粒子
+      break
+    case 'iceshatter':
+      spawnIceShatterParticles(pos, c)
+      break
+    case 'shockwave':
+      // 冲击波无额外粒子，纯 CSS
+      break
+    case 'shadow':
+      spawnShadowParticles(pos, c)
+      break
+  }
+}
+
+/** 爆炸粒子（原 showImpact 的火花逻辑） */
+function spawnExplosionParticles(pos: CardPos, c: { bg: string; glow: string }) {
+  const sparkCount = 12
   for (let i = 0; i < sparkCount; i++) {
-    const spark = document.createElement('div')
-    spark.className = 'spark'
+    const spark = createSpark(pos, c, 4)
     const angle = (Math.PI * 2 * i) / sparkCount + Math.random() * 0.5
     const dist = 40 + Math.random() * 50
     const sx = Math.cos(angle) * dist
     const sy = Math.sin(angle) * dist
-    spark.style.cssText = `
-      position: fixed; left: ${pos.x}px; top: ${pos.y}px;
-      width: 4px; height: 4px; border-radius: 50%;
-      pointer-events: none; z-index: 156;
-      background: ${type === 'fire' ? '#ffaa30' : '#8ee0ff'};
-      box-shadow: 0 0 8px ${type === 'fire' ? '#ff6600' : '#4cc9f0'};
-    `
-    const root = document.getElementById('visual-effects-root')
-    if (!root) continue
-    root.appendChild(spark)
     spark.animate([
       { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
       { transform: `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px)) scale(0)`, opacity: 0 }
     ], { duration: 600, easing: 'cubic-bezier(0.2, 0.6, 0.3, 1)' })
     setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 650)
   }
+}
+
+/** 冰裂粒子 — 菱形碎晶散射 */
+function spawnIceShatterParticles(pos: CardPos, c: { bg: string; glow: string }) {
+  for (let i = 0; i < 6; i++) {
+    const spark = createSpark(pos, c, 4)
+    // 菱形碎片
+    spark.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'
+    spark.style.borderRadius = '0'
+    spark.style.width = '8px'
+    spark.style.height = '8px'
+    const angle = Math.random() * Math.PI * 2
+    const dist = 25 + Math.random() * 55
+    const sx = Math.cos(angle) * dist
+    const sy = Math.sin(angle) * dist
+    spark.animate([
+      { transform: 'translate(-50%, -50%) scale(0.5) rotate(0deg)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px)) scale(0) rotate(${120 + Math.random() * 120}deg)`, opacity: 0 }
+    ], { duration: 600, easing: 'cubic-bezier(0.1, 0.9, 0.2, 1)' })
+    setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 650)
+  }
+  // 一个明亮的核心闪光
+  const flash = document.createElement('div')
+  flash.style.cssText = `
+    position: fixed; left: ${pos.x}px; top: ${pos.y}px;
+    width: 20px; height: 20px; border-radius: 50%;
+    pointer-events: none; z-index: 158;
+    background: radial-gradient(circle, #fff, ${c.bg}, transparent);
+    box-shadow: 0 0 30px ${c.glow};
+  `
+  const root = document.getElementById('visual-effects-root')
+  if (root) root.appendChild(flash)
+  flash.animate([
+    { transform: 'translate(-50%, -50%) scale(0.3)', opacity: 1 },
+    { transform: 'translate(-50%, -50%) scale(2.5)', opacity: 0 }
+  ], { duration: 400, easing: 'ease-out' })
+  setTimeout(() => { if (flash.parentNode) flash.parentNode.removeChild(flash) }, 450)
+}
+
+/** 暗影粒子 — 上升烟雾 */
+function spawnShadowParticles(pos: CardPos, c: { bg: string; glow: string }) {
+  for (let i = 0; i < 10; i++) {
+    const spark = createSpark(pos, c, 5)
+    // 暗影用暗紫色而不是原色
+    spark.style.background = 'radial-gradient(circle, #a855f7, transparent)'
+    spark.style.boxShadow = '0 0 8px #a855f7'
+    const sx = (Math.random() - 0.5) * 60
+    const sy = -30 - Math.random() * 50
+    spark.style.width = (6 + Math.random() * 8) + 'px'
+    spark.style.height = spark.style.width
+    spark.animate([
+      { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0.8 },
+      { transform: `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px)) scale(1.5)`, opacity: 0 }
+    ], { duration: 800, easing: 'ease-out' })
+    setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 850)
+  }
+}
+
+/** 创建单个火花 DOM 元素 */
+function createSpark(pos: CardPos, c: { bg: string; glow: string }, size: number): HTMLElement {
+  const spark = document.createElement('div')
+  spark.className = 'spark'
+  spark.style.cssText = `
+    position: fixed; left: ${pos.x}px; top: ${pos.y}px;
+    width: ${size}px; height: ${size}px; border-radius: 50%;
+    pointer-events: none; z-index: 156;
+    background: ${c.bg};
+    box-shadow: 0 0 8px ${c.glow};
+  `
+  const root = document.getElementById('visual-effects-root')
+  if (root) root.appendChild(spark)
+  return spark
 }
 
 /** 治疗光环 */
@@ -354,6 +458,18 @@ onUnmounted(() => {
 <style>
 /* ============ 全局样式（非 scoped，因为动态创建的元素在 DOM 中） ============ */
 
+/* ponytail: VFX 专用色 — 纯视觉效果独有，不纳入全局设计令牌 */
+:root {
+  --vfx-fire: #ffaa30;
+  --vfx-fire-glow: #ff6600;
+  --vfx-fire-core: #ff4400;
+  --vfx-frost: #8ee0ff;
+  --vfx-frost-glow: #4cc9f0;
+  --vfx-heal: #6affd0;
+  --vfx-heal-glow: #2dd4a8;
+  --vfx-skill-color: #ffd478;
+}
+
 /* 屏幕震动 */
 .screen-shake {
   animation: visual-shake 0.4s cubic-bezier(.36, .07, .19, .97);
@@ -405,7 +521,7 @@ onUnmounted(() => {
   white-space: nowrap;
   pointer-events: none;
   z-index: 1100;
-  color: #ffd478;
+  color: var(--vfx-skill-color);
   text-shadow: 0 0 12px currentColor, 0 0 24px currentColor, 0 2px 6px rgba(0, 0, 0, 0.95);
   will-change: transform, opacity;
   animation: skill-fly 1.2s cubic-bezier(0.3, 0.1, 0.6, 1) forwards;
@@ -445,23 +561,23 @@ onUnmounted(() => {
 }
 
 .projectile.fire {
-  background: radial-gradient(circle, #fff, #ffaa30 30%, #ff4400 70%, transparent);
-  box-shadow: 0 0 20px #ff6600, 0 0 40px #ff4400;
+  background: radial-gradient(circle, #fff, var(--vfx-fire) 30%, var(--vfx-fire-core) 70%, transparent);
+  box-shadow: 0 0 20px var(--vfx-fire-glow), 0 0 40px var(--vfx-fire-core);
 }
 
 .projectile.frost {
-  background: radial-gradient(circle, #fff, #8ee0ff 30%, #4cc9f0 70%, transparent);
-  box-shadow: 0 0 20px #4cc9f0, 0 0 40px #4cc9f0;
+  background: radial-gradient(circle, #fff, var(--vfx-frost) 30%, var(--vfx-frost-glow) 70%, transparent);
+  box-shadow: 0 0 20px var(--vfx-frost-glow), 0 0 40px var(--vfx-frost-glow);
 }
 
 .projectile.heal {
-  background: radial-gradient(circle, #fff, #6affd0 30%, #2dd4a8 70%, transparent);
-  box-shadow: 0 0 20px #2dd4a8, 0 0 40px #2dd4a8;
+  background: radial-gradient(circle, #fff, var(--vfx-heal) 30%, var(--vfx-heal-glow) 70%, transparent);
+  box-shadow: 0 0 20px var(--vfx-heal-glow), 0 0 40px var(--vfx-heal-glow);
 }
 
 .projectile.shield {
-  background: radial-gradient(circle, #fff, #8ee0ff 30%, #4cc9f0 70%, transparent);
-  box-shadow: 0 0 20px #4cc9f0, 0 0 40px #4cc9f0;
+  background: radial-gradient(circle, #fff, var(--vfx-frost) 30%, var(--vfx-frost-glow) 70%, transparent);
+  box-shadow: 0 0 20px var(--vfx-frost-glow), 0 0 40px var(--vfx-frost-glow);
 }
 
 /* 光弹尾迹 */
@@ -487,7 +603,7 @@ onUnmounted(() => {
   }
 }
 
-/* 命中爆炸 */
+/* 命中爆炸 — 基础样式 */
 .impact {
   position: fixed;
   width: 80px;
@@ -496,37 +612,208 @@ onUnmounted(() => {
   pointer-events: none;
   z-index: 1100;
   transform: translate(-50%, -50%);
-  animation: impact-burst 0.5s ease-out forwards;
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
 }
 
+/* 颜色变体（与原有一致） */
 .impact.fire {
-  background: radial-gradient(circle, #fff, #ffaa30 20%, #ff4400 50%, transparent 70%);
+  background: radial-gradient(circle, #fff, var(--vfx-fire) 20%, var(--vfx-fire-core) 50%, transparent 70%);
 }
-
 .impact.frost,
 .impact.shield {
-  background: radial-gradient(circle, #fff, #8ee0ff 20%, #4cc9f0 50%, transparent 70%);
+  background: radial-gradient(circle, #fff, var(--vfx-frost) 20%, var(--vfx-frost-glow) 50%, transparent 70%);
 }
-
 .impact.heal {
-  background: radial-gradient(circle, #fff, #6affd0 20%, #2dd4a8 50%, transparent 70%);
+  background: radial-gradient(circle, #fff, var(--vfx-heal) 20%, var(--vfx-heal-glow) 50%, transparent 70%);
 }
 
+/* ============ 爆炸动画变体 ============ */
+
+/* 1. 爆炸 — 径向扩散（原版） */
+.impact.explosion {
+  animation-name: impact-burst;
+}
 @keyframes impact-burst {
-  0% {
-    transform: translate(-50%, -50%) scale(0.2);
-    opacity: 1;
-  }
+  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+  50%  { transform: translate(-50%, -50%) scale(1.8); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+}
 
-  50% {
-    transform: translate(-50%, -50%) scale(1.8);
-    opacity: 0.8;
-  }
+/* 2. 斩击 — 干净利落的一刀斜线 */
+.impact.slash {
+  width: 100px;
+  height: 100px;
+  border-radius: 0;
+  background: none !important;
+}
+.impact.slash::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 80px;
+  height: 4px;
+  border-radius: 2px;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  animation: slash-cut 0.25s ease-out both;
+}
+.impact.slash.fire::before {
+  background: linear-gradient(90deg, transparent, var(--vfx-fire), #fff, var(--vfx-fire), transparent);
+  box-shadow: 0 0 16px var(--vfx-fire-glow), 0 0 32px var(--vfx-fire-core);
+}
+.impact.slash.frost::before,
+.impact.slash.shield::before {
+  background: linear-gradient(90deg, transparent, var(--vfx-frost), #fff, var(--vfx-frost), transparent);
+  box-shadow: 0 0 16px var(--vfx-frost-glow), 0 0 32px var(--vfx-frost-glow);
+}
+.impact.slash.heal::before {
+  background: linear-gradient(90deg, transparent, var(--vfx-heal), #fff, var(--vfx-heal), transparent);
+  box-shadow: 0 0 16px var(--vfx-heal-glow), 0 0 32px var(--vfx-heal-glow);
+}
+@keyframes slash-cut {
+  0%   { transform: translate(-50%, -50%) rotate(-45deg) scaleX(0.1); opacity: 0; }
+  15%  { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1.3); opacity: 1; filter: brightness(2); }
+  40%  { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1.0); opacity: 1; filter: brightness(1.2); }
+  100% { transform: translate(-50%, -50%) rotate(-45deg) scaleX(0.6); opacity: 0; filter: brightness(0.5); }
+}
 
-  100% {
-    transform: translate(-50%, -50%) scale(2.5);
-    opacity: 0;
-  }
+/* 3. 冰裂 — 菱形冰晶碎裂（不再是圆形扩散） */
+.impact.iceshatter {
+  width: 60px;
+  height: 60px;
+  border-radius: 0;
+  background: none !important;
+  animation-name: ice-crystal;
+}
+/* 冰晶主体 — 菱形 */
+.impact.iceshatter::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 40px;
+  height: 40px;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  transform: translate(-50%, -50%);
+  animation: ice-flash 0.5s ease-out forwards;
+}
+/* 外层碎片光环 */
+.impact.iceshatter::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 70px;
+  height: 70px;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  animation: ice-shards 0.6s ease-out forwards;
+}
+.impact.iceshatter.fire::before {
+  background: linear-gradient(135deg, #fff, var(--vfx-fire), var(--vfx-fire-core));
+  box-shadow: 0 0 20px var(--vfx-fire-glow), 0 0 40px var(--vfx-fire-core);
+}
+.impact.iceshatter.fire::after {
+  background: linear-gradient(135deg, transparent, var(--vfx-fire) 40%, transparent);
+  box-shadow: 0 0 15px var(--vfx-fire-glow);
+}
+.impact.iceshatter.frost::before,
+.impact.iceshatter.shield::before {
+  background: linear-gradient(135deg, #fff, var(--vfx-frost), var(--vfx-frost-glow));
+  box-shadow: 0 0 20px var(--vfx-frost-glow), 0 0 40px var(--vfx-frost-glow);
+}
+.impact.iceshatter.frost::after,
+.impact.iceshatter.shield::after {
+  background: linear-gradient(135deg, transparent, var(--vfx-frost) 40%, transparent);
+  box-shadow: 0 0 15px var(--vfx-frost-glow);
+}
+.impact.iceshatter.heal::before {
+  background: linear-gradient(135deg, #fff, var(--vfx-heal), var(--vfx-heal-glow));
+  box-shadow: 0 0 20px var(--vfx-heal-glow), 0 0 40px var(--vfx-heal-glow);
+}
+.impact.iceshatter.heal::after {
+  background: linear-gradient(135deg, transparent, var(--vfx-heal) 40%, transparent);
+  box-shadow: 0 0 15px var(--vfx-heal-glow);
+}
+@keyframes ice-crystal {
+  0%   { transform: translate(-50%, -50%) scale(0.1) rotate(0deg); opacity: 0; }
+  15%  { transform: translate(-50%, -50%) scale(1.3) rotate(15deg); opacity: 1; }
+  40%  { transform: translate(-50%, -50%) scale(1.1) rotate(30deg); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(0.8) rotate(60deg); opacity: 0; }
+}
+@keyframes ice-flash {
+  0%   { transform: translate(-50%, -50%) scale(0.1); opacity: 1; filter: brightness(2); }
+  20%  { transform: translate(-50%, -50%) scale(1.2); opacity: 1; filter: brightness(1.5); }
+  50%  { transform: translate(-50%, -50%) scale(0.9); opacity: 0.8; filter: brightness(1); }
+  100% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; filter: brightness(0.3); }
+}
+@keyframes ice-shards {
+  0%   { transform: translate(-50%, -50%) scale(0.3) rotate(0deg); opacity: 0.6; }
+  50%  { transform: translate(-50%, -50%) scale(1.6) rotate(45deg); opacity: 0.4; }
+  100% { transform: translate(-50%, -50%) scale(2.2) rotate(90deg); opacity: 0; }
+}
+
+/* 4. 冲击波 — 多环扩散 */
+.impact.shockwave {
+  background: none !important;
+  animation-name: shockwave-burst;
+}
+.impact.shockwave::before,
+.impact.shockwave::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: 3px solid;
+  transform-origin: center center;
+  transform: translate(-50%, -50%);
+}
+.impact.shockwave.fire::before,
+.impact.shockwave.fire::after {
+  border-color: var(--vfx-fire-glow);
+  box-shadow: 0 0 12px var(--vfx-fire-glow), inset 0 0 12px var(--vfx-fire-glow);
+}
+.impact.shockwave.frost::before,
+.impact.shockwave.frost::after,
+.impact.shockwave.shield::before,
+.impact.shockwave.shield::after {
+  border-color: var(--vfx-frost-glow);
+  box-shadow: 0 0 12px var(--vfx-frost-glow), inset 0 0 12px var(--vfx-frost-glow);
+}
+.impact.shockwave.heal::before,
+.impact.shockwave.heal::after {
+  border-color: var(--vfx-heal-glow);
+  box-shadow: 0 0 12px var(--vfx-heal-glow), inset 0 0 12px var(--vfx-heal-glow);
+}
+.impact.shockwave::after { animation: ring-2 0.5s ease-out forwards; }
+@keyframes shockwave-burst {
+  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+@keyframes ring-2 {
+  0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+}
+
+/* 5. 暗影 — 紫黑能量爆发 */
+.impact.shadow {
+  animation-name: shadow-burst;
+  mix-blend-mode: screen;
+}
+.impact.shadow.fire,
+.impact.shadow.frost,
+.impact.shadow.shield,
+.impact.shadow.heal {
+  /* 暗影统一用紫黑能量覆盖原色 */
+  background: radial-gradient(circle, #c084fc 10%, #a855f7 30%, #7c3aed 50%, transparent 70%);
+  box-shadow: 0 0 30px #a855f7, 0 0 60px #7c3aed;
+}
+@keyframes shadow-burst {
+  0%   { transform: translate(-50%, -50%) scale(0.1); opacity: 0; filter: blur(8px); }
+  30%  { transform: translate(-50%, -50%) scale(1.2); opacity: 1; filter: blur(2px); }
+  60%  { transform: translate(-50%, -50%) scale(1.6); opacity: 0.7; filter: blur(0px); }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; filter: blur(6px); }
 }
 
 /* 治疗光环 */
@@ -538,8 +825,8 @@ onUnmounted(() => {
   pointer-events: none;
   z-index: 1100;
   transform: translate(-50%, -50%);
-  border: 2px solid #2dd4a8;
-  box-shadow: 0 0 24px #2dd4a8, inset 0 0 24px #2dd4a8;
+  border: 2px solid var(--vfx-heal-glow);
+  box-shadow: 0 0 24px var(--vfx-heal-glow), inset 0 0 24px var(--vfx-heal-glow);
   animation: aura-expand 1s ease-out forwards;
 }
 
@@ -567,7 +854,7 @@ onUnmounted(() => {
 .shield-hex svg {
   width: 70px;
   height: 70px;
-  filter: drop-shadow(0 0 8px #8ee0ff) drop-shadow(0 0 16px #4cc9f0);
+  filter: drop-shadow(0 0 8px var(--vfx-frost)) drop-shadow(0 0 16px var(--vfx-frost-glow));
 }
 
 @keyframes hex-flash {
@@ -609,14 +896,14 @@ onUnmounted(() => {
 }
 
 .floating-num.dmg.normal {
-  font-size: 26px;
-  color: #ff8a6a;
+  font-size: var(--font-size-xxxl);
+  color: var(--color-damage);
 }
 
 .floating-num.dmg.crit {
   font-size: 40px;
-  color: #ffd040;
-  text-shadow: 0 0 14px #ff8800, 0 3px 8px rgba(0, 0, 0, 0.95), 0 0 32px #ff6600;
+  color: var(--color-warning);
+  text-shadow: 0 0 14px var(--color-warning), 0 3px 8px rgba(0, 0, 0, 0.95), 0 0 32px var(--color-warning);
 }
 
 .floating-num.dmg.crit::before {
@@ -626,9 +913,9 @@ onUnmounted(() => {
   left: 50%;
   transform: translateX(-50%);
   font-family: 'Noto Serif SC', serif;
-  font-size: 18px;
-  color: #ff4040;
-  text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+  font-size: var(--font-size-xl);
+  color: var(--color-danger);
+  text-shadow: 0 0 10px var(--color-danger), 0 0 20px var(--color-danger);
   letter-spacing: 0;
 }
 
@@ -656,8 +943,8 @@ onUnmounted(() => {
 
 .floating-num.heal-num {
   font-size: 24px;
-  color: #6affd0;
-  text-shadow: 0 0 12px #2dd4a8, 0 3px 6px rgba(0, 0, 0, 0.95), 0 0 28px #6affd0;
+  color: var(--color-heal);
+  text-shadow: 0 0 12px var(--color-heal), 0 3px 6px rgba(0, 0, 0, 0.95), 0 0 28px var(--color-heal);
   animation: heal-rise 1.6s cubic-bezier(0.3, 0.2, 0.5, 1) forwards;
 }
 
@@ -685,8 +972,8 @@ onUnmounted(() => {
 
 .floating-num.shield-num {
   font-size: 22px;
-  color: #8ee0ff;
-  text-shadow: 0 0 12px #4cc9f0, 0 3px 6px rgba(0, 0, 0, 0.95), 0 0 28px #8ee0ff;
+  color: var(--color-energy);
+  text-shadow: 0 0 12px var(--color-energy), 0 3px 6px rgba(0, 0, 0, 0.95), 0 0 28px var(--color-energy);
   animation: shield-rise 1.4s cubic-bezier(0.3, 0.2, 0.5, 1) forwards;
 }
 
@@ -714,8 +1001,8 @@ onUnmounted(() => {
 
 /* 闪避文字（复用 dmg 类动画，灰色） */
 .floating-num.miss {
-  font-size: 20px;
-  color: #9ca3af;
+  font-size: var(--font-size-xxl);
+  color: var(--color-text-tertiary);
   text-shadow: 0 0 8px currentColor, 0 2px 4px rgba(0, 0, 0, 0.9);
 }
 </style>

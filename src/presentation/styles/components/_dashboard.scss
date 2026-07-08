@@ -1,0 +1,346 @@
+/* ==========================================================================
+   Component: Dashboard (_dashboard.scss)
+   依赖: tokens.scss
+   作用: 右侧调试面板 — 属性监控、技能显示、干预、快照、异常状态
+   ========================================================================== */
+
+/* ----- 1. 状态工具提示 ----- */
+.status-tooltip {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  min-width: 200px;
+  max-width: 280px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  box-shadow: var(--shadow-md);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-md);
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 10px;
+    width: 10px;
+    height: 10px;
+    background: rgba(15, 23, 42, 0.95);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    transform: rotate(45deg);
+  }
+
+  .tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-2);
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    .status-name {
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-sm);
+
+      &.positive {
+        color: var(--color-success);
+      }
+
+      &.negative {
+        color: var(--color-danger);
+      }
+    }
+
+    .status-type {
+      font-size: var(--font-size-xxs);
+      padding: 0.1rem 0.3rem;
+      border-radius: var(--radius-none);
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--color-text-disabled);
+    }
+  }
+
+  .tooltip-content {
+    .tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .label {
+        color: var(--color-text-tertiary);
+        font-weight: var(--font-weight-medium);
+        min-width: 60px;
+      }
+
+      .value {
+        color: var(--color-text-secondary);
+        text-align: right;
+        flex: 1;
+        margin-left: var(--space-2);
+      }
+    }
+  }
+}
+
+/* ----- 2. 属性监控 ----- */
+.monitor-group {
+  margin-bottom: var(--space-3);
+}
+
+.monitor-subtitle {
+  color: var(--color-info);
+  margin-bottom: var(--space-1);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px dashed var(--color-border-default);
+}
+
+.monitor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+}
+
+.monitor-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.2rem 0.4rem;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.monitor-label {
+  color: var(--color-text-tertiary);
+}
+
+.monitor-value {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.monitor-value.bonus {
+  color: var(--color-success);
+}
+
+.monitor-value.final {
+  color: var(--color-warning);
+}
+
+/* ----- 3. 技能显示 ----- */
+.skills-display {
+  padding: var(--space-2);
+}
+
+.skill-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: 0.4rem 0.5rem;
+  margin-bottom: 0.35rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.skill-item:last-child {
+  margin-bottom: 0;
+}
+
+.skill-item.passive {
+  background: rgba(138, 43, 226, 0.2);
+  border: 1px solid rgba(138, 43, 226, 0.5);
+}
+
+.skill-item.small {
+  background: rgba(30, 144, 255, 0.2);
+  border: 1px solid rgba(30, 144, 255, 0.5);
+}
+
+.skill-item.ultimate {
+  background: rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+.skill-label {
+  font-weight: var(--font-weight-bold);
+  min-width: 50px;
+}
+
+.skill-item.passive .skill-label {
+  color: #dda0dd;
+}
+
+.skill-item.small .skill-label {
+  color: #87cefa;
+}
+
+.skill-item.ultimate .skill-label {
+  color: #ffd700;
+}
+
+.skill-name {
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.no-skills {
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  padding: var(--space-3) var(--space-2);
+}
+
+/* ----- 4. 干预面板 ----- */
+.intervention-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.intervention-btn {
+  background: var(--color-border-default);
+  color: var(--color-info);
+  border: 1px solid var(--color-border-strong);
+  padding: 0.3rem 0.5rem;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.intervention-btn:hover {
+  background: var(--color-border-strong);
+}
+
+.intervention-btn.danger {
+  background: rgba(74, 26, 26, 1);
+  border-color: #7a2a2a;
+  color: var(--color-danger);
+}
+
+.intervention-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--font-size-xs);
+}
+
+.intervention-input {
+  flex: 1;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  padding: 0.2rem 0.4rem;
+  font-size: var(--font-size-xxs);
+}
+
+.intervention-num {
+  width: 50px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  padding: 0.2rem;
+  font-size: var(--font-size-xxs);
+}
+
+/* ----- 5. 快照 ----- */
+.snapshot-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.last-export {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xxs);
+}
+
+.snapshot-btns {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* ----- 6. 异常状态 ----- */
+.exception-status {
+  padding: var(--space-2);
+  text-align: center;
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-xs);
+}
+
+.exception-status.normal {
+  background: rgba(76, 175, 80, 0.1);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.exception-status.warning {
+  background: rgba(255, 152, 0, 0.1);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning);
+}
+
+.exception-status.error {
+  background: rgba(244, 67, 54, 0.1);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+}
+
+/* ----- 7. 额外日志语义标签 ----- */
+.death {
+  color: #6b7280;
+  text-decoration: line-through;
+}
+
+.resource {
+  color: #3b82f6;
+  font-weight: var(--font-weight-medium);
+}
+
+.golden {
+  color: #eab308;
+  font-weight: var(--font-weight-bold);
+}
+
+.source-ally {
+  color: var(--color-heal);
+  font-weight: var(--font-weight-bold);
+}
+
+.source-enemy {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-bold);
+}
+
+.sub-effects {
+  margin-left: var(--space-6);
+  margin-top: 0.25rem;
+  color: var(--color-success);
+  font-size: var(--font-size-xxs);
+}
+
+.no-logs {
+  color: var(--color-text-disabled);
+  text-align: center;
+  padding: var(--space-4);
+  font-style: italic;
+}
+
+.expand-icon {
+  font-size: var(--font-size-xxs);
+  color: var(--color-text-tertiary);
+  width: 16px;
+  text-align: center;
+}

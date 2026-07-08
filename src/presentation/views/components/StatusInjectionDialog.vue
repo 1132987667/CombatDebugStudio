@@ -15,22 +15,21 @@
     </div>
 
     <div class="status-section">
-      <div class="section-header">
+      <div class="si-section-header">
         <span class="section-title">可用状态</span>
         <span class="status-count">{{ activeStatuses.length }}/{{ localStatuses.length }}</span>
       </div>
 
       <div class="status-list">
-        <div v-for="status in localStatuses" :key="status.id" class="status-item"
-          :class="{ active: status.active, disabled: !selectedCharName }">
+        <div class="si-status-item" :class="{ active: status.active, disabled: !selectedCharName }">
           <label class="status-label">
             <input type="checkbox" v-model="status.active" :disabled="!selectedCharName">
-            <span class="status-name" :class="status.isPositive ? 'positive' : 'negative'">
+            <span class="si-status-name" :class="status.isPositive ? 'positive' : 'negative'">
               {{ status.name }}
             </span>
           </label>
-          <span class="status-duration">回合:{{ status.duration }}</span>
-          <span class="status-effect">{{ status.effect }}</span>
+          <span class="si-status-duration">回合:{{ status.duration }}</span>
+          <span class="si-status-effect">{{ status.effect }}</span>
         </div>
 
         <div v-if="localStatuses.length === 0" class="empty-tip">
@@ -39,11 +38,11 @@
       </div>
     </div>
 
-    <div class="section-actions">
-      <button class="btn-small" @click="handleAddStatus" :disabled="!hasSelectedStatus || !selectedCharName">
+    <div class="si-section-actions">
+      <button class="btn-medium" @click="handleAddStatus" :disabled="!hasSelectedStatus || !selectedCharName">
         [A]添加状态
       </button>
-      <button class="btn-small" @click="handleClear" :disabled="!hasActiveStatus">
+      <button class="btn-medium" @click="handleClear" :disabled="!hasActiveStatus">
         [C]清空
       </button>
     </div>
@@ -134,93 +133,65 @@ const handleClear = () => {
 </script>
 
 <style scoped>
-.selected-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 6px;
-}
-
-.selected-info .label {
-  font-size: 13px;
-  color: #8ba4c7;
-}
-
-.selected-info .value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #4fc3f7;
-}
-
 .status-section {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
-.section-header {
+.si-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-}
-
-.section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #eee;
+  margin-bottom: var(--space-3);
 }
 
 .status-count {
-  font-size: 12px;
-  color: #8ba4c7;
-  background: #1a1a2e;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-primary);
   padding: 2px 8px;
-  border-radius: 10px;
-  border: 1px solid #0f3460;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-default);
 }
 
 .status-list {
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #0f3460;
-  border-radius: 6px;
-  padding: 8px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
 }
 
-.status-item {
+.si-status-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 4px;
-  margin-bottom: 4px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-1);
   transition: all 0.2s;
 }
 
-.status-item:last-child {
+.si-status-item:last-child {
   margin-bottom: 0;
 }
 
-.status-item:hover {
-  background: #1a1a2e;
+.si-status-item:hover {
+  background: var(--color-bg-primary);
 }
 
-.status-item.active {
-  background: #16213e;
-  border-left: 3px solid #4fc3f7;
+.si-status-item.active {
+  background: var(--color-bg-tertiary);
+  border-left: 3px solid var(--color-info);
 }
 
-.status-item.disabled {
+.si-status-item.disabled {
   opacity: 0.5;
 }
 
 .status-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   cursor: pointer;
   flex: 1;
 }
@@ -231,32 +202,32 @@ const handleClear = () => {
   cursor: pointer;
 }
 
-.status-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #eee;
+.si-status-name {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
 }
 
-.status-name.positive {
-  color: #4caf50;
+.si-status-name.positive {
+  color: var(--color-success);
 }
 
-.status-name.negative {
-  color: #f56c6c;
+.si-status-name.negative {
+  color: var(--color-danger);
 }
 
-.status-duration {
-  font-size: 12px;
-  color: #8ba4c7;
-  background: #0f3460;
+.si-status-duration {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: var(--color-border-default);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 
-.status-effect {
-  font-size: 12px;
-  color: #6b7280;
+.si-status-effect {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -264,37 +235,17 @@ const handleClear = () => {
 }
 
 .empty-tip {
-  padding: 30px 20px;
+  padding: var(--space-8) var(--space-5);
   text-align: center;
-  color: #6b7280;
-  font-size: 13px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
 }
 
-.section-actions {
+.si-section-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid #0f3460;
-}
-
-.btn-small {
-  padding: 8px 20px;
-  border: 1px solid #1a4a7a;
-  background: #0f3460;
-  color: #4fc3f7;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
-}
-
-.btn-small:hover:not(:disabled) {
-  background: #1a4a7a;
-}
-
-.btn-small:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-default);
 }
 </style>

@@ -551,6 +551,9 @@ export class BattleSystem implements IBattleSystem {
         
         await this.animationManager.waitForAnimation()
 
+        // ponytail: 角色行动间保留固定间隔，让 CSS 动画有足够时间淡出完成
+        await this.animationManager.wait(400)
+
         this.buffSystem.updatePerTurn(participant.id)
 
         this.runEndConditionCheck()

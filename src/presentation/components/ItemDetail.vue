@@ -181,205 +181,195 @@ const getItemSources = (itemId: string): string[] => {
 
 <style scoped>
 .item-detail {
-  color: #eee;
+  color: var(--color-text-secondary);
 }
 
 .item-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #0f3460;
-  margin-bottom: 0.75rem;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-default);
+  margin-bottom: var(--space-3);
 }
 
 .item-title h2 {
   margin: 0;
-  font-size: 16px;
-  color: #4fc3f7;
+  font-size: var(--font-size-lg);
+  color: var(--color-info);
 }
 
 .item-type {
   display: inline-block;
-  margin-top: 4px;
-  font-size: 11px;
-  color: #888;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
   padding: 1px 5px;
-  background: #1a1a2e;
-  border-radius: 3px;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-sm);
 }
 
 .item-rarity {
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 3px;
+  font-size: var(--font-size-xs);
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
 }
 
 .item-rarity.rarity-1 {
-  color: #888;
+  color: var(--color-text-tertiary);
   background: rgba(136, 136, 136, 0.15);
 }
 
 .item-rarity.rarity-2 {
-  color: #60a5fa;
+  color: var(--color-info);
   background: rgba(96, 165, 250, 0.15);
 }
 
 .item-rarity.rarity-3 {
-  color: #a78bfa;
+  color: var(--color-debuff);
   background: rgba(167, 139, 250, 0.15);
 }
 
 .item-rarity.rarity-4 {
-  color: #fbbf24;
+  color: var(--color-warning);
   background: rgba(251, 191, 36, 0.15);
 }
 
-.section-title {
-  font-size: 12px;
-  font-weight: bold;
-  color: #4fc3f7;
-  margin: 0 0 0.5rem 0;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid #0f3460;
-  letter-spacing: 0.5px;
-}
-
 .item-description-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .description-text {
-  font-size: 11px;
-  color: #aaa;
-  line-height: 1.6;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-lg);
   margin: 0;
 }
 
 .item-stats-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .stat-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.35rem 0.5rem;
-  background: #0f0f1a;
-  border-radius: 3px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
 }
 
 .stat-label {
-  font-size: 11px;
-  color: #888;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
 }
 
 .stat-value {
-  font-size: 12px;
-  font-weight: bold;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
 }
 
 .stat-value.positive {
-  color: #4ade80;
+  color: var(--color-success);
 }
 
 .stat-value.negative {
-  color: #e94560;
+  color: var(--color-brand-red);
 }
 
 .item-effects-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .effects-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .effect-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.35rem 0.5rem;
-  background: #0f0f1a;
-  border-radius: 3px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
 }
 
 .effect-type {
-  font-size: 11px;
-  color: #888;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
 }
 
 .effect-value {
-  font-size: 12px;
-  font-weight: bold;
-  color: #4fc3f7;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-info);
 }
 
 .item-usage-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .slot-tag {
   display: inline-block;
-  padding: 0.3rem 0.5rem;
-  background: #0f0f1a;
-  border-radius: 3px;
-  font-size: 11px;
-  color: #aaa;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
 }
 
 .item-source-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
 }
 
 .source-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .source-item {
-  padding: 0.35rem 0.5rem;
-  background: #0f0f1a;
-  border-radius: 3px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
 }
 
 .source-text {
-  font-size: 11px;
-  color: #aaa;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
 }
 
 .empty-source {
   text-align: center;
-  padding: 0.5rem;
-  color: #666;
-  font-size: 11px;
+  padding: var(--space-2);
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
 }
 </style>

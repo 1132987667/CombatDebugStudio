@@ -43,10 +43,10 @@ const props = defineProps<{
 .buff-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
+  gap: var(--space-2);
+  padding: var(--space-2);
   background: rgba(17, 24, 39, 0.4);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   min-height: 56px;
   align-items: center;
 }
@@ -56,9 +56,9 @@ const props = defineProps<{
 }
 
 .buff-list-placeholder {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.4);
   font-style: italic;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
 }
 </style>

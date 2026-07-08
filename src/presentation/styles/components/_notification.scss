@@ -1,0 +1,106 @@
+/* ==========================================================================
+   Component: Notification (_notification.scss)
+   依赖: tokens.scss
+   作用: 通知系统 — 容器、类型变体、滑入动画
+   ========================================================================== */
+
+.notifications-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.notification {
+  background: rgba(26, 26, 46, 0.95);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 300px;
+  max-width: 400px;
+  color: var(--color-text-primary);
+  animation: slideIn 0.3s ease-out;
+  transition: all 0.3s ease;
+  border-left: 4px solid var(--color-border-default);
+}
+
+.notification-success {
+  border-left-color: var(--color-success);
+  background: rgba(76, 175, 80, 0.2);
+}
+
+.notification-success .notification-icon {
+  color: var(--color-success);
+}
+
+.notification-error {
+  border-left-color: var(--color-danger);
+  background: rgba(244, 67, 54, 0.2);
+}
+
+.notification-error .notification-icon {
+  color: var(--color-danger);
+}
+
+.notification-info {
+  border-left-color: var(--color-info);
+  background: rgba(79, 195, 247, 0.2);
+}
+
+.notification-info .notification-icon {
+  color: var(--color-info);
+}
+
+.notification-warning {
+  border-left-color: var(--color-warning);
+  background: rgba(255, 152, 0, 0.2);
+}
+
+.notification-warning .notification-icon {
+  color: var(--color-warning);
+}
+
+.notification-icon {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-weight: var(--font-weight-bold);
+  margin-bottom: 4px;
+  font-size: var(--font-size-md);
+}
+
+.notification-message {
+  font-size: var(--font-size-sm);
+  opacity: 0.9;
+  word-break: break-word;
+}
+
+.notification-close {
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.notification-close:hover {
+  opacity: 1;
+  color: var(--color-brand-red);
+}

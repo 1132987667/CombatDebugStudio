@@ -7,7 +7,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import mitt from 'mitt'
 import BattleArena from '@/presentation/views/BattleArena.vue'
-import './presentation/styles/global.css'
+import './presentation/styles/main.scss'
 import { type BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 
 

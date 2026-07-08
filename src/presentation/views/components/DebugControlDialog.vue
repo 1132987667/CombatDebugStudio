@@ -28,6 +28,17 @@
                   {{ btn.label }}
                 </button>
               </div>
+              <!-- ponytail: 动画调试模块增加爆炸样式选择器 -->
+              <div v-if="module.name === '动画调试'" class="impact-style-selector">
+                <span class="selector-label">爆炸样式:</span>
+                <div class="style-options">
+                  <button v-for="opt in impactStyles" :key="opt.value"
+                    class="style-btn" :class="{ active: debugStore.impactStyle === opt.value }"
+                    @click="debugStore.setImpactStyle(opt.value)" :title="opt.desc">
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -38,6 +49,17 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useDebugStore } from '@/presentation/stores/debugStore'
+
+const debugStore = useDebugStore()
+
+const impactStyles = [
+  { label: '爆炸', value: 'explosion', desc: '径向火球扩散+火花' },
+  { label: '斩击', value: 'slash', desc: '干净利落的一刀弧光' },
+  { label: '冰裂', value: 'iceshatter', desc: '菱形冰晶碎裂散射' },
+  { label: '冲击波', value: 'shockwave', desc: '环形冲击波扩散' },
+  { label: '暗影', value: 'shadow', desc: '紫黑能量爆发' },
+]
 
 interface DebugButton {
   label: string
@@ -164,7 +186,7 @@ const handleButtonClick = (action: string) => {
   max-height: calc(100vh - 24px);
   background: rgba(10, 15, 25, 0.95);
   border: 1px solid rgba(34, 211, 238, 0.3);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
@@ -175,43 +197,43 @@ const handleButtonClick = (action: string) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid rgba(34, 211, 238, 0.2);
   background: rgba(34, 211, 238, 0.1);
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .dialog-title {
-  color: #22d3ee;
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--color-energy);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
 }
 
 .dialog-close {
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 20px;
+  font-size: var(--font-size-xxl);
   cursor: pointer;
   padding: 0;
-  line-height: 1;
+  line-height: var(--line-height-sm);
 }
 
 .dialog-close:hover {
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 .dialog-content {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: var(--space-3);
 }
 
 .debug-module {
-  margin-bottom: 16px;
-  padding: 12px;
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -222,83 +244,83 @@ const handleButtonClick = (action: string) => {
 .module-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .module-icon {
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 .module-name {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 .module-buttons {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .debug-btn {
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.8);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .debug-btn:hover {
   background: rgba(34, 211, 238, 0.2);
   border-color: rgba(34, 211, 238, 0.5);
-  color: #fff;
+  color: var(--color-text-primary);
 }
 
 .debug-btn.btn-success {
   border-color: rgba(76, 175, 80, 0.5);
-  color: #4caf50;
+  color: var(--color-success);
 }
 
 .debug-btn.btn-success:hover {
   background: rgba(76, 175, 80, 0.2);
-  border-color: #4caf50;
+  border-color: var(--color-success);
 }
 
 .debug-btn.btn-danger {
   border-color: rgba(244, 67, 54, 0.5);
-  color: #f44336;
+  color: var(--color-danger);
 }
 
 .debug-btn.btn-danger:hover {
   background: rgba(244, 67, 54, 0.2);
-  border-color: #f44336;
+  border-color: var(--color-danger);
 }
 
 .debug-btn.btn-warning {
   border-color: rgba(255, 152, 0, 0.5);
-  color: #ff9800;
+  color: var(--color-warning);
 }
 
 .debug-btn.btn-warning:hover {
   background: rgba(255, 152, 0, 0.2);
-  border-color: #ff9800;
+  border-color: var(--color-warning);
 }
 
 .debug-btn.btn-info {
   border-color: rgba(33, 150, 243, 0.5);
-  color: #2196f3;
+  color: var(--color-info);
 }
 
 .debug-btn.btn-info:hover {
   background: rgba(33, 150, 243, 0.2);
-  border-color: #2196f3;
+  border-color: var(--color-info);
 }
 
 .debug-btn.btn-default {
@@ -307,7 +329,7 @@ const handleButtonClick = (action: string) => {
 
 .dialog-slide-enter-active,
 .dialog-slide-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-fast) ease;
 }
 
 .dialog-slide-enter-from,
@@ -321,6 +343,49 @@ const handleButtonClick = (action: string) => {
 
 .dialog-slide-leave-active .debug-control-dialog {
   animation: slideOut 0.2s ease;
+}
+
+/* 爆炸样式选择器 */
+.impact-style-selector {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.selector-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: var(--space-1);
+}
+
+.style-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.style-btn {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.style-btn:hover {
+  background: rgba(34, 211, 238, 0.15);
+  border-color: rgba(34, 211, 238, 0.4);
+  color: var(--color-text-primary);
+}
+
+.style-btn.active {
+  background: rgba(34, 211, 238, 0.25);
+  border-color: var(--color-energy);
+  color: var(--color-energy);
 }
 
 @keyframes slideIn {

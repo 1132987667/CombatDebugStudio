@@ -64,135 +64,89 @@ watch(
 </script>
 
 <style scoped>
-.dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.dialog-container {
-  background: #1a1a2e;
-  border: 2px solid #0f3460;
-  border-radius: 8px;
-  box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
-  overflow: hidden;
-  max-width: 90%;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.dialog-header {
-  padding: 15px 20px;
-  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
-  border-bottom: 2px solid #0f3460;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .dialog-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #4fc3f7;
   text-shadow: 0 0 5px rgba(79, 195, 247, 0.5);
 }
 
 .dialog-close {
-  background: none;
-  border: 2px solid #4fc3f7;
-  font-size: 18px;
-  cursor: pointer;
-  color: #4fc3f7;
-  padding: 0;
+  border: 2px solid var(--color-info);
   width: 24px;
   height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all 0.3s;
+  transition: var(--transition-base);
+  color: var(--color-info);
 }
 
 .dialog-close:hover {
-  background: #4fc3f7;
-  color: #1a1a2e;
+  background: var(--color-info);
+  color: var(--color-bg-primary);
   transform: scale(1.1);
 }
 
 .dialog-content {
-  padding: 20px;
-  flex: 1;
-  overflow-y: auto;
-  background: #0f0f1a;
-  color: #eee;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
 }
 
 /* 确保弹窗内的表单元素样式与应用程序一致 */
 .dialog-content input[type="checkbox"] {
-  accent-color: #4fc3f7;
+  accent-color: var(--color-info);
 }
 
 .dialog-content input[type="text"],
 .dialog-content input[type="number"],
 .dialog-content select {
-  background: #0f0f1a;
-  border: 1px solid #0f3460;
-  color: #fff;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  border-radius: 3px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
 }
 
 .dialog-content input[type="text"]:focus,
 .dialog-content input[type="number"]:focus,
 .dialog-content select:focus {
   outline: none;
-  border-color: #4fc3f7;
+  border-color: var(--color-info);
   box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
 }
 
 .dialog-content button {
-  background: #0f3460;
-  color: #4fc3f7;
-  border: 1px solid #1a4a7a;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.75rem;
+  background: var(--color-border-default);
+  color: var(--color-info);
+  border: 1px solid var(--color-border-strong);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.15s;
-  border-radius: 3px;
+  transition: var(--transition-fast);
+  border-radius: var(--radius-sm);
 }
 
 .dialog-content button:hover {
-  background: #1a4a7a;
+  background: var(--color-border-strong);
 }
 
 .dialog-content button.active {
-  background: #e94560;
-  color: #fff;
+  background: var(--color-brand-red);
+  color: var(--color-text-primary);
 }
 
 .dialog-footer {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
-  border-top: 2px solid #0f3460;
-  display: flex;
+  padding: var(--space-2) var(--space-5);
+  background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-border-default) 100%);
+  border-top: 2px solid var(--color-border-default);
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 /* 过渡动画 */
 .dialog-fade-enter-active,
 .dialog-fade-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
+  transition: opacity var(--transition-base), transform var(--transition-base);
 }
 
 .dialog-fade-enter-from,

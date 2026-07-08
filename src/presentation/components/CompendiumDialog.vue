@@ -218,9 +218,9 @@ watch(activeTab, () => {
   max-width: 95vw;
   height: 500px;
   max-height: 85vh;
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 4px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
   box-shadow: 0 0 10px rgba(79, 195, 247, 0.2);
   display: flex;
   flex-direction: column;
@@ -228,85 +228,85 @@ watch(activeTab, () => {
 }
 
 .compendium-header {
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
-  border-bottom: 1px solid #0f3460;
+  padding: var(--space-2) var(--space-4);
+  background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-primary) 100%);
+  border-bottom: 1px solid var(--color-border-default);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .compendium-title {
-  font-size: 14px;
-  font-weight: bold;
-  color: #4fc3f7;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-info);
   letter-spacing: 1px;
 }
 
 .compendium-close {
   background: none;
-  border: 1px solid #4fc3f7;
-  font-size: 14px;
+  border: 1px solid var(--color-info);
+  font-size: var(--font-size-md);
   cursor: pointer;
-  color: #4fc3f7;
+  color: var(--color-info);
   width: 22px;
   height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
-  transition: all 0.15s;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
 }
 
 .compendium-close:hover {
-  background: #4fc3f7;
-  color: #1a1a2e;
+  background: var(--color-info);
+  color: var(--color-bg-primary);
 }
 
 .compendium-tabs {
   display: flex;
-  padding: 0 0.5rem;
-  background: #16213e;
-  border-bottom: 1px solid #0f3460;
-  gap: 2px;
+  padding: 0 var(--space-2);
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border-default);
+  gap: var(--space-1);
 }
 
 .compendium-tab {
-  padding: 0.4rem 0.75rem;
+  padding: var(--space-2) var(--space-3);
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  color: #888;
-  font-size: 12px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: var(--transition-fast);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
 }
 
 .compendium-tab:hover {
-  color: #eee;
+  color: var(--color-text-secondary);
   background: rgba(79, 195, 247, 0.1);
 }
 
 .compendium-tab.active {
-  color: #4fc3f7;
-  border-bottom-color: #4fc3f7;
+  color: var(--color-info);
+  border-bottom-color: var(--color-info);
   background: rgba(79, 195, 247, 0.1);
 }
 
 .tab-count {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   padding: 1px 5px;
-  background: #0f3460;
-  border-radius: 8px;
-  color: #888;
+  background: var(--color-border-default);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-tertiary);
 }
 
 .compendium-tab.active .tab-count {
   background: rgba(79, 195, 247, 0.2);
-  color: #4fc3f7;
+  color: var(--color-info);
 }
 
 .compendium-body {
@@ -318,84 +318,84 @@ watch(activeTab, () => {
 .compendium-list-panel {
   width: 200px;
   min-width: 160px;
-  background: #0f0f1a;
-  border-right: 1px solid #0f3460;
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border-default);
   overflow-y: auto;
 }
 
 .compendium-list {
-  padding: 0.25rem;
+  padding: var(--space-1);
 }
 
 .compendium-list-item {
   display: flex;
   align-items: center;
-  padding: 0.35rem 0.5rem;
-  border-radius: 3px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.1s;
-  gap: 6px;
-  margin-bottom: 2px;
+  transition: var(--transition-fast);
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
   border: 1px solid transparent;
 }
 
 .compendium-list-item:hover {
-  background: #1a4a7a;
+  background: var(--color-border-strong);
 }
 
 .compendium-list-item.selected {
   background: rgba(79, 195, 247, 0.15);
-  border-color: #4fc3f7;
+  border-color: var(--color-info);
 }
 
 .item-name {
   flex: 1;
-  color: #eee;
-  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .item-level {
-  font-size: 11px;
-  color: #e94560;
+  font-size: var(--font-size-xs);
+  color: var(--color-brand-red);
   padding: 1px 4px;
   background: rgba(233, 69, 96, 0.2);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .item-rarity {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   padding: 1px 4px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .item-rarity.rarity-1 {
-  color: #888;
+  color: var(--color-text-tertiary);
   background: rgba(136, 136, 136, 0.15);
 }
 
 .item-rarity.rarity-2 {
-  color: #60a5fa;
+  color: var(--color-info);
   background: rgba(96, 165, 250, 0.15);
 }
 
 .item-rarity.rarity-3 {
-  color: #a78bfa;
+  color: var(--color-debuff);
   background: rgba(167, 139, 250, 0.15);
 }
 
 .item-rarity.rarity-4 {
-  color: #fbbf24;
+  color: var(--color-warning);
   background: rgba(251, 191, 36, 0.15);
 }
 
 .compendium-detail-panel {
   flex: 1;
-  padding: 0.75rem;
+  padding: var(--space-3);
   overflow-y: auto;
-  background: #0f0f1a;
+  background: var(--color-bg-secondary);
 }
 
 .compendium-loading,
@@ -405,15 +405,15 @@ watch(activeTab, () => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #666;
-  gap: 8px;
+  color: var(--color-text-disabled);
+  gap: var(--space-2);
 }
 
 .loading-spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid #0f3460;
-  border-top-color: #4fc3f7;
+  border: 2px solid var(--color-border-default);
+  border-top-color: var(--color-info);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -424,12 +424,12 @@ watch(activeTab, () => {
 
 .compendium-fade-enter-active,
 .compendium-fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-fast) ease;
 }
 
 .compendium-fade-enter-active .compendium-container,
 .compendium-fade-leave-active .compendium-container {
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: transform var(--transition-fast) ease, opacity var(--transition-fast) ease;
 }
 
 .compendium-fade-enter-from,
@@ -443,33 +443,4 @@ watch(activeTab, () => {
   opacity: 0;
 }
 
-@media (max-width: 768px) {
-  .compendium-container {
-    width: 100%;
-    height: 100%;
-    max-width: 100vw;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-
-  .compendium-body {
-    flex-direction: column;
-  }
-
-  .compendium-list-panel {
-    width: 100%;
-    height: 140px;
-    border-right: none;
-    border-bottom: 1px solid #0f3460;
-  }
-
-  .compendium-tabs {
-    overflow-x: auto;
-  }
-
-  .compendium-tab {
-    padding: 0.35rem 0.5rem;
-    font-size: 12px;
-  }
-}
 </style>

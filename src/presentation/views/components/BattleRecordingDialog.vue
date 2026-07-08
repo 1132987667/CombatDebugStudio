@@ -165,7 +165,7 @@ function formatBattleName(rec: RecordedBattle): string {
 <style scoped>
 .recording-body {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   height: var(--recording-body-height, 500px);
 }
 
@@ -174,34 +174,34 @@ function formatBattleName(rec: RecordedBattle): string {
   width: 220px;
   flex-shrink: 0;
   border-right: 1px solid rgba(79, 195, 247, 0.2);
-  padding-right: 12px;
+  padding-right: var(--space-3);
   overflow-y: auto;
 }
 
 .list-header {
-  font-size: 12px;
-  font-weight: 600;
-  color: #60a5fa;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-info);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-1);
   border-bottom: 1px solid rgba(79, 195, 247, 0.2);
 }
 
 .list-empty {
   color: rgba(255, 255, 255, 0.4);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   text-align: center;
-  padding: 24px 0;
+  padding: var(--space-5) 0;
 }
 
 .recording-item {
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.15s;
-  margin-bottom: 4px;
+  transition: background var(--transition-fast);
+  margin-bottom: var(--space-1);
 }
 
 .recording-item:hover {
@@ -214,18 +214,18 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .recording-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #22d3ee;
-  margin-bottom: 2px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-energy);
+  margin-bottom: var(--space-1);
 }
 
 .recording-meta {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.5);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
 }
 
 .recording-count {
@@ -241,34 +241,34 @@ function formatBattleName(rec: RecordedBattle): string {
 
 .detail-placeholder {
   color: rgba(255, 255, 255, 0.4);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   text-align: center;
-  padding: 60px 0;
+  padding: var(--space-8) 0;
 }
 
 .detail-header {
-  font-size: 12px;
-  font-weight: 600;
-  color: #60a5fa;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-info);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-1);
   border-bottom: 1px solid rgba(79, 195, 247, 0.2);
 }
 
 .detail-actions {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1);
 }
 
 /* ====== 行动卡片 ====== */
 .action-card {
   border: 1px solid rgba(79, 195, 247, 0.15);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition-fast);
 }
 
 .action-card:hover {
@@ -282,12 +282,12 @@ function formatBattleName(rec: RecordedBattle): string {
 .action-summary {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   background: rgba(79, 195, 247, 0.03);
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
 }
 
 .action-summary:hover {
@@ -296,18 +296,18 @@ function formatBattleName(rec: RecordedBattle): string {
 
 .action-index {
   color: rgba(255, 255, 255, 0.35);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-family: 'JetBrains Mono', monospace;
   min-width: 30px;
 }
 
 .action-actor {
-  font-weight: 600;
-  color: #22d3ee;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-energy);
 }
 
 .action-actor.skill {
-  color: #a78bfa;
+  color: var(--color-debuff);
 }
 
 .action-arrow {
@@ -320,64 +320,64 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .action-type-badge {
-  font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 3px;
+  font-size: var(--font-size-xs);
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-sm);
   background: rgba(79, 195, 247, 0.15);
-  color: #60a5fa;
+  color: var(--color-info);
 }
 
 .action-type-badge.skill {
   background: rgba(167, 139, 250, 0.15);
-  color: #a78bfa;
+  color: var(--color-debuff);
 }
 
 .action-damage {
   font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  color: #f97316;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-warning);
   min-width: 40px;
   text-align: right;
 }
 
 .action-expand-icon {
   color: rgba(255, 255, 255, 0.3);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
 }
 
 /* ====== 展开详情 ====== */
 .action-detail {
   border-top: 1px solid rgba(79, 195, 247, 0.1);
-  padding: 10px 12px;
+  padding: var(--space-2) var(--space-3);
   background: rgba(0, 0, 0, 0.15);
 }
 
 .breakdown-section {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .breakdown-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: #60a5fa;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-info);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 6px;
+  margin-bottom: var(--space-1);
 }
 
 .breakdown-steps {
   background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  padding: 6px 8px;
-  margin-bottom: 8px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .step-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
   padding: 3px 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-family: 'JetBrains Mono', monospace;
   color: rgba(255, 255, 255, 0.7);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -388,8 +388,8 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .step-indicator {
-  color: #22d3ee;
-  font-size: 10px;
+  color: var(--color-energy);
+  font-size: var(--font-size-xs);
 }
 
 .step-desc {
@@ -399,17 +399,17 @@ function formatBattleName(rec: RecordedBattle): string {
 .breakdown-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .stat-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 3px 8px;
+  padding: 3px var(--space-2);
   background: rgba(0, 0, 0, 0.15);
-  border-radius: 3px;
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
 }
 
 .stat-label {
@@ -418,12 +418,12 @@ function formatBattleName(rec: RecordedBattle): string {
 
 .stat-value {
   font-family: 'JetBrains Mono', monospace;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: rgba(255, 255, 255, 0.8);
 }
 
 .stat-value.crit {
-  color: #fbbf24;
+  color: var(--color-warning);
 }
 
 .stat-row.final {
@@ -433,7 +433,7 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .final-value {
-  font-size: 14px;
-  color: #f97316;
+  font-size: var(--font-size-md);
+  color: var(--color-warning);
 }
 </style>

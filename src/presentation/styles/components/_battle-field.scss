@@ -1,0 +1,42 @@
+/* ==========================================================================
+   Component: Battle Field (_battle-field.scss)
+   依赖: tokens.scss
+   作用: 战场中部区域 — 双方阵营、参战者卡片列表
+   ========================================================================== */
+
+.battle-top-section {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-bottom: 1px solid var(--color-border-default);
+  margin-bottom: var(--space-3);
+}
+
+.battle-field {
+  display: flex;
+  gap: var(--space-2);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.field-party {
+  flex: 1;
+  background: var(--color-bg-secondary);
+  border: none;
+  border-top: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.party-header {
+  background: var(--color-bg-tertiary);
+  color: var(--color-info);
+  /* ponytail: 0.4rem has no exact space token equivalent */
+  padding: 0.4rem 0.5rem;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--color-border-default);
+}

@@ -16,37 +16,37 @@
     </div>
 
     <div class="enemy-stats-panel">
-      <div class="monitor-subtitle">基础属性</div>
-      <div class="monitor-grid">
-        <div class="monitor-item">
-          <span class="monitor-label">气血</span>
-          <span class="monitor-value">{{ enemy.stats.maxHealth }}</span>
+      <div class="enemy-section-title">基础属性</div>
+      <div class="enemy-stats-grid">
+        <div class="enemy-stat-item">
+          <span class="enemy-stat-label">气血</span>
+          <span class="enemy-stat-value">{{ enemy.stats.maxHealth }}</span>
         </div>
         <div class="monitor-item">
-          <span class="monitor-label">攻击</span>
-          <span class="monitor-value">{{ enemy.stats.minAttack }}-{{ enemy.stats.maxAttack }}</span>
+          <span class="enemy-stat-label">攻击</span>
+          <span class="enemy-stat-value">{{ enemy.stats.minAttack }}-{{ enemy.stats.maxAttack }}</span>
         </div>
         <div class="monitor-item">
-          <span class="monitor-label">防御</span>
-          <span class="monitor-value">{{ enemy.stats.defense }}</span>
+          <span class="enemy-stat-label">防御</span>
+          <span class="enemy-stat-value">{{ enemy.stats.defense }}</span>
         </div>
         <div class="monitor-item">
-          <span class="monitor-label">速度</span>
-          <span class="monitor-value">{{ enemy.stats.speed }}</span>
+          <span class="enemy-stat-label">速度</span>
+          <span class="enemy-stat-value">{{ enemy.stats.speed }}</span>
         </div>
         <div class="monitor-item">
-          <span class="monitor-label">暴击率</span>
-          <span class="monitor-value">{{ enemy.stats.critRate || 10 }}%</span>
+          <span class="enemy-stat-label">暴击率</span>
+          <span class="enemy-stat-value">{{ enemy.stats.critRate || 10 }}%</span>
         </div>
         <div class="monitor-item">
-          <span class="monitor-label">暴击伤害</span>
-          <span class="monitor-value">{{ enemy.stats.critDamage || 125 }}%</span>
+          <span class="enemy-stat-label">暴击伤害</span>
+          <span class="enemy-stat-value">{{ enemy.stats.critDamage || 125 }}%</span>
         </div>
       </div>
     </div>
 
     <div class="enemy-skills-panel">
-      <div class="monitor-subtitle">技能展示</div>
+      <div class="enemy-section-title">技能展示</div>
       <div v-if="skills.length === 0" class="empty-skills">
         <span>暂无技能</span>
       </div>
@@ -72,7 +72,7 @@
     </div>
 
     <div class="enemy-drops-panel">
-      <div class="monitor-subtitle">掉落物品</div>
+      <div class="enemy-section-title">掉落物品</div>
       <div v-if="enemy.drops && enemy.drops.length > 0" class="drops-list">
         <div v-for="drop in enemy.drops" :key="drop.itemId" class="drop-item">
           <span class="drop-item-name">{{ getItemName(drop.itemId) }}</span>
@@ -166,106 +166,89 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 
 <style scoped>
 .enemy-detail {
-  color: #eee;
+  color: var(--color-text-secondary);
 }
 
 .enemy-header {
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #0f3460;
-  margin-bottom: 0.75rem;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-default);
+  margin-bottom: var(--space-3);
 }
 
 .enemy-title h2 {
   margin: 0;
-  font-size: 16px;
-  color: #4fc3f7;
+  font-size: var(--font-size-lg);
+  color: var(--color-info);
 }
 
 .enemy-level {
-  font-size: 12px;
-  color: #e94560;
-  margin-left: 8px;
-  padding: 1px 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-brand-red);
+  margin-left: var(--space-2);
+  padding: 1px var(--space-1);
   background: rgba(233, 69, 96, 0.2);
-  border-radius: 3px;
-}
-
-.section-title {
-  font-size: 12px;
-  font-weight: bold;
-  color: #4fc3f7;
-  margin: 0 0 0.5rem 0;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid #0f3460;
-  letter-spacing: 0.5px;
+  border-radius: var(--radius-sm);
 }
 
 .enemy-stats-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
-.monitor-grid {
+.enemy-section-title {
+  color: var(--color-info);
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-1);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px dashed var(--color-border-default);
+}
+
+.enemy-stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
-.monitor-item {
+.enemy-stat-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding: 0.2rem 0.4rem;
-  background: #0f0f1a;
-  border-radius: 3px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
 }
 
-.monitor-label {
-  font-size: 11px;
-  color: #888;
+.enemy-stat-label {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
 }
 
-.monitor-value {
-  font-size: 12px;
-  font-weight: bold;
-  color: #eee;
-}
-
-.monitor-subtitle {
-  color: #4fc3f7;
-  font-size: 11px;
-  margin-bottom: 0.35rem;
-  padding-bottom: 0.15rem;
-  border-bottom: 1px dashed #0f3460;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.25rem;
+.enemy-stat-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
 }
 
 .enemy-skills-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .skills-container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .skill-card {
-  background: #0f0f1a;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
@@ -273,132 +256,132 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.4rem 0.5rem;
-  background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
-  border-bottom: 1px solid #0f3460;
+  padding: var(--space-2) var(--space-2);
+  background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-primary) 100%);
+  border-bottom: 1px solid var(--color-border-default);
 }
 
 .skill-name {
-  font-size: 12px;
-  font-weight: bold;
-  color: #4fc3f7;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-info);
 }
 
 .skill-meta {
   display: flex;
-  gap: 0.35rem;
+  gap: var(--space-1);
 }
 
 .skill-tag {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .skill-tag.passive {
-  color: #a78bfa;
+  color: var(--color-debuff);
   background: rgba(167, 139, 250, 0.15);
 }
 
 .skill-tag.ultimate {
-  color: #fbbf24;
+  color: var(--color-warning);
   background: rgba(251, 191, 36, 0.15);
 }
 
 .skill-cost {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   padding: 1px 5px;
-  border-radius: 3px;
-  color: #f97316;
+  border-radius: var(--radius-sm);
+  color: var(--color-warning);
   background: rgba(249, 115, 22, 0.15);
 }
 
 .skill-body {
-  padding: 0.4rem 0.5rem;
+  padding: var(--space-2) var(--space-2);
 }
 
 .skill-description {
-  font-size: 11px;
-  color: #aaa;
-  line-height: 1.5;
-  margin: 0 0 0.35rem 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-md);
+  margin: 0 0 var(--space-1) 0;
 }
 
 .skill-selector {
   display: flex;
-  gap: 0.25rem;
-  font-size: 10px;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
 }
 
 .selector-label {
-  color: #888;
+  color: var(--color-text-tertiary);
 }
 
 .selector-value {
-  color: #4fc3f7;
+  color: var(--color-info);
 }
 
 .empty-skills,
 .empty-drops {
   text-align: center;
-  padding: 0.5rem;
-  color: #666;
-  font-size: 11px;
+  padding: var(--space-2);
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
 }
 
 .enemy-drops-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .drops-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .drop-item {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.5rem;
-  background: #0f0f1a;
-  border-radius: 3px;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
 }
 
 .drop-item-name {
   flex: 1;
-  font-size: 11px;
-  color: #eee;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
 }
 
 .drop-quantity {
-  font-size: 11px;
-  color: #4fc3f7;
+  font-size: var(--font-size-xs);
+  color: var(--color-info);
 }
 
 .drop-chance {
-  font-size: 10px;
-  color: #888;
-  padding: 1px 4px;
-  background: #1a1a2e;
-  border-radius: 3px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  padding: 1px var(--space-1);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-sm);
 }
 
 .enemy-description {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
 }
 
 .description-text {
-  font-size: 11px;
-  color: #aaa;
-  line-height: 1.6;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-lg);
   margin: 0;
 }
 </style>

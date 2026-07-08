@@ -102,130 +102,130 @@ const logLevelName = (level: LogLevel): string => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem;
-  border-bottom: 1px solid #1e3a5f;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-bg-tertiary);
 }
 
 .log-btn {
-  background: #1e3a5f;
-  color: #fff;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
   border: none;
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
 .log-btn:hover {
-  background: #2d5a8a;
+  background: var(--color-border-strong);
 }
 
 .log-count {
-  color: #8ba4c7;
-  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
 }
 
 .log-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0.5rem;
-  background: #0a0a14;
+  padding: var(--space-2);
+  background: var(--color-bg-secondary);
 }
 
 .log-item {
-  padding: 0.5rem;
-  border-bottom: 1px solid #1e3a5f;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-bg-tertiary);
   font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 0.875rem;
+  font-size: var(--font-size-md);
 }
 
 .log-item:hover {
-  background: #12122a;
+  background: var(--color-bg-primary);
 }
 
 .log-time {
-  color: #6b7280;
-  margin-right: 0.5rem;
+  color: var(--color-text-tertiary);
+  margin-right: var(--space-2);
 }
 
 .log-level {
-  padding: 0.125rem 0.375rem;
-  border-radius: 2px;
-  margin-right: 0.5rem;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  margin-right: var(--space-2);
   font-weight: bold;
 }
 
 .log-seq {
-  color: #6b7280;
-  margin-right: 0.5rem;
-  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-right: var(--space-2);
+  font-size: var(--font-size-sm);
   min-width: 3em;
   display: inline-block;
 }
 
 .level-DEBUG {
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
 }
 
 .level-DEBUG .log-level {
-  background: #374151;
+  background: var(--color-bg-tertiary);
 }
 
 .level-INFO {
-  color: #22d3ee;
+  color: var(--color-energy);
 }
 
 .level-INFO .log-level {
-  background: #0e7490;
+  background: var(--color-energy);
 }
 
 .level-WARN {
-  color: #f97316;
+  color: var(--color-warning);
 }
 
 .level-WARN .log-level {
-  background: #c2410c;
+  background: var(--color-warning);
 }
 
 .level-ERROR {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 .level-ERROR .log-level {
-  background: #b91c1c;
+  background: var(--color-danger);
 }
 
 .log-source {
-  color: #a78bfa;
-  margin-right: 0.5rem;
+  color: var(--color-debuff);
+  margin-right: var(--space-2);
 }
 
 .log-message {
-  color: #e5e7eb;
+  color: var(--color-text-secondary);
 }
 
 .log-context {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background: #1f2937;
-  border-radius: 4px;
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-sm);
   overflow-x: auto;
 }
 
 .log-context pre {
   margin: 0;
-  color: #d1d5db;
-  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
 }
 
 .log-error {
-  margin-top: 0.25rem;
-  color: #f87171;
-  font-size: 0.875rem;
+  margin-top: var(--space-1);
+  color: var(--color-danger);
+  font-size: var(--font-size-md);
 }
 
 .log-empty {
   text-align: center;
-  color: #6b7280;
-  padding: 2rem;
+  color: var(--color-text-tertiary);
+  padding: var(--space-6);
 }
 </style>

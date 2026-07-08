@@ -9,7 +9,7 @@
         <div class="monitor-subtitle">基础属性</div>
         <div class="monitor-grid">
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '最大生命值', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0, '数值')"
+            @mouseenter="showAttrTooltipSimple($event, '最大生命值', ATTRIBUTE_CODE.maxHealth, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentHealth)?.value || 0
@@ -17,63 +17,62 @@
                 currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0 }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '能量', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value || 0, '数值')"
+            @mouseenter="showAttrTooltipSimple($event, '能量', ATTRIBUTE_CODE.currentEnergy, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">能量:</span>
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value || 0
             }}/{{
                 currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 200 }}</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttackTooltip($event)"
-            @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+          <div class="monitor-item" @mouseenter="showAttackTooltip($event)" @mousemove="updateTooltipPosition"
+            @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击:</span>
             <span class="monitor-value">{{ attackRange.min }}-{{ attackRange.max }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '防御力', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0, '数值')"
+            @mouseenter="showAttrTooltipSimple($event, '防御力', ATTRIBUTE_CODE.defense, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御:</span>
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0
             }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '速度', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0, '数值')"
+            @mouseenter="showAttrTooltipSimple($event, '速度', ATTRIBUTE_CODE.speed, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度:</span>
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0
             }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '暴击率', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critRate)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critRate)?.value || 10, '百分比')"
+            @mouseenter="showAttrTooltipSimple($event, '暴击率', ATTRIBUTE_CODE.critRate, '百分比', 10)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">暴击率:</span>
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critRate)?.value || 10
             }}%</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '暴击伤害', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critDamage)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critDamage)?.value || 125, '百分比')"
+            @mouseenter="showAttrTooltipSimple($event, '暴击伤害', ATTRIBUTE_CODE.critDamage, '百分比', 125)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">暴击伤害:</span>
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critDamage)?.value || 125
             }}%</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '免伤率', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.value || 0, '百分比')"
+            @mouseenter="showAttrTooltipSimple($event, '免伤率', ATTRIBUTE_CODE.damageReduction, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">免伤率:</span>
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.value ||
               0 }}%</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '命中率', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.hit)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.hit)?.value || 100, '百分比')"
+            @mouseenter="showAttrTooltipSimple($event, '命中率', ATTRIBUTE_CODE.hit, '百分比', 100)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">命中率:</span>
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.hit)?.value || 100
             }}%</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '闪避率', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.dodge)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.dodge)?.value || 0, '百分比')"
+            @mouseenter="showAttrTooltipSimple($event, '闪避率', ATTRIBUTE_CODE.dodge, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">闪避率:</span>
             <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.dodge)?.value || 0
@@ -85,7 +84,7 @@
         <div class="monitor-subtitle">属性加成</div>
         <div class="monitor-grid">
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '生命值加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.value || 0, '百分比')"
+            @mouseenter="showAttrTooltipSimple($event, '生命值加成', ATTRIBUTE_CODE.healthBonus, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血加成:</span>
             <span class="monitor-value bonus">{{
@@ -93,7 +92,7 @@
                 0) }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '攻击力加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.value || 0, '百分比')"
+            @mouseenter="showAttrTooltipSimple($event, '攻击力加成', ATTRIBUTE_CODE.attackBonus, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击加成:</span>
             <span class="monitor-value bonus">{{
@@ -101,7 +100,7 @@
                 0) }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '防御力加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.value || 0, '百分比')"
+            @mouseenter="showAttrTooltipSimple($event, '防御力加成', ATTRIBUTE_CODE.defenseBonus, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御加成:</span>
             <span class="monitor-value bonus">{{
@@ -109,7 +108,7 @@
                 0) }}</span>
           </div>
           <div class="monitor-item"
-            @mouseenter="showAttrTooltip($event, '速度加成', currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.modifiers || [], currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.value || 0, '百分比')"
+            @mouseenter="showAttrTooltipSimple($event, '速度加成', ATTRIBUTE_CODE.speedBonus, '百分比')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度加成:</span>
             <span class="monitor-value bonus">{{
@@ -380,6 +379,9 @@ const isSkillAvailable = (skill: SkillConfig): boolean => {
 // 属性悬浮提示状态
 const attrTooltipVisible = ref(false)
 
+/** 延迟隐藏定时器：鼠标移开后等待 300ms 再隐藏，避免快速划过时闪烁 */
+let attrTooltipHideTimer: ReturnType<typeof setTimeout> | null = null
+
 /** Alt 键按下时锁定 tooltip 不隐藏 */
 const altKeyHeld = ref(false)
 
@@ -389,7 +391,8 @@ const handleKeyDown = (e: KeyboardEvent) => {
 const handleKeyUp = (e: KeyboardEvent) => {
   if (e.key === 'Alt') {
     altKeyHeld.value = false
-    // ponytail: Alt 释放时自动隐藏属性悬浮面板，避免 mouseleave 未触发的残留
+    // ponytail: Alt 释放时取消待执行的延迟隐藏并强制隐藏
+    if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
     attrTooltipVisible.value = false
   }
 }
@@ -411,6 +414,8 @@ const attrTooltipData = ref<{
 })
 
 const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType, displayText?: string, rangeLayers?: RangeLayerData[]) => {
+  // ponytail: 鼠标进入新属性时取消待执行的延迟隐藏，避免闪烁
+  if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
   attrTooltipData.value = {
     title,
     modifiers,
@@ -421,6 +426,12 @@ const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[]
     rangeLayers
   }
   attrTooltipVisible.value = true
+}
+
+/** ponytail: 简化版 — 接收属性枚举 code 自动取值，模板调用不再写一长串 */
+const showAttrTooltipSimple = (event: MouseEvent, title: string, code: ATTRIBUTE_CODE, valueType: AttributeValueType, defaultValue: number = 0) => {
+  const attr = currentCharacter.value?.getAttributeValue(code)
+  showAttrTooltip(event, title, attr?.modifiers || [], attr?.value ?? defaultValue, valueType)
 }
 
 /**
@@ -514,7 +525,11 @@ const showAttackTooltip = (event: MouseEvent) => {
 
 const hideAttrTooltip = () => {
   if (altKeyHeld.value) return
-  attrTooltipVisible.value = false
+  // ponytail: 延迟 300ms 隐藏，避免鼠标快速划过属性项时闪烁
+  attrTooltipHideTimer = setTimeout(() => {
+    attrTooltipVisible.value = false
+    attrTooltipHideTimer = null
+  }, 300)
 }
 
 
@@ -590,6 +605,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('keyup', handleKeyUp)
+  if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
 })
 
 // ------------------------------------------------------------
@@ -666,49 +682,51 @@ const handleBattleEndReplay = (winner: string) => {
 @use "@/presentation/styles/main.scss";
 
 .skill-item {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.85);
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
   cursor: pointer;
 }
 
 .skill-item:hover {
+  /* ponytail: uses --color-energy (#22d3ee) with opacity; no token for 10% bg */
   background: rgba(34, 211, 238, 0.1);
+  /* ponytail: glow uses --color-energy with opacity */
   box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
 }
 
 .skill-item.passive:hover {
-  border-left: 2px solid #22d3ee;
+  border-left: 2px solid var(--color-energy);
 }
 
 .skill-item.small:hover {
-  border-left: 2px solid #60a5fa;
+  border-left: 2px solid var(--color-info);
 }
 
 .skill-item.ultimate:hover {
-  border-left: 2px solid #f97316;
+  border-left: 2px solid var(--color-warning);
 }
 
 /* 技能信息显示样式 */
 .skills-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .skill-category {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .skill-category-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #60a5fa;
-  margin-bottom: 4px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-info);
+  margin-bottom: var(--space-1);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -716,17 +734,17 @@ const handleBattleEndReplay = (winner: string) => {
 .skill-items {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding-left: 8px;
+  gap: var(--space-1);
+  padding-left: var(--space-2);
 }
 
 .no-skills {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.5);
   text-align: center;
-  padding: 8px;
+  padding: var(--space-2);
   background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 </style>
 
@@ -739,15 +757,15 @@ const handleBattleEndReplay = (winner: string) => {
   z-index: 10000;
   min-width: 280px;
   max-width: 360px;
-  padding: 12px 16px;
+  padding: var(--space-3) var(--space-4);
   background: rgba(15, 23, 42, 0.95);
   border: 1px solid rgba(96, 165, 250, 0.4);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(96, 165, 250, 0.2);
   backdrop-filter: blur(12px);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-md);
   color: rgba(255, 255, 255, 0.85);
   pointer-events: none;
 }
@@ -756,106 +774,106 @@ const handleBattleEndReplay = (winner: string) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
   border-bottom: 1px solid rgba(96, 165, 250, 0.3);
 }
 
 .tooltip-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #22d3ee;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-energy);
   text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
 }
 
 .tooltip-type {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .tooltip-type.active {
   background: rgba(96, 165, 250, 0.2);
-  color: #60a5fa;
+  color: var(--color-info);
 }
 
 .tooltip-type.passive {
   background: rgba(34, 211, 238, 0.2);
-  color: #22d3ee;
+  color: var(--color-energy);
 }
 
 .tooltip-type.ultimate {
   background: rgba(249, 115, 22, 0.2);
-  color: #f97316;
+  color: var(--color-warning);
 }
 
 .tooltip-description {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.75);
-  margin-bottom: 12px;
-  line-height: 1.6;
+  margin-bottom: var(--space-3);
+  line-height: var(--line-height-lg);
 }
 
 .tooltip-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
 .tooltip-stats .stat-item {
   display: flex;
   flex-direction: column;
-  padding: 6px 8px;
+  padding: var(--space-1) var(--space-2);
   background: rgba(96, 165, 250, 0.1);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(96, 165, 250, 0.2);
 }
 
 .tooltip-stats .stat-label {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .tooltip-stats .stat-value {
-  font-size: 13px;
-  color: #22d3ee;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  color: var(--color-energy);
+  font-weight: var(--font-weight-medium);
 }
 
 .tooltip-effects {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .effects-title {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
-  padding-bottom: 4px;
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-1);
   border-bottom: 1px solid rgba(96, 165, 250, 0.2);
 }
 
 .effect-item {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-1);
   align-items: center;
-  padding: 4px 0;
-  font-size: 12px;
+  padding: var(--space-1) 0;
+  font-size: var(--font-size-sm);
 }
 
 .effect-type {
-  padding: 2px 6px;
+  padding: var(--space-1) var(--space-1);
   background: rgba(34, 211, 238, 0.15);
-  border-radius: 3px;
-  color: #22d3ee;
-  font-weight: 500;
+  border-radius: var(--radius-sm);
+  color: var(--color-energy);
+  font-weight: var(--font-weight-medium);
 }
 
 .effect-formula {
@@ -872,15 +890,15 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .tooltip-condition {
-  padding: 8px;
+  padding: var(--space-2);
   background: rgba(249, 115, 22, 0.1);
   border: 1px solid rgba(249, 115, 22, 0.3);
-  border-radius: 4px;
-  font-size: 11px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
 }
 
 .condition-label {
-  color: #f97316;
+  color: var(--color-warning);
   margin-right: 6px;
 }
 
@@ -891,23 +909,23 @@ const handleBattleEndReplay = (winner: string) => {
 
 /* 技能可用性状态 */
 .tooltip-availability {
-  margin-top: 12px;
-  padding: 8px;
-  border-radius: 6px;
+  margin-top: var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
   text-align: center;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 .tooltip-availability.available {
   background: rgba(34, 211, 238, 0.15);
-  color: #22d3ee;
+  color: var(--color-energy);
   border: 1px solid rgba(34, 211, 238, 0.3);
 }
 
 .tooltip-availability.unavailable {
   background: rgba(249, 115, 22, 0.15);
-  color: #f97316;
+  color: var(--color-warning);
   border: 1px solid rgba(249, 115, 22, 0.3);
 }
 
@@ -929,28 +947,4 @@ const handleBattleEndReplay = (winner: string) => {
   transform: translateY(0);
 }
 
-/* 响应式适配 */
-@media (max-width: 768px) {
-  .skill-tooltip {
-    max-width: 280px;
-    font-size: 12px;
-  }
-
-  .tooltip-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  .skill-tooltip {
-    max-width: 260px;
-    left: 10px !important;
-    right: 10px !important;
-    font-size: 11px;
-  }
-
-  .tooltip-stats {
-    grid-template-columns: 1fr;
-  }
-}
 </style>

@@ -159,68 +159,68 @@ const reloadExport = () => {
 .snapshot-body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .snapshot-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .snapshot-section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #60a5fa;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-info);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .snapshot-btn-group {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .snapshot-btn {
-  padding: 8px 16px;
-  font-size: 13px;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
   border: 1px solid rgba(34, 211, 238, 0.3);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: rgba(34, 211, 238, 0.08);
-  color: #22d3ee;
+  color: var(--color-energy);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
 }
 .snapshot-btn:hover {
   background: rgba(34, 211, 238, 0.15);
-  border-color: #22d3ee;
+  border-color: var(--color-energy);
 }
 .snapshot-btn.primary {
   background: rgba(34, 211, 238, 0.15);
-  border-color: #22d3ee;
+  border-color: var(--color-energy);
 }
 .snapshot-btn.small {
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-sm);
 }
 
 .snapshot-last-export {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.6);
-  padding: 6px 10px;
+  padding: var(--space-1) var(--space-2);
   background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-family: monospace;
 }
 
 .snapshot-note {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.35);
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2);
   background: rgba(96, 165, 250, 0.06);
   border: 1px solid rgba(96, 165, 250, 0.15);
-  border-radius: 4px;
-  line-height: 1.5;
+  border-radius: var(--radius-sm);
+  line-height: var(--line-height-md);
 }
 </style>

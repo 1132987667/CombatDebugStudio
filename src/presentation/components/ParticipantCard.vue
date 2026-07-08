@@ -286,34 +286,34 @@ defineExpose({
 /* 浮动数字样式 */
 .damage-number {
   position: absolute;
-  font-size: 24px;
-  font-weight: bold;
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   animation: float-up v-bind(duration) ease-out forwards;
   white-space: nowrap;
 }
 
 .damage-number.damage {
-  color: #ef4444;
+  color: var(--color-danger);
   /* 红色伤害 */
 }
 
 .damage-number.heal {
-  color: #22c55e;
+  color: var(--color-success);
   /* 绿色治疗 */
 }
 
 .damage-number.critical {
-  color: #f97316;
+  color: var(--color-warning);
   /* 橙色暴击 */
   font-size: 32px;
   text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
 }
 
 .damage-number.miss {
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
   /* 灰色闪避 */
-  font-size: 20px;
+  font-size: var(--font-size-xxl);
 }
 
 /* 浮动动画 */
@@ -336,34 +336,34 @@ defineExpose({
 
 /* 复用原有 member-card 样式 */
 .debug-info {
-  margin-top: 8px;
-  padding: 8px;
+  margin-top: var(--space-2);
+  padding: var(--space-2);
   background: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
-  font-size: 11px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
 }
 
 .debug-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
 .debug-row .label {
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
   min-width: 40px;
 }
 
 .debug-row .value {
-  color: #e5e7eb;
+  color: var(--color-text-secondary);
   font-family: 'Courier New', monospace;
 }
 
 .debug-row .breakdown {
   cursor: pointer;
   opacity: 0.6;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-fast);
 }
 
 .debug-row .breakdown:hover {
@@ -371,26 +371,26 @@ defineExpose({
 }
 
 .breakdown-details {
-  margin-top: 8px;
-  padding: 8px;
+  margin-top: var(--space-2);
+  padding: var(--space-2);
   background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
-  border-left: 2px solid #22d3ee;
+  border-left: 2px solid var(--color-energy);
 }
 
 .breakdown-item {
   display: flex;
   justify-content: space-between;
-  padding: 2px 0;
+  padding: var(--space-1) 0;
   font-family: 'Courier New', monospace;
 }
 
 .breakdown-item .key {
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
 }
 
 .breakdown-item .value {
-  color: #22d3ee;
+  color: var(--color-energy);
 }
 
 /* ============ 卡片视觉状态动画 ============ */
@@ -398,7 +398,7 @@ defineExpose({
 /* 蓄力/施法 */
 .member-card.casting {
   transform: translateY(-3px);
-  box-shadow: 0 0 30px var(--side-glow, #ff6a5a), 0 6px 24px rgba(0,0,0,0.7);
+  box-shadow: 0 0 30px var(--color-brand-red), 0 6px 24px rgba(0,0,0,0.7);
   animation: cast-pulse 0.6s ease;
 }
 @keyframes cast-pulse {
@@ -436,7 +436,7 @@ defineExpose({
 }
 @keyframes heal-glow {
   0%, 100% { box-shadow: 0 0 0 transparent; }
-  50% { box-shadow: 0 0 30px #6affd0, inset 0 0 20px rgba(45, 212, 168, 0.2); }
+  50% { box-shadow: 0 0 30px var(--color-heal), inset 0 0 20px rgba(45, 212, 168, 0.2); }
 }
 
 /* 被加护盾 */
@@ -445,7 +445,7 @@ defineExpose({
 }
 @keyframes shield-glow {
   0%, 100% { box-shadow: 0 0 0 transparent; }
-  50% { box-shadow: 0 0 30px #8ee0ff, inset 0 0 20px rgba(76, 201, 240, 0.2); }
+  50% { box-shadow: 0 0 30px var(--color-energy), inset 0 0 20px rgba(76, 201, 240, 0.2); }
 }
 
 /* HP 条闪光 */

@@ -108,24 +108,22 @@ const updateCustomSpeed = () => {
 
 <style scoped>
 .rule-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 
 .rule-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-fast);
 }
 
 .rule-item:hover {
-  background-color: #1a1a2e;
+  background-color: var(--color-bg-primary);
 }
 
 .rule-item input[type="checkbox"] {
@@ -135,44 +133,44 @@ const updateCustomSpeed = () => {
 }
 
 .rule-item span {
-  font-size: 14px;
-  color: #eee;
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
 }
 
 .speed-selector {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding-top: 16px;
-  border-top: 1px solid #0f3460;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-default);
 }
 
 .speed-selector span {
-  font-size: 14px;
-  color: #8ba4c7;
-  font-weight: 500;
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
 }
 
 .speed-btn {
-  padding: 6px 12px;
-  border: 1px solid #1a4a7a;
-  background: #0f3460;
-  border-radius: 4px;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-border-default);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 12px;
-  color: #4fc3f7;
-  transition: all 0.2s;
+  font-size: var(--font-size-sm);
+  color: var(--color-info);
+  transition: all var(--transition-fast);
 }
 
 .speed-btn:hover {
-  background: #1a4a7a;
-  color: #4fc3f7;
+  background: var(--color-border-strong);
+  color: var(--color-info);
 }
 
 .speed-btn.active {
-  background: #4fc3f7;
-  border-color: #4fc3f7;
-  color: #0f0f1a;
+  background: var(--color-info);
+  border-color: var(--color-info);
+  color: var(--color-bg-secondary);
 }
 
 .custom-speed {

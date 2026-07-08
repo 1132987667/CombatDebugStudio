@@ -166,186 +166,176 @@ const getPossibleSources = (buffId: string): string[] => {
 
 <style scoped>
 .buff-detail {
-  color: #eee;
+  color: var(--color-text-primary);
 }
 
 .buff-header {
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #0f3460;
-  margin-bottom: 0.75rem;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-default);
+  margin-bottom: var(--space-3);
 }
 
 .buff-title h2 {
   margin: 0;
-  font-size: 16px;
-  color: #4fc3f7;
+  font-size: var(--font-size-lg);
+  color: var(--color-info);
 }
 
 .buff-badges {
   display: flex;
-  gap: 0.35rem;
-  margin-top: 4px;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
 }
 
 .buff-badge {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .buff-badge.stacks {
   background: rgba(167, 139, 250, 0.15);
-  color: #a78bfa;
+  color: var(--color-debuff);
 }
 
 .buff-badge.duration {
   background: rgba(96, 165, 250, 0.15);
-  color: #60a5fa;
+  color: var(--color-info);
 }
 
 .buff-badge.duration.permanent {
   background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
-}
-
-.section-title {
-  font-size: 12px;
-  font-weight: bold;
-  color: #4fc3f7;
-  margin: 0 0 0.5rem 0;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid #0f3460;
-  letter-spacing: 0.5px;
+  color: var(--color-warning);
 }
 
 .buff-attributes-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .attributes-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .attribute-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.35rem 0.5rem;
-  background: #0f0f1a;
-  border-radius: 3px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
 }
 
 .attr-key {
-  font-size: 11px;
-  color: #888;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
 }
 
 .attr-value {
-  font-size: 12px;
-  font-weight: bold;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
 }
 
 .attr-value.numeric {
-  color: #4fc3f7;
+  color: var(--color-info);
 }
 
 .attr-value.percent {
-  color: #4ade80;
+  color: var(--color-success);
 }
 
 .empty-attributes {
   text-align: center;
-  padding: 0.5rem;
-  color: #666;
-  font-size: 11px;
+  padding: var(--space-2);
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
 }
 
 .buff-description-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .description-text {
-  font-size: 11px;
-  color: #aaa;
-  line-height: 1.6;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-lg);
   margin: 0;
 }
 
 .buff-effect-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .effect-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: var(--space-1);
 }
 
 .effect-tag {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
+  font-size: var(--font-size-xs);
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
   background: rgba(79, 195, 247, 0.15);
-  color: #4fc3f7;
+  color: var(--color-info);
 }
 
 .effect-tag.debuff {
   background: rgba(233, 69, 96, 0.15);
-  color: #e94560;
+  color: var(--color-brand-red);
 }
 
 .effect-tag.stacks {
   background: rgba(167, 139, 250, 0.15);
-  color: #a78bfa;
+  color: var(--color-debuff);
 }
 
 .effect-tag.permanent {
   background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
+  color: var(--color-warning);
 }
 
 .buff-usage-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 3px;
-  padding: 0.5rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
 }
 
 .usage-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .usage-item {
-  padding: 0.35rem 0.5rem;
-  background: #0f0f1a;
-  border-radius: 3px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
 }
 
 .usage-text {
-  font-size: 11px;
-  color: #aaa;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
 }
 
 .empty-usage {
   text-align: center;
-  padding: 0.5rem;
-  color: #666;
-  font-size: 11px;
+  padding: var(--space-2);
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
 }
 </style>

@@ -16,7 +16,7 @@
       <div class="scene-actions">
         <input type="text" v-model="localSceneName" placeholder="测试场景名称" class="scene-input"
           @keydown.enter="handleSave">
-        <button class="btn-small" @click="handleSave" :disabled="!localSceneName.trim()">[S]保存</button>
+        <button class="btn-medium" @click="handleSave" :disabled="!localSceneName.trim()">[S]保存</button>
       </div>
     </div>
 
@@ -29,8 +29,8 @@
           <option value="">选择场景...</option>
           <option v-for="scene in savedScenes" :key="scene" :value="scene">{{ scene }}</option>
         </select>
-        <button class="btn-small" @click="handleLoad" :disabled="!localSelectedScene">[L]加载</button>
-        <button class="btn-small btn-danger" @click="handleDelete" :disabled="!localSelectedScene">[D]删除</button>
+        <button class="btn-medium" @click="handleLoad" :disabled="!localSelectedScene">[L]加载</button>
+        <button class="btn-medium btn-danger" @click="handleDelete" :disabled="!localSelectedScene">[D]删除</button>
       </div>
     </div>
 
@@ -115,22 +115,12 @@ const handleDelete = () => {
 
 <style scoped>
 .scene-section {
-  margin-bottom: 20px;
-}
-
-.section-header {
-  margin-bottom: 12px;
-}
-
-.section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #eee;
+  margin-bottom: var(--space-5);
 }
 
 .scene-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -147,45 +137,13 @@ const handleDelete = () => {
   cursor: not-allowed;
 }
 
-.btn-small {
-  padding: 8px 16px;
-  border: 1px solid #1a4a7a;
-  background: #0f3460;
-  color: #4fc3f7;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.btn-small:hover:not(:disabled) {
-  background: #1a4a7a;
-}
-
-.btn-small:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-danger {
-  border-color: #e74c3c;
-  color: #f56c6c;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #5a1a1a;
-  border-color: #f56c6c;
-  color: #f56c6c;
-}
-
 .empty-tip {
-  padding: 20px;
+  padding: var(--space-5);
   text-align: center;
-  color: #6b7280;
-  font-size: 13px;
-  background: #0a0a14;
-  border-radius: 4px;
-  border: 1px dashed #1a4a7a;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-border-strong);
 }
 </style>

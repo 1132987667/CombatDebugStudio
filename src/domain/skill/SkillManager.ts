@@ -60,6 +60,12 @@ export class SkillManager {
     return this.executor
   }
 
+  /** ponytail: 设置技能执行的延迟伤害模式 — 为 true 时 executeDamage/executeHeal 只记录数值不实际扣血，
+   * 由调用方在动画完成后统一应用 */
+  setDeferredDamageMode(deferred: boolean): void {
+    this.executor.deferDamage = deferred
+  }
+
   /** 获取伤害计算日志 */
   getDamageCalculationLogs(): CalculationLog[] {
     return this.damageCalculator.getCalculationLogs()

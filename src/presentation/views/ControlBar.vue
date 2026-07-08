@@ -158,33 +158,33 @@ onUnmounted(() => {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(59, 130, 246, 0.2));
   border: 1px solid rgba(34, 211, 238, 0.5);
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   animation: pulse-glow 2s ease-in-out infinite;
   z-index: 100;
 }
 
 .auto-indicator-icon {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   animation: spin 1s linear infinite;
 }
 
 .auto-indicator-text {
-  color: #22d3ee;
-  font-weight: 600;
-  font-size: 14px;
+  color: var(--color-energy);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
   text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
 }
 
 .auto-indicator-speed {
   background: rgba(34, 211, 238, 0.3);
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 12px;
-  color: #22d3ee;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-energy);
 }
 
 @keyframes pulse-glow {
@@ -204,22 +204,22 @@ onUnmounted(() => {
 .debug-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   cursor: pointer;
   user-select: none;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
-  transition: all 0.2s;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
 }
 .debug-toggle.active {
-  color: #22d3ee;
+  color: var(--color-energy);
   border-color: rgba(34, 211, 238, 0.5);
   background: rgba(34, 211, 238, 0.1);
 }
 .debug-toggle input {
-  accent-color: #22d3ee;
+  accent-color: var(--color-energy);
 }
 </style>

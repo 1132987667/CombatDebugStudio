@@ -40,8 +40,9 @@
             <div class="source-list">
               <div v-for="layer in rangeLayers" :key="layer.title" class="source-section">
                 <div class="section-title-row">
-                  <span class="section-title">{{ layer.title }}</span>
-                  <span class="layer-total">{{ formatRangeTotal(layer.minTotal, layer.title) }}-{{ formatRangeTotal(layer.maxTotal, layer.title) }}</span>
+                  <span class="stat-section-title">{{ layer.title }}</span>
+                  <span class="layer-total">{{ formatRangeTotal(layer.minTotal, layer.title) }}-{{
+                    formatRangeTotal(layer.maxTotal, layer.title) }}</span>
                 </div>
                 <div v-for="(row, idx) in layer.rows" :key="layer.title + '-' + idx" class="source-item range-row">
                   <span class="source-name-label">{{ row.label }}</span>
@@ -70,14 +71,15 @@
             <div class="source-list">
               <!-- 基础数值 -->
               <div v-if="additiveGroup.length > 0" class="source-section">
-                <div class="section-title">基础数值</div>
-                <div v-for="(modifier, index) in additiveGroup" :key="'a-'+index" class="source-item">
+                <div class="stat-section-title">基础数值</div>
+                <div v-for="(modifier, index) in additiveGroup" :key="'a-' + index" class="source-item">
                   <div class="source-header">
                     <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
                     <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
                   </div>
                   <div class="source-value">
-                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                    <span class="source-amount"
+                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -86,14 +88,15 @@
 
               <!-- 属性加成 -->
               <div v-if="percentGroup.length > 0" class="source-section">
-                <div class="section-title">属性加成</div>
-                <div v-for="(modifier, index) in percentGroup" :key="'p-'+index" class="source-item">
+                <div class="stat-section-title">属性加成</div>
+                <div v-for="(modifier, index) in percentGroup" :key="'p-' + index" class="source-item">
                   <div class="source-header">
                     <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
                     <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
                   </div>
                   <div class="source-value">
-                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                    <span class="source-amount"
+                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -102,14 +105,15 @@
 
               <!-- 独立乘区 -->
               <div v-if="multiGroup.length > 0" class="source-section">
-                <div class="section-title">独立乘区</div>
-                <div v-for="(modifier, index) in multiGroup" :key="'m-'+index" class="source-item">
+                <div class="stat-section-title">独立乘区</div>
+                <div v-for="(modifier, index) in multiGroup" :key="'m-' + index" class="source-item">
                   <div class="source-header">
                     <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
                     <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
                   </div>
                   <div class="source-value">
-                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                    <span class="source-amount"
+                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -118,14 +122,15 @@
 
               <!-- 最终乘区 -->
               <div v-if="finalGroup.length > 0" class="source-section">
-                <div class="section-title">最终乘区</div>
-                <div v-for="(modifier, index) in finalGroup" :key="'f-'+index" class="source-item">
+                <div class="stat-section-title">最终乘区</div>
+                <div v-for="(modifier, index) in finalGroup" :key="'f-' + index" class="source-item">
                   <div class="source-header">
                     <span class="source-from">{{ getSourceLabel(modifier.sourceType) }}</span>
                     <span class="source-name" v-if="modifier.description">({{ modifier.description }})</span>
                   </div>
                   <div class="source-value">
-                    <span class="source-amount" :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                    <span class="source-amount"
+                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -168,6 +173,8 @@ export interface RangeModifierRow {
   label: string
   minValue: number | null
   maxValue: number | null
+  /** ponytail: 是否按百分比格式化；由 buildRangeLayer 根据 modType 注入 */
+  isPercent: boolean
 }
 
 export interface RangeLayerData {
@@ -464,11 +471,13 @@ onUnmounted(() => {
   z-index: 9999;
   width: 320px;
   max-width: 90vw;
+  /* ponytail: bg rgba(15,23,42,.95) is a unique overlay color; no matching token */
   background: rgba(15, 23, 42, 0.95);
+  /* ponytail: border rgba(96,165,250,.4) = #60a5fa; no matching token */
   border: 1px solid rgba(96, 165, 250, 0.4);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-lg);
   backdrop-filter: blur(8px);
   pointer-events: none;
 
@@ -476,42 +485,44 @@ onUnmounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
+    /* ponytail: border rgba(96,165,250,.3) unique to tooltip */
     border-bottom: 1px solid rgba(96, 165, 250, 0.3);
 
     .tooltip-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: #22d3ee;
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-energy);
+      /* ponytail: glow uses --color-energy (#22d3ee) but no --color-energy-rgb for rgba() */
       text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
     }
 
     .tooltip-value {
-      font-size: 18px;
-      font-weight: 700;
-      color: #22d3ee;
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-energy);
       font-family: 'JetBrains Mono', monospace;
     }
   }
 
   .tooltip-description {
     background: rgba(34, 211, 238, 0.05);
-    border-radius: 6px;
-    padding: 10px;
-    margin-bottom: 12px;
+    border-radius: var(--radius-md);
+    padding: var(--space-2);
+    margin-bottom: var(--space-3);
 
     .description-item {
       display: flex;
-      margin-bottom: 6px;
+      margin-bottom: var(--space-1);
 
       &:last-child {
         margin-bottom: 0;
       }
 
       .description-label {
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.5);
+        font-size: var(--font-size-xs);
+        color: var(--color-text-tertiary);
         width: 40px;
         flex-shrink: 0;
         text-transform: uppercase;
@@ -519,24 +530,25 @@ onUnmounted(() => {
       }
 
       .description-text {
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.7);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
         flex: 1;
-        line-height: 1.4;
+        line-height: var(--line-height-sm);
       }
     }
   }
 
   .tooltip-divider {
     height: 1px;
+    /* ponytail: gradient uses unique #60a5fa, no exact token */
     background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
-    margin: 12px 0;
+    margin: var(--space-3) 0;
   }
 
   .tooltip-content {
     .source-list {
       .source-section {
-        margin-bottom: 12px;
+        margin-bottom: var(--space-3);
 
         &:last-child {
           margin-bottom: 0;
@@ -546,23 +558,24 @@ onUnmounted(() => {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 6px;
-          padding-bottom: 4px;
+          margin-bottom: var(--space-1);
+          padding-bottom: var(--space-1);
+          /* ponytail: border uses unique #60a5fa */
           border-bottom: 1px solid rgba(96, 165, 250, 0.2);
         }
 
-        .section-title {
-          font-size: 11px;
-          font-weight: 600;
-          color: #60a5fa;
+        .stat-section-title {
+          font-size: var(--font-size-xs);
+          font-weight: var(--font-weight-semibold);
+          color: var(--color-info);
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
 
         .layer-total {
-          font-size: 13px;
-          font-weight: 700;
-          color: #22d3ee;
+          font-size: var(--font-size-sm);
+          font-weight: var(--font-weight-bold);
+          color: var(--color-energy);
           font-family: 'JetBrains Mono', monospace;
         }
       }
@@ -571,7 +584,7 @@ onUnmounted(() => {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 4px 0;
+        padding: var(--space-1) 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 
         &:last-child {
@@ -581,19 +594,19 @@ onUnmounted(() => {
         .source-header {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: var(--space-1);
           min-width: 0;
 
           .source-from {
-            font-size: 12px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.65);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text-secondary);
             white-space: nowrap;
           }
 
           .source-name {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.45);
+            font-size: var(--font-size-xs);
+            color: var(--color-text-disabled);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -604,89 +617,92 @@ onUnmounted(() => {
           flex-shrink: 0;
 
           .source-amount {
-            font-size: 14px;
-            font-weight: 600;
+            font-size: var(--font-size-md);
+            font-weight: var(--font-weight-semibold);
             font-family: 'JetBrains Mono', monospace;
-            color: rgba(255, 255, 255, 0.85);
+            color: var(--color-text-primary);
 
             &.positive {
-              color: #22d3ee;
+              color: var(--color-energy);
             }
 
             &.negative {
-              color: #f97316;
+              color: var(--color-warning);
             }
           }
         }
 
         &.range-row {
           .source-name-label {
-            font-size: 12px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.65);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text-secondary);
           }
+
           .source-range-value {
-            font-size: 13px;
-            font-weight: 600;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-semibold);
             font-family: 'JetBrains Mono', monospace;
-            color: #22d3ee;
+            color: var(--color-energy);
           }
         }
       }
 
       .no-sources {
         text-align: center;
-        padding: 12px;
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 12px;
+        padding: var(--space-3);
+        color: var(--color-text-tertiary);
+        font-size: var(--font-size-sm);
         font-style: italic;
       }
     }
 
     .calculation-section {
+      /* ponytail: bg uses --color-energy (#22d3ee) at 5% opacity */
       background: rgba(34, 211, 238, 0.05);
-      border-radius: 8px;
-      padding: 12px;
-      margin-top: 8px;
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      margin-top: var(--space-2);
 
       .calculation-title {
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.5);
-        margin-bottom: 8px;
+        font-size: var(--font-size-xs);
+        color: var(--color-text-tertiary);
+        margin-bottom: var(--space-2);
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }
 
       .calculation-formula {
-        font-size: 13px;
-        color: rgba(255, 255, 255, 0.7);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
         font-family: 'JetBrains Mono', monospace;
-        line-height: 1.8;
+        line-height: var(--line-height-lg);
         white-space: pre-wrap;
         word-break: break-all;
 
         .calc-line {
-          margin-bottom: 2px;
+          margin-bottom: var(--space-1);
         }
       }
 
       .calculation-result {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-top: 8px;
-        padding-top: 8px;
+        gap: var(--space-2);
+        margin-top: var(--space-2);
+        padding-top: var(--space-2);
+        /* ponytail: border uses unique #60a5fa */
         border-top: 1px dashed rgba(96, 165, 250, 0.3);
 
         .result-label {
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.5);
+          font-size: var(--font-size-md);
+          color: var(--color-text-tertiary);
         }
 
         .result-value {
-          font-size: 16px;
-          font-weight: 700;
-          color: #22d3ee;
+          font-size: var(--font-size-lg);
+          font-weight: var(--font-weight-bold);
+          color: var(--color-energy);
           font-family: 'JetBrains Mono', monospace;
         }
       }
@@ -734,7 +750,7 @@ onUnmounted(() => {
 /* 悬浮提示过渡动画 */
 .tooltip-fade-enter-active,
 .tooltip-fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity var(--transition-fast) ease, transform var(--transition-fast) ease;
 }
 
 .tooltip-fade-enter-from,
@@ -749,20 +765,4 @@ onUnmounted(() => {
   transform: translateY(0);
 }
 
-/* 响应式适配 */
-@media (max-width: 768px) {
-  .attribute-tooltip {
-    max-width: 280px;
-    font-size: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .attribute-tooltip {
-    max-width: 260px;
-    left: 10px !important;
-    right: 10px !important;
-    font-size: 11px;
-  }
-}
 </style>

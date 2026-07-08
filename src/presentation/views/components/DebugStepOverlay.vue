@@ -126,16 +126,16 @@ onUnmounted(() => {
 <style scoped>
 .debug-float-panel {
   position: fixed;
-  bottom: 60px;
-  right: 16px;
+  bottom: var(--space-8);
+  right: var(--space-4);
   z-index: 1500;
   width: 280px;
   background: rgba(10, 15, 25, 0.92);
   border: 1px solid rgba(34, 211, 238, 0.3);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
-  font-size: 13px;
-  color: #e0e0e0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
   backdrop-filter: blur(4px);
   user-select: none;
   overflow: hidden;
@@ -145,32 +145,32 @@ onUnmounted(() => {
 .dfp-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2);
   background: rgba(34, 211, 238, 0.08);
   border-bottom: 1px solid rgba(34, 211, 238, 0.15);
   cursor: pointer;
 }
 .dfp-icon {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
 }
 .dfp-title {
-  font-weight: 600;
-  font-size: 13px;
-  color: #22d3ee;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  color: var(--color-energy);
   flex: 1;
 }
 .dfp-badge {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 8px;
+  font-size: var(--font-size-xs);
+  padding: 1px var(--space-1);
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.4);
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 .dfp-badge.active {
   background: rgba(34, 211, 238, 0.2);
-  color: #22d3ee;
+  color: var(--color-energy);
 }
 .dfp-collapse-btn,
 .dfp-close-btn {
@@ -178,55 +178,55 @@ onUnmounted(() => {
   border: none;
   color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
-  font-size: 12px;
-  padding: 2px 4px;
-  line-height: 1;
-  border-radius: 3px;
+  font-size: var(--font-size-sm);
+  padding: var(--space-1) var(--space-1);
+  line-height: var(--line-height-sm);
+  border-radius: var(--radius-sm);
 }
 .dfp-collapse-btn:hover,
 .dfp-close-btn:hover {
-  color: #fff;
+  color: var(--color-text-primary);
   background: rgba(255, 255, 255, 0.1);
 }
 
 /* 内容区 */
 .dfp-body {
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2);
   max-height: 360px;
   overflow-y: auto;
 }
 
 .dfp-section {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 .dfp-section-title {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.35);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 /* 当前阶段行 */
 .dfp-phase-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
 }
 .dfp-phase-tag {
   display: inline-block;
-  padding: 3px 10px;
-  border-radius: 4px;
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-sm);
   background: rgba(34, 211, 238, 0.15);
-  color: #22d3ee;
-  font-weight: 600;
-  font-size: 13px;
+  color: var(--color-energy);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
   animation: phase-pulse 0.3s ease;
 }
 .dfp-phase-idle {
   color: rgba(255, 255, 255, 0.3);
   font-style: italic;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 /* 阶段历史 */
@@ -238,74 +238,74 @@ onUnmounted(() => {
 }
 .dfp-history-item {
   display: flex;
-  gap: 8px;
-  padding: 2px 0;
-  font-size: 12px;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  font-size: var(--font-size-sm);
   opacity: 0.6;
 }
 .dfp-history-item.latest {
   opacity: 1;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .dfp-history-time {
   color: rgba(255, 255, 255, 0.3);
   font-family: monospace;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   min-width: 60px;
 }
 .dfp-history-phase {
-  color: #ccc;
+  color: var(--color-text-tertiary);
 }
 .dfp-history-empty {
   color: rgba(255, 255, 255, 0.2);
   font-style: italic;
-  font-size: 11px;
-  padding: 4px 0;
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) 0;
 }
 
 /* 操作按钮 */
 .dfp-actions {
   display: flex;
-  gap: 4px;
-  margin-top: 8px;
-  padding-top: 8px;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 .dfp-btn {
   flex: 1;
-  padding: 5px 6px;
-  font-size: 11px;
+  padding: 5px var(--space-1);
+  font-size: var(--font-size-xs);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
   color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--transition-fast);
   text-align: center;
 }
 .dfp-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: var(--color-text-primary);
 }
 .dfp-btn.active {
   border-color: rgba(34, 211, 238, 0.4);
-  color: #22d3ee;
+  color: var(--color-energy);
   background: rgba(34, 211, 238, 0.08);
 }
 .step-btn {
   border-color: rgba(34, 211, 238, 0.3);
 }
 .step-btn:not(:disabled) {
-  color: #22d3ee;
-  border-color: #22d3ee;
+  color: var(--color-energy);
+  border-color: var(--color-energy);
 }
 
 /* 入场动画 */
 .panel-slide-enter-active {
-  transition: all 0.25s ease;
+  transition: all var(--transition-base) ease;
 }
 .panel-slide-leave-active {
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast) ease;
 }
 .panel-slide-enter-from {
   opacity: 0;

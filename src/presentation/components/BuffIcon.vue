@@ -1,17 +1,8 @@
 <template>
-  <div 
-    class="buff-icon" 
-    :class="{ 'buff': !isDebuff, 'debuff': isDebuff }"
-    @mouseenter="showTooltip = true"
-    @mouseleave="showTooltip = false"
-  >
+  <div class="buff-icon" :class="{ 'buff': !isDebuff, 'debuff': isDebuff }" @mouseenter="showTooltip = true"
+    @mouseleave="showTooltip = false">
     <div class="icon-container">
-      <img 
-        :src="iconUrl" 
-        :alt="buffName" 
-        class="icon"
-        v-if="iconUrl"
-      >
+      <img :src="iconUrl" :alt="buffName" class="icon" v-if="iconUrl">
       <div class="icon-placeholder" v-else>
         {{ buffName.charAt(0) }}
       </div>
@@ -19,7 +10,7 @@
         {{ remainingTurns }}
       </div>
     </div>
-    
+
     <!-- 悬停提示 -->
     <div class="buff-tooltip" v-if="showTooltip">
       <div class="tooltip-header">
@@ -64,7 +55,7 @@ const iconUrl = computed(() => {
     return props.iconPath
   }
   // 默认图标 - 使用文本转图片API
-  const prompt = props.isDebuff 
+  const prompt = props.isDebuff
     ? `dark red debuff icon, ${props.buffName}, simple flat design, transparent background`
     : `bright blue buff icon, ${props.buffName}, simple flat design, transparent background`
   return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(prompt)}&image_size=square`
@@ -78,9 +69,9 @@ import { computed } from 'vue'
 .buff-icon {
   position: relative;
   display: inline-block;
-  margin: 0 4px;
+  margin: 0 var(--space-1);
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-fast) ease;
 }
 
 .buff-icon:hover {
@@ -91,7 +82,7 @@ import { computed } from 'vue'
   position: relative;
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
@@ -108,17 +99,17 @@ import { computed } from 'vue'
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  font-weight: bold;
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
   color: white;
 }
 
 .buff .icon-placeholder {
-  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  background: var(--color-info);
 }
 
 .debuff .icon-placeholder {
-  background: linear-gradient(135deg, #f97316, #ef4444);
+  background: linear-gradient(135deg, var(--color-warning), var(--color-danger));
 }
 
 .duration {
@@ -127,10 +118,10 @@ import { computed } from 'vue'
   right: 2px;
   background: rgba(0, 0, 0, 0.8);
   color: white;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
   padding: 1px 4px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   min-width: 16px;
   text-align: center;
 }
@@ -143,10 +134,10 @@ import { computed } from 'vue'
   transform: translateX(-50%);
   background: rgba(17, 24, 39, 0.95);
   border: 1px solid rgba(96, 165, 250, 0.4);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
   width: 200px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   z-index: 1000;
   backdrop-filter: blur(8px);
@@ -167,41 +158,37 @@ import { computed } from 'vue'
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .tooltip-name {
-  font-size: 14px;
-  font-weight: bold;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
   color: rgba(255, 255, 255, 0.85);
 }
 
 .tooltip-type {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 10px;
+  font-size: var(--font-size-xs);
+  padding: var(--space-1);
+  border-radius: var(--radius-lg);
   background: rgba(96, 165, 250, 0.2);
-  color: #60a5fa;
+  color: var(--color-info);
 }
 
 .debuff .tooltip-type {
   background: rgba(249, 115, 22, 0.2);
-  color: #f97316;
+  color: var(--color-warning);
 }
 
 .tooltip-description {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 8px;
-  line-height: 1.4;
-}
-
-.tooltip-stats {
-  font-size: 11px;
+  margin-bottom: var(--space-2);
+  line-height: var(--line-height-sm);
 }
 
 .tooltip-stat {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   display: flex;
   justify-content: space-between;
 }
@@ -212,6 +199,6 @@ import { computed } from 'vue'
 
 .stat-value {
   color: rgba(255, 255, 255, 0.85);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 </style>

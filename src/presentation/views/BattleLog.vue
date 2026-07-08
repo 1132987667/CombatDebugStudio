@@ -16,7 +16,7 @@
           <input type="checkbox" v-model="logFilters.debug">调试
         </label>
         <input type="text" v-model="logKeyword" placeholder="关键字" class="log-keyword">
-        <button class="btn-small" @click="applyFilters">[F]过滤</button>
+        <button class="btn-medium" @click="applyFilters">[F]过滤</button>
       </div>
     </div>
     <div class="log-content">
@@ -88,10 +88,11 @@ onUnmounted(() => {
 
 <style scoped>
 @use'@/presentation/styles/main.scss';
+
 .log-seq {
-  color: #6b7280;
-  margin-right: 0.5rem;
-  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-right: var(--space-2);
+  font-size: var(--font-size-sm);
   min-width: 3em;
   display: inline-block;
 }

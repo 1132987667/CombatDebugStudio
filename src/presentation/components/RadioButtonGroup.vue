@@ -81,57 +81,58 @@ const handleKeydown = (event: KeyboardEvent) => {
 .radio-button-group {
   display: inline-flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .radio-group-label {
-  font-size: 0.8rem;
-  color: #4fc3f7;
-  font-weight: 500;
-  margin-bottom: 0.25rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-info);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-1);
 }
 
 .radio-buttons {
   display: inline-flex;
-  background: #16213e;
-  border: 1px solid #0f3460;
-  border-radius: 4px;
-  padding: 2px;
-  gap: 2px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1);
+  gap: var(--space-1);
 }
 
 .radio-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   background: transparent;
   border: none;
-  border-radius: 3px;
-  color: #4fc3f7;
-  font-size: 0.8rem;
-  font-weight: 500;
+  border-radius: var(--radius-sm);
+  color: var(--color-info);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: var(--transition-fast);
   outline: none;
 
   &:focus-visible {
-    outline: 2px solid #60a5fa;
+    outline: 2px solid var(--color-info);
     outline-offset: 2px;
   }
 
   &:hover:not(.radio-button--disabled) {
-    background: #1a2a4e;
-    border-color: #4fc3f7;
+    background: var(--color-bg-hover);
+    border-color: var(--color-info);
   }
 
   &.radio-button--selected {
-    background: #f97316;
-    color: #ffffff;
-    border-color: #ea580c;
+    background: var(--color-warning);
+    color: var(--color-text-primary);
+    /* ponytail: border needs a darker shade; --color-brand-red-active provides contrast */
+    border-color: var(--color-brand-red-active);
 
     .radio-button__icon {
-      color: #ffffff;
+      color: var(--color-text-primary);
     }
   }
 
@@ -141,14 +142,14 @@ const handleKeydown = (event: KeyboardEvent) => {
 
     &:hover {
       background: transparent;
-      color: #4fc3f7;
+      color: var(--color-info);
     }
   }
 
   .radio-button__icon {
-    font-size: 0.9rem;
-    font-weight: bold;
-    transition: color 0.15s;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    transition: color var(--transition-fast);
   }
 
   .radio-button__label {
@@ -156,32 +157,4 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .radio-button {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-    gap: 0.375rem;
-
-    .radio-button__icon {
-      font-size: 0.8rem;
-    }
-  }
-
-  .radio-group-label {
-    font-size: 0.75rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .radio-buttons {
-    flex-direction: column;
-    gap: 1px;
-  }
-
-  .radio-button {
-    justify-content: center;
-    padding: 0.4rem;
-  }
-}
 </style>

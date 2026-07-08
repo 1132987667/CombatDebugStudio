@@ -83,17 +83,17 @@ defineExpose({
   z-index: 10000;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 .notification {
   background: white;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 15px 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   min-width: 300px;
   max-width: 400px;
   animation: slideIn 0.3s ease-out;
@@ -111,81 +111,25 @@ defineExpose({
   }
 }
 
-.notification-icon {
-  font-size: 18px;
-  font-weight: bold;
-  min-width: 20px;
-  text-align: center;
-}
-
-.notification-content {
-  flex: 1;
-  overflow: hidden;
-}
-
-.notification-title {
-  font-size: 14px;
-  font-weight: bold;
-  color: #303133;
-  margin-bottom: 4px;
-}
-
 .notification-message {
-  font-size: 12px;
-  color: #606266;
-  line-height: 1.4;
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-sm);
 }
 
 .notification-close {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: #c0c4cc;
-  padding: 0;
   width: 20px;
   height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all 0.3s;
+  transition: var(--transition-base);
+  color: var(--color-text-tertiary);
 }
 
 .notification-close:hover {
-  background: #ecf5ff;
-  color: #409eff;
+  background: var(--color-info-bg);
+  color: var(--color-info);
 }
 
-.notification-success {
-  border-left: 4px solid #67c23a;
-}
-
-.notification-success .notification-icon {
-  color: #67c23a;
-}
-
-.notification-error {
-  border-left: 4px solid #f56c6c;
-}
-
-.notification-error .notification-icon {
-  color: #f56c6c;
-}
-
-.notification-warning {
-  border-left: 4px solid #e6a23c;
-}
-
-.notification-warning .notification-icon {
-  color: #e6a23c;
-}
-
-.notification-info {
-  border-left: 4px solid #409eff;
-}
-
-.notification-info .notification-icon {
-  color: #409eff;
-}
 </style>

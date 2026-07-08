@@ -166,6 +166,10 @@ export class BattleExecutor {
     const records: CombatRecord[] = []
 
     try {
+      // ponytail: 启用延迟伤害模式 — 技能执行只记录数值不实际扣血，等待动画完成后统一应用
+      this.skillManager.setDeferredDamageMode(true)
+      const pendingDamages: Array<{ target: BattleEntity; damage: number; heal: number }> = []
+
       let totalDamage = 0
       let totalHeal = 0
       const allEffects: BattleEffect[] = []
@@ -197,10 +201,16 @@ export class BattleExecutor {
         record.message = `${source.name} 对 ${target.name} 使用 ${skill.name || skill.id}，造成 ${skillAction.damage} 伤害`
         records.push(record)
 
+        if (skillAction.damage > 0 || skillAction.heal > 0) {
+          pendingDamages.push({ target, damage: skillAction.damage, heal: skillAction.heal })
+        }
         totalDamage += skillAction.damage
         totalHeal += skillAction.heal
         allEffects.push(...skillAction.effects)
       }
+
+      // 关闭延迟模式
+      this.skillManager.setDeferredDamageMode(false)
 
       // 将所有详细记录存入 BattleRecorder
       for (const record of records) {
@@ -256,8 +266,15 @@ export class BattleExecutor {
             isHeal: true,
           })
         }
+
+        // ponytail: 动画完成后统一应用延迟的伤害/治疗到所有目标
+        for (const pd of pendingDamages) {
+          if (pd.damage > 0) pd.target.takeDamage(pd.damage)
+          if (pd.heal > 0) pd.target.heal(pd.heal)
+        }
       }
     } catch (error) {
+      this.skillManager.setDeferredDamageMode(false)
       battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error)
       action.type = ActionTypes.ATTACK
       action.damage = Math.floor(Math.random() * 20) + 10
@@ -519,15 +536,13 @@ export class BattleExecutor {
     const { damage, isCritical } = damageResult
     action.damage = damage
 
-    this.applyDamageToTarget(source, target, damage)
-
     action.effects.push({
       type: EFFECT_TYPES.DAMAGE,
       value: damage,
       description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
     })
 
-    // ponytail: 普通攻击也发射技能名飞字，保持视觉统一
+    // ponytail: 先播飞行动画，到达目标后再扣 HP，保证视觉同步
     await this.animationManager.triggerSkillEffectAnimation({
       sourceId: source.id,
       targetId: target.id,
@@ -535,6 +550,9 @@ export class BattleExecutor {
       effectType: 'attack',
       damageType: DamageType.PHYSICAL,
     })
+
+    // ponytail: 动画命中后再扣血，触发 ON_HIT/ON_DEATH 被动
+    this.applyDamageToTarget(source, target, damage)
 
     await this.animationManager.triggerDamageAnimationAndWait({
       targetId: target.id, damage, damageType: DamageType.PHYSICAL, isCritical, isHeal: false,
@@ -694,10 +712,13 @@ export class BattleExecutor {
 
     if (action.type === ActionTypes.SKILL && action.skillId) {
       try {
+        // ponytail: 延迟伤害模式 — 动画完成后才扣血
+        this.skillManager.setDeferredDamageMode(true)
         const skillAction = this.skillManager.executeSkill(
           action.skillId, source, target, action.turn,
         )
         if (!skillAction) {
+          this.skillManager.setDeferredDamageMode(false)
           battleLogManager.addDebugLog(`技能执行返回空: ${action.skillId}`)
           console.error(`技能执行返回空: ${action.skillId}`)
           action.damage = 0
@@ -712,6 +733,7 @@ export class BattleExecutor {
             (effect) => effect.type === EFFECT_TYPES.MISS,
           )
           if (hasMissEffect) {
+            this.skillManager.setDeferredDamageMode(false)
             await this.animationManager.triggerMissAnimationAndWait({ targetId: target.id })
           }
 
@@ -732,7 +754,12 @@ export class BattleExecutor {
             effectType: action.type, damageType: DamageType.PHYSICAL,
           })
 
-          // ponytail: 技能伤害/治疗数值动画
+          // ponytail: 动画完成后应用延迟的伤害/治疗
+          this.skillManager.setDeferredDamageMode(false)
+          if (action.damage > 0) target.takeDamage(action.damage)
+          if (action.heal > 0) target.heal(action.heal)
+
+          // ponytail: 技能伤害/治疗数值动画（在 HP 扣减之后播放，与 handleHitAttack 时序一致）
           if (action.damage > 0) {
             const isCrit = skillAction.effects.some(
               (e: any) => e.type === 'damage' && e.isCritical,
@@ -752,6 +779,7 @@ export class BattleExecutor {
           }
         }
       } catch (error) {
+        this.skillManager.setDeferredDamageMode(false)
         battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error)
         action.type = ActionTypes.ATTACK
         action.damage = Math.floor(Math.random() * 20) + 10
@@ -767,6 +795,13 @@ export class BattleExecutor {
     // so only apply raw damage/heal for non-skill actions (e.g. fallback attack).
     if (action.type !== ActionTypes.SKILL) {
       if (action.damage && action.damage > 0) {
+        // ponytail: 先播伤害数值动画，再扣 HP，保证视觉同步
+        await this.animationManager.triggerDamageAnimationAndWait({
+          targetId: target.id, damage: action.damage,
+          damageType: DamageType.PHYSICAL,
+          isCritical: false, isHeal: false,
+        })
+
         const actualDamage = target.takeDamage(action.damage)
         action.damage = actualDamage
 
@@ -777,22 +812,15 @@ export class BattleExecutor {
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
           )
-
-          await this.animationManager.triggerDamageAnimationAndWait({
-            targetId: target.id, damage: actualDamage,
-            damageType: DamageType.PHYSICAL,
-            isCritical: false, isHeal: false,
-          })
         }
 
         if (action.heal && action.heal > 0) {
-          const actualHeal = target.heal(action.heal)
-          action.heal = actualHeal
-
           await this.animationManager.triggerDamageAnimationAndWait({
-            targetId: target.id, damage: actualHeal, damageType: DamageType.PHYSICAL,
+            targetId: target.id, damage: action.heal, damageType: DamageType.PHYSICAL,
             isCritical: false, isHeal: true,
           })
+          const actualHeal = target.heal(action.heal)
+          action.heal = actualHeal
         }
       }
     }

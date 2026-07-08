@@ -15,12 +15,15 @@ interface ExportedBattleState {
 interface DebugState {
   injectableStatuses: InjectableStatus[]
   lastExportTime: string | null
+  /** 当前选中的命中爆炸动画样式 */
+  impactStyle: string
 }
 
 export const useDebugStore = defineStore('debug', {
   state: (): DebugState => ({
     injectableStatuses: [],
     lastExportTime: null,
+    impactStyle: 'slash',
   }),
 
   getters: {
@@ -128,6 +131,13 @@ export const useDebugStore = defineStore('debug', {
     reloadExport() {
       // 重载导出状态的逻辑
       return this.importState()
+    },
+
+    /**
+     * 设置命中爆炸动画样式
+     */
+    setImpactStyle(style: string) {
+      this.impactStyle = style
     },
   },
 })

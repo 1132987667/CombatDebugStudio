@@ -43,7 +43,6 @@
     <!-- 战斗视觉特效层 -->
     <BattleVisualEffects ref="visualEffectsRef" />
   </div>
-  </div>
 </template>
 
 <script setup lang="ts">

@@ -1,20 +1,20 @@
 <template>
   <div class="battle-test-tool">
     <!-- 加载指示器 -->
-    <div v-if="battleStore.isBattleLoading" class="loading-overlay">
+    <div v-if="battleStore.loading.isLoading" class="loading-overlay">
       <div class="loading-spinner"></div>
-      <div class="loading-text">{{ battleStore.getCurrentOperation || '加载中...' }}</div>
-      <div v-if="battleStore.getLoadingProgress !== null" class="loading-progress">
+      <div class="loading-text">{{ battleStore.loading.operation || '加载中...' }}</div>
+      <div v-if="battleStore.loading.progress !== null" class="loading-progress">
         <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: battleStore.getLoadingProgress + '%' }"></div>
+          <div class="progress-fill" :style="{ width: battleStore.loading.progress + '%' }"></div>
         </div>
-        <div class="progress-text">{{ battleStore.getLoadingProgress }}%</div>
+        <div class="progress-text">{{ battleStore.loading.progress }}%</div>
       </div>
     </div>
 
     <!-- 错误提示 -->
-    <div v-if="battleStore.hasError" class="error-toast" @click="battleStore.clearError()">
-      <span class="error-message">{{ battleStore.getErrorMessage }}</span>
+    <div v-if="battleStore.error.hasError" class="error-toast" @click="battleStore.clearError()">
+      <span class="error-message">{{ battleStore.error.message }}</span>
       <span class="error-close">&times;</span>
     </div>
 
@@ -339,10 +339,10 @@ const teamCounts = computed(() => {
 
 // 初始化战斗
 function initBattle() {
-  // 完成 敌我ParticipantInfo的初始化
-  const allyIds = ["enemy_062", "enemy_063", "enemy_064"];
+  // ponytail: 默认测试阵容 — 覆盖伤害/治疗/护盾/buff/debuff 的典型组合
+  const allyIds = ["enemy_005", "enemy_003", "boss_001", "enemy_004"];
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
-  const enemyIds = ["enemy_062", "enemy_063", "enemy_064"];
+  const enemyIds = ["enemy_008", "boss_002", "enemy_007", "boss_003"];
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
   console.log('allyList', allyList)
   console.log('enemyList', enemyList)
@@ -526,7 +526,9 @@ const startBattle = async () => {
   } catch (error) {
     console.error("开始战斗时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    battleLogManager.addErrorLog(`开始战斗时出错: ${errorMsg}`);
+    battleLogManager.addSystemLog({
+      message: `开始战斗时出错: ${errorMsg}`,
+    });
     notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
@@ -538,12 +540,14 @@ const endBattle = async () => {
     if (result) {
       notification.value?.addNotification("成功", "战斗已结束", "success");
     } else {
-      notification.value?.addNotification("错误", battleStore.getErrorMessage || "结束战斗失败", "error");
+      notification.value?.addNotification("错误", battleStore.error.message || "结束战斗失败", "error");
     }
   } catch (error) {
     console.error("结束战斗时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    battleLogManager.addErrorLog(`结束战斗时出错: ${errorMsg}`);
+    battleLogManager.addSystemLog({
+      message: `结束战斗时出错: ${errorMsg}`,
+    });
     notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
@@ -556,12 +560,14 @@ const resetBattle = async () => {
     if (result) {
       notification.value?.addNotification("成功", "战斗已重置", "success");
     } else {
-      notification.value?.addNotification("错误", battleStore.getErrorMessage || "重置战斗失败", "error");
+      notification.value?.addNotification("错误", battleStore.error.message || "重置战斗失败", "error");
     }
   } catch (error) {
     console.error("重置战斗时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    battleLogManager.addErrorLog(`重置战斗时出错: ${errorMsg}`);
+    battleLogManager.addSystemLog({
+      message: `重置战斗时出错: ${errorMsg}`,
+    });
     notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
@@ -572,12 +578,14 @@ const singleStep = async () => {
     const result = await battleStore.processSingleTurn();
 
     if (!result) {
-      notification.value?.addNotification("错误", battleStore.getErrorMessage || "执行回合失败", "error");
+      notification.value?.addNotification("错误", battleStore.error.message || "执行回合失败", "error");
     }
   } catch (error) {
     console.error("执行回合时出错:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    battleLogManager.addErrorLog(`执行回合时出错: ${errorMsg}`);
+    battleLogManager.addSystemLog({
+      message: `执行回合时出错: ${errorMsg}`,
+    });
     notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
@@ -590,12 +598,14 @@ const toggleAutoPlay = async () => {
     if (result) {
       notification.value?.addNotification("成功", battleStore.autoPlayMode ? "已开始自动战斗" : "已停止自动战斗", "success");
     } else {
-      notification.value?.addNotification("错误", battleStore.getErrorMessage || "切换自动战斗状态失败", "error");
+      notification.value?.addNotification("错误", battleStore.error.message || "切换自动战斗状态失败", "error");
     }
   } catch (error) {
     console.error("切换自动战斗状态失败:", error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    battleLogManager.addErrorLog(`切换自动战斗状态失败: ${errorMsg}`);
+    battleLogManager.addSystemLog({
+      message: `切换自动战斗状态失败: ${errorMsg}`,
+    });
     notification.value?.addNotification("错误", errorMsg, "error");
   }
 };
@@ -629,7 +639,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: var(--color-overlay);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -639,43 +649,44 @@ onUnmounted(() => {
   .loading-spinner {
     width: 60px;
     height: 60px;
+    /* ponytail: rgba(255,255,255,.3) unique to spinner border */
     border: 4px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    border-top-color: #22d3ee;
+    border-top-color: var(--color-energy);
     animation: spin 1s ease-in-out infinite;
-    margin-bottom: 20px;
+    margin-bottom: var(--space-5);
   }
 
   .loading-text {
-    color: white;
-    font-size: 18px;
-    font-weight: 500;
-    margin-bottom: 20px;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--space-5);
   }
 
   .loading-progress {
     width: 300px;
-    margin-top: 20px;
+    margin-top: var(--space-5);
 
     .progress-bar {
       width: 100%;
       height: 8px;
       background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       overflow: hidden;
-      margin-bottom: 8px;
+      margin-bottom: var(--space-2);
 
       .progress-fill {
         height: 100%;
-        background-color: #22d3ee;
-        border-radius: 4px;
+        background-color: var(--color-energy);
+        border-radius: var(--radius-sm);
         transition: width 0.3s ease;
       }
     }
 
     .progress-text {
-      color: white;
-      font-size: 14px;
+      color: var(--color-text-primary);
+      font-size: var(--font-size-md);
       text-align: center;
     }
   }
@@ -693,16 +704,16 @@ onUnmounted(() => {
   top: 20px;
   right: 20px;
   background-color: rgba(249, 115, 22, 0.9);
-  color: white;
-  padding: 12px 20px;
-  border-radius: 6px;
+  color: var(--color-text-primary);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: space-between;
   z-index: 999;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--transition-base);
   backdrop-filter: blur(2px);
 
   &:hover {
@@ -713,16 +724,16 @@ onUnmounted(() => {
 
   .error-message {
     flex: 1;
-    margin-right: 12px;
-    font-size: 14px;
-    line-height: 1.4;
+    margin-right: var(--space-3);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-sm);
   }
 
   .error-close {
-    font-size: 20px;
-    font-weight: bold;
+    font-size: var(--font-size-xxl);
+    font-weight: var(--font-weight-bold);
     cursor: pointer;
-    padding: 0 4px;
+    padding: 0 var(--space-1);
 
     &:hover {
       opacity: 0.8;

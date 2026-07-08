@@ -4,7 +4,7 @@
       <div class="section-header">
         <span>参战管理</span>
         <div class="expand-collapse-controls">
-          <button class="btn-small" @click="clearParticipants"
+          <button class="btn-medium" @click="clearParticipants"
             :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
             <span class="icon">−</span>清空
           </button>
@@ -64,9 +64,9 @@
         </div>
       </div>
       <div class="section-actions">
-        <button class="btn-small" @click="moveCharacter(-1)">[↑]上调</button>
-        <button class="btn-small" @click="moveCharacter(1)">[↓]下调</button>
-        <button class="btn-small btn-remove" @click="removeSelectedCharacter">[−]移除</button>
+        <button class="btn-medium" @click="moveCharacter(-1)">[↑]上调</button>
+        <button class="btn-medium" @click="moveCharacter(1)">[↓]下调</button>
+        <button class="btn-medium btn-remove" @click="removeSelectedCharacter">[−]移除</button>
       </div>
     </div>
 
@@ -74,10 +74,10 @@
       <div class="section-header">
         <span>角色库</span>
         <div class="expand-collapse-controls">
-          <button class="btn-small" @click="collapseAllScenes" :disabled="!hasExpandedScenes">
+          <button class="btn-medium" @click="collapseAllScenes" :disabled="!hasExpandedScenes">
             <span class="icon">−</span>一键折叠
           </button>
-          <button class="btn-small" @click="expandAllScenes" :disabled="allScenesExpanded">
+          <button class="btn-medium" @click="expandAllScenes" :disabled="allScenesExpanded">
             <span class="icon">+</span>一键展开
           </button>
         </div>
@@ -97,8 +97,7 @@
             <Transition name="scene-enemies">
               <div class="scene-enemies" v-show="isSceneExpanded(group.scene.id)">
                 <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item"
-                :class="{ selected: isRosterCharSelected(enemy.id) }"
-                @click="previewRosterCharacter(enemy)">
+                  :class="{ selected: isRosterCharSelected(enemy.id) }" @click="previewRosterCharacter(enemy)">
                   <div class="char-info">
                     <span class="char-name">{{ enemy.name }} (Lv.{{ enemy.level }})</span>
                     <span class="char-stats">气血:{{ enemy.stats.maxHealth }} 攻击:{{ enemy.stats.minAttack
@@ -289,63 +288,39 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 <style scoped>
 @use'@/presentation/styles/main.scss';
 
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #0f3460;
-}
-
 .expand-collapse-controls {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
-.expand-collapse-controls .btn-small {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  background: #0f3460;
-  color: #4fc3f7;
-  border: 1px solid #1a4a7a;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  opacity: 1;
-}
-
-.expand-collapse-controls .btn-small:hover:not(:disabled) {
-  background: #1a4a7a;
-  border-color: #4fc3f7;
+.expand-collapse-controls .btn-medium:hover:not(:disabled) {
+  background: var(--color-border-strong);
+  border-color: var(--color-info);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(79, 195, 247, 0.2);
+  box-shadow: 0 2px 4px var(--color-info-bg);
 }
 
-.expand-collapse-controls .btn-small:disabled {
+.expand-collapse-controls .btn-medium:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-.expand-collapse-controls .btn-small .icon {
-  font-weight: bold;
-  font-size: 0.9rem;
+.expand-collapse-controls .btn-medium .icon {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-md);
   line-height: 1;
 }
 
 .scene-enemies {
-  transition: all 0.3s ease-in-out;
+  transition: var(--transition-base);
   overflow: hidden;
 }
 
 .scene-enemies-enter-active,
 .scene-enemies-leave-active {
-  transition: all 0.3s ease;
+  transition: var(--transition-base);
 }
 
 .scene-enemies-enter-from,
@@ -364,24 +339,24 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 
 .scene-header {
   cursor: pointer;
-  padding: 0.5rem;
-  background: #0f0f1a;
-  border-radius: 3px;
-  margin-bottom: 0.25rem;
-  transition: all 0.2s ease;
+  padding: var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-1);
+  transition: var(--transition-fast);
   border: 1px solid transparent;
 }
 
 .scene-header:hover {
-  background: #1a1a2e;
-  border-color: #4fc3f7;
+  background: var(--color-bg-primary);
+  border-color: var(--color-info);
 }
 
 .expand-icon {
   display: inline-block;
   width: 1rem;
   text-align: center;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   transition: transform 0.2s ease;
 }
 
@@ -389,53 +364,21 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   transform: scale(1.2);
 }
 
-/* 响应式设计 */
-@media (max-width: 1200px) {
-  .expand-collapse-controls {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .expand-collapse-controls .btn-small {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.4rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .expand-collapse-controls {
-    flex-direction: row;
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .expand-collapse-controls .btn-small {
-    flex: 1;
-    justify-content: center;
-  }
-}
-
 .section-actions {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 
 .btn-remove {
   margin-left: auto;
-  color: #e57373 !important;
-  border-color: #c62828 !important;
+  color: var(--color-danger) !important;
+  border-color: var(--color-brand-red-active) !important;
 }
 
 .btn-remove:hover:not(:disabled) {
-  background: #c62828 !important;
-  color: #fff !important;
-  border-color: #e57373 !important;
+  background: var(--color-brand-red-active) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-danger) !important;
 }
 </style>

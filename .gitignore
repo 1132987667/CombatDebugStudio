@@ -150,14 +150,9 @@ dist
 .pnp.*
 
 # 文档
-.trae/documents/
-.trae/scripts/
-documents/
 tools/
 .gitattributes
 .git
 .nuxt
 .github/
 .vscode/
-prompts/
-docs/

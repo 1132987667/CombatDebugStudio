@@ -1,6 +1,6 @@
 <template>
-  <div class="buff-icon" :class="{ 'buff': !isDebuff, 'debuff': isDebuff }" @mouseenter="showTooltip = true"
-    @mouseleave="showTooltip = false">
+  <div class="buff-icon" :class="{ 'buff': !isDebuff, 'debuff': isDebuff }" ref="iconRef" @mouseenter="onMouseEnter"
+    @mouseleave="onMouseLeave">
     <div class="icon-container">
       <img :src="iconUrl" :alt="buffName" class="icon" v-if="iconUrl">
       <div class="icon-placeholder" v-else>
@@ -11,29 +11,31 @@
       </div>
     </div>
 
-    <!-- 悬停提示 -->
-    <div class="buff-tooltip" v-if="showTooltip">
-      <div class="tooltip-header">
-        <span class="tooltip-name">{{ buffName }}</span>
-        <span class="tooltip-type">{{ isDebuff ? '减益' : '增益' }}</span>
-      </div>
-      <div class="tooltip-description">{{ description }}</div>
-      <div class="tooltip-stats">
-        <div class="tooltip-stat">
-          <span class="stat-label">剩余回合：</span>
-          <span class="stat-value">{{ remainingTurns }}</span>
+    <!-- 悬停提示 — ponytail: Teleport 到 body 避免被父容器 overflow:hidden 裁剪 -->
+    <Teleport to="body">
+      <div class="buff-tooltip" v-if="showTooltip" :style="tooltipStyle">
+        <div class="tooltip-header">
+          <span class="tooltip-name">{{ buffName }}</span>
+          <span class="tooltip-type">{{ isDebuff ? '减益' : '增益' }}</span>
         </div>
-        <div class="tooltip-stat" v-if="currentStacks > 1">
-          <span class="stat-label">叠加层数：</span>
-          <span class="stat-value">{{ currentStacks }}</span>
+        <div class="tooltip-description">{{ description }}</div>
+        <div class="tooltip-stats">
+          <div class="tooltip-stat">
+            <span class="stat-label">剩余回合：</span>
+            <span class="stat-value">{{ remainingTurns }}</span>
+          </div>
+          <div class="tooltip-stat" v-if="currentStacks > 1">
+            <span class="stat-label">叠加层数：</span>
+            <span class="stat-value">{{ currentStacks }}</span>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 // Props
 const props = defineProps<{
@@ -48,6 +50,25 @@ const props = defineProps<{
 
 // 响应式数据
 const showTooltip = ref(false)
+const iconRef = ref<HTMLElement | null>(null)
+
+// ponytail: 计算 tooltip 位置（相对视口），配合 Teleport to="body" 避免被父容器 overflow:hidden 裁剪
+const tooltipStyle = computed(() => {
+  if (!showTooltip.value || !iconRef.value) return {}
+  const rect = iconRef.value.getBoundingClientRect()
+  return {
+    left: `${rect.left + rect.width / 2}px`,
+    top: `${rect.top}px`,
+  }
+})
+
+function onMouseEnter() {
+  showTooltip.value = true
+}
+
+function onMouseLeave() {
+  showTooltip.value = false
+}
 
 // 计算属性
 const iconUrl = computed(() => {
@@ -61,8 +82,6 @@ const iconUrl = computed(() => {
   return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(prompt)}&image_size=square`
 })
 
-// 引入计算属性
-import { computed } from 'vue'
 </script>
 
 <style scoped>
@@ -126,21 +145,20 @@ import { computed } from 'vue'
   text-align: center;
 }
 
-/* 悬停提示 */
+/* 悬停提示 — ponytail: position:fixed + Teleport 避免被父容器 overflow:hidden 裁剪 */
 .buff-tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
+  transform: translate(-50%, -100%);
+  margin-top: -8px;
   background: rgba(17, 24, 39, 0.95);
   border: 1px solid rgba(96, 165, 250, 0.4);
   border-radius: var(--radius-md);
   padding: var(--space-3);
   width: 200px;
-  margin-bottom: var(--space-2);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
+  z-index: 10000;
   backdrop-filter: blur(8px);
+  pointer-events: none;
 }
 
 .buff-tooltip::after {

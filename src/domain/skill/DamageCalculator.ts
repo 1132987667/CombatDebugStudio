@@ -164,11 +164,12 @@ export class DamageCalculator {
     // extraValues 处理 — 从 skillStep.calculation.extraValues 中读取
     if (skillStep.calculation?.extraValues) {
       for (const extra of skillStep.calculation.extraValues) {
-        // ponytail: attack 是区间属性，每次取 min~max 之间的随机值，而非静态属性值
+        // ponytail: maxHealth 和 currentHealth 优先从目标读取（毒素浸染、嗜血赌徒等技能）
+        const isTargetAttr = extra.attribute === 'maxHealth' || extra.attribute === 'currentHealth'
         const attrValue =
           extra.attribute === ATTRIBUTE_CODE.attack
             ? source.getRandomAttackDemage()
-            : getAttributeValue(source, extra.attribute as ATTRIBUTE_CODE)
+            : getAttributeValue(isTargetAttr ? target : source, extra.attribute as ATTRIBUTE_CODE)
         const extraValue = attrValue * extra.ratio
         damage += extraValue
         breakdown.extraContributions.push({

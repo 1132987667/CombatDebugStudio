@@ -190,11 +190,14 @@ watch(store.animationState, (state) => {
     if (state.damage.isHeal) {
       if (state.skill) {
         // ponytail: 延迟 1100ms 匹配 playHealSequence 内部动画时序
+        const healData = state.damage  // ponytail: 在 closure 外捕获，避免 setAnimationState 清空后为 null
         setTimeout(() => {
-          const tc = participantCardRefs.value[state.damage!.targetId]
+          if (!healData) return
+          const tc = participantCardRefs.value[healData.targetId]
           tc?.triggerVisualState('healed', 800)
           tc?.flashHpBar()
-          visualEffectsRef.value?.showHealNum(state.damage!.targetId, state.damage!.damage)
+          visualEffectsRef.value?.showHealAura(healData.targetId)
+          visualEffectsRef.value?.showHealNum(healData.targetId, healData.damage)
         }, 1100)
         return
       }
@@ -207,11 +210,13 @@ watch(store.animationState, (state) => {
     } else {
       if (state.skill) {
         // ponytail: 延迟 1100ms 匹配 playAttackSequence 内部动画时序（技能名飞行→光弹→命中爆炸）
+        const dmgData = state.damage  // ponytail: 在 closure 外捕获，避免 setAnimationState 清空后为 null
         setTimeout(() => {
-          const tc = participantCardRefs.value[state.damage!.targetId]
+          if (!dmgData) return
+          const tc = participantCardRefs.value[dmgData.targetId]
           tc?.triggerVisualState('hurt', 450)
-          visualEffectsRef.value?.showDamageNum(state.damage!.targetId, state.damage!.damage, state.damage!.isCritical)
-          if (state.damage!.isCritical) {
+          visualEffectsRef.value?.showDamageNum(dmgData.targetId, dmgData.damage, dmgData.isCritical)
+          if (dmgData.isCritical) {
             visualEffectsRef.value?.showScreenShake()
           }
         }, 1100)

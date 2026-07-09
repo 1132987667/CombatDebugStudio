@@ -5,7 +5,12 @@
  * 描述：提供 shallowReactive + computed 方案，实现 UI 层直接绑定 BattleEntity
  */
 
-import { computed, shallowReactive, type ShallowReactive } from 'vue'
+import {
+  computed,
+  shallowReactive,
+  type ComputedRef,
+  type ShallowReactive,
+} from 'vue'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { AttributeValue } from '@/domain/attribute/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -55,7 +60,7 @@ export interface UseBattleParticipantReturn {
   /** 参与者实例（浅代理） */
   participant: ShallowReactive<BattleEntity>
   /** 属性集合（计算属性缓存） */
-  stats: Readonly<ParticipantStats>
+  stats: ComputedRef<ParticipantStats>
   /** 是否存活 */
   isAlive: Readonly<boolean>
   /** 是否死亡 */
@@ -89,35 +94,45 @@ export function useBattleParticipant(
     shallowParticipant.statsVersion
     return {
       currentHealth: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.currentHealth,
-    )!,
-    maxHealth: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxHealth)!,
-    energy: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)!,
-    maxEnergy: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)!,
-    attack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.attack)!,
-    defense: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.defense)!,
-    speed: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.speed)!,
-    critRate: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.critRate)!,
-    critDamage: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.critDamage,
-    )!,
-    damageReduction: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.damageReduction,
-    )!,
-    healthBonus: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.healthBonus,
-    )!,
-    attackBonus: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.attackBonus,
-    )!,
-    defenseBonus: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.defenseBonus,
-    )!,
-    speedBonus: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.speedBonus,
-    )!,
-    minAttack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.minAttack)!,
-    maxAttack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxAttack)!,
+        ATTRIBUTE_CODE.currentHealth,
+      )!,
+      maxHealth: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.maxHealth,
+      )!,
+      energy: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.currentEnergy,
+      )!,
+      maxEnergy: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.maxEnergy,
+      )!,
+      attack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.attack)!,
+      defense: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.defense)!,
+      speed: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.speed)!,
+      critRate: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.critRate)!,
+      critDamage: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.critDamage,
+      )!,
+      damageReduction: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.damageReduction,
+      )!,
+      healthBonus: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.healthBonus,
+      )!,
+      attackBonus: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.attackBonus,
+      )!,
+      defenseBonus: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.defenseBonus,
+      )!,
+      speedBonus: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.speedBonus,
+      )!,
+      minAttack: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.minAttack,
+      )!,
+      maxAttack: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.maxAttack,
+      )!,
     }
   })
 

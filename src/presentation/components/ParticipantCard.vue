@@ -76,6 +76,8 @@ import { ActionResultType } from '@/domain/battle/types'
 import { useBattleParticipant } from '@/presentation/composables/useBattleParticipant'
 import { useParticipantStats } from '@/presentation/composables/useParticipantStats'
 import BuffList from '@/presentation/components/BuffList.vue'
+import { container } from '@/infrastructure/di/Container'
+import type { BuffSystem } from '@/domain/buff/BuffSystem'
 
 // 浮动数字接口
 interface FloatingNumber {
@@ -109,6 +111,8 @@ const emit = defineEmits<{
 
 // 使用 composable 包装参与者
 const { stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(props.participant)
+
+const buffSystem = container.resolve<BuffSystem>('BuffSystem')
 
 // 卡片引用
 const cardRef = ref<HTMLElement | null>(null)
@@ -193,8 +197,9 @@ const cardClasses = computed(() => ({
 }))
 
 const hpText = computed(() => {
-  const currentHealth = Math.max(0, Math.floor(stats.currentHealth?.value || 0))
-  const maxHealth = Math.max(0, Math.floor(stats.maxHealth?.value || 0))
+  const data = stats.value
+  const currentHealth = Math.max(0, Math.floor(data.currentHealth?.value || 0))
+  const maxHealth = Math.max(0, Math.floor(data.maxHealth?.value || 0))
   return `${currentHealth}/${maxHealth}`
 })
 
@@ -206,8 +211,9 @@ const hpColorClass = computed(() => {
 })
 
 const energyText = computed(() => {
-  const energy = Math.floor(stats.energy?.value || 0)
-  const maxEnergy = Math.floor(stats.maxEnergy?.value || 0)
+  const data = stats.value
+  const energy = Math.floor(data.energy?.value || 0)
+  const maxEnergy = Math.floor(data.maxEnergy?.value || 0)
   return `${energy}/${maxEnergy}`
 })
 
@@ -218,22 +224,53 @@ const energyColorClass = computed(() => {
   return 'low'
 })
 
-const statusEffects = computed(() => {
-  return (props.participant as any).statusEffects || []
-})
+/** 转换为 BuffList 所需的数据格式 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
+const buffListItems = computed(() => {
+  // ponytail: 读取 statsVersion 建立 Vue 响应式依赖（recalculateAll → _statsVersion++ 时 computed 重算）
+  void (props.participant as any).statsVersion
 
-/** 转换为 BuffList 所需的数据格式 */
-const buffListItems = computed(() =>
-  statusEffects.value.map((s: any) => ({
-    id: s.id,
-    buffId: s.id,
-    name: s.name,
-    description: s.description || s.name,
-    remainingTurns: s.remainingTurns,
-    currentStacks: s.currentStacks || 1,
-    isDebuff: s.type === 'debuff',
-  }))
-)
+  const entity = props.participant as any
+  const result: any[] = []
+  const seenIds = new Set<string>()
+
+  // 源1: BuffSystem 管理的 buff（被动/技能/脚本添加）
+  if (typeof entity.getBuffInstanceIds === 'function') {
+    const instanceIds = entity.getBuffInstanceIds()
+    for (const id of instanceIds) {
+      const config = buffSystem.getBuffConfigByInstanceId(id)
+      if (config) {
+        seenIds.add(id)
+        result.push({
+          id,
+          buffId: config.id,
+          name: config.name,
+          description: config.description || config.name,
+          remainingTurns: config.duration,
+          currentStacks: 1,
+          isDebuff: config.isDebuff === true,
+        })
+      }
+    }
+  }
+
+  // 源2: InterventionManager 维护的手动状态（兼容层 — 干预系统/回放系统依赖此字段）
+  const manualEffects = entity.statusEffects ?? []
+  for (const s of manualEffects) {
+    if (!seenIds.has(s.id)) {
+      result.push({
+        id: s.id,
+        buffId: s.id,
+        name: s.name,
+        description: s.description || s.name,
+        remainingTurns: s.remainingTurns,
+        currentStacks: s.currentStacks || 1,
+        isDebuff: s.type === 'debuff',
+      })
+    }
+  }
+
+  return result
+})
 
 // 调试信息
 const showBreakdown = ref(false)
@@ -288,7 +325,10 @@ defineExpose({
   font-size: var(--font-size-xxxl);
   font-weight: var(--font-weight-bold);
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  animation: float-up v-bind(duration) ease-out forwards;
+  animation-name: float-up;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  /* ponytail: duration 通过内联 style 的 animationDuration 设置，避免 v-bind(duration) 依赖不存在变量 */
   white-space: nowrap;
 }
 

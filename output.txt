@@ -29,6 +29,7 @@ configs/
         scenes.json
     skills/
         skill_passive.json
+        skill_passive_guardian.json
         skills.json
         skills_new.json
 scripts/
@@ -100,6 +101,8 @@ src/
                     StoneSkinBuff.ts
                     StrongPoisonDebuff.ts
                     StunDebuff.ts
+                guardian/
+                    GuardianBuffs.ts
                 support/
                     HealOverTime.ts
                     ShieldBuff.ts
@@ -508,7 +511,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
 (Yes, this file also applies to agents working on the ponytail repo itself. Especially to them.)
 
 --- configs/buffs/buffs.json ---
-﻿[
+[
   {
     "id": "buff_commander_aura",
     "name": "统领光环",
@@ -1541,6 +1544,131 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       "valueFormula": "source.maxHp * 0.10",
       "damageCategoryAbsorb": "all"
     }
+  },
+  {
+    "id": "guardian_buff_revenge_rage",
+    "name": "复仇怒火",
+    "maxStacks": 5,
+    "duration": -1
+  },
+  {
+    "id": "guardian_buff_armor_break",
+    "name": "破甲打击",
+    "maxStacks": 1,
+    "duration": 2,
+    "isDebuff": true
+  },
+  {
+    "id": "guardian_buff_firm_shield",
+    "name": "坚毅护盾",
+    "maxStacks": 1,
+    "duration": 1
+  },
+  {
+    "id": "guardian_buff_static_rebound",
+    "name": "静电反冲",
+    "maxStacks": 1,
+    "duration": -1,
+    "triggers": [
+      {
+        "phase": "ON_APPLY",
+        "scriptId": "apply_silence_to_attacker",
+        "params": { "buffId": "buff_silence", "duration": 1 },
+        "probability": 1.0
+      }
+    ]
+  },
+  {
+    "id": "guardian_buff_first_strike",
+    "name": "先发制人",
+    "maxStacks": 1,
+    "duration": 1
+  },
+  {
+    "id": "guardian_buff_charge_burst",
+    "name": "蓄力爆发",
+    "maxStacks": 1,
+    "duration": 1
+  },
+  {
+    "id": "guardian_buff_element_slow",
+    "name": "元素迟缓",
+    "maxStacks": 1,
+    "duration": 1,
+    "isDebuff": true
+  },
+  {
+    "id": "guardian_buff_despair_aura",
+    "name": "绝望气场",
+    "maxStacks": 1,
+    "duration": -1,
+    "aura": {
+      "targetSelector": "enemies",
+      "modifiers": [
+        { "id": "despair_aura_crit", "targetAttribute": "critRate", "type": "ADDITIVE", "value": -15 }
+      ]
+    }
+  },
+  {
+    "id": "guardian_buff_heal_breeze",
+    "name": "治愈微风",
+    "maxStacks": 1,
+    "duration": -1
+  },
+  {
+    "id": "guardian_buff_eye_for_eye",
+    "name": "以牙还牙",
+    "maxStacks": 1,
+    "duration": -1
+  },
+  {
+    "id": "guardian_buff_revenge_fury",
+    "name": "复仇之怒",
+    "maxStacks": 1,
+    "duration": 3
+  },
+  {
+    "id": "guardian_buff_paralyze",
+    "name": "麻痹触手",
+    "maxStacks": 1,
+    "duration": 1,
+    "isDebuff": true
+  },
+  {
+    "id": "guardian_buff_sacrifice_rage",
+    "name": "献祭之怒",
+    "maxStacks": 1,
+    "duration": -1
+  },
+  {
+    "id": "guardian_buff_berserker",
+    "name": "狂战士",
+    "maxStacks": 1,
+    "duration": 3
+  },
+  {
+    "id": "guardian_buff_wind_thunder",
+    "name": "疾风迅雷",
+    "maxStacks": 1,
+    "duration": 2
+  },
+  {
+    "id": "guardian_buff_random_taunt",
+    "name": "随机嘲讽",
+    "maxStacks": 1,
+    "duration": 1
+  },
+  {
+    "id": "guardian_buff_backwater_armor",
+    "name": "背水护甲",
+    "maxStacks": 1,
+    "duration": -1
+  },
+  {
+    "id": "guardian_buff_swift_wind",
+    "name": "疾风叠步",
+    "maxStacks": 999,
+    "duration": -1
   }
 ]
 
@@ -4359,6 +4487,101 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       "small": ["skill_boss_010_small"],
       "passive": ["skill_boss_010_passive"],
       "ultimate": ["skill_boss_010_ultimate"]
+    }
+  },
+  {
+    "id": "guardian_gold",
+    "name": "金护法",
+    "level": 10,
+    "stats": {
+      "currentHealth": 500,
+      "minAttack": 40,
+      "maxAttack": 60,
+      "defense": 30,
+      "speed": 20
+    },
+    "drops": [],
+    "skills": {
+      "small": [],
+      "passive": [],
+      "ultimate": []
+    }
+  },
+  {
+    "id": "guardian_wood",
+    "name": "木护法",
+    "level": 10,
+    "stats": {
+      "currentHealth": 450,
+      "minAttack": 35,
+      "maxAttack": 55,
+      "defense": 25,
+      "speed": 25
+    },
+    "drops": [],
+    "skills": {
+      "small": [],
+      "passive": [],
+      "ultimate": []
+    }
+  },
+  {
+    "id": "guardian_water",
+    "name": "水护法",
+    "level": 10,
+    "stats": {
+      "currentHealth": 400,
+      "minAttack": 30,
+      "maxAttack": 50,
+      "defense": 20,
+      "speed": 30
+    },
+    "drops": [],
+    "skills": {
+      "small": [],
+      "passive": [],
+      "ultimate": []
+    }
+  },
+  {
+    "id": "guardian_fire",
+    "name": "火护法",
+    "level": 10,
+    "stats": {
+      "currentHealth": 350,
+      "minAttack": 50,
+      "maxAttack": 75,
+      "defense": 15,
+      "speed": 35
+    },
+    "drops": [],
+    "skills": {
+      "small": [],
+      "passive": [
+        "guardian_revenge_rage",
+        "guardian_combo_heart",
+        "guardian_energy_overload",
+        "guardian_swift_wind"
+      ],
+      "ultimate": []
+    }
+  },
+  {
+    "id": "guardian_earth",
+    "name": "土护法",
+    "level": 10,
+    "stats": {
+      "currentHealth": 600,
+      "minAttack": 25,
+      "maxAttack": 40,
+      "defense": 40,
+      "speed": 15
+    },
+    "drops": [],
+    "skills": {
+      "small": [],
+      "passive": [],
+      "ultimate": []
     }
   }
 ]
@@ -10937,6 +11160,1397 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
   }
 ]
 
+--- configs/skills/skill_passive_guardian.json ---
+[
+  {
+    "id": "guardian_desperate_will",
+    "name": "绝境意志",
+    "description": "生命值低于20%时，立即获得一个基于最大生命值50%的护盾，每场战斗仅触发一次",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 1,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["hp_lower_than"],
+    "parameters": {
+      "hpThreshold": 20
+    },
+    "steps": [
+      {
+        "type": "shield",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.5
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_last_blood_harvest",
+    "name": "残血收割",
+    "description": "生命值低于40%时，对生命值低于自己的目标造成+40%伤害",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["hp_lower_than"],
+    "parameters": {
+      "hpThreshold": 40
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "last_blood_dmg_up",
+            "sourceName": "残血收割",
+            "sourceType": "SKILL",
+            "targetAttribute": "damageBoost",
+            "type": "ADDITIVE",
+            "value": 40
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_dying_body",
+    "name": "濒死之躯",
+    "description": "生命值低于25%时，闪避率提升至+60%（乘法叠加），但伤害降低20%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["hp_lower_than"],
+    "parameters": {
+      "hpThreshold": 25
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "dying_body_dodge",
+            "sourceName": "濒死之躯",
+            "sourceType": "SKILL",
+            "targetAttribute": "dodge",
+            "type": "ADDITIVE",
+            "value": 60
+          },
+          {
+            "id": "dying_body_dmg_down",
+            "sourceName": "濒死之躯",
+            "sourceType": "SKILL",
+            "targetAttribute": "damageBoost",
+            "type": "ADDITIVE",
+            "value": -20
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_revenge_rage",
+    "name": "复仇怒火",
+    "description": "每次受击时，获得+5%攻击力（可叠加5层），持续到战斗结束",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 5,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["damage_taken"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_revenge_rage",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_combo_heart",
+    "name": "连击之心",
+    "description": "普攻有25%概率触发一次额外普攻（伤害减半，可触发攻击特效）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "parameters": {
+      "triggerProbability": 0.25
+    },
+    "steps": [
+      {
+        "type": "deal_damage",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.5
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_armor_break",
+    "name": "破甲打击",
+    "description": "普攻命中后，降低目标20%防御力，持续2回合（可叠加）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["before_attack"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_armor_break"
+      }
+    ]
+  },
+  {
+    "id": "guardian_toxin_soak",
+    "name": "毒素浸染",
+    "description": "普攻附带3%目标最大生命值的真实伤害",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "steps": [
+      {
+        "type": "deal_damage",
+        "damageCategory": "true",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.03
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_blood_thirst",
+    "name": "吸血渴望",
+    "description": "将造成物理伤害的25%转化为自身生命回复",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["after_attack"],
+    "steps": [
+      {
+        "type": "drain",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "attack",
+              "ratio": 0.25
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_energy_overload",
+    "name": "能量过载",
+    "description": "每次命中额外获得+8能量",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "energy_overload_gain",
+            "sourceName": "能量过载",
+            "sourceType": "SKILL",
+            "targetAttribute": "currentEnergy",
+            "type": "ADDITIVE",
+            "value": 8
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_thorn_counter",
+    "name": "荆棘反刺",
+    "description": "反射所受35%的物理伤害给攻击者",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["damage_taken"],
+    "steps": [
+      {
+        "type": "reflect",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "defense",
+              "ratio": 0.35
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_firm_shield",
+    "name": "坚毅护盾",
+    "description": "受击时若伤害超过最大生命值15%，减免超出部分的50%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["damage_taken"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_firm_shield"
+      }
+    ]
+  },
+  {
+    "id": "guardian_pain_suppression",
+    "name": "痛感抑制",
+    "description": "每次受击后，永久增加+3防御力（上限30）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 10,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["damage_taken"],
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "pain_suppression_def",
+            "sourceName": "痛感抑制",
+            "sourceType": "SKILL",
+            "targetAttribute": "defense",
+            "type": "ADDITIVE",
+            "value": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_static_rebound",
+    "name": "静电反冲",
+    "description": "受击时有30%概率使攻击者沉默1回合",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["damage_taken"],
+    "parameters": {
+      "triggerProbability": 0.3
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_static_rebound"
+      }
+    ]
+  },
+  {
+    "id": "guardian_injury_energy",
+    "name": "受伤回能",
+    "description": "每损失10%生命值，立即回复15能量",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["damage_taken"],
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "injury_energy_gain",
+            "sourceName": "受伤回能",
+            "sourceType": "SKILL",
+            "targetAttribute": "currentEnergy",
+            "type": "ADDITIVE",
+            "value": 15
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_backwater_armor",
+    "name": "背水护甲",
+    "description": "生命值低于40%时，受到伤害时先由能量值抵扣（每1能量抵扣1%伤害）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["hp_lower_than"],
+    "parameters": {
+      "hpThreshold": 40
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_backwater_armor"
+      }
+    ]
+  },
+  {
+    "id": "guardian_first_strike",
+    "name": "先发制人",
+    "description": "若本回合先手行动，造成的伤害提升25%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_first_strike",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_charge_burst",
+    "name": "蓄力爆发",
+    "description": "若本回合不进行攻击（使用防御或技能），下回合伤害提升100%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_charge_burst",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_element_slow",
+    "name": "元素迟缓",
+    "description": "回合结束时，降低全体敌方5%速度（不可叠加），持续1回合",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_end"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_element_slow"
+      }
+    ]
+  },
+  {
+    "id": "guardian_inspire_banner",
+    "name": "鼓舞之旗",
+    "description": "回合开始时，我方生命值最低的单位回复8%最大生命值",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "steps": [
+      {
+        "type": "heal",
+        "targetConfig": {
+          "faction": "ally",
+          "strategy": "lowest_hp",
+          "count": 1
+        },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.08
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_despair_aura",
+    "name": "绝望气场",
+    "description": "战斗开始时，敌方全体暴击率降低15%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["battle_start"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_despair_aura"
+      }
+    ]
+  },
+  {
+    "id": "guardian_venom_hunt",
+    "name": "剧毒追猎",
+    "description": "攻击中毒目标时，伤害提升30%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "condition": "target_has_poison",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "venom_hunt_dmg_up",
+            "sourceName": "剧毒追猎",
+            "sourceType": "SKILL",
+            "targetAttribute": "damageBoost",
+            "type": "ADDITIVE",
+            "value": 30
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_stun_strike",
+    "name": "眩晕重击",
+    "description": "攻击眩晕目标时，暴击率提升至100%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["before_attack"],
+    "condition": "target_has_stun",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "stun_strike_crit",
+            "sourceName": "眩晕重击",
+            "sourceType": "SKILL",
+            "targetAttribute": "critRate",
+            "type": "ADDITIVE",
+            "value": 100
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_burn_detonate",
+    "name": "灼烧爆破",
+    "description": "攻击燃烧目标时，引爆剩余灼烧层数，造成额外火焰伤害",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "condition": "target_has_burn",
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "引爆灼烧层数，每层造成额外火焰伤害",
+          "customType": "burn_detonate"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_purify_body",
+    "name": "净化之体",
+    "description": "每回合开始时，有50%概率移除自身一个Debuff",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "parameters": {
+      "triggerProbability": 0.5
+    },
+    "steps": [
+      {
+        "type": "remove_debuff",
+        "count": 1,
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_dark_contract",
+    "name": "黑暗契约",
+    "description": "若自身拥有3个以上Debuff，攻击力提升35%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "condition": "source_has_debuff_count_3",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "dark_contract_atk",
+            "sourceName": "黑暗契约",
+            "sourceType": "SKILL",
+            "targetAttribute": "attack",
+            "type": "PERCENTAGE",
+            "value": 35
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_heal_breeze",
+    "name": "治愈微风",
+    "description": "为友方治疗时，同时额外提升友方20%防御力，受到1次攻击后移除",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["heal_received"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_heal_breeze"
+      }
+    ]
+  },
+  {
+    "id": "guardian_double_return",
+    "name": "双倍奉还",
+    "description": "受击时有15%概率将本次伤害100%反弹给攻击者",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["damage_taken"],
+    "parameters": {
+      "triggerProbability": 0.15
+    },
+    "steps": [
+      {
+        "type": "reflect",
+        "damageCategory": "physical",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "defense",
+              "ratio": 1
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_blood_gambler",
+    "name": "嗜血赌徒",
+    "description": "普攻有20%概率偷取目标10%当前生命值",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "parameters": {
+      "triggerProbability": 0.2
+    },
+    "steps": [
+      {
+        "type": "drain",
+        "damageCategory": "true",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "currentHealth",
+              "ratio": 0.1
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_combo_master",
+    "name": "连击大师",
+    "description": "连续攻击同一目标时，每次伤害递增10%，切换目标后重置",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "连续攻击同一目标伤害递增10%，切换后重置",
+          "customType": "combo_master"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_battle_exp",
+    "name": "战斗经验",
+    "description": "每存活一回合，全属性提升2%，最多叠加15层",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 15,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_end"],
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "battle_exp_atk",
+            "sourceName": "战斗经验",
+            "sourceType": "SKILL",
+            "targetAttribute": "attack",
+            "type": "PERCENTAGE",
+            "value": 2
+          },
+          {
+            "id": "battle_exp_def",
+            "sourceName": "战斗经验",
+            "sourceType": "SKILL",
+            "targetAttribute": "defense",
+            "type": "PERCENTAGE",
+            "value": 2
+          },
+          {
+            "id": "battle_exp_spd",
+            "sourceName": "战斗经验",
+            "sourceType": "SKILL",
+            "targetAttribute": "speed",
+            "type": "PERCENTAGE",
+            "value": 2
+          }
+        ],
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_eye_for_eye",
+    "name": "以牙还牙",
+    "description": "受到伤害后，下次攻击伤害提升等同于本次伤害的50%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["damage_taken"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_eye_for_eye",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_revenge_fury",
+    "name": "复仇之怒",
+    "description": "队友死亡后，自身攻击力提升30%，暴击率提升20%，持续3回合",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_death"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_revenge_fury",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_third_strike",
+    "name": "第三连击",
+    "description": "每第三次普通攻击，伤害+50%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "每第三次普攻伤害+50%，需记录普攻次数",
+          "customType": "third_strike"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_turn_heal_shield",
+    "name": "回春护盾",
+    "description": "回合开始回复8%气血，溢出气血转化为护盾",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "steps": [
+      {
+        "type": "heal",
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.08
+            }
+          ]
+        }
+      },
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "溢出治疗转化为护盾",
+          "customType": "overflow_shield"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_wind_thunder",
+    "name": "疾风迅雷",
+    "description": "每比目标快1点速度，伤害提升0.5%（上限30%）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_wind_thunder",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_sand_of_time",
+    "name": "时之沙",
+    "description": "回合结束时，有15%概率额外获得一次行动机会",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_end"],
+    "parameters": {
+      "triggerProbability": 0.15
+    },
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "15%概率额外获得一次行动机会",
+          "customType": "extra_action"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_unyielding_will",
+    "name": "不屈意志",
+    "description": "受到致命伤害时，保留1点生命并清除所有Debuff，每场战斗1次",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 1,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["damage_taken"],
+    "steps": [
+      {
+        "type": "cleanse"
+      },
+      {
+        "type": "heal",
+        "calculation": {
+          "baseValue": 1,
+          "extraValues": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_random_taunt",
+    "name": "随机嘲讽",
+    "description": "每两回合，战斗开始随机嘲讽一位敌人，攻击自己",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 2,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_random_taunt",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_frugal",
+    "name": "节俭",
+    "description": "使用技能时，有30%概率不消耗能量",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["skill_use"],
+    "parameters": {
+      "triggerProbability": 0.3
+    },
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "frugal_energy_save",
+            "sourceName": "节俭",
+            "sourceType": "SKILL",
+            "targetAttribute": "energyCost",
+            "type": "ADDITIVE",
+            "value": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_limit_accumulate",
+    "name": "极限积攒",
+    "description": "每次受击额外获得+10能量",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["damage_taken"],
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "limit_accumulate_energy",
+            "sourceName": "极限积攒",
+            "sourceType": "SKILL",
+            "targetAttribute": "currentEnergy",
+            "type": "ADDITIVE",
+            "value": 10
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_over_focus",
+    "name": "过度专注",
+    "description": "若能量高于90%，暴击率提升30%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "condition": "source_energy_high",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "over_focus_crit",
+            "sourceName": "过度专注",
+            "sourceType": "SKILL",
+            "targetAttribute": "critRate",
+            "type": "ADDITIVE",
+            "value": 30
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_toxic_hunt",
+    "name": "毒性追猎",
+    "description": "攻击中毒目标时，伤害提升50%且必定暴击",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["before_attack"],
+    "condition": "target_has_poison",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "toxic_hunt_dmg",
+            "sourceName": "毒性追猎",
+            "sourceType": "SKILL",
+            "targetAttribute": "damageBoost",
+            "type": "ADDITIVE",
+            "value": 50
+          },
+          {
+            "id": "toxic_hunt_crit",
+            "sourceName": "毒性追猎",
+            "sourceType": "SKILL",
+            "targetAttribute": "critRate",
+            "type": "ADDITIVE",
+            "value": 100
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_hypnotist",
+    "name": "催眠师",
+    "description": "攻击睡眠目标时，不唤醒且造成1.5倍伤害",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "condition": "target_has_sleep",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "hypnotist_dmg",
+            "sourceName": "催眠师",
+            "sourceType": "SKILL",
+            "targetAttribute": "damageBoost",
+            "type": "ADDITIVE",
+            "value": 50
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_burn_detonate_full",
+    "name": "灼烧引爆",
+    "description": "攻击燃烧目标时，引爆剩余灼烧总伤害的200%（一次性结算）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "condition": "target_has_burn",
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": {
+          "description": "引爆灼烧总伤害的200%，一次性结算",
+          "customType": "burn_detonate_full"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_paralyze_tentacle",
+    "name": "麻痹触手",
+    "description": "攻击时有20%概率使目标麻痹（速度-50%，概率无法行动）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "parameters": {
+      "triggerProbability": 0.2
+    },
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_paralyze"
+      }
+    ]
+  },
+  {
+    "id": "guardian_dying_emergency",
+    "name": "濒死急救",
+    "description": "治疗生命低于30%的友方时，效果提升60%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["heal_received"],
+    "condition": "target_low_hp",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "dying_emergency_heal",
+            "sourceName": "濒死急救",
+            "sourceType": "SKILL",
+            "targetAttribute": "healEffect",
+            "type": "ADDITIVE",
+            "value": 60
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_sacrifice_rage",
+    "name": "献祭之怒",
+    "description": "友方阵亡时，自身获得攻击力+50%和暴击率+20%（持续至战斗结束）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_death"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_sacrifice_rage",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_berserker",
+    "name": "狂战士",
+    "description": "战斗开始后三回合，攻击力+30%，防御力-15%，无法使用技能（仅普攻）",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "maxUses": 1,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["battle_start"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_berserker",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  },
+  {
+    "id": "guardian_night_hunter",
+    "name": "暗夜猎手",
+    "description": "若当前回合数大于5，暴击率提升20%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "condition": "source_turn_gt_5",
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "modifiers": [
+          {
+            "id": "night_hunter_crit",
+            "sourceName": "暗夜猎手",
+            "sourceType": "SKILL",
+            "targetAttribute": "critRate",
+            "type": "ADDITIVE",
+            "value": 20
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "guardian_protracted_war",
+    "name": "持久战",
+    "description": "每过5回合，全体友方回复15%生命和30能量",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 5,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["turn_start"],
+    "condition": "source_turn_mod_5",
+    "steps": [
+      {
+        "type": "heal",
+        "targetConfig": {
+          "faction": "ally",
+          "strategy": "all"
+        },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [
+            {
+              "attribute": "maxHealth",
+              "ratio": 0.15
+            }
+          ]
+        }
+      },
+      {
+        "type": "modify_attribute",
+        "targetConfig": {
+          "faction": "ally",
+          "strategy": "all"
+        },
+        "modifiers": [
+          {
+            "id": "protracted_war_energy",
+            "sourceName": "持久战",
+            "sourceType": "SKILL",
+            "targetAttribute": "currentEnergy",
+            "type": "ADDITIVE",
+            "value": 30
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "id": "guardian_swift_wind",
+    "name": "疾风叠步",
+    "description": "每次普通攻击命中敌人，为自己增加5%速度，直到战斗结束",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": {
+      "faction": "self",
+      "strategy": "first"
+    },
+    "triggerTimes": ["on_hit"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "buffId": "guardian_buff_swift_wind",
+        "targetConfig": {
+          "faction": "self",
+          "strategy": "first"
+        }
+      }
+    ]
+  }
+]
+
 --- eslint.config.js ---
 import js from '@eslint/js'
 import ts from '@typescript-eslint/eslint-plugin'
@@ -11055,7 +12669,11 @@ export default [
 --- src/application/facade/BattleFacade.ts ---
 import { BattleManager } from '@/domain/battle/BattleManager';
 import type { BattleEntity, BattleState, BattleReplay } from '@/domain/battle/types';
+<<<<<<< Updated upstream
 import { type ParticipantSide } from '@/domain/battle/types';
+=======
+import { PARTICIPANT_SIDE, type ParticipantSide } from '@/domain/battle/types';
+>>>>>>> Stashed changes
 import type { BattleEventName, BattleEventCallback } from '@/shared/types/battle-events';
 
 /**
@@ -11594,7 +13212,8 @@ export const ModifierSourceType = {
   TALENT: 'talent',
 } as const
 /** 修饰符来源类型 */
-export type ModifierSourceType = (typeof ModifierSourceType)[keyof typeof ModifierSourceType]
+export type ModifierSourceType =
+  (typeof ModifierSourceType)[keyof typeof ModifierSourceType]
 
 /** 修饰符来源类型显示名称映射 */
 export const ModifierSourceTypeNames: Record<ModifierSourceType, string> = {
@@ -11836,6 +13455,9 @@ export const ATTRIBUTE_CODE = {
   physicalSkillDmgBonus: 'physicalSkillDmgBonus', // 物理技能伤害加成
   damageToDemon: 'damageToDemon', // 对妖魔鬼怪伤害加成
   damageToLowHp: 'damageToLowHp', // 对低生命值目标伤害加成
+
+  // ========== 护盾属性 ==========
+  shield: 'shield', // 当前护盾值
 } as const
 
 export type ATTRIBUTE_CODE =
@@ -12226,6 +13848,7 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-75%',
     impact: '有概率完全避免受到伤害',
     isPercentage: true,
+    defaultValue: 10,
   },
   hit: {
     code: 'hit',
@@ -12235,7 +13858,7 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '提高攻击命中率，对抗敌方闪避',
     isPercentage: true,
-    defaultValue: 100,
+    defaultValue: 90,
   },
   controlSuccessRate: {
     code: 'controlSuccessRate',
@@ -12344,6 +13967,18 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     impact: '提高对低血量目标的伤害输出',
     isPercentage: true,
   },
+
+  // ========== 护盾属性 ==========
+  shield: {
+    code: 'shield',
+    name: '护盾值',
+    displayName: '护盾值',
+    description: '当前护盾值，受到伤害时优先消耗护盾',
+    range: '0-99999',
+    impact: '吸收受到的伤害，护盾归零后开始消耗生命值',
+    isPercentage: false,
+    isRuntimeState: true,
+  },
 }
 
 /** 从元数据派生的属性显示名称映射 */
@@ -12358,7 +13993,9 @@ export const AttributeCodeNames: Record<ATTRIBUTE_CODE, string> =
 /**
  * 根据属性编码获取属性元数据
  */
-export function getAttributeMeta(code: ATTRIBUTE_CODE): AttributeMeta | undefined {
+export function getAttributeMeta(
+  code: ATTRIBUTE_CODE,
+): AttributeMeta | undefined {
   return AttributeMetaMap[code]
 }
 
@@ -12367,8 +14004,13 @@ export function getAttributeMeta(code: ATTRIBUTE_CODE): AttributeMeta | undefine
  * @param code 属性编码
  * @returns 默认值，未定义时返回 0
  */
+<<<<<<< Updated upstream
 export function getAttributeDefaultValue(code: string): number {
   return (AttributeMetaMap as Record<string, AttributeMeta>)[code]?.defaultValue ?? 0
+=======
+export function getAttributeDefaultValue(code: ATTRIBUTE_CODE): number {
+  return AttributeMetaMap[code]?.defaultValue ?? 0
+>>>>>>> Stashed changes
 }
 
 /**
@@ -16571,7 +18213,16 @@ export class BattleParticipantImpl implements BattleEntity {
       return 0
     }
 
-    const damage = Math.max(0, amount)
+    let damage = Math.max(0, amount)
+
+    // ponytail: 背水护甲 — 能量抵扣伤害（每1能量抵扣1点伤害）
+    if (this.hasBuff('guardian_buff_backwater_armor') && this.currentEnergy > 0) {
+      const energyUsed = Math.min(this.currentEnergy, damage)
+      this.currentEnergy -= energyUsed
+      damage -= energyUsed
+      damage = Math.max(0, damage)
+    }
+
     this.currentHealth = Math.max(0, this.currentHealth - damage)
 
     // ponytail: 受击能量从 BATTLE_CONSTANTS 读取，与 BattleRuleManager 配置一致
@@ -17194,7 +18845,10 @@ import type {
   BattleEndedEventData,
 } from '@/shared/types/battle-events'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+<<<<<<< Updated upstream
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager'
+=======
+>>>>>>> Stashed changes
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
@@ -17382,10 +19036,17 @@ export class BattleEventManager {
           log.htmlResult = htmlResult
         }
 
+<<<<<<< Updated upstream
         battleLogManager.addBattleLog(log)
       }
     } catch (error) {
       battleLogManager.addSystemLog({ message: `处理战斗日志事件时出错: ${error}`, category: 'error' } as any)
+=======
+        ;(this.getBattleStore() as any).addBattleLog(log)
+      }
+    } catch (error) {
+      ;(this.getBattleStore() as any).addErrorLog(`澶勭悊鎴樻枟鏃ュ織浜嬩欢鏃跺嚭閿? ${error}`)
+>>>>>>> Stashed changes
       console.error('处理战斗日志时出错:', error)
     }
   }
@@ -17395,18 +19056,30 @@ export class BattleEventManager {
    */
   private handleBattleEndEvent(data: BattleEndedEventData) {
     try {
+<<<<<<< Updated upstream
       const store = this.getBattleStore()
       if (!store) return
       store.setBattleActive(false)
       store.setAutoPlayMode(false)
       if (data && data.winner) {
         battleLogManager.addBattleLog({
+=======
+      ;(this.getBattleStore() as any).setBattleActive(false)
+      ;(this.getBattleStore() as any).setAutoPlayMode(false)
+      // 记录战斗结束日志
+      if (data && data.winner) {
+        ;(this.getBattleStore() as any).addBattleLog({
+>>>>>>> Stashed changes
           turn: '战斗结束',
           message: `? ${data.winner === PARTICIPANT_SIDE.ALLY ? '鎴戞柟' : '鏁屾柟'}`,
         })
       }
     } catch (error) {
+<<<<<<< Updated upstream
       console.error(`Error handling battle end: ${error}`)
+=======
+      ;(this.getBattleStore() as any).addErrorLog(`Error handling battle end: ${error}`)
+>>>>>>> Stashed changes
       console.error('处理战斗结束时出错:', error)
     }
   }
@@ -17420,15 +19093,26 @@ export class BattleEventManager {
     actorId: string
   }) {
     try {
+<<<<<<< Updated upstream
       const store = this.getBattleStore()
       if (data && data.actorId && store) {
         store.currentActorId = data.actorId
         battleLogManager.addBattleLog({
+=======
+      if (data && data.actorId) {
+        ;(this.getBattleStore() as any).setCurrentActorId(data.actorId)
+        // Record turn start log
+        ;(this.getBattleStore() as any).addBattleLog({
+>>>>>>> Stashed changes
           turn: `turn_${data.turn}`,
           message: `Turn ${data.turn} start, actor: ${data.actorId}`,
         })
       }
     } catch (error) {
+<<<<<<< Updated upstream
+=======
+      ;(this.getBattleStore() as any).addErrorLog(`Error handling turn start: ${error}`)
+>>>>>>> Stashed changes
       console.error('处理回合开始时出错:', error)
     }
   }
@@ -17439,12 +19123,27 @@ export class BattleEventManager {
   private handleTurnEndEvent(data: { battleId: string; turn: number }) {
     try {
       if (data) {
+<<<<<<< Updated upstream
         battleLogManager.addBattleLog({
           turn: `回合${data.turn}`,
           message: `回合${data.turn}结束`,
         })
       }
     } catch (error) {
+=======
+        // 鍥炲悎缁撴潫澶勭悊
+        ;(this.getBattleStore() as any).addBattleLog({
+          turn: `鍥炲悎${data.turn}`,
+          source: '绯荤粺',
+          action: '缁撴潫',
+          target: '',
+          result: `鍥炲悎${data.turn}缁撴潫`,
+          level: 'system',
+        })
+      }
+    } catch (error) {
+      ;(this.getBattleStore() as any).addErrorLog(`Error handling turn end: ${error}`)
+>>>>>>> Stashed changes
       console.error('处理回合结束时出错:', error)
     }
   }
@@ -19891,14 +21590,22 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.ON_HIT,
       target,
+<<<<<<< Updated upstream
       undefined,
+=======
+      source,
+>>>>>>> Stashed changes
       { sourceId: source.id, damage },
     )
     if (!target.isAlive()) {
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.ON_DEATH,
         target,
+<<<<<<< Updated upstream
         undefined,
+=======
+        source,
+>>>>>>> Stashed changes
         { sourceId: source.id, cause: EffectType.DAMAGE },
       )
     }
@@ -20008,13 +21715,18 @@ export class BattleExecutor {
       )
     }
 
-    const roundNumber = battle.currentRound
+    const currentRound = battle.currentRound
 
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BEFORE_ATTACK,
       source,
+<<<<<<< Updated upstream
       undefined,
       { targetId, roundNumber },
+=======
+      target,
+      { targetId, currentRound },
+>>>>>>> Stashed changes
     )
 
     // 创建详细记录对象用于捕获伤害拆分
@@ -20025,7 +21737,11 @@ export class BattleExecutor {
       'attack',
       targetId,
       target.name,
+<<<<<<< Updated upstream
       roundNumber ?? 1,
+=======
+      currentRound ?? 1,
+>>>>>>> Stashed changes
     )
 
     const attackStep = this.buildNormalAttackStep(source, targetId)
@@ -20036,17 +21752,21 @@ export class BattleExecutor {
       record,
     )
 
-    const action = this.createBattleAction(source.id, targetId, roundNumber)
+    const action = this.createBattleAction(source.id, targetId, currentRound)
 
     if (damageResult.isMiss) {
-      await this.handleMissAttack(action, source, target, roundNumber)
+      await this.handleMissAttack(action, source, target, currentRound)
     } else {
       await this.handleHitAttack(
         action,
         source,
         target,
         damageResult,
+<<<<<<< Updated upstream
         roundNumber,
+=======
+        currentRound,
+>>>>>>> Stashed changes
       )
     }
 
@@ -20058,7 +21778,11 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.AFTER_ATTACK,
       source,
+<<<<<<< Updated upstream
       undefined,
+=======
+      target,
+>>>>>>> Stashed changes
       {
         targetId,
         damage: action.damage,
@@ -20303,14 +22027,22 @@ export class BattleExecutor {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.ON_HIT,
           target,
+<<<<<<< Updated upstream
           undefined,
+=======
+          source,
+>>>>>>> Stashed changes
           { sourceId: source.id, damage: actualDamage },
         )
         if (!target.isAlive()) {
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_DEATH,
             target,
+<<<<<<< Updated upstream
             undefined,
+=======
+            source,
+>>>>>>> Stashed changes
             { sourceId: source.id, cause: EffectType.DAMAGE },
           )
         }
@@ -25268,8 +27000,158 @@ export class StunDebuff extends BaseBuffScript {
 // 导出 BUFF_ID 常量
 export const BUFF_ID = StunDebuff.BUFF_ID
 
+--- src/domain/buff/scripts/guardian/GuardianBuffs.ts ---
+/**
+ * 守护者 Buff 脚本集合
+ * 每个类对应一个 buff ID，继承 AttributeBuffTemplate 实现属性修正。
+ * ponytail: 所有类写在一个文件中减少文件数量，通过静态 BUFF_ID 自动注册。
+ */
+import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/base/AttributeBuffTemplate'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+
+/* ========== 复仇怒火：受击+5%攻击，可叠5层 ========== */
+export class RevengeRageBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_revenge_rage'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.attack, value: (ctx) => this.getConfigValue(ctx, 'stackBonus', 5), type: ModifierType.PERCENTAGE, description: '复仇怒火' }]
+  }
+  protected _onApply(context: BuffContext): void {
+    context.setVariable('_bonus', this.getConfigValue(context, 'stackBonus', 5))
+    super._onApply(context)
+  }
+}
+/* ========== 破甲打击：降低目标20%防御，2回合 ========== */
+export class ArmorBreakBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_armor_break'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.defense, value: -20, type: ModifierType.PERCENTAGE, description: '破甲打击' }]
+  }
+}
+/* ========== 坚毅护盾：伤害减免标记（需配合伤害拦截） ========== */
+export class FirmShieldBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_firm_shield'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.damageReduction, value: 0, type: ModifierType.ADDITIVE, description: '坚毅护盾' }]
+  }
+}
+/* ========== 静电反冲：沉默攻击者1回合（buff 本身只是标记） ========== */
+export class StaticReboundBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_static_rebound'
+  protected getModifiers(): AttributeModifier[] {
+    return []
+  }
+}
+/* ========== 先发制人：首回合伤害+25%，1回合 ========== */
+export class FirstStrikeBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_first_strike'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.damageBoost, value: 25, type: ModifierType.ADDITIVE, description: '先发制人' }]
+  }
+}
+/* ========== 蓄力爆发：下回合伤害+100%，1回合 ========== */
+export class ChargeBurstBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_charge_burst'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.damageBoost, value: 100, type: ModifierType.ADDITIVE, description: '蓄力爆发' }]
+  }
+}
+/* ========== 元素迟缓：全体敌方速度-5%，1回合 ========== */
+export class ElementSlowBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_element_slow'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.speed, value: -5, type: ModifierType.PERCENTAGE, description: '元素迟缓' }]
+  }
+}
+/* ========== 绝望气场：敌方暴击-15% ========== */
+export class DespairAuraBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_despair_aura'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.critRate, value: -15, type: ModifierType.ADDITIVE, description: '绝望气场' }]
+  }
+}
+/* ========== 治愈微风：友方防御+20%，1次攻击后移除 ========== */
+export class HealBreezeBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_heal_breeze'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.defense, value: 20, type: ModifierType.PERCENTAGE, description: '治愈微风' }]
+  }
+}
+/* ========== 以牙还牙：下次攻击伤害标记（伤害加成通过 modify_attribute 实现） ========== */
+export class EyeForEyeBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_eye_for_eye'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.damageBoost, value: 0, type: ModifierType.ADDITIVE, description: '以牙还牙' }]
+  }
+}
+/* ========== 复仇之怒：攻+30% 暴+20%，3回合 ========== */
+export class RevengeFuryBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_revenge_fury'
+  protected getModifiers(): AttributeModifier[] {
+    return [
+      { attribute: ATTRIBUTE_CODE.attack, value: 30, type: ModifierType.PERCENTAGE, description: '复仇之怒-攻' },
+      { attribute: ATTRIBUTE_CODE.critRate, value: 20, type: ModifierType.ADDITIVE, description: '复仇之怒-暴' },
+    ]
+  }
+}
+/* ========== 麻痹触手：速度-50%（标记状态） ========== */
+export class ParalyzeBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_paralyze'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.speed, value: -50, type: ModifierType.PERCENTAGE, description: '麻痹触手' }]
+  }
+}
+/* ========== 献祭之怒：攻+50% 暴+20%，永久 ========== */
+export class SacrificeRageBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_sacrifice_rage'
+  protected getModifiers(): AttributeModifier[] {
+    return [
+      { attribute: ATTRIBUTE_CODE.attack, value: 50, type: ModifierType.PERCENTAGE, description: '献祭之怒-攻' },
+      { attribute: ATTRIBUTE_CODE.critRate, value: 20, type: ModifierType.ADDITIVE, description: '献祭之怒-暴' },
+    ]
+  }
+}
+/* ========== 狂战士：攻+30% 防-15%，3回合 ========== */
+export class BerserkerBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_berserker'
+  protected getModifiers(): AttributeModifier[] {
+    return [
+      { attribute: ATTRIBUTE_CODE.attack, value: 30, type: ModifierType.PERCENTAGE, description: '狂战士-攻' },
+      { attribute: ATTRIBUTE_CODE.defense, value: -15, type: ModifierType.PERCENTAGE, description: '狂战士-防' },
+    ]
+  }
+}
+/* ========== 疾风迅雷：速度差伤害标记 ========== */
+export class WindThunderBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_wind_thunder'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.damageBoost, value: 0, type: ModifierType.ADDITIVE, description: '疾风迅雷' }]
+  }
+}
+/* ========== 随机嘲讽 ========== */
+export class RandomTauntBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_random_taunt'
+  protected getModifiers(): AttributeModifier[] {
+    return []
+  }
+}
+/* ========== 背水护甲：标记 buff，能量抵扣伤害由 BattleParticipantImpl.takeDamage 处理 ========== */
+export class BackwaterArmorBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_backwater_armor'
+  protected getModifiers(): AttributeModifier[] {
+    return []
+  }
+}
+/* ========== 疾风叠步：普攻命中+5%速度，无限叠加，持续到战斗结束 ========== */
+export class SwiftWindBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_swift_wind'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.speed, value: (ctx) => this.getConfigValue(ctx, 'stackBonus', 5), type: ModifierType.PERCENTAGE, description: '疾风叠步' }]
+  }
+}
+
 --- src/domain/buff/scripts/index.ts ---
-﻿// 导出所有 Buff 脚本
+// 导出所有 Buff 脚本
 export * from '@/domain/buff/scripts/base/BaseBuffScript'
 export * from '@/domain/buff/scripts/base/BuffTemplate'
 
@@ -25292,6 +27174,28 @@ export { MountainChildBuff } from '@/domain/buff/scripts/combat/MountainChildBuf
 export { StrongPoisonDebuff } from '@/domain/buff/scripts/combat/StrongPoisonDebuff'
 export { StunDebuff } from '@/domain/buff/scripts/combat/StunDebuff'
 
+// 守护者 buff 脚本
+export {
+  RevengeRageBuff,
+  ArmorBreakBuff,
+  FirmShieldBuff,
+  StaticReboundBuff,
+  FirstStrikeBuff,
+  ChargeBurstBuff,
+  ElementSlowBuff,
+  DespairAuraBuff,
+  HealBreezeBuff,
+  EyeForEyeBuff,
+  RevengeFuryBuff,
+  ParalyzeBuff,
+  SacrificeRageBuff,
+  BerserkerBuff,
+  WindThunderBuff,
+  RandomTauntBuff,
+  BackwaterArmorBuff,
+  SwiftWindBuff,
+} from '@/domain/buff/scripts/guardian/GuardianBuffs'
+
 // 导出脚本映射，方便注册
 export const buffScripts = {
   mountain_god: () => import('@/domain/buff/scripts/combat/MountainGodBuff'),
@@ -25300,16 +27204,58 @@ export const buffScripts = {
   heal_over_time: () => import('@/domain/buff/scripts/support/HealOverTime'),
   shield: () => import('@/domain/buff/scripts/support/ShieldBuff'),
   // 新增buff脚本映射
-  buff_hit_reduction: () => import('@/domain/buff/scripts/combat/HitReductionDebuff'),
+  buff_hit_reduction: () =>
+    import('@/domain/buff/scripts/combat/HitReductionDebuff'),
   buff_dodge_up: () => import('@/domain/buff/scripts/combat/DodgeUpBuff'),
-  buff_speed_reduction: () => import('@/domain/buff/scripts/combat/SpeedReductionDebuff'),
+  buff_speed_reduction: () =>
+    import('@/domain/buff/scripts/combat/SpeedReductionDebuff'),
   buff_atk_up: () => import('@/domain/buff/scripts/combat/AttackUpBuff'),
   buff_def_up: () => import('@/domain/buff/scripts/combat/DefenseUpBuff'),
-  buff_crit_damage_reduction: () => import('@/domain/buff/scripts/combat/CritDamageReductionDebuff'),
+  buff_crit_damage_reduction: () =>
+    import('@/domain/buff/scripts/combat/CritDamageReductionDebuff'),
   buff_stone_skin: () => import('@/domain/buff/scripts/combat/StoneSkinBuff'),
-  buff_mountain_child: () => import('@/domain/buff/scripts/combat/MountainChildBuff'),
-  buff_strong_poison: () => import('@/domain/buff/scripts/combat/StrongPoisonDebuff'),
-  buff_stun: () => import('@/domain/buff/scripts/combat/StunDebuff')
+  buff_mountain_child: () =>
+    import('@/domain/buff/scripts/combat/MountainChildBuff'),
+  buff_strong_poison: () =>
+    import('@/domain/buff/scripts/combat/StrongPoisonDebuff'),
+  buff_stun: () => import('@/domain/buff/scripts/combat/StunDebuff'),
+  // 守护者 buff 脚本
+  guardian_buff_revenge_rage: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_armor_break: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_firm_shield: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_static_rebound: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_first_strike: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_charge_burst: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_element_slow: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_despair_aura: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_heal_breeze: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_eye_for_eye: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_revenge_fury: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_paralyze: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_sacrifice_rage: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_berserker: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_wind_thunder: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_random_taunt: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_backwater_armor: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
+  guardian_buff_swift_wind: () =>
+    import('@/domain/buff/scripts/guardian/GuardianBuffs'),
 }
 
 export type BuffScriptType = keyof typeof buffScripts
@@ -26239,11 +28185,20 @@ export class DamageCalculator {
     // extraValues 处理 — 从 skillStep.calculation.extraValues 中读取
     if (skillStep.calculation?.extraValues) {
       for (const extra of skillStep.calculation.extraValues) {
+<<<<<<< Updated upstream
         // ponytail: attack 是区间属性，每次取 min~max 之间的随机值，而非静态属性值
         const attrValue =
           extra.attribute === ATTRIBUTE_CODE.attack
             ? source.getRandomAttackDemage()
             : getAttributeValue(source, extra.attribute as ATTRIBUTE_CODE)
+=======
+        // ponytail: maxHealth 和 currentHealth 优先从目标读取（毒素浸染、嗜血赌徒等技能）
+        const isTargetAttr = extra.attribute === 'maxHealth' || extra.attribute === 'currentHealth'
+        const attrValue =
+          extra.attribute === ATTRIBUTE_CODE.attack
+            ? source.getRandomAttackDemage()
+            : getAttributeValue(isTargetAttr ? target : source, extra.attribute as ATTRIBUTE_CODE)
+>>>>>>> Stashed changes
         const extraValue = attrValue * extra.ratio
         damage += extraValue
         breakdown.extraContributions.push({
@@ -26699,7 +28654,7 @@ export interface PassiveSkillConfig {
   id: string
   name: string
   description: string
-  trigger: BattleTriggerPhase
+  trigger?: BattleTriggerPhase
   condition?: string
   skillId: string
   cooldown: number
@@ -26777,6 +28732,24 @@ export class PassiveSkillManager {
           return source.getBuffInstanceIds().length > 0
         case 'target_low_hp':
           return target ? (target.getAttribute('currentHealth') / Math.max(1, target.getAttribute('maxHealth'))) < BATTLE_CONSTANTS.HEAL_THRESHOLD : false
+        // 守护者被动技能专用条件
+        case 'target_has_poison':
+          return target ? (target.hasBuff('buff_poison') || target.hasBuff('buff_strong_poison')) : false
+        case 'target_has_stun':
+          return target ? target.hasBuff('buff_stun') : false
+        case 'target_has_burn':
+          return target ? target.hasBuff('buff_burn') : false
+        case 'target_has_sleep':
+          // ponytail: 睡眠 buff ID 待确认，当前用 hasBuff 通配检查
+          return target ? target.getBuffInstanceIds().some(id => id.includes('sleep')) : false
+        case 'source_has_debuff_count_3':
+          return source.getBuffInstanceIds().length >= 3
+        case 'source_energy_high':
+          return (source.getAttribute('currentEnergy') / Math.max(1, source.getAttribute('maxEnergy'))) > 0.9
+        case 'source_turn_gt_5':
+          return (context?.currentTurn as number) > 5
+        case 'source_turn_mod_5':
+          return (context?.currentTurn as number) % 5 === 0 && (context?.currentTurn as number) > 0
         default:
           return true
       }
@@ -26820,7 +28793,7 @@ export class PassiveSkillManager {
 }
 
 --- src/domain/skill/SkillExecutor.ts ---
-import type { ExtendedSkillStep } from '@/domain/skill/types'
+import type { ExtendedSkillStep, SkillStep } from '@/domain/skill/types'
 import { SkillStepType } from '@/domain/skill/types'
 import type { BattleAction, BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
@@ -26830,6 +28803,20 @@ import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { EffectType } from '@/shared/types/effect'
+<<<<<<< Updated upstream
+=======
+import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
+
+/** ponytail: 追踪同一攻击者的连续命中目标和计数 */
+interface ComboState {
+  /** 最后攻击的目标 ID */
+  lastTargetId: string
+  /** 连续命中次数 */
+  streak: number
+  /** 普攻总次数（用于第三连击） */
+  totalAttacks: number
+}
+>>>>>>> Stashed changes
 
 export class SkillExecutor {
   constructor(
@@ -26838,8 +28825,16 @@ export class SkillExecutor {
     private readonly buffSystem: BuffSystem,
   ) {}
 
+<<<<<<< Updated upstream
   /** ponytail: 延迟伤害模式 — 为 true 时 executeDamage/executeHeal 只记录数值到 action，不调用 target.takeDamage()/heal()，
    * 由调用方在动画完成后统一应用，保证攻击动画飞到目标时才扣血 */
+=======
+  /** ponytail: 连击追踪状态（key = 攻击者 entity ID） */
+  private comboStates = new Map<string, ComboState>()
+
+  /* ponytail: 延迟伤害模式 — 为 true 时 executeDamage/executeHeal 只记录数值到 action，不调用 target.takeDamage()/heal()，
+   由调用方在动画完成后统一应用 */
+>>>>>>> Stashed changes
   public deferDamage = false
 
   executeStep(
@@ -26865,6 +28860,22 @@ export class SkillExecutor {
       case SkillStepType.STUN:
       case SkillStepType.SILENCE:
         this.executeControl(skillStep, action, source, target, skillStep.type)
+        break
+      case SkillStepType.MODIFY_ATTRIBUTE:
+        this.executeModifyAttribute(skillStep, action, source, target)
+        break
+      case SkillStepType.REMOVE_DEBUFF:
+      case SkillStepType.CLEANSE:
+        this.executeCleanse(skillStep, action, source, target)
+        break
+      case SkillStepType.REFLECT:
+        this.executeReflect(skillStep, action, source, target)
+        break
+      case SkillStepType.DRAIN:
+        this.executeDrain(skillStep, action, source, target, record)
+        break
+      case SkillStepType.CUSTOM:
+        this.executeCustom(skillStep, action, source, target)
         break
       default: {
         // ponytail: 未实现的步骤类型 — 当前无任何技能配置使用这些类型
@@ -27015,18 +29026,339 @@ export class SkillExecutor {
     })
   }
 
-  // TODO: 实现护盾逻辑（向目标添加 buff_shield 或直接修改属性）
+  /** 运行时修改目标属性（modify_attribute 步骤） */
+  private executeModifyAttribute(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+  ): void {
+    const modTarget = skillStep.targetConfig?.faction === 'self' ? source : target
+    const modifiers = skillStep.modifiers
+    if (!modifiers || modifiers.length === 0) return
+
+    for (const mod of modifiers) {
+      const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
+      const attrData = modTarget.getAttrValue(attrCode)
+      if (!attrData) continue
+
+      const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
+        : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
+        : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
+        : mod.type === 'FINAL' ? ModifierType.FINAL
+        : ModifierType.ADDITIVE
+
+      let value = typeof mod.value === 'number' ? mod.value : 0
+      // ponytail: PERCENTAGE 值在配置中是百分比值（如 5 表示 5%），直接使用
+      if (modType === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
+        value = Math.round(value * 10000) / 100
+      }
+
+      const sourceKey = `passive:runtime:${mod.id || skillStep.buffId || 'mod'}`
+
+      // ponytail: 去重 — 移除同 sourceKey 的旧修饰符再添加新值
+      attrData.modifiers = attrData.modifiers.filter(m => m.sourceKey !== sourceKey)
+
+      const newMod: Modifier = {
+        sourceKey,
+        sourceType: ModifierSourceType.SKILL,
+        attribute: attrCode,
+        value,
+        type: modType,
+        description: mod.sourceName || '被动技能',
+      }
+      attrData.modifiers.push(newMod)
+      attrData.cachedVersion = -1
+    }
+
+    modTarget.recalcAll()
+
+    action.effects.push({
+      type: EffectType.STATUS,
+      targetId: modTarget.id,
+      description: `modify_attribute: ${modifiers.length} 个属性已修改`,
+    })
+  }
+
+  /** 净化/移除减益（cleanse / remove_debuff 步骤） */
+  private executeCleanse(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+  ): void {
+    const modTarget = skillStep.targetConfig?.faction === 'self' ? source : target
+    const instances = this.buffSystem.getBuffInstances(modTarget.id)
+    const isRemoveDebuff = skillStep.type === SkillStepType.REMOVE_DEBUFF
+    const count = skillStep.count || (isRemoveDebuff ? 1 : 999)
+
+    let removed = 0
+    for (const instance of instances) {
+      if (removed >= count) break
+      // ponytail: REMOVE_DEBUFF 只移除 isDebuff 的 buff；CLEANSE 移除所有
+      if (isRemoveDebuff && !instance.config?.isDebuff) continue
+      this.buffSystem.removeBuff(instance.id)
+      removed++
+    }
+
+    action.effects.push({
+      type: EffectType.STATUS,
+      targetId: modTarget.id,
+      description: `${isRemoveDebuff ? '移除减益' : '净化'}: ${removed} 个效果`,
+    })
+  }
+
+  /** 反射伤害（reflect 步骤） */
+  private executeReflect(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+  ): void {
+    // ponytail: reflect 的目标是攻击者（即 executeStep 的 target 是攻击者）
+    // source 是受击者（拥有反射技能的角色）
+    // 计算反射伤害
+    const dmg = this.damageCalculator.calculateDamage(skillStep, source, target)
+    if (!dmg.isMiss && dmg.damage > 0) {
+      this.damageCalculator.applyDamage(target, dmg.damage)
+      action.effects.push({
+        type: EffectType.DAMAGE,
+        targetId: target.id,
+        value: dmg.damage,
+        description: `${source.name} 反弹 ${dmg.damage} 伤害给 ${target.name}`,
+      })
+    }
+  }
+
+  /** 吸取生命（drain 步骤） */
+  private executeDrain(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+    record?: CombatRecord,
+  ): void {
+    // 对目标造成伤害
+    const dmg = this.damageCalculator.calculateDamage(skillStep, source, target, record)
+    if (!dmg.isMiss && dmg.damage > 0) {
+      this.damageCalculator.applyDamage(target, dmg.damage)
+      // 治疗施法者等量数值
+      const actualHeal = source.heal(dmg.damage)
+      action.effects.push({
+        type: EffectType.DAMAGE,
+        targetId: target.id,
+        value: dmg.damage,
+        description: `${source.name} 吸取 ${dmg.damage} 生命`,
+      })
+      if (actualHeal > 0) {
+        action.heal = (action.heal ?? 0) + actualHeal
+      }
+    }
+  }
+
+  /** ponytail: 自定义步骤分发 */
+  private executeCustom(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+  ): void {
+    const customType = skillStep.parameters?.customType as string | undefined
+    const desc = (skillStep.parameters?.description as string) || ''
+
+    // ponytail: 根据 customType 或 description 关键词分发
+    if (customType === 'third_strike' || desc.includes('第三')) {
+      this.handleThirdStrike(action, source)
+    } else if (customType === 'combo_master' || desc.includes('连续攻击')) {
+      this.handleComboMaster(action, source, target)
+    } else if (customType === 'burn_detonate' || customType === 'burn_detonate_full') {
+      this.handleBurnDetonate(action, source, target, customType === 'burn_detonate_full')
+    } else if (customType === 'extra_action') {
+      // ponytail: 时之沙 — 15% 概率额外行动，需要 BattleSystem 插入回合队列支持
+      battleLogManager.addDebugLog('时之沙: 15%额外行动 — 需要 BattleSystem 回合队列插入', LogLevel.INFO)
+      action.effects.push({
+        type: EffectType.STATUS,
+        targetId: source.id,
+        description: '时之沙触发！(额外行动待实现)',
+      })
+    } else if (customType === 'steal_item') {
+      // ponytail: 盗窃本能 — PvE 掉落系统，非战斗逻辑
+      battleLogManager.addDebugLog('盗窃本能: PvE 掉落系统专用', LogLevel.INFO)
+    } else if (customType === 'overflow_shield') {
+      // ponytail: 回春护盾溢出 — 需要治疗完成后检查溢出量并生成护盾
+      battleLogManager.addDebugLog('回春护盾溢出转盾: 需要治疗回调机制', LogLevel.INFO)
+    } else {
+      battleLogManager.addDebugLog(`自定义步骤未实现: ${desc}`, LogLevel.WARN)
+      action.effects.push({
+        type: EffectType.STATUS,
+        targetId: target.id,
+        description: `自定义效果待实现: ${desc}`,
+      })
+    }
+  }
+
+  /** 第三连击：每第3次普攻伤害+50% */
+  private handleThirdStrike(
+    action: BattleAction,
+    source: BattleEntity,
+  ): void {
+    let state = this.comboStates.get(source.id)
+    if (!state) {
+      state = { lastTargetId: '', streak: 0, totalAttacks: 0 }
+      this.comboStates.set(source.id, state)
+    }
+    state.totalAttacks++
+
+    if (state.totalAttacks % 3 === 0) {
+      // 应用伤害加成
+      const attrData = source.getAttrValue(ATTRIBUTE_CODE.damageBoost)
+      if (attrData) {
+        const sourceKey = 'custom:third_strike'
+        attrData.modifiers = attrData.modifiers.filter(m => m.sourceKey !== sourceKey)
+        attrData.modifiers.push({
+          sourceKey,
+          sourceType: ModifierSourceType.SKILL,
+          attribute: ATTRIBUTE_CODE.damageBoost,
+          value: 50,
+          type: ModifierType.ADDITIVE,
+          description: '第三连击',
+        })
+        attrData.cachedVersion = -1
+        // 通过 recalcAll 使生效，但在被动触发时 source.recalcAll 可能导致问题
+        // ponytail: 简化实现 — 加一个临时 buff 替代
+        source.recalcAll()
+      }
+      action.effects.push({
+        type: EffectType.STATUS,
+        targetId: source.id,
+        description: '第三连击！伤害+50%',
+      })
+    }
+  }
+
+  /** 连击大师：连续攻击同一目标伤害递增10%，切换后重置 */
+  private handleComboMaster(
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+  ): void {
+    let state = this.comboStates.get(source.id)
+    if (!state) {
+      state = { lastTargetId: '', streak: 0, totalAttacks: 0 }
+      this.comboStates.set(source.id, state)
+    }
+
+    if (state.lastTargetId === target.id) {
+      state.streak++
+    } else {
+      state.streak = 1
+      state.lastTargetId = target.id
+    }
+
+    if (state.streak > 1) {
+      const bonus = (state.streak - 1) * 10
+      const attrData = source.getAttrValue(ATTRIBUTE_CODE.damageBoost)
+      if (attrData) {
+        const sourceKey = 'custom:combo_master'
+        attrData.modifiers = attrData.modifiers.filter(m => m.sourceKey !== sourceKey)
+        attrData.modifiers.push({
+          sourceKey,
+          sourceType: ModifierSourceType.SKILL,
+          attribute: ATTRIBUTE_CODE.damageBoost,
+          value: bonus,
+          type: ModifierType.ADDITIVE,
+          description: `连击大师 x${state.streak}`,
+        })
+        attrData.cachedVersion = -1
+        source.recalcAll()
+      }
+      action.effects.push({
+        type: EffectType.STATUS,
+        targetId: source.id,
+        description: `连击 x${state.streak}，伤害+${bonus}%`,
+      })
+    }
+  }
+
+  /** 灼烧引爆：攻击燃烧目标时引爆灼烧层数 */
+  private handleBurnDetonate(
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+    isFullDetonate: boolean,
+  ): void {
+    // 获取目标的 buff 实例，查找灼烧类 buff
+    const instances = this.buffSystem.getBuffInstances(target.id)
+    const burnInstances = instances.filter(i => i.buffId === 'buff_burn' || i.buffId?.includes('burn'))
+
+    if (burnInstances.length === 0) return
+
+    let totalBurnDmg = 0
+    for (const inst of burnInstances) {
+      // ponytail: 假设每层灼烧每回合造成 5% 最大生命值伤害
+      const remainingDuration = inst.remainingDuration ?? inst.config?.duration ?? 1
+      const dmgPerTick = target.getAttribute('maxHealth') * 0.05
+      totalBurnDmg += dmgPerTick * remainingDuration
+
+      // 完全引爆时移除该灼烧 buff
+      if (isFullDetonate) {
+        this.buffSystem.removeBuff(inst.id)
+      }
+    }
+
+    if (totalBurnDmg <= 0) return
+
+    const multiplier = isFullDetonate ? 2.0 : 1.0
+    const finalDmg = Math.round(totalBurnDmg * multiplier)
+    this.damageCalculator.applyDamage(target, finalDmg)
+
+    action.effects.push({
+      type: EffectType.DAMAGE,
+      targetId: target.id,
+      value: finalDmg,
+      description: `${isFullDetonate ? '引爆' : '灼烧爆破'}! ${finalDmg} 点火焰伤害`,
+    })
+  }
+
+  /** 护盾（shield 步骤）— 委托给 buff_shield */
   private executeShield(
     skillStep: ExtendedSkillStep,
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
   ): void {
+<<<<<<< Updated upstream
     // TODO: 实现护盾添加逻辑
     action.effects.push({
       type: EffectType.STATUS,
       targetId: target.id,
       description: 'Shield effect (to be implemented)',
+=======
+    const buffTarget = skillStep.targetConfig?.faction === 'self' ? source : target
+    // 从 calculation 计算护盾值
+    const shieldValue = this.healCalculator.calculateHeal(skillStep, source, buffTarget)
+
+    const config: BuffConfig = {
+      id: 'buff_shield',
+      name: '护盾',
+      description: '',
+      duration: skillStep.duration ?? 1,
+      maxStacks: 1,
+      cooldown: 0,
+      stackRule: StackRule.REFRESH,
+      controlType: ControlType.NONE,
+      controlPriority: 0,
+      isDebuff: false,
+      parameters: { shieldValue },
+    }
+    const instanceId = this.buffSystem.addBuff(buffTarget.id, 'buff_shield', config, 0)
+    action.effects.push({
+      type: EffectType.STATUS,
+      targetId: buffTarget.id,
+      buffId: 'buff_shield',
+      instanceId,
+      description: `${buffTarget.name} 获得 ${shieldValue} 护盾`,
+>>>>>>> Stashed changes
     })
   }
 
@@ -27212,14 +29544,18 @@ export class SkillManager {
       }
     }
 
-    if (!target) {
+    // ponytail: 被动技能允许无 target（自施法技能通过 targetConfig.faction === 'self' 处理）
+    const hasNonSelfStep = config.steps?.some(
+      s => s.targetConfig?.faction !== 'self' && s.type !== 'remove_debuff' && s.type !== 'cleanse'
+    ) ?? false
+    if (!target && hasNonSelfStep) {
       battleLogManager.addDebugLog(`技能 ${skillId} 无有效目标`, LogLevel.WARN)
       console.error(`技能 ${skillId} 无有效目标`)
       return null
     }
 
-    // 检查目标是否被眩晕
-    const targetIsStunned = this.isTargetStunned(target)
+    // 检查目标是否被眩晕（仅目标存在时检查）
+    const targetIsStunned = target ? this.isTargetStunned(target) : false
     if (targetIsStunned) {
       battleLogManager.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, LogLevel.WARN)
       const action = BattleActionHelper.createSkill({
@@ -31283,7 +33619,10 @@ onUnmounted(() => {
   opacity: 1;
   transform: translateY(0);
 }
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 </style>
 
 --- src/presentation/components/BattleVisualEffects.vue ---
@@ -34572,8 +36911,14 @@ const cardClasses = computed(() => ({
 }))
 
 const hpText = computed(() => {
+<<<<<<< Updated upstream
   const currentHealth = Math.max(0, Math.floor(stats.currentHealth?.value || 0))
   const maxHealth = Math.max(0, Math.floor(stats.maxHealth?.value || 0))
+=======
+  const data = stats.value
+  const currentHealth = Math.max(0, Math.floor(data.currentHealth?.value || 0))
+  const maxHealth = Math.max(0, Math.floor(data.maxHealth?.value || 0))
+>>>>>>> Stashed changes
   return `${currentHealth}/${maxHealth}`
 })
 
@@ -34585,8 +36930,14 @@ const hpColorClass = computed(() => {
 })
 
 const energyText = computed(() => {
+<<<<<<< Updated upstream
   const energy = Math.floor(stats.energy?.value || 0)
   const maxEnergy = Math.floor(stats.maxEnergy?.value || 0)
+=======
+  const data = stats.value
+  const energy = Math.floor(data.energy?.value || 0)
+  const maxEnergy = Math.floor(data.maxEnergy?.value || 0)
+>>>>>>> Stashed changes
   return `${energy}/${maxEnergy}`
 })
 
@@ -35253,7 +37604,12 @@ export type UseBattleAnimationReturn = ReturnType<typeof useBattleAnimation>
  * 描述：提供 shallowReactive + computed 方案，实现 UI 层直接绑定 BattleEntity
  */
 
-import { computed, shallowReactive, type ShallowReactive } from 'vue'
+import {
+  computed,
+  shallowReactive,
+  type ComputedRef,
+  type ShallowReactive,
+} from 'vue'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { AttributeValue } from '@/domain/attribute/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -35303,7 +37659,7 @@ export interface UseBattleParticipantReturn {
   /** 参与者实例（浅代理） */
   participant: ShallowReactive<BattleEntity>
   /** 属性集合（计算属性缓存） */
-  stats: Readonly<ParticipantStats>
+  stats: ComputedRef<ParticipantStats>
   /** 是否存活 */
   isAlive: Readonly<boolean>
   /** 是否死亡 */
@@ -35337,35 +37693,45 @@ export function useBattleParticipant(
     shallowParticipant.statsVersion
     return {
       currentHealth: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.currentHealth,
-    )!,
-    maxHealth: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxHealth)!,
-    energy: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)!,
-    maxEnergy: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)!,
-    attack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.attack)!,
-    defense: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.defense)!,
-    speed: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.speed)!,
-    critRate: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.critRate)!,
-    critDamage: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.critDamage,
-    )!,
-    damageReduction: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.damageReduction,
-    )!,
-    healthBonus: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.healthBonus,
-    )!,
-    attackBonus: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.attackBonus,
-    )!,
-    defenseBonus: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.defenseBonus,
-    )!,
-    speedBonus: shallowParticipant.getAttributeValue(
-      ATTRIBUTE_CODE.speedBonus,
-    )!,
-    minAttack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.minAttack)!,
-    maxAttack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.maxAttack)!,
+        ATTRIBUTE_CODE.currentHealth,
+      )!,
+      maxHealth: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.maxHealth,
+      )!,
+      energy: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.currentEnergy,
+      )!,
+      maxEnergy: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.maxEnergy,
+      )!,
+      attack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.attack)!,
+      defense: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.defense)!,
+      speed: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.speed)!,
+      critRate: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.critRate)!,
+      critDamage: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.critDamage,
+      )!,
+      damageReduction: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.damageReduction,
+      )!,
+      healthBonus: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.healthBonus,
+      )!,
+      attackBonus: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.attackBonus,
+      )!,
+      defenseBonus: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.defenseBonus,
+      )!,
+      speedBonus: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.speedBonus,
+      )!,
+      minAttack: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.minAttack,
+      )!,
+      maxAttack: shallowParticipant.getAttributeValue(
+        ATTRIBUTE_CODE.maxAttack,
+      )!,
     }
   })
 
@@ -35904,10 +38270,14 @@ export const useBattleStore = defineStore('battle', () => {
     maxTurns.value = battleService.value!.getMaxTurns?.() ?? 999
     const battleState = battleService.value!.getBattleState()
     isBattleActive.value =
+<<<<<<< Updated upstream
       battleState?.battleState != null &&
       battleState.battleState !== BattleStatus.ENDED &&
       battleState.battleState !== BattleStatus.CREATED &&
       battleState.battleState !== BattleStatus.PREPARING
+=======
+      battleState?.battleState === BattleStatus.ACTIVE || false
+>>>>>>> Stashed changes
   }
 
   // 所有事件订阅在 events Map 创建后统一注册（见下方 🔹 3. 事件订阅管理器）
@@ -36499,6 +38869,12 @@ export const useBattleStore = defineStore('battle', () => {
       enemy,
       PARTICIPANT_SIDE.ENEMY,
     )
+<<<<<<< Updated upstream
+=======
+    // ponytail: 注册触发型被动技能到 PassiveSkillManager（预览时生效）
+    const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
+    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager);
+>>>>>>> Stashed changes
     previewEntity.value = entity
     selectedCharacterId.value = entity.id
   }
@@ -37943,6 +40319,7 @@ html {
   align-items: center;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
 }
 
 .member-action {
@@ -37976,19 +40353,23 @@ html {
 }
 
 .hp-text,
-.mp-text {
-  font-size: var(--font-size-ms);
+.energy-text {
+  font-size: var(--font-size-md);
   color: var(--color-text-tertiary);
   width: 70px;
+  line-height: var(--line-height-sm);
 }
 
 .hp-bar,
-.mp-bar {
+.energy-bar {
+  font-size: var(--font-size-md);
   flex: 1;
-  height: 0.6rem;
+  height: 0.9rem;
   background: var(--color-bg-secondary);
   border-radius: var(--radius-sm);
   overflow: hidden;
+  position: relative;
+  line-height: var(--line-height-sm);
 }
 
 .hp-fill {
@@ -38031,21 +40412,6 @@ html {
   align-items: center;
   gap: 0.25rem;
   margin-bottom: 0.15rem;
-}
-
-.energy-text {
-  font-size: var(--font-size-ms);
-  color: var(--color-text-tertiary);
-  width: 70px;
-}
-
-.energy-bar {
-  flex: 1;
-  height: 0.6rem;
-  background: #5f5f5f;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  position: relative;
 }
 
 .energy-ticks {
@@ -40263,7 +42629,10 @@ import type { BattleService } from '@/application/facade/BattleFacade';
 import type { LogEntry } from '@/shared/types/battle-log';
 import { EffectType } from '@/shared/types/effect';
 import { DamageCategory } from '@/domain/skill/types';
+<<<<<<< Updated upstream
 import { BuffSystem } from '@/domain/buff/BuffSystem'
+=======
+>>>>>>> Stashed changes
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -40494,9 +42863,15 @@ const teamCounts = computed(() => {
 // 初始化战斗
 function initBattle() {
   // ponytail: 默认测试阵容 — 覆盖伤害/治疗/护盾/buff/debuff 的典型组合
+<<<<<<< Updated upstream
   const allyIds = ["enemy_005", "boss_003", "boss_001", "enemy_004"];
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
   const enemyIds = ["enemy_008", "boss_002", "enemy_007", "enemy_003"];
+=======
+  const allyIds = ["guardian_fire"]; // "enemy_005", "boss_003", "boss_001", "enemy_004", 
+  const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
+  const enemyIds = ["guardian_fire"]; // "enemy_008", "boss_002", "enemy_007", "enemy_003", 
+>>>>>>> Stashed changes
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
   console.log('allyList', allyList)
   console.log('enemyList', enemyList)
@@ -40521,6 +42896,18 @@ function initBattle() {
         buffSystem.registerCharacterImmunities(entity.id, tags);
       }
     }
+  }
+
+  // ponytail: 将触发型被动技能注册到 PassiveSkillManager
+  const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
+  for (const entity of allParticipants) {
+    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager);
+  }
+
+  // ponytail: 默认选中第一个友方，避免面板显示 0/0
+  const firstAlly = battleService.getAllyTeam()[0];
+  if (firstAlly) {
+    battleStore.selectCharacter(firstAlly.id);
   }
 }
 
@@ -40911,17 +43298,13 @@ onUnmounted(() => {
             @mouseenter="showAttrTooltipSimple($event, '最大生命值', ATTRIBUTE_CODE.maxHealth, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentHealth)?.value || 0
-            }}/{{
-                currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0 }}</span>
+            <span class="monitor-value">{{ displayHp }}</span>
           </div>
           <div class="monitor-item"
             @mouseenter="showAttrTooltipSimple($event, '能量', ATTRIBUTE_CODE.currentEnergy, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">能量:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value || 0
-            }}/{{
-                currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 200 }}</span>
+            <span class="monitor-value">{{ displayEnergy }}</span>
           </div>
           <div class="monitor-item" @mouseenter="showAttackTooltip($event)" @mousemove="updateTooltipPosition"
             @mouseleave="hideAttrTooltip">
@@ -41161,6 +43544,23 @@ const currentCharacter = computed(() => {
   return battleService.getSelectedCharacter() || battleStore.previewEntity;
 });
 const selectedCharName = computed(() => currentCharacter.value?.name || "未选择");
+
+// ponytail: 无选中角色时显示 --/-- 而非 0/0，区分"没有数据"与"数值为零"
+const displayHp = computed(() => {
+  const char = currentCharacter.value
+  if (!char) return '--/--'
+  const cur = char.getAttributeValue(ATTRIBUTE_CODE.currentHealth)?.value ?? 0
+  const max = char.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value ?? 0
+  return `${cur}/${max}`
+})
+
+const displayEnergy = computed(() => {
+  const char = currentCharacter.value
+  if (!char) return '--/--'
+  const cur = char.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value ?? 0
+  const max = char.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value ?? 200
+  return `${cur}/${max}`
+})
 
 // 计算攻击范围
 const attackRange = computed(() => {
@@ -45944,6 +48344,9 @@ const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typ
     const buffSystem = container.resolve<any>('BuffSystem');
     buffSystem.registerCharacterImmunities(newCharacter.id, newCharacter.getImmunities());
   }
+  // ponytail: 注册触发型被动技能到 PassiveSkillManager
+  const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
+  GameDataProcessor.registerParticipantPassives(newCharacter, passiveSkillManager);
   battleStore.selectCharacter(newCharacter.id)
 };
 
@@ -48146,6 +50549,7 @@ import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
 import newSkillsData from '@configs/skills/skills_new.json'
+import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
 import buffsData from '@configs/buffs/buffs.json'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig, SkillStep } from '@/domain/skill/types'
@@ -48154,12 +50558,13 @@ import type { CharacterStats } from '@/domain/character/types'
 import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 import type { StructuredBuffConfig } from '@/domain/attribute/modifier-template'
 import type { ParticipantSide } from '@/domain/battle/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE, BattleTriggerPhase } from '@/domain/battle/types'
 import type { BattleEntity } from '@/domain/battle/types'
 import {
   BattleParticipantImpl,
   type BattleParticipantData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
+import type { PassiveSkillManager, PassiveSkillConfig } from '@/domain/skill/PassiveSkillManager'
 import { toArray } from '@/shared/utils/Utils'
 import { Counter } from '@/shared/utils/Counter'
 const counter = new Counter()
@@ -48218,7 +50623,11 @@ export class GameDataProcessor {
   }
 
   static getSkillsData(): SkillConfig[] {
+<<<<<<< Updated upstream
     return (skillsData as any[]).concat(passiveSkillsData as any[], newSkillsData as any[]) as SkillConfig[]
+=======
+    return (skillsData as any[]).concat(passiveSkillsData as any[], newSkillsData as any[], guardianPassiveSkillsData as any[]) as SkillConfig[]
+>>>>>>> Stashed changes
   }
 
   /**
@@ -48593,6 +51002,64 @@ export class GameDataProcessor {
     }
   }
 
+  /** 将 triggerTimes 字符串映射到 BattleTriggerPhase */
+  private static readonly TRIGGER_TIME_MAP: Record<string, BattleTriggerPhase> = {
+    battle_start: BattleTriggerPhase.BATTLE_START,
+    turn_start: BattleTriggerPhase.TURN_START,
+    turn_end: BattleTriggerPhase.TURN_END,
+    before_attack: BattleTriggerPhase.BEFORE_ATTACK,
+    after_attack: BattleTriggerPhase.AFTER_ATTACK,
+    on_hit: BattleTriggerPhase.ON_HIT,
+    on_death: BattleTriggerPhase.ON_DEATH,
+    on_kill: BattleTriggerPhase.ON_KILL,
+    damage_taken: BattleTriggerPhase.DAMAGE_TAKEN,
+    heal_received: BattleTriggerPhase.HEAL_RECEIVED,
+    energy_gained: BattleTriggerPhase.ENERGY_GAINED,
+    skill_use: BattleTriggerPhase.SKILL_USE,
+    hp_lower_than: BattleTriggerPhase.HP_LOWER_THAN,
+  }
+
+  /**
+   * 注册参与者的触发型被动技能到 PassiveSkillManager
+   * 只有配置了 triggerTimes 的被动技能才会被注册
+   * @param participant 参与者实体
+   * @param passiveSkillManager PassiveSkillManager 实例
+   */
+  static registerParticipantPassives(
+    entity: BattleEntity,
+    passiveSkillManager: PassiveSkillManager,
+  ): void {
+    const passives = entity.skills?.passive
+    if (!passives || passives.length === 0) return
+
+    for (const skill of passives) {
+      const triggerTimes = skill.triggerTimes
+      if (!triggerTimes || triggerTimes.length === 0) continue
+
+      const phase = GameDataProcessor.TRIGGER_TIME_MAP[triggerTimes[0]]
+      if (!phase) {
+        console.warn(`未知的被动触发时机: ${triggerTimes[0]} (技能: ${skill.id})`)
+        continue
+      }
+
+      const config: PassiveSkillConfig = {
+        id: `${entity.id}:${skill.id}`,
+        name: skill.name,
+        description: skill.description || '',
+        trigger: phase,
+        skillId: skill.id,
+        cooldown: skill.cooldown || 0,
+        condition: skill.condition,
+        maxTriggerCount: skill.maxUses,
+        // 从 parameters 中读取额外触发配置
+        triggerProbability: skill.parameters?.triggerProbability as number | undefined,
+        hpThreshold: skill.parameters?.hpThreshold as number | undefined,
+      }
+
+      passiveSkillManager.registerPassive(entity.id, config)
+    }
+  }
+
   /**
    * 从被动技能构建结构化修饰符模板列表
    * 根据名称搜索敌人
@@ -48685,9 +51152,9 @@ export class GameDataProcessor {
    * 获取角色的技能信息
    */
   static getCharacterSkills(id: string): {
-    small?: SkillConfig | undefined
-    passive?: SkillConfig | undefined
-    ultimate?: SkillConfig | undefined
+    small?: SkillConfig[]
+    passive?: SkillConfig[]
+    ultimate?: SkillConfig[]
   } {
     if (!id) return {}
 
@@ -48705,7 +51172,7 @@ export class GameDataProcessor {
       DataProcessor.setCachedData(enemyCacheKey, enemy)
     }
 
-    const skills: Record<string, SkillConfig | undefined> = {}
+    const skills: Record<string, SkillConfig[] | undefined> = {}
 
     const smallIds = GameDataProcessor.normalizeSkillIds(enemy.skills?.small)
     const passiveIds = GameDataProcessor.normalizeSkillIds(
@@ -48715,14 +51182,20 @@ export class GameDataProcessor {
       enemy.skills?.ultimate,
     )
 
-    if (smallIds[0]) {
-      skills.small = GameDataProcessor.findSkillById(smallIds[0])
+    if (smallIds.length > 0) {
+      skills.small = smallIds
+        .map((id) => GameDataProcessor.findSkillById(id))
+        .filter((s): s is SkillConfig => s !== undefined)
     }
-    if (passiveIds[0]) {
-      skills.passive = GameDataProcessor.findSkillById(passiveIds[0])
+    if (passiveIds.length > 0) {
+      skills.passive = passiveIds
+        .map((id) => GameDataProcessor.findSkillById(id))
+        .filter((s): s is SkillConfig => s !== undefined)
     }
-    if (ultimateIds[0]) {
-      skills.ultimate = GameDataProcessor.findSkillById(ultimateIds[0])
+    if (ultimateIds.length > 0) {
+      skills.ultimate = ultimateIds
+        .map((id) => GameDataProcessor.findSkillById(id))
+        .filter((s): s is SkillConfig => s !== undefined)
     }
 
     DataProcessor.setCachedData(cacheKey, skills)
@@ -48904,7 +51377,7 @@ export class GameDataProcessor {
     const skills = GameDataProcessor.getCharacterSkills(
       character.originalId || '',
     )
-    return skills.passive?.name || ''
+    return skills.passive?.map((s) => s.name).join(', ') || ''
   }
 
   /**
@@ -48914,7 +51387,7 @@ export class GameDataProcessor {
     const skills = GameDataProcessor.getCharacterSkills(
       character.originalId || '',
     )
-    return skills.small?.name || ''
+    return skills.small?.map((s) => s.name).join(', ') || ''
   }
 
   /**
@@ -48924,7 +51397,7 @@ export class GameDataProcessor {
     const skills = GameDataProcessor.getCharacterSkills(
       character.originalId || '',
     )
-    return skills.ultimate?.name || ''
+    return skills.ultimate?.map((s) => s.name).join(', ') || ''
   }
 
   /**

@@ -49,6 +49,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   private onAttributeChange?: (characterId: string) => void
   private onDamageRequest?: (targetId: string, damage: number, damagePercent?: number) => void
   private onHealRequest?: (targetId: string, amount: number) => void
+  private onBuffApplied?: (characterId: string, buffId: string) => void
+  private buffAppliedCallbackEnabled: boolean = true
   private readonly eventBus: TriggerEventBus
   private triggerScripts = new Map<string, (context: TriggerExecutionContext) => void>()
   private instanceIdCounter = new Counter(1)
@@ -149,6 +151,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   public setHealCallback(callback: (targetId: string, amount: number) => void): void {
     this.onHealRequest = callback
+  }
+
+  public setBuffAppliedCallback(callback: (characterId: string, buffId: string) => void): void {
+    this.onBuffApplied = callback
+  }
+
+  public setBuffAppliedCallbackEnabled(enabled: boolean): void {
+    this.buffAppliedCallbackEnabled = enabled
   }
 
   private triggerAttributeChange(characterId: string): void {
@@ -284,6 +294,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
     this.triggerAttributeChange(characterId)
 
+    // ponytail: 通知外部（如 BattleSystem）buff 已添加，用于触发 UI 动画
+    if (this.buffAppliedCallbackEnabled && this.onBuffApplied) {
+      this.onBuffApplied(characterId, buffInstance.buffId)
+    }
+
     if (record) {
       record.effects.push({
         type: resolvedConfig.isDebuff ? 'debuff' : 'buff',
@@ -351,10 +366,15 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const toRemove: string[] = []
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
-      instance.remainingTurns--
+
       BuffErrorBoundary.wrap(() => {
         instance.script.onUpdate(instance.context, 0)
       })
+
+      // ponytail: 永久 buff（duration === -1）跳过剩余回合递减
+      if (instance.duration === -1) return
+
+      instance.remainingTurns--
       if (instance.duration > 0 && instance.remainingTurns <= 0) {
         toRemove.push(instance.id)
       }
@@ -445,19 +465,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   public getBuffConfigByInstanceId(instanceId: string): BuffConfig | null {
     const instance = this.buffInstances.get(instanceId)
     if (!instance) return null
-    const data = this.scriptRegistry.getBuffConfig(instance.buffId)
-    if (!data) return null
-    return {
-      id: data.id,
-      name: data.name ?? data.id,
-      description: '',
-      duration: data.duration ?? 1,
-      maxStacks: data.maxStacks ?? 1,
-      cooldown: 0,
-      stackRule: StackRule.LIMITED,
-      controlType: ControlType.NONE,
-      controlPriority: 0,
-    }
+    // ponytail: 直接使用 addBuff 时已合并好的运行时配置，比重新从 JSON 查更准确
+    // 旧实现仅查 buffConfigs（JSON），遗漏了仅有脚本 static CONFIG 的 buff
+    return instance.context.config || null
   }
 
   public getSourceName(sourceId: string): string | null {

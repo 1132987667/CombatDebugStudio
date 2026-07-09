@@ -580,7 +580,16 @@ export class BattleParticipantImpl implements BattleEntity {
       return 0
     }
 
-    const damage = Math.max(0, amount)
+    let damage = Math.max(0, amount)
+
+    // ponytail: 背水护甲 — 能量抵扣伤害（每1能量抵扣1点伤害）
+    if (this.hasBuff('guardian_buff_backwater_armor') && this.currentEnergy > 0) {
+      const energyUsed = Math.min(this.currentEnergy, damage)
+      this.currentEnergy -= energyUsed
+      damage -= energyUsed
+      damage = Math.max(0, damage)
+    }
+
     this.currentHealth = Math.max(0, this.currentHealth - damage)
 
     // ponytail: 受击能量从 BATTLE_CONSTANTS 读取，与 BattleRuleManager 配置一致

@@ -30,7 +30,8 @@ export const ModifierSourceType = {
   TALENT: 'talent',
 } as const
 /** 修饰符来源类型 */
-export type ModifierSourceType = (typeof ModifierSourceType)[keyof typeof ModifierSourceType]
+export type ModifierSourceType =
+  (typeof ModifierSourceType)[keyof typeof ModifierSourceType]
 
 /** 修饰符来源类型显示名称映射 */
 export const ModifierSourceTypeNames: Record<ModifierSourceType, string> = {
@@ -272,6 +273,9 @@ export const ATTRIBUTE_CODE = {
   physicalSkillDmgBonus: 'physicalSkillDmgBonus', // 物理技能伤害加成
   damageToDemon: 'damageToDemon', // 对妖魔鬼怪伤害加成
   damageToLowHp: 'damageToLowHp', // 对低生命值目标伤害加成
+
+  // ========== 护盾属性 ==========
+  shield: 'shield', // 当前护盾值
 } as const
 
 export type ATTRIBUTE_CODE =
@@ -662,6 +666,7 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-75%',
     impact: '有概率完全避免受到伤害',
     isPercentage: true,
+    defaultValue: 10,
   },
   hit: {
     code: 'hit',
@@ -671,7 +676,7 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '提高攻击命中率，对抗敌方闪避',
     isPercentage: true,
-    defaultValue: 100,
+    defaultValue: 90,
   },
   controlSuccessRate: {
     code: 'controlSuccessRate',
@@ -780,6 +785,18 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     impact: '提高对低血量目标的伤害输出',
     isPercentage: true,
   },
+
+  // ========== 护盾属性 ==========
+  shield: {
+    code: 'shield',
+    name: '护盾值',
+    displayName: '护盾值',
+    description: '当前护盾值，受到伤害时优先消耗护盾',
+    range: '0-99999',
+    impact: '吸收受到的伤害，护盾归零后开始消耗生命值',
+    isPercentage: false,
+    isRuntimeState: true,
+  },
 }
 
 /** 从元数据派生的属性显示名称映射 */
@@ -794,7 +811,9 @@ export const AttributeCodeNames: Record<ATTRIBUTE_CODE, string> =
 /**
  * 根据属性编码获取属性元数据
  */
-export function getAttributeMeta(code: ATTRIBUTE_CODE): AttributeMeta | undefined {
+export function getAttributeMeta(
+  code: ATTRIBUTE_CODE,
+): AttributeMeta | undefined {
   return AttributeMetaMap[code]
 }
 
@@ -803,8 +822,8 @@ export function getAttributeMeta(code: ATTRIBUTE_CODE): AttributeMeta | undefine
  * @param code 属性编码
  * @returns 默认值，未定义时返回 0
  */
-export function getAttributeDefaultValue(code: string): number {
-  return (AttributeMetaMap as Record<string, AttributeMeta>)[code]?.defaultValue ?? 0
+export function getAttributeDefaultValue(code: ATTRIBUTE_CODE): number {
+  return AttributeMetaMap[code]?.defaultValue ?? 0
 }
 
 /**

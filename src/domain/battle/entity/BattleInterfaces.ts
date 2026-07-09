@@ -23,6 +23,172 @@ import type { BattleAI } from '@/domain/battle/ai/BattleAI'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 
 /**
+<<<<<<< Updated upstream
+=======
+ * 战斗系统接口
+ * 定义了战斗系统的核心功能，包括战斗创建、执行、查询和管理
+ */
+export interface IBattleSystem {
+  /**
+   * 初始化战斗
+   * @param allyParticipants - 参与者数组
+   * @param enemyParticipants - 参与者数组
+   * @returns BattleState - 初始化后的战斗状态
+   */
+  initialize(
+    allyParticipants: BattleEntity[],
+    enemyParticipants: BattleEntity[],
+  ): BattleState
+
+  /**
+   * 处理战斗回合
+   * @returns Promise<void> - 异步处理完成
+   */
+  processTurn(): Promise<void>
+
+  /**
+   * 获取战斗状态
+   * @returns BattleState | undefined - 战斗状态，如果不存在则返回undefined
+   */
+  getBattleState(): BattleState | undefined
+
+  /**
+   * 设置战斗状态
+   * @param status - 要设置的状态（ACTIVE / PAUSED / ENDED 等）
+   */
+  setBattleState(status: BattleStatus): void
+
+  /**
+   * 结束战斗
+   * @param winner - 胜利者类型
+   */
+  endBattle(winner: ParticipantSide): void
+
+  /**
+   * 重置当前战斗
+   */
+  resetBattle(): void
+
+  /**
+   * 回合执行完成回调
+   * @param turn - 回合标识
+   */
+  onTurnExecuted(turn: number): void
+
+  /**
+   * 自动战斗相关方法
+   */
+
+  /**
+   * 开始自动战斗
+   */
+  startBattle(): Promise<void>
+
+  /**
+   * 停止自动战斗
+   */
+  stopAutoBattle(): void
+
+  /**
+   * 设置自动战斗速度
+   * @param speed - 新的自动战斗速度（1-10）
+   */
+  setBattleSpeed(speed: number): void
+
+  /**
+   * 获取当前是否处于自动战斗状态
+   * @returns 是否处于自动战斗状态
+   */
+  getAutoBattle(): boolean
+
+  /**
+   * 获取当前是否处于暂停状态
+   * @returns 是否处于暂停状态
+   */
+  getIsPaused(): boolean
+
+  /**
+   * 获取当前战斗速度倍率
+   * @returns 战斗速度倍率
+   */
+  getBattleSpeed(): number
+
+  /**
+   * 设置战斗速度倍率
+   * @param speed 战斗速度倍率
+   */
+  setSpeed(speed: number): void
+
+  /**
+   * 切换暂停状态
+   */
+  togglePause(): void
+
+  /**
+   * 获取当前战斗数据
+   * @returns BattleData | undefined - 战斗数据，如果不存在则返回undefined
+   */
+  getBattleData(): BattleData | undefined
+
+  /**
+   * 获取当前战斗的参与者信息
+   * @returns BattleEntity[] - 当前战斗的参与者数组
+   */
+  getCurParticipantsInfo(): BattleEntity[]
+
+  /**
+   * 加载技能配置
+   * @param skillConfigs 技能配置数组
+   */
+  loadSkillConfigs(skillConfigs: any[]): void
+
+  /**
+   * 获取当前回合数
+   * @returns 当前回合数（从1开始）
+   */
+  getRound(): number
+
+  /**
+   * 获取Buff系统实例
+   * @returns Buff系统实例
+   */
+  getBuffSystem(): BuffSystem
+
+  /**
+   * 触发单个角色的被动技能
+   * 用于在调试面板中动态添加角色时触发被动技能
+   * @param participant 参与者
+   */
+  triggerPassiveSkillsForCharacter(participant: BattleEntity): void
+
+  /**
+   * 从当前战斗状态生成命令序列（第三阶段）
+   * 将 BattleSystem 从状态修改器转变为命令生成器
+   * @returns BattleCommand[] 命令序列
+   */
+  generateCommandsForTurn(): import('@/shared/types/battle-commands').BattleCommand[]
+
+  /**
+   * 推进到下一回合（递增回合计数器）
+   * ponytail: 从 generateCommandsForTurn 中抽取，消除命令生成器的副作用
+   */
+  advanceRound(): void
+
+  /**
+   * 获取可用的我方队伍
+   * @returns BattleEntity[] 启用的我方参与者数组
+   */
+  getEnabledAllyTeam(): BattleEntity[]
+
+  /**
+   * 获取可用的敌方队伍
+   * @returns BattleEntity[] 启用的敌方参与者数组
+   */
+  getEnabledEnemyTeam(): BattleEntity[]
+}
+
+/**
+>>>>>>> Stashed changes
  * 回合管理器接口
  * 负责管理战斗回合的初始化、推进和查询
  */
@@ -75,38 +241,6 @@ export interface ITurnManager {
 }
 
 /**
- * 动作执行器接口
- * 负责执行和验证战斗动作
- */
-export interface IActionExecutor {
-  /**
-   * 执行战斗动作
-   * @param action - 要执行的战斗动作
-   * @returns Promise<void> - 异步执行完成
-   */
-  executeAction(action: BattleAction): Promise<void>
-
-  /**
-   * 验证战斗动作是否有效
-   * @param action - 要验证的战斗动作
-   * @returns boolean - 动作是否有效
-   */
-  validateAction(action: BattleAction): boolean
-
-  /**
-   * 执行默认动作
-   * 当AI决策失败或需要默认行为时执行
-   * @param battle - 当前战斗数据
-   * @param participant - 执行动作的参与者
-   * @returns Promise<void> - 异步执行完成
-   */
-  executeDefaultAction(
-    battle: BattleData,
-    participant: BattleEntity,
-  ): Promise<void>
-}
-
-/**
  * AI系统接口
  * 负责创建AI实例并做出战斗决策
  */
@@ -130,27 +264,12 @@ export interface IAISystem {
     battleState: BattleState,
     participant: BattleEntity,
   ): BattleAction
-
-  /**
-   * 执行AI动作
-   * 综合决策、目标选择和动作执行
-   * @param battle - 当前战斗数据
-   * @param participant - 当前参与者
-   * @param actionExecutor - 动作执行器
-   * @returns Promise<void> - 异步执行完成
-   */
-  executeAIAction(
-    battle: BattleData,
-    participant: BattleEntity,
-    actionExecutor: IActionExecutor,
-  ): Promise<void>
 }
 
 // 依赖注入令牌
 // 用于依赖注入系统，确保模块间的松耦合
 export const BATTLE_SYSTEM_TOKEN = Symbol('BattleSystem')
 export const TURN_MANAGER_TOKEN = Symbol('TurnManager')
-export const ACTION_EXECUTOR_TOKEN = Symbol('ActionExecutor')
 export const AI_SYSTEM_TOKEN = Symbol('AISystem')
 export const BATTLE_RECORDER_TOKEN = Symbol('BattleRecorder')
 export const BATTLE_RULE_MANAGER_TOKEN = Symbol('BattleRuleManager')

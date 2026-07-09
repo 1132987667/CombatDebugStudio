@@ -12,17 +12,13 @@
             @mouseenter="showAttrTooltipSimple($event, '最大生命值', ATTRIBUTE_CODE.maxHealth, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentHealth)?.value || 0
-            }}/{{
-                currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value || 0 }}</span>
+            <span class="monitor-value">{{ displayHp }}</span>
           </div>
           <div class="monitor-item"
             @mouseenter="showAttrTooltipSimple($event, '能量', ATTRIBUTE_CODE.currentEnergy, '数值')"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">能量:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value || 0
-            }}/{{
-                currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value || 200 }}</span>
+            <span class="monitor-value">{{ displayEnergy }}</span>
           </div>
           <div class="monitor-item" @mouseenter="showAttackTooltip($event)" @mousemove="updateTooltipPosition"
             @mouseleave="hideAttrTooltip">
@@ -259,9 +255,29 @@ const currentCharacter = computed(() => {
   const id = battleStore.selectedCharacterId;
   if (!id) return null;
   // 先找战斗中的参战角色，若未加入队伍则回退到角色库预览实体
-  return battleService.getSelectedCharacter() || battleStore.previewEntity;
+  const char = battleService.getSelectedCharacter() || battleStore.previewEntity;
+  // ponytail: 显式依赖 statsVersion，属性重算时此 computed 重新求值触发 UI 刷新
+  char?.statsVersion;
+  return char;
 });
 const selectedCharName = computed(() => currentCharacter.value?.name || "未选择");
+
+// ponytail: 无选中角色时显示 --/-- 而非 0/0，区分"没有数据"与"数值为零"
+const displayHp = computed(() => {
+  const char = currentCharacter.value
+  if (!char) return '--/--'
+  const cur = char.getAttributeValue(ATTRIBUTE_CODE.currentHealth)?.value ?? 0
+  const max = char.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value ?? 0
+  return `${cur}/${max}`
+})
+
+const displayEnergy = computed(() => {
+  const char = currentCharacter.value
+  if (!char) return '--/--'
+  const cur = char.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value ?? 0
+  const max = char.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value ?? 200
+  return `${cur}/${max}`
+})
 
 // 计算攻击范围
 const attackRange = computed(() => {

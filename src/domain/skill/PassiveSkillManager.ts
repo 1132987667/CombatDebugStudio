@@ -3,18 +3,21 @@ import { BATTLE_CONSTANTS } from '@/domain/battle/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType } from '@/domain/buff/types'
+import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 
 export interface PassiveSkillConfig {
   id: string
   name: string
   description: string
-  trigger: BattleTriggerPhase
+  trigger?: BattleTriggerPhase
   condition?: string
   skillId: string
   cooldown: number
   lastTriggeredTurn?: number
   triggerCount?: number
   maxTriggerCount?: number
+  // 触发概率
   triggerProbability?: number
   hpThreshold?: number
 }
@@ -40,7 +43,10 @@ export class PassiveSkillManager {
   }
 
   /** Factory method for compatibility with DI Container */
-  static create(skillManager: SkillManager, buffSystem: BuffSystem): PassiveSkillManager {
+  static create(
+    skillManager: SkillManager,
+    buffSystem: BuffSystem,
+  ): PassiveSkillManager {
     return new PassiveSkillManager(skillManager, buffSystem)
   }
 
@@ -63,21 +69,55 @@ export class PassiveSkillManager {
     if (!characterPassives) return
 
     for (const config of characterPassives) {
+      // 检查触发时机是否匹配
       if (config.trigger !== trigger) continue
+      // 检查冷却时间是否到，config.cooldown = -1 表示无冷却
       if (config.cooldown > 0 && config.lastTriggeredTurn) {
-        const currentTurn = context?.currentTurn as number || 0
+        const currentTurn = (context?.currentTurn as number) || 0
         if (currentTurn - config.lastTriggeredTurn < config.cooldown) continue
       }
-      if (config.maxTriggerCount && config.triggerCount && config.triggerCount >= config.maxTriggerCount) continue
-      if (config.triggerProbability && Math.random() > config.triggerProbability) continue
-      if (config.trigger === BattleTriggerPhase.HP_LOWER_THAN && config.hpThreshold) {
-        const hpPercent = entity.getAttribute('currentHealth') / Math.max(1, entity.getAttribute('maxHealth'))
+      // 检查最大触发次数是否超过
+      if (
+        config.maxTriggerCount &&
+        config.triggerCount &&
+        config.triggerCount >= config.maxTriggerCount
+      )
+        continue
+      // 检查触发概率是否命中
+      if (
+        config.triggerProbability &&
+        Math.random() > config.triggerProbability
+      )
+        continue
+      if (
+        config.trigger === BattleTriggerPhase.HP_LOWER_THAN &&
+        config.hpThreshold
+      ) {
+        const hpPercent =
+          entity.getAttribute('currentHealth') /
+          Math.max(1, entity.getAttribute('maxHealth'))
         if (hpPercent > config.hpThreshold / 100) continue
       }
-      if (config.condition && !this.evaluateCondition(config.condition, entity, target, context)) continue
-
-      this.skillManager.executeSkill(config.skillId, entity, target!, context?.currentTurn as number || 0)
-      config.lastTriggeredTurn = context?.currentTurn as number || 0
+      // 被动有触发条件，检查是否满足
+      if (
+        config.condition &&
+        !this.evaluateCondition(config.condition, entity, target, context)
+      )
+        continue
+      // 执行被动技能
+      this.skillManager.executeSkill(
+        config.skillId,
+        entity,
+        target!,
+        (context?.currentTurn as number) || 0,
+      )
+      // ponytail: 被动触发日志
+      const targetName = target?.name || '自身'
+      battleLogManager.addSystemLog({
+        message: `${entity.name} 触发 ${config.name}，对 ${targetName} 生效`,
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+      })
+      config.lastTriggeredTurn = (context?.currentTurn as number) || 0
       config.triggerCount = (config.triggerCount || 0) + 1
     }
   }
@@ -95,7 +135,41 @@ export class PassiveSkillManager {
         case 'source_has_buff':
           return source.getBuffInstanceIds().length > 0
         case 'target_low_hp':
-          return target ? (target.getAttribute('currentHealth') / Math.max(1, target.getAttribute('maxHealth'))) < BATTLE_CONSTANTS.HEAL_THRESHOLD : false
+          return target
+            ? target.getAttribute('currentHealth') /
+                Math.max(1, target.getAttribute('maxHealth')) <
+                BATTLE_CONSTANTS.HEAL_THRESHOLD
+            : false
+        // 守护者被动技能专用条件
+        case 'target_has_poison':
+          return target
+            ? target.hasBuff('buff_poison') ||
+                target.hasBuff('buff_strong_poison')
+            : false
+        case 'target_has_stun':
+          return target ? target.hasBuff('buff_stun') : false
+        case 'target_has_burn':
+          return target ? target.hasBuff('buff_burn') : false
+        case 'target_has_sleep':
+          // ponytail: 睡眠 buff ID 待确认，当前用 hasBuff 通配检查
+          return target
+            ? target.getBuffInstanceIds().some((id) => id.includes('sleep'))
+            : false
+        case 'source_has_debuff_count_3':
+          return source.getBuffInstanceIds().length >= 3
+        case 'source_energy_high':
+          return (
+            source.getAttribute('currentEnergy') /
+              Math.max(1, source.getAttribute('maxEnergy')) >
+            0.9
+          )
+        case 'source_turn_gt_5':
+          return (context?.currentTurn as number) > 5
+        case 'source_turn_mod_5':
+          return (
+            (context?.currentTurn as number) % 5 === 0 &&
+            (context?.currentTurn as number) > 0
+          )
         default:
           return true
       }

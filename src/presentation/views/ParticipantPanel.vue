@@ -259,6 +259,9 @@ const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typ
     const buffSystem = container.resolve<any>('BuffSystem');
     buffSystem.registerCharacterImmunities(newCharacter.id, newCharacter.getImmunities());
   }
+  // ponytail: 注册触发型被动技能到 PassiveSkillManager
+  const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
+  GameDataProcessor.registerParticipantPassives(newCharacter, passiveSkillManager);
   battleStore.selectCharacter(newCharacter.id)
 };
 

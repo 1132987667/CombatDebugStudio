@@ -142,14 +142,18 @@ export class SkillManager {
       }
     }
 
-    if (!target) {
+    // ponytail: 被动技能允许无 target（自施法技能通过 targetConfig.faction === 'self' 处理）
+    const hasNonSelfStep = config.steps?.some(
+      s => s.targetConfig?.faction !== 'self' && s.type !== 'remove_debuff' && s.type !== 'cleanse'
+    ) ?? false
+    if (!target && hasNonSelfStep) {
       battleLogManager.addDebugLog(`技能 ${skillId} 无有效目标`, LogLevel.WARN)
       console.error(`技能 ${skillId} 无有效目标`)
       return null
     }
 
-    // 检查目标是否被眩晕
-    const targetIsStunned = this.isTargetStunned(target)
+    // 检查目标是否被眩晕（仅目标存在时检查）
+    const targetIsStunned = target ? this.isTargetStunned(target) : false
     if (targetIsStunned) {
       battleLogManager.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, LogLevel.WARN)
       const action = BattleActionHelper.createSkill({

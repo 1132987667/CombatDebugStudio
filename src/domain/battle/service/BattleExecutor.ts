@@ -10,6 +10,7 @@ import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { BattleTriggerPhase, ActionResultType } from '@/domain/battle/types'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
+import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { EffectType } from '@/shared/types/effect'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
 import { BUFF_IDS } from '@/domain/buff/types'
@@ -58,6 +59,7 @@ export class BattleExecutor {
     private readonly passiveSkillManager: PassiveSkillManager,
     private readonly battleRecorder: BattleRecorder,
     private readonly animationManager: BattleAnimationManager,
+    private readonly buffSystem: BuffSystem,
   ) {}
 
   // ============ 参与者行动 ============
@@ -193,6 +195,12 @@ export class BattleExecutor {
     const records: CombatRecord[] = []
 
     try {
+      this.passiveSkillManager.triggerPassives(
+        BattleTriggerPhase.BEFORE_ATTACK,
+        source,
+        targets[0],
+        { targetId: targets[0]?.id, currentRound: battle.currentRound },
+      )
       // ponytail: 启用延迟伤害模式 — 技能执行只记录数值不实际扣血，等待动画完成后统一应用
       this.skillManager.setDeferredDamageMode(true)
       const pendingDamages: Array<{
@@ -283,7 +291,7 @@ export class BattleExecutor {
       if (targets.length > 0 && (totalDamage > 0 || totalHeal > 0)) {
         const primaryTarget = targets[0]
         const isCrit = allEffects.some(
-          (e: any) => e.type === ActionResultType.DAMAGE && e.isCritical,
+          (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
         )
 
         // ponytail: 技能飞行动画只播放一次（无论伤害/治疗/同时都有）
@@ -320,6 +328,38 @@ export class BattleExecutor {
           if (pd.damage > 0) pd.target.takeDamage(pd.damage)
           if (pd.heal > 0) pd.target.heal(pd.heal)
         }
+
+        // ponytail: 触发被动 — 攻击方 ON_HIT + 受击方 DAMAGE_TAKEN + ON_DEATH
+        for (const pd of pendingDamages) {
+          if (pd.damage > 0) {
+            this.passiveSkillManager.triggerPassives(
+              BattleTriggerPhase.ON_HIT,
+              source,
+              pd.target,
+              { sourceId: source.id, damage: pd.damage },
+            )
+            this.passiveSkillManager.triggerPassives(
+              BattleTriggerPhase.DAMAGE_TAKEN,
+              pd.target,
+              source,
+              { sourceId: source.id, damage: pd.damage },
+            )
+            if (!pd.target.isAlive()) {
+              this.passiveSkillManager.triggerPassives(
+                BattleTriggerPhase.ON_DEATH,
+                pd.target,
+                source,
+                { sourceId: source.id, cause: EffectType.DAMAGE },
+              )
+              this.passiveSkillManager.triggerPassives(
+                BattleTriggerPhase.ON_KILL,
+                source,
+                pd.target,
+                { targetId: pd.target.id, cause: EffectType.DAMAGE },
+              )
+            }
+          }
+        }
       }
     } catch (error) {
       this.skillManager.setDeferredDamageMode(false)
@@ -334,6 +374,17 @@ export class BattleExecutor {
         },
       ]
     }
+
+    this.passiveSkillManager.triggerPassives(
+      BattleTriggerPhase.AFTER_ATTACK,
+      source,
+      targets[0],
+      {
+        targetId: targets[0]?.id,
+        damage: action.damage,
+        isCritical: action.effects?.some((e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical),
+      },
+    )
 
     this.recordBattleAction(battle, action)
     return action
@@ -603,18 +654,31 @@ export class BattleExecutor {
     damage: number,
   ): void {
     target.takeDamage(damage)
+    // ponytail: ON_HIT 触发攻击者（命中方）的被动，DAMAGE_TAKEN 触发受击方（受伤害）的被动
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.ON_HIT,
+      source,
       target,
-      undefined,
+      { sourceId: source.id, damage },
+    )
+    this.passiveSkillManager.triggerPassives(
+      BattleTriggerPhase.DAMAGE_TAKEN,
+      target,
+      source,
       { sourceId: source.id, damage },
     )
     if (!target.isAlive()) {
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.ON_DEATH,
         target,
-        undefined,
+        source,
         { sourceId: source.id, cause: EffectType.DAMAGE },
+      )
+      this.passiveSkillManager.triggerPassives(
+        BattleTriggerPhase.ON_KILL,
+        source,
+        target,
+        { targetId: target.id, cause: EffectType.DAMAGE },
       )
     }
   }
@@ -723,13 +787,13 @@ export class BattleExecutor {
       )
     }
 
-    const roundNumber = battle.currentRound
+    const currentRound = battle.currentRound
 
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BEFORE_ATTACK,
       source,
-      undefined,
-      { targetId, roundNumber },
+      target,
+      { targetId, currentRound },
     )
 
     // 创建详细记录对象用于捕获伤害拆分
@@ -740,7 +804,7 @@ export class BattleExecutor {
       'attack',
       targetId,
       target.name,
-      roundNumber ?? 1,
+      currentRound ?? 1,
     )
 
     const attackStep = this.buildNormalAttackStep(source, targetId)
@@ -751,17 +815,17 @@ export class BattleExecutor {
       record,
     )
 
-    const action = this.createBattleAction(source.id, targetId, roundNumber)
+    const action = this.createBattleAction(source.id, targetId, currentRound)
 
     if (damageResult.isMiss) {
-      await this.handleMissAttack(action, source, target, roundNumber)
+      await this.handleMissAttack(action, source, target, currentRound)
     } else {
       await this.handleHitAttack(
         action,
         source,
         target,
         damageResult,
-        roundNumber,
+        currentRound,
       )
     }
 
@@ -773,7 +837,7 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.AFTER_ATTACK,
       source,
-      undefined,
+      target,
       {
         targetId,
         damage: action.damage,
@@ -902,6 +966,8 @@ export class BattleExecutor {
       try {
         // ponytail: 延迟伤害模式 — 动画完成后才扣血
         this.skillManager.setDeferredDamageMode(true)
+        // ponytail: 主动技能执行时禁用 buffApplied 回调，避免与下方动画循环重复
+        this.buffSystem.setBuffAppliedCallbackEnabled(false)
         const skillAction = this.skillManager.executeSkill(
           action.skillId,
           source,
@@ -910,6 +976,8 @@ export class BattleExecutor {
         )
         if (!skillAction) {
           this.skillManager.setDeferredDamageMode(false)
+          // ponytail: early-return 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
+          this.buffSystem.setBuffAppliedCallbackEnabled(true)
           battleLogManager.addDebugLog(`技能执行返回空: ${action.skillId}`)
           console.error(`技能执行返回空: ${action.skillId}`)
           action.damage = 0
@@ -919,6 +987,22 @@ export class BattleExecutor {
           action.damage = skillAction.damage
           action.heal = skillAction.heal
           action.effects = skillAction.effects
+
+          // ponytail: 技能释放日志
+          const skillName = action.skillId.replace(/^(skill_|attack_|normal_)/, '')
+          const dmgPart = (action.damage ?? 0) > 0 ? `，造成 ${action.damage} 点` : ''
+          const healPart = (action.heal ?? 0) > 0 ? `，恢复 ${action.heal} 点生命` : ''
+          battleLogManager.addBattleLog({
+            turn: action.turn ?? 0,
+            message: `${source.name} 对 ${target.name} 使用 ${skillName}${dmgPart}${healPart}`,
+            segments: [
+              { text: source.name, classStr: source.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile' },
+              { text: ' 对 ' },
+              { text: target.name, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile' },
+              { text: ` 使用 ${skillName}${dmgPart}${healPart}` },
+            ],
+            category: BATTLE_LOG_CATEGORIES.ACTION,
+          })
 
           const hasMissEffect = skillAction.effects.some(
             (effect) => effect.type === EffectType.MISS,
@@ -953,15 +1037,40 @@ export class BattleExecutor {
             damageCategory: DamageCategory.PHYSICAL,
           })
 
+          // ponytail: 主动技能动画循环结束，恢复 buffApplied 回调（被动触发路径需要它）
+          this.buffSystem.setBuffAppliedCallbackEnabled(true)
+
           // ponytail: 动画完成后应用延迟的伤害/治疗
           this.skillManager.setDeferredDamageMode(false)
-          if ((action.damage ?? 0) > 0) target.takeDamage(action.damage ?? 0)
+          if ((action.damage ?? 0) > 0) {
+            target.takeDamage(action.damage ?? 0)
+            this.passiveSkillManager.triggerPassives(
+              BattleTriggerPhase.ON_HIT,
+              source,
+              target,
+              { sourceId: source.id, damage: action.damage ?? 0 },
+            )
+            this.passiveSkillManager.triggerPassives(
+              BattleTriggerPhase.DAMAGE_TAKEN,
+              target,
+              source,
+              { sourceId: source.id, damage: action.damage ?? 0 },
+            )
+            if (!target.isAlive()) {
+              this.passiveSkillManager.triggerPassives(
+                BattleTriggerPhase.ON_DEATH,
+                target,
+                source,
+                { sourceId: source.id, cause: EffectType.DAMAGE },
+              )
+            }
+          }
           if ((action.heal ?? 0) > 0) target.heal(action.heal ?? 0)
 
           // ponytail: 技能伤害/治疗数值动画（在 HP 扣减之后播放，与 handleHitAttack 时序一致）
           if ((action.damage ?? 0) > 0) {
             const isCrit = skillAction.effects.some(
-              (e: any) => e.type === EffectType.DAMAGE && e.isCritical,
+              (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
             )
             await this.animationManager.triggerDamageAnimationAndWait({
               targetId: target.id,
@@ -983,6 +1092,8 @@ export class BattleExecutor {
         }
       } catch (error) {
         this.skillManager.setDeferredDamageMode(false)
+        // ponytail: catch 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
+        this.buffSystem.setBuffAppliedCallbackEnabled(true)
         battleLogManager.addDebugLog(
           `技能执行失败: ${action.skillId}`,
           error as Error,
@@ -1015,18 +1126,31 @@ export class BattleExecutor {
         const actualDamage = target.takeDamage(action.damage)
         action.damage = actualDamage
 
+        // ponytail: ON_HIT 触发攻击方，DAMAGE_TAKEN 触发受击方
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.ON_HIT,
+          source,
           target,
-          undefined,
+          { sourceId: source.id, damage: actualDamage },
+        )
+        this.passiveSkillManager.triggerPassives(
+          BattleTriggerPhase.DAMAGE_TAKEN,
+          target,
+          source,
           { sourceId: source.id, damage: actualDamage },
         )
         if (!target.isAlive()) {
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_DEATH,
             target,
-            undefined,
+            source,
             { sourceId: source.id, cause: EffectType.DAMAGE },
+          )
+          this.passiveSkillManager.triggerPassives(
+            BattleTriggerPhase.ON_KILL,
+            source,
+            target,
+            { targetId: target.id, cause: EffectType.DAMAGE },
           )
         }
 

@@ -16,7 +16,6 @@ import type {
 import { BattleStatus } from '@/domain/battle/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { BattleAIFactory, BattleAI } from '@/domain/battle/ai/BattleAI'
-import type { IActionExecutor } from '@/domain/battle/entity/BattleInterfaces'
 
 /**
  * AI系统类
@@ -97,90 +96,6 @@ export class AISystem {
     }
 
     return ai.makeDecision(battleState, participant)
-  }
-
-  /**
-   * 执行AI动作
-   * 综合决策、目标选择和动作执行，生成并执行完整的AI回合动作
-   * @param battle - 当前战斗数据对象
-   * @param participant - 当前执行动作的参与者
-   * @param actionExecutor - 动作执行器实例，用于执行生成的战斗动作
-   * @returns Promise<void> - 异步执行，完成后无返回值
-   */
-  public async executeAIAction(
-    battle: BattleData,
-    participant: BattleEntity,
-    actionExecutor: IActionExecutor,
-  ): Promise<void> {
-    const ai = this.getOrCreateAI(participant)
-    if (!ai) {
-      await actionExecutor.executeDefaultAction(battle, participant)
-      return
-    }
-
-    const battleState = this.convertToBattleState(battle)
-    let action = ai.makeDecision(battleState, participant)
-    action.turn = battle.currentTurn + 1
-
-    let target = battle.participants.get(action.targetId)
-    // 检查目标是否有效（存活且在有效范围内）
-    if (!target || !target.isAlive()) {
-      // 目标无效，重新选择有效目标
-      action = await this.selectValidTarget(battle, participant, actionExecutor)
-    }
-
-    await actionExecutor.executeAction(action)
-  }
-
-  /**
-   * 选择有效的目标
-   * 如果原目标无效，重新选择活着的目标
-   * @param battle - 当前战斗数据对象
-   * @param participant - 当前执行动作的参与者
-   * @param actionExecutor - 动作执行器实例
-   * @returns 有效的战斗动作
-   */
-  private async selectValidTarget(
-    battle: BattleData,
-    participant: BattleEntity,
-    actionExecutor: IActionExecutor,
-  ): Promise<BattleAction> {
-    // 获取所有有效目标（活着的目标）
-    const validTargets = Array.from(battle.participants.values()).filter(
-      (p) => {
-        return (
-          p.isAlive() && p.id !== participant.id && p.team !== participant.team
-        )
-      },
-    )
-
-    if (validTargets.length === 0) {
-      // 没有有效目标，返回默认动作
-      return {
-        id: `default_${Date.now()}`,
-        type: 'attack',
-        sourceId: participant.id,
-        targetId: '',
-        success: false,
-        timestamp: Date.now(),
-        turn: battle.currentTurn + 1,
-        effects: [],
-      }
-    }
-
-    // 选择第一个有效目标（可以扩展为更智能的选择逻辑）
-    const newTarget = validTargets[0]
-
-    return {
-      id: `ai_adjusted_${Date.now()}`,
-      type: 'attack',
-      sourceId: participant.id,
-      targetId: newTarget.id,
-      success: true,
-      timestamp: Date.now(),
-      turn: battle.currentTurn + 1,
-      effects: [],
-    }
   }
 
   /**

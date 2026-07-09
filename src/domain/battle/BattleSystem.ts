@@ -24,14 +24,12 @@ import { BattleTriggerPhase } from '@/domain/battle/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { AISystem } from '@/domain/battle/ai/AISystem'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
-import { ActionExecutor } from '@/domain/battle/service/ActionExecutor'
 import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { TurnManager } from '@/domain/battle/service/TurnManager'
 import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
 import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
 import {
-  ACTION_EXECUTOR_TOKEN,
   AI_SYSTEM_TOKEN,
   BATTLE_RECORDER_TOKEN,
   BATTLE_RULE_MANAGER_TOKEN,
@@ -124,7 +122,6 @@ export class BattleSystem {
   /**
    * 私有构造函数，防止外部直接实例化
    * @param turnManager 回合管理器
-   * @param actionExecutor 动作执行器
    * @param aiSystem AI系统
    * @param battleRecorder 战斗录像器
    * @param ruleManager 规则管理器
@@ -136,7 +133,6 @@ export class BattleSystem {
    */
   private constructor(
     private readonly turnManager: TurnManager,
-    private readonly actionExecutor: ActionExecutor,
     private readonly aiSystem: AISystem,
     private readonly battleRecorder: BattleRecorder,
     private readonly ruleManager: BattleRuleManager,
@@ -165,6 +161,7 @@ export class BattleSystem {
       this.passiveSkillManager,
       this.battleRecorder,
       this.animationManager,
+      this.buffSystem,
     )
   }
 
@@ -208,9 +205,6 @@ export class BattleSystem {
     const turnManager = container.resolve<TurnManager>(
       TURN_MANAGER_TOKEN.toString(),
     )
-    const actionExecutor = container.resolve<ActionExecutor>(
-      ACTION_EXECUTOR_TOKEN.toString(),
-    )
 
     const aiSystem = container.resolve<AISystem>(AI_SYSTEM_TOKEN.toString())
     const battleRecorder = container.resolve<BattleRecorder>(
@@ -230,7 +224,6 @@ export class BattleSystem {
 
     return new BattleSystem(
       turnManager,
-      actionExecutor,
       aiSystem,
       battleRecorder,
       ruleManager,
@@ -314,10 +307,6 @@ export class BattleSystem {
     battleData.currentRound = 1
     battleData.battleState = BattleStatus.PREPARING
 
-    this.actionExecutor.registerBattle(
-      this.battleData.battleId,
-      this.battleData,
-    )
     const battleId = this.battleData.battleId
     this.battleRecorder.startRecording(battleId, {
       participants: allParticipants,
@@ -345,6 +334,15 @@ export class BattleSystem {
       }
     })
 
+    // ponytail: 注册 buff 添加回调，被动触发路径通过 eventBus 告知 UI 播放动画
+    this.buffSystem.setBuffAppliedCallback((characterId: string, buffId: string) => {
+      eventBus.emit(BattleEventCodes.BUFF_EFFECT, {
+        targetId: characterId,
+        buffName: buffId,
+        isPositive: true,
+      })
+    })
+
     // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
     this.buffSystem.setDamageCallback((targetId: string, damage: number, damagePercent?: number) => {
       const target = battleData.participants.get(targetId)
@@ -359,6 +357,13 @@ export class BattleSystem {
           targetId,
           value: actualDamage,
         })
+        // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
+        this.passiveSkillManager.triggerPassives(
+          BattleTriggerPhase.DAMAGE_TAKEN,
+          target,
+          undefined as any,
+          { sourceId: '', targetId, damage: actualDamage },
+        )
       }
     })
     this.buffSystem.setHealCallback((targetId: string, amount: number) => {
@@ -370,6 +375,13 @@ export class BattleSystem {
           targetId,
           value: amount,
         })
+        // ponytail: 补充被动触发 — buff 治疗也需要触发 HEAL_RECEIVED 被动
+        this.passiveSkillManager.triggerPassives(
+          BattleTriggerPhase.HEAL_RECEIVED,
+          target,
+          undefined as any,
+          { sourceId: '', targetId, value: amount },
+        )
       }
     })
 
@@ -747,11 +759,6 @@ export class BattleSystem {
   public getEnabledEnemyTeam(): BattleEntity[] {
     return Array.from(this.battleData.participants.values())
       .filter(p => p.enabled && p.team === 'enemy')
-  }
-
-  public async executeAction(action: BattleAction): Promise<BattleAction> {
-    await this.actionExecutor.executeAction(action)
-    return action
   }
 
   public stopAutoBattle(): void {

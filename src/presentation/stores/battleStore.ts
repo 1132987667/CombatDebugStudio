@@ -777,6 +777,9 @@ export const useBattleStore = defineStore('battle', () => {
       enemy,
       PARTICIPANT_SIDE.ENEMY,
     )
+    // ponytail: 注册触发型被动技能到 PassiveSkillManager（预览时生效）
+    const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
+    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager);
     previewEntity.value = entity
     selectedCharacterId.value = entity.id
   }

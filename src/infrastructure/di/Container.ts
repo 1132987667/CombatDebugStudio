@@ -83,7 +83,6 @@ export const container = reactive(Container.getInstance())
 import {
   BATTLE_SYSTEM_TOKEN,
   TURN_MANAGER_TOKEN,
-  ACTION_EXECUTOR_TOKEN,
   AI_SYSTEM_TOKEN,
   BATTLE_RECORDER_TOKEN,
   BATTLE_RULE_MANAGER_TOKEN,
@@ -91,7 +90,6 @@ import {
 
 import { BattleSystem } from '@/domain/battle/BattleSystem'
 import { TurnManager } from '@/domain/battle/service/TurnManager'
-import { ActionExecutor } from '@/domain/battle/service/ActionExecutor'
 import { AISystem } from '@/domain/battle/ai/AISystem'
 import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
@@ -157,10 +155,6 @@ export function initializeContainer(): void {
 
   // 6. 注册核心战斗组件（依赖上面注册的服务）
   container.register(TURN_MANAGER_TOKEN.toString(), new TurnManager(buffSystem))
-  container.register(
-    ACTION_EXECUTOR_TOKEN.toString(),
-    new ActionExecutor(buffSystem),
-  )
   container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
   container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder())
   container.register(

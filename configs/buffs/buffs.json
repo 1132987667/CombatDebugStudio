@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "id": "buff_commander_aura",
     "name": "统领光环",
@@ -659,7 +659,16 @@
     "id": "buff_valley_overlord",
     "name": "谷中霸主",
     "duration": -1,
-    "immunities": ["slow", "stun", "freeze", "silence", "charm", "fear", "sleep", "confuse"]
+    "immunities": [
+      "slow",
+      "stun",
+      "freeze",
+      "silence",
+      "charm",
+      "fear",
+      "sleep",
+      "confuse"
+    ]
   },
   {
     "id": "buff_crit_damage_reduction",
@@ -677,9 +686,7 @@
     "id": "buff_mountain_child",
     "name": "山林之子",
     "duration": -1,
-    "immunities": [
-      "slow"
-    ]
+    "immunities": ["slow"]
   },
   {
     "id": "buff_flower_regeneration",
@@ -901,7 +908,7 @@
         "id": "speed_up_mod",
         "targetAttribute": "speed",
         "type": "ADDITIVE",
-        "value": 10
+        "value": 5
       }
     ]
   },
@@ -1031,5 +1038,135 @@
       "valueFormula": "source.maxHp * 0.10",
       "damageCategoryAbsorb": "all"
     }
+  },
+  {
+    "id": "guardian_buff_revenge_rage",
+    "name": "复仇怒火",
+    "maxStacks": 5,
+    "duration": -1
+  },
+  {
+    "id": "guardian_buff_armor_break",
+    "name": "破甲打击",
+    "maxStacks": 1,
+    "duration": 2,
+    "isDebuff": true
+  },
+  {
+    "id": "guardian_buff_firm_shield",
+    "name": "坚毅护盾",
+    "maxStacks": 1,
+    "duration": 1
+  },
+  {
+    "id": "guardian_buff_static_rebound",
+    "name": "静电反冲",
+    "maxStacks": 1,
+    "duration": -1,
+    "triggers": [
+      {
+        "phase": "ON_APPLY",
+        "scriptId": "apply_silence_to_attacker",
+        "params": { "buffId": "buff_silence", "duration": 1 },
+        "probability": 1.0
+      }
+    ]
+  },
+  {
+    "id": "guardian_buff_first_strike",
+    "name": "先发制人",
+    "maxStacks": 1,
+    "duration": 1
+  },
+  {
+    "id": "guardian_buff_charge_burst",
+    "name": "蓄力爆发",
+    "maxStacks": 1,
+    "duration": 1
+  },
+  {
+    "id": "guardian_buff_element_slow",
+    "name": "元素迟缓",
+    "maxStacks": 1,
+    "duration": 1,
+    "isDebuff": true
+  },
+  {
+    "id": "guardian_buff_despair_aura",
+    "name": "绝望气场",
+    "maxStacks": 1,
+    "duration": -1,
+    "aura": {
+      "targetSelector": "enemies",
+      "modifiers": [
+        {
+          "id": "despair_aura_crit",
+          "targetAttribute": "critRate",
+          "type": "ADDITIVE",
+          "value": -15
+        }
+      ]
+    }
+  },
+  {
+    "id": "guardian_buff_heal_breeze",
+    "name": "治愈微风",
+    "maxStacks": 1,
+    "duration": -1
+  },
+  {
+    "id": "guardian_buff_eye_for_eye",
+    "name": "以牙还牙",
+    "maxStacks": 1,
+    "duration": -1
+  },
+  {
+    "id": "guardian_buff_revenge_fury",
+    "name": "复仇之怒",
+    "maxStacks": 1,
+    "duration": 3
+  },
+  {
+    "id": "guardian_buff_paralyze",
+    "name": "麻痹触手",
+    "maxStacks": 1,
+    "duration": 1,
+    "isDebuff": true
+  },
+  {
+    "id": "guardian_buff_sacrifice_rage",
+    "name": "献祭之怒",
+    "maxStacks": 1,
+    "duration": -1
+  },
+  {
+    "id": "guardian_buff_berserker",
+    "name": "狂战士",
+    "maxStacks": 1,
+    "duration": 3
+  },
+  {
+    "id": "guardian_buff_wind_thunder",
+    "name": "疾风迅雷",
+    "maxStacks": 1,
+    "duration": 2
+  },
+  {
+    "id": "guardian_buff_random_taunt",
+    "name": "随机嘲讽",
+    "maxStacks": 1,
+    "duration": 1
+  },
+  {
+    "id": "guardian_buff_backwater_armor",
+    "name": "背水护甲",
+    "maxStacks": 1,
+    "duration": -1
+  },
+  {
+    "id": "guardian_buff_swift_wind",
+    "name": "疾风叠步",
+    "maxStacks": 999,
+    "duration": -1
   }
 ]

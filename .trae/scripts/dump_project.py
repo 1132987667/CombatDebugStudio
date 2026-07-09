@@ -188,10 +188,10 @@ def main():
     if not args.no_ignore:
         ignore_file = args.ignore_file
         if ignore_file is None:
-            # 默认查找根目录下的 .gitignore
-            gitignore = os.path.join(root, '.gitignore')
-            if os.path.isfile(gitignore):
-                ignore_file = gitignore
+            # 默认查找根目录下的 .dumpignore（打包专用，不影响 git 提交）
+            dumpignore = os.path.join(root, '.dumpignore')
+            if os.path.isfile(dumpignore):
+                ignore_file = dumpignore
         if ignore_file and os.path.isfile(ignore_file):
             matcher = load_ignore_matcher(ignore_file)
             if matcher is None:

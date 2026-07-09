@@ -14,6 +14,7 @@ import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
 import newSkillsData from '@configs/skills/skills_new.json'
+import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
 import buffsData from '@configs/buffs/buffs.json'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig, SkillStep } from '@/domain/skill/types'
@@ -22,12 +23,13 @@ import type { CharacterStats } from '@/domain/character/types'
 import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 import type { StructuredBuffConfig } from '@/domain/attribute/modifier-template'
 import type { ParticipantSide } from '@/domain/battle/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE, BattleTriggerPhase } from '@/domain/battle/types'
 import type { BattleEntity } from '@/domain/battle/types'
 import {
   BattleParticipantImpl,
   type BattleParticipantData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
+import type { PassiveSkillManager, PassiveSkillConfig } from '@/domain/skill/PassiveSkillManager'
 import { toArray } from '@/shared/utils/Utils'
 import { Counter } from '@/shared/utils/Counter'
 const counter = new Counter()
@@ -86,7 +88,7 @@ export class GameDataProcessor {
   }
 
   static getSkillsData(): SkillConfig[] {
-    return (skillsData as any[]).concat(passiveSkillsData as any[], newSkillsData as any[]) as SkillConfig[]
+    return (skillsData as any[]).concat(passiveSkillsData as any[], newSkillsData as any[], guardianPassiveSkillsData as any[]) as SkillConfig[]
   }
 
   /**
@@ -461,6 +463,64 @@ export class GameDataProcessor {
     }
   }
 
+  /** 将 triggerTimes 字符串映射到 BattleTriggerPhase */
+  private static readonly TRIGGER_TIME_MAP: Record<string, BattleTriggerPhase> = {
+    battle_start: BattleTriggerPhase.BATTLE_START,
+    turn_start: BattleTriggerPhase.TURN_START,
+    turn_end: BattleTriggerPhase.TURN_END,
+    before_attack: BattleTriggerPhase.BEFORE_ATTACK,
+    after_attack: BattleTriggerPhase.AFTER_ATTACK,
+    on_hit: BattleTriggerPhase.ON_HIT,
+    on_death: BattleTriggerPhase.ON_DEATH,
+    on_kill: BattleTriggerPhase.ON_KILL,
+    damage_taken: BattleTriggerPhase.DAMAGE_TAKEN,
+    heal_received: BattleTriggerPhase.HEAL_RECEIVED,
+    energy_gained: BattleTriggerPhase.ENERGY_GAINED,
+    skill_use: BattleTriggerPhase.SKILL_USE,
+    hp_lower_than: BattleTriggerPhase.HP_LOWER_THAN,
+  }
+
+  /**
+   * 注册参与者的触发型被动技能到 PassiveSkillManager
+   * 只有配置了 triggerTimes 的被动技能才会被注册
+   * @param participant 参与者实体
+   * @param passiveSkillManager PassiveSkillManager 实例
+   */
+  static registerParticipantPassives(
+    entity: BattleEntity,
+    passiveSkillManager: PassiveSkillManager,
+  ): void {
+    const passives = entity.skills?.passive
+    if (!passives || passives.length === 0) return
+
+    for (const skill of passives) {
+      const triggerTimes = skill.triggerTimes
+      if (!triggerTimes || triggerTimes.length === 0) continue
+
+      const phase = GameDataProcessor.TRIGGER_TIME_MAP[triggerTimes[0]]
+      if (!phase) {
+        console.warn(`未知的被动触发时机: ${triggerTimes[0]} (技能: ${skill.id})`)
+        continue
+      }
+
+      const config: PassiveSkillConfig = {
+        id: `${entity.id}:${skill.id}`,
+        name: skill.name,
+        description: skill.description || '',
+        trigger: phase,
+        skillId: skill.id,
+        cooldown: skill.cooldown || 0,
+        condition: skill.condition,
+        maxTriggerCount: skill.maxUses,
+        // 从 parameters 中读取额外触发配置
+        triggerProbability: skill.parameters?.triggerProbability as number | undefined,
+        hpThreshold: skill.parameters?.hpThreshold as number | undefined,
+      }
+
+      passiveSkillManager.registerPassive(entity.id, config)
+    }
+  }
+
   /**
    * 从被动技能构建结构化修饰符模板列表
    * 根据名称搜索敌人
@@ -553,9 +613,9 @@ export class GameDataProcessor {
    * 获取角色的技能信息
    */
   static getCharacterSkills(id: string): {
-    small?: SkillConfig | undefined
-    passive?: SkillConfig | undefined
-    ultimate?: SkillConfig | undefined
+    small?: SkillConfig[]
+    passive?: SkillConfig[]
+    ultimate?: SkillConfig[]
   } {
     if (!id) return {}
 
@@ -573,7 +633,7 @@ export class GameDataProcessor {
       DataProcessor.setCachedData(enemyCacheKey, enemy)
     }
 
-    const skills: Record<string, SkillConfig | undefined> = {}
+    const skills: Record<string, SkillConfig[] | undefined> = {}
 
     const smallIds = GameDataProcessor.normalizeSkillIds(enemy.skills?.small)
     const passiveIds = GameDataProcessor.normalizeSkillIds(
@@ -583,14 +643,20 @@ export class GameDataProcessor {
       enemy.skills?.ultimate,
     )
 
-    if (smallIds[0]) {
-      skills.small = GameDataProcessor.findSkillById(smallIds[0])
+    if (smallIds.length > 0) {
+      skills.small = smallIds
+        .map((id) => GameDataProcessor.findSkillById(id))
+        .filter((s): s is SkillConfig => s !== undefined)
     }
-    if (passiveIds[0]) {
-      skills.passive = GameDataProcessor.findSkillById(passiveIds[0])
+    if (passiveIds.length > 0) {
+      skills.passive = passiveIds
+        .map((id) => GameDataProcessor.findSkillById(id))
+        .filter((s): s is SkillConfig => s !== undefined)
     }
-    if (ultimateIds[0]) {
-      skills.ultimate = GameDataProcessor.findSkillById(ultimateIds[0])
+    if (ultimateIds.length > 0) {
+      skills.ultimate = ultimateIds
+        .map((id) => GameDataProcessor.findSkillById(id))
+        .filter((s): s is SkillConfig => s !== undefined)
     }
 
     DataProcessor.setCachedData(cacheKey, skills)
@@ -772,7 +838,7 @@ export class GameDataProcessor {
     const skills = GameDataProcessor.getCharacterSkills(
       character.originalId || '',
     )
-    return skills.passive?.name || ''
+    return skills.passive?.map((s) => s.name).join(', ') || ''
   }
 
   /**
@@ -782,7 +848,7 @@ export class GameDataProcessor {
     const skills = GameDataProcessor.getCharacterSkills(
       character.originalId || '',
     )
-    return skills.small?.name || ''
+    return skills.small?.map((s) => s.name).join(', ') || ''
   }
 
   /**
@@ -792,7 +858,7 @@ export class GameDataProcessor {
     const skills = GameDataProcessor.getCharacterSkills(
       character.originalId || '',
     )
-    return skills.ultimate?.name || ''
+    return skills.ultimate?.map((s) => s.name).join(', ') || ''
   }
 
   /**

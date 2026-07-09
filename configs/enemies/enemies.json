@@ -2518,5 +2518,100 @@
       "passive": ["skill_boss_010_passive"],
       "ultimate": ["skill_boss_010_ultimate"]
     }
+  },
+  {
+    "id": "guardian_gold",
+    "name": "金护法",
+    "level": 10,
+    "stats": {
+      "currentHealth": 500,
+      "minAttack": 40,
+      "maxAttack": 60,
+      "defense": 30,
+      "speed": 20
+    },
+    "drops": [],
+    "skills": {
+      "small": [],
+      "passive": [],
+      "ultimate": []
+    }
+  },
+  {
+    "id": "guardian_wood",
+    "name": "木护法",
+    "level": 10,
+    "stats": {
+      "currentHealth": 450,
+      "minAttack": 35,
+      "maxAttack": 55,
+      "defense": 25,
+      "speed": 25
+    },
+    "drops": [],
+    "skills": {
+      "small": [],
+      "passive": [],
+      "ultimate": []
+    }
+  },
+  {
+    "id": "guardian_water",
+    "name": "水护法",
+    "level": 10,
+    "stats": {
+      "currentHealth": 400,
+      "minAttack": 30,
+      "maxAttack": 50,
+      "defense": 20,
+      "speed": 30
+    },
+    "drops": [],
+    "skills": {
+      "small": [],
+      "passive": [],
+      "ultimate": []
+    }
+  },
+  {
+    "id": "guardian_fire",
+    "name": "火护法",
+    "level": 10,
+    "stats": {
+      "currentHealth": 350,
+      "minAttack": 50,
+      "maxAttack": 75,
+      "defense": 15,
+      "speed": 35
+    },
+    "drops": [],
+    "skills": {
+      "small": [],
+      "passive": [
+        "guardian_revenge_rage",
+        "guardian_combo_heart",
+        "guardian_energy_overload",
+        "guardian_swift_wind"
+      ],
+      "ultimate": []
+    }
+  },
+  {
+    "id": "guardian_earth",
+    "name": "土护法",
+    "level": 10,
+    "stats": {
+      "currentHealth": 600,
+      "minAttack": 25,
+      "maxAttack": 40,
+      "defense": 40,
+      "speed": 15
+    },
+    "drops": [],
+    "skills": {
+      "small": [],
+      "passive": [],
+      "ultimate": []
+    }
   }
 ]

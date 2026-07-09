@@ -343,9 +343,9 @@ const teamCounts = computed(() => {
 // 初始化战斗
 function initBattle() {
   // ponytail: 默认测试阵容 — 覆盖伤害/治疗/护盾/buff/debuff 的典型组合
-  const allyIds = ["enemy_005", "boss_003", "boss_001", "enemy_004"];
+  const allyIds = ["guardian_fire"]; // "enemy_005", "boss_003", "boss_001", "enemy_004", 
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
-  const enemyIds = ["enemy_008", "boss_002", "enemy_007", "enemy_003"];
+  const enemyIds = ["guardian_fire"]; // "enemy_008", "boss_002", "enemy_007", "enemy_003", 
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
   console.log('allyList', allyList)
   console.log('enemyList', enemyList)
@@ -370,6 +370,18 @@ function initBattle() {
         buffSystem.registerCharacterImmunities(entity.id, tags);
       }
     }
+  }
+
+  // ponytail: 将触发型被动技能注册到 PassiveSkillManager
+  const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
+  for (const entity of allParticipants) {
+    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager);
+  }
+
+  // ponytail: 默认选中第一个友方，避免面板显示 0/0
+  const firstAlly = battleService.getAllyTeam()[0];
+  if (firstAlly) {
+    battleStore.selectCharacter(firstAlly.id);
   }
 }
 

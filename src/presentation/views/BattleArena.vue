@@ -70,10 +70,10 @@
     <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
 
     <!-- 底部控制栏 -->
-    <ControlBar :is-battle-active="battleStore.isBattleActive" :is-paused="false"
+    <ControlBar :is-battle-active="battleStore.isBattleActive" :is-paused="battleStore.isPaused"
       :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
       @end-battle="endBattle" @reset-battle="resetBattle" @step-back="stepBack" @single-step="singleStep"
-      @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange" />
+      @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange" @toggle-pause="handleTogglePause" />
 
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
@@ -112,6 +112,7 @@ import type { BattleService } from '@/application/facade/BattleFacade';
 import type { LogEntry } from '@/shared/types/battle-log';
 import { EffectType } from '@/shared/types/effect';
 import { DamageCategory } from '@/domain/skill/types';
+import { BuffSystem } from '@/domain/buff/BuffSystem'
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -357,14 +358,14 @@ function initBattle() {
   battleService.initializeTeams(allyTeamData, enemyTeamData);
 
   // ponytail: 将实体的免疫标签注册到 BuffSystem
-  const buffSystem = container.resolve<any>('BuffSystem');
+  const buffSystem = container.resolve<BuffSystem>('BuffSystem');
   const allParticipants = [
     ...battleService.getAllyTeam(),
     ...battleService.getEnemyTeam(),
   ];
   for (const entity of allParticipants) {
-    if (entity && typeof (entity as any).getImmunities === 'function') {
-      const tags: string[] = (entity as any).getImmunities();
+    if (entity && typeof entity.getImmunities === 'function') {
+      const tags: string[] = entity.getImmunities();
       if (tags.length > 0) {
         buffSystem.registerCharacterImmunities(entity.id, tags);
       }
@@ -615,6 +616,11 @@ const toggleAutoPlay = async () => {
 // 处理战斗速度变化
 const handleBattleSpeedChange = (speed: number) => {
   battleStore.setBattleSpeed(speed);
+};
+
+// 处理暂停切换
+const handleTogglePause = () => {
+  battleStore.togglePause();
 };
 
 // 选择角色

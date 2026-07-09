@@ -8,9 +8,10 @@ import type {
   BattleEndedEventData,
 } from '@/shared/types/battle-events'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
-import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
+import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 
 /**
@@ -20,7 +21,7 @@ import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 export class BattleEventManager {
   private battleStore: ReturnType<typeof useBattleStore> | null = null
   private battleStateManager: BattleStateManager | null = null
-  private battleSystem: IBattleSystem | null = null
+  private battleSystem: BattleSystem | null = null
   /** 是否正在监听事件 */
   private isListening = false
   /** 已绑定的事件处理函数 */
@@ -40,7 +41,7 @@ export class BattleEventManager {
    * 设置战斗系统和状态管理器
    */
   setBattleSystem(
-    battleSystem: IBattleSystem,
+    battleSystem: BattleSystem,
     battleStateManager: BattleStateManager,
   ) {
     this.battleSystem = battleSystem
@@ -195,10 +196,10 @@ export class BattleEventManager {
           log.htmlResult = htmlResult
         }
 
-        ;(this.getBattleStore() as any).addBattleLog(log)
+        battleLogManager.addBattleLog(log)
       }
     } catch (error) {
-      ;(this.getBattleStore() as any).addErrorLog(`澶勭悊鎴樻枟鏃ュ織浜嬩欢鏃跺嚭閿? ${error}`)
+      battleLogManager.addSystemLog({ message: `处理战斗日志事件时出错: ${error}`, category: 'error' })
       console.error('处理战斗日志时出错:', error)
     }
   }
@@ -208,21 +209,18 @@ export class BattleEventManager {
    */
   private handleBattleEndEvent(data: BattleEndedEventData) {
     try {
-      ;(this.getBattleStore() as any).setBattleActive(false)
-      ;(this.getBattleStore() as any).setAutoPlayMode(false)
-      // 记录战斗结束日志
+      const store = this.getBattleStore()
+      if (!store) return
+      store.setBattleActive(false)
+      store.setAutoPlayMode(false)
       if (data && data.winner) {
-        ;(this.getBattleStore() as any).addBattleLog({
+        battleLogManager.addBattleLog({
           turn: '战斗结束',
-          source: 'system',
-          action: 'end',
-          target: '',
-          result: `? ${data.winner === PARTICIPANT_SIDE.ALLY ? '鎴戞柟' : '鏁屾柟'}`,
-          level: 'system',
+          message: `? ${data.winner === PARTICIPANT_SIDE.ALLY ? '鎴戞柟' : '鏁屾柟'}`,
         })
       }
     } catch (error) {
-      ;(this.getBattleStore() as any).addErrorLog(`Error handling battle end: ${error}`)
+      console.error(`Error handling battle end: ${error}`)
       console.error('处理战斗结束时出错:', error)
     }
   }
@@ -236,20 +234,15 @@ export class BattleEventManager {
     actorId: string
   }) {
     try {
-      if (data && data.actorId) {
-        ;(this.getBattleStore() as any).setCurrentActorId(data.actorId)
-        // Record turn start log
-        ;(this.getBattleStore() as any).addBattleLog({
+      const store = this.getBattleStore()
+      if (data && data.actorId && store) {
+        store.currentActorId = data.actorId
+        battleLogManager.addBattleLog({
           turn: `turn_${data.turn}`,
-          source: 'system',
-          action: 'start',
-          target: '',
-          result: `Turn ${data.turn} start, actor: ${data.actorId}`,
-          level: 'system',
+          message: `Turn ${data.turn} start, actor: ${data.actorId}`,
         })
       }
     } catch (error) {
-      ;(this.getBattleStore() as any).addErrorLog(`Error handling turn start: ${error}`)
       console.error('处理回合开始时出错:', error)
     }
   }
@@ -260,18 +253,12 @@ export class BattleEventManager {
   private handleTurnEndEvent(data: { battleId: string; turn: number }) {
     try {
       if (data) {
-        // 鍥炲悎缁撴潫澶勭悊
-        ;(this.getBattleStore() as any).addBattleLog({
-          turn: `鍥炲悎${data.turn}`,
-          source: '绯荤粺',
-          action: '缁撴潫',
-          target: '',
-          result: `鍥炲悎${data.turn}缁撴潫`,
-          level: 'system',
+        battleLogManager.addBattleLog({
+          turn: `回合${data.turn}`,
+          message: `回合${data.turn}结束`,
         })
       }
     } catch (error) {
-      ;(this.getBattleStore() as any).addErrorLog(`Error handling turn end: ${error}`)
       console.error('处理回合结束时出错:', error)
     }
   }

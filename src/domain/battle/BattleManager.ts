@@ -5,7 +5,7 @@
  ** 功能: 战斗管理器
  ** 描述: 协调子管理器（AutoBattle、Intervention、Replay、State），提供统一的接口给 UI 层控制战斗流程
  **/
-import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
+import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
@@ -17,8 +17,6 @@ import type { BattleCommand } from '@/shared/types/battle-commands'
 import type {
   BattleEvents,
   BattleEventName,
-  BattleEventCallback,
-  BattleEndedEventData,
 } from '@/shared/types/battle-events'
 import { LocalStorage } from '@/infrastructure/adapters/storage'
 import { eventBus } from '@/main'
@@ -53,7 +51,7 @@ export class BattleManager {
   }
 
   constructor(
-    private battleSystem: IBattleSystem,
+    private battleSystem: BattleSystem,
     private battleStateManager: BattleStateManager,
     private autoBattleManager: AutoBattleManager,
     private interventionManager: InterventionManager,
@@ -114,7 +112,7 @@ export class BattleManager {
   /**
    * 获取战斗系统实例
    */
-  getBattleSystem(): IBattleSystem {
+  getBattleSystem(): BattleSystem {
     return this.battleSystem
   }
 
@@ -493,7 +491,6 @@ export class BattleManager {
   setBattleId(battleId: string) {
     console.log('BattleManager setBattleId', battleId)
     this.battleStateManager.setBattleId(battleId)
-    this.autoBattleManager.setBattleId(battleId)
   }
 
   /**
@@ -544,7 +541,6 @@ export class BattleManager {
     const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
     this.battleSystem.setBattleState(BattleStatus.ACTIVE)
     this.battleStateManager.setBattleId(battleState.battleId)
-    this.autoBattleManager.setBattleId(battleState.battleId)
     battleLogManager.clearLogs()
     battleLogManager.addSystemLog({ message: '战斗已创建' })
     this.syncBattleState()

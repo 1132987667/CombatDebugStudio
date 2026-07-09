@@ -4,7 +4,7 @@
     <div v-if="isAutoPlaying" class="auto-battle-indicator">
       <span class="auto-indicator-icon">⚡</span>
       <span class="auto-indicator-text">自动战斗中</span>
-      <span class="auto-indicator-speed">x{{ battleSpeed }}</span>
+      <span class="auto-indicator-speed">x{{ props.battleSpeed ?? 1 }}</span>
     </div>
     
     <div class="control-group">
@@ -18,13 +18,13 @@
       <button class="control-btn" @click="$emit('single-step')" :disabled="!isBattleActive">单步执行</button>
 
       <!-- 自动播放模式单选按钮组 -->
-      <RadioButtonGroup v-model="autoPlayMode" :options="autoPlayOptions" :disabled="!isBattleActive"
-        @update:modelValue="handleAutoPlayModeChange" />
+      <RadioButtonGroup :model-value="autoPlayMode" :options="autoPlayOptions" :disabled="!isBattleActive"
+        @update:model-value="handleAutoPlayModeChange" />
 
       <!-- 战斗速度控制按钮 -->
       <button class="control-btn speed-control-btn" @click="toggleBattleSpeed">
         <span class="speed-icon">⚡</span>
-        <span class="speed-text">战斗速度 x{{ battleSpeed }}</span>
+        <span class="speed-text">战斗速度 x{{ props.battleSpeed ?? 1 }}</span>
       </button>
     </div>
     <div class="control-group right">
@@ -65,9 +65,7 @@ const emit = defineEmits<{
   "show-help": [];
 }>();
 
-// 自动播放模式状态 - 默认开启自动战斗
-const autoPlayMode = ref<'off' | 'auto' | 'fast'>(props.isAutoPlaying ? 'auto' : 'off');
-const battleSpeed = ref(props.battleSpeed ?? 1);
+const autoPlayMode = computed(() => props.isAutoPlaying ? 'auto' as const : 'off' as const);
 
 // 自动播放选项配置
 const autoPlayOptions = [
@@ -77,23 +75,7 @@ const autoPlayOptions = [
 
 // 监听自动播放模式变化
 const handleAutoPlayModeChange = (mode: string) => {
-  if (mode === 'off') {
-    // 停止自动播放
-    if (props.isAutoPlaying) {
-      emit('toggle-auto-play');
-    }
-  } else {
-    // 开始自动播放
-    if (!props.isAutoPlaying) {
-      emit('toggle-auto-play');
-    }
-
-    // 如果是快速模式，可以设置不同的播放速度
-    if (mode === 'fast') {
-      // 这里可以添加快速模式的速度设置逻辑
-      console.log('快速自动播放模式已激活');
-    }
-  }
+  emit('toggle-auto-play');
 };
 
 // 战斗速度控制 - 使用传入的 props.battleSpeed
@@ -101,29 +83,10 @@ const speedLevels = [1, 2, 3, 5]; // 支持1倍、2倍、3倍、5倍四个速度
 
 // 切换战斗速度
 const toggleBattleSpeed = () => {
-  const currentIndex = speedLevels.indexOf(battleSpeed.value);
+  const currentIndex = speedLevels.indexOf(props.battleSpeed ?? 1);
   const nextIndex = (currentIndex + 1) % speedLevels.length;
-  battleSpeed.value = speedLevels[nextIndex];
-
-  // 发射速度变化事件
-  emit('battle-speed-change', battleSpeed.value);
+  emit('battle-speed-change', speedLevels[nextIndex]);
 };
-
-// 监听外部自动播放状态变化，同步单选按钮状态
-watch(() => props.isAutoPlaying, (newValue) => {
-  if (newValue && autoPlayMode.value === 'off') {
-    autoPlayMode.value = 'auto';
-  } else if (!newValue && autoPlayMode.value !== 'off') {
-    autoPlayMode.value = 'off';
-  }
-});
-
-// 监听外部战斗速度变化
-watch(() => props.battleSpeed, (newSpeed) => {
-  if (newSpeed !== undefined && newSpeed !== battleSpeed.value) {
-    battleSpeed.value = newSpeed;
-  }
-});
 
 const battleStateDisplay = computed(() => {
   if (autoPlayMode.value === 'fast') return "快速播放";

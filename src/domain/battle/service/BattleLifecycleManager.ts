@@ -1,17 +1,14 @@
-import type { BattleData, ParticipantSide } from '@/domain/battle/types'
-import { BattleStatus, RoundStatus, PARTICIPANT_SIDE } from '@/domain/battle/types'
-import { AUTO_BATTLE_CONFIG } from '@/domain/battle/types'
-import { BattleEventCodes } from '@/shared/types/battle-events'
-import { BattleActionHelper } from '@/domain/battle/types'
-import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
-import type { BuffSystem } from '@/domain/buff/BuffSystem'
-import type { RAFTimer } from '@/shared/utils/RAF'
-import { eventBus } from '@/main'
-import { debugGate } from '@/domain/battle/debug/DebugGate'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { debugGate } from '@/domain/battle/debug/DebugGate'
+import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
+import type { BattleData, ParticipantSide } from '@/domain/battle/types'
+import { AUTO_BATTLE_CONFIG, BattleActionHelper, BattleStatus, PARTICIPANT_SIDE, RoundStatus } from '@/domain/battle/types'
+import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { eventBus } from '@/main'
+import { BattleEventCodes } from '@/shared/types/battle-events'
+import type { RAFTimer } from '@/shared/utils/RAF'
 
 export class BattleLifecycleManager {
-  private battleSpeed = 1
   private autoBattleTimerId?: symbol
   private autoBattleLoop?: () => Promise<void>
 
@@ -83,7 +80,7 @@ export class BattleLifecycleManager {
     this.battleRecorder.clearRecording(battle.battleId)
   }
 
-  startBattle(): void {
+  startAutoBattleLoop(): void {
     const battle = this.getBattleData()
     if (!battle) return
 
@@ -92,7 +89,6 @@ export class BattleLifecycleManager {
 
     this.autoBattleLoop = async () => {
       if (this.getIsPaused()) return
-      console.error('自动战斗循环调用 autoBattleLoop')
 
       const current = this.getBattleData()
       if (!current?.autoBattle || current.battleState !== BattleStatus.ACTIVE) return
@@ -150,24 +146,6 @@ export class BattleLifecycleManager {
 
   getIsPaused(): boolean {
     return this.getBattleData()?.battleState === BattleStatus.PAUSED
-  }
-
-  getAutoBattle(): boolean {
-    return this.getBattleData()?.autoBattle ?? false
-  }
-
-  getBattleSpeed(): number {
-    return this.battleSpeed
-  }
-
-  setSpeed(speed: number): void {
-    this.battleSpeed = speed
-    const battle = this.getBattleData()
-    if (battle) battle.battleSpeed = speed
-  }
-
-  isBattleInProgress(): boolean {
-    return this.getBattleData()?.battleState === BattleStatus.ACTIVE
   }
 
   private pause(): void {

@@ -1,4 +1,4 @@
-import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
+import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 
@@ -10,13 +10,13 @@ import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
  *              与BattleSystem配合实现战斗自动化，与BattleStateManager同步战斗状态
  * @see BattleManager 主战斗管理器，负责协调各子管理器
  * @see BattleStateManager 战斗状态管理器，用于同步战斗状态
- * @see IBattleSystem 战斗系统接口，定义战斗核心操作
+ * @see BattleSystem 战斗系统核心实现，定义战斗核心操作
  */
 export class AutoBattleManager {
   /**
    * 战斗系统实例，负责核心战斗逻辑执行
    */
-  private battleSystem: IBattleSystem
+  private battleSystem: BattleSystem
   /**
    * 战斗日志管理器，负责记录系统日志和战斗日志
    */
@@ -37,7 +37,7 @@ export class AutoBattleManager {
    * @param battleStateManager 战斗状态管理器实例，用于同步和管理战斗状态
    */
   constructor(
-    battleSystem: IBattleSystem,
+    battleSystem: BattleSystem,
     battleStateManager: BattleStateManager,
   ) {
     this.battleSystem = battleSystem
@@ -60,7 +60,6 @@ export class AutoBattleManager {
    * @throws 如果battleId为空或启动过程中发生错误，返回false并记录错误日志
    */
   async startAutoBattle(battleId: string): Promise<boolean> {
-    console.log('startAutoBattle', battleId)
     if (!battleId) {
       this.battleLogManager.addSystemLog({
         message: '请先创建战斗',
@@ -73,7 +72,7 @@ export class AutoBattleManager {
 
     try {
       // 启动自动战斗
-      this.battleSystem.startBattle()
+      this.battleSystem.startAutoBattleLoop()
       this.battleLogManager.addSystemLog({ message: '开始自动战斗' })
       // 同步战斗状态
       this.battleStateManager.syncBattleState()

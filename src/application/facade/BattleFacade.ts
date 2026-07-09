@@ -1,6 +1,6 @@
 import { BattleManager } from '@/domain/battle/BattleManager';
 import type { BattleEntity, BattleState, BattleReplay } from '@/domain/battle/types';
-import { PARTICIPANT_SIDE, type ParticipantSide } from '@/domain/battle/types';
+import { type ParticipantSide } from '@/domain/battle/types';
 import type { BattleEventName, BattleEventCallback } from '@/shared/types/battle-events';
 
 /**
@@ -165,6 +165,14 @@ export class BattleService {
 
   getAutoBattle(): boolean {
     return this.battleManager.getAutoBattle();
+  }
+
+  getIsPaused(): boolean {
+    return this.battleManager.isPaused();
+  }
+
+  togglePause(): void {
+    this.battleManager.togglePause();
   }
 
   getTurn(): number {

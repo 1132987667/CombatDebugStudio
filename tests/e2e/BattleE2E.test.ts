@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { initializeContainer, container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
-import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
+import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStatus } from '@/domain/battle/types'
 import { createTestBattleParticipants } from '../factories/ParticipantFactory'
 
@@ -29,7 +29,7 @@ describe('BattleSystem E2E', () => {
   })
 
   it('should create battle with correct participant count', () => {
-    const battleSystem = container.resolve<IBattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
     const { allies, enemies } = createTestBattleParticipants()
 
     const state = battleSystem.initialize(allies, enemies)
@@ -40,7 +40,7 @@ describe('BattleSystem E2E', () => {
   })
 
   it('should set turn order based on speed', () => {
-    const battleSystem = container.resolve<IBattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
     const { allies, enemies } = createTestBattleParticipants()
 
     battleSystem.initialize(allies, enemies)
@@ -51,7 +51,7 @@ describe('BattleSystem E2E', () => {
   })
 
   it('should have all participants alive after initialization', () => {
-    const battleSystem = container.resolve<IBattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
     const { allies, enemies } = createTestBattleParticipants()
 
     battleSystem.initialize(allies, enemies)

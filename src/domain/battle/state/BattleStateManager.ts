@@ -1,4 +1,4 @@
-import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
+import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BattleState, BattleEntity } from '@/domain/battle/types'
 import { BattleStatus } from '@/domain/battle/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
@@ -25,7 +25,7 @@ export class BattleStateManager {
    * 构造函数
    * @param battleSystem 战斗系统实例
    */
-  constructor(private battleSystem: IBattleSystem) {
+  constructor(private battleSystem: BattleSystem) {
     this.teamDataChangedHandler = () => {}
 
     // 监听队伍数据变化事件
@@ -97,9 +97,7 @@ export class BattleStateManager {
    * 同步战斗状态
    */
   syncBattleState() {
-    if (!this.battleId) {
-      return
-    }
+    if (!this.battleId) return
 
     try {
       const battleState = this.battleSystem.getBattleState()
@@ -109,19 +107,24 @@ export class BattleStateManager {
         return
       }
 
-      // 同步战斗活跃状态
-      this.isBattleActive = battleState.battleState === BattleStatus.ACTIVE
+      // 同步战斗活跃状态（PAUSED/SETTLEMENT 也算活跃，只有结束/创建/准备阶段才算非活跃）
+      this.isBattleActive =
+        battleState.battleState !== BattleStatus.ENDED &&
+        battleState.battleState !== BattleStatus.CREATED &&
+        battleState.battleState !== BattleStatus.PREPARING
 
       // 同步回合数（currentRound 是 1-based 回合号）
       if (battleState.currentRound !== undefined) {
         this.currentTurn = battleState.currentRound
       }
 
-      // 同步当前行动者
+      // 同步当前行动者（currentTurn 是 0-based 回合内行动索引）
       if (battleState.currentTurn < battleState.turnOrder.length) {
-        const currentParticipantId =
+        this.currentActorId =
           battleState.turnOrder[battleState.currentTurn]
-        this.currentActorId = currentParticipantId
+      } else {
+        // 本轮所有行动者已执行完毕，清除当前行动者
+        this.currentActorId = null
       }
 
       // 同步参与者状态
@@ -162,8 +165,7 @@ export class BattleStateManager {
    * 处理战斗结束
    */
   private handleBattleEnd() {
-    this.isBattleActive = false
-    // 可以添加战斗结束的额外逻辑
+    // isBattleActive 已在上面同步时设为 false，此处为扩展预留
   }
 
   /**

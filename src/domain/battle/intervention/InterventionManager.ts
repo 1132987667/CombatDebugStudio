@@ -1,4 +1,4 @@
-import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
+import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import type { BattleEntity, StatusEffect } from '@/domain/battle/types'
@@ -9,7 +9,7 @@ import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
  * 负责处理 BattleDashboard 的事件和手动修改
  */
 export class InterventionManager {
-  private battleSystem: IBattleSystem
+  private battleSystem: BattleSystem
   private battleStateManager: BattleStateManager
   private battleLogManager = battleLogManager
   private selectedCharacterId: string | null = null
@@ -21,7 +21,7 @@ export class InterventionManager {
    * @param battleStateManager 战斗状态管理器实例
    */
   constructor(
-    battleSystem: IBattleSystem,
+    battleSystem: BattleSystem,
     battleStateManager: BattleStateManager,
   ) {
     this.battleSystem = battleSystem

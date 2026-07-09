@@ -98,7 +98,6 @@ import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { BattleManager } from '@/domain/battle/BattleManager'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
-import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
@@ -182,7 +181,7 @@ export function initializeContainer(): void {
   container.registerFactory(
     'BattleManager',
     () => {
-      const battleSystem: IBattleSystem = container.resolve(
+      const battleSystem: BattleSystem = container.resolve(
         BATTLE_SYSTEM_TOKEN.toString(),
       )
 

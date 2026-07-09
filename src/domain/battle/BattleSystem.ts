@@ -7,7 +7,6 @@
  * 版本: 2.0.0 - 集成触发器事件系统
  */
 
-import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
 import { BattleActionHelper } from '@/domain/battle/types'
 import type {
   BattleAction,
@@ -68,7 +67,7 @@ import type { SkillConfig } from '@/domain/skill/types'
  * 战斗系统核心管理类
  *
  * @class GameBattleSystem
- * @implements {IBattleSystem}
+ * 战斗系统核心实现
  *
  * @description
  * 负责战斗的完整生命周期管理，包括创建、回合流转、伤害计算及结算。
@@ -88,7 +87,7 @@ import type { SkillConfig } from '@/domain/skill/types'
 /** 动作日志保留上限 */
 const MAX_ACTION_HISTORY = 100
 
-export class BattleSystem implements IBattleSystem {
+export class BattleSystem {
 
   /**
    * 战斗ID计数器
@@ -111,11 +110,6 @@ export class BattleSystem implements IBattleSystem {
 
   /** 战斗执行器 */
   private readonly executor: BattleExecutor
-
-  /**
-   * 当前战斗速度倍率，默认为1
-   */
-  private battleSpeed = 1
 
   /**
    * 自动战斗定时器标识，用于取消自动战斗
@@ -163,7 +157,7 @@ export class BattleSystem implements IBattleSystem {
     this.animationManager = new BattleAnimationManager(
       this.rafTimer,
       () => this.battleData?.participants,
-      () => this.lifecycleManager.getBattleSpeed() * 200,
+      () => (this.battleData?.battleSpeed ?? 1) * 200,
     )
     this.executor = new BattleExecutor(
       this.skillManager,
@@ -447,12 +441,6 @@ export class BattleSystem implements IBattleSystem {
       (p) => p.isAlive(),
     )
 
-    if (aliveParticipants.length === 0) {
-      battle.roundState = RoundStatus.END
-      this.runEndConditionCheck()
-      return
-    }
-
     try {
       // 触发回合开始事件
       aliveParticipants.forEach((participant) => {
@@ -467,7 +455,7 @@ export class BattleSystem implements IBattleSystem {
         BattleTriggerPhase.TURN_START,
         battle.participants,
         undefined,
-        { round: battle.currentRound },
+        { currentTurn: battle.currentRound },
       )
 
       // 减少所有角色技能冷却
@@ -718,19 +706,19 @@ export class BattleSystem implements IBattleSystem {
   }
 
   public getAutoBattle(): boolean {
-    return this.lifecycleManager.getAutoBattle()
+    return this.battleData?.autoBattle ?? false
   }
 
   public getIsPaused(): boolean {
-    return this.lifecycleManager.getIsPaused()
+    return this.battleData?.battleState === BattleStatus.PAUSED
   }
 
   public getBattleSpeed(): number {
-    return this.lifecycleManager.getBattleSpeed()
+    return this.battleData?.battleSpeed ?? 1
   }
 
   public setSpeed(speed: number): void {
-    this.lifecycleManager.setSpeed(speed)
+    if (this.battleData) this.battleData.battleSpeed = speed
   }
 
   public togglePause(): void {
@@ -738,7 +726,7 @@ export class BattleSystem implements IBattleSystem {
   }
 
   public isBattleInProgress(): boolean {
-    return this.lifecycleManager.isBattleInProgress()
+    return this.battleData?.battleState === BattleStatus.ACTIVE
   }
 
   public getBattleState(): BattleState | undefined {
@@ -747,8 +735,8 @@ export class BattleSystem implements IBattleSystem {
     return convertToBattleState(battle)
   }
 
-  public async startBattle(): Promise<void> {
-    this.lifecycleManager.startBattle()
+  public async startAutoBattleLoop(): Promise<void> {
+    this.lifecycleManager.startAutoBattleLoop()
   }
 
   public getEnabledAllyTeam(): BattleEntity[] {
@@ -878,15 +866,9 @@ export class BattleSystem implements IBattleSystem {
     return this.battleData
   }
 
-  /**
-   * 设置战斗速度
-   * @param speed 速度倍率
-   */
+  /** @internal 接口兼容，委托给 setSpeed */
   public setBattleSpeed(speed: number): void {
-    const battle = this.battleData
-    if (battle) {
-      battle.battleSpeed = speed
-    }
+    this.setSpeed(speed)
   }
 
   // ===================== 命令生成器（第三阶段） =====================

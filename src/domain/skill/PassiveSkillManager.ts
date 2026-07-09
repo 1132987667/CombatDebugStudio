@@ -19,6 +19,16 @@ export interface PassiveSkillConfig {
   hpThreshold?: number
 }
 
+export interface PassiveTriggerContext {
+  currentTurn?: number;
+  sourceId?: string;
+  damage?: number;
+  targetId?: string;
+  roundNumber?: number;
+  cause?: string;
+  isCritical?: boolean;
+}
+
 export class PassiveSkillManager {
   private passives: Map<string, PassiveSkillConfig[]> = new Map()
   private skillManager: SkillManager
@@ -47,7 +57,7 @@ export class PassiveSkillManager {
     trigger: BattleTriggerPhase,
     entity: BattleEntity,
     target?: BattleEntity,
-    context?: Record<string, any>,
+    context?: PassiveTriggerContext,
   ): void {
     const characterPassives = this.passives.get(entity.id)
     if (!characterPassives) return

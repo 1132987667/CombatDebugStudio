@@ -103,6 +103,8 @@ export const useBattleStore = defineStore('battle', () => {
   })
   /** 自动播放模式开关（启用后自动执行回合无需手动操作） */
   const autoPlayMode = ref(false)
+  /** 暂停状态（暂停时按钮显示"继续"，非暂停显示"暂停"） */
+  const isPaused = ref(false)
   /** 动画效果状态管理（伤害数字/闪避/Buff图标/技能特效的触发与清除） */
   const animationState = reactive<AnimationState>({
     damage: null,
@@ -160,7 +162,11 @@ export const useBattleStore = defineStore('battle', () => {
     maxTurns.value = battleService.value!.getMaxTurns?.() ?? 999
     const battleState = battleService.value!.getBattleState()
     isBattleActive.value =
-      battleState?.battleState === BattleStatus.ACTIVE || false
+      battleState?.battleState != null &&
+      battleState.battleState !== BattleStatus.ENDED &&
+      battleState.battleState !== BattleStatus.CREATED &&
+      battleState.battleState !== BattleStatus.PREPARING
+    isPaused.value = battleService.value!.getIsPaused()
   }
 
   // 所有事件订阅在 events Map 创建后统一注册（见下方 🔹 3. 事件订阅管理器）
@@ -178,6 +184,7 @@ export const useBattleStore = defineStore('battle', () => {
   /** 处理战斗结束事件（重置战斗状态，记录胜负结果） */
   const handleBattleEndEvent = (data: any) => {
     isBattleActive.value = false
+    isPaused.value = false
     autoPlayMode.value = false
     // 同步 BattleStateManager 的状态
     if (battleService.value) {
@@ -535,6 +542,24 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /**
+   * 切换暂停状态
+   * @returns boolean 操作是否成功
+   */
+  const togglePause = () => {
+    try {
+      if (!battleService.value) return false
+      battleService.value.togglePause()
+      isPaused.value = battleService.value.getIsPaused()
+      battleLogManager.addSystemLog({ message: isPaused.value ? '战斗已暂停' : '战斗已继续' })
+      return true
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      setError(errorMsg, err instanceof Error ? err.stack : null)
+      return false
+    }
+  }
+
+  /**
    * 导入战斗状态（从 localStorage 恢复）
    * @returns Promise<boolean> 操作是否成功
    * @description 从浏览器本地存储读取之前保存的战斗状态数据
@@ -793,6 +818,7 @@ export const useBattleStore = defineStore('battle', () => {
     currentTurn, // 当前回合数
     maxTurns, // 最大回合数
     isBattleActive, // 战斗激活状态
+    isPaused, // 暂停状态
 
     // ========== Computed Getters (用于模板访问) ==========
     getCurrentActorId: () => currentActorId.value,
@@ -826,6 +852,7 @@ export const useBattleStore = defineStore('battle', () => {
     resetBattle, // 重置战斗
     processSingleTurn, // 执行单回合
     toggleAutoPlay, // 切换自动播放
+    togglePause, // 切换暂停
 
     // ========== 数据导入导出 ==========
     importState, // 导入状态

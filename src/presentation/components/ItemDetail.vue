@@ -68,6 +68,12 @@
 <script setup lang="ts">
 import type { CompendiumItem } from '@/presentation/composables/useCompendium'
 import { rarityNames } from '@/shared/types/Item'
+import {
+  getItemTypeText,
+  getStatLabel,
+  getEffectTypeText,
+  getSlotText,
+} from '@/shared/utils/display-helpers'
 
 interface Props {
   item: CompendiumItem
@@ -75,34 +81,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const getItemTypeText = (type: string): string => {
-  const typeMap: Record<string, string> = {
-    'weapon': '武器',
-    'armor': '防具',
-    'accessory': '饰品',
-    'material': '材料',
-    'consumable': '消耗品',
-    'quest': '任务物品'
-  }
-  return typeMap[type] || type
-}
-
 const getRarityText = (rarity: number): string => {
   return rarityNames[rarity] || '普通'
-}
-
-const getStatLabel = (key: string): string => {
-  const statMap: Record<string, string> = {
-    'attack': '攻击力',
-    'defense': '防御力',
-    'speed': '速度',
-    'health': '生命值',
-    'critRate': '暴击率',
-    'critDamage': '暴击伤害',
-    'physicalDamage': '物理伤害',
-    'magicDamage': '魔法伤害'
-  }
-  return statMap[key] || key
 }
 
 const getValueClass = (value: number | string): string => {
@@ -125,33 +105,8 @@ const formatValue = (value: number | string): string => {
   return value
 }
 
-const getEffectTypeText = (type: string): string => {
-  const effectMap: Record<string, string> = {
-    'heal': '生命恢复',
-    'mpRestore': '能量恢复',
-    'buff': '增益效果',
-    'damage': '伤害',
-    'shield': '护盾'
-  }
-  return effectMap[type] || type
-}
-
 const formatEffectValue = (value: number): string => {
   return `+${value}`
-}
-
-const getSlotText = (slot: string): string => {
-  const slotMap: Record<string, string> = {
-    'weapon': '武器',
-    'armor': '护甲',
-    'helm': '头盔',
-    'boots': '鞋子',
-    'ring': '戒指',
-    'necklace': '项链',
-    'bracelet': '手镯',
-    'belt': '腰带'
-  }
-  return slotMap[slot] || slot
 }
 
 const getDefaultDescription = (item: CompendiumItem): string => {

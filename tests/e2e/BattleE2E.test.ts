@@ -36,7 +36,7 @@ describe('BattleSystem E2E', () => {
 
     expect(state).toBeDefined()
     expect(state.participants.size).toBe(4)
-    expect(state.battleState).toBe(BattleStatus.ACTIVE)
+    expect(state.battleState).toBe(BattleStatus.PREPARING)
   })
 
   it('should set turn order based on speed', () => {

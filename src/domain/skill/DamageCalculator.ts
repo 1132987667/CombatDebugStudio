@@ -2,9 +2,16 @@
 import { AttackType, DamageCategory } from '@/domain/skill/types'
 import type { CalculationLog } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/types'
-import type { CombatRecord, DamageBreakdown } from '@/domain/battle/combat-record'
-import { ATTRIBUTE_CODE, getAttributeDefaultValue } from '@/domain/attribute/types'
+import type {
+  CombatRecord,
+  DamageBreakdown,
+} from '@/domain/battle/combat-record'
+import {
+  ATTRIBUTE_CODE,
+  getAttributeDefaultValue,
+} from '@/domain/attribute/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { EffectType } from '@/shared/types/effect'
 
 export interface DamageCalculationConfig {
   enableCrit: boolean
@@ -32,7 +39,10 @@ const DEFENSE_EFFECTIVENESS = 0.5
 /** 防御递减公式分母：控制防御收益递减曲线 */
 const DEFENSE_DENOMINATOR = 500
 
-function getAttributeValue(participant: BattleEntity, attr: ATTRIBUTE_CODE): number {
+function getAttributeValue(
+  participant: BattleEntity,
+  attr: ATTRIBUTE_CODE,
+): number {
   return participant.getAttribute(attr)
 }
 
@@ -72,7 +82,7 @@ export class DamageCalculator {
   }
 
   /**
-   *  计算伤害 
+   *  计算伤害
    * 逻辑为:
    * 1. 命中/闪避判定
    * 2. 暴击判定
@@ -81,7 +91,7 @@ export class DamageCalculator {
    * 5. 暴击倍率
    * 6. 防御计算（递减公式）
    * 7. 最终伤害计算
-  */
+   */
   calculateDamage(
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
@@ -145,25 +155,46 @@ export class DamageCalculator {
     // 基础伤害计算
     let damage = this.calculateBaseDamage(skillStep, source, target, record)
     breakdown.baseDamage = damage
-    breakdown.steps.push({ stepName: 'base', value: damage, description: `基础威力: ${damage}` })
+    breakdown.steps.push({
+      stepName: 'base',
+      value: damage,
+      description: `基础威力: ${damage}`,
+    })
 
     // extraValues 处理 — 从 skillStep.calculation.extraValues 中读取
     if (skillStep.calculation?.extraValues) {
       for (const extra of skillStep.calculation.extraValues) {
         // ponytail: attack 是区间属性，每次取 min~max 之间的随机值，而非静态属性值
-        const attrValue = extra.attribute === ATTRIBUTE_CODE.attack
-          ? source.getRandomAttackDemage()
-          : getAttributeValue(source, extra.attribute as ATTRIBUTE_CODE)
+        const attrValue =
+          extra.attribute === ATTRIBUTE_CODE.attack
+            ? source.getRandomAttackDemage()
+            : getAttributeValue(source, extra.attribute as ATTRIBUTE_CODE)
         const extraValue = attrValue * extra.ratio
         damage += extraValue
-        breakdown.extraContributions.push({ attribute: extra.attribute, value: extraValue, ratio: extra.ratio })
-        breakdown.steps.push({ stepName: 'extra', value: damage, description: `${extra.attribute} 额外加成: +${extraValue} → ${damage}` })
-        this.logCalculation('extra_value', extraValue, `${extra.attribute} 额外加成: +${extraValue}`)
+        breakdown.extraContributions.push({
+          attribute: extra.attribute,
+          value: extraValue,
+          ratio: extra.ratio,
+        })
+        breakdown.steps.push({
+          stepName: 'extra',
+          value: damage,
+          description: `${extra.attribute} 额外加成: +${extraValue} → ${damage}`,
+        })
+        this.logCalculation(
+          'extra_value',
+          extraValue,
+          `${extra.attribute} 额外加成: +${extraValue}`,
+        )
       }
     }
     breakdown.preCritDamage = damage
     if (breakdown.extraContributions.length > 0) {
-      breakdown.steps.push({ stepName: 'preCrit', value: damage, description: `加成后伤害: ${damage}` })
+      breakdown.steps.push({
+        stepName: 'preCrit',
+        value: damage,
+        description: `加成后伤害: ${damage}`,
+      })
     }
 
     // 暴击倍率
@@ -174,8 +205,15 @@ export class DamageCalculator {
       breakdown.critMultiplier = critMultiplier
       damage = Math.floor(damage * critMultiplier)
       breakdown.postCritDamage = damage
-      breakdown.steps.push({ stepName: 'crit', value: damage, description: `暴击! x${critMultiplier.toFixed(2)} → ${damage}` })
-      battleLogManager.addDebugLog(`暴击！伤害 x${critMultiplier}`, LogLevel.INFO)
+      breakdown.steps.push({
+        stepName: 'crit',
+        value: damage,
+        description: `暴击! x${critMultiplier.toFixed(2)} → ${damage}`,
+      })
+      battleLogManager.addDebugLog(
+        `暴击！伤害 x${critMultiplier}`,
+        LogLevel.INFO,
+      )
     } else {
       breakdown.postCritDamage = damage
     }
@@ -183,28 +221,51 @@ export class DamageCalculator {
     // 防御计算（递减公式）
     breakdown.defenseValue = getAttributeValue(target, ATTRIBUTE_CODE.defense)
     breakdown.effectiveDefense = breakdown.defenseValue * DEFENSE_EFFECTIVENESS
-    breakdown.defenseMultiplier = Math.max(0.1, 1 - breakdown.effectiveDefense / (breakdown.effectiveDefense + DEFENSE_DENOMINATOR))
+    breakdown.defenseMultiplier = Math.max(
+      0.1,
+      1 -
+        breakdown.effectiveDefense /
+          (breakdown.effectiveDefense + DEFENSE_DENOMINATOR),
+    )
     const beforeDef = damage
     damage = Math.floor(damage * breakdown.defenseMultiplier)
-    breakdown.steps.push({ stepName: 'defense', value: damage, description: `防御减免(x${breakdown.defenseMultiplier.toFixed(4)}): ${beforeDef} → ${damage}` })
+    breakdown.steps.push({
+      stepName: 'defense',
+      value: damage,
+      description: `防御减免(x${breakdown.defenseMultiplier.toFixed(4)}): ${beforeDef} → ${damage}`,
+    })
 
     // 攻击类型伤害减免
     const atkType = skillStep.attackType || AttackType.SKILL
     if (atkType === AttackType.NORMAL) {
-      const reduction = getAttributeValue(target, ATTRIBUTE_CODE.normalAtkDmgReduction)
+      const reduction = getAttributeValue(
+        target,
+        ATTRIBUTE_CODE.normalAtkDmgReduction,
+      )
       breakdown.normalAtkReduction = reduction
       if (reduction > 0) {
         const before = damage
         damage = Math.floor(damage * (1 - reduction / 100))
-        breakdown.steps.push({ stepName: 'normalAtkReduction', value: damage, description: `普攻减免(${reduction}%): ${before} → ${damage}` })
+        breakdown.steps.push({
+          stepName: 'normalAtkReduction',
+          value: damage,
+          description: `普攻减免(${reduction}%): ${before} → ${damage}`,
+        })
       }
     } else {
-      const reduction = getAttributeValue(target, ATTRIBUTE_CODE.skillDmgReduction)
+      const reduction = getAttributeValue(
+        target,
+        ATTRIBUTE_CODE.skillDmgReduction,
+      )
       breakdown.skillDmgReduction = reduction
       if (reduction > 0) {
         const before = damage
         damage = Math.floor(damage * (1 - reduction / 100))
-        breakdown.steps.push({ stepName: 'skillDmgReduction', value: damage, description: `技能减免(${reduction}%): ${before} → ${damage}` })
+        breakdown.steps.push({
+          stepName: 'skillDmgReduction',
+          value: damage,
+          description: `技能减免(${reduction}%): ${before} → ${damage}`,
+        })
       }
     }
 
@@ -214,7 +275,11 @@ export class DamageCalculator {
     if (damageCategory === DamageCategory.TRUE) {
       // 真实伤害：跳过防御计算和攻击类型减免，还原到暴击后伤害
       damage = breakdown.postCritDamage
-      breakdown.steps.push({ stepName: 'trueDamage', value: damage, description: `真实伤害，跳过防御/抗性减免: → ${damage}` })
+      breakdown.steps.push({
+        stepName: 'trueDamage',
+        value: damage,
+        description: `真实伤害，跳过防御/抗性减免: → ${damage}`,
+      })
     } else if (damageCategory === DamageCategory.ELEMENTAL) {
       // 元素伤害：查找目标的元素抗性，默认 fireRes
       const elementalRes = getAttributeValue(target, ATTRIBUTE_CODE.fireRes)
@@ -222,37 +287,70 @@ export class DamageCalculator {
       if (elementalRes > 0) {
         const before = damage
         damage = Math.floor(damage * (1 - elementalRes / 100))
-        breakdown.steps.push({ stepName: 'elementalResistance', value: damage, description: `元素抗性(${elementalRes}%): ${before} → ${damage}` })
+        breakdown.steps.push({
+          stepName: 'elementalResistance',
+          value: damage,
+          description: `元素抗性(${elementalRes}%): ${before} → ${damage}`,
+        })
       }
     }
     // 'physical' 沿用现有防御逻辑，不做额外变化
 
     // 通用伤害减免
-    breakdown.generalDamageReduction = getAttributeValue(target, ATTRIBUTE_CODE.damageReduction)
+    breakdown.generalDamageReduction = getAttributeValue(
+      target,
+      ATTRIBUTE_CODE.damageReduction,
+    )
     if (breakdown.generalDamageReduction > 0) {
       const before = damage
       damage = Math.floor(damage * (1 - breakdown.generalDamageReduction / 100))
-      breakdown.steps.push({ stepName: 'generalReduction', value: damage, description: `通用减免(${breakdown.generalDamageReduction}%): ${before} → ${damage}` })
+      breakdown.steps.push({
+        stepName: 'generalReduction',
+        value: damage,
+        description: `通用减免(${breakdown.generalDamageReduction}%): ${before} → ${damage}`,
+      })
     }
 
     // 受到伤害增加
-    breakdown.damageTakenIncrease = getAttributeValue(target, ATTRIBUTE_CODE.damageTakenIncrease)
+    breakdown.damageTakenIncrease = getAttributeValue(
+      target,
+      ATTRIBUTE_CODE.damageTakenIncrease,
+    )
     if (breakdown.damageTakenIncrease > 0) {
       const before = damage
       damage = Math.floor(damage * (1 + breakdown.damageTakenIncrease / 100))
-      breakdown.steps.push({ stepName: 'dmgTakenIncrease', value: damage, description: `受伤增加(${breakdown.damageTakenIncrease}%): ${before} → ${damage}` })
+      breakdown.steps.push({
+        stepName: 'dmgTakenIncrease',
+        value: damage,
+        description: `受伤增加(${breakdown.damageTakenIncrease}%): ${before} → ${damage}`,
+      })
     }
 
     // targetModifiers 处理 — 目标属性修正
     if (skillStep.targetModifiers) {
       Object.entries(skillStep.targetModifiers).forEach(([attr, modifier]) => {
-        const targetAttrValue = getAttributeValue(target, attr as ATTRIBUTE_CODE)
+        const targetAttrValue = getAttributeValue(
+          target,
+          attr as ATTRIBUTE_CODE,
+        )
         const modifierEffect = (modifier * targetAttrValue) / 100
         damage *= 1 + modifierEffect
         damage = Math.floor(damage)
-        breakdown.targetModifierEffects.push({ attribute: attr, multiplier: modifier, effect: modifierEffect })
-        breakdown.steps.push({ stepName: 'targetModifier', value: damage, description: `${attr} 目标修正(x${(1 + modifierEffect).toFixed(4)}): → ${damage}` })
-        this.logCalculation('target_modifier', modifierEffect, `${attr} 目标修正: x${1 + modifierEffect}`)
+        breakdown.targetModifierEffects.push({
+          attribute: attr,
+          multiplier: modifier,
+          effect: modifierEffect,
+        })
+        breakdown.steps.push({
+          stepName: 'targetModifier',
+          value: damage,
+          description: `${attr} 目标修正(x${(1 + modifierEffect).toFixed(4)}): → ${damage}`,
+        })
+        this.logCalculation(
+          'target_modifier',
+          modifierEffect,
+          `${attr} 目标修正: x${1 + modifierEffect}`,
+        )
       })
     }
 
@@ -262,14 +360,22 @@ export class DamageCalculator {
     const beforeClamp = damage
     damage = Math.max(minDmg, Math.min(maxDmg, damage))
     if (damage !== beforeClamp) {
-      breakdown.steps.push({ stepName: 'clamp', value: damage, description: `阈值限制[${minDmg}, ${maxDmg}]: ${beforeClamp} → ${damage}` })
+      breakdown.steps.push({
+        stepName: 'clamp',
+        value: damage,
+        description: `阈值限制[${minDmg}, ${maxDmg}]: ${beforeClamp} → ${damage}`,
+      })
     }
 
     // 确保非负整数
     damage = Math.max(0, Math.floor(damage))
 
     breakdown.finalDamage = damage
-    breakdown.steps.push({ stepName: 'final', value: damage, description: `最终伤害: ${damage}` })
+    breakdown.steps.push({
+      stepName: 'final',
+      value: damage,
+      description: `最终伤害: ${damage}`,
+    })
 
     // 写入 CombatRecord
     if (record) {
@@ -281,7 +387,12 @@ export class DamageCalculator {
     // 日志记录
     this.logCalculation('final', actualDamage, `最终伤害: ${actualDamage}`)
 
-    return { damage: actualDamage, isCritical: damageResult.isCritical, isMiss, actualDamage }
+    return {
+      damage: actualDamage,
+      isCritical: damageResult.isCritical,
+      isMiss,
+      actualDamage,
+    }
   }
 
   private calculateBaseDamage(
@@ -298,7 +409,11 @@ export class DamageCalculator {
       const minAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.minAttack)
       const maxAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.maxAttack)
       const levelBonus = (source.level || 1) * 2
-      if (skillStep.attackType === AttackType.NORMAL && minAtk > 0 && maxAtk > 0) {
+      if (
+        skillStep.attackType === AttackType.NORMAL &&
+        minAtk > 0 &&
+        maxAtk > 0
+      ) {
         baseDamage = Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
       } else {
         const atk = source.getRandomAttackDemage()
@@ -310,7 +425,7 @@ export class DamageCalculator {
 
     if (record) {
       record.effects?.push({
-        type: 'damage',
+        type: EffectType.DAMAGE,
         targetId: target.id,
         value: baseDamage,
         description: `基础伤害 ${baseDamage}`,
@@ -342,10 +457,18 @@ export class DamageCalculator {
   }
 
   private getAttributeSafe(entity: BattleEntity, code: ATTRIBUTE_CODE): number {
-    try { return entity.getAttribute(code) } catch { return 0 }
+    try {
+      return entity.getAttribute(code)
+    } catch {
+      return 0
+    }
   }
 
-  private logCalculation(step: string, value: number, description: string): void {
+  private logCalculation(
+    step: string,
+    value: number,
+    description: string,
+  ): void {
     this.calculationLogs.push({ step, value, description } as any)
   }
 }

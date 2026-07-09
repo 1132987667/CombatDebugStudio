@@ -16,6 +16,7 @@ import type {
   BattleEntity,
   BattleData,
   ParticipantSide,
+  BattleStatus,
 } from '@/domain/battle/types'
 
 import type { BattleAI } from '@/domain/battle/ai/BattleAI'
@@ -55,6 +56,12 @@ export interface IBattleSystem {
    * @returns BattleState | undefined - 战斗状态，如果不存在则返回undefined
    */
   getBattleState(): BattleState | undefined
+
+  /**
+   * 设置战斗状态
+   * @param status - 要设置的状态（ACTIVE / PAUSED / ENDED 等）
+   */
+  setBattleState(status: BattleStatus): void
 
   /**
    * 结束战斗

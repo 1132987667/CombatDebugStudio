@@ -17,14 +17,11 @@ import {
   BattleActionHelper,
 } from '@/domain/battle/types'
 import { PARTICIPANT_SIDE, BATTLE_CONSTANTS } from '@/domain/battle/types'
-import { EFFECT_TYPES } from '@/shared/types/effect'
+import { EffectType } from '@/shared/types/effect'
 import { CombatRecord, createEmptyRecord } from '@/domain/battle/combat-record'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import {
-  ControlType,
-  type TriggerEventContext,
-} from '@/domain/buff/types'
+import { ControlType, type TriggerEventContext } from '@/domain/buff/types'
 import { BattleTriggerPhase } from '@/domain/battle/types'
 import { TriggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 
@@ -126,7 +123,7 @@ export class ActionExecutor {
     if (controlType === ControlType.STUN) {
       // 眩晕状态：无法进行任何行动
       action.effects.push({
-        type: EFFECT_TYPES.STATUS,
+        type: EffectType.STATUS,
         description: `${source.name} 处于眩晕状态，无法行动`,
       })
       return
@@ -143,7 +140,7 @@ export class ActionExecutor {
               BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
         ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
       action.effects.push({
-        type: EFFECT_TYPES.STATUS,
+        type: EffectType.STATUS,
         description: `${source.name} 处于沉默状态，无法使用技能，改为普通攻击`,
       })
     }
@@ -161,7 +158,7 @@ export class ActionExecutor {
   public validateAction(action: BattleAction): boolean {
     if (!action.sourceId || !action.targetId || !action.type) {
       return false
-    } 
+    }
     if (!ValidActionTypes.includes(action.type)) {
       return false
     }
@@ -214,19 +211,21 @@ export class ActionExecutor {
       return
     }
 
-    await this.executeAction(BattleActionHelper.createAttack({
-      sourceId: participant.id,
-      targetId,
-      damage,
-      turn: battle.currentTurn + 1,
-      effects: [
-        {
-          type: EFFECT_TYPES.DAMAGE,
-          value: damage,
-          description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
-        },
-      ],
-    }))
+    await this.executeAction(
+      BattleActionHelper.createAttack({
+        sourceId: participant.id,
+        targetId,
+        damage,
+        turn: battle.currentTurn + 1,
+        effects: [
+          {
+            type: EffectType.DAMAGE,
+            value: damage,
+            description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
+          },
+        ],
+      }),
+    )
   }
 
   /**
@@ -313,7 +312,7 @@ export class ActionExecutor {
       })
 
       action.effects.push({
-        type: EFFECT_TYPES.DAMAGE,
+        type: EffectType.DAMAGE,
         value: actualDamage,
         description: `${source.name} 攻击 ${target.name} 造成 ${actualDamage} 伤害`,
       })
@@ -377,7 +376,7 @@ export class ActionExecutor {
               BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
         ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
       action.effects.push({
-        type: EFFECT_TYPES.STATUS,
+        type: EffectType.STATUS,
         description: `找不到战斗数据，改为普通攻击`,
       })
       this.processAttack(action, source, target)
@@ -395,7 +394,7 @@ export class ActionExecutor {
                 BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
           ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
         action.effects.push({
-          type: EFFECT_TYPES.STATUS,
+          type: EffectType.STATUS,
           description: `技能管理器不存在，改为普通攻击`,
         })
         this.processAttack(action, source, target)
@@ -416,11 +415,13 @@ export class ActionExecutor {
         battleLogManager.addDebugLog(`技能执行返回空: ${action.skillId}，跳过`)
         action.type = ActionTypes.ATTACK
         action.damage = Math.floor(Math.random() * 20) + 10
-        action.effects = [{
-          type: EFFECT_TYPES.DAMAGE,
-          value: action.damage,
-          description: `${source.name} 普通攻击 (技能返回空)`,
-        }]
+        action.effects = [
+          {
+            type: EffectType.DAMAGE,
+            value: action.damage,
+            description: `${source.name} 普通攻击 (技能返回空)`,
+          },
+        ]
       } else {
         action.damage = skillAction.damage
         action.heal = skillAction.heal
@@ -433,7 +434,10 @@ export class ActionExecutor {
         battleLogManager.addDebugLog(`技能执行成功: ${action.skillId}`)
       }
     } catch (error) {
-      battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error as Error)
+      battleLogManager.addDebugLog(
+        `技能执行失败: ${action.skillId}`,
+        error as Error,
+      )
       action.type = ActionTypes.ATTACK
       action.damage =
         Math.floor(
@@ -442,7 +446,7 @@ export class ActionExecutor {
               BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN),
         ) + BATTLE_CONSTANTS.DEFAULT_ATTACK_DAMAGE_MIN
       action.effects.push({
-        type: EFFECT_TYPES.STATUS,
+        type: EffectType.STATUS,
         description: `技能执行失败，改为普通攻击`,
       })
       this.processAttack(action, source, target)
@@ -475,7 +479,7 @@ export class ActionExecutor {
       })
 
       action.effects.push({
-        type: EFFECT_TYPES.HEAL,
+        type: EffectType.HEAL,
         value: actualHeal,
         description: `${source.name} 治疗 ${target.name} 恢复 ${actualHeal} 生命值`,
       })
@@ -536,7 +540,10 @@ export class ActionExecutor {
    */
   private finalizeRecord(record: CombatRecord, action: BattleAction): void {
     record.message = this.generateRecordMessage(record, action)
-    battleLogManager.addDebugLog('技能记录已生成', record as unknown as Record<string, unknown>)
+    battleLogManager.addDebugLog(
+      '技能记录已生成',
+      record as unknown as Record<string, unknown>,
+    )
   }
 
   /**

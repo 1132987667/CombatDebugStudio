@@ -5,7 +5,7 @@
  */
 
 import gsap from 'gsap'
-import { ActionResultType } from '@/domain/battle/types';
+import { ActionResultType } from '@/domain/battle/types'
 
 export interface AnimationConfig {
   battleSpeed: number
@@ -31,13 +31,6 @@ export interface HitAnimationData {
 export interface ShakeAnimationData {
   targetElement: HTMLElement
   intensity?: 'light' | 'medium' | 'heavy'
-}
-
-export interface FloatingTextData {
-  element: HTMLElement
-  text: string
-  type: 'skill' | 'damage' | 'passive' | 'miss'
-  startY?: number
 }
 
 export class BattleAnimationService {
@@ -76,7 +69,10 @@ export class BattleAnimationService {
     return timeline
   }
 
-  private createTween(target: gsap.TweenTarget, vars: gsap.TweenVars): gsap.core.Tween {
+  private createTween(
+    target: gsap.TweenTarget,
+    vars: gsap.TweenVars,
+  ): gsap.core.Tween {
     const tween = gsap.to(target, vars)
     this.activeTweens.push(tween)
     return tween
@@ -107,7 +103,11 @@ export class BattleAnimationService {
         })
 
       if (data.skillName) {
-        this.playSkillNameAnimation(data.attackerElement, data.skillName, data.attackerSide)
+        this.playSkillNameAnimation(
+          data.attackerElement,
+          data.skillName,
+          data.attackerSide,
+        )
       }
     })
   }
@@ -115,9 +115,11 @@ export class BattleAnimationService {
   private playSkillNameAnimation(
     targetElement: HTMLElement,
     skillName: string,
-    side: 'left' | 'right'
+    side: 'left' | 'right',
   ): void {
-    let skillElement: HTMLElement | null = targetElement.querySelector('.floating-skill-name')
+    let skillElement: HTMLElement | null = targetElement.querySelector(
+      '.floating-skill-name',
+    )
 
     if (!skillElement) {
       skillElement = document.createElement('div')
@@ -185,28 +187,37 @@ export class BattleAnimationService {
 
       const delayMs = this.getScaledDuration(this.HIT_SHAKE_DELAY)
 
-      if (data.hitEffect === 'miss') {
+      if (data.hitEffect === ActionResultType.MISS) {
         this.playMissTextAnimation(data.targetElement, delayMs)
       } else if (data.passiveName) {
-        this.playPassiveTextAnimation(data.targetElement, data.passiveName, delayMs)
+        this.playPassiveTextAnimation(
+          data.targetElement,
+          data.passiveName,
+          delayMs,
+        )
       } else if (data.damage !== undefined) {
         this.playDamageTextAnimation(
           data.targetElement,
           data.damage,
           data.hitEffect,
           data.isCritical,
-          delayMs
+          delayMs,
         )
       }
 
       const totalDuration = this.getScaledDuration(
-        this.HIT_SHAKE_DELAY + this.SKILL_NAME_MOVE_DURATION + this.SKILL_NAME_FADE_DURATION
+        this.HIT_SHAKE_DELAY +
+          this.SKILL_NAME_MOVE_DURATION +
+          this.SKILL_NAME_FADE_DURATION,
       )
 
-      timeline.to({}, {
-        duration: totalDuration / 1000,
-        onComplete: resolve,
-      })
+      timeline.to(
+        {},
+        {
+          duration: totalDuration / 1000,
+          onComplete: resolve,
+        },
+      )
     })
   }
 
@@ -231,9 +242,12 @@ export class BattleAnimationService {
 
   private playFlashAnimation(
     targetElement: HTMLElement,
-    hitEffect: 'damage' | 'heal' | 'critical' | 'miss'
+    hitEffect: ActionResultType,
   ): void {
-    const flashColor = hitEffect === 'heal' ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'
+    const flashColor =
+      hitEffect === ActionResultType.HEAL
+        ? 'rgba(34, 197, 94, 0.5)'
+        : 'rgba(239, 68, 68, 0.5)'
 
     const hpBar = targetElement.querySelector('.hp-fill') as HTMLElement
     if (hpBar) {
@@ -264,20 +278,20 @@ export class BattleAnimationService {
   private playDamageTextAnimation(
     targetElement: HTMLElement,
     damage: number,
-    type: 'damage' | 'heal' | 'critical',
+    type: ActionResultType,
     isCritical?: boolean,
-    delayMs: number = 0
+    delayMs: number = 0,
   ): void {
     const textElement = document.createElement('div')
     textElement.className = 'floating-damage-text'
 
-    const colorMap = {
-      damage: '#ef4444',
-      heal: '#22c55e',
-      critical: '#f59e0b',
+    const colorMap: Partial<Record<ActionResultType, string>> = {
+      [ActionResultType.DAMAGE]: '#ef4444',
+      [ActionResultType.HEAL]: '#22c55e',
+      [ActionResultType.CRITICAL]: '#f59e0b',
     }
 
-    const prefix = type === 'heal' ? '+' : '-'
+    const prefix = type === ActionResultType.HEAL ? '+' : '-'
     const suffix = isCritical ? '!' : ''
 
     textElement.style.cssText = `
@@ -323,7 +337,10 @@ export class BattleAnimationService {
       })
   }
 
-  private playMissTextAnimation(targetElement: HTMLElement, delayMs: number): void {
+  private playMissTextAnimation(
+    targetElement: HTMLElement,
+    delayMs: number,
+  ): void {
     const textElement = document.createElement('div')
     textElement.className = 'floating-miss-text'
 
@@ -373,7 +390,7 @@ export class BattleAnimationService {
   private playPassiveTextAnimation(
     targetElement: HTMLElement,
     passiveName: string,
-    delayMs: number
+    delayMs: number,
   ): void {
     const textElement = document.createElement('div')
     textElement.className = 'floating-passive-text'
@@ -421,10 +438,15 @@ export class BattleAnimationService {
       })
   }
 
-  playBuffAnimation(targetElement: HTMLElement, isPositive: boolean): Promise<void> {
+  playBuffAnimation(
+    targetElement: HTMLElement,
+    isPositive: boolean,
+  ): Promise<void> {
     return new Promise((resolve) => {
       const timeline = this.createTimeline()
-      const color = isPositive ? 'rgba(34, 211, 238, 0.8)' : 'rgba(239, 68, 68, 0.8)'
+      const color = isPositive
+        ? 'rgba(34, 211, 238, 0.8)'
+        : 'rgba(239, 68, 68, 0.8)'
       const duration = this.getScaledDuration(500)
 
       timeline
@@ -448,15 +470,14 @@ export class BattleAnimationService {
     return new Promise((resolve) => {
       const timeline = this.createTimeline()
 
-      timeline
-        .to(targetElement, {
-          opacity: 0.3,
-          scale: 0.95,
-          filter: 'grayscale(1)',
-          duration: this.getScaledDuration(300) / 1000,
-          ease: 'power2.out',
-          onComplete: resolve,
-        })
+      timeline.to(targetElement, {
+        opacity: 0.3,
+        scale: 0.95,
+        filter: 'grayscale(1)',
+        duration: this.getScaledDuration(300) / 1000,
+        ease: 'power2.out',
+        onComplete: resolve,
+      })
     })
   }
 
@@ -470,9 +491,13 @@ export class BattleAnimationService {
     this.activeAnimations = []
     this.activeTweens = []
 
-    document.querySelectorAll('.floating-skill-name, .floating-damage-text, .floating-miss-text, .floating-passive-text').forEach((el) => {
-      el.remove()
-    })
+    document
+      .querySelectorAll(
+        '.floating-skill-name, .floating-damage-text, .floating-miss-text, .floating-passive-text',
+      )
+      .forEach((el) => {
+        el.remove()
+      })
   }
 
   getAnimationDuration(): number {
@@ -481,7 +506,10 @@ export class BattleAnimationService {
 
   getTotalAttackSequenceDuration(): number {
     return this.getScaledDuration(
-      this.BASE_ATTACK_DURATION + this.SKILL_NAME_DELAY + this.SKILL_NAME_MOVE_DURATION + this.SKILL_NAME_FADE_DURATION
+      this.BASE_ATTACK_DURATION +
+        this.SKILL_NAME_DELAY +
+        this.SKILL_NAME_MOVE_DURATION +
+        this.SKILL_NAME_FADE_DURATION,
     )
   }
 }

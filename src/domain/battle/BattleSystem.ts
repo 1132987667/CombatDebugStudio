@@ -379,8 +379,6 @@ export class BattleSystem implements IBattleSystem {
       }
     })
 
-    // 初始化完成，战斗准备就绪
-    battleData.battleState = BattleStatus.ACTIVE
 
     return convertToBattleState(battleData)
   }
@@ -607,6 +605,7 @@ export class BattleSystem implements IBattleSystem {
       this.battleRecorder.recordTurnEnd(battleId, battle.currentRound || 1)
 
       battle.currentRound++
+      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED)
     } catch (error) {
       battleLogManager.addDebugLog('处理回合时出错:', LogLevel.ERROR, error as Error)
       console.error('处理回合时出错:', error)
@@ -702,6 +701,12 @@ export class BattleSystem implements IBattleSystem {
 
   public getBattleStatus(): string | undefined {
     return this.battleData?.battleState
+  }
+
+  public setBattleState(status: BattleStatus): void {
+    if (this.battleData) {
+      this.battleData.battleState = status
+    }
   }
 
   public getRoundState(): RoundStatus | undefined {

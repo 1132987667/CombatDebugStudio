@@ -9,6 +9,7 @@ import {
   BattleAnimationService,
   battleAnimationService,
 } from '@/infrastructure/animation/BattleAnimationService'
+import { EffectType } from '@/shared/types/effect'
 
 export interface UseBattleAnimationOptions {
   battleSpeed?: Ref<number>
@@ -29,9 +30,13 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
   const elementRefs = new Map<string, HTMLElement | null>()
 
   if (options.battleSpeed) {
-    watch(options.battleSpeed, (newSpeed) => {
-      animationService.value.setBattleSpeed(newSpeed)
-    }, { immediate: true })
+    watch(
+      options.battleSpeed,
+      (newSpeed) => {
+        animationService.value.setBattleSpeed(newSpeed)
+      },
+      { immediate: true },
+    )
   }
 
   function registerElement(id: string, element: HTMLElement | null): void {
@@ -49,7 +54,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
   async function playAttackAnimation(
     attackerId: string,
     attackerSide: 'left' | 'right',
-    skillName?: string
+    skillName?: string,
   ): Promise<void> {
     const attackerElement = getElement(attackerId)
     if (!attackerElement) {
@@ -77,11 +82,11 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
     targetId: string,
     data: {
       damage?: number
-      hitEffect: 'damage' | 'heal' | 'critical' | 'miss'
+      hitEffect: EffectType
       isCritical?: boolean
       skillName?: string
       passiveName?: string
-    }
+    },
   ): Promise<void> {
     const targetElement = getElement(targetId)
     if (!targetElement) {
@@ -106,7 +111,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
 
   async function playBuffAnimation(
     targetId: string,
-    isPositive: boolean
+    isPositive: boolean,
   ): Promise<void> {
     const targetElement = getElement(targetId)
     if (!targetElement) {

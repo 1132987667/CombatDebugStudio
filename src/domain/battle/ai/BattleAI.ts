@@ -14,7 +14,7 @@ import {
   BattleActionHelper,
   BATTLE_CONSTANTS,
 } from '@/domain/battle/types'
-import { EFFECT_TYPES } from '@/shared/types/effect'
+import { EffectType } from '@/shared/types/effect'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
@@ -76,7 +76,10 @@ export class BaseBattleAI implements BattleAI {
   protected skillManager?: SkillManager
   protected priorityStrategy: AIPriorityStrategy
 
-  constructor(skillIds?: string[], strategyName: string = AI_STRATEGY.BALANCED) {
+  constructor(
+    skillIds?: string[],
+    strategyName: string = AI_STRATEGY.BALANCED,
+  ) {
     this.priorityStrategy =
       AIPriorityStrategyFactory.createStrategy(strategyName)
 
@@ -179,8 +182,7 @@ export class BaseBattleAI implements BattleAI {
 
     const teamHealth = allies.reduce((sum, p) => sum + p.currentHealth, 0)
     const teamMaxHealth = allies.reduce((sum, p) => sum + p.maxHealth, 0)
-    const teamHealthPercent =
-      teamMaxHealth > 0 ? teamHealth / teamMaxHealth : 0
+    const teamHealthPercent = teamMaxHealth > 0 ? teamHealth / teamMaxHealth : 0
 
     // 判断是否应该使用技能：有可用技能且（能量充足或有治疗需求）
     const shouldUseSkill = this.shouldUseSkill(participant)
@@ -202,7 +204,8 @@ export class BaseBattleAI implements BattleAI {
       enemies,
       teamHealthPercent,
       highestThreatEnemy,
-      needsHealing: teamHealthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD,
+      needsHealing:
+        teamHealthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD,
       shouldUseSkill,
     }
   }
@@ -322,7 +325,7 @@ export class BaseBattleAI implements BattleAI {
       turn: 0,
       effects: [
         {
-          type: EFFECT_TYPES.SPECIAL,
+          type: EffectType.SPECIAL,
           description: `${participant.name} uses skill`,
         },
       ],
@@ -338,7 +341,7 @@ export class BaseBattleAI implements BattleAI {
       turn: 0,
       effects: [
         {
-          type: EFFECT_TYPES.DAMAGE,
+          type: EffectType.DAMAGE,
           value: participant.getRandomAttackDemage(),
           description: `${participant.name} normal attack`,
         },
@@ -347,10 +350,7 @@ export class BaseBattleAI implements BattleAI {
   }
 
   /** 设置上下文 */
-  public setContext(
-    buffSystem: BuffSystem,
-    skillManager: SkillManager,
-  ): void {
+  public setContext(buffSystem: BuffSystem, skillManager: SkillManager): void {
     this.buffSystem = buffSystem
     this.skillManager = skillManager
   }

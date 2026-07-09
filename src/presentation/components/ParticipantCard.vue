@@ -29,7 +29,8 @@
       <div class="member-hp">
         <span class="hp-text">{{ hpText }}</span>
         <div class="hp-bar">
-          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPercent + '%' }"></div>
+          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPercent + '%' }">
+          </div>
         </div>
       </div>
 
@@ -71,6 +72,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/types'
+import { ActionResultType } from '@/domain/battle/types'
 import { useBattleParticipant } from '@/presentation/composables/useBattleParticipant'
 import { useParticipantStats } from '@/presentation/composables/useParticipantStats'
 import BuffList from '@/presentation/components/BuffList.vue'
@@ -81,7 +83,7 @@ interface FloatingNumber {
   x: number
   y: number
   text: string
-  type: 'damage' | 'heal' | 'critical' | 'miss'
+  type: ActionResultType
   isCritical: boolean
   duration: number
 }
@@ -125,13 +127,13 @@ const nextNumberId = ref(0)
  */
 function addDamageNumber(
   value: number,
-  type: 'damage' | 'heal' | 'critical' | 'miss',
+  type: ActionResultType,
   isCritical: boolean = false,
   x: number = 50,
   y: number = 20
 ) {
   const id = nextNumberId.value++
-  const text = type === 'miss' ? '闪避' : (type === 'heal' ? `+${value}` : `-${value}`)
+  const text = type === ActionResultType.MISS ? '闪避' : (type === ActionResultType.HEAL ? `+${value}` : `-${value}`)
   const duration = isCritical ? 1500 : 1000 // 暴击动画更长
 
   damageNumbers.value.push({
@@ -191,8 +193,8 @@ const cardClasses = computed(() => ({
 }))
 
 const hpText = computed(() => {
-  const currentHealth = Math.max(0, Math.floor(stats.currentHealth.value))
-  const maxHealth = Math.max(0, Math.floor(stats.maxHealth.value))
+  const currentHealth = Math.max(0, Math.floor(stats.currentHealth?.value || 0))
+  const maxHealth = Math.max(0, Math.floor(stats.maxHealth?.value || 0))
   return `${currentHealth}/${maxHealth}`
 })
 
@@ -204,8 +206,8 @@ const hpColorClass = computed(() => {
 })
 
 const energyText = computed(() => {
-  const energy = Math.floor(stats.energy.value)
-  const maxEnergy = Math.floor(stats.maxEnergy.value)
+  const energy = Math.floor(stats.energy?.value || 0)
+  const maxEnergy = Math.floor(stats.maxEnergy?.value || 0)
   return `${energy}/${maxEnergy}`
 })
 
@@ -395,62 +397,122 @@ defineExpose({
 /* 蓄力/施法 */
 .member-card.casting {
   transform: translateY(-3px);
-  box-shadow: 0 0 30px var(--color-brand-red), 0 6px 24px rgba(0,0,0,0.7);
+  box-shadow: 0 0 30px var(--color-brand-red), 0 6px 24px rgba(0, 0, 0, 0.7);
   animation: cast-pulse 0.6s ease;
 }
+
 @keyframes cast-pulse {
-  0%, 100% { transform: translateY(-3px) scale(1); }
-  50% { transform: translateY(-3px) scale(1.018); }
+
+  0%,
+  100% {
+    transform: translateY(-3px) scale(1);
+  }
+
+  50% {
+    transform: translateY(-3px) scale(1.018);
+  }
 }
 
 /* 受击 */
 .member-card.hurt {
-  animation: hurt-shake 0.45s cubic-bezier(.36,.07,.19,.97);
+  animation: hurt-shake 0.45s cubic-bezier(.36, .07, .19, .97);
 }
+
 .member-card.hurt::after {
   content: '';
-  position: absolute; inset: 0;
+  position: absolute;
+  inset: 0;
   background: radial-gradient(circle at center, rgba(255, 80, 80, 0.55), transparent 70%);
   pointer-events: none;
   animation: hurt-flash 0.45s ease;
 }
+
 @keyframes hurt-shake {
-  0%, 100% { transform: translate(0, 0); }
-  15% { transform: translate(-5px, 1px) rotate(-1.5deg); }
-  30% { transform: translate(5px, -1px) rotate(1.5deg); }
-  45% { transform: translate(-4px, 1px) rotate(-1deg); }
-  60% { transform: translate(4px, -1px) rotate(1deg); }
-  75% { transform: translate(-2px, 0) rotate(-0.5deg); }
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  15% {
+    transform: translate(-5px, 1px) rotate(-1.5deg);
+  }
+
+  30% {
+    transform: translate(5px, -1px) rotate(1.5deg);
+  }
+
+  45% {
+    transform: translate(-4px, 1px) rotate(-1deg);
+  }
+
+  60% {
+    transform: translate(4px, -1px) rotate(1deg);
+  }
+
+  75% {
+    transform: translate(-2px, 0) rotate(-0.5deg);
+  }
 }
+
 @keyframes hurt-flash {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 /* 被治疗 */
 .member-card.healed {
   animation: heal-glow 0.8s ease;
 }
+
 @keyframes heal-glow {
-  0%, 100% { box-shadow: 0 0 0 transparent; }
-  50% { box-shadow: 0 0 30px var(--color-heal), inset 0 0 20px rgba(45, 212, 168, 0.2); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 transparent;
+  }
+
+  50% {
+    box-shadow: 0 0 30px var(--color-heal), inset 0 0 20px rgba(45, 212, 168, 0.2);
+  }
 }
 
 /* 被加护盾 */
 .member-card.shielded {
   animation: shield-glow 0.8s ease;
 }
+
 @keyframes shield-glow {
-  0%, 100% { box-shadow: 0 0 0 transparent; }
-  50% { box-shadow: 0 0 30px var(--color-energy), inset 0 0 20px rgba(76, 201, 240, 0.2); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 transparent;
+  }
+
+  50% {
+    box-shadow: 0 0 30px var(--color-energy), inset 0 0 20px rgba(76, 201, 240, 0.2);
+  }
 }
 
 /* HP 条闪光 */
 .hp-fill.hp-flash {
   animation: hp-bar-flash 0.8s ease;
 }
+
 @keyframes hp-bar-flash {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(2) saturate(1.5); }
+
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(2) saturate(1.5);
+  }
 }
 </style>

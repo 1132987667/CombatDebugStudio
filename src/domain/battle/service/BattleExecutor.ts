@@ -7,20 +7,45 @@ import { convertToBattleState } from '@/domain/battle/aggregate/BattleState'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import type { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
-import { BattleTriggerPhase } from '@/domain/battle/types'
+import { BattleTriggerPhase, ActionResultType } from '@/domain/battle/types'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
-import { EFFECT_TYPES } from '@/shared/types/effect'
+import { EffectType } from '@/shared/types/effect'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
 import { BUFF_IDS } from '@/domain/buff/types'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 
-import { BattleActionHelper, BATTLE_CONSTANTS, PARTICIPANT_SIDE, ActionTypes } from '@/domain/battle/types'
-import { type SkillConfig, type ExtendedSkillStep, SkillType, AttackType, DamageCategory, TargetFaction, TargetStrategy, SkillStepType } from '@/domain/skill/types'
-import type { BattleAction, BattleData, BattleEntity, BattleEffect } from '@/domain/battle/types'
-import { ATTRIBUTE_CODE, getAttributeDefaultValue } from '@/domain/attribute/types'
-import { createEmptyRecord, type CombatRecord } from '@/domain/battle/combat-record'
+import {
+  BattleActionHelper,
+  BATTLE_CONSTANTS,
+  PARTICIPANT_SIDE,
+  ActionTypes,
+} from '@/domain/battle/types'
+import {
+  type SkillConfig,
+  type ExtendedSkillStep,
+  SkillType,
+  AttackType,
+  DamageCategory,
+  TargetFaction,
+  TargetStrategy,
+  SkillStepType,
+} from '@/domain/skill/types'
+import type {
+  BattleAction,
+  BattleData,
+  BattleEntity,
+  BattleEffect,
+} from '@/domain/battle/types'
+import {
+  ATTRIBUTE_CODE,
+  getAttributeDefaultValue,
+} from '@/domain/attribute/types'
+import {
+  createEmptyRecord,
+  type CombatRecord,
+} from '@/domain/battle/combat-record'
 
 /**
  * 战斗执行器
@@ -33,7 +58,7 @@ export class BattleExecutor {
     private readonly passiveSkillManager: PassiveSkillManager,
     private readonly battleRecorder: BattleRecorder,
     private readonly animationManager: BattleAnimationManager,
-  ) { }
+  ) {}
 
   // ============ 参与者行动 ============
 
@@ -58,11 +83,13 @@ export class BattleExecutor {
         sourceId: participant.id,
         targetId: participant.id,
         turn: battle.currentRound || 1,
-        effects: [{
-          type: 'status',
-          description: `${participant.name} 被控制，无法行动`,
-          duration: 0,
-        }],
+        effects: [
+          {
+            type: 'status',
+            description: `${participant.name} 被控制，无法行动`,
+            duration: 0,
+          },
+        ],
       })
       this.recordBattleAction(battle, action)
       battleLogManager.addBattleLog({
@@ -168,7 +195,11 @@ export class BattleExecutor {
     try {
       // ponytail: 启用延迟伤害模式 — 技能执行只记录数值不实际扣血，等待动画完成后统一应用
       this.skillManager.setDeferredDamageMode(true)
-      const pendingDamages: Array<{ target: BattleEntity; damage: number; heal: number }> = []
+      const pendingDamages: Array<{
+        target: BattleEntity
+        damage: number
+        heal: number
+      }> = []
 
       let totalDamage = 0
       let totalHeal = 0
@@ -178,7 +209,14 @@ export class BattleExecutor {
         if (!target.isAlive()) continue
 
         const record = createEmptyRecord(
-          battle.battleId, source.id, source.name, 'skill', target.id, target.name, battle.currentRound ?? 1, skill.id,
+          battle.battleId,
+          source.id,
+          source.name,
+          'skill',
+          target.id,
+          target.name,
+          battle.currentRound ?? 1,
+          skill.id,
         )
         record.skillName = skill.name
 
@@ -192,7 +230,9 @@ export class BattleExecutor {
             this.resolveStepTargets(battle, mainTarget, stepTargetType),
         )
         if (!skillAction) {
-          battleLogManager.addDebugLog(`技能执行返回空: ${skill.id}，跳过目标 ${target.id}`)
+          battleLogManager.addDebugLog(
+            `技能执行返回空: ${skill.id}，跳过目标 ${target.id}`,
+          )
           continue
         }
 
@@ -202,7 +242,11 @@ export class BattleExecutor {
         records.push(record)
 
         if ((skillAction.damage ?? 0) > 0 || (skillAction.heal ?? 0) > 0) {
-          pendingDamages.push({ target, damage: skillAction.damage ?? 0, heal: skillAction.heal ?? 0 })
+          pendingDamages.push({
+            target,
+            damage: skillAction.damage ?? 0,
+            heal: skillAction.heal ?? 0,
+          })
         }
         totalDamage += skillAction.damage ?? 0
         totalHeal += skillAction.heal ?? 0
@@ -227,7 +271,11 @@ export class BattleExecutor {
       battleLogManager.addBattleLog({
         turn: battle.currentTurn,
         message: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}`,
-        segments: [{ text: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}` }],
+        segments: [
+          {
+            text: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}`,
+          },
+        ],
         category: BATTLE_LOG_CATEGORIES.ACTION,
       })
 
@@ -235,7 +283,7 @@ export class BattleExecutor {
       if (targets.length > 0 && (totalDamage > 0 || totalHeal > 0)) {
         const primaryTarget = targets[0]
         const isCrit = allEffects.some(
-          (e: any) => e.type === 'damage' && e.isCritical,
+          (e: any) => e.type === ActionResultType.DAMAGE && e.isCritical,
         )
 
         // ponytail: 技能飞行动画只播放一次（无论伤害/治疗/同时都有）
@@ -278,11 +326,13 @@ export class BattleExecutor {
       battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error as Error)
       action.type = ActionTypes.ATTACK
       action.damage = Math.floor(Math.random() * 20) + 10
-      action.effects = [{
-        type: EFFECT_TYPES.DAMAGE,
-        value: action.damage,
-        description: `${source.name} 普通攻击 (技能执行失败)`,
-      }]
+      action.effects = [
+        {
+          type: EffectType.DAMAGE,
+          value: action.damage,
+          description: `${source.name} 普通攻击 (技能执行失败)`,
+        },
+      ]
     }
 
     this.recordBattleAction(battle, action)
@@ -309,13 +359,17 @@ export class BattleExecutor {
       if (cfg.faction === TargetFaction.ALL) return true
       if (cfg.faction === TargetFaction.ALLY) return p.team === source.team
       // 'enemy'
-      return p.team === (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
+      return (
+        p.team ===
+        (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
+      )
     }
 
     let candidates = participants.filter(factionFilter)
     if (candidates.length === 0) return []
 
-    const take = (arr: BattleEntity[], n: number): BattleEntity[] => arr.slice(0, Math.max(1, n))
+    const take = (arr: BattleEntity[], n: number): BattleEntity[] =>
+      arr.slice(0, Math.max(1, n))
 
     const strategy = cfg.strategy || TargetStrategy.FIRST
     switch (strategy) {
@@ -323,15 +377,21 @@ export class BattleExecutor {
         return candidates
       case TargetStrategy.LOWEST_HP: {
         const target = candidates.reduce((min, p) =>
-          (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) <
-            (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
+          p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+            Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1) <
+          min.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+            Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)
+            ? p
+            : min,
         )
         return [target]
       }
       case TargetStrategy.RANDOM:
         return take(
           candidates.sort(() => Math.random() - 0.5),
-          cfg.count === TargetStrategy.ALL ? candidates.length : cfg.count ?? 1,
+          cfg.count === TargetStrategy.ALL
+            ? candidates.length
+            : (cfg.count ?? 1),
         )
       case TargetStrategy.FRONT:
         return [candidates[0]]
@@ -358,14 +418,29 @@ export class BattleExecutor {
       case TargetStrategy.FIRST:
       default: {
         // 智能默认：如果技能含治疗/增益步骤，选最低血量；否则选第一个
-        if (skill.steps.some((s) => s.type === 'heal' || s.type === 'apply_buff')) {
+        if (
+          skill.steps.some(
+            (s) =>
+              s.type === SkillStepType.HEAL ||
+              s.type === SkillStepType.APPLY_BUFF,
+          )
+        ) {
           const target = candidates.reduce((min, p) =>
-            (p.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) <
-              (min.getAttribute(ATTRIBUTE_CODE.currentHealth) / Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)) ? p : min,
+            p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+              Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1) <
+            min.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+              Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)
+              ? p
+              : min,
           )
           return [target]
         }
-        return take(candidates, cfg.count === TargetStrategy.ALL ? candidates.length : cfg.count ?? 1)
+        return take(
+          candidates,
+          cfg.count === TargetStrategy.ALL
+            ? candidates.length
+            : (cfg.count ?? 1),
+        )
       }
     }
   }
@@ -421,7 +496,10 @@ export class BattleExecutor {
   /**
    * 构造普通攻击的技能步骤配置
    */
-  buildNormalAttackStep(source: BattleEntity, targetId: string): ExtendedSkillStep {
+  buildNormalAttackStep(
+    source: BattleEntity,
+    targetId: string,
+  ): ExtendedSkillStep {
     return {
       type: SkillStepType.DEAL_DAMAGE,
       id: 'normal_attack',
@@ -429,8 +507,12 @@ export class BattleExecutor {
       damageCategory: DamageCategory.PHYSICAL,
       attackType: AttackType.NORMAL,
       criticalConfig: {
-        rate: (source.getAttribute(ATTRIBUTE_CODE.critRate) || getAttributeDefaultValue(ATTRIBUTE_CODE.critRate)),
-        multiplier: (source.getAttribute(ATTRIBUTE_CODE.critDamage) || getAttributeDefaultValue(ATTRIBUTE_CODE.critDamage)),
+        rate:
+          source.getAttribute(ATTRIBUTE_CODE.critRate) ||
+          getAttributeDefaultValue(ATTRIBUTE_CODE.critRate),
+        multiplier:
+          source.getAttribute(ATTRIBUTE_CODE.critDamage) ||
+          getAttributeDefaultValue(ATTRIBUTE_CODE.critDamage),
       },
     }
   }
@@ -438,8 +520,16 @@ export class BattleExecutor {
   /**
    * 创建战斗动作对象
    */
-  createBattleAction(sourceId: string, targetId: string, turnNumber: number): BattleAction {
-    return BattleActionHelper.createAttack({ sourceId, targetId, turn: turnNumber })
+  createBattleAction(
+    sourceId: string,
+    targetId: string,
+    turnNumber: number,
+  ): BattleAction {
+    return BattleActionHelper.createAttack({
+      sourceId,
+      targetId,
+      turn: turnNumber,
+    })
   }
 
   /**
@@ -476,28 +566,55 @@ export class BattleExecutor {
       turn: turnNumber,
       message: `${source.name} 对 ${target.name} 发动普通攻击，${isCritical ? '暴击！' : ''}造成 ${damage} 点物理伤害`,
       segments: [
-        { text: source.name, classStr: source.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile' },
+        {
+          text: source.name,
+          classStr:
+            source.type === PARTICIPANT_SIDE.ALLY
+              ? 'log-friendly'
+              : 'log-hostile',
+        },
         { text: ' 对 ' },
-        { text: target.name, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile' },
+        {
+          text: target.name,
+          classStr:
+            target.type === PARTICIPANT_SIDE.ALLY
+              ? 'log-friendly'
+              : 'log-hostile',
+        },
         { text: ` 发动普通攻击，${isCritical ? '暴击！' : ''}造成 ` },
-        { text: damage.toString(), classStr: isCritical ? 'log-crit' : 'log-damage' },
+        {
+          text: damage.toString(),
+          classStr: isCritical ? 'log-crit' : 'log-damage',
+        },
         { text: ' 点物理伤害' },
       ],
-      category: isCritical ? BATTLE_LOG_CATEGORIES.CRIT : BATTLE_LOG_CATEGORIES.DAMAGE,
+      category: isCritical
+        ? BATTLE_LOG_CATEGORIES.CRIT
+        : BATTLE_LOG_CATEGORIES.DAMAGE,
     }
   }
 
   /**
    * 对目标应用伤害并触发相关被动技能
    */
-  applyDamageToTarget(source: BattleEntity, target: BattleEntity, damage: number): void {
+  applyDamageToTarget(
+    source: BattleEntity,
+    target: BattleEntity,
+    damage: number,
+  ): void {
     target.takeDamage(damage)
     this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.ON_HIT, target, undefined, { sourceId: source.id, damage },
+      BattleTriggerPhase.ON_HIT,
+      target,
+      undefined,
+      { sourceId: source.id, damage },
     )
     if (!target.isAlive()) {
       this.passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
+        BattleTriggerPhase.ON_DEATH,
+        target,
+        undefined,
+        { sourceId: source.id, cause: EffectType.DAMAGE },
       )
     }
   }
@@ -512,15 +629,26 @@ export class BattleExecutor {
     turnNumber: number,
   ): Promise<void> {
     action.effects.push({
-      type: EFFECT_TYPES.MISS,
+      type: EffectType.MISS,
       value: 0,
       description: `${target.name} 闪避了攻击`,
     })
-    await this.animationManager.triggerMissAnimationAndWait({ targetId: target.id })
+    await this.animationManager.triggerMissAnimationAndWait({
+      targetId: target.id,
+    })
 
-    const logParams = this.generateAttackLogParams(source, target, turnNumber, { isMiss: true })
-    battleLogManager.addBattleLog({ turn: logParams.turn, message: logParams.message, segments: logParams.segments, category: logParams.category })
-    battleLogManager.addDebugLog(`普通攻击: ${source.name} → ${target.name}，被闪避`)
+    const logParams = this.generateAttackLogParams(source, target, turnNumber, {
+      isMiss: true,
+    })
+    battleLogManager.addBattleLog({
+      turn: logParams.turn,
+      message: logParams.message,
+      segments: logParams.segments,
+      category: logParams.category,
+    })
+    battleLogManager.addDebugLog(
+      `普通攻击: ${source.name} → ${target.name}，被闪避`,
+    )
   }
 
   /**
@@ -537,7 +665,7 @@ export class BattleExecutor {
     action.damage = damage
 
     action.effects.push({
-      type: EFFECT_TYPES.DAMAGE,
+      type: EffectType.DAMAGE,
       value: damage,
       description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
     })
@@ -555,11 +683,23 @@ export class BattleExecutor {
     this.applyDamageToTarget(source, target, damage)
 
     await this.animationManager.triggerDamageAnimationAndWait({
-      targetId: target.id, damage, damageCategory: DamageCategory.PHYSICAL, isCritical, isHeal: false,
+      targetId: target.id,
+      damage,
+      damageCategory: DamageCategory.PHYSICAL,
+      isCritical,
+      isHeal: false,
     })
 
-    const logParams = this.generateAttackLogParams(source, target, turnNumber, { damage, isCritical })
-    battleLogManager.addBattleLog({ turn: logParams.turn, message: logParams.message, segments: logParams.segments, category: logParams.category })
+    const logParams = this.generateAttackLogParams(source, target, turnNumber, {
+      damage,
+      isCritical,
+    })
+    battleLogManager.addBattleLog({
+      turn: logParams.turn,
+      message: logParams.message,
+      segments: logParams.segments,
+      category: logParams.category,
+    })
     battleLogManager.addDebugLog(`普通攻击: ${source.name} → ${target.name}`)
   }
 
@@ -576,29 +716,53 @@ export class BattleExecutor {
     if (!target) {
       battleLogManager.addDebugLog(`攻击失败: 未找到目标 ${targetId}`)
       console.error(`攻击失败: 未找到目标 ${targetId}`)
-      return this.createBattleAction(source.id, source.id, battle.currentRound || 1)
+      return this.createBattleAction(
+        source.id,
+        source.id,
+        battle.currentRound || 1,
+      )
     }
 
     const roundNumber = battle.currentRound
 
     this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.BEFORE_ATTACK, source, undefined, { targetId, roundNumber },
+      BattleTriggerPhase.BEFORE_ATTACK,
+      source,
+      undefined,
+      { targetId, roundNumber },
     )
 
     // 创建详细记录对象用于捕获伤害拆分
     const record = createEmptyRecord(
-      battle.battleId, source.id, source.name, 'attack', targetId, target.name, roundNumber ?? 1,
+      battle.battleId,
+      source.id,
+      source.name,
+      'attack',
+      targetId,
+      target.name,
+      roundNumber ?? 1,
     )
 
     const attackStep = this.buildNormalAttackStep(source, targetId)
-    const damageResult = this.damageCalculator.calculateDamage(attackStep, source, target, record)
+    const damageResult = this.damageCalculator.calculateDamage(
+      attackStep,
+      source,
+      target,
+      record,
+    )
 
     const action = this.createBattleAction(source.id, targetId, roundNumber)
 
     if (damageResult.isMiss) {
       await this.handleMissAttack(action, source, target, roundNumber)
     } else {
-      await this.handleHitAttack(action, source, target, damageResult, roundNumber)
+      await this.handleHitAttack(
+        action,
+        source,
+        target,
+        damageResult,
+        roundNumber,
+      )
     }
 
     // 回填最终伤害到记录
@@ -607,9 +771,14 @@ export class BattleExecutor {
     this.battleRecorder.recordCombatRecord(battle.battleId, record)
 
     this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.AFTER_ATTACK, source, undefined, {
-      targetId, damage: action.damage, isCritical: damageResult.isCritical,
-    },
+      BattleTriggerPhase.AFTER_ATTACK,
+      source,
+      undefined,
+      {
+        targetId,
+        damage: action.damage,
+        isCritical: damageResult.isCritical,
+      },
     )
 
     this.recordBattleAction(battle, action)
@@ -653,13 +822,20 @@ export class BattleExecutor {
    */
   recordBattleAction(battle: BattleData, action: BattleAction): void {
     this.addBattleAction(battle, action)
-    this.battleRecorder.recordAction(battle.battleId, action, battle.currentRound || 1)
+    this.battleRecorder.recordAction(
+      battle.battleId,
+      action,
+      battle.currentRound || 1,
+    )
   }
 
   /**
    * 执行默认行动（当AI决策失败或无效时使用）
    */
-  async executeDefaultAction(battle: BattleData, participant: BattleEntity): Promise<void> {
+  async executeDefaultAction(
+    battle: BattleData,
+    participant: BattleEntity,
+  ): Promise<void> {
     const enemies = Array.from(battle.participants.values())
       .filter((p) => p.team === PARTICIPANT_SIDE.ENEMY && p.isAlive())
       .map((p) => p.id)
@@ -673,7 +849,10 @@ export class BattleExecutor {
     if (participant.team === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
       targetId = enemies[Math.floor(Math.random() * enemies.length)]
       damage = Math.floor(Math.random() * 20) + 10
-    } else if (participant.team === PARTICIPANT_SIDE.ENEMY && characters.length > 0) {
+    } else if (
+      participant.team === PARTICIPANT_SIDE.ENEMY &&
+      characters.length > 0
+    ) {
       targetId = characters[Math.floor(Math.random() * characters.length)]
       damage = Math.floor(Math.random() * 15) + 8
     } else {
@@ -689,24 +868,33 @@ export class BattleExecutor {
       success: true,
       timestamp: Date.now(),
       turn: battle.currentRound || 1,
-      effects: [{
-        type: EFFECT_TYPES.DAMAGE,
-        value: damage,
-        description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
-      }],
+      effects: [
+        {
+          type: EffectType.DAMAGE,
+          value: damage,
+          description: `${participant.name} 普通攻击 造成 ${damage} 伤害`,
+        },
+      ],
     })
   }
 
   /**
    * 执行战斗动作
    */
-  async executeAction(battle: BattleData, action: BattleAction): Promise<BattleAction> {
+  async executeAction(
+    battle: BattleData,
+    action: BattleAction,
+  ): Promise<BattleAction> {
     const source = battle.participants.get(action.sourceId)
     const target = battle.participants.get(action.targetId)
 
     if (!source || !target) {
-      battleLogManager.addDebugLog(`执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`)
-      console.error(`执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`)
+      battleLogManager.addDebugLog(
+        `执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`,
+      )
+      console.error(
+        `执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`,
+      )
       return action
     }
 
@@ -715,7 +903,10 @@ export class BattleExecutor {
         // ponytail: 延迟伤害模式 — 动画完成后才扣血
         this.skillManager.setDeferredDamageMode(true)
         const skillAction = this.skillManager.executeSkill(
-          action.skillId, source, target, action.turn ?? 0,
+          action.skillId,
+          source,
+          target,
+          action.turn ?? 0,
         )
         if (!skillAction) {
           this.skillManager.setDeferredDamageMode(false)
@@ -730,28 +921,36 @@ export class BattleExecutor {
           action.effects = skillAction.effects
 
           const hasMissEffect = skillAction.effects.some(
-            (effect) => effect.type === EFFECT_TYPES.MISS,
+            (effect) => effect.type === EffectType.MISS,
           )
           if (hasMissEffect) {
             this.skillManager.setDeferredDamageMode(false)
-            await this.animationManager.triggerMissAnimationAndWait({ targetId: target.id })
+            await this.animationManager.triggerMissAnimationAndWait({
+              targetId: target.id,
+            })
           }
 
           for (const effect of skillAction.effects) {
-            if (effect.type === EFFECT_TYPES.BUFF || effect.type === EFFECT_TYPES.DEBUFF) {
+            if (
+              effect.type === EffectType.BUFF ||
+              effect.type === EffectType.DEBUFF
+            ) {
               let buffTarget = target
               if (effect.targetId === source.id) buffTarget = source
               await this.animationManager.triggerBuffEffectAndWait({
                 targetId: buffTarget.id,
                 buffName: effect.buffId || 'unknown',
-                isPositive: effect.type === EFFECT_TYPES.BUFF,
+                isPositive: effect.type === EffectType.BUFF,
               })
             }
           }
 
           await this.animationManager.triggerSkillEffectAnimation({
-            sourceId: source.id, targetId: target.id, skillName: action.skillId,
-            effectType: action.type, damageCategory: DamageCategory.PHYSICAL,
+            sourceId: source.id,
+            targetId: target.id,
+            skillName: action.skillId,
+            effectType: action.type,
+            damageCategory: DamageCategory.PHYSICAL,
           })
 
           // ponytail: 动画完成后应用延迟的伤害/治疗
@@ -762,32 +961,41 @@ export class BattleExecutor {
           // ponytail: 技能伤害/治疗数值动画（在 HP 扣减之后播放，与 handleHitAttack 时序一致）
           if ((action.damage ?? 0) > 0) {
             const isCrit = skillAction.effects.some(
-              (e: any) => e.type === 'damage' && e.isCritical,
+              (e: any) => e.type === EffectType.DAMAGE && e.isCritical,
             )
             await this.animationManager.triggerDamageAnimationAndWait({
-              targetId: target.id, damage: action.damage ?? 0,
+              targetId: target.id,
+              damage: action.damage ?? 0,
               damageCategory: DamageCategory.PHYSICAL,
-              isCritical: isCrit, isHeal: false,
+              isCritical: isCrit,
+              isHeal: false,
             })
           }
           if ((action.heal ?? 0) > 0) {
             await this.animationManager.triggerDamageAnimationAndWait({
-              targetId: target.id, damage: action.heal ?? 0,
+              targetId: target.id,
+              damage: action.heal ?? 0,
               damageCategory: DamageCategory.PHYSICAL,
-              isCritical: false, isHeal: true,
+              isCritical: false,
+              isHeal: true,
             })
           }
         }
       } catch (error) {
         this.skillManager.setDeferredDamageMode(false)
-        battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error as Error)
+        battleLogManager.addDebugLog(
+          `技能执行失败: ${action.skillId}`,
+          error as Error,
+        )
         action.type = ActionTypes.ATTACK
         action.damage = Math.floor(Math.random() * 20) + 10
-        action.effects = [{
-          type: EFFECT_TYPES.DAMAGE,
-          value: action.damage,
-          description: `${source.name} 普通攻击 (技能执行失败)`,
-        }]
+        action.effects = [
+          {
+            type: EffectType.DAMAGE,
+            value: action.damage,
+            description: `${source.name} 普通攻击 (技能执行失败)`,
+          },
+        ]
       }
     }
 
@@ -797,27 +1005,38 @@ export class BattleExecutor {
       if (action.damage && action.damage > 0) {
         // ponytail: 先播伤害数值动画，再扣 HP，保证视觉同步
         await this.animationManager.triggerDamageAnimationAndWait({
-          targetId: target.id, damage: action.damage,
+          targetId: target.id,
+          damage: action.damage,
           damageCategory: DamageCategory.PHYSICAL,
-          isCritical: false, isHeal: false,
+          isCritical: false,
+          isHeal: false,
         })
 
         const actualDamage = target.takeDamage(action.damage)
         action.damage = actualDamage
 
         this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.ON_HIT, target, undefined, { sourceId: source.id, damage: actualDamage },
+          BattleTriggerPhase.ON_HIT,
+          target,
+          undefined,
+          { sourceId: source.id, damage: actualDamage },
         )
         if (!target.isAlive()) {
           this.passiveSkillManager.triggerPassives(
-            BattleTriggerPhase.ON_DEATH, target, undefined, { sourceId: source.id, cause: 'damage' },
+            BattleTriggerPhase.ON_DEATH,
+            target,
+            undefined,
+            { sourceId: source.id, cause: EffectType.DAMAGE },
           )
         }
 
         if (action.heal && action.heal > 0) {
           await this.animationManager.triggerDamageAnimationAndWait({
-            targetId: target.id, damage: action.heal, damageCategory: DamageCategory.PHYSICAL,
-            isCritical: false, isHeal: true,
+            targetId: target.id,
+            damage: action.heal,
+            damageCategory: DamageCategory.PHYSICAL,
+            isCritical: false,
+            isHeal: true,
           })
           const actualHeal = target.heal(action.heal)
           action.heal = actualHeal

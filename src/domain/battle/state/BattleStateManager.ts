@@ -112,9 +112,9 @@ export class BattleStateManager {
       // 同步战斗活跃状态
       this.isBattleActive = battleState.battleState === BattleStatus.ACTIVE
 
-      // 同步回合数
-      if (battleState.currentTurn !== undefined) {
-        this.currentTurn = battleState.currentTurn + 1 // 转换为从 1 开始的回合数
+      // 同步回合数（currentRound 是 1-based 回合号）
+      if (battleState.currentRound !== undefined) {
+        this.currentTurn = battleState.currentRound
       }
 
       // 同步当前行动者

@@ -9,14 +9,18 @@ import type {
   LogSegment,
   LogFilters,
 } from '@/shared/types/battle-log'
-import { battleActionToLogEntry, LogType, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import {
+  battleActionToLogEntry,
+  LogType,
+  BATTLE_LOG_CATEGORIES,
+} from '@/shared/types/battle-log'
 import type { BattleService } from '@/application/facade/BattleFacade'
 import type { BattleAction, BattleState } from '@/domain/battle/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { Enemy } from '@/shared/types/enemy'
-import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import { EffectType } from '@/shared/types/effect'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -123,7 +127,6 @@ export const useBattleStore = defineStore('battle', () => {
   /** 已处理过的战斗动作ID集合（防止重复解析和显示同一动作） */
   const processedActionIds = ref(new Set<string>())
 
-
   const selectedCharacterId = ref<string | null>(null)
   /** 角色库预览实体（未加入队伍，仅供属性监控预览） */
   const previewEntity = shallowRef<BattleEntity | null>(null)
@@ -156,7 +159,8 @@ export const useBattleStore = defineStore('battle', () => {
     currentTurn.value = battleService.value!.getCurrentTurn()
     maxTurns.value = battleService.value!.getMaxTurns?.() ?? 999
     const battleState = battleService.value!.getBattleState()
-    isBattleActive.value = battleState?.battleState === BattleStatus.ACTIVE || false
+    isBattleActive.value =
+      battleState?.battleState === BattleStatus.ACTIVE || false
   }
 
   // 所有事件订阅在 events Map 创建后统一注册（见下方 🔹 3. 事件订阅管理器）
@@ -183,7 +187,11 @@ export const useBattleStore = defineStore('battle', () => {
       battleLogManager.addBattleLog({
         turn: battleService.value?.getTurn() ?? 1,
         message: `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`,
-        segments: [{ text: `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}` }],
+        segments: [
+          {
+            text: `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`,
+          },
+        ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
       })
     }
@@ -211,14 +219,16 @@ export const useBattleStore = defineStore('battle', () => {
 
   /** 处理伤害动画事件（触发伤害数字飘字效果） */
   const handleDamageAnimationEvent = (data: any) =>
-    setAnimationState('damage', data)
+    setAnimationState(EffectType.DAMAGE, data)
   /** 处理闪避动画事件（触发闪避提示效果） */
   const handleMissAnimationEvent = (data: any) =>
-    setAnimationState('miss', data)
+    setAnimationState(EffectType.MISS, data)
   /** 处理Buff效果事件（触发Buff图标显示/隐藏） */
-  const handleBuffEffectEvent = (data: any) => setAnimationState('buff', data)
+  const handleBuffEffectEvent = (data: any) =>
+    setAnimationState(EffectType.BUFF, data)
   /** 处理技能特效事件（触发技能释放动画） */
-  const handleSkillEffectEvent = (data: any) => setAnimationState('skill', data)
+  const handleSkillEffectEvent = (data: any) =>
+    setAnimationState('skill', data)
 
   /** 处理战斗重置事件（记录系统日志） */
   const handleBattleResetEvent = () => {
@@ -355,12 +365,14 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const updateRules = (newRules: Partial<BattleRules>) => {
     Object.assign(rules.value, newRules)
-    battleLogManager.addSystemLog({ message: `战斗规则已更新: ${JSON.stringify(newRules)}` })
+    battleLogManager.addSystemLog({
+      message: `战斗规则已更新: ${JSON.stringify(newRules)}`,
+    })
   }
 
   /**
    * 设置动画效果状态
-   * @param type 动画类型（'damage'|'miss'|'buff'|'skill'）
+   * @param type 动画类型
    * @param data 动画数据对象（包含目标ID、数值、类型等信息）
    * @description 触发指定类型的动画效果，并在持续时间后自动清除
    */
@@ -715,9 +727,9 @@ export const useBattleStore = defineStore('battle', () => {
       !filters.action
     )
       return false
-    if (!filters.battle && category === 'damage') return false
-    if (!filters.battle && category === 'heal') return false
-    if (!filters.battle && category === 'status') return false
+    if (!filters.battle && category === EffectType.DAMAGE) return false
+    if (!filters.battle && category === EffectType.HEAL) return false
+    if (!filters.battle && category === EffectType.STATUS) return false
     return true
   }
 
@@ -736,7 +748,10 @@ export const useBattleStore = defineStore('battle', () => {
    * @param enemy 角色库中的敌人数据
    */
   const previewRosterCharacter = (enemy: Enemy) => {
-    const entity = GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY)
+    const entity = GameDataProcessor.enemyToParticipant(
+      enemy,
+      PARTICIPANT_SIDE.ENEMY,
+    )
     previewEntity.value = entity
     selectedCharacterId.value = entity.id
   }

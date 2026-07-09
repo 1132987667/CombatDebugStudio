@@ -42,6 +42,13 @@
 
     <!-- 战斗视觉特效层 -->
     <BattleVisualEffects ref="visualEffectsRef" />
+
+    <!-- 回合变化公告 -->
+    <div class="round-announce-layer">
+      <div v-for="ra in roundAnnounces" :key="ra.id" class="round-announce" :style="{ animationDuration: ra.dur + 'ms' }">
+        {{ ra.text }}
+      </div>
+    </div>
   </div>
 </template>
 
@@ -61,7 +68,7 @@ const store = useBattleStore()
 const props = defineProps<{
   currentActorId: string | null;
   turnOrder?: string[];
-  damageEffects?: Record<string, { value: number; type: 'damage' | 'heal' | 'critical' | 'miss'; isCritical: boolean }>;
+  damageEffects?: Record<string, { value: number; type: ActionResultType; isCritical: boolean }>;
   skillEffects?: Record<string, { type: 'attack' | 'heal' | 'buff' | 'debuff' | 'ultimate'; name?: string }>;
   battleSpeed?: number;
 }>();
@@ -124,6 +131,26 @@ watch(visualEffectsRef, (vf) => {
 // ponytail: 防重入 key — 相同的 (source|target|skill) 只处理一次，避免 DAMAGE_ANIMATION 触发时重复播放
 let lastSkillKey = ''
 
+/** 回合变化公告列表 */
+let roundId = 0
+const roundAnnounces = ref<Array<{ id: number; text: string; dur: number }>>([])
+const ANNOUNCE_DURATION = 1200
+function addRoundAnnounce(text: string) {
+  const id = ++roundId
+  roundAnnounces.value.push({ id, text, dur: ANNOUNCE_DURATION })
+  setTimeout(() => {
+    const idx = roundAnnounces.value.findIndex(i => i.id === id)
+    if (idx !== -1) roundAnnounces.value.splice(idx, 1)
+  }, ANNOUNCE_DURATION)
+}
+
+// ponytail: 监听回合变化，触发动画
+watch(() => store.currentTurn, (newTurn, oldTurn) => {
+  if (oldTurn !== undefined && newTurn > oldTurn) {
+    addRoundAnnounce(`第 ${newTurn} 回合`)
+  }
+})
+
 // ponytail: 监听 store 层动画状态变化，编排完整视觉效果 — 直接 watch reactive 对象而非 getter 函数以保证深层变更可追踪
 watch(store.animationState, (state) => {
   if (state.skill) {
@@ -148,11 +175,6 @@ watch(store.animationState, (state) => {
         state.skill.skillName,
         0, side as 'left' | 'right',
       )
-      // ponytail: 配合 playHealSequence 内部 1100ms 定时
-      setTimeout(() => {
-        participantCardRefs.value[state.skill.targetId]?.triggerVisualState('healed', 800)
-        participantCardRefs.value[state.skill.targetId]?.flashHpBar()
-      }, 1100)
     } else {
       visualEffectsRef.value?.playAttackSequence(
         state.skill.sourceId,
@@ -162,24 +184,18 @@ watch(store.animationState, (state) => {
         side as 'left' | 'right',
         hitEffect,
       )
-      // ponytail: 配合 playAttackSequence 内部 1100ms 定时
-      const isCrit = state.skill.effectType === 'critical'
-      if (isCrit) {
-        setTimeout(() => visualEffectsRef.value?.showScreenShake(), 1100)
-      }
-      setTimeout(() => {
-        participantCardRefs.value[state.skill.targetId]?.triggerVisualState('hurt', 450)
-      }, 1100)
     }
   }
   if (state.damage) {
     if (state.damage.isHeal) {
       if (state.skill) {
-        // ponytail: playHealSequence 已处理了光环，此处只显示治疗数字
-        const targetCard = participantCardRefs.value[state.damage.targetId]
-        targetCard?.triggerVisualState('healed', 800)
-        targetCard?.flashHpBar()
-        visualEffectsRef.value?.showHealNum(state.damage.targetId, state.damage.damage)
+        // ponytail: 延迟 1100ms 匹配 playHealSequence 内部动画时序
+        setTimeout(() => {
+          const tc = participantCardRefs.value[state.damage!.targetId]
+          tc?.triggerVisualState('healed', 800)
+          tc?.flashHpBar()
+          visualEffectsRef.value?.showHealNum(state.damage!.targetId, state.damage!.damage)
+        }, 1100)
         return
       }
       // 独立治疗（无 skill 事件）
@@ -190,13 +206,15 @@ watch(store.animationState, (state) => {
       visualEffectsRef.value?.showHealNum(state.damage.targetId, state.damage.damage)
     } else {
       if (state.skill) {
-        // ponytail: playAttackSequence 已在 1100ms 处理了 impact，此处只显示伤害数字
-        const targetCard = participantCardRefs.value[state.damage.targetId]
-        targetCard?.triggerVisualState('hurt', 450)
-        visualEffectsRef.value?.showDamageNum(state.damage.targetId, state.damage.damage, state.damage.isCritical)
-        if (state.damage.isCritical) {
-          visualEffectsRef.value?.showScreenShake()
-        }
+        // ponytail: 延迟 1100ms 匹配 playAttackSequence 内部动画时序（技能名飞行→光弹→命中爆炸）
+        setTimeout(() => {
+          const tc = participantCardRefs.value[state.damage!.targetId]
+          tc?.triggerVisualState('hurt', 450)
+          visualEffectsRef.value?.showDamageNum(state.damage!.targetId, state.damage!.damage, state.damage!.isCritical)
+          if (state.damage!.isCritical) {
+            visualEffectsRef.value?.showScreenShake()
+          }
+        }, 1100)
         return
       }
       // 独立伤害（调试面板、被动触发等）
@@ -295,7 +313,7 @@ function getCharacterSide(characterId: string): 'left' | 'right' {
  * 显示伤害数字
  * 通过 ParticipantCard 组件的 addDamageNumber 方法调用
  */
-function showDamage(characterId: string, value: number, type: 'damage' | 'heal' | 'critical' | 'miss', isCritical: boolean = false) {
+function showDamage(characterId: string, value: number, type: ActionResultType, isCritical: boolean = false) {
   // 调用 ParticipantCard 组件的 addDamageNumber 方法
   const cardRef = participantCardRefs.value[characterId]
   if (cardRef && typeof cardRef.addDamageNumber === 'function') {
@@ -316,11 +334,11 @@ function showMiss(characterId: string) {
   // 调用 ParticipantCard 组件的 addDamageNumber 方法
   const cardRef = participantCardRefs.value[characterId]
   if (cardRef && typeof cardRef.addDamageNumber === 'function') {
-    cardRef.addDamageNumber(0, 'miss', false)
+    cardRef.addDamageNumber(0, ActionResultType.MISS, false)
   }
 
   playHitAnimation(characterId, {
-    hitEffect: 'miss',
+    hitEffect: ActionResultType.MISS,
   })
 }
 
@@ -335,7 +353,7 @@ function showBuffEffect(characterId: string, _buffName: string, isPositive: bool
 
 function triggerHitEffect(characterId: string) {
   playHitAnimation(characterId, {
-    hitEffect: 'damage',
+    hitEffect: ActionResultType.DAMAGE,
   })
 }
 
@@ -404,4 +422,48 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 @use'@/presentation/styles/main.scss';
+
+.round-announce-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1200;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.round-announce {
+  position: absolute;
+  top: 45%;
+  font-family: 'Cinzel', 'Noto Serif SC', serif;
+  font-size: 48px;
+  font-weight: 900;
+  color: #ffd478;
+  text-shadow:
+    0 0 20px rgba(255, 212, 120, 0.8),
+    0 0 40px rgba(255, 212, 120, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.95);
+  animation: round-rise ease-out forwards;
+  white-space: nowrap;
+}
+
+@keyframes round-rise {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -150%) scale(0.9);
+    opacity: 0;
+  }
+}
 </style>

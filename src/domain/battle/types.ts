@@ -5,7 +5,11 @@
  */
 
 import type { BattleAI } from '@/domain/battle/ai/BattleAI'
-import type { SkillConfig, SkillSet, DamageCategory } from '@/domain/skill/types'
+import type {
+  SkillConfig,
+  SkillSet,
+  DamageCategory,
+} from '@/domain/skill/types'
 import type {
   AttributeValue,
   IModifierProvider,
@@ -144,13 +148,14 @@ export type ActionTypes = (typeof ActionTypes)[keyof typeof ActionTypes]
 
 // 重命名常量名
 export const ActionResultType = {
-  DAMAGE: 'damage',
-  HEAL: 'heal',
-  CRITICAL: 'critical',
-  MISS: 'miss',
+  DAMAGE: EffectType.DAMAGE,
+  SHIELD: EffectType.SHIELD,
+  HEAL: EffectType.HEAL,
+  CRITICAL: EffectType.CRITICAL,
+  MISS: EffectType.MISS,
 }
-export type ActionResultType = (typeof ActionResultType)[keyof typeof ActionResultType]
-
+export type ActionResultType =
+  (typeof ActionResultType)[keyof typeof ActionResultType]
 
 /** 动作类型数组 - 从 ACTION_TYPES 自动生成 */
 export const ValidActionTypes = Object.freeze([
@@ -778,7 +783,8 @@ export const BattleTriggerPhase = {
   HP_LOWER_THAN: 'hp_lower_than',
 } as const
 
-export type BattleTriggerPhase = (typeof BattleTriggerPhase)[keyof typeof BattleTriggerPhase]
+export type BattleTriggerPhase =
+  (typeof BattleTriggerPhase)[keyof typeof BattleTriggerPhase]
 
 /** 事件类型枚举 */
 export const BattleEventType = {
@@ -794,7 +800,8 @@ export const BattleEventType = {
   DAMAGE: 'damage',
   HEAL: 'heal',
 }
-export type BattleEventType = (typeof BattleEventType)[keyof typeof BattleEventType]
+export type BattleEventType =
+  (typeof BattleEventType)[keyof typeof BattleEventType]
 
 /** 扩展的战斗事件 */
 export interface ReplayBattleEvent {

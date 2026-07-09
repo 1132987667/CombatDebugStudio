@@ -12,7 +12,7 @@ import type { SkillStep, SkillConfig } from '@/domain/skill/types'
  * 效果类型常量
  * 统一的效果类型定义，供全项目使用
  */
-export const EFFECT_TYPES = {
+export const EffectType = {
   DAMAGE: 'damage',
   HEAL: 'heal',
   BUFF: 'buff',
@@ -21,13 +21,13 @@ export const EFFECT_TYPES = {
   STATUS: 'status',
   CRITICAL: 'critical',
   SPECIAL: 'special',
+  SHIELD: 'shield',
 } as const
-
 /**
  * 效果类型
  * 定义技能和Buff的效果类型
  */
-export type EffectType = (typeof EFFECT_TYPES)[keyof typeof EFFECT_TYPES]
+export type EffectType = (typeof EffectType)[keyof typeof EffectType]
 
 /**
  * 效果接口
@@ -71,7 +71,6 @@ export interface EffectConfig {
    */
   effectParams?: Record<string, any>
 }
-
 
 /**
  * 技能配置接口扩展

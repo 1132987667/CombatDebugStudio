@@ -7,6 +7,7 @@ import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { EffectType } from '@/shared/types/effect'
 
 export class SkillExecutor {
   constructor(
@@ -46,9 +47,12 @@ export class SkillExecutor {
       default: {
         // ponytail: 未实现的步骤类型 — 当前无任何技能配置使用这些类型
         // 升级路径：当有技能配置使用它们时，在 switch 中添加对应 case
-        battleLogManager.addDebugLog(`未实现的技能步骤类型: ${skillStep.type}`, LogLevel.WARN)
+        battleLogManager.addDebugLog(
+          `未实现的技能步骤类型: ${skillStep.type}`,
+          LogLevel.WARN,
+        )
         action.effects.push({
-          type: 'status',
+          type: EffectType.STATUS,
           targetId: target.id,
           description: `步骤类型 ${skillStep.type} 未实现`,
         })
@@ -64,18 +68,43 @@ export class SkillExecutor {
     target: BattleEntity,
     record?: CombatRecord,
   ): void {
-    const result = this.damageCalculator.calculateDamage(skillStep, source, target, record)
+    const result = this.damageCalculator.calculateDamage(
+      skillStep,
+      source,
+      target,
+      record,
+    )
     if (result.isMiss) {
-      action.effects.push({ type: 'miss', targetId: target.id, value: 0, description: `${target.name} dodged attack` })
+      action.effects.push({
+        type: EffectType.MISS,
+        targetId: target.id,
+        value: 0,
+        description: `${target.name} dodged attack`,
+      })
     } else {
       if (this.deferDamage) {
         // ponytail: 延迟模式 — 只记录伤害数值，不调用 takeDamage，由调用方在动画后统一应用
         action.damage = (action.damage ?? 0) + result.damage
-        action.effects.push({ type: 'damage', targetId: target.id, value: result.damage, description: `${source.name} deals ${result.damage} damage`, isCritical: result.isCritical })
+        action.effects.push({
+          type: EffectType.DAMAGE,
+          targetId: target.id,
+          value: result.damage,
+          description: `${source.name} deals ${result.damage} damage`,
+          isCritical: result.isCritical,
+        })
       } else {
-        const actualDamage = this.damageCalculator.applyDamage(target, result.damage)
+        const actualDamage = this.damageCalculator.applyDamage(
+          target,
+          result.damage,
+        )
         action.damage = (action.damage ?? 0) + actualDamage
-        action.effects.push({ type: 'damage', targetId: target.id, value: actualDamage, description: `${source.name} deals ${actualDamage} damage`, isCritical: result.isCritical })
+        action.effects.push({
+          type: EffectType.DAMAGE,
+          targetId: target.id,
+          value: actualDamage,
+          description: `${source.name} deals ${actualDamage} damage`,
+          isCritical: result.isCritical,
+        })
       }
     }
   }
@@ -87,19 +116,38 @@ export class SkillExecutor {
     target: BattleEntity,
     record?: CombatRecord,
   ): void {
-    const healTarget = skillStep.targetConfig?.faction === 'self' ? source : target
-    const heal = this.healCalculator.calculateHeal(skillStep, source, healTarget, record)
+    const healTarget =
+      skillStep.targetConfig?.faction === 'self' ? source : target
+    const heal = this.healCalculator.calculateHeal(
+      skillStep,
+      source,
+      healTarget,
+      record,
+    )
     if (this.deferDamage) {
       // ponytail: 延迟模式 — 只记录治疗数值，由调用方在动画后统一应用
       action.heal = (action.heal ?? 0) + heal
-      action.effects.push({ type: 'heal', targetId: healTarget.id, value: heal, description: `${healTarget.name} healed for ${heal}` })
+      action.effects.push({
+        type: EffectType.HEAL,
+        targetId: healTarget.id,
+        value: heal,
+        description: `${healTarget.name} healed for ${heal}`,
+      })
     } else {
       const actualHeal = this.healCalculator.applyHeal(healTarget, heal)
       action.heal = (action.heal ?? 0) + actualHeal
-      action.effects.push({ type: 'heal', targetId: healTarget.id, value: actualHeal, description: `${healTarget.name} healed for ${actualHeal}` })
+      action.effects.push({
+        type: EffectType.HEAL,
+        targetId: healTarget.id,
+        value: actualHeal,
+        description: `${healTarget.name} healed for ${actualHeal}`,
+      })
     }
     if (this.healCalculator.isSingleTurnEffect(skillStep)) {
-      action.effects.push({ type: 'status', description: 'Single-turn heal effect applied immediately' })
+      action.effects.push({
+        type: EffectType.STATUS,
+        description: 'Single-turn heal effect applied immediately',
+      })
     }
   }
 
@@ -113,17 +161,36 @@ export class SkillExecutor {
     const buffId = skillStep.buffId ?? skillStep.effectId
     if (!buffId) return
 
-    const buffTarget = skillStep.targetConfig?.faction === 'self' ? source : target
+    const buffTarget =
+      skillStep.targetConfig?.faction === 'self' ? source : target
     const buffConfig: BuffConfig = {
-      id: buffId, name: buffId, description: '', duration: skillStep.duration ?? 1,
-      maxStacks: skillStep.stacks || 1, cooldown: 0,
-      stackRule: StackRule.LIMITED, controlType: ControlType.NONE, controlPriority: 0,
+      id: buffId,
+      name: buffId,
+      description: '',
+      duration: skillStep.duration ?? 1,
+      maxStacks: skillStep.stacks || 1,
+      cooldown: 0,
+      stackRule: StackRule.LIMITED,
+      controlType: ControlType.NONE,
+      controlPriority: 0,
       isDebuff: false,
       parameters: skillStep.parameters || skillStep.effectParams || {},
     }
 
-    const instanceId = this.buffSystem.addBuff(buffTarget.id, buffId, buffConfig, 0, record)
-    action.effects.push({ type: 'buff', targetId: buffTarget.id, buffId, instanceId, description: `${source.name} applies ${buffId} to ${buffTarget.name}` })
+    const instanceId = this.buffSystem.addBuff(
+      buffTarget.id,
+      buffId,
+      buffConfig,
+      0,
+      record,
+    )
+    action.effects.push({
+      type: EffectType.BUFF,
+      targetId: buffTarget.id,
+      buffId,
+      instanceId,
+      description: `${source.name} applies ${buffId} to ${buffTarget.name}`,
+    })
   }
 
   // TODO: 实现护盾逻辑（向目标添加 buff_shield 或直接修改属性）
@@ -134,7 +201,11 @@ export class SkillExecutor {
     target: BattleEntity,
   ): void {
     // TODO: 实现护盾添加逻辑
-    action.effects.push({ type: 'status', targetId: target.id, description: 'Shield effect (to be implemented)' })
+    action.effects.push({
+      type: EffectType.STATUS,
+      targetId: target.id,
+      description: 'Shield effect (to be implemented)',
+    })
   }
 
   private executeControl(
@@ -144,14 +215,32 @@ export class SkillExecutor {
     target: BattleEntity,
     normalizedType: string,
   ): void {
-    const controlType = normalizedType === SkillStepType.STUN ? ControlType.STUN : normalizedType === SkillStepType.SILENCE ? ControlType.SILENCE : ControlType.STUN
+    const controlType =
+      normalizedType === SkillStepType.STUN
+        ? ControlType.STUN
+        : normalizedType === SkillStepType.SILENCE
+          ? ControlType.SILENCE
+          : ControlType.STUN
     const buffId = skillStep.buffId || `control_${controlType}`
     const config: BuffConfig = {
-      id: buffId, name: buffId, description: '', duration: skillStep.duration ?? 1, maxStacks: 1, cooldown: 0,
-      stackRule: StackRule.REFRESH, controlType, controlPriority: 100, isDebuff: true,
+      id: buffId,
+      name: buffId,
+      description: '',
+      duration: skillStep.duration ?? 1,
+      maxStacks: 1,
+      cooldown: 0,
+      stackRule: StackRule.REFRESH,
+      controlType,
+      controlPriority: 100,
+      isDebuff: true,
       parameters: skillStep.parameters || {},
     }
     const instanceId = this.buffSystem.addBuff(target.id, buffId, config)
-    action.effects.push({ type: 'status', targetId: target.id, buffId, description: `${source.name} applies ${controlType === ControlType.STUN ? 'stun' : 'silence'} to ${target.name}` })
+    action.effects.push({
+      type: EffectType.STATUS,
+      targetId: target.id,
+      buffId,
+      description: `${source.name} applies ${controlType === ControlType.STUN ? 'stun' : 'silence'} to ${target.name}`,
+    })
   }
 }

@@ -11,7 +11,7 @@ import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
-import { PARTICIPANT_SIDE, BattleEntity, BATTLE_CONSTANTS, ParticipantSide } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE, BattleEntity, BATTLE_CONSTANTS, ParticipantSide, BattleStatus } from '@/domain/battle/types'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 import type {
@@ -542,6 +542,7 @@ export class BattleManager {
 
     // 直接使用 BattleEntity 数组
     const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
+    this.battleSystem.setBattleState(BattleStatus.ACTIVE)
     this.battleStateManager.setBattleId(battleState.battleId)
     this.autoBattleManager.setBattleId(battleState.battleId)
     battleLogManager.clearLogs()

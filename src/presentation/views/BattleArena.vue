@@ -110,6 +110,8 @@ import { PARTICIPANT_SIDE } from "@/domain/battle/types";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import type { LogEntry } from '@/shared/types/battle-log';
+import { EffectType } from '@/shared/types/effect';
+import { DamageCategory } from '@/domain/skill/types';
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -245,7 +247,7 @@ const handleDebugAction = (action: string) => {
     case 'test_damage_num': {
       const tId = battleStore.selectedCharacterId || battleStore.enemyTeam[0]?.id || battleStore.allyTeam[0]?.id
       if (tId) {
-        battleStore.setAnimationState('damage', { targetId: tId, damage: 999, damageCategory: 'physical', isCritical: false, isHeal: false })
+        battleStore.setAnimationState(EffectType.DAMAGE, { targetId: tId, damage: 999, damageCategory: DamageCategory.PHYSICAL, isCritical: false, isHeal: false })
         battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试伤害数字 999` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
@@ -255,7 +257,7 @@ const handleDebugAction = (action: string) => {
     case 'test_crit_num': {
       const tId = battleStore.selectedCharacterId || battleStore.enemyTeam[0]?.id || battleStore.allyTeam[0]?.id
       if (tId) {
-        battleStore.setAnimationState('damage', { targetId: tId, damage: 1999, damageCategory: 'physical', isCritical: true, isHeal: false })
+        battleStore.setAnimationState(EffectType.DAMAGE, { targetId: tId, damage: 1999, damageCategory: DamageCategory.PHYSICAL, isCritical: true, isHeal: false })
         battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试暴击数字 1999` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
@@ -265,7 +267,7 @@ const handleDebugAction = (action: string) => {
     case 'test_heal_num': {
       const tId = battleStore.selectedCharacterId || battleStore.allyTeam[0]?.id || battleStore.enemyTeam[0]?.id
       if (tId) {
-        battleStore.setAnimationState('damage', { targetId: tId, damage: 500, damageCategory: 'heal', isCritical: false, isHeal: true })
+        battleStore.setAnimationState(EffectType.DAMAGE, { targetId: tId, damage: 500, damageCategory: 'heal', isCritical: false, isHeal: true })
         battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试治疗数字 500` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
@@ -276,7 +278,7 @@ const handleDebugAction = (action: string) => {
       const source = battleStore.allyTeam[0]
       const target = battleStore.enemyTeam[0]
       if (source && target) {
-        battleStore.setAnimationState('skill', { sourceId: source.id, targetId: target.id, skillName: '测试技能·裂空斩', effectType: 'attack', damageCategory: 'physical' })
+        battleStore.setAnimationState('skill', { sourceId: source.id, targetId: target.id, skillName: '测试技能·裂空斩', effectType: 'attack', damageCategory: DamageCategory.PHYSICAL })
         battleLogManager.addSystemLog({ message: `调试: 测试技能飞行 [${source.name}] → [${target.name}]` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有足够的角色' })
@@ -285,9 +287,9 @@ const handleDebugAction = (action: string) => {
     }
     case 'clear_animations':
       battleFieldRef.value?.cleanupAnimations()
-      battleStore.setAnimationState('damage', null)
-      battleStore.setAnimationState('miss', null)
-      battleStore.setAnimationState('buff', null)
+      battleStore.setAnimationState(EffectType.DAMAGE, null)
+      battleStore.setAnimationState(EffectType.MISS, null)
+      battleStore.setAnimationState(EffectType.BUFF, null)
       battleStore.setAnimationState('skill', null)
       battleLogManager.addSystemLog({ message: '调试: 清除所有动画效果' })
       break
@@ -340,9 +342,9 @@ const teamCounts = computed(() => {
 // 初始化战斗
 function initBattle() {
   // ponytail: 默认测试阵容 — 覆盖伤害/治疗/护盾/buff/debuff 的典型组合
-  const allyIds = ["enemy_005", "enemy_003", "boss_001", "enemy_004"];
+  const allyIds = ["enemy_005", "boss_003", "boss_001", "enemy_004"];
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
-  const enemyIds = ["enemy_008", "boss_002", "enemy_007", "boss_003"];
+  const enemyIds = ["enemy_008", "boss_002", "enemy_007", "enemy_003"];
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
   console.log('allyList', allyList)
   console.log('enemyList', enemyList)

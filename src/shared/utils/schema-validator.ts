@@ -85,7 +85,7 @@ const skillSchema = {
                   },
                 },
               },
-              damageType: { type: 'string' },
+              damageCategory: { type: 'string' },
               isSingleTurn: { type: 'boolean' },
             },
           },

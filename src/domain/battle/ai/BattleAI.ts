@@ -245,7 +245,7 @@ export class BaseBattleAI implements BattleAI {
 
     // Check if any skill is available and has enough energy
     for (const skillId of this.skills.keys()) {
-      if (participant.isSkillAvailable(skillId)) {
+      if ((participant as any).isSkillAvailable(skillId)) {
         // Check if energy is sufficient
         const skill = this.skills.get(skillId)
         if (skill && skill.energyCost !== undefined) {
@@ -271,7 +271,7 @@ export class BaseBattleAI implements BattleAI {
 
     this.skills.forEach((skill) => {
       if (
-        participant.isSkillAvailable(skill.id) &&
+        (participant as any).isSkillAvailable(skill.id) &&
         this.canUseSkill(skill, participant)
       ) {
         availableSkills.push(skill)
@@ -322,7 +322,7 @@ export class BaseBattleAI implements BattleAI {
       turn: 0,
       effects: [
         {
-          type: EFFECT_TYPES.SKILL,
+          type: EFFECT_TYPES.SPECIAL,
           description: `${participant.name} uses skill`,
         },
       ],

@@ -17,7 +17,7 @@ export interface BattleLogEventData {
 export interface DamageAnimationEventData {
   targetId: string;
   damage: number;
-  damageType: string;
+  damageCategory: string;
   isCritical: boolean;
   isHeal: boolean;
 }
@@ -45,7 +45,7 @@ export interface SkillEffectEventData {
   targetId: string;
   skillName: string;
   effectType: string;
-  damageType: string;
+  damageCategory: string;
 }
 
 /** 团队数据变更事件数据类型 */

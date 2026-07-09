@@ -4,9 +4,6 @@
  * 版本:
  */
 
-import type { BuffContext } from '@/domain/buff/BuffContext'
-
-// ========== 导入修饰符模板类型（实际项目中应从正确路径导入） ==========
 import type { ModifierTemplate } from '@/domain/attribute/modifier-template'
 
 /**
@@ -21,6 +18,60 @@ export const SkillType = {
 }
 export type SkillType = (typeof SkillType)[keyof typeof SkillType]
 
+/**
+ * 攻击方式（用于伤害减免计算）
+ * ponytail: 值从 'normal_attack'/'skill_attack' 简化为 'normal'/'skill'
+ */
+export const AttackType = {
+  NORMAL: 'normal',
+  SKILL: 'skill',
+}
+
+export type AttackType = (typeof AttackType)[keyof typeof AttackType]
+
+/**
+ * 伤害大类
+ */
+export const DamageCategory = {
+  PHYSICAL: 'physical',
+  ELEMENTAL: 'elemental',
+  TRUE: 'true',
+}
+
+export type DamageCategory = (typeof DamageCategory)[keyof typeof DamageCategory]
+
+/**
+ * 属性类型
+ * 物理 金 木 水 火 土
+ */
+export type ElementType = 'PHYSICAL' | 'JIN' | 'MU' | 'SHU' | 'HUO' | 'TU'
+
+/**
+ * 目标阵营
+ */
+export const TargetFaction = {
+  ENEMY: 'enemy',       // 敌方
+  ALLY: 'ally',       // 友方
+  ALL: 'all',       // 所有单位
+  SELF: 'self'       // 自身
+}
+export type TargetFaction = (typeof TargetFaction)[keyof typeof TargetFaction]
+
+/**
+ * 目标选择策略
+ */
+export const TargetStrategy = {
+  ALL: 'all',        // 全部目标
+  RANDOM: 'random',     // 随机
+  LOWEST_HP: 'lowest_hp',  // 最低血量
+  HIGHEST_HP: 'highest_hp', // 最高血量
+  FRONT: 'front',      // 前排
+  BACK: 'back',       // 后排
+  ADJACENT: 'adjacent',   // 相邻
+  RANDOM_ADJACENT: 'random_adjacent', // 随机相邻
+  FIRST: 'first',      // 第一个（默认）
+} as const
+export type TargetStrategy = (typeof TargetStrategy)[keyof typeof TargetStrategy]
 
 /**
  * 技能定义接口（AI系统使用的运行时类型）
@@ -70,9 +121,9 @@ export interface DamageHealCalculationConfig {
   }>
 
   /**
-   * 伤害类型（仅DAMAGE类型使用）
+   * 伤害大类（仅DAMAGE类型使用）
    */
-  damageType?: DamageType
+  damageCategory?: DamageCategory
 
   /**
    * 是否为单回合效果（仅HEAL类型使用）
@@ -141,62 +192,6 @@ export interface CalculationError {
    */
   timestamp: number
 }
-
-/**
- * 攻击类型枚举
- * 定义攻击的类型（普通攻击、技能攻击）——用于伤害减免计算
- */
-export const AttackType = {
-  NORMAL_ATTACK: 'normal_attack',
-  SKILL_ATTACK: 'skill_attack',
-}
-
-export type AttackType = (typeof AttackType)[keyof typeof AttackType]
-
-/**
- * 伤害类型枚举
- * 定义伤害的类型（物理伤害、元素伤害、真实伤害）——用于展示/视觉反馈
- */
-export const DamageType = {
-  PHYSICAL: 'physical_damage',
-  ELEMENTAL: 'elemental_damage',
-  TRUE: 'true_damage',
-}
-
-export type DamageType = (typeof DamageType)[keyof typeof DamageType]
-
-/**
- * 属性类型
- * 物理 金 木 水 火 土
- */
-export type ElementType = 'PHYSICAL' | 'JIN' | 'MU' | 'SHU' | 'HUO' | 'TU'
-
-/**
- * 目标阵营
- */
-export const TargetFaction = {
-  ENEMY:  'enemy',       // 敌方
-  ALLY:   'ally',       // 友方
-  ALL:    'all',       // 所有单位
-  SELF:   'self'       // 自身
-}
-export type TargetFaction = (typeof TargetFaction)[keyof typeof TargetFaction]
-
-/**
- * 目标选择策略
- */
-export const TargetStrategy = {
-  ALL:        'all',        // 全部目标
-  RANDOM:     'random',     // 随机
-  LOWEST_HP:  'lowest_hp',  // 最低血量
-  HIGHEST_HP: 'highest_hp', // 最高血量
-  FRONT:      'front',      // 前排
-  BACK:       'back',       // 后排
-  ADJACENT:   'adjacent',   // 相邻
-  RANDOM_ADJACENT: 'random_adjacent', // 随机相邻
-  FIRST:      'first',      // 第一个（默认）
-} as const
-export type TargetStrategy = (typeof TargetStrategy)[keyof typeof TargetStrategy]
 
 /**
  * 组合式目标配置（新格式，推荐）
@@ -293,10 +288,10 @@ export interface SkillStep {
   targetType?: TargetStrategy
 
   /**
-   * 伤害类型
-   * 用于 deal_damage 步骤
+   * 伤害大类
+   * 用于 deal_damage 步骤，决定防御公式（physical/elemental/true）
    */
-  damageType?: DamageType
+  damageCategory?: DamageCategory
 
   /**
    * 重复次数
@@ -389,22 +384,10 @@ export interface SkillConfig {
 }
 
 export interface SkillSet {
+  [key: string]: SkillConfig[]
   small: SkillConfig[]
   passive: SkillConfig[]
   ultimate: SkillConfig[]
-}
-
-/**
-
-/**
- * 技能脚本接口
- */
-export interface ISkillScript<TParams = any> {
-  onBeforeCast?(context: BuffContext): boolean
-  onAfterCast?(context: BuffContext): void
-  onHit?(context: BuffContext, targetId: string): void
-  onMiss?(context: BuffContext, targetId: string): void
-  params?: TParams
 }
 
 /**
@@ -414,29 +397,6 @@ export interface SkillScriptMetadata {
   skillId: string
   scriptPath: string
   isLoaded: boolean
-}
-
-/**
- * 技能树节点接口
- */
-export interface SkillTreeNode {
-  id: string
-  skillId: string
-  prerequisites?: string[]
-  requiredLevel?: number
-  requiredPoints?: number
-  isUnlocked?: boolean
-}
-
-/**
- * 技能树配置接口
- */
-export interface SkillTreeConfig {
-  id: string
-  name: string
-  description?: string
-  nodes: SkillTreeNode[]
-  maxPoints?: number
 }
 
 /**
@@ -469,11 +429,12 @@ export function convertSkillConfigToSkill(
   const skill: Skill = {
     id: config.id,
     name: config.name,
-    type: config.skillType,
+    type: config.skillType!,
     energyCost: config.energyCost || 0,
     cooldown: config.cooldown || 0,
     lastUsed,
     description: config.description || '',
+    steps: config.steps || [],
   }
 
   if (includeDamage) {

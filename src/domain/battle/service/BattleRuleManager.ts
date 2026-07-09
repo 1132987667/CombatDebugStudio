@@ -138,7 +138,7 @@ export class BattleRuleManager {
    */
   public async loadConfig(): Promise<BattleRulesConfig> {
     this.config = this.getDefaultConfig()
-    battleLogManager.addSystemLog('战斗规则配置加载成功')
+    battleLogManager.addSystemLog({message: '战斗规则配置加载成功'})
     return this.config
   }
 
@@ -284,7 +284,7 @@ export class BattleRuleManager {
         typeof source[key] === 'object' &&
         !Array.isArray(source[key])
       ) {
-        result[key] = this.deepMerge(result[key] || {}, source[key])
+        result[key] = this.deepMerge(result[key] || {} as Record<string, any>, source[key]) as any
       } else {
         result[key] = source[key] as any
       }

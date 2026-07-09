@@ -1,15 +1,14 @@
 import type {
   SkillConfig,
   SkillStep,
-  TargetStrategy,
 } from '@/domain/skill/types'
-import { ActionTypes, BattleActionHelper, type BattleAction, type BattleEntity } from '@/domain/battle/types'
+import { BattleActionHelper, type BattleAction, type BattleEntity } from '@/domain/battle/types'
 import {
   ATTRIBUTE_CODE,
 } from '@/domain/attribute/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { StackRule, ControlType } from '@/domain/buff/types'
+import { ControlType } from '@/domain/buff/types'
 import { BattleTriggerPhase } from '@/domain/battle/types'
 import { SkillExecutor } from '@/domain/skill/SkillExecutor'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
@@ -76,7 +75,7 @@ export class SkillManager {
     return this.healCalculator.getCalculationLogs()
   }
 
-  /** 清空所有计算日�?*/
+  /** 清空所有计算日志 */
   clearCalculationLogs(): void {
     this.damageCalculator.clearCalculationLogs()
     this.healCalculator.clearCalculationLogs()
@@ -201,7 +200,7 @@ export class SkillManager {
       this.executeStep(ctx)
 
       // 处理步骤级 targetType（如 random_adjacent 溅射伤害）
-      const stepTargetType = (step as any).targetType as string | undefined
+      const stepTargetType = step.targetType as string | undefined
       if (stepTargetType && resolveExtraTargets) {
         const extraTargets = resolveExtraTargets(stepTargetType, target)
         for (const extraTarget of extraTargets) {

@@ -1,9 +1,9 @@
 /**
  * 文件: KeybindManager.ts
  * 创建日期: 2026-02-09
- * 作�? CombatDebugStudio
- * 功能: 快捷键管理器
- * 描述: 管理游戏中的快捷键设置，支持多配置文件、冲突检测、快捷键监听和配置导入导�? * 版本: 1.0.0
+ * 作��? CombatDebugStudio
+ * 功能: 忄1�7��锄1�7�1�7理器
+ * 描述: 管理游戏丄1�7��忄1�7��锄1�7�1�7罄1�7��攄1�7��多配罄1�7��件��冲突�1�7测��快捷键监听和配罄1�7�1�7入�1�7�? * 版本: 1.0.0
  */
 
 import type {
@@ -27,7 +27,8 @@ export class KeybindManager {
   }>
 
   constructor() {
-    // 初始化默认快捷键（符合行业通用操作习惯�?    this.defaultKeybinds = new Map([
+    // 初�1�7化默认快捷键（�1�7合�1�7业��用操作习惯�?
+    this.defaultKeybinds = new Map([
       // 战斗操作
       ['attack', 'z'],
       ['skill', 'x'],
@@ -36,7 +37,7 @@ export class KeybindManager {
       ['ultimate', 'q'],
       ['combo', 'e'],
 
-      // 移动和选择
+      // 移动和��择
       ['move_up', 'w'],
       ['move_down', 's'],
       ['move_left', 'a'],
@@ -63,24 +64,27 @@ export class KeybindManager {
       ['save_snapshot', 'f8'],
     ])
 
-    // 加载用户自定义快捷键或使用默认�?    this.keybinds = this.loadKeybinds()
+    // 加载用户臄1�7��义快捷键或使用默认��?
+    this.keybinds = this.loadKeybinds()
     this.keybindListeners = new Map()
     this.isListening = false
     this.profiles = new Map()
     this.currentProfile = 'default'
     this.keybindHistory = []
 
-    // 初始化预设配�?    this.initializeProfiles()
+    // 初�1�7化�1�7设配�?
+    this.initializeProfiles()
   }
 
-  // 开始监听键盘事�?  public startListening() {
+  // 弢�始监各1�7��盘事�?
+  public startListening() {
     if (this.isListening) return
 
     window.addEventListener('keydown', this.handleKeyDown.bind(this))
     this.isListening = true
   }
 
-  // 停止监听键盘事件
+  // 停�1�7监听锄1�7��事件
   public stopListening() {
     if (!this.isListening) return
 
@@ -88,9 +92,9 @@ export class KeybindManager {
     this.isListening = false
   }
 
-  // 处理键盘按下事件
+  // 处理锄1�7��按下事件
   private handleKeyDown(event: KeyboardEvent) {
-    // 忽略在输入框中的按键
+    // 忽略在输入�1�7丄1�7��按键
     if (
       event.target instanceof HTMLInputElement ||
       event.target instanceof HTMLTextAreaElement
@@ -102,7 +106,7 @@ export class KeybindManager {
     const action = this.getKeybindAction(key)
 
     if (action) {
-      // 特殊处理F12键，允许默认的浏览器调试功能
+      // 特殊处理F12锄1�7��允�1�7默�1�7的浏览器调试功能
       if (key !== 'f12') {
         event.preventDefault()
       }
@@ -110,7 +114,8 @@ export class KeybindManager {
     }
   }
 
-  // 根据按键获取对应的动�?  private getKeybindAction(key: string): string | null {
+  // 根据按键获取对应的动�?
+  private getKeybindAction(key: string): string | null {
     for (const [action, bindKey] of this.keybinds.entries()) {
       if (bindKey === key) {
         return action
@@ -129,32 +134,38 @@ export class KeybindManager {
     }
   }
 
-  // 注册动作监听�?  public onAction(action: string, listener: () => void): void {
+  // 注册动作监听�?
+  public onAction(action: string, listener: () => void): void {
     if (!this.keybindListeners.has(action)) {
       this.keybindListeners.set(action, new Set())
     }
     this.keybindListeners.get(action)?.add(listener)
   }
 
-  // 移除动作监听�?  public offAction(action: string, listener: () => void): void {
+  // 移除动作监听�?
+  public offAction(action: string, listener: () => void): void {
     if (this.keybindListeners.has(action)) {
       this.keybindListeners.get(action)?.delete(listener)
     }
   }
 
-  // 获取当前快捷键配�?  public getKeybinds(): Map<string, string> {
+  // 获取当前忄1�7��锄1�7���?
+  public getKeybinds(): Map<string, string> {
     return new Map(this.keybinds)
   }
 
-  // 获取默认快捷键配�?  public getDefaultKeybinds(): Map<string, string> {
+  // 获取默�1�7忄1�7��锄1�7���?
+  public getDefaultKeybinds(): Map<string, string> {
     return new Map(this.defaultKeybinds)
   }
 
-  // 设置快捷�?  public setKeybind(action: string, key: string): boolean {
-    // 检查是否有冲突
+  // 设置忄1�7���?
+  public setKeybind(action: string, key: string): boolean {
+    // 棢�查是否有冲突
     for (const [existingAction, existingKey] of this.keybinds.entries()) {
       if (existingKey === key && existingAction !== action) {
-        return false // 冲突，设置失�?      }
+        return false // 冲突，�1�7罄1�7���?
+      }
     }
 
     this.keybinds.set(action, key)
@@ -168,7 +179,7 @@ export class KeybindManager {
     this.saveKeybinds()
   }
 
-  // 保存快捷键到本地存储
+  // 保存忄1�7��锄1�7��朄1�7��存储
   private saveKeybinds(): void {
     const keybindsObject = Object.fromEntries(this.keybinds)
     localStorage.setItem('keybinds', JSON.stringify(keybindsObject))
@@ -184,7 +195,8 @@ export class KeybindManager {
         const parsedKeybinds = JSON.parse(savedKeybinds)
         const keybindsMap = new Map<string, string>()
 
-        // 合并默认值和保存的值，确保所有动作都有绑�?        for (const [action, key] of this.defaultKeybinds.entries()) {
+        // 合并默�1�7值和保存的��，硄1�7��扢�有动作都有绑�?
+        for (const [action, key] of this.defaultKeybinds.entries()) {
           keybindsMap.set(action, parsedKeybinds[action] || key)
         }
 
@@ -197,17 +209,18 @@ export class KeybindManager {
     return new Map(this.defaultKeybinds)
   }
 
-  // 初始化预设配�?  private initializeProfiles(): void {
-    // 默认配置（标准游戏操作）
+  // 初�1�7化�1�7设配�?
+  private initializeProfiles(): void {
+    // 默�1�7配置（标准游戏操作）
     this.profiles.set('default', {
       id: 'default',
-      name: '默认配置',
-      description: '标准游戏操作配置，符合行业通用习惯',
+      name: '默�1�7配置',
+      description: '标准游戏操作配置，�1�7合�1�7业��用习惯',
       keybinds: new Map(this.defaultKeybinds),
       isDefault: true,
     })
 
-    // 专业玩家配置
+    // 专业玩�1�7配置
     const proKeybinds = new Map(this.defaultKeybinds)
     proKeybinds.set('attack', 'mouse1')
     proKeybinds.set('skill', 'mouse2')
@@ -216,8 +229,8 @@ export class KeybindManager {
 
     this.profiles.set('pro', {
       id: 'pro',
-      name: '专业玩家配置',
-      description: '优化操作效率，适合高级玩家',
+      name: '专业玩�1�7配置',
+      description: '优化操作效率，��合高级玩�1�7',
       keybinds: proKeybinds,
       isDefault: false,
     })
@@ -234,15 +247,16 @@ export class KeybindManager {
     this.profiles.set('left_hand', {
       id: 'left_hand',
       name: '左手配置',
-      description: '适合左手操作的习�?,
+      description: 'Left-handed configuration',
       keybinds: leftHandKeybinds,
       isDefault: false,
     })
 
-    // 加载用户自定义配�?    this.loadUserProfiles()
+    // 加载用户臄1�7��义配�?    this.loadUserProfiles()
   }
 
-  // 加载用户自定义配�?  private loadUserProfiles(): void {
+  // 加载用户臄1�7��义配�?
+  private loadUserProfiles(): void {
     try {
       const savedProfiles = localStorage.getItem('keybind_profiles')
       if (savedProfiles) {
@@ -279,7 +293,7 @@ export class KeybindManager {
     return this.keybinds.get(action) || this.defaultKeybinds.get(action) || ''
   }
 
-  // 获取所有快捷键设置
+  // 获取扢�有快捷键设置
   public getKeybindSettings(): KeybindSetting[] {
     const settings: KeybindSetting[] = []
 
@@ -299,36 +313,36 @@ export class KeybindManager {
   // 获取动作描述
   private getActionDescription(action: string): string {
     const descriptions: Record<string, string> = {
-      attack: '普通攻�?,
-      skill: '释放技�?,
+      attack: 'Normal Attack',
+      skill: 'Release Skill',
       defend: '防御',
       item: '使用物品',
-      ultimate: '终极技�?,
+      ultimate: 'Ultimate Skill',
       combo: '连击',
       move_up: '向上移动',
       move_down: '向下移动',
       move_left: '向左移动',
       move_right: '向右移动',
-      select_target: '选择目标',
-      escape: '取消/退�?,
+      select_target: '选择盄1�7��',
+      escape: 'Cancel/Exit',
       menu: '打开菜单',
       pause: '暂停游戏',
       replay: '战斗回放',
       debug: '调试模式',
       inventory: '打开背包',
-      skills: '技能面�?,
+      skills: 'Skill Panel',
       map: '打开地图',
       quests: '任务列表',
       step_forward: '步进前进',
-      step_back: '步进后退',
+      step_back: '步进后���',
       toggle_replay: '切换回放',
-      save_snapshot: '保存快照',
+      save_snapshot: '保存忄1�7��',
     }
 
     return descriptions[action] || action
   }
 
-  // 检查快捷键冲突
+  // 棢�查快捷键冲突
   public checkKeybindConflict(key: string): KeybindConflict | null {
     for (const [existingAction, existingKey] of this.keybinds.entries()) {
       if (existingKey === key) {
@@ -342,15 +356,18 @@ export class KeybindManager {
     return null
   }
 
-  // 获取快捷键历�?  public getKeybindHistory(): Array<{
+  // 获取忄1�7��锄1�7���?
+  public getKeybindHistory(): Array<{
     action: string
     oldKey: string
     newKey: string
     timestamp: number
   }> {
-    return [...this.keybindHistory].reverse() // 返回最新的在前�?  }
+    return [...this.keybindHistory].reverse() // 返回朢�新的在前�?
+  }
 
-  // 获取所有配�?  public getProfiles(): KeybindProfile[] {
+  // 获取扢�有配�?
+  public getProfiles(): KeybindProfile[] {
     return Array.from(this.profiles.values())
   }
 
@@ -371,7 +388,8 @@ export class KeybindManager {
     return false
   }
 
-  // 创建新配�?  public createProfile(
+  // 创建新配�?
+  public createProfile(
     name: string,
     description: string,
     keybinds?: Map<string, string>,
@@ -399,7 +417,7 @@ export class KeybindManager {
 
     this.profiles.delete(profileId)
 
-    // 如果删除的是当前配置，切换到默认配置
+    // 如果删除的是当前配置，切换到默�1�7配置
     if (this.currentProfile === profileId) {
       this.currentProfile = 'default'
       this.keybinds = this.loadKeybinds()
@@ -435,8 +453,8 @@ export class KeybindManager {
       const profileId = `imported_${Date.now()}`
       const newProfile: KeybindProfile = {
         id: profileId,
-        name: parsedData.name || '导入的配�?,
-        description: parsedData.description || '从文件导入的配置',
+        name: parsedData.name || 'Imported Config',
+        description: parsedData.description || '从文件�1�7入的配置',
         keybinds: keybindsMap,
         isDefault: false,
       }
@@ -450,7 +468,8 @@ export class KeybindManager {
     }
   }
 
-  // 获取快捷键提�?  public getKeybindHints(): Array<{
+  // 获取忄1�7��锄1�7���?
+  public getKeybindHints(): Array<{
     action: string
     key: string
     description: string
@@ -469,8 +488,9 @@ export class KeybindManager {
     return hints.sort((a, b) => a.description.localeCompare(b.description))
   }
 
-  // 验证快捷键格�?  public validateKey(key: string): boolean {
-    // 允许字母、数字、功能键、方向键�?    const validKeys =
+  // 验证忄1�7��锄1�7���?
+  public validateKey(key: string): boolean {
+    // 允�1�7字母、数字��功能键、方向键�?    const validKeys =
       /^[a-z0-9]$|^f[1-9][0-9]?$|^escape$|^tab$|^capslock$|^shift$|^control$|^alt$|^space$|^enter$|^backspace$|^delete$|^insert$|^home$|^end$|^pageup$|^pagedown$|^arrowup$|^arrowdown$|^arrowleft$|^arrowright$|^mouse[0-9]$/
     return validKeys.test(key.toLowerCase())
   }
@@ -493,16 +513,17 @@ export class KeybindManager {
       end: 'End',
       pageup: 'PgUp',
       pagedown: 'PgDn',
-      arrowup: '�?,
-      arrowdown: '�?,
-      arrowleft: '�?,
-      arrowright: '�?,
+      arrowup: 'Up',
+      arrowdown: 'Down',
+      arrowleft: 'Left',
+      arrowright: 'Right',
       mouse1: '鼠标左键',
       mouse2: '鼠标右键',
-      mouse3: '鼠标中键',
+      mouse3: '鼠标丄1�7��',
     }
 
-    // 处理功能�?    if (key.startsWith('f')) {
+    // 处理功能�?
+    if (key.startsWith('f')) {
       const fnNumber = key.slice(1)
       if (/^[1-9][0-9]?$/.test(fnNumber)) {
         return `F${fnNumber}`
@@ -512,7 +533,8 @@ export class KeybindManager {
     return keyMap[key] || key.toUpperCase()
   }
 
-  // 检查快捷键是否可用（无冲突�?  public isKeyAvailable(key: string, excludeAction?: string): boolean {
+  // 棢�查快捷键昄1�7��叄1�7��（无冲突�?
+  public isKeyAvailable(key: string, excludeAction?: string): boolean {
     for (const [action, bindKey] of this.keybinds.entries()) {
       if (bindKey === key && action !== excludeAction) {
         return false

@@ -163,7 +163,7 @@ export class InterventionManager {
   clearStatuses() {
     if (this.selectedChar) {
       this.battleStateManager.updateCharacterManually(this.selectedChar.id, {
-        buffs: [],
+        statusEffects: [],
       })
 
       this.battleLogManager.addActionLog({

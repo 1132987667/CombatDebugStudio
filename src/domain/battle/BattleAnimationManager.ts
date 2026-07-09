@@ -6,7 +6,7 @@
  ** 描述: 管理战斗动画队列的入队、播放、暂停与清除，协调 RAFTimer 驱动的时序播放
  **/
 import type { AnimationQueueItem, AnimationType, AnimationData, BattleEntity } from '@/domain/battle/types'
-import type { DamageType } from '@/domain/skill/types'
+import type { DamageCategory } from '@/domain/skill/types'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import { eventBus } from '@/main'
 import type { RAFTimer } from '@/shared/utils/RAF'
@@ -121,7 +121,7 @@ export class BattleAnimationManager {
     targetId: string
     skillName: string
     effectType: string
-    damageType: DamageType
+    damageCategory: DamageCategory
   }): Promise<void> {
     const duration = Math.floor(this.getAnimationDuration() * 1.5)
     await this.triggerAnimationAndWait(BattleEventCodes.SKILL_EFFECT, data, duration)
@@ -130,7 +130,7 @@ export class BattleAnimationManager {
   async triggerDamageAnimationAndWait(data: {
     targetId: string
     damage: number
-    damageType: DamageType
+    damageCategory: DamageCategory
     isCritical: boolean
     isHeal: boolean
   }): Promise<void> {

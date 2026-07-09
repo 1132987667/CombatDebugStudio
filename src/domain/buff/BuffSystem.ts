@@ -4,10 +4,6 @@ import type {
   TriggerEventContext,
 } from '@/domain/buff/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
-import type {
-  IModifierProvider,
-  ModifierSourceType,
-} from '@/domain/attribute/types'
 import {
   ATTRIBUTE_CODE,
   type IModifierProvider,

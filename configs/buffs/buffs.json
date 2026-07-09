@@ -249,7 +249,7 @@
           "percent": 0.3
         },
         "probability": 0.2,
-        "condition": "damageType == 'elemental_damage'"
+        "condition": "damageCategory == 'elemental'"
       }
     ]
   },
@@ -568,7 +568,7 @@
         "params": {
           "healPercent": 0.2
         },
-        "condition": "damageType == 'elemental_damage'"
+        "condition": "damageCategory == 'elemental'"
       }
     ]
   },
@@ -993,7 +993,7 @@
         "phase": "ON_TURN_START",
         "scriptId": "deal_dot_damage",
         "params": {
-          "damageType": "elemental_damage",
+          "damageCategory": "elemental",
           "baseDamageFormula": "target.maxHp * 0.03"
         }
       }
@@ -1009,7 +1009,7 @@
         "phase": "ON_TURN_START",
         "scriptId": "deal_dot_damage",
         "params": {
-          "damageType": "elemental_damage",
+          "damageCategory": "elemental",
           "baseDamageFormula": "target.maxHp * 0.05"
         }
       }
@@ -1029,7 +1029,7 @@
     "duration": 1,
     "shield": {
       "valueFormula": "source.maxHp * 0.10",
-      "damageTypeAbsorb": "all"
+      "damageCategoryAbsorb": "all"
     }
   }
 ]

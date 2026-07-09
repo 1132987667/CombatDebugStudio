@@ -70,11 +70,11 @@ export class SkillExecutor {
     } else {
       if (this.deferDamage) {
         // ponytail: 延迟模式 — 只记录伤害数值，不调用 takeDamage，由调用方在动画后统一应用
-        action.damage += result.damage
+        action.damage = (action.damage ?? 0) + result.damage
         action.effects.push({ type: 'damage', targetId: target.id, value: result.damage, description: `${source.name} deals ${result.damage} damage`, isCritical: result.isCritical })
       } else {
         const actualDamage = this.damageCalculator.applyDamage(target, result.damage)
-        action.damage += actualDamage
+        action.damage = (action.damage ?? 0) + actualDamage
         action.effects.push({ type: 'damage', targetId: target.id, value: actualDamage, description: `${source.name} deals ${actualDamage} damage`, isCritical: result.isCritical })
       }
     }
@@ -91,11 +91,11 @@ export class SkillExecutor {
     const heal = this.healCalculator.calculateHeal(skillStep, source, healTarget, record)
     if (this.deferDamage) {
       // ponytail: 延迟模式 — 只记录治疗数值，由调用方在动画后统一应用
-      action.heal += heal
+      action.heal = (action.heal ?? 0) + heal
       action.effects.push({ type: 'heal', targetId: healTarget.id, value: heal, description: `${healTarget.name} healed for ${heal}` })
     } else {
       const actualHeal = this.healCalculator.applyHeal(healTarget, heal)
-      action.heal += actualHeal
+      action.heal = (action.heal ?? 0) + actualHeal
       action.effects.push({ type: 'heal', targetId: healTarget.id, value: actualHeal, description: `${healTarget.name} healed for ${actualHeal}` })
     }
     if (this.healCalculator.isSingleTurnEffect(skillStep)) {

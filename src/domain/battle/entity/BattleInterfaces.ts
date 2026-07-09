@@ -171,6 +171,18 @@ export interface IBattleSystem {
    * ponytail: 从 generateCommandsForTurn 中抽取，消除命令生成器的副作用
    */
   advanceRound(): void
+
+  /**
+   * 获取可用的我方队伍
+   * @returns BattleEntity[] 启用的我方参与者数组
+   */
+  getEnabledAllyTeam(): BattleEntity[]
+
+  /**
+   * 获取可用的敌方队伍
+   * @returns BattleEntity[] 启用的敌方参与者数组
+   */
+  getEnabledEnemyTeam(): BattleEntity[]
 }
 
 /**

@@ -17,7 +17,7 @@ import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 
 import { BattleActionHelper, BATTLE_CONSTANTS, PARTICIPANT_SIDE, ActionTypes } from '@/domain/battle/types'
-import { type SkillConfig, type ExtendedSkillStep, SkillType, AttackType, DamageType, TargetFaction, TargetStrategy, SkillStepType } from '@/domain/skill/types'
+import { type SkillConfig, type ExtendedSkillStep, SkillType, AttackType, DamageCategory, TargetFaction, TargetStrategy, SkillStepType } from '@/domain/skill/types'
 import type { BattleAction, BattleData, BattleEntity, BattleEffect } from '@/domain/battle/types'
 import { ATTRIBUTE_CODE, getAttributeDefaultValue } from '@/domain/attribute/types'
 import { createEmptyRecord, type CombatRecord } from '@/domain/battle/combat-record'
@@ -197,15 +197,15 @@ export class BattleExecutor {
         }
 
         // 回填记录
-        record.damage = skillAction.damage
-        record.message = `${source.name} 对 ${target.name} 使用 ${skill.name || skill.id}，造成 ${skillAction.damage} 伤害`
+        record.damage = skillAction.damage ?? 0
+        record.message = `${source.name} 对 ${target.name} 使用 ${skill.name || skill.id}，造成 ${skillAction.damage ?? 0} 伤害`
         records.push(record)
 
-        if (skillAction.damage > 0 || skillAction.heal > 0) {
-          pendingDamages.push({ target, damage: skillAction.damage, heal: skillAction.heal })
+        if ((skillAction.damage ?? 0) > 0 || (skillAction.heal ?? 0) > 0) {
+          pendingDamages.push({ target, damage: skillAction.damage ?? 0, heal: skillAction.heal ?? 0 })
         }
-        totalDamage += skillAction.damage
-        totalHeal += skillAction.heal
+        totalDamage += skillAction.damage ?? 0
+        totalHeal += skillAction.heal ?? 0
         allEffects.push(...skillAction.effects)
       }
 
@@ -244,14 +244,14 @@ export class BattleExecutor {
           targetId: primaryTarget.id,
           skillName: skill.name || skill.id,
           effectType: action.type,
-          damageType: DamageType.PHYSICAL,
+          damageCategory: DamageCategory.PHYSICAL,
         })
 
         if (totalDamage > 0) {
           await this.animationManager.triggerDamageAnimationAndWait({
             targetId: primaryTarget.id,
             damage: totalDamage,
-            damageType: DamageType.PHYSICAL,
+            damageCategory: DamageCategory.PHYSICAL,
             isCritical: isCrit,
             isHeal: false,
           })
@@ -261,7 +261,7 @@ export class BattleExecutor {
           await this.animationManager.triggerDamageAnimationAndWait({
             targetId: primaryTarget.id,
             damage: totalHeal,
-            damageType: DamageType.PHYSICAL,
+            damageCategory: DamageCategory.PHYSICAL,
             isCritical: false,
             isHeal: true,
           })
@@ -275,7 +275,7 @@ export class BattleExecutor {
       }
     } catch (error) {
       this.skillManager.setDeferredDamageMode(false)
-      battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error)
+      battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error as Error)
       action.type = ActionTypes.ATTACK
       action.damage = Math.floor(Math.random() * 20) + 10
       action.effects = [{
@@ -426,8 +426,8 @@ export class BattleExecutor {
       type: SkillStepType.DEAL_DAMAGE,
       id: 'normal_attack',
       targetId,
-      damageType: DamageType.PHYSICAL,
-      attackType: AttackType.NORMAL_ATTACK,
+      damageCategory: DamageCategory.PHYSICAL,
+      attackType: AttackType.NORMAL,
       criticalConfig: {
         rate: (source.getAttribute(ATTRIBUTE_CODE.critRate) || getAttributeDefaultValue(ATTRIBUTE_CODE.critRate)),
         multiplier: (source.getAttribute(ATTRIBUTE_CODE.critDamage) || getAttributeDefaultValue(ATTRIBUTE_CODE.critDamage)),
@@ -548,14 +548,14 @@ export class BattleExecutor {
       targetId: target.id,
       skillName: '普通攻击',
       effectType: 'attack',
-      damageType: DamageType.PHYSICAL,
+      damageCategory: DamageCategory.PHYSICAL,
     })
 
     // ponytail: 动画命中后再扣血，触发 ON_HIT/ON_DEATH 被动
     this.applyDamageToTarget(source, target, damage)
 
     await this.animationManager.triggerDamageAnimationAndWait({
-      targetId: target.id, damage, damageType: DamageType.PHYSICAL, isCritical, isHeal: false,
+      targetId: target.id, damage, damageCategory: DamageCategory.PHYSICAL, isCritical, isHeal: false,
     })
 
     const logParams = this.generateAttackLogParams(source, target, turnNumber, { damage, isCritical })
@@ -602,8 +602,8 @@ export class BattleExecutor {
     }
 
     // 回填最终伤害到记录
-    record.damage = action.damage
-    record.message = `${source.name} 对 ${target.name} 普通攻击，造成 ${action.damage} 伤害`
+    record.damage = action.damage ?? 0
+    record.message = `${source.name} 对 ${target.name} 普通攻击，造成 ${action.damage ?? 0} 伤害`
     this.battleRecorder.recordCombatRecord(battle.battleId, record)
 
     this.passiveSkillManager.triggerPassives(
@@ -715,7 +715,7 @@ export class BattleExecutor {
         // ponytail: 延迟伤害模式 — 动画完成后才扣血
         this.skillManager.setDeferredDamageMode(true)
         const skillAction = this.skillManager.executeSkill(
-          action.skillId, source, target, action.turn,
+          action.skillId, source, target, action.turn ?? 0,
         )
         if (!skillAction) {
           this.skillManager.setDeferredDamageMode(false)
@@ -751,36 +751,36 @@ export class BattleExecutor {
 
           await this.animationManager.triggerSkillEffectAnimation({
             sourceId: source.id, targetId: target.id, skillName: action.skillId,
-            effectType: action.type, damageType: DamageType.PHYSICAL,
+            effectType: action.type, damageCategory: DamageCategory.PHYSICAL,
           })
 
           // ponytail: 动画完成后应用延迟的伤害/治疗
           this.skillManager.setDeferredDamageMode(false)
-          if (action.damage > 0) target.takeDamage(action.damage)
-          if (action.heal > 0) target.heal(action.heal)
+          if ((action.damage ?? 0) > 0) target.takeDamage(action.damage ?? 0)
+          if ((action.heal ?? 0) > 0) target.heal(action.heal ?? 0)
 
           // ponytail: 技能伤害/治疗数值动画（在 HP 扣减之后播放，与 handleHitAttack 时序一致）
-          if (action.damage > 0) {
+          if ((action.damage ?? 0) > 0) {
             const isCrit = skillAction.effects.some(
               (e: any) => e.type === 'damage' && e.isCritical,
             )
             await this.animationManager.triggerDamageAnimationAndWait({
-              targetId: target.id, damage: action.damage,
-              damageType: DamageType.PHYSICAL,
+              targetId: target.id, damage: action.damage ?? 0,
+              damageCategory: DamageCategory.PHYSICAL,
               isCritical: isCrit, isHeal: false,
             })
           }
-          if (action.heal > 0) {
+          if ((action.heal ?? 0) > 0) {
             await this.animationManager.triggerDamageAnimationAndWait({
-              targetId: target.id, damage: action.heal,
-              damageType: DamageType.PHYSICAL,
+              targetId: target.id, damage: action.heal ?? 0,
+              damageCategory: DamageCategory.PHYSICAL,
               isCritical: false, isHeal: true,
             })
           }
         }
       } catch (error) {
         this.skillManager.setDeferredDamageMode(false)
-        battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error)
+        battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error as Error)
         action.type = ActionTypes.ATTACK
         action.damage = Math.floor(Math.random() * 20) + 10
         action.effects = [{
@@ -798,7 +798,7 @@ export class BattleExecutor {
         // ponytail: 先播伤害数值动画，再扣 HP，保证视觉同步
         await this.animationManager.triggerDamageAnimationAndWait({
           targetId: target.id, damage: action.damage,
-          damageType: DamageType.PHYSICAL,
+          damageCategory: DamageCategory.PHYSICAL,
           isCritical: false, isHeal: false,
         })
 
@@ -816,7 +816,7 @@ export class BattleExecutor {
 
         if (action.heal && action.heal > 0) {
           await this.animationManager.triggerDamageAnimationAndWait({
-            targetId: target.id, damage: action.heal, damageType: DamageType.PHYSICAL,
+            targetId: target.id, damage: action.heal, damageCategory: DamageCategory.PHYSICAL,
             isCritical: false, isHeal: true,
           })
           const actualHeal = target.heal(action.heal)

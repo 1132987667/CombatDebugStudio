@@ -9,7 +9,7 @@ import { ModifierType } from '@/domain/attribute/types'
  * 用于快速创建持续伤害类debuff
  */
 export abstract class DamageOverTimeTemplate extends BaseBuffScript {
-  protected abstract getDamageType(): string
+  protected abstract getDamageCategory(): string
   protected abstract getBaseDamage(): number
   protected abstract getDamageInterval(): number
   protected abstract getDebuffName(): string
@@ -32,7 +32,7 @@ export abstract class DamageOverTimeTemplate extends BaseBuffScript {
     context.setVariable('baseDamage', baseDamage)
     context.setVariable('damageInterval', damageInterval)
     context.setVariable('lastDamageTime', 0)
-    context.setVariable('damageType', this.getDamageType())
+    context.setVariable('damageCategory', this.getDamageCategory())
   }
 
   protected _onRemove(context: BuffContext): void {
@@ -173,15 +173,15 @@ export class BuffTemplateGenerator {
    */
   static createDamageOverTime(
     buffId: string,
-    damageType: string,
+    damageCategory: string,
     baseDamage: number,
     damageInterval: number,
     debuffName: string,
   ): typeof BaseBuffScript {
     return class extends DamageOverTimeTemplate {
       public static readonly BUFF_ID = buffId
-      protected getDamageType(): string {
-        return damageType
+      protected getDamageCategory(): string {
+        return damageCategory
       }
       protected getBaseDamage(): number {
         return baseDamage

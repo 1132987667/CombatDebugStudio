@@ -13,7 +13,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "damageType":  "physical_damage",
+                          "damageCategory":  "physical",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -41,7 +41,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "damageType":  "physical_damage",
+                          "damageCategory":  "physical",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -73,7 +73,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "damageType":  "physical_damage",
+                          "damageCategory":  "physical",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -105,7 +105,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "damageType":  "physical_damage",
+                          "damageCategory":  "physical",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -132,7 +132,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "damageType":  "physical_damage",
+                          "damageCategory":  "physical",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [

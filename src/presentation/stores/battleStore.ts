@@ -16,7 +16,7 @@ import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { Enemy } from '@/shared/types/enemy'
-import { BattleParticipantImpl } from '@/domain/battle/BattleParticipantImpl'
+import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -34,7 +34,7 @@ export interface AnimationState {
   damage: {
     targetId: string
     damage: number
-    damageType: string
+    damageCategory: string
     isCritical: boolean
     isHeal: boolean
   } | null
@@ -42,13 +42,13 @@ export interface AnimationState {
   miss: { targetId: string } | null
   /** Buff效果动画数据（目标ID、Buff名称、正面/负面） */
   buff: { targetId: string; buffName: string; isPositive: boolean } | null
-  /** 技能特效动画数据（施法者、目标、技能名、效果类型、伤害类型） */
+  /** 技能特效动画数据（施法者、目标、技能名、效果类型、伤害大类） */
   skill: {
     sourceId: string
     targetId: string
     skillName: string
     effectType: string
-    damageType: string
+    damageCategory: string
   } | null
 }
 
@@ -130,7 +130,7 @@ export const useBattleStore = defineStore('battle', () => {
 
   // 🔹 2. 业务层引用（适配器桥接，使用 shallowRef 避免深层 Proxy 开销）
   /** 战斗应用服务（门面，通过依赖注入获取） */
-  const battleService = shallowRef<BattleService>(
+  const battleService = shallowRef<BattleService | undefined>(
     container.resolve<BattleService>('BattleService'),
   )
 
@@ -151,11 +151,11 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const syncTeams = () => {
     console.log('接收队伍数据更新')
-    allyTeam.value = battleService.value.getEnabledAllyTeam()
-    enemyTeam.value = battleService.value.getEnabledEnemyTeam()
-    currentTurn.value = battleService.value.getCurrentTurn()
-    maxTurns.value = battleService.value.getMaxTurns?.() ?? 999
-    const battleState = battleService.value.getBattleState()
+    allyTeam.value = battleService.value!.getEnabledAllyTeam()
+    enemyTeam.value = battleService.value!.getEnabledEnemyTeam()
+    currentTurn.value = battleService.value!.getCurrentTurn()
+    maxTurns.value = battleService.value!.getMaxTurns?.() ?? 999
+    const battleState = battleService.value!.getBattleState()
     isBattleActive.value = battleState?.battleState === BattleStatus.ACTIVE || false
   }
 
@@ -243,7 +243,7 @@ export const useBattleStore = defineStore('battle', () => {
 
   // 注册所有事件处理器到战斗管理器（桥上 eventBus）
   for (const [eventCode, handler] of events) {
-    battleService.value.on(eventCode, handler as any)
+    battleService.value!.on(eventCode, handler as any)
   }
 
   // 🔹 5. 核心 Actions（纯函数，仅更新本地状态或调用 Manager）
@@ -339,15 +339,15 @@ export const useBattleStore = defineStore('battle', () => {
     category: BattleLogCategory = 'system',
     level?: LogType,
   ) => {
-    battleLogManager.addSystemLog(
+    battleLogManager.addSystemLog({
       turn,
       source,
       action,
       target,
       segments,
       category,
-      level,
-    )
+      level: level as any,
+    })
   }
 
   /**
@@ -355,7 +355,7 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const updateRules = (newRules: Partial<BattleRules>) => {
     Object.assign(rules.value, newRules)
-    battleLogManager.addSystemLog(`战斗规则已更新: ${JSON.stringify(newRules)}`)
+    battleLogManager.addSystemLog({ message: `战斗规则已更新: ${JSON.stringify(newRules)}` })
   }
 
   /**
@@ -602,7 +602,7 @@ export const useBattleStore = defineStore('battle', () => {
   const destroy = () => {
     try {
       if (!battleService.value) return
-      cleanupEvents.forEach((key) => battleService.value.off(key))
+      cleanupEvents.forEach((key) => battleService.value!.off(key))
       cleanupEvents.length = 0
       currentActorId.value = null
       isBattleActive.value = false
@@ -614,7 +614,7 @@ export const useBattleStore = defineStore('battle', () => {
       animationState.miss = null
       animationState.buff = null
       animationState.skill = null
-      battleService.value = null
+      battleService.value = undefined
       console.log('战斗管理器事件监听器已清理')
     } catch (err) {
       console.error('清理战斗管理器事件监听器时出错:', err)
@@ -673,7 +673,7 @@ export const useBattleStore = defineStore('battle', () => {
       )
       if (!shouldDisplay || !log) continue
       battleLogManager.addSystemLog({
-        message: log.segments.map((s) => s.text).join(''),
+        message: log.segments!.map((s) => s.text).join(''),
       })
     }
   }
@@ -697,11 +697,12 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const shouldDisplayLog = (log: BattleLogEntry): boolean => {
     const category = log.category
-    const logText = log.segments.map((s) => s.text).join('')
+    const logText = log.segments!.map((s) => s.text).join('')
     const isLogExists = false // 简化逻辑，实际可按需接入日志去重
     if (category === 'system' && !filters.system) return false
     if (
       category === 'action' &&
+      log.source &&
       log.source !== '系统' &&
       !log.source.includes(PARTICIPANT_SIDE.ENEMY) &&
       !filters.action
@@ -709,6 +710,7 @@ export const useBattleStore = defineStore('battle', () => {
       return false
     if (
       category === 'action' &&
+      log.source &&
       log.source.includes(PARTICIPANT_SIDE.ENEMY) &&
       !filters.action
     )
@@ -724,7 +726,7 @@ export const useBattleStore = defineStore('battle', () => {
    * @param characterId 角色唯一标识
    */
   const selectCharacter = (characterId: string) => {
-    battleService.value.selectCharacter(characterId)
+    battleService.value!.selectCharacter(characterId)
     selectedCharacterId.value = characterId
     previewEntity.value = null // 选中真实参战角色时清除预览
   }
@@ -745,7 +747,7 @@ export const useBattleStore = defineStore('battle', () => {
    * @param enabled 是否启用（false表示禁用该角色参与战斗）
    */
   const setCharacterEnabled = (characterId: string, enabled: boolean) => {
-    battleService.value.setCharacterEnabled(characterId, enabled)
+    battleService.value!.setCharacterEnabled(characterId, enabled)
   }
   // 🔹 生命周期清理（防止 SPA 路由切换导致内存泄漏）
   onScopeDispose(() => {

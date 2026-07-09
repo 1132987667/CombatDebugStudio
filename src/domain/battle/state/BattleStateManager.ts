@@ -218,7 +218,7 @@ export class BattleStateManager {
    * @returns 参与者ID
    */
   private getParticipantId(characterId: string): string | null {
-    // 通过映射表查找
-    return this.uiCharacterToParticipantMap.get(characterId) || null
+    // 映射表已废弃，直接返回 characterId
+    return characterId
   }
 }

@@ -40,7 +40,7 @@ export class ParticipantSkills {
   /**
    * 获取技能ID
    */
-  getSkillIds(filter: 'active' | SkillType.ALL | SkillType.PASSIVE = SkillType.ALL): string[] {
+  getSkillIds(filter: 'active' | 'all' | 'passive' = SkillType.ALL as 'all'): string[] {
     const allSkills: string[] = []
     const activeSkills: string[] = []
     const passiveSkills: string[] = []

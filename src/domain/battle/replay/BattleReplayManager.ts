@@ -1,6 +1,6 @@
 import type { BattleState, BattleReplay } from '@/domain/battle/types'
 import { BattleEventType } from '@/domain/battle/types'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import {
   ReplayEngine,
   type ReplayState,
@@ -91,7 +91,7 @@ export class BattleReplayManager {
     if (!success) {
       this.battleLogManager.addSystemLog({
         message: '加载回放数据失败',
-        level: 'ERROR',
+        level: LogLevel.ERROR,
       })
       return
     }

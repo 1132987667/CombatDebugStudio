@@ -1,5 +1,5 @@
 ﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
-import { AttackType } from '@/domain/skill/types'
+import { AttackType, DamageCategory } from '@/domain/skill/types'
 import type { CalculationLog } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord, DamageBreakdown } from '@/domain/battle/combat-record'
@@ -189,8 +189,8 @@ export class DamageCalculator {
     breakdown.steps.push({ stepName: 'defense', value: damage, description: `防御减免(x${breakdown.defenseMultiplier.toFixed(4)}): ${beforeDef} → ${damage}` })
 
     // 攻击类型伤害减免
-    const atkType = skillStep.attackType || AttackType.SKILL_ATTACK
-    if (atkType === AttackType.NORMAL_ATTACK) {
+    const atkType = skillStep.attackType || AttackType.SKILL
+    if (atkType === AttackType.NORMAL) {
       const reduction = getAttributeValue(target, ATTRIBUTE_CODE.normalAtkDmgReduction)
       breakdown.normalAtkReduction = reduction
       if (reduction > 0) {
@@ -207,6 +207,25 @@ export class DamageCalculator {
         breakdown.steps.push({ stepName: 'skillDmgReduction', value: damage, description: `技能减免(${reduction}%): ${before} → ${damage}` })
       }
     }
+
+    // 伤害大类（DamageCategory）防御/抗性逻辑
+    const damageCategory = skillStep.damageCategory || DamageCategory.PHYSICAL
+    ;(breakdown as any).damageCategory = damageCategory
+    if (damageCategory === DamageCategory.TRUE) {
+      // 真实伤害：跳过防御计算和攻击类型减免，还原到暴击后伤害
+      damage = breakdown.postCritDamage
+      breakdown.steps.push({ stepName: 'trueDamage', value: damage, description: `真实伤害，跳过防御/抗性减免: → ${damage}` })
+    } else if (damageCategory === DamageCategory.ELEMENTAL) {
+      // 元素伤害：查找目标的元素抗性，默认 fireRes
+      const elementalRes = getAttributeValue(target, ATTRIBUTE_CODE.fireRes)
+      ;(breakdown as any).elementalResistance = elementalRes
+      if (elementalRes > 0) {
+        const before = damage
+        damage = Math.floor(damage * (1 - elementalRes / 100))
+        breakdown.steps.push({ stepName: 'elementalResistance', value: damage, description: `元素抗性(${elementalRes}%): ${before} → ${damage}` })
+      }
+    }
+    // 'physical' 沿用现有防御逻辑，不做额外变化
 
     // 通用伤害减免
     breakdown.generalDamageReduction = getAttributeValue(target, ATTRIBUTE_CODE.damageReduction)
@@ -279,7 +298,7 @@ export class DamageCalculator {
       const minAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.minAttack)
       const maxAtk = this.getAttributeSafe(source, ATTRIBUTE_CODE.maxAttack)
       const levelBonus = (source.level || 1) * 2
-      if (skillStep.attackType === AttackType.NORMAL_ATTACK && minAtk > 0 && maxAtk > 0) {
+      if (skillStep.attackType === AttackType.NORMAL && minAtk > 0 && maxAtk > 0) {
         baseDamage = Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
       } else {
         const atk = source.getRandomAttackDemage()

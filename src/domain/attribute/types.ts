@@ -804,7 +804,7 @@ export function getAttributeMeta(code: ATTRIBUTE_CODE): AttributeMeta | undefine
  * @returns 默认值，未定义时返回 0
  */
 export function getAttributeDefaultValue(code: string): number {
-  return AttributeMetaMap[code]?.defaultValue ?? 0
+  return (AttributeMetaMap as Record<string, AttributeMeta>)[code]?.defaultValue ?? 0
 }
 
 /**

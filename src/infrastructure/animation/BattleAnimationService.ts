@@ -5,6 +5,7 @@
  */
 
 import gsap from 'gsap'
+import { ActionResultType } from '@/domain/battle/types';
 
 export interface AnimationConfig {
   battleSpeed: number
@@ -21,7 +22,7 @@ export interface HitAnimationData {
   targetId: string
   targetElement: HTMLElement
   damage?: number
-  damageType: 'damage' | 'heal' | 'critical' | 'miss'
+  hitEffect: ActionResultType
   isCritical?: boolean
   skillName?: string
   passiveName?: string
@@ -180,11 +181,11 @@ export class BattleAnimationService {
         intensity: data.isCritical ? 'heavy' : 'medium',
       })
 
-      this.playFlashAnimation(data.targetElement, data.damageType)
+      this.playFlashAnimation(data.targetElement, data.hitEffect)
 
       const delayMs = this.getScaledDuration(this.HIT_SHAKE_DELAY)
 
-      if (data.damageType === 'miss') {
+      if (data.hitEffect === 'miss') {
         this.playMissTextAnimation(data.targetElement, delayMs)
       } else if (data.passiveName) {
         this.playPassiveTextAnimation(data.targetElement, data.passiveName, delayMs)
@@ -192,7 +193,7 @@ export class BattleAnimationService {
         this.playDamageTextAnimation(
           data.targetElement,
           data.damage,
-          data.damageType,
+          data.hitEffect,
           data.isCritical,
           delayMs
         )
@@ -230,9 +231,9 @@ export class BattleAnimationService {
 
   private playFlashAnimation(
     targetElement: HTMLElement,
-    damageType: 'damage' | 'heal' | 'critical' | 'miss'
+    hitEffect: 'damage' | 'heal' | 'critical' | 'miss'
   ): void {
-    const flashColor = damageType === 'heal' ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'
+    const flashColor = hitEffect === 'heal' ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'
 
     const hpBar = targetElement.querySelector('.hp-fill') as HTMLElement
     if (hpBar) {

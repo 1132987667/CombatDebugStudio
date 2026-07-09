@@ -52,8 +52,9 @@ import BattleLog from "@/presentation/views/BattleLog.vue";
 import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
 import BattleVisualEffects from "@/presentation/components/BattleVisualEffects.vue";
 import { ATTRIBUTE_CODE, type AttributeValue } from '@/domain/attribute/types';
-import { ActionTypes, type BattleEntity } from '@/domain/battle/types';
+import { ActionTypes, type BattleEntity, ActionResultType } from '@/domain/battle/types';
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 
 const store = useBattleStore()
 
@@ -136,9 +137,9 @@ watch(store.animationState, (state) => {
     const side = getCharacterSide(state.skill.sourceId)
     // ponytail: GSAP 前移再回位，配合 casting CSS 动画叠加效果
     playAttackAnimation(state.skill.sourceId, side)
-    const damageType = state.skill.effectType === ActionTypes.HEAL ? 'heal'
-      : state.skill.damageType === 'elemental_damage' ? 'frost'
-      : 'fire'
+    const isHeal = state.skill.effectType === ActionTypes.HEAL
+    const visual = getVisualEffect(state.skill.damageCategory, isHeal)
+    const hitEffect = visual.impactClass
 
     if (state.skill.effectType === ActionTypes.HEAL) {
       visualEffectsRef.value?.playHealSequence(
@@ -159,7 +160,7 @@ watch(store.animationState, (state) => {
         state.skill.skillName,
         0, false,
         side as 'left' | 'right',
-        damageType,
+        hitEffect,
       )
       // ponytail: 配合 playAttackSequence 内部 1100ms 定时
       const isCrit = state.skill.effectType === 'critical'
@@ -303,7 +304,7 @@ function showDamage(characterId: string, value: number, type: 'damage' | 'heal' 
 
   playHitAnimation(characterId, {
     damage: value,
-    damageType: type,
+    hitEffect: type,
     isCritical,
   })
 }
@@ -319,7 +320,7 @@ function showMiss(characterId: string) {
   }
 
   playHitAnimation(characterId, {
-    damageType: 'miss',
+    hitEffect: 'miss',
   })
 }
 
@@ -334,7 +335,7 @@ function showBuffEffect(characterId: string, _buffName: string, isPositive: bool
 
 function triggerHitEffect(characterId: string) {
   playHitAnimation(characterId, {
-    damageType: 'damage',
+    hitEffect: 'damage',
   })
 }
 
@@ -360,7 +361,7 @@ function playAttackSequence(
   targetId: string,
   skillName?: string,
   damage?: number,
-  damageType: 'damage' | 'heal' | 'critical' | 'miss' = 'damage',
+  hitEffect: ActionResultType = ActionResultType.DAMAGE,
   isCritical?: boolean
 ): Promise<void> {
   return new Promise(async (resolve) => {
@@ -370,7 +371,7 @@ function playAttackSequence(
 
     await playHitAnimation(targetId, {
       damage,
-      damageType,
+      hitEffect,
       isCritical,
       skillName,
     })

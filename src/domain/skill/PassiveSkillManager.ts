@@ -1,4 +1,4 @@
-import type { BattleEntity, BattleTriggerPhase } from '@/domain/battle/types'
+import { BattleEntity, BattleTriggerPhase } from '@/domain/battle/types'
 import { BATTLE_CONSTANTS } from '@/domain/battle/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -66,7 +66,7 @@ export class PassiveSkillManager {
       }
       if (config.condition && !this.evaluateCondition(config.condition, entity, target, context)) continue
 
-      this.skillManager.executeSkill(config.skillId, entity, target, context?.currentTurn as number || 0)
+      this.skillManager.executeSkill(config.skillId, entity, target!, context?.currentTurn as number || 0)
       config.lastTriggeredTurn = context?.currentTurn as number || 0
       config.triggerCount = (config.triggerCount || 0) + 1
     }

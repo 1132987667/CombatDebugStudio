@@ -54,11 +54,11 @@
       <div v-if="showDebug" class="debug-info">
         <div class="debug-row">
           <span class="label">ATK:</span>
-          <span class="value">{{ stats.attack.value.displayValue }}</span>
-          <span v-if="stats.attack.value.breakdown" class="breakdown" @click="toggleBreakdown">🔍</span>
+          <span class="value">{{ stats.attack.value }}</span>
+          <span v-if="stats.attack.value" class="breakdown" @click="toggleBreakdown">🔍</span>
         </div>
         <div v-if="showBreakdown" class="breakdown-details">
-          <div v-for="(value, key) in stats.attack.value.breakdown" :key="key" class="breakdown-item">
+          <div v-for="(value, key) in stats.attack.value" :key="key" class="breakdown-item">
             <span class="key">{{ formatBreakdownKey(key) }}:</span>
             <span class="value">{{ typeof value === 'number' ? value.toFixed(2) : value }}</span>
           </div>
@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type Ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/types'
 import { useBattleParticipant } from '@/presentation/composables/useBattleParticipant'
 import { useParticipantStats } from '@/presentation/composables/useParticipantStats'
@@ -106,10 +106,7 @@ const emit = defineEmits<{
 }>()
 
 // 使用 composable 包装参与者
-const { participant: shallowParticipant, stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(props.participant)
-
-// 使用属性访问 composable
-const participantStats = useParticipantStats(props.participant)
+const { stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(props.participant)
 
 // 卡片引用
 const cardRef = ref<HTMLElement | null>(null)
@@ -186,7 +183,7 @@ const cardVisualStateClass = computed(() => {
 })
 
 // 计算属性
-const isDead = computed(() => !isAlive.value)
+const isDead = computed(() => !isAlive)
 const cardClasses = computed(() => ({
   'active': props.isActive,
   'dead': isDead.value,
@@ -194,8 +191,8 @@ const cardClasses = computed(() => ({
 }))
 
 const hpText = computed(() => {
-  const currentHealth = Math.max(0, Math.floor(stats.value.currentHealth.value))
-  const maxHealth = Math.max(0, Math.floor(stats.value.maxHealth.value))
+  const currentHealth = Math.max(0, Math.floor(stats.currentHealth.value))
+  const maxHealth = Math.max(0, Math.floor(stats.maxHealth.value))
   return `${currentHealth}/${maxHealth}`
 })
 
@@ -207,13 +204,13 @@ const hpColorClass = computed(() => {
 })
 
 const energyText = computed(() => {
-  const energy = Math.floor(stats.value.energy.value)
-  const maxEnergy = Math.floor(stats.value.maxEnergy.value)
+  const energy = Math.floor(stats.energy.value)
+  const maxEnergy = Math.floor(stats.maxEnergy.value)
   return `${energy}/${maxEnergy}`
 })
 
 const energyColorClass = computed(() => {
-  const energyPct = energyPercent.value
+  const energyPct = energyPercent
   if (energyPct >= 80) return 'full'
   if (energyPct >= 50) return 'medium'
   return 'low'

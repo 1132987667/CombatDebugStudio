@@ -8,7 +8,9 @@
  *   领域层代码通过 getLogger() 获取实例进行日志记录。
  */
 
-export type { ILogger } from './ILogger'
+import type { ILogger } from './ILogger'
+
+export type { ILogger }
 
 let _logger: ILogger | null = null
 

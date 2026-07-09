@@ -12,7 +12,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -54,7 +54,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -96,7 +96,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -136,7 +136,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -178,7 +178,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -206,7 +206,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -219,7 +219,7 @@
                       },
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -247,7 +247,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -289,7 +289,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -331,7 +331,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -373,7 +373,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -416,7 +416,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -476,7 +476,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -518,7 +518,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -546,7 +546,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -588,7 +588,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -601,7 +601,7 @@
                       },
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -629,7 +629,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -671,7 +671,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -713,7 +713,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -741,7 +741,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -783,7 +783,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -823,7 +823,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -866,7 +866,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -908,7 +908,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -950,7 +950,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -992,7 +992,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1005,7 +1005,7 @@
                       },
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "targetType":  "random_adjacent",
                           "calculation":  {
                                               "baseValue":  0,
@@ -1034,7 +1034,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1076,7 +1076,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1118,7 +1118,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1146,7 +1146,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1188,7 +1188,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1230,7 +1230,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1258,7 +1258,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1354,7 +1354,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1397,7 +1397,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1439,7 +1439,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1481,7 +1481,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1523,7 +1523,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1565,7 +1565,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1593,7 +1593,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1635,7 +1635,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1677,7 +1677,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1704,7 +1704,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1746,7 +1746,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1788,7 +1788,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1830,7 +1830,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1872,7 +1872,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1943,7 +1943,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -1985,7 +1985,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2027,7 +2027,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2040,7 +2040,7 @@
                       },
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "targetType":  "random_adjacent",
                           "calculation":  {
                                               "baseValue":  0,
@@ -2068,7 +2068,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2110,7 +2110,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2152,7 +2152,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2165,7 +2165,7 @@
                       },
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2192,7 +2192,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2233,7 +2233,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2274,7 +2274,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2316,7 +2316,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2359,7 +2359,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2387,7 +2387,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2429,7 +2429,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2471,7 +2471,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2484,7 +2484,7 @@
                       },
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "targetType":  "random_adjacent",
                           "calculation":  {
                                               "baseValue":  0,
@@ -2513,7 +2513,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2541,7 +2541,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2582,7 +2582,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2624,7 +2624,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2637,7 +2637,7 @@
                       },
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2664,7 +2664,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2706,7 +2706,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2776,7 +2776,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2819,7 +2819,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2861,7 +2861,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2903,7 +2903,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2945,7 +2945,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -2987,7 +2987,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3027,7 +3027,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3040,7 +3040,7 @@
                       },
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3067,7 +3067,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3109,7 +3109,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3150,7 +3150,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3191,7 +3191,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3261,7 +3261,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3303,7 +3303,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3331,7 +3331,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3373,7 +3373,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3415,7 +3415,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3443,7 +3443,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3485,7 +3485,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3527,7 +3527,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3583,7 +3583,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3625,7 +3625,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3667,7 +3667,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3709,7 +3709,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3749,7 +3749,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3791,7 +3791,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3804,7 +3804,7 @@
                       },
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3832,7 +3832,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3874,7 +3874,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3902,7 +3902,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -3970,7 +3970,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4013,7 +4013,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4041,7 +4041,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4083,7 +4083,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4111,7 +4111,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4139,7 +4139,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4181,7 +4181,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4209,7 +4209,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4251,7 +4251,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4264,7 +4264,7 @@
                       },
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4291,7 +4291,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4333,7 +4333,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4415,7 +4415,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4458,7 +4458,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [
@@ -4486,7 +4486,7 @@
         "steps":  [
                       {
                           "type":  "deal_damage",
-                          "attackType":  "normal_attack",
+                          "attackType": "normal",
                           "calculation":  {
                                               "baseValue":  0,
                                               "extraValues":  [

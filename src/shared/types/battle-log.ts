@@ -3,7 +3,7 @@
  * 确保系统中所有战斗日志相关的类型引用保持一致
  */
 
-import { BattleAction, ActionTypes } from '@/domain/battle/types'
+import { BattleAction, ActionTypes, ActionResultType } from '@/domain/battle/types'
 
 /**
  * 日志级别 - 统一所有日志系统的级别定义
@@ -403,7 +403,10 @@ export function createDefaultBattleLogEntry(
     source,
     action,
     target,
-    level,
+    index: -1,
+    type: LogType.BATTLE,
+    message: result,
+    level: level as any,
     category,
     segments: [{ text: result }],
   }
@@ -424,8 +427,8 @@ export const LogUtils = {
    * 检查日志级别是否有效
    */
   isValidLogLevel(level: string): boolean {
-    const validLevels: LogType[] = ['debug', 'info', 'warning', 'error']
-    return validLevels.includes(level as LogType)
+    const validLevels: string[] = ['debug', 'info', 'warning', 'error']
+    return validLevels.includes(level)
   },
 
   isValidLogCategory(category: string): boolean {
@@ -464,7 +467,7 @@ export interface CalculationLog {
   timestamp: number
 
   /** 计算类型 */
-  type: 'damage' | 'heal' | 'buff' | 'debuff'
+  type: ActionResultType
 
   /** 来源ID */
   sourceId: string
@@ -562,7 +565,10 @@ export function battleActionToLogEntry(
     source: sourceName,
     action: '对',
     target: targetName,
-    level,
+    index: -1,
+    type: LogType.BATTLE,
+    message: `${sourceName} ${action}${targetName}`,
+    level: level as any,
     category,
     segments,
   }

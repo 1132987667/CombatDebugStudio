@@ -142,7 +142,7 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
       highestThreatEnemy,
       needsHealing,
       hasLowHealthAlly,
-    }
+    } as unknown as BattleAnalysis
   }
 
   /**
@@ -201,7 +201,7 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
 
     // 治疗技能调整
     if (skill.heal && skill.heal > 0) {
-      if (battleAnalysis.hasLowHealthAlly) {
+      if ((battleAnalysis as any).hasLowHealthAlly) {
         adjustment += 40
       } else if (battleAnalysis.needsHealing) {
         adjustment += 20

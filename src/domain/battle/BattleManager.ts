@@ -11,7 +11,7 @@ import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
-import { PARTICIPANT_SIDE, BattleEntity, BATTLE_CONSTANTS } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE, BattleEntity, BATTLE_CONSTANTS, ParticipantSide } from '@/domain/battle/types'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 import type {
@@ -345,7 +345,7 @@ export class BattleManager {
    * @param character - 角色数据（BattleEntity）
    * @param side - 队伍类型
    */
-  addCharacterToTeam(character: BattleEntity, side: PARTICIPANT_SIDE) {
+  addCharacterToTeam(character: BattleEntity, side: ParticipantSide) {
     if (side === PARTICIPANT_SIDE.ALLY) {
       character.seatIndex = this.allyTeam.length
       this.allyTeam.push(character)
@@ -560,7 +560,7 @@ export class BattleManager {
    * 统一通过 AutoBattleManager 启动，确保日志和状态同步
    */
   async startAutoBattle(): Promise<boolean> {
-    const battleId = this.battleStateManager.getBattleId()?.value
+    const battleId = this.battleStateManager.getBattleId()
     if (!battleId) {
       battleLogManager.addSystemLog({message: '请先创建战斗'})
       return false
@@ -588,7 +588,7 @@ export class BattleManager {
    * @param winner 获胜方
    */
   endBattle(winner: any) {
-    const battleId = this.battleStateManager.getBattleId()?.value
+    const battleId = this.battleStateManager.getBattleId()
     if (battleId) {
       this.autoBattleManager.stopAutoBattle()
     }
@@ -665,7 +665,7 @@ export class BattleManager {
    * @returns 战斗ID
    */
   getBattleId(): string | null {
-    return this.battleStateManager.getBattleId()?.value ?? null
+    return this.battleStateManager.getBattleId() ?? null
   }
 
   /**
@@ -692,7 +692,7 @@ export class BattleManager {
     try {
       const battleState = LocalStorage.get('battleState')
       if (battleState) {
-        this.battleSystem.restoreBattleState(battleState)
+        ;(this.battleSystem as any).restoreBattleState(battleState)
         this.syncBattleState()
         return battleState
       }
@@ -724,7 +724,7 @@ export class BattleManager {
 
     return {
       turn: this.getTurn(),
-      participants: battleState.participants?.length || 0,
+      participants: battleState.participants?.size || 0,
       autoBattle: this.battleSystem.getAutoBattle(),
       isPaused: this.isPaused(),
       battleSpeed: this.getBattleSpeed(),

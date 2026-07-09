@@ -1,12 +1,8 @@
 /**
  * 类型安全的 localStorage 封装工具
  * 提供类型安全的 get/set 方法，支持类型推断和错误处理
- * 实现 domain/port/storage/IStorage 接口
  */
-
-import type { IStorage } from '@/domain/port/storage/IStorage'
-
-export class LocalStorage implements IStorage {
+export class LocalStorage {
   /**
    * 存储数据到 localStorage
    * @param key 存储键名

@@ -245,7 +245,7 @@ const handleDebugAction = (action: string) => {
     case 'test_damage_num': {
       const tId = battleStore.selectedCharacterId || battleStore.enemyTeam[0]?.id || battleStore.allyTeam[0]?.id
       if (tId) {
-        battleStore.setAnimationState('damage', { targetId: tId, damage: 999, damageType: 'physical', isCritical: false, isHeal: false })
+        battleStore.setAnimationState('damage', { targetId: tId, damage: 999, damageCategory: 'physical', isCritical: false, isHeal: false })
         battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试伤害数字 999` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
@@ -255,7 +255,7 @@ const handleDebugAction = (action: string) => {
     case 'test_crit_num': {
       const tId = battleStore.selectedCharacterId || battleStore.enemyTeam[0]?.id || battleStore.allyTeam[0]?.id
       if (tId) {
-        battleStore.setAnimationState('damage', { targetId: tId, damage: 1999, damageType: 'physical', isCritical: true, isHeal: false })
+        battleStore.setAnimationState('damage', { targetId: tId, damage: 1999, damageCategory: 'physical', isCritical: true, isHeal: false })
         battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试暴击数字 1999` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
@@ -265,7 +265,7 @@ const handleDebugAction = (action: string) => {
     case 'test_heal_num': {
       const tId = battleStore.selectedCharacterId || battleStore.allyTeam[0]?.id || battleStore.enemyTeam[0]?.id
       if (tId) {
-        battleStore.setAnimationState('damage', { targetId: tId, damage: 500, damageType: 'heal', isCritical: false, isHeal: true })
+        battleStore.setAnimationState('damage', { targetId: tId, damage: 500, damageCategory: 'heal', isCritical: false, isHeal: true })
         battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试治疗数字 500` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
@@ -276,7 +276,7 @@ const handleDebugAction = (action: string) => {
       const source = battleStore.allyTeam[0]
       const target = battleStore.enemyTeam[0]
       if (source && target) {
-        battleStore.setAnimationState('skill', { sourceId: source.id, targetId: target.id, skillName: '测试技能·裂空斩', effectType: 'attack', damageType: 'physical' })
+        battleStore.setAnimationState('skill', { sourceId: source.id, targetId: target.id, skillName: '测试技能·裂空斩', effectType: 'attack', damageCategory: 'physical' })
         battleLogManager.addSystemLog({ message: `调试: 测试技能飞行 [${source.name}] → [${target.name}]` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有足够的角色' })

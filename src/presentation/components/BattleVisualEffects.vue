@@ -389,12 +389,12 @@ function playAttackSequence(
   damage: number,
   isCrit: boolean,
   fromSide: 'left' | 'right',
-  damageType: 'fire' | 'frost' = 'fire',
+  impactStyle: 'fire' | 'frost' = 'fire',
 ) {
   showSkillName(attackerId, targetId, skillName, fromSide)
-  setTimeout(() => showProjectile(attackerId, targetId, damageType), 250)
+  setTimeout(() => showProjectile(attackerId, targetId, impactStyle), 250)
   setTimeout(() => {
-    showImpact(targetId, damageType)
+    showImpact(targetId, impactStyle)
     // ponytail: damage=0 时跳过数字，由后续 DAMAGE_ANIMATION 事件显示真实值
     if (damage > 0) showDamageNum(targetId, damage, isCrit)
     if (isCrit) showScreenShake()

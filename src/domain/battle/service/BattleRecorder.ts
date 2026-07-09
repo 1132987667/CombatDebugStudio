@@ -26,7 +26,7 @@ import { BATTLE_REPLAY_VERSION } from '@/domain/battle/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { calculateChecksum, generateReplayId } from '@/shared/utils/Checksum'
-import type { BattleLogEntry } from '@/shared/types/battle-log'
+import { LogType, type BattleLogEntry } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 
@@ -60,6 +60,8 @@ export interface RecordedBattle {
   /** 详细战斗记录（含伤害拆分） */
   combatRecords: CombatRecord[]
   result?: BattleResult
+  /** 数据校验和 */
+  checksum?: string
 }
 
 export class BattleRecorder {
@@ -456,7 +458,7 @@ export class BattleRecorder {
           battleLogManager.addDebugLog(
             '战斗记录校验失败:',
             LogLevel.ERROR,
-            null,
+            undefined,
           )
           return null
         }
@@ -471,7 +473,7 @@ export class BattleRecorder {
       battleLogManager.addDebugLog(
         '加载战斗记录失败:',
         LogLevel.ERROR,
-        null,
+        undefined,
       )
       return null
     }
@@ -547,13 +549,13 @@ export class BattleRecorder {
 
     recording.logs.push({
       eventId: event.eventId,
-      type: type as BattleEventType,
+      type: LogType.BATTLE,
       timestamp: event.timestamp,
       turn,
       roundNumber,
       message: this.generateLogMessage(type, data),
       details: data,
-    })
+    } as any)
 
     if (recording.events.length > MAX_EVENT_LOG) {
       recording.events = recording.events.slice(-MAX_EVENT_LOG)

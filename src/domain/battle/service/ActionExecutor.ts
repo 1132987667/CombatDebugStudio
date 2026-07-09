@@ -25,7 +25,7 @@ import {
   ControlType,
   type TriggerEventContext,
 } from '@/domain/buff/types'
-import type { BattleTriggerPhase } from '@/domain/battle/types'
+import { BattleTriggerPhase } from '@/domain/battle/types'
 import { TriggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 
 /**
@@ -70,12 +70,12 @@ export class ActionExecutor {
   ): void {
     const eventBus = this.getTriggerEventBus()
     const fullContext: TriggerEventContext = {
-      phase,
       sourceId: context.sourceId ?? '',
       targetId: context.targetId,
       value: context.value,
       currentTurn: context.currentTurn ?? 0,
       ...context,
+      phase,
     }
     eventBus.emit(phase, fullContext)
   }
@@ -409,7 +409,7 @@ export class ActionExecutor {
         action.skillId,
         source,
         target,
-        action.turn,
+        action.turn ?? 0,
       )
 
       if (!skillAction) {
@@ -433,7 +433,7 @@ export class ActionExecutor {
         battleLogManager.addDebugLog(`技能执行成功: ${action.skillId}`)
       }
     } catch (error) {
-      battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error)
+      battleLogManager.addDebugLog(`技能执行失败: ${action.skillId}`, error as Error)
       action.type = ActionTypes.ATTACK
       action.damage =
         Math.floor(
@@ -536,7 +536,7 @@ export class ActionExecutor {
    */
   private finalizeRecord(record: CombatRecord, action: BattleAction): void {
     record.message = this.generateRecordMessage(record, action)
-    battleLogManager.addDebugLog('技能记录已生成', record)
+    battleLogManager.addDebugLog('技能记录已生成', record as unknown as Record<string, unknown>)
   }
 
   /**

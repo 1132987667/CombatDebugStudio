@@ -5,7 +5,7 @@
  */
 
 import type { BattleAI } from '@/domain/battle/ai/BattleAI'
-import type { SkillConfig, SkillSet, DamageType } from '@/domain/skill/types'
+import type { SkillConfig, SkillSet, DamageCategory } from '@/domain/skill/types'
 import type {
   AttributeValue,
   IModifierProvider,
@@ -142,6 +142,16 @@ export const ActionTypes = {
 
 export type ActionTypes = (typeof ActionTypes)[keyof typeof ActionTypes]
 
+// 重命名常量名
+export const ActionResultType = {
+  DAMAGE: 'damage',
+  HEAL: 'heal',
+  CRITICAL: 'critical',
+  MISS: 'miss',
+}
+export type ActionResultType = (typeof ActionResultType)[keyof typeof ActionResultType]
+
+
 /** 动作类型数组 - 从 ACTION_TYPES 自动生成 */
 export const ValidActionTypes = Object.freeze([
   ActionTypes.ATTACK,
@@ -177,6 +187,15 @@ export interface BattleEntity {
   attributeValues: AttributeValues
   /** 属性版本戳（每次属性重算后递增，用于 Vue 响应式追踪） */
   readonly statsVersion: number
+
+  /** 当前气血（快捷属性，由 stats 派生） */
+  currentHealth: number
+  /** 最大气血 */
+  maxHealth: number
+  /** 当前能量 */
+  currentEnergy: number
+  /** 最大能量 */
+  maxEnergy: number
 
   /** 获取 Buff 实例 ID 列表（派生自 BuffSystem） */
   getBuffInstanceIds(): string[]
@@ -569,8 +588,8 @@ export interface DamageAnimationData extends BaseAnimationData {
   damage: number
   /** 是否暴击 */
   isCritical: boolean
-  /** 伤害类型（物理伤害/元素伤害/真实伤害） */
-  damageType: DamageType
+  /** 伤害大类（physical/elemental/true） */
+  damageCategory: DamageCategory
   /** 是否为治疗 */
   isHeal: boolean
 }
@@ -601,8 +620,8 @@ export interface SkillEffectAnimationData extends BaseAnimationData {
   skillName: string
   /** 效果类型 */
   effectType: string
-  /** 伤害类型（物理伤害/元素伤害/真实伤害） */
-  damageType: DamageType
+  /** 伤害大类（physical/elemental/true） */
+  damageCategory: DamageCategory
 }
 
 /**

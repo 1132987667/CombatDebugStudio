@@ -1,5 +1,6 @@
 import { BattleManager } from '@/domain/battle/BattleManager';
-import type { BattleEntity, BattleState, BattleReplay, PARTICIPANT_SIDE } from '@/domain/battle/types';
+import type { BattleEntity, BattleState, BattleReplay } from '@/domain/battle/types';
+import { PARTICIPANT_SIDE, type ParticipantSide } from '@/domain/battle/types';
 import type { BattleEventName, BattleEventCallback } from '@/shared/types/battle-events';
 
 /**
@@ -62,7 +63,7 @@ export class BattleService {
   // ==================== 事件管理 ====================
 
   on<T extends BattleEventName>(event: T, callback: BattleEventCallback<T>) {
-    this.battleManager.on(event, callback);
+    this.battleManager.on(event, callback as unknown as (data: T) => void);
   }
 
   off<T extends BattleEventName>(event: T) {
@@ -97,7 +98,7 @@ export class BattleService {
     this.battleManager.resetCharacterStates();
   }
 
-  addCharacterToTeam(character: BattleEntity, side: PARTICIPANT_SIDE): void {
+  addCharacterToTeam(character: BattleEntity, side: ParticipantSide): void {
     this.battleManager.addCharacterToTeam(character, side);
   }
 
@@ -158,7 +159,7 @@ export class BattleService {
     return this.battleManager.getMaxTurns();
   }
 
-  getBattleState(): BattleState | null {
+  getBattleState(): BattleState | undefined {
     return this.battleManager.getBattleState();
   }
 

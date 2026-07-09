@@ -7,7 +7,6 @@
  **/
 import { ATTRIBUTE_CODE, type AttributeValue, getAttributeMeta, getAttributeDefaultValue } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
-import * as Utils from '@/domain/utils/Utils'
 
 export class ParticipantStats {
   readonly attributes = new Map<ATTRIBUTE_CODE, AttributeValue>()
@@ -140,7 +139,7 @@ export class ParticipantStats {
     // ponytail: 加成属性（attackBonus/healthBonus）已在 enemyToParticipant 中作为
     // PERCENTAGE 修饰符注入到对应属性，此处不再重复处理。
     const value = ((attrData.base + additive) * percentMultiplier / 100 * independentMultiplier / 100) * finalMultiplier / 100
-    attrData.value = Utils.round(value, 2)
+    attrData.value = Math.round(value * 100) / 100
     // 更新版本戳，标记为已计算
     attrData.cachedVersion = this.version
   }

@@ -8,6 +8,7 @@ import type {
   BattleEndedEventData,
 } from '@/shared/types/battle-events'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { IBattleSystem } from '@/domain/battle/entity/BattleInterfaces'
 import { PARTICIPANT_SIDE } from '@/domain/battle/types'
@@ -17,7 +18,7 @@ import { PARTICIPANT_SIDE } from '@/domain/battle/types'
  * 负责监听和处理战斗事件
  */
 export class BattleEventManager {
-  private battleStore = null
+  private battleStore: ReturnType<typeof useBattleStore> | null = null
   private battleStateManager: BattleStateManager | null = null
   private battleSystem: IBattleSystem | null = null
   /** 是否正在监听事件 */
@@ -32,7 +33,7 @@ export class BattleEventManager {
     if (!this.battleStore) {
       this.battleStore = useBattleStore()
     }
-    return this.battleStore
+    return this.battleStore!
   }
 
   /**
@@ -107,14 +108,14 @@ export class BattleEventManager {
   private handleBattleLogEvent(data: BattleLogEventData) {
     try {
       if (data && data.log) {
-        const log = data.log
+        const log = data.log as BattleLogEntry & { htmlResult?: string; result?: string }
         // 濡傛灉娌℃湁 htmlResult锛屽皾璇曠敓鎴?HTML 鏍煎紡
         if (!log.htmlResult && log.result) {
           let htmlResult = log.result
 
           // 鍒ゆ柇鏉ユ簮鍜岀洰鏍囨槸鍚︽槸鏁屾柟
           const sourceIsAlly =
-            !log.source.includes('鏁屾柟') && log.source !== '绯荤粺'
+            log.source != null && !log.source.includes('鏁屾柟') && log.source !== '绯荤粺'
           const targetIsAlly =
             log.target &&
             !log.target.includes('鏁屾柟') &&
@@ -138,17 +139,17 @@ export class BattleEventManager {
           }
 
           // Add normal attack highlighting
-          if (htmlResult.includes('normal_attack')) {
+          if (htmlResult.includes('normal')) {
             htmlResult = htmlResult.replace(
-              /normal_attack/g,
-              '<span class="normal-attack">normal_attack</span>',
+              /normal/g,
+              '<span class="normal-attack">normal</span>',
             )
           }
 
           // Add skill name highlighting (match [skill name] pattern)
           htmlResult = htmlResult.replace(
             /\[([^\]]+)\]/g,
-            (match, skillName) => {
+            (match: string, skillName: string) => {
               const isHeal =
                 skillName.includes('heal') || skillName.includes('recover')
               const isDebuff =
@@ -194,10 +195,10 @@ export class BattleEventManager {
           log.htmlResult = htmlResult
         }
 
-        this.getBattleStore().addBattleLog(log)
+        ;(this.getBattleStore() as any).addBattleLog(log)
       }
     } catch (error) {
-      this.getBattleStore().addErrorLog(`澶勭悊鎴樻枟鏃ュ織浜嬩欢鏃跺嚭閿? ${error}`)
+      ;(this.getBattleStore() as any).addErrorLog(`澶勭悊鎴樻枟鏃ュ織浜嬩欢鏃跺嚭閿? ${error}`)
       console.error('处理战斗日志时出错:', error)
     }
   }
@@ -207,11 +208,11 @@ export class BattleEventManager {
    */
   private handleBattleEndEvent(data: BattleEndedEventData) {
     try {
-      this.getBattleStore().setBattleActive(false)
-      this.getBattleStore().setAutoPlayMode(false)
+      ;(this.getBattleStore() as any).setBattleActive(false)
+      ;(this.getBattleStore() as any).setAutoPlayMode(false)
       // 记录战斗结束日志
       if (data && data.winner) {
-        this.getBattleStore().addBattleLog({
+        ;(this.getBattleStore() as any).addBattleLog({
           turn: '战斗结束',
           source: 'system',
           action: 'end',
@@ -221,7 +222,7 @@ export class BattleEventManager {
         })
       }
     } catch (error) {
-      this.getBattleStore().addErrorLog(`Error handling battle end: ${error}`)
+      ;(this.getBattleStore() as any).addErrorLog(`Error handling battle end: ${error}`)
       console.error('处理战斗结束时出错:', error)
     }
   }
@@ -236,9 +237,9 @@ export class BattleEventManager {
   }) {
     try {
       if (data && data.actorId) {
-        this.getBattleStore().setCurrentActorId(data.actorId)
+        ;(this.getBattleStore() as any).setCurrentActorId(data.actorId)
         // Record turn start log
-        this.getBattleStore().addBattleLog({
+        ;(this.getBattleStore() as any).addBattleLog({
           turn: `turn_${data.turn}`,
           source: 'system',
           action: 'start',
@@ -248,7 +249,7 @@ export class BattleEventManager {
         })
       }
     } catch (error) {
-      this.getBattleStore().addErrorLog(`Error handling turn start: ${error}`)
+      ;(this.getBattleStore() as any).addErrorLog(`Error handling turn start: ${error}`)
       console.error('处理回合开始时出错:', error)
     }
   }
@@ -260,7 +261,7 @@ export class BattleEventManager {
     try {
       if (data) {
         // 鍥炲悎缁撴潫澶勭悊
-        this.getBattleStore().addBattleLog({
+        ;(this.getBattleStore() as any).addBattleLog({
           turn: `鍥炲悎${data.turn}`,
           source: '绯荤粺',
           action: '缁撴潫',
@@ -270,7 +271,7 @@ export class BattleEventManager {
         })
       }
     } catch (error) {
-      this.getBattleStore().addErrorLog(`Error handling turn end: ${error}`)
+      ;(this.getBattleStore() as any).addErrorLog(`Error handling turn end: ${error}`)
       console.error('处理回合结束时出错:', error)
     }
   }

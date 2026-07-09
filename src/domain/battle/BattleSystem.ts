@@ -193,13 +193,13 @@ export class BattleSystem implements IBattleSystem {
   ): void {
     const eventBus = this.getTriggerEventBus()
     const fullContext: TriggerEventContext = {
-      phase,
       sourceId: context.sourceId ?? '',
       targetId: context.targetId,
       value: context.value,
       currentTurn: context.currentTurn ?? this.battleData.currentRound,
       battleData: this.battleData,
       ...context,
+      phase,
     }
     eventBus.emit(phase, fullContext)
   }
@@ -379,6 +379,9 @@ export class BattleSystem implements IBattleSystem {
       }
     })
 
+    // 初始化完成，战斗准备就绪
+    battleData.battleState = BattleStatus.ACTIVE
+
     return convertToBattleState(battleData)
   }
 
@@ -515,7 +518,7 @@ export class BattleSystem implements IBattleSystem {
       await debugGate.waitIfNeeded('TURN_START')
 
       const battleId = battle.battleId
-      this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0])
+      this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0]!)
 
       for (let i = 0; i < currentTurnOrder.length; i++) {
         console.log('当前回合 顺序', i, currentTurnOrder)
@@ -528,10 +531,10 @@ export class BattleSystem implements IBattleSystem {
         
         const participantId = currentTurnOrder[i]
         const participant = battle.participants.get(participantId)
-        console.error('当前角色的能量', participant.getAttribute(ATTRIBUTE_CODE.currentEnergy))
         if (!participant || !participant.isAlive()) {
           continue
         }
+        console.error('当前角色的能量', participant.getAttribute(ATTRIBUTE_CODE.currentEnergy))
         battle.currentTurn = i
         
         // 在每个角色行动前，发送当前行动者更新事件到 UI 层
@@ -540,7 +543,7 @@ export class BattleSystem implements IBattleSystem {
         try {
           await this.executor.executeParticipantAction(battle, participant)
         } catch (error) {
-          battleLogManager.addDebugLog('角色行动执行出错:', error)
+          battleLogManager.addDebugLog('角色行动执行出错:', error as Error)
           await this.executor.executeDefaultAction(battle, participant)
         }
 
@@ -605,7 +608,7 @@ export class BattleSystem implements IBattleSystem {
 
       battle.currentRound++
     } catch (error) {
-      battleLogManager.addDebugLog('处理回合时出错:', LogLevel.ERROR, error)
+      battleLogManager.addDebugLog('处理回合时出错:', LogLevel.ERROR, error as Error)
       console.error('处理回合时出错:', error)
     } finally {
       this.animationManager.cleanupAnimationState()
@@ -739,8 +742,23 @@ export class BattleSystem implements IBattleSystem {
     return convertToBattleState(battle)
   }
 
-  public startBattle(): void {
+  public async startBattle(): Promise<void> {
     this.lifecycleManager.startBattle()
+  }
+
+  public getEnabledAllyTeam(): BattleEntity[] {
+    return Array.from(this.battleData.participants.values())
+      .filter(p => p.enabled && p.team === 'ally')
+  }
+
+  public getEnabledEnemyTeam(): BattleEntity[] {
+    return Array.from(this.battleData.participants.values())
+      .filter(p => p.enabled && p.team === 'enemy')
+  }
+
+  public async executeAction(action: BattleAction): Promise<BattleAction> {
+    await this.actionExecutor.executeAction(action)
+    return action
   }
 
   public stopAutoBattle(): void {

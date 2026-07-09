@@ -77,7 +77,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
     targetId: string,
     data: {
       damage?: number
-      damageType: 'damage' | 'heal' | 'critical' | 'miss'
+      hitEffect: 'damage' | 'heal' | 'critical' | 'miss'
       isCritical?: boolean
       skillName?: string
       passiveName?: string

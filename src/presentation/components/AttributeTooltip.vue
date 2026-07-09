@@ -164,7 +164,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Modifier, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
-import { ModifierSourceTypeNames, ModifierType } from '@/domain/attribute/types'
+import { ModifierSourceTypeNames } from '@/domain/attribute/types'
 import { getAttributeMeta, getAttributeCodeByName } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
 

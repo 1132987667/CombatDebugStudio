@@ -85,7 +85,6 @@ import {
   TURN_MANAGER_TOKEN,
   ACTION_EXECUTOR_TOKEN,
   AI_SYSTEM_TOKEN,
-  PARTICIPANT_MANAGER_TOKEN,
   BATTLE_RECORDER_TOKEN,
   BATTLE_RULE_MANAGER_TOKEN,
 } from '@/domain/battle/entity/BattleInterfaces'
@@ -220,7 +219,7 @@ export function initializeContainer(): void {
     'BattleService',
     () => {
       const battleManager = container.resolve('BattleManager')
-      return new BattleService(battleManager)
+      return new BattleService(battleManager as BattleManager)
     },
     true,
   )

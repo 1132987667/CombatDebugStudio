@@ -421,8 +421,8 @@ export class BattleLogManager {
       type: LogType.DEBUG,
       level,
       message,
-      context,
-      source: null,
+      context: context ?? undefined,
+      source: undefined,
       error: finalError || error,
       segments: [],
       action: undefined,
@@ -540,8 +540,8 @@ export class BattleLogManager {
     const lowerKeyword = keyword.toLowerCase()
     return this.battleLogs.filter(
       (log) =>
-        log.source.toLowerCase().includes(lowerKeyword) ||
-        log.target.toLowerCase().includes(lowerKeyword),
+        (log.source ?? '').toLowerCase().includes(lowerKeyword) ||
+        (log.target ?? '').toLowerCase().includes(lowerKeyword),
     )
   }
 

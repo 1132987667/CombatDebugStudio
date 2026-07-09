@@ -86,7 +86,7 @@ export class GameDataProcessor {
   }
 
   static getSkillsData(): SkillConfig[] {
-    return skillsData.concat(passiveSkillsData, newSkillsData) as SkillConfig[]
+    return (skillsData as any[]).concat(passiveSkillsData as any[], newSkillsData as any[]) as SkillConfig[]
   }
 
   /**
@@ -116,7 +116,7 @@ export class GameDataProcessor {
   ): BattleParticipantImpl {
 
     // 1. 解析被动技能并生成修饰符模板列表
-    const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive)
+    const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive ?? [])
 
     // 3. 补全派生属性（配置只有 currentHealth/minAttack/maxAttack，但引擎需要 maxHealth）
     const stats = { ...enemy.stats } as Partial<Record<ATTRIBUTE_CODE, number>>
@@ -136,10 +136,11 @@ export class GameDataProcessor {
       team: type,
       level: enemy.level,
       enabled: true,
+      seatIndex: 0,
       skills: {
-        small: GameDataProcessor.getSkillByIds(enemy.skills?.small),
+        small: GameDataProcessor.getSkillByIds(enemy.skills?.small ?? []),
         passive: passiveSkills,
-        ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate),
+        ultimate: GameDataProcessor.getSkillByIds(enemy.skills?.ultimate ?? []),
       },
       attributeValues: stats,
     }
@@ -223,7 +224,7 @@ export class GameDataProcessor {
       if (!skill.steps) continue
       for (const step of skill.steps) {
         const stepType = step.type
-        if (stepType === 'modify_attribute' || stepType === 'MODIFY_ATTRIBUTE') {
+        if (stepType === 'modify_attribute') {
           GameDataProcessor.applyStepModifiers(participant, skill, step.modifiers)
         } else if (stepType === 'apply_buff' && step.buffId) {
           GameDataProcessor.applyBuffStep(participant, skill, step.buffId)

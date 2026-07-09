@@ -11,7 +11,7 @@ import {
   BattleTriggerPhase,
   BATTLE_CONSTANTS,
 } from '@/domain/battle/types'
-import type { StatusEffect, ParticipantSnapshot, BattleEntity } from '@/domain/battle/types'
+import type { StatusEffect, ParticipantSnapshot, BattleEntity, BuffInstanceSnapshot } from '@/domain/battle/types'
 import type { IModifierProvider } from '@/domain/attribute/types'
 import { type ParticipantSide } from '@/domain/battle/types'
 import type { SkillConfig, SkillSet } from '@/domain/skill/types'
@@ -668,7 +668,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param filter - 技能类型过滤：'active'返回主动技能，SkillType.ALL返回所有，SkillType.PASSIVE返回被动技能
    * @returns 技能ID数组
    */
-  getSkillIds(filter: 'active' | SkillType.ALL | SkillType.PASSIVE = SkillType.ALL): string[] {
+  getSkillIds(filter: 'active' | 'all' | 'passive' = SkillType.ALL as 'all'): string[] {
     return this.skillManager.getSkillIds(filter)
   }
 

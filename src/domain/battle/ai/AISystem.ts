@@ -12,8 +12,8 @@ import type {
   BattleState,
   BattleAction,
   BattleData,
-} from '@/domain/battle/types'
-import { BattleStatus } from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
+import { BattleStatus } from '@/domain/battle/type/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { BattleAIFactory, BattleAI } from '@/domain/battle/ai/BattleAI'
 

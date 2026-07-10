@@ -5,8 +5,8 @@
  ** 功能: 战斗聚合工厂
  ** 描述: 提供 createDefaultBattleData 工厂函数，组装包含 ID、回合、参与者等的规范化 BattleData 聚合对象
  **/
-import type { BattleData, BattleState } from '@/domain/battle/types'
-import { BattleStatus, RoundStatus, BATTLE_CONSTANTS } from '@/domain/battle/types'
+import type { BattleData, BattleState } from '@/domain/battle/type/types'
+import { BattleStatus, RoundStatus, BATTLE_CONSTANTS } from '@/domain/battle/type/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 
 export function createDefaultBattleData(

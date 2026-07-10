@@ -1,7 +1,7 @@
 import { BattleManager } from '@/domain/battle/BattleManager';
-import type { BattleEntity, BattleState, BattleReplay } from '@/domain/battle/types';
-import { type ParticipantSide } from '@/domain/battle/types';
-import type { BattleEventName, BattleEventCallback } from '@/shared/types/battle-events';
+import type { BattleEntity, BattleState, BattleReplay } from '@/domain/battle/type/types';
+import { type ParticipantSide } from '@/domain/battle/type/types';
+import type { BattleEventName, BattleEventCallback } from '@/domain/battle/type/BattleEventType';
 
 /**
  * 战斗应用服务（门面）

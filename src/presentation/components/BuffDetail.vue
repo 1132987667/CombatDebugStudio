@@ -188,7 +188,6 @@ const getPossibleSources = (buffId: string): string[] => {
 }
 
 .buff-badge {
-  font-size: var(--font-size-xs);
   padding: 1px 5px;
   border-radius: var(--radius-sm);
 }
@@ -232,12 +231,10 @@ const getPossibleSources = (buffId: string): string[] => {
 }
 
 .attr-key {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
 .attr-value {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
 }
 
@@ -253,7 +250,6 @@ const getPossibleSources = (buffId: string): string[] => {
   text-align: center;
   padding: var(--space-2);
   color: var(--color-text-disabled);
-  font-size: var(--font-size-xs);
 }
 
 .buff-description-panel {
@@ -265,7 +261,6 @@ const getPossibleSources = (buffId: string): string[] => {
 }
 
 .description-text {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   line-height: var(--line-height-lg);
   margin: 0;
@@ -286,7 +281,6 @@ const getPossibleSources = (buffId: string): string[] => {
 }
 
 .effect-tag {
-  font-size: var(--font-size-xs);
   padding: var(--space-1);
   border-radius: var(--radius-sm);
   background: rgba(79, 195, 247, 0.15);
@@ -328,7 +322,6 @@ const getPossibleSources = (buffId: string): string[] => {
 }
 
 .usage-text {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
@@ -336,6 +329,5 @@ const getPossibleSources = (buffId: string): string[] => {
   text-align: center;
   padding: var(--space-2);
   color: var(--color-text-disabled);
-  font-size: var(--font-size-xs);
 }
 </style>

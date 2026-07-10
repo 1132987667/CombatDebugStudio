@@ -7,9 +7,9 @@
  * 版本：1.0.0
  */
 
-import type { BattleEffect } from '@/domain/battle/types'
+import type { BattleEffect } from '@/domain/battle/type/types'
 import type { CalculationStep } from '@/domain/attribute/types'
-import type { ActionTypes } from '@/domain/battle/types'
+import type { ActionTypes } from '@/domain/battle/type/types'
 
 /**
  * 计算详情 - 调试模式开启时填充

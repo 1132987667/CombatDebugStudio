@@ -26,12 +26,12 @@ build/
 # json数据
 configs/
 
-docs/
-documents/
-prompts/
-scripts/
-tests/
-tools/
+# docs/
+# documents/
+# prompts/
+# scripts/
+# tests/
+# tools/
 
 output.txt
 

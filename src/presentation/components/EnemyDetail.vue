@@ -182,7 +182,6 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 }
 
 .enemy-level {
-  font-size: var(--font-size-sm);
   color: var(--color-brand-red);
   margin-left: var(--space-2);
   padding: 1px var(--space-1);
@@ -200,7 +199,6 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 
 .enemy-section-title {
   color: var(--color-info);
-  font-size: var(--font-size-xs);
   margin-bottom: var(--space-1);
   padding-bottom: var(--space-1);
   border-bottom: 1px dashed var(--color-border-default);
@@ -222,11 +220,9 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 
 .enemy-stat-label {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
 }
 
 .enemy-stat-value {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-secondary);
 }
@@ -262,7 +258,6 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 }
 
 .skill-name {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-info);
 }
@@ -273,7 +268,6 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 }
 
 .skill-tag {
-  font-size: var(--font-size-xs);
   padding: 1px 5px;
   border-radius: var(--radius-sm);
 }
@@ -289,7 +283,6 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 }
 
 .skill-cost {
-  font-size: var(--font-size-xs);
   padding: 1px 5px;
   border-radius: var(--radius-sm);
   color: var(--color-warning);
@@ -301,7 +294,6 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 }
 
 .skill-description {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   line-height: var(--line-height-md);
   margin: 0 0 var(--space-1) 0;
@@ -310,7 +302,6 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 .skill-selector {
   display: flex;
   gap: var(--space-1);
-  font-size: var(--font-size-xs);
 }
 
 .selector-label {
@@ -326,7 +317,6 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
   text-align: center;
   padding: var(--space-2);
   color: var(--color-text-disabled);
-  font-size: var(--font-size-xs);
 }
 
 .enemy-drops-panel {
@@ -354,17 +344,14 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 
 .drop-item-name {
   flex: 1;
-  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
 }
 
 .drop-quantity {
-  font-size: var(--font-size-xs);
   color: var(--color-info);
 }
 
 .drop-chance {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   padding: 1px var(--space-1);
   background: var(--color-bg-primary);
@@ -379,7 +366,6 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 }
 
 .description-text {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   line-height: var(--line-height-lg);
   margin: 0;

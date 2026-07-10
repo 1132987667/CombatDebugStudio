@@ -157,7 +157,6 @@ const getItemSources = (itemId: string): string[] => {
 .item-type {
   display: inline-block;
   margin-top: var(--space-1);
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   padding: 1px 5px;
   background: var(--color-bg-primary);
@@ -165,7 +164,6 @@ const getItemSources = (itemId: string): string[] => {
 }
 
 .item-rarity {
-  font-size: var(--font-size-xs);
   padding: var(--space-1);
   border-radius: var(--radius-sm);
 }
@@ -199,7 +197,6 @@ const getItemSources = (itemId: string): string[] => {
 }
 
 .description-text {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   line-height: var(--line-height-lg);
   margin: 0;
@@ -229,12 +226,10 @@ const getItemSources = (itemId: string): string[] => {
 }
 
 .stat-label {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
 .stat-value {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
 }
 
@@ -270,12 +265,10 @@ const getItemSources = (itemId: string): string[] => {
 }
 
 .effect-type {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
 .effect-value {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-info);
 }
@@ -293,7 +286,6 @@ const getItemSources = (itemId: string): string[] => {
   padding: var(--space-1) var(--space-2);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
@@ -317,7 +309,6 @@ const getItemSources = (itemId: string): string[] => {
 }
 
 .source-text {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
@@ -325,6 +316,5 @@ const getItemSources = (itemId: string): string[] => {
   text-align: center;
   padding: var(--space-2);
   color: var(--color-text-disabled);
-  font-size: var(--font-size-xs);
 }
 </style>

@@ -56,7 +56,6 @@ const props = defineProps<{
 }
 
 .buff-list-placeholder {
-  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.4);
   font-style: italic;
   padding: 0 var(--space-3);

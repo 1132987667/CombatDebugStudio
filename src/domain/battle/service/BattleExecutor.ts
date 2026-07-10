@@ -7,7 +7,7 @@ import { convertToBattleState } from '@/domain/battle/aggregate/BattleState'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import type { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
-import { BattleTriggerPhase, ActionResultType } from '@/domain/battle/types'
+import { BattleTriggerPhase, ActionResultType } from '@/domain/battle/type/types'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -23,7 +23,7 @@ import {
   BATTLE_CONSTANTS,
   PARTICIPANT_SIDE,
   ActionTypes,
-} from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
 import {
   type SkillConfig,
   type ExtendedSkillStep,
@@ -39,7 +39,7 @@ import type {
   BattleData,
   BattleEntity,
   BattleEffect,
-} from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
 import {
   ATTRIBUTE_CODE,
   getAttributeDefaultValue,

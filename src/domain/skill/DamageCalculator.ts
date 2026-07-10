@@ -1,7 +1,7 @@
 ﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory } from '@/domain/skill/types'
 import type { CalculationLog } from '@/shared/types/battle-log'
-import type { BattleEntity } from '@/domain/battle/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import type {
   CombatRecord,
   DamageBreakdown,

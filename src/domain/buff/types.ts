@@ -1,5 +1,5 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { BattleData, BattleTriggerPhase } from '@/domain/battle/types'
+import { BattleData, BattleTriggerPhase } from '@/domain/battle/type/types'
 
 /** Buff ID 前缀常量 */
 export const BUFF_ID_PREFIX = 'buff_'

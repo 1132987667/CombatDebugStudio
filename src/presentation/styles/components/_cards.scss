@@ -55,7 +55,6 @@
 }
 
 .char-stats {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
@@ -77,7 +76,6 @@
   color: var(--color-text-primary);
   padding: 0.1rem 0.4rem;
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
 }
 
 .first-badge {
@@ -85,7 +83,6 @@
   color: #000;
   padding: 0.1rem 0.3rem;
   border-radius: var(--radius-none);
-  font-size: var(--font-size-xxs);
   margin-left: 0.25rem;
 }
 
@@ -171,7 +168,6 @@
   color: #000;
   padding: 0.1rem 0.3rem;
   border-radius: var(--radius-none);
-  font-size: var(--font-size-xxs);
   font-weight: var(--font-weight-bold);
   animation: blink 1s infinite;
 }
@@ -306,7 +302,6 @@
 }
 
 .status-tag {
-  font-size: var(--font-size-xxs);
   padding: 0.1rem 0.3rem;
   border-radius: var(--radius-none);
   cursor: pointer;
@@ -326,7 +321,6 @@
 
 .no-status {
   color: var(--color-text-disabled);
-  font-size: var(--font-size-xxs);
 }
 
 /* ----- 9. 状态注入 ----- */
@@ -367,12 +361,10 @@
 .status-duration {
   color: var(--color-warning);
   margin-right: var(--space-2);
-  font-size: var(--font-size-xs);
 }
 
 .status-effect {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xxs);
 }
 
 /* ----- 10. 规则列表 ----- */
@@ -409,5 +401,4 @@
   border: 1px solid var(--color-border-default);
   color: var(--color-text-primary);
   padding: 0.15rem;
-  font-size: var(--font-size-xs);
 }

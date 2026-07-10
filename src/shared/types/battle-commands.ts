@@ -7,7 +7,7 @@
  * 每条命令都是对状态的一次原子变更，支持回放与回溯。
  */
 
-import type { ParticipantSide } from '@/domain/battle/types'
+import type { ParticipantSide } from '@/domain/battle/type/types'
 
 // ===================== 命令定义 =====================
 
@@ -140,7 +140,7 @@ export interface InitParticipantsCommand {
 export interface RecordActionCommand {
   type: 'RECORD_ACTION'
   payload: {
-    action: import('@/domain/battle/types').BattleAction
+    action: import('@/domain/battle/type/types').BattleAction
   }
 }
 

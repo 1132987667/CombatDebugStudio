@@ -5,11 +5,12 @@
  ** 功能: 战斗动画管理器
  ** 描述: 管理战斗动画队列的入队、播放、暂停与清除，协调 RAFTimer 驱动的时序播放
  **/
-import type { AnimationQueueItem, AnimationType, AnimationData, BattleEntity } from '@/domain/battle/types'
+import type { AnimationData, AnimationQueueItem, AnimationType } from '@/domain/battle/type/BattleAnimationType'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import type { DamageCategory } from '@/domain/skill/types'
-import { BattleEventCodes } from '@/shared/types/battle-events'
 import { eventBus } from '@/main'
 import type { RAFTimer } from '@/shared/utils/RAF'
+import type { BattleEntity } from '@/domain/battle/type/types'
 
 export class BattleAnimationManager {
   private animationQueue: AnimationQueueItem[] = []

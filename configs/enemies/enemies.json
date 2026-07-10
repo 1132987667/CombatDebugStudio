@@ -2533,7 +2533,7 @@
     "drops": [],
     "skills": {
       "small": [],
-      "passive": [],
+      "passive": ["skill_enemy_079_passive"],
       "ultimate": []
     }
   },

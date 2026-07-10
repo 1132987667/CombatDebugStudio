@@ -179,7 +179,6 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .list-header {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-info);
   text-transform: uppercase;
@@ -191,7 +190,6 @@ function formatBattleName(rec: RecordedBattle): string {
 
 .list-empty {
   color: rgba(255, 255, 255, 0.4);
-  font-size: var(--font-size-sm);
   text-align: center;
   padding: var(--space-5) 0;
 }
@@ -214,14 +212,12 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .recording-name {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-energy);
   margin-bottom: var(--space-1);
 }
 
 .recording-meta {
-  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.5);
   display: flex;
   flex-direction: column;
@@ -241,13 +237,11 @@ function formatBattleName(rec: RecordedBattle): string {
 
 .detail-placeholder {
   color: rgba(255, 255, 255, 0.4);
-  font-size: var(--font-size-sm);
   text-align: center;
   padding: var(--space-8) 0;
 }
 
 .detail-header {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-info);
   text-transform: uppercase;
@@ -285,7 +279,6 @@ function formatBattleName(rec: RecordedBattle): string {
   gap: var(--space-2);
   padding: var(--space-2) var(--space-2);
   cursor: pointer;
-  font-size: var(--font-size-sm);
   background: rgba(79, 195, 247, 0.03);
   transition: background var(--transition-fast);
 }
@@ -296,7 +289,6 @@ function formatBattleName(rec: RecordedBattle): string {
 
 .action-index {
   color: rgba(255, 255, 255, 0.35);
-  font-size: var(--font-size-xs);
   font-family: 'JetBrains Mono', monospace;
   min-width: 30px;
 }
@@ -320,7 +312,6 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .action-type-badge {
-  font-size: var(--font-size-xs);
   padding: 1px var(--space-1);
   border-radius: var(--radius-sm);
   background: rgba(79, 195, 247, 0.15);
@@ -342,7 +333,6 @@ function formatBattleName(rec: RecordedBattle): string {
 
 .action-expand-icon {
   color: rgba(255, 255, 255, 0.3);
-  font-size: var(--font-size-xs);
 }
 
 /* ====== 展开详情 ====== */
@@ -357,7 +347,6 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .breakdown-title {
-  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   color: var(--color-info);
   text-transform: uppercase;
@@ -377,7 +366,6 @@ function formatBattleName(rec: RecordedBattle): string {
   align-items: center;
   gap: var(--space-1);
   padding: 3px 0;
-  font-size: var(--font-size-sm);
   font-family: 'JetBrains Mono', monospace;
   color: rgba(255, 255, 255, 0.7);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -389,7 +377,6 @@ function formatBattleName(rec: RecordedBattle): string {
 
 .step-indicator {
   color: var(--color-energy);
-  font-size: var(--font-size-xs);
 }
 
 .step-desc {
@@ -409,7 +396,6 @@ function formatBattleName(rec: RecordedBattle): string {
   padding: 3px var(--space-2);
   background: rgba(0, 0, 0, 0.15);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
 }
 
 .stat-label {

@@ -1,6 +1,6 @@
 <template>
   <div class="debug-panel panel-right">
-    <div class="section f1">
+    <div class="section flex-1">
       <div class="section-header">
         <span>属性监控</span>
         <span class="selected-info">(当前选中: {{ selectedCharName }})</span>
@@ -8,14 +8,12 @@
       <div class="monitor-group">
         <div class="monitor-subtitle">基础属性</div>
         <div class="monitor-grid">
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '最大生命值', ATTRIBUTE_CODE.maxHealth, '数值')"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.maxHealth)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
             <span class="monitor-value">{{ displayHp }}</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '能量', ATTRIBUTE_CODE.currentEnergy, '数值')"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.currentEnergy)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">能量:</span>
             <span class="monitor-value">{{ displayEnergy }}</span>
@@ -25,91 +23,69 @@
             <span class="monitor-label">攻击:</span>
             <span class="monitor-value">{{ attackRange.min }}-{{ attackRange.max }}</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '防御力', ATTRIBUTE_CODE.defense, '数值')"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.defense)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defense)?.value || 0
-            }}</span>
+            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.defense) }}</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '速度', ATTRIBUTE_CODE.speed, '数值')"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.speed)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speed)?.value || 0
-            }}</span>
+            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.speed) }}</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '暴击率', ATTRIBUTE_CODE.critRate, '百分比', 10)"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.critRate)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">暴击率:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critRate)?.value || 10
-            }}%</span>
+            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.critRate) }}%</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '暴击伤害', ATTRIBUTE_CODE.critDamage, '百分比', 125)"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.critDamage)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">暴击伤害:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.critDamage)?.value || 125
-            }}%</span>
+            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.critDamage) }}%</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '免伤率', ATTRIBUTE_CODE.damageReduction, '百分比')"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.damageReduction)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">免伤率:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.damageReduction)?.value ||
-              0 }}%</span>
+            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.damageReduction) }}%</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '命中率', ATTRIBUTE_CODE.hit, '百分比', 100)"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.hit)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">命中率:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.hit)?.value || 100
-            }}%</span>
+            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.hit) }}%</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '闪避率', ATTRIBUTE_CODE.dodge, '百分比')"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.dodge)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">闪避率:</span>
-            <span class="monitor-value">{{ currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.dodge)?.value || 0
-            }}%</span>
+            <span class="monitor-value">{{ attrVal(ATTRIBUTE_CODE.dodge) }}%</span>
           </div>
         </div>
       </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">属性加成</div>
         <div class="monitor-grid">
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '生命值加成', ATTRIBUTE_CODE.healthBonus, '百分比')"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.healthBonus)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血加成:</span>
             <span class="monitor-value bonus">{{
-              formatBonusValue(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.healthBonus)?.value ||
-                0) }}</span>
+              formatBonusValue(attrVal(ATTRIBUTE_CODE.healthBonus)) }}</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '攻击力加成', ATTRIBUTE_CODE.attackBonus, '百分比')"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.attackBonus)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">攻击加成:</span>
             <span class="monitor-value bonus">{{
-              formatBonusValue(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.attackBonus)?.value ||
-                0) }}</span>
+              formatBonusValue(attrVal(ATTRIBUTE_CODE.attackBonus)) }}</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '防御力加成', ATTRIBUTE_CODE.defenseBonus, '百分比')"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.defenseBonus)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">防御加成:</span>
             <span class="monitor-value bonus">{{
-              formatBonusValue(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.defenseBonus)?.value ||
-                0) }}</span>
+              formatBonusValue(attrVal(ATTRIBUTE_CODE.defenseBonus)) }}</span>
           </div>
-          <div class="monitor-item"
-            @mouseenter="showAttrTooltipSimple($event, '速度加成', ATTRIBUTE_CODE.speedBonus, '百分比')"
+          <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.speedBonus)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">速度加成:</span>
             <span class="monitor-value bonus">{{
-              formatBonusValue(currentCharacter?.getAttributeValue(ATTRIBUTE_CODE.speedBonus)?.value ||
-                0) }}</span>
+              formatBonusValue(attrVal(ATTRIBUTE_CODE.speedBonus)) }}</span>
           </div>
         </div>
       </div>
@@ -229,37 +205,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import type { BattleService } from '@/application/facade/BattleFacade';
+import { ATTRIBUTE_CODE, AttributeValueType, getAttributeDefaultValue, getAttributeMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
+import { BattleEventType, BattleEntity } from '@/domain/battle/type/types';
+import { getStepTypeDisplayName } from "@/domain/skill/constants";
+import type { SkillConfig } from "@/domain/skill/types";
+import { formatTargetConfig, SkillType, SkillTypeName, ExtendedSkillStep } from "@/domain/skill/types";
 import { container } from '@/infrastructure/di/Container';
 import AttributeTooltip, { type RangeLayerData, type RangeModifierRow } from "@/presentation/components/AttributeTooltip.vue";
-import { ATTRIBUTE_CODE, type Modifier, AttributeValueType } from "@/domain/attribute/types";
-import type { SkillConfig } from "@/domain/skill/types";
-import { formatTargetConfig } from "@/domain/skill/types";
-import { getStepTypeDisplayName } from "@/domain/skill/constants";
-import { formatBonusValue } from '@/shared/utils/format'
-import type { BattleService } from '@/application/facade/BattleFacade';
-import { SkillType } from '@/domain/skill/types';
-import { BattleEventType } from '@/domain/battle/types';
-import BattleReplay from "@/presentation/views/BattleReplay.vue";
 import { useBattleStore } from '@/presentation/stores';
+import BattleReplay from "@/presentation/views/BattleReplay.vue";
+import { formatBonusValue } from '@/shared/utils/format';
+import { computed, onMounted, onUnmounted, ref, type ComputedRef } from "vue";
+import type { BattleSystem } from '@/domain/battle/BattleSystem'
+
 const battleStore = useBattleStore();
 
 // 获取 BattleService
 const battleService = container.resolve<BattleService>('BattleService');
 const props = defineProps<{
-  battleSystem?: any;
+  battleSystem?: BattleSystem;
 }>();
 
 // 响应式获取选中角色数据 — ponytail: 依赖 battleStore.selectedCharacterId 触发 Vue 响应式更新
-const currentCharacter = computed(() => {
+const currentCharacter: ComputedRef<BattleEntity | null> = computed(() => {
   const id = battleStore.selectedCharacterId;
   if (!id) return null;
   // 先找战斗中的参战角色，若未加入队伍则回退到角色库预览实体
   const char = battleService.getSelectedCharacter() || battleStore.previewEntity;
   // ponytail: 显式依赖 statsVersion，属性重算时此 computed 重新求值触发 UI 刷新
-  char?.statsVersion;
   return char;
 });
+
 const selectedCharName = computed(() => currentCharacter.value?.name || "未选择");
 
 // ponytail: 无选中角色时显示 --/-- 而非 0/0，区分"没有数据"与"数值为零"
@@ -279,23 +256,17 @@ const displayEnergy = computed(() => {
   return `${cur}/${max}`
 })
 
-// 计算攻击范围
+// 获取角色属性值的便捷方法，默认值从 AttributeMetaMap 自动推导
+const attrVal = (code: ATTRIBUTE_CODE): number =>
+  currentCharacter.value?.getAttributeValue(code)?.value ?? getAttributeDefaultValue(code)
+
 const attackRange = computed(() => {
   const char = currentCharacter.value;
   if (!char) return { min: 0, max: 0 };
-
-  const minAttack = typeof char.minAttack === 'object' ? char.minAttack.value : char.minAttack || 0;
-  const maxAttack = typeof char.maxAttack === 'object' ? char.maxAttack.value : char.maxAttack || 0;
-
+  const minAttack = char.getAttributeValue(ATTRIBUTE_CODE.minAttack)?.value ?? 0;
+  const maxAttack = char.getAttributeValue(ATTRIBUTE_CODE.maxAttack)?.value ?? 0;
   return { min: minAttack, max: maxAttack };
 });
-
-// 手动干预表单数据
-const manualSkillName = ref("");
-const manualStatusName = ref("");
-const manualStatusTurns = ref(2);
-const manualHpAmount = ref(100);
-const manualMpAmount = ref(50);
 
 // ------------------------------------------------------------
 // 技能悬浮提示状态
@@ -358,22 +329,22 @@ const getSkillTypeClass = (skill: SkillConfig): string => {
  * @returns 技能类型中文名称
  */
 const getSkillTypeName = (skill: SkillConfig): string => {
-  if (skill.skillType === 'passive') return '被动';
-  if (skill.skillType === 'ultimate') return '终极';
-  return '主动';
+  return skill.skillType ? SkillTypeName[skill.skillType] : '未知';
 };
 
 const getStepTypeName = (stepType?: string): string => {
   return getStepTypeDisplayName(stepType);
 };
 
-const formatCalculation = (step: any): string => {
+const formatCalculation = (step: ExtendedSkillStep): string => {
   if (!step.calculation) return ''
   const parts: string[] = []
-  if (step.calculation.baseValue) parts.push(String(step.calculation.baseValue))
+  // ponytail: 用 != null 而非 if(baseValue) 避免 baseValue=0 被跳过
+  if (step.calculation.baseValue != null) parts.push(String(step.calculation.baseValue))
   if (step.calculation.extraValues) {
     for (const ev of step.calculation.extraValues) {
-      parts.push(`${ev.attribute}×${ev.ratio}`)
+      const attrName = getAttributeMeta(ev.attribute as ATTRIBUTE_CODE)?.displayName ?? ev.attribute
+      parts.push(`${attrName}×${ev.ratio}`)
     }
   }
   return parts.join(' + ') || ''
@@ -386,10 +357,8 @@ const formatCalculation = (step: any): string => {
  */
 const isSkillAvailable = (skill: SkillConfig): boolean => {
   // 简单检查：能量消耗是否为0或角色有足够能量
-  // 实际项目中需要检查角色当前能量和技能冷却
-  const currentEnergy = currentCharacter.value?.currentEnergy;
-  const energyValue = typeof currentEnergy === 'object' ? currentEnergy.value : (currentEnergy || 0);
-  return (skill.energyCost || 0) === 0 || energyValue >= (skill.energyCost || 0);
+  const currentEnergy = currentCharacter.value?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value ?? 0;
+  return (skill.energyCost || 0) === 0 || currentEnergy >= (skill.energyCost || 0);
 };
 
 // 属性悬浮提示状态
@@ -430,7 +399,6 @@ const attrTooltipData = ref<{
 })
 
 const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType, displayText?: string, rangeLayers?: RangeLayerData[]) => {
-  // ponytail: 鼠标进入新属性时取消待执行的延迟隐藏，避免闪烁
   if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
   attrTooltipData.value = {
     title,
@@ -444,8 +412,11 @@ const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[]
   attrTooltipVisible.value = true
 }
 
-/** ponytail: 简化版 — 接收属性枚举 code 自动取值，模板调用不再写一长串 */
-const showAttrTooltipSimple = (event: MouseEvent, title: string, code: ATTRIBUTE_CODE, valueType: AttributeValueType, defaultValue: number = 0) => {
+const showAttrTooltipSimple = (event: MouseEvent, code: ATTRIBUTE_CODE) => {
+  const meta = getAttributeMeta(code)
+  const title = meta?.displayName ?? code
+  const valueType = meta?.isPercentage ? AttributeValueType.PERCENT : AttributeValueType.VALUE
+  const defaultValue = getAttributeDefaultValue(code)
   const attr = currentCharacter.value?.getAttributeValue(code)
   showAttrTooltip(event, title, attr?.modifiers || [], attr?.value ?? defaultValue, valueType)
 }
@@ -525,15 +496,14 @@ const showAttackTooltip = (event: MouseEvent) => {
   const maxMods = maxAttr.modifiers
 
   const layers: RangeLayerData[] = [
-    buildRangeLayer('基础数值', minMods, maxMods, 'ADDITIVE'),
-    buildRangeLayer('属性加成', minMods, maxMods, 'PERCENTAGE'),
-    buildRangeLayer('独立乘区', minMods, maxMods, 'MULTIPLICATIVE'),
-    buildRangeLayer('最终乘区', minMods, maxMods, 'FINAL'),
+    buildRangeLayer(ModifierTypeNames.ADDITIVE, minMods, maxMods, ModifierType.ADDITIVE),
+    buildRangeLayer(ModifierTypeNames.PERCENTAGE, minMods, maxMods, ModifierType.PERCENTAGE),
+    buildRangeLayer(ModifierTypeNames.MULTIPLICATIVE, minMods, maxMods, ModifierType.MULTIPLICATIVE),
+    buildRangeLayer(ModifierTypeNames.FINAL, minMods, maxMods, ModifierType.FINAL),
   ]
-
   showAttrTooltip(
     event, '攻击力', [],
-    attackRange.value.min, '数值',
+    attackRange.value.min, AttributeValueType.VALUE,
     `${attackRange.value.min}-${attackRange.value.max}`,
     layers,
   )
@@ -541,77 +511,11 @@ const showAttackTooltip = (event: MouseEvent) => {
 
 const hideAttrTooltip = () => {
   if (altKeyHeld.value) return
-  // ponytail: 延迟 300ms 隐藏，避免鼠标快速划过属性项时闪烁
   attrTooltipHideTimer = setTimeout(() => {
     attrTooltipVisible.value = false
     attrTooltipHideTimer = null
   }, 300)
 }
-
-
-// ------------------------------------------------------------
-// 辅助函数（纯展示逻辑，无需缓存）
-
-// 手动干预方法
-const endTurn = () => {
-  if (props.battleSystem) {
-    try {
-      props.battleSystem.endTurn();
-    } catch (error) {
-      console.warn('结束回合失败:', error);
-    }
-  }
-};
-
-const executeSkill = (skillName: string) => {
-  if (props.battleSystem && currentCharacter.value) {
-    try {
-      props.battleSystem.executeSkill(currentCharacter.value.id, skillName);
-    } catch (error) {
-      console.warn('执行技能失败:', error);
-    }
-  }
-};
-
-interface StatusData {
-  name: string;
-  turns: number;
-}
-
-const addStatus = (status: StatusData) => {
-  if (props.battleSystem && currentCharacter.value) {
-    try {
-      props.battleSystem.addStatus(currentCharacter.value.id, status.name, status.turns);
-    } catch (error) {
-      console.warn('添加状态失败:', error);
-    }
-  }
-};
-
-interface StatsData {
-  hp: number;
-  mp: number;
-}
-
-const adjustStats = (stats: StatsData) => {
-  if (props.battleSystem && currentCharacter.value) {
-    try {
-      props.battleSystem.adjustStats(currentCharacter.value.id, stats.hp, stats.mp);
-    } catch (error) {
-      console.warn('调整属性失败:', error);
-    }
-  }
-};
-
-const clearStatuses = () => {
-  if (props.battleSystem && currentCharacter.value) {
-    try {
-      props.battleSystem.clearStatuses(currentCharacter.value.id);
-    } catch (error) {
-      console.warn('清除状态失败:', error);
-    }
-  }
-};
 
 // Alt 键监听：按住时属性 tooltip 不隐藏
 onMounted(() => {
@@ -698,7 +602,6 @@ const handleBattleEndReplay = (winner: string) => {
 @use "@/presentation/styles/main.scss";
 
 .skill-item {
-  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.85);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
@@ -739,7 +642,6 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .skill-category-title {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-info);
   margin-bottom: var(--space-1);
@@ -755,7 +657,6 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .no-skills {
-  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.5);
   text-align: center;
   padding: var(--space-2);
@@ -780,7 +681,6 @@ const handleBattleEndReplay = (winner: string) => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(96, 165, 250, 0.2);
   backdrop-filter: blur(12px);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: var(--font-size-sm);
   line-height: var(--line-height-md);
   color: rgba(255, 255, 255, 0.85);
   pointer-events: none;
@@ -803,7 +703,6 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .tooltip-type {
-  font-size: var(--font-size-xs);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   text-transform: uppercase;
@@ -826,7 +725,6 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .tooltip-description {
-  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.75);
   margin-bottom: var(--space-3);
   line-height: var(--line-height-lg);
@@ -849,14 +747,12 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .tooltip-stats .stat-label {
-  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .tooltip-stats .stat-value {
-  font-size: var(--font-size-sm);
   color: var(--color-energy);
   font-weight: var(--font-weight-medium);
 }
@@ -866,7 +762,6 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .effects-title {
-  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -881,7 +776,6 @@ const handleBattleEndReplay = (winner: string) => {
   gap: var(--space-1);
   align-items: center;
   padding: var(--space-1) 0;
-  font-size: var(--font-size-sm);
 }
 
 .effect-type {
@@ -910,7 +804,6 @@ const handleBattleEndReplay = (winner: string) => {
   background: rgba(249, 115, 22, 0.1);
   border: 1px solid rgba(249, 115, 22, 0.3);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
 }
 
 .condition-label {
@@ -929,7 +822,6 @@ const handleBattleEndReplay = (winner: string) => {
   padding: var(--space-2);
   border-radius: var(--radius-md);
   text-align: center;
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
 }
 
@@ -962,5 +854,4 @@ const handleBattleEndReplay = (winner: string) => {
   opacity: 1;
   transform: translateY(0);
 }
-
 </style>

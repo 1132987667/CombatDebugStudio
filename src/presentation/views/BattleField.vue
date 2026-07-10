@@ -65,7 +65,7 @@ import BattleSummaryDialog from "@/presentation/views/components/BattleSummaryDi
 import type { BattleSummary } from '@/shared/types/battle-summary'
 import { eventBus } from '@/main'
 import { ATTRIBUTE_CODE, type AttributeValue } from '@/domain/attribute/types';
-import { ActionTypes, type BattleEntity, ActionResultType } from '@/domain/battle/types';
+import { ActionTypes, type BattleEntity, ActionResultType } from '@/domain/battle/type/types';
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 

@@ -13,7 +13,7 @@ import {
   BattleEventType,
   ReplayBattleEvent,
   SnapshotIndexItem,
-} from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 

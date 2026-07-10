@@ -106,7 +106,7 @@ import BattleRecordingDialog from "./components/BattleRecordingDialog.vue";
 import { useBattleStore } from '@/presentation/stores';
 import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
-import { PARTICIPANT_SIDE } from "@/domain/battle/types";
+import { PARTICIPANT_SIDE } from "@/domain/battle/type/types.ts";
 import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import type { LogEntry } from '@/shared/types/battle-log';
@@ -343,9 +343,9 @@ const teamCounts = computed(() => {
 // 初始化战斗
 function initBattle() {
   // ponytail: 默认测试阵容 — 覆盖伤害/治疗/护盾/buff/debuff 的典型组合
-  const allyIds = ["guardian_fire"]; // "enemy_005", "boss_003", "boss_001", "enemy_004", 
+  const allyIds = ["guardian_fire", "guardian_gold"]; // "enemy_005", "boss_003", "boss_001", "enemy_004", 
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
-  const enemyIds = ["guardian_fire"]; // "enemy_008", "boss_002", "enemy_007", "enemy_003", 
+  const enemyIds = ["guardian_fire", "guardian_gold"]; // "enemy_008", "boss_002", "enemy_007", "enemy_003", 
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
   console.log('allyList', allyList)
   console.log('enemyList', enemyList)

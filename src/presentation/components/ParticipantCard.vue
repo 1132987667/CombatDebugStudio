@@ -48,8 +48,23 @@
         </div>
       </div>
 
-      <!-- Buff 列表（BuffIcon 自带悬停 tooltip） -->
-      <BuffList :buffs="buffListItems" />
+      <!-- Buff 列表：图标模式 ↔ 纯文本模式 -->
+      <BuffList v-if="buffDisplayMode === 'icon'" :buffs="buffListItems" />
+      <BuffTextBar v-else
+        :control-labels="buffDisplay.controlLabels"
+        :merged-labels="buffDisplay.mergedLabels"
+        :collapsed-count="buffDisplay.collapsedCount"
+        :expanded="panelVisible"
+        @toggle="panelVisible = !panelVisible"
+      />
+      <BuffTextPanel
+        :visible="panelVisible"
+        :participant-name="participant.name"
+        :groups="buffDisplay.groups"
+        :merged-labels="buffDisplay.mergedLabels"
+        :debug-mode="showDebug"
+        @close="panelVisible = false"
+      />
 
       <!-- 调试信息（可选） -->
       <div v-if="showDebug" class="debug-info">
@@ -70,12 +85,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { BattleEntity } from '@/domain/battle/types'
-import { ActionResultType } from '@/domain/battle/types'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import type { BattleEntity } from '@/domain/battle/type/types'
+import { ActionResultType } from '@/domain/battle/type/types'
 import { useBattleParticipant } from '@/presentation/composables/useBattleParticipant'
 import { useParticipantStats } from '@/presentation/composables/useParticipantStats'
 import BuffList from '@/presentation/components/BuffList.vue'
+import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
+import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
+import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 import { container } from '@/infrastructure/di/Container'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 
@@ -272,6 +291,23 @@ const buffListItems = computed(() => {
   return result
 })
 
+// === 纯文本 Buff 显示模式 ===
+const battleStore = useBattleStore()
+const buffDisplayMode = computed(() => battleStore.buffDisplayMode)
+const panelVisible = ref(false)
+// ponytail: 参与者 ID 在生命周期内不变，直接读取
+const buffDisplay = useBuffDisplay(buffListItems, props.participant.id)
+
+// Ctrl+B 快捷键切换 Buff 显示模式
+function onBuffModeKeydown(e: KeyboardEvent) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+    e.preventDefault()
+    battleStore.toggleBuffDisplayMode()
+  }
+}
+onMounted(() => document.addEventListener('keydown', onBuffModeKeydown))
+onUnmounted(() => document.removeEventListener('keydown', onBuffModeKeydown))
+
 // 调试信息
 const showBreakdown = ref(false)
 
@@ -379,7 +415,6 @@ defineExpose({
   padding: var(--space-2);
   background: rgba(0, 0, 0, 0.3);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
 }
 
 .debug-row {

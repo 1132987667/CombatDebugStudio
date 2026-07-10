@@ -5,7 +5,7 @@
  * 描述: 负责管理战斗回合的初始化、推进和查询，实现了ITurnManager接口，处理回合顺序和回合计数
  */
 
-import type { BattleEntity, BattleData } from '@/domain/battle/types'
+import type { BattleEntity, BattleData } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 

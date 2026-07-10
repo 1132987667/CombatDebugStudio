@@ -8,7 +8,7 @@
  * 版本: 1.0.0
  */
 
-import type { BattleAction } from '@/domain/battle/types'
+import type { BattleAction } from '@/domain/battle/type/types'
 import type { BattleLogEntry, LogSegment, ParticipantMap } from './battle-log'
 
 /**

@@ -277,7 +277,6 @@ watch(activeTab, () => {
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
   cursor: pointer;
   transition: var(--transition-fast);
   display: flex;
@@ -297,7 +296,6 @@ watch(activeTab, () => {
 }
 
 .tab-count {
-  font-size: var(--font-size-xs);
   padding: 1px 5px;
   background: var(--color-border-default);
   border-radius: var(--radius-lg);
@@ -351,14 +349,12 @@ watch(activeTab, () => {
 .item-name {
   flex: 1;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .item-level {
-  font-size: var(--font-size-xs);
   color: var(--color-brand-red);
   padding: 1px 4px;
   background: rgba(233, 69, 96, 0.2);
@@ -366,7 +362,6 @@ watch(activeTab, () => {
 }
 
 .item-rarity {
-  font-size: var(--font-size-xs);
   padding: 1px 4px;
   border-radius: var(--radius-sm);
 }

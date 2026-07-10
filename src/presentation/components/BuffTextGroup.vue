@@ -1,0 +1,261 @@
+<template>
+  <div class="buff-text-group" :class="[colorClass, { 'has-debug': debugMode }]">
+    <!-- 标题行 -->
+    <div class="group-header">
+      <span class="group-name">{{ buff.name }}</span>
+      <span class="group-meta">
+        {{ buff.condition === 'permanent' ? '永久' : `剩余 ${buff.remainingTurns} 回合` }}
+        <span v-if="buff.stacks > 1"> · ×{{ buff.stacks }}层</span>
+        <span v-if="buff.isAura"> · 全队</span>
+        <span v-if="buff.condition === 'active'" class="meta-active"> · 已激活</span>
+        <span v-if="buff.condition === 'inactive'" class="meta-inactive"> · {{ conditionText }}</span>
+      </span>
+    </div>
+
+    <!-- 效果列表 -->
+    <ul class="group-effects">
+      <li
+        v-for="(eff, idx) in effectLines"
+        :key="idx"
+        class="effect-line"
+        :class="eff.className"
+      >
+        ● {{ eff.text }}
+      </li>
+    </ul>
+
+    <!-- 调试信息（可折叠） -->
+    <div v-if="debugMode" class="group-debug">
+      <div class="debug-toggle" @click.stop="showDebug = !showDebug">
+        {{ showDebug ? '▼' : '▶' }} 调试信息
+      </div>
+      <div v-if="showDebug" class="debug-content">
+        <div class="debug-row"><span class="debug-label">实例ID:</span><code>{{ buff.instanceId }}</code></div>
+        <div class="debug-row"><span class="debug-label">BuffID:</span><code>{{ buff.buffId }}</code></div>
+        <div v-if="buff.scriptName" class="debug-row">
+          <span class="debug-label">脚本:</span><code>{{ buff.scriptName }}</code>
+        </div>
+        <div v-if="buff.configKey" class="debug-row">
+          <span class="debug-label">配置key:</span><code>{{ buff.configKey }}</code>
+        </div>
+        <div class="debug-row"><span class="debug-label">来源:</span><span>参与者 {{ buff.ownerId }}</span></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import type { BuffTextItem } from '@/shared/types/buff-display'
+
+const props = defineProps<{
+  buff: BuffTextItem
+  debugMode?: boolean
+}>()
+
+const showDebug = ref(false)
+
+const colorClass = computed(() => {
+  if (props.buff.condition === 'inactive') return 'group--inactive'
+  if (props.buff.condition === 'permanent') return 'group--permanent'
+  switch (props.buff.type) {
+    case 'buff': return 'group--buff'
+    case 'debuff': return 'group--debuff'
+    case 'control': return 'group--control'
+  }
+})
+
+const conditionText = computed(() => {
+  // 从 description 中提取条件标签
+  const match = props.buff.description.match(
+    /（([^）]+?)）（未激活）/,
+  )
+  if (match) return `${match[1]}·未激活`
+  return '未激活'
+})
+
+/** 将 Buff 拆解为显示行 */
+const effectLines = computed(() => {
+  const lines: Array<{ text: string; className: string }> = []
+
+  // 控制效果行
+  if (props.buff.type === 'control') {
+    const turnText = props.buff.remainingTurns > 0
+      ? `（${props.buff.remainingTurns}回合）`
+      : '（永久）'
+    lines.push({
+      text: `【${props.buff.name}】${turnText}`,
+      className: 'effect--control',
+    })
+  }
+
+  // 属性修正行
+  for (const mod of props.buff.modifiers) {
+    const arrow = mod.value > 0 ? '↑' : '↓'
+    const absVal = Math.abs(mod.value)
+    const turnText = props.buff.remainingTurns > 0
+      ? `（${props.buff.remainingTurns}回合）`
+      : props.buff.condition === 'permanent' ? '（永久）' : ''
+
+    // 条件标签
+    let conditionSuffix = ''
+    if (props.buff.condition === 'active') conditionSuffix = '（已激活）'
+    else if (props.buff.condition === 'inactive') {
+      const match = props.buff.description.match(/（([^）]+?)）/)
+      conditionSuffix = match ? `（${match[1]}）` : ''
+    }
+
+    const className = mod.value > 0 ? 'effect--buff' : 'effect--debuff'
+    const text = `${mod.attribute}${arrow}${absVal}%${conditionSuffix}${turnText}`
+    lines.push({ text, className })
+  }
+
+  // 特殊效果描述（非属性修正的文本）
+  // ponytail: 如果 description 中有非属性修正的内容，作为额外说明行
+  const descClean = props.buff.description
+    .replace(/[\u4e00-\u9fa5]{2,4}[↑↓]\d+%?/g, '') // 去掉已提取的属性行
+    .replace(/【.*?】/g, '') // 去掉控制标记
+    .trim()
+
+  if (descClean && lines.length === 0) {
+    // 只有纯描述没有属性修正时才显示
+    lines.push({
+      text: descClean,
+      className: 'effect--special',
+    })
+  }
+
+  return lines
+})
+</script>
+
+<style scoped>
+.buff-text-group {
+  padding: var(--space-2) var(--space-3);
+  border-left: 2px solid transparent;
+  margin-bottom: var(--space-1);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.group--buff {
+  border-left-color: var(--color-energy);
+  background: rgba(34, 211, 238, 0.03);
+}
+.group--debuff {
+  border-left-color: var(--color-danger);
+  background: rgba(244, 67, 54, 0.03);
+}
+.group--control {
+  border-left-color: var(--color-debuff);
+  background: rgba(168, 85, 247, 0.03);
+}
+.group--inactive {
+  border-left-color: var(--color-text-disabled);
+  background: transparent;
+}
+.group--permanent {
+  border-left-color: var(--color-text-tertiary);
+  background: transparent;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-1);
+}
+
+.group-name {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+}
+
+.group-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.meta-active {
+  color: var(--color-energy);
+  font-weight: var(--font-weight-semibold);
+}
+
+.meta-inactive {
+  color: var(--color-text-disabled);
+}
+
+.group-effects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.effect-line {
+  line-height: var(--line-height-lg);
+  padding: 1px 0 1px var(--space-3);
+  margin: 0;
+}
+
+.effect--buff {
+  color: var(--color-energy);
+  font-weight: var(--font-weight-bold);
+}
+
+.effect--debuff {
+  color: var(--color-danger);
+}
+
+.effect--control {
+  color: var(--color-debuff);
+  font-weight: var(--font-weight-bold);
+}
+
+.effect--special {
+  color: var(--color-text-tertiary);
+}
+
+/* 调试区 */
+.group-debug {
+  margin-top: var(--space-2);
+  padding-top: var(--space-1);
+  border-top: 1px dashed rgba(96, 165, 250, 0.2);
+}
+
+.debug-toggle {
+  font-size: var(--font-size-xs);
+  color: var(--color-info);
+  cursor: pointer;
+  user-select: none;
+  padding: var(--space-1) 0;
+}
+
+.debug-toggle:hover {
+  color: var(--color-energy);
+}
+
+.debug-content {
+  padding: var(--space-2);
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(96, 165, 250, 0.15);
+  font-size: var(--font-size-xs);
+}
+
+.debug-row {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: 2px;
+}
+
+.debug-label {
+  color: var(--color-text-tertiary);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.debug-content code {
+  color: var(--color-energy);
+  font-family: var(--font-family-mono);
+}
+</style>

@@ -90,3 +90,66 @@
     opacity: 1;
   }
 }
+
+/* ==========================================================================
+   Buff 纯文本动画（buff-text-display-design-v2）
+   ponytail: 以下 keyframes 定义后暂未被组件引用，属于设计预定义。
+   升级路径：当 BuffTextTag/BuffTextBar 需要动画时，
+   在组件的 scoped style 中引用对应的 animation-name。
+   ========================================================================== */
+
+/* 增益文字从右滑入 */
+@keyframes buffTextSlideInRight {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 减益文字从左滑入 */
+@keyframes buffTextSlideInLeft {
+  from {
+    transform: translateX(-16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 层数数字跳动 */
+@keyframes buffTextNumberPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* 剩余1回合闪烁 */
+@keyframes buffTextLastTurn {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* 条件激活高亮 */
+@keyframes buffTextActivate {
+  0%   { background-color: transparent; }
+  40%  { background-color: rgba(34, 211, 238, 0.12); }
+  100% { background-color: transparent; }
+}
+
+/* 移除渐出 */
+@keyframes buffTextRemove {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}

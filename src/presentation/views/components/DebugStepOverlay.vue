@@ -134,7 +134,6 @@ onUnmounted(() => {
   border: 1px solid rgba(34, 211, 238, 0.3);
   border-radius: var(--radius-lg);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
-  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   backdrop-filter: blur(4px);
   user-select: none;
@@ -156,12 +155,10 @@ onUnmounted(() => {
 }
 .dfp-title {
   font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
   color: var(--color-energy);
   flex: 1;
 }
 .dfp-badge {
-  font-size: var(--font-size-xs);
   padding: 1px var(--space-1);
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.1);
@@ -178,7 +175,6 @@ onUnmounted(() => {
   border: none;
   color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
-  font-size: var(--font-size-sm);
   padding: var(--space-1) var(--space-1);
   line-height: var(--line-height-sm);
   border-radius: var(--radius-sm);
@@ -200,7 +196,6 @@ onUnmounted(() => {
   margin-bottom: var(--space-2);
 }
 .dfp-section-title {
-  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.35);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -220,13 +215,11 @@ onUnmounted(() => {
   background: rgba(34, 211, 238, 0.15);
   color: var(--color-energy);
   font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
   animation: phase-pulse 0.3s ease;
 }
 .dfp-phase-idle {
   color: rgba(255, 255, 255, 0.3);
   font-style: italic;
-  font-size: var(--font-size-sm);
 }
 
 /* 阶段历史 */
@@ -240,7 +233,6 @@ onUnmounted(() => {
   display: flex;
   gap: var(--space-2);
   padding: var(--space-1) 0;
-  font-size: var(--font-size-sm);
   opacity: 0.6;
 }
 .dfp-history-item.latest {
@@ -250,7 +242,6 @@ onUnmounted(() => {
 .dfp-history-time {
   color: rgba(255, 255, 255, 0.3);
   font-family: monospace;
-  font-size: var(--font-size-xs);
   min-width: 60px;
 }
 .dfp-history-phase {
@@ -259,7 +250,6 @@ onUnmounted(() => {
 .dfp-history-empty {
   color: rgba(255, 255, 255, 0.2);
   font-style: italic;
-  font-size: var(--font-size-xs);
   padding: var(--space-1) 0;
 }
 
@@ -274,7 +264,6 @@ onUnmounted(() => {
 .dfp-btn {
   flex: 1;
   padding: 5px var(--space-1);
-  font-size: var(--font-size-xs);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);

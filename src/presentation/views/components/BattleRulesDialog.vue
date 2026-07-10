@@ -43,13 +43,7 @@
 import { ref, watch, reactive } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import { SPEED_OPTIONS } from '@/shared/constants/speed'
-
-interface BattleRules {
-  speedFirst: boolean
-  fixedTurns: boolean
-  critEnabled: boolean
-  dodgeEnabled: boolean
-}
+import { BattleRules } from '@/presentation/stores/battleStore'
 
 interface Props {
   modelValue: boolean
@@ -157,7 +151,6 @@ const updateCustomSpeed = () => {
   background: var(--color-border-default);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: var(--font-size-sm);
   color: var(--color-info);
   transition: all var(--transition-fast);
 }

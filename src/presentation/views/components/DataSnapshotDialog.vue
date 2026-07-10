@@ -169,7 +169,6 @@ const reloadExport = () => {
 }
 
 .snapshot-section-title {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-info);
   text-transform: uppercase;
@@ -184,7 +183,6 @@ const reloadExport = () => {
 
 .snapshot-btn {
   padding: var(--space-2) var(--space-4);
-  font-size: var(--font-size-sm);
   border: 1px solid rgba(34, 211, 238, 0.3);
   border-radius: var(--radius-md);
   background: rgba(34, 211, 238, 0.08);
@@ -202,11 +200,9 @@ const reloadExport = () => {
 }
 .snapshot-btn.small {
   padding: var(--space-1) var(--space-3);
-  font-size: var(--font-size-sm);
 }
 
 .snapshot-last-export {
-  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.6);
   padding: var(--space-1) var(--space-2);
   background: rgba(0, 0, 0, 0.2);
@@ -215,7 +211,6 @@ const reloadExport = () => {
 }
 
 .snapshot-note {
-  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.35);
   padding: var(--space-2) var(--space-2);
   background: rgba(96, 165, 250, 0.06);

@@ -21,13 +21,13 @@ import {
   BattleResult,
   BattleEventType,
   ReplayBattleEvent,
-} from '@/domain/battle/types'
-import { BATTLE_REPLAY_VERSION } from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
+import { BATTLE_REPLAY_VERSION } from '@/domain/battle/type/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { calculateChecksum, generateReplayId } from '@/shared/utils/Checksum'
 import { LogType, type BattleLogEntry } from '@/shared/types/battle-log'
-import type { BattleEntity } from '@/domain/battle/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 

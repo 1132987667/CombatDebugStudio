@@ -256,7 +256,6 @@ const handleButtonClick = (action: string) => {
 
 .module-name {
   color: rgba(255, 255, 255, 0.9);
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
 }
 
@@ -272,7 +271,6 @@ const handleButtonClick = (action: string) => {
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.05);
   color: rgba(255, 255, 255, 0.8);
-  font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -354,7 +352,6 @@ const handleButtonClick = (action: string) => {
 
 .selector-label {
   display: block;
-  font-size: var(--font-size-xs);
   color: rgba(255, 255, 255, 0.6);
   margin-bottom: var(--space-1);
 }

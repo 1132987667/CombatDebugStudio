@@ -32,9 +32,6 @@
         <input type="checkbox" v-model="debugMode" />
         调试
       </label>
-      <button class="control-btn" @click="$emit('exit-tool')">[Q] 退出工具</button>
-      <button class="control-btn" @click="$emit('show-help')">[H] 帮助文档</button>
-      <span class="mode-indicator">战斗状态: {{ battleStateDisplay }}</span>
     </div>
   </div>
 </template>
@@ -61,8 +58,6 @@ const emit = defineEmits<{
   "single-step": [];
   "toggle-auto-play": [];
   "battle-speed-change": [speed: number];
-  "exit-tool": [];
-  "show-help": [];
 }>();
 
 const autoPlayMode = computed(() => props.isAutoPlaying ? 'auto' as const : 'off' as const);
@@ -87,13 +82,6 @@ const toggleBattleSpeed = () => {
   const nextIndex = (currentIndex + 1) % speedLevels.length;
   emit('battle-speed-change', speedLevels[nextIndex]);
 };
-
-const battleStateDisplay = computed(() => {
-  if (autoPlayMode.value === 'fast') return "快速播放";
-  if (autoPlayMode.value === 'auto') return "自动播放";
-  if (!props.isPaused) return "进行中";
-  return "暂停";
-});
 
 // 调试模式开关 — 与 DebugGate 单例双向同步
 const debugMode = ref(debugGate.enabled)
@@ -146,7 +134,6 @@ onUnmounted(() => {
   background: rgba(34, 211, 238, 0.3);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
   color: var(--color-energy);
 }
 
@@ -169,7 +156,6 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--space-1);
   color: rgba(255, 255, 255, 0.6);
-  font-size: var(--font-size-sm);
   cursor: pointer;
   user-select: none;
   padding: var(--space-1) var(--space-2);

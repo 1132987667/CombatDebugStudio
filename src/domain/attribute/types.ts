@@ -19,6 +19,14 @@ export const ModifierType = {
 /** 修饰符计算类型 */
 export type ModifierType = (typeof ModifierType)[keyof typeof ModifierType]
 
+export const ModifierTypeNames: Record<ModifierType, string> = {
+  ADDITIVE: '加法',
+  MULTIPLICATIVE: '乘法',
+  PERCENTAGE: '百分比',
+  FINAL: '最终',
+}
+
+
 /** 修饰符来源类型 */
 export const ModifierSourceType = {
   BUFF: 'buff',

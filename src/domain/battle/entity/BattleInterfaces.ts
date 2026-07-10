@@ -17,7 +17,7 @@ import type {
   BattleData,
   ParticipantSide,
   BattleStatus,
-} from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
 
 import type { BattleAI } from '@/domain/battle/ai/BattleAI'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'

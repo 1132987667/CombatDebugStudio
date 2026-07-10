@@ -32,6 +32,12 @@ export class AutoBattleManager {
   private battleId: string | null = null
 
   /**
+   * 单步执行中的锁标志，防止快速连点导致并发 processTurn
+   * ponytail: 不依赖 UI 层的防抖，在逻辑层兜底
+   */
+  private isProcessing: boolean = false
+
+  /**
    * 构造函数
    * @param battleSystem 战斗系统实例，用于执行核心战斗逻辑
    * @param battleStateManager 战斗状态管理器实例，用于同步和管理战斗状态
@@ -121,6 +127,14 @@ export class AutoBattleManager {
       return
     }
 
+    // ⭐ 并发锁：防止快速连点导致两个 processTurn 异步并发执行
+    if (this.isProcessing) {
+      this.battleLogManager.addDebugLog('已有单步执行进行中，忽略重复请求')
+      return
+    }
+
+    this.isProcessing = true
+
     try {
       // 临时恢复以执行一个回合
       this.battleSystem.togglePause()
@@ -146,6 +160,8 @@ export class AutoBattleManager {
       if (!this.battleSystem.getIsPaused() && this.battleSystem.isBattleInProgress()) {
         this.battleSystem.togglePause()
       }
+    } finally {
+      this.isProcessing = false
     }
   }
 

@@ -1,5 +1,5 @@
-import { BattleEntity, BattleTriggerPhase, PARTICIPANT_SIDE } from '@/domain/battle/types'
-import { BATTLE_CONSTANTS } from '@/domain/battle/types'
+import { BattleEntity, BattleTriggerPhase, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import { BATTLE_CONSTANTS } from '@/domain/battle/type/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType } from '@/domain/buff/types'

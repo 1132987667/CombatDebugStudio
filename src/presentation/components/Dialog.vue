@@ -103,7 +103,6 @@ watch(
   border: 1px solid var(--color-border-default);
   color: var(--color-text-primary);
   padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-sm);
   border-radius: var(--radius-sm);
 }
 
@@ -120,7 +119,6 @@ watch(
   color: var(--color-info);
   border: 1px solid var(--color-border-strong);
   padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-sm);
   cursor: pointer;
   transition: var(--transition-fast);
   border-radius: var(--radius-sm);

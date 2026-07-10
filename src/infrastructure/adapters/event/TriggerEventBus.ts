@@ -7,7 +7,7 @@
  * 版本: 1.0.0
  */
 
-import type { BattleTriggerPhase } from '@/domain/battle/types'
+import type { BattleTriggerPhase } from '@/domain/battle/type/types'
 import type { TriggerEventContext } from '@/domain/buff/types'
 
 /**

@@ -5,16 +5,21 @@
  */
 
 import gsap from 'gsap'
-import { ActionResultType } from '@/domain/battle/types'
+import { ActionResultType } from '@/domain/battle/type/types'
 
 export interface AnimationConfig {
   battleSpeed: number
 }
 
+export const Side = {
+  LEFT: 'left',
+  RIGHT: 'right',
+}
+export type SideType = (typeof Side)[keyof typeof Side]
 export interface AttackAnimationData {
   attackerId: string
   attackerElement: HTMLElement
-  attackerSide: 'left' | 'right'
+  attackerSide: SideType
   skillName?: string
 }
 

@@ -7,13 +7,13 @@ import type {
   BattleAction,
   BattleState,
   ParticipantSide,
-} from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
 import {
   PARTICIPANT_SIDE,
   ActionTypes,
   BattleActionHelper,
   BATTLE_CONSTANTS,
-} from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
 import { EffectType } from '@/shared/types/effect'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { useBattleStore } from '@/presentation/stores/battleStore'

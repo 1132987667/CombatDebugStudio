@@ -141,7 +141,6 @@ const handleDelete = () => {
   padding: var(--space-5);
   text-align: center;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-sm);
   border: 1px dashed var(--color-border-strong);

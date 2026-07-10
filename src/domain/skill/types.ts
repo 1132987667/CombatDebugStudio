@@ -18,6 +18,15 @@ export const SkillType = {
 }
 export type SkillType = (typeof SkillType)[keyof typeof SkillType]
 
+export const SkillTypeName = {
+  [SkillType.ALL]: '所有技能',
+  [SkillType.ACTIVE]: '主动技能',
+  [SkillType.PASSIVE]: '被动技能',
+  [SkillType.SMALL]: '小技能',
+  [SkillType.ULTIMATE]: '大招',
+}
+export type SkillTypeName = (typeof SkillTypeName)[keyof typeof SkillTypeName]
+
 /**
  * 攻击方式（用于伤害减免计算）
  * ponytail: 值从 'normal_attack'/'skill_attack' 简化为 'normal'/'skill'

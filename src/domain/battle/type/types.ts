@@ -8,18 +8,15 @@ import type { BattleAI } from '@/domain/battle/ai/BattleAI'
 import type {
   SkillConfig,
   SkillSet,
-  DamageCategory,
 } from '@/domain/skill/types'
 import type {
   AttributeValue,
   IModifierProvider,
   ATTRIBUTE_CODE,
-  AttributeValues,
 } from '@/domain/attribute/types'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
 import { Counter } from '@/shared/utils/Counter'
-import { BattleEventCodes } from '@/shared/types/battle-events'
 import { SkillType } from '@/domain/skill/types'
 const counter = new Counter()
 /**
@@ -547,94 +544,6 @@ export interface ParticipantInfo {
   skills?: SkillSet
 }
 
-/**
- * 动画类型联合类型
- * 定义所有支持的动画事件类型
- */
-export type AnimationType =
-  | typeof BattleEventCodes.DAMAGE_ANIMATION
-  | typeof BattleEventCodes.MISS_ANIMATION
-  | typeof BattleEventCodes.BUFF_EFFECT
-  | typeof BattleEventCodes.SKILL_EFFECT
-
-/**
- * 动画队列项接口
- * 定义动画队列中每个动画项的结构
- */
-export interface AnimationQueueItem {
-  /** 动画类型 */
-  type: AnimationType
-  /** 动画数据 */
-  data: AnimationData
-  /** 动画持续时间（毫秒） */
-  duration: number
-  /** Promise 解析函数，动画完成时调用 */
-  resolve: () => void
-}
-
-/**
- * 动画数据基础接口
- * 所有动画数据的公共属性
- */
-export interface BaseAnimationData {
-  /** 动作来源ID（可选） */
-  sourceId?: string
-  /** 目标ID */
-  targetId: string
-}
-
-/**
- * 伤害动画数据
- */
-export interface DamageAnimationData extends BaseAnimationData {
-  /** 伤害/治疗值 */
-  damage: number
-  /** 是否暴击 */
-  isCritical: boolean
-  /** 伤害大类（physical/elemental/true） */
-  damageCategory: DamageCategory
-  /** 是否为治疗 */
-  isHeal: boolean
-}
-
-/**
- * 闪避动画数据
- */
-export interface MissAnimationData extends BaseAnimationData {
-  /** 闪避原因描述（可选） */
-  reason?: string
-}
-
-/**
- * Buff效果动画数据
- */
-export interface BuffEffectAnimationData extends BaseAnimationData {
-  /** Buff名称 */
-  buffName: string
-  /** 是否为正面Buff */
-  isPositive: boolean
-}
-
-/**
- * 技能效果动画数据
- */
-export interface SkillEffectAnimationData extends BaseAnimationData {
-  /** 技能名称 */
-  skillName: string
-  /** 效果类型 */
-  effectType: string
-  /** 伤害大类（physical/elemental/true） */
-  damageCategory: DamageCategory
-}
-
-/**
- * 动画数据联合类型
- */
-export type AnimationData =
-  | DamageAnimationData
-  | MissAnimationData
-  | BuffEffectAnimationData
-  | SkillEffectAnimationData
 
 /**
  * 战斗数据接口

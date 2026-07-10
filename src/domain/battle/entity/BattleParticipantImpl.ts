@@ -7,15 +7,15 @@
  * 版本: 3.1.0 - 集成触发器事件系统
  */
 
-import { BattleTriggerPhase, BATTLE_CONSTANTS } from '@/domain/battle/types'
+import { BattleTriggerPhase, BATTLE_CONSTANTS } from '@/domain/battle/type/types'
 import type {
   StatusEffect,
   ParticipantSnapshot,
   BattleEntity,
   BuffInstanceSnapshot,
-} from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
 import type { IModifierProvider } from '@/domain/attribute/types'
-import { type ParticipantSide } from '@/domain/battle/types'
+import { type ParticipantSide } from '@/domain/battle/type/types'
 import type { SkillConfig, SkillSet } from '@/domain/skill/types'
 import {
   Modifier,

@@ -45,7 +45,6 @@
 }
 
 .tool-header .subtitle {
-  font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
   margin: var(--space-2) 0 0 0;
 }
@@ -146,7 +145,6 @@
   align-items: center;
   margin-bottom: var(--space-2);
   color: var(--color-info);
-  font-size: var(--font-size-sm);
   border-bottom: 1px dashed var(--color-border-default);
   padding-bottom: var(--space-1);
 }
@@ -280,7 +278,6 @@
 .scene-name {
   font-weight: var(--font-weight-bold);
   color: var(--color-brand-red);
-  font-size: var(--font-size-sm);
 }
 
 .scene-level {
@@ -289,7 +286,6 @@
 
 .scene-count {
   color: var(--color-text-disabled);
-  font-size: var(--font-size-xxs);
   margin-left: auto;
 }
 
@@ -309,7 +305,6 @@
   border: 1px solid var(--color-border-default);
   color: var(--color-text-primary);
   padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-xs);
 }
 
 .scene-select {
@@ -318,7 +313,6 @@
   border: 1px solid var(--color-border-default);
   color: var(--color-text-primary);
   padding: var(--space-1);
-  font-size: var(--font-size-xs);
 }
 
 /* ----- 空状态 ----- */
@@ -326,7 +320,6 @@
   text-align: center;
   color: var(--color-text-disabled);
   padding: var(--space-6) var(--space-4);
-  font-size: var(--font-size-sm);
   font-style: italic;
 }
 
@@ -349,7 +342,6 @@
   color: var(--color-text-primary);
   padding: 0.4rem;
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
 }
 
 /* ----- VS 分隔 ----- */
@@ -399,7 +391,6 @@
   color: var(--color-info);
   border: 1px solid var(--color-border-default);
   padding: 0.4rem 0.75rem;
-  font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -468,7 +459,6 @@
 }
 
 .auto-text {
-  font-size: var(--font-size-sm);
 }
 
 .speed-control-btn {
@@ -491,17 +481,14 @@
 }
 
 .speed-icon {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
 }
 
 .speed-text {
-  font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 
 .mode-indicator {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
   margin-left: var(--space-4);
 }

@@ -521,7 +521,6 @@ onUnmounted(() => {
       }
 
       .description-label {
-        font-size: var(--font-size-xs);
         color: var(--color-text-tertiary);
         width: 40px;
         flex-shrink: 0;
@@ -530,7 +529,6 @@ onUnmounted(() => {
       }
 
       .description-text {
-        font-size: var(--font-size-sm);
         color: var(--color-text-secondary);
         flex: 1;
         line-height: var(--line-height-sm);
@@ -565,7 +563,6 @@ onUnmounted(() => {
         }
 
         .stat-section-title {
-          font-size: var(--font-size-xs);
           font-weight: var(--font-weight-semibold);
           color: var(--color-info);
           text-transform: uppercase;
@@ -573,7 +570,6 @@ onUnmounted(() => {
         }
 
         .layer-total {
-          font-size: var(--font-size-sm);
           font-weight: var(--font-weight-bold);
           color: var(--color-energy);
           font-family: 'JetBrains Mono', monospace;
@@ -598,14 +594,12 @@ onUnmounted(() => {
           min-width: 0;
 
           .source-from {
-            font-size: var(--font-size-sm);
             font-weight: var(--font-weight-medium);
             color: var(--color-text-secondary);
             white-space: nowrap;
           }
 
           .source-name {
-            font-size: var(--font-size-xs);
             color: var(--color-text-disabled);
             white-space: nowrap;
             overflow: hidden;
@@ -634,13 +628,11 @@ onUnmounted(() => {
 
         &.range-row {
           .source-name-label {
-            font-size: var(--font-size-sm);
             font-weight: var(--font-weight-medium);
             color: var(--color-text-secondary);
           }
 
           .source-range-value {
-            font-size: var(--font-size-sm);
             font-weight: var(--font-weight-semibold);
             font-family: 'JetBrains Mono', monospace;
             color: var(--color-energy);
@@ -652,7 +644,6 @@ onUnmounted(() => {
         text-align: center;
         padding: var(--space-3);
         color: var(--color-text-tertiary);
-        font-size: var(--font-size-sm);
         font-style: italic;
       }
     }
@@ -665,7 +656,6 @@ onUnmounted(() => {
       margin-top: var(--space-2);
 
       .calculation-title {
-        font-size: var(--font-size-xs);
         color: var(--color-text-tertiary);
         margin-bottom: var(--space-2);
         text-transform: uppercase;
@@ -673,7 +663,6 @@ onUnmounted(() => {
       }
 
       .calculation-formula {
-        font-size: var(--font-size-sm);
         color: var(--color-text-secondary);
         font-family: 'JetBrains Mono', monospace;
         line-height: var(--line-height-lg);

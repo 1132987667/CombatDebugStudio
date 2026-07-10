@@ -2,17 +2,17 @@
  * 鎴樻枟浜嬩欢绠＄悊鍣? * 璐熻矗缁熶竴绠＄悊鎴樻枟鐩稿叧鐨勪簨浠惰闃呭拰鍒嗗彂
  */
 import { eventBus } from '@/main'
-import { BattleEventCodes } from '@/shared/types/battle-events'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import type {
   BattleLogEventData,
   BattleEndedEventData,
-} from '@/shared/types/battle-events'
+} from '@/domain/battle/type/BattleEventType'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 
 /**

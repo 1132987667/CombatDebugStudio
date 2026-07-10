@@ -6,7 +6,7 @@
  */
 
 import { computed, type ComputedRef } from 'vue'
-import type { BattleEntity } from '@/domain/battle/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import type { AttributeValue, CalculationBreakdown } from '@/domain/attribute/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 

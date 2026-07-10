@@ -1,5 +1,5 @@
-import type { BattleState, BattleReplay } from '@/domain/battle/types'
-import { BattleEventType } from '@/domain/battle/types'
+import type { BattleState, BattleReplay } from '@/domain/battle/type/types'
+import { BattleEventType } from '@/domain/battle/type/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import {
   ReplayEngine,

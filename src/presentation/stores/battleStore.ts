@@ -1,26 +1,25 @@
-import { defineStore } from 'pinia'
-import { ref, shallowRef, computed, reactive, onScopeDispose } from 'vue'
-import { PARTICIPANT_SIDE, BattleStatus } from '@/domain/battle/types'
-import { BattleEventCodes, BattleEventCode } from '@/shared/types/battle-events'
+import type { BattleService } from '@/application/facade/BattleFacade'
+import type { BattleAction, BattleEntity, BattleState } from '@/domain/battle/type/types'
+import { BattleStatus, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
+import { BattleEventCode, BattleEventCodes, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData } from '@/domain/battle/type/BattleEventType'
 import type {
-  BattleLogEntry,
   BattleLogCategory,
-  LogSegment,
+  BattleLogEntry,
   LogFilters,
+  LogSegment,
 } from '@/shared/types/battle-log'
 import {
+  BATTLE_LOG_CATEGORIES,
   battleActionToLogEntry,
   LogType,
-  BATTLE_LOG_CATEGORIES,
 } from '@/shared/types/battle-log'
-import type { BattleService } from '@/application/facade/BattleFacade'
-import type { BattleAction, BattleState } from '@/domain/battle/types'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
-import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
-import type { BattleEntity } from '@/domain/battle/types'
-import type { Enemy } from '@/shared/types/enemy'
 import { EffectType } from '@/shared/types/effect'
+import type { Enemy } from '@/shared/types/enemy'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { defineStore } from 'pinia'
+import { onScopeDispose, reactive, ref, shallowRef } from 'vue'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -35,25 +34,13 @@ export interface BattleRules {
 
 export interface AnimationState {
   /** 伤害动画数据（目标ID、伤害值、类型、是否暴击/治疗） */
-  damage: {
-    targetId: string
-    damage: number
-    damageCategory: string
-    isCritical: boolean
-    isHeal: boolean
-  } | null
+  damage: DamageEventData | null
   /** 闪避动画数据（目标ID） */
-  miss: { targetId: string } | null
+  miss: MissEventData | null
   /** Buff效果动画数据（目标ID、Buff名称、正面/负面） */
-  buff: { targetId: string; buffName: string; isPositive: boolean } | null
+  buff: BuffEffectEventData | null
   /** 技能特效动画数据（施法者、目标、技能名、效果类型、伤害大类） */
-  skill: {
-    sourceId: string
-    targetId: string
-    skillName: string
-    effectType: string
-    damageCategory: string
-  } | null
+  skill: SkillEffectEventData | null
 }
 
 export interface LoadingState {
@@ -103,6 +90,8 @@ export const useBattleStore = defineStore('battle', () => {
   })
   /** 自动播放模式开关（启用后自动执行回合无需手动操作） */
   const autoPlayMode = ref(false)
+  /** Buff 显示模式：'icon' = 图标列表，'text' = 纯文本标签 */
+  const buffDisplayMode = ref<'icon' | 'text'>('icon')
   /** 暂停状态（暂停时按钮显示"继续"，非暂停显示"暂停"） */
   const isPaused = ref(false)
   /** 动画效果状态管理（伤害数字/闪避/Buff图标/技能特效的触发与清除） */
@@ -143,6 +132,10 @@ export const useBattleStore = defineStore('battle', () => {
   const allyTeam = shallowRef<BattleEntity[]>([])
   /** 敌方队伍成员列表（响应式同步 BattleService 内部状态） */
   const enemyTeam = shallowRef<BattleEntity[]>([])
+  /** 完整我方队伍（含禁用角色，供参战管理面板使用） */
+  const fullAllyTeam = shallowRef<BattleEntity[]>([])
+  /** 完整敌方队伍（含禁用角色，供参战管理面板使用） */
+  const fullEnemyTeam = shallowRef<BattleEntity[]>([])
   /** 当前战斗回合数（从1开始计数，用于日志和UI显示） */
   const currentTurn = ref(1)
   /** 最大回合数（从 BattleService 读取） */
@@ -158,6 +151,8 @@ export const useBattleStore = defineStore('battle', () => {
     console.log('接收队伍数据更新')
     allyTeam.value = battleService.value!.getEnabledAllyTeam()
     enemyTeam.value = battleService.value!.getEnabledEnemyTeam()
+    fullAllyTeam.value = battleService.value!.getAllyTeam()
+    fullEnemyTeam.value = battleService.value!.getEnemyTeam()
     currentTurn.value = battleService.value!.getCurrentTurn()
     maxTurns.value = battleService.value!.getMaxTurns?.() ?? 999
     const battleState = battleService.value!.getBattleState()
@@ -511,6 +506,11 @@ export const useBattleStore = defineStore('battle', () => {
    * @returns Promise<boolean> 操作是否成功
    * @description 在自动战斗和手动模式之间切换，失败时自动恢复原状态
    */
+  /** 切换 Buff 显示模式（图标 ↔ 纯文本） */
+  const toggleBuffDisplayMode = () => {
+    buffDisplayMode.value = buffDisplayMode.value === 'icon' ? 'text' : 'icon'
+  }
+
   const toggleAutoPlay = async () => {
     setLoading(true)
     clearError()
@@ -675,12 +675,12 @@ export const useBattleStore = defineStore('battle', () => {
     const sourceIsAlly =
       action.sourceId !== 'system'
         ? battleState.participants.get(action.sourceId)?.team ===
-          PARTICIPANT_SIDE.ALLY
+        PARTICIPANT_SIDE.ALLY
         : false
     const targetIsAlly =
       action.targetId && action.targetId !== 'system'
         ? battleState.participants.get(action.targetId)?.team ===
-          PARTICIPANT_SIDE.ALLY
+        PARTICIPANT_SIDE.ALLY
         : undefined
     const fullLog = battleActionToLogEntry(action, battleState.participants, {
       turnNumber: action.turn,
@@ -810,6 +810,7 @@ export const useBattleStore = defineStore('battle', () => {
     loading, // 加载状态
     error, // 错误状态
     autoPlayMode, // 自动播放模式
+    buffDisplayMode, // Buff 显示模式
     animationState, // 动画效果状态
     currentBattleId, // 当前战斗ID
     turnOrder, // 回合行动顺序
@@ -823,6 +824,8 @@ export const useBattleStore = defineStore('battle', () => {
     // ========== 业务数据（Data） ==========
     allyTeam, // 我方队伍
     enemyTeam, // 敌方队伍
+    fullAllyTeam, // 完整我方队伍（含禁用）
+    fullEnemyTeam, // 完整敌方队伍（含禁用）
     currentTurn, // 当前回合数
     maxTurns, // 最大回合数
     isBattleActive, // 战斗激活状态
@@ -860,6 +863,7 @@ export const useBattleStore = defineStore('battle', () => {
     resetBattle, // 重置战斗
     processSingleTurn, // 执行单回合
     toggleAutoPlay, // 切换自动播放
+    toggleBuffDisplayMode, // 切换 Buff 显示模式
     togglePause, // 切换暂停
 
     // ========== 数据导入导出 ==========

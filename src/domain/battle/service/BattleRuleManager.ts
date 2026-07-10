@@ -8,8 +8,8 @@
  */
 
 import { battleLogManager } from '@/infrastructure/adapters/logging'
-import type { BattleEntity, ParticipantSide } from '@/domain/battle/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
+import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /**

@@ -10,7 +10,6 @@
   color: var(--color-info);
   border: 1px solid var(--color-border-strong);
   padding: var(--space-2) var(--space-4);
-  font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
   border-radius: var(--radius-sm);
@@ -31,7 +30,6 @@
   color: var(--color-info);
   border: 1px solid var(--color-border-strong);
   padding: 0.15rem 0.35rem;
-  font-size: var(--font-size-xxs);
   cursor: pointer;
   transition: all var(--transition-fast);
   border-radius: var(--radius-sm);
@@ -71,7 +69,6 @@
   color: var(--color-info);
   border: 1px solid var(--color-border-strong);
   padding: var(--space-2) var(--space-4);
-  font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
   border-radius: var(--radius-sm);
@@ -128,7 +125,6 @@
   border: 1px solid var(--color-border-strong);
   padding: 0.15rem 0.4rem;
   cursor: pointer;
-  font-size: var(--font-size-xxs);
 }
 
 .speed-btn.active {

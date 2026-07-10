@@ -1,6 +1,6 @@
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { CalculationLog } from '@/shared/types/battle-log'
-import type { BattleEntity } from '@/domain/battle/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'

@@ -1,9 +1,9 @@
 <template>
-  <div class="battle-replay f1">
+  <div class="battle-replay flex-1">
     <div class="replay-header">
       <h3>战斗回放</h3>
       <div class="replay-info">
-        <span class="battle-name">{{ currentRecording?.name || '未选择' }}</span>
+        <span class="battle-name">{{ currentRecording?.battleId || '未选择' }}</span>
         <span class="event-count">事件: {{ currentEventIndex + 1 }}/{{ totalEvents }}</span>
         <span class="current-turn">回合: {{ currentTurn }}</span>
       </div>
@@ -170,7 +170,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { raf } from '@/shared/utils/RAF';
-import { ReplayBattleEvent, BattleEventType } from '@/domain/battle/types';
+import { ReplayBattleEvent, BattleEventType } from '@/domain/battle/type/types';
 import { RecordedBattle } from '@/domain/battle/service/BattleRecorder';
 import { SPEED_OPTIONS } from '@/shared/constants/speed';
 

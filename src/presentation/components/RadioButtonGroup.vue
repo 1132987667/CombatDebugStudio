@@ -85,7 +85,6 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 .radio-group-label {
-  font-size: var(--font-size-sm);
   color: var(--color-info);
   font-weight: var(--font-weight-medium);
   margin-bottom: var(--space-1);
@@ -109,7 +108,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   border: none;
   border-radius: var(--radius-sm);
   color: var(--color-info);
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: var(--transition-fast);

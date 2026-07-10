@@ -164,7 +164,6 @@ onUnmounted(() => {
 .log-seq {
   color: var(--color-text-tertiary);
   margin-right: var(--space-2);
-  font-size: var(--font-size-sm);
   min-width: 3em;
   display: inline-block;
 }
@@ -180,7 +179,6 @@ onUnmounted(() => {
 /* 新增：风格选择器 */
 .style-select {
   padding: 2px 6px;
-  font-size: var(--font-size-sm);
   border: 1px solid var(--color-border);
   border-radius: 4px;
   background: var(--bg-surface);
@@ -194,7 +192,6 @@ onUnmounted(() => {
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-top: 1px solid var(--color-border);
-  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 

@@ -145,7 +145,6 @@ const handleClear = () => {
 }
 
 .status-count {
-  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   background: var(--color-bg-primary);
   padding: 2px 8px;
@@ -217,7 +216,6 @@ const handleClear = () => {
 }
 
 .si-status-duration {
-  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   background: var(--color-border-default);
   padding: 2px 6px;
@@ -226,7 +224,6 @@ const handleClear = () => {
 }
 
 .si-status-effect {
-  font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
   flex: 1;
   overflow: hidden;
@@ -238,7 +235,6 @@ const handleClear = () => {
   padding: var(--space-8) var(--space-5);
   text-align: center;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
 }
 
 .si-section-actions {

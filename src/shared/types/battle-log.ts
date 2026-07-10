@@ -3,7 +3,7 @@
  * 确保系统中所有战斗日志相关的类型引用保持一致
  */
 
-import { BattleAction, ActionTypes, ActionResultType } from '@/domain/battle/types'
+import { BattleAction, ActionTypes, ActionResultType } from '@/domain/battle/type/types'
 
 /**
  * 日志级别 - 统一所有日志系统的级别定义

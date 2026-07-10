@@ -11,7 +11,7 @@ import {
   type ComputedRef,
   type ShallowReactive,
 } from 'vue'
-import type { BattleEntity } from '@/domain/battle/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import type { AttributeValue } from '@/domain/attribute/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 

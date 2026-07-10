@@ -126,7 +126,7 @@ import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { container } from '@/infrastructure/di/Container';
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene';
-import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/domain/battle/types";
+import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
 
@@ -151,8 +151,8 @@ const expandedScenes = reactive<Record<string, boolean>>({});
 scenesData.value.forEach((s) => (expandedScenes[s.id] = true));
 
 // 响应式获取队伍数据
-const allyTeam = computed(() => battleService.getAllyTeam());
-const enemyTeam = computed(() => battleService.getEnemyTeam());
+const allyTeam = computed(() => battleStore.fullAllyTeam);
+const enemyTeam = computed(() => battleStore.fullEnemyTeam);
 // 我方参战人数
 const allyTeamCount = computed(() => allyTeam.value.filter(c => c.enabled).length);
 // 敌方参战人数

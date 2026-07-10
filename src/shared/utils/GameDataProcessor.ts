@@ -22,9 +22,9 @@ import type { SceneData } from '@/shared/types/scene'
 import type { CharacterStats } from '@/domain/character/types'
 import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 import type { StructuredBuffConfig } from '@/domain/attribute/modifier-template'
-import type { ParticipantSide } from '@/domain/battle/types'
-import { PARTICIPANT_SIDE, BattleTriggerPhase } from '@/domain/battle/types'
-import type { BattleEntity } from '@/domain/battle/types'
+import type { ParticipantSide } from '@/domain/battle/type/types'
+import { PARTICIPANT_SIDE, BattleTriggerPhase } from '@/domain/battle/type/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import {
   BattleParticipantImpl,
   type BattleParticipantData,

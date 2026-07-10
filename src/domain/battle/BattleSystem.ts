@@ -7,20 +7,20 @@
  * 版本: 2.0.0 - 集成触发器事件系统
  */
 
-import { BattleActionHelper } from '@/domain/battle/types'
+import { BattleActionHelper } from '@/domain/battle/type/types'
 import type {
   BattleAction,
   BattleData,
   BattleEntity,
   BattleState,
   ParticipantSide,
-} from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 import { createDefaultBattleData, convertToBattleState } from '@/domain/battle/aggregate/BattleState'
 import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
 import { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { TriggerEventContext } from '@/domain/buff/types'
-import { BattleTriggerPhase } from '@/domain/battle/types'
+import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { AISystem } from '@/domain/battle/ai/AISystem'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
@@ -41,12 +41,12 @@ import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { eventBus } from '@/main'
 import { TriggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
-import { BattleEventCodes } from '@/shared/types/battle-events'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import {
   BattleStatus,
   PARTICIPANT_SIDE,
   RoundStatus,
-} from '@/domain/battle/types'
+} from '@/domain/battle/type/types'
 import {
   ATTRIBUTE_CODE,
 } from '@/domain/attribute/types'

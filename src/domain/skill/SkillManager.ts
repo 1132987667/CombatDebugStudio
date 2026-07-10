@@ -2,14 +2,14 @@ import type {
   SkillConfig,
   SkillStep,
 } from '@/domain/skill/types'
-import { BattleActionHelper, type BattleAction, type BattleEntity } from '@/domain/battle/types'
+import { BattleActionHelper, type BattleAction, type BattleEntity } from '@/domain/battle/type/types'
 import {
   ATTRIBUTE_CODE,
 } from '@/domain/attribute/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { ControlType } from '@/domain/buff/types'
-import { BattleTriggerPhase } from '@/domain/battle/types'
+import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { SkillExecutor } from '@/domain/skill/SkillExecutor'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'

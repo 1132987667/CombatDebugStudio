@@ -29,7 +29,7 @@ import { Counter } from '@/shared/utils/Counter'
 import type { Item } from '@/shared/types/Item'
 import type { PlayerLogRenderer } from '@/shared/types/log-renderer'
 import { PokemonStyleRenderer } from '@/domain/battle/logs/renderers/PokemonStyleRenderer'
-import type { BattleAction } from '@/domain/battle/types'
+import type { BattleAction } from '@/domain/battle/type/types'
 
 /**
  * 统一的日志参数接口 - 所有日志方法都使用此接口

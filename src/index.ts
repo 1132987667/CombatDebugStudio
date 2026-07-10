@@ -13,7 +13,7 @@ export { BattleSystem as BattleSystem } from '@/domain/battle/BattleSystem'
 export * from '@/domain/buff/types'
 export * from '@/domain/character/types'
 export * from '@/shared/types/enemy'
-export * from '@/domain/battle/types'
+export * from '@/domain/battle/type/types'
 
 // 工具函数导出
 export * from '@/infrastructure/adapters/logging'

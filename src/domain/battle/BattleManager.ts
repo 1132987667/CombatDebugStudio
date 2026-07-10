@@ -11,13 +11,13 @@ import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
-import { PARTICIPANT_SIDE, BattleEntity, BATTLE_CONSTANTS, ParticipantSide, BattleStatus } from '@/domain/battle/types'
-import { BattleEventCodes } from '@/shared/types/battle-events'
+import { PARTICIPANT_SIDE, BattleEntity, BATTLE_CONSTANTS, ParticipantSide, BattleStatus } from '@/domain/battle/type/types'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 import type {
   BattleEvents,
   BattleEventName,
-} from '@/shared/types/battle-events'
+} from '@/domain/battle/type/BattleEventType'
 import { LocalStorage } from '@/infrastructure/adapters/storage'
 import { eventBus } from '@/main'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
@@ -223,7 +223,6 @@ export class BattleManager {
 
       this.syncBattleState()
       this.emitTeamChanged()
-
       return { battleId }
     } catch (error) {
       console.error('初始化队伍数据时出错:', error)
@@ -601,6 +600,15 @@ export class BattleManager {
    * @param winner 获胜方
    */
   endBattle(winner: any) {
+    // ⭐ 幂等性守卫：防止重复触发 endBattle
+    const battleData = this.battleSystem.getBattleData()
+    if (
+      battleData?.battleState === BattleStatus.ENDED ||
+      battleData?.battleState === BattleStatus.SETTLEMENT
+    ) {
+      return
+    }
+
     const battleId = this.battleStateManager.getBattleId()
     if (battleId) {
       this.autoBattleManager.stopAutoBattle()

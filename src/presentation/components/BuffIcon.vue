@@ -137,7 +137,6 @@ const iconUrl = computed(() => {
   right: 2px;
   background: rgba(0, 0, 0, 0.8);
   color: white;
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   padding: 1px 4px;
   border-radius: var(--radius-sm);
@@ -186,7 +185,6 @@ const iconUrl = computed(() => {
 }
 
 .tooltip-type {
-  font-size: var(--font-size-xs);
   padding: var(--space-1);
   border-radius: var(--radius-lg);
   background: rgba(96, 165, 250, 0.2);
@@ -199,7 +197,6 @@ const iconUrl = computed(() => {
 }
 
 .tooltip-description {
-  font-size: var(--font-size-sm);
   color: rgba(255, 255, 255, 0.7);
   margin-bottom: var(--space-2);
   line-height: var(--line-height-sm);

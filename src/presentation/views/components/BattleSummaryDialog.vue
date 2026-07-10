@@ -183,7 +183,6 @@ const exportJson = () => {
 .winner-badge.lose { color: var(--color-damage, #f44336); }
 .summary-meta {
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
 }
 
 .summary-stats {
@@ -206,7 +205,6 @@ const exportJson = () => {
 .stat-value.damage { color: var(--color-damage, #f44336); }
 .stat-value.heal { color: var(--color-heal, #4caf50); }
 .stat-label {
-  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   margin-top: 4px;
 }
@@ -219,13 +217,11 @@ const exportJson = () => {
 }
 .record-line {
   margin: 4px 0;
-  font-size: var(--font-size-sm);
 }
 
 .section-title {
   font-weight: bold;
   margin-bottom: var(--space-1);
-  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 .summary-participants {
@@ -235,7 +231,6 @@ const exportJson = () => {
   display: flex;
   gap: var(--space-2);
   padding: 4px 0;
-  font-size: var(--font-size-sm);
   border-bottom: 1px solid var(--color-border-dim);
 }
 .p-name { flex: 0 0 80px; font-weight: bold; }
@@ -250,7 +245,6 @@ const exportJson = () => {
 .timeline-entry {
   display: flex;
   gap: var(--space-2);
-  font-size: var(--font-size-sm);
   padding: 2px 0;
 }
 .tl-turn { flex: 0 0 30px; color: var(--color-text-tertiary); }
@@ -261,7 +255,6 @@ const exportJson = () => {
 .tl-value.heal { color: var(--color-heal, #4caf50); }
 .timeline-more {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
   font-style: italic;
 }
 

@@ -157,7 +157,6 @@ const logLevelName = (level: LogLevel): string => {
 .log-seq {
   color: var(--color-text-tertiary);
   margin-right: var(--space-2);
-  font-size: var(--font-size-sm);
   min-width: 3em;
   display: inline-block;
 }
@@ -214,7 +213,6 @@ const logLevelName = (level: LogLevel): string => {
 .log-context pre {
   margin: 0;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
 }
 
 .log-error {

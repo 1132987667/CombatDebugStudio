@@ -49,6 +49,9 @@
         {{ ra.text }}
       </div>
     </div>
+
+    <!-- 战报弹窗 -->
+    <BattleSummaryDialog v-model="showSummaryDialog" :summary="lastSummary" />
   </div>
 </template>
 
@@ -58,12 +61,24 @@ import { useBattleAnimation } from '@/presentation/composables/useBattleAnimatio
 import BattleLog from "@/presentation/views/BattleLog.vue";
 import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
 import BattleVisualEffects from "@/presentation/components/BattleVisualEffects.vue";
+import BattleSummaryDialog from "@/presentation/views/components/BattleSummaryDialog.vue"
+import type { BattleSummary } from '@/shared/types/battle-summary'
+import { eventBus } from '@/main'
 import { ATTRIBUTE_CODE, type AttributeValue } from '@/domain/attribute/types';
 import { ActionTypes, type BattleEntity, ActionResultType } from '@/domain/battle/types';
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
 
 const store = useBattleStore()
+
+// 战报弹窗状态
+const showSummaryDialog = ref(false)
+const lastSummary = ref<BattleSummary | null>(null)
+// ponytail: 事件总线挂载后监听战报事件
+eventBus.on('battle-summary', (summary: any) => {
+  lastSummary.value = summary as BattleSummary
+  showSummaryDialog.value = true
+})
 
 const props = defineProps<{
   currentActorId: string | null;

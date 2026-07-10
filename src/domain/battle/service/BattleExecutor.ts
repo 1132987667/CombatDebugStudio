@@ -14,8 +14,9 @@ import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { EffectType } from '@/shared/types/effect'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
 import { BUFF_IDS } from '@/domain/buff/types'
-import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { TraceDamageLogger } from '@/domain/battle/logs/TraceDamageLogger'
 
 import {
   BattleActionHelper,
@@ -97,7 +98,10 @@ export class BattleExecutor {
       battleLogManager.addBattleLog({
         turn: battle.currentRound || 1,
         message: `${participant.name} 被控制，无法行动`,
-        segments: [{ text: `${participant.name} 被控制，无法行动` }],
+        segments: [
+          { text: participant.name, classStr: participant.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile' },
+          { text: ' 被控制，无法行动' },
+        ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
       })
       battleLogManager.addDebugLog(`角色[${participant.name}]被控制，无法行动`)
@@ -267,6 +271,8 @@ export class BattleExecutor {
       // 将所有详细记录存入 BattleRecorder
       for (const record of records) {
         this.battleRecorder.recordCombatRecord(battle.battleId, record)
+        // ponytail: 技术调试日志 — 技能伤害计算链路追踪
+        TraceDamageLogger.log(record)
       }
 
       action.damage = totalDamage
@@ -276,13 +282,14 @@ export class BattleExecutor {
       const targetNames = targets.map((t) => t.name).join(', ')
       const damageText = totalDamage > 0 ? `，造成 ${totalDamage} 点伤害` : ''
       const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点生命` : ''
+      const skillText = `使用 ${skill.name || skill.id}${damageText}${healText}`
       battleLogManager.addBattleLog({
         turn: battle.currentTurn,
-        message: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}`,
+        message: `${source.name} 对 ${targetNames} ${skillText}`,
         segments: [
-          {
-            text: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}`,
-          },
+          { text: source.name, classStr: source.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile' },
+          { text: ` 对 ${targetNames} `, classStr: targets.every(t => t.type === PARTICIPANT_SIDE.ALLY) ? 'log-friendly' : 'log-hostile' },
+          { text: skillText },
         ],
         category: BATTLE_LOG_CATEGORIES.ACTION,
       })
@@ -363,7 +370,7 @@ export class BattleExecutor {
       }
     } catch (error) {
       this.skillManager.setDeferredDamageMode(false)
-      battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, error as Error)
+      battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, { error: error as Error })
       action.type = ActionTypes.ATTACK
       action.damage = Math.floor(Math.random() * 20) + 10
       action.effects = [
@@ -833,6 +840,8 @@ export class BattleExecutor {
     record.damage = action.damage ?? 0
     record.message = `${source.name} 对 ${target.name} 普通攻击，造成 ${action.damage ?? 0} 伤害`
     this.battleRecorder.recordCombatRecord(battle.battleId, record)
+    // ponytail: 技术调试日志 — 伤害计算链路追踪
+    TraceDamageLogger.log(record)
 
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.AFTER_ATTACK,
@@ -1096,7 +1105,7 @@ export class BattleExecutor {
         this.buffSystem.setBuffAppliedCallbackEnabled(true)
         battleLogManager.addDebugLog(
           `技能执行失败: ${action.skillId}`,
-          error as Error,
+          { error: error as Error },
         )
         action.type = ActionTypes.ATTACK
         action.damage = Math.floor(Math.random() * 20) + 10

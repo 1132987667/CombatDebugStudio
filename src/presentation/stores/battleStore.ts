@@ -709,8 +709,13 @@ export const useBattleStore = defineStore('battle', () => {
         battleState,
       )
       if (!shouldDisplay || !log) continue
-      battleLogManager.addSystemLog({
-        message: log.segments!.map((s) => s.text).join(''),
+      battleLogManager.addBattleLog({
+        turn: log.turn ?? sortedActions.indexOf(action) + 1,
+        message: log.segments?.map((s) => s.text).join('') ?? '',
+        segments: log.segments,
+        category: log.category ?? 'battle',
+        source: log.source,
+        target: log.target,
       })
     }
   }

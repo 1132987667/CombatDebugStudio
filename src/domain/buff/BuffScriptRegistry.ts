@@ -52,7 +52,7 @@ export class BuffScriptRegistry {
         battleLogManager.addDebugLog(`Loaded ${this.buffConfigs.size} buff configs from buffs.json`)
       }
     } catch (error) {
-      battleLogManager.addDebugLog('Failed to load buff configs:', error as Error)
+      battleLogManager.addDebugLog('Failed to load buff configs:', { error: error as Error })
     }
     this.loadEffectConfigs()
   }
@@ -110,7 +110,7 @@ export class BuffScriptRegistry {
         battleLogManager.addDebugLog(`Loaded ${count} effect configs from effects.json`)
       }
     } catch (error) {
-      battleLogManager.addDebugLog('Failed to load effects configs:', error as Error)
+      battleLogManager.addDebugLog('Failed to load effects configs:', { error: error as Error })
     }
   }
 
@@ -210,7 +210,7 @@ export class BuffScriptRegistry {
     try {
       return entry.factory()
     } catch (e) {
-      battleLogManager.addDebugLog(`Failed to instantiate script "${scriptId}":`, e as Error)
+      battleLogManager.addDebugLog(`Failed to instantiate script "${scriptId}":`, { error: e as Error })
       return null
     }
   }

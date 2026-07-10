@@ -166,7 +166,10 @@ export interface LogSegment {
   classStr?: string
 }
 
-export function newLogSegment(text: string, classStr?: string): LogSegment {
+export function newLogSegment(
+  text: string,
+  classStr?: string,
+): LogSegment {
   return {
     text,
     classStr,
@@ -460,6 +463,72 @@ export const LogUtils = {
 }
 
 /**
+ * 生成带着色的来源/目标名称段
+ *
+ * 统一辅助函数，解决战斗日志中角色名缺少颜色的问题。
+ * 所有 addBattleLog 调用处应当使用此函数生成前 2~3 个 segment，
+ * 确保日志中所有角色名都有敌我颜色区分。
+ *
+ * 使用示例：
+ * ```
+ * const segs = buildNameSegments('剑士', true, '史莱姆', false)
+ * // → [{text:'剑士', classStr:'log-friendly'}, {text:' 对 '}, {text:'史莱姆', classStr:'log-hostile'}]
+ * segs.push({ text: ' 发动普通攻击，造成 104 点伤害' })
+ * ```
+ */
+export function buildNameSegments(
+  source: string,
+  sourceIsAlly: boolean,
+  target?: string,
+  targetIsAlly?: boolean,
+): LogSegment[] {
+  const sourcePrefix = sourceIsAlly ? '[友方]' : '[敌方]'
+  const segs: LogSegment[] = [
+    { text: `${sourcePrefix}${source}`, classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile' },
+  ]
+  if (target && target !== source) {
+    const targetPrefix = targetIsAlly != null ? (targetIsAlly ? '[友方]' : '[敌方]') : ''
+    segs.push({ text: ' 对 ' })
+    segs.push({
+      text: `${targetPrefix}${target}`,
+      classStr: targetIsAlly != null
+        ? (targetIsAlly ? 'log-friendly' : 'log-hostile')
+        : undefined,
+    })
+  }
+  return segs
+}
+
+/** 便捷版本：直接返回完整的一段着色日志 segments */
+export function buildColoredLogSegments(
+  source: string,
+  sourceIsAlly: boolean,
+  target: string | undefined,
+  targetIsAlly: boolean | undefined,
+  actionDescription: string,
+): LogSegment[] {
+  const segs = buildNameSegments(source, sourceIsAlly, target, targetIsAlly)
+  segs.push({ text: ` ${actionDescription}` })
+  return segs
+}
+
+/** 便捷版本：带数值的着色日志 */
+export function buildColoredValueLogSegments(
+  source: string,
+  sourceIsAlly: boolean,
+  target: string | undefined,
+  targetIsAlly: boolean | undefined,
+  actionText: string,
+  valueText: string,
+  valueClass?: string,
+): LogSegment[] {
+  const segs = buildNameSegments(source, sourceIsAlly, target, targetIsAlly)
+  segs.push({ text: ` ${actionText} ` })
+  segs.push({ text: valueText, classStr: valueClass })
+  return segs
+}
+
+/**
  * 计算日志接口 - 统一所有计算日志定义
  */
 export interface CalculationLog {
@@ -529,7 +598,8 @@ export function battleActionToLogEntry(
   } else {
     const sourceParticipant = participants.get(action.sourceId)
     if (sourceParticipant) {
-      sourceName = sourceParticipant.name
+      const prefix = sourceParticipant.team === 'ally' ? '[友方]' : '[敌方]'
+      sourceName = `${prefix}${sourceParticipant.name}`
     }
   }
 
@@ -537,7 +607,8 @@ export function battleActionToLogEntry(
   if (action.targetId && action.targetId !== 'system') {
     const targetParticipant = participants.get(action.targetId)
     if (targetParticipant) {
-      targetName = targetParticipant.name
+      const prefix = targetParticipant.team === 'ally' ? '[友方]' : '[敌方]'
+      targetName = `${prefix}${targetParticipant.name}`
     }
   }
 
@@ -700,12 +771,12 @@ function generateMissLogSegments(
     level: 'info',
     segments: [
       {
-        text: sourceName,
+        text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
         classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
       },
       { text: ' 对 ' },
       {
-        text: targetName,
+        text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
         classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
       },
       { text: ` 发动${isSkill ? `【${skillName}】` : ''}，攻击被闪避，未命中` },
@@ -736,12 +807,12 @@ function generateCritLogSegments(
     level: 'info',
     segments: [
       {
-        text: sourceName,
+        text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
         classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
       },
       { text: ' 对 ' },
       {
-        text: targetName,
+        text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
         classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
       },
       {
@@ -775,12 +846,12 @@ function generateHealLogSegments(
     level: 'info',
     segments: [
       {
-        text: sourceName,
+        text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
         classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
       },
       { text: ' 对 ' },
       {
-        text: targetName,
+        text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
         classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
       },
       { text: ` 施放【${skillName}】，为其恢复 ` },
@@ -814,12 +885,12 @@ function generateDamageLogSegments(
       level: 'info',
       segments: [
         {
-          text: sourceName,
+          text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
           classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
         },
         { text: ' 对 ' },
         {
-          text: targetName,
+          text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
           classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
         },
         { text: ` 发动终极技能【${skillName}】，造成 ` },
@@ -834,12 +905,12 @@ function generateDamageLogSegments(
     level: 'info',
     segments: [
       {
-        text: sourceName,
+        text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
         classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
       },
       { text: ' 对 ' },
       {
-        text: targetName,
+        text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
         classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
       },
       { text: ' 发动普通攻击，造成 ' },
@@ -870,12 +941,12 @@ function generateDefaultLogSegments(
     level: 'info',
     segments: [
       {
-        text: sourceName,
+        text: `${sourceIsAlly ? '[友方]' : '[敌方]'}${sourceName}`,
         classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
       },
       { text: ' 对 ' },
       {
-        text: targetName,
+        text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
         classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
       },
       { text: ` ${effectDescription}` },

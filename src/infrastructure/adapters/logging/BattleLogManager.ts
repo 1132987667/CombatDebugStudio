@@ -15,6 +15,7 @@ import type {
   LogEntry,
   LogHandler,
   LogSegment,
+  ParticipantMap,
 } from '@/shared/types/battle-log'
 import {
   LogLevel,
@@ -22,10 +23,14 @@ import {
   LogType,
   LogLevelClass,
   newLogSegment,
+  battleActionToLogEntry,
 } from '@/shared/types/battle-log'
 import { reactive } from 'vue'
 import { Counter } from '@/shared/utils/Counter'
 import type { Item } from '@/shared/types/Item'
+import type { PlayerLogRenderer } from '@/shared/types/log-renderer'
+import { PokemonStyleRenderer } from '@/domain/battle/logs/renderers/PokemonStyleRenderer'
+import type { BattleAction } from '@/domain/battle/types'
 
 /**
  * 统一的日志参数接口 - 所有日志方法都使用此接口
@@ -55,6 +60,15 @@ export interface UnifiedLogParams {
   error?: Error
 }
 
+
+export interface DebugLogOptions {
+  /** 日志级别，默认 LogLevel.INFO */
+  level?: LogLevel
+  /** 上下文数据 */
+  context?: Record<string, unknown>
+  /** 错误对象 */
+  error?: Error
+}
 
 export class ConsoleLogHandler implements LogHandler {
   handle(entry: LogEntry): void {
@@ -128,6 +142,12 @@ export class BattleLogManager {
   private level: LogLevel = LogLevel.DEBUG
   /** 日志处理器数组 */
   private handlers: LogHandler[] = []
+
+  /** 当前玩家日志渲染器，默认宝可梦风格 */
+  private playerRenderer: PlayerLogRenderer = PokemonStyleRenderer
+
+  /** 参与者映射表（由 addPlayerLog 的调用方注入） */
+  private participantMap: ParticipantMap = { get: () => undefined }
 
   /**
    * 获取单例实例
@@ -259,6 +279,53 @@ export class BattleLogManager {
   // ==================== 添加日志功能 ====================
 
   /**
+   * 设置玩家日志渲染器
+   */
+  setPlayerRenderer(renderer: PlayerLogRenderer): void {
+    this.playerRenderer = renderer
+  }
+
+  /**
+   * 获取当前玩家日志渲染器
+   */
+  getPlayerRenderer(): PlayerLogRenderer {
+    return this.playerRenderer
+  }
+
+  /**
+   * 设置参与者映射表（由 BattleSystem 在战斗开始时注入）
+   */
+  setParticipantMap(map: ParticipantMap): void {
+    this.participantMap = map
+  }
+
+  /**
+   * 添加玩家日志 — 使用当前渲染器将 BattleAction 渲染为带符号的日志条目
+   * @param action 原始战斗动作
+   * @param turn 回合号
+   */
+  addPlayerLog(action: BattleAction, turn: number | string): void {
+    const entry = battleActionToLogEntry(action, this.participantMap, { turnNumber: typeof turn === 'number' ? turn : undefined })
+    const segments = this.playerRenderer.render(entry, action, this.participantMap)
+
+    const logEntry: BattleLogEntry = {
+      index: this.indexCounter.next(),
+      type: LogType.BATTLE,
+      turn,
+      message: entry.message,
+      category: entry.category ?? 'battle',
+      segments,
+      level: LogLevel.INFO,
+    }
+
+    this.battleLogs.push(logEntry)
+    if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
+      this.battleLogs.shift()
+    }
+    this.emitLogUpdate()
+  }
+
+  /**
    * 添加【战斗】类型日志
    * @param params 统一日志参数
    */
@@ -284,7 +351,7 @@ export class BattleLogManager {
       action: undefined,
     }
 
-    this.battleLogs.unshift(logEntry)
+    this.battleLogs.push(logEntry)
 
     if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
       this.battleLogs.pop()
@@ -294,10 +361,10 @@ export class BattleLogManager {
   }
 
   recordBattleLog(battleLog: BattleLogEntry): void {
-    this.battleLogs.unshift(battleLog)
+    this.battleLogs.push(battleLog)
 
     if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
-      this.battleLogs.pop()
+      this.battleLogs.shift()
     }
 
     this.emitLogUpdate()
@@ -326,9 +393,9 @@ export class BattleLogManager {
       logEntry.segments = [newLogSegment(message, LogLevelClass[level])]
     }
 
-    this.systemLogs.unshift(logEntry)
+    this.systemLogs.push(logEntry)
     if (this.autoCleanup && this.systemLogs.length > this.maxSystemLogs) {
-      this.systemLogs.pop()
+      this.systemLogs.shift()
     }
     this.emitLogUpdate()
   }
@@ -345,9 +412,9 @@ export class BattleLogManager {
       type: LogType.ITEM,
       segments,
     }
-    this.itemLogs.unshift(logEntry)
+    this.itemLogs.push(logEntry)
     if (this.autoCleanup && this.itemLogs.length > this.maxItemLogs) {
-      this.itemLogs.pop()
+      this.itemLogs.shift()
     }
     this.emitLogUpdate()
   }
@@ -378,9 +445,9 @@ export class BattleLogManager {
       category,
       segments: segments.length > 0 ? segments : [{ text: message }],
     }
-    this.actionLogs.unshift(logEntry)
+    this.actionLogs.push(logEntry)
     if (this.autoCleanup && this.actionLogs.length > this.maxActionLogs) {
-      this.actionLogs.pop()
+      this.actionLogs.shift()
     }
     this.emitLogUpdate()
   }
@@ -388,33 +455,10 @@ export class BattleLogManager {
   /**
    * 记录【调试】类型日志
    * @param message 日志消息
-   * @param contextOrLevelOrError 上下文对象、日志级别（数字或字符串）或错误对象
-   * @param error 错误对象
+   * @param options 可选参数（级别、上下文、错误）
    */
-  addDebugLog(
-    message: string,
-    contextOrLevelOrError?: Record<string, unknown> | LogLevel | string | Error,
-    error?: Error,
-  ): void {
-    let context: Record<string, unknown> | null = null
-    let level: LogLevel = LogLevel.INFO
-    let finalError: Error | undefined = undefined
-
-    if (!contextOrLevelOrError) {
-      // 只有消息
-    } else if (contextOrLevelOrError instanceof Error) {
-      // 第二个参数是 Error 对象
-      finalError = contextOrLevelOrError
-    } else if (typeof contextOrLevelOrError === 'number') {
-      // 第二个参数是数字日志级别
-      level = contextOrLevelOrError
-    } else if (typeof contextOrLevelOrError === 'string') {
-      // 第二个参数是字符串日志级别
-      level = this.parseLogLevel(contextOrLevelOrError)
-    } else if (typeof contextOrLevelOrError === 'object') {
-      // 第二个参数是上下文对象
-      context = contextOrLevelOrError
-    }
+  addDebugLog(message: string, options: DebugLogOptions = {}): void {
+    const { level = LogLevel.INFO, context, error } = options
 
     const entry: LogEntry = {
       index: this.indexCounter.next(),
@@ -423,7 +467,7 @@ export class BattleLogManager {
       message,
       context: context ?? undefined,
       source: undefined,
-      error: finalError || error,
+      error: error,
       segments: [],
       action: undefined,
     }
@@ -442,20 +486,6 @@ export class BattleLogManager {
     }
   }
 
-  /**
-   * 解析字符串日志级别为 LogLevel 枚举
-   */
-  private parseLogLevel(levelStr: string): LogLevel {
-    const levelMap: Record<string, LogLevel> = {
-      error: LogLevel.ERROR,
-      warn: LogLevel.WARN,
-      warning: LogLevel.WARN,
-      info: LogLevel.INFO,
-      debug: LogLevel.DEBUG,
-      trace: LogLevel.TRACE,
-    }
-    return levelMap[levelStr.toLowerCase()] || LogLevel.INFO
-  }
 
   // ==================== 添加便捷日志功能 ====================
 
@@ -523,7 +553,7 @@ export class BattleLogManager {
       ...this.systemLogs,
       ...this.itemLogs,
     ]
-    return array.sort((a, b) => b.index - a.index)
+    return array.sort((a, b) => a.index - b.index)
   }
 
   /**

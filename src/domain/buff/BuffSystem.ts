@@ -18,6 +18,7 @@ import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
 import { TriggerEventBus, triggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { Counter } from '@/shared/utils/Counter'
+import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
 const NOOP_BUFF_SCRIPT: IBuffScript = {
@@ -294,6 +295,15 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
     this.triggerAttributeChange(characterId)
 
+    // ponytail: 技术调试日志 — Buff 变更追踪
+    BuffTraceLogger.onApply(
+      characterId,
+      resolvedConfig.name,
+      instanceId,
+      buffInstance.currentStacks,
+      buffInstance.duration,
+    )
+
     // ponytail: 通知外部（如 BattleSystem）buff 已添加，用于触发 UI 动画
     if (this.buffAppliedCallbackEnabled && this.onBuffApplied) {
       this.onBuffApplied(characterId, buffInstance.buffId)
@@ -328,6 +338,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       const normalizedAttr = attr as ATTRIBUTE_CODE
       modifierStack.addModifier(instanceId, normalizedAttr, parsed.value, parsed.type)
       this.logger.addDebugLog(`应用属性修饰符: ${attr} → ${normalizedAttr} = ${valueStr} (${parsed.type}) 到角色 ${characterId}`)
+      // ponytail: 技术调试日志 — Buff 修饰符变更
+      BuffTraceLogger.onModifier(
+        characterId,
+        buffId,
+        normalizedAttr,
+        valueStr,
+        0, /* ponytail: 没有当前属性累计值，传 0 占位 */
+      )
     }
   }
 
@@ -344,6 +362,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     const modifierStack = this.getModifierStack(instance.characterId)
     modifierStack.removeModifier(instanceId)
+
+    // ponytail: 技术调试日志 — Buff 移除追踪
+    BuffTraceLogger.onRemove(
+      instance.characterId,
+      instance.buffId,
+      instanceId,
+    )
+
     BuffContextPool.return(instance.context)
     this.triggerAttributeChange(instance.characterId)
     return true

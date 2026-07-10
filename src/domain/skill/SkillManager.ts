@@ -85,7 +85,7 @@ export class SkillManager {
     for (const config of configs) {
       this.skillConfigs.set(config.id, config)
     }
-    battleLogManager.addDebugLog(`已加载 ${configs.length} 个技能配置`, LogLevel.INFO)
+    battleLogManager.addDebugLog(`已加载 ${configs.length} 个技能配置`, { level: LogLevel.INFO })
   }
 
   getSkillConfig(skillId: string): SkillConfig | undefined {
@@ -123,7 +123,7 @@ export class SkillManager {
   ): BattleAction | null {
     const config = this.skillConfigs.get(skillId)
     if (!config) {
-      battleLogManager.addDebugLog(`技能 ${skillId} 不存在配置`, LogLevel.WARN)
+      battleLogManager.addDebugLog(`技能 ${skillId} 不存在配置`, { level: LogLevel.WARN })
       console.error(`技能 ${skillId} 不存在配置`)
       return null
     }
@@ -131,12 +131,12 @@ export class SkillManager {
     if (source.getAttribute) {
       const currentEnergy = source.getAttribute(ATTRIBUTE_CODE.currentEnergy)
       if (isNaN(config.energyCost)) {
-        battleLogManager.addDebugLog(`技能 ${skillId} 能量消耗值无效`, LogLevel.WARN)
+        battleLogManager.addDebugLog(`技能 ${skillId} 能量消耗值无效`, { level: LogLevel.WARN })
         console.error(`技能 ${skillId} 能量消耗值无效`)
         return null
       }
       if (currentEnergy < config.energyCost) {
-        battleLogManager.addDebugLog(`技能 ${skillId} 能量不足`, LogLevel.WARN)
+        battleLogManager.addDebugLog(`技能 ${skillId} 能量不足`, { level: LogLevel.WARN })
         console.error(`技能 ${skillId} 能量不足`, config.energyCost)
         return null
       }
@@ -147,7 +147,7 @@ export class SkillManager {
       s => s.targetConfig?.faction !== 'self' && s.type !== 'remove_debuff' && s.type !== 'cleanse'
     ) ?? false
     if (!target && hasNonSelfStep) {
-      battleLogManager.addDebugLog(`技能 ${skillId} 无有效目标`, LogLevel.WARN)
+      battleLogManager.addDebugLog(`技能 ${skillId} 无有效目标`, { level: LogLevel.WARN })
       console.error(`技能 ${skillId} 无有效目标`)
       return null
     }
@@ -155,7 +155,7 @@ export class SkillManager {
     // 检查目标是否被眩晕（仅目标存在时检查）
     const targetIsStunned = target ? this.isTargetStunned(target) : false
     if (targetIsStunned) {
-      battleLogManager.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, LogLevel.WARN)
+      battleLogManager.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, { level: LogLevel.WARN })
       const action = BattleActionHelper.createSkill({
         sourceId: source.id,
         targetId: target.id,
@@ -228,7 +228,7 @@ export class SkillManager {
       }
     }
 
-    battleLogManager.addDebugLog(`执行技能 ${config.name || skillId}`, LogLevel.DEBUG)
+    battleLogManager.addDebugLog(`执行技能 ${config.name || skillId}`, { level: LogLevel.DEBUG })
     return action
   }
 

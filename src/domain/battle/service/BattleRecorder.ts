@@ -29,6 +29,7 @@ import { calculateChecksum, generateReplayId } from '@/shared/utils/Checksum'
 import { LogType, type BattleLogEntry } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
+import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 
 /**
  * 战斗记录
@@ -119,6 +120,9 @@ export class BattleRecorder {
       level: LogLevel.INFO,
       message: `开始记录战斗: ${battleId}`,
     })
+
+    // ponytail: 战报累加器初始化
+    BattleSummaryGenerator.instance.startBattle(battleId)
 
     this.scheduleCleanup()
   }
@@ -229,6 +233,8 @@ export class BattleRecorder {
     if (recording) {
       recording.combatRecords.push(record)
     }
+    // ponytail: 战报数据累积
+    BattleSummaryGenerator.instance.onAction(record)
   }
 
   public recordBuffAdd(
@@ -379,11 +385,17 @@ export class BattleRecorder {
       roundNumber,
     )
 
+    const winnerLabel = winner === 'ally' ? '角色方' : '敌方'
+    const durationSec = Math.floor(duration / 1000)
+    const durationText = durationSec >= 60
+      ? `${Math.floor(durationSec / 60)} 分 ${durationSec % 60} 秒`
+      : `${durationSec} 秒`
+
     battleLogManager.addSystemLog({
-      message: `结束记录战斗: ${battleId}`,
+      message: `战斗结束 — ${winnerLabel} 获胜，用时 ${durationText}`,
       segments: [
         {
-          text: `战斗结束，${winner}获胜，耗时 ${duration}ms`,
+          text: `战斗结束 — ${winnerLabel} 获胜，用时 ${durationText}`,
         },
       ],
     })
@@ -421,7 +433,7 @@ export class BattleRecorder {
     try {
       localStorage.setItem(saveKey, JSON.stringify(saveData))
     } catch (e) {
-      battleLogManager.addDebugLog(`保存战斗记录失败: 存储空间不足`, { saveKey, error: e })
+      battleLogManager.addDebugLog(`保存战斗记录失败: 存储空间不足`, { context: { saveKey, error: e } })
       return saveKey
     }
 
@@ -435,8 +447,7 @@ export class BattleRecorder {
     }
 
     battleLogManager.addDebugLog(`保存战斗记录: ${battleId}`, {
-      saveKey,
-      checksum: checksumValue,
+      context: { saveKey, checksum: checksumValue },
     })
 
     return saveKey
@@ -457,8 +468,7 @@ export class BattleRecorder {
         if (calculatedChecksum !== checksum) {
           battleLogManager.addDebugLog(
             '战斗记录校验失败:',
-            LogLevel.ERROR,
-            undefined,
+            { level: LogLevel.ERROR },
           )
           return null
         }
@@ -472,8 +482,7 @@ export class BattleRecorder {
     } catch (error) {
       battleLogManager.addDebugLog(
         '加载战斗记录失败:',
-        LogLevel.ERROR,
-        undefined,
+        { level: LogLevel.ERROR },
       )
       return null
     }

@@ -108,8 +108,6 @@ import { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { BattleService } from '@/application/facade/BattleFacade'
 import { battleEventManager } from '@/domain/battle/events/BattleEventManager'
-import { setLogger } from '@/domain/port/logging'
-import { LoggerAdapter } from '@/infrastructure/adapters/logging/LoggerAdapter'
 import { reactive } from 'vue'
 
 /**
@@ -118,8 +116,6 @@ import { reactive } from 'vue'
  * 注意：服务注册顺序很重要，需要先注册被依赖的服务
  */
 export function initializeContainer(): void {
-  // 0. init logger via port (domain does not depend on infra)
-  setLogger(new LoggerAdapter())
 
   container.clear()
 

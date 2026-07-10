@@ -1,10 +1,10 @@
-import { BattleEntity, BattleTriggerPhase } from '@/domain/battle/types'
+import { BattleEntity, BattleTriggerPhase, PARTICIPANT_SIDE } from '@/domain/battle/types'
 import { BATTLE_CONSTANTS } from '@/domain/battle/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType } from '@/domain/buff/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
-import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 
 export interface PassiveSkillConfig {
   id: string
@@ -111,10 +111,22 @@ export class PassiveSkillManager {
         target!,
         (context?.currentTurn as number) || 0,
       )
-      // ponytail: 被动触发日志
+      // ponytail: 被动触发日志 — 带角色名着色
       const targetName = target?.name || '自身'
-      battleLogManager.addSystemLog({
-        message: `${entity.name} 触发 ${config.name}，对 ${targetName} 生效`,
+      const targetEntity = target
+      const segs = buildNameSegments(
+        entity.name,
+        entity.type === PARTICIPANT_SIDE.ALLY,
+        targetName,
+        targetEntity ? targetEntity.type === PARTICIPANT_SIDE.ALLY : undefined,
+      )
+      segs.push({ text: ` 触发 ${config.name}，对 ${targetName} 生效` })
+      const entityPrefix = entity.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      const targetEntityPrefix = targetEntity ? (targetEntity.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]') : ''
+      battleLogManager.addBattleLog({
+        turn: (context?.currentTurn as number) || 1,
+        message: `${entityPrefix}${entity.name} 触发 ${config.name}，对 ${targetEntityPrefix}${targetName} 生效`,
+        segments: segs,
         category: BATTLE_LOG_CATEGORIES.STATUS,
       })
       config.lastTriggeredTurn = (context?.currentTurn as number) || 0

@@ -541,7 +541,7 @@ export class BattleSystem {
         try {
           await this.executor.executeParticipantAction(battle, participant)
         } catch (error) {
-          battleLogManager.addDebugLog('角色行动执行出错:', error as Error)
+          battleLogManager.addDebugLog('角色行动执行出错:', { error: error as Error })
           await this.executor.executeDefaultAction(battle, participant)
         }
 
@@ -607,7 +607,7 @@ export class BattleSystem {
       battle.currentRound++
       eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED)
     } catch (error) {
-      battleLogManager.addDebugLog('处理回合时出错:', LogLevel.ERROR, error as Error)
+      battleLogManager.addDebugLog('处理回合时出错:', { level: LogLevel.ERROR, error: error as Error })
       console.error('处理回合时出错:', error)
     } finally {
       this.animationManager.cleanupAnimationState()

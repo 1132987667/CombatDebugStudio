@@ -24,9 +24,12 @@ export type {
   BattleLogManagerOptions,
   LogEntry,
   LogHandler,
+  LogSegment,
 } from '@/shared/types/battle-log'
 
-export { LogLevel } from '@/shared/types/battle-log'
+export type { DebugLogOptions } from '@/infrastructure/adapters/logging/BattleLogManager'
+
+export { LogLevel, LogType, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 
 // 导出 BattleLogManager 和相关功能
 export {
@@ -42,3 +45,8 @@ export { ConsoleLogHandler } from '@/infrastructure/adapters/logging/BattleLogMa
 
 // 结构化处理器 (JSON/CSV)
 export { JsonLogHandler, CsvLogHandler } from './StructuredLogHandlers'
+
+// 玩家日志渲染器
+export type { PlayerLogRenderer } from '@/shared/types/log-renderer'
+export { PokemonStyleRenderer } from '@/domain/battle/logs/renderers/PokemonStyleRenderer'
+export { SlayTheSpireRenderer } from '@/domain/battle/logs/renderers/SlayTheSpireRenderer'

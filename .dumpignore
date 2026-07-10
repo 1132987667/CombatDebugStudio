@@ -1,4 +1,3 @@
-@ -1,158 +1,25 @@
 # Logs
 logs
 *.log
@@ -7,8 +6,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-.git
 
 # Dependencies
 node_modules
@@ -20,8 +17,30 @@ coverage
 *.lcov
 .nyc_output
 
-# Production
-build
+# 文档
+.trae/
+.reasonix/
+.vscode/
+build/
+
+# json数据
+configs/
+
+docs/
+documents/
+prompts/
+scripts/
+tests/
+tools/
+
+output.txt
+
+.gitattributes
+.git
+.nuxt
+.github/
+
+
 dist
 dist-ssr
 *.local
@@ -49,9 +68,6 @@ package-lock.json
 # Temporary files
 *.tmp
 *.temp
-
-# Output files
-output.txt
 
 # .trae directory
 .trae/
@@ -149,15 +165,3 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# 文档
-.trae/documents/
-.trae/scripts/
-documents/
-tools/
-.gitattributes
-.git
-.nuxt
-.github/
-.vscode/
-prompts/
-docs/

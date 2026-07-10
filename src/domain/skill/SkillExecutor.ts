@@ -1,13 +1,14 @@
 import type { ExtendedSkillStep, SkillStep } from '@/domain/skill/types'
 import { SkillStepType } from '@/domain/skill/types'
 import type { BattleAction, BattleEntity } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE } from '@/domain/battle/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
-import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
 import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 
@@ -80,7 +81,7 @@ export class SkillExecutor {
         // 升级路径：当有技能配置使用它们时，在 switch 中添加对应 case
         battleLogManager.addDebugLog(
           `未实现的技能步骤类型: ${skillStep.type}`,
-          LogLevel.WARN,
+          { level: LogLevel.WARN },
         )
         action.effects.push({
           type: EffectType.STATUS,
@@ -223,11 +224,23 @@ export class SkillExecutor {
       description: `${source.name} applies ${buffId} to ${buffTarget.name}`,
     })
 
-    // ponytail: Buff 效果日志
+    // ponytail: Buff 效果日志 — 带角色名着色
     if (instanceId) {
-      const displayName = buffId.replace(/^(guardian_|buff_|debuff_)/, '')
-      battleLogManager.addSystemLog({
-        message: `${source.name} 对 ${buffTarget.name} 施加 ${displayName}`,
+      const buffConfig = this.buffSystem.scriptRegistry.getBuffConfig(buffId)
+      const displayName = buffConfig?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
+      const segs = buildNameSegments(
+        source.name,
+        source.type === PARTICIPANT_SIDE.ALLY,
+        buffTarget.name,
+        buffTarget.type === PARTICIPANT_SIDE.ALLY,
+      )
+      segs.push({ text: ` 施加 ${displayName}` })
+      const sourcePrefix = source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      const targetPrefix = buffTarget.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      battleLogManager.addBattleLog({
+        turn: (action?.turn as number) || 1,
+        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${buffTarget.name} 施加 ${displayName}`,
+        segments: segs,
         category: BATTLE_LOG_CATEGORIES.STATUS,
       })
     }
@@ -390,7 +403,7 @@ export class SkillExecutor {
       this.handleBurnDetonate(action, source, target, customType === 'burn_detonate_full')
     } else if (customType === 'extra_action') {
       // ponytail: 时之沙 — 15% 概率额外行动，需要 BattleSystem 插入回合队列支持
-      battleLogManager.addDebugLog('时之沙: 15%额外行动 — 需要 BattleSystem 回合队列插入', LogLevel.INFO)
+      battleLogManager.addDebugLog('时之沙: 15%额外行动 — 需要 BattleSystem 回合队列插入', { level: LogLevel.INFO })
       action.effects.push({
         type: EffectType.STATUS,
         targetId: source.id,
@@ -398,12 +411,12 @@ export class SkillExecutor {
       })
     } else if (customType === 'steal_item') {
       // ponytail: 盗窃本能 — PvE 掉落系统，非战斗逻辑
-      battleLogManager.addDebugLog('盗窃本能: PvE 掉落系统专用', LogLevel.INFO)
+      battleLogManager.addDebugLog('盗窃本能: PvE 掉落系统专用', { level: LogLevel.INFO })
     } else if (customType === 'overflow_shield') {
       // ponytail: 回春护盾溢出 — 需要治疗完成后检查溢出量并生成护盾
-      battleLogManager.addDebugLog('回春护盾溢出转盾: 需要治疗回调机制', LogLevel.INFO)
+      battleLogManager.addDebugLog('回春护盾溢出转盾: 需要治疗回调机制', { level: LogLevel.INFO })
     } else {
-      battleLogManager.addDebugLog(`自定义步骤未实现: ${desc}`, LogLevel.WARN)
+      battleLogManager.addDebugLog(`自定义步骤未实现: ${desc}`, { level: LogLevel.WARN })
       action.effects.push({
         type: EffectType.STATUS,
         targetId: target.id,

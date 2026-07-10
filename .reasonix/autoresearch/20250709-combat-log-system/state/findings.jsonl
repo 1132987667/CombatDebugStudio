@@ -1,0 +1,11 @@
+[
+  {"timestamp":"20260710-0940","event":"explore_complete","finding":"BattleLogManager supports 5 categories with LogSegment rendering","files":["src/infrastructure/adapters/logging/BattleLogManager.ts","src/shared/types/battle-log.ts"]},
+  {"timestamp":"20260710-0940","event":"explore_complete","finding":"BattleLogFormatter has 16 format functions for different action types","files":["src/infrastructure/adapters/logging/BattleLogFormatter.ts"]},
+  {"timestamp":"20260710-0940","event":"explore_complete","finding":"CombatRecord has DamageBreakdown for full calc chain tracing","files":["src/domain/battle/combat-record.ts"]},
+  {"timestamp":"20260710-0940","event":"explore_complete","finding":"BattleRecorder records full battle with events/rounds/snapshots","files":["src/domain/battle/service/BattleRecorder.ts"]},
+  {"timestamp":"20260710-0940","event":"explore_complete","finding":"BattleEventManager bridges eventBus to BattleLogManager","files":["src/domain/battle/events/BattleEventManager.ts"]},
+  {"timestamp":"20260710-0940","event":"explore_complete","finding":"Existing player UI: BattleLog.vue with checkbox filters","files":["src/presentation/views/BattleLog.vue"]},
+  {"timestamp":"20260710-0940","event":"explore_complete","finding":"Existing debug UI: DebugLogDialog.vue with level filtering","files":["src/presentation/views/components/DebugLogDialog.vue"]},
+  {"timestamp":"20260710-0940","event":"explore_complete","finding":"ILogger port with 4 methods, LoggerAdapter delegates to BattleLogManager","files":["src/domain/port/logging/ILogger.ts","src/infrastructure/adapters/logging/LoggerAdapter.ts"]},
+  {"timestamp":"20260710-0940","event":"explore_complete","finding":"battleActionToLogEntry() function converts BattleAction -> BattleLogEntry with segment generation","files":["src/shared/types/battle-log.ts"]}
+]

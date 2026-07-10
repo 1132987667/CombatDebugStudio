@@ -13,6 +13,7 @@ import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 
 /**
  * 战斗事件管理器
@@ -218,6 +219,12 @@ export class BattleEventManager {
           turn: '战斗结束',
           message: `? ${data.winner === PARTICIPANT_SIDE.ALLY ? '鎴戞柟' : '鏁屾柟'}`,
         })
+        // ponytail: 战报生成 — 不传参与者 HP 数据，仅有统计数据
+        const summary = BattleSummaryGenerator.instance.onBattleEnd(data.winner)
+        // 发射战报事件，供 UI 层 BattleSummaryDialog 捕获
+        if (summary) {
+          eventBus.emit('battle-summary', summary)
+        }
       }
     } catch (error) {
       console.error(`Error handling battle end: ${error}`)

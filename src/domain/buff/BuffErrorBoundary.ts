@@ -1,4 +1,5 @@
-﻿import { getLogger } from '@/domain/port/logging'
+﻿import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
 
 export enum BuffErrorType {
   CONFIG_ERROR = 'config_error',
@@ -43,22 +44,21 @@ export class BuffErrorBoundary {
     options?: { buffId?: string; scriptPath?: string },
   ): void {
     const buffError = BuffErrorBoundary.parseError(error, options)
-    const logger = getLogger()
     switch (buffError.type) {
       case BuffErrorType.CONFIG_ERROR:
-        logger.debug(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogManager.addDebugLog(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       case BuffErrorType.RUNTIME_ERROR:
-        logger.debug(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogManager.addDebugLog(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       case BuffErrorType.DEPENDENCY_ERROR:
-        logger.debug(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogManager.addDebugLog(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
       default:
-        logger.debug(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        battleLogManager.addDebugLog(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
         break
     }
-    if (buffError.stack) logger.debug(`Buff error stack: ${buffError.stack}`)
+    if (buffError.stack) battleLogManager.addDebugLog(`Buff error stack: ${buffError.stack}`)
   }
 
   private static parseError(

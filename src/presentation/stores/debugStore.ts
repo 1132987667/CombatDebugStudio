@@ -12,6 +12,19 @@ interface ExportedBattleState {
   battleLogs: BattleLogEntry[]
 }
 
+/** 基本形状校验：检查反序列化后的对象是否具备 ExportedBattleState 的必要字段 */
+function isValidExportedState(obj: unknown): obj is ExportedBattleState {
+  if (!obj || typeof obj !== 'object') return false
+  const s = obj as Record<string, unknown>
+  return (
+    Array.isArray(s.battleCharacters) &&
+    Array.isArray(s.enemyParty) &&
+    typeof s.currentTurn === 'number' &&
+    s.rules !== null && typeof s.rules === 'object' &&
+    Array.isArray(s.battleLogs)
+  )
+}
+
 interface DebugState {
   injectableStatuses: InjectableStatus[]
   lastExportTime: string | null
@@ -93,7 +106,12 @@ export const useDebugStore = defineStore('debug', {
       try {
         const savedState = localStorage.getItem('battleState')
         if (savedState) {
-          return JSON.parse(savedState) as ExportedBattleState
+          const parsed = JSON.parse(savedState)
+          if (!isValidExportedState(parsed)) {
+            console.warn('导入状态校验失败: 数据结构异常')
+            return null
+          }
+          return parsed
         }
         return null
       } catch (error) {
@@ -109,7 +127,12 @@ export const useDebugStore = defineStore('debug', {
       try {
         const savedState = localStorage.getItem('battleState')
         if (savedState) {
-          return JSON.parse(savedState) as ExportedBattleState
+          const parsed = JSON.parse(savedState)
+          if (!isValidExportedState(parsed)) {
+            console.warn('查看导出校验失败: 数据结构异常')
+            return null
+          }
+          return parsed
         }
         return null
       } catch (error) {

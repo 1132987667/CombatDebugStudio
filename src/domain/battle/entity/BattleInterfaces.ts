@@ -23,8 +23,6 @@ import type { BattleAI } from '@/domain/battle/ai/BattleAI'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 
 /**
-<<<<<<< Updated upstream
-=======
  * 战斗系统接口
  * 定义了战斗系统的核心功能，包括战斗创建、执行、查询和管理
  */
@@ -188,7 +186,6 @@ export interface IBattleSystem {
 }
 
 /**
->>>>>>> Stashed changes
  * 回合管理器接口
  * 负责管理战斗回合的初始化、推进和查询
  */

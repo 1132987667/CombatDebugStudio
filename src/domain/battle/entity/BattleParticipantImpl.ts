@@ -7,11 +7,13 @@
  * 版本: 3.1.0 - 集成触发器事件系统
  */
 
-import {
-  BattleTriggerPhase,
-  BATTLE_CONSTANTS,
+import { BattleTriggerPhase, BATTLE_CONSTANTS } from '@/domain/battle/types'
+import type {
+  StatusEffect,
+  ParticipantSnapshot,
+  BattleEntity,
+  BuffInstanceSnapshot,
 } from '@/domain/battle/types'
-import type { StatusEffect, ParticipantSnapshot, BattleEntity, BuffInstanceSnapshot } from '@/domain/battle/types'
 import type { IModifierProvider } from '@/domain/attribute/types'
 import { type ParticipantSide } from '@/domain/battle/types'
 import type { SkillConfig, SkillSet } from '@/domain/skill/types'
@@ -57,8 +59,6 @@ export class BattleParticipantImpl implements BattleEntity {
   seatIndex: number
   statusEffects?: StatusEffect[]
   skills: SkillSet
-  /** 属性值缓存（满足 BattleEntity 接口） */
-  attributeValues: AttributeValues = {} as AttributeValues
 
   /**
    * Buff 实例 ID 列表（派生自 BuffSystem)
@@ -132,10 +132,6 @@ export class BattleParticipantImpl implements BattleEntity {
     if (data.attributeValues) {
       this.stats.initAttributes(data.attributeValues)
     }
-    // 初始化 attributeValues 以满足 BattleEntity 接口要求
-    this.attributeValues = Object.fromEntries(
-      this.stats.attributes.entries()
-    ) as unknown as AttributeValues
 
     if (modifierProvider) {
       this.setModifierProvider(modifierProvider)
@@ -171,8 +167,12 @@ export class BattleParticipantImpl implements BattleEntity {
       if (stackMods.length === 0) continue
 
       // 保留 base 修饰符和被动技能修饰符
-      const baseModifier = attrData.modifiers.find(m => m.sourceKey === 'base')
-      const passiveModifiers = attrData.modifiers.filter(m => m.sourceKey.startsWith('passive:'))
+      const baseModifier = attrData.modifiers.find(
+        (m) => m.sourceKey === 'base',
+      )
+      const passiveModifiers = attrData.modifiers.filter((m) =>
+        m.sourceKey.startsWith('passive:'),
+      )
 
       // ponytail: ModifierStack 现在直接存储 Modifier[]（sourceKey = buffInstanceId），
       // 此处仅做富化（sourceType 委托给 provider，添加描述文本），无需类型桥接。
@@ -203,7 +203,8 @@ export class BattleParticipantImpl implements BattleEntity {
    * @returns 属性最终值
    */
   getAttribute(attr: ATTRIBUTE_CODE | string): number {
-    const normalizedAttr = typeof attr === 'string' ? attr as ATTRIBUTE_CODE : attr
+    const normalizedAttr =
+      typeof attr === 'string' ? (attr as ATTRIBUTE_CODE) : attr
     const attrValue = this.getAttributeValue(normalizedAttr)
     return attrValue?.value ?? 0
   }
@@ -261,7 +262,10 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   set currentHealth(value: number) {
     const maxHp = this.getAttribute(ATTRIBUTE_CODE.maxHealth)
-    this.stats.setAttributeValue(ATTRIBUTE_CODE.currentHealth, Math.max(0, Math.min(value, maxHp)))
+    this.stats.setAttributeValue(
+      ATTRIBUTE_CODE.currentHealth,
+      Math.max(0, Math.min(value, maxHp)),
+    )
     this._statsVersion++
   }
 
@@ -298,7 +302,10 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   set currentEnergy(value: number) {
     const maxEnergy = this.getAttribute(ATTRIBUTE_CODE.maxEnergy)
-    this.stats.setAttributeValue(ATTRIBUTE_CODE.currentEnergy, Math.max(0, Math.min(value, maxEnergy)))
+    this.stats.setAttributeValue(
+      ATTRIBUTE_CODE.currentEnergy,
+      Math.max(0, Math.min(value, maxEnergy)),
+    )
     this._statsVersion++
   }
 
@@ -489,7 +496,7 @@ export class BattleParticipantImpl implements BattleEntity {
    * 在minAttack和maxAttack之间随机取值
    * @returns 随机攻击力
    */
-  getRandomAttackDemage(): number {
+  getRandomAttackDamage(): number {
     const minAtk = this.getAttribute(ATTRIBUTE_CODE.minAttack)
     const maxAtk = this.getAttribute(ATTRIBUTE_CODE.maxAttack)
     return Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
@@ -583,7 +590,10 @@ export class BattleParticipantImpl implements BattleEntity {
     let damage = Math.max(0, amount)
 
     // ponytail: 背水护甲 — 能量抵扣伤害（每1能量抵扣1点伤害）
-    if (this.hasBuff('guardian_buff_backwater_armor') && this.currentEnergy > 0) {
+    if (
+      this.hasBuff('guardian_buff_backwater_armor') &&
+      this.currentEnergy > 0
+    ) {
       const energyUsed = Math.min(this.currentEnergy, damage)
       this.currentEnergy -= energyUsed
       damage -= energyUsed
@@ -612,7 +622,7 @@ export class BattleParticipantImpl implements BattleEntity {
     const originalHealth = this.currentHealth
     this.currentHealth = Math.min(
       this.currentHealth + healAmount,
-      this.maxHealth
+      this.maxHealth,
     )
     return this.currentHealth - originalHealth
   }
@@ -677,7 +687,9 @@ export class BattleParticipantImpl implements BattleEntity {
    * @param filter - 技能类型过滤：'active'返回主动技能，SkillType.ALL返回所有，SkillType.PASSIVE返回被动技能
    * @returns 技能ID数组
    */
-  getSkillIds(filter: 'active' | 'all' | 'passive' = SkillType.ALL as 'all'): string[] {
+  getSkillIds(
+    filter: 'active' | 'all' | 'passive' = SkillType.ALL as 'all',
+  ): string[] {
     return this.skillManager.getSkillIds(filter)
   }
 
@@ -806,11 +818,20 @@ export class BattleParticipantImpl implements BattleEntity {
         const absVal = Math.abs(mod.value)
         const valStr = isPercentage ? `${absVal}%` : `${absVal}`
         switch (mod.type) {
-          case ModifierType.ADDITIVE: parts.push(`${sign}${valStr}[${mod.sourceKey}]`); break
-          case ModifierType.PERCENTAGE: parts.push(`${sign}${valStr}%[${mod.sourceKey}]`); break
-          case ModifierType.MULTIPLICATIVE: parts.push(`×${1 + mod.value}[${mod.sourceKey}]`); break
-          case ModifierType.FINAL: parts.push(`×${1 + mod.value}(最终)[${mod.sourceKey}]`); break
-          default: parts.push(`${sign}${valStr}[${mod.sourceKey}]`)
+          case ModifierType.ADDITIVE:
+            parts.push(`${sign}${valStr}[${mod.sourceKey}]`)
+            break
+          case ModifierType.PERCENTAGE:
+            parts.push(`${sign}${valStr}%[${mod.sourceKey}]`)
+            break
+          case ModifierType.MULTIPLICATIVE:
+            parts.push(`×${1 + mod.value}[${mod.sourceKey}]`)
+            break
+          case ModifierType.FINAL:
+            parts.push(`×${1 + mod.value}(最终)[${mod.sourceKey}]`)
+            break
+          default:
+            parts.push(`${sign}${valStr}[${mod.sourceKey}]`)
         }
       }
 
@@ -827,7 +848,9 @@ export class BattleParticipantImpl implements BattleEntity {
         modifiers: attrValue.modifiers.map((m: Modifier) => ({
           source: m.sourceKey,
           sourceType: m.sourceType,
-          value: m.value, type: m.type, description: m.description,
+          value: m.value,
+          type: m.type,
+          description: m.description,
         })),
         formula: parts.join(' → '),
         breakdown: attrValue.breakdown,

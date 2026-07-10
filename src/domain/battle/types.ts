@@ -188,8 +188,6 @@ export interface BattleEntity {
   statusEffects?: StatusEffect[]
   /** 技能配置 */
   skills: SkillSet
-  /** 属性值缓存 */
-  attributeValues: AttributeValues
   /** 属性版本戳（每次属性重算后递增，用于 Vue 响应式追踪） */
   readonly statsVersion: number
 
@@ -224,7 +222,7 @@ export interface BattleEntity {
   /** 设置修饰符提供者 */
   setModifierProvider(provider: IModifierProvider): void
 
-  getRandomAttackDemage(): number
+  getRandomAttackDamage(): number
 
   takeDamage(amount: number): number
   heal(amount: number): number

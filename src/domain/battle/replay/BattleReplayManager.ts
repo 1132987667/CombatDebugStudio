@@ -272,70 +272,42 @@ export class BattleReplayManager {
    * 处理动作回放
    * @param action 动作对象
    */
-  // ponytail: 占位符 — 回放功能后续接入 ReplayEngine 的事件驱动 UI 更新
+  /** 处理动作回放 */
   private handleActionReplay(action: any) {
     console.log('回放动作:', action)
   }
 
-  /**
-   * 处理回合开始回放
-   * @param turn 回合数
-   * @param participantId 参与者ID
-   */
-  // ponytail: 占位符 — 回放功能后续接入 ReplayEngine 的事件驱动 UI 更新
+  /** 处理回合开始回放 */
   private handleTurnStartReplay(turn: number, participantId: string) {
     console.log('回放回合开始:', turn, '行动者:', participantId)
   }
 
-  /**
-   * 处理回合结束回放
-   * @param turn 回合数
-   */
-  // ponytail: 占位符 — 回放功能后续接入 ReplayEngine 的事件驱动 UI 更新
+  /** 处理回合结束回放 */
   private handleTurnEndReplay(turn: number) {
     console.log('回放回合结束:', turn)
   }
 
-  /**
-   * 处理战斗开始回放
-   */
-  // ponytail: 占位符 — 回放功能后续接入 ReplayEngine 的事件驱动 UI 更新
+  /** 处理战斗开始回放 */
   private handleBattleStartReplay() {
     console.log('回放战斗开始')
   }
 
-  /**
-   * 处理战斗结束回放
-   * @param winner 胜利者
-   */
-  // ponytail: 占位符 — 回放功能后续接入 ReplayEngine 的事件驱动 UI 更新
+  /** 处理战斗结束回放 */
   private handleBattleEndReplay(winner: string) {
     console.log('回放战斗结束:', winner)
   }
 
-  /**
-   * 处理Buff添加回放
-   * @param data Buff数据
-   */
-  // ponytail: 占位符 — 回放功能后续接入 ReplayEngine 的事件驱动 UI 更新
+  /** 处理Buff添加回放 */
   private handleBuffAddReplay(data: any) {
     console.log('回放Buff添加:', data)
   }
 
-  /**
-   * 处理Buff移除回放
-   * @param data Buff数据
-   */
-  // ponytail: 占位符 — 回放功能后续接入 ReplayEngine 的事件驱动 UI 更新
+  /** 处理Buff移除回放 */
   private handleBuffRemoveReplay(data: any) {
     console.log('回放Buff移除:', data)
   }
 
-  /**
-   * 处理Buff更新回放
-   * @param data Buff数据
-   */
-  // ponytail: 占位符 — 回放功能后续接入 ReplayEngine 的事件驱动 UI 更新
+  /** 处理Buff更新回放 */
   private handleBuffUpdateReplay(data: any) {
     console.log('回放Buff更新:', data)
   }

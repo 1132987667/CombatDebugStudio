@@ -145,16 +145,16 @@ const applyFilters = () => {
   battleLogManager.updateFilters(logFilters);
 };
 
+const logUpdateListener = () => {
+  logVersion.value++;
+}
+
 onMounted(() => {
-  battleLogManager.addListener(() => {
-    logVersion.value++;
-  });
+  battleLogManager.addListener(logUpdateListener);
 });
 
 onUnmounted(() => {
-  // ponytail: BattleLogManager 暂无可移除 listener 的 API，
-  // listener 持有 logVersion 的闭包引用，组件卸载后继续递增无害但浪费。
-  // 升级路径：给 manager 加上 removeListener 后在此处调用清理
+  battleLogManager.removeListener(logUpdateListener);
 });
 </script>
 

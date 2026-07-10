@@ -352,6 +352,12 @@ export class BattleManager {
       this.enemyTeam.push(character)
     }
 
+    // 同步到 BattleSystem.participants Map
+    const battleData = this.battleSystem.getBattleData()
+    if (battleData?.participants) {
+      battleData.participants.set(character.id, character)
+    }
+
     // 触发角色的被动技能
     this.battleSystem.triggerPassiveSkillsForCharacter(character)
 
@@ -365,12 +371,22 @@ export class BattleManager {
     const idxAlly = this.allyTeam.findIndex((p) => p.id === characterId)
     if (idxAlly >= 0) {
       this.allyTeam.splice(idxAlly, 1)
+      // 同步从 BattleSystem.participants 移除
+      const battleData = this.battleSystem.getBattleData()
+      if (battleData?.participants) {
+        battleData.participants.delete(characterId)
+      }
       this.emitTeamChanged()
       return
     }
     const idxEnemy = this.enemyTeam.findIndex((p) => p.id === characterId)
     if (idxEnemy >= 0) {
       this.enemyTeam.splice(idxEnemy, 1)
+      // 同步从 BattleSystem.participants 移除
+      const battleData = this.battleSystem.getBattleData()
+      if (battleData?.participants) {
+        battleData.participants.delete(characterId)
+      }
       this.emitTeamChanged()
     }
   }

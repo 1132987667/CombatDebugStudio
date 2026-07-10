@@ -60,7 +60,9 @@ import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
 import type { SkillConfig } from '@/domain/skill/types'
 
-/**
+/** 角色行动间的动画延迟（ms） */
+const TURN_ACTION_DELAY_MS = 400
+
 /**
  * 战斗系统核心管理类
  *
@@ -143,17 +145,18 @@ export class BattleSystem {
     private readonly passiveSkillManager: PassiveSkillManager,
   ) {
     this.battleData = this.getDefBattleData()
+    this.animationManager = new BattleAnimationManager(
+      this.rafTimer,
+      () => this.battleData?.participants,
+      () => (this.battleData?.battleSpeed ?? 1) * 200,
+    )
     this.lifecycleManager = new BattleLifecycleManager(
       () => this.battleData,
       this.rafTimer,
       this.battleRecorder,
       this.buffSystem,
       () => this.processTurnInternal(),
-    )
-    this.animationManager = new BattleAnimationManager(
-      this.rafTimer,
-      () => this.battleData?.participants,
-      () => (this.battleData?.battleSpeed ?? 1) * 200,
+      this.animationManager,
     )
     this.executor = new BattleExecutor(
       this.skillManager,
@@ -552,12 +555,17 @@ export class BattleSystem {
         
         await this.animationManager.waitForAnimation()
 
-        // ponytail: 角色行动间保留固定间隔，让 CSS 动画有足够时间淡出完成
-        await this.animationManager.wait(400)
+        // 角色行动间保留固定间隔，让 CSS 动画有足够时间淡出完成
+        await this.animationManager.wait(TURN_ACTION_DELAY_MS)
+
+        // ⭐ 补充守卫：如果在等待间隔期间战斗已结束，跳过后续操作
+        if (battle.battleState !== BattleStatus.ACTIVE) {
+          return
+        }
 
         this.buffSystem.updatePerTurn(participant.id)
 
-        this.runEndConditionCheck()
+        await this.runEndConditionCheck()
 
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
@@ -669,12 +677,12 @@ export class BattleSystem {
    * 检测战斗结束条件并处理
    * 委托给 ruleManager 进行规则判定，只负责后续副作用（结束战斗、日志）
    */
-  private runEndConditionCheck(): void {
+  private async runEndConditionCheck(): Promise<void> {
     const battle = this.battleData
     if (!battle) return
     const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentRound)
     if (result.shouldEnd && result.winner) {
-      this.endBattle(result.winner)
+      await this.endBattle(result.winner)
       if (battle.currentRound >= battle.maxTurns) {
         const winnerLabel = result.winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'
         battleLogManager.addBattleLog({
@@ -912,12 +920,16 @@ export class BattleSystem {
     )
 
     if (aliveParticipants.length === 0) {
-      const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentRound)
-      if (result.winner) {
-        commands.push({
-          type: 'SET_WINNER',
-          payload: { winner: result.winner === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
-        })
+      // 战斗已在 runEndConditionCheck 中结束，此处不再重复触发
+      // 仅当 battleState 仍为 ACTIVE 时才生成 SET_WINNER（兜底保护）
+      if (battle.battleState === BattleStatus.ACTIVE) {
+        const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentRound)
+        if (result.winner) {
+          commands.push({
+            type: 'SET_WINNER',
+            payload: { winner: result.winner === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+          })
+        }
       }
       return commands
     }

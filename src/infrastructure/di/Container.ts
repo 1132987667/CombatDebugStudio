@@ -77,7 +77,7 @@ export class Container {
   }
 }
 
-export const container = reactive(Container.getInstance())
+export const container = Container.getInstance()
 
 // 导入所有必要的服务和令牌
 import {
@@ -108,7 +108,7 @@ import { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { BattleService } from '@/application/facade/BattleFacade'
 import { battleEventManager } from '@/domain/battle/events/BattleEventManager'
-import { reactive } from 'vue'
+
 
 /**
  * 初始化依赖注入容器
@@ -167,25 +167,35 @@ export function initializeContainer(): void {
     true,
   )
 
-  // 注册BattleManager
+  // 注册子管理器，使其可通过容器独立访问
+  container.registerFactory('BattleStateManager', () => {
+    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    return new BattleStateManager(battleSystem)
+  }, true)
+
+  container.registerFactory('AutoBattleManager', () => {
+    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    const battleStateManager = container.resolve<BattleStateManager>('BattleStateManager')
+    return new AutoBattleManager(battleSystem, battleStateManager)
+  }, true)
+
+  container.registerFactory('InterventionManager', () => {
+    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    const battleStateManager = container.resolve<BattleStateManager>('BattleStateManager')
+    return new InterventionManager(battleSystem, battleStateManager)
+  }, true)
+
+  container.register('BattleReplayManager', new BattleReplayManager())
+
+  // 注册 BattleManager（从容器解析子管理器依赖）
   container.registerFactory(
     'BattleManager',
     () => {
-      const battleSystem: BattleSystem = container.resolve(
-        BATTLE_SYSTEM_TOKEN.toString(),
-      )
-
-      // 创建并注入所有子管理器
-      const battleStateManager = new BattleStateManager(battleSystem)
-      const autoBattleManager = new AutoBattleManager(
-        battleSystem,
-        battleStateManager,
-      )
-      const interventionManager = new InterventionManager(
-        battleSystem,
-        battleStateManager,
-      )
-      const battleReplayManager = new BattleReplayManager()
+      const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+      const battleStateManager = container.resolve<BattleStateManager>('BattleStateManager')
+      const autoBattleManager = container.resolve<AutoBattleManager>('AutoBattleManager')
+      const interventionManager = container.resolve<InterventionManager>('InterventionManager')
+      const battleReplayManager = container.resolve<BattleReplayManager>('BattleReplayManager')
 
       const battleManager = new BattleManager(
         battleSystem,

@@ -31,7 +31,7 @@ describe('DamageCalculator', () => {
     it('should calculate damage based on formula', () => {
       const source = createMockEntity()
       const target = createMockEntity()
-      source.getRandomAttackDemage = () => 100
+      source.getRandomAttackDamage = () => 100
       const step = createSkillStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 2 }] } })
 
       const result = calculator.calculateDamage(step, source, target)
@@ -69,7 +69,7 @@ describe('DamageCalculator', () => {
       const source = createMockEntity()
       const target = createMockEntity()
       const step = createSkillStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 2 }] } })
-      source.getRandomAttackDemage = () => 0
+      source.getRandomAttackDamage = () => 0
       const origGetAttr = source.getAttribute
       source.getAttribute = (attr: string) => {
         if (attr === ATTRIBUTE_CODE.hit) return 100

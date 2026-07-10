@@ -115,11 +115,15 @@ export class AutoBattleManager {
       return
     }
 
+    // ⭐ 单步执行仅在暂停状态下允许，防止自动战斗运行期间误触
+    if (!this.battleSystem.getIsPaused()) {
+      this.battleLogManager.addSystemLog({ message: '单步执行仅在暂停状态下可用', level: LogLevel.WARN })
+      return
+    }
+
     try {
-      // 确保不是暂停状态
-      if (this.battleSystem.getIsPaused()) {
-        this.battleSystem.togglePause()
-      }
+      // 临时恢复以执行一个回合
+      this.battleSystem.togglePause()
 
       await this.battleSystem.processTurn()
 
@@ -130,16 +134,16 @@ export class AutoBattleManager {
         await this.battleLogManager.syncBattleLogs(battleState)
       }
 
-      // 执行完成后暂停
-      if (!this.battleSystem.getIsPaused()) {
+      // 执行完成后暂停（仅在战斗仍活跃时才切换，防止 ENDED 被误切为 PAUSED）
+      if (!this.battleSystem.getIsPaused() && this.battleSystem.isBattleInProgress()) {
         this.battleSystem.togglePause()
       }
     } catch (error) {
       console.error('执行回合时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
       this.battleLogManager.addDebugLog(`执行回合时出错: ${errorMsg}`)
-      // 出错时也暂停
-      if (!this.battleSystem.getIsPaused()) {
+      // 出错时也暂停（仅在战斗仍活跃时）
+      if (!this.battleSystem.getIsPaused() && this.battleSystem.isBattleInProgress()) {
         this.battleSystem.togglePause()
       }
     }

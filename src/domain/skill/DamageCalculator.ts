@@ -35,9 +35,9 @@ export interface DamageResult {
 }
 
 /** 防御效果系数：每点防御转化为有效防御的比例 */
-const DEFENSE_EFFECTIVENESS = 0.5
+export const DEFENSE_EFFECTIVENESS = 0.5
 /** 防御递减公式分母：控制防御收益递减曲线 */
-const DEFENSE_DENOMINATOR = 500
+export const DEFENSE_DENOMINATOR = 500
 
 function getAttributeValue(
   participant: BattleEntity,
@@ -168,7 +168,7 @@ export class DamageCalculator {
         const isTargetAttr = extra.attribute === 'maxHealth' || extra.attribute === 'currentHealth'
         const attrValue =
           extra.attribute === ATTRIBUTE_CODE.attack
-            ? source.getRandomAttackDemage()
+            ? source.getRandomAttackDamage()
             : getAttributeValue(isTargetAttr ? target : source, extra.attribute as ATTRIBUTE_CODE)
         const extraValue = attrValue * extra.ratio
         damage += extraValue
@@ -417,7 +417,7 @@ export class DamageCalculator {
       ) {
         baseDamage = Math.floor(Math.random() * (maxAtk - minAtk + 1)) + minAtk
       } else {
-        const atk = source.getRandomAttackDemage()
+        const atk = source.getRandomAttackDamage()
         baseDamage = Math.floor(atk + levelBonus)
       }
     }

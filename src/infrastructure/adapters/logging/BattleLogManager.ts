@@ -25,7 +25,6 @@ import {
   newLogSegment,
   battleActionToLogEntry,
 } from '@/shared/types/battle-log'
-import { reactive } from 'vue'
 import { Counter } from '@/shared/utils/Counter'
 import type { Item } from '@/shared/types/Item'
 import type { PlayerLogRenderer } from '@/shared/types/log-renderer'
@@ -747,4 +746,4 @@ export class BattleLogManager {
 /**
  * 默认日志管理器单例实例
  */
-export const battleLogManager = reactive(BattleLogManager.getInstance({}))
+export const battleLogManager = BattleLogManager.getInstance({})

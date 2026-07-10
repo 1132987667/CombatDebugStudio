@@ -205,6 +205,11 @@ export class InterventionManager {
       const savedState = localStorage.getItem('battleState')
       if (savedState) {
         const state = JSON.parse(savedState)
+        // 基本形状校验：确保解析结果是对象且包含必要字段
+        if (!state || typeof state !== 'object') {
+          this.battleLogManager.addDebugLog('导入状态校验失败: 不是有效对象')
+          return false
+        }
 
         // 这里可以实现导入逻辑，更新队伍和状态
         // 例如：
@@ -232,7 +237,13 @@ export class InterventionManager {
     const savedState = localStorage.getItem('battleState')
     if (savedState) {
       try {
-        return JSON.parse(savedState)
+        const parsed = JSON.parse(savedState)
+        // 基本形状校验
+        if (!parsed || typeof parsed !== 'object') {
+          console.warn('查看导出校验失败: 不是有效对象')
+          return null
+        }
+        return parsed
       } catch (error) {
         console.error('查看导出时出错:', error)
         return null

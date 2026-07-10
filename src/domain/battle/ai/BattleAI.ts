@@ -337,12 +337,12 @@ export class BaseBattleAI implements BattleAI {
     return BattleActionHelper.createAttack({
       sourceId: participant.id,
       targetId: '',
-      damage: participant.getRandomAttackDemage(),
+      damage: participant.getRandomAttackDamage(),
       turn: 0,
       effects: [
         {
           type: EffectType.DAMAGE,
-          value: participant.getRandomAttackDemage(),
+          value: participant.getRandomAttackDamage(),
           description: `${participant.name} normal attack`,
         },
       ],

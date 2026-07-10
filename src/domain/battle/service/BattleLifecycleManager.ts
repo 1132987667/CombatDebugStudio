@@ -8,6 +8,8 @@ import { eventBus } from '@/main'
 import { BattleEventCodes } from '@/shared/types/battle-events'
 import type { RAFTimer } from '@/shared/utils/RAF'
 
+import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
+
 export class BattleLifecycleManager {
   private autoBattleTimerId?: symbol
   private autoBattleLoop?: () => Promise<void>
@@ -18,11 +20,20 @@ export class BattleLifecycleManager {
     private battleRecorder: BattleRecorder,
     private buffSystem: BuffSystem,
     private processTurnInternal: () => Promise<void>,
+    private animationManager: BattleAnimationManager,
   ) {}
 
   async endBattle(winner: ParticipantSide): Promise<void> {
     const battle = this.getBattleData()
     if (!battle) return
+
+    // ⭐ 幂等性守卫：防止重复触发 endBattle
+    if (
+      battle.battleState === BattleStatus.ENDED ||
+      battle.battleState === BattleStatus.SETTLEMENT
+    ) {
+      return
+    }
 
     this.stopAutoBattle()
     this.cleanupTimers()
@@ -35,6 +46,9 @@ export class BattleLifecycleManager {
     battle.battleState = BattleStatus.ENDED
     battle.winner = winner
     battle.endTime = Date.now()
+
+    // ⭐ 强制中断所有正在等待的动画，让 processTurnInternal 立即退出
+    this.animationManager.cleanupAnimationState()
 
     const endAction = BattleActionHelper.createSkill({
       sourceId: 'system',

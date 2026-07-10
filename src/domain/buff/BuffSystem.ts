@@ -257,7 +257,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         existingBuffs.forEach((instance) => this.removeBuff(instance.id))
         break
       case StackRule.LIMITED:
-        if (existingBuffs.length >= resolvedConfig.maxStacks) return existingBuffs[0].id
+        if (existingBuffs.length >= resolvedConfig.maxStacks) {
+          // 满层时刷新持续时间而非静默忽略
+          this.refreshBuff(existingBuffs[0].id, currentTurn)
+          return existingBuffs[0].id
+        }
         break
       case StackRule.INDEPENDENT:
         break

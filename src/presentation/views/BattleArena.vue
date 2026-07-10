@@ -393,9 +393,10 @@ onMounted(() => {
   // 初始化队伍数据
   initBattle();
   // 监听 battleLogManager 的调试日志 — 通过 addListener 订阅而非 setInterval 轮询
-  battleLogManager.addListener(() => {
+  debugLogListener = () => {
     debugLogs.value = battleLogManager.getDebugLogs();
-  });
+  };
+  battleLogManager.addListener(debugLogListener);
   debugLogs.value = battleLogManager.getDebugLogs();
 });
 
@@ -640,12 +641,16 @@ const selectCharacter = (characterId: string) => {
   battleStore.selectCharacter(characterId);
 };
 
+let debugLogListener: (() => void) | null = null
+
 onUnmounted(() => {
   // 组件卸载时的清理工作
   // 清理战斗管理器事件监听器，防止内存泄漏
   battleStore.destroy();
-  // ponytail: 日志订阅由 listener 闭包持有，manager 暂无可移除 listener 的 API，
-  // 组件卸载后继续递增 logVersion 无害；升级路径：给 manager 加上 removeListener 后在此清理
+  if (debugLogListener) {
+    battleLogManager.removeListener(debugLogListener);
+    debugLogListener = null;
+  }
 });
 </script>
 

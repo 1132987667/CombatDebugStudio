@@ -14,6 +14,8 @@ import type { RAFTimer } from '@/shared/utils/RAF'
 export class BattleAnimationManager {
   private animationQueue: AnimationQueueItem[] = []
   private isAnimationPlaying = false
+  /** ⭐ 记录 waitForAnimation 中当前轮询间隔的 resolve，外部可强制中断 */
+  private _interruptResolve: (() => void) | null = null
 
   constructor(
     private rafTimer: RAFTimer,
@@ -29,7 +31,16 @@ export class BattleAnimationManager {
 
   async waitForAnimation(): Promise<void> {
     while (this.isAnimating()) {
-      await this.wait(100)
+      await new Promise<void>((resolve) => {
+        // 保存 resolve 引用，使外部可强制中断本轮等待
+        this._interruptResolve = resolve
+        this.rafTimer.setTimeout(() => {
+          if (this._interruptResolve === resolve) {
+            this._interruptResolve = null
+          }
+          resolve()
+        }, 100)
+      })
     }
   }
 
@@ -40,6 +51,11 @@ export class BattleAnimationManager {
   cleanupAnimationState(): void {
     this.animationQueue = []
     this.isAnimationPlaying = false
+    // ⭐ 强制 resolve 当前轮询等待，让 waitForAnimation 立即检查 isAnimating 并退出
+    if (this._interruptResolve) {
+      this._interruptResolve()
+      this._interruptResolve = null
+    }
   }
 
   async triggerAnimationAndWait(

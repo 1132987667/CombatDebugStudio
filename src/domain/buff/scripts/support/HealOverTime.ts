@@ -1,5 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import type { BuffEffectLine } from '@/domain/buff/types'
 
 export class HealOverTime extends BaseBuffScript {
   public static readonly BUFF_ID = 'heal_over_time'
@@ -49,6 +50,11 @@ export class HealOverTime extends BaseBuffScript {
     context.setVariable('baseHealing', baseHealing + refreshBonus)
     
     this.log(context, `治疗量提升至 ${baseHealing + refreshBonus}`)
+  }
+
+  public getEffectLines(context: BuffContext): BuffEffectLine[] {
+    const baseHealing = this.getConfigValue(context, 'baseHealing', 20)
+    return [{ text: `每回合回复 ${baseHealing} 生命值`, kind: 'hot' }]
   }
 }
 

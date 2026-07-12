@@ -14,6 +14,7 @@
  */
 import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { StackRule, ControlType, ScriptBuffConfig } from '@/domain/buff/types'
 import { SkillStepType } from '@/domain/skill/types'
@@ -123,6 +124,14 @@ export class BerserkBuff extends BaseBuffScript {
     context.setVariable('currentCritRateBonus', newCrit)
 
     this.log(context, `✨ 攻击力额外 +${params.refreshAttackBonus}，暴击率 +${(params.refreshCritRateBonus * 100).toFixed(0)}%`)
+  }
+
+  public getEffectLines(context: BuffContext): BuffEffectLine[] {
+    const params = this.resolveParams(context)
+    return [{
+      text: `每 ${params.selfDamageInterval} 回合损失 ${(params.selfDamagePercent * 100).toFixed(0)}% 当前生命值`,
+      kind: 'dot',
+    }]
   }
 
   // ==================== 辅助方法 ====================

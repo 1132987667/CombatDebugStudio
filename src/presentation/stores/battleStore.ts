@@ -90,8 +90,6 @@ export const useBattleStore = defineStore('battle', () => {
   })
   /** 自动播放模式开关（启用后自动执行回合无需手动操作） */
   const autoPlayMode = ref(false)
-  /** Buff 显示模式：'icon' = 图标列表，'text' = 纯文本标签 */
-  const buffDisplayMode = ref<'icon' | 'text'>('icon')
   /** 暂停状态（暂停时按钮显示"继续"，非暂停显示"暂停"） */
   const isPaused = ref(false)
   /** 动画效果状态管理（伤害数字/闪避/Buff图标/技能特效的触发与清除） */
@@ -506,11 +504,6 @@ export const useBattleStore = defineStore('battle', () => {
    * @returns Promise<boolean> 操作是否成功
    * @description 在自动战斗和手动模式之间切换，失败时自动恢复原状态
    */
-  /** 切换 Buff 显示模式（图标 ↔ 纯文本） */
-  const toggleBuffDisplayMode = () => {
-    buffDisplayMode.value = buffDisplayMode.value === 'icon' ? 'text' : 'icon'
-  }
-
   const toggleAutoPlay = async () => {
     setLoading(true)
     clearError()
@@ -810,7 +803,6 @@ export const useBattleStore = defineStore('battle', () => {
     loading, // 加载状态
     error, // 错误状态
     autoPlayMode, // 自动播放模式
-    buffDisplayMode, // Buff 显示模式
     animationState, // 动画效果状态
     currentBattleId, // 当前战斗ID
     turnOrder, // 回合行动顺序
@@ -863,7 +855,6 @@ export const useBattleStore = defineStore('battle', () => {
     resetBattle, // 重置战斗
     processSingleTurn, // 执行单回合
     toggleAutoPlay, // 切换自动播放
-    toggleBuffDisplayMode, // 切换 Buff 显示模式
     togglePause, // 切换暂停
 
     // ========== 数据导入导出 ==========

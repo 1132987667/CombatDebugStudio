@@ -1,4 +1,4 @@
-﻿import type { IBuffScript } from '@/domain/buff/types'
+﻿import type { IBuffScript, BuffEffectLine } from '@/domain/buff/types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
@@ -64,6 +64,11 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
     data?: any
   ): void {
     context.triggerEvent(eventName, data)
+  }
+
+  /** 默认实现：无特殊效果行。子类可覆盖此方法返回 DOT/HOT/护盾等文本 */
+  public getEffectLines(_context: BuffContext): BuffEffectLine[] {
+    return []
   }
 }
 

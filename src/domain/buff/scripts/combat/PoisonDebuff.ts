@@ -1,5 +1,6 @@
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { SkillStepType } from '@/domain/skill/types'
 
@@ -56,6 +57,11 @@ export class PoisonDebuff extends BaseBuffScript {
     context.setVariable('baseDamage', baseDamage + refreshBonus)
     
     this.log(context, `毒素伤害提升至 ${baseDamage + refreshBonus}`)
+  }
+
+  public getEffectLines(context: BuffContext): BuffEffectLine[] {
+    const baseDamage = this.getConfigValue(context, 'baseDamage', 10)
+    return [{ text: `每回合损失 ${baseDamage} 生命值`, kind: 'dot' }]
   }
 }
 

@@ -1,4 +1,4 @@
-import type { BuffConfig, BuffInstance, BuffQuery, IBuffScript, ScriptBuffConfig } from '@/domain/buff/types'
+import type { BuffConfig, BuffInstance, BuffQuery, IBuffScript, ScriptBuffConfig, BuffEffectLine } from '@/domain/buff/types'
 import { BUFF_ID_PREFIX } from '@/domain/buff/types'
 import type {
   TriggerEventContext,
@@ -26,6 +26,7 @@ const NOOP_BUFF_SCRIPT: IBuffScript = {
   onRemove: () => {},
   onUpdate: () => {},
   onRefresh: () => {},
+  getEffectLines: () => [],
 }
 
 export interface TriggerExecutionContext extends TriggerEventContext {
@@ -293,6 +294,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       script.onApply(context)
     })
 
+    // 填充特殊效果文本行（供纯文本 UI 展示）
+    buffInstance.effectLines = script.getEffectLines?.(context) ?? []
+
     // ponytail: 自包含脚本自己通过 _onApply 管理修饰符，不重复从 JSON 读取
     if (!this.scriptRegistry.isSelfContained(buffId)) {
       this.applyAttributeModifiers(characterId, instanceId, buffId)
@@ -387,6 +391,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       instance.script.onRefresh(instance.context)
     })
 
+    // 刷新后重新计算 effectLines（参数可能已变化）
+    instance.effectLines = instance.script.getEffectLines?.(instance.context) ?? []
+
     instance.startTurn = currentTurn
     instance.remainingTurns = instance.duration
     return true
@@ -435,6 +442,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return false
   }
 
+  /** 按实例 ID 查询单个 BuffInstance */
+  public getBuffInstanceById(instanceId: string): BuffInstance | undefined {
+    return this.buffInstances.get(instanceId)
+  }
+
   public getScriptRegistry(): BuffScriptRegistry {
     return this.scriptRegistry
   }
@@ -453,6 +465,22 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     })
     toRemove.forEach((instanceId) => this.removeBuff(instanceId))
     this.modifierStacks.delete(characterId)
+  }
+
+  /**
+   * 设置 Buff 条件评估状态（已激活/未激活）
+   * ponytail: Phase 2 — 等待战斗系统在 HP/条件变化时调用此方法。
+   * 触发 condition-changed 事件供 UI 层监听（事件通道已预留，监听器待接入）。
+   * 当前 UI 已能通过 statsVersion 变化（recalculateAll 触发）重读 conditionState，
+   * 因此此方法在 Phase 1 中暂无调用者。
+   */
+  public setBuffConditionState(instanceId: string, state: 'active' | 'inactive'): void {
+    const instance = this.buffInstances.get(instanceId)
+    if (instance) {
+      instance.conditionState = state
+      // ponytail: 'condition-changed' 是非标准事件名，emit 签名要求 BattleTriggerPhase 类型，用 any 绕过
+      ;(this.eventBus as any).emit('condition-changed', { instanceId, state, characterId: instance.characterId })
+    }
   }
 
   /** 获取最高优先级的控制效果 */

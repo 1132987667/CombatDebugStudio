@@ -48,11 +48,11 @@
         </div>
       </div>
 
-      <!-- Buff 列表：图标模式 ↔ 纯文本模式 -->
-      <BuffList v-if="buffDisplayMode === 'icon'" :buffs="buffListItems" />
-      <BuffTextBar v-else
+      <!-- Buff 列表：纯文本展示 -->
+      <BuffTextBar
         :control-labels="buffDisplay.controlLabels"
         :merged-labels="buffDisplay.mergedLabels"
+        :visible-attr-labels="buffDisplay.visibleAttrLabels"
         :collapsed-count="buffDisplay.collapsedCount"
         :expanded="panelVisible"
         @toggle="panelVisible = !panelVisible"
@@ -61,6 +61,7 @@
         :visible="panelVisible"
         :participant-name="participant.name"
         :groups="buffDisplay.groups"
+        :secondary-groups="buffDisplay.secondaryGroups"
         :merged-labels="buffDisplay.mergedLabels"
         :debug-mode="showDebug"
         @close="panelVisible = false"
@@ -85,16 +86,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ActionResultType } from '@/domain/battle/type/types'
 import { useBattleParticipant } from '@/presentation/composables/useBattleParticipant'
 import { useParticipantStats } from '@/presentation/composables/useParticipantStats'
-import BuffList from '@/presentation/components/BuffList.vue'
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
-import { useBattleStore } from '@/presentation/stores/battleStore'
 import { container } from '@/infrastructure/di/Container'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 
@@ -243,7 +242,7 @@ const energyColorClass = computed(() => {
   return 'low'
 })
 
-/** 转换为 BuffList 所需的数据格式 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
+/** 转换为纯文本 Buff 展示数据 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
 const buffListItems = computed(() => {
   // ponytail: 读取 statsVersion 建立 Vue 响应式依赖（recalculateAll → _statsVersion++ 时 computed 重算）
   void (props.participant as any).statsVersion
@@ -256,17 +255,24 @@ const buffListItems = computed(() => {
   if (typeof entity.getBuffInstanceIds === 'function') {
     const instanceIds = entity.getBuffInstanceIds()
     for (const id of instanceIds) {
-      const config = buffSystem.getBuffConfigByInstanceId(id)
+      const instance = buffSystem.getBuffInstanceById(id)
+      if (!instance) continue
+      const config = instance.context.config
       if (config) {
         seenIds.add(id)
+        // ponytail: 同时记录 config.id（buffId），用于源2的去重比较
+        // 源2的条目使用效果ID（如 "burn"）而非实例ID（如 "char1_burn_0_5"）
+        seenIds.add(config.id)
         result.push({
           id,
           buffId: config.id,
           name: config.name,
           description: config.description || config.name,
-          remainingTurns: config.duration,
-          currentStacks: 1,
+          remainingTurns: instance.remainingTurns,
+          currentStacks: instance.currentStacks,
           isDebuff: config.isDebuff === true,
+          effectLines: instance.effectLines ?? [],
+          conditionState: instance.conditionState,
         })
       }
     }
@@ -276,6 +282,7 @@ const buffListItems = computed(() => {
   const manualEffects = entity.statusEffects ?? []
   for (const s of manualEffects) {
     if (!seenIds.has(s.id)) {
+      seenIds.add(s.id)
       result.push({
         id: s.id,
         buffId: s.id,
@@ -292,21 +299,34 @@ const buffListItems = computed(() => {
 })
 
 // === 纯文本 Buff 显示模式 ===
-const battleStore = useBattleStore()
-const buffDisplayMode = computed(() => battleStore.buffDisplayMode)
 const panelVisible = ref(false)
-// ponytail: 参与者 ID 在生命周期内不变，直接读取
-const buffDisplay = useBuffDisplay(buffListItems, props.participant.id)
 
-// Ctrl+B 快捷键切换 Buff 显示模式
-function onBuffModeKeydown(e: KeyboardEvent) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-    e.preventDefault()
-    battleStore.toggleBuffDisplayMode()
-  }
+// 从 stats 提取基础属性值（key=中文属性名）
+const ATTRIBUTE_CODE_TO_CN: Record<string, string> = {
+  attack: '攻击',
+  defense: '防御',
+  speed: '速度',
+  critRate: '暴击',
+  critDamage: '暴伤',
+  damageReduction: '伤害减免',
+  healing: '受疗',
+  hitRate: '命中',
+  dodgeRate: '闪避',
 }
-onMounted(() => document.addEventListener('keydown', onBuffModeKeydown))
-onUnmounted(() => document.removeEventListener('keydown', onBuffModeKeydown))
+const baseAttributes = computed(() => {
+  const s = stats.value
+  const map: Record<string, number> = {}
+  for (const [code, cn] of Object.entries(ATTRIBUTE_CODE_TO_CN)) {
+    const attr = (s as any)[code]
+    if (attr && typeof attr.base === 'number') {
+      map[cn] = attr.base
+    }
+  }
+  return map
+})
+
+// ponytail: 参与者 ID 在生命周期内不变，直接读取
+const buffDisplay = useBuffDisplay(buffListItems, props.participant.id, 5, baseAttributes)
 
 // 调试信息
 const showBreakdown = ref(false)

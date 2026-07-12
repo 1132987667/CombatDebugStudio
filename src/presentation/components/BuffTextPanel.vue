@@ -9,14 +9,29 @@
         </div>
 
         <div class="panel-body">
-          <!-- Buff 分组列表 -->
-          <div v-if="sortedGroups.length > 0" class="panel-groups">
-            <BuffTextGroup
-              v-for="group in sortedGroups"
-              :key="group.instanceId"
-              :buff="group"
-              :debug-mode="debugMode"
-            />
+          <!-- Buff 分组列表 + 次要分组 -->
+          <div v-if="sortedGroups.length > 0" class="panel-groups-wrapper">
+            <div class="panel-groups">
+              <BuffTextGroup
+                v-for="group in sortedGroups"
+                :key="group.instanceId"
+                :buff="group"
+                :debug-mode="debugMode"
+              />
+            </div>
+            <div v-if="secondaryGroups && secondaryGroups.length > 0" class="panel-secondary">
+              <div class="secondary-toggle" @click="showSecondary = !showSecondary">
+                {{ showSecondary ? '▼' : '▶' }} 其他效果（{{ secondaryGroups.length }}）
+              </div>
+              <div v-if="showSecondary" class="secondary-groups">
+                <BuffTextGroup
+                  v-for="group in secondaryGroups"
+                  :key="group.instanceId"
+                  :buff="group"
+                  :debug-mode="debugMode"
+                />
+              </div>
+            </div>
           </div>
           <div v-else class="panel-empty">无活跃状态效果</div>
 
@@ -54,6 +69,8 @@ const props = withDefaults(defineProps<{
   participantName: string
   /** 排序后的 Buff 完整分组 */
   groups: BuffTextItem[]
+  /** 次要分组（极多 Buff 时折叠的超期/永久效果） */
+  secondaryGroups?: BuffTextItem[]
   /** 合并标签列表 */
   mergedLabels: MergedAttributeLine[]
   /** 调试模式 */
@@ -67,6 +84,7 @@ const emit = defineEmits<{
 }>()
 
 const panelRef = ref<HTMLElement | null>(null)
+const showSecondary = ref(false)
 
 // ponytail: 全局 click 监听器，点击面板外部关闭。使用 cleanup 函数避免泄漏
 let clickCleanup: (() => void) | null = null
@@ -102,14 +120,12 @@ interface SummaryLine {
 }
 
 const summaryLines = computed<SummaryLine[]>(() => {
-  // ponytail: 仅使用 mergedLabels 生成汇总行，不查询基础值
-  // 升级路径：从 AttributeValue 获取 base 值
   return props.mergedLabels
     .filter((l) => l.isChanged)
     .map((l) => ({
       attribute: l.attribute,
-      baseStr: `--`,
-      totalStr: `${Math.abs(l.totalPercent)}%`,
+      baseStr: l.baseValue != null ? `${Math.round(l.baseValue)}` : `--`,
+      totalStr: l.baseValue != null ? `${Math.round(l.baseValue * (1 + l.totalPercent / 100))}` : `--`,
       totalPercent: l.totalPercent,
     }))
 })
@@ -172,6 +188,10 @@ const summaryLines = computed<SummaryLine[]>(() => {
   padding: var(--space-2) 0;
 }
 
+.panel-groups-wrapper {
+  /* 包装 primary + secondary 分组，与底部的 v-else 空状态共享 v-if/v-else */
+}
+
 .panel-groups {
   padding: 0;
 }
@@ -181,6 +201,29 @@ const summaryLines = computed<SummaryLine[]>(() => {
   padding: var(--space-8);
   color: var(--color-text-tertiary);
   font-style: italic;
+}
+
+/* 次要分组（极多 Buff 折叠） */
+.panel-secondary {
+  margin: var(--space-1) var(--space-4);
+  border-top: 1px dashed rgba(96, 165, 250, 0.15);
+  padding-top: var(--space-1);
+}
+
+.secondary-toggle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  user-select: none;
+  padding: var(--space-1) 0;
+}
+
+.secondary-toggle:hover {
+  color: var(--color-info);
+}
+
+.secondary-groups {
+  opacity: 0.85;
 }
 
 /* 分割线 */

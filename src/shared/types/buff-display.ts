@@ -2,8 +2,9 @@
  * Buff 纯文本显示类型定义
  *
  * 用于从 BuffSystem 数据到纯文本 UI 的转换管道。
- * 不与领域层耦合，只作为视图层的数据契约。
+ * 部分类型（如 BuffEffectLine）复用于领域层，从 @/domain/buff/types 导入。
  */
+import type { BuffEffectLine } from '@/domain/buff/types'
 
 /** 单个 Buff 在纯文本模式下的显示条目 */
 export interface BuffTextItem {
@@ -27,11 +28,17 @@ export interface BuffTextItem {
   /** 条件状态 */
   condition: ConditionState
 
+  /** 条件标签文本（如 "残血"、"满血"），仅 condition 为 inactive/active 时有意义 */
+  conditionLabel?: string
+
   /** 是否为光环（全队效果） */
   isAura: boolean
 
   /** 修饰符列表（来源追溯用） */
   modifiers: BuffModifier[]
+
+  /** 特殊效果行（DOT/HOT/护盾/反伤等非属性修正效果） */
+  effectLines: BuffEffectLine[]
 
   // === 调试模式字段 ===
   /** 所属的参与者 ID */
@@ -65,6 +72,8 @@ export interface MergedAttributeLine {
   totalPercent: number
   /** 该属性是否实际发生了变化（±0 表示抵消） */
   isChanged: boolean
+  /** 基础值（未加修饰符前的原始值，可选） */
+  baseValue?: number
   /** 各来源明细 */
   sources: Array<{
     buffName: string
@@ -93,10 +102,14 @@ export interface BuffDisplayState {
   items: BuffTextItem[]
   /** 合并后的属性标签（用于收缩态标签栏） */
   mergedLabels: MergedAttributeLine[]
+  /** 实际可见的属性标签（受折叠阈值控制） */
+  visibleAttrLabels: MergedAttributeLine[]
   /** 控制标签（排最前，不折叠） */
   controlLabels: BuffTextItem[]
   /** 折叠后需要隐藏的标签数 */
   collapsedCount: number
   /** 排序后的完整分组（用于展开面板） */
   groups: BuffTextItem[]
+  /** 次要分组（极多 Buff 时折叠的超期/永久效果） */
+  secondaryGroups: BuffTextItem[]
 }

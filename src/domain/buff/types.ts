@@ -64,6 +64,17 @@ export interface BuffQuery {
 // ]
 
 /**
+ * 特殊效果行（DOT/HOT/护盾/反伤等非属性修正效果）
+ * 供纯文本 UI 展示使用
+ */
+export interface BuffEffectLine {
+  /** 显示文本，如 "每回合损失 5% 生命值"、"吸收 200 点伤害" */
+  text: string
+  /** 效果分类 */
+  kind: 'dot' | 'hot' | 'shield' | 'vampire' | 'thorns' | 'control' | 'other'
+}
+
+/**
  * 增益效果脚本接口
  * 定义了增益效果的生命周期回调函数,用于实现自定义的增益逻辑
  * @template TParams - 增益效果参数类型,默认为any
@@ -103,6 +114,12 @@ export interface IBuffScript<TParams = any> {
    * 用于存储增益效果特有的配置数据
    */
   params?: TParams
+
+  /**
+   * 获取 Buff 的特殊效果文本行（供纯文本 UI 展示）
+   * 返回 DOT/HOT/护盾/反伤等非属性修正效果的描述文本
+   */
+  getEffectLines?(context: BuffContext): BuffEffectLine[]
 }
 
 /**
@@ -330,6 +347,19 @@ export interface BuffInstance<TParams = any> {
    * true表示增益效果正在生效,false表示已被暂停或失效
    */
   isActive: boolean
+
+  /**
+   * 特殊效果文本行（缓存脚本 getEffectLines 的输出）
+   * 供纯文本 UI 展示使用，由 BuffSystem 在 addBuff/refresh 时填充
+   */
+  effectLines?: BuffEffectLine[]
+
+  /**
+   * 条件评估状态
+   * 由外部通过 BuffSystem.setBuffConditionState() 设置
+   * active = 条件已满足（如已残血），inactive = 条件未满足
+   */
+  conditionState?: 'active' | 'inactive'
 }
 
 /**

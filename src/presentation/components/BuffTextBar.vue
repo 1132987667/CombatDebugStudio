@@ -2,6 +2,7 @@
   <div
     class="buff-text-bar"
     :class="{ 'is-expanded': expanded, 'is-empty': isEmpty }"
+    ref="barRef"
     @click="handleClick"
   >
     <!-- 空状态 -->
@@ -21,7 +22,7 @@
 
       <!-- 合并属性标签 -->
       <BuffTextTag
-        v-for="attr in displayAttrLabels"
+        v-for="attr in visibleAttrLabels"
         :key="attr.attribute"
         :text="formatAttrLine(attr)"
         :type="attr.totalPercent > 0 ? 'buff' : 'debuff'"
@@ -30,34 +31,40 @@
       />
 
       <!-- 折叠指示器 -->
-      <span
-        v-if="collapsedCount > 0"
-        class="bar-collapse-badge"
-        title="点击展开全部状态"
-      >+{{ collapsedCount }}</span>
+      <Transition name="badge-pop">
+        <span
+          v-if="collapsedCount > 0"
+          class="bar-collapse-badge"
+          title="点击展开全部状态"
+        >+{{ collapsedCount }}</span>
+      </Transition>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
+import gsap from 'gsap'
 import BuffTextTag from '@/presentation/components/BuffTextTag.vue'
 import type { BuffTextItem, MergedAttributeLine } from '@/shared/types/buff-display'
+
+const barRef = ref<HTMLElement | null>(null)
+// ponytail: 保存 GSAP tween 引用，新动画开始时 kill 上一轮，防止 clearProps 叠加冲突
+let currentTween: gsap.core.Tween | null = null
 
 const props = withDefaults(defineProps<{
   /** 控制标签列表 */
   controlLabels: BuffTextItem[]
   /** 合并属性标签列表（已排序） */
   mergedLabels: MergedAttributeLine[]
+  /** 可见的属性标签（受折叠阈值控制，由 useBuffDisplay 计算） */
+  visibleAttrLabels: MergedAttributeLine[]
   /** 折叠后隐藏的标签数 */
   collapsedCount: number
   /** 是否展开状态 */
   expanded?: boolean
-  /** 单行显示阈值（超过此数量折叠） */
-  maxVisible?: number
 }>(), {
   expanded: false,
-  maxVisible: 5,
 })
 
 const emit = defineEmits<{
@@ -78,14 +85,35 @@ const isEmpty = computed(() =>
 /** 控制标签：全部显示（不折叠） */
 const displayControlLabels = computed(() => props.controlLabels)
 
-/** 属性标签：最多显示 maxVisible - controlCount 个 */
-// ponytail: 切片逻辑与 useBuffDisplay 的 collapsedCount 独立计算，两边默认值都是 5，
-// 但如果修改了 composable 的 collapseThreshold，这里需要同步修改 maxVisible prop 默认值。
-const displayAttrLabels = computed(() => {
-  const remaining = props.maxVisible - props.controlLabels.length
-  if (remaining <= 0) return []
-  return props.mergedLabels.slice(0, remaining)
-})
+/** 属性标签：由 useBuffDisplay 计算 visibleAttrLabels，直接消费 */
+// ponytail: 折叠逻辑已集中到 useBuffDisplay 的 collapseThreshold 参数，两边共用同一阈值
+
+// 标签变化时播放入场动画
+watch(
+  [() => props.controlLabels, () => props.visibleAttrLabels],
+  async () => {
+    if (props.controlLabels.length === 0 && props.visibleAttrLabels.length === 0) return
+    // 清理上一轮动画，防止 clearProps 叠加冲突
+    if (currentTween) currentTween.kill()
+    await nextTick()
+    const tags = barRef.value?.querySelectorAll('.buff-text-tag')
+    if (!tags || tags.length === 0) return
+    // ponytail: 动画作用于所有标签（含未变化的），在短间隔变化下足够流畅
+    // 若需精准只动画新增标签，可加 data-anim-key 标记做增量检测
+    currentTween = gsap.fromTo(
+      tags,
+      { opacity: 0, y: -3 },
+      {
+        opacity: 1, y: 0,
+        duration: 0.2,
+        stagger: { each: 0.025, from: 'start' },
+        ease: 'power1.out',
+        clearProps: 'opacity,y',
+      },
+    )
+  },
+  { deep: false },
+)
 
 function formatAttrLine(attr: MergedAttributeLine): string {
   const arrow = attr.totalPercent > 0 ? '↑' : '↓'
@@ -162,5 +190,17 @@ function onTagLeave() {
 
 .bar-collapse-badge:hover {
   background: rgba(79, 195, 247, 0.2);
+}
+
+/* 折叠指示器弹出/收起动画 */
+.badge-pop-enter-active {
+  animation: badge-pop-in 0.2s ease-out;
+}
+.badge-pop-leave-active {
+  animation: badge-pop-in 0.15s ease-in reverse;
+}
+@keyframes badge-pop-in {
+  0% { opacity: 0; transform: scale(0.6); }
+  100% { opacity: 1; transform: scale(1); }
 }
 </style>

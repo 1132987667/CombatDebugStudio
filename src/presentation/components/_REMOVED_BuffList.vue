@@ -13,6 +13,8 @@
         :currentStacks="buff.currentStacks"
         :isDebuff="buff.isDebuff"
         :iconPath="buff.iconPath"
+        :effectLines="buff.effectLines"
+        :conditionState="buff.conditionState"
       />
     </div>
     <div class="buff-list-placeholder" v-if="buffs.length === 0">
@@ -23,6 +25,7 @@
 
 <script setup lang="ts">
 import BuffIcon from '@/presentation/components/BuffIcon.vue'
+import type { BuffEffectLine } from '@/domain/buff/types'
 
 // Props
 const props = defineProps<{
@@ -35,6 +38,8 @@ const props = defineProps<{
     currentStacks: number
     isDebuff: boolean
     iconPath?: string
+    effectLines?: BuffEffectLine[]
+    conditionState?: 'active' | 'inactive'
   }>
 }>()
 </script>

@@ -5,13 +5,17 @@
  * 原则：不修改现有数据源，仅在展示层做格式转换
  */
 
-import { computed, type ComputedRef, type Ref } from 'vue'
+import { computed, unref, type ComputedRef, type Ref } from 'vue'
 import type {
   BuffTextItem,
   MergedAttributeLine,
   BuffDisplayState,
   ConditionState,
 } from '@/shared/types/buff-display'
+import type { BuffEffectLine } from '@/domain/buff/types'
+
+/** 极多 Buff 时次要分组的阈值 */
+const SECONDARY_THRESHOLD = 20
 
 /** 已知控制类 Buff 名称关键词（全匹配） */
 const CONTROL_NAMES = new Set([
@@ -54,20 +58,40 @@ const ATTRIBUTE_SHORT_NAMES: Record<string, string> = {
 
 /**
  * 检测条件状态
- * 从 description 文本中推断条件类型与是否满足
+ * 优先使用来自 BuffSystem 的实时 conditionState（由 setBuffConditionState 设置）
+ * 回退到从 description 文本中启发式推断
  */
 function detectCondition(
-  description: string,
-  name: string,
+  raw: any,
 ): { condition: ConditionState; conditionLabel?: string } {
+  // 优先使用实例的实时条件状态（由领域层设置）
+  if (raw.conditionState === 'active') {
+    return { condition: 'active', conditionLabel: '已激活' }
+  }
+  if (raw.conditionState === 'inactive') {
+    const label = matchConditionKeyword(raw.description || '', raw.name || '')
+    return { condition: 'inactive', conditionLabel: label ? `${label}·未激活` : '未激活' }
+  }
+
+  const description = raw.description || ''
+  const name = raw.name || ''
   for (const kw of CONDITION_KEYWORDS) {
     if (kw.match.test(description) || kw.match.test(name)) {
       // ponytail: 无法从纯文本推断条件是否满足，默认按未激活处理
-      // 升级路径：从 BuffSystem 获取 conditionState 字段
       return { condition: 'inactive', conditionLabel: kw.label }
     }
   }
   return { condition: 'none' }
+}
+
+/** 辅助：从文本中匹配条件关键词 */
+function matchConditionKeyword(description: string, name: string): string | undefined {
+  for (const kw of CONDITION_KEYWORDS) {
+    if (kw.match.test(description) || kw.match.test(name)) {
+      return kw.label
+    }
+  }
+  return undefined
 }
 
 /**
@@ -114,15 +138,17 @@ function toBuffTextItem(
   entityId: string,
 ): BuffTextItem {
   const name = raw.name || ''
-  const description = raw.description || ''
+  // ponytail: 当 name 为空时显示兜底文本，防止空标签出现在 UI 中
+  const displayName = name || '未知效果'
+  const description = raw.description || (name ? name : '无详细说明')
   const isDebuff = raw.isDebuff === true
   const remainingTurns = raw.remainingTurns ?? 0
   const stacks = raw.currentStacks ?? 1
 
-  const type = detectType(name, isDebuff)
+  const type = detectType(displayName, isDebuff)
 
-  // 检测条件状态
-  let { condition, conditionLabel } = detectCondition(description, name)
+  // 检测条件状态——优先使用领域层的 conditionState
+  let { condition, conditionLabel } = detectCondition(raw)
   // 永久效果覆盖条件检测
   if (remainingTurns === 0 || description.includes('永久')) {
     condition = 'permanent'
@@ -130,7 +156,7 @@ function toBuffTextItem(
   }
 
   // 构造修饰符列表
-  const extracted = extractAttributes(name, description)
+  const extracted = extractAttributes(displayName, description)
   const modifiers = extracted.map((e) => ({
     sourceName: name,
     attribute: e.attr,
@@ -138,17 +164,22 @@ function toBuffTextItem(
     type: 'PERCENTAGE' as const,
   }))
 
+  // 传递特殊效果行
+  const effectLines: BuffEffectLine[] = raw.effectLines ?? []
+
   return {
     instanceId: raw.id ?? raw.instanceId ?? '',
     buffId: raw.buffId ?? raw.id ?? '',
-    name,
+    name: displayName,
     description,
     remainingTurns: condition === 'permanent' ? 0 : remainingTurns,
     stacks,
     type,
     condition,
+    conditionLabel,
     isAura: description.includes('全队') || description.includes('光环'),
     modifiers,
+    effectLines,
     ownerId: entityId,
     scriptName: raw.scriptName,
     configKey: raw.buffId,
@@ -158,8 +189,12 @@ function toBuffTextItem(
 /**
  * 合并同一属性的多来源
  * mod.value 已带符号：正=增益，负=减益
+ * @param baseValues 可选的基础属性值映射（key=中文属性名，如 "攻击"）
  */
-function mergeAttributes(items: BuffTextItem[]): MergedAttributeLine[] {
+function mergeAttributes(
+  items: BuffTextItem[],
+  baseValues?: Record<string, number>,
+): MergedAttributeLine[] {
   const attrMap = new Map<string, {
     total: number
     sources: MergedAttributeLine['sources']
@@ -186,6 +221,7 @@ function mergeAttributes(items: BuffTextItem[]): MergedAttributeLine[] {
     attribute,
     totalPercent: data.total,
     isChanged: data.total !== 0,
+    baseValue: baseValues?.[attribute],
     sources: data.sources,
   }))
 }
@@ -239,21 +275,26 @@ function sortLabels(labels: MergedAttributeLine[]): MergedAttributeLine[] {
  * @param rawItems — ParticipantCard.vue 中 buffListItems 的计算结果 (Ref 或 ComputedRef)
  * @param entityId — 参与者 ID
  * @param collapseThreshold — 折叠阈值，默认 5
+ * @param baseAttributes — 可选的基础属性值映射，key=中文属性名（如 "攻击"→100）
  */
 export function useBuffDisplay(
   rawItems: Ref<any[]> | ComputedRef<any[]>,
   entityId: string,
   collapseThreshold: number = 5,
+  baseAttributes?: Record<string, number> | ComputedRef<Record<string, number>> | Ref<Record<string, number>>,
 ): ComputedRef<BuffDisplayState> {
   return computed(() => {
     const raw = rawItems.value
+    const base = baseAttributes ? unref(baseAttributes) : undefined
     if (!raw || raw.length === 0) {
       return {
         items: [],
         mergedLabels: [],
+        visibleAttrLabels: [],
         controlLabels: [],
         collapsedCount: 0,
         groups: [],
+        secondaryGroups: [],
       }
     }
 
@@ -268,22 +309,49 @@ export function useBuffDisplay(
     const nonControlItems = sorted.filter((i) => i.type !== 'control')
 
     // 4. 合并属性标签
-    const mergedAll = mergeAttributes(sorted)
+    const mergedAll = mergeAttributes(sorted, base)
     const mergedLabels = sortLabels(mergedAll.filter((l) => l.isChanged))
 
-    // 5. 计算折叠数量
-    const visibleCount = controlItems.length + mergedLabels.length
-    const collapsedCount = Math.max(0, visibleCount - collapseThreshold)
+    // 5. 计算折叠数量与可见属性标签
+    const visibleAttrSlots = Math.max(0, collapseThreshold - controlItems.length)
+    const visibleAttrLabels = mergedLabels.slice(0, visibleAttrSlots)
+    // ponytail: collapsedCount 只计实际隐藏的属性标签数，不包括一直全显的控制标签
+    const collapsedCount = Math.max(0, mergedLabels.length - visibleAttrSlots)
 
-    // 6. 为展开面板准备分组
-    const groups = sorted
+    // 6. 为展开面板准备分组 — 极多 Buff 时拆分次要分组
+    let groups: BuffTextItem[] = sorted
+    let secondaryGroups: BuffTextItem[] = []
+
+    if (sorted.length > SECONDARY_THRESHOLD) {
+      // ponytail: 次要分组包含：非控制 + 长时长（>=5回合或永久）+ 未激活条件
+      // 优先保留控制类、短时长（<5回合）、已激活条件
+      const primary: BuffTextItem[] = []
+      const secondary: BuffTextItem[] = []
+      for (const item of sorted) {
+        const isLongDuration = item.remainingTurns === 0 || item.remainingTurns >= 5
+        const isInactiveCondition = item.condition === 'inactive'
+        if (item.type === 'control') {
+          primary.push(item)
+        } else if (item.condition === 'active') {
+          primary.push(item)
+        } else if (isLongDuration || isInactiveCondition) {
+          secondary.push(item)
+        } else {
+          primary.push(item)
+        }
+      }
+      groups = primary
+      secondaryGroups = secondary
+    }
 
     return {
       items,
       mergedLabels,
+      visibleAttrLabels,
       controlLabels: controlItems,
       collapsedCount,
       groups,
+      secondaryGroups,
     }
   })
 }

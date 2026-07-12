@@ -12,12 +12,12 @@
 
       <div class="battle-field">
         <div class="field-party our-party">
-          <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
+          <div class="party-header">我方 ({{ allyTeam.length }}人)</div>
           <div class="party-members">
-            <ParticipantCard v-for="member in filterAllyTeam" :key="member.id"
-              :ref="el => { handleCardRef(member.id, el) }" :participant="member"
-              :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
-              :is-enemy="false" :show-debug="false" @click="selectCharacter(member.id)" />
+            <ParticipantCard v-for="member in allyTeam" :key="`${member.id}-${member.statsVersion}`" :ref="el => { handleCardRef(member.id, el) }"
+              :participant="member" :is-active="isCurrentActor(member.id)"
+              :is-selected="store.selectedCharacterId === member.id" :is-enemy="false" :show-debug="false"
+              @click="selectCharacter(member.id)" />
           </div>
         </div>
 
@@ -26,12 +26,12 @@
         </div> -->
 
         <div class="field-party enemy-party">
-          <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
+          <div class="party-header">敌方 ({{ enemyTeam.length }}人)</div>
           <div class="party-members">
-            <ParticipantCard v-for="member in filterEnemyTeam" :key="member.id"
-              :ref="el => { handleCardRef(member.id, el) }" :participant="member"
-              :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
-              :is-enemy="true" :show-debug="false" @click="selectCharacter(member.id)" />
+            <ParticipantCard v-for="member in enemyTeam" :key="`${member.id}-${member.statsVersion}`" :ref="el => { handleCardRef(member.id, el) }"
+              :participant="member" :is-active="isCurrentActor(member.id)"
+              :is-selected="store.selectedCharacterId === member.id" :is-enemy="true" :show-debug="false"
+              @click="selectCharacter(member.id)" />
             <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>
@@ -45,7 +45,8 @@
 
     <!-- 回合变化公告 -->
     <div class="round-announce-layer">
-      <div v-for="ra in roundAnnounces" :key="ra.id" class="round-announce" :style="{ animationDuration: ra.dur + 'ms' }">
+      <div v-for="ra in roundAnnounces" :key="ra.id" class="round-announce"
+        :style="{ animationDuration: ra.dur + 'ms' }">
         {{ ra.text }}
       </div>
     </div>
@@ -259,8 +260,8 @@ watch(store.animationState, (state) => {
 }, { deep: true })
 
 // 响应式获取队伍数据
-const allyTeam = computed(() => store.allyTeam)
-const enemyTeam = computed(() => store.enemyTeam)
+const allyTeam = computed(() => store.getEnabledAllyTeam())
+const enemyTeam = computed(() => store.getEnabledEnemyTeam())
 
 // 辅助函数：转换为数字（兼容 AttributeValue 和 number）
 function toNumber(value: number | AttributeValue | undefined): number {
@@ -285,12 +286,6 @@ function isCurrentActor(memberId: string): boolean {
   return currentActor.value?.id === memberId || props.currentActorId === memberId;
 }
 
-// 根据回合顺序排序角色列表
-const filterAllyTeam = computed(() => {
-  return allyTeam.value;
-
-});
-
 // const aliveEnemies = enemyTeam.value.filter((c) => c.isAlive());
 //   if (props.turnOrder) {
 //     // 如果有回合顺序，按照回合顺序排序
@@ -306,9 +301,6 @@ const filterAllyTeam = computed(() => {
 //     // 否则按速度排序
 //     return aliveEnemies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
 //   }
-const filterEnemyTeam = computed(() => {
-  return enemyTeam.value;
-});
 
 const currentActor = computed(() => {
   if (!props.currentActorId) return null;
@@ -473,14 +465,17 @@ onUnmounted(() => {
     transform: translate(-50%, -50%) scale(0.6);
     opacity: 0;
   }
+
   15% {
     transform: translate(-50%, -50%) scale(1.2);
     opacity: 1;
   }
+
   30% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translate(-50%, -150%) scale(0.9);
     opacity: 0;

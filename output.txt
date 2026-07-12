@@ -29,8 +29,14 @@ scripts/
         validate_skills.cjs
 src/
     application/
+        command/
+        event/
         facade/
             BattleFacade.ts
+        query/
+    core/
+        battleLog/
+        config/
     domain/
         attribute/
             AttributeEngine.ts
@@ -113,6 +119,8 @@ src/
             types.ts
         character/
             types.ts
+        port/
+            di/
         skill/
             constants.ts
             DamageCalculator.ts
@@ -143,7 +151,6 @@ src/
             Container.ts
         input/
             KeybindManager.ts
-        task/
     presentation/
         components/
             AttributeTooltip.vue
@@ -8494,6 +8501,14 @@ export const ModifierType = {
 /** 修饰符计算类型 */
 export type ModifierType = (typeof ModifierType)[keyof typeof ModifierType]
 
+export const ModifierTypeNames: Record<ModifierType, string> = {
+  ADDITIVE: '加法',
+  MULTIPLICATIVE: '乘法',
+  PERCENTAGE: '百分比',
+  FINAL: '最终',
+}
+
+
 /** 修饰符来源类型 */
 export const ModifierSourceType = {
   BUFF: 'buff',
@@ -11246,6 +11261,8 @@ export class BattleManager {
    */
   async processSingleTurn() {
     await this.autoBattleManager.executeSingleTurn()
+    // ponytail: 每回合结束后通知 store 同步队伍数据，触发 Vue 响应式更新 HP/能量
+    this.emitTeamChanged()
   }
 
   /**
@@ -39580,11 +39597,11 @@ onUnmounted(() => {
 
 <script setup lang="ts">
 import type { BattleService } from '@/application/facade/BattleFacade';
-import { ATTRIBUTE_CODE, AttributeValueType, getAttributeDefaultValue, getAttributeMeta, type Modifier } from "@/domain/attribute/types";
+import { ATTRIBUTE_CODE, AttributeValueType, getAttributeDefaultValue, getAttributeMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
 import { BattleEventType, BattleEntity } from '@/domain/battle/type/types';
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { SkillConfig } from "@/domain/skill/types";
-import { formatTargetConfig, SkillType, SkillTypeName, SkillStep, ExtendedSkillStep } from "@/domain/skill/types";
+import { formatTargetConfig, SkillType, SkillTypeName, ExtendedSkillStep } from "@/domain/skill/types";
 import { container } from '@/infrastructure/di/Container';
 import AttributeTooltip, { type RangeLayerData, type RangeModifierRow } from "@/presentation/components/AttributeTooltip.vue";
 import { useBattleStore } from '@/presentation/stores';
@@ -39870,12 +39887,11 @@ const showAttackTooltip = (event: MouseEvent) => {
   const maxMods = maxAttr.modifiers
 
   const layers: RangeLayerData[] = [
-    buildRangeLayer('基础数值', minMods, maxMods, 'ADDITIVE'),
-    buildRangeLayer('属性加成', minMods, maxMods, 'PERCENTAGE'),
-    buildRangeLayer('独立乘区', minMods, maxMods, 'MULTIPLICATIVE'),
-    buildRangeLayer('最终乘区', minMods, maxMods, 'FINAL'),
+    buildRangeLayer(ModifierTypeNames.ADDITIVE, minMods, maxMods, ModifierType.ADDITIVE),
+    buildRangeLayer(ModifierTypeNames.PERCENTAGE, minMods, maxMods, ModifierType.PERCENTAGE),
+    buildRangeLayer(ModifierTypeNames.MULTIPLICATIVE, minMods, maxMods, ModifierType.MULTIPLICATIVE),
+    buildRangeLayer(ModifierTypeNames.FINAL, minMods, maxMods, ModifierType.FINAL),
   ]
-
   showAttrTooltip(
     event, '攻击力', [],
     attackRange.value.min, AttributeValueType.VALUE,
@@ -39891,71 +39907,6 @@ const hideAttrTooltip = () => {
     attrTooltipHideTimer = null
   }, 300)
 }
-
-
-// ------------------------------------------------------------
-// 辅助函数（纯展示逻辑，无需缓存）
-
-// 手动干预方法
-const endTurn = () => {
-  if (props.battleSystem) {
-    try {
-      props.battleSystem.endTurn();
-    } catch (error) {
-      console.warn('结束回合失败:', error);
-    }
-  }
-};
-
-const executeSkill = (skillName: string) => {
-  if (props.battleSystem && currentCharacter.value) {
-    try {
-      props.battleSystem.executeSkill(currentCharacter.value.id, skillName);
-    } catch (error) {
-      console.warn('执行技能失败:', error);
-    }
-  }
-};
-
-interface StatusData {
-  name: string;
-  turns: number;
-}
-
-const addStatus = (status: StatusData) => {
-  if (props.battleSystem && currentCharacter.value) {
-    try {
-      props.battleSystem.addStatus(currentCharacter.value.id, status.name, status.turns);
-    } catch (error) {
-      console.warn('添加状态失败:', error);
-    }
-  }
-};
-
-interface StatsData {
-  hp: number;
-  mp: number;
-}
-
-const adjustStats = (stats: StatsData) => {
-  if (props.battleSystem && currentCharacter.value) {
-    try {
-      props.battleSystem.adjustStats(currentCharacter.value.id, stats.hp, stats.mp);
-    } catch (error) {
-      console.warn('调整属性失败:', error);
-    }
-  }
-};
-
-const clearStatuses = () => {
-  if (props.battleSystem && currentCharacter.value) {
-    try {
-      props.battleSystem.clearStatuses(currentCharacter.value.id);
-    } catch (error) {
-      console.warn('清除状态失败:', error);
-    }
-  }
-};
 
 // Alt 键监听：按住时属性 tooltip 不隐藏
 onMounted(() => {
@@ -40311,12 +40262,12 @@ const handleBattleEndReplay = (winner: string) => {
 
       <div class="battle-field">
         <div class="field-party our-party">
-          <div class="party-header">我方 ({{ filterAllyTeam.length }}人)</div>
+          <div class="party-header">我方 ({{ allyTeam.length }}人)</div>
           <div class="party-members">
-            <ParticipantCard v-for="member in filterAllyTeam" :key="member.id"
-              :ref="el => { handleCardRef(member.id, el) }" :participant="member"
-              :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
-              :is-enemy="false" :show-debug="false" @click="selectCharacter(member.id)" />
+            <ParticipantCard v-for="member in allyTeam" :key="`${member.id}-${member.statsVersion}`" :ref="el => { handleCardRef(member.id, el) }"
+              :participant="member" :is-active="isCurrentActor(member.id)"
+              :is-selected="store.selectedCharacterId === member.id" :is-enemy="false" :show-debug="false"
+              @click="selectCharacter(member.id)" />
           </div>
         </div>
 
@@ -40325,12 +40276,12 @@ const handleBattleEndReplay = (winner: string) => {
         </div> -->
 
         <div class="field-party enemy-party">
-          <div class="party-header">敌方 ({{ filterEnemyTeam.length }}人)</div>
+          <div class="party-header">敌方 ({{ enemyTeam.length }}人)</div>
           <div class="party-members">
-            <ParticipantCard v-for="member in filterEnemyTeam" :key="member.id"
-              :ref="el => { handleCardRef(member.id, el) }" :participant="member"
-              :is-active="isCurrentActor(member.id)" :is-selected="store.selectedCharacterId === member.id"
-              :is-enemy="true" :show-debug="false" @click="selectCharacter(member.id)" />
+            <ParticipantCard v-for="member in enemyTeam" :key="`${member.id}-${member.statsVersion}`" :ref="el => { handleCardRef(member.id, el) }"
+              :participant="member" :is-active="isCurrentActor(member.id)"
+              :is-selected="store.selectedCharacterId === member.id" :is-enemy="true" :show-debug="false"
+              @click="selectCharacter(member.id)" />
             <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>
@@ -40344,7 +40295,8 @@ const handleBattleEndReplay = (winner: string) => {
 
     <!-- 回合变化公告 -->
     <div class="round-announce-layer">
-      <div v-for="ra in roundAnnounces" :key="ra.id" class="round-announce" :style="{ animationDuration: ra.dur + 'ms' }">
+      <div v-for="ra in roundAnnounces" :key="ra.id" class="round-announce"
+        :style="{ animationDuration: ra.dur + 'ms' }">
         {{ ra.text }}
       </div>
     </div>
@@ -40558,8 +40510,8 @@ watch(store.animationState, (state) => {
 }, { deep: true })
 
 // 响应式获取队伍数据
-const allyTeam = computed(() => store.allyTeam)
-const enemyTeam = computed(() => store.enemyTeam)
+const allyTeam = computed(() => store.getEnabledAllyTeam())
+const enemyTeam = computed(() => store.getEnabledEnemyTeam())
 
 // 辅助函数：转换为数字（兼容 AttributeValue 和 number）
 function toNumber(value: number | AttributeValue | undefined): number {
@@ -40584,12 +40536,6 @@ function isCurrentActor(memberId: string): boolean {
   return currentActor.value?.id === memberId || props.currentActorId === memberId;
 }
 
-// 根据回合顺序排序角色列表
-const filterAllyTeam = computed(() => {
-  return allyTeam.value;
-
-});
-
 // const aliveEnemies = enemyTeam.value.filter((c) => c.isAlive());
 //   if (props.turnOrder) {
 //     // 如果有回合顺序，按照回合顺序排序
@@ -40605,9 +40551,6 @@ const filterAllyTeam = computed(() => {
 //     // 否则按速度排序
 //     return aliveEnemies.sort((a, b) => getMemberSpeed(b) - getMemberSpeed(a));
 //   }
-const filterEnemyTeam = computed(() => {
-  return enemyTeam.value;
-});
 
 const currentActor = computed(() => {
   if (!props.currentActorId) return null;
@@ -40772,14 +40715,17 @@ onUnmounted(() => {
     transform: translate(-50%, -50%) scale(0.6);
     opacity: 0;
   }
+
   15% {
     transform: translate(-50%, -50%) scale(1.2);
     opacity: 1;
   }
+
   30% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translate(-50%, -150%) scale(0.9);
     opacity: 0;
@@ -44082,9 +44028,6 @@ const handleClear = () => {
         <input type="checkbox" v-model="debugMode" />
         调试
       </label>
-      <button class="control-btn" @click="$emit('exit-tool')">[Q] 退出工具</button>
-      <button class="control-btn" @click="$emit('show-help')">[H] 帮助文档</button>
-      <span class="mode-indicator">战斗状态: {{ battleStateDisplay }}</span>
     </div>
   </div>
 </template>
@@ -44111,8 +44054,6 @@ const emit = defineEmits<{
   "single-step": [];
   "toggle-auto-play": [];
   "battle-speed-change": [speed: number];
-  "exit-tool": [];
-  "show-help": [];
 }>();
 
 const autoPlayMode = computed(() => props.isAutoPlaying ? 'auto' as const : 'off' as const);
@@ -44137,13 +44078,6 @@ const toggleBattleSpeed = () => {
   const nextIndex = (currentIndex + 1) % speedLevels.length;
   emit('battle-speed-change', speedLevels[nextIndex]);
 };
-
-const battleStateDisplay = computed(() => {
-  if (autoPlayMode.value === 'fast') return "快速播放";
-  if (autoPlayMode.value === 'auto') return "自动播放";
-  if (!props.isPaused) return "进行中";
-  return "暂停";
-});
 
 // 调试模式开关 — 与 DebugGate 单例双向同步
 const debugMode = ref(debugGate.enabled)

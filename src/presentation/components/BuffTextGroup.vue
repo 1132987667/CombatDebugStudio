@@ -47,6 +47,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { BuffTextItem } from '@/shared/types/buff-display'
+import { getConditionLabel } from '@/presentation/composables/useBuffDisplay'
 
 const props = defineProps<{
   buff: BuffTextItem
@@ -66,12 +67,7 @@ const colorClass = computed(() => {
 })
 
 const conditionText = computed(() => {
-  // 从 description 中提取条件标签
-  const match = props.buff.description.match(
-    /（([^）]+?)）（未激活）/,
-  )
-  if (match) return `${match[1]}·未激活`
-  return '未激活'
+  return getConditionLabel(props.buff.condition, props.buff.conditionLabel)
 })
 
 /** 将 Buff 拆解为显示行 */
@@ -110,8 +106,17 @@ const effectLines = computed(() => {
     lines.push({ text, className })
   }
 
-  // 特殊效果描述（非属性修正的文本）
-  // ponytail: 如果 description 中有非属性修正的内容，作为额外说明行
+  // 特殊效果行（DOT/HOT/护盾等非属性修正效果 — 来自脚本 getEffectLines）
+  if (props.buff.effectLines && props.buff.effectLines.length > 0) {
+    for (const el of props.buff.effectLines) {
+      lines.push({
+        text: el.text,
+        className: `effect--${el.kind}`,
+      })
+    }
+  }
+
+  // 特殊效果描述（非属性修正的纯文本，仅当无其他效果行时显示）
   const descClean = props.buff.description
     .replace(/[\u4e00-\u9fa5]{2,4}[↑↓]\d+%?/g, '') // 去掉已提取的属性行
     .replace(/【.*?】/g, '') // 去掉控制标记
@@ -179,10 +184,16 @@ const effectLines = computed(() => {
 .meta-active {
   color: var(--color-energy);
   font-weight: var(--font-weight-semibold);
+  padding: 0 4px;
+  border-radius: var(--radius-xs);
+  background: rgba(34, 211, 238, 0.1);
 }
 
 .meta-inactive {
   color: var(--color-text-disabled);
+  padding: 0 4px;
+  border-radius: var(--radius-xs);
+  background: rgba(102, 102, 102, 0.08);
 }
 
 .group-effects {
@@ -212,6 +223,24 @@ const effectLines = computed(() => {
 }
 
 .effect--special {
+  color: var(--color-text-tertiary);
+}
+
+/* 特殊效果行配色（DOT/HOT/护盾等） */
+.effect--dot {
+  color: var(--color-danger);
+}
+.effect--hot {
+  color: var(--color-heal, #4ade80);
+}
+.effect--shield {
+  color: var(--color-info);
+}
+.effect--vampire,
+.effect--thorns {
+  color: var(--color-warning);
+}
+.effect--other {
   color: var(--color-text-tertiary);
 }
 

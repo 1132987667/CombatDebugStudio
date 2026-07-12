@@ -19,14 +19,28 @@
           <span class="tooltip-type">{{ isDebuff ? '减益' : '增益' }}</span>
         </div>
         <div class="tooltip-description">{{ description }}</div>
+        <!-- 特殊效果行（DOT/HOT/护盾等） -->
+        <div v-if="effectLines && effectLines.length > 0" class="tooltip-effects">
+          <div v-for="(el, i) in effectLines" :key="i" class="tooltip-effect-line" :class="'effect--' + el.kind">
+            ● {{ el.text }}
+          </div>
+        </div>
         <div class="tooltip-stats">
           <div class="tooltip-stat">
             <span class="stat-label">剩余回合：</span>
-            <span class="stat-value">{{ remainingTurns }}</span>
+            <span class="stat-value">{{ remainingTurns > 0 ? remainingTurns : '永久' }}</span>
           </div>
           <div class="tooltip-stat" v-if="currentStacks > 1">
             <span class="stat-label">叠加层数：</span>
-            <span class="stat-value">{{ currentStacks }}</span>
+            <span class="stat-value">×{{ currentStacks }}</span>
+          </div>
+          <div class="tooltip-stat" v-if="conditionState === 'active'">
+            <span class="stat-label">状态：</span>
+            <span class="stat-value stat-active">已激活</span>
+          </div>
+          <div class="tooltip-stat" v-if="conditionState === 'inactive'">
+            <span class="stat-label">状态：</span>
+            <span class="stat-value stat-inactive">未激活</span>
           </div>
         </div>
       </div>
@@ -36,6 +50,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import type { BuffEffectLine } from '@/domain/buff/types'
 
 // Props
 const props = defineProps<{
@@ -46,6 +61,8 @@ const props = defineProps<{
   currentStacks: number
   isDebuff: boolean
   iconPath?: string
+  effectLines?: BuffEffectLine[]
+  conditionState?: 'active' | 'inactive'
 }>()
 
 // 响应式数据
@@ -202,11 +219,32 @@ const iconUrl = computed(() => {
   line-height: var(--line-height-sm);
 }
 
+/* 特殊效果行 */
+.tooltip-effects {
+  margin-bottom: var(--space-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: var(--space-1);
+}
+
+.tooltip-effect-line {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-lg);
+  padding-left: var(--space-2);
+}
+
+.effect--dot { color: var(--color-danger); }
+.effect--hot { color: #4ade80; }
+.effect--shield { color: var(--color-info); }
+.effect--vampire, .effect--thorns { color: var(--color-warning); }
+
 .tooltip-stat {
   margin-bottom: var(--space-1);
   display: flex;
   justify-content: space-between;
 }
+
+.stat-active { color: var(--color-energy); font-weight: var(--font-weight-semibold); }
+.stat-inactive { color: var(--color-text-disabled); }
 
 .stat-label {
   color: rgba(255, 255, 255, 0.6);

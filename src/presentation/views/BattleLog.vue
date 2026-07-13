@@ -28,7 +28,7 @@
         </div>
       </div>
     </div>
-    <div class="log-content">
+    <div class="log-content" ref="logContainer" @scroll="onScroll">
       <div v-for="(log, index) in logs" :key="index" class="log-entry" :class="log.type">
         <span class="log-seq">#{{ log.index }}</span>
         <span class="log-type">[{{ LogTypeLabel[log.type] }}]</span>
@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from "vue";
+import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import type { LogEntry, LogFilters } from '@/shared/types/battle-log';
 import { LogTypeLabel, LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
 import { battleLogManager } from '@/infrastructure/adapters/logging'
@@ -156,6 +156,57 @@ onMounted(() => {
 onUnmounted(() => {
   battleLogManager.removeListener(logUpdateListener);
 });
+
+// === 自动滚动 ===
+const autoScrollEnabled = ref(true)
+let autoScrollTimer: ReturnType<typeof setTimeout> | null = null
+let scrollThrottled = false
+const SCROLL_RESTORE_DELAY = 3000
+
+const onScroll = () => {
+  if (!logContainer.value || scrollThrottled) return
+  scrollThrottled = true
+  requestAnimationFrame(() => { scrollThrottled = false })
+
+  const { scrollTop, scrollHeight, clientHeight } = logContainer.value
+  if (scrollTop < scrollHeight - clientHeight - 5) {
+    autoScrollEnabled.value = false
+    if (autoScrollTimer) {
+      clearTimeout(autoScrollTimer)
+    }
+    autoScrollTimer = setTimeout(() => {
+      autoScrollEnabled.value = true
+      autoScrollTimer = null
+      // ponytail: 不主动滚动，等下次 logVersion 变化由 watch 触发
+    }, SCROLL_RESTORE_DELAY)
+  } else {
+    autoScrollEnabled.value = true
+    if (autoScrollTimer) {
+      clearTimeout(autoScrollTimer)
+      autoScrollTimer = null
+    }
+  }
+}
+
+const scrollToBottom = () => {
+  if (!logContainer.value) return
+  logContainer.value.scrollTop = logContainer.value.scrollHeight
+}
+
+watch(logVersion, () => {
+  nextTick(() => {
+    if (autoScrollEnabled.value) {
+      scrollToBottom()
+    }
+  })
+})
+
+onUnmounted(() => {
+  if (autoScrollTimer) {
+    clearTimeout(autoScrollTimer)
+    autoScrollTimer = null
+  }
+})
 </script>
 
 <style scoped>

@@ -141,6 +141,8 @@ export const useBattleStore = defineStore('battle', () => {
   /** 战斗激活状态标识（true表示战斗进行中，false表示未开始或已结束） */
   const isBattleActive = ref(false)
 
+  const showDebug = ref(true)
+
   /**
    * 同步队伍数据（从 BattleService 拉取最新状态）
    * @description 当收到 TEAM_DATA_CHANGED 事件时调用，更新本地响应式状态
@@ -330,6 +332,10 @@ export const useBattleStore = defineStore('battle', () => {
   /** 设置战斗激活状态（控制UI交互可用性） */
   const setBattleActive = (active: boolean) => {
     isBattleActive.value = active
+  }
+  /** 设置显示调试信息状态 */
+  const setShowDebug = (show: boolean) => {
+    showDebug.value = show
   }
   /** 清空所有战斗日志和已处理动作记录 */
   const clearBattleLogs = () => {
@@ -822,6 +828,7 @@ export const useBattleStore = defineStore('battle', () => {
     maxTurns, // 最大回合数
     isBattleActive, // 战斗激活状态
     isPaused, // 暂停状态
+    showDebug, // 显示调试信息状态
 
     // ========== Computed Getters (用于模板访问) ==========
     getCurrentActorId: () => currentActorId.value,
@@ -848,6 +855,7 @@ export const useBattleStore = defineStore('battle', () => {
     clearBattleLogs, // 清空日志
     setAnimationState, // 设置动画状态
     getAnimationDuration, // 获取动画持续时间
+    setShowDebug, // 设置显示调试信息状态
 
     // ========== 战斗流程控制 ==========
     startBattle, // 开始战斗

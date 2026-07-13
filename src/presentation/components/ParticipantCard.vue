@@ -66,21 +66,6 @@
         :debug-mode="showDebug"
         @close="panelVisible = false"
       />
-
-      <!-- 调试信息（可选） -->
-      <div v-if="showDebug" class="debug-info">
-        <div class="debug-row">
-          <span class="label">ATK:</span>
-          <span class="value">{{ stats.attack.value }}</span>
-          <span v-if="stats.attack.value" class="breakdown" @click="toggleBreakdown">🔍</span>
-        </div>
-        <div v-if="showBreakdown" class="breakdown-details">
-          <div v-for="(value, key) in stats.attack.value" :key="key" class="breakdown-item">
-            <span class="key">{{ formatBreakdownKey(key) }}:</span>
-            <span class="value">{{ typeof value === 'number' ? value.toFixed(2) : value }}</span>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -90,12 +75,12 @@ import { computed, ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ActionResultType } from '@/domain/battle/type/types'
 import { useBattleParticipant } from '@/presentation/composables/useBattleParticipant'
-import { useParticipantStats } from '@/presentation/composables/useParticipantStats'
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 import { container } from '@/infrastructure/di/Container'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 
 // 浮动数字接口
 interface FloatingNumber {
@@ -117,8 +102,6 @@ const props = defineProps<{
   isSelected?: boolean
   /** 是否敌方 */
   isEnemy?: boolean
-  /** 显示调试信息 */
-  showDebug?: boolean
   /** 卡片引用 ID（用于动画） */
   cardRefId?: string
 }>()
@@ -126,6 +109,10 @@ const props = defineProps<{
 const emit = defineEmits<{
   click: [participantId: string]
 }>()
+
+// 从 store 中获取显示调试信息状态
+const battleStore = useBattleStore()
+const showDebug = computed(() => battleStore.showDebug)
 
 // 使用 composable 包装参与者
 const { stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(props.participant)

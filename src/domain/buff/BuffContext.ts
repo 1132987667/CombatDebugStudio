@@ -8,7 +8,7 @@ export class BuffContext {
   public instanceId: string = ''
   public config: BuffConfig = {} as BuffConfig
   public startTime: number = 0
-  public variables = new Map<string, any>()
+  public variables = new Map<string, string | number>()
   private _buffSystem: BuffSystem | null = null
 
   constructor(characterId?: string, instanceId?: string, config?: BuffConfig, buffSystem?: BuffSystem) {

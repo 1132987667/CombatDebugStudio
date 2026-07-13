@@ -26,7 +26,7 @@
 
     <!-- 调试信息（可折叠） -->
     <div v-if="debugMode" class="group-debug">
-      <div class="debug-toggle" @click.stop="showDebug = !showDebug">
+      <div class="debug-toggle" @click.stop="battleStore.setShowDebug(!showDebug)">
         {{ showDebug ? '▼' : '▶' }} 调试信息
       </div>
       <div v-if="showDebug" class="debug-content">
@@ -48,13 +48,16 @@
 import { ref, computed } from 'vue'
 import type { BuffTextItem } from '@/shared/types/buff-display'
 import { getConditionLabel } from '@/presentation/composables/useBuffDisplay'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 
 const props = defineProps<{
   buff: BuffTextItem
   debugMode?: boolean
 }>()
 
-const showDebug = ref(false)
+// 从 store 中获取显示调试信息状态
+const battleStore = useBattleStore()
+const showDebug = computed(() => battleStore.showDebug)
 
 const colorClass = computed(() => {
   if (props.buff.condition === 'inactive') return 'group--inactive'

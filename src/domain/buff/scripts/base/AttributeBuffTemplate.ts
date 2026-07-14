@@ -72,7 +72,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
 
   protected _onApply(context: BuffContext): void {
     this.applyModifiers(context)
-    this.log(context, `✅ 效果生效，应用了 ${this.getModifiers().length} 个属性修饰符`)
+    this.log(context, `√ 效果生效，应用了 ${this.getModifiers().length} 个属性修饰符`)
   }
 
   protected _onRemove(context: BuffContext): void {
@@ -84,7 +84,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     if (this.shouldReapplyOnUpdate()) {
       this.applyModifiers(context, true)
       if (this._isDebugMode()) {
-        this.log(context, `🔄 属性已更新，重新应用了修饰符`)
+        this.log(context, `属性已更新，重新应用了修饰符`)
       }
     }
   }
@@ -92,7 +92,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
   protected _onRefresh(context: BuffContext): void {
     if (this.shouldReapplyOnRefresh()) {
       this.applyModifiers(context, true)
-      this.log(context, `♻️ 刷新效果，重新应用了 ${this.getModifiers().length} 个修饰符`)
+      this.log(context, `刷新效果，重新应用了 ${this.getModifiers().length} 个修饰符`)
     }
   }
 

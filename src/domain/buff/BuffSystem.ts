@@ -206,12 +206,19 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (!script) {
       const def = this.scriptRegistry.resolve(buffId)
       if (!def?.config) {
-        console.warn(`Buff ${buffId} not found — no script or config registered, skipping`)
-        return ''
+        // ponytail: 允许无 registry 条目的动态 buff（如追踪 buff），
+        // 调用方传了完整 config 时视为自包含 buff，用 NOOP 占位
+        if (config.id && config.name && Object.keys(config).length > 1) {
+          script = NOOP_BUFF_SCRIPT
+        } else {
+          console.warn(`Buff ${buffId} not found — no script or config registered, skipping`)
+          return ''
+        }
+      } else {
+        // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
+        // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
+        script = NOOP_BUFF_SCRIPT
       }
-      // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
-      // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
-      script = NOOP_BUFF_SCRIPT
     }
 
     // ponytail: 自包含脚本的配置合并策略：

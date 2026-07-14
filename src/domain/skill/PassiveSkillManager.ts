@@ -2,7 +2,7 @@ import { BattleEntity, BattleTriggerPhase, PARTICIPANT_SIDE } from '@/domain/bat
 import { BATTLE_CONSTANTS } from '@/domain/battle/type/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { StackRule, ControlType } from '@/domain/buff/types'
+import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 
@@ -104,16 +104,23 @@ export class PassiveSkillManager {
         !this.evaluateCondition(config.condition, entity, target, context)
       )
         continue
-      // 执行被动技能
+      // ponytail: BATTLE_START 等主动触发场景下 target 可能为 undefined，默认以自身为目标
+      const actualTarget = target ?? entity
       this.skillManager.executeSkill(
         config.skillId,
         entity,
-        target!,
+        actualTarget,
         (context?.currentTurn as number) || 0,
       )
+
+      // ponytail: BATTLE_START 被动中纯 modify_attribute 步骤不创建 buff 实体，
+      // 此处自动创建追踪 buff 使其在 buff 列表中可见
+      if (trigger === BattleTriggerPhase.BATTLE_START) {
+        this.ensureTrackingBuff(entity.id, config.skillId, config.name)
+      }
       // ponytail: 被动触发日志 — 带角色名着色
-      const targetName = target?.name || '自身'
-      const targetEntity = target
+      const targetName = actualTarget?.name || '自身'
+      const targetEntity = actualTarget
       const segs = buildNameSegments(
         entity.name,
         entity.type === PARTICIPANT_SIDE.ALLY,
@@ -188,6 +195,38 @@ export class PassiveSkillManager {
     } catch {
       return true
     }
+  }
+
+  /**
+   * BATTLE_START 被动中，纯 modify_attribute 步骤不会创建 buff 实体。
+   * 此方法检查技能步骤，若无 apply_buff 步骤则自动创建追踪 buff，
+   * 使该被动在参与者 buff 列表中可见。
+   */
+  private ensureTrackingBuff(characterId: string, skillId: string, skillName: string): void {
+    const skillConfig = this.skillManager.getSkillConfig(skillId)
+    if (!skillConfig?.steps) return
+
+    // 如果已有 apply_buff 步骤，其 buff 实体已由 SkillExecutor 创建，无需追踪 buff
+    const hasApplyBuff = skillConfig.steps.some(s => s.type === 'apply_buff')
+    if (hasApplyBuff) return
+
+    const buffId = `_track_passive_${skillId}`
+    if (this.buffSystem.hasBuff(characterId, buffId)) return
+
+    const config: BuffConfig = {
+      id: buffId,
+      name: skillName,
+      description: '',
+      duration: -1,
+      maxStacks: 1,
+      cooldown: 0,
+      stackRule: StackRule.REFRESH,
+      controlType: ControlType.NONE,
+      controlPriority: 0,
+      isDebuff: false,
+      isPositive: true,
+    }
+    this.buffSystem.addBuff(characterId, buffId, config, 0)
   }
 
   getPassives(characterId: string): PassiveSkillConfig[] {

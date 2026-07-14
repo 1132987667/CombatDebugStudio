@@ -55,6 +55,7 @@ import {
   BATTLE_LOG_CATEGORIES,
 } from '@/shared/types/battle-log'
 import { RAFTimer } from '@/shared/utils/RAF'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { Counter } from '@/shared/utils/Counter'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
@@ -303,9 +304,6 @@ export class BattleSystem {
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
     battleData.skillManager = this.skillManager
 
-    battleData.turnOrder = this.turnManager.createTurnOrder(
-      Array.from(participants.values()),
-    )
     battleData.currentTurn = 0
     battleData.currentRound = 1
     battleData.battleState = BattleStatus.PREPARING
@@ -326,8 +324,6 @@ export class BattleSystem {
     battleData.autoBattle = autoBattleRules.enabled
     battleData.battleSpeed = autoBattleRules.defaultSpeed
     battleData.maxTurns = this.ruleManager.getTurnSystemRules().maxTurns
-
-    this.applyPassiveSkills(participants)
 
     // 注册属性变化回调，Buff 修改 ModifierStack 后自动同步到参与者
     this.buffSystem.setAttributeChangeCallback((characterId: string) => {
@@ -388,6 +384,17 @@ export class BattleSystem {
       }
     })
 
+    // ponytail: 统一管道 — 所有被动通过 PassiveSkillManager 在 BATTLE_START 阶段触发
+    this.applyPassiveSkills(participants)
+
+    // ponytail: 被动加成已生效，此时创建回合顺序确保速度加成正确
+    battleData.turnOrder = this.turnManager.createTurnOrder(
+      Array.from(participants.values()),
+    )
+
+    // ponytail: 光环在 applyPassiveSkills 中已通过 addBuff 添加到源参与者，
+    // 此处扫描所有参与者上的光环 buff 并分发修饰符到同队/异队成员
+    this.distributeAuras(participants)
 
     return convertToBattleState(battleData)
   }
@@ -410,6 +417,35 @@ export class BattleSystem {
       BattleTriggerPhase.BATTLE_START,
       participants,
     )
+  }
+
+  /**
+   * 分发所有参与者身上光环 buff 的 allies/enemies 修饰符
+   * 在 applyPassiveSkills 之后调用，确保所有 BATTLE_START 被动已添加 buff
+   */
+  private distributeAuras(participants: Map<string, BattleEntity>): void {
+    for (const [id, entity] of participants) {
+      if (!(entity instanceof BattleParticipantImpl)) continue
+      const buffInstanceIds = entity.getBuffInstanceIds()
+      for (const instanceId of buffInstanceIds) {
+        const buffConfig = this.buffSystem.getBuffConfigByInstanceId(instanceId)
+        if (!buffConfig) continue
+        // ponytail: 查找 BuffConfigData 中的 immunities 字段，但此处需要 aura 配置
+        // 使用 BuffSystem.getBuffAuraConfig 获取 aura 元数据
+        const aura = this.buffSystem.getBuffAuraConfig(buffConfig.id)
+        if (!aura || !aura.modifiers?.length || !aura.targetSelector) continue
+        const isAllies = aura.targetSelector === 'allies'
+        const sourceKey = `passive:${buffConfig.id}`
+        for (const [targetId, target] of participants) {
+          if (targetId === id) continue
+          if (!(target instanceof BattleParticipantImpl)) continue
+          const sameTeam = target.type === entity.type
+          if ((isAllies && sameTeam) || (!isAllies && !sameTeam)) {
+            GameDataProcessor.applyAuraModifiersToParticipant(target, sourceKey, aura.modifiers)
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -704,6 +740,8 @@ export class BattleSystem {
   }
 
   public resetBattle(): void {
+    // ponytail: 清除上一场战斗的被动注册，防止跨战斗污染
+    this.passiveSkillManager.clearAll()
     this.lifecycleManager.resetBattle()
   }
 

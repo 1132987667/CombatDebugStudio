@@ -239,8 +239,6 @@ export interface BattleEntity {
 
   /** 获取该实体免疫的标签列表 */
   getImmunities(): string[]
-  /** 添加免疫标签 */
-  addImmunity(tag: string): void
 }
 
 /**

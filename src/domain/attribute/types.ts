@@ -265,6 +265,7 @@ export const ATTRIBUTE_CODE = {
   controlSuccessRate: 'controlSuccessRate', // 控制技能成功率
   controlDurationReduction: 'controlDurationReduction', // 受控制时间减免
   damageTakenIncrease: 'damageTakenIncrease', // 受到的伤害增加（易伤）
+  damageBoost: 'damageBoost', // 伤害提升/伤害加成
 
   // ========== 反弹/反伤 ==========
   reflectDamagePercent: 'reflectDamagePercent', // 反弹伤害比例
@@ -711,6 +712,15 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     description: '受到的所有伤害增加的比例（易伤状态）',
     range: '0-200%',
     impact: '增加受到的伤害，通常由debuff引起',
+    isPercentage: true,
+  },
+  damageBoost: {
+    code: 'damageBoost',
+    name: '伤害提升',
+    displayName: '伤害提升',
+    description: '造成伤害的通用加成比例',
+    range: '0-200%',
+    impact: '提高造成的所有类型伤害',
     isPercentage: true,
   },
 

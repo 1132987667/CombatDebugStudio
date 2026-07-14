@@ -1,4 +1,4 @@
-import type { ExtendedSkillStep, SkillStep } from '@/domain/skill/types'
+import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { SkillStepType } from '@/domain/skill/types'
 import type { BattleAction, BattleEntity } from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
@@ -199,8 +199,8 @@ export class SkillExecutor {
       id: buffId,
       name: buffId,
       description: '',
-      duration: skillStep.duration ?? undefined,
-      maxStacks: skillStep.stacks ?? undefined,
+      duration: skillStep.duration ?? -1,
+      maxStacks: skillStep.stacks ?? 1,
       cooldown: 0,
       stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
@@ -226,7 +226,7 @@ export class SkillExecutor {
 
     // ponytail: Buff 效果日志 — 带角色名着色
     if (instanceId) {
-      const buffConfig = this.buffSystem.scriptRegistry.getBuffConfig(buffId)
+      const buffConfig = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
       const displayName = buffConfig?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
       const segs = buildNameSegments(
         source.name,
@@ -289,6 +289,34 @@ export class SkillExecutor {
       }
       attrData.modifiers.push(newMod)
       attrData.cachedVersion = -1
+
+      // ponytail: 与 GameDataProcessor.pushModifier 保持一致的加成属性同步
+      if (modType === ModifierType.PERCENTAGE) {
+        const BONUS_MAP: Partial<Record<string, string>> = {
+          [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
+          [ATTRIBUTE_CODE.minAttack]: ATTRIBUTE_CODE.attackBonus,
+          [ATTRIBUTE_CODE.maxAttack]: ATTRIBUTE_CODE.attackBonus,
+        }
+        const bonusAttr = BONUS_MAP[attrCode]
+        if (bonusAttr) {
+          const bonusData = modTarget.getAttrValue(bonusAttr as ATTRIBUTE_CODE)
+          if (bonusData) {
+            bonusData.modifiers = bonusData.modifiers.filter(m => m.sourceKey !== sourceKey)
+            bonusData.modifiers.push({ ...newMod, attribute: bonusAttr as ATTRIBUTE_CODE })
+            bonusData.cachedVersion = -1
+          }
+        }
+        if (attrCode === ATTRIBUTE_CODE.attack) {
+          for (const splitAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
+            const splitData = modTarget.getAttrValue(splitAttr)
+            if (splitData) {
+              splitData.modifiers = splitData.modifiers.filter(m => m.sourceKey !== sourceKey)
+              splitData.modifiers.push({ ...newMod, attribute: splitAttr })
+              splitData.cachedVersion = -1
+            }
+          }
+        }
+      }
     }
 
     modTarget.recalcAll()
@@ -316,7 +344,7 @@ export class SkillExecutor {
     for (const instance of instances) {
       if (removed >= count) break
       // ponytail: REMOVE_DEBUFF 只移除 isDebuff 的 buff；CLEANSE 移除所有
-      if (isRemoveDebuff && !instance.config?.isDebuff) continue
+      if (isRemoveDebuff && !instance.context.config?.isDebuff) continue
       this.buffSystem.removeBuff(instance.id)
       removed++
     }
@@ -524,7 +552,7 @@ export class SkillExecutor {
     let totalBurnDmg = 0
     for (const inst of burnInstances) {
       // ponytail: 假设每层灼烧每回合造成 5% 最大生命值伤害
-      const remainingDuration = inst.remainingDuration ?? inst.config?.duration ?? 1
+      const remainingDuration = inst.remainingTurns ?? inst.duration ?? 1
       const dmgPerTick = target.getAttribute('maxHealth') * 0.05
       totalBurnDmg += dmgPerTick * remainingDuration
 
@@ -568,7 +596,7 @@ export class SkillExecutor {
       id: 'buff_shield',
       name: '护盾',
       description: '',
-      duration: skillStep.duration ?? undefined,
+      duration: skillStep.duration ?? -1,
       maxStacks: 1,
       cooldown: 0,
       stackRule: StackRule.REFRESH,
@@ -605,7 +633,7 @@ export class SkillExecutor {
       id: buffId,
       name: buffId,
       description: '',
-      duration: skillStep.duration ?? undefined,
+      duration: skillStep.duration ?? -1,
       maxStacks: 1,
       cooldown: 0,
       stackRule: StackRule.REFRESH,

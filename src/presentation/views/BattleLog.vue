@@ -77,6 +77,7 @@ const onStyleChange = () => {
   }
 }
 
+const logContainer = ref<HTMLElement | null>(null)
 const logKeyword = ref("");
 const logFilters = reactive<LogFilters>({
   battle: true,

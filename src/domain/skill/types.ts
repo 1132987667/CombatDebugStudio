@@ -343,6 +343,12 @@ export interface SkillStep {
   stacks?: number
 
   /**
+   * 移除/净化数量
+   * 用于移除减益类技能步骤，指定移除多少个效果
+   */
+  count?: number
+
+  /**
    * 触发条件表达式
    */
   condition?: string

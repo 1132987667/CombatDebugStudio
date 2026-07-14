@@ -217,9 +217,7 @@ export class BattleManager {
       const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
       const battleId = battleState.battleId
       this.setBattleId(battleId)
-
-      // 应用被动技能的全队光环（如 +防御光环）
-      GameDataProcessor.applyTeamPassiveAuras(battleState.participants)
+      // ponytail: 被动 Buff / 光环统一由 BattleSystem.initialize 中的 pending 循环处理
 
       this.syncBattleState()
       this.emitTeamChanged()

@@ -105,10 +105,6 @@ export class BattleParticipantImpl implements BattleEntity {
     return [...this._immunities]
   }
 
-  addImmunity(tag: string): void {
-    this._immunities.add(tag.toLowerCase())
-  }
-
   /**
    * 构造函数
    * @param data - 初始化数据

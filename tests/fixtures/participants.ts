@@ -1,6 +1,6 @@
 import type { SkillSet } from '@/domain/skill/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 
 export const EMPTY_SKILL_SET: SkillSet = {
   small: [],

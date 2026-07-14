@@ -10,12 +10,29 @@ export interface EffectDefinition {
   config: BuffConfigData | null
 }
 
+/** Aura 光环修饰符 */
+interface BuffAuraModifier {
+  id?: string
+  targetAttribute: string
+  type: string
+  value: number
+  condition?: string
+}
+
+/** Aura 光环配置 */
+export interface BuffAuraConfig {
+  targetSelector: 'self' | 'allies' | 'enemies'
+  modifiers: BuffAuraModifier[]
+}
+
 interface BuffConfigData {
   id: string
   name?: string
   maxStacks?: number
   duration?: number
   attributes?: Record<string, string>
+  immunities?: string[]
+  aura?: BuffAuraConfig
   onAdd?: string
 }
 

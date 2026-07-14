@@ -1,6 +1,6 @@
-import type { BattleEntity } from '@/domain/battle/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 
 export const defaultAttrs = {
   [ATTRIBUTE_CODE.attack]: {

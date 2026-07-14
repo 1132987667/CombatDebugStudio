@@ -113,6 +113,7 @@ import type { LogEntry } from '@/shared/types/battle-log';
 import { EffectType } from '@/shared/types/effect';
 import { DamageCategory } from '@/domain/skill/types';
 import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -373,7 +374,7 @@ function initBattle() {
   }
 
   // ponytail: 将触发型被动技能注册到 PassiveSkillManager
-  const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
+  const passiveSkillManager = container.resolve<PassiveSkillManager>('PassiveSkillManager');
   for (const entity of allParticipants) {
     GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager);
   }

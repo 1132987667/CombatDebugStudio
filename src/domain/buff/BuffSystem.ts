@@ -8,10 +8,11 @@ import {
   ATTRIBUTE_CODE,
   type IModifierProvider,
   ModifierSourceType,
+  ModifierType,
 } from '@/domain/attribute/types'
 import { StackRule, ControlType } from '@/domain/buff/types'
 import { SkillStepType } from '@/domain/skill/types'
-import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { BuffScriptRegistry, BuffAuraConfig } from '@/domain/buff/BuffScriptRegistry'
 import { BuffContextPool } from '@/domain/buff/BuffContextPool'
 import { ModifierStack } from '@/domain/buff/ModifierStack'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
@@ -300,7 +301,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     // ponytail: 自包含脚本自己通过 _onApply 管理修饰符，不重复从 JSON 读取
     if (!this.scriptRegistry.isSelfContained(buffId)) {
       this.applyAttributeModifiers(characterId, instanceId, buffId)
+      this.applyBuffImmunities(characterId, buffId)
     }
+    // ponytail: self 目标光环的修饰符始终应用到目标角色（自包含脚本也在 ModifierStack 中管理）
+    this.applyBuffAuraModifiers(characterId, instanceId, buffId)
     this.triggerAttributeChange(characterId)
 
     // ponytail: 技术调试日志 — Buff 变更追踪
@@ -355,6 +359,56 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         0, /* ponytail: 没有当前属性累计值，传 0 占位 */
       )
     }
+  }
+
+  /**
+   * 应用 Buff 配置中的 immunities（免疫标签）到目标角色
+   * 在 addBuff 中与 applyAttributeModifiers 并列调用，确保无脚本的纯 JSON buff 也能获得免疫效果
+   */
+  private applyBuffImmunities(characterId: string, buffId: string): void {
+    const buffConfig = this.scriptRegistry.getBuffConfig(buffId)
+    if (!buffConfig || !buffConfig.immunities || buffConfig.immunities.length === 0) return
+
+    let immunities = this.characterImmunities.get(characterId)
+    if (!immunities) {
+      immunities = new Set()
+      this.characterImmunities.set(characterId, immunities)
+    }
+    for (const tag of buffConfig.immunities) {
+      immunities.add(tag.toLowerCase())
+    }
+  }
+
+  /**
+   * 应用 Buff 配置中的 aura（光环修饰符）到目标角色
+   * 仅处理 targetSelector === 'self' 的光环。allies/enemies 由 BattleSystem 在初始化时分发
+   */
+  private applyBuffAuraModifiers(characterId: string, instanceId: string, buffId: string): void {
+    const buffConfig = this.scriptRegistry.getBuffConfig(buffId)
+    if (!buffConfig?.aura || buffConfig.aura.targetSelector !== 'self') return
+
+    const modifierStack = this.getModifierStack(characterId)
+    for (const mod of buffConfig.aura.modifiers) {
+      const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
+      // aura 中的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
+      let value = typeof mod.value === 'number' ? mod.value : 0
+      if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
+        value = Math.round(value * 10000) / 100
+      }
+      const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
+        : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
+        : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
+        : mod.type === 'FINAL' ? ModifierType.FINAL
+        : ModifierType.ADDITIVE
+      modifierStack.addModifier(instanceId, attrCode, value, modType)
+    }
+  }
+
+  /**
+   * 获取 Buff 配置中的 aura 光环信息（供 BattleSystem 初始化时分发 allies/enemies）
+   */
+  public getBuffAuraConfig(buffId: string): BuffAuraConfig | undefined {
+    return this.scriptRegistry.getBuffConfig(buffId)?.aura
   }
 
   public removeBuff(instanceId: string): boolean {

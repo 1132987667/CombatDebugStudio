@@ -37,7 +37,9 @@ export class BuffTraceLogger {
     battleLogManager.addDebugLog(
       `[${id}] BUFF_APPLY ${buffName}→${characterId} |` +
       ` instance=${instanceId} stack=${stacks} duration=${duration}`,
-      LogLevel.TRACE,
+      {
+        level: LogLevel.TRACE,
+      }
     )
   }
 
@@ -52,7 +54,9 @@ export class BuffTraceLogger {
     const id = ++this.counter
     battleLogManager.addDebugLog(
       `[${id}] BUFF_REMOVE ${buffName}→${characterId} | instance=${instanceId}`,
-      LogLevel.TRACE,
+      {
+        level: LogLevel.TRACE,
+      }
     )
   }
 
@@ -71,7 +75,9 @@ export class BuffTraceLogger {
     battleLogManager.addDebugLog(
       `[${id}] BUFF_UPDATE ${buffName}→${characterId} |` +
       ` instance=${instanceId} stack=${oldStacks}→${newStacks} remain=${remainingTurns}`,
-      LogLevel.TRACE,
+      {
+        level: LogLevel.TRACE,
+      }
     )
   }
 
@@ -94,7 +100,9 @@ export class BuffTraceLogger {
     battleLogManager.addDebugLog(
       `[${id}] BUFF_MOD ${buffName}→${characterId} |` +
       ` attr=${attribute} mod=${valueStr} total=${currentTotal}`,
-      LogLevel.TRACE,
+      {
+        level: LogLevel.TRACE,
+      }
     )
   }
 }

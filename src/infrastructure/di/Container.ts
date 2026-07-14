@@ -81,33 +81,33 @@ export const container = Container.getInstance()
 
 // 导入所有必要的服务和令牌
 import {
-  BATTLE_SYSTEM_TOKEN,
-  TURN_MANAGER_TOKEN,
   AI_SYSTEM_TOKEN,
   BATTLE_RECORDER_TOKEN,
   BATTLE_RULE_MANAGER_TOKEN,
+  BATTLE_SYSTEM_TOKEN,
+  TURN_MANAGER_TOKEN,
 } from '@/domain/battle/entity/BattleInterfaces'
 
-import { BattleSystem } from '@/domain/battle/BattleSystem'
-import { TurnManager } from '@/domain/battle/service/TurnManager'
+import { BattleService } from '@/application/facade/BattleFacade'
 import { AISystem } from '@/domain/battle/ai/AISystem'
-import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
-import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
-import { BattleManager } from '@/domain/battle/BattleManager'
-import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
+import { BattleManager } from '@/domain/battle/BattleManager'
+import { BattleSystem } from '@/domain/battle/BattleSystem'
+import { battleEventManager } from '@/domain/battle/events/BattleEventManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
+import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
+import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
+import { TurnManager } from '@/domain/battle/service/TurnManager'
+import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
+import { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
+import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
-import { RAFTimer } from '@/shared/utils/RAF'
-import { SkillManager } from '@/domain/skill/SkillManager'
-import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
-import { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
-import { BattleService } from '@/application/facade/BattleFacade'
-import { battleEventManager } from '@/domain/battle/events/BattleEventManager'
+import { SkillManager } from '@/domain/skill/SkillManager'
+import { RAFTimer } from '@/shared/utils/RAF'
 
 
 /**

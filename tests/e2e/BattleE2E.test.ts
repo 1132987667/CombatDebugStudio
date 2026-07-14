@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { initializeContainer, container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import { BattleStatus } from '@/domain/battle/types'
+import { BattleStatus } from '@/domain/battle/type/types'
 import { createTestBattleParticipants } from '../factories/ParticipantFactory'
 
 vi.mock('@/main', () => ({

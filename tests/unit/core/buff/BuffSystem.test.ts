@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { StackRule, ControlType } from '@/domain/buff/types'
-import type { BuffConfig } from '@/domain/buff/types'
+import type { BuffConfig } from '@/domain/buff/BuffConfig'
 
 vi.mock('@/main', () => ({
   eventBus: { emit: () => {}, on: () => {}, off: () => {} },

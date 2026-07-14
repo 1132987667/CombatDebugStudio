@@ -15,13 +15,11 @@ import skillsData from '@configs/skills/skills.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
 import newSkillsData from '@configs/skills/skills_new.json'
 import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
-import buffsData from '@configs/buffs/buffs.json'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig, SkillStep } from '@/domain/skill/types'
 import type { SceneData } from '@/shared/types/scene'
 import type { CharacterStats } from '@/domain/character/types'
 import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
-import type { StructuredBuffConfig } from '@/domain/attribute/modifier-template'
 import type { ParticipantSide } from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE, BattleTriggerPhase } from '@/domain/battle/type/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
@@ -150,9 +148,6 @@ export class GameDataProcessor {
     // 4. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
     const participant = new BattleParticipantImpl(initData)
 
-    // 5. 应用被动技能中 modify_attribute 步骤的修饰符
-    GameDataProcessor.applyPassiveModifiers(participant, passiveSkills)
-
     // 6. 将配置中的 attackBonus/healthBonus 作为 PERCENTAGE 修饰符注入到对应属性
     if (attackBonusBase) {
       for (const attr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
@@ -202,51 +197,6 @@ export class GameDataProcessor {
     [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
     [ATTRIBUTE_CODE.minAttack]: ATTRIBUTE_CODE.attackBonus,
     [ATTRIBUTE_CODE.maxAttack]: ATTRIBUTE_CODE.attackBonus,
-  }
-
-  /**
-   * 正在等待处理的友方光环列表（阶段二使用）
-   */
-  private static pendingAllyAuras: Array<{
-    sourceName: string
-    sourceKey: string
-    teamType: ParticipantSide
-    modifiers: Array<{ targetAttribute: string; type: string; value: number }>
-  }> = []
-
-  /**
-   * 将被动技能中的修饰符应用到参与者属性上
-   * 处理 modify_attribute 和 apply_buff 两种步骤
-   */
-  private static applyPassiveModifiers(
-    participant: BattleParticipantImpl,
-    passiveSkills: SkillConfig[],
-  ): void {
-    for (const skill of passiveSkills) {
-      if (!skill.steps) continue
-      for (const step of skill.steps) {
-        const stepType = step.type
-        if (stepType === 'modify_attribute') {
-          GameDataProcessor.applyStepModifiers(participant, skill, step.modifiers)
-        } else if (stepType === 'apply_buff' && step.buffId) {
-          GameDataProcessor.applyBuffStep(participant, skill, step.buffId)
-        }
-      }
-    }
-  }
-
-  /**
-   * 将 modifier 列表应用到参与者属性
-   */
-  private static applyStepModifiers(
-    participant: BattleParticipantImpl,
-    skill: SkillConfig,
-    modifiers: any[] | undefined,
-  ): void {
-    if (!modifiers || modifiers.length === 0) return
-    for (const mod of modifiers) {
-      GameDataProcessor.pushModifier(participant, skill, mod)
-    }
   }
 
   /**
@@ -325,142 +275,40 @@ export class GameDataProcessor {
   }
 
   /**
-   * 处理 apply_buff 步骤：解析 buff 配置，应用其修饰符
-   * 友方光环存入等待列表由 applyTeamPassiveAuras 处理
+   * 将光环 aura 修饰符分发到指定的参与者
+   * 由 BattleSystem.initialize 在 pending buff 循环后调用，处理 allies/enemies 光环
    */
-  private static applyBuffStep(
-    participant: BattleParticipantImpl,
-    skill: SkillConfig,
-    buffId: string,
+  static applyAuraModifiersToParticipant(
+    target: BattleParticipantImpl,
+    sourceKey: string,
+    modifiers: Array<{ targetAttribute: string; type: string; value: number }>,
   ): void {
-    const buff = GameDataProcessor.findBuffById(buffId)
-    if (!buff) return
-
-    // 处理 aura 修饰符
-    const aura = (buff as any).aura as
-      | { targetSelector?: string; modifiers?: Array<{ targetAttribute: string; type: string; value: number }> }
-      | undefined
-    if (aura?.modifiers) {
-      if (aura.targetSelector === 'allies') {
-        // 全队光环 → 等待阶段二
-        GameDataProcessor.pendingAllyAuras.push({
-          sourceName: skill.name,
-          sourceKey: `passive:${buffId}`,
-          teamType: participant.type,
-          modifiers: aura.modifiers,
-        })
-      } else {
-        // 自目标 → 立即应用
-        GameDataProcessor.applyStepModifiers(participant, skill, aura.modifiers)
+    for (const mod of modifiers) {
+      const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
+      const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
+        : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
+        : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
+        : mod.type === 'FINAL' ? ModifierType.FINAL
+        : ModifierType.ADDITIVE
+      let value = typeof mod.value === 'number' ? mod.value : 0
+      if (modType === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
+        value = Math.round(value * 10000) / 100
+      }
+      const m: Modifier = {
+        sourceKey,
+        sourceType: ModifierSourceType.SKILL,
+        attribute: attrCode,
+        value,
+        type: modType,
+        description: sourceKey,
+      }
+      const attrData = target.getAttrValue(attrCode)
+      if (attrData) {
+        attrData.modifiers.push(m)
+        attrData.cachedVersion = -1
       }
     }
-
-    // 处理免疫标签（immunities）
-    const immunities = (buff as any).immunities as string[] | undefined
-    if (immunities) {
-      for (const tag of immunities) {
-        participant.addImmunity(tag)
-      }
-    }
-
-    // 处理直接 attributes（如 { "dmgReduction": "+20%" }）
-    const attrs = (buff as any).attributes as Record<string, string> | undefined
-    if (attrs) {
-      for (const [attrKey, valueStr] of Object.entries(attrs)) {
-        const attrCode = attrKey as ATTRIBUTE_CODE
-        const isPercent = valueStr.endsWith('%')
-        const rawValue = parseFloat(valueStr)
-        if (isNaN(rawValue)) continue
-        GameDataProcessor.pushModifier(participant, skill, {
-          targetAttribute: attrCode,
-          type: isPercent ? 'PERCENTAGE' : 'ADDITIVE',
-          value: isPercent ? rawValue : rawValue,
-        })
-      }
-    }
-  }
-
-  /**
-   * 应用所有等待中的友方光环
-   * 在队伍初始化完成后调用
-   */
-  static applyTeamPassiveAuras(
-    allParticipants: Map<string, BattleEntity>,
-  ): void {
-    const pending = GameDataProcessor.pendingAllyAuras
-    if (pending.length === 0) return
-    GameDataProcessor.pendingAllyAuras = []
-
-    for (const aura of pending) {
-      for (const entity of allParticipants.values()) {
-        if (entity.type !== aura.teamType || !(entity instanceof BattleParticipantImpl)) continue
-        for (const mod of aura.modifiers) {
-          const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
-          let value = typeof mod.value === 'number' ? mod.value : 0
-          if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
-            value = Math.round(value * 10000) / 100
-          }
-          const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
-            : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
-            : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
-            : mod.type === 'FINAL' ? ModifierType.FINAL
-            : ModifierType.ADDITIVE
-          const m: Modifier = {
-            sourceKey: aura.sourceKey,
-            sourceType: ModifierSourceType.SKILL,
-            attribute: attrCode,
-            value,
-            type: modType,
-            description: aura.sourceName,
-          }
-          const attrData = entity.getAttrValue(attrCode)
-          if (attrData) {
-            attrData.modifiers.push(m)
-            attrData.cachedVersion = -1
-          }
-
-          // 同步到加成属性（用于 UI "属性加成" 显示）
-          if (modType === ModifierType.PERCENTAGE) {
-            const bonusAttrCode = GameDataProcessor.ATTR_TO_BONUS_MAP[attrCode]
-            if (bonusAttrCode) {
-              const bonusMod: Modifier = {
-                sourceKey: aura.sourceKey,
-                sourceType: ModifierSourceType.SKILL,
-                attribute: bonusAttrCode,
-                value,
-                type: ModifierType.ADDITIVE,
-                description: aura.sourceName,
-              }
-              const bonusData = entity.getAttrValue(bonusAttrCode)
-              if (bonusData) {
-                bonusData.modifiers.push(bonusMod)
-                bonusData.cachedVersion = -1
-              }
-            }
-            // ponytail: PERCENTAGE 作用于 attack 时同步到 minAttack/maxAttack
-            // 与 pushModifier() 中的逻辑保持一致
-            if (attrCode === ATTRIBUTE_CODE.attack) {
-              for (const targetAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
-                const targetData = entity.getAttrValue(targetAttr)
-                if (targetData) {
-                  targetData.modifiers.push({
-                    sourceKey: aura.sourceKey,
-                    sourceType: ModifierSourceType.SKILL,
-                    attribute: targetAttr,
-                    value,
-                    type: ModifierType.PERCENTAGE,
-                    description: aura.sourceName,
-                  })
-                  targetData.cachedVersion = -1
-                }
-              }
-            }
-          }
-        }
-        // ponytail: 通知实体重新计算所有属性值，使光环修饰符立即生效
-        entity.recalcAll()
-      }
-    }
+    target.recalcAll()
   }
 
   /** 将 triggerTimes 字符串映射到 BattleTriggerPhase */
@@ -494,14 +342,19 @@ export class GameDataProcessor {
     if (!passives || passives.length === 0) return
 
     for (const skill of passives) {
-      const triggerTimes = skill.triggerTimes
-      if (!triggerTimes || triggerTimes.length === 0) continue
+      // ponytail: 统一管道 — 无 triggerTimes 的被动按 battle_start 注册
+      const triggerTimes = skill.triggerTimes?.length
+        ? skill.triggerTimes
+        : [BattleTriggerPhase.BATTLE_START]
 
       const phase = GameDataProcessor.TRIGGER_TIME_MAP[triggerTimes[0]]
       if (!phase) {
         console.warn(`未知的被动触发时机: ${triggerTimes[0]} (技能: ${skill.id})`)
         continue
       }
+
+      // ponytail: battle_start 被动默认触发 1 次
+      const maxTriggerCount = skill.maxUses ?? (triggerTimes[0] === 'battle_start' ? 1 : undefined)
 
       const config: PassiveSkillConfig = {
         id: `${entity.id}:${skill.id}`,
@@ -511,7 +364,7 @@ export class GameDataProcessor {
         skillId: skill.id,
         cooldown: skill.cooldown || 0,
         condition: skill.condition,
-        maxTriggerCount: skill.maxUses,
+        maxTriggerCount,
         // 从 parameters 中读取额外触发配置
         triggerProbability: skill.parameters?.triggerProbability as number | undefined,
         hpThreshold: skill.parameters?.hpThreshold as number | undefined,
@@ -661,13 +514,6 @@ export class GameDataProcessor {
 
     DataProcessor.setCachedData(cacheKey, skills)
     return skills
-  }
-
-  /**
-   * 根据 Buff ID 查找 Buff 配置
-   */
-  static findBuffById(buffId: string): StructuredBuffConfig | undefined {
-    return (buffsData as StructuredBuffConfig[]).find((b) => b.id === buffId)
   }
 
   /**

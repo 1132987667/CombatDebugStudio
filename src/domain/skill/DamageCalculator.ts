@@ -34,10 +34,11 @@ export interface DamageResult {
   actualDamage: number
 }
 
-/** 防御效果系数：每点防御转化为有效防御的比例 */
-export const DEFENSE_EFFECTIVENESS = 0.5
-/** 防御递减公式分母：控制防御收益递减曲线 */
-export const DEFENSE_DENOMINATOR = 500
+/** ponytail: 以下常量已不再使用，保留作为历史参考
+ * DEFENSE_EFFECTIVENESS = 0.5
+ * DEFENSE_DENOMINATOR   = 500
+ * 当前使用减法公式：damage = Math.max(0, damage - defense)
+ */
 
 function getAttributeValue(
   participant: BattleEntity,
@@ -219,21 +220,20 @@ export class DamageCalculator {
       breakdown.postCritDamage = damage
     }
 
-    // 防御计算（递减公式）
+    // 防御计算（减法公式：不破防为 0）
     breakdown.defenseValue = getAttributeValue(target, ATTRIBUTE_CODE.defense)
-    breakdown.effectiveDefense = breakdown.defenseValue * DEFENSE_EFFECTIVENESS
+    breakdown.effectiveDefense = breakdown.defenseValue
     breakdown.defenseMultiplier = Math.max(
-      0.1,
-      1 -
-        breakdown.effectiveDefense /
-          (breakdown.effectiveDefense + DEFENSE_DENOMINATOR),
+      0,
+      1 - breakdown.defenseValue / Math.max(1, damage),
     )
     const beforeDef = damage
-    damage = Math.floor(damage * breakdown.defenseMultiplier)
+    damage = Math.max(0, damage - breakdown.defenseValue)
+    damage = Math.floor(damage)
     breakdown.steps.push({
       stepName: 'defense',
       value: damage,
-      description: `防御减免(x${breakdown.defenseMultiplier.toFixed(4)}): ${beforeDef} → ${damage}`,
+      description: `防御减免(-${breakdown.defenseValue}): ${beforeDef} → ${damage}`,
     })
 
     // 攻击类型伤害减免

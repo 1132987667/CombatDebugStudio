@@ -34,6 +34,10 @@ import {
   TargetStrategy,
   SkillStepType,
 } from '@/domain/skill/types'
+import {
+  resolveSkillTargets,
+  resolveStepTargets,
+} from '@/domain/skill/target-resolver'
 import type {
   BattleAction,
   BattleData,
@@ -202,8 +206,7 @@ export class BattleExecutor {
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.BEFORE_ATTACK,
         source,
-        targets[0],
-        { targetId: targets[0]?.id, currentRound: battle.currentRound },
+        { target: targets[0], targetId: targets[0]?.id, currentTurn: battle.currentRound },
       )
       // ponytail: 启用延迟伤害模式 — 技能执行只记录数值不实际扣血，等待动画完成后统一应用
       this.skillManager.setDeferredDamageMode(true)
@@ -342,27 +345,23 @@ export class BattleExecutor {
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.ON_HIT,
               source,
-              pd.target,
-              { sourceId: source.id, damage: pd.damage },
+              { target: pd.target, sourceId: source.id, damage: pd.damage },
             )
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.DAMAGE_TAKEN,
               pd.target,
-              source,
-              { sourceId: source.id, damage: pd.damage },
+              { target: source, sourceId: source.id, damage: pd.damage },
             )
             if (!pd.target.isAlive()) {
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_DEATH,
                 pd.target,
-                source,
-                { sourceId: source.id, cause: EffectType.DAMAGE },
+                { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
               )
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_KILL,
                 source,
-                pd.target,
-                { targetId: pd.target.id, cause: EffectType.DAMAGE },
+                { target: pd.target, targetId: pd.target.id, cause: EffectType.DAMAGE },
               )
             }
           }
@@ -385,8 +384,8 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.AFTER_ATTACK,
       source,
-      targets[0],
       {
+        target: targets[0],
         targetId: targets[0]?.id,
         damage: action.damage,
         isCritical: action.effects?.some((e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical),
@@ -405,102 +404,12 @@ export class BattleExecutor {
     source: BattleEntity,
     skill: SkillConfig,
   ): BattleEntity[] {
-    const cfg = skill.selector
-    const participants = Array.from(battle.participants.values())
-
-    // --- self ---
-    if (cfg.faction === TargetFaction.SELF) return [source]
-
-    const isEnemySide = source.team === PARTICIPANT_SIDE.ALLY
-    const factionFilter = (p: BattleEntity): boolean => {
-      if (!p.isAlive()) return false
-      if (cfg.faction === TargetFaction.ALL) return true
-      if (cfg.faction === TargetFaction.ALLY) return p.team === source.team
-      // 'enemy'
-      return (
-        p.team ===
-        (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
-      )
-    }
-
-    let candidates = participants.filter(factionFilter)
-    if (candidates.length === 0) return []
-
-    const take = (arr: BattleEntity[], n: number): BattleEntity[] =>
-      arr.slice(0, Math.max(1, n))
-
-    const strategy = cfg.strategy || TargetStrategy.FIRST
-    switch (strategy) {
-      case TargetStrategy.ALL:
-        return candidates
-      case TargetStrategy.LOWEST_HP: {
-        const target = candidates.reduce((min, p) =>
-          p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
-            Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1) <
-          min.getAttribute(ATTRIBUTE_CODE.currentHealth) /
-            Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)
-            ? p
-            : min,
-        )
-        return [target]
-      }
-      case TargetStrategy.RANDOM:
-        return take(
-          candidates.sort(() => Math.random() - 0.5),
-          cfg.count === TargetStrategy.ALL
-            ? candidates.length
-            : (cfg.count ?? 1),
-        )
-      case TargetStrategy.FRONT:
-        return [candidates[0]]
-      case TargetStrategy.BACK:
-        return [candidates[candidates.length - 1]]
-      case TargetStrategy.ADJACENT: {
-        // 根据主目标的 seatIndex 查找同阵营相邻目标
-        // 由于 getSkillTargets 在此上下文中用于技能级目标选择，
-        // 相邻指与 source 相邻的同队角色（用于辅助/治疗技能）
-        const sourceSeat = source.seatIndex
-        return candidates.filter(
-          (p) => Math.abs(p.seatIndex - sourceSeat) === 1 && p.isAlive(),
-        )
-      }
-      case TargetStrategy.RANDOM_ADJACENT: {
-        // 随机相邻目标 — 由步骤级 targetType 使用
-        const sourceSeat = source.seatIndex
-        const adjacent = candidates.filter(
-          (p) => Math.abs(p.seatIndex - sourceSeat) === 1 && p.isAlive(),
-        )
-        if (adjacent.length === 0) return [source]
-        return [adjacent[Math.floor(Math.random() * adjacent.length)]]
-      }
-      case TargetStrategy.FIRST:
-      default: {
-        // 智能默认：如果技能含治疗/增益步骤，选最低血量；否则选第一个
-        if (
-          skill.steps.some(
-            (s) =>
-              s.type === SkillStepType.HEAL ||
-              s.type === SkillStepType.APPLY_BUFF,
-          )
-        ) {
-          const target = candidates.reduce((min, p) =>
-            p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
-              Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1) <
-            min.getAttribute(ATTRIBUTE_CODE.currentHealth) /
-              Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)
-              ? p
-              : min,
-          )
-          return [target]
-        }
-        return take(
-          candidates,
-          cfg.count === TargetStrategy.ALL
-            ? candidates.length
-            : (cfg.count ?? 1),
-        )
-      }
-    }
+    return resolveSkillTargets(
+      battle.participants,
+      source,
+      skill.selector,
+      skill.steps,
+    )
   }
 
   /**
@@ -516,25 +425,11 @@ export class BattleExecutor {
     mainTarget: BattleEntity,
     stepTargetType: string,
   ): BattleEntity[] {
-    const participants = Array.from(battle.participants.values())
-    // 同一队伍中与主目标 seatIndex 差 ±1 的存活角色
-    const teamMates = participants.filter(
-      (p) => p.team === mainTarget.team && p.isAlive(),
+    return resolveStepTargets(
+      battle.participants,
+      mainTarget,
+      stepTargetType,
     )
-    const adjacent = teamMates.filter(
-      (p) => Math.abs(p.seatIndex - mainTarget.seatIndex) === 1,
-    )
-
-    if (adjacent.length === 0) return []
-
-    switch (stepTargetType) {
-      case TargetStrategy.RANDOM_ADJACENT:
-        return [adjacent[Math.floor(Math.random() * adjacent.length)]]
-      case TargetStrategy.ADJACENT:
-        return adjacent
-      default:
-        return []
-    }
   }
 
   /**
@@ -665,27 +560,23 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.ON_HIT,
       source,
-      target,
-      { sourceId: source.id, damage },
+      { target, sourceId: source.id, damage },
     )
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.DAMAGE_TAKEN,
       target,
-      source,
-      { sourceId: source.id, damage },
+      { target: source, sourceId: source.id, damage },
     )
     if (!target.isAlive()) {
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.ON_DEATH,
         target,
-        source,
-        { sourceId: source.id, cause: EffectType.DAMAGE },
+        { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
       )
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.ON_KILL,
         source,
-        target,
-        { targetId: target.id, cause: EffectType.DAMAGE },
+        { target, targetId: target.id, cause: EffectType.DAMAGE },
       )
     }
   }
@@ -799,8 +690,7 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BEFORE_ATTACK,
       source,
-      target,
-      { targetId, currentRound },
+      { target, targetId, currentTurn: currentRound },
     )
 
     // 创建详细记录对象用于捕获伤害拆分
@@ -846,8 +736,8 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.AFTER_ATTACK,
       source,
-      target,
       {
+        target,
         targetId,
         damage: action.damage,
         isCritical: damageResult.isCritical,
@@ -1056,21 +946,18 @@ export class BattleExecutor {
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.ON_HIT,
               source,
-              target,
-              { sourceId: source.id, damage: action.damage ?? 0 },
+              { target, sourceId: source.id, damage: action.damage ?? 0 },
             )
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.DAMAGE_TAKEN,
               target,
-              source,
-              { sourceId: source.id, damage: action.damage ?? 0 },
+              { target: source, sourceId: source.id, damage: action.damage ?? 0 },
             )
             if (!target.isAlive()) {
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_DEATH,
                 target,
-                source,
-                { sourceId: source.id, cause: EffectType.DAMAGE },
+                { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
               )
             }
           }
@@ -1139,27 +1026,23 @@ export class BattleExecutor {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.ON_HIT,
           source,
-          target,
-          { sourceId: source.id, damage: actualDamage },
+          { target, sourceId: source.id, damage: actualDamage },
         )
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.DAMAGE_TAKEN,
           target,
-          source,
-          { sourceId: source.id, damage: actualDamage },
+          { target: source, sourceId: source.id, damage: actualDamage },
         )
         if (!target.isAlive()) {
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_DEATH,
             target,
-            source,
-            { sourceId: source.id, cause: EffectType.DAMAGE },
+            { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
           )
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_KILL,
             source,
-            target,
-            { targetId: target.id, cause: EffectType.DAMAGE },
+            { target, targetId: target.id, cause: EffectType.DAMAGE },
           )
         }
 

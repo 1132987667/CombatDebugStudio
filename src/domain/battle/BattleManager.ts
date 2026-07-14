@@ -217,8 +217,6 @@ export class BattleManager {
       const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
       const battleId = battleState.battleId
       this.setBattleId(battleId)
-      // ponytail: 被动 Buff / 光环统一由 BattleSystem.initialize 中的 pending 循环处理
-
       this.syncBattleState()
       this.emitTeamChanged()
       return { battleId }

@@ -9,6 +9,9 @@
 
 <template>
   <Dialog :model-value="modelValue" @update:model-value="handleModelValueChange" title="调试日志" width="800px">
+    <template #header-actions>
+      <button class="dialog-download" @click="downloadLogs">下载</button>
+    </template>
     <div class="debug-log-container">
       <div class="log-toolbar">
         <button class="log-btn" @click="clearLogs">清空</button>
@@ -89,6 +92,19 @@ const logLevelName = (level: LogLevel): string => {
   }
   return names[level] || 'UNKNOWN'
 }
+
+const downloadLogs = () => {
+  const text = localLogs.value
+    .map((log) => `[${logLevelName(log.level)}] ${log.message}`)
+    .join('\n')
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `debug-logs-${Date.now()}.txt`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <style scoped>
@@ -122,6 +138,22 @@ const logLevelName = (level: LogLevel): string => {
 .log-count {
   color: var(--color-text-secondary);
   font-size: var(--font-size-md);
+}
+
+.dialog-download {
+  background: transparent;
+  border: 1px solid var(--color-info);
+  color: var(--color-info);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: var(--transition-fast);
+}
+
+.dialog-download:hover {
+  background: var(--color-info);
+  color: var(--color-bg-primary);
 }
 
 .log-list {

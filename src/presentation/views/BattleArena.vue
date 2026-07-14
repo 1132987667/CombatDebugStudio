@@ -73,7 +73,8 @@
     <ControlBar :is-battle-active="battleStore.isBattleActive" :is-paused="battleStore.isPaused"
       :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
       @end-battle="endBattle" @reset-battle="resetBattle" @step-back="stepBack" @single-step="singleStep"
-      @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange" @toggle-pause="handleTogglePause" />
+      @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange"
+      @toggle-pause="handleTogglePause" />
 
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->

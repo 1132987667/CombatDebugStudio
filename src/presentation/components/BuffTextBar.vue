@@ -1,42 +1,21 @@
 <template>
-  <div
-    class="buff-text-bar"
-    :class="{ 'is-expanded': expanded, 'is-empty': isEmpty }"
-    ref="barRef"
-    @click="handleClick"
-  >
+  <div class="buff-text-bar" :class="{ 'is-expanded': expanded, 'is-empty': isEmpty }" ref="barRef"
+    @click="handleClick">
     <!-- 空状态 -->
     <span v-if="isEmpty" class="bar-placeholder">无效果</span>
 
     <!-- 控制标签（不折叠） -->
     <template v-else>
-      <BuffTextTag
-        v-for="ctrl in displayControlLabels"
-        :key="ctrl.instanceId"
-        :text="ctrl.name"
-        type="control"
-        :turns-left="ctrl.remainingTurns"
-        @hover.stop="onTagHover($event, ctrl)"
-        @leave="onTagLeave"
-      />
+      <BuffTextTag v-for="ctrl in displayControlLabels" :key="ctrl.instanceId" :text="ctrl.name" type="control"
+        :turns-left="ctrl.remainingTurns" @hover.stop="onTagHover($event, ctrl)" @leave="onTagLeave" />
 
       <!-- 合并属性标签 -->
-      <BuffTextTag
-        v-for="attr in visibleAttrLabels"
-        :key="attr.attribute"
-        :text="formatAttrLine(attr)"
-        :type="attr.totalPercent > 0 ? 'buff' : 'debuff'"
-        @hover.stop="onAttrHover($event, attr)"
-        @leave="onTagLeave"
-      />
+      <BuffTextTag v-for="attr in visibleAttrLabels" :key="attr.attribute" :text="formatAttrLine(attr)"
+        :type="attr.totalPercent > 0 ? 'buff' : 'debuff'" @hover.stop="onAttrHover($event, attr)" @leave="onTagLeave" />
 
       <!-- 折叠指示器 -->
       <Transition name="badge-pop">
-        <span
-          v-if="collapsedCount > 0"
-          class="bar-collapse-badge"
-          title="点击展开全部状态"
-        >+{{ collapsedCount }}</span>
+        <span v-if="collapsedCount > 0" class="bar-collapse-badge" title="点击展开全部状态">+{{ collapsedCount }}</span>
       </Transition>
     </template>
   </div>
@@ -165,6 +144,7 @@ function onTagLeave() {
 .buff-text-bar.is-empty {
   cursor: default;
 }
+
 .buff-text-bar.is-empty:hover {
   background: transparent;
 }
@@ -196,11 +176,20 @@ function onTagLeave() {
 .badge-pop-enter-active {
   animation: badge-pop-in 0.2s ease-out;
 }
+
 .badge-pop-leave-active {
   animation: badge-pop-in 0.15s ease-in reverse;
 }
+
 @keyframes badge-pop-in {
-  0% { opacity: 0; transform: scale(0.6); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>

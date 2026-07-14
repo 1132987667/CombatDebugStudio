@@ -292,10 +292,10 @@ export class BattleSystem {
       }
     })
     const battleData = this.battleData
-    
+
     // 【防止跨战斗污染】设置当前活跃战斗 ID
     this.activeBattleId = battleData.battleId
-    
+
     battleData.participants = participants
     console.log('初始化战斗数据', battleData)
     eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED)
@@ -316,7 +316,7 @@ export class BattleSystem {
     battleLogManager.addSystemLog({
       message: `战斗双方人员情况: 我方 ${allyParticipants.length} 人 | 敌方 ${enemyParticipants.length} 人`,
     }
-      
+
     )
     battleData.roundState = RoundStatus.START
 
@@ -360,7 +360,6 @@ export class BattleSystem {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.DAMAGE_TAKEN,
           target,
-          undefined as any,
           { sourceId: '', targetId, damage: actualDamage },
         )
       }
@@ -378,7 +377,6 @@ export class BattleSystem {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.HEAL_RECEIVED,
           target,
-          undefined as any,
           { sourceId: '', targetId, value: amount },
         )
       }
@@ -416,6 +414,7 @@ export class BattleSystem {
     this.passiveSkillManager.triggerPassiveSkillsForAll(
       BattleTriggerPhase.BATTLE_START,
       participants,
+      { participants },
     )
   }
 
@@ -463,7 +462,6 @@ export class BattleSystem {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BATTLE_START,
       participant,
-      undefined,
       {},
     )
   }
@@ -505,7 +503,6 @@ export class BattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         BattleTriggerPhase.TURN_START,
         battle.participants,
-        undefined,
         { currentTurn: battle.currentRound },
       )
 
@@ -560,12 +557,12 @@ export class BattleSystem {
       for (let i = 0; i < currentTurnOrder.length; i++) {
         console.log('当前回合 顺序', i, currentTurnOrder)
         await this.animationManager.waitForAnimation()
-        
+
         // 【竞态条件防护】检查战斗状态是否仍然有效
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
         }
-        
+
         const participantId = currentTurnOrder[i]
         const participant = battle.participants.get(participantId)
         if (!participant || !participant.isAlive()) {
@@ -573,10 +570,10 @@ export class BattleSystem {
         }
         console.error('当前角色的能量', participant.getAttribute(ATTRIBUTE_CODE.currentEnergy))
         battle.currentTurn = i
-        
+
         // 在每个角色行动前，发送当前行动者更新事件到 UI 层
         eventBus.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, { actorId: participantId })
-        
+
         try {
           await this.executor.executeParticipantAction(battle, participant)
         } catch (error) {
@@ -588,7 +585,7 @@ export class BattleSystem {
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
         }
-        
+
         await this.animationManager.waitForAnimation()
 
         // 角色行动间保留固定间隔，让 CSS 动画有足够时间淡出完成
@@ -640,7 +637,6 @@ export class BattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         BattleTriggerPhase.TURN_END,
         battle.participants,
-        undefined,
         { round: battle.currentRound },
       )
 

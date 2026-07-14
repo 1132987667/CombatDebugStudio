@@ -25,6 +25,7 @@
           </label>
           <input type="text" v-model="logKeyword" placeholder="关键字" class="log-keyword">
           <button class="btn-medium" @click="applyFilters">[F]过滤</button>
+          <button class="btn-medium" @click="downloadLogs">下载</button>
         </div>
       </div>
     </div>
@@ -145,6 +146,24 @@ function extractNumberFromLog(log: LogEntry): number {
 const applyFilters = () => {
   battleLogManager.updateFilters(logFilters);
 };
+
+const downloadLogs = () => {
+  const allLogs = battleLogManager.getAllLogs();
+  const lines = allLogs.map((log) => {
+    const time = log.turn != null ? `[回合${log.turn}]` : ''
+    const cat = log.category ? `[${log.category}]` : ''
+    const msg = log.message || log.segments?.map((s) => s.text).join('') || ''
+    return `${time}${cat} ${msg}`.trim()
+  })
+  const text = lines.join('\n')
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `battle-logs-${Date.now()}.txt`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 const logUpdateListener = () => {
   logVersion.value++;

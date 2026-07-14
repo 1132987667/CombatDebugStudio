@@ -129,7 +129,7 @@ export class BattleLogManager {
   /** 调试日志条目数组 */
   private debugLogs: LogEntry[] = []
   /** 调试日志最大数量 */
-  private maxDebugLogs: number = 500
+  private maxDebugLogs: number = 1000
 
   private indexCounter = new Counter()
 
@@ -165,7 +165,7 @@ export class BattleLogManager {
     this.maxSystemLogs = options.maxSystemLogs ?? 200
     this.maxItemLogs = options.maxItemLogs ?? 200
     this.maxActionLogs = options.maxActionLogs ?? 200
-    this.maxDebugLogs = options.maxDebugLogs ?? 500
+    this.maxDebugLogs = options.maxDebugLogs ?? 1000
     this.autoCleanup = options.autoCleanup ?? true
     this.level = options.level ?? LogLevel.DEBUG
 
@@ -472,8 +472,8 @@ export class BattleLogManager {
     }
 
     this.debugLogs.push(entry)
-    if (this.debugLogs.length > this.maxSystemLogs) {
-      this.debugLogs = this.debugLogs.slice(-this.maxSystemLogs)
+    if (this.debugLogs.length > this.maxDebugLogs) {
+      this.debugLogs = this.debugLogs.slice(-this.maxDebugLogs)
     }
 
     for (const handler of this.handlers) {

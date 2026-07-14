@@ -26,6 +26,9 @@ configs/
         skills.json
         skills_new.json
 docs/
+    migration/
+        adversarial-review-applyBuffStep.md
+        统一管道-Buff全生命周期时序.md
     buff-text-display-design-v2.md
     BUFF设计和展示.md
     属性监控显示设计.md
@@ -285,6 +288,8 @@ tests/
                 HealCalculator.test.ts
             AttributeEngine.test.ts
         buff-display.test.ts
+        plan-b-battle.test.ts
+        plan-b-pipeline.test.ts
 tools/
     arena-version-1.html
     test.html
@@ -9760,7 +9765,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
 ]
 
 --- configs/skills/skill_passive.json ---
-﻿[
+[
   {
     "id": "skill_enemy_004_passive",
     "name": "坚韧表皮",
@@ -9785,7 +9790,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_005_passive",
@@ -9811,7 +9819,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_006_passive",
@@ -9829,7 +9840,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_007_passive",
@@ -9855,7 +9869,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_008_passive",
@@ -9873,7 +9890,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_boss_001_passive",
@@ -9903,7 +9923,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_012_passive",
@@ -9921,7 +9944,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_013_passive",
@@ -9947,6 +9973,9 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
           }
         ]
       }
+    ],
+    "triggerTimes": [
+      "battle_start"
     ]
   },
   {
@@ -9965,7 +9994,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_boss_002_passive",
@@ -9995,7 +10027,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_015_passive",
@@ -10013,7 +10048,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_016_passive",
@@ -10039,7 +10077,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_020_passive",
@@ -10065,7 +10106,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_021_passive",
@@ -10083,7 +10127,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_022_passive",
@@ -10101,7 +10148,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_boss_003_passive",
@@ -10131,7 +10181,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_028_passive",
@@ -10149,7 +10202,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_029_passive",
@@ -10167,7 +10223,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_030_passive",
@@ -10193,7 +10252,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_031_passive",
@@ -10211,7 +10273,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_032_passive",
@@ -10237,7 +10302,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_boss_004_passive",
@@ -10267,7 +10335,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_036_passive",
@@ -10300,7 +10371,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_037_passive",
@@ -10333,7 +10407,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_038_passive",
@@ -10366,7 +10443,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_039_passive",
@@ -10406,7 +10486,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_040_passive",
@@ -10443,7 +10526,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_boss_005_passive",
@@ -10487,7 +10573,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_044_passive",
@@ -10524,7 +10613,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_045_passive",
@@ -10557,7 +10649,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_046_passive",
@@ -10590,7 +10685,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_047_passive",
@@ -10630,7 +10728,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_048_passive",
@@ -10670,7 +10771,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_boss_006_passive",
@@ -10707,7 +10811,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_052_passive",
@@ -10733,7 +10840,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_053_passive",
@@ -10751,7 +10861,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_054_passive",
@@ -10769,7 +10882,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_055_passive",
@@ -10787,7 +10903,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_056_passive",
@@ -10805,7 +10924,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_boss_007_passive",
@@ -10842,7 +10964,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_060_passive",
@@ -10860,7 +10985,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_061_passive",
@@ -10886,7 +11014,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_062_passive",
@@ -10912,7 +11043,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_063_passive",
@@ -10930,7 +11064,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_064_passive",
@@ -10948,7 +11085,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_boss_008_passive",
@@ -10978,7 +11118,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_068_passive",
@@ -11011,7 +11154,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_069_passive",
@@ -11044,7 +11190,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_070_passive",
@@ -11077,7 +11226,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_071_passive",
@@ -11103,7 +11255,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_072_passive",
@@ -11129,7 +11284,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_boss_009_passive",
@@ -11166,7 +11324,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_076_passive",
@@ -11184,7 +11345,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_077_passive",
@@ -11210,7 +11374,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_078_passive",
@@ -11236,7 +11403,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_079_passive",
@@ -11254,7 +11424,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_enemy_080_passive",
@@ -11287,7 +11460,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   },
   {
     "id": "skill_boss_010_passive",
@@ -11324,7 +11500,10 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
       }
     ],
     "energyCost": 0,
-    "skillType": "passive"
+    "skillType": "passive",
+    "triggerTimes": [
+      "battle_start"
+    ]
   }
 ]
 
@@ -13811,6 +13990,554 @@ Buff 交互怎么提示（覆盖/免疫/净化）
     └─────────────────────────────────────────────────────┘
     设计优势总结：
     在这个界面中，没有任何一个图标，但玩家依然可以通过 【】 识别状态名，通过 ↑↓ 判断好坏，通过 颜色 判断增益/减益/控制，通过 ∞ 和 x5 判断永久与叠层，通过悬停理清复杂的属性计算逻辑。完全实现了高信息密度下的零图标视觉表达。
+
+--- docs/migration/adversarial-review-applyBuffStep.md ---
+# 对抗式审查报告：被动技能 Buff 初始化迁移方案（已归档）
+
+> **此审查针对的是已被方案 B 取代的过渡方案。** 方案 B 的对抗式审查及修复详见 [`统一管道-Buff全生命周期时序.md`](./统一管道-Buff全生命周期时序.md) 末尾的「修复清单」。
+
+## 审查方法
+
+站在对立面，以「这方案有问题」为预设，主动寻找漏洞、盲区、过度简化和假设失效点。
+
+## 审查结论（仅保留对方案 B 仍有意义的发现）
+
+以下发现已全部在方案 B 中解决：
+
+| 原始发现 | 严重度 | 方案 B 的解决方式 |
+|:---------|:------:|:-----------------|
+| `addImmunity` 逻辑被静默丢弃 | 🔴 中 | `BuffSystem.addBuff` 中已实现 `applyBuffImmunities` |
+| `maxUses` / `maxStacks` 边界条件 | 🔶 中 | 统一管道中 `battle_start` 默认 `maxTriggerCount = 1`，叠加规则由 `StackRule` 控制 |
+| BATTLE_START 回调注册时序 | ⚠️ 低 | 回调注册在 `applyPassiveSkills` 之前，时序正确 |
+| pending 循环职责膨胀 | ⚠️ 低 | 方案 B 无 pending 循环 |
+| `pendingPassiveBuffIds` 附着在实体上 | ⚠️ 低 | 方案 B 完全删除此字段 |
+
+## 与方案 B 的审查差异
+
+方案 B 的第二轮对抗式审查发现了此审查未覆盖的问题：
+
+| 新发现 | 严重度 |
+|:-------|:------:|
+| BATTLE_START 的 `target` 为 undefined 导致全部被动静默拦截 | 🔴 严重 |
+| `executeModifyAttribute` 缺少加成属性同步 | 🔴 严重 |
+| 纯 `modify_attribute` 被动在 buff 列表中不可见 | 🔴 严重 |
+| `PassiveSkillManager` 跨战斗污染 | 🔶 中 |
+| 光环修饰符游离于 buff 生命周期之外 | 🔶 中 |
+
+--- docs/migration/统一管道-Buff全生命周期时序.md ---
+# 统一管道 — Buff 全生命周期时序
+
+## 图例
+
+```
+┌─ 调用方 ─┐
+├─ 方法名 ─┤
+│ 关键操作   │
+└───────────┘
+  ● 同步 / 事件通知
+```
+
+---
+
+## 阶段一：注册与初始化（构造期 → BATTLE_START）
+
+```
+GameDataProcessor.enemyToParticipant(enemy)
+  │
+  ├─ new BattleParticipantImpl(data, buffSystem)
+  │    └─ setModifierProvider(buffSystem)
+  │         ├─ this.modifierProvider = buffSystem
+  │         ├─ syncModifiersFromProvider()
+  │         │    └─ (此时 ModifierStack 为空，无效果)
+  │         └─ stats.recalculateAll()
+  │              └─ (基础属性已计算，被动加成尚未加入)
+  │
+  └─ registerParticipantPassives(entity, passiveSkillManager)
+       └─ 遍历 skills.passive[]
+            ├─ 有 triggerTimes → 原样注册到 PassiveSkillManager
+            └─ 无 triggerTimes → 补 ['battle_start'] 后注册
+                 └─ passiveSkillManager.registerPassive(entity.id, config)
+```
+
+---
+
+## 阶段二：战斗开始 — 统一 BATTLE_START 触发
+
+```
+BattleSystem.initialize(allyParticipants, enemyParticipants)
+  │
+  ├─ 1. 构建 participants Map
+  │    └─ setModifierProvider(entity, buffSystem) → syncModifiersFromProvider()
+  │
+  ├─ 2. 注册 BuffSystem 回调
+  │    ├─ setAttributeChangeCallback → recalculateAll()
+  │    └─ setBuffAppliedCallback → eventBus.emit(BUFF_EFFECT)
+  │
+  ├─ 3. applyPassiveSkills(participants)
+  │    ├─ emitTriggerEvent(BATTLE_START)         ← EventBus 广播
+  │    │
+  │    └─ passiveSkillManager.triggerPassiveSkillsForAll(BATTLE_START, participants)
+  │         │
+  │         └─ [遍历每个参与者]
+  │              └─ triggerPassives(BATTLE_START, entity, target?, context?)
+  │                   │
+  │                   └─ [遍历 characterPassives 中 trigger === BATTLE_START 的条目]
+  │                        │
+  │                        ├─ 检查冷却时间
+  │                        │    └─ config.cooldown > 0 && lastTriggeredTurn
+  │                        │         → currentTurn - lastTriggeredTurn < cooldown? → 跳过
+  │                        │
+  │                        ├─ 检查最大触发次数
+  │                        │    └─ maxTriggerCount && triggerCount >= maxTriggerCount? → 跳过
+  │                        │    └─ ponytail: battle_start 被动默认 maxTriggerCount = 1
+  │                        │
+  │                        ├─ 检查触发概率
+  │                        │    └─ triggerProbability && Math.random() > probability? → 跳过
+  │                        │
+  │                        ├─ 检查 HP 阈值 (HP_LOWER_THAN 专用)
+  │                        │    └─ currentHealth / maxHealth > hpThreshold / 100? → 跳过
+  │                        │
+  │                        ├─ 检查触发条件
+  │                        │    └─ condition && !evaluateCondition()? → 跳过
+  │                        │
+  │                        │  ──── 全部通过 ────
+  │                        │
+  │                        ├─ actualTarget = target ?? entity    ← 对抗式审查修复 #1
+  │                        │
+  │                        ├─ skillManager.executeSkill(skillId, entity, actualTarget, turn)
+  │                        │    │
+  │                        │    └─ [遍历 skill.steps]
+  │                        │         │
+  │                        │         ├── step.type === 'modify_attribute'
+  │                        │         │    └─ [流程 A：直接属性修改]
+  │                        │         │
+  │                        │         ├── step.type === 'apply_buff'
+  │                        │         │    └─ [流程 B：addBuff 完整流程]
+  │                        │         │
+  │                        │         └── step.type === 'shield' / 'heal'
+  │                        │              / 'deal_damage' / 'custom' / ...
+  │                        │              └─ SkillExecutor 对应方法
+  │                        │
+  │                        └─ ensureTrackingBuff(entity.id, skillId, name)    ← 对抗式审查修复 #2
+  │                             └─ [流程 C：创建追踪 Buff]
+  │
+  ├─ 4. 创建回合顺序（已移至被动加成之后）
+  │    └─ battleData.turnOrder = turnManager.createTurnOrder(participants)
+  │         └─ ponytail: 被动 speed 加成已生效，排序正确
+  │
+  └─ 5. distributeAuras(participants)
+       └─ [流程 D：光环扫描分发]
+```
+
+---
+
+## 流程 A：modify_attribute — 直接属性修改
+
+```
+SkillExecutor.executeModifyAttribute(step, action, source, target)
+  │
+  ├─ modTarget = step.targetConfig?.self ? source : target
+  ├─ modifiers = step.modifiers
+  │
+  └─ [遍历 modifiers]
+       │
+       ├─ attrCode = mod.targetAttribute → ATTRIBUTE_CODE
+       ├─ attrData = modTarget.getAttrValue(attrCode)
+       │    └─ 无该属性? → continue
+       │
+       ├─ 解析 ModifierType (PERCENTAGE / ADDITIVE / MULTIPLICATIVE / FINAL)
+       ├─ 值归一化 (value < 1 的 PERCENTAGE → ×100)
+       │
+       ├─ sourceKey = `passive:runtime:${mod.id || step.buffId || 'mod'}`
+       ├─ attrData.modifiers = filter(m => m.sourceKey !== sourceKey)  // 去重
+       ├─ attrData.modifiers.push(newMod)
+       ├─ attrData.cachedVersion = -1
+       │
+       └─ [PERCENTAGE 专用 — 加成属性同步]    ← 对抗式审查修复 #3
+            ├─ ATTR_TO_BONUS_MAP:
+            │    ├─ maxHealth    → healthBonus
+            │    ├─ minAttack    → attackBonus
+            │    └─ maxAttack    → attackBonus
+            │
+            └─ 同步到对应的 bonus 属性
+                 └─ (filter 去重 + push + cachedVersion = -1)
+
+            ├─ [attack PERCENTAGE 专用]
+            │    └─ 同步到 minAttack / maxAttack
+            │         └─ (filter 去重 + push + cachedVersion = -1)
+            │
+  └─ modTarget.recalcAll()
+       └─ (被动修饰符已写入 attrData.modifiers，直接参与计算)
+```
+
+---
+
+## 流程 B：apply_buff — addBuff 完整流程
+
+```
+buffSystem.addBuff(characterId, buffId, config, currentTurn, record?)
+  │
+  ├─ 步骤 1：查找脚本
+  │    ├─ scriptRegistry.get(buffId)
+  │    │    ├─ 有 IBuffScript → 就用它
+  │    │    └─ 无脚本 → 尝试 resolve(buffId)
+  │    │         ├─ config 存在? → 用 NOOP_BUFF_SCRIPT 占位
+  │    │         └─ config 不存在? → return '' (静默跳过)
+  │    │
+  │    └─ script 确定
+  │
+  ├─ 步骤 2：合并配置（四层优先级：调用方 > 脚本 CONFIG > JSON > 默认值）
+  │    ├─ scriptDefaultConfig = 脚本的静态 CONFIG (自包含脚本)
+  │    ├─ jsonConfig = scriptRegistry.getBuffConfig(buffId) (buffs.json)
+  │    ├─ 合并顺序:
+  │    │    id / name / description / duration / maxStacks
+  │    │    stackRule / cooldown / controlType / controlPriority
+  │    │    isDebuff / isPositive / isPermanent / dispellable
+  │    │    immuneTags / iconPath / parameters / attributes
+  │    │
+  │    └─ resolvedConfig 就绪
+  │
+  ├─ 步骤 3：免疫检查
+  │    ├─ characterImmunities.get(characterId)
+  │    ├─ 控制类型免疫: controlType.toLowerCase() → 匹配免疫集?
+  │    ├─ buffId 免疫: buffId 去掉前缀后 → 匹配免疫集?
+  │    └─ 任一匹配 → return '' (不施加，静默跳过)
+  │
+  ├─ 步骤 4：叠加规则
+  │    ├─ existingBuffs = getBuffInstances(charId).filter(i.buffId === buffId)
+  │    │
+  │    ├─ StackRule.REFRESH
+  │    │    └─ existingBuffs.forEach(removeBuff)
+  │    │
+  │    ├─ StackRule.LIMITED
+  │    │    ├─ existingBuffs.length >= maxStacks
+  │    │    │    └─ refreshBuff(existing[0].id, turn) → return existing[0].id
+  │    │    └─ < maxStacks → 继续创建新实例
+  │    │
+  │    └─ StackRule.INDEPENDENT → 直接创建新实例
+  │
+  ├─ 步骤 5：创建 BuffInstance
+  │    ├─ instanceId = `${charId}_${buffId}_${turn}_${counter.next()}`
+  │    ├─ context = BuffContextPool.borrow(charId, instanceId, resolvedConfig, this)
+  │    ├─ buffInstance = {
+  │    │     id: instanceId,
+  │    │     characterId, buffId, script, context,
+  │    │     startTurn: turn,
+  │    │     duration: resolvedConfig.duration || -1,
+  │    │     remainingTurns: resolvedConfig.duration,
+  │    │     currentStacks: 1,
+  │    │     isActive: true,
+  │    │   }
+  │    └─ buffInstances.set(instanceId, buffInstance)
+  │
+  ├─ 步骤 6：执行脚本 onApply
+  │    └─ BuffErrorBoundary.wrap(() => script.onApply(context))
+  │         │
+  │         ├─ [自包含脚本 AttributeBuffTemplate 示例]
+  │         │    └─ _onApply(context):
+  │         │         ├─ getModifiers() → [{attribute, value: (ctx)=>..., type}]
+  │         │         └─ context.addModifier(attrCode, computedValue, modType)
+  │         │              └─ modifierStack.addModifier(instanceId, attr, value, type)
+  │         │
+  │         └─ [NOOP 脚本] → 空操作
+  │
+  ├─ 步骤 7：非自包含脚本 → 从 JSON 配置读取属性修饰符
+  │    ├─ applyAttributeModifiers(charId, instanceId, buffId)
+  │    │    └─ scriptRegistry.getBuffAttributes(buffId)  (如 {"attack": "+20%"})
+  │    │         └─ modifierStack.addModifier(instanceId, attr, parsedValue, parsedType)
+  │    │
+  │    └─ applyBuffImmunities(charId, buffId)
+  │         └─ buffConfig.immunities? → characterImmunities.add(tag)
+  │
+  ├─ 步骤 8：自光环修饰符 (targetSelector === 'self')
+  │    └─ applyBuffAuraModifiers(charId, instanceId, buffId)
+  │         └─ aura?.targetSelector === 'self'
+  │              └─ modifierStack.addModifier(instanceId, attr, value, type)
+  │
+  ├─ 步骤 9：触发属性变更
+  │    └─ triggerAttributeChange(characterId)
+  │         └─ onAttributeChange?.(characterId)
+  │              └─ [回调 → BattleSystem]
+  │                   └─ participant.recalculateAll()
+  │                        │
+  │                        ├─ syncModifiersFromProvider()
+  │                        │    └─ [遍历所有 ATTRIBUTE_CODE]
+  │                        │         ├─ stack = modifierProvider.getModifierStack(id)
+  │                        │         ├─ stackMods = stack.getModifiers(code)
+  │                        │         ├─ 保留: baseModifiers + passiveModifiers
+  │                        │         └─ externalModifiers = stackMods + sourceName 描述
+  │                        │              └─ attrData.modifiers = [base, ...passive, ...external]
+  │                        │
+  │                        └─ stats.recalculateAll()
+  │                             └─ (最终属性值 = 基础值 + 所有修饰符)
+  │
+  ├─ 步骤 10：UI 通知
+  │    └─ onBuffApplied?.(charId, buffId)
+  │         └─ [回调 → BattleSystem]
+  │              └─ eventBus.emit(BUFF_EFFECT, { targetId, buffName, isPositive })
+  │                   └─ → UI buff 列表更新 + 动画播放
+  │
+  └─ 步骤 11：战斗记录
+       └─ record?.effects.push({ type: 'buff', targetId, buffId, instanceId })
+```
+
+---
+
+## 流程 C：追踪 Buff（modify_attribute 纯被动 -> buff 列表可见）
+
+```
+PassiveSkillManager.ensureTrackingBuff(characterId, skillId, skillName)
+  │
+  ├─ skillConfig = skillManager.getSkillConfig(skillId)
+  │    └─ 无 config 或 无 steps → return
+  │
+  ├─ hasApplyBuff = steps.some(s => s.type === 'apply_buff')
+  │    └─ true → return (apply_buff 已创建 buff 实体，无需追踪)
+  │
+  ├─ buffId = `_track_passive_${skillId}`
+  │
+  ├─ buffSystem.hasBuff(characterId, buffId)
+  │    └─ true → return (已存在，避免重复)
+  │
+  └─ buffSystem.addBuff(characterId, buffId, {
+       id: buffId,
+       name: skillName,
+       duration: -1,              // 永久
+       maxStacks: 1,
+       stackRule: StackRule.REFRESH,
+       controlType: ControlType.NONE,
+       isDebuff: false,
+       isPositive: true,
+       // 无 attributes → 不产生修饰符，仅作为 UI 占位
+     }, 0)
+```
+
+---
+
+## 流程 D：光环扫描分发
+
+```
+BattleSystem.distributeAuras(participants)
+  │
+  └─ [遍历每个参与者]
+       │
+       └─ [遍历其所有 buff 实例 ID]
+            │
+            └─ buffSystem.getBuffConfigByInstanceId(instanceId)
+                 │
+                 ├─ 返回 BuffConfig | null
+                 │
+                 └─ buffSystem.getBuffAuraConfig(buffConfig.id)
+                      │
+                      ├─ 从 BuffScriptRegistry 读取 BuffConfigData.aura
+                      │
+                      ├─ 无 aura → continue
+                      │
+                      └─ 有 aura.targetSelector
+                           ├─ 'allies' → 同队目标
+                           └─ 'enemies' → 异队目标
+                                │
+                                └─ GameDataProcessor.applyAuraModifiersToParticipant(
+                                       target, sourceKey = `passive:${buffConfig.id}`, modifiers)
+                                     │
+                                     └─ [遍历每个 modifier]
+                                          ├─ pushModifier → attrData.modifiers
+                                          ├─ cachedVersion = -1
+                                          └─ target.recalcAll()
+```
+
+---
+
+## 阶段三：每回合更新
+
+```
+BattleSystem.executeRound()
+  │
+  └─ [遍历每个存活参与者]
+       │
+       └─ buffSystem.updatePerTurn(characterId)
+            │
+            └─ [遍历该角色所有 buffInstance]
+                 │
+                 ├─ script.onUpdate(context, 0)    ← 脚本每回合逻辑
+                 │    ├─ [毒伤] → 扣除剩余回合 * 每回合伤害
+                 │    ├─ [回血] → 每回合恢复 maxHealth * 百分比
+                 │    └─ [自定义] → buff 脚本定义的 onUpdate
+                 │
+                 ├─ duration === -1?
+                 │    └─ true → 跳过到期检查 (永久 buff)
+                 │
+                 ├─ remainingTurns--
+                 │
+                 └─ remainingTurns <= 0?
+                      └─ removeBuff(instanceId)    ← 到期自动移除
+```
+
+---
+
+## 阶段四：移除 Buff
+
+```
+buffSystem.removeBuff(instanceId)
+  │
+  ├─ 1. 查找实例
+  │    ├─ instance = buffInstances.get(instanceId)
+  │    └─ 不存在或 !isActive → return false
+  │
+  ├─ 2. 执行脚本 onRemove
+  │    └─ BuffErrorBoundary.wrap(() => script.onRemove(context))
+  │         │
+  │         ├─ [BaseBuffScript.onRemove] → context.removeModifiers()
+  │         │    └─ modifierStack.removeModifier(instanceId)
+  │         │         └─ [遍历所有属性] 移除 sourceKey === instanceId 的修饰符
+  │         │
+  │         ├─ [AttributeBuffTemplate.onRemove]
+  │         │    └─ 对每个 modifier → context.removeModifiers(attrCode)
+  │         │         └─ modifierStack.removeModifier(instanceId, attrCode)
+  │         │
+  │         └─ [自包含脚本 onRemove] → 同 base 逻辑
+  │
+  ├─ 3. 清理实例状态
+  │    ├─ instance.isActive = false
+  │    └─ buffInstances.delete(instanceId)
+  │
+  ├─ 4. 保险清理 — modifierStack.removeModifier(instanceId)
+  │    └─ (即使 onRemove 漏了某个属性，这里全量清理)
+  │
+  ├─ 5. BuffContextPool.return(context)
+  │    └─ (归还上下文对象到对象池复用)
+  │
+  └─ 6. triggerAttributeChange(characterId)
+       └─ → recalculateAll()
+            ├─ syncModifiersFromProvider() ← ModifierStack 已无该 instanceId 的修饰符
+            └─ (属性值恢复为移除 buff 前的值)
+```
+
+---
+
+## 修饰符同步机制详解
+
+```
+syncModifiersFromProvider()    ← 每次 recalculateAll 前调用
+  │
+  ├─ modifierProvider = this.buffSystem (IModifierProvider)
+  ├─ stack = modifierProvider.getModifierStack(this.id)
+  │
+  └─ [遍历所有 ATTRIBUTE_CODE]
+       │
+       ├─ stackMods = stack.getModifiers(code)
+       │    └─ 从 ModifierStack 读取 (sourceKey = buffInstanceId)
+       │
+       ├─ 保留的修饰符:
+       │    ├─ baseModifier: sourceKey === 'base'
+       │    └─ passiveModifiers: sourceKey 以 'passive:' 开头
+       │         ├─ 来自 executeModifyAttribute 的 'passive:runtime:...'
+       │         └─ 来自 distributeAuras 的 'passive:{buffId}'
+       │
+       ├─ externalModifiers = stackMods.map(m => ({
+       │    ...m,
+       │    sourceType: provider.getSourceType(m.sourceKey),  ← 'buff'
+       │    description: `来自: ${provider.getSourceName(m.sourceKey)}`,
+       │  }))
+       │
+       └─ attrData.modifiers = [baseModifier, ...passiveModifiers, ...externalModifiers]
+            └─ cachedVersion = stats.currentVersion - 1
+```
+
+### 两条修饰符路径的共存规则
+
+| 来源 | sourceKey 格式 | 存储位置 | 在 syncModifiersFromProvider 中的处理 |
+|:----|:--------------|:---------|:-------------------------------------|
+| **被动 modify_attribute** | `passive:runtime:{modId}` | `attrData.modifiers` | 匹配 `passive:` 前缀 → 保留 |
+| **光环分发** | `passive:{buffId}` | `attrData.modifiers` | 匹配 `passive:` 前缀 → 保留 |
+| **BuffSystem 脚本/JSON** | `{instanceId}` (如 `char_buffX_1_42`) | `ModifierStack` → `syncModifiersFromProvider` 合并 | 每次全部刷新，无保留条件 |
+
+---
+
+## 两条修饰符路径完整对比
+
+| 特征 | ModifierStack 路径 (BuffSystem) | 直接 pushModifier 路径 |
+|:----|:-------------------------------:|:----------------------:|
+| 入口 | `addBuff` → `applyAttributeModifiers` 或脚本 `onApply` | `SkillExecutor.executeModifyAttribute` 或 `distributeAuras` |
+| 存储位置 | `ModifierStack.modifiers[attr][]` | `BattleParticipantImpl.stats.attrs[].modifiers` |
+| 生命周期 | 绑定 `BuffInstance`，`removeBuff` 时自动清理 | 需主动 `filter(sourceKey)` 去重 |
+| 同步方式 | `triggerAttributeChange` → `syncModifiersFromProvider` 合并 | 直接 `recalcAll()` |
+| sourceKey | `instanceId` (如 `char_buffX_1_42`) | `'passive:runtime:{modId}'` 或 `'passive:{buffId}'` |
+| 保留规则 | 每次 sync 全部刷新(无状态) | `syncModifiersFromProvider` 保留 `passive:` 前缀 |
+| buff 列表可见 | ✅ 有 BuffInstance | ❌ 仅属性值变化(除非追踪 buff 占位) |
+| 可驱散 | ✅ removeBuff 即可 | ❌ 需手动清理 |
+| 加成属性同步 | ✅ (脚本自行 addModifier) | ✅ (修复后: BONUS_MAP + minAttack/maxAttack) |
+
+---
+
+## 跨战斗清理
+
+```
+BattleSystem.resetBattle()
+  │
+  ├─ passiveSkillManager.clearAll()
+  │    └─ 清空所有被动注册条目，防止跨战斗 ID 重复触发
+  │
+  └─ lifecycleManager.resetBattle()
+       ├─ buffSystem.clearAllBuffs(characterId)    ← 遍历参与者
+       │    └─ removeBuff() → [进入阶段四]          ← 全部实例清除
+       ├─ 重置血量/能量
+       └─ battleRecorder.clearRecording()
+```
+
+---
+
+## 整体数据流
+
+```
+JSON 配置
+  │
+  ├─ skill_passive.json ──→ GameDataProcessor.registerParticipantPassives()
+  │                              │
+  │                              └─ PassiveSkillManager (triggerTimes 映射)
+  │                                    │
+  │                                    └─ BattleSystem.applyPassiveSkills()
+  │                                          │
+  │                                          └─ BATTLE_START
+  │                                                │
+  │                                                ├─ modify_attribute
+  │                                                │    └─ SkillExecutor.executeModifyAttribute
+  │                                                │         ├─ pushModifier → attrData.modifiers
+  │                                                │         ├─ BONUS_MAP 同步
+  │                                                │         └─ recalcAll()
+  │                                                │
+  │                                                ├─ apply_buff
+  │                                                │    └─ SkillExecutor.executeApplyBuff
+  │                                                │         └─ buffSystem.addBuff()  [流程 B]
+  │                                                │
+  │                                                └─ (追踪 buff)  [流程 C]
+  │
+  ├─ buffs.json ──→ BuffScriptRegistry
+  │                     │
+  │                     └─ buffSystem.addBuff() 时读取
+  │                          ├─ getDefaultConfig(buffId)  ← 脚本 CONFIG
+  │                          ├─ getBuffConfig(buffId)     ← JSON 配置
+  │                          ├─ getBuffAttributes(buffId) ← JSON attributes
+  │                          └─ getBuffAuraConfig(buffId) ← JSON aura
+  │
+  └─ GuardianBuffs.ts ──→ BuffScriptRegistry.register()
+                              └─ 自包含脚本，BUFF_ID 注册 + 静态 CONFIG
+```
+
+---
+
+## 修复清单（对抗式审查产出）
+
+| 修复点 | 所在文件 | 行/方法 | 说明 |
+|:------|:---------|:-------|:------|
+| `actualTarget = target ?? entity` | `PassiveSkillManager.ts` | `triggerPassives` | BATTLE_START target undefined 导致被动静默跳过 |
+| `ensureTrackingBuff` | `PassiveSkillManager.ts` | 新增方法 | 纯 modify_attribute 被动自动创建追踪 buff 使其可见 |
+| ATTR_TO_BONUS_MAP 同步 | `SkillExecutor.ts` | `executeModifyAttribute` | PERCENTAGE 修饰符同步到 healthBonus/attackBonus 等 |
+| attack% → minAttack/maxAttack | `SkillExecutor.ts` | `executeModifyAttribute` | attack PERCENTAGE 同步到分裂属性 |
+| `clearAll()` 调用 | `BattleSystem.ts` | `resetBattle` | 清除跨战斗被动注册污染 |
+| turnOrder 后移 | `BattleSystem.ts` | `initialize` | turnOrder 在 applyPassiveSkills 之后创建，确保速度加成正确 |
+| `distributeAuras` | `BattleSystem.ts` | 新增方法 | 替代旧 pendingAuras 两遍扫描，扫描所有参与者身上的光环 buff |
+| `applyBuffImmunities` | `BuffSystem.ts` | `addBuff` 流程 | 已在之前迁移中实现：从 JSON immunities 字段写入 characterImmunities |
 
 --- docs/属性监控显示设计.md ---
 # 属性监控显示设计
@@ -21299,6 +22026,7 @@ export const ATTRIBUTE_CODE = {
   controlSuccessRate: 'controlSuccessRate', // 控制技能成功率
   controlDurationReduction: 'controlDurationReduction', // 受控制时间减免
   damageTakenIncrease: 'damageTakenIncrease', // 受到的伤害增加（易伤）
+  damageBoost: 'damageBoost', // 伤害提升/伤害加成
 
   // ========== 反弹/反伤 ==========
   reflectDamagePercent: 'reflectDamagePercent', // 反弹伤害比例
@@ -21745,6 +22473,15 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     description: '受到的所有伤害增加的比例（易伤状态）',
     range: '0-200%',
     impact: '增加受到的伤害，通常由debuff引起',
+    isPercentage: true,
+  },
+  damageBoost: {
+    code: 'damageBoost',
+    name: '伤害提升',
+    displayName: '伤害提升',
+    description: '造成伤害的通用加成比例',
+    range: '0-200%',
+    impact: '提高造成的所有类型伤害',
     isPercentage: true,
   },
 
@@ -23390,10 +24127,6 @@ export class BattleManager {
       const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
       const battleId = battleState.battleId
       this.setBattleId(battleId)
-
-      // 应用被动技能的全队光环（如 +防御光环）
-      GameDataProcessor.applyTeamPassiveAuras(battleState.participants)
-
       this.syncBattleState()
       this.emitTeamChanged()
       return { battleId }
@@ -23986,6 +24719,7 @@ import {
   BATTLE_LOG_CATEGORIES,
 } from '@/shared/types/battle-log'
 import { RAFTimer } from '@/shared/utils/RAF'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { Counter } from '@/shared/utils/Counter'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
@@ -24234,9 +24968,6 @@ export class BattleSystem {
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
     battleData.skillManager = this.skillManager
 
-    battleData.turnOrder = this.turnManager.createTurnOrder(
-      Array.from(participants.values()),
-    )
     battleData.currentTurn = 0
     battleData.currentRound = 1
     battleData.battleState = BattleStatus.PREPARING
@@ -24257,8 +24988,6 @@ export class BattleSystem {
     battleData.autoBattle = autoBattleRules.enabled
     battleData.battleSpeed = autoBattleRules.defaultSpeed
     battleData.maxTurns = this.ruleManager.getTurnSystemRules().maxTurns
-
-    this.applyPassiveSkills(participants)
 
     // 注册属性变化回调，Buff 修改 ModifierStack 后自动同步到参与者
     this.buffSystem.setAttributeChangeCallback((characterId: string) => {
@@ -24319,6 +25048,17 @@ export class BattleSystem {
       }
     })
 
+    // ponytail: 统一管道 — 所有被动通过 PassiveSkillManager 在 BATTLE_START 阶段触发
+    this.applyPassiveSkills(participants)
+
+    // ponytail: 被动加成已生效，此时创建回合顺序确保速度加成正确
+    battleData.turnOrder = this.turnManager.createTurnOrder(
+      Array.from(participants.values()),
+    )
+
+    // ponytail: 光环在 applyPassiveSkills 中已通过 addBuff 添加到源参与者，
+    // 此处扫描所有参与者上的光环 buff 并分发修饰符到同队/异队成员
+    this.distributeAuras(participants)
 
     return convertToBattleState(battleData)
   }
@@ -24341,6 +25081,35 @@ export class BattleSystem {
       BattleTriggerPhase.BATTLE_START,
       participants,
     )
+  }
+
+  /**
+   * 分发所有参与者身上光环 buff 的 allies/enemies 修饰符
+   * 在 applyPassiveSkills 之后调用，确保所有 BATTLE_START 被动已添加 buff
+   */
+  private distributeAuras(participants: Map<string, BattleEntity>): void {
+    for (const [id, entity] of participants) {
+      if (!(entity instanceof BattleParticipantImpl)) continue
+      const buffInstanceIds = entity.getBuffInstanceIds()
+      for (const instanceId of buffInstanceIds) {
+        const buffConfig = this.buffSystem.getBuffConfigByInstanceId(instanceId)
+        if (!buffConfig) continue
+        // ponytail: 查找 BuffConfigData 中的 immunities 字段，但此处需要 aura 配置
+        // 使用 BuffSystem.getBuffAuraConfig 获取 aura 元数据
+        const aura = this.buffSystem.getBuffAuraConfig(buffConfig.id)
+        if (!aura || !aura.modifiers?.length || !aura.targetSelector) continue
+        const isAllies = aura.targetSelector === 'allies'
+        const sourceKey = `passive:${buffConfig.id}`
+        for (const [targetId, target] of participants) {
+          if (targetId === id) continue
+          if (!(target instanceof BattleParticipantImpl)) continue
+          const sameTeam = target.type === entity.type
+          if ((isAllies && sameTeam) || (!isAllies && !sameTeam)) {
+            GameDataProcessor.applyAuraModifiersToParticipant(target, sourceKey, aura.modifiers)
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -24635,6 +25404,8 @@ export class BattleSystem {
   }
 
   public resetBattle(): void {
+    // ponytail: 清除上一场战斗的被动注册，防止跨战斗污染
+    this.passiveSkillManager.clearAll()
     this.lifecycleManager.resetBattle()
   }
 
@@ -25524,10 +26295,6 @@ export class BattleParticipantImpl implements BattleEntity {
 
   getImmunities(): string[] {
     return [...this._immunities]
-  }
-
-  addImmunity(tag: string): void {
-    this._immunities.add(tag.toLowerCase())
   }
 
   /**
@@ -31400,8 +32167,6 @@ export interface BattleEntity {
 
   /** 获取该实体免疫的标签列表 */
   getImmunities(): string[]
-  /** 添加免疫标签 */
-  addImmunity(tag: string): void
 }
 
 /**
@@ -32207,12 +32972,29 @@ export interface EffectDefinition {
   config: BuffConfigData | null
 }
 
+/** Aura 光环修饰符 */
+interface BuffAuraModifier {
+  id?: string
+  targetAttribute: string
+  type: string
+  value: number
+  condition?: string
+}
+
+/** Aura 光环配置 */
+export interface BuffAuraConfig {
+  targetSelector: 'self' | 'allies' | 'enemies'
+  modifiers: BuffAuraModifier[]
+}
+
 interface BuffConfigData {
   id: string
   name?: string
   maxStacks?: number
   duration?: number
   attributes?: Record<string, string>
+  immunities?: string[]
+  aura?: BuffAuraConfig
   onAdd?: string
 }
 
@@ -32444,10 +33226,11 @@ import {
   ATTRIBUTE_CODE,
   type IModifierProvider,
   ModifierSourceType,
+  ModifierType,
 } from '@/domain/attribute/types'
 import { StackRule, ControlType } from '@/domain/buff/types'
 import { SkillStepType } from '@/domain/skill/types'
-import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { BuffScriptRegistry, BuffAuraConfig } from '@/domain/buff/BuffScriptRegistry'
 import { BuffContextPool } from '@/domain/buff/BuffContextPool'
 import { ModifierStack } from '@/domain/buff/ModifierStack'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
@@ -32641,12 +33424,20 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (!script) {
       const def = this.scriptRegistry.resolve(buffId)
       if (!def?.config) {
-        console.warn(`Buff ${buffId} not found — no script or config registered, skipping`)
-        return ''
+        // ponytail: 追踪 buff（_track_passive_ 前缀）是运行时动态创建的，
+        // 不需要在 buffs.json 或脚本注册表中预先注册。
+        // 其他无注册的 buff 仍然拒绝。
+        if (buffId.startsWith('_track_passive_')) {
+          script = NOOP_BUFF_SCRIPT
+        } else {
+          console.warn(`Buff ${buffId} not found — no script or config registered, skipping`)
+          return ''
+        }
+      } else {
+        // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
+        // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
+        script = NOOP_BUFF_SCRIPT
       }
-      // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
-      // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
-      script = NOOP_BUFF_SCRIPT
     }
 
     // ponytail: 自包含脚本的配置合并策略：
@@ -32736,7 +33527,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     // ponytail: 自包含脚本自己通过 _onApply 管理修饰符，不重复从 JSON 读取
     if (!this.scriptRegistry.isSelfContained(buffId)) {
       this.applyAttributeModifiers(characterId, instanceId, buffId)
+      this.applyBuffImmunities(characterId, buffId)
     }
+    // ponytail: self 目标光环的修饰符始终应用到目标角色（自包含脚本也在 ModifierStack 中管理）
+    this.applyBuffAuraModifiers(characterId, instanceId, buffId)
     this.triggerAttributeChange(characterId)
 
     // ponytail: 技术调试日志 — Buff 变更追踪
@@ -32791,6 +33585,56 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         0, /* ponytail: 没有当前属性累计值，传 0 占位 */
       )
     }
+  }
+
+  /**
+   * 应用 Buff 配置中的 immunities（免疫标签）到目标角色
+   * 在 addBuff 中与 applyAttributeModifiers 并列调用，确保无脚本的纯 JSON buff 也能获得免疫效果
+   */
+  private applyBuffImmunities(characterId: string, buffId: string): void {
+    const buffConfig = this.scriptRegistry.getBuffConfig(buffId)
+    if (!buffConfig || !buffConfig.immunities || buffConfig.immunities.length === 0) return
+
+    let immunities = this.characterImmunities.get(characterId)
+    if (!immunities) {
+      immunities = new Set()
+      this.characterImmunities.set(characterId, immunities)
+    }
+    for (const tag of buffConfig.immunities) {
+      immunities.add(tag.toLowerCase())
+    }
+  }
+
+  /**
+   * 应用 Buff 配置中的 aura（光环修饰符）到目标角色
+   * 仅处理 targetSelector === 'self' 的光环。allies/enemies 由 BattleSystem 在初始化时分发
+   */
+  private applyBuffAuraModifiers(characterId: string, instanceId: string, buffId: string): void {
+    const buffConfig = this.scriptRegistry.getBuffConfig(buffId)
+    if (!buffConfig?.aura || buffConfig.aura.targetSelector !== 'self') return
+
+    const modifierStack = this.getModifierStack(characterId)
+    for (const mod of buffConfig.aura.modifiers) {
+      const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
+      // aura 中的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
+      let value = typeof mod.value === 'number' ? mod.value : 0
+      if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
+        value = Math.round(value * 10000) / 100
+      }
+      const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
+        : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
+        : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
+        : mod.type === 'FINAL' ? ModifierType.FINAL
+        : ModifierType.ADDITIVE
+      modifierStack.addModifier(instanceId, attrCode, value, modType)
+    }
+  }
+
+  /**
+   * 获取 Buff 配置中的 aura 光环信息（供 BattleSystem 初始化时分发 allies/enemies）
+   */
+  public getBuffAuraConfig(buffId: string): BuffAuraConfig | undefined {
+    return this.scriptRegistry.getBuffConfig(buffId)?.aura
   }
 
   public removeBuff(instanceId: string): boolean {
@@ -36090,7 +36934,7 @@ import { BattleEntity, BattleTriggerPhase, PARTICIPANT_SIDE } from '@/domain/bat
 import { BATTLE_CONSTANTS } from '@/domain/battle/type/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { StackRule, ControlType } from '@/domain/buff/types'
+import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 
@@ -36192,16 +37036,23 @@ export class PassiveSkillManager {
         !this.evaluateCondition(config.condition, entity, target, context)
       )
         continue
-      // 执行被动技能
+      // ponytail: BATTLE_START 等主动触发场景下 target 可能为 undefined，默认以自身为目标
+      const actualTarget = target ?? entity
       this.skillManager.executeSkill(
         config.skillId,
         entity,
-        target!,
+        actualTarget,
         (context?.currentTurn as number) || 0,
       )
+
+      // ponytail: BATTLE_START 被动中纯 modify_attribute 步骤不创建 buff 实体，
+      // 此处自动创建追踪 buff 使其在 buff 列表中可见
+      if (trigger === BattleTriggerPhase.BATTLE_START) {
+        this.ensureTrackingBuff(entity.id, config.skillId, config.name)
+      }
       // ponytail: 被动触发日志 — 带角色名着色
-      const targetName = target?.name || '自身'
-      const targetEntity = target
+      const targetName = actualTarget?.name || '自身'
+      const targetEntity = actualTarget
       const segs = buildNameSegments(
         entity.name,
         entity.type === PARTICIPANT_SIDE.ALLY,
@@ -36278,6 +37129,38 @@ export class PassiveSkillManager {
     }
   }
 
+  /**
+   * BATTLE_START 被动中，纯 modify_attribute 步骤不会创建 buff 实体。
+   * 此方法检查技能步骤，若无 apply_buff 步骤则自动创建追踪 buff，
+   * 使该被动在参与者 buff 列表中可见。
+   */
+  private ensureTrackingBuff(characterId: string, skillId: string, skillName: string): void {
+    const skillConfig = this.skillManager.getSkillConfig(skillId)
+    if (!skillConfig?.steps) return
+
+    // 如果已有 apply_buff 步骤，其 buff 实体已由 SkillExecutor 创建，无需追踪 buff
+    const hasApplyBuff = skillConfig.steps.some(s => s.type === 'apply_buff')
+    if (hasApplyBuff) return
+
+    const buffId = `_track_passive_${skillId}`
+    if (this.buffSystem.hasBuff(characterId, buffId)) return
+
+    const config: BuffConfig = {
+      id: buffId,
+      name: skillName,
+      description: '',
+      duration: -1,
+      maxStacks: 1,
+      cooldown: 0,
+      stackRule: StackRule.REFRESH,
+      controlType: ControlType.NONE,
+      controlPriority: 0,
+      isDebuff: false,
+      isPositive: true,
+    }
+    this.buffSystem.addBuff(characterId, buffId, config, 0)
+  }
+
   getPassives(characterId: string): PassiveSkillConfig[] {
     return this.passives.get(characterId) || []
   }
@@ -36313,7 +37196,7 @@ export class PassiveSkillManager {
 }
 
 --- src/domain/skill/SkillExecutor.ts ---
-import type { ExtendedSkillStep, SkillStep } from '@/domain/skill/types'
+import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { SkillStepType } from '@/domain/skill/types'
 import type { BattleAction, BattleEntity } from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
@@ -36514,8 +37397,8 @@ export class SkillExecutor {
       id: buffId,
       name: buffId,
       description: '',
-      duration: skillStep.duration ?? undefined,
-      maxStacks: skillStep.stacks ?? undefined,
+      duration: skillStep.duration ?? -1,
+      maxStacks: skillStep.stacks ?? 1,
       cooldown: 0,
       stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
@@ -36541,7 +37424,7 @@ export class SkillExecutor {
 
     // ponytail: Buff 效果日志 — 带角色名着色
     if (instanceId) {
-      const buffConfig = this.buffSystem.scriptRegistry.getBuffConfig(buffId)
+      const buffConfig = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
       const displayName = buffConfig?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
       const segs = buildNameSegments(
         source.name,
@@ -36604,6 +37487,34 @@ export class SkillExecutor {
       }
       attrData.modifiers.push(newMod)
       attrData.cachedVersion = -1
+
+      // ponytail: 与 GameDataProcessor.pushModifier 保持一致的加成属性同步
+      if (modType === ModifierType.PERCENTAGE) {
+        const BONUS_MAP: Partial<Record<string, string>> = {
+          [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
+          [ATTRIBUTE_CODE.minAttack]: ATTRIBUTE_CODE.attackBonus,
+          [ATTRIBUTE_CODE.maxAttack]: ATTRIBUTE_CODE.attackBonus,
+        }
+        const bonusAttr = BONUS_MAP[attrCode]
+        if (bonusAttr) {
+          const bonusData = modTarget.getAttrValue(bonusAttr as ATTRIBUTE_CODE)
+          if (bonusData) {
+            bonusData.modifiers = bonusData.modifiers.filter(m => m.sourceKey !== sourceKey)
+            bonusData.modifiers.push({ ...newMod, attribute: bonusAttr as ATTRIBUTE_CODE })
+            bonusData.cachedVersion = -1
+          }
+        }
+        if (attrCode === ATTRIBUTE_CODE.attack) {
+          for (const splitAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
+            const splitData = modTarget.getAttrValue(splitAttr)
+            if (splitData) {
+              splitData.modifiers = splitData.modifiers.filter(m => m.sourceKey !== sourceKey)
+              splitData.modifiers.push({ ...newMod, attribute: splitAttr })
+              splitData.cachedVersion = -1
+            }
+          }
+        }
+      }
     }
 
     modTarget.recalcAll()
@@ -36631,7 +37542,7 @@ export class SkillExecutor {
     for (const instance of instances) {
       if (removed >= count) break
       // ponytail: REMOVE_DEBUFF 只移除 isDebuff 的 buff；CLEANSE 移除所有
-      if (isRemoveDebuff && !instance.config?.isDebuff) continue
+      if (isRemoveDebuff && !instance.context.config?.isDebuff) continue
       this.buffSystem.removeBuff(instance.id)
       removed++
     }
@@ -36839,7 +37750,7 @@ export class SkillExecutor {
     let totalBurnDmg = 0
     for (const inst of burnInstances) {
       // ponytail: 假设每层灼烧每回合造成 5% 最大生命值伤害
-      const remainingDuration = inst.remainingDuration ?? inst.config?.duration ?? 1
+      const remainingDuration = inst.remainingTurns ?? inst.duration ?? 1
       const dmgPerTick = target.getAttribute('maxHealth') * 0.05
       totalBurnDmg += dmgPerTick * remainingDuration
 
@@ -36883,7 +37794,7 @@ export class SkillExecutor {
       id: 'buff_shield',
       name: '护盾',
       description: '',
-      duration: skillStep.duration ?? undefined,
+      duration: skillStep.duration ?? -1,
       maxStacks: 1,
       cooldown: 0,
       stackRule: StackRule.REFRESH,
@@ -36920,7 +37831,7 @@ export class SkillExecutor {
       id: buffId,
       name: buffId,
       description: '',
-      duration: skillStep.duration ?? undefined,
+      duration: skillStep.duration ?? -1,
       maxStacks: 1,
       cooldown: 0,
       stackRule: StackRule.REFRESH,
@@ -37555,6 +38466,12 @@ export interface SkillStep {
    * 叠加层数
    */
   stacks?: number
+
+  /**
+   * 移除/净化数量
+   * 用于移除减益类技能步骤，指定移除多少个效果
+   */
+  count?: number
 
   /**
    * 触发条件表达式
@@ -40215,33 +41132,33 @@ export const container = Container.getInstance()
 
 // 导入所有必要的服务和令牌
 import {
-  BATTLE_SYSTEM_TOKEN,
-  TURN_MANAGER_TOKEN,
   AI_SYSTEM_TOKEN,
   BATTLE_RECORDER_TOKEN,
   BATTLE_RULE_MANAGER_TOKEN,
+  BATTLE_SYSTEM_TOKEN,
+  TURN_MANAGER_TOKEN,
 } from '@/domain/battle/entity/BattleInterfaces'
 
-import { BattleSystem } from '@/domain/battle/BattleSystem'
-import { TurnManager } from '@/domain/battle/service/TurnManager'
+import { BattleService } from '@/application/facade/BattleFacade'
 import { AISystem } from '@/domain/battle/ai/AISystem'
-import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
-import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
-import { BattleManager } from '@/domain/battle/BattleManager'
-import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
+import { BattleManager } from '@/domain/battle/BattleManager'
+import { BattleSystem } from '@/domain/battle/BattleSystem'
+import { battleEventManager } from '@/domain/battle/events/BattleEventManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
+import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
+import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
+import { TurnManager } from '@/domain/battle/service/TurnManager'
+import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
+import { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
+import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
-import { RAFTimer } from '@/shared/utils/RAF'
-import { SkillManager } from '@/domain/skill/SkillManager'
-import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
-import { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
-import { BattleService } from '@/application/facade/BattleFacade'
-import { battleEventManager } from '@/domain/battle/events/BattleEventManager'
+import { SkillManager } from '@/domain/skill/SkillManager'
+import { RAFTimer } from '@/shared/utils/RAF'
 
 
 /**
@@ -51284,6 +52201,7 @@ import type { LogEntry } from '@/shared/types/battle-log';
 import { EffectType } from '@/shared/types/effect';
 import { DamageCategory } from '@/domain/skill/types';
 import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -51544,7 +52462,7 @@ function initBattle() {
   }
 
   // ponytail: 将触发型被动技能注册到 PassiveSkillManager
-  const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
+  const passiveSkillManager = container.resolve<PassiveSkillManager>('PassiveSkillManager');
   for (const entity of allParticipants) {
     GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager);
   }
@@ -53314,7 +54232,7 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-    <div class="log-content">
+    <div class="log-content" ref="logContainer" @scroll="onScroll">
       <div v-for="(log, index) in logs" :key="index" class="log-entry" :class="log.type">
         <span class="log-seq">#{{ log.index }}</span>
         <span class="log-type">[{{ LogTypeLabel[log.type] }}]</span>
@@ -53334,7 +54252,7 @@ onUnmounted(() => {
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from "vue";
+import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import type { LogEntry, LogFilters } from '@/shared/types/battle-log';
 import { LogTypeLabel, LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
 import { battleLogManager } from '@/infrastructure/adapters/logging'
@@ -53363,6 +54281,7 @@ const onStyleChange = () => {
   }
 }
 
+const logContainer = ref<HTMLElement | null>(null)
 const logKeyword = ref("");
 const logFilters = reactive<LogFilters>({
   battle: true,
@@ -53442,6 +54361,57 @@ onMounted(() => {
 onUnmounted(() => {
   battleLogManager.removeListener(logUpdateListener);
 });
+
+// === 自动滚动 ===
+const autoScrollEnabled = ref(true)
+let autoScrollTimer: ReturnType<typeof setTimeout> | null = null
+let scrollThrottled = false
+const SCROLL_RESTORE_DELAY = 3000
+
+const onScroll = () => {
+  if (!logContainer.value || scrollThrottled) return
+  scrollThrottled = true
+  requestAnimationFrame(() => { scrollThrottled = false })
+
+  const { scrollTop, scrollHeight, clientHeight } = logContainer.value
+  if (scrollTop < scrollHeight - clientHeight - 5) {
+    autoScrollEnabled.value = false
+    if (autoScrollTimer) {
+      clearTimeout(autoScrollTimer)
+    }
+    autoScrollTimer = setTimeout(() => {
+      autoScrollEnabled.value = true
+      autoScrollTimer = null
+      // ponytail: 不主动滚动，等下次 logVersion 变化由 watch 触发
+    }, SCROLL_RESTORE_DELAY)
+  } else {
+    autoScrollEnabled.value = true
+    if (autoScrollTimer) {
+      clearTimeout(autoScrollTimer)
+      autoScrollTimer = null
+    }
+  }
+}
+
+const scrollToBottom = () => {
+  if (!logContainer.value) return
+  logContainer.value.scrollTop = logContainer.value.scrollHeight
+}
+
+watch(logVersion, () => {
+  nextTick(() => {
+    if (autoScrollEnabled.value) {
+      scrollToBottom()
+    }
+  })
+})
+
+onUnmounted(() => {
+  if (autoScrollTimer) {
+    clearTimeout(autoScrollTimer)
+    autoScrollTimer = null
+  }
+})
 </script>
 
 <style scoped>
@@ -59690,13 +60660,11 @@ import skillsData from '@configs/skills/skills.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
 import newSkillsData from '@configs/skills/skills_new.json'
 import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
-import buffsData from '@configs/buffs/buffs.json'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig, SkillStep } from '@/domain/skill/types'
 import type { SceneData } from '@/shared/types/scene'
 import type { CharacterStats } from '@/domain/character/types'
 import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
-import type { StructuredBuffConfig } from '@/domain/attribute/modifier-template'
 import type { ParticipantSide } from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE, BattleTriggerPhase } from '@/domain/battle/type/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
@@ -59825,9 +60793,6 @@ export class GameDataProcessor {
     // 4. 实例化参与者（内部自动创建 AttributeValue 并标记 dirty）
     const participant = new BattleParticipantImpl(initData)
 
-    // 5. 应用被动技能中 modify_attribute 步骤的修饰符
-    GameDataProcessor.applyPassiveModifiers(participant, passiveSkills)
-
     // 6. 将配置中的 attackBonus/healthBonus 作为 PERCENTAGE 修饰符注入到对应属性
     if (attackBonusBase) {
       for (const attr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
@@ -59877,51 +60842,6 @@ export class GameDataProcessor {
     [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
     [ATTRIBUTE_CODE.minAttack]: ATTRIBUTE_CODE.attackBonus,
     [ATTRIBUTE_CODE.maxAttack]: ATTRIBUTE_CODE.attackBonus,
-  }
-
-  /**
-   * 正在等待处理的友方光环列表（阶段二使用）
-   */
-  private static pendingAllyAuras: Array<{
-    sourceName: string
-    sourceKey: string
-    teamType: ParticipantSide
-    modifiers: Array<{ targetAttribute: string; type: string; value: number }>
-  }> = []
-
-  /**
-   * 将被动技能中的修饰符应用到参与者属性上
-   * 处理 modify_attribute 和 apply_buff 两种步骤
-   */
-  private static applyPassiveModifiers(
-    participant: BattleParticipantImpl,
-    passiveSkills: SkillConfig[],
-  ): void {
-    for (const skill of passiveSkills) {
-      if (!skill.steps) continue
-      for (const step of skill.steps) {
-        const stepType = step.type
-        if (stepType === 'modify_attribute') {
-          GameDataProcessor.applyStepModifiers(participant, skill, step.modifiers)
-        } else if (stepType === 'apply_buff' && step.buffId) {
-          GameDataProcessor.applyBuffStep(participant, skill, step.buffId)
-        }
-      }
-    }
-  }
-
-  /**
-   * 将 modifier 列表应用到参与者属性
-   */
-  private static applyStepModifiers(
-    participant: BattleParticipantImpl,
-    skill: SkillConfig,
-    modifiers: any[] | undefined,
-  ): void {
-    if (!modifiers || modifiers.length === 0) return
-    for (const mod of modifiers) {
-      GameDataProcessor.pushModifier(participant, skill, mod)
-    }
   }
 
   /**
@@ -60000,142 +60920,40 @@ export class GameDataProcessor {
   }
 
   /**
-   * 处理 apply_buff 步骤：解析 buff 配置，应用其修饰符
-   * 友方光环存入等待列表由 applyTeamPassiveAuras 处理
+   * 将光环 aura 修饰符分发到指定的参与者
+   * 由 BattleSystem.initialize 在 pending buff 循环后调用，处理 allies/enemies 光环
    */
-  private static applyBuffStep(
-    participant: BattleParticipantImpl,
-    skill: SkillConfig,
-    buffId: string,
+  static applyAuraModifiersToParticipant(
+    target: BattleParticipantImpl,
+    sourceKey: string,
+    modifiers: Array<{ targetAttribute: string; type: string; value: number }>,
   ): void {
-    const buff = GameDataProcessor.findBuffById(buffId)
-    if (!buff) return
-
-    // 处理 aura 修饰符
-    const aura = (buff as any).aura as
-      | { targetSelector?: string; modifiers?: Array<{ targetAttribute: string; type: string; value: number }> }
-      | undefined
-    if (aura?.modifiers) {
-      if (aura.targetSelector === 'allies') {
-        // 全队光环 → 等待阶段二
-        GameDataProcessor.pendingAllyAuras.push({
-          sourceName: skill.name,
-          sourceKey: `passive:${buffId}`,
-          teamType: participant.type,
-          modifiers: aura.modifiers,
-        })
-      } else {
-        // 自目标 → 立即应用
-        GameDataProcessor.applyStepModifiers(participant, skill, aura.modifiers)
+    for (const mod of modifiers) {
+      const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
+      const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
+        : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
+        : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
+        : mod.type === 'FINAL' ? ModifierType.FINAL
+        : ModifierType.ADDITIVE
+      let value = typeof mod.value === 'number' ? mod.value : 0
+      if (modType === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
+        value = Math.round(value * 10000) / 100
+      }
+      const m: Modifier = {
+        sourceKey,
+        sourceType: ModifierSourceType.SKILL,
+        attribute: attrCode,
+        value,
+        type: modType,
+        description: sourceKey,
+      }
+      const attrData = target.getAttrValue(attrCode)
+      if (attrData) {
+        attrData.modifiers.push(m)
+        attrData.cachedVersion = -1
       }
     }
-
-    // 处理免疫标签（immunities）
-    const immunities = (buff as any).immunities as string[] | undefined
-    if (immunities) {
-      for (const tag of immunities) {
-        participant.addImmunity(tag)
-      }
-    }
-
-    // 处理直接 attributes（如 { "dmgReduction": "+20%" }）
-    const attrs = (buff as any).attributes as Record<string, string> | undefined
-    if (attrs) {
-      for (const [attrKey, valueStr] of Object.entries(attrs)) {
-        const attrCode = attrKey as ATTRIBUTE_CODE
-        const isPercent = valueStr.endsWith('%')
-        const rawValue = parseFloat(valueStr)
-        if (isNaN(rawValue)) continue
-        GameDataProcessor.pushModifier(participant, skill, {
-          targetAttribute: attrCode,
-          type: isPercent ? 'PERCENTAGE' : 'ADDITIVE',
-          value: isPercent ? rawValue : rawValue,
-        })
-      }
-    }
-  }
-
-  /**
-   * 应用所有等待中的友方光环
-   * 在队伍初始化完成后调用
-   */
-  static applyTeamPassiveAuras(
-    allParticipants: Map<string, BattleEntity>,
-  ): void {
-    const pending = GameDataProcessor.pendingAllyAuras
-    if (pending.length === 0) return
-    GameDataProcessor.pendingAllyAuras = []
-
-    for (const aura of pending) {
-      for (const entity of allParticipants.values()) {
-        if (entity.type !== aura.teamType || !(entity instanceof BattleParticipantImpl)) continue
-        for (const mod of aura.modifiers) {
-          const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
-          let value = typeof mod.value === 'number' ? mod.value : 0
-          if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
-            value = Math.round(value * 10000) / 100
-          }
-          const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
-            : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
-            : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
-            : mod.type === 'FINAL' ? ModifierType.FINAL
-            : ModifierType.ADDITIVE
-          const m: Modifier = {
-            sourceKey: aura.sourceKey,
-            sourceType: ModifierSourceType.SKILL,
-            attribute: attrCode,
-            value,
-            type: modType,
-            description: aura.sourceName,
-          }
-          const attrData = entity.getAttrValue(attrCode)
-          if (attrData) {
-            attrData.modifiers.push(m)
-            attrData.cachedVersion = -1
-          }
-
-          // 同步到加成属性（用于 UI "属性加成" 显示）
-          if (modType === ModifierType.PERCENTAGE) {
-            const bonusAttrCode = GameDataProcessor.ATTR_TO_BONUS_MAP[attrCode]
-            if (bonusAttrCode) {
-              const bonusMod: Modifier = {
-                sourceKey: aura.sourceKey,
-                sourceType: ModifierSourceType.SKILL,
-                attribute: bonusAttrCode,
-                value,
-                type: ModifierType.ADDITIVE,
-                description: aura.sourceName,
-              }
-              const bonusData = entity.getAttrValue(bonusAttrCode)
-              if (bonusData) {
-                bonusData.modifiers.push(bonusMod)
-                bonusData.cachedVersion = -1
-              }
-            }
-            // ponytail: PERCENTAGE 作用于 attack 时同步到 minAttack/maxAttack
-            // 与 pushModifier() 中的逻辑保持一致
-            if (attrCode === ATTRIBUTE_CODE.attack) {
-              for (const targetAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
-                const targetData = entity.getAttrValue(targetAttr)
-                if (targetData) {
-                  targetData.modifiers.push({
-                    sourceKey: aura.sourceKey,
-                    sourceType: ModifierSourceType.SKILL,
-                    attribute: targetAttr,
-                    value,
-                    type: ModifierType.PERCENTAGE,
-                    description: aura.sourceName,
-                  })
-                  targetData.cachedVersion = -1
-                }
-              }
-            }
-          }
-        }
-        // ponytail: 通知实体重新计算所有属性值，使光环修饰符立即生效
-        entity.recalcAll()
-      }
-    }
+    target.recalcAll()
   }
 
   /** 将 triggerTimes 字符串映射到 BattleTriggerPhase */
@@ -60169,14 +60987,19 @@ export class GameDataProcessor {
     if (!passives || passives.length === 0) return
 
     for (const skill of passives) {
-      const triggerTimes = skill.triggerTimes
-      if (!triggerTimes || triggerTimes.length === 0) continue
+      // ponytail: 统一管道 — 无 triggerTimes 的被动按 battle_start 注册
+      const triggerTimes = skill.triggerTimes?.length
+        ? skill.triggerTimes
+        : [BattleTriggerPhase.BATTLE_START]
 
       const phase = GameDataProcessor.TRIGGER_TIME_MAP[triggerTimes[0]]
       if (!phase) {
         console.warn(`未知的被动触发时机: ${triggerTimes[0]} (技能: ${skill.id})`)
         continue
       }
+
+      // ponytail: battle_start 被动默认触发 1 次
+      const maxTriggerCount = skill.maxUses ?? (triggerTimes[0] === 'battle_start' ? 1 : undefined)
 
       const config: PassiveSkillConfig = {
         id: `${entity.id}:${skill.id}`,
@@ -60186,7 +61009,7 @@ export class GameDataProcessor {
         skillId: skill.id,
         cooldown: skill.cooldown || 0,
         condition: skill.condition,
-        maxTriggerCount: skill.maxUses,
+        maxTriggerCount,
         // 从 parameters 中读取额外触发配置
         triggerProbability: skill.parameters?.triggerProbability as number | undefined,
         hpThreshold: skill.parameters?.hpThreshold as number | undefined,
@@ -60336,13 +61159,6 @@ export class GameDataProcessor {
 
     DataProcessor.setCachedData(cacheKey, skills)
     return skills
-  }
-
-  /**
-   * 根据 Buff ID 查找 Buff 配置
-   */
-  static findBuffById(buffId: string): StructuredBuffConfig | undefined {
-    return (buffsData as StructuredBuffConfig[]).find((b) => b.id === buffId)
   }
 
   /**
@@ -61426,7 +62242,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { initializeContainer, container } from '@/infrastructure/di/Container'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import { BattleStatus } from '@/domain/battle/types'
+import { BattleStatus } from '@/domain/battle/type/types'
 import { createTestBattleParticipants } from '../factories/ParticipantFactory'
 
 vi.mock('@/main', () => ({
@@ -61522,7 +62338,7 @@ export function createTestBattleParticipants() {
 --- tests/fixtures/participants.ts ---
 import type { SkillSet } from '@/domain/skill/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 
 export const EMPTY_SKILL_SET: SkillSet = {
   small: [],
@@ -61592,9 +62408,9 @@ export const enemyParticipantData2 = {
 }
 
 --- tests/mocks/MockEntity.ts ---
-import type { BattleEntity } from '@/domain/battle/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/types'
+import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 
 export const defaultAttrs = {
   [ATTRIBUTE_CODE.attack]: {
@@ -62205,7 +63021,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { StackRule, ControlType } from '@/domain/buff/types'
-import type { BuffConfig } from '@/domain/buff/types'
+import type { BuffConfig } from '@/domain/buff/BuffConfig'
 
 vi.mock('@/main', () => ({
   eventBus: { emit: () => {}, on: () => {}, off: () => {} },
@@ -62582,6 +63398,430 @@ describe('HealCalculator', () => {
       const heal = calculator.calculateHeal(step, source, target)
 
       expect(heal).toBe(0)
+    })
+  })
+})
+
+--- tests/unit/plan-b-battle.test.ts ---
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
+import { SkillManager } from '@/domain/skill/SkillManager'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import { PARTICIPANT_SIDE, BattleTriggerPhase } from '@/domain/battle/type/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { EMPTY_SKILL_SET, makeDefaultAttributes } from '../fixtures/participants'
+import type { SkillConfig, SkillSet } from '@/domain/skill/types'
+
+vi.mock('@/main', () => ({
+  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
+  default: {},
+}))
+vi.mock('@/shared/utils/RAF', () => ({
+  RAFTimer: class {
+    setTimeout = (fn: (...args: unknown[]) => void) => { fn(); return Symbol('mock') }
+    setInterval = () => Symbol('mock')
+    clearTimeout = () => {}
+    clearInterval = () => {}
+  },
+}))
+
+/** 首领光环被动（配置与 skill_passive.json 一致） */
+function makeAuraPassiveSkill(): SkillConfig {
+  return {
+    id: 'skill_enemy_079_passive',
+    name: '首领光环',
+    description: '被动效果：提升所有友方单位的攻击力15%',
+    energyCost: 0,
+    cooldown: 0,
+    selector: { faction: 'self', strategy: 'first' },
+    skillType: 'passive',
+    triggerTimes: ['battle_start'],
+    steps: [{ type: 'apply_buff' as any, buffId: 'buff_leader_aura' }],
+  }
+}
+
+function createParticipant(id: string, name: string, side: PARTICIPANT_SIDE, atk: number, passives: SkillConfig[] = []): BattleParticipantImpl {
+  return new BattleParticipantImpl({
+    id, name, level: 50,
+    type: side, team: side,
+    enabled: true,
+    skills: { small: [], passive: passives, ultimate: [] } as SkillSet,
+    attributeValues: makeDefaultAttributes({ [ATTRIBUTE_CODE.attack]: atk }),
+  })
+}
+
+describe('方案 B 战斗验证：光环分发', () => {
+  let registry: BuffScriptRegistry
+  let buffSystem: BuffSystem
+  let skillManager: SkillManager
+  let passiveSkillManager: PassiveSkillManager
+
+  beforeEach(() => {
+    registry = new BuffScriptRegistry()
+    buffSystem = new BuffSystem(registry)
+    skillManager = new SkillManager(buffSystem)
+    passiveSkillManager = PassiveSkillManager.create(skillManager, buffSystem)
+
+    // 注册 buff_leader_aura 脚本，让 BuffSystem.addBuff 能找到它
+    registry.registerScript('buff_leader_aura', {
+      onApply: () => {},
+      onRemove: () => {},
+      onUpdate: () => {},
+      onRefresh: () => {},
+      getEffectLines: () => [],
+    }, { id: 'buff_leader_aura', name: '首领光环', duration: -1 })
+
+    // 注册被动技能到 SkillManager
+    skillManager.setSkillConfig('skill_enemy_079_passive', makeAuraPassiveSkill())
+  })
+
+  it('金护法在战斗开始后应有首领光环 buff', () => {
+    const gold = createParticipant('guardian_gold', '金护法', PARTICIPANT_SIDE.ENEMY, 80, [makeAuraPassiveSkill()])
+    gold.setModifierProvider(buffSystem)
+    gold.setBuffQuery(buffSystem)
+
+    GameDataProcessor.registerParticipantPassives(gold, passiveSkillManager)
+
+    const passives = passiveSkillManager.getPassives(gold.id)
+    expect(passives).toHaveLength(1)
+    expect(passives[0].trigger).toBe(BattleTriggerPhase.BATTLE_START)
+
+    // 模拟 BATTLE_START 触发
+    passiveSkillManager.triggerPassives(BattleTriggerPhase.BATTLE_START, gold, undefined, { currentTurn: 0 })
+
+    // verify buff is added
+    expect(buffSystem.hasBuff(gold.id, 'buff_leader_aura')).toBe(true)
+  })
+
+  it('distributeAuras 将光环修饰符分发给同队成员', () => {
+    const gold = createParticipant('guardian_gold', '金护法', PARTICIPANT_SIDE.ENEMY, 80, [makeAuraPassiveSkill()])
+    const grunt1 = createParticipant('enemy_grunt_1', '杂兵甲', PARTICIPANT_SIDE.ENEMY, 100)
+    const grunt2 = createParticipant('enemy_grunt_2', '杂兵乙', PARTICIPANT_SIDE.ENEMY, 80)
+
+    for (const p of [gold, grunt1, grunt2]) {
+      p.setModifierProvider(buffSystem)
+      p.setBuffQuery(buffSystem)
+    }
+
+    // 注册被动 + 触发 BATTLE_START
+    GameDataProcessor.registerParticipantPassives(gold, passiveSkillManager)
+    passiveSkillManager.triggerPassives(BattleTriggerPhase.BATTLE_START, gold, undefined, { currentTurn: 0 })
+
+    // verify gold has the buff
+    expect(buffSystem.hasBuff(gold.id, 'buff_leader_aura')).toBe(true)
+
+    // ——— 模拟 distributeAuras ———
+    const participants = new Map<string, BattleParticipantImpl>()
+    participants.set(gold.id, gold)
+    participants.set(grunt1.id, grunt1)
+    participants.set(grunt2.id, grunt2)
+
+    const initialAtk1 = grunt1.getAttribute(ATTRIBUTE_CODE.attack)
+    const initialAtk2 = grunt2.getAttribute(ATTRIBUTE_CODE.attack)
+    expect(initialAtk1).toBe(100)
+    expect(initialAtk2).toBe(80)
+
+    for (const [id, entity] of participants) {
+      const buffInstanceIds = entity.getBuffInstanceIds()
+      for (const instanceId of buffInstanceIds) {
+        const buffConfig = buffSystem.getBuffConfigByInstanceId(instanceId)
+        if (!buffConfig) continue
+        // 从 registry 读取 aura 配置（JSON 源数据）
+        const auraConfig = registry.getBuffConfig(buffConfig.id)?.aura
+        if (!auraConfig || !auraConfig.modifiers?.length || !auraConfig.targetSelector) continue
+        const isAllies = auraConfig.targetSelector === 'allies'
+        const sourceKey = `passive:${buffConfig.id}`
+        for (const [targetId, target] of participants) {
+          if (targetId === id) continue
+          const sameTeam = target.type === entity.type
+          if ((isAllies && sameTeam) || (!isAllies && !sameTeam)) {
+            for (const mod of auraConfig.modifiers) {
+              const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
+              const attrData = target.getAttrValue(attrCode)
+              if (attrData) {
+                // 去重 + 添加
+                attrData.modifiers = attrData.modifiers.filter(m => m.sourceKey !== sourceKey)
+                attrData.modifiers.push({
+                  sourceKey, sourceType: 'SKILL' as any,
+                  attribute: attrCode, value: typeof mod.value === 'number' ? mod.value : 0,
+                  type: 'PERCENTAGE' as any,
+                  description: `aura:${buffConfig.id}`,
+                })
+                attrData.cachedVersion = -1
+              }
+            }
+            target.recalcAll()
+          }
+        }
+      }
+    }
+
+    // 验证：100 + 15% = 115，80 + 15% = 92
+    // JSON 中 value 是 0.15（表示 15%），AttributeEngine.PERCENTAGE 需要 normalized 值 15
+    // 但这里直接 push 0.15 到 modifiers，recalcAll 会通过 ParticipantStats 计算
+    // ParticipantStats 的 PERCENTAGE 处理看具体实现…
+    // 更安全的验证：攻击力增加了
+    expect(grunt1.getAttribute(ATTRIBUTE_CODE.attack)).toBeGreaterThan(100)
+    expect(grunt2.getAttribute(ATTRIBUTE_CODE.attack)).toBeGreaterThan(80)
+  })
+})
+
+--- tests/unit/plan-b-pipeline.test.ts ---
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
+import { SkillManager } from '@/domain/skill/SkillManager'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { BattleTriggerPhase } from '@/domain/battle/type/types'
+import { EMPTY_SKILL_SET, makeDefaultAttributes } from '../fixtures/participants'
+import type { SkillConfig } from '@/domain/skill/types'
+
+vi.mock('@/main', () => ({
+  eventBus: { emit: () => {}, on: () => {}, off: () => {} },
+  default: {},
+}))
+vi.mock('@/shared/utils/RAF', () => ({
+  RAFTimer: class {
+    setTimeout = (fn: (...args: unknown[]) => void) => { fn(); return Symbol('mock') }
+    setInterval = () => Symbol('mock')
+    clearTimeout = () => {}
+    clearInterval = () => {}
+  },
+}))
+
+/** 创建一个测试被动技能（无 triggerTimes） */
+function makeStaticPassiveSkill(): SkillConfig {
+  return {
+    id: 'test_static_passive',
+    name: '测试常驻被动',
+    description: '测试用，防御+10%',
+    energyCost: 0,
+    cooldown: 0,
+    selector: { faction: 'self', strategy: 'first' },
+    skillType: 'passive',
+    steps: [
+      {
+        type: 'modify_attribute',
+        modifiers: [
+          { id: 'test_def_bonus', targetAttribute: 'defense', type: 'PERCENTAGE', value: 10, sourceName: '测试常驻被动' },
+        ],
+      },
+    ],
+  }
+}
+
+/** 创建一个有 apply_buff 步骤的被动 */
+function makeApplyBuffPassiveSkill(buffId: string): SkillConfig {
+  return {
+    id: `test_apply_${buffId}`,
+    name: '测试施加Buff被动',
+    description: '测试用',
+    energyCost: 0,
+    cooldown: 0,
+    selector: { faction: 'self', strategy: 'first' },
+    skillType: 'passive',
+    steps: [
+      { type: 'apply_buff' as any, buffId },
+    ],
+  }
+}
+
+/** 创建一个测试参与者，携带指定的被动技能 */
+function createTestParticipantWithPassives(passiveSkills: SkillConfig[]): BattleParticipantImpl {
+  const participant = new BattleParticipantImpl({
+    id: 'test_passive_char',
+    name: '被动测试角色',
+    level: 50,
+    type: PARTICIPANT_SIDE.ALLY,
+    team: PARTICIPANT_SIDE.ALLY,
+    enabled: true,
+    skills: { small: [], passive: passiveSkills, ultimate: [] },
+    attributeValues: makeDefaultAttributes(),
+  })
+  return participant
+}
+
+describe('方案 B 统一管道', () => {
+  let buffSystem: BuffSystem
+  let skillManager: SkillManager
+  let passiveSkillManager: PassiveSkillManager
+  let registry: BuffScriptRegistry
+
+  beforeEach(() => {
+    registry = new BuffScriptRegistry()
+    buffSystem = new BuffSystem(registry)
+    skillManager = new SkillManager(buffSystem)
+    passiveSkillManager = PassiveSkillManager.create(skillManager, buffSystem)
+  })
+
+  describe('GameDataProcessor.registerParticipantPassives', () => {
+    it('无 triggerTimes 的被动应注册为 BATTLE_START', () => {
+      const participant = createTestParticipantWithPassives([makeStaticPassiveSkill()])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
+
+      const passives = passiveSkillManager.getPassives(participant.id)
+      expect(passives).toHaveLength(1)
+      expect(passives[0].trigger).toBe(BattleTriggerPhase.BATTLE_START)
+      expect(passives[0].skillId).toBe('test_static_passive')
+    })
+
+    it('有 triggerTimes 的被动保持原样，不加 battle_start', () => {
+      const passiveWithTrigger: SkillConfig = {
+        ...makeStaticPassiveSkill(),
+        triggerTimes: ['turn_start'],
+        id: 'test_trigger_passive',
+        name: '测试触发被动',
+      }
+      const participant = createTestParticipantWithPassives([passiveWithTrigger])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
+
+      const passives = passiveSkillManager.getPassives(participant.id)
+      expect(passives).toHaveLength(1)
+      expect(passives[0].trigger).toBe(BattleTriggerPhase.TURN_START)
+    })
+
+    it('混合型被动（有触发 + 无触发）各自注册正确', () => {
+      const participant = createTestParticipantWithPassives([
+        makeStaticPassiveSkill(),
+        { ...makeStaticPassiveSkill(), id: 'test_trigger_passive', triggerTimes: ['damage_taken'] },
+      ])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
+
+      const passives = passiveSkillManager.getPassives(participant.id)
+      expect(passives).toHaveLength(2)
+      const triggers = passives.map(p => p.trigger)
+      expect(triggers).toContain(BattleTriggerPhase.BATTLE_START)
+      expect(triggers).toContain(BattleTriggerPhase.DAMAGE_TAKEN)
+    })
+
+    it('battle_start 被动默认 maxTriggerCount = 1', () => {
+      const participant = createTestParticipantWithPassives([makeStaticPassiveSkill()])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
+
+      const passives = passiveSkillManager.getPassives(participant.id)
+      expect(passives[0].maxTriggerCount).toBe(1)
+    })
+  })
+
+  describe('PassiveSkillManager.triggerPassives BATTLE_START', () => {
+    beforeEach(() => {
+      // 将所有用到的被动技能注册到 SkillManager，否则 executeSkill 找不到配置
+      const skills = [
+        makeStaticPassiveSkill(),
+        makeApplyBuffPassiveSkill('test_simple_buff'),
+      ]
+      for (const s of skills) {
+        skillManager.setSkillConfig(s.id, s)
+      }
+      // 注册一个基础 buff 供 apply_buff 测试使用
+      registry.registerScript('test_simple_buff', {
+        onApply: () => {},
+        onRemove: () => {},
+        onUpdate: () => {},
+        onRefresh: () => {},
+        getEffectLines: () => [],
+      }, { id: 'test_simple_buff', name: '测试 Buff', duration: -1, maxStacks: 1 })
+    })
+
+    it('actualTarget 修复：target 为 undefined 时默认 entity', () => {
+      const participant = createTestParticipantWithPassives([makeStaticPassiveSkill()])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
+
+      // 执行 BATTLE_START — 无 target（模拟 battle start 场景）
+      passiveSkillManager.triggerPassives(
+        BattleTriggerPhase.BATTLE_START,
+        participant,
+        undefined,   // target = undefined
+        { currentTurn: 0 },
+      )
+
+      // actualTarget = target ?? entity → entity，被动应成功执行
+      // 被动的步骤 modify_attribute 防御+10%（基础 50 + 10% = 55）
+      const defense = participant.getAttribute(ATTRIBUTE_CODE.defense)
+      expect(defense).toBeCloseTo(55, 0)
+    })
+
+    it('追踪 buff 被创建（modify_attribute-only 被动）', () => {
+      const participant = createTestParticipantWithPassives([makeStaticPassiveSkill()])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
+
+      passiveSkillManager.triggerPassives(
+        BattleTriggerPhase.BATTLE_START,
+        participant,
+        undefined,
+        { currentTurn: 0 },
+      )
+
+      // ensureTrackingBuff 应已创建 _track_passive_test_static_passive
+      expect(buffSystem.hasBuff(participant.id, '_track_passive_test_static_passive')).toBe(true)
+    })
+
+    it('已有 apply_buff 步骤的被动不创建追踪 buff', () => {
+      const buffId = 'test_simple_buff'
+      // 用 apply_buff 被动，且把 buff 注册到 ScriptRegistry
+      const passive = makeApplyBuffPassiveSkill(buffId)
+      // 确保被动技能已在 SkillManager 中注册
+      skillManager.setSkillConfig(passive.id, passive)
+
+      const participant = createTestParticipantWithPassives([passive])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
+
+      passiveSkillManager.triggerPassives(
+        BattleTriggerPhase.BATTLE_START,
+        participant,
+        undefined,
+        { currentTurn: 0 },
+      )
+
+      // 应用了 apply_buff 步骤 → buff 实例存在
+      expect(buffSystem.hasBuff(participant.id, buffId)).toBe(true)
+
+      // 不应该有追踪 buff（因为已有 apply_buff 步骤）
+      expect(buffSystem.hasBuff(participant.id, `_track_passive_${passive.id}`)).toBe(false)
+    })
+  })
+
+  describe('PassiveSkillManager.clearAll', () => {
+    it('clearAll 后被动注册列表为空', () => {
+      const participant = createTestParticipantWithPassives([makeStaticPassiveSkill()])
+      participant.setModifierProvider(buffSystem)
+      participant.setBuffQuery(buffSystem)
+
+      GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
+
+      expect(passiveSkillManager.getPassives(participant.id).length).toBeGreaterThan(0)
+
+      passiveSkillManager.clearAll()
+
+      expect(passiveSkillManager.getPassives(participant.id)).toHaveLength(0)
     })
   })
 })

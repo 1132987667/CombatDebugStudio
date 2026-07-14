@@ -700,7 +700,7 @@ export interface ReplayBattleEvent {
   roundNumber: number
   sourceId?: string
   targetId?: string
-  data: Record<string, any>
+  data: Record<string, BattleContext>
 }
 
 /** 快照索引项 */
@@ -710,4 +710,65 @@ export interface SnapshotIndexItem {
   turn: number
   roundNumber: number
   timestamp: number
+}
+
+/**
+ * 战斗触发器统一上下文
+ * 
+ * 覆盖所有场景：
+ * - TriggerEventBus 事件广播（emitTriggerEvent）
+ * - PassiveSkillManager 被动触发（triggerPassives）
+ * - BuffSystem 触发器脚本执行（executeTriggerScript）
+ * - Buff 回调（damage/heal callback）
+ */
+export interface BattleContext {
+  // ============ 基础标识 ============
+  /** 触发阶段（battle_start / turn_start / damage_taken 等） */
+  phase?: BattleTriggerPhase
+  /** 战斗实例 ID */
+  battleId?: string
+  /** 来源参与者 ID（攻击者、施法者） */
+  sourceId?: string
+  /** 目标参与者 ID（受击者、受术者） */
+  targetId?: string
+  target?: BattleEntity
+  participants?: Map<string, BattleEntity>
+  /** 技能 ID */
+  skillId?: string
+  /** Buff ID */
+  buffId?: string
+  /** Buff 实例 ID（用于追踪具体实例） */
+  instanceId?: string
+
+  // ============ 数值字段 ============
+  /** 通用数值（能量、基础值等） */
+  value?: number
+  /** 伤害值（明确为伤害） */
+  damage?: number
+  /** 治疗值（明确为治疗） */
+  heal?: number
+  /** 通用量（与 value 类似，但用于某些特定场景） */
+  amount?: number
+
+  // ============ 回合信息 ============
+  /** 当前回合数（从 1 开始） */
+  currentTurn?: number
+  /** 回合编号（roundNumber 是 currentTurn 的别名） */
+  roundNumber?: number
+  /** 当前轮次（与 currentTurn 同义） */
+  round?: number
+
+  // ============ 状态标记 ============
+  /** 是否暴击 */
+  isCritical?: boolean
+  /** 是否命中 */
+  isHit?: boolean
+  /** 原因/类型（如 'damage'、'heal'、'buff'） */
+  cause?: string
+
+  // ============ 扩展数据 ============
+  /** 额外自定义数据（灵活扩展） */
+  extra?: Record<string, unknown>
+  /** 战斗完整数据（仅用于需要全量状态的场景） */
+  battleData?: BattleData
 }

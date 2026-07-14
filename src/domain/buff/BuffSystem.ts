@@ -20,13 +20,15 @@ import { TriggerEventBus, triggerEventBus } from '@/infrastructure/adapters/even
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { Counter } from '@/shared/utils/Counter'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
+import { BattleContext } from '@/domain/battle/type/types'
+
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
 const NOOP_BUFF_SCRIPT: IBuffScript = {
-  onApply: () => {},
-  onRemove: () => {},
-  onUpdate: () => {},
-  onRefresh: () => {},
+  onApply: () => { },
+  onRemove: () => { },
+  onUpdate: () => { },
+  onRefresh: () => { },
   getEffectLines: () => [],
 }
 
@@ -130,7 +132,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       this.onDamageRequest(targetId, damage, damagePercent)
     }
   }
-  
+
   private healTarget(targetId: string, amount: number): void {
     if (this.onHealRequest) {
       this.onHealRequest(targetId, amount)
@@ -180,12 +182,12 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     instanceId: string,
     targetId: string,
     eventName: string,
-    data?: Record<string, any>,
+    data?: BattleContext,
   ): void {
     const handler = this.triggerScripts.get(eventName)
     if (handler) {
       handler({
-        phase: eventName as any,
+        phase: eventName,
         sourceId: '',
         targetId,
         instanceId,
@@ -206,9 +208,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (!script) {
       const def = this.scriptRegistry.resolve(buffId)
       if (!def?.config) {
-        // ponytail: 允许无 registry 条目的动态 buff（如追踪 buff），
-        // 调用方传了完整 config 时视为自包含 buff，用 NOOP 占位
-        if (config.id && config.name && Object.keys(config).length > 1) {
+        // ponytail: 追踪 buff（_track_passive_ 前缀）是运行时动态创建的，
+        // 不需要在 buffs.json 或脚本注册表中预先注册。
+        // 其他无注册的 buff 仍然拒绝。
+        if (buffId.startsWith('_track_passive_')) {
           script = NOOP_BUFF_SCRIPT
         } else {
           console.warn(`Buff ${buffId} not found — no script or config registered, skipping`)
@@ -404,9 +407,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       }
       const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
         : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
-        : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
-        : mod.type === 'FINAL' ? ModifierType.FINAL
-        : ModifierType.ADDITIVE
+          : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
+            : mod.type === 'FINAL' ? ModifierType.FINAL
+              : ModifierType.ADDITIVE
       modifierStack.addModifier(instanceId, attrCode, value, modType)
     }
   }
@@ -539,8 +542,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const instance = this.buffInstances.get(instanceId)
     if (instance) {
       instance.conditionState = state
-      // ponytail: 'condition-changed' 是非标准事件名，emit 签名要求 BattleTriggerPhase 类型，用 any 绕过
-      ;(this.eventBus as any).emit('condition-changed', { instanceId, state, characterId: instance.characterId })
+        // ponytail: 'condition-changed' 是非标准事件名，emit 签名要求 BattleTriggerPhase 类型，用 any 绕过
+        ; (this.eventBus as any).emit('condition-changed', { instanceId, state, characterId: instance.characterId })
     }
   }
 

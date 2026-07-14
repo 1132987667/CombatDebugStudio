@@ -14,7 +14,10 @@
         <div class="dialog-container" :style="{ width: width }">
           <div class="dialog-header">
             <span class="dialog-title">{{ title }}</span>
-            <button class="dialog-close" @click="close">×</button>
+            <div class="dialog-header-actions">
+              <slot name="header-actions"></slot>
+              <button class="dialog-close" @click="close">×</button>
+            </div>
           </div>
           <div class="dialog-content">
             <slot></slot>
@@ -78,6 +81,12 @@ watch(
   border-radius: 50%;
   transition: var(--transition-base);
   color: var(--color-info);
+}
+
+.dialog-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .dialog-close:hover {

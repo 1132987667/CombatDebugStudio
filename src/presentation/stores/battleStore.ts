@@ -19,7 +19,7 @@ import { EffectType } from '@/shared/types/effect'
 import type { Enemy } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { defineStore } from 'pinia'
-import { onScopeDispose, reactive, ref, shallowRef } from 'vue'
+import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -149,10 +149,12 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const syncTeams = () => {
     console.log('接收队伍数据更新')
-    allyTeam.value = battleService.value!.getEnabledAllyTeam()
-    enemyTeam.value = battleService.value!.getEnabledEnemyTeam()
-    fullAllyTeam.value = battleService.value!.getAllyTeam()
-    fullEnemyTeam.value = battleService.value!.getEnemyTeam()
+    // ponytail: 用 shallowReactive 包装参与者，使 Vue computed 能追踪场内属性变更（如 statsVersion）。
+    // 原始对象由 BattleSystem 管理并通过事件告知 UI 层，proxy 确保修改走 Vue 响应式系统。
+    allyTeam.value = battleService.value!.getEnabledAllyTeam().map(p => shallowReactive(p))
+    enemyTeam.value = battleService.value!.getEnabledEnemyTeam().map(p => shallowReactive(p))
+    fullAllyTeam.value = battleService.value!.getAllyTeam().map(p => shallowReactive(p))
+    fullEnemyTeam.value = battleService.value!.getEnemyTeam().map(p => shallowReactive(p))
     currentTurn.value = battleService.value!.getCurrentTurn()
     maxTurns.value = battleService.value!.getMaxTurns?.() ?? 999
     const battleState = battleService.value!.getBattleState()
@@ -249,6 +251,18 @@ export const useBattleStore = defineStore('battle', () => {
   events.set(BattleEventCodes.MISS_ANIMATION, handleMissAnimationEvent)
   events.set(BattleEventCodes.BUFF_EFFECT, handleBuffEffectEvent)
   events.set(BattleEventCodes.SKILL_EFFECT, handleSkillEffectEvent)
+  /** 处理参与者属性变更事件（Buff 触发 recalculateAll 后，在 proxy 上同步调用以使 Vue 响应式系统追踪到变更） */
+  const handleAttributeChanged = (data: { characterId: string }) => {
+    const id = data.characterId
+    // ponytail: 从当前 proxy 数组中找到目标，调用其 recalculateAll 走 proxy set trap
+    const proxy = allyTeam.value.find(p => p.id === id)
+      ?? enemyTeam.value.find(p => p.id === id)
+      ?? fullAllyTeam.value.find(p => p.id === id)
+      ?? fullEnemyTeam.value.find(p => p.id === id)
+    proxy?.recalculateAll()
+  }
+
+  events.set(BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED, handleAttributeChanged)
   events.set(BattleEventCodes.TEAM_DATA_CHANGED, syncTeams)
   /** 需要清理的事件码列表（用于组件卸载时移除监听器） */
   const cleanupEvents = [...events.keys()]

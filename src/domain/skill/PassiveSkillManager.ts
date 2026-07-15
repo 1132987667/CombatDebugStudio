@@ -1,7 +1,6 @@
 import { BattleTriggerPhase, PARTICIPANT_SIDE, BATTLE_CONSTANTS, BattleActionHelper, type BattleContext, type BattleEntity } from '@/domain/battle/type/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 import { resolveSkillTargets } from '@/domain/skill/target-resolver'
@@ -24,6 +23,9 @@ export interface PassiveSkillConfig {
 }
 
 export class PassiveSkillManager {
+  /**
+   * 当前参战角色的被动技能配置
+   */
   private passives: Map<string, PassiveSkillConfig[]> = new Map()
   private skillManager: SkillManager
   private buffSystem: BuffSystem
@@ -51,11 +53,8 @@ export class PassiveSkillManager {
    * 触发被动技能
    *
    * 目标解析规则：
-   * - 时间型触发（battle_start / turn_start / turn_end）：
-   *   根据技能 selector 从参与者中解析目标（与主动技能一致）
-   * - 事件型触发（damage_taken / on_hit 等）：
-   *   沿用原有的 context.target（事件的另一参与方），不做 selector 解析
-   *   ponytail: 后续若被动技能配置了非 self selector，事件型触发也可统一走 selector 路径
+   * - 所有触发类型统一先尝试根据技能 selector 从参与者中解析目标（与主动技能一致）
+   * - 当无参与者映射或无 selector 时，回退到 context.target（事件的另一方）或施法者自身
    */
   triggerPassives(
     trigger: BattleTriggerPhase,
@@ -68,10 +67,6 @@ export class PassiveSkillManager {
     // 事件型触发所需的上下文目标
     const contextTarget = context?.target ??
       (context?.targetId && context?.participants ? context.participants.get(context.targetId) : undefined)
-
-    const isTimeBased = trigger === BattleTriggerPhase.BATTLE_START
-      || trigger === BattleTriggerPhase.TURN_START
-      || trigger === BattleTriggerPhase.TURN_END
 
     for (const config of characterPassives) {
       // 检查触发时机是否匹配
@@ -111,9 +106,11 @@ export class PassiveSkillManager {
         continue
 
       // --- 确定目标 ---
+      // ponytail: 统一目标解析 — 所有触发类型都基于 skillConfig.selector 解析目标。
+      // 仅当无参与者和 selector 时才回退到 context.target（事件的另一方）或施法者自身。
       let targets: BattleEntity[]
 
-      if (isTimeBased && context?.participants) {
+      if (context?.participants) {
         const skillConfig = this.skillManager.getSkillConfig(config.skillId)
         if (skillConfig?.selector) {
           targets = resolveSkillTargets(
@@ -126,7 +123,13 @@ export class PassiveSkillManager {
           targets = [contextTarget ?? entity]
         }
       } else {
-        targets = [contextTarget ?? entity]
+        // ponytail: 无 participants 时仍尝试解析 selector（BATTLE_START 之外的大部分事件都没有传 participants）
+        const skillConfig = this.skillManager.getSkillConfig(config.skillId)
+        if (skillConfig?.selector?.faction === 'self') {
+          targets = [entity]
+        } else {
+          targets = [contextTarget ?? entity]
+        }
       }
 
       if (targets.length === 0) continue
@@ -134,20 +137,23 @@ export class PassiveSkillManager {
       // --- 对每个目标执行（走被动专用管道，绕过 executeSkill 的主动技能逻辑）---
       const skillConfig = this.skillManager.getSkillConfig(config.skillId)
       const turn = (context?.currentTurn as number) || 0
+      let hasExecuted = false
       if (skillConfig) {
-        this.executePassiveSkill(skillConfig, entity, targets, turn)
+        hasExecuted = this.executePassiveSkill(skillConfig, entity, targets, turn)
       } else {
         // ponytail: 无配置时回退旧路径防止崩溃
         for (const actualTarget of targets) {
           this.skillManager.executeSkill(config.skillId, entity, actualTarget, turn)
+          hasExecuted = true
         }
       }
 
-      // ponytail: BATTLE_START 被动中纯 modify_attribute 步骤不创建 buff 实体，
-      // 此处自动创建追踪 buff 使其在 buff 列表中可见
-      if (trigger === BattleTriggerPhase.BATTLE_START) {
-        this.ensureTrackingBuff(entity.id, config.skillId, config.name)
+      // ponytail: 仅在确实执行了有效步骤后才累加冷却和计数
+      if (hasExecuted) {
+        config.lastTriggeredTurn = (context?.currentTurn as number) || 0
+        config.triggerCount = (config.triggerCount || 0) + 1
       }
+
       // ponytail: 被动触发日志 — 带角色名着色
       const targetNames = targets.map((t) => t.name).join('、') || '自身'
       const firstTarget = targets[0]
@@ -166,8 +172,6 @@ export class PassiveSkillManager {
         segments: segs,
         category: BATTLE_LOG_CATEGORIES.STATUS,
       })
-      config.lastTriggeredTurn = (context?.currentTurn as number) || 0
-      config.triggerCount = (config.triggerCount || 0) + 1
     }
   }
 
@@ -185,6 +189,7 @@ export class PassiveSkillManager {
    * @param source   被动所有者（施法者）
    * @param targets  已解析的目标列表（至少一个元素）
    * @param turn     当前回合数
+   * @param options  可选 — { deferDamage } 是否启用延迟伤害模式
    * @returns 是否有至少一个步骤成功执行
    */
   private executePassiveSkill(
@@ -192,12 +197,18 @@ export class PassiveSkillManager {
     source: BattleEntity,
     targets: BattleEntity[],
     turn: number,
+    options?: { deferDamage?: boolean },
   ): boolean {
     const steps = config.steps
     if (!steps || steps.length === 0) return true // ponytail: 无步骤=无需执行，不算失败
     if (targets.length === 0) return true         // ponytail: 无目标=无需执行，不算失败
 
     const executor = this.skillManager.getExecutor()
+    // ponytail: 保存调用方的 deferDamage 状态并在完成后恢复，避免全局 toggle 的竞态
+    const prevDefer = executor.deferDamage
+    if (options?.deferDamage !== undefined) {
+      executor.deferDamage = options.deferDamage
+    }
     let anyExecuted = false
 
     for (const target of targets) {
@@ -227,6 +238,8 @@ export class PassiveSkillManager {
       }
     }
 
+    // ponytail: 恢复调用方的 deferDamage 状态
+    executor.deferDamage = prevDefer
     return anyExecuted
   }
 
@@ -264,7 +277,8 @@ export class PassiveSkillManager {
             ? target.getBuffInstanceIds().some((id) => id.includes('sleep'))
             : false
         case 'source_has_debuff_count_3':
-          return source.getBuffInstanceIds().length >= 0
+          // ponytail: 身上 ≥ 3 个减益时触发（守护者被动「不屈意志」专用）
+          return source.getBuffInstanceIds().length >= 3
         case 'source_energy_high':
           return (
             source.getAttribute('currentEnergy') /
@@ -286,37 +300,6 @@ export class PassiveSkillManager {
     }
   }
 
-  /**
-   * BATTLE_START 被动中，纯 modify_attribute 步骤不会创建 buff 实体。
-   * 此方法检查技能步骤，若无 apply_buff 步骤则自动创建追踪 buff，
-   * 使该被动在参与者 buff 列表中可见。
-   */
-  private ensureTrackingBuff(characterId: string, skillId: string, skillName: string): void {
-    const skillConfig = this.skillManager.getSkillConfig(skillId)
-    if (!skillConfig?.steps) return
-
-    // 如果已有 apply_buff 步骤，其 buff 实体已由 SkillExecutor 创建，无需追踪 buff
-    const hasApplyBuff = skillConfig.steps.some(s => s.type === 'apply_buff')
-    if (hasApplyBuff) return
-
-    const buffId = `_track_passive_${skillId}`
-    if (this.buffSystem.hasBuff(characterId, buffId)) return
-
-    const config: BuffConfig = {
-      id: buffId,
-      name: skillName,
-      description: '',
-      duration: -1,
-      maxStacks: 1,
-      cooldown: 0,
-      stackRule: StackRule.REFRESH,
-      controlType: ControlType.NONE,
-      controlPriority: 0,
-      isDebuff: false,
-      isPositive: true,
-    }
-    this.buffSystem.addBuff(characterId, buffId, config, 0)
-  }
 
   getPassives(characterId: string): PassiveSkillConfig[] {
     return this.passives.get(characterId) || []

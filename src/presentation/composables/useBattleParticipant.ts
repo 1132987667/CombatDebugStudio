@@ -91,7 +91,7 @@ export function useBattleParticipant(
   // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue（使用官方 ATTRIBUTE_CODE 标准编码）
   const stats = computed<ParticipantStats>(() => {
     // 读取 statsVersion 触发 Vue 响应式追踪——当参与者属性重算时版本戳递增，computed 自动重新求值
-    shallowParticipant.statsVersion
+    void shallowParticipant.statsVersion
     return {
       currentHealth: shallowParticipant.getAttributeValue(
         ATTRIBUTE_CODE.currentHealth,
@@ -138,7 +138,7 @@ export function useBattleParticipant(
 
   // 派生状态
   const isAlive = computed(() => {
-    shallowParticipant.statsVersion
+    void shallowParticipant.statsVersion
     return shallowParticipant.isAlive()
   })
   const isDead = computed(() => !isAlive.value)

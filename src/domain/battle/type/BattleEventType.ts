@@ -98,6 +98,7 @@ export interface BattleEvents {
   [BattleEventCodes.CURRENT_ACTOR_CHANGED]: { actorId: string | null };
   [BattleEventCodes.DEBUG_PAUSE]: { phase: string };
   [BattleEventCodes.DEBUG_PAUSE_RESUME]: void;
+  [BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED]: { characterId: string };
 }
 
 /** 战斗事件名称类型 */
@@ -137,6 +138,8 @@ export const BattleEventCodes = {
   DEBUG_PAUSE: 'debug-pause',
   /** 调试模式继续 */
   DEBUG_PAUSE_RESUME: 'debug-pause-resume',
+  /** 参与者属性变更事件（Buff 触发 recalculateAll 后发射） */
+  PARTICIPANT_ATTRIBUTE_CHANGED: 'participant-attribute-changed',
 } as const
 
 export type BattleEventCode = (typeof BattleEventCodes)[keyof typeof BattleEventCodes]

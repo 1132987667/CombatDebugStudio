@@ -29,8 +29,10 @@ docs/
     migration/
         adversarial-review-applyBuffStep.md
         统一管道-Buff全生命周期时序.md
+        被动技能全流程.md
     buff-text-display-design-v2.md
     BUFF设计和展示.md
+    不同版本回合制游戏的日志风格范例.md
     属性监控显示设计.md
     战斗文本显示实现.md
     打包后代码行数变化.md
@@ -149,6 +151,7 @@ src/
             PassiveSkillManager.ts
             SkillExecutor.ts
             SkillManager.ts
+            target-resolver.ts
             types.ts
         utils/
             Utils.js
@@ -14025,519 +14028,874 @@ Buff 交互怎么提示（覆盖/免疫/净化）
 | 光环修饰符游离于 buff 生命周期之外 | 🔶 中 |
 
 --- docs/migration/统一管道-Buff全生命周期时序.md ---
-# 统一管道 — Buff 全生命周期时序
+### 被动技能全流程时序图（文字版）
 
-## 图例
+以下时序图使用文字描述，符号说明：
+- `[A] → [B]`：A 调用 B 的方法
+- `[A] --> [B]`：B 返回结果给 A
+- `---`：阶段分隔
+
+---
+
+#### 一、被动技能注册（角色/敌人初始化阶段）
 
 ```
-┌─ 调用方 ─┐
-├─ 方法名 ─┤
-│ 关键操作   │
-└───────────┘
-  ● 同步 / 事件通知
+[GameDataProcessor.enemyToParticipant()] 
+    → 创建 BattleParticipantImpl 实例
+    → 读取 Enemy.skills.passive 技能ID列表
+    → 通过 getSkillByIds() 加载 SkillConfig 数组
+
+[GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)]
+    → 遍历 participant.skills.passive 中的每个 SkillConfig
+    ├─ 若 skill.triggerTimes 存在 → 直接使用
+    └─ 若不存在 → 默认填充 ['battle_start']
+    → 将 trigger 字符串映射为 BattleTriggerPhase（如 'battle_start' → BATTLE_START）
+    → 构造 PassiveSkillConfig 对象：
+        { id, name, trigger, skillId, cooldown, maxTriggerCount, triggerProbability, hpThreshold, condition }
+    → 调用 passiveSkillManager.registerPassive(participant.id, config)
+        └─ 存入 Map<characterId, PassiveSkillConfig[]>
 ```
 
 ---
 
-## 阶段一：注册与初始化（构造期 → BATTLE_START）
+#### 二、战斗开始阶段（BattleSystem.initialize → applyPassiveSkills）
 
 ```
-GameDataProcessor.enemyToParticipant(enemy)
-  │
-  ├─ new BattleParticipantImpl(data, buffSystem)
-  │    └─ setModifierProvider(buffSystem)
-  │         ├─ this.modifierProvider = buffSystem
-  │         ├─ syncModifiersFromProvider()
-  │         │    └─ (此时 ModifierStack 为空，无效果)
-  │         └─ stats.recalculateAll()
-  │              └─ (基础属性已计算，被动加成尚未加入)
-  │
-  └─ registerParticipantPassives(entity, passiveSkillManager)
-       └─ 遍历 skills.passive[]
-            ├─ 有 triggerTimes → 原样注册到 PassiveSkillManager
-            └─ 无 triggerTimes → 补 ['battle_start'] 后注册
-                 └─ passiveSkillManager.registerPassive(entity.id, config)
-```
-
----
-
-## 阶段二：战斗开始 — 统一 BATTLE_START 触发
-
-```
-BattleSystem.initialize(allyParticipants, enemyParticipants)
-  │
-  ├─ 1. 构建 participants Map
-  │    └─ setModifierProvider(entity, buffSystem) → syncModifiersFromProvider()
-  │
-  ├─ 2. 注册 BuffSystem 回调
-  │    ├─ setAttributeChangeCallback → recalculateAll()
-  │    └─ setBuffAppliedCallback → eventBus.emit(BUFF_EFFECT)
-  │
-  ├─ 3. applyPassiveSkills(participants)
-  │    ├─ emitTriggerEvent(BATTLE_START)         ← EventBus 广播
-  │    │
-  │    └─ passiveSkillManager.triggerPassiveSkillsForAll(BATTLE_START, participants)
-  │         │
-  │         └─ [遍历每个参与者]
-  │              └─ triggerPassives(BATTLE_START, entity, target?, context?)
-  │                   │
-  │                   └─ [遍历 characterPassives 中 trigger === BATTLE_START 的条目]
-  │                        │
-  │                        ├─ 检查冷却时间
-  │                        │    └─ config.cooldown > 0 && lastTriggeredTurn
-  │                        │         → currentTurn - lastTriggeredTurn < cooldown? → 跳过
-  │                        │
-  │                        ├─ 检查最大触发次数
-  │                        │    └─ maxTriggerCount && triggerCount >= maxTriggerCount? → 跳过
-  │                        │    └─ ponytail: battle_start 被动默认 maxTriggerCount = 1
-  │                        │
-  │                        ├─ 检查触发概率
-  │                        │    └─ triggerProbability && Math.random() > probability? → 跳过
-  │                        │
-  │                        ├─ 检查 HP 阈值 (HP_LOWER_THAN 专用)
-  │                        │    └─ currentHealth / maxHealth > hpThreshold / 100? → 跳过
-  │                        │
-  │                        ├─ 检查触发条件
-  │                        │    └─ condition && !evaluateCondition()? → 跳过
-  │                        │
-  │                        │  ──── 全部通过 ────
-  │                        │
-  │                        ├─ actualTarget = target ?? entity    ← 对抗式审查修复 #1
-  │                        │
-  │                        ├─ skillManager.executeSkill(skillId, entity, actualTarget, turn)
-  │                        │    │
-  │                        │    └─ [遍历 skill.steps]
-  │                        │         │
-  │                        │         ├── step.type === 'modify_attribute'
-  │                        │         │    └─ [流程 A：直接属性修改]
-  │                        │         │
-  │                        │         ├── step.type === 'apply_buff'
-  │                        │         │    └─ [流程 B：addBuff 完整流程]
-  │                        │         │
-  │                        │         └── step.type === 'shield' / 'heal'
-  │                        │              / 'deal_damage' / 'custom' / ...
-  │                        │              └─ SkillExecutor 对应方法
-  │                        │
-  │                        └─ ensureTrackingBuff(entity.id, skillId, name)    ← 对抗式审查修复 #2
-  │                             └─ [流程 C：创建追踪 Buff]
-  │
-  ├─ 4. 创建回合顺序（已移至被动加成之后）
-  │    └─ battleData.turnOrder = turnManager.createTurnOrder(participants)
-  │         └─ ponytail: 被动 speed 加成已生效，排序正确
-  │
-  └─ 5. distributeAuras(participants)
-       └─ [流程 D：光环扫描分发]
+[BattleSystem.initialize(allyParticipants, enemyParticipants)]
+    │
+    ├─ 创建 participants Map，设置修饰符提供者（setModifierProvider）
+    ├─ 注册 BuffSystem 回调（属性变化、Buff添加等）
+    │
+    └─ [BattleSystem.applyPassiveSkills(participants)]
+        ├─ 对每个参与者 emitTriggerEvent(BattleTriggerPhase.BATTLE_START) → 触发事件总线
+        │
+        └─ [PassiveSkillManager.triggerPassiveSkillsForAll(BATTLE_START, participants)]
+            → 遍历 participants
+                → [PassiveSkillManager.triggerPassives(trigger, entity, context)]
+                    → 获取 entity.id 对应的被动列表
+                    → 遍历每个 PassiveSkillConfig：
+                        1. 检查 trigger 是否匹配
+                        2. 检查冷却（cooldown > 0 且 lastTriggeredTurn 未达到冷却）
+                        3. 检查最大触发次数（maxTriggerCount 限制）
+                        4. 检查触发概率（triggerProbability）
+                        5. 检查 HP 阈值（HP_LOWER_THAN 专用）
+                        6. 检查自定义条件（condition 表达式）
+                        ── 全部通过 ──
+                        7. 确定目标：
+                           ├─ 若触发为时间型（BATTLE_START / TURN_START / TURN_END）且 context.participants 存在
+                           │    → 根据技能 selector 解析目标（resolveSkillTargets）
+                           └─ 否则 → 使用 context.target 或默认 entity
+                        8. [PassiveSkillManager.executePassiveSkill(skillConfig, entity, targets, turn)]
+                              ├─ 获取 SkillExecutor
+                              ├─ 遍历 targets
+                              │   └─ 遍历 skill.steps
+                              │       └─ [SkillExecutor.executeStep(step, action, source, target)]
+                              │           ├─ 若 step.type === 'modify_attribute'
+                              │           │   → 修改目标属性（直接写入 attrData.modifiers）
+                              │           │   → 同步加成属性（ATTRIBUTE_CODE → bonus 映射）
+                              │           │   → 调用 target.recalcAll()
+                              │           │
+                              │           ├─ 若 step.type === 'apply_buff'
+                              │           │   → [BuffSystem.addBuff(characterId, buffId, config, turn)]
+                              │           │       ├─ 合并配置（脚本 CONFIG、JSON、调用方）
+                              │           │       ├─ 免疫检查
+                              │           │       ├─ 叠加规则处理（REFRESH / LIMITED / INDEPENDENT）
+                              │           │       ├─ 创建 BuffInstance
+                              │           │       ├─ 执行脚本 onApply（应用修饰符到 ModifierStack）
+                              │           │       ├─ 触发属性变更（triggerAttributeChange）
+                              │           │       └─ 通知 UI（onBuffApplied 回调）
+                              │           │
+                              │           └─ 其他类型（shield / heal / deal_damage 等）→ 对应方法
+                        9. 更新被动触发计数和冷却（仅在 hasExecuted=true 时）
 ```
 
 ---
 
-## 流程 A：modify_attribute — 直接属性修改
+#### 三、光环分发（applyPassiveSkills 之后）
 
 ```
-SkillExecutor.executeModifyAttribute(step, action, source, target)
-  │
-  ├─ modTarget = step.targetConfig?.self ? source : target
-  ├─ modifiers = step.modifiers
-  │
-  └─ [遍历 modifiers]
-       │
-       ├─ attrCode = mod.targetAttribute → ATTRIBUTE_CODE
-       ├─ attrData = modTarget.getAttrValue(attrCode)
-       │    └─ 无该属性? → continue
-       │
-       ├─ 解析 ModifierType (PERCENTAGE / ADDITIVE / MULTIPLICATIVE / FINAL)
-       ├─ 值归一化 (value < 1 的 PERCENTAGE → ×100)
-       │
-       ├─ sourceKey = `passive:runtime:${mod.id || step.buffId || 'mod'}`
-       ├─ attrData.modifiers = filter(m => m.sourceKey !== sourceKey)  // 去重
-       ├─ attrData.modifiers.push(newMod)
-       ├─ attrData.cachedVersion = -1
-       │
-       └─ [PERCENTAGE 专用 — 加成属性同步]    ← 对抗式审查修复 #3
-            ├─ ATTR_TO_BONUS_MAP:
-            │    ├─ maxHealth    → healthBonus
-            │    ├─ minAttack    → attackBonus
-            │    └─ maxAttack    → attackBonus
-            │
-            └─ 同步到对应的 bonus 属性
-                 └─ (filter 去重 + push + cachedVersion = -1)
-
-            ├─ [attack PERCENTAGE 专用]
-            │    └─ 同步到 minAttack / maxAttack
-            │         └─ (filter 去重 + push + cachedVersion = -1)
-            │
-  └─ modTarget.recalcAll()
-       └─ (被动修饰符已写入 attrData.modifiers，直接参与计算)
+[BattleSystem.distributeAuras(participants)]
+    → 遍历所有参与者
+        → 获取每个 buff 实例 ID
+            → buffSystem.getBuffAuraConfig(buffId) 读取 aura 配置
+                ├─ 若 aura.targetSelector === 'allies' 或 'enemies'
+                └─ 遍历同一方或对立方的其他参与者
+                    → 将 aura.modifiers 应用为目标参与者的属性修饰符
+                        → GameDataProcessor.applyAuraModifiersToParticipant(target, sourceKey, modifiers)
+                            → 直接 push 到 attrData.modifiers
+                            → 调用 target.recalcAll()
 ```
 
 ---
 
-## 流程 B：apply_buff — addBuff 完整流程
+#### 四、回合中触发（TurnManager → PassiveSkillManager）
 
 ```
-buffSystem.addBuff(characterId, buffId, config, currentTurn, record?)
-  │
-  ├─ 步骤 1：查找脚本
-  │    ├─ scriptRegistry.get(buffId)
-  │    │    ├─ 有 IBuffScript → 就用它
-  │    │    └─ 无脚本 → 尝试 resolve(buffId)
-  │    │         ├─ config 存在? → 用 NOOP_BUFF_SCRIPT 占位
-  │    │         └─ config 不存在? → return '' (静默跳过)
-  │    │
-  │    └─ script 确定
-  │
-  ├─ 步骤 2：合并配置（四层优先级：调用方 > 脚本 CONFIG > JSON > 默认值）
-  │    ├─ scriptDefaultConfig = 脚本的静态 CONFIG (自包含脚本)
-  │    ├─ jsonConfig = scriptRegistry.getBuffConfig(buffId) (buffs.json)
-  │    ├─ 合并顺序:
-  │    │    id / name / description / duration / maxStacks
-  │    │    stackRule / cooldown / controlType / controlPriority
-  │    │    isDebuff / isPositive / isPermanent / dispellable
-  │    │    immuneTags / iconPath / parameters / attributes
-  │    │
-  │    └─ resolvedConfig 就绪
-  │
-  ├─ 步骤 3：免疫检查
-  │    ├─ characterImmunities.get(characterId)
-  │    ├─ 控制类型免疫: controlType.toLowerCase() → 匹配免疫集?
-  │    ├─ buffId 免疫: buffId 去掉前缀后 → 匹配免疫集?
-  │    └─ 任一匹配 → return '' (不施加，静默跳过)
-  │
-  ├─ 步骤 4：叠加规则
-  │    ├─ existingBuffs = getBuffInstances(charId).filter(i.buffId === buffId)
-  │    │
-  │    ├─ StackRule.REFRESH
-  │    │    └─ existingBuffs.forEach(removeBuff)
-  │    │
-  │    ├─ StackRule.LIMITED
-  │    │    ├─ existingBuffs.length >= maxStacks
-  │    │    │    └─ refreshBuff(existing[0].id, turn) → return existing[0].id
-  │    │    └─ < maxStacks → 继续创建新实例
-  │    │
-  │    └─ StackRule.INDEPENDENT → 直接创建新实例
-  │
-  ├─ 步骤 5：创建 BuffInstance
-  │    ├─ instanceId = `${charId}_${buffId}_${turn}_${counter.next()}`
-  │    ├─ context = BuffContextPool.borrow(charId, instanceId, resolvedConfig, this)
-  │    ├─ buffInstance = {
-  │    │     id: instanceId,
-  │    │     characterId, buffId, script, context,
-  │    │     startTurn: turn,
-  │    │     duration: resolvedConfig.duration || -1,
-  │    │     remainingTurns: resolvedConfig.duration,
-  │    │     currentStacks: 1,
-  │    │     isActive: true,
-  │    │   }
-  │    └─ buffInstances.set(instanceId, buffInstance)
-  │
-  ├─ 步骤 6：执行脚本 onApply
-  │    └─ BuffErrorBoundary.wrap(() => script.onApply(context))
-  │         │
-  │         ├─ [自包含脚本 AttributeBuffTemplate 示例]
-  │         │    └─ _onApply(context):
-  │         │         ├─ getModifiers() → [{attribute, value: (ctx)=>..., type}]
-  │         │         └─ context.addModifier(attrCode, computedValue, modType)
-  │         │              └─ modifierStack.addModifier(instanceId, attr, value, type)
-  │         │
-  │         └─ [NOOP 脚本] → 空操作
-  │
-  ├─ 步骤 7：非自包含脚本 → 从 JSON 配置读取属性修饰符
-  │    ├─ applyAttributeModifiers(charId, instanceId, buffId)
-  │    │    └─ scriptRegistry.getBuffAttributes(buffId)  (如 {"attack": "+20%"})
-  │    │         └─ modifierStack.addModifier(instanceId, attr, parsedValue, parsedType)
-  │    │
-  │    └─ applyBuffImmunities(charId, buffId)
-  │         └─ buffConfig.immunities? → characterImmunities.add(tag)
-  │
-  ├─ 步骤 8：自光环修饰符 (targetSelector === 'self')
-  │    └─ applyBuffAuraModifiers(charId, instanceId, buffId)
-  │         └─ aura?.targetSelector === 'self'
-  │              └─ modifierStack.addModifier(instanceId, attr, value, type)
-  │
-  ├─ 步骤 9：触发属性变更
-  │    └─ triggerAttributeChange(characterId)
-  │         └─ onAttributeChange?.(characterId)
-  │              └─ [回调 → BattleSystem]
-  │                   └─ participant.recalculateAll()
-  │                        │
-  │                        ├─ syncModifiersFromProvider()
-  │                        │    └─ [遍历所有 ATTRIBUTE_CODE]
-  │                        │         ├─ stack = modifierProvider.getModifierStack(id)
-  │                        │         ├─ stackMods = stack.getModifiers(code)
-  │                        │         ├─ 保留: baseModifiers + passiveModifiers
-  │                        │         └─ externalModifiers = stackMods + sourceName 描述
-  │                        │              └─ attrData.modifiers = [base, ...passive, ...external]
-  │                        │
-  │                        └─ stats.recalculateAll()
-  │                             └─ (最终属性值 = 基础值 + 所有修饰符)
-  │
-  ├─ 步骤 10：UI 通知
-  │    └─ onBuffApplied?.(charId, buffId)
-  │         └─ [回调 → BattleSystem]
-  │              └─ eventBus.emit(BUFF_EFFECT, { targetId, buffName, isPositive })
-  │                   └─ → UI buff 列表更新 + 动画播放
-  │
-  └─ 步骤 11：战斗记录
-       └─ record?.effects.push({ type: 'buff', targetId, buffId, instanceId })
+[BattleSystem.processTurnInternal()]  (每回合)
+    ├─ 触发 TURN_START 事件 → [PassiveSkillManager.triggerPassiveSkillsForAll(TURN_START, ...)]
+    │   └─ 同 BATTLE_START 流程，但 trigger 为 TURN_START
+    │
+    ├─ 执行所有参与者行动（动作执行器）
+    │   ├─ 在攻击/受击等事件中，显式调用 PassiveSkillManager.triggerPassives()
+    │   │   └─ 例如：在 onHit, damageTaken, onDeath 等时机
+    │   │       → 条件检查 → 执行被动步骤
+    │
+    └─ 触发 TURN_END 事件 → [PassiveSkillManager.triggerPassiveSkillsForAll(TURN_END, ...)]
+        └─ 同上
 ```
 
 ---
 
-## 流程 C：追踪 Buff（modify_attribute 纯被动 -> buff 列表可见）
+#### 五、关键逻辑说明
+
+1. **被动注册**：
+   - 每个参与者在创建时，从其技能配置中提取被动技能列表，并通过 `registerParticipantPassives` 注册到 `PassiveSkillManager`。
+   - 若被动技能未指定 `triggerTimes`，默认补充 `['battle_start']`，确保战斗开始时生效。
+
+2. **触发时机**：
+   - 时间型触发：`BATTLE_START`（仅一次），`TURN_START`，`TURN_END`。
+   - 事件型触发：`BEFORE_ATTACK`，`ON_HIT`，`DAMAGE_TAKEN`，`HEAL_RECEIVED`，`ON_DEATH`，`ON_KILL`，`SKILL_USE`，`HP_LOWER_THAN` 等。
+   - 事件型触发由业务代码在相应位置显式调用 `triggerPassives`。
+
+3. **条件检查链**：
+   - 冷却（cooldown）→ 最大触发次数（maxUses）→ 概率（triggerProbability）→ HP阈值（hp_lower_than）→ 自定义条件表达式（condition）。
+   - 所有条件通过后才执行被动效果。
+
+4. **目标解析**：
+   - 时间型触发：根据技能配置的 `selector` 解析目标（支持 `self`/`ally`/`enemy` 及策略）。
+   - 事件型触发：优先使用事件上下文中的 `target`，否则默认为自身。
+
+5. **步骤执行**：
+   - `modify_attribute`：直接修改参与者的属性修饰符列表，并触发重新计算。
+   - `apply_buff`：调用 BuffSystem 添加 Buff，遵循完整生命周期（叠加、免疫、脚本回调等）。
+   - 其他类型（damage/heal/shield/control）：由 `SkillExecutor` 处理，与主动技能共用执行器。
+
+6. **追踪 Buff**：
+   - 对于纯 `modify_attribute` 被动（无 `apply_buff` 步骤），系统会自动创建一个只读的追踪 Buff，使其在 UI 上可见，便于玩家理解被动生效状态。
+
+7. **光环分发**：
+   - 光环型被动（如首领光环、统帅之威）通过 `aura` 字段定义，在 `distributeAuras` 阶段将修饰符批量应用到盟友/敌人身上，而非每个目标单独触发。
+
+8. **跨战斗清理**：
+   - 战斗重置时调用 `PassiveSkillManager.clearAll()`，清空所有被动注册，防止跨战斗污染。
+
+---
+
+#### 六、整体时序图（简化ASCII）
 
 ```
-PassiveSkillManager.ensureTrackingBuff(characterId, skillId, skillName)
-  │
-  ├─ skillConfig = skillManager.getSkillConfig(skillId)
-  │    └─ 无 config 或 无 steps → return
-  │
-  ├─ hasApplyBuff = steps.some(s => s.type === 'apply_buff')
-  │    └─ true → return (apply_buff 已创建 buff 实体，无需追踪)
-  │
-  ├─ buffId = `_track_passive_${skillId}`
-  │
-  ├─ buffSystem.hasBuff(characterId, buffId)
-  │    └─ true → return (已存在，避免重复)
-  │
-  └─ buffSystem.addBuff(characterId, buffId, {
-       id: buffId,
-       name: skillName,
-       duration: -1,              // 永久
-       maxStacks: 1,
-       stackRule: StackRule.REFRESH,
-       controlType: ControlType.NONE,
-       isDebuff: false,
-       isPositive: true,
-       // 无 attributes → 不产生修饰符，仅作为 UI 占位
-     }, 0)
+参与者: 系统初始化 -> PassiveSkillManager -> SkillExecutor -> BuffSystem
+---------------------------------------------------------------
+1. 注册阶段
+   系统加载角色 -> GameDataProcessor.enemyToParticipant()
+                -> registerParticipantPassives()
+                    -> PassiveSkillManager.registerPassive(characterId, config)
+
+2. 战斗开始
+   BattleSystem.initialize()
+        -> applyPassiveSkills()
+            -> PassiveSkillManager.triggerPassiveSkillsForAll(BATTLE_START)
+                -> 对每个角色: triggerPassives()
+                    -> 检查条件
+                    -> executePassiveSkill()
+                        -> SkillExecutor.executeStep()
+                            -> 若 modify_attribute: 直接改属性 + recalcAll
+                            -> 若 apply_buff: BuffSystem.addBuff()
+                                -> 脚本 onApply
+                                -> 触发属性变化
+                                -> UI 通知
+
+3. 光环分发
+   BattleSystem.distributeAuras()
+        -> 遍历所有 buff 实例
+            -> 若 aura 存在，应用 modifiers 到同队/异队成员
+
+4. 回合中触发
+   TurnManager 执行回合
+        -> 触发 TURN_START 事件 (同上流程)
+        -> 动作执行中: 显式调用 triggerPassives(ON_HIT, DAMAGE_TAKEN, etc.)
+        -> 触发 TURN_END 事件 (同上)
+
+5. 结束/重置
+   BattleSystem.resetBattle()
+        -> PassiveSkillManager.clearAll()
 ```
 
 ---
 
-## 流程 D：光环扫描分发
+#### 七、总结
+
+被动技能系统采用**注册-触发-执行**三段式设计：
+- **注册**：在角色初始化时完成，与配置解耦。
+- **触发**：由战斗系统在特定阶段（回合边界、事件点）统一调度，通过 `PassiveSkillManager` 进行条件过滤。
+- **执行**：复用主动技能的执行管道（`SkillExecutor`），保证逻辑一致性。
+
+关键特性包括：
+- 支持时间型与事件型触发。
+- 完整的条件检查（冷却、次数、概率、HP、自定义条件）。
+- 对纯属性修改被动自动生成追踪 Buff，提升 UI 可观测性。
+- 光环效果通过集中分发机制保证性能与正确性。
+- 跨战斗自动清理，避免状态污染。
+
+--- docs/migration/被动技能全流程.md ---
+# 分析
+对 首领威严 进行分析
+```
+{
+  "id": "skill_enemy_008_passive",
+  "name": "首领威严",
+  "description": "被动效果：为所有友方单位施加光环，提升15%攻击力和10%防御力",
+  "cooldown": 0,
+  "selector": {
+    "faction": "self",
+    "strategy": "first"
+  },
+  "steps": [
+    {
+      "type": "apply_buff",
+      "buffId": "aura_leader_awe"
+    }
+  ],
+  "energyCost": 0,
+  "skillType": "passive",
+  "triggerTimes": [
+    "battle_start"
+  ]
+},
+```
+
+
+---
+
+### 1. 分层设计
+- **第 1 层：被动技能的作用目标（`skill_passive.json` 中的 `selector`）**
+  ```json
+  "selector": { "faction": "self" }
+  ```
+  它的语义是：**这个被动技能只作用于施法者自己**。  
+  即：金护法发动被动，把“首领威严”这个 **Buff 施加到自己身上**。
+
+- **第 2 层：Buff 的扩散范围（`buffs.json` 中的 `aura.targetSelector`）**
+  ```json
+  "aura": { "targetSelector": "allies" }
+  ```
+  它的语义是：**这个 Buff 是一个光环**，当它挂载在某人身上时，会自动把修饰符**扩散给所有友方单位**。
+
+所以流程是：`金护法（自己）` → `获得“首领威严”光环` → `光环自动扩散给所有友方`。
+
+**结论**：`faction: "self"` 是用来“给施法者挂载光环”的，而 `targetSelector: "allies"` 才是真正实现“全友方生效”的字段。
+
+---
+
+### 2. 光环的 `cooldown` 应该怎么配置？
+
+需要区分**被动技能的冷却**和**光环本身的刷新机制**：
+
+#### (1) 被动技能的 `cooldown`（配置在 `skill_passive.json`）
+当前配置：`"cooldown": 0`
+
+- **触发时机**：`"triggerTimes": ["battle_start"]`
+- **系统默认**：`battle_start` 触发的被动，**最大触发次数默认为 1**（整场战斗只触发一次）。
+- **结论**：因为只触发一次，`cooldown` 字段在此场景下**不会被使用**。保持 `0` 即可，无论设成多少都不会影响功能（因为不会第二次触发）。
+
+#### (2) 光环（Buff）自身的持续/刷新（配置在 `buffs.json`）
+光环本身**没有 `cooldown` 字段**，它只有 `duration`（持续时间）：
+
+```json
+"duration": -1   // -1 表示永久持续，整场战斗不会消失
+```
+
+因此，这个光环的**最佳配置就是 `duration: -1`**（永久），配合 `battle_start` 触发一次，覆盖整场战斗。不需要任何“冷却”或“刷新”机制。
+
+---
+
+### 总结
+
+| 层级 | 配置位置 | 当前值 | 正确性 | 说明 |
+|------|---------|--------|--------|------|
+| 被动技能目标 | `skill_passive.json` → `selector` | `self` | ✅ 正确 | 给自己挂载光环 Buff |
+| 光环扩散范围 | `buffs.json` → `aura.targetSelector` | `allies` | ✅ 正确 | 让光环影响所有友方 |
+| 被动冷却 | `skill_passive.json` → `cooldown` | `0` | ✅ 无影响 | `battle_start` 只触发一次，冷却字段不生效 |
+| 光环持续 | `buffs.json` → `duration` | `-1` | ✅ 最佳实践 | 永久光环，无需刷新 |
+
+您唯一可以做的“规范化”调整是：删除 `selector` 中多余的 `"strategy": "first"`（因为 `faction: "self"` 时该字段被忽略）。其他配置（包括 `cooldown`）在功能上都是正确的。
+
+--- docs/不同版本回合制游戏的日志风格范例.md ---
+不同版本回合制游戏的日志风格范例
+---
+
+## 版本A：《暗黑地牢》叙事风格（Darkest Dungeon）
+> **特点**：沉浸式叙事、强调情绪与状态、压抑氛围、每次行动都有“代价感”
 
 ```
-BattleSystem.distributeAuras(participants)
-  │
-  └─ [遍历每个参与者]
-       │
-       └─ [遍历其所有 buff 实例 ID]
-            │
-            └─ buffSystem.getBuffConfigByInstanceId(instanceId)
-                 │
-                 ├─ 返回 BuffConfig | null
-                 │
-                 └─ buffSystem.getBuffAuraConfig(buffConfig.id)
-                      │
-                      ├─ 从 BuffScriptRegistry 读取 BuffConfigData.aura
-                      │
-                      ├─ 无 aura → continue
-                      │
-                      └─ 有 aura.targetSelector
-                           ├─ 'allies' → 同队目标
-                           └─ 'enemies' → 异队目标
-                                │
-                                └─ GameDataProcessor.applyAuraModifiersToParticipant(
-                                       target, sourceKey = `passive:${buffConfig.id}`, modifiers)
-                                     │
-                                     └─ [遍历每个 modifier]
-                                          ├─ pushModifier → attrData.modifiers
-                                          ├─ cachedVersion = -1
-                                          └─ target.recalcAll()
+═══════════════════════════════════════════════════════
+  ～ 回合 1 ～
+═══════════════════════════════════════════════════════
+
+【剑士】的呼吸沉重，剑刃反射着浑浊的光芒…
+  他挥剑斩向【史莱姆】！
+   ⚔️ 命中！剑刃切入粘稠的躯体…
+   💥 造成 104 点伤害！史莱姆发出咕噜咕噜的惨叫
+   💢 剑士的眼中燃起怒火——【复仇怒火】被唤醒！
+      攻击力 +5%（当前层数：1）
+  
+【史莱姆】在粘液中抽搐，随即疯狂反扑！
+   🫧 粘液飞溅，命中剑士！
+   🩸 造成 45 点伤害！剑士的铠甲被腐蚀…
+   😤 剑士咬紧牙关，承受住了这一击
+
+═══════════════════════════════════════════════════════
+  ～ 回合 2 ～
+═══════════════════════════════════════════════════════
+
+【牧师】双手合十，低吟古老的祷文…
+   ✨ 圣光笼罩剑士！【治愈术】发动！
+   💚 恢复 180 点生命！剑士的伤口快速愈合
+   🙏 牧师目光坚定：“尚有喘息之机”
+
+【剑士】重新握紧剑柄，怒火在血脉中奔涌…
+   🔥 借助【复仇怒火】之力，再次斩向史莱姆！
+   ⚔️ 蓄力一击！造成 110 点伤害！
+   💢 怒火延续…（当前层数：2，攻击力 +10%）
+
+【史莱姆】濒临崩溃，最后一搏！
+   🫧 毒液喷射！剑士被命中！
+   🩸 造成 52 点伤害！
+   🌿 毒液侵蚀… 剑士速度 -10%（持续2回合）
+
+═══════════════════════════════════════════════════════
+  ～ 战斗结束 ～
+═══════════════════════════════════════════════════════
+🏆 胜利！史莱姆化为粘液，流入地缝…
+📊 战损：剑士（HP 283/500）、牧师（HP 600/600）
+📈 被动触发：2 次 | 总伤害：214 | 总治疗：180
 ```
 
 ---
 
-## 阶段三：每回合更新
+## 版本B：《杀戮尖塔》极简数据风格（Slay the Spire）
+> **特点**：极简、数据化、符号化、一目了然、适合快速浏览
 
 ```
-BattleSystem.executeRound()
-  │
-  └─ [遍历每个存活参与者]
-       │
-       └─ buffSystem.updatePerTurn(characterId)
-            │
-            └─ [遍历该角色所有 buffInstance]
-                 │
-                 ├─ script.onUpdate(context, 0)    ← 脚本每回合逻辑
-                 │    ├─ [毒伤] → 扣除剩余回合 * 每回合伤害
-                 │    ├─ [回血] → 每回合恢复 maxHealth * 百分比
-                 │    └─ [自定义] → buff 脚本定义的 onUpdate
-                 │
-                 ├─ duration === -1?
-                 │    └─ true → 跳过到期检查 (永久 buff)
-                 │
-                 ├─ remainingTurns--
-                 │
-                 └─ remainingTurns <= 0?
-                      └─ removeBuff(instanceId)    ← 到期自动移除
-```
+T1 ───────────────────────────────────────────────
+  [⚔️ 剑士] → [🟢 史莱姆]：攻击 104 (白字)
+  ⚡ [复仇怒火] 触发！攻击力 +5% (1/5)
+  💢 [🟢 史莱姆] → [⚔️ 剑士]：反击 45
 
----
+T2 ───────────────────────────────────────────────
+  [💚 牧师] → [⚔️ 剑士]：治疗 180 (溢出 0)
+  [⚔️ 剑士] → [🟢 史莱姆]：攻击 110 (暴击✧)
+  ⚡ [复仇怒火] 层数 1→2 (攻击力 +10%)
 
-## 阶段四：移除 Buff
+T3 ───────────────────────────────────────────────
+  [🟢 史莱姆] → [⚔️ 剑士]：攻击 52
+  ⚠️ 剑士 速度 -10% (中毒 2R)
+  🛡️ 剑士 触发 [荆棘反刺]！反弹 10 伤害
 
-```
-buffSystem.removeBuff(instanceId)
-  │
-  ├─ 1. 查找实例
-  │    ├─ instance = buffInstances.get(instanceId)
-  │    └─ 不存在或 !isActive → return false
-  │
-  ├─ 2. 执行脚本 onRemove
-  │    └─ BuffErrorBoundary.wrap(() => script.onRemove(context))
-  │         │
-  │         ├─ [BaseBuffScript.onRemove] → context.removeModifiers()
-  │         │    └─ modifierStack.removeModifier(instanceId)
-  │         │         └─ [遍历所有属性] 移除 sourceKey === instanceId 的修饰符
-  │         │
-  │         ├─ [AttributeBuffTemplate.onRemove]
-  │         │    └─ 对每个 modifier → context.removeModifiers(attrCode)
-  │         │         └─ modifierStack.removeModifier(instanceId, attrCode)
-  │         │
-  │         └─ [自包含脚本 onRemove] → 同 base 逻辑
-  │
-  ├─ 3. 清理实例状态
-  │    ├─ instance.isActive = false
-  │    └─ buffInstances.delete(instanceId)
-  │
-  ├─ 4. 保险清理 — modifierStack.removeModifier(instanceId)
-  │    └─ (即使 onRemove 漏了某个属性，这里全量清理)
-  │
-  ├─ 5. BuffContextPool.return(context)
-  │    └─ (归还上下文对象到对象池复用)
-  │
-  └─ 6. triggerAttributeChange(characterId)
-       └─ → recalculateAll()
-            ├─ syncModifiersFromProvider() ← ModifierStack 已无该 instanceId 的修饰符
-            └─ (属性值恢复为移除 buff 前的值)
+═══════════════════════════════════════════════════════
+  R3 战况汇总
+═══════════════════════════════════════════════════════
+  我方  HP ████████░░ 78%
+  敌方  HP ██░░░░░░░░ 23%
+  被动触发  |  总伤害 214  |  总治疗 180
+  ──────────────────────────────────────────────
+  剑士 攻击 105(+10) | 防御 48 | 速度 90(中毒-10)
+  牧师 攻击 40 | 防御 30 | 速度 60
 ```
 
 ---
 
-## 修饰符同步机制详解
+## 版本C：《女神异闻录5》华丽漫画风格（Persona 5）
+> **特点**：华丽、爆裂、日式感叹词、强调弱点/暴击/连击、视觉冲击力强
 
 ```
-syncModifiersFromProvider()    ← 每次 recalculateAll 前调用
-  │
-  ├─ modifierProvider = this.buffSystem (IModifierProvider)
-  ├─ stack = modifierProvider.getModifierStack(this.id)
-  │
-  └─ [遍历所有 ATTRIBUTE_CODE]
-       │
-       ├─ stackMods = stack.getModifiers(code)
-       │    └─ 从 ModifierStack 读取 (sourceKey = buffInstanceId)
-       │
-       ├─ 保留的修饰符:
-       │    ├─ baseModifier: sourceKey === 'base'
-       │    └─ passiveModifiers: sourceKey 以 'passive:' 开头
-       │         ├─ 来自 executeModifyAttribute 的 'passive:runtime:...'
-       │         └─ 来自 distributeAuras 的 'passive:{buffId}'
-       │
-       ├─ externalModifiers = stackMods.map(m => ({
-       │    ...m,
-       │    sourceType: provider.getSourceType(m.sourceKey),  ← 'buff'
-       │    description: `来自: ${provider.getSourceName(m.sourceKey)}`,
-       │  }))
-       │
-       └─ attrData.modifiers = [baseModifier, ...passiveModifiers, ...externalModifiers]
-            └─ cachedVersion = stats.currentVersion - 1
-```
+.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+    ╔══════════════════════════════════════════════╗
+    ║  🔥 BATTLE START ！ 🔥                       ║
+    ║  剑士 VS 史莱姆                             ║
+    ╚══════════════════════════════════════════════╝
+.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
 
-### 两条修饰符路径的共存规则
+【 1st TURN 】
+⚔️ 剑士：斩击！
+　＞ 史莱姆に 104 ダメージ！
+　「まだだ… まだ終わらんよ！」
+🔥 复仇怒火　覚醒！
+　＞ 攻击力 +5%！ 　「行ける…！」
 
-| 来源 | sourceKey 格式 | 存储位置 | 在 syncModifiersFromProvider 中的处理 |
-|:----|:--------------|:---------|:-------------------------------------|
-| **被动 modify_attribute** | `passive:runtime:{modId}` | `attrData.modifiers` | 匹配 `passive:` 前缀 → 保留 |
-| **光环分发** | `passive:{buffId}` | `attrData.modifiers` | 匹配 `passive:` 前缀 → 保留 |
-| **BuffSystem 脚本/JSON** | `{instanceId}` (如 `char_buffX_1_42`) | `ModifierStack` → `syncModifiersFromProvider` 合并 | 每次全部刷新，无保留条件 |
+💢 史莱姆：反撃！
+　＞ 剑士に 45 ダメージ
+　「チッ… この程度か」
 
----
+.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
 
-## 两条修饰符路径完整对比
+【 2nd TURN 】
+💚 牧师：ヒール！
+　＞ 剑士 180 回復！　「まだ倒れるわけには！」
+　剑士 HP 完全回復！
 
-| 特征 | ModifierStack 路径 (BuffSystem) | 直接 pushModifier 路径 |
-|:----|:-------------------------------:|:----------------------:|
-| 入口 | `addBuff` → `applyAttributeModifiers` 或脚本 `onApply` | `SkillExecutor.executeModifyAttribute` 或 `distributeAuras` |
-| 存储位置 | `ModifierStack.modifiers[attr][]` | `BattleParticipantImpl.stats.attrs[].modifiers` |
-| 生命周期 | 绑定 `BuffInstance`，`removeBuff` 时自动清理 | 需主动 `filter(sourceKey)` 去重 |
-| 同步方式 | `triggerAttributeChange` → `syncModifiersFromProvider` 合并 | 直接 `recalcAll()` |
-| sourceKey | `instanceId` (如 `char_buffX_1_42`) | `'passive:runtime:{modId}'` 或 `'passive:{buffId}'` |
-| 保留规则 | 每次 sync 全部刷新(无状态) | `syncModifiersFromProvider` 保留 `passive:` 前缀 |
-| buff 列表可见 | ✅ 有 BuffInstance | ❌ 仅属性值变化(除非追踪 buff 占位) |
-| 可驱散 | ✅ removeBuff 即可 | ❌ 需手动清理 |
-| 加成属性同步 | ✅ (脚本自行 addModifier) | ✅ (修复后: BONUS_MAP + minAttack/maxAttack) |
+⚡ 剑士：バーストアタック！
+　＞ 史莱姆に 110 ダメージ！　　（WEAK POINT!）
+　复仇怒火 レベルアップ！ 2/5
+　攻击力 +10%！
 
----
+.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
 
-## 跨战斗清理
+【 3rd TURN 】
+☠️ 史莱姆：毒液スプラッシュ！
+　＞ 剑士に 52 ダメージ＆スピードダウン！
+　「この毒… 効いてるぞ！」
 
-```
-BattleSystem.resetBattle()
-  │
-  ├─ passiveSkillManager.clearAll()
-  │    └─ 清空所有被动注册条目，防止跨战斗 ID 重复触发
-  │
-  └─ lifecycleManager.resetBattle()
-       ├─ buffSystem.clearAllBuffs(characterId)    ← 遍历参与者
-       │    └─ removeBuff() → [进入阶段四]          ← 全部实例清除
-       ├─ 重置血量/能量
-       └─ battleRecorder.clearRecording()
+🔄 剑士：反击の構え！
+　＞ 荆棘反刺発動！ 10 ダメージ反射！
+
+.  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .
+
+🏆 FIGHT FINISHED ！
+　WINNER ▶▶▶ 剑士 & 牧师
+　総与ダメージ：214 | 総回復：180
 ```
 
 ---
 
-## 整体数据流
+## 版本D：《火焰纹章》战术风格（Fire Emblem）
+> **特点**：战棋战术感、清晰显示命中率/暴击率、预测伤害范围、强调“追击/反击”
 
 ```
-JSON 配置
-  │
-  ├─ skill_passive.json ──→ GameDataProcessor.registerParticipantPassives()
-  │                              │
-  │                              └─ PassiveSkillManager (triggerTimes 映射)
-  │                                    │
-  │                                    └─ BattleSystem.applyPassiveSkills()
-  │                                          │
-  │                                          └─ BATTLE_START
-  │                                                │
-  │                                                ├─ modify_attribute
-  │                                                │    └─ SkillExecutor.executeModifyAttribute
-  │                                                │         ├─ pushModifier → attrData.modifiers
-  │                                                │         ├─ BONUS_MAP 同步
-  │                                                │         └─ recalcAll()
-  │                                                │
-  │                                                ├─ apply_buff
-  │                                                │    └─ SkillExecutor.executeApplyBuff
-  │                                                │         └─ buffSystem.addBuff()  [流程 B]
-  │                                                │
-  │                                                └─ (追踪 buff)  [流程 C]
-  │
-  ├─ buffs.json ──→ BuffScriptRegistry
-  │                     │
-  │                     └─ buffSystem.addBuff() 时读取
-  │                          ├─ getDefaultConfig(buffId)  ← 脚本 CONFIG
-  │                          ├─ getBuffConfig(buffId)     ← JSON 配置
-  │                          ├─ getBuffAttributes(buffId) ← JSON attributes
-  │                          └─ getBuffAuraConfig(buffId) ← JSON aura
-  │
-  └─ GuardianBuffs.ts ──→ BuffScriptRegistry.register()
-                              └─ 自包含脚本，BUFF_ID 注册 + 静态 CONFIG
+─────────────────────────────────────────────────────────
+  [第 1 回合]  行动阶段
+─────────────────────────────────────────────────────────
+  ▶ 剑士 (HP 500/500)
+    攻击 史莱姆 (HP 500/500)
+    命中率: 95%  |  暴击率: 20%  |  伤害: 100-108
+    ──────────────
+    命中判定: 75 < 95  →  命中 ✅
+    暴击判定: 63 > 20  →  普通攻击
+    💥 造成 104 点伤害！
+    史莱姆 HP：500 → 396
+
+  ⚡【复仇怒火】触发！剑士 攻击力 +5% (当前: 1 层)
+    状态持续到战斗结束.
+
+  ◀ 史莱姆 反击！
+    命中率: 80%  |  伤害: 40-48
+    💥 造成 45 点伤害！
+    剑士 HP：500 → 455
+
+─────────────────────────────────────────────────────────
+  [第 2 回合]  行动阶段
+─────────────────────────────────────────────────────────
+  ▶ 牧师 (HP 600/600)
+    对 剑士 施放 [治愈术]
+    治疗量: 180  (剑士 HP: 455 → 500) [已满]
+
+  ▶ 剑士 (HP 500/500)  攻击力: 100 → 110 (+10%)
+    攻击 史莱姆 (HP 396)
+    命中率: 95%  |  暴击率: 20%  |  伤害: 108-115
+    ──────────────
+    命中判定: 42 < 95  →  命中 ✅
+    暴击判定: 8 < 20   →  暴击！💥
+    💥 造成 110 点伤害！（暴击加成）
+    史莱姆 HP：396 → 286
+
+  ⚡【复仇怒火】层数上升！2/5  (攻击力 +10%)
+
+─────────────────────────────────────────────────────────
+  战况报告
+─────────────────────────────────────────────────────────
+  我方  剑士 500/500  |  牧师 600/600
+  敌方  史莱姆 286/500
+  优势：攻击力 110 (+10%)  |  被动：2 层
 ```
 
 ---
 
-## 修复清单（对抗式审查产出）
+## 版本E：《神界：原罪2》元素互动风格（Divinity: Original Sin 2）
+> **特点**：强调元素环境、状态效果联动、地面效果、元素抗性变化
 
-| 修复点 | 所在文件 | 行/方法 | 说明 |
-|:------|:---------|:-------|:------|
-| `actualTarget = target ?? entity` | `PassiveSkillManager.ts` | `triggerPassives` | BATTLE_START target undefined 导致被动静默跳过 |
-| `ensureTrackingBuff` | `PassiveSkillManager.ts` | 新增方法 | 纯 modify_attribute 被动自动创建追踪 buff 使其可见 |
-| ATTR_TO_BONUS_MAP 同步 | `SkillExecutor.ts` | `executeModifyAttribute` | PERCENTAGE 修饰符同步到 healthBonus/attackBonus 等 |
-| attack% → minAttack/maxAttack | `SkillExecutor.ts` | `executeModifyAttribute` | attack PERCENTAGE 同步到分裂属性 |
-| `clearAll()` 调用 | `BattleSystem.ts` | `resetBattle` | 清除跨战斗被动注册污染 |
-| turnOrder 后移 | `BattleSystem.ts` | `initialize` | turnOrder 在 applyPassiveSkills 之后创建，确保速度加成正确 |
-| `distributeAuras` | `BattleSystem.ts` | 新增方法 | 替代旧 pendingAuras 两遍扫描，扫描所有参与者身上的光环 buff |
-| `applyBuffImmunities` | `BuffSystem.ts` | `addBuff` 流程 | 已在之前迁移中实现：从 JSON immunities 字段写入 characterImmunities |
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🎯 回合 1  |  战场：普通地面
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚔️ 剑士 [物理] → 史莱姆
+  ↳ 斩击！造成 104 点物理伤害
+  ↳ 【复仇怒火】 觉醒！
+     ▶ 剑士 获得 物理攻击 +5% (永久)
+     ▶ 当前：攻击力 100 → 105
+
+🟢 史莱姆 [物理+毒素] → 剑士
+  ↳ 粘液撞击！造成 45 点物理伤害
+  ↳ 地面受污染！(毒地表 3m)
+  ↳ 剑士 进入 [毒素地面] 范围
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🎯 回合 2  |  战场：毒地表（剑士脚下）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💚 牧师 [神圣] → 剑士
+  ↳ 治愈术！恢复 180 点生命
+  ↳ 净化地面！毒地表 已清除
+  ↳ 剑士 获得 [圣光祝福] (回复+20%，3回合)
+
+⚔️ 剑士 [物理] → 史莱姆
+  ↳ 蓄力斩！造成 110 点物理伤害 (暴击!)
+  ↳ 复仇怒火 层数: 1→2 (攻击力 +10%)
+  ↳ 当前攻击力: 105 → 115
+
+🟢 史莱姆 [毒素] → 剑士
+  ↳ 毒液喷射！造成 52 点毒素伤害
+  ↳ 剑士 获得 [中毒] (2回合) — 速度 -10%
+  ↳ 毒抗性 0% → 受到完整伤害
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📊 战后状态：
+  ▶ 剑士：HP 433/500 | 攻击 115 (+15%) | 速度 -10%(中毒)
+  ▶ 牧师：HP 600/600 | 祝福 剩余2回合
+  ▶ 史莱姆：HP 286/500 | 中毒 剩余2回合
+  🏷️ 被动触发: 2次 | 元素互动: 毒地表→净化
+```
+
+---
+
+## 版本F：技术调试风格（开发者专用）
+> **特点**：极详细、包含堆叠信息、触发条件、计算过程、专为Bug排查设计
+
+```
+[12:00:01.234][F:0023][TRACE] TURN_START | Round=1 | Participants=3 | BattleID=b_001
+
+[12:00:01.456][F:0045][INFO] ACTION_EXECUTE | Actor=剑士 | Type=ATTACK | Target=史莱姆
+[12:00:01.467][F:0048][TRACE] DMG_CALC_START | Source=剑士 | Target=史莱姆 | ConfigVersion=1.2
+  ├─ BaseAttack: 100.0 (min=80, max=120, roll=100)
+  ├─ AttackModifiers: 
+  │   └─ [active] 无
+  ├─ Defense: 15.0 
+  ├─ DefenseReduction: 15/(15+100) = 0.1304 → 减免 13.04%
+  ├─ CritChance: 20% | Roll=63 → FALSE
+  ├─ DamageBeforeReduction: 100.0
+  ├─ DamageAfterReduction: 100.0 * (1-0.1304) = 86.96 → 87.0 (取整)
+  ├─ FinalDamage: 87.0 (最小1, 最大9999)
+  └─ [RESULT] 最终伤害: 87 (原始: 104, 减免: 17)
+
+[12:00:01.512][F:0052][INFO] PASSIVE_ATTEMPT | passive=guardian_revenge_rage | owner=剑士 | phase=ON_DAMAGE_TAKEN
+  ├─ Conditions:
+  │   ├─ IsOnHit: true (由 DAMAGE_TAKEN 触发)
+  │   ├─ Cooldown: 0 (pass) 
+  │   ├─ Probability: 1.0 (pass)
+  │   ├─ MaxUses: 5 (current=0, pass)
+  │   └─ HP_Threshold: 无限制
+  ├─ [RESULT] 触发成功!
+  ├─ BUFF_APPLIED | instance=buff_12345 | buffId=guardian_buff_revenge_rage | stacks=1 | duration=-1
+  ├─ MODIFIER_APPLIED | attribute=attack | type=PERCENTAGE | value=5.0 | total=5.0%
+  └─ ATTRIBUTE_CHANGED | target=剑士 | attr=attack | 100.0 → 105.0 | delta=+5.0
+
+[12:00:01.589][F:0067][INFO] PASSIVE_TRIGGERED | passive=guardian_revenge_rage | triggerCount=1 | owner=剑士
+
+[12:00:01.678][F:0082][TRACE] TURN_END | Round=1 | Duration=445ms | Actions=3 | Passives=1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  战斗摘要 (JSON)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{
+  "battleId": "b_001",
+  "totalRounds": 3,
+  "actions": [
+    { "round":1, "type":"attack", "source":"剑士", "target":"史莱姆", "damage":104, "crit":false },
+    { "round":1, "type":"counter", "source":"史莱姆", "target":"剑士", "damage":45, "crit":false },
+    { "round":2, "type":"heal", "source":"牧师", "target":"剑士", "heal":180, "overheal":0 },
+    { "round":2, "type":"attack", "source":"剑士", "target":"史莱姆", "damage":110, "crit":true },
+    { "round":3, "type":"attack", "source":"史莱姆", "target":"剑士", "damage":52, "crit":false }
+  ],
+  "passives": [
+    { "id":"guardian_revenge_rage", "owner":"剑士", "triggered":2, "maxStacks":2 }
+  ],
+  "finalState": {
+    "剑士": { "hp":433, "maxHp":500, "attack":115, "buffs":["复仇怒火(2层)","中毒(1回合)"] },
+    "牧师": { "hp":600, "maxHp":600, "buffs":[] },
+    "史莱姆": { "hp":286, "maxHp":500, "buffs":[] }
+  }
+}
+```
+
+---
+
+## 版本对比总结
+
+| 风格 | 适用场景 | 优点 | 缺点 |
+|------|----------|------|------|
+| **暗黑地牢**（叙事） | 游戏内战斗日志/沉浸式玩家 | 氛围强、代入感好 | 信息密度低、不适合调试 |
+| **杀戮尖塔**（极简） | 快速战斗/卡牌游戏 | 清晰高效、一目了然 | 缺乏情感色彩 |
+| **女神异闻录**（华丽） | 日式RPG/视觉冲击 | 酷炫、有节奏感 | 开发成本高 |
+| **火焰纹章**（战术） | 战棋/策略游戏 | 信息完整、概率清晰 | 略显枯燥 |
+| **神界：原罪2**（元素） | 元素互动/状态联动 | 元素反馈强、策略感 | 依赖环境系统 |
+| **技术调试**（开发者） | 调试/QA/性能分析 | 最详细、可导出JSON | 不适合普通玩家 |
+
+---
+
+## 推荐落地组合方案
+
+**对于你的项目，我建议采用“双轨制”：**
+
+1. **玩家日志（INFO级）** → 采用 **《杀戮尖塔》极简风格 + 火焰纹章战术信息**
+   - 清晰显示伤害数字、Buff变化、被动触发
+   - 颜色符号化，便于快速阅读
+
+2. **开发者日志（DEBUG/TRACE级）** → 采用 **技术调试风格**
+   - 包含完整的伤害计算链路
+   - 可导出JSON用于自动化测试
+
+这样既保证了玩家体验的清爽，又为开发者提供了排错的完整信息，一举两得。
+
+
+还有其他方案么
+
+
+当然有！世界上的回合制游戏浩如烟海，它们的日志风格也千差万别。除了上一轮提到的 6 种，我再给你 **5 种完全不同流派** 的实战日志范例。
+
+这些风格适用于不同类型的游戏场景，从“极简移动端”到“硬核策略”，再到“AI 叙事”，覆盖面非常广。
+
+---
+
+## 版本G：《宝可梦》/《勇者斗恶龙》亲切风格（Pokémon / DQ）
+> **特点**：亲切、教科书般的流程化叙事、强调“谁对谁做了什么”、易于理解、全年龄向
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  第 1 回合
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+剑士 的 普通攻击！
+  对 史莱姆 造成 104 点伤害！
+  史莱姆 的 HP 下降了！
+
+【复仇怒火】发动了！
+  剑士 的 攻击 提升了 5%！
+  现在的 攻击 是 105 点！
+
+史莱姆 的 反击！
+  对 剑士 造成 45 点伤害！
+  剑士 的 HP 下降了！
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  第 2 回合
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+牧师 的 治愈术！
+  剑士 的 HP 恢复了 180 点！
+  剑士 的 HP 全满了！
+
+剑士 的 普通攻击！
+  对 史莱姆 造成 110 点伤害！
+  效果拔群！一击必杀！
+
+【复仇怒火】层数上升！
+  攻击力 再提升 5%！(累计 2 层)
+  现在的 攻击 是 115 点！
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🎉 战斗胜利！
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  剑士 和 牧师 获得了胜利！
+  获得经验值：120 点！
+```
+
+---
+
+## 版本H：《博德之门3》CRPG 战斗日志风格（Baldur's Gate 3）
+> **特点**：结构化极强、多窗口分离、可展开计算详情、颜色编码、适合硬核策略玩家
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📜 战斗日志 [筛选: 全部]  [导出JSON]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✦ 回合 1 开始 ✦
+  ──────────────────────────────────────────────────────────
+  ▶ [攻击掷骰] 剑士 (近战) → 史莱姆
+     ├─ 攻击检定：d20 (12) + 熟练加值(4) + 力量(3) = 19
+     ├─ 敌方护甲等级：15
+     ├─ ✅ 命中！
+     ├─ 伤害掷骰：2d6(4+3) + 力量(3) + 武器附魔(1) = 11
+     ├─ 🛡️ 史莱姆 物理抗性：减免 2 (钝击易伤)
+     └─ 💥 最终伤害：11 (原始) → 9 (实际)
+
+  ▶ [反应] 复仇怒火 (剑士)
+     ├─ 触发条件：受击时
+     ├─ ❌ 未触发（条件不满足：未受击）
+
+  ◀ 史莱姆 回合
+  ──────────────────────────────────────────────────────────
+  ▶ [攻击掷骰] 史莱姆 (接触) → 剑士
+     ├─ 攻击检定：d20 (8) + 敏捷(1) = 9
+     ├─ 敌方护甲等级：18 (板甲)
+     └─ ❌ 未命中！
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🔍 点击展开详情：剑士 伤害计算 (104 点)
+─────────────────────────────────────────────────────────
+  [基础攻击] 100 (MIN=80, MAX=120, 波动值=20)
+  [加成] 无
+  [暴击] 5% → 掷骰 83 (未暴击)
+  [防御减免] 15 / (15+100) = 13.04%
+  [实际伤害] 120 * (1 - 0.1304) = 104.35 → 104
+─────────────────────────────────────────────────────────
+```
+
+---
+
+## 版本I：《魔兽世界》/MMO 战斗统计风格（World of Warcraft）
+> **特点**：顶部是实时统计仪表盘（DPS/HPS/触发率），底部是原始事件流，侧重数据监控而非叙事
+
+```
+╔═══════════════════════════════════════════════════════════╗
+║  📊 实时战斗统计 (R1)                                    ║
+╠═══════════════════════════════════════════════════════════╣
+║  [我方] 总DPS: 214  |  总HPS: 180  |  被动触发: 2 次    ║
+║  ──────────────────────────────────────────────────────── ║
+║  剑士  │  DPS 104  │  攻击 100→105 (+5%) │  Buff: 复仇怒火(1) 
+║  牧师  │  HPS 180  │  治疗量 180         │  Buff: 无
+║  史莱姆│  DPS 45   │  攻击 30            │  Buff: 无
+╚═══════════════════════════════════════════════════════════╝
+
+[12:00:01] [剑士] [近战] 对 [史莱姆] 造成 104 点伤害 (白字)
+[12:00:01] [剑士] 触发 [复仇怒火] ！ 攻击力 +5% (当前层数: 1)
+[12:00:02] [史莱姆] [物理] 对 [剑士] 造成 45 点伤害 (白字)
+[12:00:05] [牧师] [神圣] 对 [剑士] 造成 180 点治疗 (过量: 0)
+[12:00:06] [剑士] [近战] 对 [史莱姆] 造成 110 点伤害 (暴击!)
+[12:00:06] [剑士] [复仇怒火] 层数更新: 1 → 2 (攻击力 +10%)
+[12:00:08] [史莱姆] [毒素] 对 [剑士] 造成 52 点伤害 (DOT)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  战斗结束统计
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🏆 胜利者：我方
+  📈 总伤害：214  |  总治疗：180  |  战斗时长：8.0s
+  🔥 最高单次伤害：110 (剑士·暴击)
+  💚 最高单次治疗：180 (牧师)
+  ⚡ 被动触发率：100% (2/2)
+```
+
+---
+
+## 版本J：《XCOM》/《陷阵之志》风险概率风格（XCOM / Into the Breach）
+> **特点**：疯狂强调“概率”和“风险”，每个行动前都显示命中率，未命中时会有强烈的挫败感反馈，适合策略游戏
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  行动阶段：剑士
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🎯 目标：史莱姆 (距离 1 格)
+  📊 命中率：95%  (基础85% + 近战加成10%)
+  💢 暴击率：20% (基础15% + 武器5%)
+
+  [掷骰] 攻击判定：d100 = 63 (<=95) → ✅ 命中！
+  [掷骰] 暴击判定：d100 = 72 (>20) → ❌ 普通攻击
+  💥 伤害：104 点
+
+  🔥 被动判定：【复仇怒火】概率 100% → ✅ 触发！
+    攻击力 +5% (当前: 1层)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  敌方行动：史莱姆
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🎯 目标：剑士
+  📊 命中率：80% (基础70% + 近身+10%)
+
+  [掷骰] 攻击判定：d100 = 91 (>80) → ❌ 未命中！(擦身而过)
+  
+  💡 提示：史莱姆 的攻击被 剑士 的敏捷闪避了！
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📋 回合风险报告
+  ──────────────────────────────────────────────────────
+  我方：剑士 攻击成功率 100% (1/1)
+  敌方：史莱姆 攻击成功率 0% (0/1)
+  风险收益比：🔒 稳定 (未承受反击风险)
+```
+
+---
+
+## 版本K：《异度神剑》/ 战斗连携风格（Xenoblade Chronicles）
+> **特点**：强调“连击数”、“仇恨值”、“破防/倒地/眩晕”机制，战斗节奏感强，有打断和持续伤害的飘字感
+
+```
+┌──────────────────────────────────────────────────────┐
+│  ⚔️ 剑士 ARTS 激活！                                 │
+│  ──────────────────────────────────────────────────  │
+│  ▶ 连击数: 2  (破防 → 倒地)                         │
+│  ▶ 仇恨值: 剑士 80%  (坦克)  |  牧师 20%  (治疗)    │
+│  ▶ 普通攻击 104 伤害！                              │
+│  ──────────────────────────────────────────────────  │
+│  ✦ 复仇怒火 发动！                                  │
+│     破防状态延长! 攻击力 +5% (1 层)                 │
+│  ✦ 史莱姆 仇恨值转移 → 剑士 (120%)                 │
+└──────────────────────────────────────────────────────┘
+
+  ┌─ 敌方回合 ───────────────────────────────────────┐
+  │  💢 史莱姆 愤怒反击！                             │
+  │  ▶ 仇恨目标：剑士                                │
+  │  ▶ 造成 45 伤害！                                │
+  │  ▶ 剑士 仇恨值 130% (稳如泰山)                  │
+  └──────────────────────────────────────────────────┘
+
+  ╔═══════════════════════════════════════════════╗
+  ║  🔗 连携日志 (Chain Attack Log)              ║
+  ╠═══════════════════════════════════════════════╣
+  ║  牧师 发动 [治愈术]  连携值 +15%            ║
+  ║  剑士 发动 [复仇怒火] 连携值 +10%           ║
+  ║  💥 爆发状态！下次攻击 伤害 x1.5！          ║
+  ╚═══════════════════════════════════════════════╝
+```
+
+---
+
+## 版本L：智能摘要 / AI 叙事风格（Auto-Generated Summary）
+> **特点**：不是逐条列出所有事件，而是每 3-5 个回合生成一段自然语言摘要，适合自动战斗或战报系统
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ⏳ 战报摘要 (第 1~3 回合)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  战斗开始后，剑士对史莱姆发起了猛攻。第一次斩击造成了 104 点
+  伤害，并触发了【复仇怒火】，攻击力提升 5%。
+
+  史莱姆试图反击，造成 45 点伤害，但剑士并未退缩。第二回合，
+  牧师迅速施放【治愈术】将剑士的血量回满，剑士随即以一记暴击
+  (110 伤害) 将史莱姆打至残血，【复仇怒火】叠加至 2 层。
+
+  史莱姆在第三回合释放毒液，剑士中毒减速，但大局已定。
+
+  ──────────────────────────────────────────────────────
+  📊 数据摘要：
+  ▶ 剑士 承担伤害 97，输出 214，触发被动 2 次
+  ▶ 牧师 总治疗 180，能量消耗 20
+  ▶ 史莱姆 剩余 HP 286/500 (濒死)
+```
+
+---
+
+## 总结：如何选择最适合你的方案？
+
+| 风格 | 最佳适用场景 | 开发成本 | 玩家友好度 | 调试友好度 |
+|------|------------|---------|-----------|-----------|
+| **G 宝可梦** | 儿童/全年龄手游 | 低 | ⭐⭐⭐⭐⭐ | ⭐⭐ |
+| **H CRPG** | 硬核策略/PC端 | 高 | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **I MMO统计** | 数值驱动/电竞 | 中高 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| **J XCOM风险** | 肉鸽/策略战棋 | 中 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **K 异度神剑** | 动作回合/日式ARPG | 高 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
+| **L AI摘要** | 自动战斗/挂机 | 极高 | ⭐⭐⭐⭐⭐ | ⭐ |
+
+---
+
+## 我的最终推荐（针对你的项目现状）
+
+考虑到你的项目**目前处于调试和修复阶段**（被动/ Buff 系统大量问题待排查），我强烈建议你采用 **“三明治架构”**：
+
+1. **底层（技术日志）**：参照 **版本F（技术调试）** + **版本H（CRPG）**，记录完整的伤害计算链路、Buff 变更、属性重算。这是修复 Bug 的“黑匣子”。
+2. **中间层（玩家界面）**：参照 **版本G（宝可梦）** + **版本I（MMO）**，在游戏主界面展示简洁、清晰、带图标的动作日志。
+3. **顶层（战报/复盘）**：参照 **版本L（AI摘要）**，战斗结束后生成一份自然语言战报，用于分享或数据统计。
+
+这种架构既能让你现在轻松定位 `复仇怒火` 只持续 1 回合的问题，也能保证未来游戏上线时玩家看得懂、看得爽。
 
 --- docs/属性监控显示设计.md ---
 # 属性监控显示设计
@@ -24956,10 +25314,10 @@ export class BattleSystem {
       }
     })
     const battleData = this.battleData
-    
+
     // 【防止跨战斗污染】设置当前活跃战斗 ID
     this.activeBattleId = battleData.battleId
-    
+
     battleData.participants = participants
     console.log('初始化战斗数据', battleData)
     eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED)
@@ -24980,7 +25338,7 @@ export class BattleSystem {
     battleLogManager.addSystemLog({
       message: `战斗双方人员情况: 我方 ${allyParticipants.length} 人 | 敌方 ${enemyParticipants.length} 人`,
     }
-      
+
     )
     battleData.roundState = RoundStatus.START
 
@@ -24989,12 +25347,9 @@ export class BattleSystem {
     battleData.battleSpeed = autoBattleRules.defaultSpeed
     battleData.maxTurns = this.ruleManager.getTurnSystemRules().maxTurns
 
-    // 注册属性变化回调，Buff 修改 ModifierStack 后自动同步到参与者
+    // 注册属性变化回调，Buff 修改 ModifierStack 后发射事件通知 UI 层
     this.buffSystem.setAttributeChangeCallback((characterId: string) => {
-      const participant = battleData.participants.get(characterId)
-      if (participant instanceof BattleParticipantImpl) {
-        participant.recalculateAll()
-      }
+      eventBus.emit(BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED, { characterId })
     })
 
     // ponytail: 注册 buff 添加回调，被动触发路径通过 eventBus 告知 UI 播放动画
@@ -25024,7 +25379,6 @@ export class BattleSystem {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.DAMAGE_TAKEN,
           target,
-          undefined as any,
           { sourceId: '', targetId, damage: actualDamage },
         )
       }
@@ -25042,7 +25396,6 @@ export class BattleSystem {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.HEAL_RECEIVED,
           target,
-          undefined as any,
           { sourceId: '', targetId, value: amount },
         )
       }
@@ -25080,6 +25433,7 @@ export class BattleSystem {
     this.passiveSkillManager.triggerPassiveSkillsForAll(
       BattleTriggerPhase.BATTLE_START,
       participants,
+      { participants },
     )
   }
 
@@ -25123,13 +25477,18 @@ export class BattleSystem {
       sourceId: participant.id,
     })
 
+    const participants = this.battleData?.participants
+    if (!participants) return
+
     // 使用PassiveSkillManager触发战斗开始时的被动技能
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BATTLE_START,
       participant,
-      undefined,
-      {},
+      { participants },
     )
+
+    // ponytail: 增量分发光环 — 新角色受已有光环影响 + 新角色的光环施加给已有角色
+    this.distributeAuras(participants)
   }
 
   /**
@@ -25169,7 +25528,6 @@ export class BattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         BattleTriggerPhase.TURN_START,
         battle.participants,
-        undefined,
         { currentTurn: battle.currentRound },
       )
 
@@ -25224,12 +25582,12 @@ export class BattleSystem {
       for (let i = 0; i < currentTurnOrder.length; i++) {
         console.log('当前回合 顺序', i, currentTurnOrder)
         await this.animationManager.waitForAnimation()
-        
+
         // 【竞态条件防护】检查战斗状态是否仍然有效
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
         }
-        
+
         const participantId = currentTurnOrder[i]
         const participant = battle.participants.get(participantId)
         if (!participant || !participant.isAlive()) {
@@ -25237,10 +25595,10 @@ export class BattleSystem {
         }
         console.error('当前角色的能量', participant.getAttribute(ATTRIBUTE_CODE.currentEnergy))
         battle.currentTurn = i
-        
+
         // 在每个角色行动前，发送当前行动者更新事件到 UI 层
         eventBus.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, { actorId: participantId })
-        
+
         try {
           await this.executor.executeParticipantAction(battle, participant)
         } catch (error) {
@@ -25252,7 +25610,7 @@ export class BattleSystem {
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
         }
-        
+
         await this.animationManager.waitForAnimation()
 
         // 角色行动间保留固定间隔，让 CSS 动画有足够时间淡出完成
@@ -25304,8 +25662,7 @@ export class BattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         BattleTriggerPhase.TURN_END,
         battle.participants,
-        undefined,
-        { round: battle.currentRound },
+        { currentTurn: battle.currentRound },
       )
 
       battle.roundState = RoundStatus.END
@@ -28961,6 +29318,10 @@ import {
   TargetStrategy,
   SkillStepType,
 } from '@/domain/skill/types'
+import {
+  resolveSkillTargets,
+  resolveStepTargets,
+} from '@/domain/skill/target-resolver'
 import type {
   BattleAction,
   BattleData,
@@ -29129,8 +29490,7 @@ export class BattleExecutor {
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.BEFORE_ATTACK,
         source,
-        targets[0],
-        { targetId: targets[0]?.id, currentRound: battle.currentRound },
+        { target: targets[0], targetId: targets[0]?.id, currentTurn: battle.currentRound },
       )
       // ponytail: 启用延迟伤害模式 — 技能执行只记录数值不实际扣血，等待动画完成后统一应用
       this.skillManager.setDeferredDamageMode(true)
@@ -29269,27 +29629,23 @@ export class BattleExecutor {
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.ON_HIT,
               source,
-              pd.target,
-              { sourceId: source.id, damage: pd.damage },
+              { target: pd.target, sourceId: source.id, damage: pd.damage },
             )
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.DAMAGE_TAKEN,
               pd.target,
-              source,
-              { sourceId: source.id, damage: pd.damage },
+              { target: source, sourceId: source.id, damage: pd.damage },
             )
             if (!pd.target.isAlive()) {
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_DEATH,
                 pd.target,
-                source,
-                { sourceId: source.id, cause: EffectType.DAMAGE },
+                { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
               )
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_KILL,
                 source,
-                pd.target,
-                { targetId: pd.target.id, cause: EffectType.DAMAGE },
+                { target: pd.target, targetId: pd.target.id, cause: EffectType.DAMAGE },
               )
             }
           }
@@ -29312,8 +29668,8 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.AFTER_ATTACK,
       source,
-      targets[0],
       {
+        target: targets[0],
         targetId: targets[0]?.id,
         damage: action.damage,
         isCritical: action.effects?.some((e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical),
@@ -29332,102 +29688,12 @@ export class BattleExecutor {
     source: BattleEntity,
     skill: SkillConfig,
   ): BattleEntity[] {
-    const cfg = skill.selector
-    const participants = Array.from(battle.participants.values())
-
-    // --- self ---
-    if (cfg.faction === TargetFaction.SELF) return [source]
-
-    const isEnemySide = source.team === PARTICIPANT_SIDE.ALLY
-    const factionFilter = (p: BattleEntity): boolean => {
-      if (!p.isAlive()) return false
-      if (cfg.faction === TargetFaction.ALL) return true
-      if (cfg.faction === TargetFaction.ALLY) return p.team === source.team
-      // 'enemy'
-      return (
-        p.team ===
-        (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
-      )
-    }
-
-    let candidates = participants.filter(factionFilter)
-    if (candidates.length === 0) return []
-
-    const take = (arr: BattleEntity[], n: number): BattleEntity[] =>
-      arr.slice(0, Math.max(1, n))
-
-    const strategy = cfg.strategy || TargetStrategy.FIRST
-    switch (strategy) {
-      case TargetStrategy.ALL:
-        return candidates
-      case TargetStrategy.LOWEST_HP: {
-        const target = candidates.reduce((min, p) =>
-          p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
-            Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1) <
-          min.getAttribute(ATTRIBUTE_CODE.currentHealth) /
-            Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)
-            ? p
-            : min,
-        )
-        return [target]
-      }
-      case TargetStrategy.RANDOM:
-        return take(
-          candidates.sort(() => Math.random() - 0.5),
-          cfg.count === TargetStrategy.ALL
-            ? candidates.length
-            : (cfg.count ?? 1),
-        )
-      case TargetStrategy.FRONT:
-        return [candidates[0]]
-      case TargetStrategy.BACK:
-        return [candidates[candidates.length - 1]]
-      case TargetStrategy.ADJACENT: {
-        // 根据主目标的 seatIndex 查找同阵营相邻目标
-        // 由于 getSkillTargets 在此上下文中用于技能级目标选择，
-        // 相邻指与 source 相邻的同队角色（用于辅助/治疗技能）
-        const sourceSeat = source.seatIndex
-        return candidates.filter(
-          (p) => Math.abs(p.seatIndex - sourceSeat) === 1 && p.isAlive(),
-        )
-      }
-      case TargetStrategy.RANDOM_ADJACENT: {
-        // 随机相邻目标 — 由步骤级 targetType 使用
-        const sourceSeat = source.seatIndex
-        const adjacent = candidates.filter(
-          (p) => Math.abs(p.seatIndex - sourceSeat) === 1 && p.isAlive(),
-        )
-        if (adjacent.length === 0) return [source]
-        return [adjacent[Math.floor(Math.random() * adjacent.length)]]
-      }
-      case TargetStrategy.FIRST:
-      default: {
-        // 智能默认：如果技能含治疗/增益步骤，选最低血量；否则选第一个
-        if (
-          skill.steps.some(
-            (s) =>
-              s.type === SkillStepType.HEAL ||
-              s.type === SkillStepType.APPLY_BUFF,
-          )
-        ) {
-          const target = candidates.reduce((min, p) =>
-            p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
-              Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1) <
-            min.getAttribute(ATTRIBUTE_CODE.currentHealth) /
-              Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)
-              ? p
-              : min,
-          )
-          return [target]
-        }
-        return take(
-          candidates,
-          cfg.count === TargetStrategy.ALL
-            ? candidates.length
-            : (cfg.count ?? 1),
-        )
-      }
-    }
+    return resolveSkillTargets(
+      battle.participants,
+      source,
+      skill.selector,
+      skill.steps,
+    )
   }
 
   /**
@@ -29443,25 +29709,11 @@ export class BattleExecutor {
     mainTarget: BattleEntity,
     stepTargetType: string,
   ): BattleEntity[] {
-    const participants = Array.from(battle.participants.values())
-    // 同一队伍中与主目标 seatIndex 差 ±1 的存活角色
-    const teamMates = participants.filter(
-      (p) => p.team === mainTarget.team && p.isAlive(),
+    return resolveStepTargets(
+      battle.participants,
+      mainTarget,
+      stepTargetType,
     )
-    const adjacent = teamMates.filter(
-      (p) => Math.abs(p.seatIndex - mainTarget.seatIndex) === 1,
-    )
-
-    if (adjacent.length === 0) return []
-
-    switch (stepTargetType) {
-      case TargetStrategy.RANDOM_ADJACENT:
-        return [adjacent[Math.floor(Math.random() * adjacent.length)]]
-      case TargetStrategy.ADJACENT:
-        return adjacent
-      default:
-        return []
-    }
   }
 
   /**
@@ -29592,27 +29844,23 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.ON_HIT,
       source,
-      target,
-      { sourceId: source.id, damage },
+      { target, sourceId: source.id, damage },
     )
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.DAMAGE_TAKEN,
       target,
-      source,
-      { sourceId: source.id, damage },
+      { target: source, sourceId: source.id, damage },
     )
     if (!target.isAlive()) {
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.ON_DEATH,
         target,
-        source,
-        { sourceId: source.id, cause: EffectType.DAMAGE },
+        { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
       )
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.ON_KILL,
         source,
-        target,
-        { targetId: target.id, cause: EffectType.DAMAGE },
+        { target, targetId: target.id, cause: EffectType.DAMAGE },
       )
     }
   }
@@ -29726,8 +29974,7 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BEFORE_ATTACK,
       source,
-      target,
-      { targetId, currentRound },
+      { target, targetId, currentTurn: currentRound },
     )
 
     // 创建详细记录对象用于捕获伤害拆分
@@ -29773,8 +30020,8 @@ export class BattleExecutor {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.AFTER_ATTACK,
       source,
-      target,
       {
+        target,
         targetId,
         damage: action.damage,
         isCritical: damageResult.isCritical,
@@ -29983,21 +30230,18 @@ export class BattleExecutor {
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.ON_HIT,
               source,
-              target,
-              { sourceId: source.id, damage: action.damage ?? 0 },
+              { target, sourceId: source.id, damage: action.damage ?? 0 },
             )
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.DAMAGE_TAKEN,
               target,
-              source,
-              { sourceId: source.id, damage: action.damage ?? 0 },
+              { target: source, sourceId: source.id, damage: action.damage ?? 0 },
             )
             if (!target.isAlive()) {
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_DEATH,
                 target,
-                source,
-                { sourceId: source.id, cause: EffectType.DAMAGE },
+                { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
               )
             }
           }
@@ -30066,27 +30310,23 @@ export class BattleExecutor {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.ON_HIT,
           source,
-          target,
-          { sourceId: source.id, damage: actualDamage },
+          { target, sourceId: source.id, damage: actualDamage },
         )
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.DAMAGE_TAKEN,
           target,
-          source,
-          { sourceId: source.id, damage: actualDamage },
+          { target: source, sourceId: source.id, damage: actualDamage },
         )
         if (!target.isAlive()) {
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_DEATH,
             target,
-            source,
-            { sourceId: source.id, cause: EffectType.DAMAGE },
+            { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
           )
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_KILL,
             source,
-            target,
-            { targetId: target.id, cause: EffectType.DAMAGE },
+            { target, targetId: target.id, cause: EffectType.DAMAGE },
           )
         }
 
@@ -31882,6 +32122,7 @@ export interface BattleEvents {
   [BattleEventCodes.CURRENT_ACTOR_CHANGED]: { actorId: string | null };
   [BattleEventCodes.DEBUG_PAUSE]: { phase: string };
   [BattleEventCodes.DEBUG_PAUSE_RESUME]: void;
+  [BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED]: { characterId: string };
 }
 
 /** 战斗事件名称类型 */
@@ -31921,6 +32162,8 @@ export const BattleEventCodes = {
   DEBUG_PAUSE: 'debug-pause',
   /** 调试模式继续 */
   DEBUG_PAUSE_RESUME: 'debug-pause-resume',
+  /** 参与者属性变更事件（Buff 触发 recalculateAll 后发射） */
+  PARTICIPANT_ATTRIBUTE_CHANGED: 'participant-attribute-changed',
 } as const
 
 export type BattleEventCode = (typeof BattleEventCodes)[keyof typeof BattleEventCodes]
@@ -32628,7 +32871,7 @@ export interface ReplayBattleEvent {
   roundNumber: number
   sourceId?: string
   targetId?: string
-  data: Record<string, any>
+  data: Record<string, BattleContext>
 }
 
 /** 快照索引项 */
@@ -32638,6 +32881,67 @@ export interface SnapshotIndexItem {
   turn: number
   roundNumber: number
   timestamp: number
+}
+
+/**
+ * 战斗触发器统一上下文
+ * 
+ * 覆盖所有场景：
+ * - TriggerEventBus 事件广播（emitTriggerEvent）
+ * - PassiveSkillManager 被动触发（triggerPassives）
+ * - BuffSystem 触发器脚本执行（executeTriggerScript）
+ * - Buff 回调（damage/heal callback）
+ */
+export interface BattleContext {
+  // ============ 基础标识 ============
+  /** 触发阶段（battle_start / turn_start / damage_taken 等） */
+  phase?: BattleTriggerPhase
+  /** 战斗实例 ID */
+  battleId?: string
+  /** 来源参与者 ID（攻击者、施法者） */
+  sourceId?: string
+  /** 目标参与者 ID（受击者、受术者） */
+  targetId?: string
+  target?: BattleEntity
+  participants?: Map<string, BattleEntity>
+  /** 技能 ID */
+  skillId?: string
+  /** Buff ID */
+  buffId?: string
+  /** Buff 实例 ID（用于追踪具体实例） */
+  instanceId?: string
+
+  // ============ 数值字段 ============
+  /** 通用数值（能量、基础值等） */
+  value?: number
+  /** 伤害值（明确为伤害） */
+  damage?: number
+  /** 治疗值（明确为治疗） */
+  heal?: number
+  /** 通用量（与 value 类似，但用于某些特定场景） */
+  amount?: number
+
+  // ============ 回合信息 ============
+  /** 当前回合数（从 1 开始） */
+  currentTurn?: number
+  /** 回合编号（roundNumber 是 currentTurn 的别名） */
+  roundNumber?: number
+  /** 当前轮次（与 currentTurn 同义） */
+  round?: number
+
+  // ============ 状态标记 ============
+  /** 是否暴击 */
+  isCritical?: boolean
+  /** 是否命中 */
+  isHit?: boolean
+  /** 原因/类型（如 'damage'、'heal'、'buff'） */
+  cause?: string
+
+  // ============ 扩展数据 ============
+  /** 额外自定义数据（灵活扩展） */
+  extra?: Record<string, unknown>
+  /** 战斗完整数据（仅用于需要全量状态的场景） */
+  battleData?: BattleData
 }
 
 --- src/domain/buff/BuffContext.ts ---
@@ -33183,7 +33487,6 @@ export class BuffScriptRegistry {
   public get<TParams = any>(scriptId: string): IBuffScript<TParams> | null {
     const entry = this.registry.get(scriptId)
     if (!entry) {
-      battleLogManager.addDebugLog(`Buff script not found: ${scriptId}`)
       return null
     }
     try {
@@ -33238,13 +33541,15 @@ import { TriggerEventBus, triggerEventBus } from '@/infrastructure/adapters/even
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { Counter } from '@/shared/utils/Counter'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
+import { BattleContext } from '@/domain/battle/type/types'
+
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
 const NOOP_BUFF_SCRIPT: IBuffScript = {
-  onApply: () => {},
-  onRemove: () => {},
-  onUpdate: () => {},
-  onRefresh: () => {},
+  onApply: () => { },
+  onRemove: () => { },
+  onUpdate: () => { },
+  onRefresh: () => { },
   getEffectLines: () => [],
 }
 
@@ -33348,7 +33653,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       this.onDamageRequest(targetId, damage, damagePercent)
     }
   }
-  
+
   private healTarget(targetId: string, amount: number): void {
     if (this.onHealRequest) {
       this.onHealRequest(targetId, amount)
@@ -33398,12 +33703,12 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     instanceId: string,
     targetId: string,
     eventName: string,
-    data?: Record<string, any>,
+    data?: BattleContext,
   ): void {
     const handler = this.triggerScripts.get(eventName)
     if (handler) {
       handler({
-        phase: eventName as any,
+        phase: eventName,
         sourceId: '',
         targetId,
         instanceId,
@@ -33437,6 +33742,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
         // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
         script = NOOP_BUFF_SCRIPT
+        battleLogManager.addDebugLog(`Buff script not found: ${buffId}`)
       }
     }
 
@@ -33623,9 +33929,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       }
       const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
         : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
-        : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
-        : mod.type === 'FINAL' ? ModifierType.FINAL
-        : ModifierType.ADDITIVE
+          : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
+            : mod.type === 'FINAL' ? ModifierType.FINAL
+              : ModifierType.ADDITIVE
       modifierStack.addModifier(instanceId, attrCode, value, modType)
     }
   }
@@ -33758,8 +34064,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const instance = this.buffInstances.get(instanceId)
     if (instance) {
       instance.conditionState = state
-      // ponytail: 'condition-changed' 是非标准事件名，emit 签名要求 BattleTriggerPhase 类型，用 any 绕过
-      ;(this.eventBus as any).emit('condition-changed', { instanceId, state, characterId: instance.characterId })
+        // ponytail: 'condition-changed' 是非标准事件名，emit 签名要求 BattleTriggerPhase 类型，用 any 绕过
+        ; (this.eventBus as any).emit('condition-changed', { instanceId, state, characterId: instance.characterId })
     }
   }
 
@@ -34008,7 +34314,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
 
   protected _onApply(context: BuffContext): void {
     this.applyModifiers(context)
-    this.log(context, `✅ 效果生效，应用了 ${this.getModifiers().length} 个属性修饰符`)
+    this.log(context, `√ 效果生效，应用了 ${this.getModifiers().length} 个属性修饰符`)
   }
 
   protected _onRemove(context: BuffContext): void {
@@ -34020,7 +34326,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     if (this.shouldReapplyOnUpdate()) {
       this.applyModifiers(context, true)
       if (this._isDebugMode()) {
-        this.log(context, `🔄 属性已更新，重新应用了修饰符`)
+        this.log(context, `属性已更新，重新应用了修饰符`)
       }
     }
   }
@@ -34028,7 +34334,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
   protected _onRefresh(context: BuffContext): void {
     if (this.shouldReapplyOnRefresh()) {
       this.applyModifiers(context, true)
-      this.log(context, `♻️ 刷新效果，重新应用了 ${this.getModifiers().length} 个修饰符`)
+      this.log(context, `刷新效果，重新应用了 ${this.getModifiers().length} 个修饰符`)
     }
   }
 
@@ -36349,10 +36655,11 @@ export interface DamageResult {
   actualDamage: number
 }
 
-/** 防御效果系数：每点防御转化为有效防御的比例 */
-export const DEFENSE_EFFECTIVENESS = 0.5
-/** 防御递减公式分母：控制防御收益递减曲线 */
-export const DEFENSE_DENOMINATOR = 500
+/** ponytail: 以下常量已不再使用，保留作为历史参考
+ * DEFENSE_EFFECTIVENESS = 0.5
+ * DEFENSE_DENOMINATOR   = 500
+ * 当前使用减法公式：damage = Math.max(0, damage - defense)
+ */
 
 function getAttributeValue(
   participant: BattleEntity,
@@ -36534,21 +36841,20 @@ export class DamageCalculator {
       breakdown.postCritDamage = damage
     }
 
-    // 防御计算（递减公式）
+    // 防御计算（减法公式：不破防为 0）
     breakdown.defenseValue = getAttributeValue(target, ATTRIBUTE_CODE.defense)
-    breakdown.effectiveDefense = breakdown.defenseValue * DEFENSE_EFFECTIVENESS
+    breakdown.effectiveDefense = breakdown.defenseValue
     breakdown.defenseMultiplier = Math.max(
-      0.1,
-      1 -
-        breakdown.effectiveDefense /
-          (breakdown.effectiveDefense + DEFENSE_DENOMINATOR),
+      0,
+      1 - breakdown.defenseValue / Math.max(1, damage),
     )
     const beforeDef = damage
-    damage = Math.floor(damage * breakdown.defenseMultiplier)
+    damage = Math.max(0, damage - breakdown.defenseValue)
+    damage = Math.floor(damage)
     breakdown.steps.push({
       stepName: 'defense',
       value: damage,
-      description: `防御减免(x${breakdown.defenseMultiplier.toFixed(4)}): ${beforeDef} → ${damage}`,
+      description: `防御减免(-${breakdown.defenseValue}): ${beforeDef} → ${damage}`,
     })
 
     // 攻击类型伤害减免
@@ -36930,13 +37236,13 @@ export class HealCalculator {
 }
 
 --- src/domain/skill/PassiveSkillManager.ts ---
-import { BattleEntity, BattleTriggerPhase, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
-import { BATTLE_CONSTANTS } from '@/domain/battle/type/types'
+import { BattleTriggerPhase, PARTICIPANT_SIDE, BATTLE_CONSTANTS, BattleActionHelper, type BattleContext, type BattleEntity } from '@/domain/battle/type/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
+import { resolveSkillTargets } from '@/domain/skill/target-resolver'
+import type { SkillConfig } from '@/domain/skill/types'
 
 export interface PassiveSkillConfig {
   id: string
@@ -36954,17 +37260,10 @@ export interface PassiveSkillConfig {
   hpThreshold?: number
 }
 
-export interface PassiveTriggerContext {
-  currentTurn?: number;
-  sourceId?: string;
-  damage?: number;
-  targetId?: string;
-  roundNumber?: number;
-  cause?: string;
-  isCritical?: boolean;
-}
-
 export class PassiveSkillManager {
+  /**
+   * 当前参战角色的被动技能配置
+   */
   private passives: Map<string, PassiveSkillConfig[]> = new Map()
   private skillManager: SkillManager
   private buffSystem: BuffSystem
@@ -36990,15 +37289,22 @@ export class PassiveSkillManager {
 
   /**
    * 触发被动技能
+   *
+   * 目标解析规则：
+   * - 所有触发类型统一先尝试根据技能 selector 从参与者中解析目标（与主动技能一致）
+   * - 当无参与者映射或无 selector 时，回退到 context.target（事件的另一方）或施法者自身
    */
   triggerPassives(
     trigger: BattleTriggerPhase,
     entity: BattleEntity,
-    target?: BattleEntity,
-    context?: PassiveTriggerContext,
+    context?: BattleContext,
   ): void {
     const characterPassives = this.passives.get(entity.id)
     if (!characterPassives) return
+
+    // 事件型触发所需的上下文目标
+    const contextTarget = context?.target ??
+      (context?.targetId && context?.participants ? context.participants.get(context.targetId) : undefined)
 
     for (const config of characterPassives) {
       // 检查触发时机是否匹配
@@ -37033,51 +37339,147 @@ export class PassiveSkillManager {
       // 被动有触发条件，检查是否满足
       if (
         config.condition &&
-        !this.evaluateCondition(config.condition, entity, target, context)
+        !this.evaluateCondition(config.condition, entity, contextTarget, context)
       )
         continue
-      // ponytail: BATTLE_START 等主动触发场景下 target 可能为 undefined，默认以自身为目标
-      const actualTarget = target ?? entity
-      this.skillManager.executeSkill(
-        config.skillId,
-        entity,
-        actualTarget,
-        (context?.currentTurn as number) || 0,
-      )
 
-      // ponytail: BATTLE_START 被动中纯 modify_attribute 步骤不创建 buff 实体，
-      // 此处自动创建追踪 buff 使其在 buff 列表中可见
-      if (trigger === BattleTriggerPhase.BATTLE_START) {
-        this.ensureTrackingBuff(entity.id, config.skillId, config.name)
+      // --- 确定目标 ---
+      // ponytail: 统一目标解析 — 所有触发类型都基于 skillConfig.selector 解析目标。
+      // 仅当无参与者和 selector 时才回退到 context.target（事件的另一方）或施法者自身。
+      let targets: BattleEntity[]
+
+      if (context?.participants) {
+        const skillConfig = this.skillManager.getSkillConfig(config.skillId)
+        if (skillConfig?.selector) {
+          targets = resolveSkillTargets(
+            context.participants,
+            entity,
+            skillConfig.selector,
+            skillConfig.steps,
+          )
+        } else {
+          targets = [contextTarget ?? entity]
+        }
+      } else {
+        targets = [contextTarget ?? entity]
       }
+
+      if (targets.length === 0) continue
+
+      // --- 对每个目标执行（走被动专用管道，绕过 executeSkill 的主动技能逻辑）---
+      const skillConfig = this.skillManager.getSkillConfig(config.skillId)
+      const turn = (context?.currentTurn as number) || 0
+      let hasExecuted = false
+      if (skillConfig) {
+        hasExecuted = this.executePassiveSkill(skillConfig, entity, targets, turn)
+      } else {
+        // ponytail: 无配置时回退旧路径防止崩溃
+        for (const actualTarget of targets) {
+          this.skillManager.executeSkill(config.skillId, entity, actualTarget, turn)
+          hasExecuted = true
+        }
+      }
+
+      // ponytail: 仅在确实执行了有效步骤后才累加冷却和计数
+      if (hasExecuted) {
+        config.lastTriggeredTurn = (context?.currentTurn as number) || 0
+        config.triggerCount = (config.triggerCount || 0) + 1
+      }
+
       // ponytail: 被动触发日志 — 带角色名着色
-      const targetName = actualTarget?.name || '自身'
-      const targetEntity = actualTarget
+      const targetNames = targets.map((t) => t.name).join('、') || '自身'
+      const firstTarget = targets[0]
       const segs = buildNameSegments(
         entity.name,
         entity.type === PARTICIPANT_SIDE.ALLY,
-        targetName,
-        targetEntity ? targetEntity.type === PARTICIPANT_SIDE.ALLY : undefined,
+        targetNames,
+        firstTarget ? firstTarget.type === PARTICIPANT_SIDE.ALLY : undefined,
       )
-      segs.push({ text: ` 触发 ${config.name}，对 ${targetName} 生效` })
+      segs.push({ text: ` 触发 ${config.name}，对 ${targetNames} 生效` })
       const entityPrefix = entity.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
-      const targetEntityPrefix = targetEntity ? (targetEntity.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]') : ''
+      const targetPrefix = firstTarget ? (firstTarget.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]') : ''
       battleLogManager.addBattleLog({
         turn: (context?.currentTurn as number) || 1,
-        message: `${entityPrefix}${entity.name} 触发 ${config.name}，对 ${targetEntityPrefix}${targetName} 生效`,
+        message: `${entityPrefix}${entity.name} 触发 ${config.name}，对 ${targetPrefix}${targetNames} 生效`,
         segments: segs,
         category: BATTLE_LOG_CATEGORIES.STATUS,
       })
-      config.lastTriggeredTurn = (context?.currentTurn as number) || 0
-      config.triggerCount = (config.triggerCount || 0) + 1
     }
+  }
+
+  /**
+   * 执行被动技能步骤（绕过 SkillManager.executeSkill 的主动技能管道）
+   *
+   * 与主动技能 executeSkill 的关键区别：
+   * - 跳过能量检查/消耗（被动 energyCost ≡ 0）
+   * - 跳过目标眩晕检查（被动效果不受眩晕阻挡）
+   * - 跳过冷却设置（被动冷却由 PassiveSkillManager 自身管理）
+   * - 跳过 SKILL_USE 事件（被动不触发 skill_use 事件）
+   * - 每步独立 try-catch，单步失败不影响后续步骤
+   *
+   * @param config   技能配置（含 steps）
+   * @param source   被动所有者（施法者）
+   * @param targets  已解析的目标列表（至少一个元素）
+   * @param turn     当前回合数
+   * @param options  可选 — { deferDamage } 是否启用延迟伤害模式
+   * @returns 是否有至少一个步骤成功执行
+   */
+  private executePassiveSkill(
+    config: SkillConfig,
+    source: BattleEntity,
+    targets: BattleEntity[],
+    turn: number,
+    options?: { deferDamage?: boolean },
+  ): boolean {
+    const steps = config.steps
+    if (!steps || steps.length === 0) return true // ponytail: 无步骤=无需执行，不算失败
+    if (targets.length === 0) return true         // ponytail: 无目标=无需执行，不算失败
+
+    const executor = this.skillManager.getExecutor()
+    // ponytail: 保存调用方的 deferDamage 状态并在完成后恢复，避免全局 toggle 的竞态
+    const prevDefer = executor.deferDamage
+    if (options?.deferDamage !== undefined) {
+      executor.deferDamage = options.deferDamage
+    }
+    let anyExecuted = false
+
+    for (const target of targets) {
+      // ponytail: 跳过已死亡目标，被动技能不应对死尸生效
+      if (!target.isAlive()) continue
+
+      const action = BattleActionHelper.createSkill({
+        sourceId: source.id,
+        targetId: target.id,
+        skillId: config.id,
+        skillName: config.name || '',
+        turn,
+        success: true,
+      })
+
+      for (const step of steps) {
+        try {
+          executor.executeStep(step, action, source, target)
+          anyExecuted = true
+        } catch (err) {
+          battleLogManager.addDebugLog(
+            `被动 ${config.name} 步骤执行异常: ${err instanceof Error ? err.message : String(err)}`,
+            { level: LogLevel.ERROR },
+          )
+          // ponytail: 单步失败不中断后续步骤
+        }
+      }
+    }
+
+    // ponytail: 恢复调用方的 deferDamage 状态
+    executor.deferDamage = prevDefer
+    return anyExecuted
   }
 
   private evaluateCondition(
     condition: string,
     source: BattleEntity,
     target?: BattleEntity,
-    context?: Record<string, any>,
+    context?: BattleContext,
   ): boolean {
     try {
       switch (condition) {
@@ -37107,6 +37509,7 @@ export class PassiveSkillManager {
             ? target.getBuffInstanceIds().some((id) => id.includes('sleep'))
             : false
         case 'source_has_debuff_count_3':
+          // ponytail: 身上 ≥ 3 个减益时触发（守护者被动「不屈意志」专用）
           return source.getBuffInstanceIds().length >= 3
         case 'source_energy_high':
           return (
@@ -37129,37 +37532,6 @@ export class PassiveSkillManager {
     }
   }
 
-  /**
-   * BATTLE_START 被动中，纯 modify_attribute 步骤不会创建 buff 实体。
-   * 此方法检查技能步骤，若无 apply_buff 步骤则自动创建追踪 buff，
-   * 使该被动在参与者 buff 列表中可见。
-   */
-  private ensureTrackingBuff(characterId: string, skillId: string, skillName: string): void {
-    const skillConfig = this.skillManager.getSkillConfig(skillId)
-    if (!skillConfig?.steps) return
-
-    // 如果已有 apply_buff 步骤，其 buff 实体已由 SkillExecutor 创建，无需追踪 buff
-    const hasApplyBuff = skillConfig.steps.some(s => s.type === 'apply_buff')
-    if (hasApplyBuff) return
-
-    const buffId = `_track_passive_${skillId}`
-    if (this.buffSystem.hasBuff(characterId, buffId)) return
-
-    const config: BuffConfig = {
-      id: buffId,
-      name: skillName,
-      description: '',
-      duration: -1,
-      maxStacks: 1,
-      cooldown: 0,
-      stackRule: StackRule.REFRESH,
-      controlType: ControlType.NONE,
-      controlPriority: 0,
-      isDebuff: false,
-      isPositive: true,
-    }
-    this.buffSystem.addBuff(characterId, buffId, config, 0)
-  }
 
   getPassives(characterId: string): PassiveSkillConfig[] {
     return this.passives.get(characterId) || []
@@ -37186,11 +37558,10 @@ export class PassiveSkillManager {
   triggerPassiveSkillsForAll(
     trigger: BattleTriggerPhase,
     participants: Map<string, BattleEntity>,
-    target?: BattleEntity,
-    context?: Record<string, any>,
+    context?: BattleContext,
   ): void {
     for (const participant of participants.values()) {
-      this.triggerPassives(trigger, participant, target, context)
+      this.triggerPassives(trigger, participant, context)
     }
   }
 }
@@ -37381,6 +37752,9 @@ export class SkillExecutor {
     }
   }
 
+  /**
+   * 执行 Buff 效果
+   */
   private executeBuff(
     skillStep: ExtendedSkillStep,
     action: BattleAction,
@@ -37389,7 +37763,7 @@ export class SkillExecutor {
     record?: CombatRecord,
   ): void {
     const buffId = skillStep.buffId ?? skillStep.effectId
-    if (!buffId) return
+    if (!buffId) return // ponytail: 无 buffId=无效果，静默返回
 
     const buffTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
@@ -37454,6 +37828,7 @@ export class SkillExecutor {
     const modTarget = skillStep.targetConfig?.faction === 'self' ? source : target
     const modifiers = skillStep.modifiers
     if (!modifiers || modifiers.length === 0) return
+
 
     for (const mod of modifiers) {
       const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
@@ -38119,6 +38494,154 @@ export class SkillManager {
   reloadAllSkills(configs: SkillConfig[]): void {
     this.clearSkills()
     this.loadSkillConfigs(configs)
+  }
+}
+
+--- src/domain/skill/target-resolver.ts ---
+/**
+ * 目标解析器 — 根据技能 selector 从参与者列表中选出目标实体
+ * 从 BattleExecutor.getSkillTargets() 提取，供主动/被动技能统一使用
+ */
+import { PARTICIPANT_SIDE, type BattleEntity } from '@/domain/battle/type/types'
+import {
+  TargetFaction,
+  TargetStrategy,
+  SkillStepType,
+  type SkillTargetConfig,
+  type SkillStep,
+} from '@/domain/skill/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+
+/**
+ * 根据技能 selector 解析目标
+ * @param participants 所有参与者（Map）
+ * @param source 施法者
+ * @param selector 目标选择配置
+ * @param steps 可选 — 技能步骤列表，用于 FIRST 策略的智能默认
+ * @returns 目标实体数组
+ */
+export function resolveSkillTargets(
+  participants: Map<string, BattleEntity>,
+  source: BattleEntity,
+  selector: SkillTargetConfig,
+  steps?: SkillStep[],
+): BattleEntity[] {
+  const all = Array.from(participants.values())
+
+  // --- self ---
+  if (selector.faction === TargetFaction.SELF) return [source]
+
+  const isEnemySide = source.team === PARTICIPANT_SIDE.ALLY
+  const factionFilter = (p: BattleEntity): boolean => {
+    if (!p.isAlive()) return false
+    if (selector.faction === TargetFaction.ALL) return true
+    if (selector.faction === TargetFaction.ALLY) return p.team === source.team
+    // 'enemy'
+    return (
+      p.team ===
+      (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
+    )
+  }
+
+  let candidates = all.filter(factionFilter)
+  if (candidates.length === 0) return []
+
+  const take = (arr: BattleEntity[], n: number): BattleEntity[] =>
+    arr.slice(0, Math.max(1, n))
+
+  const strategy = selector.strategy || TargetStrategy.FIRST
+  switch (strategy) {
+    case TargetStrategy.ALL:
+      return candidates
+    case TargetStrategy.LOWEST_HP: {
+      const target = candidates.reduce((min, p) =>
+        p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+          Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1) <
+        min.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+          Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)
+          ? p
+          : min,
+      )
+      return [target]
+    }
+    case TargetStrategy.RANDOM:
+      return take(
+        candidates.sort(() => Math.random() - 0.5),
+        selector.count === TargetStrategy.ALL
+          ? candidates.length
+          : (selector.count ?? 1),
+      )
+    case TargetStrategy.FRONT:
+      return [candidates[0]]
+    case TargetStrategy.BACK:
+      return [candidates[candidates.length - 1]]
+    case TargetStrategy.ADJACENT: {
+      const sourceSeat = source.seatIndex
+      return candidates.filter(
+        (p) => Math.abs(p.seatIndex - sourceSeat) === 1 && p.isAlive(),
+      )
+    }
+    case TargetStrategy.RANDOM_ADJACENT: {
+      const sourceSeat = source.seatIndex
+      const adjacent = candidates.filter(
+        (p) => Math.abs(p.seatIndex - sourceSeat) === 1 && p.isAlive(),
+      )
+      if (adjacent.length === 0) return [source]
+      return [adjacent[Math.floor(Math.random() * adjacent.length)]]
+    }
+    case TargetStrategy.FIRST:
+    default: {
+      // 智能默认：如果技能含治疗/增益步骤，选最低血量；否则选第一个
+      if (steps?.some((s) => s.type === SkillStepType.HEAL || s.type === SkillStepType.APPLY_BUFF)) {
+        const target = candidates.reduce((min, p) =>
+          p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+            Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1) <
+          min.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+            Math.max(min.getAttribute(ATTRIBUTE_CODE.maxHealth), 1)
+            ? p
+            : min,
+        )
+        return [target]
+      }
+      return take(
+        candidates,
+        selector.count === TargetStrategy.ALL
+          ? candidates.length
+          : (selector.count ?? 1),
+      )
+    }
+  }
+}
+
+/**
+ * 解析步骤级目标选择（快捷入口）
+ * 根据 step.targetType 从主目标的相邻位置中选择额外目标
+ * @param participants 所有参与者
+ * @param mainTarget 主目标
+ * @param stepTargetType 步骤目标策略（如 random_adjacent）
+ * @returns 额外目标数组
+ */
+export function resolveStepTargets(
+  participants: Map<string, BattleEntity>,
+  mainTarget: BattleEntity,
+  stepTargetType: string,
+): BattleEntity[] {
+  const all = Array.from(participants.values())
+  const teamMates = all.filter(
+    (p) => p.team === mainTarget.team && p.isAlive(),
+  )
+  const adjacent = teamMates.filter(
+    (p) => Math.abs(p.seatIndex - mainTarget.seatIndex) === 1,
+  )
+  if (adjacent.length === 0) return []
+
+  switch (stepTargetType) {
+    case 'random_adjacent':
+      return [adjacent[Math.floor(Math.random() * adjacent.length)]]
+    case 'adjacent':
+      return adjacent
+    default:
+      return []
   }
 }
 
@@ -39478,7 +40001,7 @@ export class BattleLogManager {
   /** 调试日志条目数组 */
   private debugLogs: LogEntry[] = []
   /** 调试日志最大数量 */
-  private maxDebugLogs: number = 500
+  private maxDebugLogs: number = 1000
 
   private indexCounter = new Counter()
 
@@ -39514,7 +40037,7 @@ export class BattleLogManager {
     this.maxSystemLogs = options.maxSystemLogs ?? 200
     this.maxItemLogs = options.maxItemLogs ?? 200
     this.maxActionLogs = options.maxActionLogs ?? 200
-    this.maxDebugLogs = options.maxDebugLogs ?? 500
+    this.maxDebugLogs = options.maxDebugLogs ?? 1000
     this.autoCleanup = options.autoCleanup ?? true
     this.level = options.level ?? LogLevel.DEBUG
 
@@ -39821,8 +40344,8 @@ export class BattleLogManager {
     }
 
     this.debugLogs.push(entry)
-    if (this.debugLogs.length > this.maxSystemLogs) {
-      this.debugLogs = this.debugLogs.slice(-this.maxSystemLogs)
+    if (this.debugLogs.length > this.maxDebugLogs) {
+      this.debugLogs = this.debugLogs.slice(-this.maxDebugLogs)
     }
 
     for (const handler of this.handlers) {
@@ -43434,44 +43957,23 @@ const getPossibleSources = (buffId: string): string[] => {
 
 --- src/presentation/components/BuffTextBar.vue ---
 <template>
-  <div
-    class="buff-text-bar"
-    :class="{ 'is-expanded': expanded, 'is-empty': isEmpty }"
-    ref="barRef"
-    @click="handleClick"
-  >
+  <div class="buff-text-bar" :class="{ 'is-expanded': expanded, 'is-empty': isEmpty }" ref="barRef"
+    @click="handleClick">
     <!-- 空状态 -->
     <span v-if="isEmpty" class="bar-placeholder">无效果</span>
 
     <!-- 控制标签（不折叠） -->
     <template v-else>
-      <BuffTextTag
-        v-for="ctrl in displayControlLabels"
-        :key="ctrl.instanceId"
-        :text="ctrl.name"
-        type="control"
-        :turns-left="ctrl.remainingTurns"
-        @hover.stop="onTagHover($event, ctrl)"
-        @leave="onTagLeave"
-      />
+      <BuffTextTag v-for="ctrl in displayControlLabels" :key="ctrl.instanceId" :text="ctrl.name" type="control"
+        :turns-left="ctrl.remainingTurns" @hover.stop="onTagHover($event, ctrl)" @leave="onTagLeave" />
 
       <!-- 合并属性标签 -->
-      <BuffTextTag
-        v-for="attr in visibleAttrLabels"
-        :key="attr.attribute"
-        :text="formatAttrLine(attr)"
-        :type="attr.totalPercent > 0 ? 'buff' : 'debuff'"
-        @hover.stop="onAttrHover($event, attr)"
-        @leave="onTagLeave"
-      />
+      <BuffTextTag v-for="attr in visibleAttrLabels" :key="attr.attribute" :text="formatAttrLine(attr)"
+        :type="attr.totalPercent > 0 ? 'buff' : 'debuff'" @hover.stop="onAttrHover($event, attr)" @leave="onTagLeave" />
 
       <!-- 折叠指示器 -->
       <Transition name="badge-pop">
-        <span
-          v-if="collapsedCount > 0"
-          class="bar-collapse-badge"
-          title="点击展开全部状态"
-        >+{{ collapsedCount }}</span>
+        <span v-if="collapsedCount > 0" class="bar-collapse-badge" title="点击展开全部状态">+{{ collapsedCount }}</span>
       </Transition>
     </template>
   </div>
@@ -43600,6 +44102,7 @@ function onTagLeave() {
 .buff-text-bar.is-empty {
   cursor: default;
 }
+
 .buff-text-bar.is-empty:hover {
   background: transparent;
 }
@@ -43631,12 +44134,21 @@ function onTagLeave() {
 .badge-pop-enter-active {
   animation: badge-pop-in 0.2s ease-out;
 }
+
 .badge-pop-leave-active {
   animation: badge-pop-in 0.15s ease-in reverse;
 }
+
 @keyframes badge-pop-in {
-  0% { opacity: 0; transform: scale(0.6); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>
 
@@ -44837,7 +45349,10 @@ watch(activeTab, () => {
         <div class="dialog-container" :style="{ width: width }">
           <div class="dialog-header">
             <span class="dialog-title">{{ title }}</span>
-            <button class="dialog-close" @click="close">×</button>
+            <div class="dialog-header-actions">
+              <slot name="header-actions"></slot>
+              <button class="dialog-close" @click="close">×</button>
+            </div>
           </div>
           <div class="dialog-content">
             <slot></slot>
@@ -44901,6 +45416,12 @@ watch(
   border-radius: 50%;
   transition: var(--transition-base);
   color: var(--color-info);
+}
+
+.dialog-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .dialog-close:hover {
@@ -45870,7 +46391,7 @@ const battleStore = useBattleStore()
 const showDebug = computed(() => battleStore.showDebug)
 
 // 使用 composable 包装参与者
-const { stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(props.participant)
+const { participant: reactiveParticipant, stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(props.participant)
 
 const buffSystem = container.resolve<BuffSystem>('BuffSystem')
 
@@ -45986,10 +46507,10 @@ const energyColorClass = computed(() => {
 
 /** 转换为纯文本 Buff 展示数据 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
 const buffListItems = computed(() => {
-  // ponytail: 读取 statsVersion 建立 Vue 响应式依赖（recalculateAll → _statsVersion++ 时 computed 重算）
-  void (props.participant as any).statsVersion
+  // ponytail: 读取 statsVersion 建立 Vue 响应式依赖（recalculateAll → proxy._statsVersion++ 时 computed 重算）
+  void reactiveParticipant.statsVersion
 
-  const entity = props.participant as any
+  const entity = reactiveParticipant
   const result: any[] = []
   const seenIds = new Set<string>()
 
@@ -46795,7 +47316,7 @@ export function useBattleParticipant(
   // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue（使用官方 ATTRIBUTE_CODE 标准编码）
   const stats = computed<ParticipantStats>(() => {
     // 读取 statsVersion 触发 Vue 响应式追踪——当参与者属性重算时版本戳递增，computed 自动重新求值
-    shallowParticipant.statsVersion
+    void shallowParticipant.statsVersion
     return {
       currentHealth: shallowParticipant.getAttributeValue(
         ATTRIBUTE_CODE.currentHealth,
@@ -46842,7 +47363,7 @@ export function useBattleParticipant(
 
   // 派生状态
   const isAlive = computed(() => {
-    shallowParticipant.statsVersion
+    void shallowParticipant.statsVersion
     return shallowParticipant.isAlive()
   })
   const isDead = computed(() => !isAlive.value)
@@ -47636,7 +48157,7 @@ import { EffectType } from '@/shared/types/effect'
 import type { Enemy } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { defineStore } from 'pinia'
-import { onScopeDispose, reactive, ref, shallowRef } from 'vue'
+import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -47766,10 +48287,12 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const syncTeams = () => {
     console.log('接收队伍数据更新')
-    allyTeam.value = battleService.value!.getEnabledAllyTeam()
-    enemyTeam.value = battleService.value!.getEnabledEnemyTeam()
-    fullAllyTeam.value = battleService.value!.getAllyTeam()
-    fullEnemyTeam.value = battleService.value!.getEnemyTeam()
+    // ponytail: 用 shallowReactive 包装参与者，使 Vue computed 能追踪场内属性变更（如 statsVersion）。
+    // 原始对象由 BattleSystem 管理并通过事件告知 UI 层，proxy 确保修改走 Vue 响应式系统。
+    allyTeam.value = battleService.value!.getEnabledAllyTeam().map(p => shallowReactive(p))
+    enemyTeam.value = battleService.value!.getEnabledEnemyTeam().map(p => shallowReactive(p))
+    fullAllyTeam.value = battleService.value!.getAllyTeam().map(p => shallowReactive(p))
+    fullEnemyTeam.value = battleService.value!.getEnemyTeam().map(p => shallowReactive(p))
     currentTurn.value = battleService.value!.getCurrentTurn()
     maxTurns.value = battleService.value!.getMaxTurns?.() ?? 999
     const battleState = battleService.value!.getBattleState()
@@ -47866,6 +48389,18 @@ export const useBattleStore = defineStore('battle', () => {
   events.set(BattleEventCodes.MISS_ANIMATION, handleMissAnimationEvent)
   events.set(BattleEventCodes.BUFF_EFFECT, handleBuffEffectEvent)
   events.set(BattleEventCodes.SKILL_EFFECT, handleSkillEffectEvent)
+  /** 处理参与者属性变更事件（Buff 触发 recalculateAll 后，在 proxy 上同步调用以使 Vue 响应式系统追踪到变更） */
+  const handleAttributeChanged = (data: { characterId: string }) => {
+    const id = data.characterId
+    // ponytail: 从当前 proxy 数组中找到目标，调用其 recalculateAll 走 proxy set trap
+    const proxy = allyTeam.value.find(p => p.id === id)
+      ?? enemyTeam.value.find(p => p.id === id)
+      ?? fullAllyTeam.value.find(p => p.id === id)
+      ?? fullEnemyTeam.value.find(p => p.id === id)
+    proxy?.recalculateAll()
+  }
+
+  events.set(BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED, handleAttributeChanged)
   events.set(BattleEventCodes.TEAM_DATA_CHANGED, syncTeams)
   /** 需要清理的事件码列表（用于组件卸载时移除监听器） */
   const cleanupEvents = [...events.keys()]
@@ -52161,7 +52696,8 @@ $transition-fast: var(--transition-fast);
     <ControlBar :is-battle-active="battleStore.isBattleActive" :is-paused="battleStore.isPaused"
       :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
       @end-battle="endBattle" @reset-battle="resetBattle" @step-back="stepBack" @single-step="singleStep"
-      @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange" @toggle-pause="handleTogglePause" />
+      @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange"
+      @toggle-pause="handleTogglePause" />
 
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
@@ -53732,7 +54268,7 @@ const handleBattleEndReplay = (winner: string) => {
         <div class="field-party our-party">
           <div class="party-header">我方 ({{ allyTeam.length }}人)</div>
           <div class="party-members">
-            <ParticipantCard v-for="member in allyTeam" :key="`${member.id}-${member.statsVersion}`" :ref="el => { handleCardRef(member.id, el) }"
+            <ParticipantCard v-for="member in allyTeam" :key="member.id" :ref="el => { handleCardRef(member.id, el) }"
               :participant="member" :is-active="isCurrentActor(member.id)"
               :is-selected="store.selectedCharacterId === member.id" :is-enemy="false" :show-debug="false"
               @click="selectCharacter(member.id)" />
@@ -53746,7 +54282,7 @@ const handleBattleEndReplay = (winner: string) => {
         <div class="field-party enemy-party">
           <div class="party-header">敌方 ({{ enemyTeam.length }}人)</div>
           <div class="party-members">
-            <ParticipantCard v-for="member in enemyTeam" :key="`${member.id}-${member.statsVersion}`" :ref="el => { handleCardRef(member.id, el) }"
+            <ParticipantCard v-for="member in enemyTeam" :key="member.id" :ref="el => { handleCardRef(member.id, el) }"
               :participant="member" :is-active="isCurrentActor(member.id)"
               :is-selected="store.selectedCharacterId === member.id" :is-enemy="true" :show-debug="false"
               @click="selectCharacter(member.id)" />
@@ -54229,6 +54765,7 @@ onUnmounted(() => {
           </label>
           <input type="text" v-model="logKeyword" placeholder="关键字" class="log-keyword">
           <button class="btn-medium" @click="applyFilters">[F]过滤</button>
+          <button class="btn-medium" @click="downloadLogs">下载</button>
         </div>
       </div>
     </div>
@@ -54349,6 +54886,24 @@ function extractNumberFromLog(log: LogEntry): number {
 const applyFilters = () => {
   battleLogManager.updateFilters(logFilters);
 };
+
+const downloadLogs = () => {
+  const allLogs = battleLogManager.getAllLogs();
+  const lines = allLogs.map((log) => {
+    const time = log.turn != null ? `[回合${log.turn}]` : ''
+    const cat = log.category ? `[${log.category}]` : ''
+    const msg = log.message || log.segments?.map((s) => s.text).join('') || ''
+    return `${time}${cat} ${msg}`.trim()
+  })
+  const text = lines.join('\n')
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `battle-logs-${Date.now()}.txt`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 const logUpdateListener = () => {
   logVersion.value++;
@@ -56581,6 +57136,9 @@ const handleButtonClick = (action: string) => {
 
 <template>
   <Dialog :model-value="modelValue" @update:model-value="handleModelValueChange" title="调试日志" width="800px">
+    <template #header-actions>
+      <button class="dialog-download" @click="downloadLogs">下载</button>
+    </template>
     <div class="debug-log-container">
       <div class="log-toolbar">
         <button class="log-btn" @click="clearLogs">清空</button>
@@ -56654,12 +57212,26 @@ const clearLogs = () => {
 
 const logLevelName = (level: LogLevel): string => {
   const names: Record<LogLevel, string> = {
+    [LogLevel.TRACE]: 'TRACE',
     [LogLevel.DEBUG]: 'DEBUG',
     [LogLevel.INFO]: 'INFO',
     [LogLevel.WARN]: 'WARN',
     [LogLevel.ERROR]: 'ERROR'
   }
   return names[level] || 'UNKNOWN'
+}
+
+const downloadLogs = () => {
+  const text = localLogs.value
+    .map((log) => `[${logLevelName(log.level)}] ${log.message}`)
+    .join('\n')
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `debug-logs-${Date.now()}.txt`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 </script>
 
@@ -56694,6 +57266,22 @@ const logLevelName = (level: LogLevel): string => {
 .log-count {
   color: var(--color-text-secondary);
   font-size: var(--font-size-md);
+}
+
+.dialog-download {
+  background: transparent;
+  border: 1px solid var(--color-info);
+  color: var(--color-info);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: var(--transition-fast);
+}
+
+.dialog-download:hover {
+  background: var(--color-info);
+  color: var(--color-bg-primary);
 }
 
 .log-list {
@@ -56731,6 +57319,16 @@ const logLevelName = (level: LogLevel): string => {
   margin-right: var(--space-2);
   min-width: 3em;
   display: inline-block;
+}
+
+.level-TRACE {
+  color: var(--color-text-tertiary);
+  opacity: 0.7;
+}
+
+.level-TRACE .log-level {
+  background: var(--color-bg-tertiary);
+  opacity: 0.7;
 }
 
 .level-DEBUG {
@@ -63753,7 +64351,6 @@ describe('方案 B 统一管道', () => {
       passiveSkillManager.triggerPassives(
         BattleTriggerPhase.BATTLE_START,
         participant,
-        undefined,   // target = undefined
         { currentTurn: 0 },
       )
 
@@ -63763,7 +64360,7 @@ describe('方案 B 统一管道', () => {
       expect(defense).toBeCloseTo(55, 0)
     })
 
-    it('追踪 buff 被创建（modify_attribute-only 被动）', () => {
+    it('追踪 buff 不再创建，修饰符可直接通过 ModifierStack 追溯', () => {
       const participant = createTestParticipantWithPassives([makeStaticPassiveSkill()])
       participant.setModifierProvider(buffSystem)
       participant.setBuffQuery(buffSystem)
@@ -63773,12 +64370,14 @@ describe('方案 B 统一管道', () => {
       passiveSkillManager.triggerPassives(
         BattleTriggerPhase.BATTLE_START,
         participant,
-        undefined,
         { currentTurn: 0 },
       )
 
-      // ensureTrackingBuff 应已创建 _track_passive_test_static_passive
-      expect(buffSystem.hasBuff(participant.id, '_track_passive_test_static_passive')).toBe(true)
+      // ponytail: ensureTrackingBuff 已移除，modify_attribute 不再创建隐藏的 BuffInstance。
+      // 修饰符直接写入 attrData.modifiers，可通过 sourceKey 追溯。
+      const defenseData = participant.getAttrValue(ATTRIBUTE_CODE.defense)
+      expect(defenseData?.modifiers.some(m => m.sourceKey.startsWith('passive:'))).toBe(true)
+      expect(buffSystem.hasBuff(participant.id, '_track_passive_test_static_passive')).toBe(false)
     })
 
     it('已有 apply_buff 步骤的被动不创建追踪 buff', () => {
@@ -63804,8 +64403,7 @@ describe('方案 B 统一管道', () => {
       // 应用了 apply_buff 步骤 → buff 实例存在
       expect(buffSystem.hasBuff(participant.id, buffId)).toBe(true)
 
-      // 不应该有追踪 buff（因为已有 apply_buff 步骤）
-      expect(buffSystem.hasBuff(participant.id, `_track_passive_${passive.id}`)).toBe(false)
+      // ponytail: ensureTrackingBuff 已移除，不再创建追踪 buff
     })
   })
 

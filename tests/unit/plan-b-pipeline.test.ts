@@ -181,7 +181,6 @@ describe('方案 B 统一管道', () => {
       passiveSkillManager.triggerPassives(
         BattleTriggerPhase.BATTLE_START,
         participant,
-        undefined,   // target = undefined
         { currentTurn: 0 },
       )
 
@@ -191,7 +190,7 @@ describe('方案 B 统一管道', () => {
       expect(defense).toBeCloseTo(55, 0)
     })
 
-    it('追踪 buff 被创建（modify_attribute-only 被动）', () => {
+    it('追踪 buff 不再创建，修饰符可直接通过 ModifierStack 追溯', () => {
       const participant = createTestParticipantWithPassives([makeStaticPassiveSkill()])
       participant.setModifierProvider(buffSystem)
       participant.setBuffQuery(buffSystem)
@@ -201,12 +200,14 @@ describe('方案 B 统一管道', () => {
       passiveSkillManager.triggerPassives(
         BattleTriggerPhase.BATTLE_START,
         participant,
-        undefined,
         { currentTurn: 0 },
       )
 
-      // ensureTrackingBuff 应已创建 _track_passive_test_static_passive
-      expect(buffSystem.hasBuff(participant.id, '_track_passive_test_static_passive')).toBe(true)
+      // ponytail: ensureTrackingBuff 已移除，modify_attribute 不再创建隐藏的 BuffInstance。
+      // 修饰符直接写入 attrData.modifiers，可通过 sourceKey 追溯。
+      const defenseData = participant.getAttrValue(ATTRIBUTE_CODE.defense)
+      expect(defenseData?.modifiers.some(m => m.sourceKey.startsWith('passive:'))).toBe(true)
+      expect(buffSystem.hasBuff(participant.id, '_track_passive_test_static_passive')).toBe(false)
     })
 
     it('已有 apply_buff 步骤的被动不创建追踪 buff', () => {
@@ -232,8 +233,7 @@ describe('方案 B 统一管道', () => {
       // 应用了 apply_buff 步骤 → buff 实例存在
       expect(buffSystem.hasBuff(participant.id, buffId)).toBe(true)
 
-      // 不应该有追踪 buff（因为已有 apply_buff 步骤）
-      expect(buffSystem.hasBuff(participant.id, `_track_passive_${passive.id}`)).toBe(false)
+      // ponytail: ensureTrackingBuff 已移除，不再创建追踪 buff
     })
   })
 

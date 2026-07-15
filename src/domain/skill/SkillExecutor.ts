@@ -183,6 +183,9 @@ export class SkillExecutor {
     }
   }
 
+  /**
+   * 执行 Buff 效果
+   */
   private executeBuff(
     skillStep: ExtendedSkillStep,
     action: BattleAction,
@@ -191,7 +194,7 @@ export class SkillExecutor {
     record?: CombatRecord,
   ): void {
     const buffId = skillStep.buffId ?? skillStep.effectId
-    if (!buffId) return
+    if (!buffId) return // ponytail: 无 buffId=无效果，静默返回
 
     const buffTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
@@ -256,6 +259,7 @@ export class SkillExecutor {
     const modTarget = skillStep.targetConfig?.faction === 'self' ? source : target
     const modifiers = skillStep.modifiers
     if (!modifiers || modifiers.length === 0) return
+
 
     for (const mod of modifiers) {
       const attrCode = mod.targetAttribute as ATTRIBUTE_CODE

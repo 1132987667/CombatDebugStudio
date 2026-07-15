@@ -221,6 +221,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
         // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
         script = NOOP_BUFF_SCRIPT
+        battleLogManager.addDebugLog(`Buff script not found: ${buffId}`)
       }
     }
 

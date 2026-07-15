@@ -70,7 +70,7 @@ export class BattleRecorder {
   private maxRecordings = 10
   private cleanupScheduled = false
   private randomSeeds = new Map<string, string>()
-  private currentRoundNumbers = new Map<string, number>()
+  private currentTurnNumbers = new Map<string, number>()
 
   public generateRandomSeed(): string {
     return SeededRandom.generateSeed()
@@ -103,7 +103,7 @@ export class BattleRecorder {
     }
 
     this.recordings.set(battleId, recording)
-    this.currentRoundNumbers.set(battleId, 0)
+    this.currentTurnNumbers.set(battleId, 0)
 
     this.recordEvent(
       battleId,
@@ -153,7 +153,7 @@ export class BattleRecorder {
     roundNumber: number,
     snapshot?: BattleStateSnapshot,
   ) {
-    this.currentRoundNumbers.set(battleId, roundNumber)
+    this.currentTurnNumbers.set(battleId, roundNumber)
     const recording = this.recordings.get(battleId)
     if (recording) {
       const round: BattleRound = {
@@ -177,12 +177,12 @@ export class BattleRecorder {
   }
 
   public endRound(battleId: string, snapshot?: BattleStateSnapshot) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     const recording = this.recordings.get(battleId)
     if (recording && recording.rounds.length > 0) {
-      const currentRound = recording.rounds[recording.rounds.length - 1]
-      if (currentRound.roundNumber === roundNumber) {
-        currentRound.endSnapshot = snapshot
+      const currentTurn = recording.rounds[recording.rounds.length - 1]
+      if (currentTurn.roundNumber === roundNumber) {
+        currentTurn.endSnapshot = snapshot
       }
     }
 
@@ -199,7 +199,7 @@ export class BattleRecorder {
   }
 
   public recordAction(battleId: string, action: BattleAction, turn: number) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.ACTION,
@@ -213,8 +213,8 @@ export class BattleRecorder {
 
     const recording = this.recordings.get(battleId)
     if (recording && recording.rounds.length > 0) {
-      const currentRound = recording.rounds[recording.rounds.length - 1]
-      currentRound.events.push({
+      const currentTurn = recording.rounds[recording.rounds.length - 1]
+      currentTurn.events.push({
         eventId: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         type: BattleEventType.ACTION,
         timestamp: Date.now(),
@@ -244,7 +244,7 @@ export class BattleRecorder {
     instanceId: string,
     turn: number,
   ) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.BUFF_ADD,
@@ -265,7 +265,7 @@ export class BattleRecorder {
     instanceId: string,
     turn: number,
   ) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.BUFF_REMOVE,
@@ -287,7 +287,7 @@ export class BattleRecorder {
     stacks: number,
     turn: number,
   ) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.BUFF_UPDATE,
@@ -308,7 +308,7 @@ export class BattleRecorder {
     state: Partial<BattleState>,
     turn: number,
   ) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.STATE_CHANGE,
@@ -326,7 +326,7 @@ export class BattleRecorder {
     turn: number,
     participantId: string,
   ) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.TURN_START,
@@ -340,7 +340,7 @@ export class BattleRecorder {
   }
 
   public recordTurnEnd(battleId: string, turn: number) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.TURN_END,
@@ -373,7 +373,7 @@ export class BattleRecorder {
       }
     }
 
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.BATTLE_END,
@@ -597,7 +597,7 @@ export class BattleRecorder {
   public clearRecordings() {
     this.recordings.clear()
     this.randomSeeds.clear()
-    this.currentRoundNumbers.clear()
+    this.currentTurnNumbers.clear()
     battleLogManager.addDebugLog('清空所有战斗记录')
   }
 
@@ -605,7 +605,7 @@ export class BattleRecorder {
     if (this.recordings.has(battleId)) {
       this.recordings.delete(battleId)
       this.randomSeeds.delete(battleId)
-      this.currentRoundNumbers.delete(battleId)
+      this.currentTurnNumbers.delete(battleId)
       battleLogManager.addDebugLog(`清理战斗记录: ${battleId}`)
     }
   }
@@ -635,7 +635,7 @@ export class BattleRecorder {
       const [battleId] = sortedRecordings[i]
       this.recordings.delete(battleId)
       this.randomSeeds.delete(battleId)
-      this.currentRoundNumbers.delete(battleId)
+      this.currentTurnNumbers.delete(battleId)
       battleLogManager.addDebugLog(`清理过期战斗记录: ${battleId}`)
     }
   }

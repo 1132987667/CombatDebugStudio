@@ -54,12 +54,12 @@ export class BattleLifecycleManager {
       sourceId: 'system',
       targetId: 'system',
       skillId: '',
-      turn: battle.currentRound || 1,
+      turn: battle.currentTurn || 1,
       effects: [{ type: 'status', description: `战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}`, duration: 0 }],
     })
 
     battle.actions.push(endAction)
-    this.battleRecorder.recordAction(battle.battleId, endAction, battle.currentRound || 1)
+    this.battleRecorder.recordAction(battle.battleId, endAction, battle.currentTurn || 1)
     this.battleRecorder.endRecording(battle.battleId, winner)
     this.battleRecorder.saveRecording(battle.battleId)
 

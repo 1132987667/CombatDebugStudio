@@ -43,6 +43,7 @@ import type {
   BattleData,
   BattleEntity,
   BattleEffect,
+  BattleContext,
 } from '@/domain/battle/type/types'
 import {
   ATTRIBUTE_CODE,
@@ -85,11 +86,12 @@ export class BattleExecutor {
     battle: BattleData,
     participant: BattleEntity,
   ): Promise<void> {
+    // 检查参与者是否被控制
     if (this.isParticipantControlled(participant)) {
       const action = BattleActionHelper.createStatus({
         sourceId: participant.id,
         targetId: participant.id,
-        turn: battle.currentRound || 1,
+        turn: battle.currentTurn || 1,
         effects: [
           {
             type: 'status',
@@ -100,7 +102,7 @@ export class BattleExecutor {
       })
       this.recordBattleAction(battle, action)
       battleLogManager.addBattleLog({
-        turn: battle.currentRound || 1,
+        turn: battle.currentTurn || 1,
         message: `${participant.name} 被控制，无法行动`,
         segments: [
           { text: participant.name, classStr: participant.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile' },
@@ -125,6 +127,10 @@ export class BattleExecutor {
       }
       return true
     })
+    const participants =battle.participants
+    const context: BattleContext = {
+      participants
+    }
 
     const aiInstance = battle.aiInstances?.get(participant.id)
     if (aiInstance) {
@@ -136,7 +142,7 @@ export class BattleExecutor {
       if (action.type === 'skill' && action.skillId) {
         const skill = this.skillManager.getSkillConfig(action.skillId)
         if (skill && activeSkillIds.includes(action.skillId)) {
-          await this.selectAndExecuteSkill(battle, participant, skill)
+          await this.selectAndExecuteSkill(battle, participant, skill, context)
         } else {
           await this.selectAndExecuteAttack(battle, participant)
         }
@@ -152,7 +158,7 @@ export class BattleExecutor {
         availableSkills[Math.floor(Math.random() * availableSkills.length)]
       const skill = this.skillManager.getSkillConfig(selectedSkillId)
       if (skill) {
-        await this.selectAndExecuteSkill(battle, participant, skill)
+        await this.selectAndExecuteSkill(battle, participant, skill, context)
       } else {
         await this.selectAndExecuteAttack(battle, participant)
       }
@@ -172,6 +178,7 @@ export class BattleExecutor {
     battle: BattleData,
     source: BattleEntity,
     skill: SkillConfig,
+    context?: BattleContext,
   ): Promise<BattleAction> {
     if (
       'isSkillAvailable' in source &&
@@ -187,7 +194,7 @@ export class BattleExecutor {
       targetId: '',
       skillId: skill.id,
       skillName: skill.name,
-      turn: battle.currentRound,
+      turn: battle.currentTurn,
     })
 
     const targets = this.getSkillTargets(battle, source, skill)
@@ -206,7 +213,7 @@ export class BattleExecutor {
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.BEFORE_ATTACK,
         source,
-        { target: targets[0], targetId: targets[0]?.id, currentTurn: battle.currentRound },
+        { target: targets[0], targetId: targets[0]?.id, currentTurn: battle.currentTurn, participants: context?.participants ?? battle.participants },
       )
       // ponytail: 启用延迟伤害模式 — 技能执行只记录数值不实际扣血，等待动画完成后统一应用
       this.skillManager.setDeferredDamageMode(true)
@@ -230,7 +237,7 @@ export class BattleExecutor {
           'skill',
           target.id,
           target.name,
-          battle.currentRound ?? 1,
+          battle.currentTurn ?? 1,
           skill.id,
         )
         record.skillName = skill.name
@@ -239,7 +246,7 @@ export class BattleExecutor {
           skill.id,
           source,
           target,
-          battle.currentRound || 1,
+          battle.currentTurn || 1,
           record,
           (stepTargetType, mainTarget) =>
             this.resolveStepTargets(battle, mainTarget, stepTargetType),
@@ -345,23 +352,23 @@ export class BattleExecutor {
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.ON_HIT,
               source,
-              { target: pd.target, sourceId: source.id, damage: pd.damage },
+              { target: pd.target, sourceId: source.id, damage: pd.damage, participants: context?.participants ?? battle.participants },
             )
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.DAMAGE_TAKEN,
               pd.target,
-              { target: source, sourceId: source.id, damage: pd.damage },
+              { target: source, sourceId: source.id, damage: pd.damage, participants: context?.participants ?? battle.participants },
             )
             if (!pd.target.isAlive()) {
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_DEATH,
                 pd.target,
-                { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
+                { target: source, sourceId: source.id, cause: EffectType.DAMAGE, participants: context?.participants ?? battle.participants },
               )
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_KILL,
                 source,
-                { target: pd.target, targetId: pd.target.id, cause: EffectType.DAMAGE },
+                { target: pd.target, targetId: pd.target.id, cause: EffectType.DAMAGE, participants: context?.participants ?? battle.participants },
               )
             }
           }
@@ -389,6 +396,7 @@ export class BattleExecutor {
         targetId: targets[0]?.id,
         damage: action.damage,
         isCritical: action.effects?.some((e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical),
+        participants: context?.participants ?? battle.participants,
       },
     )
 
@@ -554,29 +562,30 @@ export class BattleExecutor {
     source: BattleEntity,
     target: BattleEntity,
     damage: number,
+    participants?: Map<string, BattleEntity>,
   ): void {
     target.takeDamage(damage)
     // ponytail: ON_HIT 触发攻击者（命中方）的被动，DAMAGE_TAKEN 触发受击方（受伤害）的被动
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.ON_HIT,
       source,
-      { target, sourceId: source.id, damage },
+      { target, sourceId: source.id, damage, participants },
     )
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.DAMAGE_TAKEN,
       target,
-      { target: source, sourceId: source.id, damage },
+      { target: source, sourceId: source.id, damage, participants },
     )
     if (!target.isAlive()) {
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.ON_DEATH,
         target,
-        { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
+        { target: source, sourceId: source.id, cause: EffectType.DAMAGE, participants },
       )
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.ON_KILL,
         source,
-        { target, targetId: target.id, cause: EffectType.DAMAGE },
+        { target, targetId: target.id, cause: EffectType.DAMAGE, participants },
       )
     }
   }
@@ -622,6 +631,7 @@ export class BattleExecutor {
     target: BattleEntity,
     damageResult: { damage: number; isCritical: boolean },
     turnNumber: number,
+    participants?: Map<string, BattleEntity>,
   ): Promise<void> {
     const { damage, isCritical } = damageResult
     action.damage = damage
@@ -642,7 +652,7 @@ export class BattleExecutor {
     })
 
     // ponytail: 动画命中后再扣血，触发 ON_HIT/ON_DEATH 被动
-    this.applyDamageToTarget(source, target, damage)
+    this.applyDamageToTarget(source, target, damage, participants)
 
     await this.animationManager.triggerDamageAnimationAndWait({
       targetId: target.id,
@@ -681,16 +691,16 @@ export class BattleExecutor {
       return this.createBattleAction(
         source.id,
         source.id,
-        battle.currentRound || 1,
+        battle.currentTurn || 1,
       )
     }
 
-    const currentRound = battle.currentRound
+    const currentTurn = battle.currentTurn
 
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BEFORE_ATTACK,
       source,
-      { target, targetId, currentTurn: currentRound },
+      { target, targetId, currentTurn: currentTurn, participants: battle.participants },
     )
 
     // 创建详细记录对象用于捕获伤害拆分
@@ -701,7 +711,7 @@ export class BattleExecutor {
       'attack',
       targetId,
       target.name,
-      currentRound ?? 1,
+      currentTurn ?? 1,
     )
 
     const attackStep = this.buildNormalAttackStep(source, targetId)
@@ -712,17 +722,18 @@ export class BattleExecutor {
       record,
     )
 
-    const action = this.createBattleAction(source.id, targetId, currentRound)
+    const action = this.createBattleAction(source.id, targetId, currentTurn)
 
     if (damageResult.isMiss) {
-      await this.handleMissAttack(action, source, target, currentRound)
+      await this.handleMissAttack(action, source, target, currentTurn)
     } else {
       await this.handleHitAttack(
         action,
         source,
         target,
         damageResult,
-        currentRound,
+        currentTurn,
+        battle.participants,
       )
     }
 
@@ -741,6 +752,7 @@ export class BattleExecutor {
         targetId,
         damage: action.damage,
         isCritical: damageResult.isCritical,
+        participants: battle.participants,
       },
     )
 
@@ -788,7 +800,7 @@ export class BattleExecutor {
     this.battleRecorder.recordAction(
       battle.battleId,
       action,
-      battle.currentRound || 1,
+      battle.currentTurn || 1,
     )
   }
 
@@ -830,7 +842,7 @@ export class BattleExecutor {
       damage,
       success: true,
       timestamp: Date.now(),
-      turn: battle.currentRound || 1,
+      turn: battle.currentTurn || 1,
       effects: [
         {
           type: EffectType.DAMAGE,
@@ -946,18 +958,18 @@ export class BattleExecutor {
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.ON_HIT,
               source,
-              { target, sourceId: source.id, damage: action.damage ?? 0 },
+              { target, sourceId: source.id, damage: action.damage ?? 0, participants: battle.participants },
             )
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.DAMAGE_TAKEN,
               target,
-              { target: source, sourceId: source.id, damage: action.damage ?? 0 },
+              { target: source, sourceId: source.id, damage: action.damage ?? 0, participants: battle.participants },
             )
             if (!target.isAlive()) {
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_DEATH,
                 target,
-                { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
+                { target: source, sourceId: source.id, cause: EffectType.DAMAGE, participants: battle.participants },
               )
             }
           }
@@ -1026,23 +1038,23 @@ export class BattleExecutor {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.ON_HIT,
           source,
-          { target, sourceId: source.id, damage: actualDamage },
+          { target, sourceId: source.id, damage: actualDamage, participants: battle.participants },
         )
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.DAMAGE_TAKEN,
           target,
-          { target: source, sourceId: source.id, damage: actualDamage },
+          { target: source, sourceId: source.id, damage: actualDamage, participants: battle.participants },
         )
         if (!target.isAlive()) {
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_DEATH,
             target,
-            { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
+            { target: source, sourceId: source.id, cause: EffectType.DAMAGE, participants: battle.participants },
           )
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_KILL,
             source,
-            { target, targetId: target.id, cause: EffectType.DAMAGE },
+            { target, targetId: target.id, cause: EffectType.DAMAGE, participants: battle.participants },
           )
         }
 

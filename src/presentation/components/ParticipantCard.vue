@@ -115,7 +115,7 @@ const battleStore = useBattleStore()
 const showDebug = computed(() => battleStore.showDebug)
 
 // 使用 composable 包装参与者
-const { stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(props.participant)
+const { participant: reactiveParticipant, stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(props.participant)
 
 const buffSystem = container.resolve<BuffSystem>('BuffSystem')
 
@@ -231,12 +231,14 @@ const energyColorClass = computed(() => {
 
 /** 转换为纯文本 Buff 展示数据 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
 const buffListItems = computed(() => {
-  // ponytail: 读取 statsVersion 建立 Vue 响应式依赖（recalculateAll → _statsVersion++ 时 computed 重算）
-  void (props.participant as any).statsVersion
+  // ponytail: 读取 statsVersion 建立 Vue 响应式依赖（recalculateAll → proxy._statsVersion++ 时 computed 重算）
+  const version = reactiveParticipant.statsVersion
+  console.error('版本更新', version, reactiveParticipant)
 
-  const entity = props.participant as any
+  const entity = reactiveParticipant
   const result: any[] = []
   const seenIds = new Set<string>()
+  console.error(`{entity.name}携带的buff`, buffSystem.getBuffInstances(entity.id))
 
   // 源1: BuffSystem 管理的 buff（被动/技能/脚本添加）
   if (typeof entity.getBuffInstanceIds === 'function') {
@@ -282,6 +284,7 @@ const buffListItems = computed(() => {
     }
   }
 
+  console.error('buffListItems', result)
   return result
 })
 

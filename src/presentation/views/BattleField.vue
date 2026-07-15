@@ -14,7 +14,7 @@
         <div class="field-party our-party">
           <div class="party-header">我方 ({{ allyTeam.length }}人)</div>
           <div class="party-members">
-            <ParticipantCard v-for="member in allyTeam" :key="`${member.id}-${member.statsVersion}`" :ref="el => { handleCardRef(member.id, el) }"
+            <ParticipantCard v-for="member in allyTeam" :key="member.id" :ref="el => { handleCardRef(member.id, el) }"
               :participant="member" :is-active="isCurrentActor(member.id)"
               :is-selected="store.selectedCharacterId === member.id" :is-enemy="false" :show-debug="false"
               @click="selectCharacter(member.id)" />
@@ -28,7 +28,7 @@
         <div class="field-party enemy-party">
           <div class="party-header">敌方 ({{ enemyTeam.length }}人)</div>
           <div class="party-members">
-            <ParticipantCard v-for="member in enemyTeam" :key="`${member.id}-${member.statsVersion}`" :ref="el => { handleCardRef(member.id, el) }"
+            <ParticipantCard v-for="member in enemyTeam" :key="member.id" :ref="el => { handleCardRef(member.id, el) }"
               :participant="member" :is-active="isCurrentActor(member.id)"
               :is-selected="store.selectedCharacterId === member.id" :is-enemy="true" :show-debug="false"
               @click="selectCharacter(member.id)" />

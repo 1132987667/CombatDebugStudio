@@ -191,7 +191,7 @@ export class BattleSystem {
       sourceId: context.sourceId ?? '',
       targetId: context.targetId,
       value: context.value,
-      currentTurn: context.currentTurn ?? this.battleData.currentRound,
+      currentTurn: context.currentTurn ?? this.battleData.currentTurn,
       battleData: this.battleData,
       ...context,
       phase,
@@ -252,7 +252,7 @@ export class BattleSystem {
    * @returns 当前回合数（从1开始）
    */
   public getRound(): number {
-    return this.battleData.currentRound
+    return this.battleData.currentTurn
   }
 
   /**
@@ -305,7 +305,7 @@ export class BattleSystem {
     battleData.skillManager = this.skillManager
 
     battleData.currentTurn = 0
-    battleData.currentRound = 1
+    battleData.currentTurn = 1
     battleData.battleState = BattleStatus.PREPARING
 
     const battleId = this.battleData.battleId
@@ -325,12 +325,9 @@ export class BattleSystem {
     battleData.battleSpeed = autoBattleRules.defaultSpeed
     battleData.maxTurns = this.ruleManager.getTurnSystemRules().maxTurns
 
-    // 注册属性变化回调，Buff 修改 ModifierStack 后自动同步到参与者
+    // 注册属性变化回调，Buff 修改 ModifierStack 后发射事件通知 UI 层
     this.buffSystem.setAttributeChangeCallback((characterId: string) => {
-      const participant = battleData.participants.get(characterId)
-      if (participant instanceof BattleParticipantImpl) {
-        participant.recalculateAll()
-      }
+      eventBus.emit(BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED, { characterId })
     })
 
     // ponytail: 注册 buff 添加回调，被动触发路径通过 eventBus 告知 UI 播放动画
@@ -360,7 +357,7 @@ export class BattleSystem {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.DAMAGE_TAKEN,
           target,
-          { sourceId: '', targetId, damage: actualDamage },
+          { sourceId: '', targetId, damage: actualDamage, participants: battleData.participants },
         )
       }
     })
@@ -377,7 +374,7 @@ export class BattleSystem {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.HEAL_RECEIVED,
           target,
-          { sourceId: '', targetId, value: amount },
+          { sourceId: '', targetId, value: amount, participants: battleData.participants },
         )
       }
     })
@@ -458,12 +455,18 @@ export class BattleSystem {
       sourceId: participant.id,
     })
 
+    const participants = this.battleData?.participants
+    if (!participants) return
+
     // 使用PassiveSkillManager触发战斗开始时的被动技能
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BATTLE_START,
       participant,
-      {},
+      { participants },
     )
+
+    // ponytail: 增量分发光环 — 新角色受已有光环影响 + 新角色的光环施加给已有角色
+    this.distributeAuras(participants)
   }
 
   /**
@@ -480,7 +483,7 @@ export class BattleSystem {
     }
 
     // ponytail: 调试模式 — 首回合开始前暂停，让开发者查看初始状态
-    if (battle.currentRound === 1) {
+    if (battle.currentTurn === 1) {
       await debugGate.waitIfNeeded('BATTLE_START')
     }
 
@@ -495,7 +498,7 @@ export class BattleSystem {
       aliveParticipants.forEach((participant) => {
         this.emitTriggerEvent(BattleTriggerPhase.TURN_START, {
           sourceId: participant.id,
-          currentTurn: battle.currentRound,
+          currentTurn: battle.currentTurn,
         })
       })
 
@@ -503,7 +506,7 @@ export class BattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         BattleTriggerPhase.TURN_START,
         battle.participants,
-        { currentTurn: battle.currentRound },
+        { currentTurn: battle.currentTurn },
       )
 
       // 减少所有角色技能冷却
@@ -568,7 +571,7 @@ export class BattleSystem {
         if (!participant || !participant.isAlive()) {
           continue
         }
-        console.error('当前角色的能量', participant.getAttribute(ATTRIBUTE_CODE.currentEnergy))
+        // console.error('当前角色的能量', participant.getAttribute(ATTRIBUTE_CODE.currentEnergy))
         battle.currentTurn = i
 
         // 在每个角色行动前，发送当前行动者更新事件到 UI 层
@@ -630,21 +633,21 @@ export class BattleSystem {
       endParticipants.forEach((participant) => {
         this.emitTriggerEvent(BattleTriggerPhase.TURN_END, {
           sourceId: participant.id,
-          currentTurn: battle.currentRound,
+          currentTurn: battle.currentTurn,
         })
       })
 
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         BattleTriggerPhase.TURN_END,
         battle.participants,
-        { round: battle.currentRound },
+        { currentTurn: battle.currentTurn },
       )
 
       battle.roundState = RoundStatus.END
 
-      this.battleRecorder.recordTurnEnd(battleId, battle.currentRound || 1)
+      this.battleRecorder.recordTurnEnd(battleId, battle.currentTurn || 1)
 
-      battle.currentRound++
+      battle.currentTurn++
       eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED)
     } catch (error) {
       battleLogManager.addDebugLog('处理回合时出错:', { level: LogLevel.ERROR, error: error as Error })
@@ -712,13 +715,13 @@ export class BattleSystem {
   private async runEndConditionCheck(): Promise<void> {
     const battle = this.battleData
     if (!battle) return
-    const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentRound)
+    const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentTurn)
     if (result.shouldEnd && result.winner) {
       await this.endBattle(result.winner)
-      if (battle.currentRound >= battle.maxTurns) {
+      if (battle.currentTurn >= battle.maxTurns) {
         const winnerLabel = result.winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'
         battleLogManager.addBattleLog({
-          turn: battle.currentRound,
+          turn: battle.currentTurn,
           message: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜`,
           segments: [{ text: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜` }],
           category: BATTLE_LOG_CATEGORIES.STATUS,
@@ -928,7 +931,7 @@ export class BattleSystem {
    */
   public advanceRound(): void {
     if (this.battleData) {
-      this.battleData.currentRound++
+      this.battleData.currentTurn++
     }
   }
 
@@ -957,7 +960,7 @@ export class BattleSystem {
       // 战斗已在 runEndConditionCheck 中结束，此处不再重复触发
       // 仅当 battleState 仍为 ACTIVE 时才生成 SET_WINNER（兜底保护）
       if (battle.battleState === BattleStatus.ACTIVE) {
-        const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentRound)
+        const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentTurn)
         if (result.winner) {
           commands.push({
             type: 'SET_WINNER',
@@ -975,7 +978,7 @@ export class BattleSystem {
       type: 'NEXT_TURN',
       payload: {
         actorId: turnOrder[0] || '',
-        round: battle.currentRound,
+        round: battle.currentTurn,
         turnOrder,
       },
     })

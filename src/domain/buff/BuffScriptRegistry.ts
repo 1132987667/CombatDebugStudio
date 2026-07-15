@@ -221,7 +221,6 @@ export class BuffScriptRegistry {
   public get<TParams = any>(scriptId: string): IBuffScript<TParams> | null {
     const entry = this.registry.get(scriptId)
     if (!entry) {
-      battleLogManager.addDebugLog(`Buff script not found: ${scriptId}`)
       return null
     }
     try {

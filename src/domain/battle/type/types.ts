@@ -465,7 +465,7 @@ export interface BattleState {
   /** 当前行动次序索引（0-based，表示当前回合内的第几个行动） */
   currentTurn: number
   /** 当前回合数（1-based，从 1 开始） */
-  currentRound: number
+  currentTurn: number
   /** 战斗状态 */
   battleState: BattleStatus
   startTime: number
@@ -544,7 +544,7 @@ export interface BattleData {
   /** 当前行动次序索引（表示当前回合内的第几个行动） */
   currentTurn: number
   /** 当前回合数（从1开始） */
-  currentRound: number
+  currentTurn: number
   /** 最大回合数 */
   maxTurns: number
   /** 战斗开始时间戳 */

@@ -85,6 +85,7 @@ const clearLogs = () => {
 
 const logLevelName = (level: LogLevel): string => {
   const names: Record<LogLevel, string> = {
+    [LogLevel.TRACE]: 'TRACE',
     [LogLevel.DEBUG]: 'DEBUG',
     [LogLevel.INFO]: 'INFO',
     [LogLevel.WARN]: 'WARN',
@@ -191,6 +192,16 @@ const downloadLogs = () => {
   margin-right: var(--space-2);
   min-width: 3em;
   display: inline-block;
+}
+
+.level-TRACE {
+  color: var(--color-text-tertiary);
+  opacity: 0.7;
+}
+
+.level-TRACE .log-level {
+  background: var(--color-bg-tertiary);
+  opacity: 0.7;
 }
 
 .level-DEBUG {

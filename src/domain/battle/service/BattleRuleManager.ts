@@ -428,12 +428,12 @@ export class BattleRuleManager {
    * 这是一个纯业务规则函数，不依赖外部状态
    * maxTurns 从规则配置中读取，统一配置来源
    * @param participants 所有参战方
-   * @param currentRound 当前回合数
+   * @param currentTurn 当前回合数
    * @returns 判定结果
    */
   public checkBattleEndCondition(
     participants: Map<string, BattleEntity>,
-    currentRound: number,
+    currentTurn: number,
   ): BattleEndCheckResult {
     const { maxTurns } = this.getConfig().rules.turnSystem
     const aliveCharacters = Array.from(participants.values()).filter(
@@ -452,7 +452,7 @@ export class BattleRuleManager {
     }
 
     // 2. 超过最大回合数（按血量比例判定）
-    if (currentRound >= maxTurns) {
+    if (currentTurn >= maxTurns) {
       const charactersHealth = aliveCharacters.reduce(
         (sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth),
         0,

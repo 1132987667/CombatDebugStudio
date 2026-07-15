@@ -1,513 +1,208 @@
-# 统一管道 — Buff 全生命周期时序
+### 被动技能全流程时序图（文字版）
 
-## 图例
+以下时序图使用文字描述，符号说明：
+- `[A] → [B]`：A 调用 B 的方法
+- `[A] --> [B]`：B 返回结果给 A
+- `---`：阶段分隔
+
+---
+
+#### 一、被动技能注册（角色/敌人初始化阶段）
 
 ```
-┌─ 调用方 ─┐
-├─ 方法名 ─┤
-│ 关键操作   │
-└───────────┘
-  ● 同步 / 事件通知
+[GameDataProcessor.enemyToParticipant()] 
+    → 创建 BattleParticipantImpl 实例
+    → 读取 Enemy.skills.passive 技能ID列表
+    → 通过 getSkillByIds() 加载 SkillConfig 数组
+
+[GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)]
+    → 遍历 participant.skills.passive 中的每个 SkillConfig
+    ├─ 若 skill.triggerTimes 存在 → 直接使用
+    └─ 若不存在 → 默认填充 ['battle_start']
+    → 将 trigger 字符串映射为 BattleTriggerPhase（如 'battle_start' → BATTLE_START）
+    → 构造 PassiveSkillConfig 对象：
+        { id, name, trigger, skillId, cooldown, maxTriggerCount, triggerProbability, hpThreshold, condition }
+    → 调用 passiveSkillManager.registerPassive(participant.id, config)
+        └─ 存入 Map<characterId, PassiveSkillConfig[]>
 ```
 
 ---
 
-## 阶段一：注册与初始化（构造期 → BATTLE_START）
+#### 二、战斗开始阶段（BattleSystem.initialize → applyPassiveSkills）
 
 ```
-GameDataProcessor.enemyToParticipant(enemy)
-  │
-  ├─ new BattleParticipantImpl(data, buffSystem)
-  │    └─ setModifierProvider(buffSystem)
-  │         ├─ this.modifierProvider = buffSystem
-  │         ├─ syncModifiersFromProvider()
-  │         │    └─ (此时 ModifierStack 为空，无效果)
-  │         └─ stats.recalculateAll()
-  │              └─ (基础属性已计算，被动加成尚未加入)
-  │
-  └─ registerParticipantPassives(entity, passiveSkillManager)
-       └─ 遍历 skills.passive[]
-            ├─ 有 triggerTimes → 原样注册到 PassiveSkillManager
-            └─ 无 triggerTimes → 补 ['battle_start'] 后注册
-                 └─ passiveSkillManager.registerPassive(entity.id, config)
-```
-
----
-
-## 阶段二：战斗开始 — 统一 BATTLE_START 触发
-
-```
-BattleSystem.initialize(allyParticipants, enemyParticipants)
-  │
-  ├─ 1. 构建 participants Map
-  │    └─ setModifierProvider(entity, buffSystem) → syncModifiersFromProvider()
-  │
-  ├─ 2. 注册 BuffSystem 回调
-  │    ├─ setAttributeChangeCallback → recalculateAll()
-  │    └─ setBuffAppliedCallback → eventBus.emit(BUFF_EFFECT)
-  │
-  ├─ 3. applyPassiveSkills(participants)
-  │    ├─ emitTriggerEvent(BATTLE_START)         ← EventBus 广播
-  │    │
-  │    └─ passiveSkillManager.triggerPassiveSkillsForAll(BATTLE_START, participants)
-  │         │
-  │         └─ [遍历每个参与者]
-  │              └─ triggerPassives(BATTLE_START, entity, target?, context?)
-  │                   │
-  │                   └─ [遍历 characterPassives 中 trigger === BATTLE_START 的条目]
-  │                        │
-  │                        ├─ 检查冷却时间
-  │                        │    └─ config.cooldown > 0 && lastTriggeredTurn
-  │                        │         → currentTurn - lastTriggeredTurn < cooldown? → 跳过
-  │                        │
-  │                        ├─ 检查最大触发次数
-  │                        │    └─ maxTriggerCount && triggerCount >= maxTriggerCount? → 跳过
-  │                        │    └─ ponytail: battle_start 被动默认 maxTriggerCount = 1
-  │                        │
-  │                        ├─ 检查触发概率
-  │                        │    └─ triggerProbability && Math.random() > probability? → 跳过
-  │                        │
-  │                        ├─ 检查 HP 阈值 (HP_LOWER_THAN 专用)
-  │                        │    └─ currentHealth / maxHealth > hpThreshold / 100? → 跳过
-  │                        │
-  │                        ├─ 检查触发条件
-  │                        │    └─ condition && !evaluateCondition()? → 跳过
-  │                        │
-  │                        │  ──── 全部通过 ────
-  │                        │
-  │                        ├─ actualTarget = target ?? entity    ← 对抗式审查修复 #1
-  │                        │
-  │                        ├─ skillManager.executeSkill(skillId, entity, actualTarget, turn)
-  │                        │    │
-  │                        │    └─ [遍历 skill.steps]
-  │                        │         │
-  │                        │         ├── step.type === 'modify_attribute'
-  │                        │         │    └─ [流程 A：直接属性修改]
-  │                        │         │
-  │                        │         ├── step.type === 'apply_buff'
-  │                        │         │    └─ [流程 B：addBuff 完整流程]
-  │                        │         │
-  │                        │         └── step.type === 'shield' / 'heal'
-  │                        │              / 'deal_damage' / 'custom' / ...
-  │                        │              └─ SkillExecutor 对应方法
-  │                        │
-  │                        └─ ensureTrackingBuff(entity.id, skillId, name)    ← 对抗式审查修复 #2
-  │                             └─ [流程 C：创建追踪 Buff]
-  │
-  ├─ 4. 创建回合顺序（已移至被动加成之后）
-  │    └─ battleData.turnOrder = turnManager.createTurnOrder(participants)
-  │         └─ ponytail: 被动 speed 加成已生效，排序正确
-  │
-  └─ 5. distributeAuras(participants)
-       └─ [流程 D：光环扫描分发]
+[BattleSystem.initialize(allyParticipants, enemyParticipants)]
+    │
+    ├─ 创建 participants Map，设置修饰符提供者（setModifierProvider）
+    ├─ 注册 BuffSystem 回调（属性变化、Buff添加等）
+    │
+    └─ [BattleSystem.applyPassiveSkills(participants)]
+        ├─ 对每个参与者 emitTriggerEvent(BattleTriggerPhase.BATTLE_START) → 触发事件总线
+        │
+        └─ [PassiveSkillManager.triggerPassiveSkillsForAll(BATTLE_START, participants)]
+            → 遍历 participants
+                → [PassiveSkillManager.triggerPassives(trigger, entity, context)]
+                    → 获取 entity.id 对应的被动列表
+                    → 遍历每个 PassiveSkillConfig：
+                        1. 检查 trigger 是否匹配
+                        2. 检查冷却（cooldown > 0 且 lastTriggeredTurn 未达到冷却）
+                        3. 检查最大触发次数（maxTriggerCount 限制）
+                        4. 检查触发概率（triggerProbability）
+                        5. 检查 HP 阈值（HP_LOWER_THAN 专用）
+                        6. 检查自定义条件（condition 表达式）
+                        ── 全部通过 ──
+                        7. 确定目标：
+                           ├─ 若触发为时间型（BATTLE_START / TURN_START / TURN_END）且 context.participants 存在
+                           │    → 根据技能 selector 解析目标（resolveSkillTargets）
+                           └─ 否则 → 使用 context.target 或默认 entity
+                        8. [PassiveSkillManager.executePassiveSkill(skillConfig, entity, targets, turn)]
+                              ├─ 获取 SkillExecutor
+                              ├─ 遍历 targets
+                              │   └─ 遍历 skill.steps
+                              │       └─ [SkillExecutor.executeStep(step, action, source, target)]
+                              │           ├─ 若 step.type === 'modify_attribute'
+                              │           │   → 修改目标属性（直接写入 attrData.modifiers）
+                              │           │   → 同步加成属性（ATTRIBUTE_CODE → bonus 映射）
+                              │           │   → 调用 target.recalcAll()
+                              │           │
+                              │           ├─ 若 step.type === 'apply_buff'
+                              │           │   → [BuffSystem.addBuff(characterId, buffId, config, turn)]
+                              │           │       ├─ 合并配置（脚本 CONFIG、JSON、调用方）
+                              │           │       ├─ 免疫检查
+                              │           │       ├─ 叠加规则处理（REFRESH / LIMITED / INDEPENDENT）
+                              │           │       ├─ 创建 BuffInstance
+                              │           │       ├─ 执行脚本 onApply（应用修饰符到 ModifierStack）
+                              │           │       ├─ 触发属性变更（triggerAttributeChange）
+                              │           │       └─ 通知 UI（onBuffApplied 回调）
+                              │           │
+                              │           └─ 其他类型（shield / heal / deal_damage 等）→ 对应方法
+                        9. 更新被动触发计数和冷却（仅在 hasExecuted=true 时）
 ```
 
 ---
 
-## 流程 A：modify_attribute — 直接属性修改
+#### 三、光环分发（applyPassiveSkills 之后）
 
 ```
-SkillExecutor.executeModifyAttribute(step, action, source, target)
-  │
-  ├─ modTarget = step.targetConfig?.self ? source : target
-  ├─ modifiers = step.modifiers
-  │
-  └─ [遍历 modifiers]
-       │
-       ├─ attrCode = mod.targetAttribute → ATTRIBUTE_CODE
-       ├─ attrData = modTarget.getAttrValue(attrCode)
-       │    └─ 无该属性? → continue
-       │
-       ├─ 解析 ModifierType (PERCENTAGE / ADDITIVE / MULTIPLICATIVE / FINAL)
-       ├─ 值归一化 (value < 1 的 PERCENTAGE → ×100)
-       │
-       ├─ sourceKey = `passive:runtime:${mod.id || step.buffId || 'mod'}`
-       ├─ attrData.modifiers = filter(m => m.sourceKey !== sourceKey)  // 去重
-       ├─ attrData.modifiers.push(newMod)
-       ├─ attrData.cachedVersion = -1
-       │
-       └─ [PERCENTAGE 专用 — 加成属性同步]    ← 对抗式审查修复 #3
-            ├─ ATTR_TO_BONUS_MAP:
-            │    ├─ maxHealth    → healthBonus
-            │    ├─ minAttack    → attackBonus
-            │    └─ maxAttack    → attackBonus
-            │
-            └─ 同步到对应的 bonus 属性
-                 └─ (filter 去重 + push + cachedVersion = -1)
-
-            ├─ [attack PERCENTAGE 专用]
-            │    └─ 同步到 minAttack / maxAttack
-            │         └─ (filter 去重 + push + cachedVersion = -1)
-            │
-  └─ modTarget.recalcAll()
-       └─ (被动修饰符已写入 attrData.modifiers，直接参与计算)
+[BattleSystem.distributeAuras(participants)]
+    → 遍历所有参与者
+        → 获取每个 buff 实例 ID
+            → buffSystem.getBuffAuraConfig(buffId) 读取 aura 配置
+                ├─ 若 aura.targetSelector === 'allies' 或 'enemies'
+                └─ 遍历同一方或对立方的其他参与者
+                    → 将 aura.modifiers 应用为目标参与者的属性修饰符
+                        → GameDataProcessor.applyAuraModifiersToParticipant(target, sourceKey, modifiers)
+                            → 直接 push 到 attrData.modifiers
+                            → 调用 target.recalcAll()
 ```
 
 ---
 
-## 流程 B：apply_buff — addBuff 完整流程
+#### 四、回合中触发（TurnManager → PassiveSkillManager）
 
 ```
-buffSystem.addBuff(characterId, buffId, config, currentTurn, record?)
-  │
-  ├─ 步骤 1：查找脚本
-  │    ├─ scriptRegistry.get(buffId)
-  │    │    ├─ 有 IBuffScript → 就用它
-  │    │    └─ 无脚本 → 尝试 resolve(buffId)
-  │    │         ├─ config 存在? → 用 NOOP_BUFF_SCRIPT 占位
-  │    │         └─ config 不存在? → return '' (静默跳过)
-  │    │
-  │    └─ script 确定
-  │
-  ├─ 步骤 2：合并配置（四层优先级：调用方 > 脚本 CONFIG > JSON > 默认值）
-  │    ├─ scriptDefaultConfig = 脚本的静态 CONFIG (自包含脚本)
-  │    ├─ jsonConfig = scriptRegistry.getBuffConfig(buffId) (buffs.json)
-  │    ├─ 合并顺序:
-  │    │    id / name / description / duration / maxStacks
-  │    │    stackRule / cooldown / controlType / controlPriority
-  │    │    isDebuff / isPositive / isPermanent / dispellable
-  │    │    immuneTags / iconPath / parameters / attributes
-  │    │
-  │    └─ resolvedConfig 就绪
-  │
-  ├─ 步骤 3：免疫检查
-  │    ├─ characterImmunities.get(characterId)
-  │    ├─ 控制类型免疫: controlType.toLowerCase() → 匹配免疫集?
-  │    ├─ buffId 免疫: buffId 去掉前缀后 → 匹配免疫集?
-  │    └─ 任一匹配 → return '' (不施加，静默跳过)
-  │
-  ├─ 步骤 4：叠加规则
-  │    ├─ existingBuffs = getBuffInstances(charId).filter(i.buffId === buffId)
-  │    │
-  │    ├─ StackRule.REFRESH
-  │    │    └─ existingBuffs.forEach(removeBuff)
-  │    │
-  │    ├─ StackRule.LIMITED
-  │    │    ├─ existingBuffs.length >= maxStacks
-  │    │    │    └─ refreshBuff(existing[0].id, turn) → return existing[0].id
-  │    │    └─ < maxStacks → 继续创建新实例
-  │    │
-  │    └─ StackRule.INDEPENDENT → 直接创建新实例
-  │
-  ├─ 步骤 5：创建 BuffInstance
-  │    ├─ instanceId = `${charId}_${buffId}_${turn}_${counter.next()}`
-  │    ├─ context = BuffContextPool.borrow(charId, instanceId, resolvedConfig, this)
-  │    ├─ buffInstance = {
-  │    │     id: instanceId,
-  │    │     characterId, buffId, script, context,
-  │    │     startTurn: turn,
-  │    │     duration: resolvedConfig.duration || -1,
-  │    │     remainingTurns: resolvedConfig.duration,
-  │    │     currentStacks: 1,
-  │    │     isActive: true,
-  │    │   }
-  │    └─ buffInstances.set(instanceId, buffInstance)
-  │
-  ├─ 步骤 6：执行脚本 onApply
-  │    └─ BuffErrorBoundary.wrap(() => script.onApply(context))
-  │         │
-  │         ├─ [自包含脚本 AttributeBuffTemplate 示例]
-  │         │    └─ _onApply(context):
-  │         │         ├─ getModifiers() → [{attribute, value: (ctx)=>..., type}]
-  │         │         └─ context.addModifier(attrCode, computedValue, modType)
-  │         │              └─ modifierStack.addModifier(instanceId, attr, value, type)
-  │         │
-  │         └─ [NOOP 脚本] → 空操作
-  │
-  ├─ 步骤 7：非自包含脚本 → 从 JSON 配置读取属性修饰符
-  │    ├─ applyAttributeModifiers(charId, instanceId, buffId)
-  │    │    └─ scriptRegistry.getBuffAttributes(buffId)  (如 {"attack": "+20%"})
-  │    │         └─ modifierStack.addModifier(instanceId, attr, parsedValue, parsedType)
-  │    │
-  │    └─ applyBuffImmunities(charId, buffId)
-  │         └─ buffConfig.immunities? → characterImmunities.add(tag)
-  │
-  ├─ 步骤 8：自光环修饰符 (targetSelector === 'self')
-  │    └─ applyBuffAuraModifiers(charId, instanceId, buffId)
-  │         └─ aura?.targetSelector === 'self'
-  │              └─ modifierStack.addModifier(instanceId, attr, value, type)
-  │
-  ├─ 步骤 9：触发属性变更
-  │    └─ triggerAttributeChange(characterId)
-  │         └─ onAttributeChange?.(characterId)
-  │              └─ [回调 → BattleSystem]
-  │                   └─ participant.recalculateAll()
-  │                        │
-  │                        ├─ syncModifiersFromProvider()
-  │                        │    └─ [遍历所有 ATTRIBUTE_CODE]
-  │                        │         ├─ stack = modifierProvider.getModifierStack(id)
-  │                        │         ├─ stackMods = stack.getModifiers(code)
-  │                        │         ├─ 保留: baseModifiers + passiveModifiers
-  │                        │         └─ externalModifiers = stackMods + sourceName 描述
-  │                        │              └─ attrData.modifiers = [base, ...passive, ...external]
-  │                        │
-  │                        └─ stats.recalculateAll()
-  │                             └─ (最终属性值 = 基础值 + 所有修饰符)
-  │
-  ├─ 步骤 10：UI 通知
-  │    └─ onBuffApplied?.(charId, buffId)
-  │         └─ [回调 → BattleSystem]
-  │              └─ eventBus.emit(BUFF_EFFECT, { targetId, buffName, isPositive })
-  │                   └─ → UI buff 列表更新 + 动画播放
-  │
-  └─ 步骤 11：战斗记录
-       └─ record?.effects.push({ type: 'buff', targetId, buffId, instanceId })
+[BattleSystem.processTurnInternal()]  (每回合)
+    ├─ 触发 TURN_START 事件 → [PassiveSkillManager.triggerPassiveSkillsForAll(TURN_START, ...)]
+    │   └─ 同 BATTLE_START 流程，但 trigger 为 TURN_START
+    │
+    ├─ 执行所有参与者行动（动作执行器）
+    │   ├─ 在攻击/受击等事件中，显式调用 PassiveSkillManager.triggerPassives()
+    │   │   └─ 例如：在 onHit, damageTaken, onDeath 等时机
+    │   │       → 条件检查 → 执行被动步骤
+    │
+    └─ 触发 TURN_END 事件 → [PassiveSkillManager.triggerPassiveSkillsForAll(TURN_END, ...)]
+        └─ 同上
 ```
 
 ---
 
-## 流程 C：追踪 Buff（modify_attribute 纯被动 -> buff 列表可见）
+#### 五、关键逻辑说明
+
+1. **被动注册**：
+   - 每个参与者在创建时，从其技能配置中提取被动技能列表，并通过 `registerParticipantPassives` 注册到 `PassiveSkillManager`。
+   - 若被动技能未指定 `triggerTimes`，默认补充 `['battle_start']`，确保战斗开始时生效。
+
+2. **触发时机**：
+   - 时间型触发：`BATTLE_START`（仅一次），`TURN_START`，`TURN_END`。
+   - 事件型触发：`BEFORE_ATTACK`，`ON_HIT`，`DAMAGE_TAKEN`，`HEAL_RECEIVED`，`ON_DEATH`，`ON_KILL`，`SKILL_USE`，`HP_LOWER_THAN` 等。
+   - 事件型触发由业务代码在相应位置显式调用 `triggerPassives`。
+
+3. **条件检查链**：
+   - 冷却（cooldown）→ 最大触发次数（maxUses）→ 概率（triggerProbability）→ HP阈值（hp_lower_than）→ 自定义条件表达式（condition）。
+   - 所有条件通过后才执行被动效果。
+
+4. **目标解析**：
+   - 时间型触发：根据技能配置的 `selector` 解析目标（支持 `self`/`ally`/`enemy` 及策略）。
+   - 事件型触发：优先使用事件上下文中的 `target`，否则默认为自身。
+
+5. **步骤执行**：
+   - `modify_attribute`：直接修改参与者的属性修饰符列表，并触发重新计算。
+   - `apply_buff`：调用 BuffSystem 添加 Buff，遵循完整生命周期（叠加、免疫、脚本回调等）。
+   - 其他类型（damage/heal/shield/control）：由 `SkillExecutor` 处理，与主动技能共用执行器。
+
+6. **追踪 Buff**：
+   - 对于纯 `modify_attribute` 被动（无 `apply_buff` 步骤），系统会自动创建一个只读的追踪 Buff，使其在 UI 上可见，便于玩家理解被动生效状态。
+
+7. **光环分发**：
+   - 光环型被动（如首领光环、统帅之威）通过 `aura` 字段定义，在 `distributeAuras` 阶段将修饰符批量应用到盟友/敌人身上，而非每个目标单独触发。
+
+8. **跨战斗清理**：
+   - 战斗重置时调用 `PassiveSkillManager.clearAll()`，清空所有被动注册，防止跨战斗污染。
+
+---
+
+#### 六、整体时序图（简化ASCII）
 
 ```
-PassiveSkillManager.ensureTrackingBuff(characterId, skillId, skillName)
-  │
-  ├─ skillConfig = skillManager.getSkillConfig(skillId)
-  │    └─ 无 config 或 无 steps → return
-  │
-  ├─ hasApplyBuff = steps.some(s => s.type === 'apply_buff')
-  │    └─ true → return (apply_buff 已创建 buff 实体，无需追踪)
-  │
-  ├─ buffId = `_track_passive_${skillId}`
-  │
-  ├─ buffSystem.hasBuff(characterId, buffId)
-  │    └─ true → return (已存在，避免重复)
-  │
-  └─ buffSystem.addBuff(characterId, buffId, {
-       id: buffId,
-       name: skillName,
-       duration: -1,              // 永久
-       maxStacks: 1,
-       stackRule: StackRule.REFRESH,
-       controlType: ControlType.NONE,
-       isDebuff: false,
-       isPositive: true,
-       // 无 attributes → 不产生修饰符，仅作为 UI 占位
-     }, 0)
+参与者: 系统初始化 -> PassiveSkillManager -> SkillExecutor -> BuffSystem
+---------------------------------------------------------------
+1. 注册阶段
+   系统加载角色 -> GameDataProcessor.enemyToParticipant()
+                -> registerParticipantPassives()
+                    -> PassiveSkillManager.registerPassive(characterId, config)
+
+2. 战斗开始
+   BattleSystem.initialize()
+        -> applyPassiveSkills()
+            -> PassiveSkillManager.triggerPassiveSkillsForAll(BATTLE_START)
+                -> 对每个角色: triggerPassives()
+                    -> 检查条件
+                    -> executePassiveSkill()
+                        -> SkillExecutor.executeStep()
+                            -> 若 modify_attribute: 直接改属性 + recalcAll
+                            -> 若 apply_buff: BuffSystem.addBuff()
+                                -> 脚本 onApply
+                                -> 触发属性变化
+                                -> UI 通知
+
+3. 光环分发
+   BattleSystem.distributeAuras()
+        -> 遍历所有 buff 实例
+            -> 若 aura 存在，应用 modifiers 到同队/异队成员
+
+4. 回合中触发
+   TurnManager 执行回合
+        -> 触发 TURN_START 事件 (同上流程)
+        -> 动作执行中: 显式调用 triggerPassives(ON_HIT, DAMAGE_TAKEN, etc.)
+        -> 触发 TURN_END 事件 (同上)
+
+5. 结束/重置
+   BattleSystem.resetBattle()
+        -> PassiveSkillManager.clearAll()
 ```
 
 ---
 
-## 流程 D：光环扫描分发
+#### 七、总结
 
-```
-BattleSystem.distributeAuras(participants)
-  │
-  └─ [遍历每个参与者]
-       │
-       └─ [遍历其所有 buff 实例 ID]
-            │
-            └─ buffSystem.getBuffConfigByInstanceId(instanceId)
-                 │
-                 ├─ 返回 BuffConfig | null
-                 │
-                 └─ buffSystem.getBuffAuraConfig(buffConfig.id)
-                      │
-                      ├─ 从 BuffScriptRegistry 读取 BuffConfigData.aura
-                      │
-                      ├─ 无 aura → continue
-                      │
-                      └─ 有 aura.targetSelector
-                           ├─ 'allies' → 同队目标
-                           └─ 'enemies' → 异队目标
-                                │
-                                └─ GameDataProcessor.applyAuraModifiersToParticipant(
-                                       target, sourceKey = `passive:${buffConfig.id}`, modifiers)
-                                     │
-                                     └─ [遍历每个 modifier]
-                                          ├─ pushModifier → attrData.modifiers
-                                          ├─ cachedVersion = -1
-                                          └─ target.recalcAll()
-```
+被动技能系统采用**注册-触发-执行**三段式设计：
+- **注册**：在角色初始化时完成，与配置解耦。
+- **触发**：由战斗系统在特定阶段（回合边界、事件点）统一调度，通过 `PassiveSkillManager` 进行条件过滤。
+- **执行**：复用主动技能的执行管道（`SkillExecutor`），保证逻辑一致性。
 
----
-
-## 阶段三：每回合更新
-
-```
-BattleSystem.executeRound()
-  │
-  └─ [遍历每个存活参与者]
-       │
-       └─ buffSystem.updatePerTurn(characterId)
-            │
-            └─ [遍历该角色所有 buffInstance]
-                 │
-                 ├─ script.onUpdate(context, 0)    ← 脚本每回合逻辑
-                 │    ├─ [毒伤] → 扣除剩余回合 * 每回合伤害
-                 │    ├─ [回血] → 每回合恢复 maxHealth * 百分比
-                 │    └─ [自定义] → buff 脚本定义的 onUpdate
-                 │
-                 ├─ duration === -1?
-                 │    └─ true → 跳过到期检查 (永久 buff)
-                 │
-                 ├─ remainingTurns--
-                 │
-                 └─ remainingTurns <= 0?
-                      └─ removeBuff(instanceId)    ← 到期自动移除
-```
-
----
-
-## 阶段四：移除 Buff
-
-```
-buffSystem.removeBuff(instanceId)
-  │
-  ├─ 1. 查找实例
-  │    ├─ instance = buffInstances.get(instanceId)
-  │    └─ 不存在或 !isActive → return false
-  │
-  ├─ 2. 执行脚本 onRemove
-  │    └─ BuffErrorBoundary.wrap(() => script.onRemove(context))
-  │         │
-  │         ├─ [BaseBuffScript.onRemove] → context.removeModifiers()
-  │         │    └─ modifierStack.removeModifier(instanceId)
-  │         │         └─ [遍历所有属性] 移除 sourceKey === instanceId 的修饰符
-  │         │
-  │         ├─ [AttributeBuffTemplate.onRemove]
-  │         │    └─ 对每个 modifier → context.removeModifiers(attrCode)
-  │         │         └─ modifierStack.removeModifier(instanceId, attrCode)
-  │         │
-  │         └─ [自包含脚本 onRemove] → 同 base 逻辑
-  │
-  ├─ 3. 清理实例状态
-  │    ├─ instance.isActive = false
-  │    └─ buffInstances.delete(instanceId)
-  │
-  ├─ 4. 保险清理 — modifierStack.removeModifier(instanceId)
-  │    └─ (即使 onRemove 漏了某个属性，这里全量清理)
-  │
-  ├─ 5. BuffContextPool.return(context)
-  │    └─ (归还上下文对象到对象池复用)
-  │
-  └─ 6. triggerAttributeChange(characterId)
-       └─ → recalculateAll()
-            ├─ syncModifiersFromProvider() ← ModifierStack 已无该 instanceId 的修饰符
-            └─ (属性值恢复为移除 buff 前的值)
-```
-
----
-
-## 修饰符同步机制详解
-
-```
-syncModifiersFromProvider()    ← 每次 recalculateAll 前调用
-  │
-  ├─ modifierProvider = this.buffSystem (IModifierProvider)
-  ├─ stack = modifierProvider.getModifierStack(this.id)
-  │
-  └─ [遍历所有 ATTRIBUTE_CODE]
-       │
-       ├─ stackMods = stack.getModifiers(code)
-       │    └─ 从 ModifierStack 读取 (sourceKey = buffInstanceId)
-       │
-       ├─ 保留的修饰符:
-       │    ├─ baseModifier: sourceKey === 'base'
-       │    └─ passiveModifiers: sourceKey 以 'passive:' 开头
-       │         ├─ 来自 executeModifyAttribute 的 'passive:runtime:...'
-       │         └─ 来自 distributeAuras 的 'passive:{buffId}'
-       │
-       ├─ externalModifiers = stackMods.map(m => ({
-       │    ...m,
-       │    sourceType: provider.getSourceType(m.sourceKey),  ← 'buff'
-       │    description: `来自: ${provider.getSourceName(m.sourceKey)}`,
-       │  }))
-       │
-       └─ attrData.modifiers = [baseModifier, ...passiveModifiers, ...externalModifiers]
-            └─ cachedVersion = stats.currentVersion - 1
-```
-
-### 两条修饰符路径的共存规则
-
-| 来源 | sourceKey 格式 | 存储位置 | 在 syncModifiersFromProvider 中的处理 |
-|:----|:--------------|:---------|:-------------------------------------|
-| **被动 modify_attribute** | `passive:runtime:{modId}` | `attrData.modifiers` | 匹配 `passive:` 前缀 → 保留 |
-| **光环分发** | `passive:{buffId}` | `attrData.modifiers` | 匹配 `passive:` 前缀 → 保留 |
-| **BuffSystem 脚本/JSON** | `{instanceId}` (如 `char_buffX_1_42`) | `ModifierStack` → `syncModifiersFromProvider` 合并 | 每次全部刷新，无保留条件 |
-
----
-
-## 两条修饰符路径完整对比
-
-| 特征 | ModifierStack 路径 (BuffSystem) | 直接 pushModifier 路径 |
-|:----|:-------------------------------:|:----------------------:|
-| 入口 | `addBuff` → `applyAttributeModifiers` 或脚本 `onApply` | `SkillExecutor.executeModifyAttribute` 或 `distributeAuras` |
-| 存储位置 | `ModifierStack.modifiers[attr][]` | `BattleParticipantImpl.stats.attrs[].modifiers` |
-| 生命周期 | 绑定 `BuffInstance`，`removeBuff` 时自动清理 | 需主动 `filter(sourceKey)` 去重 |
-| 同步方式 | `triggerAttributeChange` → `syncModifiersFromProvider` 合并 | 直接 `recalcAll()` |
-| sourceKey | `instanceId` (如 `char_buffX_1_42`) | `'passive:runtime:{modId}'` 或 `'passive:{buffId}'` |
-| 保留规则 | 每次 sync 全部刷新(无状态) | `syncModifiersFromProvider` 保留 `passive:` 前缀 |
-| buff 列表可见 | ✅ 有 BuffInstance | ❌ 仅属性值变化(除非追踪 buff 占位) |
-| 可驱散 | ✅ removeBuff 即可 | ❌ 需手动清理 |
-| 加成属性同步 | ✅ (脚本自行 addModifier) | ✅ (修复后: BONUS_MAP + minAttack/maxAttack) |
-
----
-
-## 跨战斗清理
-
-```
-BattleSystem.resetBattle()
-  │
-  ├─ passiveSkillManager.clearAll()
-  │    └─ 清空所有被动注册条目，防止跨战斗 ID 重复触发
-  │
-  └─ lifecycleManager.resetBattle()
-       ├─ buffSystem.clearAllBuffs(characterId)    ← 遍历参与者
-       │    └─ removeBuff() → [进入阶段四]          ← 全部实例清除
-       ├─ 重置血量/能量
-       └─ battleRecorder.clearRecording()
-```
-
----
-
-## 整体数据流
-
-```
-JSON 配置
-  │
-  ├─ skill_passive.json ──→ GameDataProcessor.registerParticipantPassives()
-  │                              │
-  │                              └─ PassiveSkillManager (triggerTimes 映射)
-  │                                    │
-  │                                    └─ BattleSystem.applyPassiveSkills()
-  │                                          │
-  │                                          └─ BATTLE_START
-  │                                                │
-  │                                                ├─ modify_attribute
-  │                                                │    └─ SkillExecutor.executeModifyAttribute
-  │                                                │         ├─ pushModifier → attrData.modifiers
-  │                                                │         ├─ BONUS_MAP 同步
-  │                                                │         └─ recalcAll()
-  │                                                │
-  │                                                ├─ apply_buff
-  │                                                │    └─ SkillExecutor.executeApplyBuff
-  │                                                │         └─ buffSystem.addBuff()  [流程 B]
-  │                                                │
-  │                                                └─ (追踪 buff)  [流程 C]
-  │
-  ├─ buffs.json ──→ BuffScriptRegistry
-  │                     │
-  │                     └─ buffSystem.addBuff() 时读取
-  │                          ├─ getDefaultConfig(buffId)  ← 脚本 CONFIG
-  │                          ├─ getBuffConfig(buffId)     ← JSON 配置
-  │                          ├─ getBuffAttributes(buffId) ← JSON attributes
-  │                          └─ getBuffAuraConfig(buffId) ← JSON aura
-  │
-  └─ GuardianBuffs.ts ──→ BuffScriptRegistry.register()
-                              └─ 自包含脚本，BUFF_ID 注册 + 静态 CONFIG
-```
-
----
-
-## 修复清单（对抗式审查产出）
-
-| 修复点 | 所在文件 | 行/方法 | 说明 |
-|:------|:---------|:-------|:------|
-| `actualTarget = target ?? entity` | `PassiveSkillManager.ts` | `triggerPassives` | BATTLE_START target undefined 导致被动静默跳过 |
-| `ensureTrackingBuff` | `PassiveSkillManager.ts` | 新增方法 | 纯 modify_attribute 被动自动创建追踪 buff 使其可见 |
-| ATTR_TO_BONUS_MAP 同步 | `SkillExecutor.ts` | `executeModifyAttribute` | PERCENTAGE 修饰符同步到 healthBonus/attackBonus 等 |
-| attack% → minAttack/maxAttack | `SkillExecutor.ts` | `executeModifyAttribute` | attack PERCENTAGE 同步到分裂属性 |
-| `clearAll()` 调用 | `BattleSystem.ts` | `resetBattle` | 清除跨战斗被动注册污染 |
-| turnOrder 后移 | `BattleSystem.ts` | `initialize` | turnOrder 在 applyPassiveSkills 之后创建，确保速度加成正确 |
-| `distributeAuras` | `BattleSystem.ts` | 新增方法 | 替代旧 pendingAuras 两遍扫描，扫描所有参与者身上的光环 buff |
-| `applyBuffImmunities` | `BuffSystem.ts` | `addBuff` 流程 | 已在之前迁移中实现：从 JSON immunities 字段写入 characterImmunities |
+关键特性包括：
+- 支持时间型与事件型触发。
+- 完整的条件检查（冷却、次数、概率、HP、自定义条件）。
+- 对纯属性修改被动自动生成追踪 Buff，提升 UI 可观测性。
+- 光环效果通过集中分发机制保证性能与正确性。
+- 跨战斗自动清理，避免状态污染。

@@ -129,7 +129,7 @@ export class AISystem {
       actions: [...battle.actions],
       turnOrder: [...battle.turnOrder],
       currentTurn: battle.currentTurn,
-      currentRound: battle.currentRound || 1,
+      currentTurn: battle.currentTurn || 1,
       battleState: battle.battleState ?? BattleStatus.ACTIVE,
       startTime: battle.startTime,
       endTime: undefined,

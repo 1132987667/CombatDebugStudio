@@ -7,6 +7,7 @@
   "cooldown": 1,
   "isPermanent": false,
   "isDebuff": true,
+  "tags": ["debuff", "dot", "poison"],
   "parameters": {
     "baseDamage": 10,
     "damageInterval": 2000,

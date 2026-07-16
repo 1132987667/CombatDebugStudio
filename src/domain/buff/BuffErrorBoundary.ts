@@ -1,5 +1,4 @@
 ﻿import { battleLogManager } from '@/infrastructure/adapters/logging'
-import { LogLevel } from '@/shared/types/battle-log'
 
 export enum BuffErrorType {
   CONFIG_ERROR = 'config_error',
@@ -91,7 +90,7 @@ export class BuffErrorBoundary {
       try { return fn() } catch (error) {
         retries++
         if (retries >= maxRetries) { BuffErrorBoundary.handleError(error, options); return null }
-        getLogger().info(`Retrying buff script execution (${retries}/${maxRetries})`)
+        battleLogManager.addDebugLog(`Retrying buff script execution (${retries}/${maxRetries})`)
       }
     }
     return null

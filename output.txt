@@ -33,15 +33,15 @@ docs/
     buff-text-display-design-v2.md
     BUFF设计和展示.md
     不同版本回合制游戏的日志风格范例.md
+    回合制战斗引擎评审关键点.md
     属性监控显示设计.md
     战斗文本显示实现.md
     打包后代码行数变化.md
+    技能系统修改计划.md
     过期代码.md
     重构排查.md
 documents/
     combat-log-system-design.md
-    css-reorganization-acceptance.md
-    css-reorganization-plan.md
     功能介绍.md
     战斗回放系统.md
     战斗示例.html
@@ -133,6 +133,8 @@ src/
                 support/
                     HealOverTime.ts
                     ShieldBuff.ts
+                index.ts
+            triggers/
                 index.ts
             BuffContext.ts
             BuffContextPool.ts
@@ -1060,14 +1062,9 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
     "id": "buff_scheming",
     "name": "老谋深算",
     "duration": -1,
-    "modifiers": [
-      {
-        "id": "scheming_control_duration_reduction",
-        "targetAttribute": "controlDurationReduction",
-        "type": "ADDITIVE",
-        "value": 1
-      }
-    ]
+    "attributes": {
+      "controlDurationReduction": "+1"
+    }
   },
   {
     "id": "buff_mist_coverage_aura",
@@ -1537,135 +1534,89 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
     "name": "防御降低",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "def_reduction_mod",
-        "targetAttribute": "defense",
-        "type": "PERCENTAGE",
-        "value": -10,
-        "levelValue": -0.1
-      }
-    ]
+    "attributes": {
+      "defense": "-10%"
+    }
   },
   {
     "id": "buff_dodge_up",
     "name": "闪避提升",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "dodge_up_mod",
-        "targetAttribute": "dodge",
-        "type": "ADDITIVE",
-        "value": 15
-      }
-    ]
+    "attributes": {
+      "dodge": "+15"
+    }
   },
   {
     "id": "buff_def_up",
     "name": "防御提升",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "def_up_mod",
-        "targetAttribute": "defense",
-        "type": "PERCENTAGE",
-        "value": 10
-      }
-    ]
+    "attributes": {
+      "defense": "+10%"
+    }
   },
   {
     "id": "buff_speed_up",
     "name": "速度提升",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "speed_up_mod",
-        "targetAttribute": "speed",
-        "type": "ADDITIVE",
-        "value": 5
-      }
-    ]
+    "attributes": {
+      "speed": "+5"
+    }
   },
   {
     "id": "buff_ally_atk_up",
     "name": "同伴攻击提升",
     "maxStacks": 1,
     "duration": 2,
-    "modifiers": [
-      {
-        "id": "ally_atk_up_mod",
-        "targetAttribute": "attack",
-        "type": "PERCENTAGE",
-        "value": 5
-      }
-    ]
+    "attributes": {
+      "attack": "+5%"
+    }
   },
   {
     "id": "buff_atk_up",
     "name": "攻击提升",
     "maxStacks": 1,
     "duration": 2,
-    "modifiers": [
-      {
-        "id": "atk_up_mod",
-        "targetAttribute": "attack",
-        "type": "PERCENTAGE",
-        "value": 10
-      }
-    ]
+    "attributes": {
+      "attack": "+10%"
+    }
   },
   {
     "id": "buff_atk_reduction",
     "name": "攻击降低",
     "maxStacks": 1,
     "duration": 2,
-    "modifiers": [
-      {
-        "id": "atk_reduction_mod",
-        "targetAttribute": "attack",
-        "type": "PERCENTAGE",
-        "value": -15
-      }
-    ]
+    "attributes": {
+      "attack": "-15%"
+    }
   },
   {
     "id": "buff_speed_reduction",
     "name": "速度降低",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "speed_reduction_mod",
-        "targetAttribute": "speed",
-        "type": "ADDITIVE",
-        "value": -10,
-        "levelValue": -0.1
-      }
-    ]
+    "attributes": {
+      "speed": "-10"
+    }
   },
   {
     "id": "buff_bind",
     "name": "束缚",
     "maxStacks": 1,
     "duration": 2,
-    "statusType": "bind"
+    "controlType": "bind",
+    "controlPriority": 60
   },
   {
     "id": "buff_hit_reduction",
     "name": "命中率下降",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "hit_reduction_mod",
-        "targetAttribute": "HIT_RATE",
-        "type": "ADDITIVE",
-        "value": -10
-      }
-    ]
+    "attributes": {
+      "HIT_RATE": "-10"
+    }
   },
   {
     "id": "buff_poison",
@@ -1719,12 +1670,14 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
   {
     "id": "guardian_buff_revenge_rage",
     "name": "复仇怒火",
+    "description": "攻击↑5%/层",
     "maxStacks": 5,
     "duration": -1
   },
   {
     "id": "guardian_buff_armor_break",
     "name": "破甲打击",
+    "description": "防御↓20%",
     "maxStacks": 1,
     "duration": 2,
     "isDebuff": true
@@ -1752,18 +1705,21 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
   {
     "id": "guardian_buff_first_strike",
     "name": "先发制人",
+    "description": "伤害↑25%",
     "maxStacks": 1,
     "duration": 1
   },
   {
     "id": "guardian_buff_charge_burst",
     "name": "蓄力爆发",
+    "description": "伤害↑100%",
     "maxStacks": 1,
     "duration": 1
   },
   {
     "id": "guardian_buff_element_slow",
     "name": "元素迟缓",
+    "description": "速度↓5%",
     "maxStacks": 1,
     "duration": 1,
     "isDebuff": true
@@ -1788,6 +1744,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
   {
     "id": "guardian_buff_heal_breeze",
     "name": "治愈微风",
+    "description": "防御↑20%",
     "maxStacks": 1,
     "duration": -1
   },
@@ -1800,12 +1757,14 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
   {
     "id": "guardian_buff_revenge_fury",
     "name": "复仇之怒",
+    "description": "攻击↑30% 暴击↑20%",
     "maxStacks": 1,
     "duration": 3
   },
   {
     "id": "guardian_buff_paralyze",
     "name": "麻痹触手",
+    "description": "速度↓50%",
     "maxStacks": 1,
     "duration": 1,
     "isDebuff": true
@@ -1813,12 +1772,14 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
   {
     "id": "guardian_buff_sacrifice_rage",
     "name": "献祭之怒",
+    "description": "攻击↑50% 暴击↑20%",
     "maxStacks": 1,
     "duration": -1
   },
   {
     "id": "guardian_buff_berserker",
     "name": "狂战士",
+    "description": "攻击↑30% 防御↓15%",
     "maxStacks": 1,
     "duration": 3
   },
@@ -1843,6 +1804,7 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
   {
     "id": "guardian_buff_swift_wind",
     "name": "疾风叠步",
+    "description": "速度↑5%/层",
     "maxStacks": 999,
     "duration": -1
   }
@@ -14897,6 +14859,130 @@ T3 ─────────────────────────�
 
 这种架构既能让你现在轻松定位 `复仇怒火` 只持续 1 回合的问题，也能保证未来游戏上线时玩家看得懂、看得爽。
 
+--- docs/回合制战斗引擎评审关键点.md ---
+状态效果管理的关键评审点
+核心关键点
+1. 状态叠加机制
+叠加规则：相同状态是替换还是叠加？
+层数限制：是否有最大叠加层数？
+效果合并：不同层数的效果如何计算？
+2. 状态优先级系统
+优先级定义：状态生效的顺序如何确定？
+冲突解决：高优先级状态如何影响低优先级状态？
+特殊状态：眩晕、沉默等控制状态的处理优先级
+3. 时间计算精度
+时间单位：使用回合制还是帧率制？
+时间漂移：长时间战斗的时间累积误差处理
+暂停处理：战斗暂停时状态的计时逻辑
+4. 状态清除机制
+清除条件：自然过期、主动清除、条件清除
+清除优先级：多个清除条件同时存在时的处理顺序
+状态免疫：某些角色对特定状态的免疫机制
+5. 状态相互影响
+状态增强/削弱：一个状态如何影响其他状态的持续时间或效果
+状态连锁反应：状态触发的连锁效果
+状态组合策略：不同状态之间的组合效果
+6. 性能优化
+状态数量限制：同时存在的最大状态数量
+更新频率：每回合/每帧的状态更新效率
+内存管理：状态对象的创建和销毁机制
+7. UI/UX设计
+状态可视化：当前状态的清晰展示
+时间显示：剩余时间的准确显示
+状态冲突提示：状态冲突时的玩家提示
+评审建议
+当您用这些关键点评审AI框架时，重点关注：
+逻辑完整性：每个关键点是否都有明确的实现？
+扩展性：是否容易添加新的状态效果？
+性能：在大量状态存在时是否仍然高效？
+可调试性：是否容易追踪状态的变化和问题？
+平衡性：状态系统的设计是否符合游戏平衡需求？
+这些关键点涵盖了状态效果管理的核心挑战，可以帮助您全面评估框架的完整性和可靠性。
+
+
+
+根据您提供的项目代码库（`CombatDebugStudio`），我重新整理了一份**针对本游戏技能系统设计**的评审关键点。  
+这些关键点直接映射到现有实现（`SkillManager`、`SkillExecutor`、`DamageCalculator`、`PassiveSkillManager`、`target-resolver`、JSON 配置等），用于评估当前架构的完备性、正确性和扩展性。
+
+---
+
+## 技能系统设计评审关键点（本游戏专属）
+
+### 1. 技能配置与数据结构（JSON → 运行时）
+- **配置完整性**：`SkillConfig` 是否包含 `id`、`name`、`energyCost`、`cooldown`、`selector`、`steps`、`skillType`、`triggerTimes`（被动）、`condition` 等字段，且类型严格。
+- **步骤结构**：每个 `SkillStep` 的 `type` 是否覆盖所有支持的操作（`deal_damage`、`heal`、`apply_buff`、`modify_attribute`、`shield`、`stun`、`silence`、`cleanse`、`reflect`、`drain` 等），以及对应的参数（`calculation`、`buffId`、`modifiers`、`duration`、`targetConfig`）是否完整。
+- **目标选择器**：`SkillTargetConfig` 是否支持 `faction`（`self/ally/enemy/all`）、`strategy`（`first/lowest_hp/random/all/front/back/adjacent`）、`count`，并在 `target-resolver.ts` 中正确实现。
+- **被动技能标识**：被动技能的 `skillType: 'passive'` + `triggerTimes` 是否明确，无 `triggerTimes` 时默认 `battle_start` 的补全逻辑是否正确。
+
+---
+
+### 2. 技能执行管道（SkillManager → SkillExecutor → 具体计算器）
+- **执行入口**：`SkillManager.executeSkill()` 是否依次完成：能量检查 → 目标眩晕检查 → 消耗能量 → 创建 `BattleAction` → 循环执行 `steps` → 设置冷却 → 返回 `BattleAction`。
+- **步骤分发**：`SkillExecutor.executeStep()` 是否根据 `step.type` 正确路由到 `executeDamage`、`executeHeal`、`executeBuff`、`executeModifyAttribute`、`executeShield`、`executeControl`、`executeCleanse`、`executeReflect`、`executeDrain`、`executeCustom`，并处理未知类型。
+- **延迟伤害模式**：`deferDamage` 标志是否在需要时启用（如技能动画期间），确保伤害/治疗在动画完成后统一应用，避免视觉与数值不同步。
+
+---
+
+### 3. 伤害/治疗计算（DamageCalculator / HealCalculator）
+- **基础伤害来源**：`calculateBaseDamage` 是否正确处理三种模式：
+  - 有 `formula`（自定义表达式，当前未使用）
+  - 有 `calculation`（`baseValue` + `extraValues`）
+  - 无 `calculation` → 使用 `minAttack/maxAttack`（普通攻击）或 `attack`（技能）
+- **额外加成**：`extraValues` 是否正确从 `source`（攻击者）或 `target`（目标）读取属性（如 `maxHealth` 从目标取），并乘以 `ratio`。
+- **暴击/闪避**：暴击判定使用 `critRate`，闪避判定使用 `hitRate - dodgeRate`，并正确记录 `isMiss` 和 `isCritical`。
+- **防御/抗性链路**：按顺序应用：防御值减法 → 普攻/技能减免 → 元素抗性（`fireRes` 等） → 通用减免 → 易伤（`damageTakenIncrease`） → 目标修正（`targetModifiers`） → 最终阈值裁剪（`minDamageThreshold` / `maxDamageThreshold`）。
+- **治疗上限**：`HealCalculator` 是否限制治疗量不超过 `maxHealth - currentHealth`，并考虑减治疗效果（如 `buff_heal_reduction`）。
+
+---
+
+### 4. 技能目标选择与动态解析（target-resolver）
+- **技能级 selector**：`resolveSkillTargets` 是否根据 `selector` 从 `participants` Map 中正确筛选活着的目标，并按策略排序/选择。
+- **步骤级目标覆盖**：当 `step.targetType` 有值时（如 `random_adjacent`），是否在步骤执行时重新解析额外目标（通过 `resolveExtraTargets` 回调），并应用于伤害/治疗等效果。
+- **边界条件**：无有效目标时，技能是否静默失败（返回 `null`）且不消耗能量/触发冷却；`selector.faction === 'self'` 时是否直接返回施法者，忽略 `strategy`。
+
+---
+
+### 5. 技能冷却与能量管理（冷却系统 & 能量系统）
+- **冷却存储**：`ParticipantSkills` 中的 `skillCooldowns` Map 是否正确记录每个技能的剩余冷却回合，并在每回合 `reduceSkillCooldowns()` 递减。
+- **冷却生效时机**：技能执行成功后是否立即设置冷却（`setSkillCooldown`），冷却回合数来自 `config.cooldown`。
+- **能量消耗**：`executeSkill` 在执行前检查 `currentEnergy >= energyCost`，并在开始执行时立即扣除；失败时（如能量不足）返回 `null` 且不消耗。
+- **被动技能**：`energyCost` 应为 0，且不消耗能量，冷却由 `PassiveSkillManager` 自行管理（不依赖 `ParticipantSkills` 冷却）。
+
+---
+
+### 6. 被动技能触发与执行（PassiveSkillManager）
+- **注册机制**：`GameDataProcessor.registerParticipantPassives` 是否将 `triggerTimes` 正确映射到 `BattleTriggerPhase`，并补全默认值（无 `triggerTimes` → `battle_start`，`maxTriggerCount` 默认 1）。
+- **触发条件检查**：`PassiveSkillManager.triggerPassives` 是否依次检查：触发时机匹配 → 冷却（`lastTriggeredTurn`）→ 最大触发次数 → 概率 → HP 阈值 → 自定义 `condition` 表达式。
+- **目标解析**：是否优先使用技能 `selector` 从 `context.participants` 中解析目标，若无则回退到 `context.target` 或自身。
+- **执行管道**：被动技能使用 `executePassiveSkill` 走独立管道，与主动技能共享 `SkillExecutor`，但跳过能量/眩晕检查，且单步失败不影响后续步骤。
+- **跨战斗清理**：`clearAll()` 是否在战斗重置时清除所有注册的被动，防止污染下一场战斗。
+
+---
+
+### 7. 技能效果扩展性与自定义步骤（扩展点）
+- **新效果类型**：是否允许通过新增 `SkillStepType` 并在 `SkillExecutor` 中添加对应 case 来扩展，而不修改核心管道。
+- **自定义步骤（CUSTOM）**：`executeCustom` 是否支持通过 `parameters.customType` 分发到不同的自定义逻辑（如 `third_strike`、`combo_master`、`burn_detonate`），并记录当前实现状态。
+- **修饰符模板**：`modify_attribute` 步骤是否接收 `ModifierTemplate` 数组，正确转换为 `Modifier` 并应用到目标属性，同时同步加成属性（`healthBonus`、`attackBonus` 等）。
+- **Buff 效果可配置**：`apply_buff` 步骤是否通过 `buffId` 引用 `buffs.json` 或脚本自包含配置，支持动态参数（`parameters`）。
+
+---
+
+### 8. AI 技能选择与资源权衡（与 AISystem 联动）
+- **技能可用性检查**：AI 选择技能时是否调用 `isSkillAvailable`（冷却）和能量充足性。
+- **优先级策略**：`AIPriorityStrategy` 是否根据战场分析（血量、能量、威胁）动态计算技能权重，并支持 `Aggressive` / `Defensive` / `Balanced` 三种策略。
+- **资源权衡**：AI 是否在能量低时倾向使用低消耗技能或普通攻击，避免能量耗尽后无法释放关键技能。
+- **随机性**：`SKILL_USE_CHANCE` 常量是否控制 AI 使用技能的概率，避免完全可预测。
+
+---
+
+## 评审建议
+- **逻辑完整性**：逐条对照以上关键点，检查现有代码（尤其是 `SkillManager`、`SkillExecutor`、`PassiveSkillManager`）是否全部覆盖，无遗漏或矛盾。
+- **可扩展性**：评估添加新技能效果（如“嘲讽”、“变形”）所需的改动范围，是否只需新增 `SkillStepType` 和对应的 `execute` 方法。
+- **平衡性**：通过实际战斗测试，验证高耗技能（如终极技）的伤害/效果是否与消耗和冷却匹配，避免出现“最优解”技能。
+- **可调试性**：检查 `battleLogManager` 是否记录了技能释放、计算步骤、能量变化、冷却更新等关键日志，便于问题定位。
+
+这些关键点完全基于本项目的代码结构，可直接用于代码审查和架构评审。
+
 --- docs/属性监控显示设计.md ---
 # 属性监控显示设计
 
@@ -15083,6 +15169,337 @@ T3 ─────────────────────────�
 53293
 49801
 49519
+
+--- docs/技能系统修改计划.md ---
+# 技能系统修改计划
+
+> 基于对抗式评审输出的分层修改计划，2026-07-16
+
+**说明**：本计划共含 8 项修改任务，按优先级分为 P0（功能性错误）、P1（设计缺陷）、P2（架构改进），每项含背景、方案、影响文件、边界案例、验证方式。
+
+---
+
+## P0 — 功能性错误，必须修复
+
+---
+
+### P0/AI-1：统一技能选择管道
+
+**背景**：
+`BattleExecutor.executeParticipantAction()` 有两条并行的技能选择路径——
+- 有 AI：`aiInstance.makeDecision()` 通过 `AIPriorityStrategy` 权重选技能
+- 无 AI：`availableSkills[Math.floor(Math.random() * availableSkills.length)]` 取第一个
+
+AI 路径选出的 target 在 `selectAndExecuteSkill` 中被 `resolveSkillTargets()` 重新覆盖。
+
+**方案**：
+1. 在 `BattleExecutor` 中把两条路径的末端统一到同一个方法 `selectAndPrepareSkill(battle, participant, skillId): {skill, targets}`
+2. AI 路径的 `makeDecision` 只输出 `skillId`（不再输出 targetId），目标解析由 `resolveSkillTargets` 统一负责
+3. 非 AI 路径的 `<random>` 替换为调用同一权重策略（默认 balanced），但使用 `availableSkills` 的范围
+
+**影响文件**：
+- `src/domain/battle/service/BattleExecutor.ts` — 重构 `executeParticipantAction`，删除随机分支
+- `src/domain/battle/ai/BattleAI.ts` — `makeDecision` 返回值简化，不再包含直接 targetId
+- `src/domain/battle/ai/AIPriorityStrategy.ts` — `BaseAIPriorityStrategy` 新增 `selectBestSkill(skills, participant, battleState)` 公共方法
+- `src/domain/battle/type/types.ts` — 如有必要调整 `BattleAction` 的创建方式
+
+**边界案例**：
+- 当 participant 没有 AI 实例时，走默认 balanced 策略而非随机第一个
+- 当 resolveSkillTargets 返回空数组时，降级为普通攻击 + 日志警告
+- AI 实例的 custom strategy 依旧通过 AIPriorityStrategy 接口生效
+
+**验证**：
+- `tests/unit/core/battle/AISkillSelection.test.ts` — 新建：给定战场状态，验证权重排序结果；验证无 AI 实例也走策略而非随机
+
+---
+
+### P0/EXEC-1：deferDamage 改为请求令牌模式
+
+**背景**：
+`SkillManager.setDeferredDamageMode(bool)` 是全局可变 boolean。异常路径一旦漏关（有 6 处 `setDeferredDamageMode(true/false)` 分布在不同 try/catch/early-return 中），伤害链路永久断开。
+
+**方案**：
+用"请求令牌"替代全局 toggle——每次执行技能时创建一个 `DeferredDamageToken`，SkillExecutor.writeDamage 写到 token 上，调用方在动画完成后调用 `token.applyAll()` 统一应用。
+
+```
+class DeferredDamageToken {
+  private entries: Array<{target, damage, heal}>
+  record(target, damage, heal): void
+  applyAll(): void       // 依次调用 target.takeDamage/heal
+  getTotalDamage(): number
+  getTotalHeal(): number
+}
+```
+
+`SkillExecutor.executeStep` 不再判断 `this.deferDamage`，改为接受 `token?: DeferredDamageToken`。调用方传 token 表示延迟模式，不传表示即时模式。
+
+**影响文件**：
+- `src/domain/skill/SkillExecutor.ts` — 删除 `deferDamage` 字段；`executeStep` / `executeDamage` / `executeHeal` 增加 `token?` 参数
+- `src/domain/skill/SkillManager.ts` — 删除 `setDeferredDamageMode`；`executeSkill` 接受 `token?` 透传给 executor
+- `src/domain/battle/service/BattleExecutor.ts` — `selectAndExecuteSkill` 中 new 一个 token，传进去，applyAll
+- `src/domain/skill/PassiveSkillManager.ts` — `executePassiveSkill` 中删除 `save/restore` 模式，改传 token
+- `src/shared/types/` — 新增 `DeferredDamageToken` 定义
+
+**边界案例**：
+- 动画播放中战斗结束了——token 不 apply，无伤害泄漏
+- 同一个技能对多个目标——每个 target 独立记录后 applyAll
+- passive 触发时 token 不传（被动不涉及动画编排）
+
+**验证**：
+- 现有技能测试绿灯（因为行为语义不变，只是调用方式变）
+- 人工注入异常路径：token 不 apply → 伤害不生效但战斗不崩溃
+
+---
+
+### P0/AI-2：convertSkillConfigToSkill 汇总全部 steps 计算总伤害/治疗
+
+**背景**：
+`convertSkillConfigToSkill` 只读 `config.steps?.[0]?.calculation?.baseValue`。如果技能的第一个 step 是 APPLY_BUFF 或 CUSTOM，AI 认为该技能伤害=0、治疗=0，权重计算完全偏误。
+
+**方案**：
+遍历所有 steps，对 DEAL_DAMAGE 汇总 damage、HEAL 汇总 heal、APPLY_BUFF 有 `buffId` 的标记为 buff 型。
+
+```typescript
+function summarizeSkillSteps(steps: SkillStep[]): {totalDamage, totalHeal, hasBuff, hasDebuff} {
+  // 遍历 steps，非 DAMAGE/HEAL 的也标记类型
+}
+```
+
+- 保留 `skill.damage` / `skill.heal` 字段，但改为汇总值而非 first step 的快照
+- 新增 `skill.hasBuff` / `skill.hasDebuff` 布尔字段供 AI 权重系统使用
+- 删除 `includeDamage / includeHeal / includeBuffId` 三个选项参数——既然是汇总，总是需要的
+
+**影响文件**：
+- `src/domain/skill/types.ts` — `Skill` 接口新增 `hasBuff` / `hasDebuff`；`convertSkillConfigToSkill` 重写
+- `src/domain/battle/ai/AIPriorityStrategy.ts` — `adjustWeightByBattleState` 和 `getBaseWeight` 中增加 `skill.hasBuff` 的判断
+
+**边界案例**：
+- 空 steps 数组 → 所有字段为 0/false
+- calculation 缺失的 DEAL_DAMAGE step → damage 计为 0，不崩溃
+- 多段伤害 → 所有段汇总
+
+**验证**：
+- `tests/unit/core/skill/convertSkillConfigToSkill.test.ts` — 新建：多步技能分别验证汇总结果
+
+---
+
+## P1 — 设计缺陷，应该修复
+
+---
+
+### P1/CTRL-1：技能可执行性检查单一路径
+
+**背景**：
+控制检查分散在三处：`SkillManager.isTargetStunned` 硬编码 `buff_stun`；`BuffSystem.isCharacterControlled` 统一入口；`BattleExecutor.isParticipantControlled` 包装前者。冷却检查也有两套——`SkillManager` 靠鸭子类型（`setSkillCooldown`），`PassiveSkillManager` 自管一套。
+
+**方案**：
+1. 在 `ParticipantSkills` 上暴露统一的 `canExecuteSkill(skillId): {can: boolean, reason?: SkillBlockReason}`，合并能量/冷却/控制状态
+2. `SkillManager.executeSkill` 入口调用此方法，不再自己做能量检查和控制检查
+3. 删除 `SkillManager.isTargetStunned`，所有控制查询走 `BuffSystem.isCharacterControlled`
+4. 给 `BattleEntity` 接口（或对应的参与者实现）增加 `canExecuteSkill` 方法签名，去掉鸭子类型
+
+**影响文件**：
+- `src/domain/battle/entity/ParticipantSkills.ts` — 新增 `canExecuteSkill(skillId, buffSystem)` 方法
+- `src/domain/skill/SkillManager.ts` — `executeSkill` 中能量/控制/冷却检查委托给 participant
+- `src/domain/buff/BuffSystem.ts` — `canUseSkill` 已经是统一的，不需要改
+- `src/domain/battle/type/types.ts` — `BattleEntity` 接口增加 `canExecuteSkill` 签名
+
+**边界案例**：
+- SILENCE 状态：`canUseSkill` 返回 false 但不阻止 `canAct`（普攻允许）
+- 能量刚好等于消耗值：允许使用
+- 冷却为 0 或 undefined：视为可用
+
+**验证**：
+- `tests/unit/core/battle/participant/ParticipantSkills.test.ts` — `canExecuteSkill` 对不同控制状态的响应
+
+---
+
+### P1/TAG-1：引入 EffectTag 系统替代硬编码 buff ID 列表
+
+**背景**：
+`HealCalculator.calculateDebuffEffect` 硬编码 `['buff_heal_reduction', 'buff_poison', 'buff_curse']`，`SkillExecutor.handleBurnDetonate` 硬编码 `includes('burn')`。新加一个减治疗的 buff 要改两个文件，且可能遗漏。
+
+**方案**：
+在 `BuffConfig` / `ScriptBuffConfig` 中增加 `tags?: string[]` 字段。查询点上通过 `BuffSystem.hasBuffWithTag(characterId, tag)` 替代硬编码 ID 列表。
+
+标签使用 **TypeScript 枚举常量** 维护，如：
+
+```typescript
+export enum EffectTag {
+  HEAL_REDUCTION = 'heal_reduction',
+  BURN = 'burn',
+  POISON = 'poison',
+  STUN = 'stun',
+  SILENCE = 'silence',
+}
+```
+
+```typescript
+// BuffSystem 新增
+hasBuffWithTag(characterId: string, tag: string): boolean {
+  for (const instance of this.getBuffInstances(characterId)) {
+    const config = this.scriptRegistry.getBuffConfig(instance.buffId)
+    if (config?.tags?.includes(tag)) return true
+  }
+  return false
+}
+```
+
+**影响文件**：
+- `src/shared/types/effect.ts` — 新增 `EffectTag` 枚举
+- `src/domain/buff/types.ts` — `BuffConfig` 和 `ScriptBuffConfig` 增加 `tags` 字段
+- `src/domain/buff/BuffSystem.ts` — 新增 `hasBuffWithTag` 和 `getBuffInstancesWithTag`
+- `src/domain/skill/HealCalculator.ts` — `calculateDebuffEffect` 改为查标签 `EffectTag.HEAL_REDUCTION` 而非硬编码 ID
+- `src/domain/skill/SkillExecutor.ts` — `handleBurnDetonate` 改为查标签 `EffectTag.BURN` 而非 `includes('burn')`
+- `configs/buffs/` 目录下的 JSON 配置——逐个增加 `tags` 字段
+
+**边界案例**：
+- buff 无 tags 配置 → 等价于空数组，不匹配任何标签查询
+- 一个 buff 可以有多个 tags（如 `['heal_reduction', 'debuff']`）
+- 通过 addBuff 运行时创建的追踪 buff（`_track_passive_` 前缀）无 tags，不参与查询
+
+**验证**：
+- `tests/unit/core/buff/BuffSystem.test.ts` — 测试 `hasBuffWithTag`
+- 现有减治疗/灼烧逻辑行为不变（因为配置加上对应 tag 即可）
+
+---
+
+### P1/PERF-1：comboStates 清理 + 被动技能按时机索引
+
+**背景**：
+- `SkillExecutor.comboStates` 在角色死亡后不清理，Map 持续膨胀
+- `PassiveSkillManager.triggerPassiveSkillsForAll` 每次遍历所有参与者 × 所有被动，O(n*m)
+
+**方案**：
+
+1. **comboStates 绑定死亡事件**：在 `BattleExecutor` 检测到目标死亡时同步调用 `SkillExecutor.cleanupComboState(entityId)`。清理时机确定为**角色死亡时**而非回合结束时（已确认）。
+
+2. **被动技能倒排索引**：`PassiveSkillManager` 内部增加按 `BattleTriggerPhase` 索引的倒排表：
+
+```typescript
+// registerPassive 时双写
+private indexByPhase = new Map<string, Array<{characterId: string, config: PassiveSkillConfig}>>()
+
+// triggerPassiveSkillsForAll 改为按 phase 查索引，只遍历有对应被动的角色
+triggerPassiveSkillsForAll(trigger: BattleTriggerPhase, participants, context): void {
+  const entries = this.indexByPhase.get(trigger) ?? []
+  for (const { characterId, config } of entries) {
+    const entity = participants.get(characterId)
+    if (!entity?.isAlive()) continue
+    this.triggerPassive(config, entity, context)
+  }
+}
+```
+
+**影响文件**：
+- `src/domain/skill/SkillExecutor.ts` — 新增 `cleanupComboState(entityId)`，公开方法
+- `src/domain/skill/PassiveSkillManager.ts` — `registerPassive` 重构为双写（character Map + 倒排索引）；`triggerPassiveSkillsForAll` 改为走索引；`removePassive` / `clearPassives` 同步更新索引
+- `src/domain/battle/service/BattleExecutor.ts` — `handleHitAttack` / `selectAndExecuteSkill` 中检测到目标死亡后调用 `cleanupComboState`
+
+**边界案例**：
+- 倒排索引必须与 `character` Map 保持同步——`removePassive` / `clearPassives` 修改倒排
+- 同一角色在同一个 phase 上注册了多个被动（如 `BEFORE_ATTACK` × 2）——数组保留所有条目
+- 角色退场后再注册——倒排索引未清理时，`isAlive()` 检查兜底
+
+**验证**：
+- `tests/unit/core/skill/SkillExecutor.test.ts` — 验证 `cleanupComboState` 后 comboStates 大小减 1
+- `tests/unit/core/skill/PassiveSkillManager.test.ts` — 验证 `triggerPassiveSkillsForAll` 只调用了有对应 phase 的角色
+
+---
+
+## P2 — 架构改进，值得做但不紧急
+
+---
+
+### P2/ARCH-1：技能与 Buff 之间的双向通信接口
+
+**背景**：
+当前 Buff → 属性变更（单向通过 `ModifierStack`），但 Buff 无法操作技能系统（如"获得强化状态后技能冷却减 1"）。技能系统也无法查询自身携带的 Buff 是否会影响技能行为。
+
+**方案**：
+在 `BuffSystem` 上暴露一个 `SkillBuffBridge` 接口，持有弱引用：
+
+```typescript
+interface SkillBuffBridge {
+  modifySkillCooldown(characterId: string, skillId: string, delta: number): void
+  isSkillSilenced(characterId: string): boolean
+  getSkillDamageModifier(characterId: string, skillId: string): number
+}
+```
+
+`BuffSystem` 在构造时接收桥接口，Buff 脚本通过 `context.getBridge()` 访问。
+
+**影响文件**：
+- `src/domain/battle/service/SkillBuffBridge.ts` — 新建
+- `src/domain/buff/BuffSystem.ts` — 构造函数增加桥接口参数；BuffContext 增加 `getBridge()`
+- `src/domain/buff/BuffContext.ts` — 新增桥引用
+- `src/domain/buff/scripts/base/BaseBuffScript.ts` — 模板 `onApply/onRefresh` 可调桥方法
+- `src/domain/di/Container.ts` — 组装时传入桥实现
+
+**延迟条件**：无功能需求驱动时可推迟到有具体 Buff 脚本需要调用桥时再做。
+
+---
+
+### P2/UI-1：技能描述模板化 + 不可用原因反馈
+
+**背景**：
+`Skill.description` 是静态字符串。技能伤害 50+attack×1.2 时描述只能手写。"技能不可用"只有布尔值，不暴露原因。
+
+**方案**：
+
+1. **描述模板**：`SkillConfig` 中支持描述模板语法 `{{damage}}` `{{heal}}` `{{extra.attack*ratio}}`，在加载时由 `GameDataProcessor` 替换为实际计算值。
+
+2. **不可用原因**：`canExecuteSkill` 返回带原因的对象：
+
+```typescript
+export enum SkillBlockReason {
+  COOLDOWN_X_TURNS = 'cooldown',
+  ENERGY_SHORT = 'energy',
+  STUNNED = 'stun',
+  SILENCED = 'silence',
+  DEAD = 'dead',
+}
+
+export interface SkillAvailability {
+  can: boolean
+  reason?: SkillBlockReason
+  detail?: string  // 如 "还需 2 回合冷却"
+}
+```
+
+UI 层据此显示不同文案和图标提示。
+
+**影响文件**：
+- `src/domain/skill/types.ts` — 新增 `SkillBlockReason` 枚举和 `SkillAvailability` 接口；`SkillConfig.description` 支持模板语法
+- `src/domain/battle/entity/ParticipantSkills.ts` — `canExecuteSkill` 返回 `SkillAvailability`
+- `src/presentation/stores/battleStore.ts` 或新的 composable — 新增不可用原因的响应式状态
+- `src/presentation/components/` — 技能面板组件展示不可用原因
+
+---
+
+## 修改顺序与依赖关系
+
+```
+P0/AI-2  (convertSkillConfigToSkill) ← 可独立进行，无依赖
+P0/EXEC-1 (deferDamage token)        ← 可独立进行，无依赖
+P0/AI-1  (统一技能选择管道)            ← 建议在 AI-2 之后，因为 AI 权重系统更准确后再统一管道
+  └─ 依赖 P0/AI-2 完成后权重计算更准确
+
+P1/TAG-1 (EffectTag 系统)            ← 推荐最先做 P1，因为后续 P1/CTRL-1 可能会用到
+P1/CTRL-1 (统一控制检查)              ← 依赖 TAG-1 建成后可以用标签而非硬编码
+P1/PERF-1 (性能优化)                 ← 可独立进行，不依赖其他
+
+P2/ARCH-1 (SkillBuffBridge)         ← 可在任何时间插入，但建议等 P1 全部完成后
+P2/UI-1 (描述模板+原因反馈)          ← 可独立进行
+```
+
+## 建议执行批次
+
+| 批次 | 内容 | 预估改动文件数 |
+|------|------|---------------|
+| **批次 1**（核心修复） | P0/AI-2 → P0/EXEC-1 → P0/AI-1 | ~8 个 |
+| **批次 2**（质量改进） | P1/TAG-1 → P1/CTRL-1 → P1/PERF-1 | ~10 个 |
+| **批次 3**（架构演进） | P2/ARCH-1 + P2/UI-1（按需） | ~7 个 |
 
 --- docs/过期代码.md ---
 
@@ -15974,664 +16391,6 @@ shared/types/battle-log.ts              ← 改造: LogSegment 扩展
 
 > 文档完成。本方案基于 12 种游戏日志风格的研究和项目现有代码的全面分析，
 > 以惰性工程（ponytail）为原则，优先复用已有基础，最小化代码改动。
-
---- documents/css-reorganization-acceptance.md ---
-# CSS 重构验收方案
-
-> 对应重构方案: `css-reorganization-plan.md`  
-> 验收性质: **功能回归 + 视觉一致 + 代码质量**
-
----
-
-## 验收清单总表
-
-| # | 验收项 | 类型 | 工具/方法 | 优先级 |
-|:-:|:-------|:----:|:----------|:------:|
-| 1 | 设计令牌完整性 | 代码审查 | 手动对照 template-css | P0 |
-| 2 | 引入顺序正确性 | 构建验证 | `npm run build` | P0 |
-| 3 | 无硬编码颜色/间距 | 代码静态检查 | grep + 指令审查 | P0 |
-| 4 | 视觉回归 | 截图对比 | 人工目测 | P0 |
-| 5 | Vue SFC 变量引用 | 代码审查 | grep + diff | P1 |
-| 6 | 组件 class 命名规范 | 代码审查 | lint | P1 |
-| 7 | 主题切换 | 功能测试 | 人工操作 | P2 |
-| 8 | 渐进迁移兼容性 | 功能测试 | 手动操作 | P1 |
-
----
-
-## 1. 设计令牌完整性验证（P0）
-
-### 1.1 验证内容
-
-确认 `_tokens.scss` 覆盖了所有当前项目中使用的视觉值。
-
-### 1.2 操作步骤
-
-1. 提取 `main.scss` 和所有 Vue SFC 中的硬编码值：
-
-```shell
-# 在项目根目录执行
-grep -ohP '#[0-9a-fA-F]{3,6}' src/presentation/ | sort -u > /tmp/current-colors.txt
-```
-
-2. 与 `_tokens.scss` 中定义的变量值做交集对比。
-
-3. 未匹配的色值判断是否为合理"漏网之鱼"（如第三方库引入的色值），否则标记为缺陷。
-
-### 1.3 通过标准
-
-- 95% 以上的项目硬编码色值可在 `_tokens.scss` 中找到对应变量
-- 剩余 5% 有注释说明原因（如：第三方库内联色值无法覆盖）
-
-### 1.4 变量覆盖矩阵
-
-```markdown
-| 类别       | 预期变量数 | 实际定义数 | 通过? |
-|-----------|:----------:|:----------:|:----:|
-| 品牌色     | ≥ 7        |            |      |
-| 中性色     | ≥ 9        |            |      |
-| 字体       | ≥ 5        |            |      |
-| 间距       | ≥ 7        |            |      |
-| 圆角       | ≥ 5        |            |      |
-| 阴影       | ≥ 4        |            |      |
-| 层级(z)   | ≥ 5        |            |      |
-| 过渡       | ≥ 3        |            |      |
-```
-
----
-
-## 2. 构建与引入顺序验证（P0）
-
-### 2.1 构建验证
-
-```shell
-cd D:\4-softworkspace\java\CombatDebugStudio
-npm run build    # 或对应构建命令
-```
-
-**通过标准**: 构建无报错、无警告。
-
-### 2.2 引入顺序验证
-
-确认 HTML 入口文件（或 Vite 入口 `main.ts`）中 CSS 引入顺序为:
-
-```
-_tokens.scss  →  _reset.scss  →  _base.scss  →  components/*  →  _utilities.scss  →  main.scss
-```
-
-**通过标准**: `tokens` 和 `reset` 在最前，`utilities` 在组件之后。
-
----
-
-## 3. 无硬编码颜色/间距验证（P0）
-
-### 3.1 静态检查命令
-
-```shell
-# 检查重构后的 SCSS 文件中是否还有硬编码色值（除 _tokens.scss 外）
-grep -rnP '#[0-9a-fA-F]{3,6}|rgba?\(|hsla?\(' src/presentation/styles/ \
-  --include='*.scss' --exclude='_tokens.scss' \
-  || echo "无硬编码色值"
-
-# 检查硬编码间距（非 var() 引用的 rem/px 值）
-grep -rnP '(padding|margin|gap)\s*:\s*[0-9.]+(rem|px)' src/presentation/styles/ \
-  --include='*.scss' \
-  || echo "无硬编码间距"
-```
-
-### 3.2 通过标准
-
-- `_tokens.scss` 以外的新建 SCSS 文件零硬编码色值
-- 间距值必须通过 `var(--space-*)` 引用，禁止直接 `0.5rem` / `8px`
-- **例外**: `@keyframes` 动画中的颜色/位移可接受硬编码
-- **例外**: `_utilities.scss` 的原子类可直接使用像素值（但须注释说明）
-
----
-
-## 4. 视觉回归验证（P0）
-
-### 4.1 页面截图点
-
-| 页面 | 关键区域 | 对比指标 |
-|:-----|:---------|:---------|
-| BattleDashboard | 三栏布局、标题头、按钮、角色列表 | 颜色、间距、圆角、字体 |
-| BattleArena | 战场区域、成员卡片、血条、状态标签 | 颜色、边框、阴影、动画 |
-| BattleReplay | 时间轴、事件列表、播放按钮 | 颜色、布局、交互态颜色 |
-| ControlBar | 底部按钮组、速度选择、自动播放按钮 | 颜色、尺寸、间距 |
-| Dialog 弹窗 | 蒙层、标题栏、内容区、关闭按钮 | 颜色、圆角、阴影 |
-
-### 4.2 操作步骤
-
-1. 重构前: 截取每个页面的完整截图，命名为 `{page}-before.png`
-2. 实施重构（Phase 1 + 2 部分里程碑）
-3. 重构后: 在相同窗口尺寸下截取完全相同区域
-4. 用 `ImageMagick compare` 或像素级对比工具比对:
-
-```shell
-# Windows PowerShell (需要安装 ImageMagick)
-magick compare -metric AE battle-dashboard-before.png battle-dashboard-after.png diff.png
-```
-
-### 4.3 通过标准
-
-- 像素差异 < 0.1%（极小的抗锯齿差异可以接受）
-- 交互态（hover/active/disabled）颜色迁移正确
-- 字体渲染无变化
-
----
-
-## 5. Vue SFC 变量引用验证（P1）
-
-### 5.1 检查内容
-
-在 Vue SFC 的 `<style scoped>` 中：
-
-```vue
-<!-- ❌ 错误: 硬编码 -->
-<style scoped>
-.my-class { color: #e94560; }
-</style>
-
-<!-- ✅ 正确: 引用全局变量 -->
-<style scoped>
-.my-class { color: var(--color-accent); }
-</style>
-```
-
-### 5.2 通过标准
-
-- 所有 `scoped style` 中的颜色、间距、圆角、阴影须通过 `var(--xxx)` 引用
-- 仅组件特有的**布局/定位/尺寸比例**可使用像素值，但必须用注释标注 `ponytail: 组件特有布局`
-
----
-
-## 6. 组件 class 命名规范验证（P1）
-
-### 6.1 命名规则检查
-
-```
-✅ .btn              # 基础组件
-✅ .btn-primary      # 变体用修饰符
-✅ .btn--hoverable   # 状态用 BEM modifier
-✅ .card-header      # 子元素用 BEM element
-❌ .my-custom-btn    # 不与已有 class 重复
-```
-
-### 6.2 通过标准
-
-- 同类型组件 class 前缀一致（如所有按钮以 `.btn` 开头）
-- 不与项目已有 class 名冲突
-- `_utilities.scss` 的原子类使用 `!important`，其余文件禁止
-
----
-
-## 7. 主题切换验证（P2 — 仅当实施了 Phase 4 时）
-
-### 7.1 操作步骤
-
-1. 在浏览器开发者工具中，给 `<html>` 添加 `data-theme="light"` 属性
-2. 观察所有页面元素颜色变化
-
-### 7.2 检查重点
-
-| 检查项 | 预期行为 |
-|:-------|:---------|
-| 背景色 | 从深色变为浅色（如 #ffffff） |
-| 文字色 | 从白色变为深色（如 #1a1b1c） |
-| 边框色 | 从深色变为浅灰 |
-| 阴影 | 从强变淡 |
-| 图片/图标 | 不受影响 |
-| 交互态颜色 | hover/active 浅色主题下正常 |
-
-### 7.3 通过标准
-
-- 切换 `data-theme` 后所有可读内容清晰可见
-- 无"白底白字"或"黑底黑字"的不可读区域
-- 切换无需刷新页面
-
----
-
-## 8. 渐进迁移兼容性验证（P1）
-
-### 8.1 每个子任务完成后
-
-| 检查项 | 方法 |
-|:-------|:-----|
-| 所有页面可正常渲染 | 手动打开每个路由 |
-| 原有交互正常 | 点击按钮、打开弹窗、切换 Tab |
-| 浏览器控制台无 404 CSS | F12 → Console |
-| 原有 class 名仍生效 | 现有 HTML 未修改 |
-
-### 8.2 回滚方案
-
-若某一步出现问题:
-
-```shell
-git revert <commit-hash>
-# 或
-git checkout -- src/presentation/styles/main.scss
-```
-
----
-
-## 9. 验收通过条件
-
-```
-P0 项: 100% 通过     → 可进入下一阶段
-P1 项: ≥ 90% 通过    → 可进入下一阶段
-P2 项: 可选不实施    → 不影响主线迁移
-```
-
-### 验收签字
-
-```markdown
-- [ ] 设计令牌完整性验证通过
-- [ ] 构建无报错
-- [ ] 零硬编码色值（_tokens.scss 除外）
-- [ ] 视觉回归截图对比差异 < 0.1%
-- [ ] Vue SFC 变量引用合规
-- [ ] class 命名规范达标
-- [ ] 渐进迁移无功能回退
-
-验收人: ________    日期: ________
-```
-
---- documents/css-reorganization-plan.md ---
-# CSS 样式统一重构方案
-
-> 参考模板: `template-css` (D:\4-softworkspace\myJs\chenxing\template-css)  
-> 目标项目: CombatDebugStudio (D:\4-softworkspace\java\CombatDebugStudio)  
-> 状态: **设计稿 / 待实施**
-
----
-
-## 1. 现状分析
-
-### 1.1 当前文件分布
-
-| 文件 | 行数 | 类型 | 问题 |
-|------|------|------|------|
-| `src/presentation/styles/global.css` | 326 | 纯 CSS | 绝大部分是 reset，末尾 `:root` 定义了 15 个变量，但未被系统化使用 |
-| `src/presentation/styles/main.scss` | 2577 | SCSS | **巨型文件**，包含布局/组件/动画/字体全部混合，所有颜色值硬编码 |
-| 28 个 `.vue` 文件 | — | SFC | 部分含 `<style scoped>`，可能也在使用硬编码值 |
-
-### 1.2 硬编码值散布情况
-
-`main.scss` 中至少出现 5 次以上的核心色值:
-
-| 色值 | 语义 | 出现次数(约) |
-|------|------|:---:|
-| `#1a1a2e` | 主背景 | 40+ |
-| `#0f3460` | 边框/次要背景 | 100+ |
-| `#e94560` | 强调色(危险/标题) | 20+ |
-| `#4fc3f7` | 信息色(按钮/链接) | 30+ |
-| `#16213e` | 面板标题背景 | 15+ |
-| `#0f0f1a` | 深色卡片背景 | 20+ |
-| `#888` / `#666` | 次要/禁用文本 | 30+ |
-
-**根因**: 没有一个「单一事实来源」(Single Source of Truth)，修改主题色需要全文搜索替换，极易遗漏。
-
-### 1.3 与 template-css 的差距
-
-```
-层级               template-css                   本项目现状
-────────────────────────────────────────────────────────────
-设计令牌(Design Token)  tokens.css ✅                  global.css 末尾 15 个变量 ❌ 不完整
-全局基础(Base)          base.css ✅                    global.css 等同于 base.css 但无 tokens 引用
-组件样式(Component)      buttons.css / cards.css ✅     main.scss 内混写 ✅ 但有但无拆分
-原子工具(Utilities)     utilities.css ✅               不存在，到处重复 `display:flex;gap:Xrem` ❌
-主题切换(Theme)         :root[data-theme="light"] ✅   不支持 ❌
-索引页/Demo             index.html ✅                  不存在 ❌
-```
-
----
-
-## 2. 目标架构
-
-### 2.1 文件结构
-
-```
-src/presentation/styles/
-├── _tokens.scss              # ① 设计令牌（SCSS 变量 + CSS 自定义属性）
-├── _reset.scss               # ② 全局 reset（从 global.css 精简）
-├── _base.scss                # ③ 全局基础排版、滚动条、焦点
-├── _utilities.scss           # ④ 原子工具类
-├── components/
-│   ├── _buttons.scss         # 按钮体系
-│   ├── _cards.scss           # 卡片体系
-│   ├── _dialogs.scss         # 弹窗体系
-│   ├── _notifications.scss   # 通知体系
-│   └── _replay.scss          # 回放相关
-├── main.scss                 # ⑤ 仅 @import 以上所有（保持干净）
-└── index.html                # ⑥ 样式展示页（非必需，推荐）
-```
-
-> **关于 `_variables.scss`**: template-css 方案中建议了一个 `_variables.scss`。考虑到本项目使用 SCSS 且已有 `main.scss`，SCSS 变量统一放在 `_tokens.scss` 中即可，不额外增加文件。
-
-### 2.2 依赖顺序
-
-```mermaid
-graph LR
-    A[_tokens] --> B[_reset]
-    A --> C[_base]
-    A --> D[components/_buttons]
-    A --> D2[components/_cards]
-    A --> D3[components/_dialogs]
-    A --> E[_utilities]
-    B --> F[main.scss]
-    C --> F
-    D --> F
-    D2 --> F
-    D3 --> F
-    E --> F
-```
-
-HTML 引入顺序：
-
-```html
-<link rel="stylesheet" href="styles/tokens.css" />
-<link rel="stylesheet" href="styles/reset.css" />
-<link rel="stylesheet" href="styles/base.css" />
-<link rel="stylesheet" href="styles/components/buttons.css" />
-<link rel="stylesheet" href="styles/components/cards.css" />
-<!-- ... -->
-<link rel="stylesheet" href="styles/utilities.css" />
-```
-
----
-
-## 3. `_tokens.scss` 设计（核心）
-
-### 3.1 色板提取（从现有配色反推）
-
-```scss
-// ===== 品牌色系 =====
-$brand-colors: (
-  'primary':   #1a1a2e,   // 主背景
-  'secondary': #0f3460,   // 边框/次要
-  'accent':    #e94560,   // 强调/危险
-  'info':      #4fc3f7,   // 信息/链接
-  'success':   #4caf50,   // 成功
-  'warning':   #ff9800,   // 警告
-  'danger':    #f44336,   // 错误
-);
-
-// ===== 中性色板 =====
-$neutral-colors: (
-  'bg-primary':     #1a1a2e,
-  'bg-secondary':   #0f0f1a,
-  'bg-tertiary':    #16213e,
-  'text-primary':   #ffffff,
-  'text-secondary': #888888,
-  'text-muted':     #666666,
-  'text-disabled':  #444444,
-  'border':         #0f3460,
-  'border-hover':   #1a4a7a,
-  'border-focus':   #4fc3f7,
-);
-```
-
-### 3.2 CSS 自定义属性输出
-
-```scss
-:root {
-  // 品牌色
-  --color-primary: #1a1a2e;
-  --color-secondary: #0f3460;
-  --color-accent: #e94560;
-  --color-info: #4fc3f7;
-  --color-success: #4caf50;
-  --color-warning: #ff9800;
-  --color-danger: #f44336;
-
-  // 中性色
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #0f0f1a;
-  --bg-tertiary: #16213e;
-  --bg-hover: #1a2a4e;
-  --bg-active: #1a4a7a;
-
-  --text-primary: #ffffff;
-  --text-secondary: #888888;
-  --text-muted: #666666;
-  --text-disabled: #444444;
-
-  --border-default: #0f3460;
-  --border-hover: #1a4a7a;
-  --border-focus: #4fc3f7;
-
-  // 字体
-  --font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  --font-size-xs: 0.65rem;
-  --font-size-sm: 0.75rem;
-  --font-size-base: 0.85rem;
-  --font-size-md: 1rem;
-  --font-size-lg: 1.4rem;
-
-  // 间距 (4px 栅格)
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-8: 3rem;
-
-  // 圆角
-  --radius-sm: 3px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 8px;
-  --radius-full: 9999px;
-
-  // 阴影
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
-  --shadow-lg: 0 10px 40px rgba(0,0,0,0.5);
-  --shadow-focus: 0 0 0 2px var(--color-info);
-
-  // 层级
-  --z-header: 100;
-  --z-dropdown: 1000;
-  --z-overlay: 1300;
-  --z-modal: 1400;
-  --z-toast: 1500;
-
-  // 过渡
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --transition-slow: 350ms ease;
-}
-```
-
----
-
-## 4. 组件样式设计方案
-
-### 4.1 按钮体系（参照 template-css buttons.css）
-
-```scss
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-family: var(--font-family);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  user-select: none;
-  white-space: nowrap;
-
-  &:hover:not(:disabled) {
-    background: var(--bg-hover);
-    border-color: var(--border-hover);
-  }
-  &:active { background: var(--bg-active); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-  &:focus-visible {
-    outline: none;
-    box-shadow: var(--shadow-focus);
-  }
-}
-
-// 颜色变体
-.btn-primary {
-  background: var(--color-accent);
-  color: #fff;
-  border-color: var(--color-accent);
-  &:hover:not(:disabled) { background: #c62828; }
-}
-.btn-info {
-  background: var(--color-secondary);
-  color: var(--color-info);
-  border-color: var(--border-default);
-  &:hover:not(:disabled) {
-    background: var(--bg-hover);
-    border-color: var(--border-hover);
-  }
-}
-.btn-ghost {
-  background: transparent;
-  color: var(--text-primary);
-  border-color: transparent;
-  &:hover:not(:disabled) { background: var(--bg-hover); }
-}
-
-// 尺寸变体
-.btn-sm  { padding: var(--space-1) var(--space-2); font-size: var(--font-size-xs); }
-.btn-lg  { padding: var(--space-3) var(--space-5); font-size: var(--font-size-base); }
-
-// 状态修饰
-.btn.is-loading { opacity: 0.8; cursor: progress; }
-```
-
-### 4.2 卡片体系
-
-```scss
-.card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  color: var(--text-primary);
-  transition: box-shadow var(--transition-base), border-color var(--transition-base);
-
-  &--hoverable:hover {
-    border-color: var(--border-hover);
-    box-shadow: var(--shadow-md);
-  }
-}
-.card-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg-tertiary);
-  border-bottom: 1px solid var(--border-default);
-}
-.card-body  { padding: var(--space-4); }
-.card-footer {
-  display: flex; align-items: center; justify-content: flex-end;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-default);
-}
-```
-
----
-
-## 5. 迁移策略（渐进式，四阶段）
-
-### Phase 1: 基石搭建（无破坏性）
-
-1. 新建 `_tokens.scss`，提取当前所有硬编码值为变量
-2. 新建 `_reset.scss`，从 `global.css` 精简（仅保留真正需要的 reset）
-3. 新建 `_base.scss`，从 `global.css` 移出排版/滚动条/焦点样式，改为 `var()` 引用
-4. 新建 `_utilities.scss`，提取 `main.scss` 中出现 5 次以上的重复片段
-5. `global.css` 原文件删除（内容已被拆分）
-6. `main.scss` 首行添加 `@import 'tokens';`，**不改动任何现有代码**
-
-**验证标准**: 页面无任何视觉变化，所有现有 class 名不变。
-
-### Phase 2: main.scss 拆分（逐步替换）
-
-将 `main.scss` 按组件类别拆分为独立文件：
-
-| 原区域 (main.scss 行号) | 目标文件 | 操作 |
-|---|---|---|
-| 布局类 (1-270, 530-570, 1470-1520) | 保留在 main.scss 或移入 `_layout.scss` | 替换硬编码为 `var()` |
-| 按钮类 (41-55, 329-341, 393-410, 1493-1567) | `_buttons.scss` | 用 `.btn` 体系替换 |
-| 卡片类 (586-670) | `_cards.scss` | 用 `.card` 体系替换 |
-| 弹窗类 (1613-1701, 1704-1842) | `_dialogs.scss` | 统一 dialog 样式 |
-| 通知类 (1990-2100) | `_notifications.scss` | 统一 notification 样式 |
-| 回放类 (2103-2509) | `_replay.scss` | 独立为回放组件库 |
-| 角色/场景列表 (144-215, 299-390, 2517-2566) | 保留 main.scss 或拆独立 | 替换为 var() |
-| 键盘设置 (1844-1988) | `_keybind.scss` | 或保留在 main.scss |
-| `@keyframes` 动画 (611-664, 1928-1938, 2018-2027, 2335-2348) | `_animations.scss` | 集中管理 |
-
-**验证标准**: 每拆一个文件前，该区域在现有 class 名下用 `var()` 替换硬编码值后，视觉不变。
-
-### Phase 3: Vue SFC 同步
-
-- 对于 `<style scoped>` 中使用了硬编码值的组件，改为引用全局 `var(--xxx)` 
-  - `ponytail: 只在 scoped 中写组件特有的布局/定位，颜色/间距全部走全局变量`
-
-### Phase 4: 可选增强
-
-- 浅色主题 `:root[data-theme="light"]` 覆盖层
-- `index.html` 样式展示页
-- 移除所有不再用到的旧 class
-
----
-
-## 6. 关键技术决策
-
-| 决策 | 选择 | 理由 |
-|------|------|------|
-| 文件格式 | **SCSS** (保留) | 项目已使用 SCSS，Vite 天然支持，不额外引入工具链 |
-| 变量机制 | **CSS Custom Properties** (`var(--xxx)`) + SCSS 变量辅助计算 | CSS 变量支持运行时修改（主题切换），SCSS 变量用于循环/计算 |
-| 组件 class 命名 | **BEM-like** (`.block-element--modifier`) | 与 template-css 一致，语义清晰，不依赖 CSS Modules |
-| 主题切换 | `:root[data-theme="light"]` 覆盖法 | 零运行时开销，只需覆盖颜色变量，其余自然继承 |
-| 迁移方式 | **渐进式替换**，不改动现有 HTML | 不破坏现有功能，可分段交付 |
-
----
-
-## 7. 注意事项 / 风险
-
-1. **SCSS `@import` 已弃用** → 使用 `@use` 和 `@forward`（Vite + sass 均支持）
-2. **Vue SFC scoped style** 中 `:deep()` 穿透全局变量不受影响，只需改为 `var(--xxx)` 即可
-3. **`z-index` 当前散乱**（`z-index: 100`, `1000`, `10001` 等），统一到 `--z-*` 变量后需检查叠层关系
-4. **`!important` 的使用限制**，仅 `_utilities.scss` 中使用，组件库中禁止
-
----
-
-## 8. 文件改动清单（最终状态）
-
-```
-ADDED:
-  src/presentation/styles/_tokens.scss
-  src/presentation/styles/_reset.scss
-  src/presentation/styles/_base.scss
-  src/presentation/styles/_utilities.scss
-  src/presentation/styles/components/_buttons.scss
-  src/presentation/styles/components/_cards.scss
-  src/presentation/styles/components/_dialogs.scss
-  src/presentation/styles/components/_notifications.scss
-  src/presentation/styles/components/_replay.scss
-  src/presentation/styles/components/_animations.scss
-  (可选) src/presentation/styles/index.html
-
-MODIFIED:
-  src/presentation/styles/main.scss   → 首行 @use 'tokens'; 并逐步清理
-
-DELETED:
-  src/presentation/styles/global.css  → 内容已分散到 _reset.scss / _base.scss
-```
 
 --- documents/功能介绍.md ---
 # 游戏功能介绍
@@ -22996,7 +22755,6 @@ export function createDefaultBattleData(
     actions: [],
     turnOrder: [],
     currentTurn: 0,
-    currentRound: 1,
     maxTurns: BATTLE_CONSTANTS.DEFAULT_MAX_TURNS,
     startTime: Date.now(),
     winner: undefined,
@@ -23016,7 +22774,6 @@ export function convertToBattleState(battleData: BattleData): BattleState {
     actions: [...battleData.actions],
     turnOrder: [...battleData.turnOrder],
     currentTurn: battleData.currentTurn,
-    currentRound: battleData.currentRound || 1,
     battleState: battleData.battleState!,
     startTime: battleData.startTime,
     endTime: battleData.endTime,
@@ -23529,7 +23286,6 @@ export class AISystem {
       actions: [...battle.actions],
       turnOrder: [...battle.turnOrder],
       currentTurn: battle.currentTurn,
-      currentRound: battle.currentRound || 1,
       battleState: battle.battleState ?? BattleStatus.ACTIVE,
       startTime: battle.startTime,
       endTime: undefined,
@@ -25213,7 +24969,7 @@ export class BattleSystem {
       sourceId: context.sourceId ?? '',
       targetId: context.targetId,
       value: context.value,
-      currentTurn: context.currentTurn ?? this.battleData.currentRound,
+      currentTurn: context.currentTurn ?? this.battleData.currentTurn,
       battleData: this.battleData,
       ...context,
       phase,
@@ -25274,7 +25030,7 @@ export class BattleSystem {
    * @returns 当前回合数（从1开始）
    */
   public getRound(): number {
-    return this.battleData.currentRound
+    return this.battleData.currentTurn
   }
 
   /**
@@ -25327,7 +25083,7 @@ export class BattleSystem {
     battleData.skillManager = this.skillManager
 
     battleData.currentTurn = 0
-    battleData.currentRound = 1
+    battleData.currentTurn = 1
     battleData.battleState = BattleStatus.PREPARING
 
     const battleId = this.battleData.battleId
@@ -25361,26 +25117,61 @@ export class BattleSystem {
       })
     })
 
+    // ponytail: 防止触发器脚本（如 reflectDamage）循环递归
+    // 在 DAMAGE_TAKEN 发射中再次调用 requestDamage → setDamageCallback → ... 无限递归
+    let _inDamageCallback = false
+
     // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
     this.buffSystem.setDamageCallback((targetId: string, damage: number, damagePercent?: number) => {
-      const target = battleData.participants.get(targetId)
-      if (target?.isAlive()) {
-        let actualDamage = damage
-        if (damagePercent && damagePercent > 0) {
-          actualDamage = Math.max(1, Math.floor(target.currentHealth * damagePercent))
+      // ponytail: 递归守卫 — 若已在回调中则跳过，避免反弹/分摊类触发器循环
+      if (_inDamageCallback) return
+      _inDamageCallback = true
+      try {
+        const target = battleData.participants.get(targetId)
+        if (target?.isAlive()) {
+          let actualDamage = damage
+          if (damagePercent && damagePercent > 0) {
+            // 正百分比 = 扣当前生命百分比
+            actualDamage = Math.max(1, Math.floor(target.currentHealth * damagePercent))
+            target.takeDamage(actualDamage)
+          } else if (damagePercent && damagePercent < 0) {
+            // 负百分比 = 按最大生命百分比治疗
+            actualDamage = Math.floor(target.maxHealth * Math.abs(damagePercent))
+            target.heal(actualDamage)
+          } else if (damage > 0) {
+            // 固定值伤害
+            target.takeDamage(actualDamage)
+          }
+          this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
+            sourceId: '',
+            targetId,
+            value: actualDamage,
+            extra: { damage: actualDamage },
+          })
+          // ponytail: 触发队友伤害事件 — 供 buff_triggers 中的 ally_damage_taken / ally_fatal_damage 使用
+          const isDead = !target.isAlive()
+          battleData.participants.forEach((p) => {
+            if (p.id !== targetId && p.team === target.team && p.isAlive()) {
+              this.emitTriggerEvent(
+                isDead ? BattleTriggerPhase.ALLY_FATAL_DAMAGE : BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
+                {
+                  sourceId: '',
+                  targetId: p.id,
+                  value: actualDamage,
+                  extra: { allyId: targetId, damage: actualDamage },
+                },
+              )
+            }
+          })
+          // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
+          this.passiveSkillManager.triggerPassives(
+            BattleTriggerPhase.DAMAGE_TAKEN,
+            target,
+            { sourceId: '', targetId, damage: actualDamage, participants: battleData.participants },
+          )
         }
-        target.takeDamage(actualDamage)
-        this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
-          sourceId: '',
-          targetId,
-          value: actualDamage,
-        })
-        // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
-        this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.DAMAGE_TAKEN,
-          target,
-          { sourceId: '', targetId, damage: actualDamage },
-        )
+      } finally {
+        _inDamageCallback = false
       }
     })
     this.buffSystem.setHealCallback((targetId: string, amount: number) => {
@@ -25396,7 +25187,7 @@ export class BattleSystem {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.HEAL_RECEIVED,
           target,
-          { sourceId: '', targetId, value: amount },
+          { sourceId: '', targetId, value: amount, participants: battleData.participants },
         )
       }
     })
@@ -25505,7 +25296,7 @@ export class BattleSystem {
     }
 
     // ponytail: 调试模式 — 首回合开始前暂停，让开发者查看初始状态
-    if (battle.currentRound === 1) {
+    if (battle.currentTurn === 1) {
       await debugGate.waitIfNeeded('BATTLE_START')
     }
 
@@ -25520,7 +25311,7 @@ export class BattleSystem {
       aliveParticipants.forEach((participant) => {
         this.emitTriggerEvent(BattleTriggerPhase.TURN_START, {
           sourceId: participant.id,
-          currentTurn: battle.currentRound,
+          currentTurn: battle.currentTurn,
         })
       })
 
@@ -25528,7 +25319,7 @@ export class BattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         BattleTriggerPhase.TURN_START,
         battle.participants,
-        { currentTurn: battle.currentRound },
+        { currentTurn: battle.currentTurn },
       )
 
       // 减少所有角色技能冷却
@@ -25593,7 +25384,7 @@ export class BattleSystem {
         if (!participant || !participant.isAlive()) {
           continue
         }
-        console.error('当前角色的能量', participant.getAttribute(ATTRIBUTE_CODE.currentEnergy))
+        // console.error('当前角色的能量', participant.getAttribute(ATTRIBUTE_CODE.currentEnergy))
         battle.currentTurn = i
 
         // 在每个角色行动前，发送当前行动者更新事件到 UI 层
@@ -25655,21 +25446,21 @@ export class BattleSystem {
       endParticipants.forEach((participant) => {
         this.emitTriggerEvent(BattleTriggerPhase.TURN_END, {
           sourceId: participant.id,
-          currentTurn: battle.currentRound,
+          currentTurn: battle.currentTurn,
         })
       })
 
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         BattleTriggerPhase.TURN_END,
         battle.participants,
-        { currentTurn: battle.currentRound },
+        { currentTurn: battle.currentTurn },
       )
 
       battle.roundState = RoundStatus.END
 
-      this.battleRecorder.recordTurnEnd(battleId, battle.currentRound || 1)
+      this.battleRecorder.recordTurnEnd(battleId, battle.currentTurn || 1)
 
-      battle.currentRound++
+      battle.currentTurn++
       eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED)
     } catch (error) {
       battleLogManager.addDebugLog('处理回合时出错:', { level: LogLevel.ERROR, error: error as Error })
@@ -25737,13 +25528,13 @@ export class BattleSystem {
   private async runEndConditionCheck(): Promise<void> {
     const battle = this.battleData
     if (!battle) return
-    const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentRound)
+    const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentTurn)
     if (result.shouldEnd && result.winner) {
       await this.endBattle(result.winner)
-      if (battle.currentRound >= battle.maxTurns) {
+      if (battle.currentTurn >= battle.maxTurns) {
         const winnerLabel = result.winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'
         battleLogManager.addBattleLog({
-          turn: battle.currentRound,
+          turn: battle.currentTurn,
           message: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜`,
           segments: [{ text: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜` }],
           category: BATTLE_LOG_CATEGORIES.STATUS,
@@ -25953,7 +25744,7 @@ export class BattleSystem {
    */
   public advanceRound(): void {
     if (this.battleData) {
-      this.battleData.currentRound++
+      this.battleData.currentTurn++
     }
   }
 
@@ -25982,7 +25773,7 @@ export class BattleSystem {
       // 战斗已在 runEndConditionCheck 中结束，此处不再重复触发
       // 仅当 battleState 仍为 ACTIVE 时才生成 SET_WINNER（兜底保护）
       if (battle.battleState === BattleStatus.ACTIVE) {
-        const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentRound)
+        const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentTurn)
         if (result.winner) {
           commands.push({
             type: 'SET_WINNER',
@@ -26000,7 +25791,7 @@ export class BattleSystem {
       type: 'NEXT_TURN',
       payload: {
         actorId: turnOrder[0] || '',
-        round: battle.currentRound,
+        round: battle.currentTurn,
         turnOrder,
       },
     })
@@ -29296,8 +29087,6 @@ import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { EffectType } from '@/shared/types/effect'
-import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
-import { BUFF_IDS } from '@/domain/buff/types'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { TraceDamageLogger } from '@/domain/battle/logs/TraceDamageLogger'
@@ -29327,6 +29116,7 @@ import type {
   BattleData,
   BattleEntity,
   BattleEffect,
+  BattleContext,
 } from '@/domain/battle/type/types'
 import {
   ATTRIBUTE_CODE,
@@ -29355,11 +29145,11 @@ export class BattleExecutor {
 
   /**
    * 检查参与者是否有控制类Buff
+   * ponytail: 委托给 BuffSystem 的优先级系统，而非硬编码 hasBuff 检查。
+   *           所有 ControlType（STUN/SILENCE/FREEZE/SLEEP/BIND）都通过同一入口处理。
    */
   isParticipantControlled(participant: BattleEntity): boolean {
-    if (participant.hasBuff(STUN_BUFF_ID)) return true
-    if (participant.hasBuff(BUFF_IDS.SILENCE)) return true
-    return false
+    return this.buffSystem.isCharacterControlled(participant.id)
   }
 
   /**
@@ -29369,11 +29159,12 @@ export class BattleExecutor {
     battle: BattleData,
     participant: BattleEntity,
   ): Promise<void> {
+    // 检查参与者是否被控制
     if (this.isParticipantControlled(participant)) {
       const action = BattleActionHelper.createStatus({
         sourceId: participant.id,
         targetId: participant.id,
-        turn: battle.currentRound || 1,
+        turn: battle.currentTurn || 1,
         effects: [
           {
             type: 'status',
@@ -29384,7 +29175,7 @@ export class BattleExecutor {
       })
       this.recordBattleAction(battle, action)
       battleLogManager.addBattleLog({
-        turn: battle.currentRound || 1,
+        turn: battle.currentTurn || 1,
         message: `${participant.name} 被控制，无法行动`,
         segments: [
           { text: participant.name, classStr: participant.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile' },
@@ -29409,6 +29200,10 @@ export class BattleExecutor {
       }
       return true
     })
+    const participants =battle.participants
+    const context: BattleContext = {
+      participants
+    }
 
     const aiInstance = battle.aiInstances?.get(participant.id)
     if (aiInstance) {
@@ -29420,7 +29215,7 @@ export class BattleExecutor {
       if (action.type === 'skill' && action.skillId) {
         const skill = this.skillManager.getSkillConfig(action.skillId)
         if (skill && activeSkillIds.includes(action.skillId)) {
-          await this.selectAndExecuteSkill(battle, participant, skill)
+          await this.selectAndExecuteSkill(battle, participant, skill, context)
         } else {
           await this.selectAndExecuteAttack(battle, participant)
         }
@@ -29436,7 +29231,7 @@ export class BattleExecutor {
         availableSkills[Math.floor(Math.random() * availableSkills.length)]
       const skill = this.skillManager.getSkillConfig(selectedSkillId)
       if (skill) {
-        await this.selectAndExecuteSkill(battle, participant, skill)
+        await this.selectAndExecuteSkill(battle, participant, skill, context)
       } else {
         await this.selectAndExecuteAttack(battle, participant)
       }
@@ -29456,6 +29251,7 @@ export class BattleExecutor {
     battle: BattleData,
     source: BattleEntity,
     skill: SkillConfig,
+    context?: BattleContext,
   ): Promise<BattleAction> {
     if (
       'isSkillAvailable' in source &&
@@ -29471,7 +29267,7 @@ export class BattleExecutor {
       targetId: '',
       skillId: skill.id,
       skillName: skill.name,
-      turn: battle.currentRound,
+      turn: battle.currentTurn,
     })
 
     const targets = this.getSkillTargets(battle, source, skill)
@@ -29490,7 +29286,7 @@ export class BattleExecutor {
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.BEFORE_ATTACK,
         source,
-        { target: targets[0], targetId: targets[0]?.id, currentTurn: battle.currentRound },
+        { target: targets[0], targetId: targets[0]?.id, currentTurn: battle.currentTurn, participants: context?.participants ?? battle.participants },
       )
       // ponytail: 启用延迟伤害模式 — 技能执行只记录数值不实际扣血，等待动画完成后统一应用
       this.skillManager.setDeferredDamageMode(true)
@@ -29514,7 +29310,7 @@ export class BattleExecutor {
           'skill',
           target.id,
           target.name,
-          battle.currentRound ?? 1,
+          battle.currentTurn ?? 1,
           skill.id,
         )
         record.skillName = skill.name
@@ -29523,7 +29319,7 @@ export class BattleExecutor {
           skill.id,
           source,
           target,
-          battle.currentRound || 1,
+          battle.currentTurn || 1,
           record,
           (stepTargetType, mainTarget) =>
             this.resolveStepTargets(battle, mainTarget, stepTargetType),
@@ -29629,23 +29425,23 @@ export class BattleExecutor {
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.ON_HIT,
               source,
-              { target: pd.target, sourceId: source.id, damage: pd.damage },
+              { target: pd.target, sourceId: source.id, damage: pd.damage, participants: context?.participants ?? battle.participants },
             )
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.DAMAGE_TAKEN,
               pd.target,
-              { target: source, sourceId: source.id, damage: pd.damage },
+              { target: source, sourceId: source.id, damage: pd.damage, participants: context?.participants ?? battle.participants },
             )
             if (!pd.target.isAlive()) {
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_DEATH,
                 pd.target,
-                { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
+                { target: source, sourceId: source.id, cause: EffectType.DAMAGE, participants: context?.participants ?? battle.participants },
               )
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_KILL,
                 source,
-                { target: pd.target, targetId: pd.target.id, cause: EffectType.DAMAGE },
+                { target: pd.target, targetId: pd.target.id, cause: EffectType.DAMAGE, participants: context?.participants ?? battle.participants },
               )
             }
           }
@@ -29673,6 +29469,7 @@ export class BattleExecutor {
         targetId: targets[0]?.id,
         damage: action.damage,
         isCritical: action.effects?.some((e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical),
+        participants: context?.participants ?? battle.participants,
       },
     )
 
@@ -29838,29 +29635,30 @@ export class BattleExecutor {
     source: BattleEntity,
     target: BattleEntity,
     damage: number,
+    participants?: Map<string, BattleEntity>,
   ): void {
     target.takeDamage(damage)
     // ponytail: ON_HIT 触发攻击者（命中方）的被动，DAMAGE_TAKEN 触发受击方（受伤害）的被动
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.ON_HIT,
       source,
-      { target, sourceId: source.id, damage },
+      { target, sourceId: source.id, damage, participants },
     )
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.DAMAGE_TAKEN,
       target,
-      { target: source, sourceId: source.id, damage },
+      { target: source, sourceId: source.id, damage, participants },
     )
     if (!target.isAlive()) {
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.ON_DEATH,
         target,
-        { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
+        { target: source, sourceId: source.id, cause: EffectType.DAMAGE, participants },
       )
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.ON_KILL,
         source,
-        { target, targetId: target.id, cause: EffectType.DAMAGE },
+        { target, targetId: target.id, cause: EffectType.DAMAGE, participants },
       )
     }
   }
@@ -29906,6 +29704,7 @@ export class BattleExecutor {
     target: BattleEntity,
     damageResult: { damage: number; isCritical: boolean },
     turnNumber: number,
+    participants?: Map<string, BattleEntity>,
   ): Promise<void> {
     const { damage, isCritical } = damageResult
     action.damage = damage
@@ -29926,7 +29725,7 @@ export class BattleExecutor {
     })
 
     // ponytail: 动画命中后再扣血，触发 ON_HIT/ON_DEATH 被动
-    this.applyDamageToTarget(source, target, damage)
+    this.applyDamageToTarget(source, target, damage, participants)
 
     await this.animationManager.triggerDamageAnimationAndWait({
       targetId: target.id,
@@ -29965,16 +29764,16 @@ export class BattleExecutor {
       return this.createBattleAction(
         source.id,
         source.id,
-        battle.currentRound || 1,
+        battle.currentTurn || 1,
       )
     }
 
-    const currentRound = battle.currentRound
+    const currentTurn = battle.currentTurn
 
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BEFORE_ATTACK,
       source,
-      { target, targetId, currentTurn: currentRound },
+      { target, targetId, currentTurn: currentTurn, participants: battle.participants },
     )
 
     // 创建详细记录对象用于捕获伤害拆分
@@ -29985,7 +29784,7 @@ export class BattleExecutor {
       'attack',
       targetId,
       target.name,
-      currentRound ?? 1,
+      currentTurn ?? 1,
     )
 
     const attackStep = this.buildNormalAttackStep(source, targetId)
@@ -29996,17 +29795,18 @@ export class BattleExecutor {
       record,
     )
 
-    const action = this.createBattleAction(source.id, targetId, currentRound)
+    const action = this.createBattleAction(source.id, targetId, currentTurn)
 
     if (damageResult.isMiss) {
-      await this.handleMissAttack(action, source, target, currentRound)
+      await this.handleMissAttack(action, source, target, currentTurn)
     } else {
       await this.handleHitAttack(
         action,
         source,
         target,
         damageResult,
-        currentRound,
+        currentTurn,
+        battle.participants,
       )
     }
 
@@ -30025,6 +29825,7 @@ export class BattleExecutor {
         targetId,
         damage: action.damage,
         isCritical: damageResult.isCritical,
+        participants: battle.participants,
       },
     )
 
@@ -30072,7 +29873,7 @@ export class BattleExecutor {
     this.battleRecorder.recordAction(
       battle.battleId,
       action,
-      battle.currentRound || 1,
+      battle.currentTurn || 1,
     )
   }
 
@@ -30114,7 +29915,7 @@ export class BattleExecutor {
       damage,
       success: true,
       timestamp: Date.now(),
-      turn: battle.currentRound || 1,
+      turn: battle.currentTurn || 1,
       effects: [
         {
           type: EffectType.DAMAGE,
@@ -30230,18 +30031,18 @@ export class BattleExecutor {
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.ON_HIT,
               source,
-              { target, sourceId: source.id, damage: action.damage ?? 0 },
+              { target, sourceId: source.id, damage: action.damage ?? 0, participants: battle.participants },
             )
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.DAMAGE_TAKEN,
               target,
-              { target: source, sourceId: source.id, damage: action.damage ?? 0 },
+              { target: source, sourceId: source.id, damage: action.damage ?? 0, participants: battle.participants },
             )
             if (!target.isAlive()) {
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_DEATH,
                 target,
-                { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
+                { target: source, sourceId: source.id, cause: EffectType.DAMAGE, participants: battle.participants },
               )
             }
           }
@@ -30310,23 +30111,23 @@ export class BattleExecutor {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.ON_HIT,
           source,
-          { target, sourceId: source.id, damage: actualDamage },
+          { target, sourceId: source.id, damage: actualDamage, participants: battle.participants },
         )
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.DAMAGE_TAKEN,
           target,
-          { target: source, sourceId: source.id, damage: actualDamage },
+          { target: source, sourceId: source.id, damage: actualDamage, participants: battle.participants },
         )
         if (!target.isAlive()) {
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_DEATH,
             target,
-            { target: source, sourceId: source.id, cause: EffectType.DAMAGE },
+            { target: source, sourceId: source.id, cause: EffectType.DAMAGE, participants: battle.participants },
           )
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_KILL,
             source,
-            { target, targetId: target.id, cause: EffectType.DAMAGE },
+            { target, targetId: target.id, cause: EffectType.DAMAGE, participants: battle.participants },
           )
         }
 
@@ -30406,12 +30207,12 @@ export class BattleLifecycleManager {
       sourceId: 'system',
       targetId: 'system',
       skillId: '',
-      turn: battle.currentRound || 1,
+      turn: battle.currentTurn || 1,
       effects: [{ type: 'status', description: `战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}`, duration: 0 }],
     })
 
     battle.actions.push(endAction)
-    this.battleRecorder.recordAction(battle.battleId, endAction, battle.currentRound || 1)
+    this.battleRecorder.recordAction(battle.battleId, endAction, battle.currentTurn || 1)
     this.battleRecorder.endRecording(battle.battleId, winner)
     this.battleRecorder.saveRecording(battle.battleId)
 
@@ -30617,7 +30418,7 @@ export class BattleRecorder {
   private maxRecordings = 10
   private cleanupScheduled = false
   private randomSeeds = new Map<string, string>()
-  private currentRoundNumbers = new Map<string, number>()
+  private currentTurnNumbers = new Map<string, number>()
 
   public generateRandomSeed(): string {
     return SeededRandom.generateSeed()
@@ -30650,7 +30451,7 @@ export class BattleRecorder {
     }
 
     this.recordings.set(battleId, recording)
-    this.currentRoundNumbers.set(battleId, 0)
+    this.currentTurnNumbers.set(battleId, 0)
 
     this.recordEvent(
       battleId,
@@ -30700,7 +30501,7 @@ export class BattleRecorder {
     roundNumber: number,
     snapshot?: BattleStateSnapshot,
   ) {
-    this.currentRoundNumbers.set(battleId, roundNumber)
+    this.currentTurnNumbers.set(battleId, roundNumber)
     const recording = this.recordings.get(battleId)
     if (recording) {
       const round: BattleRound = {
@@ -30724,12 +30525,12 @@ export class BattleRecorder {
   }
 
   public endRound(battleId: string, snapshot?: BattleStateSnapshot) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     const recording = this.recordings.get(battleId)
     if (recording && recording.rounds.length > 0) {
-      const currentRound = recording.rounds[recording.rounds.length - 1]
-      if (currentRound.roundNumber === roundNumber) {
-        currentRound.endSnapshot = snapshot
+      const currentTurn = recording.rounds[recording.rounds.length - 1]
+      if (currentTurn.roundNumber === roundNumber) {
+        currentTurn.endSnapshot = snapshot
       }
     }
 
@@ -30746,7 +30547,7 @@ export class BattleRecorder {
   }
 
   public recordAction(battleId: string, action: BattleAction, turn: number) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.ACTION,
@@ -30760,8 +30561,8 @@ export class BattleRecorder {
 
     const recording = this.recordings.get(battleId)
     if (recording && recording.rounds.length > 0) {
-      const currentRound = recording.rounds[recording.rounds.length - 1]
-      currentRound.events.push({
+      const currentTurn = recording.rounds[recording.rounds.length - 1]
+      currentTurn.events.push({
         eventId: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         type: BattleEventType.ACTION,
         timestamp: Date.now(),
@@ -30791,7 +30592,7 @@ export class BattleRecorder {
     instanceId: string,
     turn: number,
   ) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.BUFF_ADD,
@@ -30812,7 +30613,7 @@ export class BattleRecorder {
     instanceId: string,
     turn: number,
   ) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.BUFF_REMOVE,
@@ -30834,7 +30635,7 @@ export class BattleRecorder {
     stacks: number,
     turn: number,
   ) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.BUFF_UPDATE,
@@ -30855,7 +30656,7 @@ export class BattleRecorder {
     state: Partial<BattleState>,
     turn: number,
   ) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.STATE_CHANGE,
@@ -30873,7 +30674,7 @@ export class BattleRecorder {
     turn: number,
     participantId: string,
   ) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.TURN_START,
@@ -30887,7 +30688,7 @@ export class BattleRecorder {
   }
 
   public recordTurnEnd(battleId: string, turn: number) {
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.TURN_END,
@@ -30920,7 +30721,7 @@ export class BattleRecorder {
       }
     }
 
-    const roundNumber = this.currentRoundNumbers.get(battleId) || 0
+    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
     this.recordEvent(
       battleId,
       BattleEventType.BATTLE_END,
@@ -31144,7 +30945,7 @@ export class BattleRecorder {
   public clearRecordings() {
     this.recordings.clear()
     this.randomSeeds.clear()
-    this.currentRoundNumbers.clear()
+    this.currentTurnNumbers.clear()
     battleLogManager.addDebugLog('清空所有战斗记录')
   }
 
@@ -31152,7 +30953,7 @@ export class BattleRecorder {
     if (this.recordings.has(battleId)) {
       this.recordings.delete(battleId)
       this.randomSeeds.delete(battleId)
-      this.currentRoundNumbers.delete(battleId)
+      this.currentTurnNumbers.delete(battleId)
       battleLogManager.addDebugLog(`清理战斗记录: ${battleId}`)
     }
   }
@@ -31182,7 +30983,7 @@ export class BattleRecorder {
       const [battleId] = sortedRecordings[i]
       this.recordings.delete(battleId)
       this.randomSeeds.delete(battleId)
-      this.currentRoundNumbers.delete(battleId)
+      this.currentTurnNumbers.delete(battleId)
       battleLogManager.addDebugLog(`清理过期战斗记录: ${battleId}`)
     }
   }
@@ -31619,12 +31420,12 @@ export class BattleRuleManager {
    * 这是一个纯业务规则函数，不依赖外部状态
    * maxTurns 从规则配置中读取，统一配置来源
    * @param participants 所有参战方
-   * @param currentRound 当前回合数
+   * @param currentTurn 当前回合数
    * @returns 判定结果
    */
   public checkBattleEndCondition(
     participants: Map<string, BattleEntity>,
-    currentRound: number,
+    currentTurn: number,
   ): BattleEndCheckResult {
     const { maxTurns } = this.getConfig().rules.turnSystem
     const aliveCharacters = Array.from(participants.values()).filter(
@@ -31643,7 +31444,7 @@ export class BattleRuleManager {
     }
 
     // 2. 超过最大回合数（按血量比例判定）
-    if (currentRound >= maxTurns) {
+    if (currentTurn >= maxTurns) {
       const charactersHealth = aliveCharacters.reduce(
         (sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth),
         0,
@@ -31866,9 +31667,9 @@ export class BattleStateManager {
         battleState.battleState !== BattleStatus.CREATED &&
         battleState.battleState !== BattleStatus.PREPARING
 
-      // 同步回合数（currentRound 是 1-based 回合号）
-      if (battleState.currentRound !== undefined) {
-        this.currentTurn = battleState.currentRound
+      // 同步回合数（currentTurn 是 1-based 回合号）
+      if (battleState.currentTurn !== undefined) {
+        this.currentTurn = battleState.currentTurn
       }
 
       // 同步当前行动者（currentTurn 是 0-based 回合内行动索引）
@@ -32635,8 +32436,6 @@ export interface BattleState {
   turnOrder: string[]
   /** 当前行动次序索引（0-based，表示当前回合内的第几个行动） */
   currentTurn: number
-  /** 当前回合数（1-based，从 1 开始） */
-  currentRound: number
   /** 战斗状态 */
   battleState: BattleStatus
   startTime: number
@@ -32714,8 +32513,6 @@ export interface BattleData {
   turnOrder: string[]
   /** 当前行动次序索引（表示当前回合内的第几个行动） */
   currentTurn: number
-  /** 当前回合数（从1开始） */
-  currentRound: number
   /** 最大回合数 */
   maxTurns: number
   /** 战斗开始时间戳 */
@@ -32840,6 +32637,12 @@ export const BattleTriggerPhase = {
   ENERGY_GAINED: 'energy_gained',
   SKILL_USE: 'skill_use',
   HP_LOWER_THAN: 'hp_lower_than',
+  /** 队友受到致命伤害 */
+  ALLY_FATAL_DAMAGE: 'ally_fatal_damage',
+  /** 队友受到伤害 */
+  ALLY_DAMAGE_TAKEN: 'ally_damage_taken',
+  /** Buff 被施加时 */
+  ON_APPLY: 'on_apply',
 } as const
 
 export type BattleTriggerPhase =
@@ -32986,10 +32789,21 @@ export class BuffContext {
     this._buffSystem = null
   }
 
+  /**
+   * 获取流逝时间（毫秒）
+   * 用于 Buff 脚本中基于实时时间的逻辑（如 DOT 每 2 秒触发一次）。
+   * ponytail: 回合制系统的主要计时由 `updatePerTurn` 驱动（回合递减），
+   *           但部分持续效果（毒/hot）使用实时时间实现平滑触发。两套体系并存。
+   */
   public getElapsedTime(): number {
     return Date.now() - this.startTime
   }
 
+  /**
+   * @deprecated 本系统是回合制，不推荐使用实时时间计算剩余时间。
+   * 剩余回合数请通过 BuffInstance.remainingTurns 读取。
+   * 此方法保留仅用于兼容遗留代码——当前基于 getElapsedTime 计算，返回不准确的值。
+   */
   public getRemainingTime(): number {
     if (this.config.duration <= 0) return -1
     return Math.max(0, this.config.duration - this.getElapsedTime())
@@ -33264,7 +33078,7 @@ export class BuffScriptLoader {
 }
 
 --- src/domain/buff/BuffScriptRegistry.ts ---
-import { IBuffScript, ScriptBuffConfig } from '@/domain/buff/types'
+import { IBuffScript, ScriptBuffConfig, type TriggerAction } from '@/domain/buff/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import buffsData from '@configs/buffs/buffs.json'
 import effectsData from '@configs/effects/effects.json'
@@ -33300,6 +33114,7 @@ interface BuffConfigData {
   immunities?: string[]
   aura?: BuffAuraConfig
   onAdd?: string
+  triggers?: TriggerAction[]
 }
 
 type ScriptFactory<TParams = any> = () => IBuffScript<TParams>
@@ -33475,9 +33290,12 @@ export class BuffScriptRegistry {
     return this.defaultConfigs.get(scriptId)
   }
 
-  /** 检查脚本是否为自包含模式（有 defaultConfig 且标记了 selfContained） */
+  /** 检查脚本是否为自包含模式——脚本自行管理修饰符，框架不再重复从 JSON 读取 */
   public isSelfContained(scriptId: string): boolean {
+    // ponytail: 显式标记或任何已注册的脚本均视为自包含
+    // 纯 JSON 配置（无脚本）的 buff 才通过 applyAttributeModifiers 应用修饰符
     return this.defaultConfigs.get(scriptId)?.selfContained === true
+      || this.registry.has(scriptId)
   }
 
   public registerScript(scriptId: string, script: any, defaultConfig?: ScriptBuffConfig): void {
@@ -33541,7 +33359,8 @@ import { TriggerEventBus, triggerEventBus } from '@/infrastructure/adapters/even
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { Counter } from '@/shared/utils/Counter'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
-import { BattleContext } from '@/domain/battle/type/types'
+import { BattleContext, BattleTriggerPhase } from '@/domain/battle/type/types'
+import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
 
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
@@ -33646,6 +33465,26 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.registerTriggerScript(SkillStepType.HEAL, (ctx: TriggerExecutionContext) => {
       this.healTarget(ctx.targetId ?? '', ctx.params?.amount as number ?? 0)
     })
+    // ponytail: 注册 15 个 JSON 配置触发器脚本。TRIGGER_SCRIPTS 通过 import type 避免循环依赖。
+    Object.entries(TRIGGER_SCRIPTS).forEach(([id, handler]) => {
+      this.registerTriggerScript(id, handler)
+    })
+  }
+
+  /**
+   * 请求对目标造成伤害（供触发器脚本调用）
+   * 委托给 BattleSystem 注册的 onDamageRequest 回调
+   */
+  public requestDamage(targetId: string, damage: number, damagePercent?: number): void {
+    this.dealDirectDamage(targetId, damage, damagePercent)
+  }
+
+  /**
+   * 请求治疗目标（供触发器脚本调用）
+   * 委托给 BattleSystem 注册的 onHealRequest 回调
+   */
+  public requestHeal(targetId: string, amount: number): void {
+    this.healTarget(targetId, amount)
   }
 
   private dealDirectDamage(targetId: string, damage: number, damagePercent?: number): void {
@@ -33718,6 +33557,91 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
   }
 
+  // ============ 触发器系统（JSON 配置 triggers → TriggerEventBus 接线） ============
+
+  /**
+   * 阶段名规范化映射
+   * ponytail: buffs.json 历史遗留使用 ON_TURN_START 风格，与 BattleTriggerPhase 枚举值（turn_start）不匹配。
+   *           在注册触发器时做一次映射，避免修改 20+ 处 JSON 配置。
+   *           覆盖所有 BattleTriggerPhase 值，新配置可直接使用大小写混合的 ON_ 风格。
+   */
+  private static readonly PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
+    ON_TURN_START: BattleTriggerPhase.TURN_START,
+    ON_TURN_END: BattleTriggerPhase.TURN_END,
+    ON_BATTLE_START: BattleTriggerPhase.BATTLE_START,
+    ON_BATTLE_END: BattleTriggerPhase.BATTLE_END,
+    ON_DAMAGE_TAKEN: BattleTriggerPhase.DAMAGE_TAKEN,
+    ON_ATTACK_HIT: BattleTriggerPhase.ON_HIT,
+    BEFORE_ATTACK: BattleTriggerPhase.BEFORE_ATTACK,
+    AFTER_ATTACK: BattleTriggerPhase.AFTER_ATTACK,
+    ON_KILL: BattleTriggerPhase.ON_KILL,
+    ON_DEATH: BattleTriggerPhase.ON_DEATH,
+    ON_HEAL_RECEIVED: BattleTriggerPhase.HEAL_RECEIVED,
+    ON_ENERGY_GAINED: BattleTriggerPhase.ENERGY_GAINED,
+    ON_SKILL_USE: BattleTriggerPhase.SKILL_USE,
+    ON_HP_LOWER_THAN: BattleTriggerPhase.HP_LOWER_THAN,
+    ON_ALLY_FATAL_DAMAGE: BattleTriggerPhase.ALLY_FATAL_DAMAGE,
+    ON_ALLY_DAMAGE_TAKEN: BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
+    ON_APPLY: BattleTriggerPhase.ON_APPLY,
+  }
+
+  /**
+   * 为 Buff 实例注册触发器监听器
+   * 在 addBuff 中被调用，读取 resolvedConfig.triggers，向 TriggerEventBus 注册监听器。
+   */
+  private registerTriggersForInstance(
+    instanceId: string,
+    triggers: import('@/domain/buff/types').TriggerAction[],
+    characterId: string,
+  ): void {
+    const buffInstance = this.buffInstances.get(instanceId)
+    if (!buffInstance) return
+
+    const listenerIds: string[] = []
+    for (const trigger of triggers) {
+      const phase = BuffSystem.PHASE_NAME_MAP[trigger.phase] ?? trigger.phase
+      let triggerCount = 0
+      let lastTriggerTurn = -999
+
+      const callback = (ctx: TriggerEventContext) => {
+        // 概率检查
+        if (trigger.probability !== undefined && trigger.probability < 1 && Math.random() > trigger.probability) return
+        // 触发次数检查
+        if (trigger.maxTriggers !== undefined && trigger.maxTriggers >= 0 && triggerCount >= trigger.maxTriggers) return
+        // 冷却检查
+        const turn = ctx.currentTurn ?? 0
+        if (trigger.cooldown && (turn - lastTriggerTurn) < trigger.cooldown) return
+
+        const handler = this.triggerScripts.get(trigger.scriptId)
+        if (handler) {
+          handler({
+            ...ctx,
+            instanceId,
+            targetId: characterId,
+            params: trigger.params as Record<string, number | string> | undefined,
+          })
+          triggerCount++
+          lastTriggerTurn = turn
+        }
+      }
+
+      const listenerId = this.eventBus.on(phase as any, callback, instanceId)
+      listenerIds.push(listenerId)
+    }
+
+    if (listenerIds.length > 0) {
+      buffInstance.triggerListenerIds = listenerIds
+    }
+  }
+
+  /**
+   * 清理 Buff 实例的所有触发器监听器
+   * 在 removeBuff 中被调用，通过 TriggerEventBus.offByBuffInstance 批量移除。
+   */
+  private unregisterTriggersForInstance(instanceId: string): void {
+    this.eventBus.offByBuffInstance(instanceId)
+  }
+
   public addBuff(
     characterId: string,
     buffId: string,
@@ -33747,13 +33671,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
 
     // ponytail: 自包含脚本的配置合并策略：
-    // 调用方传的配置 > 脚本静态 CONFIG > JSON 配置 > 硬编码默认值
+    // 调用方传的配置（除 name/description）> 脚本静态 CONFIG > JSON 配置 > 硬编码默认值
+    // name/description 是纯展示字段，由系统从脚本 CONFIG 或 JSON 配置解析，避免调用方误传 buffId
     const scriptDefaultConfig = this.scriptRegistry.getDefaultConfig(buffId)
     const jsonConfig = this.scriptRegistry.getBuffConfig(buffId)
     const resolvedConfig: BuffConfig = {
       id: config.id ?? scriptDefaultConfig?.id ?? jsonConfig?.id ?? buffId,
-      name: config.name ?? scriptDefaultConfig?.name ?? jsonConfig?.name ?? buffId,
-      description: config.description ?? scriptDefaultConfig?.description ?? '',
+      name: scriptDefaultConfig?.name ?? jsonConfig?.name ?? buffId,
+      description: scriptDefaultConfig?.description ?? '',
       duration: config.duration ?? scriptDefaultConfig?.duration ?? jsonConfig?.duration ?? 1,
       maxStacks: config.maxStacks ?? scriptDefaultConfig?.maxStacks ?? jsonConfig?.maxStacks ?? 1,
       cooldown: config.cooldown ?? scriptDefaultConfig?.cooldown ?? 0,
@@ -33765,9 +33690,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       isPositive: config.isPositive ?? scriptDefaultConfig?.isPositive ?? undefined,
       iconPath: config.iconPath ?? scriptDefaultConfig?.iconPath ?? undefined,
       dispellable: config.dispellable ?? scriptDefaultConfig?.dispellable ?? undefined,
-      immuneTags: config.immuneTags ?? undefined,
+      immuneTags: config.immuneTags ?? (scriptDefaultConfig as any)?.immuneTags ?? jsonConfig?.immunities ?? undefined,
       parameters: config.parameters ?? scriptDefaultConfig?.parameters ?? undefined,
-      attributes: config.attributes ?? undefined,
+      attributes: config.attributes ?? jsonConfig?.attributes ?? undefined,
+      triggers: config.triggers ?? jsonConfig?.triggers ?? undefined,
     }
 
     // ponytail: 免疫检查 — 若目标对该控制类型或 buffId 免疫则跳过施加
@@ -33790,15 +33716,44 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       case StackRule.REFRESH:
         existingBuffs.forEach((instance) => this.removeBuff(instance.id))
         break
-      case StackRule.LIMITED:
-        if (existingBuffs.length >= resolvedConfig.maxStacks) {
-          // 满层时刷新持续时间而非静默忽略
-          this.refreshBuff(existingBuffs[0].id, currentTurn)
-          return existingBuffs[0].id
+      case StackRule.LIMITED: {
+        const maxStacks = resolvedConfig.maxStacks ?? 1
+        if (existingBuffs.length > 0) {
+          const target = existingBuffs[0]
+          // 清除旧修饰符（兼容旧版多实例场景，正常应只有1个）
+          for (let i = 1; i < existingBuffs.length; i++) {
+            this.removeBuff(existingBuffs[i].id)
+          }
+          const newStacks = target.currentStacks + 1
+          if (newStacks > maxStacks) {
+            // 满层：刷新持续时间，不增加层数
+            this.refreshBuff(target.id, currentTurn)
+            this.triggerAttributeChange(characterId)
+            return target.id
+          }
+          // 递增层数并重新应用修饰符
+          target.currentStacks = newStacks
+          // ponytail: 同步更新 _stacks——applyModifiers 从此变量读取层数缩放修饰符值
+          // 任何直接修改 currentStacks 的代码必须同步更新 context.variables['_stacks']
+          target.context.variables.set('_stacks', newStacks)
+          // ponytail: 手动触发 onRefresh 以重新计算修饰符（applyModifiers 读取 _stacks），
+          // 不使用 refreshBuff 因为它会重置 remainingTurns 且依赖 _onRefresh 分支
+          target.script.onRefresh(target.context)
+          target.effectLines = target.script.getEffectLines?.(target.context) ?? []
+          this.triggerAttributeChange(characterId)
+          return target.id
         }
         break
-      case StackRule.INDEPENDENT:
+      }
+      case StackRule.INDEPENDENT: {
+        // ponytail: 独立模式也设上限，防止同一 Buff 无限叠加导致修饰符膨胀
+        // 用 ?? 而非 || 避免 maxStacks:0 被误当作 falsy 回退
+        const maxIndependent = resolvedConfig.maxStacks ?? 10
+        if (existingBuffs.length >= maxIndependent) {
+          return ''
+        }
         break
+      }
     }
 
     const instanceId = `${characterId}_${buffId}_${currentTurn}_${this.instanceIdCounter.next()}`
@@ -33824,6 +33779,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
 
     BuffErrorBoundary.wrap(() => {
+      // ponytail: 设置初始层数，供 applyModifiers 读取以缩放修饰符值
+      context.variables.set('_stacks', buffInstance.currentStacks)
       script.onApply(context)
     })
 
@@ -33837,6 +33794,12 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
     // ponytail: self 目标光环的修饰符始终应用到目标角色（自包含脚本也在 ModifierStack 中管理）
     this.applyBuffAuraModifiers(characterId, instanceId, buffId)
+
+    // ponytail: 注册触发器监听器 — 从配置的 triggers 数组向 TriggerEventBus 注册
+    if (resolvedConfig.triggers && resolvedConfig.triggers.length > 0) {
+      this.registerTriggersForInstance(instanceId, resolvedConfig.triggers, characterId)
+    }
+
     this.triggerAttributeChange(characterId)
 
     // ponytail: 技术调试日志 — Buff 变更追踪
@@ -33863,6 +33826,15 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       })
     }
 
+    // ponytail: 触发 ON_APPLY 阶段 — 供其他 Buff 的触发器监听（如 "xxx 被施加时"）
+    this.eventBus.emit('on_apply' as any, {
+      phase: 'on_apply' as any,
+      targetId: characterId,
+      sourceId: characterId,
+      currentTurn,
+      extra: { buffId, instanceId },
+    } as any)
+
     return instanceId
   }
 
@@ -33880,6 +33852,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       // ponytail: normalize the attribute key so JSON keys like 'ATK' → 'attack',
       // matching the keys used by BattleParticipantImpl.syncModifiersFromProvider
       const normalizedAttr = attr as ATTRIBUTE_CODE
+      // ponytail: 计算当前累计值供调试日志
+      const existingMods = modifierStack.getModifiers(normalizedAttr)
+      const currentTotal = existingMods.reduce((sum, m) => sum + m.value, 0)
       modifierStack.addModifier(instanceId, normalizedAttr, parsed.value, parsed.type)
       this.logger.addDebugLog(`应用属性修饰符: ${attr} → ${normalizedAttr} = ${valueStr} (${parsed.type}) 到角色 ${characterId}`)
       // ponytail: 技术调试日志 — Buff 修饰符变更
@@ -33888,7 +33863,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         buffId,
         normalizedAttr,
         valueStr,
-        0, /* ponytail: 没有当前属性累计值，传 0 占位 */
+        currentTotal + parsed.value,
       )
     }
   }
@@ -33908,6 +33883,30 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
     for (const tag of buffConfig.immunities) {
       immunities.add(tag.toLowerCase())
+    }
+  }
+
+  /**
+   * 重建角色的免疫标签集合
+   * 扫描该角色所有活跃 Buff 的 immunities 配置，重新构建 characterImmunities。
+   * 在 removeBuff 后调用，确保已移除 Buff 的免疫标签被一并清理。
+   * ponytail: O(n*m) — n=角色Buff数, m=每个Buff的免疫标签数，战斗场景中两个值都很小，不计性能。
+   */
+  private rebuildCharacterImmunities(characterId: string): void {
+    const immunities = new Set<string>()
+    this.buffInstances.forEach((instance) => {
+      if (!instance.isActive || instance.characterId !== characterId) return
+      const buffConfig = this.scriptRegistry.getBuffConfig(instance.buffId)
+      if (buffConfig?.immunities) {
+        for (const tag of buffConfig.immunities) {
+          immunities.add(tag.toLowerCase())
+        }
+      }
+    })
+    if (immunities.size > 0) {
+      this.characterImmunities.set(characterId, immunities)
+    } else {
+      this.characterImmunities.delete(characterId)
     }
   }
 
@@ -33943,6 +33942,23 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return this.scriptRegistry.getBuffConfig(buffId)?.aura
   }
 
+  /**
+   * 移除目标角色所有可驱散的 Buff
+   * 仅移除 dispellable === true 的实例，不可驱散的 Buff（dispella ble !== true）保留。
+   */
+  public removeDispellableBuffs(characterId: string): number {
+    let count = 0
+    this.buffInstances.forEach((instance) => {
+      if (!instance.isActive || instance.characterId !== characterId) return
+      const config = instance.context.config
+      if (config.dispellable === true) {
+        this.removeBuff(instance.id)
+        count++
+      }
+    })
+    return count
+  }
+
   public removeBuff(instanceId: string): boolean {
     const instance = this.buffInstances.get(instanceId)
     if (!instance || !instance.isActive) return false
@@ -33952,6 +33968,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     })
 
     instance.isActive = false
+    // ponytail: 反注册触发器监听器 — 必须在 delete 前执行，确保 callback 中仍能读到 instance
+    this.unregisterTriggersForInstance(instanceId)
     this.buffInstances.delete(instanceId)
 
     const modifierStack = this.getModifierStack(instance.characterId)
@@ -33965,6 +33983,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     )
 
     BuffContextPool.return(instance.context)
+    // ponytail: 免疫标签回收 — 从剩余 Buff 重建免疫集合，防止已移除 Buff 的免疫标签残留
+    this.rebuildCharacterImmunities(instance.characterId)
     this.triggerAttributeChange(instance.characterId)
     return true
   }
@@ -33987,6 +34007,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   public updatePerTurn(characterId: string): void {
     const toRemove: string[] = []
+    let hasNonExpiredChange = false
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
 
@@ -34000,11 +34021,17 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       instance.remainingTurns--
       if (instance.duration > 0 && instance.remainingTurns <= 0) {
         toRemove.push(instance.id)
+      } else {
+        // ponytail: 非过期递减需要通知 UI（removeBuff 已处理过期的通知）
+        hasNonExpiredChange = true
       }
     })
     toRemove.forEach((instanceId) => {
       this.removeBuff(instanceId)
     })
+    if (hasNonExpiredChange) {
+      this.triggerAttributeChange(characterId)
+    }
   }
 
   public getBuffInstances(characterId: string): BuffInstance[] {
@@ -34069,16 +34096,31 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
   }
 
+  /** 控制效果同优先级时的排序权重（数值越大越优先） */
+  private static readonly CONTROL_TYPE_ORDER: Record<ControlType, number> = {
+    [ControlType.NONE]: 0,
+    [ControlType.SLEEP]: 1,
+    [ControlType.SILENCE]: 2,
+    [ControlType.FREEZE]: 3,
+    [ControlType.STUN]: 4,
+    [ControlType.BIND]: 5,
+  }
+
   /** 获取最高优先级的控制效果 */
   public getHighestPriorityControlEffect(characterId: string): ControlType {
     let highestPriority = -1
     let highestControlType = ControlType.NONE
+    let highestOrder = -1
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
       const config = instance.context.config
-      if (config.controlType !== ControlType.NONE && config.controlPriority > highestPriority) {
+      if (config.controlType === ControlType.NONE) return
+      if (config.controlPriority > highestPriority
+        || (config.controlPriority === highestPriority
+          && (BuffSystem.CONTROL_TYPE_ORDER[config.controlType] ?? 0) > highestOrder)) {
         highestPriority = config.controlPriority
         highestControlType = config.controlType
+        highestOrder = BuffSystem.CONTROL_TYPE_ORDER[config.controlType] ?? 0
       }
     })
     return highestControlType
@@ -34090,7 +34132,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   public canUseSkill(characterId: string): boolean {
     const controlType = this.getHighestPriorityControlEffect(characterId)
-    return controlType !== ControlType.STUN && controlType !== ControlType.SILENCE
+    return controlType !== ControlType.STUN
+      && controlType !== ControlType.SILENCE
+      && controlType !== ControlType.FREEZE
+      && controlType !== ControlType.SLEEP
+      && controlType !== ControlType.BIND
   }
 
   public canAct(characterId: string): boolean {
@@ -34318,8 +34364,9 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
   }
 
   protected _onRemove(context: BuffContext): void {
-    // ponytail: BaseBuffScript.onRemove 已调用 context.removeModifiers()，无需重复清理
-    // 子类如需清理运行时变量，重写此方法并调用 super._onRemove(context)
+    // ponytail: 修饰符清理由 BuffSystem.removeBuff → modifierStack.removeModifier(instanceId) 统一处理，
+    //           BaseBuffScript.onRemove 不调用 context.removeModifiers()（自 2026-07-16 重构后）。
+    //           子类如需清理运行时变量，重写此方法并调用 super._onRemove(context)
   }
 
   protected _onUpdate(context: BuffContext, deltaTime: number): void {
@@ -34347,6 +34394,8 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
    */
   protected applyModifiers(context: BuffContext, replace: boolean = false): void {
     const modifiers = this.getModifiers()
+    // ponytail: 从上下文中读取叠加层数，默认 1 层
+    const stacks = (context.getVariable<number>('_stacks') as number) ?? 1
 
     if (replace) {
       // ponytail: 精确移除——只移除本 instance 下每个声明属性的旧修饰符，不影响同 instance 的其他属性
@@ -34356,14 +34405,15 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     }
 
     for (const mod of modifiers) {
-      const value = typeof mod.value === 'function' ? mod.value(context) : mod.value
+      const rawValue = typeof mod.value === 'function' ? mod.value(context) : mod.value
+      const value = rawValue * stacks
       context.addModifier(mod.attribute as ATTRIBUTE_CODE, value, mod.type)
     }
 
     if (this._isDebugMode()) {
       for (const mod of modifiers) {
-        const resolvedValue = typeof mod.value === 'function' ? mod.value(context) : mod.value
-        this.log(context, `  ├─ ${mod.description ?? mod.attribute}: ${mod.attribute} ${mod.type} ${resolvedValue}`)
+        const rawVal = typeof mod.value === 'function' ? mod.value(context) : mod.value
+        this.log(context, `  ├─ ${mod.description ?? mod.attribute}: ${mod.attribute} ${mod.type} ${rawVal}（${stacks}层→实际${rawVal * stacks}）`)
       }
     }
   }
@@ -34417,8 +34467,11 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
   public onRemove(context: BuffContext): void {
     BuffErrorBoundary.wrap(() => {
       this._onRemove(context)
-      context.removeModifiers()
     })
+    // ponytail: 修饰符清理由 BuffSystem.removeBuff → modifierStack.removeModifier(instanceId) 统一处理。
+    //           BaseBuffScript 不再调用 context.removeModifiers()，避免 double-free 但无害。
+    //           AttributeBuffTemplate._onRemove 的注释提到"context.removeModifiers() 已由基类调用"，
+    //           该注释已过时——当前仅执行 _onRemove 回调，修饰符清理由系统层负责。
   }
 
   public onUpdate(context: BuffContext, deltaTime: number): void {
@@ -35635,10 +35688,6 @@ export class RevengeRageBuff extends AttributeBuffTemplate {
   protected getModifiers(): AttributeModifier[] {
     return [{ attribute: ATTRIBUTE_CODE.attack, value: (ctx) => this.getConfigValue(ctx, 'stackBonus', 5), type: ModifierType.PERCENTAGE, description: '复仇怒火' }]
   }
-  protected _onApply(context: BuffContext): void {
-    context.setVariable('_bonus', this.getConfigValue(context, 'stackBonus', 5))
-    super._onApply(context)
-  }
 }
 /* ========== 破甲打击：降低目标20%防御，2回合 ========== */
 export class ArmorBreakBuff extends AttributeBuffTemplate {
@@ -36019,6 +36068,223 @@ export class ShieldBuff extends BaseBuffScript {
 // 导出 BUFF_ID 常量
 export const BUFF_ID = ShieldBuff.BUFF_ID
 
+--- src/domain/buff/triggers/index.ts ---
+/**
+ * triggers/index.ts — 触发器脚本实现 + 注册入口
+ *
+ * 所有脚本签名：(ctx: TriggerExecutionContext) => void
+ * 通过 BuffSystem.registerTriggerScript 注册到 triggerScripts 映射表。
+ * 在 BuffSystem 构造函数中被调用，与 registerDefaultTriggerScripts 并列。
+ *
+ * ponytail: 所有脚本都很简短（15-30行），集中在一个文件中便于管理。
+ * 如果日后总数超过 30 个或单文件超过 300 行，按类别拆分：
+ *   healTriggers.ts / damageTriggers.ts / debuffTriggers.ts / summonTrigger.ts
+ */
+import type { TriggerExecutionContext } from '@/domain/buff/BuffSystem'
+import { ControlType } from '@/domain/buff/types'
+import type { BuffSystem } from '@/domain/buff/BuffSystem'
+
+// ===================== 治疗类 =====================
+
+/** heal_percent_max_hp — 按最大生命值百分比治疗目标 */
+export function healPercentMaxHp(ctx: TriggerExecutionContext): void {
+  const percent = (ctx.params?.percent as number) ?? 0.05
+  const targetId = (ctx.params?.target as string) === 'self' ? ctx.targetId ?? '' : ctx.targetId ?? ''
+  if (!targetId) return
+  // ponytail: 通过 BuffSystem 的 onHealRequest 回调桥接到 HP 修改
+  ctx.buffSystem?.requestHeal(targetId, 0)
+  ctx.buffSystem?.requestDamage(targetId, 0, -Math.abs(percent))
+}
+
+/** heal_lowest_hp_ally — 治疗血量最低的队友 */
+export function healLowestHpAlly(ctx: TriggerExecutionContext): void {
+  const percent = (ctx.params?.percentMaxHp as number) ?? 0.05
+  const battleData = (ctx as any).battleData
+  if (!battleData?.participants) return
+  const allies = Array.from(battleData.participants.values()).filter(
+    (p: any) => p.team === (ctx as any).sourceTeam && p.isAlive?.() && p.id !== ctx.targetId,
+  )
+  if (allies.length === 0) return
+  const lowest: any = allies.reduce((a: any, b: any) =>
+    (a.getAttribute?.('currentHealth') ?? 0) < (b.getAttribute?.('currentHealth') ?? 0) ? a : b,
+  )
+  ctx.buffSystem?.requestHeal(lowest.id, 0)
+  ctx.buffSystem?.requestDamage(lowest.id, 0, -percent)
+}
+
+/** heal_all_allies — 治疗所有队友 */
+export function healAllAllies(ctx: TriggerExecutionContext): void {
+  const percent = (ctx.params?.percentMaxHp as number) ?? 0.03
+  const battleData = (ctx as any).battleData
+  if (!battleData?.participants) return
+  const allies = Array.from(battleData.participants.values()).filter(
+    (p: any) => p.team === (ctx as any).sourceTeam && p.isAlive?.(),
+  )
+  for (const ally of allies) {
+    const a = ally as any
+    ctx.buffSystem?.requestHeal(a.id, 0)
+    ctx.buffSystem?.requestDamage(a.id, 0, -percent)
+  }
+}
+
+/** heal_on_fire_damage — 受火焰伤害时按比例治疗（预留占位，待价值系统接入） */
+export function healOnFireDamage(ctx: TriggerExecutionContext): void {
+  // ponytail: 需要战斗系统在火焰伤害事件中传递 damage 值到 extra 字段
+  const damageValue = ((ctx.extra?.damage as number) ?? 0)
+  const healPercent = (ctx.params?.percent as number) ?? 0.5
+  if (damageValue <= 0) return
+  ctx.buffSystem?.requestHeal(ctx.targetId ?? '', Math.round(damageValue * healPercent))
+}
+
+// ===================== 伤害/反弹/格挡类 =====================
+
+/** deal_dot_damage — 持续伤害（百分比），由 buff_poison/buff_strong_poison 使用 */
+export function dealDotDamage(ctx: TriggerExecutionContext): void {
+  const percent = (ctx.params?.percent as number) ?? 0.05
+  ctx.buffSystem?.requestDamage(ctx.targetId ?? '', 0, percent)
+}
+
+/** reflect_damage — 按百分比反弹伤害给攻击者 */
+export function reflectDamage(ctx: TriggerExecutionContext): void {
+  const percent = (ctx.params?.percent as number) ?? 0.3
+  const damageTaken = ((ctx.extra?.damage as number) ?? 0)
+  const attackerId = ctx.sourceId ?? ''
+  if (damageTaken <= 0 || !attackerId) return
+  ctx.buffSystem?.requestDamage(attackerId, Math.round(damageTaken * percent))
+}
+
+/** reflect_fire_damage — 按百分比反弹火焰伤害 */
+export function reflectFireDamage(ctx: TriggerExecutionContext): void {
+  // ponytail: 与 reflect_damage 逻辑相同，区别在于触发条件由战斗系统在火焰伤害时 emit 控制
+  const percent = (ctx.params?.percent as number) ?? 0.5
+  const damageTaken = ((ctx.extra?.damage as number) ?? 0)
+  const attackerId = ctx.sourceId ?? ''
+  if (damageTaken <= 0 || !attackerId) return
+  ctx.buffSystem?.requestDamage(attackerId, Math.round(damageTaken * percent))
+}
+
+/** block_damage_percent — 按百分比格挡伤害，减少所受伤害 */
+export function blockDamagePercent(ctx: TriggerExecutionContext): void {
+  const percent = (ctx.params?.percent as number) ?? 0.5
+  const damageTaken = ((ctx.extra?.damage as number) ?? 0)
+  if (damageTaken <= 0) return
+  const blocked = Math.round(damageTaken * percent)
+  ctx.buffSystem?.requestHeal(ctx.targetId ?? '', blocked)
+}
+
+/** share_damage — 将伤害分摊给所有队友 */
+export function shareDamage(ctx: TriggerExecutionContext): void {
+  const damageTaken = ((ctx.extra?.damage as number) ?? 0)
+  const battleData = (ctx as any).battleData
+  if (damageTaken <= 0 || !battleData?.participants) return
+  const allies = Array.from(battleData.participants.values()).filter(
+    (p: any) => p.team === (ctx as any).sourceTeam && p.isAlive?.(),
+  )
+  if (allies.length <= 1) return
+  const sharePerAlly = Math.round(damageTaken / allies.length)
+  for (const ally of allies) {
+    const a = ally as any
+    if (a.id !== ctx.targetId) {
+      ctx.buffSystem?.requestDamage(a.id, sharePerAlly)
+    }
+  }
+  ctx.buffSystem?.requestHeal(ctx.targetId ?? '', damageTaken - sharePerAlly)
+}
+
+// ===================== 施加 Debuff 类 =====================
+
+/** apply_debuff_to_attacker — 给攻击者施加指定 buffId 的 debuff */
+export function applyDebuffToAttacker(ctx: TriggerExecutionContext): void {
+  const buffId = (ctx.params?.buffId as string) ?? ''
+  const duration = (ctx.params?.duration as number) ?? 2
+  const attackerId = ctx.sourceId ?? ''
+  if (!buffId || !attackerId) return
+  ctx.buffSystem?.addBuff(attackerId, buffId, { duration }, ctx.currentTurn ?? 0)
+}
+
+/** apply_poison — 施加中毒 debuff（固定配置） */
+export function applyPoison(ctx: TriggerExecutionContext): void {
+  ctx.buffSystem?.addBuff(ctx.targetId ?? '', 'buff_poison', {}, ctx.currentTurn ?? 0)
+}
+
+/** apply_silence_to_attacker — 给攻击者施加沉默 */
+export function applySilenceToAttacker(ctx: TriggerExecutionContext): void {
+  const attackerId = ctx.sourceId ?? ''
+  if (!attackerId) return
+  ctx.buffSystem?.addBuff(
+    attackerId,
+    'buff_silence',
+    {
+      duration: 1,
+      controlType: ControlType.SILENCE,
+      controlPriority: 50,
+    },
+    ctx.currentTurn ?? 0,
+  )
+}
+
+/** cleanse_random_debuff — 驱散目标一个随机 debuff */
+export function cleanseRandomDebuff(ctx: TriggerExecutionContext): void {
+  const targetId = ctx.targetId ?? ''
+  if (!targetId) return
+  const buffs = ctx.buffSystem?.getBuffInstances(targetId) ?? []
+  const debuffs = buffs.filter((b) => {
+    const config = ctx.buffSystem?.getBuffConfigByInstanceId(b.id)
+    return config?.isDebuff === true && config?.dispellable !== false
+  })
+  if (debuffs.length === 0) return
+  const target = debuffs[Math.floor(Math.random() * debuffs.length)]
+  ctx.buffSystem?.removeBuff(target.id)
+}
+
+// ===================== 护盾类 =====================
+
+/** apply_shield — 施加护盾效果（通过 buff_shield 实现） */
+export function applyShield(ctx: TriggerExecutionContext): void {
+  const shieldPercent = (ctx.params?.shieldPercent as number) ?? 0.1
+  ctx.buffSystem?.addBuff(
+    ctx.targetId ?? '',
+    'buff_shield',
+    {
+      duration: 1,
+      parameters: { shieldPercent },
+    },
+    ctx.currentTurn ?? 0,
+  )
+}
+
+// ===================== 召唤类 =====================
+
+/**
+ * summon_unit — 召唤单位
+ * ponytail: 召唤系统尚未实现。当前仅打日志占位。
+ * 升级路径：实现战斗系统的单位召唤管道后，在此处调用 ctx.buffSystem 的召唤接口。
+ */
+export function summonUnit(_ctx: TriggerExecutionContext): void {
+  console.warn('[Trigger] summon_unit — 召唤系统尚未实现，跳过')
+}
+
+// ===================== 注册入口 =====================
+
+/** 所有触发器脚本 ID → 处理函数的映射，供 BuffSystem 批量注册 */
+export const TRIGGER_SCRIPTS: Record<string, (ctx: TriggerExecutionContext) => void> = {
+  heal_percent_max_hp: healPercentMaxHp,
+  heal_lowest_hp_ally: healLowestHpAlly,
+  heal_all_allies: healAllAllies,
+  heal_on_fire_damage: healOnFireDamage,
+  deal_dot_damage: dealDotDamage,
+  reflect_damage: reflectDamage,
+  reflect_fire_damage: reflectFireDamage,
+  block_damage_percent: blockDamagePercent,
+  share_damage: shareDamage,
+  apply_debuff_to_attacker: applyDebuffToAttacker,
+  apply_poison: applyPoison,
+  apply_silence_to_attacker: applySilenceToAttacker,
+  cleanse_random_debuff: cleanseRandomDebuff,
+  apply_shield: applyShield,
+  summon_unit: summonUnit,
+}
+
 --- src/domain/buff/types.ts ---
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BattleData, BattleTriggerPhase } from '@/domain/battle/type/types'
@@ -36169,7 +36435,9 @@ export enum ControlType {
   /** 冰冻：无法行动，可能有额外效果 */
   FREEZE = 'freeze',
   /** 睡眠：无法行动，受攻击后解除 */
-  SLEEP = 'sleep'
+  SLEEP = 'sleep',
+  /** 束缚：无法行动 */
+  BIND = 'bind',
 }
 
 /**
@@ -36278,6 +36546,12 @@ export interface BuffConfig {
    * 定义属性加成，使用字符串格式如 "+10"（数值加成）、"+0.05"（百分比加成）、"-0.15"（百分比减成）
    */
   attributes?: Record<string, string>
+
+  /**
+   * 触发器配置
+   * 定义 Buff 在特定阶段自动触发的行为（如回合开始治疗、受击反弹等）
+   */
+  triggers?: TriggerAction[]
 }
 
 /**
@@ -36382,6 +36656,13 @@ export interface BuffInstance<TParams = any> {
    * active = 条件已满足（如已残血），inactive = 条件未满足
    */
   conditionState?: 'active' | 'inactive'
+
+  /**
+   * 触发器监听器 ID 列表
+   * 在 addBuff 时注册到 TriggerEventBus，removeBuff 时反注册。
+   * ponytail: 每个 trigger 生成一个 listenerId，存储在数组中统一清理。
+   */
+  triggerListenerIds?: string[]
 }
 
 /**
@@ -37361,7 +37642,13 @@ export class PassiveSkillManager {
           targets = [contextTarget ?? entity]
         }
       } else {
-        targets = [contextTarget ?? entity]
+        // ponytail: 无 participants 时仍尝试解析 selector（BATTLE_START 之外的大部分事件都没有传 participants）
+        const skillConfig = this.skillManager.getSkillConfig(config.skillId)
+        if (skillConfig?.selector?.faction === 'self') {
+          targets = [entity]
+        } else {
+          targets = [contextTarget ?? entity]
+        }
       }
 
       if (targets.length === 0) continue
@@ -37767,12 +38054,12 @@ export class SkillExecutor {
 
     const buffTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
-    const buffConfig: BuffConfig = {
+    const buffConfig: Partial<BuffConfig> = {
       id: buffId,
-      name: buffId,
+      // ponytail: 不传 name/description，让 addBuff() 从 JSON 配置中解析展示名称
       description: '',
       duration: skillStep.duration ?? -1,
-      maxStacks: skillStep.stacks ?? 1,
+      maxStacks: skillStep.stacks, // ponytail: undefined 时让 addBuff 合并链回退到 JSON 配置
       cooldown: 0,
       stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
@@ -38202,9 +38489,9 @@ export class SkillExecutor {
           ? ControlType.SILENCE
           : ControlType.STUN
     const buffId = skillStep.buffId || `control_${controlType}`
-    const config: BuffConfig = {
+    const config: Partial<BuffConfig> = {
       id: buffId,
-      name: buffId,
+      // ponytail: 不传 name/description，让 addBuff() 从 JSON 配置中解析展示名称
       description: '',
       duration: skillStep.duration ?? -1,
       maxStacks: 1,
@@ -44157,7 +44444,7 @@ function onTagLeave() {
   <div class="buff-text-group" :class="[colorClass, { 'has-debug': debugMode }]">
     <!-- 标题行 -->
     <div class="group-header">
-      <span class="group-name">{{ buff.name }}</span>
+      <span class="group-name">【{{ buff.name }}】</span>
       <span class="group-meta">
         {{ buff.condition === 'permanent' ? '永久' : `剩余 ${buff.remainingTurns} 回合` }}
         <span v-if="buff.stacks > 1"> · ×{{ buff.stacks }}层</span>
@@ -44232,16 +44519,7 @@ const conditionText = computed(() => {
 const effectLines = computed(() => {
   const lines: Array<{ text: string; className: string }> = []
 
-  // 控制效果行
-  if (props.buff.type === 'control') {
-    const turnText = props.buff.remainingTurns > 0
-      ? `（${props.buff.remainingTurns}回合）`
-      : '（永久）'
-    lines.push({
-      text: `【${props.buff.name}】${turnText}`,
-      className: 'effect--control',
-    })
-  }
+  // ponytail: 控制效果不重复添加—header 已显示 【眩晕】剩余 3 回合
 
   // 属性修正行
   for (const mod of props.buff.modifiers) {
@@ -46332,6 +46610,9 @@ defineExpose({
         :collapsed-count="buffDisplay.collapsedCount"
         :expanded="panelVisible"
         @toggle="panelVisible = !panelVisible"
+        @hover-attr="handleAttrHover"
+        @hover-buff="handleBuffHover"
+        @leave="handleBuffLeave"
       />
       <BuffTextPanel
         :visible="panelVisible"
@@ -46342,6 +46623,56 @@ defineExpose({
         :debug-mode="showDebug"
         @close="panelVisible = false"
       />
+      <!-- 属性/Buff 悬停追溯浮层 -->
+      <Teleport to="body">
+        <transition name="tooltip-fade">
+          <div
+            v-if="hoveredAttr"
+            class="attr-breakdown"
+            :style="{ left: hoverPos.x + 'px', top: hoverPos.y + 'px' }"
+            @mouseenter="clearHoverTimer"
+            @mouseleave="scheduleLeave"
+          >
+            <div class="breakdown-header">{{ hoveredAttr.attribute }}：{{ formatBreakdownTotal(hoveredAttr) }}</div>
+            <div class="breakdown-sources">
+              <div
+                v-for="(src, i) in hoveredAttr.sources"
+                :key="i"
+                class="breakdown-source"
+                :class="src.percent > 0 ? 'source-buff' : 'source-debuff'"
+              >
+                <span class="source-name">{{ src.buffName }}</span>
+                <span class="source-value">{{ src.percent > 0 ? '+' : '' }}{{ src.percent }}%</span>
+                <span class="source-meta">{{ src.remainingTurns > 0 ? `${src.remainingTurns}回合` : '永久' }}</span>
+              </div>
+            </div>
+          </div>
+          <div
+            v-else-if="hoveredBuff"
+            class="attr-breakdown"
+            :style="{ left: hoverPos.x + 'px', top: hoverPos.y + 'px' }"
+            @mouseenter="clearHoverTimer"
+            @mouseleave="scheduleLeave"
+          >
+            <div class="breakdown-header">【{{ hoveredBuff.name }}】</div>
+            <div class="breakdown-body">
+              <div v-if="hoveredBuff.description" class="breakdown-desc">{{ hoveredBuff.description }}</div>
+              <div class="breakdown-meta">
+                <span v-if="hoveredBuff.remainingTurns > 0">{{ hoveredBuff.remainingTurns }}回合</span>
+                <span v-else>永久</span>
+                <span v-if="hoveredBuff.stacks > 1"> · ×{{ hoveredBuff.stacks }}层</span>
+                <span v-if="hoveredBuff.condition === 'active'" class="meta-active"> · 已激活</span>
+                <span v-if="hoveredBuff.condition === 'inactive'" class="meta-inactive"> · 未激活</span>
+              </div>
+              <div v-if="parsedBuffEffects.length > 0" class="breakdown-effects">
+                <div v-for="(eff, i) in parsedBuffEffects" :key="i" class="breakdown-effect" :class="eff.className">
+                  ● {{ eff.text }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </transition>
+      </Teleport>
     </div>
   </div>
 </template>
@@ -46354,6 +46685,7 @@ import { useBattleParticipant } from '@/presentation/composables/useBattlePartic
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
+import type { BuffRawItem, MergedAttributeLine, BuffTextItem } from '@/shared/types/buff-display'
 import { container } from '@/infrastructure/di/Container'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { useBattleStore } from '@/presentation/stores/battleStore'
@@ -46506,13 +46838,14 @@ const energyColorClass = computed(() => {
 })
 
 /** 转换为纯文本 Buff 展示数据 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
-const buffListItems = computed(() => {
+const buffListItems = computed((): BuffRawItem[] => {
   // ponytail: 读取 statsVersion 建立 Vue 响应式依赖（recalculateAll → proxy._statsVersion++ 时 computed 重算）
   void reactiveParticipant.statsVersion
 
   const entity = reactiveParticipant
-  const result: any[] = []
+  const result: BuffRawItem[] = []
   const seenIds = new Set<string>()
+
 
   // 源1: BuffSystem 管理的 buff（被动/技能/脚本添加）
   if (typeof entity.getBuffInstanceIds === 'function') {
@@ -46530,10 +46863,11 @@ const buffListItems = computed(() => {
           id,
           buffId: config.id,
           name: config.name,
-          description: config.description || config.name,
+          description: config.description ?? '',
           remainingTurns: instance.remainingTurns,
           currentStacks: instance.currentStacks,
           isDebuff: config.isDebuff === true,
+          attributes: config.attributes,
           effectLines: instance.effectLines ?? [],
           conditionState: instance.conditionState,
         })
@@ -46550,10 +46884,12 @@ const buffListItems = computed(() => {
         id: s.id,
         buffId: s.id,
         name: s.name,
-        description: s.description || s.name,
+        description: '',
         remainingTurns: s.remainingTurns,
-        currentStacks: s.currentStacks || 1,
+        currentStacks: 1,
         isDebuff: s.type === 'debuff',
+        effectLines: [],
+        conditionState: undefined,
       })
     }
   }
@@ -46590,6 +46926,66 @@ const baseAttributes = computed(() => {
 
 // ponytail: 参与者 ID 在生命周期内不变，直接读取
 const buffDisplay = useBuffDisplay(buffListItems, props.participant.id, 5, baseAttributes)
+
+
+// === 属性/Buff 悬停追溯 ===
+const hoveredAttr = ref<MergedAttributeLine | null>(null)
+const hoveredBuff = ref<BuffTextItem | null>(null)
+const hoverPos = ref({ x: 0, y: 0 })
+let leaveTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearHoverTimer() {
+  if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null }
+}
+
+function scheduleLeave() {
+  clearHoverTimer()
+  leaveTimer = setTimeout(() => {
+    hoveredAttr.value = null
+    hoveredBuff.value = null
+  }, 150)
+}
+
+function handleAttrHover(attr: MergedAttributeLine, event: MouseEvent) {
+  clearHoverTimer()
+  hoveredAttr.value = attr
+  hoveredBuff.value = null
+  hoverPos.value = { x: event.clientX + 12, y: event.clientY - 8 }
+}
+
+function handleBuffHover(item: BuffTextItem, event: MouseEvent) {
+  clearHoverTimer()
+  hoveredBuff.value = item
+  hoveredAttr.value = null
+  hoverPos.value = { x: event.clientX + 12, y: event.clientY - 8 }
+}
+
+function handleBuffLeave() {
+  scheduleLeave()
+}
+
+function formatBreakdownTotal(attr: MergedAttributeLine): string {
+  const prefix = attr.totalPercent > 0 ? '+' : ''
+  return `${prefix}${attr.totalPercent}%`
+}
+
+/** 悬停 buff 浮层的效果行：修饰符 → 显示文本 */
+const parsedBuffEffects = computed(() => {
+  const b = hoveredBuff.value
+  if (!b) return []
+  const lines: Array<{ text: string; className: string }> = []
+  for (const mod of b.modifiers) {
+    const arrow = mod.value > 0 ? '↑' : '↓'
+    lines.push({
+      text: `${mod.attribute}${arrow}${Math.abs(mod.value)}%`,
+      className: mod.value > 0 ? 'effect--buff' : 'effect--debuff',
+    })
+  }
+  for (const el of b.effectLines) {
+    lines.push({ text: el.text, className: `effect--${el.kind}` })
+  }
+  return lines
+})
 
 // 调试信息
 const showBreakdown = ref(false)
@@ -46748,6 +47144,104 @@ defineExpose({
 
 .breakdown-item .value {
   color: var(--color-energy);
+}
+
+/* ============ 属性悬停追溯浮层 ============ */
+.attr-breakdown {
+  position: fixed;
+  z-index: var(--z-tooltip, 1000);
+  min-width: 220px;
+  background: rgba(15, 23, 42, 0.97);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.breakdown-header {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  padding-bottom: var(--space-1);
+  margin-bottom: var(--space-1);
+  border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+  white-space: nowrap;
+}
+
+.breakdown-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.breakdown-desc {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.breakdown-meta {
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
+}
+
+.breakdown-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--space-1);
+}
+
+.breakdown-effect {
+  font-size: var(--font-size-xs);
+  padding-left: var(--space-1);
+}
+
+.breakdown-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.breakdown-source {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  font-size: var(--font-size-xs);
+}
+
+.source-buff .source-value {
+  color: var(--color-energy);
+  font-weight: var(--font-weight-bold);
+}
+
+.source-debuff .source-value {
+  color: var(--color-danger);
+}
+
+.source-name {
+  color: var(--color-text-tertiary);
+  flex: 1;
+}
+
+.source-meta {
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
+}
+
+/* 追溯浮层过渡 */
+.tooltip-fade-enter-active {
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+}
+.tooltip-fade-leave-active {
+  transition: opacity 0.1s ease-in;
+}
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 /* ============ 卡片视觉状态动画 ============ */
@@ -47426,6 +47920,7 @@ export function useBattleParticipants(
 import { computed, unref, type ComputedRef, type Ref } from 'vue'
 import type {
   BuffTextItem,
+  BuffRawItem,
   MergedAttributeLine,
   BuffDisplayState,
   ConditionState,
@@ -47460,6 +47955,7 @@ const ATTRIBUTE_SHORT_NAMES: Record<string, string> = {
   critRate: '暴击',
   critDamage: '暴伤',
   damage: '伤害',
+  damageBoost: '伤害提升',
   damageReduction: '伤害减免',
   healthBonus: '生命加成',
   attackBonus: '攻击加成',
@@ -47480,7 +47976,7 @@ const ATTRIBUTE_SHORT_NAMES: Record<string, string> = {
  * 回退到从 description 文本中启发式推断
  */
 function detectCondition(
-  raw: any,
+  raw: BuffRawItem,
 ): { condition: ConditionState; conditionLabel?: string } {
   // 优先使用实例的实时条件状态（由领域层设置）
   if (raw.conditionState === 'active') {
@@ -47524,6 +48020,33 @@ function detectType(name: string, isDebuff: boolean): 'buff' | 'debuff' | 'contr
 }
 
 /**
+ * 从 config.attributes 提取属性修正
+ * key=attribute code（如 "speed"），value=格式如 "+0.05"（5%/层）或 "+20%"（20%）
+ * @param stacks 当前层数，用于缩放可叠加 buff
+ */
+function extractAttributesFromConfig(
+  attributes: Record<string, string>,
+  stacks: number,
+): Array<{ attr: string; value: number }> {
+  const result: Array<{ attr: string; value: number }> = []
+  for (const [code, valueStr] of Object.entries(attributes)) {
+    const cn = ATTRIBUTE_SHORT_NAMES[code]
+    if (!cn) continue
+    const trimmed = valueStr.trim()
+    const isPercent = trimmed.includes('%')
+    const numericStr = trimmed.replace('%', '')
+    const numValue = parseFloat(numericStr)
+    if (isNaN(numValue)) continue
+    // +0.05（无%且绝对值<1）→ 转为百分比（0.05*100=5）
+    // +20%（有%）→ 直接使用（20）
+    // ponytail: 暂不支持固定值格式（如 "+10" 表示 +10 固定值），JSON 中无双例
+    const perStack = isPercent ? numValue : (Math.abs(numValue) < 1 ? numValue * 100 : numValue)
+    result.push({ attr: cn, value: Math.round(perStack * stacks) })
+  }
+  return result
+}
+
+/**
  * 从修饰符列表提取属性名（中文）+ 值
  * ponytail: 使用简单的关键词匹配提取属性，后续可从 config.modifiers 中精确获取
  */
@@ -47552,7 +48075,7 @@ function extractAttributes(
  * 将原始 buff 条目转换为 BuffTextItem
  */
 function toBuffTextItem(
-  raw: any,
+  raw: BuffRawItem,
   entityId: string,
 ): BuffTextItem {
   const name = raw.name || ''
@@ -47573,8 +48096,13 @@ function toBuffTextItem(
     conditionLabel = undefined
   }
 
-  // 构造修饰符列表
-  const extracted = extractAttributes(displayName, description)
+  // 构造修饰符列表 — 优先使用 config.attributes，回退到文本提取
+  const extracted = raw.attributes
+    ? extractAttributesFromConfig(raw.attributes, stacks)
+    : extractAttributes(displayName, description).map((e) => ({
+        ...e,
+        value: Math.round(e.value * stacks),
+      }))
   const modifiers = extracted.map((e) => ({
     sourceName: name,
     attribute: e.attr,
@@ -47696,7 +48224,7 @@ function sortLabels(labels: MergedAttributeLine[]): MergedAttributeLine[] {
  * @param baseAttributes — 可选的基础属性值映射，key=中文属性名（如 "攻击"→100）
  */
 export function useBuffDisplay(
-  rawItems: Ref<any[]> | ComputedRef<any[]>,
+  rawItems: Ref<BuffRawItem[]> | ComputedRef<BuffRawItem[]>,
   entityId: string,
   collapseThreshold: number = 5,
   baseAttributes?: Record<string, number> | ComputedRef<Record<string, number>> | Ref<Record<string, number>>,
@@ -47761,8 +48289,7 @@ export function useBuffDisplay(
       groups = primary
       secondaryGroups = secondary
     }
-
-    return {
+    const result = {
       items,
       mergedLabels,
       visibleAttrLabels,
@@ -47771,6 +48298,7 @@ export function useBuffDisplay(
       groups,
       secondaryGroups,
     }
+    return result
   })
 }
 
@@ -60196,6 +60724,38 @@ export function createAccumulator(battleId: string): BattleSummaryAccumulator {
  * 部分类型（如 BuffEffectLine）复用于领域层，从 @/domain/buff/types 导入。
  */
 import type { BuffEffectLine } from '@/domain/buff/types'
+
+/**
+ * Buff 原始条目 —— 从 BuffSystem 或 InterventionManager 合并后的中间格式，
+ * 作为 `toBuffTextItem()` 的输入契约，替代 `any` 参数。
+ * 所有字段可选，`toBuffTextItem()` 内部有兜底逻辑。
+ */
+export interface BuffRawItem {
+  /** Buff 实例 ID（源1）或效果 ID（源2） */
+  id?: string
+  /** Buff 实例 ID（与 id 二选一） */
+  instanceId?: string
+  /** Buff 配置 ID（buffs.json 中的 id） */
+  buffId?: string
+  /** 显示名称 */
+  name?: string
+  /** 效果描述 */
+  description?: string
+  /** 是否为 debuff */
+  isDebuff?: boolean
+  /** 剩余回合数 */
+  remainingTurns?: number
+  /** 当前层数 */
+  currentStacks?: number
+  /** 属性修正（key=attribute code, value=如 "+0.05" 或 "+20%"，per-stack 值） */
+  attributes?: Record<string, string>
+  /** 特殊效果行 */
+  effectLines?: BuffEffectLine[]
+  /** 领域层条件状态 */
+  conditionState?: ConditionState
+  /** Buff 脚本类名（调试用） */
+  scriptName?: string
+}
 
 /** 单个 Buff 在纯文本模式下的显示条目 */
 export interface BuffTextItem {

@@ -383,14 +383,9 @@
     "id": "buff_scheming",
     "name": "老谋深算",
     "duration": -1,
-    "modifiers": [
-      {
-        "id": "scheming_control_duration_reduction",
-        "targetAttribute": "controlDurationReduction",
-        "type": "ADDITIVE",
-        "value": 1
-      }
-    ]
+    "attributes": {
+      "controlDurationReduction": "+1"
+    }
   },
   {
     "id": "buff_mist_coverage_aura",
@@ -502,7 +497,8 @@
     "id": "buff_burn",
     "name": "灼烧",
     "maxStacks": 1,
-    "duration": 2
+    "duration": 2,
+    "tags": ["debuff", "dot", "burn"]
   },
   {
     "id": "buff_lava_skin_trigger",
@@ -860,141 +856,96 @@
     "name": "防御降低",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "def_reduction_mod",
-        "targetAttribute": "defense",
-        "type": "PERCENTAGE",
-        "value": -10,
-        "levelValue": -0.1
-      }
-    ]
+    "attributes": {
+      "defense": "-10%"
+    }
   },
   {
     "id": "buff_dodge_up",
     "name": "闪避提升",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "dodge_up_mod",
-        "targetAttribute": "dodge",
-        "type": "ADDITIVE",
-        "value": 15
-      }
-    ]
+    "attributes": {
+      "dodge": "+15"
+    }
   },
   {
     "id": "buff_def_up",
     "name": "防御提升",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "def_up_mod",
-        "targetAttribute": "defense",
-        "type": "PERCENTAGE",
-        "value": 10
-      }
-    ]
+    "attributes": {
+      "defense": "+10%"
+    }
   },
   {
     "id": "buff_speed_up",
     "name": "速度提升",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "speed_up_mod",
-        "targetAttribute": "speed",
-        "type": "ADDITIVE",
-        "value": 5
-      }
-    ]
+    "attributes": {
+      "speed": "+5"
+    }
   },
   {
     "id": "buff_ally_atk_up",
     "name": "同伴攻击提升",
     "maxStacks": 1,
     "duration": 2,
-    "modifiers": [
-      {
-        "id": "ally_atk_up_mod",
-        "targetAttribute": "attack",
-        "type": "PERCENTAGE",
-        "value": 5
-      }
-    ]
+    "attributes": {
+      "attack": "+5%"
+    }
   },
   {
     "id": "buff_atk_up",
     "name": "攻击提升",
     "maxStacks": 1,
     "duration": 2,
-    "modifiers": [
-      {
-        "id": "atk_up_mod",
-        "targetAttribute": "attack",
-        "type": "PERCENTAGE",
-        "value": 10
-      }
-    ]
+    "attributes": {
+      "attack": "+10%"
+    }
   },
   {
     "id": "buff_atk_reduction",
     "name": "攻击降低",
     "maxStacks": 1,
     "duration": 2,
-    "modifiers": [
-      {
-        "id": "atk_reduction_mod",
-        "targetAttribute": "attack",
-        "type": "PERCENTAGE",
-        "value": -15
-      }
-    ]
+    "attributes": {
+      "attack": "-15%"
+    }
   },
   {
     "id": "buff_speed_reduction",
     "name": "速度降低",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "speed_reduction_mod",
-        "targetAttribute": "speed",
-        "type": "ADDITIVE",
-        "value": -10,
-        "levelValue": -0.1
-      }
-    ]
+    "attributes": {
+      "speed": "-10"
+    }
   },
   {
     "id": "buff_bind",
     "name": "束缚",
     "maxStacks": 1,
     "duration": 2,
-    "statusType": "bind"
+    "controlType": "bind",
+    "controlPriority": 60
   },
   {
     "id": "buff_hit_reduction",
     "name": "命中率下降",
     "maxStacks": 1,
     "duration": 1,
-    "modifiers": [
-      {
-        "id": "hit_reduction_mod",
-        "targetAttribute": "HIT_RATE",
-        "type": "ADDITIVE",
-        "value": -10
-      }
-    ]
+    "attributes": {
+      "HIT_RATE": "-10"
+    }
   },
   {
     "id": "buff_poison",
     "name": "中毒",
     "maxStacks": 1,
     "duration": 2,
+    "tags": ["debuff", "dot", "heal_reduction", "poison"],
     "triggers": [
       {
         "phase": "ON_TURN_START",
@@ -1011,6 +962,7 @@
     "name": "剧毒",
     "maxStacks": 1,
     "duration": 2,
+    "tags": ["debuff", "dot", "poison"],
     "triggers": [
       {
         "phase": "ON_TURN_START",
@@ -1027,6 +979,7 @@
     "name": "眩晕",
     "maxStacks": 1,
     "duration": 1,
+    "tags": ["debuff", "control", "stun"],
     "statusType": "stun"
   },
   {
@@ -1042,12 +995,14 @@
   {
     "id": "guardian_buff_revenge_rage",
     "name": "复仇怒火",
+    "description": "攻击↑5%/层",
     "maxStacks": 5,
     "duration": -1
   },
   {
     "id": "guardian_buff_armor_break",
     "name": "破甲打击",
+    "description": "防御↓20%",
     "maxStacks": 1,
     "duration": 2,
     "isDebuff": true
@@ -1075,18 +1030,21 @@
   {
     "id": "guardian_buff_first_strike",
     "name": "先发制人",
+    "description": "伤害↑25%",
     "maxStacks": 1,
     "duration": 1
   },
   {
     "id": "guardian_buff_charge_burst",
     "name": "蓄力爆发",
+    "description": "伤害↑100%",
     "maxStacks": 1,
     "duration": 1
   },
   {
     "id": "guardian_buff_element_slow",
     "name": "元素迟缓",
+    "description": "速度↓5%",
     "maxStacks": 1,
     "duration": 1,
     "isDebuff": true
@@ -1111,6 +1069,7 @@
   {
     "id": "guardian_buff_heal_breeze",
     "name": "治愈微风",
+    "description": "防御↑20%",
     "maxStacks": 1,
     "duration": -1
   },
@@ -1123,12 +1082,14 @@
   {
     "id": "guardian_buff_revenge_fury",
     "name": "复仇之怒",
+    "description": "攻击↑30% 暴击↑20%",
     "maxStacks": 1,
     "duration": 3
   },
   {
     "id": "guardian_buff_paralyze",
     "name": "麻痹触手",
+    "description": "速度↓50%",
     "maxStacks": 1,
     "duration": 1,
     "isDebuff": true
@@ -1136,12 +1097,14 @@
   {
     "id": "guardian_buff_sacrifice_rage",
     "name": "献祭之怒",
+    "description": "攻击↑50% 暴击↑20%",
     "maxStacks": 1,
     "duration": -1
   },
   {
     "id": "guardian_buff_berserker",
     "name": "狂战士",
+    "description": "攻击↑30% 防御↓15%",
     "maxStacks": 1,
     "duration": 3
   },
@@ -1166,6 +1129,7 @@
   {
     "id": "guardian_buff_swift_wind",
     "name": "疾风叠步",
+    "description": "速度↑5%/层",
     "maxStacks": 999,
     "duration": -1
   }

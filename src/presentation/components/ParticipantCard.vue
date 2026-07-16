@@ -56,6 +56,9 @@
         :collapsed-count="buffDisplay.collapsedCount"
         :expanded="panelVisible"
         @toggle="panelVisible = !panelVisible"
+        @hover-attr="handleAttrHover"
+        @hover-buff="handleBuffHover"
+        @leave="handleBuffLeave"
       />
       <BuffTextPanel
         :visible="panelVisible"
@@ -66,6 +69,56 @@
         :debug-mode="showDebug"
         @close="panelVisible = false"
       />
+      <!-- 属性/Buff 悬停追溯浮层 -->
+      <Teleport to="body">
+        <transition name="tooltip-fade">
+          <div
+            v-if="hoveredAttr"
+            class="attr-breakdown"
+            :style="{ left: hoverPos.x + 'px', top: hoverPos.y + 'px' }"
+            @mouseenter="clearHoverTimer"
+            @mouseleave="scheduleLeave"
+          >
+            <div class="breakdown-header">{{ hoveredAttr.attribute }}：{{ formatBreakdownTotal(hoveredAttr) }}</div>
+            <div class="breakdown-sources">
+              <div
+                v-for="(src, i) in hoveredAttr.sources"
+                :key="i"
+                class="breakdown-source"
+                :class="src.percent > 0 ? 'source-buff' : 'source-debuff'"
+              >
+                <span class="source-name">{{ src.buffName }}</span>
+                <span class="source-value">{{ src.percent > 0 ? '+' : '' }}{{ src.percent }}%</span>
+                <span class="source-meta">{{ src.remainingTurns > 0 ? `${src.remainingTurns}回合` : '永久' }}</span>
+              </div>
+            </div>
+          </div>
+          <div
+            v-else-if="hoveredBuff"
+            class="attr-breakdown"
+            :style="{ left: hoverPos.x + 'px', top: hoverPos.y + 'px' }"
+            @mouseenter="clearHoverTimer"
+            @mouseleave="scheduleLeave"
+          >
+            <div class="breakdown-header">【{{ hoveredBuff.name }}】</div>
+            <div class="breakdown-body">
+              <div v-if="hoveredBuff.description" class="breakdown-desc">{{ hoveredBuff.description }}</div>
+              <div class="breakdown-meta">
+                <span v-if="hoveredBuff.remainingTurns > 0">{{ hoveredBuff.remainingTurns }}回合</span>
+                <span v-else>永久</span>
+                <span v-if="hoveredBuff.stacks > 1"> · ×{{ hoveredBuff.stacks }}层</span>
+                <span v-if="hoveredBuff.condition === 'active'" class="meta-active"> · 已激活</span>
+                <span v-if="hoveredBuff.condition === 'inactive'" class="meta-inactive"> · 未激活</span>
+              </div>
+              <div v-if="parsedBuffEffects.length > 0" class="breakdown-effects">
+                <div v-for="(eff, i) in parsedBuffEffects" :key="i" class="breakdown-effect" :class="eff.className">
+                  ● {{ eff.text }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </transition>
+      </Teleport>
     </div>
   </div>
 </template>
@@ -78,6 +131,7 @@ import { useBattleParticipant } from '@/presentation/composables/useBattlePartic
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
+import type { BuffRawItem, MergedAttributeLine, BuffTextItem } from '@/shared/types/buff-display'
 import { container } from '@/infrastructure/di/Container'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { useBattleStore } from '@/presentation/stores/battleStore'
@@ -230,15 +284,14 @@ const energyColorClass = computed(() => {
 })
 
 /** 转换为纯文本 Buff 展示数据 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
-const buffListItems = computed(() => {
+const buffListItems = computed((): BuffRawItem[] => {
   // ponytail: 读取 statsVersion 建立 Vue 响应式依赖（recalculateAll → proxy._statsVersion++ 时 computed 重算）
-  const version = reactiveParticipant.statsVersion
-  console.error('版本更新', version, reactiveParticipant)
+  void reactiveParticipant.statsVersion
 
   const entity = reactiveParticipant
-  const result: any[] = []
+  const result: BuffRawItem[] = []
   const seenIds = new Set<string>()
-  console.error(`{entity.name}携带的buff`, buffSystem.getBuffInstances(entity.id))
+
 
   // 源1: BuffSystem 管理的 buff（被动/技能/脚本添加）
   if (typeof entity.getBuffInstanceIds === 'function') {
@@ -256,10 +309,11 @@ const buffListItems = computed(() => {
           id,
           buffId: config.id,
           name: config.name,
-          description: config.description || config.name,
+          description: config.description ?? '',
           remainingTurns: instance.remainingTurns,
           currentStacks: instance.currentStacks,
           isDebuff: config.isDebuff === true,
+          attributes: config.attributes,
           effectLines: instance.effectLines ?? [],
           conditionState: instance.conditionState,
         })
@@ -276,15 +330,16 @@ const buffListItems = computed(() => {
         id: s.id,
         buffId: s.id,
         name: s.name,
-        description: s.description || s.name,
+        description: '',
         remainingTurns: s.remainingTurns,
-        currentStacks: s.currentStacks || 1,
+        currentStacks: 1,
         isDebuff: s.type === 'debuff',
+        effectLines: [],
+        conditionState: undefined,
       })
     }
   }
 
-  console.error('buffListItems', result)
   return result
 })
 
@@ -317,6 +372,66 @@ const baseAttributes = computed(() => {
 
 // ponytail: 参与者 ID 在生命周期内不变，直接读取
 const buffDisplay = useBuffDisplay(buffListItems, props.participant.id, 5, baseAttributes)
+
+
+// === 属性/Buff 悬停追溯 ===
+const hoveredAttr = ref<MergedAttributeLine | null>(null)
+const hoveredBuff = ref<BuffTextItem | null>(null)
+const hoverPos = ref({ x: 0, y: 0 })
+let leaveTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearHoverTimer() {
+  if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null }
+}
+
+function scheduleLeave() {
+  clearHoverTimer()
+  leaveTimer = setTimeout(() => {
+    hoveredAttr.value = null
+    hoveredBuff.value = null
+  }, 150)
+}
+
+function handleAttrHover(attr: MergedAttributeLine, event: MouseEvent) {
+  clearHoverTimer()
+  hoveredAttr.value = attr
+  hoveredBuff.value = null
+  hoverPos.value = { x: event.clientX + 12, y: event.clientY - 8 }
+}
+
+function handleBuffHover(item: BuffTextItem, event: MouseEvent) {
+  clearHoverTimer()
+  hoveredBuff.value = item
+  hoveredAttr.value = null
+  hoverPos.value = { x: event.clientX + 12, y: event.clientY - 8 }
+}
+
+function handleBuffLeave() {
+  scheduleLeave()
+}
+
+function formatBreakdownTotal(attr: MergedAttributeLine): string {
+  const prefix = attr.totalPercent > 0 ? '+' : ''
+  return `${prefix}${attr.totalPercent}%`
+}
+
+/** 悬停 buff 浮层的效果行：修饰符 → 显示文本 */
+const parsedBuffEffects = computed(() => {
+  const b = hoveredBuff.value
+  if (!b) return []
+  const lines: Array<{ text: string; className: string }> = []
+  for (const mod of b.modifiers) {
+    const arrow = mod.value > 0 ? '↑' : '↓'
+    lines.push({
+      text: `${mod.attribute}${arrow}${Math.abs(mod.value)}%`,
+      className: mod.value > 0 ? 'effect--buff' : 'effect--debuff',
+    })
+  }
+  for (const el of b.effectLines) {
+    lines.push({ text: el.text, className: `effect--${el.kind}` })
+  }
+  return lines
+})
 
 // 调试信息
 const showBreakdown = ref(false)
@@ -475,6 +590,104 @@ defineExpose({
 
 .breakdown-item .value {
   color: var(--color-energy);
+}
+
+/* ============ 属性悬停追溯浮层 ============ */
+.attr-breakdown {
+  position: fixed;
+  z-index: var(--z-tooltip, 1000);
+  min-width: 220px;
+  background: rgba(15, 23, 42, 0.97);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.breakdown-header {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  padding-bottom: var(--space-1);
+  margin-bottom: var(--space-1);
+  border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+  white-space: nowrap;
+}
+
+.breakdown-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.breakdown-desc {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.breakdown-meta {
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
+}
+
+.breakdown-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--space-1);
+}
+
+.breakdown-effect {
+  font-size: var(--font-size-xs);
+  padding-left: var(--space-1);
+}
+
+.breakdown-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.breakdown-source {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  font-size: var(--font-size-xs);
+}
+
+.source-buff .source-value {
+  color: var(--color-energy);
+  font-weight: var(--font-weight-bold);
+}
+
+.source-debuff .source-value {
+  color: var(--color-danger);
+}
+
+.source-name {
+  color: var(--color-text-tertiary);
+  flex: 1;
+}
+
+.source-meta {
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
+}
+
+/* 追溯浮层过渡 */
+.tooltip-fade-enter-active {
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+}
+.tooltip-fade-leave-active {
+  transition: opacity 0.1s ease-in;
+}
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 /* ============ 卡片视觉状态动画 ============ */

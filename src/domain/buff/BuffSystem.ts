@@ -1,4 +1,4 @@
-import type { BuffConfig, BuffInstance, BuffQuery, IBuffScript, ScriptBuffConfig, BuffEffectLine } from '@/domain/buff/types'
+import type { BuffConfig, BuffInstance, BuffQuery, IBuffScript } from '@/domain/buff/types'
 import { BUFF_ID_PREFIX } from '@/domain/buff/types'
 import type {
   TriggerEventContext,
@@ -20,7 +20,8 @@ import { TriggerEventBus, triggerEventBus } from '@/infrastructure/adapters/even
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { Counter } from '@/shared/utils/Counter'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
-import { BattleContext } from '@/domain/battle/type/types'
+import { BattleContext, BattleTriggerPhase } from '@/domain/battle/type/types'
+import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
 
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
@@ -125,6 +126,26 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.registerTriggerScript(SkillStepType.HEAL, (ctx: TriggerExecutionContext) => {
       this.healTarget(ctx.targetId ?? '', ctx.params?.amount as number ?? 0)
     })
+    // ponytail: 注册 15 个 JSON 配置触发器脚本。TRIGGER_SCRIPTS 通过 import type 避免循环依赖。
+    Object.entries(TRIGGER_SCRIPTS).forEach(([id, handler]) => {
+      this.registerTriggerScript(id, handler)
+    })
+  }
+
+  /**
+   * 请求对目标造成伤害（供触发器脚本调用）
+   * 委托给 BattleSystem 注册的 onDamageRequest 回调
+   */
+  public requestDamage(targetId: string, damage: number, damagePercent?: number): void {
+    this.dealDirectDamage(targetId, damage, damagePercent)
+  }
+
+  /**
+   * 请求治疗目标（供触发器脚本调用）
+   * 委托给 BattleSystem 注册的 onHealRequest 回调
+   */
+  public requestHeal(targetId: string, amount: number): void {
+    this.healTarget(targetId, amount)
   }
 
   private dealDirectDamage(targetId: string, damage: number, damagePercent?: number): void {
@@ -197,6 +218,91 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
   }
 
+  // ============ 触发器系统（JSON 配置 triggers → TriggerEventBus 接线） ============
+
+  /**
+   * 阶段名规范化映射
+   * ponytail: buffs.json 历史遗留使用 ON_TURN_START 风格，与 BattleTriggerPhase 枚举值（turn_start）不匹配。
+   *           在注册触发器时做一次映射，避免修改 20+ 处 JSON 配置。
+   *           覆盖所有 BattleTriggerPhase 值，新配置可直接使用大小写混合的 ON_ 风格。
+   */
+  private static readonly PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
+    ON_TURN_START: BattleTriggerPhase.TURN_START,
+    ON_TURN_END: BattleTriggerPhase.TURN_END,
+    ON_BATTLE_START: BattleTriggerPhase.BATTLE_START,
+    ON_BATTLE_END: BattleTriggerPhase.BATTLE_END,
+    ON_DAMAGE_TAKEN: BattleTriggerPhase.DAMAGE_TAKEN,
+    ON_ATTACK_HIT: BattleTriggerPhase.ON_HIT,
+    BEFORE_ATTACK: BattleTriggerPhase.BEFORE_ATTACK,
+    AFTER_ATTACK: BattleTriggerPhase.AFTER_ATTACK,
+    ON_KILL: BattleTriggerPhase.ON_KILL,
+    ON_DEATH: BattleTriggerPhase.ON_DEATH,
+    ON_HEAL_RECEIVED: BattleTriggerPhase.HEAL_RECEIVED,
+    ON_ENERGY_GAINED: BattleTriggerPhase.ENERGY_GAINED,
+    ON_SKILL_USE: BattleTriggerPhase.SKILL_USE,
+    ON_HP_LOWER_THAN: BattleTriggerPhase.HP_LOWER_THAN,
+    ON_ALLY_FATAL_DAMAGE: BattleTriggerPhase.ALLY_FATAL_DAMAGE,
+    ON_ALLY_DAMAGE_TAKEN: BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
+    ON_APPLY: BattleTriggerPhase.ON_APPLY,
+  }
+
+  /**
+   * 为 Buff 实例注册触发器监听器
+   * 在 addBuff 中被调用，读取 resolvedConfig.triggers，向 TriggerEventBus 注册监听器。
+   */
+  private registerTriggersForInstance(
+    instanceId: string,
+    triggers: import('@/domain/buff/types').TriggerAction[],
+    characterId: string,
+  ): void {
+    const buffInstance = this.buffInstances.get(instanceId)
+    if (!buffInstance) return
+
+    const listenerIds: string[] = []
+    for (const trigger of triggers) {
+      const phase = BuffSystem.PHASE_NAME_MAP[trigger.phase] ?? trigger.phase
+      let triggerCount = 0
+      let lastTriggerTurn = -999
+
+      const callback = (ctx: TriggerEventContext) => {
+        // 概率检查
+        if (trigger.probability !== undefined && trigger.probability < 1 && Math.random() > trigger.probability) return
+        // 触发次数检查
+        if (trigger.maxTriggers !== undefined && trigger.maxTriggers >= 0 && triggerCount >= trigger.maxTriggers) return
+        // 冷却检查
+        const turn = ctx.currentTurn ?? 0
+        if (trigger.cooldown && (turn - lastTriggerTurn) < trigger.cooldown) return
+
+        const handler = this.triggerScripts.get(trigger.scriptId)
+        if (handler) {
+          handler({
+            ...ctx,
+            instanceId,
+            targetId: characterId,
+            params: trigger.params as Record<string, number | string> | undefined,
+          })
+          triggerCount++
+          lastTriggerTurn = turn
+        }
+      }
+
+      const listenerId = this.eventBus.on(phase as any, callback, instanceId)
+      listenerIds.push(listenerId)
+    }
+
+    if (listenerIds.length > 0) {
+      buffInstance.triggerListenerIds = listenerIds
+    }
+  }
+
+  /**
+   * 清理 Buff 实例的所有触发器监听器
+   * 在 removeBuff 中被调用，通过 TriggerEventBus.offByBuffInstance 批量移除。
+   */
+  private unregisterTriggersForInstance(instanceId: string): void {
+    this.eventBus.offByBuffInstance(instanceId)
+  }
+
   public addBuff(
     characterId: string,
     buffId: string,
@@ -226,13 +332,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
 
     // ponytail: 自包含脚本的配置合并策略：
-    // 调用方传的配置 > 脚本静态 CONFIG > JSON 配置 > 硬编码默认值
+    // 调用方传的配置（除 name/description）> 脚本静态 CONFIG > JSON 配置 > 硬编码默认值
+    // name/description 是纯展示字段，由系统从脚本 CONFIG 或 JSON 配置解析，避免调用方误传 buffId
     const scriptDefaultConfig = this.scriptRegistry.getDefaultConfig(buffId)
     const jsonConfig = this.scriptRegistry.getBuffConfig(buffId)
     const resolvedConfig: BuffConfig = {
       id: config.id ?? scriptDefaultConfig?.id ?? jsonConfig?.id ?? buffId,
-      name: config.name ?? scriptDefaultConfig?.name ?? jsonConfig?.name ?? buffId,
-      description: config.description ?? scriptDefaultConfig?.description ?? '',
+      name: scriptDefaultConfig?.name ?? jsonConfig?.name ?? buffId,
+      description: scriptDefaultConfig?.description ?? '',
       duration: config.duration ?? scriptDefaultConfig?.duration ?? jsonConfig?.duration ?? 1,
       maxStacks: config.maxStacks ?? scriptDefaultConfig?.maxStacks ?? jsonConfig?.maxStacks ?? 1,
       cooldown: config.cooldown ?? scriptDefaultConfig?.cooldown ?? 0,
@@ -244,9 +351,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       isPositive: config.isPositive ?? scriptDefaultConfig?.isPositive ?? undefined,
       iconPath: config.iconPath ?? scriptDefaultConfig?.iconPath ?? undefined,
       dispellable: config.dispellable ?? scriptDefaultConfig?.dispellable ?? undefined,
-      immuneTags: config.immuneTags ?? undefined,
+      immuneTags: config.immuneTags ?? (scriptDefaultConfig as any)?.immuneTags ?? jsonConfig?.immunities ?? undefined,
+      tags: config.tags ?? scriptDefaultConfig?.tags ?? jsonConfig?.tags ?? undefined,
       parameters: config.parameters ?? scriptDefaultConfig?.parameters ?? undefined,
-      attributes: config.attributes ?? undefined,
+      attributes: config.attributes ?? jsonConfig?.attributes ?? undefined,
+      triggers: config.triggers ?? jsonConfig?.triggers ?? undefined,
     }
 
     // ponytail: 免疫检查 — 若目标对该控制类型或 buffId 免疫则跳过施加
@@ -269,15 +378,44 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       case StackRule.REFRESH:
         existingBuffs.forEach((instance) => this.removeBuff(instance.id))
         break
-      case StackRule.LIMITED:
-        if (existingBuffs.length >= resolvedConfig.maxStacks) {
-          // 满层时刷新持续时间而非静默忽略
-          this.refreshBuff(existingBuffs[0].id, currentTurn)
-          return existingBuffs[0].id
+      case StackRule.LIMITED: {
+        const maxStacks = resolvedConfig.maxStacks ?? 1
+        if (existingBuffs.length > 0) {
+          const target = existingBuffs[0]
+          // 清除旧修饰符（兼容旧版多实例场景，正常应只有1个）
+          for (let i = 1; i < existingBuffs.length; i++) {
+            this.removeBuff(existingBuffs[i].id)
+          }
+          const newStacks = target.currentStacks + 1
+          if (newStacks > maxStacks) {
+            // 满层：刷新持续时间，不增加层数
+            this.refreshBuff(target.id, currentTurn)
+            this.triggerAttributeChange(characterId)
+            return target.id
+          }
+          // 递增层数并重新应用修饰符
+          target.currentStacks = newStacks
+          // ponytail: 同步更新 _stacks——applyModifiers 从此变量读取层数缩放修饰符值
+          // 任何直接修改 currentStacks 的代码必须同步更新 context.variables['_stacks']
+          target.context.variables.set('_stacks', newStacks)
+          // ponytail: 手动触发 onRefresh 以重新计算修饰符（applyModifiers 读取 _stacks），
+          // 不使用 refreshBuff 因为它会重置 remainingTurns 且依赖 _onRefresh 分支
+          target.script.onRefresh(target.context)
+          target.effectLines = target.script.getEffectLines?.(target.context) ?? []
+          this.triggerAttributeChange(characterId)
+          return target.id
         }
         break
-      case StackRule.INDEPENDENT:
+      }
+      case StackRule.INDEPENDENT: {
+        // ponytail: 独立模式也设上限，防止同一 Buff 无限叠加导致修饰符膨胀
+        // 用 ?? 而非 || 避免 maxStacks:0 被误当作 falsy 回退
+        const maxIndependent = resolvedConfig.maxStacks ?? 10
+        if (existingBuffs.length >= maxIndependent) {
+          return ''
+        }
         break
+      }
     }
 
     const instanceId = `${characterId}_${buffId}_${currentTurn}_${this.instanceIdCounter.next()}`
@@ -303,6 +441,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
 
     BuffErrorBoundary.wrap(() => {
+      // ponytail: 设置初始层数，供 applyModifiers 读取以缩放修饰符值
+      context.variables.set('_stacks', buffInstance.currentStacks)
       script.onApply(context)
     })
 
@@ -316,6 +456,12 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
     // ponytail: self 目标光环的修饰符始终应用到目标角色（自包含脚本也在 ModifierStack 中管理）
     this.applyBuffAuraModifiers(characterId, instanceId, buffId)
+
+    // ponytail: 注册触发器监听器 — 从配置的 triggers 数组向 TriggerEventBus 注册
+    if (resolvedConfig.triggers && resolvedConfig.triggers.length > 0) {
+      this.registerTriggersForInstance(instanceId, resolvedConfig.triggers, characterId)
+    }
+
     this.triggerAttributeChange(characterId)
 
     // ponytail: 技术调试日志 — Buff 变更追踪
@@ -342,6 +488,15 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       })
     }
 
+    // ponytail: 触发 ON_APPLY 阶段 — 供其他 Buff 的触发器监听（如 "xxx 被施加时"）
+    this.eventBus.emit('on_apply' as any, {
+      phase: 'on_apply' as any,
+      targetId: characterId,
+      sourceId: characterId,
+      currentTurn,
+      extra: { buffId, instanceId },
+    } as any)
+
     return instanceId
   }
 
@@ -359,6 +514,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       // ponytail: normalize the attribute key so JSON keys like 'ATK' → 'attack',
       // matching the keys used by BattleParticipantImpl.syncModifiersFromProvider
       const normalizedAttr = attr as ATTRIBUTE_CODE
+      // ponytail: 计算当前累计值供调试日志
+      const existingMods = modifierStack.getModifiers(normalizedAttr)
+      const currentTotal = existingMods.reduce((sum, m) => sum + m.value, 0)
       modifierStack.addModifier(instanceId, normalizedAttr, parsed.value, parsed.type)
       this.logger.addDebugLog(`应用属性修饰符: ${attr} → ${normalizedAttr} = ${valueStr} (${parsed.type}) 到角色 ${characterId}`)
       // ponytail: 技术调试日志 — Buff 修饰符变更
@@ -367,7 +525,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         buffId,
         normalizedAttr,
         valueStr,
-        0, /* ponytail: 没有当前属性累计值，传 0 占位 */
+        currentTotal + parsed.value,
       )
     }
   }
@@ -387,6 +545,30 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
     for (const tag of buffConfig.immunities) {
       immunities.add(tag.toLowerCase())
+    }
+  }
+
+  /**
+   * 重建角色的免疫标签集合
+   * 扫描该角色所有活跃 Buff 的 immunities 配置，重新构建 characterImmunities。
+   * 在 removeBuff 后调用，确保已移除 Buff 的免疫标签被一并清理。
+   * ponytail: O(n*m) — n=角色Buff数, m=每个Buff的免疫标签数，战斗场景中两个值都很小，不计性能。
+   */
+  private rebuildCharacterImmunities(characterId: string): void {
+    const immunities = new Set<string>()
+    this.buffInstances.forEach((instance) => {
+      if (!instance.isActive || instance.characterId !== characterId) return
+      const buffConfig = this.scriptRegistry.getBuffConfig(instance.buffId)
+      if (buffConfig?.immunities) {
+        for (const tag of buffConfig.immunities) {
+          immunities.add(tag.toLowerCase())
+        }
+      }
+    })
+    if (immunities.size > 0) {
+      this.characterImmunities.set(characterId, immunities)
+    } else {
+      this.characterImmunities.delete(characterId)
     }
   }
 
@@ -422,6 +604,23 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return this.scriptRegistry.getBuffConfig(buffId)?.aura
   }
 
+  /**
+   * 移除目标角色所有可驱散的 Buff
+   * 仅移除 dispellable === true 的实例，不可驱散的 Buff（dispella ble !== true）保留。
+   */
+  public removeDispellableBuffs(characterId: string): number {
+    let count = 0
+    this.buffInstances.forEach((instance) => {
+      if (!instance.isActive || instance.characterId !== characterId) return
+      const config = instance.context.config
+      if (config.dispellable === true) {
+        this.removeBuff(instance.id)
+        count++
+      }
+    })
+    return count
+  }
+
   public removeBuff(instanceId: string): boolean {
     const instance = this.buffInstances.get(instanceId)
     if (!instance || !instance.isActive) return false
@@ -431,6 +630,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     })
 
     instance.isActive = false
+    // ponytail: 反注册触发器监听器 — 必须在 delete 前执行，确保 callback 中仍能读到 instance
+    this.unregisterTriggersForInstance(instanceId)
     this.buffInstances.delete(instanceId)
 
     const modifierStack = this.getModifierStack(instance.characterId)
@@ -444,6 +645,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     )
 
     BuffContextPool.return(instance.context)
+    // ponytail: 免疫标签回收 — 从剩余 Buff 重建免疫集合，防止已移除 Buff 的免疫标签残留
+    this.rebuildCharacterImmunities(instance.characterId)
     this.triggerAttributeChange(instance.characterId)
     return true
   }
@@ -466,6 +669,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   public updatePerTurn(characterId: string): void {
     const toRemove: string[] = []
+    let hasNonExpiredChange = false
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
 
@@ -479,11 +683,17 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       instance.remainingTurns--
       if (instance.duration > 0 && instance.remainingTurns <= 0) {
         toRemove.push(instance.id)
+      } else {
+        // ponytail: 非过期递减需要通知 UI（removeBuff 已处理过期的通知）
+        hasNonExpiredChange = true
       }
     })
     toRemove.forEach((instanceId) => {
       this.removeBuff(instanceId)
     })
+    if (hasNonExpiredChange) {
+      this.triggerAttributeChange(characterId)
+    }
   }
 
   public getBuffInstances(characterId: string): BuffInstance[] {
@@ -510,6 +720,39 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   /** 按实例 ID 查询单个 BuffInstance */
   public getBuffInstanceById(instanceId: string): BuffInstance | undefined {
     return this.buffInstances.get(instanceId)
+  }
+
+  /**
+   * 检查目标角色是否有包含指定标签的 Buff
+   * @param characterId 角色 ID
+   * @param tag 效果标签（如 'heal_reduction', 'burn'）
+   */
+  public hasBuffWithTag(characterId: string, tag: string): boolean {
+    for (const instance of this.buffInstances.values()) {
+      if (instance.characterId === characterId && instance.isActive) {
+        const config = this.getBuffConfigByInstanceId(instance.id)
+        if (config?.tags?.includes(tag)) return true
+      }
+    }
+    return false
+  }
+
+  /**
+   * 获取目标角色所有包含指定标签的 Buff 实例
+   * @param characterId 角色 ID
+   * @param tag 效果标签（如 'burn', 'heal_reduction'）
+   */
+  public getBuffInstancesWithTag(characterId: string, tag: string): BuffInstance[] {
+    const result: BuffInstance[] = []
+    for (const instance of this.buffInstances.values()) {
+      if (instance.characterId === characterId && instance.isActive) {
+        const config = this.getBuffConfigByInstanceId(instance.id)
+        if (config?.tags?.includes(tag)) {
+          result.push(instance)
+        }
+      }
+    }
+    return result
   }
 
   public getScriptRegistry(): BuffScriptRegistry {
@@ -548,16 +791,31 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
   }
 
+  /** 控制效果同优先级时的排序权重（数值越大越优先） */
+  private static readonly CONTROL_TYPE_ORDER: Record<ControlType, number> = {
+    [ControlType.NONE]: 0,
+    [ControlType.SLEEP]: 1,
+    [ControlType.SILENCE]: 2,
+    [ControlType.FREEZE]: 3,
+    [ControlType.STUN]: 4,
+    [ControlType.BIND]: 5,
+  }
+
   /** 获取最高优先级的控制效果 */
   public getHighestPriorityControlEffect(characterId: string): ControlType {
     let highestPriority = -1
     let highestControlType = ControlType.NONE
+    let highestOrder = -1
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
       const config = instance.context.config
-      if (config.controlType !== ControlType.NONE && config.controlPriority > highestPriority) {
+      if (config.controlType === ControlType.NONE) return
+      if (config.controlPriority > highestPriority
+        || (config.controlPriority === highestPriority
+          && (BuffSystem.CONTROL_TYPE_ORDER[config.controlType] ?? 0) > highestOrder)) {
         highestPriority = config.controlPriority
         highestControlType = config.controlType
+        highestOrder = BuffSystem.CONTROL_TYPE_ORDER[config.controlType] ?? 0
       }
     })
     return highestControlType
@@ -569,7 +827,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   public canUseSkill(characterId: string): boolean {
     const controlType = this.getHighestPriorityControlEffect(characterId)
-    return controlType !== ControlType.STUN && controlType !== ControlType.SILENCE
+    return controlType !== ControlType.STUN
+      && controlType !== ControlType.SILENCE
+      && controlType !== ControlType.FREEZE
+      && controlType !== ControlType.SLEEP
+      && controlType !== ControlType.BIND
   }
 
   public canAct(characterId: string): boolean {

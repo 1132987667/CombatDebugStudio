@@ -10,7 +10,6 @@ import type {
 } from '@/domain/battle/type/types'
 import {
   PARTICIPANT_SIDE,
-  ActionTypes,
   BattleActionHelper,
   BATTLE_CONSTANTS,
 } from '@/domain/battle/type/types'
@@ -65,7 +64,10 @@ export interface BattleAnalysis {
   teamHealthPercent: number
   highestThreatEnemy: { enemy: BattleEntity | null; threat: number }
   needsHealing: boolean
-  shouldUseSkill: boolean
+  /** ponytail: BaseBattleAI 使用，AIPriorityStrategy 不计算此字段 */
+  shouldUseSkill?: boolean
+  /** ponytail: 是否有队友生命值低于重危阈值（用于治疗权重调整） */
+  hasLowHealthAlly: boolean
 }
 
 /** 基础AI策略类 */
@@ -105,7 +107,7 @@ export class BaseBattleAI implements BattleAI {
   protected loadSkillsFromConfig(skillIds: string[]): void {
     if (this.skillConfigLoader) {
       const loadedSkills = this.skillConfigLoader(skillIds)
-      loadedSkills.forEach((skill: any) => {
+      loadedSkills.forEach((skill: Skill) => {
         if (skill && skill.id) {
           this.skills.set(skill.id, skill)
         }
@@ -207,6 +209,10 @@ export class BaseBattleAI implements BattleAI {
       needsHealing:
         teamHealthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD,
       shouldUseSkill,
+      hasLowHealthAlly:
+        allies.some(
+          (p) => p.currentHealth / Math.max(p.maxHealth, 1) < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD,
+        ),
     }
   }
 
@@ -248,7 +254,7 @@ export class BaseBattleAI implements BattleAI {
 
     // Check if any skill is available and has enough energy
     for (const skillId of this.skills.keys()) {
-      if ((participant as any).isSkillAvailable(skillId)) {
+      if (participant.isSkillAvailable(skillId)) {
         // Check if energy is sufficient
         const skill = this.skills.get(skillId)
         if (skill && skill.energyCost !== undefined) {
@@ -274,7 +280,7 @@ export class BaseBattleAI implements BattleAI {
 
     this.skills.forEach((skill) => {
       if (
-        (participant as any).isSkillAvailable(skill.id) &&
+        participant.isSkillAvailable(skill.id) &&
         this.canUseSkill(skill, participant)
       ) {
         availableSkills.push(skill)

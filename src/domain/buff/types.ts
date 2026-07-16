@@ -18,6 +18,10 @@ export const BUFF_IDS = {
 export interface BuffQuery {
   getBuffInstanceIds(characterId: string): string[]
   hasBuff(characterId: string, buffId: string): boolean
+  /** 角色是否处于被控制状态（无法行动） */
+  isCharacterControlled(characterId: string): boolean
+  /** 角色是否能使用技能（未被沉默/眩晕等阻止技能释放） */
+  canUseSkill(characterId: string): boolean
 }
 
 // [
@@ -147,7 +151,9 @@ export enum ControlType {
   /** 冰冻：无法行动，可能有额外效果 */
   FREEZE = 'freeze',
   /** 睡眠：无法行动，受攻击后解除 */
-  SLEEP = 'sleep'
+  SLEEP = 'sleep',
+  /** 束缚：无法行动 */
+  BIND = 'bind',
 }
 
 /**
@@ -210,6 +216,13 @@ export interface BuffConfig {
   controlPriority: number
 
   /**
+   * 效果标签
+   * 用于按标签查询 Buff，替代硬编码的 Buff ID 列表
+   * 如 ['heal_reduction', 'burn', 'debuff', 'dot']
+   */
+  tags?: string[]
+
+  /**
    * 免疫标签
    * 拥有对应标签的角色免疫此Buff
    */
@@ -256,6 +269,12 @@ export interface BuffConfig {
    * 定义属性加成，使用字符串格式如 "+10"（数值加成）、"+0.05"（百分比加成）、"-0.15"（百分比减成）
    */
   attributes?: Record<string, string>
+
+  /**
+   * 触发器配置
+   * 定义 Buff 在特定阶段自动触发的行为（如回合开始治疗、受击反弹等）
+   */
+  triggers?: TriggerAction[]
 }
 
 /**
@@ -281,6 +300,8 @@ export interface ScriptBuffConfig {
   parameters?: Record<string, any>
   /** 标记该脚本完全自包含——框架不再从 JSON 读取 attributes 应用修饰符 */
   selfContained?: boolean
+  /** 效果标签（同 BuffConfig.tags） */
+  tags?: string[]
 }
 
 /**
@@ -360,6 +381,13 @@ export interface BuffInstance<TParams = any> {
    * active = 条件已满足（如已残血），inactive = 条件未满足
    */
   conditionState?: 'active' | 'inactive'
+
+  /**
+   * 触发器监听器 ID 列表
+   * 在 addBuff 时注册到 TriggerEventBus，removeBuff 时反注册。
+   * ponytail: 每个 trigger 生成一个 listenerId，存储在数组中统一清理。
+   */
+  triggerListenerIds?: string[]
 }
 
 /**

@@ -76,8 +76,9 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
   }
 
   protected _onRemove(context: BuffContext): void {
-    // ponytail: BaseBuffScript.onRemove 已调用 context.removeModifiers()，无需重复清理
-    // 子类如需清理运行时变量，重写此方法并调用 super._onRemove(context)
+    // ponytail: 修饰符清理由 BuffSystem.removeBuff → modifierStack.removeModifier(instanceId) 统一处理，
+    //           BaseBuffScript.onRemove 不调用 context.removeModifiers()（自 2026-07-16 重构后）。
+    //           子类如需清理运行时变量，重写此方法并调用 super._onRemove(context)
   }
 
   protected _onUpdate(context: BuffContext, deltaTime: number): void {
@@ -105,6 +106,8 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
    */
   protected applyModifiers(context: BuffContext, replace: boolean = false): void {
     const modifiers = this.getModifiers()
+    // ponytail: 从上下文中读取叠加层数，默认 1 层
+    const stacks = (context.getVariable<number>('_stacks') as number) ?? 1
 
     if (replace) {
       // ponytail: 精确移除——只移除本 instance 下每个声明属性的旧修饰符，不影响同 instance 的其他属性
@@ -114,14 +117,15 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     }
 
     for (const mod of modifiers) {
-      const value = typeof mod.value === 'function' ? mod.value(context) : mod.value
+      const rawValue = typeof mod.value === 'function' ? mod.value(context) : mod.value
+      const value = rawValue * stacks
       context.addModifier(mod.attribute as ATTRIBUTE_CODE, value, mod.type)
     }
 
     if (this._isDebugMode()) {
       for (const mod of modifiers) {
-        const resolvedValue = typeof mod.value === 'function' ? mod.value(context) : mod.value
-        this.log(context, `  ├─ ${mod.description ?? mod.attribute}: ${mod.attribute} ${mod.type} ${resolvedValue}`)
+        const rawVal = typeof mod.value === 'function' ? mod.value(context) : mod.value
+        this.log(context, `  ├─ ${mod.description ?? mod.attribute}: ${mod.attribute} ${mod.type} ${rawVal}（${stacks}层→实际${rawVal * stacks}）`)
       }
     }
   }

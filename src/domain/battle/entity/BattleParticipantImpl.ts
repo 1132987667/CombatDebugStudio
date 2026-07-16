@@ -13,6 +13,8 @@ import type {
   ParticipantSnapshot,
   BattleEntity,
   BuffInstanceSnapshot,
+  ControlMode,
+  SkillAvailability,
 } from '@/domain/battle/type/types'
 import type { IModifierProvider } from '@/domain/attribute/types'
 import { type ParticipantSide } from '@/domain/battle/type/types'
@@ -43,6 +45,8 @@ export type BattleParticipantData = {
   skills: SkillSet
   statusEffects?: StatusEffect[]
   attributeValues?: Partial<Record<ATTRIBUTE_CODE, number>>
+  /** ponytail: P0/AI-1 — 控制模式，默认 AI */
+  controlMode?: ControlMode
 }
 
 /**
@@ -98,6 +102,9 @@ export class BattleParticipantImpl implements BattleEntity {
   /** 免疫标签集合 */
   private _immunities: Set<string> = new Set()
 
+  /** ponytail: P0/AI-1 — 参与者控制模式 */
+  controlMode: ControlMode = 'AI'
+
   /** 本回合受击能量获取次数（每回合最多3次） */
   private _energyHitCountThisRound = 0
 
@@ -123,6 +130,7 @@ export class BattleParticipantImpl implements BattleEntity {
     this.seatIndex = data.seatIndex ?? 0
     this.statusEffects = data.statusEffects
     this.skills = data.skills
+    this.controlMode = data.controlMode ?? 'AI'
     this.skillManager = new ParticipantSkills(this.skills)
 
     if (data.attributeValues) {
@@ -705,6 +713,19 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   isSkillAvailable(skillId: string): boolean {
     return this.skillManager.isSkillAvailable(skillId)
+  }
+
+  /**
+   * 统一技能可执行性检查
+   * 委托给 ParticipantSkills.canExecuteSkill
+   */
+  canExecuteSkill(
+    characterId: string,
+    skillId: string,
+    currentEnergy: number,
+    buffQuery: BuffQuery,
+  ): SkillAvailability {
+    return this.skillManager.canExecuteSkill(characterId, skillId, currentEnergy, buffQuery)
   }
 
   /**

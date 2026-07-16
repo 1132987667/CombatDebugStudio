@@ -16,6 +16,7 @@ import type {
 } from '@/domain/attribute/types'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
+import type { BuffQuery } from '@/domain/buff/types'
 import { Counter } from '@/shared/utils/Counter'
 import { SkillType } from '@/domain/skill/types'
 const counter = new Counter()
@@ -166,6 +167,39 @@ export const ValidActionTypes = Object.freeze([
 export type ParticipantSide =
   (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
 
+/** ponytail: P0/AI-1 — 参与者控制模式
+ * AI: 使用 AI 实例决策（含目标建议）
+ * AUTO: 使用默认权重策略选技能，目标由 selector 或随机决定
+ * MANUAL: 完全由玩家输入驱动
+ */
+/**
+ * 技能不可用原因枚举
+ */
+export enum SkillBlockReason {
+  /** 可用 */
+  NONE = 'none',
+  /** 能量不足 */
+  ENERGY_SHORT = 'energy',
+  /** 冷却中 */
+  COOLDOWN = 'cooldown',
+  /** 被控制（眩晕等，完全无法行动） */
+  CONTROLLED = 'controlled',
+  /** 被沉默（无法使用技能，但可普攻） */
+  SILENCED = 'silenced',
+}
+
+/**
+ * 技能可执行性检查结果
+ */
+export interface SkillAvailability {
+  /** 是否可执行 */
+  can: boolean
+  /** 不可用原因 */
+  reason: SkillBlockReason
+}
+
+export type ControlMode = 'AI' | 'AUTO' | 'MANUAL'
+
 /**
  * 战斗实体接口
  * 定义战斗中最基础的实体结构
@@ -236,9 +270,24 @@ export interface BattleEntity {
   getSkillList(): SkillConfig[]
   getSkillIds(filter?: SkillType): string[]
   hasSkill(skillId: string): boolean
+  isSkillAvailable(skillId: string): boolean
 
   /** 获取该实体免疫的标签列表 */
   getImmunities(): string[]
+
+  /** ponytail: P0/AI-1 — 参与者控制模式，影响技能/目标选择方式 */
+  controlMode: ControlMode
+
+  /**
+   * 统一技能可执行性检查
+   * ponytail: 接口签名去掉了鸭子类型，实现方委托给 ParticipantSkills
+   */
+  canExecuteSkill(
+    characterId: string,
+    skillId: string,
+    currentEnergy: number,
+    buffQuery: BuffQuery,
+  ): SkillAvailability
 }
 
 /**
@@ -464,8 +513,6 @@ export interface BattleState {
   turnOrder: string[]
   /** 当前行动次序索引（0-based，表示当前回合内的第几个行动） */
   currentTurn: number
-  /** 当前回合数（1-based，从 1 开始） */
-  currentTurn: number
   /** 战斗状态 */
   battleState: BattleStatus
   startTime: number
@@ -542,8 +589,6 @@ export interface BattleData {
   /** 回合顺序，按速度规则排序 */
   turnOrder: string[]
   /** 当前行动次序索引（表示当前回合内的第几个行动） */
-  currentTurn: number
-  /** 当前回合数（从1开始） */
   currentTurn: number
   /** 最大回合数 */
   maxTurns: number
@@ -669,6 +714,12 @@ export const BattleTriggerPhase = {
   ENERGY_GAINED: 'energy_gained',
   SKILL_USE: 'skill_use',
   HP_LOWER_THAN: 'hp_lower_than',
+  /** 队友受到致命伤害 */
+  ALLY_FATAL_DAMAGE: 'ally_fatal_damage',
+  /** 队友受到伤害 */
+  ALLY_DAMAGE_TAKEN: 'ally_damage_taken',
+  /** Buff 被施加时 */
+  ON_APPLY: 'on_apply',
 } as const
 
 export type BattleTriggerPhase =

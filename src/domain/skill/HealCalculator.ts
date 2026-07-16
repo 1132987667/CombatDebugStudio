@@ -1,12 +1,19 @@
 import type { ExtendedSkillStep } from '@/domain/skill/types'
-import type { CalculationLog } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { EffectTag } from '@/shared/types/effect'
+
+interface HealCalculationStep {
+  step: string
+  value: number
+  description: string
+}
 
 export class HealCalculator {
-  calculationLogs: CalculationLog[] = []
+  calculationLogs: HealCalculationStep[] = []
 
   /** 清空计算日志 */
   clearCalculationLogs(): void {
@@ -14,7 +21,7 @@ export class HealCalculator {
   }
 
   /** 获取计算日志 */
-  getCalculationLogs(): CalculationLog[] {
+  getCalculationLogs(): HealCalculationStep[] {
     return [...this.calculationLogs]
   }
 
@@ -23,6 +30,7 @@ export class HealCalculator {
     source: BattleEntity,
     target: BattleEntity,
     record?: CombatRecord,
+    buffSystem?: BuffSystem,
   ): number {
     this.calculationLogs = []
     let heal = 0
@@ -60,8 +68,8 @@ export class HealCalculator {
       heal = healCap
     }
 
-    // 负面状态影响（降低治疗效果�?   
-    const debuffEffect = this.calculateDebuffEffect(target)
+    // 负面状态影响（降低治疗效果）   
+    const debuffEffect = this.calculateDebuffEffect(target, buffSystem)
     if (debuffEffect > 0) {
       heal = Math.floor(heal * (1 - debuffEffect))
       this.logCalculation('debuff', debuffEffect, `减益效果: -${Math.round(debuffEffect * 100)}%`)
@@ -89,19 +97,10 @@ export class HealCalculator {
   /** 最大减治疗效果上限（80%） */
   private static readonly MAX_HEAL_REDUCTION = 0.8
 
-  private calculateDebuffEffect(target: BattleEntity): number {
-    // ponytail: 检查常见减治疗 debuff，可扩展
-    const healingReductionBuffs = [
-      'buff_heal_reduction',
-      'buff_poison',
-      'buff_curse',
-    ]
-    let debuffEffect = 0
-    for (const buffId of healingReductionBuffs) {
-      if (target.hasBuff(buffId)) {
-        debuffEffect += HealCalculator.HEAL_REDUCTION_PER_DEBUFF
-      }
-    }
+  private calculateDebuffEffect(target: BattleEntity, buffSystem?: BuffSystem): number {
+    if (!buffSystem) return 0
+    const reductionInstances = buffSystem.getBuffInstancesWithTag(target.id, EffectTag.HEAL_REDUCTION)
+    const debuffEffect = reductionInstances.length * HealCalculator.HEAL_REDUCTION_PER_DEBUFF
     return Math.min(debuffEffect, HealCalculator.MAX_HEAL_REDUCTION)
   }
 
@@ -131,8 +130,6 @@ export class HealCalculator {
   }
 
   private logCalculation(step: string, value: number, description: string): void {
-    this.calculationLogs.push({ step, value, description } as any)
-    // ponytail: CalculationLog interface needs timestamp/type/sourceId/targetId fields;
-    // the internal log shape is simpler — left as any until proper type alignment
+    this.calculationLogs.push({ step, value, description })
   }
 }

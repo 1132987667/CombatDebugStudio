@@ -7,9 +7,10 @@ import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
+import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
-import { EffectType } from '@/shared/types/effect'
+import { EffectType, EffectTag } from '@/shared/types/effect'
 import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 
 /** ponytail: 追踪同一攻击者的连续命中目标和计数 */
@@ -32,9 +33,15 @@ export class SkillExecutor {
   /** ponytail: 连击追踪状态（key = 攻击者 entity ID） */
   private comboStates = new Map<string, ComboState>()
 
-  /* ponytail: 延迟伤害模式 — 为 true 时 executeDamage/executeHeal 只记录数值到 action，不调用 target.takeDamage()/heal()，
-   由调用方在动画完成后统一应用 */
-  public deferDamage = false
+  /** 清理指定角色的连击追踪状态 */
+  public cleanupComboState(entityId: string): void {
+    this.comboStates.delete(entityId)
+  }
+
+  /** 清空所有连击追踪状态（战斗初始化时调用） */
+  public clearAllComboStates(): void {
+    this.comboStates.clear()
+  }
 
   executeStep(
     skillStep: ExtendedSkillStep,
@@ -42,13 +49,14 @@ export class SkillExecutor {
     source: BattleEntity,
     target: BattleEntity,
     record?: CombatRecord,
+    token?: DeferredDamageToken,
   ): void {
     switch (skillStep.type) {
       case SkillStepType.DEAL_DAMAGE:
-        this.executeDamage(skillStep, action, source, target, record)
+        this.executeDamage(skillStep, action, source, target, record, token)
         break
       case SkillStepType.HEAL:
-        this.executeHeal(skillStep, action, source, target, record)
+        this.executeHeal(skillStep, action, source, target, record, token)
         break
       case SkillStepType.APPLY_BUFF:
         this.executeBuff(skillStep, action, source, target, record)
@@ -68,13 +76,13 @@ export class SkillExecutor {
         this.executeCleanse(skillStep, action, source, target)
         break
       case SkillStepType.REFLECT:
-        this.executeReflect(skillStep, action, source, target)
+        this.executeReflect(skillStep, action, source, target, token)
         break
       case SkillStepType.DRAIN:
-        this.executeDrain(skillStep, action, source, target, record)
+        this.executeDrain(skillStep, action, source, target, record, token)
         break
       case SkillStepType.CUSTOM:
-        this.executeCustom(skillStep, action, source, target)
+        this.executeCustom(skillStep, action, source, target, token)
         break
       default: {
         // ponytail: 未实现的步骤类型 — 当前无任何技能配置使用这些类型
@@ -99,6 +107,7 @@ export class SkillExecutor {
     source: BattleEntity,
     target: BattleEntity,
     record?: CombatRecord,
+    token?: DeferredDamageToken,
   ): void {
     const result = this.damageCalculator.calculateDamage(
       skillStep,
@@ -114,8 +123,9 @@ export class SkillExecutor {
         description: `${target.name} dodged attack`,
       })
     } else {
-      if (this.deferDamage) {
-        // ponytail: 延迟模式 — 只记录伤害数值，不调用 takeDamage，由调用方在动画后统一应用
+      if (token) {
+        // 延迟模式 — 只记录伤害数值
+        token.record(target, result.damage)
         action.damage = (action.damage ?? 0) + result.damage
         action.effects.push({
           type: EffectType.DAMAGE,
@@ -147,6 +157,7 @@ export class SkillExecutor {
     source: BattleEntity,
     target: BattleEntity,
     record?: CombatRecord,
+    token?: DeferredDamageToken,
   ): void {
     const healTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
@@ -155,9 +166,11 @@ export class SkillExecutor {
       source,
       healTarget,
       record,
+      this.buffSystem,
     )
-    if (this.deferDamage) {
-      // ponytail: 延迟模式 — 只记录治疗数值，由调用方在动画后统一应用
+    if (token) {
+      // 延迟模式 — 只记录治疗数值
+      token.record(healTarget, 0, heal)
       action.heal = (action.heal ?? 0) + heal
       action.effects.push({
         type: EffectType.HEAL,
@@ -198,12 +211,12 @@ export class SkillExecutor {
 
     const buffTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
-    const buffConfig: BuffConfig = {
+    const buffConfig: Partial<BuffConfig> = {
       id: buffId,
-      name: buffId,
+      // ponytail: 不传 name/description，让 addBuff() 从 JSON 配置中解析展示名称
       description: '',
       duration: skillStep.duration ?? -1,
-      maxStacks: skillStep.stacks ?? 1,
+      maxStacks: skillStep.stacks, // ponytail: undefined 时让 addBuff 合并链回退到 JSON 配置
       cooldown: 0,
       stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
@@ -366,13 +379,14 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
+    token?: DeferredDamageToken,
   ): void {
     // ponytail: reflect 的目标是攻击者（即 executeStep 的 target 是攻击者）
     // source 是受击者（拥有反射技能的角色）
     const dmg = this.damageCalculator.calculateDamage(skillStep, source, target)
     if (!dmg.isMiss && dmg.damage > 0) {
-      if (this.deferDamage) {
-        // ponytail: 延迟模式 — 只记录，由调用方动画后统一应用
+      if (token) {
+        token.record(target, dmg.damage)
         action.damage = (action.damage ?? 0) + dmg.damage
       } else {
         this.damageCalculator.applyDamage(target, dmg.damage)
@@ -393,11 +407,12 @@ export class SkillExecutor {
     source: BattleEntity,
     target: BattleEntity,
     record?: CombatRecord,
+    token?: DeferredDamageToken,
   ): void {
     const dmg = this.damageCalculator.calculateDamage(skillStep, source, target, record)
     if (!dmg.isMiss && dmg.damage > 0) {
-      if (this.deferDamage) {
-        // ponytail: 延迟模式 — 只记录，由调用方动画后统一应用
+      if (token) {
+        token.record(target, dmg.damage)
         action.damage = (action.damage ?? 0) + dmg.damage
         action.heal = (action.heal ?? 0) + dmg.damage
       } else {
@@ -422,6 +437,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
+    token?: DeferredDamageToken,
   ): void {
     const customType = skillStep.parameters?.customType as string | undefined
     const desc = (skillStep.parameters?.description as string) || ''
@@ -432,7 +448,7 @@ export class SkillExecutor {
     } else if (customType === 'combo_master' || desc.includes('连续攻击')) {
       this.handleComboMaster(action, source, target)
     } else if (customType === 'burn_detonate' || customType === 'burn_detonate_full') {
-      this.handleBurnDetonate(action, source, target, customType === 'burn_detonate_full')
+      this.handleBurnDetonate(action, source, target, customType === 'burn_detonate_full', token)
     } else if (customType === 'extra_action') {
       // ponytail: 时之沙 — 15% 概率额外行动，需要 BattleSystem 插入回合队列支持
       battleLogManager.addDebugLog('时之沙: 15%额外行动 — 需要 BattleSystem 回合队列插入', { level: LogLevel.INFO })
@@ -546,10 +562,10 @@ export class SkillExecutor {
     source: BattleEntity,
     target: BattleEntity,
     isFullDetonate: boolean,
+    token?: DeferredDamageToken,
   ): void {
-    // 获取目标的 buff 实例，查找灼烧类 buff
-    const instances = this.buffSystem.getBuffInstances(target.id)
-    const burnInstances = instances.filter(i => i.buffId === 'buff_burn' || i.buffId?.includes('burn'))
+    // 获取目标的 buff 实例，按 EffectTag.BURN 标签查找灼烧类 buff
+    const burnInstances = this.buffSystem.getBuffInstancesWithTag(target.id, EffectTag.BURN)
 
     if (burnInstances.length === 0) return
 
@@ -570,8 +586,8 @@ export class SkillExecutor {
 
     const multiplier = isFullDetonate ? 2.0 : 1.0
     const finalDmg = Math.round(totalBurnDmg * multiplier)
-    if (this.deferDamage) {
-      // ponytail: 延迟模式 — 只记录，由调用方动画后统一应用
+    if (token) {
+      token.record(target, finalDmg)
       action.damage = (action.damage ?? 0) + finalDmg
     } else {
       this.damageCalculator.applyDamage(target, finalDmg)
@@ -633,9 +649,9 @@ export class SkillExecutor {
           ? ControlType.SILENCE
           : ControlType.STUN
     const buffId = skillStep.buffId || `control_${controlType}`
-    const config: BuffConfig = {
+    const config: Partial<BuffConfig> = {
       id: buffId,
-      name: buffId,
+      // ponytail: 不传 name/description，让 addBuff() 从 JSON 配置中解析展示名称
       description: '',
       duration: skillStep.duration ?? -1,
       maxStacks: 1,

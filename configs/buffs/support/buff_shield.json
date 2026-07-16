@@ -7,6 +7,7 @@
   "cooldown": 8,
   "isPermanent": false,
   "isDebuff": false,
+  "tags": ["buff", "shield"],
   "parameters": {
     "baseShield": 100,
     "shieldScale": 1,

@@ -6,6 +6,8 @@
 
 import type { SkillConfig, SkillSet } from '@/domain/skill/types'
 import { SkillType } from '@/domain/skill/types'
+import { SkillBlockReason, type SkillAvailability } from '@/domain/battle/type/types'
+import type { BuffQuery } from '@/domain/buff/types'
 /**
  * 技能管理类
  * 管理参与者的技能配置和冷却状态
@@ -84,6 +86,41 @@ export class ParticipantSkills {
   isSkillAvailable(skillId: string): boolean {
     const cooldown = this.skillCooldowns.get(skillId)
     return cooldown === undefined || cooldown <= 0
+  }
+
+  /**
+   * 统一技能可执行性检查
+   * 合并能量、冷却、控制状态检查，通过 BuffQuery 解耦 BuffSystem
+   * ponytail: 不检查目标有效性——目标由执行阶段的 resolveSkillTargets 处理
+   */
+  canExecuteSkill(
+    characterId: string,
+    skillId: string,
+    currentEnergy: number,
+    buffQuery: BuffQuery,
+  ): SkillAvailability {
+    // 1. 控制状态检查（通过 BuffQuery 接口解耦）
+    if (buffQuery.isCharacterControlled(characterId)) {
+      return { can: false, reason: SkillBlockReason.CONTROLLED }
+    }
+    if (!buffQuery.canUseSkill(characterId)) {
+      return { can: false, reason: SkillBlockReason.SILENCED }
+    }
+
+    // 2. 冷却检查
+    const cooldown = this.skillCooldowns.get(skillId) || 0
+    if (cooldown > 0) {
+      return { can: false, reason: SkillBlockReason.COOLDOWN }
+    }
+
+    // 3. 能量检查
+    const skills = this.getSkillList()
+    const skillConfig = skills.find(s => s.id === skillId)
+    if (skillConfig && skillConfig.energyCost > 0 && currentEnergy < skillConfig.energyCost) {
+      return { can: false, reason: SkillBlockReason.ENERGY_SHORT }
+    }
+
+    return { can: true, reason: SkillBlockReason.NONE }
   }
 
   /**

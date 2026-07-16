@@ -1,7 +1,6 @@
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import type { BattleState, BattleEntity } from '@/domain/battle/type/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import { BattleStatus } from '@/domain/battle/type/types'
-import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { eventBus } from '@/main'
 
 /**
@@ -127,9 +126,6 @@ export class BattleStateManager {
         this.currentActorId = null
       }
 
-      // 同步参与者状态
-      this.syncParticipantsState(battleState)
-
       // 检查战斗是否结束
       if (battleState.battleState === BattleStatus.ENDED) {
         this.handleBattleEnd()
@@ -150,15 +146,6 @@ export class BattleStateManager {
     const battleState = this.battleSystem.getBattleState()
     if (!battleState) return undefined
     return battleState.participants.get(participantId)
-  }
-
-  /**
-   * 同步参与者状态
-   * @param battleState 战斗状态
-   */
-  private syncParticipantsState(battleState: BattleState) {
-    // 不再需要同步 UI 角色状态，BattleEntity 直接管理自己的状态
-    // 属性计算通过脏标记系统自动更新
   }
 
   /**

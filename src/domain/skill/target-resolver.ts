@@ -144,3 +144,49 @@ export function resolveStepTargets(
       return []
   }
 }
+
+/**
+ * ponytail: P0/AI-1 — 验证建议目标是否满足 selector 约束
+ * 含阵营检查 + 位置策略验证（FRONT/BACK/ADJACENT）
+ * @returns true 如果目标是 selector 的合法目标
+ */
+export function validateTargetAgainstSelector(
+  target: BattleEntity,
+  source: BattleEntity,
+  selector: SkillTargetConfig,
+  participants: Map<string, BattleEntity>,
+): boolean {
+  if (!target.isAlive()) return false
+
+  if (selector.faction === TargetFaction.SELF) return target.id === source.id
+  if (selector.faction === TargetFaction.ALL) return true
+
+  // 阵营筛选
+  const sameTeam = target.team === source.team
+  if (selector.faction === TargetFaction.ALLY && !sameTeam) return false
+  if (selector.faction === TargetFaction.ENEMY && sameTeam) return false
+
+  // 位置策略验证
+  const strategy = selector.strategy || TargetStrategy.FIRST
+  const isEnemySide = source.team === PARTICIPANT_SIDE.ALLY
+  const candidates = Array.from(participants.values()).filter((p) => {
+    if (!p.isAlive()) return false
+    if (selector.faction === TargetFaction.ALL) return true
+    if (selector.faction === TargetFaction.ALLY) return p.team === source.team
+    return p.team === (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
+  })
+
+  switch (strategy) {
+    case TargetStrategy.FRONT:
+      return candidates.length > 0 && target.id === candidates[0].id
+    case TargetStrategy.BACK:
+      return candidates.length > 0 && target.id === candidates[candidates.length - 1].id
+    case TargetStrategy.ADJACENT:
+    case TargetStrategy.RANDOM_ADJACENT:
+      return candidates.some(
+        (p) => Math.abs(p.seatIndex - source.seatIndex) === 1 && p.id === target.id,
+      )
+    default:
+      return true
+  }
+}

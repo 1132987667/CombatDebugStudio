@@ -93,12 +93,16 @@ export interface Skill {
   cooldown: number // 冷却回合数
   lastUsed: number // 上次使用回合
   description: string // 技能描述
-  damage?: number // 伤害值（可选）
-  heal?: number // 治疗值（可选）
+  damage?: number // 伤害值（汇总全部 DEAL_DAMAGE 步骤的 baseValue）
+  heal?: number // 治疗值（汇总全部 HEAL 步骤的 baseValue）
   buffId?: string // 关联的Buff ID（可选）
   steps: SkillStep[] // 技能执行步骤
   level?: number // 技能等级
   levelValue?: number // 技能等级成长值
+  /** ponytail: 以下为 P0/AI-2 新增字段，供 AI 权重系统使用 */
+  hasBuff?: boolean // 技能是否包含增益步骤
+  hasDebuff?: boolean // 技能是否包含减益步骤
+  hasDynamicDamage?: boolean // 是否包含基于目标属性的动态伤害（如 maxHealth 比例），AI 应运行时实时计算
 }
 
 /**
@@ -419,9 +423,53 @@ export interface SkillScriptMetadata {
  */
 export interface ConvertSkillOptions {
   lastUsed?: number
-  includeDamage?: boolean
-  includeHeal?: boolean
-  includeBuffId?: boolean
+}
+
+/**
+ * 汇总技能步骤的伤害/治疗/类型标记
+ * 遍历全部 steps 而非只读第一个
+ */
+function summarizeSkillSteps(steps: SkillStep[]): {
+  totalDamage: number
+  totalHeal: number
+  hasBuff: boolean
+  hasDebuff: boolean
+  hasDynamicDamage: boolean
+} {
+  let totalDamage = 0, totalHeal = 0
+  let hasBuff = false, hasDebuff = false, hasDynamicDamage = false
+
+  for (const step of steps) {
+    const extStep = step as ExtendedSkillStep
+
+    if (step.type === 'deal_damage' && extStep.calculation) {
+      totalDamage += extStep.calculation.baseValue || 0
+      if (extStep.calculation.extraValues) {
+        for (const extra of extStep.calculation.extraValues) {
+          if (extra.attribute === 'maxHealth' || extra.attribute === 'currentHealth') {
+            hasDynamicDamage = true
+          }
+        }
+      }
+    }
+
+    if (step.type === 'heal' && extStep.calculation) {
+      totalHeal += extStep.calculation.baseValue || 0
+    }
+
+    if (step.type === 'apply_buff') {
+      const buffId = step.buffId || step.effectId || ''
+      if (/^debuff_/.test(buffId)) {
+        hasDebuff = true
+      } else if (buffId) {
+        hasBuff = true
+      }
+    }
+  }
+
+  // ponytail: CUSTOM 步骤的伤害（如 burn_detonate）不会被汇总。
+  // 升级路径：需要在步骤中添加 effectType 或标签体系来识别自定义步骤的伤害类型。
+  return { totalDamage, totalHeal, hasBuff, hasDebuff, hasDynamicDamage }
 }
 
 /**
@@ -431,15 +479,11 @@ export function convertSkillConfigToSkill(
   config: SkillConfig,
   options: ConvertSkillOptions = {},
 ): Skill {
-  const {
-    lastUsed = 0,
-    includeDamage = false,
-    includeHeal = false,
-    includeBuffId = false,
-  } = options
+  const { lastUsed = 0 } = options
 
-  const firstStep = config.steps?.[0] as ExtendedSkillStep | undefined
-  const calculation = firstStep?.calculation
+  const steps = config.steps || []
+  const firstStep = steps[0] as ExtendedSkillStep | undefined
+  const summary = summarizeSkillSteps(steps)
 
   const skill: Skill = {
     id: config.id,
@@ -449,19 +493,13 @@ export function convertSkillConfigToSkill(
     cooldown: config.cooldown || 0,
     lastUsed,
     description: config.description || '',
-    steps: config.steps || [],
-  }
-
-  if (includeDamage) {
-    skill.damage = calculation?.baseValue || 0
-  }
-
-  if (includeHeal) {
-    skill.heal = calculation?.baseValue || 0
-  }
-
-  if (includeBuffId) {
-    skill.buffId = firstStep?.buffId || ''
+    steps,
+    damage: summary.totalDamage || undefined,
+    heal: summary.totalHeal || undefined,
+    hasBuff: summary.hasBuff || undefined,
+    hasDebuff: summary.hasDebuff || undefined,
+    hasDynamicDamage: summary.hasDynamicDamage || undefined,
+    buffId: firstStep?.buffId || undefined,
   }
 
   return skill

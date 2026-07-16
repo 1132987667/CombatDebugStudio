@@ -339,26 +339,61 @@ export class BattleSystem {
       })
     })
 
+    // ponytail: 防止触发器脚本（如 reflectDamage）循环递归
+    // 在 DAMAGE_TAKEN 发射中再次调用 requestDamage → setDamageCallback → ... 无限递归
+    let _inDamageCallback = false
+
     // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
     this.buffSystem.setDamageCallback((targetId: string, damage: number, damagePercent?: number) => {
-      const target = battleData.participants.get(targetId)
-      if (target?.isAlive()) {
-        let actualDamage = damage
-        if (damagePercent && damagePercent > 0) {
-          actualDamage = Math.max(1, Math.floor(target.currentHealth * damagePercent))
+      // ponytail: 递归守卫 — 若已在回调中则跳过，避免反弹/分摊类触发器循环
+      if (_inDamageCallback) return
+      _inDamageCallback = true
+      try {
+        const target = battleData.participants.get(targetId)
+        if (target?.isAlive()) {
+          let actualDamage = damage
+          if (damagePercent && damagePercent > 0) {
+            // 正百分比 = 扣当前生命百分比
+            actualDamage = Math.max(1, Math.floor(target.currentHealth * damagePercent))
+            target.takeDamage(actualDamage)
+          } else if (damagePercent && damagePercent < 0) {
+            // 负百分比 = 按最大生命百分比治疗
+            actualDamage = Math.floor(target.maxHealth * Math.abs(damagePercent))
+            target.heal(actualDamage)
+          } else if (damage > 0) {
+            // 固定值伤害
+            target.takeDamage(actualDamage)
+          }
+          this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
+            sourceId: '',
+            targetId,
+            value: actualDamage,
+            extra: { damage: actualDamage },
+          })
+          // ponytail: 触发队友伤害事件 — 供 buff_triggers 中的 ally_damage_taken / ally_fatal_damage 使用
+          const isDead = !target.isAlive()
+          battleData.participants.forEach((p) => {
+            if (p.id !== targetId && p.team === target.team && p.isAlive()) {
+              this.emitTriggerEvent(
+                isDead ? BattleTriggerPhase.ALLY_FATAL_DAMAGE : BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
+                {
+                  sourceId: '',
+                  targetId: p.id,
+                  value: actualDamage,
+                  extra: { allyId: targetId, damage: actualDamage },
+                },
+              )
+            }
+          })
+          // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
+          this.passiveSkillManager.triggerPassives(
+            BattleTriggerPhase.DAMAGE_TAKEN,
+            target,
+            { sourceId: '', targetId, damage: actualDamage, participants: battleData.participants },
+          )
         }
-        target.takeDamage(actualDamage)
-        this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
-          sourceId: '',
-          targetId,
-          value: actualDamage,
-        })
-        // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
-        this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.DAMAGE_TAKEN,
-          target,
-          { sourceId: '', targetId, damage: actualDamage, participants: battleData.participants },
-        )
+      } finally {
+        _inDamageCallback = false
       }
     })
     this.buffSystem.setHealCallback((targetId: string, amount: number) => {
@@ -739,8 +774,9 @@ export class BattleSystem {
   }
 
   public resetBattle(): void {
-    // ponytail: 清除上一场战斗的被动注册，防止跨战斗污染
+    // ponytail: 清除上一场战斗的被动注册和连击状态，防止跨战斗污染
     this.passiveSkillManager.clearAll()
+    this.skillManager.getExecutor().clearAllComboStates()
     this.lifecycleManager.resetBattle()
   }
 

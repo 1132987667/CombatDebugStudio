@@ -8,6 +8,7 @@
 import { computed, unref, type ComputedRef, type Ref } from 'vue'
 import type {
   BuffTextItem,
+  BuffRawItem,
   MergedAttributeLine,
   BuffDisplayState,
   ConditionState,
@@ -42,6 +43,7 @@ const ATTRIBUTE_SHORT_NAMES: Record<string, string> = {
   critRate: '暴击',
   critDamage: '暴伤',
   damage: '伤害',
+  damageBoost: '伤害提升',
   damageReduction: '伤害减免',
   healthBonus: '生命加成',
   attackBonus: '攻击加成',
@@ -62,7 +64,7 @@ const ATTRIBUTE_SHORT_NAMES: Record<string, string> = {
  * 回退到从 description 文本中启发式推断
  */
 function detectCondition(
-  raw: any,
+  raw: BuffRawItem,
 ): { condition: ConditionState; conditionLabel?: string } {
   // 优先使用实例的实时条件状态（由领域层设置）
   if (raw.conditionState === 'active') {
@@ -106,6 +108,33 @@ function detectType(name: string, isDebuff: boolean): 'buff' | 'debuff' | 'contr
 }
 
 /**
+ * 从 config.attributes 提取属性修正
+ * key=attribute code（如 "speed"），value=格式如 "+0.05"（5%/层）或 "+20%"（20%）
+ * @param stacks 当前层数，用于缩放可叠加 buff
+ */
+function extractAttributesFromConfig(
+  attributes: Record<string, string>,
+  stacks: number,
+): Array<{ attr: string; value: number }> {
+  const result: Array<{ attr: string; value: number }> = []
+  for (const [code, valueStr] of Object.entries(attributes)) {
+    const cn = ATTRIBUTE_SHORT_NAMES[code]
+    if (!cn) continue
+    const trimmed = valueStr.trim()
+    const isPercent = trimmed.includes('%')
+    const numericStr = trimmed.replace('%', '')
+    const numValue = parseFloat(numericStr)
+    if (isNaN(numValue)) continue
+    // +0.05（无%且绝对值<1）→ 转为百分比（0.05*100=5）
+    // +20%（有%）→ 直接使用（20）
+    // ponytail: 暂不支持固定值格式（如 "+10" 表示 +10 固定值），JSON 中无双例
+    const perStack = isPercent ? numValue : (Math.abs(numValue) < 1 ? numValue * 100 : numValue)
+    result.push({ attr: cn, value: Math.round(perStack * stacks) })
+  }
+  return result
+}
+
+/**
  * 从修饰符列表提取属性名（中文）+ 值
  * ponytail: 使用简单的关键词匹配提取属性，后续可从 config.modifiers 中精确获取
  */
@@ -134,7 +163,7 @@ function extractAttributes(
  * 将原始 buff 条目转换为 BuffTextItem
  */
 function toBuffTextItem(
-  raw: any,
+  raw: BuffRawItem,
   entityId: string,
 ): BuffTextItem {
   const name = raw.name || ''
@@ -155,8 +184,13 @@ function toBuffTextItem(
     conditionLabel = undefined
   }
 
-  // 构造修饰符列表
-  const extracted = extractAttributes(displayName, description)
+  // 构造修饰符列表 — 优先使用 config.attributes，回退到文本提取
+  const extracted = raw.attributes
+    ? extractAttributesFromConfig(raw.attributes, stacks)
+    : extractAttributes(displayName, description).map((e) => ({
+        ...e,
+        value: Math.round(e.value * stacks),
+      }))
   const modifiers = extracted.map((e) => ({
     sourceName: name,
     attribute: e.attr,
@@ -278,7 +312,7 @@ function sortLabels(labels: MergedAttributeLine[]): MergedAttributeLine[] {
  * @param baseAttributes — 可选的基础属性值映射，key=中文属性名（如 "攻击"→100）
  */
 export function useBuffDisplay(
-  rawItems: Ref<any[]> | ComputedRef<any[]>,
+  rawItems: Ref<BuffRawItem[]> | ComputedRef<BuffRawItem[]>,
   entityId: string,
   collapseThreshold: number = 5,
   baseAttributes?: Record<string, number> | ComputedRef<Record<string, number>> | Ref<Record<string, number>>,
@@ -343,8 +377,7 @@ export function useBuffDisplay(
       groups = primary
       secondaryGroups = secondary
     }
-
-    return {
+    const result = {
       items,
       mergedLabels,
       visibleAttrLabels,
@@ -353,6 +386,7 @@ export function useBuffDisplay(
       groups,
       secondaryGroups,
     }
+    return result
   })
 }
 

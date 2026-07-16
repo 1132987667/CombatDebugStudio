@@ -7,6 +7,7 @@
   "cooldown": 6,
   "isPermanent": false,
   "isDebuff": false,
+  "tags": ["buff", "hot"],
   "parameters": {
     "baseHealing": 20,
     "healInterval": 1000,

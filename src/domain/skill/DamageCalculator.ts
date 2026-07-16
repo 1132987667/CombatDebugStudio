@@ -1,6 +1,5 @@
 ﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory } from '@/domain/skill/types'
-import type { CalculationLog } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type {
   CombatRecord,
@@ -47,8 +46,15 @@ function getAttributeValue(
   return participant.getAttribute(attr)
 }
 
+/** ponytail: 内部计算步骤日志，不同于外部 CalculationLog 的完整结构 */
+interface CalculationStepLog {
+  step: string
+  value: number
+  description: string
+}
+
 export class DamageCalculator {
-  calculationLogs: CalculationLog[] = []
+  calculationLogs: CalculationStepLog[] = []
   config: DamageCalculationConfig = {
     enableCrit: false,
     critRate: 0,
@@ -78,7 +84,7 @@ export class DamageCalculator {
   }
 
   /** 获取计算日志 */
-  getCalculationLogs(): CalculationLog[] {
+  getCalculationLogs(): CalculationStepLog[] {
     return [...this.calculationLogs]
   }
 
@@ -272,7 +278,7 @@ export class DamageCalculator {
 
     // 伤害大类（DamageCategory）防御/抗性逻辑
     const damageCategory = skillStep.damageCategory || DamageCategory.PHYSICAL
-    ;(breakdown as any).damageCategory = damageCategory
+    breakdown.damageCategory = damageCategory
     if (damageCategory === DamageCategory.TRUE) {
       // 真实伤害：跳过防御计算和攻击类型减免，还原到暴击后伤害
       damage = breakdown.postCritDamage
@@ -284,7 +290,7 @@ export class DamageCalculator {
     } else if (damageCategory === DamageCategory.ELEMENTAL) {
       // 元素伤害：查找目标的元素抗性，默认 fireRes
       const elementalRes = getAttributeValue(target, ATTRIBUTE_CODE.fireRes)
-      ;(breakdown as any).elementalResistance = elementalRes
+      breakdown.elementalResistance = elementalRes
       if (elementalRes > 0) {
         const before = damage
         damage = Math.floor(damage * (1 - elementalRes / 100))
@@ -470,6 +476,6 @@ export class DamageCalculator {
     value: number,
     description: string,
   ): void {
-    this.calculationLogs.push({ step, value, description } as any)
+    this.calculationLogs.push({ step, value, description })
   }
 }

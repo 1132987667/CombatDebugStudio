@@ -6,6 +6,38 @@
  */
 import type { BuffEffectLine } from '@/domain/buff/types'
 
+/**
+ * Buff 原始条目 —— 从 BuffSystem 或 InterventionManager 合并后的中间格式，
+ * 作为 `toBuffTextItem()` 的输入契约，替代 `any` 参数。
+ * 所有字段可选，`toBuffTextItem()` 内部有兜底逻辑。
+ */
+export interface BuffRawItem {
+  /** Buff 实例 ID（源1）或效果 ID（源2） */
+  id?: string
+  /** Buff 实例 ID（与 id 二选一） */
+  instanceId?: string
+  /** Buff 配置 ID（buffs.json 中的 id） */
+  buffId?: string
+  /** 显示名称 */
+  name?: string
+  /** 效果描述 */
+  description?: string
+  /** 是否为 debuff */
+  isDebuff?: boolean
+  /** 剩余回合数 */
+  remainingTurns?: number
+  /** 当前层数 */
+  currentStacks?: number
+  /** 属性修正（key=attribute code, value=如 "+0.05" 或 "+20%"，per-stack 值） */
+  attributes?: Record<string, string>
+  /** 特殊效果行 */
+  effectLines?: BuffEffectLine[]
+  /** 领域层条件状态 */
+  conditionState?: ConditionState
+  /** Buff 脚本类名（调试用） */
+  scriptName?: string
+}
+
 /** 单个 Buff 在纯文本模式下的显示条目 */
 export interface BuffTextItem {
   /** 实例 ID（用于追踪和调试） */

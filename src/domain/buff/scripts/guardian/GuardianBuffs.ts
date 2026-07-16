@@ -13,10 +13,6 @@ export class RevengeRageBuff extends AttributeBuffTemplate {
   protected getModifiers(): AttributeModifier[] {
     return [{ attribute: ATTRIBUTE_CODE.attack, value: (ctx) => this.getConfigValue(ctx, 'stackBonus', 5), type: ModifierType.PERCENTAGE, description: '复仇怒火' }]
   }
-  protected _onApply(context: BuffContext): void {
-    context.setVariable('_bonus', this.getConfigValue(context, 'stackBonus', 5))
-    super._onApply(context)
-  }
 }
 /* ========== 破甲打击：降低目标20%防御，2回合 ========== */
 export class ArmorBreakBuff extends AttributeBuffTemplate {

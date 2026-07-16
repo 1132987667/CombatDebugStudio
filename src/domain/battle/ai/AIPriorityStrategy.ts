@@ -35,6 +35,15 @@ export interface AIPriorityStrategy {
   ): SkillWeight[]
 
   /**
+   * ponytail: P0/AI-1 — 从可用技能中选出最优的一个
+   */
+  selectBestSkill(
+    skills: Skill[],
+    participant: BattleEntity,
+    battleState: BattleState,
+  ): string | null
+
+  /**
    * 获取策略名称
    */
   getName(): string
@@ -83,6 +92,22 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
 
     // 按权重排序
     return weights.sort((a, b) => b.weight - a.weight)
+  }
+
+  /**
+   * ponytail: P0/AI-1 — 从可用技能中选出最优的一个
+   */
+  public selectBestSkill(
+    skills: Skill[],
+    participant: BattleEntity,
+    battleState: BattleState,
+  ): string | null {
+    if (skills.length === 0) return null
+    const weights = this.calculateSkillWeights(battleState, participant, skills)
+    if (weights.length > 0 && weights[0].weight > 0) {
+      return weights[0].skillId
+    }
+    return skills[0].id
   }
 
   /**
@@ -142,7 +167,7 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
       highestThreatEnemy,
       needsHealing,
       hasLowHealthAlly,
-    } as unknown as BattleAnalysis
+    }
   }
 
   /**
@@ -201,7 +226,7 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
 
     // 治疗技能调整
     if (skill.heal && skill.heal > 0) {
-      if ((battleAnalysis as any).hasLowHealthAlly) {
+      if (battleAnalysis.hasLowHealthAlly) {
         adjustment += 40
       } else if (battleAnalysis.needsHealing) {
         adjustment += 20
@@ -215,6 +240,20 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
         BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD
       ) {
         adjustment += 30
+      }
+    }
+
+    // ponytail: P0/AI-2 — Buff/Debuff 技能权重调整
+    if (skill.hasBuff) {
+      // 有高威胁敌人时，增益技能更有价值
+      if (battleAnalysis.highestThreatEnemy.threat > 0) {
+        adjustment += 15
+      }
+    }
+    if (skill.hasDebuff) {
+      // 有高威胁敌人时，减益技能更有价值
+      if (battleAnalysis.highestThreatEnemy.threat > BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD) {
+        adjustment += 20
       }
     }
 

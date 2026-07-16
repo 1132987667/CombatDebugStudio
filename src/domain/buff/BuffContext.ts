@@ -39,17 +39,28 @@ export class BuffContext {
     this._buffSystem = null
   }
 
+  /**
+   * 获取流逝时间（毫秒）
+   * 用于 Buff 脚本中基于实时时间的逻辑（如 DOT 每 2 秒触发一次）。
+   * ponytail: 回合制系统的主要计时由 `updatePerTurn` 驱动（回合递减），
+   *           但部分持续效果（毒/hot）使用实时时间实现平滑触发。两套体系并存。
+   */
   public getElapsedTime(): number {
     return Date.now() - this.startTime
   }
 
+  /**
+   * @deprecated 本系统是回合制，不推荐使用实时时间计算剩余时间。
+   * 剩余回合数请通过 BuffInstance.remainingTurns 读取。
+   * 此方法保留仅用于兼容遗留代码——当前基于 getElapsedTime 计算，返回不准确的值。
+   */
   public getRemainingTime(): number {
     if (this.config.duration <= 0) return -1
     return Math.max(0, this.config.duration - this.getElapsedTime())
   }
 
-  public setVariable(key: string, value: any): void {
-    this.variables.set(key, value)
+  public setVariable(key: string, value: string | number): void {
+    this.variables.set(key, value)  
   }
 
   public getVariable<T>(key: string): T | undefined {

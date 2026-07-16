@@ -1,4 +1,4 @@
-import { IBuffScript, ScriptBuffConfig } from '@/domain/buff/types'
+import { IBuffScript, ScriptBuffConfig, type TriggerAction } from '@/domain/buff/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import buffsData from '@configs/buffs/buffs.json'
 import effectsData from '@configs/effects/effects.json'
@@ -32,8 +32,10 @@ interface BuffConfigData {
   duration?: number
   attributes?: Record<string, string>
   immunities?: string[]
+  tags?: string[]
   aura?: BuffAuraConfig
   onAdd?: string
+  triggers?: TriggerAction[]
 }
 
 type ScriptFactory<TParams = any> = () => IBuffScript<TParams>
@@ -209,9 +211,12 @@ export class BuffScriptRegistry {
     return this.defaultConfigs.get(scriptId)
   }
 
-  /** 检查脚本是否为自包含模式（有 defaultConfig 且标记了 selfContained） */
+  /** 检查脚本是否为自包含模式——脚本自行管理修饰符，框架不再重复从 JSON 读取 */
   public isSelfContained(scriptId: string): boolean {
+    // ponytail: 显式标记或任何已注册的脚本均视为自包含
+    // 纯 JSON 配置（无脚本）的 buff 才通过 applyAttributeModifiers 应用修饰符
     return this.defaultConfigs.get(scriptId)?.selfContained === true
+      || this.registry.has(scriptId)
   }
 
   public registerScript(scriptId: string, script: any, defaultConfig?: ScriptBuffConfig): void {

@@ -79,6 +79,10 @@ export interface DamageBreakdown {
   maxDamageThreshold: number
   /** 最终伤害 */
   finalDamage: number
+  /** 伤害大类 */
+  damageCategory?: string
+  /** 元素抗性 */
+  elementalResistance?: number
   /** 完整步骤链（用于 UI 逐条展示） */
   steps: DamageStep[]
 }

@@ -2,7 +2,7 @@
   <div class="buff-text-group" :class="[colorClass, { 'has-debug': debugMode }]">
     <!-- 标题行 -->
     <div class="group-header">
-      <span class="group-name">{{ buff.name }}</span>
+      <span class="group-name">【{{ buff.name }}】</span>
       <span class="group-meta">
         {{ buff.condition === 'permanent' ? '永久' : `剩余 ${buff.remainingTurns} 回合` }}
         <span v-if="buff.stacks > 1"> · ×{{ buff.stacks }}层</span>
@@ -77,16 +77,7 @@ const conditionText = computed(() => {
 const effectLines = computed(() => {
   const lines: Array<{ text: string; className: string }> = []
 
-  // 控制效果行
-  if (props.buff.type === 'control') {
-    const turnText = props.buff.remainingTurns > 0
-      ? `（${props.buff.remainingTurns}回合）`
-      : '（永久）'
-    lines.push({
-      text: `【${props.buff.name}】${turnText}`,
-      className: 'effect--control',
-    })
-  }
+  // ponytail: 控制效果不重复添加—header 已显示 【眩晕】剩余 3 回合
 
   // 属性修正行
   for (const mod of props.buff.modifiers) {

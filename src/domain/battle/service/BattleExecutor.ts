@@ -12,11 +12,11 @@ import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { EffectType } from '@/shared/types/effect'
-import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
-import { BUFF_IDS } from '@/domain/buff/types'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { TraceDamageLogger } from '@/domain/battle/logs/TraceDamageLogger'
+import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
+import { BalancedAIPriorityStrategy, type AIPriorityStrategy } from '@/domain/battle/ai/AIPriorityStrategy'
 
 import {
   BattleActionHelper,
@@ -33,10 +33,12 @@ import {
   TargetFaction,
   TargetStrategy,
   SkillStepType,
+  convertSkillConfigToSkill,
 } from '@/domain/skill/types'
 import {
   resolveSkillTargets,
   resolveStepTargets,
+  validateTargetAgainstSelector,
 } from '@/domain/skill/target-resolver'
 import type {
   BattleAction,
@@ -59,6 +61,9 @@ import {
  * 封装参与者的行动决策、技能/攻击执行、伤害/治疗应用、日志记录等运行时逻辑。
  */
 export class BattleExecutor {
+  /** ponytail: P0/AI-1 — AUTO 模式使用的默认权重策略，无需 AI 实例 */
+  private readonly defaultStrategy: AIPriorityStrategy = new BalancedAIPriorityStrategy()
+
   constructor(
     private readonly skillManager: SkillManager,
     private readonly damageCalculator: DamageCalculator,
@@ -72,15 +77,16 @@ export class BattleExecutor {
 
   /**
    * 检查参与者是否有控制类Buff
+   * ponytail: 委托给 BuffSystem 的优先级系统，而非硬编码 hasBuff 检查。
+   *           所有 ControlType（STUN/SILENCE/FREEZE/SLEEP/BIND）都通过同一入口处理。
    */
   isParticipantControlled(participant: BattleEntity): boolean {
-    if (participant.hasBuff(STUN_BUFF_ID)) return true
-    if (participant.hasBuff(BUFF_IDS.SILENCE)) return true
-    return false
+    return this.buffSystem.isCharacterControlled(participant.id)
   }
 
   /**
    * 执行单个参与者的行动
+   * ponytail: P0/AI-1 — 三路径决策：AI（含目标建议）| AUTO（策略选技能）| MANUAL（跳过）
    */
   async executeParticipantAction(
     battle: BattleData,
@@ -114,6 +120,53 @@ export class BattleExecutor {
       return
     }
 
+    const context: BattleContext = { participants: battle.participants }
+
+    switch (participant.controlMode) {
+      case 'AI': {
+        const aiInstance = battle.aiInstances?.get(participant.id)
+        if (aiInstance) {
+          const decision = aiInstance.makeDecision(
+            convertToBattleState(battle),
+            participant,
+          )
+          const suggestedTargetId = decision.targetId
+          if (decision.type === 'skill' && decision.skillId) {
+            const skill = this.skillManager.getSkillConfig(decision.skillId)
+            if (skill) {
+              await this.selectAndExecuteSkill(battle, participant, skill, suggestedTargetId, context)
+            } else {
+              await this.selectAndExecuteAttack(battle, participant, suggestedTargetId)
+            }
+          } else {
+            await this.selectAndExecuteAttack(battle, participant, suggestedTargetId)
+          }
+        } else {
+          // ponytail: 有 AI 标志但无实例，降级为 AUTO
+          await this.autoDecision(battle, participant, context)
+        }
+        break
+      }
+      case 'AUTO':
+        await this.autoDecision(battle, participant, context)
+        break
+      case 'MANUAL':
+        // ponytail: 玩家手操，由 Store/UI 直接驱动
+        battleLogManager.addDebugLog(`玩家手操角色[${participant.name}]，跳过自动决策`)
+        break
+    }
+
+    participant.afterAction()
+  }
+
+  /**
+   * ponytail: P0/AI-1 — AUTO 模式决策：用权重策略选技能，无策略时走普攻
+   */
+  private async autoDecision(
+    battle: BattleData,
+    participant: BattleEntity,
+    context: BattleContext,
+  ): Promise<void> {
     const currentEnergy = participant.getAttribute(ATTRIBUTE_CODE.currentEnergy)
     const activeSkillIds = participant.getSkillIds(SkillType.ACTIVE)
     const availableSkills = activeSkillIds.filter((skillId) => {
@@ -127,46 +180,34 @@ export class BattleExecutor {
       }
       return true
     })
-    const participants =battle.participants
-    const context: BattleContext = {
-      participants
-    }
 
-    const aiInstance = battle.aiInstances?.get(participant.id)
-    if (aiInstance) {
-      console.log('AI决策前', convertToBattleState(battle))
-      const action = aiInstance.makeDecision(
-        convertToBattleState(battle),
+    if (availableSkills.length > 0) {
+      const skills = availableSkills
+        .map((id) => this.skillManager.getSkillConfig(id))
+        .filter(Boolean)
+        .map((c) => convertSkillConfigToSkill(c!))
+      const bestSkillId = this.defaultStrategy.selectBestSkill(
+        skills,
         participant,
+        convertToBattleState(battle),
       )
-      if (action.type === 'skill' && action.skillId) {
-        const skill = this.skillManager.getSkillConfig(action.skillId)
-        if (skill && activeSkillIds.includes(action.skillId)) {
-          await this.selectAndExecuteSkill(battle, participant, skill, context)
-        } else {
-          await this.selectAndExecuteAttack(battle, participant)
+      if (bestSkillId) {
+        const skill = this.skillManager.getSkillConfig(bestSkillId)
+        if (skill) {
+          await this.selectAndExecuteSkill(battle, participant, skill, undefined, context)
+          return
         }
-      } else {
-        await this.selectAndExecuteAttack(battle, participant)
       }
-    } else if (
-      availableSkills.length > 0 &&
-      Math.random() < BATTLE_CONSTANTS.SKILL_USE_CHANCE &&
-      availableSkills[0]
-    ) {
-      const selectedSkillId =
-        availableSkills[Math.floor(Math.random() * availableSkills.length)]
-      const skill = this.skillManager.getSkillConfig(selectedSkillId)
+      // fallback: 取第一个可用技能
+      const skillId = availableSkills[0]
+      const skill = this.skillManager.getSkillConfig(skillId)
       if (skill) {
-        await this.selectAndExecuteSkill(battle, participant, skill, context)
-      } else {
-        await this.selectAndExecuteAttack(battle, participant)
+        await this.selectAndExecuteSkill(battle, participant, skill, undefined, context)
+        return
       }
-    } else {
-      await this.selectAndExecuteAttack(battle, participant)
     }
 
-    participant.afterAction()
+    await this.selectAndExecuteAttack(battle, participant)
   }
 
   // ============ 技能执行 ============
@@ -178,6 +219,7 @@ export class BattleExecutor {
     battle: BattleData,
     source: BattleEntity,
     skill: SkillConfig,
+    suggestedTargetId?: string,
     context?: BattleContext,
   ): Promise<BattleAction> {
     if (
@@ -185,7 +227,7 @@ export class BattleExecutor {
       typeof source.isSkillAvailable === 'function'
     ) {
       if (!source.isSkillAvailable(skill.id)) {
-        return this.selectAndExecuteAttack(battle, source)
+        return this.selectAndExecuteAttack(battle, source, suggestedTargetId)
       }
     }
 
@@ -197,7 +239,7 @@ export class BattleExecutor {
       turn: battle.currentTurn,
     })
 
-    const targets = this.getSkillTargets(battle, source, skill)
+    const targets = this.getSkillTargets(battle, source, skill, suggestedTargetId)
     if (targets.length === 0) {
       battleLogManager.addDebugLog(`技能执行失败: 未找到有效目标 ${skill.id}`)
       console.error(`技能执行失败: 未找到有效目标 ${skill.id}`)
@@ -215,8 +257,8 @@ export class BattleExecutor {
         source,
         { target: targets[0], targetId: targets[0]?.id, currentTurn: battle.currentTurn, participants: context?.participants ?? battle.participants },
       )
-      // ponytail: 启用延迟伤害模式 — 技能执行只记录数值不实际扣血，等待动画完成后统一应用
-      this.skillManager.setDeferredDamageMode(true)
+      // ponytail: 启用延迟伤害令牌 — 技能执行只记录数值不实际扣血
+      const damageToken = new DeferredDamageToken()
       const pendingDamages: Array<{
         target: BattleEntity
         damage: number
@@ -250,6 +292,7 @@ export class BattleExecutor {
           record,
           (stepTargetType, mainTarget) =>
             this.resolveStepTargets(battle, mainTarget, stepTargetType),
+          damageToken,
         )
         if (!skillAction) {
           battleLogManager.addDebugLog(
@@ -274,9 +317,6 @@ export class BattleExecutor {
         totalHeal += skillAction.heal ?? 0
         allEffects.push(...skillAction.effects)
       }
-
-      // 关闭延迟模式
-      this.skillManager.setDeferredDamageMode(false)
 
       // 将所有详细记录存入 BattleRecorder
       for (const record of records) {
@@ -340,11 +380,8 @@ export class BattleExecutor {
           })
         }
 
-        // ponytail: 动画完成后统一应用延迟的伤害/治疗到所有目标
-        for (const pd of pendingDamages) {
-          if (pd.damage > 0) pd.target.takeDamage(pd.damage)
-          if (pd.heal > 0) pd.target.heal(pd.heal)
-        }
+        // ponytail: 动画完成后统一应用延迟的伤害/治疗
+        damageToken.applyAll()
 
         // ponytail: 触发被动 — 攻击方 ON_HIT + 受击方 DAMAGE_TAKEN + ON_DEATH
         for (const pd of pendingDamages) {
@@ -375,7 +412,6 @@ export class BattleExecutor {
         }
       }
     } catch (error) {
-      this.skillManager.setDeferredDamageMode(false)
       battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, { error: error as Error })
       action.type = ActionTypes.ATTACK
       action.damage = Math.floor(Math.random() * 20) + 10
@@ -406,12 +442,26 @@ export class BattleExecutor {
 
   /**
    * 根据 SkillTargetConfig 解析技能的所有目标
+   * ponytail: P0/AI-1 — 接受 suggestedTargetId，验证后采纳，无效则回退到 resolveSkillTargets
    */
   getSkillTargets(
     battle: BattleData,
     source: BattleEntity,
     skill: SkillConfig,
+    suggestedTargetId?: string,
   ): BattleEntity[] {
+    // 如果有建议目标，验证其合法性
+    if (suggestedTargetId) {
+      const suggested = battle.participants.get(suggestedTargetId)
+      if (suggested) {
+        if (validateTargetAgainstSelector(suggested, source, skill.selector, battle.participants)) {
+          return [suggested]
+        }
+      }
+      battleLogManager.addDebugLog(
+        `建议目标 ${suggestedTargetId} 不满足 selector 约束，回退到自动解析`,
+      )
+    }
     return resolveSkillTargets(
       battle.participants,
       source,
@@ -681,8 +731,9 @@ export class BattleExecutor {
   async selectAndExecuteAttack(
     battle: BattleData,
     source: BattleEntity,
+    suggestedTargetId?: string,
   ): Promise<BattleAction> {
-    const targetId = this.selectTarget(battle, source)
+    const targetId = this.selectTarget(battle, source, suggestedTargetId)
     const target = battle.participants.get(targetId)
 
     if (!target) {
@@ -763,7 +814,17 @@ export class BattleExecutor {
   /**
    * 选择攻击目标
    */
-  selectTarget(battle: BattleData, source: BattleEntity): string {
+  selectTarget(battle: BattleData, source: BattleEntity, suggestedTargetId?: string): string {
+    // ponytail: P0/AI-1 — 如果建议目标是存活敌方，直接采纳
+    if (suggestedTargetId) {
+      const suggested = battle.participants.get(suggestedTargetId)
+      if (suggested && suggested.team !== source.team && suggested.isAlive()) {
+        return suggestedTargetId
+      }
+      battleLogManager.addDebugLog(
+        `建议目标 ${suggestedTargetId} 无效（已死/非敌方/不存在），回退到随机选择`,
+      )
+    }
     const enemies = Array.from(battle.participants.values()).filter(
       (p) => p.id !== source.id && p.team !== source.team && p.isAlive(),
     )
@@ -875,8 +936,8 @@ export class BattleExecutor {
 
     if (action.type === ActionTypes.SKILL && action.skillId) {
       try {
-        // ponytail: 延迟伤害模式 — 动画完成后才扣血
-        this.skillManager.setDeferredDamageMode(true)
+        // ponytail: 令牌模式 — 用局部 token 替代全局 toggle
+        const damageToken = new DeferredDamageToken()
         // ponytail: 主动技能执行时禁用 buffApplied 回调，避免与下方动画循环重复
         this.buffSystem.setBuffAppliedCallbackEnabled(false)
         const skillAction = this.skillManager.executeSkill(
@@ -884,9 +945,11 @@ export class BattleExecutor {
           source,
           target,
           action.turn ?? 0,
+          undefined,
+          undefined,
+          damageToken,
         )
         if (!skillAction) {
-          this.skillManager.setDeferredDamageMode(false)
           // ponytail: early-return 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
           this.buffSystem.setBuffAppliedCallbackEnabled(true)
           battleLogManager.addDebugLog(`技能执行返回空: ${action.skillId}`)
@@ -919,7 +982,6 @@ export class BattleExecutor {
             (effect) => effect.type === EffectType.MISS,
           )
           if (hasMissEffect) {
-            this.skillManager.setDeferredDamageMode(false)
             await this.animationManager.triggerMissAnimationAndWait({
               targetId: target.id,
             })
@@ -952,20 +1014,23 @@ export class BattleExecutor {
           this.buffSystem.setBuffAppliedCallbackEnabled(true)
 
           // ponytail: 动画完成后应用延迟的伤害/治疗
-          this.skillManager.setDeferredDamageMode(false)
-          if ((action.damage ?? 0) > 0) {
-            target.takeDamage(action.damage ?? 0)
+          damageToken.applyAll()
+          // ponytail: 使用 token 的实际扣血值而非 action.damage 判断被动触发，减少发散窗口
+          const actualDamage = damageToken.getTotalDamage()
+          if (actualDamage > 0) {
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.ON_HIT,
               source,
-              { target, sourceId: source.id, damage: action.damage ?? 0, participants: battle.participants },
+              { target, sourceId: source.id, damage: actualDamage, participants: battle.participants },
             )
             this.passiveSkillManager.triggerPassives(
               BattleTriggerPhase.DAMAGE_TAKEN,
               target,
-              { target: source, sourceId: source.id, damage: action.damage ?? 0, participants: battle.participants },
+              { target: source, sourceId: source.id, damage: actualDamage, participants: battle.participants },
             )
             if (!target.isAlive()) {
+              // ponytail: P1/PERF-1 — 死亡时清理 comboStates
+              this.skillManager.getExecutor().cleanupComboState(target.id)
               this.passiveSkillManager.triggerPassives(
                 BattleTriggerPhase.ON_DEATH,
                 target,
@@ -973,7 +1038,7 @@ export class BattleExecutor {
               )
             }
           }
-          if ((action.heal ?? 0) > 0) target.heal(action.heal ?? 0)
+          // ponytail: token.applyAll() 已经处理了所有伤害和治疗，不需要额外调用 heal
 
           // ponytail: 技能伤害/治疗数值动画（在 HP 扣减之后播放，与 handleHitAttack 时序一致）
           if ((action.damage ?? 0) > 0) {
@@ -999,7 +1064,6 @@ export class BattleExecutor {
           }
         }
       } catch (error) {
-        this.skillManager.setDeferredDamageMode(false)
         // ponytail: catch 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
         this.buffSystem.setBuffAppliedCallbackEnabled(true)
         battleLogManager.addDebugLog(
@@ -1046,6 +1110,8 @@ export class BattleExecutor {
           { target: source, sourceId: source.id, damage: actualDamage, participants: battle.participants },
         )
         if (!target.isAlive()) {
+          // ponytail: P1/PERF-1 — 死亡时清理 comboStates
+          this.skillManager.getExecutor().cleanupComboState(target.id)
           this.passiveSkillManager.triggerPassives(
             BattleTriggerPhase.ON_DEATH,
             target,

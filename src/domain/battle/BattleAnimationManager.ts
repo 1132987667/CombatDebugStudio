@@ -91,7 +91,7 @@ export class BattleAnimationManager {
 
     const participants = this.getParticipants()
     if (animation.data && 'targetId' in animation.data) {
-      const targetId = (animation.data as any).targetId
+      const targetId = animation.data.targetId
       const target = participants?.get(targetId)
       if (!target || !target.isAlive()) {
         // ponytail: 目标已死亡/不存在 — 仍发出事件让 UI 显示动画效果（伤害先应用后入队动画），但快速 resolve 避免队列卡死

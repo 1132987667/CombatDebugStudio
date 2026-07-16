@@ -2,10 +2,8 @@ import type {
   SkillConfig,
   SkillStep,
 } from '@/domain/skill/types'
-import { BattleActionHelper, type BattleAction, type BattleEntity } from '@/domain/battle/type/types'
-import {
-  ATTRIBUTE_CODE,
-} from '@/domain/attribute/types'
+import { BattleActionHelper, type BattleAction, type BattleEntity, SkillBlockReason } from '@/domain/battle/type/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { ControlType } from '@/domain/buff/types'
@@ -13,15 +11,16 @@ import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { SkillExecutor } from '@/domain/skill/SkillExecutor'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
+import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { validateSkillConfigs } from '@/shared/utils/schema-validator'
-import type { CalculationLog } from '@/shared/types/battle-log'
 interface CalculationContext {
   skillStep: SkillStep
   action: BattleAction
   source: BattleEntity
   targets: BattleEntity[]
   record?: CombatRecord
+  token?: DeferredDamageToken
 }
 
 export class SkillManager {
@@ -59,19 +58,13 @@ export class SkillManager {
     return this.executor
   }
 
-  /** ponytail: 设置技能执行的延迟伤害模式 — 为 true 时 executeDamage/executeHeal 只记录数值不实际扣血，
-   * 由调用方在动画完成后统一应用 */
-  setDeferredDamageMode(deferred: boolean): void {
-    this.executor.deferDamage = deferred
-  }
-
   /** 获取伤害计算日志 */
-  getDamageCalculationLogs(): CalculationLog[] {
+  getDamageCalculationLogs() {
     return this.damageCalculator.getCalculationLogs()
   }
 
   /** 获取治疗计算日志 */
-  getHealCalculationLogs(): CalculationLog[] {
+  getHealCalculationLogs() {
     return this.healCalculator.getCalculationLogs()
   }
 
@@ -120,6 +113,8 @@ export class SkillManager {
     record?: CombatRecord,
     /** 步骤级目标解析回调：给定 targetType 和主目标，返回额外目标列表 */
     resolveExtraTargets?: (stepTargetType: string, mainTarget: BattleEntity) => BattleEntity[],
+    /** ponytail: 延迟伤害令牌 — 传入时只记录不扣血，调用方动画后 applyAll */
+    token?: DeferredDamageToken,
   ): BattleAction | null {
     const config = this.skillConfigs.get(skillId)
     if (!config) {
@@ -128,18 +123,14 @@ export class SkillManager {
       return null
     }
 
-    if (source.getAttribute) {
-      const currentEnergy = source.getAttribute(ATTRIBUTE_CODE.currentEnergy)
-      if (isNaN(config.energyCost)) {
-        battleLogManager.addDebugLog(`技能 ${skillId} 能量消耗值无效`, { level: LogLevel.WARN })
-        console.error(`技能 ${skillId} 能量消耗值无效`)
-        return null
-      }
-      if (currentEnergy < config.energyCost) {
-        battleLogManager.addDebugLog(`技能 ${skillId} 能量不足`, { level: LogLevel.WARN })
-        console.error(`技能 ${skillId} 能量不足`, config.energyCost)
-        return null
-      }
+    // ponytail: P1/CTRL-1 — 统一可执行性检查委托给 participant.canExecuteSkill
+    // 通过 getAttribute 获取能量，确保与属性系统（含修饰符）一致
+    const currentEnergy = source.getAttribute(ATTRIBUTE_CODE.currentEnergy)
+    const availability = source.canExecuteSkill(source.id, skillId, currentEnergy, this.buffSystem)
+    if (!availability.can) {
+      battleLogManager.addDebugLog(`技能 ${skillId} 不可用: ${availability.reason}`, { level: LogLevel.WARN })
+      console.error(`技能 ${skillId} 不可用:`, availability.reason)
+      return null
     }
 
     // ponytail: 被动技能允许无 target（自施法技能通过 targetConfig.faction === 'self' 处理）
@@ -152,20 +143,22 @@ export class SkillManager {
       return null
     }
 
-    // 检查目标是否被眩晕（仅目标存在时检查）
-    const targetIsStunned = target ? this.isTargetStunned(target) : false
-    if (targetIsStunned) {
-      battleLogManager.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, { level: LogLevel.WARN })
-      const action = BattleActionHelper.createSkill({
-        sourceId: source.id,
-        targetId: target.id,
-        skillId,
-        skillName: config.name || '',
-        turn: currentTurn,
-        success: false,
-        effects: [{ type: 'status', targetId: target.id, description: `${target.name} 已被眩晕，技能取消` }],
-      })
-      return action
+    // ponytail: 目标被眩晕时技能取消（区别于施法者自身控制，返回 failure action）
+    if (target) {
+      const targetControl = this.buffSystem.getHighestPriorityControlEffect(target.id)
+      if (targetControl === ControlType.STUN) {
+        battleLogManager.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, { level: LogLevel.WARN })
+        const action = BattleActionHelper.createSkill({
+          sourceId: source.id,
+          targetId: target.id,
+          skillId,
+          skillName: config.name || '',
+          turn: currentTurn,
+          success: false,
+          effects: [{ type: 'status', targetId: target.id, description: `${target.name} 已被眩晕，技能取消` }],
+        })
+        return action
+      }
     }
 
     // 在执行前消耗能量——如果失败则无法恢复，但
@@ -200,6 +193,7 @@ export class SkillManager {
         source,
         targets: [target],
         record,
+        token,
       }
       this.executeStep(ctx)
 
@@ -215,6 +209,7 @@ export class SkillManager {
             source,
             targets: [extraTarget],
             record,
+            token,
           }
           this.executeStep(extraCtx)
         }
@@ -239,15 +234,11 @@ export class SkillManager {
       ctx.source,
       ctx.targets[0],
       ctx.record,
+      ctx.token,
     )
   }
 
-  /** 检查目标是否被眩晕 */
-  private isTargetStunned(target: BattleEntity): boolean {
-    if (target.hasBuff('buff_stun')) return true
-    const controlType = this.buffSystem.getHighestPriorityControlEffect(target.id)
-    return controlType === ControlType.STUN
-  }
+
 
   registerCalculator(name: string, calculator: any): void {
     this.calculators.set(name, calculator)
@@ -258,9 +249,14 @@ export class SkillManager {
   }
 
   loadSkillConfigsFromData(data: SkillConfig[]): SkillConfig[] {
-    const validConfigs = validateSkillConfigs(data) as any as SkillConfig[]
-    this.loadSkillConfigs(validConfigs)
-    return validConfigs
+    const result = validateSkillConfigs(data)
+    if (!result.valid) {
+      battleLogManager.addDebugLog(`技能配置验证失败: ${result.errors.join('; ')}`, { level: LogLevel.WARN })
+    }
+    // ponytail: validateSkillConfigs 签名返回 ValidationResult，实际不修改 data。
+    // 保留原数组，仅记录验证结果。
+    this.loadSkillConfigs(data)
+    return data
   }
 
   reloadAllSkills(configs: SkillConfig[]): void {

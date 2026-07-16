@@ -720,6 +720,8 @@ export const BattleTriggerPhase = {
   ALLY_DAMAGE_TAKEN: 'ally_damage_taken',
   /** Buff 被施加时 */
   ON_APPLY: 'on_apply',
+  /** Buff 条件状态变更时 */
+  CONDITION_CHANGED: 'condition_changed',
 } as const
 
 export type BattleTriggerPhase =

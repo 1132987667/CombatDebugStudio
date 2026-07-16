@@ -8,7 +8,7 @@ export class BuffContext {
   public instanceId: string = ''
   public config: BuffConfig = {} as BuffConfig
   public startTime: number = 0
-  public variables = new Map<string, string | number>()
+  public variables = new Map<string, string | number | boolean>()
   private _buffSystem: BuffSystem | null = null
 
   constructor(characterId?: string, instanceId?: string, config?: BuffConfig, buffSystem?: BuffSystem) {
@@ -59,7 +59,7 @@ export class BuffContext {
     return Math.max(0, this.config.duration - this.getElapsedTime())
   }
 
-  public setVariable(key: string, value: string | number): void {
+  public setVariable(key: string, value: string | number | boolean): void {
     this.variables.set(key, value)  
   }
 

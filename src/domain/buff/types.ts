@@ -302,6 +302,8 @@ export interface ScriptBuffConfig {
   selfContained?: boolean
   /** 效果标签（同 BuffConfig.tags） */
   tags?: string[]
+  /** 免疫标签（同 BuffConfig.immuneTags） */
+  immuneTags?: string[]
 }
 
 /**

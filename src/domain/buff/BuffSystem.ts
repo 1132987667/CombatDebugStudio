@@ -17,7 +17,7 @@ import { BuffContextPool } from '@/domain/buff/BuffContextPool'
 import { ModifierStack } from '@/domain/buff/ModifierStack'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
 import { TriggerEventBus, triggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
 import { Counter } from '@/shared/utils/Counter'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import { BattleContext, BattleTriggerPhase } from '@/domain/battle/type/types'
@@ -260,7 +260,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     const listenerIds: string[] = []
     for (const trigger of triggers) {
-      const phase = BuffSystem.PHASE_NAME_MAP[trigger.phase] ?? trigger.phase
+      const phase = BuffSystem.PHASE_NAME_MAP[trigger.phase]
+      if (!phase) {
+        battleLogManager.addDebugLog(`触发器阶段 ${trigger.phase} 未识别，跳过注册`, { level: LogLevel.WARN })
+        continue
+      }
       let triggerCount = 0
       let lastTriggerTurn = -999
 
@@ -286,7 +290,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         }
       }
 
-      const listenerId = this.eventBus.on(phase as any, callback, instanceId)
+      const listenerId = this.eventBus.on(phase, callback, instanceId)
       listenerIds.push(listenerId)
     }
 
@@ -351,7 +355,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       isPositive: config.isPositive ?? scriptDefaultConfig?.isPositive ?? undefined,
       iconPath: config.iconPath ?? scriptDefaultConfig?.iconPath ?? undefined,
       dispellable: config.dispellable ?? scriptDefaultConfig?.dispellable ?? undefined,
-      immuneTags: config.immuneTags ?? (scriptDefaultConfig as any)?.immuneTags ?? jsonConfig?.immunities ?? undefined,
+      immuneTags: config.immuneTags ?? scriptDefaultConfig?.immuneTags ?? jsonConfig?.immunities ?? undefined,
       tags: config.tags ?? scriptDefaultConfig?.tags ?? jsonConfig?.tags ?? undefined,
       parameters: config.parameters ?? scriptDefaultConfig?.parameters ?? undefined,
       attributes: config.attributes ?? jsonConfig?.attributes ?? undefined,
@@ -489,13 +493,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
 
     // ponytail: 触发 ON_APPLY 阶段 — 供其他 Buff 的触发器监听（如 "xxx 被施加时"）
-    this.eventBus.emit('on_apply' as any, {
-      phase: 'on_apply' as any,
+    this.eventBus.emit(BattleTriggerPhase.ON_APPLY, {
+      phase: BattleTriggerPhase.ON_APPLY,
       targetId: characterId,
       sourceId: characterId,
       currentTurn,
       extra: { buffId, instanceId },
-    } as any)
+    })
 
     return instanceId
   }
@@ -786,8 +790,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const instance = this.buffInstances.get(instanceId)
     if (instance) {
       instance.conditionState = state
-        // ponytail: 'condition-changed' 是非标准事件名，emit 签名要求 BattleTriggerPhase 类型，用 any 绕过
-        ; (this.eventBus as any).emit('condition-changed', { instanceId, state, characterId: instance.characterId })
+      this.eventBus.emit(BattleTriggerPhase.CONDITION_CHANGED, {
+        phase: BattleTriggerPhase.CONDITION_CHANGED,
+        targetId: instance.characterId,
+        extra: { instanceId, state, characterId: instance.characterId },
+      })
     }
   }
 

@@ -167,6 +167,8 @@ const props = defineProps<{
   isEnemy?: boolean
   /** 卡片引用 ID（用于动画） */
   cardRefId?: string
+  /** 当前选中的目标（情境属性高亮用） */
+  targetEntity?: BattleEntity | null
 }>()
 
 const emit = defineEmits<{
@@ -382,11 +384,11 @@ const baseAttributes = computed(() => {
 // ponytail: 参与者 ID 在生命周期内不变，直接读取
 const buffDisplay = useBuffDisplay(buffListItems, props.participant.id, 5, baseAttributes)
 
-// 情境属性 — ponytail: target/skill 从父组件传入（当前为 null 占位）
+// 情境属性 — 根据当前选中的目标动态计算激活的情境属性
 const situationalAttrs = useSituationalAttributes(
   computed(() => props.participant),
-  ref(null),
-  ref(null),
+  computed(() => props.targetEntity ?? null),
+  ref(null), // ponytail: skill 上下文暂未接入，未来从技能选中状态传递
 )
 
 

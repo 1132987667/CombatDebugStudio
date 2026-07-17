@@ -756,7 +756,7 @@ export interface ReplayBattleEvent {
   roundNumber: number
   sourceId?: string
   targetId?: string
-  data: Record<string, BattleContext>
+  data: Record<string, any>
 }
 
 /** 快照索引项 */

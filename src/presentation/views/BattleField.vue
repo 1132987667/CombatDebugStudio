@@ -17,6 +17,7 @@
             <ParticipantCard v-for="member in allyTeam" :key="member.id" :ref="el => { handleCardRef(member.id, el) }"
               :participant="member" :is-active="isCurrentActor(member.id)"
               :is-selected="store.selectedCharacterId === member.id" :is-enemy="false" :show-debug="false"
+              :target-entity="selectedTarget"
               @click="selectCharacter(member.id)" />
           </div>
         </div>
@@ -31,6 +32,7 @@
             <ParticipantCard v-for="member in enemyTeam" :key="member.id" :ref="el => { handleCardRef(member.id, el) }"
               :participant="member" :is-active="isCurrentActor(member.id)"
               :is-selected="store.selectedCharacterId === member.id" :is-enemy="true" :show-debug="false"
+              :target-entity="selectedTarget"
               @click="selectCharacter(member.id)" />
             <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
@@ -262,6 +264,13 @@ watch(store.animationState, (state) => {
 // 响应式获取队伍数据
 const allyTeam = computed(() => store.getEnabledAllyTeam())
 const enemyTeam = computed(() => store.getEnabledEnemyTeam())
+
+/** 当前选中的目标实体（用于情境属性高亮） */
+const selectedTarget = computed(() => {
+  const id = store.selectedCharacterId
+  if (!id) return null
+  return [...allyTeam.value, ...enemyTeam.value].find(p => p.id === id) ?? null
+})
 
 // 辅助函数：转换为数字（兼容 AttributeValue 和 number）
 function toNumber(value: number | AttributeValue | undefined): number {

@@ -287,7 +287,7 @@ function loadRecording() {
 
 function saveCurrentRecording() {
   if (currentRecording.value && props.battleManager) {
-    const saveKey = props.battleManager.saveBattleRecording(currentRecording.value.battleId, currentRecording.value.name);
+    const saveKey = props.battleManager.saveBattleRecording(currentRecording.value.battleId, currentRecording.value.battleId);
     console.log('保存记录:', saveKey);
   }
 }

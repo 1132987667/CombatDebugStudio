@@ -22,11 +22,16 @@ export class ShieldBuff extends BaseBuffScript {
     context.setVariable('shieldValue', shieldValue)
     context.setVariable('maxShieldValue', shieldValue)
     context.setVariable('shieldRegen', this.getConfigValue(context, 'shieldRegen', 0))
+
+    // 同步护盾值到 BuffSystem（供 takeDamage 吸收伤害）
+    context.getBuffSystem()?.setShieldValue(context.characterId, shieldValue)
   }
 
   protected _onRemove(context: BuffContext): void {
     const remainingShield = context.getVariable<number>('shieldValue') || 0
     this.log(context, `护盾效果消失，剩余护盾值：${remainingShield}`)
+    // 清除 BuffSystem 中的护盾值
+    context.getBuffSystem()?.setShieldValue(context.characterId, 0)
   }
 
   protected _onUpdate(context: BuffContext, deltaTime: number): void {
@@ -40,6 +45,8 @@ export class ShieldBuff extends BaseBuffScript {
         
         const newShield = Math.min(currentShield + shieldRegen, maxShield)
         context.setVariable('shieldValue', newShield)
+        // 同步更新 BuffSystem 中的护盾值
+        context.getBuffSystem()?.setShieldValue(context.characterId, newShield)
         
         this.log(context, `护盾恢复：${shieldRegen}，当前护盾值：${newShield}`)
       }
@@ -59,6 +66,8 @@ export class ShieldBuff extends BaseBuffScript {
     
     context.setVariable('shieldValue', newShield)
     context.setVariable('maxShieldValue', newMaxShield)
+    // 同步更新 BuffSystem 中的护盾值
+    context.getBuffSystem()?.setShieldValue(context.characterId, newShield)
     
     this.log(context, `护盾值提升至 ${newShield}/${newMaxShield}`)
   }

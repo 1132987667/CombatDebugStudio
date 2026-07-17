@@ -298,7 +298,7 @@ export class BattleSystem {
 
     battleData.participants = participants
     console.log('初始化战斗数据', battleData)
-    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED)
+    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, { allyTeam: [], enemyTeam: [] })
 
 
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
@@ -656,7 +656,7 @@ export class BattleSystem {
       }
 
       // 发送回合结束事件到 UI 层
-      eventBus.emit(BattleEventCodes.TURN_END, {})
+      eventBus.emit(BattleEventCodes.TURN_END)
 
       // ponytail: 调试模式 — 回合结束事件已派发后暂停
       await debugGate.waitIfNeeded('TURN_END')
@@ -678,12 +678,33 @@ export class BattleSystem {
         { currentTurn: battle.currentTurn },
       )
 
+      // ponytail: 消费 extra_action（时之沙）— 在 TURN_END 触发后、回合递增前执行额外行动
+      const extraEntityIds = this.skillManager.getExecutor().drainExtraActions()
+      // ponytail: 限制每回合最多 3 次额外行动，防止被动再触发导致无限循环
+      const MAX_EXTRA_ACTIONS = 3
+      let extraCount = 0
+      while (extraEntityIds.length > 0 && extraCount < MAX_EXTRA_ACTIONS) {
+        const entityId = extraEntityIds.shift()!
+        const entity = battle.participants.get(entityId)
+        if (entity?.isAlive() && this.executor) {
+          battleLogManager.addDebugLog(`额外行动: ${entity.name}`, { level: LogLevel.INFO })
+          await this.executor.executeParticipantAction(battle, entity)
+        }
+        extraCount++
+        // 消费本轮执行中可能新产生的 extra_action 请求
+        const newExtras = this.skillManager.getExecutor().drainExtraActions()
+        extraEntityIds.push(...newExtras)
+      }
+      if (extraEntityIds.length > 0) {
+        battleLogManager.addDebugLog(`额外行动已达上限(${MAX_EXTRA_ACTIONS})，丢弃 ${extraEntityIds.length} 个请求`, { level: LogLevel.WARN })
+      }
+
       battle.roundState = RoundStatus.END
 
       this.battleRecorder.recordTurnEnd(battleId, battle.currentTurn || 1)
 
       battle.currentTurn++
-      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED)
+      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, { allyTeam: [], enemyTeam: [] })
     } catch (error) {
       battleLogManager.addDebugLog('处理回合时出错:', { level: LogLevel.ERROR, error: error as Error })
       console.error('处理回合时出错:', error)
@@ -774,9 +795,10 @@ export class BattleSystem {
   }
 
   public resetBattle(): void {
-    // ponytail: 清除上一场战斗的被动注册和连击状态，防止跨战斗污染
+    // ponytail: 清除上一场战斗的被动注册、连击状态和待处理额外行动，防止跨战斗污染
     this.passiveSkillManager.clearAll()
     this.skillManager.getExecutor().clearAllComboStates()
+    this.skillManager.getExecutor().drainExtraActions()
     this.lifecycleManager.resetBattle()
   }
 

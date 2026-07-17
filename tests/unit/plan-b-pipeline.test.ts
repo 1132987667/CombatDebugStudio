@@ -56,7 +56,7 @@ function makeApplyBuffPassiveSkill(buffId: string): SkillConfig {
     selector: { faction: 'self', strategy: 'first' },
     skillType: 'passive',
     steps: [
-      { type: 'apply_buff' as any, buffId },
+      { type: 'apply_buff' as const, buffId },
     ],
   }
 }

@@ -362,12 +362,18 @@ export class PassiveSkillManager {
       for (const { characterId } of entries) {
         const entity = participants.get(characterId)
         if (!entity?.isAlive()) continue
-        this.triggerPassives(trigger, entity, context)
+        this.triggerPassives(trigger, entity, {
+          ...context,
+          participants: context?.participants ?? participants,
+        })
       }
     } else {
       // ponytail: 索引为空时回退全量扫描（兼容未通过 registerPassive 注册的被动）
       for (const participant of participants.values()) {
-        this.triggerPassives(trigger, participant, context)
+        this.triggerPassives(trigger, participant, {
+          ...context,
+          participants: context?.participants ?? participants,
+        })
       }
     }
   }

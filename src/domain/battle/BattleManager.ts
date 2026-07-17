@@ -36,7 +36,7 @@ export class BattleManager {
    * @param battleReplayManager 战斗回放管理器实例
    */
   /** 已注册的事件处理器引用（用于 off 时精确移除） */
-  private handlers = new Map<BattleEventName, Function>()
+  private handlers = new Map<BattleEventName, (...args: any[]) => void>()
   /** 我方队伍编成（参战管理的真实数据源，独立于战斗运行时） */
   private allyTeam: BattleEntity[] = []
   /** 敌方队伍编成（参战管理的真实数据源，独立于战斗运行时） */
@@ -80,13 +80,13 @@ export class BattleManager {
    * @param event 事件名称
    * @param callback 回调函数
    */
-  on<T extends BattleEventName>(event: T, callback: (data: T) => void) {
+  on<T extends BattleEventName>(event: T, callback: (data: BattleEvents[T]) => void) {
     const existing = this.handlers.get(event)
     if (existing) {
-      eventBus.off(event, existing as any)
+      eventBus.off(event, existing)
     }
-    this.handlers.set(event, callback as Function)
-    eventBus.on(event, callback as any)
+    this.handlers.set(event, callback)
+    eventBus.on(event, callback)
   }
 
   /**
@@ -96,7 +96,7 @@ export class BattleManager {
   off<T extends BattleEventName>(event: T) {
     const handler = this.handlers.get(event)
     if (handler) {
-      eventBus.off(event, handler as any)
+      eventBus.off(event, handler)
       this.handlers.delete(event)
     }
   }
@@ -104,7 +104,7 @@ export class BattleManager {
   /** 清除所有已注册的监听器 */
   clearAllListeners(): void {
     for (const [event, handler] of this.handlers) {
-      eventBus.off(event, handler as any)
+      eventBus.off(event, handler)
     }
     this.handlers.clear()
   }
@@ -711,7 +711,8 @@ export class BattleManager {
     try {
       const battleState = LocalStorage.get('battleState')
       if (battleState) {
-        ;(this.battleSystem as any).restoreBattleState(battleState)
+        // ponytail: BattleSystem 可能未声明 restoreBattleState；用交叉类型声明临时的调用签名
+        ;(this.battleSystem as BattleSystem & { restoreBattleState(state: unknown): void }).restoreBattleState(battleState)
         this.syncBattleState()
         return battleState
       }

@@ -89,7 +89,7 @@ export class JsonLogHandler implements LogHandler {
     }
 
     if (this.includeTimestamp) {
-      ;(result as any).timestamp = new Date().toISOString()
+      result.timestamp = new Date().toISOString()
     }
 
     // 移除 undefined 字段

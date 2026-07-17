@@ -3,7 +3,7 @@ import type { BattleAction, BattleEntity, BattleState } from '@/domain/battle/ty
 import { BattleStatus, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
-import { BattleEventCode, BattleEventCodes, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData } from '@/domain/battle/type/BattleEventType'
+import { BattleEventCode, BattleEventCodes, BattleEventName, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData } from '@/domain/battle/type/BattleEventType'
 import type {
   BattleLogCategory,
   BattleLogEntry,
@@ -14,6 +14,7 @@ import {
   BATTLE_LOG_CATEGORIES,
   battleActionToLogEntry,
   LogType,
+  toLogLevel,
 } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
 import type { Enemy } from '@/shared/types/enemy'
@@ -240,7 +241,7 @@ export const useBattleStore = defineStore('battle', () => {
   }
   // 🔹 3. 事件订阅管理器（防止内存泄漏）
   /** 事件处理器映射表（将事件码与对应的处理函数关联） */
-  const events = new Map<BattleEventCode, Function>()
+  const events = new Map<BattleEventCode, (data: any) => void>()
   events.set(BattleEventCodes.BATTLE_LOG, handleBattleLogEvent)
   events.set(BattleEventCodes.BATTLE_ENDED, handleBattleEndEvent)
   events.set(BattleEventCodes.BATTLE_RESET, handleBattleResetEvent)
@@ -269,7 +270,7 @@ export const useBattleStore = defineStore('battle', () => {
 
   // 注册所有事件处理器到战斗管理器（桥上 eventBus）
   for (const [eventCode, handler] of events) {
-    battleService.value!.on(eventCode, handler as any)
+    battleService.value!.on(eventCode as BattleEventName, handler)
   }
 
   // 🔹 5. 核心 Actions（纯函数，仅更新本地状态或调用 Manager）
@@ -376,7 +377,7 @@ export const useBattleStore = defineStore('battle', () => {
       target,
       segments,
       category,
-      level: level as any,
+      level: level ? toLogLevel(level) : undefined,
     })
   }
 

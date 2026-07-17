@@ -27,6 +27,7 @@ import {
 import {
   SkillConfig,
   Skill,
+  SkillType,
   convertSkillConfigToSkill,
 } from '@/domain/skill/types'
 
@@ -255,13 +256,11 @@ export class BaseBattleAI implements BattleAI {
     // Check if any skill is available and has enough energy
     for (const skillId of this.skills.keys()) {
       if (participant.isSkillAvailable(skillId)) {
-        // Check if energy is sufficient
         const skill = this.skills.get(skillId)
-        if (skill && skill.energyCost !== undefined) {
-          if (participant.currentEnergy >= skill.energyCost) {
-            return true
-          }
-        } else {
+        if (!skill) continue
+        // ponytail: energyCost 为 undefined 时视为 0（无消耗技能视为可用）
+        const cost = skill.energyCost ?? 0
+        if (participant.currentEnergy >= cost) {
           return true
         }
       }
@@ -279,6 +278,8 @@ export class BaseBattleAI implements BattleAI {
     const availableSkills: Skill[] = []
 
     this.skills.forEach((skill) => {
+      // ponytail: 跳过被动技能——被动由系统自动触发，不应出现在 AI 可选列表中
+      if (skill.type === SkillType.PASSIVE) return
       if (
         participant.isSkillAvailable(skill.id) &&
         this.canUseSkill(skill, participant)

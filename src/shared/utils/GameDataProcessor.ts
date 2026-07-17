@@ -86,7 +86,12 @@ export class GameDataProcessor {
   }
 
   static getSkillsData(): SkillConfig[] {
-    return (skillsData as any[]).concat(passiveSkillsData as any[], newSkillsData as any[], guardianPassiveSkillsData as any[]) as SkillConfig[]
+    return [
+      ...skillsData,
+      ...passiveSkillsData,
+      ...newSkillsData,
+      ...guardianPassiveSkillsData,
+    ] as SkillConfig[]
   }
 
   /**
@@ -347,30 +352,33 @@ export class GameDataProcessor {
         ? skill.triggerTimes
         : [BattleTriggerPhase.BATTLE_START]
 
-      const phase = GameDataProcessor.TRIGGER_TIME_MAP[triggerTimes[0]]
-      if (!phase) {
-        console.warn(`未知的被动触发时机: ${triggerTimes[0]} (技能: ${skill.id})`)
-        continue
+      for (const rawTrigger of triggerTimes) {
+        const phase = GameDataProcessor.TRIGGER_TIME_MAP[rawTrigger]
+        if (!phase) {
+          console.warn(`未知的被动触发时机: ${rawTrigger} (技能: ${skill.id})`)
+          continue
+        }
+
+        // ponytail: 非 battle_start 无默认限制（undefined = 不限次数）
+        const maxTriggerCount = skill.maxUses ?? (rawTrigger === 'battle_start' ? 1 : undefined)
+
+        // ponytail: 多 trigger 共享 skillId，通过 id 后缀区分以便独立计数/冷却
+        const config: PassiveSkillConfig = {
+          id: `${entity.id}:${skill.id}:${rawTrigger}`,
+          name: skill.name,
+          description: skill.description || '',
+          trigger: phase,
+          skillId: skill.id,
+          cooldown: skill.cooldown || 0,
+          condition: skill.condition,
+          maxTriggerCount,
+          // 从 parameters 中读取额外触发配置
+          triggerProbability: skill.parameters?.triggerProbability as number | undefined,
+          hpThreshold: skill.parameters?.hpThreshold as number | undefined,
+        }
+
+        passiveSkillManager.registerPassive(entity.id, config)
       }
-
-      // ponytail: battle_start 被动默认触发 1 次
-      const maxTriggerCount = skill.maxUses ?? (triggerTimes[0] === 'battle_start' ? 1 : undefined)
-
-      const config: PassiveSkillConfig = {
-        id: `${entity.id}:${skill.id}`,
-        name: skill.name,
-        description: skill.description || '',
-        trigger: phase,
-        skillId: skill.id,
-        cooldown: skill.cooldown || 0,
-        condition: skill.condition,
-        maxTriggerCount,
-        // 从 parameters 中读取额外触发配置
-        triggerProbability: skill.parameters?.triggerProbability as number | undefined,
-        hpThreshold: skill.parameters?.hpThreshold as number | undefined,
-      }
-
-      passiveSkillManager.registerPassive(entity.id, config)
     }
   }
 

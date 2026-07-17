@@ -7,6 +7,7 @@
  * UI 层通过 eventBus 事件 'debug-pause' 感知暂停并展示浮动面板。
  */
 import { eventBus } from '@/main'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 
 export class DebugGate {
   /** 调试模式开关 */
@@ -18,7 +19,7 @@ export class DebugGate {
 
   setEnabled(v: boolean): void {
     this.enabled = v
-    eventBus.emit('debug-toggle' as any, { enabled: v })
+    eventBus.emit(BattleEventCodes.DEBUG_TOGGLE, { enabled: v })
     if (!v) this.nextStep()
   }
 
@@ -26,7 +27,7 @@ export class DebugGate {
   async waitIfNeeded(phase: string): Promise<void> {
     if (!this.enabled) return
     this.waitingPhase = phase
-    eventBus.emit('debug-pause' as any, { phase })
+    eventBus.emit(BattleEventCodes.DEBUG_PAUSE, { phase })
     return new Promise((resolve) => {
       this._resolve = resolve
     })

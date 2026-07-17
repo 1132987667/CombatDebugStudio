@@ -307,6 +307,13 @@ export interface SkillStep {
   damageCategory?: DamageCategory
 
   /**
+   * 元素类型
+   * 当 damageCategory 为 elemental 时生效，决定使用哪种元素抗性
+   * 可选: JIN(金) MU(木) SHU(水) HUO(火) TU(土)
+   */
+  elementType?: ElementType
+
+  /**
    * 重复次数
    * 用于多段伤害/治疗
    */

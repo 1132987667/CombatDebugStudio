@@ -8,6 +8,7 @@
  */
 
 import type { LogEntry } from './battle-log'
+import { LogType } from './battle-log'
 
 /**
  * 技术调试日志条目
@@ -44,7 +45,7 @@ export function createTraceLogEntry(
 ): TraceLogEntry {
   return {
     index: -1,
-    type: 'debug' as any,
+    type: LogType.DEBUG,
     traceId,
     parentTraceId,
     stepName,
@@ -52,5 +53,5 @@ export function createTraceLogEntry(
     description,
     indentLevel,
     message: description,
-  } as TraceLogEntry
+  }
 }

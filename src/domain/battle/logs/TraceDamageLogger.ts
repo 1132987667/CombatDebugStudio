@@ -38,7 +38,7 @@ export class TraceDamageLogger {
       `DMG_SUM ${source}→${target} |` +
       ` base=${breakdown.baseDamage} final=${breakdown.finalDamage}` +
       ` crit=${breakdown.isCritical} defRed=${defReduction}%${skillInfo}`,
-      LogLevel.DEBUG,
+      { level: LogLevel.DEBUG },
     )
 
     // === TRACE 树状链路 ===
@@ -46,7 +46,7 @@ export class TraceDamageLogger {
     const lines = this.buildTraceLines(traceId, source, target, record, breakdown)
 
     for (const line of lines) {
-      battleLogManager.addDebugLog(line, LogLevel.TRACE)
+      battleLogManager.addDebugLog(line, { level: LogLevel.TRACE })
     }
   }
 

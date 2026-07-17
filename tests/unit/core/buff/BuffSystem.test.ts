@@ -97,12 +97,17 @@ describe('BuffSystem', () => {
       const id3 = buffSystem.addBuff('char_1', 'test_buff', config, 1)
 
       const instances = buffSystem.getBuffInstances('char_1')
-      expect(instances.length).toBe(2)
+      // ponytail: LIMITED 规则是 1 个实例 + 层数叠加，不是多个实例
+      expect(instances.length).toBe(1)
+      expect(instances[0].currentStacks).toBe(2)
       expect(id3).toBe(instances[0].id)
     })
 
     it('should allow INDEPENDENT stacking', () => {
-      const config = createTestBuffConfig({ stackRule: StackRule.INDEPENDENT })
+      const config = createTestBuffConfig({
+        stackRule: StackRule.INDEPENDENT,
+        maxStacks: 10, // ponytail: 覆盖默认的 maxStacks:1
+      })
       buffSystem.addBuff('char_1', 'test_buff', config, 1)
       buffSystem.addBuff('char_1', 'test_buff', config, 1)
       buffSystem.addBuff('char_1', 'test_buff', config, 1)

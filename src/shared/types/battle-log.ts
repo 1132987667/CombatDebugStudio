@@ -18,6 +18,18 @@ export const LogLevel = {
 
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel]
 
+/** 将字符串日志级别/类别转换为数值 LogLevel（用于 LogEntry.level 字段） */
+export function toLogLevel(level: string | undefined): LogLevel {
+  switch (level) {
+    case 'error': case 'ERROR': case '0': return LogLevel.ERROR
+    case 'warn': case 'WARN': case '1': return LogLevel.WARN
+    case 'info': case 'INFO': case '2': return LogLevel.INFO
+    case 'debug': case 'DEBUG': case '3': return LogLevel.DEBUG
+    case 'trace': case 'TRACE': case '4': return LogLevel.TRACE
+    default: return LogLevel.INFO
+  }
+}
+
 export const LogLevelClass: Record<LogLevel, string> = {
   [LogLevel.ERROR]: 'log-error',
   [LogLevel.WARN]: 'log-warn',
@@ -409,7 +421,7 @@ export function createDefaultBattleLogEntry(
     index: -1,
     type: LogType.BATTLE,
     message: result,
-    level: level as any,
+    level: toLogLevel(level),
     category,
     segments: [{ text: result }],
   }
@@ -639,7 +651,7 @@ export function battleActionToLogEntry(
     index: -1,
     type: LogType.BATTLE,
     message: `${sourceName} ${action}${targetName}`,
-    level: level as any,
+    level: toLogLevel(level),
     category,
     segments,
   }

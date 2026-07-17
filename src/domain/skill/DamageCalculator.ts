@@ -1,5 +1,5 @@
 ﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
-import { AttackType, DamageCategory } from '@/domain/skill/types'
+import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type {
   CombatRecord,
@@ -226,6 +226,21 @@ export class DamageCalculator {
       breakdown.postCritDamage = damage
     }
 
+    // 暴击承伤减免（目标方）
+    if (damageResult.isCritical) {
+      const critReduction = getAttributeValue(target, ATTRIBUTE_CODE.critDmgTakenReduction)
+      breakdown.critDmgTakenReduction = critReduction
+      if (critReduction > 0) {
+        const before = damage
+        damage = Math.floor(damage * (1 - critReduction / 100))
+        breakdown.steps.push({
+          stepName: 'critDmgTakenReduction',
+          value: damage,
+          description: `暴击承伤减免(${critReduction}%): ${before} → ${damage}`,
+        })
+      }
+    }
+
     // 防御计算（减法公式：不破防为 0）
     breakdown.defenseValue = getAttributeValue(target, ATTRIBUTE_CODE.defense)
     breakdown.effectiveDefense = breakdown.defenseValue
@@ -288,8 +303,21 @@ export class DamageCalculator {
         description: `真实伤害，跳过防御/抗性减免: → ${damage}`,
       })
     } else if (damageCategory === DamageCategory.ELEMENTAL) {
-      // 元素伤害：查找目标的元素抗性，默认 fireRes
-      const elementalRes = getAttributeValue(target, ATTRIBUTE_CODE.fireRes)
+      // 元素伤害：根据技能的元素类型查找对应抗性，默认 fireRes
+      const ELEMENT_RESISTANCE_MAP: Partial<Record<ElementType, ATTRIBUTE_CODE>> = {
+        JIN: ATTRIBUTE_CODE.metalRes,
+        MU: ATTRIBUTE_CODE.woodRes,
+        SHU: ATTRIBUTE_CODE.waterRes,
+        HUO: ATTRIBUTE_CODE.fireRes,
+        TU: ATTRIBUTE_CODE.earthRes,
+      }
+      const elementType = skillStep.elementType
+      if (!elementType) {
+        console.warn(`ELEMENTAL 类型伤害缺少 elementType，默认使用 HUO(火)`)
+      }
+      const resolvedType = elementType || 'HUO'
+      const resAttr = ELEMENT_RESISTANCE_MAP[resolvedType] || ATTRIBUTE_CODE.fireRes
+      const elementalRes = getAttributeValue(target, resAttr)
       breakdown.elementalResistance = elementalRes
       if (elementalRes > 0) {
         const before = damage
@@ -300,8 +328,32 @@ export class DamageCalculator {
           description: `元素抗性(${elementalRes}%): ${before} → ${damage}`,
         })
       }
+      // 魔法伤害减免（仅 ELEMENTAL 大类生效）
+      breakdown.magicalDmgReduction = getAttributeValue(target, ATTRIBUTE_CODE.magicalDmgReduction)
+      breakdown.elementType = resolvedType
+      if (breakdown.magicalDmgReduction > 0) {
+        const before = damage
+        damage = Math.floor(damage * (1 - breakdown.magicalDmgReduction / 100))
+        breakdown.steps.push({
+          stepName: 'magicalDmgReduction',
+          value: damage,
+          description: `魔法减免(${breakdown.magicalDmgReduction}%): ${before} → ${damage}`,
+        })
+      }
     }
-    // 'physical' 沿用现有防御逻辑，不做额外变化
+    // 'physical' 沿用现有防御逻辑，加物理伤害减免
+    if (damageCategory === DamageCategory.PHYSICAL) {
+      breakdown.physicalDmgReduction = getAttributeValue(target, ATTRIBUTE_CODE.physicalDmgReduction)
+      if (breakdown.physicalDmgReduction > 0) {
+        const before = damage
+        damage = Math.floor(damage * (1 - breakdown.physicalDmgReduction / 100))
+        breakdown.steps.push({
+          stepName: 'physicalDmgReduction',
+          value: damage,
+          description: `物理减免(${breakdown.physicalDmgReduction}%): ${before} → ${damage}`,
+        })
+      }
+    }
 
     // 通用伤害减免
     breakdown.generalDamageReduction = getAttributeValue(
@@ -331,6 +383,67 @@ export class DamageCalculator {
         value: damage,
         description: `受伤增加(${breakdown.damageTakenIncrease}%): ${before} → ${damage}`,
       })
+    }
+
+    // 来源方伤害提升（damageBoost）
+    const dmgBoost = getAttributeValue(source, ATTRIBUTE_CODE.damageBoost)
+    breakdown.damageBoost = dmgBoost
+    if (dmgBoost > 0) {
+      const before = damage
+      damage = Math.floor(damage * (1 + dmgBoost / 100))
+      breakdown.steps.push({
+        stepName: 'damageBoost',
+        value: damage,
+        description: `伤害提升(${dmgBoost}%): ${before} → ${damage}`,
+      })
+    }
+
+    // 火系技能伤害加成（来源方）— 仅火元素技能
+    const elementType = skillStep.elementType
+    if (elementType === 'HUO') {
+      const fireBonus = getAttributeValue(source, ATTRIBUTE_CODE.fireSkillDmgBonus)
+      breakdown.fireSkillDmgBonus = fireBonus
+      if (fireBonus > 0) {
+        const before = damage
+        damage = Math.floor(damage * (1 + fireBonus / 100))
+        breakdown.steps.push({
+          stepName: 'fireSkillDmgBonus',
+          value: damage,
+          description: `火系技能加成(${fireBonus}%): ${before} → ${damage}`,
+        })
+      }
+    }
+
+    // 物理技能伤害加成（来源方）— 物理攻击类型或 PHYSICAL 大类
+    const skillAtkType = skillStep.attackType || AttackType.SKILL
+    if (skillAtkType === AttackType.NORMAL || skillStep.damageCategory === DamageCategory.PHYSICAL) {
+      const physBonus = getAttributeValue(source, ATTRIBUTE_CODE.physicalSkillDmgBonus)
+      breakdown.physicalSkillDmgBonus = physBonus
+      if (physBonus > 0) {
+        const before = damage
+        damage = Math.floor(damage * (1 + physBonus / 100))
+        breakdown.steps.push({
+          stepName: 'physicalSkillDmgBonus',
+          value: damage,
+          description: `物理技能加成(${physBonus}%): ${before} → ${damage}`,
+        })
+      }
+    }
+
+    // 对低血量目标伤害加成（来源方）— 目标血量 < 30%
+    const targetHpPercent = target.maxHealth > 0 ? (target.currentHealth / target.maxHealth) * 100 : 100
+    if (targetHpPercent < 30) {
+      const lowHpBonus = getAttributeValue(source, ATTRIBUTE_CODE.damageToLowHp)
+      breakdown.damageToLowHp = lowHpBonus
+      if (lowHpBonus > 0) {
+        const before = damage
+        damage = Math.floor(damage * (1 + lowHpBonus / 100))
+        breakdown.steps.push({
+          stepName: 'damageToLowHp',
+          value: damage,
+          description: `低血量加成(${lowHpBonus}%): ${before} → ${damage}`,
+        })
+      }
     }
 
     // targetModifiers 处理 — 目标属性修正

@@ -31,7 +31,7 @@ export class HealCalculator {
     target: BattleEntity,
     record?: CombatRecord,
     buffSystem?: BuffSystem,
-  ): number {
+  ): { heal: number; overflow: number } {
     this.calculationLogs = []
     let heal = 0
 
@@ -63,8 +63,14 @@ export class HealCalculator {
     const maxHp = target.getAttribute(ATTRIBUTE_CODE.maxHealth)
     const currentHp = target.getAttribute(ATTRIBUTE_CODE.currentHealth)
     const healCap = Math.max(0, maxHp - currentHp)
+    let overflow = 0
     if (heal > healCap) {
-      this.logCalculation('heal_cap', healCap, `治疗上限限制: ${heal} �?${healCap}`)
+      // ponytail: 溢出量在 debuff 之前计算——"损失"由两个独立机制构成：
+      // ① 上限溢出（HP满了装不下）= overflow，用于盾生成
+      // ② 减益缩减（debuff降低效果）= 在下方计算，反映在最终 heal 值
+      // 两者互不抵消，各自反映一个不同的游戏机制
+      overflow = heal - healCap
+      this.logCalculation('heal_cap', healCap, `治疗上限限制: ${heal} → ${healCap}，溢出: ${overflow}`)
       heal = healCap
     }
 
@@ -86,7 +92,7 @@ export class HealCalculator {
       })
     }
 
-    return heal
+    return { heal, overflow }
   }
 
   /**

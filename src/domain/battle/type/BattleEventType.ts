@@ -4,6 +4,7 @@ import type {
   DamageCategory,
 } from '@/domain/skill/types';
 import type { BattleLogEntry } from '@/shared/types/battle-log';
+import type { BattleSummary } from '@/shared/types/battle-summary';
 
 
 
@@ -98,7 +99,14 @@ export interface BattleEvents {
   [BattleEventCodes.CURRENT_ACTOR_CHANGED]: { actorId: string | null };
   [BattleEventCodes.DEBUG_PAUSE]: { phase: string };
   [BattleEventCodes.DEBUG_PAUSE_RESUME]: void;
+  [BattleEventCodes.DEBUG_TOGGLE]: { enabled: boolean };
   [BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED]: { characterId: string };
+  // 自定义事件（不在 BattleEventCodes 枚举中，但由 mitt 全局发送）
+  'teamDataChanged': void;
+  'battle-summary': BattleSummary;
+  // mitt 约束：需要字符串和符号索引签名
+  [key: string]: unknown;
+  [key: symbol]: unknown;
 }
 
 /** 战斗事件名称类型 */
@@ -138,6 +146,8 @@ export const BattleEventCodes = {
   DEBUG_PAUSE: 'debug-pause',
   /** 调试模式继续 */
   DEBUG_PAUSE_RESUME: 'debug-pause-resume',
+  /** 调试模式开关切换 */
+  DEBUG_TOGGLE: 'debug-toggle',
   /** 参与者属性变更事件（Buff 触发 recalculateAll 后发射） */
   PARTICIPANT_ATTRIBUTE_CHANGED: 'participant-attribute-changed',
 } as const

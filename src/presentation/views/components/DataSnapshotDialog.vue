@@ -33,7 +33,7 @@ import Dialog from '@/presentation/components/Dialog.vue'
 import { container } from '@/infrastructure/di/Container'
 import { useDebugStore } from '@/presentation/stores'
 import type { BattleService } from '@/application/facade/BattleFacade'
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, AttributeMetaMap } from '@/domain/attribute/types'
 
 defineProps<{
   modelValue: boolean
@@ -58,12 +58,9 @@ const exportState = async () => {
     const char = currentCharacter.value
     const currentTurn = battleService.getCurrentTurn()
 
-    const attributeCodes = [
-      'currentHealth', 'maxHealth', 'energy', 'maxEnergy',
-      'attack', 'minAttack', 'maxAttack', 'defense', 'speed',
-      'critRate', 'critDamage', 'damageReduction',
-      'healthBonus', 'attackBonus', 'defenseBonus', 'speedBonus',
-    ]
+    const attributeCodes = Object.entries(AttributeMetaMap)
+      .filter(([, meta]) => !meta.isRuntimeState)
+      .map(([code]) => code)
 
     const attributesDetail: Record<string, any> = {}
     for (const attrCode of attributeCodes) {

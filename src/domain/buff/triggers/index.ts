@@ -10,7 +10,14 @@
  *   healTriggers.ts / damageTriggers.ts / debuffTriggers.ts / summonTrigger.ts
  */
 import type { TriggerExecutionContext } from '@/domain/buff/BuffSystem'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import { ControlType } from '@/domain/buff/types'
+
+/** 从上下文中获取源参与者的队伍 */
+function getSourceTeam(ctx: TriggerExecutionContext): string | undefined {
+  if (!ctx.sourceId || !ctx.battleData?.participants) return undefined
+  return ctx.battleData.participants.get(ctx.sourceId)?.team
+}
 
 // ===================== 治疗类 =====================
 
@@ -27,13 +34,15 @@ export function healPercentMaxHp(ctx: TriggerExecutionContext): void {
 /** heal_lowest_hp_ally — 治疗血量最低的队友 */
 export function healLowestHpAlly(ctx: TriggerExecutionContext): void {
   const percent = (ctx.params?.percentMaxHp as number) ?? 0.05
-  const battleData = (ctx as any).battleData
+  const battleData = ctx.battleData
   if (!battleData?.participants) return
+  const sourceTeam = getSourceTeam(ctx)
+  if (!sourceTeam) return
   const allies = Array.from(battleData.participants.values()).filter(
-    (p: any) => p.team === (ctx as any).sourceTeam && p.isAlive?.() && p.id !== ctx.targetId,
+    (p: BattleEntity) => p.team === sourceTeam && p.isAlive?.() && p.id !== ctx.targetId,
   )
   if (allies.length === 0) return
-  const lowest: any = allies.reduce((a: any, b: any) =>
+  const lowest = allies.reduce((a: BattleEntity, b: BattleEntity) =>
     (a.getAttribute?.('currentHealth') ?? 0) < (b.getAttribute?.('currentHealth') ?? 0) ? a : b,
   )
   ctx.buffSystem?.requestHeal(lowest.id, 0)
@@ -43,15 +52,16 @@ export function healLowestHpAlly(ctx: TriggerExecutionContext): void {
 /** heal_all_allies — 治疗所有队友 */
 export function healAllAllies(ctx: TriggerExecutionContext): void {
   const percent = (ctx.params?.percentMaxHp as number) ?? 0.03
-  const battleData = (ctx as any).battleData
+  const battleData = ctx.battleData
   if (!battleData?.participants) return
+  const sourceTeam = getSourceTeam(ctx)
+  if (!sourceTeam) return
   const allies = Array.from(battleData.participants.values()).filter(
-    (p: any) => p.team === (ctx as any).sourceTeam && p.isAlive?.(),
+    (p: BattleEntity) => p.team === sourceTeam && p.isAlive?.(),
   )
   for (const ally of allies) {
-    const a = ally as any
-    ctx.buffSystem?.requestHeal(a.id, 0)
-    ctx.buffSystem?.requestDamage(a.id, 0, -percent)
+    ctx.buffSystem?.requestHeal(ally.id, 0)
+    ctx.buffSystem?.requestDamage(ally.id, 0, -percent)
   }
 }
 
@@ -103,17 +113,18 @@ export function blockDamagePercent(ctx: TriggerExecutionContext): void {
 /** share_damage — 将伤害分摊给所有队友 */
 export function shareDamage(ctx: TriggerExecutionContext): void {
   const damageTaken = ((ctx.extra?.damage as number) ?? 0)
-  const battleData = (ctx as any).battleData
+  const battleData = ctx.battleData
   if (damageTaken <= 0 || !battleData?.participants) return
+  const sourceTeam = getSourceTeam(ctx)
+  if (!sourceTeam) return
   const allies = Array.from(battleData.participants.values()).filter(
-    (p: any) => p.team === (ctx as any).sourceTeam && p.isAlive?.(),
+    (p: BattleEntity) => p.team === sourceTeam && p.isAlive?.(),
   )
   if (allies.length <= 1) return
   const sharePerAlly = Math.round(damageTaken / allies.length)
   for (const ally of allies) {
-    const a = ally as any
-    if (a.id !== ctx.targetId) {
-      ctx.buffSystem?.requestDamage(a.id, sharePerAlly)
+    if (ally.id !== ctx.targetId) {
+      ctx.buffSystem?.requestDamage(ally.id, sharePerAlly)
     }
   }
   ctx.buffSystem?.requestHeal(ctx.targetId ?? '', damageTaken - sharePerAlly)

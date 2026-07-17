@@ -25,10 +25,11 @@ export class BattleStateManager {
    * @param battleSystem 战斗系统实例
    */
   constructor(private battleSystem: BattleSystem) {
-    this.teamDataChangedHandler = () => {}
+    const handler = () => {}
+    this.teamDataChangedHandler = handler
 
     // 监听队伍数据变化事件
-    eventBus.on('teamDataChanged', this.teamDataChangedHandler)
+    eventBus.on('teamDataChanged', handler)
   }
 
   /**

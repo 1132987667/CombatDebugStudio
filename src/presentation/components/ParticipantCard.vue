@@ -48,6 +48,14 @@
         </div>
       </div>
 
+      <!-- 情境属性标签（选中目标/准备技能时动态显示） -->
+      <div v-if="situationalAttrs.length > 0" class="situational-tags">
+        <span v-for="tag in situationalAttrs" :key="tag.code" class="situational-tag"
+          :class="'tag-' + tag.group">
+          {{ tag.label }} +{{ tag.value }}%
+        </span>
+      </div>
+
       <!-- Buff 列表：纯文本展示 -->
       <BuffTextBar
         :control-labels="buffDisplay.controlLabels"
@@ -131,6 +139,7 @@ import { useBattleParticipant } from '@/presentation/composables/useBattlePartic
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
+import { useSituationalAttributes } from '@/presentation/composables/useSituationalAttributes'
 import type { BuffRawItem, MergedAttributeLine, BuffTextItem } from '@/shared/types/buff-display'
 import { container } from '@/infrastructure/di/Container'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -362,7 +371,7 @@ const baseAttributes = computed(() => {
   const s = stats.value
   const map: Record<string, number> = {}
   for (const [code, cn] of Object.entries(ATTRIBUTE_CODE_TO_CN)) {
-    const attr = (s as any)[code]
+    const attr = (s as unknown as Record<string, { base: number } | undefined>)[code]
     if (attr && typeof attr.base === 'number') {
       map[cn] = attr.base
     }
@@ -372,6 +381,13 @@ const baseAttributes = computed(() => {
 
 // ponytail: 参与者 ID 在生命周期内不变，直接读取
 const buffDisplay = useBuffDisplay(buffListItems, props.participant.id, 5, baseAttributes)
+
+// 情境属性 — ponytail: target/skill 从父组件传入（当前为 null 占位）
+const situationalAttrs = useSituationalAttributes(
+  computed(() => props.participant),
+  ref(null),
+  ref(null),
+)
 
 
 // === 属性/Buff 悬停追溯 ===
@@ -468,6 +484,36 @@ defineExpose({
 </script>
 
 <style scoped>
+/* 情境属性标签行 */
+.situational-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 2px 8px;
+  margin: 2px 0;
+}
+.situational-tag {
+  font-size: 0.75em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.situational-tag.tag-offense {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+.situational-tag.tag-elemental {
+  background: rgba(34, 211, 238, 0.15);
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.25);
+}
+.situational-tag.tag-control {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
 /* 浮动数字容器 */
 .floating-numbers {
   position: absolute;

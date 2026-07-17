@@ -64,7 +64,7 @@ export class BattleLifecycleManager {
     this.battleRecorder.saveRecording(battle.battleId)
 
     battle.battleState = BattleStatus.ENDED
-    eventBus.emit(BattleEventCodes.BATTLE_ENDED, { battleId: battle.battleId, winner })
+    eventBus.emit(BattleEventCodes.BATTLE_ENDED, { winner })
 
     // ponytail: 调试模式 — 战斗结束事件已派发后暂停
     await debugGate.waitIfNeeded('BATTLE_END')

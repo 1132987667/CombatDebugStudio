@@ -278,15 +278,17 @@ export class BattleRuleManager {
   ): T {
     const result = { ...target }
 
-    for (const key in source) {
+    for (const k in source) {
+      const key = k as keyof T
       if (
         source[key] !== null &&
         typeof source[key] === 'object' &&
         !Array.isArray(source[key])
       ) {
-        result[key] = this.deepMerge(result[key] || {} as Record<string, any>, source[key]) as any
+        // ponytail: 递归合并对象类型的字段
+        result[key] = this.deepMerge(result[key] || ({} as Record<string, any>), source[key]) as T[keyof T]
       } else {
-        result[key] = source[key] as any
+        result[key] = source[key] as T[typeof key]
       }
     }
 

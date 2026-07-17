@@ -146,7 +146,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     const configParams = context.config.parameters || {}
     for (const key of Object.keys(defaults)) {
       if (configParams[key] !== undefined) {
-        (result as any)[key] = configParams[key]
+        ;(result as Record<string, unknown>)[key] = configParams[key]
       }
     }
     return result

@@ -95,6 +95,11 @@ export class BuffContext {
     return undefined
   }
 
+  /** 获取 BuffSystem 实例，供 Buff 脚本注册护盾值等运行时状态 */
+  public getBuffSystem(): BuffSystem | undefined {
+    return this._buffSystem ?? undefined
+  }
+
   public getAttributeValue(attribute: string): number {
     const character = this.getCharacter()
     return character ? character.getAttribute(attribute as ATTRIBUTE_CODE) : 0

@@ -294,9 +294,9 @@ export class BattleExecutor {
             this.resolveStepTargets(battle, mainTarget, stepTargetType),
           damageToken,
         )
-        if (!skillAction) {
+        if (!skillAction.success) {
           battleLogManager.addDebugLog(
-            `技能执行返回空: ${skill.id}，跳过目标 ${target.id}`,
+            `技能执行失败: ${skill.id}，跳过目标 ${target.id} — ${skillAction.effects[0]?.description || '未知原因'}`,
           )
           continue
         }
@@ -949,14 +949,14 @@ export class BattleExecutor {
           undefined,
           damageToken,
         )
-        if (!skillAction) {
+        if (!skillAction.success) {
           // ponytail: early-return 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
           this.buffSystem.setBuffAppliedCallbackEnabled(true)
-          battleLogManager.addDebugLog(`技能执行返回空: ${action.skillId}`)
-          console.error(`技能执行返回空: ${action.skillId}`)
+          battleLogManager.addDebugLog(`技能执行失败: ${action.skillId} — ${skillAction.effects[0]?.description || '未知原因'}`)
           action.damage = 0
           action.heal = 0
-          action.effects = []
+          action.effects = skillAction.effects
+          action.success = false
         } else {
           action.damage = skillAction.damage
           action.heal = skillAction.heal

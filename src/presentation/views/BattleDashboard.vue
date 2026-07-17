@@ -5,6 +5,13 @@
         <span>属性监控</span>
         <span class="selected-info">(当前选中: {{ selectedCharName }})</span>
       </div>
+      <!-- 显示层级过滤器（调试面板） -->
+      <div class="tier-filters">
+        <label class="tier-filter" v-for="tier in (['core','advanced','situational','hidden'] as const)" :key="tier">
+          <input type="checkbox" v-model="tierFilters[tier]" />
+          <span>{{ { core: '核心', advanced: '进阶', situational: '情境', hidden: '隐藏' }[tier] }}</span>
+        </label>
+      </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">基础属性</div>
         <div class="monitor-grid">
@@ -86,6 +93,27 @@
             <span class="monitor-label">速度加成:</span>
             <span class="monitor-value bonus">{{
               formatBonusValue(attrVal(ATTRIBUTE_CODE.speedBonus)) }}</span>
+          </div>
+        </div>
+      </div>
+      <!-- 进阶属性（折叠） -->
+      <div class="monitor-group" v-if="tierFilters.advanced">
+        <div class="monitor-subtitle" @click="advancedExpanded = !advancedExpanded" style="cursor:pointer">
+          进阶属性 {{ advancedExpanded ? '▼' : '▶' }}
+        </div>
+        <div v-show="advancedExpanded">
+          <div v-for="(attrs, group) in advancedAttributes" :key="group">
+            <div class="monitor-subtitle" style="font-size:0.85em;opacity:0.7;margin-top:8px">
+              {{ groupLabels[group] || group }}
+            </div>
+            <div class="monitor-grid">
+              <div class="monitor-item" v-for="a in attrs" :key="a.code"
+                @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)"
+                @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+                <span class="monitor-label">{{ a.meta.displayName }}:</span>
+                <span class="monitor-value">{{ attrVal(a.code as ATTRIBUTE_CODE) }}{{ a.meta.isPercentage ? '%' : '' }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -206,7 +234,7 @@
 
 <script setup lang="ts">
 import type { BattleService } from '@/application/facade/BattleFacade';
-import { ATTRIBUTE_CODE, AttributeValueType, getAttributeDefaultValue, getAttributeMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
+import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttributeDefaultValue, getAttributeMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
 import { BattleEventType, BattleEntity } from '@/domain/battle/type/types';
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { SkillConfig } from "@/domain/skill/types";
@@ -259,6 +287,32 @@ const displayEnergy = computed(() => {
 // 获取角色属性值的便捷方法，默认值从 AttributeMetaMap 自动推导
 const attrVal = (code: ATTRIBUTE_CODE): number =>
   currentCharacter.value?.getAttributeValue(code)?.value ?? getAttributeDefaultValue(code)
+
+// 进阶属性：从 AttributeMetaMap 过滤 displayTier==='advanced'，按 group 分组
+const groupLabels: Record<string, string> = {
+  defense: '🛡️ 防御',
+  offense: '⚔️ 攻击',
+  elemental: '🔥 元素',
+  control: '🌀 控制',
+  utility: '✨ 辅助',
+}
+const advancedExpanded = ref(false)
+const tierFilters = ref({
+  core: true,
+  advanced: true,
+  situational: false,
+  hidden: false,
+})
+const advancedAttributes = computed(() => {
+  const groups: Record<string, Array<{ code: string; meta: { displayName: string; isPercentage: boolean } }>> = {}
+  for (const [code, meta] of Object.entries(AttributeMetaMap)) {
+    if (meta.displayTier !== 'advanced') continue
+    const grp = meta.group || 'utility'
+    if (!groups[grp]) groups[grp] = []
+    groups[grp].push({ code, meta: { displayName: meta.displayName, isPercentage: !!meta.isPercentage } })
+  }
+  return groups
+})
 
 const attackRange = computed(() => {
   const char = currentCharacter.value;
@@ -600,6 +654,27 @@ const handleBattleEndReplay = (winner: string) => {
 
 <style scoped>
 @use "@/presentation/styles/main.scss";
+
+/* 显示层级过滤器 */
+.tier-filters {
+  display: flex;
+  gap: 12px;
+  padding: 4px 12px 8px;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+  margin-bottom: 4px;
+}
+.tier-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8em;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  user-select: none;
+}
+.tier-filter input[type="checkbox"] {
+  accent-color: #22d3ee;
+}
 
 .skill-item {
   color: rgba(255, 255, 255, 0.85);

@@ -556,15 +556,15 @@ export class BattleRecorder {
 
     recording.events.push(event)
 
-    recording.logs.push({
-      eventId: event.eventId,
-      type: LogType.BATTLE,
-      timestamp: event.timestamp,
-      turn,
-      roundNumber,
-      message: this.generateLogMessage(type, data),
-      details: data,
-    } as any)
+    recording.logs.push(Object.assign(
+      {
+        index: recording.logs.length,
+        type: LogType.BATTLE,
+        turn,
+        message: this.generateLogMessage(type, data),
+      } satisfies BattleLogEntry,
+      { eventId: event.eventId, timestamp: event.timestamp, roundNumber, details: data },
+    ))
 
     if (recording.events.length > MAX_EVENT_LOG) {
       recording.events = recording.events.slice(-MAX_EVENT_LOG)

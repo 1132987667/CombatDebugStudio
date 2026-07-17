@@ -22,6 +22,10 @@ export interface BuffQuery {
   isCharacterControlled(characterId: string): boolean
   /** 角色是否能使用技能（未被沉默/眩晕等阻止技能释放） */
   canUseSkill(characterId: string): boolean
+  /** 获取角色当前护盾值 */
+  getShieldValue(characterId: string): number
+  /** 设置角色当前护盾值 */
+  setShieldValue(characterId: string, value: number): void
 }
 
 // [

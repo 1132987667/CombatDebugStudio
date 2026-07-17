@@ -34,7 +34,7 @@ function makeAuraPassiveSkill(): SkillConfig {
     selector: { faction: 'self', strategy: 'first' },
     skillType: 'passive',
     triggerTimes: ['battle_start'],
-    steps: [{ type: 'apply_buff' as any, buffId: 'buff_leader_aura' }],
+    steps: [{ type: 'apply_buff' as const, buffId: 'buff_leader_aura' }],
   }
 }
 
@@ -140,9 +140,9 @@ describe('方案 B 战斗验证：光环分发', () => {
                 // 去重 + 添加
                 attrData.modifiers = attrData.modifiers.filter(m => m.sourceKey !== sourceKey)
                 attrData.modifiers.push({
-                  sourceKey, sourceType: 'SKILL' as any,
+                  sourceKey, sourceType: 'skill' as const,
                   attribute: attrCode, value: typeof mod.value === 'number' ? mod.value : 0,
-                  type: 'PERCENTAGE' as any,
+                  type: 'PERCENTAGE' as const,
                   description: `aura:${buffConfig.id}`,
                 })
                 attrData.cachedVersion = -1

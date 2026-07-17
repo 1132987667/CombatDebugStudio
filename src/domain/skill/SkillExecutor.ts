@@ -33,6 +33,21 @@ export class SkillExecutor {
   /** ponytail: 连击追踪状态（key = 攻击者 entity ID） */
   private comboStates = new Map<string, ComboState>()
 
+  /** ponytail: 待处理的额外行动请求 */
+  private pendingExtraActions: string[] = []
+
+  /** 请求额外行动（由 extra_action 步骤调用） */
+  requestExtraAction(entityId: string): void {
+    this.pendingExtraActions.push(entityId)
+  }
+
+  /** 消费并清空所有待处理额外行动 */
+  drainExtraActions(): string[] {
+    const actions = [...this.pendingExtraActions]
+    this.pendingExtraActions = []
+    return actions
+  }
+
   /** 清理指定角色的连击追踪状态 */
   public cleanupComboState(entityId: string): void {
     this.comboStates.delete(entityId)
@@ -161,13 +176,20 @@ export class SkillExecutor {
   ): void {
     const healTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
-    const heal = this.healCalculator.calculateHeal(
+    const { heal, overflow } = this.healCalculator.calculateHeal(
       skillStep,
       source,
       healTarget,
       record,
       this.buffSystem,
     )
+    // ponytail: 记录治疗溢出量（按目标ID），供后续 overflow_shield 步骤使用
+    if (overflow > 0) {
+      action.extra = action.extra || {}
+      const overflowMap = (action.extra.healOverflow as Record<string, number> | undefined) || {}
+      overflowMap[healTarget.id] = (overflowMap[healTarget.id] || 0) + overflow
+      action.extra.healOverflow = overflowMap
+    }
     if (token) {
       // 延迟模式 — 只记录治疗数值
       token.record(healTarget, 0, heal)
@@ -313,6 +335,8 @@ export class SkillExecutor {
           [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
           [ATTRIBUTE_CODE.minAttack]: ATTRIBUTE_CODE.attackBonus,
           [ATTRIBUTE_CODE.maxAttack]: ATTRIBUTE_CODE.attackBonus,
+          [ATTRIBUTE_CODE.defense]: ATTRIBUTE_CODE.defenseBonus,
+          [ATTRIBUTE_CODE.speed]: ATTRIBUTE_CODE.speedBonus,
         }
         const bonusAttr = BONUS_MAP[attrCode]
         if (bonusAttr) {
@@ -323,6 +347,36 @@ export class SkillExecutor {
             bonusData.cachedVersion = -1
           }
         }
+
+        // ponytail: 反向传播 — 加成属性（attackBonus/defenseBonus 等）的 PERCENTAGE
+        // 修饰符同步回主属性，与 GameDataProcessor.enemyToParticipant 初始化逻辑一致
+        const REVERSE_BONUS_MAP: Partial<Record<string, string>> = {
+          [ATTRIBUTE_CODE.healthBonus]: ATTRIBUTE_CODE.maxHealth,
+          [ATTRIBUTE_CODE.attackBonus]: ATTRIBUTE_CODE.attack,
+          [ATTRIBUTE_CODE.defenseBonus]: ATTRIBUTE_CODE.defense,
+          [ATTRIBUTE_CODE.speedBonus]: ATTRIBUTE_CODE.speed,
+        }
+        const mainAttr = REVERSE_BONUS_MAP[attrCode]
+        if (mainAttr) {
+          const mainData = modTarget.getAttrValue(mainAttr as ATTRIBUTE_CODE)
+          if (mainData) {
+            mainData.modifiers = mainData.modifiers.filter(m => m.sourceKey !== sourceKey)
+            mainData.modifiers.push({ ...newMod, attribute: mainAttr as ATTRIBUTE_CODE })
+            mainData.cachedVersion = -1
+          }
+          // attackBonus → attack → 再拆分到 minAttack/maxAttack
+          if (mainAttr === ATTRIBUTE_CODE.attack) {
+            for (const splitAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
+              const splitData = modTarget.getAttrValue(splitAttr)
+              if (splitData) {
+                splitData.modifiers = splitData.modifiers.filter(m => m.sourceKey !== sourceKey)
+                splitData.modifiers.push({ ...newMod, attribute: splitAttr })
+                splitData.cachedVersion = -1
+              }
+            }
+          }
+        }
+
         if (attrCode === ATTRIBUTE_CODE.attack) {
           for (const splitAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
             const splitData = modTarget.getAttrValue(splitAttr)
@@ -450,19 +504,52 @@ export class SkillExecutor {
     } else if (customType === 'burn_detonate' || customType === 'burn_detonate_full') {
       this.handleBurnDetonate(action, source, target, customType === 'burn_detonate_full', token)
     } else if (customType === 'extra_action') {
-      // ponytail: 时之沙 — 15% 概率额外行动，需要 BattleSystem 插入回合队列支持
-      battleLogManager.addDebugLog('时之沙: 15%额外行动 — 需要 BattleSystem 回合队列插入', { level: LogLevel.INFO })
-      action.effects.push({
-        type: EffectType.STATUS,
-        targetId: source.id,
-        description: '时之沙触发！(额外行动待实现)',
-      })
+      // ponytail: 时之沙 — 请求额外行动，由 BattleSystem 在 TURN_END 后消费
+      if (source.isAlive()) {
+        this.requestExtraAction(source.id)
+        battleLogManager.addDebugLog(`时之沙: ${source.name} 获得额外行动`, { level: LogLevel.INFO })
+        action.effects.push({
+          type: EffectType.STATUS,
+          targetId: source.id,
+          description: `时之沙触发！${source.name} 获得额外行动`,
+        })
+      }
     } else if (customType === 'steal_item') {
       // ponytail: 盗窃本能 — PvE 掉落系统，非战斗逻辑
       battleLogManager.addDebugLog('盗窃本能: PvE 掉落系统专用', { level: LogLevel.INFO })
     } else if (customType === 'overflow_shield') {
-      // ponytail: 回春护盾溢出 — 需要治疗完成后检查溢出量并生成护盾
-      battleLogManager.addDebugLog('回春护盾溢出转盾: 需要治疗回调机制', { level: LogLevel.INFO })
+      // ponytail: 回春护盾溢出转盾 — 从 action.extra.healOverflow 按目标ID查找溢出量
+      const overflowMap = (action.extra?.healOverflow as Record<string, number> | undefined) || {}
+      const overflow = overflowMap[target.id] || 0
+      if (overflow > 0) {
+        const config: BuffConfig = {
+          id: 'buff_shield',
+          name: '护盾',
+          description: '治疗溢出转化的护盾',
+          duration: skillStep.duration ?? 2,
+          maxStacks: 1,
+          cooldown: 0,
+          stackRule: StackRule.REFRESH,
+          controlType: ControlType.NONE,
+          controlPriority: 0,
+          isDebuff: false,
+          parameters: { shieldValue: overflow },
+        }
+        this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
+        battleLogManager.addDebugLog(`回春护盾: 溢出 ${overflow} 点治疗转化为护盾`, { level: LogLevel.INFO })
+        action.effects.push({
+          type: EffectType.STATUS,
+          targetId: target.id,
+          buffId: 'buff_shield',
+          description: `溢出治疗转护盾: ${overflow}`,
+        })
+      } else {
+        action.effects.push({
+          type: EffectType.STATUS,
+          targetId: target.id,
+          description: '无治疗溢出，未生成护盾',
+        })
+      }
     } else {
       battleLogManager.addDebugLog(`自定义步骤未实现: ${desc}`, { level: LogLevel.WARN })
       action.effects.push({
@@ -610,7 +697,7 @@ export class SkillExecutor {
   ): void {
     const buffTarget = skillStep.targetConfig?.faction === 'self' ? source : target
     // 从 calculation 计算护盾值
-    const shieldValue = this.healCalculator.calculateHeal(skillStep, source, buffTarget)
+    const { heal: shieldValue } = this.healCalculator.calculateHeal(skillStep, source, buffTarget)
 
     const config: BuffConfig = {
       id: 'buff_shield',

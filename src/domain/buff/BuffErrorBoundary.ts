@@ -15,6 +15,17 @@ export interface BuffError {
   scriptPath?: string
 }
 
+class BuffErrorEx extends Error {
+  buffId?: string
+  scriptPath?: string
+  constructor(message: string, options?: { buffId?: string; scriptPath?: string }) {
+    super(message)
+    this.name = 'BuffError'
+    this.buffId = options?.buffId
+    this.scriptPath = options?.scriptPath
+  }
+}
+
 export class BuffErrorBoundary {
   public static wrap<T>(
     fn: () => T,
@@ -96,24 +107,15 @@ export class BuffErrorBoundary {
     return null
   }
 
-  public static createConfigError(message: string, options?: { buffId?: string; scriptPath?: string }): Error {
-    const error = new Error(`[CONFIG_ERROR] ${message}`)
-    ;(error as any).buffId = options?.buffId
-    ;(error as any).scriptPath = options?.scriptPath
-    return error
+  public static createConfigError(message: string, options?: { buffId?: string; scriptPath?: string }): BuffErrorEx {
+    return new BuffErrorEx(`[CONFIG_ERROR] ${message}`, options)
   }
 
-  public static createRuntimeError(message: string, options?: { buffId?: string; scriptPath?: string }): Error {
-    const error = new Error(`[RUNTIME_ERROR] ${message}`)
-    ;(error as any).buffId = options?.buffId
-    ;(error as any).scriptPath = options?.scriptPath
-    return error
+  public static createRuntimeError(message: string, options?: { buffId?: string; scriptPath?: string }): BuffErrorEx {
+    return new BuffErrorEx(`[RUNTIME_ERROR] ${message}`, options)
   }
 
-  public static createDependencyError(message: string, options?: { buffId?: string; scriptPath?: string }): Error {
-    const error = new Error(`[DEPENDENCY_ERROR] ${message}`)
-    ;(error as any).buffId = options?.buffId
-    ;(error as any).scriptPath = options?.scriptPath
-    return error
+  public static createDependencyError(message: string, options?: { buffId?: string; scriptPath?: string }): BuffErrorEx {
+    return new BuffErrorEx(`[DEPENDENCY_ERROR] ${message}`, options)
   }
 }

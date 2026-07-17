@@ -174,7 +174,7 @@ export function validateTargetAgainstSelector(
     if (selector.faction === TargetFaction.ALL) return true
     if (selector.faction === TargetFaction.ALLY) return p.team === source.team
     return p.team === (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
-  })
+  }).sort((a, b) => a.seatIndex - b.seatIndex)
 
   switch (strategy) {
     case TargetStrategy.FRONT:

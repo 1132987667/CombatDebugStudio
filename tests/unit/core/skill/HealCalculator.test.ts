@@ -32,7 +32,7 @@ describe('HealCalculator', () => {
       const target = createMockEntity({ currentHealth: 500, maxHealth: 1000 })
       const step = createHealStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 0.5 }] } })
 
-      const heal = calculator.calculateHeal(step, source, target)
+      const { heal } = calculator.calculateHeal(step, source, target)
 
       expect(heal).toBeGreaterThan(0)
       expect(heal).toBe(50)
@@ -43,7 +43,7 @@ describe('HealCalculator', () => {
       const target = createMockEntity({ currentHealth: 990, maxHealth: 1000 })
       const step = createHealStep({ calculation: { baseValue: 200, extraValues: [] } })
 
-      const heal = calculator.calculateHeal(step, source, target)
+      const { heal } = calculator.calculateHeal(step, source, target)
 
       expect(heal).toBe(10)
     })
@@ -57,7 +57,7 @@ describe('HealCalculator', () => {
         calculation: { baseValue: 200, extraValues: [] },
       })
 
-      const heal = calculator.calculateHeal(step, source, target)
+      const { heal } = calculator.calculateHeal(step, source, target)
 
       expect(heal).toBe(200)
     })
@@ -72,7 +72,7 @@ describe('HealCalculator', () => {
         },
       })
 
-      const heal = calculator.calculateHeal(step, source, target)
+      const { heal } = calculator.calculateHeal(step, source, target)
 
       expect(heal).toBe(100)
     })
@@ -87,7 +87,7 @@ describe('HealCalculator', () => {
         },
       })
 
-      const heal = calculator.calculateHeal(step, source, target)
+      const { heal } = calculator.calculateHeal(step, source, target)
 
       expect(heal).toBe(200)
     })
@@ -97,9 +97,9 @@ describe('HealCalculator', () => {
     it('should return 0 for step with no calculation', () => {
       const source = createMockEntity()
       const target = createMockEntity()
-      const step = createHealStep({ calculation: undefined } as any)
+      const step = createHealStep({ calculation: undefined })
 
-      const heal = calculator.calculateHeal(step, source, target)
+      const { heal } = calculator.calculateHeal(step, source, target)
 
       expect(heal).toBe(0)
     })
@@ -109,7 +109,7 @@ describe('HealCalculator', () => {
       const target = createMockEntity({ currentHealth: 1000, maxHealth: 1000 })
       const step = createHealStep({ calculation: { baseValue: 0, extraValues: [{ attribute: 'attack', ratio: 0.5 }] } })
 
-      const heal = calculator.calculateHeal(step, source, target)
+      const { heal } = calculator.calculateHeal(step, source, target)
 
       expect(heal).toBe(0)
     })

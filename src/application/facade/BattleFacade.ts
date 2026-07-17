@@ -63,7 +63,7 @@ export class BattleService {
   // ==================== 事件管理 ====================
 
   on<T extends BattleEventName>(event: T, callback: BattleEventCallback<T>) {
-    this.battleManager.on(event, callback as unknown as (data: T) => void);
+    this.battleManager.on(event, callback);
   }
 
   off<T extends BattleEventName>(event: T) {

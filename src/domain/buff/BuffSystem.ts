@@ -49,6 +49,7 @@ export interface TriggerExecutionContext extends TriggerEventContext {
 export class BuffSystem implements IModifierProvider, BuffQuery {
   private buffInstances = new Map<string, BuffInstance>()
   private modifierStacks = new Map<string, ModifierStack>()
+  private shieldValues = new Map<string, number>()
   private readonly scriptRegistry: BuffScriptRegistry
   private readonly logger = battleLogManager
   private _debugMode: boolean = true
@@ -843,6 +844,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   public canAct(characterId: string): boolean {
     return this.getHighestPriorityControlEffect(characterId) === ControlType.NONE
+  }
+
+  // ─── 护盾值管理 ────────────────────────────────────────
+
+  getShieldValue(characterId: string): number {
+    return this.shieldValues.get(characterId) ?? 0
+  }
+
+  setShieldValue(characterId: string, value: number): void {
+    this.shieldValues.set(characterId, value)
   }
 
   public update(deltaTime: number): void { }

@@ -593,6 +593,16 @@ export class BattleParticipantImpl implements BattleEntity {
 
     let damage = Math.max(0, amount)
 
+    // 护盾吸收 — 优先消耗护盾值
+    const shield = this.buffQuery?.getShieldValue(this.id) ?? 0
+    if (shield > 0) {
+      const absorbed = Math.min(shield, damage)
+      damage -= absorbed
+      const newShield = shield - absorbed
+      this.buffQuery?.setShieldValue(this.id, newShield)
+      damage = Math.max(0, damage)
+    }
+
     // ponytail: 背水护甲 — 能量抵扣伤害（每1能量抵扣1点伤害）
     if (
       this.hasBuff('guardian_buff_backwater_armor') &&

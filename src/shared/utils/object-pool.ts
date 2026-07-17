@@ -7,6 +7,7 @@
  * 版本: 1.0.0
  */
 
+import { BuffContext } from '@/domain/buff/BuffContext'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 
 interface ObjectPoolOptions<T> {
@@ -94,18 +95,14 @@ export class ObjectPool<T> {
 
 // 预定义的对象池实例
 export const createBuffContextPool = () => {
-  return new ObjectPool({
+  return new ObjectPool<BuffContext>({
     maxSize: 100,
     create: () => {
-      // 注意：这里只是占位，实际的 BuffContext 创建需要具体参数
-      // 实际使用时，需要在 borrow 后进行初始化
-      return {} as any
+      // ponytail: 创建空 BuffContext 实例，在 borrow 后通过 initialize 初始化
+      return new BuffContext()
     },
     reset: (context) => {
-      // 重置 BuffContext 的状态
-      if (context.variables) {
-        context.variables.clear()
-      }
+      context.variables.clear()
     },
   })
 }

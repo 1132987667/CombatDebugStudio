@@ -8,7 +8,7 @@
  */
 
 interface ServiceDefinition<T> {
-  instance: T
+  instance?: T
   factory?: () => T
   singleton: boolean
 }
@@ -43,7 +43,7 @@ export class Container {
     singleton: boolean = true,
   ): void {
     this.services.set(key, {
-      instance: undefined as any,
+      instance: undefined,
       factory,
       singleton,
     })
@@ -59,7 +59,8 @@ export class Container {
       if (!service.instance && service.factory) {
         service.instance = service.factory()
       }
-      return service.instance
+      // ponytail: singleton 模式确保 instance 已初始化
+      return service.instance!
     } else {
       if (service.factory) {
         return service.factory()

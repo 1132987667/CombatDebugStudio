@@ -6,6 +6,7 @@ initializeContainer()
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import mitt from 'mitt'
+import type { BattleEvents } from '@/domain/battle/type/BattleEventType'
 import BattleArena from '@/presentation/views/BattleArena.vue'
 import './presentation/styles/main.scss'
 import { type BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
@@ -22,7 +23,7 @@ import('@/infrastructure/di/Container').then(({ container }) => {
 })
 
 // 创建全局事件总线
-const emitter = mitt()
+const emitter = mitt<BattleEvents>()
 
 document.addEventListener('DOMContentLoaded', async () => {
   const appElement = document.getElementById('app')

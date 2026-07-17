@@ -115,12 +115,20 @@ export class SkillManager {
     resolveExtraTargets?: (stepTargetType: string, mainTarget: BattleEntity) => BattleEntity[],
     /** ponytail: 延迟伤害令牌 — 传入时只记录不扣血，调用方动画后 applyAll */
     token?: DeferredDamageToken,
-  ): BattleAction | null {
+  ): BattleAction {
     const config = this.skillConfigs.get(skillId)
     if (!config) {
       battleLogManager.addDebugLog(`技能 ${skillId} 不存在配置`, { level: LogLevel.WARN })
       console.error(`技能 ${skillId} 不存在配置`)
-      return null
+      return BattleActionHelper.createSkill({
+        sourceId: source.id,
+        targetId: target.id,
+        skillId,
+        skillName: skillId,
+        turn: currentTurn,
+        success: false,
+        effects: [{ type: 'status', targetId: target.id, description: `技能 ${skillId} 不存在配置` }],
+      })
     }
 
     // ponytail: P1/CTRL-1 — 统一可执行性检查委托给 participant.canExecuteSkill
@@ -130,7 +138,15 @@ export class SkillManager {
     if (!availability.can) {
       battleLogManager.addDebugLog(`技能 ${skillId} 不可用: ${availability.reason}`, { level: LogLevel.WARN })
       console.error(`技能 ${skillId} 不可用:`, availability.reason)
-      return null
+      return BattleActionHelper.createSkill({
+        sourceId: source.id,
+        targetId: target.id,
+        skillId,
+        skillName: config.name || '',
+        turn: currentTurn,
+        success: false,
+        effects: [{ type: 'status', targetId: target.id, description: `技能 ${skillId} 不可用: ${availability.reason}` }],
+      })
     }
 
     // ponytail: 被动技能允许无 target（自施法技能通过 targetConfig.faction === 'self' 处理）
@@ -140,7 +156,15 @@ export class SkillManager {
     if (!target && hasNonSelfStep) {
       battleLogManager.addDebugLog(`技能 ${skillId} 无有效目标`, { level: LogLevel.WARN })
       console.error(`技能 ${skillId} 无有效目标`)
-      return null
+      return BattleActionHelper.createSkill({
+        sourceId: source.id,
+        targetId: source.id,
+        skillId,
+        skillName: config.name || '',
+        turn: currentTurn,
+        success: false,
+        effects: [{ type: 'status', targetId: source.id, description: `技能 ${skillId} 无有效目标` }],
+      })
     }
 
     // ponytail: 目标被眩晕时技能取消（区别于施法者自身控制，返回 failure action）

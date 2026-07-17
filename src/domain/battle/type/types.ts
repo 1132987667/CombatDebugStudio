@@ -349,6 +349,9 @@ export interface BattleAction {
   turn?: number
   /** 动作产生的效果列表 */
   effects: BattleEffect[]
+
+  /** 扩展数据（步骤间传递的临时数据，如治疗溢出量） */
+  extra?: Record<string, unknown>
 }
 
 export const BattleActionHelper = {

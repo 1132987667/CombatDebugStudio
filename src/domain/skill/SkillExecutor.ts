@@ -13,6 +13,7 @@ import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-
 import { EffectType, EffectTag } from '@/shared/types/effect'
 import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { syncBonusAttribute, syncReverseBonusAttribute, syncAttackRange, REVERSE_BONUS_ATTR_MAP } from '@/shared/utils/attributeSync'
 
 /** ponytail: 追踪同一攻击者的连续命中目标和计数 */
 interface ComboState {
@@ -334,64 +335,19 @@ export class SkillExecutor {
       attrData.modifiers.push(newMod)
       attrData.cachedVersion = -1
 
-      // ponytail: 与 GameDataProcessor.pushModifier 保持一致的加成属性同步
+      // ponytail: 统一使用 shared/attributeSync 中的加成属性同步
       if (modType === ModifierType.PERCENTAGE) {
-        const BONUS_MAP: Partial<Record<string, string>> = {
-          [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
-          [ATTRIBUTE_CODE.minAttack]: ATTRIBUTE_CODE.attackBonus,
-          [ATTRIBUTE_CODE.maxAttack]: ATTRIBUTE_CODE.attackBonus,
-          [ATTRIBUTE_CODE.defense]: ATTRIBUTE_CODE.defenseBonus,
-          [ATTRIBUTE_CODE.speed]: ATTRIBUTE_CODE.speedBonus,
+        // 前向：主属性 → 加成属性
+        syncBonusAttribute(modTarget, attrCode, newMod, sourceKey)
+        // 反向：加成属性 → 主属性（仅 SkillExecutor 有此逻辑）
+        syncReverseBonusAttribute(modTarget, attrCode, newMod, sourceKey)
+        // attackBonus → attack → 再拆分到 minAttack/maxAttack
+        const mainAttr = REVERSE_BONUS_ATTR_MAP[attrCode]
+        if (mainAttr === ATTRIBUTE_CODE.attack) {
+          syncAttackRange(modTarget, { ...newMod, attribute: ATTRIBUTE_CODE.attack }, sourceKey)
         }
-        const bonusAttr = BONUS_MAP[attrCode]
-        if (bonusAttr) {
-          const bonusData = modTarget.getAttrValue(bonusAttr as ATTRIBUTE_CODE)
-          if (bonusData) {
-            bonusData.modifiers = bonusData.modifiers.filter(m => m.sourceKey !== sourceKey)
-            bonusData.modifiers.push({ ...newMod, attribute: bonusAttr as ATTRIBUTE_CODE })
-            bonusData.cachedVersion = -1
-          }
-        }
-
-        // ponytail: 反向传播 — 加成属性（attackBonus/defenseBonus 等）的 PERCENTAGE
-        // 修饰符同步回主属性，与 GameDataProcessor.enemyToParticipant 初始化逻辑一致
-        const REVERSE_BONUS_MAP: Partial<Record<string, string>> = {
-          [ATTRIBUTE_CODE.healthBonus]: ATTRIBUTE_CODE.maxHealth,
-          [ATTRIBUTE_CODE.attackBonus]: ATTRIBUTE_CODE.attack,
-          [ATTRIBUTE_CODE.defenseBonus]: ATTRIBUTE_CODE.defense,
-          [ATTRIBUTE_CODE.speedBonus]: ATTRIBUTE_CODE.speed,
-        }
-        const mainAttr = REVERSE_BONUS_MAP[attrCode]
-        if (mainAttr) {
-          const mainData = modTarget.getAttrValue(mainAttr as ATTRIBUTE_CODE)
-          if (mainData) {
-            mainData.modifiers = mainData.modifiers.filter(m => m.sourceKey !== sourceKey)
-            mainData.modifiers.push({ ...newMod, attribute: mainAttr as ATTRIBUTE_CODE })
-            mainData.cachedVersion = -1
-          }
-          // attackBonus → attack → 再拆分到 minAttack/maxAttack
-          if (mainAttr === ATTRIBUTE_CODE.attack) {
-            for (const splitAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
-              const splitData = modTarget.getAttrValue(splitAttr)
-              if (splitData) {
-                splitData.modifiers = splitData.modifiers.filter(m => m.sourceKey !== sourceKey)
-                splitData.modifiers.push({ ...newMod, attribute: splitAttr })
-                splitData.cachedVersion = -1
-              }
-            }
-          }
-        }
-
-        if (attrCode === ATTRIBUTE_CODE.attack) {
-          for (const splitAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
-            const splitData = modTarget.getAttrValue(splitAttr)
-            if (splitData) {
-              splitData.modifiers = splitData.modifiers.filter(m => m.sourceKey !== sourceKey)
-              splitData.modifiers.push({ ...newMod, attribute: splitAttr })
-              splitData.cachedVersion = -1
-            }
-          }
-        }
+        // PERCENTAGE 作用于 attack 时同步到 minAttack/maxAttack
+        syncAttackRange(modTarget, newMod, sourceKey)
       }
     }
 

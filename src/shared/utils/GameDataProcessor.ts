@@ -22,6 +22,7 @@ import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from 
 import type { ParticipantSide } from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE, BattleTriggerPhase } from '@/domain/battle/type/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
+import { syncBonusAttribute, syncAttackRange } from '@/shared/utils/attributeSync'
 import {
   BattleParticipantImpl,
   type BattleParticipantData,
@@ -194,15 +195,6 @@ export class GameDataProcessor {
     return participant
   }
 
-  private static readonly ATTR_TO_BONUS_MAP: Partial<Record<ATTRIBUTE_CODE, ATTRIBUTE_CODE>> = {
-    [ATTRIBUTE_CODE.speed]: ATTRIBUTE_CODE.speedBonus,
-    [ATTRIBUTE_CODE.attack]: ATTRIBUTE_CODE.attackBonus,
-    [ATTRIBUTE_CODE.defense]: ATTRIBUTE_CODE.defenseBonus,
-    [ATTRIBUTE_CODE.maxHealth]: ATTRIBUTE_CODE.healthBonus,
-    [ATTRIBUTE_CODE.minAttack]: ATTRIBUTE_CODE.attackBonus,
-    [ATTRIBUTE_CODE.maxAttack]: ATTRIBUTE_CODE.attackBonus,
-  }
-
   /**
    * 创建并添加一个修饰符到参与者，同时同步加成属性
    */
@@ -224,6 +216,7 @@ export class GameDataProcessor {
       value = Math.round(value * 10000) / 100
     }
 
+    // 创建基础修饰符并写入
     const sourceKey = `passive:${mod.id || skill.name}`
     const m: Modifier = {
       sourceKey,
@@ -240,60 +233,9 @@ export class GameDataProcessor {
       attrData.cachedVersion = -1
     }
 
-    // PERCENTAGE → 同步到加成属性
-    if (modType === ModifierType.PERCENTAGE) {
-      const bonusAttrCode = GameDataProcessor.ATTR_TO_BONUS_MAP[attrCode]
-      if (bonusAttrCode) {
-        const bonusMod: Modifier = {
-          sourceKey,
-          sourceType: ModifierSourceType.SKILL,
-          attribute: bonusAttrCode,
-          value,
-          type: ModifierType.ADDITIVE,
-          description: skill.name,
-        }
-        const bonusData = participant.getAttrValue(bonusAttrCode)
-        if (bonusData) {
-          bonusData.modifiers.push(bonusMod)
-          bonusData.cachedVersion = -1
-        }
-      }
-      // ponytail: PERCENTAGE 作用于 attack 时同步到 minAttack/maxAttack
-      if (attrCode === ATTRIBUTE_CODE.attack) {
-        for (const targetAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
-          const targetData = participant.getAttrValue(targetAttr)
-          if (targetData) {
-            targetData.modifiers.push({
-              sourceKey,
-              sourceType: ModifierSourceType.SKILL,
-              attribute: targetAttr,
-              value,
-              type: ModifierType.PERCENTAGE,
-              description: skill.name,
-            })
-            targetData.cachedVersion = -1
-          }
-        }
-      }
-    }
-
-    // ADDITIVE 作用于 attack 时也同步到 minAttack/maxAttack
-    if (modType === ModifierType.ADDITIVE && attrCode === ATTRIBUTE_CODE.attack) {
-      for (const targetAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
-        const targetData = participant.getAttrValue(targetAttr)
-        if (targetData) {
-          targetData.modifiers.push({
-            sourceKey,
-            sourceType: ModifierSourceType.SKILL,
-            attribute: targetAttr,
-            value,
-            type: ModifierType.ADDITIVE,
-            description: skill.name,
-          })
-          targetData.cachedVersion = -1
-        }
-      }
-    }
+    // 使用共享工具同步加成属性和攻击范围
+    syncBonusAttribute(participant, attrCode, m, sourceKey)
+    syncAttackRange(participant, m, sourceKey)
   }
 
   /**

@@ -1,6 +1,7 @@
 import type { BattleState, BattleReplay } from '@/domain/battle/type/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { BattleEventType } from '@/domain/battle/type/types'
-import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
 import {
   ReplayEngine,
   type ReplayState,
@@ -23,7 +24,7 @@ import {
  * 版本: 2.0.0 - 使用 ReplayEngine 实现确定性回放和状态跳转
  */
 export class BattleReplayManager {
-  private battleLogManager = battleLogManager
+  private logger = LoggerProvider.logger
   private isReplaying = false
   private isPaused = false
   private currentReplayIndex = 0
@@ -89,7 +90,7 @@ export class BattleReplayManager {
 
     const success = this.replayEngine.loadReplay(recording)
     if (!success) {
-      this.battleLogManager.addSystemLog({
+      this.logger.addSystemLog({
         message: '加载回放数据失败',
         level: LogLevel.ERROR,
       })
@@ -109,7 +110,7 @@ export class BattleReplayManager {
     })
 
     this.replayEngine.play()
-    this.battleLogManager.addSystemLog({
+    this.logger.addSystemLog({
       message: '开始回放',
     })
   }
@@ -120,7 +121,7 @@ export class BattleReplayManager {
   pauseReplay() {
     if (this.replayEngine) {
       this.replayEngine.pause()
-      this.battleLogManager.addSystemLog({
+      this.logger.addSystemLog({
         message: '回放已暂停',
       })
     }
@@ -132,7 +133,7 @@ export class BattleReplayManager {
   resumeReplay() {
     if (this.replayEngine) {
       this.replayEngine.resume()
-      this.battleLogManager.addSystemLog({
+      this.logger.addSystemLog({
         message: '回放已继续',
       })
     }
@@ -143,7 +144,7 @@ export class BattleReplayManager {
    */
   stopReplay() {
     this.resetReplayState()
-    this.battleLogManager.addSystemLog({
+    this.logger.addSystemLog({
       message: '回放已停止',
     })
   }
@@ -157,7 +158,7 @@ export class BattleReplayManager {
     if (this.replayEngine) {
       this.replayEngine.setSpeed(speed)
     }
-    this.battleLogManager.addSystemLog({
+    this.logger.addSystemLog({
       message: `回放速度已调整为: ${speed}倍`,
       })
   }

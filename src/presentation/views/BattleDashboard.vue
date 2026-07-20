@@ -235,6 +235,7 @@
 <script setup lang="ts">
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttributeDefaultValue, getAttributeMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
+import { getAttributeDisplayConfig } from '@/presentation/config/attributeDisplay';
 import { BattleEventType, BattleEntity } from '@/domain/battle/type/types';
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { SkillConfig } from "@/domain/skill/types";
@@ -271,6 +272,8 @@ const selectedCharName = computed(() => currentCharacter.value?.name || "未选�
 const displayHp = computed(() => {
   const char = currentCharacter.value
   if (!char) return '--/--'
+  // ponytail: 读取 statsVersion 建立响应式依赖
+  void char.statsVersion
   const cur = char.getAttributeValue(ATTRIBUTE_CODE.currentHealth)?.value ?? 0
   const max = char.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value ?? 0
   return `${cur}/${max}`
@@ -279,16 +282,22 @@ const displayHp = computed(() => {
 const displayEnergy = computed(() => {
   const char = currentCharacter.value
   if (!char) return '--/--'
+  // ponytail: 读取 statsVersion 建立响应式依赖
+  void char.statsVersion
   const cur = char.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value ?? 0
   const max = char.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value ?? 200
   return `${cur}/${max}`
 })
 
 // 获取角色属性值的便捷方法，默认值从 AttributeMetaMap 自动推导
-const attrVal = (code: ATTRIBUTE_CODE): number =>
-  currentCharacter.value?.getAttributeValue(code)?.value ?? getAttributeDefaultValue(code)
+const attrVal = (code: ATTRIBUTE_CODE): number => {
+  const char = currentCharacter.value
+  // ponytail: 读取 statsVersion 建立 Vue 响应式依赖，属性重算时模板重渲染
+  void char?.statsVersion
+  return char?.getAttributeValue(code)?.value ?? getAttributeDefaultValue(code)
+}
 
-// 进阶属性：从 AttributeMetaMap 过滤 displayTier==='advanced'，按 group 分组
+// 进阶属性：从 attributeDisplay 过滤 displayTier==='advanced'，按 group 分组
 const groupLabels: Record<string, string> = {
   defense: '🛡️ 防御',
   offense: '⚔️ 攻击',
@@ -306,10 +315,10 @@ const tierFilters = ref({
 const advancedAttributes = computed(() => {
   const groups: Record<string, Array<{ code: string; meta: { displayName: string; isPercentage: boolean } }>> = {}
   for (const [code, meta] of Object.entries(AttributeMetaMap)) {
-    if (meta.displayTier !== 'advanced') continue
-    const grp = meta.group || 'utility'
-    if (!groups[grp]) groups[grp] = []
-    groups[grp].push({ code, meta: { displayName: meta.displayName, isPercentage: !!meta.isPercentage } })
+    const display = getAttributeDisplayConfig(code)
+    if (display.displayTier !== 'advanced') continue
+    if (!groups[display.group]) groups[display.group] = []
+    groups[display.group].push({ code, meta: { displayName: meta.displayName, isPercentage: !!meta.isPercentage } })
   }
   return groups
 })
@@ -317,6 +326,8 @@ const advancedAttributes = computed(() => {
 const attackRange = computed(() => {
   const char = currentCharacter.value;
   if (!char) return { min: 0, max: 0 };
+  // ponytail: 读取 statsVersion 建立 Vue 响应式依赖
+  void char.statsVersion
   const minAttack = char.getAttributeValue(ATTRIBUTE_CODE.minAttack)?.value ?? 0;
   const maxAttack = char.getAttributeValue(ATTRIBUTE_CODE.maxAttack)?.value ?? 0;
   return { min: minAttack, max: maxAttack };

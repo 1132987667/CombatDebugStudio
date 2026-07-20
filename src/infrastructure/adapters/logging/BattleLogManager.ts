@@ -7,6 +7,7 @@
  *
  */
 
+import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import type {
   BattleLogEntry,
   LogFilters,
@@ -102,7 +103,7 @@ export class ConsoleLogHandler implements LogHandler {
  * 统一日志管理器
  *
  */
-export class BattleLogManager {
+export class BattleLogManager implements IBattleLogManager {
   /** 单例实例 */
   private static instance: BattleLogManager | null = null
 

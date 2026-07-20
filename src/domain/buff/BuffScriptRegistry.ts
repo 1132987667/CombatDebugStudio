@@ -1,8 +1,8 @@
 import { IBuffScript, ScriptBuffConfig, type TriggerAction } from '@/domain/buff/types'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import buffsData from '@configs/buffs/buffs.json'
 import effectsData from '@configs/effects/effects.json'
 import { ModifierType } from '@/domain/attribute/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 /** 效果定义：脚本 + 配置的统一视图 */
 export interface EffectDefinition {
@@ -68,10 +68,10 @@ export class BuffScriptRegistry {
             this.buffConfigs.set(buff.id, buff as BuffConfigData)
           }
         }
-        battleLogManager.addDebugLog(`Loaded ${this.buffConfigs.size} buff configs from buffs.json`)
+        LoggerProvider.logger.addDebugLog(`Loaded ${this.buffConfigs.size} buff configs from buffs.json`)
       }
     } catch (error) {
-      battleLogManager.addDebugLog('Failed to load buff configs:', { error: error as Error })
+      LoggerProvider.logger.addDebugLog('Failed to load buff configs:', { error: error as Error })
     }
     this.loadEffectConfigs()
   }
@@ -126,10 +126,10 @@ export class BuffScriptRegistry {
         count++
       }
       if (count > 0) {
-        battleLogManager.addDebugLog(`Loaded ${count} effect configs from effects.json`)
+        LoggerProvider.logger.addDebugLog(`Loaded ${count} effect configs from effects.json`)
       }
     } catch (error) {
-      battleLogManager.addDebugLog('Failed to load effects configs:', { error: error as Error })
+      LoggerProvider.logger.addDebugLog('Failed to load effects configs:', { error: error as Error })
     }
   }
 
@@ -188,7 +188,7 @@ export class BuffScriptRegistry {
     defaultConfig?: ScriptBuffConfig,
   ): void {
     if (this.registry.has(scriptId)) {
-      battleLogManager.addDebugLog(`Script "${scriptId}" already registered, overwriting`)
+      LoggerProvider.logger.addDebugLog(`Script "${scriptId}" already registered, overwriting`)
     }
     this.registry.set(scriptId, {
       factory,
@@ -201,9 +201,9 @@ export class BuffScriptRegistry {
     })
     if (defaultConfig) {
       this.defaultConfigs.set(scriptId, defaultConfig)
-      battleLogManager.addDebugLog(`Script "${scriptId}" provides self-contained config (${Object.keys(defaultConfig).length} fields)`)
+      LoggerProvider.logger.addDebugLog(`Script "${scriptId}" provides self-contained config (${Object.keys(defaultConfig).length} fields)`)
     }
-    battleLogManager.addDebugLog(`Registered buff script: ${scriptId}`)
+    LoggerProvider.logger.addDebugLog(`Registered buff script: ${scriptId}`)
   }
 
   /** 获取脚本自包含的默认配置 */
@@ -231,7 +231,7 @@ export class BuffScriptRegistry {
     try {
       return entry.factory()
     } catch (e) {
-      battleLogManager.addDebugLog(`Failed to instantiate script "${scriptId}":`, { error: e as Error })
+      LoggerProvider.logger.addDebugLog(`Failed to instantiate script "${scriptId}":`, { error: e as Error })
       return null
     }
   }

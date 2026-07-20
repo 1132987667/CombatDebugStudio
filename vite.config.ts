@@ -14,19 +14,6 @@ export default defineConfig({
   build: {
     outDir: 'build/dist',
     sourcemap: false,
-    lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
-      name: 'BuffSystem',
-      fileName: (format) => `GameSystem.${format}.js`,
-    },
-    rollupOptions: {
-      external: ['vue'],
-      output: {
-        globals: {
-          vue: 'Vue',
-        },
-      },
-    },
   },
   test: {
     environment: 'node',

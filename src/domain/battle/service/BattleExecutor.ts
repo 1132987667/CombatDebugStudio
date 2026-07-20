@@ -3,6 +3,7 @@
  * 功能: 战斗执行引擎 — 负责参与者行动、技能执行、攻击处理等运行时逻辑
  * 从 BattleSystem.ts 提取，职责单一
  */
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { convertToBattleState } from '@/domain/battle/aggregate/BattleState'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import type { DamageCalculator } from '@/domain/skill/DamageCalculator'
@@ -13,7 +14,6 @@ import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationMana
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { EffectType } from '@/shared/types/effect'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { TraceDamageLogger } from '@/domain/battle/logs/TraceDamageLogger'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { BalancedAIPriorityStrategy, type AIPriorityStrategy } from '@/domain/battle/ai/AIPriorityStrategy'
@@ -107,7 +107,7 @@ export class BattleExecutor {
         ],
       })
       this.recordBattleAction(battle, action)
-      battleLogManager.addBattleLog({
+      LoggerProvider.logger.addBattleLog({
         turn: battle.currentTurn || 1,
         message: `${participant.name} 被控制，无法行动`,
         segments: [
@@ -116,7 +116,7 @@ export class BattleExecutor {
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
       })
-      battleLogManager.addDebugLog(`角色[${participant.name}]被控制，无法行动`)
+      LoggerProvider.logger.addDebugLog(`角色[${participant.name}]被控制，无法行动`)
       return
     }
 
@@ -152,7 +152,7 @@ export class BattleExecutor {
         break
       case 'MANUAL':
         // ponytail: 玩家手操，由 Store/UI 直接驱动
-        battleLogManager.addDebugLog(`玩家手操角色[${participant.name}]，跳过自动决策`)
+        LoggerProvider.logger.addDebugLog(`玩家手操角色[${participant.name}]，跳过自动决策`)
         break
     }
 
@@ -241,7 +241,7 @@ export class BattleExecutor {
 
     const targets = this.getSkillTargets(battle, source, skill, suggestedTargetId)
     if (targets.length === 0) {
-      battleLogManager.addDebugLog(`技能执行失败: 未找到有效目标 ${skill.id}`)
+      LoggerProvider.logger.addDebugLog(`技能执行失败: 未找到有效目标 ${skill.id}`)
       console.error(`技能执行失败: 未找到有效目标 ${skill.id}`)
       return this.selectAndExecuteAttack(battle, source)
     }
@@ -295,7 +295,7 @@ export class BattleExecutor {
           damageToken,
         )
         if (!skillAction.success) {
-          battleLogManager.addDebugLog(
+          LoggerProvider.logger.addDebugLog(
             `技能执行失败: ${skill.id}，跳过目标 ${target.id} — ${skillAction.effects[0]?.description || '未知原因'}`,
           )
           continue
@@ -333,7 +333,7 @@ export class BattleExecutor {
       const damageText = totalDamage > 0 ? `，造成 ${totalDamage} 点伤害` : ''
       const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点生命` : ''
       const skillText = `使用 ${skill.name || skill.id}${damageText}${healText}`
-      battleLogManager.addBattleLog({
+      LoggerProvider.logger.addBattleLog({
         turn: battle.currentTurn,
         message: `${source.name} 对 ${targetNames} ${skillText}`,
         segments: [
@@ -412,7 +412,7 @@ export class BattleExecutor {
         }
       }
     } catch (error) {
-      battleLogManager.addDebugLog(`技能执行失败: ${skill.id}`, { error: error as Error })
+      LoggerProvider.logger.addDebugLog(`技能执行失败: ${skill.id}`, { error: error as Error })
       action.type = ActionTypes.ATTACK
       action.damage = Math.floor(Math.random() * 20) + 10
       action.effects = [
@@ -458,7 +458,7 @@ export class BattleExecutor {
           return [suggested]
         }
       }
-      battleLogManager.addDebugLog(
+      LoggerProvider.logger.addDebugLog(
         `建议目标 ${suggestedTargetId} 不满足 selector 约束，回退到自动解析`,
       )
     }
@@ -661,13 +661,13 @@ export class BattleExecutor {
     const logParams = this.generateAttackLogParams(source, target, turnNumber, {
       isMiss: true,
     })
-    battleLogManager.addBattleLog({
+    LoggerProvider.logger.addBattleLog({
       turn: logParams.turn,
       message: logParams.message,
       segments: logParams.segments,
       category: logParams.category,
     })
-    battleLogManager.addDebugLog(
+    LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}，被闪避`,
     )
   }
@@ -716,13 +716,13 @@ export class BattleExecutor {
       damage,
       isCritical,
     })
-    battleLogManager.addBattleLog({
+    LoggerProvider.logger.addBattleLog({
       turn: logParams.turn,
       message: logParams.message,
       segments: logParams.segments,
       category: logParams.category,
     })
-    battleLogManager.addDebugLog(`普通攻击: ${source.name} → ${target.name}`)
+    LoggerProvider.logger.addDebugLog(`普通攻击: ${source.name} → ${target.name}`)
   }
 
   /**
@@ -737,7 +737,7 @@ export class BattleExecutor {
     const target = battle.participants.get(targetId)
 
     if (!target) {
-      battleLogManager.addDebugLog(`攻击失败: 未找到目标 ${targetId}`)
+      LoggerProvider.logger.addDebugLog(`攻击失败: 未找到目标 ${targetId}`)
       console.error(`攻击失败: 未找到目标 ${targetId}`)
       return this.createBattleAction(
         source.id,
@@ -821,7 +821,7 @@ export class BattleExecutor {
       if (suggested && suggested.team !== source.team && suggested.isAlive()) {
         return suggestedTargetId
       }
-      battleLogManager.addDebugLog(
+      LoggerProvider.logger.addDebugLog(
         `建议目标 ${suggestedTargetId} 无效（已死/非敌方/不存在），回退到随机选择`,
       )
     }
@@ -925,7 +925,7 @@ export class BattleExecutor {
     const target = battle.participants.get(action.targetId)
 
     if (!source || !target) {
-      battleLogManager.addDebugLog(
+      LoggerProvider.logger.addDebugLog(
         `执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`,
       )
       console.error(
@@ -952,7 +952,7 @@ export class BattleExecutor {
         if (!skillAction.success) {
           // ponytail: early-return 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
           this.buffSystem.setBuffAppliedCallbackEnabled(true)
-          battleLogManager.addDebugLog(`技能执行失败: ${action.skillId} — ${skillAction.effects[0]?.description || '未知原因'}`)
+          LoggerProvider.logger.addDebugLog(`技能执行失败: ${action.skillId} — ${skillAction.effects[0]?.description || '未知原因'}`)
           action.damage = 0
           action.heal = 0
           action.effects = skillAction.effects
@@ -966,7 +966,7 @@ export class BattleExecutor {
           const skillName = action.skillId.replace(/^(skill_|attack_|normal_)/, '')
           const dmgPart = (action.damage ?? 0) > 0 ? `，造成 ${action.damage} 点` : ''
           const healPart = (action.heal ?? 0) > 0 ? `，恢复 ${action.heal} 点生命` : ''
-          battleLogManager.addBattleLog({
+          LoggerProvider.logger.addBattleLog({
             turn: action.turn ?? 0,
             message: `${source.name} 对 ${target.name} 使用 ${skillName}${dmgPart}${healPart}`,
             segments: [
@@ -1066,7 +1066,7 @@ export class BattleExecutor {
       } catch (error) {
         // ponytail: catch 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
         this.buffSystem.setBuffAppliedCallbackEnabled(true)
-        battleLogManager.addDebugLog(
+        LoggerProvider.logger.addDebugLog(
           `技能执行失败: ${action.skillId}`,
           { error: error as Error },
         )

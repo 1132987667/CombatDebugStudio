@@ -1,17 +1,12 @@
-/**
- * AttributeEngine 单元测试
- * ponytail: 使用 types.ts 中的 calculateFinalValue 而非 AttributeEngine.compute（该接口不存在）。
- *           动态值解析和步骤追踪属于 AttributeComputeResult 范畴，当前测试仅验证核心计算逻辑。
- */
 import { describe, it, expect } from 'vitest'
 import { calculateFinalValue, ModifierType } from '@/domain/attribute/types'
 import { AttributeEngine } from '@/domain/attribute/AttributeEngine'
-import type { Modifier, ModifierType as ModifierTypeT } from '@/domain/attribute/types'
+import type { Modifier } from '@/domain/attribute/types'
 
-function makeMod(overrides: Partial<Modifier> & { value: number; type: ModifierTypeT }): Modifier {
+function makeMod(overrides: Partial<Modifier> & { value: number; type: ModifierType }): Modifier {
   return {
     sourceKey: overrides.sourceKey ?? 'test',
-    sourceType: overrides.sourceType ?? 'buff' as any,
+    sourceType: overrides.sourceType ?? 'buff' as const,
     attribute: overrides.attribute ?? 'attack' as any,
     description: overrides.description,
     ...overrides,
@@ -48,8 +43,6 @@ describe('AttributeEngine', () => {
       const modifiers: Modifier[] = [
         makeMod({ sourceKey: 'p1', type: ModifierType.PERCENTAGE, value: 0.2 }),
       ]
-      // ponytail: calculateFinalValue 中 PERCENTAGE 会进入 percentSum，base * (1+percentSum) + additive
-      // value=0.2 → percentSum=0.2 → 100 * 1.2 + 0 = 120
       const result = calculateFinalValue(100, modifiers)
       expect(result.value).toBe(120)
     })
@@ -59,9 +52,6 @@ describe('AttributeEngine', () => {
         makeMod({ sourceKey: 'm1', type: ModifierType.ADDITIVE, value: 50 }),
         makeMod({ sourceKey: 'p1', type: ModifierType.PERCENTAGE, value: 0.1 }),
       ]
-      // ponytail: additive=50, percentSum=0.1 → afterPercent = 100*1.1 + 50 = 160
-      // 注意：这和旧测试期望的 165 不同，因为加法在百分比之后（base*percent + additive）
-      // 这是 calculateFinalValue 的既有行为
       const result = calculateFinalValue(100, modifiers)
       expect(result.value).toBe(160)
     })

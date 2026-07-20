@@ -7,7 +7,6 @@
  **/
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
@@ -21,6 +20,7 @@ import type {
 import { LocalStorage } from '@/infrastructure/adapters/storage'
 import { eventBus } from '@/main'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 /**
  * 战斗管理器
@@ -516,7 +516,7 @@ export class BattleManager {
    * @param battleState 战斗状态
    */
   async syncBattleLogs(battleState: any) {
-    await battleLogManager.syncBattleLogs(battleState)
+    await LoggerProvider.logger.syncBattleLogs(battleState)
   }
 
   /**
@@ -541,7 +541,7 @@ export class BattleManager {
     const enemyTeam = this.getEnabledEnemyTeam()
 
     if (allyTeam.length === 0 || enemyTeam.length === 0) {
-      battleLogManager.addDebugLog('队伍数据未初始化，请先添加角色到队伍')
+      LoggerProvider.logger.addDebugLog('队伍数据未初始化，请先添加角色到队伍')
       return null
     }
 
@@ -552,8 +552,8 @@ export class BattleManager {
     const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
     this.battleSystem.setBattleState(BattleStatus.ACTIVE)
     this.battleStateManager.setBattleId(battleState.battleId)
-    battleLogManager.clearLogs()
-    battleLogManager.addSystemLog({ message: '战斗已创建' })
+    LoggerProvider.logger.clearLogs()
+    LoggerProvider.logger.addSystemLog({ message: '战斗已创建' })
     this.syncBattleState()
 
     // 自动开始战斗
@@ -570,7 +570,7 @@ export class BattleManager {
   async startAutoBattle(): Promise<boolean> {
     const battleId = this.battleStateManager.getBattleId()
     if (!battleId) {
-      battleLogManager.addSystemLog({message: '请先创建战斗'})
+      LoggerProvider.logger.addSystemLog({message: '请先创建战斗'})
       return false
     }
     return this.autoBattleManager.startAutoBattle(battleId)
@@ -621,7 +621,7 @@ export class BattleManager {
     this.battleSystem.resetBattle()
     this.battleStateManager.resetState()
     this.autoBattleManager.resetState()
-    battleLogManager.clearLogs()
+    LoggerProvider.logger.clearLogs()
   }
 
   /**

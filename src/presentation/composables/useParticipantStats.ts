@@ -35,7 +35,7 @@ export interface UseParticipantStatsReturn {
   /** 获取属性对象 */
   getAttribute: (type: ATTRIBUTE_CODE) => AttributeValue | undefined
   /** 获取计算拆解 */
-  getBreakdown: (type: ATTRIBUTE_CODE) => CalculationBreakdown | undefined
+  getBreakdown: (type: ATTRIBUTE_CODE) => CalculationBreakdown | null
   /** 当前生命值 */
   currentHealth: ComputedRef<FormattedAttribute>
   /** 最大生命值 */
@@ -116,20 +116,46 @@ export function useParticipantStats(
   }
 
   // 常用属性的计算属性（使用官方 ATTRIBUTE_CODE 标准编码）
-  const currentHealth = computed(() =>
-    getFormatted(ATTRIBUTE_CODE.currentHealth),
-  )
-  const maxHealth = computed(() => getFormatted(ATTRIBUTE_CODE.maxHealth))
-  const energy = computed(() => getFormatted(ATTRIBUTE_CODE.currentEnergy))
-  const maxEnergy = computed(() => getFormatted(ATTRIBUTE_CODE.maxEnergy))
-  const attack = computed(() => getFormatted(ATTRIBUTE_CODE.attack))
-  const defense = computed(() => getFormatted(ATTRIBUTE_CODE.defense))
-  const speed = computed(() => getFormatted(ATTRIBUTE_CODE.speed))
-  const critRate = computed(() => getFormatted(ATTRIBUTE_CODE.critRate))
-  const critDamage = computed(() => getFormatted(ATTRIBUTE_CODE.critDamage))
-  const damageReduction = computed(() =>
-    getFormatted(ATTRIBUTE_CODE.damageReduction),
-  )
+  const currentHealth = computed(() => {
+    void participant.statsVersion
+    return getFormatted(ATTRIBUTE_CODE.currentHealth)
+  })
+  const maxHealth = computed(() => {
+    void participant.statsVersion
+    return getFormatted(ATTRIBUTE_CODE.maxHealth)
+  })
+  const energy = computed(() => {
+    void participant.statsVersion
+    return getFormatted(ATTRIBUTE_CODE.currentEnergy)
+  })
+  const maxEnergy = computed(() => {
+    void participant.statsVersion
+    return getFormatted(ATTRIBUTE_CODE.maxEnergy)
+  })
+  const attack = computed(() => {
+    void participant.statsVersion
+    return getFormatted(ATTRIBUTE_CODE.attack)
+  })
+  const defense = computed(() => {
+    void participant.statsVersion
+    return getFormatted(ATTRIBUTE_CODE.defense)
+  })
+  const speed = computed(() => {
+    void participant.statsVersion
+    return getFormatted(ATTRIBUTE_CODE.speed)
+  })
+  const critRate = computed(() => {
+    void participant.statsVersion
+    return getFormatted(ATTRIBUTE_CODE.critRate)
+  })
+  const critDamage = computed(() => {
+    void participant.statsVersion
+    return getFormatted(ATTRIBUTE_CODE.critDamage)
+  })
+  const damageReduction = computed(() => {
+    void participant.statsVersion
+    return getFormatted(ATTRIBUTE_CODE.damageReduction)
+  })
 
   return {
     getFormatted,

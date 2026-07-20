@@ -54,9 +54,12 @@ describe('方案 B 战斗验证：光环分发', () => {
   let skillManager: SkillManager
   let passiveSkillManager: PassiveSkillManager
 
+  const mockEventBus = { emit: () => {}, on: () => {}, off: () => {}, offByListenerId: () => {} } as any
+  const mockLogger = { addDebugLog: () => {}, addSystemLog: () => {}, addBattleLog: () => {}, addActionLog: () => {}, clearLogs: () => {}, syncBattleLogs: () => {} } as any
+
   beforeEach(() => {
     registry = new BuffScriptRegistry()
-    buffSystem = new BuffSystem(registry)
+    buffSystem = new BuffSystem(registry, mockEventBus, mockLogger)
     skillManager = new SkillManager(buffSystem)
     passiveSkillManager = PassiveSkillManager.create(skillManager, buffSystem)
 

@@ -1,6 +1,0 @@
-{
-  "id": "buff_berserk",
-  "name": "狂暴",
-  "description": "陷入狂暴状态，攻击力大幅提升，但防御力降低，每回合损失生命值",
-  "icon": "berserk.png"
-}

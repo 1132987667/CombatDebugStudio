@@ -15,8 +15,7 @@ import {
   SnapshotIndexItem,
 } from '@/domain/battle/type/types'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
-
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 export type ReplayStateCallback = (state: ReplayState) => void
 export type ReplayEventCallback = (event: ReplayEvent) => void
 
@@ -68,7 +67,7 @@ export class ReplayEngine {
   loadReplay(replayData: BattleReplay): boolean {
     try {
       if (!replayData || !replayData.initialState) {
-        battleLogManager.addSystemLog({
+        LoggerProvider.logger.addSystemLog({
           message: '无效的回放数据',
         })
         return false
@@ -83,14 +82,14 @@ export class ReplayEngine {
       this.buildSnapshotIndex()
       this.currentState = this.applySnapshot(replayData.initialState)
 
-      battleLogManager.addSystemLog({
+      LoggerProvider.logger.addSystemLog({
         message: `已加载回放: ${replayData.replayId}`,
       })
       this.emitStateUpdate()
 
       return true
     } catch (error) {
-      battleLogManager.addSystemLog({
+      LoggerProvider.logger.addSystemLog({
         message: '加载回放失败: ' + error,
       })
       console.error('加载回放时出错:', error)
@@ -570,7 +569,7 @@ export class ReplayEngine {
     this.isPlaying = false
     this.isPaused = false
     this.emitStateUpdate()
-    battleLogManager.addSystemLog({
+    LoggerProvider.logger.addSystemLog({
       message: '回放已结束',
     })
   }

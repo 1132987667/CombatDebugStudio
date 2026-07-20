@@ -3,16 +3,31 @@ import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { StackRule, ControlType } from '@/domain/buff/types'
 import type { BuffConfig } from '@/domain/buff/BuffConfig'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 vi.mock('@/main', () => ({
   eventBus: { emit: () => {}, on: () => {}, off: () => {} },
   default: {},
 }))
 
-vi.mock('@/infrastructure/adapters/logging', () => ({
-  battleLogManager: { addDebugLog: () => {}, addSystemLog: () => {} },
-  LogLevel: { DEBUG: 'DEBUG', INFO: 'INFO', WARN: 'WARN', ERROR: 'ERROR' },
-}))
+const mockEventBus = {
+  emit: vi.fn(),
+  on: vi.fn(),
+  off: vi.fn(),
+  offByListenerId: vi.fn(),
+}
+
+const mockLogger = {
+  addDebugLog: vi.fn(),
+  addSystemLog: vi.fn(),
+  addBattleLog: vi.fn(),
+  addActionLog: vi.fn(),
+  clearLogs: vi.fn(),
+  syncBattleLogs: vi.fn(),
+  getSystemLogs: vi.fn(),
+}
+
+LoggerProvider.logger = mockLogger as any
 
 function createTestBuffConfig(overrides?: Partial<BuffConfig>): BuffConfig {
   return {
@@ -49,7 +64,7 @@ describe('BuffSystem', () => {
     registry.loadBuffConfigsFromArray([
       { id: 'atk_buff', name: 'ATK Up', attributes: { ATK: '+50' } },
     ])
-    buffSystem = new BuffSystem(registry)
+    buffSystem = new BuffSystem(registry, mockEventBus, mockLogger)
   })
 
   describe('addBuff', () => {

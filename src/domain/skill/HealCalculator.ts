@@ -2,9 +2,10 @@ import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { EffectTag } from '@/shared/types/effect'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 interface HealCalculationStep {
   step: string
@@ -112,11 +113,11 @@ export class HealCalculator {
 
   applyHeal(target: BattleEntity, heal: number): number {
     if (!target.isAlive()) {
-      battleLogManager.addDebugLog('目标已死亡，无法进行治疗')
+      LoggerProvider.logger.addDebugLog('目标已死亡，无法进行治疗')
       return 0
     }
     if (target.isFullHealth()) {
-      battleLogManager.addDebugLog('目标生命值已满，无需治疗')
+      LoggerProvider.logger.addDebugLog('目标生命值已满，无需治疗')
       return 0
     }
     const actualHeal = target.heal(heal)

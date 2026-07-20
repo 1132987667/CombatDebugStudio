@@ -1,3 +1,10 @@
+/**
+ * 文件: AttributeEngine.ts
+ * 功能: 修饰符 → 模板转换工具（预留）
+ * 描述: 提供 toTemplate/toTemplates 两个静态方法，
+ *       将运行时 Modifier 格式转换为配置层 ModifierTemplate 格式。
+ * ponytail: 当前无 src/ 代码调用，保留为工具函数供后续扩展使用。
+ */
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import type { ModifierTemplate } from '@/domain/attribute/modifier-template'
 import type { ModifierSourceType } from '@/domain/attribute/types'
@@ -43,4 +50,3 @@ export class AttributeEngine {
     )
   }
 }
-

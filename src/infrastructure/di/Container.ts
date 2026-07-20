@@ -94,7 +94,7 @@ import { AISystem } from '@/domain/battle/ai/AISystem'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { BattleManager } from '@/domain/battle/BattleManager'
 import { BattleSystem } from '@/domain/battle/BattleSystem'
-import { battleEventManager } from '@/domain/battle/events/BattleEventManager'
+import { battleEventManager } from '@/infrastructure/adapters/event/BattleEventManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
 import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
@@ -103,6 +103,10 @@ import { TurnManager } from '@/domain/battle/service/TurnManager'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import { triggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
+import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
@@ -131,8 +135,14 @@ export function initializeContainer(): void {
     new BuffScriptLoader(buffScriptRegistry),
   )
 
-  // 2. 注册BuffSystem（依赖BuffScriptRegistry）
-  container.register('BuffSystem', new BuffSystem(buffScriptRegistry))
+  // 2. 注册BuffSystem（依赖BuffScriptRegistry + IDomainEventBus）
+  container.register('BuffSystem', new BuffSystem(buffScriptRegistry, triggerEventBus, battleLogManager))
+
+  // 领域实体的事件总线注入（静态字段）
+  BattleParticipantImpl.eventBus = triggerEventBus
+
+  // 领域层日志器注入（LoggerProvider 静态服务定位器）
+  LoggerProvider.logger = battleLogManager
 
   // 3. 注册SkillManager（依赖BuffSystem）
   const buffSystem = container.resolve<BuffSystem>('BuffSystem')

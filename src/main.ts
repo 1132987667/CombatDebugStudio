@@ -5,8 +5,7 @@ initializeContainer()
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import mitt from 'mitt'
-import type { BattleEvents } from '@/domain/battle/type/BattleEventType'
+import { eventBus } from '@/infrastructure/adapters/event/EventBus'
 import BattleArena from '@/presentation/views/BattleArena.vue'
 import './presentation/styles/main.scss'
 import { type BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
@@ -22,9 +21,6 @@ import('@/infrastructure/di/Container').then(({ container }) => {
   })
 })
 
-// 创建全局事件总线
-const emitter = mitt<BattleEvents>()
-
 document.addEventListener('DOMContentLoaded', async () => {
   const appElement = document.getElementById('app')
   if (appElement) {
@@ -32,11 +28,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pinia = createPinia()
     app.use(pinia)
     // 挂载事件总线到Vue全局属性
-    app.config.globalProperties.$emitter = emitter
+    app.config.globalProperties.$emitter = eventBus
     app.mount(appElement)
   }
 })
 
-// 导出事件总线供其他模块使用
-export const eventBus = emitter
+// 导出事件总线供其他模块使用（保留兼容导出）
+export { eventBus }
 export * from '@/index'

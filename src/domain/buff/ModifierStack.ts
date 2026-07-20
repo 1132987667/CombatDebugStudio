@@ -81,26 +81,4 @@ export class ModifierStack implements IModifierStack {
     }
     return count
   }
-
-  /**
-   * 计算属性最终值
-   * ponytail: 未被调用（ParticipantStats 自行计算），保留接口契约
-   */
-  public calculate(attribute: ATTRIBUTE_CODE, baseValue: number): number {
-    const mods = this.modifiers.get(attribute)
-    if (!mods || mods.length === 0) return baseValue
-    let result = baseValue
-    let additiveSum = 0
-    let multiplicativeSum = 1
-    for (const modifier of mods) {
-      switch (modifier.type) {
-        case ModifierType.ADDITIVE: additiveSum += modifier.value; break
-        case ModifierType.MULTIPLICATIVE: multiplicativeSum *= 1 + modifier.value; break
-        case ModifierType.PERCENTAGE: additiveSum += baseValue * modifier.value; break
-      }
-    }
-    result += additiveSum
-    result *= multiplicativeSum
-    return result
-  }
 }

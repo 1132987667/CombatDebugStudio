@@ -40,7 +40,7 @@ import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { eventBus } from '@/main'
-import { TriggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
+import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import {
   BattleStatus,
@@ -57,9 +57,9 @@ import {
 import { RAFTimer } from '@/shared/utils/RAF'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { Counter } from '@/shared/utils/Counter'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
 import type { SkillConfig } from '@/domain/skill/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 /** 角色行动间的动画延迟（ms） */
 const TURN_ACTION_DELAY_MS = 400
@@ -173,7 +173,7 @@ export class BattleSystem {
    * 获取触发器事件总线实例
    * @returns 触发器事件总线实例
    */
-  private getTriggerEventBus(): TriggerEventBus {
+  private getTriggerEventBus(): IDomainEventBus {
     return this.buffSystem.getEventBus()
   }
 
@@ -313,7 +313,7 @@ export class BattleSystem {
       participants: allParticipants,
     })
 
-    battleLogManager.addSystemLog({
+    LoggerProvider.logger.addSystemLog({
       message: `战斗双方人员情况: 我方 ${allyParticipants.length} 人 | 敌方 ${enemyParticipants.length} 人`,
     }
 
@@ -565,7 +565,7 @@ export class BattleSystem {
       aliveParticipants.forEach((participant) => {
         participant.gainEnergy(combatRules.energyGainPerTurn)
       })
-      battleLogManager.addDebugLog('角色能量增加: ' + combatRules.energyGainPerTurn)
+      LoggerProvider.logger.addDebugLog('角色能量增加: ' + combatRules.energyGainPerTurn)
 
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
@@ -615,7 +615,7 @@ export class BattleSystem {
         try {
           await this.executor.executeParticipantAction(battle, participant)
         } catch (error) {
-          battleLogManager.addDebugLog('角色行动执行出错:', { error: error as Error })
+          LoggerProvider.logger.addDebugLog('角色行动执行出错:', { error: error as Error })
           await this.executor.executeDefaultAction(battle, participant)
         }
 
@@ -687,7 +687,7 @@ export class BattleSystem {
         const entityId = extraEntityIds.shift()!
         const entity = battle.participants.get(entityId)
         if (entity?.isAlive() && this.executor) {
-          battleLogManager.addDebugLog(`额外行动: ${entity.name}`, { level: LogLevel.INFO })
+          LoggerProvider.logger.addDebugLog(`额外行动: ${entity.name}`, { level: LogLevel.INFO })
           await this.executor.executeParticipantAction(battle, entity)
         }
         extraCount++
@@ -696,7 +696,7 @@ export class BattleSystem {
         extraEntityIds.push(...newExtras)
       }
       if (extraEntityIds.length > 0) {
-        battleLogManager.addDebugLog(`额外行动已达上限(${MAX_EXTRA_ACTIONS})，丢弃 ${extraEntityIds.length} 个请求`, { level: LogLevel.WARN })
+        LoggerProvider.logger.addDebugLog(`额外行动已达上限(${MAX_EXTRA_ACTIONS})，丢弃 ${extraEntityIds.length} 个请求`, { level: LogLevel.WARN })
       }
 
       battle.roundState = RoundStatus.END
@@ -706,7 +706,7 @@ export class BattleSystem {
       battle.currentTurn++
       eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, { allyTeam: [], enemyTeam: [] })
     } catch (error) {
-      battleLogManager.addDebugLog('处理回合时出错:', { level: LogLevel.ERROR, error: error as Error })
+      LoggerProvider.logger.addDebugLog('处理回合时出错:', { level: LogLevel.ERROR, error: error as Error })
       console.error('处理回合时出错:', error)
     } finally {
       this.animationManager.cleanupAnimationState()
@@ -776,7 +776,7 @@ export class BattleSystem {
       await this.endBattle(result.winner)
       if (battle.currentTurn >= battle.maxTurns) {
         const winnerLabel = result.winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'
-        battleLogManager.addBattleLog({
+        LoggerProvider.logger.addBattleLog({
           turn: battle.currentTurn,
           message: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜`,
           segments: [{ text: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜` }],
@@ -958,7 +958,7 @@ export class BattleSystem {
    * 回合执行事件
    */
   public onTurnExecuted(turnNumber: number): void {
-    battleLogManager.addDebugLog(`回合 ${turnNumber} 执行完成`)
+    LoggerProvider.logger.addDebugLog(`回合 ${turnNumber} 执行完成`)
   }
 
   /**

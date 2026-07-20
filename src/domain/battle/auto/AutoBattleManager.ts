@@ -1,6 +1,7 @@
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
-import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 /**
  * 自动战斗管理器
@@ -20,7 +21,7 @@ export class AutoBattleManager {
   /**
    * 战斗日志管理器，负责记录系统日志和战斗日志
    */
-  private battleLogManager = battleLogManager
+  private logger = LoggerProvider.logger
   /**
    * 战斗状态管理器，负责战斗状态的同步和管理
    */
@@ -67,7 +68,7 @@ export class AutoBattleManager {
    */
   async startAutoBattle(battleId: string): Promise<boolean> {
     if (!battleId) {
-      this.battleLogManager.addSystemLog({
+      this.logger.addSystemLog({
         message: '请先创建战斗',
         level: LogLevel.WARN,
       })
@@ -79,14 +80,14 @@ export class AutoBattleManager {
     try {
       // 启动自动战斗
       this.battleSystem.startAutoBattleLoop()
-      this.battleLogManager.addSystemLog({ message: '开始自动战斗' })
+      this.logger.addSystemLog({ message: '开始自动战斗' })
       // 同步战斗状态
       this.battleStateManager.syncBattleState()
       return true
     } catch (error) {
       console.error('开始自动战斗时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
-      this.battleLogManager.addDebugLog(`开始自动战斗时出错: ${errorMsg}`)
+      this.logger.addDebugLog(`开始自动战斗时出错: ${errorMsg}`)
       return false
     }
   }
@@ -99,13 +100,13 @@ export class AutoBattleManager {
   stopAutoBattle(): boolean {
     try {
       this.battleSystem.stopAutoBattle()
-      this.battleLogManager.addSystemLog({ message: '停止自动战斗' })
+      this.logger.addSystemLog({ message: '停止自动战斗' })
       this.battleStateManager.syncBattleState()
       return true
     } catch (error) {
       console.error('停止自动战斗时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
-      this.battleLogManager.addDebugLog(`停止自动战斗时出错: ${errorMsg}`)
+      this.logger.addDebugLog(`停止自动战斗时出错: ${errorMsg}`)
       return false
     }
   }
@@ -117,19 +118,19 @@ export class AutoBattleManager {
    */
   async executeSingleTurn() {
     if (!this.battleId) {
-      this.battleLogManager.addSystemLog({ message: '请先开始战斗', level: LogLevel.WARN })
+      this.logger.addSystemLog({ message: '请先开始战斗', level: LogLevel.WARN })
       return
     }
 
     // ⭐ 单步执行仅在暂停状态下允许，防止自动战斗运行期间误触
     if (!this.battleSystem.getIsPaused()) {
-      this.battleLogManager.addSystemLog({ message: '单步执行仅在暂停状态下可用', level: LogLevel.WARN })
+      this.logger.addSystemLog({ message: '单步执行仅在暂停状态下可用', level: LogLevel.WARN })
       return
     }
 
     // ⭐ 并发锁：防止快速连点导致两个 processTurn 异步并发执行
     if (this.isProcessing) {
-      this.battleLogManager.addDebugLog('已有单步执行进行中，忽略重复请求')
+      this.logger.addDebugLog('已有单步执行进行中，忽略重复请求')
       return
     }
 
@@ -145,7 +146,7 @@ export class AutoBattleManager {
 
       const battleState = this.battleSystem.getBattleState()
       if (battleState) {
-        await this.battleLogManager.syncBattleLogs(battleState)
+        await this.logger.syncBattleLogs(battleState)
       }
 
       // 执行完成后暂停（仅在战斗仍活跃时才切换，防止 ENDED 被误切为 PAUSED）
@@ -155,7 +156,7 @@ export class AutoBattleManager {
     } catch (error) {
       console.error('执行回合时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
-      this.battleLogManager.addDebugLog(`执行回合时出错: ${errorMsg}`)
+      this.logger.addDebugLog(`执行回合时出错: ${errorMsg}`)
       // 出错时也暂停（仅在战斗仍活跃时）
       if (!this.battleSystem.getIsPaused() && this.battleSystem.isBattleInProgress()) {
         this.battleSystem.togglePause()

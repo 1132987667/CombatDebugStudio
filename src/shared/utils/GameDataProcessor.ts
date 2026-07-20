@@ -118,6 +118,7 @@ export class GameDataProcessor {
   static enemyToParticipant(
     enemy: Enemy,
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
+    seatIndex: number = 0,
   ): BattleParticipantImpl {
 
     // 1. 解析被动技能并生成修饰符模板列表
@@ -141,7 +142,7 @@ export class GameDataProcessor {
       team: type,
       level: enemy.level,
       enabled: true,
-      seatIndex: 0,
+      seatIndex,
       skills: {
         small: GameDataProcessor.getSkillByIds(enemy.skills?.small ?? []),
         passive: passiveSkills,
@@ -274,6 +275,24 @@ export class GameDataProcessor {
             })
             targetData.cachedVersion = -1
           }
+        }
+      }
+    }
+
+    // ADDITIVE 作用于 attack 时也同步到 minAttack/maxAttack
+    if (modType === ModifierType.ADDITIVE && attrCode === ATTRIBUTE_CODE.attack) {
+      for (const targetAttr of [ATTRIBUTE_CODE.minAttack, ATTRIBUTE_CODE.maxAttack]) {
+        const targetData = participant.getAttrValue(targetAttr)
+        if (targetData) {
+          targetData.modifiers.push({
+            sourceKey,
+            sourceType: ModifierSourceType.SKILL,
+            attribute: targetAttr,
+            value,
+            type: ModifierType.ADDITIVE,
+            description: skill.name,
+          })
+          targetData.cachedVersion = -1
         }
       }
     }

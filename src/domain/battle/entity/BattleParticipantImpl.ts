@@ -30,7 +30,7 @@ import {
 import { ParticipantStats } from '@/domain/battle/entity/ParticipantStats'
 import type { BuffQuery } from '@/domain/buff/types'
 import { ParticipantSkills } from '@/domain/battle/entity/ParticipantSkills'
-import { triggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
+import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { SkillType } from '@/domain/skill/types'
 
 export type BattleParticipantData = {
@@ -54,6 +54,9 @@ export type BattleParticipantData = {
  * 使用属性缓存系统管理属性值
  */
 export class BattleParticipantImpl implements BattleEntity {
+  /** 领域事件总线（由 DI 容器初始化时注入） */
+  static eventBus: IDomainEventBus
+
   id: string
   name: string
   level: number
@@ -89,11 +92,13 @@ export class BattleParticipantImpl implements BattleEntity {
   /** 属性缓存 Map */
   private stats = new ParticipantStats()
 
-  /** 属性版本戳，每次重算后递增（用于 Vue 响应式追踪） */
-  private _statsVersion = 0
-
+  /**
+   * 属性版本戳，直接映射到 stats.version。
+   * ponytail: 统一原本两套独立的版本号（_statsVersion + stats.version）为一套，
+   * 所有属性变更路径均会触发 stats.invalidateCache()，stats.version 递增后 Vue 响应式自动追踪。
+   */
   get statsVersion(): number {
-    return this._statsVersion
+    return this.stats.getCurrentVersion()
   }
 
   /** 修饰符提供者（BuffSystem），用于从 ModifierStack 同步修饰符 */
@@ -217,6 +222,10 @@ export class BattleParticipantImpl implements BattleEntity {
     return this.stats.reCalAttributeValue(attr)
   }
 
+  /**
+   * @deprecated 使用 getAttributeValue(attr) 替代。getAttributeValue 会触发重算；
+   *             如不需要重算，使用 stats.getAttribute(attr)。
+   */
   getAttrValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
     return this.stats.getAttribute(attr)
   }
@@ -234,15 +243,13 @@ export class BattleParticipantImpl implements BattleEntity {
     this.stats.recalculateAll()
     // ponytail: maxHealth 变化时将 currentHealth 同步到新上限
     this.clampCurrentHealth()
-    this._statsVersion++
   }
 
+  /**
+   * @deprecated 使用 recalcAll() 替代
+   */
   recalculateAll(): void {
-    this.syncModifiersFromProvider()
-    this.stats.recalculateAll()
-    // ponytail: maxHealth 变化时将 currentHealth 同步到新上限
-    this.clampCurrentHealth()
-    this._statsVersion++
+    this.recalcAll()
   }
 
   /** 将 currentHealth 限制在 maxHealth 范围内 */
@@ -266,11 +273,11 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   set currentHealth(value: number) {
     const maxHp = this.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    this.stats.notifyModifiersChanged()
     this.stats.setAttributeValue(
       ATTRIBUTE_CODE.currentHealth,
       Math.max(0, Math.min(value, maxHp)),
     )
-    this._statsVersion++
   }
 
   /**
@@ -291,7 +298,6 @@ export class BattleParticipantImpl implements BattleEntity {
     if (currentHp > maxHp) {
       this.stats.setAttributeValue(ATTRIBUTE_CODE.currentHealth, maxHp)
     }
-    this._statsVersion++
   }
 
   /**
@@ -306,11 +312,11 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   set currentEnergy(value: number) {
     const maxEnergy = this.getAttribute(ATTRIBUTE_CODE.maxEnergy)
+    this.stats.notifyModifiersChanged()
     this.stats.setAttributeValue(
       ATTRIBUTE_CODE.currentEnergy,
       Math.max(0, Math.min(value, maxEnergy)),
     )
-    this._statsVersion++
   }
 
   /**
@@ -653,7 +659,7 @@ export class BattleParticipantImpl implements BattleEntity {
 
     // 触发能量获取事件
     if (actualGain > 0) {
-      triggerEventBus.emit(BattleTriggerPhase.ENERGY_GAINED, {
+      BattleParticipantImpl.eventBus.emit(BattleTriggerPhase.ENERGY_GAINED, {
         phase: BattleTriggerPhase.ENERGY_GAINED,
         sourceId: this.id,
         value: actualGain,

@@ -7,10 +7,10 @@
  * 版本: 1.0.0
  */
 
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 /**
  * 战斗规则配置接口
@@ -138,7 +138,7 @@ export class BattleRuleManager {
    */
   public async loadConfig(): Promise<BattleRulesConfig> {
     this.config = this.getDefaultConfig()
-    battleLogManager.addSystemLog({message: '战斗规则配置加载成功'})
+    LoggerProvider.logger.addSystemLog({message: '战斗规则配置加载成功'})
     return this.config
   }
 
@@ -266,7 +266,7 @@ export class BattleRuleManager {
 
     // 深度合并配置
     this.config = this.deepMerge(this.config, updates)
-    battleLogManager.addDebugLog('战斗规则配置已更新')
+    LoggerProvider.logger.addDebugLog('战斗规则配置已更新')
   }
 
   /**
@@ -406,7 +406,7 @@ export class BattleRuleManager {
       }
 
       this.config = newConfig
-      battleLogManager.addDebugLog('战斗规则配置导入成功')
+      LoggerProvider.logger.addDebugLog('战斗规则配置导入成功')
       return { success: true }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误'
@@ -422,7 +422,7 @@ export class BattleRuleManager {
    */
   public resetToDefault(): void {
     this.config = this.getDefaultConfig()
-    battleLogManager.addDebugLog('战斗规则配置已重置为默认值')
+    LoggerProvider.logger.addDebugLog('战斗规则配置已重置为默认值')
   }
 
   /**

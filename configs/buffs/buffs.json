@@ -1,1136 +1,1158 @@
 [
-  {
-    "id": "buff_commander_aura",
-    "name": "统领光环",
-    "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "commander_aura_atk",
-          "targetAttribute": "attack",
-          "type": "PERCENTAGE",
-          "value": 0.1
+    {
+        "id": "buff_commander_aura",
+        "name": "统领光环",
+        "duration": -1,
+        "aura": {
+            "targetSelector": "allies",
+            "modifiers": [
+                {
+                    "id": "commander_aura_atk",
+                    "targetAttribute": "attack",
+                    "type": "PERCENTAGE",
+                    "value": 0.1
+                }
+            ]
         }
-      ]
-    }
-  },
-  {
-    "id": "buff_iron_armor",
-    "name": "铁甲护体",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "dmgReduction": "+20%"
-    }
-  },
-  {
-    "id": "buff_sky_overlord",
-    "name": "天空霸主",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "slowImmune": "+1.0"
-    }
-  },
-  {
-    "id": "buff_guard_shield",
-    "name": "近卫之盾",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_ALLY_FATAL_DAMAGE",
-        "scriptId": "block_damage_percent",
-        "params": {
-          "percent": 0.5
-        },
-        "probability": 0.3
-      }
-    ]
-  },
-  {
-    "id": "buff_general_awe",
-    "name": "将军之威",
-    "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "general_awe_def",
-          "targetAttribute": "defense",
-          "type": "PERCENTAGE",
-          "value": 0.15
+    },
+    {
+        "id": "buff_iron_armor",
+        "name": "铁甲护体",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "dmgReduction": "+20%"
         }
-      ]
-    }
-  },
-  {
-    "id": "buff_wind_shield",
-    "name": "风之护盾",
-    "maxStacks": 1,
-    "duration": 2
-  },
-  {
-    "id": "buff_wind_spirit_trigger",
-    "name": "风之灵",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_TURN_START",
-        "scriptId": "heal_percent_max_hp",
-        "params": {
-          "percent": 0.05,
-          "target": "self"
+    },
+    {
+        "id": "buff_sky_overlord",
+        "name": "天空霸主",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "slowImmune": "+1.0"
         }
-      }
-    ]
-  },
-  {
-    "id": "buff_suffocation",
-    "name": "窒息",
-    "maxStacks": 1,
-    "duration": 3
-  },
-  {
-    "id": "buff_strong_body",
-    "name": "力士之躯",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "critRate": "15%"
-    }
-  },
-  {
-    "id": "buff_revered_awe",
-    "name": "尊者之威",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "defense": "+15%",
-      "dodge": "+10"
-    }
-  },
-  {
-    "id": "buff_diamond_rage",
-    "name": "金刚之怒",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "buff_demon_subduing",
-    "name": "伏魔之力",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "demonDamage": "+20%"
-    }
-  },
-  {
-    "id": "buff_dragon_awe",
-    "name": "龙威",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "critDamage": "+20%"
-    }
-  },
-  {
-    "id": "buff_zen_heart_trigger",
-    "name": "禅心",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_TURN_START",
-        "scriptId": "heal_lowest_hp_ally",
-        "params": {
-          "percentMaxHp": 0.05
+    },
+    {
+        "id": "buff_guard_shield",
+        "name": "近卫之盾",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_ALLY_FATAL_DAMAGE",
+                "scriptId": "block_damage_percent",
+                "params": {
+                    "percent": 0.5
+                },
+                "probability": 0.3
+            }
+        ]
+    },
+    {
+        "id": "buff_general_awe",
+        "name": "将军之威",
+        "duration": -1,
+        "aura": {
+            "targetSelector": "allies",
+            "modifiers": [
+                {
+                    "id": "general_awe_def",
+                    "targetAttribute": "defense",
+                    "type": "PERCENTAGE",
+                    "value": 0.15
+                }
+            ]
         }
-      }
-    ]
-  },
-  {
-    "id": "buff_seal_all",
-    "name": "全面封印",
-    "maxStacks": 1,
-    "duration": 2
-  },
-  {
-    "id": "buff_traitor_scheme",
-    "name": "叛徒之谋",
-    "duration": -1,
-    "aura": {
-      "targetSelector": "self",
-      "modifiers": [
-        {
-          "id": "traitor_scheme_damage_to_low_hp",
-          "targetAttribute": "damageToLowHp",
-          "type": "ADDITIVE",
-          "value": 30,
-          "condition": "target.hp_ratio < 0.5"
+    },
+    {
+        "id": "buff_wind_shield",
+        "name": "风之护盾",
+        "maxStacks": 1,
+        "duration": 2
+    },
+    {
+        "id": "buff_wind_spirit_trigger",
+        "name": "风之灵",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_TURN_START",
+                "scriptId": "heal_percent_max_hp",
+                "params": {
+                    "percent": 0.05,
+                    "target": "self"
+                }
+            }
+        ]
+    },
+    {
+        "id": "buff_suffocation",
+        "name": "窒息",
+        "maxStacks": 1,
+        "duration": 3
+    },
+    {
+        "id": "buff_strong_body",
+        "name": "力士之躯",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "critRate": "15%"
         }
-      ]
-    }
-  },
-  {
-    "id": "buff_general_bravery",
-    "name": "将领之勇",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "buff_elder_wisdom",
-    "name": "长老之智",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "skillCooldown": "-1"
-    }
-  },
-  {
-    "id": "buff_leader_aura",
-    "name": "首领光环",
-    "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "leader_aura_atk",
-          "targetAttribute": "attack",
-          "type": "PERCENTAGE",
-          "value": 0.15
+    },
+    {
+        "id": "buff_revered_awe",
+        "name": "尊者之威",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "defense": "+15%",
+            "dodge": "+10"
         }
-      ]
-    }
-  },
-  {
-    "id": "buff_commander_awe",
-    "name": "统帅之威",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "critRate": "+10%"
-    }
-  },
-  {
-    "id": "buff_sacred_blessing_trigger",
-    "name": "灵山祝福",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_TURN_START",
-        "scriptId": "heal_all_allies",
-        "params": {
-          "percentMaxHp": 0.03
+    },
+    {
+        "id": "buff_diamond_rage",
+        "name": "金刚之怒",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "buff_demon_subduing",
+        "name": "伏魔之力",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "demonDamage": "+20%"
         }
-      }
-    ]
-  },
-  {
-    "id": "buff_bleed",
-    "name": "流血",
-    "maxStacks": 1,
-    "duration": 2
-  },
-  {
-    "id": "buff_stone_flesh",
-    "name": "岩石肌肤",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "buff_metallization",
-    "name": "金属化",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_DAMAGE_TAKEN",
-        "scriptId": "reflect_damage",
-        "params": {
-          "percent": 0.3
-        },
-        "probability": 0.2,
-        "condition": "damageCategory == 'elemental'"
-      }
-    ]
-  },
-  {
-    "id": "buff_earth_protection",
-    "name": "土灵加护",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_DAMAGE_TAKEN",
-        "scriptId": "apply_shield",
-        "params": {
-          "shieldPercent": 0.1
-        },
-        "probability": 0.15
-      }
-    ]
-  },
-  {
-    "id": "buff_unshakable",
-    "name": "不动如山",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "stunResist": "+1.0",
-      "knockbackResist": "+1.0"
-    }
-  },
-  {
-    "id": "buff_indestructible",
-    "name": "金刚不坏",
-    "maxStacks": 5,
-    "duration": -1
-  },
-  {
-    "id": "buff_earth_gift_trigger",
-    "name": "大地恩赐",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_TURN_END",
-        "scriptId": "heal_percent_max_hp",
-        "params": {
-          "percent": 0.1
-        },
-        "condition": "self.hp_ratio < 0.5"
-      }
-    ]
-  },
-  {
-    "id": "buff_petrify",
-    "name": "石化",
-    "maxStacks": 1,
-    "duration": 1
-  },
-  {
-    "id": "buff_confusion",
-    "name": "混乱",
-    "maxStacks": 1,
-    "duration": 1
-  },
-  {
-    "id": "buff_old_tree_roots",
-    "name": "老树盘根",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_DAMAGE_TAKEN",
-        "scriptId": "apply_debuff_to_attacker",
-        "params": {
-          "buffId": "buff_slow",
-          "duration": 2
-        },
-        "probability": 0.2
-      }
-    ]
-  },
-  {
-    "id": "buff_demon_aura",
-    "name": "妖气弥漫",
-    "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "demon_aura_dodge",
-          "targetAttribute": "dodge",
-          "type": "ADDITIVE",
-          "value": 0.1
+    },
+    {
+        "id": "buff_dragon_awe",
+        "name": "龙威",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "critDamage": "+20%"
         }
-      ]
-    }
-  },
-  {
-    "id": "buff_thick_skin",
-    "name": "厚皮",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "critDamageTaken": "25%"
-    }
-  },
-  {
-    "id": "buff_seal",
-    "name": "封印",
-    "maxStacks": 1,
-    "duration": 1
-  },
-  {
-    "id": "buff_mist_shield",
-    "name": "迷雾护盾",
-    "maxStacks": 1,
-    "duration": 1
-  },
-  {
-    "id": "buff_thousand_year",
-    "name": "千年树龄",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_TURN_END",
-        "scriptId": "heal_percent_max_hp",
-        "params": {
-          "percent": 0.05,
-          "target": "self"
+    },
+    {
+        "id": "buff_zen_heart_trigger",
+        "name": "禅心",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_TURN_START",
+                "scriptId": "heal_lowest_hp_ally",
+                "params": {
+                    "percentMaxHp": 0.05
+                }
+            }
+        ]
+    },
+    {
+        "id": "buff_seal_all",
+        "name": "全面封印",
+        "maxStacks": 1,
+        "duration": 2
+    },
+    {
+        "id": "buff_traitor_scheme",
+        "name": "叛徒之谋",
+        "duration": -1,
+        "aura": {
+            "targetSelector": "self",
+            "modifiers": [
+                {
+                    "id": "traitor_scheme_damage_to_low_hp",
+                    "targetAttribute": "damageToLowHp",
+                    "type": "ADDITIVE",
+                    "value": 30,
+                    "condition": "target.hp_ratio < 0.5"
+                }
+            ]
         }
-      }
-    ]
-  },
-  {
-    "id": "buff_scheming",
-    "name": "老谋深算",
-    "duration": -1,
-    "attributes": {
-      "controlDurationReduction": "+1"
-    }
-  },
-  {
-    "id": "buff_mist_coverage_aura",
-    "name": "迷雾笼罩",
-    "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "mist_coverage_dodge",
-          "targetAttribute": "dodge",
-          "type": "ADDITIVE",
-          "value": 0.15
+    },
+    {
+        "id": "buff_general_bravery",
+        "name": "将领之勇",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "buff_elder_wisdom",
+        "name": "长老之智",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "skillCooldown": "-1"
         }
-      ]
-    }
-  },
-  {
-    "id": "buff_forest_rage",
-    "name": "森林之怒",
-    "maxStacks": 1,
-    "duration": 2,
-    "attributes": {
-      "attack": "+20%"
-    }
-  },
-  {
-    "id": "buff_slow_heavy",
-    "name": "沉重减速",
-    "maxStacks": 1,
-    "duration": 1,
-    "attributes": {
-      "speed": "-10"
-    }
-  },
-  {
-    "id": "buff_quicksand_body",
-    "name": "流沙之体",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "buff_snake_skin",
-    "name": "蛇皮",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "dmgReduction": "+15%"
-    }
-  },
-  {
-    "id": "buff_water_protection",
-    "name": "水之加护",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "waterDamageTaken": "30%"
-    }
-  },
-  {
-    "id": "buff_sand_avatar",
-    "name": "沙之化身",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "poisonResist": "+1.0",
-      "bleedResist": "+1.0"
-    }
-  },
-  {
-    "id": "buff_snake_king_awe_trigger",
-    "name": "蛇王威严",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_ATTACK_HIT",
-        "scriptId": "apply_poison",
-        "params": {
-          "damagePercent": 0.05,
-          "duration": 2
-        },
-        "probability": 0.2
-      }
-    ]
-  },
-  {
-    "id": "buff_water_guardian_trigger",
-    "name": "水之守护",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_DAMAGE_TAKEN",
-        "scriptId": "heal_percent_max_hp",
-        "params": {
-          "percent": 0.1,
-          "target": "self"
-        },
-        "probability": 0.15
-      }
-    ]
-  },
-  {
-    "id": "buff_drowning",
-    "name": "溺水",
-    "maxStacks": 1,
-    "duration": 3
-  },
-  {
-    "id": "buff_burn",
-    "name": "灼烧",
-    "maxStacks": 1,
-    "duration": 2,
-    "tags": ["debuff", "dot", "burn"]
-  },
-  {
-    "id": "buff_lava_skin_trigger",
-    "name": "熔岩皮肤",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_DAMAGE_TAKEN",
-        "scriptId": "reflect_fire_damage",
-        "params": {
-          "percent": 0.2
-        },
-        "probability": 0.2
-      }
-    ]
-  },
-  {
-    "id": "buff_fire_resonance",
-    "name": "火元素共鸣",
-    "maxStacks": 1,
-    "duration": -1,
-    "onAdd": "owner.addAura('aura_fire_atk_up');"
-  },
-  {
-    "id": "buff_fire_control",
-    "name": "火焰掌控",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "burnDuration": "+1"
-    }
-  },
-  {
-    "id": "buff_magma_shield",
-    "name": "岩浆护盾",
-    "maxStacks": 1,
-    "duration": 2
-  },
-  {
-    "id": "buff_fire_lord",
-    "name": "火焰领主",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "burnImmune": "+1.0",
-      "fireDamage": "+20%"
-    }
-  },
-  {
-    "id": "buff_giant_power",
-    "name": "巨人之力",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "buff_earth_fire_heart_trigger",
-    "name": "地火之心",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_DAMAGE_TAKEN",
-        "scriptId": "heal_on_fire_damage",
-        "params": {
-          "healPercent": 0.2
-        },
-        "condition": "damageCategory == 'elemental'"
-      }
-    ]
-  },
-  {
-    "id": "buff_fire_vulnerability",
-    "name": "火焰易伤",
-    "maxStacks": 1,
-    "duration": 2,
-    "attributes": {
-      "fireDamageTaken": "+30%"
-    }
-  },
-  {
-    "id": "buff_lava_bind",
-    "name": "熔岩束缚",
-    "maxStacks": 1,
-    "duration": 1
-  },
-  {
-    "id": "buff_web_master",
-    "name": "蛛网大师",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "webSuccessRate": "+10%"
-    }
-  },
-  {
-    "id": "buff_moth_powder",
-    "name": "毒蛾粉",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_DAMAGE_TAKEN",
-        "scriptId": "apply_poison",
-        "params": {
-          "damagePercent": 0.05,
-          "duration": 2
-        },
-        "probability": 0.25
-      }
-    ]
-  },
-  {
-    "id": "buff_guard_loyalty",
-    "name": "亲卫之忠",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_ALLY_DAMAGE_TAKEN",
-        "scriptId": "share_damage",
-        "params": {
-          "percent": 0.3
-        },
-        "probability": 0.15
-      }
-    ]
-  },
-  {
-    "id": "buff_guard_web",
-    "name": "守护蛛网",
-    "maxStacks": 1,
-    "duration": 2
-  },
-  {
-    "id": "buff_spider_queen",
-    "name": "蛛后之母",
-    "maxStacks": 1,
-    "duration": -1,
-    "onAdd": "owner.addAura('aura_spider_atk_def_up');"
-  },
-  {
-    "id": "buff_spider_queen",
-    "name": "蛛后之母",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_TURN_END",
-        "scriptId": "summon_unit",
-        "params": {
-          "unitId": "spider_minion"
-        },
-        "probability": 0.3
-      }
-    ]
-  },
-  {
-    "id": "buff_valley_overlord",
-    "name": "谷中霸主",
-    "duration": -1,
-    "immunities": [
-      "slow",
-      "stun",
-      "freeze",
-      "silence",
-      "charm",
-      "fear",
-      "sleep",
-      "confuse"
-    ]
-  },
-  {
-    "id": "buff_crit_damage_reduction",
-    "name": "坚韧表皮",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "buff_stone_skin",
-    "name": "石化皮肤",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "buff_mountain_child",
-    "name": "山林之子",
-    "duration": -1,
-    "immunities": ["slow"]
-  },
-  {
-    "id": "buff_flower_regeneration",
-    "name": "花之再生",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_TURN_END",
-        "scriptId": "heal_percent_max_hp",
-        "params": {
-          "percent": 0.05,
-          "target": "self"
+    },
+    {
+        "id": "buff_leader_aura",
+        "name": "首领光环",
+        "duration": -1,
+        "aura": {
+            "targetSelector": "allies",
+            "modifiers": [
+                {
+                    "id": "leader_aura_atk",
+                    "targetAttribute": "attack",
+                    "type": "PERCENTAGE",
+                    "value": 0.15
+                }
+            ]
         }
-      }
-    ]
-  },
-  {
-    "id": "aura_leader_awe",
-    "name": "首领威严",
-    "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "leader_awe_atk",
-          "targetAttribute": "attack",
-          "type": "PERCENTAGE",
-          "value": 15
-        },
-        {
-          "id": "leader_awe_def",
-          "targetAttribute": "defense",
-          "type": "PERCENTAGE",
-          "value": 10
+    },
+    {
+        "id": "buff_commander_awe",
+        "name": "统帅之威",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "critRate": "+10%"
         }
-      ]
-    }
-  },
-  {
-    "id": "buff_mountain_protection_trigger",
-    "name": "山灵庇护",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_DAMAGE_TAKEN",
-        "scriptId": "apply_debuff_to_attacker",
-        "params": {
-          "buffId": "buff_slow",
-          "duration": 2
-        },
-        "probability": 0.15
-      }
-    ]
-  },
-  {
-    "id": "buff_queen_awe",
-    "name": "女王威严",
-    "duration": -1,
-    "aura": {
-      "targetSelector": "enemies",
-      "modifiers": [
-        {
-          "id": "queen_awe_atk_debuff",
-          "targetAttribute": "attack",
-          "type": "PERCENTAGE",
-          "value": -0.15
+    },
+    {
+        "id": "buff_sacred_blessing_trigger",
+        "name": "灵山祝福",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_TURN_START",
+                "scriptId": "heal_all_allies",
+                "params": {
+                    "percentMaxHp": 0.03
+                }
+            }
+        ]
+    },
+    {
+        "id": "buff_bleed",
+        "name": "流血",
+        "maxStacks": 1,
+        "duration": 2
+    },
+    {
+        "id": "buff_stone_flesh",
+        "name": "岩石肌肤",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "buff_metallization",
+        "name": "金属化",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_DAMAGE_TAKEN",
+                "scriptId": "reflect_damage",
+                "params": {
+                    "percent": 0.3
+                },
+                "probability": 0.2,
+                "condition": "damageCategory == 'elemental'"
+            }
+        ]
+    },
+    {
+        "id": "buff_earth_protection",
+        "name": "土灵加护",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_DAMAGE_TAKEN",
+                "scriptId": "apply_shield",
+                "params": {
+                    "shieldPercent": 0.1
+                },
+                "probability": 0.15
+            }
+        ]
+    },
+    {
+        "id": "buff_unshakable",
+        "name": "不动如山",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "stunResist": "+1.0",
+            "knockbackResist": "+1.0"
         }
-      ]
-    }
-  },
-  {
-    "id": "buff_mountain_god",
-    "name": "山神降临",
-    "maxStacks": 1,
-    "duration": 2,
-    "onAdd": "owner.attributes.attack=owner.attributes.attack*1.3;owner.attributes.defense=owner.attributes.defense*1.3;owner.attributes.speed=owner.attributes.speed+10;"
-  },
-  {
-    "id": "buff_commander",
-    "name": "队长指挥",
-    "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "commander_aura_crit_rate",
-          "targetAttribute": "critRate",
-          "type": "ADDITIVE",
-          "value": 0.1
+    },
+    {
+        "id": "buff_indestructible",
+        "name": "金刚不坏",
+        "maxStacks": 5,
+        "duration": -1
+    },
+    {
+        "id": "buff_earth_gift_trigger",
+        "name": "大地恩赐",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_TURN_END",
+                "scriptId": "heal_percent_max_hp",
+                "params": {
+                    "percent": 0.1
+                },
+                "condition": "self.hp_ratio < 0.5"
+            }
+        ]
+    },
+    {
+        "id": "buff_petrify",
+        "name": "石化",
+        "maxStacks": 1,
+        "duration": 1
+    },
+    {
+        "id": "buff_confusion",
+        "name": "混乱",
+        "maxStacks": 1,
+        "duration": 1
+    },
+    {
+        "id": "buff_old_tree_roots",
+        "name": "老树盘根",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_DAMAGE_TAKEN",
+                "scriptId": "apply_debuff_to_attacker",
+                "params": {
+                    "buffId": "buff_slow",
+                    "duration": 2
+                },
+                "probability": 0.2
+            }
+        ]
+    },
+    {
+        "id": "buff_demon_aura",
+        "name": "妖气弥漫",
+        "duration": -1,
+        "aura": {
+            "targetSelector": "allies",
+            "modifiers": [
+                {
+                    "id": "demon_aura_dodge",
+                    "targetAttribute": "dodge",
+                    "type": "ADDITIVE",
+                    "value": 0.1
+                }
+            ]
         }
-      ]
-    }
-  },
-  {
-    "id": "buff_shell_defense",
-    "name": "甲壳防御",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "buff_fish_rage",
-    "name": "鱼群之怒",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_TURN_END",
-        "scriptId": "cleanse_random_debuff",
-        "params": {
-          "count": 1
-        },
-        "probability": 0.3
-      }
-    ]
-  },
-  {
-    "id": "buff_gold_shield",
-    "name": "金甲护体",
-    "maxStacks": 1,
-    "duration": 2
-  },
-  {
-    "id": "buff_water_dominance",
-    "name": "统御水域",
-    "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "water_dominance_atk",
-          "targetAttribute": "waterAtk",
-          "type": "PERCENTAGE",
-          "value": 0.15
+    },
+    {
+        "id": "buff_thick_skin",
+        "name": "厚皮",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "critDamageTaken": "25%"
         }
-      ]
-    }
-  },
-  {
-    "id": "buff_gold_shell",
-    "name": "黄金甲壳",
-    "maxStacks": 1,
-    "duration": -1,
-    "attributes": {
-      "critRate": "15%"
-    }
-  },
-  {
-    "id": "buff_water_resonance_trigger",
-    "name": "水之共鸣",
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_TURN_START",
-        "scriptId": "heal_lowest_hp_ally",
-        "params": {
-          "percentMaxHp": 0.05
+    },
+    {
+        "id": "buff_seal",
+        "name": "封印",
+        "maxStacks": 1,
+        "duration": 1
+    },
+    {
+        "id": "buff_mist_shield",
+        "name": "迷雾护盾",
+        "maxStacks": 1,
+        "duration": 1
+    },
+    {
+        "id": "buff_thousand_year",
+        "name": "千年树龄",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_TURN_END",
+                "scriptId": "heal_percent_max_hp",
+                "params": {
+                    "percent": 0.05,
+                    "target": "self"
+                }
+            }
+        ]
+    },
+    {
+        "id": "buff_scheming",
+        "name": "老谋深算",
+        "duration": -1,
+        "attributes": {
+            "controlDurationReduction": "+1"
         }
-      }
-    ]
-  },
-  {
-    "id": "buff_wet",
-    "name": "湿透",
-    "maxStacks": 1,
-    "duration": 3,
-    "attributes": {
-      "lightningDamageTaken": "+30%"
-    }
-  },
-  {
-    "id": "buff_def_reduction",
-    "name": "防御降低",
-    "maxStacks": 1,
-    "duration": 1,
-    "attributes": {
-      "defense": "-10%"
-    }
-  },
-  {
-    "id": "buff_dodge_up",
-    "name": "闪避提升",
-    "maxStacks": 1,
-    "duration": 1,
-    "attributes": {
-      "dodge": "+15"
-    }
-  },
-  {
-    "id": "buff_def_up",
-    "name": "防御提升",
-    "maxStacks": 1,
-    "duration": 1,
-    "attributes": {
-      "defense": "+10%"
-    }
-  },
-  {
-    "id": "buff_speed_up",
-    "name": "速度提升",
-    "maxStacks": 1,
-    "duration": 1,
-    "attributes": {
-      "speed": "+5"
-    }
-  },
-  {
-    "id": "buff_ally_atk_up",
-    "name": "同伴攻击提升",
-    "maxStacks": 1,
-    "duration": 2,
-    "attributes": {
-      "attack": "+5%"
-    }
-  },
-  {
-    "id": "buff_atk_up",
-    "name": "攻击提升",
-    "maxStacks": 1,
-    "duration": 2,
-    "attributes": {
-      "attack": "+10%"
-    }
-  },
-  {
-    "id": "buff_atk_reduction",
-    "name": "攻击降低",
-    "maxStacks": 1,
-    "duration": 2,
-    "attributes": {
-      "attack": "-15%"
-    }
-  },
-  {
-    "id": "buff_speed_reduction",
-    "name": "速度降低",
-    "maxStacks": 1,
-    "duration": 1,
-    "attributes": {
-      "speed": "-10"
-    }
-  },
-  {
-    "id": "buff_bind",
-    "name": "束缚",
-    "maxStacks": 1,
-    "duration": 2,
-    "controlType": "bind",
-    "controlPriority": 60
-  },
-  {
-    "id": "buff_hit_reduction",
-    "name": "命中率下降",
-    "maxStacks": 1,
-    "duration": 1,
-    "attributes": {
-      "HIT_RATE": "-10"
-    }
-  },
-  {
-    "id": "buff_poison",
-    "name": "中毒",
-    "maxStacks": 1,
-    "duration": 2,
-    "tags": ["debuff", "dot", "heal_reduction", "poison"],
-    "triggers": [
-      {
-        "phase": "ON_TURN_START",
-        "scriptId": "deal_dot_damage",
-        "params": {
-          "damageCategory": "elemental",
-          "baseDamageFormula": "target.maxHp * 0.03"
+    },
+    {
+        "id": "buff_mist_coverage_aura",
+        "name": "迷雾笼罩",
+        "duration": -1,
+        "aura": {
+            "targetSelector": "allies",
+            "modifiers": [
+                {
+                    "id": "mist_coverage_dodge",
+                    "targetAttribute": "dodge",
+                    "type": "ADDITIVE",
+                    "value": 0.15
+                }
+            ]
         }
-      }
-    ]
-  },
-  {
-    "id": "buff_strong_poison",
-    "name": "剧毒",
-    "maxStacks": 1,
-    "duration": 2,
-    "tags": ["debuff", "dot", "poison"],
-    "triggers": [
-      {
-        "phase": "ON_TURN_START",
-        "scriptId": "deal_dot_damage",
-        "params": {
-          "damageCategory": "elemental",
-          "baseDamageFormula": "target.maxHp * 0.05"
+    },
+    {
+        "id": "buff_forest_rage",
+        "name": "森林之怒",
+        "maxStacks": 1,
+        "duration": 2,
+        "attributes": {
+            "attack": "+20%"
         }
-      }
-    ]
-  },
-  {
-    "id": "buff_stun",
-    "name": "眩晕",
-    "maxStacks": 1,
-    "duration": 1,
-    "tags": ["debuff", "control", "stun"],
-    "statusType": "stun"
-  },
-  {
-    "id": "buff_shield",
-    "name": "护盾",
-    "maxStacks": 1,
-    "duration": 1,
-    "shield": {
-      "valueFormula": "source.maxHp * 0.10",
-      "damageCategoryAbsorb": "all"
-    }
-  },
-  {
-    "id": "guardian_buff_revenge_rage",
-    "name": "复仇怒火",
-    "description": "攻击↑5%/层",
-    "maxStacks": 5,
-    "duration": -1
-  },
-  {
-    "id": "guardian_buff_armor_break",
-    "name": "破甲打击",
-    "description": "防御↓20%",
-    "maxStacks": 1,
-    "duration": 2,
-    "isDebuff": true
-  },
-  {
-    "id": "guardian_buff_firm_shield",
-    "name": "坚毅护盾",
-    "maxStacks": 1,
-    "duration": 1
-  },
-  {
-    "id": "guardian_buff_static_rebound",
-    "name": "静电反冲",
-    "maxStacks": 1,
-    "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_APPLY",
-        "scriptId": "apply_silence_to_attacker",
-        "params": { "buffId": "buff_silence", "duration": 1 },
-        "probability": 1.0
-      }
-    ]
-  },
-  {
-    "id": "guardian_buff_first_strike",
-    "name": "先发制人",
-    "description": "伤害↑25%",
-    "maxStacks": 1,
-    "duration": 1
-  },
-  {
-    "id": "guardian_buff_charge_burst",
-    "name": "蓄力爆发",
-    "description": "伤害↑100%",
-    "maxStacks": 1,
-    "duration": 1
-  },
-  {
-    "id": "guardian_buff_element_slow",
-    "name": "元素迟缓",
-    "description": "速度↓5%",
-    "maxStacks": 1,
-    "duration": 1,
-    "isDebuff": true
-  },
-  {
-    "id": "guardian_buff_despair_aura",
-    "name": "绝望气场",
-    "maxStacks": 1,
-    "duration": -1,
-    "aura": {
-      "targetSelector": "enemies",
-      "modifiers": [
-        {
-          "id": "despair_aura_crit",
-          "targetAttribute": "critRate",
-          "type": "ADDITIVE",
-          "value": -15
+    },
+    {
+        "id": "buff_slow_heavy",
+        "name": "沉重减速",
+        "maxStacks": 1,
+        "duration": 1,
+        "attributes": {
+            "speed": "-10"
         }
-      ]
+    },
+    {
+        "id": "buff_quicksand_body",
+        "name": "流沙之体",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "buff_snake_skin",
+        "name": "蛇皮",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "dmgReduction": "+15%"
+        }
+    },
+    {
+        "id": "buff_water_protection",
+        "name": "水之加护",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "waterDamageTaken": "30%"
+        }
+    },
+    {
+        "id": "buff_sand_avatar",
+        "name": "沙之化身",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "poisonResist": "+1.0",
+            "bleedResist": "+1.0"
+        }
+    },
+    {
+        "id": "buff_snake_king_awe_trigger",
+        "name": "蛇王威严",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_ATTACK_HIT",
+                "scriptId": "apply_poison",
+                "params": {
+                    "damagePercent": 0.05,
+                    "duration": 2
+                },
+                "probability": 0.2
+            }
+        ]
+    },
+    {
+        "id": "buff_water_guardian_trigger",
+        "name": "水之守护",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_DAMAGE_TAKEN",
+                "scriptId": "heal_percent_max_hp",
+                "params": {
+                    "percent": 0.1,
+                    "target": "self"
+                },
+                "probability": 0.15
+            }
+        ]
+    },
+    {
+        "id": "buff_drowning",
+        "name": "溺水",
+        "maxStacks": 1,
+        "duration": 3
+    },
+    {
+        "id": "buff_burn",
+        "name": "灼烧",
+        "maxStacks": 1,
+        "duration": 2,
+        "tags": [
+            "debuff",
+            "dot",
+            "burn"
+        ]
+    },
+    {
+        "id": "buff_lava_skin_trigger",
+        "name": "熔岩皮肤",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_DAMAGE_TAKEN",
+                "scriptId": "reflect_fire_damage",
+                "params": {
+                    "percent": 0.2
+                },
+                "probability": 0.2
+            }
+        ]
+    },
+    {
+        "id": "buff_fire_resonance",
+        "name": "火元素共鸣",
+        "maxStacks": 1,
+        "duration": -1,
+        "onAdd": "owner.addAura('aura_fire_atk_up');"
+    },
+    {
+        "id": "buff_fire_control",
+        "name": "火焰掌控",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "burnDuration": "+1"
+        }
+    },
+    {
+        "id": "buff_magma_shield",
+        "name": "岩浆护盾",
+        "maxStacks": 1,
+        "duration": 2
+    },
+    {
+        "id": "buff_fire_lord",
+        "name": "火焰领主",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "burnImmune": "+1.0",
+            "fireDamage": "+20%"
+        }
+    },
+    {
+        "id": "buff_giant_power",
+        "name": "巨人之力",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "buff_earth_fire_heart_trigger",
+        "name": "地火之心",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_DAMAGE_TAKEN",
+                "scriptId": "heal_on_fire_damage",
+                "params": {
+                    "healPercent": 0.2
+                },
+                "condition": "damageCategory == 'elemental'"
+            }
+        ]
+    },
+    {
+        "id": "buff_fire_vulnerability",
+        "name": "火焰易伤",
+        "maxStacks": 1,
+        "duration": 2,
+        "attributes": {
+            "fireDamageTaken": "+30%"
+        }
+    },
+    {
+        "id": "buff_lava_bind",
+        "name": "熔岩束缚",
+        "maxStacks": 1,
+        "duration": 1
+    },
+    {
+        "id": "buff_web_master",
+        "name": "蛛网大师",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "webSuccessRate": "+10%"
+        }
+    },
+    {
+        "id": "buff_moth_powder",
+        "name": "毒蛾粉",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_DAMAGE_TAKEN",
+                "scriptId": "apply_poison",
+                "params": {
+                    "damagePercent": 0.05,
+                    "duration": 2
+                },
+                "probability": 0.25
+            }
+        ]
+    },
+    {
+        "id": "buff_guard_loyalty",
+        "name": "亲卫之忠",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_ALLY_DAMAGE_TAKEN",
+                "scriptId": "share_damage",
+                "params": {
+                    "percent": 0.3
+                },
+                "probability": 0.15
+            }
+        ]
+    },
+    {
+        "id": "buff_guard_web",
+        "name": "守护蛛网",
+        "maxStacks": 1,
+        "duration": 2
+    },
+    {
+        "id": "buff_spider_queen",
+        "name": "蛛后之母",
+        "maxStacks": 1,
+        "duration": -1,
+        "onAdd": "owner.addAura('aura_spider_atk_def_up');"
+    },
+    {
+        "id": "buff_spider_queen_summon",
+        "name": "蛛后之母",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_TURN_END",
+                "scriptId": "summon_unit",
+                "params": {
+                    "unitId": "spider_minion"
+                },
+                "probability": 0.3
+            }
+        ]
+    },
+    {
+        "id": "buff_valley_overlord",
+        "name": "谷中霸主",
+        "duration": -1,
+        "immunities": [
+            "slow",
+            "stun",
+            "freeze",
+            "silence",
+            "charm",
+            "fear",
+            "sleep",
+            "confuse"
+        ]
+    },
+    {
+        "id": "buff_crit_damage_reduction",
+        "name": "坚韧表皮",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "buff_stone_skin",
+        "name": "石化皮肤",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "buff_mountain_child",
+        "name": "山林之子",
+        "duration": -1,
+        "immunities": [
+            "slow"
+        ]
+    },
+    {
+        "id": "buff_flower_regeneration",
+        "name": "花之再生",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_TURN_END",
+                "scriptId": "heal_percent_max_hp",
+                "params": {
+                    "percent": 0.05,
+                    "target": "self"
+                }
+            }
+        ]
+    },
+    {
+        "id": "aura_leader_awe",
+        "name": "首领威严",
+        "duration": -1,
+        "aura": {
+            "targetSelector": "allies",
+            "modifiers": [
+                {
+                    "id": "leader_awe_atk",
+                    "targetAttribute": "attack",
+                    "type": "PERCENTAGE",
+                    "value": 15
+                },
+                {
+                    "id": "leader_awe_def",
+                    "targetAttribute": "defense",
+                    "type": "PERCENTAGE",
+                    "value": 10
+                }
+            ]
+        }
+    },
+    {
+        "id": "buff_mountain_protection_trigger",
+        "name": "山灵庇护",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_DAMAGE_TAKEN",
+                "scriptId": "apply_debuff_to_attacker",
+                "params": {
+                    "buffId": "buff_slow",
+                    "duration": 2
+                },
+                "probability": 0.15
+            }
+        ]
+    },
+    {
+        "id": "buff_queen_awe",
+        "name": "女王威严",
+        "duration": -1,
+        "aura": {
+            "targetSelector": "enemies",
+            "modifiers": [
+                {
+                    "id": "queen_awe_atk_debuff",
+                    "targetAttribute": "attack",
+                    "type": "PERCENTAGE",
+                    "value": -0.15
+                }
+            ]
+        }
+    },
+    {
+        "id": "buff_mountain_god",
+        "name": "山神降临",
+        "maxStacks": 1,
+        "duration": 2,
+        "onAdd": "owner.attributes.attack=owner.attributes.attack*1.3;owner.attributes.defense=owner.attributes.defense*1.3;owner.attributes.speed=owner.attributes.speed+10;"
+    },
+    {
+        "id": "buff_commander",
+        "name": "队长指挥",
+        "duration": -1,
+        "aura": {
+            "targetSelector": "allies",
+            "modifiers": [
+                {
+                    "id": "commander_aura_crit_rate",
+                    "targetAttribute": "critRate",
+                    "type": "ADDITIVE",
+                    "value": 0.1
+                }
+            ]
+        }
+    },
+    {
+        "id": "buff_shell_defense",
+        "name": "甲壳防御",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "buff_fish_rage",
+        "name": "鱼群之怒",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_TURN_END",
+                "scriptId": "cleanse_random_debuff",
+                "params": {
+                    "count": 1
+                },
+                "probability": 0.3
+            }
+        ]
+    },
+    {
+        "id": "buff_gold_shield",
+        "name": "金甲护体",
+        "maxStacks": 1,
+        "duration": 2
+    },
+    {
+        "id": "buff_water_dominance",
+        "name": "统御水域",
+        "duration": -1,
+        "aura": {
+            "targetSelector": "allies",
+            "modifiers": [
+                {
+                    "id": "water_dominance_atk",
+                    "targetAttribute": "waterAtk",
+                    "type": "PERCENTAGE",
+                    "value": 0.15
+                }
+            ]
+        }
+    },
+    {
+        "id": "buff_gold_shell",
+        "name": "黄金甲壳",
+        "maxStacks": 1,
+        "duration": -1,
+        "attributes": {
+            "critRate": "15%"
+        }
+    },
+    {
+        "id": "buff_water_resonance_trigger",
+        "name": "水之共鸣",
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_TURN_START",
+                "scriptId": "heal_lowest_hp_ally",
+                "params": {
+                    "percentMaxHp": 0.05
+                }
+            }
+        ]
+    },
+    {
+        "id": "buff_wet",
+        "name": "湿透",
+        "maxStacks": 1,
+        "duration": 3,
+        "attributes": {
+            "lightningDamageTaken": "+30%"
+        }
+    },
+    {
+        "id": "buff_def_reduction",
+        "name": "防御降低",
+        "maxStacks": 1,
+        "duration": 1,
+        "attributes": {
+            "defense": "-10%"
+        }
+    },
+    {
+        "id": "buff_dodge_up",
+        "name": "闪避提升",
+        "maxStacks": 1,
+        "duration": 1,
+        "attributes": {
+            "dodge": "+15"
+        }
+    },
+    {
+        "id": "buff_def_up",
+        "name": "防御提升",
+        "maxStacks": 1,
+        "duration": 1,
+        "attributes": {
+            "defense": "+10%"
+        }
+    },
+    {
+        "id": "buff_speed_up",
+        "name": "速度提升",
+        "maxStacks": 1,
+        "duration": 1,
+        "attributes": {
+            "speed": "+5"
+        }
+    },
+    {
+        "id": "buff_ally_atk_up",
+        "name": "同伴攻击提升",
+        "maxStacks": 1,
+        "duration": 2,
+        "attributes": {
+            "attack": "+5%"
+        }
+    },
+    {
+        "id": "buff_atk_up",
+        "name": "攻击提升",
+        "maxStacks": 1,
+        "duration": 2,
+        "attributes": {
+            "attack": "+10%"
+        }
+    },
+    {
+        "id": "buff_atk_reduction",
+        "name": "攻击降低",
+        "maxStacks": 1,
+        "duration": 2,
+        "attributes": {
+            "attack": "-15%"
+        }
+    },
+    {
+        "id": "buff_speed_reduction",
+        "name": "速度降低",
+        "maxStacks": 1,
+        "duration": 1,
+        "attributes": {
+            "speed": "-10"
+        }
+    },
+    {
+        "id": "buff_bind",
+        "name": "束缚",
+        "maxStacks": 1,
+        "duration": 2,
+        "controlType": "bind",
+        "controlPriority": 60
+    },
+    {
+        "id": "buff_hit_reduction",
+        "name": "命中率下降",
+        "maxStacks": 1,
+        "duration": 1,
+        "attributes": {
+            "HIT_RATE": "-10"
+        }
+    },
+    {
+        "id": "buff_poison",
+        "name": "中毒",
+        "maxStacks": 1,
+        "duration": 2,
+        "tags": [
+            "debuff",
+            "dot",
+            "heal_reduction",
+            "poison"
+        ],
+        "triggers": [
+            {
+                "phase": "ON_TURN_START",
+                "scriptId": "deal_dot_damage",
+                "params": {
+                    "damageCategory": "elemental",
+                    "baseDamageFormula": "target.maxHp * 0.03"
+                }
+            }
+        ]
+    },
+    {
+        "id": "buff_strong_poison",
+        "name": "剧毒",
+        "maxStacks": 1,
+        "duration": 2,
+        "tags": [
+            "debuff",
+            "dot",
+            "poison"
+        ],
+        "triggers": [
+            {
+                "phase": "ON_TURN_START",
+                "scriptId": "deal_dot_damage",
+                "params": {
+                    "damageCategory": "elemental",
+                    "baseDamageFormula": "target.maxHp * 0.05"
+                }
+            }
+        ]
+    },
+    {
+        "id": "buff_stun",
+        "name": "眩晕",
+        "maxStacks": 1,
+        "duration": 1,
+        "tags": [
+            "debuff",
+            "control",
+            "stun"
+        ],
+        "statusType": "stun"
+    },
+    {
+        "id": "buff_shield",
+        "name": "护盾",
+        "maxStacks": 1,
+        "duration": 1,
+        "shield": {
+            "valueFormula": "source.maxHp * 0.10",
+            "damageCategoryAbsorb": "all"
+        }
+    },
+    {
+        "id": "guardian_buff_revenge_rage",
+        "name": "复仇怒火",
+        "description": "攻击↑5%/层",
+        "maxStacks": 5,
+        "duration": -1
+    },
+    {
+        "id": "guardian_buff_armor_break",
+        "name": "破甲打击",
+        "description": "防御↓20%",
+        "maxStacks": 1,
+        "duration": 2,
+        "isDebuff": true
+    },
+    {
+        "id": "guardian_buff_firm_shield",
+        "name": "坚毅护盾",
+        "maxStacks": 1,
+        "duration": 1
+    },
+    {
+        "id": "guardian_buff_static_rebound",
+        "name": "静电反冲",
+        "maxStacks": 1,
+        "duration": -1,
+        "triggers": [
+            {
+                "phase": "ON_APPLY",
+                "scriptId": "apply_silence_to_attacker",
+                "params": {
+                    "buffId": "buff_silence",
+                    "duration": 1
+                },
+                "probability": 1
+            }
+        ]
+    },
+    {
+        "id": "guardian_buff_first_strike",
+        "name": "先发制人",
+        "description": "伤害↑25%",
+        "maxStacks": 1,
+        "duration": 1
+    },
+    {
+        "id": "guardian_buff_charge_burst",
+        "name": "蓄力爆发",
+        "description": "伤害↑100%",
+        "maxStacks": 1,
+        "duration": 1
+    },
+    {
+        "id": "guardian_buff_element_slow",
+        "name": "元素迟缓",
+        "description": "速度↓5%",
+        "maxStacks": 1,
+        "duration": 1,
+        "isDebuff": true
+    },
+    {
+        "id": "guardian_buff_despair_aura",
+        "name": "绝望气场",
+        "maxStacks": 1,
+        "duration": -1,
+        "aura": {
+            "targetSelector": "enemies",
+            "modifiers": [
+                {
+                    "id": "despair_aura_crit",
+                    "targetAttribute": "critRate",
+                    "type": "ADDITIVE",
+                    "value": -15
+                }
+            ]
+        }
+    },
+    {
+        "id": "guardian_buff_heal_breeze",
+        "name": "治愈微风",
+        "description": "防御↑20%",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "guardian_buff_eye_for_eye",
+        "name": "以牙还牙",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "guardian_buff_revenge_fury",
+        "name": "复仇之怒",
+        "description": "攻击↑30% 暴击↑20%",
+        "maxStacks": 1,
+        "duration": 3
+    },
+    {
+        "id": "guardian_buff_paralyze",
+        "name": "麻痹触手",
+        "description": "速度↓50%",
+        "maxStacks": 1,
+        "duration": 1,
+        "isDebuff": true
+    },
+    {
+        "id": "guardian_buff_sacrifice_rage",
+        "name": "献祭之怒",
+        "description": "攻击↑50% 暴击↑20%",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "guardian_buff_berserker",
+        "name": "狂战士",
+        "description": "攻击↑30% 防御↓15%",
+        "maxStacks": 1,
+        "duration": 3
+    },
+    {
+        "id": "guardian_buff_wind_thunder",
+        "name": "疾风迅雷",
+        "maxStacks": 1,
+        "duration": 2
+    },
+    {
+        "id": "guardian_buff_random_taunt",
+        "name": "随机嘲讽",
+        "maxStacks": 1,
+        "duration": 1
+    },
+    {
+        "id": "guardian_buff_backwater_armor",
+        "name": "背水护甲",
+        "maxStacks": 1,
+        "duration": -1
+    },
+    {
+        "id": "guardian_buff_swift_wind",
+        "name": "疾风叠步",
+        "description": "速度↑5%/层",
+        "maxStacks": 999,
+        "duration": -1
     }
-  },
-  {
-    "id": "guardian_buff_heal_breeze",
-    "name": "治愈微风",
-    "description": "防御↑20%",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "guardian_buff_eye_for_eye",
-    "name": "以牙还牙",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "guardian_buff_revenge_fury",
-    "name": "复仇之怒",
-    "description": "攻击↑30% 暴击↑20%",
-    "maxStacks": 1,
-    "duration": 3
-  },
-  {
-    "id": "guardian_buff_paralyze",
-    "name": "麻痹触手",
-    "description": "速度↓50%",
-    "maxStacks": 1,
-    "duration": 1,
-    "isDebuff": true
-  },
-  {
-    "id": "guardian_buff_sacrifice_rage",
-    "name": "献祭之怒",
-    "description": "攻击↑50% 暴击↑20%",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "guardian_buff_berserker",
-    "name": "狂战士",
-    "description": "攻击↑30% 防御↓15%",
-    "maxStacks": 1,
-    "duration": 3
-  },
-  {
-    "id": "guardian_buff_wind_thunder",
-    "name": "疾风迅雷",
-    "maxStacks": 1,
-    "duration": 2
-  },
-  {
-    "id": "guardian_buff_random_taunt",
-    "name": "随机嘲讽",
-    "maxStacks": 1,
-    "duration": 1
-  },
-  {
-    "id": "guardian_buff_backwater_armor",
-    "name": "背水护甲",
-    "maxStacks": 1,
-    "duration": -1
-  },
-  {
-    "id": "guardian_buff_swift_wind",
-    "name": "疾风叠步",
-    "description": "速度↑5%/层",
-    "maxStacks": 999,
-    "duration": -1
-  }
 ]

@@ -1,8 +1,8 @@
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import type { BattleEntity, StatusEffect } from '@/domain/battle/type/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 /**
  * 手动干预管理器
@@ -11,7 +11,7 @@ import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 export class InterventionManager {
   private battleSystem: BattleSystem
   private battleStateManager: BattleStateManager
-  private battleLogManager = battleLogManager
+  private logger = LoggerProvider.logger
   private selectedCharacterId: string | null = null
   private selectedChar: BattleEntity | null = null
 
@@ -65,7 +65,7 @@ export class InterventionManager {
   endTurn() {
     // 结束当前回合的逻辑
     if (this.selectedCharacterId) {
-      this.battleLogManager.addActionLog({
+      this.logger.addActionLog({
         source: '系统',
         action: '结束回合',
         target: this.selectedChar?.name || '',
@@ -81,7 +81,7 @@ export class InterventionManager {
    */
   executeSkill(skillName: string) {
     if (this.selectedChar) {
-      this.battleLogManager.addActionLog({
+      this.logger.addActionLog({
         source: this.selectedChar.name,
         action: '使用技能',
         target: '',
@@ -115,7 +115,7 @@ export class InterventionManager {
         statusEffects: [...this.selectedChar.statusEffects],
       })
 
-      this.battleLogManager.addActionLog({
+      this.logger.addActionLog({
         source: '系统',
         action: '添加状态',
         target: this.selectedChar.name,
@@ -148,7 +148,7 @@ export class InterventionManager {
         currentEnergy: newEnergy,
       })
 
-      this.battleLogManager.addActionLog({
+      this.logger.addActionLog({
         source: '系统',
         action: '调整属性',
         target: this.selectedChar.name,
@@ -166,7 +166,7 @@ export class InterventionManager {
         statusEffects: [],
       })
 
-      this.battleLogManager.addActionLog({
+      this.logger.addActionLog({
         source: '系统',
         action: '清除状态',
         target: this.selectedChar.name,
@@ -184,13 +184,13 @@ export class InterventionManager {
       battleCharacters: this.battleSystem.getEnabledAllyTeam(),
       enemyParty: this.battleSystem.getEnabledEnemyTeam(),
       currentTurn: this.battleStateManager.getCurrentTurn(),
-      battleLogs: this.battleLogManager.getSystemLogs(),
+      battleLogs: this.logger.getSystemLogs(),
     }
 
     // 保存到本地存储
     localStorage.setItem('battleState', JSON.stringify(state, null, 2))
 
-    this.battleLogManager.addSystemLog({
+    this.logger.addSystemLog({
       message: '战斗状态已导出',
     })
     return state
@@ -207,7 +207,7 @@ export class InterventionManager {
         const state = JSON.parse(savedState)
         // 基本形状校验：确保解析结果是对象且包含必要字段
         if (!state || typeof state !== 'object') {
-          this.battleLogManager.addDebugLog('导入状态校验失败: 不是有效对象')
+          this.logger.addDebugLog('导入状态校验失败: 不是有效对象')
           return false
         }
 
@@ -215,16 +215,16 @@ export class InterventionManager {
         // 例如：
         // this.battleStateManager.initializeTeams(state.battleCharacters, state.enemyParty);
 
-        this.battleLogManager.addSystemLog({message: '战斗状态已导入'})
+        this.logger.addSystemLog({message: '战斗状态已导入'})
         return true
       } else {
-        this.battleLogManager.addDebugLog('没有找到保存的战斗状态')
+        this.logger.addDebugLog('没有找到保存的战斗状态')
         return false
       }
     } catch (error) {
       console.error('导入状态时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
-      this.battleLogManager.addDebugLog(`导入失败: ${errorMsg}`)
+      this.logger.addDebugLog(`导入失败: ${errorMsg}`)
       return false
     }
   }
@@ -264,7 +264,7 @@ export class InterventionManager {
    * 定位异常
    */
   locateException() {
-    this.battleLogManager.addSystemLog({
+    this.logger.addSystemLog({
       message: '开始异常检测',
     })
     // 这里可以实现异常检测逻辑
@@ -281,7 +281,7 @@ export class InterventionManager {
     this.selectedCharacterId = null
     this.selectedChar = null
 
-    this.battleLogManager.addSystemLog({
+    this.logger.addSystemLog({
       message: '所有参战角色已清空',
     })
   }

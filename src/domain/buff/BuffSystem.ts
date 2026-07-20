@@ -16,8 +16,8 @@ import { BuffScriptRegistry, BuffAuraConfig } from '@/domain/buff/BuffScriptRegi
 import { BuffContextPool } from '@/domain/buff/BuffContextPool'
 import { ModifierStack } from '@/domain/buff/ModifierStack'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
-import { TriggerEventBus, triggerEventBus } from '@/infrastructure/adapters/event/TriggerEventBus'
-import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
+import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import { Counter } from '@/shared/utils/Counter'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import { BattleContext, BattleTriggerPhase } from '@/domain/battle/type/types'
@@ -51,14 +51,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   private modifierStacks = new Map<string, ModifierStack>()
   private shieldValues = new Map<string, number>()
   private readonly scriptRegistry: BuffScriptRegistry
-  private readonly logger = battleLogManager
+  private readonly logger: IBattleLogManager
   private _debugMode: boolean = true
   private onAttributeChange?: (characterId: string) => void
   private onDamageRequest?: (targetId: string, damage: number, damagePercent?: number) => void
   private onHealRequest?: (targetId: string, amount: number) => void
   private onBuffApplied?: (characterId: string, buffId: string) => void
   private buffAppliedCallbackEnabled: boolean = true
-  private readonly eventBus: TriggerEventBus
+  private readonly eventBus: IDomainEventBus
   private triggerScripts = new Map<string, (context: TriggerExecutionContext) => void>()
   private instanceIdCounter = new Counter(1)
 
@@ -83,10 +83,12 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   public constructor(
     scriptRegistry: BuffScriptRegistry,
-    eventBus?: TriggerEventBus,
+    eventBus: IDomainEventBus,
+    logger: IBattleLogManager,
   ) {
     this.scriptRegistry = scriptRegistry
-    this.eventBus = eventBus ?? triggerEventBus
+    this.eventBus = eventBus
+    this.logger = logger
     this.registerDefaultTriggerScripts()
   }
 
@@ -192,7 +194,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (this.onAttributeChange) this.onAttributeChange(characterId)
   }
 
-  public getEventBus(): TriggerEventBus {
+  public getEventBus(): IDomainEventBus {
     return this.eventBus
   }
 
@@ -259,11 +261,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const buffInstance = this.buffInstances.get(instanceId)
     if (!buffInstance) return
 
-    const listenerIds: string[] = []
     for (const trigger of triggers) {
       const phase = BuffSystem.PHASE_NAME_MAP[trigger.phase]
       if (!phase) {
-        battleLogManager.addDebugLog(`触发器阶段 ${trigger.phase} 未识别，跳过注册`, { level: LogLevel.WARN })
+        this.logger.addDebugLog(`触发器阶段 ${trigger.phase} 未识别，跳过注册`, { level: 'WARN' })
         continue
       }
       let triggerCount = 0
@@ -291,21 +292,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         }
       }
 
-      const listenerId = this.eventBus.on(phase, callback, instanceId)
-      listenerIds.push(listenerId)
-    }
-
-    if (listenerIds.length > 0) {
-      buffInstance.triggerListenerIds = listenerIds
+      this.eventBus.on(phase, callback as (...args: any[]) => void, instanceId)
     }
   }
 
   /**
    * 清理 Buff 实例的所有触发器监听器
-   * 在 removeBuff 中被调用，通过 TriggerEventBus.offByBuffInstance 批量移除。
+   * 在 removeBuff 中被调用，通过 eventBus.offByListenerId 批量移除。
    */
   private unregisterTriggersForInstance(instanceId: string): void {
-    this.eventBus.offByBuffInstance(instanceId)
+    this.eventBus.offByListenerId(instanceId)
   }
 
   public addBuff(
@@ -332,7 +328,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
         // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
         script = NOOP_BUFF_SCRIPT
-        battleLogManager.addDebugLog(`Buff script not found: ${buffId}`)
+        this.logger.addDebugLog(`Buff script not found: ${buffId}`)
       }
     }
 
@@ -887,5 +883,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   public setDebugMode(enabled: boolean): void {
     this._debugMode = enabled
+  }
+
+  /**
+   * 判断指定 buffId 是否为 debuff
+   * 按优先级：脚本静态 CONFIG → JSON 配置 → false
+   */
+  public isDebuff(buffId: string): boolean {
+    const scriptConfig = this.scriptRegistry.getDefaultConfig(buffId)
+    if (scriptConfig?.isDebuff !== undefined) return scriptConfig.isDebuff
+    const jsonConfig = this.scriptRegistry.getBuffConfig(buffId)
+    return (jsonConfig as any)?.isDebuff ?? false
   }
 }

@@ -9,8 +9,9 @@ import {
   ATTRIBUTE_CODE,
   getAttributeDefaultValue,
 } from '@/domain/attribute/types'
-import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 export interface DamageCalculationConfig {
   enableCrit: boolean
@@ -218,9 +219,9 @@ export class DamageCalculator {
         value: damage,
         description: `暴击! x${critMultiplier.toFixed(2)} → ${damage}`,
       })
-      battleLogManager.addDebugLog(
+      LoggerProvider.logger.addDebugLog(
         `暴击！伤害 x${critMultiplier}`,
-        LogLevel.INFO,
+        { level: LogLevel.INFO },
       )
     } else {
       breakdown.postCritDamage = damage
@@ -557,7 +558,7 @@ export class DamageCalculator {
 
   applyDamage(target: BattleEntity, damage: number): number {
     if (!target.isAlive()) {
-      battleLogManager.addDebugLog('目标已死亡，无法造成伤害')
+      LoggerProvider.logger.addDebugLog('目标已死亡，无法造成伤害')
       return 0
     }
     const actualDamage = target.takeDamage(damage)

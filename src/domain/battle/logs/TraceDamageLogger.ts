@@ -8,7 +8,8 @@
  */
 
 import type { CombatRecord, DamageBreakdown, DamageStep } from '@/domain/battle/combat-record'
-import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 /**
  * 伤害计算链路追踪器
@@ -34,7 +35,7 @@ export class TraceDamageLogger {
     // === DEBUG 摘要行 ===
     const defMul = breakdown.defenseMultiplier ?? 1
     const defReduction = ((1 - defMul) * 100).toFixed(2)
-    battleLogManager.addDebugLog(
+    LoggerProvider.logger.addDebugLog(
       `DMG_SUM ${source}→${target} |` +
       ` base=${breakdown.baseDamage} final=${breakdown.finalDamage}` +
       ` crit=${breakdown.isCritical} defRed=${defReduction}%${skillInfo}`,
@@ -46,7 +47,7 @@ export class TraceDamageLogger {
     const lines = this.buildTraceLines(traceId, source, target, record, breakdown)
 
     for (const line of lines) {
-      battleLogManager.addDebugLog(line, { level: LogLevel.TRACE })
+      LoggerProvider.logger.addDebugLog(line, { level: LogLevel.TRACE })
     }
   }
 

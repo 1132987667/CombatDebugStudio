@@ -1,16 +1,17 @@
 /**
  * 文件: useSituationalAttributes.ts
  * 功能: 情境属性 Composable — 动态计算当前上下文中已激活的 situational 属性
- * 描述: 根据当前选中的目标、技能，从 AttributeMetaMap 中过滤 displayTier==='situational'
+ * 描述: 根据当前选中的目标、技能，从 attributeDisplay 中过滤 displayTier==='situational'
  *       且在上下文中"有意义"的属性（如元素抗性在对应元素技能下激活、对妖加成在选中妖族时激活）
  * ponytail: 用 group 推导匹配规则，而非每个属性配一个函数——够用且简单。
- *           如需更精细化匹配，可扩展为 meta.situationalMatcher。
+ *           如需更精细化匹配，可扩展为 getAttributeDisplayConfig().situationalMatcher。
  */
 
 import { computed, toValue, type ComputedRef, type Ref } from 'vue'
 import { AttributeMetaMap, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { SkillConfig } from '@/domain/skill/types'
+import { getAttributeDisplayConfig } from '@/presentation/config/attributeDisplay'
 
 export interface SituationalAttribute {
   code: string
@@ -38,20 +39,21 @@ export function useSituationalAttributes(
     const active: SituationalAttribute[] = []
 
     for (const [code, meta] of Object.entries(AttributeMetaMap)) {
-      if (meta.displayTier !== 'situational') continue
+      const display = getAttributeDisplayConfig(code)
+      if (display.displayTier !== 'situational') continue
 
       // 从 participant 读取属性值
       const attrValue = p.getAttribute(code as ATTRIBUTE_CODE) ?? 0
       if (attrValue <= 0) continue
 
       // 按 group 推导是否在当前上下文中"有意义"
-      if (!isContextRelevant(code, meta.group, t, s)) continue
+      if (!isContextRelevant(code, display.group, t, s)) continue
 
       active.push({
         code,
         label: meta.displayName,
         value: attrValue,
-        group: meta.group || 'utility',
+        group: display.group,
       })
     }
 

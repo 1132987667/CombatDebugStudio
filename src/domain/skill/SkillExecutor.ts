@@ -8,10 +8,11 @@ import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
-import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 import { EffectType, EffectTag } from '@/shared/types/effect'
 import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 /** ponytail: 追踪同一攻击者的连续命中目标和计数 */
 interface ComboState {
@@ -102,7 +103,7 @@ export class SkillExecutor {
       default: {
         // ponytail: 未实现的步骤类型 — 当前无任何技能配置使用这些类型
         // 升级路径：当有技能配置使用它们时，在 switch 中添加对应 case
-        battleLogManager.addDebugLog(
+        LoggerProvider.logger.addDebugLog(
           `未实现的技能步骤类型: ${skillStep.type}`,
           { level: LogLevel.WARN },
         )
@@ -275,7 +276,7 @@ export class SkillExecutor {
       segs.push({ text: ` 施加 ${displayName}` })
       const sourcePrefix = source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
       const targetPrefix = buffTarget.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
-      battleLogManager.addBattleLog({
+      LoggerProvider.logger.addBattleLog({
         turn: (action?.turn as number) || 1,
         message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${buffTarget.name} 施加 ${displayName}`,
         segments: segs,
@@ -507,7 +508,7 @@ export class SkillExecutor {
       // ponytail: 时之沙 — 请求额外行动，由 BattleSystem 在 TURN_END 后消费
       if (source.isAlive()) {
         this.requestExtraAction(source.id)
-        battleLogManager.addDebugLog(`时之沙: ${source.name} 获得额外行动`, { level: LogLevel.INFO })
+        LoggerProvider.logger.addDebugLog(`时之沙: ${source.name} 获得额外行动`, { level: LogLevel.INFO })
         action.effects.push({
           type: EffectType.STATUS,
           targetId: source.id,
@@ -516,7 +517,7 @@ export class SkillExecutor {
       }
     } else if (customType === 'steal_item') {
       // ponytail: 盗窃本能 — PvE 掉落系统，非战斗逻辑
-      battleLogManager.addDebugLog('盗窃本能: PvE 掉落系统专用', { level: LogLevel.INFO })
+      LoggerProvider.logger.addDebugLog('盗窃本能: PvE 掉落系统专用', { level: LogLevel.INFO })
     } else if (customType === 'overflow_shield') {
       // ponytail: 回春护盾溢出转盾 — 从 action.extra.healOverflow 按目标ID查找溢出量
       const overflowMap = (action.extra?.healOverflow as Record<string, number> | undefined) || {}
@@ -536,7 +537,7 @@ export class SkillExecutor {
           parameters: { shieldValue: overflow },
         }
         this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
-        battleLogManager.addDebugLog(`回春护盾: 溢出 ${overflow} 点治疗转化为护盾`, { level: LogLevel.INFO })
+        LoggerProvider.logger.addDebugLog(`回春护盾: 溢出 ${overflow} 点治疗转化为护盾`, { level: LogLevel.INFO })
         action.effects.push({
           type: EffectType.STATUS,
           targetId: target.id,
@@ -551,7 +552,7 @@ export class SkillExecutor {
         })
       }
     } else {
-      battleLogManager.addDebugLog(`自定义步骤未实现: ${desc}`, { level: LogLevel.WARN })
+      LoggerProvider.logger.addDebugLog(`自定义步骤未实现: ${desc}`, { level: LogLevel.WARN })
       action.effects.push({
         type: EffectType.STATUS,
         targetId: target.id,

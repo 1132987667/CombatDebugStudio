@@ -352,8 +352,8 @@ function initBattle() {
   console.log('allyList', allyList)
   console.log('enemyList', enemyList)
 
-  const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, PARTICIPANT_SIDE.ALLY));
-  const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY));
+  const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, PARTICIPANT_SIDE.ALLY, index));
+  const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY, index));
   console.log('allyTeamData', allyTeamData)
   console.log('enemyTeamData', enemyTeamData)
   // 使用BattleService初始化队伍数据

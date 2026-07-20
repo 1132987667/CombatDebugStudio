@@ -8,6 +8,7 @@ import type {
   BattleState,
   ParticipantSide,
 } from '@/domain/battle/type/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import {
   PARTICIPANT_SIDE,
   BattleActionHelper,
@@ -15,8 +16,6 @@ import {
 } from '@/domain/battle/type/types'
 import { EffectType } from '@/shared/types/effect'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { useBattleStore } from '@/presentation/stores/battleStore'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import {
@@ -129,10 +128,9 @@ export class BaseBattleAI implements BattleAI {
     battleState: BattleState,
     participant: BattleEntity,
   ): BattleAction {
-    const battleStore = useBattleStore()
     try {
       if (!battleState || !participant) {
-        battleLogManager.addDebugLog('AI决策参数无效')
+        LoggerProvider.logger.addDebugLog('AI决策参数无效')
         return this.selectAttack(participant)
       }
 
@@ -149,7 +147,7 @@ export class BaseBattleAI implements BattleAI {
             return this.createSkillStep(battleState, participant, skillId)
           } catch (skillError) {
             console.error('技能执行出错:', skillError)
-            battleLogManager.addDebugLog('Skill execution error')
+            LoggerProvider.logger.addDebugLog('Skill execution error')
             return this.selectAttack(participant)
           }
         }
@@ -157,13 +155,13 @@ export class BaseBattleAI implements BattleAI {
 
       return this.selectAttack(participant)
     } catch (error) {
-      battleLogManager.addDebugLog('AI决策出错')
+      LoggerProvider.logger.addDebugLog('AI决策出错')
       console.log('AI决策出错')
       try {
         return this.selectAttack(participant)
       } catch (attackError) {
         console.error('攻击执行出错:', attackError)
-        battleLogManager.addDebugLog('攻击执行出错')
+        LoggerProvider.logger.addDebugLog('攻击执行出错')
       }
     }
 

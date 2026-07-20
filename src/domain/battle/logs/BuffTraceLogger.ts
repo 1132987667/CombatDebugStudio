@@ -7,7 +7,8 @@
  * 版本: 1.0.0
  */
 
-import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 /**
  * Buff 变更追踪器
@@ -34,7 +35,7 @@ export class BuffTraceLogger {
     duration: number,
   ): void {
     const id = ++this.counter
-    battleLogManager.addDebugLog(
+    LoggerProvider.logger.addDebugLog(
       `[${id}] BUFF_APPLY ${buffName}→${characterId} |` +
       ` instance=${instanceId} stack=${stacks} duration=${duration}`,
       {
@@ -52,7 +53,7 @@ export class BuffTraceLogger {
     instanceId: string,
   ): void {
     const id = ++this.counter
-    battleLogManager.addDebugLog(
+    LoggerProvider.logger.addDebugLog(
       `[${id}] BUFF_REMOVE ${buffName}→${characterId} | instance=${instanceId}`,
       {
         level: LogLevel.TRACE,
@@ -72,7 +73,7 @@ export class BuffTraceLogger {
     remainingTurns: number,
   ): void {
     const id = ++this.counter
-    battleLogManager.addDebugLog(
+    LoggerProvider.logger.addDebugLog(
       `[${id}] BUFF_UPDATE ${buffName}→${characterId} |` +
       ` instance=${instanceId} stack=${oldStacks}→${newStacks} remain=${remainingTurns}`,
       {
@@ -97,7 +98,7 @@ export class BuffTraceLogger {
     currentTotal: number,
   ): void {
     const id = ++this.counter
-    battleLogManager.addDebugLog(
+    LoggerProvider.logger.addDebugLog(
       `[${id}] BUFF_MOD ${buffName}→${characterId} |` +
       ` attr=${attribute} mod=${valueStr} total=${currentTotal}`,
       {

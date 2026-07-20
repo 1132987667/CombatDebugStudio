@@ -3,11 +3,23 @@ import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { createMockEntity, defaultAttrs } from '../../../mocks/MockEntity'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { ExtendedSkillStep } from '@/domain/skill/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { HealCalculator } from '@/domain/skill/HealCalculator'
 
 vi.mock('@/infrastructure/adapters/logging', () => ({
-  battleLogManager: { addDebugLog: () => {} },
+  battleLogManager: { addDebugLog: () => {}, addSystemLog: () => {} },
   LogLevel: { DEBUG: 'DEBUG', INFO: 'INFO', WARN: 'WARN', ERROR: 'ERROR' },
 }))
+
+LoggerProvider.logger = {
+  addDebugLog: vi.fn(),
+  addSystemLog: vi.fn(),
+  addBattleLog: vi.fn(),
+  addActionLog: vi.fn(),
+  clearLogs: vi.fn(),
+  syncBattleLogs: vi.fn(),
+  getSystemLogs: () => [],
+} as any
 
 function createSkillStep(overrides?: Partial<ExtendedSkillStep>): ExtendedSkillStep {
   return {

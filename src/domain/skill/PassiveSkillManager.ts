@@ -1,10 +1,11 @@
 import { BattleTriggerPhase, PARTICIPANT_SIDE, BATTLE_CONSTANTS, BattleActionHelper, type BattleContext, type BattleEntity } from '@/domain/battle/type/types'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 import { resolveSkillTargets } from '@/domain/skill/target-resolver'
 import type { SkillConfig } from '@/domain/skill/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 export interface PassiveSkillConfig {
   id: string
@@ -181,7 +182,7 @@ export class PassiveSkillManager {
       segs.push({ text: ` 触发 ${config.name}，对 ${targetNames} 生效` })
       const entityPrefix = entity.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
       const targetPrefix = firstTarget ? (firstTarget.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]') : ''
-      battleLogManager.addBattleLog({
+      LoggerProvider.logger.addBattleLog({
         turn: (context?.currentTurn as number) || 1,
         message: `${entityPrefix}${entity.name} 触发 ${config.name}，对 ${targetPrefix}${targetNames} 生效`,
         segments: segs,
@@ -238,7 +239,7 @@ export class PassiveSkillManager {
           executor.executeStep(step, action, source, target)
           anyExecuted = true
         } catch (err) {
-          battleLogManager.addDebugLog(
+          LoggerProvider.logger.addDebugLog(
             `被动 ${config.name} 步骤执行异常: ${err instanceof Error ? err.message : String(err)}`,
             { level: LogLevel.ERROR },
           )

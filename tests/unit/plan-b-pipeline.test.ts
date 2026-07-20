@@ -82,9 +82,12 @@ describe('方案 B 统一管道', () => {
   let passiveSkillManager: PassiveSkillManager
   let registry: BuffScriptRegistry
 
+  const mockEventBus = { emit: () => {}, on: () => {}, off: () => {}, offByListenerId: () => {} } as any
+  const mockLogger = { addDebugLog: () => {}, addSystemLog: () => {}, addBattleLog: () => {}, addActionLog: () => {}, clearLogs: () => {}, syncBattleLogs: () => {} } as any
+
   beforeEach(() => {
     registry = new BuffScriptRegistry()
-    buffSystem = new BuffSystem(registry)
+    buffSystem = new BuffSystem(registry, mockEventBus, mockLogger)
     skillManager = new SkillManager(buffSystem)
     passiveSkillManager = PassiveSkillManager.create(skillManager, buffSystem)
   })

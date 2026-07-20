@@ -140,6 +140,14 @@ export class ParticipantStats {
     // PERCENTAGE 修饰符注入到对应属性，此处不再重复处理。
     const value = ((attrData.base + additive) * percentMultiplier / 100 * independentMultiplier / 100) * finalMultiplier / 100
     attrData.value = Math.round(value * 100) / 100
+    // 记录计算拆解
+    attrData.breakdown = {
+      base: attrData.base,
+      additive,
+      percentMultiplier: percentMultiplier / 100,
+      independentMultiplier: independentMultiplier / 100,
+      finalMultiplier: finalMultiplier / 100,
+    }
     // 更新版本戳，标记为已计算
     attrData.cachedVersion = this.version
   }

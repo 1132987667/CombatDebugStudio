@@ -12,8 +12,9 @@ import { SkillExecutor } from '@/domain/skill/SkillExecutor'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
-import { battleLogManager, LogLevel } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
 import { validateSkillConfigs } from '@/shared/utils/schema-validator'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 interface CalculationContext {
   skillStep: SkillStep
   action: BattleAction
@@ -78,7 +79,7 @@ export class SkillManager {
     for (const config of configs) {
       this.skillConfigs.set(config.id, config)
     }
-    battleLogManager.addDebugLog(`已加载 ${configs.length} 个技能配置`, { level: LogLevel.INFO })
+    LoggerProvider.logger.addDebugLog(`已加载 ${configs.length} 个技能配置`, { level: LogLevel.INFO })
   }
 
   getSkillConfig(skillId: string): SkillConfig | undefined {
@@ -118,7 +119,7 @@ export class SkillManager {
   ): BattleAction {
     const config = this.skillConfigs.get(skillId)
     if (!config) {
-      battleLogManager.addDebugLog(`技能 ${skillId} 不存在配置`, { level: LogLevel.WARN })
+      LoggerProvider.logger.addDebugLog(`技能 ${skillId} 不存在配置`, { level: LogLevel.WARN })
       console.error(`技能 ${skillId} 不存在配置`)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
@@ -136,7 +137,7 @@ export class SkillManager {
     const currentEnergy = source.getAttribute(ATTRIBUTE_CODE.currentEnergy)
     const availability = source.canExecuteSkill(source.id, skillId, currentEnergy, this.buffSystem)
     if (!availability.can) {
-      battleLogManager.addDebugLog(`技能 ${skillId} 不可用: ${availability.reason}`, { level: LogLevel.WARN })
+      LoggerProvider.logger.addDebugLog(`技能 ${skillId} 不可用: ${availability.reason}`, { level: LogLevel.WARN })
       console.error(`技能 ${skillId} 不可用:`, availability.reason)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
@@ -154,7 +155,7 @@ export class SkillManager {
       s => s.targetConfig?.faction !== 'self' && s.type !== 'remove_debuff' && s.type !== 'cleanse'
     ) ?? false
     if (!target && hasNonSelfStep) {
-      battleLogManager.addDebugLog(`技能 ${skillId} 无有效目标`, { level: LogLevel.WARN })
+      LoggerProvider.logger.addDebugLog(`技能 ${skillId} 无有效目标`, { level: LogLevel.WARN })
       console.error(`技能 ${skillId} 无有效目标`)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
@@ -171,7 +172,7 @@ export class SkillManager {
     if (target) {
       const targetControl = this.buffSystem.getHighestPriorityControlEffect(target.id)
       if (targetControl === ControlType.STUN) {
-        battleLogManager.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, { level: LogLevel.WARN })
+        LoggerProvider.logger.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, { level: LogLevel.WARN })
         const action = BattleActionHelper.createSkill({
           sourceId: source.id,
           targetId: target.id,
@@ -247,7 +248,7 @@ export class SkillManager {
       }
     }
 
-    battleLogManager.addDebugLog(`执行技能 ${config.name || skillId}`, { level: LogLevel.DEBUG })
+    LoggerProvider.logger.addDebugLog(`执行技能 ${config.name || skillId}`, { level: LogLevel.DEBUG })
     return action
   }
 
@@ -275,7 +276,7 @@ export class SkillManager {
   loadSkillConfigsFromData(data: SkillConfig[]): SkillConfig[] {
     const result = validateSkillConfigs(data)
     if (!result.valid) {
-      battleLogManager.addDebugLog(`技能配置验证失败: ${result.errors.join('; ')}`, { level: LogLevel.WARN })
+      LoggerProvider.logger.addDebugLog(`技能配置验证失败: ${result.errors.join('; ')}`, { level: LogLevel.WARN })
     }
     // ponytail: validateSkillConfigs 签名返回 ValidationResult，实际不修改 data。
     // 保留原数组，仅记录验证结果。

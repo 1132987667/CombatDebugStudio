@@ -1,8 +1,8 @@
 ﻿import type { IBuffScript, BuffEffectLine } from '@/domain/buff/types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
-import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { ModifierType } from '@/domain/attribute/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TParams> {
   params?: TParams
@@ -58,7 +58,7 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
   }
 
   protected log(context: BuffContext, message: string): void {
-    battleLogManager.addDebugLog(`[${context.config.id}] ${message}`)
+    LoggerProvider.logger.addDebugLog(`[${context.config.id}] ${message}`)
   }
 
   protected triggerEvent(

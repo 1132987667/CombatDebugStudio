@@ -1,0 +1,8 @@
+{
+  "status": "completed",
+  "phase": "done",
+  "started_at": "2026-07-20T16:42:00+08:00",
+  "completed_at": "2026-07-20T17:00:00+08:00",
+  "iterations": 2,
+  "summary": "审查报告第六节所列 15 项问题中 12 项已处理，2 项被验证为伪（CalculationStep 实际被使用；剩余 10 个 ATTRIBUTE_CODE 均在 configs/ 或代码中被引用），1 项延期"
+}

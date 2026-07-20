@@ -91,8 +91,10 @@ export function resolveSkillTargets(
     }
     case TargetStrategy.FIRST:
     default: {
-      // 智能默认：如果技能含治疗/增益步骤，选最低血量；否则选第一个
-      if (steps?.some((s) => s.type === SkillStepType.HEAL || s.type === SkillStepType.APPLY_BUFF)) {
+      // 智能默认：纯治疗/增益技能选最低血量目标；含伤害步骤时选第一个
+      const hasHeal = steps?.some((s) => s.type === SkillStepType.HEAL)
+      const hasDamage = steps?.some((s) => s.type === SkillStepType.DEAL_DAMAGE || s.type === SkillStepType.DRAIN)
+      if (hasHeal && !hasDamage) {
         const target = candidates.reduce((min, p) =>
           p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
             Math.max(p.getAttribute(ATTRIBUTE_CODE.maxHealth), 1) <

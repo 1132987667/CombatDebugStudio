@@ -301,10 +301,12 @@ export class PassiveSkillManager {
             (context?.currentTurn as number) > 0
           )
         default:
-          return true
+          LoggerProvider.logger.addDebugLog(`[PassiveSkillManager] 未知条件 "${condition}"，默认不触发`, { level: LogLevel.WARN })
+          return false
       }
-    } catch {
-      return true
+    } catch (err) {
+      LoggerProvider.logger.addDebugLog(`[PassiveSkillManager] evaluateCondition 异常: ${err}`, { level: LogLevel.ERROR })
+      return false
     }
   }
 

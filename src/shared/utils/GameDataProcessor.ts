@@ -13,7 +13,6 @@ const enemiesData = enemiesDataRaw as Enemy[]
 import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
-import newSkillsData from '@configs/skills/skills_new.json'
 import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig, SkillStep } from '@/domain/skill/types'
@@ -89,7 +88,6 @@ export class GameDataProcessor {
     return [
       ...skillsData,
       ...passiveSkillsData,
-      ...newSkillsData,
       ...guardianPassiveSkillsData,
     ] as SkillConfig[]
   }

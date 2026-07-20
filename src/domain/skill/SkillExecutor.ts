@@ -34,11 +34,15 @@ export class SkillExecutor {
   /** ponytail: 连击追踪状态（key = 攻击者 entity ID） */
   private comboStates = new Map<string, ComboState>()
 
-  /** ponytail: 待处理的额外行动请求 */
+  /** ponytail: 待处理的额外行动请求（上限 10，防无限增长） */
   private pendingExtraActions: string[] = []
+  private static readonly MAX_PENDING_ACTIONS = 10
 
   /** 请求额外行动（由 extra_action 步骤调用） */
   requestExtraAction(entityId: string): void {
+    if (this.pendingExtraActions.length >= SkillExecutor.MAX_PENDING_ACTIONS) {
+      return
+    }
     this.pendingExtraActions.push(entityId)
   }
 
@@ -244,7 +248,7 @@ export class SkillExecutor {
       stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
       controlPriority: 0,
-      isDebuff: false,
+      // ponytail: 不设 isDebuff，让 addBuff 的合并链从脚本 CONFIG / JSON 配置推断
       parameters: skillStep.parameters || skillStep.effectParams || {},
     }
 
@@ -497,13 +501,14 @@ export class SkillExecutor {
     const customType = skillStep.parameters?.customType as string | undefined
     const desc = (skillStep.parameters?.description as string) || ''
 
-    // ponytail: 根据 customType 或 description 关键词分发
-    if (customType === 'third_strike' || desc.includes('第三')) {
+    // ponytail: 根据 customType 分发
+    if (customType === 'third_strike') {
       this.handleThirdStrike(action, source)
-    } else if (customType === 'combo_master' || desc.includes('连续攻击')) {
+    } else if (customType === 'combo_master') {
       this.handleComboMaster(action, source, target)
     } else if (customType === 'burn_detonate' || customType === 'burn_detonate_full') {
-      this.handleBurnDetonate(action, source, target, customType === 'burn_detonate_full', token)
+      const burnPct = (skillStep.parameters?.burnDamagePercent as number) ?? 0.05
+      this.handleBurnDetonate(action, source, target, customType === 'burn_detonate_full', token, burnPct)
     } else if (customType === 'extra_action') {
       // ponytail: 时之沙 — 请求额外行动，由 BattleSystem 在 TURN_END 后消费
       if (source.isAlive()) {
@@ -651,6 +656,7 @@ export class SkillExecutor {
     target: BattleEntity,
     isFullDetonate: boolean,
     token?: DeferredDamageToken,
+    burnDamagePercent: number = 0.05,
   ): void {
     // 获取目标的 buff 实例，按 EffectTag.BURN 标签查找灼烧类 buff
     const burnInstances = this.buffSystem.getBuffInstancesWithTag(target.id, EffectTag.BURN)
@@ -661,7 +667,7 @@ export class SkillExecutor {
     for (const inst of burnInstances) {
       // ponytail: 假设每层灼烧每回合造成 5% 最大生命值伤害
       const remainingDuration = inst.remainingTurns ?? inst.duration ?? 1
-      const dmgPerTick = target.getAttribute('maxHealth') * 0.05
+      const dmgPerTick = target.getAttribute('maxHealth') * burnDamagePercent
       totalBurnDmg += dmgPerTick * remainingDuration
 
       // 完全引爆时移除该灼烧 buff

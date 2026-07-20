@@ -1,0 +1,31 @@
+{
+  "status": "completed",
+  "phase": "fix-done",
+  "stale_count": 0,
+  "iteration": 1,
+  "completed_at": "2026-07-20T17:25:00+08:00",
+  "summary": "技能系统 16 项待处理问题中 12 项已修复，4 项经评估后标记为延期",
+  "fixes": [
+    "§3.1 isDebuff 硬编码 → 移除字段，由 addBuff 合并链自动从脚本 CONFIG/JSON 推断",
+    "§3.7 shield 参数不匹配 → ShieldBuff._onApply 优先读取 parameters.shieldValue，无则回退公式计算",
+    "§7.1 evaluateCondition 未知条件 → default 改为 false + WARN 日志；catch 也改为 false + ERROR",
+    "§2.1 控制检查 → 扩展至全部非 NONE 控制类型 + 新增施法者控制检查",
+    "§5.1 enableCrit → 暴击判定增加 if (this.config.enableCrit) 守卫",
+    "§8.1 FIRST 策略 → 改判 hasHeal && !hasDamage，不再将 APPLY_BUFF 一概视为增益",
+    "§3.5 burnDetonate 5% → 改为从 skillStep.parameters.burnDamagePercent 读取，默认 0.05",
+    "§3.4 中文文本匹配 → 移除 desc.includes('第三') 和 desc.includes('连续攻击')，仅靠 customType 分发",
+    "§2.3 loadSkillConfigs → 新增重复 ID 检测和 WARN 日志",
+    "§2.4 getSkillConfig → 返回浅拷贝 { ...config } 防止外部修改",
+    "§3.6 comboStates/pendingExtraActions → 新增 MAX_PENDING_ACTIONS = 10 上限保护"
+  ],
+  "deferred": [
+    "§3.2 executeModifyAttribute 经 ModifierStack（需架构重构）",
+    "§3.3 加成属性同步逻辑抽取到共享工具（重复代码抽取）",
+    "§3.8 9 个未实现步骤类型（新增功能，非 BUG 修复）",
+    "§5.3 Math.random → SeededRandom（需注入随机数生成器）"
+  ],
+  "verified": {
+    "typecheck": "pass (no new errors)",
+    "tests": "50/50 pass"
+  }
+}

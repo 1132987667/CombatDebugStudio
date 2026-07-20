@@ -134,7 +134,7 @@ export class DamageCalculator {
     if (Number.isNaN(cr)) {
       cr = getAttributeDefaultValue(ATTRIBUTE_CODE.critRate)
     }
-    if (Math.random() * 100 < cr) {
+    if (this.config.enableCrit && Math.random() * 100 < cr) {
       damageResult.isCritical = true
     }
 

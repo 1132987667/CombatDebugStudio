@@ -9,18 +9,22 @@ export class ShieldBuff extends BaseBuffScript {
 
   protected _onApply(context: BuffContext): void {
     this.log(context, '获得护盾保护')
-    
-    // 计算护盾值
-    const baseShield = this.getConfigValue(context, 'baseShield', 100)
-    const shieldScale = this.getConfigValue(context, 'shieldScale', 1)
-    
-    const character = context.getCharacter()
-    const maxHP = character ? character.getAttribute(ATTRIBUTE_CODE.maxHealth) : 1000
-    const shieldValue = Math.floor(baseShield * shieldScale + maxHP * 0.1)
-    
-    // 记录护盾相关参数
-    context.setVariable('shieldValue', shieldValue)
-    context.setVariable('maxShieldValue', shieldValue)
+
+    // 优先使用 executeShield 传入的 shieldValue，否则按公式计算
+    const shieldValue = this.getConfigValue(context, 'shieldValue', -1)
+    if (shieldValue < 0) {
+      const baseShield = this.getConfigValue(context, 'baseShield', 100)
+      const shieldScale = this.getConfigValue(context, 'shieldScale', 1)
+      const character = context.getCharacter()
+      const maxHP = character ? character.getAttribute(ATTRIBUTE_CODE.maxHealth) : 1000
+      const calculatedShield = Math.floor(baseShield * shieldScale + maxHP * 0.1)
+      // 记录护盾相关参数
+      context.setVariable('shieldValue', calculatedShield)
+      context.setVariable('maxShieldValue', calculatedShield)
+    } else {
+      context.setVariable('shieldValue', shieldValue)
+      context.setVariable('maxShieldValue', shieldValue)
+    }
     context.setVariable('shieldRegen', this.getConfigValue(context, 'shieldRegen', 0))
 
     // 同步护盾值到 BuffSystem（供 takeDamage 吸收伤害）

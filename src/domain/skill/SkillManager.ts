@@ -76,14 +76,21 @@ export class SkillManager {
   }
 
   loadSkillConfigs(configs: SkillConfig[]): void {
+    let dupCount = 0
     for (const config of configs) {
+      if (this.skillConfigs.has(config.id)) {
+        dupCount++
+        LoggerProvider.logger.addDebugLog(`[SkillManager] 重复技能 ID: ${config.id}，将被覆盖`, { level: LogLevel.WARN })
+      }
       this.skillConfigs.set(config.id, config)
     }
-    LoggerProvider.logger.addDebugLog(`已加载 ${configs.length} 个技能配置`, { level: LogLevel.INFO })
+    LoggerProvider.logger.addDebugLog(`已加载 ${configs.length} 个技能配置${dupCount > 0 ? `（${dupCount} 个重复 ID）` : ''}`, { level: LogLevel.INFO })
   }
 
   getSkillConfig(skillId: string): SkillConfig | undefined {
-    return this.skillConfigs.get(skillId)
+    const config = this.skillConfigs.get(skillId)
+    // ponytail: 返回浅拷贝防止外部修改影响内部状态
+    return config ? { ...config } : undefined
   }
 
   setSkillConfig(skillId: string, config: SkillConfig): void {
@@ -168,11 +175,27 @@ export class SkillManager {
       })
     }
 
-    // ponytail: 目标被眩晕时技能取消（区别于施法者自身控制，返回 failure action）
+    // ponytail: 施法者被控制时技能取消
+    const sourceControl = this.buffSystem.getHighestPriorityControlEffect(source.id)
+    if (sourceControl !== ControlType.NONE) {
+      LoggerProvider.logger.addDebugLog(`技能 ${skillId} 取消：施法者 ${source.name} 已被控制`, { level: LogLevel.WARN })
+      const action = BattleActionHelper.createSkill({
+        sourceId: source.id,
+        targetId: target?.id ?? '',
+        skillId,
+        skillName: config.name || '',
+        turn: currentTurn,
+        success: false,
+        effects: [{ type: 'status', targetId: source.id, description: `${source.name} 已被控制，技能取消` }],
+      })
+      return action
+    }
+
+    // ponytail: 目标被控制时技能取消（覆盖所有非 NONE 控制类型）
     if (target) {
       const targetControl = this.buffSystem.getHighestPriorityControlEffect(target.id)
-      if (targetControl === ControlType.STUN) {
-        LoggerProvider.logger.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被眩晕`, { level: LogLevel.WARN })
+      if (targetControl !== ControlType.NONE) {
+        LoggerProvider.logger.addDebugLog(`技能 ${skillId} 取消：目标 ${target.name} 已被控制`, { level: LogLevel.WARN })
         const action = BattleActionHelper.createSkill({
           sourceId: source.id,
           targetId: target.id,
@@ -180,7 +203,7 @@ export class SkillManager {
           skillName: config.name || '',
           turn: currentTurn,
           success: false,
-          effects: [{ type: 'status', targetId: target.id, description: `${target.name} 已被眩晕，技能取消` }],
+          effects: [{ type: 'status', targetId: target.id, description: `${target.name} 已被控制，技能取消` }],
         })
         return action
       }

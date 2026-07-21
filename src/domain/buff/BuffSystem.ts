@@ -359,14 +359,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       triggers: config.triggers ?? jsonConfig?.triggers ?? undefined,
     }
 
-    // ponytail: 免疫检查 — 若目标对该控制类型或 buffId 免疫则跳过施加
+    // ponytail: 免疫检查 — 若目标对该 buff 的 controlType / buffId / immuneTags 免疫则跳过施加
     const targetImmunities = this.characterImmunities.get(characterId)
     if (targetImmunities && targetImmunities.size > 0) {
       const controlTag = resolvedConfig.controlType && resolvedConfig.controlType !== ControlType.NONE
         ? resolvedConfig.controlType.toLowerCase()
         : null
       const buffTag = buffId.startsWith(BUFF_ID_PREFIX) ? buffId.slice(BUFF_ID_PREFIX.length) : buffId
-      if ((controlTag && targetImmunities.has(controlTag)) || targetImmunities.has(buffTag)) {
+      // ponytail: 也检查 immuneTags（如 slow 通过 speed 属性实现而非 controlType）
+      const immuneTagMatch = resolvedConfig.immuneTags?.some(tag => targetImmunities.has(tag.toLowerCase()))
+      if ((controlTag && targetImmunities.has(controlTag)) || targetImmunities.has(buffTag) || immuneTagMatch) {
         return ''
       }
     }

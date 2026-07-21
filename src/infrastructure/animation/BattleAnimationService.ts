@@ -14,7 +14,7 @@ export interface AnimationConfig {
 export const Side = {
   LEFT: 'left',
   RIGHT: 'right',
-}
+} as const
 export type SideType = (typeof Side)[keyof typeof Side]
 export interface AttackAnimationData {
   attackerId: string
@@ -111,7 +111,7 @@ export class BattleAnimationService {
         this.playSkillNameAnimation(
           data.attackerElement,
           data.skillName,
-          data.attackerSide,
+          data.attackerSide as SideType,
         )
       }
     })

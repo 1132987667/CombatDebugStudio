@@ -5,6 +5,7 @@ import { LogLevel } from '@/shared/types/battle-log'
 import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
 import { resolveSkillTargets } from '@/domain/skill/target-resolver'
 import type { SkillConfig } from '@/domain/skill/types'
+import type { CombatRecord } from '@/domain/battle/combat-record'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 export interface PassiveSkillConfig {
@@ -76,6 +77,7 @@ export class PassiveSkillManager {
     trigger: BattleTriggerPhase,
     entity: BattleEntity,
     context?: BattleContext,
+    record?: CombatRecord,
   ): void {
     const characterPassives = this.passives.get(entity.id)
     if (!characterPassives) return
@@ -155,7 +157,7 @@ export class PassiveSkillManager {
       const turn = (context?.currentTurn as number) || 0
       let hasExecuted = false
       if (skillConfig) {
-        hasExecuted = this.executePassiveSkill(skillConfig, entity, targets, turn)
+        hasExecuted = this.executePassiveSkill(skillConfig, entity, targets, turn, record)
       } else {
         // ponytail: 无配置时回退旧路径防止崩溃
         for (const actualTarget of targets) {
@@ -212,6 +214,7 @@ export class PassiveSkillManager {
     source: BattleEntity,
     targets: BattleEntity[],
     turn: number,
+    record?: CombatRecord,
     options?: { deferDamage?: boolean },
   ): boolean {
     const steps = config.steps
@@ -220,6 +223,14 @@ export class PassiveSkillManager {
 
     const executor = this.skillManager.getExecutor()
     let anyExecuted = false
+
+    // ponytail: 被动技能发射 SKILL_USE 事件，使依赖此事件的被动可以连锁
+    this.buffSystem.getEventBus().emit(BattleTriggerPhase.SKILL_USE, {
+      source,
+      skillId: config.id,
+      targets,
+      turn,
+    } as any)
 
     for (const target of targets) {
       // ponytail: 跳过已死亡目标，被动技能不应对死尸生效
@@ -236,7 +247,7 @@ export class PassiveSkillManager {
 
       for (const step of steps) {
         try {
-          executor.executeStep(step, action, source, target)
+          executor.executeStep(step, action, source, target, record)
           anyExecuted = true
         } catch (err) {
           LoggerProvider.logger.addDebugLog(

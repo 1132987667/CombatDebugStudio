@@ -1,7 +1,6 @@
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { BattleStatus } from '@/domain/battle/type/types'
-import { eventBus } from '@/main'
 
 /**
  * 战斗状态管理器
@@ -26,10 +25,8 @@ export class BattleStateManager {
    */
   constructor(private battleSystem: BattleSystem) {
     const handler = () => {}
-    this.teamDataChangedHandler = handler
-
-    // 监听队伍数据变化事件
-    eventBus.on('teamDataChanged', handler)
+    // ponytail: 队伍数据变更由 battleStore 通过 BattleService.on(TEAM_DATA_CHANGED) 处理
+    // 此监听器此前绑定 'teamDataChanged'（驼峰）但从未被触发（实际事件名是 'team-data-changed'），handler 为空函数
   }
 
   /**
@@ -37,10 +34,6 @@ export class BattleStateManager {
    * 在不再需要 BattleStateManager 时调用
    */
   public dispose(): void {
-    if (this.teamDataChangedHandler) {
-      eventBus.off('teamDataChanged', this.teamDataChangedHandler)
-      this.teamDataChangedHandler = null
-    }
   }
 
   /**

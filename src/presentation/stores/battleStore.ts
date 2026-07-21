@@ -3,7 +3,7 @@ import type { BattleAction, BattleEntity, BattleState } from '@/domain/battle/ty
 import { BattleStatus, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
-import { BattleEventCode, BattleEventCodes, BattleEventName, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData } from '@/domain/battle/type/BattleEventType'
+import { BattleEventCode, BattleEventCodes, BattleEventName, BattleLogEventData, BattleEndedEventData, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData } from '@/domain/battle/type/BattleEventType'
 import type {
   BattleLogCategory,
   BattleLogEntry,
@@ -172,7 +172,7 @@ export const useBattleStore = defineStore('battle', () => {
   // 🔹 4. 事件处理器（仅负责同步业务数据到响应式状态）
 
   /** 处理战斗日志事件（将日志数据添加到日志管理器） */
-  const handleBattleLogEvent = (data: any) => {
+  const handleBattleLogEvent = (data: BattleLogEventData) => {
     if (data?.log) {
       console.log('接受战斗日志:', data)
       battleLogManager.addSystemLog(data.log)
@@ -180,7 +180,7 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /** 处理战斗结束事件（重置战斗状态，记录胜负结果） */
-  const handleBattleEndEvent = (data: any) => {
+  const handleBattleEndEvent = (data: BattleEndedEventData) => {
     isBattleActive.value = false
     isPaused.value = false
     autoPlayMode.value = false
@@ -191,10 +191,10 @@ export const useBattleStore = defineStore('battle', () => {
     if (data?.winner) {
       battleLogManager.addBattleLog({
         turn: battleService.value?.getTurn() ?? 1,
-        message: `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`,
+        message: `战斗结束！胜利者：${data.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`,
         segments: [
           {
-            text: `战斗结束！胜利者：${data.winner === 'ALLY' ? '我方' : '敌方'}`,
+            text: `战斗结束！胜利者：${data.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`,
           },
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
@@ -203,7 +203,7 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /** 处理回合开始事件（更新当前行动者ID，记录回合开始日志） */
-  const handleTurnStartEvent = (data: any) => {
+  const handleTurnStartEvent = (data: { actorId: string | null }) => {
     if (data?.actorId) {
       currentActorId.value = data.actorId
       battleLogManager.addTurnStartLog(battleService.value?.getTurn() ?? 1)
@@ -211,7 +211,7 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /** 处理当前行动者切换事件（仅更新 UI，不记录回合开始日志） */
-  const handleCurrentActorChanged = (data: any) => {
+  const handleCurrentActorChanged = (data: { actorId: string | null }) => {
     if (data?.actorId) {
       currentActorId.value = data.actorId
     }
@@ -223,16 +223,16 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /** 处理伤害动画事件（触发伤害数字飘字效果） */
-  const handleDamageAnimationEvent = (data: any) =>
+  const handleDamageAnimationEvent = (data: DamageEventData) =>
     setAnimationState(EffectType.DAMAGE, data)
   /** 处理闪避动画事件（触发闪避提示效果） */
-  const handleMissAnimationEvent = (data: any) =>
+  const handleMissAnimationEvent = (data: MissEventData) =>
     setAnimationState(EffectType.MISS, data)
   /** 处理Buff效果事件（触发Buff图标显示/隐藏） */
-  const handleBuffEffectEvent = (data: any) =>
+  const handleBuffEffectEvent = (data: BuffEffectEventData) =>
     setAnimationState(EffectType.BUFF, data)
   /** 处理技能特效事件（触发技能释放动画） */
-  const handleSkillEffectEvent = (data: any) =>
+  const handleSkillEffectEvent = (data: SkillEffectEventData) =>
     setAnimationState('skill', data)
 
   /** 处理战斗重置事件（记录系统日志） */

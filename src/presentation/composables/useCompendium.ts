@@ -68,9 +68,10 @@ export interface CompendiumItem {
 export type CompendiumTabType = 'enemy' | 'buff' | 'item'
 
 export function useCompendium() {
-  const enemies = ref<CompendiumEnemy[]>(enemiesData as CompendiumEnemy[])
-  const buffs = ref<CompendiumBuff[]>(buffsData as CompendiumBuff[])
-  const skills = ref<CompendiumSkill[]>(GameDataProcessor.getSkillsData() as CompendiumSkill[])
+  // ponytail: JSON 推断类型与 CompendiumXxx 接口有结构差异，直接 `as T` 被 TS 拒绝，用 `as unknown as T` 绕过后依赖运行时形态兼容
+  const enemies = ref<CompendiumEnemy[]>(enemiesData as unknown as CompendiumEnemy[])
+  const buffs = ref<CompendiumBuff[]>(buffsData as unknown as CompendiumBuff[])
+  const skills = ref<CompendiumSkill[]>(GameDataProcessor.getSkillsData() as unknown as CompendiumSkill[])
   const items = ref<CompendiumItem[]>(materialsData as CompendiumItem[])
 
   const isLoading = ref(false)

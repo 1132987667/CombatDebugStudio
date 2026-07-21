@@ -9,6 +9,7 @@
 
 import { BuffContext } from '@/domain/buff/BuffContext'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { LogLevel } from '@/shared/types/battle-log'
 
 interface ObjectPoolOptions<T> {
   maxSize: number
@@ -32,7 +33,7 @@ export class ObjectPool<T> {
       if (this.options.validate && !this.options.validate(obj)) {
         battleLogManager.addDebugLog(
           'Object pool validation failed, creating new instance',
-          'info',
+          { level: LogLevel.INFO },
         )
         return this.options.create()
       }
@@ -43,7 +44,7 @@ export class ObjectPool<T> {
     if (this.borrowedCount >= this.options.maxSize) {
       battleLogManager.addDebugLog(
         'Object pool max size reached, creating new instance',
-        'warning',
+        { level: LogLevel.WARN },
       )
     }
 
@@ -55,7 +56,7 @@ export class ObjectPool<T> {
     if (this.pool.length >= this.options.maxSize) {
       battleLogManager.addDebugLog(
         'Object pool full, discarding instance',
-        'warning',
+        { level: LogLevel.WARN },
       )
       return
     }

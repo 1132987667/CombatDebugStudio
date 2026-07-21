@@ -8,9 +8,26 @@
 
 import type {
   KeybindSetting,
-  KeybindProfile,
-  KeybindConflict,
+  KeybindAction,
 } from '@/shared/types/input'
+
+/** 快捷键配置文件 */
+interface KeybindProfile {
+  id: string
+  name: string
+  description: string
+  keybinds: Map<string, string>
+  isDefault: boolean
+}
+
+/** 快捷键冲突检测结果 */
+interface KeybindConflict {
+  action: string
+  key: string
+  description: string
+  existingKey?: string
+  newKey?: string
+}
 
 export class KeybindManager {
   private keybinds: Map<string, string>
@@ -490,7 +507,8 @@ export class KeybindManager {
 
   // 楠岃瘉蹇�嵎閿�牸寮?
   public validateKey(key: string): boolean {
-    // 鍏佽�瀛楁瘝銆佹暟瀛椼€佸姛鑳介敭銆佹柟鍚戦敭绛?    const validKeys =
+    // 允许字母、数字、功能键、方向键等
+    const validKeys =
       /^[a-z0-9]$|^f[1-9][0-9]?$|^escape$|^tab$|^capslock$|^shift$|^control$|^alt$|^space$|^enter$|^backspace$|^delete$|^insert$|^home$|^end$|^pageup$|^pagedown$|^arrowup$|^arrowdown$|^arrowleft$|^arrowright$|^mouse[0-9]$/
     return validKeys.test(key.toLowerCase())
   }

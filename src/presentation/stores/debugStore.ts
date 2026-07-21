@@ -1,8 +1,15 @@
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { BattleRules } from '@/presentation/stores/battleStore'
-import type { InjectableStatus } from '@/presentation/views/components/StatusInjectionDialog.vue'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { defineStore } from 'pinia'
+
+/** 可注入状态接口 — 源自 StatusInjectionDialog.vue */
+interface InjectableStatus {
+  id: string
+  name: string
+  value: number
+  type: string
+}
 
 interface ExportedBattleState {
   battleCharacters: BattleEntity[]

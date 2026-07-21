@@ -103,7 +103,7 @@ export class BattleEventManager {
     eventBus.off(BattleEventCodes.TURN_START)
     eventBus.off(BattleEventCodes.TURN_END)
 
-    // 娓呴櫎鍥炶皟寮曠敤
+    // 娓呴櫎鍥炶皟引用
     this.boundHandlers.clear()
     this.isListening = false
   }
@@ -121,15 +121,15 @@ export class BattleEventManager {
 
           // 鍒ゆ柇鏉ユ簮鍜岀洰鏍囨槸鍚︽槸鏁屾柟
           const sourceIsAlly =
-            log.source != null && !log.source.includes('鏁屾柟') && log.source !== '绯荤粺'
+            log.source != null && !log.source.includes('鏁屾柟') && log.source !== '系统'
           const targetIsAlly =
             log.target &&
             !log.target.includes('鏁屾柟') &&
-            log.target !== '绯荤粺' &&
+            log.target !== '系统' &&
             log.target !== '鎺у埗'
 
           // 鏇挎崲瑙掕壊鍚嶇О棰滆壊
-          if (log.source && log.source !== '绯荤粺') {
+          if (log.source && log.source !== '系统') {
             const sourceClass = sourceIsAlly ? 'source-ally' : 'source-enemy'
             htmlResult = htmlResult.replace(
               log.source,

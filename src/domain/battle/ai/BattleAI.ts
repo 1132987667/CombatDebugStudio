@@ -115,7 +115,7 @@ export class BaseBattleAI implements BattleAI {
     }
   }
 
-  /** 璁剧疆鎶€鑳介厤缃姞杞藉櫒 */
+  /** 设置鎶€鑳介厤缃姞杞藉櫒 */
   public setSkillConfigLoader(loader: SkillConfigLoader): void {
     this.skillConfigLoader = loader
   }

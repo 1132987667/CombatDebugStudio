@@ -10,20 +10,28 @@ export class ShieldBuff extends BaseBuffScript {
   protected _onApply(context: BuffContext): void {
     this.log(context, '获得护盾保护')
 
-    // 优先使用 executeShield 传入的 shieldValue，否则按公式计算
+    // 优先使用 executeShield 传入的 shieldValue，其次为 shieldPercent * maxHP，否则按公式计算
     const shieldValue = this.getConfigValue(context, 'shieldValue', -1)
-    if (shieldValue < 0) {
-      const baseShield = this.getConfigValue(context, 'baseShield', 100)
-      const shieldScale = this.getConfigValue(context, 'shieldScale', 1)
-      const character = context.getCharacter()
-      const maxHP = character ? character.getAttribute(ATTRIBUTE_CODE.maxHealth) : 1000
-      const calculatedShield = Math.floor(baseShield * shieldScale + maxHP * 0.1)
-      // 记录护盾相关参数
-      context.setVariable('shieldValue', calculatedShield)
-      context.setVariable('maxShieldValue', calculatedShield)
-    } else {
+    if (shieldValue >= 0) {
       context.setVariable('shieldValue', shieldValue)
       context.setVariable('maxShieldValue', shieldValue)
+    } else {
+      const shieldPercent = this.getConfigValue(context, 'shieldPercent', -1)
+      if (shieldPercent > 0) {
+        const character = context.getCharacter()
+        const maxHP = character ? character.getAttribute(ATTRIBUTE_CODE.maxHealth) : 1000
+        const computed = Math.floor(maxHP * shieldPercent)
+        context.setVariable('shieldValue', computed)
+        context.setVariable('maxShieldValue', computed)
+      } else {
+        const baseShield = this.getConfigValue(context, 'baseShield', 100)
+        const shieldScale = this.getConfigValue(context, 'shieldScale', 1)
+        const character = context.getCharacter()
+        const maxHP = character ? character.getAttribute(ATTRIBUTE_CODE.maxHealth) : 1000
+        const calculatedShield = Math.floor(baseShield * shieldScale + maxHP * 0.1)
+        context.setVariable('shieldValue', calculatedShield)
+        context.setVariable('maxShieldValue', calculatedShield)
+      }
     }
     context.setVariable('shieldRegen', this.getConfigValue(context, 'shieldRegen', 0))
 

@@ -71,15 +71,17 @@ import { ATTRIBUTE_CODE, type AttributeValue } from '@/domain/attribute/types';
 import { ActionTypes, type BattleEntity, ActionResultType } from '@/domain/battle/type/types';
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getVisualEffect } from '@/shared/utils/visual-effect-mapper'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 
 const store = useBattleStore()
 
 // 战报弹窗状态
 const showSummaryDialog = ref(false)
 const lastSummary = ref<BattleSummary | null>(null)
+
 // ponytail: 事件总线挂载后监听战报事件
-eventBus.on('battle-summary', (summary: any) => {
-  lastSummary.value = summary as BattleSummary
+eventBus.on(BattleEventCodes.BATTLE_SUMMARY, (summary: BattleSummary) => {
+  lastSummary.value = summary
   showSummaryDialog.value = true
 })
 

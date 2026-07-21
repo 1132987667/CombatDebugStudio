@@ -36,7 +36,7 @@ export class BattleManager {
    * @param battleReplayManager 战斗回放管理器实例
    */
   /** 已注册的事件处理器引用（用于 off 时精确移除） */
-  private handlers = new Map<BattleEventName, (...args: any[]) => void>()
+  private handlers = new Map<BattleEventName, Set<(...args: any[]) => void>>()
   /** 我方队伍编成（参战管理的真实数据源，独立于战斗运行时） */
   private allyTeam: BattleEntity[] = []
   /** 敌方队伍编成（参战管理的真实数据源，独立于战斗运行时） */
@@ -81,11 +81,12 @@ export class BattleManager {
    * @param callback 回调函数
    */
   on<T extends BattleEventName>(event: T, callback: (data: BattleEvents[T]) => void) {
-    const existing = this.handlers.get(event)
-    if (existing) {
-      eventBus.off(event, existing)
+    let set = this.handlers.get(event)
+    if (!set) {
+      set = new Set()
+      this.handlers.set(event, set)
     }
-    this.handlers.set(event, callback)
+    set.add(callback as (...args: any[]) => void)
     eventBus.on(event, callback)
   }
 
@@ -93,18 +94,26 @@ export class BattleManager {
    * 取消订阅事件
    * @param event 事件名称
    */
-  off<T extends BattleEventName>(event: T) {
-    const handler = this.handlers.get(event)
-    if (handler) {
-      eventBus.off(event, handler)
+  off<T extends BattleEventName>(event: T, callback?: (data: BattleEvents[T]) => void) {
+    const set = this.handlers.get(event)
+    if (!set) return
+    if (callback) {
+      set.delete(callback as (...args: any[]) => void)
+      eventBus.off(event, callback)
+    } else {
+      for (const cb of set) {
+        eventBus.off(event, cb)
+      }
       this.handlers.delete(event)
     }
   }
 
   /** 清除所有已注册的监听器 */
   clearAllListeners(): void {
-    for (const [event, handler] of this.handlers) {
-      eventBus.off(event, handler)
+    for (const [event, set] of this.handlers) {
+      for (const cb of set) {
+        eventBus.off(event, cb)
+      }
     }
     this.handlers.clear()
   }

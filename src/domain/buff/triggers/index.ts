@@ -26,8 +26,7 @@ export function healPercentMaxHp(ctx: TriggerExecutionContext): void {
   const percent = (ctx.params?.percent as number) ?? 0.05
   const targetId = (ctx.params?.target as string) === 'self' ? ctx.targetId ?? '' : ctx.targetId ?? ''
   if (!targetId) return
-  // ponytail: 通过 BuffSystem 的 onHealRequest 回调桥接到 HP 修改
-  ctx.buffSystem?.requestHeal(targetId, 0)
+  // ponytail: 通过负 damage 实现百分比治疗; requestHeal(0) 曾在此处但会触发无效回调链
   ctx.buffSystem?.requestDamage(targetId, 0, -Math.abs(percent))
 }
 
@@ -45,7 +44,7 @@ export function healLowestHpAlly(ctx: TriggerExecutionContext): void {
   const lowest = allies.reduce((a: BattleEntity, b: BattleEntity) =>
     (a.getAttribute?.('currentHealth') ?? 0) < (b.getAttribute?.('currentHealth') ?? 0) ? a : b,
   )
-  ctx.buffSystem?.requestHeal(lowest.id, 0)
+  // ponytail: 同上，不调用 requestHeal(0) 以避免触发 HEAL_RECEIVED 被动循环
   ctx.buffSystem?.requestDamage(lowest.id, 0, -percent)
 }
 

@@ -494,7 +494,6 @@ export class SkillExecutor {
           stackRule: StackRule.REFRESH,
           controlType: ControlType.NONE,
           controlPriority: 0,
-          isDebuff: false,
           parameters: { shieldValue: overflow },
         }
         this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
@@ -672,7 +671,6 @@ export class SkillExecutor {
       stackRule: StackRule.REFRESH,
       controlType: ControlType.NONE,
       controlPriority: 0,
-      isDebuff: false,
       parameters: { shieldValue },
     }
     const instanceId = this.buffSystem.addBuff(buffTarget.id, 'buff_shield', config, 0)

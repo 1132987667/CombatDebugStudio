@@ -20,6 +20,7 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     exclude: ['node_modules', 'build'],
     globals: true,
+    setupFiles: ['tests/setup.ts'],
     pool: 'forks',
     poolOptions: {
       forks: {

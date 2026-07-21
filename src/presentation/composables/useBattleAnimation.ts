@@ -9,6 +9,7 @@ import {
   BattleAnimationService,
   battleAnimationService,
 } from '@/infrastructure/animation/BattleAnimationService'
+import type { ActionResultType } from '@/domain/battle/type/types'
 import { EffectType } from '@/shared/types/effect'
 
 export interface UseBattleAnimationOptions {
@@ -101,7 +102,11 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
       await animationService.value.playHitAnimation({
         targetId,
         targetElement,
-        ...data,
+        damage: data.damage,
+        hitEffect: data.hitEffect as unknown as ActionResultType,
+        isCritical: data.isCritical,
+        skillName: data.skillName,
+        passiveName: data.passiveName,
       })
     } finally {
       state.value.isPlaying = false

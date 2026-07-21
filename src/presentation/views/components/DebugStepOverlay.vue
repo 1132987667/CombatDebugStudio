@@ -60,6 +60,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
 import { eventBus } from '@/main'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 
 const visible = ref(debugGate.enabled)
 const collapsed = ref(false)
@@ -113,13 +114,13 @@ const onDebugPause = (data: any) => {
 }
 
 onMounted(() => {
-  eventBus.on('debug-pause', onDebugPause)
-  eventBus.on('debug-toggle', onDebugToggle)
+  eventBus.on(BattleEventCodes.DEBUG_PAUSE, onDebugPause)
+  eventBus.on(BattleEventCodes.DEBUG_TOGGLE, onDebugToggle)
 })
 
 onUnmounted(() => {
-  eventBus.off('debug-pause', onDebugPause)
-  eventBus.off('debug-toggle', onDebugToggle)
+  eventBus.off(BattleEventCodes.DEBUG_PAUSE, onDebugPause)
+  eventBus.off(BattleEventCodes.DEBUG_TOGGLE, onDebugToggle)
 })
 </script>
 

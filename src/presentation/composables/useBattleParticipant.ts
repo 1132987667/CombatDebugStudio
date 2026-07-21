@@ -62,13 +62,13 @@ export interface UseBattleParticipantReturn {
   /** 属性集合（计算属性缓存） */
   stats: ComputedRef<ParticipantStats>
   /** 是否存活 */
-  isAlive: Readonly<boolean>
+  isAlive: ComputedRef<boolean>
   /** 是否死亡 */
-  isDead: Readonly<boolean>
+  isDead: ComputedRef<boolean>
   /** 生命百分比 */
-  hpPercent: Readonly<number>
+  hpPercent: ComputedRef<number>
   /** 能量百分比 */
-  energyPercent: Readonly<number>
+  energyPercent: ComputedRef<number>
   /** 获取指定属性（直接访问缓存） */
   getAttribute: (type: ATTRIBUTE_CODE) => AttributeValue | undefined
   /** 获取属性计算拆解（仅调试模式） */

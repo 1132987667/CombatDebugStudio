@@ -101,10 +101,8 @@ export interface BattleEvents {
   [BattleEventCodes.DEBUG_PAUSE_RESUME]: void;
   [BattleEventCodes.DEBUG_TOGGLE]: { enabled: boolean };
   [BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED]: { characterId: string };
-  // 自定义事件（不在 BattleEventCodes 枚举中，但由 mitt 全局发送）
-  'teamDataChanged': void;
-  'battle-summary': BattleSummary;
-  // mitt 约束：需要字符串和符号索引签名
+  [BattleEventCodes.BATTLE_SUMMARY]: BattleSummary;
+  // mitt 约束：Emitter<Events> 要求 Events extends Record<string, unknown>，必须保留
   [key: string]: unknown;
   [key: symbol]: unknown;
 }
@@ -150,6 +148,8 @@ export const BattleEventCodes = {
   DEBUG_TOGGLE: 'debug-toggle',
   /** 参与者属性变更事件（Buff 触发 recalculateAll 后发射） */
   PARTICIPANT_ATTRIBUTE_CHANGED: 'participant-attribute-changed',
+  /** 战斗摘要事件 */
+  BATTLE_SUMMARY: 'battle-summary',
 } as const
 
 export type BattleEventCode = (typeof BattleEventCodes)[keyof typeof BattleEventCodes]

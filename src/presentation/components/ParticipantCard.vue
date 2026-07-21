@@ -132,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ActionResultType } from '@/domain/battle/type/types'
 import { useBattleParticipant } from '@/presentation/composables/useBattleParticipant'
@@ -180,7 +180,7 @@ const battleStore = useBattleStore()
 const showDebug = computed(() => battleStore.showDebug)
 
 // 使用 composable 包装参与者
-const { participant: reactiveParticipant, stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(props.participant)
+const { participant: reactiveParticipant, stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(toRef(props, 'participant'))
 
 const buffSystem = container.resolve<BuffSystem>('BuffSystem')
 
@@ -296,10 +296,10 @@ const energyColorClass = computed(() => {
 
 /** 转换为纯文本 Buff 展示数据 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
 const buffListItems = computed((): BuffRawItem[] => {
-  // ponytail: 读取 statsVersion 建立 Vue 响应式依赖（recalculateAll → proxy._statsVersion++ 时 computed 重算）
-  void reactiveParticipant.statsVersion
+  // ponytail: 读取 participantRef.value 建立 Vue 响应式依赖（syncTeams 更新包裹时重算）
+  void reactiveParticipant.value?.statsVersion
 
-  const entity = reactiveParticipant
+  const entity = reactiveParticipant.value
   const result: BuffRawItem[] = []
   const seenIds = new Set<string>()
 

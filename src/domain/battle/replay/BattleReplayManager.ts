@@ -24,7 +24,7 @@ import {
  * 版本: 2.0.0 - 使用 ReplayEngine 实现确定性回放和状态跳转
  */
 export class BattleReplayManager {
-  private logger = LoggerProvider.logger
+  private get logger() { return LoggerProvider.logger }
   private isReplaying = false
   private isPaused = false
   private currentReplayIndex = 0

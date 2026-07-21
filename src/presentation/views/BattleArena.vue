@@ -115,6 +115,7 @@ import { EffectType } from '@/shared/types/effect';
 import { DamageCategory } from '@/domain/skill/types';
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
+import type { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -144,7 +145,7 @@ const clearDebugLogs = () => {
   battleLogManager.clearDebugLogs();
 };
 
-const handleDebugAction = (action: string) => {
+const handleDebugAction = async (action: string) => {
   console.log('Debug action:', action)
   switch (action) {
     case 'win_battle':
@@ -228,6 +229,14 @@ const handleDebugAction = (action: string) => {
         message: '调试: 重置战斗',
       })
       break
+    case 'reload_buffs': {
+      const loader = container.resolve<BuffScriptLoader>('BuffScriptLoader')
+      await loader.reloadScripts()
+      battleLogManager.addSystemLog({
+        message: 'Buff 脚本已热重载',
+      })
+      break
+    }
     case 'log_battle':
       battleLogManager.addTurnStartLog(1)
       break

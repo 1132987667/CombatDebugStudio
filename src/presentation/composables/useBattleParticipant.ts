@@ -7,9 +7,9 @@
 
 import {
   computed,
-  shallowReactive,
+  toRef,
+  type Ref,
   type ComputedRef,
-  type ShallowReactive,
 } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { AttributeValue } from '@/domain/attribute/types'
@@ -57,8 +57,8 @@ export interface ParticipantStats {
  * 战斗参与者 Composable 返回值
  */
 export interface UseBattleParticipantReturn {
-  /** 参与者实例（浅代理） */
-  participant: ShallowReactive<BattleEntity>
+  /** 参与者实例 Ref（prop 变化时自动更新） */
+  participant: Ref<BattleEntity>
   /** 属性集合（计算属性缓存） */
   stats: ComputedRef<ParticipantStats>
   /** 是否存活 */
@@ -82,55 +82,54 @@ export interface UseBattleParticipantReturn {
  * @returns 响应式包装的参与者数据和属性
  */
 export function useBattleParticipant(
-  participant: BattleEntity,
+  participantRef: Ref<BattleEntity>,
 ): UseBattleParticipantReturn {
-  console.log('useBattleParticipant', participant)
-  // 使用浅代理，避免 Map 深层代理开销
-  const shallowParticipant = shallowReactive<BattleEntity>(participant)
+  // ponytail: 通过 Ref 追踪 prop 变化。syncTeams() 替换实体包裹后
+  // participantRef.value 变化 → computed 重算 → 读到的 getAttributeValue 是战斗引擎的实时值
+  // 不再依赖 shallowReactive + statsVersion getter 的不可靠追踪
 
   // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue（使用官方 ATTRIBUTE_CODE 标准编码）
   const stats = computed<ParticipantStats>(() => {
-    // 读取 statsVersion 触发 Vue 响应式追踪——当参与者属性重算时版本戳递增，computed 自动重新求值
-    void shallowParticipant.statsVersion
+    const p = participantRef.value
     return {
-      currentHealth: shallowParticipant.getAttributeValue(
+      currentHealth: p.getAttributeValue(
         ATTRIBUTE_CODE.currentHealth,
       )!,
-      maxHealth: shallowParticipant.getAttributeValue(
+      maxHealth: p.getAttributeValue(
         ATTRIBUTE_CODE.maxHealth,
       )!,
-      energy: shallowParticipant.getAttributeValue(
+      energy: p.getAttributeValue(
         ATTRIBUTE_CODE.currentEnergy,
       )!,
-      maxEnergy: shallowParticipant.getAttributeValue(
+      maxEnergy: p.getAttributeValue(
         ATTRIBUTE_CODE.maxEnergy,
       )!,
-      attack: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.attack)!,
-      defense: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.defense)!,
-      speed: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.speed)!,
-      critRate: shallowParticipant.getAttributeValue(ATTRIBUTE_CODE.critRate)!,
-      critDamage: shallowParticipant.getAttributeValue(
+      attack: p.getAttributeValue(ATTRIBUTE_CODE.attack)!,
+      defense: p.getAttributeValue(ATTRIBUTE_CODE.defense)!,
+      speed: p.getAttributeValue(ATTRIBUTE_CODE.speed)!,
+      critRate: p.getAttributeValue(ATTRIBUTE_CODE.critRate)!,
+      critDamage: p.getAttributeValue(
         ATTRIBUTE_CODE.critDamage,
       )!,
-      damageReduction: shallowParticipant.getAttributeValue(
+      damageReduction: p.getAttributeValue(
         ATTRIBUTE_CODE.damageReduction,
       )!,
-      healthBonus: shallowParticipant.getAttributeValue(
+      healthBonus: p.getAttributeValue(
         ATTRIBUTE_CODE.healthBonus,
       )!,
-      attackBonus: shallowParticipant.getAttributeValue(
+      attackBonus: p.getAttributeValue(
         ATTRIBUTE_CODE.attackBonus,
       )!,
-      defenseBonus: shallowParticipant.getAttributeValue(
+      defenseBonus: p.getAttributeValue(
         ATTRIBUTE_CODE.defenseBonus,
       )!,
-      speedBonus: shallowParticipant.getAttributeValue(
+      speedBonus: p.getAttributeValue(
         ATTRIBUTE_CODE.speedBonus,
       )!,
-      minAttack: shallowParticipant.getAttributeValue(
+      minAttack: p.getAttributeValue(
         ATTRIBUTE_CODE.minAttack,
       )!,
-      maxAttack: shallowParticipant.getAttributeValue(
+      maxAttack: p.getAttributeValue(
         ATTRIBUTE_CODE.maxAttack,
       )!,
     }
@@ -138,8 +137,7 @@ export function useBattleParticipant(
 
   // 派生状态
   const isAlive = computed(() => {
-    void shallowParticipant.statsVersion
-    return shallowParticipant.isAlive()
+    return participantRef.value.isAlive()
   })
   const isDead = computed(() => !isAlive.value)
 
@@ -158,7 +156,7 @@ export function useBattleParticipant(
 
   // 直接访问属性的方法
   const getAttribute = (type: ATTRIBUTE_CODE): AttributeValue | undefined => {
-    return shallowParticipant.getAttributeValue(type)
+    return participantRef.value.getAttributeValue(type)
   }
 
   // 获取属性计算拆解（仅调试模式）
@@ -168,7 +166,7 @@ export function useBattleParticipant(
   }
 
   return {
-    participant: shallowParticipant,
+    participant: participantRef,
     stats,
     isAlive,
     isDead,
@@ -185,7 +183,7 @@ export function useBattleParticipant(
  * @returns 包装后的参与者数组
  */
 export function useBattleParticipants(
-  participants: BattleEntity[],
+  participants: Ref<BattleEntity>[],
 ): UseBattleParticipantReturn[] {
   return participants.map((p) => useBattleParticipant(p))
 }

@@ -391,9 +391,9 @@ function triggerBuffEffect(characterId: string) {
 
 /**
  * 清理动画效果
+ * ponytail: hideStatusTooltip 随旧 tooltip 系统一起被移除，无需恢复
  */
 function cleanupAnimations() {
-  hideStatusTooltip()
   stopAllAnimations()
 }
 

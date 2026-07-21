@@ -21,7 +21,7 @@ export class AutoBattleManager {
   /**
    * 战斗日志管理器，负责记录系统日志和战斗日志
    */
-  private logger = LoggerProvider.logger
+  private get logger() { return LoggerProvider.logger }
   /**
    * 战斗状态管理器，负责战斗状态的同步和管理
    */

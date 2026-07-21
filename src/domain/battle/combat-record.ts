@@ -65,7 +65,9 @@ export interface DamageBreakdown {
   postCritDamage: number
   /** 防御相关 */
   defenseValue: number
+  /** 实际防御值（加成后） */
   effectiveDefense: number
+  /** 防御减免乘数（0~1 小数） */
   defenseMultiplier: number
   /** 各项减免（百分比点，如 20 = 减免 20%） */
   normalAtkReduction?: number

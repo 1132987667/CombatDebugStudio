@@ -124,6 +124,9 @@ export function initializeContainer(): void {
 
   container.clear()
 
+  // 领域层日志器注入 — 必须最先设置，因为后续构造的类（如 BuffScriptRegistry）会用到
+  LoggerProvider.logger = battleLogManager
+
   // 1. 注册基础服务（无依赖或只依赖外部）
   container.register('BuffScriptRegistry', new BuffScriptRegistry())
 
@@ -140,9 +143,6 @@ export function initializeContainer(): void {
 
   // 领域实体的事件总线注入（静态字段）
   BattleParticipantImpl.eventBus = triggerEventBus
-
-  // 领域层日志器注入（LoggerProvider 静态服务定位器）
-  LoggerProvider.logger = battleLogManager
 
   // 3. 注册SkillManager（依赖BuffSystem）
   const buffSystem = container.resolve<BuffSystem>('BuffSystem')

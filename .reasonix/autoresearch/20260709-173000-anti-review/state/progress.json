@@ -1,1 +1,0 @@
-{"phase":"completed","summary":"Implemented all 4 steps from modification plan","items":{"step1":"幂等性守卫: BattleLifecycleManager.endBattle 添加 ENDED/SETTLEMENT 状态检查","step2":"动画中断: BattleAnimationManager 添加 _interruptResolve 机制","step3":"串联: endBattle 中调用 cleanupAnimationState 强制中断","step4":"单步守卫: AutoBattleManager.executeSingleTurn 仅暂停状态下可用"}}

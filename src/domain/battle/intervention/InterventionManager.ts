@@ -11,7 +11,7 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 export class InterventionManager {
   private battleSystem: BattleSystem
   private battleStateManager: BattleStateManager
-  private logger = LoggerProvider.logger
+  private get logger() { return LoggerProvider.logger }
   private selectedCharacterId: string | null = null
   private selectedChar: BattleEntity | null = null
 

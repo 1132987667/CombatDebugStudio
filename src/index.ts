@@ -22,17 +22,3 @@ export * from '@/shared/utils/schema-validator'
 
 // 业务脚本导出
 export * from '@/domain/buff/scripts'
-
-// 模块初始化函数
-export async function initializeBuffSystem(): Promise<void> {
-  try {
-    // 加载所有 Buff 脚本
-    const { container } = await import('@/infrastructure/di/Container')
-    const loader: BuffScriptLoader = container.resolve('BuffScriptLoader')
-    await loader.loadScripts()
-
-    console.log('Buff system initialized successfully')
-  } catch (error) {
-    console.error('Failed to initialize buff system:', error)
-  }
-}

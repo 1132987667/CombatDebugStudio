@@ -1,4 +1,8 @@
-import { IBuffScript, ScriptBuffConfig, type TriggerAction } from '@/domain/buff/types'
+import {
+  IBuffScript,
+  ScriptBuffConfig,
+  type TriggerAction,
+} from '@/domain/buff/types'
 import buffsData from '@configs/buffs/buffs.json'
 import effectsData from '@configs/effects/effects.json'
 import { ModifierType } from '@/domain/attribute/types'
@@ -51,6 +55,7 @@ interface RegistryEntry<TParams = any> {
 }
 
 export class BuffScriptRegistry {
+  /** 脚本注册表 */
   private registry = new Map<string, RegistryEntry>()
   private buffConfigs = new Map<string, BuffConfigData>()
   /** 脚本自包含的默认配置（由脚本类的静态 CONFIG 提供） */
@@ -60,18 +65,24 @@ export class BuffScriptRegistry {
     this.loadBuffConfigs()
   }
 
+  /** 加载 buffs.json 中的配置 */
   private loadBuffConfigs(): void {
     try {
       if (Array.isArray(buffsData)) {
         for (const buff of buffsData) {
           if (buff.id) {
             this.buffConfigs.set(buff.id, buff as BuffConfigData)
+            console.log(`加载 Buff 配置: ${buff.id}`)
           }
         }
-        LoggerProvider.logger.addDebugLog(`Loaded ${this.buffConfigs.size} buff configs from buffs.json`)
+        LoggerProvider.logger.addDebugLog(
+          `Loaded ${this.buffConfigs.size} buff configs from buffs.json`,
+        )
       }
     } catch (error) {
-      LoggerProvider.logger.addDebugLog('Failed to load buff configs:', { error: error as Error })
+      LoggerProvider.logger.addDebugLog('Failed to load buff configs:', {
+        error: error as Error,
+      })
     }
     this.loadEffectConfigs()
   }
@@ -120,16 +131,21 @@ export class BuffScriptRegistry {
           name: effect.id,
           duration: params.duration ?? 1,
           maxStacks: params.maxStacks ?? 1,
-          attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
+          attributes:
+            Object.keys(attributes).length > 0 ? attributes : undefined,
         }
         this.buffConfigs.set(effect.id, config)
         count++
       }
       if (count > 0) {
-        LoggerProvider.logger.addDebugLog(`Loaded ${count} effect configs from effects.json`)
+        LoggerProvider.logger.addDebugLog(
+          `Loaded ${count} effect configs from effects.json`,
+        )
       }
     } catch (error) {
-      LoggerProvider.logger.addDebugLog('Failed to load effects configs:', { error: error as Error })
+      LoggerProvider.logger.addDebugLog('Failed to load effects configs:', {
+        error: error as Error,
+      })
     }
   }
 
@@ -166,7 +182,8 @@ export class BuffScriptRegistry {
       return { value: numValue, type: ModifierType.PERCENTAGE }
     }
     // backward compatible: decimal like "+0.1" is also PERCENTAGE → convert to x100
-    if (Math.abs(numValue) < 1) return { value: numValue * 100, type: ModifierType.PERCENTAGE }
+    if (Math.abs(numValue) < 1)
+      return { value: numValue * 100, type: ModifierType.PERCENTAGE }
     return { value: numValue, type: ModifierType.ADDITIVE }
   }
 
@@ -188,7 +205,9 @@ export class BuffScriptRegistry {
     defaultConfig?: ScriptBuffConfig,
   ): void {
     if (this.registry.has(scriptId)) {
-      LoggerProvider.logger.addDebugLog(`Script "${scriptId}" already registered, overwriting`)
+      LoggerProvider.logger.addDebugLog(
+        `Script "${scriptId}" already registered, overwriting`,
+      )
     }
     this.registry.set(scriptId, {
       factory,
@@ -201,7 +220,9 @@ export class BuffScriptRegistry {
     })
     if (defaultConfig) {
       this.defaultConfigs.set(scriptId, defaultConfig)
-      LoggerProvider.logger.addDebugLog(`Script "${scriptId}" provides self-contained config (${Object.keys(defaultConfig).length} fields)`)
+      LoggerProvider.logger.addDebugLog(
+        `Script "${scriptId}" provides self-contained config (${Object.keys(defaultConfig).length} fields)`,
+      )
     }
     LoggerProvider.logger.addDebugLog(`Registered buff script: ${scriptId}`)
   }
@@ -215,12 +236,23 @@ export class BuffScriptRegistry {
   public isSelfContained(scriptId: string): boolean {
     // ponytail: 显式标记或任何已注册的脚本均视为自包含
     // 纯 JSON 配置（无脚本）的 buff 才通过 applyAttributeModifiers 应用修饰符
-    return this.defaultConfigs.get(scriptId)?.selfContained === true
-      || this.registry.has(scriptId)
+    return (
+      this.defaultConfigs.get(scriptId)?.selfContained === true ||
+      this.registry.has(scriptId)
+    )
   }
 
-  public registerScript(scriptId: string, script: any, defaultConfig?: ScriptBuffConfig): void {
-    this.register(scriptId, () => script, { filePath: 'test', version: 'test' }, defaultConfig)
+  public registerScript(
+    scriptId: string,
+    script: any,
+    defaultConfig?: ScriptBuffConfig,
+  ): void {
+    this.register(
+      scriptId,
+      () => script,
+      { filePath: 'test', version: 'test' },
+      defaultConfig,
+    )
   }
 
   public get<TParams = any>(scriptId: string): IBuffScript<TParams> | null {
@@ -231,7 +263,10 @@ export class BuffScriptRegistry {
     try {
       return entry.factory()
     } catch (e) {
-      LoggerProvider.logger.addDebugLog(`Failed to instantiate script "${scriptId}":`, { error: e as Error })
+      LoggerProvider.logger.addDebugLog(
+        `Failed to instantiate script "${scriptId}":`,
+        { error: e as Error },
+      )
       return null
     }
   }

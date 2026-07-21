@@ -134,7 +134,8 @@ const debugModules: DebugModule[] = [
       { label: '输出日志', action: 'dump_logs', description: '输出当前日志到控制台', class: 'btn-default' },
       { label: '导出状态', action: 'export_state', description: '导出战斗状态', class: 'btn-default' },
       { label: '导入状态', action: 'import_state', description: '导入战斗状态', class: 'btn-default' },
-      { label: '重置战斗', action: 'reset_battle', description: '重置战斗数据', class: 'btn-warning' }
+      { label: '重置战斗', action: 'reset_battle', description: '重置战斗数据', class: 'btn-warning' },
+      { label: 'Buff热重载', action: 'reload_buffs', description: '重新加载所有Buff脚本', class: 'btn-info' },
     ]
   },
   {

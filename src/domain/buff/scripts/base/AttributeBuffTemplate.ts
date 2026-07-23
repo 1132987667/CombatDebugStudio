@@ -28,8 +28,6 @@ export interface AttributeModifier {
  * - 支持单一属性和批量属性
  * - 不预设成长逻辑——子类在 _onUpdate 中自行实现
  *
- * ponytail: 这是一个"工具箱"而非"预制件"。
- * 简单 Buff（AttackUpBuff）只需 7 行，复杂 Buff（BerserkBuff）也可用它管理修饰符。
  *
  * @example
  * // 简单场景：固定值，单一属性
@@ -71,14 +69,18 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
   // ==================== 生命周期实现 ====================
 
   protected _onApply(context: BuffContext): void {
-    this.applyModifiers(context)
-    this.log(context, `√ 效果生效，应用了 ${this.getModifiers().length} 个属性修饰符`)
+    const modifiers = this.getModifiers()
+    this.applyModifiers(context, false, modifiers)
+    this.log(
+      context,
+      `√ 效果生效，应用了 ${modifiers.length} 个属性修饰符`,
+    )
   }
 
   protected _onRemove(context: BuffContext): void {
-    // ponytail: 修饰符清理由 BuffSystem.removeBuff → modifierStack.removeModifier(instanceId) 统一处理，
-    //           BaseBuffScript.onRemove 不调用 context.removeModifiers()（自 2026-07-16 重构后）。
-    //           子类如需清理运行时变量，重写此方法并调用 super._onRemove(context)
+    // NOTE: 修饰符清理由 BuffSystem.removeBuff → modifierStack.removeModifier(instanceId) 统一处理，
+    //       不在脚本层调用 context.removeModifiers()。
+    //        子类如需清理运行时变量，重写此方法并调用 super._onRemove(context)
   }
 
   protected _onUpdate(context: BuffContext, deltaTime: number): void {
@@ -92,8 +94,12 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
 
   protected _onRefresh(context: BuffContext): void {
     if (this.shouldReapplyOnRefresh()) {
-      this.applyModifiers(context, true)
-      this.log(context, `刷新效果，重新应用了 ${this.getModifiers().length} 个修饰符`)
+      const modifiers = this.getModifiers()
+      this.applyModifiers(context, true, modifiers)
+      this.log(
+        context,
+        `刷新效果，重新应用了 ${modifiers.length} 个修饰符`,
+      )
     }
   }
 
@@ -103,11 +109,15 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
    * 应用修饰符列表到 BuffContext
    * @param context Buff 上下文
    * @param replace 是否先替换再应用——精确移除每个声明的属性的旧修饰符，再添加新值
+   * @param modifiers 可选——传入的修饰符列表，不传时调用 this.getModifiers()
    */
-  protected applyModifiers(context: BuffContext, replace: boolean = false): void {
-    const modifiers = this.getModifiers()
-    // ponytail: 从上下文中读取叠加层数，默认 1 层
-    const stacks = (context.getVariable<number>('_stacks') as number) ?? 1
+  protected applyModifiers(
+    context: BuffContext,
+    replace: boolean = false,
+    modifiers?: AttributeModifier[],
+  ): void {
+    modifiers ??= this.getModifiers()
+    const stacks = this.getStacks(context)
 
     if (replace) {
       // ponytail: 精确移除——只移除本 instance 下每个声明属性的旧修饰符，不影响同 instance 的其他属性
@@ -117,20 +127,48 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     }
 
     for (const mod of modifiers) {
-      const rawValue = typeof mod.value === 'function' ? mod.value(context) : mod.value
+      // NOTE: 运行时校验——仅接受已知 ATTRIBUTE_CODE，非法属性跳过并 warn
+      if (!Object.values(ATTRIBUTE_CODE).includes(mod.attribute as ATTRIBUTE_CODE)) {
+        this.log(context, `修饰符属性 "${mod.attribute}" 不在 ATTRIBUTE_CODE 中，已跳过`)
+        continue
+      }
+
+      // HACK: 动态 value 函数可能抛出异常——try-catch 兜底确保单个修饰符失败不拖垮整个战斗流程
+      let rawValue: number
+      if (typeof mod.value === 'function') {
+        try {
+          rawValue = mod.value(context)
+        } catch (error) {
+          this.log(context, `修饰符值计算失败 (${mod.attribute}): ${error}`)
+          rawValue = 0
+        }
+      } else {
+        rawValue = mod.value
+      }
       const value = rawValue * stacks
       context.addModifier(mod.attribute as ATTRIBUTE_CODE, value, mod.type)
     }
 
     if (this._isDebugMode()) {
       for (const mod of modifiers) {
-        const rawVal = typeof mod.value === 'function' ? mod.value(context) : mod.value
-        this.log(context, `  ├─ ${mod.description ?? mod.attribute}: ${mod.attribute} ${mod.type} ${rawVal}（${stacks}层→实际${rawVal * stacks}）`)
+        const rawVal =
+          typeof mod.value === 'function'
+            ? (() => { try { return mod.value(context) } catch { return NaN } })()
+            : mod.value
+        this.log(
+          context,
+          `  ├─ ${mod.description ?? mod.attribute}: ${mod.attribute} ${mod.type} ${rawVal}（${stacks}层→实际${Number.isNaN(rawVal) ? 'N/A' : rawVal * stacks}）`,
+        )
       }
     }
   }
 
   // ==================== 辅助方法 ====================
+
+  /** 读取 Buff 叠加层数，默认 1 层 */
+  protected getStacks(context: BuffContext): number {
+    return (context.getVariable<number>('_stacks') as number) ?? 1
+  }
 
   /** 获取参数的便捷方法——优先从 context.config.parameters 读取，否则使用默认值 */
   protected getParam<T>(context: BuffContext, key: string, defaultValue: T): T {

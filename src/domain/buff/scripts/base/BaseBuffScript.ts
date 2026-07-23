@@ -17,10 +17,8 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
     BuffErrorBoundary.wrap(() => {
       this._onRemove(context)
     })
-    // ponytail: 修饰符清理由 BuffSystem.removeBuff → modifierStack.removeModifier(instanceId) 统一处理。
-    //           BaseBuffScript 不再调用 context.removeModifiers()，避免 double-free 但无害。
-    //           AttributeBuffTemplate._onRemove 的注释提到"context.removeModifiers() 已由基类调用"，
-    //           该注释已过时——当前仅执行 _onRemove 回调，修饰符清理由系统层负责。
+    // NOTE: 修饰符清理由 BuffSystem.removeBuff → modifierStack.removeModifier(instanceId) 统一处理，
+    //       不在脚本层调用 context.removeModifiers()。
   }
 
   public onUpdate(context: BuffContext, deltaTime: number): void {

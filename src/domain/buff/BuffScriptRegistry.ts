@@ -78,9 +78,11 @@ export class BuffScriptRegistry {
         LoggerProvider.logger.addDebugLog(
           `Loaded ${this.buffConfigs.size} buff configs from buffs.json`,
         )
+      } else {
+        LoggerProvider.logger.addDebugLog('buffs.json 格式错误: 不是数组')
       }
     } catch (error) {
-      LoggerProvider.logger.addDebugLog('Failed to load buff configs:', {
+      LoggerProvider.logger.addDebugLog('加载 Buff 配置失败:', {
         error: error as Error,
       })
     }
@@ -143,7 +145,7 @@ export class BuffScriptRegistry {
         )
       }
     } catch (error) {
-      LoggerProvider.logger.addDebugLog('Failed to load effects configs:', {
+      LoggerProvider.logger.addDebugLog('加载效果配置失败:', {
         error: error as Error,
       })
     }
@@ -206,7 +208,7 @@ export class BuffScriptRegistry {
   ): void {
     if (this.registry.has(scriptId)) {
       LoggerProvider.logger.addDebugLog(
-        `Script "${scriptId}" already registered, overwriting`,
+        `BUFF脚本 "${scriptId}" 已经注册, 请检查`,
       )
     }
     this.registry.set(scriptId, {
@@ -221,10 +223,10 @@ export class BuffScriptRegistry {
     if (defaultConfig) {
       this.defaultConfigs.set(scriptId, defaultConfig)
       LoggerProvider.logger.addDebugLog(
-        `Script "${scriptId}" provides self-contained config (${Object.keys(defaultConfig).length} fields)`,
+        `BUFF脚本 "${scriptId}" 提供自包含配置 (${Object.keys(defaultConfig).length} 个字段)`,
       )
     }
-    LoggerProvider.logger.addDebugLog(`Registered buff script: ${scriptId}`)
+    LoggerProvider.logger.addDebugLog(`注册BUFF脚本: ${scriptId}`)
   }
 
   /** 获取脚本自包含的默认配置 */

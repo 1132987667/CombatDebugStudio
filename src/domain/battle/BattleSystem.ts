@@ -23,7 +23,7 @@ import type { TriggerEventContext } from '@/domain/buff/types'
 import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { AISystem } from '@/domain/battle/ai/AISystem'
-import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
+import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
 import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { TurnManager } from '@/domain/battle/service/TurnManager'
@@ -298,7 +298,6 @@ export class BattleSystem {
 
     battleData.participants = participants
     console.log('初始化战斗数据', battleData)
-    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, { allyTeam: [], enemyTeam: [] })
 
 
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
@@ -704,7 +703,6 @@ export class BattleSystem {
       this.battleRecorder.recordTurnEnd(battleId, battle.currentTurn || 1)
 
       battle.currentTurn++
-      eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, { allyTeam: [], enemyTeam: [] })
     } catch (error) {
       LoggerProvider.logger.addDebugLog('处理回合时出错:', { level: LogLevel.ERROR, error: error as Error })
       console.error('处理回合时出错:', error)

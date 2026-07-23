@@ -158,6 +158,57 @@ describe('BuffSystem', () => {
 
       expect(removedAgain).toBe(false)
     })
+
+    it('should cascade remove child buffs when parent is removed', () => {
+      const parentConfig = createTestBuffConfig({ id: 'parent_buff', cascadeRemove: true })
+      const childConfig = createTestBuffConfig({
+        id: 'child_buff',
+        cascadeRemove: true,
+        duration: -1,
+        attributes: { attack: '+50' },
+      })
+      registry.loadBuffConfigsFromArray([
+        { id: 'child_buff', name: 'Child Buff', attributes: { attack: '+50' } },
+      ])
+      registry.registerScript('parent_buff', { ...noopScript })
+      registry.registerScript('child_buff', { ...noopScript })
+
+      const parentId = buffSystem.addBuff('char_1', 'parent_buff', parentConfig, 1)
+      const childId = buffSystem.addBuff('char_1', 'child_buff', childConfig, 1, undefined, parentId)
+
+      // 验证父子都存在
+      expect(buffSystem.getBuffInstances('char_1').length).toBe(2)
+
+      // 移除父 Buff
+      buffSystem.removeBuff(parentId)
+
+      // 子 Buff 应被级联移除
+      const remaining = buffSystem.getBuffInstances('char_1')
+      expect(remaining.length).toBe(0)
+      expect(remaining.find((b) => b.id === childId)).toBeUndefined()
+    })
+
+    it('should NOT cascade remove child buffs when cascadeRemove is false', () => {
+      const parentConfig = createTestBuffConfig({ id: 'parent_buff_2' })
+      const childConfig = createTestBuffConfig({
+        id: 'child_buff_2',
+        cascadeRemove: false, // 弱依赖
+        duration: -1,
+      })
+      registry.registerScript('parent_buff_2', { ...noopScript })
+      registry.registerScript('child_buff_2', { ...noopScript })
+
+      const parentId = buffSystem.addBuff('char_1', 'parent_buff_2', parentConfig, 1)
+      buffSystem.addBuff('char_1', 'child_buff_2', childConfig, 1, undefined, parentId)
+
+      expect(buffSystem.getBuffInstances('char_1').length).toBe(2)
+
+      buffSystem.removeBuff(parentId)
+
+      // 子 Buff 应保留（弱依赖）
+      const remaining = buffSystem.getBuffInstances('char_1')
+      expect(remaining.length).toBe(1)
+    })
   })
 
   describe('getModifierStack', () => {

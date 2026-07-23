@@ -1,6 +1,6 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
-import { AttributeBuffTemplate } from '@/domain/buff/scripts/base/AttributeBuffTemplate'
-import type { AttributeModifier } from '@/domain/buff/scripts/base/AttributeBuffTemplate'
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { AttributeBuffTemplate } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
+import type { AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ModifierType } from '@/domain/attribute/types'
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AttributeBuffTemplate 单元测试
  *
  * 覆盖核心行为：
@@ -10,10 +10,10 @@
  * - 动态计算异常兜底
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/base/AttributeBuffTemplate'
+import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
-import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 
 // ============================================================
 // 测试辅助：继承 AttributeBuffTemplate 的具象子类

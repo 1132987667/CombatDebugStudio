@@ -1,7 +1,7 @@
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
-import type { BattleData, ParticipantSide } from '@/domain/battle/type/types'
+import type { BattleData, BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
 import { AUTO_BATTLE_CONFIG, BattleActionHelper, BattleStatus, PARTICIPANT_SIDE, RoundStatus } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { eventBus } from '@/main'
@@ -109,6 +109,18 @@ export class BattleLifecycleManager {
 
       try {
         await this.processTurnInternal()
+
+        // 每回合结束后通知 UI 同步队伍数据（HP/能量等）
+        const turnData = this.getBattleData()
+        if (turnData) {
+          const allyTeam: BattleEntity[] = []
+          const enemyTeam: BattleEntity[] = []
+          turnData.participants.forEach((p) => {
+            if (p.team === PARTICIPANT_SIDE.ALLY) allyTeam.push(p)
+            else enemyTeam.push(p)
+          })
+          eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, { allyTeam, enemyTeam })
+        }
 
         const after = this.getBattleData()
         if (after?.battleState === BattleStatus.ENDED || after?.battleState === BattleStatus.PAUSED) {

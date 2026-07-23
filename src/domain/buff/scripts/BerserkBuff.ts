@@ -12,7 +12,7 @@
  *   - 防御力 -30%（乘法削弱）
  *   - 每 2 回合损失 5% 当前生命值（狂暴代价）
  */
-import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'

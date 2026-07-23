@@ -1,4 +1,4 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
@@ -60,4 +60,3 @@ export class SpeedReductionDebuff extends BaseBuffScript {
 
 // 导出 BUFF_ID 常量
 export const BUFF_ID = SpeedReductionDebuff.BUFF_ID
-

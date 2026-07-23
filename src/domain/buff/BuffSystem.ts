@@ -77,6 +77,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   /** 角色免疫标签注册表（初始化时由被动技能填充，运行时可查询） */
   private characterImmunities = new Map<string, Set<string>>()
 
+  /** 父→子 Buff 反向索引（用于级联移除） */
+  private parentToChildren = new Map<string, Set<string>>()
+
   /** 注册角色的免疫标签 */
   registerCharacterImmunities(characterId: string, tags: string[]): void {
     if (!this.characterImmunities.has(characterId)) {
@@ -367,6 +370,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     config: Partial<BuffConfig> = {},
     currentTurn: number = 0,
     record?: CombatRecord,
+    parentInstanceId?: string,
   ): string {
     let script = this.scriptRegistry.get(buffId)
     if (!script) {
@@ -440,6 +444,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         config.parameters ?? scriptDefaultConfig?.parameters ?? undefined,
       attributes: config.attributes ?? jsonConfig?.attributes ?? undefined,
       triggers: config.triggers ?? jsonConfig?.triggers ?? undefined,
+      cascadeRemove:
+        config.cascadeRemove ??
+        scriptDefaultConfig?.cascadeRemove ??
+        undefined,
     }
 
     // ponytail: 免疫检查 — 若目标对该 buff 的 controlType / buffId / immuneTags 免疫则跳过施加
@@ -534,9 +542,18 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       remainingTurns: resolvedConfig.duration,
       currentStacks: 1,
       isActive: true,
+      parentInstanceId,
     }
 
     this.buffInstances.set(instanceId, buffInstance)
+
+    // 父→子反向索引：记录到 map 供级联移除使用
+    if (parentInstanceId) {
+      if (!this.parentToChildren.has(parentInstanceId)) {
+        this.parentToChildren.set(parentInstanceId, new Set())
+      }
+      this.parentToChildren.get(parentInstanceId)!.add(instanceId)
+    }
 
     if (!this.modifierStacks.has(characterId)) {
       this.modifierStacks.set(characterId, new ModifierStack())
@@ -752,6 +769,17 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const instance = this.buffInstances.get(instanceId)
     if (!instance || !instance.isActive) return false
 
+    // 若自己有父，从父的 child 集合中移除自己（避免悬空引用）
+    if (instance.parentInstanceId) {
+      const siblings = this.parentToChildren.get(instance.parentInstanceId)
+      if (siblings) {
+        siblings.delete(instanceId)
+        if (siblings.size === 0) {
+          this.parentToChildren.delete(instance.parentInstanceId)
+        }
+      }
+    }
+
     BuffErrorBoundary.wrap(() => {
       instance.script.onRemove(instance.context)
     })
@@ -770,8 +798,31 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     BuffContextPool.return(instance.context)
     // ponytail: 免疫标签回收 — 从剩余 Buff 重建免疫集合，防止已移除 Buff 的免疫标签残留
     this.rebuildCharacterImmunities(instance.characterId)
+
+    // ponytail: 级联移除子 Buff — 从反向索引查所有 cascadeRemove===true 的子实例
+    this.cascadeRemoveChildren(instanceId, instance.characterId)
+
     this.triggerAttributeChange(instance.characterId)
     return true
+  }
+
+  /**
+   * 级联移除指定父实例的所有子 Buff
+   * 只移除 cascadeRemove===true 的子；cascadeRemove===false/undefined 的保留。
+   * 递归处理——子 Buff 也有自己的子 Buff。
+   */
+  private cascadeRemoveChildren(parentId: string, parentCharacterId: string): void {
+    const children = this.parentToChildren.get(parentId)
+    if (!children || children.size === 0) return
+
+    this.parentToChildren.delete(parentId)
+    for (const childId of children) {
+      const childInstance = this.buffInstances.get(childId)
+      if (!childInstance || !childInstance.isActive) continue
+      // 只移除标记 cascadeRemove 的子 Buff；弱依赖保留
+      if (childInstance.context.config.cascadeRemove !== true) continue
+      this.removeBuff(childId)
+    }
   }
 
   public refreshBuff(instanceId: string, currentTurn: number): boolean {

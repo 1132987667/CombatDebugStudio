@@ -55,9 +55,12 @@
       @update:selected-scene="val => selectedScene = val" @save="handleSaveScene" @load="handleLoadScene"
       @delete="handleDeleteScene" />
 
-    <StatusInjectionDialog v-model="showStatusDialog" :selected-char-name="getSelectedCharName"
-      :injectable-statuses="injectableStatuses" @update:injectable-statuses="val => updateStatuses(val)"
-      @add="handleAddStatus" @clear="handleClearStatuses" />
+    <StatusInjectionDialog v-model="showStatusDialog"
+      :characters="characterOptions" :selected-char-id="selectedCharacterId || ''"
+      :current-attrs="currentAttrs"
+      @update:selected-char-id="val => battleStore.selectCharacter(val)"
+      @apply-buffs="handleApplyBuffs" @apply-attributes="handleApplyAttributes"
+      @reset-character="handleResetCharacter" />
 
     <CompendiumDialog v-model="showCompendiumDialog" />
 
@@ -108,9 +111,10 @@ import { useBattleStore } from '@/presentation/stores';
 import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
 import { PARTICIPANT_SIDE } from "@/domain/battle/type/types.ts";
-import type { InjectableStatus } from "./components/StatusInjectionDialog.vue";
+import type { CharacterOption } from "./components/StatusInjectionDialog.vue";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import type { LogEntry } from '@/shared/types/battle-log';
+import { ATTRIBUTE_CODE } from "@/domain/attribute/types";
 import { EffectType } from '@/shared/types/effect';
 import { DamageCategory } from '@/domain/skill/types';
 import { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -317,37 +321,66 @@ const handleDebugAction = async (action: string) => {
 
 const battleFieldRef = ref<InstanceType<typeof BattleField> | null>(null);
 const savedScenes = ref<string[]>([]);
-const injectableStatuses = ref<InjectableStatus[]>([]);
+
+// ==================== 为初始状态注入弹窗提供数据 ====================
+
+/** 所有参战角色列表（用于弹窗内下拉选择） */
+const characterOptions = computed<CharacterOption[]>(() => {
+  const ally = (battleStore.allyTeam || []).map(e => ({
+    id: e.id,
+    name: e.name,
+    side: 'ally' as const,
+  }))
+  const enemy = (battleStore.enemyTeam || []).map(e => ({
+    id: e.id,
+    name: e.name,
+    side: 'enemy' as const,
+  }))
+  return [...ally, ...enemy]
+})
+
+/** 当前选中角色的 5 个核心属性值（用于属性调整 Tab 的显示，通过 getAttributeValue 获取以保证类型正确） */
+const currentAttrs = computed(() => {
+  const char = selectedCharacter.value
+  const defaults = { currentHealth: 0, currentEnergy: 0, minAttack: 0, defense: 0, speed: 0 }
+  if (!char) return defaults
+  return {
+    currentHealth: char.currentHealth ?? 0,
+    currentEnergy: char.currentEnergy ?? 0,
+    minAttack: char.getAttributeValue(ATTRIBUTE_CODE.minAttack)?.value ?? 0,
+    defense: char.getAttributeValue(ATTRIBUTE_CODE.defense)?.value ?? 0,
+    speed: char.getAttributeValue(ATTRIBUTE_CODE.speed)?.value ?? 0,
+  }
+})
 
 // 计算属性
-const getSelectedCharName = computed(() => {
-  const selectedChar = battleService.getSelectedCharacter()
-  return selectedChar?.name || "未选择"
-});
-
 const selectedCharacterId = computed(() => {
-  return battleService.getSelectedCharacterId() || null
+  return battleStore.selectedCharacterId || null
 });
 
 const selectedCharacter = computed(() => {
-  return battleService.getSelectedCharacter()
+  const id = battleStore.selectedCharacterId
+  if (!id) return null
+  const all = [...(battleStore.allyTeam || []), ...(battleStore.enemyTeam || [])]
+  return all.find(p => p.id === id) || null
 });
 
 const currentTurn = computed(() => {
-  return battleService.getCurrentTurn() || 1
+  return battleStore.currentTurn || 1
 });
 
 const allyTeam = computed(() => {
-  return battleService.getAllyTeam() || []
+  return battleStore.allyTeam || []
 });
 
 const enemyTeam = computed(() => {
-  return battleService.getEnemyTeam() || []
+  return battleStore.enemyTeam || []
 });
 
-const teamCounts = computed(() => {
-  return battleService.getTeamCounts() || { ally: 0, enemy: 0 }
-});
+const teamCounts = computed(() => ({
+  ally: (battleStore.allyTeam || []).length,
+  enemy: (battleStore.enemyTeam || []).length,
+}));
 
 
 
@@ -475,37 +508,84 @@ const handleDeleteScene = (sceneNameValue: string) => {
   }
 };
 
-// 状态注入组件事件处理
-const updateStatuses = (newStatuses: any[]) => {
-  const targetIndex = injectableStatuses.value.findIndex(s => s.id === selectedCharacterId.value);
-  if (targetIndex !== -1) {
-    injectableStatuses.value.splice(targetIndex, 1, ...newStatuses);
-  }
-};
+// ==================== 初始状态注入事件处理 ====================
 
-const handleAddStatus = () => {
-  const selectedChar = selectedCharacter.value;
-  if (selectedChar) {
-    const activeStatuses = injectableStatuses.value.filter(s => s.active);
-    // ponytail: 实体不再存储 buffs，状态注入需通过 BuffSystem 重新实现（待 Step 2）
-    if (activeStatuses.length > 0) {
-      battleLogManager.addActionLog({
-        source: "系统",
-        action: "添加状态",
-        target: selectedChar.name,
-        message: `${activeStatuses.map(s => s.name).join(', ')} (${activeStatuses.length}个状态)`
-      });
+/** 注入 Buff：调用 BuffSystem.addBuff() 并强制 UI 刷新 */
+const handleApplyBuffs = (payload: { charId: string; buffs: { buffId: string; duration: number }[] }) => {
+  const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+  const currentTurn = battleService.getCurrentTurn() ?? 1
+  for (const b of payload.buffs) {
+    buffSystem.addBuff(payload.charId, b.buffId, { duration: b.duration }, currentTurn)
+  }
+  // 强制同步队伍数据 → 创建新的 shallowReactive proxy → 触发 ParticipantCard 重新渲染
+  battleStore.syncTeams()
+  battleLogManager.addActionLog({
+    source: '系统', action: '注入 Buff', target: payload.charId,
+    message: `${payload.buffs.length}个 Buff 已注入到 [${payload.charId}]`,
+  })
+}
+
+/** 改写属性：调用实体 setter */
+const handleApplyAttributes = (payload: { charId: string; attributes: Record<string, number> }) => {
+  const allParticipants = [
+    ...(battleService.getAllyTeam() || []),
+    ...(battleService.getEnemyTeam() || []),
+  ]
+  const entity = allParticipants.find(e => e.id === payload.charId)
+  if (!entity) return
+
+  for (const [key, value] of Object.entries(payload.attributes)) {
+    if (key === 'currentHealth') {
+      entity.currentHealth = value
+    } else if (key === 'currentEnergy') {
+      entity.currentEnergy = value
+    } else if (key === 'minAttack') {
+      entity.setAttribute(ATTRIBUTE_CODE.minAttack, value)
+    } else if (key === 'defense') {
+      entity.setAttribute(ATTRIBUTE_CODE.defense, value)
+    } else if (key === 'speed') {
+      entity.setAttribute(ATTRIBUTE_CODE.speed, value)
     }
   }
-};
 
-const handleClearStatuses = () => {
-  const selectedChar = selectedCharacter.value;
-  if (selectedChar) {
-    // ponytail: 实体不再存储 buffs，清除状态需通过 BuffSystem 重新实现（待 Step 2）
-    battleLogManager.addActionLog({ source: "系统", action: "清除状态", target: selectedChar.name, message: "所有状态已清除" });
+  // 强制 UI 刷新
+  battleStore.syncTeams()
+  const attrs = Object.keys(payload.attributes).join(', ')
+  battleLogManager.addActionLog({
+    source: '系统', action: '改写属性', target: payload.charId,
+    message: `属性已更新: ${attrs}`,
+  })
+}
+
+/** 重置角色状态 */
+const handleResetCharacter = (payload: { charId: string; mode: 'buffs' | 'hp_energy' | 'all' }) => {
+  const allParticipants = [
+    ...(battleService.getAllyTeam() || []),
+    ...(battleService.getEnemyTeam() || []),
+  ]
+  const entity = allParticipants.find(e => e.id === payload.charId)
+  if (!entity) return
+
+  const mode = payload.mode
+  if (mode === 'buffs' || mode === 'all') {
+    // 通过 BuffSystem 清除所有 Buff
+    const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+    buffSystem.clearAllBuffs(payload.charId)
   }
-};
+  if (mode === 'hp_energy' || mode === 'all') {
+    entity.currentHealth = entity.maxHealth
+    entity.currentEnergy = entity.maxEnergy
+  }
+
+  // 强制 UI 刷新
+  battleStore.syncTeams()
+
+  const modeName = { buffs: '清除所有 Buff', hp_energy: '满血满能量', all: '完全重置' }[mode]
+  battleLogManager.addActionLog({
+    source: '系统', action: '重置角色', target: payload.charId,
+    message: modeName,
+  })
+}
 
 // 监听队伍成员数量变化
 watch(

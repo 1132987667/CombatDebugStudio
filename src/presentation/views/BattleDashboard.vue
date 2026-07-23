@@ -14,7 +14,7 @@
       </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">基础属性</div>
-        <div class="monitor-grid">
+        <div class="monitor-grid" @mouseleave="hideAttrTooltip">
           <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.maxHealth)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血:</span>
@@ -69,7 +69,7 @@
       </div>
       <div class="monitor-group">
         <div class="monitor-subtitle">属性加成</div>
-        <div class="monitor-grid">
+        <div class="monitor-grid" @mouseleave="hideAttrTooltip">
           <div class="monitor-item" @mouseenter="showAttrTooltipSimple($event, ATTRIBUTE_CODE.healthBonus)"
             @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
             <span class="monitor-label">气血加成:</span>
@@ -106,7 +106,7 @@
             <div class="monitor-subtitle" style="font-size:0.85em;opacity:0.7;margin-top:8px">
               {{ groupLabels[group] || group }}
             </div>
-            <div class="monitor-grid">
+            <div class="monitor-grid" @mouseleave="hideAttrTooltip">
               <div class="monitor-item" v-for="a in attrs" :key="a.code"
                 @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)"
                 @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
@@ -123,7 +123,7 @@
           <div v-if="!currentCharacter?.skills" class="no-skills">
             暂未配置技能
           </div>
-          <div v-else class="skills-list">
+          <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
             <div class="skill-category"
               v-if="currentCharacter.skills.passive && currentCharacter.skills.passive.length > 0">
               <div class="skill-category-title">被动技能</div>
@@ -447,6 +447,15 @@ const handleKeyUp = (e: KeyboardEvent) => {
   }
 }
 
+/** 窗口失焦时重置 Alt 锁定并隐藏 tooltip，防止 altKeyHeld 卡住导致工具提示永不隐藏 */
+const handleWindowBlur = () => {
+  altKeyHeld.value = false
+  if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
+  attrTooltipVisible.value = false
+  tooltipVisible.value = false
+  tooltipContent.value = null
+}
+
 const attrTooltipData = ref<{
   title: string
   modifiers: Modifier[]
@@ -586,10 +595,12 @@ const hideAttrTooltip = () => {
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown)
   window.addEventListener('keyup', handleKeyUp)
+  window.addEventListener('blur', handleWindowBlur)
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('keyup', handleKeyUp)
+  window.removeEventListener('blur', handleWindowBlur)
   if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
 })
 

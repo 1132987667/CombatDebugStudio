@@ -564,6 +564,7 @@ export class BattleManager {
     LoggerProvider.logger.clearLogs()
     LoggerProvider.logger.addSystemLog({ message: '战斗已创建' })
     this.syncBattleState()
+    this.emitTeamChanged()
 
     // 自动开始战斗
     if (this.battleSystem.getAutoBattle()) {
@@ -621,6 +622,7 @@ export class BattleManager {
     // 触发战斗结束事件
     const eventData: any = { winner }
     this.emit(BattleEventCodes.BATTLE_ENDED, eventData)
+    this.emitTeamChanged()
   }
 
   /**
@@ -631,6 +633,7 @@ export class BattleManager {
     this.battleStateManager.resetState()
     this.autoBattleManager.resetState()
     LoggerProvider.logger.clearLogs()
+    this.emitTeamChanged()
   }
 
   /**

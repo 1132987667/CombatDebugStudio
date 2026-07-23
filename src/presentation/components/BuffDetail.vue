@@ -46,7 +46,7 @@
           {{ effectType }}
         </span>
         <span v-if="buff.maxStacks > 1" class="effect-tag stacks">
-          可叠加
+          可叠�?
         </span>
         <span v-if="isPermanent" class="effect-tag permanent">
           永久
@@ -72,7 +72,7 @@
 import { computed } from 'vue'
 import { AttributeCodeNames } from '@/domain/attribute/types'
 import type { CompendiumBuff } from '@/presentation/composables/useCompendium'
-import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/combat/StunDebuff'
+import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
 
 
 interface Props {
@@ -139,12 +139,12 @@ const getBuffDescription = (buff: CompendiumBuff): string => {
   if (buff.description) return buff.description
 
   const descriptions: Record<string, string> = {
-    'buff_speed_up': '提升角色10点速度，持续1回合。',
-    'buff_ally_atk_up': '提升同伴5%攻击力，持续2回合。',
-    'buff_iron_armor': '减少20%受到的物理伤害。',
-    'buff_wind_spirit': '风之精灵附身，提升45%速度。',
-    'buff_poison': '中毒状态，每回合损失一定生命值。',
-    'buff_shield': '获得护盾保护，可吸收一定伤害。'
+    'buff_speed_up': '提升角色10点速度，持续2回合',
+    'buff_ally_atk_up': '提升同伴5%攻击力，持续2回合',
+    'buff_iron_armor': '减少20%受到的物理伤害',
+    'buff_wind_spirit': '风之精灵附身，提升5%速度',
+    'buff_poison': '中毒状态，每回合损失一定生命值',
+    'buff_shield': '获得护盾保护，可吸收一定伤害'
   }
 
   return descriptions[buff.id] || `获得${buff.name}效果。`
@@ -152,12 +152,12 @@ const getBuffDescription = (buff: CompendiumBuff): string => {
 
 const getPossibleSources = (buffId: string): string[] => {
   const sources: Record<string, string[]> = {
-    'buff_speed_up': ['技能: 迅捷之风'],
-    'buff_ally_atk_up': ['技能: 战斗号召'],
-    'buff_iron_armor': ['技能: 铁甲护体'],
-    'buff_poison': ['技能: 毒液喷射', '敌人: 食人花妖'],
-    'buff_shield': ['技能: 护盾术'],
-    [STUN_BUFF_ID]: ['技能: 眩晕打击']
+    'buff_speed_up': ['技能 迅捷之风'],
+    'buff_ally_atk_up': ['技能 战斗号召'],
+    'buff_iron_armor': ['技能 铁甲护体'],
+    'buff_poison': ['技能 毒液喷射', '敌人: 食人花妖'],
+    'buff_shield': ['技能 护盾'],
+    [STUN_BUFF_ID]: ['技能 眩晕打击']
   }
 
   return sources[buffId] || []

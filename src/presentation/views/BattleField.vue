@@ -3,6 +3,7 @@
     <div class="battle-top-section">
       <div class="battle-header">
         <div class="turn-info">
+          <span class=" battle-header-title">演武台</span>
           <span class="turn-label">当前回合:</span>
           <span class="turn-num">{{ store.currentTurn }}/{{ store.maxTurns }}</span>
           <span class="actor-info">操作方: {{ currentActor?.name || '等待中' }} ( 速度:{{ getMemberSpeed(currentActor)
@@ -17,8 +18,7 @@
             <ParticipantCard v-for="member in allyTeam" :key="member.id" :ref="el => { handleCardRef(member.id, el) }"
               :participant="member" :is-active="isCurrentActor(member.id)"
               :is-selected="store.selectedCharacterId === member.id" :is-enemy="false" :show-debug="false"
-              :target-entity="selectedTarget"
-              @click="selectCharacter(member.id)" />
+              :target-entity="selectedTarget" @click="selectCharacter(member.id)" />
           </div>
         </div>
 
@@ -32,8 +32,7 @@
             <ParticipantCard v-for="member in enemyTeam" :key="member.id" :ref="el => { handleCardRef(member.id, el) }"
               :participant="member" :is-active="isCurrentActor(member.id)"
               :is-selected="store.selectedCharacterId === member.id" :is-enemy="true" :show-debug="false"
-              :target-entity="selectedTarget"
-              @click="selectCharacter(member.id)" />
+              :target-entity="selectedTarget" @click="selectCharacter(member.id)" />
             <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>

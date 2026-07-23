@@ -1,7 +1,7 @@
-/**
+﻿/**
  * 攻击提升buff
  */
-import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/base/AttributeBuffTemplate'
+import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 

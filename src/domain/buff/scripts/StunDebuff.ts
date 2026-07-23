@@ -1,4 +1,4 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/base/BaseBuffScript'
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
 /**
@@ -30,4 +30,3 @@ export class StunDebuff extends BaseBuffScript {
 
 // 导出 BUFF_ID 常量
 export const BUFF_ID = StunDebuff.BUFF_ID
-

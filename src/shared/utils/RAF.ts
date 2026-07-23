@@ -82,12 +82,10 @@ export class RAFTimer {
       const result = timer.callback()
       // 如果是异步函数，静默处理其 catch，不影响主循环
       if (result instanceof Promise) {
-        result.catch((err) =>
-          console.error('[RAFTimer] Async Callback Error:', err),
-        )
+        result.catch((err) => console.error('[RAFTimer] 异步回调错误:', err))
       }
     } catch (error) {
-      console.error('[RAFTimer] Callback Error:', error)
+      console.error('[RAFTimer] 回调函数执行错误:', error)
     }
   }
 

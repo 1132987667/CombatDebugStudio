@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 守护者 Buff 脚本集合
  * 每个类对应一个 buff ID，继承 AttributeBuffTemplate 实现属性修正。
  * ponytail: 所有类写在一个文件中减少文件数量，通过静态 BUFF_ID 自动注册。
  */
-import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/base/AttributeBuffTemplate'
+import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 

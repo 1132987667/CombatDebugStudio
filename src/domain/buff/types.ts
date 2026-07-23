@@ -279,6 +279,14 @@ export interface BuffConfig {
    * 定义 Buff 在特定阶段自动触发的行为（如回合开始治疗、受击反弹等）
    */
   triggers?: TriggerAction[]
+
+  /**
+   * 是否级联移除子 Buff
+   * true 表示父 Buff 移除时，以此 Buff 为父的子 Buff 被级联移除。
+   * false/undefined 表示父 Buff 移除时，子 Buff 转为独立存在。
+   * 典型场景：光环→派生子 Buff 设为 true；"Buff A 触发了一个永久标记"设为 false。
+   */
+  cascadeRemove?: boolean
 }
 
 /**
@@ -308,6 +316,8 @@ export interface ScriptBuffConfig {
   tags?: string[]
   /** 免疫标签（同 BuffConfig.immuneTags） */
   immuneTags?: string[]
+  /** 是否级联移除子 Buff（同 BuffConfig.cascadeRemove） */
+  cascadeRemove?: boolean
 }
 
 /**
@@ -394,6 +404,13 @@ export interface BuffInstance<TParams = any> {
    * ponytail: 每个 trigger 生成一个 listenerId，存储在数组中统一清理。
    */
   triggerListenerIds?: string[]
+
+  /**
+   * 父 Buff 实例 ID
+   * 当此 Buff 由另一个 Buff（如光环）派生时，记录父实例的 ID。
+   * 父 Buff 被移除时，若自身 cascadeRemove===true，则被子级联移除。
+   */
+  parentInstanceId?: string
 }
 
 /**

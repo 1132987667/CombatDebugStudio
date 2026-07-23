@@ -10,7 +10,7 @@
 <template>
   <Teleport to="body">
     <Transition name="dialog-fade">
-      <div v-if="modelValue" class="dialog-overlay" @click.self="close">
+      <div v-if="modelValue" class="dialog-overlay" :class="{ 'dialog-overlay--transparent': !showMask }" @click.self="onOverlayClick">
         <div class="dialog-container" :style="{ width: width }">
           <div class="dialog-header">
             <span class="dialog-title">{{ title }}</span>
@@ -38,10 +38,16 @@ interface Props {
   modelValue: boolean;
   title: string;
   width?: string;
+  /** 是否显示遮罩背景，默认 true */
+  showMask?: boolean;
+  /** 点击遮罩时是否关闭弹窗，默认 true。设为 false 时点击遮罩不关闭 */
+  maskClosable?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   width: "500px",
+  showMask: true,
+  maskClosable: true,
 });
 
 const emit = defineEmits<{
@@ -53,6 +59,13 @@ const close = () => {
   emit("update:modelValue", false);
   emit("close");
 };
+
+/** 点击遮罩时根据 maskClosable 决定是否关闭 */
+const onOverlayClick = () => {
+  if (props.maskClosable) {
+    close()
+  }
+}
 
 watch(
   () => props.modelValue,
@@ -160,5 +173,10 @@ watch(
 .dialog-fade-leave-to {
   opacity: 0;
   transform: translateY(-20px);
+}
+
+/* 透明遮罩：背景完全透明，点击不关闭由 maskClosable 控制 */
+.dialog-overlay--transparent {
+  background: transparent !important;
 }
 </style>

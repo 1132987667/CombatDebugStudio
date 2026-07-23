@@ -18,7 +18,7 @@
             <ParticipantCard v-for="member in allyTeam" :key="member.id" :ref="el => { handleCardRef(member.id, el) }"
               :participant="member" :is-active="isCurrentActor(member.id)"
               :is-selected="store.selectedCharacterId === member.id" :is-enemy="false" :show-debug="false"
-              :target-entity="selectedTarget" @click="selectCharacter(member.id)" />
+              :target-entity="selectedTarget" :turn-tick="store.currentTurn" @click="selectCharacter(member.id)" />
           </div>
         </div>
 
@@ -32,7 +32,7 @@
             <ParticipantCard v-for="member in enemyTeam" :key="member.id" :ref="el => { handleCardRef(member.id, el) }"
               :participant="member" :is-active="isCurrentActor(member.id)"
               :is-selected="store.selectedCharacterId === member.id" :is-enemy="true" :show-debug="false"
-              :target-entity="selectedTarget" @click="selectCharacter(member.id)" />
+              :target-entity="selectedTarget" :turn-tick="store.currentTurn" @click="selectCharacter(member.id)" />
             <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
           </div>
         </div>
@@ -263,8 +263,8 @@ watch(store.animationState, (state) => {
 }, { deep: true })
 
 // 响应式获取队伍数据
-const allyTeam = computed(() => store.getEnabledAllyTeam())
-const enemyTeam = computed(() => store.getEnabledEnemyTeam())
+const allyTeam = computed(() => store.allyTeam || [])
+const enemyTeam = computed(() => store.enemyTeam || [])
 
 /** 当前选中的目标实体（用于情境属性高亮） */
 const selectedTarget = computed(() => {

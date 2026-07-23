@@ -31,7 +31,7 @@
 import { computed } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import { container } from '@/infrastructure/di/Container'
-import { useDebugStore } from '@/presentation/stores'
+import { useBattleStore, useDebugStore } from '@/presentation/stores'
 import type { BattleService } from '@/application/facade/BattleFacade'
 import { ATTRIBUTE_CODE, AttributeMetaMap } from '@/domain/attribute/types'
 
@@ -46,7 +46,13 @@ defineEmits<{
 const battleService = container.resolve<BattleService>('BattleService')
 const debugStore = useDebugStore()
 
-const currentCharacter = computed(() => battleService.getSelectedCharacter())
+const battleStore = useBattleStore()
+
+const currentCharacter = computed(() => {
+  const id = battleStore.selectedCharacterId
+  if (!id) return null
+  return [...(battleStore.allyTeam || []), ...(battleStore.enemyTeam || [])].find(p => p.id === id) || null
+})
 
 const exportState = async () => {
   try {

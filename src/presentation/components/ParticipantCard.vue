@@ -169,6 +169,8 @@ const props = defineProps<{
   cardRefId?: string
   /** 当前选中的目标（情境属性高亮用） */
   targetEntity?: BattleEntity | null
+  /** 强制触发重渲染的 tick 值 —— 每回合递增，让 shouldUpdateComponent 检测到 prop 变化 */
+  turnTick?: number
 }>()
 
 const emit = defineEmits<{

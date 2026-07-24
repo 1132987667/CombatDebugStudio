@@ -326,12 +326,12 @@ const savedScenes = ref<string[]>([]);
 
 /** 所有参战角色列表（用于弹窗内下拉选择） */
 const characterOptions = computed<CharacterOption[]>(() => {
-  const ally = (battleStore.allyTeam || []).map(e => ({
+  const ally = battleStore.allyTeam.map(e => ({
     id: e.id,
     name: e.name,
     side: 'ally' as const,
   }))
-  const enemy = (battleStore.enemyTeam || []).map(e => ({
+  const enemy = battleStore.enemyTeam.map(e => ({
     id: e.id,
     name: e.name,
     side: 'enemy' as const,
@@ -361,7 +361,7 @@ const selectedCharacterId = computed(() => {
 const selectedCharacter = computed(() => {
   const id = battleStore.selectedCharacterId
   if (!id) return null
-  const all = [...(battleStore.allyTeam || []), ...(battleStore.enemyTeam || [])]
+  const all = [...battleStore.allyTeam, ...battleStore.enemyTeam]
   return all.find(p => p.id === id) || null
 });
 
@@ -370,16 +370,16 @@ const currentTurn = computed(() => {
 });
 
 const allyTeam = computed(() => {
-  return battleStore.allyTeam || []
+  return battleStore.allyTeam
 });
 
 const enemyTeam = computed(() => {
-  return battleStore.enemyTeam || []
+  return battleStore.enemyTeam
 });
 
 const teamCounts = computed(() => ({
-  ally: (battleStore.allyTeam || []).length,
-  enemy: (battleStore.enemyTeam || []).length,
+  ally: battleStore.allyTeam.length,
+  enemy: battleStore.enemyTeam.length,
 }));
 
 

@@ -544,7 +544,6 @@ Store 中增加 `displayMode: 'icon' | 'text'` 状态，允许用户在运行中
 |---------|---------|
 | `AttributeTooltip.vue` | 悬停属性标签时直接复用其追溯面板 |
 | `BattleVisualEffects.vue` | 动画事件格式适配后复用 |
-| `useBattleParticipant.ts` | 继续作为参与者数据源 |
 | `BuffSystem.getBuffConfigByInstanceId()` | 作为 Buff 数据来源 |
 
 ### 11.3 不修改的现有文件

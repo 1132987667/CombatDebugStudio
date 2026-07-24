@@ -99,6 +99,36 @@
   border-bottom: 1px dashed var(--color-border-default);
 }
 
+/* Tab 按钮 */
+.monitor-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.3rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.tab-btn.active {
+  color: var(--color-info);
+  border-bottom-color: var(--color-info);
+  font-weight: var(--font-weight-bold);
+}
+
 .monitor-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

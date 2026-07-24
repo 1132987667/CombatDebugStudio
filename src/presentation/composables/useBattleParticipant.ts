@@ -59,8 +59,6 @@ export interface ParticipantStats {
 export interface UseBattleParticipantReturn {
   /** 参与者实例 Ref（prop 变化时自动更新） */
   participant: Ref<BattleEntity>
-  /** 属性集合（计算属性缓存） */
-  stats: ComputedRef<ParticipantStats>
   /** 是否存活 */
   isAlive: ComputedRef<boolean>
   /** 是否死亡 */
@@ -84,57 +82,6 @@ export interface UseBattleParticipantReturn {
 export function useBattleParticipant(
   participantRef: Ref<BattleEntity>,
 ): UseBattleParticipantReturn {
-  // ponytail: 通过 Ref 追踪 prop 变化。syncTeams() 替换实体包裹后
-  // participantRef.value 变化 → computed 重算 → 读到的 getAttributeValue 是战斗引擎的实时值
-  // 不再依赖 shallowReactive + statsVersion getter 的不可靠追踪
-
-  // 使用 computed 缓存属性引用，避免重复调用 getAttributeValue（使用官方 ATTRIBUTE_CODE 标准编码）
-  const stats = computed<ParticipantStats>(() => {
-    const p = participantRef.value
-    return {
-      currentHealth: p.getAttributeValue(
-        ATTRIBUTE_CODE.currentHealth,
-      )!,
-      maxHealth: p.getAttributeValue(
-        ATTRIBUTE_CODE.maxHealth,
-      )!,
-      energy: p.getAttributeValue(
-        ATTRIBUTE_CODE.currentEnergy,
-      )!,
-      maxEnergy: p.getAttributeValue(
-        ATTRIBUTE_CODE.maxEnergy,
-      )!,
-      attack: p.getAttributeValue(ATTRIBUTE_CODE.attack)!,
-      defense: p.getAttributeValue(ATTRIBUTE_CODE.defense)!,
-      speed: p.getAttributeValue(ATTRIBUTE_CODE.speed)!,
-      critRate: p.getAttributeValue(ATTRIBUTE_CODE.critRate)!,
-      critDamage: p.getAttributeValue(
-        ATTRIBUTE_CODE.critDamage,
-      )!,
-      damageReduction: p.getAttributeValue(
-        ATTRIBUTE_CODE.damageReduction,
-      )!,
-      healthBonus: p.getAttributeValue(
-        ATTRIBUTE_CODE.healthBonus,
-      )!,
-      attackBonus: p.getAttributeValue(
-        ATTRIBUTE_CODE.attackBonus,
-      )!,
-      defenseBonus: p.getAttributeValue(
-        ATTRIBUTE_CODE.defenseBonus,
-      )!,
-      speedBonus: p.getAttributeValue(
-        ATTRIBUTE_CODE.speedBonus,
-      )!,
-      minAttack: p.getAttributeValue(
-        ATTRIBUTE_CODE.minAttack,
-      )!,
-      maxAttack: p.getAttributeValue(
-        ATTRIBUTE_CODE.maxAttack,
-      )!,
-    }
-  })
-
   // 派生状态
   const isAlive = computed(() => {
     return participantRef.value.isAlive()
@@ -143,14 +90,14 @@ export function useBattleParticipant(
 
   // 百分比计算（使用官方 ATTRIBUTE_CODE 标准编码）
   const hpPercent = computed(() => {
-    const currentHealth = stats.value.currentHealth.value
-    const maxHealth = stats.value.maxHealth.value
+    const currentHealth = participantRef.value.currentHealth
+    const maxHealth = participantRef.value.maxHealth
     return maxHealth > 0 ? (currentHealth / maxHealth) * 100 : 0
   })
 
   const energyPercent = computed(() => {
-    const energy = stats.value.energy.value
-    const maxEnergy = stats.value.maxEnergy.value
+    const energy = participantRef.value.currentEnergy
+    const maxEnergy = participantRef.value.maxEnergy
     return maxEnergy > 0 ? (energy / maxEnergy) * 100 : 0
   })
 
@@ -167,7 +114,6 @@ export function useBattleParticipant(
 
   return {
     participant: participantRef,
-    stats,
     isAlive,
     isDead,
     hpPercent,

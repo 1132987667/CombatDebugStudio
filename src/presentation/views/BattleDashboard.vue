@@ -2,7 +2,7 @@
   <div class="debug-panel panel-right">
     <div class="section flex-1">
       <div class="section-header">
-        <span>属性监控</span>
+        <span>角色监控</span>
         <span class="selected-info">(当前选中: {{ selectedCharName }})</span>
       </div>
       <!-- 显示层级过滤器（调试面板） -->
@@ -118,50 +118,58 @@
         </div>
       </div>
       <div class="monitor-group">
-        <div class="monitor-subtitle">技能信息</div>
-        <div class="skills-display">
-          <div v-if="!currentCharacter?.skills" class="no-skills">
-            暂未配置技能
+        <div class="monitor-tabs">
+          <button class="tab-btn" :class="{ active: activeTab === 'passive' }" @click="activeTab = 'passive'">被动</button>
+          <button class="tab-btn" :class="{ active: activeTab === 'active' }" @click="activeTab = 'active'">主动</button>
+          <button class="tab-btn" :class="{ active: activeTab === 'status' }" @click="activeTab = 'status'">状态</button>
+        </div>
+
+        <!-- 被动技能 -->
+        <div v-if="activeTab === 'passive'" class="skills-display">
+          <div v-if="!currentCharacter?.skills?.passive?.length" class="no-skills">
+            暂无被动技能
           </div>
           <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
-            <div class="skill-category"
-              v-if="currentCharacter.skills.passive && currentCharacter.skills.passive.length > 0">
-              <div class="skill-category-title">被动技能</div>
-              <div class="skill-items">
-                <div class="skill-item passive" v-for="(skill, index) in currentCharacter.skills.passive" :key="index"
-                  @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
-                  @mouseleave="hideSkillTooltip">
-                  {{ skill.name || '未知技能' }}
-                </div>
-              </div>
+            <div class="skill-item passive" v-for="(skill, index) in currentCharacter!.skills.passive" :key="index"
+              @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+              @mouseleave="hideSkillTooltip">
+              {{ skill.name || '未知技能' }}
             </div>
-            <div class="skill-category"
-              v-if="currentCharacter.skills.small && currentCharacter.skills.small.length > 0">
+          </div>
+        </div>
+
+        <!-- 主动技能 -->
+        <div v-if="activeTab === 'active'" class="skills-display">
+          <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length" class="no-skills">
+            暂无主动技能
+          </div>
+          <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
+            <div v-if="currentCharacter!.skills.small?.length" class="skill-category">
               <div class="skill-category-title">小技能</div>
-              <div class="skill-items">
-                <div class="skill-item small" v-for="(skill, index) in currentCharacter.skills.small" :key="index"
-                  @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
-                  @mouseleave="hideSkillTooltip">
-                  {{ skill.name || '未知技能' }}
-                </div>
+              <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index"
+                class="skill-item small"
+                @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                @mouseleave="hideSkillTooltip">
+                {{ skill.name || '未知技能' }}
               </div>
             </div>
-            <div class="skill-category"
-              v-if="currentCharacter.skills.ultimate && currentCharacter.skills.ultimate.length > 0">
+            <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category">
               <div class="skill-category-title">终极技能</div>
-              <div class="skill-items">
-                <div class="skill-item ultimate" v-for="(skill, index) in currentCharacter.skills.ultimate" :key="index"
-                  @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
-                  @mouseleave="hideSkillTooltip">
-                  {{ skill.name || '未知技能' }}
-                </div>
+              <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index"
+                class="skill-item ultimate"
+                @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                @mouseleave="hideSkillTooltip">
+                {{ skill.name || '未知技能' }}
               </div>
             </div>
-            <div
-              v-if="(!currentCharacter.skills.passive || currentCharacter.skills.passive.length === 0) && (!currentCharacter.skills.small || currentCharacter.skills.small.length === 0) && (!currentCharacter.skills.ultimate || currentCharacter.skills.ultimate.length === 0)"
-              class="no-skills">
-              暂未配置技能
-            </div>
+          </div>
+        </div>
+
+        <!-- 状态（Buff） -->
+        <div v-if="activeTab === 'status'" class="skills-display">
+          <div v-if="buffListItems.length === 0" class="no-skills">无生效状态</div>
+          <div v-else class="buff-list">
+            <BuffTextGroup v-for="buff in buffDisplay.groups" :key="buff.instanceId" :buff="buff" :debug-mode="false" />
           </div>
         </div>
       </div>
@@ -242,11 +250,15 @@ import type { SkillConfig } from "@/domain/skill/types";
 import { formatTargetConfig, SkillType, SkillTypeName, ExtendedSkillStep } from "@/domain/skill/types";
 import { container } from '@/infrastructure/di/Container';
 import AttributeTooltip, { type RangeLayerData, type RangeModifierRow } from "@/presentation/components/AttributeTooltip.vue";
+import BuffTextGroup from "@/presentation/components/BuffTextGroup.vue";
 import { useBattleStore } from '@/presentation/stores';
 import BattleReplay from "@/presentation/views/BattleReplay.vue";
 import { formatBonusValue } from '@/shared/utils/format';
 import { computed, onMounted, onUnmounted, ref, type ComputedRef } from "vue";
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
+import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import type { BuffRawItem } from '@/shared/types/buff-display'
+import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 
 const battleStore = useBattleStore();
 
@@ -332,6 +344,70 @@ const attackRange = computed(() => {
   const maxAttack = char.getAttributeValue(ATTRIBUTE_CODE.maxAttack)?.value ?? 0;
   return { min: minAttack, max: maxAttack };
 });
+
+// ------------------------------------------------------------
+// Tabs 状态（技能/状态切换）
+const activeTab = ref<'passive' | 'active' | 'status'>('passive')
+
+// ------------------------------------------------------------
+// Buff 数据（状态 tab）
+const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+
+const buffListItems = computed((): BuffRawItem[] => {
+  const entity = currentCharacter.value
+  if (!entity) return []
+  const result: BuffRawItem[] = []
+  const seenIds = new Set<string>()
+
+  // 源1: BuffSystem 管理的 buff
+  if (typeof entity.getBuffInstanceIds === 'function') {
+    const instanceIds = entity.getBuffInstanceIds()
+    for (const id of instanceIds) {
+      const instance = buffSystem.getBuffInstanceById(id)
+      if (!instance) continue
+      const config = instance.context.config
+      if (config) {
+        seenIds.add(id)
+        seenIds.add(config.id)
+        result.push({
+          id,
+          buffId: config.id,
+          name: config.name,
+          description: config.description ?? '',
+          remainingTurns: instance.remainingTurns,
+          currentStacks: instance.currentStacks,
+          isDebuff: config.isDebuff === true,
+          attributes: config.attributes,
+          effectLines: instance.effectLines ?? [],
+          conditionState: instance.conditionState,
+        })
+      }
+    }
+  }
+
+  // 源2: InterventionManager 手动状态
+  const manualEffects = entity.statusEffects ?? []
+  for (const s of manualEffects) {
+    if (!seenIds.has(s.id)) {
+      seenIds.add(s.id)
+      result.push({
+        id: s.id,
+        buffId: s.id,
+        name: s.name,
+        description: '',
+        remainingTurns: s.remainingTurns,
+        currentStacks: 1,
+        isDebuff: s.type === 'debuff',
+        effectLines: [],
+        conditionState: undefined,
+      })
+    }
+  }
+
+  return result
+})
+
+const buffDisplay = useBuffDisplay(buffListItems, computed(() => currentCharacter.value?.id ?? ''), 99)
 
 // ------------------------------------------------------------
 // 技能悬浮提示状态

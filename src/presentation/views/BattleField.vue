@@ -263,8 +263,8 @@ watch(store.animationState, (state) => {
 }, { deep: true })
 
 // 响应式获取队伍数据
-const allyTeam = computed(() => store.allyTeam || [])
-const enemyTeam = computed(() => store.enemyTeam || [])
+const allyTeam = computed(() => store.allyTeam)
+const enemyTeam = computed(() => store.enemyTeam)
 
 /** 当前选中的目标实体（用于情境属性高亮） */
 const selectedTarget = computed(() => {

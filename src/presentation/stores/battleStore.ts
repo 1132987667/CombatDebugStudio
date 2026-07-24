@@ -153,6 +153,9 @@ export const useBattleStore = defineStore('battle', () => {
     // ponytail: 用 shallowReactive 包装参与者，使 Vue computed 能追踪场内属性变更（如 statsVersion）。
     // 原始对象由 BattleSystem 管理并通过事件告知 UI 层，proxy 确保修改走 Vue 响应式系统。
     allyTeam.value = battleService.value!.getEnabledAllyTeam().map(p => shallowReactive(p))
+    for (const p of allyTeam.value) {
+      console.log('allyTeam datum:', p.currentHealth, p.maxHealth)
+    }
     enemyTeam.value = battleService.value!.getEnabledEnemyTeam().map(p => shallowReactive(p))
     fullAllyTeam.value = battleService.value!.getAllyTeam().map(p => shallowReactive(p))
     fullEnemyTeam.value = battleService.value!.getEnemyTeam().map(p => shallowReactive(p))

@@ -51,7 +51,7 @@ const battleStore = useBattleStore()
 const currentCharacter = computed(() => {
   const id = battleStore.selectedCharacterId
   if (!id) return null
-  return [...(battleStore.allyTeam || []), ...(battleStore.enemyTeam || [])].find(p => p.id === id) || null
+  return [...battleStore.allyTeam, ...battleStore.enemyTeam].find(p => p.id === id) || null
 })
 
 const exportState = async () => {

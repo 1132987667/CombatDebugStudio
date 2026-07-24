@@ -19,7 +19,7 @@
     <div class="member-info">
       <!-- 名称和行动标识 -->
       <div class="member-name">
-        Lv.{{ participant.level }} {{ participant.name }}
+        Lv.{{ participant.level }} {{ participant.name }} {{ reactiveParticipant.currentHealth }} {{ participant.currentHealth }}
         <div class="member-action" v-if="isActive">
           <span :class="['acting-badge', { 'enemy-acting': isEnemy }]">←操作中</span>
         </div>
@@ -29,7 +29,7 @@
       <div class="member-hp">
         <span class="hp-text">{{ hpText }}</span>
         <div class="hp-bar">
-          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPercent + '%' }">
+          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPct + '%' }">
           </div>
         </div>
       </div>
@@ -182,7 +182,7 @@ const battleStore = useBattleStore()
 const showDebug = computed(() => battleStore.showDebug)
 
 // 使用 composable 包装参与者
-const { participant: reactiveParticipant, stats, isAlive, hpPercent, energyPercent } = useBattleParticipant(toRef(props, 'participant'))
+const { participant: reactiveParticipant, isAlive, hpPercent, energyPercent } = useBattleParticipant(toRef(props, 'participant'))
 
 const buffSystem = container.resolve<BuffSystem>('BuffSystem')
 
@@ -269,28 +269,35 @@ const cardClasses = computed(() => ({
 }))
 
 const hpText = computed(() => {
-  const data = stats.value
-  const currentHealth = Math.max(0, Math.floor(data.currentHealth?.value || 0))
-  const maxHealth = Math.max(0, Math.floor(data.maxHealth?.value || 0))
+  const data = reactiveParticipant.value
+  console.log('allyTeam datum hpText:', data.currentHealth, data.maxHealth)
+  const currentHealth = Math.max(0, Math.floor(data.currentHealth || 0))
+  const maxHealth = Math.max(0, Math.floor(data.maxHealth || 0))
   return `${currentHealth}/${maxHealth}`
 })
 
+const hpPct = computed(() => {
+  const data = reactiveParticipant.value
+  console.log('allyTeam datum hpPct:', data.currentHealth, data.maxHealth)
+  return (data.currentHealth || 0) / (data.maxHealth || 1) * 100
+})
+
 const hpColorClass = computed(() => {
-  const hpPct = hpPercent
+  const hpPct = hpPercent.value
   if (hpPct <= 25) return 'low'
   if (hpPct <= 50) return 'medium'
   return 'high'
 })
 
 const energyText = computed(() => {
-  const data = stats.value
-  const energy = Math.floor(data.energy?.value || 0)
-  const maxEnergy = Math.floor(data.maxEnergy?.value || 0)
+  const data = reactiveParticipant.value
+  const energy = Math.floor(data.currentEnergy || 0)
+  const maxEnergy = Math.floor(data.maxEnergy || 0)
   return `${energy}/${maxEnergy}`
 })
 
 const energyColorClass = computed(() => {
-  const energyPct = energyPercent
+  const energyPct = energyPercent.value
   if (energyPct >= 80) return 'full'
   if (energyPct >= 50) return 'medium'
   return 'low'
@@ -359,7 +366,6 @@ const buffListItems = computed((): BuffRawItem[] => {
 // === 纯文本 Buff 显示模式 ===
 const panelVisible = ref(false)
 
-// 从 stats 提取基础属性值（key=中文属性名）
 const ATTRIBUTE_CODE_TO_CN: Record<string, string> = {
   attack: '攻击',
   defense: '防御',
@@ -372,10 +378,10 @@ const ATTRIBUTE_CODE_TO_CN: Record<string, string> = {
   dodgeRate: '闪避',
 }
 const baseAttributes = computed(() => {
-  const s = stats.value
+  const data = reactiveParticipant.value
   const map: Record<string, number> = {}
   for (const [code, cn] of Object.entries(ATTRIBUTE_CODE_TO_CN)) {
-    const attr = (s as unknown as Record<string, { base: number } | undefined>)[code]
+    const attr = (data as unknown as Record<string, { base: number } | undefined>)[code]
     if (attr && typeof attr.base === 'number') {
       map[cn] = attr.base
     }

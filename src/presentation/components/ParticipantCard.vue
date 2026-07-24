@@ -19,7 +19,7 @@
     <div class="member-info">
       <!-- 名称和行动标识 -->
       <div class="member-name">
-        Lv.{{ participant.level }} {{ participant.name }} {{ reactiveParticipant.currentHealth }} {{ participant.currentHealth }}
+        Lv.{{ participant.level }} {{ participant.name }} {{ hpText }}
         <div class="member-action" v-if="isActive">
           <span :class="['acting-badge', { 'enemy-acting': isEnemy }]">←操作中</span>
         </div>
@@ -29,7 +29,7 @@
       <div class="member-hp">
         <span class="hp-text">{{ hpText }}</span>
         <div class="hp-bar">
-          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPct + '%' }">
+          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPercent + '%' }">
           </div>
         </div>
       </div>
@@ -132,10 +132,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue'
+import { computed, ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ActionResultType } from '@/domain/battle/type/types'
-import { useBattleParticipant } from '@/presentation/composables/useBattleParticipant'
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
@@ -181,8 +180,23 @@ const emit = defineEmits<{
 const battleStore = useBattleStore()
 const showDebug = computed(() => battleStore.showDebug)
 
-// 使用 composable 包装参与者
-const { participant: reactiveParticipant, isAlive, hpPercent, energyPercent } = useBattleParticipant(toRef(props, 'participant'))
+// 从投影层快照读取核心数值
+const snap = computed(() => battleStore.participants.get(props.participant.id) ?? null)
+
+// 从快照派生 isAlive/hpPercent/energyPercent（回退到从实体直接读取）
+const isAlive = computed(() => snap.value?.isAlive ?? props.participant.isAlive())
+const hpPercent = computed(() => {
+  if (snap.value) return snap.value.hpPercent
+  const p = props.participant
+  const maxHp = p.maxHealth
+  return maxHp > 0 ? (p.currentHealth / maxHp) * 100 : 0
+})
+const energyPercent = computed(() => {
+  if (snap.value) return snap.value.energyPercent
+  const p = props.participant
+  const maxEnergy = p.maxEnergy
+  return maxEnergy > 0 ? (p.currentEnergy / maxEnergy) * 100 : 0
+})
 
 const buffSystem = container.resolve<BuffSystem>('BuffSystem')
 
@@ -269,17 +283,17 @@ const cardClasses = computed(() => ({
 }))
 
 const hpText = computed(() => {
-  const data = reactiveParticipant.value
-  console.log('allyTeam datum hpText:', data.currentHealth, data.maxHealth)
+  // 优先使用投影层快照数据
+  if (snap.value) {
+    const cur = Math.max(0, Math.floor(snap.value.hp))
+    const max = Math.max(0, Math.floor(snap.value.maxHp))
+    return `${cur}/${max}`
+  }
+  // 回退到直接从 participant 实体读取
+  const data = props.participant
   const currentHealth = Math.max(0, Math.floor(data.currentHealth || 0))
   const maxHealth = Math.max(0, Math.floor(data.maxHealth || 0))
   return `${currentHealth}/${maxHealth}`
-})
-
-const hpPct = computed(() => {
-  const data = reactiveParticipant.value
-  console.log('allyTeam datum hpPct:', data.currentHealth, data.maxHealth)
-  return (data.currentHealth || 0) / (data.maxHealth || 1) * 100
 })
 
 const hpColorClass = computed(() => {
@@ -290,7 +304,12 @@ const hpColorClass = computed(() => {
 })
 
 const energyText = computed(() => {
-  const data = reactiveParticipant.value
+  if (snap.value) {
+    const energy = Math.floor(snap.value.energy)
+    const maxEnergy = Math.floor(snap.value.maxEnergy)
+    return `${energy}/${maxEnergy}`
+  }
+  const data = props.participant
   const energy = Math.floor(data.currentEnergy || 0)
   const maxEnergy = Math.floor(data.maxEnergy || 0)
   return `${energy}/${maxEnergy}`
@@ -305,10 +324,10 @@ const energyColorClass = computed(() => {
 
 /** 转换为纯文本 Buff 展示数据 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
 const buffListItems = computed((): BuffRawItem[] => {
-  // ponytail: 读取 participantRef.value 建立 Vue 响应式依赖（syncTeams 更新包裹时重算）
-  void reactiveParticipant.value?.statsVersion
+  // 依赖投影层快照版本号：快照更新时重算 buff 显示
+  void snap.value?.version
 
-  const entity = reactiveParticipant.value
+  const entity = props.participant
   const result: BuffRawItem[] = []
   const seenIds = new Set<string>()
 
@@ -378,7 +397,7 @@ const ATTRIBUTE_CODE_TO_CN: Record<string, string> = {
   dodgeRate: '闪避',
 }
 const baseAttributes = computed(() => {
-  const data = reactiveParticipant.value
+  const data = props.participant
   const map: Record<string, number> = {}
   for (const [code, cn] of Object.entries(ATTRIBUTE_CODE_TO_CN)) {
     const attr = (data as unknown as Record<string, { base: number } | undefined>)[code]

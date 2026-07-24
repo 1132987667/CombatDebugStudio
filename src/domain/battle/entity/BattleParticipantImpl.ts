@@ -113,6 +113,24 @@ export class BattleParticipantImpl implements BattleEntity {
   /** 本回合受击能量获取次数（每回合最多3次） */
   private _energyHitCountThisRound = 0
 
+  // === 投影层（Projection）脏标记机制 ===
+  /** 投影层注入的回调，属性变更后调用 */
+  private _onDirty: (() => void) | undefined
+
+  /**
+   * 设置脏回调（由 BattleProjection 在 register() 时注入）
+   * 属性变更时自动调用此回调，通知投影层重新生成快照。
+   * 领域层不知道谁在监听，只知道"有人关心变更通知"。
+   */
+  setDirtyCallback(cb: () => void): void {
+    this._onDirty = cb
+  }
+
+  /** 通知投影层本实体已变更 */
+  private notifyDirty(): void {
+    this._onDirty?.()
+  }
+
   getImmunities(): string[] {
     return [...this._immunities]
   }
@@ -236,6 +254,8 @@ export class BattleParticipantImpl implements BattleEntity {
 
   setAttributeBase(attr: ATTRIBUTE_CODE, value: number): void {
     this.stats.setAttributeBase(attr, value)
+    this.stats.notifyModifiersChanged()
+    this.notifyDirty()
   }
 
   recalcAll(): void {
@@ -243,6 +263,7 @@ export class BattleParticipantImpl implements BattleEntity {
     this.stats.recalculateAll()
     // ponytail: maxHealth 变化时将 currentHealth 同步到新上限
     this.clampCurrentHealth()
+    this.notifyDirty()
   }
 
   /**
@@ -278,6 +299,7 @@ export class BattleParticipantImpl implements BattleEntity {
       ATTRIBUTE_CODE.currentHealth,
       Math.max(0, Math.min(value, maxHp)),
     )
+    this.notifyDirty()
   }
 
   /**
@@ -317,6 +339,7 @@ export class BattleParticipantImpl implements BattleEntity {
       ATTRIBUTE_CODE.currentEnergy,
       Math.max(0, Math.min(value, maxEnergy)),
     )
+    this.notifyDirty()
   }
 
   /**

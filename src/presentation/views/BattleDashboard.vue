@@ -268,48 +268,65 @@ const props = defineProps<{
   battleSystem?: BattleSystem;
 }>();
 
-// 响应式获取选中角色数据 — ponytail: 依赖 battleStore.selectedCharacterId 触发 Vue 响应式更新
+// 响应式获取选中角色数据
 const currentCharacter: ComputedRef<BattleEntity | null> = computed(() => {
   const id = battleStore.selectedCharacterId;
   if (!id) return null;
   // 先找战斗中的参战角色，若未加入队伍则回退到角色库预览实体
   const char = battleService.getSelectedCharacter() || battleStore.previewEntity;
-  // ponytail: 显式依赖 statsVersion，属性重算时此 computed 重新求值触发 UI 刷新
   return char;
 });
 
+// 投影层快照 ID — 所有下游 computed 依赖此值建立响应式链路
+const snapId = computed(() => battleStore.selectedCharacterId)
+const snapVersion = computed(() => {
+  const id = snapId.value
+  if (!id) return 0
+  return battleStore.participants.get(id)?.version ?? 0
+})
+
 const selectedCharName = computed(() => currentCharacter.value?.name || "未选择");
 
-// ponytail: 无选中角色时显示 --/-- 而非 0/0，区分"没有数据"与"数值为零"
-const displayHp = computed(() => {
+// 从实体读取选中角色最新值（依赖 snapVersion 触发重算）
+function readEntity<T>(reader: (char: BattleEntity) => T, fallback: T): T {
+  void snapVersion.value  // 建立响应式依赖
   const char = currentCharacter.value
-  if (!char) return '--/--'
-  // ponytail: 读取 statsVersion 建立响应式依赖
-  void char.statsVersion
-  const cur = char.getAttributeValue(ATTRIBUTE_CODE.currentHealth)?.value ?? 0
-  const max = char.getAttributeValue(ATTRIBUTE_CODE.maxHealth)?.value ?? 0
-  return `${cur}/${max}`
+  if (!char) return fallback
+  return reader(char)
+}
+
+const displayHp = computed(() => {
+  return readEntity(
+    char => `${Math.max(0, Math.floor(char.currentHealth))}/${Math.max(0, Math.floor(char.maxHealth))}`,
+    '--/--'
+  )
 })
 
 const displayEnergy = computed(() => {
-  const char = currentCharacter.value
-  if (!char) return '--/--'
-  // ponytail: 读取 statsVersion 建立响应式依赖
-  void char.statsVersion
-  const cur = char.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value ?? 0
-  const max = char.getAttributeValue(ATTRIBUTE_CODE.maxEnergy)?.value ?? 200
-  return `${cur}/${max}`
+  return readEntity(
+    char => `${Math.floor(char.currentEnergy)}/${Math.floor(char.maxEnergy)}`,
+    '--/--'
+  )
 })
 
-// 获取角色属性值的便捷方法，默认值从 AttributeMetaMap 自动推导
+// 获取角色属性值（模板调用时自动建立响应式依赖）
 const attrVal = (code: ATTRIBUTE_CODE): number => {
+  void snapVersion.value
   const char = currentCharacter.value
-  // ponytail: 读取 statsVersion 建立 Vue 响应式依赖，属性重算时模板重渲染
-  void char?.statsVersion
   return char?.getAttributeValue(code)?.value ?? getAttributeDefaultValue(code)
 }
 
-// 进阶属性：从 attributeDisplay 过滤 displayTier==='advanced'，按 group 分组
+const attackRange = computed(() => {
+  return readEntity(
+    char => ({
+      min: char.getAttributeValue(ATTRIBUTE_CODE.minAttack)?.value ?? 0,
+      max: char.getAttributeValue(ATTRIBUTE_CODE.maxAttack)?.value ?? 0,
+    }),
+    { min: 0, max: 0 }
+  )
+})
+
+// 进阶属性配置
 const groupLabels: Record<string, string> = {
   defense: '🛡️ 防御',
   offense: '⚔️ 攻击',
@@ -334,16 +351,6 @@ const advancedAttributes = computed(() => {
   }
   return groups
 })
-
-const attackRange = computed(() => {
-  const char = currentCharacter.value;
-  if (!char) return { min: 0, max: 0 };
-  // ponytail: 读取 statsVersion 建立 Vue 响应式依赖
-  void char.statsVersion
-  const minAttack = char.getAttributeValue(ATTRIBUTE_CODE.minAttack)?.value ?? 0;
-  const maxAttack = char.getAttributeValue(ATTRIBUTE_CODE.maxAttack)?.value ?? 0;
-  return { min: minAttack, max: maxAttack };
-});
 
 // ------------------------------------------------------------
 // Tabs 状态（技能/状态切换）

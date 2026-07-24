@@ -4,6 +4,7 @@ import { BattleStatus, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
 import { BattleEventCode, BattleEventCodes, BattleEventName, BattleLogEventData, BattleEndedEventData, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData } from '@/domain/battle/type/BattleEventType'
+import type { UIParticipantSnapshot } from '@/shared/types/projection'
 import type {
   BattleLogCategory,
   BattleLogEntry,
@@ -21,6 +22,8 @@ import type { Enemy } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { defineStore } from 'pinia'
 import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
+import { BattleProjection } from '@/application/projection/BattleProjection'
+import type { BuffSystem } from '@/domain/buff/BuffSystem'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -144,6 +147,12 @@ export const useBattleStore = defineStore('battle', () => {
 
   const showDebug = ref(true)
 
+  /** 参与者快照表 — UI 的唯一数据源（由投影层填充） */
+  const participants = reactive(new Map<string, UIParticipantSnapshot>())
+
+  /** 投影层调度器（懒初始化） */
+  let projection: BattleProjection | null = null
+
   /**
    * 同步队伍数据（从 BattleService 拉取最新状态）
    * @description 当收到 TEAM_DATA_CHANGED 事件时调用，更新本地响应式状态
@@ -168,6 +177,22 @@ export const useBattleStore = defineStore('battle', () => {
       battleState.battleState !== BattleStatus.CREATED &&
       battleState.battleState !== BattleStatus.PREPARING
     isPaused.value = battleService.value!.getIsPaused()
+
+    // 同步投影层：注册所有参与者，通过 setDirtyCallback 自动追踪变更
+    try {
+      if (!projection) {
+        const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+        projection = new BattleProjection({ participants }, buffSystem)
+        console.log('[BattleProjection] 已初始化')
+      }
+      const allEntities = [...allyTeam.value, ...enemyTeam.value]
+      projection.clear()
+      projection.registerAll(allEntities)
+      projection.flushAll()
+      console.log(`[BattleProjection] 已注册 ${allEntities.length} 个实体，participants Map 大小: ${participants.size}`)
+    } catch (err) {
+      console.error('[BattleProjection] 投影层初始化失败:', err)
+    }
   }
 
   // 所有事件订阅在 events Map 创建后统一注册（见下方 🔹 3. 事件订阅管理器）
@@ -658,6 +683,9 @@ export const useBattleStore = defineStore('battle', () => {
       if (!battleService.value) return
       cleanupEvents.forEach((key) => battleService.value!.off(key))
       cleanupEvents.length = 0
+      projection?.clear()
+      projection = null
+      participants.clear()
       currentActorId.value = null
       isBattleActive.value = false
       autoPlayMode.value = false
@@ -842,6 +870,7 @@ export const useBattleStore = defineStore('battle', () => {
     enemyTeam, // 敌方队伍
     fullAllyTeam, // 完整我方队伍（含禁用）
     fullEnemyTeam, // 完整敌方队伍（含禁用）
+    participants, // 参与者快照表（投影层数据）
     currentTurn, // 当前回合数
     maxTurns, // 最大回合数
     isBattleActive, // 战斗激活状态

@@ -175,8 +175,14 @@ watch(
   transform: translateY(-20px);
 }
 
-/* 透明遮罩：背景完全透明，点击不关闭由 maskClosable 控制 */
+/* 透明遮罩：背景完全透明，且不拦截点击事件（点击穿透到背后的元素） */
 .dialog-overlay--transparent {
   background: transparent !important;
+  pointer-events: none;
+}
+
+/* 弹窗容器自身保持可点击 */
+.dialog-overlay--transparent .dialog-container {
+  pointer-events: auto;
 }
 </style>

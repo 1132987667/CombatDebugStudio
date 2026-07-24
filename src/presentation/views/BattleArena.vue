@@ -114,7 +114,7 @@ import { PARTICIPANT_SIDE } from "@/domain/battle/type/types.ts";
 import type { CharacterOption } from "./components/StatusInjectionDialog.vue";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import type { LogEntry } from '@/shared/types/battle-log';
-import { ATTRIBUTE_CODE } from "@/domain/attribute/types";
+import { ATTRIBUTE_CODE, ModifierType } from "@/domain/attribute/types";
 import { EffectType } from '@/shared/types/effect';
 import { DamageCategory } from '@/domain/skill/types';
 import { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -532,21 +532,44 @@ const handleApplyAttributes = (payload: { charId: string; attributes: Record<str
     ...(battleService.getEnemyTeam() || []),
   ]
   const entity = allParticipants.find(e => e.id === payload.charId)
-  if (!entity) return
+  if (!entity) {
+    console.warn('[属性调整] 未找到实体:', payload.charId)
+    return
+  }
 
-  for (const [key, value] of Object.entries(payload.attributes)) {
-    if (key === 'currentHealth') {
-      entity.currentHealth = value
-    } else if (key === 'currentEnergy') {
-      entity.currentEnergy = value
-    } else if (key === 'minAttack') {
-      entity.setAttribute(ATTRIBUTE_CODE.minAttack, value)
-    } else if (key === 'defense') {
-      entity.setAttribute(ATTRIBUTE_CODE.defense, value)
-    } else if (key === 'speed') {
-      entity.setAttribute(ATTRIBUTE_CODE.speed, value)
+  // 运行时状态属性（气血/能量）走直接 setter，不经过 ModifierStack
+  if (payload.attributes.currentHealth !== undefined) {
+    entity.currentHealth = payload.attributes.currentHealth
+  }
+  if (payload.attributes.currentEnergy !== undefined) {
+    entity.currentEnergy = payload.attributes.currentEnergy
+  }
+
+  // 计算属性通过 ModifierStack 添加命名修饰符（符合现有体系，在属性追溯浮层中可见）
+  const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+  const stack = buffSystem.getModifierStack(payload.charId)
+  const calcKeys = Object.keys(payload.attributes).filter(
+    k => k !== 'currentHealth' && k !== 'currentEnergy'
+  )
+
+  for (const key of calcKeys) {
+    const targetValue = payload.attributes[key]
+    const sourceKey = `injection_${key}`
+
+    // 移除该属性之前的注入修饰符
+    stack.removeModifier(sourceKey)
+
+    // 以 base 为基准计算差值，添加 ADDITIVE 修饰符
+    // 最终值 = base + injectionDelta + 其他修饰符
+    const currentBase = entity.getAttributeBase(key as ATTRIBUTE_CODE)
+    const delta = targetValue - currentBase
+    if (delta !== 0) {
+      stack.addModifier(sourceKey, key as ATTRIBUTE_CODE, delta, ModifierType.ADDITIVE)
     }
   }
+
+  // 触发实体重新同步修饰符并重算属性
+  entity.recalcAll()
 
   // 强制 UI 刷新
   battleStore.syncTeams()
@@ -571,6 +594,12 @@ const handleResetCharacter = (payload: { charId: string; mode: 'buffs' | 'hp_ene
     // 通过 BuffSystem 清除所有 Buff
     const buffSystem = container.resolve<BuffSystem>('BuffSystem')
     buffSystem.clearAllBuffs(payload.charId)
+    // 同时清除属性注入修饰符
+    const stack = buffSystem.getModifierStack(payload.charId)
+    for (const key of ['minAttack', 'defense', 'speed']) {
+      stack.removeModifier(`injection_${key}`)
+    }
+    entity.recalcAll()
   }
   if (mode === 'hp_energy' || mode === 'all') {
     entity.currentHealth = entity.maxHealth

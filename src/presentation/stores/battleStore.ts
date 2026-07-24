@@ -150,21 +150,37 @@ export const useBattleStore = defineStore('battle', () => {
   /** 参与者快照表 — UI 的唯一数据源（由投影层填充） */
   const participants = reactive(new Map<string, UIParticipantSnapshot>())
 
-  /** 投影层调度器（懒初始化） */
+  /** 投影层调度器 */
   let projection: BattleProjection | null = null
 
   /**
+   * 初始化投影层：创建 BattleProjection 实例，注册所有参与者并生成初始快照。
+   * 仅首次调用时创建实例，后续调用只刷新注册和快照。
+   * 手动调用此方法可确保领域实体 → UI 快照的初始状态注入。
+   */
+  const initProjection = (): void => {
+    try {
+      if (!projection) {
+        const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+        projection = new BattleProjection({ participants }, buffSystem)
+      }
+      const allEntities = [...allyTeam.value, ...enemyTeam.value]
+      projection.clear()
+      projection.registerAll(allEntities)
+      projection.flushAll()
+    } catch (err) {
+      console.error('[BattleProjection] 初始化/刷新失败:', err)
+    }
+  }
+
+  /**
    * 同步队伍数据（从 BattleService 拉取最新状态）
-   * @description 当收到 TEAM_DATA_CHANGED 事件时调用，更新本地响应式状态
+   * @description 当收到 TEAM_DATA_CHANGED 事件时调用，更新本地响应式状态并刷新投影层快照
    */
   const syncTeams = () => {
-    console.log('接收队伍数据更新')
-    // ponytail: 用 shallowReactive 包装参与者，使 Vue computed 能追踪场内属性变更（如 statsVersion）。
+    // 用 shallowReactive 包装参与者，使 Vue computed 能追踪场内属性变更（如 statsVersion）。
     // 原始对象由 BattleSystem 管理并通过事件告知 UI 层，proxy 确保修改走 Vue 响应式系统。
     allyTeam.value = battleService.value!.getEnabledAllyTeam().map(p => shallowReactive(p))
-    for (const p of allyTeam.value) {
-      console.log('allyTeam datum:', p.currentHealth, p.maxHealth)
-    }
     enemyTeam.value = battleService.value!.getEnabledEnemyTeam().map(p => shallowReactive(p))
     fullAllyTeam.value = battleService.value!.getAllyTeam().map(p => shallowReactive(p))
     fullEnemyTeam.value = battleService.value!.getEnemyTeam().map(p => shallowReactive(p))
@@ -178,21 +194,8 @@ export const useBattleStore = defineStore('battle', () => {
       battleState.battleState !== BattleStatus.PREPARING
     isPaused.value = battleService.value!.getIsPaused()
 
-    // 同步投影层：注册所有参与者，通过 setDirtyCallback 自动追踪变更
-    try {
-      if (!projection) {
-        const buffSystem = container.resolve<BuffSystem>('BuffSystem')
-        projection = new BattleProjection({ participants }, buffSystem)
-        console.log('[BattleProjection] 已初始化')
-      }
-      const allEntities = [...allyTeam.value, ...enemyTeam.value]
-      projection.clear()
-      projection.registerAll(allEntities)
-      projection.flushAll()
-      console.log(`[BattleProjection] 已注册 ${allEntities.length} 个实体，participants Map 大小: ${participants.size}`)
-    } catch (err) {
-      console.error('[BattleProjection] 投影层初始化失败:', err)
-    }
+    // 刷新投影层快照（首次调用时自动初始化）
+    initProjection()
   }
 
   // 所有事件订阅在 events Map 创建后统一注册（见下方 🔹 3. 事件订阅管理器）
@@ -889,6 +892,7 @@ export const useBattleStore = defineStore('battle', () => {
 
     // ========== 同步方法（Sync） ==========
     syncTeams, // 同步队伍数据
+    initProjection, // 初始化/刷新投影层快照
 
     // ========== 核心操作（Actions） ==========
     initializeBattleService, // 初始化战斗管理器

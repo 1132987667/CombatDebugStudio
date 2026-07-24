@@ -186,7 +186,7 @@ const snap = computed(() => battleStore.participants.get(props.participant.id) ?
 // 从快照派生 isAlive/hpPercent/energyPercent（回退到从实体直接读取）
 const isAlive = computed(() => snap.value?.isAlive ?? props.participant.isAlive())
 const hpPercent = computed(() => {
-  if (snap.value) return snap.value.hpPercent
+  if (snap.value) return snap.value.healthPercent
   const p = props.participant
   const maxHp = p.maxHealth
   return maxHp > 0 ? (p.currentHealth / maxHp) * 100 : 0
@@ -285,8 +285,8 @@ const cardClasses = computed(() => ({
 const hpText = computed(() => {
   // 优先使用投影层快照数据
   if (snap.value) {
-    const cur = Math.max(0, Math.floor(snap.value.hp))
-    const max = Math.max(0, Math.floor(snap.value.maxHp))
+    const cur = Math.max(0, Math.floor(snap.value.currentHealth))
+    const max = Math.max(0, Math.floor(snap.value.maxHealth))
     return `${cur}/${max}`
   }
   // 回退到直接从 participant 实体读取
@@ -305,9 +305,9 @@ const hpColorClass = computed(() => {
 
 const energyText = computed(() => {
   if (snap.value) {
-    const energy = Math.floor(snap.value.energy)
+    const curEnergy = Math.floor(snap.value.currentEnergy)
     const maxEnergy = Math.floor(snap.value.maxEnergy)
-    return `${energy}/${maxEnergy}`
+    return `${curEnergy}/${maxEnergy}`
   }
   const data = props.participant
   const energy = Math.floor(data.currentEnergy || 0)

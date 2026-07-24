@@ -140,9 +140,7 @@ export class BattleProjection {
         // 版本检查：跳过无变化写入
         if (entity.statsVersion === this.lastVersions.get(id)) continue
         this.lastVersions.set(id, entity.statsVersion)
-
         const snap = participantToSnapshot(entity, this.buffSystem)
-
         if (this.store.participants.has(id)) {
           // 就地更新，保持 reactive 对象引用不变
           Object.assign(this.store.participants.get(id)!, snap)

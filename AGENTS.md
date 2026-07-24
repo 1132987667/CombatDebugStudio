@@ -101,12 +101,14 @@ src/
 │   ├── skill/       # 技能系统
 │   └── attribute/   # 属性系统
 ├── application/     # 应用层 — 用例编排
+│   └── projection/  # 投影层 — 领域实体→UI 快照桥接（BattleProjection + participantMapper）
 ├── infrastructure/  # 基础设施层 — DI / 日志 / 事件总线 / 外部适配
 │   └── adapters/
 │       ├── event/   # EventBus（mitt 实例）
 │       └── logging/ # 日志管理
 ├── shared/          # 共享层 — 类型定义 / 工具函数 / 数据处理器
 │   ├── types/
+│   │   └── projection.ts  # UIParticipantSnapshot / BuffDisplayItem 纯数据快照
 │   └── utils/
 └── presentation/    # 表现层 — Vue 组件 / 样式 / 视图
     ├── views/
@@ -131,4 +133,5 @@ tests/               # 测试（unit / e2e / factories / fixtures / mocks）
 - Buff 系统：响应式链路（事件桥接 + Store 层 Proxy）已修复
 - 属性系统：审计 + 设计文档已归档
 - 领域层反向依赖：已修复（eventBus 迁入 infrastructure/adapters/event/）
+- 投影层（Projection）：已落地 — BattleProjection 调度器 + participantMapper 外部映射器 + UIParticipantSnapshot 纯数据快照，Vue 组件统一从快照读取而非直接绑定领域实体
 - 开发阶段：已从 ponytail（快速搭建）转入石匠（雕琢打磨）阶段

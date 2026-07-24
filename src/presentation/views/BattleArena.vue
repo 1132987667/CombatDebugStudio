@@ -345,8 +345,8 @@ const currentAttrs = computed(() => {
   const defaults = { currentHealth: 0, currentEnergy: 0, minAttack: 0, defense: 0, speed: 0 }
   if (!char) return defaults
   return {
-    currentHealth: char.currentHealth ?? 0,
-    currentEnergy: char.currentEnergy ?? 0,
+    currentHealth: battleStore.participants.get(char.id)?.currentHealth ?? 0,
+    currentEnergy: battleStore.participants.get(char.id)?.currentEnergy ?? 0,
     minAttack: char.getAttributeValue(ATTRIBUTE_CODE.minAttack)?.value ?? 0,
     defense: char.getAttributeValue(ATTRIBUTE_CODE.defense)?.value ?? 0,
     speed: char.getAttributeValue(ATTRIBUTE_CODE.speed)?.value ?? 0,
@@ -602,8 +602,9 @@ const handleResetCharacter = (payload: { charId: string; mode: 'buffs' | 'hp_ene
     entity.recalcAll()
   }
   if (mode === 'hp_energy' || mode === 'all') {
-    entity.currentHealth = entity.maxHealth
-    entity.currentEnergy = entity.maxEnergy
+    const snap = battleStore.participants.get(entity.id)
+    entity.currentHealth = snap?.maxHealth ?? entity.maxHealth
+    entity.currentEnergy = snap?.maxEnergy ?? entity.maxEnergy
   }
 
   // 强制 UI 刷新

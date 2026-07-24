@@ -357,7 +357,6 @@ watch(() => props.modelValue, (visible) => {
   border-bottom: 2px solid transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
-  font-size: var(--font-size-sm);
   transition: all var(--transition-fast);
   text-align: center;
 }
@@ -381,7 +380,6 @@ watch(() => props.modelValue, (visible) => {
   color: var(--color-text-primary);
   padding: var(--space-1);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
   cursor: pointer;
   max-width: 160px;
 }
@@ -407,7 +405,6 @@ watch(() => props.modelValue, (visible) => {
   padding: 2px 8px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-default);
-  font-size: var(--font-size-xs);
 }
 
 /* ═══ 搜索框 ═══ */
@@ -419,7 +416,6 @@ watch(() => props.modelValue, (visible) => {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
 }
 .si-search:focus {
   outline: none;
@@ -461,7 +457,6 @@ watch(() => props.modelValue, (visible) => {
   accent-color: var(--color-info);
 }
 .si-status-name {
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   white-space: nowrap;
 }
@@ -474,13 +469,11 @@ watch(() => props.modelValue, (visible) => {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
   text-align: center;
   flex-shrink: 0;
 }
 .si-status-effect {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -490,7 +483,6 @@ watch(() => props.modelValue, (visible) => {
   padding: var(--space-6) var(--space-4);
   text-align: center;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
 }
 
 /* ═══ 按钮栏 ═══ */
@@ -516,7 +508,6 @@ watch(() => props.modelValue, (visible) => {
 }
 .attr-label {
   width: 48px;
-  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   flex-shrink: 0;
@@ -540,11 +531,9 @@ watch(() => props.modelValue, (visible) => {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
   text-align: right;
 }
 .attr-current {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   white-space: nowrap;
   width: 90px;
@@ -554,7 +543,6 @@ watch(() => props.modelValue, (visible) => {
 /* ═══ 重置 Tab ═══ */
 .reset-desc {
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
   margin-bottom: var(--space-4);
 }
 .reset-actions {

@@ -13,6 +13,7 @@
 import type { UIParticipantSnapshot, BuffDisplayItem } from '@/shared/types/projection'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { AttributeCodeNames } from '@/domain/attribute/types'
 
 /**
  * 将 BattleEntity 映射为 UI 快照
@@ -27,7 +28,7 @@ export function participantToSnapshot(
 ): UIParticipantSnapshot {
   const hp = entity.currentHealth
   const maxHp = entity.maxHealth
-  const energy = entity.currentEnergy
+  const curEnergy = entity.currentEnergy
   const maxEnergy = entity.maxEnergy
 
   return {
@@ -36,10 +37,10 @@ export function participantToSnapshot(
     level: entity.level,
     team: entity.team as 'ally' | 'enemy',
 
-    // 核心数值
-    hp,
-    maxHp,
-    energy,
+    // 核心数值（与领域层字段名统一）
+    currentHealth: hp,
+    maxHealth: maxHp,
+    currentEnergy: curEnergy,
     maxEnergy,
     attack: entity.getAttribute('attack'),
     defense: entity.getAttribute('defense'),
@@ -49,8 +50,8 @@ export function participantToSnapshot(
 
     // 派生状态
     isAlive: entity.isAlive(),
-    hpPercent: maxHp > 0 ? (hp / maxHp) * 100 : 0,
-    energyPercent: maxEnergy > 0 ? (energy / maxEnergy) * 100 : 0,
+    healthPercent: maxHp > 0 ? (hp / maxHp) * 100 : 0,
+    energyPercent: maxEnergy > 0 ? (curEnergy / maxEnergy) * 100 : 0,
 
     // Buff 显示数据
     buffs: buildBuffDisplay(entity, buffSystem),
@@ -121,20 +122,9 @@ function buildBuffDisplay(
  */
 function buildAttributeSummary(attributes: Record<string, string>): string {
   const parts: string[] = []
-  const nameMap: Record<string, string> = {
-    attack: '攻击',
-    defense: '防御',
-    speed: '速度',
-    critRate: '暴击',
-    critDamage: '暴伤',
-    damageReduction: '伤害减免',
-    healing: '受疗',
-    hitRate: '命中',
-    dodgeRate: '闪避',
-  }
 
   for (const [code, raw] of Object.entries(attributes)) {
-    const cn = nameMap[code] ?? code
+    const cn = (AttributeCodeNames as Record<string, string>)[code] ?? code
     const num = parseFloat(raw)
     if (isNaN(num)) continue
     if (num >= 0) parts.push(`${cn}+${Math.round(num * 100)}%`)

@@ -37,10 +37,10 @@ export interface UIParticipantSnapshot {
   readonly level: number
   readonly team: 'ally' | 'enemy'
 
-  // === 核心数值（每次投影更新） ===
-  hp: number
-  maxHp: number
-  energy: number
+  // === 核心数值（每次投影更新，与领域层 BattleEntity 字段名统一） ===
+  currentHealth: number
+  maxHealth: number
+  currentEnergy: number
   maxEnergy: number
   attack: number
   defense: number
@@ -51,7 +51,7 @@ export interface UIParticipantSnapshot {
   // === 派生状态 ===
   isAlive: boolean
   /** 预计算百分比，避免模板中重复除法 */
-  hpPercent: number
+  healthPercent: number
   energyPercent: number
 
   // === Buff 显示数据 ===

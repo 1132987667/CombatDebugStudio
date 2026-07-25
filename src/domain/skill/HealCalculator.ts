@@ -1,6 +1,6 @@
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
-import type { CombatRecord } from '@/domain/battle/combat-record'
+import type { BattleContext } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -30,7 +30,7 @@ export class HealCalculator {
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
     target: BattleEntity,
-    record?: CombatRecord,
+    context?: BattleContext,
     buffSystem?: BuffSystem,
   ): { heal: number; overflow: number } {
     this.calculationLogs = []
@@ -41,10 +41,17 @@ export class HealCalculator {
       // extraValues 处理
       if (skillStep.calculation.extraValues) {
         for (const extra of skillStep.calculation.extraValues) {
-          const attrValue = this.getAttrValue(source, extra.attribute as ATTRIBUTE_CODE)
+          const attrValue = this.getAttrValue(
+            source,
+            extra.attribute as ATTRIBUTE_CODE,
+          )
           const extraValue = attrValue * extra.ratio
           heal += extraValue
-          this.logCalculation('extra_value', extraValue, `${extra.attribute} 额外加成: +${extraValue}`)
+          this.logCalculation(
+            'extra_value',
+            extraValue,
+            `${extra.attribute} 额外加成: +${extraValue}`,
+          )
         }
       }
     }
@@ -52,11 +59,18 @@ export class HealCalculator {
     // targetModifiers 处理
     if (skillStep.targetModifiers) {
       Object.entries(skillStep.targetModifiers).forEach(([attr, modifier]) => {
-        const targetAttrValue = this.getAttrValue(target, attr as ATTRIBUTE_CODE)
+        const targetAttrValue = this.getAttrValue(
+          target,
+          attr as ATTRIBUTE_CODE,
+        )
         const modifierEffect = (modifier * targetAttrValue) / 100
         heal *= 1 + modifierEffect
         heal = Math.floor(heal)
-        this.logCalculation('target_modifier', modifierEffect, `${attr} 目标修正: x${1 + modifierEffect}`)
+        this.logCalculation(
+          'target_modifier',
+          modifierEffect,
+          `${attr} 目标修正: x${1 + modifierEffect}`,
+        )
       })
     }
 
@@ -71,21 +85,29 @@ export class HealCalculator {
       // ② 减益缩减（debuff降低效果）= 在下方计算，反映在最终 heal 值
       // 两者互不抵消，各自反映一个不同的游戏机制
       overflow = heal - healCap
-      this.logCalculation('heal_cap', healCap, `治疗上限限制: ${heal} → ${healCap}，溢出: ${overflow}`)
+      this.logCalculation(
+        'heal_cap',
+        healCap,
+        `治疗上限限制: ${heal} → ${healCap}，溢出: ${overflow}`,
+      )
       heal = healCap
     }
 
-    // 负面状态影响（降低治疗效果）   
+    // 负面状态影响（降低治疗效果）
     const debuffEffect = this.calculateDebuffEffect(target, buffSystem)
     if (debuffEffect > 0) {
       heal = Math.floor(heal * (1 - debuffEffect))
-      this.logCalculation('debuff', debuffEffect, `减益效果: -${Math.round(debuffEffect * 100)}%`)
+      this.logCalculation(
+        'debuff',
+        debuffEffect,
+        `减益效果: -${Math.round(debuffEffect * 100)}%`,
+      )
     }
 
     heal = Math.max(0, heal)
 
-    if (record) {
-      record.effects?.push({
+    if (context?.record) {
+      context.record.effects?.push({
         type: 'heal',
         targetId: target.id,
         value: heal,
@@ -104,10 +126,17 @@ export class HealCalculator {
   /** 最大减治疗效果上限（80%） */
   private static readonly MAX_HEAL_REDUCTION = 0.8
 
-  private calculateDebuffEffect(target: BattleEntity, buffSystem?: BuffSystem): number {
+  private calculateDebuffEffect(
+    target: BattleEntity,
+    buffSystem?: BuffSystem,
+  ): number {
     if (!buffSystem) return 0
-    const reductionInstances = buffSystem.getBuffInstancesWithTag(target.id, EffectTag.HEAL_REDUCTION)
-    const debuffEffect = reductionInstances.length * HealCalculator.HEAL_REDUCTION_PER_DEBUFF
+    const reductionInstances = buffSystem.getBuffInstancesWithTag(
+      target.id,
+      EffectTag.HEAL_REDUCTION,
+    )
+    const debuffEffect =
+      reductionInstances.length * HealCalculator.HEAL_REDUCTION_PER_DEBUFF
     return Math.min(debuffEffect, HealCalculator.MAX_HEAL_REDUCTION)
   }
 
@@ -125,10 +154,17 @@ export class HealCalculator {
   }
 
   isSingleTurnEffect(skillStep: ExtendedSkillStep): boolean {
-    return skillStep.calculation?.isSingleTurn === true || !skillStep.duration || skillStep.duration <= 1
+    return (
+      skillStep.calculation?.isSingleTurn === true ||
+      !skillStep.duration ||
+      skillStep.duration <= 1
+    )
   }
 
-  private getAttrValue(participant: BattleEntity, attr: ATTRIBUTE_CODE): number {
+  private getAttrValue(
+    participant: BattleEntity,
+    attr: ATTRIBUTE_CODE,
+  ): number {
     try {
       return participant.getAttribute(attr) || 0
     } catch {
@@ -136,7 +172,11 @@ export class HealCalculator {
     }
   }
 
-  private logCalculation(step: string, value: number, description: string): void {
+  private logCalculation(
+    step: string,
+    value: number,
+    description: string,
+  ): void {
     this.calculationLogs.push({ step, value, description })
   }
 }

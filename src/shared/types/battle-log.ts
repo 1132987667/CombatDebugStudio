@@ -38,6 +38,27 @@ export const LogLevelClass: Record<LogLevel, string> = {
   [LogLevel.TRACE]: 'log-trace',
 }
 
+/**
+ * 叙事元数据 —— 渲染器据此生成 HP 箭头、高光标记、块归类
+ */
+export interface BattleLogMeta {
+  /** 叙事角色：决定归入哪种块 */
+  role?: 'action' | 'sub' | 'settlement' | 'snapshot' | 'condition' | 'battle'
+  entityId?: string
+  hpBefore?: number
+  hpAfter?: number
+  damage?: number
+  heal?: number
+  crit?: boolean
+  kill?: boolean
+  lethal?: boolean
+  immune?: boolean
+  miss?: boolean
+  skillName?: string
+  /** 回合标签线索：'multi-trigger' | 'kill' | 'lethal-protect' | 'final' */
+  roundTag?: string
+}
+
 export const LogLevelLabel: Record<LogLevel, string> = {
   [LogLevel.ERROR]: '错误',
   [LogLevel.WARN]: '警告',
@@ -166,6 +187,32 @@ export interface BattleLogEntry extends LogEntry {
   turn: number | string
   /** 日志消息（必需） */
   message: string
+  /** 叙事元数据（可选，渲染器据此生成 HP 箭头、高光标记、块归类） */
+  meta?: BattleLogMeta
+}
+
+/**
+ * 片段语义类型 — 决定渲染器把它包成什么 HTML
+ */
+export type LogSegmentKind =
+  | 'entity'      // 角色名 → 阵营色芯片
+  | 'skill'       // 技能名 → 可悬浮芯片
+  | 'buff'        // Buff名 → 可悬浮芯片
+  | 'passive'     // 被动名 → 可悬浮芯片
+  | 'damage'      // 伤害值 → 大号红色数字
+  | 'heal'        // 治疗值 → 大号绿色数字
+  | 'hp-before'   // HP 变化前
+  | 'hp-after'    // HP 变化后
+  | 'text'        // 普通文本（默认）
+
+/**
+ * 可悬浮的实体身份（方案二：悬浮信息卡片）
+ * 带此字段的 LogSegment 渲染为可交互锚点，
+ * EntityTooltip 根据 kind+id 查 LogTooltipResolver 弹出信息卡。
+ */
+export interface LogSegmentHover {
+  kind: 'buff' | 'skill' | 'passive'
+  id: string
 }
 
 /**
@@ -176,16 +223,37 @@ export interface LogSegment {
   text: string
   /** 片段CSS类名 */
   classStr?: string
+  /** 可悬浮的实体身份（可选）：带此字段的片段渲染为可交互锚点 */
+  hover?: LogSegmentHover
+  /** 片段语义类型（可选）：指导渲染器按哪种 HTML 组件展示 */
+  kind?: LogSegmentKind
+  /** 阵营（kind=entity 时使用） */
+  faction?: 'ally' | 'enemy'
 }
+
+/**
+ * 叙事块 — 玩家日志的渲染单元
+ * 与 BattleLogMeta.role 对应，渲染器据此决定布局
+ */
+export type NarrativeBlock =
+  | { type: 'battle-header'; segments: LogSegment[] }
+  | { type: 'section'; title: string; lines: LogSegment[][] }
+  | { type: 'round'; turn: number; tag?: string }
+  | { type: 'action'; header: LogSegment[]; result?: LogSegment[]; subs: LogSegment[][] }
+  | { type: 'settlement'; lines: LogSegment[][] }
+  | { type: 'snapshot'; lines: LogSegment[][] }
+  | { type: 'summary'; lines: LogSegment[][] }
+  | { type: 'plain'; segments: LogSegment[] }
 
 export function newLogSegment(
   text: string,
   classStr?: string,
+  hover?: LogSegmentHover,
 ): LogSegment {
-  return {
-    text,
-    classStr,
-  }
+  const seg: LogSegment = { text }
+  if (classStr !== undefined) seg.classStr = classStr
+  if (hover !== undefined) seg.hover = hover
+  return seg
 }
 
 /**
@@ -495,17 +563,21 @@ export function buildNameSegments(
   targetIsAlly?: boolean,
 ): LogSegment[] {
   const sourcePrefix = sourceIsAlly ? '[友方]' : '[敌方]'
+  const sourceFaction = sourceIsAlly ? 'ally' as const : 'enemy' as const
   const segs: LogSegment[] = [
-    { text: `${sourcePrefix}${source}`, classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile' },
+    { text: `${sourcePrefix}${source}`, classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: sourceFaction },
   ]
   if (target && target !== source) {
     const targetPrefix = targetIsAlly != null ? (targetIsAlly ? '[友方]' : '[敌方]') : ''
+    const targetFaction = targetIsAlly != null ? (targetIsAlly ? 'ally' as const : 'enemy' as const) : undefined
     segs.push({ text: ' 对 ' })
     segs.push({
       text: `${targetPrefix}${target}`,
       classStr: targetIsAlly != null
         ? (targetIsAlly ? 'log-friendly' : 'log-hostile')
         : undefined,
+      kind: 'entity',
+      faction: targetFaction,
     })
   }
   return segs

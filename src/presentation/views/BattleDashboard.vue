@@ -126,14 +126,23 @@
 
         <!-- 被动技能 -->
         <div v-if="activeTab === 'passive'" class="skills-display">
-          <div v-if="!currentCharacter?.skills?.passive?.length" class="no-skills">
+          <div v-if="groupedPassives.length === 0" class="no-skills">
             暂无被动技能
           </div>
           <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
-            <div class="skill-item passive" v-for="(skill, index) in currentCharacter!.skills.passive" :key="index"
-              @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
-              @mouseleave="hideSkillTooltip">
-              {{ skill.name || '未知技能' }}
+            <div v-for="group in groupedPassives" :key="group.category" class="skill-category">
+              <div class="skill-category-title">
+                <span class="category-dot" :style="{ background: group.color }"></span>
+                {{ group.label }}
+                <span class="category-count">({{ group.skills.length }})</span>
+              </div>
+              <div v-for="(skill, index) in group.skills" :key="index"
+                class="skill-item passive"
+                :style="{ borderLeftColor: group.color }"
+                @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                @mouseleave="hideSkillTooltip">
+                {{ skill.name || '未知技能' }}
+              </div>
             </div>
           </div>
         </div>
@@ -415,6 +424,49 @@ const buffListItems = computed((): BuffRawItem[] => {
 })
 
 const buffDisplay = useBuffDisplay(buffListItems, computed(() => currentCharacter.value?.id ?? ''), 99)
+
+/** 被动技能分类展示配置 */
+const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: number }> = {
+  aura:      { label: '光环',   color: '#34d399', priority: 0 },
+  trigger:   { label: '触发',   color: '#a78bfa', priority: 1 },
+  heal:      { label: '治疗',   color: '#f472b6', priority: 2 },
+  immunity:  { label: '免疫',   color: '#fbbf24', priority: 3 },
+  summon:    { label: '召唤',   color: '#fb923c', priority: 4 },
+  dot:       { label: '持续',   color: '#f87171', priority: 5 },
+  shield:    { label: '护盾',   color: '#22d3ee', priority: 6 },
+  attribute: { label: '属性',   color: '#60a5fa', priority: 7 },
+}
+
+const UNCATEGORIZED = { label: '未分类', color: '#94a3b8', priority: 99 }
+
+interface PassiveSkillGroup {
+  category: string
+  label: string
+  color: string
+  skills: SkillConfig[]
+}
+
+const groupedPassives = computed<PassiveSkillGroup[]>(() => {
+  const passives = currentCharacter.value?.skills?.passive ?? []
+  const groups = new Map<string, PassiveSkillGroup>()
+
+  for (const skill of passives) {
+    // 取首个分类为主分类，避免重复展示
+    const primary = skill.passiveCategory?.[0]
+    const cat = primary && CATEGORY_CONFIG[primary] ? primary : '__uncategorized__'
+    if (!groups.has(cat)) {
+      const cfg = CATEGORY_CONFIG[cat] ?? UNCATEGORIZED
+      groups.set(cat, { category: cat, label: cfg.label, color: cfg.color, skills: [] })
+    }
+    groups.get(cat)!.skills.push(skill)
+  }
+
+  return [...groups.values()].sort((a, b) => {
+    const pa = CATEGORY_CONFIG[a.category]?.priority ?? 99
+    const pb = CATEGORY_CONFIG[b.category]?.priority ?? 99
+    return pa - pb
+  })
+})
 
 // ------------------------------------------------------------
 // 技能悬浮提示状态
@@ -787,6 +839,11 @@ const handleBattleEndReplay = (winner: string) => {
   border-radius: var(--radius-sm);
   transition: var(--transition-fast);
   cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.skill-item.passive {
+  border-left-color: var(--color-border-default);
 }
 
 .skill-item:hover {
@@ -827,6 +884,23 @@ const handleBattleEndReplay = (winner: string) => {
   margin-bottom: var(--space-1);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.category-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.category-count {
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-normal);
+  text-transform: none;
 }
 
 .skill-items {

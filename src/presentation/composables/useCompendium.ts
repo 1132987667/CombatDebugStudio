@@ -12,17 +12,20 @@ import enemiesData from '@configs/enemies/enemies.json'
 import buffsData from '@configs/buffs/buffs.json'
 import materialsData from '@configs/materials/materials.json'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import type { PassiveCategory } from '@/domain/skill/types'
 
 export interface CompendiumEnemy {
   id: string
   name: string
   level: number
   stats: {
-    health: number
+    currentHealth: number
     minAttack: number
     maxAttack: number
     defense: number
     speed: number
+    critRate?: number
+    critDamage?: number
   }
   drops: Array<{
     itemId: string
@@ -32,6 +35,7 @@ export interface CompendiumEnemy {
   skills: {
     small?: string[]
     passive?: string[]
+    ultimate?: string[]
   }
   description?: string
 }
@@ -52,6 +56,7 @@ export interface CompendiumSkill {
   energyCost: number
   cooldown: number
   selector: string
+  passiveCategory?: PassiveCategory[]
 }
 
 export interface CompendiumItem {

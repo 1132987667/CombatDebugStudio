@@ -229,15 +229,15 @@ export const useBattleStore = defineStore('battle', () => {
           },
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'battle' },
       })
     }
   }
 
-  /** 处理回合开始事件（更新当前行动者ID，记录回合开始日志） */
+  /** 处理回合开始事件（更新当前行动者ID） */
   const handleTurnStartEvent = (data: { actorId: string | null }) => {
     if (data?.actorId) {
       currentActorId.value = data.actorId
-      battleLogManager.addTurnStartLog(battleService.value?.getTurn() ?? 1)
     }
   }
 
@@ -248,9 +248,8 @@ export const useBattleStore = defineStore('battle', () => {
     }
   }
 
-  /** 处理回合结束事件（记录回合结束日志） */
+  /** 处理回合结束事件 */
   const handleTurnEndEvent = () => {
-    battleLogManager.addTurnEndLog(battleService.value?.getTurn() ?? 1)
   }
 
   /** 处理伤害动画事件（触发伤害数字飘字效果） */
@@ -462,6 +461,13 @@ export const useBattleStore = defineStore('battle', () => {
       setBattleActive(true)
       autoPlayMode.value = battleService.value.getAutoBattle()
       battleLogManager.addSystemLog({ message: '战斗已开始' })
+      battleLogManager.addBattleLog({
+        turn: battleService.value?.getTurn() ?? 1,
+        message: '战斗开始',
+        segments: [{ text: '战斗开始', classStr: 'log-system' }],
+        category: BATTLE_LOG_CATEGORIES.SYSTEM,
+        meta: { role: 'battle' },
+      })
       return true
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)

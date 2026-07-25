@@ -46,7 +46,7 @@
           {{ effectType }}
         </span>
         <span v-if="buff.maxStacks > 1" class="effect-tag stacks">
-          可叠�?
+          可叠加
         </span>
         <span v-if="isPermanent" class="effect-tag permanent">
           永久
@@ -109,7 +109,7 @@ const attributes = computed((): AttributeDisplay[] => {
     }
 
     return {
-      key: AttributeCodeNames[key] || key,
+      key: AttributeCodeNames[key as keyof typeof AttributeCodeNames] || key,
       value: displayValue,
       valueType
     }

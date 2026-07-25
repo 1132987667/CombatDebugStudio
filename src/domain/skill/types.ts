@@ -4,7 +4,32 @@
  * 版本:
  */
 
-import type { ModifierTemplate } from '@/domain/attribute/modifier-template'
+import type {
+  ATTRIBUTE_CODE,
+  ModifierType,
+  ModifierSourceType,
+} from '@/domain/attribute/types'
+
+/**
+ * 修饰符模板（配置层使用）
+ * 由技能/Buff/装备等配置转换而来，不包含运行时状态
+ */
+export interface ModifierTemplate {
+  /** 模板唯一标识（用于追踪来源） */
+  id: string
+  /** 显示来源名称（如 "战吼"、"铁剑"） */
+  sourceName: string
+  /** 来源类型 */
+  sourceType: ModifierSourceType
+  /** 目标属性 */
+  targetAttribute: ATTRIBUTE_CODE
+  /** 修饰类型 */
+  type: ModifierType
+  /** 修饰数值（固定值） */
+  value: number
+  /** 生效条件（可选） */
+  condition?: string
+}
 
 /**
  * 技能类型枚举
@@ -47,7 +72,8 @@ export const DamageCategory = {
   TRUE: 'true',
 }
 
-export type DamageCategory = (typeof DamageCategory)[keyof typeof DamageCategory]
+export type DamageCategory =
+  (typeof DamageCategory)[keyof typeof DamageCategory]
 
 /**
  * 属性类型
@@ -56,13 +82,26 @@ export type DamageCategory = (typeof DamageCategory)[keyof typeof DamageCategory
 export type ElementType = 'PHYSICAL' | 'JIN' | 'MU' | 'SHU' | 'HUO' | 'TU'
 
 /**
+ * 被动技能分类
+ */
+export type PassiveCategory =
+  | 'attribute' // 属性增益
+  | 'aura' // 光环
+  | 'trigger' // 触发效果
+  | 'heal' // 治疗
+  | 'immunity' // 免疫
+  | 'summon' // 召唤
+  | 'dot' // 持续伤害
+  | 'shield' // 护盾
+
+/**
  * 目标阵营
  */
 export const TargetFaction = {
-  ENEMY: 'enemy',       // 敌方
-  ALLY: 'ally',       // 友方
-  ALL: 'all',       // 所有单位
-  SELF: 'self'       // 自身
+  ENEMY: 'enemy', // 敌方
+  ALLY: 'ally', // 友方
+  ALL: 'all', // 所有单位
+  SELF: 'self', // 自身
 }
 export type TargetFaction = (typeof TargetFaction)[keyof typeof TargetFaction]
 
@@ -70,17 +109,18 @@ export type TargetFaction = (typeof TargetFaction)[keyof typeof TargetFaction]
  * 目标选择策略
  */
 export const TargetStrategy = {
-  ALL: 'all',        // 全部目标
-  RANDOM: 'random',     // 随机
-  LOWEST_HP: 'lowest_hp',  // 最低血量
+  ALL: 'all', // 全部目标
+  RANDOM: 'random', // 随机
+  LOWEST_HP: 'lowest_hp', // 最低血量
   HIGHEST_HP: 'highest_hp', // 最高血量
-  FRONT: 'front',      // 前排
-  BACK: 'back',       // 后排
-  ADJACENT: 'adjacent',   // 相邻
+  FRONT: 'front', // 前排
+  BACK: 'back', // 后排
+  ADJACENT: 'adjacent', // 相邻
   RANDOM_ADJACENT: 'random_adjacent', // 随机相邻
-  FIRST: 'first',      // 第一个（默认）
+  FIRST: 'first', // 第一个（默认）
 } as const
-export type TargetStrategy = (typeof TargetStrategy)[keyof typeof TargetStrategy]
+export type TargetStrategy =
+  (typeof TargetStrategy)[keyof typeof TargetStrategy]
 
 /**
  * 技能定义接口（AI系统使用的运行时类型）
@@ -223,11 +263,20 @@ export interface SkillTargetConfig {
  */
 export function formatTargetConfig(config: SkillTargetConfig): string {
   const factionName: Record<string, string> = {
-    enemy: '敌方', ally: '友方', all: '所有单位', self: '自身',
+    enemy: '敌方',
+    ally: '友方',
+    all: '所有单位',
+    self: '自身',
   }
   const strategyName: Record<string, string> = {
-    all: '全部', random: '随机', lowest_hp: '最低血量', highest_hp: '最高血量',
-    front: '前排', back: '后排', adjacent: '相邻', first: '',
+    all: '全部',
+    random: '随机',
+    lowest_hp: '最低血量',
+    highest_hp: '最高血量',
+    front: '前排',
+    back: '后排',
+    adjacent: '相邻',
+    first: '',
   }
   const f = factionName[config.faction] || config.faction
   const s = strategyName[config.strategy || 'first']
@@ -251,28 +300,29 @@ export enum CostType {
  */
 export const SkillStepType = {
   // === 新版步骤类型 ===
-  DEAL_DAMAGE: 'deal_damage',       // 造成伤害（结构化）
-  HEAL: 'heal',                     // 治疗目标（结构化）
-  APPLY_BUFF: 'apply_buff',         // 施加 Buff/Debuff（通过 BuffId 引用）
+  DEAL_DAMAGE: 'deal_damage', // 造成伤害（结构化）
+  HEAL: 'heal', // 治疗目标（结构化）
+  APPLY_BUFF: 'apply_buff', // 施加 Buff/Debuff（通过 BuffId 引用）
   MODIFY_ATTRIBUTE: 'modify_attribute', // 直接修改属性（仅在被动技能初始化时由 GameDataProcessor 处理）
+  GAIN_ENERGY: 'gain_energy', // 获取能量（R6: 资源变动专用）
   // ponytail: 以下步骤类型为预留定义，当前零个技能配置使用，待需要时在 SkillExecutor 中实现
-  AURA: 'aura',                     // 光环效果
-  REMOVE_BUFF: 'remove_buff',       // 移除增益效果
-  REMOVE_DEBUFF: 'remove_debuff',   // 移除减益效果
-  CLEANSE: 'cleanse',               // 净化（移除所有负面效果）
-  DISPEL: 'dispel',                 // 驱散（移除所有正面效果）
-  STUN: 'stun',                     // 眩晕（已通过 apply_buff + buff_stun 实现）
-  SILENCE: 'silence',               // 沉默（已通过 apply_buff 实现）
-  KNOCKBACK: 'knockback',           // 击退
-  PULL: 'pull',                     // 拉扯
-  TELEPORT: 'teleport',             // 传送
-  SUMMON: 'summon',                 // 召唤
-  TRANSFORM: 'transform',           // 变身
-  SHIELD: 'shield',                 // 护盾（有壳实现，无技能使用）
-  REFLECT: 'reflect',               // 反射
-  DRAIN: 'drain',                   // 吸取
-  REVIVE: 'revive',                 // 复活
-  CUSTOM: 'custom',                 // 自定义效果（通过自定义脚本实现）
+  AURA: 'aura', // 光环效果
+  REMOVE_BUFF: 'remove_buff', // 移除增益效果
+  REMOVE_DEBUFF: 'remove_debuff', // 移除减益效果
+  CLEANSE: 'cleanse', // 净化（移除所有负面效果）
+  DISPEL: 'dispel', // 驱散（移除所有正面效果）
+  STUN: 'stun', // 眩晕（已通过 apply_buff + buff_stun 实现）
+  SILENCE: 'silence', // 沉默（已通过 apply_buff 实现）
+  KNOCKBACK: 'knockback', // 击退
+  PULL: 'pull', // 拉扯
+  TELEPORT: 'teleport', // 传送
+  SUMMON: 'summon', // 召唤
+  TRANSFORM: 'transform', // 变身
+  SHIELD: 'shield', // 护盾（有壳实现，无技能使用）
+  REFLECT: 'reflect', // 反射
+  DRAIN: 'drain', // 吸取
+  REVIVE: 'revive', // 复活
+  CUSTOM: 'custom', // 自定义效果（通过自定义脚本实现）
 } as const
 export type SkillStepType = (typeof SkillStepType)[keyof typeof SkillStepType]
 
@@ -400,6 +450,7 @@ export interface SkillConfig {
   condition?: string // 施放条件
   skillType?: SkillType // 技能类型
   triggerTimes?: string[] // 触发时机（被动技能专用）
+  passiveCategory?: PassiveCategory[] // 被动技能分类（数组，支持多分类）
   level?: number // 技能等级
   levelValue?: number // 技能等级成长值
   icon?: string // 技能图标
@@ -443,8 +494,11 @@ function summarizeSkillSteps(steps: SkillStep[]): {
   hasDebuff: boolean
   hasDynamicDamage: boolean
 } {
-  let totalDamage = 0, totalHeal = 0
-  let hasBuff = false, hasDebuff = false, hasDynamicDamage = false
+  let totalDamage = 0,
+    totalHeal = 0
+  let hasBuff = false,
+    hasDebuff = false,
+    hasDynamicDamage = false
 
   for (const step of steps) {
     const extStep = step as ExtendedSkillStep
@@ -453,7 +507,10 @@ function summarizeSkillSteps(steps: SkillStep[]): {
       totalDamage += extStep.calculation.baseValue || 0
       if (extStep.calculation.extraValues) {
         for (const extra of extStep.calculation.extraValues) {
-          if (extra.attribute === 'maxHealth' || extra.attribute === 'currentHealth') {
+          if (
+            extra.attribute === 'maxHealth' ||
+            extra.attribute === 'currentHealth'
+          ) {
             hasDynamicDamage = true
           }
         }

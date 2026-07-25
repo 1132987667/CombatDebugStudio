@@ -46,7 +46,5 @@ export { ConsoleLogHandler } from '@/infrastructure/adapters/logging/BattleLogMa
 // 结构化处理器 (JSON/CSV)
 export { JsonLogHandler, CsvLogHandler } from './StructuredLogHandlers'
 
-// 玩家日志渲染器
+// 玩家日志渲染器类型（旧风格系统，已由叙事/调试视图替代）
 export type { PlayerLogRenderer } from '@/shared/types/log-renderer'
-export { PokemonStyleRenderer } from '@/domain/battle/logs/renderers/PokemonStyleRenderer'
-export { SlayTheSpireRenderer } from '@/domain/battle/logs/renderers/SlayTheSpireRenderer'

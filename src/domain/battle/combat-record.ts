@@ -135,6 +135,9 @@ export interface CombatRecord {
   /** 伤害拆分明细（攻击/技能动作时填充） */
   damageBreakdown?: DamageBreakdown
 
+  /** 伤害来源类型：区分普通攻击/技能/DOT/反伤/反应 */
+  damageSource?: 'attack' | 'skill' | 'dot' | 'thorns' | 'reaction'
+
   message: string
   htmlMessage?: string
 

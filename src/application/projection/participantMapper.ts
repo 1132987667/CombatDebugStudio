@@ -53,6 +53,9 @@ export function participantToSnapshot(
     healthPercent: maxHp > 0 ? (hp / maxHp) * 100 : 0,
     energyPercent: maxEnergy > 0 ? (curEnergy / maxEnergy) * 100 : 0,
 
+    // 护盾值（来自 BuffSystem.shieldValues）
+    shield: buffSystem.getShieldValue(entity.id),
+
     // Buff 显示数据
     buffs: buildBuffDisplay(entity, buffSystem),
 

@@ -27,87 +27,72 @@
 
       <!-- 生命值条 -->
       <div class="member-hp">
-        <span class="hp-text">{{ hpText }}</span>
         <div class="hp-bar">
           <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPercent + '%' }">
+            <div class="pulse"></div>
           </div>
+          <span class="bar-text">{{ hpText }}</span>
         </div>
       </div>
 
       <!-- 能量条 -->
       <div class="member-energy">
-        <span class="energy-text">{{ energyText }}</span>
         <div class="energy-bar">
           <div class="energy-ticks">
             <div class="tick"></div>
             <div class="tick"></div>
             <div class="tick"></div>
-            <div class="tick"></div>
           </div>
-          <div class="energy-fill" :class="energyColorClass" :style="{ width: energyPercent + '%' }"></div>
+          <div class="energy-fill" :class="energyColorClass" :style="{ width: energyPercent + '%' }">
+            <div class="pulse"></div>
+          </div>
+          <span class="bar-text">{{ energyText }}</span>
+        </div>
+      </div>
+
+      <!-- 护盾条（始终渲染，无护盾时填充宽度为 0） -->
+      <div class="member-shield">
+        <div class="shield-bar">
+          <div class="shield-fill" :style="{ width: shieldPercent + '%' }">
+            <div class="pulse"></div>
+          </div>
+          <span class="bar-text">{{ shieldText }}</span>
         </div>
       </div>
 
       <!-- 情境属性标签（选中目标/准备技能时动态显示） -->
       <div v-if="situationalAttrs.length > 0" class="situational-tags">
-        <span v-for="tag in situationalAttrs" :key="tag.code" class="situational-tag"
-          :class="'tag-' + tag.group">
+        <span v-for="tag in situationalAttrs" :key="tag.code" class="situational-tag" :class="'tag-' + tag.group">
           {{ tag.label }} +{{ tag.value }}%
         </span>
       </div>
 
       <!-- Buff 列表：纯文本展示 -->
-      <BuffTextBar
-        :control-labels="buffDisplay.controlLabels"
-        :merged-labels="buffDisplay.mergedLabels"
-        :visible-attr-labels="buffDisplay.visibleAttrLabels"
-        :collapsed-count="buffDisplay.collapsedCount"
-        :expanded="panelVisible"
-        @toggle="panelVisible = !panelVisible"
-        @hover-attr="handleAttrHover"
-        @hover-buff="handleBuffHover"
-        @leave="handleBuffLeave"
-      />
-      <BuffTextPanel
-        :visible="panelVisible"
-        :participant-name="participant.name"
-        :groups="buffDisplay.groups"
-        :secondary-groups="buffDisplay.secondaryGroups"
-        :merged-labels="buffDisplay.mergedLabels"
-        :debug-mode="showDebug"
-        @close="panelVisible = false"
-      />
+      <BuffTextBar :control-labels="buffDisplay.controlLabels" :merged-labels="buffDisplay.mergedLabels"
+        :visible-attr-labels="buffDisplay.visibleAttrLabels" :collapsed-count="buffDisplay.collapsedCount"
+        :expanded="panelVisible" @toggle="panelVisible = !panelVisible" @hover-attr="handleAttrHover"
+        @hover-buff="handleBuffHover" @leave="handleBuffLeave" />
+      <BuffTextPanel :visible="panelVisible" :participant-name="participant.name" :groups="buffDisplay.groups"
+        :secondary-groups="buffDisplay.secondaryGroups" :merged-labels="buffDisplay.mergedLabels"
+        :debug-mode="showDebug" @close="panelVisible = false" />
       <!-- 属性/Buff 悬停追溯浮层 -->
       <Teleport to="body">
         <transition name="tooltip-fade">
-          <div
-            v-if="hoveredAttr"
-            class="attr-breakdown"
-            :style="{ left: hoverPos.x + 'px', top: hoverPos.y + 'px' }"
-            @mouseenter="clearHoverTimer"
-            @mouseleave="scheduleLeave"
-          >
+          <div v-if="hoveredAttr" class="attr-breakdown" :style="{ left: hoverPos.x + 'px', top: hoverPos.y + 'px' }"
+            @mouseenter="clearHoverTimer" @mouseleave="scheduleLeave">
             <div class="breakdown-header">{{ hoveredAttr.attribute }}：{{ formatBreakdownTotal(hoveredAttr) }}</div>
             <div class="breakdown-sources">
-              <div
-                v-for="(src, i) in hoveredAttr.sources"
-                :key="i"
-                class="breakdown-source"
-                :class="src.percent > 0 ? 'source-buff' : 'source-debuff'"
-              >
+              <div v-for="(src, i) in hoveredAttr.sources" :key="i" class="breakdown-source"
+                :class="src.percent > 0 ? 'source-buff' : 'source-debuff'">
                 <span class="source-name">{{ src.buffName }}</span>
                 <span class="source-value">{{ src.percent > 0 ? '+' : '' }}{{ src.percent }}%</span>
                 <span class="source-meta">{{ src.remainingTurns > 0 ? `${src.remainingTurns}回合` : '永久' }}</span>
               </div>
             </div>
           </div>
-          <div
-            v-else-if="hoveredBuff"
-            class="attr-breakdown"
-            :style="{ left: hoverPos.x + 'px', top: hoverPos.y + 'px' }"
-            @mouseenter="clearHoverTimer"
-            @mouseleave="scheduleLeave"
-          >
+          <div v-else-if="hoveredBuff" class="attr-breakdown"
+            :style="{ left: hoverPos.x + 'px', top: hoverPos.y + 'px' }" @mouseenter="clearHoverTimer"
+            @mouseleave="scheduleLeave">
             <div class="breakdown-header">【{{ hoveredBuff.name }}】</div>
             <div class="breakdown-body">
               <div v-if="hoveredBuff.description" class="breakdown-desc">{{ hoveredBuff.description }}</div>
@@ -322,6 +307,19 @@ const energyColorClass = computed(() => {
   return 'low'
 })
 
+/** 护盾值（来自投影层快照，源头是 BuffSystem.shieldValues） */
+const shieldValue = computed(() => snap.value?.shield ?? 0)
+
+/** 护盾占最大生命值的百分比（护盾无天然上限，以 maxHealth 为参照） */
+const shieldPercent = computed(() => {
+  const maxHp = snap.value?.maxHealth ?? 0
+  return maxHp > 0 ? Math.min(100, (shieldValue.value / maxHp) * 100) : 0
+})
+
+const hasShield = computed(() => shieldValue.value > 0)
+
+const shieldText = computed(() => `${Math.floor(shieldValue.value)}`)
+
 /** 转换为纯文本 Buff 展示数据 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
 const buffListItems = computed((): BuffRawItem[] => {
   // 依赖投影层快照版本号：快照更新时重算 buff 显示
@@ -521,22 +519,26 @@ defineExpose({
   padding: 2px 8px;
   margin: 2px 0;
 }
+
 .situational-tag {
   font-size: 0.75em;
   padding: 1px 6px;
   border-radius: 4px;
   white-space: nowrap;
 }
+
 .situational-tag.tag-offense {
   background: rgba(249, 115, 22, 0.2);
   color: #fb923c;
   border: 1px solid rgba(249, 115, 22, 0.3);
 }
+
 .situational-tag.tag-elemental {
   background: rgba(34, 211, 238, 0.15);
   color: #22d3ee;
   border: 1px solid rgba(34, 211, 238, 0.25);
 }
+
 .situational-tag.tag-control {
   background: rgba(168, 85, 247, 0.15);
   color: #a855f7;
@@ -684,7 +686,6 @@ defineExpose({
 .breakdown-header {
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-sm);
   padding-bottom: var(--space-1);
   margin-bottom: var(--space-1);
   border-bottom: 1px solid rgba(96, 165, 250, 0.15);
@@ -756,9 +757,11 @@ defineExpose({
 .tooltip-fade-enter-active {
   transition: opacity 0.15s ease-out, transform 0.15s ease-out;
 }
+
 .tooltip-fade-leave-active {
   transition: opacity 0.1s ease-in;
 }
+
 .tooltip-fade-enter-from,
 .tooltip-fade-leave-to {
   opacity: 0;

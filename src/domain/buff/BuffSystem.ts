@@ -260,7 +260,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         targetId,
         instanceId,
         params: data ?? {},
-        currentTurn: 0,
+        currentTurn: data?.currentTurn ?? 0,
       } as TriggerExecutionContext)
     }
   }
@@ -369,7 +369,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     buffId: string,
     config: Partial<BuffConfig> = {},
     currentTurn: number = 0,
-    record?: CombatRecord,
+    context?: BattleContext,
     parentInstanceId?: string,
   ): string {
     let script = this.scriptRegistry.get(buffId)
@@ -445,9 +445,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       attributes: config.attributes ?? jsonConfig?.attributes ?? undefined,
       triggers: config.triggers ?? jsonConfig?.triggers ?? undefined,
       cascadeRemove:
-        config.cascadeRemove ??
-        scriptDefaultConfig?.cascadeRemove ??
-        undefined,
+        config.cascadeRemove ?? scriptDefaultConfig?.cascadeRemove ?? undefined,
     }
 
     // ponytail: 免疫检查 — 若目标对该 buff 的 controlType / buffId / immuneTags 免疫则跳过施加
@@ -524,7 +522,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
 
     const instanceId = `${characterId}_${buffId}_${currentTurn}_${this.instanceIdCounter.next()}`
-    const context = BuffContextPool.borrow(
+    const buffContext = BuffContextPool.borrow(
       characterId,
       instanceId,
       resolvedConfig,
@@ -536,7 +534,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       characterId,
       buffId,
       script,
-      context,
+      context: buffContext,
       startTurn: currentTurn,
       duration: resolvedConfig.duration || -1,
       remainingTurns: resolvedConfig.duration,
@@ -561,12 +559,12 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     BuffErrorBoundary.wrap(() => {
       // ponytail: 设置初始层数，供 applyModifiers 读取以缩放修饰符值
-      context.variables.set('_stacks', buffInstance.currentStacks)
-      script.onApply(context)
+      buffContext.variables.set('_stacks', buffInstance.currentStacks)
+      script.onApply(buffContext)
     })
 
     // 填充特殊效果文本行（供纯文本 UI 展示）
-    buffInstance.effectLines = script.getEffectLines?.(context) ?? []
+    buffInstance.effectLines = script.getEffectLines?.(buffContext) ?? []
 
     // ponytail: 自包含脚本自己通过 _onApply 管理修饰符，不重复从 JSON 读取
     if (!this.scriptRegistry.isSelfContained(buffId)) {
@@ -601,8 +599,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       this.onBuffApplied(characterId, buffInstance.buffId)
     }
 
-    if (record) {
-      record.effects.push({
+    if (context?.record) {
+      context?.record.effects.push({
         type: resolvedConfig.isDebuff ? 'debuff' : 'buff',
         targetId: characterId,
         buffId: resolvedConfig.id,
@@ -811,7 +809,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
    * 只移除 cascadeRemove===true 的子；cascadeRemove===false/undefined 的保留。
    * 递归处理——子 Buff 也有自己的子 Buff。
    */
-  private cascadeRemoveChildren(parentId: string, parentCharacterId: string): void {
+  private cascadeRemoveChildren(
+    parentId: string,
+    parentCharacterId: string,
+  ): void {
     const children = this.parentToChildren.get(parentId)
     if (!children || children.size === 0) return
 

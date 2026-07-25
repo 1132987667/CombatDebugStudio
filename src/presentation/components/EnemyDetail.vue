@@ -20,7 +20,7 @@
       <div class="enemy-stats-grid">
         <div class="enemy-stat-item">
           <span class="enemy-stat-label">气血</span>
-          <span class="enemy-stat-value">{{ enemy.stats.maxHealth }}</span>
+          <span class="enemy-stat-value">{{ enemy.stats.currentHealth }}</span>
         </div>
         <div class="monitor-item">
           <span class="enemy-stat-label">攻击</span>
@@ -47,16 +47,36 @@
 
     <div class="enemy-skills-panel">
       <div class="enemy-section-title">技能展示</div>
-      <div v-if="skills.length === 0" class="empty-skills">
+      <div v-if="allSkills.length === 0" class="empty-skills">
         <span>暂无技能</span>
       </div>
       <div v-else class="skills-container">
-        <div v-for="skill in skills" :key="skill.id" class="skill-card">
+        <!-- 被动技能按分类分组 -->
+        <div v-for="group in groupedPassives" :key="group.category" class="skill-group">
+          <div class="skill-group-title">
+            <span class="group-dot" :style="{ background: group.color }"></span>
+            {{ group.label }}
+            <span class="group-count">({{ group.skills.length }})</span>
+          </div>
+          <div v-for="skill in group.skills" :key="skill.id" class="skill-card">
+            <div class="skill-header">
+              <span class="skill-name">{{ skill.name }}</span>
+              <div class="skill-meta">
+                <span class="skill-tag category-tag" :style="{ color: group.color, borderColor: group.color }">{{ group.label }}</span>
+                <span class="skill-tag passive">被动</span>
+              </div>
+            </div>
+            <div class="skill-body">
+              <p class="skill-description">{{ skill.description }}</p>
+            </div>
+          </div>
+        </div>
+        <!-- 其他技能（小技能/大招） -->
+        <div v-for="skill in otherSkills" :key="skill.id" class="skill-card">
           <div class="skill-header">
             <span class="skill-name">{{ skill.name }}</span>
             <div class="skill-meta">
-              <span v-if="skill.category === 'passive'" class="skill-tag passive">被动</span>
-              <span v-else-if="skill.category === 'ultimate'" class="skill-tag ultimate">大招</span>
+              <span v-if="skill.category === 'ultimate'" class="skill-tag ultimate">大招</span>
               <span v-if="skill.energyCost > 0" class="skill-cost">消耗: {{ skill.energyCost }}能量</span>
             </div>
           </div>
@@ -94,8 +114,22 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useCompendium, type CompendiumEnemy } from '@/presentation/composables/useCompendium'
+import { useCompendium, type CompendiumEnemy, type CompendiumSkill } from '@/presentation/composables/useCompendium'
 import { formatTargetConfig } from '@/domain/skill/types'
+
+/** 被动分类展示配置：优先级从高到低 */
+const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: number }> = {
+  aura:      { label: '光环',   color: '#34d399', priority: 0 },
+  trigger:   { label: '触发',   color: '#a78bfa', priority: 1 },
+  heal:      { label: '治疗',   color: '#f472b6', priority: 2 },
+  immunity:  { label: '免疫',   color: '#fbbf24', priority: 3 },
+  summon:    { label: '召唤',   color: '#fb923c', priority: 4 },
+  dot:       { label: '持续',   color: '#f87171', priority: 5 },
+  shield:    { label: '护盾',   color: '#22d3ee', priority: 6 },
+  attribute: { label: '属性',   color: '#60a5fa', priority: 7 },
+}
+
+const UNCATEGORIZED = { label: '未分类', color: '#94a3b8', priority: 99 }
 
 interface Props {
   enemy: CompendiumEnemy
@@ -105,7 +139,8 @@ const props = defineProps<Props>()
 
 const { getSkillById, getItemById } = useCompendium()
 
-const skills = computed(() => {
+/** 合并所有技能，标记分类 */
+const allSkills = computed(() => {
   const skillIds = [
     ...(props.enemy.skills.small || []),
     ...(props.enemy.skills.passive || []),
@@ -118,7 +153,42 @@ const skills = computed(() => {
       const category = id.includes('_passive') ? 'passive' : id.includes('_ultimate') ? 'ultimate' : 'small'
       return { ...skill, category }
     })
-    .filter(s => s !== undefined)
+    .filter((s): s is CompendiumSkill & { category: string } => s !== undefined)
+})
+
+/** 按 passiveCategory 分组的被动技能 */
+interface SkillGroup {
+  category: string
+  label: string
+  color: string
+  skills: (CompendiumSkill & { category: string })[]
+}
+
+const groupedPassives = computed<SkillGroup[]>(() => {
+  const passives = allSkills.value.filter(s => s.category === 'passive')
+  const groups = new Map<string, SkillGroup>()
+
+  for (const skill of passives) {
+    // 取首个分类为主分类，避免重复展示
+    const primary = skill.passiveCategory?.[0]
+    const cat = primary && CATEGORY_CONFIG[primary] ? primary : '__uncategorized__'
+    if (!groups.has(cat)) {
+      const cfg = CATEGORY_CONFIG[cat] ?? UNCATEGORIZED
+      groups.set(cat, { category: cat, label: cfg.label, color: cfg.color, skills: [] })
+    }
+    groups.get(cat)!.skills.push(skill)
+  }
+
+  return [...groups.values()].sort((a, b) => {
+    const pa = CATEGORY_CONFIG[a.category]?.priority ?? 99
+    const pb = CATEGORY_CONFIG[b.category]?.priority ?? 99
+    return pa - pb
+  })
+})
+
+/** 非被动技能（小技能/大招） */
+const otherSkills = computed(() => {
+  return allSkills.value.filter(s => s.category !== 'passive')
 })
 
 const getSelectorText = (selector: any): string => {
@@ -241,6 +311,35 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
   gap: var(--space-2);
 }
 
+.skill-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.skill-group-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  padding: var(--space-1) var(--space-1);
+  border-bottom: 1px dashed var(--color-border-default);
+}
+
+.group-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.group-count {
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-normal);
+}
+
 .skill-card {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border-default);
@@ -275,6 +374,11 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 .skill-tag.passive {
   color: var(--color-debuff);
   background: rgba(167, 139, 250, 0.15);
+}
+
+.skill-tag.category-tag {
+  border: 1px solid;
+  background: transparent;
 }
 
 .skill-tag.ultimate {

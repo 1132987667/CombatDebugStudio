@@ -33,8 +33,7 @@ export class BattleStateManager {
    * 清理事件监听器，防止内存泄漏
    * 在不再需要 BattleStateManager 时调用
    */
-  public dispose(): void {
-  }
+  public dispose(): void {}
 
   /**
    * 获取当前回合
@@ -113,8 +112,7 @@ export class BattleStateManager {
 
       // 同步当前行动者（currentTurn 是 0-based 回合内行动索引）
       if (battleState.currentTurn < battleState.turnOrder.length) {
-        this.currentActorId =
-          battleState.turnOrder[battleState.currentTurn]
+        this.currentActorId = battleState.turnOrder[battleState.currentTurn]
       } else {
         // 本轮所有行动者已执行完毕，清除当前行动者
         this.currentActorId = null
@@ -164,15 +162,6 @@ export class BattleStateManager {
    */
   incrementTurn() {
     this.currentTurn++
-  }
-
-  /**
-   * 减少回合数
-   */
-  decrementTurn() {
-    if (this.currentTurn > 1) {
-      this.currentTurn--
-    }
   }
 
   /**

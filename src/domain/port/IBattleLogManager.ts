@@ -44,4 +44,14 @@ export interface IBattleLogManager {
    * @param battleState 可选战斗状态快照
    */
   syncBattleLogs(battleState?: unknown): void | Promise<void>
+
+  /**
+   * 开始缓冲 role='sub' 的日志（BEFORE_ATTACK 前调用）
+   */
+  beginBufferSubLogs(): void
+
+  /**
+   * 将缓冲的 sub 日志全部发射（action 日志之后调用）
+   */
+  flushBufferedSubLogs(): void
 }

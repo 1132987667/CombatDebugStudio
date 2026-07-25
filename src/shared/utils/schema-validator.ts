@@ -6,7 +6,12 @@
  * 描述: 使用JSON Schema验证技能和Effect配置的完整性和正确性
  */
 
-import { SkillConfig, SkillStep } from '@/domain/skill/types'
+import { SkillConfig, SkillStep, PassiveCategory } from '@/domain/skill/types'
+
+/** 合法被动分类值 */
+const VALID_PASSIVE_CATEGORIES: readonly PassiveCategory[] = [
+  'attribute', 'aura', 'trigger', 'heal', 'immunity', 'summon', 'dot', 'shield',
+]
 
 /**
  * 验证结果接口
@@ -255,6 +260,21 @@ export function validateSkillConfig(
         )
       }
     })
+  }
+
+  // 验证 passiveCategory
+  if (skillConfig.passiveCategory !== undefined) {
+    if (!Array.isArray(skillConfig.passiveCategory)) {
+      errors.push('passiveCategory must be an array')
+    } else if (skillConfig.passiveCategory.length === 0) {
+      errors.push('passiveCategory must be a non-empty array')
+    } else {
+      for (const cat of skillConfig.passiveCategory) {
+        if (!VALID_PASSIVE_CATEGORIES.includes(cat as PassiveCategory)) {
+          errors.push(`Invalid passiveCategory value: "${cat}". Must be one of: ${VALID_PASSIVE_CATEGORIES.join(', ')}`)
+        }
+      }
+    }
   }
 
   return {

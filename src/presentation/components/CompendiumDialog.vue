@@ -48,8 +48,8 @@
                   @click="selectItem(item.id)"
                 >
                   <span class="item-name">{{ getItemName(item) }}</span>
-                  <span v-if="item.level" class="item-level">Lv.{{ item.level }}</span>
-                  <span v-if="item.rarity" class="item-rarity" :class="'rarity-' + item.rarity">{{ getRarityText(item.rarity) }}</span>
+                  <span v-if="'level' in item" class="item-level">Lv.{{ (item as CompendiumEnemy).level }}</span>
+                  <span v-if="'rarity' in item" class="item-rarity" :class="'rarity-' + (item as CompendiumItem).rarity">{{ getRarityText((item as CompendiumItem).rarity) }}</span>
                 </li>
               </ul>
             </div>
@@ -63,9 +63,9 @@
                 <span>请选择图鉴项查看详情</span>
               </div>
               <template v-else>
-                <EnemyDetail v-if="activeTab === 'enemy'" :enemy="selectedData" />
-                <BuffDetail v-else-if="activeTab === 'buff'" :buff="selectedData" />
-                <ItemDetail v-else-if="activeTab === 'item'" :item="selectedData" />
+                <EnemyDetail v-if="activeTab === 'enemy'" :enemy="selectedData as CompendiumEnemy" />
+                <BuffDetail v-else-if="activeTab === 'buff'" :buff="selectedData as CompendiumBuff" />
+                <ItemDetail v-else-if="activeTab === 'item'" :item="selectedData as CompendiumItem" />
               </template>
             </div>
           </div>
@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useCompendium, type CompendiumTabType } from '@/presentation/composables/useCompendium'
+import { useCompendium, type CompendiumTabType, type CompendiumEnemy, type CompendiumBuff, type CompendiumItem } from '@/presentation/composables/useCompendium'
 import EnemyDetail from './EnemyDetail.vue'
 import BuffDetail from './BuffDetail.vue'
 import ItemDetail from './ItemDetail.vue'

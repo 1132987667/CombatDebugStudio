@@ -10,7 +10,13 @@ import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
-import { PARTICIPANT_SIDE, BattleEntity, BATTLE_CONSTANTS, ParticipantSide, BattleStatus } from '@/domain/battle/type/types'
+import {
+  PARTICIPANT_SIDE,
+  BattleEntity,
+  BATTLE_CONSTANTS,
+  ParticipantSide,
+  BattleStatus,
+} from '@/domain/battle/type/types'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 import type {
@@ -80,7 +86,10 @@ export class BattleManager {
    * @param event 事件名称
    * @param callback 回调函数
    */
-  on<T extends BattleEventName>(event: T, callback: (data: BattleEvents[T]) => void) {
+  on<T extends BattleEventName>(
+    event: T,
+    callback: (data: BattleEvents[T]) => void,
+  ) {
     let set = this.handlers.get(event)
     if (!set) {
       set = new Set()
@@ -94,7 +103,10 @@ export class BattleManager {
    * 取消订阅事件
    * @param event 事件名称
    */
-  off<T extends BattleEventName>(event: T, callback?: (data: BattleEvents[T]) => void) {
+  off<T extends BattleEventName>(
+    event: T,
+    callback?: (data: BattleEvents[T]) => void,
+  ) {
     const set = this.handlers.get(event)
     if (!set) return
     if (callback) {
@@ -130,7 +142,10 @@ export class BattleManager {
    * 通过 BattleSystem 修改参与者属性，BattleSystem 为唯一数据源
    * Store 因共享对象引用自动感知变更
    */
-  updateParticipantState(participantId: string, updates: Partial<BattleEntity>): void {
+  updateParticipantState(
+    participantId: string,
+    updates: Partial<BattleEntity>,
+  ): void {
     const battleData = this.battleSystem.getBattleData()
     const participant = battleData?.participants.get(participantId)
     if (participant) {
@@ -201,9 +216,16 @@ export class BattleManager {
    * 为队伍成员分配位置序号（seatIndex）
    * 按数组顺序分配 0, 1, 2, ...，用于前排/后排/相邻判定
    */
-  private assignSeatIndices(allyTeam: BattleEntity[], enemyTeam: BattleEntity[]): void {
-    allyTeam.forEach((p, i) => { p.seatIndex = i })
-    enemyTeam.forEach((p, i) => { p.seatIndex = i })
+  private assignSeatIndices(
+    allyTeam: BattleEntity[],
+    enemyTeam: BattleEntity[],
+  ): void {
+    allyTeam.forEach((p, i) => {
+      p.seatIndex = i
+    })
+    enemyTeam.forEach((p, i) => {
+      p.seatIndex = i
+    })
   }
 
   /**
@@ -222,13 +244,18 @@ export class BattleManager {
       this.allyTeam = [...allyTeam]
       this.enemyTeam = [...enemyTeam]
 
-      // 创建战斗状态（将内部队伍数据写入 battleData.participants）
-      const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
-      const battleId = battleState.battleId
-      this.setBattleId(battleId)
+      // 将参与者写入 battleData，使 UI 预览可用（不触发完整的战斗初始化日志）
+      const battleData = this.battleSystem.getBattleData()
+      if (!battleData) throw new Error('战斗数据未初始化')
+      const participants = new Map<string, BattleEntity>()
+      allyTeam.forEach((p) => participants.set(p.id, p))
+      enemyTeam.forEach((p) => participants.set(p.id, p))
+      battleData.participants = participants
+      this.setBattleId(battleData.battleId)
+
       this.syncBattleState()
       this.emitTeamChanged()
-      return { battleId }
+      return { battleId: battleData.battleId }
     } catch (error) {
       console.error('初始化队伍数据时出错:', error)
       throw error
@@ -481,13 +508,6 @@ export class BattleManager {
   }
 
   /**
-   * 减少回合数
-   */
-  decrementTurn() {
-    this.battleStateManager.decrementTurn()
-  }
-
-  /**
    * 更新回合数
    */
   updateTurn(turn: number) {
@@ -561,8 +581,6 @@ export class BattleManager {
     const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
     this.battleSystem.setBattleState(BattleStatus.ACTIVE)
     this.battleStateManager.setBattleId(battleState.battleId)
-    LoggerProvider.logger.clearLogs()
-    LoggerProvider.logger.addSystemLog({ message: '战斗已创建' })
     this.syncBattleState()
     this.emitTeamChanged()
 
@@ -580,7 +598,7 @@ export class BattleManager {
   async startAutoBattle(): Promise<boolean> {
     const battleId = this.battleStateManager.getBattleId()
     if (!battleId) {
-      LoggerProvider.logger.addSystemLog({message: '请先创建战斗'})
+      LoggerProvider.logger.addSystemLog({ message: '请先创建战斗' })
       return false
     }
     return this.autoBattleManager.startAutoBattle(battleId)
@@ -724,7 +742,11 @@ export class BattleManager {
       const battleState = LocalStorage.get('battleState')
       if (battleState) {
         // ponytail: BattleSystem 可能未声明 restoreBattleState；用交叉类型声明临时的调用签名
-        ;(this.battleSystem as BattleSystem & { restoreBattleState(state: unknown): void }).restoreBattleState(battleState)
+        ;(
+          this.battleSystem as BattleSystem & {
+            restoreBattleState(state: unknown): void
+          }
+        ).restoreBattleState(battleState)
         this.syncBattleState()
         return battleState
       }

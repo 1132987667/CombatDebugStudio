@@ -29,48 +29,85 @@ import { calculateChecksum, generateReplayId } from '@/shared/utils/Checksum'
 import { LogType, type BattleLogEntry } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
+import type { TraceLogEntry } from '@/shared/types/trace-log'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 /**
  * 战斗记录
+ * 一场战斗的完整录制数据：包含初始状态、事件序列、回合快照、日志、
+ * 详细伤害拆分及校验信息，用于回放与分析。
  */
 export interface RecordedBattle {
+  /** 战斗实例 ID */
   battleId: string
+  /** 回放 ID（用于定位单次录制） */
   replayId: string
+  /** 录制格式版本号 */
   version: string
+  /** 随机种子（用于确定性回放） */
   randomSeed: string
+  /** 战斗开始时间戳（ms） */
   startTime: number
+  /** 战斗结束时间戳（ms） */
   endTime?: number
+  /** 获胜方阵营 */
   winner?: ParticipantSide
+  /** 战斗事件序列（按发生顺序） */
   events: ReplayBattleEvent[]
+  /** 初始状态：参与者的基础属性快照 */
   initialState: {
     participants: Array<{
+      /** 参与者 ID */
       id: string
+      /** 参与者名称 */
       name: string
+      /** 阵营 */
       type: ParticipantSide
+      /** 最大生命值 */
       maxHealth: number
+      /** 当前生命值 */
       currentHealth: number
+      /** 最大能量值 */
       maxEnergy: number
+      /** 当前能量值 */
       currentEnergy: number
     }>
   }
+  /** 战斗初始状态快照 */
   initialSnapshot?: BattleStateSnapshot
+  /** 战斗最终状态快照 */
   finalSnapshot?: BattleStateSnapshot
+  /** 回合记录列表 */
   rounds: BattleRound[]
+  /** 战斗日志条目 */
   logs: BattleLogEntry[]
   /** 详细战斗记录（含伤害拆分） */
   combatRecords: CombatRecord[]
+  /** 树状调试日志（阶段二：TraceLogCollector 的导出数据） */
+  traceLogs?: TraceLogEntry[]
+  /** 战斗结果 */
   result?: BattleResult
   /** 数据校验和 */
   checksum?: string
 }
 
+/**
+ * 战斗记录器
+ * 负责战斗过程的录制、存储与回放数据管理：包括事件序列、随机种子、回合快照、
+ * 战斗日志及详细伤害拆分记录。支持多场战斗并发录制，并通过 maxRecordings 上限
+ * 与定时清理机制防止内存无限增长。
+ */
 export class BattleRecorder {
+  /** 战斗记录存储（key = battleId） */
   private recordings = new Map<string, RecordedBattle>()
+  /** 最大保存录制数量，超出时按最早开始时间淘汰 */
   private maxRecordings = 10
+  /** 是否已调度过期清理任务，避免重复触发 */
   private cleanupScheduled = false
+  /** 各场战斗的随机种子（key = battleId），用于确定性回放 */
   private randomSeeds = new Map<string, string>()
+  /** 各场战斗的当前回合数（key = battleId），用于记录回合边界 */
   private currentTurnNumbers = new Map<string, number>()
 
   public generateRandomSeed(): string {
@@ -238,6 +275,14 @@ export class BattleRecorder {
     BattleSummaryGenerator.instance.onAction(record)
   }
 
+  /** 记录树状调试日志（由 TraceLogCollector 在战斗结束时导出） */
+  public recordTraceLogs(battleId: string, entries: TraceLogEntry[]): void {
+    const recording = this.recordings.get(battleId)
+    if (recording) {
+      recording.traceLogs = entries
+    }
+  }
+
   public recordBuffAdd(
     battleId: string,
     targetId: string,
@@ -388,9 +433,10 @@ export class BattleRecorder {
 
     const winnerLabel = winner === 'ally' ? '角色方' : '敌方'
     const durationSec = Math.floor(duration / 1000)
-    const durationText = durationSec >= 60
-      ? `${Math.floor(durationSec / 60)} 分 ${durationSec % 60} 秒`
-      : `${durationSec} 秒`
+    const durationText =
+      durationSec >= 60
+        ? `${Math.floor(durationSec / 60)} 分 ${durationSec % 60} 秒`
+        : `${durationSec} 秒`
 
     LoggerProvider.logger.addSystemLog({
       message: `战斗结束 — ${winnerLabel} 获胜，用时 ${durationText}`,
@@ -434,7 +480,9 @@ export class BattleRecorder {
     try {
       localStorage.setItem(saveKey, JSON.stringify(saveData))
     } catch (e) {
-      LoggerProvider.logger.addDebugLog(`保存战斗记录失败: 存储空间不足`, { context: { saveKey, error: e } })
+      LoggerProvider.logger.addDebugLog(`保存战斗记录失败: 存储空间不足`, {
+        context: { saveKey, error: e },
+      })
       return saveKey
     }
 
@@ -467,10 +515,9 @@ export class BattleRecorder {
         const { checksum, ...dataWithoutChecksum } = recording
         const calculatedChecksum = calculateChecksum(dataWithoutChecksum)
         if (calculatedChecksum !== checksum) {
-          LoggerProvider.logger.addDebugLog(
-            '战斗记录校验失败:',
-            { level: LogLevel.ERROR },
-          )
+          LoggerProvider.logger.addDebugLog('战斗记录校验失败:', {
+            level: LogLevel.ERROR,
+          })
           return null
         }
       }
@@ -481,10 +528,9 @@ export class BattleRecorder {
       }
       return recording
     } catch (error) {
-      LoggerProvider.logger.addDebugLog(
-        '加载战斗记录失败:',
-        { level: LogLevel.ERROR },
-      )
+      LoggerProvider.logger.addDebugLog('加载战斗记录失败:', {
+        level: LogLevel.ERROR,
+      })
       return null
     }
   }
@@ -557,15 +603,22 @@ export class BattleRecorder {
 
     recording.events.push(event)
 
-    recording.logs.push(Object.assign(
-      {
-        index: recording.logs.length,
-        type: LogType.BATTLE,
-        turn,
-        message: this.generateLogMessage(type, data),
-      } satisfies BattleLogEntry,
-      { eventId: event.eventId, timestamp: event.timestamp, roundNumber, details: data },
-    ))
+    recording.logs.push(
+      Object.assign(
+        {
+          index: recording.logs.length,
+          type: LogType.BATTLE,
+          turn,
+          message: this.generateLogMessage(type, data),
+        } satisfies BattleLogEntry,
+        {
+          eventId: event.eventId,
+          timestamp: event.timestamp,
+          roundNumber,
+          details: data,
+        },
+      ),
+    )
 
     if (recording.events.length > MAX_EVENT_LOG) {
       recording.events = recording.events.slice(-MAX_EVENT_LOG)

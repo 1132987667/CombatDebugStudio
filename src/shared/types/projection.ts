@@ -48,6 +48,9 @@ export interface UIParticipantSnapshot {
   critRate: number
   critDamage: number
 
+  /** 当前护盾值（来自 BuffSystem.shieldValues） */
+  shield: number
+
   // === 派生状态 ===
   isAlive: boolean
   /** 预计算百分比，避免模板中重复除法 */

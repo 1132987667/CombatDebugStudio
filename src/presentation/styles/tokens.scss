@@ -119,10 +119,10 @@ $transition-fast: var(--transition-fast);
   --font-size-xxl: calc(var(--font-size-base) * 1.45); /* ~20px */
   --font-size-xxxl: calc(var(--font-size-base) * 1.7); /* ~24px */
 
-  --line-height-sm: 1.2;
-  --line-height-md: 1.5;
-  --line-height-lg: 1.75;
-  --line-height-xl: 2;
+  --line-height-sm: 1.2rem;
+  --line-height-md: 1.5rem;
+  --line-height-lg: 1.75rem;
+  --line-height-xl: 2rem;
 
   /* ==========================================================================
      3. 间距系统 (基于 4px 栅格)

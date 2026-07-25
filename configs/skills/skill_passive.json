@@ -24,9 +24,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_005_passive",
@@ -53,9 +52,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_006_passive",
@@ -74,9 +72,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["immunity"]
   },
   {
     "id": "skill_enemy_007_passive",
@@ -103,9 +100,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_008_passive",
@@ -124,9 +120,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["aura"]
   },
   {
     "id": "skill_boss_001_passive",
@@ -157,9 +152,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "trigger"]
   },
   {
     "id": "skill_enemy_012_passive",
@@ -178,9 +172,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["aura"]
   },
   {
     "id": "skill_enemy_013_passive",
@@ -207,9 +200,8 @@
         ]
       }
     ],
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_014_passive",
@@ -228,9 +220,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["trigger"]
   },
   {
     "id": "skill_boss_002_passive",
@@ -261,9 +252,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "heal"]
   },
   {
     "id": "skill_enemy_015_passive",
@@ -282,9 +272,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["aura"]
   },
   {
     "id": "skill_enemy_016_passive",
@@ -311,9 +300,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_020_passive",
@@ -340,9 +328,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_021_passive",
@@ -361,9 +348,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["trigger"]
   },
   {
     "id": "skill_enemy_022_passive",
@@ -382,9 +368,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["trigger", "shield"]
   },
   {
     "id": "skill_boss_003_passive",
@@ -415,9 +400,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "heal"]
   },
   {
     "id": "skill_enemy_028_passive",
@@ -436,9 +420,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["trigger"]
   },
   {
     "id": "skill_enemy_029_passive",
@@ -457,9 +440,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["aura"]
   },
   {
     "id": "skill_enemy_030_passive",
@@ -486,9 +468,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_031_passive",
@@ -507,9 +488,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["heal"]
   },
   {
     "id": "skill_enemy_032_passive",
@@ -536,9 +516,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_boss_004_passive",
@@ -569,9 +548,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "aura"]
   },
   {
     "id": "skill_enemy_036_passive",
@@ -605,9 +583,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_037_passive",
@@ -641,9 +618,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_038_passive",
@@ -677,9 +653,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_039_passive",
@@ -720,9 +695,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_040_passive",
@@ -760,9 +734,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "trigger"]
   },
   {
     "id": "skill_boss_005_passive",
@@ -807,9 +780,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "trigger"]
   },
   {
     "id": "skill_enemy_044_passive",
@@ -847,9 +819,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "trigger"]
   },
   {
     "id": "skill_enemy_045_passive",
@@ -883,9 +854,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_046_passive",
@@ -919,9 +889,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_047_passive",
@@ -962,9 +931,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_048_passive",
@@ -1005,9 +973,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_boss_006_passive",
@@ -1045,9 +1012,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "trigger"]
   },
   {
     "id": "skill_enemy_052_passive",
@@ -1074,9 +1040,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_053_passive",
@@ -1095,9 +1060,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["trigger", "dot"]
   },
   {
     "id": "skill_enemy_054_passive",
@@ -1116,9 +1080,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["trigger"]
   },
   {
     "id": "skill_enemy_055_passive",
@@ -1137,9 +1100,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["summon"]
   },
   {
     "id": "skill_enemy_056_passive",
@@ -1158,9 +1120,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["aura"]
   },
   {
     "id": "skill_boss_007_passive",
@@ -1198,9 +1159,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "immunity"]
   },
   {
     "id": "skill_enemy_060_passive",
@@ -1219,9 +1179,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["aura"]
   },
   {
     "id": "skill_enemy_061_passive",
@@ -1248,9 +1207,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_062_passive",
@@ -1277,9 +1235,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_063_passive",
@@ -1298,9 +1255,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["trigger", "shield"]
   },
   {
     "id": "skill_enemy_064_passive",
@@ -1319,9 +1275,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["aura"]
   },
   {
     "id": "skill_boss_008_passive",
@@ -1352,9 +1307,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "heal"]
   },
   {
     "id": "skill_enemy_068_passive",
@@ -1388,9 +1342,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_069_passive",
@@ -1424,9 +1377,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_070_passive",
@@ -1460,9 +1412,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_071_passive",
@@ -1489,9 +1440,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_072_passive",
@@ -1518,9 +1468,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_boss_009_passive",
@@ -1558,9 +1507,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "heal"]
   },
   {
     "id": "skill_enemy_076_passive",
@@ -1579,9 +1527,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["trigger"]
   },
   {
     "id": "skill_enemy_077_passive",
@@ -1608,9 +1555,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_078_passive",
@@ -1637,9 +1583,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_enemy_079_passive",
@@ -1658,9 +1603,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["aura"]
   },
   {
     "id": "skill_enemy_080_passive",
@@ -1694,9 +1638,8 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute"]
   },
   {
     "id": "skill_boss_010_passive",
@@ -1734,8 +1677,7 @@
     ],
     "energyCost": 0,
     "skillType": "passive",
-    "triggerTimes": [
-      "battle_start"
-    ]
+    "triggerTimes": ["battle_start"],
+    "passiveCategory": ["attribute", "heal"]
   }
 ]

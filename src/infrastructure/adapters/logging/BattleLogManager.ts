@@ -24,13 +24,9 @@ import {
   LogType,
   LogLevelClass,
   newLogSegment,
-  battleActionToLogEntry,
 } from '@/shared/types/battle-log'
 import { Counter } from '@/shared/utils/Counter'
 import type { Item } from '@/shared/types/Item'
-import type { PlayerLogRenderer } from '@/shared/types/log-renderer'
-import { PokemonStyleRenderer } from '@/domain/battle/logs/renderers/PokemonStyleRenderer'
-import type { BattleAction } from '@/domain/battle/type/types'
 
 /**
  * 统一的日志参数接口 - 所有日志方法都使用此接口
@@ -58,8 +54,9 @@ export interface UnifiedLogParams {
   context?: Record<string, unknown>
   /** 错误对象 */
   error?: Error
+  /** 叙事元数据 */
+  meta?: import('@/shared/types/battle-log').BattleLogMeta
 }
-
 
 export interface DebugLogOptions {
   /** 日志级别，默认 LogLevel.INFO */
@@ -132,6 +129,11 @@ export class BattleLogManager implements IBattleLogManager {
   /** 调试日志最大数量 */
   private maxDebugLogs: number = 1000
 
+  /** 缓冲机制：开始缓冲 role='sub' 日志 */
+  private _buffering = false
+  /** 缓冲中的 sub 日志列表 */
+  private _pendingSubLogs: Array<UnifiedLogParams & { turn: number | string }> = []
+
   private indexCounter = new Counter()
 
   /** 是否启用自动清理 */
@@ -142,9 +144,6 @@ export class BattleLogManager implements IBattleLogManager {
   private level: LogLevel = LogLevel.DEBUG
   /** 日志处理器数组 */
   private handlers: LogHandler[] = []
-
-  /** 当前玩家日志渲染器，默认宝可梦风格 */
-  private playerRenderer: PlayerLogRenderer = PokemonStyleRenderer
 
   /** 参与者映射表（由 addPlayerLog 的调用方注入） */
   private participantMap: ParticipantMap = { get: () => undefined }
@@ -279,20 +278,6 @@ export class BattleLogManager implements IBattleLogManager {
   // ==================== 添加日志功能 ====================
 
   /**
-   * 设置玩家日志渲染器
-   */
-  setPlayerRenderer(renderer: PlayerLogRenderer): void {
-    this.playerRenderer = renderer
-  }
-
-  /**
-   * 获取当前玩家日志渲染器
-   */
-  getPlayerRenderer(): PlayerLogRenderer {
-    return this.playerRenderer
-  }
-
-  /**
    * 设置参与者映射表（由 BattleSystem 在战斗开始时注入）
    */
   setParticipantMap(map: ParticipantMap): void {
@@ -300,36 +285,16 @@ export class BattleLogManager implements IBattleLogManager {
   }
 
   /**
-   * 添加玩家日志 — 使用当前渲染器将 BattleAction 渲染为带符号的日志条目
-   * @param action 原始战斗动作
-   * @param turn 回合号
-   */
-  addPlayerLog(action: BattleAction, turn: number | string): void {
-    const entry = battleActionToLogEntry(action, this.participantMap, { turnNumber: typeof turn === 'number' ? turn : undefined })
-    const segments = this.playerRenderer.render(entry, action, this.participantMap)
-
-    const logEntry: BattleLogEntry = {
-      index: this.indexCounter.next(),
-      type: LogType.BATTLE,
-      turn,
-      message: entry.message,
-      category: entry.category ?? 'battle',
-      segments,
-      level: LogLevel.INFO,
-    }
-
-    this.battleLogs.push(logEntry)
-    if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
-      this.battleLogs.shift()
-    }
-    this.emitLogUpdate()
-  }
-
-  /**
    * 添加【战斗】类型日志
    * @param params 统一日志参数
    */
   addBattleLog(params: UnifiedLogParams & { turn: number | string }): void {
+    // ★ 缓冲拦截：缓冲模式下 role='sub' 的日志先暂存
+    if (this._buffering && params.meta?.role === 'sub') {
+      this._pendingSubLogs.push(params)
+      return
+    }
+
     const {
       turn,
       message = '',
@@ -337,6 +302,7 @@ export class BattleLogManager implements IBattleLogManager {
       category = 'battle',
       detailCategory,
       level = LogLevel.INFO,
+      meta,
     } = params
 
     const logEntry: BattleLogEntry = {
@@ -349,6 +315,7 @@ export class BattleLogManager implements IBattleLogManager {
       segments: segments.length > 0 ? segments : [{ text: message }],
       level,
       action: undefined,
+      meta,
     }
 
     this.battleLogs.push(logEntry)
@@ -375,11 +342,7 @@ export class BattleLogManager implements IBattleLogManager {
    * @param params 统一日志参数
    */
   addSystemLog(params: UnifiedLogParams): void {
-    const {
-      message = '',
-      segments = [],
-      level = LogLevel.INFO,
-    } = params
+    const { message = '', segments = [], level = LogLevel.INFO } = params
 
     const logEntry: LogEntry = {
       index: this.indexCounter.next(),
@@ -438,7 +401,9 @@ export class BattleLogManager implements IBattleLogManager {
       index: this.indexCounter.next(),
       type: LogType.ACTION,
       level,
-      message: message || (segments.length > 0 ? segments.map(s => s.text).join('') : ''),
+      message:
+        message ||
+        (segments.length > 0 ? segments.map((s) => s.text).join('') : ''),
       source,
       target,
       action,
@@ -486,6 +451,27 @@ export class BattleLogManager implements IBattleLogManager {
     }
   }
 
+  // ==================== 缓冲机制 ====================
+
+  /**
+   * 开始缓冲 role='sub' 的日志（BEFORE_ATTACK 前调用）
+   */
+  beginBufferSubLogs(): void {
+    this._buffering = true
+    this._pendingSubLogs = []
+  }
+
+  /**
+   * 将缓冲的 sub 日志全部发射（action 日志之后调用）
+   */
+  flushBufferedSubLogs(): void {
+    this._buffering = false
+    const pending = this._pendingSubLogs
+    this._pendingSubLogs = []
+    for (const params of pending) {
+      this.addBattleLog(params)
+    }
+  }
 
   // ==================== 添加便捷日志功能 ====================
 
@@ -525,10 +511,10 @@ export class BattleLogManager implements IBattleLogManager {
    * 添加回合开始日志
    */
   addTurnStartLog(turn: number): void {
-    this.addBattleLog({ 
-      turn, 
+    this.addBattleLog({
+      turn,
       message: `第${turn}回合开始`,
-      segments: [{ text: `第${turn}回合开始` }]
+      segments: [{ text: `第${turn}回合开始` }],
     })
   }
 
@@ -536,10 +522,10 @@ export class BattleLogManager implements IBattleLogManager {
    * 添加回合结束日志
    */
   addTurnEndLog(turn: number): void {
-    this.addBattleLog({ 
-      turn, 
+    this.addBattleLog({
+      turn,
       message: `第${turn}回合结束`,
-      segments: [{ text: `第${turn}回合结束` }]
+      segments: [{ text: `第${turn}回合结束` }],
     })
   }
 
@@ -733,15 +719,14 @@ export class BattleLogManager implements IBattleLogManager {
 
       for (const effect of effects) {
         if (effect.type === 'status' && effect.description) {
-          this.addSystemLog({ 
-            message: effect.description, 
-            level: LogLevel.INFO 
+          this.addSystemLog({
+            message: effect.description,
+            level: LogLevel.INFO,
           })
         }
       }
     }
   }
-
 }
 
 /**

@@ -3,13 +3,6 @@ import type { BattleRules } from '@/presentation/stores/battleStore'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { defineStore } from 'pinia'
 
-/** 可注入状态接口 — 源自 StatusInjectionDialog.vue */
-interface InjectableStatus {
-  id: string
-  name: string
-  value: number
-  type: string
-}
 
 interface ExportedBattleState {
   battleCharacters: BattleEntity[]
@@ -33,7 +26,6 @@ function isValidExportedState(obj: unknown): obj is ExportedBattleState {
 }
 
 interface DebugState {
-  injectableStatuses: InjectableStatus[]
   lastExportTime: string | null
   /** 当前选中的命中爆炸动画样式 */
   impactStyle: string
@@ -41,19 +33,11 @@ interface DebugState {
 
 export const useDebugStore = defineStore('debug', {
   state: (): DebugState => ({
-    injectableStatuses: [],
     lastExportTime: null,
     impactStyle: 'slash',
   }),
 
   getters: {
-    /**
-     * 获取可注入的状态列表
-     */
-    getInjectableStatuses: (state): InjectableStatus[] => {
-      return state.injectableStatuses
-    },
-
     /**
      * 获取最后导出时间
      */
@@ -64,24 +48,10 @@ export const useDebugStore = defineStore('debug', {
 
   actions: {
     /**
-     * 设置可注入的状态列表
-     */
-    setInjectableStatuses(statuses: InjectableStatus[]) {
-      this.injectableStatuses = statuses
-    },
-
-    /**
      * 设置最后导出时间
      */
     setLastExportTime(time: string | null) {
       this.lastExportTime = time
-    },
-
-    /**
-     * 更新可注入的状态
-     */
-    updateStatuses(statuses: InjectableStatus[]) {
-      this.injectableStatuses = statuses
     },
 
     /**

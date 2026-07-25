@@ -13,27 +13,43 @@
       <button class="dialog-download" @click="downloadLogs">下载</button>
     </template>
     <div class="debug-log-container">
-      <div class="log-toolbar">
-        <button class="log-btn" @click="clearLogs">清空</button>
-        <span class="log-count">共 {{ localLogs.length }} 条</span>
+      <div class="log-tabs">
+        <button :class="['tab-btn', { active: activeTab === 'tree' }]" @click="activeTab = 'tree'">树状</button>
+        <button :class="['tab-btn', { active: activeTab === 'flat' }]" @click="activeTab = 'flat'">扁平</button>
+        <span class="log-count" v-if="activeTab === 'flat'">共 {{ localLogs.length }} 条</span>
       </div>
-      <div class="log-list" ref="logListRef">
-        <div v-for="(log, index) in localLogs" :key="index" class="log-item" :class="'level-' + log.level">
-          <span class="log-seq">#{{ log.index }}</span>
-          <span class="log-level" :class="'level-' + log.level">{{ logLevelName(log.level) }}</span>
-          <span class="log-source" v-if="log.source">[{{ log.source }}]</span>
-          <span class="log-message">{{ log.message }}</span>
-          <div v-if="log.context" class="log-context">
-            <pre>{{ JSON.stringify(log.context, null, 2) }}</pre>
+
+      <!-- 树状模式（默认） -->
+      <div v-if="activeTab === 'tree'" class="tree-container">
+        <div class="log-toolbar">
+          <button class="log-btn" @click="$emit('refreshTrace')">刷新</button>
+        </div>
+        <TraceLogTree :roots="traceRoots" />
+      </div>
+
+      <!-- 扁平模式 -->
+      <template v-if="activeTab === 'flat'">
+        <div class="log-toolbar">
+          <button class="log-btn" @click="clearLogs">清空</button>
+        </div>
+        <div class="log-list" ref="logListRef">
+          <div v-for="(log, index) in localLogs" :key="index" class="log-item" :class="'level-' + log.level">
+            <span class="log-seq">#{{ log.index }}</span>
+            <span class="log-level" :class="'level-' + log.level">{{ logLevelName(log.level) }}</span>
+            <span class="log-source" v-if="log.source">[{{ log.source }}]</span>
+            <span class="log-message">{{ log.message }}</span>
+            <div v-if="log.context" class="log-context">
+              <pre>{{ JSON.stringify(log.context, null, 2) }}</pre>
+            </div>
+            <div v-if="log.error" class="log-error">
+              {{ log.error.message }}
+            </div>
           </div>
-          <div v-if="log.error" class="log-error">
-            {{ log.error.message }}
+          <div v-if="localLogs.length === 0" class="log-empty">
+            暂无日志
           </div>
         </div>
-        <div v-if="localLogs.length === 0" class="log-empty">
-          暂无日志
-        </div>
-      </div>
+      </template>
     </div>
   </Dialog>
 </template>
@@ -41,12 +57,15 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import TraceLogTree from '@/presentation/views/components/TraceLogTree.vue'
 import type { LogEntry } from '@/shared/types/battle-log'
+import type { TraceLogEntry } from '@/shared/types/trace-log'
 import { LogLevel } from '@/shared/types/battle-log'
 
 interface Props {
   modelValue: boolean
   logs: LogEntry[]
+  traceRoots?: TraceLogEntry[]
 }
 
 interface Emits {
@@ -56,8 +75,11 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
-  logs: () => []
+  logs: () => [],
+  traceRoots: () => [],
 })
+
+const activeTab = ref('tree')
 
 const emit = defineEmits<Emits>()
 
@@ -123,6 +145,33 @@ const downloadLogs = () => {
   border-bottom: 1px solid var(--color-bg-tertiary);
 }
 
+.log-tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-bg-tertiary);
+  align-items: center;
+}
+
+.tab-btn {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border: 1px solid transparent;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: var(--color-bg-primary);
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+.tab-btn:hover {
+  border-color: var(--color-border-strong);
+}
+
 .log-btn {
   background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
@@ -148,7 +197,6 @@ const downloadLogs = () => {
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: var(--font-size-sm);
   transition: var(--transition-fast);
 }
 

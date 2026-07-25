@@ -1,6 +1,6 @@
 ﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
-import type { BattleEntity } from '@/domain/battle/type/types'
+import type { BattleEntity, BattleContext } from '@/domain/battle/type/types'
 import type {
   CombatRecord,
   DamageBreakdown,
@@ -104,7 +104,7 @@ export class DamageCalculator {
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
     target: BattleEntity,
-    record?: CombatRecord,
+    context?: BattleContext,
   ): DamageResult {
     this.calculationLogs = []
     let isMiss = false
@@ -161,7 +161,7 @@ export class DamageCalculator {
     }
 
     // 基础伤害计算
-    let damage = this.calculateBaseDamage(skillStep, source, target, record)
+    let damage = this.calculateBaseDamage(skillStep, source, target, context)
     breakdown.baseDamage = damage
     breakdown.steps.push({
       stepName: 'base',
@@ -173,11 +173,15 @@ export class DamageCalculator {
     if (skillStep.calculation?.extraValues) {
       for (const extra of skillStep.calculation.extraValues) {
         // ponytail: maxHealth 和 currentHealth 优先从目标读取（毒素浸染、嗜血赌徒等技能）
-        const isTargetAttr = extra.attribute === 'maxHealth' || extra.attribute === 'currentHealth'
+        const isTargetAttr =
+          extra.attribute === 'maxHealth' || extra.attribute === 'currentHealth'
         const attrValue =
           extra.attribute === ATTRIBUTE_CODE.attack
             ? source.getRandomAttackDamage()
-            : getAttributeValue(isTargetAttr ? target : source, extra.attribute as ATTRIBUTE_CODE)
+            : getAttributeValue(
+                isTargetAttr ? target : source,
+                extra.attribute as ATTRIBUTE_CODE,
+              )
         const extraValue = attrValue * extra.ratio
         damage += extraValue
         breakdown.extraContributions.push({
@@ -219,17 +223,19 @@ export class DamageCalculator {
         value: damage,
         description: `暴击! x${critMultiplier.toFixed(2)} → ${damage}`,
       })
-      LoggerProvider.logger.addDebugLog(
-        `暴击！伤害 x${critMultiplier}`,
-        { level: LogLevel.INFO },
-      )
+      LoggerProvider.logger.addDebugLog(`暴击！伤害 x${critMultiplier}`, {
+        level: LogLevel.INFO,
+      })
     } else {
       breakdown.postCritDamage = damage
     }
 
     // 暴击承伤减免（目标方）
     if (damageResult.isCritical) {
-      const critReduction = getAttributeValue(target, ATTRIBUTE_CODE.critDmgTakenReduction)
+      const critReduction = getAttributeValue(
+        target,
+        ATTRIBUTE_CODE.critDmgTakenReduction,
+      )
       breakdown.critDmgTakenReduction = critReduction
       if (critReduction > 0) {
         const before = damage
@@ -305,7 +311,9 @@ export class DamageCalculator {
       })
     } else if (damageCategory === DamageCategory.ELEMENTAL) {
       // 元素伤害：根据技能的元素类型查找对应抗性，默认 fireRes
-      const ELEMENT_RESISTANCE_MAP: Partial<Record<ElementType, ATTRIBUTE_CODE>> = {
+      const ELEMENT_RESISTANCE_MAP: Partial<
+        Record<ElementType, ATTRIBUTE_CODE>
+      > = {
         JIN: ATTRIBUTE_CODE.metalRes,
         MU: ATTRIBUTE_CODE.woodRes,
         SHU: ATTRIBUTE_CODE.waterRes,
@@ -317,7 +325,8 @@ export class DamageCalculator {
         console.warn(`ELEMENTAL 类型伤害缺少 elementType，默认使用 HUO(火)`)
       }
       const resolvedType = elementType || 'HUO'
-      const resAttr = ELEMENT_RESISTANCE_MAP[resolvedType] || ATTRIBUTE_CODE.fireRes
+      const resAttr =
+        ELEMENT_RESISTANCE_MAP[resolvedType] || ATTRIBUTE_CODE.fireRes
       const elementalRes = getAttributeValue(target, resAttr)
       breakdown.elementalResistance = elementalRes
       if (elementalRes > 0) {
@@ -330,7 +339,10 @@ export class DamageCalculator {
         })
       }
       // 魔法伤害减免（仅 ELEMENTAL 大类生效）
-      breakdown.magicalDmgReduction = getAttributeValue(target, ATTRIBUTE_CODE.magicalDmgReduction)
+      breakdown.magicalDmgReduction = getAttributeValue(
+        target,
+        ATTRIBUTE_CODE.magicalDmgReduction,
+      )
       breakdown.elementType = resolvedType
       if (breakdown.magicalDmgReduction > 0) {
         const before = damage
@@ -344,7 +356,10 @@ export class DamageCalculator {
     }
     // 'physical' 沿用现有防御逻辑，加物理伤害减免
     if (damageCategory === DamageCategory.PHYSICAL) {
-      breakdown.physicalDmgReduction = getAttributeValue(target, ATTRIBUTE_CODE.physicalDmgReduction)
+      breakdown.physicalDmgReduction = getAttributeValue(
+        target,
+        ATTRIBUTE_CODE.physicalDmgReduction,
+      )
       if (breakdown.physicalDmgReduction > 0) {
         const before = damage
         damage = Math.floor(damage * (1 - breakdown.physicalDmgReduction / 100))
@@ -402,7 +417,10 @@ export class DamageCalculator {
     // 火系技能伤害加成（来源方）— 仅火元素技能
     const elementType = skillStep.elementType
     if (elementType === 'HUO') {
-      const fireBonus = getAttributeValue(source, ATTRIBUTE_CODE.fireSkillDmgBonus)
+      const fireBonus = getAttributeValue(
+        source,
+        ATTRIBUTE_CODE.fireSkillDmgBonus,
+      )
       breakdown.fireSkillDmgBonus = fireBonus
       if (fireBonus > 0) {
         const before = damage
@@ -417,8 +435,14 @@ export class DamageCalculator {
 
     // 物理技能伤害加成（来源方）— 物理攻击类型或 PHYSICAL 大类
     const skillAtkType = skillStep.attackType || AttackType.SKILL
-    if (skillAtkType === AttackType.NORMAL || skillStep.damageCategory === DamageCategory.PHYSICAL) {
-      const physBonus = getAttributeValue(source, ATTRIBUTE_CODE.physicalSkillDmgBonus)
+    if (
+      skillAtkType === AttackType.NORMAL ||
+      skillStep.damageCategory === DamageCategory.PHYSICAL
+    ) {
+      const physBonus = getAttributeValue(
+        source,
+        ATTRIBUTE_CODE.physicalSkillDmgBonus,
+      )
       breakdown.physicalSkillDmgBonus = physBonus
       if (physBonus > 0) {
         const before = damage
@@ -432,7 +456,10 @@ export class DamageCalculator {
     }
 
     // 对低血量目标伤害加成（来源方）— 目标血量 < 30%
-    const targetHpPercent = target.maxHealth > 0 ? (target.currentHealth / target.maxHealth) * 100 : 100
+    const targetHpPercent =
+      target.maxHealth > 0
+        ? (target.currentHealth / target.maxHealth) * 100
+        : 100
     if (targetHpPercent < 30) {
       const lowHpBonus = getAttributeValue(source, ATTRIBUTE_CODE.damageToLowHp)
       breakdown.damageToLowHp = lowHpBonus
@@ -499,8 +526,8 @@ export class DamageCalculator {
     })
 
     // 写入 CombatRecord
-    if (record) {
-      record.damageBreakdown = breakdown
+    if (context?.record) {
+      context.record.damageBreakdown = breakdown
     }
 
     const actualDamage = damage
@@ -520,7 +547,7 @@ export class DamageCalculator {
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
     target: BattleEntity,
-    record?: CombatRecord,
+    context?: BattleContext,
   ): number {
     let baseDamage = 0
     if (skillStep.calculation) {
@@ -544,8 +571,8 @@ export class DamageCalculator {
 
     this.logCalculation('base', baseDamage, `基础伤害: ${baseDamage}`)
 
-    if (record) {
-      record.effects?.push({
+    if (context?.record) {
+      context?.record.effects?.push({
         type: EffectType.DAMAGE,
         targetId: target.id,
         value: baseDamage,

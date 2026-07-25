@@ -317,7 +317,7 @@ export class KeybindManager {
     for (const [action, key] of this.keybinds.entries()) {
       const defaultKey = this.defaultKeybinds.get(action) || ''
       settings.push({
-        action,
+        action: action as KeybindAction,
         key,
         defaultKey,
         description: this.getActionDescription(action),

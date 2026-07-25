@@ -179,120 +179,203 @@
 
 /* ----- 6. 血量/能量条 ----- */
 .member-hp,
-.member-mp {
+.member-energy,
+.member-shield {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 0.15rem;
-}
-
-.hp-text,
-.energy-text {
-  font-size: var(--font-size-md);
-  color: var(--color-text-tertiary);
-  width: 70px;
-  line-height: var(--line-height-sm);
+  margin-bottom: 0.3rem;
 }
 
 .hp-bar,
-.energy-bar {
+.energy-bar,
+.shield-bar {
   font-size: var(--font-size-md);
   flex: 1;
-  height: 0.9rem;
-  background: var(--color-bg-secondary);
+  height: var(--line-height-sm);
   border-radius: var(--radius-sm);
   overflow: hidden;
   position: relative;
   line-height: var(--line-height-sm);
 }
 
-.hp-fill {
+/* ── 容器主题色（霓虹玻璃） ── */
+
+/* HP 各态 */
+.hp-bar {
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  background: rgba(76, 175, 80, 0.05);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.1), inset 0 0 12px rgba(76, 175, 80, 0.05);
+}
+.hp-bar:has(.hp-fill.medium) {
+  border-color: rgba(255, 152, 0, 0.3);
+  background: rgba(255, 152, 0, 0.05);
+  box-shadow: 0 0 20px rgba(255, 152, 0, 0.1), inset 0 0 12px rgba(255, 152, 0, 0.05);
+}
+.hp-bar:has(.hp-fill.low) {
+  border-color: rgba(244, 67, 54, 0.3);
+  background: rgba(244, 67, 54, 0.05);
+  box-shadow: 0 0 20px rgba(244, 67, 54, 0.1), inset 0 0 12px rgba(244, 67, 54, 0.05);
+}
+
+/* 能量 */
+.energy-bar {
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  background: rgba(34, 211, 238, 0.05);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.1), inset 0 0 12px rgba(34, 211, 238, 0.05);
+}
+
+/* 护盾 */
+.shield-bar {
+  border: 1px solid rgba(102, 184, 255, 0.3);
+  background: rgba(102, 184, 255, 0.05);
+  box-shadow: 0 0 20px rgba(102, 184, 255, 0.1), inset 0 0 12px rgba(102, 184, 255, 0.05);
+}
+
+/* ── 填充——圆角 + 玻璃高光 ── */
+.hp-fill,
+.energy-fill,
+.shield-fill {
   height: 100%;
+  position: relative;
+  border-radius: var(--radius-sm);
+}
+
+.hp-fill::before,
+.energy-fill::before,
+.shield-fill::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── 各颜色态——渐变 + 强发光 ── */
+.hp-fill {
   background: linear-gradient(90deg, var(--color-success), var(--color-jade));
   transition: width 0.3s;
 }
-
 .hp-fill.high {
   background: linear-gradient(90deg, var(--color-success), var(--color-jade));
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.8), 0 0 30px rgba(76, 175, 80, 0.4);
 }
-
 .hp-fill.medium {
   background: linear-gradient(90deg, var(--color-warning), #e65100);
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.8), 0 0 30px rgba(255, 152, 0, 0.4);
 }
-
 .hp-fill.low {
   background: linear-gradient(90deg, var(--color-danger), #c62828);
+  box-shadow: 0 0 10px rgba(244, 67, 54, 0.8), 0 0 30px rgba(244, 67, 54, 0.4);
 }
 
-.hp-fill.enemy-fill {
-  background: linear-gradient(90deg, var(--color-danger), #c62828);
-}
-
+/* （敌人 HP 颜色反转——兼容遗留 .enemy-fill 选择器） */
+.hp-fill.enemy-fill,
 .hp-fill.enemy-fill.high {
   background: linear-gradient(90deg, var(--color-danger), #c62828);
+  box-shadow: 0 0 10px rgba(244, 67, 54, 0.8), 0 0 30px rgba(244, 67, 54, 0.4);
 }
-
 .hp-fill.enemy-fill.medium {
   background: linear-gradient(90deg, var(--color-warning), #e65100);
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.8), 0 0 30px rgba(255, 152, 0, 0.4);
 }
-
 .hp-fill.enemy-fill.low {
   background: linear-gradient(90deg, var(--color-success), var(--color-jade));
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.8), 0 0 30px rgba(76, 175, 80, 0.4);
 }
 
-/* ----- 7. 能量条 ----- */
-.member-energy {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 0.15rem;
-}
-
-.energy-ticks {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  justify-content: space-between;
-  pointer-events: none;
-}
-
-.energy-ticks .tick {
-  width: 1px;
-  height: 100%;
-  background: rgba(255, 235, 59, 0.3);
-}
-
+/* ── 能量/护盾填充 ── */
 .energy-fill {
-  height: 100%;
   background: linear-gradient(90deg, var(--color-energy), #0891b2);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.8), 0 0 30px rgba(34, 211, 238, 0.4);
   transition:
     width 0.3s,
     background 0.3s;
 }
-
 .energy-fill.low,
 .energy-fill.medium,
 .energy-fill.full {
   background: linear-gradient(90deg, var(--color-energy), #0891b2);
 }
 
-.energy-fill.full {
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+.shield-fill {
+  background: linear-gradient(90deg, var(--blue-4), var(--blue-6));
+  box-shadow: 0 0 10px rgba(102, 184, 255, 0.8), 0 0 30px rgba(102, 184, 255, 0.4);
+  transition: width 0.3s;
 }
 
-.energy-fill.enemy-fill,
-.energy-fill.enemy-fill.low,
-.energy-fill.enemy-fill.medium,
-.energy-fill.enemy-fill.full {
-  background: linear-gradient(90deg, var(--color-energy), #0891b2);
+/* ── 能量刻度线 ── */
+.energy-ticks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.energy-ticks .tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(131, 131, 131, 0.3);
+}
+.energy-ticks .tick:nth-child(1) { left: 25%; }
+.energy-ticks .tick:nth-child(2) { left: 50%; }
+.energy-ticks .tick:nth-child(3) { left: 75%; }
+
+/* ── 条内文本（共享） ── */
+.bar-text {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-sm);
+  color: var(--color-text-primary);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  white-space: nowrap;
 }
 
-.energy-fill.enemy-fill.full {
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+/* ── 脉冲光晕（霓虹玻璃风格） ── */
+.pulse {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  filter: blur(5px);
+  pointer-events: none;
+  z-index: 1;
+  animation: neon-pulse 1.5s ease-in-out infinite;
 }
+@keyframes neon-pulse {
+  0%, 100% { opacity: 0.5; transform: translateY(-50%) scale(0.8); }
+  50% { opacity: 1; transform: translateY(-50%) scale(1.2); }
+}
+
+/* 脉冲色调——HP 各态 */
+.hp-fill.high .pulse { background: rgba(76, 175, 80, 0.6); }
+.hp-fill.medium .pulse { background: rgba(255, 152, 0, 0.6); }
+.hp-fill.low .pulse { background: rgba(244, 67, 54, 0.6); }
+.hp-fill.enemy-fill.high .pulse { background: rgba(244, 67, 54, 0.6); }
+.hp-fill.enemy-fill.medium .pulse { background: rgba(255, 152, 0, 0.6); }
+.hp-fill.enemy-fill.low .pulse { background: rgba(76, 175, 80, 0.6); }
+
+/* 脉冲色调——能量/护盾 */
+.energy-fill .pulse { background: rgba(34, 211, 238, 0.6); }
+.shield-fill .pulse { background: rgba(102, 184, 255, 0.6); }
 
 /* ----- 8. 状态标签 ----- */
 .member-status {

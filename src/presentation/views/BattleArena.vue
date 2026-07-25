@@ -28,7 +28,7 @@
         <button class="header-btn" @click="showCompendiumDialog = true">图鉴</button>
         <button class="header-btn" @click="showRulesDialog = true">战斗规则</button>
         <button class="header-btn" @click="showSceneDialog = true">场景管理</button>
-        <button class="header-btn" @click="showStatusDialog = true">初始状态注入</button>
+        <button class="header-btn" @click="showStatusDialog = true">角色编辑</button>
       </div>
     </div>
 
@@ -55,12 +55,10 @@
       @update:selected-scene="val => selectedScene = val" @save="handleSaveScene" @load="handleLoadScene"
       @delete="handleDeleteScene" />
 
-    <StatusInjectionDialog v-model="showStatusDialog"
-      :characters="characterOptions" :selected-char-id="selectedCharacterId || ''"
-      :current-attrs="currentAttrs"
-      @update:selected-char-id="val => battleStore.selectCharacter(val)"
-      @apply-buffs="handleApplyBuffs" @apply-attributes="handleApplyAttributes"
-      @reset-character="handleResetCharacter" />
+    <CharacterEditor v-model="showStatusDialog" :characters="characterOptions"
+      :selected-char-id="selectedCharacterId || ''" :current-attrs="currentAttrs"
+      @update:selected-char-id="val => battleStore.selectCharacter(val)" @apply-buffs="handleApplyBuffs"
+      @apply-attributes="handleApplyAttributes" @reset-character="handleResetCharacter" />
 
     <CompendiumDialog v-model="showCompendiumDialog" />
 
@@ -68,22 +66,18 @@
 
     <BattleRecordingDialog v-model="showRecordingDialog" />
 
-    <DebugLogDialog v-model="showDebugLogDialog" :logs="debugLogs" @clear="clearDebugLogs" />
+    <DebugLogDialog v-model="showDebugLogDialog" :logs="debugLogs" :trace-roots="traceRoots" @clear="clearDebugLogs" />
 
     <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
 
     <!-- 底部控制栏 -->
     <ControlBar :is-battle-active="battleStore.isBattleActive" :is-paused="battleStore.isPaused"
       :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
-      @end-battle="endBattle" @reset-battle="resetBattle" @step-back="stepBack" @single-step="singleStep"
-      @toggle-auto-play="toggleAutoPlay" @battle-speed-change="handleBattleSpeedChange"
-      @toggle-pause="handleTogglePause" />
+      @end-battle="endBattle" @reset-battle="resetBattle" @single-step="singleStep" @toggle-auto-play="toggleAutoPlay"
+      @battle-speed-change="handleBattleSpeedChange" @toggle-pause="handleTogglePause" />
 
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
-
-    <!-- 调试模式浮动面板 -->
-    <DebugStepOverlay />
 
     <!-- 通知组件 -->
     <Notification ref="notification" />
@@ -100,20 +94,20 @@ import ControlBar from "./ControlBar.vue";
 import Notification from "@/presentation/components/Notification.vue";
 import BattleRulesDialog from "./components/BattleRulesDialog.vue";
 import SceneManagementDialog from "./components/SceneManagementDialog.vue";
-import StatusInjectionDialog from "./components/StatusInjectionDialog.vue";
+import CharacterEditor from "./components/CharacterEditor.vue";
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import DebugLogDialog from "./components/DebugLogDialog.vue";
 import DebugControlDialog from "./components/DebugControlDialog.vue";
-import DebugStepOverlay from "./components/DebugStepOverlay.vue";
 import DataSnapshotDialog from "./components/DataSnapshotDialog.vue";
 import BattleRecordingDialog from "./components/BattleRecordingDialog.vue";
 import { useBattleStore } from '@/presentation/stores';
 import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
 import { PARTICIPANT_SIDE } from "@/domain/battle/type/types.ts";
-import type { CharacterOption } from "./components/StatusInjectionDialog.vue";
+import type { CharacterOption } from "./components/CharacterEditor.vue";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import type { LogEntry } from '@/shared/types/battle-log';
+import type { TraceLogEntry } from '@/shared/types/trace-log';
 import { ATTRIBUTE_CODE, ModifierType } from "@/domain/attribute/types";
 import { EffectType } from '@/shared/types/effect';
 import { DamageCategory } from '@/domain/skill/types';
@@ -143,6 +137,37 @@ const showRecordingDialog = ref(false);
 // ponytail: 调试面板现在独立监听事件总线，无需 BattleArena 维护 phase 状态
 
 const debugLogs = ref<LogEntry[]>([]);
+
+// 树状调试日志数据
+const traceRoots = ref<TraceLogEntry[]>([]);
+
+/** 从 BattleSystem.traceCollector 刷新树状日志 */
+async function updateTraceRoots() {
+  try {
+    const { BATTLE_SYSTEM_TOKEN } = await import('@/domain/battle/entity/BattleInterfaces')
+    const { BattleSystem } = await import('@/domain/battle/BattleSystem')
+    const bs = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    if (bs?.traceCollector) {
+      const collector = bs.traceCollector
+      const allTurns = new Set<number>()
+      for (const e of collector.getAll()) {
+        if (e.turn != null) allTurns.add(Number(e.turn))
+      }
+      const roots: TraceLogEntry[] = []
+      for (const turn of allTurns) {
+        roots.push(...collector.getRootsByTurn(turn))
+      }
+      traceRoots.value = roots
+    }
+  } catch {
+    // 战斗系统未就绪时静默忽略
+  }
+}
+
+// 打开弹窗时刷新
+watch(showDebugLogDialog, async (val) => {
+  if (val) await updateTraceRoots()
+})
 
 const clearDebugLogs = () => {
   debugLogs.value = [];
@@ -242,7 +267,7 @@ const handleDebugAction = async (action: string) => {
       break
     }
     case 'log_battle':
-      battleLogManager.addTurnStartLog(1)
+      // 回合分隔线由 RoundNarrativeRenderer 自动生成
       break
     case 'log_system':
       battleLogManager.addSystemLog({
@@ -322,7 +347,7 @@ const handleDebugAction = async (action: string) => {
 const battleFieldRef = ref<InstanceType<typeof BattleField> | null>(null);
 const savedScenes = ref<string[]>([]);
 
-// ==================== 为初始状态注入弹窗提供数据 ====================
+// ==================== 为角色编辑弹窗提供数据 ====================
 
 /** 所有参战角色列表（用于弹窗内下拉选择） */
 const characterOptions = computed<CharacterOption[]>(() => {
@@ -387,9 +412,9 @@ const teamCounts = computed(() => ({
 // 初始化战斗
 function initBattle() {
   // ponytail: 默认测试阵容 — 覆盖伤害/治疗/护盾/buff/debuff 的典型组合
-  const allyIds = ["guardian_fire", "guardian_gold"]; // "enemy_005", "boss_003", "boss_001", "enemy_004", 
+  const allyIds = ["guardian_fire"]; // "enemy_005", "boss_003", "boss_001", "enemy_004", 
   const allyList = GameDataProcessor.findEnemiesByIds(allyIds);
-  const enemyIds = ["guardian_fire", "guardian_gold"]; // "enemy_008", "boss_002", "enemy_007", "enemy_003", 
+  const enemyIds = ["guardian_gold"]; // "enemy_008", "boss_002", "enemy_007", "enemy_003", 
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
   console.log('allyList', allyList)
   console.log('enemyList', enemyList)
@@ -508,7 +533,7 @@ const handleDeleteScene = (sceneNameValue: string) => {
   }
 };
 
-// ==================== 初始状态注入事件处理 ====================
+// ==================== 角色编辑事件处理 ====================
 
 /** 注入 Buff：调用 BuffSystem.addBuff() 并强制 UI 刷新 */
 const handleApplyBuffs = (payload: { charId: string; buffs: { buffId: string; duration: number }[] }) => {
@@ -617,23 +642,6 @@ const handleResetCharacter = (payload: { charId: string; mode: 'buffs' | 'hp_ene
   })
 }
 
-// 监听队伍成员数量变化
-watch(
-  () => teamCounts.value,
-  ({ ally, enemy }) => {
-    battleLogManager.addSystemLog({
-      message: `当前参战角色: ${ally}人/${enemy}人`,
-    });
-  },
-  { deep: true }
-);
-
-// 战斗回放相关方法
-const stepBack = () => {
-  if (currentTurn.value > 1) {
-    battleService.decrementTurn();
-  }
-};
 
 // 开始战斗
 const startBattle = async () => {

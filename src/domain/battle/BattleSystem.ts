@@ -7,7 +7,11 @@
  * 版本: 2.0.0 - 集成触发器事件系统
  */
 
-import { BattleActionHelper } from '@/domain/battle/type/types'
+import {
+  BattleActionHelper,
+  createBattleContext,
+} from '@/domain/battle/type/types'
+import { createEmptyRecord } from '@/domain/battle/combat-record'
 import type {
   BattleAction,
   BattleData,
@@ -16,7 +20,10 @@ import type {
   ParticipantSide,
 } from '@/domain/battle/type/types'
 import type { BattleCommand } from '@/shared/types/battle-commands'
-import { createDefaultBattleData, convertToBattleState } from '@/domain/battle/aggregate/BattleState'
+import {
+  createDefaultBattleData,
+  convertToBattleState,
+} from '@/domain/battle/aggregate/BattleState'
 import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
 import { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { TriggerEventContext } from '@/domain/buff/types'
@@ -41,19 +48,16 @@ import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { eventBus } from '@/main'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
+import { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import {
   BattleStatus,
   PARTICIPANT_SIDE,
   RoundStatus,
 } from '@/domain/battle/type/types'
-import {
-  ATTRIBUTE_CODE,
-} from '@/domain/attribute/types'
-import {
-  LogLevel,
-  BATTLE_LOG_CATEGORIES,
-} from '@/shared/types/battle-log'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { RAFTimer } from '@/shared/utils/RAF'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { Counter } from '@/shared/utils/Counter'
@@ -89,7 +93,6 @@ const TURN_ACTION_DELAY_MS = 400
 const MAX_ACTION_HISTORY = 100
 
 export class BattleSystem {
-
   /**
    * 战斗ID计数器
    */
@@ -167,7 +170,15 @@ export class BattleSystem {
       this.animationManager,
       this.buffSystem,
     )
+
+    // 树状调试日志收集器
+    this.traceCollector = new TraceLogCollector()
+    this.executor.setTraceCollector(this.traceCollector)
+    this.passiveSkillManager.setTraceCollector(this.traceCollector)
+    BuffTraceLogger.setCollector(this.traceCollector)
   }
+
+  readonly traceCollector: TraceLogCollector
 
   /**
    * 获取触发器事件总线实例
@@ -299,7 +310,6 @@ export class BattleSystem {
     battleData.participants = participants
     console.log('初始化战斗数据', battleData)
 
-
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
     battleData.skillManager = this.skillManager
 
@@ -312,11 +322,15 @@ export class BattleSystem {
       participants: allParticipants,
     })
 
-    LoggerProvider.logger.addSystemLog({
-      message: `战斗双方人员情况: 我方 ${allyParticipants.length} 人 | 敌方 ${enemyParticipants.length} 人`,
-    }
-
-    )
+    LoggerProvider.logger.addBattleLog({
+      turn: 0,
+      message: `战斗开始  ·  我方 ${allyParticipants.length} vs 敌方 ${enemyParticipants.length}`,
+      segments: [
+        { text: `战斗开始  ·  我方 ${allyParticipants.length} vs 敌方 ${enemyParticipants.length}`, classStr: 'log-system' },
+      ],
+      category: BATTLE_LOG_CATEGORIES.SYSTEM,
+      meta: { role: 'battle' },
+    })
     battleData.roundState = RoundStatus.START
 
     const autoBattleRules = this.ruleManager.getAutoBattleRules()
@@ -326,75 +340,125 @@ export class BattleSystem {
 
     // 注册属性变化回调，Buff 修改 ModifierStack 后发射事件通知 UI 层
     this.buffSystem.setAttributeChangeCallback((characterId: string) => {
-      eventBus.emit(BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED, { characterId })
+      eventBus.emit(BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED, {
+        characterId,
+      })
     })
 
     // ponytail: 注册 buff 添加回调，被动触发路径通过 eventBus 告知 UI 播放动画
-    this.buffSystem.setBuffAppliedCallback((characterId: string, buffId: string) => {
-      eventBus.emit(BattleEventCodes.BUFF_EFFECT, {
-        targetId: characterId,
-        buffName: buffId,
-        isPositive: true,
-      })
-    })
+    this.buffSystem.setBuffAppliedCallback(
+      (characterId: string, buffId: string) => {
+        eventBus.emit(BattleEventCodes.BUFF_EFFECT, {
+          targetId: characterId,
+          buffName: buffId,
+          isPositive: true,
+        })
+      },
+    )
 
     // ponytail: 防止触发器脚本（如 reflectDamage）循环递归
     // 在 DAMAGE_TAKEN 发射中再次调用 requestDamage → setDamageCallback → ... 无限递归
     let _inDamageCallback = false
 
     // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
-    this.buffSystem.setDamageCallback((targetId: string, damage: number, damagePercent?: number) => {
-      // ponytail: 递归守卫 — 若已在回调中则跳过，避免反弹/分摊类触发器循环
-      if (_inDamageCallback) return
-      _inDamageCallback = true
-      try {
-        const target = battleData.participants.get(targetId)
-        if (target?.isAlive()) {
-          let actualDamage = damage
-          if (damagePercent && damagePercent > 0) {
-            // 正百分比 = 扣当前生命百分比
-            actualDamage = Math.max(1, Math.floor(target.currentHealth * damagePercent))
-            target.takeDamage(actualDamage)
-          } else if (damagePercent && damagePercent < 0) {
-            // 负百分比 = 按最大生命百分比治疗
-            actualDamage = Math.floor(target.maxHealth * Math.abs(damagePercent))
-            target.heal(actualDamage)
-          } else if (damage > 0) {
-            // 固定值伤害
-            target.takeDamage(actualDamage)
-          }
-          this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
-            sourceId: '',
-            targetId,
-            value: actualDamage,
-            extra: { damage: actualDamage },
-          })
-          // ponytail: 触发队友伤害事件 — 供 buff_triggers 中的 ally_damage_taken / ally_fatal_damage 使用
-          const isDead = !target.isAlive()
-          battleData.participants.forEach((p) => {
-            if (p.id !== targetId && p.team === target.team && p.isAlive()) {
-              this.emitTriggerEvent(
-                isDead ? BattleTriggerPhase.ALLY_FATAL_DAMAGE : BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
-                {
-                  sourceId: '',
-                  targetId: p.id,
-                  value: actualDamage,
-                  extra: { allyId: targetId, damage: actualDamage },
-                },
+    this.buffSystem.setDamageCallback(
+      (targetId: string, damage: number, damagePercent?: number) => {
+        // ponytail: 递归守卫 — 若已在回调中则跳过，避免反弹/分摊类触发器循环
+        if (_inDamageCallback) return
+        _inDamageCallback = true
+        try {
+          const target = battleData.participants.get(targetId)
+          if (target?.isAlive()) {
+            let actualDamage = damage
+            if (damagePercent && damagePercent > 0) {
+              // 正百分比 = 扣当前生命百分比
+              actualDamage = Math.max(
+                1,
+                Math.floor(target.currentHealth * damagePercent),
               )
+              target.takeDamage(actualDamage)
+            } else if (damagePercent && damagePercent < 0) {
+              // 负百分比 = 按最大生命百分比治疗
+              actualDamage = Math.floor(
+                target.maxHealth * Math.abs(damagePercent),
+              )
+              target.heal(actualDamage)
+            } else if (damage > 0) {
+              // 固定值伤害
+              // NOTE: 在扣血前捕获 HP，用于 DOT 叙事日志
+              const hpBefore = target.currentHealth
+              target.takeDamage(actualDamage)
+              const hpAfter = target.currentHealth
+              // 记录 DOT CombatRecord
+              if (actualDamage > 0) {
+                const dotRecord = createEmptyRecord(
+                  battleData.battleId,
+                  'system',
+                  '系统',
+                  'attack' as any,
+                  targetId,
+                  target.name,
+                  battleData.currentTurn ?? 1,
+                )
+                dotRecord.damage = actualDamage
+                dotRecord.damageSource = 'dot'
+                dotRecord.message = `${target.name} 受到 ${actualDamage} 点持续伤害`
+                this.battleRecorder.recordCombatRecord(
+                  battleData.battleId,
+                  dotRecord,
+                )
+                // NOTE: DOT 叙事日志
+                LoggerProvider.logger.addBattleLog({
+                  turn: battleData.currentTurn ?? 1,
+                  message: `${target.name} 受到 ${actualDamage} 点持续伤害`,
+                  segments: [
+                    { text: `${target.name} `, classStr: 'log-hostile' },
+                    { text: `${actualDamage}`, classStr: 'log-damage' },
+                    { text: ' 点持续伤害', classStr: 'log-text' },
+                  ],
+                  category: BATTLE_LOG_CATEGORIES.DAMAGE,
+                  meta: { role: 'settlement', entityId: targetId, hpAfter, damage: actualDamage },
+                })
+              }
             }
-          })
-          // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
-          this.passiveSkillManager.triggerPassives(
-            BattleTriggerPhase.DAMAGE_TAKEN,
-            target,
-            { sourceId: '', targetId, damage: actualDamage, participants: battleData.participants },
-          )
+            this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
+              sourceId: '',
+              targetId,
+              value: actualDamage,
+              extra: { damage: actualDamage },
+            })
+            // ponytail: 触发队友伤害事件 — 供 buff_triggers 中的 ally_damage_taken / ally_fatal_damage 使用
+            const isDead = !target.isAlive()
+            battleData.participants.forEach((p) => {
+              if (p.id !== targetId && p.team === target.team && p.isAlive()) {
+                this.emitTriggerEvent(
+                  isDead
+                    ? BattleTriggerPhase.ALLY_FATAL_DAMAGE
+                    : BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
+                  {
+                    sourceId: '',
+                    targetId: p.id,
+                    value: actualDamage,
+                    extra: { allyId: targetId, damage: actualDamage },
+                  },
+                )
+              }
+            })
+            // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
+            this.passiveSkillManager.triggerPassives(
+              BattleTriggerPhase.DAMAGE_TAKEN,
+              target,
+              createBattleContext(battleData, {
+                phase: BattleTriggerPhase.TURN_START,
+                damage: actualDamage,
+              }),
+            )
+          }
+        } finally {
+          _inDamageCallback = false
         }
-      } finally {
-        _inDamageCallback = false
-      }
-    })
+      },
+    )
     this.buffSystem.setHealCallback((targetId: string, amount: number) => {
       const target = battleData.participants.get(targetId)
       if (target?.isAlive()) {
@@ -408,7 +472,10 @@ export class BattleSystem {
         this.passiveSkillManager.triggerPassives(
           BattleTriggerPhase.HEAL_RECEIVED,
           target,
-          { sourceId: '', targetId, value: amount, participants: battleData.participants },
+          createBattleContext(battleData, {
+            phase: BattleTriggerPhase.TURN_START,
+            value: amount,
+          }),
         )
       }
     })
@@ -445,7 +512,7 @@ export class BattleSystem {
     this.passiveSkillManager.triggerPassiveSkillsForAll(
       BattleTriggerPhase.BATTLE_START,
       participants,
-      { participants },
+      createBattleContext(this.battleData),
     )
   }
 
@@ -471,7 +538,11 @@ export class BattleSystem {
           if (!(target instanceof BattleParticipantImpl)) continue
           const sameTeam = target.type === entity.type
           if ((isAllies && sameTeam) || (!isAllies && !sameTeam)) {
-            GameDataProcessor.applyAuraModifiersToParticipant(target, sourceKey, aura.modifiers)
+            GameDataProcessor.applyAuraModifiersToParticipant(
+              target,
+              sourceKey,
+              aura.modifiers,
+            )
           }
         }
       }
@@ -496,7 +567,7 @@ export class BattleSystem {
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BATTLE_START,
       participant,
-      { participants },
+      createBattleContext(this.battleData),
     )
 
     // ponytail: 增量分发光环 — 新角色受已有光环影响 + 新角色的光环施加给已有角色
@@ -540,7 +611,7 @@ export class BattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         BattleTriggerPhase.TURN_START,
         battle.participants,
-        { currentTurn: battle.currentTurn },
+        createBattleContext(this.battleData),
       )
 
       // 减少所有角色技能冷却
@@ -564,7 +635,9 @@ export class BattleSystem {
       aliveParticipants.forEach((participant) => {
         participant.gainEnergy(combatRules.energyGainPerTurn)
       })
-      LoggerProvider.logger.addDebugLog('角色能量增加: ' + combatRules.energyGainPerTurn)
+      LoggerProvider.logger.addDebugLog(
+        '角色能量增加: ' + combatRules.energyGainPerTurn,
+      )
 
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
@@ -579,10 +652,10 @@ export class BattleSystem {
       // 计算出手顺序（必须在属性刷新之后，以使用最新的速度值）
       const currentTurnOrder = this.turnManager.recalculateTurnOrder(battle)
       battle.turnOrder = currentTurnOrder
-      battle.currentTurn = 0
 
       // 发送回合开始事件到 UI 层（此时拥有正确的出手顺序）
-      const firstActorId = currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
+      const firstActorId =
+        currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
       eventBus.emit(BattleEventCodes.TURN_START, { actorId: firstActorId })
 
       // ponytail: 调试模式 — 回合开始事件已派发后暂停
@@ -605,16 +678,18 @@ export class BattleSystem {
         if (!participant || !participant.isAlive()) {
           continue
         }
-        // console.error('当前角色的能量', participant.getAttribute(ATTRIBUTE_CODE.currentEnergy))
-        battle.currentTurn = i
 
         // 在每个角色行动前，发送当前行动者更新事件到 UI 层
-        eventBus.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, { actorId: participantId })
+        eventBus.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, {
+          actorId: participantId,
+        })
 
         try {
           await this.executor.executeParticipantAction(battle, participant)
         } catch (error) {
-          LoggerProvider.logger.addDebugLog('角色行动执行出错:', { error: error as Error })
+          LoggerProvider.logger.addDebugLog('角色行动执行出错:', {
+            error: error as Error,
+          })
           await this.executor.executeDefaultAction(battle, participant)
         }
 
@@ -643,7 +718,9 @@ export class BattleSystem {
 
         // 打印当前所有参战角色气血
         battle.participants.forEach((participant) => {
-          console.log(`角色 ${participant.name} 当前气血: ${participant.getAttribute(ATTRIBUTE_CODE.currentHealth)}/${participant.getAttribute(ATTRIBUTE_CODE.maxHealth)}`)
+          console.log(
+            `角色 ${participant.name} 当前气血: ${participant.getAttribute(ATTRIBUTE_CODE.currentHealth)}/${participant.getAttribute(ATTRIBUTE_CODE.maxHealth)}`,
+          )
         })
       }
 
@@ -674,7 +751,7 @@ export class BattleSystem {
       this.passiveSkillManager.triggerPassiveSkillsForAll(
         BattleTriggerPhase.TURN_END,
         battle.participants,
-        { currentTurn: battle.currentTurn },
+        createBattleContext(this.battleData),
       )
 
       // ponytail: 消费 extra_action（时之沙）— 在 TURN_END 触发后、回合递增前执行额外行动
@@ -686,7 +763,9 @@ export class BattleSystem {
         const entityId = extraEntityIds.shift()!
         const entity = battle.participants.get(entityId)
         if (entity?.isAlive() && this.executor) {
-          LoggerProvider.logger.addDebugLog(`额外行动: ${entity.name}`, { level: LogLevel.INFO })
+          LoggerProvider.logger.addDebugLog(`额外行动: ${entity.name}`, {
+            level: LogLevel.INFO,
+          })
           await this.executor.executeParticipantAction(battle, entity)
         }
         extraCount++
@@ -695,7 +774,47 @@ export class BattleSystem {
         extraEntityIds.push(...newExtras)
       }
       if (extraEntityIds.length > 0) {
-        LoggerProvider.logger.addDebugLog(`额外行动已达上限(${MAX_EXTRA_ACTIONS})，丢弃 ${extraEntityIds.length} 个请求`, { level: LogLevel.WARN })
+        LoggerProvider.logger.addDebugLog(
+          `额外行动已达上限(${MAX_EXTRA_ACTIONS})，丢弃 ${extraEntityIds.length} 个请求`,
+          { level: LogLevel.WARN },
+        )
+      }
+
+      // ★ 回合态势快照
+      const allySnapshot: string[] = []
+      const enemySnapshot: string[] = []
+      battle.participants.forEach((p) => {
+        if (!p.isAlive()) return
+        const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
+        const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
+        const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
+        if (p.team === PARTICIPANT_SIDE.ALLY) allySnapshot.push(entry)
+        else enemySnapshot.push(entry)
+      })
+
+      if (allySnapshot.length > 0) {
+        LoggerProvider.logger.addBattleLog({
+          turn: battle.currentTurn,
+          message: `我方  ${allySnapshot.join(' · ')}`,
+          segments: [
+            { text: '我方  ', classStr: 'log-friendly' },
+            { text: allySnapshot.join(' · ') },
+          ],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'snapshot' },
+        })
+      }
+      if (enemySnapshot.length > 0) {
+        LoggerProvider.logger.addBattleLog({
+          turn: battle.currentTurn,
+          message: `敌方  ${enemySnapshot.join(' · ')}`,
+          segments: [
+            { text: '敌方  ', classStr: 'log-hostile' },
+            { text: enemySnapshot.join(' · ') },
+          ],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'snapshot' },
+        })
       }
 
       battle.roundState = RoundStatus.END
@@ -704,7 +823,10 @@ export class BattleSystem {
 
       battle.currentTurn++
     } catch (error) {
-      LoggerProvider.logger.addDebugLog('处理回合时出错:', { level: LogLevel.ERROR, error: error as Error })
+      LoggerProvider.logger.addDebugLog('处理回合时出错:', {
+        level: LogLevel.ERROR,
+        error: error as Error,
+      })
       console.error('处理回合时出错:', error)
     } finally {
       this.animationManager.cleanupAnimationState()
@@ -746,7 +868,6 @@ export class BattleSystem {
     await this.processTurnInternal()
   }
 
-
   /**
    * 添加战斗动作到记录
    * @param action - 战斗动作
@@ -769,16 +890,25 @@ export class BattleSystem {
   private async runEndConditionCheck(): Promise<void> {
     const battle = this.battleData
     if (!battle) return
-    const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentTurn)
+    const result = this.ruleManager.checkBattleEndCondition(
+      battle.participants,
+      battle.currentTurn,
+    )
     if (result.shouldEnd && result.winner) {
       await this.endBattle(result.winner)
       if (battle.currentTurn >= battle.maxTurns) {
-        const winnerLabel = result.winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'
+        const winnerLabel =
+          result.winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'
         LoggerProvider.logger.addBattleLog({
           turn: battle.currentTurn,
           message: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜`,
-          segments: [{ text: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜` }],
+          segments: [
+            {
+              text: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜`,
+            },
+          ],
           category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'battle' },
         })
       }
     }
@@ -789,6 +919,13 @@ export class BattleSystem {
    * @param winner - 胜利者类型
    */
   public async endBattle(winner: ParticipantSide): Promise<void> {
+    // 战斗结束前将树状调试日志写入 BattleRecorder
+    if (this.battleData) {
+      this.battleRecorder.recordTraceLogs(
+        this.battleData.battleId,
+        this.traceCollector.exportAll(),
+      )
+    }
     return this.lifecycleManager.endBattle(winner)
   }
 
@@ -853,13 +990,15 @@ export class BattleSystem {
   }
 
   public getEnabledAllyTeam(): BattleEntity[] {
-    return Array.from(this.battleData.participants.values())
-      .filter(p => p.enabled && p.team === 'ally')
+    return Array.from(this.battleData.participants.values()).filter(
+      (p) => p.enabled && p.team === 'ally',
+    )
   }
 
   public getEnabledEnemyTeam(): BattleEntity[] {
-    return Array.from(this.battleData.participants.values())
-      .filter(p => p.enabled && p.team === 'enemy')
+    return Array.from(this.battleData.participants.values()).filter(
+      (p) => p.enabled && p.team === 'enemy',
+    )
   }
 
   public stopAutoBattle(): void {
@@ -1016,11 +1155,17 @@ export class BattleSystem {
       // 战斗已在 runEndConditionCheck 中结束，此处不再重复触发
       // 仅当 battleState 仍为 ACTIVE 时才生成 SET_WINNER（兜底保护）
       if (battle.battleState === BattleStatus.ACTIVE) {
-        const result = this.ruleManager.checkBattleEndCondition(battle.participants, battle.currentTurn)
+        const result = this.ruleManager.checkBattleEndCondition(
+          battle.participants,
+          battle.currentTurn,
+        )
         if (result.winner) {
           commands.push({
             type: 'SET_WINNER',
-            payload: { winner: result.winner === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+            payload: {
+              winner:
+                result.winner === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+            },
           })
         }
       }
@@ -1097,5 +1242,4 @@ export class BattleSystem {
     if (enemies.length === 0) return null
     return enemies[Math.floor(Math.random() * enemies.length)].id
   }
-
 }

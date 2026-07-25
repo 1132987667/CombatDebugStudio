@@ -6,16 +6,14 @@
       <span class="auto-indicator-text">自动战斗中</span>
       <span class="auto-indicator-speed">x{{ props.battleSpeed ?? 1 }}</span>
     </div>
-    
+
     <div class="control-group">
       <button class="control-btn" @click="$emit('start-battle')" :disabled="isBattleActive">开始战斗</button>
       <button class="control-btn" @click="$emit('end-battle')" :disabled="!isBattleActive">结束战斗</button>
       <button class="control-btn" @click="$emit('reset-battle')"
         :disabled="!isBattleActive && autoPlayMode !== 'off'">重置战斗</button>
-      <button class="control-btn" @click="$emit('step-back')" :disabled="!isBattleActive">回退1回合</button>
-      <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">{{ isPaused ? '继 续' :
-        '暂 停' }}</button>
-      <button class="control-btn" @click="$emit('single-step')" :disabled="!isBattleActive">单步执行</button>
+
+      <span class="separator"></span>
 
       <!-- 自动播放模式单选按钮组 -->
       <RadioButtonGroup :model-value="autoPlayMode" :options="autoPlayOptions" :disabled="!isBattleActive"
@@ -28,16 +26,26 @@
       </button>
     </div>
     <div class="control-group right">
-      <label class="debug-toggle" :class="{ active: debugMode }">
-        <input type="checkbox" v-model="debugMode" />
-        调试
+      <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">{{ isPaused ? '继 续' :
+        '暂 停' }}</button>
+      <button class="control-btn" @click="handleSingleStep" :disabled="singleStepDisabled">{{ singleStepLabel
+      }}</button>
+
+      <span class="separator"></span>
+
+      <!-- 调试切换开关 -->
+      <label class="debug-toggle-switch" :class="{ active: debugMode }" @click="toggleDebug">
+        <span class="toggle-track">
+          <span class="toggle-thumb"></span>
+        </span>
+        <span class="toggle-label">调试</span>
       </label>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import RadioButtonGroup from "@/presentation/components/RadioButtonGroup.vue";
 import { debugGate } from '@/domain/battle/debug/DebugGate'
 import { eventBus } from '@/main'
@@ -84,11 +92,12 @@ const toggleBattleSpeed = () => {
   emit('battle-speed-change', speedLevels[nextIndex]);
 };
 
-// 调试模式开关 — 与 DebugGate 单例双向同步
+// 调试模式切换 — 与 DebugGate 单例双向同步
 const debugMode = ref(debugGate.enabled)
-watch(debugMode, (v) => {
-  debugGate.setEnabled(v)
-})
+const toggleDebug = () => {
+  debugMode.value = !debugMode.value
+  debugGate.setEnabled(debugMode.value)
+}
 // 反向同步：通过 eventBus 监听外部调试开关变化
 onMounted(() => {
   eventBus.on(BattleEventCodes.DEBUG_TOGGLE, (data: { enabled?: boolean }) => {
@@ -98,6 +107,24 @@ onMounted(() => {
 onUnmounted(() => {
   eventBus.off(BattleEventCodes.DEBUG_TOGGLE)
 })
+
+// 单步执行按钮 — 调试模式下合并 DebugGate 的"下一步"语义
+const isDebugWaiting = computed(() => debugMode.value && debugGate.isWaiting())
+
+const singleStepLabel = computed(() => isDebugWaiting.value ? '▶ 下一步' : '单步执行')
+
+const singleStepDisabled = computed(() => {
+  if (isDebugWaiting.value) return false
+  return !props.isBattleActive
+})
+
+const handleSingleStep = () => {
+  if (isDebugWaiting.value) {
+    debugGate.nextStep()
+  } else {
+    emit('single-step')
+  }
+}
 </script>
 
 <style scoped>
@@ -139,37 +166,90 @@ onUnmounted(() => {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(34, 211, 238, 0.3);
   }
+
   50% {
     box-shadow: 0 0 20px rgba(34, 211, 238, 0.6);
   }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.debug-toggle {
+.separator {
+  width: 1px;
+  height: 24px;
+  background: var(--color-border-default);
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+/* 调试切换开关 */
+.debug-toggle-switch {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  color: rgba(255, 255, 255, 0.6);
+  gap: var(--space-2);
   cursor: pointer;
   user-select: none;
   padding: var(--space-1) var(--space-2);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-xl);
   transition: var(--transition-fast);
 }
-.debug-toggle.active {
-  color: var(--color-energy);
+
+.debug-toggle-switch.active {
   border-color: rgba(34, 211, 238, 0.5);
   background: rgba(34, 211, 238, 0.1);
 }
-.debug-toggle input {
-  accent-color: var(--color-energy);
+
+.toggle-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.debug-toggle-switch.active .toggle-track {
+  background: var(--color-energy);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.debug-toggle-switch.active .toggle-thumb {
+  transform: translateX(16px);
+}
+
+.toggle-label {
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  transition: color var(--transition-fast);
+}
+
+.debug-toggle-switch.active .toggle-label {
+  color: var(--color-energy);
 }
 </style>

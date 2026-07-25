@@ -5,10 +5,7 @@
  */
 
 import type { BattleAI } from '@/domain/battle/ai/BattleAI'
-import type {
-  SkillConfig,
-  SkillSet,
-} from '@/domain/skill/types'
+import type { SkillConfig, SkillSet } from '@/domain/skill/types'
 import type {
   AttributeValue,
   IModifierProvider,
@@ -19,6 +16,9 @@ import { EffectType } from '@/shared/types/effect'
 import type { BuffQuery } from '@/domain/buff/types'
 import { Counter } from '@/shared/utils/Counter'
 import { SkillType } from '@/domain/skill/types'
+import type { CombatRecord } from '@/domain/battle/combat-record'
+import type { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
+
 const counter = new Counter()
 /**
  * 战斗状态常量
@@ -384,7 +384,7 @@ export const BattleActionHelper = {
     isCrit?: boolean
     critDamage?: number
     effects?: BattleEffect[]
-    turn: number
+    turn?: number
   }): BattleAction {
     return {
       id: this.generateId(options.type),
@@ -439,7 +439,7 @@ export const BattleActionHelper = {
     isCrit?: boolean
     critDamage?: number
     effects?: BattleEffect[]
-    turn: number
+    turn?: number
   }): BattleAction {
     return this.create({ type: 'skill', ...options })
   },
@@ -452,7 +452,7 @@ export const BattleActionHelper = {
     targetId: string
     buffId: string
     effects?: BattleEffect[]
-    turn: number
+    turn?: number
   }): BattleAction {
     return this.create({ type: 'buff', ...options })
   },
@@ -466,7 +466,7 @@ export const BattleActionHelper = {
     itemId: string
     heal?: number
     effects?: BattleEffect[]
-    turn: number
+    turn?: number
   }): BattleAction {
     return this.create({ type: 'item', ...options })
   },
@@ -479,7 +479,7 @@ export const BattleActionHelper = {
     targetId: string
     success?: boolean
     effects?: BattleEffect[]
-    turn: number
+    turn?: number
   }): BattleAction {
     return this.create({ type: 'status', ...options })
   },
@@ -500,6 +500,8 @@ export interface BattleEffect {
   duration?: number
   description: string
   isCritical?: boolean
+  /** 特殊效果标签：immune(免疫)/unyielding(不屈)/share(分担)/summon(召唤) */
+  effectTag?: 'immune' | 'unyielding' | 'share' | 'summon'
 }
 
 /**
@@ -574,7 +576,6 @@ export interface ParticipantInfo {
   /** 技能配置 */
   skills?: SkillSet
 }
-
 
 /**
  * 战斗数据接口
@@ -770,7 +771,7 @@ export interface SnapshotIndexItem {
 
 /**
  * 战斗触发器统一上下文
- * 
+ *
  * 覆盖所有场景：
  * - TriggerEventBus 事件广播（emitTriggerEvent）
  * - PassiveSkillManager 被动触发（triggerPassives）
@@ -822,9 +823,41 @@ export interface BattleContext {
   /** 原因/类型（如 'damage'、'heal'、'buff'） */
   cause?: string
 
+  parentTraceId?: string
+
+  /** 伤害记录 */
+  record?: CombatRecord
+
+  /** 延迟伤害令牌 */
+  token?: DeferredDamageToken
+
   // ============ 扩展数据 ============
   /** 额外自定义数据（灵活扩展） */
   extra?: Record<string, unknown>
   /** 战斗完整数据（仅用于需要全量状态的场景） */
   battleData?: BattleData
+}
+
+/**
+ * 从 BattleData 创建完整的战斗上下文
+ *
+ * 公共字段（battleId / participants / currentTurn）自动从 battle 填充，
+ * 调用方只需提供事件特有字段（sourceId / targetId / damage 等）。
+ *
+ * @param battle  当前战斗数据（唯一数据源）
+ * @param event   事件特有字段（覆盖式合并）
+ */
+export function createBattleContext(
+  battle: BattleData,
+  event: Partial<BattleContext> = {},
+): BattleContext {
+  return {
+    // ── 公共字段：始终从 battle 填充 ──
+    battleId: battle.battleId,
+    participants: battle.participants,
+    currentTurn: battle.currentTurn,
+
+    // ── 事件特有字段：调用方覆盖 ──
+    ...event,
+  }
 }

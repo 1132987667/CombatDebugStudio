@@ -1,6 +1,10 @@
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { SkillStepType } from '@/domain/skill/types'
-import type { BattleAction, BattleEntity } from '@/domain/battle/type/types'
+import type {
+  BattleAction,
+  BattleEntity,
+  BattleContext,
+} from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -9,11 +13,24 @@ import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { LogLevel } from '@/shared/types/battle-log'
-import { BATTLE_LOG_CATEGORIES, buildNameSegments } from '@/shared/types/battle-log'
+import {
+  BATTLE_LOG_CATEGORIES,
+} from '@/shared/types/battle-log'
 import { EffectType, EffectTag } from '@/shared/types/effect'
-import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
+import {
+  ATTRIBUTE_CODE,
+  AttributeCodeNames,
+  ModifierType,
+  ModifierSourceType,
+  type Modifier,
+} from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
-import { syncBonusAttribute, syncReverseBonusAttribute, syncAttackRange, REVERSE_BONUS_ATTR_MAP } from '@/shared/utils/attributeSync'
+import {
+  syncBonusAttribute,
+  syncReverseBonusAttribute,
+  syncAttackRange,
+  REVERSE_BONUS_ATTR_MAP,
+} from '@/shared/utils/attributeSync'
 
 /** ponytail: 追踪同一攻击者的连续命中目标和计数 */
 interface ComboState {
@@ -69,21 +86,23 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    record?: CombatRecord,
-    token?: DeferredDamageToken,
+    context?: BattleContext,
   ): void {
     switch (skillStep.type) {
       case SkillStepType.DEAL_DAMAGE:
-        this.executeDamage(skillStep, action, source, target, record, token)
+        this.executeDamage(skillStep, action, source, target, context)
         break
       case SkillStepType.HEAL:
-        this.executeHeal(skillStep, action, source, target, record, token)
+        this.executeHeal(skillStep, action, source, target, context)
         break
       case SkillStepType.APPLY_BUFF:
-        this.executeBuff(skillStep, action, source, target, record)
+        this.executeBuff(skillStep, action, source, target, context)
         break
       case SkillStepType.SHIELD:
         this.executeShield(skillStep, action, source, target)
+        break
+      case SkillStepType.GAIN_ENERGY:
+        this.executeGainEnergy(skillStep, action, source, target)
         break
       case SkillStepType.STUN:
       case SkillStepType.SILENCE:
@@ -97,13 +116,13 @@ export class SkillExecutor {
         this.executeCleanse(skillStep, action, source, target)
         break
       case SkillStepType.REFLECT:
-        this.executeReflect(skillStep, action, source, target, token)
+        this.executeReflect(skillStep, action, source, target, context)
         break
       case SkillStepType.DRAIN:
-        this.executeDrain(skillStep, action, source, target, record, token)
+        this.executeDrain(skillStep, action, source, target, context)
         break
       case SkillStepType.CUSTOM:
-        this.executeCustom(skillStep, action, source, target, token)
+        this.executeCustom(skillStep, action, source, target, context)
         break
       default: {
         // ponytail: 未实现的步骤类型 — 当前无任何技能配置使用这些类型
@@ -127,14 +146,13 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    record?: CombatRecord,
-    token?: DeferredDamageToken,
+    context?: BattleContext,
   ): void {
     const result = this.damageCalculator.calculateDamage(
       skillStep,
       source,
       target,
-      record,
+      context,
     )
     if (result.isMiss) {
       action.effects.push({
@@ -144,9 +162,9 @@ export class SkillExecutor {
         description: `${target.name} dodged attack`,
       })
     } else {
-      if (token) {
+      if (context?.token) {
         // 延迟模式 — 只记录伤害数值
-        token.record(target, result.damage)
+        context.token.record(target, result.damage)
         action.damage = (action.damage ?? 0) + result.damage
         action.effects.push({
           type: EffectType.DAMAGE,
@@ -177,8 +195,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    record?: CombatRecord,
-    token?: DeferredDamageToken,
+    context?: BattleContext,
   ): void {
     const healTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
@@ -186,19 +203,20 @@ export class SkillExecutor {
       skillStep,
       source,
       healTarget,
-      record,
+      context,
       this.buffSystem,
     )
     // ponytail: 记录治疗溢出量（按目标ID），供后续 overflow_shield 步骤使用
     if (overflow > 0) {
       action.extra = action.extra || {}
-      const overflowMap = (action.extra.healOverflow as Record<string, number> | undefined) || {}
+      const overflowMap =
+        (action.extra.healOverflow as Record<string, number> | undefined) || {}
       overflowMap[healTarget.id] = (overflowMap[healTarget.id] || 0) + overflow
       action.extra.healOverflow = overflowMap
     }
-    if (token) {
+    if (context?.token) {
       // 延迟模式 — 只记录治疗数值
-      token.record(healTarget, 0, heal)
+      context.token.record(healTarget, 0, heal)
       action.heal = (action.heal ?? 0) + heal
       action.effects.push({
         type: EffectType.HEAL,
@@ -232,10 +250,10 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    record?: CombatRecord,
+    context?: BattleContext,
   ): void {
     const buffId = skillStep.buffId ?? skillStep.effectId
-    if (!buffId) return // ponytail: 无 buffId=无效果，静默返回
+    if (!buffId) return
 
     const buffTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
@@ -258,7 +276,7 @@ export class SkillExecutor {
       buffId,
       buffConfig,
       0,
-      record,
+      context,
     )
     action.effects.push({
       type: EffectType.BUFF,
@@ -268,26 +286,67 @@ export class SkillExecutor {
       description: `${source.name} applies ${buffId} to ${buffTarget.name}`,
     })
 
-    // ponytail: Buff 效果日志 — 带角色名着色
+    // ponytail: Buff 效果日志 — 简洁格式：Buff名 + 效果摘要
     if (instanceId) {
-      const buffConfig = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
-      const displayName = buffConfig?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
-      const segs = buildNameSegments(
-        source.name,
-        source.type === PARTICIPANT_SIDE.ALLY,
-        buffTarget.name,
-        buffTarget.type === PARTICIPANT_SIDE.ALLY,
-      )
-      segs.push({ text: ` 施加 ${displayName}` })
-      const sourcePrefix = source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
-      const targetPrefix = buffTarget.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      const buffConfig = this.buffSystem
+        .getScriptRegistry()
+        .getBuffConfig(buffId)
+      const displayName =
+        buffConfig?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
+
+      // 构建 Buff 效果摘要
+      const effectSummary = this.buildBuffEffectSummary(buffId, instanceId)
+
       LoggerProvider.logger.addBattleLog({
         turn: (action?.turn as number) || 1,
-        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${buffTarget.name} 施加 ${displayName}`,
-        segments: segs,
+        message: `${displayName}  ${effectSummary}`,
+        segments: [
+          { text: displayName, classStr: 'log-buff', kind: 'buff',
+            hover: { kind: 'buff', id: buffId } },
+          { text: `  ${effectSummary}` },
+        ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'sub' },
       })
     }
+  }
+
+  /**
+   * 构建 Buff 效果摘要文本
+   * 从 Buff 配置中提取属性修正、层数、持续时间等效果描述
+   */
+  private buildBuffEffectSummary(buffId: string, instanceId: string): string {
+    const parts: string[] = []
+    const config = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
+    if (!config) return ''
+
+    // 属性修正
+    if (config.attributes) {
+      for (const [attr, valStr] of Object.entries(config.attributes)) {
+        const cn = (AttributeCodeNames as Record<string, string>)[attr] ?? attr
+        const num = parseFloat(valStr)
+        if (isNaN(num)) continue
+        const pct = Math.abs(valStr.includes('%') ? num : (Math.abs(num) < 1 ? num * 100 : num))
+        const arrow = num >= 0 ? '↑' : '↓'
+        parts.push(`${cn}${arrow}${Math.round(pct)}%`)
+      }
+    }
+
+    // 层数
+    const instance = this.buffSystem.getBuffInstanceById(instanceId)
+    if (instance && instance.currentStacks > 1) {
+      parts.push(`（${instance.currentStacks}层）`)
+    }
+
+    // 持续时间
+    const duration = config.duration ?? 0
+    if (duration > 0) {
+      parts.push(`（${duration}回合）`)
+    } else if (duration === -1) {
+      parts.push(`（永久）`)
+    }
+
+    return parts.join(' ') || config.name || ''
   }
 
   /** 运行时修改目标属性（modify_attribute 步骤） */
@@ -297,21 +356,26 @@ export class SkillExecutor {
     source: BattleEntity,
     target: BattleEntity,
   ): void {
-    const modTarget = skillStep.targetConfig?.faction === 'self' ? source : target
+    const modTarget =
+      skillStep.targetConfig?.faction === 'self' ? source : target
     const modifiers = skillStep.modifiers
     if (!modifiers || modifiers.length === 0) return
-
 
     for (const mod of modifiers) {
       const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
       const attrData = modTarget.getAttrValue(attrCode)
       if (!attrData) continue
 
-      const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
-        : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
-        : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
-        : mod.type === 'FINAL' ? ModifierType.FINAL
-        : ModifierType.ADDITIVE
+      const modType =
+        mod.type === 'PERCENTAGE'
+          ? ModifierType.PERCENTAGE
+          : mod.type === 'ADDITIVE'
+            ? ModifierType.ADDITIVE
+            : mod.type === 'MULTIPLICATIVE'
+              ? ModifierType.MULTIPLICATIVE
+              : mod.type === 'FINAL'
+                ? ModifierType.FINAL
+                : ModifierType.ADDITIVE
 
       let value = typeof mod.value === 'number' ? mod.value : 0
       // ponytail: PERCENTAGE 值在配置中是百分比值（如 5 表示 5%），直接使用
@@ -322,7 +386,9 @@ export class SkillExecutor {
       const sourceKey = `passive:runtime:${mod.id || skillStep.buffId || 'mod'}`
 
       // ponytail: 去重 — 移除同 sourceKey 的旧修饰符再添加新值
-      attrData.modifiers = attrData.modifiers.filter(m => m.sourceKey !== sourceKey)
+      attrData.modifiers = attrData.modifiers.filter(
+        (m) => m.sourceKey !== sourceKey,
+      )
 
       const newMod: Modifier = {
         sourceKey,
@@ -344,7 +410,11 @@ export class SkillExecutor {
         // attackBonus → attack → 再拆分到 minAttack/maxAttack
         const mainAttr = REVERSE_BONUS_ATTR_MAP[attrCode]
         if (mainAttr === ATTRIBUTE_CODE.attack) {
-          syncAttackRange(modTarget, { ...newMod, attribute: ATTRIBUTE_CODE.attack }, sourceKey)
+          syncAttackRange(
+            modTarget,
+            { ...newMod, attribute: ATTRIBUTE_CODE.attack },
+            sourceKey,
+          )
         }
         // PERCENTAGE 作用于 attack 时同步到 minAttack/maxAttack
         syncAttackRange(modTarget, newMod, sourceKey)
@@ -367,7 +437,8 @@ export class SkillExecutor {
     source: BattleEntity,
     target: BattleEntity,
   ): void {
-    const modTarget = skillStep.targetConfig?.faction === 'self' ? source : target
+    const modTarget =
+      skillStep.targetConfig?.faction === 'self' ? source : target
     const instances = this.buffSystem.getBuffInstances(modTarget.id)
     const isRemoveDebuff = skillStep.type === SkillStepType.REMOVE_DEBUFF
     const count = skillStep.count || (isRemoveDebuff ? 1 : 999)
@@ -394,14 +465,14 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    token?: DeferredDamageToken,
+    context?: BattleContext,
   ): void {
     // ponytail: reflect 的目标是攻击者（即 executeStep 的 target 是攻击者）
     // source 是受击者（拥有反射技能的角色）
     const dmg = this.damageCalculator.calculateDamage(skillStep, source, target)
     if (!dmg.isMiss && dmg.damage > 0) {
-      if (token) {
-        token.record(target, dmg.damage)
+      if (context?.token) {
+        context?.token.record(target, dmg.damage)
         action.damage = (action.damage ?? 0) + dmg.damage
       } else {
         this.damageCalculator.applyDamage(target, dmg.damage)
@@ -421,13 +492,17 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    record?: CombatRecord,
-    token?: DeferredDamageToken,
+    context?: BattleContext,
   ): void {
-    const dmg = this.damageCalculator.calculateDamage(skillStep, source, target, record)
+    const dmg = this.damageCalculator.calculateDamage(
+      skillStep,
+      source,
+      target,
+      context,
+    )
     if (!dmg.isMiss && dmg.damage > 0) {
-      if (token) {
-        token.record(target, dmg.damage)
+      if (context?.token) {
+        context?.token.record(target, dmg.damage)
         action.damage = (action.damage ?? 0) + dmg.damage
         action.heal = (action.heal ?? 0) + dmg.damage
       } else {
@@ -452,7 +527,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    token?: DeferredDamageToken,
+    context?: BattleContext,
   ): void {
     const customType = skillStep.parameters?.customType as string | undefined
     const desc = (skillStep.parameters?.description as string) || ''
@@ -462,14 +537,28 @@ export class SkillExecutor {
       this.handleThirdStrike(action, source)
     } else if (customType === 'combo_master') {
       this.handleComboMaster(action, source, target)
-    } else if (customType === 'burn_detonate' || customType === 'burn_detonate_full') {
-      const burnPct = (skillStep.parameters?.burnDamagePercent as number) ?? 0.05
-      this.handleBurnDetonate(action, source, target, customType === 'burn_detonate_full', token, burnPct)
+    } else if (
+      customType === 'burn_detonate' ||
+      customType === 'burn_detonate_full'
+    ) {
+      const burnPct =
+        (skillStep.parameters?.burnDamagePercent as number) ?? 0.05
+      this.handleBurnDetonate(
+        action,
+        source,
+        target,
+        customType === 'burn_detonate_full',
+        context?.token,
+        burnPct,
+      )
     } else if (customType === 'extra_action') {
       // ponytail: 时之沙 — 请求额外行动，由 BattleSystem 在 TURN_END 后消费
       if (source.isAlive()) {
         this.requestExtraAction(source.id)
-        LoggerProvider.logger.addDebugLog(`时之沙: ${source.name} 获得额外行动`, { level: LogLevel.INFO })
+        LoggerProvider.logger.addDebugLog(
+          `时之沙: ${source.name} 获得额外行动`,
+          { level: LogLevel.INFO },
+        )
         action.effects.push({
           type: EffectType.STATUS,
           targetId: source.id,
@@ -478,10 +567,13 @@ export class SkillExecutor {
       }
     } else if (customType === 'steal_item') {
       // ponytail: 盗窃本能 — PvE 掉落系统，非战斗逻辑
-      LoggerProvider.logger.addDebugLog('盗窃本能: PvE 掉落系统专用', { level: LogLevel.INFO })
+      LoggerProvider.logger.addDebugLog('盗窃本能: PvE 掉落系统专用', {
+        level: LogLevel.INFO,
+      })
     } else if (customType === 'overflow_shield') {
       // ponytail: 回春护盾溢出转盾 — 从 action.extra.healOverflow 按目标ID查找溢出量
-      const overflowMap = (action.extra?.healOverflow as Record<string, number> | undefined) || {}
+      const overflowMap =
+        (action.extra?.healOverflow as Record<string, number> | undefined) || {}
       const overflow = overflowMap[target.id] || 0
       if (overflow > 0) {
         const config: BuffConfig = {
@@ -497,7 +589,10 @@ export class SkillExecutor {
           parameters: { shieldValue: overflow },
         }
         this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
-        LoggerProvider.logger.addDebugLog(`回春护盾: 溢出 ${overflow} 点治疗转化为护盾`, { level: LogLevel.INFO })
+        LoggerProvider.logger.addDebugLog(
+          `回春护盾: 溢出 ${overflow} 点治疗转化为护盾`,
+          { level: LogLevel.INFO },
+        )
         action.effects.push({
           type: EffectType.STATUS,
           targetId: target.id,
@@ -512,7 +607,9 @@ export class SkillExecutor {
         })
       }
     } else {
-      LoggerProvider.logger.addDebugLog(`自定义步骤未实现: ${desc}`, { level: LogLevel.WARN })
+      LoggerProvider.logger.addDebugLog(`自定义步骤未实现: ${desc}`, {
+        level: LogLevel.WARN,
+      })
       action.effects.push({
         type: EffectType.STATUS,
         targetId: target.id,
@@ -522,10 +619,7 @@ export class SkillExecutor {
   }
 
   /** 第三连击：每第3次普攻伤害+50% */
-  private handleThirdStrike(
-    action: BattleAction,
-    source: BattleEntity,
-  ): void {
+  private handleThirdStrike(action: BattleAction, source: BattleEntity): void {
     let state = this.comboStates.get(source.id)
     if (!state) {
       state = { lastTargetId: '', streak: 0, totalAttacks: 0 }
@@ -538,7 +632,9 @@ export class SkillExecutor {
       const attrData = source.getAttrValue(ATTRIBUTE_CODE.damageBoost)
       if (attrData) {
         const sourceKey = 'custom:third_strike'
-        attrData.modifiers = attrData.modifiers.filter(m => m.sourceKey !== sourceKey)
+        attrData.modifiers = attrData.modifiers.filter(
+          (m) => m.sourceKey !== sourceKey,
+        )
         attrData.modifiers.push({
           sourceKey,
           sourceType: ModifierSourceType.SKILL,
@@ -584,7 +680,9 @@ export class SkillExecutor {
       const attrData = source.getAttrValue(ATTRIBUTE_CODE.damageBoost)
       if (attrData) {
         const sourceKey = 'custom:combo_master'
-        attrData.modifiers = attrData.modifiers.filter(m => m.sourceKey !== sourceKey)
+        attrData.modifiers = attrData.modifiers.filter(
+          (m) => m.sourceKey !== sourceKey,
+        )
         attrData.modifiers.push({
           sourceKey,
           sourceType: ModifierSourceType.SKILL,
@@ -614,15 +712,18 @@ export class SkillExecutor {
     burnDamagePercent: number = 0.05,
   ): void {
     // 获取目标的 buff 实例，按 EffectTag.BURN 标签查找灼烧类 buff
-    const burnInstances = this.buffSystem.getBuffInstancesWithTag(target.id, EffectTag.BURN)
-
+    const burnInstances = this.buffSystem.getBuffInstancesWithTag(
+      target.id,
+      EffectTag.BURN,
+    )
     if (burnInstances.length === 0) return
 
     let totalBurnDmg = 0
     for (const inst of burnInstances) {
       // ponytail: 假设每层灼烧每回合造成 5% 最大生命值伤害
       const remainingDuration = inst.remainingTurns ?? inst.duration ?? 1
-      const dmgPerTick = target.getAttribute('maxHealth') * burnDamagePercent
+      const dmgPerTick =
+        target.getAttribute(ATTRIBUTE_CODE.maxHealth) * burnDamagePercent
       totalBurnDmg += dmgPerTick * remainingDuration
 
       // 完全引爆时移除该灼烧 buff
@@ -650,6 +751,27 @@ export class SkillExecutor {
     })
   }
 
+  /** 获取能量（gain_energy 步骤 — R6: 资源变动 ≠ 属性修正）
+   *  复用 BattleEntity.gainEnergy()，自带上限封顶 + ENERGY_GAINED 事件触发
+   */
+  private executeGainEnergy(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+  ): void {
+    const modTarget =
+      skillStep.targetConfig?.faction === 'self' ? source : target
+    const value = skillStep.parameters?.value ?? 0
+    if (value <= 0) return
+    modTarget.gainEnergy(value)
+    action.effects.push({
+      type: EffectType.STATUS,
+      targetId: modTarget.id,
+      description: `${modTarget.name} 获得 ${value} 能量`,
+    })
+  }
+
   /** 护盾（shield 步骤）— 委托给 buff_shield */
   private executeShield(
     skillStep: ExtendedSkillStep,
@@ -657,9 +779,14 @@ export class SkillExecutor {
     source: BattleEntity,
     target: BattleEntity,
   ): void {
-    const buffTarget = skillStep.targetConfig?.faction === 'self' ? source : target
+    const buffTarget =
+      skillStep.targetConfig?.faction === 'self' ? source : target
     // 从 calculation 计算护盾值
-    const { heal: shieldValue } = this.healCalculator.calculateHeal(skillStep, source, buffTarget)
+    const { heal: shieldValue } = this.healCalculator.calculateHeal(
+      skillStep,
+      source,
+      buffTarget,
+    )
 
     const config: BuffConfig = {
       id: 'buff_shield',
@@ -673,7 +800,12 @@ export class SkillExecutor {
       controlPriority: 0,
       parameters: { shieldValue },
     }
-    const instanceId = this.buffSystem.addBuff(buffTarget.id, 'buff_shield', config, 0)
+    const instanceId = this.buffSystem.addBuff(
+      buffTarget.id,
+      'buff_shield',
+      config,
+      0,
+    )
     action.effects.push({
       type: EffectType.STATUS,
       targetId: buffTarget.id,

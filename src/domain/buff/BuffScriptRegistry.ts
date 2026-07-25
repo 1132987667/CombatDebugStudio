@@ -40,6 +40,10 @@ interface BuffConfigData {
   aura?: BuffAuraConfig
   onAdd?: string
   triggers?: TriggerAction[]
+  /** buffs.json 中的 category（如 aura/attribute/trigger/control/dot/shield） */
+  category?: string
+  /** 控制类型（如 stun/silence/freeze） */
+  controlType?: string
 }
 
 type ScriptFactory<TParams = any> = () => IBuffScript<TParams>

@@ -78,7 +78,7 @@
   {
     "id": "skill_enemy_007_passive",
     "name": "花之再生",
-    "description": "被动效果：每回合结束时，恢复自身最大生命值5%的生命值",
+    "description": "被动效果：每回合结束时，恢复自身最大气血值5%的气血值",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -226,7 +226,7 @@
   {
     "id": "skill_boss_002_passive",
     "name": "水之共鸣",
-    "description": "被动效果：每回合开始时，为生命值最低的友方单位恢复5%最大生命值；永久提升自身生命值15%",
+    "description": "被动效果：每回合开始时，为气血值最低的友方单位恢复5%最大气血值；永久提升自身气血值15%",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -374,7 +374,7 @@
   {
     "id": "skill_boss_003_passive",
     "name": "大地恩赐",
-    "description": "被动效果：生命值低于50%时，每回合结束时恢复10%最大生命值；永久提升自身生命值20%",
+    "description": "被动效果：气血值低于50%时，每回合结束时恢复10%最大气血值；永久提升自身气血值20%",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -474,7 +474,7 @@
   {
     "id": "skill_enemy_031_passive",
     "name": "千年树龄",
-    "description": "被动效果：每回合结束时，恢复自身最大生命值5%的生命值",
+    "description": "被动效果：每回合结束时，恢复自身最大气血值5%的气血值",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -740,7 +740,7 @@
   {
     "id": "skill_boss_005_passive",
     "name": "水之守护",
-    "description": "被动技能,自身获得水之守护效果,永久提升魔法防御力和水属性抗性,受到攻击时有概率回复生命值;永久提升自身攻击力15%",
+    "description": "被动技能,自身获得水之守护效果,永久提升魔法防御力和水属性抗性,受到攻击时有概率回复气血值;永久提升自身攻击力15%",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -979,7 +979,7 @@
   {
     "id": "skill_boss_006_passive",
     "name": "地火之心",
-    "description": "被动技能,自身获得地火之心效果,永久提升所有属性,受到火属性伤害时回复生命值;永久提升自身攻击力20%和防御力15%",
+    "description": "被动技能,自身获得地火之心效果,永久提升所有属性,受到火属性伤害时回复气血值;永久提升自身攻击力20%和防御力15%",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -1126,7 +1126,7 @@
   {
     "id": "skill_boss_007_passive",
     "name": "谷中霸主",
-    "description": "被动效果：提升自身所有属性10%，并免疫所有控制效果;永久提升自身生命值25%与攻击力15%",
+    "description": "被动效果：提升自身所有属性10%，并免疫所有控制效果;永久提升自身气血值25%与攻击力15%",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -1281,7 +1281,7 @@
   {
     "id": "skill_boss_008_passive",
     "name": "风之灵",
-    "description": "被动效果：提升自身速度30%，并在每回合开始时恢复5%最大生命值;永久提升自身速度额外15%",
+    "description": "被动效果：提升自身速度30%，并在每回合开始时恢复5%最大气血值;永久提升自身速度额外15%",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -1313,7 +1313,7 @@
   {
     "id": "skill_enemy_068_passive",
     "name": "力士之躯",
-    "description": "被动技能，自身获得力士之躯效果，永久提升攻击力和生命值上限",
+    "description": "被动技能，自身获得力士之躯效果，永久提升攻击力和气血值上限",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -1474,7 +1474,7 @@
   {
     "id": "skill_boss_009_passive",
     "name": "禅心",
-    "description": "被动效果：每回合开始时，为生命值最低的友方单位恢复5%最大生命值;永久提升自身生命值20%与防御力15%",
+    "description": "被动效果：每回合开始时，为气血值最低的友方单位恢复5%最大气血值;永久提升自身气血值20%与防御力15%",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -1513,7 +1513,7 @@
   {
     "id": "skill_enemy_076_passive",
     "name": "叛徒之谋",
-    "description": "被动效果：对生命值低于50%的敌人造成的伤害提升30%",
+    "description": "被动效果：对气血值低于50%的敌人造成的伤害提升30%",
     "cooldown": 0,
     "selector": {
       "faction": "self",
@@ -1644,7 +1644,7 @@
   {
     "id": "skill_boss_010_passive",
     "name": "灵山祝福",
-    "description": "被动效果：每回合开始时，为所有友方单位恢复3%最大生命值;永久提升自身生命值30%与攻击力20%",
+    "description": "被动效果：每回合开始时，为所有友方单位恢复3%最大气血值;永久提升自身气血值30%与攻击力20%",
     "cooldown": 0,
     "selector": {
       "faction": "self",

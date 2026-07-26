@@ -9,6 +9,10 @@
 
     <div class="control-group">
       <button class="control-btn" @click="$emit('start-battle')" :disabled="isBattleActive">开始战斗</button>
+      <!-- 暂停/继续按钮 -->
+      <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">
+        {{ isPaused ? '继 续' : '暂 停' }}
+      </button>
       <button class="control-btn" @click="$emit('end-battle')" :disabled="!isBattleActive">结束战斗</button>
       <button class="control-btn" @click="$emit('reset-battle')"
         :disabled="!isBattleActive && autoPlayMode !== 'off'">重置战斗</button>
@@ -59,6 +63,7 @@ import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 const props = defineProps<{
   isBattleActive: boolean;
   isAutoPlaying: boolean;
+  isPaused: boolean;
   battleSpeed?: number;
 }>();
 
@@ -66,6 +71,7 @@ const emit = defineEmits<{
   "start-battle": [];
   "end-battle": [];
   "reset-battle": [];
+  "toggle-pause": [];
   "toggle-auto-play": [];
   "battle-speed-change": [speed: number];
 }>();

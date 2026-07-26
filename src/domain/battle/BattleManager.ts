@@ -666,7 +666,7 @@ export class BattleManager {
    */
   async processSingleTurn() {
     await this.autoBattleManager.executeSingleTurn()
-    // ponytail: 每回合结束后通知 store 同步队伍数据，触发 Vue 响应式更新 HP/能量
+    // ponytail: 每回合结束后通知 store 同步队伍数据，触发 Vue 响应式更新 气血/能量
     this.emitTeamChanged()
   }
 

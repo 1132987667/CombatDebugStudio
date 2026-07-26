@@ -10,7 +10,7 @@
  *   - 暴击率 +20%（刷新时额外 +5%）
  *   - 暴击伤害 +50%
  *   - 防御力 -30%（乘法削弱）
- *   - 每 2 回合损失 5% 当前生命值（狂暴代价）
+ *   - 每 2 回合损失 5% 当前气血值（狂暴代价）
  */
 import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
@@ -32,7 +32,7 @@ export class BerserkBuff extends BaseBuffScript {
   public static readonly CONFIG: ScriptBuffConfig = {
     id: 'buff_berserk',
     name: '狂暴',
-    description: '陷入狂暴状态，攻击力大幅提升，但防御力降低，每回合损失生命值',
+    description: '陷入狂暴状态，攻击力大幅提升，但防御力降低，每回合损失气血值',
     duration: 4,
     maxStacks: 1,
     cooldown: 9,
@@ -48,7 +48,7 @@ export class BerserkBuff extends BaseBuffScript {
   private static readonly DEFAULT_PARAMS = {
     attackBonus: 100,
     selfDamagePercent: 0.05,
-    selfDamageInterval: 2,        // 每 N 回合触发一次自残
+    selfDamageInterval: 2, // 每 N 回合触发一次自残
     refreshAttackBonus: 20,
     refreshCritRateBonus: 0.05,
     defensePenalty: 0.3,
@@ -56,18 +56,38 @@ export class BerserkBuff extends BaseBuffScript {
     critDamageBonus: 0.5,
   }
 
-  // ==================== 生命周期 ====================
+  // ==================== 气血周期 ====================
 
   protected _onApply(context: BuffContext): void {
     this.log(context, '🔥 陷入狂暴状态！攻击力大幅提升，但防御力降低')
 
     const params = this.resolveParams(context)
 
-    this.addModifier(context, ATTRIBUTE_CODE.attack, params.attackBonus, ModifierType.ADDITIVE)
-    this.addModifier(context, ATTRIBUTE_CODE.critRate, params.critRateBonus, ModifierType.ADDITIVE)
-    this.addModifier(context, ATTRIBUTE_CODE.critDamage, params.critDamageBonus, ModifierType.ADDITIVE)
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      params.attackBonus,
+      ModifierType.ADDITIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.critRate,
+      params.critRateBonus,
+      ModifierType.ADDITIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.critDamage,
+      params.critDamageBonus,
+      ModifierType.ADDITIVE,
+    )
     // ponytail: 防御削弱用 MULTIPLICATIVE，value 为 -0.3 → 最终防御 *= 0.7
-    this.addModifier(context, ATTRIBUTE_CODE.defense, -params.defensePenalty, ModifierType.MULTIPLICATIVE)
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.defense,
+      -params.defensePenalty,
+      ModifierType.MULTIPLICATIVE,
+    )
 
     // ponytail: 运行时状态——currentAttackBonus 供 _onRefresh 读取
     context.setVariable('currentAttackBonus', params.attackBonus)
@@ -88,10 +108,14 @@ export class BerserkBuff extends BaseBuffScript {
   protected _onUpdate(context: BuffContext, _deltaTime: number): void {
     const params = this.resolveParams(context)
     const interval = params.selfDamageInterval
-    const turnsSince = (context.getVariable<number>('turnsSinceSelfDamage') ?? 0) + 1
+    const turnsSince =
+      (context.getVariable<number>('turnsSinceSelfDamage') ?? 0) + 1
 
     if (turnsSince >= interval) {
-      this.log(context, `💢 狂暴的代价：损失 ${(params.selfDamagePercent * 100).toFixed(0)}% 当前生命值`)
+      this.log(
+        context,
+        `💢 狂暴的代价：损失 ${(params.selfDamagePercent * 100).toFixed(0)}% 当前气血值`,
+      )
       // 通过百分比伤害回调造成自残
       this.triggerEvent(context, SkillStepType.DEAL_DAMAGE, {
         damagePercent: params.selfDamagePercent,
@@ -110,28 +134,46 @@ export class BerserkBuff extends BaseBuffScript {
     this.log(context, '⚡ 狂暴之力进一步增强！')
 
     const params = this.resolveParams(context)
-    const currentAttack = context.getVariable<number>('currentAttackBonus') ?? params.attackBonus
-    const currentCrit = context.getVariable<number>('currentCritRateBonus') ?? params.critRateBonus
+    const currentAttack =
+      context.getVariable<number>('currentAttackBonus') ?? params.attackBonus
+    const currentCrit =
+      context.getVariable<number>('currentCritRateBonus') ??
+      params.critRateBonus
 
     const newAttack = currentAttack + params.refreshAttackBonus
     const newCrit = currentCrit + params.refreshCritRateBonus
 
     // ponytail: 增量叠加——只增加 refresh 部分，原有修饰符不变
-    this.addModifier(context, ATTRIBUTE_CODE.attack, params.refreshAttackBonus, ModifierType.ADDITIVE)
-    this.addModifier(context, ATTRIBUTE_CODE.critRate, params.refreshCritRateBonus, ModifierType.ADDITIVE)
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      params.refreshAttackBonus,
+      ModifierType.ADDITIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.critRate,
+      params.refreshCritRateBonus,
+      ModifierType.ADDITIVE,
+    )
 
     context.setVariable('currentAttackBonus', newAttack)
     context.setVariable('currentCritRateBonus', newCrit)
 
-    this.log(context, `✨ 攻击力额外 +${params.refreshAttackBonus}，暴击率 +${(params.refreshCritRateBonus * 100).toFixed(0)}%`)
+    this.log(
+      context,
+      `✨ 攻击力额外 +${params.refreshAttackBonus}，暴击率 +${(params.refreshCritRateBonus * 100).toFixed(0)}%`,
+    )
   }
 
   public getEffectLines(context: BuffContext): BuffEffectLine[] {
     const params = this.resolveParams(context)
-    return [{
-      text: `每 ${params.selfDamageInterval} 回合损失 ${(params.selfDamagePercent * 100).toFixed(0)}% 当前生命值`,
-      kind: 'dot',
-    }]
+    return [
+      {
+        text: `每 ${params.selfDamageInterval} 回合损失 ${(params.selfDamagePercent * 100).toFixed(0)}% 当前气血值`,
+        kind: 'dot',
+      },
+    ]
   }
 
   // ==================== 辅助方法 ====================
@@ -140,7 +182,9 @@ export class BerserkBuff extends BaseBuffScript {
    * 解析参数：优先从 context.config.parameters 读取，否则使用 DEFAULT_PARAMS。
    * 允许 JSON 或技能配置在 parameters 中覆写单个参数值。
    */
-  private resolveParams(context: BuffContext): typeof BerserkBuff.DEFAULT_PARAMS {
+  private resolveParams(
+    context: BuffContext,
+  ): typeof BerserkBuff.DEFAULT_PARAMS {
     const get = <K extends keyof typeof BerserkBuff.DEFAULT_PARAMS>(key: K) =>
       this.getConfigValue(context, key, BerserkBuff.DEFAULT_PARAMS[key])
 

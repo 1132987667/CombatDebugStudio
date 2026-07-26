@@ -1,5 +1,5 @@
-import { ATTRIBUTE_CODE, AttributeCodeNames } from '@/domain/attribute/types'
-import type { CombatRecord } from '@/domain/battle/combat-record'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { EffectRenderer, type RenderContext } from '@/domain/battle/logs/EffectRenderer'
 import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
 import {
   BATTLE_CONSTANTS,
@@ -8,6 +8,7 @@ import {
   PARTICIPANT_SIDE,
   type PassiveTriggerContext,
   type BattleEntity,
+  type BattleEffect,
 } from '@/domain/battle/type/types'
 import { createStepContext } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -15,12 +16,15 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { resolveSkillTargets } from '@/domain/skill/target-resolver'
 import type { SkillConfig } from '@/domain/skill/types'
-import { SkillStepType } from '@/domain/skill/types'
 import {
   BATTLE_LOG_CATEGORIES,
   LogLevel,
+  type LogSegment,
 } from '@/shared/types/battle-log'
+import { EffectType } from '@/shared/types/effect'
 import { createTraceLogEntry } from '@/shared/types/trace-log'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
+import { eventBus } from '@/infrastructure/adapters/event/EventBus'
 
 export interface PassiveSkillConfig {
   id: string
@@ -60,6 +64,9 @@ export class PassiveSkillManager {
   /** 可选的 TraceLogCollector */
   private traceCollector?: TraceLogCollector
   private traceCounter = 0
+
+  /** EffectRenderer — 结构化效果 → LogSegment 渲染 */
+  private effectRenderer = new EffectRenderer()
 
   setTraceCollector(c: TraceLogCollector): void {
     this.traceCollector = c
@@ -104,7 +111,10 @@ export class PassiveSkillManager {
     config: PassiveSkillConfig,
     entity: BattleEntity,
     contextTarget?: BattleEntity,
-    context: PassiveTriggerContext = { phase: BattleTriggerPhase.BATTLE_START, currentTurn: 0 },
+    context: PassiveTriggerContext = {
+      phase: BattleTriggerPhase.BATTLE_START,
+      currentTurn: 0,
+    },
   ): boolean {
     if (config.trigger !== context.phase) return false
     // 检查冷却时间是否到，config.cooldown = -1 表示无冷却
@@ -147,10 +157,7 @@ export class PassiveSkillManager {
    * - 所有触发类型统一先尝试根据技能 selector 从参与者中解析目标（与主动技能一致）
    * - 当无参与者映射或无 selector 时，回退到 context.target（事件的另一方）或施法者自身
    */
-  triggerPassives(
-    entity: BattleEntity,
-    context: PassiveTriggerContext,
-  ): void {
+  triggerPassives(entity: BattleEntity, context: PassiveTriggerContext): void {
     const characterPassives = this.passives.get(entity.id)
     if (!characterPassives) return
 
@@ -163,14 +170,7 @@ export class PassiveSkillManager {
 
     for (const config of characterPassives) {
       // 检查触发时机是否匹配
-      if (
-        !this.shouldTriggerPassive(
-          config,
-          entity,
-          contextTarget,
-          context,
-        )
-      )
+      if (!this.shouldTriggerPassive(config, entity, contextTarget, context))
         continue
 
       let targets: BattleEntity[]
@@ -205,12 +205,14 @@ export class PassiveSkillManager {
         )
         continue
       }
-      hasExecuted = this.executePassiveSkill(
+
+      const result = this.executePassiveSkill(
         skillConfig,
         entity,
         targets,
         context,
       )
+      hasExecuted = result.executed
 
       // ponytail: 仅在确实执行了有效步骤后才累加冷却和计数
       if (hasExecuted) {
@@ -218,24 +220,10 @@ export class PassiveSkillManager {
         config.triggerCount = (config.triggerCount || 0) + 1
       }
 
-      // ponytail: 被动触发日志 — 简洁格式：被动名 + 效果摘要
-      const configName = config.name || config.skillId
-      const effectSummary = this.buildPassiveEffectSummary(skillConfig, targets, context)
-
-      LoggerProvider.logger.addBattleLog({
-        turn: context.currentTurn,
-        message: `${configName}  ${effectSummary}`,
-        segments: [
-          { text: configName, classStr: 'log-passive', kind: 'passive', hover: { kind: 'passive', id: config.skillId } },
-          { text: `  ${effectSummary}` },
-        ],
-        category: BATTLE_LOG_CATEGORIES.STATUS,
-        meta: { role: 'sub' },
-      })
-
       // TraceLogCollector 输出
       if (this.traceCollector && hasExecuted) {
         this.traceCounter++
+        const configName = config.name || config.skillId
         const traceId = `pas_${this.traceCounter}_${Date.now()}`
         this.traceCollector.add({
           ...createTraceLogEntry(
@@ -274,16 +262,25 @@ export class PassiveSkillManager {
     source: BattleEntity,
     targets: BattleEntity[],
     context: PassiveTriggerContext,
-  ): boolean {
+  ): { executed: boolean; totalDamage: number } {
     const steps = config.steps
-    if (!steps || steps.length === 0) return true // ponytail: 无步骤=无需执行，不算失败
-    if (targets.length === 0) return true // ponytail: 无目标=无需执行，不算失败
+    if (!steps || steps.length === 0) return { executed: true, totalDamage: 0 }
+    if (targets.length === 0) return { executed: true, totalDamage: 0 }
+
+    // ★ 1. 捕获执行前的 气血 快照
+    const hpSnapshots = new Map<string, { before: number; after: number }>()
+    const allEntities = [source, ...targets]
+    for (const entity of allEntities) {
+      hpSnapshots.set(entity.id, { before: entity.currentHealth, after: 0 })
+    }
 
     const executor = this.skillManager.getExecutor()
     let anyExecuted = false
+    let totalDamage = 0
+    const allEffects: BattleEffect[] = []
 
     // ponytail: 被动技能发射 SKILL_USE 事件，使依赖此事件的被动可以连锁
-    const targetsIds = targets.map(t => t.id)
+    const targetsIds = targets.map((t) => t.id)
     this.buffSystem.getEventBus().emit(BattleTriggerPhase.SKILL_USE, {
       phase: BattleTriggerPhase.SKILL_USE,
       sourceId: source.id,
@@ -292,6 +289,7 @@ export class PassiveSkillManager {
       extra: { skillId: config.id },
     })
 
+    // ★ 2. 执行步骤 (SkillExecutor 产出结构化 effects)
     for (const target of targets) {
       // ponytail: 跳过已死亡目标，被动技能不应对死尸生效
       if (!target.isAlive()) continue
@@ -307,7 +305,13 @@ export class PassiveSkillManager {
 
       for (const step of steps) {
         try {
-          executor.executeStep(step, action, source, target, createStepContext(undefined, undefined, true))
+          executor.executeStep(
+            step,
+            action,
+            source,
+            target,
+            createStepContext(undefined, undefined, true, context.damage),
+          )
           anyExecuted = true
         } catch (err) {
           LoggerProvider.logger.addDebugLog(
@@ -317,95 +321,119 @@ export class PassiveSkillManager {
           // ponytail: 单步失败不中断后续步骤
         }
       }
+
+      // 收集该目标的所有效果
+      allEffects.push(...action.effects)
+      totalDamage += action.damage ?? 0
     }
 
-    return anyExecuted
+    // ★ 3. 捕获执行后的 气血 快照
+    for (const [id] of hpSnapshots) {
+      let entity: BattleEntity | undefined
+      if (id === source.id) {
+        entity = source
+      } else {
+        entity = targets.find((t) => t.id === id)
+      }
+      if (entity) {
+        hpSnapshots.set(id, { before: hpSnapshots.get(id)!.before, after: entity.currentHealth })
+      }
+    }
+
+    // ★ 4. 构建渲染上下文
+    const renderCtx: RenderContext = {
+      source,
+      targets,
+      getEntityName: (id: string) => {
+        if (id === source.id) return source.name
+        const t = targets.find((e) => e.id === id)
+        if (t) return t.name
+        if (context.participants) {
+          const p = context.participants.get(id)
+          if (p) return p.name
+        }
+        return id
+      },
+      hpSnapshots,
+    }
+
+    // ★ 5. 渲染日志片段
+    const segments = allEffects.length > 0
+      ? this.effectRenderer.render(allEffects, renderCtx)
+      : []
+
+    // ★ 6. 输出日志
+    const configName = config.name || config.id
+    const passiveNameSeg = {
+      text: configName,
+      classStr: 'log-passive' as const,
+      kind: 'passive' as const,
+      hover: { kind: 'passive' as const, id: config.id },
+    }
+    const logSegments = segments.length > 0
+      ? [passiveNameSeg, { text: '  ' }, ...segments]
+      : [passiveNameSeg, { text: '  生效' }]
+
+    LoggerProvider.logger.addBattleLog({
+      turn: context.currentTurn,
+      message: logSegments.map(s => s.text).join(''),
+      segments: logSegments,
+      category: BATTLE_LOG_CATEGORIES.STATUS,
+      meta: { role: 'sub' },
+    })
+
+    // ★ 7. 统一发射动画
+    this.emitAnimations(allEffects, hpSnapshots)
+
+    return { executed: anyExecuted, totalDamage }
+  }
+
+  /**
+   * 统一发射动画 — 匹配规范定义的动画事件
+   */
+  private emitAnimations(
+    effects: BattleEffect[],
+    snapshots: Map<string, { before: number; after: number }>,
+  ): void {
+    for (const effect of effects) {
+      if (!effect.targetId) continue
+
+      if (effect.type === EffectType.DAMAGE || effect.type === EffectType.REFLECT) {
+        eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+          targetId: effect.targetId,
+          damage: effect.damage || 0,
+          damageCategory: 'physical',
+          isCritical: effect.isCritical || false,
+          isHeal: false,
+        })
+      } else if (effect.type === EffectType.HEAL || effect.type === EffectType.DRAIN) {
+        // 吸血需要发射两个动画：目标受击，自身回血
+        if (effect.type === EffectType.DRAIN) {
+          eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+            targetId: effect.targetId,
+            damage: effect.damage || 0,
+            damageCategory: 'physical',
+            isCritical: false,
+            isHeal: false,
+          })
+        }
+        if (effect.heal && effect.heal > 0 && effect.sourceId) {
+          eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+            targetId: effect.sourceId,
+            damage: effect.heal,
+            damageCategory: 'physical',
+            isCritical: false,
+            isHeal: true,
+          })
+        }
+      }
+    }
   }
 
   /**
    * 构建被动技能效果摘要文本
    * 从技能配置的 steps 中提取效果描述，用于被动触发日志显示
    */
-  private buildPassiveEffectSummary(
-    config?: SkillConfig,
-    targets?: BattleEntity[],
-    context?: PassiveTriggerContext,
-  ): string {
-    if (!config) return ''
-    const parts: string[] = []
-    const steps = config.steps || []
-
-    for (const step of steps) {
-      switch (step.type) {
-        case SkillStepType.GAIN_ENERGY: {
-          const val = step.parameters?.value ?? 0
-          if (val > 0) parts.push(`能量 +${val}`)
-          break
-        }
-        case SkillStepType.APPLY_BUFF: {
-          const buffId = step.buffId ?? step.effectId
-          if (buffId) {
-            const buffConfig = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
-            if (buffConfig?.attributes) {
-              for (const [attr, valStr] of Object.entries(buffConfig.attributes)) {
-                const cn = (AttributeCodeNames as Record<string, string>)[attr] ?? attr
-                const num = parseFloat(valStr)
-                if (isNaN(num)) continue
-                const pct = Math.abs(valStr.includes('%') ? num : (Math.abs(num) < 1 ? num * 100 : num))
-                const arrow = num >= 0 ? '↑' : '↓'
-                const maxStacks = step.stacks ?? buffConfig.maxStacks ?? 1
-                // 查目标实体上该 buff 的当前实际层数
-                let currentStacks = 0
-                if (targets && targets.length > 0) {
-                  for (const t of targets) {
-                    if (typeof t.getBuffInstanceIds === 'function') {
-                      const ids = t.getBuffInstanceIds()
-                      for (const instanceId of ids) {
-                        const instance = this.buffSystem.getBuffInstanceById(instanceId)
-                        if (instance?.buffId === buffId && instance.currentStacks > currentStacks) {
-                          currentStacks = instance.currentStacks
-                        }
-                      }
-                    }
-                  }
-                }
-                const stackDisplay = currentStacks > 0
-                  ? `（${currentStacks}/${maxStacks}层）`
-                  : `（${maxStacks}层）`
-                parts.push(`${cn}${arrow}${Math.round(pct)}%${stackDisplay}`)
-              }
-            } else {
-              parts.push(buffConfig?.name ?? buffId)
-            }
-          }
-          break
-        }
-        case SkillStepType.DEAL_DAMAGE: {
-          const dmg = context?.damage ?? 0
-          if (dmg > 0) parts.push(`追加 ${dmg} 点伤害`)
-          break
-        }
-        case SkillStepType.MODIFY_ATTRIBUTE: {
-          for (const mod of step.modifiers || []) {
-            const cn = (AttributeCodeNames as Record<string, string>)[mod.targetAttribute] ?? mod.targetAttribute
-            const arrow = mod.value >= 0 ? '↑' : '↓'
-            parts.push(`${cn}${arrow}${Math.abs(mod.value)}%`)
-          }
-          break
-        }
-        case SkillStepType.HEAL: {
-          const heal = context?.heal ?? 0
-          if (heal > 0) parts.push(`恢复 ${heal} HP`)
-          break
-        }
-        default:
-          break
-      }
-    }
-
-    return parts.join(' · ') || '生效'
-  }
-
   private evaluateCondition(
     condition: string,
     source: BattleEntity,

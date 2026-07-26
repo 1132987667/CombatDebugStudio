@@ -11,7 +11,9 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 export class InterventionManager {
   private battleSystem: BattleSystem
   private battleStateManager: BattleStateManager
-  private get logger() { return LoggerProvider.logger }
+  private get logger() {
+    return LoggerProvider.logger
+  }
   private selectedCharacterId: string | null = null
   private selectedChar: BattleEntity | null = null
 
@@ -155,7 +157,7 @@ export class InterventionManager {
         source: '系统',
         action: '调整属性',
         target: this.selectedChar.name,
-        message: `HP:${stats.hp}, 能量:${stats.energy}`,
+        message: `气血:${stats.hp}, 能量:${stats.energy}`,
       })
     }
   }
@@ -221,7 +223,7 @@ export class InterventionManager {
         // 例如：
         // this.battleStateManager.initializeTeams(state.battleCharacters, state.enemyParty);
 
-        this.logger.addSystemLog({message: '战斗状态已导入'})
+        this.logger.addSystemLog({ message: '战斗状态已导入' })
         return true
       } else {
         this.logger.addDebugLog('没有找到保存的战斗状态')

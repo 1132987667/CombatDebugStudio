@@ -7,7 +7,10 @@
 
 import { computed, type ComputedRef } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
-import type { AttributeValue, CalculationBreakdown } from '@/domain/attribute/types'
+import type {
+  AttributeValue,
+  CalculationBreakdown,
+} from '@/domain/attribute/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /**
@@ -36,9 +39,9 @@ export interface UseParticipantStatsReturn {
   getAttribute: (type: ATTRIBUTE_CODE) => AttributeValue | undefined
   /** 获取计算拆解 */
   getBreakdown: (type: ATTRIBUTE_CODE) => CalculationBreakdown | null
-  /** 当前生命值 */
+  /** 当前气血值 */
   currentHealth: ComputedRef<FormattedAttribute>
-  /** 最大生命值 */
+  /** 最大气血值 */
   maxHealth: ComputedRef<FormattedAttribute>
   /** 能量 */
   energy: ComputedRef<FormattedAttribute>
@@ -191,7 +194,7 @@ export type CombatStatType =
  */
 export function getStatName(type: CombatStatType): string {
   const names: Record<CombatStatType, string> = {
-    currentHealth: '生命',
+    currentHealth: '气血',
     energy: '能量',
     attack: '攻击',
     defense: '防御',

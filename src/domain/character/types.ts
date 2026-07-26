@@ -22,9 +22,9 @@ export interface CharacterStats {
   name: string
   /** 角色等级 */
   level: number
-  /** 当前生命值 */
+  /** 当前气血值 */
   currentHp: number
-  /** 最大生命值 */
+  /** 最大气血值 */
   maxHp: number
   /** 当前魔法值 */
   currentEnergy: number
@@ -46,7 +46,7 @@ export interface CharacterStats {
   evade: number
   /** 吸血 */
   lifeSteal: number
-  /** 生命回复 */
+  /** 气血回复 */
   regeneration: number
   /** 魔法回复 */
   manaRegen: number

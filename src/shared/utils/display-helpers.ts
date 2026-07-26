@@ -44,7 +44,7 @@ export function getItemTypeText(type: string): string {
 // ───── 效果类型 ─────
 
 export const effectTypeLabels: Record<string, string> = {
-  [EffectType.HEAL]: '生命恢复',
+  [EffectType.HEAL]: '气血恢复',
   [EffectType.BUFF]: '增益效果',
   [EffectType.DAMAGE]: '伤害',
   mpRestore: '能量恢复',
@@ -61,7 +61,7 @@ export const statLabels: Record<string, string> = {
   attack: '攻击力',
   defense: '防御力',
   speed: '速度',
-  health: '生命值',
+  health: '气血值',
   critRate: '暴击率',
   critDamage: '暴击伤害',
   physicalDamage: '物理伤害',

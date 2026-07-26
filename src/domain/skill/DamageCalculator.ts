@@ -29,6 +29,10 @@ export interface DamageCalculationConfig {
 
 export interface DamageResult {
   damage: number
+  /** 减免前伤害（Pre-mitigation Damage）。
+   *  定义：经过来源方加成、暴击倍率计算后，但尚未扣除目标防御、抗性、免伤率的伤害值。
+   *  用途：供"荆棘/反伤"等基于攻击方原始威力的触发器使用（模型二）。 */
+  rawDamage: number
   isCritical: boolean
   isMiss: boolean
   actualDamage: number
@@ -113,20 +117,26 @@ export class DamageCalculator {
       damage: 0,
       isCritical: false,
       isMiss: false,
+      rawDamage: 0,
       actualDamage: 0,
     }
 
+    // ★ 检测必暴标记：必暴意味着必中+必暴
+    const hasGuaranteedCrit = typeof source.hasBuff === 'function' && source.hasBuff('buff_guaranteed_crit')
+
     // 命中/闪避判定 — 默认命中率100%，减去目标闪避率
-    const hitRate = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hit)
-    const dodgeRate = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodge)
-    let actualHitRate = hitRate - dodgeRate
-    if (actualHitRate < 0) {
-      actualHitRate = 0
-    }
-    if (Math.random() * 100 > actualHitRate) {
-      isMiss = true
-      damageResult.isMiss = true
-      return damageResult
+    if (!hasGuaranteedCrit) {
+      const hitRate = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hit)
+      const dodgeRate = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodge)
+      let actualHitRate = hitRate - dodgeRate
+      if (actualHitRate < 0) {
+        actualHitRate = 0
+      }
+      if (Math.random() * 100 > actualHitRate) {
+        isMiss = true
+        damageResult.isMiss = true
+        return damageResult
+      }
     }
 
     // 暴击判定
@@ -134,7 +144,7 @@ export class DamageCalculator {
     if (Number.isNaN(cr)) {
       cr = getAttributeDefaultValue(ATTRIBUTE_CODE.critRate)
     }
-    if (this.config.enableCrit && Math.random() * 100 < cr) {
+    if (hasGuaranteedCrit || (this.config.enableCrit && Math.random() * 100 < cr)) {
       damageResult.isCritical = true
     }
 
@@ -518,6 +528,9 @@ export class DamageCalculator {
     // 确保非负整数
     damage = Math.max(0, Math.floor(damage))
 
+    // NOTE: 捕获减免前伤害（暴击后、防御前），用于荆棘/反伤等基于原始威力的触发器
+    const rawDamage = breakdown.postCritDamage
+
     breakdown.finalDamage = damage
     breakdown.steps.push({
       stepName: 'final',
@@ -537,6 +550,7 @@ export class DamageCalculator {
 
     return {
       damage: actualDamage,
+      rawDamage,
       isCritical: damageResult.isCritical,
       isMiss,
       actualDamage,

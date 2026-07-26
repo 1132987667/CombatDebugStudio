@@ -116,7 +116,7 @@ const getDefaultDescription = (item: CompendiumItem): string => {
     'mat_003': '从冰魄中采集的晶体，可用于制作冰系装备。',
     'weapon_001': '铁匠打造的制式长剑，剑身锋利，适合初学者使用。',
     'armor_001': '由精铁打造的护甲，具备基本的防护能力。',
-    'potion_001': '恢复少量生命值的药水，战斗中的必备品。'
+    'potion_001': '恢复少量气血值的药水，战斗中的必备品。'
   }
   return descriptions[item.id] || `${item.name}是一种有用的物品。`
 }

@@ -66,15 +66,12 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     return false
   }
 
-  // ==================== 生命周期实现 ====================
+  // ==================== 气血周期实现 ====================
 
   protected _onApply(context: BuffContext): void {
     const modifiers = this.getModifiers()
     this.applyModifiers(context, false, modifiers)
-    this.log(
-      context,
-      `√ 效果生效，应用了 ${modifiers.length} 个属性修饰符`,
-    )
+    this.log(context, `√ 效果生效，应用了 ${modifiers.length} 个属性修饰符`)
   }
 
   protected _onRemove(context: BuffContext): void {
@@ -96,10 +93,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     if (this.shouldReapplyOnRefresh()) {
       const modifiers = this.getModifiers()
       this.applyModifiers(context, true, modifiers)
-      this.log(
-        context,
-        `刷新效果，重新应用了 ${modifiers.length} 个修饰符`,
-      )
+      this.log(context, `刷新效果，重新应用了 ${modifiers.length} 个修饰符`)
     }
   }
 
@@ -128,8 +122,13 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
 
     for (const mod of modifiers) {
       // NOTE: 运行时校验——仅接受已知 ATTRIBUTE_CODE，非法属性跳过并 warn
-      if (!Object.values(ATTRIBUTE_CODE).includes(mod.attribute as ATTRIBUTE_CODE)) {
-        this.log(context, `修饰符属性 "${mod.attribute}" 不在 ATTRIBUTE_CODE 中，已跳过`)
+      if (
+        !Object.values(ATTRIBUTE_CODE).includes(mod.attribute as ATTRIBUTE_CODE)
+      ) {
+        this.log(
+          context,
+          `修饰符属性 "${mod.attribute}" 不在 ATTRIBUTE_CODE 中，已跳过`,
+        )
         continue
       }
 
@@ -153,7 +152,13 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
       for (const mod of modifiers) {
         const rawVal =
           typeof mod.value === 'function'
-            ? (() => { try { return mod.value(context) } catch { return NaN } })()
+            ? (() => {
+                try {
+                  return mod.value(context)
+                } catch {
+                  return NaN
+                }
+              })()
             : mod.value
         this.log(
           context,

@@ -7,17 +7,32 @@ export class MountainGodBuff extends BaseBuffScript {
 
   protected _onApply(context: BuffContext): void {
     this.log(context, '山神降临！获得强大的力量')
-    
+
     // 添加攻击力和防御力提升
     const attackBonus = this.getConfigValue(context, 'attackBonus', 50)
     const defenseBonus = this.getConfigValue(context, 'defenseBonus', 30)
-    
-    this.addModifier(context, ATTRIBUTE_CODE.attack, attackBonus, ModifierType.ADDITIVE)
-    this.addModifier(context, ATTRIBUTE_CODE.defense, defenseBonus, ModifierType.ADDITIVE)
-    
+
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      attackBonus,
+      ModifierType.ADDITIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.defense,
+      defenseBonus,
+      ModifierType.ADDITIVE,
+    )
+
     // 添加暴击率提升
-    this.addModifier(context, ATTRIBUTE_CODE.critRate, 0.1, ModifierType.ADDITIVE)
-    
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.critRate,
+      0.1,
+      ModifierType.ADDITIVE,
+    )
+
     context.setVariable('initialAttackBonus', attackBonus)
   }
 
@@ -26,11 +41,11 @@ export class MountainGodBuff extends BaseBuffScript {
   }
 
   protected _onUpdate(context: BuffContext, deltaTime: number): void {
-    // 每秒钟恢复少量生命值
+    // 每秒钟恢复少量气血值
     const elapsed = context.getElapsedTime()
     if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
       const regeneration = this.getConfigValue(context, 'regeneration', 5)
-      this.log(context, `山神的祝福：恢复 ${regeneration} 生命值`)
+      this.log(context, `山神的祝福：恢复 ${regeneration} 气血值`)
       this.triggerEvent(context, SkillStepType.HEAL, {
         amount: regeneration,
       })
@@ -39,13 +54,18 @@ export class MountainGodBuff extends BaseBuffScript {
 
   protected _onRefresh(context: BuffContext): void {
     this.log(context, '山神之力得到强化！')
-    
+
     // 刷新时增加额外的攻击力
     const refreshBonus = this.getConfigValue(context, 'refreshBonus', 10)
-    
-    this.addModifier(context, ATTRIBUTE_CODE.attack, refreshBonus, ModifierType.ADDITIVE)
-    
-    this.log(context, `获得额外 ${refreshBonus} 攻击力`)    
+
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      refreshBonus,
+      ModifierType.ADDITIVE,
+    )
+
+    this.log(context, `获得额外 ${refreshBonus} 攻击力`)
   }
 }
 

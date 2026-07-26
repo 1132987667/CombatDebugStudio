@@ -14,15 +14,15 @@ export type ItemType = (typeof ItemType)[keyof typeof ItemType]
  * 装备槽位枚举
  */
 export const EquipmentSlot = {
-  WEAPON : 'weapon', // 武器
-  ARMOR : 'armor', // 护甲
-  ACCESSORY : 'accessory', // 饰品
-  HELM : 'helm', // 头盔
-  BOOTS : 'boots', // 鞋子
-  RING : 'ring', // 戒指
-  NECKLACE : 'necklace', // 项链
-  BRACELET : 'bracelet', // 手镯
-  BELT : 'belt', // 腰带
+  WEAPON: 'weapon', // 武器
+  ARMOR: 'armor', // 护甲
+  ACCESSORY: 'accessory', // 饰品
+  HELM: 'helm', // 头盔
+  BOOTS: 'boots', // 鞋子
+  RING: 'ring', // 戒指
+  NECKLACE: 'necklace', // 项链
+  BRACELET: 'bracelet', // 手镯
+  BELT: 'belt', // 腰带
 }
 export type EquipmentSlot = (typeof EquipmentSlot)[keyof typeof EquipmentSlot]
 
@@ -31,7 +31,7 @@ export type EquipmentSlot = (typeof EquipmentSlot)[keyof typeof EquipmentSlot]
  * 用于消耗品或特殊物品
  */
 export interface ItemEffect {
-  /** 效果类型：如 heal（恢复生命）、mpRestore（恢复能量）、buff（施加增益）等 */
+  /** 效果类型：如 heal（恢复气血）、mpRestore（恢复能量）、buff（施加增益）等 */
   type: string
   /** 效果数值 */
   value: number
@@ -52,7 +52,7 @@ export interface EquipmentStats {
   defense?: number
   /** 速度加成（可选） */
   speed?: number
-  /** 生命值加成（可选） */
+  /** 气血值加成（可选） */
   health?: number
   /** 暴击率加成（可选，百分比） */
   critRate?: number

@@ -207,7 +207,7 @@
         "healthBonus": 1.3,
         "attackBonus": 1.2
       },
-      "description": "灵山祝福，每回合为所有友方单位恢复生命值"
+      "description": "灵山祝福，每回合为所有友方单位恢复气血值"
     }
   ]
 }

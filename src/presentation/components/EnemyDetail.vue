@@ -62,7 +62,8 @@
             <div class="skill-header">
               <span class="skill-name">{{ skill.name }}</span>
               <div class="skill-meta">
-                <span class="skill-tag category-tag" :style="{ color: group.color, borderColor: group.color }">{{ group.label }}</span>
+                <span class="skill-tag category-tag" :style="{ color: group.color, borderColor: group.color }">{{
+                  group.label }}</span>
                 <span class="skill-tag passive">被动</span>
               </div>
             </div>
@@ -119,14 +120,14 @@ import { formatTargetConfig } from '@/domain/skill/types'
 
 /** 被动分类展示配置：优先级从高到低 */
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: number }> = {
-  aura:      { label: '光环',   color: '#34d399', priority: 0 },
-  trigger:   { label: '触发',   color: '#a78bfa', priority: 1 },
-  heal:      { label: '治疗',   color: '#f472b6', priority: 2 },
-  immunity:  { label: '免疫',   color: '#fbbf24', priority: 3 },
-  summon:    { label: '召唤',   color: '#fb923c', priority: 4 },
-  dot:       { label: '持续',   color: '#f87171', priority: 5 },
-  shield:    { label: '护盾',   color: '#22d3ee', priority: 6 },
-  attribute: { label: '属性',   color: '#60a5fa', priority: 7 },
+  aura: { label: '光环', color: '#34d399', priority: 0 },
+  trigger: { label: '触发', color: '#a78bfa', priority: 1 },
+  heal: { label: '治疗', color: '#f472b6', priority: 2 },
+  immunity: { label: '免疫', color: '#fbbf24', priority: 3 },
+  summon: { label: '召唤', color: '#fb923c', priority: 4 },
+  dot: { label: '持续', color: '#f87171', priority: 5 },
+  shield: { label: '护盾', color: '#22d3ee', priority: 6 },
+  attribute: { label: '属性', color: '#60a5fa', priority: 7 },
 }
 
 const UNCATEGORIZED = { label: '未分类', color: '#94a3b8', priority: 99 }
@@ -200,7 +201,7 @@ const getItemName = (itemId: string): string => {
   if (item) return item.name
 
   const knownItems: Record<string, string> = {
-    'elix_001': '生命精华',
+    'elix_001': '气血精华',
     'elix_002': '能量精华',
     'elix_003': '速度精华',
     'elix_004': '防御精华',

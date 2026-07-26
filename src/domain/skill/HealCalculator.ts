@@ -41,11 +41,17 @@ export class HealCalculator {
       // extraValues 处理
       if (skillStep.calculation.extraValues) {
         for (const extra of skillStep.calculation.extraValues) {
-          const attrValue = this.getAttrValue(
-            source,
-            extra.attribute as ATTRIBUTE_CODE,
-          )
-          const extraValue = attrValue * extra.ratio
+          let extraValue: number
+          if (
+            extra.attribute === 'damageDealt' ||
+            extra.attribute === 'damageTaken'
+          ) {
+            extraValue = (context?.damage ?? 0) * extra.ratio
+          } else {
+            extraValue =
+              this.getAttrValue(source, extra.attribute as ATTRIBUTE_CODE) *
+              extra.ratio
+          }
           heal += extraValue
           this.logCalculation(
             'extra_value',
@@ -74,7 +80,7 @@ export class HealCalculator {
       })
     }
 
-    // 治疗上限: 不超过目标最大生命值
+    // 治疗上限: 不超过目标最大气血值
     const maxHp = target.getAttribute(ATTRIBUTE_CODE.maxHealth)
     const currentHp = target.getAttribute(ATTRIBUTE_CODE.currentHealth)
     const healCap = Math.max(0, maxHp - currentHp)
@@ -146,7 +152,7 @@ export class HealCalculator {
       return 0
     }
     if (target.isFullHealth()) {
-      LoggerProvider.logger.addDebugLog('目标生命值已满，无需治疗')
+      LoggerProvider.logger.addDebugLog('目标气血值已满，无需治疗')
       return 0
     }
     const actualHeal = target.heal(heal)

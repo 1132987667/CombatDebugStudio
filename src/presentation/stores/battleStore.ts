@@ -1,9 +1,24 @@
 import type { BattleService } from '@/application/facade/BattleFacade'
-import type { BattleAction, BattleEntity, BattleState } from '@/domain/battle/type/types'
+import type {
+  BattleAction,
+  BattleEntity,
+  BattleState,
+} from '@/domain/battle/type/types'
 import { BattleStatus, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
-import { BattleEventCode, BattleEventCodes, BattleEventName, BattleLogEventData, BattleEndedEventData, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData, AnimationCompleteEventData } from '@/domain/battle/type/BattleEventType'
+import {
+  BattleEventCode,
+  BattleEventCodes,
+  BattleEventName,
+  BattleLogEventData,
+  BattleEndedEventData,
+  DamageEventData,
+  BuffEffectEventData,
+  MissEventData,
+  SkillEffectEventData,
+  AnimationCompleteEventData,
+} from '@/domain/battle/type/BattleEventType'
 import type { UIParticipantSnapshot } from '@/shared/types/projection'
 import type {
   BattleLogCategory,
@@ -181,10 +196,18 @@ export const useBattleStore = defineStore('battle', () => {
   const syncTeams = () => {
     // 用 shallowReactive 包装参与者，使 Vue computed 能追踪场内属性变更（如 statsVersion）。
     // 原始对象由 BattleSystem 管理并通过事件告知 UI 层，proxy 确保修改走 Vue 响应式系统。
-    allyTeam.value = battleService.value!.getEnabledAllyTeam().map(p => shallowReactive(p))
-    enemyTeam.value = battleService.value!.getEnabledEnemyTeam().map(p => shallowReactive(p))
-    fullAllyTeam.value = battleService.value!.getAllyTeam().map(p => shallowReactive(p))
-    fullEnemyTeam.value = battleService.value!.getEnemyTeam().map(p => shallowReactive(p))
+    allyTeam.value = battleService
+      .value!.getEnabledAllyTeam()
+      .map((p) => shallowReactive(p))
+    enemyTeam.value = battleService
+      .value!.getEnabledEnemyTeam()
+      .map((p) => shallowReactive(p))
+    fullAllyTeam.value = battleService
+      .value!.getAllyTeam()
+      .map((p) => shallowReactive(p))
+    fullEnemyTeam.value = battleService
+      .value!.getEnemyTeam()
+      .map((p) => shallowReactive(p))
     currentTurn.value = battleService.value!.getCurrentTurn()
     maxTurns.value = battleService.value!.getMaxTurns?.() ?? 999
     const battleState = battleService.value!.getBattleState()
@@ -250,8 +273,7 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /** 处理回合结束事件 */
-  const handleTurnEndEvent = () => {
-  }
+  const handleTurnEndEvent = () => {}
 
   /** 处理伤害动画事件（触发伤害数字飘字效果） */
   const handleDamageAnimationEvent = (data: DamageEventData) =>
@@ -300,14 +322,18 @@ export const useBattleStore = defineStore('battle', () => {
   const handleAttributeChanged = (data: { characterId: string }) => {
     const id = data.characterId
     // ponytail: 从当前 proxy 数组中找到目标，调用其 recalculateAll 走 proxy set trap
-    const proxy = allyTeam.value.find(p => p.id === id)
-      ?? enemyTeam.value.find(p => p.id === id)
-      ?? fullAllyTeam.value.find(p => p.id === id)
-      ?? fullEnemyTeam.value.find(p => p.id === id)
+    const proxy =
+      allyTeam.value.find((p) => p.id === id) ??
+      enemyTeam.value.find((p) => p.id === id) ??
+      fullAllyTeam.value.find((p) => p.id === id) ??
+      fullEnemyTeam.value.find((p) => p.id === id)
     proxy?.recalculateAll()
   }
 
-  events.set(BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED, handleAttributeChanged)
+  events.set(
+    BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED,
+    handleAttributeChanged,
+  )
   events.set(BattleEventCodes.TEAM_DATA_CHANGED, syncTeams)
   /** 需要清理的事件码列表（用于组件卸载时移除监听器） */
   const cleanupEvents = [...events.keys()]
@@ -631,7 +657,9 @@ export const useBattleStore = defineStore('battle', () => {
       if (!battleService.value) return false
       battleService.value.togglePause()
       isPaused.value = battleService.value.getIsPaused()
-      battleLogManager.addSystemLog({ message: isPaused.value ? '战斗已暂停' : '战斗已继续' })
+      battleLogManager.addSystemLog({
+        message: isPaused.value ? '战斗已暂停' : '战斗已继续',
+      })
       return true
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
@@ -759,12 +787,12 @@ export const useBattleStore = defineStore('battle', () => {
     const sourceIsAlly =
       action.sourceId !== 'system'
         ? battleState.participants.get(action.sourceId)?.team ===
-        PARTICIPANT_SIDE.ALLY
+          PARTICIPANT_SIDE.ALLY
         : false
     const targetIsAlly =
       action.targetId && action.targetId !== 'system'
         ? battleState.participants.get(action.targetId)?.team ===
-        PARTICIPANT_SIDE.ALLY
+          PARTICIPANT_SIDE.ALLY
         : undefined
     const fullLog = battleActionToLogEntry(action, battleState.participants, {
       turnNumber: action.turn,
@@ -867,8 +895,8 @@ export const useBattleStore = defineStore('battle', () => {
       PARTICIPANT_SIDE.ENEMY,
     )
     // ponytail: 注册触发型被动技能到 PassiveSkillManager（预览时生效）
-    const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
-    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager);
+    const passiveSkillManager = container.resolve<any>('PassiveSkillManager')
+    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
     previewEntity.value = entity
     selectedCharacterId.value = entity.id
   }
@@ -881,7 +909,7 @@ export const useBattleStore = defineStore('battle', () => {
   const setCharacterEnabled = (characterId: string, enabled: boolean) => {
     battleService.value!.setCharacterEnabled(characterId, enabled)
   }
-  // 🔹 生命周期清理（防止 SPA 路由切换导致内存泄漏）
+  // 🔹 气血周期清理（防止 SPA 路由切换导致内存泄漏）
   onScopeDispose(() => {
     destroy()
   })

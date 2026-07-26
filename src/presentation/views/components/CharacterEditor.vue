@@ -236,7 +236,7 @@ const ATTR_KEY_TO_CN: Record<string, string> = {
   attack: '攻击', defense: '防御', speed: '速度',
   critRate: '暴击率', critDamage: '暴击伤害', dodge: '闪避',
   dmgReduction: '伤害减免', damageBoost: '伤害加成',
-  maxHealth: '生命上限', currentHealth: '当前生命',
+  maxHealth: '气血上限', currentHealth: '当前气血',
   maxEnergy: '能量上限', currentEnergy: '当前能量',
   hit: '命中率', HIT_RATE: '命中率',
   critDamageTaken: '暴击承伤', critDmgTakenReduction: '暴击减免',

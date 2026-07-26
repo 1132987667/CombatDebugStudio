@@ -66,7 +66,7 @@ export interface BattleAnalysis {
   needsHealing: boolean
   /** ponytail: BaseBattleAI 使用，AIPriorityStrategy 不计算此字段 */
   shouldUseSkill?: boolean
-  /** ponytail: 是否有队友生命值低于重危阈值（用于治疗权重调整） */
+  /** ponytail: 是否有队友气血值低于重危阈值（用于治疗权重调整） */
   hasLowHealthAlly: boolean
 }
 
@@ -208,10 +208,11 @@ export class BaseBattleAI implements BattleAI {
       needsHealing:
         teamHealthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD,
       shouldUseSkill,
-      hasLowHealthAlly:
-        allies.some(
-          (p) => p.currentHealth / Math.max(p.maxHealth, 1) < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD,
-        ),
+      hasLowHealthAlly: allies.some(
+        (p) =>
+          p.currentHealth / Math.max(p.maxHealth, 1) <
+          BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD,
+      ),
     }
   }
 

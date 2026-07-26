@@ -290,7 +290,7 @@ export function formatTargetConfig(config: SkillTargetConfig): string {
  */
 export enum CostType {
   ENERGY = '能量',
-  HP = '生命值',
+  气血 = '气血值',
   NONE = '无消耗',
 }
 

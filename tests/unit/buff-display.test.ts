@@ -41,22 +41,35 @@ interface BuffTextItemStub {
 
 describe('detectCondition', () => {
   it('优先使用 conditionState 字段', () => {
-    expect(detectCondition({ conditionState: 'active', description: '生命低于40%时' } as any))
-      .toEqual({ condition: 'active', conditionLabel: '已激活' })
-    expect(detectCondition({ conditionState: 'inactive', description: '生命低于40%时' } as any))
-      .toEqual({ condition: 'inactive', conditionLabel: '残血·未激活' })
+    expect(
+      detectCondition({
+        conditionState: 'active',
+        description: '气血低于40%时',
+      } as any),
+    ).toEqual({ condition: 'active', conditionLabel: '已激活' })
+    expect(
+      detectCondition({
+        conditionState: 'inactive',
+        description: '气血低于40%时',
+      } as any),
+    ).toEqual({ condition: 'inactive', conditionLabel: '残血·未激活' })
   })
 
   it('从关键词推断条件', () => {
-    expect(detectCondition({ description: '残血时触发' } as any))
-      .toEqual({ condition: 'inactive', conditionLabel: '残血' })
-    expect(detectCondition({ description: '暴击后触发' } as any))
-      .toEqual({ condition: 'inactive', conditionLabel: '暴击' })
+    expect(detectCondition({ description: '残血时触发' } as any)).toEqual({
+      condition: 'inactive',
+      conditionLabel: '残血',
+    })
+    expect(detectCondition({ description: '暴击后触发' } as any)).toEqual({
+      condition: 'inactive',
+      conditionLabel: '暴击',
+    })
   })
 
   it('无条件时返回 none', () => {
-    expect(detectCondition({ description: '普通增益效果' } as any))
-      .toEqual({ condition: 'none' })
+    expect(detectCondition({ description: '普通增益效果' } as any)).toEqual({
+      condition: 'none',
+    })
   })
 })
 
@@ -79,35 +92,103 @@ describe('detectType', () => {
 
 describe('mergeAttributes', () => {
   it('合并同一属性的多来源', () => {
-    const items: BuffTextItemStub[] = [{
-      name: '强攻', type: 'buff', condition: 'none', remainingTurns: 3, stacks: 1,
-      modifiers: [{ attribute: '攻击', value: 30, sourceName: '强攻', remainingTurns: 3, isPermanent: false, stacks: 1 }],
-    }, {
-      name: '剑意', type: 'buff', condition: 'permanent', remainingTurns: 0, stacks: 5,
-      modifiers: [{ attribute: '攻击', value: 25, sourceName: '剑意', remainingTurns: 0, isPermanent: true, stacks: 5 }],
-    }]
+    const items: BuffTextItemStub[] = [
+      {
+        name: '强攻',
+        type: 'buff',
+        condition: 'none',
+        remainingTurns: 3,
+        stacks: 1,
+        modifiers: [
+          {
+            attribute: '攻击',
+            value: 30,
+            sourceName: '强攻',
+            remainingTurns: 3,
+            isPermanent: false,
+            stacks: 1,
+          },
+        ],
+      },
+      {
+        name: '剑意',
+        type: 'buff',
+        condition: 'permanent',
+        remainingTurns: 0,
+        stacks: 5,
+        modifiers: [
+          {
+            attribute: '攻击',
+            value: 25,
+            sourceName: '剑意',
+            remainingTurns: 0,
+            isPermanent: true,
+            stacks: 5,
+          },
+        ],
+      },
+    ]
     const result = mergeAttributes(items as any)
-    expect(result.find(r => r.attribute === '攻击')?.totalPercent).toBe(55)
+    expect(result.find((r) => r.attribute === '攻击')?.totalPercent).toBe(55)
   })
 
   it('正负抵消', () => {
-    const items: BuffTextItemStub[] = [{
-      name: '强攻', type: 'buff', condition: 'none', remainingTurns: 3, stacks: 1,
-      modifiers: [{ attribute: '攻击', value: 30, sourceName: '强攻', remainingTurns: 3, isPermanent: false, stacks: 1 }],
-    }, {
-      name: '虚弱', type: 'debuff', condition: 'none', remainingTurns: 3, stacks: 1,
-      modifiers: [{ attribute: '攻击', value: -30, sourceName: '虚弱', remainingTurns: 3, isPermanent: false, stacks: 1 }],
-    }]
+    const items: BuffTextItemStub[] = [
+      {
+        name: '强攻',
+        type: 'buff',
+        condition: 'none',
+        remainingTurns: 3,
+        stacks: 1,
+        modifiers: [
+          {
+            attribute: '攻击',
+            value: 30,
+            sourceName: '强攻',
+            remainingTurns: 3,
+            isPermanent: false,
+            stacks: 1,
+          },
+        ],
+      },
+      {
+        name: '虚弱',
+        type: 'debuff',
+        condition: 'none',
+        remainingTurns: 3,
+        stacks: 1,
+        modifiers: [
+          {
+            attribute: '攻击',
+            value: -30,
+            sourceName: '虚弱',
+            remainingTurns: 3,
+            isPermanent: false,
+            stacks: 1,
+          },
+        ],
+      },
+    ]
     const result = mergeAttributes(items as any)
-    const atk = result.find(r => r.attribute === '攻击')
+    const atk = result.find((r) => r.attribute === '攻击')
     expect(atk?.totalPercent).toBe(0)
     expect(atk?.isChanged).toBe(false)
   })
 })
 
 describe('sortItems', () => {
-  const makeItem = (name: string, type: BuffType, condition: ConditionState, turns: number): BuffTextItemStub => ({
-    name, type, condition, remainingTurns: turns, stacks: 1, modifiers: [],
+  const makeItem = (
+    name: string,
+    type: BuffType,
+    condition: ConditionState,
+    turns: number,
+  ): BuffTextItemStub => ({
+    name,
+    type,
+    condition,
+    remainingTurns: turns,
+    stacks: 1,
+    modifiers: [],
   })
 
   it('控制排最前', () => {

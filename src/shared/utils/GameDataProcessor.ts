@@ -9,25 +9,44 @@
 
 import { DataProcessor } from '@/shared/utils/DataProcessor'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
-const enemiesData = enemiesDataRaw as Enemy[]
+import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
+const enemiesData = [
+  ...(enemiesDataRaw as Enemy[]),
+  ...(enemiesTestDataRaw as Enemy[]),
+]
 import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
 import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
+import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig, SkillStep } from '@/domain/skill/types'
 import type { SceneData } from '@/shared/types/scene'
 import type { CharacterStats } from '@/domain/character/types'
-import { ATTRIBUTE_CODE, ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
+import {
+  ATTRIBUTE_CODE,
+  ModifierType,
+  ModifierSourceType,
+  type Modifier,
+} from '@/domain/attribute/types'
 import type { ParticipantSide } from '@/domain/battle/type/types'
-import { PARTICIPANT_SIDE, BattleTriggerPhase } from '@/domain/battle/type/types'
+import {
+  PARTICIPANT_SIDE,
+  BattleTriggerPhase,
+} from '@/domain/battle/type/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
-import { syncBonusAttribute, syncAttackRange } from '@/shared/utils/attributeSync'
+import {
+  syncBonusAttribute,
+  syncAttackRange,
+} from '@/shared/utils/attributeSync'
 import {
   BattleParticipantImpl,
   type BattleParticipantData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
-import type { PassiveSkillManager, PassiveSkillConfig } from '@/domain/skill/PassiveSkillManager'
+import type {
+  PassiveSkillManager,
+  PassiveSkillConfig,
+} from '@/domain/skill/PassiveSkillManager'
 import { toArray } from '@/shared/utils/Utils'
 import { Counter } from '@/shared/utils/Counter'
 const counter = new Counter()
@@ -43,8 +62,6 @@ export class GameDataProcessor {
   static getEnemiesData(): Enemy[] {
     return enemiesData
   }
-
-
 
   /**
    * 根据ID查找敌人
@@ -63,7 +80,7 @@ export class GameDataProcessor {
     return enemy
   }
 
-    /**
+  /**
    * 根据ID数组批量查找敌人
    * @param enemyIds - 敌人ID数组
    * @returns Enemy[] - 找到的敌人数组
@@ -90,6 +107,7 @@ export class GameDataProcessor {
       ...skillsData,
       ...passiveSkillsData,
       ...guardianPassiveSkillsData,
+      ...passiveTestSkillsData,
     ] as SkillConfig[]
   }
 
@@ -99,8 +117,6 @@ export class GameDataProcessor {
   static getScenesData(): SceneData[] {
     return scenesData
   }
-
-
 
   /**
    * 将 Enemy 转换为 BattleParticipant（重构版）
@@ -119,13 +135,17 @@ export class GameDataProcessor {
     type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
     seatIndex: number = 0,
   ): BattleParticipantImpl {
-
     // 1. 解析被动技能并生成修饰符模板列表
-    const passiveSkills = GameDataProcessor.getSkillByIds(enemy.skills?.passive ?? [])
+    const passiveSkills = GameDataProcessor.getSkillByIds(
+      enemy.skills?.passive ?? [],
+    )
 
     // 3. 补全派生属性（配置只有 currentHealth/minAttack/maxAttack，但引擎需要 maxHealth）
     const stats = { ...enemy.stats } as Partial<Record<ATTRIBUTE_CODE, number>>
-    if (!stats[ATTRIBUTE_CODE.maxHealth] && stats[ATTRIBUTE_CODE.currentHealth]) {
+    if (
+      !stats[ATTRIBUTE_CODE.maxHealth] &&
+      stats[ATTRIBUTE_CODE.currentHealth]
+    ) {
       stats[ATTRIBUTE_CODE.maxHealth] = stats[ATTRIBUTE_CODE.currentHealth]
     }
 
@@ -204,11 +224,16 @@ export class GameDataProcessor {
     mod: { id?: string; targetAttribute: string; type: string; value: number },
   ): void {
     const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
-    const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
-      : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
-      : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
-      : mod.type === 'FINAL' ? ModifierType.FINAL
-      : ModifierType.ADDITIVE
+    const modType =
+      mod.type === 'PERCENTAGE'
+        ? ModifierType.PERCENTAGE
+        : mod.type === 'ADDITIVE'
+          ? ModifierType.ADDITIVE
+          : mod.type === 'MULTIPLICATIVE'
+            ? ModifierType.MULTIPLICATIVE
+            : mod.type === 'FINAL'
+              ? ModifierType.FINAL
+              : ModifierType.ADDITIVE
 
     // ponytail: buff aura 的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
     let value = typeof mod.value === 'number' ? mod.value : 0
@@ -249,11 +274,16 @@ export class GameDataProcessor {
   ): void {
     for (const mod of modifiers) {
       const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
-      const modType = mod.type === 'PERCENTAGE' ? ModifierType.PERCENTAGE
-        : mod.type === 'ADDITIVE' ? ModifierType.ADDITIVE
-        : mod.type === 'MULTIPLICATIVE' ? ModifierType.MULTIPLICATIVE
-        : mod.type === 'FINAL' ? ModifierType.FINAL
-        : ModifierType.ADDITIVE
+      const modType =
+        mod.type === 'PERCENTAGE'
+          ? ModifierType.PERCENTAGE
+          : mod.type === 'ADDITIVE'
+            ? ModifierType.ADDITIVE
+            : mod.type === 'MULTIPLICATIVE'
+              ? ModifierType.MULTIPLICATIVE
+              : mod.type === 'FINAL'
+                ? ModifierType.FINAL
+                : ModifierType.ADDITIVE
       let value = typeof mod.value === 'number' ? mod.value : 0
       if (modType === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
         value = Math.round(value * 10000) / 100
@@ -276,21 +306,23 @@ export class GameDataProcessor {
   }
 
   /** 将 triggerTimes 字符串映射到 BattleTriggerPhase */
-  private static readonly TRIGGER_TIME_MAP: Record<string, BattleTriggerPhase> = {
-    battle_start: BattleTriggerPhase.BATTLE_START,
-    turn_start: BattleTriggerPhase.TURN_START,
-    turn_end: BattleTriggerPhase.TURN_END,
-    before_attack: BattleTriggerPhase.BEFORE_ATTACK,
-    after_attack: BattleTriggerPhase.AFTER_ATTACK,
-    on_hit: BattleTriggerPhase.ON_HIT,
-    on_death: BattleTriggerPhase.ON_DEATH,
-    on_kill: BattleTriggerPhase.ON_KILL,
-    damage_taken: BattleTriggerPhase.DAMAGE_TAKEN,
-    heal_received: BattleTriggerPhase.HEAL_RECEIVED,
-    energy_gained: BattleTriggerPhase.ENERGY_GAINED,
-    skill_use: BattleTriggerPhase.SKILL_USE,
-    hp_lower_than: BattleTriggerPhase.HP_LOWER_THAN,
-  }
+  private static readonly TRIGGER_TIME_MAP: Record<string, BattleTriggerPhase> =
+    {
+      battle_start: BattleTriggerPhase.BATTLE_START,
+      turn_start: BattleTriggerPhase.TURN_START,
+      turn_end: BattleTriggerPhase.TURN_END,
+      before_attack: BattleTriggerPhase.BEFORE_ATTACK,
+      after_attack: BattleTriggerPhase.AFTER_ATTACK,
+      on_hit: BattleTriggerPhase.ON_HIT,
+      on_death: BattleTriggerPhase.ON_DEATH,
+      on_kill: BattleTriggerPhase.ON_KILL,
+      damage_taken: BattleTriggerPhase.DAMAGE_TAKEN,
+      heal_received: BattleTriggerPhase.HEAL_RECEIVED,
+      energy_gained: BattleTriggerPhase.ENERGY_GAINED,
+      skill_use: BattleTriggerPhase.SKILL_USE,
+      hp_lower_than: BattleTriggerPhase.HP_LOWER_THAN,
+      dodge: BattleTriggerPhase.DODGE,
+    }
 
   /**
    * 注册参与者的触发型被动技能到 PassiveSkillManager
@@ -319,7 +351,8 @@ export class GameDataProcessor {
         }
 
         // ponytail: 非 battle_start 无默认限制（undefined = 不限次数）
-        const maxTriggerCount = skill.maxUses ?? (rawTrigger === 'battle_start' ? 1 : undefined)
+        const maxTriggerCount =
+          skill.maxUses ?? (rawTrigger === 'battle_start' ? 1 : undefined)
 
         // ponytail: 多 trigger 共享 skillId，通过 id 后缀区分以便独立计数/冷却
         const config: PassiveSkillConfig = {
@@ -332,7 +365,9 @@ export class GameDataProcessor {
           condition: skill.condition,
           maxTriggerCount,
           // 从 parameters 中读取额外触发配置
-          triggerProbability: skill.parameters?.triggerProbability as number | undefined,
+          triggerProbability: skill.parameters?.triggerProbability as
+            | number
+            | undefined,
           hpThreshold: skill.parameters?.hpThreshold as number | undefined,
         }
 
@@ -630,13 +665,13 @@ export class GameDataProcessor {
         field: 'maxHp',
         type: 'number',
         min: 1,
-        message: '最大生命值必须大于0',
+        message: '最大气血值必须大于0',
       },
       {
         field: 'currentHp',
         type: 'number',
         min: 0,
-        message: '当前生命值不能为负数',
+        message: '当前气血值不能为负数',
       },
       { field: 'attack', type: 'number', min: 0, message: '攻击力不能为负数' },
       { field: 'defense', type: 'number', min: 0, message: '防御力不能为负数' },

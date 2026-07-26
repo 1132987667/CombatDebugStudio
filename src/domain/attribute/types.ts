@@ -26,7 +26,6 @@ export const ModifierTypeNames: Record<ModifierType, string> = {
   FINAL: '最终',
 }
 
-
 /** 修饰符来源类型 */
 export const ModifierSourceType = {
   BUFF: 'buff',
@@ -133,7 +132,6 @@ export interface AttributeValue {
   breakdown?: CalculationBreakdown
 }
 
-
 // ========== 抽象接口（依赖倒置） ==========
 
 /**
@@ -209,9 +207,9 @@ export const ATTRIBUTE_CODE = {
   critDmgTakenReduction: 'critDmgTakenReduction', // 受到暴击伤害减免
 
   // 再生属性
-  hpRegenPercent: 'hpRegenPercent', // 每回合恢复最大生命百分比
+  hpRegenPercent: 'hpRegenPercent', // 每回合恢复最大气血百分比
   // 预留
-  hpRegenFlat: 'hpRegenFlat', // 每回合恢复固定生命
+  hpRegenFlat: 'hpRegenFlat', // 每回合恢复固定气血
 
   currentEnergy: 'currentEnergy',
   maxEnergy: 'maxEnergy',
@@ -256,7 +254,7 @@ export const ATTRIBUTE_CODE = {
   fireSkillDmgBonus: 'fireSkillDmgBonus', // 火属性技能伤害加成
   physicalSkillDmgBonus: 'physicalSkillDmgBonus', // 物理技能伤害加成
   damageToDemon: 'damageToDemon', // 对妖魔鬼怪伤害加成
-  damageToLowHp: 'damageToLowHp', // 对低生命值目标伤害加成
+  damageToLowHp: 'damageToLowHp', // 对低气血值目标伤害加成
 
   // ========== 护盾属性 ==========
   shield: 'shield', // 当前护盾值
@@ -350,24 +348,22 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   // ========== 基础属性 ==========
   currentHealth: {
     code: 'currentHealth',
-    name: '当前生命值',
-    displayName: '当前生命值',
-    description: '角色当前生命值',
+    name: '当前气血值',
+    displayName: '当前气血值',
+    description: '角色当前气血值',
     range: '0-最大值',
     impact: '直接影响角色生存能力，为0时角色死亡',
     isPercentage: false,
     isRuntimeState: true,
-
   },
   maxHealth: {
     code: 'maxHealth',
-    name: '最大生命值',
-    displayName: '最大生命值',
-    description: '最大生命值上限',
+    name: '最大气血值',
+    displayName: '最大气血值',
+    description: '最大气血值上限',
     range: '1-99999',
-    impact: '决定角色的生命值上限，影响生存能力',
+    impact: '决定角色的气血值上限，影响生存能力',
     isPercentage: false,
-
   },
   attack: {
     code: 'attack',
@@ -377,7 +373,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '1-9999',
     impact: '直接影响伤害输出，是计算最终伤害的基础',
     isPercentage: false,
-
   },
   minAttack: {
     code: 'minAttack',
@@ -387,7 +382,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '1-9999',
     impact: '直接影响伤害输出下限',
     isPercentage: false,
-
   },
   maxAttack: {
     code: 'maxAttack',
@@ -397,7 +391,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '1-9999',
     impact: '直接影响伤害输出上限',
     isPercentage: false,
-
   },
   defense: {
     code: 'defense',
@@ -407,7 +400,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-9999',
     impact: '减少受到的伤害，值越高减伤越多',
     isPercentage: false,
-
   },
   speed: {
     code: 'speed',
@@ -417,7 +409,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '1-9999',
     impact: '速度越高，行动顺序越靠前，回合内行动次数可能增加',
     isPercentage: false,
-
   },
   critRate: {
     code: 'critRate',
@@ -428,7 +419,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     impact: '提高暴击触发几率，增加伤害爆发能力，默认为10%',
     isPercentage: true,
     defaultValue: 10,
-
   },
   critDamage: {
     code: 'critDamage',
@@ -439,7 +429,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     impact: '暴击时造成的额外伤害，值越高暴击伤害越高，默认125%',
     isPercentage: true,
     defaultValue: 125,
-
   },
 
   // ========== 能量属性 ==========
@@ -453,7 +442,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     isPercentage: false,
     defaultValue: 30,
     isRuntimeState: true,
-
   },
   maxEnergy: {
     code: 'maxEnergy',
@@ -464,7 +452,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     impact: '决定能量上限，通常固定为200',
     isPercentage: false,
     defaultValue: 200,
-
   },
 
   // ========== 伤害减免细分 ==========
@@ -476,7 +463,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '减少受到的所有类型伤害',
     isPercentage: true,
-
   },
   normalAtkDmgReduction: {
     code: 'normalAtkDmgReduction',
@@ -486,7 +472,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '专门减少普通攻击造成的伤害',
     isPercentage: true,
-
   },
   skillDmgReduction: {
     code: 'skillDmgReduction',
@@ -496,7 +481,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '专门减少技能攻击造成的伤害',
     isPercentage: true,
-
   },
   critDmgTakenReduction: {
     code: 'critDmgTakenReduction',
@@ -506,42 +490,38 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '减少暴击时受到的额外伤害，提高抗暴能力',
     isPercentage: true,
-
   },
 
   // ========== 再生属性 ==========
   hpRegenPercent: {
     code: 'hpRegenPercent',
-    name: '生命回复(%)',
-    displayName: '百分比生命回复',
-    description: '每回合恢复最大生命的百分比',
+    name: '气血回复(%)',
+    displayName: '百分比气血回复',
+    description: '每回合恢复最大气血的百分比',
     range: '0-50%',
-    impact: '按最大生命值百分比回复生命，适合高血量角色',
+    impact: '按最大气血值百分比回复气血，适合高血量角色',
     isPercentage: true,
-
   },
   // 预留
   hpRegenFlat: {
     code: 'hpRegenFlat',
-    name: '生命回复(固定)',
-    displayName: '固定生命回复',
-    description: '每回合恢复固定的生命值',
+    name: '气血回复(固定)',
+    displayName: '固定气血回复',
+    description: '每回合恢复固定的气血值',
     range: '0-9999',
-    impact: '每回合回复固定数值的生命值',
+    impact: '每回合回复固定数值的气血值',
     isPercentage: false,
-
   },
 
   // ========== 属性加成 ==========
   healthBonus: {
     code: 'healthBonus',
-    name: '生命值加成',
-    displayName: '生命值加成',
-    description: '基于基础生命值的加成百分比',
+    name: '气血值加成',
+    displayName: '气血值加成',
+    description: '基于基础气血值的加成百分比',
     range: '0-500%',
-    impact: '按百分比提高最大生命值上限',
+    impact: '按百分比提高最大气血值上限',
     isPercentage: true,
-
   },
   attackBonus: {
     code: 'attackBonus',
@@ -551,7 +531,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-500%',
     impact: '按百分比提高攻击力',
     isPercentage: true,
-
   },
   defenseBonus: {
     code: 'defenseBonus',
@@ -561,7 +540,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-500%',
     impact: '按百分比提高防御力',
     isPercentage: true,
-
   },
   speedBonus: {
     code: 'speedBonus',
@@ -571,7 +549,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-500%',
     impact: '按百分比提高速度',
     isPercentage: true,
-
   },
 
   // ========== 五行属性 ==========
@@ -583,7 +560,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-9999',
     impact: '对火属性敌人造成额外伤害',
     isPercentage: false,
-
   },
   fireAtk: {
     code: 'fireAtk',
@@ -593,7 +569,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-9999',
     impact: '对金属性敌人造成额外伤害',
     isPercentage: false,
-
   },
   // 预留五行攻击
   metalAtk: {
@@ -604,7 +579,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-9999',
     impact: '对木属性敌人造成额外伤害',
     isPercentage: false,
-
   },
   woodAtk: {
     code: 'woodAtk',
@@ -614,7 +588,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-9999',
     impact: '对土属性敌人造成额外伤害',
     isPercentage: false,
-
   },
   earthAtk: {
     code: 'earthAtk',
@@ -624,7 +597,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-9999',
     impact: '对水属性敌人造成额外伤害',
     isPercentage: false,
-
   },
 
   // ========== 五行属性 ==========
@@ -636,7 +608,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '减少受到的金属性伤害',
     isPercentage: true,
-
   },
   woodRes: {
     code: 'woodRes',
@@ -646,7 +617,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '减少受到的木属性伤害',
     isPercentage: true,
-
   },
   waterRes: {
     code: 'waterRes',
@@ -656,7 +626,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '减少受到的水属性伤害',
     isPercentage: true,
-
   },
   fireRes: {
     code: 'fireRes',
@@ -666,7 +635,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '减少受到的火属性伤害',
     isPercentage: true,
-
   },
   earthRes: {
     code: 'earthRes',
@@ -676,7 +644,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '减少受到的土属性伤害',
     isPercentage: true,
-
   },
 
   // ========== 特殊战斗属性 ==========
@@ -689,7 +656,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     impact: '有概率完全避免受到伤害',
     isPercentage: true,
     defaultValue: 10,
-
   },
   hit: {
     code: 'hit',
@@ -700,7 +666,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     impact: '提高攻击命中率，对抗敌方闪避',
     isPercentage: true,
     defaultValue: 90,
-
   },
   controlSuccessRate: {
     code: 'controlSuccessRate',
@@ -710,7 +675,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '提高控制效果施加成功的概率',
     isPercentage: true,
-
   },
   controlDurationReduction: {
     code: 'controlDurationReduction',
@@ -720,7 +684,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '降低被眩晕、沉默等控制的持续时间',
     isPercentage: true,
-
   },
   damageTakenIncrease: {
     code: 'damageTakenIncrease',
@@ -730,7 +693,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-200%',
     impact: '增加受到的伤害，通常由debuff引起',
     isPercentage: true,
-
   },
   damageBoost: {
     code: 'damageBoost',
@@ -740,7 +702,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-200%',
     impact: '提高造成的所有类型伤害',
     isPercentage: true,
-
   },
 
   // ========== 特殊抗性 ==========
@@ -752,7 +713,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '减少中毒效果的持续时间和伤害',
     isPercentage: true,
-
   },
 
   // ========== 伤害类型减免 ==========
@@ -764,7 +724,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '减少受到的物理属性伤害',
     isPercentage: true,
-
   },
   magicalDmgReduction: {
     code: 'magicalDmgReduction',
@@ -774,7 +733,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '减少受到的魔法属性伤害',
     isPercentage: true,
-
   },
 
   // ========== 特殊伤害加成 ==========
@@ -786,7 +744,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-200%',
     impact: '提高火属性技能的伤害输出',
     isPercentage: true,
-
   },
   physicalSkillDmgBonus: {
     code: 'physicalSkillDmgBonus',
@@ -796,7 +753,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-200%',
     impact: '提高物理技能的伤害输出',
     isPercentage: true,
-
   },
   damageToDemon: {
     code: 'damageToDemon',
@@ -806,17 +762,15 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-200%',
     impact: '提高对妖魔鬼怪类敌人的伤害',
     isPercentage: true,
-
   },
   damageToLowHp: {
     code: 'damageToLowHp',
     name: '对低血量伤害加成',
     displayName: '对低血量目标伤害加成',
-    description: '对生命值低于一定比例的目标造成的额外伤害百分比',
+    description: '对气血值低于一定比例的目标造成的额外伤害百分比',
     range: '0-200%',
     impact: '提高对低血量目标的伤害输出',
     isPercentage: true,
-
   },
 
   // ========== 护盾属性 ==========
@@ -826,10 +780,9 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     displayName: '护盾值',
     description: '当前护盾值，受到伤害时优先消耗护盾',
     range: '0-99999',
-    impact: '吸收受到的伤害，护盾归零后开始消耗生命值',
+    impact: '吸收受到的伤害，护盾归零后开始消耗气血值',
     isPercentage: false,
     isRuntimeState: true,
-
   },
   // 预留
   reflectDamagePercent: {
@@ -840,7 +793,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '受到伤害时反弹部分伤害给攻击者',
     isPercentage: true,
-
   },
 }
 

@@ -2,7 +2,7 @@
   {
     "id": "guardian_desperate_will",
     "name": "绝境意志",
-    "description": "生命值低于20%时，立即获得一个基于最大生命值50%的护盾，每场战斗仅触发一次",
+    "description": "气血值低于20%时，立即获得一个基于最大气血值50%的护盾，每场战斗仅触发一次",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -34,7 +34,7 @@
   {
     "id": "guardian_last_blood_harvest",
     "name": "残血收割",
-    "description": "生命值低于40%时，对生命值低于自己的目标造成+40%伤害",
+    "description": "气血值低于40%时，对气血值低于自己的目标造成+40%伤害",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -66,7 +66,7 @@
   {
     "id": "guardian_dying_body",
     "name": "濒死之躯",
-    "description": "生命值低于25%时，闪避率提升至+60%（乘法叠加），但伤害降低20%",
+    "description": "气血值低于25%时，闪避率提升至+60%（乘法叠加），但伤害降低20%",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -183,7 +183,7 @@
   {
     "id": "guardian_toxin_soak",
     "name": "毒素浸染",
-    "description": "普攻附带3%目标最大生命值的真实伤害",
+    "description": "普攻附带3%目标最大气血值的真实伤害",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -212,7 +212,7 @@
   {
     "id": "guardian_blood_thirst",
     "name": "吸血渴望",
-    "description": "将造成物理伤害的25%转化为自身生命回复",
+    "description": "将造成物理伤害的25%转化为自身气血回复",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -296,7 +296,7 @@
   {
     "id": "guardian_firm_shield",
     "name": "坚毅护盾",
-    "description": "受击时若伤害超过最大生命值15%，减免超出部分的50%",
+    "description": "受击时若伤害超过最大气血值15%，减免超出部分的50%",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -369,7 +369,7 @@
   {
     "id": "guardian_injury_energy",
     "name": "受伤回能",
-    "description": "每损失10%生命值，立即回复15能量",
+    "description": "每损失10%气血值，立即回复15能量",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -395,7 +395,7 @@
   {
     "id": "guardian_backwater_armor",
     "name": "背水护甲",
-    "description": "生命值低于40%时，受到伤害时先由能量值抵扣（每1能量抵扣1%伤害）",
+    "description": "气血值低于40%时，受到伤害时先由能量值抵扣（每1能量抵扣1%伤害）",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -486,7 +486,7 @@
   {
     "id": "guardian_inspire_banner",
     "name": "鼓舞之旗",
-    "description": "回合开始时，我方生命值最低的单位回复8%最大生命值",
+    "description": "回合开始时，我方气血值最低的单位回复8%最大气血值",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -732,7 +732,7 @@
   {
     "id": "guardian_blood_gambler",
     "name": "嗜血赌徒",
-    "description": "普攻有20%概率偷取目标10%当前生命值",
+    "description": "普攻有20%概率偷取目标10%当前气血值",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -993,7 +993,7 @@
   {
     "id": "guardian_unyielding_will",
     "name": "不屈意志",
-    "description": "受到致命伤害时，保留1点生命并清除所有Debuff，每场战斗1次",
+    "description": "受到致命伤害时，保留1点气血并清除所有Debuff，每场战斗1次",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -1247,7 +1247,7 @@
   {
     "id": "guardian_dying_emergency",
     "name": "濒死急救",
-    "description": "治疗生命低于30%的友方时，效果提升60%",
+    "description": "治疗气血低于30%的友方时，效果提升60%",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -1356,7 +1356,7 @@
   {
     "id": "guardian_protracted_war",
     "name": "持久战",
-    "description": "每过5回合，全体友方回复15%生命和30能量",
+    "description": "每过5回合，全体友方回复15%气血和30能量",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 5,

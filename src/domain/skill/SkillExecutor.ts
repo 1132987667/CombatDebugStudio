@@ -154,17 +154,20 @@ export class SkillExecutor {
     if (result.isMiss) {
       action.effects.push({
         type: EffectType.MISS,
+        sourceId: source.id,
         targetId: target.id,
         value: 0,
+        damage: 0,
         description: `${target.name} dodged attack`,
       })
     } else {
       if (context?.token) {
         // 延迟模式 — 只记录伤害数值
-        context.token.record(target, result.damage)
+        context.token.record(target, result.damage, 0, result.rawDamage)
         action.damage = (action.damage ?? 0) + result.damage
         action.effects.push({
           type: EffectType.DAMAGE,
+          sourceId: source.id,
           targetId: target.id,
           value: result.damage,
           description: `${source.name} deals ${result.damage} damage`,
@@ -178,11 +181,22 @@ export class SkillExecutor {
         action.damage = (action.damage ?? 0) + actualDamage
         action.effects.push({
           type: EffectType.DAMAGE,
+          sourceId: source.id,
           targetId: target.id,
           value: actualDamage,
           description: `${source.name} deals ${actualDamage} damage`,
           isCritical: result.isCritical,
         })
+      }
+    }
+    // 消耗必暴标记（buff_guaranteed_crit）
+    if (result.isCritical && source.hasBuff?.('buff_guaranteed_crit')) {
+      const instances = this.buffSystem.getBuffInstances(source.id)
+      const critBuffInstances = instances.filter(
+        (i) => i.buffId === 'buff_guaranteed_crit',
+      )
+      for (const instance of critBuffInstances) {
+        this.buffSystem.removeBuff(instance.id)
       }
     }
   }
@@ -217,24 +231,30 @@ export class SkillExecutor {
       action.heal = (action.heal ?? 0) + heal
       action.effects.push({
         type: EffectType.HEAL,
+        sourceId: source.id,
         targetId: healTarget.id,
         value: heal,
-        description: `${healTarget.name} healed for ${heal}`,
+        heal,
+        overflow,
+        description: `${healTarget.name} 恢复 ${heal} 气血`,
       })
     } else {
       const actualHeal = this.healCalculator.applyHeal(healTarget, heal)
       action.heal = (action.heal ?? 0) + actualHeal
       action.effects.push({
         type: EffectType.HEAL,
+        sourceId: source.id,
         targetId: healTarget.id,
         value: actualHeal,
-        description: `${healTarget.name} healed for ${actualHeal}`,
+        heal: actualHeal,
+        overflow,
+        description: `${healTarget.name} 恢复 ${actualHeal} 气血`,
       })
     }
     if (this.healCalculator.isSingleTurnEffect(skillStep)) {
       action.effects.push({
         type: EffectType.STATUS,
-        description: 'Single-turn heal effect applied immediately',
+        description: '立即生效的单回合治疗效果',
       })
     }
   }
@@ -275,21 +295,29 @@ export class SkillExecutor {
       0,
       context,
     )
+    // 解析 Buff 展示名称
+    const buffCfgForName = this.buffSystem
+      .getScriptRegistry()
+      .getBuffConfig(buffId)
+    const buffName = buffCfgForName?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
     action.effects.push({
       type: EffectType.BUFF,
+      sourceId: source.id,
       targetId: buffTarget.id,
       buffId,
+      buffName,
       instanceId,
-      description: `${source.name} applies ${buffId} to ${buffTarget.name}`,
+      stacks: skillStep.stacks ?? 1,
+      description: `${source.name} 附加 ${buffName} 给 ${buffTarget.name}`,
     })
 
     // 仅在非被动上下文中打日志（被动由 triggerPassives 统一输出，避免重复）
     if (instanceId && !context?.fromPassive) {
-      const buffConfig = this.buffSystem
+      const buffCfg = this.buffSystem
         .getScriptRegistry()
         .getBuffConfig(buffId)
       const displayName =
-        buffConfig?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
+        buffCfg?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
 
       // 构建 Buff 效果摘要
       const effectSummary = this.buildBuffEffectSummary(buffId, instanceId)
@@ -298,7 +326,12 @@ export class SkillExecutor {
         turn: (action?.turn as number) || 1,
         message: `${displayName}  ${effectSummary}`,
         segments: [
-          { text: displayName, classStr: 'log-buff', kind: 'buff', hover: { kind: 'buff', id: buffId } },
+          {
+            text: displayName,
+            classStr: 'log-buff',
+            kind: 'buff',
+            hover: { kind: 'buff', id: buffId },
+          },
           { text: `  ${effectSummary}` },
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
@@ -322,7 +355,9 @@ export class SkillExecutor {
         const cn = (AttributeCodeNames as Record<string, string>)[attr] ?? attr
         const num = parseFloat(valStr)
         if (isNaN(num)) continue
-        const pct = Math.abs(valStr.includes('%') ? num : (Math.abs(num) < 1 ? num * 100 : num))
+        const pct = Math.abs(
+          valStr.includes('%') ? num : Math.abs(num) < 1 ? num * 100 : num,
+        )
         const arrow = num >= 0 ? '↑' : '↓'
         parts.push(`${cn}${arrow}${Math.round(pct)}%`)
       }
@@ -470,21 +505,23 @@ export class SkillExecutor {
     const dmg = this.damageCalculator.calculateDamage(skillStep, source, target)
     if (!dmg.isMiss && dmg.damage > 0) {
       if (context?.token) {
-        context?.token.record(target, dmg.damage)
+        context?.token.record(target, dmg.damage, 0, dmg.rawDamage)
         action.damage = (action.damage ?? 0) + dmg.damage
       } else {
         this.damageCalculator.applyDamage(target, dmg.damage)
       }
       action.effects.push({
-        type: EffectType.DAMAGE,
+        type: EffectType.REFLECT,
+        sourceId: source.id,
         targetId: target.id,
         value: dmg.damage,
+        damage: dmg.damage,
         description: `${source.name} 反弹 ${dmg.damage} 伤害给 ${target.name}`,
       })
     }
   }
 
-  /** 吸取生命（drain 步骤） */
+  /** 吸取气血（drain 步骤） */
   private executeDrain(
     skillStep: ExtendedSkillStep,
     action: BattleAction,
@@ -499,22 +536,28 @@ export class SkillExecutor {
       context,
     )
     if (!dmg.isMiss && dmg.damage > 0) {
+      let actualHeal = 0
       if (context?.token) {
-        context?.token.record(target, dmg.damage)
+        context?.token.record(target, dmg.damage, 0, dmg.rawDamage)
         action.damage = (action.damage ?? 0) + dmg.damage
         action.heal = (action.heal ?? 0) + dmg.damage
+        actualHeal = dmg.damage
       } else {
         this.damageCalculator.applyDamage(target, dmg.damage)
-        const actualHeal = source.heal(dmg.damage)
+        actualHeal = source.heal(dmg.damage)
         if (actualHeal > 0) {
           action.heal = (action.heal ?? 0) + actualHeal
         }
       }
       action.effects.push({
-        type: EffectType.DAMAGE,
+        type: EffectType.DRAIN,
+        sourceId: source.id,
         targetId: target.id,
         value: dmg.damage,
-        description: `${source.name} 吸取 ${dmg.damage} 生命`,
+        damage: dmg.damage,
+        heal: actualHeal,
+        overflow: Math.max(0, dmg.damage - actualHeal),
+        description: `${source.name} 吸取 ${dmg.damage} 气血`,
       })
     }
   }
@@ -718,7 +761,7 @@ export class SkillExecutor {
 
     let totalBurnDmg = 0
     for (const inst of burnInstances) {
-      // ponytail: 假设每层灼烧每回合造成 5% 最大生命值伤害
+      // ponytail: 假设每层灼烧每回合造成 5% 最大气血值伤害
       const remainingDuration = inst.remainingTurns ?? inst.duration ?? 1
       const dmgPerTick =
         target.getAttribute(ATTRIBUTE_CODE.maxHealth) * burnDamagePercent
@@ -745,6 +788,7 @@ export class SkillExecutor {
       type: EffectType.DAMAGE,
       targetId: target.id,
       value: finalDmg,
+      damage: finalDmg,
       description: `${isFullDetonate ? '引爆' : '灼烧爆破'}! ${finalDmg} 点火焰伤害`,
     })
   }

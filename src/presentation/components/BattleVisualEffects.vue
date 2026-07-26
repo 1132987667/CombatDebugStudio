@@ -35,7 +35,7 @@
 
     <!-- 伤害/治疗/护盾数字 -->
     <div v-for="dn in dmgNums" :key="dn.id" class="floating-num" :class="dn.cls"
-      :style="{ left: dn.x + 'px', top: dn.y + 'px' }">
+      :style="{ left: dn.x + 'px', top: dn.y + 'px', '--rotate': (dn.rotate || 0) + 'deg' }">
       {{ dn.text }}
     </div>
   </div>
@@ -73,7 +73,7 @@ const healAuras = ref<Array<{ id: number; x: number; y: number }>>([])
 /** 护盾六边形 */
 const shieldHexes = ref<Array<{ id: number; x: number; y: number }>>([])
 /** 伤害/治疗/护盾数字 */
-const dmgNums = ref<Array<{ id: number; text: string; x: number; y: number; cls: string }>>([])
+const dmgNums = ref<Array<{ id: number; text: string; x: number; y: number; cls: string; rotate?: number }>>([])
 /** 屏幕震动 */
 const shaking = ref(false)
 
@@ -345,12 +345,15 @@ function showDamageNum(targetId: string, value: number, isCrit: boolean, budget?
   if (!pos) return
   const id = nextId++
   // HACK: budget 由所有当前调用方传入，兜底用 1x 速度的 numberFloat 阶段时长
-  const floatDuration = (budget ?? getActionBudget(1)) * 0.35
+  const floatDuration = Math.max((budget ?? getActionBudget(1)) * 0.35, 1400)
+  const offsetX = (Math.random() - 0.5) * 60 // 扩大 X 轴偏移至 ±30px
+  const rotate = (Math.random() - 0.5) * 10  // 微小旋转 ±5度
   dmgNums.value.push({
     id, text: `-${value}`,
-    x: pos.x + (Math.random() - 0.5) * 40,
+    x: pos.x + offsetX,
     y: pos.y - 20,
     cls: isCrit ? 'dmg crit' : 'dmg normal',
+    rotate,
   })
   setRemove(id, dmgNums, floatDuration)
 }
@@ -360,12 +363,15 @@ function showHealNum(targetId: string, value: number, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
-  const floatDuration = (budget ?? getActionBudget(1)) * 0.35
+  const floatDuration = Math.max((budget ?? getActionBudget(1)) * 0.35, 1600)
+  const offsetX = (Math.random() - 0.5) * 40
+  const rotate = (Math.random() - 0.5) * 6
   dmgNums.value.push({
     id, text: `+${value}`,
-    x: pos.x + (Math.random() - 0.5) * 30,
+    x: pos.x + offsetX,
     y: pos.y + 10,
     cls: 'heal-num',
+    rotate,
   })
   setRemove(id, dmgNums, floatDuration)
 }
@@ -375,13 +381,33 @@ function showShieldNum(targetId: string, value: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
+  const offsetX = (Math.random() - 0.5) * 40
+  const rotate = (Math.random() - 0.5) * 6
   dmgNums.value.push({
     id, text: `+${value}`,
-    x: pos.x + (Math.random() - 0.5) * 30,
+    x: pos.x + offsetX,
     y: pos.y + 15,
     cls: 'shield-num',
+    rotate,
   })
-  setRemove(id, dmgNums, 1450)
+  setRemove(id, dmgNums, 1450) // NOTE: shield-rise 动画 1.4s，1450ms 足够覆盖
+}
+
+/** 闪避文字 */
+function showMissText(targetId: string, budget?: number) {
+  const pos = cardCenter(targetId)
+  if (!pos) return
+  const id = nextId++
+  const floatDuration = Math.max((budget ?? getActionBudget(1)) * 0.35, 1400)
+  const offsetX = (Math.random() - 0.5) * 40
+  dmgNums.value.push({
+    id, text: '闪避',
+    x: pos.x + offsetX,
+    y: pos.y - 20,
+    cls: 'miss',
+    rotate: 0,
+  })
+  setRemove(id, dmgNums, floatDuration)
 }
 
 /** 屏幕震动 */
@@ -458,6 +484,7 @@ defineExpose({
   showDamageNum,
   showHealNum,
   showShieldNum,
+  showMissText,
   showScreenShake,
   playFlightSequence,
   playAttackSequence,
@@ -477,7 +504,7 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 1000;
+  z-index: 9999;
 }
 </style>
 
@@ -918,7 +945,8 @@ onUnmounted(() => {
 
 .floating-num.dmg {
   text-shadow: 0 0 10px currentColor, 0 3px 6px rgba(0, 0, 0, 0.95), 0 0 24px currentColor;
-  animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+  animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards,
+             dmg-glow 1.4s ease-out forwards;
 }
 
 .floating-num.dmg.normal {
@@ -930,6 +958,8 @@ onUnmounted(() => {
   font-size: 40px;
   color: var(--color-warning);
   text-shadow: 0 0 14px var(--color-warning), 0 3px 8px rgba(0, 0, 0, 0.95), 0 0 32px var(--color-warning);
+  animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards,
+             dmg-crit-glow 1.4s ease-out forwards;
 }
 
 .floating-num.dmg.crit::before {
@@ -947,24 +977,34 @@ onUnmounted(() => {
 
 @keyframes dmg-pop {
   0% {
-    transform: translate(-50%, -50%) scale(0.2);
+    transform: translate(-50%, -50%) scale(0.2) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
-
-  20% {
-    transform: translate(-50%, -80%) scale(1.4);
+  15% {
+    transform: translate(-50%, -65%) scale(1.5) rotate(var(--rotate, 0deg));
     opacity: 1;
+    animation-timing-function: cubic-bezier(0.17, 0.67, 0.83, 0.67);
   }
-
-  40% {
-    transform: translate(-50%, -90%) scale(1.0);
-    opacity: 1;
+  30% {
+    transform: translate(-50%, -70%) scale(1.2) rotate(var(--rotate, 0deg));
   }
-
   100% {
-    transform: translate(-50%, -200%) scale(0.85);
+    transform: translate(-50%, -220%) scale(0.85) rotate(var(--rotate, 0deg));
     opacity: 0;
+    animation-timing-function: ease-out;
   }
+}
+
+/* 普通伤害发光消散 */
+@keyframes dmg-glow {
+  0%, 30% { filter: drop-shadow(0 0 8px currentColor) brightness(1.2); }
+  100%    { filter: drop-shadow(0 0 24px currentColor) brightness(0.6); }
+}
+
+/* 暴击伤害：更强烈的能量爆发 */
+@keyframes dmg-crit-glow {
+  0%, 20% { filter: drop-shadow(0 0 15px var(--color-warning)) brightness(1.5); }
+  100%    { filter: drop-shadow(0 0 35px var(--color-warning)) brightness(0.4); }
 }
 
 .floating-num.heal-num {
@@ -976,22 +1016,17 @@ onUnmounted(() => {
 
 @keyframes heal-rise {
   0% {
-    transform: translate(-50%, 30%) scale(0.3);
+    transform: translate(-50%, 30%) scale(0.3) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
 
   20% {
-    transform: translate(-50%, -20%) scale(1.3);
-    opacity: 1;
-  }
-
-  50% {
-    transform: translate(-50%, -90%) scale(1.0);
+    transform: translate(-50%, -20%) scale(1.3) rotate(var(--rotate, 0deg));
     opacity: 1;
   }
 
   100% {
-    transform: translate(-50%, -180%) scale(0.85);
+    transform: translate(-50%, -180%) scale(0.85) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
 }
@@ -1005,22 +1040,17 @@ onUnmounted(() => {
 
 @keyframes shield-rise {
   0% {
-    transform: translate(-50%, 20%) scale(0.3);
+    transform: translate(-50%, 20%) scale(0.3) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
 
   25% {
-    transform: translate(-50%, -20%) scale(1.2);
-    opacity: 1;
-  }
-
-  65% {
-    transform: translate(-50%, -70%) scale(1.0);
+    transform: translate(-50%, -20%) scale(1.2) rotate(var(--rotate, 0deg));
     opacity: 1;
   }
 
   100% {
-    transform: translate(-50%, -110%) scale(0.85);
+    transform: translate(-50%, -110%) scale(0.85) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
 }
@@ -1030,5 +1060,6 @@ onUnmounted(() => {
   font-size: var(--font-size-xxl);
   color: var(--color-text-tertiary);
   text-shadow: 0 0 8px currentColor, 0 2px 4px rgba(0, 0, 0, 0.9);
+  animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
 }
 </style>

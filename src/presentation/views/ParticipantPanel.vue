@@ -1,5 +1,18 @@
 <template>
   <div class="panel-left">
+    <!-- 阵容预设选择器 -->
+    <div class="preset-selector">
+      <label class="preset-label">阵容预设：</label>
+      <select v-model="selectedPreset" class="preset-select" @change="applyPreset">
+        <option value="">-- 手动配置 --</option>
+        <optgroup v-for="group in presetGroups" :key="group.label" :label="group.label">
+          <option v-for="p in group.items" :key="p.id" :value="p.id">
+            {{ p.name }}
+          </option>
+        </optgroup>
+      </select>
+      <span v-if="currentPresetDesc" class="preset-desc">{{ currentPresetDesc }}</span>
+    </div>
     <div class="panel-section">
       <div class="section-header">
         <span>参战管理</span>
@@ -129,6 +142,8 @@ import type { SceneData } from '@/shared/types/scene';
 import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
+import { BuffSystem } from '@/domain/buff/BuffSystem';
+import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager';
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -149,6 +164,209 @@ const expandedScenes = reactive<Record<string, boolean>>({});
 
 // 默认展开所有场景
 scenesData.value.forEach((s) => (expandedScenes[s.id] = true));
+
+// 阵容预设
+interface Preset {
+  id: string
+  name: string
+  description: string
+  ally: string[]
+  enemy: string[]
+}
+
+const presets: Preset[] = [
+  // ═══ 第一组：已有角色基线测试 ═══
+  {
+    id: 'baseline_fire_vs_gold',
+    name: '火护法 vs 金护法',
+    description: '基线测试：速度递增 vs 攻击递增的消耗战',
+    ally: ['guardian_fire'],
+    enemy: ['guardian_gold'],
+  },
+  {
+    id: 'baseline_2v1_boss',
+    name: '双护法 vs Boss',
+    description: '2v1 多目标选择、Boss 技能释放',
+    ally: ['guardian_fire', 'guardian_gold'],
+    enemy: ['boss_001'],
+  },
+  {
+    id: 'baseline_multi_boss',
+    name: '双护法 vs 双Boss',
+    description: '高压多目标战斗稳定性',
+    ally: ['guardian_fire', 'guardian_gold'],
+    enemy: ['boss_001', 'boss_002'],
+  },
+  {
+    id: 'baseline_full_roster',
+    name: '全角色混战',
+    description: '所有已有角色参战，验证系统上限',
+    ally: ['guardian_fire', 'enemy_003', 'enemy_004'],
+    enemy: ['guardian_gold', 'enemy_005', 'boss_003'],
+  },
+
+  // ═══ 第二组：基础机制验证（测试角色） ═══
+  {
+    id: 'test_basic_damage',
+    name: '基础伤害',
+    description: 'ATK=20 vs DEF=0，验证基础伤害公式',
+    ally: ['test_warrior'],
+    enemy: ['test_warrior'],
+  },
+  {
+    id: 'test_defense',
+    name: '防御减伤',
+    description: 'ATK=20 vs DEF=20，验证减法公式和最小伤害阈值',
+    ally: ['test_warrior'],
+    enemy: ['test_tank'],
+  },
+  {
+    id: 'test_crit_vs_anti_crit',
+    name: '暴击 vs 抗暴',
+    description: '100%暴击+150%暴伤 vs 100%暴击承伤减免',
+    ally: ['test_assassin'],
+    enemy: ['test_anti_crit'],
+  },
+
+  // ═══ 第三组：被动技能验证 ═══
+  {
+    id: 'test_dodge_chain',
+    name: '闪避连锁',
+    description: '80%闪避 → 闪避回血 + 闪避必暴',
+    ally: ['test_warrior'],
+    enemy: ['test_dodge_master'],
+  },
+  {
+    id: 'test_lifesteal_vs_shield',
+    name: '吸血 vs 护盾',
+    description: '20%吸血 vs 每回合+10护盾',
+    ally: ['test_vampire'],
+    enemy: ['test_shield_guard'],
+  },
+  {
+    id: 'test_thorns',
+    name: '荆棘反伤',
+    description: 'ATK=20 攻击 → 反弹30%伤害，验证递归守卫',
+    ally: ['test_warrior'],
+    enemy: ['test_thorns'],
+  },
+  {
+    id: 'test_combo_vs_thorns',
+    name: '连击 vs 反伤',
+    description: '25%额外行动 + 每次攻击触发反弹',
+    ally: ['test_combo'],
+    enemy: ['test_thorns'],
+  },
+
+  // ═══ 第四组：Buff/Debuff 验证 ═══
+  {
+    id: 'test_control',
+    name: '控制链',
+    description: '眩晕打击 → 跳过行动 → Buff 过期',
+    ally: ['test_controller'],
+    enemy: ['test_warrior'],
+  },
+  {
+    id: 'test_dot_poison',
+    name: 'DOT 毒伤',
+    description: '毒液喷射 → 每回合10%最大气血伤害，最多3层',
+    ally: ['test_poisoner'],
+    enemy: ['test_tank'],
+  },
+  {
+    id: 'test_buff_stack',
+    name: '增益叠加',
+    description: '战斗鼓舞(开场+10%) + 鼓舞技能(全队+20%)',
+    ally: ['test_bard'],
+    enemy: ['test_warrior'],
+  },
+
+  // ═══ 第五组：已有角色 + 测试角色混合 ═══
+  {
+    id: 'mixed_fire_vs_dodge',
+    name: '火护法 vs 闪避大师',
+    description: '真实角色的连击被动 vs 测试角色的闪避被动',
+    ally: ['guardian_fire'],
+    enemy: ['test_dodge_master'],
+  },
+  {
+    id: 'mixed_gold_vs_vampire',
+    name: '金护法 vs 吸血鬼',
+    description: '复仇怒火(越挨打越强) vs 吸血(越打越回血)',
+    ally: ['guardian_gold'],
+    enemy: ['test_vampire'],
+  },
+  {
+    id: 'mixed_full_battle',
+    name: '全面混战',
+    description: '3v3 多被动并发、多Buff交互',
+    ally: ['guardian_fire', 'test_vampire', 'test_bard'],
+    enemy: ['guardian_gold', 'test_dodge_master', 'test_thorns'],
+  },
+]
+const selectedPreset = ref('')
+
+const presetGroups = computed(() => [
+  { label: '已有角色基线', items: presets.filter(p => p.id.startsWith('baseline_')) },
+  { label: '基础机制', items: presets.filter(p => ['test_basic_damage', 'test_defense', 'test_crit_vs_anti_crit'].includes(p.id)) },
+  { label: '被动技能', items: presets.filter(p => ['test_dodge_chain', 'test_lifesteal_vs_shield', 'test_thorns', 'test_combo_vs_thorns'].includes(p.id)) },
+  { label: 'Buff/Debuff', items: presets.filter(p => ['test_control', 'test_dot_poison', 'test_buff_stack'].includes(p.id)) },
+  { label: '混合对抗', items: presets.filter(p => p.id.startsWith('mixed_')) },
+])
+
+const currentPresetDesc = computed(() => {
+  const p = presets.find(p => p.id === selectedPreset.value)
+  return p?.description ?? ''
+})
+
+const applyPreset = () => {
+  const preset = presets.find(p => p.id === selectedPreset.value)
+  if (!preset) return
+
+  // 先停止可能正在进行的战斗
+  if (battleStore.isBattleActive) {
+    battleStore.endBattle(PARTICIPANT_SIDE.ALLY)
+  }
+  battleStore.resetBattle()
+  battleService.clearParticipants()
+
+  const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+  const passiveSkillManager = container.resolve<PassiveSkillManager>('PassiveSkillManager')
+
+  // 构建我方
+  preset.ally.forEach((id, index) => {
+    const enemyData = GameDataProcessor.findEnemyById(id)
+    if (!enemyData) {
+      console.warn(`预设角色未找到: ${id}`)
+      return
+    }
+    const entity = GameDataProcessor.enemyToParticipant(enemyData, PARTICIPANT_SIDE.ALLY, index)
+    battleService.addCharacterToTeam(entity, PARTICIPANT_SIDE.ALLY)
+    if (entity.getImmunities().length > 0) {
+      buffSystem.registerCharacterImmunities(entity.id, entity.getImmunities())
+    }
+    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
+  })
+
+  // 构建敌方
+  preset.enemy.forEach((id, index) => {
+    const enemyData = GameDataProcessor.findEnemyById(id)
+    if (!enemyData) {
+      console.warn(`预设角色未找到: ${id}`)
+      return
+    }
+    const entity = GameDataProcessor.enemyToParticipant(enemyData, PARTICIPANT_SIDE.ENEMY, index)
+    battleService.addCharacterToTeam(entity, PARTICIPANT_SIDE.ENEMY)
+    if (entity.getImmunities().length > 0) {
+      buffSystem.registerCharacterImmunities(entity.id, entity.getImmunities())
+    }
+    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
+  })
+
+  battleStore.syncTeams()
+  const firstAlly = battleService.getAllyTeam()[0]
+  if (firstAlly) battleStore.selectCharacter(firstAlly.id)
+}
 
 // 响应式获取队伍数据
 const allyTeam = computed(() => battleStore.fullAllyTeam);
@@ -383,5 +601,44 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   background: var(--color-brand-red-active) !important;
   color: var(--color-text-primary) !important;
   border-color: var(--color-danger) !important;
+}
+
+.preset-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border-default);
+  flex-wrap: wrap;
+}
+
+.preset-label {
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  font-weight: var(--font-weight-medium);
+}
+
+.preset-select {
+  flex: 1;
+  min-width: 140px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+}
+
+.preset-select:focus {
+  outline: none;
+  border-color: var(--color-info);
+}
+
+.preset-desc {
+  width: 100%;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  padding-top: var(--space-1);
 }
 </style>

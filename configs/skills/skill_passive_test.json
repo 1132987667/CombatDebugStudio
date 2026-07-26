@@ -1,0 +1,183 @@
+[
+  {
+    "id": "test_passive_lifesteal",
+    "name": "吸血",
+    "description": "造成伤害时恢复伤害量的20%气血",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "self", "strategy": "first" },
+    "triggerTimes": ["on_hit"],
+    "steps": [
+      {
+        "type": "heal",
+        "targetConfig": { "faction": "self" },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "attribute": "damageDealt", "ratio": 0.2 }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "test_passive_dodge_heal",
+    "name": "闪避回血",
+    "description": "闪避后恢复10点期许",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "self", "strategy": "first" },
+    "triggerTimes": ["dodge"],
+    "steps": [
+      {
+        "type": "heal",
+        "targetConfig": { "faction": "self" },
+        "calculation": {
+          "baseValue": 10,
+          "extraValues": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "test_passive_dodge_buff",
+    "name": "闪避必暴",
+    "description": "闪避后下一次攻击必定暴击",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "self", "strategy": "first" },
+    "triggerTimes": ["dodge"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "targetConfig": { "faction": "self" },
+        "buffId": "buff_guaranteed_crit",
+        "duration": 1,
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "test_passive_shield_per_turn",
+    "name": "每回合护盾",
+    "description": "每回合开始获得10点护盾",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "self", "strategy": "first" },
+    "triggerTimes": ["turn_start"],
+    "steps": [
+      {
+        "type": "apply_buff",
+        "targetConfig": { "faction": "self" },
+        "buffId": "buff_shield_test",
+        "duration": 1,
+        "parameters": { "shieldValue": 10 }
+      }
+    ]
+  },
+  {
+    "id": "test_passive_poison_on_hit",
+    "name": "中毒反击",
+    "description": "受到攻击时30%概率使攻击者中毒",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "enemy", "strategy": "first" },
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.3,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "targetConfig": { "faction": "enemy" },
+        "buffId": "buff_poison_test",
+        "duration": 3,
+        "stacks": 1
+      }
+    ]
+  },
+  {
+    "id": "test_passive_counterattack",
+    "name": "荆棘之躯",
+    "description": "受到攻击时反弹30%伤害",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "enemy", "strategy": "first" },
+    "triggerTimes": ["damage_taken"],
+    "steps": [
+      {
+        "type": "deal_damage",
+        "targetConfig": { "faction": "enemy" },
+        "calculation": {
+          "baseValue": 0,
+          "extraValues": [{ "attribute": "damageTaken", "ratio": 0.3 }]
+        }
+      }
+    ]
+  },
+  {
+    "id": "test_passive_extra_attack",
+    "name": "连击",
+    "description": "普通攻击25%概率获得额外行动",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "self", "strategy": "first" },
+    "triggerTimes": ["on_hit"],
+    "triggerProbability": 0.25,
+    "steps": [
+      {
+        "type": "custom",
+        "parameters": { "customType": "extra_action" }
+      }
+    ]
+  },
+  {
+    "id": "test_passive_attack_up_battle_start",
+    "name": "战斗鼓舞",
+    "description": "战斗开始时自身攻击力+10%",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "self", "strategy": "first" },
+    "triggerTimes": ["battle_start"],
+    "maxUses": 1,
+    "steps": [
+      {
+        "type": "modify_attribute",
+        "targetConfig": { "faction": "self" },
+        "modifiers": [
+          {
+            "id": "test_atk_up",
+            "targetAttribute": "attack",
+            "type": "PERCENTAGE",
+            "value": 0.1,
+            "sourceName": "战斗鼓舞"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "test_passive_silence_chance",
+    "name": "沉默领域",
+    "description": "受到攻击时20%概率使攻击者沉默1回合",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "enemy", "strategy": "first" },
+    "triggerTimes": ["damage_taken"],
+    "triggerProbability": 0.2,
+    "steps": [
+      {
+        "type": "apply_buff",
+        "targetConfig": { "faction": "enemy" },
+        "buffId": "buff_silence",
+        "duration": 1,
+        "stacks": 1
+      }
+    ]
+  }
+]

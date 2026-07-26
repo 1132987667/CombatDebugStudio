@@ -76,7 +76,7 @@ export interface BuffQuery {
  * 供纯文本 UI 展示使用
  */
 export interface BuffEffectLine {
-  /** 显示文本，如 "每回合损失 5% 生命值"、"吸收 200 点伤害" */
+  /** 显示文本，如 "每回合损失 5% 气血值"、"吸收 200 点伤害" */
   text: string
   /** 效果分类 */
   kind: 'dot' | 'hot' | 'shield' | 'vampire' | 'thorns' | 'control' | 'other'
@@ -84,7 +84,7 @@ export interface BuffEffectLine {
 
 /**
  * 增益效果脚本接口
- * 定义了增益效果的生命周期回调函数,用于实现自定义的增益逻辑
+ * 定义了增益效果的气血周期回调函数,用于实现自定义的增益逻辑
  * @template TParams - 增益效果参数类型,默认为any
  */
 export interface IBuffScript<TParams = any> {
@@ -139,7 +139,7 @@ export enum StackRule {
   /** 刷新持续时间：新Buff覆盖旧Buff并重置时间 */
   REFRESH = 'refresh',
   /** 限制层数：达到最大层数后无法继续叠加 */
-  LIMITED = 'limited'
+  LIMITED = 'limited',
 }
 
 /**
@@ -345,7 +345,7 @@ export interface BuffInstance<TParams = any> {
 
   /**
    * 增益效果脚本对象
-   * 包含增益效果的所有生命周期回调函数
+   * 包含增益效果的所有气血周期回调函数
    */
   script: IBuffScript<TParams>
 

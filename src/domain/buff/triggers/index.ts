@@ -21,10 +21,13 @@ function getSourceTeam(ctx: TriggerExecutionContext): string | undefined {
 
 // ===================== 治疗类 =====================
 
-/** heal_percent_max_hp — 按最大生命值百分比治疗目标 */
+/** heal_percent_max_hp — 按最大气血值百分比治疗目标 */
 export function healPercentMaxHp(ctx: TriggerExecutionContext): void {
   const percent = (ctx.params?.percent as number) ?? 0.05
-  const targetId = (ctx.params?.target as string) === 'self' ? ctx.targetId ?? '' : ctx.targetId ?? ''
+  const targetId =
+    (ctx.params?.target as string) === 'self'
+      ? (ctx.targetId ?? '')
+      : (ctx.targetId ?? '')
   if (!targetId) return
   // ponytail: 通过负 damage 实现百分比治疗; requestHeal(0) 曾在此处但会触发无效回调链
   ctx.buffSystem?.requestDamage(targetId, 0, -Math.abs(percent))
@@ -38,11 +41,15 @@ export function healLowestHpAlly(ctx: TriggerExecutionContext): void {
   const sourceTeam = getSourceTeam(ctx)
   if (!sourceTeam) return
   const allies = Array.from(battleData.participants.values()).filter(
-    (p: BattleEntity) => p.team === sourceTeam && p.isAlive?.() && p.id !== ctx.targetId,
+    (p: BattleEntity) =>
+      p.team === sourceTeam && p.isAlive?.() && p.id !== ctx.targetId,
   )
   if (allies.length === 0) return
   const lowest = allies.reduce((a: BattleEntity, b: BattleEntity) =>
-    (a.getAttribute?.('currentHealth') ?? 0) < (b.getAttribute?.('currentHealth') ?? 0) ? a : b,
+    (a.getAttribute?.('currentHealth') ?? 0) <
+    (b.getAttribute?.('currentHealth') ?? 0)
+      ? a
+      : b,
   )
   // ponytail: 同上，不调用 requestHeal(0) 以避免触发 HEAL_RECEIVED 被动循环
   ctx.buffSystem?.requestDamage(lowest.id, 0, -percent)
@@ -67,10 +74,13 @@ export function healAllAllies(ctx: TriggerExecutionContext): void {
 /** heal_on_fire_damage — 受火焰伤害时按比例治疗（预留占位，待价值系统接入） */
 export function healOnFireDamage(ctx: TriggerExecutionContext): void {
   // ponytail: 需要战斗系统在火焰伤害事件中传递 damage 值到 extra 字段
-  const damageValue = ((ctx.extra?.damage as number) ?? 0)
+  const damageValue = (ctx.extra?.damage as number) ?? 0
   const healPercent = (ctx.params?.percent as number) ?? 0.5
   if (damageValue <= 0) return
-  ctx.buffSystem?.requestHeal(ctx.targetId ?? '', Math.round(damageValue * healPercent))
+  ctx.buffSystem?.requestHeal(
+    ctx.targetId ?? '',
+    Math.round(damageValue * healPercent),
+  )
 }
 
 // ===================== 伤害/反弹/格挡类 =====================
@@ -81,20 +91,36 @@ export function dealDotDamage(ctx: TriggerExecutionContext): void {
   ctx.buffSystem?.requestDamage(ctx.targetId ?? '', 0, percent)
 }
 
-/** reflect_damage — 按百分比反弹伤害给攻击者 */
+/** 
+ * reflect_damage — 按百分比反弹伤害给攻击者
+ * 
+ * 反伤模型说明：
+ * - basis='final'（模型一）：反伤 = 实际扣血 * 比例。受目标防御影响，防御越高反伤越低。
+ * - basis='raw'  （模型二）：反伤 = 减免前伤害 * 比例。鼓励坦克堆防御，反伤下限稳定，
+ *                           且能正确反馈敌方暴击带来的威胁。
+ * 
+ * @param ctx.params.percent - 反弹比例 (0.0 - 1.0)
+ * @param ctx.params.basis   - 计算基数：'final'（默认，最终扣血）| 'raw'（减免前原始伤害）
+ */
 export function reflectDamage(ctx: TriggerExecutionContext): void {
   const percent = (ctx.params?.percent as number) ?? 0.3
-  const damageTaken = ((ctx.extra?.damage as number) ?? 0)
+  const basis = (ctx.params?.basis as string) ?? 'final'
+
+  // 根据配置选择基数
+  const baseDamage = basis === 'raw'
+    ? ((ctx.extra?.rawDamage as number) ?? 0)
+    : ((ctx.extra?.damage as number) ?? 0)
+
   const attackerId = ctx.sourceId ?? ''
-  if (damageTaken <= 0 || !attackerId) return
-  ctx.buffSystem?.requestDamage(attackerId, Math.round(damageTaken * percent))
+  if (baseDamage <= 0 || !attackerId) return
+  ctx.buffSystem?.requestDamage(attackerId, Math.round(baseDamage * percent))
 }
 
 /** reflect_fire_damage — 按百分比反弹火焰伤害 */
 export function reflectFireDamage(ctx: TriggerExecutionContext): void {
   // ponytail: 与 reflect_damage 逻辑相同，区别在于触发条件由战斗系统在火焰伤害时 emit 控制
   const percent = (ctx.params?.percent as number) ?? 0.5
-  const damageTaken = ((ctx.extra?.damage as number) ?? 0)
+  const damageTaken = (ctx.extra?.damage as number) ?? 0
   const attackerId = ctx.sourceId ?? ''
   if (damageTaken <= 0 || !attackerId) return
   ctx.buffSystem?.requestDamage(attackerId, Math.round(damageTaken * percent))
@@ -103,7 +129,7 @@ export function reflectFireDamage(ctx: TriggerExecutionContext): void {
 /** block_damage_percent — 按百分比格挡伤害，减少所受伤害 */
 export function blockDamagePercent(ctx: TriggerExecutionContext): void {
   const percent = (ctx.params?.percent as number) ?? 0.5
-  const damageTaken = ((ctx.extra?.damage as number) ?? 0)
+  const damageTaken = (ctx.extra?.damage as number) ?? 0
   if (damageTaken <= 0) return
   const blocked = Math.round(damageTaken * percent)
   ctx.buffSystem?.requestHeal(ctx.targetId ?? '', blocked)
@@ -111,7 +137,7 @@ export function blockDamagePercent(ctx: TriggerExecutionContext): void {
 
 /** share_damage — 将伤害分摊给所有队友 */
 export function shareDamage(ctx: TriggerExecutionContext): void {
-  const damageTaken = ((ctx.extra?.damage as number) ?? 0)
+  const damageTaken = (ctx.extra?.damage as number) ?? 0
   const battleData = ctx.battleData
   if (damageTaken <= 0 || !battleData?.participants) return
   const sourceTeam = getSourceTeam(ctx)
@@ -137,12 +163,22 @@ export function applyDebuffToAttacker(ctx: TriggerExecutionContext): void {
   const duration = (ctx.params?.duration as number) ?? 2
   const attackerId = ctx.sourceId ?? ''
   if (!buffId || !attackerId) return
-  ctx.buffSystem?.addBuff(attackerId, buffId, { duration }, ctx.currentTurn ?? 0)
+  ctx.buffSystem?.addBuff(
+    attackerId,
+    buffId,
+    { duration },
+    ctx.currentTurn ?? 0,
+  )
 }
 
 /** apply_poison — 施加中毒 debuff（固定配置） */
 export function applyPoison(ctx: TriggerExecutionContext): void {
-  ctx.buffSystem?.addBuff(ctx.targetId ?? '', 'buff_poison', {}, ctx.currentTurn ?? 0)
+  ctx.buffSystem?.addBuff(
+    ctx.targetId ?? '',
+    'buff_poison',
+    {},
+    ctx.currentTurn ?? 0,
+  )
 }
 
 /** apply_silence_to_attacker — 给攻击者施加沉默 */
@@ -205,7 +241,10 @@ export function summonUnit(_ctx: TriggerExecutionContext): void {
 // ===================== 注册入口 =====================
 
 /** 所有触发器脚本 ID → 处理函数的映射，供 BuffSystem 批量注册 */
-export const TRIGGER_SCRIPTS: Record<string, (ctx: TriggerExecutionContext) => void> = {
+export const TRIGGER_SCRIPTS: Record<
+  string,
+  (ctx: TriggerExecutionContext) => void
+> = {
   heal_percent_max_hp: healPercentMaxHp,
   heal_lowest_hp_ally: healLowestHpAlly,
   heal_all_allies: healAllAllies,

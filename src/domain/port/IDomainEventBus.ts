@@ -6,7 +6,7 @@
  *
  * 支持两种反注册模式：
  * - off(event, handler)：按处理器引用卸载（mitt 风格，推荐用于临时监听）
- * - offByListenerId(listenerId)：按监听器 ID 批量卸载（TriggerEventBus 风格，用于 Buff 生命周期清理）
+ * - offByListenerId(listenerId)：按监听器 ID 批量卸载（TriggerEventBus 风格，用于 Buff 气血周期清理）
  */
 export interface IDomainEventBus {
   /**
@@ -22,7 +22,11 @@ export interface IDomainEventBus {
    * @param handler 事件处理器
    * @param listenerId 可选，监听器分组 ID（用于 offByListenerId 批量清理，如 Buff 实例 ID）
    */
-  on(event: string, handler: (...args: unknown[]) => void, listenerId?: string): void
+  on(
+    event: string,
+    handler: (...args: unknown[]) => void,
+    listenerId?: string,
+  ): void
 
   /**
    * 按处理器引用取消订阅

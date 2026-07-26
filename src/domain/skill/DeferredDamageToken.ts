@@ -4,6 +4,8 @@ interface DamageEntry {
   target: BattleEntity
   damage: number
   heal: number
+  /** 减免前原始伤害（供 DAMAGE_TAKEN 事件发射使用） */
+  rawDamage: number
 }
 
 /**
@@ -19,8 +21,18 @@ export class DeferredDamageToken {
   private totalDamageSnapshot = 0
   private totalHealSnapshot = 0
 
-  record(target: BattleEntity, damage: number, heal: number = 0): void {
-    this.entries.push({ target, damage, heal })
+  record(target: BattleEntity, damage: number, heal: number = 0, rawDamage?: number): void {
+    this.entries.push({ target, damage, heal, rawDamage: rawDamage ?? damage })
+  }
+
+  /** 获取所有记录条目（供 BattleExecutor 遍历扣血并发射事件） */
+  getEntries(): ReadonlyArray<DamageEntry> {
+    return this.entries
+  }
+
+  /** 清空记录条目（在手动遍历扣血后调用，替代 applyAll） */
+  clear(): void {
+    this.entries = []
   }
 
   /** 统一应用所有记录的伤害/治疗，首次调用后锁定 */

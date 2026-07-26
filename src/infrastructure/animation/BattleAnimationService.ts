@@ -198,8 +198,7 @@ export class BattleAnimationService {
       const delayMs = this.getScaledDuration(this.HIT_SHAKE_DELAY)
 
       if (data.hitEffect === ActionResultType.MISS) {
-        // HACK: Miss 文本由 ParticipantCard.addDamageNumber 通过 CSS 实现，此处不再重复创建
-        // 震屏+闪光仍然保留
+        // NOTE: Miss 文本由 BattleVisualEffects.showMissText 统一接管，此处只做震屏+闪光
       } else if (data.passiveName) {
         this.playPassiveTextAnimation(
           data.targetElement,

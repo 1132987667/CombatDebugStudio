@@ -1,5 +1,5 @@
 > **源位置**: docs/buff-text-display-design-v2.md — 从 docs/ 迁移至此
->
+
 # Buff 纯文本显示方案 v2
 
 > 基于 CombatDebugStudio 现有组件架构（BuffSystem + BuffIcon + AttributeTooltip）的全文本驱动 UI 设计
@@ -34,17 +34,17 @@
 
 使用项目中已定义的 CSS 自定义属性，**不新增颜色变量**。
 
-| 语义 | Token | 色值 | 字重 | 使用场景 |
-|------|-------|------|------|---------|
-| **增益** | `var(--color-energy)` | `#22d3ee` 青 | 加粗 | 攻击↑、防御↑、速度↑ 等正面修正 |
-| **减益** | `var(--color-danger)` | `#f44336` 红 | 常规 | 攻击↓、防御↓、速度↓ 等负面修正 |
-| **控制** | `var(--color-debuff)` | `#a855f7` 紫 | 加粗 | `【眩晕】` `【沉默】` `【恐惧】` |
-| **永久** | `var(--color-text-tertiary)` | `#888` 灰 | 常规 | `（永久）`、无持续回合的效果 |
-| **条件-未激活** | `var(--color-text-disabled)` | `#666` 灰 | 常规 | `（未激活）` 状态 |
-| **条件-已激活** | `var(--color-energy)` | `#22d3ee` 青 | 加粗 | `（已激活）` 状态 |
-| **标签名** | `var(--color-text-secondary)` | `#eee` 灰白 | 加粗 | Buff 名称，如 `【狂战士】` |
-| **层数/回合** | `var(--color-text-tertiary)` | `#888` 灰 | 常规 | `（2回合）`、`×3层` |
-| **基础数值** | `var(--color-text-primary)` | `#fff` 白 | 常规 | 来源追溯中的基础值 |
+| 语义            | Token                         | 色值         | 字重 | 使用场景                         |
+| --------------- | ----------------------------- | ------------ | ---- | -------------------------------- |
+| **增益**        | `var(--color-energy)`         | `#22d3ee` 青 | 加粗 | 攻击↑、防御↑、速度↑ 等正面修正   |
+| **减益**        | `var(--color-danger)`         | `#f44336` 红 | 常规 | 攻击↓、防御↓、速度↓ 等负面修正   |
+| **控制**        | `var(--color-debuff)`         | `#a855f7` 紫 | 加粗 | `【眩晕】` `【沉默】` `【恐惧】` |
+| **永久**        | `var(--color-text-tertiary)`  | `#888` 灰    | 常规 | `（永久）`、无持续回合的效果     |
+| **条件-未激活** | `var(--color-text-disabled)`  | `#666` 灰    | 常规 | `（未激活）` 状态                |
+| **条件-已激活** | `var(--color-energy)`         | `#22d3ee` 青 | 加粗 | `（已激活）` 状态                |
+| **标签名**      | `var(--color-text-secondary)` | `#eee` 灰白  | 加粗 | Buff 名称，如 `【狂战士】`       |
+| **层数/回合**   | `var(--color-text-tertiary)`  | `#888` 灰    | 常规 | `（2回合）`、`×3层`              |
+| **基础数值**    | `var(--color-text-primary)`   | `#fff` 白    | 常规 | 来源追溯中的基础值               |
 
 > **色盲辅助**：增益额外添加 `+` 前缀，减益为 `-` 前缀，控制为 `【】` 符号包裹。即使无色觉也能区分。
 
@@ -101,8 +101,8 @@ interface BuffTextItem {
 
 /** 属性合并条目：同一属性多来源合并后的一条显示 */
 interface MergedAttributeLine {
-  attribute: string       // 属性名，如 "攻击"
-  totalPercent: number    // 合并百分比，如 45（表示 +45%）
+  attribute: string // 属性名，如 "攻击"
+  totalPercent: number // 合并百分比，如 45（表示 +45%）
   sources: Array<{
     name: string
     percent: number
@@ -142,7 +142,7 @@ buffs.json ──→ BuffSystem ──→ getBuffConfigByInstanceId()
 
 ```
 ParticipantCard.vue
-  ├── HP/MP 条（已有）
+  ├── 气血/MP 条（已有）
   ├── BuffTextBar.vue          ← 新增：主界面收缩态标签栏
   │     └── BuffTextTag.vue    ← 新增：单个标签（合并后）
   ├── BuffTextPanel.vue        ← 新增：展开浮层面板
@@ -156,11 +156,17 @@ ParticipantCard.vue
 
 ```vue
 <template>
-  <div class="buff-text-bar" :class="{ expanded: isExpanded }"
-       @click="isExpanded = !isExpanded">
+  <div
+    class="buff-text-bar"
+    :class="{ expanded: isExpanded }"
+    @click="isExpanded = !isExpanded"
+  >
     <!-- 控制标签优先显示 -->
-    <span v-for="item in controlItems" :key="item.instanceId"
-          class="text-tag control-tag">
+    <span
+      v-for="item in controlItems"
+      :key="item.instanceId"
+      class="text-tag control-tag"
+    >
       【{{ item.name }}】
       <span v-if="item.remainingTurns" class="turn-count">
         （{{ item.remainingTurns }}）
@@ -168,12 +174,16 @@ ParticipantCard.vue
     </span>
 
     <!-- 合并属性标签 -->
-    <span v-for="line in mergedLines" :key="line.attribute"
-          class="text-tag"
-          :class="line.totalPercent > 0 ? 'buff-tag' : 'debuff-tag'"
-          @mouseenter="showBreakdown($event, line)"
-          @mouseleave="hideBreakdown">
-      {{ line.attribute }}{{ line.totalPercent > 0 ? '↑' : '↓' }}{{ Math.abs(line.totalPercent) }}%
+    <span
+      v-for="line in mergedLines"
+      :key="line.attribute"
+      class="text-tag"
+      :class="line.totalPercent > 0 ? 'buff-tag' : 'debuff-tag'"
+      @mouseenter="showBreakdown($event, line)"
+      @mouseleave="hideBreakdown"
+    >
+      {{ line.attribute }}{{ line.totalPercent > 0 ? '↑' : '↓'
+      }}{{ Math.abs(line.totalPercent) }}%
     </span>
 
     <!-- 折叠 -->
@@ -206,14 +216,19 @@ ParticipantCard.vue
       <!-- 属性汇总 -->
       <div class="panel-divider"></div>
       <div class="attribute-summary">
-        <div v-for="attr in attributeSummary" :key="attr.name"
-             class="summary-line">
+        <div
+          v-for="attr in attributeSummary"
+          :key="attr.name"
+          class="summary-line"
+        >
           <span class="summary-label">{{ attr.name }}：</span>
           <span class="summary-base">{{ attr.base }}</span>
           <span class="summary-arrow">→</span>
           <span class="summary-total">{{ attr.total }}</span>
-          <span class="summary-delta"
-                :class="attr.delta > 0 ? 'positive' : 'negative'">
+          <span
+            class="summary-delta"
+            :class="attr.delta > 0 ? 'positive' : 'negative'"
+          >
             （{{ attr.delta > 0 ? '+' : '' }}{{ attr.delta }}%）
           </span>
         </div>
@@ -239,32 +254,33 @@ ParticipantCard.vue
 
 ### 5.2 格式矩阵
 
-| 效果类型 | 格式 | 示例 |
-|---------|------|------|
-| 百分比增益 | `属性↑数值%` | `攻击↑30%` |
-| 百分比减益 | `属性↓数值%` | `防御↓15%` |
-| 固定值增益 | `属性+数值` | `生命+200` |
-| 控制 | `【控制名】` | `【眩晕】` |
-| 特殊（每回合） | `每回合 效果` | `每回合损失 5% 生命值` |
-| 护盾 | `吸收 数值 类型` | `吸收 200 点伤害` |
-| 光环 | `效果（全队）` | `攻击↑10%（全队）` |
+| 效果类型       | 格式             | 示例                   |
+| -------------- | ---------------- | ---------------------- |
+| 百分比增益     | `属性↑数值%`     | `攻击↑30%`             |
+| 百分比减益     | `属性↓数值%`     | `防御↓15%`             |
+| 固定值增益     | `属性+数值`      | `气血+200`             |
+| 控制           | `【控制名】`     | `【眩晕】`             |
+| 特殊（每回合） | `每回合 效果`    | `每回合损失 5% 气血值` |
+| 护盾           | `吸收 数值 类型` | `吸收 200 点伤害`      |
+| 光环           | `效果（全队）`   | `攻击↑10%（全队）`     |
 
 ### 5.3 回合与状态后缀
 
-| 后缀 | 含义 |
-|------|------|
-| `（N回合）` | 持续 N 回合 |
-| `（永久）` | 永久效果 |
-| `（残血）` | 条件：生命低于 40% |
-| `（未激活）` | 条件不满足 |
-| `（已激活）` | 条件满足 |
-| `（全队）` | 光环效果 |
+| 后缀         | 含义               |
+| ------------ | ------------------ |
+| `（N回合）`  | 持续 N 回合        |
+| `（永久）`   | 永久效果           |
+| `（残血）`   | 条件：气血低于 40% |
+| `（未激活）` | 条件不满足         |
+| `（已激活）` | 条件满足           |
+| `（全队）`   | 光环效果           |
 
 ### 5.4 合并规则（同属性多来源）
 
 同一属性的多个来源**必须合并为一条显示**，悬停展示详细拆解。
 
 **合并前：**
+
 ```
 狂战士：攻击↑30%（3回合）
 复仇怒火：攻击↑5%（永久）
@@ -272,11 +288,13 @@ ParticipantCard.vue
 ```
 
 **合并后（收缩态）：**
+
 ```
 攻击↑45%
 ```
 
 **悬停拆解：**
+
 ```
 ┌─────────────────────────────────────┐
 │  攻击力：100 → 145（+45%）          │
@@ -309,38 +327,61 @@ ParticipantCard.vue
 
 基于 `BattleVisualEffects.vue` 的动画框架，定义以下纯文本动画：
 
-| 事件 | 动画 | 实现方式 |
-|------|------|---------|
-| 增益添加 | 青色文字从右滑入（200ms） | CSS `@keyframes slideInRight` + `opacity` |
-| 减益添加 | 红色文字从左滑入（200ms） | CSS `@keyframes slideInLeft` + `opacity` |
-| 层数变化 | 数字跳动（300ms） | CSS `@keyframes numberPop`（scale 1→1.3→1） |
-| 剩余1回合 | 文字闪烁（1s 循环） | CSS `@keyframes blink`（opacity 1→0.4→1） |
-| 移除 | 文字渐出+上移（300ms） | CSS `transition: all 300ms ease-out` |
-| 条件激活 | 灰色→青色切换 + 0.3s 高亮 | CSS `@keyframes activateHighlight` |
-| 条件失活 | 青色→灰色切换 | CSS `transition: color 200ms` |
+| 事件      | 动画                      | 实现方式                                    |
+| --------- | ------------------------- | ------------------------------------------- |
+| 增益添加  | 青色文字从右滑入（200ms） | CSS `@keyframes slideInRight` + `opacity`   |
+| 减益添加  | 红色文字从左滑入（200ms） | CSS `@keyframes slideInLeft` + `opacity`    |
+| 层数变化  | 数字跳动（300ms）         | CSS `@keyframes numberPop`（scale 1→1.3→1） |
+| 剩余1回合 | 文字闪烁（1s 循环）       | CSS `@keyframes blink`（opacity 1→0.4→1）   |
+| 移除      | 文字渐出+上移（300ms）    | CSS `transition: all 300ms ease-out`        |
+| 条件激活  | 灰色→青色切换 + 0.3s 高亮 | CSS `@keyframes activateHighlight`          |
+| 条件失活  | 青色→灰色切换             | CSS `transition: color 200ms`               |
 
 ```scss
 // 动画定义示例（放入 _animations.scss）
 @keyframes slideInRight {
-  from { transform: translateX(20px); opacity: 0; }
-  to   { transform: translateX(0);    opacity: 1; }
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes numberPop {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.3); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 @keyframes activateHighlight {
-  0%   { background-color: transparent; }
-  50%  { background-color: rgba(34, 211, 238, 0.15); }
-  100% { background-color: transparent; }
+  0% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(34, 211, 238, 0.15);
+  }
+  100% {
+    background-color: transparent;
+  }
 }
 ```
 
@@ -373,7 +414,7 @@ ParticipantCard.vue
 
 - 通过现有键盘快捷键（`useKeyBind.ts`）切换：**`Ctrl+D`** 切换调试模式
 - 调试模式开启时，所有标签追加 `[ID]` 后缀小字
-- 调试模式开启时，日志面板实时输出 Buff 生命周期事件
+- 调试模式开启时，日志面板实时输出 Buff 气血周期事件
 
 ### 7.3 调试日志输出格式
 
@@ -393,21 +434,21 @@ ParticipantCard.vue
 ### 8.1 空状态
 
 ```text
-剑士  HP 400/500（80%）
+剑士  气血 400/500（80%）
 无状态效果
 ```
 
 ### 8.2 加载中
 
 ```text
-剑士  HP 400/500（80%）
+剑士  气血 400/500（80%）
 状态加载中...
 ```
 
 ### 8.3 错误/未知 Buff
 
 ```text
-剑士  HP 400/500（80%）
+剑士  气血 400/500（80%）
 【未知效果】（3回合）      ← Buff 配置缺失时的兜底
   ● 未知属性↓?%（来源ID: unknown_buff_123）
 ```
@@ -435,7 +476,7 @@ ParticipantCard.vue
 ### 9.1 主界面（收缩态）
 
 ```text
-剑士  HP 320/500（64%）
+剑士  气血 320/500（64%）
 【沉默】 攻击↑45%  防御↓15%  速度↑10%  +2
 ```
 
@@ -461,7 +502,7 @@ ParticipantCard.vue
 │                                                     │
 │  【中毒】剩余 3 回合                                │
 │    ● 速度↓10%（3回合）                              │
-│    ● 每回合损失 5% 生命值（3回合）                   │
+│    ● 每回合损失 5% 气血值（3回合）                   │
 │                                                     │
 │  ──────────────────────────────────────────────────  │
 │  攻击力：100 → 145 →（+45%）                         │
@@ -533,18 +574,18 @@ ParticipantCard.vue
 
 ```vue
 <BuffTextBar v-if="displayMode === 'text'" />
-<BuffList   v-else />
+<BuffList v-else />
 ```
 
 Store 中增加 `displayMode: 'icon' | 'text'` 状态，允许用户在运行中切换。
 
 ### 11.2 复用的现有组件
 
-| 现有组件 | 复用方式 |
-|---------|---------|
-| `AttributeTooltip.vue` | 悬停属性标签时直接复用其追溯面板 |
-| `BattleVisualEffects.vue` | 动画事件格式适配后复用 |
-| `BuffSystem.getBuffConfigByInstanceId()` | 作为 Buff 数据来源 |
+| 现有组件                                 | 复用方式                         |
+| ---------------------------------------- | -------------------------------- |
+| `AttributeTooltip.vue`                   | 悬停属性标签时直接复用其追溯面板 |
+| `BattleVisualEffects.vue`                | 动画事件格式适配后复用           |
+| `BuffSystem.getBuffConfigByInstanceId()` | 作为 Buff 数据来源               |
 
 ### 11.3 不修改的现有文件
 
@@ -557,40 +598,40 @@ Store 中增加 `displayMode: 'icon' | 'text'` 状态，允许用户在运行中
 
 ## 十二、设计规范速查表
 
-| 维度 | 规范 |
-|------|------|
-| **图标** | 无。完全使用文本 |
-| **允许符号** | `↑ ↓ % ∞ 【】 （ ） + - > < = / ： ，` |
+| 维度           | 规范                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| **图标**       | 无。完全使用文本                                                                                 |
+| **允许符号**   | `↑ ↓ % ∞ 【】 （ ） + - > < = / ： ，`                                                           |
 | **颜色 Token** | `--color-energy`(青) / `--color-danger`(红) / `--color-debuff`(紫) / `--color-text-tertiary`(灰) |
-| **字重** | 增益=加粗，减益=常规，控制=加粗，标签名=加粗 |
-| **属性名** | 2-4 中文字，标准术语（攻击/防御/速度/暴击/暴伤/伤害） |
-| **格式模板** | `属性↑数值%（条件）（回合）` |
-| **合并规则** | 同属性合并显示，悬停拆解来源 |
-| **排序规则** | 控制优先 > 快到期优先 > 增益优先 |
-| **折叠阈值** | 5 条 |
-| **空状态** | `无状态效果` |
-| **错误兜底** | `【未知效果】` |
-| **调试模式** | `Ctrl+D` 切换，显示实例 ID、脚本名、配置 key |
+| **字重**       | 增益=加粗，减益=常规，控制=加粗，标签名=加粗                                                     |
+| **属性名**     | 2-4 中文字，标准术语（攻击/防御/速度/暴击/暴伤/伤害）                                            |
+| **格式模板**   | `属性↑数值%（条件）（回合）`                                                                     |
+| **合并规则**   | 同属性合并显示，悬停拆解来源                                                                     |
+| **排序规则**   | 控制优先 > 快到期优先 > 增益优先                                                                 |
+| **折叠阈值**   | 5 条                                                                                             |
+| **空状态**     | `无状态效果`                                                                                     |
+| **错误兜底**   | `【未知效果】`                                                                                   |
+| **调试模式**   | `Ctrl+D` 切换，显示实例 ID、脚本名、配置 key                                                     |
 
 ---
 
 ## 十三、评分对比
 
-| 维度 | 原方案 | v2 方案 | 说明 |
-|------|--------|---------|------|
-| 排版与格式 | 10/10 | 10/10 | 继承并精细化 |
-| 颜色系统 | 8/10 | 10/10 | 对齐项目现有 token，无新增变量 |
-| 组件架构 | 0/10 | 10/10 | 补齐 Vue 组件树、Props、Computed |
-| 数据管道 | 0/10 | 10/10 | 从 BuffSystem → 显示层的完整链路 |
-| 调试模式 | 0/10 | 10/10 | CombatDebugStudio 专属功能 |
-| 边界状态 | 0/10 | 10/10 | 空/错误/加载/极多情况全覆盖 |
-| 动画方案 | 7/10 | 9/10 | 对齐现有动画系统，CSS 实现 |
-| 可访问性 | 2/10 | 8/10 | +`-` 前缀 + `【】` 符号辅助 |
-| 色盲兼容 | 0/10 | 8/10 | 颜色+符号双重编码 |
-| 配置化 | 0/10 | 6/10 | `ponytail:` 标记，后续可抽离 |
-| 集成策略 | 0/10 | 10/10 | 共存模式 + 复用现有组件 |
-| **合计** | **75/100** | **96/100** | |
+| 维度       | 原方案     | v2 方案    | 说明                             |
+| ---------- | ---------- | ---------- | -------------------------------- |
+| 排版与格式 | 10/10      | 10/10      | 继承并精细化                     |
+| 颜色系统   | 8/10       | 10/10      | 对齐项目现有 token，无新增变量   |
+| 组件架构   | 0/10       | 10/10      | 补齐 Vue 组件树、Props、Computed |
+| 数据管道   | 0/10       | 10/10      | 从 BuffSystem → 显示层的完整链路 |
+| 调试模式   | 0/10       | 10/10      | CombatDebugStudio 专属功能       |
+| 边界状态   | 0/10       | 10/10      | 空/错误/加载/极多情况全覆盖      |
+| 动画方案   | 7/10       | 9/10       | 对齐现有动画系统，CSS 实现       |
+| 可访问性   | 2/10       | 8/10       | +`-` 前缀 + `【】` 符号辅助      |
+| 色盲兼容   | 0/10       | 8/10       | 颜色+符号双重编码                |
+| 配置化     | 0/10       | 6/10       | `ponytail:` 标记，后续可抽离     |
+| 集成策略   | 0/10       | 10/10      | 共存模式 + 复用现有组件          |
+| **合计**   | **75/100** | **96/100** |                                  |
 
 ---
 
-*本方案遵循 ponytail 原则：最小化改动，最大复用现有组件，不修改领域层代码。*
+_本方案遵循 ponytail 原则：最小化改动，最大复用现有组件，不修改领域层代码。_

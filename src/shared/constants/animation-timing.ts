@@ -3,7 +3,7 @@
  *
  * 1. 每个行动消耗固定总预算 T；T(speed) = BASE_BUDGET / speed
  * 2. 所有动画节点按 T 的固定占比排布，命中瞬间锁定 50%
- * 3. 命中瞬间 = 伤害数字弹出 = HP 条开始变化 = 命中特效，三者严格同步
+ * 3. 命中瞬间 = 伤害数字弹出 = 气血 条开始变化 = 命中特效，三者严格同步
  * 4. 领域层按此配速（flight→impact 两段等待），UI 按此排期，不再各定时长
  */
 export const BATTLE_ANIMATION_TIMING = {
@@ -12,13 +12,13 @@ export const BATTLE_ANIMATION_TIMING = {
 
   /** 阶段占比（全速度通用，值为 T 的比例） */
   PHASES: {
-    windup:       { start: 0.00, end: 0.20 },  // 攻击者蓄力/突进
-    nameFlight:   { start: 0.10, end: 0.50 },  // 技能名飞行
-    projectile:   { start: 0.20, end: 0.50 },  // 光弹飞行
-    impact:       0.50,                         // 命中瞬间（数字+HP+特效同步锚点）
-    numberFloat:  { start: 0.50, end: 0.85 },  // 伤害数字上浮淡出
-    hpTransition: { start: 0.50, end: 1.00 },  // HP 条过渡
-    settle:       { start: 0.50, end: 1.00 },  // 攻击者回位/场景收束
+    windup: { start: 0.0, end: 0.2 }, // 攻击者蓄力/突进
+    nameFlight: { start: 0.1, end: 0.5 }, // 技能名飞行
+    projectile: { start: 0.2, end: 0.5 }, // 光弹飞行
+    impact: 0.5, // 命中瞬间（数字+气血+特效同步锚点）
+    numberFloat: { start: 0.5, end: 0.85 }, // 伤害数字上浮淡出
+    hpTransition: { start: 0.5, end: 1.0 }, // 气血 条过渡
+    settle: { start: 0.5, end: 1.0 }, // 攻击者回位/场景收束
   },
 
   /** 多目标命中错峰间隔（占 T 比例） */

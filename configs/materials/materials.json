@@ -31,7 +31,7 @@
     "id": "elix_001",
     "name": "小还丹",
     "type": "consumable",
-    "description": "基础的恢复丹药，可恢复少量生命值",
+    "description": "基础的恢复丹药，可恢复少量气血值",
     "rarity": 1,
     "effects": [{ "type": "heal", "value": 30 }]
   },
@@ -39,7 +39,7 @@
     "id": "elix_002",
     "name": "中还丹",
     "type": "consumable",
-    "description": "中级的恢复丹药，可恢复中等生命值",
+    "description": "中级的恢复丹药，可恢复中等气血值",
     "rarity": 2,
     "effects": [{ "type": "heal", "value": 60 }]
   },
@@ -47,7 +47,7 @@
     "id": "elix_003",
     "name": "大还丹",
     "type": "consumable",
-    "description": "高级的恢复丹药，可恢复大量生命值",
+    "description": "高级的恢复丹药，可恢复大量气血值",
     "rarity": 3,
     "effects": [{ "type": "heal", "value": 100 }]
   },

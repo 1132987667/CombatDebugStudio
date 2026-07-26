@@ -116,7 +116,7 @@ export const BattleLogFormatter = {
       classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
     })
     segments.push({
-      text: ` 恢复 ${healAmount} 点生命`,
+      text: ` 恢复 ${healAmount} 点气血`,
       classStr: 'log-heal',
     })
 

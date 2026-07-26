@@ -138,7 +138,7 @@ export class BattleRuleManager {
    */
   public async loadConfig(): Promise<BattleRulesConfig> {
     this.config = this.getDefaultConfig()
-    LoggerProvider.logger.addSystemLog({message: '战斗规则配置加载成功'})
+    LoggerProvider.logger.addSystemLog({ message: '战斗规则配置加载成功' })
     return this.config
   }
 
@@ -219,7 +219,7 @@ export class BattleRuleManager {
           decisionDelay: 1000,
           // skillPriority: 技能使用优先级权重，数值越高越优先使用
           skillPriority: {
-            // heal: 治疗技能优先级（最高），确保AI优先恢复生命值
+            // heal: 治疗技能优先级（最高），确保AI优先恢复气血值
             heal: 90,
             // attack: 攻击技能优先级，常规输出手段
             attack: 70,
@@ -286,7 +286,10 @@ export class BattleRuleManager {
         !Array.isArray(source[key])
       ) {
         // ponytail: 递归合并对象类型的字段
-        result[key] = this.deepMerge(result[key] || ({} as Record<string, any>), source[key]) as T[keyof T]
+        result[key] = this.deepMerge(
+          result[key] || ({} as Record<string, any>),
+          source[key],
+        ) as T[keyof T]
       } else {
         result[key] = source[key] as T[typeof key]
       }
@@ -456,16 +459,23 @@ export class BattleRuleManager {
     // 2. 超过最大回合数（按血量比例判定）
     if (currentTurn >= maxTurns) {
       const charactersHealth = aliveCharacters.reduce(
-        (sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth),
+        (sum, p) =>
+          sum +
+          p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+            p.getAttribute(ATTRIBUTE_CODE.maxHealth),
         0,
       )
       const enemiesHealth = aliveEnemies.reduce(
-        (sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth),
+        (sum, p) =>
+          sum +
+          p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+            p.getAttribute(ATTRIBUTE_CODE.maxHealth),
         0,
       )
-      const winner = charactersHealth >= enemiesHealth
-        ? PARTICIPANT_SIDE.ALLY
-        : PARTICIPANT_SIDE.ENEMY
+      const winner =
+        charactersHealth >= enemiesHealth
+          ? PARTICIPANT_SIDE.ALLY
+          : PARTICIPANT_SIDE.ENEMY
       return { shouldEnd: true, winner }
     }
 

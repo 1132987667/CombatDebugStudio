@@ -7,7 +7,10 @@
  * 版本: 3.1.0 - 集成触发器事件系统
  */
 
-import { BattleTriggerPhase, BATTLE_CONSTANTS } from '@/domain/battle/type/types'
+import {
+  BattleTriggerPhase,
+  BATTLE_CONSTANTS,
+} from '@/domain/battle/type/types'
 import type {
   StatusEffect,
   ParticipantSnapshot,
@@ -283,14 +286,14 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 获取当前生命值
+   * 获取当前气血值
    */
   get currentHealth(): number {
     return this.getAttribute(ATTRIBUTE_CODE.currentHealth)
   }
 
   /**
-   * 设置当前生命值
+   * 设置当前气血值
    */
   set currentHealth(value: number) {
     const maxHp = this.getAttribute(ATTRIBUTE_CODE.maxHealth)
@@ -303,18 +306,18 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 获取最大生命值
+   * 获取最大气血值
    */
   get maxHealth(): number {
     return this.getAttribute(ATTRIBUTE_CODE.maxHealth)
   }
 
   /**
-   * 设置最大生命值
+   * 设置最大气血值
    */
   set maxHealth(value: number) {
     this.setAttributeBase(ATTRIBUTE_CODE.maxHealth, value)
-    // 设置最大生命值后裁剪当前生命值
+    // 设置最大气血值后裁剪当前气血值
     const maxHp = this.getAttribute(ATTRIBUTE_CODE.maxHealth)
     const currentHp = this.getAttribute(ATTRIBUTE_CODE.currentHealth)
     if (currentHp > maxHp) {
@@ -590,7 +593,7 @@ export class BattleParticipantImpl implements BattleEntity {
    */
   isAlive(): boolean {
     // 使用严格比较确保死亡判定准确
-    // HP <= 0 即视为死亡，避免 epsilon 导致的"锁血"问题
+    // 气血 <= 0 即视为死亡，避免 epsilon 导致的"锁血"问题
     return this.currentHealth > 0
   }
 
@@ -765,7 +768,12 @@ export class BattleParticipantImpl implements BattleEntity {
     currentEnergy: number,
     buffQuery: BuffQuery,
   ): SkillAvailability {
-    return this.skillManager.canExecuteSkill(characterId, skillId, currentEnergy, buffQuery)
+    return this.skillManager.canExecuteSkill(
+      characterId,
+      skillId,
+      currentEnergy,
+      buffQuery,
+    )
   }
 
   /**

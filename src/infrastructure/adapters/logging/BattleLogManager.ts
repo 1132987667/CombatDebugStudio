@@ -132,7 +132,8 @@ export class BattleLogManager implements IBattleLogManager {
   /** 缓冲机制：开始缓冲 role='sub' 日志 */
   private _buffering = false
   /** 缓冲中的 sub 日志列表 */
-  private _pendingSubLogs: Array<UnifiedLogParams & { turn: number | string }> = []
+  private _pendingSubLogs: Array<UnifiedLogParams & { turn: number | string }> =
+    []
 
   private indexCounter = new Counter()
 
@@ -712,7 +713,7 @@ export class BattleLogManager implements IBattleLogManager {
           source: sourceId,
           action: '治疗',
           target: targetId,
-          message: `恢复 ${heal} 生命值`,
+          message: `恢复 ${heal} 气血`,
           level: LogLevel.INFO,
         })
       }

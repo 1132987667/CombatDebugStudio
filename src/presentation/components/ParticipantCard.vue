@@ -4,18 +4,6 @@
 -->
 <template>
   <div class="member-card" ref="cardRef" :class="[cardClasses, cardVisualStateClass]" @click="handleClick">
-    <!-- 内部浮动数字列表 -->
-    <div class="floating-numbers">
-      <div v-for="num in damageNumbers" :key="num.id" class="damage-number"
-        :class="[num.type, { critical: num.isCritical }]" :style="{
-          left: num.x + 'px',
-          top: num.y + 'px',
-          animationDuration: num.duration + 'ms',
-        }" @animationend="removeDamageNumber(num.id)">
-        {{ num.text }}
-      </div>
-    </div>
-
     <div class="member-info">
       <!-- 名称和行动标识 -->
       <div class="member-name">
@@ -25,10 +13,11 @@
         </div>
       </div>
 
-      <!-- 生命值条 -->
+      <!-- 气血值条 -->
       <div class="member-hp">
         <div class="hp-bar">
-          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPercent + '%', transition: `width ${hpTransitionDuration}` }">
+          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]"
+            :style="{ width: hpPercent + '%', transition: `width ${hpTransitionDuration}` }">
             <div class="pulse"></div>
           </div>
           <span class="bar-text">{{ hpText }}</span>
@@ -119,7 +108,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
-import { ActionResultType } from '@/domain/battle/type/types'
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
@@ -129,17 +117,6 @@ import type { BuffRawItem, MergedAttributeLine, BuffTextItem } from '@/shared/ty
 import { ATTRIBUTE_SHORT_NAMES } from '@/presentation/config/attributeNames'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getActionBudget } from '@/shared/constants/animation-timing'
-
-// 浮动数字接口
-interface FloatingNumber {
-  id: number
-  x: number
-  y: number
-  text: string
-  type: ActionResultType
-  isCritical: boolean
-  duration: number
-}
 
 const props = defineProps<{
   /** 战斗参与者实例 */
@@ -184,7 +161,7 @@ const energyPercent = computed(() => {
   return maxEnergy > 0 ? (p.currentEnergy / maxEnergy) * 100 : 0
 })
 
-/** HP 条过渡时长 = 50% 预算（匹配命中阶段 50%→100%T） */
+/** 气血 条过渡时长 = 50% 预算（匹配命中阶段 50%→100%T） */
 const hpTransitionDuration = computed(() => {
   const budget = getActionBudget(battleStore.battleSpeed)
   return `${budget * 0.5}ms`
@@ -192,50 +169,6 @@ const hpTransitionDuration = computed(() => {
 
 // 卡片引用
 const cardRef = ref<HTMLElement | null>(null)
-
-// 浮动数字管理
-const damageNumbers = ref<FloatingNumber[]>([])
-const nextNumberId = ref(0)
-
-/**
- * 添加浮动数字
- * @param value 伤害/治疗值
- * @param type 类型：damage | heal | critical | miss
- * @param isCritical 是否暴击
- * @param x 横坐标（百分比，0-100）
- * @param y 纵坐标（百分比，0-100）
- */
-function addDamageNumber(
-  value: number,
-  type: ActionResultType,
-  isCritical: boolean = false,
-  x: number = 50,
-  y: number = 20
-) {
-  const id = nextNumberId.value++
-  const text = type === ActionResultType.MISS ? '闪避' : (type === ActionResultType.HEAL ? `+${value}` : `-${value}`)
-  const duration = isCritical ? 1500 : 1000 // 暴击动画更长
-
-  damageNumbers.value.push({
-    id,
-    x,
-    y,
-    text,
-    type,
-    isCritical,
-    duration
-  })
-}
-
-/**
- * 移除浮动数字（动画结束后调用）
- */
-function removeDamageNumber(id: number) {
-  const index = damageNumbers.value.findIndex(n => n.id === id)
-  if (index !== -1) {
-    damageNumbers.value.splice(index, 1)
-  }
-}
 
 // ============ 卡片视觉状态（casting/hurt/healed/shielded） ============
 const cardVisualState = ref<string | null>(null)
@@ -252,11 +185,11 @@ function triggerVisualState(state: 'casting' | 'hurt' | 'healed' | 'shielded', d
 }
 
 /**
- * HP 条闪光（治疗时）
+ * 气血 条闪光（治疗时）
  */
 function flashHpBar(budget?: number) {
   hpFlash.value = true
-  // NOTE: HP条闪光时长 = 命中阶段 50%T（与 HP 过渡时长一致）
+  // NOTE: HP条闪光时长 = 命中阶段 50%T（与 气血 过渡时长一致）
   const flashDuration = budget ? budget * 0.5 : 800
   setTimeout(() => { hpFlash.value = false }, flashDuration)
 }
@@ -317,7 +250,7 @@ const energyColorClass = computed(() => {
 /** 护盾值（来自投影层快照，源头是 BuffSystem.shieldValues） */
 const shieldValue = computed(() => snap.value?.shield ?? 0)
 
-/** 护盾占最大生命值的百分比（护盾无天然上限，以 maxHealth 为参照） */
+/** 护盾占最大气血值的百分比（护盾无天然上限，以 maxHealth 为参照） */
 const shieldPercent = computed(() => {
   const maxHp = snap.value?.maxHealth ?? 0
   return maxHp > 0 ? Math.min(100, (shieldValue.value / maxHp) * 100) : 0
@@ -345,7 +278,7 @@ const baseAttributes = computed(() => {
   return map
 })
 
-// ponytail: 参与者 ID 在生命周期内不变，直接读取
+// ponytail: 参与者 ID 在气血周期内不变，直接读取
 const buffDisplay = useBuffDisplay(buffListItems, props.participant.id, 5, baseAttributes)
 
 // 情境属性 — 根据当前选中的目标动态计算激活的情境属性
@@ -444,7 +377,6 @@ const handleClick = () => {
 defineExpose({
   cardRef,
   participantId: props.participant.id,
-  addDamageNumber,
   triggerVisualState,
   flashHpBar,
 })
@@ -484,94 +416,6 @@ defineExpose({
   background: rgba(168, 85, 247, 0.15);
   color: #a855f7;
   border: 1px solid rgba(168, 85, 247, 0.25);
-}
-
-/* 浮动数字容器 */
-.floating-numbers {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 10;
-}
-
-/* 浮动数字样式 */
-.damage-number {
-  position: absolute;
-  font-size: var(--font-size-xxxl);
-  font-weight: var(--font-weight-bold);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  animation-name: float-up;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
-  /* ponytail: duration 通过内联 style 的 animationDuration 设置，避免 v-bind(duration) 依赖不存在变量 */
-  white-space: nowrap;
-}
-
-.damage-number.damage {
-  color: var(--color-danger);
-  /* 红色伤害 */
-}
-
-.damage-number.heal {
-  color: var(--color-success);
-  /* 绿色治疗 */
-}
-
-.damage-number.critical {
-  color: var(--color-warning);
-  /* 橙色暴击 */
-  font-size: 32px;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
-}
-
-.damage-number.miss {
-  color: #a0aec0;
-  /* 银灰色闪避，更醒目 */
-  font-size: 28px;
-  font-weight: 800;
-  text-shadow: 0 0 12px rgba(160, 174, 192, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.8);
-  animation-name: miss-float;
-}
-
-/* 闪避专用浮动动画 — 水平弹跳 + 上浮淡出 */
-@keyframes miss-float {
-  0% {
-    opacity: 0;
-    transform: translateY(0) scale(0.5);
-  }
-  15% {
-    opacity: 1;
-    transform: translateY(-15px) scale(1.3);
-  }
-  40% {
-    transform: translateY(-25px) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-60px) scale(0.9);
-  }
-}
-
-/* 浮动动画 */
-@keyframes float-up {
-  0% {
-    opacity: 0;
-    transform: translateY(0) scale(0.8);
-  }
-
-  20% {
-    opacity: 1;
-    transform: translateY(-10px) scale(1.2);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateY(-60px) scale(1);
-  }
 }
 
 /* 复用原有 member-card 样式 */
@@ -838,7 +682,7 @@ defineExpose({
   }
 }
 
-/* HP 条闪光 */
+/* 气血 条闪光 */
 .hp-fill.hp-flash {
   animation: hp-bar-flash 0.8s ease;
 }

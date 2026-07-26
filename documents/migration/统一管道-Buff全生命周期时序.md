@@ -1,8 +1,9 @@
-> **源位置**: docs\migration\统一管道-Buff全生命周期时序.md — 从 docs/ 迁移至此
->
+> **源位置**: docs\migration\统一管道-Buff全气血周期时序.md — 从 docs/ 迁移至此
+
 ### 被动技能全流程时序图（文字版）
 
 以下时序图使用文字描述，符号说明：
+
 - `[A] → [B]`：A 调用 B 的方法
 - `[A] --> [B]`：B 返回结果给 A
 - `---`：阶段分隔
@@ -12,7 +13,7 @@
 #### 一、被动技能注册（角色/敌人初始化阶段）
 
 ```
-[GameDataProcessor.enemyToParticipant()] 
+[GameDataProcessor.enemyToParticipant()]
     → 创建 BattleParticipantImpl 实例
     → 读取 Enemy.skills.passive 技能ID列表
     → 通过 getSkillByIds() 加载 SkillConfig 数组
@@ -50,7 +51,7 @@
                         2. 检查冷却（cooldown > 0 且 lastTriggeredTurn 未达到冷却）
                         3. 检查最大触发次数（maxTriggerCount 限制）
                         4. 检查触发概率（triggerProbability）
-                        5. 检查 HP 阈值（HP_LOWER_THAN 专用）
+                        5. 检查 气血 阈值（HP_LOWER_THAN 专用）
                         6. 检查自定义条件（condition 表达式）
                         ── 全部通过 ──
                         7. 确定目标：
@@ -139,7 +140,7 @@
 
 5. **步骤执行**：
    - `modify_attribute`：直接修改参与者的属性修饰符列表，并触发重新计算。
-   - `apply_buff`：调用 BuffSystem 添加 Buff，遵循完整生命周期（叠加、免疫、脚本回调等）。
+   - `apply_buff`：调用 BuffSystem 添加 Buff，遵循完整气血周期（叠加、免疫、脚本回调等）。
    - 其他类型（damage/heal/shield/control）：由 `SkillExecutor` 处理，与主动技能共用执行器。
 
 6. **追踪 Buff**：
@@ -198,13 +199,15 @@
 #### 七、总结
 
 被动技能系统采用**注册-触发-执行**三段式设计：
+
 - **注册**：在角色初始化时完成，与配置解耦。
 - **触发**：由战斗系统在特定阶段（回合边界、事件点）统一调度，通过 `PassiveSkillManager` 进行条件过滤。
 - **执行**：复用主动技能的执行管道（`SkillExecutor`），保证逻辑一致性。
 
 关键特性包括：
+
 - 支持时间型与事件型触发。
-- 完整的条件检查（冷却、次数、概率、HP、自定义条件）。
+- 完整的条件检查（冷却、次数、概率、气血、自定义条件）。
 - 对纯属性修改被动自动生成追踪 Buff，提升 UI 可观测性。
 - 光环效果通过集中分发机制保证性能与正确性。
 - 跨战斗自动清理，避免状态污染。

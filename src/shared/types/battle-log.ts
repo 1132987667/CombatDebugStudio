@@ -3,7 +3,11 @@
  * 确保系统中所有战斗日志相关的类型引用保持一致
  */
 
-import { BattleAction, ActionTypes, ActionResultType } from '@/domain/battle/type/types'
+import {
+  BattleAction,
+  ActionTypes,
+  ActionResultType,
+} from '@/domain/battle/type/types'
 
 /**
  * 日志级别 - 统一所有日志系统的级别定义
@@ -21,12 +25,28 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel]
 /** 将字符串日志级别/类别转换为数值 LogLevel（用于 LogEntry.level 字段） */
 export function toLogLevel(level: string | undefined): LogLevel {
   switch (level) {
-    case 'error': case 'ERROR': case '0': return LogLevel.ERROR
-    case 'warn': case 'WARN': case '1': return LogLevel.WARN
-    case 'info': case 'INFO': case '2': return LogLevel.INFO
-    case 'debug': case 'DEBUG': case '3': return LogLevel.DEBUG
-    case 'trace': case 'TRACE': case '4': return LogLevel.TRACE
-    default: return LogLevel.INFO
+    case 'error':
+    case 'ERROR':
+    case '0':
+      return LogLevel.ERROR
+    case 'warn':
+    case 'WARN':
+    case '1':
+      return LogLevel.WARN
+    case 'info':
+    case 'INFO':
+    case '2':
+      return LogLevel.INFO
+    case 'debug':
+    case 'DEBUG':
+    case '3':
+      return LogLevel.DEBUG
+    case 'trace':
+    case 'TRACE':
+    case '4':
+      return LogLevel.TRACE
+    default:
+      return LogLevel.INFO
   }
 }
 
@@ -39,7 +59,7 @@ export const LogLevelClass: Record<LogLevel, string> = {
 }
 
 /**
- * 叙事元数据 —— 渲染器据此生成 HP 箭头、高光标记、块归类
+ * 叙事元数据 —— 渲染器据此生成 气血 箭头、高光标记、块归类
  */
 export interface BattleLogMeta {
   /** 叙事角色：决定归入哪种块 */
@@ -90,7 +110,6 @@ export const LogTypeLabel: Record<LogType, string> = {
   [LogType.ACTION]: '动作',
   [LogType.DEBUG]: '调试',
 }
-
 
 /**
  * 战斗日志类别常量
@@ -146,7 +165,8 @@ export const DetailActionType = {
   BATTLE_END: 'battle_end',
 } as const
 
-export type DetailActionType = (typeof DetailActionType)[keyof typeof DetailActionType]
+export type DetailActionType =
+  (typeof DetailActionType)[keyof typeof DetailActionType]
 
 /**
  * 通用日志条目接口 - 用于框架日志系统
@@ -189,7 +209,7 @@ export interface BattleLogEntry extends LogEntry {
   turn: number | string
   /** 日志消息（必需） */
   message: string
-  /** 叙事元数据（可选，渲染器据此生成 HP 箭头、高光标记、块归类） */
+  /** 叙事元数据（可选，渲染器据此生成 气血 箭头、高光标记、块归类） */
   meta?: BattleLogMeta
 }
 
@@ -197,15 +217,15 @@ export interface BattleLogEntry extends LogEntry {
  * 片段语义类型 — 决定渲染器把它包成什么 HTML
  */
 export type LogSegmentKind =
-  | 'entity'      // 角色名 → 阵营色芯片
-  | 'skill'       // 技能名 → 可悬浮芯片
-  | 'buff'        // Buff名 → 可悬浮芯片
-  | 'passive'     // 被动名 → 可悬浮芯片
-  | 'damage'      // 伤害值 → 大号红色数字
-  | 'heal'        // 治疗值 → 大号绿色数字
-  | 'hp-before'   // HP 变化前
-  | 'hp-after'    // HP 变化后
-  | 'text'        // 普通文本（默认）
+  | 'entity' // 角色名 → 阵营色芯片
+  | 'skill' // 技能名 → 可悬浮芯片
+  | 'buff' // Buff名 → 可悬浮芯片
+  | 'passive' // 被动名 → 可悬浮芯片
+  | 'damage' // 伤害值 → 大号红色数字
+  | 'heal' // 治疗值 → 大号绿色数字
+  | 'hp-before' // 气血 变化前
+  | 'hp-after' // 气血 变化后
+  | 'text' // 普通文本（默认）
 
 /**
  * 可悬浮的实体身份（方案二：悬浮信息卡片）
@@ -241,7 +261,12 @@ export type NarrativeBlock =
   | { type: 'battle-header'; segments: LogSegment[] }
   | { type: 'section'; title: string; lines: LogSegment[][] }
   | { type: 'round'; turn: number; tag?: string }
-  | { type: 'action'; header: LogSegment[]; result?: LogSegment[]; subs: LogSegment[][] }
+  | {
+      type: 'action'
+      header: LogSegment[]
+      result?: LogSegment[]
+      subs: LogSegment[][]
+    }
   | { type: 'settlement'; lines: LogSegment[][] }
   | { type: 'snapshot'; lines: LogSegment[][] }
   | { type: 'summary'; lines: LogSegment[][] }
@@ -401,7 +426,7 @@ export function createAttackLogSegments(
       text: target,
       classStr: isFriendlyTarget ? 'log-friendly' : 'log-hostile',
     },
-    { text: ' 发动普通攻击，造成 ' },
+    { text: ' 使用 「普通攻击」，造成 ' },
     { text: damage.toString(), classStr: 'log-damage' },
     { text: ' 点伤害' },
   ]
@@ -435,7 +460,7 @@ export function createHealLogSegments(
     },
     { text: ' 恢复 ' },
     { text: healAmount.toString(), classStr: 'log-heal' },
-    { text: ' 点生命值' },
+    { text: ' 点气血' },
   ]
 }
 
@@ -526,9 +551,7 @@ export const LogUtils = {
    * @param level - 日志级别或类别
    */
   getLevelDisplayName(level: BattleLogMessageType): string {
-    const displayNames: Partial<
-      Record<LogType | BattleLogCategory, string>
-    > = {
+    const displayNames: Partial<Record<LogType | BattleLogCategory, string>> = {
       damage: '伤害',
       heal: '治疗',
       crit: '暴击',
@@ -555,7 +578,7 @@ export const LogUtils = {
  * ```
  * const segs = buildNameSegments('剑士', true, '史莱姆', false)
  * // → [{text:'剑士', classStr:'log-friendly'}, {text:' 对 '}, {text:'史莱姆', classStr:'log-hostile'}]
- * segs.push({ text: ' 发动普通攻击，造成 104 点伤害' })
+ * segs.push({ text: ' 使用 「普通攻击」，造成 104 点伤害' })
  * ```
  */
 export function buildNameSegments(
@@ -565,19 +588,33 @@ export function buildNameSegments(
   targetIsAlly?: boolean,
 ): LogSegment[] {
   const sourcePrefix = sourceIsAlly ? '[友方]' : '[敌方]'
-  const sourceFaction = sourceIsAlly ? 'ally' as const : 'enemy' as const
+  const sourceFaction = sourceIsAlly ? ('ally' as const) : ('enemy' as const)
   const segs: LogSegment[] = [
-    { text: `${sourcePrefix}${source}`, classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: sourceFaction },
+    {
+      text: `${sourcePrefix}${source}`,
+      classStr: sourceIsAlly ? 'log-friendly' : 'log-hostile',
+      kind: 'entity',
+      faction: sourceFaction,
+    },
   ]
   if (target && target !== source) {
-    const targetPrefix = targetIsAlly != null ? (targetIsAlly ? '[友方]' : '[敌方]') : ''
-    const targetFaction = targetIsAlly != null ? (targetIsAlly ? 'ally' as const : 'enemy' as const) : undefined
+    const targetPrefix =
+      targetIsAlly != null ? (targetIsAlly ? '[友方]' : '[敌方]') : ''
+    const targetFaction =
+      targetIsAlly != null
+        ? targetIsAlly
+          ? ('ally' as const)
+          : ('enemy' as const)
+        : undefined
     segs.push({ text: ' 对 ' })
     segs.push({
       text: `${targetPrefix}${target}`,
-      classStr: targetIsAlly != null
-        ? (targetIsAlly ? 'log-friendly' : 'log-hostile')
-        : undefined,
+      classStr:
+        targetIsAlly != null
+          ? targetIsAlly
+            ? 'log-friendly'
+            : 'log-hostile'
+          : undefined,
       kind: 'entity',
       faction: targetFaction,
     })
@@ -647,7 +684,6 @@ export interface CalculationLog {
 
   /** 修正系数（兼容原有系统） */
   modifiers?: Record<string, number>
-
 }
 
 /**
@@ -942,7 +978,7 @@ function generateHealLogSegments(
       },
       { text: ` 施放【${skillName}】，为其恢复 ` },
       { text: healAmount.toString(), classStr: 'log-heal' },
-      { text: ' 点生命值' },
+      { text: ' 点气血' },
     ],
   }
 }
@@ -999,7 +1035,7 @@ function generateDamageLogSegments(
         text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
         classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
       },
-      { text: ' 发动普通攻击，造成 ' },
+      { text: ' 使用 「普通攻击」，造成 ' },
       { text: damage.toString(), classStr: 'log-damage' },
       { text: ' 点物理伤害' },
     ],
@@ -1023,7 +1059,7 @@ function generateDefaultLogSegments(
   const effectDescription = action.effects[0]?.description || '执行了动作'
 
   return {
-    category: BATTLE_LOG_CATEGORIES.ACTION,
+    category: BATTLE_LOG_CATEGORIES.STATUS,
     level: 'info',
     segments: [
       {

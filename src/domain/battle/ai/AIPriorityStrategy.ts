@@ -132,8 +132,14 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
       (p) => p.team !== participant.team && p.isAlive(),
     )
 
-    const teamHealth = allies.reduce((sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth), 0)
-    const teamMaxHealth = allies.reduce((sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.maxHealth), 0)
+    const teamHealth = allies.reduce(
+      (sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.currentHealth),
+      0,
+    )
+    const teamMaxHealth = allies.reduce(
+      (sum, p) => sum + p.getAttribute(ATTRIBUTE_CODE.maxHealth),
+      0,
+    )
     const teamHealthPercent = teamMaxHealth > 0 ? teamHealth / teamMaxHealth : 0
 
     const highestThreatEnemy = enemies.reduce<{
@@ -152,11 +158,15 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
     )
 
     const needsHealing = allies.some(
-      (p) => p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth) < BATTLE_CONSTANTS.HEAL_THRESHOLD,
+      (p) =>
+        p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+          p.getAttribute(ATTRIBUTE_CODE.maxHealth) <
+        BATTLE_CONSTANTS.HEAL_THRESHOLD,
     )
     const hasLowHealthAlly = allies.some(
       (p) =>
-        p.getAttribute(ATTRIBUTE_CODE.currentHealth) / p.getAttribute(ATTRIBUTE_CODE.maxHealth) <
+        p.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+          p.getAttribute(ATTRIBUTE_CODE.maxHealth) <
         BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD,
     )
 
@@ -180,14 +190,19 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
   ): number {
     let threat = 0
 
-    const healthPercent = enemy.getAttribute(ATTRIBUTE_CODE.currentHealth) / enemy.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    const healthPercent =
+      enemy.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+      enemy.getAttribute(ATTRIBUTE_CODE.maxHealth)
     threat += (1 - healthPercent) * BATTLE_CONSTANTS.THREAT_HEALTH_WEIGHT
 
-    const energyPercent = enemy.getAttribute(ATTRIBUTE_CODE.currentEnergy) / enemy.getAttribute(ATTRIBUTE_CODE.maxEnergy)
+    const energyPercent =
+      enemy.getAttribute(ATTRIBUTE_CODE.currentEnergy) /
+      enemy.getAttribute(ATTRIBUTE_CODE.maxEnergy)
     threat += energyPercent * BATTLE_CONSTANTS.THREAT_ENERGY_WEIGHT
 
     if (enemy.getBuffInstanceIds().length > 0) {
-      threat += enemy.getBuffInstanceIds().length * BATTLE_CONSTANTS.THREAT_BUFF_WEIGHT
+      threat +=
+        enemy.getBuffInstanceIds().length * BATTLE_CONSTANTS.THREAT_BUFF_WEIGHT
     }
 
     return threat
@@ -252,7 +267,10 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
     }
     if (skill.hasDebuff) {
       // 有高威胁敌人时，减益技能更有价值
-      if (battleAnalysis.highestThreatEnemy.threat > BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD) {
+      if (
+        battleAnalysis.highestThreatEnemy.threat >
+        BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD
+      ) {
         adjustment += 20
       }
     }
@@ -268,18 +286,23 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
     participant: BattleEntity,
   ): number {
     let adjustment = 0
-    const healthPercent = participant.getAttribute(ATTRIBUTE_CODE.currentHealth) / participant.getAttribute(ATTRIBUTE_CODE.maxHealth)
-    const energyPercent = participant.getAttribute(ATTRIBUTE_CODE.currentEnergy) / participant.getAttribute(ATTRIBUTE_CODE.maxEnergy)
+    const healthPercent =
+      participant.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+      participant.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    const energyPercent =
+      participant.getAttribute(ATTRIBUTE_CODE.currentEnergy) /
+      participant.getAttribute(ATTRIBUTE_CODE.maxEnergy)
 
     // 能量不足时降低技能权重
     if (
       skill.energyCost &&
-      energyPercent < skill.energyCost / participant.getAttribute(ATTRIBUTE_CODE.maxEnergy)
+      energyPercent <
+        skill.energyCost / participant.getAttribute(ATTRIBUTE_CODE.maxEnergy)
     ) {
       adjustment -= 50
     }
 
-    // 生命值过低时优先使用治疗技能
+    // 气血值过低时优先使用治疗技能
     if (
       skill.heal &&
       skill.heal > 0 &&
@@ -354,9 +377,11 @@ export class DefensiveAIPriorityStrategy extends BaseAIPriorityStrategy {
   ): number {
     let adjustment = super.adjustWeightByParticipantState(skill, participant)
 
-    const healthPercent = participant.getAttribute(ATTRIBUTE_CODE.currentHealth) / participant.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    const healthPercent =
+      participant.getAttribute(ATTRIBUTE_CODE.currentHealth) /
+      participant.getAttribute(ATTRIBUTE_CODE.maxHealth)
 
-    // 生命值越低，治疗技能权重越高
+    // 气血值越低，治疗技能权重越高
     if (skill.heal && skill.heal > 0 && healthPercent < 0.5) {
       adjustment += (0.5 - healthPercent) * 100
     }

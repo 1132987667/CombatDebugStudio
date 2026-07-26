@@ -15,7 +15,10 @@
  *   - 系统初始化日志 → 过滤
  */
 
-import type { CombatRecord, DamageBreakdown } from '@/domain/battle/combat-record'
+import type {
+  CombatRecord,
+  DamageBreakdown,
+} from '@/domain/battle/combat-record'
 import type { LogSegment, BattleLogEntry } from '@/shared/types/battle-log'
 import type { NarrativeBlock as BattleLogNarrativeBlock } from '@/shared/types/battle-log'
 import { skillSegment } from '@/shared/utils/log-segment-factory'
@@ -53,9 +56,9 @@ export interface NarrativeBlock {
   heal: number
   /** 伤害类型描述（如"物理伤害"、"水属性伤害"） */
   damageType?: string
-  /** 目标受击前 HP（跟踪累计） */
+  /** 目标受击前 气血（跟踪累计） */
   targetHpBefore?: number
-  /** 目标受击后 HP */
+  /** 目标受击后 气血 */
   targetHpAfter?: number
   /** 已触发的被动 */
   passives: TriggeredPassive[]
@@ -67,14 +70,17 @@ export interface NarrativeBlock {
   isCrit: boolean
 }
 
-// ==================== HP 追踪器 ====================
+// ==================== 气血 追踪器 ====================
 
-/** 简单 HP 状态追踪 */
+/** 简单 气血 状态追踪 */
 class HpTracker {
-  private hp = new Map<string, { current: number; max: number; name?: string }>()
+  private hp = new Map<
+    string,
+    { current: number; max: number; name?: string }
+  >()
   private side = new Map<string, string>()
 
-  /** 设置初始 HP */
+  /** 设置初始 气血 */
   init(id: string, current: number, max: number, name?: string): void {
     this.hp.set(id, { current, max, name })
   }
@@ -123,7 +129,7 @@ export class RoundNarrativeRenderer {
   }
 
   /**
-   * 重置 HP 追踪状态（新战斗开始时调用）
+   * 重置 气血 追踪状态（新战斗开始时调用）
    */
   reset(): void {
     this.hpTracker = new HpTracker()
@@ -145,19 +151,42 @@ export class RoundNarrativeRenderer {
   renderEntries(entries: BattleLogEntry[]): BattleLogNarrativeBlock[] {
     const blocks: BattleLogNarrativeBlock[] = []
     let currentTurn = -1
-    let currentAction: Extract<BattleLogNarrativeBlock, { type: 'action' }> | null = null
+    let currentAction: Extract<
+      BattleLogNarrativeBlock,
+      { type: 'action' }
+    > | null = null
     let settlement: LogSegment[][] | null = null
     let snapshot: LogSegment[][] | null = null
     let roundTag: string | undefined
 
-    const flushAction = () => { if (currentAction) { blocks.push(currentAction); currentAction = null } }
-    const flushSettlement = () => { if (settlement) { blocks.push({ type: 'settlement', lines: settlement }); settlement = null } }
-    const flushSnapshot = () => { if (snapshot) { blocks.push({ type: 'snapshot', lines: snapshot }); snapshot = null } }
-    const flushAll = () => { flushAction(); flushSettlement(); flushSnapshot() }
+    const flushAction = () => {
+      if (currentAction) {
+        blocks.push(currentAction)
+        currentAction = null
+      }
+    }
+    const flushSettlement = () => {
+      if (settlement) {
+        blocks.push({ type: 'settlement', lines: settlement })
+        settlement = null
+      }
+    }
+    const flushSnapshot = () => {
+      if (snapshot) {
+        blocks.push({ type: 'snapshot', lines: snapshot })
+        snapshot = null
+      }
+    }
+    const flushAll = () => {
+      flushAction()
+      flushSettlement()
+      flushSnapshot()
+    }
 
     for (const e of entries) {
       const meta = e.meta ?? {}
-      const turn = typeof e.turn === 'number' ? e.turn : (parseInt(String(e.turn), 10) || 0)
+      const turn =
+        typeof e.turn === 'number' ? e.turn : parseInt(String(e.turn), 10) || 0
 
       // 回合切换 → 先落盘上一回合，再推入回合头
       if (turn !== currentTurn) {
@@ -171,7 +200,10 @@ export class RoundNarrativeRenderer {
       switch (meta.role) {
         case 'battle':
           flushAll()
-          blocks.push({ type: 'battle-header', segments: e.segments ?? [{ text: e.message || '' }] })
+          blocks.push({
+            type: 'battle-header',
+            segments: e.segments ?? [{ text: e.message || '' }],
+          })
           break
         case 'action':
           flushAll()
@@ -188,7 +220,10 @@ export class RoundNarrativeRenderer {
           if (currentAction) {
             currentAction.subs.push(e.segments ?? [{ text: e.message || '' }])
           } else {
-            blocks.push({ type: 'plain', segments: e.segments ?? [{ text: e.message || '' }] })
+            blocks.push({
+              type: 'plain',
+              segments: e.segments ?? [{ text: e.message || '' }],
+            })
           }
           break
         case 'settlement':
@@ -203,11 +238,18 @@ export class RoundNarrativeRenderer {
           break
         case 'condition':
           flushAction()
-          blocks.push({ type: 'section', title: '条件激活', lines: [e.segments ?? [{ text: e.message || '' }]] })
+          blocks.push({
+            type: 'section',
+            title: '条件激活',
+            lines: [e.segments ?? [{ text: e.message || '' }]],
+          })
           break
         default:
           flushAction()
-          blocks.push({ type: 'plain', segments: e.segments ?? [{ text: e.message || '' }] })
+          blocks.push({
+            type: 'plain',
+            segments: e.segments ?? [{ text: e.message || '' }],
+          })
       }
     }
     flushAll()
@@ -217,21 +259,37 @@ export class RoundNarrativeRenderer {
     if (summary) {
       const summaryLines: LogSegment[][] = []
       summaryLines.push([
-        { text: `战斗结束 · ${summary.winner}胜利 · ${summary.totalRounds}回合`, classStr: 'log-system' },
+        {
+          text: `战斗结束 · ${summary.winner}胜利 · ${summary.totalRounds}回合`,
+          classStr: 'log-system',
+        },
       ])
       summaryLines.push([
-        { text: `总伤害 ${summary.totalDamageDealt} · 总治疗 ${summary.totalHealing} · `, classStr: 'log-text' },
-        { text: `暴击 ${summary.highestSingleDamage?.crit ? '是' : '否'}`, classStr: 'log-text' },
+        {
+          text: `总伤害 ${summary.totalDamageDealt} · 总治疗 ${summary.totalHealing} · `,
+          classStr: 'log-text',
+        },
+        {
+          text: `暴击 ${summary.highestSingleDamage?.crit ? '是' : '否'}`,
+          classStr: 'log-text',
+        },
       ])
       if (summary.highestSingleDamage) {
         summaryLines.push([
-          { text: `最高单次: ${summary.highestSingleDamage.actor} — ${summary.highestSingleDamage.value}`, classStr: 'log-friendly' },
+          {
+            text: `最高单次: ${summary.highestSingleDamage.actor} — ${summary.highestSingleDamage.value}`,
+            classStr: 'log-friendly',
+          },
         ])
       }
       // MVP：按总伤害排序
-      let mvp = '', mvpDmg = -1
+      let mvp = '',
+        mvpDmg = -1
       for (const p of summary.participants) {
-        if (p.totalDamageDealt > mvpDmg) { mvpDmg = p.totalDamageDealt; mvp = p.name }
+        if (p.totalDamageDealt > mvpDmg) {
+          mvpDmg = p.totalDamageDealt
+          mvp = p.name
+        }
       }
       if (mvp) {
         summaryLines.push([
@@ -247,7 +305,12 @@ export class RoundNarrativeRenderer {
       if (b.type !== 'round') continue
       const roundEntries: BattleLogNarrativeBlock[] = []
       for (let j = i + 1; j < blocks.length; j++) {
-        if (blocks[j].type === 'round' || blocks[j].type === 'battle-header' || blocks[j].type === 'summary') break
+        if (
+          blocks[j].type === 'round' ||
+          blocks[j].type === 'battle-header' ||
+          blocks[j].type === 'summary'
+        )
+          break
         roundEntries.push(blocks[j])
       }
       const tag = this.inferRoundTag(roundEntries)
@@ -279,23 +342,34 @@ export class RoundNarrativeRenderer {
   }
 
   /** 结果行：`42 点物理伤害  450 → 408`，暴击前缀 ★，致死/击杀标记 */
-  private buildResult(meta: import('@/shared/types/battle-log').BattleLogMeta): LogSegment[] | undefined {
+  private buildResult(
+    meta: import('@/shared/types/battle-log').BattleLogMeta,
+  ): LogSegment[] | undefined {
     if (meta.damage == null && meta.heal == null) return undefined
     const segs: LogSegment[] = []
     if (meta.crit) segs.push({ text: '★ 暴击! ', classStr: 'log-crit' })
     if (meta.damage != null) {
       const damageType = '物理伤害'
-      segs.push({ text: `${meta.damage} 点${damageType}  `, classStr: meta.crit ? 'log-crit' : 'log-damage' })
+      segs.push({
+        text: `${meta.damage} 点${damageType}  `,
+        classStr: meta.crit ? 'log-crit' : 'log-damage',
+      })
     } else if (meta.heal != null) {
       segs.push({ text: `+${meta.heal}`, classStr: 'log-heal' })
-      segs.push({ text: ' HP  ' })
+      segs.push({ text: ' 气血  ' })
     }
     if (meta.hpBefore != null && meta.hpAfter != null) {
       if (meta.entityName) {
         const prefix = meta.entityFaction === 'ally' ? '[友方]' : '[敌方]'
-        segs.push({ text: ` ${prefix}${meta.entityName} `, classStr: 'log-entity' })
+        segs.push({
+          text: ` ${prefix}${meta.entityName} `,
+          classStr: 'log-entity',
+        })
       }
-      segs.push({ text: `${meta.hpBefore} → ${meta.hpAfter}`, classStr: 'log-hp' })
+      segs.push({
+        text: `${Math.round(meta.hpBefore)} → ${Math.round(meta.hpAfter)}`,
+        classStr: 'log-hp',
+      })
     }
     if (meta.lethal) segs.push({ text: ' — 致死!', classStr: 'log-lethal' })
     if (meta.kill) segs.push({ text: ' ✦ 击杀!', classStr: 'log-kill' })
@@ -303,9 +377,13 @@ export class RoundNarrativeRenderer {
   }
 
   /** 结算行：DOT `中毒 -10HP → 303` */
-  private buildSettlementLine(e: BattleLogEntry, meta: import('@/shared/types/battle-log').BattleLogMeta): LogSegment[] {
+  private buildSettlementLine(
+    e: BattleLogEntry,
+    meta: import('@/shared/types/battle-log').BattleLogMeta,
+  ): LogSegment[] {
     const segs: LogSegment[] = [...(e.segments ?? [])]
-    if (meta.hpAfter != null) segs.push({ text: ` → ${meta.hpAfter}`, classStr: 'log-hp' })
+    if (meta.hpAfter != null)
+      segs.push({ text: ` → ${Math.round(meta.hpAfter)}`, classStr: 'log-hp' })
     return segs
   }
 
@@ -315,18 +393,25 @@ export class RoundNarrativeRenderer {
    */
   renderRecords(
     records: CombatRecord[],
-    participants: Map<string, { name: string; currentHealth: number; maxHealth: number; side?: string }>,
+    participants: Map<
+      string,
+      { name: string; currentHealth: number; maxHealth: number; side?: string }
+    >,
   ): LogSegment[][] {
     if (records.length === 0) return []
 
-    // 初始化 HP + 阵营
+    // 初始化 气血 + 阵营
     for (const [id, p] of participants) {
       this.hpTracker.init(id, p.currentHealth, p.maxHealth, p.name)
       if (p.side === 'ally' || p.side === 'enemy') {
         this.hpTracker.setSide(id, p.side)
       } else {
         // 从 ID 前缀推断阵营
-        const inferredSide = id.startsWith('enemy') ? 'enemy' : (id.startsWith('ally') ? 'ally' : undefined)
+        const inferredSide = id.startsWith('enemy')
+          ? 'enemy'
+          : id.startsWith('ally')
+            ? 'ally'
+            : undefined
         if (inferredSide) this.hpTracker.setSide(id, inferredSide)
       }
     }
@@ -354,7 +439,11 @@ export class RoundNarrativeRenderer {
 
       // 回合装饰线 + 标题
       const isLast = ti === sortedTurns.length - 1
-      const annotation = this.detectTurnAnnotation(turnRecords, ti, sortedTurns.length)
+      const annotation = this.detectTurnAnnotation(
+        turnRecords,
+        ti,
+        sortedTurns.length,
+      )
       result.push(...this.renderRoundHeader(turn, annotation))
 
       // 分离 DOT / 常规行动 / 系统记录
@@ -459,7 +548,8 @@ export class RoundNarrativeRenderer {
       if (r.damageBreakdown?.isCritical) hasCrit = true
       if (r.effects?.some((e) => e.effectTag === 'immune')) immunityCount++
       // 粗略检测被动触发：多个 actor 在同一回合行动且含 damage 辅助效果
-      if (r.skillName?.includes('被动') || r.message?.includes('触发')) passiveCount++
+      if (r.skillName?.includes('被动') || r.message?.includes('触发'))
+        passiveCount++
     }
 
     if (turnIndex === totalTurns - 1) return '终结'
@@ -472,20 +562,42 @@ export class RoundNarrativeRenderer {
   /** 渲染战斗初始化 */
   private renderBattleHeader(): LogSegment[][] {
     return [
-      [{ text: '═══════════════════════════════════════════════════════════', classStr: 'log-system' }],
+      [
+        {
+          text: '═══════════════════════════════════════════════════════════',
+          classStr: 'log-system',
+        },
+      ],
       [{ text: '  战斗开始', classStr: 'log-system' }],
-      [{ text: '═══════════════════════════════════════════════════════════', classStr: 'log-system' }],
+      [
+        {
+          text: '═══════════════════════════════════════════════════════════',
+          classStr: 'log-system',
+        },
+      ],
     ]
   }
 
   /** 渲染回合标题 */
   private renderRoundHeader(turn: number, annotation?: string): LogSegment[][] {
     const lines: LogSegment[][] = []
-    lines.push([{ text: '───────────────────────────────────────────────────────────', classStr: 'log-system' }])
+    lines.push([
+      {
+        text: '───────────────────────────────────────────────────────────',
+        classStr: 'log-system',
+      },
+    ])
 
-    const title = annotation ? `  第 ${turn} 回合  ·  ${annotation}` : `  第 ${turn} 回合`
+    const title = annotation
+      ? `  第 ${turn} 回合  ·  ${annotation}`
+      : `  第 ${turn} 回合`
     lines.push([{ text: title, classStr: 'log-system' }])
-    lines.push([{ text: '───────────────────────────────────────────────────────────', classStr: 'log-system' }])
+    lines.push([
+      {
+        text: '───────────────────────────────────────────────────────────',
+        classStr: 'log-system',
+      },
+    ])
 
     return lines
   }
@@ -494,7 +606,13 @@ export class RoundNarrativeRenderer {
   private renderSystemBlock(records: CombatRecord[]): LogSegment[][] {
     const lines: LogSegment[][] = []
     const messages = records
-      .map((r) => r.effects?.map((e) => e.description).filter(Boolean).join('；') || r.message)
+      .map(
+        (r) =>
+          r.effects
+            ?.map((e) => e.description)
+            .filter(Boolean)
+            .join('；') || r.message,
+      )
       .filter(Boolean)
 
     if (messages.length > 0) {
@@ -530,7 +648,10 @@ export class RoundNarrativeRenderer {
     let totalHeal = 0
     let critCount = 0
     let killCount = 0
-    const damageByActor = new Map<string, { damage: number; kills: number; crits: number; name: string }>()
+    const damageByActor = new Map<
+      string,
+      { damage: number; kills: number; crits: number; name: string }
+    >()
 
     for (const r of records) {
       totalDamage += r.damage
@@ -546,7 +667,12 @@ export class RoundNarrativeRenderer {
       // 按角色累积伤害
       if (r.actorId !== 'system' && r.damage > 0) {
         if (!damageByActor.has(r.actorId)) {
-          damageByActor.set(r.actorId, { damage: 0, kills: 0, crits: 0, name: r.actorName })
+          damageByActor.set(r.actorId, {
+            damage: 0,
+            kills: 0,
+            crits: 0,
+            name: r.actorName,
+          })
         }
         const entry = damageByActor.get(r.actorId)!
         entry.damage += r.damage
@@ -598,17 +724,38 @@ export class RoundNarrativeRenderer {
   }): LogSegment[][] {
     const lines: LogSegment[][] = []
 
-    lines.push([{ text: '═══════════════════════════════════════════════════════════', classStr: 'log-system' }])
-    lines.push([{ text: `  战斗结束  ·  我方胜利  ·  ${summary.totalTurns} 回合`, classStr: 'log-system' }])
-    lines.push([{ text: '═══════════════════════════════════════════════════════════', classStr: 'log-system' }])
+    lines.push([
+      {
+        text: '═══════════════════════════════════════════════════════════',
+        classStr: 'log-system',
+      },
+    ])
+    lines.push([
+      {
+        text: `  战斗结束  ·  我方胜利  ·  ${summary.totalTurns} 回合`,
+        classStr: 'log-system',
+      },
+    ])
+    lines.push([
+      {
+        text: '═══════════════════════════════════════════════════════════',
+        classStr: 'log-system',
+      },
+    ])
     lines.push([{ text: '', classStr: 'log-system' }])
     lines.push([{ text: '  ── 战报摘要 ──', classStr: 'log-system' }])
     lines.push([
-      { text: `  总伤害 ${summary.totalDamage} · 总治疗 ${summary.totalHeal} · 暴击 ${summary.critCount} 次 · 击杀 ${summary.killCount}`, classStr: 'log-text' },
+      {
+        text: `  总伤害 ${summary.totalDamage} · 总治疗 ${summary.totalHeal} · 暴击 ${summary.critCount} 次 · 击杀 ${summary.killCount}`,
+        classStr: 'log-text',
+      },
     ])
     if (summary.mvpName) {
       lines.push([
-        { text: `  MVP: ${summary.mvpName} — 总伤害 ${summary.mvpDamage}, 击杀 ${summary.mvpKills}, 暴击 ${summary.mvpCrits}`, classStr: 'log-friendly' },
+        {
+          text: `  MVP: ${summary.mvpName} — 总伤害 ${summary.mvpDamage}, 击杀 ${summary.mvpKills}, 暴击 ${summary.mvpCrits}`,
+          classStr: 'log-friendly',
+        },
       ])
     }
 
@@ -634,7 +781,7 @@ export class RoundNarrativeRenderer {
       const heal = record.heal ?? 0
       const isKill = damage > 0 && this.isFatal(record.targetId, damage)
 
-      // 追踪 HP
+      // 追踪 气血
       this.hpTracker.applyDamage(record.targetId, damage)
       this.hpTracker.applyHeal(record.targetId, heal)
 
@@ -693,7 +840,10 @@ export class RoundNarrativeRenderer {
     // DOT 伤害 — 特殊格式：无 ◆ 图标，显示为"actor 效果名 -XHP"
     if (block.damageSource === 'dot') {
       segs.push({ text: `  ${block.target} `, classStr: 'log-hostile' })
-      segs.push({ text: `${block.actionName} -${block.damage}HP`, classStr: 'log-damage' })
+      segs.push({
+        text: `${block.actionName} -${block.damage}气血`,
+        classStr: 'log-damage',
+      })
       if (block.targetHpAfter != null) {
         segs.push({ text: ` → ${block.targetHpAfter}`, classStr: 'log-text' })
       }
@@ -702,9 +852,15 @@ export class RoundNarrativeRenderer {
 
     // 反伤 — 特殊格式
     if (block.damageSource === 'thorns') {
-      segs.push({ text: `  ${block.actionName} 反弹 `, classStr: 'log-passive' })
+      segs.push({
+        text: `  ${block.actionName} 反弹 `,
+        classStr: 'log-passive',
+      })
       segs.push({ text: `${block.damage}`, classStr: 'log-damage' })
-      segs.push({ text: ` 点${block.damageType || '物理伤害'}`, classStr: 'log-text' })
+      segs.push({
+        text: ` 点${block.damageType || '物理伤害'}`,
+        classStr: 'log-text',
+      })
       segs.push({ text: ` → `, classStr: 'log-text' })
       segs.push({ text: block.actor, classStr: 'log-friendly' })
       if (block.targetHpBefore != null && block.targetHpAfter != null) {
@@ -739,22 +895,28 @@ export class RoundNarrativeRenderer {
         segs.push({ text: `\n  `, classStr: 'log-text' })
         segs.push({ text: `${block.damage}`, classStr: 'log-damage' })
       }
-      segs.push({ text: ` 点${block.damageType || '物理伤害'}`, classStr: 'log-text' })
+      segs.push({
+        text: ` 点${block.damageType || '物理伤害'}`,
+        classStr: 'log-text',
+      })
 
-      // HP 变化
+      // 气血 变化
       if (block.targetHpBefore != null && block.targetHpAfter != null) {
         segs.push({ text: `  `, classStr: 'log-text' })
         segs.push({ text: block.target, classStr: 'log-hostile' })
         segs.push({ text: ` ${block.targetHpBefore}`, classStr: 'log-text' })
         segs.push({ text: ` → `, classStr: 'log-text' })
-        segs.push({ text: `${block.targetHpAfter}`, classStr: block.targetHpAfter === 0 ? 'log-crit' : 'log-text' })
+        segs.push({
+          text: `${block.targetHpAfter}`,
+          classStr: block.targetHpAfter === 0 ? 'log-crit' : 'log-text',
+        })
       }
     }
 
     if (block.heal > 0) {
       segs.push({ text: `\n  `, classStr: 'log-text' })
       segs.push({ text: `+${block.heal}`, classStr: 'log-heal' })
-      segs.push({ text: ` HP`, classStr: 'log-text' })
+      segs.push({ text: ` 气血`, classStr: 'log-text' })
     }
 
     // 击杀高光

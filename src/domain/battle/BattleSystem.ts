@@ -62,9 +62,8 @@ import { RAFTimer } from '@/shared/utils/RAF'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { Counter } from '@/shared/utils/Counter'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
-import type { SkillConfig } from '@/domain/skill/types'
+import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
-
 
 /**
  * 战斗系统核心管理类
@@ -73,7 +72,7 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
  * 战斗系统核心实现
  *
  * @description
- * 负责战斗的完整生命周期管理，包括创建、回合流转、伤害计算及结算。
+ * 负责战斗的完整气血周期管理，包括创建、回合流转、伤害计算及结算。
  *
  * @architecture
  * 1. 【依赖注入】: 通过 DI 容器注入管理器实例，降低耦合。
@@ -324,7 +323,10 @@ export class BattleSystem {
       turn: 0,
       message: `战斗开始  ·  我方 ${allyParticipants.length} vs 敌方 ${enemyParticipants.length}`,
       segments: [
-        { text: `战斗开始  ·  我方 ${allyParticipants.length} vs 敌方 ${enemyParticipants.length}`, classStr: 'log-system' },
+        {
+          text: `战斗开始  ·  我方 ${allyParticipants.length} vs 敌方 ${enemyParticipants.length}`,
+          classStr: 'log-system',
+        },
       ],
       category: BATTLE_LOG_CATEGORIES.SYSTEM,
       meta: { role: 'battle' },
@@ -360,7 +362,7 @@ export class BattleSystem {
 
     // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
     this.buffSystem.setDamageCallback(
-      (targetId: string, damage: number, damagePercent?: number) => {
+      (targetId: string, damage: number, rawDamage?: number, damagePercent?: number) => {
         // ponytail: 递归守卫 — 若已在回调中则跳过，避免反弹/分摊类触发器循环
         if (_inDamageCallback) return
         _inDamageCallback = true
@@ -368,22 +370,24 @@ export class BattleSystem {
           const target = battleData.participants.get(targetId)
           if (target?.isAlive()) {
             let actualDamage = damage
+            let isHeal = false
             if (damagePercent && damagePercent > 0) {
-              // 正百分比 = 扣当前生命百分比
+              // 正百分比 = 扣当前气血百分比
               actualDamage = Math.max(
                 1,
                 Math.floor(target.currentHealth * damagePercent),
               )
               target.takeDamage(actualDamage)
             } else if (damagePercent && damagePercent < 0) {
-              // 负百分比 = 按最大生命百分比治疗
+              // 负百分比 = 按最大气血百分比治疗
               actualDamage = Math.floor(
                 target.maxHealth * Math.abs(damagePercent),
               )
               target.heal(actualDamage)
+              isHeal = true
             } else if (damage > 0) {
               // 固定值伤害
-              // NOTE: 在扣血前捕获 HP，用于 DOT 叙事日志
+              // NOTE: 在扣血前捕获 气血，用于 DOT 叙事日志
               const hpBefore = target.currentHealth
               target.takeDamage(actualDamage)
               const hpAfter = target.currentHealth
@@ -415,15 +419,30 @@ export class BattleSystem {
                     { text: ' 点持续伤害', classStr: 'log-text' },
                   ],
                   category: BATTLE_LOG_CATEGORIES.DAMAGE,
-                  meta: { role: 'settlement', entityId: targetId, hpAfter, damage: actualDamage },
+                  meta: {
+                    role: 'settlement',
+                    entityId: targetId,
+                    hpAfter,
+                    damage: actualDamage,
+                  },
                 })
               }
+            }
+            // ★ 统一管道：触发器伤害/治疗动画
+            if (actualDamage > 0) {
+              eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+                targetId,
+                damage: actualDamage,
+                damageCategory: DamageCategory.PHYSICAL,
+                isCritical: false,
+                isHeal,
+              })
             }
             this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
               sourceId: '',
               targetId,
               value: actualDamage,
-              extra: { damage: actualDamage },
+              extra: { damage: actualDamage, rawDamage: rawDamage ?? actualDamage },
             })
             // ponytail: 触发队友伤害事件 — 供 buff_triggers 中的 ally_damage_taken / ally_fatal_damage 使用
             const isDead = !target.isAlive()
@@ -443,10 +462,15 @@ export class BattleSystem {
               }
             })
             // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
-            this.passiveSkillManager.triggerPassives(target,
-              createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battleData, {
-                damage: actualDamage,
-              }),
+            this.passiveSkillManager.triggerPassives(
+              target,
+              createPassiveContext(
+                BattleTriggerPhase.DAMAGE_TAKEN,
+                battleData,
+                {
+                  damage: actualDamage,
+                },
+              ),
             )
           }
         } finally {
@@ -457,14 +481,25 @@ export class BattleSystem {
     this.buffSystem.setHealCallback((targetId: string, amount: number) => {
       const target = battleData.participants.get(targetId)
       if (target?.isAlive()) {
-        target.heal(amount)
+        const actualHeal = target.heal(amount)
+        // ★ 统一管道：触发器治疗动画
+        if (actualHeal > 0) {
+          eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+            targetId,
+            damage: actualHeal,
+            damageCategory: DamageCategory.PHYSICAL,
+            isCritical: false,
+            isHeal: true,
+          })
+        }
         this.emitTriggerEvent(BattleTriggerPhase.HEAL_RECEIVED, {
           sourceId: '',
           targetId,
           value: amount,
         })
         // ponytail: 补充被动触发 — buff 治疗也需要触发 HEAL_RECEIVED 被动
-        this.passiveSkillManager.triggerPassives(target,
+        this.passiveSkillManager.triggerPassives(
+          target,
           createPassiveContext(BattleTriggerPhase.HEAL_RECEIVED, battleData, {
             heal: amount,
           }),
@@ -555,7 +590,8 @@ export class BattleSystem {
     if (!participants) return
 
     // 使用PassiveSkillManager触发战斗开始时的被动技能
-    this.passiveSkillManager.triggerPassives(participant,
+    this.passiveSkillManager.triggerPassives(
+      participant,
       createPassiveContext(BattleTriggerPhase.BATTLE_START, this.battleData),
     )
 
@@ -687,7 +723,6 @@ export class BattleSystem {
         }
 
         await this.animationManager.waitForAnimation()
-
 
         // ⭐ 补充守卫：如果在等待间隔期间战斗已结束，跳过后续操作
         if (battle.battleState !== BattleStatus.ACTIVE) {

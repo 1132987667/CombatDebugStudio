@@ -20,6 +20,7 @@ import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { EffectType } from '@/shared/types/effect'
 import {
   BATTLE_LOG_CATEGORIES,
+  type BattleLogCategory,
   buildNameSegments,
 } from '@/shared/types/battle-log'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
@@ -60,6 +61,7 @@ import type {
   BattleEntity,
   BattleEffect,
   PassiveTriggerContext,
+  TriggerEventContext,
 } from '@/domain/battle/type/types'
 import {
   ATTRIBUTE_CODE,
@@ -142,7 +144,8 @@ export class BattleExecutor {
                 ? 'log-friendly'
                 : 'log-hostile',
             kind: 'entity',
-            faction: participant.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+            faction:
+              participant.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
           },
           { text: ' 被控制，无法行动' },
         ],
@@ -154,7 +157,10 @@ export class BattleExecutor {
       return
     }
 
-    const context = createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battle)
+    const context = createPassiveContext(
+      BattleTriggerPhase.BEFORE_ATTACK,
+      battle,
+    )
 
     switch (participant.controlMode) {
       case 'AI': {
@@ -168,13 +174,22 @@ export class BattleExecutor {
           if (decision.type === 'skill' && decision.skillId) {
             const skill = this.skillManager.getSkillConfig(decision.skillId)
             if (skill) {
-              await this.selectAndExecuteSkill(
-                battle,
-                participant,
-                skill,
-                suggestedTargetId,
-                context,
-              )
+              // ★ 拦截普通攻击，强制走普攻路径，避免日志格式不一致
+              if (this.isNormalAttackSkill(skill)) {
+                await this.selectAndExecuteAttack(
+                  battle,
+                  participant,
+                  suggestedTargetId,
+                )
+              } else {
+                await this.selectAndExecuteSkill(
+                  battle,
+                  participant,
+                  skill,
+                  suggestedTargetId,
+                  context,
+                )
+              }
             } else {
               await this.selectAndExecuteAttack(
                 battle,
@@ -244,6 +259,11 @@ export class BattleExecutor {
       if (bestSkillId) {
         const skill = this.skillManager.getSkillConfig(bestSkillId)
         if (skill) {
+          // ★ 拦截普通攻击，强制走普攻路径
+          if (this.isNormalAttackSkill(skill)) {
+            await this.selectAndExecuteAttack(battle, participant)
+            return
+          }
           await this.selectAndExecuteSkill(
             battle,
             participant,
@@ -258,6 +278,11 @@ export class BattleExecutor {
       const skillId = availableSkills[0]
       const skill = this.skillManager.getSkillConfig(skillId)
       if (skill) {
+        // ★ 拦截普通攻击，强制走普攻路径
+        if (this.isNormalAttackSkill(skill)) {
+          await this.selectAndExecuteAttack(battle, participant)
+          return
+        }
         await this.selectAndExecuteSkill(
           battle,
           participant,
@@ -328,7 +353,8 @@ export class BattleExecutor {
       // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
       LoggerProvider.logger.beginBufferSubLogs()
 
-      this.passiveSkillManager.triggerPassives(source,
+      this.passiveSkillManager.triggerPassives(
+        source,
         createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battleData, {
           target: targets[0],
           targetId: targets[0]?.id,
@@ -415,7 +441,7 @@ export class BattleExecutor {
 
       const targetNames = targets.map((t) => t.name).join(', ')
       const damageText = totalDamage > 0 ? `，造成 ${totalDamage} 点伤害` : ''
-      const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点生命` : ''
+      const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点气血` : ''
       // NOTE: 固定预算模型 — 伤害/治疗走飞行→命中，治疗单独走直接命中
       if (targets.length > 0 && (totalDamage > 0 || totalHeal > 0)) {
         const primaryTarget = targets[0]
@@ -423,7 +449,7 @@ export class BattleExecutor {
           (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
         )
 
-        // NOTE: 在扣血前捕获 HP 用于叙事日志
+        // NOTE: 在扣血前捕获 气血 用于叙事日志
         const hpBeforeMap = new Map<string, number>()
         for (const pd of pendingDamages) {
           hpBeforeMap.set(pd.target.id, pd.target.currentHealth)
@@ -439,8 +465,20 @@ export class BattleExecutor {
             damageCategory: DamageCategory.PHYSICAL,
           })
 
-          // 命中瞬间（50%T）：统一应用所有延迟伤害
-          damageToken.applyAll()
+          // 命中瞬间（50%T）：统一应用所有延迟伤害，并发射 DAMAGE_TAKEN 事件
+          for (const entry of damageToken.getEntries()) {
+            if (!entry.target.isAlive()) continue
+            if (entry.damage > 0) {
+              entry.target.takeDamage(entry.damage)
+              this.emitDamageTakenEvent(
+                source, entry.target, entry.damage, entry.rawDamage, isCrit, battleData,
+              )
+            }
+            if (entry.heal > 0) {
+              entry.target.heal(entry.heal)
+            }
+          }
+          damageToken.clear()
 
           await this.animationManager.triggerImpactPhaseAndWait({
             targetId: primaryTarget.id,
@@ -462,17 +500,31 @@ export class BattleExecutor {
           })
         }
 
-        // NOTE: 扣血后捕获 HP，构建叙事日志
-        const primaryHpBefore = pendingDamages.length > 0 ? hpBeforeMap.get(pendingDamages[0].target.id) : undefined
-        const primaryHpAfter = pendingDamages.length > 0 ? pendingDamages[0].target.currentHealth : undefined
-        const logTarget = pendingDamages.length > 0 ? pendingDamages[0].target : undefined
+        // NOTE: 扣血后捕获 气血，构建叙事日志
+        const primaryHpBefore =
+          pendingDamages.length > 0
+            ? hpBeforeMap.get(pendingDamages[0].target.id)
+            : undefined
+        const primaryHpAfter =
+          pendingDamages.length > 0
+            ? pendingDamages[0].target.currentHealth
+            : undefined
+        const logTarget =
+          pendingDamages.length > 0 ? pendingDamages[0].target : undefined
         const skillId = skill.id || skill.name || ''
         let skillSeg: ReturnType<typeof skillSegment>
         try {
           skillSeg = skillSegment(skillId, this.skillManager)
         } catch {
-          skillSeg = { text: `【${skill.name || skillId}】`, classStr: 'log-skill' }
+          skillSeg = {
+            text: `【${skill.name || skillId}】`,
+            classStr: 'log-skill',
+          }
         }
+        // NOTE: 动态决定日志类别，确保日志面板能正确渲染
+        let logCategory: BattleLogCategory = BATTLE_LOG_CATEGORIES.STATUS
+        if (totalDamage > 0) logCategory = BATTLE_LOG_CATEGORIES.DAMAGE
+        else if (totalHeal > 0) logCategory = BATTLE_LOG_CATEGORIES.HEAL
         LoggerProvider.logger.addBattleLog({
           turn: battleData.currentTurn,
           message: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}`,
@@ -496,7 +548,7 @@ export class BattleExecutor {
             skillSeg,
             { text: `${damageText}${healText}` },
           ],
-          category: BATTLE_LOG_CATEGORIES.ACTION,
+          category: logCategory,
           meta: {
             role: 'action',
             entityId: logTarget?.id,
@@ -512,29 +564,37 @@ export class BattleExecutor {
         // ponytail: 触发被动 — 攻击方 ON_HIT + 受击方 DAMAGE_TAKEN + ON_DEATH
         for (const pd of pendingDamages) {
           if (pd.damage > 0) {
-            this.passiveSkillManager.triggerPassives(source,
+            this.passiveSkillManager.triggerPassives(
+              source,
               createPassiveContext(BattleTriggerPhase.ON_HIT, battleData, {
                 target: pd.target,
                 sourceId: source.id,
                 damage: pd.damage,
               }),
             )
-            this.passiveSkillManager.triggerPassives(pd.target,
-              createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battleData, {
-                target: pd.target,
-                sourceId: source.id,
-                damage: pd.damage,
-              }),
+            this.passiveSkillManager.triggerPassives(
+              pd.target,
+              createPassiveContext(
+                BattleTriggerPhase.DAMAGE_TAKEN,
+                battleData,
+                {
+                  target: pd.target,
+                  sourceId: source.id,
+                  damage: pd.damage,
+                },
+              ),
             )
             if (!pd.target.isAlive()) {
-              this.passiveSkillManager.triggerPassives(pd.target,
+              this.passiveSkillManager.triggerPassives(
+                pd.target,
                 createPassiveContext(BattleTriggerPhase.ON_DEATH, battleData, {
                   target: source,
                   sourceId: source.id,
                   cause: EffectType.DAMAGE,
                 }),
               )
-              this.passiveSkillManager.triggerPassives(source,
+              this.passiveSkillManager.triggerPassives(
+                source,
                 createPassiveContext(BattleTriggerPhase.ON_KILL, battleData, {
                   target: pd.target,
                   sourceId: pd.target.id,
@@ -551,11 +611,19 @@ export class BattleExecutor {
           turn: battleData.currentTurn,
           message: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}`,
           segments: [
-            { text: source.name, classStr: source.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+            {
+              text: source.name,
+              classStr:
+                source.type === PARTICIPANT_SIDE.ALLY
+                  ? 'log-friendly'
+                  : 'log-hostile',
+              kind: 'entity',
+              faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+            },
             { text: ` 对 ${targetNames} 使用 ` },
             { text: `【${skill.name || skillId}】`, classStr: 'log-skill' },
           ],
-          category: BATTLE_LOG_CATEGORIES.ACTION,
+          category: BATTLE_LOG_CATEGORIES.STATUS,
           meta: { role: 'action', skillName: skill.name || skill.id },
         })
       }
@@ -574,7 +642,8 @@ export class BattleExecutor {
       ]
     }
 
-    this.passiveSkillManager.triggerPassives(source,
+    this.passiveSkillManager.triggerPassives(
+      source,
       createPassiveContext(BattleTriggerPhase.AFTER_ATTACK, battleData, {
         target: targets[0],
         targetId: targets[0]?.id,
@@ -654,6 +723,30 @@ export class BattleExecutor {
     return targets.length > 0 ? targets[0].id : ''
   }
 
+  /** ★ 精准识别「伪装成技能的普通攻击」
+   *  名称模糊匹配 + 结构特征兜底，确保所有普通攻击都被拦截走普攻路径
+   */
+  private isNormalAttackSkill(skill: SkillConfig): boolean {
+    if (!skill) return false
+    // 名称模糊匹配
+    if (skill.name?.includes('普通攻击')) return true
+    if (
+      skill.id?.includes('normal_attack') ||
+      skill.id?.includes('basic_attack')
+    )
+      return true
+    // 结构特征兜底：无消耗、无冷却、单段纯伤害
+    if (
+      skill.energyCost === 0 &&
+      skill.cooldown === 0 &&
+      skill.steps?.length === 1 &&
+      skill.steps[0].type === 'deal_damage'
+    ) {
+      return true
+    }
+    return false
+  }
+
   // ============ 普通攻击 ============
 
   /**
@@ -720,9 +813,25 @@ export class BattleExecutor {
         turn: turnNumber,
         message: `${sourcePrefix}${source.name} → ${targetPrefix}${target.name}「普通攻击」`,
         segments: [
-          { text: `${sourcePrefix}${source.name}`, classStr: source.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+          {
+            text: `${sourcePrefix}${source.name}`,
+            classStr:
+              source.type === PARTICIPANT_SIDE.ALLY
+                ? 'log-friendly'
+                : 'log-hostile',
+            kind: 'entity',
+            faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+          },
           { text: ' → ' },
-          { text: `${targetPrefix}${target.name}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+          {
+            text: `${targetPrefix}${target.name}`,
+            classStr:
+              target.type === PARTICIPANT_SIDE.ALLY
+                ? 'log-friendly'
+                : 'log-hostile',
+            kind: 'entity',
+            faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+          },
           { text: '「普通攻击」' },
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
@@ -761,24 +870,58 @@ export class BattleExecutor {
   }
 
   /**
+   * 向 TriggerEventBus 发射 DAMAGE_TAKEN 事件
+   * 统一收口所有扣血行为的事件发射，确保荆棘/反伤等 Buff 触发器能正确触发
+   */
+  private emitDamageTakenEvent(
+    source: BattleEntity,
+    target: BattleEntity,
+    finalDamage: number,
+    rawDamage: number,
+    isCritical: boolean,
+    battle: BattleData,
+  ): void {
+    const eventBus = this.buffSystem.getEventBus()
+    eventBus.emit(BattleTriggerPhase.DAMAGE_TAKEN, {
+      phase: BattleTriggerPhase.DAMAGE_TAKEN,
+      sourceId: source.id,
+      targetId: target.id,
+      value: finalDamage,
+      currentTurn: battle.currentTurn,
+      extra: {
+        damage: finalDamage,
+        rawDamage,
+        isCritical,
+      },
+    } as TriggerEventContext)
+  }
+
+  /**
    * 对目标应用伤害并触发相关被动技能
    */
   applyDamageToTarget(
     source: BattleEntity,
     target: BattleEntity,
     damage: number,
+    rawDamage: number,
+    isCritical: boolean,
     battle: BattleData,
   ): void {
     target.takeDamage(damage)
+
+    // 🆕 向 TriggerEventBus 发射 DAMAGE_TAKEN 事件（修复普攻/技能不触发 Buff 触发器的 Bug）
+    this.emitDamageTakenEvent(source, target, damage, rawDamage, isCritical, battle)
     // ponytail: ON_HIT 触发攻击者（命中方）的被动，DAMAGE_TAKEN 触发受击方（受伤害）的被动
-    this.passiveSkillManager.triggerPassives(source,
+    this.passiveSkillManager.triggerPassives(
+      source,
       createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
         target,
         sourceId: source.id,
         damage,
       }),
     )
-    this.passiveSkillManager.triggerPassives(target,
+    this.passiveSkillManager.triggerPassives(
+      target,
       createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
         target: source,
         sourceId: source.id,
@@ -786,14 +929,16 @@ export class BattleExecutor {
       }),
     )
     if (!target.isAlive()) {
-      this.passiveSkillManager.triggerPassives(target,
+      this.passiveSkillManager.triggerPassives(
+        target,
         createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
           target: source,
           sourceId: source.id,
           cause: EffectType.DAMAGE,
         }),
       )
-      this.passiveSkillManager.triggerPassives(source,
+      this.passiveSkillManager.triggerPassives(
+        source,
         createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
           target,
           targetId: target.id,
@@ -811,6 +956,7 @@ export class BattleExecutor {
     source: BattleEntity,
     target: BattleEntity,
     turnNumber: number,
+    battle: BattleData,
   ): Promise<void> {
     action.effects.push({
       type: EffectType.MISS,
@@ -828,7 +974,9 @@ export class BattleExecutor {
     })
 
     // 命中阶段（50%→100%T）：显示"闪避"
-    await this.animationManager.triggerMissImpactAndWait({ targetId: target.id })
+    await this.animationManager.triggerMissImpactAndWait({
+      targetId: target.id,
+    })
 
     const logParams = this.generateAttackLogParams(source, target, turnNumber, {
       isMiss: true,
@@ -838,16 +986,19 @@ export class BattleExecutor {
       message: logParams.message,
       segments: logParams.segments,
       category: logParams.category,
-      meta: { role: 'action', entityId: target.id, miss: true, skillName: '普通攻击' },
+      meta: {
+        role: 'action',
+        entityId: target.id,
+        miss: true,
+        skillName: '普通攻击',
+      },
     })
 
     // 闪避结果作为 Sub 节点
     LoggerProvider.logger.addBattleLog({
       turn: turnNumber,
       message: '被闪避!',
-      segments: [
-        { text: '被闪避!', classStr: 'log-heal' },
-      ],
+      segments: [{ text: '被闪避!', classStr: 'log-heal' }],
       category: BATTLE_LOG_CATEGORIES.STATUS,
       meta: {
         role: 'sub',
@@ -858,6 +1009,16 @@ export class BattleExecutor {
     LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}，被闪避`,
     )
+
+    // 闪避后触发 DODGE 被动技能（闪避者作为触发者）
+    this.passiveSkillManager.triggerPassives(
+      target,
+      createPassiveContext(BattleTriggerPhase.DODGE, battle, {
+        sourceId: target.id,
+        targetId: source.id,
+        damage: 0,
+      }),
+    )
   }
 
   /**
@@ -867,10 +1028,10 @@ export class BattleExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    damageResult: { damage: number; isCritical: boolean },
+    damageResult: { damage: number; isCritical: boolean; rawDamage: number },
     battle: BattleData,
   ): Promise<void> {
-    const { damage, isCritical } = damageResult
+    const { damage, isCritical, rawDamage } = damageResult
     action.damage = damage
 
     action.effects.push({
@@ -888,11 +1049,11 @@ export class BattleExecutor {
       damageCategory: DamageCategory.PHYSICAL,
     })
 
-    // NOTE: 在扣血前捕获 hpBefore，确保 HP 箭头准确
+    // NOTE: 在扣血前捕获 hpBefore，确保 气血 箭头准确
     const hpBefore = target.currentHealth
 
-    // 命中瞬间（50%T）：扣血，HP 条与 UI 特效同帧开始
-    this.applyDamageToTarget(source, target, damage, battle)
+    // 命中瞬间（50%T）：扣血，气血 条与 UI 特效同帧开始
+    this.applyDamageToTarget(source, target, damage, rawDamage, isCritical, battle)
 
     const hpAfter = target.currentHealth
 
@@ -905,10 +1066,15 @@ export class BattleExecutor {
       isHeal: false,
     })
 
-    const logParams = this.generateAttackLogParams(source, target, battle.currentTurn, {
-      damage,
-      isCritical,
-    })
+    const logParams = this.generateAttackLogParams(
+      source,
+      target,
+      battle.currentTurn,
+      {
+        damage,
+        isCritical,
+      },
+    )
     LoggerProvider.logger.addBattleLog({
       turn: logParams.turn,
       message: logParams.message,
@@ -960,7 +1126,8 @@ export class BattleExecutor {
     // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
     LoggerProvider.logger.beginBufferSubLogs()
 
-    this.passiveSkillManager.triggerPassives(source,
+    this.passiveSkillManager.triggerPassives(
+      source,
       createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battle, {
         target,
         targetId,
@@ -988,16 +1155,22 @@ export class BattleExecutor {
 
     const action = this.createBattleAction(source.id, targetId, currentTurn)
 
-    if (damageResult.isMiss) {
-      await this.handleMissAttack(action, source, target, currentTurn)
-    } else {
-      await this.handleHitAttack(
-        action,
-        source,
-        target,
-        damageResult,
-        battle,
+    // ★ 消耗必暴标记（无论是自然暴击还是必暴强制暴击，只要暴击了就消耗）
+    if (
+      damageResult.isCritical &&
+      this.buffSystem.hasBuff(source.id, 'buff_guaranteed_crit')
+    ) {
+      const buffInstances = this.buffSystem.getBuffInstances(source.id)
+      const critBuff = buffInstances.find(
+        (b) => b.buffId === 'buff_guaranteed_crit',
       )
+      if (critBuff) this.buffSystem.removeBuff(critBuff.id)
+    }
+
+    if (damageResult.isMiss) {
+      await this.handleMissAttack(action, source, target, currentTurn, battle)
+    } else {
+      await this.handleHitAttack(action, source, target, damageResult, battle)
     }
 
     // ★ action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
@@ -1015,7 +1188,8 @@ export class BattleExecutor {
       // 调试日志失败绝不中断战斗
     }
 
-    this.passiveSkillManager.triggerPassives(source,
+    this.passiveSkillManager.triggerPassives(
+      source,
       createPassiveContext(BattleTriggerPhase.AFTER_ATTACK, battle, {
         target,
         targetId,
@@ -1213,7 +1387,7 @@ export class BattleExecutor {
           // NOTE: 固定预算模型 — executeAction 技能路径：飞行→命中扣血→命中特效
           this.buffSystem.setBuffAppliedCallbackEnabled(true)
 
-          // NOTE: 在扣血前捕获 HP 用于叙事日志
+          // NOTE: 在扣血前捕获 气血 用于叙事日志
           const hpBefore = target.currentHealth
           let hpAfter = target.currentHealth
 
@@ -1231,8 +1405,20 @@ export class BattleExecutor {
               damageCategory: DamageCategory.PHYSICAL,
             })
 
-            // 命中瞬间（50%T）：应用延迟伤害
-            damageToken.applyAll()
+            // 命中瞬间（50%T）：应用延迟伤害，发射 DAMAGE_TAKEN 事件
+            for (const entry of damageToken.getEntries()) {
+              if (!entry.target.isAlive()) continue
+              if (entry.damage > 0) {
+                entry.target.takeDamage(entry.damage)
+                this.emitDamageTakenEvent(
+                  source, entry.target, entry.damage, entry.rawDamage, actionIsCrit, battle,
+                )
+              }
+              if (entry.heal > 0) {
+                entry.target.heal(entry.heal)
+              }
+            }
+            damageToken.clear()
             hpAfter = target.currentHealth
 
             await this.animationManager.triggerImpactPhaseAndWait({
@@ -1261,13 +1447,25 @@ export class BattleExecutor {
 
             await this.animationManager.triggerAnimationAndWait(
               BattleEventCodes.DAMAGE_ANIMATION,
-              { targetId: target.id, damage: 0, damageCategory: DamageCategory.PHYSICAL, isCritical: false, isHeal: false },
+              {
+                targetId: target.id,
+                damage: 0,
+                damageCategory: DamageCategory.PHYSICAL,
+                isCritical: false,
+                isHeal: false,
+              },
               0, // 0 = 使用动画管理器的默认预算
             )
           }
           const skillId = action.skillId
-          const dmgPart = (action.damage ?? 0) > 0 ? `，造成 ${action.damage} 点` : ''
-          const healPart = (action.heal ?? 0) > 0 ? `，恢复 ${action.heal} 点生命` : ''
+          const dmgPart =
+            (action.damage ?? 0) > 0 ? `，造成 ${action.damage} 点` : ''
+          const healPart =
+            (action.heal ?? 0) > 0 ? `，恢复 ${action.heal} 点气血` : ''
+          // NOTE: 动态决定日志类别，确保日志面板能正确渲染
+          let logCategory: BattleLogCategory = BATTLE_LOG_CATEGORIES.STATUS
+          if ((action.damage ?? 0) > 0) logCategory = BATTLE_LOG_CATEGORIES.DAMAGE
+          else if ((action.heal ?? 0) > 0) logCategory = BATTLE_LOG_CATEGORIES.HEAL
           let actionSkillSeg: ReturnType<typeof skillSegment>
           try {
             actionSkillSeg = skillSegment(skillId, this.skillManager)
@@ -1285,7 +1483,8 @@ export class BattleExecutor {
                     ? 'log-friendly'
                     : 'log-hostile',
                 kind: 'entity',
-                faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+                faction:
+                  source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
               },
               { text: ' 对 ' },
               {
@@ -1295,13 +1494,14 @@ export class BattleExecutor {
                     ? 'log-friendly'
                     : 'log-hostile',
                 kind: 'entity',
-                faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+                faction:
+                  target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
               },
               { text: ' 使用 ' },
               actionSkillSeg,
               { text: `${dmgPart}${healPart}` },
             ],
-            category: BATTLE_LOG_CATEGORIES.ACTION,
+            category: logCategory,
             meta: {
               role: 'action',
               entityId: target.id,
@@ -1318,14 +1518,16 @@ export class BattleExecutor {
           // ponytail: 使用 token 的实际扣血值而非 action.damage 判断被动触发，减少发散窗口
           const actualDamage = damageToken.getTotalDamage()
           if (actualDamage > 0) {
-            this.passiveSkillManager.triggerPassives(source,
+            this.passiveSkillManager.triggerPassives(
+              source,
               createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
                 target,
                 sourceId: source.id,
                 damage: actualDamage,
               }),
             )
-            this.passiveSkillManager.triggerPassives(target,
+            this.passiveSkillManager.triggerPassives(
+              target,
               createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
                 target: source,
                 sourceId: source.id,
@@ -1335,7 +1537,8 @@ export class BattleExecutor {
             if (!target.isAlive()) {
               // ponytail: P1/PERF-1 — 死亡时清理 comboStates
               this.skillManager.getExecutor().cleanupComboState(target.id)
-              this.passiveSkillManager.triggerPassives(target,
+              this.passiveSkillManager.triggerPassives(
+                target,
                 createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
                   target: source,
                   sourceId: source.id,
@@ -1345,7 +1548,6 @@ export class BattleExecutor {
             }
           }
           // ponytail: token.applyAll() 已经处理了所有伤害和治疗，不需要额外调用 heal
-
         }
       } catch (error) {
         // ponytail: catch 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
@@ -1393,14 +1595,16 @@ export class BattleExecutor {
         })
 
         // ponytail: ON_HIT 触发攻击方，DAMAGE_TAKEN 触发受击方
-        this.passiveSkillManager.triggerPassives(source,
+        this.passiveSkillManager.triggerPassives(
+          source,
           createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
             target,
             sourceId: source.id,
             damage: actualDamage,
           }),
         )
-        this.passiveSkillManager.triggerPassives(target,
+        this.passiveSkillManager.triggerPassives(
+          target,
           createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
             target: source,
             sourceId: source.id,
@@ -1410,14 +1614,16 @@ export class BattleExecutor {
         if (!target.isAlive()) {
           // ponytail: P1/PERF-1 — 死亡时清理 comboStates
           this.skillManager.getExecutor().cleanupComboState(target.id)
-          this.passiveSkillManager.triggerPassives(target,
+          this.passiveSkillManager.triggerPassives(
+            target,
             createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
               target: source,
               sourceId: source.id,
               cause: EffectType.DAMAGE,
             }),
           )
-          this.passiveSkillManager.triggerPassives(source,
+          this.passiveSkillManager.triggerPassives(
+            source,
             createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
               target,
               targetId: target.id,

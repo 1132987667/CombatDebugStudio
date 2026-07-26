@@ -22,6 +22,8 @@ export const EffectType = {
   CRITICAL: 'critical',
   SPECIAL: 'special',
   SHIELD: 'shield',
+  DRAIN: 'drain',
+  REFLECT: 'reflect',
 } as const
 /**
  * 效果类型

@@ -22,7 +22,7 @@ import type { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 const counter = new Counter()
 /**
  * 战斗状态常量
- * 控制战斗的宏观生命周期
+ * 控制战斗的宏观气血周期
  */
 export const BattleStatus = {
   /** 已创建 - 战斗实例已创建，等待参与者加入 */
@@ -203,7 +203,7 @@ export type ControlMode = 'AI' | 'AUTO' | 'MANUAL'
 /**
  * 战斗实体接口
  * 定义战斗中最基础的实体结构
- * 包含实体的基本属性（ID、名称、等级、阵营等）和核心方法（生命值、能量、Buff 等）
+ * 包含实体的基本属性（ID、名称、等级、阵营等）和核心方法（气血值、能量、Buff 等）
  * 所有参与战斗的角色和敌人都应实现此接口
  */
 export interface BattleEntity {
@@ -490,16 +490,48 @@ export const BattleActionHelper = {
  * 表示战斗中产生的单一效果
  * 包含效果的类型、数值、关联的 Buff 以及效果描述
  * 用于描述战斗动作产生的具体效果（如伤害、治疗、Buff 等）
+ *
+ * NOTE: 增强数据契约 — 每个效果携带高信息密度的结构化数据，
+ * 渲染层（EffectRenderer）据此无脑翻译为 LogSegment[]，消灭字符串拼接。
+ * SkillExecutor 只负责填空不拼接字符串，EffectRenderer 负责所有文本排版。
  */
 export interface BattleEffect {
   type: EffectType
   targetId?: string
+  /** 来源 ID（关键：反伤时 source 是被反弹者，target 是攻击者） */
+  sourceId?: string
+
+  // === 伤害/治疗数值 ===
+  /** 伤害值（damage/reflect/drain 类型时有效） */
   value?: number
+  /** 伤害值别名，与 value 同语义（规范要求的显式字段名） */
+  damage?: number
+  /** 治疗值（heal/drain 类型时有效，与 value/damage 分离以便渲染层区分） */
+  heal?: number
+  /** 治疗/吸血溢出量 */
+  overflow?: number
+  /** 护盾吸收量 */
+  shieldAbsorbed?: number
+
+  // === Buff 信息 ===
   buffId?: string
+  /** Buff 展示名称（渲染层直接使用，无需再次查配置） */
+  buffName?: string
   instanceId?: string
+  stacks?: number
   duration?: number
-  description: string
+
+  // === 状态标记 ===
   isCritical?: boolean
+  isMiss?: boolean
+
+  // === 渲染层注入的快照（Executor 不填，由 Manager 在效果执行前后捕获） ===
+  hpBefore?: number
+  hpAfter?: number
+
+  /** 效果文本描述（用于兜底 / 未实现的自定义效果） */
+  description?: string
+
   /** 特殊效果标签：immune(免疫)/unyielding(不屈)/share(分担)/summon(召唤) */
   effectTag?: 'immune' | 'unyielding' | 'share' | 'summon'
 }
@@ -539,9 +571,9 @@ export interface ParticipantInfo {
   type: ParticipantSide
   /** 队伍归属 */
   team: ParticipantSide
-  /** 最大生命值 */
+  /** 最大气血值 */
   maxHealth: number
-  /** 当前生命值 */
+  /** 当前气血值 */
   currentHealth?: number
   /** 最大能量值 */
   maxEnergy?: number
@@ -581,7 +613,7 @@ export interface ParticipantInfo {
  * 战斗数据接口
  * 描述战斗的完整状态和数据
  * 包含战斗的核心运行时信息（参与者、回合、状态等）以及战斗控制相关属性
- * 是战斗系统中最全面的数据结构，用于管理整个战斗的生命周期
+ * 是战斗系统中最全面的数据结构，用于管理整个战斗的气血周期
  */
 export interface BattleData {
   /** 战斗唯一标识符 */
@@ -702,7 +734,7 @@ export interface BattleReplay {
   result?: BattleResult
 }
 
-/** 战斗阶段 -- 唯一的事实来源，统一 Buff 触发、被动技能、回放、事件总线的生命周期定义 */
+/** 战斗阶段 -- 唯一的事实来源，统一 Buff 触发、被动技能、回放、事件总线的气血周期定义 */
 export const BattleTriggerPhase = {
   BATTLE_START: 'battle_start',
   BATTLE_END: 'battle_end',
@@ -726,6 +758,8 @@ export const BattleTriggerPhase = {
   ON_APPLY: 'on_apply',
   /** Buff 条件状态变更时 */
   CONDITION_CHANGED: 'condition_changed',
+  /** 闪避时 */
+  DODGE: 'dodge',
 } as const
 
 export type BattleTriggerPhase =
@@ -796,6 +830,8 @@ export interface StepExecutionContext {
   readonly token?: DeferredDamageToken
   /** 是否来自被动触发 */
   readonly fromPassive?: boolean
+  /** 触发的伤害量（用于 damageDealt/damageTaken 等动态属性） */
+  readonly damage?: number
 }
 
 /**
@@ -818,7 +854,9 @@ export interface TriggerEventContext {
 export function createPassiveContext(
   phase: BattleTriggerPhase,
   battle: BattleData,
-  overrides?: Partial<Omit<PassiveTriggerContext, 'phase' | 'currentTurn' | 'participants'>>,
+  overrides?: Partial<
+    Omit<PassiveTriggerContext, 'phase' | 'currentTurn' | 'participants'>
+  >,
 ): PassiveTriggerContext {
   return {
     phase,
@@ -835,6 +873,7 @@ export function createStepContext(
   record?: CombatRecord,
   token?: DeferredDamageToken,
   fromPassive?: boolean,
+  damage?: number,
 ): StepExecutionContext {
-  return { record, token, fromPassive }
+  return { record, token, fromPassive, damage }
 }

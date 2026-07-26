@@ -76,17 +76,17 @@ ParticipantCard.vue (子组件)
 
 `syncTeams()` 只在以下时机被调用：
 
-| 触发时机 | 代码位置 |
-|---|---|
-| `BattleManager.initializeTeams()` | `BattleManager.ts:230` |
-| `BattleManager.setCharacterEnabled()` | `BattleManager.ts:308` |
-| `BattleManager.addCharacterToTeam()` | `BattleManager.ts:331` |
-| `BattleManager.removeCharacter()` | `BattleManager.ts:342` |
-| `BattleManager.startBattle()` | `BattleManager.ts:567` |
-| `BattleManager.endBattle()` | `BattleManager.ts:625` |
-| `BattleManager.resetBattle()` | `BattleManager.ts:636` |
-| 自动战斗每回合结束 | `BattleLifecycleManager.ts:122` |
-| `BattleArena.vue` 手动干预操作 | `BattleArena.vue:521/552/581` |
+| 触发时机                              | 代码位置                        |
+| ------------------------------------- | ------------------------------- |
+| `BattleManager.initializeTeams()`     | `BattleManager.ts:230`          |
+| `BattleManager.setCharacterEnabled()` | `BattleManager.ts:308`          |
+| `BattleManager.addCharacterToTeam()`  | `BattleManager.ts:331`          |
+| `BattleManager.removeCharacter()`     | `BattleManager.ts:342`          |
+| `BattleManager.startBattle()`         | `BattleManager.ts:567`          |
+| `BattleManager.endBattle()`           | `BattleManager.ts:625`          |
+| `BattleManager.resetBattle()`         | `BattleManager.ts:636`          |
+| 自动战斗每回合结束                    | `BattleLifecycleManager.ts:122` |
+| `BattleArena.vue` 手动干预操作        | `BattleArena.vue:521/552/581`   |
 
 **唯一覆盖回合内变化的事件**是 `PARTICIPANT_ATTRIBUTE_CHANGED`，但它通过 `handleAttributeChanged` 调 `proxy.recalculateAll()`，下面会说明为什么这条路也断了。
 
@@ -95,7 +95,7 @@ ParticipantCard.vue (子组件)
 ```
 回合 1 开始
   participantRef = proxy(A)     ← syncTeams 创建的
-  HP 显示 100/100                  ✓
+  气血 显示 100/100                  ✓
 
   takeDamage(70)
   → proxy(A).currentHealth = 30  ← 内存变了
@@ -122,8 +122,9 @@ ParticipantCard.vue (子组件)
 `syncTeams()` 中：
 
 ```ts
-allyTeam.value = battleService.value!.getEnabledAllyTeam()
-  .map(p => shallowReactive(p))     // src/presentation/stores/battleStore.ts:155
+allyTeam.value = battleService
+  .value!.getEnabledAllyTeam()
+  .map((p) => shallowReactive(p)) // src/presentation/stores/battleStore.ts:155
 ```
 
 `shallowReactive` 只拦截**一级属性**的 get/set。而 `BattleParticipantImpl` 的 `currentHealth` 是 getter：
@@ -185,7 +186,7 @@ hpText = computed(() => {
 
 ### 4.2 为什么是陷阱
 
-`stats` computed 在 participantRef 换对象时才重算，但它返回的对象里存的 `currentHealth` 是 `AttributeValue`**引用**。  
+`stats` computed 在 participantRef 换对象时才重算，但它返回的对象里存的 `currentHealth` 是 `AttributeValue`**引用**。
 
 引用指向的对象在回合内 `.value` 属性确实会变成 30——但 **Vue 不知道**，因为：
 
@@ -203,8 +204,8 @@ hpText = computed(() => {
 ```ts
 // 方式一：直接读 props.participant（hpText, hpPct）
 const hpText = computed(() => {
-  const data = props.participant         // 依赖 props.participant
-  data.currentHealth                     // BattleParticipantImpl getter
+  const data = props.participant // 依赖 props.participant
+  data.currentHealth // BattleParticipantImpl getter
   // → this.getAttribute(ATTRIBUTE_CODE.currentHealth)
   // → this.stats.reCalAttributeValue('currentHealth')
   // → this.attributes.get('currentHealth').value
@@ -214,8 +215,8 @@ const hpText = computed(() => {
 // 方式二：通过 stats computed（energyText）
 const { stats } = useBattleParticipant(toRef(props, 'participant'))
 const energyText = computed(() => {
-  const data = stats.value               // 依赖 stats computed
-  data.energy.value                      // AttributeValue.value
+  const data = stats.value // 依赖 stats computed
+  data.energy.value // AttributeValue.value
   // stats 只依赖 participantRef.value（= props.participant）
   // participantRef 不变 → stats 不重算 → UI 不刷新
 })
@@ -257,15 +258,15 @@ getAttributeValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
 // useBattleParticipant.ts
 const stats = computed(() => {
   return {
-    currentHealth: p.getAttributeValue(ATTRIBUTE_CODE.currentHealth)!,  // ! 是 TS 断言，运行时无效
+    currentHealth: p.getAttributeValue(ATTRIBUTE_CODE.currentHealth)!, // ! 是 TS 断言，运行时无效
     // 实际值是 undefined
   }
 })
 
 // ParticipantCard.vue
 const hpText = computed(() => {
-  const data = stats.value              // { currentHealth: undefined, ... }
-  data.currentHealth.value              // TypeError: Cannot read properties of undefined
+  const data = stats.value // { currentHealth: undefined, ... }
+  data.currentHealth.value // TypeError: Cannot read properties of undefined
   // console.log 在这之前但 data.currentHealth 已经是 undefined，
   // 表达式 data.currentHealth.value 还没执行到 console.log 就崩了
   // Vue 3 模式下不会有未捕获的 error 弹窗，但 console 会有 Vue warning
@@ -311,33 +312,33 @@ recalcAll(): void {
 
 ## 7. 根因总结
 
-| # | 缺陷 | 影响 | 严重度 |
-|---|---|---|---|
-| 1 | **回合粒度刷新**：`syncTeams` 只在回合边界的少数时机触发，回合内所有中间变化不通知 UI | 战斗中 HP/能量条不会实时变化，只在回合跳变时刷新 | 高 |
-| 2 | **`shallowReactive` 不追踪深层**：`AttributeValue.value` 的修改在 `stats.attributes` Map 内部，不在 proxy 的拦截范围内 | Vue 无法感知属性值变化，computed 不重算 | 高 |
-| 3 | **`stats` computed 只依赖对象引用**：`participantRef.value` 不变就不重算，返回的 `AttributeValue` 引用内部 `.value` 变了也没人知道 | 整条 computed 链断在中间层 | 高 |
-| 4 | **`getAttributeValue` 返回 `undefined` 被 `!` 掩盖**：极端情况下崩溃发生在 `console.log` 之前，且没有明确报错信息 | 调试困难，新构造路径可能静默失败 | 中 |
-| 5 | **`handleAttributeChanged` 补救无效**：调 `recalculateAll` 但修改的还是深层属性，Vue 仍不感知 | 事件发了但 UI 不更新 | 中 |
+| #   | 缺陷                                                                                                                               | 影响                                               | 严重度 |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------ |
+| 1   | **回合粒度刷新**：`syncTeams` 只在回合边界的少数时机触发，回合内所有中间变化不通知 UI                                              | 战斗中 气血/能量条不会实时变化，只在回合跳变时刷新 | 高     |
+| 2   | **`shallowReactive` 不追踪深层**：`AttributeValue.value` 的修改在 `stats.attributes` Map 内部，不在 proxy 的拦截范围内             | Vue 无法感知属性值变化，computed 不重算            | 高     |
+| 3   | **`stats` computed 只依赖对象引用**：`participantRef.value` 不变就不重算，返回的 `AttributeValue` 引用内部 `.value` 变了也没人知道 | 整条 computed 链断在中间层                         | 高     |
+| 4   | **`getAttributeValue` 返回 `undefined` 被 `!` 掩盖**：极端情况下崩溃发生在 `console.log` 之前，且没有明确报错信息                  | 调试困难，新构造路径可能静默失败                   | 中     |
+| 5   | **`handleAttributeChanged` 补救无效**：调 `recalculateAll` 但修改的还是深层属性，Vue 仍不感知                                      | 事件发了但 UI 不更新                               | 中     |
 
 ---
 
 ## 8. 关键文件 & 行号
 
-| 文件 | 行 | 内容 |
-|---|---|---|
-| `src/presentation/stores/battleStore.ts` | 151-158 | `syncTeams()` 定义 |
-| `src/presentation/stores/battleStore.ts` | 257-267 | `handleAttributeChanged` 补救 |
-| `src/presentation/stores/battleStore.ts` | 270 | `TEAM_DATA_CHANGED` 事件注册 |
-| `src/presentation/composables/useBattleParticipant.ts` | 84-136 | `stats` computed，用 `!` 断言 |
-| `src/presentation/components/ParticipantCard.vue` | 185 | `useBattleParticipant(toRef(props, 'participant'))` 调用 |
-| `src/presentation/components/ParticipantCard.vue` | 271-277 | `hpText` 直接读 `props.participant` |
-| `src/presentation/components/ParticipantCard.vue` | 292-296 | `energyText` 走 `stats.value` |
-| `src/domain/battle/entity/BattleParticipantImpl.ts` | 141-143 | 条件构造 `initAttributes` |
-| `src/domain/battle/entity/BattleParticipantImpl.ts` | 221-222 | `getAttributeValue` 返回 `undefined` 的可能 |
-| `src/domain/battle/entity/BattleParticipantImpl.ts` | 267-268 | `currentHealth` getter 走深层 `getAttribute` |
-| `src/domain/battle/entity/BattleParticipantImpl.ts` | 274-281 | `currentHealth` setter 赋值到深层 |
-| `src/domain/battle/entity/ParticipantStats.ts` | 64-67 | `reCalAttributeValue` 返回 `this.attributes.get(attr)` |
-| `src/shared/utils/GameDataProcessor.ts` | 150 | `enemyToParticipant` 传 `attributeValues` |
+| 文件                                                   | 行      | 内容                                                     |
+| ------------------------------------------------------ | ------- | -------------------------------------------------------- |
+| `src/presentation/stores/battleStore.ts`               | 151-158 | `syncTeams()` 定义                                       |
+| `src/presentation/stores/battleStore.ts`               | 257-267 | `handleAttributeChanged` 补救                            |
+| `src/presentation/stores/battleStore.ts`               | 270     | `TEAM_DATA_CHANGED` 事件注册                             |
+| `src/presentation/composables/useBattleParticipant.ts` | 84-136  | `stats` computed，用 `!` 断言                            |
+| `src/presentation/components/ParticipantCard.vue`      | 185     | `useBattleParticipant(toRef(props, 'participant'))` 调用 |
+| `src/presentation/components/ParticipantCard.vue`      | 271-277 | `hpText` 直接读 `props.participant`                      |
+| `src/presentation/components/ParticipantCard.vue`      | 292-296 | `energyText` 走 `stats.value`                            |
+| `src/domain/battle/entity/BattleParticipantImpl.ts`    | 141-143 | 条件构造 `initAttributes`                                |
+| `src/domain/battle/entity/BattleParticipantImpl.ts`    | 221-222 | `getAttributeValue` 返回 `undefined` 的可能              |
+| `src/domain/battle/entity/BattleParticipantImpl.ts`    | 267-268 | `currentHealth` getter 走深层 `getAttribute`             |
+| `src/domain/battle/entity/BattleParticipantImpl.ts`    | 274-281 | `currentHealth` setter 赋值到深层                        |
+| `src/domain/battle/entity/ParticipantStats.ts`         | 64-67   | `reCalAttributeValue` 返回 `this.attributes.get(attr)`   |
+| `src/shared/utils/GameDataProcessor.ts`                | 150     | `enemyToParticipant` 传 `attributeValues`                |
 
 ---
 

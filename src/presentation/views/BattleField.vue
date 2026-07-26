@@ -294,33 +294,11 @@ function getCharacterSide(characterId: string): 'left' | 'right' {
 }
 
 /**
- * 显示伤害数字
- * 通过 ParticipantCard 组件的 addDamageNumber 方法调用
- */
-function showDamage(characterId: string, value: number, type: ActionResultType, isCritical: boolean = false) {
-  // 调用 ParticipantCard 组件的 addDamageNumber 方法
-  const cardRef = participantCardRefs.value[characterId]
-  if (cardRef && typeof cardRef.addDamageNumber === 'function') {
-    cardRef.addDamageNumber(value, type, isCritical)
-  }
-
-  playHitAnimation(characterId, {
-    damage: value,
-    hitEffect: type,
-    isCritical,
-  })
-}
-
-/**
  * 显示闪避
  */
 function showMiss(characterId: string) {
-  // 调用 ParticipantCard 组件的 addDamageNumber 方法
-  const cardRef = participantCardRefs.value[characterId]
-  if (cardRef && typeof cardRef.addDamageNumber === 'function') {
-    cardRef.addDamageNumber(0, ActionResultType.MISS, false)
-  }
-
+  const budget = getActionBudget(store.battleSpeed)
+  visualEffectsRef.value?.showMissText(characterId, budget)
   playHitAnimation(characterId, {
     hitEffect: ActionResultType.MISS,
   })
@@ -383,7 +361,6 @@ function playAttackSequence(
 }
 
 defineExpose({
-  showDamage,
   showMiss,
   showSkillEffect,
   showBuffEffect,

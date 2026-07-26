@@ -12,14 +12,28 @@ export class StrongPoisonDebuff extends BaseBuffScript {
 
   protected _onApply(context: BuffContext): void {
     this.log(context, '强烈的毒素侵蚀身体！')
-    
+
     // 降低移动速度和攻击力
     const speedReduction = this.getConfigValue(context, 'speedReduction', 0.2)
-    const attackReduction = this.getConfigValue(context, 'attackReduction', 0.15)
-    
-    this.addModifier(context, ATTRIBUTE_CODE.speed, -speedReduction, ModifierType.MULTIPLICATIVE)
-    this.addModifier(context, ATTRIBUTE_CODE.attack, -attackReduction, ModifierType.MULTIPLICATIVE)
-    
+    const attackReduction = this.getConfigValue(
+      context,
+      'attackReduction',
+      0.15,
+    )
+
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.speed,
+      -speedReduction,
+      ModifierType.MULTIPLICATIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      -attackReduction,
+      ModifierType.MULTIPLICATIVE,
+    )
+
     // 记录初始伤害值
     const baseDamage = this.getConfigValue(context, 'baseDamage', 15)
     context.setVariable('baseDamage', baseDamage)
@@ -36,56 +50,76 @@ export class StrongPoisonDebuff extends BaseBuffScript {
     const elapsed = context.getElapsedTime()
     const lastDamageTime = context.getVariable<number>('lastDamageTime') || 0
     const damageInterval = this.getConfigValue(context, 'damageInterval', 1500) // 比普通毒更快
-    
+
     // 每隔一段时间造成伤害
     if (elapsed - lastDamageTime >= damageInterval) {
       const baseDamage = context.getVariable<number>('baseDamage') || 15
-      const damageMultiplier = this.getConfigValue(context, 'damageMultiplier', 1.3) // 比普通毒更强
-      
+      const damageMultiplier = this.getConfigValue(
+        context,
+        'damageMultiplier',
+        1.3,
+      ) // 比普通毒更强
+
       // 计算当前伤害（随时间递增）
       const stacks = Math.floor(elapsed / damageInterval)
-      const currentDamage = Math.floor(baseDamage * Math.pow(damageMultiplier, stacks))
-      
+      const currentDamage = Math.floor(
+        baseDamage * Math.pow(damageMultiplier, stacks),
+      )
+
       this.log(context, `强毒伤害：${currentDamage}`)
       this.triggerEvent(context, SkillStepType.DEAL_DAMAGE, {
         damage: currentDamage,
       })
-      
+
       context.setVariable('lastDamageTime', elapsed)
     }
   }
 
   protected _onRefresh(context: BuffContext): void {
     this.log(context, '强毒效果增强！')
-    
+
     // 刷新时增加伤害和负面效果
     const baseDamage = context.getVariable<number>('baseDamage') || 15
     const speedReduction = context.getVariable<number>('speedReduction') || 0.2
-    const attackReduction = context.getVariable<number>('attackReduction') || 0.15
-    
+    const attackReduction =
+      context.getVariable<number>('attackReduction') || 0.15
+
     const refreshBonus = this.getConfigValue(context, 'refreshBonus', 0.05)
-    
+
     const newSpeedReduction = Math.min(speedReduction + refreshBonus, 0.4)
     const newAttackReduction = Math.min(attackReduction + refreshBonus, 0.3)
     const newBaseDamage = baseDamage + 3
-    
+
     // 更新效果
     context.removeModifiers(ATTRIBUTE_CODE.speed)
     context.removeModifiers(ATTRIBUTE_CODE.attack)
-    
-    this.addModifier(context, ATTRIBUTE_CODE.speed, -newSpeedReduction, ModifierType.MULTIPLICATIVE)
-    this.addModifier(context, ATTRIBUTE_CODE.attack, -newAttackReduction, ModifierType.MULTIPLICATIVE)
-    
+
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.speed,
+      -newSpeedReduction,
+      ModifierType.MULTIPLICATIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      -newAttackReduction,
+      ModifierType.MULTIPLICATIVE,
+    )
+
     context.setVariable('baseDamage', newBaseDamage)
     context.setVariable('speedReduction', newSpeedReduction)
     context.setVariable('attackReduction', newAttackReduction)
-    
-    this.log(context, `速度降低提升至 ${(newSpeedReduction * 100).toFixed(1)}%，攻击降低提升至 ${(newAttackReduction * 100).toFixed(1)}%，基础伤害提升至 ${newBaseDamage}`)
+
+    this.log(
+      context,
+      `速度降低提升至 ${(newSpeedReduction * 100).toFixed(1)}%，攻击降低提升至 ${(newAttackReduction * 100).toFixed(1)}%，基础伤害提升至 ${newBaseDamage}`,
+    )
   }
 
   public getEffectLines(context: BuffContext): BuffEffectLine[] {
     const baseDamage = this.getConfigValue(context, 'baseDamage', 15)
-    return [{ text: `每回合损失 ${baseDamage} 生命值`, kind: 'dot' }]
+    return [{ text: `每回合损失 ${baseDamage} 气血值`, kind: 'dot' }]
   }
 }
 

@@ -1,8 +1,18 @@
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
-import type { BattleData, BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
-import { AUTO_BATTLE_CONFIG, BattleActionHelper, BattleStatus, PARTICIPANT_SIDE, RoundStatus } from '@/domain/battle/type/types'
+import type {
+  BattleData,
+  BattleEntity,
+  ParticipantSide,
+} from '@/domain/battle/type/types'
+import {
+  AUTO_BATTLE_CONFIG,
+  BattleActionHelper,
+  BattleStatus,
+  PARTICIPANT_SIDE,
+  RoundStatus,
+} from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { eventBus } from '@/main'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
@@ -55,11 +65,21 @@ export class BattleLifecycleManager {
       targetId: 'system',
       skillId: '',
       turn: battle.currentTurn || 1,
-      effects: [{ type: 'status', description: `战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}`, duration: 0 }],
+      effects: [
+        {
+          type: 'status',
+          description: `战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}`,
+          duration: 0,
+        },
+      ],
     })
 
     battle.actions.push(endAction)
-    this.battleRecorder.recordAction(battle.battleId, endAction, battle.currentTurn || 1)
+    this.battleRecorder.recordAction(
+      battle.battleId,
+      endAction,
+      battle.currentTurn || 1,
+    )
     this.battleRecorder.endRecording(battle.battleId, winner)
     this.battleRecorder.saveRecording(battle.battleId)
 
@@ -86,7 +106,10 @@ export class BattleLifecycleManager {
     battle.actions = []
 
     battle.participants.forEach((participant) => {
-      participant.setAttribute(ATTRIBUTE_CODE.currentHealth, participant.getAttribute(ATTRIBUTE_CODE.maxHealth))
+      participant.setAttribute(
+        ATTRIBUTE_CODE.currentHealth,
+        participant.getAttribute(ATTRIBUTE_CODE.maxHealth),
+      )
       participant.setAttribute(ATTRIBUTE_CODE.currentEnergy, 0)
       this.buffSystem.clearAllBuffs(participant.id)
     })
@@ -105,12 +128,13 @@ export class BattleLifecycleManager {
       if (this.getIsPaused()) return
 
       const current = this.getBattleData()
-      if (!current?.autoBattle || current.battleState !== BattleStatus.ACTIVE) return
+      if (!current?.autoBattle || current.battleState !== BattleStatus.ACTIVE)
+        return
 
       try {
         await this.processTurnInternal()
 
-        // 每回合结束后通知 UI 同步队伍数据（HP/能量等）
+        // 每回合结束后通知 UI 同步队伍数据（气血/能量等）
         const turnData = this.getBattleData()
         if (turnData) {
           const allyTeam: BattleEntity[] = []
@@ -119,11 +143,17 @@ export class BattleLifecycleManager {
             if (p.team === PARTICIPANT_SIDE.ALLY) allyTeam.push(p)
             else enemyTeam.push(p)
           })
-          eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, { allyTeam, enemyTeam })
+          eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
+            allyTeam,
+            enemyTeam,
+          })
         }
 
         const after = this.getBattleData()
-        if (after?.battleState === BattleStatus.ENDED || after?.battleState === BattleStatus.PAUSED) {
+        if (
+          after?.battleState === BattleStatus.ENDED ||
+          after?.battleState === BattleStatus.PAUSED
+        ) {
           this.stopAutoBattle()
           return
         }
@@ -140,7 +170,10 @@ export class BattleLifecycleManager {
     }
 
     const delay = this.getBattleDelay()
-    this.autoBattleTimerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
+    this.autoBattleTimerId = this.rafTimer.setTimeout(
+      this.autoBattleLoop,
+      delay,
+    )
   }
 
   stopAutoBattle(): void {
@@ -161,7 +194,10 @@ export class BattleLifecycleManager {
     const battle = this.getBattleData()
     if (!battle) return
 
-    battle.battleState = battle.battleState === BattleStatus.PAUSED ? BattleStatus.ACTIVE : BattleStatus.PAUSED
+    battle.battleState =
+      battle.battleState === BattleStatus.PAUSED
+        ? BattleStatus.ACTIVE
+        : BattleStatus.PAUSED
 
     if (this.getIsPaused()) {
       this.pause()
@@ -183,7 +219,11 @@ export class BattleLifecycleManager {
 
   private resume(): void {
     const battle = this.getBattleData()
-    if (battle?.autoBattle && battle.battleState === BattleStatus.ACTIVE && this.autoBattleLoop) {
+    if (
+      battle?.autoBattle &&
+      battle.battleState === BattleStatus.ACTIVE &&
+      this.autoBattleLoop
+    ) {
       const delay = this.getBattleDelay()
       const timerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
       this.autoBattleTimerId = timerId
@@ -200,6 +240,9 @@ export class BattleLifecycleManager {
   private getBattleDelay(): number {
     const battle = this.getBattleData()
     if (!battle) return AUTO_BATTLE_CONFIG.DEFAULT_DELAY
-    return AUTO_BATTLE_CONFIG.DELAYS[battle.battleSpeed] ?? AUTO_BATTLE_CONFIG.DEFAULT_DELAY
+    return (
+      AUTO_BATTLE_CONFIG.DELAYS[battle.battleSpeed] ??
+      AUTO_BATTLE_CONFIG.DEFAULT_DELAY
+    )
   }
 }

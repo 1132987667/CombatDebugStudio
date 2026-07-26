@@ -215,6 +215,7 @@ AGENTS.md
 eslint.config.js
 index.html
 package.json
+reasonix.toml
 tsconfig.json
 tsconfig.node.json
 tsconfig.strict.json
@@ -787,6 +788,10 @@ export default [
     "vue-tsc": "^2.1.10"
   }
 }
+
+--- reasonix.toml ---
+[permissions]
+allow = ["Bash(cd D:\\5-workspace\\code\\CombatDebugStudio; python -c \"import json; f=open('configs/skills/skill_passive.json','r',encoding='utf-8'); skills=json.load(f); missing=[s['id'] for s in skills if 'selector' not in s]; print(f'Total: {len(skills)}, Missing selector: {len(missing)}'); [print(f'  - {m}') for m in missing]\")"]
 
 --- src/application/facade/BattleFacade.ts ---
 import { BattleManager } from '@/domain/battle/BattleManager'
@@ -4699,7 +4704,7 @@ export class BattleManager {
 
 import {
   BattleActionHelper,
-  createBattleContext,
+  createPassiveContext,
 } from '@/domain/battle/type/types'
 import { createEmptyRecord } from '@/domain/battle/combat-record'
 import type {
@@ -5133,11 +5138,8 @@ export class BattleSystem {
               }
             })
             // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
-            this.passiveSkillManager.triggerPassives(
-              BattleTriggerPhase.DAMAGE_TAKEN,
-              target,
-              createBattleContext(battleData, {
-                phase: BattleTriggerPhase.TURN_START,
+            this.passiveSkillManager.triggerPassives(target,
+              createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battleData, {
                 damage: actualDamage,
               }),
             )
@@ -5157,12 +5159,9 @@ export class BattleSystem {
           value: amount,
         })
         // ponytail: 补充被动触发 — buff 治疗也需要触发 HEAL_RECEIVED 被动
-        this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.HEAL_RECEIVED,
-          target,
-          createBattleContext(battleData, {
-            phase: BattleTriggerPhase.TURN_START,
-            value: amount,
+        this.passiveSkillManager.triggerPassives(target,
+          createPassiveContext(BattleTriggerPhase.HEAL_RECEIVED, battleData, {
+            heal: amount,
           }),
         )
       }
@@ -5198,9 +5197,8 @@ export class BattleSystem {
 
     // 使用PassiveSkillManager触发战斗开始时的被动技能
     this.passiveSkillManager.triggerPassiveSkillsForAll(
-      BattleTriggerPhase.BATTLE_START,
       participants,
-      createBattleContext(this.battleData),
+      createPassiveContext(BattleTriggerPhase.BATTLE_START, this.battleData),
     )
   }
 
@@ -5252,10 +5250,8 @@ export class BattleSystem {
     if (!participants) return
 
     // 使用PassiveSkillManager触发战斗开始时的被动技能
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.BATTLE_START,
-      participant,
-      createBattleContext(this.battleData),
+    this.passiveSkillManager.triggerPassives(participant,
+      createPassiveContext(BattleTriggerPhase.BATTLE_START, this.battleData),
     )
 
     // ponytail: 增量分发光环 — 新角色受已有光环影响 + 新角色的光环施加给已有角色
@@ -5297,9 +5293,8 @@ export class BattleSystem {
 
       // 触发回合开始时的被动技能
       this.passiveSkillManager.triggerPassiveSkillsForAll(
-        BattleTriggerPhase.TURN_START,
         battle.participants,
-        createBattleContext(this.battleData),
+        createPassiveContext(BattleTriggerPhase.TURN_START, this.battleData),
       )
 
       // 减少所有角色技能冷却
@@ -5435,9 +5430,8 @@ export class BattleSystem {
       })
 
       this.passiveSkillManager.triggerPassiveSkillsForAll(
-        BattleTriggerPhase.TURN_END,
         battle.participants,
-        createBattleContext(this.battleData),
+        createPassiveContext(BattleTriggerPhase.TURN_END, this.battleData),
       )
 
       // ponytail: 消费 extra_action（时之沙）— 在 TURN_END 触发后、回合递增前执行额外行动
@@ -7127,6 +7121,7 @@ export class BattleParticipantImpl implements BattleEntity {
         phase: BattleTriggerPhase.ENERGY_GAINED,
         sourceId: this.id,
         value: actualGain,
+        currentTurn: 0,
       })
     }
   }
@@ -9020,7 +9015,8 @@ import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import {
   BattleTriggerPhase,
   ActionResultType,
-  createBattleContext,
+  createPassiveContext,
+  createStepContext,
 } from '@/domain/battle/type/types'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
@@ -9067,7 +9063,7 @@ import type {
   BattleData,
   BattleEntity,
   BattleEffect,
-  BattleContext,
+  PassiveTriggerContext,
 } from '@/domain/battle/type/types'
 import {
   ATTRIBUTE_CODE,
@@ -9162,7 +9158,7 @@ export class BattleExecutor {
       return
     }
 
-    const context: BattleContext = { participants: battle.participants }
+    const context = createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battle)
 
     switch (participant.controlMode) {
       case 'AI': {
@@ -9223,7 +9219,7 @@ export class BattleExecutor {
   private async autoDecision(
     battle: BattleData,
     participant: BattleEntity,
-    context: BattleContext,
+    context: PassiveTriggerContext,
   ): Promise<void> {
     const currentEnergy = participant.getAttribute(ATTRIBUTE_CODE.currentEnergy)
     const activeSkillIds = participant.getSkillIds(SkillType.ACTIVE)
@@ -9290,7 +9286,7 @@ export class BattleExecutor {
     source: BattleEntity,
     skill: SkillConfig,
     suggestedTargetId?: string,
-    context?: BattleContext,
+    context?: PassiveTriggerContext,
   ): Promise<BattleAction> {
     if (
       'isSkillAvailable' in source &&
@@ -9336,10 +9332,8 @@ export class BattleExecutor {
       // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
       LoggerProvider.logger.beginBufferSubLogs()
 
-      this.passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.BEFORE_ATTACK,
-        source,
-        createBattleContext(battleData, {
+      this.passiveSkillManager.triggerPassives(source,
+        createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battleData, {
           target: targets[0],
           targetId: targets[0]?.id,
         }),
@@ -9522,38 +9516,30 @@ export class BattleExecutor {
         // ponytail: 触发被动 — 攻击方 ON_HIT + 受击方 DAMAGE_TAKEN + ON_DEATH
         for (const pd of pendingDamages) {
           if (pd.damage > 0) {
-            this.passiveSkillManager.triggerPassives(
-              BattleTriggerPhase.ON_HIT,
-              source,
-              createBattleContext(battleData, {
+            this.passiveSkillManager.triggerPassives(source,
+              createPassiveContext(BattleTriggerPhase.ON_HIT, battleData, {
                 target: pd.target,
                 sourceId: source.id,
                 damage: pd.damage,
               }),
             )
-            this.passiveSkillManager.triggerPassives(
-              BattleTriggerPhase.DAMAGE_TAKEN,
-              pd.target,
-              createBattleContext(battleData, {
+            this.passiveSkillManager.triggerPassives(pd.target,
+              createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battleData, {
                 target: pd.target,
                 sourceId: source.id,
                 damage: pd.damage,
               }),
             )
             if (!pd.target.isAlive()) {
-              this.passiveSkillManager.triggerPassives(
-                BattleTriggerPhase.ON_DEATH,
-                pd.target,
-                createBattleContext(battleData, {
+              this.passiveSkillManager.triggerPassives(pd.target,
+                createPassiveContext(BattleTriggerPhase.ON_DEATH, battleData, {
                   target: source,
                   sourceId: source.id,
                   cause: EffectType.DAMAGE,
                 }),
               )
-              this.passiveSkillManager.triggerPassives(
-                BattleTriggerPhase.ON_KILL,
-                source,
-                createBattleContext(battleData, {
+              this.passiveSkillManager.triggerPassives(source,
+                createPassiveContext(BattleTriggerPhase.ON_KILL, battleData, {
                   target: pd.target,
                   sourceId: pd.target.id,
                   cause: EffectType.DAMAGE,
@@ -9592,10 +9578,8 @@ export class BattleExecutor {
       ]
     }
 
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.AFTER_ATTACK,
-      source,
-      createBattleContext(battleData, {
+    this.passiveSkillManager.triggerPassives(source,
+      createPassiveContext(BattleTriggerPhase.AFTER_ATTACK, battleData, {
         target: targets[0],
         targetId: targets[0]?.id,
         damage: action.damage,
@@ -9787,49 +9771,38 @@ export class BattleExecutor {
     source: BattleEntity,
     target: BattleEntity,
     damage: number,
-    participants?: Map<string, BattleEntity>,
-    currentTurn?: number,
+    battle: BattleData,
   ): void {
     target.takeDamage(damage)
     // ponytail: ON_HIT 触发攻击者（命中方）的被动，DAMAGE_TAKEN 触发受击方（受伤害）的被动
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.ON_HIT,
-      source,
-      { target, sourceId: source.id, damage, participants, currentTurn },
+    this.passiveSkillManager.triggerPassives(source,
+      createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
+        target,
+        sourceId: source.id,
+        damage,
+      }),
     )
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.DAMAGE_TAKEN,
-      target,
-      {
+    this.passiveSkillManager.triggerPassives(target,
+      createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
         target: source,
         sourceId: source.id,
         damage,
-        participants,
-        currentTurn,
-      },
+      }),
     )
     if (!target.isAlive()) {
-      this.passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.ON_DEATH,
-        target,
-        {
+      this.passiveSkillManager.triggerPassives(target,
+        createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
           target: source,
           sourceId: source.id,
           cause: EffectType.DAMAGE,
-          participants,
-          currentTurn,
-        },
+        }),
       )
-      this.passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.ON_KILL,
-        source,
-        {
+      this.passiveSkillManager.triggerPassives(source,
+        createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
           target,
           targetId: target.id,
           cause: EffectType.DAMAGE,
-          participants,
-          currentTurn,
-        },
+        }),
       )
     }
   }
@@ -9842,6 +9815,7 @@ export class BattleExecutor {
     source: BattleEntity,
     target: BattleEntity,
     turnNumber: number,
+    battle: BattleData,
   ): Promise<void> {
     action.effects.push({
       type: EffectType.MISS,
@@ -9889,6 +9863,16 @@ export class BattleExecutor {
     LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}，被闪避`,
     )
+
+    // 闪避后触发 DODGE 被动技能（闪避者作为触发者）
+    this.passiveSkillManager.triggerPassives(
+      target,
+      createPassiveContext(BattleTriggerPhase.DODGE, battle, {
+        sourceId: target.id,
+        targetId: source.id,
+        damage: 0,
+      }),
+    )
   }
 
   /**
@@ -9899,8 +9883,7 @@ export class BattleExecutor {
     source: BattleEntity,
     target: BattleEntity,
     damageResult: { damage: number; isCritical: boolean },
-    turnNumber: number,
-    participants?: Map<string, BattleEntity>,
+    battle: BattleData,
   ): Promise<void> {
     const { damage, isCritical } = damageResult
     action.damage = damage
@@ -9924,7 +9907,7 @@ export class BattleExecutor {
     const hpBefore = target.currentHealth
 
     // 命中瞬间（50%T）：扣血，HP 条与 UI 特效同帧开始
-    this.applyDamageToTarget(source, target, damage, participants, turnNumber)
+    this.applyDamageToTarget(source, target, damage, battle)
 
     const hpAfter = target.currentHealth
 
@@ -9937,7 +9920,7 @@ export class BattleExecutor {
       isHeal: false,
     })
 
-    const logParams = this.generateAttackLogParams(source, target, turnNumber, {
+    const logParams = this.generateAttackLogParams(source, target, battle.currentTurn, {
       damage,
       isCritical,
     })
@@ -9992,15 +9975,11 @@ export class BattleExecutor {
     // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
     LoggerProvider.logger.beginBufferSubLogs()
 
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.BEFORE_ATTACK,
-      source,
-      {
+    this.passiveSkillManager.triggerPassives(source,
+      createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battle, {
         target,
         targetId,
-        currentTurn: currentTurn,
-        participants: battle.participants,
-      },
+      }),
     )
 
     // 创建详细记录对象用于捕获伤害拆分
@@ -10019,21 +9998,32 @@ export class BattleExecutor {
       attackStep,
       source,
       target,
-      record,
+      createStepContext(record, undefined),
     )
 
     const action = this.createBattleAction(source.id, targetId, currentTurn)
 
+    // ponytail: 必暴标记处理 — 若攻击者持有 buff_guaranteed_crit 且未自然暴击则强制暴击
+    if (!damageResult.isMiss && !damageResult.isCritical && this.buffSystem.hasBuff(source.id, 'buff_guaranteed_crit')) {
+      damageResult.isCritical = true
+      // 计算暴击伤害（DamageCalculator 按非暴击路径算的 damage，需乘以暴伤倍率）
+      const cd = source.getAttribute(ATTRIBUTE_CODE.critDamage) || 125
+      damageResult.damage = Math.floor(damageResult.damage * cd / 100)
+      // 消耗必暴标记
+      const buffInstances = this.buffSystem.getBuffInstances(source.id)
+      const critBuff = buffInstances.find(b => b.buffId === 'buff_guaranteed_crit')
+      if (critBuff) this.buffSystem.removeBuff(critBuff.id)
+    }
+
     if (damageResult.isMiss) {
-      await this.handleMissAttack(action, source, target, currentTurn)
+      await this.handleMissAttack(action, source, target, currentTurn, battle)
     } else {
       await this.handleHitAttack(
         action,
         source,
         target,
         damageResult,
-        currentTurn,
-        battle.participants,
+        battle,
       )
     }
 
@@ -10052,17 +10042,13 @@ export class BattleExecutor {
       // 调试日志失败绝不中断战斗
     }
 
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.AFTER_ATTACK,
-      source,
-      {
+    this.passiveSkillManager.triggerPassives(source,
+      createPassiveContext(BattleTriggerPhase.AFTER_ATTACK, battle, {
         target,
         targetId,
         damage: action.damage,
         isCritical: damageResult.isCritical,
-        participants: battle.participants,
-        currentTurn: battle.currentTurn,
-      },
+      }),
     )
 
     this.recordBattleAction(battle, action)
@@ -10359,41 +10345,29 @@ export class BattleExecutor {
           // ponytail: 使用 token 的实际扣血值而非 action.damage 判断被动触发，减少发散窗口
           const actualDamage = damageToken.getTotalDamage()
           if (actualDamage > 0) {
-            this.passiveSkillManager.triggerPassives(
-              BattleTriggerPhase.ON_HIT,
-              source,
-              {
+            this.passiveSkillManager.triggerPassives(source,
+              createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
                 target,
                 sourceId: source.id,
                 damage: actualDamage,
-                participants: battle.participants,
-                currentTurn: battle.currentTurn,
-              },
+              }),
             )
-            this.passiveSkillManager.triggerPassives(
-              BattleTriggerPhase.DAMAGE_TAKEN,
-              target,
-              {
+            this.passiveSkillManager.triggerPassives(target,
+              createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
                 target: source,
                 sourceId: source.id,
                 damage: actualDamage,
-                participants: battle.participants,
-                currentTurn: battle.currentTurn,
-              },
+              }),
             )
             if (!target.isAlive()) {
               // ponytail: P1/PERF-1 — 死亡时清理 comboStates
               this.skillManager.getExecutor().cleanupComboState(target.id)
-              this.passiveSkillManager.triggerPassives(
-                BattleTriggerPhase.ON_DEATH,
-                target,
-                {
+              this.passiveSkillManager.triggerPassives(target,
+                createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
                   target: source,
                   sourceId: source.id,
                   cause: EffectType.DAMAGE,
-                  participants: battle.participants,
-                  currentTurn: battle.currentTurn,
-                },
+                }),
               )
             }
           }
@@ -10446,52 +10420,36 @@ export class BattleExecutor {
         })
 
         // ponytail: ON_HIT 触发攻击方，DAMAGE_TAKEN 触发受击方
-        this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.ON_HIT,
-          source,
-          {
+        this.passiveSkillManager.triggerPassives(source,
+          createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
             target,
             sourceId: source.id,
             damage: actualDamage,
-            participants: battle.participants,
-            currentTurn: battle.currentTurn,
-          },
+          }),
         )
-        this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.DAMAGE_TAKEN,
-          target,
-          {
+        this.passiveSkillManager.triggerPassives(target,
+          createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
             target: source,
             sourceId: source.id,
             damage: actualDamage,
-            participants: battle.participants,
-            currentTurn: battle.currentTurn,
-          },
+          }),
         )
         if (!target.isAlive()) {
           // ponytail: P1/PERF-1 — 死亡时清理 comboStates
           this.skillManager.getExecutor().cleanupComboState(target.id)
-          this.passiveSkillManager.triggerPassives(
-            BattleTriggerPhase.ON_DEATH,
-            target,
-            {
+          this.passiveSkillManager.triggerPassives(target,
+            createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
               target: source,
               sourceId: source.id,
               cause: EffectType.DAMAGE,
-              participants: battle.participants,
-              currentTurn: battle.currentTurn,
-            },
+            }),
           )
-          this.passiveSkillManager.triggerPassives(
-            BattleTriggerPhase.ON_KILL,
-            source,
-            {
+          this.passiveSkillManager.triggerPassives(source,
+            createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
               target,
               targetId: target.id,
               cause: EffectType.DAMAGE,
-              participants: battle.participants,
-              currentTurn: battle.currentTurn,
-            },
+            }),
           )
         }
 
@@ -13122,6 +13080,8 @@ export const BattleTriggerPhase = {
   ON_APPLY: 'on_apply',
   /** Buff 条件状态变更时 */
   CONDITION_CHANGED: 'condition_changed',
+  /** 闪避时 */
+  DODGE: 'dodge',
 } as const
 
 export type BattleTriggerPhase =
@@ -13166,96 +13126,76 @@ export interface SnapshotIndexItem {
 }
 
 /**
- * 战斗触发器统一上下文
- *
- * 覆盖所有场景：
- * - TriggerEventBus 事件广播（emitTriggerEvent）
- * - PassiveSkillManager 被动触发（triggerPassives）
- * - BuffSystem 触发器脚本执行（executeTriggerScript）
- * - Buff 回调（damage/heal callback）
+ * 被动触发上下文 — PassiveSkillManager.triggerPassives 专用
+ * phase 必填，由工厂函数从 trigger 参数注入，不可能遗漏
  */
-export interface BattleContext {
-  // ============ 基础标识 ============
-  /** 触发阶段（battle_start / turn_start / damage_taken 等） */
-  phase?: BattleTriggerPhase
-  /** 战斗实例 ID */
-  battleId?: string
-  /** 来源参与者 ID（攻击者、施法者） */
-  sourceId?: string
-  /** 目标参与者 ID（受击者、受术者） */
-  targetId?: string
-  target?: BattleEntity
-  participants?: Map<string, BattleEntity>
-  /** 技能 ID */
-  skillId?: string
-  /** Buff ID */
-  buffId?: string
-  /** Buff 实例 ID（用于追踪具体实例） */
-  instanceId?: string
-
-  // ============ 数值字段 ============
-  /** 通用数值（能量、基础值等） */
-  value?: number
-  /** 伤害值（明确为伤害） */
-  damage?: number
-  /** 治疗值（明确为治疗） */
-  heal?: number
-  /** 通用量（与 value 类似，但用于某些特定场景） */
-  amount?: number
-
-  // ============ 回合信息 ============
-  /** 当前回合数（从 1 开始） */
-  currentTurn?: number
-  /** 回合编号（roundNumber 是 currentTurn 的别名） */
-  roundNumber?: number
-  /** 当前轮次（与 currentTurn 同义） */
-  round?: number
-
-  // ============ 状态标记 ============
-  /** 是否暴击 */
-  isCritical?: boolean
-  /** 是否命中 */
-  isHit?: boolean
-  /** 原因/类型（如 'damage'、'heal'、'buff'） */
-  cause?: string
-
-  parentTraceId?: string
-
-  /** 伤害记录 */
-  record?: CombatRecord
-
-  /** 延迟伤害令牌 */
-  token?: DeferredDamageToken
-
-  // ============ 扩展数据 ============
-  /** 额外自定义数据（灵活扩展） */
-  extra?: Record<string, unknown>
-  /** 战斗完整数据（仅用于需要全量状态的场景） */
-  battleData?: BattleData
+export interface PassiveTriggerContext {
+  readonly phase: BattleTriggerPhase
+  readonly currentTurn: number
+  readonly participants?: Map<string, BattleEntity>
+  readonly sourceId?: string
+  readonly targetId?: string
+  readonly target?: BattleEntity
+  readonly damage?: number
+  readonly heal?: number
+  readonly isCritical?: boolean
+  readonly cause?: string
+  readonly parentTraceId?: string
 }
 
 /**
- * 从 BattleData 创建完整的战斗上下文
- *
- * 公共字段（battleId / participants / currentTurn）自动从 battle 填充，
- * 调用方只需提供事件特有字段（sourceId / targetId / damage 等）。
- *
- * @param battle  当前战斗数据（唯一数据源）
- * @param event   事件特有字段（覆盖式合并）
+ * 技能步骤执行上下文 — SkillExecutor / DamageCalculator / HealCalculator / BuffSystem 专用
+ * 与战斗会话解耦，只携带执行时需要的 record 和 token
  */
-export function createBattleContext(
-  battle: BattleData,
-  event: Partial<BattleContext> = {},
-): BattleContext {
-  return {
-    // ── 公共字段：始终从 battle 填充 ──
-    battleId: battle.battleId,
-    participants: battle.participants,
-    currentTurn: battle.currentTurn,
+export interface StepExecutionContext {
+  readonly record?: CombatRecord
+  readonly token?: DeferredDamageToken
+  /** 是否来自被动触发 */
+  readonly fromPassive?: boolean
+  /** 触发的伤害量（用于 damageDealt/damageTaken 等动态属性） */
+  readonly damage?: number
+}
 
-    // ── 事件特有字段：调用方覆盖 ──
-    ...event,
+/**
+ * 触发器事件上下文 — TriggerEventBus / BuffSystem.executeTriggerScript 专用
+ */
+export interface TriggerEventContext {
+  readonly phase: BattleTriggerPhase
+  readonly sourceId: string
+  readonly targetId?: string
+  readonly value?: number
+  readonly currentTurn: number
+  readonly extra?: Record<string, unknown>
+  readonly battleData?: BattleData
+}
+
+/**
+ * 创建被动触发上下文
+ * phase 从第一个参数强制注入，调用方不可能遗漏
+ */
+export function createPassiveContext(
+  phase: BattleTriggerPhase,
+  battle: BattleData,
+  overrides?: Partial<Omit<PassiveTriggerContext, 'phase' | 'currentTurn' | 'participants'>>,
+): PassiveTriggerContext {
+  return {
+    phase,
+    currentTurn: battle.currentTurn,
+    participants: battle.participants,
+    ...overrides,
   }
+}
+
+/**
+ * 创建技能执行上下文
+ */
+export function createStepContext(
+  record?: CombatRecord,
+  token?: DeferredDamageToken,
+  fromPassive?: boolean,
+  damage?: number,
+): StepExecutionContext {
+  return { record, token, fromPassive, damage }
 }
 
 --- src/domain/buff/BuffContext.ts ---
@@ -13966,7 +13906,7 @@ import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import { Counter } from '@/shared/utils/Counter'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
-import { BattleContext, BattleTriggerPhase } from '@/domain/battle/type/types'
+import { StepExecutionContext, BattleTriggerPhase } from '@/domain/battle/type/types'
 import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
@@ -13982,7 +13922,6 @@ export interface TriggerExecutionContext extends TriggerEventContext {
   instanceId?: string
   buffSystem?: BuffSystem
   params?: Record<string, number | string>
-  currentTurn?: number
 }
 
 /**
@@ -14190,7 +14129,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     instanceId: string,
     targetId: string,
     eventName: string,
-    data?: BattleContext,
+    data?: Record<string, unknown>,
   ): void {
     const handler = this.triggerScripts.get(eventName)
     if (handler) {
@@ -14309,7 +14248,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     buffId: string,
     config: Partial<BuffConfig> = {},
     currentTurn: number = 0,
-    context?: BattleContext,
+    context?: StepExecutionContext,
     parentInstanceId?: string,
   ): string {
     let script = this.scriptRegistry.get(buffId)
@@ -14558,6 +14497,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       extra: { buffId, instanceId },
     })
 
+    // ponytail: 处理护盾类 Buff 的参数化护盾值
+    const shieldValue = (resolvedConfig.parameters?.shieldValue as number) ?? 0
+    if (shieldValue > 0) {
+      const current = this.getShieldValue(characterId)
+      this.setShieldValue(characterId, current + shieldValue)
+    }
+
     return instanceId
   }
 
@@ -14729,6 +14675,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     const modifierStack = this.getModifierStack(instance.characterId)
     modifierStack.removeModifier(instanceId)
+
+    // 回收护盾值：任何带有 parameters.shieldValue 的 Buff 移除时回收
+    const shieldParam = instance.context.config.parameters?.shieldValue as number | undefined
+    if (shieldParam && shieldParam > 0) {
+      const current = this.getShieldValue(instance.characterId)
+      this.setShieldValue(instance.characterId, Math.max(0, current - shieldParam))
+    }
 
     // ponytail: 技术调试日志 — Buff 移除追踪
     BuffTraceLogger.onRemove(instance.characterId, instance.buffId, instanceId)
@@ -15808,30 +15761,8 @@ export interface TriggerAction {
   maxTriggers?: number
 }
 
-/**
- * 触发事件上下文
- * 触发事件发生时的上下文信息
- */
-export interface TriggerEventContext {
-  /** 触发事件的阶段 */
-  phase: BattleTriggerPhase
-  /** 事件发生时的战斗实例ID */
-  battleId?: string
-  /** 事件相关的源参与者ID（如攻击者） */
-  sourceId?: string
-  /** 事件相关的目标参与者ID（如受击者） */
-  targetId?: string
-  /** 技能ID（如果事件由技能触发） */
-  skillId?: string
-  /** 伤害/治疗数值 */
-  value?: number
-  /** 其他自定义数据 */
-  extra?: Record<string, unknown>
-  /** 当前回合数 */
-  currentTurn?: number
-  /** 战斗数据（包含所有角色、状态等） */
-  battleData?: BattleData
-}
+// 删除，改为从 battle/type/types.ts 导入
+export type { TriggerEventContext } from '@/domain/battle/type/types'
 
 /**
  * 触发器运行时状态
@@ -16119,7 +16050,7 @@ export function getStepTypeDisplayName(stepType?: string): string {
 --- src/domain/skill/DamageCalculator.ts ---
 ﻿﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
-import type { BattleEntity, BattleContext } from '@/domain/battle/type/types'
+import type { BattleEntity, StepExecutionContext } from '@/domain/battle/type/types'
 import type {
   CombatRecord,
   DamageBreakdown,
@@ -16223,7 +16154,7 @@ export class DamageCalculator {
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): DamageResult {
     this.calculationLogs = []
     let isMiss = false
@@ -16666,7 +16597,7 @@ export class DamageCalculator {
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): number {
     let baseDamage = 0
     if (skillStep.calculation) {
@@ -16804,7 +16735,7 @@ export class DeferredDamageToken {
 --- src/domain/skill/HealCalculator.ts ---
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
-import type { BattleContext } from '@/domain/battle/type/types'
+import type { StepExecutionContext } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -16834,7 +16765,7 @@ export class HealCalculator {
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
     buffSystem?: BuffSystem,
   ): { heal: number; overflow: number } {
     this.calculationLogs = []
@@ -16845,11 +16776,15 @@ export class HealCalculator {
       // extraValues 处理
       if (skillStep.calculation.extraValues) {
         for (const extra of skillStep.calculation.extraValues) {
-          const attrValue = this.getAttrValue(
-            source,
-            extra.attribute as ATTRIBUTE_CODE,
-          )
-          const extraValue = attrValue * extra.ratio
+          let extraValue: number
+          if (extra.attribute === 'damageDealt' || extra.attribute === 'damageTaken') {
+            extraValue = (context?.damage ?? 0) * extra.ratio
+          } else {
+            extraValue = this.getAttrValue(
+              source,
+              extra.attribute as ATTRIBUTE_CODE,
+            ) * extra.ratio
+          }
           heal += extraValue
           this.logCalculation(
             'extra_value',
@@ -16994,9 +16929,10 @@ import {
   BattleActionHelper,
   BattleTriggerPhase,
   PARTICIPANT_SIDE,
-  type BattleContext,
+  type PassiveTriggerContext,
   type BattleEntity,
 } from '@/domain/battle/type/types'
+import { createStepContext } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { SkillManager } from '@/domain/skill/SkillManager'
@@ -17089,15 +17025,14 @@ export class PassiveSkillManager {
    */
   shouldTriggerPassive(
     config: PassiveSkillConfig,
-    trigger: BattleTriggerPhase,
     entity: BattleEntity,
     contextTarget?: BattleEntity,
-    context?: BattleContext,
+    context: PassiveTriggerContext = { phase: BattleTriggerPhase.BATTLE_START, currentTurn: 0 },
   ): boolean {
-    if (config.trigger !== trigger) return false
+    if (config.trigger !== context.phase) return false
     // 检查冷却时间是否到，config.cooldown = -1 表示无冷却
     if (config.cooldown > 0 && config.lastTriggeredTurn) {
-      const currentTurn = (context?.currentTurn as number) || 0
+      const currentTurn = context.currentTurn
       if (currentTurn - config.lastTriggeredTurn < config.cooldown) return false
     }
     // 检查最大触发次数是否超过
@@ -17136,17 +17071,16 @@ export class PassiveSkillManager {
    * - 当无参与者映射或无 selector 时，回退到 context.target（事件的另一方）或施法者自身
    */
   triggerPassives(
-    trigger: BattleTriggerPhase,
     entity: BattleEntity,
-    context?: BattleContext,
+    context: PassiveTriggerContext,
   ): void {
     const characterPassives = this.passives.get(entity.id)
     if (!characterPassives) return
 
     // 事件型触发所需的上下文目标
     const contextTarget =
-      context?.target ??
-      (context?.targetId && context?.participants
+      context.target ??
+      (context.targetId && context.participants
         ? context.participants.get(context.targetId)
         : undefined)
 
@@ -17155,7 +17089,6 @@ export class PassiveSkillManager {
       if (
         !this.shouldTriggerPassive(
           config,
-          trigger,
           entity,
           contextTarget,
           context,
@@ -17166,7 +17099,7 @@ export class PassiveSkillManager {
       let targets: BattleEntity[]
       const skillConfig = this.skillManager.getSkillConfig(config.skillId)
 
-      if (context?.participants) {
+      if (context.participants) {
         if (skillConfig?.selector) {
           targets = resolveSkillTargets(
             context.participants,
@@ -17204,7 +17137,7 @@ export class PassiveSkillManager {
 
       // ponytail: 仅在确实执行了有效步骤后才累加冷却和计数
       if (hasExecuted) {
-        config.lastTriggeredTurn = (context?.currentTurn as number) || 0
+        config.lastTriggeredTurn = context.currentTurn
         config.triggerCount = (config.triggerCount || 0) + 1
       }
 
@@ -17213,7 +17146,7 @@ export class PassiveSkillManager {
       const effectSummary = this.buildPassiveEffectSummary(skillConfig, targets, context)
 
       LoggerProvider.logger.addBattleLog({
-        turn: (context?.currentTurn as number) || 1,
+        turn: context.currentTurn,
         message: `${configName}  ${effectSummary}`,
         segments: [
           { text: configName, classStr: 'log-passive', kind: 'passive', hover: { kind: 'passive', id: config.skillId } },
@@ -17236,7 +17169,7 @@ export class PassiveSkillManager {
             `${entity.name} 触发 【${configName}】`,
             1,
           ),
-          turn: (context?.currentTurn as number) || 1,
+          turn: context.currentTurn,
           source: entity.id,
         })
       }
@@ -17263,7 +17196,7 @@ export class PassiveSkillManager {
     config: SkillConfig,
     source: BattleEntity,
     targets: BattleEntity[],
-    context?: BattleContext,
+    context: PassiveTriggerContext,
   ): boolean {
     const steps = config.steps
     if (!steps || steps.length === 0) return true // ponytail: 无步骤=无需执行，不算失败
@@ -17273,12 +17206,14 @@ export class PassiveSkillManager {
     let anyExecuted = false
 
     // ponytail: 被动技能发射 SKILL_USE 事件，使依赖此事件的被动可以连锁
+    const targetsIds = targets.map(t => t.id)
     this.buffSystem.getEventBus().emit(BattleTriggerPhase.SKILL_USE, {
-      source,
-      skillId: config.id,
-      targets,
-      context,
-    } as any)
+      phase: BattleTriggerPhase.SKILL_USE,
+      sourceId: source.id,
+      targetId: targetsIds[0],
+      currentTurn: context.currentTurn,
+      extra: { skillId: config.id },
+    })
 
     for (const target of targets) {
       // ponytail: 跳过已死亡目标，被动技能不应对死尸生效
@@ -17289,13 +17224,13 @@ export class PassiveSkillManager {
         targetId: target.id,
         skillId: config.id,
         skillName: config.name || '',
-        turn: context?.currentTurn,
+        turn: context.currentTurn,
         success: true,
       })
 
       for (const step of steps) {
         try {
-          executor.executeStep(step, action, source, target, context)
+          executor.executeStep(step, action, source, target, createStepContext(undefined, undefined, true, context.damage))
           anyExecuted = true
         } catch (err) {
           LoggerProvider.logger.addDebugLog(
@@ -17317,7 +17252,7 @@ export class PassiveSkillManager {
   private buildPassiveEffectSummary(
     config?: SkillConfig,
     targets?: BattleEntity[],
-    context?: BattleContext,
+    context?: PassiveTriggerContext,
   ): string {
     if (!config) return ''
     const parts: string[] = []
@@ -17398,7 +17333,7 @@ export class PassiveSkillManager {
     condition: string,
     source: BattleEntity,
     target?: BattleEntity,
-    context?: BattleContext,
+    context?: PassiveTriggerContext,
   ): boolean {
     try {
       switch (condition) {
@@ -17437,11 +17372,11 @@ export class PassiveSkillManager {
             0.9
           )
         case 'source_turn_gt_5':
-          return (context?.currentTurn as number) > 5
+          return (context?.currentTurn ?? 0) > 5
         case 'source_turn_mod_5':
           return (
-            (context?.currentTurn as number) % 5 === 0 &&
-            (context?.currentTurn as number) > 0
+            (context?.currentTurn ?? 0) % 5 === 0 &&
+            (context?.currentTurn ?? 0) > 0
           )
         default:
           LoggerProvider.logger.addDebugLog(
@@ -17505,27 +17440,26 @@ export class PassiveSkillManager {
 
   /** 为所有参与者触发指定时机的被动技能 */
   triggerPassiveSkillsForAll(
-    trigger: BattleTriggerPhase,
     participants: Map<string, BattleEntity>,
-    context?: BattleContext,
+    context: PassiveTriggerContext,
   ): void {
     // 优先走倒排索引，只遍历注册了该时机的被动
-    const entries = this.indexByPhase.get(trigger)
+    const entries = this.indexByPhase.get(context.phase)
     if (entries && entries.length > 0) {
       for (const { characterId } of entries) {
         const entity = participants.get(characterId)
         if (!entity?.isAlive()) continue
-        this.triggerPassives(trigger, entity, {
+        this.triggerPassives(entity, {
           ...context,
-          participants: context?.participants ?? participants,
+          participants: context.participants ?? participants,
         })
       }
     } else {
       // ponytail: 索引为空时回退全量扫描（兼容未通过 registerPassive 注册的被动）
       for (const participant of participants.values()) {
-        this.triggerPassives(trigger, participant, {
+        this.triggerPassives(participant, {
           ...context,
-          participants: context?.participants ?? participants,
+          participants: context.participants ?? participants,
         })
       }
     }
@@ -17538,7 +17472,7 @@ import { SkillStepType } from '@/domain/skill/types'
 import type {
   BattleAction,
   BattleEntity,
-  BattleContext,
+  StepExecutionContext,
 } from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
@@ -17618,7 +17552,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     switch (skillStep.type) {
       case SkillStepType.DEAL_DAMAGE:
@@ -17678,7 +17612,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     const result = this.damageCalculator.calculateDamage(
       skillStep,
@@ -17720,6 +17654,14 @@ export class SkillExecutor {
         })
       }
     }
+    // 消耗必暴标记（buff_guaranteed_crit）
+    if (result.isCritical && source.hasBuff?.('buff_guaranteed_crit')) {
+      const instances = this.buffSystem.getBuffInstances(source.id)
+      const critBuffInstances = instances.filter(i => i.buffId === 'buff_guaranteed_crit')
+      for (const instance of critBuffInstances) {
+        this.buffSystem.removeBuff(instance.id)
+      }
+    }
   }
 
   private executeHeal(
@@ -17727,7 +17669,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     const healTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
@@ -17782,7 +17724,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     const buffId = skillStep.buffId ?? skillStep.effectId
     if (!buffId) return
@@ -17819,7 +17761,7 @@ export class SkillExecutor {
     })
 
     // 仅在非被动上下文中打日志（被动由 triggerPassives 统一输出，避免重复）
-    if (instanceId && !context?.phase) {
+    if (instanceId && !context?.fromPassive) {
       const buffConfig = this.buffSystem
         .getScriptRegistry()
         .getBuffConfig(buffId)
@@ -17998,7 +17940,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     // ponytail: reflect 的目标是攻击者（即 executeStep 的 target 是攻击者）
     // source 是受击者（拥有反射技能的角色）
@@ -18025,7 +17967,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     const dmg = this.damageCalculator.calculateDamage(
       skillStep,
@@ -18060,7 +18002,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     const customType = skillStep.parameters?.customType as string | undefined
     const desc = (skillStep.parameters?.description as string) || ''
@@ -18405,6 +18347,7 @@ import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { LogLevel } from '@/shared/types/battle-log'
 import { validateSkillConfigs } from '@/shared/utils/schema-validator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { createStepContext } from '@/domain/battle/type/types'
 interface CalculationContext {
   skillStep: SkillStep
   action: BattleAction
@@ -18749,7 +18692,7 @@ export class SkillManager {
       ctx.action,
       ctx.source,
       ctx.targets[0],
-      { record: ctx.record, token: ctx.token },
+      createStepContext(ctx.record, ctx.token),
     )
   }
 
@@ -19957,7 +19900,7 @@ export const eventBus = mitt<BattleEvents>()
 
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import type { BattleTriggerPhase } from '@/domain/battle/type/types'
-import type { TriggerEventContext } from '@/domain/buff/types'
+import type { TriggerEventContext } from '@/domain/battle/type/types'
 
 /**
  * 事件监听器类型
@@ -21952,8 +21895,7 @@ export class BattleAnimationService {
       const delayMs = this.getScaledDuration(this.HIT_SHAKE_DELAY)
 
       if (data.hitEffect === ActionResultType.MISS) {
-        // HACK: Miss 文本由 ParticipantCard.addDamageNumber 通过 CSS 实现，此处不再重复创建
-        // 震屏+闪光仍然保留
+        // NOTE: Miss 文本由 BattleVisualEffects.showMissText 统一接管，此处只做震屏+闪光
       } else if (data.passiveName) {
         this.playPassiveTextAnimation(
           data.targetElement,
@@ -23366,7 +23308,7 @@ onUnmounted(() => {
 
     <!-- 伤害/治疗/护盾数字 -->
     <div v-for="dn in dmgNums" :key="dn.id" class="floating-num" :class="dn.cls"
-      :style="{ left: dn.x + 'px', top: dn.y + 'px' }">
+      :style="{ left: dn.x + 'px', top: dn.y + 'px', '--rotate': (dn.rotate || 0) + 'deg' }">
       {{ dn.text }}
     </div>
   </div>
@@ -23404,7 +23346,7 @@ const healAuras = ref<Array<{ id: number; x: number; y: number }>>([])
 /** 护盾六边形 */
 const shieldHexes = ref<Array<{ id: number; x: number; y: number }>>([])
 /** 伤害/治疗/护盾数字 */
-const dmgNums = ref<Array<{ id: number; text: string; x: number; y: number; cls: string }>>([])
+const dmgNums = ref<Array<{ id: number; text: string; x: number; y: number; cls: string; rotate?: number }>>([])
 /** 屏幕震动 */
 const shaking = ref(false)
 
@@ -23677,11 +23619,14 @@ function showDamageNum(targetId: string, value: number, isCrit: boolean, budget?
   const id = nextId++
   // HACK: budget 由所有当前调用方传入，兜底用 1x 速度的 numberFloat 阶段时长
   const floatDuration = (budget ?? getActionBudget(1)) * 0.35
+  const offsetX = (Math.random() - 0.5) * 60 // 扩大 X 轴偏移至 ±30px
+  const rotate = (Math.random() - 0.5) * 10  // 微小旋转 ±5度
   dmgNums.value.push({
     id, text: `-${value}`,
-    x: pos.x + (Math.random() - 0.5) * 40,
+    x: pos.x + offsetX,
     y: pos.y - 20,
     cls: isCrit ? 'dmg crit' : 'dmg normal',
+    rotate,
   })
   setRemove(id, dmgNums, floatDuration)
 }
@@ -23692,11 +23637,14 @@ function showHealNum(targetId: string, value: number, budget?: number) {
   if (!pos) return
   const id = nextId++
   const floatDuration = (budget ?? getActionBudget(1)) * 0.35
+  const offsetX = (Math.random() - 0.5) * 40
+  const rotate = (Math.random() - 0.5) * 6
   dmgNums.value.push({
     id, text: `+${value}`,
-    x: pos.x + (Math.random() - 0.5) * 30,
+    x: pos.x + offsetX,
     y: pos.y + 10,
     cls: 'heal-num',
+    rotate,
   })
   setRemove(id, dmgNums, floatDuration)
 }
@@ -23706,13 +23654,33 @@ function showShieldNum(targetId: string, value: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
+  const offsetX = (Math.random() - 0.5) * 40
+  const rotate = (Math.random() - 0.5) * 6
   dmgNums.value.push({
     id, text: `+${value}`,
-    x: pos.x + (Math.random() - 0.5) * 30,
+    x: pos.x + offsetX,
     y: pos.y + 15,
     cls: 'shield-num',
+    rotate,
   })
   setRemove(id, dmgNums, 1450)
+}
+
+/** 闪避文字 */
+function showMissText(targetId: string, budget?: number) {
+  const pos = cardCenter(targetId)
+  if (!pos) return
+  const id = nextId++
+  const floatDuration = (budget ?? getActionBudget(1)) * 0.35
+  const offsetX = (Math.random() - 0.5) * 40
+  dmgNums.value.push({
+    id, text: '闪避',
+    x: pos.x + offsetX,
+    y: pos.y - 20,
+    cls: 'miss',
+    rotate: 0,
+  })
+  setRemove(id, dmgNums, floatDuration)
 }
 
 /** 屏幕震动 */
@@ -23789,6 +23757,7 @@ defineExpose({
   showDamageNum,
   showHealNum,
   showShieldNum,
+  showMissText,
   showScreenShake,
   playFlightSequence,
   playAttackSequence,
@@ -23808,7 +23777,7 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 1000;
+  z-index: 9999;
 }
 </style>
 
@@ -24249,7 +24218,8 @@ onUnmounted(() => {
 
 .floating-num.dmg {
   text-shadow: 0 0 10px currentColor, 0 3px 6px rgba(0, 0, 0, 0.95), 0 0 24px currentColor;
-  animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+  animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards,
+             dmg-glow 1.4s ease-out forwards;
 }
 
 .floating-num.dmg.normal {
@@ -24261,6 +24231,8 @@ onUnmounted(() => {
   font-size: 40px;
   color: var(--color-warning);
   text-shadow: 0 0 14px var(--color-warning), 0 3px 8px rgba(0, 0, 0, 0.95), 0 0 32px var(--color-warning);
+  animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards,
+             dmg-crit-glow 1.4s ease-out forwards;
 }
 
 .floating-num.dmg.crit::before {
@@ -24278,24 +24250,34 @@ onUnmounted(() => {
 
 @keyframes dmg-pop {
   0% {
-    transform: translate(-50%, -50%) scale(0.2);
+    transform: translate(-50%, -50%) scale(0.2) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
-
-  20% {
-    transform: translate(-50%, -80%) scale(1.4);
+  15% {
+    transform: translate(-50%, -65%) scale(1.5) rotate(var(--rotate, 0deg));
     opacity: 1;
+    animation-timing-function: cubic-bezier(0.17, 0.67, 0.83, 0.67);
   }
-
-  40% {
-    transform: translate(-50%, -90%) scale(1.0);
-    opacity: 1;
+  30% {
+    transform: translate(-50%, -70%) scale(1.2) rotate(var(--rotate, 0deg));
   }
-
   100% {
-    transform: translate(-50%, -200%) scale(0.85);
+    transform: translate(-50%, -220%) scale(0.85) rotate(var(--rotate, 0deg));
     opacity: 0;
+    animation-timing-function: ease-out;
   }
+}
+
+/* 普通伤害发光消散 */
+@keyframes dmg-glow {
+  0%, 30% { filter: drop-shadow(0 0 8px currentColor) brightness(1.2); }
+  100%    { filter: drop-shadow(0 0 24px currentColor) brightness(0.6); }
+}
+
+/* 暴击伤害：更强烈的能量爆发 */
+@keyframes dmg-crit-glow {
+  0%, 20% { filter: drop-shadow(0 0 15px var(--color-warning)) brightness(1.5); }
+  100%    { filter: drop-shadow(0 0 35px var(--color-warning)) brightness(0.4); }
 }
 
 .floating-num.heal-num {
@@ -24307,22 +24289,17 @@ onUnmounted(() => {
 
 @keyframes heal-rise {
   0% {
-    transform: translate(-50%, 30%) scale(0.3);
+    transform: translate(-50%, 30%) scale(0.3) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
 
   20% {
-    transform: translate(-50%, -20%) scale(1.3);
-    opacity: 1;
-  }
-
-  50% {
-    transform: translate(-50%, -90%) scale(1.0);
+    transform: translate(-50%, -20%) scale(1.3) rotate(var(--rotate, 0deg));
     opacity: 1;
   }
 
   100% {
-    transform: translate(-50%, -180%) scale(0.85);
+    transform: translate(-50%, -180%) scale(0.85) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
 }
@@ -24336,22 +24313,17 @@ onUnmounted(() => {
 
 @keyframes shield-rise {
   0% {
-    transform: translate(-50%, 20%) scale(0.3);
+    transform: translate(-50%, 20%) scale(0.3) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
 
   25% {
-    transform: translate(-50%, -20%) scale(1.2);
-    opacity: 1;
-  }
-
-  65% {
-    transform: translate(-50%, -70%) scale(1.0);
+    transform: translate(-50%, -20%) scale(1.2) rotate(var(--rotate, 0deg));
     opacity: 1;
   }
 
   100% {
-    transform: translate(-50%, -110%) scale(0.85);
+    transform: translate(-50%, -110%) scale(0.85) rotate(var(--rotate, 0deg));
     opacity: 0;
   }
 }
@@ -24361,6 +24333,7 @@ onUnmounted(() => {
   font-size: var(--font-size-xxl);
   color: var(--color-text-tertiary);
   text-shadow: 0 0 8px currentColor, 0 2px 4px rgba(0, 0, 0, 0.9);
+  animation: dmg-pop 1.4s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
 }
 </style>
 
@@ -27670,18 +27643,6 @@ function clamp(v: number, lo: number, hi: number): number {
 -->
 <template>
   <div class="member-card" ref="cardRef" :class="[cardClasses, cardVisualStateClass]" @click="handleClick">
-    <!-- 内部浮动数字列表 -->
-    <div class="floating-numbers">
-      <div v-for="num in damageNumbers" :key="num.id" class="damage-number"
-        :class="[num.type, { critical: num.isCritical }]" :style="{
-          left: num.x + 'px',
-          top: num.y + 'px',
-          animationDuration: num.duration + 'ms',
-        }" @animationend="removeDamageNumber(num.id)">
-        {{ num.text }}
-      </div>
-    </div>
-
     <div class="member-info">
       <!-- 名称和行动标识 -->
       <div class="member-name">
@@ -27785,7 +27746,6 @@ function clamp(v: number, lo: number, hi: number): number {
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
-import { ActionResultType } from '@/domain/battle/type/types'
 import BuffTextBar from '@/presentation/components/BuffTextBar.vue'
 import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
@@ -27795,17 +27755,6 @@ import type { BuffRawItem, MergedAttributeLine, BuffTextItem } from '@/shared/ty
 import { ATTRIBUTE_SHORT_NAMES } from '@/presentation/config/attributeNames'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getActionBudget } from '@/shared/constants/animation-timing'
-
-// 浮动数字接口
-interface FloatingNumber {
-  id: number
-  x: number
-  y: number
-  text: string
-  type: ActionResultType
-  isCritical: boolean
-  duration: number
-}
 
 const props = defineProps<{
   /** 战斗参与者实例 */
@@ -27858,50 +27807,6 @@ const hpTransitionDuration = computed(() => {
 
 // 卡片引用
 const cardRef = ref<HTMLElement | null>(null)
-
-// 浮动数字管理
-const damageNumbers = ref<FloatingNumber[]>([])
-const nextNumberId = ref(0)
-
-/**
- * 添加浮动数字
- * @param value 伤害/治疗值
- * @param type 类型：damage | heal | critical | miss
- * @param isCritical 是否暴击
- * @param x 横坐标（百分比，0-100）
- * @param y 纵坐标（百分比，0-100）
- */
-function addDamageNumber(
-  value: number,
-  type: ActionResultType,
-  isCritical: boolean = false,
-  x: number = 50,
-  y: number = 20
-) {
-  const id = nextNumberId.value++
-  const text = type === ActionResultType.MISS ? '闪避' : (type === ActionResultType.HEAL ? `+${value}` : `-${value}`)
-  const duration = isCritical ? 1500 : 1000 // 暴击动画更长
-
-  damageNumbers.value.push({
-    id,
-    x,
-    y,
-    text,
-    type,
-    isCritical,
-    duration
-  })
-}
-
-/**
- * 移除浮动数字（动画结束后调用）
- */
-function removeDamageNumber(id: number) {
-  const index = damageNumbers.value.findIndex(n => n.id === id)
-  if (index !== -1) {
-    damageNumbers.value.splice(index, 1)
-  }
-}
 
 // ============ 卡片视觉状态（casting/hurt/healed/shielded） ============
 const cardVisualState = ref<string | null>(null)
@@ -28110,7 +28015,6 @@ const handleClick = () => {
 defineExpose({
   cardRef,
   participantId: props.participant.id,
-  addDamageNumber,
   triggerVisualState,
   flashHpBar,
 })
@@ -28150,94 +28054,6 @@ defineExpose({
   background: rgba(168, 85, 247, 0.15);
   color: #a855f7;
   border: 1px solid rgba(168, 85, 247, 0.25);
-}
-
-/* 浮动数字容器 */
-.floating-numbers {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 10;
-}
-
-/* 浮动数字样式 */
-.damage-number {
-  position: absolute;
-  font-size: var(--font-size-xxxl);
-  font-weight: var(--font-weight-bold);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  animation-name: float-up;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
-  /* ponytail: duration 通过内联 style 的 animationDuration 设置，避免 v-bind(duration) 依赖不存在变量 */
-  white-space: nowrap;
-}
-
-.damage-number.damage {
-  color: var(--color-danger);
-  /* 红色伤害 */
-}
-
-.damage-number.heal {
-  color: var(--color-success);
-  /* 绿色治疗 */
-}
-
-.damage-number.critical {
-  color: var(--color-warning);
-  /* 橙色暴击 */
-  font-size: 32px;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
-}
-
-.damage-number.miss {
-  color: #a0aec0;
-  /* 银灰色闪避，更醒目 */
-  font-size: 28px;
-  font-weight: 800;
-  text-shadow: 0 0 12px rgba(160, 174, 192, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.8);
-  animation-name: miss-float;
-}
-
-/* 闪避专用浮动动画 — 水平弹跳 + 上浮淡出 */
-@keyframes miss-float {
-  0% {
-    opacity: 0;
-    transform: translateY(0) scale(0.5);
-  }
-  15% {
-    opacity: 1;
-    transform: translateY(-15px) scale(1.3);
-  }
-  40% {
-    transform: translateY(-25px) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-60px) scale(0.9);
-  }
-}
-
-/* 浮动动画 */
-@keyframes float-up {
-  0% {
-    opacity: 0;
-    transform: translateY(0) scale(0.8);
-  }
-
-  20% {
-    opacity: 1;
-    transform: translateY(-10px) scale(1.2);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateY(-60px) scale(1);
-  }
 }
 
 /* 复用原有 member-card 样式 */
@@ -37046,33 +36862,11 @@ function getCharacterSide(characterId: string): 'left' | 'right' {
 }
 
 /**
- * 显示伤害数字
- * 通过 ParticipantCard 组件的 addDamageNumber 方法调用
- */
-function showDamage(characterId: string, value: number, type: ActionResultType, isCritical: boolean = false) {
-  // 调用 ParticipantCard 组件的 addDamageNumber 方法
-  const cardRef = participantCardRefs.value[characterId]
-  if (cardRef && typeof cardRef.addDamageNumber === 'function') {
-    cardRef.addDamageNumber(value, type, isCritical)
-  }
-
-  playHitAnimation(characterId, {
-    damage: value,
-    hitEffect: type,
-    isCritical,
-  })
-}
-
-/**
  * 显示闪避
  */
 function showMiss(characterId: string) {
-  // 调用 ParticipantCard 组件的 addDamageNumber 方法
-  const cardRef = participantCardRefs.value[characterId]
-  if (cardRef && typeof cardRef.addDamageNumber === 'function') {
-    cardRef.addDamageNumber(0, ActionResultType.MISS, false)
-  }
-
+  const budget = getActionBudget(store.battleSpeed)
+  visualEffectsRef.value?.showMissText(characterId, budget)
   playHitAnimation(characterId, {
     hitEffect: ActionResultType.MISS,
   })
@@ -37135,7 +36929,6 @@ function playAttackSequence(
 }
 
 defineExpose({
-  showDamage,
   showMiss,
   showSkillEffect,
   showBuffEffect,
@@ -41551,6 +41344,10 @@ const valueColorClass = computed(() => {
 
     <div class="control-group">
       <button class="control-btn" @click="$emit('start-battle')" :disabled="isBattleActive">开始战斗</button>
+      <!-- 暂停/继续按钮 -->
+      <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">
+        {{ isPaused ? '继 续' : '暂 停' }}
+      </button>
       <button class="control-btn" @click="$emit('end-battle')" :disabled="!isBattleActive">结束战斗</button>
       <button class="control-btn" @click="$emit('reset-battle')"
         :disabled="!isBattleActive && autoPlayMode !== 'off'">重置战斗</button>
@@ -41601,6 +41398,7 @@ import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 const props = defineProps<{
   isBattleActive: boolean;
   isAutoPlaying: boolean;
+  isPaused: boolean;
   battleSpeed?: number;
 }>();
 
@@ -41608,6 +41406,7 @@ const emit = defineEmits<{
   "start-battle": [];
   "end-battle": [];
   "reset-battle": [];
+  "toggle-pause": [];
   "toggle-auto-play": [];
   "battle-speed-change": [speed: number];
 }>();
@@ -42057,6 +41856,19 @@ onUnmounted(() => {
 --- src/presentation/views/ParticipantPanel.vue ---
 <template>
   <div class="panel-left">
+    <!-- 阵容预设选择器 -->
+    <div class="preset-selector">
+      <label class="preset-label">阵容预设：</label>
+      <select v-model="selectedPreset" class="preset-select" @change="applyPreset">
+        <option value="">-- 手动配置 --</option>
+        <optgroup v-for="group in presetGroups" :key="group.label" :label="group.label">
+          <option v-for="p in group.items" :key="p.id" :value="p.id">
+            {{ p.name }}
+          </option>
+        </optgroup>
+      </select>
+      <span v-if="currentPresetDesc" class="preset-desc">{{ currentPresetDesc }}</span>
+    </div>
     <div class="panel-section">
       <div class="section-header">
         <span>参战管理</span>
@@ -42186,6 +41998,8 @@ import type { SceneData } from '@/shared/types/scene';
 import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
+import { BuffSystem } from '@/domain/buff/BuffSystem';
+import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager';
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -42206,6 +42020,209 @@ const expandedScenes = reactive<Record<string, boolean>>({});
 
 // 默认展开所有场景
 scenesData.value.forEach((s) => (expandedScenes[s.id] = true));
+
+// 阵容预设
+interface Preset {
+  id: string
+  name: string
+  description: string
+  ally: string[]
+  enemy: string[]
+}
+
+const presets: Preset[] = [
+  // ═══ 第一组：已有角色基线测试 ═══
+  {
+    id: 'baseline_fire_vs_gold',
+    name: '火护法 vs 金护法',
+    description: '基线测试：速度递增 vs 攻击递增的消耗战',
+    ally: ['guardian_fire'],
+    enemy: ['guardian_gold'],
+  },
+  {
+    id: 'baseline_2v1_boss',
+    name: '双护法 vs Boss',
+    description: '2v1 多目标选择、Boss 技能释放',
+    ally: ['guardian_fire', 'guardian_gold'],
+    enemy: ['boss_001'],
+  },
+  {
+    id: 'baseline_multi_boss',
+    name: '双护法 vs 双Boss',
+    description: '高压多目标战斗稳定性',
+    ally: ['guardian_fire', 'guardian_gold'],
+    enemy: ['boss_001', 'boss_002'],
+  },
+  {
+    id: 'baseline_full_roster',
+    name: '全角色混战',
+    description: '所有已有角色参战，验证系统上限',
+    ally: ['guardian_fire', 'enemy_003', 'enemy_004'],
+    enemy: ['guardian_gold', 'enemy_005', 'boss_003'],
+  },
+
+  // ═══ 第二组：基础机制验证（测试角色） ═══
+  {
+    id: 'test_basic_damage',
+    name: '基础伤害',
+    description: 'ATK=20 vs DEF=0，验证基础伤害公式',
+    ally: ['test_warrior'],
+    enemy: ['test_warrior'],
+  },
+  {
+    id: 'test_defense',
+    name: '防御减伤',
+    description: 'ATK=20 vs DEF=20，验证减法公式和最小伤害阈值',
+    ally: ['test_warrior'],
+    enemy: ['test_tank'],
+  },
+  {
+    id: 'test_crit_vs_anti_crit',
+    name: '暴击 vs 抗暴',
+    description: '100%暴击+150%暴伤 vs 100%暴击承伤减免',
+    ally: ['test_assassin'],
+    enemy: ['test_anti_crit'],
+  },
+
+  // ═══ 第三组：被动技能验证 ═══
+  {
+    id: 'test_dodge_chain',
+    name: '闪避连锁',
+    description: '80%闪避 → 闪避回血 + 闪避必暴',
+    ally: ['test_warrior'],
+    enemy: ['test_dodge_master'],
+  },
+  {
+    id: 'test_lifesteal_vs_shield',
+    name: '吸血 vs 护盾',
+    description: '20%吸血 vs 每回合+10护盾',
+    ally: ['test_vampire'],
+    enemy: ['test_shield_guard'],
+  },
+  {
+    id: 'test_thorns',
+    name: '荆棘反伤',
+    description: 'ATK=20 攻击 → 反弹30%伤害，验证递归守卫',
+    ally: ['test_warrior'],
+    enemy: ['test_thorns'],
+  },
+  {
+    id: 'test_combo_vs_thorns',
+    name: '连击 vs 反伤',
+    description: '25%额外行动 + 每次攻击触发反弹',
+    ally: ['test_combo'],
+    enemy: ['test_thorns'],
+  },
+
+  // ═══ 第四组：Buff/Debuff 验证 ═══
+  {
+    id: 'test_control',
+    name: '控制链',
+    description: '眩晕打击 → 跳过行动 → Buff 过期',
+    ally: ['test_controller'],
+    enemy: ['test_warrior'],
+  },
+  {
+    id: 'test_dot_poison',
+    name: 'DOT 毒伤',
+    description: '毒液喷射 → 每回合10%最大生命伤害，最多3层',
+    ally: ['test_poisoner'],
+    enemy: ['test_tank'],
+  },
+  {
+    id: 'test_buff_stack',
+    name: '增益叠加',
+    description: '战斗鼓舞(开场+10%) + 鼓舞技能(全队+20%)',
+    ally: ['test_bard'],
+    enemy: ['test_warrior'],
+  },
+
+  // ═══ 第五组：已有角色 + 测试角色混合 ═══
+  {
+    id: 'mixed_fire_vs_dodge',
+    name: '火护法 vs 闪避大师',
+    description: '真实角色的连击被动 vs 测试角色的闪避被动',
+    ally: ['guardian_fire'],
+    enemy: ['test_dodge_master'],
+  },
+  {
+    id: 'mixed_gold_vs_vampire',
+    name: '金护法 vs 吸血鬼',
+    description: '复仇怒火(越挨打越强) vs 吸血(越打越回血)',
+    ally: ['guardian_gold'],
+    enemy: ['test_vampire'],
+  },
+  {
+    id: 'mixed_full_battle',
+    name: '全面混战',
+    description: '3v3 多被动并发、多Buff交互',
+    ally: ['guardian_fire', 'test_vampire', 'test_bard'],
+    enemy: ['guardian_gold', 'test_dodge_master', 'test_thorns'],
+  },
+]
+const selectedPreset = ref('')
+
+const presetGroups = computed(() => [
+  { label: '已有角色基线', items: presets.filter(p => p.id.startsWith('baseline_')) },
+  { label: '基础机制', items: presets.filter(p => ['test_basic_damage', 'test_defense', 'test_crit_vs_anti_crit'].includes(p.id)) },
+  { label: '被动技能', items: presets.filter(p => ['test_dodge_chain', 'test_lifesteal_vs_shield', 'test_thorns', 'test_combo_vs_thorns'].includes(p.id)) },
+  { label: 'Buff/Debuff', items: presets.filter(p => ['test_control', 'test_dot_poison', 'test_buff_stack'].includes(p.id)) },
+  { label: '混合对抗', items: presets.filter(p => p.id.startsWith('mixed_')) },
+])
+
+const currentPresetDesc = computed(() => {
+  const p = presets.find(p => p.id === selectedPreset.value)
+  return p?.description ?? ''
+})
+
+const applyPreset = () => {
+  const preset = presets.find(p => p.id === selectedPreset.value)
+  if (!preset) return
+
+  // 先停止可能正在进行的战斗
+  if (battleStore.isBattleActive) {
+    battleStore.endBattle(PARTICIPANT_SIDE.ALLY)
+  }
+  battleStore.resetBattle()
+  battleService.clearParticipants()
+
+  const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+  const passiveSkillManager = container.resolve<PassiveSkillManager>('PassiveSkillManager')
+
+  // 构建我方
+  preset.ally.forEach((id, index) => {
+    const enemyData = GameDataProcessor.findEnemyById(id)
+    if (!enemyData) {
+      console.warn(`预设角色未找到: ${id}`)
+      return
+    }
+    const entity = GameDataProcessor.enemyToParticipant(enemyData, PARTICIPANT_SIDE.ALLY, index)
+    battleService.addCharacterToTeam(entity, PARTICIPANT_SIDE.ALLY)
+    if (entity.getImmunities().length > 0) {
+      buffSystem.registerCharacterImmunities(entity.id, entity.getImmunities())
+    }
+    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
+  })
+
+  // 构建敌方
+  preset.enemy.forEach((id, index) => {
+    const enemyData = GameDataProcessor.findEnemyById(id)
+    if (!enemyData) {
+      console.warn(`预设角色未找到: ${id}`)
+      return
+    }
+    const entity = GameDataProcessor.enemyToParticipant(enemyData, PARTICIPANT_SIDE.ENEMY, index)
+    battleService.addCharacterToTeam(entity, PARTICIPANT_SIDE.ENEMY)
+    if (entity.getImmunities().length > 0) {
+      buffSystem.registerCharacterImmunities(entity.id, entity.getImmunities())
+    }
+    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
+  })
+
+  battleStore.syncTeams()
+  const firstAlly = battleService.getAllyTeam()[0]
+  if (firstAlly) battleStore.selectCharacter(firstAlly.id)
+}
 
 // 响应式获取队伍数据
 const allyTeam = computed(() => battleStore.fullAllyTeam);
@@ -42440,6 +42457,41 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   background: var(--color-brand-red-active) !important;
   color: var(--color-text-primary) !important;
   border-color: var(--color-danger) !important;
+}
+
+.preset-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border-default);
+  flex-wrap: wrap;
+}
+.preset-label {
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  font-weight: var(--font-weight-medium);
+}
+.preset-select {
+  flex: 1;
+  min-width: 140px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+}
+.preset-select:focus {
+  outline: none;
+  border-color: var(--color-info);
+}
+.preset-desc {
+  width: 100%;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  padding-top: var(--space-1);
 }
 </style>
 
@@ -45397,11 +45449,13 @@ export function formatBonusValue(value: any): string {
 
 import { DataProcessor } from '@/shared/utils/DataProcessor'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
-const enemiesData = enemiesDataRaw as Enemy[]
+import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
+const enemiesData = [...enemiesDataRaw as Enemy[], ...enemiesTestDataRaw as Enemy[]]
 import scenesData from '@configs/scenes/scenes.json'
 import skillsData from '@configs/skills/skills.json'
 import passiveSkillsData from '@configs/skills/skill_passive.json'
 import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
+import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SkillConfig, SkillStep } from '@/domain/skill/types'
 import type { SceneData } from '@/shared/types/scene'
@@ -45478,6 +45532,7 @@ export class GameDataProcessor {
       ...skillsData,
       ...passiveSkillsData,
       ...guardianPassiveSkillsData,
+      ...passiveTestSkillsData,
     ] as SkillConfig[]
   }
 
@@ -45678,6 +45733,7 @@ export class GameDataProcessor {
     energy_gained: BattleTriggerPhase.ENERGY_GAINED,
     skill_use: BattleTriggerPhase.SKILL_USE,
     hp_lower_than: BattleTriggerPhase.HP_LOWER_THAN,
+    dodge: BattleTriggerPhase.DODGE,
   }
 
   /**

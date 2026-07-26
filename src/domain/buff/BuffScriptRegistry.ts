@@ -7,6 +7,8 @@ import buffsData from '@configs/buffs/buffs.json'
 import effectsData from '@configs/effects/effects.json'
 import { ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { AtomicEffectRegistry } from '@/domain/buff/atomic/AtomicEffectRegistry'
+import { BuffConfigResolver, type ResolvedBuffConfig } from '@/domain/buff/atomic/BuffConfigResolver'
 
 /** 效果定义：脚本 + 配置的统一视图 */
 export interface EffectDefinition {
@@ -65,8 +67,26 @@ export class BuffScriptRegistry {
   /** 脚本自包含的默认配置（由脚本类的静态 CONFIG 提供） */
   private defaultConfigs = new Map<string, ScriptBuffConfig>()
 
+  /** 原子效果注册表（惰性初始化） */
+  private atomicRegistry: AtomicEffectRegistry | null = null
+  /** Buff 配置解析器（惰性初始化） */
+  private configResolver: BuffConfigResolver | null = null
+  /** 已解析的运行时配置缓存 */
+  private resolvedConfigs = new Map<string, ResolvedBuffConfig>()
+
   public constructor() {
     this.loadBuffConfigs()
+  }
+
+  /** 确保原子效果注册表和解析器已初始化 */
+  private ensureResolver(): BuffConfigResolver {
+    if (!this.atomicRegistry) {
+      this.atomicRegistry = new AtomicEffectRegistry()
+    }
+    if (!this.configResolver) {
+      this.configResolver = new BuffConfigResolver(this.atomicRegistry)
+    }
+    return this.configResolver
   }
 
   /** 加载 buffs.json 中的配置 */
@@ -177,6 +197,28 @@ export class BuffScriptRegistry {
     return this.buffConfigs.get(buffId)
   }
 
+  /**
+   * 获取带 effectPlan 的已解析运行时配置
+   * 首次访问时惰性解析并缓存
+   */
+  public getResolvedBuffConfig(buffId: string): ResolvedBuffConfig | undefined {
+    const cached = this.resolvedConfigs.get(buffId)
+    if (cached) return cached
+
+    const raw = this.buffConfigs.get(buffId)
+    if (!raw) return undefined
+
+    const resolver = this.ensureResolver()
+    const resolved = resolver.resolve(raw as unknown as Record<string, any>)
+    this.resolvedConfigs.set(buffId, resolved)
+    return resolved
+  }
+
+  /** 清除解析缓存（在 reloadBuffConfigs 后调用） */
+  private clearResolvedCache(): void {
+    this.resolvedConfigs.clear()
+  }
+
   /** 统一查询效果定义：脚本优先，配置兜底 */
   public resolve(effectId: string): EffectDefinition | null {
     const script = this.get(effectId)
@@ -188,6 +230,17 @@ export class BuffScriptRegistry {
   public getBuffAttributes(buffId: string): Record<string, string> | undefined {
     const config = this.buffConfigs.get(buffId)
     return config?.attributes
+  }
+
+  /** 获取已解析配置的 effectPlan（仅返回 effectPlan，无配置） */
+  public getEffectPlan(buffId: string): ResolvedBuffConfig['effectPlan'] | undefined {
+    return this.getResolvedBuffConfig(buffId)?.effectPlan
+  }
+
+  /** 检查 Buff 是否有非空的 effectPlan（纯数据驱动标记） */
+  public hasEffectPlan(buffId: string): boolean {
+    const resolved = this.getResolvedBuffConfig(buffId)
+    return !!resolved && resolved.effectPlan.length > 0
   }
 
   public parseAttributeValue(value: string): {
@@ -213,12 +266,16 @@ export class BuffScriptRegistry {
 
   public loadBuffConfigsFromArray(configs: BuffConfigData[]): void {
     for (const buff of configs) {
-      if (buff.id) this.buffConfigs.set(buff.id, buff)
+      if (buff.id) {
+        this.buffConfigs.set(buff.id, buff)
+        this.clearResolvedCache() // 清除缓存以便下次重新解析
+      }
     }
   }
 
   public reloadBuffConfigs(): void {
     this.buffConfigs.clear()
+    this.clearResolvedCache()
     this.loadBuffConfigs()
   }
 

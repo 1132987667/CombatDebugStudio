@@ -2,7 +2,7 @@
  * 战斗事件管理器
  * 负责监听和处理战斗事件
  * 桥接领域事件和 Pinia Store（UI 状态）
- * 
+ *
  * ponytail: 位于 infrastructure 层，因为此类本质上是事件→Store 的桥接器。
  */
 import { eventBus } from '@/infrastructure/adapters/event/EventBus'
@@ -114,14 +114,19 @@ export class BattleEventManager {
   private handleBattleLogEvent(data: BattleLogEventData) {
     try {
       if (data && data.log) {
-        const log = data.log as BattleLogEntry & { htmlResult?: string; result?: string }
+        const log = data.log as BattleLogEntry & {
+          htmlResult?: string
+          result?: string
+        }
         // 濡傛灉娌℃湁 htmlResult锛屽皾璇曠敓鎴?HTML 鏍煎紡
         if (!log.htmlResult && log.result) {
           let htmlResult = log.result
 
           // 鍒ゆ柇鏉ユ簮鍜岀洰鏍囨槸鍚︽槸鏁屾柟
           const sourceIsAlly =
-            log.source != null && !log.source.includes('鏁屾柟') && log.source !== '系统'
+            log.source != null &&
+            !log.source.includes('鏁屾柟') &&
+            log.source !== '系统'
           const targetIsAlly =
             log.target &&
             !log.target.includes('鏁屾柟') &&
@@ -204,13 +209,16 @@ export class BattleEventManager {
         LoggerProvider.logger.addBattleLog(log)
       }
     } catch (error) {
-      LoggerProvider.logger.addSystemLog({ message: `处理战斗日志事件时出错: ${error}`, category: 'error' })
+      LoggerProvider.logger.addSystemLog({
+        message: `处理战斗日志事件时出错: ${error}`,
+        category: 'error',
+      })
       console.error('处理战斗日志时出错:', error)
     }
   }
 
-    /**
-     * 处理战斗结束事件
+  /**
+   * 处理战斗结束事件
    */
   private handleBattleEndEvent(data: BattleEndedEventData) {
     try {
@@ -223,7 +231,7 @@ export class BattleEventManager {
           turn: '战斗结束',
           message: `? ${data.winner === PARTICIPANT_SIDE.ALLY ? '鎴戞柟' : '鏁屾柟'}`,
         })
-        // ponytail: 战报生成 — 不传参与者 HP 数据，仅有统计数据
+        // ponytail: 战报生成 — 不传参与者 气血 数据，仅有统计数据
         const summary = BattleSummaryGenerator.instance.onBattleEnd(data.winner)
         // 发射战报事件，供 UI 层 BattleSummaryDialog 捕获
         if (summary) {
@@ -273,7 +281,6 @@ export class BattleEventManager {
       console.error('处理回合结束时出错:', error)
     }
   }
-
 }
 
 // 瀵煎嚭鍗曚緥瀹炰緥

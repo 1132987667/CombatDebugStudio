@@ -1,7 +1,7 @@
 {
   "id": "heal_over_time",
   "name": "持续治疗",
-  "description": "获得持续治疗效果，每秒钟恢复一定量的生命值",
+  "description": "获得持续治疗效果，每秒钟恢复一定量的气血值",
   "duration": 3,
   "maxStacks": 2,
   "cooldown": 6,

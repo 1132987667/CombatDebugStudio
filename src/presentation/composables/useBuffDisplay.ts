@@ -21,15 +21,25 @@ const SECONDARY_THRESHOLD = 20
 
 /** 已知控制类 Buff 名称关键词（全匹配） */
 const CONTROL_NAMES = new Set([
-  '眩晕', '沉默', '恐惧', '魅惑', '石化',
-  '睡眠', '冰冻', '混乱', '嘲讽', '定身',
-  '缴械', '变形', '禁锢',
+  '眩晕',
+  '沉默',
+  '恐惧',
+  '魅惑',
+  '石化',
+  '睡眠',
+  '冰冻',
+  '混乱',
+  '嘲讽',
+  '定身',
+  '缴械',
+  '变形',
+  '禁锢',
 ])
 
 /** 已知条件关键词（description 中匹配） */
 const CONDITION_KEYWORDS: Array<{ match: RegExp; label: string }> = [
-  { match: /残血|生命.*低于|低血量/i, label: '残血' },
-  { match: /满血|生命.*高于|高血量/i, label: '满血' },
+  { match: /残血|气血.*低于|低血量/i, label: '残血' },
+  { match: /满血|气血.*高于|高血量/i, label: '满血' },
   { match: /暴击|暴击后/i, label: '暴击' },
   { match: /闪避|闪避后/i, label: '闪避' },
   { match: /击杀|击败后/i, label: '击杀' },
@@ -41,16 +51,20 @@ const CONDITION_KEYWORDS: Array<{ match: RegExp; label: string }> = [
  * 优先使用来自 BuffSystem 的实时 conditionState（由 setBuffConditionState 设置）
  * 回退到从 description 文本中启发式推断
  */
-export function detectCondition(
-  raw: BuffRawItem,
-): { condition: ConditionState; conditionLabel?: string } {
+export function detectCondition(raw: BuffRawItem): {
+  condition: ConditionState
+  conditionLabel?: string
+} {
   // 优先使用实例的实时条件状态（由领域层设置）
   if (raw.conditionState === 'active') {
     return { condition: 'active', conditionLabel: '已激活' }
   }
   if (raw.conditionState === 'inactive') {
     const label = matchConditionKeyword(raw.description || '', raw.name || '')
-    return { condition: 'inactive', conditionLabel: label ? `${label}·未激活` : '未激活' }
+    return {
+      condition: 'inactive',
+      conditionLabel: label ? `${label}·未激活` : '未激活',
+    }
   }
 
   const description = raw.description || ''
@@ -65,7 +79,10 @@ export function detectCondition(
 }
 
 /** 辅助：从文本中匹配条件关键词 */
-function matchConditionKeyword(description: string, name: string): string | undefined {
+function matchConditionKeyword(
+  description: string,
+  name: string,
+): string | undefined {
   for (const kw of CONDITION_KEYWORDS) {
     if (kw.match.test(description) || kw.match.test(name)) {
       return kw.label
@@ -78,7 +95,11 @@ function matchConditionKeyword(description: string, name: string): string | unde
  * 从 isDebuff + name 推断类型
  * 优先使用结构化 controlType 字段，回退到名称关键词匹配
  */
-export function detectType(name: string, isDebuff: boolean, controlType?: string): 'buff' | 'debuff' | 'control' {
+export function detectType(
+  name: string,
+  isDebuff: boolean,
+  controlType?: string,
+): 'buff' | 'debuff' | 'control' {
   // 优先使用结构化字段（新数据走此路径）
   if (controlType && controlType !== 'none' && controlType !== '') {
     return 'control'
@@ -158,10 +179,7 @@ function extractAttributes(
 /**
  * 将原始 buff 条目转换为 BuffTextItem
  */
-function toBuffTextItem(
-  raw: BuffRawItem,
-  entityId: string,
-): BuffTextItem {
+function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
   const name = raw.name
   // ponytail: 当 name 为空时显示兜底文本，防止空标签出现在 UI 中
   const displayName = name || '未知效果'
@@ -226,17 +244,25 @@ export function mergeAttributes(
   items: BuffTextItem[],
   baseValues?: Record<string, number>,
 ): MergedAttributeLine[] {
-  const attrMap = new Map<string, {
-    total: number
-    sources: MergedAttributeLine['sources']
-    hasFlat: boolean
-    hasPercent: boolean
-  }>()
+  const attrMap = new Map<
+    string,
+    {
+      total: number
+      sources: MergedAttributeLine['sources']
+      hasFlat: boolean
+      hasPercent: boolean
+    }
+  >()
 
   for (const item of items) {
     for (const mod of item.modifiers) {
       if (!attrMap.has(mod.attribute)) {
-        attrMap.set(mod.attribute, { total: 0, sources: [], hasFlat: false, hasPercent: false })
+        attrMap.set(mod.attribute, {
+          total: 0,
+          sources: [],
+          hasFlat: false,
+          hasPercent: false,
+        })
       }
       const entry = attrMap.get(mod.attribute)!
       entry.total += mod.value
@@ -321,7 +347,10 @@ export function useBuffDisplay(
   rawItems: Ref<BuffRawItem[]> | ComputedRef<BuffRawItem[]>,
   entityId: string,
   collapseThreshold: number = 5,
-  baseAttributes?: Record<string, number> | ComputedRef<Record<string, number>> | Ref<Record<string, number>>,
+  baseAttributes?:
+    | Record<string, number>
+    | ComputedRef<Record<string, number>>
+    | Ref<Record<string, number>>,
 ): ComputedRef<BuffDisplayState> {
   return computed(() => {
     const raw = rawItems.value
@@ -353,7 +382,10 @@ export function useBuffDisplay(
     const mergedLabels = sortLabels(mergedAll.filter((l) => l.isChanged))
 
     // 5. 计算折叠数量与可见属性标签
-    const visibleAttrSlots = Math.max(0, collapseThreshold - controlItems.length)
+    const visibleAttrSlots = Math.max(
+      0,
+      collapseThreshold - controlItems.length,
+    )
     const visibleAttrLabels = mergedLabels.slice(0, visibleAttrSlots)
     // ponytail: collapsedCount 只计实际隐藏的属性标签数，不包括一直全显的控制标签
     const collapsedCount = Math.max(0, mergedLabels.length - visibleAttrSlots)
@@ -368,7 +400,8 @@ export function useBuffDisplay(
       const primary: BuffTextItem[] = []
       const secondary: BuffTextItem[] = []
       for (const item of sorted) {
-        const isLongDuration = item.remainingTurns === 0 || item.remainingTurns >= 5
+        const isLongDuration =
+          item.remainingTurns === 0 || item.remainingTurns >= 5
         const isInactiveCondition = item.condition === 'inactive'
         if (item.type === 'control') {
           primary.push(item)
@@ -407,9 +440,12 @@ export function getBuffColorClass(
   if (condition === 'permanent') return 'buff-text--permanent'
 
   switch (type) {
-    case 'buff': return 'buff-text--buff'
-    case 'debuff': return 'buff-text--debuff'
-    case 'control': return 'buff-text--control'
+    case 'buff':
+      return 'buff-text--buff'
+    case 'debuff':
+      return 'buff-text--debuff'
+    case 'control':
+      return 'buff-text--control'
   }
 }
 
@@ -432,9 +468,13 @@ export function formatRemainingTurns(turns: number): string {
 /**
  * 获取条件标签文本
  */
-export function getConditionLabel(condition: ConditionState, customLabel?: string): string {
+export function getConditionLabel(
+  condition: ConditionState,
+  customLabel?: string,
+): string {
   if (condition === 'active') return '已激活'
-  if (condition === 'inactive') return customLabel ? `${customLabel}·未激活` : '未激活'
+  if (condition === 'inactive')
+    return customLabel ? `${customLabel}·未激活` : '未激活'
   if (condition === 'permanent') return '永久'
   return ''
 }

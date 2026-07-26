@@ -16,6 +16,8 @@
  *   - facets    → 运行时能力（从配置结构自动派生）
  */
 
+import type { ResolvedEffectPlan } from '@/domain/buff/atomic/BuffConfigResolver'
+
 // ==================== 维度一：极性（UI 颜色） ====================
 
 export const BUFF_POLARITY = {
@@ -68,10 +70,30 @@ export function deriveBuffFacets(config: {
   shield?: unknown
   controlType?: string
   immunities?: string[]
+  /** 数据驱动：从 atomic effects 派生（优先级最高） */
+  effectPlan?: ResolvedEffectPlan[]
 }): BuffCategory[] {
   const facets: BuffCategory[] = []
 
-  // 属性修饰符：有 attributes 对象
+  // ★ 优先从 effectPlan 派生（数据驱动方式）
+  if (config.effectPlan && config.effectPlan.length > 0) {
+    for (const effect of config.effectPlan) {
+      switch (effect.type) {
+        case 'modifier': facets.push(BUFF_CATEGORY.MODIFIER); break
+        case 'dot':      facets.push(BUFF_CATEGORY.DOT); break
+        case 'hot':      facets.push(BUFF_CATEGORY.TRIGGER); break  // HOT 归入 trigger 类
+        case 'control':  facets.push(BUFF_CATEGORY.CONTROL); break
+        case 'shield':   facets.push(BUFF_CATEGORY.SHIELD); break
+        case 'trigger':  facets.push(BUFF_CATEGORY.TRIGGER); break
+        case 'aura':     facets.push(BUFF_CATEGORY.AURA); break
+        case 'immunity': facets.push(BUFF_CATEGORY.IMMUNITY); break
+      }
+    }
+    // 去重
+    return [...new Set(facets)]
+  }
+
+  // 向后兼容：从旧字段派生
   if (
     config.attributes != null &&
     typeof config.attributes === 'object' &&

@@ -64,9 +64,9 @@ export interface RecordedBattle {
       name: string
       /** 阵营 */
       type: ParticipantSide
-      /** 最大生命值 */
+      /** 最大气血值 */
       maxHealth: number
-      /** 当前生命值 */
+      /** 当前气血值 */
       currentHealth: number
       /** 最大能量值 */
       maxEnergy: number

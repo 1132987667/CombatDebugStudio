@@ -1,11 +1,12 @@
 <template>
   <div class="battle-log-section">
     <div class="log-header">
-      <span>战斗日志</span>
+      <span>日志</span>
       <div class="log-filters">
         <label class="filter-check"><input type="checkbox" v-model="filters.battle" /> 战斗</label>
         <label class="filter-check"><input type="checkbox" v-model="filters.system" /> 系统</label>
         <label class="filter-check"><input type="checkbox" v-model="showStatus" /> 状态</label>
+        <label class="filter-check"><input type="checkbox" v-model="filters.debug" /> 调试</label>
         <input class="log-keyword" v-model="keyword" placeholder="搜索…" />
         <button class="export-btn" @click="exportLogs" title="导出日志文本">📋 导出</button>
       </div>
@@ -17,7 +18,9 @@
         <!-- 战斗头/尾 -->
         <template v-if="b.type === 'battle-header'">
           <span class="rule rule--double"></span>
-          <div class="battle-line"><LogSeg v-for="(s,j) in b.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/></div>
+          <div class="battle-line">
+            <LogSeg v-for="(s, j) in b.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
+          </div>
           <span class="rule rule--double"></span>
         </template>
 
@@ -31,38 +34,38 @@
         <!-- 行动块 -->
         <template v-else-if="b.type === 'action'">
           <div class="action-header"><span class="glyph">◆</span>
-            <LogSeg v-for="(s,j) in b.header" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+            <LogSeg v-for="(s, j) in b.header" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
           <div v-if="b.result" class="action-result">
-            <LogSeg v-for="(s,j) in b.result" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+            <LogSeg v-for="(s, j) in b.result" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
-          <div v-for="(sub,k) in b.subs" :key="'s'+k" class="action-sub">
+          <div v-for="(sub, k) in b.subs" :key="'s' + k" class="action-sub">
             <span class="glyph glyph--sub">{{ k === b.subs.length - 1 ? '└' : '├' }}</span>
-            <LogSeg v-for="(s,j) in sub" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+            <LogSeg v-for="(s, j) in sub" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
         </template>
 
         <!-- 回合结算 -->
         <template v-else-if="b.type === 'settlement'">
           <div class="sub-header"><span class="rule rule--thin"></span>回合结算<span class="rule rule--thin"></span></div>
-          <div v-for="(line,k) in b.lines" :key="k" class="indent-line">
-            <LogSeg v-for="(s,j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+          <div v-for="(line, k) in b.lines" :key="k" class="indent-line">
+            <LogSeg v-for="(s, j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
         </template>
 
         <!-- 态势 -->
         <template v-else-if="b.type === 'snapshot'">
           <div class="sub-header"><span class="rule rule--thin"></span>态势<span class="rule rule--thin"></span></div>
-          <div v-for="(line,k) in b.lines" :key="k" class="indent-line">
-            <LogSeg v-for="(s,j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+          <div v-for="(line, k) in b.lines" :key="k" class="indent-line">
+            <LogSeg v-for="(s, j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
         </template>
 
         <!-- 条件激活 -->
         <template v-else-if="b.type === 'section'">
           <div class="section-title">【{{ b.title }}】</div>
-          <div v-for="(line,k) in b.lines" :key="k" class="indent-line">
-            <LogSeg v-for="(s,j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+          <div v-for="(line, k) in b.lines" :key="k" class="indent-line">
+            <LogSeg v-for="(s, j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
         </template>
 
@@ -70,8 +73,8 @@
         <template v-else-if="b.type === 'summary'">
           <span class="rule rule--double"></span>
           <div class="summary-content">
-            <div v-for="(line,k) in b.lines" :key="k" class="summary-line">
-              <LogSeg v-for="(s,j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+            <div v-for="(line, k) in b.lines" :key="k" class="summary-line">
+              <LogSeg v-for="(s, j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
             </div>
           </div>
           <span class="rule rule--double"></span>
@@ -79,12 +82,13 @@
 
         <!-- 普通行 -->
         <template v-else>
-          <LogSeg v-for="(s,j) in b.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+          <LogSeg v-for="(s, j) in b.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
         </template>
       </div>
     </div>
 
-    <EntityTooltip :visible="tooltipVisible" :data="tooltipData" :trigger-rect="tooltipRect" @hide="tooltipVisible = false" />
+    <EntityTooltip :visible="tooltipVisible" :data="tooltipData" :trigger-rect="tooltipRect"
+      @hide="tooltipVisible = false" />
 
     <div v-if="hasStats" class="log-stats">
       <span class="stat-item">回合: {{ stats.totalRounds }}</span>
@@ -364,13 +368,6 @@ function exportLogs(): void {
 <style scoped>
 @use '@/presentation/styles/main.scss';
 
-.log-content {
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  font-size: var(--font-size-sm);
-  line-height: 1.7;
-  padding: var(--space-2);
-}
-
 .no-logs {
   text-align: center;
   color: var(--color-text-tertiary);
@@ -378,38 +375,116 @@ function exportLogs(): void {
 }
 
 /* ── 分隔线（CSS 实现） ── */
-.rule { flex: 1; height: 1px; background: var(--color-border-default); align-self: center; }
-.rule--double { height: 3px; border-top: 1px solid var(--color-border-strong); border-bottom: 1px solid var(--color-border-strong); background: transparent; }
-.rule--thin { opacity: 0.5; }
+.rule {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-default);
+  align-self: center;
+}
+
+.rule--double {
+  height: 3px;
+  border-top: 1px solid var(--color-border-strong);
+  border-bottom: 1px solid var(--color-border-strong);
+  background: transparent;
+}
+
+.rule--thin {
+  opacity: 0.5;
+}
 
 /* 叙事块基础 */
-.nb { margin: 2px 0; }
+.nb {
+  margin: 2px 0;
+}
 
 /* 战斗头/尾 */
-.nb--battle-header { display: flex; gap: 10px; text-align: center; font-weight: var(--font-weight-bold); color: var(--color-warning); padding: 6px 0; align-items: center; }
-.battle-line { padding: 4px 0; letter-spacing: 1px; text-align: center; }
+.nb--battle-header {
+  display: flex;
+  gap: 10px;
+  text-align: center;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-warning);
+  padding: 6px 0;
+  align-items: center;
+}
+
+.battle-line {
+  padding: 4px 0;
+  letter-spacing: 1px;
+  text-align: center;
+}
 
 /* 回合头 */
-.nb--round { display: flex; gap: 10px; margin: 14px 0 6px; align-items: center; }
-.round-label { color: var(--color-info); font-weight: var(--font-weight-bold); white-space: nowrap; }
+.nb--round {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 6px;
+  align-items: center;
+}
+
+.round-label {
+  color: var(--color-info);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
 
 /* 行动块：◆ 头 + 缩进结果/从属 */
-.action-header { font-weight: var(--font-weight-semibold); }
-.glyph { color: var(--color-warning); margin-right: 6px; }
-.action-result, .action-sub { padding-left: 1.4em; }
-.glyph--sub { color: var(--color-text-tertiary); }
+.action-header {
+  font-weight: var(--font-weight-semibold);
+}
+
+.glyph {
+  color: var(--color-warning);
+  margin-right: 6px;
+}
+
+.action-result,
+.action-sub {
+  padding-left: 1.4em;
+}
+
+.glyph--sub {
+  color: var(--color-text-tertiary);
+}
 
 /* 结算/态势 子标题 */
-.sub-header { display: flex; gap: 8px; color: var(--color-text-tertiary); margin-top: 8px; font-size: var(--font-size-xs); letter-spacing: 2px; align-items: center; }
-.indent-line { padding-left: 1.4em; }
+.sub-header {
+  display: flex;
+  gap: 8px;
+  color: var(--color-text-tertiary);
+  margin-top: 8px;
+  font-size: var(--font-size-xs);
+  letter-spacing: 2px;
+  align-items: center;
+}
+
+.indent-line {
+  padding-left: 1.4em;
+}
 
 /* 条件激活 */
-.section-title { color: var(--color-energy); font-weight: var(--font-weight-bold); }
+.section-title {
+  color: var(--color-energy);
+  font-weight: var(--font-weight-bold);
+}
 
 /* 战报摘要 */
-.nb--summary { display: flex; gap: 10px; padding: 8px 0; align-items: center; }
-.summary-content { text-align: center; padding: 4px 0; }
-.summary-line { margin: 2px 0; }
+.nb--summary {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  align-items: center;
+}
+
+.summary-content {
+  text-align: center;
+  padding: 4px 0;
+}
+
+.summary-line {
+  margin: 2px 0;
+}
 
 /* 统计栏 */
 .log-stats {
@@ -428,7 +503,6 @@ function exportLogs(): void {
 .export-btn {
   margin-left: auto;
   padding: 2px 8px;
-  font-size: var(--font-size-xs);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
   background: var(--color-surface-raised);
@@ -437,6 +511,7 @@ function exportLogs(): void {
   white-space: nowrap;
   transition: background var(--transition-fast);
 }
+
 .export-btn:hover {
   background: var(--color-surface-hover);
   color: var(--color-text-primary);
@@ -444,9 +519,31 @@ function exportLogs(): void {
 
 /* 微交互：新块淡入 */
 @media (prefers-reduced-motion: no-preference) {
-  .nb { animation: nb-in .18s ease-out; }
-  @keyframes nb-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  .nb {
+    animation: nb-in .18s ease-out;
+  }
+
+  @keyframes nb-in {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
-.log-hoverable { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; transition: filter var(--transition-fast); }
-.log-hoverable:hover { filter: brightness(1.35); }
+
+.log-hoverable {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  cursor: help;
+  transition: filter var(--transition-fast);
+}
+
+.log-hoverable:hover {
+  filter: brightness(1.35);
+}
 </style>

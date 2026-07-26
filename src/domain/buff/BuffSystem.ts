@@ -26,7 +26,7 @@ import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import { Counter } from '@/shared/utils/Counter'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
-import { BattleContext, BattleTriggerPhase } from '@/domain/battle/type/types'
+import { StepExecutionContext, BattleTriggerPhase } from '@/domain/battle/type/types'
 import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
@@ -42,7 +42,6 @@ export interface TriggerExecutionContext extends TriggerEventContext {
   instanceId?: string
   buffSystem?: BuffSystem
   params?: Record<string, number | string>
-  currentTurn?: number
 }
 
 /**
@@ -250,7 +249,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     instanceId: string,
     targetId: string,
     eventName: string,
-    data?: BattleContext,
+    data?: Record<string, unknown>,
   ): void {
     const handler = this.triggerScripts.get(eventName)
     if (handler) {
@@ -369,7 +368,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     buffId: string,
     config: Partial<BuffConfig> = {},
     currentTurn: number = 0,
-    context?: BattleContext,
+    context?: StepExecutionContext,
     parentInstanceId?: string,
   ): string {
     let script = this.scriptRegistry.get(buffId)
@@ -978,6 +977,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         targetId: instance.characterId,
         extra: { instanceId, state, characterId: instance.characterId },
       })
+      // 通知投影层刷新（conditionState 变更需要反映到 UI）
+      this.triggerAttributeChange(instance.characterId)
     }
   }
 

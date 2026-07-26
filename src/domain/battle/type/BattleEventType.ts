@@ -82,6 +82,12 @@ export interface TeamDataChangedEventData {
   enemyTeam: BattleEntity[];
 }
 
+/** 动画完成事件数据类型（用于替代定时器清除动画状态） */
+export interface AnimationCompleteEventData {
+  /** 完成的动画类型（与 AnimationType 对应的事件码字符串） */
+  type: string
+}
+
 
 /** 战斗事件类型映射 */
 export interface BattleEvents {
@@ -102,6 +108,7 @@ export interface BattleEvents {
   [BattleEventCodes.DEBUG_TOGGLE]: { enabled: boolean };
   [BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED]: { characterId: string };
   [BattleEventCodes.BATTLE_SUMMARY]: BattleSummary;
+  [BattleEventCodes.ANIMATION_COMPLETE]: AnimationCompleteEventData;
   // mitt 约束：Emitter<Events> 要求 Events extends Record<string, unknown>，必须保留
   [key: string]: unknown;
   [key: symbol]: unknown;
@@ -150,6 +157,8 @@ export const BattleEventCodes = {
   PARTICIPANT_ATTRIBUTE_CHANGED: 'participant-attribute-changed',
   /** 战斗摘要事件 */
   BATTLE_SUMMARY: 'battle-summary',
+  /** 动画完成事件（领域层动画队列 resolve 时发射，用于 UI 层竞态安全的清除动画状态） */
+  ANIMATION_COMPLETE: 'animation-complete',
 } as const
 
 export type BattleEventCode = (typeof BattleEventCodes)[keyof typeof BattleEventCodes]

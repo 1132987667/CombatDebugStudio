@@ -37,7 +37,6 @@
   display: flex;
   align-items: center;
   gap: 0.15rem;
-  font-size: var(--font-size-xs);
   cursor: pointer;
 }
 
@@ -58,6 +57,7 @@
   overflow-y: auto;
   padding: var(--space-2);
   min-height: 0;
+  line-height: var(--line-height-md);
 }
 
 /* ----- 2. 日志条目 ----- */
@@ -303,7 +303,6 @@
 .log-system {
   color: var(--color-text-tertiary);
   opacity: 0.7;
-  font-size: var(--font-size-xs);
 }
 
 /* 高亮信息（条件激活等） */

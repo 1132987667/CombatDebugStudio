@@ -1,5 +1,5 @@
 <template>
-  <div class="debug-panel panel-right">
+  <div class="panel-right">
     <div class="section flex-1">
       <div class="section-header">
         <span>角色监控</span>
@@ -7,7 +7,7 @@
       </div>
       <!-- 显示层级过滤器（调试面板） -->
       <div class="tier-filters">
-        <label class="tier-filter" v-for="tier in (['core','advanced','situational','hidden'] as const)" :key="tier">
+        <label class="tier-filter" v-for="tier in (['core', 'advanced', 'situational', 'hidden'] as const)" :key="tier">
           <input type="checkbox" v-model="tierFilters[tier]" />
           <span>{{ { core: '核心', advanced: '进阶', situational: '情境', hidden: '隐藏' }[tier] }}</span>
         </label>
@@ -108,10 +108,11 @@
             </div>
             <div class="monitor-grid" @mouseleave="hideAttrTooltip">
               <div class="monitor-item" v-for="a in attrs" :key="a.code"
-                @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)"
-                @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+                @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)" @mousemove="updateTooltipPosition"
+                @mouseleave="hideAttrTooltip">
                 <span class="monitor-label">{{ a.meta.displayName }}:</span>
-                <span class="monitor-value">{{ attrVal(a.code as ATTRIBUTE_CODE) }}{{ a.meta.isPercentage ? '%' : '' }}</span>
+                <span class="monitor-value">{{ attrVal(a.code as ATTRIBUTE_CODE) }}{{ a.meta.isPercentage ? '%' : ''
+                  }}</span>
               </div>
             </div>
           </div>
@@ -119,7 +120,8 @@
       </div>
       <div class="monitor-group">
         <div class="monitor-tabs">
-          <button class="tab-btn" :class="{ active: activeTab === 'passive' }" @click="activeTab = 'passive'">被动</button>
+          <button class="tab-btn" :class="{ active: activeTab === 'passive' }"
+            @click="activeTab = 'passive'">被动</button>
           <button class="tab-btn" :class="{ active: activeTab === 'active' }" @click="activeTab = 'active'">主动</button>
           <button class="tab-btn" :class="{ active: activeTab === 'status' }" @click="activeTab = 'status'">状态</button>
         </div>
@@ -136,11 +138,9 @@
                 {{ group.label }}
                 <span class="category-count">({{ group.skills.length }})</span>
               </div>
-              <div v-for="(skill, index) in group.skills" :key="index"
-                class="skill-item passive"
-                :style="{ borderLeftColor: group.color }"
-                @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
-                @mouseleave="hideSkillTooltip">
+              <div v-for="(skill, index) in group.skills" :key="index" class="skill-item passive"
+                :style="{ borderLeftColor: group.color }" @mouseenter="showSkillTooltip($event, skill)"
+                @mousemove="updateTooltipPosition" @mouseleave="hideSkillTooltip">
                 {{ skill.name || '未知技能' }}
               </div>
             </div>
@@ -149,14 +149,14 @@
 
         <!-- 主动技能 -->
         <div v-if="activeTab === 'active'" class="skills-display">
-          <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length" class="no-skills">
+          <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length"
+            class="no-skills">
             暂无主动技能
           </div>
           <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
             <div v-if="currentCharacter!.skills.small?.length" class="skill-category">
               <div class="skill-category-title">小技能</div>
-              <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index"
-                class="skill-item small"
+              <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index" class="skill-item small"
                 @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
                 @mouseleave="hideSkillTooltip">
                 {{ skill.name || '未知技能' }}
@@ -164,8 +164,7 @@
             </div>
             <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category">
               <div class="skill-category-title">终极技能</div>
-              <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index"
-                class="skill-item ultimate"
+              <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index" class="skill-item ultimate"
                 @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
                 @mouseleave="hideSkillTooltip">
                 {{ skill.name || '未知技能' }}
@@ -265,7 +264,6 @@ import BattleReplay from "@/presentation/views/BattleReplay.vue";
 import { formatBonusValue } from '@/shared/utils/format';
 import { computed, onMounted, onUnmounted, ref, type ComputedRef } from "vue";
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { BuffRawItem } from '@/shared/types/buff-display'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 
@@ -367,74 +365,28 @@ const activeTab = ref<'passive' | 'active' | 'status'>('passive')
 
 // ------------------------------------------------------------
 // Buff 数据（状态 tab）
-const buffSystem = container.resolve<BuffSystem>('BuffSystem')
-
-const buffListItems = computed((): BuffRawItem[] => {
-  const entity = currentCharacter.value
-  if (!entity) return []
-  const result: BuffRawItem[] = []
-  const seenIds = new Set<string>()
-
-  // 源1: BuffSystem 管理的 buff
-  if (typeof entity.getBuffInstanceIds === 'function') {
-    const instanceIds = entity.getBuffInstanceIds()
-    for (const id of instanceIds) {
-      const instance = buffSystem.getBuffInstanceById(id)
-      if (!instance) continue
-      const config = instance.context.config
-      if (config) {
-        seenIds.add(id)
-        seenIds.add(config.id)
-        result.push({
-          id,
-          buffId: config.id,
-          name: config.name,
-          description: config.description ?? '',
-          remainingTurns: instance.remainingTurns,
-          currentStacks: instance.currentStacks,
-          isDebuff: config.isDebuff === true,
-          attributes: config.attributes,
-          effectLines: instance.effectLines ?? [],
-          conditionState: instance.conditionState,
-        })
-      }
-    }
-  }
-
-  // 源2: InterventionManager 手动状态
-  const manualEffects = entity.statusEffects ?? []
-  for (const s of manualEffects) {
-    if (!seenIds.has(s.id)) {
-      seenIds.add(s.id)
-      result.push({
-        id: s.id,
-        buffId: s.id,
-        name: s.name,
-        description: '',
-        remainingTurns: s.remainingTurns,
-        currentStacks: 1,
-        isDebuff: s.type === 'debuff',
-        effectLines: [],
-        conditionState: undefined,
-      })
-    }
-  }
-
-  return result
+// 从投影层快照读取当前角色的 Buff 原始数据
+const currentCharacterSnap = computed(() => {
+  const id = snapId.value
+  if (!id) return null
+  return battleStore.participants.get(id) ?? null
 })
+
+// 从快照读取 Buff 数据，无需再直接 resolve BuffSystem
+const buffListItems = computed((): BuffRawItem[] => currentCharacterSnap.value?.buffs ?? [])
 
 const buffDisplay = useBuffDisplay(buffListItems, computed(() => currentCharacter.value?.id ?? ''), 99)
 
 /** 被动技能分类展示配置 */
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: number }> = {
-  aura:      { label: '光环',   color: '#34d399', priority: 0 },
-  trigger:   { label: '触发',   color: '#a78bfa', priority: 1 },
-  heal:      { label: '治疗',   color: '#f472b6', priority: 2 },
-  immunity:  { label: '免疫',   color: '#fbbf24', priority: 3 },
-  summon:    { label: '召唤',   color: '#fb923c', priority: 4 },
-  dot:       { label: '持续',   color: '#f87171', priority: 5 },
-  shield:    { label: '护盾',   color: '#22d3ee', priority: 6 },
-  attribute: { label: '属性',   color: '#60a5fa', priority: 7 },
+  aura: { label: '光环', color: '#34d399', priority: 0 },
+  trigger: { label: '触发', color: '#a78bfa', priority: 1 },
+  heal: { label: '治疗', color: '#f472b6', priority: 2 },
+  immunity: { label: '免疫', color: '#fbbf24', priority: 3 },
+  summon: { label: '召唤', color: '#fb923c', priority: 4 },
+  dot: { label: '持续', color: '#f87171', priority: 5 },
+  shield: { label: '护盾', color: '#22d3ee', priority: 6 },
+  attribute: { label: '属性', color: '#60a5fa', priority: 7 },
 }
 
 const UNCATEGORIZED = { label: '未分类', color: '#94a3b8', priority: 99 }
@@ -820,6 +772,7 @@ const handleBattleEndReplay = (winner: string) => {
   border-bottom: 1px solid rgba(96, 165, 250, 0.15);
   margin-bottom: 4px;
 }
+
 .tier-filter {
   display: flex;
   align-items: center;
@@ -829,6 +782,7 @@ const handleBattleEndReplay = (winner: string) => {
   cursor: pointer;
   user-select: none;
 }
+
 .tier-filter input[type="checkbox"] {
   accent-color: #22d3ee;
 }

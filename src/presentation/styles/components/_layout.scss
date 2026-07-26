@@ -57,7 +57,7 @@
 /* ----- 三栏主布局 ----- */
 .main-layout {
   display: grid;
-  grid-template-columns: 30% 1fr 30%;
+  grid-template-columns: 25% 1fr 25%;
   gap: var(--space-4);
   /* ponytail: 140px = header(80px) + control-bar(~60px), extract to tokens if reused */
   height: calc(100vh - 140px);
@@ -68,7 +68,6 @@
 .panel-left,
 .panel-center,
 .panel-right {
-  /* ponytail: 140px mirrors .main-layout calc */
   height: calc(100vh - 140px);
   padding: var(--space-3);
 }
@@ -104,7 +103,6 @@
   border-radius: var(--radius-sm);
   padding: var(--space-3);
   overflow-y: auto;
-  /* ponytail: 140px mirrors .main-layout calc */
   height: calc((100vh - 140px - var(--space-6)) / 2);
 }
 

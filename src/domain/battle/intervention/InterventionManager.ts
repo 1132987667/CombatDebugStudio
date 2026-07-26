@@ -115,6 +115,9 @@ export class InterventionManager {
         statusEffects: [...this.selectedChar.statusEffects],
       })
 
+      // 通知投影层刷新（手动添加状态需要反映到 UI）
+      this.selectedChar.recalcAll()
+
       this.logger.addActionLog({
         source: '系统',
         action: '添加状态',
@@ -165,6 +168,9 @@ export class InterventionManager {
       this.battleStateManager.updateCharacterManually(this.selectedChar.id, {
         statusEffects: [],
       })
+
+      // 通知投影层刷新
+      this.selectedChar.recalcAll()
 
       this.logger.addActionLog({
         source: '系统',

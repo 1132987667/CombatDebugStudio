@@ -21,6 +21,8 @@ export interface AttackAnimationData {
   attackerElement: HTMLElement
   attackerSide: SideType
   skillName?: string
+  /** 固定预算模型中的总预算 T（ms），用于按比例排期突进时长 */
+  budget?: number
 }
 
 export interface HitAnimationData {
@@ -89,7 +91,10 @@ export class BattleAnimationService {
       const moveDistance = 30
       const direction = data.attackerSide === 'left' ? 1 : -1
 
-      const attackDuration = this.getScaledDuration(this.BASE_ATTACK_DURATION)
+      // NOTE: 固定预算模型 — budget 优先，按 windup 占比（20%T）分配
+      const attackDuration = data.budget
+        ? data.budget * 0.2
+        : this.getScaledDuration(this.BASE_ATTACK_DURATION)
       const halfDuration = attackDuration / 2
 
       timeline
@@ -193,7 +198,8 @@ export class BattleAnimationService {
       const delayMs = this.getScaledDuration(this.HIT_SHAKE_DELAY)
 
       if (data.hitEffect === ActionResultType.MISS) {
-        this.playMissTextAnimation(data.targetElement, delayMs)
+        // HACK: Miss 文本由 ParticipantCard.addDamageNumber 通过 CSS 实现，此处不再重复创建
+        // 震屏+闪光仍然保留
       } else if (data.passiveName) {
         this.playPassiveTextAnimation(
           data.targetElement,

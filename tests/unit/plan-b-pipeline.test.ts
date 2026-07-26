@@ -182,9 +182,8 @@ describe('方案 B 统一管道', () => {
 
       // 执行 BATTLE_START — 无 target（模拟 battle start 场景）
       passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.BATTLE_START,
         participant,
-        { currentTurn: 0 },
+        { phase: BattleTriggerPhase.BATTLE_START, currentTurn: 0 },
       )
 
       // actualTarget = target ?? entity → entity，被动应成功执行
@@ -201,9 +200,8 @@ describe('方案 B 统一管道', () => {
       GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
 
       passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.BATTLE_START,
         participant,
-        { currentTurn: 0 },
+        { phase: BattleTriggerPhase.BATTLE_START, currentTurn: 0 },
       )
 
       // ponytail: ensureTrackingBuff 已移除，modify_attribute 不再创建隐藏的 BuffInstance。
@@ -227,10 +225,8 @@ describe('方案 B 统一管道', () => {
       GameDataProcessor.registerParticipantPassives(participant, passiveSkillManager)
 
       passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.BATTLE_START,
         participant,
-        undefined,
-        { currentTurn: 0 },
+        { phase: BattleTriggerPhase.BATTLE_START, currentTurn: 0 },
       )
 
       // 应用了 apply_buff 步骤 → buff 实例存在

@@ -6,9 +6,10 @@ import {
   BattleActionHelper,
   BattleTriggerPhase,
   PARTICIPANT_SIDE,
-  type BattleContext,
+  type PassiveTriggerContext,
   type BattleEntity,
 } from '@/domain/battle/type/types'
+import { createStepContext } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { SkillManager } from '@/domain/skill/SkillManager'
@@ -101,15 +102,14 @@ export class PassiveSkillManager {
    */
   shouldTriggerPassive(
     config: PassiveSkillConfig,
-    trigger: BattleTriggerPhase,
     entity: BattleEntity,
     contextTarget?: BattleEntity,
-    context?: BattleContext,
+    context: PassiveTriggerContext = { phase: BattleTriggerPhase.BATTLE_START, currentTurn: 0 },
   ): boolean {
-    if (config.trigger !== trigger) return false
+    if (config.trigger !== context.phase) return false
     // 检查冷却时间是否到，config.cooldown = -1 表示无冷却
     if (config.cooldown > 0 && config.lastTriggeredTurn) {
-      const currentTurn = (context?.currentTurn as number) || 0
+      const currentTurn = context.currentTurn
       if (currentTurn - config.lastTriggeredTurn < config.cooldown) return false
     }
     // 检查最大触发次数是否超过
@@ -148,17 +148,16 @@ export class PassiveSkillManager {
    * - 当无参与者映射或无 selector 时，回退到 context.target（事件的另一方）或施法者自身
    */
   triggerPassives(
-    trigger: BattleTriggerPhase,
     entity: BattleEntity,
-    context?: BattleContext,
+    context: PassiveTriggerContext,
   ): void {
     const characterPassives = this.passives.get(entity.id)
     if (!characterPassives) return
 
     // 事件型触发所需的上下文目标
     const contextTarget =
-      context?.target ??
-      (context?.targetId && context?.participants
+      context.target ??
+      (context.targetId && context.participants
         ? context.participants.get(context.targetId)
         : undefined)
 
@@ -167,7 +166,6 @@ export class PassiveSkillManager {
       if (
         !this.shouldTriggerPassive(
           config,
-          trigger,
           entity,
           contextTarget,
           context,
@@ -178,7 +176,7 @@ export class PassiveSkillManager {
       let targets: BattleEntity[]
       const skillConfig = this.skillManager.getSkillConfig(config.skillId)
 
-      if (context?.participants) {
+      if (context.participants) {
         if (skillConfig?.selector) {
           targets = resolveSkillTargets(
             context.participants,
@@ -216,7 +214,7 @@ export class PassiveSkillManager {
 
       // ponytail: 仅在确实执行了有效步骤后才累加冷却和计数
       if (hasExecuted) {
-        config.lastTriggeredTurn = (context?.currentTurn as number) || 0
+        config.lastTriggeredTurn = context.currentTurn
         config.triggerCount = (config.triggerCount || 0) + 1
       }
 
@@ -225,10 +223,10 @@ export class PassiveSkillManager {
       const effectSummary = this.buildPassiveEffectSummary(skillConfig, targets, context)
 
       LoggerProvider.logger.addBattleLog({
-        turn: (context?.currentTurn as number) || 1,
+        turn: context.currentTurn,
         message: `${configName}  ${effectSummary}`,
         segments: [
-          { text: configName, classStr: 'log-passive', kind: 'passive' },
+          { text: configName, classStr: 'log-passive', kind: 'passive', hover: { kind: 'passive', id: config.skillId } },
           { text: `  ${effectSummary}` },
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
@@ -248,7 +246,7 @@ export class PassiveSkillManager {
             `${entity.name} 触发 【${configName}】`,
             1,
           ),
-          turn: (context?.currentTurn as number) || 1,
+          turn: context.currentTurn,
           source: entity.id,
         })
       }
@@ -275,7 +273,7 @@ export class PassiveSkillManager {
     config: SkillConfig,
     source: BattleEntity,
     targets: BattleEntity[],
-    context?: BattleContext,
+    context: PassiveTriggerContext,
   ): boolean {
     const steps = config.steps
     if (!steps || steps.length === 0) return true // ponytail: 无步骤=无需执行，不算失败
@@ -285,12 +283,14 @@ export class PassiveSkillManager {
     let anyExecuted = false
 
     // ponytail: 被动技能发射 SKILL_USE 事件，使依赖此事件的被动可以连锁
+    const targetsIds = targets.map(t => t.id)
     this.buffSystem.getEventBus().emit(BattleTriggerPhase.SKILL_USE, {
-      source,
-      skillId: config.id,
-      targets,
-      context,
-    } as any)
+      phase: BattleTriggerPhase.SKILL_USE,
+      sourceId: source.id,
+      targetId: targetsIds[0],
+      currentTurn: context.currentTurn,
+      extra: { skillId: config.id },
+    })
 
     for (const target of targets) {
       // ponytail: 跳过已死亡目标，被动技能不应对死尸生效
@@ -301,13 +301,13 @@ export class PassiveSkillManager {
         targetId: target.id,
         skillId: config.id,
         skillName: config.name || '',
-        turn: context?.currentTurn,
+        turn: context.currentTurn,
         success: true,
       })
 
       for (const step of steps) {
         try {
-          executor.executeStep(step, action, source, target, context)
+          executor.executeStep(step, action, source, target, createStepContext(undefined, undefined, true))
           anyExecuted = true
         } catch (err) {
           LoggerProvider.logger.addDebugLog(
@@ -329,7 +329,7 @@ export class PassiveSkillManager {
   private buildPassiveEffectSummary(
     config?: SkillConfig,
     targets?: BattleEntity[],
-    context?: BattleContext,
+    context?: PassiveTriggerContext,
   ): string {
     if (!config) return ''
     const parts: string[] = []
@@ -353,8 +353,26 @@ export class PassiveSkillManager {
                 if (isNaN(num)) continue
                 const pct = Math.abs(valStr.includes('%') ? num : (Math.abs(num) < 1 ? num * 100 : num))
                 const arrow = num >= 0 ? '↑' : '↓'
-                const stacks = step.stacks ?? buffConfig.maxStacks ?? 1
-                parts.push(`${cn}${arrow}${Math.round(pct)}%（${stacks}层）`)
+                const maxStacks = step.stacks ?? buffConfig.maxStacks ?? 1
+                // 查目标实体上该 buff 的当前实际层数
+                let currentStacks = 0
+                if (targets && targets.length > 0) {
+                  for (const t of targets) {
+                    if (typeof t.getBuffInstanceIds === 'function') {
+                      const ids = t.getBuffInstanceIds()
+                      for (const instanceId of ids) {
+                        const instance = this.buffSystem.getBuffInstanceById(instanceId)
+                        if (instance?.buffId === buffId && instance.currentStacks > currentStacks) {
+                          currentStacks = instance.currentStacks
+                        }
+                      }
+                    }
+                  }
+                }
+                const stackDisplay = currentStacks > 0
+                  ? `（${currentStacks}/${maxStacks}层）`
+                  : `（${maxStacks}层）`
+                parts.push(`${cn}${arrow}${Math.round(pct)}%${stackDisplay}`)
               }
             } else {
               parts.push(buffConfig?.name ?? buffId)
@@ -392,7 +410,7 @@ export class PassiveSkillManager {
     condition: string,
     source: BattleEntity,
     target?: BattleEntity,
-    context?: BattleContext,
+    context?: PassiveTriggerContext,
   ): boolean {
     try {
       switch (condition) {
@@ -431,11 +449,11 @@ export class PassiveSkillManager {
             0.9
           )
         case 'source_turn_gt_5':
-          return (context?.currentTurn as number) > 5
+          return (context?.currentTurn ?? 0) > 5
         case 'source_turn_mod_5':
           return (
-            (context?.currentTurn as number) % 5 === 0 &&
-            (context?.currentTurn as number) > 0
+            (context?.currentTurn ?? 0) % 5 === 0 &&
+            (context?.currentTurn ?? 0) > 0
           )
         default:
           LoggerProvider.logger.addDebugLog(
@@ -499,27 +517,26 @@ export class PassiveSkillManager {
 
   /** 为所有参与者触发指定时机的被动技能 */
   triggerPassiveSkillsForAll(
-    trigger: BattleTriggerPhase,
     participants: Map<string, BattleEntity>,
-    context?: BattleContext,
+    context: PassiveTriggerContext,
   ): void {
     // 优先走倒排索引，只遍历注册了该时机的被动
-    const entries = this.indexByPhase.get(trigger)
+    const entries = this.indexByPhase.get(context.phase)
     if (entries && entries.length > 0) {
       for (const { characterId } of entries) {
         const entity = participants.get(characterId)
         if (!entity?.isAlive()) continue
-        this.triggerPassives(trigger, entity, {
+        this.triggerPassives(entity, {
           ...context,
-          participants: context?.participants ?? participants,
+          participants: context.participants ?? participants,
         })
       }
     } else {
       // ponytail: 索引为空时回退全量扫描（兼容未通过 registerPassive 注册的被动）
       for (const participant of participants.values()) {
-        this.triggerPassives(trigger, participant, {
+        this.triggerPassives(participant, {
           ...context,
-          participants: context?.participants ?? participants,
+          participants: context.participants ?? participants,
         })
       }
     }

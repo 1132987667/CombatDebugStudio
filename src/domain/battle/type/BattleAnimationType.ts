@@ -15,6 +15,7 @@ export type AnimationType =
   | typeof BattleEventCodes.MISS_ANIMATION
   | typeof BattleEventCodes.BUFF_EFFECT
   | typeof BattleEventCodes.SKILL_EFFECT
+  | typeof BattleEventCodes.ANIMATION_COMPLETE
 
 /**
  * 动画数据联合类型

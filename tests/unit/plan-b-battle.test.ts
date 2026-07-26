@@ -88,7 +88,7 @@ describe('方案 B 战斗验证：光环分发', () => {
     expect(passives[0].trigger).toBe(BattleTriggerPhase.BATTLE_START)
 
     // 模拟 BATTLE_START 触发
-    passiveSkillManager.triggerPassives(BattleTriggerPhase.BATTLE_START, gold, undefined, { currentTurn: 0 })
+    passiveSkillManager.triggerPassives(gold, { phase: BattleTriggerPhase.BATTLE_START, currentTurn: 0 })
 
     // verify buff is added
     expect(buffSystem.hasBuff(gold.id, 'buff_leader_aura')).toBe(true)
@@ -106,7 +106,7 @@ describe('方案 B 战斗验证：光环分发', () => {
 
     // 注册被动 + 触发 BATTLE_START
     GameDataProcessor.registerParticipantPassives(gold, passiveSkillManager)
-    passiveSkillManager.triggerPassives(BattleTriggerPhase.BATTLE_START, gold, undefined, { currentTurn: 0 })
+    passiveSkillManager.triggerPassives(gold, { phase: BattleTriggerPhase.BATTLE_START, currentTurn: 0 })
 
     // verify gold has the buff
     expect(buffSystem.hasBuff(gold.id, 'buff_leader_aura')).toBe(true)

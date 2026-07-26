@@ -44,6 +44,8 @@
 <script setup lang="ts">
 import { ref, onUnmounted, nextTick } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
+import { getActionBudget } from '@/shared/constants/animation-timing'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 
 const debugStore = useDebugStore()
 
@@ -115,8 +117,8 @@ function cardCenter(id: string): CardPos | null {
 
 // ============ 公共方法 ============
 
-/** 技能名从攻击者飞向目标 */
-function showSkillName(attackerId: string, targetId: string, name: string, fromSide: 'left' | 'right') {
+/** 技能名从攻击者飞向目标（飞行时长 = budget * 0.5，即 0→50%T） */
+function showSkillName(attackerId: string, targetId: string, name: string, fromSide: 'left' | 'right', budget: number) {
   const aPos = cardCenter(attackerId)
   const tPos = cardCenter(targetId)
   if (!aPos || !tPos) return
@@ -125,11 +127,11 @@ function showSkillName(attackerId: string, targetId: string, name: string, fromS
   const dx = tPos.x - aPos.x
   const dy = tPos.y - aPos.y
   skillNames.value.push({ id, text: name, x: aPos.x, y: aPos.y - 20, dx, dy, fromSide })
-  setRemove(id, skillNames, 1250)
+  setRemove(id, skillNames, budget * 0.5 + 50)
 }
 
-/** 光弹飞行（requestAnimationFrame 驱动） */
-function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | 'heal' | 'shield') {
+/** 光弹飞行（requestAnimationFrame 驱动），duration = budget * 0.3（20%→50%T） */
+function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | 'heal' | 'shield', duration: number) {
   const from = cardCenter(fromId)
   const to = cardCenter(toId)
   if (!from || !to) return
@@ -142,7 +144,6 @@ function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | '
 
   const dx = to.x - from.x
   const dy = to.y - from.y
-  const duration = 700
   const start = performance.now()
   let lastTrail = 0
 
@@ -182,13 +183,15 @@ function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | '
 }
 
 /** 命中爆炸 — 根据 debugStore.impactStyle 选择动画变体 */
-function showImpact(targetId: string, colorType: 'fire' | 'frost' | 'heal' | 'shield') {
+function showImpact(targetId: string, colorType: 'fire' | 'frost' | 'heal' | 'shield', budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
   const style = debugStore.impactStyle
   impacts.value.push({ id, x: pos.x, y: pos.y, colorType, style })
-  setRemove(id, impacts, 650)
+  // NOTE: 命中爆炸清除时长 = 数字上浮阶段（50%→85%T），有 budget 时按比例，否则兜底 1x
+  const impactDuration = (budget ?? getActionBudget(1)) * 0.35
+  setRemove(id, impacts, impactDuration)
 
   // 粒子 — 根据 style 变化
   const isCrit = false // 只区分颜色，暴击由调用方决定
@@ -309,56 +312,62 @@ function createSpark(pos: CardPos, c: { bg: string; glow: string }, size: number
 }
 
 /** 治疗光环 */
-function showHealAura(targetId: string) {
+function showHealAura(targetId: string, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
   healAuras.value.push({ id, x: pos.x, y: pos.y })
-  setRemove(id, healAuras, 1050)
+  // NOTE: 治疗光环清除时长 = 命中阶段（50%→100%T）
+  const auraDuration = (budget ?? getActionBudget(1)) * 0.5
+  setRemove(id, healAuras, auraDuration)
 
   // 第二层
   const id2 = nextId++
   setTimeout(() => {
     healAuras.value.push({ id: id2, x: pos.x, y: pos.y })
-    setRemove(id2, healAuras, 1050)
+    setRemove(id2, healAuras, auraDuration)
   }, 200)
 }
 
 /** 护盾六边形 */
-function showShieldHex(targetId: string) {
+function showShieldHex(targetId: string, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
   shieldHexes.value.push({ id, x: pos.x, y: pos.y })
-  setRemove(id, shieldHexes, 950)
+  const hexDuration = (budget ?? getActionBudget(1)) * 0.5
+  setRemove(id, shieldHexes, hexDuration)
 }
 
-/** 伤害数字 */
-function showDamageNum(targetId: string, value: number, isCrit: boolean) {
+/** 伤害数字（上浮淡出时长 = budget * 0.35，即 50%→85%T） */
+function showDamageNum(targetId: string, value: number, isCrit: boolean, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
+  // HACK: budget 由所有当前调用方传入，兜底用 1x 速度的 numberFloat 阶段时长
+  const floatDuration = (budget ?? getActionBudget(1)) * 0.35
   dmgNums.value.push({
     id, text: `-${value}`,
     x: pos.x + (Math.random() - 0.5) * 40,
     y: pos.y - 20,
     cls: isCrit ? 'dmg crit' : 'dmg normal',
   })
-  setRemove(id, dmgNums, 1450)
+  setRemove(id, dmgNums, floatDuration)
 }
 
-/** 治疗数字 */
-function showHealNum(targetId: string, value: number) {
+/** 治疗数字（上浮淡出时长 = budget * 0.35） */
+function showHealNum(targetId: string, value: number, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
+  const floatDuration = (budget ?? getActionBudget(1)) * 0.35
   dmgNums.value.push({
     id, text: `+${value}`,
     x: pos.x + (Math.random() - 0.5) * 30,
     y: pos.y + 10,
     cls: 'heal-num',
   })
-  setRemove(id, dmgNums, 1650)
+  setRemove(id, dmgNums, floatDuration)
 }
 
 /** 护盾数字 */
@@ -381,7 +390,21 @@ function showScreenShake() {
   setTimeout(() => { shaking.value = false }, 400)
 }
 
-/** 完整攻击动画序列 */
+/** 飞行序列：只飞（技能名 + 光弹），不包含命中 */
+function playFlightSequence(
+  attackerId: string,
+  targetId: string,
+  skillName: string,
+  fromSide: 'left' | 'right',
+  impactStyle: 'fire' | 'frost',
+  budget: number,
+) {
+  showSkillName(attackerId, targetId, skillName, fromSide, budget)
+  // 光弹从 20%T 出发 → 50%T 到达
+  setTimeout(() => showProjectile(attackerId, targetId, impactStyle, budget * 0.3), budget * 0.2)
+}
+
+/** 完整攻击动画序列（已废弃 — 保留旧接口兼容） */
 function playAttackSequence(
   attackerId: string,
   targetId: string,
@@ -391,35 +414,37 @@ function playAttackSequence(
   fromSide: 'left' | 'right',
   impactStyle: 'fire' | 'frost' = 'fire',
 ) {
-  showSkillName(attackerId, targetId, skillName, fromSide)
-  setTimeout(() => showProjectile(attackerId, targetId, impactStyle), 250)
+  const budget = getActionBudget(useBattleStore().battleSpeed)
+  showSkillName(attackerId, targetId, skillName, fromSide, budget)
+  setTimeout(() => showProjectile(attackerId, targetId, impactStyle, budget * 0.3), budget * 0.2)
   setTimeout(() => {
-    showImpact(targetId, impactStyle)
-    // ponytail: damage=0 时跳过数字，由后续 DAMAGE_ANIMATION 事件显示真实值
-    if (damage > 0) showDamageNum(targetId, damage, isCrit)
+    showImpact(targetId, impactStyle, budget)
+    if (damage > 0) showDamageNum(targetId, damage, isCrit, budget)
     if (isCrit) showScreenShake()
-  }, 1100)
+  }, budget * 0.5)
 }
 
-/** 完整治疗动画序列 */
+/** 完整治疗动画序列（已废弃 — 保留旧接口兼容） */
 function playHealSequence(healerId: string, targetId: string, skillName: string, value: number, fromSide: 'left' | 'right') {
-  showSkillName(healerId, targetId, skillName, fromSide)
-  setTimeout(() => showProjectile(healerId, targetId, 'heal'), 250)
+  const budget = getActionBudget(useBattleStore().battleSpeed)
+  showSkillName(healerId, targetId, skillName, fromSide, budget)
+  setTimeout(() => showProjectile(healerId, targetId, 'heal', budget * 0.3), budget * 0.2)
   setTimeout(() => {
-    showImpact(targetId, 'heal')
-    showHealAura(targetId)
-    showHealNum(targetId, value)
-  }, 1100)
+    showImpact(targetId, 'heal', budget)
+    showHealAura(targetId, budget)
+    showHealNum(targetId, value, budget)
+  }, budget * 0.5)
 }
 
-/** 完整护盾动画序列 */
+/** 完整护盾动画序列（已废弃 — 保留旧接口兼容） */
 function playShieldSequence(casterId: string, targetId: string, skillName: string, value: number, fromSide: 'left' | 'right') {
-  showSkillName(casterId, targetId, skillName, fromSide)
-  setTimeout(() => showProjectile(casterId, targetId, 'shield'), 250)
+  const budget = getActionBudget(useBattleStore().battleSpeed)
+  showSkillName(casterId, targetId, skillName, fromSide, budget)
+  setTimeout(() => showProjectile(casterId, targetId, 'shield', budget * 0.3), budget * 0.2)
   setTimeout(() => {
-    showShieldHex(targetId)
+    showShieldHex(targetId, budget)
     showShieldNum(targetId, value)
-  }, 1100)
+  }, budget * 0.5)
 }
 
 defineExpose({
@@ -434,6 +459,7 @@ defineExpose({
   showHealNum,
   showShieldNum,
   showScreenShake,
+  playFlightSequence,
   playAttackSequence,
   playHealSequence,
   playShieldSequence,

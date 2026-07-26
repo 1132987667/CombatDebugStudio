@@ -29,8 +29,12 @@ export function useSituationalAttributes(
   participant: ComputedRef<BattleEntity | null> | Ref<BattleEntity | null>,
   target: ComputedRef<BattleEntity | null> | Ref<BattleEntity | null>,
   skill: ComputedRef<SkillConfig | null> | Ref<SkillConfig | null>,
+  versionTick?: ComputedRef<number> | Ref<number>,
 ) {
   return computed<SituationalAttribute[]>(() => {
+    // 建立响应式依赖：版本戳变化时重新求值
+    void (versionTick ? toValue(versionTick) : 0)
+
     const p = toValue(participant)
     const t = toValue(target)
     const s = toValue(skill)

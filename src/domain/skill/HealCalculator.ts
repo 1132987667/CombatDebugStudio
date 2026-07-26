@@ -1,6 +1,6 @@
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
-import type { BattleContext } from '@/domain/battle/type/types'
+import type { StepExecutionContext } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -30,7 +30,7 @@ export class HealCalculator {
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
     buffSystem?: BuffSystem,
   ): { heal: number; overflow: number } {
     this.calculationLogs = []

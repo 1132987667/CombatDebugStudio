@@ -10,10 +10,10 @@
  * - 所有 UI 格式化逻辑在此完成（如 Buff summary 字符串）
  */
 
-import type { UIParticipantSnapshot, BuffDisplayItem } from '@/shared/types/projection'
+import type { UIParticipantSnapshot } from '@/shared/types/projection'
+import type { BuffRawItem } from '@/shared/types/buff-display'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
-import { AttributeCodeNames } from '@/domain/attribute/types'
 
 /**
  * 将 BattleEntity 映射为 UI 快照
@@ -56,8 +56,8 @@ export function participantToSnapshot(
     // 护盾值（来自 BuffSystem.shieldValues）
     shield: buffSystem.getShieldValue(entity.id),
 
-    // Buff 显示数据
-    buffs: buildBuffDisplay(entity, buffSystem),
+    // Buff 显示数据（BuffRawItem[]，供 useBuffDisplay 管道消费）
+    buffs: buildBuffRawItems(entity, buffSystem),
 
     // 版本戳
     version: entity.statsVersion,
@@ -65,16 +65,17 @@ export function participantToSnapshot(
 }
 
 /**
- * 构建 Buff 显示条目列表
+ * 构建 Buff 原始条目列表（BuffRawItem[]）
  *
- * 逻辑源自 ParticipantCard.vue 的 buffListItems computed +
- * useBuffDisplay 中的摘要生成，现在在投影层预计算。
+ * 逻辑与 ParticipantCard.vue 的 buffListItems computed 完全一致，
+ * 但在此处（投影层）预计算，组件层改为纯消费快照。
+ * 输出 BuffRawItem[] 供 useBuffDisplay 管道消费。
  */
-function buildBuffDisplay(
+function buildBuffRawItems(
   entity: BattleEntity,
   buffSystem: BuffSystem,
-): BuffDisplayItem[] {
-  const items: BuffDisplayItem[] = []
+): BuffRawItem[] {
+  const result: BuffRawItem[] = []
   const seenIds = new Set<string>()
 
   // 源1: BuffSystem 管理的 buff
@@ -85,54 +86,35 @@ function buildBuffDisplay(
       if (!instance) continue
       const config = instance.context.config
       if (!config) continue
-
       seenIds.add(id)
       seenIds.add(config.id)
-
-      items.push({
-        instanceId: id,
+      result.push({
+        id,
+        buffId: config.id,
         name: config.name,
-        isDebuff: config.isDebuff === true,
+        description: config.description ?? '',
         remainingTurns: instance.remainingTurns,
-        stacks: instance.currentStacks,
-        summary: buildAttributeSummary(config.attributes ?? {}),
+        currentStacks: instance.currentStacks,
+        isDebuff: config.isDebuff === true,
+        attributes: config.attributes,
+        effectLines: instance.effectLines ?? [],
+        conditionState: instance.conditionState,
+        controlType: config.controlType,
       })
     }
   }
 
-  // 源2: InterventionManager 维护的手动状态（兼容层）
+  // 源2: InterventionManager 手动状态
   const manualEffects = entity.statusEffects ?? []
   for (const s of manualEffects) {
     if (!seenIds.has(s.id)) {
       seenIds.add(s.id)
-      items.push({
-        instanceId: s.id,
-        name: s.name,
-        isDebuff: s.type === 'debuff',
-        remainingTurns: s.remainingTurns,
-        stacks: 1,
-        summary: '',
+      result.push({
+        id: s.id, buffId: s.id, name: s.name, description: '',
+        remainingTurns: s.remainingTurns, currentStacks: 1,
+        isDebuff: s.type === 'debuff', effectLines: [], conditionState: undefined,
       })
     }
   }
-
-  return items
-}
-
-/**
- * 从 BuffConfig.attributes 生成显示摘要
- * 如 { attack: "+0.15", defense: "-0.10" } → "攻击+15% 防御-10%"
- */
-function buildAttributeSummary(attributes: Record<string, string>): string {
-  const parts: string[] = []
-
-  for (const [code, raw] of Object.entries(attributes)) {
-    const cn = (AttributeCodeNames as Record<string, string>)[code] ?? code
-    const num = parseFloat(raw)
-    if (isNaN(num)) continue
-    if (num >= 0) parts.push(`${cn}+${Math.round(num * 100)}%`)
-    else parts.push(`${cn}${Math.round(num * 100)}%`)
-  }
-
-  return parts.join(' ')
+  return result
 }

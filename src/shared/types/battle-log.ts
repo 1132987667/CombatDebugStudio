@@ -45,6 +45,8 @@ export interface BattleLogMeta {
   /** 叙事角色：决定归入哪种块 */
   role?: 'action' | 'sub' | 'settlement' | 'snapshot' | 'condition' | 'battle'
   entityId?: string
+  entityName?: string
+  entityFaction?: 'ally' | 'enemy'
   hpBefore?: number
   hpAfter?: number
   damage?: number

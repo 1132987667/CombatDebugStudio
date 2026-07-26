@@ -9,7 +9,7 @@
 
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import type { BattleTriggerPhase } from '@/domain/battle/type/types'
-import type { TriggerEventContext } from '@/domain/buff/types'
+import type { TriggerEventContext } from '@/domain/battle/type/types'
 
 /**
  * 事件监听器类型

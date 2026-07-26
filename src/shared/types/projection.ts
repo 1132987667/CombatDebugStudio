@@ -6,20 +6,7 @@
  * Vue reactive() 对此结构的追踪是零成本的（所有字段都是原始值或纯数组）。
  */
 
-/**
- * Buff 显示条目 — 纯数据，无方法引用
- */
-export interface BuffDisplayItem {
-  readonly instanceId: string
-  readonly name: string
-  readonly isDebuff: boolean
-  /** 剩余回合数，0 = 永久 */
-  readonly remainingTurns: number
-  /** 当前层数 */
-  readonly stacks: number
-  /** 合并后的属性修正摘要，如 "攻击+15%" */
-  readonly summary: string
-}
+import type { BuffRawItem } from '@/shared/types/buff-display'
 
 /**
  * 参与者 UI 快照 — 纯数据，无方法，无 getter 链
@@ -58,7 +45,7 @@ export interface UIParticipantSnapshot {
   energyPercent: number
 
   // === Buff 显示数据 ===
-  buffs: BuffDisplayItem[]
+  buffs: BuffRawItem[]
 
   // === 版本戳（调试用） ===
   version: number

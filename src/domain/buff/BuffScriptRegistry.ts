@@ -75,6 +75,24 @@ export class BuffScriptRegistry {
       if (Array.isArray(buffsData)) {
         for (const buff of buffsData) {
           if (buff.id) {
+            // 校验 attributes 值格式
+            if (buff.attributes) {
+              for (const [key, value] of Object.entries(buff.attributes)) {
+                if (typeof value !== 'string') {
+                  LoggerProvider.logger.addDebugLog(
+                    `Buff ${buff.id} 属性 ${key} 的值不是字符串: ${value}`,
+                  )
+                  continue
+                }
+                const trimmed = (value as string).trim()
+                const numericStr = trimmed.replace('%', '')
+                if (isNaN(parseFloat(numericStr))) {
+                  LoggerProvider.logger.addDebugLog(
+                    `Buff ${buff.id} 属性 ${key} 的值无法解析为数字: "${value}"`,
+                  )
+                }
+              }
+            }
             this.buffConfigs.set(buff.id, buff as BuffConfigData)
             console.log(`加载 Buff 配置: ${buff.id}`)
           }

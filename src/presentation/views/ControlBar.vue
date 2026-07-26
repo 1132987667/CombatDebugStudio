@@ -26,11 +26,16 @@
       </button>
     </div>
     <div class="control-group right">
-      <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">{{ isPaused ? '继 续' :
-        '暂 停' }}</button>
-      <button class="control-btn" @click="handleSingleStep" :disabled="singleStepDisabled">{{ singleStepLabel
-      }}</button>
-
+      <!-- 调试模式：暂停相位指示 + 暂停 / 单步调试 -->
+      <template v-if="debugMode">
+        <span v-if="debugPhase" class="debug-phase-badge">⏸ 暂停于：{{ debugPhaseLabel }}</span>
+        <button class="control-btn" @click="handleDebugStep" :disabled="!debugPhase">
+          {{ debugPhase ? '继 续' : '暂 停' }}
+        </button>
+        <button class="control-btn" @click="handleDebugStep" :disabled="!debugPhase">
+          {{ debugPhase ? '下一步 ▶' : '单步调试' }}
+        </button>
+      </template>
       <span class="separator"></span>
 
       <!-- 调试切换开关 -->
@@ -53,7 +58,6 @@ import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 
 const props = defineProps<{
   isBattleActive: boolean;
-  isPaused: boolean;
   isAutoPlaying: boolean;
   battleSpeed?: number;
 }>();
@@ -62,9 +66,6 @@ const emit = defineEmits<{
   "start-battle": [];
   "end-battle": [];
   "reset-battle": [];
-  "step-back": [];
-  "toggle-pause": [];
-  "single-step": [];
   "toggle-auto-play": [];
   "battle-speed-change": [speed: number];
 }>();
@@ -92,39 +93,50 @@ const toggleBattleSpeed = () => {
   emit('battle-speed-change', speedLevels[nextIndex]);
 };
 
-// 调试模式切换 — 与 DebugGate 单例双向同步
+
+
+// ========== 调试模式 ==========
+// NOTE: debugGate 是普通类，状态不可响应式追踪，
+//       因此通过 DEBUG_PAUSE / DEBUG_PAUSE_RESUME 事件驱动本地 ref
 const debugMode = ref(debugGate.enabled)
+const debugPhase = ref<string | null>(debugGate.waitingPhase)
+
+const PHASE_LABELS: Record<string, string> = {
+  BATTLE_START: '战斗开始',
+  TURN_START: '回合开始',
+  TURN_END: '回合结束',
+  BATTLE_END: '战斗结束',
+}
+const debugPhaseLabel = computed(() =>
+  debugPhase.value ? (PHASE_LABELS[debugPhase.value] ?? debugPhase.value) : ''
+)
+
 const toggleDebug = () => {
   debugMode.value = !debugMode.value
   debugGate.setEnabled(debugMode.value)
 }
-// 反向同步：通过 eventBus 监听外部调试开关变化
+
+// 暂停 / 单步调试：调试模式下战斗停在断点上，两者都推进到下一个断点
+const handleDebugStep = () => {
+  debugGate.nextStep()
+}
+
 onMounted(() => {
-  eventBus.on(BattleEventCodes.DEBUG_TOGGLE, (data: { enabled?: boolean }) => {
+  eventBus.on(BattleEventCodes.DEBUG_TOGGLE, (data) => {
     debugMode.value = data?.enabled ?? false
+  })
+  eventBus.on(BattleEventCodes.DEBUG_PAUSE, (data) => {
+    debugPhase.value = data?.phase ?? null
+  })
+  eventBus.on(BattleEventCodes.DEBUG_PAUSE_RESUME, () => {
+    debugPhase.value = null
   })
 })
 onUnmounted(() => {
   eventBus.off(BattleEventCodes.DEBUG_TOGGLE)
+  eventBus.off(BattleEventCodes.DEBUG_PAUSE)
+  eventBus.off(BattleEventCodes.DEBUG_PAUSE_RESUME)
 })
-
-// 单步执行按钮 — 调试模式下合并 DebugGate 的"下一步"语义
-const isDebugWaiting = computed(() => debugMode.value && debugGate.isWaiting())
-
-const singleStepLabel = computed(() => isDebugWaiting.value ? '▶ 下一步' : '单步执行')
-
-const singleStepDisabled = computed(() => {
-  if (isDebugWaiting.value) return false
-  return !props.isBattleActive
-})
-
-const handleSingleStep = () => {
-  if (isDebugWaiting.value) {
-    debugGate.nextStep()
-  } else {
-    emit('single-step')
-  }
-}
 </script>
 
 <style scoped>
@@ -193,6 +205,19 @@ const handleSingleStep = () => {
   background: var(--color-border-default);
   opacity: 0.4;
   flex-shrink: 0;
+}
+
+/* 调试相位徽标 */
+.debug-phase-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  border-radius: var(--radius-xl);
+  background: rgba(34, 211, 238, 0.1);
+  color: var(--color-energy);
+  white-space: nowrap;
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
 /* 调试切换开关 */

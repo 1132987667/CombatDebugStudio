@@ -128,6 +128,7 @@ src/
             useSituationalAttributes.ts
         config/
             attributeDisplay.ts
+            attributeNames.ts
         stores/
             battleStore.ts
             debugStore.ts
@@ -173,6 +174,7 @@ src/
             ParticipantPanel.vue
     shared/
         constants/
+            animation-timing.ts
             speed.ts
         types/
             battle-commands.ts
@@ -1543,10 +1545,10 @@ export class LogTooltipResolver {
  * - 所有 UI 格式化逻辑在此完成（如 Buff summary 字符串）
  */
 
-import type { UIParticipantSnapshot, BuffDisplayItem } from '@/shared/types/projection'
+import type { UIParticipantSnapshot } from '@/shared/types/projection'
+import type { BuffRawItem } from '@/shared/types/buff-display'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
-import { AttributeCodeNames } from '@/domain/attribute/types'
 
 /**
  * 将 BattleEntity 映射为 UI 快照
@@ -1589,8 +1591,8 @@ export function participantToSnapshot(
     // 护盾值（来自 BuffSystem.shieldValues）
     shield: buffSystem.getShieldValue(entity.id),
 
-    // Buff 显示数据
-    buffs: buildBuffDisplay(entity, buffSystem),
+    // Buff 显示数据（BuffRawItem[]，供 useBuffDisplay 管道消费）
+    buffs: buildBuffRawItems(entity, buffSystem),
 
     // 版本戳
     version: entity.statsVersion,
@@ -1598,16 +1600,17 @@ export function participantToSnapshot(
 }
 
 /**
- * 构建 Buff 显示条目列表
+ * 构建 Buff 原始条目列表（BuffRawItem[]）
  *
- * 逻辑源自 ParticipantCard.vue 的 buffListItems computed +
- * useBuffDisplay 中的摘要生成，现在在投影层预计算。
+ * 逻辑与 ParticipantCard.vue 的 buffListItems computed 完全一致，
+ * 但在此处（投影层）预计算，组件层改为纯消费快照。
+ * 输出 BuffRawItem[] 供 useBuffDisplay 管道消费。
  */
-function buildBuffDisplay(
+function buildBuffRawItems(
   entity: BattleEntity,
   buffSystem: BuffSystem,
-): BuffDisplayItem[] {
-  const items: BuffDisplayItem[] = []
+): BuffRawItem[] {
+  const result: BuffRawItem[] = []
   const seenIds = new Set<string>()
 
   // 源1: BuffSystem 管理的 buff
@@ -1618,56 +1621,37 @@ function buildBuffDisplay(
       if (!instance) continue
       const config = instance.context.config
       if (!config) continue
-
       seenIds.add(id)
       seenIds.add(config.id)
-
-      items.push({
-        instanceId: id,
+      result.push({
+        id,
+        buffId: config.id,
         name: config.name,
-        isDebuff: config.isDebuff === true,
+        description: config.description ?? '',
         remainingTurns: instance.remainingTurns,
-        stacks: instance.currentStacks,
-        summary: buildAttributeSummary(config.attributes ?? {}),
+        currentStacks: instance.currentStacks,
+        isDebuff: config.isDebuff === true,
+        attributes: config.attributes,
+        effectLines: instance.effectLines ?? [],
+        conditionState: instance.conditionState,
+        controlType: config.controlType,
       })
     }
   }
 
-  // 源2: InterventionManager 维护的手动状态（兼容层）
+  // 源2: InterventionManager 手动状态
   const manualEffects = entity.statusEffects ?? []
   for (const s of manualEffects) {
     if (!seenIds.has(s.id)) {
       seenIds.add(s.id)
-      items.push({
-        instanceId: s.id,
-        name: s.name,
-        isDebuff: s.type === 'debuff',
-        remainingTurns: s.remainingTurns,
-        stacks: 1,
-        summary: '',
+      result.push({
+        id: s.id, buffId: s.id, name: s.name, description: '',
+        remainingTurns: s.remainingTurns, currentStacks: 1,
+        isDebuff: s.type === 'debuff', effectLines: [], conditionState: undefined,
       })
     }
   }
-
-  return items
-}
-
-/**
- * 从 BuffConfig.attributes 生成显示摘要
- * 如 { attack: "+0.15", defense: "-0.10" } → "攻击+15% 防御-10%"
- */
-function buildAttributeSummary(attributes: Record<string, string>): string {
-  const parts: string[] = []
-
-  for (const [code, raw] of Object.entries(attributes)) {
-    const cn = (AttributeCodeNames as Record<string, string>)[code] ?? code
-    const num = parseFloat(raw)
-    if (isNaN(num)) continue
-    if (num >= 0) parts.push(`${cn}+${Math.round(num * 100)}%`)
-    else parts.push(`${cn}${Math.round(num * 100)}%`)
-  }
-
-  return parts.join(' ')
+  return result
 }
 
 --- src/domain/attribute/types.ts ---
@@ -3723,6 +3707,12 @@ export class AutoBattleManager {
  ** 作者: CombatDebugStudio
  ** 功能: 战斗动画管理器
  ** 描述: 管理战斗动画队列的入队、播放、暂停与清除，协调 RAFTimer 驱动的时序播放
+ **
+ ** 改造（2026-07-26）：固定行动预算模型
+ ** - 依赖从 getAnimationDuration（反向 bug）改为 getBattleSpeed
+ ** - 新增阶段化方法：triggerFlightPhaseAndWait / triggerImpactPhaseAndWait / triggerMissImpactAndWait / triggerDirectImpactAndWait
+ ** - 删除旧的方法：triggerSkillEffectAnimation / triggerDamageAnimationAndWait / triggerMissAnimationAndWait
+ ** - resolve 时发射 ANIMATION_COMPLETE 事件，供 UI 层竞态安全地清除动画状态
  **/
 import type { AnimationData, AnimationQueueItem, AnimationType } from '@/domain/battle/type/BattleAnimationType'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
@@ -3730,6 +3720,12 @@ import type { DamageCategory } from '@/domain/skill/types'
 import { eventBus } from '@/main'
 import type { RAFTimer } from '@/shared/utils/RAF'
 import type { BattleEntity } from '@/domain/battle/type/types'
+import { BATTLE_ANIMATION_TIMING, getActionBudget, phaseAt } from '@/shared/constants/animation-timing'
+import type {
+  SkillEffectEventData,
+  DamageEventData,
+  MissEventData,
+} from '@/domain/battle/type/BattleEventType'
 
 export class BattleAnimationManager {
   private animationQueue: AnimationQueueItem[] = []
@@ -3740,8 +3736,13 @@ export class BattleAnimationManager {
   constructor(
     private rafTimer: RAFTimer,
     private getParticipants: () => Map<string, BattleEntity> | undefined,
-    private getAnimationDuration: () => number,
+    private getBattleSpeed: () => number,   // 改：传速度，不传（反向的）时长
   ) {}
+
+  /** 当前速度下的单行动总预算 T */
+  private get budget(): number {
+    return getActionBudget(this.getBattleSpeed())
+  }
 
   wait(ms: number): Promise<void> {
     return new Promise((resolve) => {
@@ -3783,7 +3784,7 @@ export class BattleAnimationManager {
     data: AnimationData,
     duration: number = 0,
   ): Promise<void> {
-    const actualDuration = duration > 0 ? duration : this.getAnimationDuration()
+    const actualDuration = duration > 0 ? duration : this.budget
 
     return new Promise<void>((resolve) => {
       this.animationQueue.push({
@@ -3835,6 +3836,8 @@ export class BattleAnimationManager {
         resolved = true
         clearTimeout(timeoutId)
         this.rafTimer.clear(timerId)
+        // 发射动画完成事件，供 UI 层竞态安全地清除动画状态
+        eventBus.emit(BattleEventCodes.ANIMATION_COMPLETE, { type: animation.type })
         if (typeof animation.resolve === 'function') {
           animation.resolve()
         }
@@ -3852,33 +3855,40 @@ export class BattleAnimationManager {
     })
   }
 
-  async triggerSkillEffectAnimation(data: {
-    sourceId: string
-    targetId: string
-    skillName: string
-    effectType: string
-    damageCategory: DamageCategory
-  }): Promise<void> {
-    const duration = Math.floor(this.getAnimationDuration() * 1.5)
+  // ============ 阶段化方法（固定预算模型） ============
+
+  /**
+   * 飞行阶段（0 → 50%T）：蓄力 + 技能名/光弹飞行，终点即命中瞬间
+   */
+  async triggerFlightPhaseAndWait(data: SkillEffectEventData): Promise<void> {
+    const duration = phaseAt(BATTLE_ANIMATION_TIMING.PHASES.impact, this.getBattleSpeed())
     await this.triggerAnimationAndWait(BattleEventCodes.SKILL_EFFECT, data, duration)
   }
 
-  async triggerDamageAnimationAndWait(data: {
-    targetId: string
-    damage: number
-    damageCategory: DamageCategory
-    isCritical: boolean
-    isHeal: boolean
-  }): Promise<void> {
-    const baseDuration = this.getAnimationDuration()
-    const duration = data.isCritical ? Math.floor(baseDuration * 1.5) : baseDuration
+  /**
+   * 命中阶段（50% → 100%T）：伤害数字 + 命中爆发
+   */
+  async triggerImpactPhaseAndWait(data: DamageEventData): Promise<void> {
+    const duration = this.budget - phaseAt(BATTLE_ANIMATION_TIMING.PHASES.impact, this.getBattleSpeed())
     await this.triggerAnimationAndWait(BattleEventCodes.DAMAGE_ANIMATION, data, duration)
   }
 
-  async triggerMissAnimationAndWait(data: { targetId: string }): Promise<void> {
-    await this.triggerAnimationAndWait(BattleEventCodes.MISS_ANIMATION, data, this.getAnimationDuration())
+  /**
+   * 闪避命中阶段（50% → 100%T）
+   */
+  async triggerMissImpactAndWait(data: MissEventData): Promise<void> {
+    const duration = this.budget - phaseAt(BATTLE_ANIMATION_TIMING.PHASES.impact, this.getBattleSpeed())
+    await this.triggerAnimationAndWait(BattleEventCodes.MISS_ANIMATION, data, duration)
   }
 
+  /**
+   * 轻量命中阶段（无飞行，完整 T）：治疗/护盾等非投射类行动
+   */
+  async triggerDirectImpactAndWait(data: DamageEventData): Promise<void> {
+    await this.triggerAnimationAndWait(BattleEventCodes.DAMAGE_ANIMATION, data, this.budget)
+  }
+
+  /** Buff 特效（保留原样 — 不属于行动预算，独立触发） */
   async triggerBuffEffectAndWait(data: {
     targetId: string
     buffName: string
@@ -4472,8 +4482,6 @@ export class BattleManager {
     const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
     this.battleSystem.setBattleState(BattleStatus.ACTIVE)
     this.battleStateManager.setBattleId(battleState.battleId)
-    LoggerProvider.logger.clearLogs()
-    LoggerProvider.logger.addSystemLog({ message: '战斗已创建' })
     this.syncBattleState()
     this.emitTeamChanged()
 
@@ -4747,8 +4755,6 @@ import { debugGate } from '@/domain/battle/debug/DebugGate'
 import type { SkillConfig } from '@/domain/skill/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
-/** 角色行动间的动画延迟（ms） */
-const TURN_ACTION_DELAY_MS = 400
 
 /**
  * 战斗系统核心管理类
@@ -4834,7 +4840,7 @@ export class BattleSystem {
     this.animationManager = new BattleAnimationManager(
       this.rafTimer,
       () => this.battleData?.participants,
-      () => (this.battleData?.battleSpeed ?? 1) * 200,
+      () => this.battleData?.battleSpeed ?? 1,
     )
     this.lifecycleManager = new BattleLifecycleManager(
       () => this.battleData,
@@ -5004,8 +5010,14 @@ export class BattleSystem {
       participants: allParticipants,
     })
 
-    LoggerProvider.logger.addSystemLog({
-      message: `战斗双方人员情况: 我方 ${allyParticipants.length} 人 | 敌方 ${enemyParticipants.length} 人`,
+    LoggerProvider.logger.addBattleLog({
+      turn: 0,
+      message: `战斗开始  ·  我方 ${allyParticipants.length} vs 敌方 ${enemyParticipants.length}`,
+      segments: [
+        { text: `战斗开始  ·  我方 ${allyParticipants.length} vs 敌方 ${enemyParticipants.length}`, classStr: 'log-system' },
+      ],
+      category: BATTLE_LOG_CATEGORIES.SYSTEM,
+      meta: { role: 'battle' },
     })
     battleData.roundState = RoundStatus.START
 
@@ -5376,8 +5388,6 @@ export class BattleSystem {
 
         await this.animationManager.waitForAnimation()
 
-        // 角色行动间保留固定间隔，让 CSS 动画有足够时间淡出完成
-        await this.animationManager.wait(TURN_ACTION_DELAY_MS)
 
         // ⭐ 补充守卫：如果在等待间隔期间战斗已结束，跳过后续操作
         if (battle.battleState !== BattleStatus.ACTIVE) {
@@ -5454,6 +5464,43 @@ export class BattleSystem {
           `额外行动已达上限(${MAX_EXTRA_ACTIONS})，丢弃 ${extraEntityIds.length} 个请求`,
           { level: LogLevel.WARN },
         )
+      }
+
+      // ★ 回合态势快照
+      const allySnapshot: string[] = []
+      const enemySnapshot: string[] = []
+      battle.participants.forEach((p) => {
+        if (!p.isAlive()) return
+        const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
+        const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
+        const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
+        if (p.team === PARTICIPANT_SIDE.ALLY) allySnapshot.push(entry)
+        else enemySnapshot.push(entry)
+      })
+
+      if (allySnapshot.length > 0) {
+        LoggerProvider.logger.addBattleLog({
+          turn: battle.currentTurn,
+          message: `我方  ${allySnapshot.join(' · ')}`,
+          segments: [
+            { text: '我方  ', classStr: 'log-friendly' },
+            { text: allySnapshot.join(' · ') },
+          ],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'snapshot' },
+        })
+      }
+      if (enemySnapshot.length > 0) {
+        LoggerProvider.logger.addBattleLog({
+          turn: battle.currentTurn,
+          message: `敌方  ${enemySnapshot.join(' · ')}`,
+          segments: [
+            { text: '敌方  ', classStr: 'log-hostile' },
+            { text: enemySnapshot.join(' · ') },
+          ],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'snapshot' },
+        })
       }
 
       battle.roundState = RoundStatus.END
@@ -6104,6 +6151,8 @@ export class DebugGate {
     const resolve = this._resolve
     this._resolve = null
     resolve?.()
+    // NOTE: 必须通知 UI 清除"暂停中"状态，否则 debugPhase 只进不出
+    eventBus.emit(BattleEventCodes.DEBUG_PAUSE_RESUME)
   }
 
   /** 是否正在等待用户操作 */
@@ -7835,6 +7884,9 @@ export class InterventionManager {
         statusEffects: [...this.selectedChar.statusEffects],
       })
 
+      // 通知投影层刷新（手动添加状态需要反映到 UI）
+      this.selectedChar.recalcAll()
+
       this.logger.addActionLog({
         source: '系统',
         action: '添加状态',
@@ -7885,6 +7937,9 @@ export class InterventionManager {
       this.battleStateManager.updateCharacterManually(this.selectedChar.id, {
         statusEffects: [],
       })
+
+      // 通知投影层刷新
+      this.selectedChar.recalcAll()
 
       this.logger.addActionLog({
         source: '系统',
@@ -8975,6 +9030,7 @@ import {
   BATTLE_LOG_CATEGORIES,
   buildNameSegments,
 } from '@/shared/types/battle-log'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { skillSegment } from '@/shared/utils/log-segment-factory'
 import { TraceDamageLogger } from '@/domain/battle/logs/TraceDamageLogger'
 import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
@@ -9277,6 +9333,9 @@ export class BattleExecutor {
     const records: CombatRecord[] = []
 
     try {
+      // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
+      LoggerProvider.logger.beginBufferSubLogs()
+
       this.passiveSkillManager.triggerPassives(
         BattleTriggerPhase.BEFORE_ATTACK,
         source,
@@ -9367,34 +9426,44 @@ export class BattleExecutor {
       const targetNames = targets.map((t) => t.name).join(', ')
       const damageText = totalDamage > 0 ? `，造成 ${totalDamage} 点伤害` : ''
       const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点生命` : ''
-      // ponytail: 技能执行的伤害/治疗动画 — 与 handleHitAttack / executeAction 保持一致
+      // NOTE: 固定预算模型 — 伤害/治疗走飞行→命中，治疗单独走直接命中
       if (targets.length > 0 && (totalDamage > 0 || totalHeal > 0)) {
         const primaryTarget = targets[0]
         const isCrit = allEffects.some(
           (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
         )
 
-        // ponytail: 技能飞行动画只播放一次（无论伤害/治疗/同时都有）
-        await this.animationManager.triggerSkillEffectAnimation({
-          sourceId: source.id,
-          targetId: primaryTarget.id,
-          skillName: skill.name || skill.id,
-          effectType: action.type,
-          damageCategory: DamageCategory.PHYSICAL,
-        })
+        // NOTE: 在扣血前捕获 HP 用于叙事日志
+        const hpBeforeMap = new Map<string, number>()
+        for (const pd of pendingDamages) {
+          hpBeforeMap.set(pd.target.id, pd.target.currentHealth)
+        }
 
         if (totalDamage > 0) {
-          await this.animationManager.triggerDamageAnimationAndWait({
+          // 攻击/伤害技能 → 飞行（0→50%T）+ 命中（50%→100%T）
+          await this.animationManager.triggerFlightPhaseAndWait({
+            sourceId: source.id,
+            targetId: primaryTarget.id,
+            skillName: skill.name || skill.id,
+            effectType: action.type,
+            damageCategory: DamageCategory.PHYSICAL,
+          })
+
+          // 命中瞬间（50%T）：统一应用所有延迟伤害
+          damageToken.applyAll()
+
+          await this.animationManager.triggerImpactPhaseAndWait({
             targetId: primaryTarget.id,
             damage: totalDamage,
             damageCategory: DamageCategory.PHYSICAL,
             isCritical: isCrit,
             isHeal: false,
           })
-        }
+        } else if (totalHeal > 0) {
+          // 治疗技能 → 直接命中（无飞行，完整 T）
+          damageToken.applyAll()
 
-        if (totalHeal > 0) {
-          await this.animationManager.triggerDamageAnimationAndWait({
+          await this.animationManager.triggerDirectImpactAndWait({
             targetId: primaryTarget.id,
             damage: totalHeal,
             damageCategory: DamageCategory.PHYSICAL,
@@ -9402,14 +9471,6 @@ export class BattleExecutor {
             isHeal: true,
           })
         }
-
-        // ponytail: 动画完成后统一应用延迟的伤害/治疗
-        // NOTE: 在扣血前捕获 HP 用于叙事日志
-        const hpBeforeMap = new Map<string, number>()
-        for (const pd of pendingDamages) {
-          hpBeforeMap.set(pd.target.id, pd.target.currentHealth)
-        }
-        damageToken.applyAll()
 
         // NOTE: 扣血后捕获 HP，构建叙事日志
         const primaryHpBefore = pendingDamages.length > 0 ? hpBeforeMap.get(pendingDamages[0].target.id) : undefined
@@ -9668,7 +9729,7 @@ export class BattleExecutor {
     segments: import('@/shared/types/battle-log').LogSegment[]
     category: import('@/shared/types/battle-log').BattleLogCategory
   } {
-    const { isMiss = false, damage = 0, isCritical = false } = options
+    const { isMiss = false, isCritical = false } = options
     const sourcePrefix =
       source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
     const targetPrefix =
@@ -9677,12 +9738,12 @@ export class BattleExecutor {
     if (isMiss) {
       return {
         turn: turnNumber,
-        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name} 发动普通攻击，但是被闪避了！`,
+        message: `${sourcePrefix}${source.name} → ${targetPrefix}${target.name}「普通攻击」`,
         segments: [
-          { text: `${sourcePrefix}${source.name}`, classStr: 'log-hostile', kind: 'entity', faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
-          { text: ' 对 ' },
-          { text: `${targetPrefix}${target.name}`, classStr: 'log-friendly', kind: 'entity', faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
-          { text: ' 发动普通攻击，但是被闪避了！' },
+          { text: `${sourcePrefix}${source.name}`, classStr: source.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+          { text: ' → ' },
+          { text: `${targetPrefix}${target.name}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+          { text: '「普通攻击」' },
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
       }
@@ -9690,7 +9751,7 @@ export class BattleExecutor {
 
     return {
       turn: turnNumber,
-      message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name} 发动普通攻击，${isCritical ? '暴击！' : ''}造成 ${damage} 点物理伤害`,
+      message: `${sourcePrefix}${source.name} → ${targetPrefix}${target.name}「普通攻击」`,
       segments: [
         {
           text: `${sourcePrefix}${source.name}`,
@@ -9701,7 +9762,7 @@ export class BattleExecutor {
           kind: 'entity',
           faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
         },
-        { text: ' 对 ' },
+        { text: ' → ' },
         {
           text: `${targetPrefix}${target.name}`,
           classStr:
@@ -9711,12 +9772,7 @@ export class BattleExecutor {
           kind: 'entity',
           faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
         },
-        { text: ` 发动普通攻击，${isCritical ? '暴击！' : ''}造成 ` },
-        {
-          text: damage.toString(),
-          classStr: isCritical ? 'log-crit' : 'log-damage',
-        },
-        { text: ' 点物理伤害' },
+        { text: `「普通攻击」` },
       ],
       category: isCritical
         ? BATTLE_LOG_CATEGORIES.CRIT
@@ -9792,9 +9848,18 @@ export class BattleExecutor {
       value: 0,
       description: `${target.name} 闪避了攻击`,
     })
-    await this.animationManager.triggerMissAnimationAndWait({
+
+    // 飞行阶段（0→50%T）：与命中一致的前摇
+    await this.animationManager.triggerFlightPhaseAndWait({
+      sourceId: source.id,
       targetId: target.id,
+      skillName: '普通攻击',
+      effectType: 'attack',
+      damageCategory: DamageCategory.PHYSICAL,
     })
+
+    // 命中阶段（50%→100%T）：显示"闪避"
+    await this.animationManager.triggerMissImpactAndWait({ targetId: target.id })
 
     const logParams = this.generateAttackLogParams(source, target, turnNumber, {
       isMiss: true,
@@ -9806,6 +9871,21 @@ export class BattleExecutor {
       category: logParams.category,
       meta: { role: 'action', entityId: target.id, miss: true, skillName: '普通攻击' },
     })
+
+    // 闪避结果作为 Sub 节点
+    LoggerProvider.logger.addBattleLog({
+      turn: turnNumber,
+      message: '被闪避!',
+      segments: [
+        { text: '被闪避!', classStr: 'log-heal' },
+      ],
+      category: BATTLE_LOG_CATEGORIES.STATUS,
+      meta: {
+        role: 'sub',
+        miss: true,
+      },
+    })
+
     LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}，被闪避`,
     )
@@ -9831,8 +9911,8 @@ export class BattleExecutor {
       description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
     })
 
-    // ponytail: 先播飞行动画，到达目标后再扣 HP，保证视觉同步
-    await this.animationManager.triggerSkillEffectAnimation({
+    // 飞行阶段（0→50%T）：蓄力 + 技能名/光弹飞行
+    await this.animationManager.triggerFlightPhaseAndWait({
       sourceId: source.id,
       targetId: target.id,
       skillName: '普通攻击',
@@ -9843,12 +9923,13 @@ export class BattleExecutor {
     // NOTE: 在扣血前捕获 hpBefore，确保 HP 箭头准确
     const hpBefore = target.currentHealth
 
-    // ponytail: 动画命中后再扣血，触发 ON_HIT/ON_DEATH 被动
+    // 命中瞬间（50%T）：扣血，HP 条与 UI 特效同帧开始
     this.applyDamageToTarget(source, target, damage, participants, turnNumber)
 
     const hpAfter = target.currentHealth
 
-    await this.animationManager.triggerDamageAnimationAndWait({
+    // 命中阶段（50%→100%T）：伤害数字 + 命中爆发
+    await this.animationManager.triggerImpactPhaseAndWait({
       targetId: target.id,
       damage,
       damageCategory: DamageCategory.PHYSICAL,
@@ -9908,6 +9989,9 @@ export class BattleExecutor {
     this.traceCounter++
     const atkTraceId = `atk_${this.traceCounter}_${Date.now()}`
 
+    // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
+    LoggerProvider.logger.beginBufferSubLogs()
+
     this.passiveSkillManager.triggerPassives(
       BattleTriggerPhase.BEFORE_ATTACK,
       source,
@@ -9952,6 +10036,9 @@ export class BattleExecutor {
         battle.participants,
       )
     }
+
+    // ★ action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
+    LoggerProvider.logger.flushBufferedSubLogs()
 
     // 回填最终伤害到记录
     record.damage = action.damage ?? 0
@@ -10144,7 +10231,7 @@ export class BattleExecutor {
             (effect) => effect.type === EffectType.MISS,
           )
           if (hasMissEffect) {
-            await this.animationManager.triggerMissAnimationAndWait({
+            await this.animationManager.triggerMissImpactAndWait({
               targetId: target.id,
             })
           }
@@ -10164,24 +10251,61 @@ export class BattleExecutor {
             }
           }
 
-          await this.animationManager.triggerSkillEffectAnimation({
-            sourceId: source.id,
-            targetId: target.id,
-            skillName: action.skillId,
-            effectType: action.type,
-            damageCategory: DamageCategory.PHYSICAL,
-          })
-
-          // ponytail: 主动技能动画循环结束，恢复 buffApplied 回调（被动触发路径需要它）
+          // NOTE: 固定预算模型 — executeAction 技能路径：飞行→命中扣血→命中特效
           this.buffSystem.setBuffAppliedCallbackEnabled(true)
 
-          // NOTE: 在 applyAll 前捕获 HP 用于叙事日志
+          // NOTE: 在扣血前捕获 HP 用于叙事日志
           const hpBefore = target.currentHealth
+          let hpAfter = target.currentHealth
 
-          // ponytail: 动画完成后应用延迟的伤害/治疗
-          damageToken.applyAll()
+          if ((action.damage ?? 0) > 0) {
+            // 伤害技能 → 飞行（0→50%T）+ 命中（50%→100%T）
+            const actionIsCrit = skillAction.effects.some(
+              (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
+            )
 
-          const hpAfter = target.currentHealth
+            await this.animationManager.triggerFlightPhaseAndWait({
+              sourceId: source.id,
+              targetId: target.id,
+              skillName: action.skillId,
+              effectType: action.type,
+              damageCategory: DamageCategory.PHYSICAL,
+            })
+
+            // 命中瞬间（50%T）：应用延迟伤害
+            damageToken.applyAll()
+            hpAfter = target.currentHealth
+
+            await this.animationManager.triggerImpactPhaseAndWait({
+              targetId: target.id,
+              damage: action.damage ?? 0,
+              damageCategory: DamageCategory.PHYSICAL,
+              isCritical: actionIsCrit,
+              isHeal: false,
+            })
+          } else if ((action.heal ?? 0) > 0) {
+            // 治疗技能 → 直接命中（无飞行，完整 T）
+            damageToken.applyAll()
+            hpAfter = target.currentHealth
+
+            await this.animationManager.triggerDirectImpactAndWait({
+              targetId: target.id,
+              damage: action.heal ?? 0,
+              damageCategory: DamageCategory.PHYSICAL,
+              isCritical: false,
+              isHeal: true,
+            })
+          } else {
+            // 无伤害/治疗 — 仍用完 T 预算
+            damageToken.applyAll()
+            hpAfter = target.currentHealth
+
+            await this.animationManager.triggerAnimationAndWait(
+              BattleEventCodes.DAMAGE_ANIMATION,
+              { targetId: target.id, damage: 0, damageCategory: DamageCategory.PHYSICAL, isCritical: false, isHeal: false },
+              0, // 0 = 使用动画管理器的默认预算
+            )
+          }
           const skillId = action.skillId
           const dmgPart = (action.damage ?? 0) > 0 ? `，造成 ${action.damage} 点` : ''
           const healPart = (action.heal ?? 0) > 0 ? `，恢复 ${action.heal} 点生命` : ''
@@ -10230,6 +10354,8 @@ export class BattleExecutor {
               skillName: skillId,
             },
           })
+          // ★ action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
+          LoggerProvider.logger.flushBufferedSubLogs()
           // ponytail: 使用 token 的实际扣血值而非 action.damage 判断被动触发，减少发散窗口
           const actualDamage = damageToken.getTotalDamage()
           if (actualDamage > 0) {
@@ -10273,32 +10399,12 @@ export class BattleExecutor {
           }
           // ponytail: token.applyAll() 已经处理了所有伤害和治疗，不需要额外调用 heal
 
-          // ponytail: 技能伤害/治疗数值动画（在 HP 扣减之后播放，与 handleHitAttack 时序一致）
-          if ((action.damage ?? 0) > 0) {
-            const isCrit = skillAction.effects.some(
-              (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
-            )
-            await this.animationManager.triggerDamageAnimationAndWait({
-              targetId: target.id,
-              damage: action.damage ?? 0,
-              damageCategory: DamageCategory.PHYSICAL,
-              isCritical: isCrit,
-              isHeal: false,
-            })
-          }
-          if ((action.heal ?? 0) > 0) {
-            await this.animationManager.triggerDamageAnimationAndWait({
-              targetId: target.id,
-              damage: action.heal ?? 0,
-              damageCategory: DamageCategory.PHYSICAL,
-              isCritical: false,
-              isHeal: true,
-            })
-          }
         }
       } catch (error) {
         // ponytail: catch 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
         this.buffSystem.setBuffAppliedCallbackEnabled(true)
+        // ★ 出错时也刷出缓冲的 sub 日志，防止内存泄漏
+        LoggerProvider.logger.flushBufferedSubLogs()
         LoggerProvider.logger.addDebugLog(`技能执行失败: ${action.skillId}`, {
           error: error as Error,
         })
@@ -10318,17 +10424,26 @@ export class BattleExecutor {
     // so only apply raw damage/heal for non-skill actions (e.g. fallback attack).
     if (action.type !== ActionTypes.SKILL) {
       if (action.damage && action.damage > 0) {
-        // ponytail: 先播伤害数值动画，再扣 HP，保证视觉同步
-        await this.animationManager.triggerDamageAnimationAndWait({
+        // NOTE: 固定预算模型 — 飞行→命中扣血→命中特效
+        await this.animationManager.triggerFlightPhaseAndWait({
+          sourceId: source.id,
+          targetId: target.id,
+          skillName: '普通攻击',
+          effectType: 'attack',
+          damageCategory: DamageCategory.PHYSICAL,
+        })
+
+        // 命中瞬间（50%T）：扣血
+        const actualDamage = target.takeDamage(action.damage)
+        action.damage = actualDamage
+
+        await this.animationManager.triggerImpactPhaseAndWait({
           targetId: target.id,
           damage: action.damage,
           damageCategory: DamageCategory.PHYSICAL,
           isCritical: false,
           isHeal: false,
         })
-
-        const actualDamage = target.takeDamage(action.damage)
-        action.damage = actualDamage
 
         // ponytail: ON_HIT 触发攻击方，DAMAGE_TAKEN 触发受击方
         this.passiveSkillManager.triggerPassives(
@@ -10381,15 +10496,17 @@ export class BattleExecutor {
         }
 
         if (action.heal && action.heal > 0) {
-          await this.animationManager.triggerDamageAnimationAndWait({
+          // 治疗 → 直接命中（无飞行）
+          const actualHeal = target.heal(action.heal)
+          action.heal = actualHeal
+
+          await this.animationManager.triggerDirectImpactAndWait({
             targetId: target.id,
             damage: action.heal,
             damageCategory: DamageCategory.PHYSICAL,
             isCritical: false,
             isHeal: true,
           })
-          const actualHeal = target.heal(action.heal)
-          action.heal = actualHeal
         }
       }
     }
@@ -12084,6 +12201,7 @@ export type AnimationType =
   | typeof BattleEventCodes.MISS_ANIMATION
   | typeof BattleEventCodes.BUFF_EFFECT
   | typeof BattleEventCodes.SKILL_EFFECT
+  | typeof BattleEventCodes.ANIMATION_COMPLETE
 
 /**
  * 动画数据联合类型
@@ -12194,6 +12312,12 @@ export interface TeamDataChangedEventData {
   enemyTeam: BattleEntity[];
 }
 
+/** 动画完成事件数据类型（用于替代定时器清除动画状态） */
+export interface AnimationCompleteEventData {
+  /** 完成的动画类型（与 AnimationType 对应的事件码字符串） */
+  type: string
+}
+
 
 /** 战斗事件类型映射 */
 export interface BattleEvents {
@@ -12214,6 +12338,7 @@ export interface BattleEvents {
   [BattleEventCodes.DEBUG_TOGGLE]: { enabled: boolean };
   [BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED]: { characterId: string };
   [BattleEventCodes.BATTLE_SUMMARY]: BattleSummary;
+  [BattleEventCodes.ANIMATION_COMPLETE]: AnimationCompleteEventData;
   // mitt 约束：Emitter<Events> 要求 Events extends Record<string, unknown>，必须保留
   [key: string]: unknown;
   [key: symbol]: unknown;
@@ -12262,6 +12387,8 @@ export const BattleEventCodes = {
   PARTICIPANT_ATTRIBUTE_CHANGED: 'participant-attribute-changed',
   /** 战斗摘要事件 */
   BATTLE_SUMMARY: 'battle-summary',
+  /** 动画完成事件（领域层动画队列 resolve 时发射，用于 UI 层竞态安全的清除动画状态） */
+  ANIMATION_COMPLETE: 'animation-complete',
 } as const
 
 export type BattleEventCode = (typeof BattleEventCodes)[keyof typeof BattleEventCodes]
@@ -13569,6 +13696,24 @@ export class BuffScriptRegistry {
       if (Array.isArray(buffsData)) {
         for (const buff of buffsData) {
           if (buff.id) {
+            // 校验 attributes 值格式
+            if (buff.attributes) {
+              for (const [key, value] of Object.entries(buff.attributes)) {
+                if (typeof value !== 'string') {
+                  LoggerProvider.logger.addDebugLog(
+                    `Buff ${buff.id} 属性 ${key} 的值不是字符串: ${value}`,
+                  )
+                  continue
+                }
+                const trimmed = (value as string).trim()
+                const numericStr = trimmed.replace('%', '')
+                if (isNaN(parseFloat(numericStr))) {
+                  LoggerProvider.logger.addDebugLog(
+                    `Buff ${buff.id} 属性 ${key} 的值无法解析为数字: "${value}"`,
+                  )
+                }
+              }
+            }
             this.buffConfigs.set(buff.id, buff as BuffConfigData)
             console.log(`加载 Buff 配置: ${buff.id}`)
           }
@@ -14773,6 +14918,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         targetId: instance.characterId,
         extra: { instanceId, state, characterId: instance.characterId },
       })
+      // 通知投影层刷新（conditionState 变更需要反映到 UI）
+      this.triggerAttributeChange(instance.characterId)
     }
   }
 
@@ -15859,6 +16006,16 @@ export interface IBattleLogManager {
    * @param battleState 可选战斗状态快照
    */
   syncBattleLogs(battleState?: unknown): void | Promise<void>
+
+  /**
+   * 开始缓冲 role='sub' 的日志（BEFORE_ATTACK 前调用）
+   */
+  beginBufferSubLogs(): void
+
+  /**
+   * 将缓冲的 sub 日志全部发射（action 日志之后调用）
+   */
+  flushBufferedSubLogs(): void
 }
 
 --- src/domain/port/IDomainEventBus.ts ---
@@ -15960,7 +16117,7 @@ export function getStepTypeDisplayName(stepType?: string): string {
 }
 
 --- src/domain/skill/DamageCalculator.ts ---
-﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
+﻿﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
 import type { BattleEntity, BattleContext } from '@/domain/battle/type/types'
 import type {
@@ -16829,7 +16986,7 @@ export class HealCalculator {
 }
 
 --- src/domain/skill/PassiveSkillManager.ts ---
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, AttributeCodeNames } from '@/domain/attribute/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
 import {
@@ -16845,13 +17002,12 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { resolveSkillTargets } from '@/domain/skill/target-resolver'
 import type { SkillConfig } from '@/domain/skill/types'
+import { SkillStepType } from '@/domain/skill/types'
 import {
   BATTLE_LOG_CATEGORIES,
-  buildNameSegments,
   LogLevel,
 } from '@/shared/types/battle-log'
 import { createTraceLogEntry } from '@/shared/types/trace-log'
-import { passiveSegment } from '@/shared/utils/log-segment-factory'
 
 export interface PassiveSkillConfig {
   id: string
@@ -17052,34 +17208,17 @@ export class PassiveSkillManager {
         config.triggerCount = (config.triggerCount || 0) + 1
       }
 
-      // ponytail: 被动触发日志 — 带角色名着色
-      const targetNames = targets.map((t) => t.name).join('、') || '自身'
-      const firstTarget = targets[0]
-      const segs = buildNameSegments(
-        entity.name,
-        entity.type === PARTICIPANT_SIDE.ALLY,
-        targetNames,
-        firstTarget ? firstTarget.type === PARTICIPANT_SIDE.ALLY : undefined,
-      )
-
-      // 被动触发名使用 passiveSegment 风格（text + classStr）
+      // ponytail: 被动触发日志 — 简洁格式：被动名 + 效果摘要
       const configName = config.name || config.skillId
-      segs.push({ text: ` 触发 ` })
-      // 用 passiveSegment 工厂获取可悬浮的被动名
-      let passiveSeg: ReturnType<typeof passiveSegment>
-      try {
-        passiveSeg = passiveSegment(config.skillId, this.skillManager)
-      } catch {
-        passiveSeg = { text: `【${config.name || config.skillId}】`, classStr: 'log-passive' }
-      }
-      segs.push(passiveSeg)
+      const effectSummary = this.buildPassiveEffectSummary(skillConfig, targets, context)
 
-      const entityPrefix =
-        entity.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
       LoggerProvider.logger.addBattleLog({
         turn: (context?.currentTurn as number) || 1,
-        message: `${entityPrefix}${entity.name} 触发 ${configName}`,
-        segments: segs,
+        message: `${configName}  ${effectSummary}`,
+        segments: [
+          { text: configName, classStr: 'log-passive', kind: 'passive', hover: { kind: 'passive', id: config.skillId } },
+          { text: `  ${effectSummary}` },
+        ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
         meta: { role: 'sub' },
       })
@@ -17169,6 +17308,90 @@ export class PassiveSkillManager {
     }
 
     return anyExecuted
+  }
+
+  /**
+   * 构建被动技能效果摘要文本
+   * 从技能配置的 steps 中提取效果描述，用于被动触发日志显示
+   */
+  private buildPassiveEffectSummary(
+    config?: SkillConfig,
+    targets?: BattleEntity[],
+    context?: BattleContext,
+  ): string {
+    if (!config) return ''
+    const parts: string[] = []
+    const steps = config.steps || []
+
+    for (const step of steps) {
+      switch (step.type) {
+        case SkillStepType.GAIN_ENERGY: {
+          const val = step.parameters?.value ?? 0
+          if (val > 0) parts.push(`能量 +${val}`)
+          break
+        }
+        case SkillStepType.APPLY_BUFF: {
+          const buffId = step.buffId ?? step.effectId
+          if (buffId) {
+            const buffConfig = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
+            if (buffConfig?.attributes) {
+              for (const [attr, valStr] of Object.entries(buffConfig.attributes)) {
+                const cn = (AttributeCodeNames as Record<string, string>)[attr] ?? attr
+                const num = parseFloat(valStr)
+                if (isNaN(num)) continue
+                const pct = Math.abs(valStr.includes('%') ? num : (Math.abs(num) < 1 ? num * 100 : num))
+                const arrow = num >= 0 ? '↑' : '↓'
+                const maxStacks = step.stacks ?? buffConfig.maxStacks ?? 1
+                // 查目标实体上该 buff 的当前实际层数
+                let currentStacks = 0
+                if (targets && targets.length > 0) {
+                  for (const t of targets) {
+                    if (typeof t.getBuffInstanceIds === 'function') {
+                      const ids = t.getBuffInstanceIds()
+                      for (const instanceId of ids) {
+                        const instance = this.buffSystem.getBuffInstanceById(instanceId)
+                        if (instance?.buffId === buffId && instance.currentStacks > currentStacks) {
+                          currentStacks = instance.currentStacks
+                        }
+                      }
+                    }
+                  }
+                }
+                const stackDisplay = currentStacks > 0
+                  ? `（${currentStacks}/${maxStacks}层）`
+                  : `（${maxStacks}层）`
+                parts.push(`${cn}${arrow}${Math.round(pct)}%${stackDisplay}`)
+              }
+            } else {
+              parts.push(buffConfig?.name ?? buffId)
+            }
+          }
+          break
+        }
+        case SkillStepType.DEAL_DAMAGE: {
+          const dmg = context?.damage ?? 0
+          if (dmg > 0) parts.push(`追加 ${dmg} 点伤害`)
+          break
+        }
+        case SkillStepType.MODIFY_ATTRIBUTE: {
+          for (const mod of step.modifiers || []) {
+            const cn = (AttributeCodeNames as Record<string, string>)[mod.targetAttribute] ?? mod.targetAttribute
+            const arrow = mod.value >= 0 ? '↑' : '↓'
+            parts.push(`${cn}${arrow}${Math.abs(mod.value)}%`)
+          }
+          break
+        }
+        case SkillStepType.HEAL: {
+          const heal = context?.heal ?? 0
+          if (heal > 0) parts.push(`恢复 ${heal} HP`)
+          break
+        }
+        default:
+          break
+      }
+    }
+
+    return parts.join(' · ') || '生效'
   }
 
   private evaluateCondition(
@@ -17324,15 +17547,11 @@ import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
-import { LogLevel } from '@/shared/types/battle-log'
-import {
-  BATTLE_LOG_CATEGORIES,
-  buildNameSegments,
-} from '@/shared/types/battle-log'
-import { buffSegment } from '@/shared/utils/log-segment-factory'
+import { LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { EffectType, EffectTag } from '@/shared/types/effect'
 import {
   ATTRIBUTE_CODE,
+  AttributeCodeNames,
   ModifierType,
   ModifierSourceType,
   type Modifier,
@@ -17599,39 +17818,68 @@ export class SkillExecutor {
       description: `${source.name} applies ${buffId} to ${buffTarget.name}`,
     })
 
-    // ponytail: Buff 效果日志 — 带角色名着色 + 可悬浮 Buff 名
-    if (instanceId) {
+    // 仅在非被动上下文中打日志（被动由 triggerPassives 统一输出，避免重复）
+    if (instanceId && !context?.phase) {
       const buffConfig = this.buffSystem
         .getScriptRegistry()
         .getBuffConfig(buffId)
       const displayName =
         buffConfig?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
-      const segs = buildNameSegments(
-        source.name,
-        source.type === PARTICIPANT_SIDE.ALLY,
-        buffTarget.name,
-        buffTarget.type === PARTICIPANT_SIDE.ALLY,
-      )
-      segs.push({ text: ` 施加 ` })
-      let buffSeg: ReturnType<typeof buffSegment>
-      try {
-        buffSeg = buffSegment(buffId, this.buffSystem.getScriptRegistry())
-      } catch {
-        buffSeg = { text: `【${displayName}】`, classStr: 'log-buff' }
-      }
-      segs.push(buffSeg)
-      const sourcePrefix =
-        source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
-      const targetPrefix =
-        buffTarget.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+
+      // 构建 Buff 效果摘要
+      const effectSummary = this.buildBuffEffectSummary(buffId, instanceId)
+
       LoggerProvider.logger.addBattleLog({
         turn: (action?.turn as number) || 1,
-        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${buffTarget.name} 施加 ${displayName}`,
-        segments: segs,
+        message: `${displayName}  ${effectSummary}`,
+        segments: [
+          { text: displayName, classStr: 'log-buff', kind: 'buff', hover: { kind: 'buff', id: buffId } },
+          { text: `  ${effectSummary}` },
+        ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
         meta: { role: 'sub' },
       })
     }
+  }
+
+  /**
+   * 构建 Buff 效果摘要文本
+   * 从 Buff 配置中提取属性修正、层数、持续时间等效果描述
+   */
+  private buildBuffEffectSummary(buffId: string, instanceId: string): string {
+    const parts: string[] = []
+    const config = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
+    if (!config) return ''
+
+    // 属性修正
+    if (config.attributes) {
+      for (const [attr, valStr] of Object.entries(config.attributes)) {
+        const cn = (AttributeCodeNames as Record<string, string>)[attr] ?? attr
+        const num = parseFloat(valStr)
+        if (isNaN(num)) continue
+        const pct = Math.abs(valStr.includes('%') ? num : (Math.abs(num) < 1 ? num * 100 : num))
+        const arrow = num >= 0 ? '↑' : '↓'
+        parts.push(`${cn}${arrow}${Math.round(pct)}%`)
+      }
+    }
+
+    // 层数
+    const instance = this.buffSystem.getBuffInstanceById(instanceId)
+    if (instance && instance.currentStacks > 1) {
+      // 显示当前层数/最大层数
+      const maxStacks = config.maxStacks ?? instance.currentStacks
+      parts.push(`（${instance.currentStacks}/${maxStacks}层）`)
+    }
+
+    // 持续时间
+    const duration = config.duration ?? 0
+    if (duration > 0) {
+      parts.push(`（${duration}回合）`)
+    } else if (duration === -1) {
+      parts.push(`（永久）`)
+    }
+
+    return parts.join(' ') || config.name || ''
   }
 
   /** 运行时修改目标属性（modify_attribute 步骤） */
@@ -20473,6 +20721,11 @@ export class BattleLogManager implements IBattleLogManager {
   /** 调试日志最大数量 */
   private maxDebugLogs: number = 1000
 
+  /** 缓冲机制：开始缓冲 role='sub' 日志 */
+  private _buffering = false
+  /** 缓冲中的 sub 日志列表 */
+  private _pendingSubLogs: Array<UnifiedLogParams & { turn: number | string }> = []
+
   private indexCounter = new Counter()
 
   /** 是否启用自动清理 */
@@ -20628,6 +20881,12 @@ export class BattleLogManager implements IBattleLogManager {
    * @param params 统一日志参数
    */
   addBattleLog(params: UnifiedLogParams & { turn: number | string }): void {
+    // ★ 缓冲拦截：缓冲模式下 role='sub' 的日志先暂存
+    if (this._buffering && params.meta?.role === 'sub') {
+      this._pendingSubLogs.push(params)
+      return
+    }
+
     const {
       turn,
       message = '',
@@ -20781,6 +21040,28 @@ export class BattleLogManager implements IBattleLogManager {
       } catch {
         console.error('Logger handler error:', handler)
       }
+    }
+  }
+
+  // ==================== 缓冲机制 ====================
+
+  /**
+   * 开始缓冲 role='sub' 的日志（BEFORE_ATTACK 前调用）
+   */
+  beginBufferSubLogs(): void {
+    this._buffering = true
+    this._pendingSubLogs = []
+  }
+
+  /**
+   * 将缓冲的 sub 日志全部发射（action 日志之后调用）
+   */
+  flushBufferedSubLogs(): void {
+    this._buffering = false
+    const pending = this._pendingSubLogs
+    this._pendingSubLogs = []
+    for (const params of pending) {
+      this.addBattleLog(params)
     }
   }
 
@@ -21494,6 +21775,8 @@ export interface AttackAnimationData {
   attackerElement: HTMLElement
   attackerSide: SideType
   skillName?: string
+  /** 固定预算模型中的总预算 T（ms），用于按比例排期突进时长 */
+  budget?: number
 }
 
 export interface HitAnimationData {
@@ -21562,7 +21845,10 @@ export class BattleAnimationService {
       const moveDistance = 30
       const direction = data.attackerSide === 'left' ? 1 : -1
 
-      const attackDuration = this.getScaledDuration(this.BASE_ATTACK_DURATION)
+      // NOTE: 固定预算模型 — budget 优先，按 windup 占比（20%T）分配
+      const attackDuration = data.budget
+        ? data.budget * 0.2
+        : this.getScaledDuration(this.BASE_ATTACK_DURATION)
       const halfDuration = attackDuration / 2
 
       timeline
@@ -21666,7 +21952,8 @@ export class BattleAnimationService {
       const delayMs = this.getScaledDuration(this.HIT_SHAKE_DELAY)
 
       if (data.hitEffect === ActionResultType.MISS) {
-        this.playMissTextAnimation(data.targetElement, delayMs)
+        // HACK: Miss 文本由 ParticipantCard.addDamageNumber 通过 CSS 实现，此处不再重复创建
+        // 震屏+闪光仍然保留
       } else if (data.passiveName) {
         this.playPassiveTextAnimation(
           data.targetElement,
@@ -23088,6 +23375,8 @@ onUnmounted(() => {
 <script setup lang="ts">
 import { ref, onUnmounted, nextTick } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
+import { getActionBudget } from '@/shared/constants/animation-timing'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 
 const debugStore = useDebugStore()
 
@@ -23159,8 +23448,8 @@ function cardCenter(id: string): CardPos | null {
 
 // ============ 公共方法 ============
 
-/** 技能名从攻击者飞向目标 */
-function showSkillName(attackerId: string, targetId: string, name: string, fromSide: 'left' | 'right') {
+/** 技能名从攻击者飞向目标（飞行时长 = budget * 0.5，即 0→50%T） */
+function showSkillName(attackerId: string, targetId: string, name: string, fromSide: 'left' | 'right', budget: number) {
   const aPos = cardCenter(attackerId)
   const tPos = cardCenter(targetId)
   if (!aPos || !tPos) return
@@ -23169,11 +23458,11 @@ function showSkillName(attackerId: string, targetId: string, name: string, fromS
   const dx = tPos.x - aPos.x
   const dy = tPos.y - aPos.y
   skillNames.value.push({ id, text: name, x: aPos.x, y: aPos.y - 20, dx, dy, fromSide })
-  setRemove(id, skillNames, 1250)
+  setRemove(id, skillNames, budget * 0.5 + 50)
 }
 
-/** 光弹飞行（requestAnimationFrame 驱动） */
-function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | 'heal' | 'shield') {
+/** 光弹飞行（requestAnimationFrame 驱动），duration = budget * 0.3（20%→50%T） */
+function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | 'heal' | 'shield', duration: number) {
   const from = cardCenter(fromId)
   const to = cardCenter(toId)
   if (!from || !to) return
@@ -23186,7 +23475,6 @@ function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | '
 
   const dx = to.x - from.x
   const dy = to.y - from.y
-  const duration = 700
   const start = performance.now()
   let lastTrail = 0
 
@@ -23226,13 +23514,15 @@ function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | '
 }
 
 /** 命中爆炸 — 根据 debugStore.impactStyle 选择动画变体 */
-function showImpact(targetId: string, colorType: 'fire' | 'frost' | 'heal' | 'shield') {
+function showImpact(targetId: string, colorType: 'fire' | 'frost' | 'heal' | 'shield', budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
   const style = debugStore.impactStyle
   impacts.value.push({ id, x: pos.x, y: pos.y, colorType, style })
-  setRemove(id, impacts, 650)
+  // NOTE: 命中爆炸清除时长 = 数字上浮阶段（50%→85%T），有 budget 时按比例，否则兜底 1x
+  const impactDuration = (budget ?? getActionBudget(1)) * 0.35
+  setRemove(id, impacts, impactDuration)
 
   // 粒子 — 根据 style 变化
   const isCrit = false // 只区分颜色，暴击由调用方决定
@@ -23353,56 +23643,62 @@ function createSpark(pos: CardPos, c: { bg: string; glow: string }, size: number
 }
 
 /** 治疗光环 */
-function showHealAura(targetId: string) {
+function showHealAura(targetId: string, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
   healAuras.value.push({ id, x: pos.x, y: pos.y })
-  setRemove(id, healAuras, 1050)
+  // NOTE: 治疗光环清除时长 = 命中阶段（50%→100%T）
+  const auraDuration = (budget ?? getActionBudget(1)) * 0.5
+  setRemove(id, healAuras, auraDuration)
 
   // 第二层
   const id2 = nextId++
   setTimeout(() => {
     healAuras.value.push({ id: id2, x: pos.x, y: pos.y })
-    setRemove(id2, healAuras, 1050)
+    setRemove(id2, healAuras, auraDuration)
   }, 200)
 }
 
 /** 护盾六边形 */
-function showShieldHex(targetId: string) {
+function showShieldHex(targetId: string, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
   shieldHexes.value.push({ id, x: pos.x, y: pos.y })
-  setRemove(id, shieldHexes, 950)
+  const hexDuration = (budget ?? getActionBudget(1)) * 0.5
+  setRemove(id, shieldHexes, hexDuration)
 }
 
-/** 伤害数字 */
-function showDamageNum(targetId: string, value: number, isCrit: boolean) {
+/** 伤害数字（上浮淡出时长 = budget * 0.35，即 50%→85%T） */
+function showDamageNum(targetId: string, value: number, isCrit: boolean, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
+  // HACK: budget 由所有当前调用方传入，兜底用 1x 速度的 numberFloat 阶段时长
+  const floatDuration = (budget ?? getActionBudget(1)) * 0.35
   dmgNums.value.push({
     id, text: `-${value}`,
     x: pos.x + (Math.random() - 0.5) * 40,
     y: pos.y - 20,
     cls: isCrit ? 'dmg crit' : 'dmg normal',
   })
-  setRemove(id, dmgNums, 1450)
+  setRemove(id, dmgNums, floatDuration)
 }
 
-/** 治疗数字 */
-function showHealNum(targetId: string, value: number) {
+/** 治疗数字（上浮淡出时长 = budget * 0.35） */
+function showHealNum(targetId: string, value: number, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
+  const floatDuration = (budget ?? getActionBudget(1)) * 0.35
   dmgNums.value.push({
     id, text: `+${value}`,
     x: pos.x + (Math.random() - 0.5) * 30,
     y: pos.y + 10,
     cls: 'heal-num',
   })
-  setRemove(id, dmgNums, 1650)
+  setRemove(id, dmgNums, floatDuration)
 }
 
 /** 护盾数字 */
@@ -23425,7 +23721,21 @@ function showScreenShake() {
   setTimeout(() => { shaking.value = false }, 400)
 }
 
-/** 完整攻击动画序列 */
+/** 飞行序列：只飞（技能名 + 光弹），不包含命中 */
+function playFlightSequence(
+  attackerId: string,
+  targetId: string,
+  skillName: string,
+  fromSide: 'left' | 'right',
+  impactStyle: 'fire' | 'frost',
+  budget: number,
+) {
+  showSkillName(attackerId, targetId, skillName, fromSide, budget)
+  // 光弹从 20%T 出发 → 50%T 到达
+  setTimeout(() => showProjectile(attackerId, targetId, impactStyle, budget * 0.3), budget * 0.2)
+}
+
+/** 完整攻击动画序列（已废弃 — 保留旧接口兼容） */
 function playAttackSequence(
   attackerId: string,
   targetId: string,
@@ -23435,35 +23745,37 @@ function playAttackSequence(
   fromSide: 'left' | 'right',
   impactStyle: 'fire' | 'frost' = 'fire',
 ) {
-  showSkillName(attackerId, targetId, skillName, fromSide)
-  setTimeout(() => showProjectile(attackerId, targetId, impactStyle), 250)
+  const budget = getActionBudget(useBattleStore().battleSpeed)
+  showSkillName(attackerId, targetId, skillName, fromSide, budget)
+  setTimeout(() => showProjectile(attackerId, targetId, impactStyle, budget * 0.3), budget * 0.2)
   setTimeout(() => {
-    showImpact(targetId, impactStyle)
-    // ponytail: damage=0 时跳过数字，由后续 DAMAGE_ANIMATION 事件显示真实值
-    if (damage > 0) showDamageNum(targetId, damage, isCrit)
+    showImpact(targetId, impactStyle, budget)
+    if (damage > 0) showDamageNum(targetId, damage, isCrit, budget)
     if (isCrit) showScreenShake()
-  }, 1100)
+  }, budget * 0.5)
 }
 
-/** 完整治疗动画序列 */
+/** 完整治疗动画序列（已废弃 — 保留旧接口兼容） */
 function playHealSequence(healerId: string, targetId: string, skillName: string, value: number, fromSide: 'left' | 'right') {
-  showSkillName(healerId, targetId, skillName, fromSide)
-  setTimeout(() => showProjectile(healerId, targetId, 'heal'), 250)
+  const budget = getActionBudget(useBattleStore().battleSpeed)
+  showSkillName(healerId, targetId, skillName, fromSide, budget)
+  setTimeout(() => showProjectile(healerId, targetId, 'heal', budget * 0.3), budget * 0.2)
   setTimeout(() => {
-    showImpact(targetId, 'heal')
-    showHealAura(targetId)
-    showHealNum(targetId, value)
-  }, 1100)
+    showImpact(targetId, 'heal', budget)
+    showHealAura(targetId, budget)
+    showHealNum(targetId, value, budget)
+  }, budget * 0.5)
 }
 
-/** 完整护盾动画序列 */
+/** 完整护盾动画序列（已废弃 — 保留旧接口兼容） */
 function playShieldSequence(casterId: string, targetId: string, skillName: string, value: number, fromSide: 'left' | 'right') {
-  showSkillName(casterId, targetId, skillName, fromSide)
-  setTimeout(() => showProjectile(casterId, targetId, 'shield'), 250)
+  const budget = getActionBudget(useBattleStore().battleSpeed)
+  showSkillName(casterId, targetId, skillName, fromSide, budget)
+  setTimeout(() => showProjectile(casterId, targetId, 'shield', budget * 0.3), budget * 0.2)
   setTimeout(() => {
-    showShieldHex(targetId)
+    showShieldHex(targetId, budget)
     showShieldNum(targetId, value)
-  }, 1100)
+  }, budget * 0.5)
 }
 
 defineExpose({
@@ -23478,6 +23790,7 @@ defineExpose({
   showHealNum,
   showShieldNum,
   showScreenShake,
+  playFlightSequence,
   playAttackSequence,
   playHealSequence,
   playShieldSequence,
@@ -24485,7 +24798,8 @@ watch(
 
 function formatAttrLine(attr: MergedAttributeLine): string {
   const arrow = attr.totalPercent > 0 ? '↑' : '↓'
-  return `${attr.attribute}${arrow}${Math.abs(attr.totalPercent)}%`
+  const suffix = attr.isFlat ? '' : '%'
+  return `${attr.attribute}${arrow}${Math.abs(attr.totalPercent)}${suffix}`
 }
 
 function handleClick() {
@@ -27380,7 +27694,7 @@ function clamp(v: number, lo: number, hi: number): number {
       <!-- 生命值条 -->
       <div class="member-hp">
         <div class="hp-bar">
-          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPercent + '%' }">
+          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPercent + '%', transition: `width ${hpTransitionDuration}` }">
             <div class="pulse"></div>
           </div>
           <span class="bar-text">{{ hpText }}</span>
@@ -27477,9 +27791,10 @@ import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 import { useSituationalAttributes } from '@/presentation/composables/useSituationalAttributes'
 import type { BuffRawItem, MergedAttributeLine, BuffTextItem } from '@/shared/types/buff-display'
-import { container } from '@/infrastructure/di/Container'
-import type { BuffSystem } from '@/domain/buff/BuffSystem'
+
+import { ATTRIBUTE_SHORT_NAMES } from '@/presentation/config/attributeNames'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import { getActionBudget } from '@/shared/constants/animation-timing'
 
 // 浮动数字接口
 interface FloatingNumber {
@@ -27535,7 +27850,11 @@ const energyPercent = computed(() => {
   return maxEnergy > 0 ? (p.currentEnergy / maxEnergy) * 100 : 0
 })
 
-const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+/** HP 条过渡时长 = 50% 预算（匹配命中阶段 50%→100%T） */
+const hpTransitionDuration = computed(() => {
+  const budget = getActionBudget(battleStore.battleSpeed)
+  return `${budget * 0.5}ms`
+})
 
 // 卡片引用
 const cardRef = ref<HTMLElement | null>(null)
@@ -27601,9 +27920,11 @@ function triggerVisualState(state: 'casting' | 'hurt' | 'healed' | 'shielded', d
 /**
  * HP 条闪光（治疗时）
  */
-function flashHpBar() {
+function flashHpBar(budget?: number) {
   hpFlash.value = true
-  setTimeout(() => { hpFlash.value = false }, 800)
+  // NOTE: HP条闪光时长 = 命中阶段 50%T（与 HP 过渡时长一致）
+  const flashDuration = budget ? budget * 0.5 : 800
+  setTimeout(() => { hpFlash.value = false }, flashDuration)
 }
 
 const cardVisualStateClass = computed(() => {
@@ -27672,87 +27993,19 @@ const hasShield = computed(() => shieldValue.value > 0)
 
 const shieldText = computed(() => `${Math.floor(shieldValue.value)}`)
 
-/** 转换为纯文本 Buff 展示数据 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
-const buffListItems = computed((): BuffRawItem[] => {
-  // 依赖投影层快照版本号：快照更新时重算 buff 显示
-  void snap.value?.version
-
-  const entity = props.participant
-  const result: BuffRawItem[] = []
-  const seenIds = new Set<string>()
-
-
-  // 源1: BuffSystem 管理的 buff（被动/技能/脚本添加）
-  if (typeof entity.getBuffInstanceIds === 'function') {
-    const instanceIds = entity.getBuffInstanceIds()
-    for (const id of instanceIds) {
-      const instance = buffSystem.getBuffInstanceById(id)
-      if (!instance) continue
-      const config = instance.context.config
-      if (config) {
-        seenIds.add(id)
-        // ponytail: 同时记录 config.id（buffId），用于源2的去重比较
-        // 源2的条目使用效果ID（如 "burn"）而非实例ID（如 "char1_burn_0_5"）
-        seenIds.add(config.id)
-        result.push({
-          id,
-          buffId: config.id,
-          name: config.name,
-          description: config.description ?? '',
-          remainingTurns: instance.remainingTurns,
-          currentStacks: instance.currentStacks,
-          isDebuff: config.isDebuff === true,
-          attributes: config.attributes,
-          effectLines: instance.effectLines ?? [],
-          conditionState: instance.conditionState,
-        })
-      }
-    }
-  }
-
-  // 源2: InterventionManager 维护的手动状态（兼容层 — 干预系统/回放系统依赖此字段）
-  const manualEffects = entity.statusEffects ?? []
-  for (const s of manualEffects) {
-    if (!seenIds.has(s.id)) {
-      seenIds.add(s.id)
-      result.push({
-        id: s.id,
-        buffId: s.id,
-        name: s.name,
-        description: '',
-        remainingTurns: s.remainingTurns,
-        currentStacks: 1,
-        isDebuff: s.type === 'debuff',
-        effectLines: [],
-        conditionState: undefined,
-      })
-    }
-  }
-
-  return result
-})
+/** Buff 原始条目 — 直接从投影层快照读取（由 participantMapper 预计算） */
+const buffListItems = computed((): BuffRawItem[] => snap.value?.buffs ?? [])
 
 // === 纯文本 Buff 显示模式 ===
 const panelVisible = ref(false)
 
-const ATTRIBUTE_CODE_TO_CN: Record<string, string> = {
-  attack: '攻击',
-  defense: '防御',
-  speed: '速度',
-  critRate: '暴击',
-  critDamage: '暴伤',
-  damageReduction: '伤害减免',
-  healing: '受疗',
-  hitRate: '命中',
-  dodgeRate: '闪避',
-}
 const baseAttributes = computed(() => {
-  const data = props.participant
+  const entity = props.participant
   const map: Record<string, number> = {}
-  for (const [code, cn] of Object.entries(ATTRIBUTE_CODE_TO_CN)) {
-    const attr = (data as unknown as Record<string, { base: number } | undefined>)[code]
-    if (attr && typeof attr.base === 'number') {
-      map[cn] = attr.base
+  for (const [code, cn] of Object.entries(ATTRIBUTE_SHORT_NAMES)) {
+    const attrValue = entity.getAttributeValue(code as any)
+    if (attrValue && typeof attrValue.base === 'number') {
+      map[cn] = attrValue.base
     }
   }
   return map
@@ -27766,6 +28019,7 @@ const situationalAttrs = useSituationalAttributes(
   computed(() => props.participant),
   computed(() => props.targetEntity ?? null),
   ref(null), // ponytail: skill 上下文暂未接入，未来从技能选中状态传递
+  computed(() => snap.value?.version ?? 0), // 版本戳变化时重新求值
 )
 
 
@@ -27817,8 +28071,9 @@ const parsedBuffEffects = computed(() => {
   const lines: Array<{ text: string; className: string }> = []
   for (const mod of b.modifiers) {
     const arrow = mod.value > 0 ? '↑' : '↓'
+    const suffix = mod.isFlat ? '' : '%'
     lines.push({
-      text: `${mod.attribute}${arrow}${Math.abs(mod.value)}%`,
+      text: `${mod.attribute}${arrow}${Math.abs(mod.value)}${suffix}`,
       className: mod.value > 0 ? 'effect--buff' : 'effect--debuff',
     })
   }
@@ -27940,9 +28195,31 @@ defineExpose({
 }
 
 .damage-number.miss {
-  color: var(--color-text-tertiary);
-  /* 灰色闪避 */
-  font-size: var(--font-size-xxl);
+  color: #a0aec0;
+  /* 银灰色闪避，更醒目 */
+  font-size: 28px;
+  font-weight: 800;
+  text-shadow: 0 0 12px rgba(160, 174, 192, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.8);
+  animation-name: miss-float;
+}
+
+/* 闪避专用浮动动画 — 水平弹跳 + 上浮淡出 */
+@keyframes miss-float {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-15px) scale(1.3);
+  }
+  40% {
+    transform: translateY(-25px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.9);
+  }
 }
 
 /* 浮动动画 */
@@ -28464,6 +28741,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
     attackerId: string,
     attackerSide: 'left' | 'right',
     skillName?: string,
+    budget?: number,
   ): Promise<void> {
     const attackerElement = getElement(attackerId)
     if (!attackerElement) {
@@ -28480,6 +28758,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
         attackerElement,
         attackerSide,
         skillName,
+        budget,
       })
     } finally {
       state.value.isPlaying = false
@@ -28614,6 +28893,7 @@ import type {
   ConditionState,
 } from '@/shared/types/buff-display'
 import type { BuffEffectLine } from '@/domain/buff/types'
+import { ATTRIBUTE_SHORT_NAMES } from '@/presentation/config/attributeNames'
 
 /** 极多 Buff 时次要分组的阈值 */
 const SECONDARY_THRESHOLD = 20
@@ -28635,35 +28915,12 @@ const CONDITION_KEYWORDS: Array<{ match: RegExp; label: string }> = [
   { match: /受击|被攻击/i, label: '受击' },
 ]
 
-/** 属性名缩写映射（标准中文本地化） */
-const ATTRIBUTE_SHORT_NAMES: Record<string, string> = {
-  attack: '攻击',
-  defense: '防御',
-  speed: '速度',
-  critRate: '暴击',
-  critDamage: '暴伤',
-  damage: '伤害',
-  damageBoost: '伤害提升',
-  damageReduction: '伤害减免',
-  healthBonus: '生命加成',
-  attackBonus: '攻击加成',
-  defenseBonus: '防御加成',
-  speedBonus: '速度加成',
-  currentHealth: '生命',
-  maxHealth: '生命',
-  healing: '受疗',
-  hitRate: '命中',
-  dodgeRate: '闪避',
-  physicalReduction: '物理减免',
-  magicReduction: '魔法减免',
-}
-
 /**
  * 检测条件状态
  * 优先使用来自 BuffSystem 的实时 conditionState（由 setBuffConditionState 设置）
  * 回退到从 description 文本中启发式推断
  */
-function detectCondition(
+export function detectCondition(
   raw: BuffRawItem,
 ): { condition: ConditionState; conditionLabel?: string } {
   // 优先使用实例的实时条件状态（由领域层设置）
@@ -28698,9 +28955,14 @@ function matchConditionKeyword(description: string, name: string): string | unde
 
 /**
  * 从 isDebuff + name 推断类型
+ * 优先使用结构化 controlType 字段，回退到名称关键词匹配
  */
-function detectType(name: string, isDebuff: boolean): 'buff' | 'debuff' | 'control' {
-  // 先检查是否为控制 — 控制优先于 debuff
+export function detectType(name: string, isDebuff: boolean, controlType?: string): 'buff' | 'debuff' | 'control' {
+  // 优先使用结构化字段（新数据走此路径）
+  if (controlType && controlType !== 'none' && controlType !== '') {
+    return 'control'
+  }
+  // 回退：名称匹配（兼容无 controlType 的旧数据）
   for (const keyword of CONTROL_NAMES) {
     if (name.includes(keyword)) return 'control'
   }
@@ -28715,8 +28977,8 @@ function detectType(name: string, isDebuff: boolean): 'buff' | 'debuff' | 'contr
 function extractAttributesFromConfig(
   attributes: Record<string, string>,
   stacks: number,
-): Array<{ attr: string; value: number }> {
-  const result: Array<{ attr: string; value: number }> = []
+): Array<{ attr: string; value: number; isFlat?: boolean }> {
+  const result: Array<{ attr: string; value: number; isFlat?: boolean }> = []
   for (const [code, valueStr] of Object.entries(attributes)) {
     const cn = ATTRIBUTE_SHORT_NAMES[code]
     if (!cn) continue
@@ -28725,11 +28987,24 @@ function extractAttributesFromConfig(
     const numericStr = trimmed.replace('%', '')
     const numValue = parseFloat(numericStr)
     if (isNaN(numValue)) continue
-    // +0.05（无%且绝对值<1）→ 转为百分比（0.05*100=5）
-    // +20%（有%）→ 直接使用（20）
-    // ponytail: 暂不支持固定值格式（如 "+10" 表示 +10 固定值），JSON 中无双例
-    const perStack = isPercent ? numValue : (Math.abs(numValue) < 1 ? numValue * 100 : numValue)
-    result.push({ attr: cn, value: Math.round(perStack * stacks) })
+
+    let perStack: number
+    let isFlat: boolean | undefined
+
+    if (isPercent) {
+      // "+20%" → 20（百分比点）
+      perStack = numValue
+      isFlat = undefined
+    } else if (Math.abs(numValue) < 1) {
+      // "+0.05" → 5（小数转百分比）
+      perStack = numValue * 100
+      isFlat = undefined
+    } else {
+      // "+10" → 固定值 10
+      perStack = numValue
+      isFlat = true
+    }
+    result.push({ attr: cn, value: Math.round(perStack * stacks), isFlat })
   }
   return result
 }
@@ -28766,7 +29041,7 @@ function toBuffTextItem(
   raw: BuffRawItem,
   entityId: string,
 ): BuffTextItem {
-  const name = raw.name || ''
+  const name = raw.name
   // ponytail: 当 name 为空时显示兜底文本，防止空标签出现在 UI 中
   const displayName = name || '未知效果'
   const description = raw.description || (name ? name : '无详细说明')
@@ -28774,7 +29049,7 @@ function toBuffTextItem(
   const remainingTurns = raw.remainingTurns ?? 0
   const stacks = raw.currentStacks ?? 1
 
-  const type = detectType(displayName, isDebuff)
+  const type = detectType(displayName, isDebuff, raw.controlType)
 
   // 检测条件状态——优先使用领域层的 conditionState
   let { condition, conditionLabel } = detectCondition(raw)
@@ -28796,13 +29071,14 @@ function toBuffTextItem(
     attribute: e.attr,
     value: e.value,
     type: 'PERCENTAGE' as const,
+    isFlat: e.isFlat,
   }))
 
   // 传递特殊效果行
   const effectLines: BuffEffectLine[] = raw.effectLines ?? []
 
   return {
-    instanceId: raw.id ?? raw.instanceId ?? '',
+    instanceId: raw.id,
     buffId: raw.buffId ?? raw.id ?? '',
     name: displayName,
     description,
@@ -28825,19 +29101,21 @@ function toBuffTextItem(
  * mod.value 已带符号：正=增益，负=减益
  * @param baseValues 可选的基础属性值映射（key=中文属性名，如 "攻击"）
  */
-function mergeAttributes(
+export function mergeAttributes(
   items: BuffTextItem[],
   baseValues?: Record<string, number>,
 ): MergedAttributeLine[] {
   const attrMap = new Map<string, {
     total: number
     sources: MergedAttributeLine['sources']
+    hasFlat: boolean
+    hasPercent: boolean
   }>()
 
   for (const item of items) {
     for (const mod of item.modifiers) {
       if (!attrMap.has(mod.attribute)) {
-        attrMap.set(mod.attribute, { total: 0, sources: [] })
+        attrMap.set(mod.attribute, { total: 0, sources: [], hasFlat: false, hasPercent: false })
       }
       const entry = attrMap.get(mod.attribute)!
       entry.total += mod.value
@@ -28848,6 +29126,11 @@ function mergeAttributes(
         isPermanent: item.remainingTurns === 0,
         stacks: item.stacks,
       })
+      if (mod.isFlat) {
+        entry.hasFlat = true
+      } else {
+        entry.hasPercent = true
+      }
     }
   }
 
@@ -28855,6 +29138,8 @@ function mergeAttributes(
     attribute,
     totalPercent: data.total,
     isChanged: data.total !== 0,
+    // 仅当所有来源都是 flat 时标记为 flat；混合情况按百分比显示
+    isFlat: data.hasFlat && !data.hasPercent,
     baseValue: baseValues?.[attribute],
     sources: data.sources,
   }))
@@ -28863,7 +29148,7 @@ function mergeAttributes(
 /**
  * 排序函数
  */
-function sortItems(items: BuffTextItem[]): BuffTextItem[] {
+export function sortItems(items: BuffTextItem[]): BuffTextItem[] {
   return [...items].sort((a, b) => {
     // 1. 控制类型排最前
     const aCtrl = a.type === 'control' ? 0 : 1
@@ -29415,8 +29700,12 @@ export function useSituationalAttributes(
   participant: ComputedRef<BattleEntity | null> | Ref<BattleEntity | null>,
   target: ComputedRef<BattleEntity | null> | Ref<BattleEntity | null>,
   skill: ComputedRef<SkillConfig | null> | Ref<SkillConfig | null>,
+  versionTick?: ComputedRef<number> | Ref<number>,
 ) {
   return computed<SituationalAttribute[]>(() => {
+    // 建立响应式依赖：版本戳变化时重新求值
+    void (versionTick ? toValue(versionTick) : 0)
+
     const p = toValue(participant)
     const t = toValue(target)
     const s = toValue(skill)
@@ -29563,13 +29852,43 @@ export function getAttributeDisplayConfig(code: string): AttributeDisplayConfig 
   return ATTRIBUTE_DISPLAY_CONFIG[code] ?? { displayTier: 'advanced', group: 'utility' }
 }
 
+--- src/presentation/config/attributeNames.ts ---
+/**
+ * 属性代码 → 中文短名映射（唯一来源）
+ * 用于 Buff 标签显示、属性面板、调试面板
+ */
+export const ATTRIBUTE_SHORT_NAMES: Record<string, string> = {
+  attack: '攻击',
+  defense: '防御',
+  speed: '速度',
+  critRate: '暴击',
+  critDamage: '暴伤',
+  damage: '伤害',
+  damageBoost: '伤害提升',
+  damageReduction: '伤害减免',
+  healthBonus: '生命加成',
+  attackBonus: '攻击加成',
+  defenseBonus: '防御加成',
+  speedBonus: '速度加成',
+  currentHealth: '生命',
+  maxHealth: '生命',
+  healing: '受疗',
+  hitRate: '命中',
+  hit: '命中',
+  dodgeRate: '闪避',
+  dodge: '闪避',
+  slowImmune: '减速免疫',
+  physicalReduction: '物理减免',
+  magicReduction: '魔法减免',
+}
+
 --- src/presentation/stores/battleStore.ts ---
 import type { BattleService } from '@/application/facade/BattleFacade'
 import type { BattleAction, BattleEntity, BattleState } from '@/domain/battle/type/types'
 import { BattleStatus, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
-import { BattleEventCode, BattleEventCodes, BattleEventName, BattleLogEventData, BattleEndedEventData, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData } from '@/domain/battle/type/BattleEventType'
+import { BattleEventCode, BattleEventCodes, BattleEventName, BattleLogEventData, BattleEndedEventData, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData, AnimationCompleteEventData } from '@/domain/battle/type/BattleEventType'
 import type { UIParticipantSnapshot } from '@/shared/types/projection'
 import type {
   BattleLogCategory,
@@ -29590,6 +29909,7 @@ import { defineStore } from 'pinia'
 import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
 import { BattleProjection } from '@/application/projection/BattleProjection'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { getActionBudget } from '@/shared/constants/animation-timing'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -29800,11 +30120,10 @@ export const useBattleStore = defineStore('battle', () => {
     }
   }
 
-  /** 处理回合开始事件（更新当前行动者ID，记录回合开始日志） */
+  /** 处理回合开始事件（更新当前行动者ID） */
   const handleTurnStartEvent = (data: { actorId: string | null }) => {
     if (data?.actorId) {
       currentActorId.value = data.actorId
-      battleLogManager.addTurnStartLog(battleService.value?.getTurn() ?? 1)
     }
   }
 
@@ -29815,9 +30134,8 @@ export const useBattleStore = defineStore('battle', () => {
     }
   }
 
-  /** 处理回合结束事件（记录回合结束日志） */
+  /** 处理回合结束事件 */
   const handleTurnEndEvent = () => {
-    battleLogManager.addTurnEndLog(battleService.value?.getTurn() ?? 1)
   }
 
   /** 处理伤害动画事件（触发伤害数字飘字效果） */
@@ -29832,6 +30150,18 @@ export const useBattleStore = defineStore('battle', () => {
   /** 处理技能特效事件（触发技能释放动画） */
   const handleSkillEffectEvent = (data: SkillEffectEventData) =>
     setAnimationState('skill', data)
+
+  /** 处理动画完成事件（清除对应动画状态，避免定时器竞态） */
+  const handleAnimationCompleteEvent = (data: AnimationCompleteEventData) => {
+    const typeMap: Record<string, keyof AnimationState> = {
+      [BattleEventCodes.DAMAGE_ANIMATION]: 'damage',
+      [BattleEventCodes.MISS_ANIMATION]: 'miss',
+      [BattleEventCodes.BUFF_EFFECT]: 'buff',
+      [BattleEventCodes.SKILL_EFFECT]: 'skill',
+    }
+    const key = typeMap[data.type]
+    if (key) clearAnimationState(key)
+  }
 
   /** 处理战斗重置事件（记录系统日志） */
   const handleBattleResetEvent = () => {
@@ -29850,6 +30180,7 @@ export const useBattleStore = defineStore('battle', () => {
   events.set(BattleEventCodes.MISS_ANIMATION, handleMissAnimationEvent)
   events.set(BattleEventCodes.BUFF_EFFECT, handleBuffEffectEvent)
   events.set(BattleEventCodes.SKILL_EFFECT, handleSkillEffectEvent)
+  events.set(BattleEventCodes.ANIMATION_COMPLETE, handleAnimationCompleteEvent)
   /** 处理参与者属性变更事件（Buff 触发 recalculateAll 后，在 proxy 上同步调用以使 Vue 响应式系统追踪到变更） */
   const handleAttributeChanged = (data: { characterId: string }) => {
     const id = data.characterId
@@ -29992,22 +30323,38 @@ export const useBattleStore = defineStore('battle', () => {
   /**
    * 设置动画效果状态
    * @param type 动画类型
-   * @param data 动画数据对象（包含目标ID、数值、类型等信息）
-   * @description 触发指定类型的动画效果，并在持续时间后自动清除
+   * @param data 动画数据对象
+   * @description 触发指定类型的动画效果，超时后自动清除（ANIMATION_COMPLETE 事件优先）
    */
   const setAnimationState = (type: keyof AnimationState, data: any) => {
     animationState[type] = data
-    const duration = getAnimationDuration()
-    setTimeout(() => {
+    // NOTE: 每个动画阶段最多持有 50%T 预算（领域层在同一时长内完成）
+    const phaseDuration = getActionBudget(battleSpeed.value) * 0.5
+    // 清除之前的超时防止竞态
+    if (_stateTimeouts[type]) {
+      clearTimeout(_stateTimeouts[type])
+    }
+    _stateTimeouts[type] = setTimeout(() => {
       animationState[type] = null
-    }, duration)
+      _stateTimeouts[type] = null
+    }, phaseDuration)
   }
 
-  /** 根据当前战斗速度计算动画持续时间（速度越快，持续时间越短） */
-  const getAnimationDuration = () => {
-    const speed = battleSpeed.value
-    const delayMap: Record<number, number> = { 1: 1000, 2: 500, 3: 330, 5: 200 }
-    return delayMap[speed] || 500
+  /** 存储每个动画类型的 setTimeout id（用于竞态安全的清除） */
+  const _stateTimeouts: Record<string, ReturnType<typeof setTimeout> | null> = {
+    damage: null,
+    miss: null,
+    buff: null,
+    skill: null,
+  }
+
+  /** 主动清除动画状态（由 ANIMATION_COMPLETE 事件驱动） */
+  const clearAnimationState = (type: keyof AnimationState) => {
+    if (_stateTimeouts[type]) {
+      clearTimeout(_stateTimeouts[type])
+      _stateTimeouts[type] = null
+    }
+    animationState[type] = null
   }
 
   // 🔹 业务动作包装器（统一错误处理与 Loading 状态）
@@ -30479,7 +30826,8 @@ export const useBattleStore = defineStore('battle', () => {
     setBattleActive, // 设置战斗激活状态
     clearBattleLogs, // 清空日志
     setAnimationState, // 设置动画状态
-    getAnimationDuration, // 获取动画持续时间
+    clearAnimationState, // 主动清除动画状态
+    getAnimationDuration: () => getActionBudget(battleSpeed.value), // 兼容旧接口名
     setShowDebug, // 设置显示调试信息状态
 
     // ========== 战斗流程控制 ==========
@@ -31361,7 +31709,6 @@ html {
   display: flex;
   align-items: center;
   gap: 0.15rem;
-  font-size: var(--font-size-xs);
   cursor: pointer;
 }
 
@@ -31382,6 +31729,7 @@ html {
   overflow-y: auto;
   padding: var(--space-2);
   min-height: 0;
+  line-height: var(--line-height-md);
 }
 
 /* ----- 2. 日志条目 ----- */
@@ -31627,7 +31975,6 @@ html {
 .log-system {
   color: var(--color-text-tertiary);
   opacity: 0.7;
-  font-size: var(--font-size-xs);
 }
 
 /* 高亮信息（条件激活等） */
@@ -33244,7 +33591,7 @@ html {
 /* ----- 三栏主布局 ----- */
 .main-layout {
   display: grid;
-  grid-template-columns: 30% 1fr 30%;
+  grid-template-columns: 25% 1fr 25%;
   gap: var(--space-4);
   /* ponytail: 140px = header(80px) + control-bar(~60px), extract to tokens if reused */
   height: calc(100vh - 140px);
@@ -33255,7 +33602,6 @@ html {
 .panel-left,
 .panel-center,
 .panel-right {
-  /* ponytail: 140px mirrors .main-layout calc */
   height: calc(100vh - 140px);
   padding: var(--space-3);
 }
@@ -33291,7 +33637,6 @@ html {
   border-radius: var(--radius-sm);
   padding: var(--space-3);
   overflow-y: auto;
-  /* ponytail: 140px mirrors .main-layout calc */
   height: calc((100vh - 140px - var(--space-6)) / 2);
 }
 
@@ -34495,9 +34840,7 @@ $transition-fast: var(--transition-fast);
         @select-character="selectCharacter" />
 
       <!-- 右侧：调试面板 -->
-      <div class="right-panel">
-        <BattleDashboard />
-      </div>
+      <BattleDashboard />
     </div>
 
     <!-- 对话框组件 -->
@@ -34525,10 +34868,10 @@ $transition-fast: var(--transition-fast);
     <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
 
     <!-- 底部控制栏 -->
-    <ControlBar :is-battle-active="battleStore.isBattleActive" :is-paused="battleStore.isPaused"
+    <ControlBar :is-battle-active="battleStore.isBattleActive"
       :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
-      @end-battle="endBattle" @reset-battle="resetBattle" @single-step="singleStep" @toggle-auto-play="toggleAutoPlay"
-      @battle-speed-change="handleBattleSpeedChange" @toggle-pause="handleTogglePause" />
+      @end-battle="endBattle" @reset-battle="resetBattle" @toggle-auto-play="toggleAutoPlay"
+      @battle-speed-change="handleBattleSpeedChange" />
 
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
@@ -34557,6 +34900,7 @@ import BattleRecordingDialog from "./components/BattleRecordingDialog.vue";
 import { useBattleStore } from '@/presentation/stores';
 import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
+import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
 import { PARTICIPANT_SIDE } from "@/domain/battle/type/types.ts";
 import type { CharacterOption } from "./components/CharacterEditor.vue";
 import type { BattleService } from '@/application/facade/BattleFacade';
@@ -34721,21 +35065,28 @@ const handleDebugAction = async (action: string) => {
       break
     }
     case 'log_battle':
-      battleLogManager.addTurnStartLog(1)
+      battleLogManager.addBattleLog({
+        turn: 1,
+        message: '[调试] 测试战斗日志',
+        segments: [{ text: '[调试] 测试战斗日志', classStr: 'log-info' }],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'sub' },
+      })
       break
     case 'log_system':
       battleLogManager.addSystemLog({
-        message: '测试系统日志',
+        message: '[调试] 测试系统日志',
       })
       break
     case 'log_item':
       battleLogManager.addGainItemLog([])
       break
     case 'log_action':
-      battleLogManager.addActionLog({ source: '调试角色', action: '普通攻击', message: '测试行为日志' })
+      battleLogManager.addActionLog({ source: '调试角色', action: '普通攻击', message: '[调试] 测试行为日志' })
       break
     case 'log_debug':
-      battleLogManager.addDebugLog('测试调试日志')
+      battleLogManager.updateFilters({ debug: true })
+      battleLogManager.addDebugLog('[调试] 测试调试日志')
       break
 
     // ========== 动画调试 ==========
@@ -35171,23 +35522,7 @@ const resetBattle = async () => {
   }
 };
 
-// 执行单个回合
-const singleStep = async () => {
-  try {
-    const result = await battleStore.processSingleTurn();
 
-    if (!result) {
-      notification.value?.addNotification("错误", battleStore.error.message || "执行回合失败", "error");
-    }
-  } catch (error) {
-    console.error("执行回合时出错:", error);
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    battleLogManager.addSystemLog({
-      message: `执行回合时出错: ${errorMsg}`,
-    });
-    notification.value?.addNotification("错误", errorMsg, "error");
-  }
-};
 
 // 切换自动战斗状态
 const toggleAutoPlay = async () => {
@@ -35214,10 +35549,7 @@ const handleBattleSpeedChange = (speed: number) => {
   battleStore.setBattleSpeed(speed);
 };
 
-// 处理暂停切换
-const handleTogglePause = () => {
-  battleStore.togglePause();
-};
+
 
 // 选择角色
 const selectCharacter = (characterId: string) => {
@@ -35352,7 +35684,7 @@ onUnmounted(() => {
 
 --- src/presentation/views/BattleDashboard.vue ---
 <template>
-  <div class="debug-panel panel-right">
+  <div class="panel-right">
     <div class="section flex-1">
       <div class="section-header">
         <span>角色监控</span>
@@ -35360,7 +35692,7 @@ onUnmounted(() => {
       </div>
       <!-- 显示层级过滤器（调试面板） -->
       <div class="tier-filters">
-        <label class="tier-filter" v-for="tier in (['core','advanced','situational','hidden'] as const)" :key="tier">
+        <label class="tier-filter" v-for="tier in (['core', 'advanced', 'situational', 'hidden'] as const)" :key="tier">
           <input type="checkbox" v-model="tierFilters[tier]" />
           <span>{{ { core: '核心', advanced: '进阶', situational: '情境', hidden: '隐藏' }[tier] }}</span>
         </label>
@@ -35461,10 +35793,11 @@ onUnmounted(() => {
             </div>
             <div class="monitor-grid" @mouseleave="hideAttrTooltip">
               <div class="monitor-item" v-for="a in attrs" :key="a.code"
-                @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)"
-                @mousemove="updateTooltipPosition" @mouseleave="hideAttrTooltip">
+                @mouseenter="showAttrTooltipSimple($event, a.code as ATTRIBUTE_CODE)" @mousemove="updateTooltipPosition"
+                @mouseleave="hideAttrTooltip">
                 <span class="monitor-label">{{ a.meta.displayName }}:</span>
-                <span class="monitor-value">{{ attrVal(a.code as ATTRIBUTE_CODE) }}{{ a.meta.isPercentage ? '%' : '' }}</span>
+                <span class="monitor-value">{{ attrVal(a.code as ATTRIBUTE_CODE) }}{{ a.meta.isPercentage ? '%' : ''
+                  }}</span>
               </div>
             </div>
           </div>
@@ -35472,7 +35805,8 @@ onUnmounted(() => {
       </div>
       <div class="monitor-group">
         <div class="monitor-tabs">
-          <button class="tab-btn" :class="{ active: activeTab === 'passive' }" @click="activeTab = 'passive'">被动</button>
+          <button class="tab-btn" :class="{ active: activeTab === 'passive' }"
+            @click="activeTab = 'passive'">被动</button>
           <button class="tab-btn" :class="{ active: activeTab === 'active' }" @click="activeTab = 'active'">主动</button>
           <button class="tab-btn" :class="{ active: activeTab === 'status' }" @click="activeTab = 'status'">状态</button>
         </div>
@@ -35489,11 +35823,9 @@ onUnmounted(() => {
                 {{ group.label }}
                 <span class="category-count">({{ group.skills.length }})</span>
               </div>
-              <div v-for="(skill, index) in group.skills" :key="index"
-                class="skill-item passive"
-                :style="{ borderLeftColor: group.color }"
-                @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
-                @mouseleave="hideSkillTooltip">
+              <div v-for="(skill, index) in group.skills" :key="index" class="skill-item passive"
+                :style="{ borderLeftColor: group.color }" @mouseenter="showSkillTooltip($event, skill)"
+                @mousemove="updateTooltipPosition" @mouseleave="hideSkillTooltip">
                 {{ skill.name || '未知技能' }}
               </div>
             </div>
@@ -35502,14 +35834,14 @@ onUnmounted(() => {
 
         <!-- 主动技能 -->
         <div v-if="activeTab === 'active'" class="skills-display">
-          <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length" class="no-skills">
+          <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length"
+            class="no-skills">
             暂无主动技能
           </div>
           <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
             <div v-if="currentCharacter!.skills.small?.length" class="skill-category">
               <div class="skill-category-title">小技能</div>
-              <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index"
-                class="skill-item small"
+              <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index" class="skill-item small"
                 @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
                 @mouseleave="hideSkillTooltip">
                 {{ skill.name || '未知技能' }}
@@ -35517,8 +35849,7 @@ onUnmounted(() => {
             </div>
             <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category">
               <div class="skill-category-title">终极技能</div>
-              <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index"
-                class="skill-item ultimate"
+              <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index" class="skill-item ultimate"
                 @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
                 @mouseleave="hideSkillTooltip">
                 {{ skill.name || '未知技能' }}
@@ -35618,7 +35949,6 @@ import BattleReplay from "@/presentation/views/BattleReplay.vue";
 import { formatBonusValue } from '@/shared/utils/format';
 import { computed, onMounted, onUnmounted, ref, type ComputedRef } from "vue";
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { BuffRawItem } from '@/shared/types/buff-display'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 
@@ -35720,74 +36050,28 @@ const activeTab = ref<'passive' | 'active' | 'status'>('passive')
 
 // ------------------------------------------------------------
 // Buff 数据（状态 tab）
-const buffSystem = container.resolve<BuffSystem>('BuffSystem')
-
-const buffListItems = computed((): BuffRawItem[] => {
-  const entity = currentCharacter.value
-  if (!entity) return []
-  const result: BuffRawItem[] = []
-  const seenIds = new Set<string>()
-
-  // 源1: BuffSystem 管理的 buff
-  if (typeof entity.getBuffInstanceIds === 'function') {
-    const instanceIds = entity.getBuffInstanceIds()
-    for (const id of instanceIds) {
-      const instance = buffSystem.getBuffInstanceById(id)
-      if (!instance) continue
-      const config = instance.context.config
-      if (config) {
-        seenIds.add(id)
-        seenIds.add(config.id)
-        result.push({
-          id,
-          buffId: config.id,
-          name: config.name,
-          description: config.description ?? '',
-          remainingTurns: instance.remainingTurns,
-          currentStacks: instance.currentStacks,
-          isDebuff: config.isDebuff === true,
-          attributes: config.attributes,
-          effectLines: instance.effectLines ?? [],
-          conditionState: instance.conditionState,
-        })
-      }
-    }
-  }
-
-  // 源2: InterventionManager 手动状态
-  const manualEffects = entity.statusEffects ?? []
-  for (const s of manualEffects) {
-    if (!seenIds.has(s.id)) {
-      seenIds.add(s.id)
-      result.push({
-        id: s.id,
-        buffId: s.id,
-        name: s.name,
-        description: '',
-        remainingTurns: s.remainingTurns,
-        currentStacks: 1,
-        isDebuff: s.type === 'debuff',
-        effectLines: [],
-        conditionState: undefined,
-      })
-    }
-  }
-
-  return result
+// 从投影层快照读取当前角色的 Buff 原始数据
+const currentCharacterSnap = computed(() => {
+  const id = snapId.value
+  if (!id) return null
+  return battleStore.participants.get(id) ?? null
 })
+
+// 从快照读取 Buff 数据，无需再直接 resolve BuffSystem
+const buffListItems = computed((): BuffRawItem[] => currentCharacterSnap.value?.buffs ?? [])
 
 const buffDisplay = useBuffDisplay(buffListItems, computed(() => currentCharacter.value?.id ?? ''), 99)
 
 /** 被动技能分类展示配置 */
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: number }> = {
-  aura:      { label: '光环',   color: '#34d399', priority: 0 },
-  trigger:   { label: '触发',   color: '#a78bfa', priority: 1 },
-  heal:      { label: '治疗',   color: '#f472b6', priority: 2 },
-  immunity:  { label: '免疫',   color: '#fbbf24', priority: 3 },
-  summon:    { label: '召唤',   color: '#fb923c', priority: 4 },
-  dot:       { label: '持续',   color: '#f87171', priority: 5 },
-  shield:    { label: '护盾',   color: '#22d3ee', priority: 6 },
-  attribute: { label: '属性',   color: '#60a5fa', priority: 7 },
+  aura: { label: '光环', color: '#34d399', priority: 0 },
+  trigger: { label: '触发', color: '#a78bfa', priority: 1 },
+  heal: { label: '治疗', color: '#f472b6', priority: 2 },
+  immunity: { label: '免疫', color: '#fbbf24', priority: 3 },
+  summon: { label: '召唤', color: '#fb923c', priority: 4 },
+  dot: { label: '持续', color: '#f87171', priority: 5 },
+  shield: { label: '护盾', color: '#22d3ee', priority: 6 },
+  attribute: { label: '属性', color: '#60a5fa', priority: 7 },
 }
 
 const UNCATEGORIZED = { label: '未分类', color: '#94a3b8', priority: 99 }
@@ -36173,6 +36457,7 @@ const handleBattleEndReplay = (winner: string) => {
   border-bottom: 1px solid rgba(96, 165, 250, 0.15);
   margin-bottom: 4px;
 }
+
 .tier-filter {
   display: flex;
   align-items: center;
@@ -36182,6 +36467,7 @@ const handleBattleEndReplay = (winner: string) => {
   cursor: pointer;
   user-select: none;
 }
+
 .tier-filter input[type="checkbox"] {
   accent-color: #22d3ee;
 }
@@ -36526,6 +36812,7 @@ const handleBattleEndReplay = (winner: string) => {
 <script setup lang="ts">
 import { computed, ref, reactive, onUnmounted, watch } from "vue";
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
+import { getActionBudget, BATTLE_ANIMATION_TIMING } from '@/shared/constants/animation-timing';
 import BattleLog from "@/presentation/views/BattleLog.vue";
 import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
 import BattleVisualEffects from "@/presentation/components/BattleVisualEffects.vue";
@@ -36636,82 +36923,41 @@ watch(() => store.currentTurn, (newTurn, oldTurn) => {
   }
 })
 
-// ponytail: 监听 store 层动画状态变化，编排完整视觉效果 — 直接 watch reactive 对象而非 getter 函数以保证深层变更可追踪
+// ponytail: 固定预算模型 — 动画编排完全由领域层配速驱动，UI 只负责按事件即时显示
 watch(store.animationState, (state) => {
+  const budget = getActionBudget(store.battleSpeed)
   if (state.skill) {
     const key = `${state.skill.sourceId}|${state.skill.targetId}|${state.skill.skillName}`
-    if (key === lastSkillKey) return  // DAMAGE_ANIMATION 触发时 skill 还没清，跳过重复
+    if (key === lastSkillKey) return
     lastSkillKey = key
 
-    // 技能释放序列: 攻击者蓄力 + 技能名飞行 + 突进 + 光弹 + 命中效果
     const card = participantCardRefs.value[state.skill.sourceId]
-    card?.triggerVisualState('casting', 600)
+    // 蓄力相 = 20%T
+    card?.triggerVisualState('casting', budget * BATTLE_ANIMATION_TIMING.PHASES.windup.end)
     const side = getCharacterSide(state.skill.sourceId)
-    // ponytail: GSAP 前移再回位，配合 casting CSS 动画叠加效果
-    playAttackAnimation(state.skill.sourceId, side)
+    // GSAP 突进 = 20%T
+    playAttackAnimation(state.skill.sourceId, side, budget)
     const isHeal = state.skill.effectType === ActionTypes.HEAL
     const visual = getVisualEffect(state.skill.damageCategory, isHeal)
-    const hitEffect = visual.impactClass
 
-    if (state.skill.effectType === ActionTypes.HEAL) {
-      visualEffectsRef.value?.playHealSequence(
-        state.skill.sourceId,
-        state.skill.targetId,
-        state.skill.skillName,
-        0, side as 'left' | 'right',
-      )
-    } else {
-      visualEffectsRef.value?.playAttackSequence(
-        state.skill.sourceId,
-        state.skill.targetId,
-        state.skill.skillName,
-        0, false,
-        side as 'left' | 'right',
-        hitEffect,
-      )
-    }
+    // 飞行序列：只飞（技能名+光弹），终点 = 50%T
+    visualEffectsRef.value?.playFlightSequence(
+      state.skill.sourceId, state.skill.targetId, state.skill.skillName,
+      side as 'left' | 'right', visual.impactClass, budget,
+    )
   }
   if (state.damage) {
+    // NOTE: 领域层已在 50%T 扣血，此处立即显示数字/特效（零延迟）
+    const targetCard = participantCardRefs.value[state.damage.targetId]
     if (state.damage.isHeal) {
-      if (state.skill) {
-        // ponytail: 延迟 1100ms 匹配 playHealSequence 内部动画时序
-        const healData = state.damage  // ponytail: 在 closure 外捕获，避免 setAnimationState 清空后为 null
-        setTimeout(() => {
-          if (!healData) return
-          const tc = participantCardRefs.value[healData.targetId]
-          tc?.triggerVisualState('healed', 800)
-          tc?.flashHpBar()
-          visualEffectsRef.value?.showHealAura(healData.targetId)
-          visualEffectsRef.value?.showHealNum(healData.targetId, healData.damage)
-        }, 1100)
-        return
-      }
-      // 独立治疗（无 skill 事件）
-      const targetCard = participantCardRefs.value[state.damage.targetId]
-      targetCard?.triggerVisualState('healed', 800)
-      targetCard?.flashHpBar()
-      visualEffectsRef.value?.showHealAura(state.damage.targetId)
-      visualEffectsRef.value?.showHealNum(state.damage.targetId, state.damage.damage)
+      targetCard?.triggerVisualState('healed', budget * 0.4)
+      targetCard?.flashHpBar(budget)
+      visualEffectsRef.value?.showHealAura(state.damage.targetId, budget)
+      visualEffectsRef.value?.showHealNum(state.damage.targetId, state.damage.damage, budget)
     } else {
-      if (state.skill) {
-        // ponytail: 延迟 1100ms 匹配 playAttackSequence 内部动画时序（技能名飞行→光弹→命中爆炸）
-        const dmgData = state.damage  // ponytail: 在 closure 外捕获，避免 setAnimationState 清空后为 null
-        setTimeout(() => {
-          if (!dmgData) return
-          const tc = participantCardRefs.value[dmgData.targetId]
-          tc?.triggerVisualState('hurt', 450)
-          visualEffectsRef.value?.showDamageNum(dmgData.targetId, dmgData.damage, dmgData.isCritical)
-          if (dmgData.isCritical) {
-            visualEffectsRef.value?.showScreenShake()
-          }
-        }, 1100)
-        return
-      }
-      // 独立伤害（调试面板、被动触发等）
-      const targetCard = participantCardRefs.value[state.damage.targetId]
-      targetCard?.triggerVisualState('hurt', 450)
-      visualEffectsRef.value?.showImpact(state.damage.targetId, 'fire')
-      visualEffectsRef.value?.showDamageNum(state.damage.targetId, state.damage.damage, state.damage.isCritical)
+      targetCard?.triggerVisualState('hurt', budget * 0.4)
+      visualEffectsRef.value?.showImpact(state.damage.targetId, 'fire', budget)
+      visualEffectsRef.value?.showDamageNum(state.damage.targetId, state.damage.damage, state.damage.isCritical, budget)
       if (state.damage.isCritical) {
         visualEffectsRef.value?.showScreenShake()
       }
@@ -36721,9 +36967,11 @@ watch(store.animationState, (state) => {
     showMiss(state.miss.targetId)
   }
   if (state.buff) {
+    // NOTE: 被动特效时长钳制在 50%T 内，保证不侵入下一行动
+    const buffDuration = budget * BATTLE_ANIMATION_TIMING.PHASES.settle.start
     showBuffEffect(state.buff.targetId, state.buff.buffName, state.buff.isPositive)
     if (state.buff.isPositive) {
-      participantCardRefs.value[state.buff.targetId]?.triggerVisualState('shielded', 800)
+      participantCardRefs.value[state.buff.targetId]?.triggerVisualState('shielded', buffDuration)
     }
   }
 }, { deep: true })
@@ -36845,9 +37093,9 @@ function triggerHitEffect(characterId: string) {
   })
 }
 
-function triggerCastingEffect(characterId: string, _duration: number = 1000) {
+function triggerCastingEffect(characterId: string, duration: number = 1000) {
   const side = getCharacterSide(characterId)
-  playAttackAnimation(characterId, side)
+  playAttackAnimation(characterId, side, undefined, duration)
 }
 
 function triggerBuffEffect(characterId: string) {
@@ -36963,11 +37211,12 @@ onUnmounted(() => {
 <template>
   <div class="battle-log-section">
     <div class="log-header">
-      <span>战斗日志</span>
+      <span>日志</span>
       <div class="log-filters">
         <label class="filter-check"><input type="checkbox" v-model="filters.battle" /> 战斗</label>
         <label class="filter-check"><input type="checkbox" v-model="filters.system" /> 系统</label>
         <label class="filter-check"><input type="checkbox" v-model="showStatus" /> 状态</label>
+        <label class="filter-check"><input type="checkbox" v-model="filters.debug" /> 调试</label>
         <input class="log-keyword" v-model="keyword" placeholder="搜索…" />
         <button class="export-btn" @click="exportLogs" title="导出日志文本">📋 导出</button>
       </div>
@@ -36979,7 +37228,9 @@ onUnmounted(() => {
         <!-- 战斗头/尾 -->
         <template v-if="b.type === 'battle-header'">
           <span class="rule rule--double"></span>
-          <div class="battle-line"><LogSeg v-for="(s,j) in b.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/></div>
+          <div class="battle-line">
+            <LogSeg v-for="(s, j) in b.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
+          </div>
           <span class="rule rule--double"></span>
         </template>
 
@@ -36993,38 +37244,38 @@ onUnmounted(() => {
         <!-- 行动块 -->
         <template v-else-if="b.type === 'action'">
           <div class="action-header"><span class="glyph">◆</span>
-            <LogSeg v-for="(s,j) in b.header" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+            <LogSeg v-for="(s, j) in b.header" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
           <div v-if="b.result" class="action-result">
-            <LogSeg v-for="(s,j) in b.result" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+            <LogSeg v-for="(s, j) in b.result" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
-          <div v-for="(sub,k) in b.subs" :key="'s'+k" class="action-sub">
+          <div v-for="(sub, k) in b.subs" :key="'s' + k" class="action-sub">
             <span class="glyph glyph--sub">{{ k === b.subs.length - 1 ? '└' : '├' }}</span>
-            <LogSeg v-for="(s,j) in sub" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+            <LogSeg v-for="(s, j) in sub" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
         </template>
 
         <!-- 回合结算 -->
         <template v-else-if="b.type === 'settlement'">
           <div class="sub-header"><span class="rule rule--thin"></span>回合结算<span class="rule rule--thin"></span></div>
-          <div v-for="(line,k) in b.lines" :key="k" class="indent-line">
-            <LogSeg v-for="(s,j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+          <div v-for="(line, k) in b.lines" :key="k" class="indent-line">
+            <LogSeg v-for="(s, j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
         </template>
 
         <!-- 态势 -->
         <template v-else-if="b.type === 'snapshot'">
           <div class="sub-header"><span class="rule rule--thin"></span>态势<span class="rule rule--thin"></span></div>
-          <div v-for="(line,k) in b.lines" :key="k" class="indent-line">
-            <LogSeg v-for="(s,j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+          <div v-for="(line, k) in b.lines" :key="k" class="indent-line">
+            <LogSeg v-for="(s, j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
         </template>
 
         <!-- 条件激活 -->
         <template v-else-if="b.type === 'section'">
           <div class="section-title">【{{ b.title }}】</div>
-          <div v-for="(line,k) in b.lines" :key="k" class="indent-line">
-            <LogSeg v-for="(s,j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+          <div v-for="(line, k) in b.lines" :key="k" class="indent-line">
+            <LogSeg v-for="(s, j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
           </div>
         </template>
 
@@ -37032,8 +37283,8 @@ onUnmounted(() => {
         <template v-else-if="b.type === 'summary'">
           <span class="rule rule--double"></span>
           <div class="summary-content">
-            <div v-for="(line,k) in b.lines" :key="k" class="summary-line">
-              <LogSeg v-for="(s,j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+            <div v-for="(line, k) in b.lines" :key="k" class="summary-line">
+              <LogSeg v-for="(s, j) in line" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
             </div>
           </div>
           <span class="rule rule--double"></span>
@@ -37041,12 +37292,13 @@ onUnmounted(() => {
 
         <!-- 普通行 -->
         <template v-else>
-          <LogSeg v-for="(s,j) in b.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave"/>
+          <LogSeg v-for="(s, j) in b.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
         </template>
       </div>
     </div>
 
-    <EntityTooltip :visible="tooltipVisible" :data="tooltipData" :trigger-rect="tooltipRect" @hide="tooltipVisible = false" />
+    <EntityTooltip :visible="tooltipVisible" :data="tooltipData" :trigger-rect="tooltipRect"
+      @hide="tooltipVisible = false" />
 
     <div v-if="hasStats" class="log-stats">
       <span class="stat-item">回合: {{ stats.totalRounds }}</span>
@@ -37059,6 +37311,7 @@ onUnmounted(() => {
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import type { LogSegment, LogSegmentHover, LogFilters, BattleLogEntry, NarrativeBlock } from '@/shared/types/battle-log'
+import { LogType } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
 import LogSeg from '@/presentation/components/LogSeg.vue'
@@ -37116,6 +37369,8 @@ const keyword = ref('')
 
 const effectiveLogs = computed(() => {
   let result = logs.value
+  // ★ 只保留 BATTLE 类型日志，过滤 SYSTEM/DEBUG/ACTION/ITEM
+  result = result.filter((e) => e.type === LogType.BATTLE)
   // 关键词过滤
   if (keyword.value) {
     const kw = keyword.value.toLowerCase()
@@ -37323,13 +37578,6 @@ function exportLogs(): void {
 <style scoped>
 @use '@/presentation/styles/main.scss';
 
-.log-content {
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  font-size: var(--font-size-sm);
-  line-height: 1.7;
-  padding: var(--space-2);
-}
-
 .no-logs {
   text-align: center;
   color: var(--color-text-tertiary);
@@ -37337,38 +37585,116 @@ function exportLogs(): void {
 }
 
 /* ── 分隔线（CSS 实现） ── */
-.rule { flex: 1; height: 1px; background: var(--color-border-default); align-self: center; }
-.rule--double { height: 3px; border-top: 1px solid var(--color-border-strong); border-bottom: 1px solid var(--color-border-strong); background: transparent; }
-.rule--thin { opacity: 0.5; }
+.rule {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-default);
+  align-self: center;
+}
+
+.rule--double {
+  height: 3px;
+  border-top: 1px solid var(--color-border-strong);
+  border-bottom: 1px solid var(--color-border-strong);
+  background: transparent;
+}
+
+.rule--thin {
+  opacity: 0.5;
+}
 
 /* 叙事块基础 */
-.nb { margin: 2px 0; }
+.nb {
+  margin: 2px 0;
+}
 
 /* 战斗头/尾 */
-.nb--battle-header { display: flex; gap: 10px; text-align: center; font-weight: var(--font-weight-bold); color: var(--color-warning); padding: 6px 0; align-items: center; }
-.battle-line { padding: 4px 0; letter-spacing: 1px; text-align: center; }
+.nb--battle-header {
+  display: flex;
+  gap: 10px;
+  text-align: center;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-warning);
+  padding: 6px 0;
+  align-items: center;
+}
+
+.battle-line {
+  padding: 4px 0;
+  letter-spacing: 1px;
+  text-align: center;
+}
 
 /* 回合头 */
-.nb--round { display: flex; gap: 10px; margin: 14px 0 6px; align-items: center; }
-.round-label { color: var(--color-info); font-weight: var(--font-weight-bold); white-space: nowrap; }
+.nb--round {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 6px;
+  align-items: center;
+}
+
+.round-label {
+  color: var(--color-info);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
 
 /* 行动块：◆ 头 + 缩进结果/从属 */
-.action-header { font-weight: var(--font-weight-semibold); }
-.glyph { color: var(--color-warning); margin-right: 6px; }
-.action-result, .action-sub { padding-left: 1.4em; }
-.glyph--sub { color: var(--color-text-tertiary); }
+.action-header {
+  font-weight: var(--font-weight-semibold);
+}
+
+.glyph {
+  color: var(--color-warning);
+  margin-right: 6px;
+}
+
+.action-result,
+.action-sub {
+  padding-left: 1.4em;
+}
+
+.glyph--sub {
+  color: var(--color-text-tertiary);
+}
 
 /* 结算/态势 子标题 */
-.sub-header { display: flex; gap: 8px; color: var(--color-text-tertiary); margin-top: 8px; font-size: var(--font-size-xs); letter-spacing: 2px; align-items: center; }
-.indent-line { padding-left: 1.4em; }
+.sub-header {
+  display: flex;
+  gap: 8px;
+  color: var(--color-text-tertiary);
+  margin-top: 8px;
+  font-size: var(--font-size-xs);
+  letter-spacing: 2px;
+  align-items: center;
+}
+
+.indent-line {
+  padding-left: 1.4em;
+}
 
 /* 条件激活 */
-.section-title { color: var(--color-energy); font-weight: var(--font-weight-bold); }
+.section-title {
+  color: var(--color-energy);
+  font-weight: var(--font-weight-bold);
+}
 
 /* 战报摘要 */
-.nb--summary { display: flex; gap: 10px; padding: 8px 0; align-items: center; }
-.summary-content { text-align: center; padding: 4px 0; }
-.summary-line { margin: 2px 0; }
+.nb--summary {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  align-items: center;
+}
+
+.summary-content {
+  text-align: center;
+  padding: 4px 0;
+}
+
+.summary-line {
+  margin: 2px 0;
+}
 
 /* 统计栏 */
 .log-stats {
@@ -37387,7 +37713,6 @@ function exportLogs(): void {
 .export-btn {
   margin-left: auto;
   padding: 2px 8px;
-  font-size: var(--font-size-xs);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
   background: var(--color-surface-raised);
@@ -37396,6 +37721,7 @@ function exportLogs(): void {
   white-space: nowrap;
   transition: background var(--transition-fast);
 }
+
 .export-btn:hover {
   background: var(--color-surface-hover);
   color: var(--color-text-primary);
@@ -37403,11 +37729,33 @@ function exportLogs(): void {
 
 /* 微交互：新块淡入 */
 @media (prefers-reduced-motion: no-preference) {
-  .nb { animation: nb-in .18s ease-out; }
-  @keyframes nb-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  .nb {
+    animation: nb-in .18s ease-out;
+  }
+
+  @keyframes nb-in {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
-.log-hoverable { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; transition: filter var(--transition-fast); }
-.log-hoverable:hover { filter: brightness(1.35); }
+
+.log-hoverable {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  cursor: help;
+  transition: filter var(--transition-fast);
+}
+
+.log-hoverable:hover {
+  filter: brightness(1.35);
+}
 </style>
 
 --- src/presentation/views/BattleReplay.vue ---
@@ -41220,11 +41568,16 @@ const valueColorClass = computed(() => {
       </button>
     </div>
     <div class="control-group right">
-      <button class="control-btn" @click="$emit('toggle-pause')" :disabled="!isBattleActive">{{ isPaused ? '继 续' :
-        '暂 停' }}</button>
-      <button class="control-btn" @click="handleSingleStep" :disabled="singleStepDisabled">{{ singleStepLabel
-      }}</button>
-
+      <!-- 调试模式：暂停相位指示 + 暂停 / 单步调试 -->
+      <template v-if="debugMode">
+        <span v-if="debugPhase" class="debug-phase-badge">⏸ 暂停于：{{ debugPhaseLabel }}</span>
+        <button class="control-btn" @click="handleDebugStep" :disabled="!debugPhase">
+          {{ debugPhase ? '继 续' : '暂 停' }}
+        </button>
+        <button class="control-btn" @click="handleDebugStep" :disabled="!debugPhase">
+          {{ debugPhase ? '下一步 ▶' : '单步调试' }}
+        </button>
+      </template>
       <span class="separator"></span>
 
       <!-- 调试切换开关 -->
@@ -41247,7 +41600,6 @@ import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 
 const props = defineProps<{
   isBattleActive: boolean;
-  isPaused: boolean;
   isAutoPlaying: boolean;
   battleSpeed?: number;
 }>();
@@ -41256,9 +41608,6 @@ const emit = defineEmits<{
   "start-battle": [];
   "end-battle": [];
   "reset-battle": [];
-  "step-back": [];
-  "toggle-pause": [];
-  "single-step": [];
   "toggle-auto-play": [];
   "battle-speed-change": [speed: number];
 }>();
@@ -41286,39 +41635,50 @@ const toggleBattleSpeed = () => {
   emit('battle-speed-change', speedLevels[nextIndex]);
 };
 
-// 调试模式切换 — 与 DebugGate 单例双向同步
+
+
+// ========== 调试模式 ==========
+// NOTE: debugGate 是普通类，状态不可响应式追踪，
+//       因此通过 DEBUG_PAUSE / DEBUG_PAUSE_RESUME 事件驱动本地 ref
 const debugMode = ref(debugGate.enabled)
+const debugPhase = ref<string | null>(debugGate.waitingPhase)
+
+const PHASE_LABELS: Record<string, string> = {
+  BATTLE_START: '战斗开始',
+  TURN_START: '回合开始',
+  TURN_END: '回合结束',
+  BATTLE_END: '战斗结束',
+}
+const debugPhaseLabel = computed(() =>
+  debugPhase.value ? (PHASE_LABELS[debugPhase.value] ?? debugPhase.value) : ''
+)
+
 const toggleDebug = () => {
   debugMode.value = !debugMode.value
   debugGate.setEnabled(debugMode.value)
 }
-// 反向同步：通过 eventBus 监听外部调试开关变化
+
+// 暂停 / 单步调试：调试模式下战斗停在断点上，两者都推进到下一个断点
+const handleDebugStep = () => {
+  debugGate.nextStep()
+}
+
 onMounted(() => {
-  eventBus.on(BattleEventCodes.DEBUG_TOGGLE, (data: { enabled?: boolean }) => {
+  eventBus.on(BattleEventCodes.DEBUG_TOGGLE, (data) => {
     debugMode.value = data?.enabled ?? false
+  })
+  eventBus.on(BattleEventCodes.DEBUG_PAUSE, (data) => {
+    debugPhase.value = data?.phase ?? null
+  })
+  eventBus.on(BattleEventCodes.DEBUG_PAUSE_RESUME, () => {
+    debugPhase.value = null
   })
 })
 onUnmounted(() => {
   eventBus.off(BattleEventCodes.DEBUG_TOGGLE)
+  eventBus.off(BattleEventCodes.DEBUG_PAUSE)
+  eventBus.off(BattleEventCodes.DEBUG_PAUSE_RESUME)
 })
-
-// 单步执行按钮 — 调试模式下合并 DebugGate 的"下一步"语义
-const isDebugWaiting = computed(() => debugMode.value && debugGate.isWaiting())
-
-const singleStepLabel = computed(() => isDebugWaiting.value ? '▶ 下一步' : '单步执行')
-
-const singleStepDisabled = computed(() => {
-  if (isDebugWaiting.value) return false
-  return !props.isBattleActive
-})
-
-const handleSingleStep = () => {
-  if (isDebugWaiting.value) {
-    debugGate.nextStep()
-  } else {
-    emit('single-step')
-  }
-}
 </script>
 
 <style scoped>
@@ -41387,6 +41747,19 @@ const handleSingleStep = () => {
   background: var(--color-border-default);
   opacity: 0.4;
   flex-shrink: 0;
+}
+
+/* 调试相位徽标 */
+.debug-phase-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  border-radius: var(--radius-xl);
+  background: rgba(34, 211, 238, 0.1);
+  color: var(--color-energy);
+  white-space: nowrap;
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
 /* 调试切换开关 */
@@ -42070,6 +42443,42 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 }
 </style>
 
+--- src/shared/constants/animation-timing.ts ---
+/**
+ * 战斗动画时序配置 — 固定行动预算模型（唯一时间源）
+ *
+ * 1. 每个行动消耗固定总预算 T；T(speed) = BASE_BUDGET / speed
+ * 2. 所有动画节点按 T 的固定占比排布，命中瞬间锁定 50%
+ * 3. 命中瞬间 = 伤害数字弹出 = HP 条开始变化 = 命中特效，三者严格同步
+ * 4. 领域层按此配速（flight→impact 两段等待），UI 按此排期，不再各定时长
+ */
+export const BATTLE_ANIMATION_TIMING = {
+  /** 1x 速度下的单行动总预算（ms）— 唯一基准常数 */
+  BASE_BUDGET: 1200,
+
+  /** 阶段占比（全速度通用，值为 T 的比例） */
+  PHASES: {
+    windup:       { start: 0.00, end: 0.20 },  // 攻击者蓄力/突进
+    nameFlight:   { start: 0.10, end: 0.50 },  // 技能名飞行
+    projectile:   { start: 0.20, end: 0.50 },  // 光弹飞行
+    impact:       0.50,                         // 命中瞬间（数字+HP+特效同步锚点）
+    numberFloat:  { start: 0.50, end: 0.85 },  // 伤害数字上浮淡出
+    hpTransition: { start: 0.50, end: 1.00 },  // HP 条过渡
+    settle:       { start: 0.50, end: 1.00 },  // 攻击者回位/场景收束
+  },
+
+  /** 多目标命中错峰间隔（占 T 比例） */
+  MULTI_TARGET_STAGGER: 0.08,
+} as const
+
+/** 指定速度下的单行动总预算 T */
+export const getActionBudget = (speed: number): number =>
+  BATTLE_ANIMATION_TIMING.BASE_BUDGET / speed
+
+/** 指定速度下某占比点对应的绝对毫秒 */
+export const phaseAt = (ratio: number, speed: number): number =>
+  getActionBudget(speed) * ratio
+
 --- src/shared/constants/speed.ts ---
 /** 战斗速度倍率选项 */
 export const SPEED_OPTIONS = [0.5, 1, 2, 5] as const
@@ -42339,6 +42748,8 @@ export interface BattleLogMeta {
   /** 叙事角色：决定归入哪种块 */
   role?: 'action' | 'sub' | 'settlement' | 'snapshot' | 'condition' | 'battle'
   entityId?: string
+  entityName?: string
+  entityFaction?: 'ally' | 'enemy'
   hpBefore?: number
   hpAfter?: number
   damage?: number
@@ -43714,17 +44125,17 @@ import type { BuffEffectLine } from '@/domain/buff/types'
 /**
  * Buff 原始条目 —— 从 BuffSystem 或 InterventionManager 合并后的中间格式，
  * 作为 `toBuffTextItem()` 的输入契约，替代 `any` 参数。
- * 所有字段可选，`toBuffTextItem()` 内部有兜底逻辑。
+ * id/buffId/name 为必填字段，其余可选。
  */
 export interface BuffRawItem {
   /** Buff 实例 ID（源1）或效果 ID（源2） */
-  id?: string
+  id: string
   /** Buff 实例 ID（与 id 二选一） */
   instanceId?: string
   /** Buff 配置 ID（buffs.json 中的 id） */
-  buffId?: string
+  buffId: string
   /** 显示名称 */
-  name?: string
+  name: string
   /** 效果描述 */
   description?: string
   /** 是否为 debuff */
@@ -43737,10 +44148,14 @@ export interface BuffRawItem {
   attributes?: Record<string, string>
   /** 特殊效果行 */
   effectLines?: BuffEffectLine[]
-  /** 领域层条件状态 */
+  /** 领域层条件状态（由 BuffSystem.setBuffConditionState 设置）
+   *  'active' = 条件已满足，'inactive' = 条件未满足
+   *  undefined = 领域层未设置，回退到文本启发式推断 */
   conditionState?: ConditionState
   /** Buff 脚本类名（调试用） */
   scriptName?: string
+  /** 控制类型（来自 BuffConfig，如 "stun"、"silence"） */
+  controlType?: string
 }
 
 /** 单个 Buff 在纯文本模式下的显示条目 */
@@ -43799,6 +44214,8 @@ export interface BuffModifier {
   attribute: string
   value: number
   type: 'PERCENTAGE' | 'ADDITIVE' | 'MULTIPLICATIVE' | 'FINAL'
+  /** 是否为固定值（不加 % 后缀） */
+  isFlat?: boolean
 }
 
 /** 属性合并条目：同一属性多来源合并后的一条显示 */
@@ -43809,6 +44226,8 @@ export interface MergedAttributeLine {
   totalPercent: number
   /** 该属性是否实际发生了变化（±0 表示抵消） */
   isChanged: boolean
+  /** 是否为固定值（不加 % 后缀） */
+  isFlat?: boolean
   /** 基础值（未加修饰符前的原始值，可选） */
   baseValue?: number
   /** 各来源明细 */
@@ -44253,20 +44672,7 @@ export interface PlayerLogRenderer {
  * Vue reactive() 对此结构的追踪是零成本的（所有字段都是原始值或纯数组）。
  */
 
-/**
- * Buff 显示条目 — 纯数据，无方法引用
- */
-export interface BuffDisplayItem {
-  readonly instanceId: string
-  readonly name: string
-  readonly isDebuff: boolean
-  /** 剩余回合数，0 = 永久 */
-  readonly remainingTurns: number
-  /** 当前层数 */
-  readonly stacks: number
-  /** 合并后的属性修正摘要，如 "攻击+15%" */
-  readonly summary: string
-}
+import type { BuffRawItem } from '@/shared/types/buff-display'
 
 /**
  * 参与者 UI 快照 — 纯数据，无方法，无 getter 链
@@ -44305,7 +44711,7 @@ export interface UIParticipantSnapshot {
   energyPercent: number
 
   // === Buff 显示数据 ===
-  buffs: BuffDisplayItem[]
+  buffs: BuffRawItem[]
 
   // === 版本戳（调试用） ===
   version: number

@@ -60,6 +60,7 @@
 <script setup lang="ts">
 import { computed, ref, reactive, onUnmounted, watch } from "vue";
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
+import { getActionBudget, BATTLE_ANIMATION_TIMING } from '@/shared/constants/animation-timing';
 import BattleLog from "@/presentation/views/BattleLog.vue";
 import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
 import BattleVisualEffects from "@/presentation/components/BattleVisualEffects.vue";
@@ -170,82 +171,41 @@ watch(() => store.currentTurn, (newTurn, oldTurn) => {
   }
 })
 
-// ponytail: 监听 store 层动画状态变化，编排完整视觉效果 — 直接 watch reactive 对象而非 getter 函数以保证深层变更可追踪
+// ponytail: 固定预算模型 — 动画编排完全由领域层配速驱动，UI 只负责按事件即时显示
 watch(store.animationState, (state) => {
+  const budget = getActionBudget(store.battleSpeed)
   if (state.skill) {
     const key = `${state.skill.sourceId}|${state.skill.targetId}|${state.skill.skillName}`
-    if (key === lastSkillKey) return  // DAMAGE_ANIMATION 触发时 skill 还没清，跳过重复
+    if (key === lastSkillKey) return
     lastSkillKey = key
 
-    // 技能释放序列: 攻击者蓄力 + 技能名飞行 + 突进 + 光弹 + 命中效果
     const card = participantCardRefs.value[state.skill.sourceId]
-    card?.triggerVisualState('casting', 600)
+    // 蓄力相 = 20%T
+    card?.triggerVisualState('casting', budget * BATTLE_ANIMATION_TIMING.PHASES.windup.end)
     const side = getCharacterSide(state.skill.sourceId)
-    // ponytail: GSAP 前移再回位，配合 casting CSS 动画叠加效果
-    playAttackAnimation(state.skill.sourceId, side)
+    // GSAP 突进 = 20%T
+    playAttackAnimation(state.skill.sourceId, side, budget)
     const isHeal = state.skill.effectType === ActionTypes.HEAL
     const visual = getVisualEffect(state.skill.damageCategory, isHeal)
-    const hitEffect = visual.impactClass
 
-    if (state.skill.effectType === ActionTypes.HEAL) {
-      visualEffectsRef.value?.playHealSequence(
-        state.skill.sourceId,
-        state.skill.targetId,
-        state.skill.skillName,
-        0, side as 'left' | 'right',
-      )
-    } else {
-      visualEffectsRef.value?.playAttackSequence(
-        state.skill.sourceId,
-        state.skill.targetId,
-        state.skill.skillName,
-        0, false,
-        side as 'left' | 'right',
-        hitEffect,
-      )
-    }
+    // 飞行序列：只飞（技能名+光弹），终点 = 50%T
+    visualEffectsRef.value?.playFlightSequence(
+      state.skill.sourceId, state.skill.targetId, state.skill.skillName,
+      side as 'left' | 'right', visual.impactClass, budget,
+    )
   }
   if (state.damage) {
+    // NOTE: 领域层已在 50%T 扣血，此处立即显示数字/特效（零延迟）
+    const targetCard = participantCardRefs.value[state.damage.targetId]
     if (state.damage.isHeal) {
-      if (state.skill) {
-        // ponytail: 延迟 1100ms 匹配 playHealSequence 内部动画时序
-        const healData = state.damage  // ponytail: 在 closure 外捕获，避免 setAnimationState 清空后为 null
-        setTimeout(() => {
-          if (!healData) return
-          const tc = participantCardRefs.value[healData.targetId]
-          tc?.triggerVisualState('healed', 800)
-          tc?.flashHpBar()
-          visualEffectsRef.value?.showHealAura(healData.targetId)
-          visualEffectsRef.value?.showHealNum(healData.targetId, healData.damage)
-        }, 1100)
-        return
-      }
-      // 独立治疗（无 skill 事件）
-      const targetCard = participantCardRefs.value[state.damage.targetId]
-      targetCard?.triggerVisualState('healed', 800)
-      targetCard?.flashHpBar()
-      visualEffectsRef.value?.showHealAura(state.damage.targetId)
-      visualEffectsRef.value?.showHealNum(state.damage.targetId, state.damage.damage)
+      targetCard?.triggerVisualState('healed', budget * 0.4)
+      targetCard?.flashHpBar(budget)
+      visualEffectsRef.value?.showHealAura(state.damage.targetId, budget)
+      visualEffectsRef.value?.showHealNum(state.damage.targetId, state.damage.damage, budget)
     } else {
-      if (state.skill) {
-        // ponytail: 延迟 1100ms 匹配 playAttackSequence 内部动画时序（技能名飞行→光弹→命中爆炸）
-        const dmgData = state.damage  // ponytail: 在 closure 外捕获，避免 setAnimationState 清空后为 null
-        setTimeout(() => {
-          if (!dmgData) return
-          const tc = participantCardRefs.value[dmgData.targetId]
-          tc?.triggerVisualState('hurt', 450)
-          visualEffectsRef.value?.showDamageNum(dmgData.targetId, dmgData.damage, dmgData.isCritical)
-          if (dmgData.isCritical) {
-            visualEffectsRef.value?.showScreenShake()
-          }
-        }, 1100)
-        return
-      }
-      // 独立伤害（调试面板、被动触发等）
-      const targetCard = participantCardRefs.value[state.damage.targetId]
-      targetCard?.triggerVisualState('hurt', 450)
-      visualEffectsRef.value?.showImpact(state.damage.targetId, 'fire')
-      visualEffectsRef.value?.showDamageNum(state.damage.targetId, state.damage.damage, state.damage.isCritical)
+      targetCard?.triggerVisualState('hurt', budget * 0.4)
+      visualEffectsRef.value?.showImpact(state.damage.targetId, 'fire', budget)
+      visualEffectsRef.value?.showDamageNum(state.damage.targetId, state.damage.damage, state.damage.isCritical, budget)
       if (state.damage.isCritical) {
         visualEffectsRef.value?.showScreenShake()
       }
@@ -255,9 +215,11 @@ watch(store.animationState, (state) => {
     showMiss(state.miss.targetId)
   }
   if (state.buff) {
+    // NOTE: 被动特效时长钳制在 50%T 内，保证不侵入下一行动
+    const buffDuration = budget * BATTLE_ANIMATION_TIMING.PHASES.settle.start
     showBuffEffect(state.buff.targetId, state.buff.buffName, state.buff.isPositive)
     if (state.buff.isPositive) {
-      participantCardRefs.value[state.buff.targetId]?.triggerVisualState('shielded', 800)
+      participantCardRefs.value[state.buff.targetId]?.triggerVisualState('shielded', buffDuration)
     }
   }
 }, { deep: true })
@@ -379,9 +341,9 @@ function triggerHitEffect(characterId: string) {
   })
 }
 
-function triggerCastingEffect(characterId: string, _duration: number = 1000) {
+function triggerCastingEffect(characterId: string, duration: number = 1000) {
   const side = getCharacterSide(characterId)
-  playAttackAnimation(characterId, side)
+  playAttackAnimation(characterId, side, undefined, duration)
 }
 
 function triggerBuffEffect(characterId: string) {

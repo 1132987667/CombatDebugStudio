@@ -4,6 +4,12 @@
  ** 作者: CombatDebugStudio
  ** 功能: 战斗动画管理器
  ** 描述: 管理战斗动画队列的入队、播放、暂停与清除，协调 RAFTimer 驱动的时序播放
+ **
+ ** 改造（2026-07-26）：固定行动预算模型
+ ** - 依赖从 getAnimationDuration（反向 bug）改为 getBattleSpeed
+ ** - 新增阶段化方法：triggerFlightPhaseAndWait / triggerImpactPhaseAndWait / triggerMissImpactAndWait / triggerDirectImpactAndWait
+ ** - 删除旧的方法：triggerSkillEffectAnimation / triggerDamageAnimationAndWait / triggerMissAnimationAndWait
+ ** - resolve 时发射 ANIMATION_COMPLETE 事件，供 UI 层竞态安全地清除动画状态
  **/
 import type { AnimationData, AnimationQueueItem, AnimationType } from '@/domain/battle/type/BattleAnimationType'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
@@ -11,6 +17,12 @@ import type { DamageCategory } from '@/domain/skill/types'
 import { eventBus } from '@/main'
 import type { RAFTimer } from '@/shared/utils/RAF'
 import type { BattleEntity } from '@/domain/battle/type/types'
+import { BATTLE_ANIMATION_TIMING, getActionBudget, phaseAt } from '@/shared/constants/animation-timing'
+import type {
+  SkillEffectEventData,
+  DamageEventData,
+  MissEventData,
+} from '@/domain/battle/type/BattleEventType'
 
 export class BattleAnimationManager {
   private animationQueue: AnimationQueueItem[] = []
@@ -21,8 +33,13 @@ export class BattleAnimationManager {
   constructor(
     private rafTimer: RAFTimer,
     private getParticipants: () => Map<string, BattleEntity> | undefined,
-    private getAnimationDuration: () => number,
+    private getBattleSpeed: () => number,   // 改：传速度，不传（反向的）时长
   ) {}
+
+  /** 当前速度下的单行动总预算 T */
+  private get budget(): number {
+    return getActionBudget(this.getBattleSpeed())
+  }
 
   wait(ms: number): Promise<void> {
     return new Promise((resolve) => {
@@ -64,7 +81,7 @@ export class BattleAnimationManager {
     data: AnimationData,
     duration: number = 0,
   ): Promise<void> {
-    const actualDuration = duration > 0 ? duration : this.getAnimationDuration()
+    const actualDuration = duration > 0 ? duration : this.budget
 
     return new Promise<void>((resolve) => {
       this.animationQueue.push({
@@ -116,6 +133,8 @@ export class BattleAnimationManager {
         resolved = true
         clearTimeout(timeoutId)
         this.rafTimer.clear(timerId)
+        // 发射动画完成事件，供 UI 层竞态安全地清除动画状态
+        eventBus.emit(BattleEventCodes.ANIMATION_COMPLETE, { type: animation.type })
         if (typeof animation.resolve === 'function') {
           animation.resolve()
         }
@@ -133,33 +152,40 @@ export class BattleAnimationManager {
     })
   }
 
-  async triggerSkillEffectAnimation(data: {
-    sourceId: string
-    targetId: string
-    skillName: string
-    effectType: string
-    damageCategory: DamageCategory
-  }): Promise<void> {
-    const duration = Math.floor(this.getAnimationDuration() * 1.5)
+  // ============ 阶段化方法（固定预算模型） ============
+
+  /**
+   * 飞行阶段（0 → 50%T）：蓄力 + 技能名/光弹飞行，终点即命中瞬间
+   */
+  async triggerFlightPhaseAndWait(data: SkillEffectEventData): Promise<void> {
+    const duration = phaseAt(BATTLE_ANIMATION_TIMING.PHASES.impact, this.getBattleSpeed())
     await this.triggerAnimationAndWait(BattleEventCodes.SKILL_EFFECT, data, duration)
   }
 
-  async triggerDamageAnimationAndWait(data: {
-    targetId: string
-    damage: number
-    damageCategory: DamageCategory
-    isCritical: boolean
-    isHeal: boolean
-  }): Promise<void> {
-    const baseDuration = this.getAnimationDuration()
-    const duration = data.isCritical ? Math.floor(baseDuration * 1.5) : baseDuration
+  /**
+   * 命中阶段（50% → 100%T）：伤害数字 + 命中爆发
+   */
+  async triggerImpactPhaseAndWait(data: DamageEventData): Promise<void> {
+    const duration = this.budget - phaseAt(BATTLE_ANIMATION_TIMING.PHASES.impact, this.getBattleSpeed())
     await this.triggerAnimationAndWait(BattleEventCodes.DAMAGE_ANIMATION, data, duration)
   }
 
-  async triggerMissAnimationAndWait(data: { targetId: string }): Promise<void> {
-    await this.triggerAnimationAndWait(BattleEventCodes.MISS_ANIMATION, data, this.getAnimationDuration())
+  /**
+   * 闪避命中阶段（50% → 100%T）
+   */
+  async triggerMissImpactAndWait(data: MissEventData): Promise<void> {
+    const duration = this.budget - phaseAt(BATTLE_ANIMATION_TIMING.PHASES.impact, this.getBattleSpeed())
+    await this.triggerAnimationAndWait(BattleEventCodes.MISS_ANIMATION, data, duration)
   }
 
+  /**
+   * 轻量命中阶段（无飞行，完整 T）：治疗/护盾等非投射类行动
+   */
+  async triggerDirectImpactAndWait(data: DamageEventData): Promise<void> {
+    await this.triggerAnimationAndWait(BattleEventCodes.DAMAGE_ANIMATION, data, this.budget)
+  }
+
+  /** Buff 特效（保留原样 — 不属于行动预算，独立触发） */
   async triggerBuffEffectAndWait(data: {
     targetId: string
     buffName: string

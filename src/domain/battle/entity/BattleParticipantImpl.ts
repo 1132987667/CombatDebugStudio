@@ -686,6 +686,7 @@ export class BattleParticipantImpl implements BattleEntity {
         phase: BattleTriggerPhase.ENERGY_GAINED,
         sourceId: this.id,
         value: actualGain,
+        currentTurn: 0,
       })
     }
   }

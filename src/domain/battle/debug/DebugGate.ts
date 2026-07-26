@@ -39,6 +39,8 @@ export class DebugGate {
     const resolve = this._resolve
     this._resolve = null
     resolve?.()
+    // NOTE: 必须通知 UI 清除"暂停中"状态，否则 debugPhase 只进不出
+    eventBus.emit(BattleEventCodes.DEBUG_PAUSE_RESUME)
   }
 
   /** 是否正在等待用户操作 */

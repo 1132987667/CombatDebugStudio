@@ -770,94 +770,71 @@ export interface SnapshotIndexItem {
 }
 
 /**
- * 战斗触发器统一上下文
- *
- * 覆盖所有场景：
- * - TriggerEventBus 事件广播（emitTriggerEvent）
- * - PassiveSkillManager 被动触发（triggerPassives）
- * - BuffSystem 触发器脚本执行（executeTriggerScript）
- * - Buff 回调（damage/heal callback）
+ * 被动触发上下文 — PassiveSkillManager.triggerPassives 专用
+ * phase 必填，由工厂函数从 trigger 参数注入，不可能遗漏
  */
-export interface BattleContext {
-  // ============ 基础标识 ============
-  /** 触发阶段（battle_start / turn_start / damage_taken 等） */
-  phase?: BattleTriggerPhase
-  /** 战斗实例 ID */
-  battleId?: string
-  /** 来源参与者 ID（攻击者、施法者） */
-  sourceId?: string
-  /** 目标参与者 ID（受击者、受术者） */
-  targetId?: string
-  target?: BattleEntity
-  participants?: Map<string, BattleEntity>
-  /** 技能 ID */
-  skillId?: string
-  /** Buff ID */
-  buffId?: string
-  /** Buff 实例 ID（用于追踪具体实例） */
-  instanceId?: string
-
-  // ============ 数值字段 ============
-  /** 通用数值（能量、基础值等） */
-  value?: number
-  /** 伤害值（明确为伤害） */
-  damage?: number
-  /** 治疗值（明确为治疗） */
-  heal?: number
-  /** 通用量（与 value 类似，但用于某些特定场景） */
-  amount?: number
-
-  // ============ 回合信息 ============
-  /** 当前回合数（从 1 开始） */
-  currentTurn?: number
-  /** 回合编号（roundNumber 是 currentTurn 的别名） */
-  roundNumber?: number
-  /** 当前轮次（与 currentTurn 同义） */
-  round?: number
-
-  // ============ 状态标记 ============
-  /** 是否暴击 */
-  isCritical?: boolean
-  /** 是否命中 */
-  isHit?: boolean
-  /** 原因/类型（如 'damage'、'heal'、'buff'） */
-  cause?: string
-
-  parentTraceId?: string
-
-  /** 伤害记录 */
-  record?: CombatRecord
-
-  /** 延迟伤害令牌 */
-  token?: DeferredDamageToken
-
-  // ============ 扩展数据 ============
-  /** 额外自定义数据（灵活扩展） */
-  extra?: Record<string, unknown>
-  /** 战斗完整数据（仅用于需要全量状态的场景） */
-  battleData?: BattleData
+export interface PassiveTriggerContext {
+  readonly phase: BattleTriggerPhase
+  readonly currentTurn: number
+  readonly participants?: Map<string, BattleEntity>
+  readonly sourceId?: string
+  readonly targetId?: string
+  readonly target?: BattleEntity
+  readonly damage?: number
+  readonly heal?: number
+  readonly isCritical?: boolean
+  readonly cause?: string
+  readonly parentTraceId?: string
 }
 
 /**
- * 从 BattleData 创建完整的战斗上下文
- *
- * 公共字段（battleId / participants / currentTurn）自动从 battle 填充，
- * 调用方只需提供事件特有字段（sourceId / targetId / damage 等）。
- *
- * @param battle  当前战斗数据（唯一数据源）
- * @param event   事件特有字段（覆盖式合并）
+ * 技能步骤执行上下文 — SkillExecutor / DamageCalculator / HealCalculator / BuffSystem 专用
+ * 与战斗会话解耦，只携带执行时需要的 record 和 token
  */
-export function createBattleContext(
-  battle: BattleData,
-  event: Partial<BattleContext> = {},
-): BattleContext {
-  return {
-    // ── 公共字段：始终从 battle 填充 ──
-    battleId: battle.battleId,
-    participants: battle.participants,
-    currentTurn: battle.currentTurn,
+export interface StepExecutionContext {
+  readonly record?: CombatRecord
+  readonly token?: DeferredDamageToken
+  /** 是否来自被动触发 */
+  readonly fromPassive?: boolean
+}
 
-    // ── 事件特有字段：调用方覆盖 ──
-    ...event,
+/**
+ * 触发器事件上下文 — TriggerEventBus / BuffSystem.executeTriggerScript 专用
+ */
+export interface TriggerEventContext {
+  readonly phase: BattleTriggerPhase
+  readonly sourceId: string
+  readonly targetId?: string
+  readonly value?: number
+  readonly currentTurn: number
+  readonly extra?: Record<string, unknown>
+  readonly battleData?: BattleData
+}
+
+/**
+ * 创建被动触发上下文
+ * phase 从第一个参数强制注入，调用方不可能遗漏
+ */
+export function createPassiveContext(
+  phase: BattleTriggerPhase,
+  battle: BattleData,
+  overrides?: Partial<Omit<PassiveTriggerContext, 'phase' | 'currentTurn' | 'participants'>>,
+): PassiveTriggerContext {
+  return {
+    phase,
+    currentTurn: battle.currentTurn,
+    participants: battle.participants,
+    ...overrides,
   }
+}
+
+/**
+ * 创建技能执行上下文
+ */
+export function createStepContext(
+  record?: CombatRecord,
+  token?: DeferredDamageToken,
+  fromPassive?: boolean,
+): StepExecutionContext {
+  return { record, token, fromPassive }
 }

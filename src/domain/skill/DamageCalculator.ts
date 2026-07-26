@@ -1,6 +1,6 @@
-﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
+﻿﻿import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
-import type { BattleEntity, BattleContext } from '@/domain/battle/type/types'
+import type { BattleEntity, StepExecutionContext } from '@/domain/battle/type/types'
 import type {
   CombatRecord,
   DamageBreakdown,
@@ -104,7 +104,7 @@ export class DamageCalculator {
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): DamageResult {
     this.calculationLogs = []
     let isMiss = false
@@ -547,7 +547,7 @@ export class DamageCalculator {
     skillStep: ExtendedSkillStep,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): number {
     let baseDamage = 0
     if (skillStep.calculation) {

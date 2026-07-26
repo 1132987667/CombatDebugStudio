@@ -291,6 +291,10 @@ export class RoundNarrativeRenderer {
       segs.push({ text: ' HP  ' })
     }
     if (meta.hpBefore != null && meta.hpAfter != null) {
+      if (meta.entityName) {
+        const prefix = meta.entityFaction === 'ally' ? '[友方]' : '[敌方]'
+        segs.push({ text: ` ${prefix}${meta.entityName} `, classStr: 'log-entity' })
+      }
       segs.push({ text: `${meta.hpBefore} → ${meta.hpAfter}`, classStr: 'log-hp' })
     }
     if (meta.lethal) segs.push({ text: ' — 致死!', classStr: 'log-lethal' })

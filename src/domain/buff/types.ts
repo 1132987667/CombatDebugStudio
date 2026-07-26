@@ -459,30 +459,8 @@ export interface TriggerAction {
   maxTriggers?: number
 }
 
-/**
- * 触发事件上下文
- * 触发事件发生时的上下文信息
- */
-export interface TriggerEventContext {
-  /** 触发事件的阶段 */
-  phase: BattleTriggerPhase
-  /** 事件发生时的战斗实例ID */
-  battleId?: string
-  /** 事件相关的源参与者ID（如攻击者） */
-  sourceId?: string
-  /** 事件相关的目标参与者ID（如受击者） */
-  targetId?: string
-  /** 技能ID（如果事件由技能触发） */
-  skillId?: string
-  /** 伤害/治疗数值 */
-  value?: number
-  /** 其他自定义数据 */
-  extra?: Record<string, unknown>
-  /** 当前回合数 */
-  currentTurn?: number
-  /** 战斗数据（包含所有角色、状态等） */
-  battleData?: BattleData
-}
+// 删除，改为从 battle/type/types.ts 导入
+export type { TriggerEventContext } from '@/domain/battle/type/types'
 
 /**
  * 触发器运行时状态

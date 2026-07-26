@@ -28,7 +28,7 @@
       <!-- 生命值条 -->
       <div class="member-hp">
         <div class="hp-bar">
-          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPercent + '%' }">
+          <div class="hp-fill" :class="[hpColorClass, { 'hp-flash': hpFlash }]" :style="{ width: hpPercent + '%', transition: `width ${hpTransitionDuration}` }">
             <div class="pulse"></div>
           </div>
           <span class="bar-text">{{ hpText }}</span>
@@ -125,9 +125,10 @@ import BuffTextPanel from '@/presentation/components/BuffTextPanel.vue'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 import { useSituationalAttributes } from '@/presentation/composables/useSituationalAttributes'
 import type { BuffRawItem, MergedAttributeLine, BuffTextItem } from '@/shared/types/buff-display'
-import { container } from '@/infrastructure/di/Container'
-import type { BuffSystem } from '@/domain/buff/BuffSystem'
+
+import { ATTRIBUTE_SHORT_NAMES } from '@/presentation/config/attributeNames'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+import { getActionBudget } from '@/shared/constants/animation-timing'
 
 // 浮动数字接口
 interface FloatingNumber {
@@ -183,7 +184,11 @@ const energyPercent = computed(() => {
   return maxEnergy > 0 ? (p.currentEnergy / maxEnergy) * 100 : 0
 })
 
-const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+/** HP 条过渡时长 = 50% 预算（匹配命中阶段 50%→100%T） */
+const hpTransitionDuration = computed(() => {
+  const budget = getActionBudget(battleStore.battleSpeed)
+  return `${budget * 0.5}ms`
+})
 
 // 卡片引用
 const cardRef = ref<HTMLElement | null>(null)
@@ -249,9 +254,11 @@ function triggerVisualState(state: 'casting' | 'hurt' | 'healed' | 'shielded', d
 /**
  * HP 条闪光（治疗时）
  */
-function flashHpBar() {
+function flashHpBar(budget?: number) {
   hpFlash.value = true
-  setTimeout(() => { hpFlash.value = false }, 800)
+  // NOTE: HP条闪光时长 = 命中阶段 50%T（与 HP 过渡时长一致）
+  const flashDuration = budget ? budget * 0.5 : 800
+  setTimeout(() => { hpFlash.value = false }, flashDuration)
 }
 
 const cardVisualStateClass = computed(() => {
@@ -320,87 +327,19 @@ const hasShield = computed(() => shieldValue.value > 0)
 
 const shieldText = computed(() => `${Math.floor(shieldValue.value)}`)
 
-/** 转换为纯文本 Buff 展示数据 — 合并 BuffSystem 实例 + InterventionManager 手动状态 */
-const buffListItems = computed((): BuffRawItem[] => {
-  // 依赖投影层快照版本号：快照更新时重算 buff 显示
-  void snap.value?.version
-
-  const entity = props.participant
-  const result: BuffRawItem[] = []
-  const seenIds = new Set<string>()
-
-
-  // 源1: BuffSystem 管理的 buff（被动/技能/脚本添加）
-  if (typeof entity.getBuffInstanceIds === 'function') {
-    const instanceIds = entity.getBuffInstanceIds()
-    for (const id of instanceIds) {
-      const instance = buffSystem.getBuffInstanceById(id)
-      if (!instance) continue
-      const config = instance.context.config
-      if (config) {
-        seenIds.add(id)
-        // ponytail: 同时记录 config.id（buffId），用于源2的去重比较
-        // 源2的条目使用效果ID（如 "burn"）而非实例ID（如 "char1_burn_0_5"）
-        seenIds.add(config.id)
-        result.push({
-          id,
-          buffId: config.id,
-          name: config.name,
-          description: config.description ?? '',
-          remainingTurns: instance.remainingTurns,
-          currentStacks: instance.currentStacks,
-          isDebuff: config.isDebuff === true,
-          attributes: config.attributes,
-          effectLines: instance.effectLines ?? [],
-          conditionState: instance.conditionState,
-        })
-      }
-    }
-  }
-
-  // 源2: InterventionManager 维护的手动状态（兼容层 — 干预系统/回放系统依赖此字段）
-  const manualEffects = entity.statusEffects ?? []
-  for (const s of manualEffects) {
-    if (!seenIds.has(s.id)) {
-      seenIds.add(s.id)
-      result.push({
-        id: s.id,
-        buffId: s.id,
-        name: s.name,
-        description: '',
-        remainingTurns: s.remainingTurns,
-        currentStacks: 1,
-        isDebuff: s.type === 'debuff',
-        effectLines: [],
-        conditionState: undefined,
-      })
-    }
-  }
-
-  return result
-})
+/** Buff 原始条目 — 直接从投影层快照读取（由 participantMapper 预计算） */
+const buffListItems = computed((): BuffRawItem[] => snap.value?.buffs ?? [])
 
 // === 纯文本 Buff 显示模式 ===
 const panelVisible = ref(false)
 
-const ATTRIBUTE_CODE_TO_CN: Record<string, string> = {
-  attack: '攻击',
-  defense: '防御',
-  speed: '速度',
-  critRate: '暴击',
-  critDamage: '暴伤',
-  damageReduction: '伤害减免',
-  healing: '受疗',
-  hitRate: '命中',
-  dodgeRate: '闪避',
-}
 const baseAttributes = computed(() => {
-  const data = props.participant
+  const entity = props.participant
   const map: Record<string, number> = {}
-  for (const [code, cn] of Object.entries(ATTRIBUTE_CODE_TO_CN)) {
-    const attr = (data as unknown as Record<string, { base: number } | undefined>)[code]
-    if (attr && typeof attr.base === 'number') {
-      map[cn] = attr.base
+  for (const [code, cn] of Object.entries(ATTRIBUTE_SHORT_NAMES)) {
+    const attrValue = entity.getAttributeValue(code as any)
+    if (attrValue && typeof attrValue.base === 'number') {
+      map[cn] = attrValue.base
     }
   }
   return map
@@ -414,6 +353,7 @@ const situationalAttrs = useSituationalAttributes(
   computed(() => props.participant),
   computed(() => props.targetEntity ?? null),
   ref(null), // ponytail: skill 上下文暂未接入，未来从技能选中状态传递
+  computed(() => snap.value?.version ?? 0), // 版本戳变化时重新求值
 )
 
 
@@ -465,8 +405,9 @@ const parsedBuffEffects = computed(() => {
   const lines: Array<{ text: string; className: string }> = []
   for (const mod of b.modifiers) {
     const arrow = mod.value > 0 ? '↑' : '↓'
+    const suffix = mod.isFlat ? '' : '%'
     lines.push({
-      text: `${mod.attribute}${arrow}${Math.abs(mod.value)}%`,
+      text: `${mod.attribute}${arrow}${Math.abs(mod.value)}${suffix}`,
       className: mod.value > 0 ? 'effect--buff' : 'effect--debuff',
     })
   }
@@ -588,9 +529,31 @@ defineExpose({
 }
 
 .damage-number.miss {
-  color: var(--color-text-tertiary);
-  /* 灰色闪避 */
-  font-size: var(--font-size-xxl);
+  color: #a0aec0;
+  /* 银灰色闪避，更醒目 */
+  font-size: 28px;
+  font-weight: 800;
+  text-shadow: 0 0 12px rgba(160, 174, 192, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.8);
+  animation-name: miss-float;
+}
+
+/* 闪避专用浮动动画 — 水平弹跳 + 上浮淡出 */
+@keyframes miss-float {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-15px) scale(1.3);
+  }
+  40% {
+    transform: translateY(-25px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.9);
+  }
 }
 
 /* 浮动动画 */

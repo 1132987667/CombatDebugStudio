@@ -14,6 +14,7 @@ import type {
   ConditionState,
 } from '@/shared/types/buff-display'
 import type { BuffEffectLine } from '@/domain/buff/types'
+import { ATTRIBUTE_SHORT_NAMES } from '@/presentation/config/attributeNames'
 
 /** 极多 Buff 时次要分组的阈值 */
 const SECONDARY_THRESHOLD = 20
@@ -35,35 +36,12 @@ const CONDITION_KEYWORDS: Array<{ match: RegExp; label: string }> = [
   { match: /受击|被攻击/i, label: '受击' },
 ]
 
-/** 属性名缩写映射（标准中文本地化） */
-const ATTRIBUTE_SHORT_NAMES: Record<string, string> = {
-  attack: '攻击',
-  defense: '防御',
-  speed: '速度',
-  critRate: '暴击',
-  critDamage: '暴伤',
-  damage: '伤害',
-  damageBoost: '伤害提升',
-  damageReduction: '伤害减免',
-  healthBonus: '生命加成',
-  attackBonus: '攻击加成',
-  defenseBonus: '防御加成',
-  speedBonus: '速度加成',
-  currentHealth: '生命',
-  maxHealth: '生命',
-  healing: '受疗',
-  hitRate: '命中',
-  dodgeRate: '闪避',
-  physicalReduction: '物理减免',
-  magicReduction: '魔法减免',
-}
-
 /**
  * 检测条件状态
  * 优先使用来自 BuffSystem 的实时 conditionState（由 setBuffConditionState 设置）
  * 回退到从 description 文本中启发式推断
  */
-function detectCondition(
+export function detectCondition(
   raw: BuffRawItem,
 ): { condition: ConditionState; conditionLabel?: string } {
   // 优先使用实例的实时条件状态（由领域层设置）
@@ -98,9 +76,14 @@ function matchConditionKeyword(description: string, name: string): string | unde
 
 /**
  * 从 isDebuff + name 推断类型
+ * 优先使用结构化 controlType 字段，回退到名称关键词匹配
  */
-function detectType(name: string, isDebuff: boolean): 'buff' | 'debuff' | 'control' {
-  // 先检查是否为控制 — 控制优先于 debuff
+export function detectType(name: string, isDebuff: boolean, controlType?: string): 'buff' | 'debuff' | 'control' {
+  // 优先使用结构化字段（新数据走此路径）
+  if (controlType && controlType !== 'none' && controlType !== '') {
+    return 'control'
+  }
+  // 回退：名称匹配（兼容无 controlType 的旧数据）
   for (const keyword of CONTROL_NAMES) {
     if (name.includes(keyword)) return 'control'
   }
@@ -115,8 +98,8 @@ function detectType(name: string, isDebuff: boolean): 'buff' | 'debuff' | 'contr
 function extractAttributesFromConfig(
   attributes: Record<string, string>,
   stacks: number,
-): Array<{ attr: string; value: number }> {
-  const result: Array<{ attr: string; value: number }> = []
+): Array<{ attr: string; value: number; isFlat?: boolean }> {
+  const result: Array<{ attr: string; value: number; isFlat?: boolean }> = []
   for (const [code, valueStr] of Object.entries(attributes)) {
     const cn = ATTRIBUTE_SHORT_NAMES[code]
     if (!cn) continue
@@ -125,11 +108,24 @@ function extractAttributesFromConfig(
     const numericStr = trimmed.replace('%', '')
     const numValue = parseFloat(numericStr)
     if (isNaN(numValue)) continue
-    // +0.05（无%且绝对值<1）→ 转为百分比（0.05*100=5）
-    // +20%（有%）→ 直接使用（20）
-    // ponytail: 暂不支持固定值格式（如 "+10" 表示 +10 固定值），JSON 中无双例
-    const perStack = isPercent ? numValue : (Math.abs(numValue) < 1 ? numValue * 100 : numValue)
-    result.push({ attr: cn, value: Math.round(perStack * stacks) })
+
+    let perStack: number
+    let isFlat: boolean | undefined
+
+    if (isPercent) {
+      // "+20%" → 20（百分比点）
+      perStack = numValue
+      isFlat = undefined
+    } else if (Math.abs(numValue) < 1) {
+      // "+0.05" → 5（小数转百分比）
+      perStack = numValue * 100
+      isFlat = undefined
+    } else {
+      // "+10" → 固定值 10
+      perStack = numValue
+      isFlat = true
+    }
+    result.push({ attr: cn, value: Math.round(perStack * stacks), isFlat })
   }
   return result
 }
@@ -166,7 +162,7 @@ function toBuffTextItem(
   raw: BuffRawItem,
   entityId: string,
 ): BuffTextItem {
-  const name = raw.name || ''
+  const name = raw.name
   // ponytail: 当 name 为空时显示兜底文本，防止空标签出现在 UI 中
   const displayName = name || '未知效果'
   const description = raw.description || (name ? name : '无详细说明')
@@ -174,7 +170,7 @@ function toBuffTextItem(
   const remainingTurns = raw.remainingTurns ?? 0
   const stacks = raw.currentStacks ?? 1
 
-  const type = detectType(displayName, isDebuff)
+  const type = detectType(displayName, isDebuff, raw.controlType)
 
   // 检测条件状态——优先使用领域层的 conditionState
   let { condition, conditionLabel } = detectCondition(raw)
@@ -196,13 +192,14 @@ function toBuffTextItem(
     attribute: e.attr,
     value: e.value,
     type: 'PERCENTAGE' as const,
+    isFlat: e.isFlat,
   }))
 
   // 传递特殊效果行
   const effectLines: BuffEffectLine[] = raw.effectLines ?? []
 
   return {
-    instanceId: raw.id ?? raw.instanceId ?? '',
+    instanceId: raw.id,
     buffId: raw.buffId ?? raw.id ?? '',
     name: displayName,
     description,
@@ -225,19 +222,21 @@ function toBuffTextItem(
  * mod.value 已带符号：正=增益，负=减益
  * @param baseValues 可选的基础属性值映射（key=中文属性名，如 "攻击"）
  */
-function mergeAttributes(
+export function mergeAttributes(
   items: BuffTextItem[],
   baseValues?: Record<string, number>,
 ): MergedAttributeLine[] {
   const attrMap = new Map<string, {
     total: number
     sources: MergedAttributeLine['sources']
+    hasFlat: boolean
+    hasPercent: boolean
   }>()
 
   for (const item of items) {
     for (const mod of item.modifiers) {
       if (!attrMap.has(mod.attribute)) {
-        attrMap.set(mod.attribute, { total: 0, sources: [] })
+        attrMap.set(mod.attribute, { total: 0, sources: [], hasFlat: false, hasPercent: false })
       }
       const entry = attrMap.get(mod.attribute)!
       entry.total += mod.value
@@ -248,6 +247,11 @@ function mergeAttributes(
         isPermanent: item.remainingTurns === 0,
         stacks: item.stacks,
       })
+      if (mod.isFlat) {
+        entry.hasFlat = true
+      } else {
+        entry.hasPercent = true
+      }
     }
   }
 
@@ -255,6 +259,8 @@ function mergeAttributes(
     attribute,
     totalPercent: data.total,
     isChanged: data.total !== 0,
+    // 仅当所有来源都是 flat 时标记为 flat；混合情况按百分比显示
+    isFlat: data.hasFlat && !data.hasPercent,
     baseValue: baseValues?.[attribute],
     sources: data.sources,
   }))
@@ -263,7 +269,7 @@ function mergeAttributes(
 /**
  * 排序函数
  */
-function sortItems(items: BuffTextItem[]): BuffTextItem[] {
+export function sortItems(items: BuffTextItem[]): BuffTextItem[] {
   return [...items].sort((a, b) => {
     // 1. 控制类型排最前
     const aCtrl = a.type === 'control' ? 0 : 1

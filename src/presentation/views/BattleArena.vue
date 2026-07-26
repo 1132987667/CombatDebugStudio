@@ -41,9 +41,7 @@
         @select-character="selectCharacter" />
 
       <!-- 右侧：调试面板 -->
-      <div class="right-panel">
-        <BattleDashboard />
-      </div>
+      <BattleDashboard />
     </div>
 
     <!-- 对话框组件 -->
@@ -71,10 +69,10 @@
     <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
 
     <!-- 底部控制栏 -->
-    <ControlBar :is-battle-active="battleStore.isBattleActive" :is-paused="battleStore.isPaused"
+    <ControlBar :is-battle-active="battleStore.isBattleActive"
       :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
-      @end-battle="endBattle" @reset-battle="resetBattle" @single-step="singleStep" @toggle-auto-play="toggleAutoPlay"
-      @battle-speed-change="handleBattleSpeedChange" @toggle-pause="handleTogglePause" />
+      @end-battle="endBattle" @reset-battle="resetBattle" @toggle-auto-play="toggleAutoPlay"
+      @battle-speed-change="handleBattleSpeedChange" />
 
     <!-- 快捷键提示面板 -->
     <!-- <KeybindHintPanel ref="keybindHintPanelRef" /> -->
@@ -103,6 +101,7 @@ import BattleRecordingDialog from "./components/BattleRecordingDialog.vue";
 import { useBattleStore } from '@/presentation/stores';
 import { container } from '@/infrastructure/di/Container';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
+import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
 import { PARTICIPANT_SIDE } from "@/domain/battle/type/types.ts";
 import type { CharacterOption } from "./components/CharacterEditor.vue";
 import type { BattleService } from '@/application/facade/BattleFacade';
@@ -267,21 +266,28 @@ const handleDebugAction = async (action: string) => {
       break
     }
     case 'log_battle':
-      // 回合分隔线由 RoundNarrativeRenderer 自动生成
+      battleLogManager.addBattleLog({
+        turn: 1,
+        message: '[调试] 测试战斗日志',
+        segments: [{ text: '[调试] 测试战斗日志', classStr: 'log-info' }],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'sub' },
+      })
       break
     case 'log_system':
       battleLogManager.addSystemLog({
-        message: '测试系统日志',
+        message: '[调试] 测试系统日志',
       })
       break
     case 'log_item':
       battleLogManager.addGainItemLog([])
       break
     case 'log_action':
-      battleLogManager.addActionLog({ source: '调试角色', action: '普通攻击', message: '测试行为日志' })
+      battleLogManager.addActionLog({ source: '调试角色', action: '普通攻击', message: '[调试] 测试行为日志' })
       break
     case 'log_debug':
-      battleLogManager.addDebugLog('测试调试日志')
+      battleLogManager.updateFilters({ debug: true })
+      battleLogManager.addDebugLog('[调试] 测试调试日志')
       break
 
     // ========== 动画调试 ==========
@@ -717,23 +723,7 @@ const resetBattle = async () => {
   }
 };
 
-// 执行单个回合
-const singleStep = async () => {
-  try {
-    const result = await battleStore.processSingleTurn();
 
-    if (!result) {
-      notification.value?.addNotification("错误", battleStore.error.message || "执行回合失败", "error");
-    }
-  } catch (error) {
-    console.error("执行回合时出错:", error);
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    battleLogManager.addSystemLog({
-      message: `执行回合时出错: ${errorMsg}`,
-    });
-    notification.value?.addNotification("错误", errorMsg, "error");
-  }
-};
 
 // 切换自动战斗状态
 const toggleAutoPlay = async () => {
@@ -760,10 +750,7 @@ const handleBattleSpeedChange = (speed: number) => {
   battleStore.setBattleSpeed(speed);
 };
 
-// 处理暂停切换
-const handleTogglePause = () => {
-  battleStore.togglePause();
-};
+
 
 // 选择角色
 const selectCharacter = (characterId: string) => {

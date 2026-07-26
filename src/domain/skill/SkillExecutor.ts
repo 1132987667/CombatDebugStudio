@@ -3,7 +3,7 @@ import { SkillStepType } from '@/domain/skill/types'
 import type {
   BattleAction,
   BattleEntity,
-  BattleContext,
+  StepExecutionContext,
 } from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
@@ -12,10 +12,7 @@ import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
-import { LogLevel } from '@/shared/types/battle-log'
-import {
-  BATTLE_LOG_CATEGORIES,
-} from '@/shared/types/battle-log'
+import { LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { EffectType, EffectTag } from '@/shared/types/effect'
 import {
   ATTRIBUTE_CODE,
@@ -86,7 +83,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     switch (skillStep.type) {
       case SkillStepType.DEAL_DAMAGE:
@@ -146,7 +143,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     const result = this.damageCalculator.calculateDamage(
       skillStep,
@@ -195,7 +192,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     const healTarget =
       skillStep.targetConfig?.faction === 'self' ? source : target
@@ -250,7 +247,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     const buffId = skillStep.buffId ?? skillStep.effectId
     if (!buffId) return
@@ -286,8 +283,8 @@ export class SkillExecutor {
       description: `${source.name} applies ${buffId} to ${buffTarget.name}`,
     })
 
-    // ponytail: Buff 效果日志 — 简洁格式：Buff名 + 效果摘要
-    if (instanceId) {
+    // 仅在非被动上下文中打日志（被动由 triggerPassives 统一输出，避免重复）
+    if (instanceId && !context?.fromPassive) {
       const buffConfig = this.buffSystem
         .getScriptRegistry()
         .getBuffConfig(buffId)
@@ -301,8 +298,7 @@ export class SkillExecutor {
         turn: (action?.turn as number) || 1,
         message: `${displayName}  ${effectSummary}`,
         segments: [
-          { text: displayName, classStr: 'log-buff', kind: 'buff',
-            hover: { kind: 'buff', id: buffId } },
+          { text: displayName, classStr: 'log-buff', kind: 'buff', hover: { kind: 'buff', id: buffId } },
           { text: `  ${effectSummary}` },
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
@@ -335,7 +331,9 @@ export class SkillExecutor {
     // 层数
     const instance = this.buffSystem.getBuffInstanceById(instanceId)
     if (instance && instance.currentStacks > 1) {
-      parts.push(`（${instance.currentStacks}层）`)
+      // 显示当前层数/最大层数
+      const maxStacks = config.maxStacks ?? instance.currentStacks
+      parts.push(`（${instance.currentStacks}/${maxStacks}层）`)
     }
 
     // 持续时间
@@ -465,7 +463,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     // ponytail: reflect 的目标是攻击者（即 executeStep 的 target 是攻击者）
     // source 是受击者（拥有反射技能的角色）
@@ -492,7 +490,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     const dmg = this.damageCalculator.calculateDamage(
       skillStep,
@@ -527,7 +525,7 @@ export class SkillExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    context?: BattleContext,
+    context?: StepExecutionContext,
   ): void {
     const customType = skillStep.parameters?.customType as string | undefined
     const desc = (skillStep.parameters?.description as string) || ''

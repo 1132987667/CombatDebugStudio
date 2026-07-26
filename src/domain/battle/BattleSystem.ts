@@ -9,7 +9,7 @@
 
 import {
   BattleActionHelper,
-  createBattleContext,
+  createPassiveContext,
 } from '@/domain/battle/type/types'
 import { createEmptyRecord } from '@/domain/battle/combat-record'
 import type {
@@ -65,8 +65,6 @@ import { debugGate } from '@/domain/battle/debug/DebugGate'
 import type { SkillConfig } from '@/domain/skill/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
-/** 角色行动间的动画延迟（ms） */
-const TURN_ACTION_DELAY_MS = 400
 
 /**
  * 战斗系统核心管理类
@@ -152,7 +150,7 @@ export class BattleSystem {
     this.animationManager = new BattleAnimationManager(
       this.rafTimer,
       () => this.battleData?.participants,
-      () => (this.battleData?.battleSpeed ?? 1) * 200,
+      () => this.battleData?.battleSpeed ?? 1,
     )
     this.lifecycleManager = new BattleLifecycleManager(
       () => this.battleData,
@@ -445,11 +443,8 @@ export class BattleSystem {
               }
             })
             // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
-            this.passiveSkillManager.triggerPassives(
-              BattleTriggerPhase.DAMAGE_TAKEN,
-              target,
-              createBattleContext(battleData, {
-                phase: BattleTriggerPhase.TURN_START,
+            this.passiveSkillManager.triggerPassives(target,
+              createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battleData, {
                 damage: actualDamage,
               }),
             )
@@ -469,12 +464,9 @@ export class BattleSystem {
           value: amount,
         })
         // ponytail: 补充被动触发 — buff 治疗也需要触发 HEAL_RECEIVED 被动
-        this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.HEAL_RECEIVED,
-          target,
-          createBattleContext(battleData, {
-            phase: BattleTriggerPhase.TURN_START,
-            value: amount,
+        this.passiveSkillManager.triggerPassives(target,
+          createPassiveContext(BattleTriggerPhase.HEAL_RECEIVED, battleData, {
+            heal: amount,
           }),
         )
       }
@@ -510,9 +502,8 @@ export class BattleSystem {
 
     // 使用PassiveSkillManager触发战斗开始时的被动技能
     this.passiveSkillManager.triggerPassiveSkillsForAll(
-      BattleTriggerPhase.BATTLE_START,
       participants,
-      createBattleContext(this.battleData),
+      createPassiveContext(BattleTriggerPhase.BATTLE_START, this.battleData),
     )
   }
 
@@ -564,10 +555,8 @@ export class BattleSystem {
     if (!participants) return
 
     // 使用PassiveSkillManager触发战斗开始时的被动技能
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.BATTLE_START,
-      participant,
-      createBattleContext(this.battleData),
+    this.passiveSkillManager.triggerPassives(participant,
+      createPassiveContext(BattleTriggerPhase.BATTLE_START, this.battleData),
     )
 
     // ponytail: 增量分发光环 — 新角色受已有光环影响 + 新角色的光环施加给已有角色
@@ -609,9 +598,8 @@ export class BattleSystem {
 
       // 触发回合开始时的被动技能
       this.passiveSkillManager.triggerPassiveSkillsForAll(
-        BattleTriggerPhase.TURN_START,
         battle.participants,
-        createBattleContext(this.battleData),
+        createPassiveContext(BattleTriggerPhase.TURN_START, this.battleData),
       )
 
       // 减少所有角色技能冷却
@@ -700,8 +688,6 @@ export class BattleSystem {
 
         await this.animationManager.waitForAnimation()
 
-        // 角色行动间保留固定间隔，让 CSS 动画有足够时间淡出完成
-        await this.animationManager.wait(TURN_ACTION_DELAY_MS)
 
         // ⭐ 补充守卫：如果在等待间隔期间战斗已结束，跳过后续操作
         if (battle.battleState !== BattleStatus.ACTIVE) {
@@ -749,9 +735,8 @@ export class BattleSystem {
       })
 
       this.passiveSkillManager.triggerPassiveSkillsForAll(
-        BattleTriggerPhase.TURN_END,
         battle.participants,
-        createBattleContext(this.battleData),
+        createPassiveContext(BattleTriggerPhase.TURN_END, this.battleData),
       )
 
       // ponytail: 消费 extra_action（时之沙）— 在 TURN_END 触发后、回合递增前执行额外行动

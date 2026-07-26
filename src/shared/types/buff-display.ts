@@ -9,17 +9,17 @@ import type { BuffEffectLine } from '@/domain/buff/types'
 /**
  * Buff 原始条目 —— 从 BuffSystem 或 InterventionManager 合并后的中间格式，
  * 作为 `toBuffTextItem()` 的输入契约，替代 `any` 参数。
- * 所有字段可选，`toBuffTextItem()` 内部有兜底逻辑。
+ * id/buffId/name 为必填字段，其余可选。
  */
 export interface BuffRawItem {
   /** Buff 实例 ID（源1）或效果 ID（源2） */
-  id?: string
+  id: string
   /** Buff 实例 ID（与 id 二选一） */
   instanceId?: string
   /** Buff 配置 ID（buffs.json 中的 id） */
-  buffId?: string
+  buffId: string
   /** 显示名称 */
-  name?: string
+  name: string
   /** 效果描述 */
   description?: string
   /** 是否为 debuff */
@@ -32,10 +32,14 @@ export interface BuffRawItem {
   attributes?: Record<string, string>
   /** 特殊效果行 */
   effectLines?: BuffEffectLine[]
-  /** 领域层条件状态 */
+  /** 领域层条件状态（由 BuffSystem.setBuffConditionState 设置）
+   *  'active' = 条件已满足，'inactive' = 条件未满足
+   *  undefined = 领域层未设置，回退到文本启发式推断 */
   conditionState?: ConditionState
   /** Buff 脚本类名（调试用） */
   scriptName?: string
+  /** 控制类型（来自 BuffConfig，如 "stun"、"silence"） */
+  controlType?: string
 }
 
 /** 单个 Buff 在纯文本模式下的显示条目 */
@@ -94,6 +98,8 @@ export interface BuffModifier {
   attribute: string
   value: number
   type: 'PERCENTAGE' | 'ADDITIVE' | 'MULTIPLICATIVE' | 'FINAL'
+  /** 是否为固定值（不加 % 后缀） */
+  isFlat?: boolean
 }
 
 /** 属性合并条目：同一属性多来源合并后的一条显示 */
@@ -104,6 +110,8 @@ export interface MergedAttributeLine {
   totalPercent: number
   /** 该属性是否实际发生了变化（±0 表示抵消） */
   isChanged: boolean
+  /** 是否为固定值（不加 % 后缀） */
+  isFlat?: boolean
   /** 基础值（未加修饰符前的原始值，可选） */
   baseValue?: number
   /** 各来源明细 */

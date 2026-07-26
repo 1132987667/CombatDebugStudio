@@ -56,6 +56,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
     attackerId: string,
     attackerSide: 'left' | 'right',
     skillName?: string,
+    budget?: number,
   ): Promise<void> {
     const attackerElement = getElement(attackerId)
     if (!attackerElement) {
@@ -72,6 +73,7 @@ export function useBattleAnimation(options: UseBattleAnimationOptions = {}) {
         attackerElement,
         attackerSide,
         skillName,
+        budget,
       })
     } finally {
       state.value.isPlaying = false

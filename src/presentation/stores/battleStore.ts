@@ -3,7 +3,7 @@ import type { BattleAction, BattleEntity, BattleState } from '@/domain/battle/ty
 import { BattleStatus, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
-import { BattleEventCode, BattleEventCodes, BattleEventName, BattleLogEventData, BattleEndedEventData, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData } from '@/domain/battle/type/BattleEventType'
+import { BattleEventCode, BattleEventCodes, BattleEventName, BattleLogEventData, BattleEndedEventData, DamageEventData, BuffEffectEventData, MissEventData, SkillEffectEventData, AnimationCompleteEventData } from '@/domain/battle/type/BattleEventType'
 import type { UIParticipantSnapshot } from '@/shared/types/projection'
 import type {
   BattleLogCategory,
@@ -24,6 +24,7 @@ import { defineStore } from 'pinia'
 import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
 import { BattleProjection } from '@/application/projection/BattleProjection'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { getActionBudget } from '@/shared/constants/animation-timing'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -265,6 +266,18 @@ export const useBattleStore = defineStore('battle', () => {
   const handleSkillEffectEvent = (data: SkillEffectEventData) =>
     setAnimationState('skill', data)
 
+  /** 处理动画完成事件（清除对应动画状态，避免定时器竞态） */
+  const handleAnimationCompleteEvent = (data: AnimationCompleteEventData) => {
+    const typeMap: Record<string, keyof AnimationState> = {
+      [BattleEventCodes.DAMAGE_ANIMATION]: 'damage',
+      [BattleEventCodes.MISS_ANIMATION]: 'miss',
+      [BattleEventCodes.BUFF_EFFECT]: 'buff',
+      [BattleEventCodes.SKILL_EFFECT]: 'skill',
+    }
+    const key = typeMap[data.type]
+    if (key) clearAnimationState(key)
+  }
+
   /** 处理战斗重置事件（记录系统日志） */
   const handleBattleResetEvent = () => {
     battleLogManager.addSystemLog({ message: '战斗重置' })
@@ -282,6 +295,7 @@ export const useBattleStore = defineStore('battle', () => {
   events.set(BattleEventCodes.MISS_ANIMATION, handleMissAnimationEvent)
   events.set(BattleEventCodes.BUFF_EFFECT, handleBuffEffectEvent)
   events.set(BattleEventCodes.SKILL_EFFECT, handleSkillEffectEvent)
+  events.set(BattleEventCodes.ANIMATION_COMPLETE, handleAnimationCompleteEvent)
   /** 处理参与者属性变更事件（Buff 触发 recalculateAll 后，在 proxy 上同步调用以使 Vue 响应式系统追踪到变更） */
   const handleAttributeChanged = (data: { characterId: string }) => {
     const id = data.characterId
@@ -424,22 +438,38 @@ export const useBattleStore = defineStore('battle', () => {
   /**
    * 设置动画效果状态
    * @param type 动画类型
-   * @param data 动画数据对象（包含目标ID、数值、类型等信息）
-   * @description 触发指定类型的动画效果，并在持续时间后自动清除
+   * @param data 动画数据对象
+   * @description 触发指定类型的动画效果，超时后自动清除（ANIMATION_COMPLETE 事件优先）
    */
   const setAnimationState = (type: keyof AnimationState, data: any) => {
     animationState[type] = data
-    const duration = getAnimationDuration()
-    setTimeout(() => {
+    // NOTE: 每个动画阶段最多持有 50%T 预算（领域层在同一时长内完成）
+    const phaseDuration = getActionBudget(battleSpeed.value) * 0.5
+    // 清除之前的超时防止竞态
+    if (_stateTimeouts[type]) {
+      clearTimeout(_stateTimeouts[type])
+    }
+    _stateTimeouts[type] = setTimeout(() => {
       animationState[type] = null
-    }, duration)
+      _stateTimeouts[type] = null
+    }, phaseDuration)
   }
 
-  /** 根据当前战斗速度计算动画持续时间（速度越快，持续时间越短） */
-  const getAnimationDuration = () => {
-    const speed = battleSpeed.value
-    const delayMap: Record<number, number> = { 1: 1000, 2: 500, 3: 330, 5: 200 }
-    return delayMap[speed] || 500
+  /** 存储每个动画类型的 setTimeout id（用于竞态安全的清除） */
+  const _stateTimeouts: Record<string, ReturnType<typeof setTimeout> | null> = {
+    damage: null,
+    miss: null,
+    buff: null,
+    skill: null,
+  }
+
+  /** 主动清除动画状态（由 ANIMATION_COMPLETE 事件驱动） */
+  const clearAnimationState = (type: keyof AnimationState) => {
+    if (_stateTimeouts[type]) {
+      clearTimeout(_stateTimeouts[type])
+      _stateTimeouts[type] = null
+    }
+    animationState[type] = null
   }
 
   // 🔹 业务动作包装器（统一错误处理与 Loading 状态）
@@ -911,7 +941,8 @@ export const useBattleStore = defineStore('battle', () => {
     setBattleActive, // 设置战斗激活状态
     clearBattleLogs, // 清空日志
     setAnimationState, // 设置动画状态
-    getAnimationDuration, // 获取动画持续时间
+    clearAnimationState, // 主动清除动画状态
+    getAnimationDuration: () => getActionBudget(battleSpeed.value), // 兼容旧接口名
     setShowDebug, // 设置显示调试信息状态
 
     // ========== 战斗流程控制 ==========

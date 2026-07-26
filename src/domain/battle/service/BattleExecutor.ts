@@ -11,7 +11,8 @@ import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import {
   BattleTriggerPhase,
   ActionResultType,
-  createBattleContext,
+  createPassiveContext,
+  createStepContext,
 } from '@/domain/battle/type/types'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
@@ -21,6 +22,7 @@ import {
   BATTLE_LOG_CATEGORIES,
   buildNameSegments,
 } from '@/shared/types/battle-log'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { skillSegment } from '@/shared/utils/log-segment-factory'
 import { TraceDamageLogger } from '@/domain/battle/logs/TraceDamageLogger'
 import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
@@ -57,7 +59,7 @@ import type {
   BattleData,
   BattleEntity,
   BattleEffect,
-  BattleContext,
+  PassiveTriggerContext,
 } from '@/domain/battle/type/types'
 import {
   ATTRIBUTE_CODE,
@@ -152,7 +154,7 @@ export class BattleExecutor {
       return
     }
 
-    const context: BattleContext = { participants: battle.participants }
+    const context = createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battle)
 
     switch (participant.controlMode) {
       case 'AI': {
@@ -213,7 +215,7 @@ export class BattleExecutor {
   private async autoDecision(
     battle: BattleData,
     participant: BattleEntity,
-    context: BattleContext,
+    context: PassiveTriggerContext,
   ): Promise<void> {
     const currentEnergy = participant.getAttribute(ATTRIBUTE_CODE.currentEnergy)
     const activeSkillIds = participant.getSkillIds(SkillType.ACTIVE)
@@ -280,7 +282,7 @@ export class BattleExecutor {
     source: BattleEntity,
     skill: SkillConfig,
     suggestedTargetId?: string,
-    context?: BattleContext,
+    context?: PassiveTriggerContext,
   ): Promise<BattleAction> {
     if (
       'isSkillAvailable' in source &&
@@ -326,10 +328,8 @@ export class BattleExecutor {
       // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
       LoggerProvider.logger.beginBufferSubLogs()
 
-      this.passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.BEFORE_ATTACK,
-        source,
-        createBattleContext(battleData, {
+      this.passiveSkillManager.triggerPassives(source,
+        createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battleData, {
           target: targets[0],
           targetId: targets[0]?.id,
         }),
@@ -416,34 +416,44 @@ export class BattleExecutor {
       const targetNames = targets.map((t) => t.name).join(', ')
       const damageText = totalDamage > 0 ? `，造成 ${totalDamage} 点伤害` : ''
       const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点生命` : ''
-      // ponytail: 技能执行的伤害/治疗动画 — 与 handleHitAttack / executeAction 保持一致
+      // NOTE: 固定预算模型 — 伤害/治疗走飞行→命中，治疗单独走直接命中
       if (targets.length > 0 && (totalDamage > 0 || totalHeal > 0)) {
         const primaryTarget = targets[0]
         const isCrit = allEffects.some(
           (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
         )
 
-        // ponytail: 技能飞行动画只播放一次（无论伤害/治疗/同时都有）
-        await this.animationManager.triggerSkillEffectAnimation({
-          sourceId: source.id,
-          targetId: primaryTarget.id,
-          skillName: skill.name || skill.id,
-          effectType: action.type,
-          damageCategory: DamageCategory.PHYSICAL,
-        })
+        // NOTE: 在扣血前捕获 HP 用于叙事日志
+        const hpBeforeMap = new Map<string, number>()
+        for (const pd of pendingDamages) {
+          hpBeforeMap.set(pd.target.id, pd.target.currentHealth)
+        }
 
         if (totalDamage > 0) {
-          await this.animationManager.triggerDamageAnimationAndWait({
+          // 攻击/伤害技能 → 飞行（0→50%T）+ 命中（50%→100%T）
+          await this.animationManager.triggerFlightPhaseAndWait({
+            sourceId: source.id,
+            targetId: primaryTarget.id,
+            skillName: skill.name || skill.id,
+            effectType: action.type,
+            damageCategory: DamageCategory.PHYSICAL,
+          })
+
+          // 命中瞬间（50%T）：统一应用所有延迟伤害
+          damageToken.applyAll()
+
+          await this.animationManager.triggerImpactPhaseAndWait({
             targetId: primaryTarget.id,
             damage: totalDamage,
             damageCategory: DamageCategory.PHYSICAL,
             isCritical: isCrit,
             isHeal: false,
           })
-        }
+        } else if (totalHeal > 0) {
+          // 治疗技能 → 直接命中（无飞行，完整 T）
+          damageToken.applyAll()
 
-        if (totalHeal > 0) {
-          await this.animationManager.triggerDamageAnimationAndWait({
+          await this.animationManager.triggerDirectImpactAndWait({
             targetId: primaryTarget.id,
             damage: totalHeal,
             damageCategory: DamageCategory.PHYSICAL,
@@ -451,14 +461,6 @@ export class BattleExecutor {
             isHeal: true,
           })
         }
-
-        // ponytail: 动画完成后统一应用延迟的伤害/治疗
-        // NOTE: 在扣血前捕获 HP 用于叙事日志
-        const hpBeforeMap = new Map<string, number>()
-        for (const pd of pendingDamages) {
-          hpBeforeMap.set(pd.target.id, pd.target.currentHealth)
-        }
-        damageToken.applyAll()
 
         // NOTE: 扣血后捕获 HP，构建叙事日志
         const primaryHpBefore = pendingDamages.length > 0 ? hpBeforeMap.get(pendingDamages[0].target.id) : undefined
@@ -510,38 +512,30 @@ export class BattleExecutor {
         // ponytail: 触发被动 — 攻击方 ON_HIT + 受击方 DAMAGE_TAKEN + ON_DEATH
         for (const pd of pendingDamages) {
           if (pd.damage > 0) {
-            this.passiveSkillManager.triggerPassives(
-              BattleTriggerPhase.ON_HIT,
-              source,
-              createBattleContext(battleData, {
+            this.passiveSkillManager.triggerPassives(source,
+              createPassiveContext(BattleTriggerPhase.ON_HIT, battleData, {
                 target: pd.target,
                 sourceId: source.id,
                 damage: pd.damage,
               }),
             )
-            this.passiveSkillManager.triggerPassives(
-              BattleTriggerPhase.DAMAGE_TAKEN,
-              pd.target,
-              createBattleContext(battleData, {
+            this.passiveSkillManager.triggerPassives(pd.target,
+              createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battleData, {
                 target: pd.target,
                 sourceId: source.id,
                 damage: pd.damage,
               }),
             )
             if (!pd.target.isAlive()) {
-              this.passiveSkillManager.triggerPassives(
-                BattleTriggerPhase.ON_DEATH,
-                pd.target,
-                createBattleContext(battleData, {
+              this.passiveSkillManager.triggerPassives(pd.target,
+                createPassiveContext(BattleTriggerPhase.ON_DEATH, battleData, {
                   target: source,
                   sourceId: source.id,
                   cause: EffectType.DAMAGE,
                 }),
               )
-              this.passiveSkillManager.triggerPassives(
-                BattleTriggerPhase.ON_KILL,
-                source,
-                createBattleContext(battleData, {
+              this.passiveSkillManager.triggerPassives(source,
+                createPassiveContext(BattleTriggerPhase.ON_KILL, battleData, {
                   target: pd.target,
                   sourceId: pd.target.id,
                   cause: EffectType.DAMAGE,
@@ -580,10 +574,8 @@ export class BattleExecutor {
       ]
     }
 
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.AFTER_ATTACK,
-      source,
-      createBattleContext(battleData, {
+    this.passiveSkillManager.triggerPassives(source,
+      createPassiveContext(BattleTriggerPhase.AFTER_ATTACK, battleData, {
         target: targets[0],
         targetId: targets[0]?.id,
         damage: action.damage,
@@ -775,49 +767,38 @@ export class BattleExecutor {
     source: BattleEntity,
     target: BattleEntity,
     damage: number,
-    participants?: Map<string, BattleEntity>,
-    currentTurn?: number,
+    battle: BattleData,
   ): void {
     target.takeDamage(damage)
     // ponytail: ON_HIT 触发攻击者（命中方）的被动，DAMAGE_TAKEN 触发受击方（受伤害）的被动
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.ON_HIT,
-      source,
-      { target, sourceId: source.id, damage, participants, currentTurn },
+    this.passiveSkillManager.triggerPassives(source,
+      createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
+        target,
+        sourceId: source.id,
+        damage,
+      }),
     )
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.DAMAGE_TAKEN,
-      target,
-      {
+    this.passiveSkillManager.triggerPassives(target,
+      createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
         target: source,
         sourceId: source.id,
         damage,
-        participants,
-        currentTurn,
-      },
+      }),
     )
     if (!target.isAlive()) {
-      this.passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.ON_DEATH,
-        target,
-        {
+      this.passiveSkillManager.triggerPassives(target,
+        createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
           target: source,
           sourceId: source.id,
           cause: EffectType.DAMAGE,
-          participants,
-          currentTurn,
-        },
+        }),
       )
-      this.passiveSkillManager.triggerPassives(
-        BattleTriggerPhase.ON_KILL,
-        source,
-        {
+      this.passiveSkillManager.triggerPassives(source,
+        createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
           target,
           targetId: target.id,
           cause: EffectType.DAMAGE,
-          participants,
-          currentTurn,
-        },
+        }),
       )
     }
   }
@@ -836,9 +817,18 @@ export class BattleExecutor {
       value: 0,
       description: `${target.name} 闪避了攻击`,
     })
-    await this.animationManager.triggerMissAnimationAndWait({
+
+    // 飞行阶段（0→50%T）：与命中一致的前摇
+    await this.animationManager.triggerFlightPhaseAndWait({
+      sourceId: source.id,
       targetId: target.id,
+      skillName: '普通攻击',
+      effectType: 'attack',
+      damageCategory: DamageCategory.PHYSICAL,
     })
+
+    // 命中阶段（50%→100%T）：显示"闪避"
+    await this.animationManager.triggerMissImpactAndWait({ targetId: target.id })
 
     const logParams = this.generateAttackLogParams(source, target, turnNumber, {
       isMiss: true,
@@ -850,6 +840,21 @@ export class BattleExecutor {
       category: logParams.category,
       meta: { role: 'action', entityId: target.id, miss: true, skillName: '普通攻击' },
     })
+
+    // 闪避结果作为 Sub 节点
+    LoggerProvider.logger.addBattleLog({
+      turn: turnNumber,
+      message: '被闪避!',
+      segments: [
+        { text: '被闪避!', classStr: 'log-heal' },
+      ],
+      category: BATTLE_LOG_CATEGORIES.STATUS,
+      meta: {
+        role: 'sub',
+        miss: true,
+      },
+    })
+
     LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}，被闪避`,
     )
@@ -863,8 +868,7 @@ export class BattleExecutor {
     source: BattleEntity,
     target: BattleEntity,
     damageResult: { damage: number; isCritical: boolean },
-    turnNumber: number,
-    participants?: Map<string, BattleEntity>,
+    battle: BattleData,
   ): Promise<void> {
     const { damage, isCritical } = damageResult
     action.damage = damage
@@ -875,8 +879,8 @@ export class BattleExecutor {
       description: `${source.name} 普通攻击 造成 ${damage} 伤害${isCritical ? ' (暴击)' : ''}`,
     })
 
-    // ponytail: 先播飞行动画，到达目标后再扣 HP，保证视觉同步
-    await this.animationManager.triggerSkillEffectAnimation({
+    // 飞行阶段（0→50%T）：蓄力 + 技能名/光弹飞行
+    await this.animationManager.triggerFlightPhaseAndWait({
       sourceId: source.id,
       targetId: target.id,
       skillName: '普通攻击',
@@ -887,12 +891,13 @@ export class BattleExecutor {
     // NOTE: 在扣血前捕获 hpBefore，确保 HP 箭头准确
     const hpBefore = target.currentHealth
 
-    // ponytail: 动画命中后再扣血，触发 ON_HIT/ON_DEATH 被动
-    this.applyDamageToTarget(source, target, damage, participants, turnNumber)
+    // 命中瞬间（50%T）：扣血，HP 条与 UI 特效同帧开始
+    this.applyDamageToTarget(source, target, damage, battle)
 
     const hpAfter = target.currentHealth
 
-    await this.animationManager.triggerDamageAnimationAndWait({
+    // 命中阶段（50%→100%T）：伤害数字 + 命中爆发
+    await this.animationManager.triggerImpactPhaseAndWait({
       targetId: target.id,
       damage,
       damageCategory: DamageCategory.PHYSICAL,
@@ -900,7 +905,7 @@ export class BattleExecutor {
       isHeal: false,
     })
 
-    const logParams = this.generateAttackLogParams(source, target, turnNumber, {
+    const logParams = this.generateAttackLogParams(source, target, battle.currentTurn, {
       damage,
       isCritical,
     })
@@ -955,15 +960,11 @@ export class BattleExecutor {
     // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
     LoggerProvider.logger.beginBufferSubLogs()
 
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.BEFORE_ATTACK,
-      source,
-      {
+    this.passiveSkillManager.triggerPassives(source,
+      createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battle, {
         target,
         targetId,
-        currentTurn: currentTurn,
-        participants: battle.participants,
-      },
+      }),
     )
 
     // 创建详细记录对象用于捕获伤害拆分
@@ -982,7 +983,7 @@ export class BattleExecutor {
       attackStep,
       source,
       target,
-      record,
+      createStepContext(record, undefined),
     )
 
     const action = this.createBattleAction(source.id, targetId, currentTurn)
@@ -995,8 +996,7 @@ export class BattleExecutor {
         source,
         target,
         damageResult,
-        currentTurn,
-        battle.participants,
+        battle,
       )
     }
 
@@ -1015,17 +1015,13 @@ export class BattleExecutor {
       // 调试日志失败绝不中断战斗
     }
 
-    this.passiveSkillManager.triggerPassives(
-      BattleTriggerPhase.AFTER_ATTACK,
-      source,
-      {
+    this.passiveSkillManager.triggerPassives(source,
+      createPassiveContext(BattleTriggerPhase.AFTER_ATTACK, battle, {
         target,
         targetId,
         damage: action.damage,
         isCritical: damageResult.isCritical,
-        participants: battle.participants,
-        currentTurn: battle.currentTurn,
-      },
+      }),
     )
 
     this.recordBattleAction(battle, action)
@@ -1194,7 +1190,7 @@ export class BattleExecutor {
             (effect) => effect.type === EffectType.MISS,
           )
           if (hasMissEffect) {
-            await this.animationManager.triggerMissAnimationAndWait({
+            await this.animationManager.triggerMissImpactAndWait({
               targetId: target.id,
             })
           }
@@ -1214,24 +1210,61 @@ export class BattleExecutor {
             }
           }
 
-          await this.animationManager.triggerSkillEffectAnimation({
-            sourceId: source.id,
-            targetId: target.id,
-            skillName: action.skillId,
-            effectType: action.type,
-            damageCategory: DamageCategory.PHYSICAL,
-          })
-
-          // ponytail: 主动技能动画循环结束，恢复 buffApplied 回调（被动触发路径需要它）
+          // NOTE: 固定预算模型 — executeAction 技能路径：飞行→命中扣血→命中特效
           this.buffSystem.setBuffAppliedCallbackEnabled(true)
 
-          // NOTE: 在 applyAll 前捕获 HP 用于叙事日志
+          // NOTE: 在扣血前捕获 HP 用于叙事日志
           const hpBefore = target.currentHealth
+          let hpAfter = target.currentHealth
 
-          // ponytail: 动画完成后应用延迟的伤害/治疗
-          damageToken.applyAll()
+          if ((action.damage ?? 0) > 0) {
+            // 伤害技能 → 飞行（0→50%T）+ 命中（50%→100%T）
+            const actionIsCrit = skillAction.effects.some(
+              (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
+            )
 
-          const hpAfter = target.currentHealth
+            await this.animationManager.triggerFlightPhaseAndWait({
+              sourceId: source.id,
+              targetId: target.id,
+              skillName: action.skillId,
+              effectType: action.type,
+              damageCategory: DamageCategory.PHYSICAL,
+            })
+
+            // 命中瞬间（50%T）：应用延迟伤害
+            damageToken.applyAll()
+            hpAfter = target.currentHealth
+
+            await this.animationManager.triggerImpactPhaseAndWait({
+              targetId: target.id,
+              damage: action.damage ?? 0,
+              damageCategory: DamageCategory.PHYSICAL,
+              isCritical: actionIsCrit,
+              isHeal: false,
+            })
+          } else if ((action.heal ?? 0) > 0) {
+            // 治疗技能 → 直接命中（无飞行，完整 T）
+            damageToken.applyAll()
+            hpAfter = target.currentHealth
+
+            await this.animationManager.triggerDirectImpactAndWait({
+              targetId: target.id,
+              damage: action.heal ?? 0,
+              damageCategory: DamageCategory.PHYSICAL,
+              isCritical: false,
+              isHeal: true,
+            })
+          } else {
+            // 无伤害/治疗 — 仍用完 T 预算
+            damageToken.applyAll()
+            hpAfter = target.currentHealth
+
+            await this.animationManager.triggerAnimationAndWait(
+              BattleEventCodes.DAMAGE_ANIMATION,
+              { targetId: target.id, damage: 0, damageCategory: DamageCategory.PHYSICAL, isCritical: false, isHeal: false },
+              0, // 0 = 使用动画管理器的默认预算
+            )
+          }
           const skillId = action.skillId
           const dmgPart = (action.damage ?? 0) > 0 ? `，造成 ${action.damage} 点` : ''
           const healPart = (action.heal ?? 0) > 0 ? `，恢复 ${action.heal} 点生命` : ''
@@ -1285,68 +1318,34 @@ export class BattleExecutor {
           // ponytail: 使用 token 的实际扣血值而非 action.damage 判断被动触发，减少发散窗口
           const actualDamage = damageToken.getTotalDamage()
           if (actualDamage > 0) {
-            this.passiveSkillManager.triggerPassives(
-              BattleTriggerPhase.ON_HIT,
-              source,
-              {
+            this.passiveSkillManager.triggerPassives(source,
+              createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
                 target,
                 sourceId: source.id,
                 damage: actualDamage,
-                participants: battle.participants,
-                currentTurn: battle.currentTurn,
-              },
+              }),
             )
-            this.passiveSkillManager.triggerPassives(
-              BattleTriggerPhase.DAMAGE_TAKEN,
-              target,
-              {
+            this.passiveSkillManager.triggerPassives(target,
+              createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
                 target: source,
                 sourceId: source.id,
                 damage: actualDamage,
-                participants: battle.participants,
-                currentTurn: battle.currentTurn,
-              },
+              }),
             )
             if (!target.isAlive()) {
               // ponytail: P1/PERF-1 — 死亡时清理 comboStates
               this.skillManager.getExecutor().cleanupComboState(target.id)
-              this.passiveSkillManager.triggerPassives(
-                BattleTriggerPhase.ON_DEATH,
-                target,
-                {
+              this.passiveSkillManager.triggerPassives(target,
+                createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
                   target: source,
                   sourceId: source.id,
                   cause: EffectType.DAMAGE,
-                  participants: battle.participants,
-                  currentTurn: battle.currentTurn,
-                },
+                }),
               )
             }
           }
           // ponytail: token.applyAll() 已经处理了所有伤害和治疗，不需要额外调用 heal
 
-          // ponytail: 技能伤害/治疗数值动画（在 HP 扣减之后播放，与 handleHitAttack 时序一致）
-          if ((action.damage ?? 0) > 0) {
-            const isCrit = skillAction.effects.some(
-              (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
-            )
-            await this.animationManager.triggerDamageAnimationAndWait({
-              targetId: target.id,
-              damage: action.damage ?? 0,
-              damageCategory: DamageCategory.PHYSICAL,
-              isCritical: isCrit,
-              isHeal: false,
-            })
-          }
-          if ((action.heal ?? 0) > 0) {
-            await this.animationManager.triggerDamageAnimationAndWait({
-              targetId: target.id,
-              damage: action.heal ?? 0,
-              damageCategory: DamageCategory.PHYSICAL,
-              isCritical: false,
-              isHeal: true,
-            })
-          }
         }
       } catch (error) {
         // ponytail: catch 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
@@ -1372,8 +1371,20 @@ export class BattleExecutor {
     // so only apply raw damage/heal for non-skill actions (e.g. fallback attack).
     if (action.type !== ActionTypes.SKILL) {
       if (action.damage && action.damage > 0) {
-        // ponytail: 先播伤害数值动画，再扣 HP，保证视觉同步
-        await this.animationManager.triggerDamageAnimationAndWait({
+        // NOTE: 固定预算模型 — 飞行→命中扣血→命中特效
+        await this.animationManager.triggerFlightPhaseAndWait({
+          sourceId: source.id,
+          targetId: target.id,
+          skillName: '普通攻击',
+          effectType: 'attack',
+          damageCategory: DamageCategory.PHYSICAL,
+        })
+
+        // 命中瞬间（50%T）：扣血
+        const actualDamage = target.takeDamage(action.damage)
+        action.damage = actualDamage
+
+        await this.animationManager.triggerImpactPhaseAndWait({
           targetId: target.id,
           damage: action.damage,
           damageCategory: DamageCategory.PHYSICAL,
@@ -1381,69 +1392,52 @@ export class BattleExecutor {
           isHeal: false,
         })
 
-        const actualDamage = target.takeDamage(action.damage)
-        action.damage = actualDamage
-
         // ponytail: ON_HIT 触发攻击方，DAMAGE_TAKEN 触发受击方
-        this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.ON_HIT,
-          source,
-          {
+        this.passiveSkillManager.triggerPassives(source,
+          createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
             target,
             sourceId: source.id,
             damage: actualDamage,
-            participants: battle.participants,
-            currentTurn: battle.currentTurn,
-          },
+          }),
         )
-        this.passiveSkillManager.triggerPassives(
-          BattleTriggerPhase.DAMAGE_TAKEN,
-          target,
-          {
+        this.passiveSkillManager.triggerPassives(target,
+          createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
             target: source,
             sourceId: source.id,
             damage: actualDamage,
-            participants: battle.participants,
-            currentTurn: battle.currentTurn,
-          },
+          }),
         )
         if (!target.isAlive()) {
           // ponytail: P1/PERF-1 — 死亡时清理 comboStates
           this.skillManager.getExecutor().cleanupComboState(target.id)
-          this.passiveSkillManager.triggerPassives(
-            BattleTriggerPhase.ON_DEATH,
-            target,
-            {
+          this.passiveSkillManager.triggerPassives(target,
+            createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
               target: source,
               sourceId: source.id,
               cause: EffectType.DAMAGE,
-              participants: battle.participants,
-              currentTurn: battle.currentTurn,
-            },
+            }),
           )
-          this.passiveSkillManager.triggerPassives(
-            BattleTriggerPhase.ON_KILL,
-            source,
-            {
+          this.passiveSkillManager.triggerPassives(source,
+            createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
               target,
               targetId: target.id,
               cause: EffectType.DAMAGE,
-              participants: battle.participants,
-              currentTurn: battle.currentTurn,
-            },
+            }),
           )
         }
 
         if (action.heal && action.heal > 0) {
-          await this.animationManager.triggerDamageAnimationAndWait({
+          // 治疗 → 直接命中（无飞行）
+          const actualHeal = target.heal(action.heal)
+          action.heal = actualHeal
+
+          await this.animationManager.triggerDirectImpactAndWait({
             targetId: target.id,
             damage: action.heal,
             damageCategory: DamageCategory.PHYSICAL,
             isCritical: false,
             isHeal: true,
           })
-          const actualHeal = target.heal(action.heal)
-          action.heal = actualHeal
         }
       }
     }

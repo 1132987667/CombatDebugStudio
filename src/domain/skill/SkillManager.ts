@@ -17,6 +17,7 @@ import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { LogLevel } from '@/shared/types/battle-log'
 import { validateSkillConfigs } from '@/shared/utils/schema-validator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { createStepContext } from '@/domain/battle/type/types'
 interface CalculationContext {
   skillStep: SkillStep
   action: BattleAction
@@ -361,7 +362,7 @@ export class SkillManager {
       ctx.action,
       ctx.source,
       ctx.targets[0],
-      { record: ctx.record, token: ctx.token },
+      createStepContext(ctx.record, ctx.token),
     )
   }
 

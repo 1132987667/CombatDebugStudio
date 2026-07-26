@@ -96,7 +96,8 @@ watch(
 
 function formatAttrLine(attr: MergedAttributeLine): string {
   const arrow = attr.totalPercent > 0 ? '↑' : '↓'
-  return `${attr.attribute}${arrow}${Math.abs(attr.totalPercent)}%`
+  const suffix = attr.isFlat ? '' : '%'
+  return `${attr.attribute}${arrow}${Math.abs(attr.totalPercent)}${suffix}`
 }
 
 function handleClick() {

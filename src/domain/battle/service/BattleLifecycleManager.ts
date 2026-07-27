@@ -160,8 +160,13 @@ export class BattleLifecycleManager {
 
         if (!this.getIsPaused()) {
           const delay = this.getBattleDelay()
-          const timerId = this.rafTimer.setTimeout(this.autoBattleLoop!, delay)
-          this.autoBattleTimerId = timerId
+          if (delay === 0) {
+            // ★ 快速模式：使用微任务而非 RAF，避免每回合 ~16ms 的 RAF 等待开销
+            Promise.resolve().then(this.autoBattleLoop!)
+          } else {
+            const timerId = this.rafTimer.setTimeout(this.autoBattleLoop!, delay)
+            this.autoBattleTimerId = timerId
+          }
         }
       } catch (error) {
         this.stopAutoBattle()
@@ -170,10 +175,15 @@ export class BattleLifecycleManager {
     }
 
     const delay = this.getBattleDelay()
-    this.autoBattleTimerId = this.rafTimer.setTimeout(
-      this.autoBattleLoop,
-      delay,
-    )
+    if (delay === 0) {
+      // ★ 快速模式：首次调用使用微任务
+      Promise.resolve().then(this.autoBattleLoop)
+    } else {
+      this.autoBattleTimerId = this.rafTimer.setTimeout(
+        this.autoBattleLoop,
+        delay,
+      )
+    }
   }
 
   stopAutoBattle(): void {
@@ -225,8 +235,13 @@ export class BattleLifecycleManager {
       this.autoBattleLoop
     ) {
       const delay = this.getBattleDelay()
-      const timerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
-      this.autoBattleTimerId = timerId
+      if (delay === 0) {
+        // ★ 快速模式：恢复时使用微任务
+        Promise.resolve().then(this.autoBattleLoop)
+      } else {
+        const timerId = this.rafTimer.setTimeout(this.autoBattleLoop, delay)
+        this.autoBattleTimerId = timerId
+      }
     }
   }
 
@@ -240,6 +255,8 @@ export class BattleLifecycleManager {
   private getBattleDelay(): number {
     const battle = this.getBattleData()
     if (!battle) return AUTO_BATTLE_CONFIG.DEFAULT_DELAY
+    // ★ 快速/无头模式：零延迟
+    if (battle.quickMode || battle.headless) return 0
     return (
       AUTO_BATTLE_CONFIG.DELAYS[battle.battleSpeed] ??
       AUTO_BATTLE_CONFIG.DEFAULT_DELAY

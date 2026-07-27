@@ -1,21 +1,49 @@
 <template>
   <div class="battle-log-section">
+    <!-- ═══ 头部：页签 + 搜索 + 导出 ═══ -->
     <div class="log-header">
-      <span>日志</span>
-      <div class="log-filters">
-        <label class="filter-check"><input type="checkbox" v-model="filters.battle" /> 战斗</label>
-        <label class="filter-check"><input type="checkbox" v-model="filters.system" /> 系统</label>
-        <label class="filter-check"><input type="checkbox" v-model="showStatus" /> 状态</label>
-        <label class="filter-check"><input type="checkbox" v-model="filters.debug" /> 调试</label>
+      <span class="log-title">日志</span>
+
+      <div class="log-tabs" ref="tabBarRef">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          :ref="(el) => setTabRef(tab.id, el)"
+          class="log-tab"
+          :class="{ active: activeTab === tab.id }"
+          @click="switchTab(tab.id)"
+        >
+          {{ tab.label }}
+          <span class="tab-badge" :key="tabCount(tab.id)">{{ tabCount(tab.id) }}</span>
+        </button>
+        <span class="tab-indicator" :style="indicatorStyle"></span>
+      </div>
+
+      <div class="log-tools">
         <input class="log-keyword" v-model="keyword" placeholder="搜索…" />
-        <button class="export-btn" @click="exportLogs" title="导出日志文本">📋 导出</button>
+        <button class="export-btn" @click="exportLogs" title="导出当前页签日志">📋 导出</button>
       </div>
     </div>
-    <div class="log-content" ref="logContainer" @scroll="onScroll">
+
+    <!-- ═══ 容器 A：战斗页签（独立，叙事渲染） ═══ -->
+    <div
+      v-show="activeTab === 'battle'"
+      class="log-content"
+      :class="{ 'is-active': activeTab === 'battle' }"
+      ref="battleContainer"
+      @scroll="onScroll"
+    >
+      <div class="battle-toolbar">
+        <label class="status-toggle" :class="{ on: showStatus }">
+          <input type="checkbox" v-model="showStatus" />
+          <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          <span>状态明细</span>
+        </label>
+      </div>
+
       <div v-if="blocks.length === 0" class="no-logs">暂无战斗日志</div>
 
       <div v-for="(b, i) in blocks" :key="i" class="nb" :class="'nb--' + b.type">
-        <!-- 战斗头/尾 -->
         <template v-if="b.type === 'battle-header'">
           <span class="rule rule--double"></span>
           <div class="battle-line">
@@ -24,14 +52,12 @@
           <span class="rule rule--double"></span>
         </template>
 
-        <!-- 回合头 -->
         <template v-else-if="b.type === 'round'">
           <span class="rule"></span>
           <span class="round-label">第 {{ b.turn }} 回合<template v-if="b.tag"> · {{ b.tag }}</template></span>
           <span class="rule"></span>
         </template>
 
-        <!-- 行动块 -->
         <template v-else-if="b.type === 'action'">
           <div class="action-header"><span class="glyph">◆</span>
             <LogSeg v-for="(s, j) in b.header" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
@@ -45,7 +71,6 @@
           </div>
         </template>
 
-        <!-- 回合结算 -->
         <template v-else-if="b.type === 'settlement'">
           <div class="sub-header"><span class="rule rule--thin"></span>回合结算<span class="rule rule--thin"></span></div>
           <div v-for="(line, k) in b.lines" :key="k" class="indent-line">
@@ -53,7 +78,6 @@
           </div>
         </template>
 
-        <!-- 态势 -->
         <template v-else-if="b.type === 'snapshot'">
           <div class="sub-header"><span class="rule rule--thin"></span>态势<span class="rule rule--thin"></span></div>
           <div v-for="(line, k) in b.lines" :key="k" class="indent-line">
@@ -61,7 +85,6 @@
           </div>
         </template>
 
-        <!-- 条件激活 -->
         <template v-else-if="b.type === 'section'">
           <div class="section-title">【{{ b.title }}】</div>
           <div v-for="(line, k) in b.lines" :key="k" class="indent-line">
@@ -69,7 +92,6 @@
           </div>
         </template>
 
-        <!-- 战报摘要 -->
         <template v-else-if="b.type === 'summary'">
           <span class="rule rule--double"></span>
           <div class="summary-content">
@@ -80,28 +102,73 @@
           <span class="rule rule--double"></span>
         </template>
 
-        <!-- 普通行 -->
         <template v-else>
           <LogSeg v-for="(s, j) in b.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
         </template>
       </div>
     </div>
 
-    <EntityTooltip :visible="tooltipVisible" :data="tooltipData" :trigger-rect="tooltipRect"
-      @hide="tooltipVisible = false" />
+    <!-- ═══ 容器 B：系统 / 调试页签（共用，扁平渲染） ═══ -->
+    <div
+      v-show="activeTab !== 'battle'"
+      class="log-content log-content--flat"
+      :class="{ 'is-active': activeTab !== 'battle' }"
+      ref="sharedContainer"
+      @scroll="onScroll"
+    >
+      <div v-if="activeTab === 'debug' && debugTotal > DEBUG_DISPLAY_LIMIT" class="flat-note">
+        仅显示最近 {{ DEBUG_DISPLAY_LIMIT }} 条（共 {{ debugTotal }} 条）
+      </div>
 
-    <div v-if="hasStats" class="log-stats">
-      <span class="stat-item">回合: {{ stats.totalRounds }}</span>
-      <span class="stat-item">总伤害: {{ stats.totalDamage }}</span>
-      <span class="stat-item">总治疗: {{ stats.totalHealing }}</span>
+      <div v-if="sharedLogs.length === 0" class="no-logs">
+        暂无{{ activeTab === 'debug' ? '调试' : '系统' }}日志
+      </div>
+
+      <div
+        v-for="entry in sharedLogs"
+        :key="entry.index"
+        class="flat-item"
+        :class="flatItemClass(entry)"
+      >
+        <!-- 调试条目：级别徽章 + 消息 + 可折叠上下文 -->
+        <template v-if="entry.type === LogType.DEBUG">
+          <span class="flat-seq">#{{ entry.index }}</span>
+          <span class="flat-level">{{ levelName(entry.level) }}</span>
+          <span class="flat-msg">{{ entry.message }}</span>
+          <pre v-if="entry.context" class="flat-ctx">{{ JSON.stringify(entry.context, null, 2) }}</pre>
+          <div v-if="entry.error" class="flat-err">{{ entry.error.message }}</div>
+        </template>
+
+        <!-- 系统/动作/物品条目：优先 segments -->
+        <template v-else-if="entry.segments && entry.segments.length">
+          <LogSeg v-for="(s, j) in entry.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
+        </template>
+
+        <template v-else>
+          <span class="flat-msg">{{ entry.message }}</span>
+        </template>
+      </div>
     </div>
+
+    <EntityTooltip
+      :visible="tooltipVisible"
+      :data="tooltipData"
+      :trigger-rect="tooltipRect"
+      @hide="tooltipVisible = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import type { LogSegment, LogSegmentHover, LogFilters, BattleLogEntry, NarrativeBlock } from '@/shared/types/battle-log'
-import { LogType } from '@/shared/types/battle-log'
+import type {
+  LogSegment,
+  LogSegmentHover,
+  BattleLogEntry,
+  NarrativeBlock,
+  LogEntry,
+} from '@/shared/types/battle-log'
+import { LogType, LogLevel } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
 import LogSeg from '@/presentation/components/LogSeg.vue'
@@ -111,11 +178,10 @@ import { LogTooltipResolver } from '@/application/projection/LogTooltipResolver'
 import { container } from '@/infrastructure/di/Container'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { blocksToText, segsText } from '@/shared/utils/log-segment-factory'
 
-// 渲染器
+// ───────────────────────── 渲染器 & 悬浮解析器 ─────────────────────────
 const renderer = new RoundNarrativeRenderer()
-
-// 悬浮解析器
 let tooltipResolver: LogTooltipResolver | null = null
 try {
   const skillManager = container.resolve<SkillManager>('SkillManager')
@@ -126,95 +192,117 @@ try {
   // 容器未就绪时静默
 }
 
-// 数据源：battleLogManager
-const logs = ref<BattleLogEntry[]>([])
+// ───────────────────────── 页签状态 ─────────────────────────
+const tabs = [
+  { id: 'battle', label: '战斗' },
+  { id: 'system', label: '系统' },
+  { id: 'debug', label: '调试' },
+] as const
+type TabId = (typeof tabs)[number]['id']
 
-const logUpdateListener = () => {
-  logs.value = battleLogManager.getFilteredLogs() as BattleLogEntry[]
-}
-
-// 过滤
-const filters = ref<LogFilters>({ ...battleLogManager.getFilters() })
-
-// 监听本地过滤变更 → 同步到 battleLogManager
-watch(
-  () => [filters.value.battle, filters.value.system, filters.value.item, filters.value.action, filters.value.debug],
-  () => {
-    battleLogManager.updateFilters({
-      battle: filters.value.battle,
-      system: filters.value.system,
-      item: filters.value.item,
-      action: filters.value.action,
-      debug: filters.value.debug,
-    })
-  },
-  { immediate: true },
-)
-
-// 额外状态过滤（渲染层本地）
+const activeTab = ref<TabId>('battle')
+const keyword = ref('')
+/** 战斗页签内的状态明细开关（原 showStatus，降噪用） */
 const showStatus = ref(true)
 
-// 关键词搜索
-const keyword = ref('')
+const SYSTEM_TYPES = [LogType.SYSTEM, LogType.ACTION, LogType.ITEM]
+const DEBUG_DISPLAY_LIMIT = 200
 
-const effectiveLogs = computed(() => {
-  let result = logs.value
-  // ★ 只保留 BATTLE 类型日志，过滤 SYSTEM/DEBUG/ACTION/ITEM
-  result = result.filter((e) => e.type === LogType.BATTLE)
-  // 关键词过滤
-  if (keyword.value) {
-    const kw = keyword.value.toLowerCase()
-    result = result.filter((e) => {
-      if (e.message?.toLowerCase().includes(kw)) return true
-      if (e.segments?.some((s) => s.text.toLowerCase().includes(kw))) return true
-      return false
-    })
-  }
-  // 状态类别过滤（status 子类别按 showStatus 开关）
-  if (!showStatus.value) {
-    result = result.filter((e) => e.category !== 'status')
-  }
-  return result
-})
-
-// 渲染为叙事块
-const blocks = computed(() => renderer.renderEntries(effectiveLogs.value))
-
-// 统计（从 battleLogManager 汇总）
-const hasStats = ref(false)
-const stats = ref({ totalRounds: 0, totalDamage: 0, totalHealing: 0 })
-
-// 定期刷新统计
-let statTimer: ReturnType<typeof setInterval> | null = null
-
-function refreshStats() {
-  try {
-    const allLogs = logs.value
-    const rounds = new Set<number | string>()
-    let dmg = 0
-    let heal = 0
-    for (const l of allLogs) {
-      rounds.add(l.turn)
-      if (l.category === 'damage' || l.category === 'crit') {
-        // 从 segments 中提取数值
-        const numSeg = l.segments?.find((s) => s.kind === 'damage')
-        if (numSeg) dmg += parseInt(numSeg.text, 10) || 0
-      }
-      if (l.category === 'heal') {
-        const numSeg = l.segments?.find((s) => s.kind === 'heal')
-        if (numSeg) heal += parseInt(numSeg.text, 10) || 0
-      }
-    }
-    stats.value = { totalRounds: rounds.size, totalDamage: dmg, totalHealing: heal }
-    hasStats.value = rounds.size > 0
-  } catch {
-    // 静默
-  }
+// ───────────────────────── 数据源：全量拉取，本地过滤 ─────────────────────────
+const allLogs = ref<LogEntry[]>([])
+const logUpdateListener = () => {
+  allLogs.value = battleLogManager.getFilteredLogs()
 }
 
-watch(logs, refreshStats, { immediate: true })
+// ───────────────────────── 派生数据 ─────────────────────────
+function applyKeyword(list: LogEntry[], kw: string): LogEntry[] {
+  const k = kw.toLowerCase()
+  return list.filter((e) => {
+    if (e.message?.toLowerCase().includes(k)) return true
+    if (e.segments?.some((s) => s.text.toLowerCase().includes(k))) return true
+    return false
+  })
+}
 
-// === 悬浮信息卡片 ===
+/** 战斗页签数据（叙事渲染输入） */
+const battleLogs = computed(() => {
+  let r = allLogs.value.filter((l) => l.type === LogType.BATTLE)
+  if (!showStatus.value) {
+    r = r.filter((l) => (l as BattleLogEntry).category !== 'status')
+  }
+  if (keyword.value) r = applyKeyword(r, keyword.value)
+  return r as BattleLogEntry[]
+})
+
+/** 系统页签数据（SYSTEM + ACTION + ITEM） */
+const systemLogs = computed(() => {
+  let r = allLogs.value.filter((l) => SYSTEM_TYPES.includes(l.type))
+  if (keyword.value) r = applyKeyword(r, keyword.value)
+  return r
+})
+
+/** 调试页签数据（限量显示最新 N 条） */
+const debugAll = computed(() => {
+  let r = allLogs.value.filter((l) => l.type === LogType.DEBUG)
+  if (keyword.value) r = applyKeyword(r, keyword.value)
+  return r
+})
+const debugTotal = computed(() => debugAll.value.length)
+const debugLogs = computed(() => debugAll.value.slice(-DEBUG_DISPLAY_LIMIT))
+
+/** 共用容器当前展示的数据 */
+const sharedLogs = computed(() =>
+  activeTab.value === 'debug' ? debugLogs.value : systemLogs.value,
+)
+
+/** 叙事块 */
+const blocks = computed(() => renderer.renderEntries(battleLogs.value))
+
+// ───────────────────────── 页签计数 & 滑动指示器 ─────────────────────────
+function tabCount(id: TabId): number {
+  if (id === 'battle') return allLogs.value.filter((l) => l.type === LogType.BATTLE).length
+  if (id === 'system') return allLogs.value.filter((l) => SYSTEM_TYPES.includes(l.type)).length
+  return debugTotal.value
+}
+
+const tabElRefs = new Map<string, HTMLElement>()
+const indicatorStyle = ref<{ left: string; width: string }>({ left: '0px', width: '0px' })
+
+function setTabRef(id: string, el: unknown) {
+  if (el) tabElRefs.set(id, el as HTMLElement)
+  else tabElRefs.delete(id)
+}
+
+function updateIndicator() {
+  const el = tabElRefs.get(activeTab.value)
+  if (!el) return
+  indicatorStyle.value = { left: el.offsetLeft + 'px', width: el.offsetWidth + 'px' }
+}
+
+function switchTab(id: TabId) {
+  activeTab.value = id
+}
+
+// ───────────────────────── 扁平条目辅助 ─────────────────────────
+const LEVEL_NAMES: Record<number, string> = {
+  [LogLevel.ERROR]: 'ERR',
+  [LogLevel.WARN]: 'WRN',
+  [LogLevel.INFO]: 'INF',
+  [LogLevel.DEBUG]: 'DBG',
+  [LogLevel.TRACE]: 'TRC',
+}
+function levelName(lv?: LogLevel): string {
+  return LEVEL_NAMES[lv ?? LogLevel.INFO] ?? 'INF'
+}
+
+function flatItemClass(e: LogEntry): string {
+  if (e.type === LogType.DEBUG) return 'flat-item--debug lv-' + (e.level ?? LogLevel.INFO)
+  if (e.type === LogType.ACTION) return 'flat-item--action'
+  if (e.type === LogType.ITEM) return 'flat-item--item'
+  return 'flat-item--system'
+}
+
+// ───────────────────────── 悬浮信息卡片 ─────────────────────────
 const tooltipVisible = ref(false)
 const tooltipData = ref<TooltipData | null>(null)
 const tooltipRect = ref<DOMRect | null>(null)
@@ -228,131 +316,74 @@ function onSegmentEnter(event: MouseEvent, hover: LogSegmentHover) {
     tooltipVisible.value = true
   }
 }
-
 function onSegmentLeave() {
   tooltipVisible.value = false
   tooltipData.value = null
   tooltipRect.value = null
 }
 
-// === 自动滚动 ===
-const logContainer = ref<HTMLElement | null>(null)
+// ───────────────────────── 自动滚动（双容器） ─────────────────────────
+const battleContainer = ref<HTMLElement | null>(null)
+const sharedContainer = ref<HTMLElement | null>(null)
 const autoScrollEnabled = ref(true)
 let autoScrollTimer: ReturnType<typeof setTimeout> | null = null
 let scrollThrottled = false
-const SCROLL_RESTORE_DELAY = 3000
 
-const onScroll = () => {
-  if (!logContainer.value || scrollThrottled) return
+function activeContainer(): HTMLElement | null {
+  return activeTab.value === 'battle' ? battleContainer.value : sharedContainer.value
+}
+
+const onScroll = (ev: Event) => {
+  const el = ev.target as HTMLElement
+  if (!el || scrollThrottled) return
   scrollThrottled = true
-  requestAnimationFrame(() => { scrollThrottled = false })
-  const { scrollTop, scrollHeight, clientHeight } = logContainer.value
+  requestAnimationFrame(() => {
+    scrollThrottled = false
+  })
+  const { scrollTop, scrollHeight, clientHeight } = el
   if (scrollTop < scrollHeight - clientHeight - 5) {
     autoScrollEnabled.value = false
     if (autoScrollTimer) clearTimeout(autoScrollTimer)
     autoScrollTimer = setTimeout(() => {
       autoScrollEnabled.value = true
       autoScrollTimer = null
-    }, SCROLL_RESTORE_DELAY)
+    }, 3000)
   } else {
     autoScrollEnabled.value = true
-    if (autoScrollTimer) { clearTimeout(autoScrollTimer); autoScrollTimer = null }
+    if (autoScrollTimer) {
+      clearTimeout(autoScrollTimer)
+      autoScrollTimer = null
+    }
   }
 }
 
-const scrollToBottom = () => {
-  if (!logContainer.value) return
-  logContainer.value.scrollTop = logContainer.value.scrollHeight
+function scrollActiveToBottom() {
+  const el = activeContainer()
+  if (el) el.scrollTop = el.scrollHeight
 }
 
-watch(blocks, () => {
+watch([battleLogs, sharedLogs, activeTab], () => {
   nextTick(() => {
-    if (autoScrollEnabled.value) scrollToBottom()
+    if (autoScrollEnabled.value) scrollActiveToBottom()
   })
 })
 
-onMounted(() => {
-  battleLogManager.addListener(logUpdateListener)
-  logUpdateListener() // 立即加载
-})
+// ───────────────────────── 导出（当前页签） ─────────────────────────
 
-onUnmounted(() => {
-  battleLogManager.removeListener(logUpdateListener)
-  if (autoScrollTimer) clearTimeout(autoScrollTimer)
-  if (statTimer) clearInterval(statTimer)
-})
-
-// === 导出日志文本 ===
-
-/** 将 LogSegment[] 拼接为纯文本 */
-function segsText(segs: LogSegment[]): string {
-  return segs.map((s) => s.text).join('')
+function flatToText(e: LogEntry): string {
+  if (e.segments?.length) return segsText(e.segments)
+  return e.message ?? ''
 }
 
-/** 将 NarrativeBlock[] 渲染为叙事纯文本 */
-function blocksToText(blocks: NarrativeBlock[]): string {
-  const lines: string[] = []
-  for (const b of blocks) {
-    switch (b.type) {
-      case 'battle-header':
-        lines.push('═══════════════════════════════════════════')
-        lines.push(segsText(b.segments))
-        lines.push('═══════════════════════════════════════════')
-        lines.push('')
-        break
-      case 'round':
-        lines.push(`─────────────────────── 第 ${b.turn} 回合${b.tag ? ` · ${b.tag}` : ''} ───────────────────────`)
-        break
-      case 'action':
-        lines.push(`◆ ${segsText(b.header)}`)
-        if (b.result) lines.push(`  ${segsText(b.result)}`)
-        for (let k = 0; k < b.subs.length; k++) {
-          const prefix = k === b.subs.length - 1 ? '└' : '├'
-          lines.push(`  ${prefix} ${segsText(b.subs[k])}`)
-        }
-        break
-      case 'settlement':
-        lines.push('')
-        lines.push('  ── 回合结算 ──')
-        for (const line of b.lines) {
-          lines.push(`    ${segsText(line)}`)
-        }
-        break
-      case 'snapshot':
-        lines.push('')
-        lines.push('  ── 态势 ──')
-        for (const line of b.lines) {
-          lines.push(`    ${segsText(line)}`)
-        }
-        break
-      case 'section':
-        lines.push(`【${b.title}】`)
-        for (const line of b.lines) {
-          lines.push(`  ${segsText(line)}`)
-        }
-        break
-      case 'summary':
-        lines.push('')
-        lines.push('═══════════════════════════════════════════')
-        for (const line of b.lines) {
-          lines.push(segsText(line))
-        }
-        lines.push('═══════════════════════════════════════════')
-        lines.push('')
-        break
-      default: // plain
-        lines.push(segsText(b.segments))
-    }
-  }
-  return lines.join('\n')
-}
-
-/** 导出战斗日志为 .txt 文件 */
 function exportLogs(): void {
-  const text = blocksToText(blocks.value)
+  let text = ''
+  if (activeTab.value === 'battle') text = blocksToText(blocks.value)
+  else if (activeTab.value === 'debug') text = debugLogs.value.map(flatToText).join('\n')
+  else text = systemLogs.value.map(flatToText).join('\n')
+
   if (!text.trim()) return
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-  const filename = `battle-log-${timestamp}.txt`
+  const filename = `battle-log-${activeTab.value}-${timestamp}.txt`
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -363,187 +394,341 @@ function exportLogs(): void {
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
+
+// ───────────────────────── 生命周期 ─────────────────────────
+onMounted(() => {
+  // 打开全部过滤器，确保 listener 收到全量日志（页签过滤在本地完成）
+  battleLogManager.updateFilters({
+    battle: true,
+    system: true,
+    item: true,
+    action: true,
+    debug: true,
+  })
+  battleLogManager.addListener(logUpdateListener)
+
+  nextTick(updateIndicator)
+  window.addEventListener('resize', updateIndicator)
+})
+
+onUnmounted(() => {
+  battleLogManager.removeListener(logUpdateListener)
+  window.removeEventListener('resize', updateIndicator)
+  if (autoScrollTimer) clearTimeout(autoScrollTimer)
+})
+
+watch(activeTab, () => nextTick(updateIndicator))
 </script>
 
 <style scoped>
 @use '@/presentation/styles/main.scss';
 
+/* ─────────── 头部 ─────────── */
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border-default);
+  flex-wrap: wrap;
+}
+.log-title {
+  color: var(--color-info);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 1px;
+}
+
+/* ─────────── 页签栏 ─────────── */
+.log-tabs {
+  position: relative;
+  display: flex;
+  gap: var(--space-1);
+}
+.log-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  white-space: nowrap;
+}
+.log-tab:hover {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-hover);
+}
+.log-tab.active {
+  color: var(--color-energy);
+  font-weight: var(--font-weight-bold);
+}
+/* 计数徽章 */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-default);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family-mono);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.log-tab.active .tab-badge {
+  background: var(--color-energy);
+  color: var(--color-bg-secondary);
+}
+/* 徽章数字变化时的弹跳（:key 触发重渲染） */
+.tab-badge {
+  animation: badge-pop 0.2s ease-out;
+}
+@keyframes badge-pop {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+/* 滑动指示条 */
+.tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  height: 2px;
+  background: var(--color-energy);
+  box-shadow: 0 0 8px var(--color-energy);
+  border-radius: var(--radius-full);
+  transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+/* ─────────── 搜索 & 导出 ─────────── */
+.log-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+.log-keyword {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  width: 110px;
+  transition: border-color var(--transition-fast), width var(--transition-fast);
+}
+.log-keyword:focus {
+  outline: none;
+  border-color: var(--color-energy);
+  width: 150px;
+}
+.export-btn {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+.export-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-energy);
+}
+
+/* ─────────── 内容容器（双容器，v-show 保留滚动位置） ─────────── */
+.log-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2);
+  min-height: 0;
+  line-height: var(--line-height-md);
+}
+/* 页签切入时的淡入上浮 */
+.log-content.is-active {
+  animation: content-in 0.18s ease-out;
+}
+@keyframes content-in {
+  from { opacity: 0.4; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ─────────── 战斗页签工具条（状态明细开关） ─────────── */
+.battle-toolbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px dashed var(--color-border-default);
+}
+.status-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+  color: var(--color-text-tertiary);
+  transition: color var(--transition-fast);
+}
+.status-toggle input { display: none; }
+.status-toggle .toggle-track {
+  position: relative;
+  width: 30px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-default);
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+.status-toggle .toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-text-tertiary);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+.status-toggle.on { color: var(--color-energy); }
+.status-toggle.on .toggle-track { background: var(--color-energy); }
+.status-toggle.on .toggle-thumb {
+  transform: translateX(14px);
+  background: var(--color-bg-secondary);
+}
+
+/* ─────────── 扁平容器（系统/调试共用） ─────────── */
+.log-content--flat {
+  font-family: var(--font-family-mono);
+}
+.flat-note {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+  margin-bottom: var(--space-1);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--color-warning);
+}
+.flat-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  margin-bottom: 2px;
+  border-radius: var(--radius-sm);
+  border-left: 2px solid transparent;
+  transition: background var(--transition-fast);
+}
+.flat-item:hover { background: var(--color-bg-hover); }
+.flat-item--system { border-left-color: var(--color-info); }
+.flat-item--action { border-left-color: var(--color-debuff); }
+.flat-item--item { border-left-color: var(--color-heal); }
+.flat-item--debug { border-left-color: var(--color-text-disabled); }
+
+.flat-seq {
+  color: var(--color-text-disabled);
+  font-size: var(--font-size-xs);
+  min-width: 3.5em;
+}
+.flat-level {
+  padding: 0 5px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-weight-bold);
+  background: var(--color-border-default);
+  color: var(--color-text-secondary);
+}
+.flat-item.lv-0 .flat-level { background: var(--color-danger); color: var(--color-text-primary); }
+.flat-item.lv-1 .flat-level { background: var(--color-warning); color: var(--color-bg-secondary); }
+.flat-item.lv-2 .flat-level { background: var(--color-info); color: var(--color-bg-secondary); }
+.flat-item.lv-0 { color: var(--color-danger); }
+.flat-item.lv-1 { color: var(--color-warning); }
+.flat-msg { color: var(--color-text-secondary); flex: 1; min-width: 0; word-break: break-all; }
+.flat-item.lv-0 .flat-msg,
+.flat-item.lv-1 .flat-msg { color: inherit; }
+.flat-ctx {
+  flex-basis: 100%;
+  margin: var(--space-1) 0 0 0;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+.flat-err {
+  flex-basis: 100%;
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+}
+
+/* ─────────── 空状态 ─────────── */
 .no-logs {
   text-align: center;
   color: var(--color-text-tertiary);
   padding: var(--space-6);
+  font-style: italic;
 }
 
-/* ── 分隔线（CSS 实现） ── */
-.rule {
-  flex: 1;
-  height: 1px;
-  background: var(--color-border-default);
-  align-self: center;
-}
-
+/* ─────────── 叙事块（原有样式保留） ─────────── */
+.rule { flex: 1; height: 1px; background: var(--color-border-default); align-self: center; }
 .rule--double {
   height: 3px;
   border-top: 1px solid var(--color-border-strong);
   border-bottom: 1px solid var(--color-border-strong);
   background: transparent;
 }
-
-.rule--thin {
-  opacity: 0.5;
-}
-
-/* 叙事块基础 */
-.nb {
-  margin: 2px 0;
-}
-
-/* 战斗头/尾 */
+.rule--thin { opacity: 0.5; }
+.nb { margin: 2px 0; }
 .nb--battle-header {
-  display: flex;
-  gap: 10px;
-  text-align: center;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-warning);
-  padding: 6px 0;
-  align-items: center;
+  display: flex; gap: 10px; text-align: center;
+  font-weight: var(--font-weight-bold); color: var(--color-warning);
+  padding: 6px 0; align-items: center;
 }
-
-.battle-line {
-  padding: 4px 0;
-  letter-spacing: 1px;
-  text-align: center;
-}
-
-/* 回合头 */
-.nb--round {
-  display: flex;
-  gap: 10px;
-  margin: 14px 0 6px;
-  align-items: center;
-}
-
-.round-label {
-  color: var(--color-info);
-  font-weight: var(--font-weight-bold);
-  white-space: nowrap;
-}
-
-/* 行动块：◆ 头 + 缩进结果/从属 */
-.action-header {
-  font-weight: var(--font-weight-semibold);
-}
-
-.glyph {
-  color: var(--color-warning);
-  margin-right: 6px;
-}
-
-.action-result,
-.action-sub {
-  padding-left: 1.4em;
-}
-
-.glyph--sub {
-  color: var(--color-text-tertiary);
-}
-
-/* 结算/态势 子标题 */
+.battle-line { padding: 4px 0; letter-spacing: 1px; text-align: center; }
+.nb--round { display: flex; gap: 10px; margin: 14px 0 6px; align-items: center; }
+.round-label { color: var(--color-info); font-weight: var(--font-weight-bold); white-space: nowrap; }
+.action-header { font-weight: var(--font-weight-semibold); }
+.glyph { color: var(--color-warning); margin-right: 6px; }
+.action-result, .action-sub { padding-left: 1.4em; }
+.glyph--sub { color: var(--color-text-tertiary); }
 .sub-header {
-  display: flex;
-  gap: 8px;
-  color: var(--color-text-tertiary);
-  margin-top: 8px;
-  font-size: var(--font-size-xs);
-  letter-spacing: 2px;
-  align-items: center;
+  display: flex; gap: 8px; color: var(--color-text-tertiary);
+  margin-top: 8px; font-size: var(--font-size-xs); letter-spacing: 2px; align-items: center;
 }
+.indent-line { padding-left: 1.4em; }
+.section-title { color: var(--color-energy); font-weight: var(--font-weight-bold); }
+.nb--summary { display: flex; gap: 10px; padding: 8px 0; align-items: center; }
+.summary-content { text-align: center; padding: 4px 0; }
+.summary-line { margin: 2px 0; }
 
-.indent-line {
-  padding-left: 1.4em;
-}
-
-/* 条件激活 */
-.section-title {
-  color: var(--color-energy);
-  font-weight: var(--font-weight-bold);
-}
-
-/* 战报摘要 */
-.nb--summary {
-  display: flex;
-  gap: 10px;
-  padding: 8px 0;
-  align-items: center;
-}
-
-.summary-content {
-  text-align: center;
-  padding: 4px 0;
-}
-
-.summary-line {
-  margin: 2px 0;
-}
-
-/* 统计栏 */
-.log-stats {
-  display: flex;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-top: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-}
-
-.stat-item {
-  white-space: nowrap;
-}
-
-/* 导出按钮 */
-.export-btn {
-  margin-left: auto;
-  padding: 2px 8px;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-raised);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background var(--transition-fast);
-}
-
-.export-btn:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-text-primary);
-}
-
-/* 微交互：新块淡入 */
+/* 新块淡入 */
 @media (prefers-reduced-motion: no-preference) {
-  .nb {
-    animation: nb-in .18s ease-out;
-  }
-
+  .nb { animation: nb-in 0.18s ease-out; }
   @keyframes nb-in {
-    from {
-      opacity: 0;
-      transform: translateY(3px);
-    }
-
-    to {
-      opacity: 1;
-      transform: none;
-    }
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: none; }
   }
 }
 
+/* 可悬浮锚点 */
 .log-hoverable {
   text-decoration: underline dotted;
   text-underline-offset: 2px;
   cursor: help;
   transition: filter var(--transition-fast);
 }
-
-.log-hoverable:hover {
-  filter: brightness(1.35);
-}
+.log-hoverable:hover { filter: brightness(1.35); }
 </style>

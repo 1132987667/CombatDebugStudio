@@ -28,6 +28,33 @@
         <span class="speed-icon">⚡</span>
         <span class="speed-text">战斗速度 x{{ props.battleSpeed ?? 1 }}</span>
       </button>
+
+      <!-- ★ 快速战斗开关 -->
+      <label class="quick-toggle" :class="{ active: store.quickMode }" @click="store.toggleQuickMode()">
+        <span class="qt-toggle-track"><span class="qt-toggle-thumb"></span></span>
+        <span class="qt-toggle-label">⚡快速</span>
+      </label>
+
+      <span class="separator"></span>
+
+      <!-- ★ 战斗数据生成 -->
+      <div class="gen-wrapper" ref="genWrapperRef">
+        <button
+          class="control-btn gen-trigger"
+          :disabled="store.generationProgress.isGenerating"
+          @click="showGenMenu = !showGenMenu"
+        >
+          {{ store.generationProgress.isGenerating
+            ? `生成中 ${store.generationProgress.percent}%`
+            : '📊 生成数据' }}
+        </button>
+        <!-- 生成模式选择弹出 -->
+        <div v-if="showGenMenu" class="gen-menu">
+          <button @click="startGenerate('1v1')">1v1 × 50场</button>
+          <button @click="startGenerate('2v2')">2v2 × 50场</button>
+          <button @click="startGenerate('random')">随机 × 50场</button>
+        </div>
+      </div>
     </div>
     <div class="control-group right">
       <!-- 调试模式：暂停相位指示 + 暂停 / 单步调试 -->
@@ -59,6 +86,9 @@ import RadioButtonGroup from "@/presentation/components/RadioButtonGroup.vue";
 import { debugGate } from '@/domain/battle/debug/DebugGate'
 import { eventBus } from '@/main'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
+import { useBattleStore } from '@/presentation/stores/battleStore'
+
+const store = useBattleStore()
 
 const props = defineProps<{
   isBattleActive: boolean;
@@ -99,7 +129,21 @@ const toggleBattleSpeed = () => {
   emit('battle-speed-change', speedLevels[nextIndex]);
 };
 
+// ★ 战斗数据生成菜单
+const showGenMenu = ref(false)
+const genWrapperRef = ref<HTMLElement | null>(null)
 
+const startGenerate = (mode: '1v1' | '2v2' | 'random') => {
+  showGenMenu.value = false
+  store.generateBattleData(mode)
+}
+
+// 点击外部关闭生成菜单
+const handleClickOutside = (e: MouseEvent) => {
+  if (genWrapperRef.value && !genWrapperRef.value.contains(e.target as Node)) {
+    showGenMenu.value = false
+  }
+}
 
 // ========== 调试模式 ==========
 // NOTE: debugGate 是普通类，状态不可响应式追踪，
@@ -137,11 +181,13 @@ onMounted(() => {
   eventBus.on(BattleEventCodes.DEBUG_PAUSE_RESUME, () => {
     debugPhase.value = null
   })
+  document.addEventListener('click', handleClickOutside)
 })
 onUnmounted(() => {
   eventBus.off(BattleEventCodes.DEBUG_TOGGLE)
   eventBus.off(BattleEventCodes.DEBUG_PAUSE)
   eventBus.off(BattleEventCodes.DEBUG_PAUSE_RESUME)
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -282,5 +328,92 @@ onUnmounted(() => {
 
 .debug-toggle-switch.active .toggle-label {
   color: var(--color-energy);
+}
+
+/* ★ 快速战斗切换开关 */
+.quick-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: var(--radius-xl);
+  transition: var(--transition-fast);
+}
+.quick-toggle.active {
+  border-color: var(--color-warning);
+  background: rgba(255, 152, 0, 0.15);
+}
+.quick-toggle .qt-toggle-track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9px;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+.quick-toggle.active .qt-toggle-track {
+  background: var(--color-warning);
+}
+.quick-toggle .qt-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.quick-toggle.active .qt-toggle-thumb {
+  transform: translateX(14px);
+}
+.quick-toggle .qt-toggle-label {
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  transition: color var(--transition-fast);
+}
+.quick-toggle.active .qt-toggle-label {
+  color: var(--color-warning);
+}
+
+/* ★ 战斗数据生成菜单 */
+.gen-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+.gen-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 4px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: var(--z-dropdown);
+  box-shadow: var(--shadow-md);
+  min-width: 140px;
+}
+.gen-menu button {
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: left;
+}
+.gen-menu button:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-info);
 }
 </style>

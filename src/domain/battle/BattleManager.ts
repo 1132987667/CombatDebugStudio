@@ -686,6 +686,21 @@ export class BattleManager {
     return this.battleSystem.getBattleSpeed()
   }
 
+  /** ★ 设置快速战斗模式 */
+  setQuickMode(enabled: boolean): void {
+    this.battleSystem.setQuickMode(enabled)
+  }
+
+  /** ★ 获取快速战斗模式 */
+  getQuickMode(): boolean {
+    return this.battleSystem.getQuickMode()
+  }
+
+  /** ★ 重新生成战斗ID */
+  regenerateBattleId(): void {
+    this.battleSystem.regenerateBattleId()
+  }
+
   /**
    * 切换暂停状态
    */

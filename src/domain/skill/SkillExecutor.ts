@@ -5,8 +5,6 @@ import type {
   BattleEntity,
   StepExecutionContext,
 } from '@/domain/battle/type/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
-import type { CombatRecord } from '@/domain/battle/combat-record'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { StackRule, ControlType, type BuffConfig } from '@/domain/buff/types'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'

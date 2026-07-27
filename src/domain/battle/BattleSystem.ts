@@ -150,6 +150,8 @@ export class BattleSystem {
       this.rafTimer,
       () => this.battleData?.participants,
       () => this.battleData?.battleSpeed ?? 1,
+      () => this.battleData?.quickMode ?? false,
+      () => this.battleData?.headless ?? false,
     )
     this.lifecycleManager = new BattleLifecycleManager(
       () => this.battleData,
@@ -166,6 +168,10 @@ export class BattleSystem {
       this.battleRecorder,
       this.animationManager,
       this.buffSystem,
+    )
+
+    this.passiveSkillManager.setAnimationEnabledGetter(
+      () => !this.shouldSuppressAnimationEvents(),
     )
 
     // 树状调试日志收集器
@@ -348,6 +354,7 @@ export class BattleSystem {
     // ponytail: 注册 buff 添加回调，被动触发路径通过 eventBus 告知 UI 播放动画
     this.buffSystem.setBuffAppliedCallback(
       (characterId: string, buffId: string) => {
+        if (this.shouldSuppressAnimationEvents()) return  // ★ 无头/快速模式：抑制
         eventBus.emit(BattleEventCodes.BUFF_EFFECT, {
           targetId: characterId,
           buffName: buffId,
@@ -429,7 +436,7 @@ export class BattleSystem {
               }
             }
             // ★ 统一管道：触发器伤害/治疗动画
-            if (actualDamage > 0) {
+            if (actualDamage > 0 && !this.shouldSuppressAnimationEvents()) {
               eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
                 targetId,
                 damage: actualDamage,
@@ -483,7 +490,7 @@ export class BattleSystem {
       if (target?.isAlive()) {
         const actualHeal = target.heal(amount)
         // ★ 统一管道：触发器治疗动画
-        if (actualHeal > 0) {
+        if (actualHeal > 0 && !this.shouldSuppressAnimationEvents()) {
           eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
             targetId,
             damage: actualHeal,
@@ -989,6 +996,43 @@ export class BattleSystem {
 
   public setSpeed(speed: number): void {
     if (this.battleData) this.battleData.battleSpeed = speed
+  }
+
+  /** ★ 设置快速战斗模式（跳过动画和等待） */
+  public setQuickMode(enabled: boolean): void {
+    if (this.battleData) {
+      this.battleData.quickMode = enabled
+    }
+  }
+
+  /** ★ 获取快速战斗模式状态 */
+  public getQuickMode(): boolean {
+    return this.battleData?.quickMode ?? false
+  }
+
+  /** ★ 设置无头模式（批量生成用，抑制所有 UI 动画事件） */
+  public setHeadless(enabled: boolean): void {
+    if (this.battleData) {
+      this.battleData.headless = enabled
+    }
+  }
+
+  /** ★ 获取无头模式状态 */
+  public getHeadless(): boolean {
+    return this.battleData?.headless ?? false
+  }
+
+  /** ★ 是否抑制 UI 动画事件发射（快速战斗 || 无头模式） */
+  private shouldSuppressAnimationEvents(): boolean {
+    return !!(this.battleData?.quickMode || this.battleData?.headless)
+  }
+
+  /** ★ 重新生成战斗ID（用于批量生成场景中每场战斗拥有独立ID） */
+  public regenerateBattleId(): void {
+    const id = this.generateBattleId()
+    if (this.battleData) {
+      this.battleData.battleId = id
+    }
   }
 
   public togglePause(): void {

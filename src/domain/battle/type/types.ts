@@ -648,6 +648,10 @@ export interface BattleData {
   autoBattleIntervalId?: symbol
   /** 技能管理器实例（可选，用于技能执行） */
   skillManager?: import('@/domain/skill/SkillManager').SkillManager
+  /** ★ 快速战斗模式：跳过动画和等待时间 */
+  quickMode: boolean
+  /** ★ 无头模式：跳过动画时序 + 抑制所有 UI 动画事件（批量生成用） */
+  headless: boolean
 }
 
 /** 战斗回放系统版本号 */

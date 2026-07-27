@@ -163,6 +163,18 @@ export const useBattleStore = defineStore('battle', () => {
 
   const showDebug = ref(true)
 
+  /** ★ 快速战斗模式（跳过动画和等待） */
+  const quickMode = ref(false)
+  /** ★ 战斗数据生成进度 */
+  const generationProgress = reactive({
+    isGenerating: false,
+    current: 0,
+    total: 0,
+    percent: 0,
+  })
+  /** ★ 当前运行的生成器引用（用于 destroy 时取消） */
+  let _currentGenerator: import('@/application/service/BattleDataGenerator').BattleDataGenerator | null = null
+
   /** 参与者快照表 — UI 的唯一数据源（由投影层填充） */
   const participants = reactive(new Map<string, UIParticipantSnapshot>())
 
@@ -509,6 +521,7 @@ export const useBattleStore = defineStore('battle', () => {
     setLoading(true, '开始战斗')
     clearError()
     try {
+      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
       if (!battleService.value) throw new Error('战斗管理器未初始化')
       const battleId = await battleService.value.startBattle()
       if (!battleId) throw new Error('战斗创建失败，请检查参战队伍的配置')
@@ -547,6 +560,7 @@ export const useBattleStore = defineStore('battle', () => {
     setLoading(true, '结束战斗')
     clearError()
     try {
+      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
       if (!battleService.value) throw new Error('战斗管理器未初始化')
       battleService.value.endBattle(winner)
       battleService.value.syncBattleState()
@@ -571,6 +585,7 @@ export const useBattleStore = defineStore('battle', () => {
     setLoading(true, '重置战斗')
     clearError()
     try {
+      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
       if (!battleService.value) throw new Error('战斗管理器未初始化')
       battleService.value.reset()
       currentActorId.value = null
@@ -599,6 +614,7 @@ export const useBattleStore = defineStore('battle', () => {
     setLoading(true, '执行回合')
     clearError()
     try {
+      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
       if (!battleService.value) throw new Error('战斗管理器未初始化')
       await battleService.value.processSingleTurn()
       battleService.value.syncBattleState()
@@ -622,6 +638,7 @@ export const useBattleStore = defineStore('battle', () => {
     setLoading(true)
     clearError()
     try {
+      if (generationProgress.isGenerating) throw new Error('战斗数据生成中，请等待完成')
       if (!battleService.value) throw new Error('战斗管理器未初始化')
       const isActive = battleService.value.getAutoBattle()
       if (isActive) {
@@ -654,6 +671,7 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const togglePause = () => {
     try {
+      if (generationProgress.isGenerating) return false
       if (!battleService.value) return false
       battleService.value.togglePause()
       isPaused.value = battleService.value.getIsPaused()
@@ -740,6 +758,48 @@ export const useBattleStore = defineStore('battle', () => {
     }
   }
 
+  /** ★ 切换快速战斗模式 */
+  const toggleQuickMode = () => {
+    if (!battleService.value) return
+    quickMode.value = !quickMode.value
+    battleService.value.setQuickMode(quickMode.value)
+    battleLogManager.addSystemLog({
+      message: quickMode.value ? '快速战斗已开启（跳过动画）' : '快速战斗已关闭',
+    })
+  }
+
+  /** ★ 执行战斗数据生成 */
+  const generateBattleData = async (mode: '1v1' | '2v2' | 'random' = 'random') => {
+    if (!battleService.value) return
+    if (generationProgress.isGenerating) return
+    generationProgress.isGenerating = true
+    generationProgress.current = 0
+    generationProgress.percent = 0
+
+    try {
+      const { BattleDataGenerator } = await import('@/application/service/BattleDataGenerator')
+      const generator = new BattleDataGenerator(container)
+      _currentGenerator = generator
+      await generator.generate({
+        totalBattles: 50,
+        mode,
+        onProgress: (_progress: number, current: number, total: number) => {
+          generationProgress.current = current
+          generationProgress.total = total
+          generationProgress.percent = Math.round((current / total) * 100)
+        },
+      })
+      battleLogManager.addSystemLog({ message: `战斗数据生成完成（${mode}×50场），文件已下载` })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setError(msg)
+      battleLogManager.addDebugLog(`战斗数据生成失败: ${msg}`)
+    } finally {
+      generationProgress.isGenerating = false
+      _currentGenerator = null
+    }
+  }
+
   /**
    * 销毁战斗管理器并清理所有资源
    * @description 移除所有事件监听器，重置状态，释放内存，防止内存泄漏
@@ -747,6 +807,13 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const destroy = () => {
     try {
+      // ★ 取消正在执行的战斗数据生成
+      if (_currentGenerator) {
+        _currentGenerator.cancel()
+        _currentGenerator = null
+        generationProgress.isGenerating = false
+      }
+
       if (!battleService.value) return
       cleanupEvents.forEach((key) => battleService.value!.off(key))
       cleanupEvents.length = 0
@@ -943,6 +1010,8 @@ export const useBattleStore = defineStore('battle', () => {
     isBattleActive, // 战斗激活状态
     isPaused, // 暂停状态
     showDebug, // 显示调试信息状态
+    quickMode, // ★ 快速战斗模式
+    generationProgress, // ★ 战斗数据生成进度
 
     // ========== Computed Getters (用于模板访问) ==========
     getCurrentActorId: () => currentActorId.value,
@@ -988,6 +1057,10 @@ export const useBattleStore = defineStore('battle', () => {
     // ========== 配置与清理 ==========
     setBattleSpeed, // 设置战斗速度
     destroy, // 销毁并清理资源
+
+    // ========== 快速战斗 ==========
+    toggleQuickMode, // 切换快速战斗模式
+    generateBattleData, // 执行战斗数据生成
 
     // ========== 日志处理 ==========
     parseBattleAction, // 解析战斗动作

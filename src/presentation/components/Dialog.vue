@@ -11,7 +11,7 @@
   <Teleport to="body">
     <Transition name="dialog-fade">
       <div v-if="modelValue" class="dialog-overlay" :class="{ 'dialog-overlay--transparent': !showMask }" @click.self="onOverlayClick">
-        <div class="dialog-container" :style="{ width: width }">
+        <div class="dialog-container" :style="{ width: width, height: height }">
           <div class="dialog-header">
             <span class="dialog-title">{{ title }}</span>
             <div class="dialog-header-actions">
@@ -38,6 +38,7 @@ interface Props {
   modelValue: boolean;
   title: string;
   width?: string;
+  height?: string;
   /** 是否显示遮罩背景，默认 true */
   showMask?: boolean;
   /** 点击遮罩时是否关闭弹窗，默认 true。设为 false 时点击遮罩不关闭 */

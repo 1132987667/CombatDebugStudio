@@ -1,0 +1,253 @@
+/**
+ * BattleDataGenerator.ts — 战斗数据批量生成器
+ *
+ * 职责：随机选择双方成员（1v1 或 2v2），执行多场战斗，
+ *       收集每场战斗的叙事日志（与日志面板导出格式完全一致），
+ *       合并为单一文本文件并触发浏览器下载。
+ *
+ * 日志管线（与面板导出同源）：
+ *   battleLogManager 战斗日志 → RoundNarrativeRenderer → blocksToText
+ *
+ * 关键处理：
+ * - 生成期间 setAutoCleanup(false)，避免长战斗日志超 200 条被截断
+ * - 每场战斗前 clearLogs，保证每场日志独立完整
+ * - 结束后恢复用户原有日志与 autoCleanup
+ */
+import type { Container } from '@/infrastructure/di/Container'
+import type { BattleSystem } from '@/domain/battle/BattleSystem'
+import type { BattleService } from '@/application/facade/BattleFacade'
+import type { BattleEntity } from '@/domain/battle/type/types'
+import { PARTICIPANT_SIDE, BattleStatus } from '@/domain/battle/type/types'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import type { Enemy } from '@/shared/types/enemy'
+import { debugGate } from '@/domain/battle/debug/DebugGate'
+import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { LogType, type BattleLogEntry } from '@/shared/types/battle-log'
+import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
+import { blocksToText } from '@/shared/utils/log-segment-factory'
+
+export interface BattleGenerationOptions {
+  /** 总场次数（默认 50） */
+  totalBattles?: number
+  /** 战斗模式：'1v1' | '2v2' | 'random'（随机选择） */
+  mode?: '1v1' | '2v2' | 'random'
+  /** 进度回调（0~1） */
+  onProgress?: (progress: number, current: number, total: number) => void
+}
+
+export interface SingleBattleLog {
+  battleIndex: number
+  battleId: string
+  allyNames: string[]
+  enemyNames: string[]
+  winner: string
+  totalRounds: number
+  /** 叙事格式日志文本（与面板导出一致） */
+  narrativeText: string
+}
+
+export class BattleDataGenerator {
+  private battleSystem: BattleSystem
+  private renderer = new RoundNarrativeRenderer()
+  private _cancelled = false
+  /** 上一场参与者 ID，用于清理 BuffSystem 残留修饰符 */
+  private _prevParticipantIds: string[] = []
+  private _currentParticipantIds: string[] = []
+
+  constructor(container: Container) {
+    const battleService = container.resolve<BattleService>('BattleService')
+    this.battleSystem = battleService.getBattleManager().getBattleSystem()
+  }
+
+  /** 取消正在执行的生成任务 */
+  cancel(): void {
+    this._cancelled = true
+  }
+
+  async generate(options: BattleGenerationOptions = {}): Promise<string> {
+    const total = options.totalBattles ?? 50
+    const mode = options.mode ?? 'random'
+    const allEnemies = GameDataProcessor.getEnemiesData()
+    if (allEnemies.length < 1) {
+      throw new Error('角色库数据不足，至少需要 1 个角色')
+    }
+
+    this._cancelled = false
+    this._prevParticipantIds = []
+    this._currentParticipantIds = []
+
+    // ── 备份并隔离全局日志状态，防止 50 场战斗污染 UI 面板 ──
+    const savedBattleLogs = battleLogManager.exportLogs()
+    battleLogManager.setAutoCleanup(false) // 解除 200 条上限，防止长战斗日志被截断
+    battleLogManager.clearLogs()
+
+    const battleLogs: SingleBattleLog[] = []
+    const prevDebugEnabled = debugGate.enabled
+    debugGate.enabled = false
+    const prevHeadless = this.battleSystem.getHeadless()
+    this.battleSystem.setHeadless(true)
+
+    try {
+      for (let i = 0; i < total; i++) {
+        if (this._cancelled) break
+        options.onProgress?.(i / total, i + 1, total)
+
+        // 决定本场模式
+        const battleMode = mode === 'random' ? (Math.random() < 0.5 ? '1v1' : '2v2') : mode
+        const teamSize = battleMode === '1v1' ? 1 : 2
+
+        // 随机选择双方成员；角色不足时允许克隆补足，保证至少 1v1
+        const shuffled = [...allEnemies].sort(() => Math.random() - 0.5)
+        const allySource = shuffled.slice(0, teamSize)
+        const enemySource = shuffled.slice(teamSize, teamSize * 2)
+        while (enemySource.length < teamSize) {
+          enemySource.push(allySource[enemySource.length % allySource.length])
+        }
+
+        const allyTeam = allySource.map((e, idx) => this.createParticipant(e, PARTICIPANT_SIDE.ALLY, idx))
+        const enemyTeam = enemySource.map((e, idx) => this.createParticipant(e, PARTICIPANT_SIDE.ENEMY, idx))
+        this._currentParticipantIds = [...allyTeam.map(e => e.id), ...enemyTeam.map(e => e.id)]
+
+        // 清理上一场参与者残留在 BuffSystem 中的修饰符
+        this.cleanupPrevBuffSystemEntries()
+        // 清空上一场的战斗日志，保证本场日志独立完整
+        battleLogManager.clearLogs()
+
+        // 每场独立 battleId
+        this.battleSystem.regenerateBattleId()
+        const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
+        this.battleSystem.setBattleState(BattleStatus.ACTIVE)
+        const battleId = battleState.battleId
+
+        // 执行战斗直到结束
+        let rounds = 0
+        const MAX_ROUNDS = 200
+        while (this.battleSystem.getBattleStatus() === BattleStatus.ACTIVE && rounds < MAX_ROUNDS) {
+          await this.battleSystem.processTurn()
+          rounds++
+        }
+
+        // ── 收集本场叙事日志（与面板导出同管线）──
+        const narrativeText = this.collectNarrativeText()
+        const winner = this.battleSystem.getBattleData()?.winner
+
+        battleLogs.push({
+          battleIndex: i + 1,
+          battleId,
+          allyNames: allyTeam.map(e => e.name),
+          enemyNames: enemyTeam.map(e => e.name),
+          winner: winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方',
+          totalRounds: rounds,
+          narrativeText,
+        })
+
+        this.battleSystem.resetBattle()
+        this._prevParticipantIds = this._currentParticipantIds
+        this._currentParticipantIds = []
+
+        // 让出主线程，避免 UI 冻结
+        if (i % 5 === 0) await new Promise(resolve => setTimeout(resolve, 0))
+      }
+    } finally {
+      // 恢复原始设置
+      this.battleSystem.setHeadless(prevHeadless)
+      debugGate.enabled = prevDebugEnabled
+      battleLogManager.setAutoCleanup(true)
+      // 恢复用户原有战斗日志（无条件恢复，避免取消后日志永久丢失）
+      battleLogManager.importLogs(savedBattleLogs)
+      // 清理最后一场参与者残留
+      this.cleanupPrevBuffSystemEntries()
+      // 清理可能未进入 _prevParticipantIds 的当前参与者
+      for (const id of this._currentParticipantIds) {
+        this.battleSystem.getBuffSystem().clearCharacterState(id)
+      }
+    }
+
+    options.onProgress?.(1, total, total)
+
+    if (!this._cancelled && battleLogs.length > 0) {
+      const mergedText = this.mergeLogs(battleLogs)
+      this.downloadFile(mergedText, `battle-data-${battleLogs.length}场-${this.getTimestamp()}.txt`)
+    }
+    return this._cancelled ? 'cancelled' : 'done'
+  }
+
+  /**
+   * 收集当前战斗的叙事日志文本
+   * 与日志面板"导出"使用完全相同的渲染管线，保证格式一致
+   */
+  private collectNarrativeText(): string {
+    const entries = battleLogManager
+      .getAllLogs()
+      .filter((l) => l.type === LogType.BATTLE) as BattleLogEntry[]
+    const blocks = this.renderer.renderEntries(entries)
+    return blocksToText(blocks)
+  }
+
+  /** 清理上一场参与者残留在 BuffSystem 中的修饰符、护盾、免疫等全部状态 */
+  private cleanupPrevBuffSystemEntries(): void {
+    for (const id of this._prevParticipantIds) {
+      this.battleSystem.getBuffSystem().clearCharacterState(id)
+    }
+    this._prevParticipantIds = []
+  }
+
+  private createParticipant(
+    enemy: Enemy,
+    side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY,
+    seatIndex: number,
+  ): BattleEntity {
+    return GameDataProcessor.enemyToParticipant(enemy, side, seatIndex)
+  }
+
+  /** 合并所有战斗日志（头部统计 + 每场叙事） */
+  private mergeLogs(battleLogs: SingleBattleLog[]): string {
+    const header: string[] = []
+    header.push('═'.repeat(60))
+    header.push(`  战斗数据报告 — 共 ${battleLogs.length} 场`)
+    header.push(`  生成时间: ${new Date().toLocaleString()}`)
+    header.push('═'.repeat(60))
+    header.push('')
+
+    const allyWins = battleLogs.filter(b => b.winner === '我方').length
+    const enemyWins = battleLogs.length - allyWins
+    const totalRounds = battleLogs.reduce((s, b) => s + b.totalRounds, 0)
+    const avgRounds = battleLogs.length > 0 ? Math.round(totalRounds / battleLogs.length) : 0
+    header.push('【统计摘要】')
+    header.push(`  我方胜: ${allyWins} 场 | 敌方胜: ${enemyWins} 场`)
+    header.push(`  平均回合数: ${avgRounds}`)
+    header.push(`  总回合数: ${totalRounds}`)
+    header.push('')
+    header.push('═'.repeat(60))
+    header.push('')
+
+    const body = battleLogs.map(b => {
+      const meta = [
+        `━━━━━━━━━━ 第 ${b.battleIndex} 场 ━━━━━━━━━━`,
+        `我方: ${b.allyNames.join('、')}`,
+        `敌方: ${b.enemyNames.join('、')}`,
+        `胜方: ${b.winner}  |  回合数: ${b.totalRounds}`,
+        '─'.repeat(40),
+      ].join('\n')
+      return `${meta}\n${b.narrativeText}\n`
+    }).join('\n')
+
+    return [...header, body].join('\n')
+  }
+
+  private downloadFile(content: string, filename: string): void {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  private getTimestamp(): string {
+    return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+  }
+}

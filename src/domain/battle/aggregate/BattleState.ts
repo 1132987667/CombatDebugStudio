@@ -28,6 +28,8 @@ export function createDefaultBattleData(
     battleState: BattleStatus.CREATED,
     roundState: RoundStatus.NONE,
     skillManager,
+    quickMode: false,
+    headless: false,
   }
 }
 

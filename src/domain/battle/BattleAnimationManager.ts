@@ -34,10 +34,18 @@ export class BattleAnimationManager {
     private rafTimer: RAFTimer,
     private getParticipants: () => Map<string, BattleEntity> | undefined,
     private getBattleSpeed: () => number,   // 改：传速度，不传（反向的）时长
+    private getQuickMode: () => boolean = () => false,
+    private getHeadless: () => boolean = () => false,  // ★ 新增：无头模式回调
   ) {}
+
+  /** ★ 是否跳过动画（快速模式 || 无头模式） */
+  private get shouldSkipAnimation(): boolean {
+    return this.getQuickMode() || this.getHeadless()
+  }
 
   /** 当前速度下的单行动总预算 T */
   private get budget(): number {
+    if (this.shouldSkipAnimation) return 0
     return getActionBudget(this.getBattleSpeed())
   }
 
@@ -48,6 +56,7 @@ export class BattleAnimationManager {
   }
 
   async waitForAnimation(): Promise<void> {
+    if (this.shouldSkipAnimation) return
     while (this.isAnimating()) {
       await new Promise<void>((resolve) => {
         // 保存 resolve 引用，使外部可强制中断本轮等待
@@ -81,6 +90,8 @@ export class BattleAnimationManager {
     data: AnimationData,
     duration: number = 0,
   ): Promise<void> {
+    if (this.shouldSkipAnimation) return
+
     const actualDuration = duration > 0 ? duration : this.budget
 
     return new Promise<void>((resolve) => {

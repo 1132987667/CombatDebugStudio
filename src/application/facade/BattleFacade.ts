@@ -213,6 +213,16 @@ export class BattleService {
     this.battleManager.setBattleSpeed(speed)
   }
 
+  /** ★ 切换快速战斗模式 */
+  setQuickMode(enabled: boolean): void {
+    this.battleManager.setQuickMode(enabled)
+  }
+
+  /** ★ 获取快速战斗模式 */
+  getQuickMode(): boolean {
+    return this.battleManager.getQuickMode()
+  }
+
   // ==================== 降级通道 ====================
 
   /** 获取原始 BattleManager（降级通道，用于尚未封装的边缘能力） */

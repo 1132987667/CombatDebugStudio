@@ -70,7 +70,8 @@
 
     <!-- 底部控制栏 -->
     <ControlBar :is-battle-active="battleStore.isBattleActive"
-      :is-auto-playing="battleStore.autoPlayMode" :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
+      :is-auto-playing="battleStore.autoPlayMode" :is-paused="battleStore.isPaused"
+      :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
       @end-battle="endBattle" @reset-battle="resetBattle" @toggle-auto-play="toggleAutoPlay"
       @battle-speed-change="handleBattleSpeedChange" />
 

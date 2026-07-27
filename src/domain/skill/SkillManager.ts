@@ -181,7 +181,7 @@ export class SkillManager {
         `技能 ${skillId} 不可用: ${availability.reason}`,
         { level: LogLevel.WARN },
       )
-      console.error(`技能 ${skillId} 不可用:`, availability.reason)
+      console.log(`技能 ${skillId} 不可用:`, availability.reason)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
         targetId: target.id,

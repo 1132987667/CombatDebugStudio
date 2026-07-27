@@ -811,7 +811,7 @@ export class BattleExecutor {
     if (isMiss) {
       return {
         turn: turnNumber,
-        message: `${sourcePrefix}${source.name} → ${targetPrefix}${target.name}「普通攻击」`,
+        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name}发起「普通攻击」`,
         segments: [
           {
             text: `${sourcePrefix}${source.name}`,
@@ -851,7 +851,7 @@ export class BattleExecutor {
           kind: 'entity',
           faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
         },
-        { text: ' → ' },
+        { text: ' 对 ' },
         {
           text: `${targetPrefix}${target.name}`,
           classStr:
@@ -861,7 +861,7 @@ export class BattleExecutor {
           kind: 'entity',
           faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
         },
-        { text: `「普通攻击」` },
+        { text: `发起「普通攻击」` },
       ],
       category: isCritical
         ? BATTLE_LOG_CATEGORIES.CRIT

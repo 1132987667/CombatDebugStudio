@@ -1064,6 +1064,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.modifierStacks.delete(characterId)
   }
 
+  /** ★ 彻底清理指定角色的所有 Buff 相关状态（批量生成防内存泄漏） */
+  public clearCharacterState(characterId: string): void {
+    this.clearAllBuffs(characterId)
+    this.shieldValues.delete(characterId)
+    this.characterImmunities.delete(characterId)
+  }
+
   /**
    * 设置 Buff 条件评估状态（已激活/未激活）
    * ponytail: Phase 2 — 等待战斗系统在 气血/条件变化时调用此方法。

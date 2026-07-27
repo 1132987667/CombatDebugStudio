@@ -68,8 +68,16 @@ export class PassiveSkillManager {
   /** EffectRenderer — 结构化效果 → LogSegment 渲染 */
   private effectRenderer = new EffectRenderer()
 
+  /** 动画发射开关（由 BattleSystem 注入动态 getter） */
+  private _getAnimationEnabled: () => boolean = () => true
+
   setTraceCollector(c: TraceLogCollector): void {
     this.traceCollector = c
+  }
+
+  /** ★ 注入动画发射开关 getter（headless/quickMode 时抑制动画事件） */
+  setAnimationEnabledGetter(getter: () => boolean): void {
+    this._getAnimationEnabled = getter
   }
 
   constructor(skillManager: SkillManager, buffSystem: BuffSystem) {
@@ -395,6 +403,7 @@ export class PassiveSkillManager {
     effects: BattleEffect[],
     snapshots: Map<string, { before: number; after: number }>,
   ): void {
+    if (!this._getAnimationEnabled()) return  // ★ 无头/快速模式：抑制
     for (const effect of effects) {
       if (!effect.targetId) continue
 

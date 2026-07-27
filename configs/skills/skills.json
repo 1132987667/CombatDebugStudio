@@ -1244,7 +1244,7 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_023_unshakable",
+    "id": "skill_enemy_023_passive",
     "name": "不动如山",
     "description": "被动效果：免疫眩晕和击退效果",
     "cooldown": 2,
@@ -1270,7 +1270,7 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_024_indestructible",
+    "id": "skill_enemy_024_passive",
     "name": "金刚不坏",
     "description": "被动效果：受到攻击时，有25%几率使自身防御力提升5%（可叠加5层）",
     "cooldown": 2,
@@ -1296,7 +1296,7 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_023_meteor",
+    "id": "skill_enemy_023_ultimate",
     "name": "陨石天降",
     "description": "终极技能：对所有敌人造成140%攻击力的普通伤害，并使其防御力降低40%，持续2回合",
     "cooldown": 2,
@@ -1336,7 +1336,7 @@
     "skillType": "small"
   },
   {
-    "id": "skill_enemy_024_fury",
+    "id": "skill_enemy_024_ultimate",
     "name": "金刚怒",
     "description": "终极技能：对单个敌人造成220%攻击力的普通伤害，并使其攻击力降低100%，持续2回合",
     "cooldown": 2,

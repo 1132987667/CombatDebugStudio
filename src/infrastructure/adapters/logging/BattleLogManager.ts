@@ -322,10 +322,18 @@ export class BattleLogManager implements IBattleLogManager {
     this.battleLogs.push(logEntry)
 
     if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
-      this.battleLogs.pop()
+      this.battleLogs.shift()
     }
 
     this.emitLogUpdate()
+  }
+
+  /**
+   * 启用/禁用战斗日志自动清理
+   * 批量生成战斗数据时临时禁用，避免单场日志超出上限被截断
+   */
+  setAutoCleanup(enabled: boolean): void {
+    this.autoCleanup = enabled
   }
 
   recordBattleLog(battleLog: BattleLogEntry): void {

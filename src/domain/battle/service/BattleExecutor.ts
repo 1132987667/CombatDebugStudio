@@ -831,7 +831,7 @@ export class BattleExecutor {
 
     return {
       turn: turnNumber,
-      message: `${sourcePrefix}${source.name} → ${targetPrefix}${target.name}「普通攻击」`,
+      message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name}发起「普通攻击」`,
       segments: [
         {
           text: `${sourcePrefix}${source.name}`,

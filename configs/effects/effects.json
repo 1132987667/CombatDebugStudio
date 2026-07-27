@@ -101,7 +101,7 @@
         "maxStacks": 1,
         "defenseBonus": 1.15
       },
-      "description": "甲壳防御，永久降低受到的物理伤害"
+      "description": "甲壳防御，永久降低受到的伤害"
     },
     {
       "id": "buff_fish_rage",

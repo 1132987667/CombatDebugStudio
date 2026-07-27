@@ -212,7 +212,7 @@
   {
     "id": "guardian_blood_thirst",
     "name": "吸血渴望",
-    "description": "将造成物理伤害的25%转化为自身气血回复",
+    "description": "将造成伤害的25%转化为自身气血回复",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,
@@ -267,7 +267,7 @@
   {
     "id": "guardian_thorn_counter",
     "name": "荆棘反刺",
-    "description": "反射所受35%的物理伤害给攻击者",
+    "description": "反射所受35%的伤害给攻击者",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,

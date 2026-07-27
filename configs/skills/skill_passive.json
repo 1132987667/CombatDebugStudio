@@ -178,7 +178,7 @@
   {
     "id": "skill_enemy_013_passive",
     "name": "甲壳防御",
-    "description": "被动效果：永久降低受到的物理伤害15%",
+    "description": "被动效果：永久降低受到的伤害15%",
     "skillType": "passive",
     "cooldown": 0,
     "energyCost": 0,
@@ -659,7 +659,7 @@
   {
     "id": "skill_enemy_039_passive",
     "name": "沙之化身",
-    "description": "被动技能,自身获得沙之化身效果,永久大幅提升防御力和闪避率,并对物理伤害有额外减免",
+    "description": "被动技能,自身获得沙之化身效果,永久大幅提升防御力和闪避率,并对伤害有额外减免",
     "cooldown": 0,
     "selector": {
       "faction": "self",

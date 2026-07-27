@@ -426,7 +426,7 @@ export function createAttackLogSegments(
       text: target,
       classStr: isFriendlyTarget ? 'log-friendly' : 'log-hostile',
     },
-    { text: ' 使用 「普通攻击」，造成 ' },
+    { text: ' 发起 「普通攻击」，造成 ' },
     { text: damage.toString(), classStr: 'log-damage' },
     { text: ' 点伤害' },
   ]
@@ -578,7 +578,7 @@ export const LogUtils = {
  * ```
  * const segs = buildNameSegments('剑士', true, '史莱姆', false)
  * // → [{text:'剑士', classStr:'log-friendly'}, {text:' 对 '}, {text:'史莱姆', classStr:'log-hostile'}]
- * segs.push({ text: ' 使用 「普通攻击」，造成 104 点伤害' })
+ * segs.push({ text: ' 发起 「普通攻击」，造成 104 点伤害' })
  * ```
  */
 export function buildNameSegments(
@@ -1035,9 +1035,9 @@ function generateDamageLogSegments(
         text: `${targetIsAlly ? '[友方]' : '[敌方]'}${targetName}`,
         classStr: targetIsAlly ? 'log-friendly' : 'log-hostile',
       },
-      { text: ' 使用 「普通攻击」，造成 ' },
+      { text: ' 发起 「普通攻击」，造成 ' },
       { text: damage.toString(), classStr: 'log-damage' },
-      { text: ' 点物理伤害' },
+      { text: ' 点伤害' },
     ],
   }
 }

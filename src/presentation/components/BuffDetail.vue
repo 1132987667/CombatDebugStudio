@@ -141,7 +141,7 @@ const getBuffDescription = (buff: CompendiumBuff): string => {
   const descriptions: Record<string, string> = {
     'buff_speed_up': '提升角色10点速度，持续2回合',
     'buff_ally_atk_up': '提升同伴5%攻击力，持续2回合',
-    'buff_iron_armor': '减少20%受到的物理伤害',
+    'buff_iron_armor': '减少20%受到的伤害',
     'buff_wind_spirit': '风之精灵附身，提升5%速度',
     'buff_poison': '中毒状态，每回合损失一定气血值',
     'buff_shield': '获得护盾保护，可吸收一定伤害'

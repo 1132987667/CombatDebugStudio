@@ -64,7 +64,7 @@ export const statLabels: Record<string, string> = {
   health: '气血值',
   critRate: '暴击率',
   critDamage: '暴击伤害',
-  physicalDamage: '物理伤害',
+  physicalDamage: '伤害',
   magicDamage: '魔法伤害',
 }
 

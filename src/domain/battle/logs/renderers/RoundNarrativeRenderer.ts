@@ -54,7 +54,7 @@ export interface NarrativeBlock {
   damage: number
   /** 治疗值 */
   heal: number
-  /** 伤害类型描述（如"物理伤害"、"水属性伤害"） */
+  /** 伤害类型描述（如"伤害"、"水属性伤害"） */
   damageType?: string
   /** 目标受击前 气血（跟踪累计） */
   targetHpBefore?: number
@@ -341,7 +341,7 @@ export class RoundNarrativeRenderer {
     return undefined
   }
 
-  /** 结果行：`42 点物理伤害  450 → 408`，暴击前缀 ★，致死/击杀标记 */
+  /** 结果行：`42 点伤害  450 → 408`，暴击前缀 ★，致死/击杀标记 */
   private buildResult(
     meta: import('@/shared/types/battle-log').BattleLogMeta,
   ): LogSegment[] | undefined {
@@ -349,7 +349,7 @@ export class RoundNarrativeRenderer {
     const segs: LogSegment[] = []
     if (meta.crit) segs.push({ text: '★ 暴击! ', classStr: 'log-crit' })
     if (meta.damage != null) {
-      const damageType = '物理伤害'
+      const damageType = '伤害'
       segs.push({
         text: `${meta.damage} 点${damageType}  `,
         classStr: meta.crit ? 'log-crit' : 'log-damage',
@@ -795,7 +795,7 @@ export class RoundNarrativeRenderer {
 
       // 伤害类型
       let damageType: string | undefined
-      if (bd?.damageCategory === 'physical') damageType = '物理伤害'
+      if (bd?.damageCategory === 'physical') damageType = '伤害'
       else if (bd?.damageCategory === 'elemental') damageType = '元素伤害'
       else if (bd?.damageCategory === 'true') damageType = '真实伤害'
 
@@ -858,7 +858,7 @@ export class RoundNarrativeRenderer {
       })
       segs.push({ text: `${block.damage}`, classStr: 'log-damage' })
       segs.push({
-        text: ` 点${block.damageType || '物理伤害'}`,
+        text: ` 点${block.damageType || '伤害'}`,
         classStr: 'log-text',
       })
       segs.push({ text: ` → `, classStr: 'log-text' })
@@ -896,7 +896,7 @@ export class RoundNarrativeRenderer {
         segs.push({ text: `${block.damage}`, classStr: 'log-damage' })
       }
       segs.push({
-        text: ` 点${block.damageType || '物理伤害'}`,
+        text: ` 点${block.damageType || '伤害'}`,
         classStr: 'log-text',
       })
 

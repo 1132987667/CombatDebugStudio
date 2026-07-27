@@ -82,7 +82,7 @@ export interface DamageBreakdown {
   damageBoost?: number
   /** 暴击承伤减免（目标方） */
   critDmgTakenReduction?: number
-  /** 物理伤害减免（目标方，按伤害大类） */
+  /** 伤害减免（目标方，按伤害大类） */
   physicalDmgReduction?: number
   /** 魔法伤害减免（目标方，按伤害大类） */
   magicalDmgReduction?: number

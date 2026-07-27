@@ -14,8 +14,7 @@ import type {
   ConditionState,
 } from '@/shared/types/buff-display'
 import type { BuffEffectLine } from '@/domain/buff/types'
-import { ATTRIBUTE_SHORT_NAMES } from '@/presentation/config/attributeNames'
-
+import { getAttrName, ATTRIBUTE_CODE } from '@/domain/attribute/types'
 /** 极多 Buff 时次要分组的阈值 */
 const SECONDARY_THRESHOLD = 20
 
@@ -117,12 +116,12 @@ export function detectType(
  * @param stacks 当前层数，用于缩放可叠加 buff
  */
 function extractAttributesFromConfig(
-  attributes: Record<string, string>,
+  attributes: Record<ATTRIBUTE_CODE, string>,
   stacks: number,
 ): Array<{ attr: string; value: number; isFlat?: boolean }> {
   const result: Array<{ attr: string; value: number; isFlat?: boolean }> = []
   for (const [code, valueStr] of Object.entries(attributes)) {
-    const cn = ATTRIBUTE_SHORT_NAMES[code]
+    const cn = getAttrName(code as ATTRIBUTE_CODE)
     if (!cn) continue
     const trimmed = valueStr.trim()
     const isPercent = trimmed.includes('%')

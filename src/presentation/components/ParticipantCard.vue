@@ -114,9 +114,9 @@ import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 import { useSituationalAttributes } from '@/presentation/composables/useSituationalAttributes'
 import type { BuffRawItem, MergedAttributeLine, BuffTextItem } from '@/shared/types/buff-display'
 
-import { ATTRIBUTE_SHORT_NAMES } from '@/presentation/config/attributeNames'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import { getActionBudget } from '@/shared/constants/animation-timing'
+import { getAttrName, ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 const props = defineProps<{
   /** 战斗参与者实例 */
@@ -269,10 +269,10 @@ const panelVisible = ref(false)
 const baseAttributes = computed(() => {
   const entity = props.participant
   const map: Record<string, number> = {}
-  for (const [code, cn] of Object.entries(ATTRIBUTE_SHORT_NAMES)) {
-    const attrValue = entity.getAttrVal(code as any)
+  for (const code of Object.values(ATTRIBUTE_CODE)) {
+    const attrValue = entity.getAttrVal(code)
     if (attrValue && typeof attrValue.base === 'number') {
-      map[cn] = attrValue.base
+      map[getAttrName(code)] = attrValue.base
     }
   }
   return map

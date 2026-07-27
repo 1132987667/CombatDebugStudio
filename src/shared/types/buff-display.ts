@@ -5,7 +5,7 @@
  * 部分类型（如 BuffEffectLine）复用于领域层，从 @/domain/buff/types 导入。
  */
 import type { BuffEffectLine } from '@/domain/buff/types'
-
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 /**
  * Buff 原始条目 —— 从 BuffSystem 或 InterventionManager 合并后的中间格式，
  * 作为 `toBuffTextItem()` 的输入契约，替代 `any` 参数。
@@ -29,7 +29,7 @@ export interface BuffRawItem {
   /** 当前层数 */
   currentStacks?: number
   /** 属性修正（key=attribute code, value=如 "+0.05" 或 "+20%"，per-stack 值） */
-  attributes?: Record<string, string>
+  attributes?: Record<ATTRIBUTE_CODE, string>
   /** 特殊效果行 */
   effectLines?: BuffEffectLine[]
   /** 领域层条件状态（由 BuffSystem.setBuffConditionState 设置）
@@ -87,12 +87,13 @@ export interface BuffTextItem {
 
 /** 条件状态 */
 export const ConditionState = {
-  ACTIVE: 'active',     // 条件已满足（如已经残血）
-  INACTIVE: 'inactive',   // 条件未满足
-  PERMANENT: 'permanent',  // 永久效果
-  NONE: 'none'       // 无条件，普通计时
+  ACTIVE: 'active', // 条件已满足（如已经残血）
+  INACTIVE: 'inactive', // 条件未满足
+  PERMANENT: 'permanent', // 永久效果
+  NONE: 'none', // 无条件，普通计时
 } as const
-export type ConditionState = (typeof ConditionState)[keyof typeof ConditionState]
+export type ConditionState =
+  (typeof ConditionState)[keyof typeof ConditionState]
 
 export const ConditionStateNames = {
   [ConditionState.ACTIVE]: '已激活',
@@ -101,12 +102,11 @@ export const ConditionStateNames = {
   [ConditionState.NONE]: '无条件，普通计时',
 }
 
-
 /**
  * 条件状态名称
  */
-export type ConditionStateName = (typeof ConditionStateNames)[keyof typeof ConditionStateNames]
-
+export type ConditionStateName =
+  (typeof ConditionStateNames)[keyof typeof ConditionStateNames]
 
 /** 修饰符（来源追溯用） */
 export interface BuffModifier {

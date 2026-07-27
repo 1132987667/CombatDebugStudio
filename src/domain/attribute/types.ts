@@ -808,10 +808,17 @@ export const AttributeCodeNames: Record<ATTRIBUTE_CODE, string> =
 /**
  * 根据属性编码获取属性元数据
  */
-export function getAttrMeta(
-  code: ATTRIBUTE_CODE,
-): AttributeMeta | undefined {
+export function getAttrMeta(code: ATTRIBUTE_CODE): AttributeMeta | undefined {
   return AttributeMetaMap[code]
+}
+
+/**
+ * 根据属性编码获取属性的中文显示名称
+ * @param code 属性编码
+ * @returns 中文显示名称，未定义时返回 code 本身
+ */
+export function getAttrName(code: ATTRIBUTE_CODE): string {
+  return AttributeCodeNames[code] ?? code
 }
 
 /**

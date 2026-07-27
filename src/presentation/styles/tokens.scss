@@ -33,7 +33,9 @@ $transition-fast: var(--transition-fast);
   /* ----- 1.1 基础背景与文本颜色 ----- */
   --color-bg-primary: #1a1a2e;
   --color-bg-secondary: #0f0f1a;
-  --color-bg-tertiary: #16213e;
+  --color-bg-tertiary: #16213e; /* hsl(223, 48%, 16%)  基准 */
+  --color-bg-tertiary-hover: #152b66; /* hsl(224, 66%, 24%)  ΔL +8 / ΔS +18 */
+  --color-bg-tertiary-active: #15338e; /* hsl(225, 74%, 32%)  ΔL +8 / ΔS +8 */
 
   --color-bg-primary-rgb: 26, 26, 46;
   --color-bg-secondary-rgb: 15, 15, 26;
@@ -47,7 +49,9 @@ $transition-fast: var(--transition-fast);
   /* ----- 1.2 边框与分割线 ----- */
   --color-border-default: #0f3460;
   --color-border-light: #1a3a5e;
-  --color-border-strong: #1a4a7a;
+  --color-border-tertiary: #0f4b86; /* hsl(210, 80%, 29%)  基准 */
+  --color-border-tertiary-hover: #175fb0; /* hsl(212, 77%, 39%)  ΔL +10 */
+  --color-border-tertiary-active: #1976e1; /* hsl(212, 80%, 49%)  ΔL +10 */
   --color-border-focus: var(--color-info);
 
   /* ----- 1.3 品牌色与辅助色 (适配当前战斗系统风格) ----- */
@@ -85,8 +89,8 @@ $transition-fast: var(--transition-fast);
   --color-debuff: #a855f7;
 
   /* ----- 1.5 组件交互状态色 ----- */
-  --color-bg-hover: rgba(255, 255, 255, 0.05);
-  --color-bg-active: rgba(255, 255, 255, 0.08);
+  --color-bg-hover: rgba(255, 255, 255, 0.25);
+  --color-bg-active: rgba(255, 255, 255, 0.32);
   --color-overlay: rgba(0, 0, 0, 0.6);
 
   /* ponytail: 阵营色用于区分我方/敌方头部背景 */
@@ -193,7 +197,7 @@ $transition-fast: var(--transition-fast);
 
   --color-border-default: #d0d5dd;
   --color-border-light: #e0e4ea;
-  --color-border-strong: #b0b8c4;
+  --color-border-tertiary: #b0b8c4;
 
   --color-brand-red: #e94560;
   --color-brand-red-hover: #d63350;

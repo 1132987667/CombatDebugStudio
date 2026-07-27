@@ -14,7 +14,7 @@ import { LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { EffectType, EffectTag } from '@/shared/types/effect'
 import {
   ATTRIBUTE_CODE,
-  AttributeCodeNames,
+  getAttrName,
   ModifierType,
   ModifierSourceType,
   type Modifier,
@@ -297,7 +297,8 @@ export class SkillExecutor {
     const buffCfgForName = this.buffSystem
       .getScriptRegistry()
       .getBuffConfig(buffId)
-    const buffName = buffCfgForName?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
+    const buffName =
+      buffCfgForName?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
     action.effects.push({
       type: EffectType.BUFF,
       sourceId: source.id,
@@ -311,9 +312,7 @@ export class SkillExecutor {
 
     // 仅在非被动上下文中打日志（被动由 triggerPassives 统一输出，避免重复）
     if (instanceId && !context?.fromPassive) {
-      const buffCfg = this.buffSystem
-        .getScriptRegistry()
-        .getBuffConfig(buffId)
+      const buffCfg = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
       const displayName =
         buffCfg?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
 
@@ -350,7 +349,7 @@ export class SkillExecutor {
     // 属性修正
     if (config.attributes) {
       for (const [attr, valStr] of Object.entries(config.attributes)) {
-        const cn = (AttributeCodeNames as Record<string, string>)[attr] ?? attr
+        const cn = getAttrName(attr as ATTRIBUTE_CODE)
         const num = parseFloat(valStr)
         if (isNaN(num)) continue
         const pct = Math.abs(

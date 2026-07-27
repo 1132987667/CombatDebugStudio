@@ -5,10 +5,13 @@ import {
 } from '@/domain/buff/types'
 import buffsData from '@configs/buffs/buffs.json'
 import effectsData from '@configs/effects/effects.json'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { AtomicEffectRegistry } from '@/domain/buff/atomic/AtomicEffectRegistry'
-import { BuffConfigResolver, type ResolvedBuffConfig } from '@/domain/buff/atomic/BuffConfigResolver'
+import {
+  BuffConfigResolver,
+  type ResolvedBuffConfig,
+} from '@/domain/buff/atomic/BuffConfigResolver'
 
 /** 效果定义：脚本 + 配置的统一视图 */
 export interface EffectDefinition {
@@ -36,7 +39,7 @@ interface BuffConfigData {
   name?: string
   maxStacks?: number
   duration?: number
-  attributes?: Record<string, string>
+  attributes?: Record<ATTRIBUTE_CODE, string>
   immunities?: string[]
   tags?: string[]
   aura?: BuffAuraConfig
@@ -233,7 +236,9 @@ export class BuffScriptRegistry {
   }
 
   /** 获取已解析配置的 effectPlan（仅返回 effectPlan，无配置） */
-  public getEffectPlan(buffId: string): ResolvedBuffConfig['effectPlan'] | undefined {
+  public getEffectPlan(
+    buffId: string,
+  ): ResolvedBuffConfig['effectPlan'] | undefined {
     return this.getResolvedBuffConfig(buffId)?.effectPlan
   }
 

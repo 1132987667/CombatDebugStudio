@@ -77,9 +77,9 @@
         </div>
       </div>
       <div class="section-actions">
-        <button class="btn-medium" @click="moveCharacter(-1)">[↑]上调</button>
-        <button class="btn-medium" @click="moveCharacter(1)">[↓]下调</button>
-        <button class="btn-medium btn-remove" @click="removeSelectedCharacter">[−]移除</button>
+        <button class="btn-medium" @click="moveCharacter(-1)"><span class="icon mr-2">[↑]</span>上调</button>
+        <button class="btn-medium" @click="moveCharacter(1)"><span class="icon mr-2">[↓]</span>下调</button>
+        <button class="btn-medium btn-remove" @click="removeSelectedCharacter"><span class="icon mr-2">[−]</span>移除</button>
       </div>
     </div>
 
@@ -88,10 +88,10 @@
         <span>角色库</span>
         <div class="expand-collapse-controls">
           <button class="btn-medium" @click="collapseAllScenes" :disabled="!hasExpandedScenes">
-            <span class="icon">−</span>一键折叠
+            <span class="icon mr-2">[−]</span>一键折叠
           </button>
           <button class="btn-medium" @click="expandAllScenes" :disabled="allScenesExpanded">
-            <span class="icon">+</span>一键展开
+            <span class="icon mr-2">[+]</span>一键展开
           </button>
         </div>
       </div>
@@ -515,7 +515,7 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 }
 
 .expand-collapse-controls .btn-medium:hover:not(:disabled) {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
   border-color: var(--color-info);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px var(--color-info-bg);
@@ -558,21 +558,6 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   transform: translateY(0);
 }
 
-.scene-header {
-  cursor: pointer;
-  padding: var(--space-2);
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-1);
-  transition: var(--transition-fast);
-  border: 1px solid transparent;
-}
-
-.scene-header:hover {
-  background: var(--color-bg-primary);
-  border-color: var(--color-info);
-}
-
 .expand-icon {
   display: inline-block;
   width: 1rem;
@@ -581,9 +566,7 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   transition: transform 0.2s ease;
 }
 
-.scene-header:hover .expand-icon {
-  transform: scale(1.2);
-}
+
 
 .section-actions {
   display: flex;
@@ -607,9 +590,9 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-4);
   background: var(--color-bg-tertiary);
-  border-bottom: 1px solid var(--color-border-default);
+  border-bottom: 2px solid var(--color-border-default);
   flex-wrap: wrap;
 }
 

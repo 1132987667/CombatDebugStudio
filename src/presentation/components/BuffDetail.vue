@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AttributeCodeNames } from '@/domain/attribute/types'
+import { getAttrName, ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { CompendiumBuff } from '@/presentation/composables/useCompendium'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
 
@@ -109,7 +109,7 @@ const attributes = computed((): AttributeDisplay[] => {
     }
 
     return {
-      key: AttributeCodeNames[key as keyof typeof AttributeCodeNames] || key,
+      key: getAttrName(key as ATTRIBUTE_CODE) || key,
       value: displayValue,
       valueType
     }

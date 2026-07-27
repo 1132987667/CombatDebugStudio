@@ -176,7 +176,7 @@
   align-items: center;
   justify-content: center;
   background: var(--color-border-default);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-tertiary);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
@@ -186,7 +186,7 @@
 }
 
 .keybind-key:hover {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
   transform: translateY(-1px);
 }
 

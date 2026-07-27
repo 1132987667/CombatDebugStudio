@@ -454,14 +454,12 @@ watch(activeTab, () => nextTick(updateIndicator))
   background: transparent;
   border: none;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  color: var(--color-text-tertiary);
+  color: var(--color-info);
   cursor: pointer;
   transition: color var(--transition-fast), background var(--transition-fast);
   white-space: nowrap;
 }
 .log-tab:hover {
-  color: var(--color-text-secondary);
-  background: var(--color-bg-hover);
 }
 .log-tab.active {
   color: var(--color-energy);
@@ -686,8 +684,8 @@ watch(activeTab, () => nextTick(updateIndicator))
 .rule { flex: 1; height: 1px; background: var(--color-border-default); align-self: center; }
 .rule--double {
   height: 3px;
-  border-top: 1px solid var(--color-border-strong);
-  border-bottom: 1px solid var(--color-border-strong);
+  border-top: 1px solid var(--color-border-tertiary);
+  border-bottom: 1px solid var(--color-border-tertiary);
   background: transparent;
 }
 .rule--thin { opacity: 0.5; }

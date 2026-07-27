@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # 调用命令为:
-# python d:\5-workspace\code\CombatDebugStudio\.trae\scripts\dump_project.py d:\5-workspace\code\CombatDebugStudio -o output.txt
-# python D:\4-softworkspace\java\CombatDebugStudio\.trae\scripts\dump_project.py D:\4-softworkspace\java\CombatDebugStudio -o output.txt
+# python d:\5-workspace\code\CombatDebugStudio\.trae\scripts\dump_project.py d:\5-workspace\code\CombatDebugStudio -o output.txt --strip-empty-lines
+# python D:\4-softworkspace\java\CombatDebugStudio\.trae\scripts\dump_project.py D:\4-softworkspace\java\CombatDebugStudio -o output.txt --strip-empty-lines
 """
 dump_project.py - 抽取项目文件夹架构和所有文件内容。
 支持忽略规则（类似 .gitignore）。
@@ -177,6 +177,8 @@ def main():
                         help="不使用任何忽略文件")
     parser.add_argument('--follow-links', action='store_true',
                         help="跟随符号链接")
+    parser.add_argument('--strip-empty-lines', action='store_true',
+                        help="删除文件内容中的空行（仅保留非空行），使输出更紧凑")  # 新增
     args = parser.parse_args()
 
     root = os.path.abspath(args.path)
@@ -222,8 +224,15 @@ def main():
         if content is None:
             output_lines.append("<二进制文件，内容未显示>")
         else:
+            # 如果启用了删除空行，则过滤掉所有空行
+            if args.strip_empty_lines:
+                lines = content.splitlines()
+                # 保留非空行（去除首尾空白后不为空）
+                filtered = [line for line in lines if line.strip() != '']
+                content = '\n'.join(filtered)
+            # 始终去除末尾换行
             output_lines.append(content.rstrip())
-        output_lines.append("")  # 空行分隔
+        output_lines.append("")  # 文件间分隔空行（保留，使输出清晰）
 
     output_text = "\n".join(output_lines)
 

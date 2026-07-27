@@ -143,6 +143,6 @@ const handleDelete = () => {
   color: var(--color-text-tertiary);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-sm);
-  border: 1px dashed var(--color-border-strong);
+  border: 1px dashed var(--color-border-tertiary);
 }
 </style>

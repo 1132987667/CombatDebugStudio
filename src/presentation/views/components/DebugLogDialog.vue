@@ -169,7 +169,7 @@ const downloadLogs = () => {
 }
 
 .tab-btn:hover {
-  border-color: var(--color-border-strong);
+  border-color: var(--color-border-tertiary);
 }
 
 .log-btn {
@@ -182,7 +182,7 @@ const downloadLogs = () => {
 }
 
 .log-btn:hover {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
 }
 
 .log-count {

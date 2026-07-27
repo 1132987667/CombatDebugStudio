@@ -186,21 +186,27 @@ const reloadExport = () => {
 
 .snapshot-btn {
   padding: var(--space-2) var(--space-4);
-  border: 1px solid rgba(34, 211, 238, 0.3);
+  border: 2px solid rgba(34, 211, 238, 0.3);
   border-radius: var(--radius-md);
   background: rgba(34, 211, 238, 0.08);
   color: var(--color-energy);
   cursor: pointer;
   transition: all var(--transition-fast);
+  outline: 1px solid rgba(0, 0, 0, 0.8);
+  outline-offset: -3px;
 }
+
 .snapshot-btn:hover {
   background: rgba(34, 211, 238, 0.15);
+  outline-color: rgba(0, 0, 0, 0.5);
   border-color: var(--color-energy);
 }
+
 .snapshot-btn.primary {
   background: rgba(34, 211, 238, 0.15);
   border-color: var(--color-energy);
 }
+
 .snapshot-btn.small {
   padding: var(--space-1) var(--space-3);
 }

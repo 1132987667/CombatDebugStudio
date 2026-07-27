@@ -147,7 +147,7 @@ const updateCustomSpeed = () => {
 
 .speed-btn {
   padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-tertiary);
   background: var(--color-border-default);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -156,7 +156,7 @@ const updateCustomSpeed = () => {
 }
 
 .speed-btn:hover {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
   color: var(--color-info);
 }
 

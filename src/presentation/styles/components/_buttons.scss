@@ -8,7 +8,7 @@
 .header-btn {
   background: var(--color-border-default);
   color: var(--color-info);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-tertiary);
   padding: var(--space-2) var(--space-4);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -16,7 +16,7 @@
 }
 
 .header-btn:hover {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
   border-color: var(--color-info);
 }
 
@@ -28,7 +28,7 @@
 .btn-tiny {
   background: var(--color-border-default);
   color: var(--color-info);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-tertiary);
   padding: 0.15rem 0.35rem;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -37,14 +37,14 @@
 }
 
 .btn-tiny:hover {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
 }
 
 /* 2.2 小型按钮（面板内操作） */
 .btn-small {
   background: var(--color-border-default);
   color: var(--color-info);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-tertiary);
   padding: var(--space-1) var(--space-2);
   font-size: var(--font-size-xs);
   cursor: pointer;
@@ -55,7 +55,7 @@
 }
 
 .btn-small:hover:not(:disabled) {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
 }
 
 .btn-small:disabled {
@@ -67,7 +67,7 @@
 .btn-medium {
   background: var(--color-border-default);
   color: var(--color-info);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-tertiary);
   padding: var(--space-2) var(--space-4);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -77,7 +77,7 @@
 }
 
 .btn-medium:hover:not(:disabled) {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
 }
 
 .btn-medium:disabled {
@@ -89,7 +89,7 @@
 .btn-large {
   background: var(--color-border-default);
   color: var(--color-info);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-tertiary);
   padding: var(--space-3) var(--space-5);
   font-size: var(--font-size-md);
   cursor: pointer;
@@ -99,7 +99,7 @@
 }
 
 .btn-large:hover:not(:disabled) {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
 }
 
 .btn-large:disabled {
@@ -122,7 +122,7 @@
 .speed-btn {
   background: var(--color-border-default);
   color: var(--color-info);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-tertiary);
   padding: 0.15rem 0.4rem;
   cursor: pointer;
 }

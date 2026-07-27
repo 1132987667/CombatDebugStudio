@@ -330,7 +330,7 @@ watch(activeTab, () => {
 }
 
 .compendium-list-item:hover {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
 }
 
 .compendium-list-item.selected {

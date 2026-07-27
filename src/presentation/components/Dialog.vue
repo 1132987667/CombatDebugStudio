@@ -10,7 +10,8 @@
 <template>
   <Teleport to="body">
     <Transition name="dialog-fade">
-      <div v-if="modelValue" class="dialog-overlay" :class="{ 'dialog-overlay--transparent': !showMask }" @click.self="onOverlayClick">
+      <div v-if="modelValue" class="dialog-overlay" :class="{ 'dialog-overlay--transparent': !showMask }"
+        @click.self="onOverlayClick">
         <div class="dialog-container" :style="{ width: width, height: height }">
           <div class="dialog-header">
             <span class="dialog-title">{{ title }}</span>
@@ -81,9 +82,6 @@ watch(
 </script>
 
 <style scoped>
-
-
-
 .dialog-header-actions {
   display: flex;
   align-items: center;
@@ -117,7 +115,7 @@ watch(
 .dialog-content button {
   background: var(--color-border-default);
   color: var(--color-info);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border-tertiary);
   padding: var(--space-1) var(--space-2);
   cursor: pointer;
   transition: var(--transition-fast);
@@ -125,7 +123,7 @@ watch(
 }
 
 .dialog-content button:hover {
-  background: var(--color-border-strong);
+  background: var(--color-border-tertiary);
 }
 
 .dialog-content button.active {

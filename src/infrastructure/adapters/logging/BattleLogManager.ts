@@ -11,12 +11,13 @@ import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import type {
   BattleLogEntry,
   LogFilters,
-  BattleLogManagerOptions,
-  BattleLogCategory,
   LogEntry,
   LogHandler,
   LogSegment,
   ParticipantMap,
+  UnifiedLogParams,
+  BattleLogParams,
+  DebugLogParams,
 } from '@/shared/types/battle-log'
 import {
   LogLevel,
@@ -27,45 +28,6 @@ import {
 } from '@/shared/types/battle-log'
 import { Counter } from '@/shared/utils/Counter'
 import type { Item } from '@/shared/types/Item'
-
-/**
- * 统一的日志参数接口 - 所有日志方法都使用此接口
- */
-export interface UnifiedLogParams {
-  /** 日志消息（可选，与 segments 二选一） */
-  message?: string
-  /** 日志片段数组（推荐使用的结构化格式） */
-  segments?: LogSegment[]
-  /** 日志级别 */
-  level?: LogLevel
-  /** 日志来源 */
-  source?: string
-  /** 日志目标 */
-  target?: string
-  /** 操作类型 */
-  action?: string
-  /** 回合号 */
-  turn?: number | string
-  /** 日志类别 */
-  category?: BattleLogCategory
-  /** 日志详细类别 */
-  detailCategory?: string
-  /** 上下文数据 */
-  context?: Record<string, unknown>
-  /** 错误对象 */
-  error?: Error
-  /** 叙事元数据 */
-  meta?: import('@/shared/types/battle-log').BattleLogMeta
-}
-
-export interface DebugLogOptions {
-  /** 日志级别，默认 LogLevel.INFO */
-  level?: LogLevel
-  /** 上下文数据 */
-  context?: Record<string, unknown>
-  /** 错误对象 */
-  error?: Error
-}
 
 export class ConsoleLogHandler implements LogHandler {
   handle(entry: LogEntry): void {
@@ -132,8 +94,7 @@ export class BattleLogManager implements IBattleLogManager {
   /** 缓冲机制：开始缓冲 role='sub' 日志 */
   private _buffering = false
   /** 缓冲中的 sub 日志列表 */
-  private _pendingSubLogs: Array<UnifiedLogParams & { turn: number | string }> =
-    []
+  private _pendingSubLogs: BattleLogParams[] = []
 
   private indexCounter = new Counter()
 
@@ -152,35 +113,20 @@ export class BattleLogManager implements IBattleLogManager {
   /**
    * 获取单例实例
    */
-  public static getInstance(
-    options?: BattleLogManagerOptions,
-  ): BattleLogManager {
+  public static getInstance(): BattleLogManager {
     if (!BattleLogManager.instance) {
-      BattleLogManager.instance = new BattleLogManager(options)
+      BattleLogManager.instance = new BattleLogManager()
     }
     return BattleLogManager.instance
   }
 
-  private constructor(options: BattleLogManagerOptions = {}) {
-    this.battleMaxLogs = options.battleMaxLogs ?? 200
-    this.maxSystemLogs = options.maxSystemLogs ?? 200
-    this.maxItemLogs = options.maxItemLogs ?? 200
-    this.maxActionLogs = options.maxActionLogs ?? 200
-    this.maxDebugLogs = options.maxDebugLogs ?? 1000
-    this.autoCleanup = options.autoCleanup ?? true
-    this.level = options.level ?? LogLevel.DEBUG
-
+  private constructor() {
     this.filters = {
       battle: true,
       system: true,
       item: true,
       action: true,
       debug: true,
-      ...options.filters,
-    }
-
-    if (options.handlers) {
-      options.handlers.forEach((handler) => this.addHandler(handler))
     }
 
     // this.addHandler(new ConsoleLogHandler())
@@ -234,11 +180,6 @@ export class BattleLogManager implements IBattleLogManager {
       this.systemLogs = this.systemLogs.slice(-this.maxSystemLogs)
     }
 
-    this.debugLogs.push(entry)
-    if (this.debugLogs.length > this.maxDebugLogs) {
-      this.debugLogs = this.debugLogs.slice(-this.maxDebugLogs)
-    }
-
     for (const handler of this.handlers) {
       try {
         handler.handle(entry)
@@ -289,7 +230,7 @@ export class BattleLogManager implements IBattleLogManager {
    * 添加【战斗】类型日志
    * @param params 统一日志参数
    */
-  addBattleLog(params: UnifiedLogParams & { turn: number | string }): void {
+  addBattleLog(params: BattleLogParams): void {
     // ★ 缓冲拦截：缓冲模式下 role='sub' 的日志先暂存
     if (this._buffering && params.meta?.role === 'sub') {
       this._pendingSubLogs.push(params)
@@ -431,7 +372,7 @@ export class BattleLogManager implements IBattleLogManager {
    * @param message 日志消息
    * @param options 可选参数（级别、上下文、错误）
    */
-  addDebugLog(message: string, options: DebugLogOptions = {}): void {
+  addDebugLog(message: string, options: DebugLogParams = {}): void {
     const { level = LogLevel.INFO, context, error } = options
 
     const entry: LogEntry = {
@@ -617,8 +558,7 @@ export class BattleLogManager implements IBattleLogManager {
    * 判断日志是否应该显示
    */
   private shouldDisplayLog(log: LogEntry): boolean {
-    const type = log.type || 'battle'
-    switch (type) {
+    switch (log.type) {
       case 'battle':
         return this.filters.battle !== false
       case 'system':
@@ -674,34 +614,33 @@ export class BattleLogManager implements IBattleLogManager {
    * 同步战斗日志
    * @param battleState 战斗状态
    */
-  async syncBattleLogs(battleState: any): Promise<void> {
-    if (!battleState || !battleState.actions) {
-      return
-    }
+  async syncBattleLogs(battleState?: unknown): Promise<void> {
+    if (!battleState || typeof battleState !== 'object') return
+    const state = battleState as Record<string, unknown>
+    const actions = state.actions as Array<Record<string, unknown>> | undefined
+    if (!actions) return
 
-    const sortedActions = [...battleState.actions].sort((a: any, b: any) => {
-      if (a.timestamp !== b.timestamp) {
-        return a.timestamp - b.timestamp
-      }
-      const turnA = a.turn || 0
-      const turnB = b.turn || 0
-      if (turnA !== turnB) {
-        return turnA - turnB
-      }
-      return a.id.localeCompare(b.id)
+    const sortedActions = [...actions].sort((a, b) => {
+      const tsA = (a.timestamp as number) ?? 0
+      const tsB = (b.timestamp as number) ?? 0
+      if (tsA !== tsB) return tsA - tsB
+      const turnA = (a.turn as number) ?? 0
+      const turnB = (b.turn as number) ?? 0
+      if (turnA !== turnB) return turnA - turnB
+      return String(a.id ?? '').localeCompare(String(b.id ?? ''))
     })
 
     for (const action of sortedActions) {
-      const actionType = action.type || 'attack'
-      const sourceId = action.sourceId || ''
-      const targetId = action.targetId || ''
-      const damage = action.damage || 0
-      const heal = action.heal || 0
-      const effects = action.effects || []
+      const actionType = String(action.type || 'attack')
+      const sourceId = String(action.sourceId || '')
+      const targetId = String(action.targetId || '')
+      const damage = Number(action.damage || 0)
+      const heal = Number(action.heal || 0)
+      const effects = (action.effects || []) as Array<Record<string, unknown>>
 
       let logMessage = ''
       if (actionType === 'skill' && action.skillId) {
-        logMessage = `使用技能 ${action.skillId}`
+        logMessage = `使用技能 ${String(action.skillId)}`
       } else if (actionType === 'attack') {
         logMessage = '发起攻击'
       }
@@ -729,7 +668,7 @@ export class BattleLogManager implements IBattleLogManager {
       for (const effect of effects) {
         if (effect.type === 'status' && effect.description) {
           this.addSystemLog({
-            message: effect.description,
+            message: String(effect.description),
             level: LogLevel.INFO,
           })
         }
@@ -741,4 +680,4 @@ export class BattleLogManager implements IBattleLogManager {
 /**
  * 默认日志管理器单例实例
  */
-export const battleLogManager = BattleLogManager.getInstance({})
+export const battleLogManager = BattleLogManager.getInstance()

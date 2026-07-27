@@ -168,8 +168,6 @@ export class AutoBattleManager {
 
   /**
    * 重置自动战斗状态
-   * 将所有状态重置为初始值
-   * 通常在开始新战斗前调用，以确保状态干净
    */
   resetState() {
     this.battleId = null

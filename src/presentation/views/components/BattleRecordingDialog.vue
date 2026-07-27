@@ -173,7 +173,7 @@ function formatBattleName(rec: RecordedBattle): string {
 .recording-list {
   width: 220px;
   flex-shrink: 0;
-  border-right: 1px solid rgba(79, 195, 247, 0.2);
+  border-right: 1px solid var(--color-info-bg);
   padding-right: var(--space-3);
   overflow-y: auto;
 }
@@ -185,7 +185,7 @@ function formatBattleName(rec: RecordedBattle): string {
   letter-spacing: 0.5px;
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-1);
-  border-bottom: 1px solid rgba(79, 195, 247, 0.2);
+  border-bottom: 1px solid var(--color-info-bg);
 }
 
 .list-empty {
@@ -203,11 +203,11 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .recording-item:hover {
-  background: rgba(79, 195, 247, 0.1);
+  background: var(--color-info-bg);
 }
 
 .recording-item.active {
-  background: rgba(79, 195, 247, 0.2);
+  background: var(--color-info-bg);
   border: 1px solid rgba(79, 195, 247, 0.3);
 }
 
@@ -248,7 +248,7 @@ function formatBattleName(rec: RecordedBattle): string {
   letter-spacing: 0.5px;
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-1);
-  border-bottom: 1px solid rgba(79, 195, 247, 0.2);
+  border-bottom: 1px solid var(--color-info-bg);
 }
 
 .detail-actions {
@@ -259,7 +259,7 @@ function formatBattleName(rec: RecordedBattle): string {
 
 /* ====== 行动卡片 ====== */
 .action-card {
-  border: 1px solid rgba(79, 195, 247, 0.15);
+  border: 1px solid var(--color-info-bg);
   border-radius: var(--radius-md);
   overflow: hidden;
   transition: border-color var(--transition-fast);
@@ -314,7 +314,7 @@ function formatBattleName(rec: RecordedBattle): string {
 .action-type-badge {
   padding: 1px var(--space-1);
   border-radius: var(--radius-sm);
-  background: rgba(79, 195, 247, 0.15);
+  background: var(--color-info-bg);
   color: var(--color-info);
 }
 
@@ -337,7 +337,7 @@ function formatBattleName(rec: RecordedBattle): string {
 
 /* ====== 展开详情 ====== */
 .action-detail {
-  border-top: 1px solid rgba(79, 195, 247, 0.1);
+  border-top: 1px solid var(--color-info-bg);
   padding: var(--space-2) var(--space-3);
   background: rgba(0, 0, 0, 0.15);
 }

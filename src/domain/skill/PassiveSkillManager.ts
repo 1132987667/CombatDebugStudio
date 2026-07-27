@@ -1,30 +1,28 @@
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { EffectRenderer, type RenderContext } from '@/domain/battle/logs/EffectRenderer'
 import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import {
   BATTLE_CONSTANTS,
   BattleActionHelper,
   BattleTriggerPhase,
-  PARTICIPANT_SIDE,
-  type PassiveTriggerContext,
-  type BattleEntity,
+  createStepContext,
   type BattleEffect,
+  type BattleEntity,
+  type PassiveTriggerContext,
 } from '@/domain/battle/type/types'
-import { createStepContext } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { resolveSkillTargets } from '@/domain/skill/target-resolver'
 import type { SkillConfig } from '@/domain/skill/types'
+import { eventBus } from '@/infrastructure/adapters/event/EventBus'
 import {
   BATTLE_LOG_CATEGORIES,
   LogLevel,
-  type LogSegment,
 } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
 import { createTraceLogEntry } from '@/shared/types/trace-log'
-import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
-import { eventBus } from '@/infrastructure/adapters/event/EventBus'
 
 export interface PassiveSkillConfig {
   id: string
@@ -43,9 +41,7 @@ export interface PassiveSkillConfig {
 }
 
 export class PassiveSkillManager {
-  /**
-   * 当前参战角色的被动技能配置
-   */
+  // 当前参战角色的被动技能配置
   private passives: Map<string, PassiveSkillConfig[]> = new Map()
   /**
    * 倒排索引：按触发时机索引被动技能
@@ -569,7 +565,6 @@ export class PassiveSkillManager {
         })
       }
     } else {
-      // ponytail: 索引为空时回退全量扫描（兼容未通过 registerPassive 注册的被动）
       for (const participant of participants.values()) {
         this.triggerPassives(participant, {
           ...context,

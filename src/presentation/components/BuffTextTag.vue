@@ -1,11 +1,6 @@
 <template>
-  <span
-    class="buff-text-tag"
-    :class="[colorClass, { 'has-stacks': stacks > 1, 'tag--last-turn': turnsLeft === 1 }]"
-    :title="tooltipText"
-    @mouseenter="$emit('hover', $event)"
-    @mouseleave="$emit('leave')"
-  >
+  <span class="buff-text-tag" :class="[colorClass, { 'has-stacks': stacks > 1, 'tag--last-turn': turnsLeft === 1 }]"
+    :title="tooltipText" @mouseenter="$emit('hover', $event)" @mouseleave="$emit('leave')">
     <template v-if="type === 'control'">
       【{{ text }}】<span v-if="turnsLeft > 0" class="tag-turns">（{{ turnsLeft }}）</span>
     </template>
@@ -18,7 +13,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ConditionState } from '@/shared/types/buff-display'
+import { ConditionState, ConditionStateNames } from '@/shared/types/buff-display'
 
 const props = withDefaults(defineProps<{
   /** 显示文本，如 "攻击↑45%" 或 "眩晕" */
@@ -34,7 +29,7 @@ const props = withDefaults(defineProps<{
   /** 悬停 tooltip */
   tooltip?: string
 }>(), {
-  condition: 'none',
+  condition: ConditionState.NONE,
   turnsLeft: 0,
   stacks: 1,
   tooltip: '',
@@ -45,21 +40,25 @@ defineEmits<{
   leave: []
 }>()
 
+const TypeClass = {
+  buff: 'tag--buff',
+  debuff: 'tag--debuff',
+  control: 'tag--control',
+}
+
 const colorClass = computed(() => {
-  if (props.condition === 'inactive') return 'tag--inactive'
-  if (props.condition === 'permanent') return 'tag--permanent'
-  switch (props.type) {
-    case 'buff': return 'tag--buff'
-    case 'debuff': return 'tag--debuff'
-    case 'control': return 'tag--control'
-  }
+  if (props.condition === ConditionState.INACTIVE) return 'tag--inactive'
+  if (props.condition === ConditionState.PERMANENT) return 'tag--permanent'
+  return TypeClass[props.type]
 })
 
 const tooltipText = computed(() => {
   if (props.tooltip) return props.tooltip
-  if (props.condition === 'inactive') return `${props.text}（未激活）`
-  if (props.condition === 'active') return `${props.text}（已激活）`
-  if (props.condition === 'permanent') return `${props.text}（永久）`
+  const names = ConditionStateNames
+  const validStates: string[] = Object.values(ConditionState)
+  if (validStates.includes(props.condition)) {
+    return `${props.text}（${names[props.condition]}）`
+  }
   return props.text
 })
 </script>
@@ -69,7 +68,7 @@ const tooltipText = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  padding: 1px 6px;
+  padding: 1px var(--space-2);
   border-radius: var(--radius-sm);
   line-height: var(--line-height-md);
   white-space: nowrap;
@@ -82,6 +81,7 @@ const tooltipText = computed(() => {
   color: var(--color-energy);
   font-weight: var(--font-weight-bold);
 }
+
 .tag--buff:hover {
   background: rgba(34, 211, 238, 0.1);
 }
@@ -89,10 +89,10 @@ const tooltipText = computed(() => {
 /* 减益 */
 .tag--debuff {
   color: var(--color-danger);
-  font-weight: var(--font-weight-regular);
 }
+
 .tag--debuff:hover {
-  background: rgba(244, 67, 54, 0.1);
+  background: var(--color-danger-bg);
 }
 
 /* 控制 */
@@ -100,6 +100,7 @@ const tooltipText = computed(() => {
   color: var(--color-debuff);
   font-weight: var(--font-weight-bold);
 }
+
 .tag--control:hover {
   background: rgba(168, 85, 247, 0.1);
 }
@@ -107,20 +108,17 @@ const tooltipText = computed(() => {
 /* 未激活 */
 .tag--inactive {
   color: var(--color-text-disabled);
-  font-weight: var(--font-weight-regular);
 }
 
 /* 永久 */
 .tag--permanent {
   color: var(--color-text-tertiary);
-  font-weight: var(--font-weight-regular);
 }
 
 .tag-turns,
 .tag-stacks {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  font-weight: var(--font-weight-regular);
 }
 
 .has-stacks {
@@ -133,12 +131,20 @@ const tooltipText = computed(() => {
     animation: blink-turn 1s ease-in-out infinite;
   }
 }
+
 .tag--last-turn {
   opacity: 0.7;
 }
 
 @keyframes blink-turn {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
 }
 </style>

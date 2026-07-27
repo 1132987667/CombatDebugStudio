@@ -81,21 +81,8 @@ watch(
 </script>
 
 <style scoped>
-.dialog-title {
-  text-shadow: 0 0 5px rgba(79, 195, 247, 0.5);
-}
 
-.dialog-close {
-  border: 2px solid var(--color-info);
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: var(--transition-base);
-  color: var(--color-info);
-}
+
 
 .dialog-header-actions {
   display: flex;
@@ -103,16 +90,6 @@ watch(
   gap: var(--space-2);
 }
 
-.dialog-close:hover {
-  background: var(--color-info);
-  color: var(--color-bg-primary);
-  transform: scale(1.1);
-}
-
-.dialog-content {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-}
 
 /* 确保弹窗内的表单元素样式与应用程序一致 */
 .dialog-content input[type="checkbox"] {
@@ -134,7 +111,7 @@ watch(
 .dialog-content select:focus {
   outline: none;
   border-color: var(--color-info);
-  box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
+  box-shadow: 0 0 0 2px var(--color-info-bg);
 }
 
 .dialog-content button {

@@ -194,42 +194,6 @@ const handleButtonClick = (action: string) => {
   backdrop-filter: blur(10px);
 }
 
-.dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid rgba(34, 211, 238, 0.2);
-  background: rgba(34, 211, 238, 0.1);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
-.dialog-title {
-  color: var(--color-energy);
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-}
-
-.dialog-close {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: var(--font-size-xxl);
-  cursor: pointer;
-  padding: 0;
-  line-height: var(--line-height-sm);
-}
-
-.dialog-close:hover {
-  color: var(--color-text-primary);
-}
-
-.dialog-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-3);
-}
-
 .debug-module {
   margin-bottom: var(--space-4);
   padding: var(--space-3);

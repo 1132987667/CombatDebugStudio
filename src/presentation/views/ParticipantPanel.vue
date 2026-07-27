@@ -638,7 +638,6 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 .preset-desc {
   width: 100%;
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
   padding-top: var(--space-1);
 }
 </style>

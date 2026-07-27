@@ -808,7 +808,7 @@ export const AttributeCodeNames: Record<ATTRIBUTE_CODE, string> =
 /**
  * 根据属性编码获取属性元数据
  */
-export function getAttributeMeta(
+export function getAttrMeta(
   code: ATTRIBUTE_CODE,
 ): AttributeMeta | undefined {
   return AttributeMetaMap[code]
@@ -819,7 +819,7 @@ export function getAttributeMeta(
  * @param code 属性编码
  * @returns 默认值，未定义时返回 0
  */
-export function getAttributeDefaultValue(code: ATTRIBUTE_CODE): number {
+export function getAttrDv(code: ATTRIBUTE_CODE): number {
   return AttributeMetaMap[code]?.defaultValue ?? 0
 }
 
@@ -831,5 +831,3 @@ export function getAttributeCodeByName(name: string): string | undefined {
     ([_, meta]) => meta.name === name,
   )?.[0]
 }
-
-// ========== Re-exports from domain kernel (Phase 3 migration — deprecated, values use primitive types) ==========

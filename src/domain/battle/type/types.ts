@@ -237,7 +237,7 @@ export interface BattleEntity {
   hasBuff(buffId: string): boolean
 
   /** 获取属性值对象（包含详细信息） */
-  getAttributeValue(
+  getAttrVal(
     attribute: ATTRIBUTE_CODE | string,
   ): AttributeValue | undefined
   /** 获取属性最终值（快捷方法） */

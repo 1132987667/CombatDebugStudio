@@ -92,7 +92,7 @@ export function useParticipantStats(
 ): UseParticipantStatsReturn {
   // 获取格式化属性
   const getFormatted = (type: ATTRIBUTE_CODE): FormattedAttribute => {
-    const attrValue = participant.getAttributeValue(type)
+    const attrValue = participant.getAttrVal(type)
     if (!attrValue) {
       return {
         displayValue: '0',
@@ -105,12 +105,12 @@ export function useParticipantStats(
 
   // 获取属性值
   const getValue = (type: ATTRIBUTE_CODE): number => {
-    return participant.getAttributeValue(type)?.value ?? 0
+    return participant.getAttrVal(type)?.value ?? 0
   }
 
   // 获取属性对象
   const getAttribute = (type: ATTRIBUTE_CODE): AttributeValue | undefined => {
-    return participant.getAttributeValue(type)
+    return participant.getAttrVal(type)
   }
 
   // 获取计算拆解

@@ -283,7 +283,7 @@ const getPossibleSources = (buffId: string): string[] => {
 .effect-tag {
   padding: var(--space-1);
   border-radius: var(--radius-sm);
-  background: rgba(79, 195, 247, 0.15);
+  background: var(--color-info-bg);
   color: var(--color-info);
 }
 

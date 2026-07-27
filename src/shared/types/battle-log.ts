@@ -1075,3 +1075,48 @@ function generateDefaultLogSegments(
     ],
   }
 }
+
+/**
+ * 统一日志参数 — 所有 addXxxLog 方法的入参
+ * 从 infrastructure/adapters/logging/BattleLogManager.ts 下沉到 shared 层，
+ * 使领域层端口接口可以引用具体类型而非 any。
+ */
+export interface UnifiedLogParams {
+  /** 日志消息（可选，与 segments 二选一） */
+  message?: string
+  /** 日志片段数组（推荐使用的结构化格式） */
+  segments?: LogSegment[]
+  /** 日志级别 */
+  level?: LogLevel
+  /** 日志来源 */
+  source?: string
+  /** 日志目标 */
+  target?: string
+  /** 操作类型 */
+  action?: string
+  /** 回合号 */
+  turn?: number | string
+  /** 日志类别 */
+  category?: BattleLogCategory
+  /** 日志详细类别 */
+  detailCategory?: string
+  /** 上下文数据 */
+  context?: Record<string, unknown>
+  /** 错误对象 */
+  error?: Error
+  /** 叙事元数据 */
+  meta?: BattleLogMeta
+}
+
+/** 战斗日志参数 — turn 必填 */
+export type BattleLogParams = UnifiedLogParams & { turn: number | string }
+
+/** 调试日志参数 */
+export interface DebugLogParams {
+  /** 日志级别，默认 LogLevel.INFO */
+  level?: LogLevel
+  /** 上下文数据 */
+  context?: Record<string, unknown>
+  /** 错误对象 */
+  error?: Error
+}

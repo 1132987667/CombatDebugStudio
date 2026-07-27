@@ -1,7 +1,7 @@
 <!--
   战斗视觉特效层
   覆盖在战场上方，实现技能名飞行、光弹尾迹、命中爆炸、治疗光环、护盾六边形、屏幕震动等效果
-  ponytail: 纯 DOM + CSS 动画实现，无 GSAP 依赖，动画结束后自动清理
+  纯 DOM + CSS 动画实现，无 GSAP 依赖，动画结束后自动清理
 -->
 <template>
   <div id="visual-effects-root" class="battle-visual-effects" :class="{ 'screen-shake': shaking }">

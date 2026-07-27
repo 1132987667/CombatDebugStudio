@@ -16,15 +16,10 @@
             <span class="compendium-title">图鉴</span>
             <button class="compendium-close" @click="close">×</button>
           </div>
-          
+
           <div class="compendium-tabs">
-            <button 
-              v-for="tab in tabs" 
-              :key="tab.value"
-              class="compendium-tab"
-              :class="{ active: activeTab === tab.value }"
-              @click="activeTab = tab.value"
-            >
+            <button v-for="tab in tabs" :key="tab.value" class="compendium-tab"
+              :class="{ active: activeTab === tab.value }" @click="activeTab = tab.value">
               {{ tab.label }}
               <span class="tab-count">{{ getTabCount(tab.value) }}</span>
             </button>
@@ -40,16 +35,13 @@
                 <span>暂无数据</span>
               </div>
               <ul v-else class="compendium-list">
-                <li
-                  v-for="item in currentList"
-                  :key="item.id"
-                  class="compendium-list-item"
-                  :class="{ selected: selectedId === item.id }"
-                  @click="selectItem(item.id)"
-                >
+                <li v-for="item in currentList" :key="item.id" class="compendium-list-item"
+                  :class="{ selected: selectedId === item.id }" @click="selectItem(item.id)">
                   <span class="item-name">{{ getItemName(item) }}</span>
                   <span v-if="'level' in item" class="item-level">Lv.{{ (item as CompendiumEnemy).level }}</span>
-                  <span v-if="'rarity' in item" class="item-rarity" :class="'rarity-' + (item as CompendiumItem).rarity">{{ getRarityText((item as CompendiumItem).rarity) }}</span>
+                  <span v-if="'rarity' in item" class="item-rarity"
+                    :class="'rarity-' + (item as CompendiumItem).rarity">{{ getRarityText((item as
+                    CompendiumItem).rarity) }}</span>
                 </li>
               </ul>
             </div>
@@ -221,7 +213,7 @@ watch(activeTab, () => {
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
-  box-shadow: 0 0 10px rgba(79, 195, 247, 0.2);
+  box-shadow: 0 0 10px ;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -286,13 +278,13 @@ watch(activeTab, () => {
 
 .compendium-tab:hover {
   color: var(--color-text-secondary);
-  background: rgba(79, 195, 247, 0.1);
+  background: var(--color-info-bg);
 }
 
 .compendium-tab.active {
   color: var(--color-info);
   border-bottom-color: var(--color-info);
-  background: rgba(79, 195, 247, 0.1);
+  background: var(--color-info-bg);
 }
 
 .tab-count {
@@ -303,7 +295,7 @@ watch(activeTab, () => {
 }
 
 .compendium-tab.active .tab-count {
-  background: rgba(79, 195, 247, 0.2);
+  background: var(--color-info-bg);
   color: var(--color-info);
 }
 
@@ -342,7 +334,7 @@ watch(activeTab, () => {
 }
 
 .compendium-list-item.selected {
-  background: rgba(79, 195, 247, 0.15);
+  background: var(--color-info-bg);
   border-color: var(--color-info);
 }
 
@@ -357,7 +349,7 @@ watch(activeTab, () => {
 .item-level {
   color: var(--color-brand-red);
   padding: 1px 4px;
-  background: rgba(233, 69, 96, 0.2);
+  background: var(--color-danger-bg);
   border-radius: var(--radius-sm);
 }
 
@@ -414,7 +406,9 @@ watch(activeTab, () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .compendium-fade-enter-active,
@@ -437,5 +431,4 @@ watch(activeTab, () => {
   transform: scale(0.95);
   opacity: 0;
 }
-
 </style>

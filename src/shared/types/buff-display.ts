@@ -86,11 +86,27 @@ export interface BuffTextItem {
 }
 
 /** 条件状态 */
-export type ConditionState =
-  | 'active'     // 条件已满足（如已经残血）
-  | 'inactive'   // 条件未满足
-  | 'permanent'  // 永久效果
-  | 'none'       // 无条件，普通计时
+export const ConditionState = {
+  ACTIVE: 'active',     // 条件已满足（如已经残血）
+  INACTIVE: 'inactive',   // 条件未满足
+  PERMANENT: 'permanent',  // 永久效果
+  NONE: 'none'       // 无条件，普通计时
+} as const
+export type ConditionState = (typeof ConditionState)[keyof typeof ConditionState]
+
+export const ConditionStateNames = {
+  [ConditionState.ACTIVE]: '已激活',
+  [ConditionState.INACTIVE]: '未激活',
+  [ConditionState.PERMANENT]: '永久效果',
+  [ConditionState.NONE]: '无条件，普通计时',
+}
+
+
+/**
+ * 条件状态名称
+ */
+export type ConditionStateName = (typeof ConditionStateNames)[keyof typeof ConditionStateNames]
+
 
 /** 修饰符（来源追溯用） */
 export interface BuffModifier {

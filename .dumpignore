@@ -40,6 +40,8 @@ output.txt
 .nuxt
 .github/
 
+.dumpignore
+.gitignore
 
 dist
 dist-ssr

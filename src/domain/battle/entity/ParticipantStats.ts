@@ -5,7 +5,7 @@
  ** 功能: 参与者属性管理
  ** 描述: 
  **/
-import { ATTRIBUTE_CODE, type AttributeValue, getAttributeMeta, getAttributeDefaultValue } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, type AttributeValue, getAttrMeta, getAttrDv } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 
 export class ParticipantStats {
@@ -53,8 +53,8 @@ export class ParticipantStats {
       normalized[key as ATTRIBUTE_CODE] = value
     }
     for (const code of Object.values(ATTRIBUTE_CODE)) {
-      const meta = getAttributeMeta(code)
-      const baseValue = normalized[code] ?? getAttributeDefaultValue(code)
+      const meta = getAttrMeta(code)
+      const baseValue = normalized[code] ?? getAttrDv(code)
       this.initAttribute(code, baseValue, meta?.isPercentage ?? false)
     }
     // 初始化后使缓存失效，强制第一次读取时重算
@@ -66,7 +66,7 @@ export class ParticipantStats {
     return this.attributes.get(attr)
   }
 
-  getAttributeValue(attr: ATTRIBUTE_CODE): number {
+  getAttrVal(attr: ATTRIBUTE_CODE): number {
     const result = this.getAttribute(attr)
     return result?.value ?? 0
   }
@@ -113,7 +113,7 @@ export class ParticipantStats {
     if (!attrData) return
 
     // ponytail: 跳过运行时状态属性（血量、能量），它们由 setAttributeValue 单独维护，不从公式重算
-    const meta = getAttributeMeta(attrCode)
+    const meta = getAttrMeta(attrCode)
     if (meta?.isRuntimeState) return
 
     // 版本号比对：如果缓存是最新的，跳过重算

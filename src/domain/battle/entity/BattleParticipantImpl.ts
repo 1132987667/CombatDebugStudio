@@ -26,7 +26,7 @@ import {
   Modifier,
   AttributeValue,
   ATTRIBUTE_CODE,
-  getAttributeMeta,
+  getAttrMeta,
   type AttributeValues,
   ModifierType,
 } from '@/domain/attribute/types'
@@ -235,16 +235,16 @@ export class BattleParticipantImpl implements BattleEntity {
   getAttribute(attr: ATTRIBUTE_CODE | string): number {
     const normalizedAttr =
       typeof attr === 'string' ? (attr as ATTRIBUTE_CODE) : attr
-    const attrValue = this.getAttributeValue(normalizedAttr)
+    const attrValue = this.getAttrVal(normalizedAttr)
     return attrValue?.value ?? 0
   }
 
-  getAttributeValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
+  getAttrVal(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
     return this.stats.reCalAttributeValue(attr)
   }
 
   /**
-   * @deprecated 使用 getAttributeValue(attr) 替代。getAttributeValue 会触发重算；
+   * @deprecated 使用 getAttrVal(attr) 替代。getAttrVal 会触发重算；
    *             如不需要重算，使用 stats.getAttribute(attr)。
    */
   getAttrValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
@@ -875,7 +875,7 @@ export class BattleParticipantImpl implements BattleEntity {
       const attrValue = this.stats.reCalAttributeValue(attrCode)
       if (!attrValue) continue
 
-      const meta = getAttributeMeta(attrCode)
+      const meta = getAttrMeta(attrCode)
       const isPercentage = meta?.isPercentage ?? attrValue.isPercentage
       const parts: string[] = [`基础值(${attrValue.base})`]
       for (const mod of attrValue.modifiers) {

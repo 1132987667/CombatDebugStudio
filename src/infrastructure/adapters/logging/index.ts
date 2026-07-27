@@ -27,7 +27,7 @@ export type {
   LogSegment,
 } from '@/shared/types/battle-log'
 
-export type { DebugLogOptions } from '@/infrastructure/adapters/logging/BattleLogManager'
+export type { DebugLogParams } from '@/shared/types/battle-log'
 
 export { LogLevel, LogType, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 

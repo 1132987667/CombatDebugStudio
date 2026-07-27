@@ -371,7 +371,7 @@ const characterOptions = computed<CharacterOption[]>(() => {
   return [...ally, ...enemy]
 })
 
-/** 当前选中角色的 5 个核心属性值（用于属性调整 Tab 的显示，通过 getAttributeValue 获取以保证类型正确） */
+/** 当前选中角色的 5 个核心属性值（用于属性调整 Tab 的显示，通过 getAttrVal 获取以保证类型正确） */
 const currentAttrs = computed(() => {
   const char = selectedCharacter.value
   const defaults = { currentHealth: 0, currentEnergy: 0, minAttack: 0, defense: 0, speed: 0 }
@@ -379,9 +379,9 @@ const currentAttrs = computed(() => {
   return {
     currentHealth: battleStore.participants.get(char.id)?.currentHealth ?? 0,
     currentEnergy: battleStore.participants.get(char.id)?.currentEnergy ?? 0,
-    minAttack: char.getAttributeValue(ATTRIBUTE_CODE.minAttack)?.value ?? 0,
-    defense: char.getAttributeValue(ATTRIBUTE_CODE.defense)?.value ?? 0,
-    speed: char.getAttributeValue(ATTRIBUTE_CODE.speed)?.value ?? 0,
+    minAttack: char.getAttrVal(ATTRIBUTE_CODE.minAttack)?.value ?? 0,
+    defense: char.getAttrVal(ATTRIBUTE_CODE.defense)?.value ?? 0,
+    speed: char.getAttrVal(ATTRIBUTE_CODE.speed)?.value ?? 0,
   }
 })
 

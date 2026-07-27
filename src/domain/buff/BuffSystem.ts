@@ -25,6 +25,7 @@ import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import { Counter } from '@/shared/utils/Counter'
+import { LogLevel } from '@/shared/types/battle-log'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import {
   StepExecutionContext,
@@ -316,7 +317,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       if (!phase) {
         this.logger.addDebugLog(
           `触发器阶段 ${trigger.phase} 未识别，跳过注册`,
-          { level: 'WARN' },
+          { level: LogLevel.WARN },
         )
         continue
       }

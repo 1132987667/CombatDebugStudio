@@ -4,7 +4,6 @@
  * 描述: 定义属性的展示层级和分组，用于调试面板的折叠/过滤/分组渲染。
  *       与领域层 AttributeMeta 分离，避免领域层依赖 UI 概念。
  */
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 /**
  * 展示层级

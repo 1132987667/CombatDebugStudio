@@ -246,11 +246,11 @@ function toNumber(value: number | AttributeValue | undefined): number {
 
 /**
  * 获取参与者速度
- * 直接使用 BattleEntity 的 getAttributeValue 方法
+ * 直接使用 BattleEntity 的 getAttrVal 方法
  */
 function getMemberSpeed(member: BattleEntity | null): number {
   if (!member) return 0;
-  const spdValue = member.getAttributeValue(ATTRIBUTE_CODE.speed)
+  const spdValue = member.getAttrVal(ATTRIBUTE_CODE.speed)
   return toNumber(spdValue?.value)
 }
 

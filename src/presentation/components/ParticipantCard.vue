@@ -270,7 +270,7 @@ const baseAttributes = computed(() => {
   const entity = props.participant
   const map: Record<string, number> = {}
   for (const [code, cn] of Object.entries(ATTRIBUTE_SHORT_NAMES)) {
-    const attrValue = entity.getAttributeValue(code as any)
+    const attrValue = entity.getAttrVal(code as any)
     if (attrValue && typeof attrValue.base === 'number') {
       map[cn] = attrValue.base
     }

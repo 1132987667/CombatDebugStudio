@@ -144,7 +144,7 @@ export interface BuffClassificationInput {
   category?: string
   /** 控制类型（BuffConfig.controlType） */
   controlType?: string
-  /** 效果标签（如 ['dot', 'debuff', 'heal_reduction']） */
+  /** 效果标签 */
   tags?: string[]
   /** 光环配置 */
   aura?: unknown

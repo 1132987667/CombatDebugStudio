@@ -198,7 +198,7 @@ const tooltipStyle = computed(() => {
 }
 
 .badge-type {
-  background: rgba(79, 195, 247, 0.15);
+  background: var(--color-info-bg);
   color: var(--color-info);
 }
 

@@ -395,9 +395,6 @@ export class DefensiveAIPriorityStrategy extends BaseAIPriorityStrategy {
  * 平衡伤害和治疗
  */
 export class BalancedAIPriorityStrategy extends BaseAIPriorityStrategy {
-  /**
-   * 获取策略名称
-   */
   public getName(): string {
     return 'BalancedAIPriorityStrategy'
   }

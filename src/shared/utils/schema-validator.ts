@@ -173,29 +173,6 @@ const skillSchema = {
   },
 }
 
-/**
- * Effect配置JSON Schema
- */
-const effectSchema = {
-  type: 'object',
-  required: ['id', 'type', 'params'],
-  properties: {
-    id: {
-      type: 'string',
-      minLength: 1,
-    },
-    type: {
-      type: 'string',
-      enum: ['damage', 'heal', 'buff', 'debuff', 'special'],
-    },
-    params: {
-      type: 'object',
-    },
-    description: {
-      type: 'string',
-    },
-  },
-}
 
 /**
  * 验证技能配置

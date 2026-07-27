@@ -24,7 +24,7 @@ export class ShieldEffect implements IAtomicEffect {
     if (valueType === 'percent_max_hp') {
       // HACK: BuffContext.getCharacter() 尚未实现，此时值为 0；
       // 待 getCharacter 接入后自动生效，无需修改此文件
-      const maxHp = ctx.getAttributeValue('maxHealth')
+      const maxHp = ctx.getAttrVal('maxHealth')
       shieldAmount = Math.round(maxHp * value / 100)
     } else {
       shieldAmount = value
@@ -42,7 +42,7 @@ export class ShieldEffect implements IAtomicEffect {
 
     let shieldAmount: number
     if (valueType === 'percent_max_hp') {
-      const maxHp = ctx.getAttributeValue('maxHealth')
+      const maxHp = ctx.getAttrVal('maxHealth')
       shieldAmount = Math.round(maxHp * value / 100)
     } else {
       shieldAmount = value

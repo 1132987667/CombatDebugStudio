@@ -19,10 +19,12 @@ import type { BattleService } from '@/application/facade/BattleFacade'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE, BattleStatus } from '@/domain/battle/type/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { SeededRandom } from '@/shared/utils/SeededRandom'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
-import { LogType, type BattleLogEntry } from '@/shared/types/battle-log'
+import { LogType, type BattleLogEntry, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
 import { blocksToText } from '@/shared/utils/log-segment-factory'
 
@@ -92,12 +94,15 @@ export class BattleDataGenerator {
         if (this._cancelled) break
         options.onProgress?.(i / total, i + 1, total)
 
+        // 每场战斗使用独立种子，确保结果不重复
+        const rng = new SeededRandom(Date.now() + i * 9973 + Math.floor(Math.random() * 10000))
+
         // 决定本场模式
-        const battleMode = mode === 'random' ? (Math.random() < 0.5 ? '1v1' : '2v2') : mode
+        const battleMode = mode === 'random' ? (rng.next() < 0.5 ? '1v1' : '2v2') : mode
         const teamSize = battleMode === '1v1' ? 1 : 2
 
         // 随机选择双方成员；角色不足时允许克隆补足，保证至少 1v1
-        const shuffled = [...allEnemies].sort(() => Math.random() - 0.5)
+        const shuffled = rng.shuffle(allEnemies)
         const allySource = shuffled.slice(0, teamSize)
         const enemySource = shuffled.slice(teamSize, teamSize * 2)
         while (enemySource.length < teamSize) {
@@ -126,6 +131,9 @@ export class BattleDataGenerator {
           await this.battleSystem.processTurn()
           rounds++
         }
+
+        // 补充可能缺失的态势快照和战斗结束日志（短战斗提前结束时会被跳过）
+        this.ensureEndBattleLogs()
 
         // ── 收集本场叙事日志（与面板导出同管线）──
         const narrativeText = this.collectNarrativeText()
@@ -182,6 +190,79 @@ export class BattleDataGenerator {
       .filter((l) => l.type === LogType.BATTLE) as BattleLogEntry[]
     const blocks = this.renderer.renderEntries(entries)
     return blocksToText(blocks)
+  }
+
+  /**
+   * 补充可能缺失的态势快照和战斗结束日志
+   *
+   * 短战斗可能在参与者行动中提前结束（processTurnInternal 第 703-705 行 return），
+   * 跳过回合末的态势快照输出（第 810-845 行）和 battle-header 渲染。
+   * 此方法检查日志中是否已包含这些内容，若缺失则直接补充。
+   */
+  private ensureEndBattleLogs(): void {
+    const battleData = this.battleSystem.getBattleData()
+    if (!battleData) return
+
+    const lastTurn = battleData.currentTurn || 1
+    const allBattles = battleLogManager.getAllLogs().filter(
+      (l) => l.type === LogType.BATTLE,
+    ) as BattleLogEntry[]
+
+    // 检查是否已有态势快照
+    const hasSnapshot = allBattles.some((l) => l.meta?.role === 'snapshot')
+    if (!hasSnapshot) {
+      const allySnapshot: string[] = []
+      const enemySnapshot: string[] = []
+      battleData.participants.forEach((p) => {
+        if (!p.isAlive()) return
+        const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
+        const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
+        const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
+        if (p.team === PARTICIPANT_SIDE.ALLY) allySnapshot.push(entry)
+        else enemySnapshot.push(entry)
+      })
+
+      if (allySnapshot.length > 0) {
+        battleLogManager.addBattleLog({
+          turn: lastTurn,
+          message: `我方  ${allySnapshot.join(' · ')}`,
+          segments: [
+            { text: '我方  ', classStr: 'log-friendly' },
+            { text: allySnapshot.join(' · ') },
+          ],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'snapshot' },
+        })
+      }
+      if (enemySnapshot.length > 0) {
+        battleLogManager.addBattleLog({
+          turn: lastTurn,
+          message: `敌方  ${enemySnapshot.join(' · ')}`,
+          segments: [
+            { text: '敌方  ', classStr: 'log-hostile' },
+            { text: enemySnapshot.join(' · ') },
+          ],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'snapshot' },
+        })
+      }
+    }
+
+    // 检查是否已有战斗结束横幅（role: 'battle'）
+    const hasEndBanner = allBattles.some(
+      (l) => l.meta?.role === 'battle' && l.message?.includes('战斗结束'),
+    )
+    if (!hasEndBanner && battleData.winner) {
+      const winnerLabel =
+        battleData.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'
+      battleLogManager.addBattleLog({
+        turn: lastTurn,
+        message: `战斗结束！胜利者：${winnerLabel}`,
+        segments: [{ text: `战斗结束！胜利者：${winnerLabel}` }],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'battle' },
+      })
+    }
   }
 
   /** 清理上一场参与者残留在 BuffSystem 中的修饰符、护盾、免疫等全部状态 */

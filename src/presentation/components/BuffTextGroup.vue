@@ -167,11 +167,9 @@ const effectLines = computed(() => {
 .group-name {
   font-weight: var(--font-weight-bold);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-md);
 }
 
 .group-meta {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
@@ -246,7 +244,6 @@ const effectLines = computed(() => {
 }
 
 .debug-toggle {
-  font-size: var(--font-size-xs);
   color: var(--color-info);
   cursor: pointer;
   user-select: none;
@@ -262,7 +259,6 @@ const effectLines = computed(() => {
   background: rgba(15, 23, 42, 0.6);
   border-radius: var(--radius-sm);
   border: 1px solid rgba(96, 165, 250, 0.15);
-  font-size: var(--font-size-xs);
 }
 
 .debug-row {

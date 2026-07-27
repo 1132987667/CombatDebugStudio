@@ -250,7 +250,7 @@
 
 <script setup lang="ts">
 import type { BattleService } from '@/application/facade/BattleFacade';
-import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttributeDefaultValue, getAttributeMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
+import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
 import { getAttributeDisplayConfig } from '@/presentation/config/attributeDisplay';
 import { BattleEventType, BattleEntity } from '@/domain/battle/type/types';
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
@@ -320,14 +320,14 @@ const displayEnergy = computed(() => {
 const attrVal = (code: ATTRIBUTE_CODE): number => {
   void snapVersion.value
   const char = currentCharacter.value
-  return char?.getAttributeValue(code)?.value ?? getAttributeDefaultValue(code)
+  return char?.getAttrVal(code)?.value ?? getAttrDv(code)
 }
 
 const attackRange = computed(() => {
   return readEntity(
     char => ({
-      min: char.getAttributeValue(ATTRIBUTE_CODE.minAttack)?.value ?? 0,
-      max: char.getAttributeValue(ATTRIBUTE_CODE.maxAttack)?.value ?? 0,
+      min: char.getAttrVal(ATTRIBUTE_CODE.minAttack)?.value ?? 0,
+      max: char.getAttrVal(ATTRIBUTE_CODE.maxAttack)?.value ?? 0,
     }),
     { min: 0, max: 0 }
   )
@@ -495,7 +495,7 @@ const formatCalculation = (step: ExtendedSkillStep): string => {
   if (step.calculation.baseValue != null) parts.push(String(step.calculation.baseValue))
   if (step.calculation.extraValues) {
     for (const ev of step.calculation.extraValues) {
-      const attrName = getAttributeMeta(ev.attribute as ATTRIBUTE_CODE)?.displayName ?? ev.attribute
+      const attrName = getAttrMeta(ev.attribute as ATTRIBUTE_CODE)?.displayName ?? ev.attribute
       parts.push(`${attrName}×${ev.ratio}`)
     }
   }
@@ -509,7 +509,7 @@ const formatCalculation = (step: ExtendedSkillStep): string => {
  */
 const isSkillAvailable = (skill: SkillConfig): boolean => {
   // 简单检查：能量消耗是否为0或角色有足够能量
-  const currentEnergy = currentCharacter.value?.getAttributeValue(ATTRIBUTE_CODE.currentEnergy)?.value ?? 0;
+  const currentEnergy = currentCharacter.value?.getAttrVal(ATTRIBUTE_CODE.currentEnergy)?.value ?? 0;
   return (skill.energyCost || 0) === 0 || currentEnergy >= (skill.energyCost || 0);
 };
 
@@ -574,11 +574,11 @@ const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[]
 }
 
 const showAttrTooltipSimple = (event: MouseEvent, code: ATTRIBUTE_CODE) => {
-  const meta = getAttributeMeta(code)
+  const meta = getAttrMeta(code)
   const title = meta?.displayName ?? code
   const valueType = meta?.isPercentage ? AttributeValueType.PERCENT : AttributeValueType.VALUE
-  const defaultValue = getAttributeDefaultValue(code)
-  const attr = currentCharacter.value?.getAttributeValue(code)
+  const defaultValue = getAttrDv(code)
+  const attr = currentCharacter.value?.getAttrVal(code)
   showAttrTooltip(event, title, attr?.modifiers || [], attr?.value ?? defaultValue, valueType)
 }
 
@@ -649,8 +649,8 @@ const showAttackTooltip = (event: MouseEvent) => {
   const char = currentCharacter.value
   if (!char) return
 
-  const minAttr = char.getAttributeValue(ATTRIBUTE_CODE.minAttack)
-  const maxAttr = char.getAttributeValue(ATTRIBUTE_CODE.maxAttack)
+  const minAttr = char.getAttrVal(ATTRIBUTE_CODE.minAttack)
+  const maxAttr = char.getAttrVal(ATTRIBUTE_CODE.maxAttack)
   if (!minAttr || !maxAttr) return
 
   const minMods = minAttr.modifiers

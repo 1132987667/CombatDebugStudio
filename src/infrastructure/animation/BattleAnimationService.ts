@@ -76,20 +76,11 @@ export class BattleAnimationService {
     return timeline
   }
 
-  private createTween(
-    target: gsap.TweenTarget,
-    vars: gsap.TweenVars,
-  ): gsap.core.Tween {
-    const tween = gsap.to(target, vars)
-    this.activeTweens.push(tween)
-    return tween
-  }
-
   playAttackAnimation(data: AttackAnimationData): Promise<void> {
     return new Promise((resolve) => {
       const timeline = this.createTimeline()
       const moveDistance = 30
-      const direction = data.attackerSide === 'left' ? 1 : -1
+      const direction = data.attackerSide === Side.LEFT ? 1 : -1
 
       // NOTE: 固定预算模型 — budget 优先，按 windup 占比（20%T）分配
       const attackDuration = data.budget
@@ -125,7 +116,7 @@ export class BattleAnimationService {
   private playSkillNameAnimation(
     targetElement: HTMLElement,
     skillName: string,
-    side: 'left' | 'right',
+    side: SideType,
   ): void {
     let skillElement: HTMLElement | null = targetElement.querySelector(
       '.floating-skill-name',
@@ -160,7 +151,7 @@ export class BattleAnimationService {
     const moveDurationMs = this.getScaledDuration(this.SKILL_NAME_MOVE_DURATION)
     const fadeDurationMs = this.getScaledDuration(this.SKILL_NAME_FADE_DURATION)
 
-    const direction = side === 'left' ? -1 : 1
+    const direction = side === Side.LEFT ? -1 : 1
 
     timeline
       .set(skillElement, { opacity: 1, scale: 1, y: 0 })

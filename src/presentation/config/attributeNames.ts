@@ -23,6 +23,4 @@ export const ATTRIBUTE_SHORT_NAMES: Record<string, string> = {
   dodgeRate: '闪避',
   dodge: '闪避',
   slowImmune: '减速免疫',
-  physicalReduction: '物理减免',
-  magicReduction: '魔法减免',
 }

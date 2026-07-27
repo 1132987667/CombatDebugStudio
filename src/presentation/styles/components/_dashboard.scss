@@ -312,7 +312,7 @@
 }
 
 .exception-status.error {
-  background: rgba(244, 67, 54, 0.1);
+  background: var(--color-danger-bg);
   color: var(--color-danger);
   border: 1px solid var(--color-danger);
 }

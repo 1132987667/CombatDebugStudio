@@ -61,8 +61,12 @@ export interface DamageBreakdown {
   critMultiplier: number
   /** 暴击前伤害（加成后） */
   preCritDamage: number
-  /** 暴击后伤害 */
+  /** 暴击后伤害（暴击后、来源方加成前） */
   postCritDamage: number
+  /** 原始伤害：来源方全部产出（暴击 + 伤害提升 + 条件加成），目标方减免前
+   *  可选兼容：旧 localStorage 记录加载后该字段为 undefined。
+   *  读取时请使用 `breakdown.rawDamage ?? breakdown.postCritDamage` 回退。 */
+  rawDamage?: number
   /** 防御相关 */
   defenseValue: number
   /** 实际防御值（加成后） */
@@ -74,7 +78,7 @@ export interface DamageBreakdown {
   skillDmgReduction?: number
   generalDamageReduction?: number
   damageTakenIncrease?: number
-  /** 来源方伤害提升 */
+  /** 来源方伤害提升（在原始伤害阶段生效） */
   damageBoost?: number
   /** 暴击承伤减免（目标方） */
   critDmgTakenReduction?: number
@@ -82,11 +86,11 @@ export interface DamageBreakdown {
   physicalDmgReduction?: number
   /** 魔法伤害减免（目标方，按伤害大类） */
   magicalDmgReduction?: number
-  /** 火系技能伤害加成（来源方） */
+  /** 火系技能伤害加成（来源方，在原始伤害阶段生效） */
   fireSkillDmgBonus?: number
-  /** 物理技能伤害加成（来源方） */
+  /** 物理技能伤害加成（来源方，在原始伤害阶段生效） */
   physicalSkillDmgBonus?: number
-  /** 低血量增伤（来源方） */
+  /** 低血量增伤（来源方，在原始伤害阶段生效） */
   damageToLowHp?: number
   /** 当前生效的技能元素类型 */
   elementType?: string

@@ -164,13 +164,13 @@ function onTagLeave() {
   color: var(--color-info);
   font-weight: var(--font-weight-bold);
   border-radius: var(--radius-sm);
-  background: rgba(79, 195, 247, 0.1);
+  background: var(--color-info-bg);
   border: 1px solid rgba(79, 195, 247, 0.25);
   transition: background var(--transition-fast) ease;
 }
 
 .bar-collapse-badge:hover {
-  background: rgba(79, 195, 247, 0.2);
+  background: var(--color-info-bg);
 }
 
 /* 折叠指示器弹出/收起动画 */

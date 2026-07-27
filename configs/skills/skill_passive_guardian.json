@@ -316,7 +316,7 @@
   {
     "id": "guardian_pain_suppression",
     "name": "痛感抑制",
-    "description": "每次受击后，永久增加+3防御力（上限30）",
+    "description": "每次受击后，增加+3防御力（上限30）",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,

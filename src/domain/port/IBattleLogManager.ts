@@ -1,3 +1,5 @@
+import type { UnifiedLogParams, BattleLogParams, DebugLogParams, LogEntry, LogFilters } from '@/shared/types/battle-log'
+
 /**
  * 战斗日志管理器端口接口
  *
@@ -10,25 +12,31 @@ export interface IBattleLogManager {
    * @param message 日志文本
    * @param options 可选参数（如日志级别）
    */
-  addDebugLog(message: string, options?: Record<string, unknown>): void
+  addDebugLog(message: string, options?: DebugLogParams): void
 
   /**
    * 添加系统日志
-   * @param params 日志参数（具体类型由实现层定义）
+   * @param params 日志参数
    */
-  addSystemLog(params: any): void
+  addSystemLog(params: UnifiedLogParams): void
 
   /**
    * 添加战斗日志
-   * @param params 日志参数（具体类型由实现层定义）
+   * @param params 日志参数（turn 必填）
    */
-  addBattleLog(params: any): void
+  addBattleLog(params: BattleLogParams): void
 
   /**
    * 添加行为日志
-   * @param params 日志参数（具体类型由实现层定义）
+   * @param params 日志参数
    */
-  addActionLog(params: any): void
+  addActionLog(params: UnifiedLogParams): void
+
+  /**
+   * 添加物品日志
+   * @param params 日志参数
+   */
+  addItemLog(params: UnifiedLogParams): void
 
   /** 清除所有日志 */
   clearLogs(): void
@@ -37,7 +45,52 @@ export interface IBattleLogManager {
    * 获取系统日志
    * @returns 系统日志条目列表
    */
-  getSystemLogs(): unknown[]
+  getSystemLogs(): LogEntry[]
+
+  /**
+   * 获取调试日志
+   * @returns 调试日志条目列表
+   */
+  getDebugLogs(): LogEntry[]
+
+  /**
+   * 获取所有日志（按 index 排序）
+   */
+  getAllLogs(): LogEntry[]
+
+  /**
+   * 获取过滤后的日志
+   */
+  getFilteredLogs(): LogEntry[]
+
+  /**
+   * 获取当前过滤器配置
+   */
+  getFilters(): LogFilters
+
+  /**
+   * 更新过滤器配置
+   * @param newFilters 部分过滤器配置
+   */
+  updateFilters(newFilters: Partial<LogFilters>): void
+
+  /**
+   * 添加日志更新监听器
+   * @param callback 监听回调
+   */
+  addListener(callback: (logs: LogEntry[]) => void): void
+
+  /**
+   * 移除日志更新监听器
+   * @param callback 要移除的回调
+   */
+  removeListener(callback: (logs: LogEntry[]) => void): void
+
+  /**
+   * 启用/禁用战斗日志自动清理
+   * @param enabled 是否启用自动清理
+   */
+  setAutoCleanup(enabled: boolean): void
 
   /**
    * 同步战斗日志到存储
@@ -54,4 +107,15 @@ export interface IBattleLogManager {
    * 将缓冲的 sub 日志全部发射（action 日志之后调用）
    */
   flushBufferedSubLogs(): void
+
+  /**
+   * 导出日志为 JSON 字符串
+   */
+  exportLogs(): string
+
+  /**
+   * 从 JSON 字符串导入日志
+   * @param logsData JSON 格式的日志数据
+   */
+  importLogs(logsData: string): void
 }

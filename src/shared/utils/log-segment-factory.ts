@@ -117,7 +117,9 @@ export function blocksToText(blocks: NarrativeBlock[]): string {
         lines.push('')
         break
       case 'round':
-        lines.push(`─────────────────────── 第 ${b.turn} 回合${b.tag ? ` · ${b.tag}` : ''} ───────────────────────`)
+        lines.push(b.turn === 0
+          ? `─────────────────────── 战斗开始 ───────────────────────`
+          : `─────────────────────── 第 ${b.turn} 回合${b.tag ? ` · ${b.tag}` : ''} ───────────────────────`)
         break
       case 'action':
         lines.push(`◆ ${segsText(b.header)}`)

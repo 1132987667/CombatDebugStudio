@@ -256,7 +256,7 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
   color: var(--color-brand-red);
   margin-left: var(--space-2);
   padding: 1px var(--space-1);
-  background: rgba(233, 69, 96, 0.2);
+  background: var(--color-danger-bg);
   border-radius: var(--radius-sm);
 }
 

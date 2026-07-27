@@ -100,7 +100,7 @@ export class BuffContext {
     return this._buffSystem ?? undefined
   }
 
-  public getAttributeValue(attribute: string): number {
+  public getAttrVal(attribute: string): number {
     const character = this.getCharacter()
     return character ? character.getAttribute(attribute as ATTRIBUTE_CODE) : 0
   }

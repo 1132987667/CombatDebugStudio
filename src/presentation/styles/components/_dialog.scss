@@ -41,6 +41,7 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-info);
+  text-shadow: 0 0 5px rgba(79, 195, 247, 0.5);
 }
 
 .dialog-close {
@@ -59,6 +60,7 @@
 }
 
 .dialog-content {
+  background: var(--color-bg-secondary);
   padding: var(--space-5);
   overflow-y: auto;
   flex: 1;

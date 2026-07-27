@@ -95,9 +95,13 @@ export function dealDotDamage(ctx: TriggerExecutionContext): void {
  * reflect_damage — 按百分比反弹伤害给攻击者
  * 
  * 反伤模型说明：
- * - basis='final'（模型一）：反伤 = 实际扣血 * 比例。受目标防御影响，防御越高反伤越低。
- * - basis='raw'  （模型二）：反伤 = 减免前伤害 * 比例。鼓励坦克堆防御，反伤下限稳定，
- *                           且能正确反馈敌方暴击带来的威胁。
+ * - basis='final'（模型一）：反伤 = 最终扣血 × 比例。受目标防御影响。
+ * - basis='raw'  （模型二）：反伤 = 原始伤害 × 比例。
+ *   ★ 原始伤害 = 来源方全部产出（含暴击、伤害提升、火系/物理/低血量加成），
+ *     目标方减免前。鼓励坦克堆防御，反伤下限稳定。
+ * 
+ * ⚠️ 数值平衡影响：rawDamage 基数已包含来源方全部加成（damageBoost、火系/物理/低血量等），
+ *    配置了 basis='raw' 的反伤 Buff 数值约增大 10-30%，需策划确认。
  * 
  * @param ctx.params.percent - 反弹比例 (0.0 - 1.0)
  * @param ctx.params.basis   - 计算基数：'final'（默认，最终扣血）| 'raw'（减免前原始伤害）

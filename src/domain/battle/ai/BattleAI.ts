@@ -156,7 +156,7 @@ export class BaseBattleAI implements BattleAI {
       return this.selectAttack(participant)
     } catch (error) {
       LoggerProvider.logger.addDebugLog('AI决策出错')
-      console.log('AI决策出错')
+      console.error('AI决策出错', error)
       try {
         return this.selectAttack(participant)
       } catch (attackError) {

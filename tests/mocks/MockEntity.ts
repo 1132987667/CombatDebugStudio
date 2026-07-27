@@ -110,7 +110,7 @@ export function createMockEntity(
     skills: { small: [], passive: [], ultimate: [] },
     maxHealth: hp,
     currentHealth: curHp,
-    getAttributeValue: (attr: string) => attrs[attr as ATTRIBUTE_CODE],
+    getAttrVal: (attr: string) => attrs[attr as ATTRIBUTE_CODE],
     getAttribute: (attr: string) => attrs[attr as ATTRIBUTE_CODE]?.value ?? 0,
     getAttr: (attr: string) => attrs[attr as ATTRIBUTE_CODE]?.value ?? 0,
     getAttrValue: (attr: string) => attrs[attr as ATTRIBUTE_CODE],

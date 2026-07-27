@@ -225,7 +225,6 @@ src/
             visual-effect-mapper.ts
     index.ts
     main.ts
-.dumpignore
 .gitignore
 AGENTS.md
 eslint.config.js
@@ -238,174 +237,6 @@ vite.config.ts
 
 ============================================================
 文件内容:
-
---- .dumpignore ---
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Dependencies
-node_modules
-.pnp
-.pnp.js
-
-# Testing
-coverage
-*.lcov
-.nyc_output
-
-# 文档
-.trae/
-.reasonix/
-.vscode/
-build/
-
-# json数据
-configs/
-
-docs/
-documents/
-prompts/
-scripts/
-tests/
-tools/
-
-output.txt
-
-.gitattributes
-.git
-.nuxt
-.github/
-
-
-dist
-dist-ssr
-*.local
-
-package-lock.json
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Temporary files
-*.tmp
-*.temp
-
-# .trae directory
-.trae/
-.cache
-
-# OS generated files
-Thumbs.db
-.DS_Store
-
-# Package manager files
-.npm
-.yarn-integrity
-
-# TypeScript
-*.tsbuildinfo
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-out
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Gatsby files
-.cache/
-# Comment in the public line in if your project uses Gatsby and not Next.js
-# https://nextjs.org/blog/next-9-1#public-directory-support
-# public
-
-# vuepress build output
-.vuepress/dist
-
-# vuepress v2.x temp and cache directory
-.temp
-.cache
-
-# Docusaurus cache and generated files
-.docusaurus
-
-# Serverless directories
-.serverless/
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# yarn v2
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
 
 --- .gitignore ---
 @ -1,158 +1,25 @@
@@ -1685,30 +1516,36 @@ function buildBuffRawItems(
  * BattleDataGenerator.ts — 战斗数据批量生成器
  *
  * 职责：随机选择双方成员（1v1 或 2v2），执行多场战斗，
- *       收集每场战斗日志，合并为单一文本文件并触发浏览器下载。
+ *       收集每场战斗的叙事日志（与日志面板导出格式完全一致），
+ *       合并为单一文本文件并触发浏览器下载。
  *
- * 设计原则：
- * - 复用 BattleSystem 核心循环，不重复实现战斗逻辑
- * - 强制 quickMode 以跳过动画/等待，确保多场在数秒内完成
- * - 使用 BattleRecorder 的 recording.logs + combatRecords 作为日志来源
- * - 生成前后备份/恢复全局 battleLogManager，防止日志污染 UI 面板
- * - 每场战斗清理 BuffSystem 残留，防止内存泄漏
+ * 日志管线（与面板导出同源）：
+ *   battleLogManager 战斗日志 → RoundNarrativeRenderer → blocksToText
+ *
+ * 关键处理：
+ * - 生成期间 setAutoCleanup(false)，避免长战斗日志超 200 条被截断
+ * - 每场战斗前 clearLogs，保证每场日志独立完整
+ * - 结束后恢复用户原有日志与 autoCleanup
  */
 import type { Container } from '@/infrastructure/di/Container'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BattleService } from '@/application/facade/BattleFacade'
-import type { RecordedBattle } from '@/domain/battle/service/BattleRecorder'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { PARTICIPANT_SIDE, BattleStatus } from '@/domain/battle/type/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { SeededRandom } from '@/shared/utils/SeededRandom'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
-import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { battleLogManager } from '@/infrastructure/adapters/logging'
+import { LogType, type BattleLogEntry, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
+import { blocksToText } from '@/shared/utils/log-segment-factory'
 
 export interface BattleGenerationOptions {
   /** 总场次数（默认 50） */
   totalBattles?: number
-  /** 战斗模式：'1v1' | '2v2' | 'random'（随机选择 1v1 或 2v2） */
+  /** 战斗模式：'1v1' | '2v2' | 'random'（随机选择） */
   mode?: '1v1' | '2v2' | 'random'
   /** 进度回调（0~1） */
   onProgress?: (progress: number, current: number, total: number) => void
@@ -1721,19 +1558,19 @@ export interface SingleBattleLog {
   enemyNames: string[]
   winner: string
   totalRounds: number
-  logText: string
+  /** 叙事格式日志文本（与面板导出一致） */
+  narrativeText: string
 }
 
 export class BattleDataGenerator {
   private battleSystem: BattleSystem
+  private renderer = new RoundNarrativeRenderer()
   private _cancelled = false
-  /** 上一场战斗的参与者 ID，用于 resetBattle 后清理 BuffSystem 残留修饰符 */
+  /** 上一场参与者 ID，用于清理 BuffSystem 残留修饰符 */
   private _prevParticipantIds: string[] = []
-  /** 当前场次的参与者 ID */
   private _currentParticipantIds: string[] = []
 
   constructor(container: Container) {
-    // 通过 BattleService 链路获取 BattleSystem，避免直接依赖容器 Symbol 键
     const battleService = container.resolve<BattleService>('BattleService')
     this.battleSystem = battleService.getBattleManager().getBattleSystem()
   }
@@ -1743,163 +1580,213 @@ export class BattleDataGenerator {
     this._cancelled = true
   }
 
-  /**
-   * 执行批量战斗生成
-   */
   async generate(options: BattleGenerationOptions = {}): Promise<string> {
     const total = options.totalBattles ?? 50
     const mode = options.mode ?? 'random'
     const allEnemies = GameDataProcessor.getEnemiesData()
-
     if (allEnemies.length < 1) {
       throw new Error('角色库数据不足，至少需要 1 个角色')
     }
 
     this._cancelled = false
+    this._prevParticipantIds = []
+    this._currentParticipantIds = []
 
-    // ★ 保存并备份全局 battleLogManager，防止 50 场战斗日志污染 UI 面板
-    const savedBattleLogs = (LoggerProvider.logger as any).exportLogs?.() ?? '[]'
-    LoggerProvider.logger.clearLogs()
+    // ── 备份并隔离全局日志状态，防止 50 场战斗污染 UI 面板 ──
+    const savedBattleLogs = battleLogManager.exportLogs()
+    battleLogManager.setAutoCleanup(false) // 解除 200 条上限，防止长战斗日志被截断
+    battleLogManager.clearLogs()
 
     const battleLogs: SingleBattleLog[] = []
+    const prevDebugEnabled = debugGate.enabled
+    debugGate.enabled = false
+    const prevHeadless = this.battleSystem.getHeadless()
+    this.battleSystem.setHeadless(true)
 
     try {
-      // ★ 状态保存移入 try 内，确保 finally 恢复时值有效
-      const prevDebugEnabled = debugGate.enabled
-      debugGate.enabled = false
+      for (let i = 0; i < total; i++) {
+        if (this._cancelled) break
+        options.onProgress?.(i / total, i + 1, total)
 
-      const prevQuickMode = this.battleSystem.getQuickMode()
-      this.battleSystem.setQuickMode(true)
+        // 每场战斗使用独立种子，确保结果不重复
+        const rng = new SeededRandom(Date.now() + i * 9973 + Math.floor(Math.random() * 10000))
 
-      try {
-        for (let i = 0; i < total; i++) {
-          if (this._cancelled) break
+        // 决定本场模式
+        const battleMode = mode === 'random' ? (rng.next() < 0.5 ? '1v1' : '2v2') : mode
+        const teamSize = battleMode === '1v1' ? 1 : 2
 
-          options.onProgress?.(i / total, i + 1, total)
-
-          // 决定本场模式
-          const battleMode = mode === 'random'
-            ? (Math.random() < 0.5 ? '1v1' : '2v2')
-            : mode
-          const teamSize = battleMode === '1v1' ? 1 : 2
-
-          // 随机选择双方成员
-          // 当角色不足时，允许同一角色出现在双方（克隆），确保至少 1v1
-          const shuffled = [...allEnemies].sort(() => Math.random() - 0.5)
-          const allySource = shuffled.slice(0, teamSize)
-          // 若剩余角色不足，从已选角色中补足（允许克隆）
-          let enemySource = shuffled.slice(teamSize, teamSize * 2)
-          while (enemySource.length < teamSize) {
-            enemySource.push(allySource[enemySource.length % allySource.length])
-          }
-
-          // 构建参战实体（enemyToParticipant 内部使用全局计数器确保 ID 唯一）
-          const allyTeam = allySource.map((e, idx) =>
-            this.createParticipant(e, PARTICIPANT_SIDE.ALLY, idx),
-          )
-          const enemyTeam = enemySource.map((e, idx) =>
-            this.createParticipant(e, PARTICIPANT_SIDE.ENEMY, idx),
-          )
-
-          // ★ 重新生成 battleId，使每场战斗拥有独立 ID
-          this.battleSystem.regenerateBattleId()
-
-          // 记录本场参与者 ID，用于下一轮循环开始前的 BuffSystem 清理
-          this._currentParticipantIds = [
-            ...allyTeam.map(e => e.id),
-            ...enemyTeam.map(e => e.id),
-          ]
-
-          // 初始化战斗
-          const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
-          this.battleSystem.setBattleState(BattleStatus.ACTIVE)
-          const battleId = battleState.battleId
-
-          // 执行战斗直到结束
-          let rounds = 0
-          const MAX_ROUNDS = 200 // 安全上限
-          while (
-            this.battleSystem.getBattleStatus() === BattleStatus.ACTIVE &&
-            rounds < MAX_ROUNDS
-          ) {
-            await this.battleSystem.processTurn()
-            rounds++
-          }
-
-          // ★ 清理上一场参与者残留在 BuffSystem 中的 modifierStacks
-          //   resetBattle 只清当前 participants 的 buffs，旧 ID 的 modifierStacks
-          //   仍残留在 BuffSystem 内部 Map 中，需跨迭代显式清理
-          this.cleanupPrevBuffSystemEntries()
-
-          // 收集日志 — 从 BattleRecorder 获取
-          const recording = this.battleSystem.getBattleRecording(battleId)
-          const logText = this.formatBattleLog(recording, battleId, allyTeam, enemyTeam, rounds)
-
-          const winner = this.battleSystem.getBattleData()?.winner
-          battleLogs.push({
-            battleIndex: i + 1,
-            battleId,
-            allyNames: allyTeam.map(e => e.name),
-            enemyNames: enemyTeam.map(e => e.name),
-            winner: winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方',
-            totalRounds: rounds,
-            logText,
-          })
-
-          // 重置战斗（为下一场做准备）
-          this.battleSystem.resetBattle()
-
-          // ★ 记录本场参与者 ID 供下一轮循环清理 BuffSystem 残留
-          this._prevParticipantIds = this._currentParticipantIds
-          this._currentParticipantIds = []
-
-          // 让出主线程，避免 UI 冻结
-          if (i % 5 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 0))
-          }
+        // 随机选择双方成员；角色不足时允许克隆补足，保证至少 1v1
+        const shuffled = rng.shuffle(allEnemies)
+        const allySource = shuffled.slice(0, teamSize)
+        const enemySource = shuffled.slice(teamSize, teamSize * 2)
+        while (enemySource.length < teamSize) {
+          enemySource.push(allySource[enemySource.length % allySource.length])
         }
-      } finally {
-        // 恢复原始设置
-        this.battleSystem.setQuickMode(prevQuickMode)
-        debugGate.enabled = prevDebugEnabled
+
+        const allyTeam = allySource.map((e, idx) => this.createParticipant(e, PARTICIPANT_SIDE.ALLY, idx))
+        const enemyTeam = enemySource.map((e, idx) => this.createParticipant(e, PARTICIPANT_SIDE.ENEMY, idx))
+        this._currentParticipantIds = [...allyTeam.map(e => e.id), ...enemyTeam.map(e => e.id)]
+
+        // 清理上一场参与者残留在 BuffSystem 中的修饰符
+        this.cleanupPrevBuffSystemEntries()
+        // 清空上一场的战斗日志，保证本场日志独立完整
+        battleLogManager.clearLogs()
+
+        // 每场独立 battleId
+        this.battleSystem.regenerateBattleId()
+        const battleState = this.battleSystem.initialize(allyTeam, enemyTeam)
+        this.battleSystem.setBattleState(BattleStatus.ACTIVE)
+        const battleId = battleState.battleId
+
+        // 执行战斗直到结束
+        let rounds = 0
+        const MAX_ROUNDS = 200
+        while (this.battleSystem.getBattleStatus() === BattleStatus.ACTIVE && rounds < MAX_ROUNDS) {
+          await this.battleSystem.processTurn()
+          rounds++
+        }
+
+        // 补充可能缺失的态势快照和战斗结束日志（短战斗提前结束时会被跳过）
+        this.ensureEndBattleLogs()
+
+        // ── 收集本场叙事日志（与面板导出同管线）──
+        const narrativeText = this.collectNarrativeText()
+        const winner = this.battleSystem.getBattleData()?.winner
+
+        battleLogs.push({
+          battleIndex: i + 1,
+          battleId,
+          allyNames: allyTeam.map(e => e.name),
+          enemyNames: enemyTeam.map(e => e.name),
+          winner: winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方',
+          totalRounds: rounds,
+          narrativeText,
+        })
+
+        this.battleSystem.resetBattle()
+        this._prevParticipantIds = this._currentParticipantIds
+        this._currentParticipantIds = []
+
+        // 让出主线程，避免 UI 冻结
+        if (i % 5 === 0) await new Promise(resolve => setTimeout(resolve, 0))
       }
     } finally {
-      // ★ 恢复全局 battleLogManager 状态
-      LoggerProvider.logger.clearLogs()
-      try {
-        ;(LoggerProvider.logger as any).importLogs?.(savedBattleLogs)
-      } catch {
-        // 恢复失败时仅丢失生成前的日志，不影响后续功能
+      // 恢复原始设置
+      this.battleSystem.setHeadless(prevHeadless)
+      debugGate.enabled = prevDebugEnabled
+      battleLogManager.setAutoCleanup(true)
+      // 恢复用户原有战斗日志（无条件恢复，避免取消后日志永久丢失）
+      battleLogManager.importLogs(savedBattleLogs)
+      // 清理最后一场参与者残留
+      this.cleanupPrevBuffSystemEntries()
+      // 清理可能未进入 _prevParticipantIds 的当前参与者
+      for (const id of this._currentParticipantIds) {
+        this.battleSystem.getBuffSystem().clearCharacterState(id)
       }
     }
 
     options.onProgress?.(1, total, total)
 
-    // 合并日志并下载（取消时不下载文件）
-    if (!this._cancelled) {
-      const mergedText = this.mergeLogs(battleLogs, total)
-      this.downloadFile(mergedText, `battle-data-${total}场-${this.getTimestamp()}.txt`)
+    if (!this._cancelled && battleLogs.length > 0) {
+      const mergedText = this.mergeLogs(battleLogs)
+      this.downloadFile(mergedText, `battle-data-${battleLogs.length}场-${this.getTimestamp()}.txt`)
     }
-
-    return this._cancelled ? 'cancelled' : battleLogs.map(b => b.logText).join('\n')
+    return this._cancelled ? 'cancelled' : 'done'
   }
 
   /**
-   * 清理上一场参与者残留在 BuffSystem 中的 modifierStacks
-   * - resetBattle 只清当前 participants 的 buff 实例，但 modifierStacks、shieldValues、
-   *   characterImmunities 等内部 Map 中旧 ID 的条目仍残留在 BuffSystem 中
-   * - 每轮循环开始时调用，清理上一轮记录的参与者 ID
+   * 收集当前战斗的叙事日志文本
+   * 与日志面板"导出"使用完全相同的渲染管线，保证格式一致
    */
+  private collectNarrativeText(): string {
+    const entries = battleLogManager
+      .getAllLogs()
+      .filter((l) => l.type === LogType.BATTLE) as BattleLogEntry[]
+    const blocks = this.renderer.renderEntries(entries)
+    return blocksToText(blocks)
+  }
+
+  /**
+   * 补充可能缺失的态势快照和战斗结束日志
+   *
+   * 短战斗可能在参与者行动中提前结束（processTurnInternal 第 703-705 行 return），
+   * 跳过回合末的态势快照输出（第 810-845 行）和 battle-header 渲染。
+   * 此方法检查日志中是否已包含这些内容，若缺失则直接补充。
+   */
+  private ensureEndBattleLogs(): void {
+    const battleData = this.battleSystem.getBattleData()
+    if (!battleData) return
+
+    const lastTurn = battleData.currentTurn || 1
+    const allBattles = battleLogManager.getAllLogs().filter(
+      (l) => l.type === LogType.BATTLE,
+    ) as BattleLogEntry[]
+
+    // 检查是否已有态势快照
+    const hasSnapshot = allBattles.some((l) => l.meta?.role === 'snapshot')
+    if (!hasSnapshot) {
+      const allySnapshot: string[] = []
+      const enemySnapshot: string[] = []
+      battleData.participants.forEach((p) => {
+        if (!p.isAlive()) return
+        const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
+        const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
+        const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
+        if (p.team === PARTICIPANT_SIDE.ALLY) allySnapshot.push(entry)
+        else enemySnapshot.push(entry)
+      })
+
+      if (allySnapshot.length > 0) {
+        battleLogManager.addBattleLog({
+          turn: lastTurn,
+          message: `我方  ${allySnapshot.join(' · ')}`,
+          segments: [
+            { text: '我方  ', classStr: 'log-friendly' },
+            { text: allySnapshot.join(' · ') },
+          ],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'snapshot' },
+        })
+      }
+      if (enemySnapshot.length > 0) {
+        battleLogManager.addBattleLog({
+          turn: lastTurn,
+          message: `敌方  ${enemySnapshot.join(' · ')}`,
+          segments: [
+            { text: '敌方  ', classStr: 'log-hostile' },
+            { text: enemySnapshot.join(' · ') },
+          ],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'snapshot' },
+        })
+      }
+    }
+
+    // 检查是否已有战斗结束横幅（role: 'battle'）
+    const hasEndBanner = allBattles.some(
+      (l) => l.meta?.role === 'battle' && l.message?.includes('战斗结束'),
+    )
+    if (!hasEndBanner && battleData.winner) {
+      const winnerLabel =
+        battleData.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'
+      battleLogManager.addBattleLog({
+        turn: lastTurn,
+        message: `战斗结束！胜利者：${winnerLabel}`,
+        segments: [{ text: `战斗结束！胜利者：${winnerLabel}` }],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'battle' },
+      })
+    }
+  }
+
+  /** 清理上一场参与者残留在 BuffSystem 中的修饰符、护盾、免疫等全部状态 */
   private cleanupPrevBuffSystemEntries(): void {
     for (const id of this._prevParticipantIds) {
-      this.battleSystem.getBuffSystem().clearAllBuffs(id)
+      this.battleSystem.getBuffSystem().clearCharacterState(id)
     }
     this._prevParticipantIds = []
   }
 
-  /**
-   * 创建参战实体
-   */
   private createParticipant(
     enemy: Enemy,
     side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY,
@@ -1908,120 +1795,41 @@ export class BattleDataGenerator {
     return GameDataProcessor.enemyToParticipant(enemy, side, seatIndex)
   }
 
-  /**
-   * 格式化单场战斗日志
-   * 结合 recording.combatRecords（结构化伤害/治疗）和 recording.logs（叙事事件）
-   */
-  private formatBattleLog(
-    recording: RecordedBattle | undefined,
-    battleId: string,
-    allyTeam: BattleEntity[],
-    enemyTeam: BattleEntity[],
-    rounds: number,
-  ): string {
-    const lines: string[] = []
-    const allyNames = allyTeam.map(e => e.name).join('、')
-    const enemyNames = enemyTeam.map(e => e.name).join('、')
-    const winner = this.battleSystem.getBattleData()?.winner
-    const winnerLabel = winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'
-
-    lines.push(`【第 ${battleId} 场】`)
-    lines.push(`我方: ${allyNames}`)
-    lines.push(`敌方: ${enemyNames}`)
-    lines.push(`回合数: ${rounds}`)
-    lines.push(`胜方: ${winnerLabel}`)
-    lines.push('─'.repeat(40))
-
-    if (!recording) {
-      lines.push('  （无记录数据）')
-      lines.push('')
-      return lines.join('\n')
-    }
-
-    // 1. 从 combatRecords 提取结构化动作（含 actorName、skillName、damage、heal）
-    const turnActions = new Map<number, string[]>()
-    for (const record of recording.combatRecords) {
-      const turn = record.turn ?? 0
-      if (!turnActions.has(turn)) turnActions.set(turn, [])
-
-      const actor = record.actorName || record.actorId
-      const target = record.targetName || record.targetId
-      const skillName = record.skillName ? `【${record.skillName}】` : '普通攻击'
-      const parts = [`    T${turn} ${actor} → ${target} ${skillName}`]
-      if (record.damage > 0) parts.push(`造成 ${record.damage} 伤害`)
-      if (record.heal > 0) parts.push(`恢复 ${record.heal} 气血`)
-      if (record.message) parts.push(`（${record.message}）`)
-
-      turnActions.get(turn)!.push(parts.join(' '))
-    }
-
-    // 按回合输出动作
-    const sortedTurns = [...turnActions.keys()].sort((a, b) => a - b)
-    for (const turn of sortedTurns) {
-      for (const line of turnActions.get(turn)!) {
-        lines.push(line)
-      }
-    }
-
-    // 2. 从 recording.logs 提取叙事事件（buff 添加/移除、控制效果等）
-    const buffLogs = recording.logs.filter(log => {
-      const msg = log.message || ''
-      return (
-        msg.includes('Buff') ||
-        msg.includes('buff') ||
-        msg.includes('BUFF') ||
-        msg.includes('添加') ||
-        msg.includes('移除')
-      )
-    })
-    for (const log of buffLogs) {
-      const turn = log.turn ?? ''
-      const msg = log.message || ''
-      lines.push(`    T${turn} [事件] ${msg}`)
-    }
-
-    lines.push('')
-    return lines.join('\n')
-  }
-
-  /**
-   * 合并所有战斗日志
-   */
-  private mergeLogs(
-    battleLogs: SingleBattleLog[],
-    total: number,
-  ): string {
+  /** 合并所有战斗日志（头部统计 + 每场叙事） */
+  private mergeLogs(battleLogs: SingleBattleLog[]): string {
     const header: string[] = []
     header.push('═'.repeat(60))
-    header.push(`  战斗数据报告 — 共 ${total} 场`)
+    header.push(`  战斗数据报告 — 共 ${battleLogs.length} 场`)
     header.push(`  生成时间: ${new Date().toLocaleString()}`)
     header.push('═'.repeat(60))
     header.push('')
 
-    // 统计摘要（排除取消标记项）
-    const validBattles = battleLogs.filter(b => b.totalRounds > 0)
-    const allyWins = validBattles.filter(b => b.winner === '我方').length
-    const enemyWins = validBattles.length - allyWins
-    const avgRounds = validBattles.length > 0
-      ? Math.round(validBattles.reduce((sum, b) => sum + b.totalRounds, 0) / validBattles.length)
-      : 0
-
-    header.push(`【统计摘要】`)
+    const allyWins = battleLogs.filter(b => b.winner === '我方').length
+    const enemyWins = battleLogs.length - allyWins
+    const totalRounds = battleLogs.reduce((s, b) => s + b.totalRounds, 0)
+    const avgRounds = battleLogs.length > 0 ? Math.round(totalRounds / battleLogs.length) : 0
+    header.push('【统计摘要】')
     header.push(`  我方胜: ${allyWins} 场 | 敌方胜: ${enemyWins} 场`)
     header.push(`  平均回合数: ${avgRounds}`)
-    header.push(`  总回合数: ${validBattles.reduce((sum, b) => sum + b.totalRounds, 0)}`)
+    header.push(`  总回合数: ${totalRounds}`)
     header.push('')
     header.push('═'.repeat(60))
     header.push('')
 
-    const body = validBattles.map(b => b.logText).join('\n')
+    const body = battleLogs.map(b => {
+      const meta = [
+        `━━━━━━━━━━ 第 ${b.battleIndex} 场 ━━━━━━━━━━`,
+        `我方: ${b.allyNames.join('、')}`,
+        `敌方: ${b.enemyNames.join('、')}`,
+        `胜方: ${b.winner}  |  回合数: ${b.totalRounds}`,
+        '─'.repeat(40),
+      ].join('\n')
+      return `${meta}\n${b.narrativeText}\n`
+    }).join('\n')
 
     return [...header, body].join('\n')
   }
 
-  /**
-   * 触发浏览器文件下载
-   */
   private downloadFile(content: string, filename: string): void {
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
@@ -2850,7 +2658,7 @@ export const AttributeCodeNames: Record<ATTRIBUTE_CODE, string> =
 /**
  * 根据属性编码获取属性元数据
  */
-export function getAttributeMeta(
+export function getAttrMeta(
   code: ATTRIBUTE_CODE,
 ): AttributeMeta | undefined {
   return AttributeMetaMap[code]
@@ -2861,7 +2669,7 @@ export function getAttributeMeta(
  * @param code 属性编码
  * @returns 默认值，未定义时返回 0
  */
-export function getAttributeDefaultValue(code: ATTRIBUTE_CODE): number {
+export function getAttrDv(code: ATTRIBUTE_CODE): number {
   return AttributeMetaMap[code]?.defaultValue ?? 0
 }
 
@@ -2908,6 +2716,7 @@ export function createDefaultBattleData(
     roundState: RoundStatus.NONE,
     skillManager,
     quickMode: false,
+    headless: false,
   }
 }
 
@@ -4101,12 +3910,18 @@ export class BattleAnimationManager {
     private rafTimer: RAFTimer,
     private getParticipants: () => Map<string, BattleEntity> | undefined,
     private getBattleSpeed: () => number,   // 改：传速度，不传（反向的）时长
-    private getQuickMode: () => boolean = () => false,  // ★ 新增：快速模式回调
+    private getQuickMode: () => boolean = () => false,
+    private getHeadless: () => boolean = () => false,  // ★ 新增：无头模式回调
   ) {}
+
+  /** ★ 是否跳过动画（快速模式 || 无头模式） */
+  private get shouldSkipAnimation(): boolean {
+    return this.getQuickMode() || this.getHeadless()
+  }
 
   /** 当前速度下的单行动总预算 T */
   private get budget(): number {
-    if (this.getQuickMode()) return 0  // ★ 快速模式：零预算
+    if (this.shouldSkipAnimation) return 0
     return getActionBudget(this.getBattleSpeed())
   }
 
@@ -4117,7 +3932,7 @@ export class BattleAnimationManager {
   }
 
   async waitForAnimation(): Promise<void> {
-    if (this.getQuickMode()) return  // ★ 快速模式：直接返回
+    if (this.shouldSkipAnimation) return
     while (this.isAnimating()) {
       await new Promise<void>((resolve) => {
         // 保存 resolve 引用，使外部可强制中断本轮等待
@@ -4151,8 +3966,7 @@ export class BattleAnimationManager {
     data: AnimationData,
     duration: number = 0,
   ): Promise<void> {
-    // ★ 快速模式：跳过动画，直接 resolve
-    if (this.getQuickMode()) return
+    if (this.shouldSkipAnimation) return
 
     const actualDuration = duration > 0 ? duration : this.budget
 
@@ -5225,7 +5039,8 @@ export class BattleSystem {
       this.rafTimer,
       () => this.battleData?.participants,
       () => this.battleData?.battleSpeed ?? 1,
-      () => this.battleData?.quickMode ?? false,  // ★ 新增：快速模式回调
+      () => this.battleData?.quickMode ?? false,
+      () => this.battleData?.headless ?? false,
     )
     this.lifecycleManager = new BattleLifecycleManager(
       () => this.battleData,
@@ -5242,6 +5057,10 @@ export class BattleSystem {
       this.battleRecorder,
       this.animationManager,
       this.buffSystem,
+    )
+
+    this.passiveSkillManager.setAnimationEnabledGetter(
+      () => !this.shouldSuppressAnimationEvents(),
     )
 
     // 树状调试日志收集器
@@ -5424,6 +5243,7 @@ export class BattleSystem {
     // ponytail: 注册 buff 添加回调，被动触发路径通过 eventBus 告知 UI 播放动画
     this.buffSystem.setBuffAppliedCallback(
       (characterId: string, buffId: string) => {
+        if (this.shouldSuppressAnimationEvents()) return  // ★ 无头/快速模式：抑制
         eventBus.emit(BattleEventCodes.BUFF_EFFECT, {
           targetId: characterId,
           buffName: buffId,
@@ -5505,7 +5325,7 @@ export class BattleSystem {
               }
             }
             // ★ 统一管道：触发器伤害/治疗动画
-            if (actualDamage > 0) {
+            if (actualDamage > 0 && !this.shouldSuppressAnimationEvents()) {
               eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
                 targetId,
                 damage: actualDamage,
@@ -5559,7 +5379,7 @@ export class BattleSystem {
       if (target?.isAlive()) {
         const actualHeal = target.heal(amount)
         // ★ 统一管道：触发器治疗动画
-        if (actualHeal > 0) {
+        if (actualHeal > 0 && !this.shouldSuppressAnimationEvents()) {
           eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
             targetId,
             damage: actualHeal,
@@ -6077,6 +5897,23 @@ export class BattleSystem {
   /** ★ 获取快速战斗模式状态 */
   public getQuickMode(): boolean {
     return this.battleData?.quickMode ?? false
+  }
+
+  /** ★ 设置无头模式（批量生成用，抑制所有 UI 动画事件） */
+  public setHeadless(enabled: boolean): void {
+    if (this.battleData) {
+      this.battleData.headless = enabled
+    }
+  }
+
+  /** ★ 获取无头模式状态 */
+  public getHeadless(): boolean {
+    return this.battleData?.headless ?? false
+  }
+
+  /** ★ 是否抑制 UI 动画事件发射（快速战斗 || 无头模式） */
+  private shouldSuppressAnimationEvents(): boolean {
+    return !!(this.battleData?.quickMode || this.battleData?.headless)
   }
 
   /** ★ 重新生成战斗ID（用于批量生成场景中每场战斗拥有独立ID） */
@@ -6897,7 +6734,7 @@ import {
   Modifier,
   AttributeValue,
   ATTRIBUTE_CODE,
-  getAttributeMeta,
+  getAttrMeta,
   type AttributeValues,
   ModifierType,
 } from '@/domain/attribute/types'
@@ -7746,7 +7583,7 @@ export class BattleParticipantImpl implements BattleEntity {
       const attrValue = this.stats.reCalAttributeValue(attrCode)
       if (!attrValue) continue
 
-      const meta = getAttributeMeta(attrCode)
+      const meta = getAttrMeta(attrCode)
       const isPercentage = meta?.isPercentage ?? attrValue.isPercentage
       const parts: string[] = [`基础值(${attrValue.base})`]
       for (const mod of attrValue.modifiers) {
@@ -8049,7 +7886,7 @@ export class ParticipantSkills {
  ** 功能: 参与者属性管理
  ** 描述: 
  **/
-import { ATTRIBUTE_CODE, type AttributeValue, getAttributeMeta, getAttributeDefaultValue } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, type AttributeValue, getAttrMeta, getAttrDv } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 
 export class ParticipantStats {
@@ -8097,8 +7934,8 @@ export class ParticipantStats {
       normalized[key as ATTRIBUTE_CODE] = value
     }
     for (const code of Object.values(ATTRIBUTE_CODE)) {
-      const meta = getAttributeMeta(code)
-      const baseValue = normalized[code] ?? getAttributeDefaultValue(code)
+      const meta = getAttrMeta(code)
+      const baseValue = normalized[code] ?? getAttrDv(code)
       this.initAttribute(code, baseValue, meta?.isPercentage ?? false)
     }
     // 初始化后使缓存失效，强制第一次读取时重算
@@ -8157,7 +7994,7 @@ export class ParticipantStats {
     if (!attrData) return
 
     // ponytail: 跳过运行时状态属性（血量、能量），它们由 setAttributeValue 单独维护，不从公式重算
-    const meta = getAttributeMeta(attrCode)
+    const meta = getAttrMeta(attrCode)
     if (meta?.isRuntimeState) return
 
     // 版本号比对：如果缓存是最新的，跳过重算
@@ -9515,7 +9352,7 @@ import type {
 } from '@/domain/battle/type/types'
 import {
   ATTRIBUTE_CODE,
-  getAttributeDefaultValue,
+  getAttrDv,
 } from '@/domain/attribute/types'
 import {
   createEmptyRecord,
@@ -10215,10 +10052,10 @@ export class BattleExecutor {
       criticalConfig: {
         rate:
           source.getAttribute(ATTRIBUTE_CODE.critRate) ||
-          getAttributeDefaultValue(ATTRIBUTE_CODE.critRate),
+          getAttrDv(ATTRIBUTE_CODE.critRate),
         multiplier:
           source.getAttribute(ATTRIBUTE_CODE.critDamage) ||
-          getAttributeDefaultValue(ATTRIBUTE_CODE.critDamage),
+          getAttrDv(ATTRIBUTE_CODE.critDamage),
       },
     }
   }
@@ -10261,7 +10098,7 @@ export class BattleExecutor {
     if (isMiss) {
       return {
         turn: turnNumber,
-        message: `${sourcePrefix}${source.name} → ${targetPrefix}${target.name}「普通攻击」`,
+        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name}发起「普通攻击」`,
         segments: [
           {
             text: `${sourcePrefix}${source.name}`,
@@ -10301,7 +10138,7 @@ export class BattleExecutor {
           kind: 'entity',
           faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
         },
-        { text: ' → ' },
+        { text: ' 对 ' },
         {
           text: `${targetPrefix}${target.name}`,
           classStr:
@@ -10311,7 +10148,7 @@ export class BattleExecutor {
           kind: 'entity',
           faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
         },
-        { text: `「普通攻击」` },
+        { text: `发起「普通攻击」` },
       ],
       category: isCritical
         ? BATTLE_LOG_CATEGORIES.CRIT
@@ -11361,8 +11198,8 @@ export class BattleLifecycleManager {
   private getBattleDelay(): number {
     const battle = this.getBattleData()
     if (!battle) return AUTO_BATTLE_CONFIG.DEFAULT_DELAY
-    // ★ 快速模式：零延迟
-    if (battle.quickMode) return 0
+    // ★ 快速/无头模式：零延迟
+    if (battle.quickMode || battle.headless) return 0
     return (
       AUTO_BATTLE_CONFIG.DELAYS[battle.battleSpeed] ??
       AUTO_BATTLE_CONFIG.DEFAULT_DELAY
@@ -13703,6 +13540,8 @@ export interface BattleData {
   skillManager?: import('@/domain/skill/SkillManager').SkillManager
   /** ★ 快速战斗模式：跳过动画和等待时间 */
   quickMode: boolean
+  /** ★ 无头模式：跳过动画时序 + 抑制所有 UI 动画事件（批量生成用） */
+  headless: boolean
 }
 
 /** 战斗回放系统版本号 */
@@ -16396,6 +16235,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.modifierStacks.delete(characterId)
   }
 
+  /** ★ 彻底清理指定角色的所有 Buff 相关状态（批量生成防内存泄漏） */
+  public clearCharacterState(characterId: string): void {
+    this.clearAllBuffs(characterId)
+    this.shieldValues.delete(characterId)
+    this.characterImmunities.delete(characterId)
+  }
+
   /**
    * 设置 Buff 条件评估状态（已激活/未激活）
    * ponytail: Phase 2 — 等待战斗系统在 气血/条件变化时调用此方法。
@@ -17644,7 +17490,7 @@ import type {
 } from '@/domain/battle/combat-record'
 import {
   ATTRIBUTE_CODE,
-  getAttributeDefaultValue,
+  getAttrDv,
 } from '@/domain/attribute/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
@@ -17779,7 +17625,7 @@ export class DamageCalculator {
     // 暴击判定
     let cr = source.getAttribute(ATTRIBUTE_CODE.critRate)
     if (Number.isNaN(cr)) {
-      cr = getAttributeDefaultValue(ATTRIBUTE_CODE.critRate)
+      cr = getAttrDv(ATTRIBUTE_CODE.critRate)
     }
     if (hasGuaranteedCrit || (this.config.enableCrit && Math.random() * 100 < cr)) {
       damageResult.isCritical = true
@@ -18606,8 +18452,16 @@ export class PassiveSkillManager {
   /** EffectRenderer — 结构化效果 → LogSegment 渲染 */
   private effectRenderer = new EffectRenderer()
 
+  /** 动画发射开关（由 BattleSystem 注入动态 getter） */
+  private _getAnimationEnabled: () => boolean = () => true
+
   setTraceCollector(c: TraceLogCollector): void {
     this.traceCollector = c
+  }
+
+  /** ★ 注入动画发射开关 getter（headless/quickMode 时抑制动画事件） */
+  setAnimationEnabledGetter(getter: () => boolean): void {
+    this._getAnimationEnabled = getter
   }
 
   constructor(skillManager: SkillManager, buffSystem: BuffSystem) {
@@ -18933,6 +18787,7 @@ export class PassiveSkillManager {
     effects: BattleEffect[],
     snapshots: Map<string, { before: number; after: number }>,
   ): void {
+    if (!this._getAnimationEnabled()) return  // ★ 无头/快速模式：抑制
     for (const effect of effects) {
       if (!effect.targetId) continue
 
@@ -20188,7 +20043,7 @@ export class SkillManager {
         `技能 ${skillId} 不可用: ${availability.reason}`,
         { level: LogLevel.WARN },
       )
-      console.error(`技能 ${skillId} 不可用:`, availability.reason)
+      console.log(`技能 ${skillId} 不可用:`, availability.reason)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
         targetId: target.id,
@@ -21289,6 +21144,7 @@ import type {
 } from '@/domain/battle/type/BattleEventType'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
+import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
@@ -21503,9 +21359,13 @@ export class BattleEventManager {
       store.setBattleActive(false)
       store.setAutoPlayMode(false)
       if (data && data.winner) {
+        const winnerLabel = data.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'
         LoggerProvider.logger.addBattleLog({
-          turn: '战斗结束',
-          message: `? ${data.winner === PARTICIPANT_SIDE.ALLY ? '鎴戞柟' : '鏁屾柟'}`,
+          turn: store.getCurrentTurn?.() ?? 1,
+          message: `战斗结束！胜利者：${winnerLabel}`,
+          segments: [{ text: `战斗结束！胜利者：${winnerLabel}` }],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'battle' },
         })
         // ponytail: 战报生成 — 不传参与者 气血 数据，仅有统计数据
         const summary = BattleSummaryGenerator.instance.onBattleEnd(data.winner)
@@ -22541,10 +22401,18 @@ export class BattleLogManager implements IBattleLogManager {
     this.battleLogs.push(logEntry)
 
     if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
-      this.battleLogs.pop()
+      this.battleLogs.shift()
     }
 
     this.emitLogUpdate()
+  }
+
+  /**
+   * 启用/禁用战斗日志自动清理
+   * 批量生成战斗数据时临时禁用，避免单场日志超出上限被截断
+   */
+  setAutoCleanup(enabled: boolean): void {
+    this.autoCleanup = enabled
   }
 
   recordBattleLog(battleLog: BattleLogEntry): void {
@@ -24365,7 +24233,7 @@ export * from '@/index'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Modifier, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
 import { ModifierSourceTypeNames } from '@/domain/attribute/types'
-import { getAttributeMeta, getAttributeCodeByName } from '@/domain/attribute/types'
+import { getAttrMeta, getAttributeCodeByName } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
 
 // ===================== 区间模式类型导出 =====================
@@ -24417,7 +24285,7 @@ const attributeMeta = computed(() => {
     if (!attributeCode) {
       attributeCode = props.title.toLowerCase()
     }
-    return getAttributeMeta(attributeCode)
+    return getAttrMeta(attributeCode)
   } catch (error) {
     console.error('获取属性元数据时出错:', error)
     return undefined
@@ -32206,7 +32074,6 @@ export const useBattleStore = defineStore('battle', () => {
     if (generationProgress.isGenerating) return
     generationProgress.isGenerating = true
     generationProgress.current = 0
-    generationProgress.total = 50
     generationProgress.percent = 0
 
     try {
@@ -37641,7 +37508,7 @@ onUnmounted(() => {
 
 <script setup lang="ts">
 import type { BattleService } from '@/application/facade/BattleFacade';
-import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttributeDefaultValue, getAttributeMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
+import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
 import { getAttributeDisplayConfig } from '@/presentation/config/attributeDisplay';
 import { BattleEventType, BattleEntity } from '@/domain/battle/type/types';
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
@@ -37711,7 +37578,7 @@ const displayEnergy = computed(() => {
 const attrVal = (code: ATTRIBUTE_CODE): number => {
   void snapVersion.value
   const char = currentCharacter.value
-  return char?.getAttributeValue(code)?.value ?? getAttributeDefaultValue(code)
+  return char?.getAttributeValue(code)?.value ?? getAttrDv(code)
 }
 
 const attackRange = computed(() => {
@@ -37886,7 +37753,7 @@ const formatCalculation = (step: ExtendedSkillStep): string => {
   if (step.calculation.baseValue != null) parts.push(String(step.calculation.baseValue))
   if (step.calculation.extraValues) {
     for (const ev of step.calculation.extraValues) {
-      const attrName = getAttributeMeta(ev.attribute as ATTRIBUTE_CODE)?.displayName ?? ev.attribute
+      const attrName = getAttrMeta(ev.attribute as ATTRIBUTE_CODE)?.displayName ?? ev.attribute
       parts.push(`${attrName}×${ev.ratio}`)
     }
   }
@@ -37965,10 +37832,10 @@ const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[]
 }
 
 const showAttrTooltipSimple = (event: MouseEvent, code: ATTRIBUTE_CODE) => {
-  const meta = getAttributeMeta(code)
+  const meta = getAttrMeta(code)
   const title = meta?.displayName ?? code
   const valueType = meta?.isPercentage ? AttributeValueType.PERCENT : AttributeValueType.VALUE
-  const defaultValue = getAttributeDefaultValue(code)
+  const defaultValue = getAttrDv(code)
   const attr = currentCharacter.value?.getAttributeValue(code)
   showAttrTooltip(event, title, attr?.modifiers || [], attr?.value ?? defaultValue, valueType)
 }
@@ -39071,6 +38938,7 @@ import { LogTooltipResolver } from '@/application/projection/LogTooltipResolver'
 import { container } from '@/infrastructure/di/Container'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import { blocksToText, segsText } from '@/shared/utils/log-segment-factory'
 
 // ───────────────────────── 渲染器 & 悬浮解析器 ─────────────────────────
 const renderer = new RoundNarrativeRenderer()
@@ -39261,58 +39129,6 @@ watch([battleLogs, sharedLogs, activeTab], () => {
 })
 
 // ───────────────────────── 导出（当前页签） ─────────────────────────
-function segsText(segs: LogSegment[]): string {
-  return segs.map((s) => s.text).join('')
-}
-
-function blocksToText(list: NarrativeBlock[]): string {
-  const lines: string[] = []
-  for (const b of list) {
-    switch (b.type) {
-      case 'battle-header':
-        lines.push('═══════════════════════════════════════════')
-        lines.push(segsText(b.segments))
-        lines.push('═══════════════════════════════════════════')
-        lines.push('')
-        break
-      case 'round':
-        lines.push(`─────────────────────── 第 ${b.turn} 回合${b.tag ? ` · ${b.tag}` : ''} ───────────────────────`)
-        break
-      case 'action':
-        lines.push(`◆ ${segsText(b.header)}`)
-        if (b.result) lines.push(`  ${segsText(b.result)}`)
-        for (let k = 0; k < b.subs.length; k++) {
-          const prefix = k === b.subs.length - 1 ? '└' : '├'
-          lines.push(`  ${prefix} ${segsText(b.subs[k])}`)
-        }
-        break
-      case 'settlement':
-        lines.push('')
-        lines.push('  ── 回合结算 ──')
-        for (const line of b.lines) lines.push(`    ${segsText(line)}`)
-        break
-      case 'snapshot':
-        lines.push('')
-        lines.push('  ── 态势 ──')
-        for (const line of b.lines) lines.push(`    ${segsText(line)}`)
-        break
-      case 'section':
-        lines.push(`【${b.title}】`)
-        for (const line of b.lines) lines.push(`  ${segsText(line)}`)
-        break
-      case 'summary':
-        lines.push('')
-        lines.push('═══════════════════════════════════════════')
-        for (const line of b.lines) lines.push(segsText(line))
-        lines.push('═══════════════════════════════════════════')
-        lines.push('')
-        break
-      default:
-        lines.push(segsText(b.segments))
-    }
-  }
-  return lines.join('\n')
-}
 
 function flatToText(e: LogEntry): string {
   if (e.segments?.length) return segsText(e.segments)
@@ -48556,7 +48372,6 @@ export class GameDataProcessor {
  * 文件: log-segment-factory.ts
  * 功能: 日志片段工厂 — 统一收口所有实体名的 LogSegment 生成
  * 描述: 三个工厂函数分别用于 buff/技能/被动，同时产出 classStr（着色）和 hover（可悬浮）。
- *       各调用点不再手拼实体名文本，统一走此工厂。
  *
  * 设计原则：
  * - 可测试：所有外部依赖通过接口注入
@@ -48564,7 +48379,7 @@ export class GameDataProcessor {
  * - 一致性：classStr 和 hover 在同一处决定
  */
 
-import type { LogSegment, LogSegmentHover } from '@/shared/types/battle-log'
+import type { LogSegment, LogSegmentHover, NarrativeBlock } from '@/shared/types/battle-log'
 import {
   classifyBuff,
   getBuffLogClass,
@@ -48651,6 +48466,65 @@ export function passiveSegment(
   const hover: LogSegmentHover = { kind: 'passive', id: skillId }
 
   return { text: `【${name}】`, classStr: 'log-passive', hover, kind: 'passive' }
+}
+
+// ==================== 叙事文本导出 ====================
+
+/** 将 LogSegment[] 拼接为纯文本 */
+export function segsText(segs: LogSegment[]): string {
+  return segs.map((s) => s.text).join('')
+}
+
+/** 将 NarrativeBlock[] 渲染为叙事纯文本 —— 与日志面板"导出"格式完全一致 */
+export function blocksToText(blocks: NarrativeBlock[]): string {
+  const lines: string[] = []
+  for (const b of blocks) {
+    switch (b.type) {
+      case 'battle-header':
+        lines.push('═══════════════════════════════════════════')
+        lines.push(segsText(b.segments))
+        lines.push('═══════════════════════════════════════════')
+        lines.push('')
+        break
+      case 'round':
+        lines.push(b.turn === 0
+          ? `─────────────────────── 战斗开始 ───────────────────────`
+          : `─────────────────────── 第 ${b.turn} 回合${b.tag ? ` · ${b.tag}` : ''} ───────────────────────`)
+        break
+      case 'action':
+        lines.push(`◆ ${segsText(b.header)}`)
+        if (b.result) lines.push(`  ${segsText(b.result)}`)
+        for (let k = 0; k < b.subs.length; k++) {
+          const prefix = k === b.subs.length - 1 ? '└' : '├'
+          lines.push(`  ${prefix} ${segsText(b.subs[k])}`)
+        }
+        break
+      case 'settlement':
+        lines.push('')
+        lines.push('  ── 回合结算 ──')
+        for (const line of b.lines) lines.push(`    ${segsText(line)}`)
+        break
+      case 'snapshot':
+        lines.push('')
+        lines.push('  ── 态势 ──')
+        for (const line of b.lines) lines.push(`    ${segsText(line)}`)
+        break
+      case 'section':
+        lines.push(`【${b.title}】`)
+        for (const line of b.lines) lines.push(`  ${segsText(line)}`)
+        break
+      case 'summary':
+        lines.push('')
+        lines.push('═══════════════════════════════════════════')
+        for (const line of b.lines) lines.push(segsText(line))
+        lines.push('═══════════════════════════════════════════')
+        lines.push('')
+        break
+      default:
+        lines.push(segsText(b.segments))
+    }
+  }
+  return lines.join('\n')
 }
 
 --- src/shared/utils/math.ts ---

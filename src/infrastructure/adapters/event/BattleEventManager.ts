@@ -13,6 +13,7 @@ import type {
 } from '@/domain/battle/type/BattleEventType'
 import { useBattleStore } from '@/presentation/stores/battleStore'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
+import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
@@ -227,9 +228,13 @@ export class BattleEventManager {
       store.setBattleActive(false)
       store.setAutoPlayMode(false)
       if (data && data.winner) {
+        const winnerLabel = data.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'
         LoggerProvider.logger.addBattleLog({
-          turn: '战斗结束',
-          message: `? ${data.winner === PARTICIPANT_SIDE.ALLY ? '鎴戞柟' : '鏁屾柟'}`,
+          turn: store.getCurrentTurn?.() ?? 1,
+          message: `战斗结束！胜利者：${winnerLabel}`,
+          segments: [{ text: `战斗结束！胜利者：${winnerLabel}` }],
+          category: BATTLE_LOG_CATEGORIES.STATUS,
+          meta: { role: 'battle' },
         })
         // ponytail: 战报生成 — 不传参与者 气血 数据，仅有统计数据
         const summary = BattleSummaryGenerator.instance.onBattleEnd(data.winner)

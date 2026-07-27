@@ -165,7 +165,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Modifier, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
 import { ModifierSourceTypeNames } from '@/domain/attribute/types'
-import { getAttributeMeta, getAttributeCodeByName } from '@/domain/attribute/types'
+import { getAttrMeta, getAttributeCodeByName } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
 
 // ===================== 区间模式类型导出 =====================
@@ -217,7 +217,7 @@ const attributeMeta = computed(() => {
     if (!attributeCode) {
       attributeCode = props.title.toLowerCase()
     }
-    return getAttributeMeta(attributeCode)
+    return getAttrMeta(attributeCode)
   } catch (error) {
     console.error('获取属性元数据时出错:', error)
     return undefined

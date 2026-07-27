@@ -69,7 +69,7 @@ $transition-fast: var(--transition-fast);
   --color-warning-bg: rgba(255, 152, 0, 0.2);
 
   --color-info: #4fc3f7;
-  --color-info-bg: rgba(79, 195, 247, 0.2);
+  --color-info-bg: var(--color-info-bg);
 
   /* 战斗系统专用语义色 */
   --color-heal: #4caf50;

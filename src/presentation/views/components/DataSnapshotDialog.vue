@@ -70,7 +70,7 @@ const exportState = async () => {
 
     const attributesDetail: Record<string, any> = {}
     for (const attrCode of attributeCodes) {
-      const attrValue = char.getAttributeValue(attrCode)
+      const attrValue = char.getAttrVal(attrCode)
       if (attrValue) {
         attributesDetail[attrCode] = {
           finalValue: attrValue.value,

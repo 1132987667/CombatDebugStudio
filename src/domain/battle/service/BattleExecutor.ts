@@ -1,7 +1,6 @@
 /**
  * 文件: BattleExecutor.ts
  * 功能: 战斗执行引擎 — 负责参与者行动、技能执行、攻击处理等运行时逻辑
- * 从 BattleSystem.ts 提取，职责单一
  */
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { convertToBattleState } from '@/domain/battle/aggregate/BattleState'
@@ -10,7 +9,6 @@ import type { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import {
   BattleTriggerPhase,
-  ActionResultType,
   createPassiveContext,
   createStepContext,
 } from '@/domain/battle/type/types'
@@ -21,7 +19,6 @@ import { EffectType } from '@/shared/types/effect'
 import {
   BATTLE_LOG_CATEGORIES,
   type BattleLogCategory,
-  buildNameSegments,
 } from '@/shared/types/battle-log'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { skillSegment } from '@/shared/utils/log-segment-factory'
@@ -35,7 +32,6 @@ import {
 
 import {
   BattleActionHelper,
-  BATTLE_CONSTANTS,
   PARTICIPANT_SIDE,
   ActionTypes,
 } from '@/domain/battle/type/types'
@@ -45,8 +41,6 @@ import {
   SkillType,
   AttackType,
   DamageCategory,
-  TargetFaction,
-  TargetStrategy,
   SkillStepType,
   convertSkillConfigToSkill,
 } from '@/domain/skill/types'
@@ -65,7 +59,7 @@ import type {
 } from '@/domain/battle/type/types'
 import {
   ATTRIBUTE_CODE,
-  getAttributeDefaultValue,
+  getAttrDv,
 } from '@/domain/attribute/types'
 import {
   createEmptyRecord,
@@ -77,7 +71,6 @@ import {
  * 封装参与者的行动决策、技能/攻击执行、伤害/治疗应用、日志记录等运行时逻辑。
  */
 export class BattleExecutor {
-  /** ponytail: P0/AI-1 — AUTO 模式使用的默认权重策略，无需 AI 实例 */
   private readonly defaultStrategy: AIPriorityStrategy =
     new BalancedAIPriorityStrategy()
 
@@ -98,8 +91,6 @@ export class BattleExecutor {
     private readonly animationManager: BattleAnimationManager,
     private readonly buffSystem: BuffSystem,
   ) {}
-
-  // ============ 参与者行动 ============
 
   /**
    * 检查参与者是否有控制类Buff
@@ -765,10 +756,10 @@ export class BattleExecutor {
       criticalConfig: {
         rate:
           source.getAttribute(ATTRIBUTE_CODE.critRate) ||
-          getAttributeDefaultValue(ATTRIBUTE_CODE.critRate),
+          getAttrDv(ATTRIBUTE_CODE.critRate),
         multiplier:
           source.getAttribute(ATTRIBUTE_CODE.critDamage) ||
-          getAttributeDefaultValue(ATTRIBUTE_CODE.critDamage),
+          getAttrDv(ATTRIBUTE_CODE.critDamage),
       },
     }
   }

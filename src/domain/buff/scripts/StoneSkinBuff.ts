@@ -4,7 +4,7 @@ import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 
 /**
  * 石化皮肤buff脚本
- * 提供物理伤害减免，但可能降低移动速度
+ * 提供伤害减免，但可能降低移动速度
  */
 export class StoneSkinBuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'buff_stone_skin'
@@ -12,9 +12,9 @@ export class StoneSkinBuff extends BaseBuffScript {
   protected _onApply(context: BuffContext): void {
     this.log(context, '皮肤变得如石头般坚硬！')
     
-    // 提供物理伤害减免
-    const physicalReduction = this.getConfigValue(context, 'physicalReduction', 0.3) // 默认30%物理减免
-    this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', physicalReduction, ModifierType.MULTIPLICATIVE)
+    // 提供伤害减免
+    const physicalReduction = this.getConfigValue(context, 'physicalReduction', 0.3) // 默认30%伤害减免
+    this.addModifier(context, ATTRIBUTE_CODE.damageReduction, physicalReduction, ModifierType.MULTIPLICATIVE)
     
     // 降低移动速度作为代价
     const speedPenalty = this.getConfigValue(context, 'speedPenalty', 0.15) // 默认降低15%速度
@@ -43,16 +43,16 @@ export class StoneSkinBuff extends BaseBuffScript {
       
       if (newReduction > currentReduction) {
         // 更新效果
-        context.removeModifiers('PHYSICAL_DAMAGE_REDUCTION')
+        context.removeModifiers(ATTRIBUTE_CODE.damageReduction)
         context.removeModifiers(ATTRIBUTE_CODE.speed)
         
-        this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', newReduction, ModifierType.MULTIPLICATIVE)
+        this.addModifier(context, ATTRIBUTE_CODE.damageReduction, newReduction, ModifierType.MULTIPLICATIVE)
         this.addModifier(context, ATTRIBUTE_CODE.speed, -newPenalty, ModifierType.MULTIPLICATIVE)
         
         context.setVariable('physicalReduction', newReduction)
         context.setVariable('speedPenalty', newPenalty)
         
-        this.log(context, `石化效果增强，物理减免：${(newReduction * 100).toFixed(1)}%，速度惩罚：${(newPenalty * 100).toFixed(1)}%`)
+        this.log(context, `石化效果增强，伤害减免：${(newReduction * 100).toFixed(1)}%，速度惩罚：${(newPenalty * 100).toFixed(1)}%`)
       }
     }
   }
@@ -69,16 +69,16 @@ export class StoneSkinBuff extends BaseBuffScript {
     const newPenalty = Math.min(currentPenalty + refreshBonus * 0.3, 0.4) // 最大40%
     
     // 更新效果
-    context.removeModifiers('PHYSICAL_DAMAGE_REDUCTION')
+    context.removeModifiers(ATTRIBUTE_CODE.damageReduction)
     context.removeModifiers(ATTRIBUTE_CODE.speed)
     
-    this.addModifier(context, 'PHYSICAL_DAMAGE_REDUCTION', newReduction, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.damageReduction, newReduction, ModifierType.MULTIPLICATIVE)
     this.addModifier(context, ATTRIBUTE_CODE.speed, -newPenalty, ModifierType.MULTIPLICATIVE)
     
     context.setVariable('physicalReduction', newReduction)
     context.setVariable('speedPenalty', newPenalty)
     
-    this.log(context, `物理减免提升至 ${(newReduction * 100).toFixed(1)}%，速度惩罚提升至 ${(newPenalty * 100).toFixed(1)}%`)
+    this.log(context, `伤害减免提升至 ${(newReduction * 100).toFixed(1)}%，速度惩罚提升至 ${(newPenalty * 100).toFixed(1)}%`)
   }
 }
 

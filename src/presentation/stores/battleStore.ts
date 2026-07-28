@@ -4,7 +4,7 @@ import type {
   BattleEntity,
   BattleState,
 } from '@/domain/battle/type/types'
-import { BattleStatus, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import { BattleStatus, ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
 import {
@@ -258,10 +258,10 @@ export const useBattleStore = defineStore('battle', () => {
     if (data?.winner) {
       battleLogManager.addBattleLog({
         turn: battleService.value?.getTurn() ?? 1,
-        message: `战斗结束！胜利者：${data.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`,
+        message: `战斗结束！胜利者：${ParticipantSideName[data.winner!]}`,
         segments: [
           {
-            text: `战斗结束！胜利者：${data.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`,
+            text: `战斗结束！胜利者：${ParticipantSideName[data.winner!]}`,
           },
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
@@ -479,7 +479,7 @@ export const useBattleStore = defineStore('battle', () => {
    * @param data 动画数据对象
    * @description 触发指定类型的动画效果，超时后自动清除（ANIMATION_COMPLETE 事件优先）
    */
-  const setAnimationState = (type: keyof AnimationState, data: any) => {
+  const setAnimationState = <T extends keyof AnimationState>(type: T, data: AnimationState[T]) => {
     animationState[type] = data
     // NOTE: 每个动画阶段最多持有 50%T 预算（领域层在同一时长内完成）
     const phaseDuration = getActionBudget(battleSpeed.value) * 0.5
@@ -555,7 +555,7 @@ export const useBattleStore = defineStore('battle', () => {
    * @description 终止战斗会话，记录胜负结果，清理相关状态
    */
   const endBattle = async (
-    winner: typeof PARTICIPANT_SIDE.ALLY = PARTICIPANT_SIDE.ALLY,
+    winner: typeof ParticipantSide.ALLY = ParticipantSide.ALLY,
   ) => {
     setLoading(true, '结束战斗')
     clearError()
@@ -854,12 +854,12 @@ export const useBattleStore = defineStore('battle', () => {
     const sourceIsAlly =
       action.sourceId !== 'system'
         ? battleState.participants.get(action.sourceId)?.team ===
-          PARTICIPANT_SIDE.ALLY
+          ParticipantSide.ALLY
         : false
     const targetIsAlly =
       action.targetId && action.targetId !== 'system'
         ? battleState.participants.get(action.targetId)?.team ===
-          PARTICIPANT_SIDE.ALLY
+          ParticipantSide.ALLY
         : undefined
     const fullLog = battleActionToLogEntry(action, battleState.participants, {
       turnNumber: action.turn,
@@ -925,14 +925,14 @@ export const useBattleStore = defineStore('battle', () => {
       category === 'action' &&
       log.source &&
       log.source !== '系统' &&
-      !log.source.includes(PARTICIPANT_SIDE.ENEMY) &&
+      !log.source.includes(ParticipantSide.ENEMY) &&
       !filters.action
     )
       return false
     if (
       category === 'action' &&
       log.source &&
-      log.source.includes(PARTICIPANT_SIDE.ENEMY) &&
+      log.source.includes(ParticipantSide.ENEMY) &&
       !filters.action
     )
       return false
@@ -959,7 +959,7 @@ export const useBattleStore = defineStore('battle', () => {
   const previewRosterCharacter = (enemy: Enemy) => {
     const entity = GameDataProcessor.enemyToParticipant(
       enemy,
-      PARTICIPANT_SIDE.ENEMY,
+      ParticipantSide.ENEMY,
     )
     // ponytail: 注册触发型被动技能到 PassiveSkillManager（预览时生效）
     const passiveSkillManager = container.resolve<any>('PassiveSkillManager')

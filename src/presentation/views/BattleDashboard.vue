@@ -263,7 +263,7 @@ import { useBattleStore } from '@/presentation/stores';
 import BattleReplay from "@/presentation/views/BattleReplay.vue";
 import { formatBonusValue } from '@/shared/utils/format';
 import { computed, onMounted, onUnmounted, ref, type ComputedRef } from "vue";
-import type { BattleSystem } from '@/domain/battle/BattleSystem'
+
 import type { BuffRawItem } from '@/shared/types/buff-display'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
 
@@ -271,9 +271,7 @@ const battleStore = useBattleStore();
 
 // 获取 BattleService
 const battleService = container.resolve<BattleService>('BattleService');
-const props = defineProps<{
-  battleSystem?: BattleSystem;
-}>();
+defineProps<{}>();
 
 // 响应式获取选中角色数据
 const currentCharacter: ComputedRef<BattleEntity | null> = computed(() => {

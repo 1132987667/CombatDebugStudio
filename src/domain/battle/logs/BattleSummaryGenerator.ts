@@ -11,8 +11,7 @@
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import type { BattleSummary, BattleSummaryAccumulator } from '@/shared/types/battle-summary'
 import { createAccumulator } from '@/shared/types/battle-summary'
-import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
-import type { ParticipantSide } from '@/domain/battle/type/types'
+import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
 
 /**
  * 战报生成器
@@ -144,7 +143,7 @@ export class BattleSummaryGenerator {
     const summary: BattleSummary = {
       battleId: acc.battleId,
       totalRounds,
-      winner: winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方',
+      winner: ParticipantSideName[winner],
       duration,
       totalDamageDealt: acc.totalDamageDealt,
       totalDamageTaken: acc.totalDamageTaken,

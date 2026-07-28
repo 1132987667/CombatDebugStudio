@@ -127,8 +127,6 @@ const props = defineProps<{
   isSelected?: boolean
   /** 是否敌方 */
   isEnemy?: boolean
-  /** 卡片引用 ID（用于动画） */
-  cardRefId?: string
   /** 当前选中的目标（情境属性高亮用） */
   targetEntity?: BattleEntity | null
   /** 强制触发重渲染的 tick 值 —— 每回合递增，让 shouldUpdateComponent 检测到 prop 变化 */
@@ -144,7 +142,7 @@ const battleStore = useBattleStore()
 const showDebug = computed(() => battleStore.showDebug)
 
 // 从投影层快照读取核心数值
-const snap = computed(() => battleStore.participants.get(props.participant.id) ?? null)
+const snap = computed(() => battleStore.participants.get(props.participant.id))
 
 // 从快照派生 isAlive/hpPercent/energyPercent（回退到从实体直接读取）
 const isAlive = computed(() => snap.value?.isAlive ?? props.participant.isAlive())
@@ -170,14 +168,15 @@ const hpTransitionDuration = computed(() => {
 // 卡片引用
 const cardRef = ref<HTMLElement | null>(null)
 
-// ============ 卡片视觉状态（casting/hurt/healed/shielded） ============
-const cardVisualState = ref<string | null>(null)
+// ============ 卡片视觉状态（正在施放技能（吟唱/前摇）、受到伤害、被治疗、获得护盾） ============
+type CardVisualState = 'casting' | 'hurt' | 'healed' | 'shielded'
+const cardVisualState = ref<CardVisualState | null>(null)
 const hpFlash = ref(false)
 
 /**
  * 触发卡片视觉状态，自动在动画结束后清除
  */
-function triggerVisualState(state: 'casting' | 'hurt' | 'healed' | 'shielded', duration: number = 800) {
+function triggerVisualState(state: CardVisualState, duration: number = 800) {
   cardVisualState.value = state
   setTimeout(() => {
     if (cardVisualState.value === state) cardVisualState.value = null
@@ -256,11 +255,8 @@ const shieldPercent = computed(() => {
   return maxHp > 0 ? Math.min(100, (shieldValue.value / maxHp) * 100) : 0
 })
 
-const hasShield = computed(() => shieldValue.value > 0)
-
 const shieldText = computed(() => `${Math.floor(shieldValue.value)}`)
 
-/** Buff 原始条目 — 直接从投影层快照读取（由 participantMapper 预计算） */
 const buffListItems = computed((): BuffRawItem[] => snap.value?.buffs ?? [])
 
 // === 纯文本 Buff 显示模式 ===
@@ -353,21 +349,6 @@ const parsedBuffEffects = computed(() => {
 // 调试信息
 const showBreakdown = ref(false)
 
-const toggleBreakdown = () => {
-  showBreakdown.value = !showBreakdown.value
-}
-
-const formatBreakdownKey = (key: string) => {
-  const keyMap: Record<string, string> = {
-    base: '基础数值',
-    additive: '基础数值(固定)',
-    percentMultiplier: '属性加成',
-    independentMultiplier: '独立乘区',
-    finalMultiplier: '最终乘区',
-  }
-  return keyMap[key] || key
-}
-
 // 事件处理
 const handleClick = () => {
   emit('click', props.participant.id)
@@ -376,7 +357,6 @@ const handleClick = () => {
 // 暴露卡片引用给父组件（用于动画）
 defineExpose({
   cardRef,
-  participantId: props.participant.id,
   triggerVisualState,
   flashHpBar,
 })

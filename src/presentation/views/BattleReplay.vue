@@ -173,10 +173,12 @@ import { raf } from '@/shared/utils/RAF';
 import { ReplayBattleEvent, BattleEventType } from '@/domain/battle/type/types';
 import { RecordedBattle } from '@/domain/battle/service/BattleRecorder';
 import { SPEED_OPTIONS } from '@/shared/constants/speed';
+import { container } from '@/infrastructure/di/Container';
+import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces';
+import type { BattleSystem } from '@/domain/battle/BattleSystem';
+// no props — all data comes from DI
 
-const props = defineProps<{
-  battleManager?: any;
-}>();
+const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
 
 const emit = defineEmits<{
   (e: 'replay-event', event: ReplayBattleEvent, index: number): void;
@@ -271,31 +273,29 @@ function loadRecording() {
   console.log('加载记录');
 
   // 模拟加载一个记录
-  if (props.battleManager) {
-    const savedList = props.battleManager.getSavedBattleRecordingsList();
-    if (savedList.length > 0) {
-      const recording = props.battleManager.loadBattleRecording(savedList[0]);
-      if (recording) {
-        currentRecording.value = recording;
-        currentEventIndex.value = 0;
-        isPlaying.value = false;
-        emit('replay-start', recording);
-      }
+  const savedList = battleSystem.getSavedBattleRecordingsList();
+  if (savedList.length > 0) {
+    const recording = battleSystem.loadBattleRecording(savedList[0]);
+    if (recording) {
+      currentRecording.value = recording;
+      currentEventIndex.value = 0;
+      isPlaying.value = false;
+      emit('replay-start', recording);
     }
   }
 }
 
 function saveCurrentRecording() {
-  if (currentRecording.value && props.battleManager) {
-    const saveKey = props.battleManager.saveBattleRecording(currentRecording.value.battleId, currentRecording.value.battleId);
+  if (currentRecording.value) {
+    const saveKey = battleSystem.saveBattleRecording(currentRecording.value.battleId, currentRecording.value.battleId);
     console.log('保存记录:', saveKey);
   }
 }
 
 function deleteCurrentRecording() {
-  if (currentRecording.value && props.battleManager) {
+  if (currentRecording.value) {
     const saveKey = `battle_recording_${currentRecording.value.battleId}`;
-    const success = props.battleManager.deleteBattleRecording(saveKey);
+    const success = battleSystem.deleteBattleRecording(saveKey);
     if (success) {
       currentRecording.value = null;
       currentEventIndex.value = 0;

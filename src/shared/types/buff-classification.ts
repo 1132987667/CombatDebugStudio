@@ -17,6 +17,7 @@
  */
 
 import type { ResolvedEffectPlan } from '@/domain/buff/atomic/BuffConfigResolver'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 
 export type BuffDisplayType = 'buff' | 'debuff' | 'control'
 
@@ -81,14 +82,14 @@ export function deriveBuffFacets(config: {
   if (config.effectPlan && config.effectPlan.length > 0) {
     for (const effect of config.effectPlan) {
       switch (effect.type) {
-        case 'modifier': facets.push(BUFF_CATEGORY.MODIFIER); break
-        case 'dot':      facets.push(BUFF_CATEGORY.DOT); break
-        case 'hot':      facets.push(BUFF_CATEGORY.TRIGGER); break  // HOT 归入 trigger 类
-        case 'control':  facets.push(BUFF_CATEGORY.CONTROL); break
-        case 'shield':   facets.push(BUFF_CATEGORY.SHIELD); break
-        case 'trigger':  facets.push(BUFF_CATEGORY.TRIGGER); break
-        case 'aura':     facets.push(BUFF_CATEGORY.AURA); break
-        case 'immunity': facets.push(BUFF_CATEGORY.IMMUNITY); break
+        case AtomicEffectType.MODIFIER: facets.push(BUFF_CATEGORY.MODIFIER); break
+        case AtomicEffectType.DOT:      facets.push(BUFF_CATEGORY.DOT); break
+        case AtomicEffectType.HOT:      facets.push(BUFF_CATEGORY.TRIGGER); break  // HOT 归入 trigger 类
+        case AtomicEffectType.CONTROL: facets.push(BUFF_CATEGORY.CONTROL); break
+        case AtomicEffectType.SHIELD:  facets.push(BUFF_CATEGORY.SHIELD); break
+        case AtomicEffectType.TRIGGER: facets.push(BUFF_CATEGORY.TRIGGER); break
+        case AtomicEffectType.AURA:    facets.push(BUFF_CATEGORY.AURA); break
+        case AtomicEffectType.IMMUNITY: facets.push(BUFF_CATEGORY.IMMUNITY); break
       }
     }
     // 去重
@@ -154,12 +155,16 @@ export interface BuffClassificationInput {
   triggers?: unknown[]
   /** 属性修饰符 */
   attributes?: Record<string, string>
+  /** 护盾配置 */
+  shield?: unknown
   /** 免疫标签 */
   immunities?: string[]
   /** 是否为减益（遗留字段，被 polarity 取代） */
   isDebuff?: boolean
   /** 极性：直接决定 UI 颜色（取代 isDebuff + category 优先级链的猜测） */
-  polarity?: BuffPolarity
+  polarity?: BuffPolarity | string
+  /** 原子效果执行计划（从 ResolvedBuffConfig 传入） */
+  effectPlan?: ResolvedEffectPlan[]
 }
 
 /**
@@ -196,8 +201,8 @@ export function classifyBuff(
     return {
       category: BUFF_CATEGORY.OTHER,
       facets: [],
-      polarity: BUFF_POLARITY.NEUTRAL,
       isNegative: false,
+      polarity: BUFF_POLARITY.NEUTRAL,
     }
   }
 
@@ -207,7 +212,7 @@ export function classifyBuff(
   // 2. 确定极性：polarity → isDebuff → category 猜测（三级回退）
   let polarity: BuffPolarity
   if (config.polarity) {
-    polarity = config.polarity
+    polarity = config.polarity as BuffPolarity
   } else if (config.isDebuff !== undefined) {
     polarity = config.isDebuff ? BUFF_POLARITY.NEGATIVE : BUFF_POLARITY.POSITIVE
   } else {

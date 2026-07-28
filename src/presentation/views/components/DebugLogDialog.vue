@@ -37,7 +37,7 @@
             <span class="log-seq">#{{ log.index }}</span>
             <span class="log-level" :class="'level-' + log.level">{{ logLevelName(log.level) }}</span>
             <span class="log-source" v-if="log.source">[{{ log.source }}]</span>
-            <span class="log-message">{{ log.message }}</span>
+            <span class="log-message">{{ log.segments?.map(s => s.text).join('') || log.message || '' }}</span>
             <div v-if="log.context" class="log-context">
               <pre>{{ JSON.stringify(log.context, null, 2) }}</pre>
             </div>
@@ -118,7 +118,7 @@ const logLevelName = (level: LogLevel): string => {
 
 const downloadLogs = () => {
   const text = localLogs.value
-    .map((log) => `[${logLevelName(log.level)}] ${log.message}`)
+    .map((log) => `[${logLevelName(log.level)}] ${log.segments?.map(s => s.text).join('') || log.message || ''}`)
     .join('\n')
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)

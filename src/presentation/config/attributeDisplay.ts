@@ -62,8 +62,6 @@ export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = 
   damageTakenIncrease:         { displayTier: 'advanced',    group: 'defense' },
   damageBoost:                 { displayTier: 'advanced',    group: 'offense' },
   poisonRes:                   { displayTier: 'situational', group: 'control' },
-  physicalDmgReduction:        { displayTier: 'advanced',    group: 'defense' },
-  magicalDmgReduction:         { displayTier: 'advanced',    group: 'defense' },
   fireSkillDmgBonus:           { displayTier: 'situational', group: 'offense' },
   physicalSkillDmgBonus:       { displayTier: 'situational', group: 'offense' },
   damageToDemon:               { displayTier: 'situational', group: 'offense' },

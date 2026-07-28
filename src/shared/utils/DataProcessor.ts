@@ -54,7 +54,7 @@ export interface ValidationRule<T> {
   /** 正则表达式（字符串类型） */
   pattern?: RegExp
   /** 自定义验证函数 */
-  validator?: (value: any) => boolean
+  validator?: (value: unknown) => boolean
   /** 错误消息 */
   message?: string
 }
@@ -70,7 +70,7 @@ export interface ValidationResult {
  * 数据处理工具类
  */
 export class DataProcessor {
-  private static cache: Map<string, { data: any; timestamp: number }> = new Map()
+  private static cache: Map<string, { data: unknown; timestamp: number }> = new Map()
 
   constructor() {}
 
@@ -302,7 +302,7 @@ export class DataProcessor {
   static getCachedData<T>(key: string): T | null {
     const cached = this.cache.get(key)
     if (!cached) return null
-    return cached.data
+    return cached.data as T
   }
 
   /**

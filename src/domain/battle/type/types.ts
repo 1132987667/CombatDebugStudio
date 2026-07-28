@@ -64,12 +64,19 @@ export type RoundStatus = (typeof RoundStatus)[keyof typeof RoundStatus]
  * 参与方常量
  * 用于区分战斗中的不同参与方
  */
-export const PARTICIPANT_SIDE = {
+export const ParticipantSide = {
   /** 我方/友方 */
-  ALLY: 'ally' as const,
+  ALLY: 'ally',
   /** 敌方 */
-  ENEMY: 'enemy' as const,
-}
+  ENEMY: 'enemy',
+} as const
+export type ParticipantSide = (typeof ParticipantSide)[keyof typeof ParticipantSide]
+
+export const ParticipantSideName = {
+  [ParticipantSide.ALLY]: '友方',
+  [ParticipantSide.ENEMY]: '敌方',
+} as const satisfies Record<ParticipantSide, string>
+
 
 /** 战斗相关常量 */
 export const BATTLE_CONSTANTS = {
@@ -164,9 +171,6 @@ export const ValidActionTypes = Object.freeze([
   ActionTypes.ITEM,
 ]) as readonly (typeof ActionTypes)[keyof typeof ActionTypes][]
 
-export type ParticipantSide =
-  (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
-
 /** ponytail: P0/AI-1 — 参与者控制模式
  * AI: 使用 AI 实例决策（含目标建议）
  * AUTO: 使用默认权重策略选技能，目标由 selector 或随机决定
@@ -210,7 +214,6 @@ export interface BattleEntity {
   id: string // 实体唯一标识
   name: string // 实体名称
   level: number // 实体等级
-  type: ParticipantSide // 实体类型
   team: ParticipantSide // 实体阵营
   enabled: boolean // 实体是否启用
   /** 队伍位置序号（从0开始，用于前排/后排/相邻判定） */
@@ -565,8 +568,6 @@ export interface ParticipantInfo {
   id: string
   /** 参与者名称 */
   name: string
-  /** 参与者类型（我方/敌方） */
-  type: ParticipantSide
   /** 队伍归属 */
   team: ParticipantSide
   /** 最大气血值 */
@@ -668,7 +669,6 @@ export interface BuffInstanceSnapshot {
 export interface ParticipantSnapshot {
   id: string
   name: string
-  type: ParticipantSide
   team: ParticipantSide
   hp: number
   maxHp: number

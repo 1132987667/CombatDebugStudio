@@ -32,7 +32,8 @@ import {
 
 import {
   BattleActionHelper,
-  PARTICIPANT_SIDE,
+  ParticipantSide,
+  ParticipantSideName,
   ActionTypes,
 } from '@/domain/battle/type/types'
 import {
@@ -131,12 +132,12 @@ export class BattleExecutor {
           {
             text: participant.name,
             classStr:
-              participant.type === PARTICIPANT_SIDE.ALLY
+              participant.team === ParticipantSide.ALLY
                 ? 'log-friendly'
                 : 'log-hostile',
             kind: 'entity',
             faction:
-              participant.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+              participant.team,
           },
           { text: ' 被控制，无法行动' },
         ],
@@ -439,10 +440,10 @@ export class BattleExecutor {
       action.heal = totalHeal
       action.effects = allEffects
 
-      const sourcePrefix = source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      const sourcePrefix = `[${ParticipantSideName[source.team]}]`
       const targetNames = targets
         .map((t) => {
-          const prefix = t.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+          const prefix = `[${ParticipantSideName[t.team]}]`
           const name = t.id === source.id ? '自身' : t.name
           return `${prefix}${name}`
         })
@@ -565,15 +566,15 @@ export class BattleExecutor {
             {
               text: `${sourcePrefix}${source.name}`,
               classStr:
-                source.type === PARTICIPANT_SIDE.ALLY
+                source.team === ParticipantSide.ALLY
                   ? 'log-friendly'
                   : 'log-hostile',
               kind: 'entity',
-              faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+              faction: source.team,
             },
             {
               text: ` 对 ${targetNames} `,
-              classStr: targets.every((t) => t.type === PARTICIPANT_SIDE.ALLY)
+              classStr: targets.every((t) => t.team === ParticipantSide.ALLY)
                 ? 'log-friendly'
                 : 'log-hostile',
             },
@@ -599,7 +600,7 @@ export class BattleExecutor {
 
         // ★ 为每个目标输出 result sub 日志
         for (const r of targetResults) {
-          const tPrefix = r.target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+          const tPrefix = `[${ParticipantSideName[r.target.team]}]`
           const tName = r.target.id === source.id ? '自身' : r.target.name
 
           if (r.finalDamage > 0) {
@@ -607,7 +608,7 @@ export class BattleExecutor {
               turn: battleData.currentTurn,
               message: `${tPrefix}${tName} 受到 ${r.finalDamage} 点伤害  ${r.hpBefore} → ${r.hpAfter}`,
               segments: [
-                { text: `${tPrefix}${tName}`, classStr: r.target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+                { text: `${tPrefix}${tName}`, classStr: r.target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.team },
                 { text: ' 受到 ' },
                 { text: `${r.finalDamage}`, classStr: 'log-damage', kind: 'damage' },
                 { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
@@ -622,7 +623,7 @@ export class BattleExecutor {
               turn: battleData.currentTurn,
               message: `${tPrefix}${tName} 恢复 ${r.heal} 点气血  ${r.hpBefore} → ${r.hpAfter}`,
               segments: [
-                { text: `${tPrefix}${tName}`, classStr: r.target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+                { text: `${tPrefix}${tName}`, classStr: r.target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.team },
                 { text: ' 恢复 ' },
                 { text: `${r.heal}`, classStr: 'log-heal', kind: 'heal' },
                 { text: ` 点气血  ${r.hpBefore} → ${r.hpAfter}` },
@@ -686,11 +687,11 @@ export class BattleExecutor {
             {
               text: `${sourcePrefix}${source.name}`,
               classStr:
-                source.type === PARTICIPANT_SIDE.ALLY
+                source.team === ParticipantSide.ALLY
                   ? 'log-friendly'
                   : 'log-hostile',
               kind: 'entity',
-              faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+              faction: source.team,
             },
             { text: ` 对 ${targetNames} 使用 ` },
             { text: `【${skill.name || skillId}】`, classStr: 'log-skill' },
@@ -881,9 +882,9 @@ export class BattleExecutor {
   } {
     const { isMiss = false, isCritical = false } = options
     const sourcePrefix =
-      source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      `[${ParticipantSideName[source.team]}]`
     const targetPrefix =
-      target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      `[${ParticipantSideName[target.team]}]`
 
     if (isMiss) {
       return {
@@ -893,21 +894,21 @@ export class BattleExecutor {
           {
             text: `${sourcePrefix}${source.name}`,
             classStr:
-              source.type === PARTICIPANT_SIDE.ALLY
+              source.team === ParticipantSide.ALLY
                 ? 'log-friendly'
                 : 'log-hostile',
             kind: 'entity',
-            faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+            faction: source.team,
           },
           { text: ' 对 ' },
           {
             text: `${targetPrefix}${target.name}`,
             classStr:
-              target.type === PARTICIPANT_SIDE.ALLY
+              target.team === ParticipantSide.ALLY
                 ? 'log-friendly'
                 : 'log-hostile',
             kind: 'entity',
-            faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+            faction: target.team,
           },
           { text: '「普通攻击」' },
         ],
@@ -922,21 +923,21 @@ export class BattleExecutor {
         {
           text: `${sourcePrefix}${source.name}`,
           classStr:
-            source.type === PARTICIPANT_SIDE.ALLY
+            source.team === ParticipantSide.ALLY
               ? 'log-friendly'
               : 'log-hostile',
           kind: 'entity',
-          faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+          faction: source.team,
         },
         { text: ' 对 ' },
         {
           text: `${targetPrefix}${target.name}`,
           classStr:
-            target.type === PARTICIPANT_SIDE.ALLY
+            target.team === ParticipantSide.ALLY
               ? 'log-friendly'
               : 'log-hostile',
           kind: 'entity',
-          faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+          faction: target.team,
         },
         { text: `发起「普通攻击」` },
       ],
@@ -1153,8 +1154,8 @@ export class BattleExecutor {
       },
     )
     const rawSuffix = `，造成 ${rawDamage} 点伤害`
-    const targetPrefix = target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
-    const targetFaction = target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy'
+    const targetPrefix = `[${ParticipantSideName[target.team]}]`
+    const targetFaction = target.team
 
     LoggerProvider.logger.addBattleLog({
       turn: logParams.turn,
@@ -1178,7 +1179,7 @@ export class BattleExecutor {
       turn: battle.currentTurn,
       message: `${targetPrefix}${target.name} 受到 ${damage} 点伤害  ${hpBefore} → ${hpAfter}`,
       segments: [
-        { text: `${targetPrefix}${target.name}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFaction },
+        { text: `${targetPrefix}${target.name}`, classStr: target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFaction },
         { text: ' 受到 ' },
         { text: `${damage}`, classStr: 'log-damage', kind: 'damage' },
         { text: ` 点伤害  ${hpBefore} → ${hpAfter}` },
@@ -1364,20 +1365,20 @@ export class BattleExecutor {
     participant: BattleEntity,
   ): Promise<void> {
     const enemies = Array.from(battle.participants.values())
-      .filter((p) => p.team === PARTICIPANT_SIDE.ENEMY && p.isAlive())
+      .filter((p) => p.team === ParticipantSide.ENEMY && p.isAlive())
       .map((p) => p.id)
     const characters = Array.from(battle.participants.values())
-      .filter((p) => p.team === PARTICIPANT_SIDE.ALLY && p.isAlive())
+      .filter((p) => p.team === ParticipantSide.ALLY && p.isAlive())
       .map((p) => p.id)
 
     let targetId: string
     let damage: number
 
-    if (participant.team === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
+    if (participant.team === ParticipantSide.ALLY && enemies.length > 0) {
       targetId = enemies[Math.floor(Math.random() * enemies.length)]
       damage = Math.floor(Math.random() * 20) + 10
     } else if (
-      participant.team === PARTICIPANT_SIDE.ENEMY &&
+      participant.team === ParticipantSide.ENEMY &&
       characters.length > 0
     ) {
       targetId = characters[Math.floor(Math.random() * characters.length)]
@@ -1571,9 +1572,9 @@ export class BattleExecutor {
           } catch {
             actionSkillSeg = { text: `【${skillId}】`, classStr: 'log-skill' }
           }
-          const sourcePrefixX = source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
-          const targetPrefixX = target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
-          const targetFactionX = target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy'
+          const sourcePrefixX = `[${ParticipantSideName[source.team]}]`
+          const targetPrefixX = `[${ParticipantSideName[target.team]}]`
+          const targetFactionX = target.team
           const targetNameX = target.id === source.id ? '自身' : target.name
           LoggerProvider.logger.addBattleLog({
             turn: action.turn ?? 0,
@@ -1582,23 +1583,23 @@ export class BattleExecutor {
               {
                 text: `${sourcePrefixX}${source.name}`,
                 classStr:
-                  source.type === PARTICIPANT_SIDE.ALLY
+                  source.team === ParticipantSide.ALLY
                     ? 'log-friendly'
                     : 'log-hostile',
                 kind: 'entity',
                 faction:
-                  source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+                  source.team,
               },
               { text: ' 对 ' },
               {
                 text: `${targetPrefixX}${targetNameX}`,
                 classStr:
-                  target.type === PARTICIPANT_SIDE.ALLY
+                  target.team === ParticipantSide.ALLY
                     ? 'log-friendly'
                     : 'log-hostile',
                 kind: 'entity',
                 faction:
-                  target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+                  target.team,
               },
               { text: ' 使用 ' },
               actionSkillSeg,
@@ -1625,7 +1626,7 @@ export class BattleExecutor {
               turn: action.turn ?? 0,
               message: `${targetPrefixX}${targetNameX} 受到 ${actionFinalDamage} 点伤害  ${hpBefore} → ${hpAfter}`,
               segments: [
-                { text: `${targetPrefixX}${targetNameX}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFactionX },
+                { text: `${targetPrefixX}${targetNameX}`, classStr: target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFactionX },
                 { text: ' 受到 ' },
                 { text: `${actionFinalDamage}`, classStr: 'log-damage', kind: 'damage' },
                 { text: ` 点伤害  ${hpBefore} → ${hpAfter}` },
@@ -1638,7 +1639,7 @@ export class BattleExecutor {
               turn: action.turn ?? 0,
               message: `${targetPrefixX}${targetNameX} 恢复 ${action.heal} 点气血  ${hpBefore} → ${hpAfter}`,
               segments: [
-                { text: `${targetPrefixX}${targetNameX}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFactionX },
+                { text: `${targetPrefixX}${targetNameX}`, classStr: target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFactionX },
                 { text: ' 恢复 ' },
                 { text: `${action.heal}`, classStr: 'log-heal', kind: 'heal' },
                 { text: ` 点气血  ${hpBefore} → ${hpAfter}` },

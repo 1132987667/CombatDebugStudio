@@ -47,6 +47,7 @@ function createMockRegistries(): { buffRegistry: BuffScriptRegistry; skillManage
       }
       return configs[id]
     }),
+    getResolvedBuffConfig: vi.fn(() => undefined),
   } as unknown as BuffScriptRegistry
 
   const skillManager = {

@@ -6,7 +6,7 @@
  * 描述: 用于战斗回放数据的完整性校验
  */
 
-export function calculateChecksum(data: any): string {
+export function calculateChecksum(data: unknown): string {
   const str = JSON.stringify(data)
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -17,7 +17,7 @@ export function calculateChecksum(data: any): string {
   return hex
 }
 
-export function verifyChecksum(data: any, expectedChecksum: string): boolean {
+export function verifyChecksum(data: unknown, expectedChecksum: string): boolean {
   const actualChecksum = calculateChecksum(data)
   return actualChecksum === expectedChecksum
 }

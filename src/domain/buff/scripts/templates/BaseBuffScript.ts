@@ -1,4 +1,4 @@
-﻿import type { IBuffScript, BuffEffectLine } from '@/domain/buff/types'
+import type { IBuffScript, BuffEffectLine } from '@/domain/buff/types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
 import { ModifierType } from '@/domain/attribute/types'
@@ -62,7 +62,7 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
   protected triggerEvent(
     context: BuffContext,
     eventName: string,
-    data?: any
+    data?: unknown
   ): void {
     context.triggerEvent(eventName, data)
   }

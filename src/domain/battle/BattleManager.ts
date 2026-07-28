@@ -11,13 +11,12 @@ import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
 import {
-  PARTICIPANT_SIDE,
+  ParticipantSide,
   BattleEntity,
   BATTLE_CONSTANTS,
-  ParticipantSide,
   BattleStatus,
 } from '@/domain/battle/type/types'
-import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
+import { BattleEventCodes, type BattleEndedEventData } from '@/domain/battle/type/BattleEventType'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 import type {
   BattleEvents,
@@ -42,7 +41,7 @@ export class BattleManager {
    * @param battleReplayManager 战斗回放管理器实例
    */
   /** 已注册的事件处理器引用（用于 off 时精确移除） */
-  private handlers = new Map<BattleEventName, Set<(...args: any[]) => void>>()
+  private handlers = new Map<BattleEventName, Set<(...args: unknown[]) => void>>()
   /** 我方队伍编成（参战管理的真实数据源，独立于战斗运行时） */
   private allyTeam: BattleEntity[] = []
   /** 敌方队伍编成（参战管理的真实数据源，独立于战斗运行时） */
@@ -95,7 +94,7 @@ export class BattleManager {
       set = new Set()
       this.handlers.set(event, set)
     }
-    set.add(callback as (...args: any[]) => void)
+    set.add(callback as (...args: unknown[]) => void)
     eventBus.on(event, callback)
   }
 
@@ -110,7 +109,7 @@ export class BattleManager {
     const set = this.handlers.get(event)
     if (!set) return
     if (callback) {
-      set.delete(callback as (...args: any[]) => void)
+      set.delete(callback as (...args: unknown[]) => void)
       eventBus.off(event, callback)
     } else {
       for (const cb of set) {
@@ -375,7 +374,7 @@ export class BattleManager {
    * @param side - 队伍类型
    */
   addCharacterToTeam(character: BattleEntity, side: ParticipantSide) {
-    if (side === PARTICIPANT_SIDE.ALLY) {
+    if (side === ParticipantSide.ALLY) {
       character.seatIndex = this.allyTeam.length
       this.allyTeam.push(character)
     } else {
@@ -544,7 +543,7 @@ export class BattleManager {
    * 同步战斗日志
    * @param battleState 战斗状态
    */
-  async syncBattleLogs(battleState: any) {
+  async syncBattleLogs(battleState: unknown) {
     await LoggerProvider.logger.syncBattleLogs(battleState)
   }
 
@@ -623,7 +622,7 @@ export class BattleManager {
    * 结束战斗
    * @param winner 获胜方
    */
-  endBattle(winner: any) {
+  endBattle(winner: string) {
     // ⭐ 幂等性守卫：防止重复触发 endBattle
     const battleData = this.battleSystem.getBattleData()
     if (
@@ -638,7 +637,7 @@ export class BattleManager {
       this.autoBattleManager.stopAutoBattle()
     }
     // 触发战斗结束事件
-    const eventData: any = { winner }
+    const eventData: BattleEndedEventData = { winner: winner as ParticipantSide }
     this.emit(BattleEventCodes.BATTLE_ENDED, eventData)
     this.emitTeamChanged()
   }
@@ -752,7 +751,7 @@ export class BattleManager {
   /**
    * 加载战斗状态
    */
-  loadBattleState(): any | null {
+  loadBattleState(): unknown | null {
     try {
       const battleState = LocalStorage.get('battleState')
       if (battleState) {

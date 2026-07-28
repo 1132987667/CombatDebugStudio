@@ -2,7 +2,7 @@
  * 目标解析器 — 根据技能 selector 从参与者列表中选出目标实体
  * 从 BattleExecutor.getSkillTargets() 提取，供主动/被动技能统一使用
  */
-import { PARTICIPANT_SIDE, type BattleEntity } from '@/domain/battle/type/types'
+import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
 import {
   TargetFaction,
   TargetStrategy,
@@ -31,7 +31,7 @@ export function resolveSkillTargets(
   // --- self ---
   if (selector.faction === TargetFaction.SELF) return [source]
 
-  const isEnemySide = source.team === PARTICIPANT_SIDE.ALLY
+  const isEnemySide = source.team === ParticipantSide.ALLY
   const factionFilter = (p: BattleEntity): boolean => {
     if (!p.isAlive()) return false
     if (selector.faction === TargetFaction.ALL) return true
@@ -39,7 +39,7 @@ export function resolveSkillTargets(
     // 'enemy'
     return (
       p.team ===
-      (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
+      (isEnemySide ? ParticipantSide.ENEMY : ParticipantSide.ALLY)
     )
   }
 
@@ -170,12 +170,12 @@ export function validateTargetAgainstSelector(
 
   // 位置策略验证
   const strategy = selector.strategy || TargetStrategy.FIRST
-  const isEnemySide = source.team === PARTICIPANT_SIDE.ALLY
+  const isEnemySide = source.team === ParticipantSide.ALLY
   const candidates = Array.from(participants.values()).filter((p) => {
     if (!p.isAlive()) return false
     if (selector.faction === TargetFaction.ALL) return true
     if (selector.faction === TargetFaction.ALLY) return p.team === source.team
-    return p.team === (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
+    return p.team === (isEnemySide ? ParticipantSide.ENEMY : ParticipantSide.ALLY)
   }).sort((a, b) => a.seatIndex - b.seatIndex)
 
   switch (strategy) {

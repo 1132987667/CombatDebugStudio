@@ -74,13 +74,6 @@ onMounted(() => {
   initKeybindHints();
   window.addEventListener('keydown', handleKeyDown);
 });
-
-// 暴露方法给父组件
-defineExpose({
-  showPanel,
-  closePanel,
-  togglePanel
-});
 </script>
 
 <style scoped>

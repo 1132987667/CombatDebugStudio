@@ -16,7 +16,7 @@ import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
@@ -228,7 +228,7 @@ export class BattleEventManager {
       store.setBattleActive(false)
       store.setAutoPlayMode(false)
       if (data && data.winner) {
-        const winnerLabel = data.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'
+        const winnerLabel = ParticipantSideName[data.winner!]
         LoggerProvider.logger.addBattleLog({
           turn: store.getCurrentTurn?.() ?? 1,
           message: `战斗结束！胜利者：${winnerLabel}`,

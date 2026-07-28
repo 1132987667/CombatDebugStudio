@@ -17,7 +17,7 @@ import type { Container } from '@/infrastructure/di/Container'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BattleService } from '@/application/facade/BattleFacade'
 import type { BattleEntity } from '@/domain/battle/type/types'
-import { PARTICIPANT_SIDE, BattleStatus } from '@/domain/battle/type/types'
+import { ParticipantSide, ParticipantSideName, BattleStatus } from '@/domain/battle/type/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -109,8 +109,8 @@ export class BattleDataGenerator {
           enemySource.push(allySource[enemySource.length % allySource.length])
         }
 
-        const allyTeam = allySource.map((e, idx) => this.createParticipant(e, PARTICIPANT_SIDE.ALLY, idx))
-        const enemyTeam = enemySource.map((e, idx) => this.createParticipant(e, PARTICIPANT_SIDE.ENEMY, idx))
+        const allyTeam = allySource.map((e, idx) => this.createParticipant(e, ParticipantSide.ALLY, idx))
+        const enemyTeam = enemySource.map((e, idx) => this.createParticipant(e, ParticipantSide.ENEMY, idx))
         this._currentParticipantIds = [...allyTeam.map(e => e.id), ...enemyTeam.map(e => e.id)]
 
         // 清理上一场参与者残留在 BuffSystem 中的修饰符
@@ -136,15 +136,18 @@ export class BattleDataGenerator {
         this.ensureEndBattleLogs()
 
         // ── 收集本场叙事日志（与面板导出同管线）──
+        const battleData = this.battleSystem.getBattleData()
+        if (!battleData) continue
+
         const narrativeText = this.collectNarrativeText()
-        const winner = this.battleSystem.getBattleData()?.winner
+        const winner = battleData.winner
 
         battleLogs.push({
           battleIndex: i + 1,
           battleId,
           allyNames: allyTeam.map(e => e.name),
           enemyNames: enemyTeam.map(e => e.name),
-          winner: winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方',
+          winner: ParticipantSideName[winner!],
           totalRounds: rounds,
           narrativeText,
         })
@@ -218,7 +221,7 @@ export class BattleDataGenerator {
         const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
         const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
         const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
-        if (p.team === PARTICIPANT_SIDE.ALLY) allySnapshot.push(entry)
+        if (p.team === ParticipantSide.ALLY) allySnapshot.push(entry)
         else enemySnapshot.push(entry)
       })
 
@@ -253,8 +256,7 @@ export class BattleDataGenerator {
       (l) => l.meta?.role === 'battle' && l.message?.includes('战斗结束'),
     )
     if (!hasEndBanner && battleData.winner) {
-      const winnerLabel =
-        battleData.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'
+      const winnerLabel = ParticipantSideName[battleData.winner!]
       battleLogManager.addBattleLog({
         turn: lastTurn,
         message: `战斗结束！胜利者：${winnerLabel}`,
@@ -275,7 +277,7 @@ export class BattleDataGenerator {
 
   private createParticipant(
     enemy: Enemy,
-    side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY,
+    side: typeof ParticipantSide.ALLY | typeof ParticipantSide.ENEMY,
     seatIndex: number,
   ): BattleEntity {
     return GameDataProcessor.enemyToParticipant(enemy, side, seatIndex)
@@ -290,7 +292,7 @@ export class BattleDataGenerator {
     header.push('═'.repeat(60))
     header.push('')
 
-    const allyWins = battleLogs.filter(b => b.winner === '我方').length
+    const allyWins = battleLogs.filter(b => b.winner === '友方').length
     const enemyWins = battleLogs.length - allyWins
     const totalRounds = battleLogs.reduce((s, b) => s + b.totalRounds, 0)
     const avgRounds = battleLogs.length > 0 ? Math.round(totalRounds / battleLogs.length) : 0

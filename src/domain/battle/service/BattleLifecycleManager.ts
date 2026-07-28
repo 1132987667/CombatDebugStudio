@@ -4,13 +4,13 @@ import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type {
   BattleData,
   BattleEntity,
-  ParticipantSide,
 } from '@/domain/battle/type/types'
 import {
   AUTO_BATTLE_CONFIG,
   BattleActionHelper,
   BattleStatus,
-  PARTICIPANT_SIDE,
+  ParticipantSide,
+  ParticipantSideName,
   RoundStatus,
 } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -68,7 +68,7 @@ export class BattleLifecycleManager {
       effects: [
         {
           type: 'status',
-          description: `战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}`,
+          description: `战斗结束！胜利者: ${ParticipantSideName[winner]}`,
           duration: 0,
         },
       ],
@@ -140,7 +140,7 @@ export class BattleLifecycleManager {
           const allyTeam: BattleEntity[] = []
           const enemyTeam: BattleEntity[] = []
           turnData.participants.forEach((p) => {
-            if (p.team === PARTICIPANT_SIDE.ALLY) allyTeam.push(p)
+            if (p.team === ParticipantSide.ALLY) allyTeam.push(p)
             else enemyTeam.push(p)
           })
           eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {

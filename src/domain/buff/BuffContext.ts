@@ -95,10 +95,10 @@ export class BuffContext {
     return character ? character.getAttribute(attribute as ATTRIBUTE_CODE) : 0
   }
 
-  public triggerEvent(eventName: string, data?: any): void {
+  public triggerEvent(eventName: string, data?: unknown): void {
     const system = this._buffSystem
     if (system) {
-      system.executeTriggerScript(this.instanceId, this.characterId, eventName, data)
+      system.executeTriggerScript(this.instanceId, this.characterId, eventName, data as Record<string, unknown> | undefined)
     } else {
       console.warn(`BuffSystem not injected, cannot trigger event: ${eventName}`, data)
     }

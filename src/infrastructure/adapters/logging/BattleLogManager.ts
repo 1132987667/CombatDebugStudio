@@ -8,12 +8,11 @@
  */
 
 import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
-import type {
+import {
   BattleLogEntry,
   LogFilters,
   LogEntry,
   LogHandler,
-  LogSegment,
   ParticipantMap,
   UnifiedLogParams,
   BattleLogParams,
@@ -36,7 +35,8 @@ export class ConsoleLogHandler implements LogHandler {
     const contextStr = entry.context ? JSON.stringify(entry.context) : ''
     const errorStr = entry.error ? `\nError: ${entry.error.message}` : ''
 
-    const logMessage = `[${index}] ${levelName}: ${entry.message || ''} ${contextStr}${errorStr}`
+    const text = entry.segments?.map(s => s.text).join('') || ''
+    const logMessage = `[${index}] ${levelName}: ${text} ${contextStr}${errorStr}`
 
     switch (entry.level) {
       case LogLevel.ERROR:
@@ -150,144 +150,6 @@ export class BattleLogManager implements IBattleLogManager {
   }
 
   /**
-   * 内部日志记录方法
-   */
-  private log(
-    level: LogLevel,
-    message: string,
-    context?: Record<string, unknown>,
-    error?: Error,
-    source?: string,
-    segments?: LogSegment[],
-  ): void {
-    if (level > this.level) {
-      return
-    }
-
-    const entry: LogEntry = {
-      index: this.indexCounter.next(),
-      type: LogType.SYSTEM,
-      level,
-      message,
-      context,
-      source,
-      error,
-      segments: segments || [],
-    }
-
-    this.systemLogs.push(entry)
-    if (this.systemLogs.length > this.maxSystemLogs) {
-      this.systemLogs = this.systemLogs.slice(-this.maxSystemLogs)
-    }
-
-    for (const handler of this.handlers) {
-      try {
-        handler.handle(entry)
-      } catch {
-        console.error('Logger handler error:', handler)
-      }
-    }
-  }
-
-  /**
-   * 获取系统日志
-   */
-  getSystemLogs(): LogEntry[] {
-    return [...this.systemLogs]
-  }
-
-  /**
-   * 获取调试日志
-   */
-  getDebugLogs(): LogEntry[] {
-    return [...this.debugLogs]
-  }
-
-  /**
-   * 清除系统日志
-   */
-  clearSystemLogs(): void {
-    this.systemLogs = []
-  }
-
-  /**
-   * 清除调试日志
-   */
-  clearDebugLogs(): void {
-    this.debugLogs = []
-  }
-
-  // ==================== 添加日志功能 ====================
-
-  /**
-   * 设置参与者映射表（由 BattleSystem 在战斗开始时注入）
-   */
-  setParticipantMap(map: ParticipantMap): void {
-    this.participantMap = map
-  }
-
-  /**
-   * 添加【战斗】类型日志
-   * @param params 统一日志参数
-   */
-  addBattleLog(params: BattleLogParams): void {
-    // ★ 缓冲拦截：缓冲模式下 role='sub' 的日志先暂存
-    if (this._buffering && params.meta?.role === 'sub') {
-      this._pendingSubLogs.push(params)
-      return
-    }
-
-    const {
-      turn,
-      message = '',
-      segments = [],
-      category = 'battle',
-      detailCategory,
-      level = LogLevel.INFO,
-      meta,
-    } = params
-
-    const logEntry: BattleLogEntry = {
-      index: this.indexCounter.next(),
-      type: LogType.BATTLE,
-      turn,
-      message,
-      category,
-      detailCategory,
-      segments: segments.length > 0 ? segments : [{ text: message }],
-      level,
-      action: undefined,
-      meta,
-    }
-
-    this.battleLogs.push(logEntry)
-
-    if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
-      this.battleLogs.shift()
-    }
-
-    this.emitLogUpdate()
-  }
-
-  /**
-   * 启用/禁用战斗日志自动清理
-   * 批量生成战斗数据时临时禁用，避免单场日志超出上限被截断
-   */
-  setAutoCleanup(enabled: boolean): void {
-    this.autoCleanup = enabled
-  }
-
-  recordBattleLog(battleLog: BattleLogEntry): void {
-    this.battleLogs.push(battleLog)
-
-    if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
-      this.battleLogs.shift()
-    }
-
-    this.emitLogUpdate()
-  }
-
-  /**
    * 添加【系统】类型日志
    * @param params 统一日志参数
    */
@@ -296,7 +158,6 @@ export class BattleLogManager implements IBattleLogManager {
 
     const logEntry: LogEntry = {
       index: this.indexCounter.next(),
-      message,
       level,
       type: LogType.SYSTEM,
     }
@@ -351,9 +212,6 @@ export class BattleLogManager implements IBattleLogManager {
       index: this.indexCounter.next(),
       type: LogType.ACTION,
       level,
-      message:
-        message ||
-        (segments.length > 0 ? segments.map((s) => s.text).join('') : ''),
       source,
       target,
       action,
@@ -379,11 +237,10 @@ export class BattleLogManager implements IBattleLogManager {
       index: this.indexCounter.next(),
       type: LogType.DEBUG,
       level,
-      message,
       context: context ?? undefined,
       source: undefined,
       error: error,
-      segments: [],
+      segments: [{ text: message }],
       action: undefined,
     }
 
@@ -399,6 +256,36 @@ export class BattleLogManager implements IBattleLogManager {
         console.error('Logger handler error:', handler)
       }
     }
+  }
+
+  /**
+   * 添加【战斗】类型日志
+   * @param params 战斗日志参数（turn 必填）
+   */
+  addBattleLog(params: BattleLogParams): void {
+    const { message = '', segments = [], level = LogLevel.INFO, turn, source, target, action, category, context, error, meta } = params
+
+    const logEntry: BattleLogEntry = {
+      index: this.indexCounter.next(),
+      type: LogType.BATTLE,
+      turn,
+      message,
+      segments: segments.length > 0 ? segments : [{ text: message }],
+    }
+    if (level !== LogLevel.INFO) logEntry.level = level
+    if (source) logEntry.source = source
+    if (target) logEntry.target = target
+    if (action) logEntry.action = action
+    if (category) logEntry.category = category
+    if (context) logEntry.context = context
+    if (error) logEntry.error = error
+    if (meta) logEntry.meta = meta
+
+    this.battleLogs.push(logEntry)
+    if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
+      this.battleLogs.shift()
+    }
+    this.emitLogUpdate()
   }
 
   // ==================== 缓冲机制 ====================
@@ -480,6 +367,20 @@ export class BattleLogManager implements IBattleLogManager {
   }
 
   /**
+   * 获取调试日志
+   */
+  getDebugLogs(): LogEntry[] {
+    return this.debugLogs
+  }
+
+  /**
+   * 获取系统日志
+   */
+  getSystemLogs(): LogEntry[] {
+    return this.systemLogs
+  }
+
+  /**
    * 获取所有战斗日志
    */
   getAllLogs(): LogEntry[] {
@@ -552,6 +453,13 @@ export class BattleLogManager implements IBattleLogManager {
   updateFilters(newFilters: Partial<LogFilters>): void {
     this.filters = { ...this.filters, ...newFilters }
     this.emitLogUpdate()
+  }
+
+  /**
+   * 启用/禁用战斗日志自动清理
+   */
+  setAutoCleanup(enabled: boolean): void {
+    this.autoCleanup = enabled
   }
 
   /**

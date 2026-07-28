@@ -227,6 +227,12 @@ export type LogSegmentKind =
   | 'hp-after' // 气血 变化后
   | 'text' // 普通文本（默认）
 
+export const LogSegmentHoverKind = {
+  BUFF: 'buff',
+  SKILL: 'skill',
+  PASSIVE: 'passive',
+} as const
+export type LogSegmentHoverKind = (typeof LogSegmentHoverKind)[keyof typeof LogSegmentHoverKind]
 /**
  * 可悬浮的实体身份（方案二：悬浮信息卡片）
  * 带此字段的 LogSegment 渲染为可交互锚点，

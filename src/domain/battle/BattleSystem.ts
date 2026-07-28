@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 文件: BattleSystem.ts
  * 创建日期: 2026-02-09
  * 作者: CombatDebugStudio
@@ -8,62 +8,58 @@
  */
 
 import {
-  BattleActionHelper,
-  createPassiveContext,
-} from '@/domain/battle/type/types'
-import { createEmptyRecord } from '@/domain/battle/combat-record'
-import type {
-  BattleAction,
-  BattleData,
-  BattleEntity,
-  BattleState,
-  ParticipantSide,
-} from '@/domain/battle/type/types'
-import type { BattleCommand } from '@/shared/types/battle-commands'
-import {
-  createDefaultBattleData,
   convertToBattleState,
+  createDefaultBattleData,
 } from '@/domain/battle/aggregate/BattleState'
-import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
-import { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
-import type { TriggerEventContext } from '@/domain/buff/types'
-import { BattleTriggerPhase } from '@/domain/battle/type/types'
-import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { AISystem } from '@/domain/battle/ai/AISystem'
-import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
-import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
-import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
-import { TurnManager } from '@/domain/battle/service/TurnManager'
-import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
-import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
+import { createEmptyRecord } from '@/domain/battle/combat-record'
 import {
   AI_SYSTEM_TOKEN,
   BATTLE_RECORDER_TOKEN,
   BATTLE_RULE_MANAGER_TOKEN,
   TURN_MANAGER_TOKEN,
 } from '@/domain/battle/entity/BattleInterfaces'
-import type { Container } from '@/infrastructure/di/Container'
+import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
+import { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
+import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
+import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
+import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
+import { TurnManager } from '@/domain/battle/service/TurnManager'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
+import {
+  BattleAction,
+  BattleData,
+  BattleEntity,
+  BattleState,
+  BattleStatus,
+  BattleTriggerPhase,
+  createPassiveContext,
+  ParticipantSide,
+  ParticipantSideName,
+  RoundStatus,
+} from '@/domain/battle/type/types'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
+import type { TriggerEventContext } from '@/domain/buff/types'
+import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
+import type { Container } from '@/infrastructure/di/Container'
 import { eventBus } from '@/main'
-import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
-import { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
-import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
-import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
-import {
-  BattleStatus,
-  PARTICIPANT_SIDE,
-  RoundStatus,
-} from '@/domain/battle/type/types'
+import type { BattleCommand } from '@/shared/types/battle-commands'
+
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
-import { RAFTimer } from '@/shared/utils/RAF'
-import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
-import { Counter } from '@/shared/utils/Counter'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
-import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
+import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
+import { Counter } from '@/shared/utils/Counter'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { RAFTimer } from '@/shared/utils/RAF'
 
 /**
  * 战斗系统核心管理类
@@ -560,7 +556,7 @@ export class BattleSystem {
       for (const instanceId of buffInstanceIds) {
         const buffConfig = this.buffSystem.getBuffConfigByInstanceId(instanceId)
         if (!buffConfig) continue
-        // ponytail: 查找 BuffConfigData 中的 immunities 字段，但此处需要 aura 配置
+        // ponytail: 查找 BuffJsonEntry 中的 immunities 字段，但此处需要 aura 配置
         // 使用 BuffSystem.getBuffAuraConfig 获取 aura 元数据
         const aura = this.buffSystem.getBuffAuraConfig(buffConfig.id)
         if (!aura || !aura.modifiers?.length || !aura.targetSelector) continue
@@ -569,7 +565,7 @@ export class BattleSystem {
         for (const [targetId, target] of participants) {
           if (targetId === id) continue
           if (!(target instanceof BattleParticipantImpl)) continue
-          const sameTeam = target.type === entity.type
+          const sameTeam = target.team === entity.team
           if ((isAllies && sameTeam) || (!isAllies && !sameTeam)) {
             GameDataProcessor.applyAuraModifiersToParticipant(
               target,
@@ -815,7 +811,7 @@ export class BattleSystem {
         const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
         const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
         const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
-        if (p.team === PARTICIPANT_SIDE.ALLY) allySnapshot.push(entry)
+        if (p.team === ParticipantSide.ALLY) allySnapshot.push(entry)
         else enemySnapshot.push(entry)
       })
 
@@ -924,8 +920,7 @@ export class BattleSystem {
     if (result.shouldEnd && result.winner) {
       await this.endBattle(result.winner)
       if (battle.currentTurn >= battle.maxTurns) {
-        const winnerLabel =
-          result.winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'
+        const winnerLabel = ParticipantSideName[result.winner!]
         LoggerProvider.logger.addBattleLog({
           turn: battle.currentTurn,
           message: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜`,
@@ -1086,14 +1081,11 @@ export class BattleSystem {
   /**
    * 获取伤害计算日志
    */
-  public getDamageCalculationLogs(): any[] {
+  public getDamageCalculationLogs() {
     return this.skillManager.getDamageCalculationLogs()
   }
 
-  /**
-   * 获取治疗计算日志
-   */
-  public getHealCalculationLogs(): any[] {
+  public getHealCalculationLogs() {
     return this.skillManager.getHealCalculationLogs()
   }
 
@@ -1228,7 +1220,7 @@ export class BattleSystem {
             type: 'SET_WINNER',
             payload: {
               winner:
-                result.winner === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+                result.winner,
             },
           })
         }

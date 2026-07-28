@@ -95,8 +95,6 @@ const cancelHide = () => {
   }
 }
 
-defineExpose({ cancelHide })
-
 // ===================== 定位 =====================
 
 const TOOLTIP_WIDTH = 300

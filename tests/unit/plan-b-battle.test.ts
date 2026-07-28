@@ -5,7 +5,7 @@ import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
-import { PARTICIPANT_SIDE, BattleTriggerPhase } from '@/domain/battle/type/types'
+import { ParticipantSide, BattleTriggerPhase } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { EMPTY_SKILL_SET, makeDefaultAttributes } from '../fixtures/participants'
 import type { SkillConfig, SkillSet } from '@/domain/skill/types'
@@ -38,10 +38,10 @@ function makeAuraPassiveSkill(): SkillConfig {
   }
 }
 
-function createParticipant(id: string, name: string, side: PARTICIPANT_SIDE, atk: number, passives: SkillConfig[] = []): BattleParticipantImpl {
+function createParticipant(id: string, name: string, side: ParticipantSide, atk: number, passives: SkillConfig[] = []): BattleParticipantImpl {
   return new BattleParticipantImpl({
     id, name, level: 50,
-    type: side, team: side,
+    team: side,
     enabled: true,
     skills: { small: [], passive: passives, ultimate: [] } as SkillSet,
     attributeValues: makeDefaultAttributes({ [ATTRIBUTE_CODE.attack]: atk }),
@@ -77,7 +77,7 @@ describe('方案 B 战斗验证：光环分发', () => {
   })
 
   it('金护法在战斗开始后应有首领光环 buff', () => {
-    const gold = createParticipant('guardian_gold', '金护法', PARTICIPANT_SIDE.ENEMY, 80, [makeAuraPassiveSkill()])
+    const gold = createParticipant('guardian_gold', '金护法', ParticipantSide.ENEMY, 80, [makeAuraPassiveSkill()])
     gold.setModifierProvider(buffSystem)
     gold.setBuffQuery(buffSystem)
 
@@ -95,9 +95,9 @@ describe('方案 B 战斗验证：光环分发', () => {
   })
 
   it('distributeAuras 将光环修饰符分发给同队成员', () => {
-    const gold = createParticipant('guardian_gold', '金护法', PARTICIPANT_SIDE.ENEMY, 80, [makeAuraPassiveSkill()])
-    const grunt1 = createParticipant('enemy_grunt_1', '杂兵甲', PARTICIPANT_SIDE.ENEMY, 100)
-    const grunt2 = createParticipant('enemy_grunt_2', '杂兵乙', PARTICIPANT_SIDE.ENEMY, 80)
+    const gold = createParticipant('guardian_gold', '金护法', ParticipantSide.ENEMY, 80, [makeAuraPassiveSkill()])
+    const grunt1 = createParticipant('enemy_grunt_1', '杂兵甲', ParticipantSide.ENEMY, 100)
+    const grunt2 = createParticipant('enemy_grunt_2', '杂兵乙', ParticipantSide.ENEMY, 80)
 
     for (const p of [gold, grunt1, grunt2]) {
       p.setModifierProvider(buffSystem)

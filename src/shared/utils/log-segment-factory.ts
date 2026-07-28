@@ -11,8 +11,6 @@
 
 import type { LogSegment, LogSegmentHover, NarrativeBlock } from '@/shared/types/battle-log'
 import {
-  classifyBuff,
-  getBuffLogClass,
   type BuffClassificationInput,
 } from '@/shared/types/buff-classification'
 
@@ -33,34 +31,6 @@ export interface SkillConfigLookup {
 }
 
 // ==================== 工厂函数 ====================
-
-/**
- * 生成 buff 名称的 LogSegment
- *
- * 根据 buffId 查配置 → 获取名称 → classifyBuff 判定颜色 → 注入 hover
- *
- * @param buffId - Buff 的唯一标识
- * @param lookup - Buff 配置查找器（通常是 BuffScriptRegistry）
- * @returns LogSegment（含 classStr 和 hover）
- *
- * 使用示例：
- * ```
- * const seg = buffSegment('buff_leader_aura', buffScriptRegistry)
- * // → { text: '统领光环', classStr: 'log-buff', hover: { kind: 'buff', id: 'buff_leader_aura' } }
- * ```
- */
-export function buffSegment(
-  buffId: string,
-  lookup: BuffConfigLookup,
-): LogSegment {
-  const config = lookup.getBuffConfig(buffId)
-  const name = config?.name ?? config?.id ?? buffId
-  const classification = classifyBuff(config)
-  const classStr = getBuffLogClass(classification)
-  const hover: LogSegmentHover = { kind: 'buff', id: buffId }
-
-  return { text: `【${name}】`, classStr, hover, kind: 'buff' }
-}
 
 /**
  * 生成技能名称的 LogSegment

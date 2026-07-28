@@ -4,7 +4,7 @@ import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
-import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import { ParticipantSide } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import {
   EMPTY_SKILL_SET,
@@ -30,8 +30,7 @@ function createParticipant(energy = 30, maxEnergy = 200): BattleParticipantImpl 
     id: 'test_energy_char',
     name: '能量测试角色',
     level: 50,
-    type: PARTICIPANT_SIDE.ALLY,
-    team: PARTICIPANT_SIDE.ALLY,
+    team: ParticipantSide.ALLY,
     enabled: true,
     skills: EMPTY_SKILL_SET,
     attributeValues: makeDefaultAttributes({

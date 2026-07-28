@@ -16,6 +16,7 @@ import {
   BattleState,
   BattleAction,
   ParticipantSide,
+  ParticipantSideName,
   BattleStateSnapshot,
   BattleRound,
   BattleResult,
@@ -63,7 +64,7 @@ export interface RecordedBattle {
       /** 参与者名称 */
       name: string
       /** 阵营 */
-      type: ParticipantSide
+      team: ParticipantSide
       /** 最大气血值 */
       maxHealth: number
       /** 当前气血值 */
@@ -431,7 +432,7 @@ export class BattleRecorder {
       roundNumber,
     )
 
-    const winnerLabel = winner === 'ally' ? '角色方' : '敌方'
+    const winnerLabel = winner ? ParticipantSideName[winner] : '未知'
     const durationSec = Math.floor(duration / 1000)
     const durationText =
       durationSec >= 60

@@ -76,24 +76,17 @@ export interface DamageBreakdown {
   /** 各项减免（百分比点，如 20 = 减免 20%） */
   normalAtkReduction?: number
   skillDmgReduction?: number
-  generalDamageReduction?: number
   damageTakenIncrease?: number
   /** 来源方伤害提升（在原始伤害阶段生效） */
   damageBoost?: number
   /** 暴击承伤减免（目标方） */
   critDmgTakenReduction?: number
-  /** 伤害减免（目标方，按伤害大类） */
-  physicalDmgReduction?: number
-  /** 魔法伤害减免（目标方，按伤害大类） */
-  magicalDmgReduction?: number
   /** 火系技能伤害加成（来源方，在原始伤害阶段生效） */
   fireSkillDmgBonus?: number
   /** 物理技能伤害加成（来源方，在原始伤害阶段生效） */
   physicalSkillDmgBonus?: number
   /** 低血量增伤（来源方，在原始伤害阶段生效） */
   damageToLowHp?: number
-  /** 当前生效的技能元素类型 */
-  elementType?: string
   /** 目标修正 */
   targetModifierEffects: TargetModifierEffect[]
   /** 阈值 */

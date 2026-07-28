@@ -245,10 +245,6 @@ export const ATTRIBUTE_CODE = {
   // ========== 反弹/反伤（预留） ==========
   reflectDamagePercent: 'reflectDamagePercent', // 反弹伤害比例
 
-  // ========== 伤害类型减免 ==========
-  physicalDmgReduction: 'physicalDmgReduction', // 伤害减免
-  magicalDmgReduction: 'magicalDmgReduction', // 魔法伤害减免
-
   // ========== 特殊伤害加成 ==========
   fireSkillDmgBonus: 'fireSkillDmgBonus', // 火属性技能伤害加成
   physicalSkillDmgBonus: 'physicalSkillDmgBonus', // 物理技能伤害加成
@@ -656,24 +652,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
   },
 
   // ========== 伤害类型减免 ==========
-  physicalDmgReduction: {
-    code: 'physicalDmgReduction',
-    name: '伤害减免',
-    displayName: '伤害减免',
-    description: '对物理类型伤害的减免比例',
-    range: '0-100%',
-    impact: '减少受到的物理属性伤害',
-    isPercentage: true,
-  },
-  magicalDmgReduction: {
-    code: 'magicalDmgReduction',
-    name: '魔法伤害减免',
-    displayName: '魔法伤害减免',
-    description: '对魔法类型伤害的减免比例',
-    range: '0-100%',
-    impact: '减少受到的魔法属性伤害',
-    isPercentage: true,
-  },
 
   // ========== 特殊伤害加成 ==========
   fireSkillDmgBonus: {

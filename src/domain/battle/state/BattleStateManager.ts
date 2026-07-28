@@ -24,16 +24,7 @@ export class BattleStateManager {
    * @param battleSystem 战斗系统实例
    */
   constructor(private battleSystem: BattleSystem) {
-    const handler = () => {}
-    // ponytail: 队伍数据变更由 battleStore 通过 BattleService.on(TEAM_DATA_CHANGED) 处理
-    // 此监听器此前绑定 'teamDataChanged'（驼峰）但从未被触发（实际事件名是 'team-data-changed'），handler 为空函数
   }
-
-  /**
-   * 清理事件监听器，防止内存泄漏
-   * 在不再需要 BattleStateManager 时调用
-   */
-  public dispose(): void {}
 
   /**
    * 获取当前回合
@@ -182,15 +173,5 @@ export class BattleStateManager {
       // 更新参与者属性
       Object.assign(participant, updates)
     }
-  }
-
-  /**
-   * 获取参与者ID
-   * @param characterId 角色ID
-   * @returns 参与者ID
-   */
-  private getParticipantId(characterId: string): string | null {
-    // 映射表已废弃，直接返回 characterId
-    return characterId
   }
 }

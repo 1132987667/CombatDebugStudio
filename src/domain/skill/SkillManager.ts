@@ -33,7 +33,7 @@ export class SkillManager {
   private damageCalculator: DamageCalculator
   private healCalculator: HealCalculator
   private executor: SkillExecutor
-  private calculators: Map<string, any> = new Map()
+  private calculators: Map<string, unknown> = new Map()
 
   constructor(
     buffSystem: BuffSystem,
@@ -366,11 +366,11 @@ export class SkillManager {
     )
   }
 
-  registerCalculator(name: string, calculator: any): void {
+  registerCalculator(name: string, calculator: unknown): void {
     this.calculators.set(name, calculator)
   }
 
-  getCalculator(name: string): any | undefined {
+  getCalculator(name: string): unknown | undefined {
     return this.calculators.get(name)
   }
 

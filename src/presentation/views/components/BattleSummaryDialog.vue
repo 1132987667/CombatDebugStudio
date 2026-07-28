@@ -9,8 +9,8 @@
     <div v-if="summary" class="summary-container">
       <!-- 头部 -->
       <div class="summary-header">
-        <span class="winner-badge" :class="summary.winner === '我方' ? 'win' : 'lose'">
-          {{ summary.winner === '我方' ? '胜利' : '败北' }}
+        <span class="winner-badge" :class="summary.winner === '友方' ? 'win' : 'lose'">
+          {{ summary.winner === '友方' ? '胜利' : '败北' }}
         </span>
         <span class="summary-meta">
           {{ summary.totalRounds }} 回合 · {{ formatDuration(summary.duration) }}
@@ -129,7 +129,7 @@ const copySummary = () => {
   if (!s) return
 
   const lines = [
-    `战斗战报 — ${s.winner === '我方' ? '胜利' : '败北'}`,
+    `战斗战报 — ${s.winner === '友方' ? '胜利' : '败北'}`,
     `${s.totalRounds} 回合 · ${formatDuration(s.duration)}`,
     `─── 数据统计 ───`,
     `总伤害: ${s.totalDamageDealt}  |  总治疗: ${s.totalHealing}  |  受击: ${s.totalDamageTaken}`,

@@ -3,6 +3,7 @@ import type {
   BuffInstance,
   BuffQuery,
   IBuffScript,
+  TriggerAction,
 } from '@/domain/buff/types'
 import { BUFF_ID_PREFIX } from '@/domain/buff/types'
 import type { TriggerEventContext } from '@/domain/buff/types'
@@ -450,7 +451,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       parameters:
         config.parameters ?? scriptDefaultConfig?.parameters ?? undefined,
       attributes: config.attributes ?? jsonConfig?.attributes ?? undefined,
-      triggers: config.triggers ?? jsonConfig?.triggers ?? undefined,
+      triggers: config.triggers ?? jsonConfig?.triggers as TriggerAction[] | undefined,
       cascadeRemove:
         config.cascadeRemove ?? scriptDefaultConfig?.cascadeRemove ?? undefined,
     }
@@ -803,7 +804,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
         value = Math.round(value * 10000) / 100
       }
-      modifierStack.addModifier(instanceId, attrCode, value, mod.type)
+      modifierStack.addModifier(instanceId, attrCode, value, mod.type as ModifierType)
     }
   }
 
@@ -811,7 +812,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
    * 获取 Buff 配置中的 aura 光环信息（供 BattleSystem 初始化时分发 allies/enemies）
    */
   public getBuffAuraConfig(buffId: string): BuffAuraConfig | undefined {
-    return this.scriptRegistry.getBuffConfig(buffId)?.aura
+    // HACK: BuffJsonAura 与 BuffAuraConfig 结构相同（仅 type 字段为 string 而非 ModifierType），
+    // 运行时值完全一致，故直接断言。
+    return this.scriptRegistry.getBuffConfig(buffId)?.aura as BuffAuraConfig | undefined
   }
 
   /**
@@ -1193,6 +1196,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const scriptConfig = this.scriptRegistry.getDefaultConfig(buffId)
     if (scriptConfig?.isDebuff !== undefined) return scriptConfig.isDebuff
     const jsonConfig = this.scriptRegistry.getBuffConfig(buffId)
-    return (jsonConfig as any)?.isDebuff ?? false
+    return jsonConfig?.isDebuff ?? false
   }
 }

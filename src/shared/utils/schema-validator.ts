@@ -265,7 +265,7 @@ export function validateSkillConfig(
  * @param effectConfig Effect配置对象
  * @returns 验证结果
  */
-export function validateEffectConfig(effectConfig: any): ValidationResult {
+export function validateEffectConfig(effectConfig: Record<string, unknown>): ValidationResult {
   const errors: string[] = []
 
   // 检查必填字段
@@ -276,7 +276,7 @@ export function validateEffectConfig(effectConfig: any): ValidationResult {
   if (!effectConfig.type) {
     errors.push('Missing required field: type')
   } else if (
-    !['damage', 'heal', 'buff', 'debuff', 'special'].includes(effectConfig.type)
+    !['damage', 'heal', 'buff', 'debuff', 'special'].includes(effectConfig.type as string)
   ) {
     errors.push(
       `Invalid type: ${effectConfig.type}. Must be one of: damage, heal, buff, debuff, special`,
@@ -329,7 +329,7 @@ export function validateSkillConfigs(
  * @param effectConfigs Effect配置数组
  * @returns 验证结果
  */
-export function validateEffectConfigs(effectConfigs: any[]): ValidationResult {
+export function validateEffectConfigs(effectConfigs: Record<string, unknown>[]): ValidationResult {
   const errors: string[] = []
   let validCount = 0
 

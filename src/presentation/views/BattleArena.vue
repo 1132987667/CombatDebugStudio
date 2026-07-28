@@ -84,36 +84,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, shallowReactive } from "vue";
-import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
-import ParticipantPanel from "./ParticipantPanel.vue";
-import BattleField from "./BattleField.vue";
-import BattleDashboard from "./BattleDashboard.vue";
-import ControlBar from "./ControlBar.vue";
-import Notification from "@/presentation/components/Notification.vue";
-import BattleRulesDialog from "./components/BattleRulesDialog.vue";
-import SceneManagementDialog from "./components/SceneManagementDialog.vue";
-import CharacterEditor from "./components/CharacterEditor.vue";
-import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
-import DebugLogDialog from "./components/DebugLogDialog.vue";
-import DebugControlDialog from "./components/DebugControlDialog.vue";
-import DataSnapshotDialog from "./components/DataSnapshotDialog.vue";
-import BattleRecordingDialog from "./components/BattleRecordingDialog.vue";
-import { useBattleStore } from '@/presentation/stores';
-import { container } from '@/infrastructure/di/Container';
-import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
-import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
-import { PARTICIPANT_SIDE } from "@/domain/battle/type/types.ts";
-import type { CharacterOption } from "./components/CharacterEditor.vue";
 import type { BattleService } from '@/application/facade/BattleFacade';
-import type { LogEntry } from '@/shared/types/battle-log';
-import type { TraceLogEntry } from '@/shared/types/trace-log';
 import { ATTRIBUTE_CODE, ModifierType } from "@/domain/attribute/types";
-import { EffectType } from '@/shared/types/effect';
+import { ParticipantSide } from "@/domain/battle/type/types.ts";
+import type { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader';
+import { BuffSystem } from '@/domain/buff/BuffSystem';
+import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager';
 import { DamageCategory } from '@/domain/skill/types';
-import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
-import type { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
+import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
+import { container } from '@/infrastructure/di/Container';
+import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
+import Notification from "@/presentation/components/Notification.vue";
+import { useBattleStore } from '@/presentation/stores';
+import type { LogEntry } from '@/shared/types/battle-log';
+import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
+import { EffectType } from '@/shared/types/effect';
+import type { TraceLogEntry } from '@/shared/types/trace-log';
+import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
+import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
+import BattleDashboard from "./BattleDashboard.vue";
+import BattleField from "./BattleField.vue";
+import BattleRecordingDialog from "./components/BattleRecordingDialog.vue";
+import BattleRulesDialog from "./components/BattleRulesDialog.vue";
+import type { CharacterOption } from "./components/CharacterEditor.vue";
+import CharacterEditor from "./components/CharacterEditor.vue";
+import DataSnapshotDialog from "./components/DataSnapshotDialog.vue";
+import DebugControlDialog from "./components/DebugControlDialog.vue";
+import DebugLogDialog from "./components/DebugLogDialog.vue";
+import SceneManagementDialog from "./components/SceneManagementDialog.vue";
+import ControlBar from "./ControlBar.vue";
+import ParticipantPanel from "./ParticipantPanel.vue";
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -140,6 +140,21 @@ const debugLogs = ref<LogEntry[]>([]);
 
 // 树状调试日志数据
 const traceRoots = ref<TraceLogEntry[]>([]);
+
+const CT = {
+  common: {
+
+  },
+  status: {
+    success: '胜利',
+    fail: '失败',
+    skip: '跳过回合',
+    end: '强制结束',
+    full_health: '满血',
+    full_energy: '满能量',
+    kill_selected: '击杀选中',
+  }
+}
 
 /** 从 BattleSystem.traceCollector 刷新树状日志 */
 async function updateTraceRoots() {
@@ -171,7 +186,7 @@ watch(showDebugLogDialog, async (val) => {
 
 const clearDebugLogs = () => {
   debugLogs.value = [];
-  battleLogManager.clearDebugLogs();
+  battleLogManager.clearLogs();
 };
 
 const handleDebugAction = async (action: string) => {
@@ -409,13 +424,6 @@ const enemyTeam = computed(() => {
   return battleStore.enemyTeam
 });
 
-const teamCounts = computed(() => ({
-  ally: battleStore.allyTeam.length,
-  enemy: battleStore.enemyTeam.length,
-}));
-
-
-
 // 初始化战斗
 function initBattle() {
   // ponytail: 默认测试阵容 — 覆盖伤害/治疗/护盾/buff/debuff 的典型组合
@@ -426,8 +434,8 @@ function initBattle() {
   console.log('allyList', allyList)
   console.log('enemyList', enemyList)
 
-  const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, PARTICIPANT_SIDE.ALLY, index));
-  const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY, index));
+  const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, ParticipantSide.ALLY, index));
+  const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, index));
   console.log('allyTeamData', allyTeamData)
   console.log('enemyTeamData', enemyTeamData)
   // 使用BattleService初始化队伍数据
@@ -492,18 +500,6 @@ watch(
   }
 );
 
-// 子组件事件处理方法
-const exportState = () => {
-  const result = battleStore.exportState(currentTurn.value);
-
-  if (result) {
-    battleLogManager.addSystemLog({
-      message: '战斗状态已导出',
-    });
-  }
-
-  return result;
-};
 
 // 战斗规则组件事件处理
 const updateSpeed = (speed: number) => {
@@ -687,7 +683,7 @@ const startBattle = async () => {
 
 const endBattle = async () => {
   try {
-    const result = await battleStore.endBattle(PARTICIPANT_SIDE.ALLY);
+    const result = await battleStore.endBattle(ParticipantSide.ALLY);
 
     if (result) {
       notification.value?.addNotification("成功", "战斗已结束", "success");
@@ -730,7 +726,6 @@ const resetBattle = async () => {
 const toggleAutoPlay = async () => {
   try {
     const result = await battleStore.toggleAutoPlay();
-
     if (result) {
       notification.value?.addNotification("成功", battleStore.autoPlayMode ? "已开始自动战斗" : "已停止自动战斗", "success");
     } else {
@@ -751,8 +746,6 @@ const handleBattleSpeedChange = (speed: number) => {
   battleStore.setBattleSpeed(speed);
 };
 
-
-
 // 选择角色
 const selectCharacter = (characterId: string) => {
   battleStore.selectCharacter(characterId);
@@ -761,8 +754,6 @@ const selectCharacter = (characterId: string) => {
 let debugLogListener: (() => void) | null = null
 
 onUnmounted(() => {
-  // 组件卸载时的清理工作
-  // 清理战斗管理器事件监听器，防止内存泄漏
   battleStore.destroy();
   if (debugLogListener) {
     battleLogManager.removeListener(debugLogListener);

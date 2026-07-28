@@ -42,73 +42,100 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted, nextTick } from 'vue'
+import { ref, onUnmounted, type Ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
-import { getActionBudget } from '@/shared/constants/animation-timing'
-import { useBattleStore } from '@/presentation/stores/battleStore'
+import { getActionBudget, BATTLE_ANIMATION_TIMING } from '@/shared/constants/animation-timing'
 
 const debugStore = useDebugStore()
+const P = BATTLE_ANIMATION_TIMING.PHASES
 
 // ============ 类型 ============
 export interface CardPos { x: number; y: number; el: HTMLElement }
+export type VfxColorType = 'fire' | 'frost' | 'heal' | 'shield'
+
+interface SkillNameItem { id: number; text: string; x: number; y: number; dx: number; dy: number; fromSide: string }
+interface ImpactItem { id: number; x: number; y: number; colorType: VfxColorType; style: string }
+interface PositionItem { id: number; x: number; y: number }
+interface FloatingNumItem { id: number; text: string; x: number; y: number; cls: string; rotate?: number }
 
 // ============ VFX 颜色映射 ============
-/* ponytail: these match the --vfx-* CSS variables above; keep in sync */
-const VFX_COLORS: Record<string, Record<string, string>> = {
+/* NOTE: 与 <style> 中 --vfx-* CSS 变量同源，改这里必须同步改 CSS */
+const VFX_COLORS: Record<VfxColorType, { bg: string; glow: string }> = {
   fire: { bg: '#ffaa30', glow: '#ff6600' },
   frost: { bg: '#8ee0ff', glow: '#4cc9f0' },
   heal: { bg: '#6affd0', glow: '#2dd4a8' },
   shield: { bg: '#8ee0ff', glow: '#4cc9f0' },
 }
 
+// ============ VFX 侧时长常量（耦合 CSS 关键帧，刻意不随倍速缩放） ============
+/* NOTE: 这些数字与本文件 CSS 动画时长耦合，不从 PHASES 派生。
+   若修改 CSS 动画时长，必须同步修改对应常量。 */
+const SKILL_NAME_REMOVE_BUFFER_MS = 50   // 技能名移除缓冲（skill-fly 1.2s）
+const DMG_NUM_MIN_TTL_MS = 1400          // 伤害数字浮动下限（dmg-pop 1.4s，可读性保障）
+const HEAL_NUM_MIN_TTL_MS = 1600         // 治疗数字浮动下限（heal-rise 1.6s）
+const SHIELD_NUM_TTL_MS = 1450           // 护盾数字 TTL（shield-rise 1.4s，+50ms 缓冲）
+const SHAKE_DURATION_MS = 400            // 屏幕震动时长（visual-shake 0.4s）
+const AURA_SECOND_LAYER_DELAY_MS = 200   // 治疗光环第二层延迟
+const TRAIL_INTERVAL_MS = 30             // 光弹尾迹生成间隔
+const TRAIL_TTL_MS = 600                 // 光弹尾迹存活时长（trail-fade 0.6s）
+/* hex-flash CSS 动画 0.9s > JS 移除时长 b*0.5（1x 时 = 600ms），
+   这意味着六边形在 CSS 动画完成前就被移除。这是原版既有行为。 */
+
 // ============ 响应式数据 ============
 let nextId = 0
-
-/** 技能名飞行 */
-const skillNames = ref<Array<{ id: number; text: string; x: number; y: number; dx: number; dy: number; fromSide: string }>>([])
-/** 命中爆炸 */
-const impacts = ref<Array<{ id: number; x: number; y: number; colorType: string; style: string }>>([])
-/** 治疗光环 */
-const healAuras = ref<Array<{ id: number; x: number; y: number }>>([])
-/** 护盾六边形 */
-const shieldHexes = ref<Array<{ id: number; x: number; y: number }>>([])
-/** 伤害/治疗/护盾数字 */
-const dmgNums = ref<Array<{ id: number; text: string; x: number; y: number; cls: string; rotate?: number }>>([])
-/** 屏幕震动 */
+const skillNames = ref<SkillNameItem[]>([])
+const impacts = ref<ImpactItem[]>([])
+const healAuras = ref<PositionItem[]>([])
+const shieldHexes = ref<PositionItem[]>([])
+const dmgNums = ref<FloatingNumItem[]>([])
 const shaking = ref(false)
 
-// ============ 工具 ============
-let timeouts: ReturnType<typeof setTimeout>[] = []
-function setRemove(id: number, arr: any, delay: number) {
-  const t = setTimeout(() => {
-    const idx = arr.value.findIndex((i: any) => i.id === id)
+// ============ 生命周期安全调度器 ============
+/* NOTE: 单视图应用中此组件实际不卸载（BattleArena 是唯一 view）。
+   以下收口是卫生与期权，非修复既有泄漏（原版回调均有 parentNode 守卫）。 */
+const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
+const pendingFrames = new Set<number>()
+
+function later(fn: () => void, delay: number): void {
+  const t = setTimeout(() => { pendingTimers.delete(t); fn() }, delay)
+  pendingTimers.add(t)
+}
+function nextFrame(fn: FrameRequestCallback): void {
+  const id = requestAnimationFrame((now) => { pendingFrames.delete(id); fn(now) })
+  pendingFrames.add(id)
+}
+
+// ============ 泛型移除 ============
+function setRemove<T extends { id: number }>(id: number, arr: Ref<T[]>, delay: number): void {
+  later(() => {
+    const idx = arr.value.findIndex((i) => i.id === id)
     if (idx !== -1) arr.value.splice(idx, 1)
   }, delay)
-  timeouts.push(t)
 }
 
-function spawn(html: string, x: number, y: number, cls: string, duration: number, container?: HTMLElement): HTMLElement {
-  const el = document.createElement('div')
-  el.className = cls
-  el.innerHTML = html
-  el.style.left = x + 'px'
-  el.style.top = y + 'px'
-    ; (container || document.getElementById('visual-effects-root') || document.body).appendChild(el)
-  setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el) }, duration + 50)
-  return el
-}
+// ============ 相位派生时长（单一事实来源：animation-timing.ts） ============
+/* NOTE: 随倍速缩放，值与历史魔数恒等（由特征测试证明）。 */
+/** 技能名飞行时长 = nameFlight 相位（0→50%T），= budget × 0.5 */
+const skillNameDuration = (b: number) => b * P.nameFlight.end
+/** 光弹发射延迟 = projectile.start（20%T），= budget × 0.2 */
+const projectileDelay = (b: number) => b * P.projectile.start
+/** 光弹飞行时长 = projectile 相位跨度（20%→50%T），= budget × 0.3 */
+const projectileDuration = (b: number) => b * (P.projectile.end - P.projectile.start)
+/** 命中特效时长 = impact→numberFloat.end（50%→85%T），= budget × 0.35 */
+const impactDuration = (b: number) => b * (P.numberFloat.end - P.impact)
+/** 光环/护盾六边形时长 = 0→impact（0→50%T），= budget × 0.5 */
+const auraDuration = (b: number) => b * P.impact
 
 // ============ 获取卡片位置 ============
-/** 外部需注入卡片 DOM 元素映射 */
 const cardElements = new Map<string, HTMLElement>()
-
 function registerCard(id: string, el: HTMLElement) { cardElements.set(id, el) }
 function unregisterCard(id: string) { cardElements.delete(id) }
-
 function cardCenter(id: string): CardPos | null {
   const el = cardElements.get(id)
-  if (!el) {
-    console.warn('[BattleVisualEffects] 卡片未注册，无法定位:', id, '已有卡片:', Array.from(cardElements.keys()))
+  // isConnected 防御：卡片可能已脱离文档但未反注册（v-if/路由切换瞬间），
+  // 此时 getBoundingClientRect 返回过期坐标
+  if (!el || !el.isConnected) {
+    console.warn('[BattleVisualEffects] 卡片未注册或已脱离文档，无法定位:', id)
     return null
   }
   const r = el.getBoundingClientRect()
@@ -116,105 +143,96 @@ function cardCenter(id: string): CardPos | null {
 }
 
 // ============ 公共方法 ============
-
-/** 技能名从攻击者飞向目标（飞行时长 = budget * 0.5，即 0→50%T） */
+/** 技能名从攻击者飞向目标（飞行时长 = 0→50%T） */
 function showSkillName(attackerId: string, targetId: string, name: string, fromSide: 'left' | 'right', budget: number) {
   const aPos = cardCenter(attackerId)
   const tPos = cardCenter(targetId)
   if (!aPos || !tPos) return
-
   const id = nextId++
-  const dx = tPos.x - aPos.x
-  const dy = tPos.y - aPos.y
-  skillNames.value.push({ id, text: name, x: aPos.x, y: aPos.y - 20, dx, dy, fromSide })
-  setRemove(id, skillNames, budget * 0.5 + 50)
+  skillNames.value.push({
+    id, text: name,
+    x: aPos.x, y: aPos.y - 20,
+    dx: tPos.x - aPos.x, dy: tPos.y - aPos.y,
+    fromSide,
+  })
+  setRemove(id, skillNames, skillNameDuration(budget) + SKILL_NAME_REMOVE_BUFFER_MS)
 }
 
-/** 光弹飞行（requestAnimationFrame 驱动），duration = budget * 0.3（20%→50%T） */
-function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | 'heal' | 'shield', duration: number) {
+/** 光弹飞行（requestAnimationFrame 驱动），时长 = 20%→50%T */
+function showProjectile(fromId: string, toId: string, type: VfxColorType, duration: number) {
   const from = cardCenter(fromId)
   const to = cardCenter(toId)
-  if (!from || !to) return
-
+  // duration<=0 防御：避免 (now-start)/0 产生 NaN 坐标（实践中 budget 恒为正，此路径不可达）
+  if (!from || !to || duration <= 0) return
   const proj = document.createElement('div')
   proj.className = `projectile ${type}`
   const root = document.getElementById('visual-effects-root')
   if (!root) return
   root.appendChild(proj)
-
   const dx = to.x - from.x
   const dy = to.y - from.y
   const start = performance.now()
   let lastTrail = 0
-
   function step(now: number) {
+    // 卸载后立即终止（元素已被回收），rAF 链自然断开
+    if (!proj.isConnected) return
     const t = Math.min(1, (now - start) / duration)
     const arc = Math.sin(t * Math.PI) * 60
     const x = from.x + dx * t
     const y = from.y + dy * t - arc
     proj.style.left = (x - 7) + 'px'
     proj.style.top = (y - 7) + 'px'
-
-    // 尾迹
-    if (now - lastTrail > 30) {
+    if (now - lastTrail > TRAIL_INTERVAL_MS) {
       lastTrail = now
-      const trail = document.createElement('div')
-      trail.className = 'projectile-trail'
-      trail.style.left = x + 'px'
-      trail.style.top = y + 'px'
-      if (type === 'fire') {
-        trail.style.background = `radial-gradient(circle, ${VFX_COLORS[type].bg}, transparent)`
-        trail.style.boxShadow = `0 0 10px ${VFX_COLORS[type].glow}`
-      } else {
-        trail.style.background = `radial-gradient(circle, ${VFX_COLORS.frost.bg}, transparent)`
-        trail.style.boxShadow = `0 0 10px ${VFX_COLORS.frost.glow}`
-      }
-      root.appendChild(trail)
-      setTimeout(() => { if (trail.parentNode) trail.parentNode.removeChild(trail) }, 600)
+      spawnTrail(root, x, y, type)
     }
-
     if (t < 1) {
-      requestAnimationFrame(step)
+      nextFrame(step)
     } else {
       if (proj.parentNode) proj.parentNode.removeChild(proj)
     }
   }
-  requestAnimationFrame(step)
+  nextFrame(step)
+}
+
+/** 光弹尾迹（生成后自行淡出） */
+function spawnTrail(root: HTMLElement, x: number, y: number, type: VfxColorType) {
+  const trail = document.createElement('div')
+  trail.className = 'projectile-trail'
+  trail.style.left = x + 'px'
+  trail.style.top = y + 'px'
+  if (type === 'fire') {
+    trail.style.background = `radial-gradient(circle, ${VFX_COLORS.fire.bg}, transparent)`
+    trail.style.boxShadow = `0 0 10px ${VFX_COLORS.fire.glow}`
+  } else {
+    trail.style.background = `radial-gradient(circle, ${VFX_COLORS.frost.bg}, transparent)`
+    trail.style.boxShadow = `0 0 10px ${VFX_COLORS.frost.glow}`
+  }
+  root.appendChild(trail)
+  later(() => { if (trail.parentNode) trail.parentNode.removeChild(trail) }, TRAIL_TTL_MS)
 }
 
 /** 命中爆炸 — 根据 debugStore.impactStyle 选择动画变体 */
-function showImpact(targetId: string, colorType: 'fire' | 'frost' | 'heal' | 'shield', budget?: number) {
+function showImpact(targetId: string, colorType: VfxColorType, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
   const style = debugStore.impactStyle
   impacts.value.push({ id, x: pos.x, y: pos.y, colorType, style })
-  // NOTE: 命中爆炸清除时长 = 数字上浮阶段（50%→85%T），有 budget 时按比例，否则兜底 1x
-  const impactDuration = (budget ?? getActionBudget(1)) * 0.35
-  setRemove(id, impacts, impactDuration)
-
-  // 粒子 — 根据 style 变化
-  const isCrit = false // 只区分颜色，暴击由调用方决定
-  const sparkColors: Record<string, { bg: string; glow: string }> = {
-    fire: { bg: '#ffaa30', glow: '#ff6600' },
-    frost: { bg: '#8ee0ff', glow: '#4cc9f0' },
-    heal: { bg: '#6affd0', glow: '#2dd4a8' },
-    shield: { bg: '#8ee0ff', glow: '#4cc9f0' },
-  }
-  const c = sparkColors[colorType] || sparkColors.fire
-
+  setRemove(id, impacts, impactDuration(budget ?? getActionBudget(1)))
+  const c = VFX_COLORS[colorType] ?? VFX_COLORS.fire
   switch (style) {
     case 'explosion':
       spawnExplosionParticles(pos, c)
       break
     case 'slash':
-      // ponytail: 一刀效果完全由 CSS ::before 实现，无需额外 JS 粒子
+      // NOTE: 一刀效果完全由 CSS ::before 实现，无需额外 JS 粒子
       break
     case 'iceshatter':
       spawnIceShatterParticles(pos, c)
       break
     case 'shockwave':
-      // 冲击波无额外粒子，纯 CSS
+      // NOTE: 冲击波无额外粒子，纯 CSS
       break
     case 'shadow':
       spawnShadowParticles(pos, c)
@@ -235,7 +253,7 @@ function spawnExplosionParticles(pos: CardPos, c: { bg: string; glow: string }) 
       { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
       { transform: `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px)) scale(0)`, opacity: 0 }
     ], { duration: 600, easing: 'cubic-bezier(0.2, 0.6, 0.3, 1)' })
-    setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 650)
+    later(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 650)
   }
 }
 
@@ -243,7 +261,6 @@ function spawnExplosionParticles(pos: CardPos, c: { bg: string; glow: string }) 
 function spawnIceShatterParticles(pos: CardPos, c: { bg: string; glow: string }) {
   for (let i = 0; i < 6; i++) {
     const spark = createSpark(pos, c, 4)
-    // 菱形碎片
     spark.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'
     spark.style.borderRadius = '0'
     spark.style.width = '8px'
@@ -256,7 +273,7 @@ function spawnIceShatterParticles(pos: CardPos, c: { bg: string; glow: string })
       { transform: 'translate(-50%, -50%) scale(0.5) rotate(0deg)', opacity: 1 },
       { transform: `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px)) scale(0) rotate(${120 + Math.random() * 120}deg)`, opacity: 0 }
     ], { duration: 600, easing: 'cubic-bezier(0.1, 0.9, 0.2, 1)' })
-    setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 650)
+    later(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 650)
   }
   // 一个明亮的核心闪光
   const flash = document.createElement('div')
@@ -273,14 +290,13 @@ function spawnIceShatterParticles(pos: CardPos, c: { bg: string; glow: string })
     { transform: 'translate(-50%, -50%) scale(0.3)', opacity: 1 },
     { transform: 'translate(-50%, -50%) scale(2.5)', opacity: 0 }
   ], { duration: 400, easing: 'ease-out' })
-  setTimeout(() => { if (flash.parentNode) flash.parentNode.removeChild(flash) }, 450)
+  later(() => { if (flash.parentNode) flash.parentNode.removeChild(flash) }, 450)
 }
 
 /** 暗影粒子 — 上升烟雾 */
 function spawnShadowParticles(pos: CardPos, c: { bg: string; glow: string }) {
   for (let i = 0; i < 10; i++) {
     const spark = createSpark(pos, c, 5)
-    // 暗影用暗紫色而不是原色
     spark.style.background = 'radial-gradient(circle, #a855f7, transparent)'
     spark.style.boxShadow = '0 0 8px #a855f7'
     const sx = (Math.random() - 0.5) * 60
@@ -291,7 +307,7 @@ function spawnShadowParticles(pos: CardPos, c: { bg: string; glow: string }) {
       { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0.8 },
       { transform: `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px)) scale(1.5)`, opacity: 0 }
     ], { duration: 800, easing: 'ease-out' })
-    setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 850)
+    later(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 850)
   }
 }
 
@@ -317,16 +333,13 @@ function showHealAura(targetId: string, budget?: number) {
   if (!pos) return
   const id = nextId++
   healAuras.value.push({ id, x: pos.x, y: pos.y })
-  // NOTE: 治疗光环清除时长 = 命中阶段（50%→100%T）
-  const auraDuration = (budget ?? getActionBudget(1)) * 0.5
-  setRemove(id, healAuras, auraDuration)
-
-  // 第二层
+  const duration = auraDuration(budget ?? getActionBudget(1))
+  setRemove(id, healAuras, duration)
   const id2 = nextId++
-  setTimeout(() => {
+  later(() => {
     healAuras.value.push({ id: id2, x: pos.x, y: pos.y })
-    setRemove(id2, healAuras, auraDuration)
-  }, 200)
+    setRemove(id2, healAuras, duration)
+  }, AURA_SECOND_LAYER_DELAY_MS)
 }
 
 /** 护盾六边形 */
@@ -335,43 +348,40 @@ function showShieldHex(targetId: string, budget?: number) {
   if (!pos) return
   const id = nextId++
   shieldHexes.value.push({ id, x: pos.x, y: pos.y })
-  const hexDuration = (budget ?? getActionBudget(1)) * 0.5
-  setRemove(id, shieldHexes, hexDuration)
+  setRemove(id, shieldHexes, auraDuration(budget ?? getActionBudget(1)))
 }
 
-/** 伤害数字（上浮淡出时长 = budget * 0.35，即 50%→85%T） */
+/** 伤害数字（上浮淡出时长 = 50%→85%T） */
 function showDamageNum(targetId: string, value: number, isCrit: boolean, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
-  // HACK: budget 由所有当前调用方传入，兜底用 1x 速度的 numberFloat 阶段时长
-  const floatDuration = Math.max((budget ?? getActionBudget(1)) * 0.35, 1400)
-  const offsetX = (Math.random() - 0.5) * 60 // 扩大 X 轴偏移至 ±30px
-  const rotate = (Math.random() - 0.5) * 10  // 微小旋转 ±5度
+  // HACK: budget 由所有当前调用方传入，兜底用 1x 速度的 numberFloat 阶段时长。
+  //       天花板：快速模式下上游（BattleSystem.shouldSuppressAnimationEvents）根本不发事件，
+  //       此兜底实际不可达；若未来 VFX 需要感知快速模式，重新评估此兜底。
+  const floatDuration = Math.max(impactDuration(budget ?? getActionBudget(1)), DMG_NUM_MIN_TTL_MS)
   dmgNums.value.push({
     id, text: `-${value}`,
-    x: pos.x + offsetX,
+    x: pos.x + (Math.random() - 0.5) * 60,
     y: pos.y - 20,
     cls: isCrit ? 'dmg crit' : 'dmg normal',
-    rotate,
+    rotate: (Math.random() - 0.5) * 10,
   })
   setRemove(id, dmgNums, floatDuration)
 }
 
-/** 治疗数字（上浮淡出时长 = budget * 0.35） */
+/** 治疗数字（上浮淡出时长 = 50%→85%T） */
 function showHealNum(targetId: string, value: number, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
-  const floatDuration = Math.max((budget ?? getActionBudget(1)) * 0.35, 1600)
-  const offsetX = (Math.random() - 0.5) * 40
-  const rotate = (Math.random() - 0.5) * 6
+  const floatDuration = Math.max(impactDuration(budget ?? getActionBudget(1)), HEAL_NUM_MIN_TTL_MS)
   dmgNums.value.push({
     id, text: `+${value}`,
-    x: pos.x + offsetX,
+    x: pos.x + (Math.random() - 0.5) * 40,
     y: pos.y + 10,
     cls: 'heal-num',
-    rotate,
+    rotate: (Math.random() - 0.5) * 6,
   })
   setRemove(id, dmgNums, floatDuration)
 }
@@ -381,16 +391,14 @@ function showShieldNum(targetId: string, value: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
-  const offsetX = (Math.random() - 0.5) * 40
-  const rotate = (Math.random() - 0.5) * 6
   dmgNums.value.push({
     id, text: `+${value}`,
-    x: pos.x + offsetX,
+    x: pos.x + (Math.random() - 0.5) * 40,
     y: pos.y + 15,
     cls: 'shield-num',
-    rotate,
+    rotate: (Math.random() - 0.5) * 6,
   })
-  setRemove(id, dmgNums, 1450) // NOTE: shield-rise 动画 1.4s，1450ms 足够覆盖
+  setRemove(id, dmgNums, SHIELD_NUM_TTL_MS) // NOTE: shield-rise 动画 1.4s，1450ms 足够覆盖
 }
 
 /** 闪避文字 */
@@ -398,11 +406,10 @@ function showMissText(targetId: string, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
-  const floatDuration = Math.max((budget ?? getActionBudget(1)) * 0.35, 1400)
-  const offsetX = (Math.random() - 0.5) * 40
+  const floatDuration = Math.max(impactDuration(budget ?? getActionBudget(1)), DMG_NUM_MIN_TTL_MS)
   dmgNums.value.push({
     id, text: '闪避',
-    x: pos.x + offsetX,
+    x: pos.x + (Math.random() - 0.5) * 40,
     y: pos.y - 20,
     cls: 'miss',
     rotate: 0,
@@ -413,7 +420,7 @@ function showMissText(targetId: string, budget?: number) {
 /** 屏幕震动 */
 function showScreenShake() {
   shaking.value = true
-  setTimeout(() => { shaking.value = false }, 400)
+  later(() => { shaking.value = false }, SHAKE_DURATION_MS)
 }
 
 /** 飞行序列：只飞（技能名 + 光弹），不包含命中 */
@@ -426,51 +433,7 @@ function playFlightSequence(
   budget: number,
 ) {
   showSkillName(attackerId, targetId, skillName, fromSide, budget)
-  // 光弹从 20%T 出发 → 50%T 到达
-  setTimeout(() => showProjectile(attackerId, targetId, impactStyle, budget * 0.3), budget * 0.2)
-}
-
-/** 完整攻击动画序列（已废弃 — 保留旧接口兼容） */
-function playAttackSequence(
-  attackerId: string,
-  targetId: string,
-  skillName: string,
-  damage: number,
-  isCrit: boolean,
-  fromSide: 'left' | 'right',
-  impactStyle: 'fire' | 'frost' = 'fire',
-) {
-  const budget = getActionBudget(useBattleStore().battleSpeed)
-  showSkillName(attackerId, targetId, skillName, fromSide, budget)
-  setTimeout(() => showProjectile(attackerId, targetId, impactStyle, budget * 0.3), budget * 0.2)
-  setTimeout(() => {
-    showImpact(targetId, impactStyle, budget)
-    if (damage > 0) showDamageNum(targetId, damage, isCrit, budget)
-    if (isCrit) showScreenShake()
-  }, budget * 0.5)
-}
-
-/** 完整治疗动画序列（已废弃 — 保留旧接口兼容） */
-function playHealSequence(healerId: string, targetId: string, skillName: string, value: number, fromSide: 'left' | 'right') {
-  const budget = getActionBudget(useBattleStore().battleSpeed)
-  showSkillName(healerId, targetId, skillName, fromSide, budget)
-  setTimeout(() => showProjectile(healerId, targetId, 'heal', budget * 0.3), budget * 0.2)
-  setTimeout(() => {
-    showImpact(targetId, 'heal', budget)
-    showHealAura(targetId, budget)
-    showHealNum(targetId, value, budget)
-  }, budget * 0.5)
-}
-
-/** 完整护盾动画序列（已废弃 — 保留旧接口兼容） */
-function playShieldSequence(casterId: string, targetId: string, skillName: string, value: number, fromSide: 'left' | 'right') {
-  const budget = getActionBudget(useBattleStore().battleSpeed)
-  showSkillName(casterId, targetId, skillName, fromSide, budget)
-  setTimeout(() => showProjectile(casterId, targetId, 'shield', budget * 0.3), budget * 0.2)
-  setTimeout(() => {
-    showShieldHex(targetId, budget)
-    showShieldNum(targetId, value)
-  }, budget * 0.5)
+  later(() => showProjectile(attackerId, targetId, impactStyle, projectileDuration(budget)), projectileDelay(budget))
 }
 
 defineExpose({
@@ -487,14 +450,14 @@ defineExpose({
   showMissText,
   showScreenShake,
   playFlightSequence,
-  playAttackSequence,
-  playHealSequence,
-  playShieldSequence,
   cardElements,
 })
 
 onUnmounted(() => {
-  timeouts.forEach(clearTimeout)
+  pendingTimers.forEach(clearTimeout)
+  pendingFrames.forEach(cancelAnimationFrame)
+  pendingTimers.clear()
+  pendingFrames.clear()
   cardElements.clear()
 })
 </script>

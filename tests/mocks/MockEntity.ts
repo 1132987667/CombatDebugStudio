@@ -1,6 +1,6 @@
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import { ParticipantSide } from '@/domain/battle/type/types'
 
 export const defaultAttrs = {
   [ATTRIBUTE_CODE.attack]: {
@@ -102,8 +102,7 @@ export function createMockEntity(
     id: 'test_entity',
     name: 'Test',
     level: 50,
-    type: PARTICIPANT_SIDE.ALLY,
-    team: PARTICIPANT_SIDE.ALLY,
+    team: ParticipantSide.ALLY,
     enabled: true,
     seatIndex: 0,
     statusEffects: [],

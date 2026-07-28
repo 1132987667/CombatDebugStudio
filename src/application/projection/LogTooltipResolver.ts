@@ -10,11 +10,12 @@
  * - 三级回退：buff.description → 反查技能.description → 按结构自动生成
  */
 
-import type { LogSegmentHover } from '@/shared/types/battle-log'
+import { LogSegmentHover, LogSegmentHoverKind } from '@/shared/types/battle-log'
 import { classifyBuff, getBuffCategoryBadge, BUFF_CATEGORY, type BuffCategory } from '@/shared/types/buff-classification'
+import type { BuffJsonEntry, BuffJsonAuraModifier } from '@/shared/types/buffs-json'
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import type { SkillManager } from '@/domain/skill/SkillManager'
-import type { SkillConfig } from '@/domain/skill/types'
+import { SkillConfig, SkillType } from '@/domain/skill/types'
 
 // ==================== 输出类型 ====================
 
@@ -59,11 +60,11 @@ export class LogTooltipResolver {
    */
   resolve(hover: LogSegmentHover): TooltipData | null {
     switch (hover.kind) {
-      case 'buff':
+      case LogSegmentHoverKind.BUFF:
         return this.resolveBuff(hover.id)
-      case 'skill':
+      case LogSegmentHoverKind.SKILL:
         return this.resolveSkill(hover.id)
-      case 'passive':
+      case LogSegmentHoverKind.PASSIVE:
         return this.resolvePassive(hover.id)
       default:
         return null
@@ -84,7 +85,11 @@ export class LogTooltipResolver {
     }
 
     const name = config.name ?? config.id ?? buffId
-    const classification = classifyBuff(config)
+    // 合并已解析的 effectPlan，让 deriveBuffFacets 走数据驱动分支（而非旧字段回退）
+    const resolved = this.buffRegistry.getResolvedBuffConfig(buffId)
+    const classification = classifyBuff(
+      resolved ? { ...config, effectPlan: resolved.effectPlan } : config,
+    )
     const badge = getBuffCategoryBadge(classification)
     const durationLabel = this.formatDuration(config.duration)
 
@@ -109,7 +114,7 @@ export class LogTooltipResolver {
    */
   private resolveBuffDescription(
     buffId: string,
-    config: Record<string, any>,
+    config: BuffJsonEntry,
     category: BuffCategory,
   ): string {
     // ①
@@ -137,15 +142,15 @@ export class LogTooltipResolver {
   }
 
   /** 按结构自动生成描述 */
-  private generateAutoDescription(config: Record<string, any>, category: BuffCategory): string {
+  private generateAutoDescription(config: BuffJsonEntry, category: BuffCategory): string {
     switch (category) {
       case BUFF_CATEGORY.AURA: {
         const aura = config.aura
-        if (aura?.modifiers?.length > 0) {
-          const items = aura.modifiers.map(
-            (m: any) => `${m.targetAttribute ?? ''} ${this.formatModifierValue(m)}`,
+        if (aura?.modifiers?.length) {
+          const items = aura!.modifiers.map(
+            (m) => `${m.targetAttribute ?? ''} ${this.formatModifierValue(m)}`,
           ).filter(Boolean).join('、')
-          const scope = aura.targetSelector === 'allies' ? '全体友方' : aura.targetSelector === 'enemies' ? '全体敌方' : '自身'
+          const scope = aura!.targetSelector === 'allies' ? '全体友方' : aura!.targetSelector === 'enemies' ? '全体敌方' : '自身'
           return `提升 ${scope} ${items}`
         }
         return '光环效果'
@@ -172,7 +177,7 @@ export class LogTooltipResolver {
 
   private appendBuffDetails(
     details: TooltipDetailRow[],
-    config: Record<string, any>,
+    config: BuffJsonEntry,
     category: BuffCategory,
   ): void {
     switch (category) {
@@ -181,7 +186,7 @@ export class LogTooltipResolver {
         if (aura) {
           const scope = aura.targetSelector === 'allies' ? '全体友方' : aura.targetSelector === 'enemies' ? '全体敌方' : '自身'
           details.push({ label: '生效范围', value: scope })
-          if (aura.modifiers?.length > 0) {
+          if (aura.modifiers?.length) {
             for (const m of aura.modifiers) {
               details.push({
                 label: m.targetAttribute ?? '属性',
@@ -203,14 +208,14 @@ export class LogTooltipResolver {
       }
       case BUFF_CATEGORY.TRIGGER: {
         const triggers = config.triggers
-        if (triggers?.length > 0) {
-          for (const t of triggers) {
+        if (triggers?.length) {
+          for (const t of triggers!) {
             details.push({
               label: '触发时机',
               value: t.phase ?? t.scriptId ?? '未知',
             })
             if (t.params?.probability != null) {
-              details.push({ label: '触发概率', value: `${Math.round(t.params.probability * 100)}%` })
+              details.push({ label: '触发概率', value: `${Math.round((t.params.probability as number) * 100)}%` })
             }
           }
         }
@@ -230,8 +235,8 @@ export class LogTooltipResolver {
       }
       case BUFF_CATEGORY.IMMUNITY: {
         const immunities = config.immunities
-        if (immunities?.length > 0) {
-          details.push({ label: '免疫列表', value: immunities.join('、') })
+        if (immunities?.length) {
+          details.push({ label: '免疫列表', value: immunities!.join('、') })
         }
         break
       }
@@ -312,7 +317,7 @@ export class LogTooltipResolver {
   // ==================== 辅助方法 ====================
 
   /** 格式化修饰符值 */
-  private formatModifierValue(modifier: any): string {
+  private formatModifierValue(modifier: BuffJsonAuraModifier): string {
     if (modifier.value == null) return ''
     const pct = Math.round(modifier.value * 100)
     const type = modifier.type === 'PERCENTAGE' ? '%' : ''

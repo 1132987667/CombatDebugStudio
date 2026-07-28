@@ -5,7 +5,7 @@ import { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
-import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import { ParticipantSide } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { EMPTY_SKILL_SET, makeDefaultAttributes } from '../fixtures/participants'
@@ -67,8 +67,7 @@ function createTestParticipantWithPassives(passiveSkills: SkillConfig[]): Battle
     id: 'test_passive_char',
     name: '被动测试角色',
     level: 50,
-    type: PARTICIPANT_SIDE.ALLY,
-    team: PARTICIPANT_SIDE.ALLY,
+    team: ParticipantSide.ALLY,
     enabled: true,
     skills: { small: [], passive: passiveSkills, ultimate: [] },
     attributeValues: makeDefaultAttributes(),

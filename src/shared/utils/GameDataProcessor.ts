@@ -17,11 +17,7 @@ import {
   BattleParticipantImpl,
   type BattleParticipantData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
-import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
-import {
-  BattleTriggerPhase,
-  PARTICIPANT_SIDE,
-} from '@/domain/battle/type/types'
+import { BattleEntity, ParticipantSide, BattleTriggerPhase } from '@/domain/battle/type/types'
 import type { CharacterStats } from '@/domain/character/types'
 import type {
   PassiveSkillConfig,
@@ -129,7 +125,7 @@ export class GameDataProcessor {
    */
   static enemyToParticipant(
     enemy: Enemy,
-    type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
+    type: ParticipantSide = ParticipantSide.ENEMY,
     seatIndex: number = 0,
   ): BattleParticipantImpl {
     // 1. 解析被动技能并生成修饰符模板列表
@@ -154,7 +150,6 @@ export class GameDataProcessor {
     const initData: BattleParticipantData = {
       id: `[${type}]_${enemy.id}_${counter.next()}`,
       name: enemy.name,
-      type,
       team: type,
       level: enemy.level,
       enabled: true,

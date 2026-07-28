@@ -21,7 +21,7 @@ export function formatModifierValue(value: number, type: string): string {
 /**
  * 从可能为 AttributeValue 对象的值中提取数值
  */
-function getNumericValue(value: any): number {
+function getNumericValue(value: number | { value: number }): number {
   if (typeof value === 'number') return value
   if (typeof value === 'object' && value !== null && typeof value.value === 'number') return value.value
   return 0
@@ -32,7 +32,7 @@ function getNumericValue(value: any): number {
  * @param value 加成属性值（数值或 { value: number } 对象）
  * @returns 格式化后的字符串，如 "+12.5%" 或 "-8%"
  */
-export function formatBonusValue(value: any): string {
+export function formatBonusValue(value: number | { value: number }): string {
   const numValue = getNumericValue(value)
   if (isNaN(numValue)) return '0%'
   if (numValue === 0) return '0%'

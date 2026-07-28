@@ -13,6 +13,7 @@ import buffsData from '@configs/buffs/buffs.json'
 import materialsData from '@configs/materials/materials.json'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import type { PassiveCategory } from '@/domain/skill/types'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 
 export interface CompendiumEnemy {
   id: string
@@ -73,9 +74,9 @@ export interface CompendiumItem {
 export type CompendiumTabType = 'enemy' | 'buff' | 'item'
 
 export function useCompendium() {
-  // ponytail: JSON 推断类型与 CompendiumXxx 接口有结构差异，直接 `as T` 被 TS 拒绝，用 `as unknown as T` 绕过后依赖运行时形态兼容
+  // ponytail: JSON 推断类型与 CompendiumXxx 接口有结构差异，用 `as BuffJsonEntry[] as T` 绕过后依赖运行时形态兼容
   const enemies = ref<CompendiumEnemy[]>(enemiesData as unknown as CompendiumEnemy[])
-  const buffs = ref<CompendiumBuff[]>(buffsData as unknown as CompendiumBuff[])
+  const buffs = ref<CompendiumBuff[]>(buffsData as BuffJsonEntry[] as CompendiumBuff[])
   const skills = ref<CompendiumSkill[]>(GameDataProcessor.getSkillsData() as unknown as CompendiumSkill[])
   const items = ref<CompendiumItem[]>(materialsData as CompendiumItem[])
 

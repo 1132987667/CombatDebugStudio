@@ -379,9 +379,9 @@ export class ReplayEngine {
   private cloneParticipant(p: ParticipantSnapshot): ParticipantSnapshot {
     return {
       ...p,
-      buffs: p.buffs.map(b => ({ ...b })),
+      buffs: p.buffs?.map(b => ({ ...b })) || [],
       skillCooldowns: { ...p.skillCooldowns },
-      statusEffects: p.statusEffects.map(s => ({ ...s })),
+      statusEffects: p.statusEffects?.map(s => ({ ...s })) || [],
       attributes: { ...p.attributes },
     }
   }

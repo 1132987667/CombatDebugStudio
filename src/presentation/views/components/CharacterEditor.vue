@@ -12,7 +12,7 @@
       <select v-model="innerSelectedCharId" class="char-selector" @change="emitSelectChar">
         <option value="" disabled>{{ characters.length === 0 ? '暂无参战角色' : '选择角色' }}</option>
         <option v-for="char in characters" :key="char.id" :value="char.id">
-          {{ char.name }} ({{ char.side === 'ally' ? '我方' : '敌方' }})
+          {{ char.name }} ({{ ParticipantSideName[char.side] }})
         </option>
       </select>
     </template>
@@ -123,7 +123,10 @@ import { ref, computed, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
 import buffsData from '@configs/buffs/buffs.json'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import { classifyBuff, type BuffCategory } from '@/shared/types/buff-classification'
+import { getAttrName } from '@/domain/attribute/types'
+import { ParticipantSideName } from '@/domain/battle/type/types'
 
 // ==================== 类型 ====================
 
@@ -194,7 +197,7 @@ const activeTab = ref<'buffs' | 'attrs' | 'reset'>('buffs')
 const buffSearch = ref('')
 const innerSelectedCharId = ref('')
 const activeCategory = ref<string>('all') // 'all' 或 facet key
-const localStatuses = ref<EditorBuffEntry[]>([])
+const localStatuses = ref<EditorBuffEntry[]>([]) // 本地状态的 Buff 入口
 
 const attrOverrides = ref<Record<string, number>>({
   currentHealth: 0, currentEnergy: 0, minAttack: 0, defense: 0, speed: 0,
@@ -230,28 +233,26 @@ const attrFields: AttrOverrideItem[] = [
   { key: 'speed', label: '速度', min: 0, max: 9999, steps: [100, 10, 1] },
 ]
 
-// ==================== 属性名 → 中文 ====================
+// ==================== 属性名 → 中文（兜底：getAttrName 不认识的 ad-hoc 键） ====================
 
-const ATTR_KEY_TO_CN: Record<string, string> = {
-  attack: '攻击', defense: '防御', speed: '速度',
-  critRate: '暴击率', critDamage: '暴击伤害', dodge: '闪避',
-  dmgReduction: '伤害减免', damageBoost: '伤害加成',
-  maxHealth: '气血上限', currentHealth: '当前气血',
-  maxEnergy: '能量上限', currentEnergy: '当前能量',
-  hit: '命中率', HIT_RATE: '命中率',
-  critDamageTaken: '暴击承伤', critDmgTakenReduction: '暴击减免',
-  normalAtkDmgReduction: '普攻减免', physicalDmgReduction: '物伤减免',
-  magicalDmgReduction: '魔伤减免', fireDamageTaken: '火伤减免',
-  waterDamageTaken: '水伤减免', lightningDamageTaken: '雷伤减免',
-  slowImmune: '减速免疫', stunResist: '眩晕抵抗',
-  knockbackResist: '击退抵抗', poisonResist: '毒抗',
-  bleedResist: '流血抵抗', burnImmune: '灼烧免疫',
-  burnDuration: '灼烧延长', controlDurationReduction: '控制减免',
-  skillCooldown: '技能冷却', demonDamage: '对妖伤害',
-  damageToDemon: '对妖伤害', damageToLowHp: '对低血伤害',
-  webSuccessRate: '蛛网成功率', controlSuccessRate: '控制成功率',
-  fireDamage: '火攻', waterAtk: '水攻', fireAtk: '火攻',
-  poisonRes: '毒抗', healEffect: '治疗效果',
+const ATTR_ALIAS: Record<string, string> = {
+  dmgReduction: '伤害减免',
+  HIT_RATE: '命中率',
+  critDamageTaken: '暴击承伤',
+  poisonResist: '毒抗',
+  demonDamage: '对妖伤害',
+  fireDamage: '火攻',
+  fireDamageTaken: '火伤减免',
+  waterDamageTaken: '水伤减免',
+  slowImmune: '减速免疫',
+  stunResist: '眩晕抵抗',
+  knockbackResist: '击退抵抗',
+  bleedResist: '流血抵抗',
+  burnImmune: '灼烧免疫',
+  burnDuration: '灼烧延长',
+  skillCooldown: '技能冷却',
+  webSuccessRate: '蛛网成功率',
+  healEffect: '治疗效果',
   energyCost: '能量消耗',
 }
 
@@ -259,7 +260,7 @@ const ATTR_KEY_TO_CN: Record<string, string> = {
 function formatAttributes(attrs: Record<string, string>): string {
   return Object.entries(attrs)
     .map(([key, val]) => {
-      const cn = ATTR_KEY_TO_CN[key] || key
+      const cn = getAttrName(key as never) || ATTR_ALIAS[key] || key
       // 数值格式化：+1.0 → +1, +20% → +20%, -10 → -10
       const num = parseFloat(val)
       if (val.endsWith('%')) return `${cn}${val}`
@@ -274,7 +275,7 @@ function formatAttributes(attrs: Record<string, string>): string {
 
 function buildStatusesFromBuffs() {
   const buffList = Array.isArray(buffsData) ? buffsData : []
-  return buffList.map((buff: any) => {
+  return buffList.map((buff: BuffJsonEntry) => {
     const classification = classifyBuff(buff)
     const primaryFacet = classification.facets.length > 0 ? classification.facets[0] : 'other'
     return {
@@ -289,7 +290,7 @@ function buildStatusesFromBuffs() {
   })
 }
 
-function buildEffectSummary(buff: any): string {
+function buildEffectSummary(buff: BuffJsonEntry): string {
   const parts: string[] = []
   if (buff.attributes) {
     parts.push(formatAttributes(buff.attributes))

@@ -117,8 +117,8 @@
                     }}-{{ enemy.stats.maxAttack }}</span>
                   </div>
                   <div class="char-actions">
-                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, PARTICIPANT_SIDE.ALLY)">我方</button>
-                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, PARTICIPANT_SIDE.ENEMY)">敌方</button>
+                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ALLY)">我方</button>
+                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ENEMY)">敌方</button>
                   </div>
                 </div>
               </div>
@@ -139,7 +139,7 @@ import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { container } from '@/infrastructure/di/Container';
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene';
-import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/domain/battle/type/types";
+import { ParticipantSide } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
 import { BuffSystem } from '@/domain/buff/BuffSystem';
@@ -325,7 +325,7 @@ const applyPreset = () => {
 
   // 先停止可能正在进行的战斗
   if (battleStore.isBattleActive) {
-    battleStore.endBattle(PARTICIPANT_SIDE.ALLY)
+    battleStore.endBattle(ParticipantSide.ALLY)
   }
   battleStore.resetBattle()
   battleService.clearParticipants()
@@ -340,8 +340,8 @@ const applyPreset = () => {
       console.warn(`预设角色未找到: ${id}`)
       return
     }
-    const entity = GameDataProcessor.enemyToParticipant(enemyData, PARTICIPANT_SIDE.ALLY, index)
-    battleService.addCharacterToTeam(entity, PARTICIPANT_SIDE.ALLY)
+    const entity = GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ALLY, index)
+    battleService.addCharacterToTeam(entity, ParticipantSide.ALLY)
     if (entity.getImmunities().length > 0) {
       buffSystem.registerCharacterImmunities(entity.id, entity.getImmunities())
     }
@@ -355,8 +355,8 @@ const applyPreset = () => {
       console.warn(`预设角色未找到: ${id}`)
       return
     }
-    const entity = GameDataProcessor.enemyToParticipant(enemyData, PARTICIPANT_SIDE.ENEMY, index)
-    battleService.addCharacterToTeam(entity, PARTICIPANT_SIDE.ENEMY)
+    const entity = GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ENEMY, index)
+    battleService.addCharacterToTeam(entity, ParticipantSide.ENEMY)
     if (entity.getImmunities().length > 0) {
       buffSystem.registerCharacterImmunities(entity.id, entity.getImmunities())
     }
@@ -469,7 +469,7 @@ const isRosterCharSelected = (enemyId: string): boolean => {
   return id.startsWith(`[ENEMY]_${enemyId}_`);
 };
 
-const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY = PARTICIPANT_SIDE.ALLY) => {
+const addEnemyToBattle = (enemy: Enemy, side: typeof ParticipantSide.ALLY | typeof ParticipantSide.ENEMY = ParticipantSide.ALLY) => {
   const newCharacter = GameDataProcessor.enemyToParticipant(enemy, side)
   battleService.addCharacterToTeam(newCharacter, side)
   // ponytail: 注册免疫标签到 BuffSystem

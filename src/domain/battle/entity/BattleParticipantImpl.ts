@@ -40,7 +40,6 @@ export type BattleParticipantData = {
   id: string
   name: string
   level: number
-  type: ParticipantSide
   team: ParticipantSide
   enabled: boolean
   /** 队伍位置序号 */
@@ -63,7 +62,6 @@ export class BattleParticipantImpl implements BattleEntity {
   id: string
   name: string
   level: number
-  type: ParticipantSide
   team: ParticipantSide
   enabled: boolean
   seatIndex: number
@@ -150,7 +148,6 @@ export class BattleParticipantImpl implements BattleEntity {
     this.id = data.id
     this.name = data.name
     this.level = data.level
-    this.type = data.type
     this.team = data.team
     this.enabled = data.enabled ?? true
     this.seatIndex = data.seatIndex ?? 0
@@ -812,7 +809,6 @@ export class BattleParticipantImpl implements BattleEntity {
     return {
       id: this.id,
       name: this.name,
-      type: this.type,
       team: this.team,
       hp: this.currentHealth,
       maxHp: this.maxHealth,
@@ -862,7 +858,33 @@ export class BattleParticipantImpl implements BattleEntity {
     }
   }> {
     this.recalcAll()
-    const result: any[] = []
+    const result: Array<{
+
+      code: string
+      name: string
+      displayName: string
+      description: string
+      range: string
+      impact: string
+      isPercentage: boolean
+      baseValue: number
+      finalValue: number
+      modifiers: Array<{
+        source: string
+        sourceType: string
+        value: number
+        type: string
+        description?: string
+      }>
+      formula: string
+      breakdown?: {
+        base: number
+        additive: number
+        percentMultiplier: number
+        independentMultiplier: number
+        finalMultiplier: number
+      }
+    }> = []
 
     for (const attrCode of Object.values(ATTRIBUTE_CODE)) {
       const attrValue = this.stats.reCalAttributeValue(attrCode)

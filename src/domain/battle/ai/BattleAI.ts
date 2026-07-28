@@ -6,11 +6,10 @@ import type {
   BattleEntity,
   BattleAction,
   BattleState,
-  ParticipantSide,
 } from '@/domain/battle/type/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import {
-  PARTICIPANT_SIDE,
+  ParticipantSide,
   BattleActionHelper,
   BATTLE_CONSTANTS,
 } from '@/domain/battle/type/types'
@@ -176,9 +175,9 @@ export class BaseBattleAI implements BattleAI {
     const allies = this.getAliveParticipants(battleState, participant.team)
     const enemies = this.getAliveParticipants(
       battleState,
-      participant.team === PARTICIPANT_SIDE.ALLY
-        ? PARTICIPANT_SIDE.ENEMY
-        : PARTICIPANT_SIDE.ALLY,
+      participant.team === ParticipantSide.ALLY
+        ? ParticipantSide.ENEMY
+        : ParticipantSide.ALLY,
     )
 
     const teamHealth = allies.reduce((sum, p) => sum + p.currentHealth, 0)

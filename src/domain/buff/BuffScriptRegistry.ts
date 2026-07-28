@@ -1,22 +1,23 @@
 import {
   IBuffScript,
   ScriptBuffConfig,
-  type TriggerAction,
 } from '@/domain/buff/types'
 import buffsData from '@configs/buffs/buffs.json'
 import effectsData from '@configs/effects/effects.json'
-import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { AtomicEffectRegistry } from '@/domain/buff/atomic/AtomicEffectRegistry'
 import {
   BuffConfigResolver,
   type ResolvedBuffConfig,
 } from '@/domain/buff/atomic/BuffConfigResolver'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
+import type { EffectsJsonData } from '@/shared/types/effects-json'
 
 /** 效果定义：脚本 + 配置的统一视图 */
 export interface EffectDefinition {
   script: IBuffScript | null
-  config: BuffConfigData | null
+  config: BuffJsonEntry | null
 }
 
 /** Aura 光环修饰符 */
@@ -34,23 +35,6 @@ export interface BuffAuraConfig {
   modifiers: BuffAuraModifier[]
 }
 
-interface BuffConfigData {
-  id: string
-  name?: string
-  maxStacks?: number
-  duration?: number
-  attributes?: Record<ATTRIBUTE_CODE, string>
-  immunities?: string[]
-  tags?: string[]
-  aura?: BuffAuraConfig
-  onAdd?: string
-  triggers?: TriggerAction[]
-  /** buffs.json 中的 category（如 aura/attribute/trigger/control/dot/shield） */
-  category?: string
-  /** 控制类型（如 stun/silence/freeze） */
-  controlType?: string
-}
-
 type ScriptFactory<TParams = any> = () => IBuffScript<TParams>
 
 interface RegistryEntry<TParams = any> {
@@ -66,7 +50,7 @@ interface RegistryEntry<TParams = any> {
 export class BuffScriptRegistry {
   /** 脚本注册表 */
   private registry = new Map<string, RegistryEntry>()
-  private buffConfigs = new Map<string, BuffConfigData>()
+  private buffConfigs = new Map<string, BuffJsonEntry>()
   /** 脚本自包含的默认配置（由脚本类的静态 CONFIG 提供） */
   private defaultConfigs = new Map<string, ScriptBuffConfig>()
 
@@ -116,7 +100,7 @@ export class BuffScriptRegistry {
                 }
               }
             }
-            this.buffConfigs.set(buff.id, buff as BuffConfigData)
+            this.buffConfigs.set(buff.id, buff as BuffJsonEntry)
             console.log(`加载 Buff 配置: ${buff.id}`)
           }
         }
@@ -151,7 +135,7 @@ export class BuffScriptRegistry {
   /** 将 effects.json 的参数转换为 attributes 格式并加载到注册表 */
   private loadEffectConfigs(): void {
     try {
-      const raw = effectsData as { effects: Array<Record<string, any>> }
+      const raw = effectsData as EffectsJsonData
       if (!raw?.effects) return
       let count = 0
       for (const effect of raw.effects) {
@@ -173,11 +157,11 @@ export class BuffScriptRegistry {
           const sign = pct >= 0 ? '+' : ''
           attributes[attr] = `${sign}${pct}%`
         }
-        const config: BuffConfigData = {
+        const config: BuffJsonEntry = {
           id: effect.id,
           name: effect.id,
-          duration: params.duration ?? 1,
-          maxStacks: params.maxStacks ?? 1,
+          duration: (params.duration as number) ?? 1,
+          maxStacks: (params.maxStacks as number) ?? 1,
           attributes:
             Object.keys(attributes).length > 0 ? attributes : undefined,
         }
@@ -196,7 +180,7 @@ export class BuffScriptRegistry {
     }
   }
 
-  public getBuffConfig(buffId: string): BuffConfigData | undefined {
+  public getBuffConfig(buffId: string): BuffJsonEntry | undefined {
     return this.buffConfigs.get(buffId)
   }
 
@@ -212,7 +196,7 @@ export class BuffScriptRegistry {
     if (!raw) return undefined
 
     const resolver = this.ensureResolver()
-    const resolved = resolver.resolve(raw as unknown as Record<string, any>)
+    const resolved = resolver.resolve(raw as Record<string, any>)
     this.resolvedConfigs.set(buffId, resolved)
     return resolved
   }
@@ -269,7 +253,7 @@ export class BuffScriptRegistry {
     return { value: numValue, type: ModifierType.ADDITIVE }
   }
 
-  public loadBuffConfigsFromArray(configs: BuffConfigData[]): void {
+  public loadBuffConfigsFromArray(configs: BuffJsonEntry[]): void {
     for (const buff of configs) {
       if (buff.id) {
         this.buffConfigs.set(buff.id, buff)
@@ -330,7 +314,7 @@ export class BuffScriptRegistry {
 
   public registerScript(
     scriptId: string,
-    script: any,
+    script: IBuffScript,
     defaultConfig?: ScriptBuffConfig,
   ): void {
     this.register(

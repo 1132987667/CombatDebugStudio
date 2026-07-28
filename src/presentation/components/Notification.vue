@@ -70,8 +70,7 @@ const removeNotification = (notificationId: number): void => {
 }
 
 defineExpose({
-  addNotification,
-  removeNotification
+  addNotification
 })
 </script>
 

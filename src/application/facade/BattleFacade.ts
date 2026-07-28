@@ -159,8 +159,6 @@ export class BattleService {
   }
 
   /** 获取当前战斗回合数（从 BattleStateManager 读取） */
-  // ponytail: 与 getTurn() 语义重叠，getTurn 取自 battleSystem.getRound()
-  // 两者在 syncBattleState() 后应一致；优先使用此方法获取 UI 层可见的回合数
   getCurrentTurn(): number {
     return this.battleManager.getCurrentTurn()
   }

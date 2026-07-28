@@ -49,7 +49,7 @@ export class AISystem {
     const aiInstances = new Map<string, BattleAI>()
     participants.forEach((participant) => {
       const ai = BattleAIFactory.createAIWithSkills(
-        participant.type,
+        participant.team,
         participant.getSkillList(),
       )
       aiInstances.set(participant.id, ai)
@@ -70,7 +70,7 @@ export class AISystem {
 
     if (!ai) {
       ai = BattleAIFactory.createAIWithSkills(
-        participant.type,
+        participant.team,
         participant.getSkillList(),
       )
       this.aiInstances.set(participant.id, ai)

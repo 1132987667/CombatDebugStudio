@@ -1,4 +1,4 @@
-﻿﻿import {
+import {
   ATTRIBUTE_CODE,
   getAttrDv,
 } from '@/domain/attribute/types'
@@ -161,7 +161,6 @@ export class DamageCalculator {
       defenseValue: 0,
       effectiveDefense: 0,
       defenseMultiplier: 1,
-      generalDamageReduction: 0,
       damageTakenIncrease: 0,
       targetModifierEffects: [],
       minDamageThreshold: this.config.minDamageThreshold ?? 1,
@@ -406,9 +405,8 @@ export class DamageCalculator {
       })
     }
 
-    // 伤害大类抗性 — 真实伤害跳过，不执行任何操作
+    // 五行抗性 — 仅 ELEMENTAL 根据元素类型走对应抗性
     if (damageCategory === DamageCategory.ELEMENTAL) {
-      // 元素伤害：根据技能的元素类型查找对应抗性，默认 fireRes
       const ELEMENT_RESISTANCE_MAP: Partial<
         Record<ElementType, ATTRIBUTE_CODE>
       > = {
@@ -436,58 +434,25 @@ export class DamageCalculator {
           description: `元素抗性(${elementalRes}%): ${before} → ${damage}`,
         })
       }
-      // 魔法伤害减免（仅 ELEMENTAL 大类生效）
-      breakdown.magicalDmgReduction = getAttrVal(
-        target,
-        ATTRIBUTE_CODE.magicalDmgReduction,
-      )
-      breakdown.elementType = resolvedType
-      if (breakdown.magicalDmgReduction > 0) {
-        const before = damage
-        damage = Math.floor(damage * (1 - breakdown.magicalDmgReduction / 100))
-        breakdown.steps.push({
-          stepName: 'magicalDmgReduction',
-          value: damage,
-          description: `魔法减免(${breakdown.magicalDmgReduction}%): ${before} → ${damage}`,
-        })
-      }
-    } else if (damageCategory === DamageCategory.PHYSICAL) {
-      breakdown.physicalDmgReduction = getAttrVal(
-        target,
-        ATTRIBUTE_CODE.physicalDmgReduction,
-      )
-      if (breakdown.physicalDmgReduction > 0) {
-        const before = damage
-        damage = Math.floor(damage * (1 - breakdown.physicalDmgReduction / 100))
-        breakdown.steps.push({
-          stepName: 'physicalDmgReduction',
-          value: damage,
-          description: `物理减免(${breakdown.physicalDmgReduction}%): ${before} → ${damage}`,
-        })
-      }
     }
-    // TRUE 分支：不执行任何操作，damage 保持来源方加成后的值
 
-    // 通用伤害减免（真实伤害跳过 — 真实伤害穿透目标方所有减免，但保留易伤）
+    // 伤害减免 — 同时作用于 ELEMENTAL 和 PHYSICAL，TRUE 跳过
     if (damageCategory !== DamageCategory.TRUE) {
-      breakdown.generalDamageReduction = getAttrVal(
-        target,
-        ATTRIBUTE_CODE.damageReduction,
-      )
-      if (breakdown.generalDamageReduction > 0) {
+      const dmgReduction = getAttrVal(target, ATTRIBUTE_CODE.damageReduction)
+      if (dmgReduction > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 - breakdown.generalDamageReduction / 100))
+        damage = Math.floor(damage * (1 - dmgReduction / 100))
         breakdown.steps.push({
-          stepName: 'generalReduction',
+          stepName: 'damageReduction',
           value: damage,
-          description: `通用减免(${breakdown.generalDamageReduction}%): ${before} → ${damage}`,
+          description: `伤害减免(${dmgReduction}%): ${before} → ${damage}`,
         })
       }
     } else {
       breakdown.steps.push({
-        stepName: 'generalReduction',
+        stepName: 'damageReduction',
         value: damage,
-        description: `真实伤害，跳过通用减免`,
+        description: `真实伤害，跳过伤害减免`,
       })
     }
 

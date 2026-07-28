@@ -21,6 +21,7 @@ import type {
 
 import type { BattleAI } from '@/domain/battle/ai/BattleAI'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import type { SkillConfig } from '@/domain/skill/types'
 
 /**
  * 战斗系统接口
@@ -138,7 +139,7 @@ export interface IBattleSystem {
    * 加载技能配置
    * @param skillConfigs 技能配置数组
    */
-  loadSkillConfigs(skillConfigs: any[]): void
+  loadSkillConfigs(skillConfigs: SkillConfig[]): void
 
   /**
    * 获取当前回合数

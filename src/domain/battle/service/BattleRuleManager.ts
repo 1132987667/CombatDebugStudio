@@ -7,8 +7,8 @@
  * 版本: 1.0.0
  */
 
-import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
+import { ParticipantSide } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
@@ -442,18 +442,18 @@ export class BattleRuleManager {
   ): BattleEndCheckResult {
     const { maxTurns } = this.getConfig().rules.turnSystem
     const aliveCharacters = Array.from(participants.values()).filter(
-      (p) => p.team === PARTICIPANT_SIDE.ALLY && p.isAlive(),
+      (p) => p.team === ParticipantSide.ALLY && p.isAlive(),
     )
     const aliveEnemies = Array.from(participants.values()).filter(
-      (p) => p.team === PARTICIPANT_SIDE.ENEMY && p.isAlive(),
+      (p) => p.team === ParticipantSide.ENEMY && p.isAlive(),
     )
 
     // 1. 一方全灭
     if (aliveCharacters.length === 0) {
-      return { shouldEnd: true, winner: PARTICIPANT_SIDE.ENEMY }
+      return { shouldEnd: true, winner: ParticipantSide.ENEMY }
     }
     if (aliveEnemies.length === 0) {
-      return { shouldEnd: true, winner: PARTICIPANT_SIDE.ALLY }
+      return { shouldEnd: true, winner: ParticipantSide.ALLY }
     }
 
     // 2. 超过最大回合数（按血量比例判定）
@@ -474,8 +474,8 @@ export class BattleRuleManager {
       )
       const winner =
         charactersHealth >= enemiesHealth
-          ? PARTICIPANT_SIDE.ALLY
-          : PARTICIPANT_SIDE.ENEMY
+          ? ParticipantSide.ALLY
+          : ParticipantSide.ENEMY
       return { shouldEnd: true, winner }
     }
 

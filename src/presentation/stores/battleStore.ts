@@ -487,7 +487,7 @@ export const useBattleStore = defineStore('battle', () => {
         },
       })
     } catch {
-      // 容器未就绪时忽略
+      console.warn('[battleStore] BattleRuleManager 未就绪，规则同步跳过')
     }
     battleLogManager.addSystemLog({
       message: `战斗规则已更新: ${JSON.stringify(newRules)}`,

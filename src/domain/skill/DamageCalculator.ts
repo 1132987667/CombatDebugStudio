@@ -64,7 +64,7 @@ interface CalculationStepLog {
 export class DamageCalculator {
   calculationLogs: CalculationStepLog[] = []
   config: DamageCalculationConfig = {
-    enableCrit: true,
+    enableCrit: false,
     enableDodge: false,
     critRate: 0,
     critDamage: 0,

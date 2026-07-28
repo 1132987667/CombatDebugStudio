@@ -266,6 +266,8 @@ export type NarrativeBlock =
       header: LogSegment[]
       result?: LogSegment[]
       subs: LogSegment[][]
+      /** 是否造成击杀（用于回合标签推断） */
+      kill?: boolean
     }
   | { type: 'settlement'; lines: LogSegment[][] }
   | { type: 'snapshot'; lines: LogSegment[][] }

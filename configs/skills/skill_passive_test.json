@@ -22,7 +22,7 @@
   {
     "id": "test_passive_dodge_heal",
     "name": "闪避回血",
-    "description": "闪避后恢复10点期许",
+    "description": "闪避后恢复10点气血",
     "skillType": "passive",
     "energyCost": 0,
     "cooldown": 0,

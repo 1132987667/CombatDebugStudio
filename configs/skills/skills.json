@@ -82,7 +82,7 @@
   {
     "id": "skill_enemy_003_small",
     "name": "野性扑击",
-    "description": "对单个敌人造成90%攻击力的普通伤害，并恢复造成伤害15%的期许值",
+    "description": "对单个敌人造成90%攻击力的普通伤害，并恢复造成伤害15%的气血值",
     "cooldown": 2,
     "selector": {
       "faction": "enemy",
@@ -747,7 +747,7 @@
   {
     "id": "skill_boss_002_small",
     "name": "水疗波",
-    "description": "对单个敌人造成90%攻击力的普通伤害，并为期许值最低的友方单位恢复50%攻击力的期许值",
+    "description": "对单个敌人造成90%攻击力的普通伤害，并为气血值最低的友方单位恢复50%攻击力的气血值",
     "cooldown": 2,
     "selector": {
       "faction": "enemy",
@@ -1206,7 +1206,7 @@
   {
     "id": "skill_boss_003_small",
     "name": "地脉涌动",
-    "description": "对单个敌人造成 100% 攻击力的普通伤害，并为所有友方单位恢复 30% 攻击力的期许值",
+    "description": "对单个敌人造成 100% 攻击力的普通伤害，并为所有友方单位恢复 30% 攻击力的气血值",
     "cooldown": 2,
     "selector": {
       "faction": "enemy",
@@ -2865,7 +2865,7 @@
   {
     "id": "skill_enemy_051_small",
     "name": "啃噬",
-    "description": "对单个敌人造成100%攻击力的普通伤害，并恢复造成伤害20%的期许值",
+    "description": "对单个敌人造成100%攻击力的普通伤害，并恢复造成伤害20%的气血值",
     "cooldown": 2,
     "selector": {
       "faction": "enemy",
@@ -3559,7 +3559,7 @@
   {
     "id": "skill_enemy_067_small",
     "name": "护法杖击",
-    "description": "对单个敌人造成105%攻击力的普通伤害，并根据造成的伤害值为自身恢复10%的期许值",
+    "description": "对单个敌人造成105%攻击力的普通伤害，并根据造成的伤害值为自身恢复10%的气血值",
     "cooldown": 2,
     "selector": {
       "faction": "enemy",
@@ -3788,7 +3788,7 @@
   {
     "id": "skill_boss_009_small",
     "name": "禅音护体",
-    "description": "为所有友方单位恢复50%攻击力的期许值",
+    "description": "为所有友方单位恢复50%攻击力的气血值",
     "cooldown": 2,
     "selector": {
       "faction": "ally",
@@ -4207,7 +4207,7 @@
   {
     "id": "skill_boss_010_small",
     "name": "灵霄之光",
-    "description": "为所有友方单位恢复60%攻击力的期许值，并提升其攻击力，持续2回合",
+    "description": "为所有友方单位恢复100%攻击力的气血值，并提升其攻击力，持续2回合",
     "cooldown": 2,
     "selector": {
       "faction": "ally",
@@ -4220,7 +4220,7 @@
           "baseValue": 0,
           "extraValues": [
             {
-              "ratio": 0.6,
+              "ratio": 1,
               "attribute": "attack"
             }
           ]

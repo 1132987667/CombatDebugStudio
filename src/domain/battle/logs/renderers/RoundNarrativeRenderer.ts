@@ -140,7 +140,7 @@ export class RoundNarrativeRenderer {
    *
    * 分组规则（基于 meta.role）：
    *  - battle: `battle-header` 块
-   *  - action: `action` 块，header=segments, result=buildResult(meta)
+   *  - action: `action` 块，header=segments, result=none（由独立的 sub 日志提供 result 信息）
    *  - sub: 作为从属行挂到最近的 action 块下
    *  - settlement: 归入 `settlement` 块
    *  - snapshot: 归入 `snapshot` 块
@@ -210,8 +210,9 @@ export class RoundNarrativeRenderer {
           currentAction = {
             type: 'action',
             header: e.segments ?? [{ text: e.message || '' }],
-            result: this.buildResult(meta),
+            result: undefined,
             subs: [],
+            kill: meta.kill === true,
           }
           break
         case 'sub':
@@ -327,13 +328,7 @@ export class RoundNarrativeRenderer {
     let subCount = 0
     for (const b of blocks) {
       if (b.type === 'action') subCount += b.subs.length
-      if (b.type === 'action' && b.result) {
-        // 检查 result segments 中是否包含击杀/致死标记
-        for (const s of b.result) {
-          if (s.classStr === 'log-kill') hasKill = true
-          if (s.classStr === 'log-lethal') hasLethal = true
-        }
-      }
+      if (b.type === 'action' && b.kill) hasKill = true
     }
     if (hasKill) return '击杀!'
     if (hasLethal) return '致命保护!'

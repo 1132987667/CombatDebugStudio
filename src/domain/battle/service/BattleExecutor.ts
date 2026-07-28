@@ -361,7 +361,16 @@ export class BattleExecutor {
 
       let totalDamage = 0
       let totalHeal = 0
+      let totalRawDamage = 0
       const allEffects: BattleEffect[] = []
+      const targetResults: Array<{
+        target: BattleEntity
+        finalDamage: number
+        rawDamage: number
+        heal: number
+        hpBefore: number
+        hpAfter: number
+      }> = []
 
       for (const target of targets) {
         if (!target.isAlive()) continue
@@ -430,8 +439,15 @@ export class BattleExecutor {
       action.heal = totalHeal
       action.effects = allEffects
 
-      const targetNames = targets.map((t) => t.name).join(', ')
-      const damageText = totalDamage > 0 ? `，造成 ${totalDamage} 点伤害` : ''
+      const sourcePrefix = source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      const targetNames = targets
+        .map((t) => {
+          const prefix = t.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+          const name = t.id === source.id ? '自身' : t.name
+          return `${prefix}${name}`
+        })
+        .join(', ')
+      const damageText = totalRawDamage > 0 ? `，造成 ${totalRawDamage} 点伤害` : ''
       const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点气血` : ''
       // NOTE: 固定预算模型 — 伤害/治疗走飞行→命中，治疗单独走直接命中
       if (targets.length > 0 && (totalDamage > 0 || totalHeal > 0)) {
@@ -457,8 +473,27 @@ export class BattleExecutor {
           })
 
           // 命中瞬间（50%T）：统一应用所有延迟伤害，并发射 DAMAGE_TAKEN 事件
+          // NOTE: 收集每个目标的原始伤害、最终伤害、气血变化 — 用于 result sub 日志
+          // 按 target.id 聚合，避免多步骤技能对同一目标产生多条 entry
+          const resultMap = new Map<string, (typeof targetResults)[0]>()
           for (const entry of damageToken.getEntries()) {
             if (!entry.target.isAlive()) continue
+            const existing = resultMap.get(entry.target.id)
+            if (existing) {
+              existing.finalDamage += entry.damage
+              existing.rawDamage += entry.rawDamage
+              existing.heal += entry.heal
+              existing.hpAfter = entry.target.currentHealth
+            } else {
+              resultMap.set(entry.target.id, {
+                target: entry.target,
+                finalDamage: entry.damage,
+                rawDamage: entry.rawDamage,
+                heal: entry.heal,
+                hpBefore: entry.target.currentHealth,
+                hpAfter: entry.target.currentHealth,
+              })
+            }
             if (entry.damage > 0) {
               entry.target.takeDamage(entry.damage)
               this.emitDamageTakenEvent(
@@ -468,6 +503,13 @@ export class BattleExecutor {
             if (entry.heal > 0) {
               entry.target.heal(entry.heal)
             }
+            totalRawDamage += entry.rawDamage
+          }
+          // 所有伤害/治疗应用后，更新最终 hpAfter 并回填到 targetResults
+          targetResults.length = 0
+          for (const r of resultMap.values()) {
+            r.hpAfter = r.target.currentHealth
+            targetResults.push(r)
           }
           damageToken.clear()
 
@@ -518,10 +560,10 @@ export class BattleExecutor {
         else if (totalHeal > 0) logCategory = BATTLE_LOG_CATEGORIES.HEAL
         LoggerProvider.logger.addBattleLog({
           turn: battleData.currentTurn,
-          message: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}`,
+          message: `${sourcePrefix}${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}`,
           segments: [
             {
-              text: source.name,
+              text: `${sourcePrefix}${source.name}`,
               classStr:
                 source.type === PARTICIPANT_SIDE.ALLY
                   ? 'log-friendly'
@@ -551,6 +593,45 @@ export class BattleExecutor {
             skillName: skill.name || skill.id,
           },
         })
+
+        // ★ 刷出缓冲的 BEFORE_ATTACK sub 日志
+        LoggerProvider.logger.flushBufferedSubLogs()
+
+        // ★ 为每个目标输出 result sub 日志
+        for (const r of targetResults) {
+          const tPrefix = r.target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+          const tName = r.target.id === source.id ? '自身' : r.target.name
+
+          if (r.finalDamage > 0) {
+            LoggerProvider.logger.addBattleLog({
+              turn: battleData.currentTurn,
+              message: `${tPrefix}${tName} 受到 ${r.finalDamage} 点伤害  ${r.hpBefore} → ${r.hpAfter}`,
+              segments: [
+                { text: `${tPrefix}${tName}`, classStr: r.target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+                { text: ' 受到 ' },
+                { text: `${r.finalDamage}`, classStr: 'log-damage', kind: 'damage' },
+                { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
+              ],
+              category: BATTLE_LOG_CATEGORIES.DAMAGE,
+              meta: { role: 'sub', entityId: r.target.id, hpBefore: r.hpBefore, hpAfter: r.hpAfter, damage: r.finalDamage },
+            })
+          }
+
+          if (r.heal > 0) {
+            LoggerProvider.logger.addBattleLog({
+              turn: battleData.currentTurn,
+              message: `${tPrefix}${tName} 恢复 ${r.heal} 点气血  ${r.hpBefore} → ${r.hpAfter}`,
+              segments: [
+                { text: `${tPrefix}${tName}`, classStr: r.target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+                { text: ' 恢复 ' },
+                { text: `${r.heal}`, classStr: 'log-heal', kind: 'heal' },
+                { text: ` 点气血  ${r.hpBefore} → ${r.hpAfter}` },
+              ],
+              category: BATTLE_LOG_CATEGORIES.HEAL,
+              meta: { role: 'sub', entityId: r.target.id, hpBefore: r.hpBefore, hpAfter: r.hpAfter, heal: r.heal },
+            })
+          }
+        }
 
         // ponytail: 触发被动 — 攻击方 ON_HIT + 受击方 DAMAGE_TAKEN + ON_DEATH
         for (const pd of pendingDamages) {
@@ -600,10 +681,10 @@ export class BattleExecutor {
         const skillId = skill.id || skill.name || ''
         LoggerProvider.logger.addBattleLog({
           turn: battleData.currentTurn,
-          message: `${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}`,
+          message: `${sourcePrefix}${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}`,
           segments: [
             {
-              text: source.name,
+              text: `${sourcePrefix}${source.name}`,
               classStr:
                 source.type === PARTICIPANT_SIDE.ALLY
                   ? 'log-friendly'
@@ -617,8 +698,13 @@ export class BattleExecutor {
           category: BATTLE_LOG_CATEGORIES.STATUS,
           meta: { role: 'action', skillName: skill.name || skill.id },
         })
+
+        // ★ 刷出缓冲的 BEFORE_ATTACK sub 日志
+        LoggerProvider.logger.flushBufferedSubLogs()
       }
     } catch (error) {
+      // ★ catch 路径也需刷出缓冲的 sub 日志，防止内存泄漏
+      LoggerProvider.logger.flushBufferedSubLogs()
       LoggerProvider.logger.addDebugLog(`技能执行失败: ${skill.id}`, {
         error: error as Error,
       })
@@ -1066,22 +1152,41 @@ export class BattleExecutor {
         isCritical,
       },
     )
+    const rawSuffix = `，造成 ${rawDamage} 点伤害`
+    const targetPrefix = target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+    const targetFaction = target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy'
+
     LoggerProvider.logger.addBattleLog({
       turn: logParams.turn,
-      message: logParams.message,
-      segments: logParams.segments,
+      message: logParams.message + rawSuffix,
+      segments: [...logParams.segments, { text: rawSuffix }],
       category: logParams.category,
       meta: {
         role: 'action',
         entityId: target.id,
         hpBefore,
         hpAfter,
-        damage,
+        damage: rawDamage,
         crit: isCritical,
         kill: !target.isAlive(),
         skillName: '普通攻击',
       },
     })
+
+    // result sub 行：最终伤害 + 气血变化
+    LoggerProvider.logger.addBattleLog({
+      turn: battle.currentTurn,
+      message: `${targetPrefix}${target.name} 受到 ${damage} 点伤害  ${hpBefore} → ${hpAfter}`,
+      segments: [
+        { text: `${targetPrefix}${target.name}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFaction },
+        { text: ' 受到 ' },
+        { text: `${damage}`, classStr: 'log-damage', kind: 'damage' },
+        { text: ` 点伤害  ${hpBefore} → ${hpAfter}` },
+      ],
+      category: BATTLE_LOG_CATEGORIES.DAMAGE,
+      meta: { role: 'sub', entityId: target.id, hpBefore, hpAfter, damage },
+    })
+
     LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}`,
     )
@@ -1381,6 +1486,8 @@ export class BattleExecutor {
           // NOTE: 在扣血前捕获 气血 用于叙事日志
           const hpBefore = target.currentHealth
           let hpAfter = target.currentHealth
+          let actionRawDamage = 0
+          let actionFinalDamage = 0
 
           if ((action.damage ?? 0) > 0) {
             // 伤害技能 → 飞行（0→50%T）+ 命中（50%→100%T）
@@ -1408,6 +1515,8 @@ export class BattleExecutor {
               if (entry.heal > 0) {
                 entry.target.heal(entry.heal)
               }
+              actionRawDamage += entry.rawDamage
+              actionFinalDamage += entry.damage
             }
             damageToken.clear()
             hpAfter = target.currentHealth
@@ -1449,8 +1558,7 @@ export class BattleExecutor {
             )
           }
           const skillId = action.skillId
-          const dmgPart =
-            (action.damage ?? 0) > 0 ? `，造成 ${action.damage} 点` : ''
+          const dmgPart = actionRawDamage > 0 ? `，造成 ${actionRawDamage} 点` : ''
           const healPart =
             (action.heal ?? 0) > 0 ? `，恢复 ${action.heal} 点气血` : ''
           // NOTE: 动态决定日志类别，确保日志面板能正确渲染
@@ -1463,12 +1571,16 @@ export class BattleExecutor {
           } catch {
             actionSkillSeg = { text: `【${skillId}】`, classStr: 'log-skill' }
           }
+          const sourcePrefixX = source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+          const targetPrefixX = target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+          const targetFactionX = target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy'
+          const targetNameX = target.id === source.id ? '自身' : target.name
           LoggerProvider.logger.addBattleLog({
             turn: action.turn ?? 0,
-            message: `${source.name} 对 ${target.name} 使用 ${skillId}${dmgPart}${healPart}`,
+            message: `${sourcePrefixX}${source.name} 对 ${targetPrefixX}${targetNameX} 使用 ${skillId}${dmgPart}${healPart}`,
             segments: [
               {
-                text: source.name,
+                text: `${sourcePrefixX}${source.name}`,
                 classStr:
                   source.type === PARTICIPANT_SIDE.ALLY
                     ? 'log-friendly'
@@ -1479,7 +1591,7 @@ export class BattleExecutor {
               },
               { text: ' 对 ' },
               {
-                text: target.name,
+                text: `${targetPrefixX}${targetNameX}`,
                 classStr:
                   target.type === PARTICIPANT_SIDE.ALLY
                     ? 'log-friendly'
@@ -1498,7 +1610,7 @@ export class BattleExecutor {
               entityId: target.id,
               hpBefore,
               hpAfter,
-              damage: action.damage ?? 0,
+              damage: actionRawDamage > 0 ? actionRawDamage : (action.damage ?? 0),
               crit: skillAction.isCrit ?? false,
               kill: !target.isAlive(),
               skillName: skillId,
@@ -1506,6 +1618,36 @@ export class BattleExecutor {
           })
           // ★ action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
           LoggerProvider.logger.flushBufferedSubLogs()
+
+          // ★ 输出 result sub 日志
+          if ((action.damage ?? 0) > 0) {
+            LoggerProvider.logger.addBattleLog({
+              turn: action.turn ?? 0,
+              message: `${targetPrefixX}${targetNameX} 受到 ${actionFinalDamage} 点伤害  ${hpBefore} → ${hpAfter}`,
+              segments: [
+                { text: `${targetPrefixX}${targetNameX}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFactionX },
+                { text: ' 受到 ' },
+                { text: `${actionFinalDamage}`, classStr: 'log-damage', kind: 'damage' },
+                { text: ` 点伤害  ${hpBefore} → ${hpAfter}` },
+              ],
+              category: BATTLE_LOG_CATEGORIES.DAMAGE,
+              meta: { role: 'sub', entityId: target.id, hpBefore, hpAfter, damage: actionFinalDamage },
+            })
+          } else if ((action.heal ?? 0) > 0) {
+            LoggerProvider.logger.addBattleLog({
+              turn: action.turn ?? 0,
+              message: `${targetPrefixX}${targetNameX} 恢复 ${action.heal} 点气血  ${hpBefore} → ${hpAfter}`,
+              segments: [
+                { text: `${targetPrefixX}${targetNameX}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFactionX },
+                { text: ' 恢复 ' },
+                { text: `${action.heal}`, classStr: 'log-heal', kind: 'heal' },
+                { text: ` 点气血  ${hpBefore} → ${hpAfter}` },
+              ],
+              category: BATTLE_LOG_CATEGORIES.HEAL,
+              meta: { role: 'sub', entityId: target.id, hpBefore, hpAfter, heal: action.heal ?? 0 },
+            })
+          }
+
           // ponytail: 使用 token 的实际扣血值而非 action.damage 判断被动触发，减少发散窗口
           const actualDamage = damageToken.getTotalDamage()
           if (actualDamage > 0) {

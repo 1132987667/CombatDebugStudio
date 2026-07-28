@@ -53,3 +53,8 @@ export interface BuffJsonEntry {
   cooldown?: number
   dispellable?: boolean
 }
+
+import rawBuffsData from '@configs/buffs/buffs.json'
+
+export const buffsData: readonly BuffJsonEntry[] =
+  rawBuffsData as BuffJsonEntry[]

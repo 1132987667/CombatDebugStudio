@@ -167,7 +167,7 @@ export class EffectRenderer {
   private renderBuff(e: BattleEffect, _name: string): LogSegment[] {
     const displayName = e.buffName ?? e.buffId ?? '未知效果'
     const segs: LogSegment[] = [
-      { text: `附加 `, classStr: 'log-info' },
+      { text: `获得 `, classStr: 'log-info' },
       {
         text: `【${displayName}】`,
         classStr: 'log-buff',

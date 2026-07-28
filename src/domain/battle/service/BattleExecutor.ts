@@ -889,7 +889,7 @@ export class BattleExecutor {
     if (isMiss) {
       return {
         turn: turnNumber,
-        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name}发起「普通攻击」`,
+        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name} 发起「普通攻击」`,
         segments: [
           {
             text: `${sourcePrefix}${source.name}`,
@@ -918,7 +918,7 @@ export class BattleExecutor {
 
     return {
       turn: turnNumber,
-      message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name}发起「普通攻击」`,
+      message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name} 发起「普通攻击」`,
       segments: [
         {
           text: `${sourcePrefix}${source.name}`,
@@ -939,7 +939,7 @@ export class BattleExecutor {
           kind: 'entity',
           faction: target.team,
         },
-        { text: `发起「普通攻击」` },
+        { text: ` 发起「普通攻击」` },
       ],
       category: isCritical
         ? BATTLE_LOG_CATEGORIES.CRIT
@@ -989,41 +989,8 @@ export class BattleExecutor {
 
     // 🆕 向 TriggerEventBus 发射 DAMAGE_TAKEN 事件（修复普攻/技能不触发 Buff 触发器的 Bug）
     this.emitDamageTakenEvent(source, target, damage, rawDamage, isCritical, battle)
-    // ponytail: ON_HIT 触发攻击者（命中方）的被动，DAMAGE_TAKEN 触发受击方（受伤害）的被动
-    this.passiveSkillManager.triggerPassives(
-      source,
-      createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
-        target,
-        sourceId: source.id,
-        damage,
-      }),
-    )
-    this.passiveSkillManager.triggerPassives(
-      target,
-      createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
-        target: source,
-        sourceId: source.id,
-        damage,
-      }),
-    )
-    if (!target.isAlive()) {
-      this.passiveSkillManager.triggerPassives(
-        target,
-        createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
-          target: source,
-          sourceId: source.id,
-          cause: EffectType.DAMAGE,
-        }),
-      )
-      this.passiveSkillManager.triggerPassives(
-        source,
-        createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
-          target,
-          targetId: target.id,
-          cause: EffectType.DAMAGE,
-        }),
-      )
-    }
+    // NOTE: 被动触发（ON_HIT/DAMAGE_TAKEN/ON_DEATH/ON_KILL）已移至调用方 handleHitAttack 的 action 日志之后
+
   }
 
   /**
@@ -1191,6 +1158,42 @@ export class BattleExecutor {
     LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}`,
     )
+
+    // ★ 被动触发移到 action + result sub 日志之后
+    this.passiveSkillManager.triggerPassives(
+      source,
+      createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
+        target,
+        sourceId: source.id,
+        damage,
+      }),
+    )
+    this.passiveSkillManager.triggerPassives(
+      target,
+      createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
+        target: source,
+        sourceId: source.id,
+        damage,
+      }),
+    )
+    if (!target.isAlive()) {
+      this.passiveSkillManager.triggerPassives(
+        target,
+        createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
+          target: source,
+          sourceId: source.id,
+          cause: EffectType.DAMAGE,
+        }),
+      )
+      this.passiveSkillManager.triggerPassives(
+        source,
+        createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
+          target,
+          targetId: target.id,
+          cause: EffectType.DAMAGE,
+        }),
+      )
+    }
   }
 
   /**

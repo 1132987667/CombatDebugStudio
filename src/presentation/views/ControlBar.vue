@@ -35,26 +35,7 @@
         <span class="qt-toggle-label">⚡快速</span>
       </label>
 
-      <span class="separator"></span>
 
-      <!-- ★ 战斗数据生成 -->
-      <div class="gen-wrapper" ref="genWrapperRef">
-        <button
-          class="control-btn gen-trigger"
-          :disabled="store.generationProgress.isGenerating"
-          @click="showGenMenu = !showGenMenu"
-        >
-          {{ store.generationProgress.isGenerating
-            ? `生成中 ${store.generationProgress.percent}%`
-            : '📊 生成数据' }}
-        </button>
-        <!-- 生成模式选择弹出 -->
-        <div v-if="showGenMenu" class="gen-menu">
-          <button @click="startGenerate('1v1')">1v1 × 50场</button>
-          <button @click="startGenerate('2v2')">2v2 × 50场</button>
-          <button @click="startGenerate('random')">随机 × 50场</button>
-        </div>
-      </div>
     </div>
     <div class="control-group right">
       <!-- 调试模式：暂停相位指示 + 暂停 / 单步调试 -->
@@ -129,21 +110,6 @@ const toggleBattleSpeed = () => {
   emit('battle-speed-change', speedLevels[nextIndex]);
 };
 
-// ★ 战斗数据生成菜单
-const showGenMenu = ref(false)
-const genWrapperRef = ref<HTMLElement | null>(null)
-
-const startGenerate = (mode: '1v1' | '2v2' | 'random') => {
-  showGenMenu.value = false
-  store.generateBattleData(mode)
-}
-
-// 点击外部关闭生成菜单
-const handleClickOutside = (e: MouseEvent) => {
-  if (genWrapperRef.value && !genWrapperRef.value.contains(e.target as Node)) {
-    showGenMenu.value = false
-  }
-}
 
 // ========== 调试模式 ==========
 // NOTE: debugGate 是普通类，状态不可响应式追踪，
@@ -181,13 +147,11 @@ onMounted(() => {
   eventBus.on(BattleEventCodes.DEBUG_PAUSE_RESUME, () => {
     debugPhase.value = null
   })
-  document.addEventListener('click', handleClickOutside)
 })
 onUnmounted(() => {
   eventBus.off(BattleEventCodes.DEBUG_TOGGLE)
   eventBus.off(BattleEventCodes.DEBUG_PAUSE)
   eventBus.off(BattleEventCodes.DEBUG_PAUSE_RESUME)
-  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -381,39 +345,4 @@ onUnmounted(() => {
   color: var(--color-warning);
 }
 
-/* ★ 战斗数据生成菜单 */
-.gen-wrapper {
-  position: relative;
-  display: inline-flex;
-}
-.gen-menu {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  margin-bottom: 4px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  padding: var(--space-1);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: var(--z-dropdown);
-  box-shadow: var(--shadow-md);
-  min-width: 140px;
-}
-.gen-menu button {
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  white-space: nowrap;
-  text-align: left;
-}
-.gen-menu button:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-info);
-}
 </style>

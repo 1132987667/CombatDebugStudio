@@ -122,7 +122,7 @@
 import { ref, computed, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
-import buffsData from '@configs/buffs/buffs.json'
+import { buffsData } from '@/shared/types/buffs-json'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import { classifyBuff, type BuffCategory } from '@/shared/types/buff-classification'
 import { getAttrName } from '@/domain/attribute/types'

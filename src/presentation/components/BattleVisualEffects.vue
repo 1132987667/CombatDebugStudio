@@ -401,7 +401,7 @@ function showShieldNum(targetId: string, value: number) {
   setRemove(id, dmgNums, SHIELD_NUM_TTL_MS) // NOTE: shield-rise 动画 1.4s，1450ms 足够覆盖
 }
 
-/** 闪避文字 */
+/** 闪避文字 — 固定偏移到目标右上角，与伤害数字分离 */
 function showMissText(targetId: string, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
@@ -409,8 +409,8 @@ function showMissText(targetId: string, budget?: number) {
   const floatDuration = Math.max(impactDuration(budget ?? getActionBudget(1)), DMG_NUM_MIN_TTL_MS)
   dmgNums.value.push({
     id, text: '闪避',
-    x: pos.x + (Math.random() - 0.5) * 40,
-    y: pos.y - 20,
+    x: pos.x + 50,
+    y: pos.y - 40,
     cls: 'miss',
     rotate: 0,
   })

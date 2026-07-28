@@ -73,7 +73,7 @@ $transition-fast: var(--transition-fast);
   --color-warning-bg: rgba(255, 152, 0, 0.2);
 
   --color-info: #4fc3f7;
-  --color-info-bg: var(--color-info-bg);
+  --color-info-bg: rgba(75, 195, 247, 0.2);
 
   /* 战斗系统专用语义色 */
   --color-heal: #4caf50;
@@ -82,9 +82,9 @@ $transition-fast: var(--transition-fast);
   --color-damage-bg: rgba(244, 67, 54, 0.2);
   --color-crit: #ff9800;
   --color-crit-glow: rgba(255, 152, 0, 0.5);
-  --color-energy: #22d3ee;
+  --color-energy: #0a7f91;
   --color-casting: #9c88ff;
-  --color-selected: #22d3ee;
+  --color-selected: #0a7f91;
   --color-buff: #4caf50;
   --color-debuff: #a855f7;
 

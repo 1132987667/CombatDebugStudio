@@ -530,13 +530,6 @@ export const useBattleStore = defineStore('battle', () => {
       setBattleActive(true)
       autoPlayMode.value = battleService.value.getAutoBattle()
       battleLogManager.addSystemLog({ message: '战斗已开始' })
-      battleLogManager.addBattleLog({
-        turn: battleService.value?.getTurn() ?? 1,
-        message: '战斗开始',
-        segments: [{ text: '战斗开始', classStr: 'log-system' }],
-        category: BATTLE_LOG_CATEGORIES.SYSTEM,
-        meta: { role: 'battle' },
-      })
       return true
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
@@ -769,7 +762,7 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /** ★ 执行战斗数据生成 */
-  const generateBattleData = async (mode: '1v1' | '2v2' | 'random' = 'random') => {
+  const generateBattleData = async (mode: '1v1' | '2v2' | 'random' = 'random', format: 'txt' | 'html' = 'txt') => {
     if (!battleService.value) return
     if (generationProgress.isGenerating) return
     generationProgress.isGenerating = true
@@ -783,6 +776,7 @@ export const useBattleStore = defineStore('battle', () => {
       await generator.generate({
         totalBattles: 50,
         mode,
+        format,
         onProgress: (_progress: number, current: number, total: number) => {
           generationProgress.current = current
           generationProgress.total = total

@@ -510,6 +510,20 @@ export class BattleSystem {
       }
     })
 
+    // ★ 每次 initialize 确保技能配置已加载（幂等，批量生成器独立运行时兜底）
+    if (this.skillManager.getSkillConfigs().size === 0) {
+      this.loadSkillConfigs(GameDataProcessor.getSkillsData())
+    }
+
+    // ★ 每次 initialize 重新注册被动和免疫，消除对外部调用顺序的依赖
+    this.passiveSkillManager.clearAll()
+    for (const participant of participants.values()) {
+      GameDataProcessor.registerParticipantPassives(participant, this.passiveSkillManager)
+      const immunities = participant.getImmunities()
+      if (immunities.length > 0) {
+        this.buffSystem.registerCharacterImmunities(participant.id, immunities)
+      }
+    }
     // ponytail: 统一管道 — 所有被动通过 PassiveSkillManager 在 BATTLE_START 阶段触发
     this.applyPassiveSkills(participants)
 
@@ -948,7 +962,51 @@ export class BattleSystem {
         this.traceCollector.exportAll(),
       )
     }
+    // ★ 补偿可能缺失的回合末态势快照（战斗在回合中途结束时）
+    this.ensureFinalSnapshot()
     return this.lifecycleManager.endBattle(winner)
+  }
+
+  /** 补偿战斗中途结束时缺失的回合末态势快照 */
+  private ensureFinalSnapshot(): void {
+    const battle = this.battleData
+    if (!battle) return
+    // ★ 如果 roundState 已经是 END，说明正常流程已产出快照，无需补偿
+    if (battle.roundState === RoundStatus.END) return
+    const allySnapshot: string[] = []
+    const enemySnapshot: string[] = []
+    battle.participants.forEach((p) => {
+      if (!p.isAlive()) return
+      const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
+      const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
+      const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
+      if (p.team === ParticipantSide.ALLY) allySnapshot.push(entry)
+      else enemySnapshot.push(entry)
+    })
+    if (allySnapshot.length > 0) {
+      LoggerProvider.logger.addBattleLog({
+        turn: battle.currentTurn,
+        message: `我方  ${allySnapshot.join(' · ')}`,
+        segments: [
+          { text: '我方  ', classStr: 'log-friendly' },
+          { text: allySnapshot.join(' · ') },
+        ],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'snapshot' },
+      })
+    }
+    if (enemySnapshot.length > 0) {
+      LoggerProvider.logger.addBattleLog({
+        turn: battle.currentTurn,
+        message: `敌方  ${enemySnapshot.join(' · ')}`,
+        segments: [
+          { text: '敌方  ', classStr: 'log-hostile' },
+          { text: enemySnapshot.join(' · ') },
+        ],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'snapshot' },
+      })
+    }
   }
 
   public resetBattle(): void {

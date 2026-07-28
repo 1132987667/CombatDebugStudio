@@ -548,9 +548,9 @@ export class BattleLogManager implements IBattleLogManager {
 
       let logMessage = ''
       if (actionType === 'skill' && action.skillId) {
-        logMessage = `使用技能 ${String(action.skillId)}`
+        logMessage = ` 使用技能 ${String(action.skillId)}`
       } else if (actionType === 'attack') {
-        logMessage = '发起攻击'
+        logMessage = ' 发起攻击'
       }
 
       if (damage > 0) {

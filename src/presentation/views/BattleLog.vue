@@ -5,14 +5,8 @@
       <span class="log-title">日志</span>
 
       <div class="log-tabs" ref="tabBarRef">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          :ref="(el) => setTabRef(tab.id, el)"
-          class="log-tab"
-          :class="{ active: activeTab === tab.id }"
-          @click="switchTab(tab.id)"
-        >
+        <button v-for="tab in tabs" :key="tab.id" :ref="(el) => setTabRef(tab.id, el)" class="log-tab"
+          :class="{ active: activeTab === tab.id }" @click="switchTab(tab.id)">
           {{ tab.label }}
           <span class="tab-badge" :key="tabCount(tab.id)">{{ tabCount(tab.id) }}</span>
         </button>
@@ -20,27 +14,29 @@
       </div>
 
       <div class="log-tools">
-        <input class="log-keyword" v-model="keyword" placeholder="搜索…" />
-        <button class="export-btn" @click="exportLogs" title="导出当前页签日志">📋 导出</button>
-      </div>
-    </div>
-
-    <!-- ═══ 容器 A：战斗页签（独立，叙事渲染） ═══ -->
-    <div
-      v-show="activeTab === 'battle'"
-      class="log-content"
-      :class="{ 'is-active': activeTab === 'battle' }"
-      ref="battleContainer"
-      @scroll="onScroll"
-    >
-      <div class="battle-toolbar">
         <label class="status-toggle" :class="{ on: showStatus }">
           <input type="checkbox" v-model="showStatus" />
           <span class="toggle-track"><span class="toggle-thumb"></span></span>
           <span>状态明细</span>
         </label>
-      </div>
 
+        <input class="log-keyword" v-model="keyword" placeholder="搜索…" />
+        <div class="export-wrapper" ref="exportWrapperRef">
+          <button class="export-btn" @click="showExportMenu = !showExportMenu" title="导出当前页签日志">
+            导出 ▾
+          </button>
+          <div v-if="showExportMenu" class="export-menu">
+            <button @click="exportLogs('txt')">导出为 TXT</button>
+            <!-- 修复⑤：HTML 仅对战斗页签提供 -->
+            <button v-if="activeTab === 'battle'" @click="exportLogs('html')">导出为 HTML</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 容器 A：战斗页签（独立，叙事渲染） ═══ -->
+    <div v-show="activeTab === 'battle'" class="log-content" :class="{ 'is-active': activeTab === 'battle' }"
+      ref="battleContainer" @scroll="onScroll">
       <div v-if="blocks.length === 0" class="no-logs">暂无战斗日志</div>
 
       <div v-for="(b, i) in blocks" :key="i" class="nb" :class="'nb--' + b.type">
@@ -109,13 +105,8 @@
     </div>
 
     <!-- ═══ 容器 B：系统 / 调试页签（共用，扁平渲染） ═══ -->
-    <div
-      v-show="activeTab !== 'battle'"
-      class="log-content log-content--flat"
-      :class="{ 'is-active': activeTab !== 'battle' }"
-      ref="sharedContainer"
-      @scroll="onScroll"
-    >
+    <div v-show="activeTab !== 'battle'" class="log-content log-content--flat"
+      :class="{ 'is-active': activeTab !== 'battle' }" ref="sharedContainer" @scroll="onScroll">
       <div v-if="activeTab === 'debug' && debugTotal > DEBUG_DISPLAY_LIMIT" class="flat-note">
         仅显示最近 {{ DEBUG_DISPLAY_LIMIT }} 条（共 {{ debugTotal }} 条）
       </div>
@@ -124,12 +115,7 @@
         暂无{{ activeTab === 'debug' ? '调试' : '系统' }}日志
       </div>
 
-      <div
-        v-for="entry in sharedLogs"
-        :key="entry.index"
-        class="flat-item"
-        :class="flatItemClass(entry)"
-      >
+      <div v-for="entry in sharedLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
         <!-- 调试条目：级别徽章 + 消息 + 可折叠上下文 -->
         <template v-if="entry.type === LogType.DEBUG">
           <span class="flat-seq">#{{ entry.index }}</span>
@@ -150,12 +136,8 @@
       </div>
     </div>
 
-    <EntityTooltip
-      :visible="tooltipVisible"
-      :data="tooltipData"
-      :trigger-rect="tooltipRect"
-      @hide="tooltipVisible = false"
-    />
+    <EntityTooltip :visible="tooltipVisible" :data="tooltipData" :trigger-rect="tooltipRect"
+      @hide="tooltipVisible = false" />
   </div>
 </template>
 
@@ -178,7 +160,7 @@ import { LogTooltipResolver } from '@/application/projection/LogTooltipResolver'
 import { container } from '@/infrastructure/di/Container'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
-import { blocksToText, segsText } from '@/shared/utils/log-segment-factory'
+import { blocksToText, blocksToHtml, segsText } from '@/shared/utils/log-segment-factory'
 
 // ───────────────────────── 渲染器 & 悬浮解析器 ─────────────────────────
 const renderer = new RoundNarrativeRenderer()
@@ -370,21 +352,51 @@ watch([battleLogs, sharedLogs, activeTab], () => {
 
 // ───────────────────────── 导出（当前页签） ─────────────────────────
 
+const showExportMenu = ref(false)
+const exportWrapperRef = ref<HTMLElement | null>(null)
+
+function handleExportClickOutside(e: MouseEvent) {
+  if (exportWrapperRef.value && !exportWrapperRef.value.contains(e.target as Node)) {
+    showExportMenu.value = false
+  }
+}
+
 function flatToText(e: LogEntry): string {
   if (e.segments?.length) return segsText(e.segments)
   return e.message ?? ''
 }
 
-function exportLogs(): void {
-  let text = ''
-  if (activeTab.value === 'battle') text = blocksToText(blocks.value)
-  else if (activeTab.value === 'debug') text = debugLogs.value.map(flatToText).join('\n')
-  else text = systemLogs.value.map(flatToText).join('\n')
+function exportLogs(format: 'txt' | 'html' = 'txt'): void {
+  showExportMenu.value = false
+  let content: string
+  let mime: string
+  let ext: string
 
-  if (!text.trim()) return
+  if (activeTab.value === 'battle') {
+    if (format === 'html') {
+      content = blocksToHtml(blocks.value, {
+        title: '战斗日志',
+        generatedAt: new Date().toLocaleString(),
+      })
+      mime = 'text/html;charset=utf-8'
+      ext = 'html'
+    } else {
+      content = blocksToText(blocks.value)
+      mime = 'text/plain;charset=utf-8'
+      ext = 'txt'
+    }
+  } else {
+    // 系统/调试页签：扁平日志，仅 TXT
+    const logs = activeTab.value === 'debug' ? debugLogs.value : systemLogs.value
+    content = logs.map(flatToText).join('\n')
+    mime = 'text/plain;charset=utf-8'
+    ext = 'txt'
+  }
+
+  if (!content.trim()) return
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-  const filename = `battle-log-${activeTab.value}-${timestamp}.txt`
-  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  const filename = `battle-log-${activeTab.value}-${timestamp}.${ext}`
+  const blob = new Blob([content], { type: mime })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -409,11 +421,13 @@ onMounted(() => {
 
   nextTick(updateIndicator)
   window.addEventListener('resize', updateIndicator)
+  document.addEventListener('click', handleExportClickOutside)
 })
 
 onUnmounted(() => {
   battleLogManager.removeListener(logUpdateListener)
   window.removeEventListener('resize', updateIndicator)
+  document.removeEventListener('click', handleExportClickOutside)
   if (autoScrollTimer) clearTimeout(autoScrollTimer)
 })
 
@@ -433,6 +447,7 @@ watch(activeTab, () => nextTick(updateIndicator))
   border-bottom: 1px solid var(--color-border-default);
   flex-wrap: wrap;
 }
+
 .log-title {
   color: var(--color-info);
   font-weight: var(--font-weight-bold);
@@ -445,6 +460,7 @@ watch(activeTab, () => nextTick(updateIndicator))
   display: flex;
   gap: var(--space-1);
 }
+
 .log-tab {
   position: relative;
   display: inline-flex;
@@ -459,12 +475,14 @@ watch(activeTab, () => nextTick(updateIndicator))
   transition: color var(--transition-fast), background var(--transition-fast);
   white-space: nowrap;
 }
-.log-tab:hover {
-}
+
+.log-tab:hover {}
+
 .log-tab.active {
   color: var(--color-energy);
   font-weight: var(--font-weight-bold);
 }
+
 /* 计数徽章 */
 .tab-badge {
   display: inline-flex;
@@ -481,19 +499,31 @@ watch(activeTab, () => nextTick(updateIndicator))
   font-family: var(--font-family-mono);
   transition: background var(--transition-fast), color var(--transition-fast);
 }
+
 .log-tab.active .tab-badge {
   background: var(--color-energy);
   color: var(--color-bg-secondary);
 }
+
 /* 徽章数字变化时的弹跳（:key 触发重渲染） */
 .tab-badge {
   animation: badge-pop 0.2s ease-out;
 }
+
 @keyframes badge-pop {
-  0% { transform: scale(0.6); }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.6);
+  }
+
+  60% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
+
 /* 滑动指示条 */
 .tab-indicator {
   position: absolute;
@@ -513,6 +543,7 @@ watch(activeTab, () => nextTick(updateIndicator))
   gap: var(--space-2);
   margin-left: auto;
 }
+
 .log-keyword {
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border-default);
@@ -522,11 +553,13 @@ watch(activeTab, () => nextTick(updateIndicator))
   width: 110px;
   transition: border-color var(--transition-fast), width var(--transition-fast);
 }
+
 .log-keyword:focus {
   outline: none;
   border-color: var(--color-energy);
   width: 150px;
 }
+
 .export-btn {
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--color-border-default);
@@ -537,37 +570,69 @@ watch(activeTab, () => nextTick(updateIndicator))
   white-space: nowrap;
   transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
+
 .export-btn:hover {
   background: var(--color-bg-hover);
   color: var(--color-text-primary);
   border-color: var(--color-energy);
 }
 
-/* ─────────── 内容容器（双容器，v-show 保留滚动位置） ─────────── */
-.log-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-2);
-  min-height: 0;
-  line-height: var(--line-height-md);
+.export-wrapper {
+  position: relative;
+  display: inline-flex;
 }
+
+.export-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: var(--z-dropdown);
+  box-shadow: var(--shadow-md);
+  min-width: 120px;
+}
+
+.export-menu button {
+  padding: var(--space-1) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.export-menu button:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-info);
+}
+
+/* ─────────── 内容容器（双容器，v-show 保留滚动位置） ─────────── */
 /* 页签切入时的淡入上浮 */
 .log-content.is-active {
   animation: content-in 0.18s ease-out;
 }
+
 @keyframes content-in {
-  from { opacity: 0.4; transform: translateY(3px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0.4;
+    transform: translateY(3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-/* ─────────── 战斗页签工具条（状态明细开关） ─────────── */
-.battle-toolbar {
-  display: flex;
-  align-items: center;
-  margin-bottom: var(--space-2);
-  padding-bottom: var(--space-1);
-  border-bottom: 1px dashed var(--color-border-default);
-}
 .status-toggle {
   display: inline-flex;
   align-items: center;
@@ -577,7 +642,11 @@ watch(activeTab, () => nextTick(updateIndicator))
   color: var(--color-text-tertiary);
   transition: color var(--transition-fast);
 }
-.status-toggle input { display: none; }
+
+.status-toggle input {
+  display: none;
+}
+
 .status-toggle .toggle-track {
   position: relative;
   width: 30px;
@@ -587,6 +656,7 @@ watch(activeTab, () => nextTick(updateIndicator))
   transition: background var(--transition-fast);
   flex-shrink: 0;
 }
+
 .status-toggle .toggle-thumb {
   position: absolute;
   top: 2px;
@@ -597,8 +667,15 @@ watch(activeTab, () => nextTick(updateIndicator))
   background: var(--color-text-tertiary);
   transition: transform var(--transition-fast), background var(--transition-fast);
 }
-.status-toggle.on { color: var(--color-energy); }
-.status-toggle.on .toggle-track { background: var(--color-energy); }
+
+.status-toggle.on {
+  color: var(--color-energy);
+}
+
+.status-toggle.on .toggle-track {
+  background: var(--color-energy);
+}
+
 .status-toggle.on .toggle-thumb {
   transform: translateX(14px);
   background: var(--color-bg-secondary);
@@ -608,6 +685,7 @@ watch(activeTab, () => nextTick(updateIndicator))
 .log-content--flat {
   font-family: var(--font-family-mono);
 }
+
 .flat-note {
   color: var(--color-text-tertiary);
   font-size: var(--font-size-xs);
@@ -617,6 +695,7 @@ watch(activeTab, () => nextTick(updateIndicator))
   border-radius: var(--radius-sm);
   border-left: 2px solid var(--color-warning);
 }
+
 .flat-item {
   display: flex;
   flex-wrap: wrap;
@@ -628,17 +707,33 @@ watch(activeTab, () => nextTick(updateIndicator))
   border-left: 2px solid transparent;
   transition: background var(--transition-fast);
 }
-.flat-item:hover { background: var(--color-bg-hover); }
-.flat-item--system { border-left-color: var(--color-info); }
-.flat-item--action { border-left-color: var(--color-debuff); }
-.flat-item--item { border-left-color: var(--color-heal); }
-.flat-item--debug { border-left-color: var(--color-text-disabled); }
+
+.flat-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.flat-item--system {
+  border-left-color: var(--color-info);
+}
+
+.flat-item--action {
+  border-left-color: var(--color-debuff);
+}
+
+.flat-item--item {
+  border-left-color: var(--color-heal);
+}
+
+.flat-item--debug {
+  border-left-color: var(--color-text-disabled);
+}
 
 .flat-seq {
   color: var(--color-text-disabled);
   font-size: var(--font-size-xs);
   min-width: 3.5em;
 }
+
 .flat-level {
   padding: 0 5px;
   border-radius: var(--radius-sm);
@@ -647,14 +742,42 @@ watch(activeTab, () => nextTick(updateIndicator))
   background: var(--color-border-default);
   color: var(--color-text-secondary);
 }
-.flat-item.lv-0 .flat-level { background: var(--color-danger); color: var(--color-text-primary); }
-.flat-item.lv-1 .flat-level { background: var(--color-warning); color: var(--color-bg-secondary); }
-.flat-item.lv-2 .flat-level { background: var(--color-info); color: var(--color-bg-secondary); }
-.flat-item.lv-0 { color: var(--color-danger); }
-.flat-item.lv-1 { color: var(--color-warning); }
-.flat-msg { color: var(--color-text-secondary); flex: 1; min-width: 0; word-break: break-all; }
+
+.flat-item.lv-0 .flat-level {
+  background: var(--color-danger);
+  color: var(--color-text-primary);
+}
+
+.flat-item.lv-1 .flat-level {
+  background: var(--color-warning);
+  color: var(--color-bg-secondary);
+}
+
+.flat-item.lv-2 .flat-level {
+  background: var(--color-info);
+  color: var(--color-bg-secondary);
+}
+
+.flat-item.lv-0 {
+  color: var(--color-danger);
+}
+
+.flat-item.lv-1 {
+  color: var(--color-warning);
+}
+
+.flat-msg {
+  color: var(--color-text-secondary);
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+}
+
 .flat-item.lv-0 .flat-msg,
-.flat-item.lv-1 .flat-msg { color: inherit; }
+.flat-item.lv-1 .flat-msg {
+  color: inherit;
+}
+
 .flat-ctx {
   flex-basis: 100%;
   margin: var(--space-1) 0 0 0;
@@ -666,10 +789,10 @@ watch(activeTab, () => nextTick(updateIndicator))
   overflow-x: auto;
   white-space: pre-wrap;
 }
+
 .flat-err {
   flex-basis: 100%;
   color: var(--color-danger);
-  font-size: var(--font-size-xs);
 }
 
 /* ─────────── 空状态 ─────────── */
@@ -681,43 +804,130 @@ watch(activeTab, () => nextTick(updateIndicator))
 }
 
 /* ─────────── 叙事块（原有样式保留） ─────────── */
-.rule { flex: 1; height: 1px; background: var(--color-border-default); align-self: center; }
+.rule {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-default);
+  align-self: center;
+}
+
 .rule--double {
   height: 3px;
   border-top: 1px solid var(--color-border-tertiary);
   border-bottom: 1px solid var(--color-border-tertiary);
   background: transparent;
 }
-.rule--thin { opacity: 0.5; }
-.nb { margin: 2px 0; }
+
+.rule--thin {
+  opacity: 0.5;
+}
+
+.nb {
+  margin: var(--space-1) 0;
+}
+
 .nb--battle-header {
-  display: flex; gap: 10px; text-align: center;
-  font-weight: var(--font-weight-bold); color: var(--color-warning);
-  padding: 6px 0; align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  text-align: center;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-warning);
+  padding: var(--space-2) 0;
+  align-items: center;
 }
-.battle-line { padding: 4px 0; letter-spacing: 1px; text-align: center; }
-.nb--round { display: flex; gap: 10px; margin: 14px 0 6px; align-items: center; }
-.round-label { color: var(--color-info); font-weight: var(--font-weight-bold); white-space: nowrap; }
-.action-header { font-weight: var(--font-weight-semibold); }
-.glyph { color: var(--color-warning); margin-right: 6px; }
-.action-result, .action-sub { padding-left: 1.4em; }
-.glyph--sub { color: var(--color-text-tertiary); }
+
+.battle-line {
+  padding: var(--space-2) 0;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.nb--round {
+  display: flex;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-2);
+  align-items: center;
+}
+
+.round-label {
+  color: var(--color-info);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+.action-header {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-xl);
+  margin: var(--space-1) 0;
+}
+
+.glyph {
+  color: var(--color-warning);
+  margin-right: var(--space-2);
+}
+
+.action-result,
+.action-sub {
+  padding-left: var(--space-5);
+  line-height: var(--line-height-xl);
+  margin: var(--space-1) 0;
+}
+
+.glyph--sub {
+  color: var(--color-text-tertiary);
+}
+
 .sub-header {
-  display: flex; gap: 8px; color: var(--color-text-tertiary);
-  margin-top: 8px; font-size: var(--font-size-xs); letter-spacing: 2px; align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-2);
+  letter-spacing: var(--space-1);
+  align-items: center;
 }
-.indent-line { padding-left: 1.4em; }
-.section-title { color: var(--color-energy); font-weight: var(--font-weight-bold); }
-.nb--summary { display: flex; gap: 10px; padding: 8px 0; align-items: center; }
-.summary-content { text-align: center; padding: 4px 0; }
-.summary-line { margin: 2px 0; }
+
+.indent-line {
+  padding-left: var(--space-5);
+  margin: var(--space-1) 0;
+}
+
+.section-title {
+  color: var(--color-energy);
+  font-weight: var(--font-weight-bold);
+}
+
+.nb--summary {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  align-items: center;
+}
+
+.summary-content {
+  text-align: center;
+  padding: 4px 0;
+}
+
+.summary-line {
+  margin: 2px 0;
+}
 
 /* 新块淡入 */
 @media (prefers-reduced-motion: no-preference) {
-  .nb { animation: nb-in 0.18s ease-out; }
+  .nb {
+    animation: nb-in 0.18s ease-out;
+  }
+
   @keyframes nb-in {
-    from { opacity: 0; transform: translateY(3px); }
-    to { opacity: 1; transform: none; }
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 }
 
@@ -728,5 +938,8 @@ watch(activeTab, () => nextTick(updateIndicator))
   cursor: help;
   transition: filter var(--transition-fast);
 }
-.log-hoverable:hover { filter: brightness(1.35); }
+
+.log-hoverable:hover {
+  filter: brightness(1.35);
+}
 </style>

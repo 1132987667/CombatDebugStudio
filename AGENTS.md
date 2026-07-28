@@ -126,6 +126,9 @@ tests/               # 测试（unit / e2e / factories / fixtures / mocks）
 
 **别名**: `@/` → `src/`, `@configs/` → `configs/`
 
+## 禁止
+不要将文本大小设置为 --font-size-md 以下
+
 ## 当前状态
 
 - 技能系统：已完成 P0/P1 批次重构（差异计算器、步骤类型、战斗文本显示）

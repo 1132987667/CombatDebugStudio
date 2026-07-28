@@ -6,6 +6,7 @@ import {
   BATTLE_CONSTANTS,
   BattleActionHelper,
   BattleTriggerPhase,
+  ParticipantSide,
   createStepContext,
   type BattleEffect,
   type BattleEntity,
@@ -349,12 +350,16 @@ export class PassiveSkillManager {
       source,
       targets,
       getEntityName: (id: string) => {
-        if (id === source.id) return source.name
+        const resolve = (e: BattleEntity) => {
+          const prefix = e.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
+          return `${prefix}${e.name}`
+        }
+        if (id === source.id) return resolve(source)
         const t = targets.find((e) => e.id === id)
-        if (t) return t.name
+        if (t) return resolve(t)
         if (context.participants) {
           const p = context.participants.get(id)
-          if (p) return p.name
+          if (p) return resolve(p)
         }
         return id
       },
@@ -374,16 +379,32 @@ export class PassiveSkillManager {
       kind: 'passive' as const,
       hover: { kind: 'passive' as const, id: config.id },
     }
+    // ★ 触发者实体片段（带阵营前缀）
+    const sourcePrefix = source.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
+    const sourceSeg = {
+      text: `${sourcePrefix}${source.name}`,
+      classStr: source.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile',
+      kind: 'entity' as const,
+      faction: source.team,
+    }
     const logSegments = segments.length > 0
-      ? [passiveNameSeg, { text: '  ' }, ...segments]
-      : [passiveNameSeg, { text: '  生效' }]
+      ? [passiveNameSeg, { text: '  ' }, sourceSeg, { text: ' ' }, ...segments]
+      : [passiveNameSeg, { text: '  ' }, sourceSeg, { text: '  生效' }]
+
+    // ★ 独立触发阶段（无父 action）使用 plain 渲染；行动内触发保持 sub 附加
+    const standalonePhases: BattleTriggerPhase[] = [
+      BattleTriggerPhase.BATTLE_START,
+      BattleTriggerPhase.TURN_START,
+      BattleTriggerPhase.TURN_END,
+    ]
+    const isStandalone = standalonePhases.includes(context.phase)
 
     LoggerProvider.logger.addBattleLog({
       turn: context.currentTurn,
       message: logSegments.map(s => s.text).join(''),
       segments: logSegments,
       category: BATTLE_LOG_CATEGORIES.STATUS,
-      meta: { role: 'sub' },
+      meta: isStandalone ? undefined : { role: 'sub' },
     })
 
     // ★ 7. 统一发射动画

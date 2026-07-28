@@ -2,7 +2,7 @@ import {
   IBuffScript,
   ScriptBuffConfig,
 } from '@/domain/buff/types'
-import buffsData from '@configs/buffs/buffs.json'
+import { buffsData } from '@/shared/types/buffs-json'
 import effectsData from '@configs/effects/effects.json'
 import { ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'

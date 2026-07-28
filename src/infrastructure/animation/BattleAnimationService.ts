@@ -132,7 +132,7 @@ export class BattleAnimationService {
         transform: translate(-50%, -50%);
         font-size: 14px;
         font-weight: bold;
-        color: #22d3ee;
+        color: #0a7f91;
         text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
         pointer-events: none;
         z-index: 100;

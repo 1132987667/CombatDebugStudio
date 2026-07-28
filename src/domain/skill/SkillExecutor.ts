@@ -307,7 +307,7 @@ export class SkillExecutor {
       buffName,
       instanceId,
       stacks: skillStep.stacks ?? 1,
-      description: `${source.name} 附加 ${buffName} 给 ${buffTarget.name}`,
+      description: `${buffTarget.name} 获得 【${buffName}】`,
     })
 
     // 仅在非被动上下文中打日志（被动由 triggerPassives 统一输出，避免重复）

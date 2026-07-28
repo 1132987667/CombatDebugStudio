@@ -157,7 +157,6 @@ const tooltipStyle = computed(() => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(8px);
   pointer-events: auto;
-  font-size: var(--font-size-sm);
   line-height: var(--line-height-md);
 }
 
@@ -173,7 +172,6 @@ const tooltipStyle = computed(() => {
 }
 
 .tooltip-name {
-  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-energy);
   text-shadow: 0 0 6px rgba(34, 211, 238, 0.3);
@@ -190,7 +188,6 @@ const tooltipStyle = computed(() => {
   display: inline-block;
   padding: 1px 6px;
   border-radius: var(--radius-sm);
-  font-size: 11px;
   font-weight: var(--font-weight-medium);
   white-space: nowrap;
 }
@@ -234,20 +231,17 @@ const tooltipStyle = computed(() => {
 
 .detail-label {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
 }
 
 .detail-value {
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
   text-align: right;
 }
 
 /* 来源脚注 */
 .tooltip-source {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
   padding-top: var(--space-1);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }

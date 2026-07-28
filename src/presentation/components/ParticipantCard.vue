@@ -388,7 +388,7 @@ defineExpose({
 
 .situational-tag.tag-elemental {
   background: rgba(34, 211, 238, 0.15);
-  color: #22d3ee;
+  color: #0a7f91;
   border: 1px solid rgba(34, 211, 238, 0.25);
 }
 

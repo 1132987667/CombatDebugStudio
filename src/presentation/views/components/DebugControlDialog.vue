@@ -39,6 +39,32 @@
                   </button>
                 </div>
               </div>
+              <!-- 数据生成模块控件 -->
+              <div v-if="module.name === '数据生成'" class="log-gen-control">
+                <div class="log-gen-row">
+                  <span class="log-gen-label">模式:</span>
+                  <div class="log-gen-options">
+                    <button v-for="opt in modeOptions" :key="opt.value"
+                      class="log-gen-opt-btn" :class="{ active: genMode === opt.value }"
+                      @click="genMode = opt.value">{{ opt.label }}</button>
+                  </div>
+                </div>
+                <div class="log-gen-row">
+                  <span class="log-gen-label">格式:</span>
+                  <div class="log-gen-options">
+                    <button v-for="opt in formatOptions" :key="opt.value"
+                      class="log-gen-opt-btn" :class="{ active: genFormat === opt.value }"
+                      @click="genFormat = opt.value">{{ opt.label }}</button>
+                  </div>
+                </div>
+                <button class="log-gen-btn"
+                  :disabled="battleStore.generationProgress.isGenerating"
+                  @click="battleStore.generateBattleData(genMode, genFormat)">
+                  {{ battleStore.generationProgress.isGenerating
+                    ? `生成中 ${battleStore.generationProgress.percent}%`
+                    : '生成数据（50场）' }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -48,11 +74,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 
 const debugStore = useDebugStore()
+const battleStore = useBattleStore()
 
+// ==================== 战斗数据生成 ====================
+const genMode = ref<'1v1' | '2v2' | 'random'>('random')
+const genFormat = ref<'txt' | 'html'>('txt')
+const modeOptions = [
+  { value: '1v1' as const, label: '1v1' },
+  { value: '2v2' as const, label: '2v2' },
+  { value: 'random' as const, label: '随机' },
+]
+const formatOptions = [
+  { value: 'txt' as const, label: 'TXT' },
+  { value: 'html' as const, label: 'HTML' },
+]
 const impactStyles = [
   { label: '爆炸', value: 'explosion', desc: '径向火球扩散+火花' },
   { label: '斩击', value: 'slash', desc: '干净利落的一刀弧光' },
@@ -148,6 +188,11 @@ const debugModules: DebugModule[] = [
       { label: '行为日志', action: 'log_action', description: '调用 addActionLog', class: 'btn-info' },
       { label: '调试日志', action: 'log_debug', description: '调用 addDebugLog', class: 'btn-info' },
     ],
+  },
+  {
+    name: '数据生成',
+    icon: '📊',
+    buttons: [],
   },
   {
     name: '动画调试',
@@ -348,6 +393,74 @@ const handleButtonClick = (action: string) => {
   background: rgba(34, 211, 238, 0.25);
   border-color: var(--color-energy);
   color: var(--color-energy);
+}
+
+/* ====== 日志生成控件 ====== */
+.log-gen-control {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.log-gen-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.log-gen-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--font-size-md);
+  min-width: 40px;
+  flex-shrink: 0;
+}
+
+.log-gen-options {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.log-gen-opt-btn {
+  padding: 2px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.log-gen-opt-btn:hover {
+  background: rgba(34, 211, 238, 0.15);
+  border-color: rgba(34, 211, 238, 0.4);
+  color: var(--color-text-primary);
+}
+
+.log-gen-opt-btn.active {
+  background: rgba(34, 211, 238, 0.25);
+  border-color: var(--color-energy);
+  color: var(--color-energy);
+}
+
+.log-gen-btn {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-energy);
+  border-radius: var(--radius-sm);
+  background: rgba(34, 211, 238, 0.15);
+  color: var(--color-energy);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-weight: var(--font-weight-medium);
+  align-self: flex-start;
+}
+
+.log-gen-btn:hover {
+  background: rgba(34, 211, 238, 0.3);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
 }
 
 @keyframes slideIn {

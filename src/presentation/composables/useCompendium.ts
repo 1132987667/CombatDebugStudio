@@ -9,7 +9,7 @@
 
 import { ref, computed } from 'vue'
 import enemiesData from '@configs/enemies/enemies.json'
-import buffsData from '@configs/buffs/buffs.json'
+import { buffsData } from '@/shared/types/buffs-json'
 import materialsData from '@configs/materials/materials.json'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import type { PassiveCategory } from '@/domain/skill/types'

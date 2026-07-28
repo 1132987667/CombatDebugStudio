@@ -3,6 +3,8 @@ CombatDebugStudio/
 .mimocode/
     commands/
         verify.md
+    plans/
+        1785226662827-quiet-falcon.md
     skills/
         domain-migration/
             SKILL.md
@@ -36,7 +38,6 @@ src/
                 ParticipantBuffs.ts
                 ParticipantSkills.ts
                 ParticipantStats.ts
-            events/
             intervention/
                 InterventionManager.ts
             replay/
@@ -85,6 +86,7 @@ src/
         character/
             types.ts
         port/
+            di/
             IBattleLogManager.ts
             IDomainEventBus.ts
             LoggerProvider.ts
@@ -120,7 +122,6 @@ src/
             Container.ts
         input/
             KeybindManager.ts
-        task/
     presentation/
         components/
             AttributeTooltip.vue
@@ -201,12 +202,13 @@ src/
             battle-summary.ts
             buff-classification.ts
             buff-display.ts
+            buffs-json.ts
             effect.ts
+            effects-json.ts
             enemy.ts
             index.ts
             input.ts
             Item.ts
-            log-renderer.ts
             projection.ts
             scene.ts
             trace-log.ts
@@ -270,6 +272,142 @@ npm test 2>&1 | Select-String -Pattern "Test Files|Tests|FAIL|PASS"
 ```powershell
 npm run typecheck 2>&1 | Select-String "src/domain/"
 ```
+
+--- .mimocode/plans/1785226662827-quiet-falcon.md ---
+# BattleVisualEffects.vue 重构执行计划
+---
+## 对 Spec 的总体意见
+**设计思路完全认同。** P0 测试先行 → P1 时序派生 → P2 卫生 → P3 类型去重 的四阶段顺序正确，负面清单合理，CSS/模板冻结原则正确。
+以下是我经过全面代码审查后发现的 **3 个需要修正的点**，其余全部按 spec 执行。
+---
+## 修正点（与 spec 不同的地方）
+### 修正 1：测试 Mount 方式 —— ref callback
+**spec 原文**：
+```ts
+const app = createApp({ render: () => h(BattleVisualEffects, { ref: vfxRef }) })
+```
+**问题**：Vue 3.2.x 中 `h()` 传递 `Ref` 对象作为 `ref` 不一定自动解包（Vue 3.4+ 才稳定）。该项目的 Vue 版本是 `^3.2.47`。
+**改为**：
+```ts
+const app = createApp({
+  render: () => h(BattleVisualEffects, { ref: (el) => { vfxRef.value = el } }),
+})
+```
+### 修正 2：fakeCard DOM 清理
+**spec 原文**：`fakeCard` 创建的 div 直接 `appendChild` 到 body，无清理逻辑。
+**补充**：在 `afterEach` 中统一移除所有 fakeCard 创建的 DOM 元素。实现方式：`fakeCard` 改成 track 模式。
+### 修正 3：CSS 动画时长注释准确化
+**spec 原文**（P1 映射表脚注）：
+```
+`1400/1600` 是"战斗节奏可压缩、但伤害数字必须让人看清"的可读性保障，与 `dmg-pop 1.4s` / `heal-rise 1.6s` 绑定。
+```
+**补充说明**：`shield-rise` CSS 动画时长也是 1.4s（1400ms），但 JS 常量为 `SHIELD_NUM_TTL_MS = 1450`（多了 50ms 缓冲）。注释中应明确指出这一点。同时 `hex-flash` CSS 动画 0.9s > JS 移除时长 `b * 0.5`，这是原版就有的行为，已在常量旁加注释。
+---
+## 详细执行计划
+### P0：特征测试文件
+**文件**：`tests/unit/presentation/BattleVisualEffects.test.ts`（新建）
+**变化**：
+- 使用 ref callback mount 而非 Ref 传参
+- `afterEach` 中清理 fakeCard 产生的 DOM 元素
+- 其余完全按 spec §2.2 代码
+**验证**：`npm test` 在**原代码**上 9 个全绿。
+### P1：时序派生
+**文件**：`src/presentation/components/BattleVisualEffects.vue`
+**变化**：
+- 追加 import `BATTLE_ANIMATION_TIMING`
+- 新增 5 个相位派生函数，替换 5 处魔数
+- 值恒等，[P0 测试仍全绿]
+### P2：生命周期卫生 + 边界守卫
+**文件**：`src/presentation/components/BattleVisualEffects.vue`
+**变化**：
+- `later()` / `nextFrame()` 统一收口 + `onUnmounted` 清理
+- `cardCenter` 增加 `isConnected` 守卫
+- `showProjectile` 增加 `duration <= 0` 守卫 + 飞行循环内 `proj.isConnected` 守卫
+- **唯一有意行为变化**（已在 spec §4.2 诚实标注）：`duration <= 0` 时不创建 NaN 光弹
+### P3：类型与去重
+**文件**：`src/presentation/components/BattleVisualEffects.vue`
+**变化**：
+- `setRemove` 泛型化 `any → Ref<T[]>`
+- 删除 `sparkColors` 重复色表
+- 移除未使用的 `nextTick` 导入
+- CSS 耦合常量旁补注释
+### 不改（完全按 spec §0.2 负面清单）
+- 不抽 composable、不拆组件、不建策略表
+- 不改尾迹颜色（frost 回退逻辑保留）
+- 不改容量上限
+- `impactStyle` 非法值不做静默回退
+---
+## 验证清单（执行每个阶段后运行）
+```powershell
+# P0: 特征锁定
+npm test 2>&1 | Select-String "Test Files|Tests|FAIL|PASS"
+# P1-P3: 无回归
+npm test
+# 构建
+npm run build
+# 类型检查（仅 domain/application/infrastructure，本组件不受 strict 约束）
+npm run typecheck 2>&1 | Select-String "BattleVisualEffects"
+```
+---
+## 代码质量、健壮性、正确回收 —— 深度审查报告
+### 代码质量
+**Spec 已覆盖**：
+- `setRemove` 泛型化 `any → Ref<T extends { id: number }>`
+- `VFX_COLORS` 类型收窄：`Record<string, Record<string, string>>` → `Record<VfxColorType, { bg: string; glow: string }>`
+- 删除重复的 `sparkColors`（与 `VFX_COLORS` 完全重复）
+- 移除未使用的 `nextTick` 导入
+- 所有 `setRemove` 调用方类型安全（`skillNames`/`impacts`/`healAuras`/`shieldHexes`/`dmgNums` 都满足 `{ id: number }`）
+**无需额外处理**：`timeouts` 数组 → `pendingTimers` Set 不仅是重命名，更是类型增强（Set 的 `forEach`+`delete` 防重复注册）。
+### 健壮性 —— 边界 case 验证
+| 场景 | 行为 | 结论 |
+|---|---|---|
+| `document.getElementById('visual-effects-root')` 返回 null | 函数静默 return（`showProjectile`/`createSpark`/`spawnIceShatterParticles` 均有守卫） | 安全 |
+| `nextId` 单会话自增 | 不可能溢出 | 无需处理 |
+| `impactStyle` 非法值（如 `'nonexistent'`） | `switch` 落空，`case` 无默认 → body 为空（slash/shockwave 无 JS 粒子） | 安全，且负面清单明确不做静默回退 |
+| `VFX_COLORS[colorType]` 找不到 | `?? VFX_COLORS.fire` 兜底 | 安全 |
+| `CardPos.el` 字段 | 保留在 `CardPos` 类型中，`defineExpose` 暴露 `cardElements`，调用方可直接访问 | 向后兼容 |
+### 正确回收 —— 原版问题与 Spec 修复
+**原版未追踪的定时器（Spec 全部改为 `later()`）**：
+| 位置 | 原版 | 卸载后 |
+|---|---|---|
+| `setRemove` 内部 | 追踪到 `timeouts[]` | ✅ 清除 |
+| `spawnExplosionParticles` 的 `setTimeout(fn, 650)` | **未追踪** | ❌ 残留 → ✅ `later()` |
+| `spawnIceShatterParticles` 的 2 处 `setTimeout` | **未追踪** | ❌ 残留 → ✅ `later()` |
+| `spawnShadowParticles` 的 `setTimeout(fn, 850)` | **未追踪** | ❌ 残留 → ✅ `later()` |
+| `showScreenShake` 的 `setTimeout` | **未追踪** | ❌ 残留 → ✅ `later()` |
+| `showHealAura` 的 `setTimeout` | **未追踪** | ❌ 残留 → ✅ `later()` |
+| `showProjectile` 的 `rAF(step)` | **未追踪** | ❌ 残留 → ✅ `nextFrame()` |
+**竞态分析 —— 卸载发生在光弹飞行 rAF 途中**：
+```
+onUnmounted()
+  ├─ pendingFrames.forEach(cancelAnimationFrame)   ← 清除待处理 rAF
+  ├─ pendingTimers.forEach(clearTimeout)            ← 清除待处理定时器
+  ├─ cardElements.clear()
+  └─ #visual-effects-root 被 DOM 移除
+       └─ proj, trail, 粒子等全部子节点自动移除
+```
+corner case：若 `step()` 正在执行且 `t < 1`，会调用 `nextFrame(step)` 向已清理的 `pendingFrames` 添加新 id。但该新 rAF 回调触发时 `proj.isConnected === false`，立即 return。**无泄漏，无 DOM 操作。**
+**WAAPI 动画（`Element.animate`）**：
+粒子/闪光通过 `spark.animate()` 播放动画。这些 `Animation` 对象未显式 `cancel()`，但元素被 DOM 移除后浏览器自动终止动画，GC 回收 detached 元素时一起回收。**无需额外处理。**
+**尾迹清理 —— 双路径验证**：
+```
+trail 创建 → later(removeChild, 600) → pendingTimers
+  ├─ 若卸载先到：timer 被 clearTimeout，trail 随 root 一起被 DOM 移除
+  └─ 若 600ms 先到：回调执行，parentNode 存在则移除
+```
+两种路径都安全。
+### 结论
+三个维度核心风险已被 P2 阶段完全覆盖，无需在 spec 基础上额外补充。
+---
+## 风险登记
+| 风险 | 等级 | 缓解 |
+|---|---|---|
+| `createApp` mount 在 jsdom 下的稳定性 | 低 | 已验证：jsdom 支持 `getElementById`、`appendChild`、`getBoundingClientRect` |
+| `Element.animate` 在 jsdom 中不存在 | 低 | 已在 `beforeEach` 中打桩 |
+| `performance.now` 与 fake timers 的联动 | 低 | P0 时序用例刻意不依赖 `performance.now`；光弹轨迹由打桩后的 rAF 短路 |
+| 派生值与历史魔数不一致 | 低 | P0 9 个用例按毫秒级断言，值恒等由机器证明 |
+## 回滚策略
+改动面 = 1 个组件文件 `<script setup>` + 1 个新增测试文件。`git revert` 单提交即可完整回滚。
 
 --- .mimocode/skills/domain-migration/SKILL.md ---
 ---
@@ -475,6 +613,8 @@ documents/           # 设计文档 / 迁移记录
 tests/               # 测试（unit / e2e / factories / fixtures / mocks）
 ```
 **别名**: `@/` → `src/`, `@configs/` → `configs/`
+## 禁止
+不要将文本大小设置为 --font-size-md 以下
 ## 当前状态
 - 技能系统：已完成 P0/P1 批次重构（差异计算器、步骤类型、战斗文本显示）
 - 日志系统：三层架构（LogCollector → LogParser → LogRenderer）已落地
@@ -571,6 +711,7 @@ export default [
     "@vue/eslint-config-typescript": "^14.1.3",
     "eslint": "^9.13.0",
     "eslint-plugin-vue": "^9.30.0",
+    "happy-dom": "^20.11.1",
     "iconv-lite": "^0.7.3",
     "jsdom": "^27.4.0",
     "sass": "^1.97.3",
@@ -708,8 +849,6 @@ export class BattleService {
     return this.battleManager.getSelectedCharacterId()
   }
   /** 获取当前战斗回合数（从 BattleStateManager 读取） */
-  // ponytail: 与 getTurn() 语义重叠，getTurn 取自 battleSystem.getRound()
-  // 两者在 syncBattleState() 后应一致；优先使用此方法获取 UI 层可见的回合数
   getCurrentTurn(): number {
     return this.battleManager.getCurrentTurn()
   }
@@ -919,11 +1058,12 @@ export class BattleProjection {
  *   通过反向索引 buffId → SkillConfig[] 获取技能描述作为 buff 的说明文本。
  * - 三级回退：buff.description → 反查技能.description → 按结构自动生成
  */
-import type { LogSegmentHover } from '@/shared/types/battle-log'
+import { LogSegmentHover, LogSegmentHoverKind } from '@/shared/types/battle-log'
 import { classifyBuff, getBuffCategoryBadge, BUFF_CATEGORY, type BuffCategory } from '@/shared/types/buff-classification'
+import type { BuffJsonEntry, BuffJsonAuraModifier } from '@/shared/types/buffs-json'
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import type { SkillManager } from '@/domain/skill/SkillManager'
-import type { SkillConfig } from '@/domain/skill/types'
+import { SkillConfig, SkillType } from '@/domain/skill/types'
 // ==================== 输出类型 ====================
 /** Tooltip 卡片的明细行 */
 export interface TooltipDetailRow {
@@ -960,11 +1100,11 @@ export class LogTooltipResolver {
    */
   resolve(hover: LogSegmentHover): TooltipData | null {
     switch (hover.kind) {
-      case 'buff':
+      case LogSegmentHoverKind.BUFF:
         return this.resolveBuff(hover.id)
-      case 'skill':
+      case LogSegmentHoverKind.SKILL:
         return this.resolveSkill(hover.id)
-      case 'passive':
+      case LogSegmentHoverKind.PASSIVE:
         return this.resolvePassive(hover.id)
       default:
         return null
@@ -982,7 +1122,11 @@ export class LogTooltipResolver {
       }
     }
     const name = config.name ?? config.id ?? buffId
-    const classification = classifyBuff(config)
+    // 合并已解析的 effectPlan，让 deriveBuffFacets 走数据驱动分支（而非旧字段回退）
+    const resolved = this.buffRegistry.getResolvedBuffConfig(buffId)
+    const classification = classifyBuff(
+      resolved ? { ...config, effectPlan: resolved.effectPlan } : config,
+    )
     const badge = getBuffCategoryBadge(classification)
     const durationLabel = this.formatDuration(config.duration)
     // 描述：三级回退
@@ -1002,7 +1146,7 @@ export class LogTooltipResolver {
    */
   private resolveBuffDescription(
     buffId: string,
-    config: Record<string, any>,
+    config: BuffJsonEntry,
     category: BuffCategory,
   ): string {
     // ①
@@ -1026,15 +1170,15 @@ export class LogTooltipResolver {
     return desc.replace(/^被动效果：/, '').trim()
   }
   /** 按结构自动生成描述 */
-  private generateAutoDescription(config: Record<string, any>, category: BuffCategory): string {
+  private generateAutoDescription(config: BuffJsonEntry, category: BuffCategory): string {
     switch (category) {
       case BUFF_CATEGORY.AURA: {
         const aura = config.aura
-        if (aura?.modifiers?.length > 0) {
-          const items = aura.modifiers.map(
-            (m: any) => `${m.targetAttribute ?? ''} ${this.formatModifierValue(m)}`,
+        if (aura?.modifiers?.length) {
+          const items = aura!.modifiers.map(
+            (m) => `${m.targetAttribute ?? ''} ${this.formatModifierValue(m)}`,
           ).filter(Boolean).join('、')
-          const scope = aura.targetSelector === 'allies' ? '全体友方' : aura.targetSelector === 'enemies' ? '全体敌方' : '自身'
+          const scope = aura!.targetSelector === 'allies' ? '全体友方' : aura!.targetSelector === 'enemies' ? '全体敌方' : '自身'
           return `提升 ${scope} ${items}`
         }
         return '光环效果'
@@ -1060,7 +1204,7 @@ export class LogTooltipResolver {
   }
   private appendBuffDetails(
     details: TooltipDetailRow[],
-    config: Record<string, any>,
+    config: BuffJsonEntry,
     category: BuffCategory,
   ): void {
     switch (category) {
@@ -1069,7 +1213,7 @@ export class LogTooltipResolver {
         if (aura) {
           const scope = aura.targetSelector === 'allies' ? '全体友方' : aura.targetSelector === 'enemies' ? '全体敌方' : '自身'
           details.push({ label: '生效范围', value: scope })
-          if (aura.modifiers?.length > 0) {
+          if (aura.modifiers?.length) {
             for (const m of aura.modifiers) {
               details.push({
                 label: m.targetAttribute ?? '属性',
@@ -1091,14 +1235,14 @@ export class LogTooltipResolver {
       }
       case BUFF_CATEGORY.TRIGGER: {
         const triggers = config.triggers
-        if (triggers?.length > 0) {
-          for (const t of triggers) {
+        if (triggers?.length) {
+          for (const t of triggers!) {
             details.push({
               label: '触发时机',
               value: t.phase ?? t.scriptId ?? '未知',
             })
             if (t.params?.probability != null) {
-              details.push({ label: '触发概率', value: `${Math.round(t.params.probability * 100)}%` })
+              details.push({ label: '触发概率', value: `${Math.round((t.params.probability as number) * 100)}%` })
             }
           }
         }
@@ -1118,8 +1262,8 @@ export class LogTooltipResolver {
       }
       case BUFF_CATEGORY.IMMUNITY: {
         const immunities = config.immunities
-        if (immunities?.length > 0) {
-          details.push({ label: '免疫列表', value: immunities.join('、') })
+        if (immunities?.length) {
+          details.push({ label: '免疫列表', value: immunities!.join('、') })
         }
         break
       }
@@ -1186,7 +1330,7 @@ export class LogTooltipResolver {
   }
   // ==================== 辅助方法 ====================
   /** 格式化修饰符值 */
-  private formatModifierValue(modifier: any): string {
+  private formatModifierValue(modifier: BuffJsonAuraModifier): string {
     if (modifier.value == null) return ''
     const pct = Math.round(modifier.value * 100)
     const type = modifier.type === 'PERCENTAGE' ? '%' : ''
@@ -1356,7 +1500,7 @@ import type { Container } from '@/infrastructure/di/Container'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BattleService } from '@/application/facade/BattleFacade'
 import type { BattleEntity } from '@/domain/battle/type/types'
-import { PARTICIPANT_SIDE, BattleStatus } from '@/domain/battle/type/types'
+import { ParticipantSide, ParticipantSideName, BattleStatus } from '@/domain/battle/type/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
@@ -1365,7 +1509,8 @@ import { debugGate } from '@/domain/battle/debug/DebugGate'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { LogType, type BattleLogEntry, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
-import { blocksToText } from '@/shared/utils/log-segment-factory'
+import { blocksToText, blocksToHtmlBody, wrapHtmlDocument, escapeHtml } from '@/shared/utils/log-segment-factory'
+import type { NarrativeBlock } from '@/shared/types/battle-log'
 export interface BattleGenerationOptions {
   /** 总场次数（默认 50） */
   totalBattles?: number
@@ -1373,6 +1518,8 @@ export interface BattleGenerationOptions {
   mode?: '1v1' | '2v2' | 'random'
   /** 进度回调（0~1） */
   onProgress?: (progress: number, current: number, total: number) => void
+  /** 导出格式，默认 'txt' */
+  format?: 'txt' | 'html'
 }
 export interface SingleBattleLog {
   battleIndex: number
@@ -1381,8 +1528,8 @@ export interface SingleBattleLog {
   enemyNames: string[]
   winner: string
   totalRounds: number
-  /** 叙事格式日志文本（与面板导出一致） */
-  narrativeText: string
+  /** 叙事块（TXT/HTML 导出的唯一数据源） */
+  narrativeBlocks: NarrativeBlock[]
 }
 export class BattleDataGenerator {
   private battleSystem: BattleSystem
@@ -1434,8 +1581,8 @@ export class BattleDataGenerator {
         while (enemySource.length < teamSize) {
           enemySource.push(allySource[enemySource.length % allySource.length])
         }
-        const allyTeam = allySource.map((e, idx) => this.createParticipant(e, PARTICIPANT_SIDE.ALLY, idx))
-        const enemyTeam = enemySource.map((e, idx) => this.createParticipant(e, PARTICIPANT_SIDE.ENEMY, idx))
+        const allyTeam = allySource.map((e, idx) => this.createParticipant(e, ParticipantSide.ALLY, idx))
+        const enemyTeam = enemySource.map((e, idx) => this.createParticipant(e, ParticipantSide.ENEMY, idx))
         this._currentParticipantIds = [...allyTeam.map(e => e.id), ...enemyTeam.map(e => e.id)]
         // 清理上一场参与者残留在 BuffSystem 中的修饰符
         this.cleanupPrevBuffSystemEntries()
@@ -1456,16 +1603,18 @@ export class BattleDataGenerator {
         // 补充可能缺失的态势快照和战斗结束日志（短战斗提前结束时会被跳过）
         this.ensureEndBattleLogs()
         // ── 收集本场叙事日志（与面板导出同管线）──
-        const narrativeText = this.collectNarrativeText()
-        const winner = this.battleSystem.getBattleData()?.winner
+        const battleData = this.battleSystem.getBattleData()
+        if (!battleData) continue
+        const narrativeBlocks = this.collectNarrativeBlocks()
+        const winner = battleData.winner
         battleLogs.push({
           battleIndex: i + 1,
           battleId,
           allyNames: allyTeam.map(e => e.name),
           enemyNames: enemyTeam.map(e => e.name),
-          winner: winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方',
+          winner: ParticipantSideName[winner!],
           totalRounds: rounds,
-          narrativeText,
+          narrativeBlocks,
         })
         this.battleSystem.resetBattle()
         this._prevParticipantIds = this._currentParticipantIds
@@ -1489,21 +1638,26 @@ export class BattleDataGenerator {
     }
     options.onProgress?.(1, total, total)
     if (!this._cancelled && battleLogs.length > 0) {
-      const mergedText = this.mergeLogs(battleLogs)
-      this.downloadFile(mergedText, `battle-data-${battleLogs.length}场-${this.getTimestamp()}.txt`)
+      const format = options.format ?? 'txt'
+      if (format === 'html') {
+        const mergedHtml = this.mergeLogsHtml(battleLogs)
+        this.downloadFile(mergedHtml, `battle-data-${battleLogs.length}场-${this.getTimestamp()}.html`, 'text/html;charset=utf-8')
+      } else {
+        const mergedText = this.mergeLogs(battleLogs)
+        this.downloadFile(mergedText, `battle-data-${battleLogs.length}场-${this.getTimestamp()}.txt`)
+      }
     }
     return this._cancelled ? 'cancelled' : 'done'
   }
   /**
-   * 收集当前战斗的叙事日志文本
+   * 收集当前战斗的叙事日志块
    * 与日志面板"导出"使用完全相同的渲染管线，保证格式一致
    */
-  private collectNarrativeText(): string {
+  private collectNarrativeBlocks(): NarrativeBlock[] {
     const entries = battleLogManager
       .getAllLogs()
       .filter((l) => l.type === LogType.BATTLE) as BattleLogEntry[]
-    const blocks = this.renderer.renderEntries(entries)
-    return blocksToText(blocks)
+    return this.renderer.renderEntries(entries)
   }
   /**
    * 补充可能缺失的态势快照和战斗结束日志
@@ -1529,7 +1683,7 @@ export class BattleDataGenerator {
         const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
         const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
         const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
-        if (p.team === PARTICIPANT_SIDE.ALLY) allySnapshot.push(entry)
+        if (p.team === ParticipantSide.ALLY) allySnapshot.push(entry)
         else enemySnapshot.push(entry)
       })
       if (allySnapshot.length > 0) {
@@ -1562,8 +1716,7 @@ export class BattleDataGenerator {
       (l) => l.meta?.role === 'battle' && l.message?.includes('战斗结束'),
     )
     if (!hasEndBanner && battleData.winner) {
-      const winnerLabel =
-        battleData.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'
+      const winnerLabel = ParticipantSideName[battleData.winner!]
       battleLogManager.addBattleLog({
         turn: lastTurn,
         message: `战斗结束！胜利者：${winnerLabel}`,
@@ -1582,7 +1735,7 @@ export class BattleDataGenerator {
   }
   private createParticipant(
     enemy: Enemy,
-    side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY,
+    side: typeof ParticipantSide.ALLY | typeof ParticipantSide.ENEMY,
     seatIndex: number,
   ): BattleEntity {
     return GameDataProcessor.enemyToParticipant(enemy, side, seatIndex)
@@ -1595,7 +1748,7 @@ export class BattleDataGenerator {
     header.push(`  生成时间: ${new Date().toLocaleString()}`)
     header.push('═'.repeat(60))
     header.push('')
-    const allyWins = battleLogs.filter(b => b.winner === '我方').length
+    const allyWins = battleLogs.filter(b => b.winner === '友方').length
     const enemyWins = battleLogs.length - allyWins
     const totalRounds = battleLogs.reduce((s, b) => s + b.totalRounds, 0)
     const avgRounds = battleLogs.length > 0 ? Math.round(totalRounds / battleLogs.length) : 0
@@ -1614,12 +1767,33 @@ export class BattleDataGenerator {
         `胜方: ${b.winner}  |  回合数: ${b.totalRounds}`,
         '─'.repeat(40),
       ].join('\n')
-      return `${meta}\n${b.narrativeText}\n`
+      return `${meta}\n${blocksToText(b.narrativeBlocks)}\n`
     }).join('\n')
     return [...header, body].join('\n')
   }
-  private downloadFile(content: string, filename: string): void {
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  /** 合并所有战斗日志为 HTML（头部统计 + <details> 折叠 + 语义渲染） */
+  private mergeLogsHtml(battleLogs: SingleBattleLog[]): string {
+    const allyWins = battleLogs.filter(b => b.winner === '友方').length
+    const enemyWins = battleLogs.length - allyWins
+    const totalRounds = battleLogs.reduce((s, b) => s + b.totalRounds, 0)
+    const avgRounds = battleLogs.length > 0 ? Math.round(totalRounds / battleLogs.length) : 0
+    const headerHtml = `<div class="report-stats">\n` +
+      `<div>战斗数据报告 — 共 ${battleLogs.length} 场</div>\n` +
+      `<div>我方胜: ${allyWins} 场 | 敌方胜: ${enemyWins} 场</div>\n` +
+      `<div>平均回合数: ${avgRounds} | 总回合数: ${totalRounds}</div>\n` +
+      `</div>`
+    const sections = battleLogs.map(b => {
+      const meta = `第 ${b.battleIndex} 场 · 我方: ${b.allyNames.join('、')} · 敌方: ${b.enemyNames.join('、')} · 胜方: ${b.winner} · 回合: ${b.totalRounds}`
+      return `<details class="battle-block"><summary>${escapeHtml(meta)}</summary>\n` +
+        `<div class="battle-body">${blocksToHtmlBody(b.narrativeBlocks)}</div></details>`
+    }).join('\n')
+    return wrapHtmlDocument(headerHtml + '\n' + sections, {
+      title: `战斗数据报告 (${battleLogs.length}场)`,
+      generatedAt: new Date().toLocaleString(),
+    })
+  }
+  private downloadFile(content: string, filename: string, mime: string = 'text/plain;charset=utf-8'): void {
+    const blob = new Blob([content], { type: mime })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -1855,9 +2029,6 @@ export const ATTRIBUTE_CODE = {
   poisonRes: 'poisonRes', // 毒素抗性
   // ========== 反弹/反伤（预留） ==========
   reflectDamagePercent: 'reflectDamagePercent', // 反弹伤害比例
-  // ========== 伤害类型减免 ==========
-  physicalDmgReduction: 'physicalDmgReduction', // 伤害减免
-  magicalDmgReduction: 'magicalDmgReduction', // 魔法伤害减免
   // ========== 特殊伤害加成 ==========
   fireSkillDmgBonus: 'fireSkillDmgBonus', // 火属性技能伤害加成
   physicalSkillDmgBonus: 'physicalSkillDmgBonus', // 物理技能伤害加成
@@ -2250,24 +2421,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     isPercentage: true,
   },
   // ========== 伤害类型减免 ==========
-  physicalDmgReduction: {
-    code: 'physicalDmgReduction',
-    name: '伤害减免',
-    displayName: '伤害减免',
-    description: '对物理类型伤害的减免比例',
-    range: '0-100%',
-    impact: '减少受到的物理属性伤害',
-    isPercentage: true,
-  },
-  magicalDmgReduction: {
-    code: 'magicalDmgReduction',
-    name: '魔法伤害减免',
-    displayName: '魔法伤害减免',
-    description: '对魔法类型伤害的减免比例',
-    range: '0-100%',
-    impact: '减少受到的魔法属性伤害',
-    isPercentage: true,
-  },
   // ========== 特殊伤害加成 ==========
   fireSkillDmgBonus: {
     code: 'fireSkillDmgBonus',
@@ -2842,7 +2995,7 @@ export class AISystem {
     const aiInstances = new Map<string, BattleAI>()
     participants.forEach((participant) => {
       const ai = BattleAIFactory.createAIWithSkills(
-        participant.type,
+        participant.team,
         participant.getSkillList(),
       )
       aiInstances.set(participant.id, ai)
@@ -2860,7 +3013,7 @@ export class AISystem {
     let ai = this.aiInstances.get(participant.id)
     if (!ai) {
       ai = BattleAIFactory.createAIWithSkills(
-        participant.type,
+        participant.team,
         participant.getSkillList(),
       )
       this.aiInstances.set(participant.id, ai)
@@ -2929,11 +3082,10 @@ import type {
   BattleEntity,
   BattleAction,
   BattleState,
-  ParticipantSide,
 } from '@/domain/battle/type/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import {
-  PARTICIPANT_SIDE,
+  ParticipantSide,
   BattleActionHelper,
   BATTLE_CONSTANTS,
 } from '@/domain/battle/type/types'
@@ -3078,9 +3230,9 @@ export class BaseBattleAI implements BattleAI {
     const allies = this.getAliveParticipants(battleState, participant.team)
     const enemies = this.getAliveParticipants(
       battleState,
-      participant.team === PARTICIPANT_SIDE.ALLY
-        ? PARTICIPANT_SIDE.ENEMY
-        : PARTICIPANT_SIDE.ALLY,
+      participant.team === ParticipantSide.ALLY
+        ? ParticipantSide.ENEMY
+        : ParticipantSide.ALLY,
     )
     const teamHealth = allies.reduce((sum, p) => sum + p.currentHealth, 0)
     const teamMaxHealth = allies.reduce((sum, p) => sum + p.maxHealth, 0)
@@ -3144,10 +3296,11 @@ export class BaseBattleAI implements BattleAI {
     if (Math.random() >= BATTLE_CONSTANTS.SKILL_USE_CHANCE) return false
     // Check if any skill is available and has enough energy
     for (const skillId of this.skills.keys()) {
+      const skill = this.skills.get(skillId)
+      if (!skill) continue
+      // ★ 被动技能由系统自动触发，不参与 AI 主动决策
+      if (skill.type === SkillType.PASSIVE) continue
       if (participant.isSkillAvailable(skillId)) {
-        const skill = this.skills.get(skillId)
-        if (!skill) continue
-        // ponytail: energyCost 为 undefined 时视为 0（无消耗技能视为可用）
         const cost = skill.energyCost ?? 0
         if (participant.currentEnergy >= cost) {
           return true
@@ -3249,6 +3402,8 @@ export class BattleAIFactory {
   ): BattleAI {
     const ai = new BaseBattleAI()
     skills.forEach((skillConfig) => {
+      // ★ 被动技能不进入 AI 决策池，由 PassiveSkillManager 独立管理
+      if (skillConfig.skillType === SkillType.PASSIVE) return
       const skill = convertSkillConfigToSkill(skillConfig)
       if (skill) {
         ai['skills'].set(skill.id, skill)
@@ -3612,13 +3767,12 @@ import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
 import {
-  PARTICIPANT_SIDE,
+  ParticipantSide,
   BattleEntity,
   BATTLE_CONSTANTS,
-  ParticipantSide,
   BattleStatus,
 } from '@/domain/battle/type/types'
-import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
+import { BattleEventCodes, type BattleEndedEventData } from '@/domain/battle/type/BattleEventType'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 import type {
   BattleEvents,
@@ -3642,7 +3796,7 @@ export class BattleManager {
    * @param battleReplayManager 战斗回放管理器实例
    */
   /** 已注册的事件处理器引用（用于 off 时精确移除） */
-  private handlers = new Map<BattleEventName, Set<(...args: any[]) => void>>()
+  private handlers = new Map<BattleEventName, Set<(...args: unknown[]) => void>>()
   /** 我方队伍编成（参战管理的真实数据源，独立于战斗运行时） */
   private allyTeam: BattleEntity[] = []
   /** 敌方队伍编成（参战管理的真实数据源，独立于战斗运行时） */
@@ -3690,7 +3844,7 @@ export class BattleManager {
       set = new Set()
       this.handlers.set(event, set)
     }
-    set.add(callback as (...args: any[]) => void)
+    set.add(callback as (...args: unknown[]) => void)
     eventBus.on(event, callback)
   }
   /**
@@ -3704,7 +3858,7 @@ export class BattleManager {
     const set = this.handlers.get(event)
     if (!set) return
     if (callback) {
-      set.delete(callback as (...args: any[]) => void)
+      set.delete(callback as (...args: unknown[]) => void)
       eventBus.off(event, callback)
     } else {
       for (const cb of set) {
@@ -3938,7 +4092,7 @@ export class BattleManager {
    * @param side - 队伍类型
    */
   addCharacterToTeam(character: BattleEntity, side: ParticipantSide) {
-    if (side === PARTICIPANT_SIDE.ALLY) {
+    if (side === ParticipantSide.ALLY) {
       character.seatIndex = this.allyTeam.length
       this.allyTeam.push(character)
     } else {
@@ -3950,8 +4104,7 @@ export class BattleManager {
     if (battleData?.participants) {
       battleData.participants.set(character.id, character)
     }
-    // 触发角色的被动技能
-    this.battleSystem.triggerPassiveSkillsForCharacter(character)
+    // NOTE: 被动触发延迟到 initialize() 统一执行，避免与 initialize 中的 clearAll+重注册冲突
     this.emitTeamChanged()
   }
   /**
@@ -4087,7 +4240,7 @@ export class BattleManager {
    * 同步战斗日志
    * @param battleState 战斗状态
    */
-  async syncBattleLogs(battleState: any) {
+  async syncBattleLogs(battleState: unknown) {
     await LoggerProvider.logger.syncBattleLogs(battleState)
   }
   /**
@@ -4155,7 +4308,7 @@ export class BattleManager {
    * 结束战斗
    * @param winner 获胜方
    */
-  endBattle(winner: any) {
+  endBattle(winner: string) {
     // ⭐ 幂等性守卫：防止重复触发 endBattle
     const battleData = this.battleSystem.getBattleData()
     if (
@@ -4169,7 +4322,7 @@ export class BattleManager {
       this.autoBattleManager.stopAutoBattle()
     }
     // 触发战斗结束事件
-    const eventData: any = { winner }
+    const eventData: BattleEndedEventData = { winner: winner as ParticipantSide }
     this.emit(BattleEventCodes.BATTLE_ENDED, eventData)
     this.emitTeamChanged()
   }
@@ -4269,7 +4422,7 @@ export class BattleManager {
   /**
    * 加载战斗状态
    */
-  loadBattleState(): any | null {
+  loadBattleState(): unknown | null {
     try {
       const battleState = LocalStorage.get('battleState')
       if (battleState) {
@@ -4316,7 +4469,7 @@ export class BattleManager {
 }
 
 --- src/domain/battle/BattleSystem.ts ---
-﻿/**
+/**
  * 文件: BattleSystem.ts
  * 创建日期: 2026-02-09
  * 作者: CombatDebugStudio
@@ -4325,62 +4478,57 @@ export class BattleManager {
  * 版本: 2.0.0 - 集成触发器事件系统
  */
 import {
-  BattleActionHelper,
-  createPassiveContext,
-} from '@/domain/battle/type/types'
-import { createEmptyRecord } from '@/domain/battle/combat-record'
-import type {
-  BattleAction,
-  BattleData,
-  BattleEntity,
-  BattleState,
-  ParticipantSide,
-} from '@/domain/battle/type/types'
-import type { BattleCommand } from '@/shared/types/battle-commands'
-import {
-  createDefaultBattleData,
   convertToBattleState,
+  createDefaultBattleData,
 } from '@/domain/battle/aggregate/BattleState'
-import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
-import { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
-import type { TriggerEventContext } from '@/domain/buff/types'
-import { BattleTriggerPhase } from '@/domain/battle/type/types'
-import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { AISystem } from '@/domain/battle/ai/AISystem'
-import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
-import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
-import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
-import { TurnManager } from '@/domain/battle/service/TurnManager'
-import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
-import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
+import { createEmptyRecord } from '@/domain/battle/combat-record'
 import {
   AI_SYSTEM_TOKEN,
   BATTLE_RECORDER_TOKEN,
   BATTLE_RULE_MANAGER_TOKEN,
   TURN_MANAGER_TOKEN,
 } from '@/domain/battle/entity/BattleInterfaces'
-import type { Container } from '@/infrastructure/di/Container'
+import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
+import { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
+import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
+import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
+import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
+import { TurnManager } from '@/domain/battle/service/TurnManager'
+import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
+import {
+  BattleAction,
+  BattleData,
+  BattleEntity,
+  BattleState,
+  BattleStatus,
+  BattleTriggerPhase,
+  createPassiveContext,
+  ParticipantSide,
+  ParticipantSideName,
+  RoundStatus,
+} from '@/domain/battle/type/types'
+import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
+import type { TriggerEventContext } from '@/domain/buff/types'
+import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
+import type { Container } from '@/infrastructure/di/Container'
 import { eventBus } from '@/main'
-import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
-import { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
-import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
-import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
-import {
-  BattleStatus,
-  PARTICIPANT_SIDE,
-  RoundStatus,
-} from '@/domain/battle/type/types'
+import type { BattleCommand } from '@/shared/types/battle-commands'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
-import { RAFTimer } from '@/shared/utils/RAF'
-import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
-import { Counter } from '@/shared/utils/Counter'
 import { debugGate } from '@/domain/battle/debug/DebugGate'
-import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
+import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
+import { Counter } from '@/shared/utils/Counter'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { RAFTimer } from '@/shared/utils/RAF'
 /**
  * 战斗系统核心管理类
  *
@@ -4796,6 +4944,19 @@ export class BattleSystem {
         )
       }
     })
+    // ★ 每次 initialize 确保技能配置已加载（幂等，批量生成器独立运行时兜底）
+    if (this.skillManager.getSkillConfigs().size === 0) {
+      this.loadSkillConfigs(GameDataProcessor.getSkillsData())
+    }
+    // ★ 每次 initialize 重新注册被动和免疫，消除对外部调用顺序的依赖
+    this.passiveSkillManager.clearAll()
+    for (const participant of participants.values()) {
+      GameDataProcessor.registerParticipantPassives(participant, this.passiveSkillManager)
+      const immunities = participant.getImmunities()
+      if (immunities.length > 0) {
+        this.buffSystem.registerCharacterImmunities(participant.id, immunities)
+      }
+    }
     // ponytail: 统一管道 — 所有被动通过 PassiveSkillManager 在 BATTLE_START 阶段触发
     this.applyPassiveSkills(participants)
     // ponytail: 被动加成已生效，此时创建回合顺序确保速度加成正确
@@ -4836,7 +4997,7 @@ export class BattleSystem {
       for (const instanceId of buffInstanceIds) {
         const buffConfig = this.buffSystem.getBuffConfigByInstanceId(instanceId)
         if (!buffConfig) continue
-        // ponytail: 查找 BuffConfigData 中的 immunities 字段，但此处需要 aura 配置
+        // ponytail: 查找 BuffJsonEntry 中的 immunities 字段，但此处需要 aura 配置
         // 使用 BuffSystem.getBuffAuraConfig 获取 aura 元数据
         const aura = this.buffSystem.getBuffAuraConfig(buffConfig.id)
         if (!aura || !aura.modifiers?.length || !aura.targetSelector) continue
@@ -4845,7 +5006,7 @@ export class BattleSystem {
         for (const [targetId, target] of participants) {
           if (targetId === id) continue
           if (!(target instanceof BattleParticipantImpl)) continue
-          const sameTeam = target.type === entity.type
+          const sameTeam = target.team === entity.team
           if ((isAllies && sameTeam) || (!isAllies && !sameTeam)) {
             GameDataProcessor.applyAuraModifiersToParticipant(
               target,
@@ -5053,7 +5214,7 @@ export class BattleSystem {
         const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
         const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
         const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
-        if (p.team === PARTICIPANT_SIDE.ALLY) allySnapshot.push(entry)
+        if (p.team === ParticipantSide.ALLY) allySnapshot.push(entry)
         else enemySnapshot.push(entry)
       })
       if (allySnapshot.length > 0) {
@@ -5152,8 +5313,7 @@ export class BattleSystem {
     if (result.shouldEnd && result.winner) {
       await this.endBattle(result.winner)
       if (battle.currentTurn >= battle.maxTurns) {
-        const winnerLabel =
-          result.winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'
+        const winnerLabel = ParticipantSideName[result.winner!]
         LoggerProvider.logger.addBattleLog({
           turn: battle.currentTurn,
           message: `回合数达到上限(${battle.maxTurns})，${winnerLabel}以血量优势获胜`,
@@ -5180,7 +5340,50 @@ export class BattleSystem {
         this.traceCollector.exportAll(),
       )
     }
+    // ★ 补偿可能缺失的回合末态势快照（战斗在回合中途结束时）
+    this.ensureFinalSnapshot()
     return this.lifecycleManager.endBattle(winner)
+  }
+  /** 补偿战斗中途结束时缺失的回合末态势快照 */
+  private ensureFinalSnapshot(): void {
+    const battle = this.battleData
+    if (!battle) return
+    // ★ 如果 roundState 已经是 END，说明正常流程已产出快照，无需补偿
+    if (battle.roundState === RoundStatus.END) return
+    const allySnapshot: string[] = []
+    const enemySnapshot: string[] = []
+    battle.participants.forEach((p) => {
+      if (!p.isAlive()) return
+      const hp = p.getAttribute(ATTRIBUTE_CODE.currentHealth)
+      const maxHp = p.getAttribute(ATTRIBUTE_CODE.maxHealth)
+      const entry = `${p.name} ${Math.floor(hp)}/${Math.floor(maxHp)}`
+      if (p.team === ParticipantSide.ALLY) allySnapshot.push(entry)
+      else enemySnapshot.push(entry)
+    })
+    if (allySnapshot.length > 0) {
+      LoggerProvider.logger.addBattleLog({
+        turn: battle.currentTurn,
+        message: `我方  ${allySnapshot.join(' · ')}`,
+        segments: [
+          { text: '我方  ', classStr: 'log-friendly' },
+          { text: allySnapshot.join(' · ') },
+        ],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'snapshot' },
+      })
+    }
+    if (enemySnapshot.length > 0) {
+      LoggerProvider.logger.addBattleLog({
+        turn: battle.currentTurn,
+        message: `敌方  ${enemySnapshot.join(' · ')}`,
+        segments: [
+          { text: '敌方  ', classStr: 'log-hostile' },
+          { text: enemySnapshot.join(' · ') },
+        ],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'snapshot' },
+      })
+    }
   }
   public resetBattle(): void {
     // ponytail: 清除上一场战斗的被动注册、连击状态和待处理额外行动，防止跨战斗污染
@@ -5288,13 +5491,10 @@ export class BattleSystem {
   /**
    * 获取伤害计算日志
    */
-  public getDamageCalculationLogs(): any[] {
+  public getDamageCalculationLogs() {
     return this.skillManager.getDamageCalculationLogs()
   }
-  /**
-   * 获取治疗计算日志
-   */
-  public getHealCalculationLogs(): any[] {
+  public getHealCalculationLogs() {
     return this.skillManager.getHealCalculationLogs()
   }
   /**
@@ -5411,7 +5611,7 @@ export class BattleSystem {
             type: 'SET_WINNER',
             payload: {
               winner:
-                result.winner === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+                result.winner,
             },
           })
         }
@@ -5554,24 +5754,17 @@ export interface DamageBreakdown {
   /** 各项减免（百分比点，如 20 = 减免 20%） */
   normalAtkReduction?: number
   skillDmgReduction?: number
-  generalDamageReduction?: number
   damageTakenIncrease?: number
   /** 来源方伤害提升（在原始伤害阶段生效） */
   damageBoost?: number
   /** 暴击承伤减免（目标方） */
   critDmgTakenReduction?: number
-  /** 伤害减免（目标方，按伤害大类） */
-  physicalDmgReduction?: number
-  /** 魔法伤害减免（目标方，按伤害大类） */
-  magicalDmgReduction?: number
   /** 火系技能伤害加成（来源方，在原始伤害阶段生效） */
   fireSkillDmgBonus?: number
   /** 物理技能伤害加成（来源方，在原始伤害阶段生效） */
   physicalSkillDmgBonus?: number
   /** 低血量增伤（来源方，在原始伤害阶段生效） */
   damageToLowHp?: number
-  /** 当前生效的技能元素类型 */
-  elementType?: string
   /** 目标修正 */
   targetModifierEffects: TargetModifierEffect[]
   /** 阈值 */
@@ -5718,6 +5911,7 @@ import type {
 } from '@/domain/battle/type/types'
 import type { BattleAI } from '@/domain/battle/ai/BattleAI'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import type { SkillConfig } from '@/domain/skill/types'
 /**
  * 战斗系统接口
  * 定义了战斗系统的核心功能，包括战斗创建、执行、查询和管理
@@ -5816,7 +6010,7 @@ export interface IBattleSystem {
    * 加载技能配置
    * @param skillConfigs 技能配置数组
    */
-  loadSkillConfigs(skillConfigs: any[]): void
+  loadSkillConfigs(skillConfigs: SkillConfig[]): void
   /**
    * 获取当前回合数
    * @returns 当前回合数（从1开始）
@@ -5974,7 +6168,6 @@ export type BattleParticipantData = {
   id: string
   name: string
   level: number
-  type: ParticipantSide
   team: ParticipantSide
   enabled: boolean
   /** 队伍位置序号 */
@@ -5995,7 +6188,6 @@ export class BattleParticipantImpl implements BattleEntity {
   id: string
   name: string
   level: number
-  type: ParticipantSide
   team: ParticipantSide
   enabled: boolean
   seatIndex: number
@@ -6066,7 +6258,6 @@ export class BattleParticipantImpl implements BattleEntity {
     this.id = data.id
     this.name = data.name
     this.level = data.level
-    this.type = data.type
     this.team = data.team
     this.enabled = data.enabled ?? true
     this.seatIndex = data.seatIndex ?? 0
@@ -6648,7 +6839,6 @@ export class BattleParticipantImpl implements BattleEntity {
     return {
       id: this.id,
       name: this.name,
-      type: this.type,
       team: this.team,
       hp: this.currentHealth,
       maxHp: this.maxHealth,
@@ -6697,7 +6887,32 @@ export class BattleParticipantImpl implements BattleEntity {
     }
   }> {
     this.recalcAll()
-    const result: any[] = []
+    const result: Array<{
+      code: string
+      name: string
+      displayName: string
+      description: string
+      range: string
+      impact: string
+      isPercentage: boolean
+      baseValue: number
+      finalValue: number
+      modifiers: Array<{
+        source: string
+        sourceType: string
+        value: number
+        type: string
+        description?: string
+      }>
+      formula: string
+      breakdown?: {
+        base: number
+        additive: number
+        percentMultiplier: number
+        independentMultiplier: number
+        finalMultiplier: number
+      }
+    }> = []
     for (const attrCode of Object.values(ATTRIBUTE_CODE)) {
       const attrValue = this.stats.reCalAttributeValue(attrCode)
       if (!attrValue) continue
@@ -8017,9 +8232,9 @@ export class ReplayEngine {
   private cloneParticipant(p: ParticipantSnapshot): ParticipantSnapshot {
     return {
       ...p,
-      buffs: p.buffs.map(b => ({ ...b })),
+      buffs: p.buffs?.map(b => ({ ...b })) || [],
       skillCooldowns: { ...p.skillCooldowns },
-      statusEffects: p.statusEffects.map(s => ({ ...s })),
+      statusEffects: p.statusEffects?.map(s => ({ ...s })) || [],
       attributes: { ...p.attributes },
     }
   }
@@ -8227,7 +8442,8 @@ import {
 } from '@/domain/battle/ai/AIPriorityStrategy'
 import {
   BattleActionHelper,
-  PARTICIPANT_SIDE,
+  ParticipantSide,
+  ParticipantSideName,
   ActionTypes,
 } from '@/domain/battle/type/types'
 import {
@@ -8320,12 +8536,12 @@ export class BattleExecutor {
           {
             text: participant.name,
             classStr:
-              participant.type === PARTICIPANT_SIDE.ALLY
+              participant.team === ParticipantSide.ALLY
                 ? 'log-friendly'
                 : 'log-hostile',
             kind: 'entity',
             faction:
-              participant.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+              participant.team,
           },
           { text: ' 被控制，无法行动' },
         ],
@@ -8605,10 +8821,10 @@ export class BattleExecutor {
       action.damage = totalDamage
       action.heal = totalHeal
       action.effects = allEffects
-      const sourcePrefix = source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      const sourcePrefix = `[${ParticipantSideName[source.team]}]`
       const targetNames = targets
         .map((t) => {
-          const prefix = t.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+          const prefix = `[${ParticipantSideName[t.team]}]`
           const name = t.id === source.id ? '自身' : t.name
           return `${prefix}${name}`
         })
@@ -8725,15 +8941,15 @@ export class BattleExecutor {
             {
               text: `${sourcePrefix}${source.name}`,
               classStr:
-                source.type === PARTICIPANT_SIDE.ALLY
+                source.team === ParticipantSide.ALLY
                   ? 'log-friendly'
                   : 'log-hostile',
               kind: 'entity',
-              faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+              faction: source.team,
             },
             {
               text: ` 对 ${targetNames} `,
-              classStr: targets.every((t) => t.type === PARTICIPANT_SIDE.ALLY)
+              classStr: targets.every((t) => t.team === ParticipantSide.ALLY)
                 ? 'log-friendly'
                 : 'log-hostile',
             },
@@ -8757,14 +8973,14 @@ export class BattleExecutor {
         LoggerProvider.logger.flushBufferedSubLogs()
         // ★ 为每个目标输出 result sub 日志
         for (const r of targetResults) {
-          const tPrefix = r.target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+          const tPrefix = `[${ParticipantSideName[r.target.team]}]`
           const tName = r.target.id === source.id ? '自身' : r.target.name
           if (r.finalDamage > 0) {
             LoggerProvider.logger.addBattleLog({
               turn: battleData.currentTurn,
               message: `${tPrefix}${tName} 受到 ${r.finalDamage} 点伤害  ${r.hpBefore} → ${r.hpAfter}`,
               segments: [
-                { text: `${tPrefix}${tName}`, classStr: r.target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+                { text: `${tPrefix}${tName}`, classStr: r.target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.team },
                 { text: ' 受到 ' },
                 { text: `${r.finalDamage}`, classStr: 'log-damage', kind: 'damage' },
                 { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
@@ -8778,7 +8994,7 @@ export class BattleExecutor {
               turn: battleData.currentTurn,
               message: `${tPrefix}${tName} 恢复 ${r.heal} 点气血  ${r.hpBefore} → ${r.hpAfter}`,
               segments: [
-                { text: `${tPrefix}${tName}`, classStr: r.target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy' },
+                { text: `${tPrefix}${tName}`, classStr: r.target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.team },
                 { text: ' 恢复 ' },
                 { text: `${r.heal}`, classStr: 'log-heal', kind: 'heal' },
                 { text: ` 点气血  ${r.hpBefore} → ${r.hpAfter}` },
@@ -8841,11 +9057,11 @@ export class BattleExecutor {
             {
               text: `${sourcePrefix}${source.name}`,
               classStr:
-                source.type === PARTICIPANT_SIDE.ALLY
+                source.team === ParticipantSide.ALLY
                   ? 'log-friendly'
                   : 'log-hostile',
               kind: 'entity',
-              faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+              faction: source.team,
             },
             { text: ` 对 ${targetNames} 使用 ` },
             { text: `【${skill.name || skillId}】`, classStr: 'log-skill' },
@@ -9025,9 +9241,9 @@ export class BattleExecutor {
   } {
     const { isMiss = false, isCritical = false } = options
     const sourcePrefix =
-      source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      `[${ParticipantSideName[source.team]}]`
     const targetPrefix =
-      target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
+      `[${ParticipantSideName[target.team]}]`
     if (isMiss) {
       return {
         turn: turnNumber,
@@ -9036,21 +9252,21 @@ export class BattleExecutor {
           {
             text: `${sourcePrefix}${source.name}`,
             classStr:
-              source.type === PARTICIPANT_SIDE.ALLY
+              source.team === ParticipantSide.ALLY
                 ? 'log-friendly'
                 : 'log-hostile',
             kind: 'entity',
-            faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+            faction: source.team,
           },
           { text: ' 对 ' },
           {
             text: `${targetPrefix}${target.name}`,
             classStr:
-              target.type === PARTICIPANT_SIDE.ALLY
+              target.team === ParticipantSide.ALLY
                 ? 'log-friendly'
                 : 'log-hostile',
             kind: 'entity',
-            faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+            faction: target.team,
           },
           { text: '「普通攻击」' },
         ],
@@ -9064,21 +9280,21 @@ export class BattleExecutor {
         {
           text: `${sourcePrefix}${source.name}`,
           classStr:
-            source.type === PARTICIPANT_SIDE.ALLY
+            source.team === ParticipantSide.ALLY
               ? 'log-friendly'
               : 'log-hostile',
           kind: 'entity',
-          faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+          faction: source.team,
         },
         { text: ' 对 ' },
         {
           text: `${targetPrefix}${target.name}`,
           classStr:
-            target.type === PARTICIPANT_SIDE.ALLY
+            target.team === ParticipantSide.ALLY
               ? 'log-friendly'
               : 'log-hostile',
           kind: 'entity',
-          faction: target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+          faction: target.team,
         },
         { text: `发起「普通攻击」` },
       ],
@@ -9127,41 +9343,7 @@ export class BattleExecutor {
     target.takeDamage(damage)
     // 🆕 向 TriggerEventBus 发射 DAMAGE_TAKEN 事件（修复普攻/技能不触发 Buff 触发器的 Bug）
     this.emitDamageTakenEvent(source, target, damage, rawDamage, isCritical, battle)
-    // ponytail: ON_HIT 触发攻击者（命中方）的被动，DAMAGE_TAKEN 触发受击方（受伤害）的被动
-    this.passiveSkillManager.triggerPassives(
-      source,
-      createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
-        target,
-        sourceId: source.id,
-        damage,
-      }),
-    )
-    this.passiveSkillManager.triggerPassives(
-      target,
-      createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
-        target: source,
-        sourceId: source.id,
-        damage,
-      }),
-    )
-    if (!target.isAlive()) {
-      this.passiveSkillManager.triggerPassives(
-        target,
-        createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
-          target: source,
-          sourceId: source.id,
-          cause: EffectType.DAMAGE,
-        }),
-      )
-      this.passiveSkillManager.triggerPassives(
-        source,
-        createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
-          target,
-          targetId: target.id,
-          cause: EffectType.DAMAGE,
-        }),
-      )
-    }
+    // NOTE: 被动触发（ON_HIT/DAMAGE_TAKEN/ON_DEATH/ON_KILL）已移至调用方 handleHitAttack 的 action 日志之后
   }
   /**
    * 处理攻击被闪避的情况
@@ -9277,8 +9459,8 @@ export class BattleExecutor {
       },
     )
     const rawSuffix = `，造成 ${rawDamage} 点伤害`
-    const targetPrefix = target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
-    const targetFaction = target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy'
+    const targetPrefix = `[${ParticipantSideName[target.team]}]`
+    const targetFaction = target.team
     LoggerProvider.logger.addBattleLog({
       turn: logParams.turn,
       message: logParams.message + rawSuffix,
@@ -9300,7 +9482,7 @@ export class BattleExecutor {
       turn: battle.currentTurn,
       message: `${targetPrefix}${target.name} 受到 ${damage} 点伤害  ${hpBefore} → ${hpAfter}`,
       segments: [
-        { text: `${targetPrefix}${target.name}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFaction },
+        { text: `${targetPrefix}${target.name}`, classStr: target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFaction },
         { text: ' 受到 ' },
         { text: `${damage}`, classStr: 'log-damage', kind: 'damage' },
         { text: ` 点伤害  ${hpBefore} → ${hpAfter}` },
@@ -9311,6 +9493,41 @@ export class BattleExecutor {
     LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}`,
     )
+    // ★ 被动触发移到 action + result sub 日志之后
+    this.passiveSkillManager.triggerPassives(
+      source,
+      createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
+        target,
+        sourceId: source.id,
+        damage,
+      }),
+    )
+    this.passiveSkillManager.triggerPassives(
+      target,
+      createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
+        target: source,
+        sourceId: source.id,
+        damage,
+      }),
+    )
+    if (!target.isAlive()) {
+      this.passiveSkillManager.triggerPassives(
+        target,
+        createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
+          target: source,
+          sourceId: source.id,
+          cause: EffectType.DAMAGE,
+        }),
+      )
+      this.passiveSkillManager.triggerPassives(
+        source,
+        createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
+          target,
+          targetId: target.id,
+          cause: EffectType.DAMAGE,
+        }),
+      )
+    }
   }
   /**
    * 选择并执行普通攻击
@@ -9464,18 +9681,18 @@ export class BattleExecutor {
     participant: BattleEntity,
   ): Promise<void> {
     const enemies = Array.from(battle.participants.values())
-      .filter((p) => p.team === PARTICIPANT_SIDE.ENEMY && p.isAlive())
+      .filter((p) => p.team === ParticipantSide.ENEMY && p.isAlive())
       .map((p) => p.id)
     const characters = Array.from(battle.participants.values())
-      .filter((p) => p.team === PARTICIPANT_SIDE.ALLY && p.isAlive())
+      .filter((p) => p.team === ParticipantSide.ALLY && p.isAlive())
       .map((p) => p.id)
     let targetId: string
     let damage: number
-    if (participant.team === PARTICIPANT_SIDE.ALLY && enemies.length > 0) {
+    if (participant.team === ParticipantSide.ALLY && enemies.length > 0) {
       targetId = enemies[Math.floor(Math.random() * enemies.length)]
       damage = Math.floor(Math.random() * 20) + 10
     } else if (
-      participant.team === PARTICIPANT_SIDE.ENEMY &&
+      participant.team === ParticipantSide.ENEMY &&
       characters.length > 0
     ) {
       targetId = characters[Math.floor(Math.random() * characters.length)]
@@ -9655,9 +9872,9 @@ export class BattleExecutor {
           } catch {
             actionSkillSeg = { text: `【${skillId}】`, classStr: 'log-skill' }
           }
-          const sourcePrefixX = source.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
-          const targetPrefixX = target.type === PARTICIPANT_SIDE.ALLY ? '[友方]' : '[敌方]'
-          const targetFactionX = target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy'
+          const sourcePrefixX = `[${ParticipantSideName[source.team]}]`
+          const targetPrefixX = `[${ParticipantSideName[target.team]}]`
+          const targetFactionX = target.team
           const targetNameX = target.id === source.id ? '自身' : target.name
           LoggerProvider.logger.addBattleLog({
             turn: action.turn ?? 0,
@@ -9666,23 +9883,23 @@ export class BattleExecutor {
               {
                 text: `${sourcePrefixX}${source.name}`,
                 classStr:
-                  source.type === PARTICIPANT_SIDE.ALLY
+                  source.team === ParticipantSide.ALLY
                     ? 'log-friendly'
                     : 'log-hostile',
                 kind: 'entity',
                 faction:
-                  source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+                  source.team,
               },
               { text: ' 对 ' },
               {
                 text: `${targetPrefixX}${targetNameX}`,
                 classStr:
-                  target.type === PARTICIPANT_SIDE.ALLY
+                  target.team === ParticipantSide.ALLY
                     ? 'log-friendly'
                     : 'log-hostile',
                 kind: 'entity',
                 faction:
-                  target.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
+                  target.team,
               },
               { text: ' 使用 ' },
               actionSkillSeg,
@@ -9708,7 +9925,7 @@ export class BattleExecutor {
               turn: action.turn ?? 0,
               message: `${targetPrefixX}${targetNameX} 受到 ${actionFinalDamage} 点伤害  ${hpBefore} → ${hpAfter}`,
               segments: [
-                { text: `${targetPrefixX}${targetNameX}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFactionX },
+                { text: `${targetPrefixX}${targetNameX}`, classStr: target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFactionX },
                 { text: ' 受到 ' },
                 { text: `${actionFinalDamage}`, classStr: 'log-damage', kind: 'damage' },
                 { text: ` 点伤害  ${hpBefore} → ${hpAfter}` },
@@ -9721,7 +9938,7 @@ export class BattleExecutor {
               turn: action.turn ?? 0,
               message: `${targetPrefixX}${targetNameX} 恢复 ${action.heal} 点气血  ${hpBefore} → ${hpAfter}`,
               segments: [
-                { text: `${targetPrefixX}${targetNameX}`, classStr: target.type === PARTICIPANT_SIDE.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFactionX },
+                { text: `${targetPrefixX}${targetNameX}`, classStr: target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFactionX },
                 { text: ' 恢复 ' },
                 { text: `${action.heal}`, classStr: 'log-heal', kind: 'heal' },
                 { text: ` 点气血  ${hpBefore} → ${hpAfter}` },
@@ -9869,13 +10086,13 @@ import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type {
   BattleData,
   BattleEntity,
-  ParticipantSide,
 } from '@/domain/battle/type/types'
 import {
   AUTO_BATTLE_CONFIG,
   BattleActionHelper,
   BattleStatus,
-  PARTICIPANT_SIDE,
+  ParticipantSide,
+  ParticipantSideName,
   RoundStatus,
 } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
@@ -9923,7 +10140,7 @@ export class BattleLifecycleManager {
       effects: [
         {
           type: 'status',
-          description: `战斗结束！胜利者: ${winner === PARTICIPANT_SIDE.ALLY ? '角色方' : '敌方'}`,
+          description: `战斗结束！胜利者: ${ParticipantSideName[winner]}`,
           duration: 0,
         },
       ],
@@ -9981,7 +10198,7 @@ export class BattleLifecycleManager {
           const allyTeam: BattleEntity[] = []
           const enemyTeam: BattleEntity[] = []
           turnData.participants.forEach((p) => {
-            if (p.team === PARTICIPANT_SIDE.ALLY) allyTeam.push(p)
+            if (p.team === ParticipantSide.ALLY) allyTeam.push(p)
             else enemyTeam.push(p)
           })
           eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
@@ -10108,6 +10325,7 @@ import {
   BattleState,
   BattleAction,
   ParticipantSide,
+  ParticipantSideName,
   BattleStateSnapshot,
   BattleRound,
   BattleResult,
@@ -10154,7 +10372,7 @@ export interface RecordedBattle {
       /** 参与者名称 */
       name: string
       /** 阵营 */
-      type: ParticipantSide
+      team: ParticipantSide
       /** 最大气血值 */
       maxHealth: number
       /** 当前气血值 */
@@ -10491,7 +10709,7 @@ export class BattleRecorder {
       roundNumber,
       roundNumber,
     )
-    const winnerLabel = winner === 'ally' ? '角色方' : '敌方'
+    const winnerLabel = winner ? ParticipantSideName[winner] : '未知'
     const durationSec = Math.floor(duration / 1000)
     const durationText =
       durationSec >= 60
@@ -10730,8 +10948,8 @@ export class BattleRecorder {
  * 描述: 负责加载和管理战斗规则配置，包括回合系统、战斗机制、伤害计算、AI行为等规则
  * 版本: 1.0.0
  */
-import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
-import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
+import { ParticipantSide } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 /**
@@ -11135,17 +11353,17 @@ export class BattleRuleManager {
   ): BattleEndCheckResult {
     const { maxTurns } = this.getConfig().rules.turnSystem
     const aliveCharacters = Array.from(participants.values()).filter(
-      (p) => p.team === PARTICIPANT_SIDE.ALLY && p.isAlive(),
+      (p) => p.team === ParticipantSide.ALLY && p.isAlive(),
     )
     const aliveEnemies = Array.from(participants.values()).filter(
-      (p) => p.team === PARTICIPANT_SIDE.ENEMY && p.isAlive(),
+      (p) => p.team === ParticipantSide.ENEMY && p.isAlive(),
     )
     // 1. 一方全灭
     if (aliveCharacters.length === 0) {
-      return { shouldEnd: true, winner: PARTICIPANT_SIDE.ENEMY }
+      return { shouldEnd: true, winner: ParticipantSide.ENEMY }
     }
     if (aliveEnemies.length === 0) {
-      return { shouldEnd: true, winner: PARTICIPANT_SIDE.ALLY }
+      return { shouldEnd: true, winner: ParticipantSide.ALLY }
     }
     // 2. 超过最大回合数（按血量比例判定）
     if (currentTurn >= maxTurns) {
@@ -11165,8 +11383,8 @@ export class BattleRuleManager {
       )
       const winner =
         charactersHealth >= enemiesHealth
-          ? PARTICIPANT_SIDE.ALLY
-          : PARTICIPANT_SIDE.ENEMY
+          ? ParticipantSide.ALLY
+          : ParticipantSide.ENEMY
       return { shouldEnd: true, winner }
     }
     return { shouldEnd: false }
@@ -11275,15 +11493,7 @@ export class BattleStateManager {
    * @param battleSystem 战斗系统实例
    */
   constructor(private battleSystem: BattleSystem) {
-    const handler = () => {}
-    // ponytail: 队伍数据变更由 battleStore 通过 BattleService.on(TEAM_DATA_CHANGED) 处理
-    // 此监听器此前绑定 'teamDataChanged'（驼峰）但从未被触发（实际事件名是 'team-data-changed'），handler 为空函数
   }
-  /**
-   * 清理事件监听器，防止内存泄漏
-   * 在不再需要 BattleStateManager 时调用
-   */
-  public dispose(): void {}
   /**
    * 获取当前回合
    */
@@ -11663,12 +11873,17 @@ export type RoundStatus = (typeof RoundStatus)[keyof typeof RoundStatus]
  * 参与方常量
  * 用于区分战斗中的不同参与方
  */
-export const PARTICIPANT_SIDE = {
+export const ParticipantSide = {
   /** 我方/友方 */
-  ALLY: 'ally' as const,
+  ALLY: 'ally',
   /** 敌方 */
-  ENEMY: 'enemy' as const,
-}
+  ENEMY: 'enemy',
+} as const
+export type ParticipantSide = (typeof ParticipantSide)[keyof typeof ParticipantSide]
+export const ParticipantSideName = {
+  [ParticipantSide.ALLY]: '友方',
+  [ParticipantSide.ENEMY]: '敌方',
+} as const satisfies Record<ParticipantSide, string>
 /** 战斗相关常量 */
 export const BATTLE_CONSTANTS = {
   /** 默认攻击伤害范围 */
@@ -11755,8 +11970,6 @@ export const ValidActionTypes = Object.freeze([
   ActionTypes.BUFF,
   ActionTypes.ITEM,
 ]) as readonly (typeof ActionTypes)[keyof typeof ActionTypes][]
-export type ParticipantSide =
-  (typeof PARTICIPANT_SIDE)[keyof typeof PARTICIPANT_SIDE]
 /** ponytail: P0/AI-1 — 参与者控制模式
  * AI: 使用 AI 实例决策（含目标建议）
  * AUTO: 使用默认权重策略选技能，目标由 selector 或随机决定
@@ -11797,7 +12010,6 @@ export interface BattleEntity {
   id: string // 实体唯一标识
   name: string // 实体名称
   level: number // 实体等级
-  type: ParticipantSide // 实体类型
   team: ParticipantSide // 实体阵营
   enabled: boolean // 实体是否启用
   /** 队伍位置序号（从0开始，用于前排/后排/相邻判定） */
@@ -12123,8 +12335,6 @@ export interface ParticipantInfo {
   id: string
   /** 参与者名称 */
   name: string
-  /** 参与者类型（我方/敌方） */
-  type: ParticipantSide
   /** 队伍归属 */
   team: ParticipantSide
   /** 最大气血值 */
@@ -12222,7 +12432,6 @@ export interface BuffInstanceSnapshot {
 export interface ParticipantSnapshot {
   id: string
   name: string
-  type: ParticipantSide
   team: ParticipantSide
   hp: number
   maxHp: number
@@ -13075,10 +13284,10 @@ export class BuffContext {
     const character = this.getCharacter()
     return character ? character.getAttribute(attribute as ATTRIBUTE_CODE) : 0
   }
-  public triggerEvent(eventName: string, data?: any): void {
+  public triggerEvent(eventName: string, data?: unknown): void {
     const system = this._buffSystem
     if (system) {
-      system.executeTriggerScript(this.instanceId, this.characterId, eventName, data)
+      system.executeTriggerScript(this.instanceId, this.characterId, eventName, data as Record<string, unknown> | undefined)
     } else {
       console.warn(`BuffSystem not injected, cannot trigger event: ${eventName}`, data)
     }
@@ -13306,21 +13515,22 @@ export class BuffScriptLoader {
 import {
   IBuffScript,
   ScriptBuffConfig,
-  type TriggerAction,
 } from '@/domain/buff/types'
-import buffsData from '@configs/buffs/buffs.json'
+import { buffsData } from '@/shared/types/buffs-json'
 import effectsData from '@configs/effects/effects.json'
-import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { AtomicEffectRegistry } from '@/domain/buff/atomic/AtomicEffectRegistry'
 import {
   BuffConfigResolver,
   type ResolvedBuffConfig,
 } from '@/domain/buff/atomic/BuffConfigResolver'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
+import type { EffectsJsonData } from '@/shared/types/effects-json'
 /** 效果定义：脚本 + 配置的统一视图 */
 export interface EffectDefinition {
   script: IBuffScript | null
-  config: BuffConfigData | null
+  config: BuffJsonEntry | null
 }
 /** Aura 光环修饰符 */
 export interface BuffAuraModifier {
@@ -13335,22 +13545,6 @@ export interface BuffAuraConfig {
   targetSelector: 'self' | 'allies' | 'enemies'
   modifiers: BuffAuraModifier[]
 }
-interface BuffConfigData {
-  id: string
-  name?: string
-  maxStacks?: number
-  duration?: number
-  attributes?: Record<ATTRIBUTE_CODE, string>
-  immunities?: string[]
-  tags?: string[]
-  aura?: BuffAuraConfig
-  onAdd?: string
-  triggers?: TriggerAction[]
-  /** buffs.json 中的 category（如 aura/attribute/trigger/control/dot/shield） */
-  category?: string
-  /** 控制类型（如 stun/silence/freeze） */
-  controlType?: string
-}
 type ScriptFactory<TParams = any> = () => IBuffScript<TParams>
 interface RegistryEntry<TParams = any> {
   factory: ScriptFactory<TParams>
@@ -13364,7 +13558,7 @@ interface RegistryEntry<TParams = any> {
 export class BuffScriptRegistry {
   /** 脚本注册表 */
   private registry = new Map<string, RegistryEntry>()
-  private buffConfigs = new Map<string, BuffConfigData>()
+  private buffConfigs = new Map<string, BuffJsonEntry>()
   /** 脚本自包含的默认配置（由脚本类的静态 CONFIG 提供） */
   private defaultConfigs = new Map<string, ScriptBuffConfig>()
   /** 原子效果注册表（惰性初始化） */
@@ -13410,7 +13604,7 @@ export class BuffScriptRegistry {
                 }
               }
             }
-            this.buffConfigs.set(buff.id, buff as BuffConfigData)
+            this.buffConfigs.set(buff.id, buff as BuffJsonEntry)
             console.log(`加载 Buff 配置: ${buff.id}`)
           }
         }
@@ -13443,7 +13637,7 @@ export class BuffScriptRegistry {
   /** 将 effects.json 的参数转换为 attributes 格式并加载到注册表 */
   private loadEffectConfigs(): void {
     try {
-      const raw = effectsData as { effects: Array<Record<string, any>> }
+      const raw = effectsData as EffectsJsonData
       if (!raw?.effects) return
       let count = 0
       for (const effect of raw.effects) {
@@ -13465,11 +13659,11 @@ export class BuffScriptRegistry {
           const sign = pct >= 0 ? '+' : ''
           attributes[attr] = `${sign}${pct}%`
         }
-        const config: BuffConfigData = {
+        const config: BuffJsonEntry = {
           id: effect.id,
           name: effect.id,
-          duration: params.duration ?? 1,
-          maxStacks: params.maxStacks ?? 1,
+          duration: (params.duration as number) ?? 1,
+          maxStacks: (params.maxStacks as number) ?? 1,
           attributes:
             Object.keys(attributes).length > 0 ? attributes : undefined,
         }
@@ -13487,7 +13681,7 @@ export class BuffScriptRegistry {
       })
     }
   }
-  public getBuffConfig(buffId: string): BuffConfigData | undefined {
+  public getBuffConfig(buffId: string): BuffJsonEntry | undefined {
     return this.buffConfigs.get(buffId)
   }
   /**
@@ -13500,7 +13694,7 @@ export class BuffScriptRegistry {
     const raw = this.buffConfigs.get(buffId)
     if (!raw) return undefined
     const resolver = this.ensureResolver()
-    const resolved = resolver.resolve(raw as unknown as Record<string, any>)
+    const resolved = resolver.resolve(raw as Record<string, any>)
     this.resolvedConfigs.set(buffId, resolved)
     return resolved
   }
@@ -13549,7 +13743,7 @@ export class BuffScriptRegistry {
       return { value: numValue * 100, type: ModifierType.PERCENTAGE }
     return { value: numValue, type: ModifierType.ADDITIVE }
   }
-  public loadBuffConfigsFromArray(configs: BuffConfigData[]): void {
+  public loadBuffConfigsFromArray(configs: BuffJsonEntry[]): void {
     for (const buff of configs) {
       if (buff.id) {
         this.buffConfigs.set(buff.id, buff)
@@ -13605,7 +13799,7 @@ export class BuffScriptRegistry {
   }
   public registerScript(
     scriptId: string,
-    script: any,
+    script: IBuffScript,
     defaultConfig?: ScriptBuffConfig,
   ): void {
     this.register(
@@ -13654,6 +13848,7 @@ import type {
   BuffInstance,
   BuffQuery,
   IBuffScript,
+  TriggerAction,
 } from '@/domain/buff/types'
 import { BUFF_ID_PREFIX } from '@/domain/buff/types'
 import type { TriggerEventContext } from '@/domain/buff/types'
@@ -14069,7 +14264,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       parameters:
         config.parameters ?? scriptDefaultConfig?.parameters ?? undefined,
       attributes: config.attributes ?? jsonConfig?.attributes ?? undefined,
-      triggers: config.triggers ?? jsonConfig?.triggers ?? undefined,
+      triggers: config.triggers ?? jsonConfig?.triggers as TriggerAction[] | undefined,
       cascadeRemove:
         config.cascadeRemove ?? scriptDefaultConfig?.cascadeRemove ?? undefined,
     }
@@ -14395,14 +14590,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
         value = Math.round(value * 10000) / 100
       }
-      modifierStack.addModifier(instanceId, attrCode, value, mod.type)
+      modifierStack.addModifier(instanceId, attrCode, value, mod.type as ModifierType)
     }
   }
   /**
    * 获取 Buff 配置中的 aura 光环信息（供 BattleSystem 初始化时分发 allies/enemies）
    */
   public getBuffAuraConfig(buffId: string): BuffAuraConfig | undefined {
-    return this.scriptRegistry.getBuffConfig(buffId)?.aura
+    // HACK: BuffJsonAura 与 BuffAuraConfig 结构相同（仅 type 字段为 string 而非 ModifierType），
+    // 运行时值完全一致，故直接断言。
+    return this.scriptRegistry.getBuffConfig(buffId)?.aura as BuffAuraConfig | undefined
   }
   /**
    * 移除目标角色所有可驱散的 Buff
@@ -14734,7 +14931,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const scriptConfig = this.scriptRegistry.getDefaultConfig(buffId)
     if (scriptConfig?.isDebuff !== undefined) return scriptConfig.isDebuff
     const jsonConfig = this.scriptRegistry.getBuffConfig(buffId)
-    return (jsonConfig as any)?.isDebuff ?? false
+    return jsonConfig?.isDebuff ?? false
   }
 }
 
@@ -15783,7 +15980,7 @@ export function getStepTypeDisplayName(stepType?: string): string {
 }
 
 --- src/domain/skill/DamageCalculator.ts ---
-﻿﻿import {
+import {
   ATTRIBUTE_CODE,
   getAttrDv,
 } from '@/domain/attribute/types'
@@ -15929,7 +16126,6 @@ export class DamageCalculator {
       defenseValue: 0,
       effectiveDefense: 0,
       defenseMultiplier: 1,
-      generalDamageReduction: 0,
       damageTakenIncrease: 0,
       targetModifierEffects: [],
       minDamageThreshold: this.config.minDamageThreshold ?? 1,
@@ -16160,9 +16356,8 @@ export class DamageCalculator {
         description: `真实伤害，跳过攻击类型减免`,
       })
     }
-    // 伤害大类抗性 — 真实伤害跳过，不执行任何操作
+    // 五行抗性 — 仅 ELEMENTAL 根据元素类型走对应抗性
     if (damageCategory === DamageCategory.ELEMENTAL) {
-      // 元素伤害：根据技能的元素类型查找对应抗性，默认 fireRes
       const ELEMENT_RESISTANCE_MAP: Partial<
         Record<ElementType, ATTRIBUTE_CODE>
       > = {
@@ -16190,57 +16385,24 @@ export class DamageCalculator {
           description: `元素抗性(${elementalRes}%): ${before} → ${damage}`,
         })
       }
-      // 魔法伤害减免（仅 ELEMENTAL 大类生效）
-      breakdown.magicalDmgReduction = getAttrVal(
-        target,
-        ATTRIBUTE_CODE.magicalDmgReduction,
-      )
-      breakdown.elementType = resolvedType
-      if (breakdown.magicalDmgReduction > 0) {
-        const before = damage
-        damage = Math.floor(damage * (1 - breakdown.magicalDmgReduction / 100))
-        breakdown.steps.push({
-          stepName: 'magicalDmgReduction',
-          value: damage,
-          description: `魔法减免(${breakdown.magicalDmgReduction}%): ${before} → ${damage}`,
-        })
-      }
-    } else if (damageCategory === DamageCategory.PHYSICAL) {
-      breakdown.physicalDmgReduction = getAttrVal(
-        target,
-        ATTRIBUTE_CODE.physicalDmgReduction,
-      )
-      if (breakdown.physicalDmgReduction > 0) {
-        const before = damage
-        damage = Math.floor(damage * (1 - breakdown.physicalDmgReduction / 100))
-        breakdown.steps.push({
-          stepName: 'physicalDmgReduction',
-          value: damage,
-          description: `物理减免(${breakdown.physicalDmgReduction}%): ${before} → ${damage}`,
-        })
-      }
     }
-    // TRUE 分支：不执行任何操作，damage 保持来源方加成后的值
-    // 通用伤害减免（真实伤害跳过 — 真实伤害穿透目标方所有减免，但保留易伤）
+    // 伤害减免 — 同时作用于 ELEMENTAL 和 PHYSICAL，TRUE 跳过
     if (damageCategory !== DamageCategory.TRUE) {
-      breakdown.generalDamageReduction = getAttrVal(
-        target,
-        ATTRIBUTE_CODE.damageReduction,
-      )
-      if (breakdown.generalDamageReduction > 0) {
+      const dmgReduction = getAttrVal(target, ATTRIBUTE_CODE.damageReduction)
+      if (dmgReduction > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 - breakdown.generalDamageReduction / 100))
+        damage = Math.floor(damage * (1 - dmgReduction / 100))
         breakdown.steps.push({
-          stepName: 'generalReduction',
+          stepName: 'damageReduction',
           value: damage,
-          description: `通用减免(${breakdown.generalDamageReduction}%): ${before} → ${damage}`,
+          description: `伤害减免(${dmgReduction}%): ${before} → ${damage}`,
         })
       }
     } else {
       breakdown.steps.push({
-        stepName: 'generalReduction',
+        stepName: 'damageReduction',
         value: damage,
-        description: `真实伤害，跳过通用减免`,
+        description: `真实伤害，跳过伤害减免`,
       })
     }
     // 受到伤害增加
@@ -16634,6 +16796,7 @@ import {
   BATTLE_CONSTANTS,
   BattleActionHelper,
   BattleTriggerPhase,
+  ParticipantSide,
   createStepContext,
   type BattleEffect,
   type BattleEntity,
@@ -16945,12 +17108,16 @@ export class PassiveSkillManager {
       source,
       targets,
       getEntityName: (id: string) => {
-        if (id === source.id) return source.name
+        const resolve = (e: BattleEntity) => {
+          const prefix = e.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
+          return `${prefix}${e.name}`
+        }
+        if (id === source.id) return resolve(source)
         const t = targets.find((e) => e.id === id)
-        if (t) return t.name
+        if (t) return resolve(t)
         if (context.participants) {
           const p = context.participants.get(id)
-          if (p) return p.name
+          if (p) return resolve(p)
         }
         return id
       },
@@ -16968,15 +17135,30 @@ export class PassiveSkillManager {
       kind: 'passive' as const,
       hover: { kind: 'passive' as const, id: config.id },
     }
+    // ★ 触发者实体片段（带阵营前缀）
+    const sourcePrefix = source.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
+    const sourceSeg = {
+      text: `${sourcePrefix}${source.name}`,
+      classStr: source.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile',
+      kind: 'entity' as const,
+      faction: source.team,
+    }
     const logSegments = segments.length > 0
-      ? [passiveNameSeg, { text: '  ' }, ...segments]
-      : [passiveNameSeg, { text: '  生效' }]
+      ? [passiveNameSeg, { text: '  ' }, sourceSeg, { text: ' ' }, ...segments]
+      : [passiveNameSeg, { text: '  ' }, sourceSeg, { text: '  生效' }]
+    // ★ 独立触发阶段（无父 action）使用 plain 渲染；行动内触发保持 sub 附加
+    const standalonePhases: BattleTriggerPhase[] = [
+      BattleTriggerPhase.BATTLE_START,
+      BattleTriggerPhase.TURN_START,
+      BattleTriggerPhase.TURN_END,
+    ]
+    const isStandalone = standalonePhases.includes(context.phase)
     LoggerProvider.logger.addBattleLog({
       turn: context.currentTurn,
       message: logSegments.map(s => s.text).join(''),
       segments: logSegments,
       category: BATTLE_LOG_CATEGORIES.STATUS,
-      meta: { role: 'sub' },
+      meta: isStandalone ? undefined : { role: 'sub' },
     })
     // ★ 7. 统一发射动画
     this.emitAnimations(allEffects, hpSnapshots)
@@ -17453,7 +17635,7 @@ export class SkillExecutor {
       buffName,
       instanceId,
       stacks: skillStep.stacks ?? 1,
-      description: `${source.name} 附加 ${buffName} 给 ${buffTarget.name}`,
+      description: `${buffTarget.name} 获得 【${buffName}】`,
     })
     // 仅在非被动上下文中打日志（被动由 triggerPassives 统一输出，避免重复）
     if (instanceId && !context?.fromPassive) {
@@ -18022,7 +18204,7 @@ export class SkillManager {
   private damageCalculator: DamageCalculator
   private healCalculator: HealCalculator
   private executor: SkillExecutor
-  private calculators: Map<string, any> = new Map()
+  private calculators: Map<string, unknown> = new Map()
   constructor(
     buffSystem: BuffSystem,
     damageCalculator?: DamageCalculator,
@@ -18325,10 +18507,10 @@ export class SkillManager {
       createStepContext(ctx.record, ctx.token),
     )
   }
-  registerCalculator(name: string, calculator: any): void {
+  registerCalculator(name: string, calculator: unknown): void {
     this.calculators.set(name, calculator)
   }
-  getCalculator(name: string): any | undefined {
+  getCalculator(name: string): unknown | undefined {
     return this.calculators.get(name)
   }
   loadSkillConfigsFromData(data: SkillConfig[]): SkillConfig[] {
@@ -18355,7 +18537,7 @@ export class SkillManager {
  * 目标解析器 — 根据技能 selector 从参与者列表中选出目标实体
  * 从 BattleExecutor.getSkillTargets() 提取，供主动/被动技能统一使用
  */
-import { PARTICIPANT_SIDE, type BattleEntity } from '@/domain/battle/type/types'
+import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
 import {
   TargetFaction,
   TargetStrategy,
@@ -18381,7 +18563,7 @@ export function resolveSkillTargets(
   const all = Array.from(participants.values())
   // --- self ---
   if (selector.faction === TargetFaction.SELF) return [source]
-  const isEnemySide = source.team === PARTICIPANT_SIDE.ALLY
+  const isEnemySide = source.team === ParticipantSide.ALLY
   const factionFilter = (p: BattleEntity): boolean => {
     if (!p.isAlive()) return false
     if (selector.faction === TargetFaction.ALL) return true
@@ -18389,7 +18571,7 @@ export function resolveSkillTargets(
     // 'enemy'
     return (
       p.team ===
-      (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
+      (isEnemySide ? ParticipantSide.ENEMY : ParticipantSide.ALLY)
     )
   }
   let candidates = all.filter(factionFilter)
@@ -18511,12 +18693,12 @@ export function validateTargetAgainstSelector(
   if (selector.faction === TargetFaction.ENEMY && sameTeam) return false
   // 位置策略验证
   const strategy = selector.strategy || TargetStrategy.FIRST
-  const isEnemySide = source.team === PARTICIPANT_SIDE.ALLY
+  const isEnemySide = source.team === ParticipantSide.ALLY
   const candidates = Array.from(participants.values()).filter((p) => {
     if (!p.isAlive()) return false
     if (selector.faction === TargetFaction.ALL) return true
     if (selector.faction === TargetFaction.ALLY) return p.team === source.team
-    return p.team === (isEnemySide ? PARTICIPANT_SIDE.ENEMY : PARTICIPANT_SIDE.ALLY)
+    return p.team === (isEnemySide ? ParticipantSide.ENEMY : ParticipantSide.ALLY)
   }).sort((a, b) => a.seatIndex - b.seatIndex)
   switch (strategy) {
     case TargetStrategy.FRONT:
@@ -19151,7 +19333,7 @@ import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import { PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 /**
@@ -19339,7 +19521,7 @@ export class BattleEventManager {
       store.setBattleActive(false)
       store.setAutoPlayMode(false)
       if (data && data.winner) {
-        const winnerLabel = data.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'
+        const winnerLabel = ParticipantSideName[data.winner!]
         LoggerProvider.logger.addBattleLog({
           turn: store.getCurrentTurn?.() ?? 1,
           message: `战斗结束！胜利者：${winnerLabel}`,
@@ -20178,7 +20360,7 @@ export class BattleLogManager implements IBattleLogManager {
       context: context ?? undefined,
       source: undefined,
       error: error,
-      segments: [{ text: message, type: 'text' }],
+      segments: [{ text: message }],
       action: undefined,
     }
     this.debugLogs.push(entry)
@@ -20192,6 +20374,33 @@ export class BattleLogManager implements IBattleLogManager {
         console.error('Logger handler error:', handler)
       }
     }
+  }
+  /**
+   * 添加【战斗】类型日志
+   * @param params 战斗日志参数（turn 必填）
+   */
+  addBattleLog(params: BattleLogParams): void {
+    const { message = '', segments = [], level = LogLevel.INFO, turn, source, target, action, category, context, error, meta } = params
+    const logEntry: BattleLogEntry = {
+      index: this.indexCounter.next(),
+      type: LogType.BATTLE,
+      turn,
+      message,
+      segments: segments.length > 0 ? segments : [{ text: message }],
+    }
+    if (level !== LogLevel.INFO) logEntry.level = level
+    if (source) logEntry.source = source
+    if (target) logEntry.target = target
+    if (action) logEntry.action = action
+    if (category) logEntry.category = category
+    if (context) logEntry.context = context
+    if (error) logEntry.error = error
+    if (meta) logEntry.meta = meta
+    this.battleLogs.push(logEntry)
+    if (this.autoCleanup && this.battleLogs.length > this.battleMaxLogs) {
+      this.battleLogs.shift()
+    }
+    this.emitLogUpdate()
   }
   // ==================== 缓冲机制 ====================
   /**
@@ -20259,6 +20468,18 @@ export class BattleLogManager implements IBattleLogManager {
     })
   }
   /**
+   * 获取调试日志
+   */
+  getDebugLogs(): LogEntry[] {
+    return this.debugLogs
+  }
+  /**
+   * 获取系统日志
+   */
+  getSystemLogs(): LogEntry[] {
+    return this.systemLogs
+  }
+  /**
    * 获取所有战斗日志
    */
   getAllLogs(): LogEntry[] {
@@ -20324,6 +20545,12 @@ export class BattleLogManager implements IBattleLogManager {
   updateFilters(newFilters: Partial<LogFilters>): void {
     this.filters = { ...this.filters, ...newFilters }
     this.emitLogUpdate()
+  }
+  /**
+   * 启用/禁用战斗日志自动清理
+   */
+  setAutoCleanup(enabled: boolean): void {
+    this.autoCleanup = enabled
   }
   /**
    * 判断日志是否应该显示
@@ -20480,8 +20707,6 @@ export { BattleLogFormatter } from './BattleLogFormatter'
 export { ConsoleLogHandler } from '@/infrastructure/adapters/logging/BattleLogManager'
 // 结构化处理器 (JSON/CSV)
 export { JsonLogHandler, CsvLogHandler } from './StructuredLogHandlers'
-// 玩家日志渲染器类型（旧风格系统，已由叙事/调试视图替代）
-export type { PlayerLogRenderer } from '@/shared/types/log-renderer'
 
 --- src/infrastructure/adapters/logging/StructuredLogHandlers.ts ---
 /**
@@ -22213,74 +22438,115 @@ onUnmounted(() => {
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onUnmounted, nextTick } from 'vue'
+import { ref, onUnmounted, type Ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
-import { getActionBudget } from '@/shared/constants/animation-timing'
+import { getActionBudget, BATTLE_ANIMATION_TIMING } from '@/shared/constants/animation-timing'
 const debugStore = useDebugStore()
+const P = BATTLE_ANIMATION_TIMING.PHASES
 // ============ 类型 ============
 export interface CardPos { x: number; y: number; el: HTMLElement }
+export type VfxColorType = 'fire' | 'frost' | 'heal' | 'shield'
+interface SkillNameItem { id: number; text: string; x: number; y: number; dx: number; dy: number; fromSide: string }
+interface ImpactItem { id: number; x: number; y: number; colorType: VfxColorType; style: string }
+interface PositionItem { id: number; x: number; y: number }
+interface FloatingNumItem { id: number; text: string; x: number; y: number; cls: string; rotate?: number }
 // ============ VFX 颜色映射 ============
-/* ponytail: these match the --vfx-* CSS variables above; keep in sync */
-const VFX_COLORS: Record<string, Record<string, string>> = {
+/* NOTE: 与 <style> 中 --vfx-* CSS 变量同源，改这里必须同步改 CSS */
+const VFX_COLORS: Record<VfxColorType, { bg: string; glow: string }> = {
   fire: { bg: '#ffaa30', glow: '#ff6600' },
   frost: { bg: '#8ee0ff', glow: '#4cc9f0' },
   heal: { bg: '#6affd0', glow: '#2dd4a8' },
   shield: { bg: '#8ee0ff', glow: '#4cc9f0' },
 }
+// ============ VFX 侧时长常量（耦合 CSS 关键帧，刻意不随倍速缩放） ============
+/* NOTE: 这些数字与本文件 CSS 动画时长耦合，不从 PHASES 派生。
+   若修改 CSS 动画时长，必须同步修改对应常量。 */
+const SKILL_NAME_REMOVE_BUFFER_MS = 50   // 技能名移除缓冲（skill-fly 1.2s）
+const DMG_NUM_MIN_TTL_MS = 1400          // 伤害数字浮动下限（dmg-pop 1.4s，可读性保障）
+const HEAL_NUM_MIN_TTL_MS = 1600         // 治疗数字浮动下限（heal-rise 1.6s）
+const SHIELD_NUM_TTL_MS = 1450           // 护盾数字 TTL（shield-rise 1.4s，+50ms 缓冲）
+const SHAKE_DURATION_MS = 400            // 屏幕震动时长（visual-shake 0.4s）
+const AURA_SECOND_LAYER_DELAY_MS = 200   // 治疗光环第二层延迟
+const TRAIL_INTERVAL_MS = 30             // 光弹尾迹生成间隔
+const TRAIL_TTL_MS = 600                 // 光弹尾迹存活时长（trail-fade 0.6s）
+/* hex-flash CSS 动画 0.9s > JS 移除时长 b*0.5（1x 时 = 600ms），
+   这意味着六边形在 CSS 动画完成前就被移除。这是原版既有行为。 */
 // ============ 响应式数据 ============
 let nextId = 0
-/** 技能名飞行 */
-const skillNames = ref<Array<{ id: number; text: string; x: number; y: number; dx: number; dy: number; fromSide: string }>>([])
-/** 命中爆炸 */
-const impacts = ref<Array<{ id: number; x: number; y: number; colorType: string; style: string }>>([])
-/** 治疗光环 */
-const healAuras = ref<Array<{ id: number; x: number; y: number }>>([])
-/** 护盾六边形 */
-const shieldHexes = ref<Array<{ id: number; x: number; y: number }>>([])
-/** 伤害/治疗/护盾数字 */
-const dmgNums = ref<Array<{ id: number; text: string; x: number; y: number; cls: string; rotate?: number }>>([])
-/** 屏幕震动 */
+const skillNames = ref<SkillNameItem[]>([])
+const impacts = ref<ImpactItem[]>([])
+const healAuras = ref<PositionItem[]>([])
+const shieldHexes = ref<PositionItem[]>([])
+const dmgNums = ref<FloatingNumItem[]>([])
 const shaking = ref(false)
-// ============ 工具 ============
-let timeouts: ReturnType<typeof setTimeout>[] = []
-function setRemove(id: number, arr: any, delay: number) {
-  const t = setTimeout(() => {
-    const idx = arr.value.findIndex((i: any) => i.id === id)
+// ============ 生命周期安全调度器 ============
+/* NOTE: 单视图应用中此组件实际不卸载（BattleArena 是唯一 view）。
+   以下收口是卫生与期权，非修复既有泄漏（原版回调均有 parentNode 守卫）。 */
+const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
+const pendingFrames = new Set<number>()
+function later(fn: () => void, delay: number): void {
+  const t = setTimeout(() => { pendingTimers.delete(t); fn() }, delay)
+  pendingTimers.add(t)
+}
+function nextFrame(fn: FrameRequestCallback): void {
+  const id = requestAnimationFrame((now) => { pendingFrames.delete(id); fn(now) })
+  pendingFrames.add(id)
+}
+// ============ 泛型移除 ============
+function setRemove<T extends { id: number }>(id: number, arr: Ref<T[]>, delay: number): void {
+  later(() => {
+    const idx = arr.value.findIndex((i) => i.id === id)
     if (idx !== -1) arr.value.splice(idx, 1)
   }, delay)
-  timeouts.push(t)
 }
+// ============ 相位派生时长（单一事实来源：animation-timing.ts） ============
+/* NOTE: 随倍速缩放，值与历史魔数恒等（由特征测试证明）。 */
+/** 技能名飞行时长 = nameFlight 相位（0→50%T），= budget × 0.5 */
+const skillNameDuration = (b: number) => b * P.nameFlight.end
+/** 光弹发射延迟 = projectile.start（20%T），= budget × 0.2 */
+const projectileDelay = (b: number) => b * P.projectile.start
+/** 光弹飞行时长 = projectile 相位跨度（20%→50%T），= budget × 0.3 */
+const projectileDuration = (b: number) => b * (P.projectile.end - P.projectile.start)
+/** 命中特效时长 = impact→numberFloat.end（50%→85%T），= budget × 0.35 */
+const impactDuration = (b: number) => b * (P.numberFloat.end - P.impact)
+/** 光环/护盾六边形时长 = 0→impact（0→50%T），= budget × 0.5 */
+const auraDuration = (b: number) => b * P.impact
 // ============ 获取卡片位置 ============
-/** 外部需注入卡片 DOM 元素映射 */
 const cardElements = new Map<string, HTMLElement>()
 function registerCard(id: string, el: HTMLElement) { cardElements.set(id, el) }
 function unregisterCard(id: string) { cardElements.delete(id) }
 function cardCenter(id: string): CardPos | null {
   const el = cardElements.get(id)
-  if (!el) {
-    console.warn('[BattleVisualEffects] 卡片未注册，无法定位:', id, '已有卡片:', Array.from(cardElements.keys()))
+  // isConnected 防御：卡片可能已脱离文档但未反注册（v-if/路由切换瞬间），
+  // 此时 getBoundingClientRect 返回过期坐标
+  if (!el || !el.isConnected) {
+    console.warn('[BattleVisualEffects] 卡片未注册或已脱离文档，无法定位:', id)
     return null
   }
   const r = el.getBoundingClientRect()
   return { x: r.left + r.width / 2, y: r.top + r.height / 2, el }
 }
 // ============ 公共方法 ============
-/** 技能名从攻击者飞向目标（飞行时长 = budget * 0.5，即 0→50%T） */
+/** 技能名从攻击者飞向目标（飞行时长 = 0→50%T） */
 function showSkillName(attackerId: string, targetId: string, name: string, fromSide: 'left' | 'right', budget: number) {
   const aPos = cardCenter(attackerId)
   const tPos = cardCenter(targetId)
   if (!aPos || !tPos) return
   const id = nextId++
-  const dx = tPos.x - aPos.x
-  const dy = tPos.y - aPos.y
-  skillNames.value.push({ id, text: name, x: aPos.x, y: aPos.y - 20, dx, dy, fromSide })
-  setRemove(id, skillNames, budget * 0.5 + 50)
+  skillNames.value.push({
+    id, text: name,
+    x: aPos.x, y: aPos.y - 20,
+    dx: tPos.x - aPos.x, dy: tPos.y - aPos.y,
+    fromSide,
+  })
+  setRemove(id, skillNames, skillNameDuration(budget) + SKILL_NAME_REMOVE_BUFFER_MS)
 }
-/** 光弹飞行（requestAnimationFrame 驱动），duration = budget * 0.3（20%→50%T） */
-function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | 'heal' | 'shield', duration: number) {
+/** 光弹飞行（requestAnimationFrame 驱动），时长 = 20%→50%T */
+function showProjectile(fromId: string, toId: string, type: VfxColorType, duration: number) {
   const from = cardCenter(fromId)
   const to = cardCenter(toId)
-  if (!from || !to) return
+  // duration<=0 防御：避免 (now-start)/0 产生 NaN 坐标（实践中 budget 恒为正，此路径不可达）
+  if (!from || !to || duration <= 0) return
   const proj = document.createElement('div')
   proj.className = `projectile ${type}`
   const root = document.getElementById('visual-effects-root')
@@ -22291,67 +22557,63 @@ function showProjectile(fromId: string, toId: string, type: 'fire' | 'frost' | '
   const start = performance.now()
   let lastTrail = 0
   function step(now: number) {
+    // 卸载后立即终止（元素已被回收），rAF 链自然断开
+    if (!proj.isConnected) return
     const t = Math.min(1, (now - start) / duration)
     const arc = Math.sin(t * Math.PI) * 60
     const x = from.x + dx * t
     const y = from.y + dy * t - arc
     proj.style.left = (x - 7) + 'px'
     proj.style.top = (y - 7) + 'px'
-    // 尾迹
-    if (now - lastTrail > 30) {
+    if (now - lastTrail > TRAIL_INTERVAL_MS) {
       lastTrail = now
-      const trail = document.createElement('div')
-      trail.className = 'projectile-trail'
-      trail.style.left = x + 'px'
-      trail.style.top = y + 'px'
-      if (type === 'fire') {
-        trail.style.background = `radial-gradient(circle, ${VFX_COLORS[type].bg}, transparent)`
-        trail.style.boxShadow = `0 0 10px ${VFX_COLORS[type].glow}`
-      } else {
-        trail.style.background = `radial-gradient(circle, ${VFX_COLORS.frost.bg}, transparent)`
-        trail.style.boxShadow = `0 0 10px ${VFX_COLORS.frost.glow}`
-      }
-      root.appendChild(trail)
-      setTimeout(() => { if (trail.parentNode) trail.parentNode.removeChild(trail) }, 600)
+      spawnTrail(root, x, y, type)
     }
     if (t < 1) {
-      requestAnimationFrame(step)
+      nextFrame(step)
     } else {
       if (proj.parentNode) proj.parentNode.removeChild(proj)
     }
   }
-  requestAnimationFrame(step)
+  nextFrame(step)
+}
+/** 光弹尾迹（生成后自行淡出） */
+function spawnTrail(root: HTMLElement, x: number, y: number, type: VfxColorType) {
+  const trail = document.createElement('div')
+  trail.className = 'projectile-trail'
+  trail.style.left = x + 'px'
+  trail.style.top = y + 'px'
+  if (type === 'fire') {
+    trail.style.background = `radial-gradient(circle, ${VFX_COLORS.fire.bg}, transparent)`
+    trail.style.boxShadow = `0 0 10px ${VFX_COLORS.fire.glow}`
+  } else {
+    trail.style.background = `radial-gradient(circle, ${VFX_COLORS.frost.bg}, transparent)`
+    trail.style.boxShadow = `0 0 10px ${VFX_COLORS.frost.glow}`
+  }
+  root.appendChild(trail)
+  later(() => { if (trail.parentNode) trail.parentNode.removeChild(trail) }, TRAIL_TTL_MS)
 }
 /** 命中爆炸 — 根据 debugStore.impactStyle 选择动画变体 */
-function showImpact(targetId: string, colorType: 'fire' | 'frost' | 'heal' | 'shield', budget?: number) {
+function showImpact(targetId: string, colorType: VfxColorType, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
   const style = debugStore.impactStyle
   impacts.value.push({ id, x: pos.x, y: pos.y, colorType, style })
-  // NOTE: 命中爆炸清除时长 = 数字上浮阶段（50%→85%T），有 budget 时按比例，否则兜底 1x
-  const impactDuration = (budget ?? getActionBudget(1)) * 0.35
-  setRemove(id, impacts, impactDuration)
-  // 粒子 — 根据 style 变化
-  const sparkColors: Record<string, { bg: string; glow: string }> = {
-    fire: { bg: '#ffaa30', glow: '#ff6600' },
-    frost: { bg: '#8ee0ff', glow: '#4cc9f0' },
-    heal: { bg: '#6affd0', glow: '#2dd4a8' },
-    shield: { bg: '#8ee0ff', glow: '#4cc9f0' },
-  }
-  const c = sparkColors[colorType] || sparkColors.fire
+  setRemove(id, impacts, impactDuration(budget ?? getActionBudget(1)))
+  const c = VFX_COLORS[colorType] ?? VFX_COLORS.fire
   switch (style) {
     case 'explosion':
       spawnExplosionParticles(pos, c)
       break
     case 'slash':
-      // ponytail: 一刀效果完全由 CSS ::before 实现，无需额外 JS 粒子
+      // NOTE: 一刀效果完全由 CSS ::before 实现，无需额外 JS 粒子
       break
     case 'iceshatter':
       spawnIceShatterParticles(pos, c)
       break
     case 'shockwave':
-      // 冲击波无额外粒子，纯 CSS
+      // NOTE: 冲击波无额外粒子，纯 CSS
       break
     case 'shadow':
       spawnShadowParticles(pos, c)
@@ -22371,14 +22633,13 @@ function spawnExplosionParticles(pos: CardPos, c: { bg: string; glow: string }) 
       { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
       { transform: `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px)) scale(0)`, opacity: 0 }
     ], { duration: 600, easing: 'cubic-bezier(0.2, 0.6, 0.3, 1)' })
-    setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 650)
+    later(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 650)
   }
 }
 /** 冰裂粒子 — 菱形碎晶散射 */
 function spawnIceShatterParticles(pos: CardPos, c: { bg: string; glow: string }) {
   for (let i = 0; i < 6; i++) {
     const spark = createSpark(pos, c, 4)
-    // 菱形碎片
     spark.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'
     spark.style.borderRadius = '0'
     spark.style.width = '8px'
@@ -22391,7 +22652,7 @@ function spawnIceShatterParticles(pos: CardPos, c: { bg: string; glow: string })
       { transform: 'translate(-50%, -50%) scale(0.5) rotate(0deg)', opacity: 1 },
       { transform: `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px)) scale(0) rotate(${120 + Math.random() * 120}deg)`, opacity: 0 }
     ], { duration: 600, easing: 'cubic-bezier(0.1, 0.9, 0.2, 1)' })
-    setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 650)
+    later(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 650)
   }
   // 一个明亮的核心闪光
   const flash = document.createElement('div')
@@ -22408,13 +22669,12 @@ function spawnIceShatterParticles(pos: CardPos, c: { bg: string; glow: string })
     { transform: 'translate(-50%, -50%) scale(0.3)', opacity: 1 },
     { transform: 'translate(-50%, -50%) scale(2.5)', opacity: 0 }
   ], { duration: 400, easing: 'ease-out' })
-  setTimeout(() => { if (flash.parentNode) flash.parentNode.removeChild(flash) }, 450)
+  later(() => { if (flash.parentNode) flash.parentNode.removeChild(flash) }, 450)
 }
 /** 暗影粒子 — 上升烟雾 */
 function spawnShadowParticles(pos: CardPos, c: { bg: string; glow: string }) {
   for (let i = 0; i < 10; i++) {
     const spark = createSpark(pos, c, 5)
-    // 暗影用暗紫色而不是原色
     spark.style.background = 'radial-gradient(circle, #a855f7, transparent)'
     spark.style.boxShadow = '0 0 8px #a855f7'
     const sx = (Math.random() - 0.5) * 60
@@ -22425,7 +22685,7 @@ function spawnShadowParticles(pos: CardPos, c: { bg: string; glow: string }) {
       { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0.8 },
       { transform: `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px)) scale(1.5)`, opacity: 0 }
     ], { duration: 800, easing: 'ease-out' })
-    setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 850)
+    later(() => { if (spark.parentNode) spark.parentNode.removeChild(spark) }, 850)
   }
 }
 /** 创建单个火花 DOM 元素 */
@@ -22449,15 +22709,13 @@ function showHealAura(targetId: string, budget?: number) {
   if (!pos) return
   const id = nextId++
   healAuras.value.push({ id, x: pos.x, y: pos.y })
-  // NOTE: 治疗光环清除时长 = 命中阶段（50%→100%T）
-  const auraDuration = (budget ?? getActionBudget(1)) * 0.5
-  setRemove(id, healAuras, auraDuration)
-  // 第二层
+  const duration = auraDuration(budget ?? getActionBudget(1))
+  setRemove(id, healAuras, duration)
   const id2 = nextId++
-  setTimeout(() => {
+  later(() => {
     healAuras.value.push({ id: id2, x: pos.x, y: pos.y })
-    setRemove(id2, healAuras, auraDuration)
-  }, 200)
+    setRemove(id2, healAuras, duration)
+  }, AURA_SECOND_LAYER_DELAY_MS)
 }
 /** 护盾六边形 */
 function showShieldHex(targetId: string, budget?: number) {
@@ -22465,41 +22723,38 @@ function showShieldHex(targetId: string, budget?: number) {
   if (!pos) return
   const id = nextId++
   shieldHexes.value.push({ id, x: pos.x, y: pos.y })
-  const hexDuration = (budget ?? getActionBudget(1)) * 0.5
-  setRemove(id, shieldHexes, hexDuration)
+  setRemove(id, shieldHexes, auraDuration(budget ?? getActionBudget(1)))
 }
-/** 伤害数字（上浮淡出时长 = budget * 0.35，即 50%→85%T） */
+/** 伤害数字（上浮淡出时长 = 50%→85%T） */
 function showDamageNum(targetId: string, value: number, isCrit: boolean, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
-  // HACK: budget 由所有当前调用方传入，兜底用 1x 速度的 numberFloat 阶段时长
-  const floatDuration = Math.max((budget ?? getActionBudget(1)) * 0.35, 1400)
-  const offsetX = (Math.random() - 0.5) * 60 // 扩大 X 轴偏移至 ±30px
-  const rotate = (Math.random() - 0.5) * 10  // 微小旋转 ±5度
+  // HACK: budget 由所有当前调用方传入，兜底用 1x 速度的 numberFloat 阶段时长。
+  //       天花板：快速模式下上游（BattleSystem.shouldSuppressAnimationEvents）根本不发事件，
+  //       此兜底实际不可达；若未来 VFX 需要感知快速模式，重新评估此兜底。
+  const floatDuration = Math.max(impactDuration(budget ?? getActionBudget(1)), DMG_NUM_MIN_TTL_MS)
   dmgNums.value.push({
     id, text: `-${value}`,
-    x: pos.x + offsetX,
+    x: pos.x + (Math.random() - 0.5) * 60,
     y: pos.y - 20,
     cls: isCrit ? 'dmg crit' : 'dmg normal',
-    rotate,
+    rotate: (Math.random() - 0.5) * 10,
   })
   setRemove(id, dmgNums, floatDuration)
 }
-/** 治疗数字（上浮淡出时长 = budget * 0.35） */
+/** 治疗数字（上浮淡出时长 = 50%→85%T） */
 function showHealNum(targetId: string, value: number, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
-  const floatDuration = Math.max((budget ?? getActionBudget(1)) * 0.35, 1600)
-  const offsetX = (Math.random() - 0.5) * 40
-  const rotate = (Math.random() - 0.5) * 6
+  const floatDuration = Math.max(impactDuration(budget ?? getActionBudget(1)), HEAL_NUM_MIN_TTL_MS)
   dmgNums.value.push({
     id, text: `+${value}`,
-    x: pos.x + offsetX,
+    x: pos.x + (Math.random() - 0.5) * 40,
     y: pos.y + 10,
     cls: 'heal-num',
-    rotate,
+    rotate: (Math.random() - 0.5) * 6,
   })
   setRemove(id, dmgNums, floatDuration)
 }
@@ -22508,28 +22763,25 @@ function showShieldNum(targetId: string, value: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
-  const offsetX = (Math.random() - 0.5) * 40
-  const rotate = (Math.random() - 0.5) * 6
   dmgNums.value.push({
     id, text: `+${value}`,
-    x: pos.x + offsetX,
+    x: pos.x + (Math.random() - 0.5) * 40,
     y: pos.y + 15,
     cls: 'shield-num',
-    rotate,
+    rotate: (Math.random() - 0.5) * 6,
   })
-  setRemove(id, dmgNums, 1450) // NOTE: shield-rise 动画 1.4s，1450ms 足够覆盖
+  setRemove(id, dmgNums, SHIELD_NUM_TTL_MS) // NOTE: shield-rise 动画 1.4s，1450ms 足够覆盖
 }
-/** 闪避文字 */
+/** 闪避文字 — 固定偏移到目标右上角，与伤害数字分离 */
 function showMissText(targetId: string, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
-  const floatDuration = Math.max((budget ?? getActionBudget(1)) * 0.35, 1400)
-  const offsetX = (Math.random() - 0.5) * 40
+  const floatDuration = Math.max(impactDuration(budget ?? getActionBudget(1)), DMG_NUM_MIN_TTL_MS)
   dmgNums.value.push({
     id, text: '闪避',
-    x: pos.x + offsetX,
-    y: pos.y - 20,
+    x: pos.x + 50,
+    y: pos.y - 40,
     cls: 'miss',
     rotate: 0,
   })
@@ -22538,7 +22790,7 @@ function showMissText(targetId: string, budget?: number) {
 /** 屏幕震动 */
 function showScreenShake() {
   shaking.value = true
-  setTimeout(() => { shaking.value = false }, 400)
+  later(() => { shaking.value = false }, SHAKE_DURATION_MS)
 }
 /** 飞行序列：只飞（技能名 + 光弹），不包含命中 */
 function playFlightSequence(
@@ -22550,8 +22802,7 @@ function playFlightSequence(
   budget: number,
 ) {
   showSkillName(attackerId, targetId, skillName, fromSide, budget)
-  // 光弹从 20%T 出发 → 50%T 到达
-  setTimeout(() => showProjectile(attackerId, targetId, impactStyle, budget * 0.3), budget * 0.2)
+  later(() => showProjectile(attackerId, targetId, impactStyle, projectileDuration(budget)), projectileDelay(budget))
 }
 defineExpose({
   registerCard,
@@ -22570,7 +22821,10 @@ defineExpose({
   cardElements,
 })
 onUnmounted(() => {
-  timeouts.forEach(clearTimeout)
+  pendingTimers.forEach(clearTimeout)
+  pendingFrames.forEach(cancelAnimationFrame)
+  pendingTimers.clear()
+  pendingFrames.clear()
   cardElements.clear()
 })
 </script>
@@ -25197,7 +25451,6 @@ const cancelHide = () => {
     hideTimer = null
   }
 }
-defineExpose({ cancelHide })
 // ===================== 定位 =====================
 const TOOLTIP_WIDTH = 300
 const TOOLTIP_HEIGHT = 240
@@ -25749,8 +26002,7 @@ const removeNotification = (notificationId: number): void => {
   notifications.value = notifications.value.filter(n => n.id !== notificationId)
 }
 defineExpose({
-  addNotification,
-  removeNotification
+  addNotification
 })
 </script>
 
@@ -26228,7 +26480,6 @@ const handleClick = () => {
 // 暴露卡片引用给父组件（用于动画）
 defineExpose({
   cardRef,
-  participantId: props.participant.id,
   triggerVisualState,
   flashHpBar,
 })
@@ -27246,10 +27497,11 @@ export function getConditionLabel(
  */
 import { ref, computed } from 'vue'
 import enemiesData from '@configs/enemies/enemies.json'
-import buffsData from '@configs/buffs/buffs.json'
+import { buffsData } from '@/shared/types/buffs-json'
 import materialsData from '@configs/materials/materials.json'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import type { PassiveCategory } from '@/domain/skill/types'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 export interface CompendiumEnemy {
   id: string
   name: string
@@ -27304,9 +27556,9 @@ export interface CompendiumItem {
 }
 export type CompendiumTabType = 'enemy' | 'buff' | 'item'
 export function useCompendium() {
-  // ponytail: JSON 推断类型与 CompendiumXxx 接口有结构差异，直接 `as T` 被 TS 拒绝，用 `as unknown as T` 绕过后依赖运行时形态兼容
+  // ponytail: JSON 推断类型与 CompendiumXxx 接口有结构差异，用 `as BuffJsonEntry[] as T` 绕过后依赖运行时形态兼容
   const enemies = ref<CompendiumEnemy[]>(enemiesData as unknown as CompendiumEnemy[])
-  const buffs = ref<CompendiumBuff[]>(buffsData as unknown as CompendiumBuff[])
+  const buffs = ref<CompendiumBuff[]>(buffsData as BuffJsonEntry[] as CompendiumBuff[])
   const skills = ref<CompendiumSkill[]>(GameDataProcessor.getSkillsData() as unknown as CompendiumSkill[])
   const items = ref<CompendiumItem[]>(materialsData as CompendiumItem[])
   const isLoading = ref(false)
@@ -27705,8 +27957,6 @@ export const ATTRIBUTE_DISPLAY_CONFIG: Record<string, AttributeDisplayConfig> = 
   damageTakenIncrease:         { displayTier: 'advanced',    group: 'defense' },
   damageBoost:                 { displayTier: 'advanced',    group: 'offense' },
   poisonRes:                   { displayTier: 'situational', group: 'control' },
-  physicalDmgReduction:        { displayTier: 'advanced',    group: 'defense' },
-  magicalDmgReduction:         { displayTier: 'advanced',    group: 'defense' },
   fireSkillDmgBonus:           { displayTier: 'situational', group: 'offense' },
   physicalSkillDmgBonus:       { displayTier: 'situational', group: 'offense' },
   damageToDemon:               { displayTier: 'situational', group: 'offense' },
@@ -27729,7 +27979,7 @@ import type {
   BattleEntity,
   BattleState,
 } from '@/domain/battle/type/types'
-import { BattleStatus, PARTICIPANT_SIDE } from '@/domain/battle/type/types'
+import { BattleStatus, ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
 import {
@@ -27964,10 +28214,10 @@ export const useBattleStore = defineStore('battle', () => {
     if (data?.winner) {
       battleLogManager.addBattleLog({
         turn: battleService.value?.getTurn() ?? 1,
-        message: `战斗结束！胜利者：${data.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`,
+        message: `战斗结束！胜利者：${ParticipantSideName[data.winner!]}`,
         segments: [
           {
-            text: `战斗结束！胜利者：${data.winner === PARTICIPANT_SIDE.ALLY ? '我方' : '敌方'}`,
+            text: `战斗结束！胜利者：${ParticipantSideName[data.winner!]}`,
           },
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
@@ -28166,7 +28416,7 @@ export const useBattleStore = defineStore('battle', () => {
    * @param data 动画数据对象
    * @description 触发指定类型的动画效果，超时后自动清除（ANIMATION_COMPLETE 事件优先）
    */
-  const setAnimationState = (type: keyof AnimationState, data: any) => {
+  const setAnimationState = <T extends keyof AnimationState>(type: T, data: AnimationState[T]) => {
     animationState[type] = data
     // NOTE: 每个动画阶段最多持有 50%T 预算（领域层在同一时长内完成）
     const phaseDuration = getActionBudget(battleSpeed.value) * 0.5
@@ -28213,13 +28463,6 @@ export const useBattleStore = defineStore('battle', () => {
       setBattleActive(true)
       autoPlayMode.value = battleService.value.getAutoBattle()
       battleLogManager.addSystemLog({ message: '战斗已开始' })
-      battleLogManager.addBattleLog({
-        turn: battleService.value?.getTurn() ?? 1,
-        message: '战斗开始',
-        segments: [{ text: '战斗开始', classStr: 'log-system' }],
-        category: BATTLE_LOG_CATEGORIES.SYSTEM,
-        meta: { role: 'battle' },
-      })
       return true
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
@@ -28237,7 +28480,7 @@ export const useBattleStore = defineStore('battle', () => {
    * @description 终止战斗会话，记录胜负结果，清理相关状态
    */
   const endBattle = async (
-    winner: typeof PARTICIPANT_SIDE.ALLY = PARTICIPANT_SIDE.ALLY,
+    winner: typeof ParticipantSide.ALLY = ParticipantSide.ALLY,
   ) => {
     setLoading(true, '结束战斗')
     clearError()
@@ -28442,7 +28685,7 @@ export const useBattleStore = defineStore('battle', () => {
     })
   }
   /** ★ 执行战斗数据生成 */
-  const generateBattleData = async (mode: '1v1' | '2v2' | 'random' = 'random') => {
+  const generateBattleData = async (mode: '1v1' | '2v2' | 'random' = 'random', format: 'txt' | 'html' = 'txt') => {
     if (!battleService.value) return
     if (generationProgress.isGenerating) return
     generationProgress.isGenerating = true
@@ -28455,6 +28698,7 @@ export const useBattleStore = defineStore('battle', () => {
       await generator.generate({
         totalBattles: 50,
         mode,
+        format,
         onProgress: (_progress: number, current: number, total: number) => {
           generationProgress.current = current
           generationProgress.total = total
@@ -28523,12 +28767,12 @@ export const useBattleStore = defineStore('battle', () => {
     const sourceIsAlly =
       action.sourceId !== 'system'
         ? battleState.participants.get(action.sourceId)?.team ===
-          PARTICIPANT_SIDE.ALLY
+          ParticipantSide.ALLY
         : false
     const targetIsAlly =
       action.targetId && action.targetId !== 'system'
         ? battleState.participants.get(action.targetId)?.team ===
-          PARTICIPANT_SIDE.ALLY
+          ParticipantSide.ALLY
         : undefined
     const fullLog = battleActionToLogEntry(action, battleState.participants, {
       turnNumber: action.turn,
@@ -28591,14 +28835,14 @@ export const useBattleStore = defineStore('battle', () => {
       category === 'action' &&
       log.source &&
       log.source !== '系统' &&
-      !log.source.includes(PARTICIPANT_SIDE.ENEMY) &&
+      !log.source.includes(ParticipantSide.ENEMY) &&
       !filters.action
     )
       return false
     if (
       category === 'action' &&
       log.source &&
-      log.source.includes(PARTICIPANT_SIDE.ENEMY) &&
+      log.source.includes(ParticipantSide.ENEMY) &&
       !filters.action
     )
       return false
@@ -28623,7 +28867,7 @@ export const useBattleStore = defineStore('battle', () => {
   const previewRosterCharacter = (enemy: Enemy) => {
     const entity = GameDataProcessor.enemyToParticipant(
       enemy,
-      PARTICIPANT_SIDE.ENEMY,
+      ParticipantSide.ENEMY,
     )
     // ponytail: 注册触发型被动技能到 PassiveSkillManager（预览时生效）
     const passiveSkillManager = container.resolve<any>('PassiveSkillManager')
@@ -29746,10 +29990,12 @@ html {
 }
 /* 芯片：角色名 / 技能 / buff */
 .chip {
-  padding: 0 6px;
   border-radius: var(--radius-sm);
   font-weight: var(--font-weight-medium);
   white-space: nowrap;
+  cursor: pointer;
+  line-height: var(--line-height-lg);
+  padding: var(--space-1) var(--space-2);
 }
 .chip--ally {
   color: var(--color-heal);
@@ -32253,36 +32499,35 @@ $transition-fast: var(--transition-fast);
   </div>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, shallowReactive } from "vue";
-import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
-import ParticipantPanel from "./ParticipantPanel.vue";
-import BattleField from "./BattleField.vue";
-import BattleDashboard from "./BattleDashboard.vue";
-import ControlBar from "./ControlBar.vue";
-import Notification from "@/presentation/components/Notification.vue";
-import BattleRulesDialog from "./components/BattleRulesDialog.vue";
-import SceneManagementDialog from "./components/SceneManagementDialog.vue";
-import CharacterEditor from "./components/CharacterEditor.vue";
-import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
-import DebugLogDialog from "./components/DebugLogDialog.vue";
-import DebugControlDialog from "./components/DebugControlDialog.vue";
-import DataSnapshotDialog from "./components/DataSnapshotDialog.vue";
-import BattleRecordingDialog from "./components/BattleRecordingDialog.vue";
-import { useBattleStore } from '@/presentation/stores';
-import { container } from '@/infrastructure/di/Container';
-import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
-import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
-import { PARTICIPANT_SIDE } from "@/domain/battle/type/types.ts";
-import type { CharacterOption } from "./components/CharacterEditor.vue";
 import type { BattleService } from '@/application/facade/BattleFacade';
-import type { LogEntry } from '@/shared/types/battle-log';
-import type { TraceLogEntry } from '@/shared/types/trace-log';
 import { ATTRIBUTE_CODE, ModifierType } from "@/domain/attribute/types";
-import { EffectType } from '@/shared/types/effect';
+import { ParticipantSide } from "@/domain/battle/type/types.ts";
+import type { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader';
+import { BuffSystem } from '@/domain/buff/BuffSystem';
 import { DamageCategory } from '@/domain/skill/types';
-import { BuffSystem } from '@/domain/buff/BuffSystem'
-import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
-import type { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
+import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
+import { container } from '@/infrastructure/di/Container';
+import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
+import Notification from "@/presentation/components/Notification.vue";
+import { useBattleStore } from '@/presentation/stores';
+import type { LogEntry } from '@/shared/types/battle-log';
+import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
+import { EffectType } from '@/shared/types/effect';
+import type { TraceLogEntry } from '@/shared/types/trace-log';
+import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
+import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
+import BattleDashboard from "./BattleDashboard.vue";
+import BattleField from "./BattleField.vue";
+import BattleRecordingDialog from "./components/BattleRecordingDialog.vue";
+import BattleRulesDialog from "./components/BattleRulesDialog.vue";
+import type { CharacterOption } from "./components/CharacterEditor.vue";
+import CharacterEditor from "./components/CharacterEditor.vue";
+import DataSnapshotDialog from "./components/DataSnapshotDialog.vue";
+import DebugControlDialog from "./components/DebugControlDialog.vue";
+import DebugLogDialog from "./components/DebugLogDialog.vue";
+import SceneManagementDialog from "./components/SceneManagementDialog.vue";
+import ControlBar from "./ControlBar.vue";
+import ParticipantPanel from "./ParticipantPanel.vue";
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 // 使用Pinia状态管理
@@ -32303,6 +32548,19 @@ const showRecordingDialog = ref(false);
 const debugLogs = ref<LogEntry[]>([]);
 // 树状调试日志数据
 const traceRoots = ref<TraceLogEntry[]>([]);
+const CT = {
+  common: {
+  },
+  status: {
+    success: '胜利',
+    fail: '失败',
+    skip: '跳过回合',
+    end: '强制结束',
+    full_health: '满血',
+    full_energy: '满能量',
+    kill_selected: '击杀选中',
+  }
+}
 /** 从 BattleSystem.traceCollector 刷新树状日志 */
 async function updateTraceRoots() {
   try {
@@ -32331,7 +32589,7 @@ watch(showDebugLogDialog, async (val) => {
 })
 const clearDebugLogs = () => {
   debugLogs.value = [];
-  battleLogManager.clearDebugLogs();
+  battleLogManager.clearLogs();
 };
 const handleDebugAction = async (action: string) => {
   console.log('Debug action:', action)
@@ -32557,10 +32815,6 @@ const allyTeam = computed(() => {
 const enemyTeam = computed(() => {
   return battleStore.enemyTeam
 });
-const teamCounts = computed(() => ({
-  ally: battleStore.allyTeam.length,
-  enemy: battleStore.enemyTeam.length,
-}));
 // 初始化战斗
 function initBattle() {
   // ponytail: 默认测试阵容 — 覆盖伤害/治疗/护盾/buff/debuff 的典型组合
@@ -32570,32 +32824,12 @@ function initBattle() {
   const enemyList = GameDataProcessor.findEnemiesByIds(enemyIds);
   console.log('allyList', allyList)
   console.log('enemyList', enemyList)
-  const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, PARTICIPANT_SIDE.ALLY, index));
-  const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, PARTICIPANT_SIDE.ENEMY, index));
+  const allyTeamData = allyList.map((ally, index) => GameDataProcessor.enemyToParticipant(ally, ParticipantSide.ALLY, index));
+  const enemyTeamData = enemyList.map((enemy, index) => GameDataProcessor.enemyToParticipant(enemy, ParticipantSide.ENEMY, index));
   console.log('allyTeamData', allyTeamData)
   console.log('enemyTeamData', enemyTeamData)
   // 使用BattleService初始化队伍数据
   battleService.initializeTeams(allyTeamData, enemyTeamData);
-  // ponytail: 将实体的免疫标签注册到 BuffSystem
-  const buffSystem = container.resolve<BuffSystem>('BuffSystem');
-  const allParticipants = [
-    ...battleService.getAllyTeam(),
-    ...battleService.getEnemyTeam(),
-  ];
-  for (const entity of allParticipants) {
-    if (entity && typeof entity.getImmunities === 'function') {
-      const tags: string[] = entity.getImmunities();
-      if (tags.length > 0) {
-        buffSystem.registerCharacterImmunities(entity.id, tags);
-      }
-    }
-  }
-  // ponytail: 将触发型被动技能注册到 PassiveSkillManager
-  const passiveSkillManager = container.resolve<PassiveSkillManager>('PassiveSkillManager');
-  for (const entity of allParticipants) {
-    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager);
-  }
-  // ponytail: 默认选中第一个友方，避免面板显示 0/0
   const firstAlly = battleService.getAllyTeam()[0];
   if (firstAlly) {
     battleStore.selectCharacter(firstAlly.id);
@@ -32629,16 +32863,6 @@ watch(
     }
   }
 );
-// 子组件事件处理方法
-const exportState = () => {
-  const result = battleStore.exportState(currentTurn.value);
-  if (result) {
-    battleLogManager.addSystemLog({
-      message: '战斗状态已导出',
-    });
-  }
-  return result;
-};
 // 战斗规则组件事件处理
 const updateSpeed = (speed: number) => {
   battleStore.setBattleSpeed(speed);
@@ -32797,7 +33021,7 @@ const startBattle = async () => {
 };
 const endBattle = async () => {
   try {
-    const result = await battleStore.endBattle(PARTICIPANT_SIDE.ALLY);
+    const result = await battleStore.endBattle(ParticipantSide.ALLY);
     if (result) {
       notification.value?.addNotification("成功", "战斗已结束", "success");
     } else {
@@ -32858,8 +33082,6 @@ const selectCharacter = (characterId: string) => {
 };
 let debugLogListener: (() => void) | null = null
 onUnmounted(() => {
-  // 组件卸载时的清理工作
-  // 清理战斗管理器事件监听器，防止内存泄漏
   battleStore.destroy();
   if (debugLogListener) {
     battleLogManager.removeListener(debugLogListener);
@@ -33082,7 +33304,7 @@ onUnmounted(() => {
                 @mouseleave="hideAttrTooltip">
                 <span class="monitor-label">{{ a.meta.displayName }}:</span>
                 <span class="monitor-value">{{ attrVal(a.code as ATTRIBUTE_CODE) }}{{ a.meta.isPercentage ? '%' : ''
-                  }}</span>
+                }}</span>
               </div>
             </div>
           </div>
@@ -33997,7 +34219,6 @@ const {
   playAttackAnimation,
   playHitAnimation,
   playBuffAnimation,
-  playDeathAnimation,
   setBattleSpeed,
   stopAllAnimations,
 } = useBattleAnimation();
@@ -34098,7 +34319,7 @@ watch(store.animationState, (state) => {
   if (state.buff) {
     // NOTE: 被动特效时长钳制在 50%T 内，保证不侵入下一行动
     const buffDuration = budget * BATTLE_ANIMATION_TIMING.PHASES.settle.start
-    showBuffEffect(state.buff.targetId, state.buff.buffName, state.buff.isPositive)
+    showBuffEffect(state.buff.targetId, state.buff.isPositive)
     if (state.buff.isPositive) {
       participantCardRefs.value[state.buff.targetId]?.triggerVisualState('shielded', buffDuration)
     }
@@ -34134,7 +34355,6 @@ const selectCharacter = (charId: string) => {
   emit('select-character', charId);
 };
 // 状态工具提示相关逻辑
-// ponytail: 已迁移到 BuffIcon 自带 tooltip，移除父级 tooltip 系统
 function getCharacterSide(characterId: string): 'left' | 'right' {
   const isAlly = allyTeam.value.some((c) => c.id === characterId)
   return isAlly ? 'left' : 'right'
@@ -34149,12 +34369,11 @@ function showMiss(characterId: string) {
     hitEffect: ActionResultType.MISS,
   })
 }
-function showBuffEffect(characterId: string, _buffName: string, isPositive: boolean) {
+function showBuffEffect(characterId: string, isPositive: boolean) {
   playBuffAnimation(characterId, isPositive)
 }
 /**
  * 清理动画效果
- * ponytail: hideStatusTooltip 随旧 tooltip 系统一起被移除，无需恢复
  */
 function cleanupAnimations() {
   stopAllAnimations()
@@ -34166,7 +34385,6 @@ defineExpose({
   playAttackAnimation,
   playHitAnimation,
   playBuffAnimation,
-  playDeathAnimation,
 })
 onUnmounted(() => {
   cleanupAnimations()
@@ -34225,39 +34443,35 @@ onUnmounted(() => {
     <div class="log-header">
       <span class="log-title">日志</span>
       <div class="log-tabs" ref="tabBarRef">
-        <button
-          v-for="tab in tabs"
-          :key="tab.id"
-          :ref="(el) => setTabRef(tab.id, el)"
-          class="log-tab"
-          :class="{ active: activeTab === tab.id }"
-          @click="switchTab(tab.id)"
-        >
+        <button v-for="tab in tabs" :key="tab.id" :ref="(el) => setTabRef(tab.id, el)" class="log-tab"
+          :class="{ active: activeTab === tab.id }" @click="switchTab(tab.id)">
           {{ tab.label }}
           <span class="tab-badge" :key="tabCount(tab.id)">{{ tabCount(tab.id) }}</span>
         </button>
         <span class="tab-indicator" :style="indicatorStyle"></span>
       </div>
       <div class="log-tools">
-        <input class="log-keyword" v-model="keyword" placeholder="搜索…" />
-        <button class="export-btn" @click="exportLogs" title="导出当前页签日志">📋 导出</button>
-      </div>
-    </div>
-    <!-- ═══ 容器 A：战斗页签（独立，叙事渲染） ═══ -->
-    <div
-      v-show="activeTab === 'battle'"
-      class="log-content"
-      :class="{ 'is-active': activeTab === 'battle' }"
-      ref="battleContainer"
-      @scroll="onScroll"
-    >
-      <div class="battle-toolbar">
         <label class="status-toggle" :class="{ on: showStatus }">
           <input type="checkbox" v-model="showStatus" />
           <span class="toggle-track"><span class="toggle-thumb"></span></span>
           <span>状态明细</span>
         </label>
+        <input class="log-keyword" v-model="keyword" placeholder="搜索…" />
+        <div class="export-wrapper" ref="exportWrapperRef">
+          <button class="export-btn" @click="showExportMenu = !showExportMenu" title="导出当前页签日志">
+            导出 ▾
+          </button>
+          <div v-if="showExportMenu" class="export-menu">
+            <button @click="exportLogs('txt')">导出为 TXT</button>
+            <!-- 修复⑤：HTML 仅对战斗页签提供 -->
+            <button v-if="activeTab === 'battle'" @click="exportLogs('html')">导出为 HTML</button>
+          </div>
+        </div>
       </div>
+    </div>
+    <!-- ═══ 容器 A：战斗页签（独立，叙事渲染） ═══ -->
+    <div v-show="activeTab === 'battle'" class="log-content" :class="{ 'is-active': activeTab === 'battle' }"
+      ref="battleContainer" @scroll="onScroll">
       <div v-if="blocks.length === 0" class="no-logs">暂无战斗日志</div>
       <div v-for="(b, i) in blocks" :key="i" class="nb" :class="'nb--' + b.type">
         <template v-if="b.type === 'battle-header'">
@@ -34317,25 +34531,15 @@ onUnmounted(() => {
       </div>
     </div>
     <!-- ═══ 容器 B：系统 / 调试页签（共用，扁平渲染） ═══ -->
-    <div
-      v-show="activeTab !== 'battle'"
-      class="log-content log-content--flat"
-      :class="{ 'is-active': activeTab !== 'battle' }"
-      ref="sharedContainer"
-      @scroll="onScroll"
-    >
+    <div v-show="activeTab !== 'battle'" class="log-content log-content--flat"
+      :class="{ 'is-active': activeTab !== 'battle' }" ref="sharedContainer" @scroll="onScroll">
       <div v-if="activeTab === 'debug' && debugTotal > DEBUG_DISPLAY_LIMIT" class="flat-note">
         仅显示最近 {{ DEBUG_DISPLAY_LIMIT }} 条（共 {{ debugTotal }} 条）
       </div>
       <div v-if="sharedLogs.length === 0" class="no-logs">
         暂无{{ activeTab === 'debug' ? '调试' : '系统' }}日志
       </div>
-      <div
-        v-for="entry in sharedLogs"
-        :key="entry.index"
-        class="flat-item"
-        :class="flatItemClass(entry)"
-      >
+      <div v-for="entry in sharedLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
         <!-- 调试条目：级别徽章 + 消息 + 可折叠上下文 -->
         <template v-if="entry.type === LogType.DEBUG">
           <span class="flat-seq">#{{ entry.index }}</span>
@@ -34353,12 +34557,8 @@ onUnmounted(() => {
         </template>
       </div>
     </div>
-    <EntityTooltip
-      :visible="tooltipVisible"
-      :data="tooltipData"
-      :trigger-rect="tooltipRect"
-      @hide="tooltipVisible = false"
-    />
+    <EntityTooltip :visible="tooltipVisible" :data="tooltipData" :trigger-rect="tooltipRect"
+      @hide="tooltipVisible = false" />
   </div>
 </template>
 <script setup lang="ts">
@@ -34380,7 +34580,7 @@ import { LogTooltipResolver } from '@/application/projection/LogTooltipResolver'
 import { container } from '@/infrastructure/di/Container'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
-import { blocksToText, segsText } from '@/shared/utils/log-segment-factory'
+import { blocksToText, blocksToHtml, segsText } from '@/shared/utils/log-segment-factory'
 // ───────────────────────── 渲染器 & 悬浮解析器 ─────────────────────────
 const renderer = new RoundNarrativeRenderer()
 let tooltipResolver: LogTooltipResolver | null = null
@@ -34545,19 +34745,46 @@ watch([battleLogs, sharedLogs, activeTab], () => {
   })
 })
 // ───────────────────────── 导出（当前页签） ─────────────────────────
+const showExportMenu = ref(false)
+const exportWrapperRef = ref<HTMLElement | null>(null)
+function handleExportClickOutside(e: MouseEvent) {
+  if (exportWrapperRef.value && !exportWrapperRef.value.contains(e.target as Node)) {
+    showExportMenu.value = false
+  }
+}
 function flatToText(e: LogEntry): string {
   if (e.segments?.length) return segsText(e.segments)
   return e.message ?? ''
 }
-function exportLogs(): void {
-  let text = ''
-  if (activeTab.value === 'battle') text = blocksToText(blocks.value)
-  else if (activeTab.value === 'debug') text = debugLogs.value.map(flatToText).join('\n')
-  else text = systemLogs.value.map(flatToText).join('\n')
-  if (!text.trim()) return
+function exportLogs(format: 'txt' | 'html' = 'txt'): void {
+  showExportMenu.value = false
+  let content: string
+  let mime: string
+  let ext: string
+  if (activeTab.value === 'battle') {
+    if (format === 'html') {
+      content = blocksToHtml(blocks.value, {
+        title: '战斗日志',
+        generatedAt: new Date().toLocaleString(),
+      })
+      mime = 'text/html;charset=utf-8'
+      ext = 'html'
+    } else {
+      content = blocksToText(blocks.value)
+      mime = 'text/plain;charset=utf-8'
+      ext = 'txt'
+    }
+  } else {
+    // 系统/调试页签：扁平日志，仅 TXT
+    const logs = activeTab.value === 'debug' ? debugLogs.value : systemLogs.value
+    content = logs.map(flatToText).join('\n')
+    mime = 'text/plain;charset=utf-8'
+    ext = 'txt'
+  }
+  if (!content.trim()) return
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-  const filename = `battle-log-${activeTab.value}-${timestamp}.txt`
-  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  const filename = `battle-log-${activeTab.value}-${timestamp}.${ext}`
+  const blob = new Blob([content], { type: mime })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -34580,10 +34807,12 @@ onMounted(() => {
   battleLogManager.addListener(logUpdateListener)
   nextTick(updateIndicator)
   window.addEventListener('resize', updateIndicator)
+  document.addEventListener('click', handleExportClickOutside)
 })
 onUnmounted(() => {
   battleLogManager.removeListener(logUpdateListener)
   window.removeEventListener('resize', updateIndicator)
+  document.removeEventListener('click', handleExportClickOutside)
   if (autoScrollTimer) clearTimeout(autoScrollTimer)
 })
 watch(activeTab, () => nextTick(updateIndicator))
@@ -34625,8 +34854,7 @@ watch(activeTab, () => nextTick(updateIndicator))
   transition: color var(--transition-fast), background var(--transition-fast);
   white-space: nowrap;
 }
-.log-tab:hover {
-}
+.log-tab:hover {}
 .log-tab.active {
   color: var(--color-energy);
   font-weight: var(--font-weight-bold);
@@ -34656,9 +34884,15 @@ watch(activeTab, () => nextTick(updateIndicator))
   animation: badge-pop 0.2s ease-out;
 }
 @keyframes badge-pop {
-  0% { transform: scale(0.6); }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 /* 滑动指示条 */
 .tab-indicator {
@@ -34707,6 +34941,40 @@ watch(activeTab, () => nextTick(updateIndicator))
   color: var(--color-text-primary);
   border-color: var(--color-energy);
 }
+.export-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+.export-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: var(--z-dropdown);
+  box-shadow: var(--shadow-md);
+  min-width: 120px;
+}
+.export-menu button {
+  padding: var(--space-1) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: left;
+}
+.export-menu button:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-info);
+}
 /* ─────────── 内容容器（双容器，v-show 保留滚动位置） ─────────── */
 .log-content {
   flex: 1;
@@ -34720,16 +34988,14 @@ watch(activeTab, () => nextTick(updateIndicator))
   animation: content-in 0.18s ease-out;
 }
 @keyframes content-in {
-  from { opacity: 0.4; transform: translateY(3px); }
-  to { opacity: 1; transform: none; }
-}
-/* ─────────── 战斗页签工具条（状态明细开关） ─────────── */
-.battle-toolbar {
-  display: flex;
-  align-items: center;
-  margin-bottom: var(--space-2);
-  padding-bottom: var(--space-1);
-  border-bottom: 1px dashed var(--color-border-default);
+  from {
+    opacity: 0.4;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .status-toggle {
   display: inline-flex;
@@ -34740,7 +35006,9 @@ watch(activeTab, () => nextTick(updateIndicator))
   color: var(--color-text-tertiary);
   transition: color var(--transition-fast);
 }
-.status-toggle input { display: none; }
+.status-toggle input {
+  display: none;
+}
 .status-toggle .toggle-track {
   position: relative;
   width: 30px;
@@ -34760,8 +35028,12 @@ watch(activeTab, () => nextTick(updateIndicator))
   background: var(--color-text-tertiary);
   transition: transform var(--transition-fast), background var(--transition-fast);
 }
-.status-toggle.on { color: var(--color-energy); }
-.status-toggle.on .toggle-track { background: var(--color-energy); }
+.status-toggle.on {
+  color: var(--color-energy);
+}
+.status-toggle.on .toggle-track {
+  background: var(--color-energy);
+}
 .status-toggle.on .toggle-thumb {
   transform: translateX(14px);
   background: var(--color-bg-secondary);
@@ -34790,11 +35062,21 @@ watch(activeTab, () => nextTick(updateIndicator))
   border-left: 2px solid transparent;
   transition: background var(--transition-fast);
 }
-.flat-item:hover { background: var(--color-bg-hover); }
-.flat-item--system { border-left-color: var(--color-info); }
-.flat-item--action { border-left-color: var(--color-debuff); }
-.flat-item--item { border-left-color: var(--color-heal); }
-.flat-item--debug { border-left-color: var(--color-text-disabled); }
+.flat-item:hover {
+  background: var(--color-bg-hover);
+}
+.flat-item--system {
+  border-left-color: var(--color-info);
+}
+.flat-item--action {
+  border-left-color: var(--color-debuff);
+}
+.flat-item--item {
+  border-left-color: var(--color-heal);
+}
+.flat-item--debug {
+  border-left-color: var(--color-text-disabled);
+}
 .flat-seq {
   color: var(--color-text-disabled);
   font-size: var(--font-size-xs);
@@ -34808,14 +35090,34 @@ watch(activeTab, () => nextTick(updateIndicator))
   background: var(--color-border-default);
   color: var(--color-text-secondary);
 }
-.flat-item.lv-0 .flat-level { background: var(--color-danger); color: var(--color-text-primary); }
-.flat-item.lv-1 .flat-level { background: var(--color-warning); color: var(--color-bg-secondary); }
-.flat-item.lv-2 .flat-level { background: var(--color-info); color: var(--color-bg-secondary); }
-.flat-item.lv-0 { color: var(--color-danger); }
-.flat-item.lv-1 { color: var(--color-warning); }
-.flat-msg { color: var(--color-text-secondary); flex: 1; min-width: 0; word-break: break-all; }
+.flat-item.lv-0 .flat-level {
+  background: var(--color-danger);
+  color: var(--color-text-primary);
+}
+.flat-item.lv-1 .flat-level {
+  background: var(--color-warning);
+  color: var(--color-bg-secondary);
+}
+.flat-item.lv-2 .flat-level {
+  background: var(--color-info);
+  color: var(--color-bg-secondary);
+}
+.flat-item.lv-0 {
+  color: var(--color-danger);
+}
+.flat-item.lv-1 {
+  color: var(--color-warning);
+}
+.flat-msg {
+  color: var(--color-text-secondary);
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+}
 .flat-item.lv-0 .flat-msg,
-.flat-item.lv-1 .flat-msg { color: inherit; }
+.flat-item.lv-1 .flat-msg {
+  color: inherit;
+}
 .flat-ctx {
   flex-basis: 100%;
   margin: var(--space-1) 0 0 0;
@@ -34840,42 +35142,107 @@ watch(activeTab, () => nextTick(updateIndicator))
   font-style: italic;
 }
 /* ─────────── 叙事块（原有样式保留） ─────────── */
-.rule { flex: 1; height: 1px; background: var(--color-border-default); align-self: center; }
+.rule {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-default);
+  align-self: center;
+}
 .rule--double {
   height: 3px;
   border-top: 1px solid var(--color-border-tertiary);
   border-bottom: 1px solid var(--color-border-tertiary);
   background: transparent;
 }
-.rule--thin { opacity: 0.5; }
-.nb { margin: 2px 0; }
+.rule--thin {
+  opacity: 0.5;
+}
+.nb {
+  margin: 2px 0;
+}
 .nb--battle-header {
-  display: flex; gap: 10px; text-align: center;
-  font-weight: var(--font-weight-bold); color: var(--color-warning);
-  padding: 6px 0; align-items: center;
+  display: flex;
+  gap: 10px;
+  text-align: center;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-warning);
+  padding: 6px 0;
+  align-items: center;
 }
-.battle-line { padding: 4px 0; letter-spacing: 1px; text-align: center; }
-.nb--round { display: flex; gap: 10px; margin: 14px 0 6px; align-items: center; }
-.round-label { color: var(--color-info); font-weight: var(--font-weight-bold); white-space: nowrap; }
-.action-header { font-weight: var(--font-weight-semibold); }
-.glyph { color: var(--color-warning); margin-right: 6px; }
-.action-result, .action-sub { padding-left: 1.4em; }
-.glyph--sub { color: var(--color-text-tertiary); }
+.battle-line {
+  padding: 4px 0;
+  letter-spacing: 1px;
+  text-align: center;
+}
+.nb--round {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 6px;
+  align-items: center;
+}
+.round-label {
+  color: var(--color-info);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+.action-header {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-xl);
+}
+.glyph {
+  color: var(--color-warning);
+  margin-right: 6px;
+}
+.action-result,
+.action-sub {
+  padding-left: 1.4em;
+  line-height: var(--line-height-xl);
+}
+.glyph--sub {
+  color: var(--color-text-tertiary);
+}
 .sub-header {
-  display: flex; gap: 8px; color: var(--color-text-tertiary);
-  margin-top: 8px; font-size: var(--font-size-xs); letter-spacing: 2px; align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-2);
+  letter-spacing: var(--space-1);
+  align-items: center;
 }
-.indent-line { padding-left: 1.4em; }
-.section-title { color: var(--color-energy); font-weight: var(--font-weight-bold); }
-.nb--summary { display: flex; gap: 10px; padding: 8px 0; align-items: center; }
-.summary-content { text-align: center; padding: 4px 0; }
-.summary-line { margin: 2px 0; }
+.indent-line {
+  padding-left: 1.4em;
+}
+.section-title {
+  color: var(--color-energy);
+  font-weight: var(--font-weight-bold);
+}
+.nb--summary {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  align-items: center;
+}
+.summary-content {
+  text-align: center;
+  padding: 4px 0;
+}
+.summary-line {
+  margin: 2px 0;
+}
 /* 新块淡入 */
 @media (prefers-reduced-motion: no-preference) {
-  .nb { animation: nb-in 0.18s ease-out; }
+  .nb {
+    animation: nb-in 0.18s ease-out;
+  }
   @keyframes nb-in {
-    from { opacity: 0; transform: translateY(3px); }
-    to { opacity: 1; transform: none; }
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 }
 /* 可悬浮锚点 */
@@ -34885,7 +35252,9 @@ watch(activeTab, () => nextTick(updateIndicator))
   cursor: help;
   transition: filter var(--transition-fast);
 }
-.log-hoverable:hover { filter: brightness(1.35); }
+.log-hoverable:hover {
+  filter: brightness(1.35);
+}
 </style>
 
 --- src/presentation/views/BattleReplay.vue ---
@@ -35136,9 +35505,7 @@ const filteredEvents = computed(() => {
   return events;
 });
 function loadRecording() {
-  // 这里应该显示一个加载对话框，让用户选择要加载的记录
-  console.log('加载记录');
-  // 模拟加载一个记录
+  // 加载最近录像，仅填充面板数据；播放由用户点击 ▶ 按钮手动触发
   const savedList = battleSystem.getSavedBattleRecordingsList();
   if (savedList.length > 0) {
     const recording = battleSystem.loadBattleRecording(savedList[0]);
@@ -35146,7 +35513,8 @@ function loadRecording() {
       currentRecording.value = recording;
       currentEventIndex.value = 0;
       isPlaying.value = false;
-      emit('replay-start', recording);
+      // NOTE: 不 emit('replay-start') — 加载不等同于播放，
+      // 避免触发父组件 resetBattle 和 BattleReplayManager 自动播放链
     }
   }
 }
@@ -35945,8 +36313,8 @@ const updateCustomSpeed = () => {
     <div v-if="summary" class="summary-container">
       <!-- 头部 -->
       <div class="summary-header">
-        <span class="winner-badge" :class="summary.winner === '我方' ? 'win' : 'lose'">
-          {{ summary.winner === '我方' ? '胜利' : '败北' }}
+        <span class="winner-badge" :class="summary.winner === '友方' ? 'win' : 'lose'">
+          {{ summary.winner === '友方' ? '胜利' : '败北' }}
         </span>
         <span class="summary-meta">
           {{ summary.totalRounds }} 回合 · {{ formatDuration(summary.duration) }}
@@ -36050,7 +36418,7 @@ const copySummary = () => {
   const s = props.summary
   if (!s) return
   const lines = [
-    `战斗战报 — ${s.winner === '我方' ? '胜利' : '败北'}`,
+    `战斗战报 — ${s.winner === '友方' ? '胜利' : '败北'}`,
     `${s.totalRounds} 回合 · ${formatDuration(s.duration)}`,
     `─── 数据统计 ───`,
     `总伤害: ${s.totalDamageDealt}  |  总治疗: ${s.totalHealing}  |  受击: ${s.totalDamageTaken}`,
@@ -36192,7 +36560,7 @@ const exportJson = () => {
       <select v-model="innerSelectedCharId" class="char-selector" @change="emitSelectChar">
         <option value="" disabled>{{ characters.length === 0 ? '暂无参战角色' : '选择角色' }}</option>
         <option v-for="char in characters" :key="char.id" :value="char.id">
-          {{ char.name }} ({{ char.side === 'ally' ? '我方' : '敌方' }})
+          {{ char.name }} ({{ ParticipantSideName[char.side] }})
         </option>
       </select>
     </template>
@@ -36292,8 +36660,11 @@ const exportJson = () => {
 import { ref, computed, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
-import buffsData from '@configs/buffs/buffs.json'
+import { buffsData } from '@/shared/types/buffs-json'
+import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import { classifyBuff, type BuffCategory } from '@/shared/types/buff-classification'
+import { getAttrName } from '@/domain/attribute/types'
+import { ParticipantSideName } from '@/domain/battle/type/types'
 // ==================== 类型 ====================
 export interface EditorBuffEntry {
   id: string
@@ -36351,7 +36722,7 @@ const activeTab = ref<'buffs' | 'attrs' | 'reset'>('buffs')
 const buffSearch = ref('')
 const innerSelectedCharId = ref('')
 const activeCategory = ref<string>('all') // 'all' 或 facet key
-const localStatuses = ref<EditorBuffEntry[]>([])
+const localStatuses = ref<EditorBuffEntry[]>([]) // 本地状态的 Buff 入口
 const attrOverrides = ref<Record<string, number>>({
   currentHealth: 0, currentEnergy: 0, minAttack: 0, defense: 0, speed: 0,
 })
@@ -36381,34 +36752,32 @@ const attrFields: AttrOverrideItem[] = [
   { key: 'defense', label: '防御', min: 0, max: 99999, steps: [100, 10, 1] },
   { key: 'speed', label: '速度', min: 0, max: 9999, steps: [100, 10, 1] },
 ]
-// ==================== 属性名 → 中文 ====================
-const ATTR_KEY_TO_CN: Record<string, string> = {
-  attack: '攻击', defense: '防御', speed: '速度',
-  critRate: '暴击率', critDamage: '暴击伤害', dodge: '闪避',
-  dmgReduction: '伤害减免', damageBoost: '伤害加成',
-  maxHealth: '气血上限', currentHealth: '当前气血',
-  maxEnergy: '能量上限', currentEnergy: '当前能量',
-  hit: '命中率', HIT_RATE: '命中率',
-  critDamageTaken: '暴击承伤', critDmgTakenReduction: '暴击减免',
-  normalAtkDmgReduction: '普攻减免', physicalDmgReduction: '物伤减免',
-  magicalDmgReduction: '魔伤减免', fireDamageTaken: '火伤减免',
-  waterDamageTaken: '水伤减免', lightningDamageTaken: '雷伤减免',
-  slowImmune: '减速免疫', stunResist: '眩晕抵抗',
-  knockbackResist: '击退抵抗', poisonResist: '毒抗',
-  bleedResist: '流血抵抗', burnImmune: '灼烧免疫',
-  burnDuration: '灼烧延长', controlDurationReduction: '控制减免',
-  skillCooldown: '技能冷却', demonDamage: '对妖伤害',
-  damageToDemon: '对妖伤害', damageToLowHp: '对低血伤害',
-  webSuccessRate: '蛛网成功率', controlSuccessRate: '控制成功率',
-  fireDamage: '火攻', waterAtk: '水攻', fireAtk: '火攻',
-  poisonRes: '毒抗', healEffect: '治疗效果',
+// ==================== 属性名 → 中文（兜底：getAttrName 不认识的 ad-hoc 键） ====================
+const ATTR_ALIAS: Record<string, string> = {
+  dmgReduction: '伤害减免',
+  HIT_RATE: '命中率',
+  critDamageTaken: '暴击承伤',
+  poisonResist: '毒抗',
+  demonDamage: '对妖伤害',
+  fireDamage: '火攻',
+  fireDamageTaken: '火伤减免',
+  waterDamageTaken: '水伤减免',
+  slowImmune: '减速免疫',
+  stunResist: '眩晕抵抗',
+  knockbackResist: '击退抵抗',
+  bleedResist: '流血抵抗',
+  burnImmune: '灼烧免疫',
+  burnDuration: '灼烧延长',
+  skillCooldown: '技能冷却',
+  webSuccessRate: '蛛网成功率',
+  healEffect: '治疗效果',
   energyCost: '能量消耗',
 }
 /** 格式化属性修正为可读文本 */
 function formatAttributes(attrs: Record<string, string>): string {
   return Object.entries(attrs)
     .map(([key, val]) => {
-      const cn = ATTR_KEY_TO_CN[key] || key
+      const cn = getAttrName(key as never) || ATTR_ALIAS[key] || key
       // 数值格式化：+1.0 → +1, +20% → +20%, -10 → -10
       const num = parseFloat(val)
       if (val.endsWith('%')) return `${cn}${val}`
@@ -36421,7 +36790,7 @@ function formatAttributes(attrs: Record<string, string>): string {
 // ==================== Methods ====================
 function buildStatusesFromBuffs() {
   const buffList = Array.isArray(buffsData) ? buffsData : []
-  return buffList.map((buff: any) => {
+  return buffList.map((buff: BuffJsonEntry) => {
     const classification = classifyBuff(buff)
     const primaryFacet = classification.facets.length > 0 ? classification.facets[0] : 'other'
     return {
@@ -36435,7 +36804,7 @@ function buildStatusesFromBuffs() {
     }
   })
 }
-function buildEffectSummary(buff: any): string {
+function buildEffectSummary(buff: BuffJsonEntry): string {
   const parts: string[] = []
   if (buff.attributes) {
     parts.push(formatAttributes(buff.attributes))
@@ -37154,6 +37523,36 @@ const reloadExport = () => {
                   </button>
                 </div>
               </div>
+              <!-- 日志生成模块控件 -->
+              <div v-if="module.name === '日志生成'" class="log-gen-control">
+                <div class="log-gen-row">
+                  <span class="log-gen-label">队伍:</span>
+                  <div class="log-gen-options">
+                    <button v-for="opt in teamOptions" :key="opt.value"
+                      class="log-gen-opt-btn" :class="{ active: teamConfig === opt.value }"
+                      @click="teamConfig = opt.value">{{ opt.label }}</button>
+                  </div>
+                </div>
+                <div class="log-gen-row">
+                  <span class="log-gen-label">格式:</span>
+                  <div class="log-gen-options">
+                    <button v-for="opt in formatOptions" :key="opt.value"
+                      class="log-gen-opt-btn" :class="{ active: format === opt.value }"
+                      @click="format = opt.value">{{ opt.label }}</button>
+                  </div>
+                </div>
+                <div class="log-gen-row">
+                  <span class="log-gen-label">场次:</span>
+                  <div class="log-gen-options">
+                    <button v-for="n in countOptions" :key="n"
+                      class="log-gen-opt-btn" :class="{ active: battleCount === n }"
+                      @click="battleCount = n">{{ n }}</button>
+                  </div>
+                </div>
+                <button class="log-gen-btn" @click="handleGenerate">
+                  生成 {{ battleCount }} 场
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -37162,9 +37561,112 @@ const reloadExport = () => {
   </Teleport>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
+import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager'
+import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 const debugStore = useDebugStore()
+// ==================== 日志生成 ====================
+const teamConfig = ref<'1v1' | '2v2' | 'random'>('1v1')
+const format = ref<'txt' | 'html'>('txt')
+const battleCount = ref(1)
+const countOptions = [1, 10, 50]
+const teamOptions = [
+  { value: '1v1' as const, label: '1v1' },
+  { value: '2v2' as const, label: '2v2' },
+  { value: 'random' as const, label: '随机' },
+]
+const formatOptions = [
+  { value: 'txt' as const, label: 'TXT' },
+  { value: 'html' as const, label: 'HTML' },
+]
+const allyNames = ['火焰守卫', '冰霜法师', '圣光骑士', '暗影刺客', '雷霆战士']
+const enemyNames = ['熔岩巨魔', '亡灵巫师', '深渊猎手', '毒蝎领主', '暗影刺客']
+const skillNames = ['裂空斩', '冰霜新星', '圣光审判', '暗影突袭', '雷霆一击', '火焰风暴', '治愈术', '护盾']
+function genRandomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+function getTeamPair(): { ally: string; enemy: string }[] {
+  switch (teamConfig.value) {
+    case '1v1':
+      return [{ ally: pickRandom(allyNames), enemy: pickRandom(enemyNames) }]
+    case '2v2':
+      return [
+        { ally: pickRandom(allyNames), enemy: pickRandom(enemyNames) },
+        { ally: pickRandom(allyNames), enemy: pickRandom(enemyNames) },
+      ]
+    case 'random': {
+      const count = genRandomInt(1, 3)
+      return Array.from({ length: count }, () => ({
+        ally: pickRandom(allyNames),
+        enemy: pickRandom(enemyNames),
+      }))
+    }
+  }
+}
+function generateBattleLogs(battleIndex: number) {
+  const { addSystemLog, addBattleLog, addActionLog } = battleLogManager
+  const isAllyWin = Math.random() > 0.4
+  const totalTurns = genRandomInt(3, 8)
+  const battleId = `gen_${Date.now()}_${battleIndex}`
+  const pairs = getTeamPair()
+  const allActors = pairs.flatMap(p => [p.ally, p.enemy])
+  const isHtml = format.value === 'html'
+  addSystemLog({
+    message: `═══ 第 ${battleIndex} 场开始 [${battleId}] 队伍: ${pairs.map(p => `${p.ally} vs ${p.enemy}`).join(' | ')}`,
+  })
+  for (let turn = 1; turn <= totalTurns; turn++) {
+    const actor = pickRandom(allActors)
+    const target = pickRandom(allActors.filter(n => n !== actor))
+    const isSkill = Math.random() > 0.4
+    const damage = isSkill ? genRandomInt(80, 450) : genRandomInt(20, 120)
+    const actionName = isSkill ? pickRandom(skillNames) : '普通攻击'
+    const isCrit = Math.random() > 0.8
+    addBattleLog({
+      turn,
+      source: actor,
+      target,
+      action: actionName,
+      message: isHtml
+        ? `${actor} 对 ${target} 使用 ${actionName}${isCrit ? '，暴击!' : ''}，造成 ${damage} 点伤害`
+        : `${actor} → ${target}: ${actionName}${isCrit ? ' [暴击!]' : ''} ${damage} 伤害`,
+      category: isCrit ? BATTLE_LOG_CATEGORIES.CRIT : BATTLE_LOG_CATEGORIES.DAMAGE,
+      meta: { role: Math.random() > 0.5 ? 'action' : 'sub' },
+    })
+    addActionLog({
+      source: actor,
+      target,
+      action: actionName,
+      message: isCrit ? `暴击! 造成 ${damage} 点伤害` : `造成 ${damage} 点伤害`,
+    })
+    if (Math.random() > 0.7) {
+      const healer = pickRandom(pairs.flatMap(p => [p.ally, p.enemy]))
+      const healTarget = pickRandom(allActors.filter(n => n !== healer))
+      const healAmount = genRandomInt(30, 150)
+      addBattleLog({
+        turn,
+        source: healer,
+        target: healTarget,
+        action: '治愈术',
+        message: `${healer} 对 ${healTarget} 使用 治愈术，恢复 ${healAmount} 点气血`,
+        category: BATTLE_LOG_CATEGORIES.HEAL,
+      })
+    }
+  }
+  const winner = isAllyWin ? '我方' : '敌方'
+  addSystemLog({ message: `第 ${battleIndex} 场结束 — ${winner}胜利 (${totalTurns}回合)` })
+}
+function handleGenerate() {
+  for (let i = 1; i <= battleCount.value; i++) {
+    generateBattleLogs(i)
+  }
+  battleLogManager.addSystemLog({
+    message: `✅ 已生成 ${battleCount.value} 场 (${teamConfig.value} / ${format.value.toUpperCase()})`,
+  })
+}
 const impactStyles = [
   { label: '爆炸', value: 'explosion', desc: '径向火球扩散+火花' },
   { label: '斩击', value: 'slash', desc: '干净利落的一刀弧光' },
@@ -37252,6 +37754,11 @@ const debugModules: DebugModule[] = [
       { label: '行为日志', action: 'log_action', description: '调用 addActionLog', class: 'btn-info' },
       { label: '调试日志', action: 'log_debug', description: '调用 addDebugLog', class: 'btn-info' },
     ],
+  },
+  {
+    name: '日志生成',
+    icon: '📊',
+    buttons: [],
   },
   {
     name: '动画调试',
@@ -37421,6 +37928,65 @@ const handleButtonClick = (action: string) => {
   background: rgba(34, 211, 238, 0.25);
   border-color: var(--color-energy);
   color: var(--color-energy);
+}
+/* ====== 日志生成控件 ====== */
+.log-gen-control {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.log-gen-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.log-gen-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--font-size-md);
+  min-width: 40px;
+  flex-shrink: 0;
+}
+.log-gen-options {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+.log-gen-opt-btn {
+  padding: 2px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.log-gen-opt-btn:hover {
+  background: rgba(34, 211, 238, 0.15);
+  border-color: rgba(34, 211, 238, 0.4);
+  color: var(--color-text-primary);
+}
+.log-gen-opt-btn.active {
+  background: rgba(34, 211, 238, 0.25);
+  border-color: var(--color-energy);
+  color: var(--color-energy);
+}
+.log-gen-btn {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-energy);
+  border-radius: var(--radius-sm);
+  background: rgba(34, 211, 238, 0.15);
+  color: var(--color-energy);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-weight: var(--font-weight-medium);
+  align-self: flex-start;
+}
+.log-gen-btn:hover {
+  background: rgba(34, 211, 238, 0.3);
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
 }
 @keyframes slideIn {
   from {
@@ -38180,10 +38746,14 @@ const valueColorClass = computed(() => {
         >
           {{ store.generationProgress.isGenerating
             ? `生成中 ${store.generationProgress.percent}%`
-            : '📊 生成数据' }}
+            : '生成数据' }}
         </button>
         <!-- 生成模式选择弹出 -->
         <div v-if="showGenMenu" class="gen-menu">
+          <div class="gen-format-row">
+            <button :class="{ active: genFormat === 'txt' }" @click="genFormat = 'txt'">TXT</button>
+            <button :class="{ active: genFormat === 'html' }" @click="genFormat = 'html'">HTML</button>
+          </div>
           <button @click="startGenerate('1v1')">1v1 × 50场</button>
           <button @click="startGenerate('2v2')">2v2 × 50场</button>
           <button @click="startGenerate('random')">随机 × 50场</button>
@@ -38255,9 +38825,10 @@ const toggleBattleSpeed = () => {
 // ★ 战斗数据生成菜单
 const showGenMenu = ref(false)
 const genWrapperRef = ref<HTMLElement | null>(null)
+const genFormat = ref<'txt' | 'html'>('txt')
 const startGenerate = (mode: '1v1' | '2v2' | 'random') => {
   showGenMenu.value = false
-  store.generateBattleData(mode)
+  store.generateBattleData(mode, genFormat.value)
 }
 // 点击外部关闭生成菜单
 const handleClickOutside = (e: MouseEvent) => {
@@ -38510,6 +39081,29 @@ onUnmounted(() => {
   background: var(--color-bg-hover);
   color: var(--color-info);
 }
+.gen-format-row {
+  display: flex;
+  gap: 2px;
+  padding: var(--space-1);
+  border-bottom: 1px solid var(--color-border-default);
+  margin-bottom: 2px;
+}
+.gen-format-row button {
+  flex: 1;
+  text-align: center;
+  padding: var(--space-1);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+}
+.gen-format-row button.active {
+  border-color: var(--color-info);
+  color: var(--color-info);
+  background: rgba(79, 195, 247, 0.1);
+}
 </style>
 
 --- src/presentation/views/KeybindHintPanel.vue ---
@@ -38578,12 +39172,6 @@ function handleKeyDown(event: KeyboardEvent) {
 onMounted(() => {
   initKeybindHints();
   window.addEventListener('keydown', handleKeyDown);
-});
-// 暴露方法给父组件
-defineExpose({
-  showPanel,
-  closePanel,
-  togglePanel
 });
 </script>
 <style scoped>
@@ -38831,8 +39419,8 @@ onUnmounted(() => {
                     }}-{{ enemy.stats.maxAttack }}</span>
                   </div>
                   <div class="char-actions">
-                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, PARTICIPANT_SIDE.ALLY)">我方</button>
-                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, PARTICIPANT_SIDE.ENEMY)">敌方</button>
+                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ALLY)">我方</button>
+                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ENEMY)">敌方</button>
                   </div>
                 </div>
               </div>
@@ -38852,11 +39440,9 @@ import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { container } from '@/infrastructure/di/Container';
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene';
-import { PARTICIPANT_SIDE, type ParticipantSide, type BattleEntity } from "@/domain/battle/type/types";
+import { ParticipantSide } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
-import { BuffSystem } from '@/domain/buff/BuffSystem';
-import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager';
 interface GroupedEnemies {
   scene: SceneData;
   enemies: Enemy[];
@@ -39024,12 +39610,10 @@ const applyPreset = () => {
   if (!preset) return
   // 先停止可能正在进行的战斗
   if (battleStore.isBattleActive) {
-    battleStore.endBattle(PARTICIPANT_SIDE.ALLY)
+    battleStore.endBattle(ParticipantSide.ALLY)
   }
   battleStore.resetBattle()
   battleService.clearParticipants()
-  const buffSystem = container.resolve<BuffSystem>('BuffSystem')
-  const passiveSkillManager = container.resolve<PassiveSkillManager>('PassiveSkillManager')
   // 构建我方
   preset.ally.forEach((id, index) => {
     const enemyData = GameDataProcessor.findEnemyById(id)
@@ -39037,12 +39621,8 @@ const applyPreset = () => {
       console.warn(`预设角色未找到: ${id}`)
       return
     }
-    const entity = GameDataProcessor.enemyToParticipant(enemyData, PARTICIPANT_SIDE.ALLY, index)
-    battleService.addCharacterToTeam(entity, PARTICIPANT_SIDE.ALLY)
-    if (entity.getImmunities().length > 0) {
-      buffSystem.registerCharacterImmunities(entity.id, entity.getImmunities())
-    }
-    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
+    const entity = GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ALLY, index)
+    battleService.addCharacterToTeam(entity, ParticipantSide.ALLY)
   })
   // 构建敌方
   preset.enemy.forEach((id, index) => {
@@ -39051,12 +39631,8 @@ const applyPreset = () => {
       console.warn(`预设角色未找到: ${id}`)
       return
     }
-    const entity = GameDataProcessor.enemyToParticipant(enemyData, PARTICIPANT_SIDE.ENEMY, index)
-    battleService.addCharacterToTeam(entity, PARTICIPANT_SIDE.ENEMY)
-    if (entity.getImmunities().length > 0) {
-      buffSystem.registerCharacterImmunities(entity.id, entity.getImmunities())
-    }
-    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
+    const entity = GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ENEMY, index)
+    battleService.addCharacterToTeam(entity, ParticipantSide.ENEMY)
   })
   battleStore.syncTeams()
   const firstAlly = battleService.getAllyTeam()[0]
@@ -39146,17 +39722,9 @@ const isRosterCharSelected = (enemyId: string): boolean => {
   // ponytail: previewEntity ID 格式是 [ENEMY]_<enemyId>_<counter>
   return id.startsWith(`[ENEMY]_${enemyId}_`);
 };
-const addEnemyToBattle = (enemy: Enemy, side: typeof PARTICIPANT_SIDE.ALLY | typeof PARTICIPANT_SIDE.ENEMY = PARTICIPANT_SIDE.ALLY) => {
+const addEnemyToBattle = (enemy: Enemy, side: typeof ParticipantSide.ALLY | typeof ParticipantSide.ENEMY = ParticipantSide.ALLY) => {
   const newCharacter = GameDataProcessor.enemyToParticipant(enemy, side)
   battleService.addCharacterToTeam(newCharacter, side)
-  // ponytail: 注册免疫标签到 BuffSystem
-  if (newCharacter.getImmunities().length > 0) {
-    const buffSystem = container.resolve<any>('BuffSystem');
-    buffSystem.registerCharacterImmunities(newCharacter.id, newCharacter.getImmunities());
-  }
-  // ponytail: 注册触发型被动技能到 PassiveSkillManager
-  const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
-  GameDataProcessor.registerParticipantPassives(newCharacter, passiveSkillManager);
   battleStore.selectCharacter(newCharacter.id)
 };
 const moveCharacter = (direction: number) => {
@@ -39722,6 +40290,12 @@ export type LogSegmentKind =
   | 'hp-before' // 气血 变化前
   | 'hp-after' // 气血 变化后
   | 'text' // 普通文本（默认）
+export const LogSegmentHoverKind = {
+  BUFF: 'buff',
+  SKILL: 'skill',
+  PASSIVE: 'passive',
+} as const
+export type LogSegmentHoverKind = (typeof LogSegmentHoverKind)[keyof typeof LogSegmentHoverKind]
 /**
  * 可悬浮的实体身份（方案二：悬浮信息卡片）
  * 带此字段的 LogSegment 渲染为可交互锚点，
@@ -40667,6 +41241,7 @@ export function createAccumulator(battleId: string): BattleSummaryAccumulator {
  *   - facets    → 运行时能力（从配置结构自动派生）
  */
 import type { ResolvedEffectPlan } from '@/domain/buff/atomic/BuffConfigResolver'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 export type BuffDisplayType = 'buff' | 'debuff' | 'control'
 // ==================== 维度一：极性（UI 颜色） ====================
 export const BUFF_POLARITY = {
@@ -40722,14 +41297,14 @@ export function deriveBuffFacets(config: {
   if (config.effectPlan && config.effectPlan.length > 0) {
     for (const effect of config.effectPlan) {
       switch (effect.type) {
-        case 'modifier': facets.push(BUFF_CATEGORY.MODIFIER); break
-        case 'dot':      facets.push(BUFF_CATEGORY.DOT); break
-        case 'hot':      facets.push(BUFF_CATEGORY.TRIGGER); break  // HOT 归入 trigger 类
-        case 'control':  facets.push(BUFF_CATEGORY.CONTROL); break
-        case 'shield':   facets.push(BUFF_CATEGORY.SHIELD); break
-        case 'trigger':  facets.push(BUFF_CATEGORY.TRIGGER); break
-        case 'aura':     facets.push(BUFF_CATEGORY.AURA); break
-        case 'immunity': facets.push(BUFF_CATEGORY.IMMUNITY); break
+        case AtomicEffectType.MODIFIER: facets.push(BUFF_CATEGORY.MODIFIER); break
+        case AtomicEffectType.DOT:      facets.push(BUFF_CATEGORY.DOT); break
+        case AtomicEffectType.HOT:      facets.push(BUFF_CATEGORY.TRIGGER); break  // HOT 归入 trigger 类
+        case AtomicEffectType.CONTROL: facets.push(BUFF_CATEGORY.CONTROL); break
+        case AtomicEffectType.SHIELD:  facets.push(BUFF_CATEGORY.SHIELD); break
+        case AtomicEffectType.TRIGGER: facets.push(BUFF_CATEGORY.TRIGGER); break
+        case AtomicEffectType.AURA:    facets.push(BUFF_CATEGORY.AURA); break
+        case AtomicEffectType.IMMUNITY: facets.push(BUFF_CATEGORY.IMMUNITY); break
       }
     }
     // 去重
@@ -40786,12 +41361,16 @@ export interface BuffClassificationInput {
   triggers?: unknown[]
   /** 属性修饰符 */
   attributes?: Record<string, string>
+  /** 护盾配置 */
+  shield?: unknown
   /** 免疫标签 */
   immunities?: string[]
   /** 是否为减益（遗留字段，被 polarity 取代） */
   isDebuff?: boolean
   /** 极性：直接决定 UI 颜色（取代 isDebuff + category 优先级链的猜测） */
-  polarity?: BuffPolarity
+  polarity?: BuffPolarity | string
+  /** 原子效果执行计划（从 ResolvedBuffConfig 传入） */
+  effectPlan?: ResolvedEffectPlan[]
 }
 /**
  * Buff 分类结果
@@ -40825,8 +41404,8 @@ export function classifyBuff(
     return {
       category: BUFF_CATEGORY.OTHER,
       facets: [],
-      polarity: BUFF_POLARITY.NEUTRAL,
       isNegative: false,
+      polarity: BUFF_POLARITY.NEUTRAL,
     }
   }
   // 1. 自动派生 facets（从配置结构，不看 category，不看 tags）
@@ -40834,7 +41413,7 @@ export function classifyBuff(
   // 2. 确定极性：polarity → isDebuff → category 猜测（三级回退）
   let polarity: BuffPolarity
   if (config.polarity) {
-    polarity = config.polarity
+    polarity = config.polarity as BuffPolarity
   } else if (config.isDebuff !== undefined) {
     polarity = config.isDebuff ? BUFF_POLARITY.NEGATIVE : BUFF_POLARITY.POSITIVE
   } else {
@@ -41065,6 +41644,63 @@ export interface BuffDisplayState {
   secondaryGroups: BuffTextItem[]
 }
 
+--- src/shared/types/buffs-json.ts ---
+/**
+ * buffs.json 完整类型定义
+ *
+ * 这是配置数据的纯 schema 类型——描述 JSON 文件中的字段结构，
+ * 而非领域模型。用于替代散布在各处的局部接口和 `any` 转换。
+ *
+ * 所有非 id 字段均为可选（JSON 中并非每条 entry 都有所有字段）。
+ */
+export interface BuffJsonAuraModifier {
+  id?: string
+  targetAttribute: string
+  type: string
+  value: number
+  condition?: string
+}
+export interface BuffJsonAura {
+  targetSelector: string
+  modifiers: BuffJsonAuraModifier[]
+}
+export interface BuffJsonTriggerEntry {
+  phase: string
+  scriptId: string
+  params?: Record<string, unknown>
+  probability?: number
+  cooldown?: number
+  maxTriggers?: number
+  condition?: string
+}
+export interface BuffJsonEntry {
+  id: string
+  name?: string
+  category?: string
+  duration?: number
+  maxStacks?: number
+  aura?: BuffJsonAura
+  polarity?: string
+  description?: string
+  attributes?: Record<string, string>
+  triggers?: BuffJsonTriggerEntry[]
+  controlType?: string
+  controlPriority?: number
+  stackRule?: string
+  tags?: string[]
+  onAdd?: string
+  immunities?: string[]
+  statusType?: string
+  shield?: unknown
+  isDebuff?: boolean
+  parameters?: Record<string, unknown>
+  cooldown?: number
+  dispellable?: boolean
+}
+import rawBuffsData from '@configs/buffs/buffs.json'
+export const buffsData: readonly BuffJsonEntry[] =
+  rawBuffsData as BuffJsonEntry[]
+
 --- src/shared/types/effect.ts ---
 import type { SkillStep, SkillConfig } from '@/domain/skill/types'
 /**
@@ -41181,6 +41817,23 @@ export interface SkillConfigWithEffect extends SkillConfig {
    * 技能效果配置（可选）
    */
   effectConfig?: EffectConfig
+}
+
+--- src/shared/types/effects-json.ts ---
+/**
+ * effects.json 完整类型定义
+ *
+ * 配置数据的纯 schema 类型——描述 JSON 文件中 effects 数组的结构，
+ * 而非运行时效果模型。
+ */
+export interface EffectsJsonEntry {
+  id: string
+  type: string
+  params: Record<string, unknown>
+  description?: string
+}
+export interface EffectsJsonData {
+  effects: EffectsJsonEntry[]
 }
 
 --- src/shared/types/enemy.ts ---
@@ -41379,43 +42032,6 @@ export function isConsumable(
   item: Item,
 ): item is Item & { effects: ItemEffect[] } {
   return item.type === ItemType.CONSUMABLE && !!item.effects
-}
-
---- src/shared/types/log-renderer.ts ---
-/**
- * 文件: log-renderer.ts
- * 功能: 玩家日志渲染器接口
- * 描述: 定义 PlayerLogRenderer 接口，供不同的日志模板风格实现。
- *
- * 设计原则: Typography-First（排版优先）。
- * 全部依赖于纯中文文本排版和 CSS 着色，不依赖任何符号/图标。
- * 版本: 1.0.0
- */
-import type { BattleAction } from '@/domain/battle/type/types'
-import type { BattleLogEntry, LogSegment, ParticipantMap } from './battle-log'
-/**
- * 玩家日志渲染器接口
- * 每种展示风格（叙事、极简等）实现此接口，
- * 将 BattleLogEntry 渲染为着色后的 LogSegment[]。
- */
-export interface PlayerLogRenderer {
-  /** 渲染器唯一标识，如 'pokemon', 'slay-the-spire' */
-  id: string
-  /** 渲染器显示名称，如 '纯文本叙事', '极简数据' */
-  name: string
-  /** 描述文案，用于 UI 下拉提示 */
-  description: string
-  /**
-   * 将 BattleLogEntry 渲染为 LogSegment[]
-   * @param entry 战斗日志条目
-   * @param action 原始战斗动作（可选，极简风格需要数值信息）
-   * @param participants 参与者映射表（用于查询敌我阵营、名称等）
-   */
-  render(
-    entry: BattleLogEntry,
-    action: BattleAction | undefined,
-    participants: ParticipantMap,
-  ): LogSegment[]
 }
 
 --- src/shared/types/projection.ts ---
@@ -41628,7 +42244,7 @@ export function syncAttackRange(
  * 功能: 数据校验工具
  * 描述: 用于战斗回放数据的完整性校验
  */
-export function calculateChecksum(data: any): string {
+export function calculateChecksum(data: unknown): string {
   const str = JSON.stringify(data)
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -41638,7 +42254,7 @@ export function calculateChecksum(data: any): string {
   const hex = (hash >>> 0).toString(16).padStart(8, '0')
   return hex
 }
-export function verifyChecksum(data: any, expectedChecksum: string): boolean {
+export function verifyChecksum(data: unknown, expectedChecksum: string): boolean {
   const actualChecksum = calculateChecksum(data)
   return actualChecksum === expectedChecksum
 }
@@ -41726,7 +42342,7 @@ export interface ValidationRule<T> {
   /** 正则表达式（字符串类型） */
   pattern?: RegExp
   /** 自定义验证函数 */
-  validator?: (value: any) => boolean
+  validator?: (value: unknown) => boolean
   /** 错误消息 */
   message?: string
 }
@@ -41740,7 +42356,7 @@ export interface ValidationResult {
  * 数据处理工具类
  */
 export class DataProcessor {
-  private static cache: Map<string, { data: any; timestamp: number }> = new Map()
+  private static cache: Map<string, { data: unknown; timestamp: number }> = new Map()
   constructor() {}
   /**
    * 数据查找方法
@@ -41939,7 +42555,7 @@ export class DataProcessor {
   static getCachedData<T>(key: string): T | null {
     const cached = this.cache.get(key)
     if (!cached) return null
-    return cached.data
+    return cached.data as T
   }
   /**
    * 设置缓存数据
@@ -42047,7 +42663,7 @@ export function formatModifierValue(value: number, type: string): string {
 /**
  * 从可能为 AttributeValue 对象的值中提取数值
  */
-function getNumericValue(value: any): number {
+function getNumericValue(value: number | { value: number }): number {
   if (typeof value === 'number') return value
   if (typeof value === 'object' && value !== null && typeof value.value === 'number') return value.value
   return 0
@@ -42057,7 +42673,7 @@ function getNumericValue(value: any): number {
  * @param value 加成属性值（数值或 { value: number } 对象）
  * @returns 格式化后的字符串，如 "+12.5%" 或 "-8%"
  */
-export function formatBonusValue(value: any): string {
+export function formatBonusValue(value: number | { value: number }): string {
   const numValue = getNumericValue(value)
   if (isNaN(numValue)) return '0%'
   if (numValue === 0) return '0%'
@@ -42084,11 +42700,7 @@ import {
   BattleParticipantImpl,
   type BattleParticipantData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
-import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
-import {
-  BattleTriggerPhase,
-  PARTICIPANT_SIDE,
-} from '@/domain/battle/type/types'
+import { BattleEntity, ParticipantSide, BattleTriggerPhase } from '@/domain/battle/type/types'
 import type { CharacterStats } from '@/domain/character/types'
 import type {
   PassiveSkillConfig,
@@ -42188,7 +42800,7 @@ export class GameDataProcessor {
    */
   static enemyToParticipant(
     enemy: Enemy,
-    type: ParticipantSide = PARTICIPANT_SIDE.ENEMY,
+    type: ParticipantSide = ParticipantSide.ENEMY,
     seatIndex: number = 0,
   ): BattleParticipantImpl {
     // 1. 解析被动技能并生成修饰符模板列表
@@ -42210,7 +42822,6 @@ export class GameDataProcessor {
     const initData: BattleParticipantData = {
       id: `[${type}]_${enemy.id}_${counter.next()}`,
       name: enemy.name,
-      type,
       team: type,
       level: enemy.level,
       enabled: true,
@@ -42741,10 +43352,15 @@ export class GameDataProcessor {
  */
 import type { LogSegment, LogSegmentHover, NarrativeBlock } from '@/shared/types/battle-log'
 import {
-  classifyBuff,
-  getBuffLogClass,
   type BuffClassificationInput,
 } from '@/shared/types/buff-classification'
+// HACK: EXPORT_CSS 是 SCSS 令牌体系的静态快照，不参与构建。
+// 修改以下 SCSS 内容时须同步更新此处（grep "EXPORT_CSS" 定位）：
+//   - tokens.scss 颜色令牌: --color-bg-primary/-secondary/-tertiary, --color-text-primary/
+//     -secondary/-tertiary, --color-border-default/-tertiary, --color-success, --color-danger,
+//     --color-warning, --color-info, --color-energy, --color-debuff
+//   - _battle-log.scss §5-6 语义类: .log-*, .chip--*, .num--*, .hp-*, .hoverable
+//   - _battle-log.scss §6 叙事块类: .nb--*, .rule--*, .action-*, .sub-header, .summary-*
 // ==================== 可注入的查找接口 ====================
 /**
  * Buff 配置查找接口（工厂不依赖具体的 BuffScriptRegistry）
@@ -42759,32 +43375,6 @@ export interface SkillConfigLookup {
   getSkillConfig(skillId: string): { name: string; description?: string } | undefined
 }
 // ==================== 工厂函数 ====================
-/**
- * 生成 buff 名称的 LogSegment
- *
- * 根据 buffId 查配置 → 获取名称 → classifyBuff 判定颜色 → 注入 hover
- *
- * @param buffId - Buff 的唯一标识
- * @param lookup - Buff 配置查找器（通常是 BuffScriptRegistry）
- * @returns LogSegment（含 classStr 和 hover）
- *
- * 使用示例：
- * ```
- * const seg = buffSegment('buff_leader_aura', buffScriptRegistry)
- * // → { text: '统领光环', classStr: 'log-buff', hover: { kind: 'buff', id: 'buff_leader_aura' } }
- * ```
- */
-export function buffSegment(
-  buffId: string,
-  lookup: BuffConfigLookup,
-): LogSegment {
-  const config = lookup.getBuffConfig(buffId)
-  const name = config?.name ?? config?.id ?? buffId
-  const classification = classifyBuff(config)
-  const classStr = getBuffLogClass(classification)
-  const hover: LogSegmentHover = { kind: 'buff', id: buffId }
-  return { text: `【${name}】`, classStr, hover, kind: 'buff' }
-}
 /**
  * 生成技能名称的 LogSegment
  *
@@ -42872,6 +43462,208 @@ export function blocksToText(blocks: NarrativeBlock[]): string {
     }
   }
   return lines.join('\n')
+}
+// ==================== HTML 导出 ====================
+/** HTML 转义（含 " 与 '，供属性/文本上下文共用） */
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+/**
+ * 导出专用 CSS — 提取自 tokens.scss + _battle-log.scss，自包含供离线查看。
+ *
+ * ⚠️ 双源同步检查清单：此常量是 SCSS 令牌体系的"快照"，不参与构建。
+ *    修改 SCSS 中以下内容时，必须手动同步此处（grep "EXPORT_CSS" 定位）：
+ *    - 颜色令牌: --color-bg-primary/-secondary/-tertiary, --color-text-primary/
+ *      -secondary/-tertiary, --color-border-default/-tertiary, --color-success,
+ *      --color-danger, --color-warning, --color-info, --color-energy, --color-debuff
+ *    - 语义类: .log-* / .chip--* / .num--* / .hp-* / .hoverable (_battle-log.scss §5-6)
+ *    - 叙事块类: .nb--* / .rule--* / .action-* / .sub-header / .summary-* (_battle-log.scss §6)
+ */
+const EXPORT_CSS = `
+:root {
+  --bg-primary:#1a1a2e; --bg-secondary:#0f0f1a; --bg-tertiary:#16213e;
+  --text-primary:#ffffff; --text-secondary:#eeeeee; --text-tertiary:#888888;
+  --border:#0f3460; --border-tertiary:#0f4b86;
+  --c-success:#4caf50; --c-danger:#f44336; --c-warning:#ff9800;
+  --c-info:#4fc3f7; --c-energy:#22d3ee; --c-debuff:#a855f7;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg-primary); color:var(--text-primary);
+  font-family:'Consolas','Monaco','Courier New',monospace; font-size:14px;
+  line-height:1.6; padding:20px; }
+.log-container { max-width:900px; margin:0 auto; background:var(--bg-secondary);
+  border:1px solid var(--border); border-radius:8px; padding:24px; }
+.meta { color:var(--text-tertiary); font-size:12px; border-bottom:1px solid var(--border);
+  padding-bottom:8px; margin-bottom:16px; }
+/* 叙事块（同源 _battle-log.scss §6） */
+.nb { margin:2px 0; }
+.nb--battle-header { display:flex; gap:10px; align-items:center; text-align:center;
+  font-weight:bold; color:var(--c-warning); padding:6px 0; }
+.battle-line { letter-spacing:1px; }
+.rule { flex:1; height:1px; background:var(--border); }
+.rule--double { height:3px; background:transparent;
+  border-top:1px solid var(--border-tertiary); border-bottom:1px solid var(--border-tertiary); }
+.rule--thin { opacity:0.5; }
+.nb--round { display:flex; gap:10px; align-items:center; margin:14px 0 6px; }
+.round-label { color:var(--c-info); font-weight:bold; white-space:nowrap; }
+.action-header { font-weight:600; line-height: var(--line-height-xl); }
+.glyph { color:var(--c-warning); margin-right:6px; }
+.action-result, .action-sub { padding-left:1.4em; line-height: var(--line-height-xl); }
+.glyph--sub { color:var(--text-tertiary); }
+.sub-header { display:flex; gap:8px; align-items:center; color:var(--text-tertiary);
+  margin-top:8px; letter-spacing:4px; }
+.indent-line { padding-left:1.4em; }
+.section-title { color:var(--c-energy); font-weight:bold; }
+.nb--summary { display:flex; gap:10px; align-items:center; padding:8px 0; }
+.summary-content { text-align:center; }
+.summary-line { margin:2px 0; }
+/* 语义着色（同源 _battle-log.scss §5） */
+.log-friendly { color:var(--c-success); font-weight:bold; }
+.log-hostile { color:var(--c-danger); font-weight:bold; }
+.log-damage { color:var(--c-danger); font-weight:bold; }
+.log-heal { color:var(--c-success); font-weight:bold; }
+.log-crit { color:var(--c-warning); font-weight:bold; }
+.log-buff { color:var(--c-energy); font-weight:500; }
+.log-debuff { color:var(--c-debuff); font-weight:500; }
+.log-control { color:var(--c-debuff); font-weight:bold; }
+.log-skill { color:var(--c-warning); font-weight:500; }
+.log-passive { color:var(--c-info); font-weight:500; }
+.log-energy { color:var(--c-energy); font-weight:bold; }
+.log-shield { color:var(--c-info); font-weight:bold; }
+.log-system { color:var(--text-tertiary); opacity:0.7; }
+.log-info { color:var(--c-info); font-weight:600; }
+/* 芯片（同源 _battle-log.scss §6 — 含 chip--skill/buff/passive 与 hoverable） */
+.chip { padding:0 6px; border-radius:4px; font-weight:500; white-space:nowrap; }
+.chip--ally { color:var(--c-success); background:rgba(76,175,80,0.12); }
+.chip--enemy { color:var(--c-danger); background:rgba(244,67,54,0.12); }
+.chip--skill { color:var(--c-warning); }
+.chip--buff { color:var(--c-energy); }
+.chip--passive { color:var(--c-info); }
+.hoverable { text-decoration:underline dotted; text-underline-offset:2px; }
+/* 大号数字 / 气血 */
+.num--damage { color:var(--c-danger); font-size:1.15em; font-weight:bold; }
+.num--heal { color:var(--c-success); font-size:1.15em; font-weight:bold; }
+.hp-before { color:var(--text-tertiary); }
+.hp-after { color:var(--c-warning); font-weight:bold; }
+/* 批量报告 — batch-only（仅在 mergeLogsHtml 中使用） */
+.report-stats { color:var(--text-secondary); border:1px solid var(--border);
+  border-radius:6px; padding:12px 16px; margin-bottom:16px; }
+.report-stats div:first-child { font-size:16px; font-weight:bold;
+  color:var(--c-warning); margin-bottom:4px; }
+.battle-block { border:1px solid var(--border); border-left:3px solid var(--c-info);
+  border-radius:6px; margin-bottom:8px; background:var(--bg-tertiary); }
+.battle-block > summary { cursor:pointer; padding:8px 12px; color:var(--text-secondary);
+  user-select:none; list-style:none; }
+.battle-block > summary::-webkit-details-marker { display:none; }
+.battle-block > summary::before { content:'▶ '; color:var(--c-info); }
+.battle-block[open] > summary::before { content:'▼ '; }
+.battle-block > summary:hover { background:rgba(255,255,255,0.04); }
+.battle-body { padding:8px 12px 12px; border-top:1px solid var(--border); }
+`
+/**
+ * 将单个 LogSegment 渲染为 HTML。
+ * NOTE: 分支与 LogSeg.vue 的 v-if 链严格同源，修改 LogSeg.vue 时须同步此处。
+ */
+function segToHtml(seg: LogSegment): string {
+  const text = escapeHtml(seg.text)
+  if (seg.kind === 'entity') {
+    const cls = seg.faction === 'ally' ? 'chip--ally' : 'chip--enemy'
+    return `<span class="chip ${cls}">${text}</span>`
+  }
+  if (seg.kind === 'damage') return `<b class="num num--damage">${text}</b>`
+  if (seg.kind === 'heal') return `<b class="num num--heal">${text}</b>`
+  if (seg.kind === 'hp-before') return `<span class="hp-before">${text}</span>`
+  if (seg.kind === 'hp-after') return `<span class="hp-after">${text}</span>`
+  if (seg.kind && ['buff', 'skill', 'passive'].includes(seg.kind)) {
+    const hoverable = seg.hover ? ' hoverable' : ''
+    return `<span class="chip chip--${seg.kind}${hoverable}">${text}</span>`
+  }
+  if (seg.classStr) return `<span class="${escapeHtml(seg.classStr)}">${text}</span>`
+  return text
+}
+function segsToHtml(segs: LogSegment[]): string {
+  return segs.map(segToHtml).join('')
+}
+function blockToHtml(b: NarrativeBlock): string {
+  switch (b.type) {
+    case 'battle-header':
+      return `<div class="nb nb--battle-header"><span class="rule rule--double"></span>` +
+        `<div class="battle-line">${segsToHtml(b.segments)}</div>` +
+        `<span class="rule rule--double"></span></div>`
+    case 'round':
+      return `<div class="nb nb--round"><span class="rule"></span>` +
+        `<span class="round-label">第 ${b.turn} 回合${b.tag ? ` · ${escapeHtml(b.tag)}` : ''}</span>` +
+        `<span class="rule"></span></div>`
+    case 'action': {
+      let html = `<div class="nb nb--action"><div class="action-header">` +
+        `<span class="glyph">◆</span>${segsToHtml(b.header)}</div>`
+      if (b.result) html += `<div class="action-result">${segsToHtml(b.result)}</div>`
+      b.subs.forEach((sub, k) => {
+        const prefix = k === b.subs.length - 1 ? '└' : '├'
+        html += `<div class="action-sub"><span class="glyph glyph--sub">${prefix}</span>${segsToHtml(sub)}</div>`
+      })
+      return html + '</div>'
+    }
+    case 'settlement':
+      return `<div class="nb nb--settlement"><div class="sub-header">` +
+        `<span class="rule rule--thin"></span>回合结算<span class="rule rule--thin"></span></div>` +
+        b.lines.map(l => `<div class="indent-line">${segsToHtml(l)}</div>`).join('') + '</div>'
+    case 'snapshot':
+      return `<div class="nb nb--snapshot"><div class="sub-header">` +
+        `<span class="rule rule--thin"></span>态势<span class="rule rule--thin"></span></div>` +
+        b.lines.map(l => `<div class="indent-line">${segsToHtml(l)}</div>`).join('') + '</div>'
+    case 'section':
+      return `<div class="nb nb--section"><div class="section-title">【${escapeHtml(b.title)}】</div>` +
+        b.lines.map(l => `<div class="indent-line">${segsToHtml(l)}</div>`).join('') + '</div>'
+    case 'summary':
+      return `<div class="nb nb--summary"><span class="rule rule--double"></span>` +
+        `<div class="summary-content">` +
+        b.lines.map(l => `<div class="summary-line">${segsToHtml(l)}</div>`).join('') +
+        `</div><span class="rule rule--double"></span></div>`
+    case 'plain':
+      return `<div class="nb">${segsToHtml(b.segments)}</div>`
+    default:
+      return ''
+  }
+}
+/** 将 NarrativeBlock[] 渲染为 HTML 正文片段（不含 <html> 外壳），供单场/批量复用 */
+export function blocksToHtmlBody(blocks: NarrativeBlock[]): string {
+  return blocks.map(blockToHtml).join('\n')
+}
+/** 将 HTML 正文片段包装为自包含完整文档（内联样式） */
+export function wrapHtmlDocument(
+  body: string,
+  meta: { title: string; generatedAt: string },
+): string {
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>${escapeHtml(meta.title)}</title>
+<style>${EXPORT_CSS}</style>
+</head>
+<body>
+<div class="log-container">
+<div class="meta">
+<div>${escapeHtml(meta.title)}</div>
+<div>生成时间: ${escapeHtml(meta.generatedAt)}</div>
+</div>
+${body}
+</div>
+</body>
+</html>`
+}
+/** 将 NarrativeBlock[] 渲染为自包含 HTML 字符串（单场导出入口） */
+export function blocksToHtml(
+  blocks: NarrativeBlock[],
+  meta: { title: string; generatedAt: string },
+): string {
+  return wrapHtmlDocument(blocksToHtmlBody(blocks), meta)
 }
 
 --- src/shared/utils/math.ts ---
@@ -43426,7 +44218,7 @@ export function validateSkillConfig(
  * @param effectConfig Effect配置对象
  * @returns 验证结果
  */
-export function validateEffectConfig(effectConfig: any): ValidationResult {
+export function validateEffectConfig(effectConfig: Record<string, unknown>): ValidationResult {
   const errors: string[] = []
   // 检查必填字段
   if (!effectConfig.id) {
@@ -43435,7 +44227,7 @@ export function validateEffectConfig(effectConfig: any): ValidationResult {
   if (!effectConfig.type) {
     errors.push('Missing required field: type')
   } else if (
-    !['damage', 'heal', 'buff', 'debuff', 'special'].includes(effectConfig.type)
+    !['damage', 'heal', 'buff', 'debuff', 'special'].includes(effectConfig.type as string)
   ) {
     errors.push(
       `Invalid type: ${effectConfig.type}. Must be one of: damage, heal, buff, debuff, special`,
@@ -43482,7 +44274,7 @@ export function validateSkillConfigs(
  * @param effectConfigs Effect配置数组
  * @returns 验证结果
  */
-export function validateEffectConfigs(effectConfigs: any[]): ValidationResult {
+export function validateEffectConfigs(effectConfigs: Record<string, unknown>[]): ValidationResult {
   const errors: string[] = []
   let validCount = 0
   effectConfigs.forEach((config, index) => {

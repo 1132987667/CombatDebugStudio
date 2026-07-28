@@ -112,7 +112,7 @@
                 @mouseleave="hideAttrTooltip">
                 <span class="monitor-label">{{ a.meta.displayName }}:</span>
                 <span class="monitor-value">{{ attrVal(a.code as ATTRIBUTE_CODE) }}{{ a.meta.isPercentage ? '%' : ''
-                  }}</span>
+                }}</span>
               </div>
             </div>
           </div>
@@ -245,6 +245,7 @@
     <!-- 战斗回放 -->
     <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart" @replay-end="handleReplayEnd"
       @replay-pause="handleReplayPause" />
+
   </div>
 </template>
 
@@ -383,7 +384,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: 
   immunity: { label: '免疫', color: '#fbbf24', priority: 3 },
   summon: { label: '召唤', color: '#fb923c', priority: 4 },
   dot: { label: '持续', color: '#f87171', priority: 5 },
-  shield: { label: '护盾', color: '#22d3ee', priority: 6 },
+  shield: { label: '护盾', color: '#0a7f91', priority: 6 },
   attribute: { label: '属性', color: '#60a5fa', priority: 7 },
 }
 
@@ -782,7 +783,7 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .tier-filter input[type="checkbox"] {
-  accent-color: #22d3ee;
+  accent-color: #0a7f91;
 }
 
 .skill-item {
@@ -799,7 +800,7 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .skill-item:hover {
-  /* ponytail: uses --color-energy (#22d3ee) with opacity; no token for 10% bg */
+  /* ponytail: uses --color-energy (#0a7f91) with opacity; no token for 10% bg */
   background: rgba(34, 211, 238, 0.1);
   /* ponytail: glow uses --color-energy with opacity */
   box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);

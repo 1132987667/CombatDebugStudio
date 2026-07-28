@@ -142,8 +142,6 @@ import type { SceneData } from '@/shared/types/scene';
 import { ParticipantSide } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
-import { BuffSystem } from '@/domain/buff/BuffSystem';
-import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager';
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -188,7 +186,7 @@ const presets: Preset[] = [
     name: '双护法 vs Boss',
     description: '2v1 多目标选择、Boss 技能释放',
     ally: ['guardian_fire', 'guardian_gold'],
-    enemy: ['boss_001'],
+    enemy: ['boss_007'],
   },
   {
     id: 'baseline_multi_boss',
@@ -330,9 +328,6 @@ const applyPreset = () => {
   battleStore.resetBattle()
   battleService.clearParticipants()
 
-  const buffSystem = container.resolve<BuffSystem>('BuffSystem')
-  const passiveSkillManager = container.resolve<PassiveSkillManager>('PassiveSkillManager')
-
   // 构建我方
   preset.ally.forEach((id, index) => {
     const enemyData = GameDataProcessor.findEnemyById(id)
@@ -342,10 +337,6 @@ const applyPreset = () => {
     }
     const entity = GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ALLY, index)
     battleService.addCharacterToTeam(entity, ParticipantSide.ALLY)
-    if (entity.getImmunities().length > 0) {
-      buffSystem.registerCharacterImmunities(entity.id, entity.getImmunities())
-    }
-    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
   })
 
   // 构建敌方
@@ -357,10 +348,6 @@ const applyPreset = () => {
     }
     const entity = GameDataProcessor.enemyToParticipant(enemyData, ParticipantSide.ENEMY, index)
     battleService.addCharacterToTeam(entity, ParticipantSide.ENEMY)
-    if (entity.getImmunities().length > 0) {
-      buffSystem.registerCharacterImmunities(entity.id, entity.getImmunities())
-    }
-    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager)
   })
 
   battleStore.syncTeams()
@@ -472,14 +459,6 @@ const isRosterCharSelected = (enemyId: string): boolean => {
 const addEnemyToBattle = (enemy: Enemy, side: typeof ParticipantSide.ALLY | typeof ParticipantSide.ENEMY = ParticipantSide.ALLY) => {
   const newCharacter = GameDataProcessor.enemyToParticipant(enemy, side)
   battleService.addCharacterToTeam(newCharacter, side)
-  // ponytail: 注册免疫标签到 BuffSystem
-  if (newCharacter.getImmunities().length > 0) {
-    const buffSystem = container.resolve<any>('BuffSystem');
-    buffSystem.registerCharacterImmunities(newCharacter.id, newCharacter.getImmunities());
-  }
-  // ponytail: 注册触发型被动技能到 PassiveSkillManager
-  const passiveSkillManager = container.resolve<any>('PassiveSkillManager');
-  GameDataProcessor.registerParticipantPassives(newCharacter, passiveSkillManager);
   battleStore.selectCharacter(newCharacter.id)
 };
 

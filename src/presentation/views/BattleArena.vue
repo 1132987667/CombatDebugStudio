@@ -89,7 +89,6 @@ import { ATTRIBUTE_CODE, ModifierType } from "@/domain/attribute/types";
 import { ParticipantSide } from "@/domain/battle/type/types.ts";
 import type { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader';
 import { BuffSystem } from '@/domain/buff/BuffSystem';
-import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager';
 import { DamageCategory } from '@/domain/skill/types';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
 import { container } from '@/infrastructure/di/Container';
@@ -441,28 +440,6 @@ function initBattle() {
   // 使用BattleService初始化队伍数据
   battleService.initializeTeams(allyTeamData, enemyTeamData);
 
-  // ponytail: 将实体的免疫标签注册到 BuffSystem
-  const buffSystem = container.resolve<BuffSystem>('BuffSystem');
-  const allParticipants = [
-    ...battleService.getAllyTeam(),
-    ...battleService.getEnemyTeam(),
-  ];
-  for (const entity of allParticipants) {
-    if (entity && typeof entity.getImmunities === 'function') {
-      const tags: string[] = entity.getImmunities();
-      if (tags.length > 0) {
-        buffSystem.registerCharacterImmunities(entity.id, tags);
-      }
-    }
-  }
-
-  // ponytail: 将触发型被动技能注册到 PassiveSkillManager
-  const passiveSkillManager = container.resolve<PassiveSkillManager>('PassiveSkillManager');
-  for (const entity of allParticipants) {
-    GameDataProcessor.registerParticipantPassives(entity, passiveSkillManager);
-  }
-
-  // ponytail: 默认选中第一个友方，避免面板显示 0/0
   const firstAlly = battleService.getAllyTeam()[0];
   if (firstAlly) {
     battleStore.selectCharacter(firstAlly.id);

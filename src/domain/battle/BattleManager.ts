@@ -388,9 +388,7 @@ export class BattleManager {
       battleData.participants.set(character.id, character)
     }
 
-    // 触发角色的被动技能
-    this.battleSystem.triggerPassiveSkillsForCharacter(character)
-
+    // NOTE: 被动触发延迟到 initialize() 统一执行，避免与 initialize 中的 clearAll+重注册冲突
     this.emitTeamChanged()
   }
 

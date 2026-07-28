@@ -55,7 +55,7 @@
 .log-content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-2);
+  padding: var(--space-2) var(--space-5);
   min-height: 0;
   line-height: var(--line-height-md);
 }
@@ -363,10 +363,12 @@
 
 /* 芯片：角色名 / 技能 / buff */
 .chip {
-  padding: 0 6px;
   border-radius: var(--radius-sm);
   font-weight: var(--font-weight-medium);
   white-space: nowrap;
+  cursor: pointer;
+  line-height: var(--line-height-lg);
+  padding: var(--space-1) var(--space-2);
 }
 
 .chip--ally {
@@ -392,7 +394,9 @@
 }
 
 .hoverable {
-  text-decoration: underline dotted;
+  outline: 2px solid var(--color-info-bg);
+  outline-offset: -2px;
+  border-radius: 0;
   cursor: help;
 }
 

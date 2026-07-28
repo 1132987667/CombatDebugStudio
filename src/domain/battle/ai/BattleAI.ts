@@ -253,10 +253,11 @@ export class BaseBattleAI implements BattleAI {
 
     // Check if any skill is available and has enough energy
     for (const skillId of this.skills.keys()) {
+      const skill = this.skills.get(skillId)
+      if (!skill) continue
+      // ★ 被动技能由系统自动触发，不参与 AI 主动决策
+      if (skill.type === SkillType.PASSIVE) continue
       if (participant.isSkillAvailable(skillId)) {
-        const skill = this.skills.get(skillId)
-        if (!skill) continue
-        // ponytail: energyCost 为 undefined 时视为 0（无消耗技能视为可用）
         const cost = skill.energyCost ?? 0
         if (participant.currentEnergy >= cost) {
           return true
@@ -370,6 +371,8 @@ export class BattleAIFactory {
   ): BattleAI {
     const ai = new BaseBattleAI()
     skills.forEach((skillConfig) => {
+      // ★ 被动技能不进入 AI 决策池，由 PassiveSkillManager 独立管理
+      if (skillConfig.skillType === SkillType.PASSIVE) return
       const skill = convertSkillConfigToSkill(skillConfig)
       if (skill) {
         ai['skills'].set(skill.id, skill)

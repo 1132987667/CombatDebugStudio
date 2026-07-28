@@ -149,6 +149,7 @@ export class RoundNarrativeRenderer {
    *  回合号变化时插入 `round` 块
    */
   renderEntries(entries: BattleLogEntry[]): BattleLogNarrativeBlock[] {
+    if (!entries || entries.length === 0) return []
     const blocks: BattleLogNarrativeBlock[] = []
     let currentTurn = -1
     let currentAction: Extract<
@@ -185,26 +186,33 @@ export class RoundNarrativeRenderer {
 
     for (const e of entries) {
       const meta = e.meta ?? {}
+
+      // ★ 战斗开始/结束日志（role='battle'）走独立分支，不参与回合分组
+      if (meta.role === 'battle') {
+        flushAll()
+        blocks.push({
+          type: 'battle-header',
+          segments: e.segments ?? [{ text: e.message || '' }],
+        })
+        continue
+      }
+
       const turn =
         typeof e.turn === 'number' ? e.turn : parseInt(String(e.turn), 10) || 0
 
       // 回合切换 → 先落盘上一回合，再推入回合头
       if (turn !== currentTurn) {
         flushAll()
-        blocks.push({ type: 'round', turn, tag: roundTag })
+        // ★ 防止 turn: 0 产生“第 0 回合”分隔线
+        if (turn > 0) {
+          blocks.push({ type: 'round', turn, tag: roundTag })
+        }
         currentTurn = turn
         roundTag = undefined
       }
       if (meta.roundTag) roundTag = meta.roundTag
 
       switch (meta.role) {
-        case 'battle':
-          flushAll()
-          blocks.push({
-            type: 'battle-header',
-            segments: e.segments ?? [{ text: e.message || '' }],
-          })
-          break
         case 'action':
           flushAll()
           currentAction = {

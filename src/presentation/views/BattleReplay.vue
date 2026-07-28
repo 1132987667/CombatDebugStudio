@@ -269,10 +269,7 @@ const filteredEvents = computed(() => {
 });
 
 function loadRecording() {
-  // 这里应该显示一个加载对话框，让用户选择要加载的记录
-  console.log('加载记录');
-
-  // 模拟加载一个记录
+  // 加载最近录像，仅填充面板数据；播放由用户点击 ▶ 按钮手动触发
   const savedList = battleSystem.getSavedBattleRecordingsList();
   if (savedList.length > 0) {
     const recording = battleSystem.loadBattleRecording(savedList[0]);
@@ -280,7 +277,8 @@ function loadRecording() {
       currentRecording.value = recording;
       currentEventIndex.value = 0;
       isPlaying.value = false;
-      emit('replay-start', recording);
+      // NOTE: 不 emit('replay-start') — 加载不等同于播放，
+      // 避免触发父组件 resetBattle 和 BattleReplayManager 自动播放链
     }
   }
 }

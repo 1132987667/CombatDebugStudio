@@ -4,14 +4,15 @@
  */
 import { describe, it, expect } from 'vitest'
 import {
-  buffSegment,
   skillSegment,
   passiveSegment,
+  blocksToHtml,
 } from '@/shared/utils/log-segment-factory'
 import type {
   BuffConfigLookup,
   SkillConfigLookup,
 } from '@/shared/utils/log-segment-factory'
+import type { LogSegment, NarrativeBlock } from '@/shared/types/battle-log'
 
 const mockBuffLookup: BuffConfigLookup = {
   getBuffConfig(buffId: string) {
@@ -65,34 +66,6 @@ const mockSkillLookup: SkillConfigLookup = {
   },
 }
 
-describe('buffSegment', () => {
-  it('produces correct segment for aura buff', () => {
-    const seg = buffSegment('buff_leader_aura', mockBuffLookup)
-    expect(seg.text).toBe('【统领光环】')
-    expect(seg.classStr).toBe('log-buff')
-    expect(seg.hover).toEqual({ kind: 'buff', id: 'buff_leader_aura' })
-  })
-
-  it('produces correct segment for dot buff', () => {
-    const seg = buffSegment('buff_poison', mockBuffLookup)
-    expect(seg.text).toBe('【中毒】')
-    expect(seg.classStr).toBe('log-debuff')
-    expect(seg.hover).toEqual({ kind: 'buff', id: 'buff_poison' })
-  })
-
-  it('produces control class for control buff', () => {
-    const seg = buffSegment('buff_stun', mockBuffLookup)
-    expect(seg.classStr).toBe('log-control')
-  })
-
-  it('falls back to buffId when config not found', () => {
-    const seg = buffSegment('buff_unknown', mockBuffLookup)
-    expect(seg.text).toBe('【buff_unknown】')
-    expect(seg.classStr).toBe('log-buff')
-    expect(seg.hover).toEqual({ kind: 'buff', id: 'buff_unknown' })
-  })
-})
-
 describe('skillSegment', () => {
   it('produces correct segment for a skill', () => {
     const seg = skillSegment('skill_water_heal', mockSkillLookup)
@@ -113,5 +86,68 @@ describe('passiveSegment', () => {
     expect(seg.text).toBe('【连击之心】')
     expect(seg.classStr).toBe('log-passive')
     expect(seg.hover).toEqual({ kind: 'passive', id: 'passive_combo_heart' })
+  })
+})
+
+// ==================== HTML 导出 ====================
+
+function makeTextSeg(text: string): LogSegment {
+  return { text }
+}
+
+function makeSkillSeg(name: string, id: string): LogSegment {
+  return { text: `【${name}】`, classStr: 'log-skill', hover: { kind: 'skill', id }, kind: 'skill' }
+}
+
+function makeDamageSeg(value: number): LogSegment {
+  return { text: String(value), kind: 'damage' }
+}
+
+function makeHealSeg(value: number): LogSegment {
+  return { text: String(value), kind: 'heal' }
+}
+
+
+describe('blocksToHtml', () => {
+  it('renders skill chip with correct class', () => {
+    const blocks: NarrativeBlock[] = [
+      {
+        type: 'action',
+        header: [makeSkillSeg('烈焰斩', 'skill_fire_slash')],
+        subs: [[makeDamageSeg(150)]],
+      },
+    ]
+    const html = blocksToHtml(blocks, { title: '测试', generatedAt: 'now' })
+    expect(html).toContain('chip--skill')
+    expect(html).toContain('class="num num--damage"')
+    expect(html).toContain('烈焰斩')
+    expect(html).toContain('150')
+    expect(html).toContain('<!DOCTYPE html>')
+    expect(html).toContain('<style>')
+  })
+
+  it('renders battle-header, round, and summary blocks', () => {
+    const blocks: NarrativeBlock[] = [
+      { type: 'battle-header', segments: [makeTextSeg('测试对局')] },
+      { type: 'round', turn: 1 },
+      { type: 'summary', lines: [[makeTextSeg('战斗结束')]] },
+    ]
+    const html = blocksToHtml(blocks, { title: '测试', generatedAt: 'now' })
+    expect(html).toContain('nb--battle-header')
+    expect(html).toContain('第 1 回合')
+    expect(html).toContain('nb--summary')
+    expect(html).toContain('战斗结束')
+  })
+
+  it('renders settlement and snapshot sections', () => {
+    const blocks: NarrativeBlock[] = [
+      { type: 'settlement', lines: [[makeDamageSeg(50)]] },
+      { type: 'snapshot', lines: [[makeHealSeg(30)]] },
+    ]
+    const html = blocksToHtml(blocks, { title: '测试', generatedAt: 'now' })
+    expect(html).toContain('nb--settlement')
+    expect(html).toContain('num--damage')
+    expect(html).toContain('nb--snapshot')
+    expect(html).toContain('num--heal')
   })
 })

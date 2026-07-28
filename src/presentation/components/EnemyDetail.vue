@@ -126,7 +126,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: 
   immunity: { label: '免疫', color: '#fbbf24', priority: 3 },
   summon: { label: '召唤', color: '#fb923c', priority: 4 },
   dot: { label: '持续', color: '#f87171', priority: 5 },
-  shield: { label: '护盾', color: '#22d3ee', priority: 6 },
+  shield: { label: '护盾', color: '#0a7f91', priority: 6 },
   attribute: { label: '属性', color: '#60a5fa', priority: 7 },
 }
 

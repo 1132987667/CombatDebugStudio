@@ -494,7 +494,7 @@ onUnmounted(() => {
       font-size: var(--font-size-lg);
       font-weight: var(--font-weight-semibold);
       color: var(--color-energy);
-      /* ponytail: glow uses --color-energy (#22d3ee) but no --color-energy-rgb for rgba() */
+      /* ponytail: glow uses --color-energy (#0a7f91) but no --color-energy-rgb for rgba() */
       text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
     }
 
@@ -649,7 +649,7 @@ onUnmounted(() => {
     }
 
     .calculation-section {
-      /* ponytail: bg uses --color-energy (#22d3ee) at 5% opacity */
+      /* ponytail: bg uses --color-energy (#0a7f91) at 5% opacity */
       background: rgba(34, 211, 238, 0.05);
       border-radius: var(--radius-md);
       padding: var(--space-3);

@@ -26,7 +26,8 @@ import { debugGate } from '@/domain/battle/debug/DebugGate'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { LogType, type BattleLogEntry, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
-import { blocksToText } from '@/shared/utils/log-segment-factory'
+import { blocksToText, blocksToHtmlBody, wrapHtmlDocument, escapeHtml } from '@/shared/utils/log-segment-factory'
+import type { NarrativeBlock } from '@/shared/types/battle-log'
 
 export interface BattleGenerationOptions {
   /** 总场次数（默认 50） */
@@ -35,6 +36,8 @@ export interface BattleGenerationOptions {
   mode?: '1v1' | '2v2' | 'random'
   /** 进度回调（0~1） */
   onProgress?: (progress: number, current: number, total: number) => void
+  /** 导出格式，默认 'txt' */
+  format?: 'txt' | 'html'
 }
 
 export interface SingleBattleLog {
@@ -44,8 +47,8 @@ export interface SingleBattleLog {
   enemyNames: string[]
   winner: string
   totalRounds: number
-  /** 叙事格式日志文本（与面板导出一致） */
-  narrativeText: string
+  /** 叙事块（TXT/HTML 导出的唯一数据源） */
+  narrativeBlocks: NarrativeBlock[]
 }
 
 export class BattleDataGenerator {
@@ -139,7 +142,7 @@ export class BattleDataGenerator {
         const battleData = this.battleSystem.getBattleData()
         if (!battleData) continue
 
-        const narrativeText = this.collectNarrativeText()
+        const narrativeBlocks = this.collectNarrativeBlocks()
         const winner = battleData.winner
 
         battleLogs.push({
@@ -149,7 +152,7 @@ export class BattleDataGenerator {
           enemyNames: enemyTeam.map(e => e.name),
           winner: ParticipantSideName[winner!],
           totalRounds: rounds,
-          narrativeText,
+          narrativeBlocks,
         })
 
         this.battleSystem.resetBattle()
@@ -177,22 +180,27 @@ export class BattleDataGenerator {
     options.onProgress?.(1, total, total)
 
     if (!this._cancelled && battleLogs.length > 0) {
-      const mergedText = this.mergeLogs(battleLogs)
-      this.downloadFile(mergedText, `battle-data-${battleLogs.length}场-${this.getTimestamp()}.txt`)
+      const format = options.format ?? 'txt'
+      if (format === 'html') {
+        const mergedHtml = this.mergeLogsHtml(battleLogs)
+        this.downloadFile(mergedHtml, `battle-data-${battleLogs.length}场-${this.getTimestamp()}.html`, 'text/html;charset=utf-8')
+      } else {
+        const mergedText = this.mergeLogs(battleLogs)
+        this.downloadFile(mergedText, `battle-data-${battleLogs.length}场-${this.getTimestamp()}.txt`)
+      }
     }
     return this._cancelled ? 'cancelled' : 'done'
   }
 
   /**
-   * 收集当前战斗的叙事日志文本
+   * 收集当前战斗的叙事日志块
    * 与日志面板"导出"使用完全相同的渲染管线，保证格式一致
    */
-  private collectNarrativeText(): string {
+  private collectNarrativeBlocks(): NarrativeBlock[] {
     const entries = battleLogManager
       .getAllLogs()
       .filter((l) => l.type === LogType.BATTLE) as BattleLogEntry[]
-    const blocks = this.renderer.renderEntries(entries)
-    return blocksToText(blocks)
+    return this.renderer.renderEntries(entries)
   }
 
   /**
@@ -312,14 +320,39 @@ export class BattleDataGenerator {
         `胜方: ${b.winner}  |  回合数: ${b.totalRounds}`,
         '─'.repeat(40),
       ].join('\n')
-      return `${meta}\n${b.narrativeText}\n`
+      return `${meta}\n${blocksToText(b.narrativeBlocks)}\n`
     }).join('\n')
 
     return [...header, body].join('\n')
   }
 
-  private downloadFile(content: string, filename: string): void {
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  /** 合并所有战斗日志为 HTML（头部统计 + <details> 折叠 + 语义渲染） */
+  private mergeLogsHtml(battleLogs: SingleBattleLog[]): string {
+    const allyWins = battleLogs.filter(b => b.winner === '友方').length
+    const enemyWins = battleLogs.length - allyWins
+    const totalRounds = battleLogs.reduce((s, b) => s + b.totalRounds, 0)
+    const avgRounds = battleLogs.length > 0 ? Math.round(totalRounds / battleLogs.length) : 0
+
+    const headerHtml = `<div class="report-stats">\n` +
+      `<div>战斗数据报告 — 共 ${battleLogs.length} 场</div>\n` +
+      `<div>我方胜: ${allyWins} 场 | 敌方胜: ${enemyWins} 场</div>\n` +
+      `<div>平均回合数: ${avgRounds} | 总回合数: ${totalRounds}</div>\n` +
+      `</div>`
+
+    const sections = battleLogs.map(b => {
+      const meta = `第 ${b.battleIndex} 场 · 我方: ${b.allyNames.join('、')} · 敌方: ${b.enemyNames.join('、')} · 胜方: ${b.winner} · 回合: ${b.totalRounds}`
+      return `<details class="battle-block"><summary>${escapeHtml(meta)}</summary>\n` +
+        `<div class="battle-body">${blocksToHtmlBody(b.narrativeBlocks)}</div></details>`
+    }).join('\n')
+
+    return wrapHtmlDocument(headerHtml + '\n' + sections, {
+      title: `战斗数据报告 (${battleLogs.length}场)`,
+      generatedAt: new Date().toLocaleString(),
+    })
+  }
+
+  private downloadFile(content: string, filename: string, mime: string = 'text/plain;charset=utf-8'): void {
+    const blob = new Blob([content], { type: mime })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

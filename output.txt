@@ -1064,6 +1064,8 @@ import type { BuffJsonEntry, BuffJsonAuraModifier } from '@/shared/types/buffs-j
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { SkillConfig, SkillType } from '@/domain/skill/types'
+import { BattleTriggerPhaseName, OLD_PHASE_NAME_MAP } from '@/domain/battle/type/types'
+import type { BattleTriggerPhase } from '@/domain/battle/type/types'
 // ==================== 输出类型 ====================
 /** Tooltip 卡片的明细行 */
 export interface TooltipDetailRow {
@@ -1239,7 +1241,7 @@ export class LogTooltipResolver {
           for (const t of triggers!) {
             details.push({
               label: '触发时机',
-              value: t.phase ?? t.scriptId ?? '未知',
+              value: this.formatTriggerPhase(t.phase ?? '') || t.scriptId || '未知',
             })
             if (t.params?.probability != null) {
               details.push({ label: '触发概率', value: `${Math.round((t.params.probability as number) * 100)}%` })
@@ -1311,7 +1313,7 @@ export class LogTooltipResolver {
     const details: TooltipDetailRow[] = []
     // 触发时机
     if (config.triggerTimes && config.triggerTimes.length > 0) {
-      details.push({ label: '触发时机', value: config.triggerTimes.join('、') })
+      details.push({ label: '触发时机', value: config.triggerTimes.map((t) => this.formatTriggerPhase(t)).join('、') })
     }
     // 触发概率（从 parameters 或 steps 中推测）
     const probability = config.parameters?.triggerProbability ?? config.parameters?.probability
@@ -1329,6 +1331,16 @@ export class LogTooltipResolver {
     }
   }
   // ==================== 辅助方法 ====================
+  /** 格式化触发时机：中文化，兼容新旧风格 */
+  private formatTriggerPhase(phase: string): string {
+    // 新风格直接查中文表（on_hit → 命中时）
+    const direct = BattleTriggerPhaseName[phase as BattleTriggerPhase]
+    if (direct) return direct
+    // 旧风格归一化后查中文表（ON_ATTACK_HIT → on_hit → 命中时）
+    const normalized = OLD_PHASE_NAME_MAP[phase]
+    if (normalized) return BattleTriggerPhaseName[normalized]
+    return phase
+  }
   /** 格式化修饰符值 */
   private formatModifierValue(modifier: BuffJsonAuraModifier): string {
     if (modifier.value == null) return ''
@@ -4737,6 +4749,14 @@ export class BattleSystem {
     allyParticipants: BattleEntity[],
     enemyParticipants: BattleEntity[],
   ): BattleState {
+    // ★ 桥接战斗规则 → 伤害计算器（暴击/闪避开关），每场战斗开始时生效
+    // NOTE: §1.1 修复后 this.damageCalculator 与 this.skillManager.getDamageCalculator()
+    //       为同一实例，一次 setConfig 即覆盖普攻和技能两条路径
+    const combatRules = this.ruleManager.getCombatRules()
+    this.damageCalculator.setConfig({
+      enableCrit: combatRules.critEnabled,
+      enableDodge: combatRules.dodgeEnabled,
+    })
     const allParticipants = [...allyParticipants, ...enemyParticipants]
     const participants = new Map<string, BattleEntity>()
     allParticipants.forEach((participant) => {
@@ -9247,7 +9267,7 @@ export class BattleExecutor {
     if (isMiss) {
       return {
         turn: turnNumber,
-        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name}发起「普通攻击」`,
+        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name} 发起「普通攻击」`,
         segments: [
           {
             text: `${sourcePrefix}${source.name}`,
@@ -9275,7 +9295,7 @@ export class BattleExecutor {
     }
     return {
       turn: turnNumber,
-      message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name}发起「普通攻击」`,
+      message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name} 发起「普通攻击」`,
       segments: [
         {
           text: `${sourcePrefix}${source.name}`,
@@ -9296,7 +9316,7 @@ export class BattleExecutor {
           kind: 'entity',
           faction: target.team,
         },
-        { text: `发起「普通攻击」` },
+        { text: ` 发起「普通攻击」` },
       ],
       category: isCritical
         ? BATTLE_LOG_CATEGORIES.CRIT
@@ -12523,6 +12543,48 @@ export const BattleTriggerPhase = {
 } as const
 export type BattleTriggerPhase =
   (typeof BattleTriggerPhase)[keyof typeof BattleTriggerPhase]
+/** 旧风格阶段名（ON_TURN_START 等）→ 标准化阶段名映射，供 JSON 配置向后兼容 */
+export const OLD_PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
+  ON_TURN_START: BattleTriggerPhase.TURN_START,
+  ON_TURN_END: BattleTriggerPhase.TURN_END,
+  ON_BATTLE_START: BattleTriggerPhase.BATTLE_START,
+  ON_BATTLE_END: BattleTriggerPhase.BATTLE_END,
+  ON_DAMAGE_TAKEN: BattleTriggerPhase.DAMAGE_TAKEN,
+  ON_ATTACK_HIT: BattleTriggerPhase.ON_HIT,
+  BEFORE_ATTACK: BattleTriggerPhase.BEFORE_ATTACK,
+  AFTER_ATTACK: BattleTriggerPhase.AFTER_ATTACK,
+  ON_KILL: BattleTriggerPhase.ON_KILL,
+  ON_DEATH: BattleTriggerPhase.ON_DEATH,
+  ON_HEAL_RECEIVED: BattleTriggerPhase.HEAL_RECEIVED,
+  ON_ENERGY_GAINED: BattleTriggerPhase.ENERGY_GAINED,
+  ON_SKILL_USE: BattleTriggerPhase.SKILL_USE,
+  ON_HP_LOWER_THAN: BattleTriggerPhase.HP_LOWER_THAN,
+  ON_ALLY_FATAL_DAMAGE: BattleTriggerPhase.ALLY_FATAL_DAMAGE,
+  ON_ALLY_DAMAGE_TAKEN: BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
+  ON_APPLY: BattleTriggerPhase.ON_APPLY,
+}
+/** BattleTriggerPhase → 中文显示名 */
+export const BattleTriggerPhaseName: Record<BattleTriggerPhase, string> = {
+  [BattleTriggerPhase.BATTLE_START]: '战斗开始',
+  [BattleTriggerPhase.BATTLE_END]: '战斗结束',
+  [BattleTriggerPhase.TURN_START]: '回合开始',
+  [BattleTriggerPhase.TURN_END]: '回合结束',
+  [BattleTriggerPhase.BEFORE_ATTACK]: '攻击前',
+  [BattleTriggerPhase.ON_HIT]: '命中时',
+  [BattleTriggerPhase.AFTER_ATTACK]: '攻击后',
+  [BattleTriggerPhase.DAMAGE_TAKEN]: '受击时',
+  [BattleTriggerPhase.ON_KILL]: '击杀时',
+  [BattleTriggerPhase.ON_DEATH]: '死亡时',
+  [BattleTriggerPhase.HEAL_RECEIVED]: '受治疗时',
+  [BattleTriggerPhase.ENERGY_GAINED]: '获得能量时',
+  [BattleTriggerPhase.SKILL_USE]: '使用技能时',
+  [BattleTriggerPhase.HP_LOWER_THAN]: '血量低于阈值',
+  [BattleTriggerPhase.ALLY_FATAL_DAMAGE]: '队友受致命伤害',
+  [BattleTriggerPhase.ALLY_DAMAGE_TAKEN]: '队友受击',
+  [BattleTriggerPhase.ON_APPLY]: '施加时',
+  [BattleTriggerPhase.CONDITION_CHANGED]: '条件变化',
+  [BattleTriggerPhase.DODGE]: '闪避时',
+}
 /** 事件类型枚举 */
 export const BattleEventType = {
   ACTION: 'action',
@@ -13876,6 +13938,7 @@ import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import {
   StepExecutionContext,
   BattleTriggerPhase,
+  OLD_PHASE_NAME_MAP,
 } from '@/domain/battle/type/types'
 import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
 /** 无操作脚本占位：用于有配置无脚本的 buff */
@@ -14097,30 +14160,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   }
   // ============ 触发器系统（JSON 配置 triggers → TriggerEventBus 接线） ============
   /**
-   * 阶段名规范化映射
-   * ponytail: buffs.json 历史遗留使用 ON_TURN_START 风格，与 BattleTriggerPhase 枚举值（turn_start）不匹配。
-   *           在注册触发器时做一次映射，避免修改 20+ 处 JSON 配置。
-   *           覆盖所有 BattleTriggerPhase 值，新配置可直接使用大小写混合的 ON_ 风格。
-   */
-  private static readonly PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
-    ON_TURN_START: BattleTriggerPhase.TURN_START,
-    ON_TURN_END: BattleTriggerPhase.TURN_END,
-    ON_BATTLE_START: BattleTriggerPhase.BATTLE_START,
-    ON_BATTLE_END: BattleTriggerPhase.BATTLE_END,
-    ON_DAMAGE_TAKEN: BattleTriggerPhase.DAMAGE_TAKEN,
-    ON_ATTACK_HIT: BattleTriggerPhase.ON_HIT,
-    BEFORE_ATTACK: BattleTriggerPhase.BEFORE_ATTACK,
-    AFTER_ATTACK: BattleTriggerPhase.AFTER_ATTACK,
-    ON_KILL: BattleTriggerPhase.ON_KILL,
-    ON_DEATH: BattleTriggerPhase.ON_DEATH,
-    ON_HEAL_RECEIVED: BattleTriggerPhase.HEAL_RECEIVED,
-    ON_ENERGY_GAINED: BattleTriggerPhase.ENERGY_GAINED,
-    ON_SKILL_USE: BattleTriggerPhase.SKILL_USE,
-    ON_HP_LOWER_THAN: BattleTriggerPhase.HP_LOWER_THAN,
-    ON_ALLY_FATAL_DAMAGE: BattleTriggerPhase.ALLY_FATAL_DAMAGE,
-    ON_ALLY_DAMAGE_TAKEN: BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
-    ON_APPLY: BattleTriggerPhase.ON_APPLY,
-  }
   /**
    * 为 Buff 实例注册触发器监听器
    * 在 addBuff 中被调用，读取 resolvedConfig.triggers，向 TriggerEventBus 注册监听器。
@@ -14133,7 +14172,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const buffInstance = this.buffInstances.get(instanceId)
     if (!buffInstance) return
     for (const trigger of triggers) {
-      const phase = BuffSystem.PHASE_NAME_MAP[trigger.phase]
+      const phase = OLD_PHASE_NAME_MAP[trigger.phase]
       if (!phase) {
         this.logger.addDebugLog(
           `触发器阶段 ${trigger.phase} 未识别，跳过注册`,
@@ -15995,6 +16034,8 @@ import { LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/shared/types/effect'
 export interface DamageCalculationConfig {
   enableCrit: boolean
+  /** 是否启用闪避机制（默认关闭，对齐 BattleRuleManager） */
+  enableDodge: boolean
   critRate: number
   critDamage: number
   /** @deprecated 未使用，仅保留避免破坏外部配置 */
@@ -16038,7 +16079,8 @@ interface CalculationStepLog {
 export class DamageCalculator {
   calculationLogs: CalculationStepLog[] = []
   config: DamageCalculationConfig = {
-    enableCrit: false,
+    enableCrit: true,
+    enableDodge: false,
     critRate: 0,
     critDamage: 0,
     minDamageThreshold: 1,
@@ -16092,7 +16134,8 @@ export class DamageCalculator {
     // ★ 检测必暴标记：必暴意味着必中+必暴
     const hasGuaranteedCrit = typeof source.hasBuff === 'function' && source.hasBuff('buff_guaranteed_crit')
     // 命中/闪避判定 — 默认命中率100%，减去目标闪避率
-    if (!hasGuaranteedCrit) {
+    // 闪避门控：仅当 enableDodge 为 true 时执行闪避判定
+    if (!hasGuaranteedCrit && this.config.enableDodge) {
       const hitRate = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hit)
       const dodgeRate = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodge)
       let actualHitRate = hitRate - dodgeRate
@@ -16269,7 +16312,9 @@ export class DamageCalculator {
       }
     }
     // 捕获原始伤害（来源方全部产出，目标方减免前）
-    breakdown.rawDamage = damage
+    // NOTE: extraValues 累加可能产生小数，与最终伤害保持一致取整，保证日志与反伤基数为整数
+    breakdown.rawDamage = Math.floor(damage)
+    damage = breakdown.rawDamage
     breakdown.steps.push({
       stepName: 'rawDamage',
       value: damage,
@@ -16718,7 +16763,7 @@ export class HealCalculator {
         `减益效果: -${Math.round(debuffEffect * 100)}%`,
       )
     }
-    heal = Math.max(0, heal)
+    heal = Math.max(0, Math.floor(heal))
     if (context?.record) {
       context.record.effects?.push({
         type: 'heal',
@@ -20629,9 +20674,9 @@ export class BattleLogManager implements IBattleLogManager {
       const effects = (action.effects || []) as Array<Record<string, unknown>>
       let logMessage = ''
       if (actionType === 'skill' && action.skillId) {
-        logMessage = `使用技能 ${String(action.skillId)}`
+        logMessage = ` 使用技能 ${String(action.skillId)}`
       } else if (actionType === 'attack') {
-        logMessage = '发起攻击'
+        logMessage = ' 发起攻击'
       }
       if (damage > 0) {
         this.addActionLog({
@@ -21154,7 +21199,7 @@ export class BattleAnimationService {
         transform: translate(-50%, -50%);
         font-size: 14px;
         font-weight: bold;
-        color: #22d3ee;
+        color: #0a7f91;
         text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
         pointer-events: none;
         z-index: 100;
@@ -21621,19 +21666,21 @@ export function initializeContainer(): void {
   container.register('BuffSystem', new BuffSystem(buffScriptRegistry, triggerEventBus, battleLogManager))
   // 领域实体的事件总线注入（静态字段）
   BattleParticipantImpl.eventBus = triggerEventBus
-  // 3. 注册SkillManager（依赖BuffSystem）
+  // 3. ★ 先创建计算服务，确保 SkillManager 复用同一实例（消除双实例）
+  const damageCalculator = new DamageCalculator()
+  const healCalculator = new HealCalculator()
+  container.register('DamageCalculator', damageCalculator)
+  container.register('HealCalculator', healCalculator)
+  container.register('RAFTimer', new RAFTimer())
+  // 4. 注册SkillManager（依赖BuffSystem + DamageCalculator + HealCalculator）
   const buffSystem = container.resolve<BuffSystem>('BuffSystem')
-  container.register('SkillManager', new SkillManager(buffSystem))
-  // 4. 注册PassiveSkillManager（依赖SkillManager和BuffSystem）
+  container.register('SkillManager', new SkillManager(buffSystem, damageCalculator, healCalculator))
+  // 5. 注册PassiveSkillManager（依赖SkillManager和BuffSystem）
   const skillManager = container.resolve<SkillManager>('SkillManager')
   container.register(
     'PassiveSkillManager',
     PassiveSkillManager.create(skillManager, buffSystem),
   )
-  // 5. 注册计算服务
-  container.register('DamageCalculator', new DamageCalculator())
-  container.register('HealCalculator', new HealCalculator())
-  container.register('RAFTimer', new RAFTimer())
   // 6. 注册核心战斗组件（依赖上面注册的服务）
   container.register(TURN_MANAGER_TOKEN.toString(), new TurnManager(buffSystem))
   container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
@@ -22178,7 +22225,7 @@ onUnmounted(() => {
       font-size: var(--font-size-lg);
       font-weight: var(--font-weight-semibold);
       color: var(--color-energy);
-      /* ponytail: glow uses --color-energy (#22d3ee) but no --color-energy-rgb for rgba() */
+      /* ponytail: glow uses --color-energy (#0a7f91) but no --color-energy-rgb for rgba() */
       text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
     }
     .tooltip-value {
@@ -22308,7 +22355,7 @@ onUnmounted(() => {
       }
     }
     .calculation-section {
-      /* ponytail: bg uses --color-energy (#22d3ee) at 5% opacity */
+      /* ponytail: bg uses --color-energy (#0a7f91) at 5% opacity */
       background: rgba(34, 211, 238, 0.05);
       border-radius: var(--radius-md);
       padding: var(--space-3);
@@ -25072,7 +25119,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: 
   immunity: { label: '免疫', color: '#fbbf24', priority: 3 },
   summon: { label: '召唤', color: '#fb923c', priority: 4 },
   dot: { label: '持续', color: '#f87171', priority: 5 },
-  shield: { label: '护盾', color: '#22d3ee', priority: 6 },
+  shield: { label: '护盾', color: '#0a7f91', priority: 6 },
   attribute: { label: '属性', color: '#60a5fa', priority: 7 },
 }
 const UNCATEGORIZED = { label: '未分类', color: '#94a3b8', priority: 99 }
@@ -25504,7 +25551,6 @@ const tooltipStyle = computed(() => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(8px);
   pointer-events: auto;
-  font-size: var(--font-size-sm);
   line-height: var(--line-height-md);
 }
 /* 标题行 */
@@ -25518,7 +25564,6 @@ const tooltipStyle = computed(() => {
   border-bottom: 1px solid rgba(96, 165, 250, 0.2);
 }
 .tooltip-name {
-  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-energy);
   text-shadow: 0 0 6px rgba(34, 211, 238, 0.3);
@@ -25533,7 +25578,6 @@ const tooltipStyle = computed(() => {
   display: inline-block;
   padding: 1px 6px;
   border-radius: var(--radius-sm);
-  font-size: 11px;
   font-weight: var(--font-weight-medium);
   white-space: nowrap;
 }
@@ -25570,18 +25614,15 @@ const tooltipStyle = computed(() => {
 }
 .detail-label {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
 }
 .detail-value {
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
   text-align: right;
 }
 /* 来源脚注 */
 .tooltip-source {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
   padding-top: var(--space-1);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -26506,7 +26547,7 @@ defineExpose({
 }
 .situational-tag.tag-elemental {
   background: rgba(34, 211, 238, 0.15);
-  color: #22d3ee;
+  color: #0a7f91;
   border: 1px solid rgba(34, 211, 238, 0.25);
 }
 .situational-tag.tag-control {
@@ -28014,6 +28055,8 @@ import { defineStore } from 'pinia'
 import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
 import { BattleProjection } from '@/application/projection/BattleProjection'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
+import type { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { getActionBudget } from '@/shared/constants/animation-timing'
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -28406,6 +28449,25 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const updateRules = (newRules: Partial<BattleRules>) => {
     Object.assign(rules.value, newRules)
+    // ★ 同步暴击/闪避开关到领域层规则管理器，下一场战斗 initialize 时生效
+    try {
+      const ruleManager = container.resolve<BattleRuleManager>(
+        BATTLE_RULE_MANAGER_TOKEN.toString(),
+      )
+      const config = ruleManager.getConfig()
+      ruleManager.updateConfig({
+        rules: {
+          ...config.rules,
+          combat: {
+            ...config.rules.combat,
+            critEnabled: rules.value.critEnabled,
+            dodgeEnabled: rules.value.dodgeEnabled,
+          },
+        },
+      })
+    } catch {
+      // 容器未就绪时忽略
+    }
     battleLogManager.addSystemLog({
       message: `战斗规则已更新: ${JSON.stringify(newRules)}`,
     })
@@ -29738,7 +29800,7 @@ html {
 .log-content {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-2);
+  padding: var(--space-2) var(--space-5);
   min-height: 0;
   line-height: var(--line-height-md);
 }
@@ -30015,7 +30077,9 @@ html {
   color: var(--color-info);
 }
 .hoverable {
-  text-decoration: underline dotted;
+  outline: 2px solid var(--color-info-bg);
+  outline-offset: -2px;
+  border-radius: 0;
   cursor: help;
 }
 /* 大号数字 */
@@ -32238,7 +32302,7 @@ $transition-fast: var(--transition-fast);
   --color-warning: #ff9800;
   --color-warning-bg: rgba(255, 152, 0, 0.2);
   --color-info: #4fc3f7;
-  --color-info-bg: var(--color-info-bg);
+  --color-info-bg: rgba(75, 195, 247, 0.2);
   /* 战斗系统专用语义色 */
   --color-heal: #4caf50;
   --color-heal-bg: rgba(76, 175, 80, 0.2);
@@ -32246,9 +32310,9 @@ $transition-fast: var(--transition-fast);
   --color-damage-bg: rgba(244, 67, 54, 0.2);
   --color-crit: #ff9800;
   --color-crit-glow: rgba(255, 152, 0, 0.5);
-  --color-energy: #22d3ee;
+  --color-energy: #1099ae;
   --color-casting: #9c88ff;
-  --color-selected: #22d3ee;
+  --color-selected: #0a7f91;
   --color-buff: #4caf50;
   --color-debuff: #a855f7;
   /* ----- 1.5 组件交互状态色 ----- */
@@ -33547,7 +33611,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: 
   immunity: { label: '免疫', color: '#fbbf24', priority: 3 },
   summon: { label: '召唤', color: '#fb923c', priority: 4 },
   dot: { label: '持续', color: '#f87171', priority: 5 },
-  shield: { label: '护盾', color: '#22d3ee', priority: 6 },
+  shield: { label: '护盾', color: '#0a7f91', priority: 6 },
   attribute: { label: '属性', color: '#60a5fa', priority: 7 },
 }
 const UNCATEGORIZED = { label: '未分类', color: '#94a3b8', priority: 99 }
@@ -33896,7 +33960,7 @@ const handleBattleEndReplay = (winner: string) => {
   user-select: none;
 }
 .tier-filter input[type="checkbox"] {
-  accent-color: #22d3ee;
+  accent-color: #0a7f91;
 }
 .skill-item {
   color: rgba(255, 255, 255, 0.85);
@@ -33910,7 +33974,7 @@ const handleBattleEndReplay = (winner: string) => {
   border-left-color: var(--color-border-default);
 }
 .skill-item:hover {
-  /* ponytail: uses --color-energy (#22d3ee) with opacity; no token for 10% bg */
+  /* ponytail: uses --color-energy (#0a7f91) with opacity; no token for 10% bg */
   background: rgba(34, 211, 238, 0.1);
   /* ponytail: glow uses --color-energy with opacity */
   box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
@@ -34856,7 +34920,8 @@ watch(activeTab, () => nextTick(updateIndicator))
 }
 .log-tab:hover {}
 .log-tab.active {
-  color: var(--color-energy);
+  color: var(--color-success);
+  border-color: var(--color-success);
   font-weight: var(--font-weight-bold);
 }
 /* 计数徽章 */
@@ -34874,14 +34939,11 @@ watch(activeTab, () => nextTick(updateIndicator))
   font-weight: var(--font-weight-bold);
   font-family: var(--font-family-mono);
   transition: background var(--transition-fast), color var(--transition-fast);
+  animation: badge-pop 0.2s ease-out;
 }
 .log-tab.active .tab-badge {
-  background: var(--color-energy);
+  background: var(--color-success);
   color: var(--color-bg-secondary);
-}
-/* 徽章数字变化时的弹跳（:key 触发重渲染） */
-.tab-badge {
-  animation: badge-pop 0.2s ease-out;
 }
 @keyframes badge-pop {
   0% {
@@ -34899,8 +34961,8 @@ watch(activeTab, () => nextTick(updateIndicator))
   position: absolute;
   bottom: -1px;
   height: 2px;
-  background: var(--color-energy);
-  box-shadow: 0 0 8px var(--color-energy);
+  background: var(--color-success);
+  box-shadow: 0 0 8px var(--color-success);
   border-radius: var(--radius-full);
   transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
@@ -34976,13 +35038,6 @@ watch(activeTab, () => nextTick(updateIndicator))
   color: var(--color-info);
 }
 /* ─────────── 内容容器（双容器，v-show 保留滚动位置） ─────────── */
-.log-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-2);
-  min-height: 0;
-  line-height: var(--line-height-md);
-}
 /* 页签切入时的淡入上浮 */
 .log-content.is-active {
   animation: content-in 0.18s ease-out;
@@ -35132,7 +35187,6 @@ watch(activeTab, () => nextTick(updateIndicator))
 .flat-err {
   flex-basis: 100%;
   color: var(--color-danger);
-  font-size: var(--font-size-xs);
 }
 /* ─────────── 空状态 ─────────── */
 .no-logs {
@@ -35158,26 +35212,26 @@ watch(activeTab, () => nextTick(updateIndicator))
   opacity: 0.5;
 }
 .nb {
-  margin: 2px 0;
+  margin: var(--space-1) 0;
 }
 .nb--battle-header {
   display: flex;
-  gap: 10px;
+  gap: var(--space-3);
   text-align: center;
   font-weight: var(--font-weight-bold);
   color: var(--color-warning);
-  padding: 6px 0;
+  padding: var(--space-2) 0;
   align-items: center;
 }
 .battle-line {
-  padding: 4px 0;
+  padding: var(--space-2) 0;
   letter-spacing: 1px;
   text-align: center;
 }
 .nb--round {
   display: flex;
-  gap: 10px;
-  margin: 14px 0 6px;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-2);
   align-items: center;
 }
 .round-label {
@@ -35188,15 +35242,17 @@ watch(activeTab, () => nextTick(updateIndicator))
 .action-header {
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-xl);
+  margin: var(--space-1) 0;
 }
 .glyph {
   color: var(--color-warning);
-  margin-right: 6px;
+  margin-right: var(--space-2);
 }
 .action-result,
 .action-sub {
-  padding-left: 1.4em;
+  padding-left: var(--space-5);
   line-height: var(--line-height-xl);
+  margin: var(--space-1) 0;
 }
 .glyph--sub {
   color: var(--color-text-tertiary);
@@ -35210,7 +35266,8 @@ watch(activeTab, () => nextTick(updateIndicator))
   align-items: center;
 }
 .indent-line {
-  padding-left: 1.4em;
+  padding-left: var(--space-5);
+  margin: var(--space-1) 0;
 }
 .section-title {
   color: var(--color-energy);
@@ -37523,34 +37580,30 @@ const reloadExport = () => {
                   </button>
                 </div>
               </div>
-              <!-- 日志生成模块控件 -->
-              <div v-if="module.name === '日志生成'" class="log-gen-control">
+              <!-- 数据生成模块控件 -->
+              <div v-if="module.name === '数据生成'" class="log-gen-control">
                 <div class="log-gen-row">
-                  <span class="log-gen-label">队伍:</span>
+                  <span class="log-gen-label">模式:</span>
                   <div class="log-gen-options">
-                    <button v-for="opt in teamOptions" :key="opt.value"
-                      class="log-gen-opt-btn" :class="{ active: teamConfig === opt.value }"
-                      @click="teamConfig = opt.value">{{ opt.label }}</button>
+                    <button v-for="opt in modeOptions" :key="opt.value"
+                      class="log-gen-opt-btn" :class="{ active: genMode === opt.value }"
+                      @click="genMode = opt.value">{{ opt.label }}</button>
                   </div>
                 </div>
                 <div class="log-gen-row">
                   <span class="log-gen-label">格式:</span>
                   <div class="log-gen-options">
                     <button v-for="opt in formatOptions" :key="opt.value"
-                      class="log-gen-opt-btn" :class="{ active: format === opt.value }"
-                      @click="format = opt.value">{{ opt.label }}</button>
+                      class="log-gen-opt-btn" :class="{ active: genFormat === opt.value }"
+                      @click="genFormat = opt.value">{{ opt.label }}</button>
                   </div>
                 </div>
-                <div class="log-gen-row">
-                  <span class="log-gen-label">场次:</span>
-                  <div class="log-gen-options">
-                    <button v-for="n in countOptions" :key="n"
-                      class="log-gen-opt-btn" :class="{ active: battleCount === n }"
-                      @click="battleCount = n">{{ n }}</button>
-                  </div>
-                </div>
-                <button class="log-gen-btn" @click="handleGenerate">
-                  生成 {{ battleCount }} 场
+                <button class="log-gen-btn"
+                  :disabled="battleStore.generationProgress.isGenerating"
+                  @click="battleStore.generateBattleData(genMode, genFormat)">
+                  {{ battleStore.generationProgress.isGenerating
+                    ? `生成中 ${battleStore.generationProgress.percent}%`
+                    : '生成数据（50场）' }}
                 </button>
               </div>
             </div>
@@ -37563,15 +37616,13 @@ const reloadExport = () => {
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
-import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager'
-import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import { useBattleStore } from '@/presentation/stores/battleStore'
 const debugStore = useDebugStore()
-// ==================== 日志生成 ====================
-const teamConfig = ref<'1v1' | '2v2' | 'random'>('1v1')
-const format = ref<'txt' | 'html'>('txt')
-const battleCount = ref(1)
-const countOptions = [1, 10, 50]
-const teamOptions = [
+const battleStore = useBattleStore()
+// ==================== 战斗数据生成 ====================
+const genMode = ref<'1v1' | '2v2' | 'random'>('random')
+const genFormat = ref<'txt' | 'html'>('txt')
+const modeOptions = [
   { value: '1v1' as const, label: '1v1' },
   { value: '2v2' as const, label: '2v2' },
   { value: 'random' as const, label: '随机' },
@@ -37580,93 +37631,6 @@ const formatOptions = [
   { value: 'txt' as const, label: 'TXT' },
   { value: 'html' as const, label: 'HTML' },
 ]
-const allyNames = ['火焰守卫', '冰霜法师', '圣光骑士', '暗影刺客', '雷霆战士']
-const enemyNames = ['熔岩巨魔', '亡灵巫师', '深渊猎手', '毒蝎领主', '暗影刺客']
-const skillNames = ['裂空斩', '冰霜新星', '圣光审判', '暗影突袭', '雷霆一击', '火焰风暴', '治愈术', '护盾']
-function genRandomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]
-}
-function getTeamPair(): { ally: string; enemy: string }[] {
-  switch (teamConfig.value) {
-    case '1v1':
-      return [{ ally: pickRandom(allyNames), enemy: pickRandom(enemyNames) }]
-    case '2v2':
-      return [
-        { ally: pickRandom(allyNames), enemy: pickRandom(enemyNames) },
-        { ally: pickRandom(allyNames), enemy: pickRandom(enemyNames) },
-      ]
-    case 'random': {
-      const count = genRandomInt(1, 3)
-      return Array.from({ length: count }, () => ({
-        ally: pickRandom(allyNames),
-        enemy: pickRandom(enemyNames),
-      }))
-    }
-  }
-}
-function generateBattleLogs(battleIndex: number) {
-  const { addSystemLog, addBattleLog, addActionLog } = battleLogManager
-  const isAllyWin = Math.random() > 0.4
-  const totalTurns = genRandomInt(3, 8)
-  const battleId = `gen_${Date.now()}_${battleIndex}`
-  const pairs = getTeamPair()
-  const allActors = pairs.flatMap(p => [p.ally, p.enemy])
-  const isHtml = format.value === 'html'
-  addSystemLog({
-    message: `═══ 第 ${battleIndex} 场开始 [${battleId}] 队伍: ${pairs.map(p => `${p.ally} vs ${p.enemy}`).join(' | ')}`,
-  })
-  for (let turn = 1; turn <= totalTurns; turn++) {
-    const actor = pickRandom(allActors)
-    const target = pickRandom(allActors.filter(n => n !== actor))
-    const isSkill = Math.random() > 0.4
-    const damage = isSkill ? genRandomInt(80, 450) : genRandomInt(20, 120)
-    const actionName = isSkill ? pickRandom(skillNames) : '普通攻击'
-    const isCrit = Math.random() > 0.8
-    addBattleLog({
-      turn,
-      source: actor,
-      target,
-      action: actionName,
-      message: isHtml
-        ? `${actor} 对 ${target} 使用 ${actionName}${isCrit ? '，暴击!' : ''}，造成 ${damage} 点伤害`
-        : `${actor} → ${target}: ${actionName}${isCrit ? ' [暴击!]' : ''} ${damage} 伤害`,
-      category: isCrit ? BATTLE_LOG_CATEGORIES.CRIT : BATTLE_LOG_CATEGORIES.DAMAGE,
-      meta: { role: Math.random() > 0.5 ? 'action' : 'sub' },
-    })
-    addActionLog({
-      source: actor,
-      target,
-      action: actionName,
-      message: isCrit ? `暴击! 造成 ${damage} 点伤害` : `造成 ${damage} 点伤害`,
-    })
-    if (Math.random() > 0.7) {
-      const healer = pickRandom(pairs.flatMap(p => [p.ally, p.enemy]))
-      const healTarget = pickRandom(allActors.filter(n => n !== healer))
-      const healAmount = genRandomInt(30, 150)
-      addBattleLog({
-        turn,
-        source: healer,
-        target: healTarget,
-        action: '治愈术',
-        message: `${healer} 对 ${healTarget} 使用 治愈术，恢复 ${healAmount} 点气血`,
-        category: BATTLE_LOG_CATEGORIES.HEAL,
-      })
-    }
-  }
-  const winner = isAllyWin ? '我方' : '敌方'
-  addSystemLog({ message: `第 ${battleIndex} 场结束 — ${winner}胜利 (${totalTurns}回合)` })
-}
-function handleGenerate() {
-  for (let i = 1; i <= battleCount.value; i++) {
-    generateBattleLogs(i)
-  }
-  battleLogManager.addSystemLog({
-    message: `✅ 已生成 ${battleCount.value} 场 (${teamConfig.value} / ${format.value.toUpperCase()})`,
-  })
-}
 const impactStyles = [
   { label: '爆炸', value: 'explosion', desc: '径向火球扩散+火花' },
   { label: '斩击', value: 'slash', desc: '干净利落的一刀弧光' },
@@ -37756,7 +37720,7 @@ const debugModules: DebugModule[] = [
     ],
   },
   {
-    name: '日志生成',
+    name: '数据生成',
     icon: '📊',
     buttons: [],
   },
@@ -38736,29 +38700,6 @@ const valueColorClass = computed(() => {
         <span class="qt-toggle-track"><span class="qt-toggle-thumb"></span></span>
         <span class="qt-toggle-label">⚡快速</span>
       </label>
-      <span class="separator"></span>
-      <!-- ★ 战斗数据生成 -->
-      <div class="gen-wrapper" ref="genWrapperRef">
-        <button
-          class="control-btn gen-trigger"
-          :disabled="store.generationProgress.isGenerating"
-          @click="showGenMenu = !showGenMenu"
-        >
-          {{ store.generationProgress.isGenerating
-            ? `生成中 ${store.generationProgress.percent}%`
-            : '生成数据' }}
-        </button>
-        <!-- 生成模式选择弹出 -->
-        <div v-if="showGenMenu" class="gen-menu">
-          <div class="gen-format-row">
-            <button :class="{ active: genFormat === 'txt' }" @click="genFormat = 'txt'">TXT</button>
-            <button :class="{ active: genFormat === 'html' }" @click="genFormat = 'html'">HTML</button>
-          </div>
-          <button @click="startGenerate('1v1')">1v1 × 50场</button>
-          <button @click="startGenerate('2v2')">2v2 × 50场</button>
-          <button @click="startGenerate('random')">随机 × 50场</button>
-        </div>
-      </div>
     </div>
     <div class="control-group right">
       <!-- 调试模式：暂停相位指示 + 暂停 / 单步调试 -->
@@ -38822,20 +38763,6 @@ const toggleBattleSpeed = () => {
   const nextIndex = (currentIndex + 1) % speedLevels.length;
   emit('battle-speed-change', speedLevels[nextIndex]);
 };
-// ★ 战斗数据生成菜单
-const showGenMenu = ref(false)
-const genWrapperRef = ref<HTMLElement | null>(null)
-const genFormat = ref<'txt' | 'html'>('txt')
-const startGenerate = (mode: '1v1' | '2v2' | 'random') => {
-  showGenMenu.value = false
-  store.generateBattleData(mode, genFormat.value)
-}
-// 点击外部关闭生成菜单
-const handleClickOutside = (e: MouseEvent) => {
-  if (genWrapperRef.value && !genWrapperRef.value.contains(e.target as Node)) {
-    showGenMenu.value = false
-  }
-}
 // ========== 调试模式 ==========
 // NOTE: debugGate 是普通类，状态不可响应式追踪，
 //       因此通过 DEBUG_PAUSE / DEBUG_PAUSE_RESUME 事件驱动本地 ref
@@ -38868,13 +38795,11 @@ onMounted(() => {
   eventBus.on(BattleEventCodes.DEBUG_PAUSE_RESUME, () => {
     debugPhase.value = null
   })
-  document.addEventListener('click', handleClickOutside)
 })
 onUnmounted(() => {
   eventBus.off(BattleEventCodes.DEBUG_TOGGLE)
   eventBus.off(BattleEventCodes.DEBUG_PAUSE)
   eventBus.off(BattleEventCodes.DEBUG_PAUSE_RESUME)
-  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 <style scoped>
@@ -39045,64 +38970,6 @@ onUnmounted(() => {
 }
 .quick-toggle.active .qt-toggle-label {
   color: var(--color-warning);
-}
-/* ★ 战斗数据生成菜单 */
-.gen-wrapper {
-  position: relative;
-  display: inline-flex;
-}
-.gen-menu {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  margin-bottom: 4px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  padding: var(--space-1);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: var(--z-dropdown);
-  box-shadow: var(--shadow-md);
-  min-width: 140px;
-}
-.gen-menu button {
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  white-space: nowrap;
-  text-align: left;
-}
-.gen-menu button:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-info);
-}
-.gen-format-row {
-  display: flex;
-  gap: 2px;
-  padding: var(--space-1);
-  border-bottom: 1px solid var(--color-border-default);
-  margin-bottom: 2px;
-}
-.gen-format-row button {
-  flex: 1;
-  text-align: center;
-  padding: var(--space-1);
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  font-size: var(--font-size-xs);
-}
-.gen-format-row button.active {
-  border-color: var(--color-info);
-  color: var(--color-info);
-  background: rgba(79, 195, 247, 0.1);
 }
 </style>
 
@@ -39481,7 +39348,7 @@ const presets: Preset[] = [
     name: '双护法 vs Boss',
     description: '2v1 多目标选择、Boss 技能释放',
     ally: ['guardian_fire', 'guardian_gold'],
-    enemy: ['boss_001'],
+    enemy: ['boss_007'],
   },
   {
     id: 'baseline_multi_boss',
@@ -43486,84 +43353,101 @@ export function escapeHtml(text: string): string {
  */
 const EXPORT_CSS = `
 :root {
-  --bg-primary:#1a1a2e; --bg-secondary:#0f0f1a; --bg-tertiary:#16213e;
-  --text-primary:#ffffff; --text-secondary:#eeeeee; --text-tertiary:#888888;
-  --border:#0f3460; --border-tertiary:#0f4b86;
-  --c-success:#4caf50; --c-danger:#f44336; --c-warning:#ff9800;
-  --c-info:#4fc3f7; --c-energy:#22d3ee; --c-debuff:#a855f7;
+  --color-bg-primary:#1a1a2e; --color-bg-secondary:#0f0f1a; --color-bg-tertiary:#16213e;
+  --color-text-primary:#ffffff; --color-text-secondary:#eee; --color-text-tertiary:#888888;
+  --color-border-default:#0f3460; --color-border-tertiary:#0f4b86;
+  --color-success:#4caf50; --color-danger:#f44336; --color-warning:#ff9800;
+  --color-info:#4fc3f7; --color-energy:#0a7f91; --color-debuff:#a855f7;
+  --color-heal:#4caf50; --color-damage:#f44336; --color-crit:#ff9800;
+  --color-crit-glow:rgba(255,152,0,0.5);
+  --color-success-bg:rgba(76,175,80,0.12); --color-danger-bg:rgba(244,67,54,0.12);
+  --color-info-bg:rgba(75,195,247,0.2); --color-warning-bg:rgba(255,152,0,0.2);
+  --font-weight-medium:500; --font-weight-semibold:600; --font-weight-bold:700;
+  --line-height-xl:2rem; --radius-sm:4px;
 }
 * { box-sizing:border-box; }
-body { margin:0; background:var(--bg-primary); color:var(--text-primary);
+body { margin:0; background:var(--color-bg-primary); color:var(--color-text-primary);
   font-family:'Consolas','Monaco','Courier New',monospace; font-size:14px;
   line-height:1.6; padding:20px; }
-.log-container { max-width:900px; margin:0 auto; background:var(--bg-secondary);
-  border:1px solid var(--border); border-radius:8px; padding:24px; }
-.meta { color:var(--text-tertiary); font-size:12px; border-bottom:1px solid var(--border);
+.log-container { max-width:900px; margin:0 auto; background:var(--color-bg-secondary);
+  border:1px solid var(--color-border-default); border-radius:8px; padding:24px; }
+.meta { color:var(--color-text-tertiary); font-size:12px; border-bottom:1px solid var(--color-border-default);
   padding-bottom:8px; margin-bottom:16px; }
 /* 叙事块（同源 _battle-log.scss §6） */
 .nb { margin:2px 0; }
 .nb--battle-header { display:flex; gap:10px; align-items:center; text-align:center;
-  font-weight:bold; color:var(--c-warning); padding:6px 0; }
+  font-weight:bold; color:var(--color-warning); padding:6px 0; }
 .battle-line { letter-spacing:1px; }
-.rule { flex:1; height:1px; background:var(--border); }
+.rule { flex:1; height:1px; background:var(--color-border-default); }
 .rule--double { height:3px; background:transparent;
-  border-top:1px solid var(--border-tertiary); border-bottom:1px solid var(--border-tertiary); }
+  border-top:1px solid var(--color-border-tertiary); border-bottom:1px solid var(--color-border-tertiary); }
 .rule--thin { opacity:0.5; }
 .nb--round { display:flex; gap:10px; align-items:center; margin:14px 0 6px; }
-.round-label { color:var(--c-info); font-weight:bold; white-space:nowrap; }
-.action-header { font-weight:600; line-height: var(--line-height-xl); }
-.glyph { color:var(--c-warning); margin-right:6px; }
-.action-result, .action-sub { padding-left:1.4em; line-height: var(--line-height-xl); }
-.glyph--sub { color:var(--text-tertiary); }
-.sub-header { display:flex; gap:8px; align-items:center; color:var(--text-tertiary);
+.round-label { color:var(--color-info); font-weight:bold; white-space:nowrap; }
+.action-header { font-weight:600; line-height:var(--line-height-xl); }
+.glyph { color:var(--color-warning); margin-right:6px; }
+.action-result, .action-sub { padding-left:1.4em; line-height:var(--line-height-xl); }
+.glyph--sub { color:var(--color-text-tertiary); }
+.sub-header { display:flex; gap:8px; align-items:center; color:var(--color-text-tertiary);
   margin-top:8px; letter-spacing:4px; }
 .indent-line { padding-left:1.4em; }
-.section-title { color:var(--c-energy); font-weight:bold; }
+.section-title { color:var(--color-energy); font-weight:bold; }
 .nb--summary { display:flex; gap:10px; align-items:center; padding:8px 0; }
 .summary-content { text-align:center; }
 .summary-line { margin:2px 0; }
 /* 语义着色（同源 _battle-log.scss §5） */
-.log-friendly { color:var(--c-success); font-weight:bold; }
-.log-hostile { color:var(--c-danger); font-weight:bold; }
-.log-damage { color:var(--c-danger); font-weight:bold; }
-.log-heal { color:var(--c-success); font-weight:bold; }
-.log-crit { color:var(--c-warning); font-weight:bold; }
-.log-buff { color:var(--c-energy); font-weight:500; }
-.log-debuff { color:var(--c-debuff); font-weight:500; }
-.log-control { color:var(--c-debuff); font-weight:bold; }
-.log-skill { color:var(--c-warning); font-weight:500; }
-.log-passive { color:var(--c-info); font-weight:500; }
-.log-energy { color:var(--c-energy); font-weight:bold; }
-.log-shield { color:var(--c-info); font-weight:bold; }
-.log-system { color:var(--text-tertiary); opacity:0.7; }
-.log-info { color:var(--c-info); font-weight:600; }
+.log-friendly { color:var(--color-success); font-weight:var(--font-weight-bold); }
+.log-hostile { color:var(--color-danger); font-weight:var(--font-weight-bold); }
+.log-damage { color:var(--color-damage); font-weight:var(--font-weight-bold); }
+.log-heal { color:var(--color-heal); font-weight:var(--font-weight-bold); }
+.log-crit { color:var(--color-crit); font-weight:var(--font-weight-bold);
+  text-shadow:0 0 5px var(--color-crit-glow); }
+.log-buff { color:var(--color-energy); font-weight:var(--font-weight-medium); }
+.log-debuff { color:var(--color-debuff); font-weight:var(--font-weight-medium); }
+.log-control { color:var(--color-debuff); font-weight:var(--font-weight-bold); }
+.log-skill { color:var(--color-warning); font-weight:var(--font-weight-medium); }
+.log-passive { color:var(--color-info); font-weight:var(--font-weight-medium); }
+.log-energy { color:var(--color-energy); font-weight:var(--font-weight-bold); }
+.log-shield { color:var(--color-info); font-weight:var(--font-weight-bold); }
+.log-system { color:var(--color-text-tertiary); opacity:0.7; }
+.log-info { color:var(--color-info); font-weight:var(--font-weight-semibold); }
+/* 可悬浮锚点视觉暗示 */
+.log-hoverable { text-decoration:underline dotted; text-underline-offset:2px;
+  cursor:help; transition:filter var(--transition-fast); }
+.log-hoverable:hover { filter:brightness(1.3); }
 /* 芯片（同源 _battle-log.scss §6 — 含 chip--skill/buff/passive 与 hoverable） */
-.chip { padding:0 6px; border-radius:4px; font-weight:500; white-space:nowrap; }
-.chip--ally { color:var(--c-success); background:rgba(76,175,80,0.12); }
-.chip--enemy { color:var(--c-danger); background:rgba(244,67,54,0.12); }
-.chip--skill { color:var(--c-warning); }
-.chip--buff { color:var(--c-energy); }
-.chip--passive { color:var(--c-info); }
-.hoverable { text-decoration:underline dotted; text-underline-offset:2px; }
+.chip { border-radius:var(--radius-sm); font-weight:var(--font-weight-medium);
+  white-space:nowrap; cursor:pointer; line-height:1.75rem; padding:0.25rem 0.5rem; }
+.chip--ally { color:var(--color-heal); background:var(--color-success-bg); }
+.chip--enemy { color:var(--color-danger); background:var(--color-danger-bg); }
+.chip--skill { color:var(--color-warning); }
+.chip--buff { color:var(--color-energy); }
+.chip--passive { color:var(--color-info); }
+.hoverable { outline:2px solid var(--color-info-bg); outline-offset:-2px;
+  border-radius:0; cursor:help; }
 /* 大号数字 / 气血 */
-.num--damage { color:var(--c-danger); font-size:1.15em; font-weight:bold; }
-.num--heal { color:var(--c-success); font-size:1.15em; font-weight:bold; }
-.hp-before { color:var(--text-tertiary); }
-.hp-after { color:var(--c-warning); font-weight:bold; }
+.num--damage { color:var(--color-damage); font-size:1.15em; font-weight:var(--font-weight-bold); }
+.num--heal { color:var(--color-heal); font-size:1.15em; font-weight:var(--font-weight-bold); }
+.hp-before { color:var(--color-text-tertiary); }
+.hp-after { color:var(--color-warning); font-weight:var(--font-weight-bold); }
+/* 高光 callout */
+.log-callout { margin:4px 0; padding:4px 10px; border-radius:var(--radius-sm);
+  color:var(--color-crit); background:var(--color-warning-bg);
+  border-left:3px solid var(--color-crit); font-weight:var(--font-weight-bold); }
 /* 批量报告 — batch-only（仅在 mergeLogsHtml 中使用） */
-.report-stats { color:var(--text-secondary); border:1px solid var(--border);
+.report-stats { color:var(--color-text-secondary); border:1px solid var(--color-border-default);
   border-radius:6px; padding:12px 16px; margin-bottom:16px; }
 .report-stats div:first-child { font-size:16px; font-weight:bold;
-  color:var(--c-warning); margin-bottom:4px; }
-.battle-block { border:1px solid var(--border); border-left:3px solid var(--c-info);
-  border-radius:6px; margin-bottom:8px; background:var(--bg-tertiary); }
-.battle-block > summary { cursor:pointer; padding:8px 12px; color:var(--text-secondary);
+  color:var(--color-warning); margin-bottom:4px; }
+.battle-block { border:1px solid var(--color-border-default); border-left:3px solid var(--color-info);
+  border-radius:6px; margin-bottom:8px; background:var(--color-bg-tertiary); }
+.battle-block > summary { cursor:pointer; padding:8px 12px; color:var(--color-text-secondary);
   user-select:none; list-style:none; }
 .battle-block > summary::-webkit-details-marker { display:none; }
-.battle-block > summary::before { content:'▶ '; color:var(--c-info); }
+.battle-block > summary::before { content:'▶ '; color:var(--color-info); }
 .battle-block[open] > summary::before { content:'▼ '; }
 .battle-block > summary:hover { background:rgba(255,255,255,0.04); }
-.battle-body { padding:8px 12px 12px; border-top:1px solid var(--border); }
+.battle-body { padding:8px 12px 12px; border-top:1px solid var(--color-border-default); }
 `
 /**
  * 将单个 LogSegment 渲染为 HTML。

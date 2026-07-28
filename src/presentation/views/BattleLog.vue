@@ -479,7 +479,8 @@ watch(activeTab, () => nextTick(updateIndicator))
 .log-tab:hover {}
 
 .log-tab.active {
-  color: var(--color-energy);
+  color: var(--color-success);
+  border-color: var(--color-success);
   font-weight: var(--font-weight-bold);
 }
 
@@ -498,16 +499,12 @@ watch(activeTab, () => nextTick(updateIndicator))
   font-weight: var(--font-weight-bold);
   font-family: var(--font-family-mono);
   transition: background var(--transition-fast), color var(--transition-fast);
+  animation: badge-pop 0.2s ease-out;
 }
 
 .log-tab.active .tab-badge {
-  background: var(--color-energy);
+  background: var(--color-success);
   color: var(--color-bg-secondary);
-}
-
-/* 徽章数字变化时的弹跳（:key 触发重渲染） */
-.tab-badge {
-  animation: badge-pop 0.2s ease-out;
 }
 
 @keyframes badge-pop {
@@ -529,8 +526,8 @@ watch(activeTab, () => nextTick(updateIndicator))
   position: absolute;
   bottom: -1px;
   height: 2px;
-  background: var(--color-energy);
-  box-shadow: 0 0 8px var(--color-energy);
+  background: var(--color-success);
+  box-shadow: 0 0 8px var(--color-success);
   border-radius: var(--radius-full);
   transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;

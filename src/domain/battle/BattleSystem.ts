@@ -291,6 +291,15 @@ export class BattleSystem {
     allyParticipants: BattleEntity[],
     enemyParticipants: BattleEntity[],
   ): BattleState {
+    // ★ 桥接战斗规则 → 伤害计算器（暴击/闪避开关），每场战斗开始时生效
+    // NOTE: §1.1 修复后 this.damageCalculator 与 this.skillManager.getDamageCalculator()
+    //       为同一实例，一次 setConfig 即覆盖普攻和技能两条路径
+    const combatRules = this.ruleManager.getCombatRules()
+    this.damageCalculator.setConfig({
+      enableCrit: combatRules.critEnabled,
+      enableDodge: combatRules.dodgeEnabled,
+    })
+
     const allParticipants = [...allyParticipants, ...enemyParticipants]
     const participants = new Map<string, BattleEntity>()
     allParticipants.forEach((participant) => {

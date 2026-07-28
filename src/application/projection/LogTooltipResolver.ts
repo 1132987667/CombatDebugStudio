@@ -16,6 +16,8 @@ import type { BuffJsonEntry, BuffJsonAuraModifier } from '@/shared/types/buffs-j
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { SkillConfig, SkillType } from '@/domain/skill/types'
+import { BattleTriggerPhaseName, OLD_PHASE_NAME_MAP } from '@/domain/battle/type/types'
+import type { BattleTriggerPhase } from '@/domain/battle/type/types'
 
 // ==================== 输出类型 ====================
 
@@ -212,7 +214,7 @@ export class LogTooltipResolver {
           for (const t of triggers!) {
             details.push({
               label: '触发时机',
-              value: t.phase ?? t.scriptId ?? '未知',
+              value: this.formatTriggerPhase(t.phase ?? '') || t.scriptId || '未知',
             })
             if (t.params?.probability != null) {
               details.push({ label: '触发概率', value: `${Math.round((t.params.probability as number) * 100)}%` })
@@ -293,7 +295,7 @@ export class LogTooltipResolver {
 
     // 触发时机
     if (config.triggerTimes && config.triggerTimes.length > 0) {
-      details.push({ label: '触发时机', value: config.triggerTimes.join('、') })
+      details.push({ label: '触发时机', value: config.triggerTimes.map((t) => this.formatTriggerPhase(t)).join('、') })
     }
 
     // 触发概率（从 parameters 或 steps 中推测）
@@ -315,6 +317,17 @@ export class LogTooltipResolver {
   }
 
   // ==================== 辅助方法 ====================
+
+  /** 格式化触发时机：中文化，兼容新旧风格 */
+  private formatTriggerPhase(phase: string): string {
+    // 新风格直接查中文表（on_hit → 命中时）
+    const direct = BattleTriggerPhaseName[phase as BattleTriggerPhase]
+    if (direct) return direct
+    // 旧风格归一化后查中文表（ON_ATTACK_HIT → on_hit → 命中时）
+    const normalized = OLD_PHASE_NAME_MAP[phase]
+    if (normalized) return BattleTriggerPhaseName[normalized]
+    return phase
+  }
 
   /** 格式化修饰符值 */
   private formatModifierValue(modifier: BuffJsonAuraModifier): string {

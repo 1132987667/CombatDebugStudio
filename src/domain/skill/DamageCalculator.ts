@@ -14,6 +14,8 @@ import { EffectType } from '@/shared/types/effect'
 
 export interface DamageCalculationConfig {
   enableCrit: boolean
+  /** 是否启用闪避机制（默认关闭，对齐 BattleRuleManager） */
+  enableDodge: boolean
   critRate: number
   critDamage: number
   /** @deprecated 未使用，仅保留避免破坏外部配置 */
@@ -62,7 +64,8 @@ interface CalculationStepLog {
 export class DamageCalculator {
   calculationLogs: CalculationStepLog[] = []
   config: DamageCalculationConfig = {
-    enableCrit: false,
+    enableCrit: true,
+    enableDodge: false,
     critRate: 0,
     critDamage: 0,
     minDamageThreshold: 1,
@@ -125,7 +128,8 @@ export class DamageCalculator {
     const hasGuaranteedCrit = typeof source.hasBuff === 'function' && source.hasBuff('buff_guaranteed_crit')
 
     // 命中/闪避判定 — 默认命中率100%，减去目标闪避率
-    if (!hasGuaranteedCrit) {
+    // 闪避门控：仅当 enableDodge 为 true 时执行闪避判定
+    if (!hasGuaranteedCrit && this.config.enableDodge) {
       const hitRate = this.getAttributeOrConfig(source, ATTRIBUTE_CODE.hit)
       const dodgeRate = this.getAttributeOrConfig(target, ATTRIBUTE_CODE.dodge)
       let actualHitRate = hitRate - dodgeRate
@@ -314,7 +318,9 @@ export class DamageCalculator {
     }
 
     // 捕获原始伤害（来源方全部产出，目标方减免前）
-    breakdown.rawDamage = damage
+    // NOTE: extraValues 累加可能产生小数，与最终伤害保持一致取整，保证日志与反伤基数为整数
+    breakdown.rawDamage = Math.floor(damage)
+    damage = breakdown.rawDamage
     breakdown.steps.push({
       stepName: 'rawDamage',
       value: damage,

@@ -160,84 +160,101 @@ export function escapeHtml(text: string): string {
  */
 const EXPORT_CSS = `
 :root {
-  --bg-primary:#1a1a2e; --bg-secondary:#0f0f1a; --bg-tertiary:#16213e;
-  --text-primary:#ffffff; --text-secondary:#eeeeee; --text-tertiary:#888888;
-  --border:#0f3460; --border-tertiary:#0f4b86;
-  --c-success:#4caf50; --c-danger:#f44336; --c-warning:#ff9800;
-  --c-info:#4fc3f7; --c-energy:#0a7f91; --c-debuff:#a855f7;
+  --color-bg-primary:#1a1a2e; --color-bg-secondary:#0f0f1a; --color-bg-tertiary:#16213e;
+  --color-text-primary:#ffffff; --color-text-secondary:#eee; --color-text-tertiary:#888888;
+  --color-border-default:#0f3460; --color-border-tertiary:#0f4b86;
+  --color-success:#4caf50; --color-danger:#f44336; --color-warning:#ff9800;
+  --color-info:#4fc3f7; --color-energy:#0a7f91; --color-debuff:#a855f7;
+  --color-heal:#4caf50; --color-damage:#f44336; --color-crit:#ff9800;
+  --color-crit-glow:rgba(255,152,0,0.5);
+  --color-success-bg:rgba(76,175,80,0.12); --color-danger-bg:rgba(244,67,54,0.12);
+  --color-info-bg:rgba(75,195,247,0.2); --color-warning-bg:rgba(255,152,0,0.2);
+  --font-weight-medium:500; --font-weight-semibold:600; --font-weight-bold:700;
+  --line-height-xl:2rem; --radius-sm:4px;
 }
 * { box-sizing:border-box; }
-body { margin:0; background:var(--bg-primary); color:var(--text-primary);
+body { margin:0; background:var(--color-bg-primary); color:var(--color-text-primary);
   font-family:'Consolas','Monaco','Courier New',monospace; font-size:14px;
   line-height:1.6; padding:20px; }
-.log-container { max-width:900px; margin:0 auto; background:var(--bg-secondary);
-  border:1px solid var(--border); border-radius:8px; padding:24px; }
-.meta { color:var(--text-tertiary); font-size:12px; border-bottom:1px solid var(--border);
+.log-container { max-width:900px; margin:0 auto; background:var(--color-bg-secondary);
+  border:1px solid var(--color-border-default); border-radius:8px; padding:24px; }
+.meta { color:var(--color-text-tertiary); font-size:12px; border-bottom:1px solid var(--color-border-default);
   padding-bottom:8px; margin-bottom:16px; }
 /* 叙事块（同源 _battle-log.scss §6） */
 .nb { margin:2px 0; }
 .nb--battle-header { display:flex; gap:10px; align-items:center; text-align:center;
-  font-weight:bold; color:var(--c-warning); padding:6px 0; }
+  font-weight:bold; color:var(--color-warning); padding:6px 0; }
 .battle-line { letter-spacing:1px; }
-.rule { flex:1; height:1px; background:var(--border); }
+.rule { flex:1; height:1px; background:var(--color-border-default); }
 .rule--double { height:3px; background:transparent;
-  border-top:1px solid var(--border-tertiary); border-bottom:1px solid var(--border-tertiary); }
+  border-top:1px solid var(--color-border-tertiary); border-bottom:1px solid var(--color-border-tertiary); }
 .rule--thin { opacity:0.5; }
 .nb--round { display:flex; gap:10px; align-items:center; margin:14px 0 6px; }
-.round-label { color:var(--c-info); font-weight:bold; white-space:nowrap; }
-.action-header { font-weight:600; line-height: var(--line-height-xl); }
-.glyph { color:var(--c-warning); margin-right:6px; }
-.action-result, .action-sub { padding-left:1.4em; line-height: var(--line-height-xl); }
-.glyph--sub { color:var(--text-tertiary); }
-.sub-header { display:flex; gap:8px; align-items:center; color:var(--text-tertiary);
+.round-label { color:var(--color-info); font-weight:bold; white-space:nowrap; }
+.action-header { font-weight:600; line-height:var(--line-height-xl); }
+.glyph { color:var(--color-warning); margin-right:6px; }
+.action-result, .action-sub { padding-left:1.4em; line-height:var(--line-height-xl); }
+.glyph--sub { color:var(--color-text-tertiary); }
+.sub-header { display:flex; gap:8px; align-items:center; color:var(--color-text-tertiary);
   margin-top:8px; letter-spacing:4px; }
 .indent-line { padding-left:1.4em; }
-.section-title { color:var(--c-energy); font-weight:bold; }
+.section-title { color:var(--color-energy); font-weight:bold; }
 .nb--summary { display:flex; gap:10px; align-items:center; padding:8px 0; }
 .summary-content { text-align:center; }
 .summary-line { margin:2px 0; }
 /* 语义着色（同源 _battle-log.scss §5） */
-.log-friendly { color:var(--c-success); font-weight:bold; }
-.log-hostile { color:var(--c-danger); font-weight:bold; }
-.log-damage { color:var(--c-danger); font-weight:bold; }
-.log-heal { color:var(--c-success); font-weight:bold; }
-.log-crit { color:var(--c-warning); font-weight:bold; }
-.log-buff { color:var(--c-energy); font-weight:500; }
-.log-debuff { color:var(--c-debuff); font-weight:500; }
-.log-control { color:var(--c-debuff); font-weight:bold; }
-.log-skill { color:var(--c-warning); font-weight:500; }
-.log-passive { color:var(--c-info); font-weight:500; }
-.log-energy { color:var(--c-energy); font-weight:bold; }
-.log-shield { color:var(--c-info); font-weight:bold; }
-.log-system { color:var(--text-tertiary); opacity:0.7; }
-.log-info { color:var(--c-info); font-weight:600; }
+.log-friendly { color:var(--color-success); font-weight:var(--font-weight-bold); }
+.log-hostile { color:var(--color-danger); font-weight:var(--font-weight-bold); }
+.log-damage { color:var(--color-damage); font-weight:var(--font-weight-bold); }
+.log-heal { color:var(--color-heal); font-weight:var(--font-weight-bold); }
+.log-crit { color:var(--color-crit); font-weight:var(--font-weight-bold);
+  text-shadow:0 0 5px var(--color-crit-glow); }
+.log-buff { color:var(--color-energy); font-weight:var(--font-weight-medium); }
+.log-debuff { color:var(--color-debuff); font-weight:var(--font-weight-medium); }
+.log-control { color:var(--color-debuff); font-weight:var(--font-weight-bold); }
+.log-skill { color:var(--color-warning); font-weight:var(--font-weight-medium); }
+.log-passive { color:var(--color-info); font-weight:var(--font-weight-medium); }
+.log-energy { color:var(--color-energy); font-weight:var(--font-weight-bold); }
+.log-shield { color:var(--color-info); font-weight:var(--font-weight-bold); }
+.log-system { color:var(--color-text-tertiary); opacity:0.7; }
+.log-info { color:var(--color-info); font-weight:var(--font-weight-semibold); }
+/* 可悬浮锚点视觉暗示 */
+.log-hoverable { text-decoration:underline dotted; text-underline-offset:2px;
+  cursor:help; transition:filter var(--transition-fast); }
+.log-hoverable:hover { filter:brightness(1.3); }
 /* 芯片（同源 _battle-log.scss §6 — 含 chip--skill/buff/passive 与 hoverable） */
-.chip { padding:0 6px; border-radius:4px; font-weight:500; white-space:nowrap; }
-.chip--ally { color:var(--c-success); background:rgba(76,175,80,0.12); }
-.chip--enemy { color:var(--c-danger); background:rgba(244,67,54,0.12); }
-.chip--skill { color:var(--c-warning); }
-.chip--buff { color:var(--c-energy); }
-.chip--passive { color:var(--c-info); }
-.hoverable { text-decoration:underline dotted; text-underline-offset:2px; }
+.chip { border-radius:var(--radius-sm); font-weight:var(--font-weight-medium);
+  white-space:nowrap; cursor:pointer; line-height:1.75rem; padding:0.25rem 0.5rem; }
+.chip--ally { color:var(--color-heal); background:var(--color-success-bg); }
+.chip--enemy { color:var(--color-danger); background:var(--color-danger-bg); }
+.chip--skill { color:var(--color-warning); }
+.chip--buff { color:var(--color-energy); }
+.chip--passive { color:var(--color-info); }
+.hoverable { outline:2px solid var(--color-info-bg); outline-offset:-2px;
+  border-radius:0; cursor:help; }
 /* 大号数字 / 气血 */
-.num--damage { color:var(--c-danger); font-size:1.15em; font-weight:bold; }
-.num--heal { color:var(--c-success); font-size:1.15em; font-weight:bold; }
-.hp-before { color:var(--text-tertiary); }
-.hp-after { color:var(--c-warning); font-weight:bold; }
+.num--damage { color:var(--color-damage); font-size:1.15em; font-weight:var(--font-weight-bold); }
+.num--heal { color:var(--color-heal); font-size:1.15em; font-weight:var(--font-weight-bold); }
+.hp-before { color:var(--color-text-tertiary); }
+.hp-after { color:var(--color-warning); font-weight:var(--font-weight-bold); }
+/* 高光 callout */
+.log-callout { margin:4px 0; padding:4px 10px; border-radius:var(--radius-sm);
+  color:var(--color-crit); background:var(--color-warning-bg);
+  border-left:3px solid var(--color-crit); font-weight:var(--font-weight-bold); }
 /* 批量报告 — batch-only（仅在 mergeLogsHtml 中使用） */
-.report-stats { color:var(--text-secondary); border:1px solid var(--border);
+.report-stats { color:var(--color-text-secondary); border:1px solid var(--color-border-default);
   border-radius:6px; padding:12px 16px; margin-bottom:16px; }
 .report-stats div:first-child { font-size:16px; font-weight:bold;
-  color:var(--c-warning); margin-bottom:4px; }
-.battle-block { border:1px solid var(--border); border-left:3px solid var(--c-info);
-  border-radius:6px; margin-bottom:8px; background:var(--bg-tertiary); }
-.battle-block > summary { cursor:pointer; padding:8px 12px; color:var(--text-secondary);
+  color:var(--color-warning); margin-bottom:4px; }
+.battle-block { border:1px solid var(--color-border-default); border-left:3px solid var(--color-info);
+  border-radius:6px; margin-bottom:8px; background:var(--color-bg-tertiary); }
+.battle-block > summary { cursor:pointer; padding:8px 12px; color:var(--color-text-secondary);
   user-select:none; list-style:none; }
 .battle-block > summary::-webkit-details-marker { display:none; }
-.battle-block > summary::before { content:'▶ '; color:var(--c-info); }
+.battle-block > summary::before { content:'▶ '; color:var(--color-info); }
 .battle-block[open] > summary::before { content:'▼ '; }
 .battle-block > summary:hover { background:rgba(255,255,255,0.04); }
-.battle-body { padding:8px 12px 12px; border-top:1px solid var(--border); }
+.battle-body { padding:8px 12px 12px; border-top:1px solid var(--color-border-default); }
 `
 
 /**

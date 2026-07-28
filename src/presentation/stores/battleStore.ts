@@ -39,6 +39,8 @@ import { defineStore } from 'pinia'
 import { onScopeDispose, reactive, ref, shallowRef, shallowReactive } from 'vue'
 import { BattleProjection } from '@/application/projection/BattleProjection'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
+import type { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { getActionBudget } from '@/shared/constants/animation-timing'
 
 export interface BattleRules {
@@ -468,6 +470,25 @@ export const useBattleStore = defineStore('battle', () => {
    */
   const updateRules = (newRules: Partial<BattleRules>) => {
     Object.assign(rules.value, newRules)
+    // ★ 同步暴击/闪避开关到领域层规则管理器，下一场战斗 initialize 时生效
+    try {
+      const ruleManager = container.resolve<BattleRuleManager>(
+        BATTLE_RULE_MANAGER_TOKEN.toString(),
+      )
+      const config = ruleManager.getConfig()
+      ruleManager.updateConfig({
+        rules: {
+          ...config.rules,
+          combat: {
+            ...config.rules.combat,
+            critEnabled: rules.value.critEnabled,
+            dodgeEnabled: rules.value.dodgeEnabled,
+          },
+        },
+      })
+    } catch {
+      // 容器未就绪时忽略
+    }
     battleLogManager.addSystemLog({
       message: `战斗规则已更新: ${JSON.stringify(newRules)}`,
     })

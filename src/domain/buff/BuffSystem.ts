@@ -31,6 +31,7 @@ import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import {
   StepExecutionContext,
   BattleTriggerPhase,
+  OLD_PHASE_NAME_MAP,
 } from '@/domain/battle/type/types'
 import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
 
@@ -276,30 +277,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   // ============ 触发器系统（JSON 配置 triggers → TriggerEventBus 接线） ============
 
   /**
-   * 阶段名规范化映射
-   * ponytail: buffs.json 历史遗留使用 ON_TURN_START 风格，与 BattleTriggerPhase 枚举值（turn_start）不匹配。
-   *           在注册触发器时做一次映射，避免修改 20+ 处 JSON 配置。
-   *           覆盖所有 BattleTriggerPhase 值，新配置可直接使用大小写混合的 ON_ 风格。
-   */
-  private static readonly PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
-    ON_TURN_START: BattleTriggerPhase.TURN_START,
-    ON_TURN_END: BattleTriggerPhase.TURN_END,
-    ON_BATTLE_START: BattleTriggerPhase.BATTLE_START,
-    ON_BATTLE_END: BattleTriggerPhase.BATTLE_END,
-    ON_DAMAGE_TAKEN: BattleTriggerPhase.DAMAGE_TAKEN,
-    ON_ATTACK_HIT: BattleTriggerPhase.ON_HIT,
-    BEFORE_ATTACK: BattleTriggerPhase.BEFORE_ATTACK,
-    AFTER_ATTACK: BattleTriggerPhase.AFTER_ATTACK,
-    ON_KILL: BattleTriggerPhase.ON_KILL,
-    ON_DEATH: BattleTriggerPhase.ON_DEATH,
-    ON_HEAL_RECEIVED: BattleTriggerPhase.HEAL_RECEIVED,
-    ON_ENERGY_GAINED: BattleTriggerPhase.ENERGY_GAINED,
-    ON_SKILL_USE: BattleTriggerPhase.SKILL_USE,
-    ON_HP_LOWER_THAN: BattleTriggerPhase.HP_LOWER_THAN,
-    ON_ALLY_FATAL_DAMAGE: BattleTriggerPhase.ALLY_FATAL_DAMAGE,
-    ON_ALLY_DAMAGE_TAKEN: BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
-    ON_APPLY: BattleTriggerPhase.ON_APPLY,
-  }
 
   /**
    * 为 Buff 实例注册触发器监听器
@@ -314,7 +291,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (!buffInstance) return
 
     for (const trigger of triggers) {
-      const phase = BuffSystem.PHASE_NAME_MAP[trigger.phase]
+      const phase = OLD_PHASE_NAME_MAP[trigger.phase]
       if (!phase) {
         this.logger.addDebugLog(
           `触发器阶段 ${trigger.phase} 未识别，跳过注册`,

@@ -144,21 +144,23 @@ export function initializeContainer(): void {
   // 领域实体的事件总线注入（静态字段）
   BattleParticipantImpl.eventBus = triggerEventBus
 
-  // 3. 注册SkillManager（依赖BuffSystem）
-  const buffSystem = container.resolve<BuffSystem>('BuffSystem')
-  container.register('SkillManager', new SkillManager(buffSystem))
+  // 3. ★ 先创建计算服务，确保 SkillManager 复用同一实例（消除双实例）
+  const damageCalculator = new DamageCalculator()
+  const healCalculator = new HealCalculator()
+  container.register('DamageCalculator', damageCalculator)
+  container.register('HealCalculator', healCalculator)
+  container.register('RAFTimer', new RAFTimer())
 
-  // 4. 注册PassiveSkillManager（依赖SkillManager和BuffSystem）
+  // 4. 注册SkillManager（依赖BuffSystem + DamageCalculator + HealCalculator）
+  const buffSystem = container.resolve<BuffSystem>('BuffSystem')
+  container.register('SkillManager', new SkillManager(buffSystem, damageCalculator, healCalculator))
+
+  // 5. 注册PassiveSkillManager（依赖SkillManager和BuffSystem）
   const skillManager = container.resolve<SkillManager>('SkillManager')
   container.register(
     'PassiveSkillManager',
     PassiveSkillManager.create(skillManager, buffSystem),
   )
-
-  // 5. 注册计算服务
-  container.register('DamageCalculator', new DamageCalculator())
-  container.register('HealCalculator', new HealCalculator())
-  container.register('RAFTimer', new RAFTimer())
 
   // 6. 注册核心战斗组件（依赖上面注册的服务）
   container.register(TURN_MANAGER_TOKEN.toString(), new TurnManager(buffSystem))

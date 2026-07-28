@@ -110,7 +110,7 @@ export class HealCalculator {
       )
     }
 
-    heal = Math.max(0, heal)
+    heal = Math.max(0, Math.floor(heal))
 
     if (context?.record) {
       context.record.effects?.push({

@@ -57,6 +57,8 @@ describe('DamageCalculator', () => {
     it('should apply dodge when target has max dodge rate', () => {
       const source = createMockEntity()
       const target = createMockEntity()
+      // 启用闪避门控，否则闪避判定被跳过
+      calculator.setConfig({ enableDodge: true })
       target.getAttrVal = (attr: string) => {
         if (attr === 'dodgeRate' || attr === ATTRIBUTE_CODE.dodge) {
           return { value: 100, base: 100, modifiers: [], dirty: false }
@@ -338,10 +340,10 @@ describe('DamageCalculator', () => {
 
   describe('config', () => {
     it('should allow setting custom config', () => {
-      calculator.setConfig({ criticalEnabled: false })
+      calculator.setConfig({ enableCrit: false })
 
       const config = calculator.getConfig()
-      expect(config.criticalEnabled).toBe(false)
+      expect(config.enableCrit).toBe(false)
     })
   })
 })

@@ -767,6 +767,50 @@ export const BattleTriggerPhase = {
 export type BattleTriggerPhase =
   (typeof BattleTriggerPhase)[keyof typeof BattleTriggerPhase]
 
+/** 旧风格阶段名（ON_TURN_START 等）→ 标准化阶段名映射，供 JSON 配置向后兼容 */
+export const OLD_PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
+  ON_TURN_START: BattleTriggerPhase.TURN_START,
+  ON_TURN_END: BattleTriggerPhase.TURN_END,
+  ON_BATTLE_START: BattleTriggerPhase.BATTLE_START,
+  ON_BATTLE_END: BattleTriggerPhase.BATTLE_END,
+  ON_DAMAGE_TAKEN: BattleTriggerPhase.DAMAGE_TAKEN,
+  ON_ATTACK_HIT: BattleTriggerPhase.ON_HIT,
+  BEFORE_ATTACK: BattleTriggerPhase.BEFORE_ATTACK,
+  AFTER_ATTACK: BattleTriggerPhase.AFTER_ATTACK,
+  ON_KILL: BattleTriggerPhase.ON_KILL,
+  ON_DEATH: BattleTriggerPhase.ON_DEATH,
+  ON_HEAL_RECEIVED: BattleTriggerPhase.HEAL_RECEIVED,
+  ON_ENERGY_GAINED: BattleTriggerPhase.ENERGY_GAINED,
+  ON_SKILL_USE: BattleTriggerPhase.SKILL_USE,
+  ON_HP_LOWER_THAN: BattleTriggerPhase.HP_LOWER_THAN,
+  ON_ALLY_FATAL_DAMAGE: BattleTriggerPhase.ALLY_FATAL_DAMAGE,
+  ON_ALLY_DAMAGE_TAKEN: BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
+  ON_APPLY: BattleTriggerPhase.ON_APPLY,
+}
+
+/** BattleTriggerPhase → 中文显示名 */
+export const BattleTriggerPhaseName: Record<BattleTriggerPhase, string> = {
+  [BattleTriggerPhase.BATTLE_START]: '战斗开始',
+  [BattleTriggerPhase.BATTLE_END]: '战斗结束',
+  [BattleTriggerPhase.TURN_START]: '回合开始',
+  [BattleTriggerPhase.TURN_END]: '回合结束',
+  [BattleTriggerPhase.BEFORE_ATTACK]: '攻击前',
+  [BattleTriggerPhase.ON_HIT]: '命中时',
+  [BattleTriggerPhase.AFTER_ATTACK]: '攻击后',
+  [BattleTriggerPhase.DAMAGE_TAKEN]: '受击时',
+  [BattleTriggerPhase.ON_KILL]: '击杀时',
+  [BattleTriggerPhase.ON_DEATH]: '死亡时',
+  [BattleTriggerPhase.HEAL_RECEIVED]: '受治疗时',
+  [BattleTriggerPhase.ENERGY_GAINED]: '获得能量时',
+  [BattleTriggerPhase.SKILL_USE]: '使用技能时',
+  [BattleTriggerPhase.HP_LOWER_THAN]: '血量低于阈值',
+  [BattleTriggerPhase.ALLY_FATAL_DAMAGE]: '队友受致命伤害',
+  [BattleTriggerPhase.ALLY_DAMAGE_TAKEN]: '队友受击',
+  [BattleTriggerPhase.ON_APPLY]: '施加时',
+  [BattleTriggerPhase.CONDITION_CHANGED]: '条件变化',
+  [BattleTriggerPhase.DODGE]: '闪避时',
+}
+
 /** 事件类型枚举 */
 export const BattleEventType = {
   ACTION: 'action',

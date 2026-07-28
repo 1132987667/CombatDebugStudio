@@ -269,13 +269,6 @@ export class BattleParticipantImpl implements BattleEntity {
     this.notifyDirty()
   }
 
-  /**
-   * @deprecated 使用 recalcAll() 替代
-   */
-  recalculateAll(): void {
-    this.recalcAll()
-  }
-
   /** 将 currentHealth 限制在 maxHealth 范围内 */
   private clampCurrentHealth(): void {
     const maxHp = this.getAttribute(ATTRIBUTE_CODE.maxHealth)
@@ -868,7 +861,7 @@ export class BattleParticipantImpl implements BattleEntity {
       finalMultiplier: number
     }
   }> {
-    this.recalculateAll()
+    this.recalcAll()
     const result: any[] = []
 
     for (const attrCode of Object.values(ATTRIBUTE_CODE)) {

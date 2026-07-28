@@ -20,10 +20,10 @@ export interface EffectDefinition {
 }
 
 /** Aura 光环修饰符 */
-interface BuffAuraModifier {
+export interface BuffAuraModifier {
   id?: string
   targetAttribute: string
-  type: string
+  type: ModifierType
   value: number
   condition?: string
 }

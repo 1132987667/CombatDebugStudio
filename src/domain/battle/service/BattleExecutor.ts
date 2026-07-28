@@ -899,7 +899,7 @@ export class BattleExecutor {
             kind: 'entity',
             faction: source.type === PARTICIPANT_SIDE.ALLY ? 'ally' : 'enemy',
           },
-          { text: ' → ' },
+          { text: ' 对 ' },
           {
             text: `${targetPrefix}${target.name}`,
             classStr:

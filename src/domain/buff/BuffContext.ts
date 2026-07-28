@@ -49,16 +49,6 @@ export class BuffContext {
     return Date.now() - this.startTime
   }
 
-  /**
-   * @deprecated 本系统是回合制，不推荐使用实时时间计算剩余时间。
-   * 剩余回合数请通过 BuffInstance.remainingTurns 读取。
-   * 此方法保留仅用于兼容遗留代码——当前基于 getElapsedTime 计算，返回不准确的值。
-   */
-  public getRemainingTime(): number {
-    if (this.config.duration <= 0) return -1
-    return Math.max(0, this.config.duration - this.getElapsedTime())
-  }
-
   public setVariable(key: string, value: string | number | boolean): void {
     this.variables.set(key, value)  
   }

@@ -18,6 +18,8 @@
 
 import type { ResolvedEffectPlan } from '@/domain/buff/atomic/BuffConfigResolver'
 
+export type BuffDisplayType = 'buff' | 'debuff' | 'control'
+
 // ==================== 维度一：极性（UI 颜色） ====================
 
 export const BUFF_POLARITY = {

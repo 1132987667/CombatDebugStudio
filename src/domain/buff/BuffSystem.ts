@@ -803,17 +803,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
         value = Math.round(value * 10000) / 100
       }
-      const modType =
-        mod.type === 'PERCENTAGE'
-          ? ModifierType.PERCENTAGE
-          : mod.type === 'ADDITIVE'
-            ? ModifierType.ADDITIVE
-            : mod.type === 'MULTIPLICATIVE'
-              ? ModifierType.MULTIPLICATIVE
-              : mod.type === 'FINAL'
-                ? ModifierType.FINAL
-                : ModifierType.ADDITIVE
-      modifierStack.addModifier(instanceId, attrCode, value, modType)
+      modifierStack.addModifier(instanceId, attrCode, value, mod.type)
     }
   }
 

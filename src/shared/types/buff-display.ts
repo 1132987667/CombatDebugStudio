@@ -6,6 +6,9 @@
  */
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import type { BuffDisplayType } from '@/shared/types/buff-classification'
+import { ModifierType } from '@/domain/attribute/types'
+
 /**
  * Buff 原始条目 —— 从 BuffSystem 或 InterventionManager 合并后的中间格式，
  * 作为 `toBuffTextItem()` 的输入契约，替代 `any` 参数。
@@ -59,7 +62,7 @@ export interface BuffTextItem {
   stacks: number
 
   /** 类型标识 */
-  type: 'buff' | 'debuff' | 'control'
+  type: BuffDisplayType
 
   /** 条件状态 */
   condition: ConditionState
@@ -113,7 +116,7 @@ export interface BuffModifier {
   sourceName: string
   attribute: string
   value: number
-  type: 'PERCENTAGE' | 'ADDITIVE' | 'MULTIPLICATIVE' | 'FINAL'
+  type: ModifierType,
   /** 是否为固定值（不加 % 后缀） */
   isFlat?: boolean
 }

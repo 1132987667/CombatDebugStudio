@@ -9,14 +9,13 @@
 
 // ========== 类型定义 ==========
 
-/** 修饰符计算类型 */
+/** 修饰符计算类型 四个类型 */
 export const ModifierType = {
   ADDITIVE: 'ADDITIVE',
   MULTIPLICATIVE: 'MULTIPLICATIVE',
   PERCENTAGE: 'PERCENTAGE',
   FINAL: 'FINAL',
 } as const
-/** 修饰符计算类型 */
 export type ModifierType = (typeof ModifierType)[keyof typeof ModifierType]
 
 export const ModifierTypeNames: Record<ModifierType, string> = {
@@ -264,65 +263,6 @@ export type ATTRIBUTE_CODE =
   (typeof ATTRIBUTE_CODE)[keyof typeof ATTRIBUTE_CODE]
 
 // ========== 属性计算核心 ==========
-
-/**
- * 根据修饰符类型计算最终值
- *
- * @deprecated 使用 ParticipantStats.recalcAttribute 替代。
- * 该函数使用 decimal 单位（0.2 = 20%），而 ParticipantStats 使用 percentage-point 单位（20 = 20%），
- * 两者 PERCENTAGE 值域不同，混用会导致灾难性结果。
- *
- * @param base 基础值
- * @param modifiers 修饰符详情列表（PERCENTAGE 类型的 value 为小数，如 0.2 表示 +20%）
- * @returns 最终值及计算拆解
- */
-export function calculateFinalValue(
-  base: number,
-  modifiers: Modifier[],
-): { value: number; breakdown: CalculationBreakdown } {
-  let additive = 0
-  let percentSum = 0
-  let independentMultiplier = 1
-  let finalMultiplier = 1
-
-  for (const mod of modifiers) {
-    switch (mod.type) {
-      case ModifierType.ADDITIVE:
-        additive += mod.value
-        break
-      case ModifierType.PERCENTAGE:
-        percentSum += mod.value
-        break
-      case ModifierType.MULTIPLICATIVE:
-        independentMultiplier *= 1 + mod.value
-        break
-      case ModifierType.FINAL:
-        finalMultiplier *= 1 + mod.value
-        break
-      default:
-        // 防御性编程：如果传入无效类型，静默忽略
-        console.warn(
-          `[calculateFinalValue] 未知修饰符类型: ${(mod as Modifier).type}`,
-        )
-    }
-  }
-
-  const percentMultiplier = 1 + percentSum
-  const afterPercent = base * percentMultiplier + additive
-  const afterIndependent = afterPercent * independentMultiplier
-  const finalValue = afterIndependent * finalMultiplier
-
-  return {
-    value: finalValue,
-    breakdown: {
-      base,
-      additive,
-      percentMultiplier,
-      independentMultiplier,
-      finalMultiplier,
-    },
-  }
-}
 
 // ========== 属性元数据 ==========
 

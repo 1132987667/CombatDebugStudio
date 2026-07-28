@@ -248,8 +248,6 @@ export interface BattleEntity {
   recalcAll(): void
   /** 设置属性值 */
   setAttribute(attribute: string, value: number): void
-  /** 重新计算所有属性 */
-  recalculateAll(): void
   /** 设置修饰符提供者 */
   setModifierProvider(provider: IModifierProvider): void
 

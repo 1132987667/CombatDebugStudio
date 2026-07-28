@@ -396,20 +396,9 @@ export class SkillExecutor {
       const attrData = modTarget.getAttrValue(attrCode)
       if (!attrData) continue
 
-      const modType =
-        mod.type === 'PERCENTAGE'
-          ? ModifierType.PERCENTAGE
-          : mod.type === 'ADDITIVE'
-            ? ModifierType.ADDITIVE
-            : mod.type === 'MULTIPLICATIVE'
-              ? ModifierType.MULTIPLICATIVE
-              : mod.type === 'FINAL'
-                ? ModifierType.FINAL
-                : ModifierType.ADDITIVE
-
       let value = typeof mod.value === 'number' ? mod.value : 0
       // ponytail: PERCENTAGE 值在配置中是百分比值（如 5 表示 5%），直接使用
-      if (modType === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
+      if (mod.type === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
         value = Math.round(value * 10000) / 100
       }
 
@@ -425,14 +414,14 @@ export class SkillExecutor {
         sourceType: ModifierSourceType.SKILL,
         attribute: attrCode,
         value,
-        type: modType,
+        type: mod.type,
         description: mod.sourceName || '被动技能',
       }
       attrData.modifiers.push(newMod)
       attrData.cachedVersion = -1
 
       // ponytail: 统一使用 shared/attributeSync 中的加成属性同步
-      if (modType === ModifierType.PERCENTAGE) {
+      if (mod.type === ModifierType.PERCENTAGE) {
         // 前向：主属性 → 加成属性
         syncBonusAttribute(modTarget, attrCode, newMod, sourceKey)
         // 反向：加成属性 → 主属性（仅 SkillExecutor 有此逻辑）

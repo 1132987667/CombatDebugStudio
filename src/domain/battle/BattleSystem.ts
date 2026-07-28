@@ -673,10 +673,10 @@ export class BattleSystem {
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
         if (
-          'recalculateAll' in participant &&
-          typeof participant.recalculateAll === 'function'
+          'recalcAll' in participant &&
+          typeof participant.recalcAll === 'function'
         ) {
-          participant.recalculateAll()
+          participant.recalcAll()
         }
       })
 

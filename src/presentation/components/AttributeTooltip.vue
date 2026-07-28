@@ -163,7 +163,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import type { Modifier, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
+import { Modifier, ModifierType, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
 import { ModifierSourceTypeNames } from '@/domain/attribute/types'
 import { getAttrMeta, getAttributeCodeByName } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
@@ -253,7 +253,7 @@ const formatRangeTotal = (total: number, layerTitle: string): string => {
 
 /** 格式化区间行 */
 const formatRangeRow = (row: RangeModifierRow): string => {
-  const fmt = (v: number) => row.isPercent ? formatModifierValue(v, 'PERCENTAGE') : formatModifierValue(v, 'ADDITIVE')
+  const fmt = (v: number) => row.isPercent ? formatModifierValue(v, ModifierType.PERCENTAGE) : formatModifierValue(v, ModifierType.ADDITIVE)
 
   if (row.minValue !== null && row.maxValue !== null) {
     if (row.minValue === row.maxValue) {
@@ -321,16 +321,16 @@ const rangeResultMax = computed(() => {
 
 // 按乘区分组修饰符
 const additiveGroup = computed(() => {
-  return props.modifiers.filter(m => m.type === 'ADDITIVE')
+  return props.modifiers.filter(m => m.type === ModifierType.ADDITIVE)
 })
 const percentGroup = computed(() => {
-  return props.modifiers.filter(m => m.type === 'PERCENTAGE')
+  return props.modifiers.filter(m => m.type === ModifierType.PERCENTAGE)
 })
 const multiGroup = computed(() => {
-  return props.modifiers.filter(m => m.type === 'MULTIPLICATIVE')
+  return props.modifiers.filter(m => m.type === ModifierType.MULTIPLICATIVE)
 })
 const finalGroup = computed(() => {
-  return props.modifiers.filter(m => m.type === 'FINAL')
+  return props.modifiers.filter(m => m.type === ModifierType.FINAL)
 })
 
 const formula = computed(() => {
@@ -344,10 +344,10 @@ const formula = computed(() => {
   for (const m of props.modifiers) {
     if (m.sourceKey === 'base') {
       baseValue = m.value
-    } else if (m.type === 'ADDITIVE') additiveMods.push(m)
-    else if (m.type === 'PERCENTAGE') percentMods.push(m)
-    else if (m.type === 'MULTIPLICATIVE') multiMods.push(m)
-    else if (m.type === 'FINAL') finalMods.push(m)
+    } else if (m.type === ModifierType.ADDITIVE) additiveMods.push(m)
+    else if (m.type === ModifierType.PERCENTAGE) percentMods.push(m)
+    else if (m.type === ModifierType.MULTIPLICATIVE) multiMods.push(m)
+    else if (m.type === ModifierType.FINAL) finalMods.push(m)
   }
 
   const brackets: string[] = []

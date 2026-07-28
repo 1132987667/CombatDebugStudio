@@ -4018,7 +4018,7 @@
   },
   {
     "id": "skill_enemy_076_small",
-    "name": "精英叛变",
+    "name": "狂怒打击",
     "description": "对单个敌人造成120%攻击力的普通伤害",
     "cooldown": 2,
     "selector": {

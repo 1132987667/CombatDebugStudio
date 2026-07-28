@@ -7,48 +7,45 @@
  * 版本: 3.0.0
  */
 
-import { DataProcessor } from '@/shared/utils/DataProcessor'
-import enemiesDataRaw from '@configs/enemies/enemies.json'
-import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
-const enemiesData = [
-  ...(enemiesDataRaw as Enemy[]),
-  ...(enemiesTestDataRaw as Enemy[]),
-]
-import scenesData from '@configs/scenes/scenes.json'
-import skillsData from '@configs/skills/skills.json'
-import passiveSkillsData from '@configs/skills/skill_passive.json'
-import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
-import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
-import type { Enemy } from '@/shared/types/enemy'
-import type { SkillConfig, SkillStep } from '@/domain/skill/types'
-import type { SceneData } from '@/shared/types/scene'
-import type { CharacterStats } from '@/domain/character/types'
 import {
   ATTRIBUTE_CODE,
-  ModifierType,
   ModifierSourceType,
+  ModifierType,
   type Modifier,
 } from '@/domain/attribute/types'
-import type { ParticipantSide } from '@/domain/battle/type/types'
-import {
-  PARTICIPANT_SIDE,
-  BattleTriggerPhase,
-} from '@/domain/battle/type/types'
-import type { BattleEntity } from '@/domain/battle/type/types'
-import {
-  syncBonusAttribute,
-  syncAttackRange,
-} from '@/shared/utils/attributeSync'
 import {
   BattleParticipantImpl,
   type BattleParticipantData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
+import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
+import {
+  BattleTriggerPhase,
+  PARTICIPANT_SIDE,
+} from '@/domain/battle/type/types'
+import type { CharacterStats } from '@/domain/character/types'
 import type {
-  PassiveSkillManager,
   PassiveSkillConfig,
+  PassiveSkillManager,
 } from '@/domain/skill/PassiveSkillManager'
-import { toArray } from '@/shared/utils/Utils'
+import type { SkillConfig, SkillStep } from '@/domain/skill/types'
+import type { Enemy } from '@/shared/types/enemy'
+import type { SceneData } from '@/shared/types/scene'
 import { Counter } from '@/shared/utils/Counter'
+import { DataProcessor } from '@/shared/utils/DataProcessor'
+import { toArray } from '@/shared/utils/Utils'
+import enemiesDataRaw from '@configs/enemies/enemies.json'
+import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
+import scenesData from '@configs/scenes/scenes.json'
+import passiveSkillsData from '@configs/skills/skill_passive.json'
+import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
+import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
+import skillsData from '@configs/skills/skills.json'
+import { BuffAuraModifier } from '@/domain/buff/BuffScriptRegistry'
+
+const enemiesData = [
+  ...(enemiesDataRaw as Enemy[]),
+  ...(enemiesTestDataRaw as Enemy[]),
+]
 const counter = new Counter()
 
 /**
@@ -207,60 +204,12 @@ export class GameDataProcessor {
     participant.recalcAll()
     // ponytail: setAttributeBase 只改 base 不改 value，而 currentHealth 是运行时属性
     // （recalcAttribute 跳过），value 永不会从 base 同步，故直接写 value
-    const curHp = participant.getAttrValue(ATTRIBUTE_CODE.currentHealth)
+    const curHp = participant.getAttrVal(ATTRIBUTE_CODE.currentHealth)
     if (curHp) {
       curHp.value = participant.getAttribute(ATTRIBUTE_CODE.maxHealth)
     }
 
     return participant
-  }
-
-  /**
-   * 创建并添加一个修饰符到参与者，同时同步加成属性
-   */
-  private static pushModifier(
-    participant: BattleParticipantImpl,
-    skill: SkillConfig,
-    mod: { id?: string; targetAttribute: string; type: string; value: number },
-  ): void {
-    const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
-    const modType =
-      mod.type === 'PERCENTAGE'
-        ? ModifierType.PERCENTAGE
-        : mod.type === 'ADDITIVE'
-          ? ModifierType.ADDITIVE
-          : mod.type === 'MULTIPLICATIVE'
-            ? ModifierType.MULTIPLICATIVE
-            : mod.type === 'FINAL'
-              ? ModifierType.FINAL
-              : ModifierType.ADDITIVE
-
-    // ponytail: buff aura 的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
-    let value = typeof mod.value === 'number' ? mod.value : 0
-    if (modType === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
-      value = Math.round(value * 10000) / 100
-    }
-
-    // 创建基础修饰符并写入
-    const sourceKey = `passive:${mod.id || skill.name}`
-    const m: Modifier = {
-      sourceKey,
-      sourceType: ModifierSourceType.SKILL,
-      attribute: attrCode,
-      value,
-      type: modType,
-      description: skill.name,
-    }
-
-    const attrData = participant.getAttrValue(attrCode)
-    if (attrData) {
-      attrData.modifiers.push(m)
-      attrData.cachedVersion = -1
-    }
-
-    // 使用共享工具同步加成属性和攻击范围
-    syncBonusAttribute(participant, attrCode, m, sourceKey)
-    syncAttackRange(participant, m, sourceKey)
   }
 
   /**
@@ -270,22 +219,12 @@ export class GameDataProcessor {
   static applyAuraModifiersToParticipant(
     target: BattleParticipantImpl,
     sourceKey: string,
-    modifiers: Array<{ targetAttribute: string; type: string; value: number }>,
+    modifiers: BuffAuraModifier[],
   ): void {
     for (const mod of modifiers) {
       const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
-      const modType =
-        mod.type === 'PERCENTAGE'
-          ? ModifierType.PERCENTAGE
-          : mod.type === 'ADDITIVE'
-            ? ModifierType.ADDITIVE
-            : mod.type === 'MULTIPLICATIVE'
-              ? ModifierType.MULTIPLICATIVE
-              : mod.type === 'FINAL'
-                ? ModifierType.FINAL
-                : ModifierType.ADDITIVE
       let value = typeof mod.value === 'number' ? mod.value : 0
-      if (modType === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
+      if (mod.type === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
         value = Math.round(value * 10000) / 100
       }
       const m: Modifier = {
@@ -293,10 +232,10 @@ export class GameDataProcessor {
         sourceType: ModifierSourceType.SKILL,
         attribute: attrCode,
         value,
-        type: modType,
+        type: mod.type,
         description: sourceKey,
       }
-      const attrData = target.getAttrValue(attrCode)
+      const attrData = target.getAttrVal(attrCode)
       if (attrData) {
         attrData.modifiers.push(m)
         attrData.cachedVersion = -1

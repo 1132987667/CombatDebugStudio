@@ -339,7 +339,7 @@ export const useBattleStore = defineStore('battle', () => {
       enemyTeam.value.find((p) => p.id === id) ??
       fullAllyTeam.value.find((p) => p.id === id) ??
       fullEnemyTeam.value.find((p) => p.id === id)
-    proxy?.recalculateAll()
+    proxy?.recalcAll()
   }
 
   events.set(

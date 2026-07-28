@@ -1,6 +1,7 @@
 import type { IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ModifierType } from '@/domain/attribute/types'
+import { ModifierTemplate } from '@/domain/skill/types'
 
 /**
  * AuraEffect — 光环原语
@@ -30,11 +31,7 @@ export class AuraEffect implements IAtomicEffect {
   }
 
   private applySelfAura(ctx: BuffContext, params: Record<string, unknown>): void {
-    const modifiers = params.modifiers as Array<{
-      targetAttribute: string
-      value: number
-      type: string
-    }> | undefined
+    const modifiers = params.modifiers as ModifierTemplate[] | undefined
     if (!modifiers) return
 
     for (const mod of modifiers) {
@@ -43,17 +40,7 @@ export class AuraEffect implements IAtomicEffect {
       if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
         value = Math.round(value * 10000) / 100
       }
-      const modType =
-        mod.type === 'PERCENTAGE'
-          ? ModifierType.PERCENTAGE
-          : mod.type === 'ADDITIVE'
-            ? ModifierType.ADDITIVE
-            : mod.type === 'MULTIPLICATIVE'
-              ? ModifierType.MULTIPLICATIVE
-              : mod.type === 'FINAL'
-                ? ModifierType.FINAL
-                : ModifierType.ADDITIVE
-      ctx.addModifier(mod.targetAttribute, value, modType)
+      ctx.addModifier(mod.targetAttribute, value, mod.type)
     }
   }
 

@@ -189,7 +189,7 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .list-empty {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--rgb-white), 0.4);
   text-align: center;
   padding: var(--space-5) 0;
 }
@@ -208,7 +208,7 @@ function formatBattleName(rec: RecordedBattle): string {
 
 .recording-item.active {
   background: var(--color-info-bg);
-  border: 1px solid rgba(79, 195, 247, 0.3);
+  border: 1px solid rgba(var(--rgb-info), var(--alpha-border));
 }
 
 .recording-name {
@@ -218,14 +218,14 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .recording-meta {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--rgb-white), var(--alpha-glow));
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
 .recording-count {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--rgb-white), 0.4);
 }
 
 /* ====== 右侧详情 ====== */
@@ -236,7 +236,7 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .detail-placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--rgb-white), 0.4);
   text-align: center;
   padding: var(--space-8) 0;
 }
@@ -266,11 +266,11 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .action-card:hover {
-  border-color: rgba(79, 195, 247, 0.3);
+  border-color: rgba(var(--rgb-info), var(--alpha-border));
 }
 
 .action-card.expanded {
-  border-color: rgba(79, 195, 247, 0.4);
+  border-color: rgba(var(--rgb-info), 0.4);
 }
 
 .action-summary {
@@ -279,16 +279,16 @@ function formatBattleName(rec: RecordedBattle): string {
   gap: var(--space-2);
   padding: var(--space-2) var(--space-2);
   cursor: pointer;
-  background: rgba(79, 195, 247, 0.03);
+  background: rgba(var(--rgb-info), var(--alpha-tint));
   transition: background var(--transition-fast);
 }
 
 .action-summary:hover {
-  background: rgba(79, 195, 247, 0.07);
+  background: rgba(var(--rgb-info), var(--alpha-wash));
 }
 
 .action-index {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--rgb-white), 0.35);
   font-family: 'JetBrains Mono', monospace;
   min-width: 30px;
 }
@@ -303,11 +303,11 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .action-arrow {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--rgb-white), 0.35);
 }
 
 .action-target {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(var(--rgb-white), 0.7);
   flex: 1;
 }
 
@@ -319,7 +319,7 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .action-type-badge.skill {
-  background: rgba(167, 139, 250, 0.15);
+  background: rgba(var(--rgb-debuff), var(--alpha-wash));
   color: var(--color-debuff);
 }
 
@@ -332,14 +332,14 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .action-expand-icon {
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(var(--rgb-white), 0.3);
 }
 
 /* ====== 展开详情 ====== */
 .action-detail {
   border-top: 1px solid var(--color-info-bg);
   padding: var(--space-2) var(--space-3);
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(var(--rgb-black), var(--alpha-wash));
 }
 
 .breakdown-section {
@@ -355,7 +355,7 @@ function formatBattleName(rec: RecordedBattle): string {
 }
 
 .breakdown-steps {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--rgb-black), var(--alpha-wash-strong));
   border-radius: var(--radius-sm);
   padding: var(--space-1) var(--space-2);
   margin-bottom: var(--space-2);
@@ -367,8 +367,8 @@ function formatBattleName(rec: RecordedBattle): string {
   gap: var(--space-1);
   padding: 3px 0;
   font-family: 'JetBrains Mono', monospace;
-  color: rgba(255, 255, 255, 0.7);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: rgba(var(--rgb-white), 0.7);
+  border-bottom: 1px solid var(--color-border-hairline);
 }
 
 .step-row:last-child {
@@ -394,18 +394,18 @@ function formatBattleName(rec: RecordedBattle): string {
   justify-content: space-between;
   align-items: center;
   padding: 3px var(--space-2);
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(var(--rgb-black), var(--alpha-wash));
   border-radius: var(--radius-sm);
 }
 
 .stat-label {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--rgb-white), var(--alpha-glow));
 }
 
 .stat-value {
   font-family: 'JetBrains Mono', monospace;
   font-weight: var(--font-weight-semibold);
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--rgb-white), 0.8);
 }
 
 .stat-value.crit {
@@ -414,8 +414,8 @@ function formatBattleName(rec: RecordedBattle): string {
 
 .stat-row.final {
   grid-column: 1 / -1;
-  background: rgba(249, 115, 22, 0.1);
-  border: 1px solid rgba(249, 115, 22, 0.2);
+  background: rgba(var(--rgb-live), var(--alpha-wash));
+  border: 1px solid rgba(var(--rgb-live), var(--alpha-wash-strong));
 }
 
 .final-value {

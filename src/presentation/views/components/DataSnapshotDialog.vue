@@ -188,22 +188,22 @@ const reloadExport = () => {
   padding: var(--space-2) var(--space-4);
   border: 2px solid var(--border-debug-color);
   border-radius: var(--radius-md);
-  background: rgba(34, 211, 238, 0.08);
+  background: rgba(var(--rgb-energy), var(--alpha-tint));
   color: var(--color-energy);
   cursor: pointer;
   transition: all var(--transition-fast);
-  outline: 1px solid rgba(0, 0, 0, 0.8);
+  outline: 1px solid rgba(var(--rgb-black), 0.8);
   outline-offset: -3px;
 }
 
 .snapshot-btn:hover {
-  background: --border-debug-color-dark;
-  outline-color: rgba(0, 0, 0, 0.5);
+  background: var(--border-debug-color-dark);
+  outline-color: rgba(var(--rgb-black), 0.5);
   border-color: var(--color-energy);
 }
 
 .snapshot-btn.primary {
-  background: --border-debug-color-dark;
+  background: var(--border-debug-color-dark);
   border-color: var(--color-energy);
 }
 
@@ -212,15 +212,15 @@ const reloadExport = () => {
 }
 
 .snapshot-last-export {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--rgb-white), 0.6);
   padding: var(--space-1) var(--space-2);
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--rgb-black), var(--alpha-wash-strong));
   border-radius: var(--radius-sm);
   font-family: monospace;
 }
 
 .snapshot-note {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--rgb-white), 0.35);
   padding: var(--space-2) var(--space-2);
   background: var(--border-common-color-dark);
   border: 1px solid var(--border-common-color-dark);

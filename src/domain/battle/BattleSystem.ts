@@ -49,11 +49,11 @@ import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import type { Container } from '@/infrastructure/di/Container'
-import { eventBus } from '@/main'
+import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { debugGate } from '@/domain/battle/debug/DebugGate'
+import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
 import { EffectType } from '@/shared/types/effect'
@@ -185,6 +185,8 @@ export class BattleSystem {
     private readonly skillManager: SkillManager,
     private readonly buffSystem: BuffSystem,
     private readonly passiveSkillManager: PassiveSkillManager,
+    private readonly uiEventPort: IUIEventPort,
+    private readonly debugGate: DebugGate,
   ) {
     this.battleData = this.getDefBattleData()
     this.animationManager = new BattleAnimationManager(
@@ -193,6 +195,7 @@ export class BattleSystem {
       () => this.battleData?.battleSpeed ?? 1,
       () => this.battleData?.quickMode ?? false,
       () => this.battleData?.headless ?? false,
+      this.uiEventPort,
     )
     this.lifecycleManager = new BattleLifecycleManager(
       () => this.battleData,
@@ -201,6 +204,8 @@ export class BattleSystem {
       this.buffSystem,
       () => this.processTurnInternal(),
       this.animationManager,
+      this.uiEventPort,
+      this.debugGate,
     )
     this.executor = new BattleExecutor(
       this.skillManager,
@@ -265,6 +270,7 @@ export class BattleSystem {
    */
   public static createInstanceWithContainer(
     container: Container,
+    uiEventPort: IUIEventPort,
   ): BattleSystem {
     const turnManager = container.resolve<TurnManager>(
       TURN_MANAGER_TOKEN.toString(),
@@ -285,6 +291,7 @@ export class BattleSystem {
     const passiveSkillManager = container.resolve<PassiveSkillManager>(
       'PassiveSkillManager',
     )
+    const debugGate = container.resolve<DebugGate>('DebugGate')
 
     return new BattleSystem(
       turnManager,
@@ -296,6 +303,8 @@ export class BattleSystem {
       skillManager,
       buffSystem,
       passiveSkillManager,
+      uiEventPort,
+      debugGate,
     )
   }
 
@@ -410,7 +419,7 @@ export class BattleSystem {
 
     // 注册属性变化回调，Buff 修改 ModifierStack 后发射事件通知 UI 层
     this.buffSystem.setAttributeChangeCallback((characterId: string) => {
-      eventBus.emit(BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED, {
+      this.uiEventPort.emit(BattleEventCodes.PARTICIPANT_ATTRIBUTE_CHANGED, {
         characterId,
       })
     })
@@ -419,7 +428,7 @@ export class BattleSystem {
     this.buffSystem.setBuffAppliedCallback(
       (characterId: string, buffId: string) => {
         if (this.shouldSuppressAnimationEvents()) return  // ★ 无头/快速模式：抑制
-        eventBus.emit(BattleEventCodes.BUFF_EFFECT, {
+        this.uiEventPort.emit(BattleEventCodes.BUFF_EFFECT, {
           targetId: characterId,
           buffName: buffId,
           isPositive: true,
@@ -508,7 +517,7 @@ export class BattleSystem {
           }
           // ★ 统一管道：触发器伤害/治疗动画（所有分支都需要）
           if (actualDamage > 0 && !this.shouldSuppressAnimationEvents()) {
-            eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+            this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
               targetId,
               damage: actualDamage,
               damageCategory: DamageCategory.PHYSICAL,
@@ -563,7 +572,7 @@ export class BattleSystem {
         const actualHeal = target.heal(amount)
         // ★ 统一管道：触发器治疗动画
         if (actualHeal > 0 && !this.shouldSuppressAnimationEvents()) {
-          eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+          this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
             targetId,
             damage: actualHeal,
             damageCategory: DamageCategory.PHYSICAL,
@@ -776,7 +785,7 @@ export class BattleSystem {
 
     // ponytail: 调试模式 — 首回合开始前暂停，让开发者查看初始状态
     if (battle.currentTurn === 1) {
-      await debugGate.waitIfNeeded('BATTLE_START')
+      await this.debugGate.waitIfNeeded('BATTLE_START')
     }
 
     battle.roundState = RoundStatus.START
@@ -846,10 +855,10 @@ export class BattleSystem {
       // 发送回合开始事件到 UI 层（此时拥有正确的出手顺序）
       const firstActorId =
         currentTurnOrder.length > 0 ? currentTurnOrder[0] : null
-      eventBus.emit(BattleEventCodes.TURN_START, { actorId: firstActorId })
+      this.uiEventPort.emit(BattleEventCodes.TURN_START, { actorId: firstActorId })
 
       // ponytail: 调试模式 — 回合开始事件已派发后暂停
-      await debugGate.waitIfNeeded('TURN_START')
+      await this.debugGate.waitIfNeeded('TURN_START')
 
       const battleId = battle.battleId
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0]!)
@@ -873,7 +882,7 @@ export class BattleSystem {
         this.executor.setActionOrder(i + 1)
 
         // 在每个角色行动前，发送当前行动者更新事件到 UI 层
-        eventBus.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, {
+        this.uiEventPort.emit(BattleEventCodes.CURRENT_ACTOR_CHANGED, {
           actorId: participantId,
         })
 
@@ -922,10 +931,10 @@ export class BattleSystem {
       }
 
       // 发送回合结束事件到 UI 层
-      eventBus.emit(BattleEventCodes.TURN_END)
+      this.uiEventPort.emit(BattleEventCodes.TURN_END)
 
       // ponytail: 调试模式 — 回合结束事件已派发后暂停
-      await debugGate.waitIfNeeded('TURN_END')
+      await this.debugGate.waitIfNeeded('TURN_END')
 
       // 触发回合结束事件
       const endParticipants = Array.from(battle.participants.values()).filter(

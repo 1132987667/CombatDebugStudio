@@ -1,5 +1,4 @@
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { debugGate } from '@/domain/battle/debug/DebugGate'
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type {
   BattleData,
@@ -14,11 +13,12 @@ import {
   RoundStatus,
 } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
-import { eventBus } from '@/main'
+import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import type { RAFTimer } from '@/shared/utils/RAF'
 
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
+import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 
 export class BattleLifecycleManager {
   private autoBattleTimerId?: symbol
@@ -31,6 +31,8 @@ export class BattleLifecycleManager {
     private buffSystem: BuffSystem,
     private processTurnInternal: () => Promise<void>,
     private animationManager: BattleAnimationManager,
+    private readonly uiEventPort: IUIEventPort,
+    private readonly debugGate: DebugGate,
   ) {}
 
   async endBattle(winner: ParticipantSide): Promise<void> {
@@ -84,10 +86,10 @@ export class BattleLifecycleManager {
     await this.battleRecorder.saveRecording(battle.battleId)
 
     battle.battleState = BattleStatus.ENDED
-    eventBus.emit(BattleEventCodes.BATTLE_ENDED, { winner })
+    this.uiEventPort.emit(BattleEventCodes.BATTLE_ENDED, { winner })
 
     // ponytail: 调试模式 — 战斗结束事件已派发后暂停
-    await debugGate.waitIfNeeded('BATTLE_END')
+    await this.debugGate.waitIfNeeded('BATTLE_END')
   }
 
   resetBattle(): void {
@@ -143,7 +145,7 @@ export class BattleLifecycleManager {
             if (p.team === ParticipantSide.ALLY) allyTeam.push(p)
             else enemyTeam.push(p)
           })
-          eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
+          this.uiEventPort.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
             allyTeam,
             enemyTeam,
           })

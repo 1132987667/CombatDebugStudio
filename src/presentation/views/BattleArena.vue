@@ -759,8 +759,7 @@ onUnmounted(() => {
   .loading-spinner {
     width: 60px;
     height: 60px;
-    /* ponytail: rgba(255,255,255,.3) unique to spinner border */
-    border: 4px solid rgba(255, 255, 255, 0.3);
+    border: 4px solid rgba(var(--rgb-white), var(--alpha-border));
     border-radius: 50%;
     border-top-color: var(--color-energy);
     animation: spin 1s ease-in-out infinite;
@@ -781,7 +780,7 @@ onUnmounted(() => {
     .progress-bar {
       width: 100%;
       height: 8px;
-      background-color: rgba(255, 255, 255, 0.2);
+      background-color: rgba(var(--rgb-white), var(--alpha-wash-strong));
       border-radius: var(--radius-sm);
       overflow: hidden;
       margin-bottom: var(--space-2);
@@ -813,11 +812,11 @@ onUnmounted(() => {
   position: fixed;
   top: 20px;
   right: 20px;
-  background-color: rgba(249, 115, 22, 0.9);
+  background-color: rgba(var(--rgb-live), 0.9);
   color: var(--color-text-primary);
   padding: var(--space-3) var(--space-5);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(var(--rgb-black), 0.15);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -827,9 +826,9 @@ onUnmounted(() => {
   backdrop-filter: blur(2px);
 
   &:hover {
-    background-color: rgba(249, 115, 22, 1);
+    background-color: rgba(var(--rgb-live), 1);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 16px rgba(var(--rgb-black), 0.2);
   }
 
   .error-message {

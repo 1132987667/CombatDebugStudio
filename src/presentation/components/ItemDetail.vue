@@ -170,7 +170,7 @@ const getItemSources = (itemId: string): string[] => {
 
 .item-rarity.rarity-1 {
   color: var(--color-text-tertiary);
-  background: rgba(136, 136, 136, 0.15);
+  background: rgba(var(--rgb-neutral), var(--alpha-wash));
 }
 
 .item-rarity.rarity-2 {
@@ -180,12 +180,12 @@ const getItemSources = (itemId: string): string[] => {
 
 .item-rarity.rarity-3 {
   color: var(--color-debuff);
-  background: rgba(167, 139, 250, 0.15);
+  background: rgba(var(--rgb-debuff), var(--alpha-wash));
 }
 
 .item-rarity.rarity-4 {
   color: var(--color-warning);
-  background: rgba(251, 191, 36, 0.15);
+  background: rgba(var(--rgb-skill-ultimate), var(--alpha-wash));
 }
 
 .item-description-panel {

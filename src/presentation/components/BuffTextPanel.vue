@@ -140,7 +140,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
   transform: translate(-50%, -50%);
   width: min(440px, 90vw);
   max-height: 70vh;
-  background: rgba(15, 23, 42, 0.97);
+  background: var(--color-overlay-panel);
   border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-lg);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
@@ -179,7 +179,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
 
 .panel-close:hover {
   color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(var(--rgb-white), var(--alpha-wash));
 }
 
 .panel-body {

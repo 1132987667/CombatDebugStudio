@@ -5,7 +5,6 @@ initializeContainer()
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import { eventBus } from '@/infrastructure/adapters/event/EventBus'
 import BattleArena from '@/presentation/views/BattleArena.vue'
 import './presentation/styles/main.scss'
 import { type BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
@@ -27,12 +26,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const app = createApp(BattleArena)
     const pinia = createPinia()
     app.use(pinia)
-    // 挂载事件总线到Vue全局属性
-    app.config.globalProperties.$emitter = eventBus
     app.mount(appElement)
   }
 })
-
-// 导出事件总线供其他模块使用（保留兼容导出）
-export { eventBus }
-export * from '@/index'

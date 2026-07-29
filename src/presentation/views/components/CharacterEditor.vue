@@ -570,35 +570,35 @@ watch(() => props.modelValue, (visible) => {
 }
 
 .dot-modifier {
-  background: #8bc34a;
+  background: var(--cat-modifier);
 }
 
 .dot-trigger {
-  background: #64b5f6;
+  background: var(--cat-trigger);
 }
 
 .dot-aura {
-  background: #ce93d8;
+  background: var(--cat-aura);
 }
 
 .dot-shield {
-  background: #4dd0e1;
+  background: var(--cat-shield);
 }
 
 .dot-control {
-  background: #ef5350;
+  background: var(--cat-control);
 }
 
 .dot-dot {
-  background: #ff7043;
+  background: var(--cat-dot);
 }
 
 .dot-immunity {
-  background: #ffd54f;
+  background: var(--cat-immunity);
 }
 
 .dot-other {
-  background: var(--color-text-tertiary);
+  background: var(--cat-other);
 }
 
 .sidebar-label {

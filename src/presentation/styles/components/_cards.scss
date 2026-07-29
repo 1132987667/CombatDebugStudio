@@ -116,7 +116,7 @@
 
 .member-card.active {
   border-color: var(--color-warning);
-  background: #2a2a4e;
+  background: var(--color-casting-bg);
 }
 
 .member-card.dead {
@@ -139,7 +139,7 @@
 
 .member-card.selected {
   border-color: var(--color-selected);
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+  box-shadow: 0 0 8px rgba(var(--rgb-energy), var(--alpha-glow));
 }
 
 /* ----- 4. 成员信息 ----- */
@@ -202,43 +202,43 @@
 
 /* 气血 各态 */
 .hp-bar {
-  border: 1px solid rgba(76, 175, 80, 0.3);
-  background: rgba(76, 175, 80, 0.05);
+  border: 1px solid rgba(var(--rgb-success), var(--alpha-border));
+  background: rgba(var(--rgb-success), var(--alpha-tint));
   box-shadow:
-    0 0 20px rgba(76, 175, 80, 0.1),
-    inset 0 0 12px rgba(76, 175, 80, 0.05);
+    0 0 20px rgba(var(--rgb-success), var(--alpha-wash)),
+    inset 0 0 12px rgba(var(--rgb-success), var(--alpha-tint));
 }
 .hp-bar:has(.hp-fill.medium) {
-  border-color: rgba(255, 152, 0, 0.3);
-  background: rgba(255, 152, 0, 0.05);
+  border-color: rgba(var(--rgb-warning), var(--alpha-border));
+  background: rgba(var(--rgb-warning), var(--alpha-tint));
   box-shadow:
-    0 0 20px rgba(255, 152, 0, 0.1),
-    inset 0 0 12px rgba(255, 152, 0, 0.05);
+    0 0 20px rgba(var(--rgb-warning), var(--alpha-wash)),
+    inset 0 0 12px rgba(var(--rgb-warning), var(--alpha-tint));
 }
 .hp-bar:has(.hp-fill.low) {
-  border-color: rgba(244, 67, 54, 0.3);
-  background: rgba(244, 67, 54, 0.05);
+  border-color: rgba(var(--rgb-danger), var(--alpha-border));
+  background: rgba(var(--rgb-danger), var(--alpha-tint));
   box-shadow:
     0 0 20px var(--color-danger-bg),
-    inset 0 0 12px rgba(244, 67, 54, 0.05);
+    inset 0 0 12px rgba(var(--rgb-danger), var(--alpha-tint));
 }
 
 /* 能量 */
 .energy-bar {
   border: 1px solid var(--border-debug-color);
-  background: rgba(34, 211, 238, 0.05);
+  background: rgba(var(--rgb-energy), var(--alpha-tint));
   box-shadow:
-    0 0 20px rgba(34, 211, 238, 0.1),
-    inset 0 0 12px rgba(34, 211, 238, 0.05);
+    0 0 20px rgba(var(--rgb-energy), var(--alpha-wash)),
+    inset 0 0 12px rgba(var(--rgb-energy), var(--alpha-tint));
 }
 
 /* 护盾 */
 .shield-bar {
-  border: 1px solid rgba(102, 184, 255, 0.3);
-  background: rgba(102, 184, 255, 0.05);
+  border: 1px solid rgba(var(--rgb-shield), var(--alpha-border));
+  background: rgba(var(--rgb-shield), var(--alpha-tint));
   box-shadow:
-    0 0 20px rgba(102, 184, 255, 0.1),
-    inset 0 0 12px rgba(102, 184, 255, 0.05);
+    0 0 20px rgba(var(--rgb-shield), var(--alpha-wash)),
+    inset 0 0 12px rgba(var(--rgb-shield), var(--alpha-tint));
 }
 
 /* ── 填充——圆角 + 玻璃高光 ── */
@@ -275,20 +275,20 @@
 .hp-fill.high {
   background: linear-gradient(90deg, var(--color-success), var(--color-jade));
   box-shadow:
-    0 0 10px rgba(76, 175, 80, 0.8),
-    0 0 30px rgba(76, 175, 80, 0.4);
+    0 0 10px rgba(var(--rgb-success), 0.8),
+    0 0 30px rgba(var(--rgb-success), 0.4);
 }
 .hp-fill.medium {
   background: linear-gradient(90deg, var(--color-warning), #e65100);
   box-shadow:
-    0 0 10px rgba(255, 152, 0, 0.8),
-    0 0 30px rgba(255, 152, 0, 0.4);
+    0 0 10px rgba(var(--rgb-warning), 0.8),
+    0 0 30px rgba(var(--rgb-warning), 0.4);
 }
 .hp-fill.low {
   background: linear-gradient(90deg, var(--color-danger), #c62828);
   box-shadow:
-    0 0 10px rgba(244, 67, 54, 0.8),
-    0 0 30px rgba(244, 67, 54, 0.4);
+    0 0 10px rgba(var(--rgb-danger), 0.8),
+    0 0 30px rgba(var(--rgb-danger), 0.4);
 }
 
 /* （敌人 气血 颜色反转——兼容遗留 .enemy-fill 选择器） */
@@ -296,28 +296,28 @@
 .hp-fill.enemy-fill.high {
   background: linear-gradient(90deg, var(--color-danger), #c62828);
   box-shadow:
-    0 0 10px rgba(244, 67, 54, 0.8),
-    0 0 30px rgba(244, 67, 54, 0.4);
+    0 0 10px rgba(var(--rgb-danger), 0.8),
+    0 0 30px rgba(var(--rgb-danger), 0.4);
 }
 .hp-fill.enemy-fill.medium {
   background: linear-gradient(90deg, var(--color-warning), #e65100);
   box-shadow:
-    0 0 10px rgba(255, 152, 0, 0.8),
-    0 0 30px rgba(255, 152, 0, 0.4);
+    0 0 10px rgba(var(--rgb-warning), 0.8),
+    0 0 30px rgba(var(--rgb-warning), 0.4);
 }
 .hp-fill.enemy-fill.low {
   background: linear-gradient(90deg, var(--color-success), var(--color-jade));
   box-shadow:
-    0 0 10px rgba(76, 175, 80, 0.8),
-    0 0 30px rgba(76, 175, 80, 0.4);
+    0 0 10px rgba(var(--rgb-success), 0.8),
+    0 0 30px rgba(var(--rgb-success), 0.4);
 }
 
 /* ── 能量/护盾填充 ── */
 .energy-fill {
-  background: linear-gradient(90deg, var(--color-energy), #0891b2);
+  background: linear-gradient(90deg, var(--color-energy), var(--color-energy-deep));
   box-shadow:
-    0 0 10px rgba(34, 211, 238, 0.8),
-    0 0 30px rgba(34, 211, 238, 0.4);
+    0 0 10px rgba(var(--rgb-energy), 0.8),
+    0 0 30px rgba(var(--rgb-energy), 0.4);
   transition:
     width 0.3s,
     background 0.3s;
@@ -325,14 +325,14 @@
 .energy-fill.low,
 .energy-fill.medium,
 .energy-fill.full {
-  background: linear-gradient(90deg, var(--color-energy), #0891b2);
+  background: linear-gradient(90deg, var(--color-energy), var(--color-energy-deep));
 }
 
 .shield-fill {
-  background: linear-gradient(90deg, var(--blue-4), var(--blue-6));
+  background: linear-gradient(90deg, var(--color-shield), var(--color-shield-deep));
   box-shadow:
-    0 0 10px rgba(102, 184, 255, 0.8),
-    0 0 30px rgba(102, 184, 255, 0.4);
+    0 0 10px rgba(var(--rgb-shield), 0.8),
+    0 0 30px rgba(var(--rgb-shield), 0.4);
   transition: width 0.3s;
 }
 
@@ -407,30 +407,30 @@
 
 /* 脉冲色调——气血 各态 */
 .hp-fill.high .pulse {
-  background: rgba(76, 175, 80, 0.6);
+  background: rgba(var(--rgb-success), var(--alpha-glow));
 }
 .hp-fill.medium .pulse {
-  background: rgba(255, 152, 0, 0.6);
+  background: rgba(var(--rgb-warning), var(--alpha-glow));
 }
 .hp-fill.low .pulse {
-  background: rgba(244, 67, 54, 0.6);
+  background: rgba(var(--rgb-danger), var(--alpha-glow));
 }
 .hp-fill.enemy-fill.high .pulse {
-  background: rgba(244, 67, 54, 0.6);
+  background: rgba(var(--rgb-danger), var(--alpha-glow));
 }
 .hp-fill.enemy-fill.medium .pulse {
-  background: rgba(255, 152, 0, 0.6);
+  background: rgba(var(--rgb-warning), var(--alpha-glow));
 }
 .hp-fill.enemy-fill.low .pulse {
-  background: rgba(76, 175, 80, 0.6);
+  background: rgba(var(--rgb-success), var(--alpha-glow));
 }
 
 /* 脉冲色调——能量/护盾 */
 .energy-fill .pulse {
-  background: rgba(34, 211, 238, 0.6);
+  background: rgba(var(--rgb-energy), var(--alpha-glow));
 }
 .shield-fill .pulse {
-  background: rgba(102, 184, 255, 0.6);
+  background: rgba(var(--rgb-shield), var(--alpha-glow));
 }
 
 /* ----- 8. 状态标签 ----- */
@@ -447,13 +447,13 @@
 }
 
 .status-tag.positive {
-  background: rgba(76, 175, 80, 0.2);
+  background: var(--color-success-bg);
   color: var(--color-buff);
   border: 1px solid var(--color-buff);
 }
 
 .status-tag.negative {
-  background: rgba(244, 67, 54, 0.2);
+  background: var(--color-danger-bg);
   color: var(--color-danger);
   border: 1px solid var(--color-danger);
 }

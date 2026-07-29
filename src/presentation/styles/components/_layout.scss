@@ -413,7 +413,7 @@
 
 .control-btn.stop {
   color: var(--color-danger);
-  border-color: #7a1a1a;
+  border-color: rgba(var(--rgb-danger), var(--alpha-glow));
 }
 
 .control-btn.stop:hover:not(:disabled) {
@@ -443,14 +443,14 @@
 }
 
 .auto-play-btn.auto-playing {
-  background: #f97316;
-  border-color: #ea580c;
+  background: var(--color-live);
+  border-color: var(--color-live-hover);
   color: var(--color-text-primary);
 }
 
 .auto-play-btn.auto-playing:hover:not(:disabled) {
-  background: #ea580c;
-  border-color: #c2410c;
+  background: var(--color-live-hover);
+  border-color: var(--color-live-active);
 }
 
 .play-icon {

@@ -17,7 +17,7 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { resolveSkillTargets } from '@/domain/skill/target-resolver'
 import type { SkillConfig } from '@/domain/skill/types'
-import { eventBus } from '@/infrastructure/adapters/event/EventBus'
+import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import {
   BATTLE_LOG_CATEGORIES,
   LogLevel,
@@ -97,7 +97,11 @@ export class PassiveSkillManager {
     this._getAnimationEnabled = getter
   }
 
-  constructor(skillManager: SkillManager, buffSystem: BuffSystem) {
+  constructor(
+    skillManager: SkillManager,
+    buffSystem: BuffSystem,
+    private readonly uiEventPort: IUIEventPort,
+  ) {
     this.skillManager = skillManager
     this.buffSystem = buffSystem
   }
@@ -106,8 +110,9 @@ export class PassiveSkillManager {
   static create(
     skillManager: SkillManager,
     buffSystem: BuffSystem,
+    uiEventPort: IUIEventPort,
   ): PassiveSkillManager {
-    return new PassiveSkillManager(skillManager, buffSystem)
+    return new PassiveSkillManager(skillManager, buffSystem, uiEventPort)
   }
 
   registerPassive(characterId: string, config: PassiveSkillConfig): void {
@@ -458,7 +463,7 @@ export class PassiveSkillManager {
       if (!effect.targetId) continue
 
       if (effect.type === EffectType.DAMAGE || effect.type === EffectType.REFLECT) {
-        eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+        this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
           targetId: effect.targetId,
           damage: effect.damage || 0,
           damageCategory: 'physical',
@@ -468,7 +473,7 @@ export class PassiveSkillManager {
       } else if (effect.type === EffectType.HEAL || effect.type === EffectType.DRAIN) {
         // 吸血需要发射两个动画：目标受击，自身回血
         if (effect.type === EffectType.DRAIN) {
-          eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+          this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
             targetId: effect.targetId,
             damage: effect.damage || 0,
             damageCategory: 'physical',
@@ -477,7 +482,7 @@ export class PassiveSkillManager {
           })
         }
         if (effect.heal && effect.heal > 0 && effect.sourceId) {
-          eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+          this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
             targetId: effect.sourceId,
             damage: effect.heal,
             damageCategory: 'physical',

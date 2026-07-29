@@ -150,11 +150,11 @@ const tooltipStyle = computed(() => {
   max-width: 90vw;
   max-height: 50vh;
   overflow-y: auto;
-  background: rgba(15, 23, 42, 0.96);
+  background: var(--color-overlay-panel);
   border: 1px solid var(--border-common-color);
   border-radius: var(--radius-lg);
   padding: var(--space-3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px rgba(var(--rgb-black), 0.4);
   backdrop-filter: blur(8px);
   pointer-events: auto;
   line-height: var(--line-height-md);
@@ -198,7 +198,7 @@ const tooltipStyle = computed(() => {
 }
 
 .badge-duration {
-  background: rgba(34, 211, 238, 0.1);
+  background: rgba(var(--rgb-energy), var(--alpha-wash));
   color: var(--color-energy);
 }
 
@@ -207,7 +207,7 @@ const tooltipStyle = computed(() => {
   color: var(--color-text-secondary);
   margin-bottom: var(--space-2);
   padding: var(--space-2);
-  background: rgba(34, 211, 238, 0.04);
+  background: rgba(var(--rgb-energy), var(--alpha-tint));
   border-radius: var(--radius-sm);
   line-height: var(--line-height-md);
 }
@@ -222,7 +222,7 @@ const tooltipStyle = computed(() => {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-1) 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--color-border-hairline);
 
   &:last-child {
     border-bottom: none;
@@ -243,7 +243,7 @@ const tooltipStyle = computed(() => {
 .tooltip-source {
   color: var(--color-text-tertiary);
   padding-top: var(--space-1);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--color-border-hairline);
 }
 
 /* 箭头 */
@@ -251,7 +251,7 @@ const tooltipStyle = computed(() => {
   position: absolute;
   width: 10px;
   height: 10px;
-  background: rgba(15, 23, 42, 0.96);
+  background: var(--color-overlay-panel);
   border: 1px solid var(--border-common-color);
   transform: rotate(45deg);
 

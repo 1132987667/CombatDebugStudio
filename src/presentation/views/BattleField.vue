@@ -56,7 +56,10 @@
 import { ATTRIBUTE_CODE, type AttributeValue } from '@/domain/attribute/types';
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType';
 import { ActionResultType, ActionTypes, type BattleEntity } from '@/domain/battle/type/types';
-import { eventBus } from '@/main';
+import { container } from '@/infrastructure/di/Container';
+import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus';
+
+const emitter = container.resolve<UIEventBus>('UIEventBus').getEmitter()
 import BattleVisualEffects from "@/presentation/components/BattleVisualEffects.vue";
 import ParticipantCard from "@/presentation/components/ParticipantCard.vue";
 import { useBattleAnimation } from '@/presentation/composables/useBattleAnimation';
@@ -75,7 +78,7 @@ const showSummaryDialog = ref(false)
 const lastSummary = ref<BattleSummary | null>(null)
 
 // ponytail: 事件总线挂载后监听战报事件
-eventBus.on(BattleEventCodes.BATTLE_SUMMARY, (summary: BattleSummary) => {
+emitter.on(BattleEventCodes.BATTLE_SUMMARY, (summary: BattleSummary) => {
   lastSummary.value = summary
   showSummaryDialog.value = true
 })

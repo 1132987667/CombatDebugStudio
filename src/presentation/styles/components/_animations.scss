@@ -7,19 +7,19 @@
 /* ----- 受击闪烁 ----- */
 @keyframes hitFlash {
   0% {
-    background: rgba(239, 68, 68, 0.6);
+    background: rgba(var(--rgb-danger), var(--alpha-glow));
     transform: translateX(-2px);
   }
   25% {
-    background: rgba(239, 68, 68, 0.3);
+    background: rgba(var(--rgb-danger), var(--alpha-border));
     transform: translateX(2px);
   }
   50% {
-    background: rgba(239, 68, 68, 0.6);
+    background: rgba(var(--rgb-danger), var(--alpha-glow));
     transform: translateX(-2px);
   }
   75% {
-    background: rgba(239, 68, 68, 0.3);
+    background: rgba(var(--rgb-danger), var(--alpha-border));
     transform: translateX(2px);
   }
   100% {
@@ -32,12 +32,12 @@
 @keyframes castingGlow {
   0%,
   100% {
-    box-shadow: 0 0 5px rgba(156, 136, 255, 0.3);
-    background: #2a2a4e;
+    box-shadow: 0 0 5px rgba(var(--rgb-casting), var(--alpha-border));
+    background: var(--color-casting-bg);
   }
   50% {
-    box-shadow: 0 0 15px rgba(156, 136, 255, 0.6);
-    background: #3a3a5e;
+    box-shadow: 0 0 15px rgba(var(--rgb-casting), var(--alpha-glow));
+    background: var(--color-casting-bg-glow);
   }
 }
 
@@ -45,10 +45,10 @@
 @keyframes buffedGlow {
   0%,
   100% {
-    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 0 5px rgba(var(--rgb-success), var(--alpha-border));
   }
   50% {
-    box-shadow: 0 0 12px rgba(76, 175, 80, 0.5);
+    box-shadow: 0 0 12px rgba(var(--rgb-success), var(--alpha-glow));
   }
 }
 
@@ -138,7 +138,7 @@
 /* 条件激活高亮 */
 @keyframes buffTextActivate {
   0%   { background-color: transparent; }
-  40%  { background-color: rgba(34, 211, 238, 0.12); }
+  40%  { background-color: rgba(var(--rgb-energy), var(--alpha-wash)); }
   100% { background-color: transparent; }
 }
 

@@ -132,8 +132,8 @@ export class BattleAnimationService {
         transform: translate(-50%, -50%);
         font-size: 14px;
         font-weight: bold;
-        color: #0a7f91;
-        text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+        color: var(--color-energy-deep);
+        text-shadow: 0 0 10px rgba(var(--rgb-energy), 0.8);
         pointer-events: none;
         z-index: 100;
         white-space: nowrap;
@@ -247,8 +247,8 @@ export class BattleAnimationService {
   ): void {
     const flashColor =
       hitEffect === ActionResultType.HEAL
-        ? 'rgba(34, 197, 94, 0.5)'
-        : 'rgba(239, 68, 68, 0.5)'
+        ? 'rgba(var(--rgb-success), var(--alpha-glow))'
+        : 'rgba(var(--rgb-danger), var(--alpha-glow))'
 
     const hpBar = targetElement.querySelector('.hp-fill') as HTMLElement
     if (hpBar) {
@@ -287,9 +287,9 @@ export class BattleAnimationService {
     textElement.className = 'floating-damage-text'
 
     const colorMap: Partial<Record<ActionResultType, string>> = {
-      [ActionResultType.DAMAGE]: '#ef4444',
-      [ActionResultType.HEAL]: '#22c55e',
-      [ActionResultType.CRITICAL]: '#f59e0b',
+      [ActionResultType.DAMAGE]: 'var(--color-damage)',
+      [ActionResultType.HEAL]: 'var(--color-heal)',
+      [ActionResultType.CRITICAL]: 'var(--color-crit)',
     }
 
     const prefix = type === ActionResultType.HEAL ? '+' : '-'
@@ -352,8 +352,8 @@ export class BattleAnimationService {
       transform: translate(-50%, -50%);
       font-size: 16px;
       font-weight: bold;
-      color: #9ca3af;
-      text-shadow: 0 0 5px rgba(156, 163, 175, 0.5);
+      color: var(--color-text-tertiary);
+      text-shadow: 0 0 5px rgba(var(--rgb-neutral), var(--alpha-glow));
       pointer-events: none;
       z-index: 100;
     `
@@ -403,8 +403,8 @@ export class BattleAnimationService {
       transform: translate(-50%, -50%);
       font-size: 14px;
       font-weight: bold;
-      color: #a855f7;
-      text-shadow: 0 0 10px rgba(168, 85, 247, 0.8);
+      color: var(--color-debuff);
+      text-shadow: 0 0 10px rgba(var(--rgb-debuff), 0.8);
       pointer-events: none;
       z-index: 100;
     `
@@ -446,8 +446,8 @@ export class BattleAnimationService {
     return new Promise((resolve) => {
       const timeline = this.createTimeline()
       const color = isPositive
-        ? 'rgba(34, 211, 238, 0.8)'
-        : 'rgba(239, 68, 68, 0.8)'
+        ? 'rgba(var(--rgb-energy), 0.8)'
+        : 'rgba(var(--rgb-danger), 0.8)'
       const duration = this.getScaledDuration(500)
 
       timeline

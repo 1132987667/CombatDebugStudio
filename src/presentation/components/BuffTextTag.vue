@@ -83,7 +83,7 @@ const tooltipText = computed(() => {
 }
 
 .tag--buff:hover {
-  background: rgba(34, 211, 238, 0.1);
+  background: rgba(var(--rgb-energy), var(--alpha-wash));
 }
 
 /* 减益 */
@@ -102,7 +102,7 @@ const tooltipText = computed(() => {
 }
 
 .tag--control:hover {
-  background: rgba(168, 85, 247, 0.1);
+  background: rgba(var(--rgb-debuff), var(--alpha-wash));
 }
 
 /* 未激活 */
@@ -122,7 +122,7 @@ const tooltipText = computed(() => {
 }
 
 .has-stacks {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-border-hairline);
 }
 
 /* 剩余 1 回合闪烁 — 尊重系统减少动效设置 */

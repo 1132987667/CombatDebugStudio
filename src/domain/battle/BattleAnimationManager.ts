@@ -14,7 +14,7 @@
 import type { AnimationData, AnimationQueueItem, AnimationType } from '@/domain/battle/type/BattleAnimationType'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import type { DamageCategory } from '@/domain/skill/types'
-import { eventBus } from '@/main'
+import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import type { RAFTimer } from '@/shared/utils/RAF'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { BATTLE_ANIMATION_TIMING, getActionBudget, phaseAt } from '@/shared/constants/animation-timing'
@@ -36,6 +36,7 @@ export class BattleAnimationManager {
     private getBattleSpeed: () => number,   // 改：传速度，不传（反向的）时长
     private getQuickMode: () => boolean = () => false,
     private getHeadless: () => boolean = () => false,  // ★ 新增：无头模式回调
+    private readonly uiEventPort: IUIEventPort,
   ) {}
 
   /** ★ 是否跳过动画（快速模式 || 无头模式） */
@@ -123,7 +124,7 @@ export class BattleAnimationManager {
       const target = participants?.get(targetId)
       if (!target || !target.isAlive()) {
         // ponytail: 目标已死亡/不存在 — 仍发出事件让 UI 显示动画效果（伤害先应用后入队动画），但快速 resolve 避免队列卡死
-        eventBus.emit(animation.type, animation.data)
+        this.uiEventPort.emit(animation.type, animation.data)
         if (typeof animation.resolve === 'function') {
           animation.resolve()
         }
@@ -132,7 +133,7 @@ export class BattleAnimationManager {
       }
     }
 
-    eventBus.emit(animation.type, animation.data)
+    this.uiEventPort.emit(animation.type, animation.data)
 
     const TIMEOUT_MS = Math.max(animation.duration + 2000, 5000)
 
@@ -145,7 +146,7 @@ export class BattleAnimationManager {
         clearTimeout(timeoutId)
         this.rafTimer.clear(timerId)
         // 发射动画完成事件，供 UI 层竞态安全地清除动画状态
-        eventBus.emit(BattleEventCodes.ANIMATION_COMPLETE, { type: animation.type })
+        this.uiEventPort.emit(BattleEventCodes.ANIMATION_COMPLETE, { type: animation.type })
         if (typeof animation.resolve === 'function') {
           animation.resolve()
         }

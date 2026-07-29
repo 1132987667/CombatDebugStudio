@@ -6,7 +6,7 @@
  *
  * UI 层通过 eventBus 事件 'debug-pause' 感知暂停并展示浮动面板。
  */
-import { eventBus } from '@/main'
+import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 
 export class DebugGate {
@@ -17,9 +17,11 @@ export class DebugGate {
   /** 等待中的 Promise resolve 函数 */
   private _resolve: (() => void) | null = null
 
+  constructor(private readonly uiEventPort: IUIEventPort) {}
+
   setEnabled(v: boolean): void {
     this.enabled = v
-    eventBus.emit(BattleEventCodes.DEBUG_TOGGLE, { enabled: v })
+    this.uiEventPort.emit(BattleEventCodes.DEBUG_TOGGLE, { enabled: v })
     if (!v) this.nextStep()
   }
 
@@ -27,7 +29,7 @@ export class DebugGate {
   async waitIfNeeded(phase: string): Promise<void> {
     if (!this.enabled) return
     this.waitingPhase = phase
-    eventBus.emit(BattleEventCodes.DEBUG_PAUSE, { phase })
+    this.uiEventPort.emit(BattleEventCodes.DEBUG_PAUSE, { phase })
     return new Promise((resolve) => {
       this._resolve = resolve
     })
@@ -40,7 +42,7 @@ export class DebugGate {
     this._resolve = null
     resolve?.()
     // NOTE: 必须通知 UI 清除"暂停中"状态，否则 debugPhase 只进不出
-    eventBus.emit(BattleEventCodes.DEBUG_PAUSE_RESUME)
+    this.uiEventPort.emit(BattleEventCodes.DEBUG_PAUSE_RESUME)
   }
 
   /** 是否正在等待用户操作 */
@@ -48,6 +50,3 @@ export class DebugGate {
     return this._resolve !== null
   }
 }
-
-/** 全局单例，domain 层和 UI 层共享同一实例 */
-export const debugGate = new DebugGate()

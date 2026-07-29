@@ -22,7 +22,14 @@ import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { Enemy } from '@/shared/types/enemy'
-import { debugGate } from '@/domain/battle/debug/DebugGate'
+import { container } from '@/infrastructure/di/Container'
+import type { DebugGate } from '@/domain/battle/debug/DebugGate'
+
+/** 惰性获取 DebugGate 实例（DI 容器初始化后方可 resolve） */
+function getDebugGate(): DebugGate | undefined {
+  try { return container.resolve<DebugGate>('DebugGate') }
+  catch { return undefined }
+}
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { LogType, type BattleLogEntry, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
@@ -87,8 +94,9 @@ export class BattleDataGenerator {
     battleLogManager.clearLogs()
 
     const battleLogs: SingleBattleLog[] = []
-    const prevDebugEnabled = debugGate.enabled
-    debugGate.enabled = false
+    const dg = getDebugGate()
+    const prevDebugEnabled = dg?.enabled ?? false
+    if (dg) dg.enabled = false
     const prevHeadless = this.battleSystem.getHeadless()
     this.battleSystem.setHeadless(true)
 
@@ -165,7 +173,8 @@ export class BattleDataGenerator {
     } finally {
       // 恢复原始设置
       this.battleSystem.setHeadless(prevHeadless)
-      debugGate.enabled = prevDebugEnabled
+      const dgRestore = getDebugGate()
+      if (dgRestore) dgRestore.enabled = prevDebugEnabled
       battleLogManager.setAutoCleanup(true)
       // 恢复用户原有战斗日志（无条件恢复，避免取消后日志永久丢失）
       battleLogManager.importLogs(savedBattleLogs)

@@ -138,15 +138,15 @@ const effectLines = computed(() => {
 
 .group--buff {
   border-left-color: var(--color-energy);
-  background: rgba(34, 211, 238, 0.03);
+  background: rgba(var(--rgb-energy), var(--alpha-tint));
 }
 .group--debuff {
   border-left-color: var(--color-danger);
-  background: rgba(244, 67, 54, 0.03);
+  background: rgba(var(--rgb-danger), var(--alpha-tint));
 }
 .group--control {
   border-left-color: var(--color-debuff);
-  background: rgba(168, 85, 247, 0.03);
+  background: rgba(var(--rgb-debuff), var(--alpha-tint));
 }
 .group--inactive {
   border-left-color: var(--color-text-disabled);
@@ -178,14 +178,14 @@ const effectLines = computed(() => {
   font-weight: var(--font-weight-semibold);
   padding: 0 4px;
   border-radius: var(--radius-xs);
-  background: rgba(34, 211, 238, 0.1);
+  background: rgba(var(--rgb-energy), var(--alpha-wash));
 }
 
 .meta-inactive {
   color: var(--color-text-disabled);
   padding: 0 4px;
   border-radius: var(--radius-xs);
-  background: rgba(102, 102, 102, 0.08);
+  background: rgba(var(--rgb-neutral), var(--alpha-tint));
 }
 
 .group-effects {
@@ -256,7 +256,7 @@ const effectLines = computed(() => {
 
 .debug-content {
   padding: var(--space-2);
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(var(--rgb-overlay), 0.6);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-common-color-dark);
 }

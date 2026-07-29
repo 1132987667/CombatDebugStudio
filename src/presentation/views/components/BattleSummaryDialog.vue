@@ -173,7 +173,7 @@ const exportJson = () => {
   align-items: center;
   margin-bottom: var(--space-3);
   padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-default);
 }
 .winner-badge {
   font-size: 1.2em;
@@ -194,9 +194,9 @@ const exportJson = () => {
   flex: 1;
   text-align: center;
   padding: var(--space-2);
-  background: var(--bg-surface);
+  background: var(--color-bg-tertiary);
   border-radius: 6px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-default);
 }
 .stat-value {
   font-size: 1.5em;
@@ -212,7 +212,7 @@ const exportJson = () => {
 .summary-records {
   margin-bottom: var(--space-3);
   padding: var(--space-2);
-  background: var(--bg-surface);
+  background: var(--color-bg-tertiary);
   border-radius: 6px;
 }
 .record-line {
@@ -231,7 +231,7 @@ const exportJson = () => {
   display: flex;
   gap: var(--space-2);
   padding: 4px 0;
-  border-bottom: 1px solid var(--color-border-dim);
+  border-bottom: 1px solid var(--color-border-hairline);
 }
 .p-name { flex: 0 0 80px; font-weight: bold; }
 .p-hp { flex: 0 0 70px; }

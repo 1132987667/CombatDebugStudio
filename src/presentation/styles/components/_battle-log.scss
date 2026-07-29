@@ -81,8 +81,7 @@
 .log-entry.crit {
   border-left-color: var(--color-warning);
   color: var(--color-crit);
-  /* ponytail: #2a2a1e is a subtle dark-gold bg unique to crit logs */
-  background: #2a2a1e;
+  background: var(--color-crit-bg);
 }
 
 .log-entry.heal {
@@ -178,14 +177,12 @@
 
 /* ----- 4. 战斗日志语义化标签 ----- */
 .normal-attack {
-  /* ponytail: #60a5fa is a light blue (tailwind blue-400), no exact token */
-  color: #60a5fa;
+  color: var(--color-skill-active);
   font-weight: var(--font-weight-medium);
 }
 
 .skill-attack {
-  /* ponytail: #f97316 is tailwind orange-500, --color-warning (#ff9800) is closest */
-  color: #f97316;
+  color: var(--color-warning);
   font-weight: var(--font-weight-medium);
 }
 
@@ -373,12 +370,12 @@
 
 .chip--ally {
   color: var(--color-heal);
-  background: rgba(76, 175, 80, 0.12);
+  background: rgba(var(--rgb-success), var(--alpha-wash));
 }
 
 .chip--enemy {
   color: var(--color-danger);
-  background: rgba(244, 67, 54, 0.12);
+  background: rgba(var(--rgb-danger), var(--alpha-wash));
 }
 
 .chip--skill {
@@ -428,7 +425,7 @@
   padding: 4px 10px;
   border-radius: var(--radius-sm);
   color: var(--color-crit);
-  background: rgba(255, 152, 0, 0.1);
+  background: rgba(var(--rgb-warning), var(--alpha-wash));
   border-left: 3px solid var(--color-crit);
   font-weight: var(--font-weight-bold);
 }

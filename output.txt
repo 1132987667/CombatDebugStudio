@@ -44,7 +44,6 @@ src/
                 ParticipantBuffs.ts
                 ParticipantSkills.ts
                 ParticipantStats.ts
-            events/
             intervention/
                 InterventionManager.ts
             replay/
@@ -97,6 +96,7 @@ src/
         character/
             types.ts
         port/
+            di/
             IBattleLogManager.ts
             IDomainEventBus.ts
             LoggerProvider.ts
@@ -132,7 +132,6 @@ src/
             Container.ts
         input/
             KeybindManager.ts
-        task/
     presentation/
         components/
             AttributeTooltip.vue
@@ -256,7 +255,7 @@ vite.config.ts
 文件内容:
 
 --- .mimocode/.cron-lock ---
-{"pid":23940,"startedAt":1785314427638}
+{"pid":12160,"startedAt":1785319886761}
 
 --- .mimocode/commands/verify.md ---
 ---
@@ -4380,7 +4379,6 @@ import type {
   BattleEvents,
   BattleEventName,
 } from '@/domain/battle/type/BattleEventType'
-import { LocalStorage } from '@/infrastructure/adapters/storage'
 import { eventBus } from '@/main'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
@@ -5039,51 +5037,6 @@ export class BattleManager {
    */
   getBattleId(): string | null {
     return this.battleStateManager.getBattleId() ?? null
-  }
-  /**
-   * 保存战斗状态
-   * @deprecated 该功能从未正确工作过（参见评审 #9）：toSnapshot() 只捕获 5 个属性，
-   *             远少于 ATTRIBUTE_CODE 的 40+ 属性，且 restoreBattleState 在 BattleSystem 上不存在。
-   *             如需要完整状态保存/恢复，需重新设计 BattleStateSnapshot 序列化协议（覆盖全部属性 + Buff 实例 + 技能冷却）。
-   *             此方法保留仅避免编译错误，实际调用时返回 false。
-   */
-  saveBattleState(): boolean {
-    return false
-    try {
-      const battleState = this.getBattleState()
-      if (!battleState) {
-        return false
-      }
-      LocalStorage.set('battleState', battleState)
-      return true
-    } catch (error) {
-      console.error('保存战斗状态时出错:', error)
-      return false
-    }
-  }
-  /**
-   * 加载战斗状态
-   * @deprecated 同 saveBattleState：该方法从未正常工作。保留仅避免编译错误，始终返回 null。
-   */
-  loadBattleState(): unknown | null {
-    return null
-    try {
-      const battleState = LocalStorage.get('battleState')
-      if (battleState) {
-        // ponytail: BattleSystem 可能未声明 restoreBattleState；用交叉类型声明临时的调用签名
-        ;(
-          this.battleSystem as BattleSystem & {
-            restoreBattleState(state: unknown): void
-          }
-        ).restoreBattleState(battleState)
-        this.syncBattleState()
-        return battleState
-      }
-      return null
-    } catch (error) {
-      console.error('加载战斗状态时出错:', error)
-      return null
-    }
   }
   /**
    * 导出战斗记录
@@ -7180,8 +7133,8 @@ export class BattleParticipantImpl implements BattleEntity {
     return this.stats.reCalAttributeValue(attr)
   }
   /**
-   * @deprecated 使用 getAttrVal(attr) 替代。getAttrVal 会触发重算；
-   *             如不需要重算，使用 stats.getAttribute(attr)。
+   * 获取属性值对象（不触发重算），用于需要直接操作 AttributeValue 修饰符数组的场景。
+   * 如需触发重算后取值，使用 getAttrVal(attr) 或 getAttribute(attr)。
    */
   getAttrValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
     return this.stats.getAttribute(attr)
@@ -10685,7 +10638,7 @@ export class BattleExecutor {
     }
     if (action.type === ActionTypes.SKILL && action.skillId) {
       try {
-        // ponytail: 令牌模式 — 用局部 token 替代全局 toggle
+        // NOTE: 令牌模式 — 用局部 token 替代全局 toggle
         const damageToken = new DeferredDamageToken()
         // ponytail: 主动技能执行时禁用 buffApplied 回调，避免与下方动画循环重复
         this.buffSystem.setBuffAppliedCallbackEnabled(false)
@@ -10912,7 +10865,7 @@ export class BattleExecutor {
         ]
       }
     }
-    // ponytail: skill actions already apply damage+heal inside SkillExecutor,
+    // NOTE: skill actions already apply damage+heal inside SkillExecutor,
     // so only apply raw damage/heal for non-skill actions (e.g. fallback attack).
     if (action.type !== ActionTypes.SKILL) {
       if (action.damage && action.damage > 0) {
@@ -17285,15 +17238,6 @@ export interface DamageCalculationConfig {
   enableDodge: boolean
   critRate: number
   critDamage: number
-  /** @deprecated 未使用，仅保留避免破坏外部配置 */
-  baseRate?: number
-  /** @deprecated 未使用，仅保留避免破坏外部配置 */
-  growthRate?: number
-  /** @deprecated 未使用，仅保留避免破坏外部配置 */
-  level?: number
-  /** @deprecated 未使用，当前使用目标方 ATTRIBUTE_CODE.damageReduction 属性 */
-  damageReduction?: number
-  /** 最小伤害阈值，默认 1 */
   minDamageThreshold?: number
   /** 最大伤害阈值，默认 9999 */
   maxDamageThreshold?: number
@@ -17944,7 +17888,7 @@ interface DamageEntry {
 export class DeferredDamageToken {
   private entries: DamageEntry[] = []
   private applied = false
-  /** ponytail: applyAll 后的快照，供后续 getTotalDamage/getTotalHeal 查询 */
+  /** applyAll 后的快照，供外部查询总伤害/治疗汇总 */
   private totalDamageSnapshot = 0
   private totalHealSnapshot = 0
   record(target: BattleEntity, damage: number, heal: number = 0, rawDamage?: number): void {
@@ -20805,7 +20749,6 @@ declare module '*.vue' {
 }
 
 --- src/index.ts ---
-import { type BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
 // 核心引擎导出
 export * from '@/domain/buff/BuffSystem'
 export * from '@/domain/buff/BuffScriptRegistry'
@@ -23673,10 +23616,8 @@ onUnmounted(() => {
   z-index: 9999;
   width: 320px;
   max-width: 90vw;
-  /* ponytail: bg rgba(15,23,42,.95) is a unique overlay color; no matching token */
   background: rgba(15, 23, 42, 0.95);
-  /* ponytail: border rgba(96,165,250,.4) = #60a5fa; no matching token */
-  border: 1px solid rgba(96, 165, 250, 0.4);
+  border: 1px solid var(--border-common-color-light);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   box-shadow: var(--shadow-lg);
@@ -23688,8 +23629,7 @@ onUnmounted(() => {
     align-items: center;
     margin-bottom: var(--space-3);
     padding-bottom: var(--space-2);
-    /* ponytail: border rgba(96,165,250,.3) unique to tooltip */
-    border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+    border-bottom: 1px solid var(--border-common-color-dark);
     .tooltip-title {
       font-size: var(--font-size-lg);
       font-weight: var(--font-weight-semibold);
@@ -23731,8 +23671,7 @@ onUnmounted(() => {
   }
   .tooltip-divider {
     height: 1px;
-    /* ponytail: gradient uses unique #60a5fa, no exact token */
-    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, var(--border-common-color-light), transparent);
     margin: var(--space-3) 0;
   }
   .tooltip-content {
@@ -23748,8 +23687,7 @@ onUnmounted(() => {
           align-items: center;
           margin-bottom: var(--space-1);
           padding-bottom: var(--space-1);
-          /* ponytail: border uses unique #60a5fa */
-          border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+          border-bottom: 1px solid var(--border-common-color-dark);
         }
         .stat-section-title {
           font-weight: var(--font-weight-semibold);
@@ -23852,7 +23790,7 @@ onUnmounted(() => {
         margin-top: var(--space-2);
         padding-top: var(--space-2);
         /* ponytail: border uses unique #60a5fa */
-        border-top: 1px dashed rgba(96, 165, 250, 0.3);
+        border-top: 1px dashed var(--border-common-color-dark);
         .result-label {
           font-size: var(--font-size-md);
           color: var(--color-text-tertiary);
@@ -23871,7 +23809,7 @@ onUnmounted(() => {
     width: 12px;
     height: 12px;
     background: rgba(15, 23, 42, 0.95);
-    border: 1px solid rgba(96, 165, 250, 0.4);
+    border: 1px solid var(--border-common-color);
     transform: rotate(45deg);
     &.arrow-top {
       top: -7px;
@@ -25022,7 +24960,7 @@ const getPossibleSources = (buffId: string): string[] => {
   color: var(--color-debuff);
 }
 .buff-badge.duration {
-  background: rgba(96, 165, 250, 0.15);
+  background: var(--border-common-color-dark);
   color: var(--color-info);
 }
 .buff-badge.duration.permanent {
@@ -25516,7 +25454,7 @@ const effectLines = computed(() => {
 .group-debug {
   margin-top: var(--space-2);
   padding-top: var(--space-1);
-  border-top: 1px dashed rgba(96, 165, 250, 0.2);
+  border-top: 1px dashed var(--border-common-color-dark);
 }
 .debug-toggle {
   color: var(--color-info);
@@ -25531,7 +25469,7 @@ const effectLines = computed(() => {
   padding: var(--space-2);
   background: rgba(15, 23, 42, 0.6);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(96, 165, 250, 0.15);
+  border: 1px solid var(--border-common-color-dark);
 }
 .debug-row {
   display: flex;
@@ -25682,7 +25620,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
   width: min(440px, 90vw);
   max-height: 70vh;
   background: rgba(15, 23, 42, 0.97);
-  border: 1px solid rgba(96, 165, 250, 0.3);
+  border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-lg);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(12px);
@@ -25695,7 +25633,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+  border-bottom: 1px solid var(--border-common-color-dark);
   flex-shrink: 0;
 }
 .panel-title {
@@ -25738,7 +25676,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
 /* 次要分组（极多 Buff 折叠） */
 .panel-secondary {
   margin: var(--space-1) var(--space-4);
-  border-top: 1px dashed rgba(96, 165, 250, 0.15);
+  border-top: 1px dashed var(--border-common-color-dark);
   padding-top: var(--space-1);
 }
 .secondary-toggle {
@@ -25757,7 +25695,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
 /* 分割线 */
 .panel-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.25), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-common-color-dark), transparent);
   margin: var(--space-2) var(--space-4);
 }
 /* 属性汇总 */
@@ -26263,7 +26201,7 @@ watch(activeTab, () => {
 }
 .item-rarity.rarity-2 {
   color: var(--color-info);
-  background: rgba(96, 165, 250, 0.15);
+  background: var(--border-common-color-dark);
 }
 .item-rarity.rarity-3 {
   color: var(--color-debuff);
@@ -27014,7 +26952,7 @@ const tooltipStyle = computed(() => {
   max-height: 50vh;
   overflow-y: auto;
   background: rgba(15, 23, 42, 0.96);
-  border: 1px solid rgba(96, 165, 250, 0.35);
+  border: 1px solid var(--border-common-color);
   border-radius: var(--radius-lg);
   padding: var(--space-3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -27030,12 +26968,12 @@ const tooltipStyle = computed(() => {
   gap: var(--space-2);
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-2);
-  border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+  border-bottom: 1px solid var(--border-common-color-dark);
 }
 .tooltip-name {
   font-weight: var(--font-weight-semibold);
   color: var(--color-energy);
-  text-shadow: 0 0 6px rgba(34, 211, 238, 0.3);
+  text-shadow: 0 0 6px var(--border-debug-color);
   word-break: break-all;
 }
 .tooltip-badges {
@@ -27101,7 +27039,7 @@ const tooltipStyle = computed(() => {
   width: 10px;
   height: 10px;
   background: rgba(15, 23, 42, 0.96);
-  border: 1px solid rgba(96, 165, 250, 0.35);
+  border: 1px solid var(--border-common-color);
   transform: rotate(45deg);
   &.arrow-top {
     top: -6px;
@@ -27301,7 +27239,7 @@ const getItemSources = (itemId: string): string[] => {
 }
 .item-rarity.rarity-2 {
   color: var(--color-info);
-  background: rgba(96, 165, 250, 0.15);
+  background: var(--border-common-color-dark);
 }
 .item-rarity.rarity-3 {
   color: var(--color-debuff);
@@ -28015,7 +27953,7 @@ defineExpose({
   border: 1px solid rgba(249, 115, 22, 0.3);
 }
 .situational-tag.tag-elemental {
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   color: #0a7f91;
   border: 1px solid rgba(34, 211, 238, 0.25);
 }
@@ -28078,7 +28016,7 @@ defineExpose({
   z-index: var(--z-tooltip, 1000);
   min-width: 220px;
   background: rgba(15, 23, 42, 0.97);
-  border: 1px solid rgba(96, 165, 250, 0.3);
+  border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -28090,7 +28028,7 @@ defineExpose({
   font-weight: var(--font-weight-bold);
   padding-bottom: var(--space-1);
   margin-bottom: var(--space-1);
-  border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+  border-bottom: 1px solid var(--border-common-color-dark);
   white-space: nowrap;
 }
 .breakdown-body {
@@ -28282,7 +28220,6 @@ import { computed } from 'vue'
 interface RadioOption {
   value: string | number
   label: string
-  icon: string
 }
 interface Props {
   modelValue: string | number
@@ -32009,7 +31946,7 @@ html {
 }
 /* 能量 */
 .energy-bar {
-  border: 1px solid rgba(34, 211, 238, 0.3);
+  border: 1px solid var(--border-debug-color);
   background: rgba(34, 211, 238, 0.05);
   box-shadow:
     0 0 20px rgba(34, 211, 238, 0.1),
@@ -33791,6 +33728,12 @@ $transition-fast: var(--transition-fast);
   --color-ally-text: var(--color-info);
   --color-enemy-primary: #7a1a1a;
   --color-enemy-text: var(--color-danger);
+  --border-debug-color-dark: rgba(34, 211, 238, 0.15);
+  --border-debug-color: rgba(34, 211, 238, 0.3);
+  --border-debug-color-light: rgba(34, 211, 238, 0.5);
+  --border-common-color-dark: rgba(96, 165, 250, 0.15);
+  --border-common-color: rgba(96, 165, 250, 0.3);
+  --border-common-color-light: rgba(96, 165, 250, 0.5);
   /* ==========================================================================
      2. 排版系统 (基准 14px，适配当前项目)
      ========================================================================== */
@@ -35412,7 +35355,7 @@ const handleBattleEndReplay = (winner: string) => {
   display: flex;
   gap: 12px;
   padding: 4px 12px 8px;
-  border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+  border-bottom: 1px solid var(--border-common-color-dark);
   margin-bottom: 4px;
 }
 .tier-filter {
@@ -35442,7 +35385,7 @@ const handleBattleEndReplay = (winner: string) => {
   /* ponytail: uses --color-energy (#0a7f91) with opacity; no token for 10% bg */
   background: rgba(34, 211, 238, 0.1);
   /* ponytail: glow uses --color-energy with opacity */
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
+  box-shadow: 0 0 8px var(--border-debug-color);
 }
 .skill-item.passive:hover {
   border-left: 2px solid var(--color-energy);
@@ -35511,9 +35454,9 @@ const handleBattleEndReplay = (winner: string) => {
   max-width: 360px;
   padding: var(--space-3) var(--space-4);
   background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(96, 165, 250, 0.4);
+  border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(96, 165, 250, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px var(--border-common-color-dark);
   backdrop-filter: blur(12px);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   line-height: var(--line-height-md);
@@ -35526,7 +35469,7 @@ const handleBattleEndReplay = (winner: string) => {
   align-items: center;
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-2);
-  border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+  border-bottom: 1px solid var(--border-common-color-dark);
 }
 .tooltip-name {
   font-size: var(--font-size-lg);
@@ -35541,7 +35484,7 @@ const handleBattleEndReplay = (winner: string) => {
   letter-spacing: 0.5px;
 }
 .tooltip-type.active {
-  background: rgba(96, 165, 250, 0.2);
+  background: var(--border-common-color-dark);
   color: var(--color-info);
 }
 .tooltip-type.passive {
@@ -35567,9 +35510,9 @@ const handleBattleEndReplay = (winner: string) => {
   display: flex;
   flex-direction: column;
   padding: var(--space-1) var(--space-2);
-  background: rgba(96, 165, 250, 0.1);
+  background: var(--border-common-color-dark);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(96, 165, 250, 0.2);
+  border: 1px solid var(--border-common-color-dark);
 }
 .tooltip-stats .stat-label {
   color: rgba(255, 255, 255, 0.5);
@@ -35589,7 +35532,7 @@ const handleBattleEndReplay = (winner: string) => {
   letter-spacing: 0.5px;
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-1);
-  border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+  border-bottom: 1px solid var(--border-common-color-dark);
 }
 .effect-item {
   display: flex;
@@ -35600,7 +35543,7 @@ const handleBattleEndReplay = (winner: string) => {
 }
 .effect-type {
   padding: var(--space-1) var(--space-1);
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   border-radius: var(--radius-sm);
   color: var(--color-energy);
   font-weight: var(--font-weight-medium);
@@ -35610,7 +35553,7 @@ const handleBattleEndReplay = (winner: string) => {
   font-family: 'JetBrains Mono', monospace;
 }
 .effect-scope {
-  color: rgba(96, 165, 250, 0.8);
+  color: var(--border-common-color-light);
 }
 .effect-duration {
   color: rgba(249, 115, 22, 0.8);
@@ -35638,9 +35581,9 @@ const handleBattleEndReplay = (winner: string) => {
   font-weight: var(--font-weight-medium);
 }
 .tooltip-availability.available {
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   color: var(--color-energy);
-  border: 1px solid rgba(34, 211, 238, 0.3);
+  border: 1px solid var(--border-debug-color);
 }
 .tooltip-availability.unavailable {
   background: rgba(249, 115, 22, 0.15);
@@ -38966,7 +38909,7 @@ const reloadExport = () => {
 }
 .snapshot-btn {
   padding: var(--space-2) var(--space-4);
-  border: 2px solid rgba(34, 211, 238, 0.3);
+  border: 2px solid var(--border-debug-color);
   border-radius: var(--radius-md);
   background: rgba(34, 211, 238, 0.08);
   color: var(--color-energy);
@@ -38976,12 +38919,12 @@ const reloadExport = () => {
   outline-offset: -3px;
 }
 .snapshot-btn:hover {
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   outline-color: rgba(0, 0, 0, 0.5);
   border-color: var(--color-energy);
 }
 .snapshot-btn.primary {
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   border-color: var(--color-energy);
 }
 .snapshot-btn.small {
@@ -38997,8 +38940,8 @@ const reloadExport = () => {
 .snapshot-note {
   color: rgba(255, 255, 255, 0.35);
   padding: var(--space-2) var(--space-2);
-  background: rgba(96, 165, 250, 0.06);
-  border: 1px solid rgba(96, 165, 250, 0.15);
+  background: var(--border-common-color-dark);
+  border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-sm);
   line-height: var(--line-height-md);
 }
@@ -39222,7 +39165,7 @@ const handleButtonClick = (action: string) => {
   position: absolute;
   max-height: calc(100vh - 24px);
   background: rgba(10, 15, 25, 0.95);
-  border: 1px solid rgba(34, 211, 238, 0.3);
+  border: 1px solid var(--border-debug-color);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
@@ -39270,7 +39213,7 @@ const handleButtonClick = (action: string) => {
 }
 .debug-btn:hover {
   background: rgba(34, 211, 238, 0.2);
-  border-color: rgba(34, 211, 238, 0.5);
+  border-color: var(--border-debug-color-light);
   color: var(--color-text-primary);
 }
 .debug-btn.btn-success {
@@ -39349,7 +39292,7 @@ const handleButtonClick = (action: string) => {
   transition: all var(--transition-fast);
 }
 .style-btn:hover {
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   border-color: rgba(34, 211, 238, 0.4);
   color: var(--color-text-primary);
 }
@@ -39393,7 +39336,7 @@ const handleButtonClick = (action: string) => {
   transition: all var(--transition-fast);
 }
 .log-gen-opt-btn:hover {
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   border-color: rgba(34, 211, 238, 0.4);
   color: var(--color-text-primary);
 }
@@ -39406,7 +39349,7 @@ const handleButtonClick = (action: string) => {
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--color-energy);
   border-radius: var(--radius-sm);
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   color: var(--color-energy);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -39414,8 +39357,8 @@ const handleButtonClick = (action: string) => {
   align-self: flex-start;
 }
 .log-gen-btn:hover {
-  background: rgba(34, 211, 238, 0.3);
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
+  background: var(--border-debug-color);
+  box-shadow: 0 0 8px var(--border-debug-color);
 }
 @keyframes slideIn {
   from {
@@ -40174,7 +40117,7 @@ const valueColorClass = computed(() => {
           {{ debugPhase ? '继 续' : '暂 停' }}
         </button>
         <button class="control-btn" @click="handleDebugStep" :disabled="!debugPhase">
-          {{ debugPhase ? '下一步 ▶' : '单步调试' }}
+          {{ debugPhase ? '下一步' : '单步调试' }}
         </button>
       </template>
       <span class="separator"></span>
@@ -40279,7 +40222,7 @@ onUnmounted(() => {
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(59, 130, 246, 0.2));
-  border: 1px solid rgba(34, 211, 238, 0.5);
+  border: 1px solid var(--border-debug-color-light);
   border-radius: var(--radius-xl);
   animation: pulse-glow 2s ease-in-out infinite;
   z-index: 100;
@@ -40292,10 +40235,10 @@ onUnmounted(() => {
   color: var(--color-energy);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-md);
-  text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+  text-shadow: 0 0 10px var(--border-debug-color-light);
 }
 .auto-indicator-speed {
-  background: rgba(34, 211, 238, 0.3);
+  background: var(--border-debug-color);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-lg);
   color: var(--color-energy);
@@ -40303,7 +40246,7 @@ onUnmounted(() => {
 @keyframes pulse-glow {
   0%,
   100% {
-    box-shadow: 0 0 5px rgba(34, 211, 238, 0.3);
+    box-shadow: 0 0 5px var(--border-debug-color);
   }
   50% {
     box-shadow: 0 0 20px rgba(34, 211, 238, 0.6);
@@ -40329,7 +40272,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   padding: var(--space-1) var(--space-3);
-  border: 1px solid rgba(34, 211, 238, 0.5);
+  border: 1px solid var(--border-debug-color-light);
   border-radius: var(--radius-xl);
   background: rgba(34, 211, 238, 0.1);
   color: var(--color-energy);
@@ -40349,7 +40292,7 @@ onUnmounted(() => {
   transition: var(--transition-fast);
 }
 .debug-toggle-switch.active {
-  border-color: rgba(34, 211, 238, 0.5);
+  border-color: var(--border-debug-color-light);
   background: rgba(34, 211, 238, 0.1);
 }
 .toggle-track {

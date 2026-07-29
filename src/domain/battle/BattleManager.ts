@@ -22,7 +22,8 @@ import type {
   BattleEvents,
   BattleEventName,
 } from '@/domain/battle/type/BattleEventType'
-import { eventBus } from '@/main'
+import type { IUIEventPort } from '@/domain/port/IUIEventPort'
+import type { Emitter } from 'mitt'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
@@ -48,7 +49,7 @@ export class BattleManager {
 
   /** 发送队伍变更事件 */
   private emitTeamChanged(): void {
-    eventBus.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
+    this.uiEventPort.emit(BattleEventCodes.TEAM_DATA_CHANGED, {
       allyTeam: this.getEnabledAllyTeam(),
       enemyTeam: this.getEnabledEnemyTeam(),
     })
@@ -60,6 +61,8 @@ export class BattleManager {
     private autoBattleManager: AutoBattleManager,
     private interventionManager: InterventionManager,
     private battleReplayManager: BattleReplayManager,
+    private readonly uiEventPort: IUIEventPort,
+    private readonly emitter: Emitter<BattleEvents>,
   ) {}
 
   /** 当前场景 ID */
@@ -97,7 +100,7 @@ export class BattleManager {
    * @param data 事件数据
    */
   private emit<T extends BattleEventName>(event: T, data: BattleEvents[T]) {
-    eventBus.emit(event, data)
+    this.uiEventPort.emit(event as string, data)
   }
 
   /**
@@ -115,7 +118,7 @@ export class BattleManager {
       this.handlers.set(event, set)
     }
     set.add(callback as (...args: unknown[]) => void)
-    eventBus.on(event, callback)
+    this.emitter.on(event, callback)
   }
 
   /**
@@ -130,10 +133,10 @@ export class BattleManager {
     if (!set) return
     if (callback) {
       set.delete(callback as (...args: unknown[]) => void)
-      eventBus.off(event, callback)
+      this.emitter.off(event, callback)
     } else {
       for (const cb of set) {
-        eventBus.off(event, cb)
+        this.emitter.off(event, cb)
       }
       this.handlers.delete(event)
     }
@@ -143,7 +146,7 @@ export class BattleManager {
   clearAllListeners(): void {
     for (const [event, set] of this.handlers) {
       for (const cb of set) {
-        eventBus.off(event, cb)
+        this.emitter.off(event, cb)
       }
     }
     this.handlers.clear()

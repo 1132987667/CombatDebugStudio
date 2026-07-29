@@ -64,10 +64,15 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from "vue";
 import RadioButtonGroup from "@/presentation/components/RadioButtonGroup.vue";
-import { debugGate } from '@/domain/battle/debug/DebugGate'
-import { eventBus } from '@/main'
+import { container } from '@/infrastructure/di/Container'
+import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
+import type { DebugGate as DebugGateType } from '@/domain/battle/debug/DebugGate'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { useBattleStore } from '@/presentation/stores/battleStore'
+
+const emitter = container.resolve<UIEventBus>('UIEventBus').getEmitter()
+let debugGate: DebugGateType | undefined
+try { debugGate = container.resolve<DebugGateType>('DebugGate') } catch { /* 容器未初始化 */ }
 
 const store = useBattleStore()
 
@@ -114,8 +119,8 @@ const toggleBattleSpeed = () => {
 // ========== 调试模式 ==========
 // NOTE: debugGate 是普通类，状态不可响应式追踪，
 //       因此通过 DEBUG_PAUSE / DEBUG_PAUSE_RESUME 事件驱动本地 ref
-const debugMode = ref(debugGate.enabled)
-const debugPhase = ref<string | null>(debugGate.waitingPhase)
+const debugMode = ref(debugGate?.enabled ?? false)
+const debugPhase = ref<string | null>(debugGate?.waitingPhase ?? null)
 
 const PHASE_LABELS: Record<string, string> = {
   BATTLE_START: '战斗开始',
@@ -129,29 +134,29 @@ const debugPhaseLabel = computed(() =>
 
 const toggleDebug = () => {
   debugMode.value = !debugMode.value
-  debugGate.setEnabled(debugMode.value)
+  debugGate?.setEnabled(debugMode.value)
 }
 
 // 暂停 / 单步调试：调试模式下战斗停在断点上，两者都推进到下一个断点
 const handleDebugStep = () => {
-  debugGate.nextStep()
+  debugGate?.nextStep()
 }
 
 onMounted(() => {
-  eventBus.on(BattleEventCodes.DEBUG_TOGGLE, (data) => {
+  emitter.on(BattleEventCodes.DEBUG_TOGGLE, (data) => {
     debugMode.value = data?.enabled ?? false
   })
-  eventBus.on(BattleEventCodes.DEBUG_PAUSE, (data) => {
+  emitter.on(BattleEventCodes.DEBUG_PAUSE, (data) => {
     debugPhase.value = data?.phase ?? null
   })
-  eventBus.on(BattleEventCodes.DEBUG_PAUSE_RESUME, () => {
+  emitter.on(BattleEventCodes.DEBUG_PAUSE_RESUME, () => {
     debugPhase.value = null
   })
 })
 onUnmounted(() => {
-  eventBus.off(BattleEventCodes.DEBUG_TOGGLE)
-  eventBus.off(BattleEventCodes.DEBUG_PAUSE)
-  eventBus.off(BattleEventCodes.DEBUG_PAUSE_RESUME)
+  emitter.off(BattleEventCodes.DEBUG_TOGGLE)
+  emitter.off(BattleEventCodes.DEBUG_PAUSE)
+  emitter.off(BattleEventCodes.DEBUG_PAUSE_RESUME)
 })
 </script>
 
@@ -167,7 +172,7 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(59, 130, 246, 0.2));
+  background: linear-gradient(135deg, rgba(var(--rgb-energy), var(--alpha-wash-strong)), rgba(var(--rgb-skill-active), var(--alpha-wash-strong)));
   border: 1px solid var(--border-debug-color-light);
   border-radius: var(--radius-xl);
   animation: pulse-glow 2s ease-in-out infinite;
@@ -230,7 +235,7 @@ onUnmounted(() => {
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--border-debug-color-light);
   border-radius: var(--radius-xl);
-  background: rgba(34, 211, 238, 0.1);
+  background: rgba(var(--rgb-energy), var(--alpha-wash));
   color: var(--color-energy);
   white-space: nowrap;
   animation: pulse-glow 2s ease-in-out infinite;
@@ -244,7 +249,7 @@ onUnmounted(() => {
   cursor: pointer;
   user-select: none;
   padding: var(--space-1) var(--space-2);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--color-border-hairline);
   border-radius: var(--radius-xl);
   transition: var(--transition-fast);
 }
@@ -258,7 +263,7 @@ onUnmounted(() => {
   position: relative;
   width: 36px;
   height: 20px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(var(--rgb-white), var(--alpha-wash));
   border-radius: 10px;
   transition: background var(--transition-fast);
   flex-shrink: 0;
@@ -302,19 +307,19 @@ onUnmounted(() => {
   cursor: pointer;
   user-select: none;
   padding: var(--space-1) var(--space-2);
-  border: 1px solid rgba(255, 152, 0, 0.3);
+  border: 1px solid rgba(var(--rgb-warning), var(--alpha-border));
   border-radius: var(--radius-xl);
   transition: var(--transition-fast);
 }
 .quick-toggle.active {
   border-color: var(--color-warning);
-  background: rgba(255, 152, 0, 0.15);
+  background: rgba(var(--rgb-warning), var(--alpha-wash));
 }
 .quick-toggle .qt-toggle-track {
   position: relative;
   width: 32px;
   height: 18px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(var(--rgb-white), var(--alpha-wash));
   border-radius: 9px;
   transition: background var(--transition-fast);
   flex-shrink: 0;

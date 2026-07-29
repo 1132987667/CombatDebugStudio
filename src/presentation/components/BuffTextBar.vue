@@ -134,7 +134,7 @@ function onTagLeave() {
 }
 
 .buff-text-bar:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--rgb-white), var(--alpha-tint));
 }
 
 .buff-text-bar.is-expanded {
@@ -165,7 +165,7 @@ function onTagLeave() {
   font-weight: var(--font-weight-bold);
   border-radius: var(--radius-sm);
   background: var(--color-info-bg);
-  border: 1px solid rgba(79, 195, 247, 0.25);
+  border: 1px solid rgba(var(--rgb-info), var(--alpha-border));
   transition: background var(--transition-fast) ease;
 }
 

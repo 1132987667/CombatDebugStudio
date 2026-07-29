@@ -471,7 +471,7 @@ onUnmounted(() => {
   z-index: 9999;
   width: 320px;
   max-width: 90vw;
-  background: rgba(15, 23, 42, 0.95);
+  background: var(--color-overlay-panel);
   border: 1px solid var(--border-common-color-light);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
@@ -491,8 +491,7 @@ onUnmounted(() => {
       font-size: var(--font-size-lg);
       font-weight: var(--font-weight-semibold);
       color: var(--color-energy);
-      /* ponytail: glow uses --color-energy (#0a7f91) but no --color-energy-rgb for rgba() */
-      text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+      text-shadow: 0 0 8px rgba(var(--rgb-energy), var(--alpha-glow));
     }
 
     .tooltip-value {
@@ -504,7 +503,7 @@ onUnmounted(() => {
   }
 
   .tooltip-description {
-    background: rgba(34, 211, 238, 0.05);
+    background: rgba(var(--rgb-energy), var(--alpha-tint));
     border-radius: var(--radius-md);
     padding: var(--space-2);
     margin-bottom: var(--space-3);
@@ -576,7 +575,7 @@ onUnmounted(() => {
         justify-content: space-between;
         align-items: center;
         padding: var(--space-1) 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid var(--color-border-hairline);
 
         &:last-child {
           border-bottom: none;
@@ -644,8 +643,7 @@ onUnmounted(() => {
     }
 
     .calculation-section {
-      /* ponytail: bg uses --color-energy (#0a7f91) at 5% opacity */
-      background: rgba(34, 211, 238, 0.05);
+      background: rgba(var(--rgb-energy), var(--alpha-tint));
       border-radius: var(--radius-md);
       padding: var(--space-3);
       margin-top: var(--space-2);
@@ -675,7 +673,6 @@ onUnmounted(() => {
         gap: var(--space-2);
         margin-top: var(--space-2);
         padding-top: var(--space-2);
-        /* ponytail: border uses unique #60a5fa */
         border-top: 1px dashed var(--border-common-color-dark);
 
         .result-label {
@@ -697,7 +694,7 @@ onUnmounted(() => {
     position: absolute;
     width: 12px;
     height: 12px;
-    background: rgba(15, 23, 42, 0.95);
+    background: var(--color-overlay-panel);
     border: 1px solid var(--border-common-color);
     transform: rotate(45deg);
 

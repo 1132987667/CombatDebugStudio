@@ -94,6 +94,7 @@ import { AISystem } from '@/domain/battle/ai/AISystem'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
 import { BattleManager } from '@/domain/battle/BattleManager'
 import { BattleSystem } from '@/domain/battle/BattleSystem'
+import { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { battleEventManager } from '@/infrastructure/adapters/event/BattleEventManager'
 import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
@@ -113,6 +114,7 @@ import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { RAFTimer } from '@/shared/utils/RAF'
+import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
 
 
 /**
@@ -123,6 +125,10 @@ import { RAFTimer } from '@/shared/utils/RAF'
 export function initializeContainer(): void {
 
   container.clear()
+
+  // ── 0. 注册 UIEventBus（必须先于所有领域类）─────────────────────────────
+  const uiEventBus = new UIEventBus()
+  container.register('UIEventBus', uiEventBus)
 
   // 领域层日志器注入 — 必须最先设置，因为后续构造的类（如 BuffScriptRegistry）会用到
   LoggerProvider.logger = battleLogManager
@@ -159,7 +165,7 @@ export function initializeContainer(): void {
   const skillManager = container.resolve<SkillManager>('SkillManager')
   container.register(
     'PassiveSkillManager',
-    PassiveSkillManager.create(skillManager, buffSystem),
+    PassiveSkillManager.create(skillManager, buffSystem, uiEventBus),
   )
 
   // 6. 注册核心战斗组件（依赖上面注册的服务）
@@ -175,10 +181,13 @@ export function initializeContainer(): void {
   container.registerFactory(
     BATTLE_SYSTEM_TOKEN.toString(),
     () => {
-      return BattleSystem.createInstanceWithContainer(container as Container)
+      return BattleSystem.createInstanceWithContainer(container as Container, uiEventBus)
     },
     true,
   )
+
+  // ── 注册 DebugGate（DI 容器管理，废弃全局单例）────────────────────────
+  container.register('DebugGate', new DebugGate(uiEventBus))
 
   // 注册子管理器，使其可通过容器独立访问
   container.registerFactory('BattleStateManager', () => {
@@ -218,6 +227,8 @@ export function initializeContainer(): void {
         autoBattleManager,
         interventionManager,
         battleReplayManager,
+        uiEventBus,
+        uiEventBus.getEmitter(),
       )
 
       // 注入战斗系统引用到事件管理器

@@ -164,7 +164,7 @@ const EXPORT_CSS = `
   --color-text-primary:#ffffff; --color-text-secondary:#eee; --color-text-tertiary:#888888;
   --color-border-default:#0f3460; --color-border-tertiary:#0f4b86;
   --color-success:#4caf50; --color-danger:#f44336; --color-warning:#ff9800;
-  --color-info:#4fc3f7; --color-energy:#0a7f91; --color-debuff:#a855f7;
+  --color-info:#4fc3f7; --color-energy:#22d3ee; --color-energy-deep:#0a7f91; --color-debuff:#a855f7;
   --color-heal:#4caf50; --color-damage:#f44336; --color-crit:#ff9800;
   --color-crit-glow:rgba(255,152,0,0.5);
   --color-success-bg:rgba(76,175,80,0.12); --color-danger-bg:rgba(244,67,54,0.12);

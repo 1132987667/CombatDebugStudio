@@ -5,7 +5,8 @@
  *
  * ponytail: 位于 infrastructure 层，因为此类本质上是事件→Store 的桥接器。
  */
-import { eventBus } from '@/infrastructure/adapters/event/EventBus'
+import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
+import { container } from '@/infrastructure/di/Container'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import type {
   BattleLogEventData,
@@ -32,6 +33,10 @@ export class BattleEventManager {
   private isListening = false
   /** 已绑定的事件处理函数 */
   private boundHandlers: Map<string, Function> = new Map()
+  /** 惰性获取 emitter（DI 容器初始化后方可用） */
+  private get emitter(): ReturnType<UIEventBus['getEmitter']> {
+    return container.resolve<UIEventBus>('UIEventBus').getEmitter()
+  }
 
   /**
    * 获取战斗状态
@@ -73,22 +78,22 @@ export class BattleEventManager {
 
     // 璁㈤槄鎴樻枟鏃ュ織浜嬩欢
     const battleLogHandler = (data: any) => this.handleBattleLogEvent(data)
-    eventBus.on(BattleEventCodes.BATTLE_LOG, battleLogHandler)
+    this.emitter.on(BattleEventCodes.BATTLE_LOG, battleLogHandler)
     this.boundHandlers.set(BattleEventCodes.BATTLE_LOG, battleLogHandler)
 
     // 璁㈤槄鎴樻枟缁撴潫浜嬩欢
     const battleEndHandler = (data: any) => this.handleBattleEndEvent(data)
-    eventBus.on(BattleEventCodes.BATTLE_ENDED, battleEndHandler)
+    this.emitter.on(BattleEventCodes.BATTLE_ENDED, battleEndHandler)
     this.boundHandlers.set(BattleEventCodes.BATTLE_ENDED, battleEndHandler)
 
     // Subscribe to turn start events
     const turnStartHandler = (data: any) => this.handleTurnStartEvent(data)
-    eventBus.on(BattleEventCodes.TURN_START, turnStartHandler)
+    this.emitter.on(BattleEventCodes.TURN_START, turnStartHandler)
     this.boundHandlers.set(BattleEventCodes.TURN_START, turnStartHandler)
 
     // 璁㈤槄鍥炲悎缁撴潫浜嬩欢
     const turnEndHandler = (data: any) => this.handleTurnEndEvent(data)
-    eventBus.on(BattleEventCodes.TURN_END, turnEndHandler)
+    this.emitter.on(BattleEventCodes.TURN_END, turnEndHandler)
     this.boundHandlers.set(BattleEventCodes.TURN_END, turnEndHandler)
 
     this.isListening = true
@@ -99,10 +104,10 @@ export class BattleEventManager {
    */
   stopListening() {
     // Unsubscribe all battle events
-    eventBus.off(BattleEventCodes.BATTLE_LOG)
-    eventBus.off(BattleEventCodes.BATTLE_ENDED)
-    eventBus.off(BattleEventCodes.TURN_START)
-    eventBus.off(BattleEventCodes.TURN_END)
+    this.emitter.off(BattleEventCodes.BATTLE_LOG)
+    this.emitter.off(BattleEventCodes.BATTLE_ENDED)
+    this.emitter.off(BattleEventCodes.TURN_START)
+    this.emitter.off(BattleEventCodes.TURN_END)
 
     // 娓呴櫎鍥炶皟引用
     this.boundHandlers.clear()
@@ -240,7 +245,7 @@ export class BattleEventManager {
         const summary = BattleSummaryGenerator.instance.onBattleEnd(data.winner)
         // 发射战报事件，供 UI 层 BattleSummaryDialog 捕获
         if (summary) {
-          eventBus.emit('battle-summary', summary)
+          this.emitter.emit('battle-summary', summary)
         }
       }
     } catch (error) {

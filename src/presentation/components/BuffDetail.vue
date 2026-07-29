@@ -193,7 +193,7 @@ const getPossibleSources = (buffId: string): string[] => {
 }
 
 .buff-badge.stacks {
-  background: rgba(167, 139, 250, 0.15);
+  background: rgba(var(--rgb-debuff), var(--alpha-wash));
   color: var(--color-debuff);
 }
 
@@ -203,7 +203,7 @@ const getPossibleSources = (buffId: string): string[] => {
 }
 
 .buff-badge.duration.permanent {
-  background: rgba(251, 191, 36, 0.15);
+  background: rgba(var(--rgb-skill-ultimate), var(--alpha-wash));
   color: var(--color-warning);
 }
 
@@ -288,17 +288,17 @@ const getPossibleSources = (buffId: string): string[] => {
 }
 
 .effect-tag.debuff {
-  background: rgba(233, 69, 96, 0.15);
+  background: rgba(var(--rgb-brand-red), var(--alpha-wash));
   color: var(--color-brand-red);
 }
 
 .effect-tag.stacks {
-  background: rgba(167, 139, 250, 0.15);
+  background: rgba(var(--rgb-debuff), var(--alpha-wash));
   color: var(--color-debuff);
 }
 
 .effect-tag.permanent {
-  background: rgba(251, 191, 36, 0.15);
+  background: rgba(var(--rgb-skill-ultimate), var(--alpha-wash));
   color: var(--color-warning);
 }
 

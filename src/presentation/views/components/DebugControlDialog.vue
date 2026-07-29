@@ -230,7 +230,7 @@ const handleButtonClick = (action: string) => {
 .debug-control-dialog {
   position: absolute;
   max-height: calc(100vh - 24px);
-  background: rgba(10, 15, 25, 0.95);
+  background: var(--color-overlay-panel);
   border: 1px solid var(--border-debug-color);
   border-radius: var(--radius-lg);
   display: flex;
@@ -244,7 +244,7 @@ const handleButtonClick = (action: string) => {
   padding: var(--space-3);
   background: rgba(255, 255, 255, 0.03);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border-hairline);
 }
 
 .debug-module:last-child {
@@ -257,7 +257,7 @@ const handleButtonClick = (action: string) => {
   gap: var(--space-2);
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--color-border-hairline);
 }
 
 .module-icon {
@@ -277,62 +277,62 @@ const handleButtonClick = (action: string) => {
 
 .debug-btn {
   padding: var(--space-2) var(--space-3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(var(--rgb-white), var(--alpha-wash-strong));
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(var(--rgb-white), var(--alpha-tint));
+  color: rgba(var(--rgb-white), 0.8);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .debug-btn:hover {
-  background: rgba(34, 211, 238, 0.2);
+  background: rgba(var(--rgb-energy), var(--alpha-wash-strong));
   border-color: var(--border-debug-color-light);
   color: var(--color-text-primary);
 }
 
 .debug-btn.btn-success {
-  border-color: rgba(76, 175, 80, 0.5);
+  border-color: rgba(var(--rgb-success), var(--alpha-glow));
   color: var(--color-success);
 }
 
 .debug-btn.btn-success:hover {
-  background: rgba(76, 175, 80, 0.2);
+  background: rgba(var(--rgb-success), var(--alpha-wash-strong));
   border-color: var(--color-success);
 }
 
 .debug-btn.btn-danger {
-  border-color: rgba(244, 67, 54, 0.5);
+  border-color: rgba(var(--rgb-danger), var(--alpha-glow));
   color: var(--color-danger);
 }
 
 .debug-btn.btn-danger:hover {
-  background: rgba(244, 67, 54, 0.2);
+  background: rgba(var(--rgb-danger), var(--alpha-wash-strong));
   border-color: var(--color-danger);
 }
 
 .debug-btn.btn-warning {
-  border-color: rgba(255, 152, 0, 0.5);
+  border-color: rgba(var(--rgb-warning), var(--alpha-glow));
   color: var(--color-warning);
 }
 
 .debug-btn.btn-warning:hover {
-  background: rgba(255, 152, 0, 0.2);
+  background: rgba(var(--rgb-warning), var(--alpha-wash-strong));
   border-color: var(--color-warning);
 }
 
 .debug-btn.btn-info {
-  border-color: rgba(33, 150, 243, 0.5);
+  border-color: rgba(var(--rgb-info), var(--alpha-glow));
   color: var(--color-info);
 }
 
 .debug-btn.btn-info:hover {
-  background: rgba(33, 150, 243, 0.2);
+  background: rgba(var(--rgb-info), var(--alpha-wash-strong));
   border-color: var(--color-info);
 }
 
 .debug-btn.btn-default {
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(var(--rgb-white), var(--alpha-border));
 }
 
 .dialog-slide-enter-active,
@@ -374,23 +374,23 @@ const handleButtonClick = (action: string) => {
 
 .style-btn {
   padding: var(--space-1) var(--space-2);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(var(--rgb-white), var(--alpha-wash-strong));
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.7);
+  background: rgba(var(--rgb-white), var(--alpha-tint));
+  color: rgba(var(--rgb-white), 0.7);
   font-size: 11px;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .style-btn:hover {
-  background: --border-debug-color-dark;
-  border-color: rgba(34, 211, 238, 0.4);
+  background: var(--border-debug-color-dark);
+  border-color: rgba(var(--rgb-energy), 0.4);
   color: var(--color-text-primary);
 }
 
 .style-btn.active {
-  background: rgba(34, 211, 238, 0.25);
+  background: rgba(var(--rgb-energy), var(--alpha-border));
   border-color: var(--color-energy);
   color: var(--color-energy);
 }
@@ -425,23 +425,23 @@ const handleButtonClick = (action: string) => {
 
 .log-gen-opt-btn {
   padding: 2px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(var(--rgb-white), var(--alpha-wash-strong));
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.7);
+  background: rgba(var(--rgb-white), var(--alpha-tint));
+  color: rgba(var(--rgb-white), 0.7);
   font-size: var(--font-size-md);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .log-gen-opt-btn:hover {
-  background: --border-debug-color-dark;
-  border-color: rgba(34, 211, 238, 0.4);
+  background: var(--border-debug-color-dark);
+  border-color: rgba(var(--rgb-energy), 0.4);
   color: var(--color-text-primary);
 }
 
 .log-gen-opt-btn.active {
-  background: rgba(34, 211, 238, 0.25);
+  background: rgba(var(--rgb-energy), var(--alpha-border));
   border-color: var(--color-energy);
   color: var(--color-energy);
 }
@@ -450,7 +450,7 @@ const handleButtonClick = (action: string) => {
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--color-energy);
   border-radius: var(--radius-sm);
-  background: --border-debug-color-dark;
+  background: var(--border-debug-color-dark);
   color: var(--color-energy);
   cursor: pointer;
   transition: all var(--transition-fast);

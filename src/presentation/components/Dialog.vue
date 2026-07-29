@@ -47,7 +47,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  width: "500px",
+  width: "60vw",
   showMask: true,
   maskClosable: true,
 });

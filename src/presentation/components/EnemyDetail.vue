@@ -120,17 +120,17 @@ import { formatTargetConfig } from '@/domain/skill/types'
 
 /** 被动分类展示配置：优先级从高到低 */
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: number }> = {
-  aura: { label: '光环', color: '#34d399', priority: 0 },
-  trigger: { label: '触发', color: '#a78bfa', priority: 1 },
-  heal: { label: '治疗', color: '#f472b6', priority: 2 },
-  immunity: { label: '免疫', color: '#fbbf24', priority: 3 },
-  summon: { label: '召唤', color: '#fb923c', priority: 4 },
-  dot: { label: '持续', color: '#f87171', priority: 5 },
-  shield: { label: '护盾', color: '#0a7f91', priority: 6 },
-  attribute: { label: '属性', color: '#60a5fa', priority: 7 },
+  aura: { label: '光环', color: 'var(--cat-aura)', priority: 0 },
+  trigger: { label: '触发', color: 'var(--cat-trigger)', priority: 1 },
+  heal: { label: '治疗', color: 'var(--cat-heal)', priority: 2 },
+  immunity: { label: '免疫', color: 'var(--cat-immunity)', priority: 3 },
+  summon: { label: '召唤', color: 'var(--cat-summon)', priority: 4 },
+  dot: { label: '持续', color: 'var(--cat-dot)', priority: 5 },
+  shield: { label: '护盾', color: 'var(--cat-shield)', priority: 6 },
+  attribute: { label: '属性', color: 'var(--cat-attribute)', priority: 7 },
 }
 
-const UNCATEGORIZED = { label: '未分类', color: '#94a3b8', priority: 99 }
+const UNCATEGORIZED = { label: '未分类', color: 'var(--cat-other)', priority: 99 }
 
 interface Props {
   enemy: CompendiumEnemy
@@ -374,7 +374,7 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 
 .skill-tag.passive {
   color: var(--color-debuff);
-  background: rgba(167, 139, 250, 0.15);
+  background: rgba(var(--rgb-debuff), var(--alpha-wash));
 }
 
 .skill-tag.category-tag {
@@ -384,14 +384,14 @@ const getEnemyDescription = (enemy: CompendiumEnemy): string => {
 
 .skill-tag.ultimate {
   color: var(--color-warning);
-  background: rgba(251, 191, 36, 0.15);
+  background: rgba(var(--rgb-skill-ultimate), var(--alpha-wash));
 }
 
 .skill-cost {
   padding: 1px 5px;
   border-radius: var(--radius-sm);
   color: var(--color-warning);
-  background: rgba(249, 115, 22, 0.15);
+  background: rgba(var(--rgb-live), var(--alpha-wash));
 }
 
 .skill-body {

@@ -381,21 +381,21 @@ defineExpose({
 }
 
 .situational-tag.tag-offense {
-  background: rgba(249, 115, 22, 0.2);
-  color: #fb923c;
-  border: 1px solid rgba(249, 115, 22, 0.3);
+  background: rgba(var(--rgb-live), var(--alpha-wash));
+  color: var(--color-live);
+  border: 1px solid rgba(var(--rgb-live), var(--alpha-border));
 }
 
 .situational-tag.tag-elemental {
-  background: --border-debug-color-dark;
-  color: #0a7f91;
-  border: 1px solid rgba(34, 211, 238, 0.25);
+  background: rgba(var(--rgb-energy), var(--alpha-tint));
+  color: var(--color-energy-deep);
+  border: 1px solid rgba(var(--rgb-energy), var(--alpha-border));
 }
 
 .situational-tag.tag-control {
-  background: rgba(168, 85, 247, 0.15);
-  color: #a855f7;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  background: rgba(var(--rgb-debuff), var(--alpha-wash));
+  color: var(--color-debuff);
+  border: 1px solid rgba(var(--rgb-debuff), var(--alpha-border));
 }
 
 /* 复用原有 member-card 样式 */
@@ -585,7 +585,7 @@ defineExpose({
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(255, 80, 80, 0.55), transparent 70%);
+  background: radial-gradient(circle at center, rgba(var(--rgb-danger), var(--alpha-glow)), transparent 70%);
   pointer-events: none;
   animation: hurt-flash 0.45s ease;
 }
@@ -641,7 +641,7 @@ defineExpose({
   }
 
   50% {
-    box-shadow: 0 0 30px var(--color-heal), inset 0 0 20px rgba(45, 212, 168, 0.2);
+    box-shadow: 0 0 30px var(--color-heal), inset 0 0 20px rgba(var(--rgb-success), 0.2);
   }
 }
 
@@ -658,7 +658,7 @@ defineExpose({
   }
 
   50% {
-    box-shadow: 0 0 30px var(--color-energy), inset 0 0 20px rgba(76, 201, 240, 0.2);
+    box-shadow: 0 0 30px var(--color-energy), inset 0 0 20px rgba(var(--rgb-energy), 0.2);
   }
 }
 

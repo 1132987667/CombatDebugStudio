@@ -10,9 +10,9 @@
   z-index: var(--z-dropdown);
   min-width: 200px;
   max-width: 280px;
-  background: rgba(15, 23, 42, 0.95);
+  background: var(--color-overlay-panel);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-border-hairline);
   border-radius: var(--radius-sm);
   padding: var(--space-3);
   box-shadow: var(--shadow-md);
@@ -27,9 +27,9 @@
     left: 10px;
     width: 10px;
     height: 10px;
-    background: rgba(15, 23, 42, 0.95);
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-overlay-panel);
+    border-left: 1px solid var(--color-border-hairline);
+    border-top: 1px solid var(--color-border-hairline);
     transform: rotate(45deg);
   }
 
@@ -39,7 +39,7 @@
     align-items: center;
     margin-bottom: var(--space-2);
     padding-bottom: 0.25rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--color-border-hairline);
 
     .status-name {
       font-weight: var(--font-weight-bold);
@@ -56,7 +56,7 @@
     .status-type {
       padding: 0.1rem 0.3rem;
       border-radius: var(--radius-none);
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(var(--rgb-white), var(--alpha-wash));
       color: var(--color-text-disabled);
     }
   }
@@ -180,18 +180,18 @@
 }
 
 .skill-item.passive {
-  background: rgba(138, 43, 226, 0.2);
-  border: 1px solid rgba(138, 43, 226, 0.5);
+  background: rgba(var(--rgb-debuff), var(--alpha-wash-strong));
+  border: 1px solid rgba(var(--rgb-debuff), var(--alpha-glow));
 }
 
 .skill-item.small {
-  background: rgba(30, 144, 255, 0.2);
-  border: 1px solid rgba(30, 144, 255, 0.5);
+  background: rgba(var(--rgb-skill-active), var(--alpha-wash-strong));
+  border: 1px solid rgba(var(--rgb-skill-active), var(--alpha-glow));
 }
 
 .skill-item.ultimate {
-  background: rgba(255, 215, 0, 0.2);
-  border: 1px solid rgba(255, 215, 0, 0.5);
+  background: rgba(var(--rgb-skill-ultimate), var(--alpha-wash-strong));
+  border: 1px solid rgba(var(--rgb-skill-ultimate), var(--alpha-glow));
 }
 
 .skill-label {
@@ -200,15 +200,15 @@
 }
 
 .skill-item.passive .skill-label {
-  color: #dda0dd;
+  color: var(--color-skill-passive);
 }
 
 .skill-item.small .skill-label {
-  color: #87cefa;
+  color: var(--color-skill-active);
 }
 
 .skill-item.ultimate .skill-label {
-  color: #ffd700;
+  color: var(--color-skill-ultimate);
 }
 
 .skill-name {
@@ -244,8 +244,8 @@
 }
 
 .intervention-btn.danger {
-  background: rgba(74, 26, 26, 1);
-  border-color: #7a2a2a;
+  background: rgba(var(--rgb-danger), 0.3);
+  border-color: rgba(var(--rgb-danger), var(--alpha-glow));
   color: var(--color-danger);
 }
 
@@ -300,13 +300,13 @@
 }
 
 .exception-status.normal {
-  background: rgba(76, 175, 80, 0.1);
+  background: rgba(var(--rgb-success), var(--alpha-wash));
   color: var(--color-success);
   border: 1px solid var(--color-success);
 }
 
 .exception-status.warning {
-  background: rgba(255, 152, 0, 0.1);
+  background: rgba(var(--rgb-warning), var(--alpha-wash));
   color: var(--color-warning);
   border: 1px solid var(--color-warning);
 }
@@ -319,17 +319,17 @@
 
 /* ----- 7. 额外日志语义标签 ----- */
 .death {
-  color: #6b7280;
+  color: var(--color-text-tertiary);
   text-decoration: line-through;
 }
 
 .resource {
-  color: #3b82f6;
+  color: var(--color-skill-active);
   font-weight: var(--font-weight-medium);
 }
 
 .golden {
-  color: #eab308;
+  color: var(--color-skill-ultimate);
   font-weight: var(--font-weight-bold);
 }
 

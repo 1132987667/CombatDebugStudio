@@ -81,7 +81,7 @@ export class BattleLifecycleManager {
       battle.currentTurn || 1,
     )
     this.battleRecorder.endRecording(battle.battleId, winner)
-    this.battleRecorder.saveRecording(battle.battleId)
+    await this.battleRecorder.saveRecording(battle.battleId)
 
     battle.battleState = BattleStatus.ENDED
     eventBus.emit(BattleEventCodes.BATTLE_ENDED, { winner })

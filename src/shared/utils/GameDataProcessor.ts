@@ -26,6 +26,7 @@ import type {
 import type { SkillConfig, SkillStep } from '@/domain/skill/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
+import type { FormationConfig } from '@/shared/types/formation'
 import { Counter } from '@/shared/utils/Counter'
 import { DataProcessor } from '@/shared/utils/DataProcessor'
 import { toArray } from '@/shared/utils/Utils'
@@ -36,6 +37,7 @@ import passiveSkillsData from '@configs/skills/skill_passive.json'
 import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
 import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
 import skillsData from '@configs/skills/skills.json'
+import formationsData from '@configs/formations/formations.json'
 import { BuffAuraModifier } from '@/domain/buff/BuffScriptRegistry'
 
 const enemiesData = [
@@ -719,5 +721,15 @@ export class GameDataProcessor {
    */
   static clearCache(): void {
     DataProcessor.clearCache()
+  }
+
+  /** 获取所有阵型配置 */
+  static getFormationsData(): FormationConfig[] {
+    return formationsData as FormationConfig[]
+  }
+
+  /** 根据 ID 查找阵型配置 */
+  static findFormationById(id: string): FormationConfig | undefined {
+    return (formationsData as FormationConfig[]).find(f => f.id === id)
   }
 }

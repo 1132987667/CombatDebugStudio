@@ -1,0 +1,35 @@
+[
+  {
+    "id": "crane_wing",
+    "name": "鹤翼阵",
+    "description": "前排防御提升，后排速度提升",
+    "maxSlots": 4,
+    "slots": [
+      { "index": 0, "row": "front" },
+      { "index": 1, "row": "front" },
+      { "index": 2, "row": "back" },
+      { "index": 3, "row": "back" }
+    ],
+    "effects": [
+      { "id": "front_def", "condition": "front", "buffId": "buff_formation_front_def" },
+      { "id": "back_spd", "condition": "back", "buffId": "buff_formation_back_spd" }
+    ],
+    "frontProtection": true
+  },
+  {
+    "id": "iron_wall",
+    "name": "铁壁阵",
+    "description": "全体防御提升",
+    "maxSlots": 4,
+    "slots": [
+      { "index": 0, "row": "front" },
+      { "index": 1, "row": "front" },
+      { "index": 2, "row": "back" },
+      { "index": 3, "row": "back" }
+    ],
+    "effects": [
+      { "id": "all_def", "condition": "all", "buffId": "buff_formation_all_def" }
+    ],
+    "frontProtection": true
+  }
+]

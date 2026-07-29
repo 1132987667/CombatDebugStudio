@@ -29,9 +29,33 @@ export interface DamageStep {
   stepName: string
   value: number
   description: string
+  /** 此步骤计算前的伤害值（用于 UI 展示 before→after 变化） */
+  before?: number
+  /** 此步骤计算后的伤害值（与 value 一致，结构化冗余以便 UI 直接读） */
+  after?: number
+  /**
+   * 来源类型：复用 ModifierSourceType 的值（'buff'|'skill'|'equipment'|'terrain'|'formation'|'base'|'talent'），
+   * 并扩展 'passive'（被动技能触发）和 'system'（系统机制如 clamp/threshold）。
+   * 类型定义为 string 而非联合类型，避免维护两套平行枚举。使用时应参考 ModifierSourceType 的现有值。
+   */
+  sourceType?: string
+  /**
+   * 子步骤（嵌套步骤）。
+   * 最大嵌套深度 3：顶层步骤可以作为父节点包含 children，子节点不再嵌套。
+   * 当前管线是线性的，children 为未来被动触发产生的子链路预留。
+   */
+  children?: DamageStep[]
 }
 
-/** 额外加成项 */
+/** 动作上下文：记录行动前的被动触发信息 */
+export interface ActionContext {
+  prePassives: Array<{
+    passiveId: string
+    passiveName: string
+    ownerName: string
+    effectSummary: string
+  }>
+}
 export interface ExtraContribution {
   attribute: string
   value: number
@@ -131,6 +155,8 @@ export interface CombatRecord {
 
   /** 伤害拆分明细（攻击/技能动作时填充） */
   damageBreakdown?: DamageBreakdown
+
+  actionContext?: ActionContext
 
   /** 伤害来源类型：区分普通攻击/技能/DOT/反伤/反应 */
   damageSource?: 'attack' | 'skill' | 'dot' | 'thorns' | 'reaction'

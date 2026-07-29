@@ -1,5 +1,5 @@
 import type { BuffConfig } from '@/domain/buff/types'
-import type { Character } from '@/domain/character/types'
+import type { BattleEntity } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 
@@ -80,9 +80,12 @@ export class BuffContext {
     modifierStack.removeModifier(this.instanceId, attribute as ATTRIBUTE_CODE | undefined)
   }
 
-  // TODO: 实现从 BuffSystem 或外部注入的 Character 缓存中获取角色实例
-  public getCharacter(): Character | undefined {
-    return undefined
+  /**
+   * 获取角色实例
+   * 通过 BuffSystem 注入的 CharacterResolver 解析
+   */
+  public getCharacter(): BattleEntity | undefined {
+    return this._buffSystem?.resolveCharacter(this.characterId)
   }
 
   /** 获取 BuffSystem 实例，供 Buff 脚本注册护盾值等运行时状态 */
@@ -92,7 +95,7 @@ export class BuffContext {
 
   public getAttrVal(attribute: string): number {
     const character = this.getCharacter()
-    return character ? character.getAttribute(attribute as ATTRIBUTE_CODE) : 0
+    return character ? character.getAttribute(attribute) : 0
   }
 
   public triggerEvent(eventName: string, data?: unknown): void {

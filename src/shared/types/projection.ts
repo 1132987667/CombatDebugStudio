@@ -49,4 +49,10 @@ export interface UIParticipantSnapshot {
 
   // === 版本戳（调试用） ===
   version: number
+
+  // === 阵型/复活信息（可选） ===
+  /** 行位置（阵型系统） */
+  formationRow?: 'front' | 'back'
+  /** 本场已复活次数 */
+  reviveCount?: number
 }

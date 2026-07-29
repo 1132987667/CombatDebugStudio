@@ -568,3 +568,15 @@ export function convertSkillConfigToSkill(
 
   return skill
 }
+
+/** 复活步骤参数 */
+export interface ReviveStepParams {
+  /** 复活后气血百分比（默认 30） */
+  hpPercent: number
+  /** 最大复活次数限制 */
+  maxRevives?: number
+  /** 复活冷却回合数 */
+  cooldown?: number
+  /** 是否清除减益效果 */
+  cleanseDebuffs?: boolean
+}

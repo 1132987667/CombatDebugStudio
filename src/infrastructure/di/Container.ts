@@ -198,7 +198,9 @@ export function initializeContainer(): void {
     return new InterventionManager(battleSystem, battleStateManager)
   }, true)
 
-  container.register('BattleReplayManager', new BattleReplayManager())
+  container.registerFactory('BattleReplayManager', () => {
+    return new BattleReplayManager(triggerEventBus)
+  }, true)
 
   // 注册 BattleManager（从容器解析子管理器依赖）
   container.registerFactory(

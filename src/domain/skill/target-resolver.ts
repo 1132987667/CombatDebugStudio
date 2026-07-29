@@ -11,6 +11,10 @@ import {
   type SkillStep,
 } from '@/domain/skill/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import type { ThreatManager } from '@/domain/battle/service/ThreatManager'
+
+/** 嘲讽 Buff ID — 与 configs/buffs/buffs.json 中 buff_taunt 的 id 一致 */
+const TAUNT_BUFF_ID = 'buff_taunt'
 
 /**
  * 根据技能 selector 解析目标
@@ -18,6 +22,9 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
  * @param source 施法者
  * @param selector 目标选择配置
  * @param steps 可选 — 技能步骤列表，用于 FIRST 策略的智能默认
+ * @param threatManager 可选 — 仇恨管理器（用于嘲讽检查 + 仇恨优先）
+ * @param formationRowLookup 可选 — 阵型行查询回调
+ * @param frontProtectionLookup 可选 — 前排保护查询回调
  * @returns 目标实体数组
  */
 export function resolveSkillTargets(
@@ -25,6 +32,9 @@ export function resolveSkillTargets(
   source: BattleEntity,
   selector: SkillTargetConfig,
   steps?: SkillStep[],
+  threatManager?: ThreatManager,
+  formationRowLookup?: (side: ParticipantSide, seatIndex: number) => 'front' | 'back' | null,
+  frontProtectionLookup?: (side: ParticipantSide) => boolean,
 ): BattleEntity[] {
   const all = Array.from(participants.values())
 
@@ -45,6 +55,23 @@ export function resolveSkillTargets(
 
   let candidates = all.filter(factionFilter)
   if (candidates.length === 0) return []
+
+  // ★ 仅在 faction === 'enemy' 时检查嘲讽 + 仇恨（修复 S1）
+  if (selector.faction === TargetFaction.ENEMY) {
+    // 嘲讽优先
+    const tauntTarget = candidates.find(e => e.hasBuff?.(TAUNT_BUFF_ID))
+    if (tauntTarget) return [tauntTarget]
+
+    // 仇恨优先
+    if (threatManager) {
+      const candidateIds = candidates.map(c => c.id)
+      const highestId = threatManager.getHighestThreatTarget(source.id, candidateIds)
+      if (highestId) {
+        const target = participants.get(highestId)
+        if (target?.isAlive()) return [target]
+      }
+    }
+  }
 
   const take = (arr: BattleEntity[], n: number): BattleEntity[] =>
     arr.slice(0, Math.max(1, n))
@@ -71,10 +98,24 @@ export function resolveSkillTargets(
           ? candidates.length
           : (selector.count ?? 1),
       )
-    case TargetStrategy.FRONT:
+    case TargetStrategy.FRONT: {
+      // 阵型增强：有 formationRowLookup 时按行定位
+      if (formationRowLookup) {
+        const enemySide = source.team === ParticipantSide.ALLY ? ParticipantSide.ENEMY : ParticipantSide.ALLY
+        const frontRow = candidates.filter(p => formationRowLookup(enemySide, p.seatIndex) === 'front')
+        if (frontRow.length > 0) return [frontRow[0]]
+      }
       return [candidates[0]]
-    case TargetStrategy.BACK:
+    }
+    case TargetStrategy.BACK: {
+      // 阵型增强：有 formationRowLookup 时按行定位
+      if (formationRowLookup) {
+        const enemySide = source.team === ParticipantSide.ALLY ? ParticipantSide.ENEMY : ParticipantSide.ALLY
+        const backRow = candidates.filter(p => formationRowLookup(enemySide, p.seatIndex) === 'back')
+        if (backRow.length > 0) return [backRow[backRow.length - 1]]
+      }
       return [candidates[candidates.length - 1]]
+    }
     case TargetStrategy.ADJACENT: {
       const sourceSeat = source.seatIndex
       return candidates.filter(
@@ -94,6 +135,20 @@ export function resolveSkillTargets(
       // 智能默认：纯治疗/增益技能选最低血量目标；含伤害步骤时选第一个
       const hasHeal = steps?.some((s) => s.type === SkillStepType.HEAL)
       const hasDamage = steps?.some((s) => s.type === SkillStepType.DEAL_DAMAGE || s.type === SkillStepType.DRAIN)
+
+      // ★ 前排保护：非治疗/增益默认策略中，若敌方启用前排保护且前排存活，过滤后排（修复 S1）
+      if (frontProtectionLookup && formationRowLookup && !(hasHeal && !hasDamage)) {
+        const enemySide = source.team === ParticipantSide.ALLY ? ParticipantSide.ENEMY : ParticipantSide.ALLY
+        if (frontProtectionLookup(enemySide)) {
+          const frontAlive = candidates.filter(
+            p => formationRowLookup(enemySide, p.seatIndex) === 'front',
+          )
+          if (frontAlive.length > 0) {
+            candidates = frontAlive
+          }
+        }
+      }
+
       if (hasHeal && !hasDamage) {
         const target = candidates.reduce((min, p) =>
           p.getAttribute(ATTRIBUTE_CODE.currentHealth) /

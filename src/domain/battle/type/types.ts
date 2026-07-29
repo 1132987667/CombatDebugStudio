@@ -762,6 +762,8 @@ export const BattleTriggerPhase = {
   CONDITION_CHANGED: 'condition_changed',
   /** 闪避时 */
   DODGE: 'dodge',
+  /** 复活时 */
+  ON_REVIVE: 'on_revive',
 } as const
 
 export type BattleTriggerPhase =
@@ -786,6 +788,7 @@ export const OLD_PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
   ON_ALLY_FATAL_DAMAGE: BattleTriggerPhase.ALLY_FATAL_DAMAGE,
   ON_ALLY_DAMAGE_TAKEN: BattleTriggerPhase.ALLY_DAMAGE_TAKEN,
   ON_APPLY: BattleTriggerPhase.ON_APPLY,
+  ON_REVIVE: BattleTriggerPhase.ON_REVIVE,
 }
 
 /** BattleTriggerPhase → 中文显示名 */
@@ -809,6 +812,7 @@ export const BattleTriggerPhaseName: Record<BattleTriggerPhase, string> = {
   [BattleTriggerPhase.ON_APPLY]: '施加时',
   [BattleTriggerPhase.CONDITION_CHANGED]: '条件变化',
   [BattleTriggerPhase.DODGE]: '闪避时',
+  [BattleTriggerPhase.ON_REVIVE]: '复活时',
 }
 
 /** 事件类型枚举 */
@@ -824,6 +828,7 @@ export const BattleEventType = {
   BUFF_UPDATE: 'buff_update',
   DAMAGE: 'damage',
   HEAL: 'heal',
+  REVIVE: 'revive',
 }
 export type BattleEventType =
   (typeof BattleEventType)[keyof typeof BattleEventType]

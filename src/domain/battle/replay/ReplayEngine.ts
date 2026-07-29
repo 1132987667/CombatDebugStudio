@@ -51,6 +51,16 @@ export class ReplayEngine {
   private eventCallbacks: ReplayEventCallback[] = []
   private playTimer: symbol | null = null
 
+  /** 技能配置查询函数（由外部注入，避免直接依赖 SkillManager） */
+  private skillConfigLookup: ((skillId: string) => { cooldown: number } | undefined) | null = null
+
+  /** 注入技能配置查询函数 */
+  public setSkillConfigLookup(
+    lookup: (skillId: string) => { cooldown: number } | undefined,
+  ): void {
+    this.skillConfigLookup = lookup
+  }
+
   getState(): ReplayState {
     return {
       currentIndex: this.currentIndex,
@@ -72,6 +82,9 @@ export class ReplayEngine {
         })
         return false
       }
+
+      // NOTE: 回放数据迁移/兼容性代码应放在 BattleRecorder.loadRecording 中。
+      //       ReplayEngine 只处理 BattleReplay（events/rounds），不处理 RecordedBattle（combatRecords/traceLogs）。
 
       this.replayData = replayData
       this.random = new SeededRandom(replayData.randomSeed)
@@ -418,6 +431,9 @@ export class ReplayEngine {
       case BattleEventType.STATE_CHANGE:
         this.applyStateChangeEvent(event)
         break
+      case BattleEventType.REVIVE:
+        // 复活事件 — 无需额外状态恢复，applyActionEvent 已处理气血变化
+        break
     }
 
     this.emitEvent({
@@ -455,13 +471,7 @@ export class ReplayEngine {
   }
 
   private getSkillCooldown(skillId: string): number {
-    const skillCooldowns: Record<string, number> = {
-      'skill_1': 3,
-      'skill_2': 4,
-      'skill_3': 5,
-      'ultimate': 6,
-    }
-    return skillCooldowns[skillId] || 3
+    return this.skillConfigLookup?.(skillId)?.cooldown ?? 0
   }
 
   private applyBuffAddEvent(event: ReplayBattleEvent): void {

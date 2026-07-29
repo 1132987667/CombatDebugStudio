@@ -55,6 +55,15 @@ export interface BattleRulesConfig {
       energyGainPerTurn: number
       /** 命中敌人时获得的额外能量值 */
       energyGainOnHit: number
+      /** 仇恨系统配置（可选） */
+      threat?: {
+        /** 伤害×仇恨系数 */
+        damageCoefficient?: number
+        /** 嘲讽额外仇恨倍率 */
+        tauntMultiplier?: number
+        /** 每回合仇恨衰减比例 */
+        decayPerTurn?: number
+      }
     }
     /** 伤害计算详细规则 */
     damage: {

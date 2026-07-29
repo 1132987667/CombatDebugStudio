@@ -20,11 +20,15 @@ import type { BuffSystem } from '@/domain/buff/BuffSystem'
  *
  * @param entity — 领域层的战斗参与者
  * @param buffSystem — BuffSystem 实例（用于读取 buff 显示数据）
+ * @param formationRow — 可选阵型行位置
+ * @param reviveCount — 可选本场已复活次数
  * @returns 纯数据快照，可直接写入 Vue reactive 状态
  */
 export function participantToSnapshot(
   entity: BattleEntity,
   buffSystem: BuffSystem,
+  formationRow?: 'front' | 'back',
+  reviveCount?: number,
 ): UIParticipantSnapshot {
   const hp = entity.currentHealth
   const maxHp = entity.maxHealth
@@ -61,6 +65,10 @@ export function participantToSnapshot(
 
     // 版本戳
     version: entity.statsVersion,
+
+    // 阵型/复活信息
+    formationRow,
+    reviveCount,
   }
 }
 

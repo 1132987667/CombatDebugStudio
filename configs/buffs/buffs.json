@@ -2039,5 +2039,49 @@
         }
       }
     ]
+  },
+  {
+    "id": "buff_taunt",
+    "name": "嘲讽",
+    "category": "attribute",
+    "duration": 2,
+    "maxStacks": 1,
+    "attributes": {},
+    "polarity": "positive",
+    "tags": ["taunt"],
+    "description": "强制敌方攻击自己，持续2回合"
+  },
+  {
+    "id": "buff_formation_front_def",
+    "name": "鹤翼阵·前排",
+    "category": "attribute",
+    "duration": -1,
+    "maxStacks": 1,
+    "attributes": { "defense": "+15%" },
+    "polarity": "positive",
+    "tags": ["formation"],
+    "description": "阵型效果：防御+15%"
+  },
+  {
+    "id": "buff_formation_back_spd",
+    "name": "鹤翼阵·后排",
+    "category": "attribute",
+    "duration": -1,
+    "maxStacks": 1,
+    "attributes": { "speed": "+10%" },
+    "polarity": "positive",
+    "tags": ["formation"],
+    "description": "阵型效果：速度+10%"
+  },
+  {
+    "id": "buff_formation_all_def",
+    "name": "铁壁阵",
+    "category": "attribute",
+    "duration": -1,
+    "maxStacks": 1,
+    "attributes": { "defense": "+10%" },
+    "polarity": "positive",
+    "tags": ["formation"],
+    "description": "阵型效果：防御+10%"
   }
 ]

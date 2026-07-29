@@ -65,6 +65,26 @@ export class PassiveSkillManager {
   /** EffectRenderer — 结构化效果 → LogSegment 渲染 */
   private effectRenderer = new EffectRenderer()
 
+  /** 最近一次 triggerPassives 调用中触发的被动记录（供 BattleExecutor 提取 ActionContext） */
+  private lastTriggeredPassives: Array<{
+    passiveId: string
+    passiveName: string
+    ownerName: string
+    effectSummary: string
+  }> = []
+
+  /** 获取并清空最近触发的被动记录 */
+  drainLastTriggeredPassives(): Array<{
+    passiveId: string
+    passiveName: string
+    ownerName: string
+    effectSummary: string
+  }> {
+    const records = this.lastTriggeredPassives
+    this.lastTriggeredPassives = []
+    return records
+  }
+
   /** 动画发射开关（由 BattleSystem 注入动态 getter） */
   private _getAnimationEnabled: () => boolean = () => true
 
@@ -166,6 +186,9 @@ export class PassiveSkillManager {
     const characterPassives = this.passives.get(entity.id)
     if (!characterPassives) return
 
+    // 清空最近触发记录（每次新触发周期重新收集）
+    this.lastTriggeredPassives = []
+
     // 事件型触发所需的上下文目标
     const contextTarget =
       context.target ??
@@ -223,6 +246,16 @@ export class PassiveSkillManager {
       if (hasExecuted) {
         config.lastTriggeredTurn = context.currentTurn
         config.triggerCount = (config.triggerCount || 0) + 1
+      }
+
+      // 记录触发信息（供 ActionContext 使用）
+      if (hasExecuted) {
+        this.lastTriggeredPassives.push({
+          passiveId: config.skillId,
+          passiveName: config.name || config.skillId,
+          ownerName: entity.name,
+          effectSummary: `${entity.name} 触发 【${config.name || config.skillId}】`,
+        })
       }
 
       // TraceLogCollector 输出

@@ -32,6 +32,7 @@ import {
   StepExecutionContext,
   BattleTriggerPhase,
   OLD_PHASE_NAME_MAP,
+  type BattleEntity,
 } from '@/domain/battle/type/types'
 import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
 
@@ -48,6 +49,21 @@ export interface TriggerExecutionContext extends TriggerEventContext {
   instanceId?: string
   buffSystem?: BuffSystem
   params?: Record<string, number | string>
+}
+
+/** 角色解析器：characterId → BattleEntity */
+export type CharacterResolver = (characterId: string) => BattleEntity | undefined
+
+/** 召唤配置（最小定义，供回调传递） */
+export interface SummonRequest {
+  /** 召唤物模板 ID（对应 enemies.json 中的 id） */
+  summonId: string
+  /** 持续回合数（-1 = 永久） */
+  duration: number
+  /** 召唤者 ID */
+  sourceId: string
+  /** 召唤者阵营 */
+  team: string
 }
 
 /**
@@ -71,6 +87,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     damagePercent?: number,
   ) => void
   private onHealRequest?: (targetId: string, amount: number) => void
+  private onEnergyRequest?: (targetId: string, amount: number) => void
+  private onSummonRequest?: (request: SummonRequest) => void
   private onBuffApplied?: (characterId: string, buffId: string) => void
   private buffAppliedCallbackEnabled: boolean = true
   private readonly eventBus: IDomainEventBus
@@ -82,6 +100,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   /** 角色免疫标签注册表（初始化时由被动技能填充，运行时可查询） */
   private characterImmunities = new Map<string, Set<string>>()
+
+  /** 角色解析器（由 BattleSystem.initialize 注入） */
+  private characterResolver: CharacterResolver | null = null
 
   /** 父→子 Buff 反向索引（用于级联移除） */
   private parentToChildren = new Map<string, Set<string>>()
@@ -186,6 +207,23 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.healTarget(targetId, amount)
   }
 
+  /**
+   * 请求能量恢复（供 HotEffect / 触发器脚本调用）
+   * 委托给 BattleSystem 注册的 onEnergyRequest 回调
+   */
+  public requestEnergy(targetId: string, amount: number): void {
+    this.onEnergyRequest?.(targetId, amount)
+  }
+
+  /**
+   * 请求召唤单位（供触发器脚本调用）
+   * Phase 0：仅通过回调链路传递召唤请求，不创建实体。
+   * 委托给 BattleSystem 注册的 onSummonRequest 回调。
+   */
+  public requestSummon(request: SummonRequest): void {
+    this.onSummonRequest?.(request)
+  }
+
   private dealDirectDamage(
     targetId: string,
     damage: number,
@@ -233,6 +271,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.onHealRequest = callback
   }
 
+  public setEnergyCallback(
+    callback: (targetId: string, amount: number) => void,
+  ): void {
+    this.onEnergyRequest = callback
+  }
+
+  public setSummonCallback(callback: (request: SummonRequest) => void): void {
+    this.onSummonRequest = callback
+  }
+
   public setBuffAppliedCallback(
     callback: (characterId: string, buffId: string) => void,
   ): void {
@@ -241,6 +289,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   public setBuffAppliedCallbackEnabled(enabled: boolean): void {
     this.buffAppliedCallbackEnabled = enabled
+  }
+
+  /** 设置角色解析器 */
+  public setCharacterResolver(resolver: CharacterResolver | null): void {
+    this.characterResolver = resolver
+  }
+
+  /** 解析角色实例（供 BuffContext 调用） */
+  public resolveCharacter(characterId: string): BattleEntity | undefined {
+    return this.characterResolver?.(characterId)
   }
 
   private triggerAttributeChange(characterId: string): void {

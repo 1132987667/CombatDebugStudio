@@ -30,6 +30,8 @@ export interface DamageCalculationConfig {
   minDamageThreshold?: number
   /** 最大伤害阈值，默认 9999 */
   maxDamageThreshold?: number
+  /** 场地元素修正回调 */
+  fieldElementalModifier?: (elementType: string) => number
 }
 
 export interface DamageResult {
@@ -180,6 +182,9 @@ export class DamageCalculator {
     breakdown.steps.push({
       stepName: 'base',
       value: damage,
+      before: 0,
+      after: damage,
+      sourceType: 'base',
       description: `基础威力: ${damage}`,
     })
 
@@ -206,6 +211,9 @@ export class DamageCalculator {
         breakdown.steps.push({
           stepName: 'extra',
           value: damage,
+          before: damage - extraValue,
+          after: damage,
+          sourceType: 'skill',
           description: `${extra.attribute} 额外加成: +${extraValue} → ${damage}`,
         })
         this.logCalculation(
@@ -220,6 +228,9 @@ export class DamageCalculator {
       breakdown.steps.push({
         stepName: 'preCrit',
         value: damage,
+        before: breakdown.baseDamage,
+        after: damage,
+        sourceType: 'skill',
         description: `加成后伤害: ${damage}`,
       })
     }
@@ -235,6 +246,9 @@ export class DamageCalculator {
       breakdown.steps.push({
         stepName: 'crit',
         value: damage,
+        before: breakdown.preCritDamage,
+        after: damage,
+        sourceType: 'system',
         description: `暴击! x${critMultiplier.toFixed(2)} → ${damage}`,
       })
       LoggerProvider.logger.addDebugLog(`暴击！伤害 x${critMultiplier}`, {
@@ -259,6 +273,9 @@ export class DamageCalculator {
       breakdown.steps.push({
         stepName: 'damageBoost',
         value: damage,
+        before,
+        after: damage,
+        sourceType: 'skill',
         description: `伤害提升(${dmgBoost}%): ${before} → ${damage}`,
       })
     }
@@ -274,6 +291,9 @@ export class DamageCalculator {
         breakdown.steps.push({
           stepName: 'fireSkillDmgBonus',
           value: damage,
+          before,
+          after: damage,
+          sourceType: 'skill',
           description: `火系技能加成(${fireBonus}%): ${before} → ${damage}`,
         })
       }
@@ -293,6 +313,9 @@ export class DamageCalculator {
         breakdown.steps.push({
           stepName: 'physicalSkillDmgBonus',
           value: damage,
+          before,
+          after: damage,
+          sourceType: 'skill',
           description: `物理技能加成(${physBonus}%): ${before} → ${damage}`,
         })
       }
@@ -312,6 +335,9 @@ export class DamageCalculator {
         breakdown.steps.push({
           stepName: 'damageToLowHp',
           value: damage,
+          before,
+          after: damage,
+          sourceType: 'skill',
           description: `低血量加成(${lowHpBonus}%): ${before} → ${damage}`,
         })
       }
@@ -324,6 +350,9 @@ export class DamageCalculator {
     breakdown.steps.push({
       stepName: 'rawDamage',
       value: damage,
+      before: damage,
+      after: damage,
+      sourceType: 'system',
       description: `原始伤害（来源方产出）: ${damage}`,
     })
 
@@ -340,6 +369,9 @@ export class DamageCalculator {
         breakdown.steps.push({
           stepName: 'critDmgTakenReduction',
           value: damage,
+          before,
+          after: damage,
+          sourceType: 'skill',
           description: `暴击承伤减免(${critReduction}%): ${before} → ${damage}`,
         })
       }
@@ -359,12 +391,18 @@ export class DamageCalculator {
       breakdown.steps.push({
         stepName: 'defense',
         value: damage,
+        before: beforeDef,
+        after: damage,
+        sourceType: 'system',
         description: `防御减免(-${breakdown.defenseValue}): ${beforeDef} → ${damage}`,
       })
     } else {
       breakdown.steps.push({
         stepName: 'defense',
         value: damage,
+        before: damage,
+        after: damage,
+        sourceType: 'system',
         description: `真实伤害，跳过防御减免`,
       })
     }
@@ -384,6 +422,9 @@ export class DamageCalculator {
           breakdown.steps.push({
             stepName: 'normalAtkReduction',
             value: damage,
+            before,
+            after: damage,
+            sourceType: 'system',
             description: `普攻减免(${reduction}%): ${before} → ${damage}`,
           })
         }
@@ -399,6 +440,9 @@ export class DamageCalculator {
           breakdown.steps.push({
             stepName: 'skillDmgReduction',
             value: damage,
+            before,
+            after: damage,
+            sourceType: 'system',
             description: `技能减免(${reduction}%): ${before} → ${damage}`,
           })
         }
@@ -407,6 +451,9 @@ export class DamageCalculator {
       breakdown.steps.push({
         stepName: 'atkTypeReduction',
         value: damage,
+        before: damage,
+        after: damage,
+        sourceType: 'system',
         description: `真实伤害，跳过攻击类型减免`,
       })
     }
@@ -437,8 +484,28 @@ export class DamageCalculator {
         breakdown.steps.push({
           stepName: 'elementalResistance',
           value: damage,
+          before,
+          after: damage,
+          sourceType: 'system',
           description: `元素抗性(${elementalRes}%): ${before} → ${damage}`,
         })
+      }
+
+      // 场地元素修正 — 紧接在元素抗性之后（修复 F3）
+      if (this.config.fieldElementalModifier) {
+        const fieldMod = this.config.fieldElementalModifier(resolvedType)
+        if (fieldMod !== 0) {
+          const before = damage
+          damage = Math.floor(damage * (1 + fieldMod / 100))
+          breakdown.steps.push({
+            stepName: 'fieldElemental',
+            value: damage,
+            before,
+            after: damage,
+            sourceType: 'system',
+            description: `场地效果(${fieldMod > 0 ? '+' : ''}${fieldMod}%): ${before} → ${damage}`,
+          })
+        }
       }
     }
 
@@ -451,6 +518,9 @@ export class DamageCalculator {
         breakdown.steps.push({
           stepName: 'damageReduction',
           value: damage,
+          before,
+          after: damage,
+          sourceType: 'system',
           description: `伤害减免(${dmgReduction}%): ${before} → ${damage}`,
         })
       }
@@ -458,6 +528,9 @@ export class DamageCalculator {
       breakdown.steps.push({
         stepName: 'damageReduction',
         value: damage,
+        before: damage,
+        after: damage,
+        sourceType: 'system',
         description: `真实伤害，跳过伤害减免`,
       })
     }
@@ -473,6 +546,9 @@ export class DamageCalculator {
       breakdown.steps.push({
         stepName: 'dmgTakenIncrease',
         value: damage,
+        before,
+        after: damage,
+        sourceType: 'system',
         description: `受伤增加(${breakdown.damageTakenIncrease}%): ${before} → ${damage}`,
       })
     }
@@ -495,6 +571,9 @@ export class DamageCalculator {
         breakdown.steps.push({
           stepName: 'targetModifier',
           value: damage,
+          before: damage / (1 + modifierEffect),
+          after: damage,
+          sourceType: 'skill',
           description: `${attr} 目标修正(x${(1 + modifierEffect).toFixed(4)}): → ${damage}`,
         })
         this.logCalculation(
@@ -514,6 +593,9 @@ export class DamageCalculator {
       breakdown.steps.push({
         stepName: 'clamp',
         value: damage,
+        before: beforeClamp,
+        after: damage,
+        sourceType: 'system',
         description: `阈值限制[${minDmg}, ${maxDmg}]: ${beforeClamp} → ${damage}`,
       })
     }
@@ -525,6 +607,9 @@ export class DamageCalculator {
     breakdown.steps.push({
       stepName: 'final',
       value: damage,
+      before: damage,
+      after: damage,
+      sourceType: 'system',
       description: `最终伤害: ${damage}`,
     })
 

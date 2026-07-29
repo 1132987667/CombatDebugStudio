@@ -268,11 +268,11 @@ const filteredEvents = computed(() => {
   return events;
 });
 
-function loadRecording() {
+async function loadRecording() {
   // 加载最近录像，仅填充面板数据；播放由用户点击 ▶ 按钮手动触发
-  const savedList = battleSystem.getSavedBattleRecordingsList();
+  const savedList = await battleSystem.getSavedBattleRecordingsList();
   if (savedList.length > 0) {
-    const recording = battleSystem.loadBattleRecording(savedList[0]);
+    const recording = await battleSystem.loadBattleRecording(savedList[0]);
     if (recording) {
       currentRecording.value = recording;
       currentEventIndex.value = 0;
@@ -283,17 +283,17 @@ function loadRecording() {
   }
 }
 
-function saveCurrentRecording() {
+async function saveCurrentRecording() {
   if (currentRecording.value) {
-    const saveKey = battleSystem.saveBattleRecording(currentRecording.value.battleId, currentRecording.value.battleId);
+    const saveKey = await battleSystem.saveBattleRecording(currentRecording.value.battleId, currentRecording.value.battleId);
     console.log('保存记录:', saveKey);
   }
 }
 
-function deleteCurrentRecording() {
+async function deleteCurrentRecording() {
   if (currentRecording.value) {
     const saveKey = `battle_recording_${currentRecording.value.battleId}`;
-    const success = battleSystem.deleteBattleRecording(saveKey);
+    const success = await battleSystem.deleteBattleRecording(saveKey);
     if (success) {
       currentRecording.value = null;
       currentEventIndex.value = 0;

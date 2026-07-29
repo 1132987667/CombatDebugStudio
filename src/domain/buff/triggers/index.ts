@@ -235,11 +235,27 @@ export function applyShield(ctx: TriggerExecutionContext): void {
 
 /**
  * summon_unit — 召唤单位
- * ponytail: 召唤系统尚未实现。当前仅打日志占位。
- * 升级路径：实现战斗系统的单位召唤管道后，在此处调用 ctx.buffSystem 的召唤接口。
+ *
+ * Phase 0：通过 BuffSystem.requestSummon 回调链路传递召唤请求。
+ * BattleSystem 注册的回调当前仅记录日志，召唤管道待后续设计文档实现。
+ *
+ * 升级路径：在 BattleSystem 的 setSummonCallback 中实现完整的
+ * 实体创建 → participants 注入 → AI 实例 → 回合顺序 → 到期移除。
  */
-export function summonUnit(_ctx: TriggerExecutionContext): void {
-  console.warn('[Trigger] summon_unit — 召唤系统尚未实现，跳过')
+export function summonUnit(ctx: TriggerExecutionContext): void {
+  const summonId = (ctx.params?.summonId as string) ?? ''
+  const duration = (ctx.params?.duration as number) ?? 3
+  if (!summonId) {
+    console.warn('[Trigger] summon_unit — 缺少 summonId 参数')
+    return
+  }
+  const sourceTeam = getSourceTeam(ctx)
+  ctx.buffSystem?.requestSummon({
+    summonId,
+    duration,
+    sourceId: ctx.sourceId ?? '',
+    team: sourceTeam ?? 'enemy',
+  })
 }
 
 // ===================== 注册入口 =====================

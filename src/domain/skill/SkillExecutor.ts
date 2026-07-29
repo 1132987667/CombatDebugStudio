@@ -1,4 +1,4 @@
-import type { ExtendedSkillStep } from '@/domain/skill/types'
+import type { ExtendedSkillStep, ReviveStepParams } from '@/domain/skill/types'
 import { SkillStepType } from '@/domain/skill/types'
 import type {
   BattleAction,
@@ -118,6 +118,9 @@ export class SkillExecutor {
         break
       case SkillStepType.CUSTOM:
         this.executeCustom(skillStep, action, source, target, context)
+        break
+      case SkillStepType.REVIVE:
+        this.executeRevive(skillStep, action, source, target, context)
         break
       default: {
         // ponytail: 未实现的步骤类型 — 当前无任何技能配置使用这些类型
@@ -876,6 +879,55 @@ export class SkillExecutor {
       targetId: target.id,
       buffId,
       description: `${source.name} applies ${controlType === ControlType.STUN ? 'stun' : 'silence'} to ${target.name}`,
+    })
+  }
+
+  /**
+   * 执行复活步骤
+   * 不持有 ReviveTracker（修复 R2），通过 action.extra 标记，由 BattleExecutor 统一结算
+   */
+  private executeRevive(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+    context?: StepExecutionContext,
+  ): void {
+    const params = (skillStep.parameters ?? {}) as ReviveStepParams
+    const hpPercent = params.hpPercent ?? 30
+
+    // 前置校验：目标必须已死亡
+    if (target.isAlive()) {
+      action.effects.push({
+        type: EffectType.STATUS,
+        targetId: target.id,
+        description: `${target.name} 仍然存活，无需复活`,
+      })
+      return
+    }
+
+    // 执行复活 — 通过 currentHealth setter 写入（修复 F2，触发 notifyDirty）
+    const maxHp = target.getAttribute(ATTRIBUTE_CODE.maxHealth)
+    const reviveHp = Math.max(1, Math.floor(maxHp * hpPercent / 100))
+    target.currentHealth = reviveHp
+
+    // 可选：清除 debuff
+    if (params.cleanseDebuffs) {
+      this.buffSystem.removeDispellableBuffs(target.id)
+    }
+
+    // 标记复活请求，由 BattleExecutor 统一结算（修复 R2）
+    action.extra = action.extra || {}
+    action.extra.revivedEntityId = target.id
+    action.extra.reviveParams = params
+
+    action.effects.push({
+      type: EffectType.HEAL,
+      sourceId: source.id,
+      targetId: target.id,
+      value: reviveHp,
+      heal: reviveHp,
+      description: `${source.name} 复活了 ${target.name}，恢复 ${reviveHp} 气血`,
     })
   }
 }

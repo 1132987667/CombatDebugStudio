@@ -236,6 +236,10 @@ export class BaseBattleAI implements BattleAI {
 
     if (enemies.length === 0) return ''
 
+    // 嘲讽优先：有 `taunt` 标签的敌方
+    const taunters = enemies.filter(e => e.hasBuff?.('buff_taunt'))
+    if (taunters.length > 0) return taunters[0].id
+
     // 选择血量最低的敌人
     const target = enemies.reduce((min, p) =>
       p.currentHealth < min.currentHealth ? p : min,

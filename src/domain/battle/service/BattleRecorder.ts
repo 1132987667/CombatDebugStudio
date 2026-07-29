@@ -91,6 +91,13 @@ export interface RecordedBattle {
   result?: BattleResult
   /** 数据校验和 */
   checksum?: string
+  /** 复活事件列表（用于回放分析） */
+  reviveEvents?: Array<{
+    turn: number
+    revivedId: string
+    sourceId: string
+    hpAfterRevive: number
+  }>
 }
 
 /**
@@ -457,7 +464,7 @@ export class BattleRecorder {
     return Array.from(this.recordings.values())
   }
 
-  public saveRecording(battleId: string, name?: string): string | null {
+  public async saveRecording(battleId: string, name?: string): Promise<string | null> {
     const recording = this.recordings.get(battleId)
     if (!recording) {
       return null
@@ -487,7 +494,7 @@ export class BattleRecorder {
       return saveKey
     }
 
-    const recordingsList = this.getSavedRecordingsList()
+    const recordingsList = await this.getSavedRecordingsList()
     if (!recordingsList.includes(saveKey)) {
       recordingsList.push(saveKey)
       localStorage.setItem(
@@ -503,7 +510,10 @@ export class BattleRecorder {
     return saveKey
   }
 
-  public loadRecording(saveKey: string): RecordedBattle | null {
+  public async loadRecording(saveKey: string): Promise<RecordedBattle | null> {
+    // NOTE: 所有回放数据迁移/兼容性代码应放在此处，而非 ReplayEngine.loadReplay。
+    //       RecordedBattle（含 combatRecords/traceLogs）是录制数据，由 BattleRecorder 管理；
+    //       BattleReplay（含 events/rounds）是回放数据，由 ReplayEngine 管理。
     const savedData = localStorage.getItem(saveKey)
     if (!savedData) {
       return null
@@ -557,7 +567,7 @@ export class BattleRecorder {
     }
   }
 
-  public getSavedRecordingsList(): string[] {
+  public async getSavedRecordingsList(): Promise<string[]> {
     const listData = localStorage.getItem('battle_recordings_list')
     if (!listData) {
       return []
@@ -570,10 +580,10 @@ export class BattleRecorder {
     }
   }
 
-  public deleteRecording(saveKey: string): boolean {
+  public async deleteRecording(saveKey: string): Promise<boolean> {
     localStorage.removeItem(saveKey)
 
-    const recordingsList = this.getSavedRecordingsList()
+    const recordingsList = await this.getSavedRecordingsList()
     const updatedList = recordingsList.filter((key) => key !== saveKey)
     localStorage.setItem('battle_recordings_list', JSON.stringify(updatedList))
 

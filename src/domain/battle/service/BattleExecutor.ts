@@ -25,6 +25,9 @@ import { skillSegment } from '@/shared/utils/log-segment-factory'
 import { TraceDamageLogger } from '@/domain/battle/logs/TraceDamageLogger'
 import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
+import type { ThreatManager } from '@/domain/battle/service/ThreatManager'
+import type { ReviveTracker } from '@/domain/battle/service/ReviveTracker'
+import type { ReviveStepParams } from '@/domain/skill/types'
 import {
   BalancedAIPriorityStrategy,
   type AIPriorityStrategy,
@@ -79,9 +82,38 @@ export class BattleExecutor {
   private traceCollector?: TraceLogCollector
   private traceCounter = 0
 
-  /** 设置 traceCollector（由 BattleSystem 在初始化时注入） */
+  /** 当前行动顺序号（用于记录 / UI 展示） */
+  private currentActionOrder = 0
+
+  /** 设置当前行动顺序号 */
+  setActionOrder(order: number): void {
+    this.currentActionOrder = order
+  }
+
+  /** 获取当前行动顺序号 */
+  getActionOrder(): number {
+    return this.currentActionOrder
+  }
   setTraceCollector(collector: TraceLogCollector): void {
     this.traceCollector = collector
+  }
+
+  /** 待处理的死亡事件（延迟结算，复活机制用） */
+  private pendingDeaths: Array<{
+    deadId: string
+    killerId: string
+    battle: BattleData
+  }> = []
+
+  /** 提取并清空待处理的死亡事件 */
+  drainPendingDeaths(): Array<{
+    deadId: string
+    killerId: string
+    battle: BattleData
+  }> {
+    const deaths = [...this.pendingDeaths]
+    this.pendingDeaths = []
+    return deaths
   }
 
   constructor(
@@ -91,6 +123,10 @@ export class BattleExecutor {
     private readonly battleRecorder: BattleRecorder,
     private readonly animationManager: BattleAnimationManager,
     private readonly buffSystem: BuffSystem,
+    private readonly reviveTracker?: ReviveTracker,
+    private readonly threatManager?: ThreatManager,
+    private readonly formationRowLookup?: (side: ParticipantSide, seatIndex: number) => 'front' | 'back' | null,
+    private readonly frontProtectionLookup?: (side: ParticipantSide) => boolean,
   ) {}
 
   /**
@@ -352,6 +388,8 @@ export class BattleExecutor {
           targetId: targets[0]?.id,
         }),
       )
+      // 收集 BEFORE_ATTACK 被动触发记录（将在技能执行时写入每个 CombatRecord）
+      const prePassiveRecords = this.passiveSkillManager.drainLastTriggeredPassives()
       // ponytail: 启用延迟伤害令牌 — 技能执行只记录数值不实际扣血
       const damageToken = new DeferredDamageToken()
       const pendingDamages: Array<{
@@ -387,6 +425,10 @@ export class BattleExecutor {
           skill.id,
         )
         record.skillName = skill.name
+        // 填充 BEFORE_ATTACK 被动触发上下文
+        if (prePassiveRecords.length > 0) {
+          record.actionContext = { prePassives: prePassiveRecords }
+        }
 
         const skillAction = this.skillManager.executeSkill(
           skill.id,
@@ -473,9 +515,8 @@ export class BattleExecutor {
             damageCategory: DamageCategory.PHYSICAL,
           })
 
-          // 命中瞬间（50%T）：统一应用所有延迟伤害，并发射 DAMAGE_TAKEN 事件
-          // NOTE: 收集每个目标的原始伤害、最终伤害、气血变化 — 用于 result sub 日志
-          // 按 target.id 聚合，避免多步骤技能对同一目标产生多条 entry
+          // 命中瞬间（50%T）：统一应用所有延迟伤害，统一走 settleDamage
+          // NOTE: 先按 target.id 聚合 entries，确保多步骤技能对同一目标只触发一次 ON_HIT/DAMAGE_TAKEN
           const resultMap = new Map<string, (typeof targetResults)[0]>()
           for (const entry of damageToken.getEntries()) {
             if (!entry.target.isAlive()) continue
@@ -495,20 +536,17 @@ export class BattleExecutor {
                 hpAfter: entry.target.currentHealth,
               })
             }
-            if (entry.damage > 0) {
-              entry.target.takeDamage(entry.damage)
-              this.emitDamageTakenEvent(
-                source, entry.target, entry.damage, entry.rawDamage, isCrit, battleData,
-              )
-            }
-            if (entry.heal > 0) {
-              entry.target.heal(entry.heal)
-            }
             totalRawDamage += entry.rawDamage
           }
-          // 所有伤害/治疗应用后，更新最终 hpAfter 并回填到 targetResults
+          // 按目标聚合后，每个目标调用一次 settleDamage
           targetResults.length = 0
           for (const r of resultMap.values()) {
+            if (r.finalDamage > 0) {
+              this.settleDamage(source, r.target, r.finalDamage, r.rawDamage, isCrit, battleData)
+            }
+            if (r.heal > 0) {
+              r.target.heal(r.heal)
+            }
             r.hpAfter = r.target.currentHealth
             targetResults.push(r)
           }
@@ -634,49 +672,7 @@ export class BattleExecutor {
           }
         }
 
-        // ponytail: 触发被动 — 攻击方 ON_HIT + 受击方 DAMAGE_TAKEN + ON_DEATH
-        for (const pd of pendingDamages) {
-          if (pd.damage > 0) {
-            this.passiveSkillManager.triggerPassives(
-              source,
-              createPassiveContext(BattleTriggerPhase.ON_HIT, battleData, {
-                target: pd.target,
-                sourceId: source.id,
-                damage: pd.damage,
-              }),
-            )
-            this.passiveSkillManager.triggerPassives(
-              pd.target,
-              createPassiveContext(
-                BattleTriggerPhase.DAMAGE_TAKEN,
-                battleData,
-                {
-                  target: pd.target,
-                  sourceId: source.id,
-                  damage: pd.damage,
-                },
-              ),
-            )
-            if (!pd.target.isAlive()) {
-              this.passiveSkillManager.triggerPassives(
-                pd.target,
-                createPassiveContext(BattleTriggerPhase.ON_DEATH, battleData, {
-                  target: source,
-                  sourceId: source.id,
-                  cause: EffectType.DAMAGE,
-                }),
-              )
-              this.passiveSkillManager.triggerPassives(
-                source,
-                createPassiveContext(BattleTriggerPhase.ON_KILL, battleData, {
-                  target: pd.target,
-                  sourceId: pd.target.id,
-                  cause: EffectType.DAMAGE,
-                }),
-              )
-            }
-          }
-        }
+        // settleDamage 内部已处理：ON_HIT/DAMAGE_TAKEN 被动 + pendingDeaths（B1 修复：ON_DEATH/ON_KILL 改由 runEndConditionCheck 延迟触发）
       } else if (totalDamage === 0 && totalHeal === 0) {
         // 无伤害/治疗时仍输出行动日志
         const skillId = skill.id || skill.name || ''
@@ -718,6 +714,22 @@ export class BattleExecutor {
           description: `${source.name} 普通攻击 (技能执行失败)`,
         },
       ]
+    }
+
+    // ★ 复活结算：SkillExecutor.executeRevive 已通过 action.extra 标记，由这里统一调用（修复 R2）
+    if (action.extra?.revivedEntityId && this.reviveTracker) {
+      const revivedId = action.extra.revivedEntityId as string
+      const reviveParams = action.extra.reviveParams as ReviveStepParams
+      const revived = battleData.participants.get(revivedId)
+      if (revived?.isAlive()) {
+        this.reviveTracker.recordRevive(revivedId, reviveParams.cooldown ?? 0)
+        this.passiveSkillManager.triggerPassives(
+          revived,
+          createPassiveContext(BattleTriggerPhase.ON_REVIVE, battleData, {
+            sourceId: action.sourceId,
+          }),
+        )
+      }
     }
 
     this.passiveSkillManager.triggerPassives(
@@ -770,6 +782,9 @@ export class BattleExecutor {
       source,
       skill.selector,
       skill.steps,
+      this.threatManager,
+      this.formationRowLookup,
+      this.frontProtectionLookup,
     )
   }
 
@@ -948,49 +963,71 @@ export class BattleExecutor {
   }
 
   /**
-   * 向 TriggerEventBus 发射 DAMAGE_TAKEN 事件
-   * 统一收口所有扣血行为的事件发射，确保荆棘/反伤等 Buff 触发器能正确触发
+   * 伤害结算 — 所有伤害路径的唯一执行入口
+   *
+   * 不变量序列（调用方不可重排）：扣血 → TriggerEventBus(DAMAGE_TAKEN) → 仇恨 → 被动(ON_HIT/DAMAGE_TAKEN) → pendingDeaths
+   * 调用方负责：动画编排、日志、CombatRecord
+   *
+   * @returns 实际扣除的 HP（经过护盾/能量吸收后），0 表示完全吸收
    */
-  private emitDamageTakenEvent(
-    source: BattleEntity,
+  settleDamage(
+    source: BattleEntity | null,
     target: BattleEntity,
     finalDamage: number,
     rawDamage: number,
     isCritical: boolean,
     battle: BattleData,
-  ): void {
+  ): number {
+    // 1. 扣血（内部处理护盾吸收、背水护甲能量抵扣）
+    const actualDamage = target.takeDamage(finalDamage)
+    if (actualDamage <= 0) return 0
+
+    // 2. 向 TriggerEventBus 发射 DAMAGE_TAKEN（驱动反伤/荆棘等 Buff 触发器）
     const eventBus = this.buffSystem.getEventBus()
     eventBus.emit(BattleTriggerPhase.DAMAGE_TAKEN, {
       phase: BattleTriggerPhase.DAMAGE_TAKEN,
-      sourceId: source.id,
+      sourceId: source?.id ?? '',
       targetId: target.id,
-      value: finalDamage,
+      value: actualDamage,
       currentTurn: battle.currentTurn,
-      extra: {
-        damage: finalDamage,
-        rawDamage,
-        isCritical,
-      },
+      extra: { damage: actualDamage, rawDamage, isCritical },
     } as TriggerEventContext)
-  }
 
-  /**
-   * 对目标应用伤害并触发相关被动技能
-   */
-  applyDamageToTarget(
-    source: BattleEntity,
-    target: BattleEntity,
-    damage: number,
-    rawDamage: number,
-    isCritical: boolean,
-    battle: BattleData,
-  ): void {
-    target.takeDamage(damage)
+    // 3. 仇恨记录（无来源时跳过）
+    if (this.threatManager && source) {
+      const targetHasTaunt = this.buffSystem.hasBuffWithTag(target.id, 'taunt')
+      this.threatManager.recordThreat(source.id, target.id, actualDamage, targetHasTaunt)
+    }
 
-    // 🆕 向 TriggerEventBus 发射 DAMAGE_TAKEN 事件（修复普攻/技能不触发 Buff 触发器的 Bug）
-    this.emitDamageTakenEvent(source, target, damage, rawDamage, isCritical, battle)
-    // NOTE: 被动触发（ON_HIT/DAMAGE_TAKEN/ON_DEATH/ON_KILL）已移至调用方 handleHitAttack 的 action 日志之后
+    // 4. 被动触发（ON_HIT 仅当有来源时触发）
+    if (source) {
+      this.passiveSkillManager.triggerPassives(
+        source,
+        createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
+          target, sourceId: source.id, damage: actualDamage,
+        }),
+      )
+    }
+    this.passiveSkillManager.triggerPassives(
+      target,
+      createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
+        target: source ?? target,
+        sourceId: source?.id ?? '',
+        damage: actualDamage,
+      }),
+    )
 
+    // 5. 死亡 → pendingDeaths（延迟结算，兼容复活机制）
+    if (!target.isAlive()) {
+      this.skillManager.getExecutor().cleanupComboState(target.id)
+      this.pendingDeaths.push({
+        deadId: target.id,
+        killerId: source?.id ?? 'system',
+        battle,
+      })
+    }
+
+    return actualDamage
   }
 
   /**
@@ -1098,7 +1135,7 @@ export class BattleExecutor {
     const hpBefore = target.currentHealth
 
     // 命中瞬间（50%T）：扣血，气血 条与 UI 特效同帧开始
-    this.applyDamageToTarget(source, target, damage, rawDamage, isCritical, battle)
+    const actualDamage = this.settleDamage(source, target, damage, rawDamage, isCritical, battle)
 
     const hpAfter = target.currentHealth
 
@@ -1159,41 +1196,7 @@ export class BattleExecutor {
       `普通攻击: ${source.name} → ${target.name}`,
     )
 
-    // ★ 被动触发移到 action + result sub 日志之后
-    this.passiveSkillManager.triggerPassives(
-      source,
-      createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
-        target,
-        sourceId: source.id,
-        damage,
-      }),
-    )
-    this.passiveSkillManager.triggerPassives(
-      target,
-      createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
-        target: source,
-        sourceId: source.id,
-        damage,
-      }),
-    )
-    if (!target.isAlive()) {
-      this.passiveSkillManager.triggerPassives(
-        target,
-        createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
-          target: source,
-          sourceId: source.id,
-          cause: EffectType.DAMAGE,
-        }),
-      )
-      this.passiveSkillManager.triggerPassives(
-        source,
-        createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
-          target,
-          targetId: target.id,
-          cause: EffectType.DAMAGE,
-        }),
-      )
-    }
+    // settleDamage 内部已处理：ON_HIT/DAMAGE_TAKEN 被动、pendingDeaths
   }
 
   /**
@@ -1233,6 +1236,8 @@ export class BattleExecutor {
         targetId,
       }),
     )
+    // 收集 BEFORE_ATTACK 被动触发记录
+    const prePassiveRecords = this.passiveSkillManager.drainLastTriggeredPassives()
 
     // 创建详细记录对象用于捕获伤害拆分
     const record = createEmptyRecord(
@@ -1244,6 +1249,10 @@ export class BattleExecutor {
       target.name,
       currentTurn ?? 1,
     )
+    // 填充 BEFORE_ATTACK 被动触发上下文
+    if (prePassiveRecords.length > 0) {
+      record.actionContext = { prePassives: prePassiveRecords }
+    }
 
     const attackStep = this.buildNormalAttackStep(source, targetId)
     const damageResult = this.damageCalculator.calculateDamage(
@@ -1324,6 +1333,19 @@ export class BattleExecutor {
       (p) => p.id !== source.id && p.team !== source.team && p.isAlive(),
     )
     if (enemies.length === 0) return ''
+
+    // 嘲讽优先：有 taunt 标签的敌方
+    const taunters = enemies.filter(e => e.hasBuff?.('buff_taunt'))
+    if (taunters.length > 0) return taunters[0].id
+
+    // 仇恨优先
+    if (this.threatManager) {
+      const highestId = this.threatManager.getHighestThreatTarget(
+        source.id, enemies.map(e => e.id),
+      )
+      if (highestId) return highestId
+    }
+
     return enemies[Math.floor(Math.random() * enemies.length)].id
   }
 
@@ -1507,14 +1529,11 @@ export class BattleExecutor {
               damageCategory: DamageCategory.PHYSICAL,
             })
 
-            // 命中瞬间（50%T）：应用延迟伤害，发射 DAMAGE_TAKEN 事件
+            // 命中瞬间（50%T）：应用延迟伤害，统一走 settleDamage
             for (const entry of damageToken.getEntries()) {
               if (!entry.target.isAlive()) continue
               if (entry.damage > 0) {
-                entry.target.takeDamage(entry.damage)
-                this.emitDamageTakenEvent(
-                  source, entry.target, entry.damage, entry.rawDamage, actionIsCrit, battle,
-                )
+                this.settleDamage(source, entry.target, entry.damage, entry.rawDamage, actionIsCrit, battle)
               }
               if (entry.heal > 0) {
                 entry.target.heal(entry.heal)
@@ -1652,39 +1671,7 @@ export class BattleExecutor {
             })
           }
 
-          // ponytail: 使用 token 的实际扣血值而非 action.damage 判断被动触发，减少发散窗口
-          const actualDamage = damageToken.getTotalDamage()
-          if (actualDamage > 0) {
-            this.passiveSkillManager.triggerPassives(
-              source,
-              createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
-                target,
-                sourceId: source.id,
-                damage: actualDamage,
-              }),
-            )
-            this.passiveSkillManager.triggerPassives(
-              target,
-              createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
-                target: source,
-                sourceId: source.id,
-                damage: actualDamage,
-              }),
-            )
-            if (!target.isAlive()) {
-              // ponytail: P1/PERF-1 — 死亡时清理 comboStates
-              this.skillManager.getExecutor().cleanupComboState(target.id)
-              this.passiveSkillManager.triggerPassives(
-                target,
-                createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
-                  target: source,
-                  sourceId: source.id,
-                  cause: EffectType.DAMAGE,
-                }),
-              )
-            }
-          }
-          // ponytail: token.applyAll() 已经处理了所有伤害和治疗，不需要额外调用 heal
+          // settleDamage 内部已处理：DAMAGE_TAKEN 事件、仇恨、ON_HIT/DAMAGE_TAKEN 被动、pendingDeaths
         }
       } catch (error) {
         // ponytail: catch 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
@@ -1719,8 +1706,8 @@ export class BattleExecutor {
           damageCategory: DamageCategory.PHYSICAL,
         })
 
-        // 命中瞬间（50%T）：扣血
-        const actualDamage = target.takeDamage(action.damage)
+        // 命中瞬间（50%T）：扣血（settleDamage 统一处理事件/仇恨/被动/死亡）
+        const actualDamage = this.settleDamage(source, target, action.damage, action.damage, false, battle)
         action.damage = actualDamage
 
         await this.animationManager.triggerImpactPhaseAndWait({
@@ -1731,43 +1718,7 @@ export class BattleExecutor {
           isHeal: false,
         })
 
-        // ponytail: ON_HIT 触发攻击方，DAMAGE_TAKEN 触发受击方
-        this.passiveSkillManager.triggerPassives(
-          source,
-          createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
-            target,
-            sourceId: source.id,
-            damage: actualDamage,
-          }),
-        )
-        this.passiveSkillManager.triggerPassives(
-          target,
-          createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
-            target: source,
-            sourceId: source.id,
-            damage: actualDamage,
-          }),
-        )
-        if (!target.isAlive()) {
-          // ponytail: P1/PERF-1 — 死亡时清理 comboStates
-          this.skillManager.getExecutor().cleanupComboState(target.id)
-          this.passiveSkillManager.triggerPassives(
-            target,
-            createPassiveContext(BattleTriggerPhase.ON_DEATH, battle, {
-              target: source,
-              sourceId: source.id,
-              cause: EffectType.DAMAGE,
-            }),
-          )
-          this.passiveSkillManager.triggerPassives(
-            source,
-            createPassiveContext(BattleTriggerPhase.ON_KILL, battle, {
-              target,
-              targetId: target.id,
-              cause: EffectType.DAMAGE,
-            }),
-          )
-        }
+        // settleDamage 内部已处理：DAMAGE_TAKEN 事件、仇恨、ON_HIT/DAMAGE_TAKEN 被动、pendingDeaths
 
         if (action.heal && action.heal > 0) {
           // 治疗 → 直接命中（无飞行）

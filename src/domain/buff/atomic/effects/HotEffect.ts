@@ -35,8 +35,17 @@ export class HotEffect implements IAtomicEffect {
         const stacks = ctx.getVariable<number>('_stacks') ?? 1
         buffSystem.requestHeal(ctx.characterId, value * stacks)
       }
+    } else if (resource === 'energy') {
+      const stacks = ctx.getVariable<number>('_stacks') ?? 1
+      if (healType === 'percent') {
+        // 百分比能量：基于最大能量值（依赖问题一修复后的 getAttrVal）
+        const maxEnergy = ctx.getAttrVal('maxEnergy')
+        const amount = Math.round(maxEnergy * value / 100) * stacks
+        buffSystem.requestEnergy(ctx.characterId, amount)
+      } else {
+        buffSystem.requestEnergy(ctx.characterId, value * stacks)
+      }
     }
-    // energy 类型的恢复暂未实现，预留扩展点
   }
 
   getEffectLines(_ctx: BuffContext, params: Record<string, unknown>) {

@@ -8,6 +8,8 @@ CombatDebugStudio/
     skills/
         domain-migration/
             SKILL.md
+    .cron-lock
+    package.json
 src/
     application/
         facade/
@@ -38,6 +40,7 @@ src/
                 ParticipantBuffs.ts
                 ParticipantSkills.ts
                 ParticipantStats.ts
+            events/
             intervention/
                 InterventionManager.ts
             replay/
@@ -86,7 +89,6 @@ src/
         character/
             types.ts
         port/
-            di/
             IBattleLogManager.ts
             IDomainEventBus.ts
             LoggerProvider.ts
@@ -122,6 +124,7 @@ src/
             Container.ts
         input/
             KeybindManager.ts
+        task/
     presentation/
         components/
             AttributeTooltip.vue
@@ -243,6 +246,9 @@ vite.config.ts
 ============================================================
 文件内容:
 
+--- .mimocode/.cron-lock ---
+{"pid":15408,"startedAt":1785228286540}
+
 --- .mimocode/commands/verify.md ---
 ---
 description: >
@@ -272,6 +278,13 @@ npm test 2>&1 | Select-String -Pattern "Test Files|Tests|FAIL|PASS"
 ```powershell
 npm run typecheck 2>&1 | Select-String "src/domain/"
 ```
+
+--- .mimocode/package.json ---
+{
+  "dependencies": {
+    "@mimo-ai/plugin": "0.1.9"
+  }
+}
 
 --- .mimocode/plans/1785226662827-quiet-falcon.md ---
 # BattleVisualEffects.vue 重构执行计划
@@ -16079,7 +16092,7 @@ interface CalculationStepLog {
 export class DamageCalculator {
   calculationLogs: CalculationStepLog[] = []
   config: DamageCalculationConfig = {
-    enableCrit: true,
+    enableCrit: false,
     enableDodge: false,
     critRate: 0,
     critDamage: 0,
@@ -28466,7 +28479,7 @@ export const useBattleStore = defineStore('battle', () => {
         },
       })
     } catch {
-      // 容器未就绪时忽略
+      console.warn('[battleStore] BattleRuleManager 未就绪，规则同步跳过')
     }
     battleLogManager.addSystemLog({
       message: `战斗规则已更新: ${JSON.stringify(newRules)}`,

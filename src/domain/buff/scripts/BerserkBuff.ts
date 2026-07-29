@@ -17,7 +17,7 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { StackRule, ControlType, ScriptBuffConfig } from '@/domain/buff/types'
-import { SkillStepType } from '@/domain/skill/types'
+import { EffectType } from '@/domain/skill/types'
 
 export class BerserkBuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'buff_berserk'
@@ -117,7 +117,7 @@ export class BerserkBuff extends BaseBuffScript {
         `💢 狂暴的代价：损失 ${(params.selfDamagePercent * 100).toFixed(0)}% 当前气血值`,
       )
       // 通过百分比伤害回调造成自残
-      this.triggerEvent(context, SkillStepType.DEAL_DAMAGE, {
+      this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
         damagePercent: params.selfDamagePercent,
       })
       context.setVariable('turnsSinceSelfDamage', 0)

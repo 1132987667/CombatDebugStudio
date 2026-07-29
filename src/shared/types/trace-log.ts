@@ -30,6 +30,13 @@ export interface TraceLogEntry extends LogEntry {
   indentLevel: number
   /** 子步骤列表（仅在构建树时填充，持久化时展平为独立条目） */
   children?: TraceLogEntry[]
+
+  /** 此步骤前的累计伤害（效果链 before→after 展示） */
+  before?: number
+  /** 此步骤后的累计伤害（与 stepValue 一致，结构化冗余以方便 UI 直接读取） */
+  after?: number
+  /** 来源类型：'system' | 'buff' | 'skill' | 'passive' | 'base' */
+  sourceType?: string
 }
 
 /**

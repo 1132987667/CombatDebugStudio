@@ -85,6 +85,10 @@ export class TraceDamageLogger {
           turn,
           source: record.actorId,
           target: record.targetId,
+          // ★ 效果链数据：传透 before/after/sourceType 供 UI 展示
+          before: step.before,
+          after: step.after,
+          sourceType: step.sourceType,
         })
       }
     }

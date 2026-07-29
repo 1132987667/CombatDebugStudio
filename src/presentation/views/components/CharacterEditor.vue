@@ -17,14 +17,9 @@
       </select>
     </template>
 
-    <div class="ce-tabs">
-      <button class="ce-tab" :class="{ active: activeTab === 'buffs' }" @click="activeTab = 'buffs'">附加状态</button>
-      <button class="ce-tab" :class="{ active: activeTab === 'attrs' }" @click="activeTab = 'attrs'">属性调整</button>
-      <button class="ce-tab" :class="{ active: activeTab === 'reset' }" @click="activeTab = 'reset'">重置</button>
-    </div>
-
-    <!-- ═══ Tab: Buff 注入（双列布局）═══ -->
-    <div v-show="activeTab === 'buffs'" class="ce-tab-content">
+    <Tabs v-model="activeTab" :tabs="editorTabs" equal-width>
+      <template #buffs>
+    <div class="ce-tab-content">
       <div class="buff-layout">
         <!-- 左侧：分类栏 -->
         <div class="buff-sidebar">
@@ -84,9 +79,9 @@
         </div>
       </div>
     </div>
-
-    <!-- ═══ Tab: 属性调整 ═══ -->
-    <div v-show="activeTab === 'attrs'" class="ce-tab-content">
+      </template>
+      <template #attrs>
+    <div class="ce-tab-content">
       <div class="attr-grid">
         <div v-for="attr in attrFields" :key="attr.key" class="attr-row">
           <label class="attr-label">{{ attr.label }}</label>
@@ -103,8 +98,9 @@
       </div>
     </div>
 
-    <!-- ═══ Tab: 重置 ═══ -->
-    <div v-show="activeTab === 'reset'" class="ce-tab-content">
+      </template>
+      <template #reset>
+    <div class="ce-tab-content">
       <p class="reset-desc">对选中的角色执行以下操作：</p>
       <div class="reset-actions">
         <button class="btn-medium reset-btn" @click="emitReset('buffs')" :disabled="!innerSelectedCharId">清除所有
@@ -114,13 +110,17 @@
         <button class="btn-medium reset-btn btn-danger" @click="emitReset('all')"
           :disabled="!innerSelectedCharId">完全重置</button>
       </div>
-    </div>
+    </div> <!-- /ce-tab-content reset -->
+      </template>
+    </Tabs>
   </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Tabs from '@/presentation/components/Tabs.vue'
+import type { TabItem } from '@/presentation/components/Tabs.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
@@ -193,7 +193,12 @@ const emit = defineEmits<Emits>()
 
 // ==================== 本地状态 ====================
 
-const activeTab = ref<'buffs' | 'attrs' | 'reset'>('buffs')
+const activeTab = ref<string>('buffs')
+const editorTabs: TabItem[] = [
+  { id: 'buffs', label: '附加状态' },
+  { id: 'attrs', label: '属性调整' },
+  { id: 'reset', label: '重置' },
+]
 const buffSearch = ref('')
 const innerSelectedCharId = ref('')
 const activeCategory = ref<string>('all') // 'all' 或 facet key
@@ -458,46 +463,13 @@ watch(() => props.modelValue, (visible) => {
 </script>
 
 <style scoped>
-/* ═══ Tab 栏 ═══ */
-.ce-tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--color-border-default);
-  margin-bottom: var(--space-3);
-}
-
-.ce-tab {
-  flex: 1;
-  padding: var(--space-2) var(--space-3);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  text-align: center;
-}
-
-.ce-tab:hover {
-  color: var(--color-text-primary);
-  background: var(--color-bg-hover);
-}
-
-.ce-tab.active {
-  color: var(--color-info);
-  border-bottom-color: var(--color-info);
-}
-
-.ce-tab-content {
-  min-height: 280px;
-}
-
 /* ═══ 角色选择器 ═══ */
 .char-selector {
   flex: 1;
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border-default);
   color: var(--color-text-primary);
-  padding: var(--space-2);
+  padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-sm);
   cursor: pointer;
   max-width: 160px;
@@ -548,7 +520,7 @@ watch(() => props.modelValue, (visible) => {
 }
 
 .sidebar-item:hover {
-  background: var(--color-bg-hover);
+  background: var(--color-bg-hover-accent);
   color: var(--color-text-primary);
 }
 

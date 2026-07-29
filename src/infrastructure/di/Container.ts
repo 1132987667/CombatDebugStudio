@@ -114,6 +114,7 @@ import { HealCalculator } from '@/domain/skill/HealCalculator'
 import { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { SkillManager } from '@/domain/skill/SkillManager'
 import { RAFTimer } from '@/shared/utils/RAF'
+import { persistentStorage } from '@/infrastructure/adapters/storage'
 import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
 
 
@@ -171,7 +172,7 @@ export function initializeContainer(): void {
   // 6. 注册核心战斗组件（依赖上面注册的服务）
   container.register(TURN_MANAGER_TOKEN.toString(), new TurnManager(buffSystem))
   container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
-  container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder())
+  container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder(persistentStorage))
   container.register(
     BATTLE_RULE_MANAGER_TOKEN.toString(),
     new BattleRuleManager(),
@@ -204,7 +205,7 @@ export function initializeContainer(): void {
   container.registerFactory('InterventionManager', () => {
     const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
     const battleStateManager = container.resolve<BattleStateManager>('BattleStateManager')
-    return new InterventionManager(battleSystem, battleStateManager)
+    return new InterventionManager(battleSystem, battleStateManager, persistentStorage)
   }, true)
 
   container.registerFactory('BattleReplayManager', () => {

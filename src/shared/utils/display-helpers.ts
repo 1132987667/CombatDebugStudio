@@ -5,7 +5,7 @@
  * 键名优先使用现有枚举常量，无枚举覆盖的保留字符串字面量。
  */
 import { EquipmentSlot } from '@/shared/types/Item'
-import { EffectType } from '@/shared/types/effect'
+import { EffectType } from '@/domain/skill/types'
 
 // ───── 装备槽位 ─────
 

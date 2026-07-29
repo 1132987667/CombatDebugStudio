@@ -84,7 +84,7 @@ export function deriveBuffFacets(config: {
       switch (effect.type) {
         case AtomicEffectType.MODIFIER: facets.push(BUFF_CATEGORY.MODIFIER); break
         case AtomicEffectType.DOT:      facets.push(BUFF_CATEGORY.DOT); break
-        case AtomicEffectType.HOT:      facets.push(BUFF_CATEGORY.TRIGGER); break  // HOT 归入 trigger 类
+        case AtomicEffectType.HEAL:      facets.push(BUFF_CATEGORY.TRIGGER); break  // HEAL 归入 trigger 类
         case AtomicEffectType.CONTROL: facets.push(BUFF_CATEGORY.CONTROL); break
         case AtomicEffectType.SHIELD:  facets.push(BUFF_CATEGORY.SHIELD); break
         case AtomicEffectType.TRIGGER: facets.push(BUFF_CATEGORY.TRIGGER); break

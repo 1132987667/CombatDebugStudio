@@ -1,15 +1,10 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BattleData, BattleTriggerPhase } from '@/domain/battle/type/types'
+import { CONTROL_KIND } from '@/shared/types/effect'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 
 /** Buff ID 前缀常量 */
 export const BUFF_ID_PREFIX = 'buff_'
-
-/** 常见 Buff 模板 ID 常量 */
-export const BUFF_IDS = {
-  SILENCE: 'buff_silence',
-  STUN: 'buff_stun',
-  POISON: 'buff_poison',
-} as const
 
 /**
  * buff 查询接口
@@ -28,58 +23,15 @@ export interface BuffQuery {
   setShieldValue(characterId: string, value: number): void
 }
 
-// [
-//   {
-//     id: "burn",
-//     name: "灼烧",
-//     duration: 3,
-//     effect: "伤害:15/回合",
-//     active: false,
-//     isPositive: false,
-//   },
-//   {
-//     id: "power",
-//     name: "力量祝福",
-//     duration: 5,
-//     effect: "ATK+20%",
-//     active: true,
-//     isPositive: true,
-//   },
-//   {
-//     id: "weak",
-//     name: "虚弱",
-//     duration: 2,
-//     effect: "DEF-30%",
-//     active: false,
-//     isPositive: false,
-//   },
-//   {
-//     id: "poison",
-//     name: "中毒",
-//     duration: 4,
-//     effect: "伤害:20/回合",
-//     active: false,
-//     isPositive: false,
-//   },
-//   {
-//     id: "shield",
-//     name: "护盾",
-//     duration: 3,
-//     effect: "吸收100伤害",
-//     active: false,
-//     isPositive: true,
-//   },
-// ]
-
 /**
- * 特殊效果行（DOT/HOT/护盾/反伤等非属性修正效果）
+ * 特殊效果行（DOT/HEAL/护盾/反伤等非属性修正效果）
  * 供纯文本 UI 展示使用
  */
 export interface BuffEffectLine {
   /** 显示文本，如 "每回合损失 5% 气血值"、"吸收 200 点伤害" */
   text: string
   /** 效果分类 */
-  kind: 'dot' | 'hot' | 'shield' | 'vampire' | 'thorns' | 'control' | 'other'
+  kind: AtomicEffectType
 }
 
 /**
@@ -125,7 +77,7 @@ export interface IBuffScript<TParams = any> {
 
   /**
    * 获取 Buff 的特殊效果文本行（供纯文本 UI 展示）
-   * 返回 DOT/HOT/护盾/反伤等非属性修正效果的描述文本
+   * 返回 DOT/HEAL/护盾/反伤等非属性修正效果的描述文本
    */
   getEffectLines?(context: BuffContext): BuffEffectLine[]
 }
@@ -145,20 +97,12 @@ export enum StackRule {
 /**
  * 控制效果类型枚举
  */
-export enum ControlType {
+export const ControlType = {
   /** 无控制效果 */
-  NONE = 'none',
-  /** 眩晕：无法进行任何行动 */
-  STUN = 'stun',
-  /** 沉默：无法使用技能，但可普攻 */
-  SILENCE = 'silence',
-  /** 冰冻：无法行动，可能有额外效果 */
-  FREEZE = 'freeze',
-  /** 睡眠：无法行动，受攻击后解除 */
-  SLEEP = 'sleep',
-  /** 束缚：无法行动 */
-  BIND = 'bind',
-}
+  NONE: 'none',
+  ...CONTROL_KIND,
+} as const
+export type ControlType = (typeof ControlType)[keyof typeof ControlType]
 
 /**
  * 增益效果配置接口
@@ -221,10 +165,8 @@ export interface BuffConfig {
 
   /**
    * 效果标签
-   * 用于按标签查询 Buff，替代硬编码的 Buff ID 列表
-   * 如 ['heal_reduction', 'burn', 'debuff', 'dot']
    */
-  tags?: string[]
+  tags?: AtomicEffectType[]
 
   /**
    * 免疫标签
@@ -313,7 +255,7 @@ export interface ScriptBuffConfig {
   /** 标记该脚本完全自包含——框架不再从 JSON 读取 attributes 应用修饰符 */
   selfContained?: boolean
   /** 效果标签（同 BuffConfig.tags） */
-  tags?: string[]
+  tags?: AtomicEffectType[]
   /** 免疫标签（同 BuffConfig.immuneTags） */
   immuneTags?: string[]
   /** 是否级联移除子 Buff（同 BuffConfig.cascadeRemove） */

@@ -1,4 +1,4 @@
-import type { SkillStep, SkillConfig } from '@/domain/skill/types'
+import type { SkillStep, SkillConfig, EffectType } from '@/domain/skill/types'
 
 /**
  * 文件: effect.ts
@@ -8,28 +8,66 @@ import type { SkillStep, SkillConfig } from '@/domain/skill/types'
  * 描述: 统一技能和Buff的效果接口，包含伤害、治疗、Buff等效果类型
  */
 
-/**
- * 效果类型常量
- * 统一的效果类型定义，供全项目使用
- */
-export const EffectType = {
-  DAMAGE: 'damage',
-  HEAL: 'heal',
-  BUFF: 'buff',
-  DEBUFF: 'debuff',
-  MISS: 'miss',
-  STATUS: 'status',
-  CRITICAL: 'critical',
-  SPECIAL: 'special',
-  SHIELD: 'shield',
-  DRAIN: 'drain',
-  REFLECT: 'reflect',
+export const STATUS_NAMES = {
+  // 控制类
+  STUN: '眩晕',
+  SILENCE: '沉默',
+  FREEZE: '冰冻',
+  SLEEP: '睡眠',
+  BIND: '束缚',
+  /** 混乱: 行动目标随机化（可能攻击友方） */
+  CONFUSION: 'confusion',
+  /** 恐惧: 无法主动攻击，只能逃跑/跳过行动 */
+  FEAR: 'fear',
+  // 伤害/治疗类
+  DOT: '持续伤害',
+  HEAL: '持续治疗',
+  BURN: '灼烧',
+  POISON: '中毒',
+  DRAIN: '吸取',
+  REFLECT: '反射',
+  // 防御类
+  SHIELD: '护盾',
+  // 增益/减益
+  BUFF: '增益',
+  DEBUFF: '减益',
+  HEAL_REDUCTION: '减治疗',
+  // 动作类
+  DEAL_DAMAGE: '造成伤害',
+  KNOCKBACK: '击退',
+  PULL: '拉扯',
+  TELEPORT: '传送',
+  SUMMON: '召唤',
+  TRANSFORM: '变身',
+  REVIVE: '复活',
+  CLEANSE: '净化',
+  DISPEL: '驱散',
+  AURA: '光环',
 } as const
-/**
- * 效果类型
- * 定义技能和Buff的效果类型
- */
-export type EffectType = (typeof EffectType)[keyof typeof EffectType]
+
+export type CombatTerm = keyof typeof STATUS_NAMES
+
+export const CONTROL_KIND = {
+  /** 眩晕: 无法进行任何行动 */
+  STUN: 'stun',
+  /** 沉默: 无法使用技能，但可普攻 */
+  SILENCE: 'silence',
+  /** 冰冻: 无法行动，可能有额外效果 */
+  FREEZE: 'freeze',
+  /** 睡眠: 无法行动，受攻击后解除 */
+  SLEEP: 'sleep',
+  /** 束缚: 无法行动 */
+  BIND: 'bind',
+} as const
+export type ControlKind = (typeof CONTROL_KIND)[keyof typeof CONTROL_KIND]
+
+export const CONTROL_NAMES: Record<string, string> = {
+  [CONTROL_KIND.STUN]: STATUS_NAMES.STUN,
+  [CONTROL_KIND.SILENCE]: STATUS_NAMES.SILENCE,
+  [CONTROL_KIND.FREEZE]: STATUS_NAMES.FREEZE,
+  [CONTROL_KIND.SLEEP]: STATUS_NAMES.SLEEP,
+  [CONTROL_KIND.BIND]: STATUS_NAMES.BIND,
+}
 
 /**
  * 效果标签枚举
@@ -46,7 +84,7 @@ export const EffectTag = {
   /** 持续伤害 */
   DOT: 'dot',
   /** 持续治疗 */
-  HOT: 'hot',
+  HEAL: 'heal',
   /** 护盾 */
   SHIELD: 'shield',
   /** 减治疗效果 */
@@ -55,16 +93,7 @@ export const EffectTag = {
   BURN: 'burn',
   /** 中毒 */
   POISON: 'poison',
-  /** 眩晕 */
-  STUN: 'stun',
-  /** 沉默 */
-  SILENCE: 'silence',
-  /** 冰冻 */
-  FREEZE: 'freeze',
-  /** 睡眠 */
-  SLEEP: 'sleep',
-  /** 束缚 */
-  BIND: 'bind',
+  ...CONTROL_KIND,
 } as const
 
 /**

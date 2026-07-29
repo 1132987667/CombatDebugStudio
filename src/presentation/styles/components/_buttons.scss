@@ -1,110 +1,39 @@
 /* ==========================================================================
    Component: Buttons (_buttons.scss)
    依赖: tokens.scss
-   作用: 所有按钮变体 — header-btn, btn-tiny, btn-small, speed-btn, action-btn, play-btn
+   作用: 所有按钮变体 — btn-medium, btn-tiny, btn-small, speed-btn, action-btn, play-btn
    ========================================================================== */
-
-/* ----- 1. 头部操作按钮 ----- */
-.header-btn {
-  background: var(--color-border-default);
-  color: var(--color-info);
-  border: 1px solid var(--color-border-tertiary);
-  padding: var(--space-2) var(--space-4);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  border-radius: var(--radius-sm);
-}
-
-.header-btn:hover {
-  background: var(--color-border-tertiary);
-  border-color: var(--color-info);
-}
+@use '../mixins' as *;
 
 /* ----- 2. 按钮尺寸体系 ----- */
 /* 使用说明: <button class="btn-tiny"> 或 <button class="btn-small"> 或 <button class="btn-medium"> */
-/* 共用基础：background/color/border/cursor/transition 各尺寸继承自 .btn-* 自身定义 */
+/* 共用 btn-base，仅差异行保留 */
 
 /* 2.1 极小按钮（标签式、紧凑场景） */
 .btn-tiny {
-  background: var(--color-border-default);
-  color: var(--color-info);
-  border: 1px solid var(--color-border-tertiary);
+  @include btn-base;
   padding: 0.15rem 0.35rem;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-}
-
-.btn-tiny:hover {
-  background: var(--color-border-tertiary);
 }
 
 /* 2.2 小型按钮（面板内操作） */
 .btn-small {
-  background: var(--color-border-default);
-  color: var(--color-info);
-  border: 1px solid var(--color-border-tertiary);
+  @include btn-base;
   padding: var(--space-1) var(--space-2);
   font-size: var(--font-size-xs);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
   line-height: 1.4;
-}
-
-.btn-small:hover:not(:disabled) {
-  background: var(--color-border-tertiary);
-}
-
-.btn-small:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 /* 2.3 中型按钮（通用、对话框操作） */
 .btn-medium {
-  background: var(--color-border-default);
-  color: var(--color-info);
-  border: 1px solid var(--color-border-tertiary);
-  padding: var(--space-2) var(--space-4);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
+  @include btn-base;
   line-height: 1.4;
-}
-
-.btn-medium:hover:not(:disabled) {
-  background: var(--color-border-tertiary);
-}
-
-.btn-medium:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 /* 2.4 大按钮（强调场景） */
 .btn-large {
-  background: var(--color-border-default);
-  color: var(--color-info);
-  border: 1px solid var(--color-border-tertiary);
+  @include btn-base;
   padding: var(--space-3) var(--space-5);
   font-size: var(--font-size-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-}
-
-.btn-large:hover:not(:disabled) {
-  background: var(--color-border-tertiary);
-}
-
-.btn-large:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 /* 2.5 按钮危险变体（可叠加 .btn-danger） */
@@ -146,6 +75,7 @@
 
 .action-btn:hover {
   background: var(--color-bg-hover);
+  border-color: var(--color-border-tertiary-hover); /* 补上这一行 */
 }
 
 .action-btn.primary {
@@ -193,7 +123,6 @@
   border-radius: var(--radius-sm);
   background: var(--color-bg-secondary);
   cursor: pointer;
-  font-size: var(--font-size-xs);
   transition: all var(--transition-fast);
   color: var(--color-info);
 }

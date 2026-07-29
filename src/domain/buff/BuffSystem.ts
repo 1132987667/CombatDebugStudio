@@ -15,7 +15,7 @@ import {
   ModifierType,
 } from '@/domain/attribute/types'
 import { StackRule, ControlType } from '@/domain/buff/types'
-import { SkillStepType } from '@/domain/skill/types'
+import { EffectType } from '@/domain/skill/types'
 import {
   BuffScriptRegistry,
   BuffAuraConfig,
@@ -136,7 +136,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   private registerDefaultTriggerScripts(): void {
     this.registerTriggerScript(
-      SkillStepType.DEAL_DAMAGE,
+      EffectType.DEAL_DAMAGE,
       (ctx: TriggerExecutionContext) => {
         const damage = (ctx.params?.damage as number) ?? 0
         const damagePercent = (ctx.params?.damagePercent as number) ?? 0
@@ -148,7 +148,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       },
     )
     this.registerTriggerScript(
-      SkillStepType.APPLY_BUFF,
+      EffectType.APPLY_BUFF,
       (ctx: TriggerExecutionContext) => {
         if (ctx.params?.buffId) {
           const buffId = ctx.params.buffId as string
@@ -175,7 +175,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       },
     )
     this.registerTriggerScript(
-      SkillStepType.HEAL,
+      EffectType.HEAL,
       (ctx: TriggerExecutionContext) => {
         this.healTarget(ctx.targetId ?? '', (ctx.params?.amount as number) ?? 0)
       },
@@ -680,7 +680,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     if (context?.record) {
       context?.record.effects.push({
-        type: resolvedConfig.isDebuff ? 'debuff' : 'buff',
+        type: resolvedConfig.isDebuff ? EffectType.DEBUFF : EffectType.BUFF,
         targetId: characterId,
         buffId: resolvedConfig.id,
         instanceId,
@@ -979,7 +979,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         instance.script.onUpdate(instance.context, 0)
       })
 
-      // ★ 数据驱动：执行 effectPlan 中各原语的 onTick（DOT/HOT 每回合触发）
+      // ★ 数据驱动：执行 effectPlan 中各原语的 onTick（DOT/HEAL 每回合触发）
       const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
       if (buffResolved?.effectPlan) {
         for (const effect of buffResolved.effectPlan) {

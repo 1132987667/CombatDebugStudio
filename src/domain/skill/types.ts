@@ -9,6 +9,8 @@ import type {
   ModifierType,
   ModifierSourceType,
 } from '@/domain/attribute/types'
+import { CONTROL_KIND } from '@/shared/types'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 
 /**
  * 修饰符模板（配置层使用）
@@ -80,19 +82,6 @@ export type DamageCategory =
  * 物理 金 木 水 火 土
  */
 export type ElementType = 'PHYSICAL' | 'JIN' | 'MU' | 'SHU' | 'HUO' | 'TU'
-
-/**
- * 被动技能分类
- */
-export type PassiveCategory =
-  | 'attribute' // 属性增益
-  | 'aura' // 光环
-  | 'trigger' // 触发效果
-  | 'heal' // 治疗
-  | 'immunity' // 免疫
-  | 'summon' // 召唤
-  | 'dot' // 持续伤害
-  | 'shield' // 护盾
 
 /**
  * 目标阵营
@@ -298,11 +287,12 @@ export enum CostType {
  * 技能步骤类型枚举（扩展版）
  * 定义技能执行步骤的所有可能类型
  */
-export const SkillStepType = {
-  // === 新版步骤类型 ===
+export const EffectType = {
   DEAL_DAMAGE: 'deal_damage', // 造成伤害（结构化）
+  DAMAGE: 'damage', // 伤害效果（结果分类）
   HEAL: 'heal', // 治疗目标（结构化）
   APPLY_BUFF: 'apply_buff', // 施加 Buff/Debuff（通过 BuffId 引用）
+  BUFF: 'buff', // 增益效果（结果分类）
   MODIFY_ATTRIBUTE: 'modify_attribute', // 直接修改属性（仅在被动技能初始化时由 GameDataProcessor 处理）
   GAIN_ENERGY: 'gain_energy', // 获取能量（R6: 资源变动专用）
   // ponytail: 以下步骤类型为预留定义，当前零个技能配置使用，待需要时在 SkillExecutor 中实现
@@ -311,8 +301,6 @@ export const SkillStepType = {
   REMOVE_DEBUFF: 'remove_debuff', // 移除减益效果
   CLEANSE: 'cleanse', // 净化（移除所有负面效果）
   DISPEL: 'dispel', // 驱散（移除所有正面效果）
-  STUN: 'stun', // 眩晕（已通过 apply_buff + buff_stun 实现）
-  SILENCE: 'silence', // 沉默（已通过 apply_buff 实现）
   KNOCKBACK: 'knockback', // 击退
   PULL: 'pull', // 拉扯
   TELEPORT: 'teleport', // 传送
@@ -322,9 +310,15 @@ export const SkillStepType = {
   REFLECT: 'reflect', // 反射
   DRAIN: 'drain', // 吸取
   REVIVE: 'revive', // 复活
+  MISS: 'miss', // 未命中
+  STATUS: 'status', // 状态效果
+  CRITICAL: 'critical', // 暴击
+  SPECIAL: 'special', // 特殊效果
+  DEBUFF: 'debuff', // 减益效果
   CUSTOM: 'custom', // 自定义效果（通过自定义脚本实现）
+  ...CONTROL_KIND,
 } as const
-export type SkillStepType = (typeof SkillStepType)[keyof typeof SkillStepType]
+export type EffectType = (typeof EffectType)[keyof typeof EffectType]
 
 /**
  * 技能步骤接口
@@ -334,7 +328,7 @@ export interface SkillStep {
   /**
    * 步骤类型
    */
-  type: SkillStepType
+  type: EffectType
 
   // ========== 新版字段 ==========
   /**
@@ -450,7 +444,7 @@ export interface SkillConfig {
   condition?: string // 施放条件
   skillType?: SkillType // 技能类型
   triggerTimes?: string[] // 触发时机（被动技能专用）
-  passiveCategory?: PassiveCategory[] // 被动技能分类（数组，支持多分类）
+  passiveCategory?: AtomicEffectType[] // 被动技能分类（数组，支持多分类）
   level?: number // 技能等级
   levelValue?: number // 技能等级成长值
   icon?: string // 技能图标

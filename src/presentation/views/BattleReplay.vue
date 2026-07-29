@@ -292,8 +292,7 @@ async function saveCurrentRecording() {
 
 async function deleteCurrentRecording() {
   if (currentRecording.value) {
-    const saveKey = `battle_recording_${currentRecording.value.battleId}`;
-    const success = await battleSystem.deleteBattleRecording(saveKey);
+    const success = await battleSystem.deleteBattleRecordingByBattleId(currentRecording.value.battleId);
     if (success) {
       currentRecording.value = null;
       currentEventIndex.value = 0;
@@ -599,6 +598,3 @@ watch(() => currentEventIndex.value, () => {
 });
 </script>
 
-<style scoped>
-@use'@/presentation/styles/main.scss';
-</style>

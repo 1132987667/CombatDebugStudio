@@ -119,7 +119,6 @@ function clamp(v: number, lo: number, hi: number): number {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
-  font-size: var(--font-size-xs, 12px);
   cursor: pointer;
   transition: all var(--transition-fast);
   user-select: none;

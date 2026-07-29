@@ -1,17 +1,8 @@
 <template>
   <div class="battle-log-section">
-    <!-- ═══ 头部：页签 + 搜索 + 导出 ═══ -->
+    <!-- ═══ 头部：标题 + 搜索 + 导出（页签由下方 Tabs 组件接管） ═══ -->
     <div class="log-header">
       <span class="log-title">日志</span>
-
-      <div class="log-tabs" ref="tabBarRef">
-        <button v-for="tab in tabs" :key="tab.id" :ref="(el) => setTabRef(tab.id, el)" class="log-tab"
-          :class="{ active: activeTab === tab.id }" @click="switchTab(tab.id)">
-          {{ tab.label }}
-          <span class="tab-badge" :key="tabCount(tab.id)">{{ tabCount(tab.id) }}</span>
-        </button>
-        <span class="tab-indicator" :style="indicatorStyle"></span>
-      </div>
 
       <div class="log-tools">
         <label class="status-toggle" :class="{ on: showStatus }">
@@ -34,9 +25,11 @@
       </div>
     </div>
 
-    <!-- ═══ 容器 A：战斗页签（独立，叙事渲染） ═══ -->
-    <div v-show="activeTab === 'battle'" class="log-content" :class="{ 'is-active': activeTab === 'battle' }"
-      ref="battleContainer" @scroll="onScroll">
+    <Tabs v-model="activeTab" :tabs="tabsWithCount" class="log-tabs-host">
+      <!-- ═══ 容器 A：战斗页签 ═══ -->
+      <template #battle>
+        <div class="log-content" :class="{ 'is-active': activeTab === 'battle' }"
+          ref="battleContainer" @scroll="onScroll">
       <div v-if="blocks.length === 0" class="no-logs">暂无战斗日志</div>
 
       <div v-for="(b, i) in blocks" :key="i" class="nb" :class="'nb--' + b.type">
@@ -102,39 +95,46 @@
           <LogSeg v-for="(s, j) in b.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
         </template>
       </div>
-    </div>
+    </div> <!-- /battle-content -->
+      </template>
 
-    <!-- ═══ 容器 B：系统 / 调试页签（共用，扁平渲染） ═══ -->
-    <div v-show="activeTab !== 'battle'" class="log-content log-content--flat"
-      :class="{ 'is-active': activeTab !== 'battle' }" ref="sharedContainer" @scroll="onScroll">
-      <div v-if="activeTab === 'debug' && debugTotal > DEBUG_DISPLAY_LIMIT" class="flat-note">
-        仅显示最近 {{ DEBUG_DISPLAY_LIMIT }} 条（共 {{ debugTotal }} 条）
-      </div>
+      <!-- ═══ 容器 B-1：系统页签 ═══ -->
+      <template #system>
+        <div class="log-content log-content--flat" :class="{ 'is-active': activeTab === 'system' }"
+          ref="systemContainer" @scroll="onScroll">
+          <div v-if="systemLogs.length === 0" class="no-logs">暂无系统日志</div>
 
-      <div v-if="sharedLogs.length === 0" class="no-logs">
-        暂无{{ activeTab === 'debug' ? '调试' : '系统' }}日志
-      </div>
+          <div v-for="entry in systemLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
+            <!-- 系统/动作/物品条目：优先 segments -->
+            <template v-if="entry.segments && entry.segments.length">
+              <LogSeg v-for="(s, j) in entry.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
+            </template>
+            <template v-else>
+              <span class="flat-msg">{{ entry.message }}</span>
+            </template>
+          </div>
+        </div>
+      </template>
 
-      <div v-for="entry in sharedLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
-        <!-- 调试条目：级别徽章 + 消息 + 可折叠上下文 -->
-        <template v-if="entry.type === LogType.DEBUG">
-          <span class="flat-seq">#{{ entry.index }}</span>
-          <span class="flat-level">{{ levelName(entry.level) }}</span>
-          <span class="flat-msg">{{ entry.message }}</span>
-          <pre v-if="entry.context" class="flat-ctx">{{ JSON.stringify(entry.context, null, 2) }}</pre>
-          <div v-if="entry.error" class="flat-err">{{ entry.error.message }}</div>
-        </template>
+      <!-- ═══ 容器 B-2：调试页签 ═══ -->
+      <template #debug>
+        <div class="log-content log-content--flat" :class="{ 'is-active': activeTab === 'debug' }"
+          ref="debugContainer" @scroll="onScroll">
+          <div v-if="debugTotal > DEBUG_DISPLAY_LIMIT" class="flat-note">
+            仅显示最近 {{ DEBUG_DISPLAY_LIMIT }} 条（共 {{ debugTotal }} 条）
+          </div>
+          <div v-if="debugLogs.length === 0" class="no-logs">暂无调试日志</div>
 
-        <!-- 系统/动作/物品条目：优先 segments -->
-        <template v-else-if="entry.segments && entry.segments.length">
-          <LogSeg v-for="(s, j) in entry.segments" :key="j" :seg="s" @hover="onSegmentEnter" @leave="onSegmentLeave" />
-        </template>
-
-        <template v-else>
-          <span class="flat-msg">{{ entry.message }}</span>
-        </template>
-      </div>
-    </div>
+          <div v-for="entry in debugLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
+            <span class="flat-seq">#{{ entry.index }}</span>
+            <span class="flat-level">{{ levelName(entry.level) }}</span>
+            <span class="flat-msg">{{ entry.message }}</span>
+            <pre v-if="entry.context" class="flat-ctx">{{ JSON.stringify(entry.context, null, 2) }}</pre>
+            <div v-if="entry.error" class="flat-err">{{ entry.error.message }}</div>
+          </div>
+        </div>
+      </template>
+    </Tabs>
 
     <EntityTooltip :visible="tooltipVisible" :data="tooltipData" :trigger-rect="tooltipRect"
       @hide="tooltipVisible = false" />
@@ -154,6 +154,8 @@ import { LogType, LogLevel } from '@/shared/types/battle-log'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
 import LogSeg from '@/presentation/components/LogSeg.vue'
+import Tabs from '@/presentation/components/Tabs.vue'
+import type { TabItem } from '@/presentation/components/Tabs.vue'
 import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
 import { LogTooltipResolver } from '@/application/projection/LogTooltipResolver'
@@ -175,14 +177,20 @@ try {
 }
 
 // ───────────────────────── 页签状态 ─────────────────────────
-const tabs = [
+const TAB_DEFS = [
   { id: 'battle', label: '战斗' },
   { id: 'system', label: '系统' },
   { id: 'debug', label: '调试' },
 ] as const
-type TabId = (typeof tabs)[number]['id']
+type TabId = (typeof TAB_DEFS)[number]['id']
 
 const activeTab = ref<TabId>('battle')
+
+/** 为 Tabs 组件构建带计数徽章的页签列表 */
+const tabsWithCount = computed<TabItem[]>(() =>
+  TAB_DEFS.map((t) => ({ id: t.id, label: t.label, count: tabCount(t.id) })),
+)
+
 const keyword = ref('')
 /** 战斗页签内的状态明细开关（原 showStatus，降噪用） */
 const showStatus = ref(true)
@@ -232,37 +240,14 @@ const debugAll = computed(() => {
 const debugTotal = computed(() => debugAll.value.length)
 const debugLogs = computed(() => debugAll.value.slice(-DEBUG_DISPLAY_LIMIT))
 
-/** 共用容器当前展示的数据 */
-const sharedLogs = computed(() =>
-  activeTab.value === 'debug' ? debugLogs.value : systemLogs.value,
-)
-
 /** 叙事块 */
 const blocks = computed(() => renderer.renderEntries(battleLogs.value))
 
-// ───────────────────────── 页签计数 & 滑动指示器 ─────────────────────────
+// ───────────────────────── 页签计数 ═══ Tabs 组件接管指示条 ──────────────────
 function tabCount(id: TabId): number {
   if (id === 'battle') return allLogs.value.filter((l) => l.type === LogType.BATTLE).length
   if (id === 'system') return allLogs.value.filter((l) => SYSTEM_TYPES.includes(l.type)).length
   return debugTotal.value
-}
-
-const tabElRefs = new Map<string, HTMLElement>()
-const indicatorStyle = ref<{ left: string; width: string }>({ left: '0px', width: '0px' })
-
-function setTabRef(id: string, el: unknown) {
-  if (el) tabElRefs.set(id, el as HTMLElement)
-  else tabElRefs.delete(id)
-}
-
-function updateIndicator() {
-  const el = tabElRefs.get(activeTab.value)
-  if (!el) return
-  indicatorStyle.value = { left: el.offsetLeft + 'px', width: el.offsetWidth + 'px' }
-}
-
-function switchTab(id: TabId) {
-  activeTab.value = id
 }
 
 // ───────────────────────── 扁平条目辅助 ─────────────────────────
@@ -304,15 +289,18 @@ function onSegmentLeave() {
   tooltipRect.value = null
 }
 
-// ───────────────────────── 自动滚动（双容器） ─────────────────────────
+// ───────────────────────── 自动滚动（三容器） ─────────────────────────
 const battleContainer = ref<HTMLElement | null>(null)
-const sharedContainer = ref<HTMLElement | null>(null)
+const systemContainer = ref<HTMLElement | null>(null)
+const debugContainer = ref<HTMLElement | null>(null)
 const autoScrollEnabled = ref(true)
 let autoScrollTimer: ReturnType<typeof setTimeout> | null = null
 let scrollThrottled = false
 
 function activeContainer(): HTMLElement | null {
-  return activeTab.value === 'battle' ? battleContainer.value : sharedContainer.value
+  if (activeTab.value === 'battle') return battleContainer.value
+  if (activeTab.value === 'system') return systemContainer.value
+  return debugContainer.value
 }
 
 const onScroll = (ev: Event) => {
@@ -344,7 +332,7 @@ function scrollActiveToBottom() {
   if (el) el.scrollTop = el.scrollHeight
 }
 
-watch([battleLogs, sharedLogs, activeTab], () => {
+watch([battleLogs, systemLogs, debugLogs, activeTab], () => {
   nextTick(() => {
     if (autoScrollEnabled.value) scrollActiveToBottom()
   })
@@ -419,23 +407,22 @@ onMounted(() => {
   })
   battleLogManager.addListener(logUpdateListener)
 
-  nextTick(updateIndicator)
-  window.addEventListener('resize', updateIndicator)
   document.addEventListener('click', handleExportClickOutside)
 })
 
 onUnmounted(() => {
   battleLogManager.removeListener(logUpdateListener)
-  window.removeEventListener('resize', updateIndicator)
   document.removeEventListener('click', handleExportClickOutside)
   if (autoScrollTimer) clearTimeout(autoScrollTimer)
 })
-
-watch(activeTab, () => nextTick(updateIndicator))
 </script>
 
 <style scoped>
-@use '@/presentation/styles/main.scss';
+/** 激活色覆盖：BattleLog 页签激活态使用 success 绿 + 辉光 */
+.log-tabs-host.tabs-root {
+  --tabs-accent: var(--color-success);
+  --tabs-accent-glow: rgba(var(--rgb-success), var(--alpha-glow));
+}
 
 /* ─────────── 头部 ─────────── */
 .log-header {
@@ -444,7 +431,6 @@ watch(activeTab, () => nextTick(updateIndicator))
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   background: var(--color-bg-tertiary);
-  border-bottom: 1px solid var(--color-border-default);
   flex-wrap: wrap;
 }
 
@@ -452,85 +438,6 @@ watch(activeTab, () => nextTick(updateIndicator))
   color: var(--color-info);
   font-weight: var(--font-weight-bold);
   letter-spacing: 1px;
-}
-
-/* ─────────── 页签栏 ─────────── */
-.log-tabs {
-  position: relative;
-  display: flex;
-  gap: var(--space-1);
-}
-
-.log-tab {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  color: var(--color-info);
-  cursor: pointer;
-  transition: color var(--transition-fast), background var(--transition-fast);
-  white-space: nowrap;
-}
-
-.log-tab:hover {}
-
-.log-tab.active {
-  color: var(--color-success);
-  border-color: var(--color-success);
-  font-weight: var(--font-weight-bold);
-}
-
-/* 计数徽章 */
-.tab-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 16px;
-  padding: 0 5px;
-  border-radius: var(--radius-full);
-  background: var(--color-border-default);
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-xxs);
-  font-weight: var(--font-weight-bold);
-  font-family: var(--font-family-mono);
-  transition: background var(--transition-fast), color var(--transition-fast);
-  animation: badge-pop 0.2s ease-out;
-}
-
-.log-tab.active .tab-badge {
-  background: var(--color-success);
-  color: var(--color-bg-secondary);
-}
-
-@keyframes badge-pop {
-  0% {
-    transform: scale(0.6);
-  }
-
-  60% {
-    transform: scale(1.15);
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* 滑动指示条 */
-.tab-indicator {
-  position: absolute;
-  bottom: -1px;
-  height: 2px;
-  background: var(--color-success);
-  box-shadow: 0 0 8px var(--color-success);
-  border-radius: var(--radius-full);
-  transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
 }
 
 /* ─────────── 搜索 & 导出 ─────────── */
@@ -685,7 +592,6 @@ watch(activeTab, () => nextTick(updateIndicator))
 
 .flat-note {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
   padding: var(--space-1) var(--space-2);
   margin-bottom: var(--space-1);
   background: var(--color-bg-tertiary);
@@ -727,7 +633,6 @@ watch(activeTab, () => nextTick(updateIndicator))
 
 .flat-seq {
   color: var(--color-text-disabled);
-  font-size: var(--font-size-xs);
   min-width: 3.5em;
 }
 
@@ -782,7 +687,6 @@ watch(activeTab, () => nextTick(updateIndicator))
   background: var(--color-bg-primary);
   border-radius: var(--radius-sm);
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
   overflow-x: auto;
   white-space: pre-wrap;
 }

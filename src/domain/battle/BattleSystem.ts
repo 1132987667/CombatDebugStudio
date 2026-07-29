@@ -56,7 +56,7 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
-import { EffectType } from '@/shared/types/effect'
+import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { Counter } from '@/shared/utils/Counter'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
@@ -1401,6 +1401,13 @@ export class BattleSystem {
    */
   public async deleteBattleRecording(saveKey: string): Promise<boolean> {
     return this.battleRecorder.deleteRecording(saveKey)
+  }
+
+  /**
+   * 按 battleId 删除持久化战斗记录
+   */
+  public async deleteBattleRecordingByBattleId(battleId: string): Promise<boolean> {
+    return this.battleRecorder.deleteRecordingByBattleId(battleId)
   }
 
   /**

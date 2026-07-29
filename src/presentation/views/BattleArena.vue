@@ -21,14 +21,14 @@
     <div class="tool-header">
       <h1>回合制战斗系统测试工具 v1.0</h1>
       <div class="header-actions">
-        <button class="header-btn" @click="showDataSnapshotDialog = true">数据快照</button>
-        <button class="header-btn" @click="showRecordingDialog = true">战斗记录</button>
-        <button class="header-btn" @click="showDebugLogDialog = true">调试日志</button>
-        <button class="header-btn" @click="showDebugControlDialog = true">调试面板</button>
-        <button class="header-btn" @click="showCompendiumDialog = true">图鉴</button>
-        <button class="header-btn" @click="showRulesDialog = true">战斗规则</button>
-        <button class="header-btn" @click="showSceneDialog = true">场景管理</button>
-        <button class="header-btn" @click="showStatusDialog = true">角色编辑</button>
+        <button class="btn-medium" @click="showDataSnapshotDialog = true">数据快照</button>
+        <button class="btn-medium" @click="showRecordingDialog = true">战斗记录</button>
+        <button class="btn-medium" @click="showDebugLogDialog = true">调试日志</button>
+        <button class="btn-medium" @click="showDebugControlDialog = true">调试面板</button>
+        <button class="btn-medium" @click="showCompendiumDialog = true">图鉴</button>
+        <button class="btn-medium" @click="showRulesDialog = true">战斗规则</button>
+        <button class="btn-medium" @click="showSceneDialog = true">场景管理</button>
+        <button class="btn-medium" @click="showStatusDialog = true">角色编辑</button>
       </div>
     </div>
 
@@ -97,7 +97,7 @@ import Notification from "@/presentation/components/Notification.vue";
 import { useBattleStore } from '@/presentation/stores';
 import type { LogEntry } from '@/shared/types/battle-log';
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
-import { EffectType } from '@/shared/types/effect';
+import { SkillStepType } from '@/domain/skill/types';
 import type { TraceLogEntry } from '@/shared/types/trace-log';
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
@@ -309,7 +309,7 @@ const handleDebugAction = async (action: string) => {
     case 'test_damage_num': {
       const tId = battleStore.selectedCharacterId || battleStore.enemyTeam[0]?.id || battleStore.allyTeam[0]?.id
       if (tId) {
-        battleStore.setAnimationState(EffectType.DAMAGE, { targetId: tId, damage: 999, damageCategory: DamageCategory.PHYSICAL, isCritical: false, isHeal: false })
+        battleStore.setAnimationState(SkillStepType.DAMAGE, { targetId: tId, damage: 999, damageCategory: DamageCategory.PHYSICAL, isCritical: false, isHeal: false })
         battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试伤害数字 999` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
@@ -319,7 +319,7 @@ const handleDebugAction = async (action: string) => {
     case 'test_crit_num': {
       const tId = battleStore.selectedCharacterId || battleStore.enemyTeam[0]?.id || battleStore.allyTeam[0]?.id
       if (tId) {
-        battleStore.setAnimationState(EffectType.DAMAGE, { targetId: tId, damage: 1999, damageCategory: DamageCategory.PHYSICAL, isCritical: true, isHeal: false })
+        battleStore.setAnimationState(SkillStepType.DAMAGE, { targetId: tId, damage: 1999, damageCategory: DamageCategory.PHYSICAL, isCritical: true, isHeal: false })
         battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试暴击数字 1999` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
@@ -329,7 +329,7 @@ const handleDebugAction = async (action: string) => {
     case 'test_heal_num': {
       const tId = battleStore.selectedCharacterId || battleStore.allyTeam[0]?.id || battleStore.enemyTeam[0]?.id
       if (tId) {
-        battleStore.setAnimationState(EffectType.DAMAGE, { targetId: tId, damage: 500, damageCategory: 'heal', isCritical: false, isHeal: true })
+        battleStore.setAnimationState(SkillStepType.DAMAGE, { targetId: tId, damage: 500, damageCategory: 'heal', isCritical: false, isHeal: true })
         battleLogManager.addSystemLog({ message: `调试: 在 [${tId}] 上测试治疗数字 500` })
       } else {
         battleLogManager.addSystemLog({ message: '调试: 没有可用的角色' })
@@ -349,9 +349,9 @@ const handleDebugAction = async (action: string) => {
     }
     case 'clear_animations':
       battleFieldRef.value?.cleanupAnimations()
-      battleStore.setAnimationState(EffectType.DAMAGE, null)
-      battleStore.setAnimationState(EffectType.MISS, null)
-      battleStore.setAnimationState(EffectType.BUFF, null)
+      battleStore.setAnimationState(SkillStepType.DAMAGE, null)
+      battleStore.setAnimationState(SkillStepType.MISS, null)
+      battleStore.setAnimationState(SkillStepType.BUFF, null)
       battleStore.setAnimationState('skill', null)
       battleLogManager.addSystemLog({ message: '调试: 清除所有动画效果' })
       break
@@ -740,8 +740,6 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss">
-@use '@/presentation/styles/main.scss';
-
 // 加载指示器样式
 .loading-overlay {
   position: fixed;

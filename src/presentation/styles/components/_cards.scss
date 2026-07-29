@@ -259,9 +259,9 @@
   border-radius: calc(var(--radius-sm) - 2px);
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.3) 0%,
+    rgba(var(--rgb-white), var(--alpha-border)) 0%,
     transparent 50%,
-    rgba(0, 0, 0, 0.1) 100%
+    rgba(var(--rgb-black), var(--alpha-wash)) 100%
   );
   pointer-events: none;
   z-index: 1;
@@ -350,7 +350,7 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: rgba(131, 131, 131, 0.3);
+  background: rgba(var(--rgb-neutral), var(--alpha-border));
 }
 .energy-ticks .tick:nth-child(1) {
   left: 25%;
@@ -374,7 +374,7 @@
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-sm);
   color: var(--color-text-primary);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 1px 2px rgba(var(--rgb-black), 0.9);
   pointer-events: none;
   white-space: nowrap;
 }

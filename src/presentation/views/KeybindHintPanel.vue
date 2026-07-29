@@ -75,7 +75,3 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
 });
 </script>
-
-<style scoped>
-@use'@/presentation/styles/main.scss';
-</style>

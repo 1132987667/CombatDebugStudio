@@ -20,6 +20,7 @@ import type {
   DamageBreakdown,
 } from '@/domain/battle/combat-record'
 import type { LogSegment, BattleLogEntry } from '@/shared/types/battle-log'
+import { DamageSource } from '@/domain/battle/type/types'
 import type { NarrativeBlock as BattleLogNarrativeBlock } from '@/shared/types/battle-log'
 import { skillSegment } from '@/shared/utils/log-segment-factory'
 import type { SkillConfigLookup } from '@/shared/utils/log-segment-factory'
@@ -47,7 +48,7 @@ export interface NarrativeBlock {
   /** 技能 ID（用于可悬浮技能名） */
   skillId?: string
   /** 伤害来源类型 */
-  damageSource?: 'attack' | 'skill' | 'dot' | 'thorns' | 'reaction'
+  damageSource?: DamageSource
   /** 是否为目标行为（有别于系统行为） */
   isAction: boolean
   /** 主伤害值 */

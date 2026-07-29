@@ -13,7 +13,7 @@ import {
   BattleActionHelper,
   BATTLE_CONSTANTS,
 } from '@/domain/battle/type/types'
-import { EffectType } from '@/shared/types/effect'
+import { EffectType } from '@/domain/skill/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { SkillManager } from '@/domain/skill/SkillManager'

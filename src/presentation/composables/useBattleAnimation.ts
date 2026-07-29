@@ -10,7 +10,7 @@ import {
   battleAnimationService,
 } from '@/infrastructure/animation/BattleAnimationService'
 import type { ActionResultType } from '@/domain/battle/type/types'
-import { EffectType } from '@/shared/types/effect'
+import { EffectType } from '@/domain/skill/types'
 
 export interface UseBattleAnimationOptions {
   battleSpeed?: Ref<number>

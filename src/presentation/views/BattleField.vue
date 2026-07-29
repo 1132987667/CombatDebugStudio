@@ -295,8 +295,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use'@/presentation/styles/main.scss';
-
 .round-announce-layer {
   position: fixed;
   inset: 0;
@@ -317,7 +315,7 @@ onUnmounted(() => {
   text-shadow:
     0 0 20px rgba(255, 212, 120, 0.8),
     0 0 40px rgba(255, 212, 120, 0.4),
-    0 4px 8px rgba(0, 0, 0, 0.95);
+    0 4px 8px rgba(var(--rgb-black), 0.95);
   animation: round-rise ease-out forwards;
   white-space: nowrap;
 }

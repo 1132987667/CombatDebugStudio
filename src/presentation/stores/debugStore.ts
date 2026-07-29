@@ -2,6 +2,8 @@ import type { BattleEntity } from '@/domain/battle/type/types'
 import type { BattleRules } from '@/presentation/stores/battleStore'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { defineStore } from 'pinia'
+import { persistentStorage } from '@/infrastructure/adapters/storage'
+import { STORAGE_STORE } from '@/domain/port/IPersistentStorage'
 
 
 interface ExportedBattleState {
@@ -57,7 +59,7 @@ export const useDebugStore = defineStore('debug', {
     /**
      * 导出战斗状态
      */
-    exportState(
+    async exportState(
       allyTeam: BattleEntity[],
       enemyTeam: BattleEntity[],
       currentTurn: number,
@@ -71,24 +73,22 @@ export const useDebugStore = defineStore('debug', {
         rules,
         battleLogs,
       }
-      const json = JSON.stringify(state, null, 2)
-      localStorage.setItem('battleState', json)
+      await persistentStorage.set(STORAGE_STORE.SNAPSHOTS, 'debugSnapshot', state)
       this.setLastExportTime(new Date().toLocaleString())
     },
 
     /**
      * 导入战斗状态
      */
-    importState(): ExportedBattleState | null {
+    async importState(): Promise<ExportedBattleState | null> {
       try {
-        const savedState = localStorage.getItem('battleState')
+        const savedState = await persistentStorage.get(STORAGE_STORE.SNAPSHOTS, 'debugSnapshot')
         if (savedState) {
-          const parsed = JSON.parse(savedState)
-          if (!isValidExportedState(parsed)) {
+          if (!isValidExportedState(savedState)) {
             console.warn('导入状态校验失败: 数据结构异常')
             return null
           }
-          return parsed
+          return savedState as ExportedBattleState
         }
         return null
       } catch (error) {
@@ -100,16 +100,11 @@ export const useDebugStore = defineStore('debug', {
     /**
      * 查看导出的状态
      */
-    viewExport(): ExportedBattleState | null {
+    async viewExport(): Promise<ExportedBattleState | null> {
       try {
-        const savedState = localStorage.getItem('battleState')
-        if (savedState) {
-          const parsed = JSON.parse(savedState)
-          if (!isValidExportedState(parsed)) {
-            console.warn('查看导出校验失败: 数据结构异常')
-            return null
-          }
-          return parsed
+        const savedState = await persistentStorage.get(STORAGE_STORE.SNAPSHOTS, 'debugSnapshot')
+        if (savedState && isValidExportedState(savedState)) {
+          return savedState as ExportedBattleState
         }
         return null
       } catch (error) {

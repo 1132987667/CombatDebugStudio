@@ -747,12 +747,3 @@ export function getAttrName(code: ATTRIBUTE_CODE): string {
 export function getAttrDv(code: ATTRIBUTE_CODE): number {
   return AttributeMetaMap[code]?.defaultValue ?? 0
 }
-
-/**
- * 根据属性名称获取属性编码
- */
-export function getAttributeCodeByName(name: string): string | undefined {
-  return Object.entries(AttributeMetaMap).find(
-    ([_, meta]) => meta.name === name,
-  )?.[0]
-}

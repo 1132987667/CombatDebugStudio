@@ -2,7 +2,7 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
-import { SkillStepType } from '@/domain/skill/types'
+import { EffectType } from '@/domain/skill/types'
 
 export class PoisonDebuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'buff_poison'
@@ -50,7 +50,7 @@ export class PoisonDebuff extends BaseBuffScript {
 
       this.log(context, `毒素伤害：${currentDamage}`)
       // 通过触发系统造成伤害
-      this.triggerEvent(context, SkillStepType.DEAL_DAMAGE, {
+      this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
         damage: currentDamage,
       })
 

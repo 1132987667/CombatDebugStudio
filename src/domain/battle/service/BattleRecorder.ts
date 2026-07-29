@@ -12,6 +12,8 @@ const MAX_EVENT_LOG = 1000
 /** 过期记录清理检查间隔（毫秒） */
 const CLEANUP_INTERVAL = 60000
 
+import type { IPersistentStorage } from '@/domain/port/IPersistentStorage'
+import { STORAGE_STORE } from '@/domain/port/IPersistentStorage'
 import {
   BattleState,
   BattleAction,
@@ -91,6 +93,8 @@ export interface RecordedBattle {
   result?: BattleResult
   /** 数据校验和 */
   checksum?: string
+  /** 持久化后的存储键名（用于删除时精确匹配） */
+  saveKey?: string
   /** 复活事件列表（用于回放分析） */
   reviveEvents?: Array<{
     turn: number
@@ -107,16 +111,41 @@ export interface RecordedBattle {
  * 与定时清理机制防止内存无限增长。
  */
 export class BattleRecorder {
+  /** 持久化存储后端 */
+  private storage: IPersistentStorage
+
   /** 战斗记录存储（key = battleId） */
   private recordings = new Map<string, RecordedBattle>()
   /** 最大保存录制数量，超出时按最早开始时间淘汰 */
-  private maxRecordings = 10
+  private maxRecordings = 50
   /** 是否已调度过期清理任务，避免重复触发 */
   private cleanupScheduled = false
   /** 各场战斗的随机种子（key = battleId），用于确定性回放 */
   private randomSeeds = new Map<string, string>()
   /** 各场战斗的当前回合数（key = battleId），用于记录回合边界 */
   private currentTurnNumbers = new Map<string, number>()
+
+  constructor(storage?: IPersistentStorage) {
+    this.storage = storage ?? this.createNoopStorage()
+  }
+
+  /** 空操作存储后端（无 storage 注入时降级使用） */
+  private createNoopStorage(): IPersistentStorage {
+    return {
+      backend: 'indexeddb' as const,
+      set: async () => true,
+      get: async () => null,
+      remove: async () => true,
+      keys: async () => [],
+      clear: async () => true,
+      getStats: async () => null,
+    }
+  }
+
+  /** 延迟初始化存储（供 DI 容器在构造后注入，替换 noop） */
+  setStorage(storage: IPersistentStorage): void {
+    this.storage = storage
+  }
 
   public generateRandomSeed(): string {
     return SeededRandom.generateSeed()
@@ -484,24 +513,17 @@ export class BattleRecorder {
     }
 
     const saveKey = `battle_recording_${battleId}_${Date.now()}`
-    // ponytail: localStorage 约 5MB 限额，超出时跳过保存不阻塞战斗
     try {
-      localStorage.setItem(saveKey, JSON.stringify(saveData))
+      await this.storage.set(STORAGE_STORE.RECORDINGS, saveKey, saveData)
     } catch (e) {
-      LoggerProvider.logger.addDebugLog(`保存战斗记录失败: 存储空间不足`, {
+      LoggerProvider.logger.addDebugLog(`保存战斗记录失败: 存储异常`, {
         context: { saveKey, error: e },
       })
       return saveKey
     }
 
-    const recordingsList = await this.getSavedRecordingsList()
-    if (!recordingsList.includes(saveKey)) {
-      recordingsList.push(saveKey)
-      localStorage.setItem(
-        'battle_recordings_list',
-        JSON.stringify(recordingsList),
-      )
-    }
+    // 在内存记录中保存持久化键名（供删除和清理使用）
+    recording.saveKey = saveKey
 
     LoggerProvider.logger.addDebugLog(`保存战斗记录: ${battleId}`, {
       context: { saveKey, checksum: checksumValue },
@@ -514,13 +536,19 @@ export class BattleRecorder {
     // NOTE: 所有回放数据迁移/兼容性代码应放在此处，而非 ReplayEngine.loadReplay。
     //       RecordedBattle（含 combatRecords/traceLogs）是录制数据，由 BattleRecorder 管理；
     //       BattleReplay（含 events/rounds）是回放数据，由 ReplayEngine 管理。
-    const savedData = localStorage.getItem(saveKey)
+    const savedData = await this.storage.get<RecordedBattle>(STORAGE_STORE.RECORDINGS, saveKey)
     if (!savedData) {
       return null
     }
 
     try {
-      const recording = JSON.parse(savedData) as RecordedBattle
+      const recording = savedData
+
+      // ★ 旧数据一次性迁移：补充缺失字段
+      for (const record of recording.combatRecords ?? []) {
+        if (record.actionOrder === undefined) record.actionOrder = 0
+        if (record.overkill === undefined) record.overkill = 0
+      }
 
       if (recording.checksum) {
         const { checksum, ...dataWithoutChecksum } = recording
@@ -546,14 +574,13 @@ export class BattleRecorder {
     }
   }
 
-  public validateRecording(saveKey: string): boolean {
-    const savedData = localStorage.getItem(saveKey)
-    if (!savedData) {
+  public async validateRecording(saveKey: string): Promise<boolean> {
+    const recording = await this.storage.get<RecordedBattle>(STORAGE_STORE.RECORDINGS, saveKey)
+    if (!recording) {
       return false
     }
 
     try {
-      const recording = JSON.parse(savedData)
       if (!recording.checksum) {
         return true
       }
@@ -568,27 +595,35 @@ export class BattleRecorder {
   }
 
   public async getSavedRecordingsList(): Promise<string[]> {
-    const listData = localStorage.getItem('battle_recordings_list')
-    if (!listData) {
-      return []
-    }
-
     try {
-      return JSON.parse(listData)
+      return await this.storage.keys(STORAGE_STORE.RECORDINGS)
     } catch {
       return []
     }
   }
 
   public async deleteRecording(saveKey: string): Promise<boolean> {
-    localStorage.removeItem(saveKey)
-
-    const recordingsList = await this.getSavedRecordingsList()
-    const updatedList = recordingsList.filter((key) => key !== saveKey)
-    localStorage.setItem('battle_recordings_list', JSON.stringify(updatedList))
+    await this.storage.remove(STORAGE_STORE.RECORDINGS, saveKey)
 
     LoggerProvider.logger.addDebugLog(`删除战斗记录: ${saveKey}`)
     return true
+  }
+
+  /**
+   * 按 battleId 删除持久化战斗记录（匹配 saveKey 前缀，支持 BatteReplay.vue 调用）
+   */
+  public async deleteRecordingByBattleId(battleId: string): Promise<boolean> {
+    const keys = await this.storage.keys(STORAGE_STORE.RECORDINGS)
+    const matching = keys.filter(k => k.startsWith(`battle_recording_${battleId}`))
+    let deleted = 0
+    for (const k of matching) {
+      await this.storage.remove(STORAGE_STORE.RECORDINGS, k)
+      deleted++
+    }
+    if (deleted > 0) {
+      LoggerProvider.logger.addDebugLog(`删除战斗记录 battleId=${battleId}: 共 ${deleted} 条`)
+    }
+    return deleted > 0
   }
 
   private recordEvent(
@@ -697,10 +732,15 @@ export class BattleRecorder {
 
     const toDeleteCount = this.recordings.size - this.maxRecordings
     for (let i = 0; i < toDeleteCount; i++) {
-      const [battleId] = sortedRecordings[i]
+      const [battleId, recording] = sortedRecordings[i]
       this.recordings.delete(battleId)
       this.randomSeeds.delete(battleId)
       this.currentTurnNumbers.delete(battleId)
+      // ★ 同步清理持久化记录
+      if (recording.saveKey) {
+        this.storage.remove(STORAGE_STORE.RECORDINGS, recording.saveKey)
+          .catch((e) => LoggerProvider.logger.addDebugLog(`清理持久化记录失败: ${recording.saveKey}`, { error: e }))
+      }
       LoggerProvider.logger.addDebugLog(`清理过期战斗记录: ${battleId}`)
     }
   }

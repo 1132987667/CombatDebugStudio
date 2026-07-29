@@ -100,7 +100,7 @@ const effectLines = computed(() => {
     lines.push({ text, className })
   }
 
-  // 特殊效果行（DOT/HOT/护盾等非属性修正效果 — 来自脚本 getEffectLines）
+  // 特殊效果行（DOT/HEAL/护盾等非属性修正效果 — 来自脚本 getEffectLines）
   if (props.buff.effectLines && props.buff.effectLines.length > 0) {
     for (const el of props.buff.effectLines) {
       lines.push({
@@ -218,7 +218,7 @@ const effectLines = computed(() => {
   color: var(--color-text-tertiary);
 }
 
-/* 特殊效果行配色（DOT/HOT/护盾等） */
+/* 特殊效果行配色（DOT/HEAL/护盾等） */
 .effect--dot {
   color: var(--color-danger);
 }

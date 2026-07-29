@@ -1,5 +1,10 @@
 // 游戏系统演示入口点
 import { initializeContainer } from '@/infrastructure/di/Container'
+import { persistentStorage, migrateLegacyLocalStorage } from '@/infrastructure/adapters/storage'
+
+// 迁移完成前阻塞挂载，防止竞态读取空数据
+const migrationPromise = migrateLegacyLocalStorage(persistentStorage)
+
 initializeContainer()
 
 
@@ -21,6 +26,9 @@ import('@/infrastructure/di/Container').then(({ container }) => {
 })
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // ★ 等待旧数据迁移完成，防止竞态
+  await migrationPromise
+
   const appElement = document.getElementById('app')
   if (appElement) {
     const app = createApp(BattleArena)

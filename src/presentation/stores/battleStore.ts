@@ -32,7 +32,7 @@ import {
   LogType,
   toLogLevel,
 } from '@/shared/types/battle-log'
-import { EffectType } from '@/shared/types/effect'
+import { SkillStepType } from '@/domain/skill/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { defineStore } from 'pinia'
@@ -42,6 +42,8 @@ import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { BATTLE_RULE_MANAGER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
 import { getActionBudget } from '@/shared/constants/animation-timing'
+import { persistentStorage } from '@/infrastructure/adapters/storage'
+import { STORAGE_STORE } from '@/domain/port/IPersistentStorage'
 
 export interface BattleRules {
   /** 是否按速度决定行动顺序（true=速度优先，false=固定顺序） */
@@ -291,13 +293,13 @@ export const useBattleStore = defineStore('battle', () => {
 
   /** 处理伤害动画事件（触发伤害数字飘字效果） */
   const handleDamageAnimationEvent = (data: DamageEventData) =>
-    setAnimationState(EffectType.DAMAGE, data)
+    setAnimationState(SkillStepType.DAMAGE, data)
   /** 处理闪避动画事件（触发闪避提示效果） */
   const handleMissAnimationEvent = (data: MissEventData) =>
-    setAnimationState(EffectType.MISS, data)
+    setAnimationState(SkillStepType.MISS, data)
   /** 处理Buff效果事件（触发Buff图标显示/隐藏） */
   const handleBuffEffectEvent = (data: BuffEffectEventData) =>
-    setAnimationState(EffectType.BUFF, data)
+    setAnimationState(SkillStepType.BUFF, data)
   /** 处理技能特效事件（触发技能释放动画） */
   const handleSkillEffectEvent = (data: SkillEffectEventData) =>
     setAnimationState('skill', data)
@@ -701,17 +703,16 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /**
-   * 导入战斗状态（从 localStorage 恢复）
+   * 导入战斗状态（从 IndexedDB 恢复）
    * @returns Promise<boolean> 操作是否成功
-   * @description 从浏览器本地存储读取之前保存的战斗状态数据
+   * @description 从持久化存储读取之前保存的战斗状态数据
    */
   const importState = async () => {
     setLoading(true)
     clearError()
     try {
-      const savedState = localStorage.getItem('battleState')
+      const savedState = await persistentStorage.get(STORAGE_STORE.SNAPSHOTS, 'battleStateExport')
       if (savedState) {
-        JSON.parse(savedState) // 仅验证格式，实际导入逻辑由外部处理
         battleLogManager.addSystemLog({ message: '战斗状态已导入' })
         return true
       }
@@ -726,12 +727,12 @@ export const useBattleStore = defineStore('battle', () => {
   }
 
   /**
-   * 导出战斗状态（保存到 localStorage）
+   * 导出战斗状态（保存到 IndexedDB）
    * @param currentTurn 当前回合数
    * @returns boolean 操作是否成功
-   * @description 将当前战斗状态（队伍、回合数、规则等）序列化后保存到本地存储
+   * @description 将当前战斗状态（队伍、回合数、规则等）序列化后保存到持久化存储
    */
-  const exportState = (currentTurn: number) => {
+  const exportState = async (currentTurn: number) => {
     try {
       const allyTeam = battleService.value?.getEnabledAllyTeam() || []
       const enemyTeam = battleService.value?.getEnabledEnemyTeam() || []
@@ -740,9 +741,9 @@ export const useBattleStore = defineStore('battle', () => {
         enemyParty: enemyTeam,
         currentTurn,
         rules: rules.value,
-        battleLogs: battleLogManager.getSystemLogs(), // 按需替换为实际日志获取逻辑
+        battleLogs: battleLogManager.getSystemLogs(),
       }
-      localStorage.setItem('battleState', JSON.stringify(state, null, 2))
+      await persistentStorage.set(STORAGE_STORE.SNAPSHOTS, 'battleStateExport', state)
       battleLogManager.addSystemLog({ message: '战斗状态已导出' })
       return true
     } catch (err) {
@@ -951,9 +952,9 @@ export const useBattleStore = defineStore('battle', () => {
       !filters.action
     )
       return false
-    if (!filters.battle && category === EffectType.DAMAGE) return false
-    if (!filters.battle && category === EffectType.HEAL) return false
-    if (!filters.battle && category === EffectType.STATUS) return false
+    if (!filters.battle && category === SkillStepType.DAMAGE) return false
+    if (!filters.battle && category === SkillStepType.HEAL) return false
+    if (!filters.battle && category === SkillStepType.STATUS) return false
     return true
   }
 

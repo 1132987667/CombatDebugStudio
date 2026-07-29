@@ -165,7 +165,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Modifier, ModifierType, AttributeValueType, ModifierSourceType } from '@/domain/attribute/types'
 import { ModifierSourceTypeNames } from '@/domain/attribute/types'
-import { getAttrMeta, getAttributeCodeByName } from '@/domain/attribute/types'
+import { getAttrMeta } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
 
 // ===================== 区间模式类型导出 =====================
@@ -195,6 +195,8 @@ interface Props {
   displayText?: string
   /** 区间模式数据（攻击力使用），存在时切换为区间渲染 */
   rangeLayers?: RangeLayerData[]
+  /** 属性编码（可选），传此值可避免从 title 反向查找 attributeMeta */
+  attributeCode?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -202,7 +204,7 @@ const props = withDefaults(defineProps<Props>(), {
   title: '',
   modifiers: () => [],
   finalValue: 0,
-  valueType: '数值',
+  valueType: AttributeValueType.VALUE,
   triggerRect: null,
   displayText: '',
   rangeLayers: () => [],
@@ -211,17 +213,10 @@ const props = withDefaults(defineProps<Props>(), {
 const tooltipRef = ref<HTMLElement | null>(null)
 
 // 根据属性名称获取属性元数据
+// NOTE: 优先用 attributeCode 直接查 meta，无则跳过（title 反向查找不可靠）
 const attributeMeta = computed(() => {
-  try {
-    let attributeCode = getAttributeCodeByName(props.title)
-    if (!attributeCode) {
-      attributeCode = props.title.toLowerCase()
-    }
-    return getAttrMeta(attributeCode)
-  } catch (error) {
-    console.error('获取属性元数据时出错:', error)
-    return undefined
-  }
+  if (!props.attributeCode) return undefined
+  return getAttrMeta(props.attributeCode as any)
 })
 
 const getSourceLabel = (source: ModifierSourceType): string => {
@@ -230,7 +225,7 @@ const getSourceLabel = (source: ModifierSourceType): string => {
 
 const formatValue = (value: number, valueType: AttributeValueType): string => {
   const rounded = Math.round(value * 100) / 100
-  if (valueType === '百分比') {
+  if (valueType === AttributeValueType.PERCENT) {
     return rounded > 0 ? `+${rounded}%` : `${rounded}%`
   }
   return rounded > 0 ? `+${rounded}` : `${rounded}`

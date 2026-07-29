@@ -3,6 +3,8 @@ import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { BattleEntity, StatusEffect } from '@/domain/battle/type/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import type { IPersistentStorage } from '@/domain/port/IPersistentStorage'
+import { STORAGE_STORE } from '@/domain/port/IPersistentStorage'
 
 /**
  * 手动干预管理器
@@ -16,18 +18,27 @@ export class InterventionManager {
   }
   private selectedCharacterId: string | null = null
   private selectedChar: BattleEntity | null = null
+  private storage: IPersistentStorage | null = null
 
   /**
    * 构造函数
    * @param battleSystem 战斗系统实例
    * @param battleStateManager 战斗状态管理器实例
+   * @param storage 持久化存储（可选，不传时降级为仅内存操作）
    */
   constructor(
     battleSystem: BattleSystem,
     battleStateManager: BattleStateManager,
+    storage?: IPersistentStorage,
   ) {
     this.battleSystem = battleSystem
     this.battleStateManager = battleStateManager
+    if (storage) this.storage = storage
+  }
+
+  /** 延迟注入存储 */
+  setStorage(storage: IPersistentStorage): void {
+    this.storage = storage
   }
 
   /**
@@ -187,7 +198,7 @@ export class InterventionManager {
    * 导出状态
    * @returns 导出的状态对象
    */
-  exportState() {
+  async exportState() {
     const state = {
       battleCharacters: this.battleSystem.getEnabledAllyTeam(),
       enemyParty: this.battleSystem.getEnabledEnemyTeam(),
@@ -195,8 +206,9 @@ export class InterventionManager {
       battleLogs: this.logger.getSystemLogs(),
     }
 
-    // 保存到本地存储
-    localStorage.setItem('battleState', JSON.stringify(state, null, 2))
+    if (this.storage) {
+      await this.storage.set(STORAGE_STORE.SNAPSHOTS, 'interventionExport', state)
+    }
 
     this.logger.addSystemLog({
       message: '战斗状态已导出',
@@ -208,13 +220,15 @@ export class InterventionManager {
    * 导入状态
    * @returns 是否导入成功
    */
-  importState() {
+  async importState() {
     try {
-      const savedState = localStorage.getItem('battleState')
+      let savedState: any = null
+      if (this.storage) {
+        savedState = await this.storage.get(STORAGE_STORE.SNAPSHOTS, 'interventionExport')
+      }
       if (savedState) {
-        const state = JSON.parse(savedState)
         // 基本形状校验：确保解析结果是对象且包含必要字段
-        if (!state || typeof state !== 'object') {
+        if (!savedState || typeof savedState !== 'object') {
           this.logger.addDebugLog('导入状态校验失败: 不是有效对象')
           return false
         }
@@ -241,30 +255,23 @@ export class InterventionManager {
    * 查看导出
    * @returns 导出的状态对象
    */
-  viewExport() {
-    const savedState = localStorage.getItem('battleState')
-    if (savedState) {
-      try {
-        const parsed = JSON.parse(savedState)
-        // 基本形状校验
-        if (!parsed || typeof parsed !== 'object') {
-          console.warn('查看导出校验失败: 不是有效对象')
-          return null
-        }
-        return parsed
-      } catch (error) {
-        console.error('查看导出时出错:', error)
-        return null
+  async viewExport() {
+    try {
+      if (this.storage) {
+        return await this.storage.get(STORAGE_STORE.SNAPSHOTS, 'interventionExport')
       }
+      return null
+    } catch (error) {
+      console.error('查看导出时出错:', error)
+      return null
     }
-    return null
   }
 
   /**
    * 重新加载导出
    * @returns 是否重新加载成功
    */
-  reloadExport() {
+  async reloadExport() {
     return this.importState()
   }
 

@@ -3,6 +3,7 @@
    依赖: tokens.scss
    作用: 主布局、顶栏、三栏面板、控制栏
    ========================================================================== */
+@use '../mixins' as *;
 
 .battle-test-tool {
   width: 100vw;
@@ -273,7 +274,6 @@
 }
 
 .scene-header:hover {
-  background: var(--color-bg-tertiary-hover);
   border-color: var(--color-bg-tertiary-hover);
 }
 

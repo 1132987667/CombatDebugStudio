@@ -146,7 +146,7 @@
 
 .timeline-event.active {
   background: var(--color-info);
-  box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.5);
+  box-shadow: 0 0 0 2px rgba(var(--rgb-info), var(--alpha-glow));
 }
 
 .timeline-event.event-type-action {

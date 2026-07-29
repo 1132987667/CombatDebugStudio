@@ -1,0 +1,122 @@
+// ==========================================================================
+// _mixins.scss — 零 CSS 产物，仅供 @use
+// 除非新组件确实需要，否则不要在 .vue 的 scoped style 中 @use 此文件
+// .vue 文件 → @use '@/presentation/styles/mixins' as *;
+// .scss 文件 → @use 'mixins' as *;
+// ==========================================================================
+
+// ── Flex 布局容器 ──
+@mixin flex-layout($justify: space-between, $align: center) {
+  display: flex;
+  justify-content: $justify;
+  align-items: $align;
+}
+
+// ── 按钮基座（18 个变体共享 80% 结构） ──
+@mixin btn-base {
+  background: var(--color-border-default);
+  color: var(--color-info);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+  padding: var(--space-2) var(--space-4);
+  &:hover:not(:disabled) {
+    background: var(--color-border-tertiary);
+    border-color: var(--color-border-tertiary-active);
+  }
+  &.active {
+    background: rgba(var(--rgb-active-color), var(--alpha-wash-strong));
+    color: var(--color-active);
+    border-color: var(--color-active);
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+// ── 输入字段 ──
+@mixin field {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  padding: var(--space-1) var(--space-2);
+  &:focus {
+    outline: none;
+    border-color: var(--color-info);
+  }
+  &:disabled {
+    color: var(--color-text-disabled);
+  }
+}
+
+// ── 面板头部 ──
+@mixin panel-header {
+  @include flex-layout;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border-default);
+  color: var(--color-info);
+}
+
+// ── 面板容器 ──
+@mixin panel {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+}
+
+// ── 徽章 ──
+@mixin badge(
+  $bg: var(--color-border-default),
+  $fg: var(--color-text-tertiary)
+) {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: $bg;
+  color: $fg;
+  font-size: var(--font-size-xxs);
+  font-weight: var(--font-weight-bold);
+}
+
+// ── 空状态 ──
+@mixin empty-state {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+// ── 遮罩 ──
+@mixin overlay($z: var(--z-modal)) {
+  position: fixed;
+  inset: 0;
+  background: var(--color-overlay);
+  @include flex-layout(center);
+  z-index: $z;
+}
+
+// ── 滚动区域 ──
+@mixin scroll-area {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+// ── 文本截断 ──
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -235,14 +235,14 @@ const handleButtonClick = (action: string) => {
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(var(--rgb-black), var(--alpha-glow));
   backdrop-filter: blur(10px);
 }
 
 .debug-module {
   margin-bottom: var(--space-4);
   padding: var(--space-3);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(var(--rgb-white), var(--alpha-tint));
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-hairline);
 }
@@ -265,7 +265,7 @@ const handleButtonClick = (action: string) => {
 }
 
 .module-name {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(var(--rgb-white), 0.9);
   font-weight: var(--font-weight-medium);
 }
 
@@ -357,12 +357,12 @@ const handleButtonClick = (action: string) => {
 .impact-style-selector {
   margin-top: var(--space-2);
   padding-top: var(--space-2);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(var(--rgb-white), var(--alpha-tint));
 }
 
 .selector-label {
   display: block;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--rgb-white), 0.6);
   margin-bottom: var(--space-1);
 }
 
@@ -411,7 +411,7 @@ const handleButtonClick = (action: string) => {
 }
 
 .log-gen-label {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--rgb-white), 0.6);
   font-size: var(--font-size-md);
   min-width: 40px;
   flex-shrink: 0;

@@ -161,8 +161,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@use'@/presentation/styles/main.scss';
-
 .auto-battle-indicator {
   position: absolute;
   top: 10px;
@@ -206,7 +204,7 @@ onUnmounted(() => {
   }
 
   50% {
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.6);
+    box-shadow: 0 0 20px rgba(var(--rgb-energy), 0.6);
   }
 }
 
@@ -256,7 +254,7 @@ onUnmounted(() => {
 
 .debug-toggle-switch.active {
   border-color: var(--border-debug-color-light);
-  background: rgba(34, 211, 238, 0.1);
+  background: rgba(var(--rgb-energy), var(--alpha-wash));
 }
 
 .toggle-track {
@@ -282,7 +280,7 @@ onUnmounted(() => {
   background: #fff;
   border-radius: 50%;
   transition: transform var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(var(--rgb-black), var(--alpha-border));
 }
 
 .debug-toggle-switch.active .toggle-thumb {
@@ -290,7 +288,7 @@ onUnmounted(() => {
 }
 
 .toggle-label {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--rgb-white), 0.6);
   white-space: nowrap;
   transition: color var(--transition-fast);
 }
@@ -336,13 +334,13 @@ onUnmounted(() => {
   background: #fff;
   border-radius: 50%;
   transition: transform var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(var(--rgb-black), var(--alpha-border));
 }
 .quick-toggle.active .qt-toggle-thumb {
   transform: translateX(14px);
 }
 .quick-toggle .qt-toggle-label {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--rgb-white), 0.6);
   white-space: nowrap;
   transition: color var(--transition-fast);
 }

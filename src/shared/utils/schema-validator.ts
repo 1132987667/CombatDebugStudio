@@ -6,12 +6,11 @@
  * 描述: 使用JSON Schema验证技能和Effect配置的完整性和正确性
  */
 
-import { SkillConfig, SkillStep, PassiveCategory } from '@/domain/skill/types'
-
+import { SkillConfig, SkillStep } from '@/domain/skill/types'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 /** 合法被动分类值 */
-const VALID_PASSIVE_CATEGORIES: readonly PassiveCategory[] = [
-  'attribute', 'aura', 'trigger', 'heal', 'immunity', 'summon', 'dot', 'shield',
-]
+const VALID_PASSIVE_CATEGORIES: readonly AtomicEffectType[] =
+  Object.values(AtomicEffectType)
 
 /**
  * 验证结果接口
@@ -58,7 +57,19 @@ const skillSchema = {
       required: ['faction'],
       properties: {
         faction: { type: 'string', enum: ['enemy', 'ally', 'all', 'self'] },
-        strategy: { type: 'string', enum: ['all', 'random', 'lowest_hp', 'highest_hp', 'front', 'back', 'adjacent', 'first'] },
+        strategy: {
+          type: 'string',
+          enum: [
+            'all',
+            'random',
+            'lowest_hp',
+            'highest_hp',
+            'front',
+            'back',
+            'adjacent',
+            'first',
+          ],
+        },
         count: { type: 'number', minimum: 1 },
       },
     },
@@ -173,7 +184,6 @@ const skillSchema = {
   },
 }
 
-
 /**
  * 验证技能配置
  * @param skillConfig 技能配置对象
@@ -222,16 +232,35 @@ export function validateSkillConfig(
       // 验证 step.targetConfig 字段（新格式）
       if (step.targetConfig) {
         const tc = step.targetConfig
-        if (!tc.faction || !['enemy', 'ally', 'all', 'self'].includes(tc.faction)) {
-          errors.push(`Step ${index}: targetConfig.faction must be one of: enemy, ally, all, self`)
+        if (
+          !tc.faction ||
+          !['enemy', 'ally', 'all', 'self'].includes(tc.faction)
+        ) {
+          errors.push(
+            `Step ${index}: targetConfig.faction must be one of: enemy, ally, all, self`,
+          )
         }
-        if (tc.strategy && !['all', 'random', 'lowest_hp', 'highest_hp', 'front', 'back', 'adjacent', 'first'].includes(tc.strategy)) {
-          errors.push(`Step ${index}: targetConfig.strategy is invalid: ${tc.strategy}`)
+        if (
+          tc.strategy &&
+          ![
+            'all',
+            'random',
+            'lowest_hp',
+            'highest_hp',
+            'front',
+            'back',
+            'adjacent',
+            'first',
+          ].includes(tc.strategy)
+        ) {
+          errors.push(
+            `Step ${index}: targetConfig.strategy is invalid: ${tc.strategy}`,
+          )
         }
       }
 
       // 检查 effectId（如果是 apply_buff 类型）
-      if ((step.type === 'apply_buff') && !step.effectId && !step.buffId) {
+      if (step.type === 'apply_buff' && !step.effectId && !step.buffId) {
         errors.push(
           `Step ${index}: Missing required field: effectId for ${step.type} type`,
         )
@@ -247,8 +276,10 @@ export function validateSkillConfig(
       errors.push('passiveCategory must be a non-empty array')
     } else {
       for (const cat of skillConfig.passiveCategory) {
-        if (!VALID_PASSIVE_CATEGORIES.includes(cat as PassiveCategory)) {
-          errors.push(`Invalid passiveCategory value: "${cat}". Must be one of: ${VALID_PASSIVE_CATEGORIES.join(', ')}`)
+        if (!VALID_PASSIVE_CATEGORIES.includes(cat as AtomicEffectType)) {
+          errors.push(
+            `Invalid passiveCategory value: "${cat}". Must be one of: ${VALID_PASSIVE_CATEGORIES.join(', ')}`,
+          )
         }
       }
     }
@@ -265,7 +296,9 @@ export function validateSkillConfig(
  * @param effectConfig Effect配置对象
  * @returns 验证结果
  */
-export function validateEffectConfig(effectConfig: Record<string, unknown>): ValidationResult {
+export function validateEffectConfig(
+  effectConfig: Record<string, unknown>,
+): ValidationResult {
   const errors: string[] = []
 
   // 检查必填字段
@@ -276,7 +309,9 @@ export function validateEffectConfig(effectConfig: Record<string, unknown>): Val
   if (!effectConfig.type) {
     errors.push('Missing required field: type')
   } else if (
-    !['damage', 'heal', 'buff', 'debuff', 'special'].includes(effectConfig.type as string)
+    !['damage', 'heal', 'buff', 'debuff', 'special'].includes(
+      effectConfig.type as string,
+    )
   ) {
     errors.push(
       `Invalid type: ${effectConfig.type}. Must be one of: damage, heal, buff, debuff, special`,
@@ -329,7 +364,9 @@ export function validateSkillConfigs(
  * @param effectConfigs Effect配置数组
  * @returns 验证结果
  */
-export function validateEffectConfigs(effectConfigs: Record<string, unknown>[]): ValidationResult {
+export function validateEffectConfigs(
+  effectConfigs: Record<string, unknown>[],
+): ValidationResult {
   const errors: string[] = []
   let validCount = 0
 

@@ -15,7 +15,6 @@ import {
 import type { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
-import { EffectType } from '@/shared/types/effect'
 import {
   BATTLE_LOG_CATEGORIES,
   type BattleLogCategory,
@@ -45,7 +44,7 @@ import {
   SkillType,
   AttackType,
   DamageCategory,
-  SkillStepType,
+  EffectType,
   convertSkillConfigToSkill,
 } from '@/domain/skill/types'
 import {
@@ -131,8 +130,6 @@ export class BattleExecutor {
 
   /**
    * 检查参与者是否有控制类Buff
-   * ponytail: 委托给 BuffSystem 的优先级系统，而非硬编码 hasBuff 检查。
-   *           所有 ControlType（STUN/SILENCE/FREEZE/SLEEP/BIND）都通过同一入口处理。
    */
   isParticipantControlled(participant: BattleEntity): boolean {
     return this.buffSystem.isCharacterControlled(participant.id)
@@ -376,6 +373,7 @@ export class BattleExecutor {
 
     // 用于收集每次技能执行的详细记录
     const records: CombatRecord[] = []
+    const overkillMap = new Map<string, number>()
 
     try {
       // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
@@ -467,6 +465,9 @@ export class BattleExecutor {
       // 将所有详细记录存入 BattleRecorder
       for (const record of records) {
         record.damageSource = 'skill'
+        record.actionOrder = this.getActionOrder()
+        const recordOverkill = overkillMap.get(record.targetId)
+        if (recordOverkill && recordOverkill > 0) record.overkill = recordOverkill
         this.battleRecorder.recordCombatRecord(battleData.battleId, record)
         // ponytail: 技术调试日志 — 技能伤害计算链路追踪
         try {
@@ -542,7 +543,8 @@ export class BattleExecutor {
           targetResults.length = 0
           for (const r of resultMap.values()) {
             if (r.finalDamage > 0) {
-              this.settleDamage(source, r.target, r.finalDamage, r.rawDamage, isCrit, battleData)
+              const actualDamage = this.settleDamage(source, r.target, r.finalDamage, r.rawDamage, isCrit, battleData)
+              overkillMap.set(r.target.id, Math.max(0, actualDamage - r.hpBefore))
             }
             if (r.heal > 0) {
               r.target.heal(r.heal)
@@ -850,7 +852,7 @@ export class BattleExecutor {
     targetId: string,
   ): ExtendedSkillStep {
     return {
-      type: SkillStepType.DEAL_DAMAGE,
+      type: EffectType.DAMAGE,
       id: 'normal_attack',
       targetId,
       damageCategory: DamageCategory.PHYSICAL,
@@ -1112,6 +1114,7 @@ export class BattleExecutor {
     target: BattleEntity,
     damageResult: { damage: number; isCritical: boolean; rawDamage: number },
     battle: BattleData,
+    record?: CombatRecord,
   ): Promise<void> {
     const { damage, isCritical, rawDamage } = damageResult
     action.damage = damage
@@ -1136,6 +1139,9 @@ export class BattleExecutor {
 
     // 命中瞬间（50%T）：扣血，气血 条与 UI 特效同帧开始
     const actualDamage = this.settleDamage(source, target, damage, rawDamage, isCritical, battle)
+    // ★ overkill = takeDamage 返回值超出目标扣血前 HP 的部分
+    const overkill = Math.max(0, actualDamage - hpBefore)
+    if (record && overkill > 0) record.overkill = overkill
 
     const hpAfter = target.currentHealth
 
@@ -1279,7 +1285,7 @@ export class BattleExecutor {
     if (damageResult.isMiss) {
       await this.handleMissAttack(action, source, target, currentTurn, battle)
     } else {
-      await this.handleHitAttack(action, source, target, damageResult, battle)
+      await this.handleHitAttack(action, source, target, damageResult, battle, record)
     }
 
     // ★ action 日志已发射，刷出缓冲的 BEFORE_ATTACK sub 日志
@@ -1288,6 +1294,7 @@ export class BattleExecutor {
     // 回填最终伤害到记录
     record.damage = action.damage ?? 0
     record.damageSource = 'attack'
+    record.actionOrder = this.getActionOrder()
     record.message = `${source.name} 对 ${target.name} 普通攻击，造成 ${action.damage ?? 0} 伤害`
     this.battleRecorder.recordCombatRecord(battle.battleId, record)
     // ponytail: 技术调试日志 — 伤害计算链路追踪

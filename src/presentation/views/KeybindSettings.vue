@@ -135,7 +135,3 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 </script>
-
-<style scoped>
-@use'@/presentation/styles/main.scss';
-</style>

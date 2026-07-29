@@ -76,7 +76,7 @@ export interface BuffTextItem {
   /** 修饰符列表（来源追溯用） */
   modifiers: BuffModifier[]
 
-  /** 特殊效果行（DOT/HOT/护盾/反伤等非属性修正效果） */
+  /** 特殊效果行（DOT/HEAL/护盾/反伤等非属性修正效果） */
   effectLines: BuffEffectLine[]
 
   // === 调试模式字段 ===

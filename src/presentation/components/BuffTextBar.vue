@@ -151,7 +151,6 @@ function onTagLeave() {
 }
 
 .bar-placeholder {
-  font-size: var(--font-size-xs);
   color: var(--color-text-disabled);
   font-style: italic;
 }
@@ -160,7 +159,6 @@ function onTagLeave() {
   display: inline-flex;
   align-items: center;
   padding: 0 6px;
-  font-size: var(--font-size-xs);
   color: var(--color-info);
   font-weight: var(--font-weight-bold);
   border-radius: var(--radius-sm);

@@ -143,7 +143,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
   background: var(--color-overlay-panel);
   border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-lg);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 16px 48px rgba(var(--rgb-black), var(--alpha-glow));
   backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
@@ -211,7 +211,6 @@ const summaryLines = computed<SummaryLine[]>(() => {
 }
 
 .secondary-toggle {
-  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   cursor: pointer;
   user-select: none;

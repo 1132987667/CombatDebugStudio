@@ -71,13 +71,6 @@
 .display-none { display: none !important; }
 .hidden { visibility: hidden !important; }
 
-/* ----- 5. 文本缩进与浮动 ----- */
-.ti1 { text-indent: 1em; }
-.ti2 { text-indent: 2em; }
-
-.fr { float: right; }
-.fl { float: left; }
-
 /* ----- 6. 溢出与省略 ----- */
 .toh { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
 .ofh { overflow: hidden; }

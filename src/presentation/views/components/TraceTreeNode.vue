@@ -19,10 +19,23 @@
         {{ node.stepName }}
       </span>
 
+      <!-- 效果链：before → after（当 before !== after 且均非 undefined 时显示） -->
+      <span v-if="hasEffectChain" class="trace-effect-chain">
+        <span class="eff-before">{{ node.before }}</span>
+        <span class="eff-arrow">→</span>
+        <span class="eff-after">{{ node.after }}</span>
+      </span>
+
       <!-- 数值 -->
-      <span v-if="node.stepValue !== 0" class="trace-value" :class="valueColorClass">
+      <span v-if="node.stepValue !== 0 && !hasEffectChain" class="trace-value" :class="valueColorClass">
         {{ node.stepValue }}
       </span>
+      <span v-else-if="node.stepValue !== 0 && hasEffectChain" class="trace-value" :class="valueColorClass">
+        = {{ node.stepValue }}
+      </span>
+
+      <!-- 来源标记 -->
+      <span v-if="node.sourceType" class="trace-source">{{ node.sourceType }}</span>
 
       <!-- 描述 -->
       <span class="trace-desc">{{ node.description || node.message || '' }}</span>
@@ -51,6 +64,13 @@ const props = withDefaults(defineProps<Props>(), {
 const expanded = ref(props.depth < 1) // 第一层默认展开
 
 const hasChildren = computed(() => props.node.children && props.node.children.length > 0)
+
+/** 有 before/after 且数值不同步时显示效果链箭头 */
+const hasEffectChain = computed(() => {
+  return props.node.before !== undefined
+    && props.node.after !== undefined
+    && props.node.before !== props.node.after
+})
 
 const toggle = () => {
   if (hasChildren.value) expanded.value = !expanded.value
@@ -176,6 +196,43 @@ const valueColorClass = computed(() => {
   &.value-negative {
     color: var(--color-warning);
   }
+}
+
+/* 效果链：before → after */
+.trace-effect-chain {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: var(--font-weight-semibold);
+  flex-shrink: 0;
+  min-width: 60px;
+
+  .eff-before {
+    color: var(--color-text-secondary);
+    font-size: 0.85em;
+  }
+
+  .eff-arrow {
+    color: var(--color-text-tertiary);
+    font-size: 0.8em;
+  }
+
+  .eff-after {
+    color: var(--color-damage);
+  }
+}
+
+/* 来源标记 */
+.trace-source {
+  display: inline-block;
+  padding: 0 4px;
+  font-size: 0.75em;
+  line-height: 1.4;
+  border-radius: 3px;
+  background: var(--color-bg-tertiary, #f0f0f0);
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
 }
 
 .trace-desc {

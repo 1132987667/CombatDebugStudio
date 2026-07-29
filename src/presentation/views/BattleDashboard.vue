@@ -119,15 +119,8 @@
         </div>
       </div>
       <div class="monitor-group">
-        <div class="monitor-tabs">
-          <button class="tab-btn" :class="{ active: activeTab === 'passive' }"
-            @click="activeTab = 'passive'">被动</button>
-          <button class="tab-btn" :class="{ active: activeTab === 'active' }" @click="activeTab = 'active'">主动</button>
-          <button class="tab-btn" :class="{ active: activeTab === 'status' }" @click="activeTab = 'status'">状态</button>
-        </div>
-
-        <!-- 被动技能 -->
-        <div v-if="activeTab === 'passive'" class="skills-display">
+        <Tabs v-model="activeTab" :tabs="skillTabs" size="sm" destroy-inactive>
+          <template #passive>
           <div v-if="groupedPassives.length === 0" class="no-skills">
             暂无被动技能
           </div>
@@ -146,9 +139,9 @@
             </div>
           </div>
         </div>
-
-        <!-- 主动技能 -->
-        <div v-if="activeTab === 'active'" class="skills-display">
+      </template>
+      <template #active>
+        <div class="skills-display">
           <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length"
             class="no-skills">
             暂无主动技能
@@ -172,14 +165,16 @@
             </div>
           </div>
         </div>
-
-        <!-- 状态（Buff） -->
-        <div v-if="activeTab === 'status'" class="skills-display">
+      </template>
+      <template #status>
+        <div class="skills-display">
           <div v-if="buffListItems.length === 0" class="no-skills">无生效状态</div>
           <div v-else class="buff-list">
             <BuffTextGroup v-for="buff in buffDisplay.groups" :key="buff.instanceId" :buff="buff" :debug-mode="false" />
           </div>
         </div>
+      </template>
+    </Tabs>
       </div>
     </div>
 
@@ -240,7 +235,8 @@
     <AttributeTooltip :visible="attrTooltipVisible" :title="attrTooltipData.title"
       :modifiers="attrTooltipData.modifiers" :final-value="attrTooltipData.finalValue"
       :value-type="attrTooltipData.valueType" :trigger-rect="attrTooltipData.triggerRect"
-      :display-text="attrTooltipData.displayText" :range-layers="attrTooltipData.rangeLayers" />
+      :display-text="attrTooltipData.displayText" :range-layers="attrTooltipData.rangeLayers"
+      :attribute-code="attrTooltipData.attributeCode" />
 
     <!-- 战斗回放 -->
     <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart" @replay-end="handleReplayEnd"
@@ -260,6 +256,8 @@ import { formatTargetConfig, SkillType, SkillTypeName, ExtendedSkillStep } from 
 import { container } from '@/infrastructure/di/Container';
 import AttributeTooltip, { type RangeLayerData, type RangeModifierRow } from "@/presentation/components/AttributeTooltip.vue";
 import BuffTextGroup from "@/presentation/components/BuffTextGroup.vue";
+import Tabs from '@/presentation/components/Tabs.vue'
+import type { TabItem } from '@/presentation/components/Tabs.vue'
 import { useBattleStore } from '@/presentation/stores';
 import BattleReplay from "@/presentation/views/BattleReplay.vue";
 import { formatBonusValue } from '@/shared/utils/format';
@@ -360,7 +358,12 @@ const advancedAttributes = computed(() => {
 
 // ------------------------------------------------------------
 // Tabs 状态（技能/状态切换）
-const activeTab = ref<'passive' | 'active' | 'status'>('passive')
+const activeTab = ref<string>('passive')
+const skillTabs: TabItem[] = [
+  { id: 'passive', label: '被动' },
+  { id: 'active', label: '主动' },
+  { id: 'status', label: '状态' },
+]
 
 // ------------------------------------------------------------
 // Buff 数据（状态 tab）
@@ -550,6 +553,7 @@ const attrTooltipData = ref<{
   triggerRect: DOMRect | null
   displayText?: string
   rangeLayers?: RangeLayerData[]
+  attributeCode?: string
 }>({
   title: '',
   modifiers: [],
@@ -558,7 +562,7 @@ const attrTooltipData = ref<{
   triggerRect: null
 })
 
-const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType, displayText?: string, rangeLayers?: RangeLayerData[]) => {
+const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[], finalValue: number, valueType: AttributeValueType, displayText?: string, rangeLayers?: RangeLayerData[], attributeCode?: string) => {
   if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
   attrTooltipData.value = {
     title,
@@ -567,7 +571,8 @@ const showAttrTooltip = (event: MouseEvent, title: string, modifiers: Modifier[]
     valueType,
     triggerRect: (event.currentTarget as HTMLElement).getBoundingClientRect(),
     displayText,
-    rangeLayers
+    rangeLayers,
+    attributeCode,
   }
   attrTooltipVisible.value = true
 }
@@ -578,7 +583,7 @@ const showAttrTooltipSimple = (event: MouseEvent, code: ATTRIBUTE_CODE) => {
   const valueType = meta?.isPercentage ? AttributeValueType.PERCENT : AttributeValueType.VALUE
   const defaultValue = getAttrDv(code)
   const attr = currentCharacter.value?.getAttrVal(code)
-  showAttrTooltip(event, title, attr?.modifiers || [], attr?.value ?? defaultValue, valueType)
+  showAttrTooltip(event, title, attr?.modifiers || [], attr?.value ?? defaultValue, valueType, undefined, undefined, code)
 }
 
 /**
@@ -761,8 +766,6 @@ const handleBattleEndReplay = (winner: string) => {
 </script>
 
 <style scoped>
-@use "@/presentation/styles/main.scss";
-
 /* 显示层级过滤器 */
 .tier-filters {
   display: flex;
@@ -777,7 +780,7 @@ const handleBattleEndReplay = (winner: string) => {
   align-items: center;
   gap: 4px;
   font-size: 0.8em;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(var(--rgb-white), 0.65);
   cursor: pointer;
   user-select: none;
 }
@@ -787,7 +790,7 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .skill-item {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--rgb-white), 0.85);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   transition: var(--transition-fast);
@@ -801,7 +804,7 @@ const handleBattleEndReplay = (winner: string) => {
 
 .skill-item:hover {
   /* ponytail: uses --color-energy (#0a7f91) with opacity; no token for 10% bg */
-  background: rgba(34, 211, 238, 0.1);
+  background: rgba(var(--rgb-energy), var(--alpha-wash));
   /* ponytail: glow uses --color-energy with opacity */
   box-shadow: 0 0 8px var(--border-debug-color);
 }
@@ -864,10 +867,10 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .no-skills {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--rgb-white), var(--alpha-glow));
   text-align: center;
   padding: var(--space-2);
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--rgb-black), var(--alpha-wash-strong));
   border-radius: var(--radius-sm);
 }
 </style>
@@ -882,14 +885,14 @@ const handleBattleEndReplay = (winner: string) => {
   min-width: 280px;
   max-width: 360px;
   padding: var(--space-3) var(--space-4);
-  background: rgba(15, 23, 42, 0.95);
+  background: var(--color-overlay-panel);
   border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px var(--border-common-color-dark);
+  box-shadow: 0 8px 32px rgba(var(--rgb-black), var(--alpha-glow)), 0 0 16px var(--border-common-color-dark);
   backdrop-filter: blur(12px);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   line-height: var(--line-height-md);
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--rgb-white), 0.85);
   pointer-events: none;
 }
 
@@ -906,7 +909,7 @@ const handleBattleEndReplay = (winner: string) => {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--color-energy);
-  text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+  text-shadow: 0 0 8px rgba(var(--rgb-energy), 0.4);
 }
 
 .tooltip-type {
@@ -922,17 +925,17 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .tooltip-type.passive {
-  background: rgba(34, 211, 238, 0.2);
+  background: rgba(var(--rgb-energy), var(--alpha-wash-strong));
   color: var(--color-energy);
 }
 
 .tooltip-type.ultimate {
-  background: rgba(249, 115, 22, 0.2);
+  background: rgba(var(--rgb-live), var(--alpha-wash-strong));
   color: var(--color-warning);
 }
 
 .tooltip-description {
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(var(--rgb-white), 0.75);
   margin-bottom: var(--space-3);
   line-height: var(--line-height-lg);
 }
@@ -954,7 +957,7 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .tooltip-stats .stat-label {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--rgb-white), var(--alpha-glow));
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -969,7 +972,7 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .effects-title {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--rgb-white), var(--alpha-glow));
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: var(--space-2);
@@ -994,7 +997,7 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .effect-formula {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(var(--rgb-white), 0.7);
   font-family: 'JetBrains Mono', monospace;
 }
 
@@ -1003,13 +1006,13 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .effect-duration {
-  color: rgba(249, 115, 22, 0.8);
+  color: rgba(var(--rgb-live), 0.8);
 }
 
 .tooltip-condition {
   padding: var(--space-2);
-  background: rgba(249, 115, 22, 0.1);
-  border: 1px solid rgba(249, 115, 22, 0.3);
+  background: rgba(var(--rgb-live), var(--alpha-wash));
+  border: 1px solid rgba(var(--rgb-live), var(--alpha-border));
   border-radius: var(--radius-sm);
 }
 
@@ -1019,7 +1022,7 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .condition-value {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(var(--rgb-white), 0.7);
   font-family: 'JetBrains Mono', monospace;
 }
 
@@ -1039,9 +1042,9 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .tooltip-availability.unavailable {
-  background: rgba(249, 115, 22, 0.15);
+  background: rgba(var(--rgb-live), var(--alpha-wash));
   color: var(--color-warning);
-  border: 1px solid rgba(249, 115, 22, 0.3);
+  border: 1px solid rgba(var(--rgb-live), var(--alpha-border));
 }
 
 /* 悬浮提示过渡动画 */

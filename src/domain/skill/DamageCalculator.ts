@@ -10,7 +10,7 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
-import { EffectType } from '@/shared/types/effect'
+import { EffectType } from '@/domain/skill/types'
 
 export interface DamageCalculationConfig {
   enableCrit: boolean

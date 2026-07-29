@@ -1,14 +1,6 @@
 import type { IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ControlType } from '@/domain/buff/types'
-
-const CONTROL_NAMES: Record<string, string> = {
-  [ControlType.STUN]: '眩晕',
-  [ControlType.SILENCE]: '沉默',
-  [ControlType.FREEZE]: '冰冻',
-  [ControlType.SLEEP]: '睡眠',
-  [ControlType.BIND]: '束缚',
-}
+import { CONTROL_NAMES } from '@/shared/types/effect'
 
 /**
  * ControlEffect — 控制原语

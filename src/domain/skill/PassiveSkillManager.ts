@@ -22,7 +22,7 @@ import {
   BATTLE_LOG_CATEGORIES,
   LogLevel,
 } from '@/shared/types/battle-log'
-import { EffectType } from '@/shared/types/effect'
+import { EffectType } from '@/domain/skill/types'
 import { createTraceLogEntry } from '@/shared/types/trace-log'
 
 export interface PassiveSkillConfig {

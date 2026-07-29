@@ -44,8 +44,7 @@ $transition-fast: var(--transition-fast);
   --color-text-inverse: #1a1a2e;
 
   /* ----- 1.2 边框与分割线 ----- */
-  --color-border-default: #0f3460;
-  --color-border-light: #1a3a5e;
+  --color-border-default: #1a3a5e;
   --color-border-tertiary: #0f4b86; /* hsl(210, 80%, 29%)  基准 */
   --color-border-tertiary-hover: #175fb0; /* hsl(212, 77%, 39%)  ΔL +10 */
   --color-border-tertiary-active: #1976e1; /* hsl(212, 80%, 49%)  ΔL +10 */
@@ -61,30 +60,22 @@ $transition-fast: var(--transition-fast);
 
   /* ----- 1.4 语义色 (状态反馈) ----- */
   --color-success: #4caf50;
-  --color-success-bg: rgba(76, 175, 80, 0.2);
-
   --color-danger: #f44336;
-  --color-danger-bg: rgba(244, 67, 54, 0.2);
-
   --color-warning: #ff9800;
-  --color-warning-bg: rgba(255, 152, 0, 0.2);
-
   --color-info: #4fc3f7;
-  --color-info-bg: rgba(75, 195, 247, 0.2);
 
   /* 战斗系统专用语义色 */
   --color-heal: #4caf50;
-  --color-heal-bg: rgba(76, 175, 80, 0.2);
   --color-damage: #f44336;
-  --color-damage-bg: rgba(244, 67, 54, 0.2);
   --color-crit: #ff9800;
   --color-casting: #9c88ff;
   --color-buff: #4caf50;
   --color-debuff: #a855f7;
 
   /* ----- 1.5 组件交互状态色 ----- */
-  --color-bg-hover: rgba(255, 255, 255, 0.25);
-  --color-bg-active: rgba(255, 255, 255, 0.32);
+  --color-bg-hover: rgba(255, 255, 255, 0.06); /* 轻抚 */
+  --color-bg-active: rgba(255, 255, 255, 0.1); /* 按下/选中 */
+  --color-bg-hover-accent: rgba(34, 211, 238, 0.08); /* 对应 --rgb-energy */
   --color-overlay: rgba(0, 0, 0, 0.6);
 
   /* ponytail: 阵营色用于区分我方/敌方头部背景 */
@@ -93,51 +84,44 @@ $transition-fast: var(--transition-fast);
   --color-enemy-primary: #7a1a1a;
   --color-enemy-text: var(--color-danger);
 
-  --border-debug-color-dark: rgba(34, 211, 238, 0.15);
-  --border-debug-color: rgba(34, 211, 238, 0.3);
-  --border-debug-color-light: rgba(34, 211, 238, 0.5);
-
-  --border-common-color-dark: rgba(96, 165, 250, 0.15);
-  --border-common-color: rgba(96, 165, 250, 0.3);
-  --border-common-color-light: rgba(96, 165, 250, 0.5);
-
   /* ═══ 机制一：RGB 分量 —— 只为需要透明的强调色建立 ═══ */
-  --rgb-energy:    34, 211, 238;   /* #22d3ee 唯一能量青 */
-  --rgb-info:      79, 195, 247;   /* #4fc3f7 */
-  --rgb-success:   76, 175, 80;    /* #4caf50（heal/buff 共用） */
-  --rgb-danger:    244, 67, 54;    /* #f44336（damage 共用） */
-  --rgb-warning:   255, 152, 0;    /* #ff9800（crit 共用） */
-  --rgb-debuff:    168, 85, 247;   /* #a855f7 唯一紫 */
-  --rgb-casting:   156, 136, 255;  /* #9c88ff */
-  --rgb-shield:    102, 184, 255;  /* #66b8ff */
-  --rgb-brand-red: 233, 69, 96;    /* #e94560 */
-  --rgb-live:      249, 115, 22;   /* #f97316 自动战斗/运行态 */
-  --rgb-skill-active:   96, 165, 250;  /* #60a5fa */
-  --rgb-skill-ultimate: 251, 191, 36;  /* #fbbf24 */
-  --rgb-neutral:   136, 136, 136;
-  --rgb-white:     255, 255, 255;
-  --rgb-black:     0, 0, 0;
-  --rgb-overlay:   15, 23, 42;     /* #0f172a 浮层面板底 */
+  --rgb-energy: 34, 211, 238; /* #22d3ee 唯一能量青 */
+  --rgb-info: 79, 195, 247; /* #4fc3f7 */
+  --rgb-success: 76, 175, 80; /* #4caf50（heal/buff 共用） */
+  --rgb-danger: 244, 67, 54; /* #f44336（damage 共用） */
+  --rgb-warning: 255, 152, 0; /* #ff9800（crit 共用） */
+  --rgb-debuff: 168, 85, 247; /* #a855f7 唯一紫 */
+  --rgb-casting: 156, 136, 255; /* #9c88ff */
+  --rgb-shield: 102, 184, 255; /* #66b8ff */
+  --rgb-brand-red: 233, 69, 96; /* #e94560 */
+  --rgb-live: 249, 115, 22; /* #f97316 自动战斗/运行态 */
+  --rgb-skill-active: 96, 165, 250; /* #60a5fa */
+  --rgb-skill-ultimate: 251, 191, 36; /* #fbbf24 */
+  --rgb-active-color: 251, 191, 36; /* #fbbf24 */
+  --rgb-neutral: 136, 136, 136;
+  --rgb-white: 255, 255, 255;
+  --rgb-black: 0, 0, 0;
+  --rgb-overlay: 15, 23, 42; /* #0f172a 浮层面板底 */
 
   /* ═══ 机制二：透明度角色 —— 系统全部 alpha 词汇，仅此 5 档 ═══ */
-  --alpha-tint:        0.05;  /* 环境着色：条容器底、tooltip 描述底 */
-  --alpha-wash:        0.1;   /* 交互着色：hover、选中、标签底 */
-  --alpha-wash-strong: 0.2;   /* 强调着色：技能卡底、徽章底 */
-  --alpha-border:      0.3;   /* 彩色边框 */
-  --alpha-glow:        0.5;   /* 辉光、投影、脉冲 */
+  --alpha-tint: 0.05; /* 环境着色：条容器底、tooltip 描述底 */
+  --alpha-wash: 0.1; /* 交互着色：hover、选中、标签底 */
+  --alpha-wash-strong: 0.2; /* 强调着色：技能卡底、徽章底 */
+  --alpha-border: 0.3; /* 彩色边框 */
+  --alpha-glow: 0.5; /* 辉光、投影、脉冲 */
 
   /* ═══ 机制三：语义补全 —— 收编当前裸奔的色值 ═══ */
-  --color-energy: #22d3ee;             /* ⚠ 原 #1099ae，改判给事实标准青 */
-  --color-energy-deep: #0a7f91;        /* 深青：渐变端点、选中态、元素标签 */
+  --color-energy: #22d3ee; /* ⚠ 原 #1099ae，改判给事实标准青 */
+  --color-energy-deep: #0a7f91; /* 深青：渐变端点、选中态、元素标签 */
   --color-selected: var(--color-energy-deep);
   --color-crit-glow: rgba(var(--rgb-warning), var(--alpha-glow));
   --color-shield: #66b8ff;
   --color-shield-deep: #198fff;
-  --color-skill-passive:  var(--color-debuff);  /* #a855f7 */
-  --color-skill-active:   #60a5fa;
+  --color-skill-passive: var(--color-debuff); /* #a855f7 */
+  --color-skill-active: #60a5fa;
   --color-skill-ultimate: #fbbf24;
   --color-live: #f97316;
-  --color-live-hover:  #ea580c;
+  --color-live-hover: #ea580c;
   --color-live-active: #c2410c;
   --color-casting-bg: #2a2a4e;
   --color-casting-bg-glow: #3a3a5e;
@@ -147,22 +131,31 @@ $transition-fast: var(--transition-fast);
 
   /* ═══ 存量复合令牌改写（名字不变 → 引用方零改动） ═══ */
   --color-success-bg: rgba(var(--rgb-success), var(--alpha-wash-strong));
-  --color-danger-bg:  rgba(var(--rgb-danger),  var(--alpha-wash-strong));
+  --color-danger-bg: rgba(var(--rgb-danger), var(--alpha-wash-strong));
   --color-warning-bg: rgba(var(--rgb-warning), var(--alpha-wash-strong));
-  --color-info-bg:    rgba(var(--rgb-info),    var(--alpha-wash-strong));
-  --border-debug-color-dark:  rgba(var(--rgb-energy), var(--alpha-wash));
-  --border-debug-color:       rgba(var(--rgb-energy), var(--alpha-border));
+  /* NOTE: info-bg R=75 不匹配 --rgb-info(79)，保持裸 rgba 保视觉不变 */
+  --color-info-bg: rgba(75, 195, 247, 0.2);
+  --color-heal-bg: rgba(var(--rgb-success), var(--alpha-wash-strong));
+  --color-damage-bg: rgba(var(--rgb-danger), var(--alpha-wash-strong));
+  /* NOTE: 0.15 无 alpha 刻度对应，保持裸 rgba 防透明度漂移 */
+  --border-debug-color-dark: rgba(34, 211, 238, 0.15);
+  --border-debug-color: rgba(var(--rgb-energy), var(--alpha-border));
   --border-debug-color-light: rgba(var(--rgb-energy), var(--alpha-glow));
-  --border-common-color-dark:  rgba(var(--rgb-skill-active), var(--alpha-wash));
-  --border-common-color:       rgba(var(--rgb-skill-active), var(--alpha-border));
+  --border-common-color-dark: rgba(96, 165, 250, 0.15);
+  --border-common-color: rgba(var(--rgb-skill-active), var(--alpha-border));
   --border-common-color-light: rgba(var(--rgb-skill-active), var(--alpha-glow));
 
   /* ═══ 类目色板（数据分类圆点专用，非语义） ═══ */
-  --cat-modifier: #8bc34a;  --cat-trigger: #64b5f6;
-  --cat-aura: #ce93d8;      --cat-shield: #4dd0e1;
-  --cat-control: #ef5350;   --cat-dot: #ff7043;
-  --cat-immunity: #ffd54f;  --cat-heal: #f472b6;
-  --cat-summon: #fb923c;    --cat-attribute: #60a5fa;
+  --cat-modifier: #8bc34a;
+  --cat-trigger: #64b5f6;
+  --cat-aura: #ce93d8;
+  --cat-shield: #4dd0e1;
+  --cat-control: #ef5350;
+  --cat-dot: #ff7043;
+  --cat-immunity: #ffd54f;
+  --cat-heal: #f472b6;
+  --cat-summon: #fb923c;
+  --cat-attribute: #60a5fa;
   --cat-other: #90a4ae;
 
   /* ==========================================================================
@@ -224,6 +217,10 @@ $transition-fast: var(--transition-fast);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
   --shadow-focus: 0 0 0 2px var(--color-border-focus);
+  --shadow-layered:
+    0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.24),
+    0 8px 16px rgba(0, 0, 0, 0.28), 0 16px 32px rgba(0, 0, 0, 0.32),
+    0 32px 64px rgba(0, 0, 0, 0.36);
 
   /* ==========================================================================
      6. 层级 (z-index)
@@ -259,7 +256,6 @@ $transition-fast: var(--transition-fast);
   --color-text-inverse: #ffffff;
 
   --color-border-default: #d0d5dd;
-  --color-border-light: #e0e4ea;
   --color-border-tertiary: #b0b8c4;
 
   --color-brand-red: #e94560;

@@ -12,7 +12,7 @@ import type {
   ATTRIBUTE_CODE,
 } from '@/domain/attribute/types'
 import type { BattleLogEntry } from '@/shared/types/battle-log'
-import { EffectType } from '@/shared/types/effect'
+import { EffectType } from '@/domain/skill/types'
 import type { BuffQuery } from '@/domain/buff/types'
 import { Counter } from '@/shared/utils/Counter'
 import { SkillType } from '@/domain/skill/types'
@@ -40,6 +40,21 @@ export const BattleStatus = {
 } as const
 
 export type BattleStatus = (typeof BattleStatus)[keyof typeof BattleStatus]
+
+
+/**
+ * 回合状态常量
+ * 控制回合内的子阶段
+ */
+export const DamageSource = {
+  ATTACK: 'attack',     // 攻击
+  SKILL: 'skill',       // 技能
+  DOT: 'dot',           // 持续伤害
+  THORNS: 'thorns',     // 反伤(荆棘)
+  REACTION: 'reaction', // 反击
+} as const
+export type DamageSource = (typeof DamageSource)[keyof typeof DamageSource]
+
 
 /**
  * 回合状态常量

@@ -402,7 +402,7 @@ defineExpose({
 .debug-info {
   margin-top: var(--space-2);
   padding: var(--space-2);
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(var(--rgb-black), var(--alpha-border));
   border-radius: var(--radius-sm);
 }
 
@@ -436,7 +436,7 @@ defineExpose({
 .breakdown-details {
   margin-top: var(--space-2);
   padding: var(--space-2);
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--rgb-black), var(--alpha-wash-strong));
   border-radius: 4px;
   border-left: 2px solid var(--color-energy);
 }
@@ -461,11 +461,11 @@ defineExpose({
   position: fixed;
   z-index: var(--z-tooltip, 1000);
   min-width: 220px;
-  background: rgba(15, 23, 42, 0.97);
+  background: var(--color-overlay-panel);
   border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(var(--rgb-black), var(--alpha-glow));
   backdrop-filter: blur(8px);
   pointer-events: auto;
 }
@@ -487,12 +487,10 @@ defineExpose({
 
 .breakdown-desc {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
 }
 
 .breakdown-meta {
   color: var(--color-text-disabled);
-  font-size: var(--font-size-xs);
 }
 
 .breakdown-effects {
@@ -503,7 +501,6 @@ defineExpose({
 }
 
 .breakdown-effect {
-  font-size: var(--font-size-xs);
   padding-left: var(--space-1);
 }
 
@@ -518,7 +515,6 @@ defineExpose({
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-1) 0;
-  font-size: var(--font-size-xs);
 }
 
 .source-buff .source-value {
@@ -537,7 +533,6 @@ defineExpose({
 
 .source-meta {
   color: var(--color-text-disabled);
-  font-size: var(--font-size-xs);
 }
 
 /* 追溯浮层过渡 */
@@ -560,7 +555,7 @@ defineExpose({
 /* 蓄力/施法 */
 .member-card.casting {
   transform: translateY(-3px);
-  box-shadow: 0 0 30px var(--color-brand-red), 0 6px 24px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 30px var(--color-brand-red), 0 6px 24px rgba(var(--rgb-black), 0.7);
   animation: cast-pulse 0.6s ease;
 }
 

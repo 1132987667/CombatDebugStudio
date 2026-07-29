@@ -198,7 +198,7 @@ watch(activeTab, () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(var(--rgb-black), 0.7);
   display: flex;
   align-items: center;
   justify-content: center;

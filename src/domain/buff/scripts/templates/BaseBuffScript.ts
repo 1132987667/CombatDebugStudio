@@ -67,7 +67,7 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
     context.triggerEvent(eventName, data)
   }
 
-  /** 默认实现：无特殊效果行。子类可覆盖此方法返回 DOT/HOT/护盾等文本 */
+  /** 默认实现：无特殊效果行。子类可覆盖此方法返回 DOT/HEAL/护盾等文本 */
   public getEffectLines(_context: BuffContext): BuffEffectLine[] {
     return []
   }

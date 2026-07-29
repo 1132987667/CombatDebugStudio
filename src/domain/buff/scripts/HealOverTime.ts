@@ -54,7 +54,7 @@ export class HealOverTime extends BaseBuffScript {
 
   public getEffectLines(context: BuffContext): BuffEffectLine[] {
     const baseHealing = this.getConfigValue(context, 'baseHealing', 20)
-    return [{ text: `每回合回复 ${baseHealing} 气血值`, kind: 'hot' }]
+    return [{ text: `每回合回复 ${baseHealing} 气血值`, kind: 'heal' }]
   }
 }
 

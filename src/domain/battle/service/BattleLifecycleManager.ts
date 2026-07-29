@@ -19,6 +19,7 @@ import type { RAFTimer } from '@/shared/utils/RAF'
 
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 export class BattleLifecycleManager {
   private autoBattleTimerId?: symbol
@@ -83,7 +84,14 @@ export class BattleLifecycleManager {
       battle.currentTurn || 1,
     )
     this.battleRecorder.endRecording(battle.battleId, winner)
-    await this.battleRecorder.saveRecording(battle.battleId)
+    // ★ headless 模式跳过持久化保存；保存失败不阻塞战斗结束流程
+    if (!battle.headless) {
+      try {
+        await this.battleRecorder.saveRecording(battle.battleId)
+      } catch (e) {
+        LoggerProvider.logger.addDebugLog(`保存战斗记录失败: ${e}`)
+      }
+    }
 
     battle.battleState = BattleStatus.ENDED
     this.uiEventPort.emit(BattleEventCodes.BATTLE_ENDED, { winner })

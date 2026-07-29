@@ -12,7 +12,7 @@ import enemiesData from '@configs/enemies/enemies.json'
 import { buffsData } from '@/shared/types/buffs-json'
 import materialsData from '@configs/materials/materials.json'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
-import type { PassiveCategory } from '@/domain/skill/types'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 
 export interface CompendiumEnemy {
@@ -57,7 +57,7 @@ export interface CompendiumSkill {
   energyCost: number
   cooldown: number
   selector: string
-  passiveCategory?: PassiveCategory[]
+  passiveCategory?: AtomicEffectType[]
 }
 
 export interface CompendiumItem {

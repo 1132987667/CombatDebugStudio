@@ -336,6 +336,232 @@ describe('DamageCalculator', () => {
       expect(result.rawDamage).toBe(130)
       expect(result.damage).toBe(130)
     })
+
+    it('should apply elemental resistance for ELEMENTAL damage', () => {
+      const source = createMockEntity()
+      const target = createMockEntity()
+      const origTgtGetAttr = target.getAttribute
+      target.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.fireRes) return 30
+        if (attr === ATTRIBUTE_CODE.defense) return 0
+        return origTgtGetAttr(attr)
+      }
+
+      calculator = new DamageCalculator({
+        minDamageThreshold: 0,
+        maxDamageThreshold: 99999,
+      })
+
+      const step = createSkillStep({
+        calculation: { baseValue: 100 },
+        damageCategory: DamageCategory.ELEMENTAL,
+        elementType: 'HUO',
+      })
+
+      const result = calculator.calculateDamage(step, source, target)
+
+      // base = 100, no crit
+      // 元素抗性 30% → 100 × 0.7 = 70
+      expect(result.damage).toBe(70)
+    })
+
+    it('should apply fieldElemental modifier', () => {
+      const source = createMockEntity()
+      const target = createMockEntity()
+      const origTgtGetAttr = target.getAttribute
+      target.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.fireRes) return 0
+        if (attr === ATTRIBUTE_CODE.defense) return 0
+        return origTgtGetAttr(attr)
+      }
+
+      calculator = new DamageCalculator({
+        minDamageThreshold: 0,
+        maxDamageThreshold: 99999,
+        fieldElementalModifier: () => 15, // 场地火伤+15%
+      })
+
+      const step = createSkillStep({
+        calculation: { baseValue: 100 },
+        damageCategory: DamageCategory.ELEMENTAL,
+        elementType: 'HUO',
+      })
+
+      const result = calculator.calculateDamage(step, source, target)
+
+      // base = 100, 元素抗性 0, 无 extraValues
+      // 场地效果 +15% → Math.floor(100 × 1.15) — IEEE 754 可能为 114
+      const expected = Math.floor(100 * (1 + 15 / 100))
+      expect(result.damage).toBe(expected)
+    })
+
+    it('should apply normalAtkReduction for NORMAL attack type', () => {
+      const source = createMockEntity()
+      const target = createMockEntity()
+      const origTgtGetAttr = target.getAttribute
+      target.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.normalAtkDmgReduction) return 20
+        if (attr === ATTRIBUTE_CODE.defense) return 0
+        return origTgtGetAttr(attr)
+      }
+
+      calculator = new DamageCalculator({
+        minDamageThreshold: 0,
+        maxDamageThreshold: 99999,
+      })
+
+      const step = createSkillStep({
+        calculation: { baseValue: 100 },
+        attackType: AttackType.NORMAL,
+      })
+
+      const result = calculator.calculateDamage(step, source, target)
+
+      // base = 100, defense = 0
+      // 普攻减免 20% → 100 × 0.8 = 80
+      expect(result.damage).toBe(80)
+    })
+
+    it('should apply skillDmgReduction for SKILL attack type', () => {
+      const source = createMockEntity()
+      const target = createMockEntity()
+      const origTgtGetAttr = target.getAttribute
+      target.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.skillDmgReduction) return 20
+        if (attr === ATTRIBUTE_CODE.defense) return 0
+        return origTgtGetAttr(attr)
+      }
+
+      calculator = new DamageCalculator({
+        minDamageThreshold: 0,
+        maxDamageThreshold: 99999,
+      })
+
+      const step = createSkillStep({
+        calculation: { baseValue: 100 },
+        attackType: AttackType.SKILL,
+      })
+
+      const result = calculator.calculateDamage(step, source, target)
+
+      // base = 100, defense = 0
+      // 技能减免 20% → 100 × 0.8 = 80
+      expect(result.damage).toBe(80)
+    })
+
+    it('should apply targetModifier from skill step', () => {
+      const source = createMockEntity()
+      const target = createMockEntity()
+      const origTgtGetAttr = target.getAttribute
+      target.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.defense) return 0
+        if (attr === ATTRIBUTE_CODE.attack) return 200 // 用于目标修正
+        return origTgtGetAttr(attr)
+      }
+
+      calculator = new DamageCalculator({
+        minDamageThreshold: 0,
+        maxDamageThreshold: 99999,
+      })
+
+      const step = createSkillStep({
+        calculation: { baseValue: 100 },
+        targetModifiers: { [ATTRIBUTE_CODE.attack]: 10 }, // 目标攻击力 10% 转化为增伤
+      })
+
+      const result = calculator.calculateDamage(step, source, target)
+
+      // base = 100, defense = 0
+      // targetModifier: modifier=10, attrValue(attack)=200
+      //   → modifierEffect = 10 * 200 / 100 = 20
+      //   → damage = 100 × (1 + 20) = 2100
+      expect(result.damage).toBe(2100)
+    })
+
+    it('should list all stepNames in order for a full pipeline', () => {
+      const source = createMockEntity()
+      const target = createMockEntity({ currentHealth: 200, maxHealth: 1000 })
+      source.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.critRate) return 100
+        if (attr === ATTRIBUTE_CODE.critDamage) return 200
+        if (attr === ATTRIBUTE_CODE.damageBoost) return 15
+        if (attr === ATTRIBUTE_CODE.fireSkillDmgBonus) return 10
+        if (attr === ATTRIBUTE_CODE.damageToLowHp) return 20
+        // physicalSkillDmgBonus: stays default (0) — ELEMENTAL damage skips physical bonus
+        return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
+      }
+      target.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.defense) return 30
+        if (attr === ATTRIBUTE_CODE.critDmgTakenReduction) return 10
+        if (attr === ATTRIBUTE_CODE.skillDmgReduction) return 15
+        if (attr === ATTRIBUTE_CODE.fireRes) return 5
+        if (attr === ATTRIBUTE_CODE.damageReduction) return 10
+        if (attr === ATTRIBUTE_CODE.damageTakenIncrease) return 20
+        return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
+      }
+
+      calculator = new DamageCalculator({
+        enableCrit: true,
+        minDamageThreshold: 0,
+        maxDamageThreshold: 99999,
+      })
+
+      const context: any = { record: { effects: [] } }
+      // 使用 extraValues 使 preCrit 步骤产生，使用 ELEMENTAL+SKILL 触发 fireSkillDmgBonus
+      const step = createSkillStep({
+        calculation: { baseValue: 100, extraValues: [{ attribute: 'attack', ratio: 1 }] },
+        damageCategory: DamageCategory.ELEMENTAL,
+        elementType: 'HUO',
+        attackType: AttackType.SKILL,
+      })
+      calculator.calculateDamage(step, source, target, context)
+      const breakdown = context.record.damageBreakdown
+      const stepNames = breakdown.steps.map((s: { stepName: string }) => s.stepName)
+
+      // 预期步骤顺序（不含 physicalSkillDmgBonus — ELEMENTAL damage 不触发）
+      const expectedOrder = [
+        'base', 'extra', 'preCrit', 'crit', 'damageBoost', 'fireSkillDmgBonus',
+        'damageToLowHp', 'rawDamage',
+        'critDmgTakenReduction', 'defense', 'skillDmgReduction',
+        'elementalResistance', 'damageReduction', 'dmgTakenIncrease', 'final',
+      ]
+      const filtered = stepNames.filter((n: string) => expectedOrder.includes(n))
+      expect(filtered).toEqual(expectedOrder)
+    })
+
+    it('should maintain before/after value coherence across steps (skip clamp)', () => {
+      const source = createMockEntity()
+      const target = createMockEntity()
+      source.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.critRate) return 100
+        if (attr === ATTRIBUTE_CODE.critDamage) return 200
+        if (attr === ATTRIBUTE_CODE.damageBoost) return 20
+        return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
+      }
+      target.getAttribute = (attr: string) => {
+        if (attr === ATTRIBUTE_CODE.defense) return 50
+        return defaultAttrs[attr as ATTRIBUTE_CODE]?.value ?? 0
+      }
+
+      calculator = new DamageCalculator({
+        enableCrit: true,
+        minDamageThreshold: 0,
+        maxDamageThreshold: 99999,
+      })
+
+      const context: any = { record: { effects: [] } }
+      const step = createSkillStep({ calculation: { baseValue: 100 } })
+      calculator.calculateDamage(step, source, target, context)
+      const breakdown = context.record.damageBreakdown
+      const steps = breakdown.steps
+
+      // 除 clamp 外，每步的 after 应等于下一步的 before
+      for (let i = 0; i < steps.length - 1; i++) {
+        if (steps[i + 1].stepName === 'clamp') continue
+        if (steps[i].stepName === 'final') break
+        expect(steps[i].after).toBe(steps[i + 1].before)
+      }
+    })
   })
 
   describe('config', () => {

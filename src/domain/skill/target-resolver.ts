@@ -6,7 +6,7 @@ import { ParticipantSide, type BattleEntity } from '@/domain/battle/type/types'
 import {
   TargetFaction,
   TargetStrategy,
-  SkillStepType,
+  EffectType,
   type SkillTargetConfig,
   type SkillStep,
 } from '@/domain/skill/types'
@@ -133,8 +133,8 @@ export function resolveSkillTargets(
     case TargetStrategy.FIRST:
     default: {
       // 智能默认：纯治疗/增益技能选最低血量目标；含伤害步骤时选第一个
-      const hasHeal = steps?.some((s) => s.type === SkillStepType.HEAL)
-      const hasDamage = steps?.some((s) => s.type === SkillStepType.DEAL_DAMAGE || s.type === SkillStepType.DRAIN)
+      const hasHeal = steps?.some((s) => s.type === EffectType.HEAL)
+      const hasDamage = steps?.some((s) => s.type === EffectType.DEAL_DAMAGE || s.type === EffectType.DRAIN)
 
       // ★ 前排保护：非治疗/增益默认策略中，若敌方启用前排保护且前排存活，过滤后排（修复 S1）
       if (frontProtectionLookup && formationRowLookup && !(hasHeal && !hasDamage)) {

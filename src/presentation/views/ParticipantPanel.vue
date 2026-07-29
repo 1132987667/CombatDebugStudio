@@ -19,7 +19,7 @@
         <div class="expand-collapse-controls">
           <button class="btn-medium" @click="clearParticipants"
             :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
-            <span class="icon">−</span>清空
+            <span class="icon mr-2">[−]</span>清空
           </button>
         </div>
       </div>
@@ -117,8 +117,8 @@
                     }}-{{ enemy.stats.maxAttack }}</span>
                   </div>
                   <div class="char-actions">
-                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ALLY)">我方</button>
-                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ENEMY)">敌方</button>
+                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ALLY)"><span class="icon mr-2">[+]</span>我方</button>
+                    <button class="btn-tiny" @click.stop="addEnemyToBattle(enemy, ParticipantSide.ENEMY)"><span class="icon mr-2">[+]</span>敌方</button>
                   </div>
                 </div>
               </div>
@@ -486,25 +486,9 @@ const toggleCharacterEnabled = (characterId: string, enabled: boolean) => {
 </script>
 
 <style scoped>
-@use'@/presentation/styles/main.scss';
-
 .expand-collapse-controls {
   display: flex;
   gap: var(--space-2);
-}
-
-.expand-collapse-controls .btn-medium:hover:not(:disabled) {
-  background: var(--color-border-tertiary);
-  border-color: var(--color-info);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px var(--color-info-bg);
-}
-
-.expand-collapse-controls .btn-medium:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 .expand-collapse-controls .btn-medium .icon {

@@ -1,6 +1,6 @@
 import type { BattleEffect, BattleEntity } from '@/domain/battle/type/types'
 import type { LogSegment } from '@/shared/types/battle-log'
-import { EffectType } from '@/shared/types/effect'
+import { EffectType } from '@/domain/skill/types'
 
 /**
  * 渲染上下文 — 提供执行来源、目标和 HP 快照

@@ -160,5 +160,6 @@ watch(
 /* 弹窗容器自身保持可点击 */
 .dialog-overlay--transparent .dialog-container {
   pointer-events: auto;
+  box-shadow: var(--shadow-layered);
 }
 </style>

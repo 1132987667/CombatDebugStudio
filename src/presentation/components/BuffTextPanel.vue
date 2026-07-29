@@ -141,7 +141,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
   width: min(440px, 90vw);
   max-height: 70vh;
   background: rgba(15, 23, 42, 0.97);
-  border: 1px solid rgba(96, 165, 250, 0.3);
+  border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-lg);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(12px);
@@ -155,7 +155,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+  border-bottom: 1px solid var(--border-common-color-dark);
   flex-shrink: 0;
 }
 
@@ -206,7 +206,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
 /* 次要分组（极多 Buff 折叠） */
 .panel-secondary {
   margin: var(--space-1) var(--space-4);
-  border-top: 1px dashed rgba(96, 165, 250, 0.15);
+  border-top: 1px dashed var(--border-common-color-dark);
   padding-top: var(--space-1);
 }
 
@@ -229,7 +229,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
 /* 分割线 */
 .panel-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.25), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-common-color-dark), transparent);
   margin: var(--space-2) var(--space-4);
 }
 

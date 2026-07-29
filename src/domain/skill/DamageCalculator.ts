@@ -18,15 +18,6 @@ export interface DamageCalculationConfig {
   enableDodge: boolean
   critRate: number
   critDamage: number
-  /** @deprecated 未使用，仅保留避免破坏外部配置 */
-  baseRate?: number
-  /** @deprecated 未使用，仅保留避免破坏外部配置 */
-  growthRate?: number
-  /** @deprecated 未使用，仅保留避免破坏外部配置 */
-  level?: number
-  /** @deprecated 未使用，当前使用目标方 ATTRIBUTE_CODE.damageReduction 属性 */
-  damageReduction?: number
-  /** 最小伤害阈值，默认 1 */
   minDamageThreshold?: number
   /** 最大伤害阈值，默认 9999 */
   maxDamageThreshold?: number

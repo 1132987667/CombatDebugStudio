@@ -45,7 +45,7 @@
           {{ debugPhase ? '继 续' : '暂 停' }}
         </button>
         <button class="control-btn" @click="handleDebugStep" :disabled="!debugPhase">
-          {{ debugPhase ? '下一步 ▶' : '单步调试' }}
+          {{ debugPhase ? '下一步' : '单步调试' }}
         </button>
       </template>
       <span class="separator"></span>
@@ -168,7 +168,7 @@ onUnmounted(() => {
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(59, 130, 246, 0.2));
-  border: 1px solid rgba(34, 211, 238, 0.5);
+  border: 1px solid var(--border-debug-color-light);
   border-radius: var(--radius-xl);
   animation: pulse-glow 2s ease-in-out infinite;
   z-index: 100;
@@ -183,11 +183,11 @@ onUnmounted(() => {
   color: var(--color-energy);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-md);
-  text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+  text-shadow: 0 0 10px var(--border-debug-color-light);
 }
 
 .auto-indicator-speed {
-  background: rgba(34, 211, 238, 0.3);
+  background: var(--border-debug-color);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-lg);
   color: var(--color-energy);
@@ -197,7 +197,7 @@ onUnmounted(() => {
 
   0%,
   100% {
-    box-shadow: 0 0 5px rgba(34, 211, 238, 0.3);
+    box-shadow: 0 0 5px var(--border-debug-color);
   }
 
   50% {
@@ -228,7 +228,7 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   padding: var(--space-1) var(--space-3);
-  border: 1px solid rgba(34, 211, 238, 0.5);
+  border: 1px solid var(--border-debug-color-light);
   border-radius: var(--radius-xl);
   background: rgba(34, 211, 238, 0.1);
   color: var(--color-energy);
@@ -250,7 +250,7 @@ onUnmounted(() => {
 }
 
 .debug-toggle-switch.active {
-  border-color: rgba(34, 211, 238, 0.5);
+  border-color: var(--border-debug-color-light);
   background: rgba(34, 211, 238, 0.1);
 }
 

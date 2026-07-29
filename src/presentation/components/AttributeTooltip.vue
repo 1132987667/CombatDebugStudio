@@ -471,10 +471,8 @@ onUnmounted(() => {
   z-index: 9999;
   width: 320px;
   max-width: 90vw;
-  /* ponytail: bg rgba(15,23,42,.95) is a unique overlay color; no matching token */
   background: rgba(15, 23, 42, 0.95);
-  /* ponytail: border rgba(96,165,250,.4) = #60a5fa; no matching token */
-  border: 1px solid rgba(96, 165, 250, 0.4);
+  border: 1px solid var(--border-common-color-light);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
   box-shadow: var(--shadow-lg);
@@ -487,8 +485,7 @@ onUnmounted(() => {
     align-items: center;
     margin-bottom: var(--space-3);
     padding-bottom: var(--space-2);
-    /* ponytail: border rgba(96,165,250,.3) unique to tooltip */
-    border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+    border-bottom: 1px solid var(--border-common-color-dark);
 
     .tooltip-title {
       font-size: var(--font-size-lg);
@@ -538,8 +535,7 @@ onUnmounted(() => {
 
   .tooltip-divider {
     height: 1px;
-    /* ponytail: gradient uses unique #60a5fa, no exact token */
-    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, var(--border-common-color-light), transparent);
     margin: var(--space-3) 0;
   }
 
@@ -558,8 +554,7 @@ onUnmounted(() => {
           align-items: center;
           margin-bottom: var(--space-1);
           padding-bottom: var(--space-1);
-          /* ponytail: border uses unique #60a5fa */
-          border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+          border-bottom: 1px solid var(--border-common-color-dark);
         }
 
         .stat-section-title {
@@ -681,7 +676,7 @@ onUnmounted(() => {
         margin-top: var(--space-2);
         padding-top: var(--space-2);
         /* ponytail: border uses unique #60a5fa */
-        border-top: 1px dashed rgba(96, 165, 250, 0.3);
+        border-top: 1px dashed var(--border-common-color-dark);
 
         .result-label {
           font-size: var(--font-size-md);
@@ -703,7 +698,7 @@ onUnmounted(() => {
     width: 12px;
     height: 12px;
     background: rgba(15, 23, 42, 0.95);
-    border: 1px solid rgba(96, 165, 250, 0.4);
+    border: 1px solid var(--border-common-color);
     transform: rotate(45deg);
 
     &.arrow-top {

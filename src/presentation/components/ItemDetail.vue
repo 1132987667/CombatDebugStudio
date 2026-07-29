@@ -175,7 +175,7 @@ const getItemSources = (itemId: string): string[] => {
 
 .item-rarity.rarity-2 {
   color: var(--color-info);
-  background: rgba(96, 165, 250, 0.15);
+  background: var(--border-common-color-dark);
 }
 
 .item-rarity.rarity-3 {

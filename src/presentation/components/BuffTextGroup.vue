@@ -240,7 +240,7 @@ const effectLines = computed(() => {
 .group-debug {
   margin-top: var(--space-2);
   padding-top: var(--space-1);
-  border-top: 1px dashed rgba(96, 165, 250, 0.2);
+  border-top: 1px dashed var(--border-common-color-dark);
 }
 
 .debug-toggle {
@@ -258,7 +258,7 @@ const effectLines = computed(() => {
   padding: var(--space-2);
   background: rgba(15, 23, 42, 0.6);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(96, 165, 250, 0.15);
+  border: 1px solid var(--border-common-color-dark);
 }
 
 .debug-row {

@@ -231,7 +231,7 @@ const handleButtonClick = (action: string) => {
   position: absolute;
   max-height: calc(100vh - 24px);
   background: rgba(10, 15, 25, 0.95);
-  border: 1px solid rgba(34, 211, 238, 0.3);
+  border: 1px solid var(--border-debug-color);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
@@ -287,7 +287,7 @@ const handleButtonClick = (action: string) => {
 
 .debug-btn:hover {
   background: rgba(34, 211, 238, 0.2);
-  border-color: rgba(34, 211, 238, 0.5);
+  border-color: var(--border-debug-color-light);
   color: var(--color-text-primary);
 }
 
@@ -384,7 +384,7 @@ const handleButtonClick = (action: string) => {
 }
 
 .style-btn:hover {
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   border-color: rgba(34, 211, 238, 0.4);
   color: var(--color-text-primary);
 }
@@ -435,7 +435,7 @@ const handleButtonClick = (action: string) => {
 }
 
 .log-gen-opt-btn:hover {
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   border-color: rgba(34, 211, 238, 0.4);
   color: var(--color-text-primary);
 }
@@ -450,7 +450,7 @@ const handleButtonClick = (action: string) => {
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--color-energy);
   border-radius: var(--radius-sm);
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   color: var(--color-energy);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -459,8 +459,8 @@ const handleButtonClick = (action: string) => {
 }
 
 .log-gen-btn:hover {
-  background: rgba(34, 211, 238, 0.3);
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
+  background: var(--border-debug-color);
+  box-shadow: 0 0 8px var(--border-debug-color);
 }
 
 @keyframes slideIn {

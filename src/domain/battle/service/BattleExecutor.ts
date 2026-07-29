@@ -1453,7 +1453,7 @@ export class BattleExecutor {
 
     if (action.type === ActionTypes.SKILL && action.skillId) {
       try {
-        // ponytail: 令牌模式 — 用局部 token 替代全局 toggle
+        // NOTE: 令牌模式 — 用局部 token 替代全局 toggle
         const damageToken = new DeferredDamageToken()
         // ponytail: 主动技能执行时禁用 buffApplied 回调，避免与下方动画循环重复
         this.buffSystem.setBuffAppliedCallbackEnabled(false)
@@ -1693,7 +1693,7 @@ export class BattleExecutor {
       }
     }
 
-    // ponytail: skill actions already apply damage+heal inside SkillExecutor,
+    // NOTE: skill actions already apply damage+heal inside SkillExecutor,
     // so only apply raw damage/heal for non-skill actions (e.g. fallback attack).
     if (action.type !== ActionTypes.SKILL) {
       if (action.damage && action.damage > 0) {

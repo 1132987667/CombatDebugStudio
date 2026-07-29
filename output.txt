@@ -7,6 +7,8 @@ CombatDebugStudio/
         1785226662827-quiet-falcon.md
         1785306229186-quick-comet.md
         1785310085860-kind-pixel.md
+        1785313216049-silent-meadow.md
+        1785314866221-happy-comet.md
     skills/
         domain-migration/
             SKILL.md
@@ -254,7 +256,7 @@ vite.config.ts
 文件内容:
 
 --- .mimocode/.cron-lock ---
-{"pid":23624,"startedAt":1785310065835}
+{"pid":23940,"startedAt":1785314427638}
 
 --- .mimocode/commands/verify.md ---
 ---
@@ -847,6 +849,145 @@ it('source_has_debuff_count 从 params 读取阈值', () => {
   expect(manager['evaluateCondition']('source_has_debuff_count_3', source)).toBe(true)
 })
 ```
+
+--- .mimocode/plans/1785313216049-silent-meadow.md ---
+# 修复 BattleReplayManager 的 8 个空壳事件处理器
+## 修改清单
+### 文件 1: `src/domain/battle/replay/BattleReplayManager.ts`
+1. **新增导入**:
+   - `type { IDomainEventBus }` from `@/domain/port/IDomainEventBus`
+   - `{ battleLogManager }` from `@/infrastructure/adapters/logging`
+2. **构造函数变更**: 新增可选 `eventBus?: IDomainEventBus` 参数，保存到私有字段 `eventBus`。
+   - Phase 1 不发射动画事件，仅注入备用。
+   - `eventBus` 字段保留，供 Phase 2 使用（需注入 mitt eventBus 而非 triggerEventBus）。
+3. **`startReplay()` 变更**: 在方法开始时调用 `battleLogManager.setAutoCleanup(false)`，防止长战斗日志被截断。
+4. **`stopReplay()` 变更**: 在 `resetReplayState()` 后调用 `battleLogManager.setAutoCleanup(true)`，恢复日志自动清理。
+5. **8 个 handler 替换** — 每个 handler 移除 `console.log`，改为调用 `LoggerProvider.logger.addBattleLog(...)`:
+   - `handleActionReplay`: 输出 sourceId→targetId、damage/heal 信息，category 根据伤害/治疗/普通切换
+   - `handleTurnStartReplay`: 系统日志，标注第 N 回合开始 + 行动者
+   - `handleTurnEndReplay`: 系统日志，标注回合结束
+   - `handleBattleStartReplay`: 系统日志 "战斗开始"
+   - `handleBattleEndReplay`: 状态日志，标注胜利者（**不**调用 `stopReplay()`）
+   - `handleBuffAddReplay`: 状态日志，targetId + buffId
+   - `handleBuffRemoveReplay`: 状态日志，targetId + instanceId
+   - `handleBuffUpdateReplay`: 状态日志，remainingTurns / stacks 信息
+### 文件 2: `src/infrastructure/di/Container.ts`
+6. **`BattleReplayManager` 注册变更**: 从 `container.register(...)` 改为 `container.registerFactory(...)`，工厂中传入 `triggerEventBus`：
+   ```ts
+   // 改前:
+   container.register('BattleReplayManager', new BattleReplayManager())
+   // 改后:
+   container.registerFactory('BattleReplayManager', () => {
+     return new BattleReplayManager(triggerEventBus)
+   }, true)
+   ```
+### 验证步骤
+- 运行 `npm test` 确认无回归
+- 确认类型检查通过: `npm run typecheck`
+- 手工验证思路：启动开发服务器，录制一场战斗，回放时日志面板应出现带有 `[回放]` 前缀的条目（回合开始/结束、战斗开始/结束、动作、Buff 变化）
+
+--- .mimocode/plans/1785314866221-happy-comet.md ---
+# 伤害结算收口方案审查报告
+## 审查结论
+**评分：85/100**
+方案整体方向正确（`settleDamage` 统一入口），B1-B5 的 Bug 定位准确，代码证据确凿。但以下 **3 个缺陷**需要在实施前修复，否则会引入新问题。
+---
+## 缺陷 1（P1）：Path B 被动触发频次改变 — `pendingDamages` 聚合丢失
+**严重度：P1**
+### 根因
+原 `selectAndExecuteSkill` 的被动触发循环（行 684-726）使用 `pendingDamages` 数组，**每个目标只触发一次** `ON_HIT`/`DAMAGE_TAKEN`，传入的是 `skillAction.damage`（整次技能行动的汇总伤害）。
+设计文档的 After 代码改为遍历 `damageToken.getEntries()`，每一条 entry 调用一次 `settleDamage`。对于多步骤技能（2 步各造成 50 伤害），场景变化：
+| 维度 | 原行为 | After 行为 |
+|---|---|---|
+| `takeDamage` | 2 次 (50+50) | 2 次 (50+50) ✅ |
+| `ON_HIT` 触发 | **1 次 (damage=100)** | **2 次 (damage=50, 50)** ❌ |
+| `DAMAGE_TAKEN` | **1 次 (damage=100)** | **2 次 (damage=50, 50)** ❌ |
+### 触发条件
+仅针对多步骤技能对**同一目标**造成多次伤害的场景。单步骤技能不受影响。
+### 修复方向
+保持 `pendingDamages` 的按目标聚合逻辑，在 `selectAndExecuteSkill` 中先按 target 聚合 damageToken entries，然后每个目标调用一次 `settleDamage`。或者在遍历 `damageToken.getEntries()` 时按 target.id 聚合后统一调用。
+---
+## 缺陷 2（P1）：Path D `onDamageRequest` 回调共享代码导致 DAMAGE_TAKEN 重复发射
+**严重度：P1**
+### 根因
+`onDamageRequest` 回调（BattleSystem.ts 行 435-550）在三个分支**之后**有共享的后续逻辑：
+```
+三个分支：
+  ├─ percentDamage > 0  → target.takeDamage()  // 仍然需要事件+被动
+  ├─ percentDamage < 0  → target.heal()         // 治疗路径，不走 settleDamage
+  └─ damage > 0         → target.takeDamage()   // → 改为 settleDamage
+共享后续逻辑（行 502-545）：
+  ├─ eventBus.emit(DAMAGE_ANIMATION)         // 三个分支都要
+  ├─ emitTriggerEvent(DAMAGE_TAKEN, ...)     // ← 固定伤害分支通过 settleDamage 已经发射了！
+  ├─ ALLY_DAMAGE_TAKEN / ALLY_FATAL_DAMAGE  // 三个分支都要
+  └─ passiveSkillManager.triggerPassives(DAMAGE_TAKEN) // ← 固定伤害分支通过 settleDamage 已经触发了！
+```
+如果只是简单将固定伤害分支替换为 `settleDamage` 调用，共享代码仍然会执行，导致 **DAMAGE_TAKEN 事件和被动触发重复执行**。
+### 修复方向
+需要让共享逻辑感知到当前分支是否已经通过 `settleDamage` 处理过。方案：
+1. 将固定伤害分支完全独立出去，让共享逻辑只对 `percentDamage > 0` 分支执行
+2. 或者在固定伤害分支设置一个 flag，共享逻辑判断后跳过
+推荐方案 1：重构 `onDamageRequest` 为：
+```
+if (percentDamage > 0) {
+  // 百分比伤害：保持原有逻辑（takeDamage + 事件 + 动画 + 被动）
+} else if (percentDamage < 0) {
+  // 百分比治疗：保持原有逻辑（heal + 事件）
+} else if (damage > 0) {
+  // 固定伤害：走 settleDamage（内部处理事件 + 被动 + pendingDeaths）
+  // 然后只保留 DOT 特有逻辑（DOT记录/日志/动画/队友事件）
+}
+```
+---
+## 缺陷 3（P2）：设计文档关于 `emitTriggerEvent` 的 `currentTurn` 描述不准确
+**严重度：P2**
+设计文档第六节表格说 `emitTriggerEvent` 缺失 `currentTurn`，但实际代码中 `emitTriggerEvent` 方法（BattleSystem.ts 行 254）使用 `this.battleData.currentTurn` 作为默认值：
+```typescript
+currentTurn: context.currentTurn ?? this.battleData.currentTurn,
+```
+所以事件上下文中**并不缺失** `currentTurn`。正确的差异点在于：
+| 差异 | `emitDamageTakenEvent` | `emitTriggerEvent` (Path D) |
+|---|---|---|
+| `extra.isCritical` | ✅ 传入 | ❌ 缺失（始终无暴击标记） |
+| `sourceId` | `source.id` | `''`（无来源） |
+`isCritical` 缺失是真实差异，但 `currentTurn` 不是。
+---
+## 确认的亮点（方案正确部分）
+### B5 确认（P0）
+代码证据确凿：`damageToken.clear()`（行 1602）后调用 `getTotalDamage()`（行 1733）返回 0，`ON_HIT`/`DAMAGE_TAKEN` 被动永远不执行。
+### B1-B4 确认
+- B1：`selectAndExecuteSkill` 中 `ON_DEATH` 立即触发（行 708），不通过 `pendingDeaths`
+- B2：`onDamageRequest` 回调无 `pendingDeaths.push`，DOT 击杀不触发 `ON_DEATH`
+- B3：`executeAction` 技能分支缺仇恨记录（行 1588-1601）
+- B4：`executeAction` 非技能分支（行 1781-1825）缺 `emitDamageTakenEvent` 和仇恨记录
+### 重复删除估算 ~35 行
+认真复核了每个路径的改动量，生产代码净删除约 35 行，没有新文件，估算属实。
+### Path B B5 修复验证
+`executeAction` 的 B5 已确认（`getTotalDamage()` 在 `clear()` 后返回 0），`settleDamage` 直接在遍历时调用，不依赖 `getTotalDamage()`，绕过此 bug。
+### `runEndConditionCheck` 对 `killerId: 'system'` 兼容
+确认 `participants.get('system')` 返回 `undefined`，`if (killer)` 自然跳过 `ON_KILL`。
+---
+## 实施前必须修复的 2 个问题
+修复方案已经包含在缺陷说明中。在实施时需要：
+1. **Path B**（`selectAndExecuteSkill`）：保持 `pendingDamages` 按目标聚合逻辑，每个目标调用一次 `settleDamage`
+2. **Path D**（`onDamageRequest`）：重构三个分支的共享代码，避免 `settleDamage` 后重复发射 DAMAGE_TAKEN
+---
+## 验证方案
+每步实施后：
+```powershell
+npm run typecheck 2>&1 | Select-String "src/domain/"
+npm test 2>&1 | Select-String -Pattern "Test Files|Tests|FAIL|PASS"
+```
+关键测试场景（需补充）：
+| 场景 | 覆盖的 Bug | 预期 |
+|---|---|---|
+| 普通攻击击杀 | B5（ON_HIT 触发） | ON_HIT 触发，RUN_END_CONDITION 触发 ON_DEATH |
+| 单步骤技能击杀 | B3（仇恨）+ B5 | 仇恨记录正确，ON_DEATH 延迟触发 |
+| 多步骤技能（2步各50伤） | 缺陷 1 | ON_HIT 触发 1 次(100) 而非 2 次(50+50) |
+| DOT 击杀 | B2 | pendingDeaths 推入，ON_DEATH 在 runEndConditionCheck 触发 |
+| 反伤击杀 | B2 + 递归守卫 | 反伤触发，第二层被 _inDamageCallback 阻断，ON_DEATH 触发 |
+| 复活路径 | B1 | 死亡→复活→ON_DEATH 不触发（pendingDeaths 检查 isAlive） |
+| 兜底攻击（executeAction 非技能） | B4 | 触发 DAMAGE_TAKEN 事件，仇恨记录，反伤生效 |
 
 --- .mimocode/skills/domain-migration/SKILL.md ---
 ---
@@ -5014,7 +5155,7 @@ import {
   ParticipantSideName,
   RoundStatus,
 } from '@/domain/battle/type/types'
-import { BuffSystem } from '@/domain/buff/BuffSystem'
+import { BuffSystem, type SummonRequest } from '@/domain/buff/BuffSystem'
 import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
 import type { TriggerEventContext } from '@/domain/buff/types'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
@@ -5368,83 +5509,100 @@ export class BattleSystem {
         _inDamageCallback = true
         try {
           const target = battleData.participants.get(targetId)
-          if (target?.isAlive()) {
-            let actualDamage = damage
-            let isHeal = false
-            if (damagePercent && damagePercent > 0) {
-              // 正百分比 = 扣当前气血百分比
-              actualDamage = Math.max(
-                1,
-                Math.floor(target.currentHealth * damagePercent),
-              )
-              target.takeDamage(actualDamage)
-            } else if (damagePercent && damagePercent < 0) {
-              // 负百分比 = 按最大气血百分比治疗
-              actualDamage = Math.floor(
-                target.maxHealth * Math.abs(damagePercent),
-              )
-              target.heal(actualDamage)
-              isHeal = true
-            } else if (damage > 0) {
-              // 固定值伤害
-              // NOTE: 在扣血前捕获 气血，用于 DOT 叙事日志
-              const hpBefore = target.currentHealth
-              target.takeDamage(actualDamage)
+          if (!target?.isAlive()) return
+          let actualDamage = damage
+          let isHeal = false
+          // Defect 2 修复：固定伤害走 settleDamage 后不再重复发射事件/被动
+          let settledViaExecutor = false
+          if (damagePercent && damagePercent > 0) {
+            // 正百分比 = 扣当前气血百分比
+            actualDamage = Math.max(
+              1,
+              Math.floor(target.currentHealth * damagePercent),
+            )
+            target.takeDamage(actualDamage)
+          } else if (damagePercent && damagePercent < 0) {
+            // 负百分比 = 按最大气血百分比治疗
+            actualDamage = Math.floor(
+              target.maxHealth * Math.abs(damagePercent),
+            )
+            target.heal(actualDamage)
+            isHeal = true
+          } else if (damage > 0) {
+            // 固定值伤害：走 settleDamage（统一处理 TriggerEventBus/仇恨/被动/pendingDeaths）
+            // NOTE: 在扣血前捕获 气血，用于 DOT 叙事日志
+            const hpBefore = target.currentHealth
+            actualDamage = this.executor.settleDamage(
+              null, target, damage, rawDamage ?? damage, false, battleData,
+            )
+            settledViaExecutor = true
+            // DOT 特有逻辑（DOT CombatRecord、叙事日志）
+            if (actualDamage > 0) {
               const hpAfter = target.currentHealth
-              // 记录 DOT CombatRecord
-              if (actualDamage > 0) {
-                const dotRecord = createEmptyRecord(
-                  battleData.battleId,
-                  'system',
-                  '系统',
-                  'attack' as any,
-                  targetId,
-                  target.name,
-                  battleData.currentTurn ?? 1,
-                )
-                dotRecord.damage = actualDamage
-                dotRecord.damageSource = 'dot'
-                dotRecord.message = `${target.name} 受到 ${actualDamage} 点持续伤害`
-                this.battleRecorder.recordCombatRecord(
-                  battleData.battleId,
-                  dotRecord,
-                )
-                // NOTE: DOT 叙事日志
-                LoggerProvider.logger.addBattleLog({
-                  turn: battleData.currentTurn ?? 1,
-                  message: `${target.name} 受到 ${actualDamage} 点持续伤害`,
-                  segments: [
-                    { text: `${target.name} `, classStr: 'log-hostile' },
-                    { text: `${actualDamage}`, classStr: 'log-damage' },
-                    { text: ' 点持续伤害', classStr: 'log-text' },
-                  ],
-                  category: BATTLE_LOG_CATEGORIES.DAMAGE,
-                  meta: {
-                    role: 'settlement',
-                    entityId: targetId,
-                    hpAfter,
-                    damage: actualDamage,
-                  },
-                })
-              }
-            }
-            // ★ 统一管道：触发器伤害/治疗动画
-            if (actualDamage > 0 && !this.shouldSuppressAnimationEvents()) {
-              eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+              const dotRecord = createEmptyRecord(
+                battleData.battleId,
+                'system',
+                '系统',
+                'attack' as any,
                 targetId,
-                damage: actualDamage,
-                damageCategory: DamageCategory.PHYSICAL,
-                isCritical: false,
-                isHeal,
+                target.name,
+                battleData.currentTurn ?? 1,
+              )
+              dotRecord.damage = actualDamage
+              dotRecord.damageSource = 'dot'
+              dotRecord.message = `${target.name} 受到 ${actualDamage} 点持续伤害`
+              this.battleRecorder.recordCombatRecord(
+                battleData.battleId,
+                dotRecord,
+              )
+              // NOTE: DOT 叙事日志
+              LoggerProvider.logger.addBattleLog({
+                turn: battleData.currentTurn ?? 1,
+                message: `${target.name} 受到 ${actualDamage} 点持续伤害`,
+                segments: [
+                  { text: `${target.name} `, classStr: 'log-hostile' },
+                  { text: `${actualDamage}`, classStr: 'log-damage' },
+                  { text: ' 点持续伤害', classStr: 'log-text' },
+                ],
+                category: BATTLE_LOG_CATEGORIES.DAMAGE,
+                meta: {
+                  role: 'settlement',
+                  entityId: targetId,
+                  hpAfter,
+                  damage: actualDamage,
+                },
               })
             }
+          }
+          // ★ 统一管道：触发器伤害/治疗动画（所有分支都需要）
+          if (actualDamage > 0 && !this.shouldSuppressAnimationEvents()) {
+            eventBus.emit(BattleEventCodes.DAMAGE_ANIMATION, {
+              targetId,
+              damage: actualDamage,
+              damageCategory: DamageCategory.PHYSICAL,
+              isCritical: false,
+              isHeal,
+            })
+          }
+          // ★ TriggerEventBus + 被动触发（仅非 settleDamage 分支需要，Defect 2 修复）
+          if (!settledViaExecutor && actualDamage > 0) {
             this.emitTriggerEvent(BattleTriggerPhase.DAMAGE_TAKEN, {
               sourceId: '',
               targetId,
               value: actualDamage,
               extra: { damage: actualDamage, rawDamage: rawDamage ?? actualDamage },
             })
-            // ponytail: 触发队友伤害事件 — 供 buff_triggers 中的 ally_damage_taken / ally_fatal_damage 使用
+            this.passiveSkillManager.triggerPassives(
+              target,
+              createPassiveContext(
+                BattleTriggerPhase.DAMAGE_TAKEN,
+                battleData,
+                { damage: actualDamage },
+              ),
+            )
+          }
+          // ★ 队友伤害事件（所有分支都需要）
+          if (actualDamage > 0) {
             const isDead = !target.isAlive()
             battleData.participants.forEach((p) => {
               if (p.id !== targetId && p.team === target.team && p.isAlive()) {
@@ -5461,17 +5619,6 @@ export class BattleSystem {
                 )
               }
             })
-            // ponytail: 补充被动触发 — buff 伤害（毒伤等）也需要触发受击方被动
-            this.passiveSkillManager.triggerPassives(
-              target,
-              createPassiveContext(
-                BattleTriggerPhase.DAMAGE_TAKEN,
-                battleData,
-                {
-                  damage: actualDamage,
-                },
-              ),
-            )
           }
         } finally {
           _inDamageCallback = false
@@ -5518,6 +5665,17 @@ export class BattleSystem {
           createPassiveContext(BattleTriggerPhase.ENERGY_GAINED, battleData, {}),
         )
       }
+    })
+    // ★ Phase 0：召唤回调占位 — 仅记录日志，不创建实体
+    this.buffSystem.setSummonCallback((request: SummonRequest) => {
+      LoggerProvider.logger.addBattleLog({
+        turn: this.battleData.currentTurn ?? 1,
+        message: `[召唤] ${request.sourceId} 尝试召唤 ${request.summonId}（${request.duration}回合）— 召唤系统尚未实现`,
+        segments: [{ text: `[召唤] ${request.summonId} — 尚未实现`, classStr: 'log-system' }],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'sub' },
+      })
+      // TODO(P2): 实现完整召唤管道
     })
     // ★ 每次 initialize 确保技能配置已加载（幂等，批量生成器独立运行时兜底）
     if (this.skillManager.getSkillConfigs().size === 0) {
@@ -8282,8 +8440,9 @@ export class InterventionManager {
 --- src/domain/battle/replay/BattleReplayManager.ts ---
 import type { BattleState, BattleReplay } from '@/domain/battle/type/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { BattleEventType } from '@/domain/battle/type/types'
-import { LogLevel } from '@/shared/types/battle-log'
+import { LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import {
   ReplayEngine,
   type ReplayState,
@@ -8318,6 +8477,15 @@ export class BattleReplayManager {
   private loadedReplayData: BattleReplay | null = null
   private stateUnsubscribe: (() => void) | null = null
   private eventUnsubscribe: (() => void) | null = null
+  /**
+   * 领域事件总线（由 DI 容器注入）
+   * NOTE: Phase 1 未使用。Phase 2 发射 UI 动画事件时需注入 mitt eventBus，
+   *       而非 triggerEventBus（UI 组件监听的是 mitt eventBus）。
+   */
+  private eventBus: IDomainEventBus | null = null
+  constructor(eventBus?: IDomainEventBus) {
+    this.eventBus = eventBus ?? null
+  }
   /**
    * 获取是否正在回放
    */
@@ -8360,13 +8528,15 @@ export class BattleReplayManager {
    */
   startReplay(recording: BattleReplay) {
     this.resetReplayState()
+    // ★ 临时关闭日志自动清理，防止长战斗回放日志被截断
+    LoggerProvider.logger.setAutoCleanup(false)
     this.replayEngine = new ReplayEngine()
     // ★ 注入技能配置查询，替代硬编码冷却值
     try {
       const skillManager = container.resolve<SkillManager>('SkillManager')
       this.replayEngine.setSkillConfigLookup((id) => skillManager.getSkillConfig(id))
     } catch {
-      // 容器未就绪时静默忽略，冷却显示为 0
+      console.warn('[BattleReplayManager] 无法获取 SkillManager，冷却显示为 0')
     }
     this.loadedReplayData = recording
     const success = this.replayEngine.loadReplay(recording)
@@ -8419,6 +8589,8 @@ export class BattleReplayManager {
    */
   stopReplay() {
     this.resetReplayState()
+    // ★ 恢复日志自动清理
+    LoggerProvider.logger.setAutoCleanup(true)
     this.logger.addSystemLog({
       message: '回放已停止',
     })
@@ -8505,7 +8677,6 @@ export class BattleReplayManager {
    * @param event 事件对象
    */
   private handleReplayEvent(event: ReplayEvent) {
-    console.log('回放事件:', event)
     switch (event.type) {
       case BattleEventType.ACTION:
         this.handleActionReplay(event.data?.action)
@@ -8533,41 +8704,102 @@ export class BattleReplayManager {
         break
     }
   }
-  /**
-   * 处理动作回放
-   * @param action 动作对象
-   */
   /** 处理动作回放 */
   private handleActionReplay(action: any) {
-    console.log('回放动作:', action)
+    if (!action) return
+    const sourceName = action.sourceId ?? '未知'
+    const targetName = action.targetId ?? '未知'
+    const dmgText = (action.damage ?? 0) > 0 ? `，造成 ${action.damage} 点伤害` : ''
+    const healText = (action.heal ?? 0) > 0 ? `，恢复 ${action.heal} 点气血` : ''
+    LoggerProvider.logger.addBattleLog({
+      turn: action.turn ?? 0,
+      message: `[回放] ${sourceName} → ${targetName}${dmgText}${healText}`,
+      segments: [{ text: `[回放] ${sourceName} → ${targetName}${dmgText}${healText}` }],
+      category: (action.damage ?? 0) > 0
+        ? BATTLE_LOG_CATEGORIES.DAMAGE
+        : (action.heal ?? 0) > 0
+          ? BATTLE_LOG_CATEGORIES.HEAL
+          : BATTLE_LOG_CATEGORIES.STATUS,
+      meta: { role: 'action' },
+    })
   }
   /** 处理回合开始回放 */
   private handleTurnStartReplay(turn: number, participantId: string) {
-    console.log('回放回合开始:', turn, '行动者:', participantId)
+    LoggerProvider.logger.addBattleLog({
+      turn,
+      message: `[回放] 第 ${turn} 回合开始，行动者：${participantId}`,
+      segments: [{ text: `[回放] 第 ${turn} 回合开始`, classStr: 'log-system' }],
+      category: BATTLE_LOG_CATEGORIES.SYSTEM,
+      meta: { role: 'battle' },
+    })
+    // NOTE: 不发射 TURN_START 动画事件 — 回放模式下参与者卡片未渲染
   }
   /** 处理回合结束回放 */
   private handleTurnEndReplay(turn: number) {
-    console.log('回放回合结束:', turn)
+    LoggerProvider.logger.addBattleLog({
+      turn,
+      message: `[回放] 第 ${turn} 回合结束`,
+      segments: [{ text: `[回放] 第 ${turn} 回合结束`, classStr: 'log-system' }],
+      category: BATTLE_LOG_CATEGORIES.SYSTEM,
+      meta: { role: 'battle' },
+    })
   }
   /** 处理战斗开始回放 */
   private handleBattleStartReplay() {
-    console.log('回放战斗开始')
+    LoggerProvider.logger.addBattleLog({
+      turn: 0,
+      message: '[回放] 战斗开始',
+      segments: [{ text: '[回放] 战斗开始', classStr: 'log-system' }],
+      category: BATTLE_LOG_CATEGORIES.SYSTEM,
+      meta: { role: 'battle' },
+    })
   }
   /** 处理战斗结束回放 */
   private handleBattleEndReplay(winner: string) {
-    console.log('回放战斗结束:', winner)
+    LoggerProvider.logger.addBattleLog({
+      turn: 0,
+      message: `[回放] 战斗结束，胜利者：${winner}`,
+      segments: [{ text: `[回放] 战斗结束，胜利者：${winner}` }],
+      category: BATTLE_LOG_CATEGORIES.STATUS,
+      meta: { role: 'battle' },
+    })
+    // NOTE: 不调用 stopReplay() — ReplayEngine.handleReplayEnd() 已处理播放结束
   }
-  /** 处理Buff添加回放 */
+  /** 处理 Buff 添加回放 */
   private handleBuffAddReplay(data: any) {
-    console.log('回放Buff添加:', data)
+    if (!data?.targetId) return
+    LoggerProvider.logger.addBattleLog({
+      turn: data.turn ?? 0,
+      message: `[回放] ${data.targetId} 获得 Buff: ${data.buffId ?? '未知'}`,
+      segments: [{ text: `[回放] Buff 添加: ${data.buffId ?? '未知'}` }],
+      category: BATTLE_LOG_CATEGORIES.STATUS,
+      meta: { role: 'sub' },
+    })
   }
-  /** 处理Buff移除回放 */
+  /** 处理 Buff 移除回放 */
   private handleBuffRemoveReplay(data: any) {
-    console.log('回放Buff移除:', data)
+    if (!data?.targetId) return
+    LoggerProvider.logger.addBattleLog({
+      turn: data.turn ?? 0,
+      message: `[回放] ${data.targetId} 移除 Buff: ${data.instanceId ?? '未知'}`,
+      segments: [{ text: `[回放] Buff 移除: ${data.instanceId ?? '未知'}` }],
+      category: BATTLE_LOG_CATEGORIES.STATUS,
+      meta: { role: 'sub' },
+    })
   }
-  /** 处理Buff更新回放 */
+  /** 处理 Buff 更新回放 */
   private handleBuffUpdateReplay(data: any) {
-    console.log('回放Buff更新:', data)
+    if (!data?.targetId) return
+    const info: string[] = []
+    if (data.remainingTurns != null) info.push(`剩余${data.remainingTurns}回合`)
+    if (data.stacks != null) info.push(`${data.stacks}层`)
+    LoggerProvider.logger.addBattleLog({
+      turn: data.turn ?? 0,
+      message: `[回放] ${data.targetId} Buff 更新: ${info.join('，') || '状态变化'}`,
+      segments: [{ text: `[回放] Buff 更新: ${info.join('，') || '状态变化'}` }],
+      category: BATTLE_LOG_CATEGORIES.STATUS,
+      meta: { role: 'sub' },
+    })
   }
   /**
    * 重置回放状态
@@ -8602,6 +8834,8 @@ export class BattleReplayManager {
    */
   destroy() {
     this.resetReplayState()
+    // ★ 恢复日志自动清理，与 stopReplay() 保持一致
+    LoggerProvider.logger.setAutoCleanup(true)
   }
 }
 
@@ -9590,9 +9824,8 @@ export class BattleExecutor {
             effectType: action.type,
             damageCategory: DamageCategory.PHYSICAL,
           })
-          // 命中瞬间（50%T）：统一应用所有延迟伤害，并发射 DAMAGE_TAKEN 事件
-          // NOTE: 收集每个目标的原始伤害、最终伤害、气血变化 — 用于 result sub 日志
-          // 按 target.id 聚合，避免多步骤技能对同一目标产生多条 entry
+          // 命中瞬间（50%T）：统一应用所有延迟伤害，统一走 settleDamage
+          // NOTE: 先按 target.id 聚合 entries，确保多步骤技能对同一目标只触发一次 ON_HIT/DAMAGE_TAKEN
           const resultMap = new Map<string, (typeof targetResults)[0]>()
           for (const entry of damageToken.getEntries()) {
             if (!entry.target.isAlive()) continue
@@ -9612,25 +9845,17 @@ export class BattleExecutor {
                 hpAfter: entry.target.currentHealth,
               })
             }
-            if (entry.damage > 0) {
-              const actualDmg = entry.target.takeDamage(entry.damage)
-              this.emitDamageTakenEvent(
-                source, entry.target, entry.damage, entry.rawDamage, isCrit, battleData,
-              )
-              // 技能路径仇恨生成
-              if (this.threatManager) {
-                const targetHasTaunt = this.buffSystem.hasBuffWithTag(entry.target.id, 'taunt')
-                this.threatManager.recordThreat(source.id, entry.target.id, actualDmg, targetHasTaunt)
-              }
-            }
-            if (entry.heal > 0) {
-              entry.target.heal(entry.heal)
-            }
             totalRawDamage += entry.rawDamage
           }
-          // 所有伤害/治疗应用后，更新最终 hpAfter 并回填到 targetResults
+          // 按目标聚合后，每个目标调用一次 settleDamage
           targetResults.length = 0
           for (const r of resultMap.values()) {
+            if (r.finalDamage > 0) {
+              this.settleDamage(source, r.target, r.finalDamage, r.rawDamage, isCrit, battleData)
+            }
+            if (r.heal > 0) {
+              r.target.heal(r.heal)
+            }
             r.hpAfter = r.target.currentHealth
             targetResults.push(r)
           }
@@ -9748,49 +9973,7 @@ export class BattleExecutor {
             })
           }
         }
-        // ponytail: 触发被动 — 攻击方 ON_HIT + 受击方 DAMAGE_TAKEN + ON_DEATH
-        for (const pd of pendingDamages) {
-          if (pd.damage > 0) {
-            this.passiveSkillManager.triggerPassives(
-              source,
-              createPassiveContext(BattleTriggerPhase.ON_HIT, battleData, {
-                target: pd.target,
-                sourceId: source.id,
-                damage: pd.damage,
-              }),
-            )
-            this.passiveSkillManager.triggerPassives(
-              pd.target,
-              createPassiveContext(
-                BattleTriggerPhase.DAMAGE_TAKEN,
-                battleData,
-                {
-                  target: pd.target,
-                  sourceId: source.id,
-                  damage: pd.damage,
-                },
-              ),
-            )
-            if (!pd.target.isAlive()) {
-              this.passiveSkillManager.triggerPassives(
-                pd.target,
-                createPassiveContext(BattleTriggerPhase.ON_DEATH, battleData, {
-                  target: source,
-                  sourceId: source.id,
-                  cause: EffectType.DAMAGE,
-                }),
-              )
-              this.passiveSkillManager.triggerPassives(
-                source,
-                createPassiveContext(BattleTriggerPhase.ON_KILL, battleData, {
-                  target: pd.target,
-                  sourceId: pd.target.id,
-                  cause: EffectType.DAMAGE,
-                }),
-              )
-            }
-          }
-        }
+        // settleDamage 内部已处理：ON_HIT/DAMAGE_TAKEN 被动 + pendingDeaths（B1 修复：ON_DEATH/ON_KILL 改由 runEndConditionCheck 延迟触发）
       } else if (totalDamage === 0 && totalHeal === 0) {
         // 无伤害/治疗时仍输出行动日志
         const skillId = skill.id || skill.name || ''
@@ -10066,50 +10249,64 @@ export class BattleExecutor {
     }
   }
   /**
-   * 向 TriggerEventBus 发射 DAMAGE_TAKEN 事件
-   * 统一收口所有扣血行为的事件发射，确保荆棘/反伤等 Buff 触发器能正确触发
+   * 伤害结算 — 所有伤害路径的唯一执行入口
+   *
+   * 不变量序列（调用方不可重排）：扣血 → TriggerEventBus(DAMAGE_TAKEN) → 仇恨 → 被动(ON_HIT/DAMAGE_TAKEN) → pendingDeaths
+   * 调用方负责：动画编排、日志、CombatRecord
+   *
+   * @returns 实际扣除的 HP（经过护盾/能量吸收后），0 表示完全吸收
    */
-  private emitDamageTakenEvent(
-    source: BattleEntity,
+  settleDamage(
+    source: BattleEntity | null,
     target: BattleEntity,
     finalDamage: number,
     rawDamage: number,
     isCritical: boolean,
     battle: BattleData,
-  ): void {
+  ): number {
+    // 1. 扣血（内部处理护盾吸收、背水护甲能量抵扣）
+    const actualDamage = target.takeDamage(finalDamage)
+    if (actualDamage <= 0) return 0
+    // 2. 向 TriggerEventBus 发射 DAMAGE_TAKEN（驱动反伤/荆棘等 Buff 触发器）
     const eventBus = this.buffSystem.getEventBus()
     eventBus.emit(BattleTriggerPhase.DAMAGE_TAKEN, {
       phase: BattleTriggerPhase.DAMAGE_TAKEN,
-      sourceId: source.id,
+      sourceId: source?.id ?? '',
       targetId: target.id,
-      value: finalDamage,
+      value: actualDamage,
       currentTurn: battle.currentTurn,
-      extra: {
-        damage: finalDamage,
-        rawDamage,
-        isCritical,
-      },
+      extra: { damage: actualDamage, rawDamage, isCritical },
     } as TriggerEventContext)
-  }
-  /**
-   * 对目标应用伤害并触发相关被动技能
-   */
-  applyDamageToTarget(
-    source: BattleEntity,
-    target: BattleEntity,
-    damage: number,
-    rawDamage: number,
-    isCritical: boolean,
-    battle: BattleData,
-  ): number {
-    const actualDamage = target.takeDamage(damage)
-    // 🆕 向 TriggerEventBus 发射 DAMAGE_TAKEN 事件（修复普攻/技能不触发 Buff 触发器的 Bug）
-    this.emitDamageTakenEvent(source, target, damage, rawDamage, isCritical, battle)
-    // NOTE: 被动触发（ON_HIT/DAMAGE_TAKEN/ON_DEATH/ON_KILL）已移至调用方 handleHitAttack 的 action 日志之后
-    // 仇恨生成
-    if (this.threatManager && actualDamage > 0) {
+    // 3. 仇恨记录（无来源时跳过）
+    if (this.threatManager && source) {
       const targetHasTaunt = this.buffSystem.hasBuffWithTag(target.id, 'taunt')
       this.threatManager.recordThreat(source.id, target.id, actualDamage, targetHasTaunt)
+    }
+    // 4. 被动触发（ON_HIT 仅当有来源时触发）
+    if (source) {
+      this.passiveSkillManager.triggerPassives(
+        source,
+        createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
+          target, sourceId: source.id, damage: actualDamage,
+        }),
+      )
+    }
+    this.passiveSkillManager.triggerPassives(
+      target,
+      createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
+        target: source ?? target,
+        sourceId: source?.id ?? '',
+        damage: actualDamage,
+      }),
+    )
+    // 5. 死亡 → pendingDeaths（延迟结算，兼容复活机制）
+    if (!target.isAlive()) {
+      this.skillManager.getExecutor().cleanupComboState(target.id)
+      this.pendingDeaths.push({
+        deadId: target.id,
+        killerId: source?.id ?? 'system',
+        battle,
+      })
     }
     return actualDamage
   }
@@ -10207,7 +10404,7 @@ export class BattleExecutor {
     // NOTE: 在扣血前捕获 hpBefore，确保 气血 箭头准确
     const hpBefore = target.currentHealth
     // 命中瞬间（50%T）：扣血，气血 条与 UI 特效同帧开始
-    const actualDamage = this.applyDamageToTarget(source, target, damage, rawDamage, isCritical, battle)
+    const actualDamage = this.settleDamage(source, target, damage, rawDamage, isCritical, battle)
     const hpAfter = target.currentHealth
     // 命中阶段（50%→100%T）：伤害数字 + 命中爆发
     await this.animationManager.triggerImpactPhaseAndWait({
@@ -10261,26 +10458,7 @@ export class BattleExecutor {
     LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}`,
     )
-    // ★ 被动触发移到 action + result sub 日志之后
-    this.passiveSkillManager.triggerPassives(
-      source,
-      createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
-        target,
-        sourceId: source.id,
-        damage,
-      }),
-    )
-    this.passiveSkillManager.triggerPassives(
-      target,
-      createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
-        target: source,
-        sourceId: source.id,
-        damage,
-      }),
-    )
-    if (!target.isAlive()) {
-      this.pendingDeaths.push({ deadId: target.id, killerId: source.id, battle })
-    }
+    // settleDamage 内部已处理：ON_HIT/DAMAGE_TAKEN 被动、pendingDeaths
   }
   /**
    * 选择并执行普通攻击
@@ -10576,14 +10754,11 @@ export class BattleExecutor {
               effectType: action.type,
               damageCategory: DamageCategory.PHYSICAL,
             })
-            // 命中瞬间（50%T）：应用延迟伤害，发射 DAMAGE_TAKEN 事件
+            // 命中瞬间（50%T）：应用延迟伤害，统一走 settleDamage
             for (const entry of damageToken.getEntries()) {
               if (!entry.target.isAlive()) continue
               if (entry.damage > 0) {
-                entry.target.takeDamage(entry.damage)
-                this.emitDamageTakenEvent(
-                  source, entry.target, entry.damage, entry.rawDamage, actionIsCrit, battle,
-                )
+                this.settleDamage(source, entry.target, entry.damage, entry.rawDamage, actionIsCrit, battle)
               }
               if (entry.heal > 0) {
                 entry.target.heal(entry.heal)
@@ -10716,32 +10891,7 @@ export class BattleExecutor {
               meta: { role: 'sub', entityId: target.id, hpBefore, hpAfter, heal: action.heal ?? 0 },
             })
           }
-          // ponytail: 使用 token 的实际扣血值而非 action.damage 判断被动触发，减少发散窗口
-          const actualDamage = damageToken.getTotalDamage()
-          if (actualDamage > 0) {
-            this.passiveSkillManager.triggerPassives(
-              source,
-              createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
-                target,
-                sourceId: source.id,
-                damage: actualDamage,
-              }),
-            )
-            this.passiveSkillManager.triggerPassives(
-              target,
-              createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
-                target: source,
-                sourceId: source.id,
-                damage: actualDamage,
-              }),
-            )
-            if (!target.isAlive()) {
-              // ponytail: P1/PERF-1 — 死亡时清理 comboStates
-              this.skillManager.getExecutor().cleanupComboState(target.id)
-              this.pendingDeaths.push({ deadId: target.id, killerId: source.id, battle })
-            }
-          }
-          // ponytail: token.applyAll() 已经处理了所有伤害和治疗，不需要额外调用 heal
+          // settleDamage 内部已处理：DAMAGE_TAKEN 事件、仇恨、ON_HIT/DAMAGE_TAKEN 被动、pendingDeaths
         }
       } catch (error) {
         // ponytail: catch 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
@@ -10774,8 +10924,8 @@ export class BattleExecutor {
           effectType: 'attack',
           damageCategory: DamageCategory.PHYSICAL,
         })
-        // 命中瞬间（50%T）：扣血
-        const actualDamage = target.takeDamage(action.damage)
+        // 命中瞬间（50%T）：扣血（settleDamage 统一处理事件/仇恨/被动/死亡）
+        const actualDamage = this.settleDamage(source, target, action.damage, action.damage, false, battle)
         action.damage = actualDamage
         await this.animationManager.triggerImpactPhaseAndWait({
           targetId: target.id,
@@ -10784,28 +10934,7 @@ export class BattleExecutor {
           isCritical: false,
           isHeal: false,
         })
-        // ponytail: ON_HIT 触发攻击方，DAMAGE_TAKEN 触发受击方
-        this.passiveSkillManager.triggerPassives(
-          source,
-          createPassiveContext(BattleTriggerPhase.ON_HIT, battle, {
-            target,
-            sourceId: source.id,
-            damage: actualDamage,
-          }),
-        )
-        this.passiveSkillManager.triggerPassives(
-          target,
-          createPassiveContext(BattleTriggerPhase.DAMAGE_TAKEN, battle, {
-            target: source,
-            sourceId: source.id,
-            damage: actualDamage,
-          }),
-        )
-        if (!target.isAlive()) {
-          // ponytail: P1/PERF-1 — 死亡时清理 comboStates
-          this.skillManager.getExecutor().cleanupComboState(target.id)
-          this.pendingDeaths.push({ deadId: target.id, killerId: source.id, battle })
-        }
+        // settleDamage 内部已处理：DAMAGE_TAKEN 事件、仇恨、ON_HIT/DAMAGE_TAKEN 被动、pendingDeaths
         if (action.heal && action.heal > 0) {
           // 治疗 → 直接命中（无飞行）
           const actualHeal = target.heal(action.heal)
@@ -14992,9 +15121,9 @@ import {
   StepExecutionContext,
   BattleTriggerPhase,
   OLD_PHASE_NAME_MAP,
+  type BattleEntity,
 } from '@/domain/battle/type/types'
 import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
-import type { BattleEntity } from '@/domain/battle/type/types'
 /** 无操作脚本占位：用于有配置无脚本的 buff */
 const NOOP_BUFF_SCRIPT: IBuffScript = {
   onApply: () => {},
@@ -15010,6 +15139,17 @@ export interface TriggerExecutionContext extends TriggerEventContext {
 }
 /** 角色解析器：characterId → BattleEntity */
 export type CharacterResolver = (characterId: string) => BattleEntity | undefined
+/** 召唤配置（最小定义，供回调传递） */
+export interface SummonRequest {
+  /** 召唤物模板 ID（对应 enemies.json 中的 id） */
+  summonId: string
+  /** 持续回合数（-1 = 永久） */
+  duration: number
+  /** 召唤者 ID */
+  sourceId: string
+  /** 召唤者阵营 */
+  team: string
+}
 /**
  * Buff系统类
  * 负责管理Buff实例的气血周期、状态更新和修饰符堆栈
@@ -15032,6 +15172,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   ) => void
   private onHealRequest?: (targetId: string, amount: number) => void
   private onEnergyRequest?: (targetId: string, amount: number) => void
+  private onSummonRequest?: (request: SummonRequest) => void
   private onBuffApplied?: (characterId: string, buffId: string) => void
   private buffAppliedCallbackEnabled: boolean = true
   private readonly eventBus: IDomainEventBus
@@ -15147,6 +15288,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   public requestEnergy(targetId: string, amount: number): void {
     this.onEnergyRequest?.(targetId, amount)
   }
+  /**
+   * 请求召唤单位（供触发器脚本调用）
+   * Phase 0：仅通过回调链路传递召唤请求，不创建实体。
+   * 委托给 BattleSystem 注册的 onSummonRequest 回调。
+   */
+  public requestSummon(request: SummonRequest): void {
+    this.onSummonRequest?.(request)
+  }
   private dealDirectDamage(
     targetId: string,
     damage: number,
@@ -15192,6 +15341,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     callback: (targetId: string, amount: number) => void,
   ): void {
     this.onEnergyRequest = callback
+  }
+  public setSummonCallback(callback: (request: SummonRequest) => void): void {
+    this.onSummonRequest = callback
   }
   public setBuffAppliedCallback(
     callback: (characterId: string, buffId: string) => void,
@@ -16348,11 +16500,27 @@ export function applyShield(ctx: TriggerExecutionContext): void {
 // ===================== 召唤类 =====================
 /**
  * summon_unit — 召唤单位
- * ponytail: 召唤系统尚未实现。当前仅打日志占位。
- * 升级路径：实现战斗系统的单位召唤管道后，在此处调用 ctx.buffSystem 的召唤接口。
+ *
+ * Phase 0：通过 BuffSystem.requestSummon 回调链路传递召唤请求。
+ * BattleSystem 注册的回调当前仅记录日志，召唤管道待后续设计文档实现。
+ *
+ * 升级路径：在 BattleSystem 的 setSummonCallback 中实现完整的
+ * 实体创建 → participants 注入 → AI 实例 → 回合顺序 → 到期移除。
  */
-export function summonUnit(_ctx: TriggerExecutionContext): void {
-  console.warn('[Trigger] summon_unit — 召唤系统尚未实现，跳过')
+export function summonUnit(ctx: TriggerExecutionContext): void {
+  const summonId = (ctx.params?.summonId as string) ?? ''
+  const duration = (ctx.params?.duration as number) ?? 3
+  if (!summonId) {
+    console.warn('[Trigger] summon_unit — 缺少 summonId 参数')
+    return
+  }
+  const sourceTeam = getSourceTeam(ctx)
+  ctx.buffSystem?.requestSummon({
+    summonId,
+    duration,
+    sourceId: ctx.sourceId ?? '',
+    team: sourceTeam ?? 'enemy',
+  })
 }
 // ===================== 注册入口 =====================
 /** 所有触发器脚本 ID → 处理函数的映射，供 BuffSystem 批量注册 */
@@ -23011,7 +23179,9 @@ export function initializeContainer(): void {
     const battleStateManager = container.resolve<BattleStateManager>('BattleStateManager')
     return new InterventionManager(battleSystem, battleStateManager)
   }, true)
-  container.register('BattleReplayManager', new BattleReplayManager())
+  container.registerFactory('BattleReplayManager', () => {
+    return new BattleReplayManager(triggerEventBus)
+  }, true)
   // 注册 BattleManager（从容器解析子管理器依赖）
   container.registerFactory(
     'BattleManager',

@@ -22,7 +22,6 @@ import type {
   BattleEvents,
   BattleEventName,
 } from '@/domain/battle/type/BattleEventType'
-import { LocalStorage } from '@/infrastructure/adapters/storage'
 import { eventBus } from '@/main'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
@@ -767,53 +766,6 @@ export class BattleManager {
    */
   getBattleId(): string | null {
     return this.battleStateManager.getBattleId() ?? null
-  }
-
-  /**
-   * 保存战斗状态
-   * @deprecated 该功能从未正确工作过（参见评审 #9）：toSnapshot() 只捕获 5 个属性，
-   *             远少于 ATTRIBUTE_CODE 的 40+ 属性，且 restoreBattleState 在 BattleSystem 上不存在。
-   *             如需要完整状态保存/恢复，需重新设计 BattleStateSnapshot 序列化协议（覆盖全部属性 + Buff 实例 + 技能冷却）。
-   *             此方法保留仅避免编译错误，实际调用时返回 false。
-   */
-  saveBattleState(): boolean {
-    return false
-    try {
-      const battleState = this.getBattleState()
-      if (!battleState) {
-        return false
-      }
-      LocalStorage.set('battleState', battleState)
-      return true
-    } catch (error) {
-      console.error('保存战斗状态时出错:', error)
-      return false
-    }
-  }
-
-  /**
-   * 加载战斗状态
-   * @deprecated 同 saveBattleState：该方法从未正常工作。保留仅避免编译错误，始终返回 null。
-   */
-  loadBattleState(): unknown | null {
-    return null
-    try {
-      const battleState = LocalStorage.get('battleState')
-      if (battleState) {
-        // ponytail: BattleSystem 可能未声明 restoreBattleState；用交叉类型声明临时的调用签名
-        ;(
-          this.battleSystem as BattleSystem & {
-            restoreBattleState(state: unknown): void
-          }
-        ).restoreBattleState(battleState)
-        this.syncBattleState()
-        return battleState
-      }
-      return null
-    } catch (error) {
-      console.error('加载战斗状态时出错:', error)
-      return null
-    }
   }
 
   /**

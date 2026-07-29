@@ -367,7 +367,7 @@ ParticipantCard.vue
     background-color: transparent;
   }
   50% {
-    background-color: rgba(34, 211, 238, 0.15);
+    background-color: --border-debug-color-dark;
   }
   100% {
     background-color: transparent;

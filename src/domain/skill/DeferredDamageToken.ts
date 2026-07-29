@@ -17,7 +17,7 @@ interface DamageEntry {
 export class DeferredDamageToken {
   private entries: DamageEntry[] = []
   private applied = false
-  /** ponytail: applyAll 后的快照，供后续 getTotalDamage/getTotalHeal 查询 */
+  /** applyAll 后的快照，供外部查询总伤害/治疗汇总 */
   private totalDamageSnapshot = 0
   private totalHealSnapshot = 0
 

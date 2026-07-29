@@ -198,7 +198,7 @@ const getPossibleSources = (buffId: string): string[] => {
 }
 
 .buff-badge.duration {
-  background: rgba(96, 165, 250, 0.15);
+  background: var(--border-common-color-dark);
   color: var(--color-info);
 }
 

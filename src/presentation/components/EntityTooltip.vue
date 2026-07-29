@@ -151,7 +151,7 @@ const tooltipStyle = computed(() => {
   max-height: 50vh;
   overflow-y: auto;
   background: rgba(15, 23, 42, 0.96);
-  border: 1px solid rgba(96, 165, 250, 0.35);
+  border: 1px solid var(--border-common-color);
   border-radius: var(--radius-lg);
   padding: var(--space-3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -168,13 +168,13 @@ const tooltipStyle = computed(() => {
   gap: var(--space-2);
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-2);
-  border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+  border-bottom: 1px solid var(--border-common-color-dark);
 }
 
 .tooltip-name {
   font-weight: var(--font-weight-semibold);
   color: var(--color-energy);
-  text-shadow: 0 0 6px rgba(34, 211, 238, 0.3);
+  text-shadow: 0 0 6px var(--border-debug-color);
   word-break: break-all;
 }
 
@@ -252,7 +252,7 @@ const tooltipStyle = computed(() => {
   width: 10px;
   height: 10px;
   background: rgba(15, 23, 42, 0.96);
-  border: 1px solid rgba(96, 165, 250, 0.35);
+  border: 1px solid var(--border-common-color);
   transform: rotate(45deg);
 
   &.arrow-top {

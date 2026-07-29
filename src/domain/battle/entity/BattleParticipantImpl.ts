@@ -241,8 +241,8 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * @deprecated 使用 getAttrVal(attr) 替代。getAttrVal 会触发重算；
-   *             如不需要重算，使用 stats.getAttribute(attr)。
+   * 获取属性值对象（不触发重算），用于需要直接操作 AttributeValue 修饰符数组的场景。
+   * 如需触发重算后取值，使用 getAttrVal(attr) 或 getAttribute(attr)。
    */
   getAttrValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined {
     return this.stats.getAttribute(attr)

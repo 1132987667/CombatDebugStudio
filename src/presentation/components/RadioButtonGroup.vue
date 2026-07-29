@@ -29,7 +29,6 @@ import { computed } from 'vue'
 interface RadioOption {
   value: string | number
   label: string
-  icon: string
 }
 
 interface Props {

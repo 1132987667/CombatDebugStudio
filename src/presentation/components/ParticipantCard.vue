@@ -387,7 +387,7 @@ defineExpose({
 }
 
 .situational-tag.tag-elemental {
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   color: #0a7f91;
   border: 1px solid rgba(34, 211, 238, 0.25);
 }
@@ -462,7 +462,7 @@ defineExpose({
   z-index: var(--z-tooltip, 1000);
   min-width: 220px;
   background: rgba(15, 23, 42, 0.97);
-  border: 1px solid rgba(96, 165, 250, 0.3);
+  border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-3);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -475,7 +475,7 @@ defineExpose({
   font-weight: var(--font-weight-bold);
   padding-bottom: var(--space-1);
   margin-bottom: var(--space-1);
-  border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+  border-bottom: 1px solid var(--border-common-color-dark);
   white-space: nowrap;
 }
 

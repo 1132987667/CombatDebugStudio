@@ -1,5 +1,3 @@
-import { type BuffScriptLoader } from '@/domain/buff/BuffScriptLoader'
-
 // 核心引擎导出
 export * from '@/domain/buff/BuffSystem'
 export * from '@/domain/buff/BuffScriptRegistry'

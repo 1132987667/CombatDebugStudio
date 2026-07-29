@@ -768,7 +768,7 @@ const handleBattleEndReplay = (winner: string) => {
   display: flex;
   gap: 12px;
   padding: 4px 12px 8px;
-  border-bottom: 1px solid rgba(96, 165, 250, 0.15);
+  border-bottom: 1px solid var(--border-common-color-dark);
   margin-bottom: 4px;
 }
 
@@ -803,7 +803,7 @@ const handleBattleEndReplay = (winner: string) => {
   /* ponytail: uses --color-energy (#0a7f91) with opacity; no token for 10% bg */
   background: rgba(34, 211, 238, 0.1);
   /* ponytail: glow uses --color-energy with opacity */
-  box-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
+  box-shadow: 0 0 8px var(--border-debug-color);
 }
 
 .skill-item.passive:hover {
@@ -883,9 +883,9 @@ const handleBattleEndReplay = (winner: string) => {
   max-width: 360px;
   padding: var(--space-3) var(--space-4);
   background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(96, 165, 250, 0.4);
+  border: 1px solid var(--border-common-color-dark);
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(96, 165, 250, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px var(--border-common-color-dark);
   backdrop-filter: blur(12px);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   line-height: var(--line-height-md);
@@ -899,7 +899,7 @@ const handleBattleEndReplay = (winner: string) => {
   align-items: center;
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-2);
-  border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+  border-bottom: 1px solid var(--border-common-color-dark);
 }
 
 .tooltip-name {
@@ -917,7 +917,7 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .tooltip-type.active {
-  background: rgba(96, 165, 250, 0.2);
+  background: var(--border-common-color-dark);
   color: var(--color-info);
 }
 
@@ -948,9 +948,9 @@ const handleBattleEndReplay = (winner: string) => {
   display: flex;
   flex-direction: column;
   padding: var(--space-1) var(--space-2);
-  background: rgba(96, 165, 250, 0.1);
+  background: var(--border-common-color-dark);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(96, 165, 250, 0.2);
+  border: 1px solid var(--border-common-color-dark);
 }
 
 .tooltip-stats .stat-label {
@@ -974,7 +974,7 @@ const handleBattleEndReplay = (winner: string) => {
   letter-spacing: 0.5px;
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-1);
-  border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+  border-bottom: 1px solid var(--border-common-color-dark);
 }
 
 .effect-item {
@@ -987,7 +987,7 @@ const handleBattleEndReplay = (winner: string) => {
 
 .effect-type {
   padding: var(--space-1) var(--space-1);
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   border-radius: var(--radius-sm);
   color: var(--color-energy);
   font-weight: var(--font-weight-medium);
@@ -999,7 +999,7 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .effect-scope {
-  color: rgba(96, 165, 250, 0.8);
+  color: var(--border-common-color-light);
 }
 
 .effect-duration {
@@ -1033,9 +1033,9 @@ const handleBattleEndReplay = (winner: string) => {
 }
 
 .tooltip-availability.available {
-  background: rgba(34, 211, 238, 0.15);
+  background: --border-debug-color-dark;
   color: var(--color-energy);
-  border: 1px solid rgba(34, 211, 238, 0.3);
+  border: 1px solid var(--border-debug-color);
 }
 
 .tooltip-availability.unavailable {

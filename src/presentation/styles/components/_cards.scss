@@ -225,7 +225,7 @@
 
 /* 能量 */
 .energy-bar {
-  border: 1px solid rgba(34, 211, 238, 0.3);
+  border: 1px solid var(--border-debug-color);
   background: rgba(34, 211, 238, 0.05);
   box-shadow:
     0 0 20px rgba(34, 211, 238, 0.1),

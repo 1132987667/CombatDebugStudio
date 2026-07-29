@@ -96,6 +96,14 @@ $transition-fast: var(--transition-fast);
   --color-enemy-primary: #7a1a1a;
   --color-enemy-text: var(--color-danger);
 
+  --border-debug-color-dark: rgba(34, 211, 238, 0.15);
+  --border-debug-color: rgba(34, 211, 238, 0.3);
+  --border-debug-color-light: rgba(34, 211, 238, 0.5);
+
+  --border-common-color-dark: rgba(96, 165, 250, 0.15);
+  --border-common-color: rgba(96, 165, 250, 0.3);
+  --border-common-color-light: rgba(96, 165, 250, 0.5);
+
   /* ==========================================================================
      2. 排版系统 (基准 14px，适配当前项目)
      ========================================================================== */

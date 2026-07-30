@@ -1,15 +1,12 @@
 <template>
-  <Dialog :model-value="modelValue" title="战斗记录" width="800px"
-    @update:model-value="$emit('update:modelValue', $event)">
+  <Dialog :model-value="modelValue" title="战斗记录" width="800px" @update:model-value="$emit('update:modelValue', $event)">
     <div class="recording-body">
       <!-- 左侧：战斗列表 -->
       <div class="recording-list">
         <div class="list-header">战斗列表</div>
         <EmptyState v-if="recordings.length === 0">暂无战斗记录</EmptyState>
-        <div v-for="rec in recordings" :key="rec.battleId"
-          class="recording-item"
-          :class="{ active: selectedRecording?.battleId === rec.battleId }"
-          @click="selectRecording(rec)">
+        <div v-for="rec in recordings" :key="rec.battleId" class="recording-item"
+          :class="{ active: selectedRecording?.battleId === rec.battleId }" @click="selectRecording(rec)">
           <div class="recording-name">{{ formatBattleName(rec) }}</div>
           <div class="recording-meta">
             <span>{{ new Date(rec.startTime).toLocaleTimeString() }}</span>
@@ -23,18 +20,14 @@
         <template v-if="!selectedRecording">
           <EmptyState v-if="!selectedRecording">请从左侧选择一个战斗记录</EmptyState>
         </template>
-        <template v-else-if="selectedRecording.combatRecords.length === 0">
-          <EmptyState v-else-if="selectedRecording.combatRecords.length === 0">该战斗暂无详细记录</EmptyState>
-        </template>
+        <EmptyState v-else-if="selectedRecording.combatRecords.length === 0">该战斗暂无详细记录</EmptyState>
         <template v-else>
           <div class="detail-header">
             共 {{ selectedRecording.combatRecords.length }} 次行动
           </div>
           <div class="detail-actions">
-            <div v-for="(record, idx) in selectedRecording.combatRecords" :key="record.id"
-              class="action-card"
-              :class="{ expanded: expandedRecordId === record.id }"
-              @click="toggleExpand(record.id)">
+            <div v-for="(record, idx) in selectedRecording.combatRecords" :key="record.id" class="action-card"
+              :class="{ expanded: expandedRecordId === record.id }" @click="toggleExpand(record.id)">
               <div class="action-summary">
                 <span class="action-index">#{{ idx + 1 }}</span>
                 <span class="action-actor" :class="record.actionType">{{ record.actorName }}</span>
@@ -63,7 +56,8 @@
                     <div class="stat-row">
                       <span class="stat-label">暴击</span>
                       <span class="stat-value" :class="record.damageBreakdown.isCritical ? 'crit' : ''">
-                        {{ record.damageBreakdown.isCritical ? '是 (x' + record.damageBreakdown.critMultiplier.toFixed(2) + ')' : '否' }}
+                        {{ record.damageBreakdown.isCritical ? '是 (x' + record.damageBreakdown.critMultiplier.toFixed(2)
+                        + ')' : '否' }}
                       </span>
                     </div>
                     <div class="stat-row">
@@ -82,10 +76,11 @@
                       <span class="stat-label">技能减免</span>
                       <span class="stat-value">{{ record.damageBreakdown.skillDmgReduction }}%</span>
                     </div>
-                    <div v-if="record.damageBreakdown.generalDamageReduction" class="stat-row">
+                    <div v-if="record.damageBreakdown.damageReduction" class="stat-row">
                       <span class="stat-label">通用减免</span>
-                      <span class="stat-value">{{ record.damageBreakdown.generalDamageReduction }}%</span>
+                      <span class="stat-value">{{ record.damageBreakdown.damageReduction }}%</span>
                     </div>
+
                     <div class="stat-row final">
                       <span class="stat-label">最终伤害</span>
                       <span class="stat-value final-value">{{ record.damageBreakdown.finalDamage }}</span>

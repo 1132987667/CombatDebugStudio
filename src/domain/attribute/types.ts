@@ -201,7 +201,6 @@ export const ATTRIBUTE_CODE = {
   critDamage: 'critDamage',
   // 伤害减免细分
   damageReduction: 'damageReduction', // 免伤率
-  generalDamageReduction: 'generalDamageReduction', // 通用伤害减免
   normalAtkDmgReduction: 'normalAtkDmgReduction', // 普通攻击伤害减免
   skillDmgReduction: 'skillDmgReduction', // 技能伤害减免
   critDmgTakenReduction: 'critDmgTakenReduction', // 受到暴击伤害减免
@@ -423,15 +422,6 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     name: '免伤率',
     displayName: '免伤率',
     description: '受到伤害的通用减免比例',
-    range: '0-100%',
-    impact: '减少受到的所有类型伤害',
-    isPercentage: true,
-  },
-  generalDamageReduction: {
-    code: 'generalDamageReduction',
-    name: '通用免伤率',
-    displayName: '通用免伤率',
-    description: '受到伤害的通用减免比例（独立管线，与 damageReduction 叠加）',
     range: '0-100%',
     impact: '减少受到的所有类型伤害',
     isPercentage: true,

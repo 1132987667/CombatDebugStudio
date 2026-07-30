@@ -490,6 +490,7 @@ export class DamageCalculator {
     // 伤害减免 — 同时作用于 ELEMENTAL 和 PHYSICAL，TRUE 跳过
     if (damageCategory !== DamageCategory.TRUE) {
       const dmgReduction = getAttrVal(target, ATTRIBUTE_CODE.damageReduction)
+      breakdown.damageReduction = dmgReduction
       if (dmgReduction > 0) {
         const before = damage
         damage = Math.floor(damage * (1 - dmgReduction / 100))

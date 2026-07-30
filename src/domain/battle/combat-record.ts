@@ -97,6 +97,8 @@ export interface DamageBreakdown {
   /** 各项减免（百分比点，如 20 = 减免 20%） */
   normalAtkReduction?: number
   skillDmgReduction?: number
+  /** 通用减免（免伤率，百分比点） */
+  damageReduction?: number
   damageTakenIncrease?: number
   /** 来源方伤害提升（在原始伤害阶段生效） */
   damageBoost?: number

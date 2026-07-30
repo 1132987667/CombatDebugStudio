@@ -202,7 +202,7 @@ describe('DamageCalculator', () => {
       }
       const origTgtGetAttr = target.getAttribute
       target.getAttribute = (attr: string) => {
-        if (attr === ATTRIBUTE_CODE.generalDamageReduction || attr === ATTRIBUTE_CODE.damageReduction) return 50
+        if (attr === ATTRIBUTE_CODE.damageReduction) return 50
         return origTgtGetAttr(attr)
       }
 

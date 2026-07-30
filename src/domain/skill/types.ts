@@ -72,10 +72,16 @@ export const DamageCategory = {
   PHYSICAL: 'physical',
   ELEMENTAL: 'elemental',
   TRUE: 'true',
-}
-
+} as const
 export type DamageCategory =
   (typeof DamageCategory)[keyof typeof DamageCategory]
+
+export const DamageCategoryName : Record<DamageCategory, string>  = {
+  [DamageCategory.PHYSICAL]: '物理',
+  [DamageCategory.ELEMENTAL]: '元素',
+  [DamageCategory.TRUE]: '真实',
+} as const
+export type DamageCategoryName = (typeof DamageCategoryName)[keyof typeof DamageCategoryName]
 
 /**
  * 属性类型

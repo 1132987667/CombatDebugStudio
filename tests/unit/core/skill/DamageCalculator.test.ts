@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
-import { createMockEntity, defaultAttrs } from '../../../mocks/MockEntity'
+import { createMockEntity, defaultAttrs } from '@tests/mocks/MockEntity'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory } from '@/domain/skill/types'

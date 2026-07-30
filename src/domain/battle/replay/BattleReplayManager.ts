@@ -8,7 +8,6 @@ import {
   type ReplayState,
   type ReplayEvent,
 } from './ReplayEngine'
-import { container } from '@/infrastructure/di/Container'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 
 /**
@@ -45,9 +44,14 @@ export class BattleReplayManager {
    *       而非 triggerEventBus（UI 组件监听的是 mitt eventBus）。
    */
   private eventBus: IDomainEventBus | null = null
+  private skillConfigLookup: ((id: string) => { cooldown: number } | undefined) | null = null
 
-  constructor(eventBus?: IDomainEventBus) {
+  constructor(
+    eventBus?: IDomainEventBus,
+    skillConfigLookup?: (id: string) => { cooldown: number } | undefined,
+  ) {
     this.eventBus = eventBus ?? null
+    this.skillConfigLookup = skillConfigLookup ?? null
   }
 
   /**
@@ -103,12 +107,9 @@ export class BattleReplayManager {
     LoggerProvider.logger.setAutoCleanup(false)
 
     this.replayEngine = new ReplayEngine()
-    // ★ 注入技能配置查询，替代硬编码冷却值
-    try {
-      const skillManager = container.resolve<SkillManager>('SkillManager')
-      this.replayEngine.setSkillConfigLookup((id) => skillManager.getSkillConfig(id))
-    } catch {
-      console.warn('[BattleReplayManager] 无法获取 SkillManager，冷却显示为 0')
+    // ★ 注入技能配置查询（由 DI 容器在构造时传入）
+    if (this.skillConfigLookup) {
+      this.replayEngine.setSkillConfigLookup(this.skillConfigLookup)
     }
     this.loadedReplayData = recording
 

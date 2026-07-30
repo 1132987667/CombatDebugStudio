@@ -1,4 +1,4 @@
-import type { IAtomicEffect, AtomicEffectType } from '../types'
+import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { StatusNames, StatusCode } from '@/shared/types/status-meta'
 
@@ -12,7 +12,7 @@ import { StatusNames, StatusCode } from '@/shared/types/status-meta'
  * 和 stackRule 管理。
  */
 export class ControlEffect implements IAtomicEffect {
-  readonly type: AtomicEffectType = 'control'
+  readonly type: AtomicEffectType = AtomicEffectType.CONTROL
 
   onApply(_ctx: BuffContext, _params: Record<string, unknown>): void {
     // 控制状态由 BuffSystem.getHighestPriorityControlEffect 统一查询
@@ -28,7 +28,7 @@ export class ControlEffect implements IAtomicEffect {
     const name = StatusNames[controlType] ?? controlType
     return [{
       text: `无法行动（${name}）`,
-      kind: 'control' as const,
+      kind: AtomicEffectType.CONTROL,
     }]
   }
 }

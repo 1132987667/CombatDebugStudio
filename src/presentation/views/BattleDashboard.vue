@@ -121,60 +121,60 @@
       <div class="monitor-group">
         <Tabs v-model="activeTab" :tabs="skillTabs" size="sm" destroy-inactive>
           <template #passive>
-          <div v-if="groupedPassives.length === 0" class="no-skills">
-            暂无被动技能
-          </div>
-          <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
-            <div v-for="group in groupedPassives" :key="group.category" class="skill-category">
-              <div class="skill-category-title">
-                <span class="category-dot" :style="{ background: group.color }"></span>
-                {{ group.label }}
-                <span class="category-count">({{ group.skills.length }})</span>
-              </div>
-              <div v-for="(skill, index) in group.skills" :key="index" class="skill-item passive"
-                :style="{ borderLeftColor: group.color }" @mouseenter="showSkillTooltip($event, skill)"
-                @mousemove="updateTooltipPosition" @mouseleave="hideSkillTooltip">
-                {{ skill.name || '未知技能' }}
+            <div v-if="groupedPassives.length === 0" class="no-skills">
+              暂无被动技能
+            </div>
+            <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
+              <div v-for="group in groupedPassives" :key="group.category" class="skill-category">
+                <div class="skill-category-title">
+                  <span class="category-dot" :style="{ background: group.color }"></span>
+                  {{ group.label }}
+                  <span class="category-count">({{ group.skills.length }})</span>
+                </div>
+                <div v-for="(skill, index) in group.skills" :key="index" class="skill-item passive"
+                  :style="{ borderLeftColor: group.color }" @mouseenter="showSkillTooltip($event, skill)"
+                  @mousemove="updateTooltipPosition" @mouseleave="hideSkillTooltip">
+                  {{ skill.name || '未知技能' }}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </template>
-      <template #active>
-        <div class="skills-display">
-          <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length"
-            class="no-skills">
-            暂无主动技能
-          </div>
-          <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
-            <div v-if="currentCharacter!.skills.small?.length" class="skill-category">
-              <div class="skill-category-title">小技能</div>
-              <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index" class="skill-item small"
-                @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
-                @mouseleave="hideSkillTooltip">
-                {{ skill.name || '未知技能' }}
+          </template>
+          <template #active>
+            <div class="skills-display">
+              <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length"
+                class="no-skills">
+                暂无主动技能
+              </div>
+              <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
+                <div v-if="currentCharacter!.skills.small?.length" class="skill-category">
+                  <div class="skill-category-title">小技能</div>
+                  <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index" class="skill-item small"
+                    @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                    @mouseleave="hideSkillTooltip">
+                    {{ skill.name || '未知技能' }}
+                  </div>
+                </div>
+                <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category">
+                  <div class="skill-category-title">终极技能</div>
+                  <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index"
+                    class="skill-item ultimate" @mouseenter="showSkillTooltip($event, skill)"
+                    @mousemove="updateTooltipPosition" @mouseleave="hideSkillTooltip">
+                    {{ skill.name || '未知技能' }}
+                  </div>
+                </div>
               </div>
             </div>
-            <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category">
-              <div class="skill-category-title">终极技能</div>
-              <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index" class="skill-item ultimate"
-                @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
-                @mouseleave="hideSkillTooltip">
-                {{ skill.name || '未知技能' }}
+          </template>
+          <template #status>
+            <div class="skills-display">
+              <div v-if="buffListItems.length === 0" class="no-skills">无生效状态</div>
+              <div v-else class="buff-list">
+                <BuffTextGroup v-for="buff in buffDisplay.groups" :key="buff.instanceId" :buff="buff"
+                  :debug-mode="false" />
               </div>
             </div>
-          </div>
-        </div>
-      </template>
-      <template #status>
-        <div class="skills-display">
-          <div v-if="buffListItems.length === 0" class="no-skills">无生效状态</div>
-          <div v-else class="buff-list">
-            <BuffTextGroup v-for="buff in buffDisplay.groups" :key="buff.instanceId" :buff="buff" :debug-mode="false" />
-          </div>
-        </div>
-      </template>
-    </Tabs>
+          </template>
+        </Tabs>
       </div>
     </div>
 

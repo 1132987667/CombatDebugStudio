@@ -48,6 +48,8 @@ export interface CompendiumBuff {
   duration: number
   attributes?: Record<string, string>
   description?: string
+  category?: string
+  polarity?: string
 }
 
 export interface CompendiumSkill {

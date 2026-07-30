@@ -25,6 +25,7 @@ import type { NarrativeBlock as BattleLogNarrativeBlock } from '@/shared/types/b
 import { skillSegment } from '@/shared/utils/log-segment-factory'
 import type { SkillConfigLookup } from '@/shared/utils/log-segment-factory'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
+import { DamageCategoryName } from '@/domain/skill/types'
 
 // ==================== 叙事块类型 ====================
 
@@ -656,10 +657,10 @@ export class RoundNarrativeRenderer {
       if (isKill) highlights.push('kill')
 
       // 伤害类型
-      let damageType: string | undefined
-      if (bd?.damageCategory === 'physical') damageType = '伤害'
-      else if (bd?.damageCategory === 'elemental') damageType = '元素伤害'
-      else if (bd?.damageCategory === 'true') damageType = '真实伤害'
+      let damageType: DamageCategoryName | undefined
+      if (bd?.damageCategory) {
+        damageType = DamageCategoryName[bd.damageCategory!]
+      }
 
       blocks.push({
         turn,

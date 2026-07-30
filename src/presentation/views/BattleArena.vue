@@ -94,10 +94,9 @@ import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogMan
 import { container } from '@/infrastructure/di/Container';
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import Notification from "@/presentation/components/Notification.vue";
-import { useBattleStore } from '@/presentation/stores';
+import { useBattleStore, SkillStepType } from '@/presentation/stores';
 import type { LogEntry } from '@/shared/types/battle-log';
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
-import { SkillStepType } from '@/domain/skill/types';
 import type { TraceLogEntry } from '@/shared/types/trace-log';
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";

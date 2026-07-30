@@ -4,6 +4,7 @@ import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { StackRule, ControlType } from '@/domain/buff/types'
 import type { BuffConfig } from '@/domain/buff/BuffConfig'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { getBuffConfig } from '@tests/fixtures/loadTestData'
 
 vi.mock('@/main', () => ({
   eventBus: { emit: () => {}, on: () => {}, off: () => {} },
@@ -28,6 +29,10 @@ const mockLogger = {
 }
 
 LoggerProvider.logger = mockLogger as any
+
+/** 从真实 JSON 配置加载 buff 的属性数据 */
+const realAtkBuff = getBuffConfig('buff_atk_up')
+const realAttributes = realAtkBuff?.attributes ?? {}
 
 function createTestBuffConfig(overrides?: Partial<BuffConfig>): BuffConfig {
   return {
@@ -57,12 +62,11 @@ describe('BuffSystem', () => {
   beforeEach(() => {
     registry = new BuffScriptRegistry()
     registry.registerScript('test_buff', { ...noopScript })
-    registry.registerScript('atk_buff', {
-      ...noopScript,
-    })
-    registry.loadBuffConfigsFromArray([
-      { id: 'atk_buff', name: 'ATK Up', attributes: { ATK: '+50' } },
-    ])
+    // 用真实 JSON 配置替换内联 Mock 数据
+    const realConfig = getBuffConfig('buff_atk_up')
+    if (realConfig) {
+      registry.loadBuffConfigsFromArray([realConfig])
+    }
     buffSystem = new BuffSystem(registry, mockEventBus, mockLogger)
   })
 
@@ -83,8 +87,8 @@ describe('BuffSystem', () => {
     })
 
     it('should create modifier stack when adding buff with attributes', () => {
-      const config = createTestBuffConfig({ id: 'atk_buff' })
-      const instanceId = buffSystem.addBuff('char_1', 'atk_buff', config, 1)
+      const config = createTestBuffConfig({ id: 'buff_atk_up' })
+      const instanceId = buffSystem.addBuff('char_1', 'buff_atk_up', config, 1)
 
       expect(instanceId).toBeTruthy()
       const stack = buffSystem.getModifierStack('char_1')

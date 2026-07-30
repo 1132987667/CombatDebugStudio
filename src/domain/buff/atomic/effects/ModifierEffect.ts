@@ -1,6 +1,7 @@
-import type { IAtomicEffect, AtomicEffectType } from '../types'
+import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ModifierType } from '@/domain/attribute/types'
+import { parseAttributeValue } from '@/domain/buff/atomic/parseUtils'
 
 /**
  * ModifierEffect — 属性修正原语
@@ -10,7 +11,7 @@ import { ModifierType } from '@/domain/attribute/types'
  * perStack=true 时，修饰符值 × 当前层数。
  */
 export class ModifierEffect implements IAtomicEffect {
-  readonly type: AtomicEffectType = 'modifier'
+  readonly type: AtomicEffectType = AtomicEffectType.MODIFIER
 
   onApply(ctx: BuffContext, params: Record<string, unknown>): void {
     const attributes = params.attributes as Record<string, string> | undefined
@@ -48,17 +49,11 @@ export class ModifierEffect implements IAtomicEffect {
     const stacks = ctx.getVariable<number>('_stacks') ?? 1
     return Object.entries(attributes).map(([attr, val]) => ({
       text: `${attr} ${val}${(params.perStack ?? true) && stacks > 1 ? ` ×${stacks}` : ''}`,
-      kind: 'modifier' as const,
+      kind: AtomicEffectType.MODIFIER,
     }))
   }
 
   private parseValue(valueStr: string): { value: number; type: ModifierType } {
-    const trimmed = valueStr.trim()
-    const isPercent = trimmed.includes('%')
-    const num = parseFloat(trimmed.replace('%', ''))
-    if (isNaN(num)) return { value: 0, type: ModifierType.ADDITIVE }
-    if (isPercent) return { value: num, type: ModifierType.PERCENTAGE }
-    if (Math.abs(num) < 1) return { value: num * 100, type: ModifierType.PERCENTAGE }
-    return { value: num, type: ModifierType.ADDITIVE }
+    return parseAttributeValue(valueStr)
   }
 }

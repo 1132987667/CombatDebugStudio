@@ -32,7 +32,6 @@ import {
   LogType,
   toLogLevel,
 } from '@/shared/types/battle-log'
-import { SkillStepType } from '@/domain/skill/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { defineStore } from 'pinia'
@@ -55,6 +54,16 @@ export interface BattleRules {
   /** 是否启用闪避机制 */
   dodgeEnabled: boolean
 }
+
+/** 动画步骤类型（与 AnimationState key 一一对应） */
+export const SkillStepType = {
+  DAMAGE: 'damage',
+  MISS: 'miss',
+  BUFF: 'buff',
+  HEAL: 'heal',
+  STATUS: 'status',
+} as const
+export type SkillStepType = (typeof SkillStepType)[keyof typeof SkillStepType]
 
 export interface AnimationState {
   /** 伤害动画数据（目标ID、伤害值、类型、是否暴击/治疗） */

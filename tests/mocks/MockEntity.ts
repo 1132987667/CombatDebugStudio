@@ -1,47 +1,49 @@
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { ParticipantSide } from '@/domain/battle/type/types'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { getEnemyConfig } from '@tests/fixtures/loadTestData'
 
 export const defaultAttrs = {
   [ATTRIBUTE_CODE.attack]: {
-    value: 100,
-    base: 100,
+    value: 63,
+    base: 63,
     modifiers: [],
     cachedVersion: 0,
   },
   [ATTRIBUTE_CODE.minAttack]: {
-    value: 80,
-    base: 80,
-    modifiers: [],
-    cachedVersion: 0,
-  },
-  [ATTRIBUTE_CODE.maxAttack]: {
-    value: 120,
-    base: 120,
-    modifiers: [],
-    cachedVersion: 0,
-  },
-  [ATTRIBUTE_CODE.defense]: {
     value: 50,
     base: 50,
     modifiers: [],
     cachedVersion: 0,
   },
+  [ATTRIBUTE_CODE.maxAttack]: {
+    value: 75,
+    base: 75,
+    modifiers: [],
+    cachedVersion: 0,
+  },
+  [ATTRIBUTE_CODE.defense]: {
+    value: 15,
+    base: 15,
+    modifiers: [],
+    cachedVersion: 0,
+  },
   [ATTRIBUTE_CODE.maxHealth]: {
-    value: 1000,
-    base: 1000,
+    value: 350,
+    base: 350,
     modifiers: [],
     cachedVersion: 0,
   },
   [ATTRIBUTE_CODE.currentHealth]: {
-    value: 800,
-    base: 1000,
+    value: 350,
+    base: 350,
     modifiers: [],
     cachedVersion: 0,
   },
   [ATTRIBUTE_CODE.speed]: {
-    value: 100,
-    base: 100,
+    value: 35,
+    base: 35,
     modifiers: [],
     cachedVersion: 0,
   },
@@ -87,8 +89,8 @@ export function createMockEntity(
   overrides?: Partial<Record<string, unknown>>,
 ): BattleEntity {
   const attrs = { ...defaultAttrs }
-  const hp = overrides?.maxHealth ?? 1000
-  const curHp = overrides?.currentHealth ?? 800
+  const hp = overrides?.maxHealth ?? 350
+  const curHp = overrides?.currentHealth ?? 350
   attrs[ATTRIBUTE_CODE.maxHealth] = {
     ...attrs[ATTRIBUTE_CODE.maxHealth],
     value: hp as number,
@@ -139,4 +141,23 @@ export function createMockEntity(
     getSkillIds: () => [],
     hasSkill: () => false,
   } as unknown as BattleEntity
+}
+
+// ═══════════════════════════════════════════════
+//  基于真实 JSON 配置的 Mock 创建函数（新增）
+// ═══════════════════════════════════════════════
+
+/**
+ * 从真实敌人配置创建 Mock 实体。
+ * 使用 GameDataProcessor.enemyToParticipant 生成完整 BattleParticipantImpl，
+ * 再提取结构给调用方。返回 { participant, ...attrs } 以便测试同时访问实体和属性值。
+ */
+export function createMockEntityFromConfig(
+  enemyId: string,
+  side: ParticipantSide = ParticipantSide.ALLY,
+) {
+  const enemy = getEnemyConfig(enemyId)
+  if (!enemy) return undefined
+  const participant = GameDataProcessor.enemyToParticipant(enemy, side)
+  return { participant, id: enemy.id, name: enemy.name, level: enemy.level }
 }

@@ -6,7 +6,9 @@ import { buffsData } from '@/shared/types/buffs-json'
 import effectsData from '@configs/effects/effects.json'
 import { ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 import { AtomicEffectRegistry } from '@/domain/buff/atomic/AtomicEffectRegistry'
+import { parseAttributeValue } from '@/domain/buff/atomic/parseUtils'
 import {
   BuffConfigResolver,
   type ResolvedBuffConfig,
@@ -116,6 +118,45 @@ export class BuffScriptRegistry {
       })
     }
     this.loadEffectConfigs()
+    this.validateBuffConfigs()
+  }
+
+  /** 加载时校验：标记无脚本、无 effectPlan 的 Buff */
+  private validateBuffConfigs(): void {
+    for (const [buffId] of this.buffConfigs) {
+      const raw = this.buffConfigs.get(buffId)
+      if (!raw) continue
+
+      // 检测旧字段：仍在用 attributes/immunities/aura/shield 但没有 effects[]
+      // NOTE: controlType 不是旧字段——BuffSystem 直接从 config.controlType 读取控制查询
+      const usedLegacy: string[] = []
+      for (const f of ['attributes', 'immunities', 'aura', 'shield'] as const) {
+        const v = raw[f]
+        if (v == null) continue
+        // 空对象（attributes: {}）不算
+        if (typeof v === 'object' && Object.keys(v).length === 0) continue
+        usedLegacy.push(f)
+      }
+      if (usedLegacy.length > 0 && !raw.effects?.length) {
+        throw new Error(
+          `[BuffConfigValidator] ${buffId}: 检测到旧字段 [${usedLegacy.join(', ')}] 但无 effects[]。` +
+          `请将所有效果迁移到 effects[] 数组格式。`
+        )
+      }
+
+      const hasScript = this.registry.has(buffId)
+      const resolved = this.getResolvedBuffConfig(buffId)
+      const hasEffectPlan = resolved?.effectPlan && resolved.effectPlan.length > 0
+      const hasTriggers = (raw.triggers?.length ?? 0) > 0
+
+      if (!hasScript && !hasEffectPlan && !hasTriggers) {
+        if (buffId.startsWith('_track_passive_')) continue
+        throw new Error(
+          `[BuffConfigValidator] ${buffId}: 无脚本、无 effects[]、无 triggers。` +
+          `请至少配置其一。旧字段 attributes/controlType/immunities/aura 不再被识别。`
+        )
+      }
+    }
   }
 
   /** 效果参数到属性修饰符的映射表 */
@@ -164,6 +205,13 @@ export class BuffScriptRegistry {
           maxStacks: (params.maxStacks as number) ?? 1,
           attributes:
             Object.keys(attributes).length > 0 ? attributes : undefined,
+          effects: [{
+            type: 'modifier',
+            params: {
+              attributes,
+              perStack: true,
+            },
+          }],
         }
         this.buffConfigs.set(effect.id, config)
         count++
@@ -236,21 +284,7 @@ export class BuffScriptRegistry {
     value: number
     type: ModifierType
   } {
-    const trimmed = value.trim()
-    // ponytail: detect explicit % suffix first — "+10%" → PERCENTAGE 0.1
-    const isPercent = trimmed.includes('%')
-    const numericStr = trimmed.replace('%', '')
-    const numValue = parseFloat(numericStr)
-    if (isNaN(numValue)) return { value: 0, type: ModifierType.ADDITIVE }
-
-    if (isPercent) {
-      // ponytail: x100 convention — "20%" means 20, recalc does (100+20)/100 = 1.2
-      return { value: numValue, type: ModifierType.PERCENTAGE }
-    }
-    // backward compatible: decimal like "+0.1" is also PERCENTAGE → convert to x100
-    if (Math.abs(numValue) < 1)
-      return { value: numValue * 100, type: ModifierType.PERCENTAGE }
-    return { value: numValue, type: ModifierType.ADDITIVE }
+    return parseAttributeValue(value)
   }
 
   public loadBuffConfigsFromArray(configs: BuffJsonEntry[]): void {
@@ -304,12 +338,7 @@ export class BuffScriptRegistry {
 
   /** 检查脚本是否为自包含模式——脚本自行管理修饰符，框架不再重复从 JSON 读取 */
   public isSelfContained(scriptId: string): boolean {
-    const config = this.defaultConfigs.get(scriptId)
-    if (config?.selfContained === true) return true
-    // 有 effectPlan 的 buff 视为自包含（effectPlan 自行管理生命周期）
-    const resolved = this.getResolvedBuffConfig(scriptId)
-    if (resolved?.effectPlan && resolved.effectPlan.length > 0) return true
-    return false
+    return this.defaultConfigs.get(scriptId)?.selfContained === true
   }
 
   public registerScript(

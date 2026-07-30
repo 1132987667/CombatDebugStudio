@@ -36,7 +36,7 @@
 
     <div class="buff-description-panel">
       <h3 class="section-title">效果说明</h3>
-      <p class="description-text">{{ getBuffDescription(buff) }}</p>
+      <p class="description-text">{{ buff.description || `获得${buff.name}效果。` }}</p>
     </div>
 
     <div class="buff-effect-panel">
@@ -54,17 +54,7 @@
       </div>
     </div>
 
-    <div class="buff-usage-panel">
-      <h3 class="section-title">获取方式</h3>
-      <div class="usage-list">
-        <div v-for="source in getPossibleSources(buff.id)" :key="source" class="usage-item">
-          <span class="usage-text">{{ source }}</span>
-        </div>
-        <div v-if="getPossibleSources(buff.id).length === 0" class="empty-usage">
-          <span>可通过技能或装备获得</span>
-        </div>
-      </div>
-    </div>
+
   </div>
 </template>
 
@@ -72,7 +62,6 @@
 import { computed } from 'vue'
 import { getAttrName, ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { CompendiumBuff } from '@/presentation/composables/useCompendium'
-import { BUFF_ID as STUN_BUFF_ID } from '@/domain/buff/scripts/StunDebuff'
 
 
 interface Props {
@@ -117,51 +106,15 @@ const attributes = computed((): AttributeDisplay[] => {
 })
 
 const effectType = computed(() => {
-  const id = props.buff.id.toLowerCase()
-  if (id.includes('poison') || id.includes('stun') || id.includes('slow') || id.includes('seal')) {
-    return '减益效果'
-  }
-  if (id.includes('heal') || id.includes('shield')) {
-    return '增益效果'
-  }
-  if (id.includes('aura')) {
-    return '光环效果'
-  }
-  return '增益/增益'
+  if (props.buff.category === 'aura') return '光环效果'
+  if (props.buff.polarity === 'negative') return '减益效果'
+  if (props.buff.polarity === 'positive') return '增益效果'
+  return '中性效果'
 })
 
 const effectTypeClass = computed(() => {
-  if (effectType.value === '减益效果') return 'debuff'
-  return 'buff'
+  return props.buff.polarity === 'negative' ? 'debuff' : 'buff'
 })
-
-const getBuffDescription = (buff: CompendiumBuff): string => {
-  if (buff.description) return buff.description
-
-  const descriptions: Record<string, string> = {
-    'buff_speed_up': '提升角色10点速度，持续2回合',
-    'buff_ally_atk_up': '提升同伴5%攻击力，持续2回合',
-    'buff_iron_armor': '减少20%受到的伤害',
-    'buff_wind_spirit': '风之精灵附身，提升5%速度',
-    'buff_poison': '中毒状态，每回合损失一定气血值',
-    'buff_shield': '获得护盾保护，可吸收一定伤害'
-  }
-
-  return descriptions[buff.id] || `获得${buff.name}效果。`
-}
-
-const getPossibleSources = (buffId: string): string[] => {
-  const sources: Record<string, string[]> = {
-    'buff_speed_up': ['技能 迅捷之风'],
-    'buff_ally_atk_up': ['技能 战斗号召'],
-    'buff_iron_armor': ['技能 铁甲护体'],
-    'buff_poison': ['技能 毒液喷射', '敌人: 食人花妖'],
-    'buff_shield': ['技能 护盾'],
-    [STUN_BUFF_ID]: ['技能 眩晕打击']
-  }
-
-  return sources[buffId] || []
-}
 </script>
 
 <style scoped>
@@ -302,32 +255,5 @@ const getPossibleSources = (buffId: string): string[] => {
   color: var(--color-warning);
 }
 
-.buff-usage-panel {
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2);
-}
 
-.usage-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.usage-item {
-  padding: var(--space-1) var(--space-2);
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
-}
-
-.usage-text {
-  color: var(--color-text-tertiary);
-}
-
-.empty-usage {
-  text-align: center;
-  padding: var(--space-2);
-  color: var(--color-text-disabled);
-}
 </style>

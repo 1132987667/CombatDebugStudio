@@ -62,7 +62,7 @@
         :expanded="panelVisible" @toggle="panelVisible = !panelVisible" @hover-attr="handleAttrHover"
         @hover-buff="handleBuffHover" @leave="handleBuffLeave" />
       <BuffTextPanel :visible="panelVisible" :participant-name="participant.name" :groups="buffDisplay.groups"
-        :secondary-groups="buffDisplay.secondaryGroups" :merged-labels="buffDisplay.mergedLabels"
+        :long-duration-items="buffDisplay.longDurationItems" :merged-labels="buffDisplay.mergedLabels"
         :debug-mode="showDebug" @close="panelVisible = false" />
       <!-- 属性/Buff 悬停追溯浮层 -->
       <Teleport to="body">

@@ -21,7 +21,7 @@
 
     <div class="item-description-panel">
       <h3 class="section-title">物品描述</h3>
-      <p class="description-text">{{ item.description || getDefaultDescription(item) }}</p>
+      <p class="description-text">{{ item.description || `${item.name}是一种有用的物品。` }}</p>
     </div>
 
     <div v-if="item.stats && Object.keys(item.stats).length > 0" class="item-stats-panel">
@@ -51,17 +51,7 @@
       </div>
     </div>
 
-    <div class="item-source-panel">
-      <h3 class="section-title">获取方式</h3>
-      <div class="source-list">
-        <div v-for="source in getItemSources(item.id)" :key="source" class="source-item">
-          <span class="source-text">{{ source }}</span>
-        </div>
-        <div v-if="getItemSources(item.id).length === 0" class="empty-source">
-          <span>可从商店购买或怪物掉落</span>
-        </div>
-      </div>
-    </div>
+
   </div>
 </template>
 
@@ -110,29 +100,7 @@ const formatEffectValue = (value: number): string => {
   return `+${value}`
 }
 
-const getDefaultDescription = (item: CompendiumItem): string => {
-  const descriptions: Record<string, string> = {
-    'mat_001': '生长在灵山深处的普通药草，具有基本的灵气。',
-    'mat_002': '蕴含火焰精华的矿石，是锻造火系武器的材料。',
-    'mat_003': '从冰魄中采集的晶体，可用于制作冰系装备。',
-    'weapon_001': '铁匠打造的制式长剑，剑身锋利，适合初学者使用。',
-    'armor_001': '由精铁打造的护甲，具备基本的防护能力。',
-    'potion_001': '恢复少量气血值的药水，战斗中的必备品。'
-  }
-  return descriptions[item.id] || `${item.name}是一种有用的物品。`
-}
 
-const getItemSources = (itemId: string): string[] => {
-  const sources: Record<string, string[]> = {
-    'mat_001': ['灵山深处采集', '击败草精掉落'],
-    'mat_002': ['火山矿洞采集', '击败火元素掉落'],
-    'mat_003': ['冰魄之巅采集', '击败冰元素掉落'],
-    'weapon_001': ['铁匠铺购买', '击败山魈掉落'],
-    'armor_001': ['铁匠铺购买', '击败石魔掉落'],
-    'potion_001': ['药店购买', '炼金师制作']
-  }
-  return sources[itemId] || []
-}
 </script>
 
 <style scoped>
@@ -290,32 +258,5 @@ const getItemSources = (itemId: string): string[] => {
   color: var(--color-text-tertiary);
 }
 
-.item-source-panel {
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2);
-}
 
-.source-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.source-item {
-  padding: var(--space-1) var(--space-2);
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-sm);
-}
-
-.source-text {
-  color: var(--color-text-tertiary);
-}
-
-.empty-source {
-  text-align: center;
-  padding: var(--space-2);
-  color: var(--color-text-disabled);
-}
 </style>

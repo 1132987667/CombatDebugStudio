@@ -1,4 +1,4 @@
-import type { IAtomicEffect, AtomicEffectType } from '../types'
+import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ModifierTemplate } from '@/domain/skill/types'
 
@@ -13,7 +13,7 @@ import { ModifierTemplate } from '@/domain/skill/types'
  * 移除时通过 ctx.removeModifiers() 清理全部。
  */
 export class AuraEffect implements IAtomicEffect {
-  readonly type: AtomicEffectType = 'aura'
+  readonly type: AtomicEffectType = AtomicEffectType.AURA
 
   onApply(ctx: BuffContext, params: Record<string, unknown>): void {
     const targetSelector = params.targetSelector as string | undefined
@@ -49,7 +49,7 @@ export class AuraEffect implements IAtomicEffect {
     const targetLabel = targetSelector === 'self' ? '自身' : targetSelector === 'allies' ? '队友' : '敌人'
     return [{
       text: `光环: 影响${targetLabel}`,
-      kind: 'other' as const,
+      kind: AtomicEffectType.AURA,
     }]
   }
 }

@@ -659,7 +659,8 @@
       "strategy": "first"
     },
     "triggerTimes": ["turn_start"],
-    "condition": "source_has_debuff_count_3",
+    "condition": "source_has_debuff_count",
+    "conditionParams": { "count": 3 },
     "steps": [
       {
         "type": "modify_attribute",
@@ -1112,6 +1113,7 @@
     },
     "triggerTimes": ["turn_start"],
     "condition": "source_energy_high",
+    "conditionParams": { "ratio": 0.9 },
     "steps": [
       {
         "type": "modify_attribute",
@@ -1335,7 +1337,8 @@
       "strategy": "first"
     },
     "triggerTimes": ["turn_start"],
-    "condition": "source_turn_gt_5",
+    "condition": "source_turn_gt",
+    "conditionParams": { "turn": 5 },
     "steps": [
       {
         "type": "modify_attribute",
@@ -1365,7 +1368,8 @@
       "strategy": "first"
     },
     "triggerTimes": ["turn_start"],
-    "condition": "source_turn_mod_5",
+    "condition": "source_turn_mod",
+    "conditionParams": { "mod": 5 },
     "steps": [
       {
         "type": "heal",

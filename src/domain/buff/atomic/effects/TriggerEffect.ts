@@ -1,4 +1,4 @@
-import type { IAtomicEffect, AtomicEffectType } from '../types'
+import { IAtomicEffect, AtomicEffectType } from '@/domain/buff/atomic/types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
 /**
@@ -11,11 +11,10 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
  * 此原语用作 facets 派生和 UI 显示。
  */
 export class TriggerEffect implements IAtomicEffect {
-  readonly type: AtomicEffectType = 'trigger'
+  readonly type: AtomicEffectType = AtomicEffectType.TRIGGER
 
   onApply(_ctx: BuffContext, _params: Record<string, unknown>): void {
     // 触发器注册由 BuffSystem.addBuff 中的 registerTriggersForInstance 处理
-    // 此处留空避免重复注册
   }
 
   onRemove(_ctx: BuffContext, _params: Record<string, unknown>): void {
@@ -25,8 +24,8 @@ export class TriggerEffect implements IAtomicEffect {
   getEffectLines(_ctx: BuffContext, params: Record<string, unknown>) {
     const scriptId = params.scriptId as string | undefined
     if (scriptId) {
-      return [{ text: `触发效果: ${scriptId}`, kind: 'other' as const }]
+      return [{ text: `触发效果: ${scriptId}`, kind: AtomicEffectType.TRIGGER }]
     }
-    return [{ text: '条件触发', kind: 'other' as const }]
+    return [{ text: '条件触发', kind: AtomicEffectType.TRIGGER }]
   }
 }

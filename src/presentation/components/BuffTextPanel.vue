@@ -19,13 +19,13 @@
                 :debug-mode="debugMode"
               />
             </div>
-            <div v-if="secondaryGroups && secondaryGroups.length > 0" class="panel-secondary">
+          <div v-if="longDurationItems && longDurationItems.length > 0" class="panel-secondary">
               <div class="secondary-toggle" @click="showSecondary = !showSecondary">
-                {{ showSecondary ? '▼' : '▶' }} 其他效果（{{ secondaryGroups.length }}）
+                {{ showSecondary ? '▼' : '▶' }} 其他效果（{{ longDurationItems.length }}）
               </div>
               <div v-if="showSecondary" class="secondary-groups">
                 <BuffTextGroup
-                  v-for="group in secondaryGroups"
+                  v-for="group in longDurationItems"
                   :key="group.instanceId"
                   :buff="group"
                   :debug-mode="debugMode"
@@ -69,8 +69,8 @@ const props = withDefaults(defineProps<{
   participantName: string
   /** 排序后的 Buff 完整分组 */
   groups: BuffTextItem[]
-  /** 次要分组（极多 Buff 时折叠的超期/永久效果） */
-  secondaryGroups?: BuffTextItem[]
+  /** 长时效果分组（极多 Buff 时折叠的长期/永久效果） */
+  longDurationItems?: BuffTextItem[]
   /** 合并标签列表 */
   mergedLabels: MergedAttributeLine[]
   /** 调试模式 */

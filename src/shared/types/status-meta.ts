@@ -7,7 +7,6 @@
 
 // ==================== 状态代码常量 ====================
 
-
 // ==================== 状态分类 ====================
 export const StatusCategory = {
   /** 控制类：限制或改变目标行动能力 */
@@ -30,7 +29,8 @@ export const StatusCategory = {
   ACTION: 'action',
   OTHER: 'other',
 } as const
-export type StatusCategory = (typeof StatusCategory)[keyof typeof StatusCategory]
+export type StatusCategory =
+  (typeof StatusCategory)[keyof typeof StatusCategory]
 
 export const StatusCategoryNames: Record<StatusCategory, string> = {
   [StatusCategory.CONTROL]: '控制',
@@ -54,6 +54,13 @@ export const STATUS_CODE = {
   BIND: 'bind',
   CONFUSION: 'confusion',
   FEAR: 'fear',
+  CHARM: 'charm',
+  TAUNT: 'taunt',
+  PETRIFY: 'petrify',
+  IMMOBILIZE: 'immobilize',
+  DISARM: 'disarm',
+  POLYMORPH: 'polymorph',
+  IMPRISON: 'imprison',
   GUIXU: 'guixu',
   // ── 持续伤害/治疗类 ──
   DOT: 'dot',
@@ -84,7 +91,6 @@ export const STATUS_CODE = {
 } as const
 
 export type StatusCode = (typeof STATUS_CODE)[keyof typeof STATUS_CODE]
-
 
 // ==================== 元数据接口 ====================
 
@@ -252,6 +258,140 @@ export const STATUS_META: Record<StatusCode, StatusMeta> = {
     stackable: false,
     defaultDuration: 1,
     controlPriority: 60,
+    blocksAction: true,
+    blocksSkill: true,
+  },
+
+  [STATUS_CODE.CHARM]: {
+    code: STATUS_CODE.CHARM,
+    category: StatusCategory.CONTROL,
+    name: '魅惑',
+    playerDescription: '倒戈攻击友方，无法控制自身行动。',
+    mechanicDescription:
+      '目标被魅惑后转为敌方阵营行动，自动攻击原友方单位。' +
+      '持续期间施法者无法主动解除。受击不会解除魅惑。' +
+      '某些技能/道具可抵抗魅惑效果。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 75,
+    blocksAction: false,
+    blocksSkill: false,
+  },
+
+  [STATUS_CODE.TAUNT]: {
+    code: STATUS_CODE.TAUNT,
+    category: StatusCategory.CONTROL,
+    name: '嘲讽',
+    playerDescription: '强制攻击施法者，无法选择其他目标。',
+    mechanicDescription:
+      '目标在持续期间只能以施法者为攻击/技能目标，' +
+      'AOE 技能以施法者所在位置为中心释放。' +
+      '若施法者已死亡则嘲讽失效。目标仍可正常行动但目标受限。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 35,
+    blocksAction: false,
+    blocksSkill: false,
+  },
+
+  [STATUS_CODE.PETRIFY]: {
+    code: STATUS_CODE.PETRIFY,
+    category: StatusCategory.CONTROL,
+    name: '石化',
+    playerDescription: '完全无法行动，同时获得 50% 伤害减免。',
+    mechanicDescription:
+      '目标完全无法行动（普攻、技能均不可用）。' +
+      '同时获得 50% 全伤害减免。' +
+      '受击不会提前解除石化。石化结束时伤害减免同时消失。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 95,
+    blocksAction: true,
+    blocksSkill: true,
+  },
+
+  [STATUS_CODE.IMMOBILIZE]: {
+    code: STATUS_CODE.IMMOBILIZE,
+    category: StatusCategory.CONTROL,
+    name: '定身',
+    playerDescription: '无法移动和改变位置，但可正常行动。',
+    mechanicDescription:
+      '目标无法被任何位移效果影响（击退、拉扯、传送等均无效），' +
+      '但可以正常进行攻击和释放技能。不影响目标自身的行动能力。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 25,
+    blocksAction: false,
+    blocksSkill: false,
+  },
+
+  [STATUS_CODE.DISARM]: {
+    code: STATUS_CODE.DISARM,
+    category: StatusCategory.CONTROL,
+    name: '缴械',
+    playerDescription: '无法使用物理攻击和物理技能。',
+    mechanicDescription:
+      '目标无法使用任何物理类型（physical）的攻击和技能。' +
+      '法术类技能不受影响。普攻若为物理类型同样被禁止。' +
+      '被动技能（非主动）不受影响。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 45,
+    blocksAction: false,
+    blocksSkill: true,
+  },
+
+  [STATUS_CODE.POLYMORPH]: {
+    code: STATUS_CODE.POLYMORPH,
+    category: StatusCategory.CONTROL,
+    name: '变形',
+    playerDescription: '变成无害小动物，无法使用任何技能。',
+    mechanicDescription:
+      '目标被变形为小动物，无法使用任何主动技能和普攻。' +
+      '基础属性大幅降低（攻击力降为 0）。' +
+      '变形期间免疫其他控制效果（高优先级覆盖）。' +
+      '受击不会解除变形。变形解除后恢复原状态。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 85,
+    blocksAction: true,
+    blocksSkill: true,
+  },
+
+  [STATUS_CODE.IMPRISON]: {
+    code: STATUS_CODE.IMPRISON,
+    category: StatusCategory.CONTROL,
+    name: '禁锢',
+    playerDescription: '无法行动且无法被选中为目标。',
+    mechanicDescription:
+      '目标被完全禁锢，无法进行任何行动。' +
+      '同时无法被任何单位选中为目标（包括友方治疗技能）。' +
+      'AOE 技能若为全屏/区域效果则仍可波及，但单体选择会跳过。' +
+      '禁锢期间免疫所有伤害和控制效果。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 1,
+    controlPriority: 65,
     blocksAction: true,
     blocksSkill: true,
   },
@@ -698,7 +838,13 @@ export const StatusNames: Record<StatusCode, string> = Object.fromEntries(
   Object.entries(STATUS_META).map(([code, meta]) => [code, meta.name]),
 ) as Record<StatusCode, string>
 
-export const ControlKind : StatusCode[] = Object.values(STATUS_META).filter((m) => m.category === StatusCategory.CONTROL).map((m) => m.code)
+export const ControlKind: StatusCode[] = Object.values(STATUS_META)
+  .filter((m) => m.category === StatusCategory.CONTROL)
+  .map((m) => m.code)
 export type ControlKind = (typeof ControlKind)[number]
-export const ControlKindNames = Object.values(STATUS_META).filter((m) => m.category === StatusCategory.CONTROL).map((m) => m.name)
-export const ControlKindOrder = ControlKind.map((code) => STATUS_META[code].controlPriority ?? 0)
+export const ControlKindNames = Object.values(STATUS_META)
+  .filter((m) => m.category === StatusCategory.CONTROL)
+  .map((m) => m.name)
+export const ControlKindOrder = ControlKind.map(
+  (code) => STATUS_META[code].controlPriority ?? 0,
+)

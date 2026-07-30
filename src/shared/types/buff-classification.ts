@@ -20,8 +20,6 @@ import type { ResolvedEffectPlan } from '@/domain/buff/atomic/BuffConfigResolver
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
 
-export type BuffDisplayType = 'buff' | 'debuff' | 'control'
-
 // ==================== 维度一：极性（UI 颜色） ====================
 
 export const BuffPolarity = {

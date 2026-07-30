@@ -1,4 +1,4 @@
-import type { IAtomicEffect, AtomicEffectType } from '../types'
+import { type IAtomicEffect, AtomicEffectType } from '@/domain/buff/atomic/types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
 /**
@@ -10,7 +10,7 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
  * 采用重建策略而非逐个删除，确保已移除 Buff 的免疫标签被正确清理。
  */
 export class ImmunityEffect implements IAtomicEffect {
-  readonly type: AtomicEffectType = 'immunity'
+  readonly type: AtomicEffectType = AtomicEffectType.IMMUNITY
 
   onApply(ctx: BuffContext, params: Record<string, unknown>): void {
     const tags = params.tags as string[] | undefined
@@ -35,9 +35,9 @@ export class ImmunityEffect implements IAtomicEffect {
     if (tags && tags.length > 0) {
       return [{
         text: `免疫: ${tags.join(', ')}`,
-        kind: 'other' as const,
+        kind: AtomicEffectType.IMMUNITY,
       }]
     }
-    return [{ text: '免疫效果', kind: 'other' as const }]
+    return [{ text: '免疫效果', kind: AtomicEffectType.IMMUNITY }]
   }
 }

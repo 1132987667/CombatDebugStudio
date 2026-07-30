@@ -1,6 +1,9 @@
 import type { SkillSet } from '@/domain/skill/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { ParticipantSide } from '@/domain/battle/type/types'
+import type { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
+import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
+import { getEnemyConfig } from '@tests/fixtures/loadTestData'
 
 export const EMPTY_SKILL_SET: SkillSet = {
   small: [],
@@ -63,4 +66,42 @@ export const enemyParticipantData2 = {
   enabled: true,
   skills: EMPTY_SKILL_SET,
   attributeValues: makeDefaultAttributes({ [ATTRIBUTE_CODE.maxHealth]: 500, [ATTRIBUTE_CODE.currentHealth]: 500 }),
+}
+
+// ═══════════════════════════════════════════════
+//  基于真实 JSON 配置的参与者创建函数（新增）
+// ═══════════════════════════════════════════════
+
+let _counter = 0
+
+/**
+ * 从敌人 JSON 配置创建参与者实例。
+ * 使用 GameDataProcessor.enemyToParticipant 走完整转换流程，
+ * 确保测试用参与者与真实游戏逻辑一致。
+ */
+export function createParticipantFromEnemy(
+  enemyId: string,
+  side: ParticipantSide = ParticipantSide.ENEMY,
+): BattleParticipantImpl | undefined {
+  const enemy = getEnemyConfig(enemyId)
+  if (!enemy) return undefined
+  _counter++
+  return GameDataProcessor.enemyToParticipant(enemy, side, _counter)
+}
+
+/**
+ * 创建一套标准对战参与者（2v2，基于真实敌人配置）。
+ * 默认用 guardian_fire vs guardian_gold 的测试守护者组合。
+ */
+export function createTestParticipantsFromConfig(
+  allyIds: string[] = ['guardian_fire'],
+  enemyIds: string[] = ['guardian_gold'],
+): { allies: BattleParticipantImpl[]; enemies: BattleParticipantImpl[] } {
+  const allies = allyIds
+    .map((id) => createParticipantFromEnemy(id, ParticipantSide.ALLY))
+    .filter((p): p is BattleParticipantImpl => p !== undefined)
+  const enemies = enemyIds
+    .map((id) => createParticipantFromEnemy(id, ParticipantSide.ENEMY))
+    .filter((p): p is BattleParticipantImpl => p !== undefined)
+  return { allies, enemies }
 }

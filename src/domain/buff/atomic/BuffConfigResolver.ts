@@ -21,14 +21,14 @@ export interface ResolvedBuffConfig extends BuffConfig {
 /**
  * Buff 配置解析器
  *
- * 职责：将 JSON 配置（或旧格式配置）解析为运行时 ResolvedBuffConfig，
+ * 职责：将 JSON 配置解析为运行时 ResolvedBuffConfig，
  * 核心产出是 effectPlan 数组——一个 Buff 可包含多个原子效果原语。
  *
- * 向后兼容策略：
- * - effects[] 字段存在时优先使用
- * - 不存在时从旧字段（attributes / controlType / immunities / aura）自动派生
+ * 契约：
+ * - effects[] 字段是唯一的声明方式
  * - triggers 字段保持不变，走现有 TriggerEventBus
  * - 脚本类 Buff（selfContained）的 effectPlan 为空数组，脚本自行管理
+ * - 旧字段（attributes / controlType / immunities / aura）不再被识别
  */
 export class BuffConfigResolver {
   constructor(private registry: AtomicEffectRegistry) {}
@@ -49,14 +49,14 @@ export class BuffConfigResolver {
   private buildEffectPlan(raw: Record<string, any>): ResolvedEffectPlan[] {
     const plan: ResolvedEffectPlan[] = []
 
-    // 1. 优先从 effects 数组解析
     const rawEffects: Array<{ type: string; params: Record<string, unknown> }> =
       raw.effects ?? []
     for (const rawEffect of rawEffects) {
       const handler = this.registry.get(rawEffect.type as AtomicEffectType)
       if (!handler) {
-        console.warn(`[BuffConfigResolver] 未知原子效果类型: ${rawEffect.type}`)
-        continue
+        throw new Error(
+          `[BuffConfigResolver] ${raw.id ?? 'unknown'}: 未知原子效果类型 "${rawEffect.type}"`
+        )
       }
       plan.push({
         type: rawEffect.type as AtomicEffectType,
@@ -64,58 +64,8 @@ export class BuffConfigResolver {
         params: rawEffect.params ?? {},
       })
     }
-    if (plan.length > 0) return plan // effects 存在时优先使用，不派生
 
-    // 2. 兼容旧格式：从 attributes 字段自动生成 modifier 效果
-    if (raw.attributes && Object.keys(raw.attributes).length > 0) {
-      const modifierHandler = this.registry.get('modifier')
-      if (modifierHandler) {
-        plan.push({
-          type: 'modifier',
-          handler: modifierHandler,
-          params: { attributes: raw.attributes, perStack: true },
-        })
-      }
-    }
-
-    // 3. 兼容旧格式：从 controlType 字段自动生成 control 效果
-    if (raw.controlType && raw.controlType !== 'none' && raw.controlType !== 'NONE') {
-      const controlHandler = this.registry.get('control')
-      if (controlHandler) {
-        plan.push({
-          type: 'control',
-          handler: controlHandler,
-          params: {
-            controlType: raw.controlType,
-          },
-        })
-      }
-    }
-
-    // 4. 兼容旧格式：从 immunities 字段自动生成 immunity 效果
-    if (raw.immunities?.length > 0) {
-      const immunityHandler = this.registry.get('immunity')
-      if (immunityHandler) {
-        plan.push({
-          type: 'immunity',
-          handler: immunityHandler,
-          params: { tags: raw.immunities },
-        })
-      }
-    }
-
-    // 5. 兼容旧格式：从 aura 字段自动生成 aura 效果
-    if (raw.aura) {
-      const auraHandler = this.registry.get('aura')
-      if (auraHandler) {
-        plan.push({
-          type: 'aura',
-          handler: auraHandler,
-          params: raw.aura,
-        })
-      }
-    }
-
+    // 不兼容旧格式——没有 effects[] 就是空 plan
     return plan
   }
 

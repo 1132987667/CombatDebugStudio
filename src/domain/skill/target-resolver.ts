@@ -13,8 +13,8 @@ import {
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { ThreatManager } from '@/domain/battle/service/ThreatManager'
 
-/** 嘲讽 Buff ID — 与 configs/buffs/buffs.json 中 buff_taunt 的 id 一致 */
-const TAUNT_BUFF_ID = 'buff_taunt'
+/** 嘲讽的标签字符串（替换旧版硬编码 buff_taunt） */
+const TAUNT_TAG = 'taunt'
 
 /**
  * 根据技能 selector 解析目标
@@ -25,6 +25,7 @@ const TAUNT_BUFF_ID = 'buff_taunt'
  * @param threatManager 可选 — 仇恨管理器（用于嘲讽检查 + 仇恨优先）
  * @param formationRowLookup 可选 — 阵型行查询回调
  * @param frontProtectionLookup 可选 — 前排保护查询回调
+ * @param hasTaunt 可选 — 嘲讽检测回调（替换硬编码 buff_taunt 查询）
  * @returns 目标实体数组
  */
 export function resolveSkillTargets(
@@ -35,6 +36,7 @@ export function resolveSkillTargets(
   threatManager?: ThreatManager,
   formationRowLookup?: (side: ParticipantSide, seatIndex: number) => 'front' | 'back' | null,
   frontProtectionLookup?: (side: ParticipantSide) => boolean,
+  hasTaunt?: (entity: BattleEntity) => boolean,
 ): BattleEntity[] {
   const all = Array.from(participants.values())
 
@@ -58,8 +60,10 @@ export function resolveSkillTargets(
 
   // ★ 仅在 faction === 'enemy' 时检查嘲讽 + 仇恨（修复 S1）
   if (selector.faction === TargetFaction.ENEMY) {
-    // 嘲讽优先
-    const tauntTarget = candidates.find(e => e.hasBuff?.(TAUNT_BUFF_ID))
+    // 嘲讽优先 — 通过回调检测（由调用方注入 buffSystem.hasBuffWithTag）
+    const tauntTarget = hasTaunt
+      ? candidates.find(e => hasTaunt(e))
+      : candidates.find(e => e.hasBuff?.('buff_taunt'))
     if (tauntTarget) return [tauntTarget]
 
     // 仇恨优先

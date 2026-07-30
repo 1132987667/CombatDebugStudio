@@ -40,6 +40,12 @@ export interface IAtomicEffect {
     newStacks: number,
   ): void
 
+  /** 刷新时调用（持续时间重置 + 可选效果增强） */
+  onRefresh?(
+    ctx: BuffContext,
+    params: Record<string, unknown>,
+  ): void
+
   /** 生成 UI 显示文本 */
   getEffectLines?(
     ctx: BuffContext,

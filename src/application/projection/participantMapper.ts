@@ -15,6 +15,7 @@ import type { BuffRawItem } from '@/shared/types/buff-display'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { classifyBuff } from '@/shared/types/buff-classification'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 
 /**
  * 将 BattleEntity 映射为 UI 快照
@@ -97,6 +98,21 @@ function buildBuffRawItems(
       if (!config) continue
       seenIds.add(id)
       seenIds.add(config.id)
+
+      // 从 effectPlan 的 modifier 效果中提取修饰符数据（供展示层生成属性标签）
+      let attributes: Record<string, string> | undefined
+      const resolved = buffSystem.getResolvedBuffConfig?.(config.id)
+      const modifierEffects = resolved?.effectPlan?.filter(
+        (e: { type: string }) => e.type === AtomicEffectType.MODIFIER,
+      ) ?? []
+      if (modifierEffects.length > 0) {
+        attributes = {}
+        for (const effect of modifierEffects) {
+          const attrs = effect.params.attributes as Record<string, string> | undefined
+          if (attrs) Object.assign(attributes, attrs)
+        }
+      }
+
       result.push({
         id,
         buffId: config.id,
@@ -105,10 +121,13 @@ function buildBuffRawItems(
         remainingTurns: instance.remainingTurns,
         currentStacks: instance.currentStacks,
         isNegative: classifyBuff(config as Parameters<typeof classifyBuff>[0]).isNegative,
-        attributes: config.attributes,
+        attributes,
         effectLines: instance.effectLines ?? [],
         conditionState: instance.conditionState,
-        controlType: config.controlType,
+        controlType: config.controlType as string | undefined,
+        isAura: resolved?.effectPlan?.some(
+          (e: { type: string }) => e.type === AtomicEffectType.AURA,
+        ) ?? false,
       })
     }
   }
@@ -122,6 +141,7 @@ function buildBuffRawItems(
         id: s.id, buffId: s.id, name: s.name, description: '',
         remainingTurns: s.remainingTurns, currentStacks: 1,
         isNegative: s.type === 'debuff', effectLines: [], conditionState: undefined,
+        isAura: false,
       })
     }
   }

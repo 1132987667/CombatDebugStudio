@@ -35,11 +35,6 @@ export interface DamageResult {
   isMiss: boolean
 }
 
-/** ponytail: 以下常量已不再使用，保留作为历史参考
- * DEFENSE_EFFECTIVENESS = 0.5
- * DEFENSE_DENOMINATOR   = 500
- * 当前使用减法公式：damage = Math.max(0, damage - defense)
- */
 
 function getAttrVal(
   participant: BattleEntity,

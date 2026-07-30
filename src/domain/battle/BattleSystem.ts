@@ -447,11 +447,10 @@ export class BattleSystem {
       (targetId: string, damage: number, rawDamage?: number, damagePercent?: number) => {
         // ponytail: 递归守卫 — 深度计数器替代布尔标志，允许有限嵌套
         if (_damageCallbackDepth >= MAX_DAMAGE_CALLBACK_DEPTH) {
-          LoggerProvider.logger.addDebugLog(
-            `伤害回调嵌套深度超过上限(${MAX_DAMAGE_CALLBACK_DEPTH})，丢弃: ${targetId}`,
-            { level: LogLevel.WARN },
+          throw new Error(
+            `[BattleSystem] 伤害回调嵌套超过 ${MAX_DAMAGE_CALLBACK_DEPTH} 层，` +
+            `存在无限递归。目标: ${targetId}。请检查触发器配置。`
           )
-          return
         }
         _damageCallbackDepth++
         try {
@@ -1561,7 +1560,7 @@ export class BattleSystem {
       const aiInstance = battle.aiInstances?.get(participantId)
       const targetId = this.selectCommandTarget(battle, participant)
       if (targetId) {
-        const damage = Math.floor(Math.random() * 20) + 10
+        const damage = participant.getRandomAttackDamage()
         commands.push({
           type: 'APPLY_DAMAGE',
           payload: {

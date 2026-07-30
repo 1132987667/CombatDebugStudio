@@ -6,7 +6,6 @@
 import { describe, it, expect } from 'vitest'
 import {
   detectCondition,
-  detectType,
   mergeAttributes,
   sortItems,
   formatRemainingTurns,
@@ -50,43 +49,15 @@ describe('detectCondition', () => {
     expect(
       detectCondition({
         conditionState: 'inactive',
-        description: '气血低于40%时',
+        description: '残血时触发',
       } as any),
     ).toEqual({ condition: 'inactive', conditionLabel: '残血·未激活' })
-  })
-
-  it('从关键词推断条件', () => {
-    expect(detectCondition({ description: '残血时触发' } as any)).toEqual({
-      condition: 'inactive',
-      conditionLabel: '残血',
-    })
-    expect(detectCondition({ description: '暴击后触发' } as any)).toEqual({
-      condition: 'inactive',
-      conditionLabel: '暴击',
-    })
   })
 
   it('无条件时返回 none', () => {
     expect(detectCondition({ description: '普通增益效果' } as any)).toEqual({
       condition: 'none',
     })
-  })
-})
-
-describe('detectType', () => {
-  it('优先使用 controlType 字段', () => {
-    expect(detectType('眩晕', false, 'stun')).toBe('control')
-    expect(detectType('被动', true, 'freeze')).toBe('control')
-  })
-
-  it('回退到名称关键词匹配', () => {
-    expect(detectType('眩晕', false)).toBe('control')
-    expect(detectType('沉默', true)).toBe('control') // isDebuff 不覆盖控制
-  })
-
-  it('根据 isDebuff 区分 buff/debuff', () => {
-    expect(detectType('强攻', false)).toBe('buff')
-    expect(detectType('破甲', true)).toBe('debuff')
   })
 })
 

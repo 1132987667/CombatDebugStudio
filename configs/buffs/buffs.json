@@ -4,17 +4,15 @@
     "name": "统领光环",
     "category": "aura",
     "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "commander_aura_atk",
-          "targetAttribute": "attack",
-          "type": "PERCENTAGE",
-          "value": 0.1
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "allies",
+        "modifiers": [
+          { "id": "commander_aura_atk", "targetAttribute": "attack", "type": "PERCENTAGE", "value": 0.1 }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：全体友方 攻击+10%"
   },
@@ -24,9 +22,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "slowImmune": "+1.0"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "slowImmune": "+1.0" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "减速免疫+1"
   },
@@ -39,9 +38,7 @@
       {
         "phase": "ON_ALLY_FATAL_DAMAGE",
         "scriptId": "block_damage_percent",
-        "params": {
-          "percent": 0.5
-        },
+        "params": { "percent": 0.5 },
         "probability": 0.3
       }
     ],
@@ -53,17 +50,15 @@
     "name": "将军之威",
     "category": "aura",
     "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "general_awe_def",
-          "targetAttribute": "defense",
-          "type": "PERCENTAGE",
-          "value": 0.15
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "allies",
+        "modifiers": [
+          { "id": "general_awe_def", "targetAttribute": "defense", "type": "PERCENTAGE", "value": 0.15 }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：全体友方 防御+15%"
   },
@@ -73,6 +68,10 @@
     "category": "shield",
     "maxStacks": 1,
     "duration": 2,
+    "effects": [{
+      "type": "shield",
+      "params": { "value": 100, "valueType": "flat" }
+    }],
     "polarity": "positive",
     "description": "吸收伤害的护盾"
   },
@@ -85,10 +84,7 @@
       {
         "phase": "ON_TURN_START",
         "scriptId": "heal_percent_max_hp",
-        "params": {
-          "percent": 0.05,
-          "target": "self"
-        }
+        "params": { "percent": 0.05, "target": "self" }
       }
     ],
     "polarity": "positive",
@@ -100,6 +96,10 @@
     "category": "dot",
     "maxStacks": 1,
     "duration": 3,
+    "effects": [{
+      "type": "dot",
+      "params": { "damageType": "percent", "value": 0 }
+    }],
     "polarity": "negative",
     "description": "每回合持续伤害"
   },
@@ -109,9 +109,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "critRate": "15%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "critRate": "15%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "暴击率+15%"
   },
@@ -121,10 +122,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "defense": "+15%",
-      "dodge": "+10"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "defense": "+15%", "dodge": "+10" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "防御+15%，闪避+10"
   },
@@ -134,9 +135,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "demonDamage": "+20%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "demonDamage": "+20%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "对妖伤害+20%"
   },
@@ -146,9 +148,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "critDamage": "+20%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "critDamage": "+20%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "暴击伤害+20%"
   },
@@ -161,9 +164,7 @@
       {
         "phase": "ON_TURN_START",
         "scriptId": "heal_lowest_hp_ally",
-        "params": {
-          "percentMaxHp": 0.05
-        }
+        "params": { "percentMaxHp": 0.05 }
       }
     ],
     "polarity": "positive",
@@ -176,6 +177,10 @@
     "maxStacks": 1,
     "duration": 2,
     "controlType": "silence",
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "silence" }
+    }],
     "polarity": "negative",
     "description": "使目标沉默"
   },
@@ -184,18 +189,15 @@
     "name": "叛徒之谋",
     "category": "aura",
     "duration": -1,
-    "aura": {
-      "targetSelector": "self",
-      "modifiers": [
-        {
-          "id": "traitor_scheme_damage_to_low_hp",
-          "targetAttribute": "damageToLowHp",
-          "type": "ADDITIVE",
-          "value": 30,
-          "condition": "target.hp_ratio < 0.5"
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "self",
+        "modifiers": [
+          { "id": "traitor_scheme_damage_to_low_hp", "targetAttribute": "damageToLowHp", "type": "ADDITIVE", "value": 30, "condition": "target.hp_ratio < 0.5" }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：自身 对低血伤害+30"
   },
@@ -205,9 +207,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "skillCooldown": "-1"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "skillCooldown": "-1" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "技能冷却-1"
   },
@@ -216,17 +219,15 @@
     "name": "首领光环",
     "category": "aura",
     "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "leader_aura_atk",
-          "targetAttribute": "attack",
-          "type": "PERCENTAGE",
-          "value": 0.15
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "allies",
+        "modifiers": [
+          { "id": "leader_aura_atk", "targetAttribute": "attack", "type": "PERCENTAGE", "value": 0.15 }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：全体友方 攻击+15%"
   },
@@ -236,9 +237,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "critRate": "+10%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "critRate": "+10%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "暴击率+10%"
   },
@@ -251,9 +253,7 @@
       {
         "phase": "ON_TURN_START",
         "scriptId": "heal_all_allies",
-        "params": {
-          "percentMaxHp": 0.03
-        }
+        "params": { "percentMaxHp": 0.03 }
       }
     ],
     "polarity": "positive",
@@ -265,6 +265,10 @@
     "category": "dot",
     "maxStacks": 1,
     "duration": 2,
+    "effects": [{
+      "type": "dot",
+      "params": { "damageType": "percent", "value": 0 }
+    }],
     "polarity": "negative",
     "description": "每回合持续伤害"
   },
@@ -277,9 +281,7 @@
       {
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "reflect_damage",
-        "params": {
-          "percent": 0.3
-        },
+        "params": { "percent": 0.3 },
         "probability": 0.2,
         "condition": "damageCategory == 'elemental'"
       }
@@ -296,9 +298,7 @@
       {
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "apply_shield",
-        "params": {
-          "shieldPercent": 0.1
-        },
+        "params": { "shieldPercent": 0.1 },
         "probability": 0.15
       }
     ],
@@ -311,10 +311,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "stunResist": "+1.0",
-      "knockbackResist": "+1.0"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "stunResist": "+1.0", "knockbackResist": "+1.0" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "眩晕抵抗+1，击退抵抗+1"
   },
@@ -325,6 +325,10 @@
     "maxStacks": 5,
     "duration": -1,
     "stackRule": "limited",
+    "effects": [{
+      "type": "immunity",
+      "params": {}
+    }],
     "polarity": "positive",
     "description": "免疫伤害，可叠加5层"
   },
@@ -337,9 +341,7 @@
       {
         "phase": "ON_TURN_END",
         "scriptId": "heal_percent_max_hp",
-        "params": {
-          "percent": 0.1
-        },
+        "params": { "percent": 0.1 },
         "condition": "self.hp_ratio < 0.5"
       }
     ],
@@ -353,6 +355,10 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "freeze",
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "freeze" }
+    }],
     "polarity": "negative",
     "description": "使目标冰冻"
   },
@@ -363,6 +369,10 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "sleep",
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "sleep" }
+    }],
     "polarity": "negative",
     "description": "使目标睡眠"
   },
@@ -375,10 +385,7 @@
       {
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "apply_debuff_to_attacker",
-        "params": {
-          "buffId": "buff_slow",
-          "duration": 2
-        },
+        "params": { "buffId": "buff_slow", "duration": 2 },
         "probability": 0.2
       }
     ],
@@ -390,17 +397,15 @@
     "name": "妖气弥漫",
     "category": "aura",
     "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "demon_aura_dodge",
-          "targetAttribute": "dodge",
-          "type": "ADDITIVE",
-          "value": 0.1
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "allies",
+        "modifiers": [
+          { "id": "demon_aura_dodge", "targetAttribute": "dodge", "type": "ADDITIVE", "value": 0.1 }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：全体友方 闪避+10%"
   },
@@ -410,9 +415,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "critDamageTaken": "25%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "critDamageTaken": "25%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "暴击承伤+25%"
   },
@@ -423,6 +429,10 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "silence",
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "silence" }
+    }],
     "polarity": "negative",
     "description": "使目标沉默"
   },
@@ -432,6 +442,10 @@
     "category": "shield",
     "maxStacks": 1,
     "duration": 1,
+    "effects": [{
+      "type": "shield",
+      "params": { "value": 80, "valueType": "flat" }
+    }],
     "polarity": "positive",
     "description": "吸收伤害的护盾"
   },
@@ -444,10 +458,7 @@
       {
         "phase": "ON_TURN_END",
         "scriptId": "heal_percent_max_hp",
-        "params": {
-          "percent": 0.05,
-          "target": "self"
-        }
+        "params": { "percent": 0.05, "target": "self" }
       }
     ],
     "polarity": "positive",
@@ -458,9 +469,10 @@
     "name": "老谋深算",
     "category": "attribute",
     "duration": -1,
-    "attributes": {
-      "controlDurationReduction": "+1"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "controlDurationReduction": "+1" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "控制减免+1"
   },
@@ -469,17 +481,15 @@
     "name": "迷雾笼罩",
     "category": "aura",
     "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "mist_coverage_dodge",
-          "targetAttribute": "dodge",
-          "type": "ADDITIVE",
-          "value": 0.15
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "allies",
+        "modifiers": [
+          { "id": "mist_coverage_dodge", "targetAttribute": "dodge", "type": "ADDITIVE", "value": 0.15 }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：全体友方 闪避+15%"
   },
@@ -489,9 +499,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 2,
-    "attributes": {
-      "attack": "+20%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "+20%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "攻击+20%"
   },
@@ -501,9 +512,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 1,
-    "attributes": {
-      "speed": "-10"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "speed": "-10" }, "perStack": true }
+    }],
     "polarity": "negative",
     "description": "速度-10"
   },
@@ -513,9 +525,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "dmgReduction": "+15%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "dmgReduction": "+15%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "伤害减免+15%"
   },
@@ -525,9 +538,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "waterDamageTaken": "30%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "waterDamageTaken": "30%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "水伤减免+30%"
   },
@@ -537,10 +551,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "poisonResist": "+1.0",
-      "bleedResist": "+1.0"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "poisonResist": "+1.0", "bleedResist": "+1.0" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "毒抗+1，流血抵抗+1"
   },
@@ -553,10 +567,7 @@
       {
         "phase": "ON_ATTACK_HIT",
         "scriptId": "apply_poison",
-        "params": {
-          "damagePercent": 0.05,
-          "duration": 2
-        },
+        "params": { "damagePercent": 0.05, "duration": 2 },
         "probability": 0.2
       }
     ],
@@ -572,10 +583,7 @@
       {
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "heal_percent_max_hp",
-        "params": {
-          "percent": 0.1,
-          "target": "self"
-        },
+        "params": { "percent": 0.1, "target": "self" },
         "probability": 0.15
       }
     ],
@@ -588,6 +596,10 @@
     "category": "dot",
     "maxStacks": 1,
     "duration": 3,
+    "effects": [{
+      "type": "dot",
+      "params": { "damageType": "percent", "value": 0 }
+    }],
     "polarity": "negative",
     "description": "每回合持续伤害"
   },
@@ -597,9 +609,11 @@
     "category": "dot",
     "maxStacks": 1,
     "duration": 2,
-    "tags": [
-      "burn"
-    ],
+    "tags": ["burn"],
+    "effects": [{
+      "type": "dot",
+      "params": { "damageType": "percent", "value": 0 }
+    }],
     "polarity": "negative",
     "description": "每回合持续伤害"
   },
@@ -612,9 +626,7 @@
       {
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "reflect_fire_damage",
-        "params": {
-          "percent": 0.2
-        },
+        "params": { "percent": 0.2 },
         "probability": 0.2
       }
     ],
@@ -627,17 +639,15 @@
     "category": "aura",
     "maxStacks": 1,
     "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "fire_resonance_fire_atk",
-          "targetAttribute": "fireDamage",
-          "type": "PERCENTAGE",
-          "value": 0.15
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "allies",
+        "modifiers": [
+          { "id": "fire_resonance_fire_atk", "targetAttribute": "fireDamage", "type": "PERCENTAGE", "value": 0.15 }
+        ]
+      }
+    }],
     "onAdd": "owner.addAura('aura_fire_atk_up');",
     "polarity": "positive",
     "description": "光环：全体友方 火攻+15%"
@@ -648,9 +658,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "burnDuration": "+1"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "burnDuration": "+1" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "灼烧延长+1"
   },
@@ -660,6 +671,10 @@
     "category": "shield",
     "maxStacks": 1,
     "duration": 2,
+    "effects": [{
+      "type": "shield",
+      "params": { "value": 150, "valueType": "flat" }
+    }],
     "polarity": "positive",
     "description": "吸收伤害的护盾"
   },
@@ -669,10 +684,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "burnImmune": "+1.0",
-      "fireDamage": "+20%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "burnImmune": "+1.0", "fireDamage": "+20%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "灼烧免疫+1，火攻+20%"
   },
@@ -685,9 +700,7 @@
       {
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "heal_on_fire_damage",
-        "params": {
-          "healPercent": 0.2
-        },
+        "params": { "healPercent": 0.2 },
         "condition": "damageCategory == 'elemental'"
       }
     ],
@@ -700,9 +713,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 2,
-    "attributes": {
-      "fireDamageTaken": "+30%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "fireDamageTaken": "+30%" }, "perStack": true }
+    }],
     "polarity": "negative",
     "description": "火伤减免+30%"
   },
@@ -713,6 +727,10 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "bind",
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "bind" }
+    }],
     "polarity": "negative",
     "description": "使目标束缚"
   },
@@ -722,9 +740,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "webSuccessRate": "+10%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "webSuccessRate": "+10%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "蛛网成功率+10%"
   },
@@ -737,10 +756,7 @@
       {
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "apply_poison",
-        "params": {
-          "damagePercent": 0.05,
-          "duration": 2
-        },
+        "params": { "damagePercent": 0.05, "duration": 2 },
         "probability": 0.25
       }
     ],
@@ -756,9 +772,7 @@
       {
         "phase": "ON_ALLY_DAMAGE_TAKEN",
         "scriptId": "share_damage",
-        "params": {
-          "percent": 0.3
-        },
+        "params": { "percent": 0.3 },
         "probability": 0.15
       }
     ],
@@ -772,6 +786,10 @@
     "maxStacks": 1,
     "duration": 2,
     "controlType": "bind",
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "bind" }
+    }],
     "polarity": "negative",
     "description": "使目标束缚"
   },
@@ -781,23 +799,16 @@
     "category": "aura",
     "maxStacks": 1,
     "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "spider_queen_atk",
-          "targetAttribute": "attack",
-          "type": "PERCENTAGE",
-          "value": 0.15
-        },
-        {
-          "id": "spider_queen_def",
-          "targetAttribute": "defense",
-          "type": "PERCENTAGE",
-          "value": 0.15
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "allies",
+        "modifiers": [
+          { "id": "spider_queen_atk", "targetAttribute": "attack", "type": "PERCENTAGE", "value": 0.15 },
+          { "id": "spider_queen_def", "targetAttribute": "defense", "type": "PERCENTAGE", "value": 0.15 }
+        ]
+      }
+    }],
     "onAdd": "owner.addAura('aura_spider_atk_def_up');",
     "polarity": "positive",
     "description": "光环：全体友方 攻击+15%，防御+15%"
@@ -811,9 +822,7 @@
       {
         "phase": "ON_TURN_END",
         "scriptId": "summon_unit",
-        "params": {
-          "unitId": "spider_minion"
-        },
+        "params": { "unitId": "spider_minion" },
         "probability": 0.3
       }
     ],
@@ -825,16 +834,10 @@
     "name": "谷中霸主",
     "category": "immunity",
     "duration": -1,
-    "immunities": [
-      "slow",
-      "stun",
-      "freeze",
-      "silence",
-      "charm",
-      "fear",
-      "sleep",
-      "confuse"
-    ],
+    "effects": [{
+      "type": "immunity",
+      "params": { "tags": ["slow", "stun", "freeze", "silence", "charm", "fear", "sleep", "confuse"] }
+    }],
     "polarity": "positive",
     "description": "免疫减速、眩晕、冰冻、沉默、魅惑、恐惧、睡眠、混乱"
   },
@@ -843,9 +846,10 @@
     "name": "山林之子",
     "category": "immunity",
     "duration": -1,
-    "immunities": [
-      "slow"
-    ],
+    "effects": [{
+      "type": "immunity",
+      "params": { "tags": ["slow"] }
+    }],
     "polarity": "positive",
     "description": "免疫减速"
   },
@@ -858,10 +862,7 @@
       {
         "phase": "ON_TURN_END",
         "scriptId": "heal_percent_max_hp",
-        "params": {
-          "percent": 0.05,
-          "target": "self"
-        }
+        "params": { "percent": 0.05, "target": "self" }
       }
     ],
     "polarity": "positive",
@@ -872,23 +873,16 @@
     "name": "首领威严",
     "category": "aura",
     "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "leader_awe_atk",
-          "targetAttribute": "attack",
-          "type": "PERCENTAGE",
-          "value": 15
-        },
-        {
-          "id": "leader_awe_def",
-          "targetAttribute": "defense",
-          "type": "PERCENTAGE",
-          "value": 10
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "allies",
+        "modifiers": [
+          { "id": "leader_awe_atk", "targetAttribute": "attack", "type": "PERCENTAGE", "value": 15 },
+          { "id": "leader_awe_def", "targetAttribute": "defense", "type": "PERCENTAGE", "value": 10 }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：全体友方 攻击+1500%，防御+1000%"
   },
@@ -901,10 +895,7 @@
       {
         "phase": "ON_DAMAGE_TAKEN",
         "scriptId": "apply_debuff_to_attacker",
-        "params": {
-          "buffId": "buff_slow",
-          "duration": 2
-        },
+        "params": { "buffId": "buff_slow", "duration": 2 },
         "probability": 0.15
       }
     ],
@@ -916,17 +907,15 @@
     "name": "女王威严",
     "category": "aura",
     "duration": -1,
-    "aura": {
-      "targetSelector": "enemies",
-      "modifiers": [
-        {
-          "id": "queen_awe_atk_debuff",
-          "targetAttribute": "attack",
-          "type": "PERCENTAGE",
-          "value": -0.15
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "enemies",
+        "modifiers": [
+          { "id": "queen_awe_atk_debuff", "targetAttribute": "attack", "type": "PERCENTAGE", "value": -0.15 }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：全体敌方 攻击-15%"
   },
@@ -936,6 +925,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 2,
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "+30%", "defense": "+30%", "speed": "+10" }, "perStack": true }
+    }],
     "onAdd": "owner.attributes.attack=owner.attributes.attack*1.3;owner.attributes.defense=owner.attributes.defense*1.3;owner.attributes.speed=owner.attributes.speed+10;",
     "polarity": "positive",
     "description": "攻击+30%，防御+30%，速度+10，持续2回合"
@@ -945,17 +938,15 @@
     "name": "队长指挥",
     "category": "aura",
     "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "commander_aura_crit_rate",
-          "targetAttribute": "critRate",
-          "type": "ADDITIVE",
-          "value": 0.1
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "allies",
+        "modifiers": [
+          { "id": "commander_aura_crit_rate", "targetAttribute": "critRate", "type": "ADDITIVE", "value": 0.1 }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：全体友方 暴击率+10%"
   },
@@ -968,9 +959,7 @@
       {
         "phase": "ON_TURN_END",
         "scriptId": "cleanse_random_debuff",
-        "params": {
-          "count": 1
-        },
+        "params": { "count": 1 },
         "probability": 0.3
       }
     ],
@@ -983,6 +972,10 @@
     "category": "shield",
     "maxStacks": 1,
     "duration": 2,
+    "effects": [{
+      "type": "shield",
+      "params": { "value": 200, "valueType": "flat" }
+    }],
     "polarity": "positive",
     "description": "吸收伤害的护盾"
   },
@@ -991,17 +984,15 @@
     "name": "统御水域",
     "category": "aura",
     "duration": -1,
-    "aura": {
-      "targetSelector": "allies",
-      "modifiers": [
-        {
-          "id": "water_dominance_atk",
-          "targetAttribute": "waterAtk",
-          "type": "PERCENTAGE",
-          "value": 0.15
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "allies",
+        "modifiers": [
+          { "id": "water_dominance_atk", "targetAttribute": "waterAtk", "type": "PERCENTAGE", "value": 0.15 }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：全体友方 水攻+15%"
   },
@@ -1011,9 +1002,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "critRate": "15%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "critRate": "15%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "暴击率+15%"
   },
@@ -1026,9 +1018,7 @@
       {
         "phase": "ON_TURN_START",
         "scriptId": "heal_lowest_hp_ally",
-        "params": {
-          "percentMaxHp": 0.05
-        }
+        "params": { "percentMaxHp": 0.05 }
       }
     ],
     "polarity": "positive",
@@ -1040,9 +1030,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 3,
-    "attributes": {
-      "lightningDamageTaken": "+30%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "lightningDamageTaken": "+30%" }, "perStack": true }
+    }],
     "polarity": "negative",
     "description": "雷伤减免+30%"
   },
@@ -1052,9 +1043,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 1,
-    "attributes": {
-      "defense": "-10%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "defense": "-10%" }, "perStack": true }
+    }],
     "polarity": "negative",
     "description": "防御-10%"
   },
@@ -1064,9 +1056,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 1,
-    "attributes": {
-      "dodge": "+15"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "dodge": "+15" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "闪避+15"
   },
@@ -1076,9 +1069,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 1,
-    "attributes": {
-      "defense": "+10%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "defense": "+10%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "防御+10%"
   },
@@ -1088,9 +1082,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 1,
-    "attributes": {
-      "speed": "+5"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "speed": "+5" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "速度+5"
   },
@@ -1100,9 +1095,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 2,
-    "attributes": {
-      "attack": "+5%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "+5%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "攻击+5%"
   },
@@ -1112,9 +1108,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 2,
-    "attributes": {
-      "attack": "+10%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "+10%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "攻击+10%"
   },
@@ -1124,9 +1121,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 2,
-    "attributes": {
-      "attack": "-15%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "-15%" }, "perStack": true }
+    }],
     "polarity": "negative",
     "description": "攻击-15%"
   },
@@ -1136,9 +1134,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 1,
-    "attributes": {
-      "speed": "-10"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "speed": "-10" }, "perStack": true }
+    }],
     "polarity": "negative",
     "description": "速度-10"
   },
@@ -1149,6 +1148,10 @@
     "maxStacks": 1,
     "duration": 2,
     "controlType": "bind",
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "bind" }
+    }],
     "polarity": "negative",
     "description": "使目标束缚"
   },
@@ -1158,9 +1161,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 1,
-    "attributes": {
-      "HIT_RATE": "-10"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "HIT_RATE": "-10" }, "perStack": true }
+    }],
     "polarity": "negative",
     "description": "命中率-10"
   },
@@ -1170,17 +1174,12 @@
     "category": "dot",
     "maxStacks": 1,
     "duration": 2,
-    "tags": [
-      "heal_reduction"
-    ],
+    "tags": ["heal_reduction"],
     "triggers": [
       {
         "phase": "ON_TURN_START",
         "scriptId": "deal_dot_damage",
-        "params": {
-          "damageCategory": "elemental",
-          "baseDamageFormula": "target.maxHp * 0.03"
-        }
+        "params": { "damageCategory": "elemental", "baseDamageFormula": "target.maxHp * 0.03" }
       }
     ],
     "polarity": "negative",
@@ -1196,10 +1195,7 @@
       {
         "phase": "ON_TURN_START",
         "scriptId": "deal_dot_damage",
-        "params": {
-          "damageCategory": "elemental",
-          "baseDamageFormula": "target.maxHp * 0.05"
-        }
+        "params": { "damageCategory": "elemental", "baseDamageFormula": "target.maxHp * 0.05" }
       }
     ],
     "polarity": "negative",
@@ -1212,6 +1208,10 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "stun",
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "stun" }
+    }],
     "polarity": "negative",
     "description": "使目标眩晕"
   },
@@ -1221,10 +1221,10 @@
     "category": "shield",
     "maxStacks": 1,
     "duration": 1,
-    "shield": {
-      "valueFormula": "source.maxHp * 0.10",
-      "damageCategoryAbsorb": "all"
-    },
+    "effects": [{
+      "type": "shield",
+      "params": { "value": 10, "valueType": "percent_max_hp" }
+    }],
     "polarity": "positive",
     "description": "护盾"
   },
@@ -1236,9 +1236,10 @@
     "maxStacks": 5,
     "duration": -1,
     "stackRule": "limited",
-    "attributes": {
-      "attack": "+5%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "+5%" }, "perStack": true }
+    }],
     "polarity": "positive"
   },
   {
@@ -1248,9 +1249,10 @@
     "description": "防御↓20%",
     "maxStacks": 1,
     "duration": 2,
-    "attributes": {
-      "defense": "-20%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "defense": "-20%" }, "perStack": true }
+    }],
     "polarity": "negative"
   },
   {
@@ -1259,6 +1261,10 @@
     "category": "shield",
     "maxStacks": 1,
     "duration": 1,
+    "effects": [{
+      "type": "shield",
+      "params": { "value": 80, "valueType": "flat" }
+    }],
     "polarity": "positive",
     "description": "吸收伤害的护盾"
   },
@@ -1272,10 +1278,7 @@
       {
         "phase": "ON_APPLY",
         "scriptId": "apply_silence_to_attacker",
-        "params": {
-          "buffId": "buff_silence",
-          "duration": 1
-        },
+        "params": { "buffId": "buff_silence", "duration": 1 },
         "probability": 1
       }
     ],
@@ -1289,9 +1292,10 @@
     "description": "伤害↑25%",
     "maxStacks": 1,
     "duration": 1,
-    "attributes": {
-      "damageBoost": "+25%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "damageBoost": "+25%" }, "perStack": true }
+    }],
     "polarity": "positive"
   },
   {
@@ -1301,9 +1305,10 @@
     "description": "伤害↑100%",
     "maxStacks": 1,
     "duration": 1,
-    "attributes": {
-      "damageBoost": "+100%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "damageBoost": "+100%" }, "perStack": true }
+    }],
     "polarity": "positive"
   },
   {
@@ -1313,9 +1318,10 @@
     "description": "速度↓5%",
     "maxStacks": 1,
     "duration": 1,
-    "attributes": {
-      "speed": "-5%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "speed": "-5%" }, "perStack": true }
+    }],
     "polarity": "negative"
   },
   {
@@ -1324,17 +1330,15 @@
     "category": "aura",
     "maxStacks": 1,
     "duration": -1,
-    "aura": {
-      "targetSelector": "enemies",
-      "modifiers": [
-        {
-          "id": "despair_aura_crit",
-          "targetAttribute": "critRate",
-          "type": "ADDITIVE",
-          "value": -15
-        }
-      ]
-    },
+    "effects": [{
+      "type": "aura",
+      "params": {
+        "targetSelector": "enemies",
+        "modifiers": [
+          { "id": "despair_aura_crit", "targetAttribute": "critRate", "type": "ADDITIVE", "value": -15 }
+        ]
+      }
+    }],
     "polarity": "positive",
     "description": "光环：全体敌方 暴击率-15"
   },
@@ -1345,9 +1349,10 @@
     "description": "防御↑20%",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "defense": "+20%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "defense": "+20%" }, "perStack": true }
+    }],
     "polarity": "positive"
   },
   {
@@ -1356,6 +1361,13 @@
     "category": "trigger",
     "maxStacks": 1,
     "duration": -1,
+    "triggers": [
+      {
+        "phase": "ON_ATTACK",
+        "scriptId": "bonus_damage",
+        "params": { "percent": 0.5 }
+      }
+    ],
     "polarity": "positive",
     "description": "下次攻击附加等同上一次所受伤害50%的额外伤害"
   },
@@ -1366,10 +1378,10 @@
     "description": "攻击↑30% 暴击↑20%",
     "maxStacks": 1,
     "duration": 3,
-    "attributes": {
-      "attack": "+30%",
-      "critRate": "+20%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "+30%", "critRate": "+20%" }, "perStack": true }
+    }],
     "polarity": "positive"
   },
   {
@@ -1380,9 +1392,10 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "stun",
-    "attributes": {
-      "speed": "-50%"
-    },
+    "effects": [
+      { "type": "control", "params": { "controlType": "stun" } },
+      { "type": "modifier", "params": { "attributes": { "speed": "-50%" }, "perStack": true } }
+    ],
     "polarity": "negative"
   },
   {
@@ -1392,10 +1405,10 @@
     "description": "攻击↑50% 暴击↑20%",
     "maxStacks": 1,
     "duration": -1,
-    "attributes": {
-      "attack": "+50%",
-      "critRate": "+20%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "+50%", "critRate": "+20%" }, "perStack": true }
+    }],
     "polarity": "positive"
   },
   {
@@ -1405,10 +1418,10 @@
     "description": "攻击↑30% 防御↓15%",
     "maxStacks": 1,
     "duration": 3,
-    "attributes": {
-      "attack": "+30%",
-      "defense": "-15%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "+30%", "defense": "-15%" }, "perStack": true }
+    }],
     "polarity": "positive"
   },
   {
@@ -1417,6 +1430,10 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 2,
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "damageBoost": "+0%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "每比目标快1点速度，伤害提升0.5%（上限30%）"
   },
@@ -1427,6 +1444,10 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "bind",
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "bind" }
+    }],
     "polarity": "negative",
     "description": "使目标束缚"
   },
@@ -1436,6 +1457,14 @@
     "category": "trigger",
     "maxStacks": 1,
     "duration": -1,
+    "triggers": [
+      {
+        "phase": "ON_DAMAGE_TAKEN",
+        "scriptId": "energy_absorb",
+        "params": { "hpThreshold": 0.4 },
+        "condition": "self.hp_ratio < 0.4"
+      }
+    ],
     "polarity": "positive",
     "tags": ["energy_absorption"],
     "description": "气血低于40%时，受到伤害先由能量抵扣"
@@ -1448,9 +1477,10 @@
     "maxStacks": 999,
     "duration": -1,
     "stackRule": "independent",
-    "attributes": {
-      "speed": "+5%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "speed": "+5%" }, "perStack": true }
+    }],
     "polarity": "positive"
   },
   {
@@ -1459,7 +1489,10 @@
     "description": "下一次攻击必定暴击",
     "duration": 1,
     "maxStacks": 1,
-    "attributes": {}
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "critRate": "+100%" }, "perStack": true }
+    }]
   },
   {
     "id": "buff_shield_test",
@@ -1467,10 +1500,11 @@
     "description": "吸收伤害的护盾",
     "duration": 1,
     "maxStacks": 99,
-    "attributes": {},
-    "parameters": {
-      "shieldValue": 10
-    }
+    "effects": [{
+      "type": "shield",
+      "params": { "value": 10, "valueType": "flat" }
+    }],
+    "parameters": { "shieldValue": 10 }
   },
   {
     "id": "buff_attack_up_20",
@@ -1478,9 +1512,10 @@
     "description": "攻击力提升20%",
     "duration": 2,
     "maxStacks": 1,
-    "attributes": {
-      "attack": "+20%"
-    }
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "+20%" }, "perStack": true }
+    }]
   },
   {
     "id": "buff_poison_test",
@@ -1488,14 +1523,11 @@
     "description": "每回合损失10%最大气血值",
     "duration": 3,
     "maxStacks": 3,
-    "attributes": {},
     "triggers": [
       {
         "phase": "turn_start",
         "scriptId": "deal_dot_damage",
-        "params": {
-          "percent": 0.1
-        }
+        "params": { "percent": 0.1 }
       }
     ]
   },
@@ -1507,15 +1539,12 @@
     "maxStacks": 20,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "trueDamageRate": "+1%"
-    },
-    "parameters": {
-      "perStackValue": 1
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "trueDamageRate": "+1%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 1 }
   },
   {
     "id": "buff_xunlei",
@@ -1525,15 +1554,12 @@
     "maxStacks": 15,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "speed": "+4%"
-    },
-    "parameters": {
-      "perStackValue": 4
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "speed": "+4%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 4 }
   },
   {
     "id": "buff_extra_action",
@@ -1543,9 +1569,7 @@
     "maxStacks": 1,
     "cooldown": 0,
     "stackRule": "refresh",
-    "controlType": "NONE",
     "dispellable": false,
-    "attributes": {},
     "parameters": {},
     "triggers": [
       {
@@ -1563,13 +1587,12 @@
     "maxStacks": 1,
     "cooldown": 0,
     "stackRule": "refresh",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "healReceived": "-40%"
-    },
-    "parameters": {},
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "healReceived": "-40%" }, "perStack": true }
+    }],
+    "parameters": {}
   },
   {
     "id": "buff_daodi",
@@ -1581,9 +1604,11 @@
     "stackRule": "limited",
     "controlType": "DISARM",
     "dispellable": true,
-    "attributes": {},
-    "parameters": {},
-    "triggers": []
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "DISARM" }
+    }],
+    "parameters": {}
   },
   {
     "id": "buff_fengyin",
@@ -1595,9 +1620,11 @@
     "stackRule": "limited",
     "controlType": "SILENCE",
     "dispellable": true,
-    "attributes": {},
-    "parameters": {},
-    "triggers": []
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "SILENCE" }
+    }],
+    "parameters": {}
   },
   {
     "id": "buff_jiaoxie",
@@ -1609,9 +1636,11 @@
     "stackRule": "limited",
     "controlType": "DISARM",
     "dispellable": true,
-    "attributes": {},
-    "parameters": {},
-    "triggers": []
+    "effects": [{
+      "type": "control",
+      "params": { "controlType": "DISARM" }
+    }],
+    "parameters": {}
   },
   {
     "id": "buff_lianji",
@@ -1621,15 +1650,12 @@
     "maxStacks": 15,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "comboRate": "+4%"
-    },
-    "parameters": {
-      "perStackValue": 4
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "comboRate": "+4%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 4 }
   },
   {
     "id": "buff_fanji",
@@ -1639,15 +1665,12 @@
     "maxStacks": 15,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "counterRate": "+4%"
-    },
-    "parameters": {
-      "perStackValue": 4
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "counterRate": "+4%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 4 }
   },
   {
     "id": "buff_yishang",
@@ -1657,16 +1680,12 @@
     "maxStacks": 25,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "damageTaken": "+4"
-    },
-    "parameters": {
-      "perStackValue": 4,
-      "valueType": "flat"
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "damageTaken": "+4" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 4, "valueType": "flat" }
   },
   {
     "id": "buff_xuruo",
@@ -1676,15 +1695,12 @@
     "maxStacks": 15,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "damageDealt": "-3%"
-    },
-    "parameters": {
-      "perStackValue": 3
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "damageDealt": "-3%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 3 }
   },
   {
     "id": "buff_chihuan",
@@ -1694,15 +1710,12 @@
     "maxStacks": 15,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "speed": "-3%"
-    },
-    "parameters": {
-      "perStackValue": 3
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "speed": "-3%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 3 }
   },
   {
     "id": "buff_jiansu",
@@ -1712,15 +1725,12 @@
     "maxStacks": 15,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "dodgeRate": "-3%"
-    },
-    "parameters": {
-      "perStackValue": 3
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "dodgeRate": "-3%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 3 }
   },
   {
     "id": "buff_mumang",
@@ -1730,15 +1740,12 @@
     "maxStacks": 15,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "hitRate": "-3%"
-    },
-    "parameters": {
-      "perStackValue": 3
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "hitRate": "-3%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 3 }
   },
   {
     "id": "buff_pojia",
@@ -1748,15 +1755,12 @@
     "maxStacks": 15,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "defense": "-3%"
-    },
-    "parameters": {
-      "perStackValue": 3
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "defense": "-3%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 3 }
   },
   {
     "id": "buff_fali",
@@ -1766,15 +1770,12 @@
     "maxStacks": 15,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "attack": "-3%"
-    },
-    "parameters": {
-      "perStackValue": 3
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "-3%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 3 }
   },
   {
     "id": "buff_liuxue",
@@ -1784,21 +1785,13 @@
     "maxStacks": 20,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {},
-    "parameters": {
-      "damageType": "flat",
-      "damageCategory": "BLEED"
-    },
+    "parameters": { "damageType": "flat", "damageCategory": "BLEED" },
     "triggers": [
       {
         "phase": "turn_start",
         "scriptId": "dot_damage",
-        "params": {
-          "valueType": "flat",
-          "damageCategory": "BLEED"
-        }
+        "params": { "valueType": "flat", "damageCategory": "BLEED" }
       }
     ]
   },
@@ -1810,21 +1803,13 @@
     "maxStacks": 20,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {},
-    "parameters": {
-      "damageType": "percent",
-      "damageCategory": "POISON"
-    },
+    "parameters": { "damageType": "percent", "damageCategory": "POISON" },
     "triggers": [
       {
         "phase": "turn_start",
         "scriptId": "dot_damage",
-        "params": {
-          "valueType": "percent",
-          "damageCategory": "POISON"
-        }
+        "params": { "valueType": "percent", "damageCategory": "POISON" }
       }
     ]
   },
@@ -1836,15 +1821,12 @@
     "maxStacks": 20,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "debuffImmunityRate": "+8%"
-    },
-    "parameters": {
-      "perStackValue": 8
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "debuffImmunityRate": "+8%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 8 }
   },
   {
     "id": "buff_shipo",
@@ -1854,15 +1836,12 @@
     "maxStacks": 20,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "critRate": "+4%"
-    },
-    "parameters": {
-      "perStackValue": 4
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "critRate": "+4%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 4 }
   },
   {
     "id": "buff_piaomiao",
@@ -1872,15 +1851,12 @@
     "maxStacks": 20,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "dodgeRate": "+4%"
-    },
-    "parameters": {
-      "perStackValue": 4
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "dodgeRate": "+4%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 4 }
   },
   {
     "id": "buff_jiangu",
@@ -1890,15 +1866,12 @@
     "maxStacks": 20,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "defense": "+4%"
-    },
-    "parameters": {
-      "perStackValue": 4
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "defense": "+4%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 4 }
   },
   {
     "id": "buff_yongwu",
@@ -1908,15 +1881,12 @@
     "maxStacks": 20,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {
-      "attack": "+5%"
-    },
-    "parameters": {
-      "perStackValue": 5
-    },
-    "triggers": []
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "attack": "+5%" }, "perStack": true }
+    }],
+    "parameters": { "perStackValue": 5 }
   },
   {
     "id": "buff_lingfu",
@@ -1926,22 +1896,13 @@
     "maxStacks": 10,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {},
-    "parameters": {
-      "perStackValue": 3,
-      "resourceType": "energy"
-    },
+    "parameters": { "perStackValue": 3, "resourceType": "energy" },
     "triggers": [
       {
         "phase": "turn_start",
         "scriptId": "regen_resource",
-        "params": {
-          "resourceType": "energy",
-          "valueType": "percent",
-          "perStackValue": 3
-        }
+        "params": { "resourceType": "energy", "valueType": "percent", "perStackValue": 3 }
       }
     ]
   },
@@ -1953,22 +1914,13 @@
     "maxStacks": 10,
     "cooldown": 0,
     "stackRule": "limited",
-    "controlType": "NONE",
     "dispellable": true,
-    "attributes": {},
-    "parameters": {
-      "perStackValue": 3,
-      "resourceType": "health"
-    },
+    "parameters": { "perStackValue": 3, "resourceType": "health" },
     "triggers": [
       {
         "phase": "turn_start",
         "scriptId": "regen_resource",
-        "params": {
-          "resourceType": "health",
-          "valueType": "percent",
-          "perStackValue": 3
-        }
+        "params": { "resourceType": "health", "valueType": "percent", "perStackValue": 3 }
       }
     ]
   },
@@ -1978,11 +1930,12 @@
     "category": "attribute",
     "duration": 2,
     "maxStacks": 1,
-    "attributes": {},
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "critRate": "+0%" }, "perStack": true }
+    }],
     "polarity": "positive",
-    "tags": [
-      "taunt"
-    ],
+    "tags": ["taunt"],
     "description": "强制敌方攻击自己，持续2回合"
   },
   {
@@ -1991,9 +1944,10 @@
     "category": "attribute",
     "duration": -1,
     "maxStacks": 1,
-    "attributes": {
-      "defense": "+15%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "defense": "+15%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "阵型效果：防御+15%"
   },
@@ -2003,9 +1957,10 @@
     "category": "attribute",
     "duration": -1,
     "maxStacks": 1,
-    "attributes": {
-      "speed": "+10%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "speed": "+10%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "阵型效果：速度+10%"
   },
@@ -2015,9 +1970,10 @@
     "category": "attribute",
     "duration": -1,
     "maxStacks": 1,
-    "attributes": {
-      "defense": "+10%"
-    },
+    "effects": [{
+      "type": "modifier",
+      "params": { "attributes": { "defense": "+10%" }, "perStack": true }
+    }],
     "polarity": "positive",
     "description": "阵型效果：防御+10%"
   }

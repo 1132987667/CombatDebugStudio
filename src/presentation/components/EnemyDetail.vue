@@ -96,7 +96,7 @@
       <div class="enemy-section-title">掉落物品</div>
       <div v-if="enemy.drops && enemy.drops.length > 0" class="drops-list">
         <div v-for="drop in enemy.drops" :key="drop.itemId" class="drop-item">
-          <span class="drop-item-name">{{ getItemName(drop.itemId) }}</span>
+          <span class="drop-item-name">{{ getItemById(drop.itemId)?.name ?? drop.itemId }}</span>
           <span class="drop-quantity">×{{ drop.quantity }}</span>
           <span class="drop-chance">{{ Math.round(drop.chance * 100) }}%</span>
         </div>
@@ -108,7 +108,7 @@
 
     <div class="enemy-description">
       <h3 class="section-title">背景故事</h3>
-      <p class="description-text">{{ getEnemyDescription(enemy) }}</p>
+      <p class="description-text">{{ enemy.description || `${enemy.name}是一种栖息在灵山中的怪物，具有独特的战斗能力。` }}</p>
     </div>
   </div>
 </template>
@@ -196,43 +196,7 @@ const getSelectorText = (selector: any): string => {
   return formatTargetConfig(selector)
 }
 
-const getItemName = (itemId: string): string => {
-  const item = getItemById(itemId)
-  if (item) return item.name
 
-  const knownItems: Record<string, string> = {
-    'elix_001': '气血精华',
-    'elix_002': '能量精华',
-    'elix_003': '速度精华',
-    'elix_004': '防御精华',
-    'elix_005': '攻击精华',
-    'elix_006': '暴击精华',
-    'elix_007': '全能精华',
-    'crys_001': '火焰结晶',
-    'crys_002': '冰霜结晶',
-    'crys_003': '雷电结晶',
-    'crys_004': '光明结晶',
-    'crys_005': '黑暗结晶',
-    'crys_006': '大地结晶',
-    'crys_007': '神圣结晶'
-  }
-
-  return knownItems[itemId] || itemId
-}
-
-const getEnemyDescription = (enemy: CompendiumEnemy): string => {
-  if (enemy.description) return enemy.description
-
-  const descriptions: Record<string, string> = {
-    'enemy_001': '生长在灵山深处的花妖，擅长使用花粉进行迷惑攻击。',
-    'enemy_002': '由草木精灵化成的草精，行动敏捷，善于缠绕敌人。',
-    'enemy_003': '山魈的幼年形态，虽然年幼但已具备相当的战斗力。',
-    'enemy_004': '食人花的进阶形态，喷射的毒液可让敌人持续掉血。',
-    'enemy_005': '由巨石吸收天地灵气化成的精怪，防御力极高。'
-  }
-
-  return descriptions[enemy.id] || `${enemy.name}是一种栖息在灵山中的怪物，具有独特的战斗能力。`
-}
 </script>
 
 <style scoped>

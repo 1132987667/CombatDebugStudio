@@ -124,18 +124,10 @@ export class SkillExecutor {
         this.executeRevive(skillStep, action, source, target, context)
         break
       default: {
-        // 未实现的步骤类型 — 当前无任何技能配置使用这些类型
-        // 升级路径：当有技能配置使用它们时，在 switch 中添加对应 case
-        LoggerProvider.logger.addDebugLog(
-          `未实现的技能步骤类型: ${skillStep.type}`,
-          { level: LogLevel.WARN },
+        throw new Error(
+          `[SkillExecutor] 未实现的技能步骤类型: ${skillStep.type}。` +
+          `请实现对应的处理逻辑或从技能配置中移除。`
         )
-        action.effects.push({
-          type: EffectType.STATUS,
-          targetId: target.id,
-          description: `步骤类型 ${skillStep.type} 未实现`,
-        })
-        break
       }
     }
   }
@@ -642,14 +634,10 @@ export class SkillExecutor {
         })
       }
     } else {
-      LoggerProvider.logger.addDebugLog(`自定义步骤未实现: ${desc}`, {
-        level: LogLevel.WARN,
-      })
-      action.effects.push({
-        type: EffectType.STATUS,
-        targetId: target.id,
-        description: `自定义效果待实现: ${desc}`,
-      })
+      throw new Error(
+        `[SkillExecutor] 未实现的自定义步骤类型: ${desc}（${customType}）。` +
+        `请实现对应的处理逻辑或从技能配置中移除。`
+      )
     }
   }
 

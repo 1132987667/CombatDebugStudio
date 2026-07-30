@@ -11,6 +11,8 @@ import type { BattleEffect } from '@/domain/battle/type/types'
 import type { CalculationStep } from '@/domain/attribute/types'
 import type { ActionTypes } from '@/domain/battle/type/types'
 import { DamageSource } from '@/domain/battle/type/types'
+import { DamageCategory } from '@/domain/skill/types'
+
 /**
  * 计算详情 - 调试模式开启时填充
  */
@@ -114,7 +116,7 @@ export interface DamageBreakdown {
   /** 最终伤害 */
   finalDamage: number
   /** 伤害大类 */
-  damageCategory?: string
+  damageCategory?: DamageCategory
   /** 元素抗性 */
   elementalResistance?: number
   /** 完整步骤链（用于 UI 逐条展示） */

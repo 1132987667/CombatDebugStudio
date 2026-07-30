@@ -1,5 +1,8 @@
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { EffectRenderer, type RenderContext } from '@/domain/battle/logs/EffectRenderer'
+import {
+  EffectRenderer,
+  type RenderContext,
+} from '@/domain/battle/logs/EffectRenderer'
 import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import {
@@ -18,12 +21,10 @@ import { SkillManager } from '@/domain/skill/SkillManager'
 import { resolveSkillTargets } from '@/domain/skill/target-resolver'
 import type { SkillConfig } from '@/domain/skill/types'
 import type { IUIEventPort } from '@/domain/port/IUIEventPort'
-import {
-  BATTLE_LOG_CATEGORIES,
-  LogLevel,
-} from '@/shared/types/battle-log'
+import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
 import { createTraceLogEntry } from '@/shared/types/trace-log'
+import { DamageCategory } from '@/domain/skill/types'
 
 export interface PassiveSkillConfig {
   id: string
@@ -31,6 +32,8 @@ export interface PassiveSkillConfig {
   description: string
   trigger?: BattleTriggerPhase
   condition?: string
+  /** 参数化条件的参数映射（如 source_has_debuff_count 的 count 阈值） */
+  conditionParams?: Record<string, number | string | boolean>
   skillId: string
   cooldown: number
   lastTriggeredTurn?: number
@@ -174,7 +177,7 @@ export class PassiveSkillManager {
     // 被动有触发条件，检查是否满足
     if (
       config.condition &&
-      !this.evaluateCondition(config.condition, entity, contextTarget, context)
+      !this.evaluateCondition(config.condition, entity, contextTarget, context, config.conditionParams)
     )
       return false
     return true
@@ -216,6 +219,10 @@ export class PassiveSkillManager {
             entity,
             skillConfig.selector,
             skillConfig.steps,
+            undefined,
+            undefined,
+            undefined,
+            (e) => this.buffSystem.hasBuffWithTag?.(e.id, 'taunt') ?? false,
           )
         } else {
           targets = [contextTarget ?? entity]
@@ -379,7 +386,10 @@ export class PassiveSkillManager {
         entity = targets.find((t) => t.id === id)
       }
       if (entity) {
-        hpSnapshots.set(id, { before: hpSnapshots.get(id)!.before, after: entity.currentHealth })
+        hpSnapshots.set(id, {
+          before: hpSnapshots.get(id)!.before,
+          after: entity.currentHealth,
+        })
       }
     }
 
@@ -405,9 +415,10 @@ export class PassiveSkillManager {
     }
 
     // ★ 5. 渲染日志片段
-    const segments = allEffects.length > 0
-      ? this.effectRenderer.render(allEffects, renderCtx)
-      : []
+    const segments =
+      allEffects.length > 0
+        ? this.effectRenderer.render(allEffects, renderCtx)
+        : []
 
     // ★ 6. 输出日志
     const configName = config.name || config.id
@@ -418,16 +429,25 @@ export class PassiveSkillManager {
       hover: { kind: 'passive' as const, id: config.id },
     }
     // ★ 触发者实体片段（带阵营前缀）
-    const sourcePrefix = source.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
+    const sourcePrefix =
+      source.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
     const sourceSeg = {
       text: `${sourcePrefix}${source.name}`,
-      classStr: source.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile',
+      classStr:
+        source.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile',
       kind: 'entity' as const,
       faction: source.team,
     }
-    const logSegments = segments.length > 0
-      ? [passiveNameSeg, { text: '  ' }, sourceSeg, { text: ' ' }, ...segments]
-      : [passiveNameSeg, { text: '  ' }, sourceSeg, { text: '  生效' }]
+    const logSegments =
+      segments.length > 0
+        ? [
+            passiveNameSeg,
+            { text: '  ' },
+            sourceSeg,
+            { text: ' ' },
+            ...segments,
+          ]
+        : [passiveNameSeg, { text: '  ' }, sourceSeg, { text: '  生效' }]
 
     // ★ 独立触发阶段（无父 action）使用 plain 渲染；行动内触发保持 sub 附加
     const standalonePhases: BattleTriggerPhase[] = [
@@ -439,7 +459,7 @@ export class PassiveSkillManager {
 
     LoggerProvider.logger.addBattleLog({
       turn: context.currentTurn,
-      message: logSegments.map(s => s.text).join(''),
+      message: logSegments.map((s) => s.text).join(''),
       segments: logSegments,
       category: BATTLE_LOG_CATEGORIES.STATUS,
       meta: isStandalone ? undefined : { role: 'sub' },
@@ -458,25 +478,31 @@ export class PassiveSkillManager {
     effects: BattleEffect[],
     snapshots: Map<string, { before: number; after: number }>,
   ): void {
-    if (!this._getAnimationEnabled()) return  // ★ 无头/快速模式：抑制
+    if (!this._getAnimationEnabled()) return // ★ 无头/快速模式：抑制
     for (const effect of effects) {
       if (!effect.targetId) continue
 
-      if (effect.type === EffectType.DAMAGE || effect.type === EffectType.REFLECT) {
+      if (
+        effect.type === EffectType.DAMAGE ||
+        effect.type === EffectType.REFLECT
+      ) {
         this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
           targetId: effect.targetId,
           damage: effect.damage || 0,
-          damageCategory: 'physical',
+          damageCategory: DamageCategory.PHYSICAL,
           isCritical: effect.isCritical || false,
           isHeal: false,
         })
-      } else if (effect.type === EffectType.HEAL || effect.type === EffectType.DRAIN) {
+      } else if (
+        effect.type === EffectType.HEAL ||
+        effect.type === EffectType.DRAIN
+      ) {
         // 吸血需要发射两个动画：目标受击，自身回血
         if (effect.type === EffectType.DRAIN) {
           this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
             targetId: effect.targetId,
             damage: effect.damage || 0,
-            damageCategory: 'physical',
+            damageCategory: DamageCategory.PHYSICAL,
             isCritical: false,
             isHeal: false,
           })
@@ -485,7 +511,7 @@ export class PassiveSkillManager {
           this.uiEventPort.emit(BattleEventCodes.DAMAGE_ANIMATION, {
             targetId: effect.sourceId,
             damage: effect.heal,
-            damageCategory: 'physical',
+            damageCategory: DamageCategory.PHYSICAL,
             isCritical: false,
             isHeal: true,
           })
@@ -503,6 +529,7 @@ export class PassiveSkillManager {
     source: BattleEntity,
     target?: BattleEntity,
     context?: PassiveTriggerContext,
+    params?: Record<string, number | string | boolean>,
   ): boolean {
     try {
       switch (condition) {
@@ -531,28 +558,60 @@ export class PassiveSkillManager {
           return target
             ? target.getBuffInstanceIds().some((id) => id.includes('sleep'))
             : false
-        case 'source_has_debuff_count_3':
-          // ponytail: 身上 ≥ 3 个减益时触发（守护者被动「不屈意志」专用）
-          return source.getBuffInstanceIds().length >= 3
-        case 'source_energy_high':
+
+        // 参数化条件：通过 params 传阈值
+        case 'source_has_debuff_count': {
+          const debuffThreshold = params?.count as number | undefined
+          if (debuffThreshold == null) {
+            throw new Error(
+              `[PassiveSkillManager] 条件 "${condition}" 需要 params.count`
+            )
+          }
+          return source.getBuffInstanceIds().length >= debuffThreshold
+        }
+        case 'source_energy_high': {
+          const energyRatio = (params?.ratio as number) ?? 0.9
           return (
             source.getAttribute('currentEnergy') /
               Math.max(1, source.getAttribute('maxEnergy')) >
-            0.9
+            energyRatio
           )
-        case 'source_turn_gt_5':
-          return (context?.currentTurn ?? 0) > 5
-        case 'source_turn_mod_5':
+        }
+        case 'source_turn_gt': {
+          const turnThreshold = params?.turn as number | undefined
+          if (turnThreshold == null) {
+            throw new Error(
+              `[PassiveSkillManager] 条件 "${condition}" 需要 params.turn`
+            )
+          }
+          return (context?.currentTurn ?? 0) > turnThreshold
+        }
+        case 'source_turn_mod': {
+          const modValue = params?.mod as number | undefined
+          if (modValue == null) {
+            throw new Error(
+              `[PassiveSkillManager] 条件 "${condition}" 需要 params.mod`
+            )
+          }
           return (
-            (context?.currentTurn ?? 0) % 5 === 0 &&
+            (context?.currentTurn ?? 0) % modValue === 0 &&
             (context?.currentTurn ?? 0) > 0
           )
-        default:
-          LoggerProvider.logger.addDebugLog(
-            `[PassiveSkillManager] 未知条件 "${condition}"，默认不触发`,
-            { level: LogLevel.WARN },
+        }
+
+        // 废弃的旧条件名——直接报错
+        case 'source_has_debuff_count_3':
+        case 'source_turn_gt_5':
+        case 'source_turn_mod_5':
+          throw new Error(
+            `[PassiveSkillManager] 废弃的条件名 "${condition}"。` +
+            `请改用参数化版本并从 conditionParams 传阈值。`
           )
-          return false
+
+        default:
+          throw new Error(
+            `[PassiveSkillManager] 未知条件 "${condition}"，请检查配置。`
+          )
       }
     } catch (err) {
       LoggerProvider.logger.addDebugLog(

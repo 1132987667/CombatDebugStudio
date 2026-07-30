@@ -1,4 +1,4 @@
-import type { IAtomicEffect, AtomicEffectType } from '../types'
+import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
 /**
@@ -10,7 +10,7 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
  * - resource='health' 治疗生命，'energy' 恢复能量
  */
 export class HotEffect implements IAtomicEffect {
-  readonly type: AtomicEffectType = 'heal'
+  readonly type: AtomicEffectType = AtomicEffectType.HEAL
 
   onApply(_ctx: BuffContext, _params: Record<string, unknown>): void {
     // HEAL 不在施加时生效
@@ -56,7 +56,7 @@ export class HotEffect implements IAtomicEffect {
     const resourceLabel = resource === 'energy' ? '能量' : '生命'
     return [{
       text: `每回合恢复 ${value}${suffix} ${resourceLabel}`,
-      kind: 'heal' as const,
+      kind: AtomicEffectType.HEAL,
     }]
   }
 }

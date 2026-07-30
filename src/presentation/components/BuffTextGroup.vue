@@ -62,11 +62,8 @@ const showDebug = computed(() => battleStore.showDebug)
 const colorClass = computed(() => {
   if (props.buff.condition === 'inactive') return 'group--inactive'
   if (props.buff.condition === 'permanent') return 'group--permanent'
-  switch (props.buff.type) {
-    case 'buff': return 'group--buff'
-    case 'debuff': return 'group--debuff'
-    case 'control': return 'group--control'
-  }
+  if (props.buff.controlType && props.buff.controlType !== 'none') return 'group--control'
+  return props.buff.isNegative ? 'group--debuff' : 'group--buff'
 })
 
 const conditionText = computed(() => {
@@ -87,12 +84,11 @@ const effectLines = computed(() => {
       ? `（${props.buff.remainingTurns}回合）`
       : props.buff.condition === 'permanent' ? '（永久）' : ''
 
-    // 条件标签
+    // 条件标签 — 使用 conditionLabel（投影层预计算），不再从 description 正则提取
     let conditionSuffix = ''
     if (props.buff.condition === 'active') conditionSuffix = '（已激活）'
-    else if (props.buff.condition === 'inactive') {
-      const match = props.buff.description.match(/（([^）]+?)）/)
-      conditionSuffix = match ? `（${match[1]}）` : ''
+    else if (props.buff.condition === 'inactive' && props.buff.conditionLabel) {
+      conditionSuffix = `（${props.buff.conditionLabel}）`
     }
 
     const className = mod.value > 0 ? 'effect--buff' : 'effect--debuff'
@@ -101,8 +97,10 @@ const effectLines = computed(() => {
   }
 
   // 特殊效果行（DOT/HEAL/护盾等非属性修正效果 — 来自脚本 getEffectLines）
+  // NOTE: modifier 类效果行跳过——modifiers 区段已通过结构化数据渲染
   if (props.buff.effectLines && props.buff.effectLines.length > 0) {
     for (const el of props.buff.effectLines) {
+      if (el.kind === 'modifier') continue
       lines.push({
         text: el.text,
         className: `effect--${el.kind}`,

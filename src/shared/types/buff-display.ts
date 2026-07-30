@@ -6,7 +6,6 @@
  */
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import type { BuffDisplayType } from '@/shared/types/buff-classification'
 import { ModifierType } from '@/domain/attribute/types'
 
 /**
@@ -37,12 +36,14 @@ export interface BuffRawItem {
   effectLines?: BuffEffectLine[]
   /** 领域层条件状态（由 BuffSystem.setBuffConditionState 设置）
    *  'active' = 条件已满足，'inactive' = 条件未满足
-   *  undefined = 领域层未设置，回退到文本启发式推断 */
+   *  undefined = 领域层未设置，视为无条件(NONE) */
   conditionState?: ConditionState
   /** Buff 脚本类名（调试用） */
   scriptName?: string
   /** 控制类型（来自 BuffConfig，如 "stun"、"silence"） */
   controlType?: string
+  /** 是否为光环（检查配置中是否有 aura 配置块，由 participantMapper 在构建时填充） */
+  isAura: boolean
 }
 
 /** 单个 Buff 在纯文本模式下的显示条目 */
@@ -61,8 +62,10 @@ export interface BuffTextItem {
   /** 当前层数 */
   stacks: number
 
-  /** 类型标识 */
-  type: BuffDisplayType
+  /** 是否为减益 */
+  isNegative: boolean
+  /** 控制类型（来自 BuffConfig，如 "stun"、"silence"；非控制 buff 为 undefined 或 "none"） */
+  controlType?: string
 
   /** 条件状态 */
   condition: ConditionState
@@ -143,18 +146,6 @@ export interface MergedAttributeLine {
   }>
 }
 
-/** 排序优先级（用于 collapse 前的预排序） */
-export interface SortKey {
-  /** 是否控制类型 */
-  isControl: boolean
-  /** 剩余回合数（永久=Infinity） */
-  turnsLeft: number
-  /** 是否已激活条件 */
-  isActive: boolean
-  /** 增益（数值>0）优先 */
-  isPositive: boolean
-}
-
 /** useBuffDisplay 的返回值 */
 export interface BuffDisplayState {
   /** 原始转换后的条目 */
@@ -169,6 +160,6 @@ export interface BuffDisplayState {
   collapsedCount: number
   /** 排序后的完整分组（用于展开面板） */
   groups: BuffTextItem[]
-  /** 次要分组（极多 Buff 时折叠的超期/永久效果） */
-  secondaryGroups: BuffTextItem[]
+  /** 长时效果分组（极多 Buff 时折叠的长期/永久效果，非控制类 ≥5 回合或永久） */
+  longDurationItems: BuffTextItem[]
 }

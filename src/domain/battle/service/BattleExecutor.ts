@@ -787,6 +787,7 @@ export class BattleExecutor {
       this.threatManager,
       this.formationRowLookup,
       this.frontProtectionLookup,
+      (e) => this.buffSystem.hasBuffWithTag(e.id, 'taunt'),
     )
   }
 
@@ -1341,8 +1342,8 @@ export class BattleExecutor {
     )
     if (enemies.length === 0) return ''
 
-    // 嘲讽优先：有 taunt 标签的敌方
-    const taunters = enemies.filter(e => e.hasBuff?.('buff_taunt'))
+    // 嘲讽优先：通过标签检测（替换硬编码 buff_taunt）
+    const taunters = enemies.filter(e => this.buffSystem.hasBuffWithTag(e.id, 'taunt'))
     if (taunters.length > 0) return taunters[0].id
 
     // 仇恨优先

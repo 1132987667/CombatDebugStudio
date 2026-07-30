@@ -1,4 +1,4 @@
-import type { IAtomicEffect, AtomicEffectType } from '../types'
+import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
 /**
@@ -9,7 +9,7 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
  * - damageType='percent': 百分比最大生命伤害（通过 requestDamage 的 damagePercent 参数）
  */
 export class DotEffect implements IAtomicEffect {
-  readonly type: AtomicEffectType = 'dot'
+  readonly type: AtomicEffectType = AtomicEffectType.DOT
 
   onApply(_ctx: BuffContext, _params: Record<string, unknown>): void {
     // DOT 不在施加时生效，在 onTick 中每回合触发
@@ -39,7 +39,7 @@ export class DotEffect implements IAtomicEffect {
     const suffix = type === 'percent' ? '% 最大生命' : ' 点'
     return [{
       text: `每回合失去 ${value}${suffix} 生命`,
-      kind: 'dot' as const,
+      kind: AtomicEffectType.DOT,
     }]
   }
 }

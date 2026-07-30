@@ -12,103 +12,14 @@ import {
   MergedAttributeLine,
   BuffDisplayState,
   ConditionState,
+  ConditionStateNames,
 } from '@/shared/types/buff-display'
+import type { ConditionState as ConditionStateType } from '@/shared/types/buff-display'
 import type { BuffEffectLine } from '@/domain/buff/types'
-import { getAttrName, ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { getAttrName, ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+
 /** 极多 Buff 时次要分组的阈值 */
 const SECONDARY_THRESHOLD = 20
-
-/** 已知控制类 Buff 名称关键词（全匹配） */
-const CONTROL_NAMES = new Set([
-  '眩晕',
-  '沉默',
-  '恐惧',
-  '魅惑',
-  '石化',
-  '睡眠',
-  '冰冻',
-  '混乱',
-  '嘲讽',
-  '定身',
-  '缴械',
-  '变形',
-  '禁锢',
-])
-
-/** 已知条件关键词（description 中匹配） */
-const CONDITION_KEYWORDS: Array<{ match: RegExp; label: string }> = [
-  { match: /残血|气血.*低于|低血量/i, label: '残血' },
-  { match: /满血|气血.*高于|高血量/i, label: '满血' },
-  { match: /暴击|暴击后/i, label: '暴击' },
-  { match: /闪避|闪避后/i, label: '闪避' },
-  { match: /击杀|击败后/i, label: '击杀' },
-  { match: /受击|被攻击/i, label: '受击' },
-]
-
-/**
- * 检测条件状态
- * 优先使用来自 BuffSystem 的实时 conditionState（由 setBuffConditionState 设置）
- * 回退到从 description 文本中启发式推断
- */
-export function detectCondition(raw: BuffRawItem): {
-  condition: ConditionState
-  conditionLabel?: string
-} {
-  // 优先使用实例的实时条件状态（由领域层设置）
-  if (raw.conditionState === ConditionState.ACTIVE) {
-    return { condition: ConditionState.ACTIVE, conditionLabel: '已激活' }
-  }
-  if (raw.conditionState === ConditionState.INACTIVE) {
-    const label = matchConditionKeyword(raw.description || '', raw.name || '')
-    return {
-      condition: ConditionState.INACTIVE,
-      conditionLabel: label ? `${label}·未激活` : '未激活',
-    }
-  }
-
-  const description = raw.description || ''
-  const name = raw.name || ''
-  for (const kw of CONDITION_KEYWORDS) {
-    if (kw.match.test(description) || kw.match.test(name)) {
-      // ponytail: 无法从纯文本推断条件是否满足，默认按未激活处理
-      return { condition: ConditionState.INACTIVE, conditionLabel: kw.label }
-    }
-  }
-  return { condition: 'none' }
-}
-
-/** 辅助：从文本中匹配条件关键词 */
-function matchConditionKeyword(
-  description: string,
-  name: string,
-): string | undefined {
-  for (const kw of CONDITION_KEYWORDS) {
-    if (kw.match.test(description) || kw.match.test(name)) {
-      return kw.label
-    }
-  }
-  return undefined
-}
-
-/**
- * 从 isNegative + name 推断类型
- * 优先使用结构化 controlType 字段，回退到名称关键词匹配
- */
-export function detectType(
-  name: string,
-  isNegative: boolean,
-  controlType?: string,
-): 'buff' | 'debuff' | 'control' {
-  // 优先使用结构化字段（新数据走此路径）
-  if (controlType && controlType !== 'none' && controlType !== '') {
-    return 'control'
-  }
-  // 回退：名称匹配（兼容无 controlType 的旧数据）
-  for (const keyword of CONTROL_NAMES) {
-    if (name.includes(keyword)) return 'control'
-  }
-  return isNegative ? 'debuff' : 'buff'
-}
 
 /**
  * 从 config.attributes 提取属性修正
@@ -151,28 +62,46 @@ function extractAttributesFromConfig(
 }
 
 /**
- * 从修饰符列表提取属性名（中文）+ 值
- * ponytail: 使用简单的关键词匹配提取属性，后续可从 config.modifiers 中精确获取
+ * 从描述文本中提取条件标签（2-4 字的中文关键词，位于"时触发"/"后触发"/"时"/"后"等标记前）
+ * 例："残血时触发" → "残血"，"暴击后触发" → "暴击"
  */
-function extractAttributes(
-  name: string,
-  description: string,
-): Array<{ attr: string; value: number }> {
-  const result: Array<{ attr: string; value: number }> = []
+function extractConditionLabel(description?: string): string | undefined {
+  if (!description) return undefined
+  const match = description.match(/([\u4e00-\u9fa5]{2,4})(?:时触发|后触发|时|后)/)
+  return match?.[1]
+}
 
-  // ponytail: 基于名称和描述的启发式提取
-  // 格式："攻击↑30%" → +30, "防御↓15%" → -15
-  // ↑ 表示增益（正数），↓ 表示减益（负数）
-  const pattern = /([\u4e00-\u9fa5]{2,4})([↑↓])(\d+(?:\.\d+)?)%?/g
-  let match: RegExpExecArray | null
-
-  const text = `${description} ${name}`
-  while ((match = pattern.exec(text)) !== null) {
-    const sign = match[2] === '↑' ? 1 : -1
-    result.push({ attr: match[1], value: sign * parseInt(match[3]) })
+/**
+ * 检测 Buff 的条件状态 — 通过结构化 conditionState 决定
+ * conditionState 缺失时视为无条件(NONE)
+ */
+export function detectCondition(raw: {
+  conditionState?: string
+  description?: string
+  remainingTurns?: number
+}): { condition: ConditionStateType; conditionLabel?: string } {
+  // 优先级 1: 领域层结构化 conditionState
+  if (raw.conditionState) {
+    if (raw.conditionState === ConditionState.ACTIVE) {
+      return { condition: ConditionState.ACTIVE, conditionLabel: '已激活' }
+    }
+    if (raw.conditionState === ConditionState.INACTIVE) {
+      const label = extractConditionLabel(raw.description)
+      return {
+        condition: ConditionState.INACTIVE,
+        conditionLabel: label ? `${label}·${ConditionStateNames[ConditionState.INACTIVE]}` : ConditionStateNames[ConditionState.INACTIVE],
+      }
+    }
+    if (raw.conditionState === ConditionState.PERMANENT) {
+      return { condition: ConditionState.PERMANENT, conditionLabel: '永久' }
+    }
+    if (raw.conditionState === ConditionState.NONE) {
+      return { condition: ConditionState.NONE }
+    }
   }
 
-  return result
+  // conditionState 必须由调用方提供，缺失即视为无条件
+  return { condition: ConditionState.NONE }
 }
 
 /**
@@ -187,28 +116,21 @@ function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
   const remainingTurns = raw.remainingTurns ?? 0
   const stacks = raw.currentStacks ?? 1
 
-  const type = detectType(displayName, isNegative, raw.controlType)
+  // 条件状态 — 使用 detectCondition 统一处理（结构化 → 启发式回退）
+  const { condition, conditionLabel } = detectCondition({
+    conditionState: raw.conditionState,
+    description,
+    remainingTurns,
+  })
 
-  // 检测条件状态——优先使用领域层的 conditionState
-  let { condition, conditionLabel } = detectCondition(raw)
-  // 永久效果覆盖条件检测
-  if (remainingTurns === 0 || description.includes('永久')) {
-    condition = 'permanent'
-    conditionLabel = undefined
-  }
-
-  // 构造修饰符列表 — 优先使用 config.attributes，回退到文本提取
-  const extracted = raw.attributes
-    ? extractAttributesFromConfig(raw.attributes, stacks)
-    : extractAttributes(displayName, description).map((e) => ({
-        ...e,
-        value: Math.round(e.value * stacks),
-      }))
+  // 构造修饰符列表 — 从 config.attributes 提取
+  const extracted = extractAttributesFromConfig(raw.attributes ?? {} as Record<ATTRIBUTE_CODE, string>, stacks)
   const modifiers = extracted.map((e) => ({
     sourceName: name,
     attribute: e.attr,
     value: e.value,
-    type: 'PERCENTAGE' as const,
+    // isFlat → ADDITIVE（固定数值修正），否则 → PERCENTAGE（百分比修正）
+    type: e.isFlat ? ModifierType.ADDITIVE : ModifierType.PERCENTAGE,
     isFlat: e.isFlat,
   }))
 
@@ -220,12 +142,13 @@ function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
     buffId: raw.buffId ?? raw.id ?? '',
     name: displayName,
     description,
-    remainingTurns: condition === 'permanent' ? 0 : remainingTurns,
+    remainingTurns: condition === ConditionState.PERMANENT ? 0 : remainingTurns,
     stacks,
-    type,
+    isNegative,
+    controlType: raw.controlType,
     condition,
     conditionLabel,
-    isAura: description.includes('全队') || description.includes('光环'),
+    isAura: raw.isAura,
     modifiers,
     effectLines,
     ownerId: entityId,
@@ -296,27 +219,32 @@ export function mergeAttributes(
  */
 export function sortItems(items: BuffTextItem[]): BuffTextItem[] {
   return [...items].sort((a, b) => {
-    // 1. 控制类型排最前
-    const aCtrl = a.type === 'control' ? 0 : 1
-    const bCtrl = b.type === 'control' ? 0 : 1
-    if (aCtrl !== bCtrl) return aCtrl - bCtrl
-
-    // 2. 已激活的排前
+    // 1. 条件已激活（active）排最前 — 效果正在生效，需要关注
     const aActive = a.condition === ConditionState.ACTIVE ? 0 : 1
     const bActive = b.condition === ConditionState.ACTIVE ? 0 : 1
     if (aActive !== bActive) return aActive - bActive
 
-    // 3. 剩余回合短的排前（即将到期的优先展示）
+    // 2. 控制类型排次前
+    const aCtrl = a.controlType && a.controlType !== 'none' ? 0 : 1
+    const bCtrl = b.controlType && b.controlType !== 'none' ? 0 : 1
+    if (aCtrl !== bCtrl) return aCtrl - bCtrl
+
+    // 3. 条件未激活（inactive）排最后 — 条件未满足，效果暂不生效
+    const aInactive = a.condition === ConditionState.INACTIVE ? 1 : 0
+    const bInactive = b.condition === ConditionState.INACTIVE ? 1 : 0
+    if (aInactive !== bInactive) return aInactive - bInactive
+
+    // 4. 剩余回合短的排前（即将到期的优先展示）
     const aTurns = a.remainingTurns > 0 ? a.remainingTurns : Infinity
     const bTurns = b.remainingTurns > 0 ? b.remainingTurns : Infinity
     if (aTurns !== bTurns) return aTurns - bTurns
 
-    // 4. 增益优先于减益
-    const aBuff = a.type === 'debuff' ? 1 : 0
-    const bBuff = b.type === 'debuff' ? 1 : 0
+    // 5. 增益优先于减益
+    const aBuff = a.isNegative ? 1 : 0
+    const bBuff = b.isNegative ? 1 : 0
     if (aBuff !== bBuff) return aBuff - bBuff
 
-    // 5. 按名称字母序
+    // 6. 按名称字母序
     return a.name.localeCompare(b.name, 'zh-CN')
   })
 }
@@ -362,7 +290,7 @@ export function useBuffDisplay(
         controlLabels: [],
         collapsedCount: 0,
         groups: [],
-        secondaryGroups: [],
+        longDurationItems: [],
       }
     }
 
@@ -373,8 +301,9 @@ export function useBuffDisplay(
     const sorted = sortItems(items)
 
     // 3. 分类：控制 vs 非控制
-    const controlItems = sorted.filter((i) => i.type === 'control')
-    const nonControlItems = sorted.filter((i) => i.type !== 'control')
+    const controlItems = sorted.filter(
+      (i) => i.controlType && i.controlType !== 'none',
+    )
 
     // 4. 合并属性标签
     const mergedAll = mergeAttributes(sorted, base)
@@ -389,31 +318,31 @@ export function useBuffDisplay(
     // ponytail: collapsedCount 只计实际隐藏的属性标签数，不包括一直全显的控制标签
     const collapsedCount = Math.max(0, mergedLabels.length - visibleAttrSlots)
 
-    // 6. 为展开面板准备分组 — 极多 Buff 时拆分次要分组
+    // 6. 为展开面板准备分组 — 极多 Buff 时拆分长时效果
     let groups: BuffTextItem[] = sorted
-    let secondaryGroups: BuffTextItem[] = []
+    let longDurationItems: BuffTextItem[] = []
 
     if (sorted.length > SECONDARY_THRESHOLD) {
-      // ponytail: 次要分组包含：非控制 + 长时长（>=5回合或永久）+ 未激活条件
-      // 优先保留控制类、短时长（<5回合）、已激活条件
+      // 长时效果分组：非控制的、>=5回合或永久的效果归入长时组
+      // 主分组保留：控制类 + 条件已激活 + 短时长（<5回合）效果
       const primary: BuffTextItem[] = []
-      const secondary: BuffTextItem[] = []
+      const longDur: BuffTextItem[] = []
       for (const item of sorted) {
         const isLongDuration =
-          item.remainingTurns === 0 || item.remainingTurns >= 5
-        const isInactiveCondition = item.condition === ConditionState.INACTIVE
-        if (item.type === 'control') {
+          item.condition === ConditionState.PERMANENT ||
+          item.remainingTurns >= 5 ||
+          item.condition === ConditionState.INACTIVE
+        const isControl = item.controlType && item.controlType !== 'none'
+        if (isControl || item.condition === ConditionState.ACTIVE) {
           primary.push(item)
-        } else if (item.condition === ConditionState.ACTIVE) {
-          primary.push(item)
-        } else if (isLongDuration || isInactiveCondition) {
-          secondary.push(item)
+        } else if (isLongDuration) {
+          longDur.push(item)
         } else {
           primary.push(item)
         }
       }
       groups = primary
-      secondaryGroups = secondary
+      longDurationItems = longDur
     }
     const result = {
       items,
@@ -422,30 +351,10 @@ export function useBuffDisplay(
       controlLabels: controlItems,
       collapsedCount,
       groups,
-      secondaryGroups,
+      longDurationItems,
     }
     return result
   })
-}
-
-/**
- * 获取纯文本显示颜色类名
- */
-export function getBuffColorClass(
-  type: 'buff' | 'debuff' | 'control',
-  condition?: ConditionState,
-): string {
-  if (condition === ConditionState.INACTIVE) return 'buff-text--inactive'
-  if (condition === 'permanent') return 'buff-text--permanent'
-
-  switch (type) {
-    case 'buff':
-      return 'buff-text--buff'
-    case 'debuff':
-      return 'buff-text--debuff'
-    case 'control':
-      return 'buff-text--control'
-  }
 }
 
 /**
@@ -466,14 +375,26 @@ export function formatRemainingTurns(turns: number): string {
 
 /**
  * 获取条件标签文本
+ * @param condition 条件状态
+ * @param customLabel 自定义标签（如 "残血"），当 condition 为 inactive 时与状态名拼接为 "残血·未激活"
  */
 export function getConditionLabel(
-  condition: ConditionState,
+  condition: ConditionStateType,
   customLabel?: string,
 ): string {
-  if (condition === ConditionState.ACTIVE) return '已激活'
-  if (condition === ConditionState.INACTIVE)
-    return customLabel ? `${customLabel}·未激活` : '未激活'
-  if (condition === 'permanent') return '永久'
-  return ''
+  const stateLabel = getConditionStateName(condition)
+  if (customLabel && condition === ConditionState.INACTIVE) {
+    return `${customLabel}·${stateLabel}`
+  }
+  return stateLabel
+}
+
+/** 获取条件状态的默认显示名 */
+function getConditionStateName(condition: ConditionStateType): string {
+  switch (condition) {
+    case ConditionState.PERMANENT: return '永久'
+    case ConditionState.ACTIVE: return '已激活'
+    case ConditionState.INACTIVE: return '未激活'
+    default: return ''
+  }
 }

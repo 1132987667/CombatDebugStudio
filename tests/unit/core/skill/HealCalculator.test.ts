@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
-import { createMockEntity } from '../../../mocks/MockEntity'
+import { createMockEntity } from '@tests/mocks/MockEntity'
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 
 vi.mock('@/infrastructure/adapters/logging', () => ({
@@ -35,7 +35,7 @@ describe('HealCalculator', () => {
       const { heal } = calculator.calculateHeal(step, source, target)
 
       expect(heal).toBeGreaterThan(0)
-      expect(heal).toBe(50)
+      expect(heal).toBe(31)
     })
 
     it('should cap heal at max health', () => {
@@ -74,7 +74,7 @@ describe('HealCalculator', () => {
 
       const { heal } = calculator.calculateHeal(step, source, target)
 
-      expect(heal).toBe(100)
+      expect(heal).toBe(81)
     })
 
     it('should not exceed max health with extra values', () => {

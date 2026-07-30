@@ -1,7 +1,6 @@
 import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import type { BuffEffectLine } from '@/domain/buff/types'
-
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 
 export class ShieldBuff extends BaseBuffScript {
@@ -80,7 +79,7 @@ export class ShieldBuff extends BaseBuffScript {
   public getEffectLines(context: BuffContext): BuffEffectLine[] {
     const maxShield = context.getVariable<number>('maxShieldValue') ||
       Math.floor(this.getConfigValue(context, 'baseShield', 100) * this.getConfigValue(context, 'shieldScale', 1) + 1000 * 0.1)
-    return [{ text: `吸收 ${maxShield} 点伤害`, kind: 'shield' }]
+    return [{ text: `吸收 ${maxShield} 点伤害`, kind: ATTRIBUTE_CODE.shield }]
   }
 }
 

@@ -5,7 +5,8 @@ import {
   allyParticipantData2,
   enemyParticipantData,
   enemyParticipantData2,
-} from '../fixtures/participants'
+  createTestParticipantsFromConfig,
+} from '@tests/fixtures/participants'
 
 export function createAllyParticipant(overrides?: Partial<BattleParticipantInitData>): BattleParticipantImpl {
   return new BattleParticipantImpl({ ...allyParticipantData, ...overrides })
@@ -28,4 +29,19 @@ export function createTestBattleParticipants() {
     allies: [createAllyParticipant(), createAllyParticipant2()],
     enemies: [createEnemyParticipant(), createEnemyParticipant2()],
   }
+}
+
+// ═══════════════════════════════════════════════
+//  基于真实 JSON 配置的工厂函数（新增）
+// ═══════════════════════════════════════════════
+
+/**
+ * 从真实敌人配置创建对战参与者（替代 createTestBattleParticipants）。
+ * 默认阵容：guardian_fire vs guardian_gold。
+ */
+export function createBattleParticipantsFromConfig(
+  allyIds?: string[],
+  enemyIds?: string[],
+) {
+  return createTestParticipantsFromConfig(allyIds, enemyIds)
 }

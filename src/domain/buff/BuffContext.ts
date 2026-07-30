@@ -9,6 +9,8 @@ export class BuffContext {
   public config: BuffConfig = {} as BuffConfig
   public startTime: number = 0
   public variables = new Map<string, string | number | boolean>()
+  /** 当前回合号（由 updatePerTurn 注入，供脚本 onUpdate 读取） */
+  public currentTurn: number = 0
   private _buffSystem: BuffSystem | null = null
 
   constructor(characterId?: string, instanceId?: string, config?: BuffConfig, buffSystem?: BuffSystem) {

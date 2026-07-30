@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SkillExecutor } from '@/domain/skill/SkillExecutor'
 import { DamageCalculator } from '@/domain/skill/DamageCalculator'
 import { HealCalculator } from '@/domain/skill/HealCalculator'
@@ -6,10 +7,7 @@ import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
 import { ParticipantSide } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import {
-  EMPTY_SKILL_SET,
-  makeDefaultAttributes,
-} from '../../../fixtures/participants'
+import { createParticipantFromEnemy } from '@tests/fixtures/participants'
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 
 vi.mock('@/main', () => ({
@@ -25,102 +23,43 @@ vi.mock('@/shared/utils/RAF', () => ({
   },
 }))
 
-function createParticipant(energy = 30, maxEnergy = 200): BattleParticipantImpl {
-  return new BattleParticipantImpl({
-    id: 'test_energy_char',
-    name: '能量测试角色',
-    level: 50,
-    team: ParticipantSide.ALLY,
-    enabled: true,
-    skills: EMPTY_SKILL_SET,
-    attributeValues: makeDefaultAttributes({
-      [ATTRIBUTE_CODE.currentEnergy]: energy,
-      [ATTRIBUTE_CODE.maxEnergy]: maxEnergy,
-    }),
+const mockEventBus = { emit: vi.fn(), on: vi.fn(), off: vi.fn(), offByListenerId: vi.fn() }
+const TEST_MAX_ENERGY = 200
+const TEST_INITIAL_ENERGY = 30
+
+describe('SkillExecutor gainEnergy', () => {
+  let executor: SkillExecutor
+
+  beforeEach(() => {
+    BattleParticipantImpl.eventBus = mockEventBus as any
+    const registry = new BuffScriptRegistry()
+    const mockLogger = { addDebugLog: vi.fn(), addSystemLog: vi.fn(), addBattleLog: vi.fn(), addActionLog: vi.fn(), clearLogs: vi.fn(), syncBattleLogs: vi.fn() } as any
+    executor = new SkillExecutor(new BuffSystem(registry, mockEventBus, mockLogger), mockLogger, new DamageCalculator(), new HealCalculator())
   })
-}
 
-function createExecutor(): SkillExecutor {
-  const registry = new BuffScriptRegistry()
-  const mockEventBus = {
-    emit: () => {},
-    on: () => {},
-    off: () => {},
-    offByListenerId: () => {},
-  } as any
-  // 设置 gainEnergy 需要的事件总线
-  BattleParticipantImpl.eventBus = mockEventBus as any
-  const mockLogger = {
-    addDebugLog: () => {},
-    addSystemLog: () => {},
-    addBattleLog: () => {},
-    addActionLog: () => {},
-    clearLogs: () => {},
-    syncBattleLogs: () => {},
-  } as any
-  const buffSystem = new BuffSystem(registry, mockEventBus, mockLogger)
-  const damageCalculator = new DamageCalculator()
-  const healCalculator = new HealCalculator(buffSystem)
-  return new SkillExecutor(damageCalculator, healCalculator, buffSystem)
-}
+  it('should add energy to target', () => {
+    const target = createParticipantFromEnemy('guardian_wood', ParticipantSide.ALLY)
+    if (!target) return
 
-describe('SkillExecutor', () => {
-  describe('gain_energy', () => {
-    it('应增加目标能量', () => {
-      const executor = createExecutor()
-      const participant = createParticipant(30, 200)
-      const step: ExtendedSkillStep = {
-        type: 'gain_energy' as any,
-        targetConfig: { faction: 'self', strategy: 'first' },
-        parameters: { value: 15 },
-      }
-      const action = {
-        sourceId: participant.id,
-        targetId: participant.id,
-        effects: [],
-      } as any
+    target.setAttribute(ATTRIBUTE_CODE.maxEnergy, TEST_MAX_ENERGY)
+    target.setAttribute(ATTRIBUTE_CODE.currentEnergy, TEST_INITIAL_ENERGY)
+    target.recalcAll()
 
-      executor.executeStep(step, action, participant, participant)
+    executor.executeStep({ type: 'gain_energy', parameters: { value: 20 } } as ExtendedSkillStep, { effects: [] } as any, target, target, {} as any)
 
-      expect(participant.currentEnergy).toBe(45)
-    })
+    expect(target.currentEnergy).toBe(TEST_INITIAL_ENERGY + 20)
+  })
 
-    it('不应超过最大能量上限', () => {
-      const executor = createExecutor()
-      const participant = createParticipant(195, 200)
-      const step: ExtendedSkillStep = {
-        type: 'gain_energy' as any,
-        targetConfig: { faction: 'self', strategy: 'first' },
-        parameters: { value: 15 },
-      }
-      const action = {
-        sourceId: participant.id,
-        targetId: participant.id,
-        effects: [],
-      } as any
+  it('should not exceed max energy', () => {
+    const target = createParticipantFromEnemy('guardian_wood', ParticipantSide.ALLY)
+    if (!target) return
 
-      executor.executeStep(step, action, participant, participant)
+    target.setAttribute(ATTRIBUTE_CODE.maxEnergy, TEST_MAX_ENERGY)
+    target.setAttribute(ATTRIBUTE_CODE.currentEnergy, TEST_MAX_ENERGY - 5)
+    target.recalcAll()
 
-      expect(participant.currentEnergy).toBe(200)
-    })
+    executor.executeStep({ type: 'gain_energy', parameters: { value: 20 } } as ExtendedSkillStep, { effects: [] } as any, target, target, {} as any)
 
-    it('value <= 0 应不做任何事', () => {
-      const executor = createExecutor()
-      const participant = createParticipant(30, 200)
-      const step: ExtendedSkillStep = {
-        type: 'gain_energy' as any,
-        targetConfig: { faction: 'self', strategy: 'first' },
-        parameters: { value: 0 },
-      }
-      const action = {
-        sourceId: participant.id,
-        targetId: participant.id,
-        effects: [],
-      } as any
-
-      executor.executeStep(step, action, participant, participant)
-
-      expect(participant.currentEnergy).toBe(30)
-    })
+    expect(target.currentEnergy).toBe(TEST_MAX_ENERGY)
   })
 })

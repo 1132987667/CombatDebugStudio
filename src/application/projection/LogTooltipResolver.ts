@@ -11,7 +11,8 @@
  */
 
 import { LogSegmentHover, LogSegmentHoverKind } from '@/shared/types/battle-log'
-import { classifyBuff, getStatusCategoryBadge, StatusCategory, type StatusCategory } from '@/shared/types/buff-classification'
+import { classifyBuff, getStatusCategoryBadge } from '@/shared/types/buff-classification'
+import { StatusCategory } from '@/shared/types/status-meta'
 import type { BuffJsonEntry, BuffJsonAuraModifier } from '@/shared/types/buffs-json'
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import type { SkillManager } from '@/domain/skill/SkillManager'

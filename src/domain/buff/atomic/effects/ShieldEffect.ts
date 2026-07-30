@@ -1,4 +1,4 @@
-import type { IAtomicEffect, AtomicEffectType } from '../types'
+import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 
 /**
@@ -14,7 +14,7 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
  * 护盾值存储在 BuffSystem 的 shieldValues 中，随 Buff 移除而回收。
  */
 export class ShieldEffect implements IAtomicEffect {
-  readonly type: AtomicEffectType = 'shield'
+  readonly type: AtomicEffectType = AtomicEffectType.SHIELD
 
   onApply(ctx: BuffContext, params: Record<string, unknown>): void {
     const value = params.value as number
@@ -55,7 +55,7 @@ export class ShieldEffect implements IAtomicEffect {
     const suffix = type === 'percent_max_hp' ? '% 最大生命' : ' 点'
     return [{
       text: `获得 ${value}${suffix} 护盾`,
-      kind: 'shield' as const,
+      kind: AtomicEffectType.SHIELD,
     }]
   }
 }

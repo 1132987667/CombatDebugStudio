@@ -91,12 +91,12 @@ function matchConditionKeyword(
 }
 
 /**
- * 从 isDebuff + name 推断类型
+ * 从 isNegative + name 推断类型
  * 优先使用结构化 controlType 字段，回退到名称关键词匹配
  */
 export function detectType(
   name: string,
-  isDebuff: boolean,
+  isNegative: boolean,
   controlType?: string,
 ): 'buff' | 'debuff' | 'control' {
   // 优先使用结构化字段（新数据走此路径）
@@ -107,7 +107,7 @@ export function detectType(
   for (const keyword of CONTROL_NAMES) {
     if (name.includes(keyword)) return 'control'
   }
-  return isDebuff ? 'debuff' : 'buff'
+  return isNegative ? 'debuff' : 'buff'
 }
 
 /**
@@ -183,11 +183,11 @@ function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
   // ponytail: 当 name 为空时显示兜底文本，防止空标签出现在 UI 中
   const displayName = name || '未知效果'
   const description = raw.description || (name ? name : '无详细说明')
-  const isDebuff = raw.isDebuff === true
+  const isNegative = raw.isNegative === true
   const remainingTurns = raw.remainingTurns ?? 0
   const stacks = raw.currentStacks ?? 1
 
-  const type = detectType(displayName, isDebuff, raw.controlType)
+  const type = detectType(displayName, isNegative, raw.controlType)
 
   // 检测条件状态——优先使用领域层的 conditionState
   let { condition, conditionLabel } = detectCondition(raw)

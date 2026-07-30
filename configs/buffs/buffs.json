@@ -176,7 +176,6 @@
     "maxStacks": 1,
     "duration": 2,
     "controlType": "silence",
-    "controlPriority": 80,
     "polarity": "negative",
     "description": "使目标沉默"
   },
@@ -327,7 +326,6 @@
     "duration": -1,
     "stackRule": "limited",
     "polarity": "positive",
-    "tags": ["stacking"],
     "description": "免疫伤害，可叠加5层"
   },
   {
@@ -355,7 +353,6 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "freeze",
-    "controlPriority": 90,
     "polarity": "negative",
     "description": "使目标冰冻"
   },
@@ -366,7 +363,6 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "sleep",
-    "controlPriority": 70,
     "polarity": "negative",
     "description": "使目标睡眠"
   },
@@ -427,7 +423,6 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "silence",
-    "controlPriority": 60,
     "polarity": "negative",
     "description": "使目标沉默"
   },
@@ -602,7 +597,9 @@
     "category": "dot",
     "maxStacks": 1,
     "duration": 2,
-    "tags": ["debuff", "dot", "burn"],
+    "tags": [
+      "burn"
+    ],
     "polarity": "negative",
     "description": "每回合持续伤害"
   },
@@ -716,7 +713,6 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "bind",
-    "controlPriority": 65,
     "polarity": "negative",
     "description": "使目标束缚"
   },
@@ -776,7 +772,6 @@
     "maxStacks": 1,
     "duration": 2,
     "controlType": "bind",
-    "controlPriority": 55,
     "polarity": "negative",
     "description": "使目标束缚"
   },
@@ -848,7 +843,9 @@
     "name": "山林之子",
     "category": "immunity",
     "duration": -1,
-    "immunities": ["slow"],
+    "immunities": [
+      "slow"
+    ],
     "polarity": "positive",
     "description": "免疫减速"
   },
@@ -1152,7 +1149,6 @@
     "maxStacks": 1,
     "duration": 2,
     "controlType": "bind",
-    "controlPriority": 60,
     "polarity": "negative",
     "description": "使目标束缚"
   },
@@ -1174,7 +1170,9 @@
     "category": "dot",
     "maxStacks": 1,
     "duration": 2,
-    "tags": ["debuff", "dot", "heal_reduction", "poison"],
+    "tags": [
+      "heal_reduction"
+    ],
     "triggers": [
       {
         "phase": "ON_TURN_START",
@@ -1194,7 +1192,6 @@
     "category": "dot",
     "maxStacks": 1,
     "duration": 2,
-    "tags": ["debuff", "dot", "poison"],
     "triggers": [
       {
         "phase": "ON_TURN_START",
@@ -1214,10 +1211,7 @@
     "category": "control",
     "maxStacks": 1,
     "duration": 1,
-    "tags": ["debuff", "control", "stun"],
-    "statusType": "stun",
     "controlType": "stun",
-    "controlPriority": 100,
     "polarity": "negative",
     "description": "使目标眩晕"
   },
@@ -1245,8 +1239,7 @@
     "attributes": {
       "attack": "+5%"
     },
-    "polarity": "positive",
-    "tags": ["stacking"]
+    "polarity": "positive"
   },
   {
     "id": "guardian_buff_armor_break",
@@ -1255,7 +1248,6 @@
     "description": "防御↓20%",
     "maxStacks": 1,
     "duration": 2,
-    "isDebuff": true,
     "attributes": {
       "defense": "-20%"
     },
@@ -1321,7 +1313,6 @@
     "description": "速度↓5%",
     "maxStacks": 1,
     "duration": 1,
-    "isDebuff": true,
     "attributes": {
       "speed": "-5%"
     },
@@ -1388,9 +1379,7 @@
     "description": "速度↓50%",
     "maxStacks": 1,
     "duration": 1,
-    "isDebuff": true,
     "controlType": "stun",
-    "controlPriority": 50,
     "attributes": {
       "speed": "-50%"
     },
@@ -1438,7 +1427,6 @@
     "maxStacks": 1,
     "duration": 1,
     "controlType": "bind",
-    "controlPriority": 50,
     "polarity": "negative",
     "description": "使目标束缚"
   },
@@ -1462,8 +1450,7 @@
     "attributes": {
       "speed": "+5%"
     },
-    "polarity": "positive",
-    "tags": ["stacking"]
+    "polarity": "positive"
   },
   {
     "id": "buff_guaranteed_crit",
@@ -1471,9 +1458,7 @@
     "description": "下一次攻击必定暴击",
     "duration": 1,
     "maxStacks": 1,
-    "attributes": {},
-    "isDebuff": false,
-    "tags": ["buff"]
+    "attributes": {}
   },
   {
     "id": "buff_shield_test",
@@ -1482,8 +1467,6 @@
     "duration": 1,
     "maxStacks": 99,
     "attributes": {},
-    "isDebuff": false,
-    "tags": ["shield"],
     "parameters": {
       "shieldValue": 10
     }
@@ -1496,9 +1479,7 @@
     "maxStacks": 1,
     "attributes": {
       "attack": "+20%"
-    },
-    "isDebuff": false,
-    "tags": ["buff"]
+    }
   },
   {
     "id": "buff_poison_test",
@@ -1507,13 +1488,13 @@
     "duration": 3,
     "maxStacks": 3,
     "attributes": {},
-    "isDebuff": true,
-    "tags": ["dot", "poison"],
     "triggers": [
       {
         "phase": "turn_start",
         "scriptId": "deal_dot_damage",
-        "params": { "percent": 0.1 }
+        "params": {
+          "percent": 0.1
+        }
       }
     ]
   },
@@ -1524,10 +1505,8 @@
     "duration": 1,
     "maxStacks": 20,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {
       "trueDamageRate": "+1%"
@@ -1544,10 +1523,8 @@
     "duration": 1,
     "maxStacks": 15,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {
       "speed": "+4%"
@@ -1564,10 +1541,8 @@
     "duration": 1,
     "maxStacks": 1,
     "cooldown": 0,
-    "stackRule": "REFRESH",
+    "stackRule": "refresh",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": false,
     "attributes": {},
     "parameters": {},
@@ -1586,10 +1561,8 @@
     "duration": 1,
     "maxStacks": 1,
     "cooldown": 0,
-    "stackRule": "REFRESH",
+    "stackRule": "refresh",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {
       "healReceived": "-40%"
@@ -1604,10 +1577,8 @@
     "duration": 1,
     "maxStacks": 5,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "DISARM",
-    "controlPriority": 60,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {},
     "parameters": {},
@@ -1620,10 +1591,8 @@
     "duration": 1,
     "maxStacks": 10,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "SILENCE",
-    "controlPriority": 70,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {},
     "parameters": {},
@@ -1636,10 +1605,8 @@
     "duration": 1,
     "maxStacks": 5,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "DISARM",
-    "controlPriority": 50,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {},
     "parameters": {},
@@ -1652,10 +1619,8 @@
     "duration": 1,
     "maxStacks": 15,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {
       "comboRate": "+4%"
@@ -1672,10 +1637,8 @@
     "duration": 1,
     "maxStacks": 15,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {
       "counterRate": "+4%"
@@ -1692,10 +1655,8 @@
     "duration": 1,
     "maxStacks": 25,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {
       "damageTaken": "+4"
@@ -1713,10 +1674,8 @@
     "duration": 1,
     "maxStacks": 15,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {
       "damageDealt": "-3%"
@@ -1733,10 +1692,8 @@
     "duration": 1,
     "maxStacks": 15,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {
       "speed": "-3%"
@@ -1753,10 +1710,8 @@
     "duration": 1,
     "maxStacks": 15,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {
       "dodgeRate": "-3%"
@@ -1773,10 +1728,8 @@
     "duration": 1,
     "maxStacks": 15,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {
       "hitRate": "-3%"
@@ -1793,10 +1746,8 @@
     "duration": 1,
     "maxStacks": 15,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {
       "defense": "-3%"
@@ -1813,10 +1764,8 @@
     "duration": 1,
     "maxStacks": 15,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {
       "attack": "-3%"
@@ -1833,10 +1782,8 @@
     "duration": 1,
     "maxStacks": 20,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {},
     "parameters": {
@@ -1861,10 +1808,8 @@
     "duration": 1,
     "maxStacks": 20,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": true,
     "dispellable": true,
     "attributes": {},
     "parameters": {
@@ -1889,10 +1834,8 @@
     "duration": 1,
     "maxStacks": 20,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {
       "debuffImmunityRate": "+8%"
@@ -1909,10 +1852,8 @@
     "duration": 1,
     "maxStacks": 20,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {
       "critRate": "+4%"
@@ -1929,10 +1870,8 @@
     "duration": 1,
     "maxStacks": 20,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {
       "dodgeRate": "+4%"
@@ -1949,10 +1888,8 @@
     "duration": 1,
     "maxStacks": 20,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {
       "defense": "+4%"
@@ -1969,10 +1906,8 @@
     "duration": 1,
     "maxStacks": 20,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {
       "attack": "+5%"
@@ -1989,10 +1924,8 @@
     "duration": 1,
     "maxStacks": 10,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {},
     "parameters": {
@@ -2018,10 +1951,8 @@
     "duration": 1,
     "maxStacks": 10,
     "cooldown": 0,
-    "stackRule": "LIMITED",
+    "stackRule": "limited",
     "controlType": "NONE",
-    "controlPriority": 0,
-    "isDebuff": false,
     "dispellable": true,
     "attributes": {},
     "parameters": {
@@ -2048,7 +1979,9 @@
     "maxStacks": 1,
     "attributes": {},
     "polarity": "positive",
-    "tags": ["taunt"],
+    "tags": [
+      "taunt"
+    ],
     "description": "强制敌方攻击自己，持续2回合"
   },
   {
@@ -2057,9 +1990,10 @@
     "category": "attribute",
     "duration": -1,
     "maxStacks": 1,
-    "attributes": { "defense": "+15%" },
+    "attributes": {
+      "defense": "+15%"
+    },
     "polarity": "positive",
-    "tags": ["formation"],
     "description": "阵型效果：防御+15%"
   },
   {
@@ -2068,9 +2002,10 @@
     "category": "attribute",
     "duration": -1,
     "maxStacks": 1,
-    "attributes": { "speed": "+10%" },
+    "attributes": {
+      "speed": "+10%"
+    },
     "polarity": "positive",
-    "tags": ["formation"],
     "description": "阵型效果：速度+10%"
   },
   {
@@ -2079,9 +2014,10 @@
     "category": "attribute",
     "duration": -1,
     "maxStacks": 1,
-    "attributes": { "defense": "+10%" },
+    "attributes": {
+      "defense": "+10%"
+    },
     "polarity": "positive",
-    "tags": ["formation"],
     "description": "阵型效果：防御+10%"
   }
 ]

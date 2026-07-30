@@ -217,7 +217,7 @@ ParticipantCard.vue
           <span class="summary-total">{{ attr.total }}</span>
           <span
             class="summary-delta"
-            :class="attr.delta > 0 ? 'positive' : 'negative'"
+            :class="attr.delta > 0 ? BuffPolarity.POSITIVE : BuffPolarity.NEGATIVE"
           >
             （{{ attr.delta > 0 ? '+' : '' }}{{ attr.delta }}%）
           </span>

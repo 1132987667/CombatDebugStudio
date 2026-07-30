@@ -699,5 +699,6 @@ export const StatusNames: Record<StatusCode, string> = Object.fromEntries(
 ) as Record<StatusCode, string>
 
 export const ControlKind : StatusCode[] = Object.values(STATUS_META).filter((m) => m.category === StatusCategory.CONTROL).map((m) => m.code)
+export type ControlKind = (typeof ControlKind)[number]
 export const ControlKindNames = Object.values(STATUS_META).filter((m) => m.category === StatusCategory.CONTROL).map((m) => m.name)
 export const ControlKindOrder = ControlKind.map((code) => STATUS_META[code].controlPriority ?? 0)

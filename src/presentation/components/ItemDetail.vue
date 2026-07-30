@@ -74,6 +74,7 @@ import {
   getEffectTypeText,
   getSlotText,
 } from '@/shared/utils/display-helpers'
+import { BuffPolarity } from '@/shared/types/buff-classification'
 
 interface Props {
   item: CompendiumItem
@@ -87,13 +88,13 @@ const getRarityText = (rarity: number): string => {
 
 const getValueClass = (value: number | string): string => {
   if (typeof value === 'string' && value.startsWith('+')) {
-    return 'positive'
+    return BuffPolarity.POSITIVE
   }
   if (typeof value === 'string' && value.startsWith('-')) {
-    return 'negative'
+    return BuffPolarity.NEGATIVE
   }
   if (typeof value === 'number' && value > 0) {
-    return 'positive'
+    return BuffPolarity.POSITIVE
   }
   return ''
 }

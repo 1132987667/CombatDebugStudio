@@ -20,6 +20,7 @@ import type { ExtendedSkillStep, ReviveStepParams } from '@/domain/skill/types'
 import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { STATUS_CODE } from '@/shared/types/status-meta'
+import { classifyBuff } from '@/shared/types/buff-classification'
 import {
   REVERSE_BONUS_ATTR_MAP,
   syncAttackRange,
@@ -284,8 +285,7 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
-      controlPriority: 0,
-      // 不设 isDebuff，让 addBuff 的合并链从脚本 CONFIG / JSON 配置推断
+      // 不设 isDebuff/isPositive，让 classifyBuff 从配置结构推导
       parameters: skillStep.parameters || skillStep.effectParams || {},
     }
 
@@ -469,7 +469,7 @@ export class SkillExecutor {
     for (const instance of instances) {
       if (removed >= count) break
       // REMOVE_DEBUFF 只移除 isDebuff 的 buff；CLEANSE 移除所有
-      if (isRemoveDebuff && !instance.context.config?.isDebuff) continue
+      if (isRemoveDebuff && !classifyBuff(instance.context.config).isNegative) continue
       this.buffSystem.removeBuff(instance.id)
       removed++
     }
@@ -615,7 +615,6 @@ export class SkillExecutor {
           cooldown: 0,
           stackRule: StackRule.REFRESH,
           controlType: ControlType.NONE,
-          controlPriority: 0,
           parameters: { shieldValue: overflow },
         }
         this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
@@ -828,7 +827,6 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.REFRESH,
       controlType: ControlType.NONE,
-      controlPriority: 0,
       parameters: { shieldValue },
     }
     const instanceId = this.buffSystem.addBuff(
@@ -869,8 +867,6 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.REFRESH,
       controlType,
-      controlPriority: 100,
-      isDebuff: true,
       parameters: skillStep.parameters || {},
     }
     const instanceId = this.buffSystem.addBuff(target.id, buffId, config)

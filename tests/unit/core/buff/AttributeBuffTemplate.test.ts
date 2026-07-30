@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AttributeBuffTemplate 单元测试
  *
  * 覆盖核心行为：
@@ -63,7 +63,6 @@ function createMockContext(overrides?: Partial<BuffContext>): BuffContext {
       cooldown: 0,
       stackRule: 'limited' as any,
       controlType: 'none' as any,
-      controlPriority: 0,
       parameters: {},
     },
     addModifier: vi.fn(),

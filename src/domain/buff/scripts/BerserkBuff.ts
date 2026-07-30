@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 狂暴 Buff — 自包含脚本示范类
  *
  * 这是一个"完全由脚本驱动"的 Buff，不依赖 JSON 配置提供逻辑或数值。
@@ -37,10 +37,8 @@ export class BerserkBuff extends BaseBuffScript {
     maxStacks: 1,
     cooldown: 9,
     isPermanent: false,
-    isDebuff: false,
     stackRule: StackRule.REFRESH,
     controlType: ControlType.NONE,
-    controlPriority: 0,
     selfContained: true,
   }
 

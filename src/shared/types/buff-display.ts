@@ -25,8 +25,8 @@ export interface BuffRawItem {
   name: string
   /** 效果描述 */
   description?: string
-  /** 是否为 debuff */
-  isDebuff?: boolean
+  /** 是否为减益（来自 classifyBuff.isNegative） */
+  isNegative?: boolean
   /** 剩余回合数 */
   remainingTurns?: number
   /** 当前层数 */

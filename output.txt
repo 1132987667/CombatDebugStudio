@@ -222,7 +222,6 @@ src/
             buff-classification.ts
             buff-display.ts
             buffs-json.ts
-            effect.ts
             effects-json.ts
             enemy.ts
             formation.ts
@@ -231,6 +230,7 @@ src/
             Item.ts
             projection.ts
             scene.ts
+            status-meta.ts
             trace-log.ts
         utils/
             attributeSync.ts
@@ -2477,7 +2477,7 @@ export class BattleProjection {
  * - 三级回退：buff.description → 反查技能.description → 按结构自动生成
  */
 import { LogSegmentHover, LogSegmentHoverKind } from '@/shared/types/battle-log'
-import { classifyBuff, getBuffCategoryBadge, BUFF_CATEGORY, type BuffCategory } from '@/shared/types/buff-classification'
+import { classifyBuff, getStatusCategoryBadge, StatusCategory, type StatusCategory } from '@/shared/types/buff-classification'
 import type { BuffJsonEntry, BuffJsonAuraModifier } from '@/shared/types/buffs-json'
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import type { SkillManager } from '@/domain/skill/SkillManager'
@@ -2547,7 +2547,7 @@ export class LogTooltipResolver {
     const classification = classifyBuff(
       resolved ? { ...config, effectPlan: resolved.effectPlan } : config,
     )
-    const badge = getBuffCategoryBadge(classification)
+    const badge = getStatusCategoryBadge(classification)
     const durationLabel = this.formatDuration(config.duration)
     // 描述：三级回退
     const description = this.resolveBuffDescription(buffId, config, classification.category)
@@ -2567,7 +2567,7 @@ export class LogTooltipResolver {
   private resolveBuffDescription(
     buffId: string,
     config: BuffJsonEntry,
-    category: BuffCategory,
+    category: StatusCategory,
   ): string {
     // ①
     if (config.description && typeof config.description === 'string' && config.description.trim()) {
@@ -2590,9 +2590,9 @@ export class LogTooltipResolver {
     return desc.replace(/^被动效果：/, '').trim()
   }
   /** 按结构自动生成描述 */
-  private generateAutoDescription(config: BuffJsonEntry, category: BuffCategory): string {
+  private generateAutoDescription(config: BuffJsonEntry, category: StatusCategory): string {
     switch (category) {
-      case BUFF_CATEGORY.AURA: {
+      case StatusCategory.AURA: {
         const aura = config.aura
         if (aura?.modifiers?.length) {
           const items = aura!.modifiers.map(
@@ -2603,20 +2603,20 @@ export class LogTooltipResolver {
         }
         return '光环效果'
       }
-      case BUFF_CATEGORY.MODIFIER: {
+      case StatusCategory.MODIFIER: {
         const attrs = config.attributes
         if (attrs) {
           return Object.entries(attrs).map(([k, v]) => `${k} ${v}`).join('、')
         }
         return '属性修正'
       }
-      case BUFF_CATEGORY.CONTROL:
+      case StatusCategory.CONTROL:
         return '无法行动'
-      case BUFF_CATEGORY.DOT:
+      case StatusCategory.DOT:
         return '每回合造成持续伤害'
-      case BUFF_CATEGORY.SHIELD:
+      case StatusCategory.SHIELD:
         return '吸收伤害'
-      case BUFF_CATEGORY.TRIGGER:
+      case StatusCategory.TRIGGER:
         return '满足条件时触发效果'
       default:
         return config.name ?? '未知效果'
@@ -2625,10 +2625,10 @@ export class LogTooltipResolver {
   private appendBuffDetails(
     details: TooltipDetailRow[],
     config: BuffJsonEntry,
-    category: BuffCategory,
+    category: StatusCategory,
   ): void {
     switch (category) {
-      case BUFF_CATEGORY.AURA: {
+      case StatusCategory.AURA: {
         const aura = config.aura
         if (aura) {
           const scope = aura.targetSelector === 'allies' ? '全体友方' : aura.targetSelector === 'enemies' ? '全体敌方' : '自身'
@@ -2644,7 +2644,7 @@ export class LogTooltipResolver {
         }
         break
       }
-      case BUFF_CATEGORY.MODIFIER: {
+      case StatusCategory.MODIFIER: {
         const attrs = config.attributes
         if (attrs) {
           for (const [key, value] of Object.entries(attrs)) {
@@ -2653,7 +2653,7 @@ export class LogTooltipResolver {
         }
         break
       }
-      case BUFF_CATEGORY.TRIGGER: {
+      case StatusCategory.TRIGGER: {
         const triggers = config.triggers
         if (triggers?.length) {
           for (const t of triggers!) {
@@ -2668,19 +2668,19 @@ export class LogTooltipResolver {
         }
         break
       }
-      case BUFF_CATEGORY.CONTROL: {
+      case StatusCategory.CONTROL: {
         details.push({ label: '效果', value: '无法行动' })
         break
       }
-      case BUFF_CATEGORY.DOT: {
+      case StatusCategory.DOT: {
         details.push({ label: '类型', value: '持续伤害' })
         break
       }
-      case BUFF_CATEGORY.SHIELD: {
+      case StatusCategory.SHIELD: {
         details.push({ label: '类型', value: '护盾吸收' })
         break
       }
-      case BUFF_CATEGORY.IMMUNITY: {
+      case StatusCategory.IMMUNITY: {
         const immunities = config.immunities
         if (immunities?.length) {
           details.push({ label: '免疫列表', value: immunities!.join('、') })
@@ -7323,6 +7323,7 @@ export class BattleSystem {
 import type { BattleEffect } from '@/domain/battle/type/types'
 import type { CalculationStep } from '@/domain/attribute/types'
 import type { ActionTypes } from '@/domain/battle/type/types'
+import { DamageSource } from '@/domain/battle/type/types'
 /**
  * 计算详情 - 调试模式开启时填充
  */
@@ -7343,12 +7344,7 @@ export interface DamageStep {
   before?: number
   /** 此步骤计算后的伤害值（与 value 一致，结构化冗余以便 UI 直接读） */
   after?: number
-  /**
-   * 来源类型：复用 ModifierSourceType 的值（'buff'|'skill'|'equipment'|'terrain'|'formation'|'base'|'talent'），
-   * 并扩展 'passive'（被动技能触发）和 'system'（系统机制如 clamp/threshold）。
-   * 类型定义为 string 而非联合类型，避免维护两套平行枚举。使用时应参考 ModifierSourceType 的现有值。
-   */
-  sourceType?: string
+  sourceType?: DamageSource
   /**
    * 子步骤（嵌套步骤）。
    * 最大嵌套深度 3：顶层步骤可以作为父节点包含 children，子节点不再嵌套。
@@ -7462,7 +7458,7 @@ export interface CombatRecord {
   actionOrder?: number
   /** 溢出伤害（takeDamage 返回值超出目标扣血前 HP 的部分，≥0） */
   overkill?: number
-  damageSource?: 'attack' | 'skill' | 'dot' | 'thorns' | 'reaction'
+  damageSource?: DamageSource // 伤害来源类型
   message: string
   htmlMessage?: string
   sourceAction?: Record<string, any>
@@ -13919,6 +13915,18 @@ export type BattleStatus = (typeof BattleStatus)[keyof typeof BattleStatus]
  * 回合状态常量
  * 控制回合内的子阶段
  */
+export const DamageSource = {
+  ATTACK: 'attack',     // 攻击
+  SKILL: 'skill',       // 技能
+  DOT: 'dot',           // 持续伤害
+  THORNS: 'thorns',     // 反伤(荆棘)
+  REACTION: 'reaction', // 反击
+} as const
+export type DamageSource = (typeof DamageSource)[keyof typeof DamageSource]
+/**
+ * 回合状态常量
+ * 控制回合内的子阶段
+ */
 export const RoundStatus = {
   /** 无回合 - 不在回合中 */
   NONE: 'NONE',
@@ -14915,7 +14923,6 @@ export class BuffConfigResolver {
 --- src/domain/buff/atomic/effects/AuraEffect.ts ---
 import type { IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
 import { ModifierTemplate } from '@/domain/skill/types'
 /**
  * AuraEffect — 光环原语
@@ -14966,7 +14973,7 @@ export class AuraEffect implements IAtomicEffect {
 --- src/domain/buff/atomic/effects/ControlEffect.ts ---
 import type { IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { CONTROL_NAMES } from '@/shared/types/effect'
+import { StatusNames, StatusCode } from '@/shared/types/status-meta'
 /**
  * ControlEffect — 控制原语
  *
@@ -14986,8 +14993,8 @@ export class ControlEffect implements IAtomicEffect {
     // 控制效果随 Buff 移除而自然消失
   }
   getEffectLines(_ctx: BuffContext, params: Record<string, unknown>) {
-    const controlType = params.controlType as string
-    const name = CONTROL_NAMES[controlType] ?? controlType
+    const controlType = params.controlType as StatusCode
+    const name = StatusNames[controlType] ?? controlType
     return [{
       text: `无法行动（${name}）`,
       kind: 'control' as const,
@@ -15048,9 +15055,9 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
  * - resource='health' 治疗生命，'energy' 恢复能量
  */
 export class HotEffect implements IAtomicEffect {
-  readonly type: AtomicEffectType = 'hot'
+  readonly type: AtomicEffectType = 'heal'
   onApply(_ctx: BuffContext, _params: Record<string, unknown>): void {
-    // HOT 不在施加时生效
+    // HEAL 不在施加时生效
   }
   onRemove(_ctx: BuffContext, _params: Record<string, unknown>): void {
     // 无持久状态需要清理
@@ -15089,7 +15096,7 @@ export class HotEffect implements IAtomicEffect {
     const resourceLabel = resource === 'energy' ? '能量' : '生命'
     return [{
       text: `每回合恢复 ${value}${suffix} ${resourceLabel}`,
-      kind: 'hot' as const,
+      kind: 'heal' as const,
     }]
   }
 }
@@ -15279,19 +15286,22 @@ export class TriggerEffect implements IAtomicEffect {
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import type { BuffEffectLine } from '@/domain/buff/types'
 /**
- * 原子效果类型 — 7 种不可再分的效果原语 + immunity
+ * 原子效果类型 — 不可再分的效果原语 + immunity
  */
 export const AtomicEffectType = {
-  MODIFIER: 'modifier',   // 属性修正
-  DOT: 'dot',             // 持续伤害
-  HOT: 'hot',             // 持续治疗
-  CONTROL: 'control',     // 控制（眩晕/沉默/冰冻等）
-  SHIELD: 'shield',       // 护盾
-  TRIGGER: 'trigger',     // 条件触发（受击反伤、击杀回血等）
-  AURA: 'aura',           // 光环（影响队友/敌人）
-  IMMUNITY: 'immunity',   // 免疫
+  MODIFIER: 'modifier', // 属性修正
+  DOT: 'dot', // 持续伤害
+  HEAL: 'heal', // 持续治疗
+  CONTROL: 'control', // 控制（眩晕/沉默/冰冻等）
+  SHIELD: 'shield', // 护盾
+  TRIGGER: 'trigger', // 条件触发（受击反伤、击杀回血等）
+  AURA: 'aura', // 光环（影响队友/敌人）
+  IMMUNITY: 'immunity', // 免疫
+  SUMMON: 'summon', // 召唤
+  THORNS: 'thorns', // 荆棘|反伤
 } as const
-export type AtomicEffectType = (typeof AtomicEffectType)[keyof typeof AtomicEffectType]
+export type AtomicEffectType =
+  (typeof AtomicEffectType)[keyof typeof AtomicEffectType]
 /** 原子效果统一接口 */
 export interface IAtomicEffect {
   /** 效果类型标识 */
@@ -15300,12 +15310,19 @@ export interface IAtomicEffect {
   onApply(ctx: BuffContext, params: Record<string, unknown>): void
   /** 移除时调用（清理修饰符/状态） */
   onRemove(ctx: BuffContext, params: Record<string, unknown>): void
-  /** 每回合更新（DOT/HOT 用） */
+  /** 每回合更新（DOT/HEAL 用） */
   onTick?(ctx: BuffContext, params: Record<string, unknown>, turn: number): void
   /** 层数变化时调用（重新计算修饰符值） */
-  onStackChange?(ctx: BuffContext, params: Record<string, unknown>, newStacks: number): void
+  onStackChange?(
+    ctx: BuffContext,
+    params: Record<string, unknown>,
+    newStacks: number,
+  ): void
   /** 生成 UI 显示文本 */
-  getEffectLines?(ctx: BuffContext, params: Record<string, unknown>): BuffEffectLine[]
+  getEffectLines?(
+    ctx: BuffContext,
+    params: Record<string, unknown>,
+  ): BuffEffectLine[]
 }
 
 --- src/domain/buff/BuffContext.ts ---
@@ -15953,43 +15970,42 @@ export class BuffScriptRegistry {
 }
 
 --- src/domain/buff/BuffSystem.ts ---
+import {
+  ATTRIBUTE_CODE,
+  ModifierSourceType,
+  ModifierType,
+  type IModifierProvider,
+} from '@/domain/attribute/types'
+import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
+import {
+  BattleTriggerPhase,
+  OLD_PHASE_NAME_MAP,
+  StepExecutionContext,
+  type BattleEntity,
+} from '@/domain/battle/type/types'
+import { BuffContextPool } from '@/domain/buff/BuffContextPool'
+import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
+import {
+  BuffAuraConfig,
+  BuffScriptRegistry,
+} from '@/domain/buff/BuffScriptRegistry'
+import { ModifierStack } from '@/domain/buff/ModifierStack'
+import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
 import type {
   BuffConfig,
   BuffInstance,
   BuffQuery,
   IBuffScript,
   TriggerAction,
+  TriggerEventContext,
 } from '@/domain/buff/types'
-import { BUFF_ID_PREFIX } from '@/domain/buff/types'
-import type { TriggerEventContext } from '@/domain/buff/types'
-import type { CombatRecord } from '@/domain/battle/combat-record'
-import {
-  ATTRIBUTE_CODE,
-  type IModifierProvider,
-  ModifierSourceType,
-  ModifierType,
-} from '@/domain/attribute/types'
-import { StackRule, ControlType } from '@/domain/buff/types'
-import { EffectType } from '@/domain/skill/types'
-import {
-  BuffScriptRegistry,
-  BuffAuraConfig,
-} from '@/domain/buff/BuffScriptRegistry'
-import { BuffContextPool } from '@/domain/buff/BuffContextPool'
-import { ModifierStack } from '@/domain/buff/ModifierStack'
-import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
-import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
+import { BUFF_ID_PREFIX, ControlType, StackRule } from '@/domain/buff/types'
 import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
-import { Counter } from '@/shared/utils/Counter'
+import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
+import { EffectType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
-import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
-import {
-  StepExecutionContext,
-  BattleTriggerPhase,
-  OLD_PHASE_NAME_MAP,
-  type BattleEntity,
-} from '@/domain/battle/type/types'
-import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
+import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
+import { Counter } from '@/shared/utils/Counter'
 /** 无操作脚本占位：用于有配置无脚本的 buff */
 const NOOP_BUFF_SCRIPT: IBuffScript = {
   onApply: () => {},
@@ -16679,7 +16695,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       const resolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
       if (resolved?.effectPlan) {
         for (const effect of resolved.effectPlan) {
-          if (effect.type === 'immunity') {
+          if (effect.type === StatusCategory.IMMUNITY) {
             const tags = effect.params.tags as string[] | undefined
             if (tags) {
               for (const tag of tags) {
@@ -16844,7 +16860,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       BuffErrorBoundary.wrap(() => {
         instance.script.onUpdate(instance.context, 0)
       })
-      // ★ 数据驱动：执行 effectPlan 中各原语的 onTick（DOT/HOT 每回合触发）
+      // ★ 数据驱动：执行 effectPlan 中各原语的 onTick（DOT/HEAL 每回合触发）
       const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
       if (buffResolved?.effectPlan) {
         for (const effect of buffResolved.effectPlan) {
@@ -17014,11 +17030,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   public canUseSkill(characterId: string): boolean {
     const controlType = this.getHighestPriorityControlEffect(characterId)
     return (
-      controlType !== ControlType.STUN &&
-      controlType !== ControlType.SILENCE &&
-      controlType !== ControlType.FREEZE &&
-      controlType !== ControlType.SLEEP &&
-      controlType !== ControlType.BIND
+      controlType !== StatusCategory.STUN &&
+      controlType !== StatusCategory.SILENCE &&
+      controlType !== StatusCategory.FREEZE &&
+      controlType !== StatusCategory.SLEEP &&
+      controlType !== StatusCategory.BIND
     )
   }
   public canAct(characterId: string): boolean {
@@ -17413,8 +17429,9 @@ export const TRIGGER_SCRIPTS: Record<
 
 --- src/domain/buff/types.ts ---
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { BattleData, BattleTriggerPhase } from '@/domain/battle/type/types'
-import { CONTROL_KIND } from '@/shared/types/effect'
+import { BattleTriggerPhase } from '@/domain/battle/type/types'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import { ControlKind } from '@/shared/types/status-meta'
 /** Buff ID 前缀常量 */
 export const BUFF_ID_PREFIX = 'buff_'
 /**
@@ -17434,14 +17451,14 @@ export interface BuffQuery {
   setShieldValue(characterId: string, value: number): void
 }
 /**
- * 特殊效果行（DOT/HOT/护盾/反伤等非属性修正效果）
+ * 特殊效果行（DOT/HEAL/护盾/反伤等非属性修正效果）
  * 供纯文本 UI 展示使用
  */
 export interface BuffEffectLine {
   /** 显示文本，如 "每回合损失 5% 气血值"、"吸收 200 点伤害" */
   text: string
   /** 效果分类 */
-  kind: 'dot' | 'hot' | 'shield' | 'vampire' | 'thorns' | 'control' | 'other'
+  kind: AtomicEffectType
 }
 /**
  * 增益效果脚本接口
@@ -17481,7 +17498,7 @@ export interface IBuffScript<TParams = any> {
   params?: TParams
   /**
    * 获取 Buff 的特殊效果文本行（供纯文本 UI 展示）
-   * 返回 DOT/HOT/护盾/反伤等非属性修正效果的描述文本
+   * 返回 DOT/HEAL/护盾/反伤等非属性修正效果的描述文本
    */
   getEffectLines?(context: BuffContext): BuffEffectLine[]
 }
@@ -17502,7 +17519,7 @@ export enum StackRule {
 export const ControlType = {
   /** 无控制效果 */
   NONE: 'none',
-  ...CONTROL_KIND,
+  ...ControlKind,
 } as const
 export type ControlType = (typeof ControlType)[keyof typeof ControlType]
 /**
@@ -17557,10 +17574,8 @@ export interface BuffConfig {
   controlPriority: number
   /**
    * 效果标签
-   * 用于按标签查询 Buff，替代硬编码的 Buff ID 列表
-   * 如 ['heal_reduction', 'burn', 'debuff', 'dot']
    */
-  tags?: string[]
+  tags?: AtomicEffectType[]
   /**
    * 免疫标签
    * 拥有对应标签的角色免疫此Buff
@@ -17638,7 +17653,7 @@ export interface ScriptBuffConfig {
   /** 标记该脚本完全自包含——框架不再从 JSON 读取 attributes 应用修饰符 */
   selfContained?: boolean
   /** 效果标签（同 BuffConfig.tags） */
-  tags?: string[]
+  tags?: AtomicEffectType[]
   /** 免疫标签（同 BuffConfig.immuneTags） */
   immuneTags?: string[]
   /** 是否级联移除子 Buff（同 BuffConfig.cascadeRemove） */
@@ -18841,9 +18856,8 @@ import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { StepExecutionContext } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { LogLevel } from '@/shared/types/battle-log'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
-import { EffectTag } from '@/shared/types/effect'
+import { STATUS_CODE } from '@/shared/types/status-meta'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 interface HealCalculationStep {
   step: string
@@ -18964,7 +18978,7 @@ export class HealCalculator {
     if (!buffSystem) return 0
     const reductionInstances = buffSystem.getBuffInstancesWithTag(
       target.id,
-      EffectTag.HEAL_REDUCTION,
+      STATUS_CODE.HEAL_REDUCTION,
     )
     const debuffEffect =
       reductionInstances.length * HealCalculator.HEAL_REDUCTION_PER_DEBUFF
@@ -19616,7 +19630,7 @@ import { HealCalculator } from '@/domain/skill/HealCalculator'
 import type { ExtendedSkillStep, ReviveStepParams } from '@/domain/skill/types'
 import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
-import { EffectTag } from '@/shared/types/effect'
+import { STATUS_CODE } from '@/shared/types/status-meta'
 import {
   REVERSE_BONUS_ATTR_MAP,
   syncAttackRange,
@@ -20294,10 +20308,10 @@ export class SkillExecutor {
     token?: DeferredDamageToken,
     burnDamagePercent: number = 0.05,
   ): void {
-    // 获取目标的 buff 实例，按 EffectTag.BURN 标签查找灼烧类 buff
+    // 获取目标的 buff 实例，按 STATUS_CODE.BURN 标签查找灼烧类 buff
     const burnInstances = this.buffSystem.getBuffInstancesWithTag(
       target.id,
-      EffectTag.BURN,
+      STATUS_CODE.BURN,
     )
     if (burnInstances.length === 0) return
     let totalBurnDmg = 0
@@ -21077,7 +21091,8 @@ import type {
   ModifierType,
   ModifierSourceType,
 } from '@/domain/attribute/types'
-import { CONTROL_KIND } from '@/shared/types'
+import { ControlKind } from '@/shared/types/status-meta'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 /**
  * 修饰符模板（配置层使用）
  * 由技能/Buff/装备等配置转换而来，不包含运行时状态
@@ -21141,18 +21156,6 @@ export type DamageCategory =
  * 物理 金 木 水 火 土
  */
 export type ElementType = 'PHYSICAL' | 'JIN' | 'MU' | 'SHU' | 'HUO' | 'TU'
-/**
- * 被动技能分类
- */
-export type PassiveCategory =
-  | 'attribute' // 属性增益
-  | 'aura' // 光环
-  | 'trigger' // 触发效果
-  | 'heal' // 治疗
-  | 'immunity' // 免疫
-  | 'summon' // 召唤
-  | 'dot' // 持续伤害
-  | 'shield' // 护盾
 /**
  * 目标阵营
  */
@@ -21366,7 +21369,7 @@ export const EffectType = {
   SPECIAL: 'special', // 特殊效果
   DEBUFF: 'debuff', // 减益效果
   CUSTOM: 'custom', // 自定义效果（通过自定义脚本实现）
-  ...CONTROL_KIND,
+  ...ControlKind,
 } as const
 export type EffectType = (typeof EffectType)[keyof typeof EffectType]
 /**
@@ -21475,7 +21478,7 @@ export interface SkillConfig {
   condition?: string // 施放条件
   skillType?: SkillType // 技能类型
   triggerTimes?: string[] // 触发时机（被动技能专用）
-  passiveCategory?: PassiveCategory[] // 被动技能分类（数组，支持多分类）
+  passiveCategory?: AtomicEffectType[] // 被动技能分类（数组，支持多分类）
   level?: number // 技能等级
   levelValue?: number // 技能等级成长值
   icon?: string // 技能图标
@@ -25084,18 +25087,18 @@ onUnmounted(() => {
 import { ref, onUnmounted, type Ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
 import { getActionBudget, BATTLE_ANIMATION_TIMING } from '@/shared/constants/animation-timing'
+import { ImpactClass } from '@/shared/utils/visual-effect-mapper.ts'
 const debugStore = useDebugStore()
 const P = BATTLE_ANIMATION_TIMING.PHASES
 // ============ 类型 ============
 export interface CardPos { x: number; y: number; el: HTMLElement }
-export type VfxColorType = 'fire' | 'frost' | 'heal' | 'shield'
 interface SkillNameItem { id: number; text: string; x: number; y: number; dx: number; dy: number; fromSide: string }
-interface ImpactItem { id: number; x: number; y: number; colorType: VfxColorType; style: string }
+interface ImpactItem { id: number; x: number; y: number; colorType: ImpactClass; style: string }
 interface PositionItem { id: number; x: number; y: number }
 interface FloatingNumItem { id: number; text: string; x: number; y: number; cls: string; rotate?: number }
 // ============ VFX 颜色映射 ============
 /* NOTE: 与 <style> 中 --vfx-* CSS 变量同源，改这里必须同步改 CSS */
-const VFX_COLORS: Record<VfxColorType, { bg: string; glow: string }> = {
+const VFX_COLORS: Record<ImpactClass, { bg: string; glow: string }> = {
   fire: { bg: '#ffaa30', glow: '#ff6600' },
   frost: { bg: '#8ee0ff', glow: '#4cc9f0' },
   heal: { bg: '#6affd0', glow: '#2dd4a8' },
@@ -25185,7 +25188,7 @@ function showSkillName(attackerId: string, targetId: string, name: string, fromS
   setRemove(id, skillNames, skillNameDuration(budget) + SKILL_NAME_REMOVE_BUFFER_MS)
 }
 /** 光弹飞行（requestAnimationFrame 驱动），时长 = 20%→50%T */
-function showProjectile(fromId: string, toId: string, type: VfxColorType, duration: number) {
+function showProjectile(fromId: string, toId: string, type: ImpactClass, duration: number) {
   const from = cardCenter(fromId)
   const to = cardCenter(toId)
   // duration<=0 防御：避免 (now-start)/0 产生 NaN 坐标（实践中 budget 恒为正，此路径不可达）
@@ -25221,7 +25224,7 @@ function showProjectile(fromId: string, toId: string, type: VfxColorType, durati
   nextFrame(step)
 }
 /** 光弹尾迹（生成后自行淡出） */
-function spawnTrail(root: HTMLElement, x: number, y: number, type: VfxColorType) {
+function spawnTrail(root: HTMLElement, x: number, y: number, type: ImpactClass) {
   const trail = document.createElement('div')
   trail.className = 'projectile-trail'
   trail.style.left = x + 'px'
@@ -25237,7 +25240,7 @@ function spawnTrail(root: HTMLElement, x: number, y: number, type: VfxColorType)
   later(() => { if (trail.parentNode) trail.parentNode.removeChild(trail) }, TRAIL_TTL_MS)
 }
 /** 命中爆炸 — 根据 debugStore.impactStyle 选择动画变体 */
-function showImpact(targetId: string, colorType: VfxColorType, budget?: number) {
+function showImpact(targetId: string, colorType: ImpactClass, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++
@@ -26519,7 +26522,7 @@ const effectLines = computed(() => {
     const text = `${mod.attribute}${arrow}${absVal}%${conditionSuffix}${turnText}`
     lines.push({ text, className })
   }
-  // 特殊效果行（DOT/HOT/护盾等非属性修正效果 — 来自脚本 getEffectLines）
+  // 特殊效果行（DOT/HEAL/护盾等非属性修正效果 — 来自脚本 getEffectLines）
   if (props.buff.effectLines && props.buff.effectLines.length > 0) {
     for (const el of props.buff.effectLines) {
       lines.push({
@@ -26620,7 +26623,7 @@ const effectLines = computed(() => {
 .effect--special {
   color: var(--color-text-tertiary);
 }
-/* 特殊效果行配色（DOT/HOT/护盾等） */
+/* 特殊效果行配色（DOT/HEAL/护盾等） */
 .effect--dot {
   color: var(--color-danger);
 }
@@ -31108,7 +31111,7 @@ import enemiesData from '@configs/enemies/enemies.json'
 import { buffsData } from '@/shared/types/buffs-json'
 import materialsData from '@configs/materials/materials.json'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
-import type { PassiveCategory } from '@/domain/skill/types'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 export interface CompendiumEnemy {
   id: string
@@ -31150,7 +31153,7 @@ export interface CompendiumSkill {
   energyCost: number
   cooldown: number
   selector: string
-  passiveCategory?: PassiveCategory[]
+  passiveCategory?: AtomicEffectType[]
 }
 export interface CompendiumItem {
   id: string
@@ -40073,92 +40076,92 @@ const exportJson = () => {
     </template>
     <Tabs v-model="activeTab" :tabs="editorTabs" equal-width>
       <template #buffs>
-    <div class="ce-tab-content">
-      <div class="buff-layout">
-        <!-- 左侧：分类栏 -->
-        <div class="buff-sidebar">
-          <div class="sidebar-title">分类</div>
-          <button v-for="cat in sidebarCategories" :key="cat.key" class="sidebar-item"
-            :class="{ active: activeCategory === cat.key }" @click="activeCategory = cat.key">
-            <span class="sidebar-dot" :class="'dot-' + cat.key"></span>
-            <span class="sidebar-label">{{ cat.label }}</span>
-            <span class="sidebar-count">{{ cat.count }}</span>
-          </button>
-        </div>
-        <!-- 右侧：状态列表 -->
-        <div class="buff-main">
-          <div class="ce-section-header">
-            <span class="section-title">{{ currentCategoryLabel }}</span>
-            <span class="status-count">{{ checkedBuffs.length }}/{{ localStatuses.length }}</span>
-          </div>
-          <input v-model="buffSearch" class="ce-search" placeholder="搜索状态名称..." />
-          <div class="status-list">
-            <div v-for="status in filteredStatuses" :key="status.id" class="ce-status-item"
-              :class="{ active: status.active, disabled: !innerSelectedCharId }">
-              <div class="ce-status-row">
-                <label class="status-label">
-                  <input type="checkbox" v-model="status.active" :disabled="!innerSelectedCharId">
-                  <span class="ce-status-name" :class="status.polarity">
-                    {{ status.name }}
-                  </span>
-                </label>
-                <div class="ce-duration-wrap">
-                  <input type="number" class="ce-duration-input" v-model="status.duration" min="0" max="99"
-                    :disabled="!innerSelectedCharId">
-                  <span class="ce-duration-unit">回合</span>
+        <div class="ce-tab-content">
+          <div class="buff-layout">
+            <!-- 左侧：分类栏 -->
+            <div class="buff-sidebar">
+              <div class="sidebar-title">分类</div>
+              <button v-for="cat in sidebarCategories" :key="cat.key" class="sidebar-item"
+                :class="{ active: activeCategory === cat.key }" @click="activeCategory = cat.key">
+                <span class="sidebar-dot" :class="'dot-' + cat.key"></span>
+                <span class="sidebar-label">{{ cat.label }}</span>
+                <span class="sidebar-count">{{ cat.count }}</span>
+              </button>
+            </div>
+            <!-- 右侧：状态列表 -->
+            <div class="buff-main">
+              <div class="ce-section-header">
+                <span class="section-title">{{ currentCategoryLabel }}</span>
+                <span class="status-count">{{ checkedBuffs.length }}/{{ localStatuses.length }}</span>
+              </div>
+              <input v-model="buffSearch" class="ce-search" placeholder="搜索状态名称..." />
+              <div class="status-list">
+                <div v-for="status in filteredStatuses" :key="status.id" class="ce-status-item"
+                  :class="{ active: status.active, disabled: !innerSelectedCharId }">
+                  <div class="ce-status-row">
+                    <label class="status-label">
+                      <input type="checkbox" v-model="status.active" :disabled="!innerSelectedCharId">
+                      <span class="ce-status-name" :class="status.polarity">
+                        {{ status.name }}
+                      </span>
+                    </label>
+                    <div class="ce-duration-wrap">
+                      <input type="number" class="ce-duration-input" v-model="status.duration" min="0" max="99"
+                        :disabled="!innerSelectedCharId">
+                      <span class="ce-duration-unit">回合</span>
+                    </div>
+                  </div>
+                  <div class="ce-status-desc">{{ status.effect }}</div>
+                </div>
+                <div v-if="filteredStatuses.length === 0" class="empty-tip">
+                  {{ buffSearch ? '无匹配状态' : (innerSelectedCharId ? '该分类暂无状态' : '请先选择角色') }}
                 </div>
               </div>
-              <div class="ce-status-desc">{{ status.effect }}</div>
+              <div class="ce-section-actions">
+                <button class="btn-medium" @click="toggleCurrentCategory" :disabled="!innerSelectedCharId"
+                  :title="currentCategoryAllChecked ? '取消全选当前分类' : '全选当前分类'">
+                  {{ currentCategoryAllChecked ? '取消全选' : '全选本类' }}
+                </button>
+                <button class="btn-medium" @click="emitApplyBuffs"
+                  :disabled="checkedBuffs.length === 0 || !innerSelectedCharId">
+                  注入选中 ({{ checkedBuffs.length }})
+                </button>
+                <button class="btn-medium" @click="clearAllChecks" :disabled="checkedBuffs.length === 0">清空</button>
+              </div>
             </div>
-            <div v-if="filteredStatuses.length === 0" class="empty-tip">
-              {{ buffSearch ? '无匹配状态' : (innerSelectedCharId ? '该分类暂无状态' : '请先选择角色') }}
+          </div>
+        </div>
+      </template>
+      <template #attrs>
+        <div class="ce-tab-content">
+          <div class="attr-grid">
+            <div v-for="attr in attrFields" :key="attr.key" class="attr-row">
+              <label class="attr-label">{{ attr.label }}</label>
+              <div class="attr-control">
+                <NumericStepper v-model.number="attrOverrides[attr.key]" :min="attr.min" :max="attr.max"
+                  :steps="attr.steps" :disabled="!innerSelectedCharId" />
+              </div>
+              <span class="attr-current">当前:{{ getCurrentAttr(attr.key) }}</span>
             </div>
           </div>
           <div class="ce-section-actions">
-            <button class="btn-medium" @click="toggleCurrentCategory" :disabled="!innerSelectedCharId"
-              :title="currentCategoryAllChecked ? '取消全选当前分类' : '全选当前分类'">
-              {{ currentCategoryAllChecked ? '取消全选' : '全选本类' }}
-            </button>
-            <button class="btn-medium" @click="emitApplyBuffs"
-              :disabled="checkedBuffs.length === 0 || !innerSelectedCharId">
-              注入选中 ({{ checkedBuffs.length }})
-            </button>
-            <button class="btn-medium" @click="clearAllChecks" :disabled="checkedBuffs.length === 0">清空</button>
+            <button class="btn-medium" @click="emitApplyAttrs" :disabled="!innerSelectedCharId">应用属性</button>
+            <button class="btn-medium" @click="resetAttrOverrides">重置到当前值</button>
           </div>
         </div>
-      </div>
-    </div>
-      </template>
-      <template #attrs>
-    <div class="ce-tab-content">
-      <div class="attr-grid">
-        <div v-for="attr in attrFields" :key="attr.key" class="attr-row">
-          <label class="attr-label">{{ attr.label }}</label>
-          <div class="attr-control">
-            <NumericStepper v-model.number="attrOverrides[attr.key]" :min="attr.min" :max="attr.max" :steps="attr.steps"
-              :disabled="!innerSelectedCharId" />
-          </div>
-          <span class="attr-current">当前:{{ getCurrentAttr(attr.key) }}</span>
-        </div>
-      </div>
-      <div class="ce-section-actions">
-        <button class="btn-medium" @click="emitApplyAttrs" :disabled="!innerSelectedCharId">应用属性</button>
-        <button class="btn-medium" @click="resetAttrOverrides">重置到当前值</button>
-      </div>
-    </div>
       </template>
       <template #reset>
-    <div class="ce-tab-content">
-      <p class="reset-desc">对选中的角色执行以下操作：</p>
-      <div class="reset-actions">
-        <button class="btn-medium reset-btn" @click="emitReset('buffs')" :disabled="!innerSelectedCharId">清除所有
-          Buff</button>
-        <button class="btn-medium reset-btn" @click="emitReset('hp_energy')"
-          :disabled="!innerSelectedCharId">恢复满血满能量</button>
-        <button class="btn-medium reset-btn btn-danger" @click="emitReset('all')"
-          :disabled="!innerSelectedCharId">完全重置</button>
-      </div>
-    </div> <!-- /ce-tab-content reset -->
+        <div class="ce-tab-content">
+          <p class="reset-desc">对选中的角色执行以下操作：</p>
+          <div class="reset-actions">
+            <button class="btn-medium reset-btn" @click="emitReset('buffs')" :disabled="!innerSelectedCharId">清除所有
+              Buff</button>
+            <button class="btn-medium reset-btn" @click="emitReset('hp_energy')"
+              :disabled="!innerSelectedCharId">恢复满血满能量</button>
+            <button class="btn-medium reset-btn btn-danger" @click="emitReset('all')"
+              :disabled="!innerSelectedCharId">完全重置</button>
+          </div>
+        </div> <!-- /ce-tab-content reset -->
       </template>
     </Tabs>
   </Dialog>
@@ -40171,9 +40174,10 @@ import type { TabItem } from '@/presentation/components/Tabs.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
-import { classifyBuff, type BuffCategory } from '@/shared/types/buff-classification'
+import { classifyBuff } from '@/shared/types/buff-classification'
 import { getAttrName } from '@/domain/attribute/types'
 import { ParticipantSideName } from '@/domain/battle/type/types'
+import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
 // ==================== 类型 ====================
 export interface EditorBuffEntry {
   id: string
@@ -40247,16 +40251,12 @@ watch(attrOverrides, () => {
   _skipDirtyMark = false
 }, { deep: true })
 // ==================== 分类配置 ====================
-const SIDEBAR_DEFS: { key: string; label: string; categoryMatch?: BuffCategory }[] = [
-  { key: 'all', label: '全部' },
-  { key: 'modifier', label: '属性修正', categoryMatch: 'modifier' as BuffCategory },
-  { key: 'trigger', label: '触发', categoryMatch: 'trigger' as BuffCategory },
-  { key: 'aura', label: '光环', categoryMatch: 'aura' as BuffCategory },
-  { key: 'shield', label: '护盾', categoryMatch: 'shield' as BuffCategory },
-  { key: 'control', label: '控制', categoryMatch: 'control' as BuffCategory },
-  { key: 'dot', label: '持续伤害', categoryMatch: 'dot' as BuffCategory },
-  { key: 'immunity', label: '免疫', categoryMatch: 'immunity' as BuffCategory },
-  { key: 'other', label: '其他', categoryMatch: undefined },
+const SIDEBAR_DEFS: { key: string; label: string; categoryMatch?: StatusCategory }[] = [
+  { key: 'all', label: '所有' },
+  ...(Object.keys(StatusCategoryNames) as StatusCategory[]).map(key => ({
+    key: key as string,
+    label: StatusCategoryNames[key],
+  })),
 ]
 // ==================== 属性字段 ====================
 const attrFields: AttrOverrideItem[] = [
@@ -44547,6 +44547,7 @@ export function createAccumulator(battleId: string): BattleSummaryAccumulator {
  */
 import type { ResolvedEffectPlan } from '@/domain/buff/atomic/BuffConfigResolver'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
 export type BuffDisplayType = 'buff' | 'debuff' | 'control'
 // ==================== 维度一：极性（UI 颜色） ====================
 export const BUFF_POLARITY = {
@@ -44555,28 +44556,6 @@ export const BUFF_POLARITY = {
   NEUTRAL: 'neutral',
 } as const
 export type BuffPolarity = (typeof BUFF_POLARITY)[keyof typeof BUFF_POLARITY]
-// ==================== 维度二：分类标签（纯显示） ====================
-export const BUFF_CATEGORY = {
-  CONTROL: 'control',
-  DOT: 'dot',
-  SHIELD: 'shield',
-  AURA: 'aura',
-  IMMUNITY: 'immunity',
-  TRIGGER: 'trigger',
-  MODIFIER: 'modifier',
-  OTHER: 'other',
-} as const
-export type BuffCategory = (typeof BUFF_CATEGORY)[keyof typeof BUFF_CATEGORY]
-export const BUFF_CATEGORY_LABEL: Record<BuffCategory, string> = {
-  [BUFF_CATEGORY.CONTROL]: '控制',
-  [BUFF_CATEGORY.DOT]: '持续',
-  [BUFF_CATEGORY.SHIELD]: '护盾',
-  [BUFF_CATEGORY.AURA]: '光环',
-  [BUFF_CATEGORY.IMMUNITY]: '免疫',
-  [BUFF_CATEGORY.TRIGGER]: '触发',
-  [BUFF_CATEGORY.MODIFIER]: '属性',
-  [BUFF_CATEGORY.OTHER]: '其他',
-}
 // ==================== 维度三：运行时 facet（从配置结构自动派生） ====================
 /**
  * 从 buff 配置结构自动派生其运行时 facets。
@@ -44596,20 +44575,20 @@ export function deriveBuffFacets(config: {
   immunities?: string[]
   /** 数据驱动：从 atomic effects 派生（优先级最高） */
   effectPlan?: ResolvedEffectPlan[]
-}): BuffCategory[] {
-  const facets: BuffCategory[] = []
+}): StatusCategory[] {
+  const facets: StatusCategory[] = []
   // ★ 优先从 effectPlan 派生（数据驱动方式）
   if (config.effectPlan && config.effectPlan.length > 0) {
     for (const effect of config.effectPlan) {
       switch (effect.type) {
-        case AtomicEffectType.MODIFIER: facets.push(BUFF_CATEGORY.MODIFIER); break
-        case AtomicEffectType.DOT:      facets.push(BUFF_CATEGORY.DOT); break
-        case AtomicEffectType.HOT:      facets.push(BUFF_CATEGORY.TRIGGER); break  // HOT 归入 trigger 类
-        case AtomicEffectType.CONTROL: facets.push(BUFF_CATEGORY.CONTROL); break
-        case AtomicEffectType.SHIELD:  facets.push(BUFF_CATEGORY.SHIELD); break
-        case AtomicEffectType.TRIGGER: facets.push(BUFF_CATEGORY.TRIGGER); break
-        case AtomicEffectType.AURA:    facets.push(BUFF_CATEGORY.AURA); break
-        case AtomicEffectType.IMMUNITY: facets.push(BUFF_CATEGORY.IMMUNITY); break
+        case AtomicEffectType.MODIFIER: facets.push(StatusCategory.MODIFIER); break
+        case AtomicEffectType.DOT: facets.push(StatusCategory.DOT); break
+        case AtomicEffectType.HEAL: facets.push(StatusCategory.TRIGGER); break  // HEAL 归入 trigger 类
+        case AtomicEffectType.CONTROL: facets.push(StatusCategory.CONTROL); break
+        case AtomicEffectType.SHIELD: facets.push(StatusCategory.SHIELD); break
+        case AtomicEffectType.TRIGGER: facets.push(StatusCategory.TRIGGER); break
+        case AtomicEffectType.AURA: facets.push(StatusCategory.AURA); break
+        case AtomicEffectType.IMMUNITY: facets.push(StatusCategory.IMMUNITY); break
       }
     }
     // 去重
@@ -44621,19 +44600,19 @@ export function deriveBuffFacets(config: {
     typeof config.attributes === 'object' &&
     Object.keys(config.attributes).length > 0
   ) {
-    facets.push(BUFF_CATEGORY.MODIFIER)
+    facets.push(StatusCategory.MODIFIER)
   }
   // 触发器：有 triggers 数组
   if (config.triggers != null && config.triggers.length > 0) {
-    facets.push(BUFF_CATEGORY.TRIGGER)
+    facets.push(StatusCategory.TRIGGER)
   }
   // 光环：有 aura 配置
   if (config.aura != null) {
-    facets.push(BUFF_CATEGORY.AURA)
+    facets.push(StatusCategory.AURA)
   }
   // 护盾：有 shield 配置
   if (config.shield != null) {
-    facets.push(BUFF_CATEGORY.SHIELD)
+    facets.push(StatusCategory.SHIELD)
   }
   // 控制：有 controlType 且非 NONE
   if (
@@ -44641,14 +44620,14 @@ export function deriveBuffFacets(config: {
     config.controlType !== '' &&
     config.controlType !== 'none'
   ) {
-    facets.push(BUFF_CATEGORY.CONTROL)
+    facets.push(StatusCategory.CONTROL)
   }
   // 免疫：有 immunities 数组
   if (config.immunities != null && config.immunities.length > 0) {
-    facets.push(BUFF_CATEGORY.IMMUNITY)
+    facets.push(StatusCategory.IMMUNITY)
   }
   // 空壳/纯标记型 buff → token
-  return facets.length > 0 ? facets : [BUFF_CATEGORY.OTHER]
+  return facets.length > 0 ? facets : [StatusCategory.OTHER]
 }
 // ==================== classifyBuff 入参/出参 ====================
 export interface BuffClassificationInput {
@@ -44686,9 +44665,9 @@ export interface BuffClassificationInput {
  */
 export interface BuffClassificationResult {
   /** 分类标签：直接从 JSON config.category 透传（纯显示用） */
-  category: BuffCategory
+  category: StatusCategory
   /** 运行时 facets：从配置结构自动派生，可能多个（['modifier', 'trigger']） */
-  facets: BuffCategory[]
+  facets: StatusCategory[]
   /** 是否为减益（由 polarity 决定） */
   isNegative: boolean
   /** 极性：直接声明 */
@@ -44707,7 +44686,7 @@ export function classifyBuff(
 ): BuffClassificationResult {
   if (!config) {
     return {
-      category: BUFF_CATEGORY.OTHER,
+      category: StatusCategory.OTHER,
       facets: [],
       isNegative: false,
       polarity: BUFF_POLARITY.NEUTRAL,
@@ -44725,13 +44704,13 @@ export function classifyBuff(
     polarity = guessPolarity(config.category ?? null, facets)
   }
   // 3. 显示标签：透传 JSON 的 category，兜底取 facets[0]
-  const category = asBuffCategory(config.category) ?? (facets.length > 0 ? facets[0] : BUFF_CATEGORY.OTHER)
+  const category = asStatusCategory(config.category) ?? (facets.length > 0 ? facets[0] : StatusCategory.OTHER)
   return { category, facets, polarity, isNegative: polarity === BUFF_POLARITY.NEGATIVE }
 }
-/** 安全地将字符串转为 BuffCategory（仅透传有效值，无效返回 undefined） */
-function asBuffCategory(raw: string | undefined | null): BuffCategory | undefined {
+/** 安全地将字符串转为 StatusCategory（仅透传有效值，无效返回 undefined） */
+function asStatusCategory(raw: string | undefined | null): StatusCategory | undefined {
   if (!raw) return undefined
-  for (const val of Object.values(BUFF_CATEGORY)) {
+  for (const val of Object.values(StatusCategory)) {
     if (val === raw) return val
   }
   return undefined
@@ -44739,16 +44718,16 @@ function asBuffCategory(raw: string | undefined | null): BuffCategory | undefine
 /** 兜底猜极性（仅当 polarity/isDebuff 都未提供时使用） */
 function guessPolarity(
   rawCategory: string | null,
-  facets: BuffCategory[],
+  facets: StatusCategory[],
 ): BuffPolarity {
   // 从 facets 判
-  if (facets.includes(BUFF_CATEGORY.CONTROL)) return BUFF_POLARITY.NEGATIVE
-  if (facets.includes(BUFF_CATEGORY.IMMUNITY)) return BUFF_POLARITY.POSITIVE
-  if (facets.includes(BUFF_CATEGORY.AURA)) return BUFF_POLARITY.POSITIVE
-  if (facets.includes(BUFF_CATEGORY.SHIELD)) return BUFF_POLARITY.POSITIVE
+  if (facets.includes(StatusCategory.CONTROL)) return BUFF_POLARITY.NEGATIVE
+  if (facets.includes(StatusCategory.IMMUNITY)) return BUFF_POLARITY.POSITIVE
+  if (facets.includes(StatusCategory.AURA)) return BUFF_POLARITY.POSITIVE
+  if (facets.includes(StatusCategory.SHIELD)) return BUFF_POLARITY.POSITIVE
   // 从 rawCategory 判（仅当 facets 判断无法决定时）
-  if (rawCategory === 'control' || rawCategory === 'dot') return BUFF_POLARITY.NEGATIVE
-  if (rawCategory === 'shield' || rawCategory === 'aura' || rawCategory === 'immunity') return BUFF_POLARITY.POSITIVE
+  if (rawCategory === StatusCategory.CONTROL || rawCategory === StatusCategory.DOT) return BUFF_POLARITY.NEGATIVE
+  if (rawCategory === StatusCategory.SHIELD || rawCategory === StatusCategory.AURA || rawCategory === StatusCategory.IMMUNITY) return BUFF_POLARITY.POSITIVE
   return BUFF_POLARITY.NEUTRAL
 }
 // ==================== 日志/显示工具函数 ====================
@@ -44762,7 +44741,7 @@ function guessPolarity(
 export function getBuffLogClass(
   classification: BuffClassificationResult,
 ): string {
-  if (classification.facets.includes(BUFF_CATEGORY.CONTROL)) return 'log-control'
+  if (classification.facets.includes(StatusCategory.CONTROL)) return 'log-control'
   if (classification.isNegative) return 'log-debuff'
   return 'log-buff'
 }
@@ -44774,20 +44753,20 @@ export function getBuffLogClass(
  *   - 单个 facet → 展示 facet 的中文名
  *   - 控制类 facet → 加前缀"控制 ·"
  */
-export function getBuffCategoryBadge(
+export function getStatusCategoryBadge(
   classification: BuffClassificationResult,
 ): string {
   const { facets } = classification
   if (facets.length === 1) {
-    const label = BUFF_CATEGORY_LABEL[facets[0]]
+    const label = StatusCategoryNames[facets[0]]
     // 控制类额外标注
-    if (facets.includes(BUFF_CATEGORY.CONTROL)) {
+    if (facets.includes(StatusCategory.CONTROL)) {
       return `控制 · ${label}`
     }
     return label
   }
   // 多个 facet → 全部展示
-  return facets.map((f) => BUFF_CATEGORY_LABEL[f]).join('+')
+  return facets.map((f) => StatusCategoryNames[f]).join('+')
 }
 
 --- src/shared/types/buff-display.ts ---
@@ -44860,7 +44839,7 @@ export interface BuffTextItem {
   isAura: boolean
   /** 修饰符列表（来源追溯用） */
   modifiers: BuffModifier[]
-  /** 特殊效果行（DOT/HOT/护盾/反伤等非属性修正效果） */
+  /** 特殊效果行（DOT/HEAL/护盾/反伤等非属性修正效果） */
   effectLines: BuffEffectLine[]
   // === 调试模式字段 ===
   /** 所属的参与者 ID */
@@ -45005,147 +44984,6 @@ export interface BuffJsonEntry {
 import rawBuffsData from '@configs/buffs/buffs.json'
 export const buffsData: readonly BuffJsonEntry[] =
   rawBuffsData as BuffJsonEntry[]
-
---- src/shared/types/effect.ts ---
-import type { SkillStep, SkillConfig, EffectType } from '@/domain/skill/types'
-/**
- * 文件: effect.ts
- * 创建日期: 2026-02-19
- * 作者: CombatDebugStudio
- * 功能: 定义效果接口和相关类型
- * 描述: 统一技能和Buff的效果接口，包含伤害、治疗、Buff等效果类型
- */
-export const COMBAT_TERM = {
-  // 控制类
-  STUN: '眩晕',
-  SILENCE: '沉默',
-  FREEZE: '冰冻',
-  SLEEP: '睡眠',
-  BIND: '束缚',
-  // 伤害/治疗类
-  DOT: '持续伤害',
-  HOT: '持续治疗',
-  BURN: '灼烧',
-  POISON: '中毒',
-  DRAIN: '吸取',
-  REFLECT: '反射',
-  // 防御类
-  SHIELD: '护盾',
-  // 增益/减益
-  BUFF: '增益',
-  DEBUFF: '减益',
-  HEAL_REDUCTION: '减治疗',
-  // 动作类
-  DEAL_DAMAGE: '造成伤害',
-  HEAL: '治疗',
-  KNOCKBACK: '击退',
-  PULL: '拉扯',
-  TELEPORT: '传送',
-  SUMMON: '召唤',
-  TRANSFORM: '变身',
-  REVIVE: '复活',
-  CLEANSE: '净化',
-  DISPEL: '驱散',
-  AURA: '光环',
-} as const
-export type CombatTerm = keyof typeof COMBAT_TERM
-export const CONTROL_KIND = {
-  /** 眩晕: 无法进行任何行动 */
-  STUN: 'stun',
-  /** 沉默: 无法使用技能，但可普攻 */
-  SILENCE: 'silence',
-  /** 冰冻: 无法行动，可能有额外效果 */
-  FREEZE: 'freeze',
-  /** 睡眠: 无法行动，受攻击后解除 */
-  SLEEP: 'sleep',
-  /** 束缚: 无法行动 */
-  BIND: 'bind',
-} as const
-export type ControlKind = (typeof CONTROL_KIND)[keyof typeof CONTROL_KIND]
-export const CONTROL_NAMES: Record<string, string> = {
-  [CONTROL_KIND.STUN]: COMBAT_TERM.STUN,
-  [CONTROL_KIND.SILENCE]: COMBAT_TERM.SILENCE,
-  [CONTROL_KIND.FREEZE]: COMBAT_TERM.FREEZE,
-  [CONTROL_KIND.SLEEP]: COMBAT_TERM.SLEEP,
-  [CONTROL_KIND.BIND]: COMBAT_TERM.BIND,
-}
-/**
- * 效果标签枚举
- * 用于替代硬编码的 Buff ID 列表，通过标签驱动查询
- * 配置在 JSON 中的 tags 字段使用这些值
- */
-export const EffectTag = {
-  /** 增益效果 */
-  BUFF: 'buff',
-  /** 减益效果 */
-  DEBUFF: 'debuff',
-  /** 控制效果 */
-  CONTROL: 'control',
-  /** 持续伤害 */
-  DOT: 'dot',
-  /** 持续治疗 */
-  HOT: 'hot',
-  /** 护盾 */
-  SHIELD: 'shield',
-  /** 减治疗效果 */
-  HEAL_REDUCTION: 'heal_reduction',
-  /** 灼烧 */
-  BURN: 'burn',
-  /** 中毒 */
-  POISON: 'poison',
-  ...CONTROL_KIND,
-} as const
-/**
- * 效果标签类型
- */
-export type EffectTag = (typeof EffectTag)[keyof typeof EffectTag]
-/**
- * 效果接口
- * 定义技能和Buff的统一效果接口
- */
-export interface Effect {
-  /**
-   * 效果唯一标识符
-   */
-  id: string
-  /**
-   * 效果类型
-   */
-  type: EffectType
-  /**
-   * 效果参数
-   */
-  params: Record<string, any>
-  /**
-   * 效果描述（可选）
-   */
-  description?: string
-}
-/**
- * 效果配置接口
- * 定义技能步骤中的效果配置
- */
-export interface EffectConfig {
-  /**
-   * 效果ID
-   */
-  effectId: string
-  /**
-   * 效果参数（可选）
-   * 用于覆盖默认参数
-   */
-  effectParams?: Record<string, any>
-}
-/**
- * 技能配置接口扩展
- * 包含效果配置
- */
-export interface SkillConfigWithEffect extends SkillConfig {
-  /**
-   * 技能效果配置（可选）
-   */
-  effectConfig?: EffectConfig
-}
 
 --- src/shared/types/effects-json.ts ---
 /**
@@ -45489,6 +45327,657 @@ export interface SceneData {
   /** 场地效果列表 */
   fieldEffects?: FieldEffectConfig[]
 }
+
+--- src/shared/types/status-meta.ts ---
+/**
+ * 文件: status-meta.ts
+ * 功能: 战斗状态元数据定义
+ * 描述: 为所有战斗状态提供分类、机制说明、玩家描述等元数据，
+ *       供 UI 展示、Tooltip 渲染、日志着色、调试面板使用。
+ */
+// ==================== 状态代码常量 ====================
+// ==================== 状态分类 ====================
+export const StatusCategory = {
+  /** 控制类：限制或改变目标行动能力 */
+  CONTROL: 'control',
+  /** 持续效果类：每回合自动结算的伤害 */
+  DOT: 'dot',
+  /** 持续效果类：每回合自动结算的治疗 */
+  HOT: 'hot',
+  /** 防御类：吸收伤害的护盾 */
+  SHIELD: 'shield',
+  /** 光环类：影响范围内队友/敌人的被动效果 */
+  AURA: 'aura',
+  /** 免疫类：使目标免疫特定效果 */
+  IMMUNITY: 'immunity',
+  /** 触发类：在特定条件下触发的状态效果 */
+  TRIGGER: 'trigger',
+  /** 增减益类：修改目标属性或行为规则 */
+  MODIFIER: 'modifier',
+  /** 动作类：触发一次性战斗行为（如召唤、净化、复活） */
+  ACTION: 'action',
+  OTHER: 'other',
+} as const
+export type StatusCategory = (typeof StatusCategory)[keyof typeof StatusCategory]
+export const StatusCategoryNames: Record<StatusCategory, string> = {
+  [StatusCategory.CONTROL]: '控制',
+  [StatusCategory.DOT]: '持续伤害',
+  [StatusCategory.HOT]: '持续治疗',
+  [StatusCategory.SHIELD]: '护盾',
+  [StatusCategory.AURA]: '光环',
+  [StatusCategory.IMMUNITY]: '免疫',
+  [StatusCategory.TRIGGER]: '触发',
+  [StatusCategory.MODIFIER]: '属性',
+  [StatusCategory.ACTION]: '动作',
+  [StatusCategory.OTHER]: '其他',
+}
+export const STATUS_CODE = {
+  // ── 控制类 ──
+  STUN: 'stun',
+  SILENCE: 'silence',
+  FREEZE: 'freeze',
+  SLEEP: 'sleep',
+  BIND: 'bind',
+  CONFUSION: 'confusion',
+  FEAR: 'fear',
+  GUIXU: 'guixu',
+  // ── 持续伤害/治疗类 ──
+  DOT: 'dot',
+  HEAL: 'heal',
+  BLEED: 'bleed',
+  FROSTBITE: 'frostbite',
+  BURN: 'burn',
+  POISON: 'poison',
+  DRAIN: 'drain',
+  REFLECT: 'reflect',
+  // ── 防御类 ──
+  SHIELD: 'shield',
+  // ── 增益/减益类 ──
+  BUFF: 'buff',
+  DEBUFF: 'debuff',
+  HEAL_REDUCTION: 'heal_reduction',
+  // ── 动作类 ──
+  DEAL_DAMAGE: 'deal_damage',
+  KNOCKBACK: 'knockback',
+  PULL: 'pull',
+  TELEPORT: 'teleport',
+  SUMMON: 'summon',
+  TRANSFORM: 'transform',
+  REVIVE: 'revive',
+  CLEANSE: 'cleanse',
+  DISPEL: 'dispel',
+  AURA: 'aura',
+} as const
+export type StatusCode = (typeof STATUS_CODE)[keyof typeof STATUS_CODE]
+// ==================== 元数据接口 ====================
+export interface StatusMeta {
+  /** 状态代码（唯一标识） */
+  code: StatusCode
+  /** 所属分类 */
+  category: StatusCategory
+  /** 内部名称（开发/日志用） */
+  name: string
+  /** 玩家可见的简短描述（Tooltip 标题下方一行） */
+  playerDescription: string
+  /** 机制说明（调试面板 / 详细 Tooltip 展开后显示） */
+  mechanicDescription: string
+  /** 是否为负面效果（决定 UI 颜色：红/绿） */
+  isNegative: boolean
+  /** 是否可被净化（cleanse）移除 */
+  cleanseable: boolean
+  /** 是否可被驱散（dispel）移除 */
+  dispellable: boolean
+  /** 是否可叠加多层 */
+  stackable: boolean
+  /** 默认持续回合数（-1 = 永久，0 = 即时） */
+  defaultDuration: number
+  /** 控制优先级（仅控制类有效；同目标多个控制共存时，高优先级生效） */
+  controlPriority?: number
+  /** 是否阻止行动（仅控制类：true = 完全跳过回合） */
+  blocksAction?: boolean
+  /** 是否阻止技能（仅控制类：true = 无法释放技能但可普攻） */
+  blocksSkill?: boolean
+}
+// ==================== 元数据表 ====================
+export const STATUS_META: Record<StatusCode, StatusMeta> = {
+  // ═══════════════════════════════════════════
+  // 控制类
+  // ═══════════════════════════════════════════
+  [STATUS_CODE.STUN]: {
+    code: STATUS_CODE.STUN,
+    category: StatusCategory.CONTROL,
+    name: '眩晕',
+    playerDescription: '无法进行任何行动，回合被跳过。',
+    mechanicDescription:
+      '目标在持续期间完全无法行动（普攻、技能、物品均不可用）。' +
+      '回合开始时检查，若仍处于眩晕则跳过整个行动阶段。' +
+      '受击不会提前解除。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 1,
+    controlPriority: 100,
+    blocksAction: true,
+    blocksSkill: true,
+  },
+  [STATUS_CODE.SILENCE]: {
+    code: STATUS_CODE.SILENCE,
+    category: StatusCategory.CONTROL,
+    name: '沉默',
+    playerDescription: '无法使用技能，但仍可进行普通攻击。',
+    mechanicDescription:
+      '目标在持续期间无法释放任何主动技能（小技能/终极技能），' +
+      '但普通攻击不受影响。被动技能仍正常触发。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 50,
+    blocksAction: false,
+    blocksSkill: true,
+  },
+  [STATUS_CODE.FREEZE]: {
+    code: STATUS_CODE.FREEZE,
+    category: StatusCategory.CONTROL,
+    name: '冰冻',
+    playerDescription: '无法行动，受到攻击时解除。',
+    mechanicDescription:
+      '目标完全无法行动。与眩晕不同的是，' +
+      '受到任何伤害（含 DOT）时立即解除冰冻状态。' +
+      '解除时不触发额外效果。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 90,
+    blocksAction: true,
+    blocksSkill: true,
+  },
+  [STATUS_CODE.SLEEP]: {
+    code: STATUS_CODE.SLEEP,
+    category: StatusCategory.CONTROL,
+    name: '睡眠',
+    playerDescription: '无法行动，受到攻击时解除并额外承受 20% 伤害。',
+    mechanicDescription:
+      '目标完全无法行动。受到任何伤害时解除睡眠，' +
+      '且该次伤害额外增加 20%（乘算）。' +
+      'DOT 伤害同样会唤醒目标。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 80,
+    blocksAction: true,
+    blocksSkill: true,
+  },
+  [STATUS_CODE.BIND]: {
+    code: STATUS_CODE.BIND,
+    category: StatusCategory.CONTROL,
+    name: '束缚',
+    playerDescription: '无法行动，但受到伤害不会提前解除。',
+    mechanicDescription:
+      '目标完全无法行动，与眩晕类似但优先级更低。' +
+      '受击不会解除。通常由物理系控制技能施加。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 1,
+    controlPriority: 70,
+    blocksAction: true,
+    blocksSkill: true,
+  },
+  [STATUS_CODE.CONFUSION]: {
+    code: STATUS_CODE.CONFUSION,
+    category: StatusCategory.CONTROL,
+    name: '混乱',
+    playerDescription: '行动目标随机化，可能攻击友方。',
+    mechanicDescription:
+      '目标仍可行动，但目标选择被强制随机化：' +
+      '从全场存活单位（含己方）中随机选取一个作为目标。' +
+      '技能选择不受影响，仅目标被篡改。' +
+      '若随机到自身则视为跳过行动。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 40,
+    blocksAction: false,
+    blocksSkill: false,
+  },
+  [STATUS_CODE.FEAR]: {
+    code: STATUS_CODE.FEAR,
+    category: StatusCategory.CONTROL,
+    name: '恐惧',
+    playerDescription: '无法主动攻击，只能跳过行动。',
+    mechanicDescription:
+      '目标无法选择任何敌方单位作为攻击/技能目标，' +
+      '行动阶段强制跳过（等同于被控制）。' +
+      '与眩晕的区别：恐惧可被「免疫控制」以外的方式解除（如队友净化），' +
+      '且恐惧期间仍可触发被动技能。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 1,
+    controlPriority: 60,
+    blocksAction: true,
+    blocksSkill: true,
+  },
+  [STATUS_CODE.GUIXU]: {
+    code: STATUS_CODE.GUIXU,
+    category: StatusCategory.CONTROL,
+    name: '归墟',
+    playerDescription: '无法被除自身以外的任何角色选为目标。',
+    mechanicDescription:
+      '目标进入「归墟」状态后，所有其他单位的技能/攻击目标选择' +
+      '将自动跳过该单位（如同不存在）。' +
+      '该单位自身仍可正常行动和选择目标。' +
+      'AOE 技能若以区域为目标则不受影响（非单体选择）。' +
+      '优先级最高的控制效果，不可被其他控制覆盖。',
+    isNegative: false,
+    cleanseable: false,
+    dispellable: false,
+    stackable: false,
+    defaultDuration: 2,
+    controlPriority: 200,
+    blocksAction: false,
+    blocksSkill: false,
+  },
+  // ═══════════════════════════════════════════
+  // 持续效果类
+  // ═══════════════════════════════════════════
+  [STATUS_CODE.DOT]: {
+    code: STATUS_CODE.DOT,
+    category: StatusCategory.DOT,
+    name: '持续伤害',
+    playerDescription: '每回合结束时受到固定伤害。',
+    mechanicDescription:
+      '每回合结束时（TURN_END 阶段）对目标造成固定数值伤害。' +
+      '伤害不受防御减免影响（真实伤害），但可被护盾吸收。' +
+      '多层 DOT 独立结算，互不覆盖。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: true,
+    defaultDuration: 3,
+  },
+  [STATUS_CODE.HEAL]: {
+    code: STATUS_CODE.HEAL,
+    category: StatusCategory.HOT,
+    name: '持续治疗',
+    playerDescription: '每回合结束时恢复固定气血。',
+    mechanicDescription:
+      '每回合结束时（TURN_END 阶段）恢复固定数值气血。' +
+      '治疗量不受减治疗影响（除非特别标注）。' +
+      '多层 HOT 独立结算。',
+    isNegative: false,
+    cleanseable: false,
+    dispellable: true,
+    stackable: true,
+    defaultDuration: 3,
+  },
+  [STATUS_CODE.BLEED]: {
+    code: STATUS_CODE.BLEED,
+    category: StatusCategory.DOT,
+    name: '出血',
+    playerDescription: '每回合结束时按最大气血百分比流血。',
+    mechanicDescription:
+      '每回合结束时造成目标最大气血值一定百分比的伤害。' +
+      '属于物理持续伤害，可被物理减免部分抵消。' +
+      '可叠加，每层独立计算。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: true,
+    defaultDuration: 3,
+  },
+  [STATUS_CODE.FROSTBITE]: {
+    code: STATUS_CODE.FROSTBITE,
+    category: StatusCategory.DOT,
+    name: '冰息',
+    playerDescription: '每回合受到冰属性伤害，并降低速度。',
+    mechanicDescription:
+      '每回合结束时造成冰属性伤害，同时降低目标速度属性。' +
+      '速度降低为 ADDITIVE 修饰符，随层数叠加。' +
+      '可被火属性技能提前解除。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: true,
+    defaultDuration: 2,
+  },
+  [STATUS_CODE.BURN]: {
+    code: STATUS_CODE.BURN,
+    category: StatusCategory.DOT,
+    name: '灼烧',
+    playerDescription: '每回合受到火属性伤害。',
+    mechanicDescription:
+      '每回合结束时造成火属性伤害。' +
+      '伤害基于施加者的火属性攻击力计算。' +
+      '可叠加，每层独立结算。可被水属性技能净化。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: true,
+    defaultDuration: 3,
+  },
+  [STATUS_CODE.POISON]: {
+    code: STATUS_CODE.POISON,
+    category: StatusCategory.DOT,
+    name: '中毒',
+    playerDescription: '每回合受到毒素伤害，可叠加多层。',
+    mechanicDescription:
+      '每回合结束时造成毒素伤害（真实伤害，无视防御）。' +
+      '最多叠加 N 层（由施加技能决定），每层独立结算。' +
+      '可被「毒素抗性」属性减少伤害。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: true,
+    defaultDuration: 3,
+  },
+  [STATUS_CODE.DRAIN]: {
+    code: STATUS_CODE.DRAIN,
+    category: StatusCategory.TRIGGER,
+    name: '吸取',
+    playerDescription: '每回合被吸取气血，施加者获得等量治疗。',
+    mechanicDescription:
+      '每回合结束时对目标造成伤害，并将等量数值治疗施加者。' +
+      '若施加者已死亡则仅造成伤害不治疗。' +
+      '伤害为真实伤害，治疗不受减治疗影响。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 3,
+  },
+  [STATUS_CODE.REFLECT]: {
+    code: STATUS_CODE.REFLECT,
+    category: StatusCategory.TRIGGER,
+    name: '反射',
+    playerDescription: '受到攻击时将部分伤害反弹给攻击者。',
+    mechanicDescription:
+      '持续期间，每次受到直接伤害时将一定比例反弹给攻击者。' +
+      '反弹伤害为真实伤害，不触发攻击者的受击被动。' +
+      '反弹不会递归（A 反弹给 B，B 的反弹不再弹回 A）。',
+    isNegative: false,
+    cleanseable: false,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 3,
+  },
+  // ═══════════════════════════════════════════
+  // 防御类
+  // ═══════════════════════════════════════════
+  [STATUS_CODE.SHIELD]: {
+    code: STATUS_CODE.SHIELD,
+    category: StatusCategory.SHIELD,
+    name: '护盾',
+    playerDescription: '获得一层护盾，优先吸收受到的伤害。',
+    mechanicDescription:
+      '为目标附加护盾值。受到伤害时优先消耗护盾，' +
+      '护盾耗尽后剩余伤害才扣除气血。' +
+      '多个护盾可叠加（数值累加）。' +
+      '护盾不可被治疗，回合结束不衰减（除非配置了 duration）。',
+    isNegative: false,
+    cleanseable: false,
+    dispellable: true,
+    stackable: true,
+    defaultDuration: -1,
+  },
+  // ═══════════════════════════════════════════
+  // 增减益类
+  // ═══════════════════════════════════════════
+  [STATUS_CODE.BUFF]: {
+    code: STATUS_CODE.BUFF,
+    category: StatusCategory.MODIFIER,
+    name: '增益',
+    playerDescription: '获得属性提升或特殊正面效果。',
+    mechanicDescription:
+      '通用正面状态标记。具体效果由 Buff 配置的 attributes/triggers 决定。' +
+      '增益状态在 UI 中以绿色/青色显示。' +
+      '可被敌方「驱散」技能移除。',
+    isNegative: false,
+    cleanseable: false,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 3,
+  },
+  [STATUS_CODE.DEBUFF]: {
+    code: STATUS_CODE.DEBUFF,
+    category: StatusCategory.MODIFIER,
+    name: '减益',
+    playerDescription: '属性被削弱或受到特殊负面效果。',
+    mechanicDescription:
+      '通用负面状态标记。具体效果由 Buff 配置的 attributes/triggers 决定。' +
+      '减益状态在 UI 中以紫色/红色显示。' +
+      '可被己方「净化」技能移除。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 3,
+  },
+  [STATUS_CODE.HEAL_REDUCTION]: {
+    code: STATUS_CODE.HEAL_REDUCTION,
+    category: StatusCategory.MODIFIER,
+    name: '减治疗',
+    playerDescription: '受到的治疗效果降低。',
+    mechanicDescription:
+      '持续期间，目标受到的所有治疗效果按百分比削减。' +
+      '例：50% 减治疗 → 原本恢复 100 气血变为恢复 50。' +
+      '多层减治疗取最高值，不叠加。' +
+      '不影响护盾吸收和 HOT 的原始结算（HOT 在结算时检查）。',
+    isNegative: true,
+    cleanseable: true,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 2,
+  },
+  // ═══════════════════════════════════════════
+  // 动作类
+  // ═══════════════════════════════════════════
+  [STATUS_CODE.DEAL_DAMAGE]: {
+    code: STATUS_CODE.DEAL_DAMAGE,
+    category: StatusCategory.ACTION,
+    name: '造成伤害',
+    playerDescription: '对目标造成一次性伤害。',
+    mechanicDescription:
+      '即时结算的伤害动作。伤害经过完整管线计算' +
+      '（基础值 → 加成 → 暴击 → 防御减免 → 阈值钳制）。' +
+      '不附加持续状态。',
+    isNegative: true,
+    cleanseable: false,
+    dispellable: false,
+    stackable: false,
+    defaultDuration: 0,
+  },
+  [STATUS_CODE.KNOCKBACK]: {
+    code: STATUS_CODE.KNOCKBACK,
+    category: StatusCategory.ACTION,
+    name: '击退',
+    playerDescription: '将目标向后推移一个位置。',
+    mechanicDescription:
+      '将目标在阵型中的 seatIndex +1（向后推移）。' +
+      '若已在最后排则无效。' +
+      '击退不造成伤害，但可触发位置相关被动。' +
+      '可被「击退抵抗」属性免疫。',
+    isNegative: true,
+    cleanseable: false,
+    dispellable: false,
+    stackable: false,
+    defaultDuration: 0,
+  },
+  [STATUS_CODE.PULL]: {
+    code: STATUS_CODE.PULL,
+    category: StatusCategory.ACTION,
+    name: '拉扯',
+    playerDescription: '将目标向前拉近一个位置。',
+    mechanicDescription:
+      '将目标在阵型中的 seatIndex -1（向前拉近）。' +
+      '若已在最前排则无效。' +
+      '拉扯不造成伤害。可被「击退抵抗」属性免疫（共用抗性）。',
+    isNegative: true,
+    cleanseable: false,
+    dispellable: false,
+    stackable: false,
+    defaultDuration: 0,
+  },
+  [STATUS_CODE.TELEPORT]: {
+    code: STATUS_CODE.TELEPORT,
+    category: StatusCategory.ACTION,
+    name: '传送',
+    playerDescription: '将目标传送到指定位置。',
+    mechanicDescription:
+      '将目标的 seatIndex 直接设为指定值。' +
+      '不受位置抗性影响。' +
+      '传送后触发位置变更事件。',
+    isNegative: true,
+    cleanseable: false,
+    dispellable: false,
+    stackable: false,
+    defaultDuration: 0,
+  },
+  [STATUS_CODE.SUMMON]: {
+    code: STATUS_CODE.SUMMON,
+    category: StatusCategory.ACTION,
+    name: '召唤',
+    playerDescription: '召唤一个单位加入战斗。',
+    mechanicDescription:
+      '在施法者同阵营创建一个召唤物实体。' +
+      '召唤物拥有独立气血、属性和技能。' +
+      '召唤物有存活回合限制，到期自动消失。' +
+      '召唤物死亡不触发 ON_DEATH 被动（防止无限连锁）。',
+    isNegative: false,
+    cleanseable: false,
+    dispellable: false,
+    stackable: false,
+    defaultDuration: 0,
+  },
+  [STATUS_CODE.TRANSFORM]: {
+    code: STATUS_CODE.TRANSFORM,
+    category: StatusCategory.ACTION,
+    name: '变身',
+    playerDescription: '改变目标的外观和技能组。',
+    mechanicDescription:
+      '将目标的技能组替换为指定技能集，持续期间生效。' +
+      '变身不改变基础属性，但可附加属性修饰符。' +
+      '变身期间原技能不可用。变身结束后恢复原技能组和冷却。',
+    isNegative: false,
+    cleanseable: false,
+    dispellable: true,
+    stackable: false,
+    defaultDuration: 3,
+  },
+  [STATUS_CODE.REVIVE]: {
+    code: STATUS_CODE.REVIVE,
+    category: StatusCategory.ACTION,
+    name: '复活',
+    playerDescription: '使已倒下的角色重新站起。',
+    mechanicDescription:
+      '将已死亡目标的气血恢复至指定百分比。' +
+      '复活后触发 ON_REVIVE 被动。' +
+      '受 ReviveTracker 次数和冷却限制。' +
+      '复活不解除目标身上的 debuff（除非配置了 cleanseDebuffs）。',
+    isNegative: false,
+    cleanseable: false,
+    dispellable: false,
+    stackable: false,
+    defaultDuration: 0,
+  },
+  [STATUS_CODE.CLEANSE]: {
+    code: STATUS_CODE.CLEANSE,
+    category: StatusCategory.ACTION,
+    name: '净化',
+    playerDescription: '移除友方目标身上的负面状态。',
+    mechanicDescription:
+      '移除目标身上所有 cleanseable=true 的负面状态。' +
+      '包括：控制类、DOT、减益、减治疗等。' +
+      '不影响正面 Buff 和护盾。' +
+      '净化数量可配置（默认全部移除）。',
+    isNegative: false,
+    cleanseable: false,
+    dispellable: false,
+    stackable: false,
+    defaultDuration: 0,
+  },
+  [STATUS_CODE.DISPEL]: {
+    code: STATUS_CODE.DISPEL,
+    category: StatusCategory.ACTION,
+    name: '驱散',
+    playerDescription: '移除敌方目标身上的正面状态。',
+    mechanicDescription:
+      '移除目标身上所有 dispellable=true 的正面状态。' +
+      '包括：增益 Buff、护盾、反射等。' +
+      '不影响负面 debuff 和控制效果。' +
+      '驱散数量可配置（默认全部移除）。',
+    isNegative: true,
+    cleanseable: false,
+    dispellable: false,
+    stackable: false,
+    defaultDuration: 0,
+  },
+  [STATUS_CODE.AURA]: {
+    code: STATUS_CODE.AURA,
+    category: StatusCategory.ACTION,
+    name: '光环',
+    playerDescription: '为周围友方/敌方提供持续属性加成或减益。',
+    mechanicDescription:
+      '光环持有者存活期间，自动为指定范围（allies/enemies/self）' +
+      '的单位施加属性修饰符。' +
+      '光环持有者死亡或被沉默时光环失效。' +
+      '光环修饰符随持有者 Buff 移除而自动清理。' +
+      '同类光环不叠加，取最高值。',
+    isNegative: false,
+    cleanseable: false,
+    dispellable: false,
+    stackable: false,
+    defaultDuration: -1,
+  },
+}
+// ==================== 辅助查询函数 ====================
+/** 根据状态代码获取元数据 */
+export function getStatusMeta(code: StatusCode): StatusMeta {
+  return STATUS_META[code]
+}
+/** 获取指定分类下的所有状态元数据 */
+export function getStatusByCategory(category: StatusCategory): StatusMeta[] {
+  return Object.values(STATUS_META).filter((m) => m.category === category)
+}
+/** 判断状态是否为控制类且阻止行动 */
+export function isActionBlockingControl(code: StatusCode): boolean {
+  const meta = STATUS_META[code]
+  return meta.category === StatusCategory.CONTROL && meta.blocksAction === true
+}
+/** 判断状态是否为控制类且阻止技能 */
+export function isSkillBlockingControl(code: StatusCode): boolean {
+  const meta = STATUS_META[code]
+  return meta.category === StatusCategory.CONTROL && meta.blocksSkill === true
+}
+/** 获取控制类状态的优先级（非控制类返回 0） */
+export function getControlPriority(code: StatusCode): number {
+  return STATUS_META[code].controlPriority ?? 0
+}
+/** 判断状态是否可被净化 */
+export function isCleanseable(code: StatusCode): boolean {
+  return STATUS_META[code].cleanseable
+}
+/** 判断状态是否可被驱散 */
+export function isDispellable(code: StatusCode): boolean {
+  return STATUS_META[code].dispellable
+}
+export const StatusNames: Record<StatusCode, string> = Object.fromEntries(
+  Object.entries(STATUS_META).map(([code, meta]) => [code, meta.name]),
+) as Record<StatusCode, string>
+export const ControlKind : StatusCode[] = Object.values(STATUS_META).filter((m) => m.category === StatusCategory.CONTROL).map((m) => m.code)
+export const ControlKindNames = Object.values(STATUS_META).filter((m) => m.category === StatusCategory.CONTROL).map((m) => m.name)
+export const ControlKindOrder = ControlKind.map((code) => STATUS_META[code].controlPriority ?? 0)
 
 --- src/shared/types/trace-log.ts ---
 /**
@@ -47397,11 +47886,11 @@ export const raf = new RAFTimer()
  * 功能: 配置文件验证工具
  * 描述: 使用JSON Schema验证技能和Effect配置的完整性和正确性
  */
-import { SkillConfig, SkillStep, PassiveCategory } from '@/domain/skill/types'
+import { SkillConfig, SkillStep } from '@/domain/skill/types'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 /** 合法被动分类值 */
-const VALID_PASSIVE_CATEGORIES: readonly PassiveCategory[] = [
-  'attribute', 'aura', 'trigger', 'heal', 'immunity', 'summon', 'dot', 'shield',
-]
+const VALID_PASSIVE_CATEGORIES: readonly AtomicEffectType[] =
+  Object.values(AtomicEffectType)
 /**
  * 验证结果接口
  */
@@ -47446,7 +47935,19 @@ const skillSchema = {
       required: ['faction'],
       properties: {
         faction: { type: 'string', enum: ['enemy', 'ally', 'all', 'self'] },
-        strategy: { type: 'string', enum: ['all', 'random', 'lowest_hp', 'highest_hp', 'front', 'back', 'adjacent', 'first'] },
+        strategy: {
+          type: 'string',
+          enum: [
+            'all',
+            'random',
+            'lowest_hp',
+            'highest_hp',
+            'front',
+            'back',
+            'adjacent',
+            'first',
+          ],
+        },
         count: { type: 'number', minimum: 1 },
       },
     },
@@ -47601,15 +48102,34 @@ export function validateSkillConfig(
       // 验证 step.targetConfig 字段（新格式）
       if (step.targetConfig) {
         const tc = step.targetConfig
-        if (!tc.faction || !['enemy', 'ally', 'all', 'self'].includes(tc.faction)) {
-          errors.push(`Step ${index}: targetConfig.faction must be one of: enemy, ally, all, self`)
+        if (
+          !tc.faction ||
+          !['enemy', 'ally', 'all', 'self'].includes(tc.faction)
+        ) {
+          errors.push(
+            `Step ${index}: targetConfig.faction must be one of: enemy, ally, all, self`,
+          )
         }
-        if (tc.strategy && !['all', 'random', 'lowest_hp', 'highest_hp', 'front', 'back', 'adjacent', 'first'].includes(tc.strategy)) {
-          errors.push(`Step ${index}: targetConfig.strategy is invalid: ${tc.strategy}`)
+        if (
+          tc.strategy &&
+          ![
+            'all',
+            'random',
+            'lowest_hp',
+            'highest_hp',
+            'front',
+            'back',
+            'adjacent',
+            'first',
+          ].includes(tc.strategy)
+        ) {
+          errors.push(
+            `Step ${index}: targetConfig.strategy is invalid: ${tc.strategy}`,
+          )
         }
       }
       // 检查 effectId（如果是 apply_buff 类型）
-      if ((step.type === 'apply_buff') && !step.effectId && !step.buffId) {
+      if (step.type === 'apply_buff' && !step.effectId && !step.buffId) {
         errors.push(
           `Step ${index}: Missing required field: effectId for ${step.type} type`,
         )
@@ -47624,8 +48144,10 @@ export function validateSkillConfig(
       errors.push('passiveCategory must be a non-empty array')
     } else {
       for (const cat of skillConfig.passiveCategory) {
-        if (!VALID_PASSIVE_CATEGORIES.includes(cat as PassiveCategory)) {
-          errors.push(`Invalid passiveCategory value: "${cat}". Must be one of: ${VALID_PASSIVE_CATEGORIES.join(', ')}`)
+        if (!VALID_PASSIVE_CATEGORIES.includes(cat as AtomicEffectType)) {
+          errors.push(
+            `Invalid passiveCategory value: "${cat}". Must be one of: ${VALID_PASSIVE_CATEGORIES.join(', ')}`,
+          )
         }
       }
     }
@@ -47640,7 +48162,9 @@ export function validateSkillConfig(
  * @param effectConfig Effect配置对象
  * @returns 验证结果
  */
-export function validateEffectConfig(effectConfig: Record<string, unknown>): ValidationResult {
+export function validateEffectConfig(
+  effectConfig: Record<string, unknown>,
+): ValidationResult {
   const errors: string[] = []
   // 检查必填字段
   if (!effectConfig.id) {
@@ -47649,7 +48173,9 @@ export function validateEffectConfig(effectConfig: Record<string, unknown>): Val
   if (!effectConfig.type) {
     errors.push('Missing required field: type')
   } else if (
-    !['damage', 'heal', 'buff', 'debuff', 'special'].includes(effectConfig.type as string)
+    !['damage', 'heal', 'buff', 'debuff', 'special'].includes(
+      effectConfig.type as string,
+    )
   ) {
     errors.push(
       `Invalid type: ${effectConfig.type}. Must be one of: damage, heal, buff, debuff, special`,
@@ -47696,7 +48222,9 @@ export function validateSkillConfigs(
  * @param effectConfigs Effect配置数组
  * @returns 验证结果
  */
-export function validateEffectConfigs(effectConfigs: Record<string, unknown>[]): ValidationResult {
+export function validateEffectConfigs(
+  effectConfigs: Record<string, unknown>[],
+): ValidationResult {
   const errors: string[] = []
   let validCount = 0
   effectConfigs.forEach((config, index) => {
@@ -47812,13 +48340,20 @@ export function toArray<T>(array: T[]): T[] {
  * 后续可扩展至元素属性（ElementType）→颜色/粒子效果。
  */
 import { DamageCategory, type DamageCategory as DamageCategoryType } from '@/domain/skill/types'
+export const ImpactClass = {
+  FIRE: 'fire',
+  FROST: 'frost',
+  HEAL: 'heal',
+  SHIELD: 'shield'
+}
+export type ImpactClass = (typeof ImpactClass)[keyof typeof ImpactClass]
 export interface VisualEffectConfig {
   /** 主色调（CSS 色值） */
   color: string
   /** 命中特效 CSS 类名 */
-  impactClass: 'fire' | 'frost' | 'heal' | 'shield'
+  impactClass: ImpactClass
   /** 飞行物 CSS 类名 */
-  projectileClass: 'fire' | 'frost' | 'heal' | 'shield'
+  projectileClass: ImpactClass
 }
 /**
  * 根据伤害大类和治疗标记获取视觉配置
@@ -47833,34 +48368,34 @@ export function getVisualEffect(
   if (isHeal) {
     return {
       color: '#4caf50',
-      impactClass: 'heal',
-      projectileClass: 'heal',
+      impactClass: ImpactClass.HEAL,
+      projectileClass: ImpactClass.HEAL,
     }
   }
   switch (category) {
     case DamageCategory.PHYSICAL:
       return {
         color: '#ff6b35',
-        impactClass: 'fire',
-        projectileClass: 'fire',
+        impactClass: ImpactClass.FIRE,
+        projectileClass: ImpactClass.FIRE,
       }
     case DamageCategory.ELEMENTAL:
       return {
         color: '#4cc9f0',
-        impactClass: 'frost',
-        projectileClass: 'frost',
+        impactClass: ImpactClass.FROST,
+        projectileClass: ImpactClass.FROST,
       }
     case DamageCategory.TRUE:
       return {
         color: '#ffffff',
-        impactClass: 'fire',
-        projectileClass: 'fire',
+        impactClass: ImpactClass.FIRE,
+        projectileClass: ImpactClass.FIRE,
       }
     default:
       return {
         color: '#ff6b35',
-        impactClass: 'fire',
-        projectileClass: 'fire',
+        impactClass: ImpactClass.FIRE,
+        projectileClass: ImpactClass.FIRE,
       }
   }
 }

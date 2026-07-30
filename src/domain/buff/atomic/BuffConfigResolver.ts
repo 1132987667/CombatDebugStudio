@@ -87,7 +87,6 @@ export class BuffConfigResolver {
           handler: controlHandler,
           params: {
             controlType: raw.controlType,
-            priority: raw.controlPriority ?? 50,
           },
         })
       }
@@ -130,11 +129,9 @@ export class BuffConfigResolver {
       cooldown: raw.cooldown ?? 0,
       stackRule: (raw.stackRule ?? 'LIMITED') as StackRule,
       controlType: (raw.controlType ?? 'NONE') as ControlType,
-      controlPriority: raw.controlPriority ?? 0,
-      isDebuff: raw.isDebuff ?? false,
       dispellable: raw.dispellable ?? true,
       tags: raw.tags ?? [],
-      immuneTags: raw.immuneTags ?? raw.immunities ?? undefined,
+      immunities: raw.immunities ?? undefined,
       parameters: raw.parameters ?? undefined,
       attributes: raw.attributes ?? undefined,
       triggers: raw.triggers ?? undefined,

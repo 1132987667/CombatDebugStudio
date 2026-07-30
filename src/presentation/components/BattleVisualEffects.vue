@@ -45,22 +45,23 @@
 import { ref, onUnmounted, type Ref } from 'vue'
 import { useDebugStore } from '@/presentation/stores/debugStore'
 import { getActionBudget, BATTLE_ANIMATION_TIMING } from '@/shared/constants/animation-timing'
+import { ImpactClass } from '@/shared/utils/visual-effect-mapper.ts'
 
 const debugStore = useDebugStore()
 const P = BATTLE_ANIMATION_TIMING.PHASES
 
 // ============ 类型 ============
 export interface CardPos { x: number; y: number; el: HTMLElement }
-export type VfxColorType = 'fire' | 'frost' | 'heal' | 'shield'
+
 
 interface SkillNameItem { id: number; text: string; x: number; y: number; dx: number; dy: number; fromSide: string }
-interface ImpactItem { id: number; x: number; y: number; colorType: VfxColorType; style: string }
+interface ImpactItem { id: number; x: number; y: number; colorType: ImpactClass; style: string }
 interface PositionItem { id: number; x: number; y: number }
 interface FloatingNumItem { id: number; text: string; x: number; y: number; cls: string; rotate?: number }
 
 // ============ VFX 颜色映射 ============
 /* NOTE: 与 <style> 中 --vfx-* CSS 变量同源，改这里必须同步改 CSS */
-const VFX_COLORS: Record<VfxColorType, { bg: string; glow: string }> = {
+const VFX_COLORS: Record<ImpactClass, { bg: string; glow: string }> = {
   fire: { bg: '#ffaa30', glow: '#ff6600' },
   frost: { bg: '#8ee0ff', glow: '#4cc9f0' },
   heal: { bg: '#6affd0', glow: '#2dd4a8' },
@@ -159,7 +160,7 @@ function showSkillName(attackerId: string, targetId: string, name: string, fromS
 }
 
 /** 光弹飞行（requestAnimationFrame 驱动），时长 = 20%→50%T */
-function showProjectile(fromId: string, toId: string, type: VfxColorType, duration: number) {
+function showProjectile(fromId: string, toId: string, type: ImpactClass, duration: number) {
   const from = cardCenter(fromId)
   const to = cardCenter(toId)
   // duration<=0 防御：避免 (now-start)/0 产生 NaN 坐标（实践中 budget 恒为正，此路径不可达）
@@ -196,7 +197,7 @@ function showProjectile(fromId: string, toId: string, type: VfxColorType, durati
 }
 
 /** 光弹尾迹（生成后自行淡出） */
-function spawnTrail(root: HTMLElement, x: number, y: number, type: VfxColorType) {
+function spawnTrail(root: HTMLElement, x: number, y: number, type: ImpactClass) {
   const trail = document.createElement('div')
   trail.className = 'projectile-trail'
   trail.style.left = x + 'px'
@@ -213,7 +214,7 @@ function spawnTrail(root: HTMLElement, x: number, y: number, type: VfxColorType)
 }
 
 /** 命中爆炸 — 根据 debugStore.impactStyle 选择动画变体 */
-function showImpact(targetId: string, colorType: VfxColorType, budget?: number) {
+function showImpact(targetId: string, colorType: ImpactClass, budget?: number) {
   const pos = cardCenter(targetId)
   if (!pos) return
   const id = nextId++

@@ -12,6 +12,7 @@
 import type { TriggerExecutionContext } from '@/domain/buff/BuffSystem'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ControlType } from '@/domain/buff/types'
+import { classifyBuff } from '@/shared/types/buff-classification'
 
 /** 从上下文中获取源参与者的队伍 */
 function getSourceTeam(ctx: TriggerExecutionContext): string | undefined {
@@ -195,7 +196,6 @@ export function applySilenceToAttacker(ctx: TriggerExecutionContext): void {
     {
       duration: 1,
       controlType: ControlType.SILENCE,
-      controlPriority: 50,
     },
     ctx.currentTurn ?? 0,
   )
@@ -208,7 +208,7 @@ export function cleanseRandomDebuff(ctx: TriggerExecutionContext): void {
   const buffs = ctx.buffSystem?.getBuffInstances(targetId) ?? []
   const debuffs = buffs.filter((b) => {
     const config = ctx.buffSystem?.getBuffConfigByInstanceId(b.id)
-    return config?.isDebuff === true && config?.dispellable !== false
+    return classifyBuff(config as Parameters<typeof classifyBuff>[0]).isNegative && config?.dispellable !== false
   })
   if (debuffs.length === 0) return
   const target = debuffs[Math.floor(Math.random() * debuffs.length)]

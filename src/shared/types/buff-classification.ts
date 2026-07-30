@@ -24,12 +24,13 @@ export type BuffDisplayType = 'buff' | 'debuff' | 'control'
 
 // ==================== 维度一：极性（UI 颜色） ====================
 
-export const BUFF_POLARITY = {
-  POSITIVE: 'positive',
-  NEGATIVE: 'negative',
-  NEUTRAL: 'neutral',
+export const BuffPolarity = {
+  POSITIVE: 'positive',   // 正面/积极
+  NEGATIVE: 'negative',   // 负面/消极
+  NEUTRAL: 'neutral',     // 中性/客观
+  MIXED: 'mixed'          // 混合/复杂
 } as const
-export type BuffPolarity = (typeof BUFF_POLARITY)[keyof typeof BUFF_POLARITY]
+export type BuffPolarity = (typeof BuffPolarity)[keyof typeof BuffPolarity]
 
 
 
@@ -137,8 +138,6 @@ export interface BuffClassificationInput {
   shield?: unknown
   /** 免疫标签 */
   immunities?: string[]
-  /** 是否为减益（遗留字段，被 polarity 取代） */
-  isDebuff?: boolean
   /** 极性：直接决定 UI 颜色（取代 isDebuff + category 优先级链的猜测） */
   polarity?: BuffPolarity | string
   /** 原子效果执行计划（从 ResolvedBuffConfig 传入） */
@@ -180,19 +179,17 @@ export function classifyBuff(
       category: StatusCategory.OTHER,
       facets: [],
       isNegative: false,
-      polarity: BUFF_POLARITY.NEUTRAL,
+      polarity: BuffPolarity.NEUTRAL,
     }
   }
 
   // 1. 自动派生 facets（从配置结构，不看 category，不看 tags）
   const facets = deriveBuffFacets(config)
 
-  // 2. 确定极性：polarity → isDebuff → category 猜测（三级回退）
+  // 2. 确定极性：polarity → category 猜测（两级回退）
   let polarity: BuffPolarity
   if (config.polarity) {
     polarity = config.polarity as BuffPolarity
-  } else if (config.isDebuff !== undefined) {
-    polarity = config.isDebuff ? BUFF_POLARITY.NEGATIVE : BUFF_POLARITY.POSITIVE
   } else {
     polarity = guessPolarity(config.category ?? null, facets)
   }
@@ -200,7 +197,7 @@ export function classifyBuff(
   // 3. 显示标签：透传 JSON 的 category，兜底取 facets[0]
   const category = asStatusCategory(config.category) ?? (facets.length > 0 ? facets[0] : StatusCategory.OTHER)
 
-  return { category, facets, polarity, isNegative: polarity === BUFF_POLARITY.NEGATIVE }
+  return { category, facets, polarity, isNegative: polarity === BuffPolarity.NEGATIVE }
 }
 
 /** 安全地将字符串转为 StatusCategory（仅透传有效值，无效返回 undefined） */
@@ -218,16 +215,16 @@ function guessPolarity(
   facets: StatusCategory[],
 ): BuffPolarity {
   // 从 facets 判
-  if (facets.includes(StatusCategory.CONTROL)) return BUFF_POLARITY.NEGATIVE
-  if (facets.includes(StatusCategory.IMMUNITY)) return BUFF_POLARITY.POSITIVE
-  if (facets.includes(StatusCategory.AURA)) return BUFF_POLARITY.POSITIVE
-  if (facets.includes(StatusCategory.SHIELD)) return BUFF_POLARITY.POSITIVE
+  if (facets.includes(StatusCategory.CONTROL)) return BuffPolarity.NEGATIVE
+  if (facets.includes(StatusCategory.IMMUNITY)) return BuffPolarity.POSITIVE
+  if (facets.includes(StatusCategory.AURA)) return BuffPolarity.POSITIVE
+  if (facets.includes(StatusCategory.SHIELD)) return BuffPolarity.POSITIVE
 
   // 从 rawCategory 判（仅当 facets 判断无法决定时）
-  if (rawCategory === StatusCategory.CONTROL || rawCategory === StatusCategory.DOT) return BUFF_POLARITY.NEGATIVE
-  if (rawCategory === StatusCategory.SHIELD || rawCategory === StatusCategory.AURA || rawCategory === StatusCategory.IMMUNITY) return BUFF_POLARITY.POSITIVE
+  if (rawCategory === StatusCategory.CONTROL || rawCategory === StatusCategory.DOT) return BuffPolarity.NEGATIVE
+  if (rawCategory === StatusCategory.SHIELD || rawCategory === StatusCategory.AURA || rawCategory === StatusCategory.IMMUNITY) return BuffPolarity.POSITIVE
 
-  return BUFF_POLARITY.NEUTRAL
+  return BuffPolarity.NEUTRAL
 }
 
 // ==================== 日志/显示工具函数 ====================

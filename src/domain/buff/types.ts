@@ -158,21 +158,15 @@ export interface BuffConfig {
   controlType: ControlType
 
   /**
-   * 控制效果优先级
-   * 数值越大优先级越高
-   */
-  controlPriority: number
-
-  /**
    * 效果标签
    */
-  tags?: AtomicEffectType[]
+  tags?: string[]
 
   /**
    * 免疫标签
    * 拥有对应标签的角色免疫此Buff
    */
-  immuneTags?: string[]
+  immunities?: string[]
 
   /**
    * 是否可驱散
@@ -193,22 +187,10 @@ export interface BuffConfig {
   isPermanent?: boolean
 
   /**
-   * 是否为负面效果
-   * true表示该增益效果为debuff,会影响角色属性
-   */
-  isDebuff?: boolean
-
-  /**
    * 增益效果参数配置
    * 用于存储额外的自定义参数,键值对形式
    */
   parameters?: Record<string, any>
-
-  /**
-   * 是否为正面效果
-   * true表示该增益效果为buff,会增强角色属性
-   */
-  isPositive?: boolean
 
   /**
    * 属性修饰符
@@ -244,20 +226,17 @@ export interface ScriptBuffConfig {
   maxStacks?: number
   cooldown?: number
   isPermanent?: boolean
-  isDebuff?: boolean
   stackRule?: StackRule
   controlType?: ControlType
-  controlPriority?: number
   iconPath?: string
   dispellable?: boolean
-  isPositive?: boolean
   parameters?: Record<string, any>
   /** 标记该脚本完全自包含——框架不再从 JSON 读取 attributes 应用修饰符 */
   selfContained?: boolean
   /** 效果标签（同 BuffConfig.tags） */
-  tags?: AtomicEffectType[]
-  /** 免疫标签（同 BuffConfig.immuneTags） */
-  immuneTags?: string[]
+  tags?: string[]
+  /** 免疫标签（同 BuffConfig.immunities） */
+  immunities?: string[]
   /** 是否级联移除子 Buff（同 BuffConfig.cascadeRemove） */
   cascadeRemove?: boolean
 }

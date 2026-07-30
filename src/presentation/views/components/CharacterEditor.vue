@@ -128,7 +128,7 @@ import { classifyBuff } from '@/shared/types/buff-classification'
 import { getAttrName } from '@/domain/attribute/types'
 import { ParticipantSideName } from '@/domain/battle/type/types'
 import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
-
+import { BuffPolarity } from '@/shared/types/buff-classification'
 // ==================== 类型 ====================
 
 export interface EditorBuffEntry {
@@ -137,7 +137,7 @@ export interface EditorBuffEntry {
   /** 主分类（facets[0]） */
   primaryFacet: string
   /** 极性 */
-  polarity: string
+  polarity: BuffPolarity
   /** 用户可调的回合数（0=永久） */
   duration: number
   effect: string

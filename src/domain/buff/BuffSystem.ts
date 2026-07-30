@@ -32,7 +32,8 @@ import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { EffectType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
-import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
+import { StatusCategory, StatusCategoryNames, StatusCode, getControlPriority } from '@/shared/types/status-meta'
+import { classifyBuff } from '@/shared/types/buff-classification'
 import { Counter } from '@/shared/utils/Counter'
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
@@ -165,7 +166,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
                 cooldown: 0,
                 stackRule: StackRule.LIMITED,
                 controlType: ControlType.NONE,
-                controlPriority: 0,
               },
               ctx.currentTurn ?? 0,
             )
@@ -462,19 +462,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         config.controlType ??
         scriptDefaultConfig?.controlType ??
         ControlType.NONE,
-      controlPriority:
-        config.controlPriority ?? scriptDefaultConfig?.controlPriority ?? 0,
       isPermanent:
         config.isPermanent ?? scriptDefaultConfig?.isPermanent ?? false,
-      isDebuff: config.isDebuff ?? scriptDefaultConfig?.isDebuff ?? false,
-      isPositive:
-        config.isPositive ?? scriptDefaultConfig?.isPositive ?? undefined,
       iconPath: config.iconPath ?? scriptDefaultConfig?.iconPath ?? undefined,
       dispellable:
         config.dispellable ?? scriptDefaultConfig?.dispellable ?? undefined,
-      immuneTags:
-        config.immuneTags ??
-        scriptDefaultConfig?.immuneTags ??
+      immunities:
+        config.immunities ??
+        scriptDefaultConfig?.immunities ??
         jsonConfig?.immunities ??
         undefined,
       tags:
@@ -490,7 +485,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         config.cascadeRemove ?? scriptDefaultConfig?.cascadeRemove ?? undefined,
     }
 
-    // ponytail: 免疫检查 — 若目标对该 buff 的 controlType / buffId / immuneTags 免疫则跳过施加
+    // ponytail: 免疫检查 — 若目标对该 buff 的 controlType / buffId / immunities 免疫则跳过施加
     const targetImmunities = this.characterImmunities.get(characterId)
     if (targetImmunities && targetImmunities.size > 0) {
       const controlTag =
@@ -501,8 +496,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       const buffTag = buffId.startsWith(BUFF_ID_PREFIX)
         ? buffId.slice(BUFF_ID_PREFIX.length)
         : buffId
-      // ponytail: 也检查 immuneTags（如 slow 通过 speed 属性实现而非 controlType）
-      const immuneTagMatch = resolvedConfig.immuneTags?.some((tag) =>
+      // ponytail: 也检查 immunities（如 slow 通过 speed 属性实现而非 controlType）
+      const immuneTagMatch = resolvedConfig.immunities?.some((tag) =>
         targetImmunities.has(tag.toLowerCase()),
       )
       if (
@@ -679,7 +674,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     if (context?.record) {
       context?.record.effects.push({
-        type: resolvedConfig.isDebuff ? EffectType.DEBUFF : EffectType.BUFF,
+        type: classifyBuff(resolvedConfig as Parameters<typeof classifyBuff>[0]).isNegative ? EffectType.DEBUFF : EffectType.BUFF,
         targetId: characterId,
         buffId: resolvedConfig.id,
         instanceId,
@@ -1142,13 +1137,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       if (!instance.isActive || instance.characterId !== characterId) return
       const config = instance.context.config
       if (config.controlType === ControlType.NONE) return
+      const priority = getControlPriority(config.controlType as StatusCode)
       if (
-        config.controlPriority > highestPriority ||
-        (config.controlPriority === highestPriority &&
+        priority > highestPriority ||
+        (priority === highestPriority &&
           (BuffSystem.CONTROL_TYPE_ORDER[config.controlType] ?? 0) >
             highestOrder)
       ) {
-        highestPriority = config.controlPriority
+        highestPriority = priority
         highestControlType = config.controlType
         highestOrder = BuffSystem.CONTROL_TYPE_ORDER[config.controlType] ?? 0
       }
@@ -1224,12 +1220,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   /**
    * 判断指定 buffId 是否为 debuff
-   * 按优先级：脚本静态 CONFIG → JSON 配置 → false
+   * 通过 classifyBuff 从配置结构推导
    */
   public isDebuff(buffId: string): boolean {
-    const scriptConfig = this.scriptRegistry.getDefaultConfig(buffId)
-    if (scriptConfig?.isDebuff !== undefined) return scriptConfig.isDebuff
     const jsonConfig = this.scriptRegistry.getBuffConfig(buffId)
-    return jsonConfig?.isDebuff ?? false
+    return classifyBuff(jsonConfig ?? undefined).isNegative
   }
 }

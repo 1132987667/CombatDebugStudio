@@ -1,6 +1,5 @@
 import type { IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
 import { ModifierTemplate } from '@/domain/skill/types'
 
 /**

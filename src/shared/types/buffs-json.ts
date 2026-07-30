@@ -1,3 +1,8 @@
+import { BuffPolarity } from '@/shared/types/buff-classification'
+import { StatusCategory, ControlKind } from '@/shared/types/status-meta'
+import { StackRule } from '@/domain/buff/types'
+
+
 /**
  * buffs.json 完整类型定义
  *
@@ -32,25 +37,35 @@ export interface BuffJsonTriggerEntry {
 export interface BuffJsonEntry {
   id: string
   name?: string
-  category?: string
+  category?: StatusCategory
   duration?: number
   maxStacks?: number
   aura?: BuffJsonAura
-  polarity?: string
+  polarity?: BuffPolarity
   description?: string
   attributes?: Record<string, string>
   triggers?: BuffJsonTriggerEntry[]
-  controlType?: string
-  controlPriority?: number
-  stackRule?: string
+  controlType?: ControlKind
+  stackRule?: StackRule
   tags?: string[]
   onAdd?: string
-  immunities?: string[]
-  statusType?: string
+
+  // --- 补全遗漏字段 ---
+  immunities?: string[] // 免疫标签
+  effects?: Array<{
+    // 原子效果系统配置
+    type: string
+    params?: Record<string, unknown>
+  }>
+  cascadeRemove?: boolean // 级联移除标记
+  isPermanent?: boolean // 是否永久
+  iconPath?: string // 图标路径
+  // ----------------------
+
   shield?: unknown
-  isDebuff?: boolean
   parameters?: Record<string, unknown>
   cooldown?: number
+  // 是否可驱散
   dispellable?: boolean
 }
 

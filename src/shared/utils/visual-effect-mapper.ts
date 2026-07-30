@@ -9,13 +9,21 @@
  */
 import { DamageCategory, type DamageCategory as DamageCategoryType } from '@/domain/skill/types'
 
+export const ImpactClass = {
+  FIRE: 'fire',
+  FROST: 'frost',
+  HEAL: 'heal',
+  SHIELD: 'shield'
+}
+export type ImpactClass = (typeof ImpactClass)[keyof typeof ImpactClass]
+
 export interface VisualEffectConfig {
   /** 主色调（CSS 色值） */
   color: string
   /** 命中特效 CSS 类名 */
-  impactClass: 'fire' | 'frost' | 'heal' | 'shield'
+  impactClass: ImpactClass
   /** 飞行物 CSS 类名 */
-  projectileClass: 'fire' | 'frost' | 'heal' | 'shield'
+  projectileClass: ImpactClass
 }
 
 /**
@@ -31,8 +39,8 @@ export function getVisualEffect(
   if (isHeal) {
     return {
       color: '#4caf50',
-      impactClass: 'heal',
-      projectileClass: 'heal',
+      impactClass: ImpactClass.HEAL,
+      projectileClass: ImpactClass.HEAL,
     }
   }
 
@@ -40,26 +48,26 @@ export function getVisualEffect(
     case DamageCategory.PHYSICAL:
       return {
         color: '#ff6b35',
-        impactClass: 'fire',
-        projectileClass: 'fire',
+        impactClass: ImpactClass.FIRE,
+        projectileClass: ImpactClass.FIRE,
       }
     case DamageCategory.ELEMENTAL:
       return {
         color: '#4cc9f0',
-        impactClass: 'frost',
-        projectileClass: 'frost',
+        impactClass: ImpactClass.FROST,
+        projectileClass: ImpactClass.FROST,
       }
     case DamageCategory.TRUE:
       return {
         color: '#ffffff',
-        impactClass: 'fire',
-        projectileClass: 'fire',
+        impactClass: ImpactClass.FIRE,
+        projectileClass: ImpactClass.FIRE,
       }
     default:
       return {
         color: '#ff6b35',
-        impactClass: 'fire',
-        projectileClass: 'fire',
+        impactClass: ImpactClass.FIRE,
+        projectileClass: ImpactClass.FIRE,
       }
   }
 }

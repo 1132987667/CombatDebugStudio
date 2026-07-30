@@ -79,7 +79,7 @@
                   </div>
                   <div class="source-value">
                     <span class="source-amount"
-                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -96,7 +96,7 @@
                   </div>
                   <div class="source-value">
                     <span class="source-amount"
-                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -113,7 +113,7 @@
                   </div>
                   <div class="source-value">
                     <span class="source-amount"
-                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -130,7 +130,7 @@
                   </div>
                   <div class="source-value">
                     <span class="source-amount"
-                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -167,6 +167,7 @@ import { Modifier, ModifierType, AttributeValueType, ModifierSourceType } from '
 import { ModifierSourceTypeNames } from '@/domain/attribute/types'
 import { getAttrMeta } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
+import { BuffPolarity } from '@/shared/types/buff-classification'
 
 // ===================== 区间模式类型导出 =====================
 export interface RangeModifierRow {

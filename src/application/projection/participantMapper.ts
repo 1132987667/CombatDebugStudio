@@ -14,6 +14,7 @@ import type { UIParticipantSnapshot } from '@/shared/types/projection'
 import type { BuffRawItem } from '@/shared/types/buff-display'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { classifyBuff } from '@/shared/types/buff-classification'
 
 /**
  * 将 BattleEntity 映射为 UI 快照
@@ -103,7 +104,7 @@ function buildBuffRawItems(
         description: config.description ?? '',
         remainingTurns: instance.remainingTurns,
         currentStacks: instance.currentStacks,
-        isDebuff: config.isDebuff === true,
+        isNegative: classifyBuff(config as Parameters<typeof classifyBuff>[0]).isNegative,
         attributes: config.attributes,
         effectLines: instance.effectLines ?? [],
         conditionState: instance.conditionState,
@@ -120,7 +121,7 @@ function buildBuffRawItems(
       result.push({
         id: s.id, buffId: s.id, name: s.name, description: '',
         remainingTurns: s.remainingTurns, currentStacks: 1,
-        isDebuff: s.type === 'debuff', effectLines: [], conditionState: undefined,
+        isNegative: s.type === 'debuff', effectLines: [], conditionState: undefined,
       })
     }
   }

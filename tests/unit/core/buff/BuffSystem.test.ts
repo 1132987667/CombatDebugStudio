@@ -39,7 +39,6 @@ function createTestBuffConfig(overrides?: Partial<BuffConfig>): BuffConfig {
     cooldown: 0,
     stackRule: StackRule.INDEPENDENT,
     controlType: ControlType.NONE,
-    controlPriority: 0,
     ...overrides,
   }
 }

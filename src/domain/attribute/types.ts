@@ -253,6 +253,32 @@ export const ATTRIBUTE_CODE = {
 
   // ========== 护盾属性 ==========
   shield: 'shield', // 当前护盾值
+
+  // ========== 免疫/抗性标记 ==========
+  slowImmune: 'slowImmune',
+  stunResist: 'stunResist',
+  knockbackResist: 'knockbackResist',
+  poisonResist: 'poisonResist',
+  bleedResist: 'bleedResist',
+  burnImmune: 'burnImmune',
+  debuffImmunityRate: 'debuffImmunityRate',
+
+  // ========== 特殊伤害/机制属性 ==========
+  demonDamage: 'demonDamage', // 对妖魔鬼怪伤害（区别于 damageToDemon 的通用加成）
+  skillCooldown: 'skillCooldown',
+  critDamageTaken: 'critDamageTaken',
+  burnDuration: 'burnDuration',
+  fireDamage: 'fireDamage', // 火属性伤害（区别于 fireSkillDmgBonus 的百分比加成）
+  fireDamageTaken: 'fireDamageTaken',
+  waterDamageTaken: 'waterDamageTaken',
+  lightningDamageTaken: 'lightningDamageTaken',
+  webSuccessRate: 'webSuccessRate',
+  trueDamageRate: 'trueDamageRate',
+  healReceived: 'healReceived', // 受到治疗效果加成
+  comboRate: 'comboRate',
+  counterRate: 'counterRate',
+  damageDealt: 'damageDealt', // 造成伤害（上下文值，用于技能计算）
+  damageTaken: 'damageTaken', // 受到伤害（上下文值，用于技能计算）
 } as const
 
 export type ATTRIBUTE_CODE =
@@ -711,6 +737,98 @@ export const AttributeMetaMap: Record<ATTRIBUTE_CODE, AttributeMeta> = {
     range: '0-100%',
     impact: '受到伤害时反弹部分伤害给攻击者',
     isPercentage: true,
+  },
+
+  // ========== 免疫/抗性标记 ==========
+  slowImmune: {
+    code: 'slowImmune', name: '减速免疫', displayName: '减速免疫',
+    description: '免疫减速效果', range: '0-1', impact: '非0时免疫减速', isPercentage: false,
+  },
+  stunResist: {
+    code: 'stunResist', name: '眩晕抗性', displayName: '眩晕抗性',
+    description: '抵抗眩晕效果', range: '0-1', impact: '非0时抵抗眩晕', isPercentage: false,
+  },
+  knockbackResist: {
+    code: 'knockbackResist', name: '击退抗性', displayName: '击退抗性',
+    description: '抵抗击退效果', range: '0-1', impact: '非0时抵抗击退', isPercentage: false,
+  },
+  poisonResist: {
+    code: 'poisonResist', name: '中毒抗性', displayName: '中毒抗性',
+    description: '抵抗中毒效果', range: '0-1', impact: '非0时抵抗中毒', isPercentage: false,
+  },
+  bleedResist: {
+    code: 'bleedResist', name: '流血抗性', displayName: '流血抗性',
+    description: '抵抗流血效果', range: '0-1', impact: '非0时抵抗流血', isPercentage: false,
+  },
+  burnImmune: {
+    code: 'burnImmune', name: '灼烧免疫', displayName: '灼烧免疫',
+    description: '免疫灼烧效果', range: '0-1', impact: '非0时免疫灼烧', isPercentage: false,
+  },
+  debuffImmunityRate: {
+    code: 'debuffImmunityRate', name: '减益免疫率', displayName: '减益免疫率',
+    description: '抵抗减益效果的概率', range: '0-100%', impact: '百分比抵抗减益', isPercentage: true,
+  },
+
+  // ========== 特殊伤害/机制属性 ==========
+  demonDamage: {
+    code: 'demonDamage', name: '妖魔鬼怪伤害', displayName: '妖魔鬼怪伤害',
+    description: '对妖魔鬼怪类型敌人的伤害加成', range: '0-99999', impact: '提高对妖魔的伤害', isPercentage: false,
+  },
+  skillCooldown: {
+    code: 'skillCooldown', name: '技能冷却', displayName: '技能冷却',
+    description: '技能冷却缩减（正数为减少，负数为增加）', range: '-99-99', impact: '影响技能冷却回合', isPercentage: false,
+  },
+  critDamageTaken: {
+    code: 'critDamageTaken', name: '受到暴击伤害', displayName: '受到暴击伤害',
+    description: '受到暴击时额外承受的伤害比例', range: '0-100%', impact: '提高暴击所受伤害', isPercentage: true,
+  },
+  burnDuration: {
+    code: 'burnDuration', name: '灼烧持续时间', displayName: '灼烧持续时间',
+    description: '灼烧效果的持续回合数', range: '0-99', impact: '增加或减少灼烧回合', isPercentage: false,
+  },
+  fireDamage: {
+    code: 'fireDamage', name: '火属性伤害', displayName: '火属性伤害',
+    description: '火属性伤害数值（区别于百分比加成）', range: '0-99999', impact: '提高火系技能伤害', isPercentage: false,
+  },
+  fireDamageTaken: {
+    code: 'fireDamageTaken', name: '受到火属性伤害', displayName: '受到火属性伤害',
+    description: '受到火属性伤害时额外承受的数值', range: '0-100%', impact: '提高所受火伤', isPercentage: true,
+  },
+  waterDamageTaken: {
+    code: 'waterDamageTaken', name: '受到水属性伤害', displayName: '受到水属性伤害',
+    description: '受到水属性伤害时额外承受的数值', range: '0-100%', impact: '提高所受水伤', isPercentage: true,
+  },
+  lightningDamageTaken: {
+    code: 'lightningDamageTaken', name: '受到雷属性伤害', displayName: '受到雷属性伤害',
+    description: '受到雷属性伤害时额外承受的数值', range: '0-100%', impact: '提高所受雷伤', isPercentage: true,
+  },
+  webSuccessRate: {
+    code: 'webSuccessRate', name: '蛛网成功率', displayName: '蛛网成功率',
+    description: '蛛网类技能成功概率', range: '0-100%', impact: '影响蛛网控制命中率', isPercentage: true,
+  },
+  trueDamageRate: {
+    code: 'trueDamageRate', name: '真实伤害率', displayName: '真实伤害率',
+    description: '造成真实伤害的比例，忽略防御和免伤', range: '0-100%', impact: '造成无视防御的伤害', isPercentage: true,
+  },
+  healReceived: {
+    code: 'healReceived', name: '受到治疗加成', displayName: '受到治疗加成',
+    description: '受到治疗效果的比例修正', range: '0-100%', impact: '影响所受治疗量', isPercentage: true,
+  },
+  comboRate: {
+    code: 'comboRate', name: '连击率', displayName: '连击率',
+    description: '普通攻击触发额外连击的概率', range: '0-100%', impact: '提高额外攻击次数', isPercentage: true,
+  },
+  counterRate: {
+    code: 'counterRate', name: '反击率', displayName: '反击率',
+    description: '受到攻击时触发反击的概率', range: '0-100%', impact: '提高反击触发几率', isPercentage: true,
+  },
+  damageDealt: {
+    code: 'damageDealt', name: '造成伤害', displayName: '造成伤害',
+    description: '本次攻击造成的伤害值（上下文值，用于技能链计算）', range: '0-99999', impact: '作为技能公式输入', isPercentage: false,
+  },
+  damageTaken: {
+    code: 'damageTaken', name: '受到伤害', displayName: '受到伤害',
+    description: '本次受到的伤害值（上下文值，用于技能链计算）', range: '0-99999', impact: '作为技能公式输入', isPercentage: false,
   },
 }
 

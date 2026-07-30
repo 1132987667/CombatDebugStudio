@@ -527,7 +527,7 @@
     "duration": -1,
     "effects": [{
       "type": "modifier",
-      "params": { "attributes": { "dmgReduction": "+15%" }, "perStack": true }
+      "params": { "attributes": { "damageReduction": "+15%" }, "perStack": true }
     }],
     "polarity": "positive",
     "description": "伤害减免+15%"
@@ -1163,7 +1163,7 @@
     "duration": 1,
     "effects": [{
       "type": "modifier",
-      "params": { "attributes": { "HIT_RATE": "-10" }, "perStack": true }
+      "params": { "attributes": { "hit": "-10" }, "perStack": true }
     }],
     "polarity": "negative",
     "description": "命中率-10"
@@ -1728,7 +1728,7 @@
     "dispellable": true,
     "effects": [{
       "type": "modifier",
-      "params": { "attributes": { "dodgeRate": "-3%" }, "perStack": true }
+      "params": { "attributes": { "dodge": "-3%" }, "perStack": true }
     }],
     "parameters": { "perStackValue": 3 }
   },
@@ -1743,7 +1743,7 @@
     "dispellable": true,
     "effects": [{
       "type": "modifier",
-      "params": { "attributes": { "hitRate": "-3%" }, "perStack": true }
+      "params": { "attributes": { "hit": "-3%" }, "perStack": true }
     }],
     "parameters": { "perStackValue": 3 }
   },
@@ -1854,7 +1854,7 @@
     "dispellable": true,
     "effects": [{
       "type": "modifier",
-      "params": { "attributes": { "dodgeRate": "+4%" }, "perStack": true }
+      "params": { "attributes": { "dodge": "+4%" }, "perStack": true }
     }],
     "parameters": { "perStackValue": 4 }
   },

@@ -1,7 +1,7 @@
 import type { IBuffScript, BuffEffectLine } from '@/domain/buff/types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TParams> {
@@ -40,7 +40,7 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
 
   protected addModifier(
     context: BuffContext,
-    attribute: string,
+    attribute: ATTRIBUTE_CODE,
     value: number,
     type: ModifierType
   ): void {

@@ -213,11 +213,9 @@ export class SkillExecutor {
     )
     // 记录治疗溢出量（按目标ID），供后续 overflow_shield 步骤使用
     if (overflow > 0) {
-      action.extra = action.extra || {}
-      const overflowMap =
-        (action.extra.healOverflow as Record<string, number> | undefined) || {}
-      overflowMap[healTarget.id] = (overflowMap[healTarget.id] || 0) + overflow
-      action.extra.healOverflow = overflowMap
+      action.extra ??= {}
+      action.extra.healOverflow ??= {}
+      action.extra.healOverflow[healTarget.id] = (action.extra.healOverflow[healTarget.id] || 0) + overflow
     }
     if (context?.token) {
       // 延迟模式 — 只记录治疗数值
@@ -592,9 +590,8 @@ export class SkillExecutor {
       })
     } else if (customType === 'overflow_shield') {
       // 回春护盾溢出转盾 — 从 action.extra.healOverflow 按目标ID查找溢出量
-      const overflowMap =
-        (action.extra?.healOverflow as Record<string, number> | undefined) || {}
-      const overflow = overflowMap[target.id] || 0
+      const overflowMap = action.extra?.healOverflow ?? {}
+      const overflow = overflowMap[target.id] ?? 0
       if (overflow > 0) {
         const config: BuffConfig = {
           id: 'buff_shield',
@@ -921,7 +918,7 @@ export class SkillExecutor {
     }
 
     // 标记复活请求，由 BattleExecutor 统一结算（修复 R2）
-    action.extra = action.extra || {}
+    action.extra ??= {}
     action.extra.revivedEntityId = target.id
     action.extra.reviveParams = params
 

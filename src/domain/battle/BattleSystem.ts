@@ -1334,13 +1334,13 @@ export class BattleSystem {
 
   public getEnabledAllyTeam(): BattleEntity[] {
     return Array.from(this.battleData.participants.values()).filter(
-      (p) => p.enabled && p.team === 'ally',
+      (p) => p.enabled && p.team === ParticipantSide.ALLY,
     )
   }
 
   public getEnabledEnemyTeam(): BattleEntity[] {
     return Array.from(this.battleData.participants.values()).filter(
-      (p) => p.enabled && p.team === 'enemy',
+      (p) => p.enabled && p.team === ParticipantSide.ENEMY,
     )
   }
 

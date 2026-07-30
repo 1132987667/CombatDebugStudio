@@ -40,7 +40,7 @@ export function convertToBattleState(battleData: BattleData): BattleState {
     actions: [...battleData.actions],
     turnOrder: [...battleData.turnOrder],
     currentTurn: battleData.currentTurn,
-    battleState: battleData.battleState!,
+    battleState: battleData.battleState,
     startTime: battleData.startTime,
     endTime: battleData.endTime,
     winner: battleData.winner,

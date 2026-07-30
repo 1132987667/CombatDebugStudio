@@ -4,7 +4,7 @@ import {
 } from '@/domain/buff/types'
 import { buffsData } from '@/shared/types/buffs-json'
 import effectsData from '@configs/effects/effects.json'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { LogLevel } from '@/shared/types/battle-log'
 import { AtomicEffectRegistry } from '@/domain/buff/atomic/AtomicEffectRegistry'
@@ -123,9 +123,36 @@ export class BuffScriptRegistry {
 
   /** 加载时校验：标记无脚本、无 effectPlan 的 Buff */
   private validateBuffConfigs(): void {
+    const knownCodes = Object.values(ATTRIBUTE_CODE) as string[]
+
     for (const [buffId] of this.buffConfigs) {
       const raw = this.buffConfigs.get(buffId)
       if (!raw) continue
+
+      // 校验 raw.attributes 中的属性名是否在 ATTRIBUTE_CODE 中
+      if (raw.attributes) {
+        for (const key of Object.keys(raw.attributes)) {
+          if (!knownCodes.includes(key)) {
+            console.warn(
+              `[BuffConfigValidator] ${buffId}: raw.attributes 中的 "${key}" 不在 ATTRIBUTE_CODE 中，修饰符将静默失效`,
+            )
+          }
+        }
+      }
+
+      // 校验 effects[].params.attributes 中的属性名
+      if (raw.effects) {
+        for (const effect of raw.effects) {
+          const attrs = (effect.params?.attributes ?? {}) as Record<string, string>
+          for (const key of Object.keys(attrs)) {
+            if (!knownCodes.includes(key)) {
+              console.warn(
+                `[BuffConfigValidator] ${buffId}: effects[].params.attributes 中的 "${key}" 不在 ATTRIBUTE_CODE 中，修饰符将静默失效`,
+              )
+            }
+          }
+        }
+      }
 
       // 检测旧字段：仍在用 attributes/immunities/aura/shield 但没有 effects[]
       // NOTE: controlType 不是旧字段——BuffSystem 直接从 config.controlType 读取控制查询

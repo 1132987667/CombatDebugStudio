@@ -4,7 +4,7 @@ import type {
   BattleEntity,
   BattleState,
 } from '@/domain/battle/type/types'
-import { BattleStatus, ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
+import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
 import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { container } from '@/infrastructure/di/Container'
 import {
@@ -235,12 +235,7 @@ export const useBattleStore = defineStore('battle', () => {
       .map((p) => shallowReactive(p))
     currentTurn.value = battleService.value!.getCurrentTurn()
     maxTurns.value = battleService.value!.getMaxTurns?.() ?? 999
-    const battleState = battleService.value!.getBattleState()
-    isBattleActive.value =
-      battleState?.battleState != null &&
-      battleState.battleState !== BattleStatus.ENDED &&
-      battleState.battleState !== BattleStatus.CREATED &&
-      battleState.battleState !== BattleStatus.PREPARING
+    isBattleActive.value = battleService.value!.getIsBattleActive()
     isPaused.value = battleService.value!.getIsPaused()
 
     // 刷新投影层快照（首次调用时自动初始化）

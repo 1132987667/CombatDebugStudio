@@ -45,6 +45,7 @@ import {
   AttackType,
   DamageCategory,
   EffectType,
+  StepEffectType,
   convertSkillConfigToSkill,
 } from '@/domain/skill/types'
 import {
@@ -847,13 +848,16 @@ export class BattleExecutor {
 
   /**
    * 构造普通攻击的技能步骤配置
+   * NOTE: 此步骤不走 SkillExecutor.executeStep（直接传入 damageCalculator.calculateDamage），
+   *       因此 type 字段仅用于识别，不参与 switch 调度。值使用 StepEffectType.DEAL_DAMAGE
+   *       而非 EffectType.DAMAGE 以满足 SkillStep.type 的类型约束。
    */
   buildNormalAttackStep(
     source: BattleEntity,
     targetId: string,
   ): ExtendedSkillStep {
     return {
-      type: EffectType.DAMAGE,
+      type: StepEffectType.DEAL_DAMAGE,
       id: 'normal_attack',
       targetId,
       damageCategory: DamageCategory.PHYSICAL,

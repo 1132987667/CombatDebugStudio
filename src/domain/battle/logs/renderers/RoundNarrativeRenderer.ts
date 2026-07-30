@@ -20,7 +20,7 @@ import type {
   DamageBreakdown,
 } from '@/domain/battle/combat-record'
 import type { LogSegment, BattleLogEntry } from '@/shared/types/battle-log'
-import { DamageSource } from '@/domain/battle/type/types'
+import { ParticipantSide, DamageSource } from '@/domain/battle/type/types'
 import type { NarrativeBlock as BattleLogNarrativeBlock } from '@/shared/types/battle-log'
 import { skillSegment } from '@/shared/utils/log-segment-factory'
 import type { SkillConfigLookup } from '@/shared/utils/log-segment-factory'
@@ -365,7 +365,7 @@ export class RoundNarrativeRenderer {
     }
     if (meta.hpBefore != null && meta.hpAfter != null) {
       if (meta.entityName) {
-        const prefix = meta.entityFaction === 'ally' ? '[友方]' : '[敌方]'
+        const prefix = meta.entityFaction === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
         segs.push({
           text: ` ${prefix}${meta.entityName} `,
           classStr: 'log-entity',
@@ -814,7 +814,7 @@ export class RoundNarrativeRenderer {
       const name = hp.name ?? id
       const line = `${name} ${hp.current}/${hp.max}${warning}`
       const side = this.hpTracker.getSide(id)
-      if (side === 'enemy') {
+      if (side === ParticipantSide.ENEMY) {
         enemies.push(line)
       } else {
         allies.push(line)

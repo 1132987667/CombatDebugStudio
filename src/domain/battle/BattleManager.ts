@@ -764,6 +764,13 @@ export class BattleManager {
   }
 
   /**
+   * 获取战斗是否活跃
+   */
+  getIsBattleActive(): boolean {
+    return this.battleStateManager.getIsBattleActive()
+  }
+
+  /**
    * 获取战斗ID
    * @returns 战斗ID
    */

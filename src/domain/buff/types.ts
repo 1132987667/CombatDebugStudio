@@ -1,7 +1,6 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
-import { ControlKind } from '@/shared/types/status-meta'
 import {
   ConditionState,
 } from '@/shared/types/buff-display'
@@ -105,7 +104,21 @@ export enum StackRule {
 export const ControlType = {
   /** 无控制效果 */
   NONE: 'none',
-  ...ControlKind,
+  STUN: 'stun',
+  SILENCE: 'silence',
+  FREEZE: 'freeze',
+  SLEEP: 'sleep',
+  BIND: 'bind',
+  CONFUSION: 'confusion',
+  FEAR: 'fear',
+  CHARM: 'charm',
+  TAUNT: 'taunt',
+  PETRIFY: 'petrify',
+  IMMOBILIZE: 'immobilize',
+  DISARM: 'disarm',
+  POLYMORPH: 'polymorph',
+  IMPRISON: 'imprison',
+  GUIXU: 'guixu',
 } as const
 export type ControlType = (typeof ControlType)[keyof typeof ControlType]
 

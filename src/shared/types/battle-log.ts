@@ -7,6 +7,7 @@ import {
   BattleAction,
   ActionTypes,
   ActionResultType,
+  ParticipantSide,
 } from '@/domain/battle/type/types'
 
 /**
@@ -256,7 +257,7 @@ export interface LogSegment {
   /** 片段语义类型（可选）：指导渲染器按哪种 HTML 组件展示 */
   kind?: LogSegmentKind
   /** 阵营（kind=entity 时使用） */
-  faction?: 'ally' | 'enemy'
+  faction?: ParticipantSide
 }
 
 /**
@@ -728,7 +729,7 @@ export function battleActionToLogEntry(
   } else {
     const sourceParticipant = participants.get(action.sourceId)
     if (sourceParticipant) {
-      const prefix = sourceParticipant.team === 'ally' ? '[友方]' : '[敌方]'
+      const prefix = sourceParticipant.team === ParticipantSide.ALLY ? '[友方]' : '[敌方]'
       sourceName = `${prefix}${sourceParticipant.name}`
     }
   }
@@ -745,12 +746,12 @@ export function battleActionToLogEntry(
   const sourceIsAlly =
     options?.sourceIsAlly ??
     (action.sourceId !== 'system'
-      ? participants.get(action.sourceId)?.team === 'ally'
+      ? participants.get(action.sourceId)?.team === ParticipantSide.ALLY
       : false)
   const targetIsAlly =
     options?.targetIsAlly ??
     (action.targetId
-      ? participants.get(action.targetId)?.team === 'ally'
+      ? participants.get(action.targetId)?.team === ParticipantSide.ALLY
       : undefined)
 
   const { category, level, segments } = generateLogSegments(

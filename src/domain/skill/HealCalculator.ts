@@ -5,6 +5,7 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { STATUS_CODE } from '@/shared/types/status-meta'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { processExtraValues, processTargetModifiers } from '@/domain/skill/calculation-utils'
 
 interface HealCalculationStep {
   step: string
@@ -39,44 +40,23 @@ export class HealCalculator {
       heal = skillStep.calculation.baseValue
       // extraValues 处理
       if (skillStep.calculation.extraValues) {
-        for (const extra of skillStep.calculation.extraValues) {
-          let extraValue: number
-          if (
-            extra.attribute === 'damageDealt' ||
-            extra.attribute === 'damageTaken'
-          ) {
-            extraValue = (context?.damage ?? 0) * extra.ratio
-          } else {
-            extraValue =
-              this.getAttrValue(source, extra.attribute as ATTRIBUTE_CODE) *
-              extra.ratio
-          }
-          heal += extraValue
-          this.logCalculation(
-            'extra_value',
-            extraValue,
-            `${extra.attribute} 额外加成: +${extraValue}`,
-          )
-        }
+        const { total } = processExtraValues(
+          skillStep.calculation.extraValues,
+          (attr) => {
+            if (attr === 'damageDealt' || attr === 'damageTaken') {
+              return context?.damage ?? 0
+            }
+            return source.getAttribute(attr as ATTRIBUTE_CODE) || 0
+          },
+        )
+        heal += total
       }
     }
 
     // targetModifiers 处理
     if (skillStep.targetModifiers) {
-      Object.entries(skillStep.targetModifiers).forEach(([attr, modifier]) => {
-        const targetAttrValue = this.getAttrValue(
-          target,
-          attr as ATTRIBUTE_CODE,
-        )
-        const modifierEffect = (modifier * targetAttrValue) / 100
-        heal *= 1 + modifierEffect
-        heal = Math.floor(heal)
-        this.logCalculation(
-          'target_modifier',
-          modifierEffect,
-          `${attr} 目标修正: x${1 + modifierEffect}`,
-        )
-      })
+      const { result } = processTargetModifiers(skillStep.targetModifiers, target, heal)
+      heal = result
     }
 
     // 治疗上限: 不超过目标最大气血值
@@ -90,11 +70,11 @@ export class HealCalculator {
       // ② 减益缩减（debuff降低效果）= 在下方计算，反映在最终 heal 值
       // 两者互不抵消，各自反映一个不同的游戏机制
       overflow = heal - healCap
-      this.logCalculation(
-        'heal_cap',
-        healCap,
-        `治疗上限限制: ${heal} → ${healCap}，溢出: ${overflow}`,
-      )
+      this.calculationLogs.push({
+        step: 'heal_cap',
+        value: healCap,
+        description: `治疗上限限制: ${heal} → ${healCap}，溢出: ${overflow}`,
+      })
       heal = healCap
     }
 
@@ -102,11 +82,11 @@ export class HealCalculator {
     const debuffEffect = this.calculateDebuffEffect(target, buffSystem)
     if (debuffEffect > 0) {
       heal = Math.floor(heal * (1 - debuffEffect))
-      this.logCalculation(
-        'debuff',
-        debuffEffect,
-        `减益效果: -${Math.round(debuffEffect * 100)}%`,
-      )
+      this.calculationLogs.push({
+        step: 'debuff',
+        value: debuffEffect,
+        description: `减益效果: -${Math.round(debuffEffect * 100)}%`,
+      })
     }
 
     heal = Math.max(0, Math.floor(heal))
@@ -164,24 +144,5 @@ export class HealCalculator {
       !skillStep.duration ||
       skillStep.duration <= 1
     )
-  }
-
-  private getAttrValue(
-    participant: BattleEntity,
-    attr: ATTRIBUTE_CODE,
-  ): number {
-    try {
-      return participant.getAttribute(attr) || 0
-    } catch {
-      return 0
-    }
-  }
-
-  private logCalculation(
-    step: string,
-    value: number,
-    description: string,
-  ): void {
-    this.calculationLogs.push({ step, value, description })
   }
 }

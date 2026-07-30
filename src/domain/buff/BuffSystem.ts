@@ -776,11 +776,22 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   /**
    * 获取 Buff 配置中的 aura 光环信息（供 BattleSystem 初始化时分发 allies/enemies）
+   * NOTE: 旧字段 `aura` 已逐步迁移至 effectPlan（`AtomicEffectType.AURA`），
+   *       此方法保留用于兼容尚未迁移的 JSON 配置。
    */
   public getBuffAuraConfig(buffId: string): BuffAuraConfig | undefined {
-    // HACK: BuffJsonAura 与 BuffAuraConfig 结构相同（仅 type 字段为 string 而非 ModifierType），
-    // 运行时值完全一致，故直接断言。
-    return this.scriptRegistry.getBuffConfig(buffId)?.aura as BuffAuraConfig | undefined
+    const raw = this.scriptRegistry.getBuffConfig(buffId)
+    if (!raw?.aura) return undefined
+    // HACK: BuffJsonAuraModifier.type 是 string，ModifierType 也是 string 字面量，
+    // 运行时值一致（如 'ADDITIVE' | 'MULTIPLICATIVE' | 'PERCENTAGE' | 'FINAL'）。
+    // 此处从 `as` 断言改为显式映射，隔离边界。
+    return {
+      targetSelector: raw.aura.targetSelector as BuffAuraConfig['targetSelector'],
+      modifiers: raw.aura.modifiers.map((m) => ({
+        ...m,
+        type: m.type as ModifierType,
+      })),
+    }
   }
 
   /**
@@ -1092,7 +1103,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   /** 获取最高优先级的控制效果 */
   public getHighestPriorityControlEffect(characterId: string): ControlType {
     let highestPriority = -1
-    let highestControlType = ControlType.NONE
+    let highestControlType: ControlType = ControlType.NONE
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
       const config = instance.context.config

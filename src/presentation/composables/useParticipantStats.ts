@@ -5,7 +5,7 @@
  * 描述：提供便捷的属性访问和格式化功能
  */
 
-import { computed, type ComputedRef } from 'vue'
+import { computed, ref, watchEffect, type ComputedRef } from 'vue'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type {
   AttributeValue,
@@ -118,45 +118,51 @@ export function useParticipantStats(
     return getAttribute(type)?.breakdown || null
   }
 
+  // 显式追踪 statsVersion 变更驱动 computed 重新求值
+  const statsVersionRef = ref(0)
+  watchEffect(() => {
+    statsVersionRef.value = participant.statsVersion
+  })
+
   // 常用属性的计算属性（使用官方 ATTRIBUTE_CODE 标准编码）
   const currentHealth = computed(() => {
-    void participant.statsVersion
+    statsVersionRef.value
     return getFormatted(ATTRIBUTE_CODE.currentHealth)
   })
   const maxHealth = computed(() => {
-    void participant.statsVersion
+    statsVersionRef.value
     return getFormatted(ATTRIBUTE_CODE.maxHealth)
   })
   const energy = computed(() => {
-    void participant.statsVersion
+    statsVersionRef.value
     return getFormatted(ATTRIBUTE_CODE.currentEnergy)
   })
   const maxEnergy = computed(() => {
-    void participant.statsVersion
+    statsVersionRef.value
     return getFormatted(ATTRIBUTE_CODE.maxEnergy)
   })
   const attack = computed(() => {
-    void participant.statsVersion
+    statsVersionRef.value
     return getFormatted(ATTRIBUTE_CODE.attack)
   })
   const defense = computed(() => {
-    void participant.statsVersion
+    statsVersionRef.value
     return getFormatted(ATTRIBUTE_CODE.defense)
   })
   const speed = computed(() => {
-    void participant.statsVersion
+    statsVersionRef.value
     return getFormatted(ATTRIBUTE_CODE.speed)
   })
   const critRate = computed(() => {
-    void participant.statsVersion
+    statsVersionRef.value
     return getFormatted(ATTRIBUTE_CODE.critRate)
   })
   const critDamage = computed(() => {
-    void participant.statsVersion
+    statsVersionRef.value
     return getFormatted(ATTRIBUTE_CODE.critDamage)
   })
   const damageReduction = computed(() => {
-    void participant.statsVersion
+    statsVersionRef.value
     return getFormatted(ATTRIBUTE_CODE.damageReduction)
   })
 

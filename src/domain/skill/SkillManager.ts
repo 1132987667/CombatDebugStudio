@@ -1,4 +1,5 @@
-import type { SkillConfig, SkillStep } from '@/domain/skill/types'
+import type { SkillConfig, SkillStep, ExtendedSkillStep } from '@/domain/skill/types'
+import { EffectType } from '@/domain/skill/types'
 import {
   BattleActionHelper,
   type BattleAction,
@@ -310,6 +311,15 @@ export class SkillManager {
     })
 
     const steps = config.steps || []
+    // HACK: 校验 DEAL_DAMAGE/HEAL 步骤的 calculation 配置完整性
+    for (const step of steps) {
+      if (
+        (step.type === EffectType.DEAL_DAMAGE || step.type === EffectType.HEAL) &&
+        !(step as ExtendedSkillStep).calculation
+      ) {
+        console.warn(`[SkillManager] 技能 ${skillId} 步骤缺少 calculation 配置`, step)
+      }
+    }
     for (const step of steps) {
       const ctx: CalculationContext = {
         skillStep: step,

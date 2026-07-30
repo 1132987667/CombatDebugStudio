@@ -1,6 +1,6 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 
 export class DodgeUpBuff extends BaseBuffScript {
   public static readonly BUFF_ID = 'buff_dodge_up'
@@ -10,7 +10,7 @@ export class DodgeUpBuff extends BaseBuffScript {
     
     // 提升闪避率
     const dodgeBonus = this.getConfigValue(context, 'dodgeBonus', 0.2)
-    this.addModifier(context, 'dodgeRate', dodgeBonus, ModifierType.ADDITIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.dodge, dodgeBonus, ModifierType.ADDITIVE)
     
     context.setVariable('dodgeBonus', dodgeBonus)
   }

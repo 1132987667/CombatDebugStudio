@@ -179,6 +179,11 @@ export class BattleService {
     return this.battleManager.isPaused()
   }
 
+  /** 获取战斗是否活跃（从 BattleStateManager 读取） */
+  getIsBattleActive(): boolean {
+    return this.battleManager.getIsBattleActive()
+  }
+
   togglePause(): void {
     this.battleManager.togglePause()
   }

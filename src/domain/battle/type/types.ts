@@ -367,7 +367,17 @@ export interface BattleAction {
   effects: BattleEffect[]
 
   /** 扩展数据（步骤间传递的临时数据，如治疗溢出量） */
-  extra?: Record<string, unknown>
+  extra?: BattleActionExtra
+}
+
+/** 步骤间扩展数据，由 SkillExecutor 在执行阶段写入 */
+export interface BattleActionExtra {
+  /** 治疗溢出量映射 { entityId: overflow } */
+  healOverflow?: Record<string, number>
+  /** 被复活的实体 ID */
+  revivedEntityId?: string
+  /** 复活参数 */
+  reviveParams?: import('@/domain/skill/types').ReviveStepParams
 }
 
 export const BattleActionHelper = {
@@ -442,6 +452,8 @@ export const BattleActionHelper = {
 
   /**
    * 创建技能动作
+   * NOTE: extra 字段不在创建时传入——SkillExecutor 在执行阶段（如 executeHeal/executeRevive）
+   *       通过 action.extra ??= {} 写入 healOverflow/revivedEntityId 等运行时副产品。
    */
   createSkill(options: {
     sourceId: string
@@ -653,7 +665,7 @@ export interface BattleData {
   /** 战斗速度（1-10） */
   battleSpeed: number
   /** 战斗状态 */
-  battleState?: BattleStatus
+  battleState: BattleStatus
   /** 回合状态 */
   roundState?: RoundStatus
   /** 是否开启自动战斗 */

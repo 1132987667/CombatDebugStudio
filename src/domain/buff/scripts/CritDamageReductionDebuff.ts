@@ -1,6 +1,6 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 
 /**
  * 暴击伤害降低debuff脚本
@@ -14,7 +14,7 @@ export class CritDamageReductionDebuff extends BaseBuffScript {
     
     // 降低暴击伤害
     const critDamageReduction = this.getConfigValue(context, 'critDamageReduction', 0.2) // 默认降低20%暴击伤害
-    this.addModifier(context, 'CRIT_DAMAGE', -critDamageReduction, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.critDamage, -critDamageReduction, ModifierType.MULTIPLICATIVE)
     
     // 记录初始暴击伤害降低值
     context.setVariable('critDamageReduction', critDamageReduction)
@@ -35,8 +35,8 @@ export class CritDamageReductionDebuff extends BaseBuffScript {
       
       if (newReduction < currentReduction) {
         // 更新暴击伤害降低效果
-        context.removeModifiers('CRIT_DAMAGE')
-        this.addModifier(context, 'CRIT_DAMAGE', -newReduction, ModifierType.MULTIPLICATIVE)
+        context.removeModifiers(ATTRIBUTE_CODE.critDamage)
+        this.addModifier(context, ATTRIBUTE_CODE.critDamage, -newReduction, ModifierType.MULTIPLICATIVE)
         context.setVariable('critDamageReduction', newReduction)
         this.log(context, `暴击伤害逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
       }
@@ -52,8 +52,8 @@ export class CritDamageReductionDebuff extends BaseBuffScript {
     const newReduction = Math.min(currentReduction + refreshBonus, 0.5) // 最大降低50%
     
     // 更新效果
-    context.removeModifiers('CRIT_DAMAGE')
-    this.addModifier(context, 'CRIT_DAMAGE', -newReduction, ModifierType.MULTIPLICATIVE)
+    context.removeModifiers(ATTRIBUTE_CODE.critDamage)
+    this.addModifier(context, ATTRIBUTE_CODE.critDamage, -newReduction, ModifierType.MULTIPLICATIVE)
     context.setVariable('critDamageReduction', newReduction)
     
     this.log(context, `暴击伤害降低提升至 ${(newReduction * 100).toFixed(1)}%`)

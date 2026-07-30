@@ -66,22 +66,22 @@ export class BuffContext {
   }
 
   public addModifier(
-    attribute: string,
+    attribute: ATTRIBUTE_CODE,
     value: number,
     type: ModifierType,
   ): void {
     const system = this.buffSystem
     if (!system) { console.warn('BuffSystem not injected, cannot add modifier'); return }
     const modifierStack = system.getModifierStack(this.characterId)
-    modifierStack.addModifier(this.instanceId, attribute as ATTRIBUTE_CODE, value, type)
-    if (attribute === 'speed') console.log(`Speed modifier added for character ${this.characterId}`)
+    modifierStack.addModifier(this.instanceId, attribute, value, type)
+    if (attribute === ATTRIBUTE_CODE.speed) console.log(`Speed modifier added for character ${this.characterId}`)
   }
 
-  public removeModifiers(attribute?: string): void {
+  public removeModifiers(attribute?: ATTRIBUTE_CODE): void {
     const system = this.buffSystem
     if (!system) { console.warn('BuffSystem not injected, cannot remove modifiers'); return }
     const modifierStack = system.getModifierStack(this.characterId)
-    modifierStack.removeModifier(this.instanceId, attribute as ATTRIBUTE_CODE | undefined)
+    modifierStack.removeModifier(this.instanceId, attribute)
   }
 
   /**

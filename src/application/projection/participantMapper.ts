@@ -12,7 +12,7 @@
 
 import type { UIParticipantSnapshot } from '@/shared/types/projection'
 import type { BuffRawItem } from '@/shared/types/buff-display'
-import type { BattleEntity } from '@/domain/battle/type/types'
+import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { classifyBuff } from '@/shared/types/buff-classification'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
@@ -41,7 +41,7 @@ export function participantToSnapshot(
     id: entity.id,
     name: entity.name,
     level: entity.level,
-    team: entity.team as 'ally' | 'enemy',
+    team: entity.team,
 
     // 核心数值（与领域层字段名统一）
     currentHealth: hp,

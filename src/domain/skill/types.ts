@@ -9,7 +9,6 @@ import type {
   ModifierType,
   ModifierSourceType,
 } from '@/domain/attribute/types'
-import { ControlKind } from '@/shared/types/status-meta'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 
 /**
@@ -290,39 +289,59 @@ export enum CostType {
 }
 
 /**
- * 技能步骤类型枚举（扩展版）
- * 定义技能执行步骤的所有可能类型
+ * 技能步骤类型（配置层）
+ * 仅包含可作为 SkillStep.type 的合法值
  */
+export const StepEffectType = {
+  DEAL_DAMAGE: 'deal_damage',
+  HEAL: 'heal',
+  APPLY_BUFF: 'apply_buff',
+  MODIFY_ATTRIBUTE: 'modify_attribute',
+  GAIN_ENERGY: 'gain_energy',
+  REMOVE_DEBUFF: 'remove_debuff',
+  CLEANSE: 'cleanse',
+  SHIELD: 'shield',
+  REFLECT: 'reflect',
+  DRAIN: 'drain',
+  REVIVE: 'revive',
+  CUSTOM: 'custom',
+  STUN: 'stun',
+  SILENCE: 'silence',
+} as const
+export type StepEffectType = (typeof StepEffectType)[keyof typeof StepEffectType]
+
+/**
+ * 战斗效果结果类型（运行时）
+ * 用于 BattleEffect.type 分类
+ */
+export const ActionResultType = {
+  DAMAGE: 'damage',
+  HEAL: 'heal',
+  BUFF: 'buff',
+  DEBUFF: 'debuff',
+  MISS: 'miss',
+  CRITICAL: 'critical',
+  STATUS: 'status',
+  SHIELD: 'shield',
+  DRAIN: 'drain',
+  REFLECT: 'reflect',
+} as const
+export type ActionResultType = (typeof ActionResultType)[keyof typeof ActionResultType]
+
+/** @deprecated 逐步迁移到 StepEffectType / ActionResultType */
 export const EffectType = {
-  DEAL_DAMAGE: 'deal_damage', // 造成伤害（结构化）
-  DAMAGE: 'damage', // 伤害效果（结果分类）
-  HEAL: 'heal', // 治疗目标（结构化）
-  APPLY_BUFF: 'apply_buff', // 施加 Buff/Debuff（通过 BuffId 引用）
-  BUFF: 'buff', // 增益效果（结果分类）
-  MODIFY_ATTRIBUTE: 'modify_attribute', // 直接修改属性（仅在被动技能初始化时由 GameDataProcessor 处理）
-  GAIN_ENERGY: 'gain_energy', // 获取能量（R6: 资源变动专用）
-  // ponytail: 以下步骤类型为预留定义，当前零个技能配置使用，待需要时在 SkillExecutor 中实现
-  AURA: 'aura', // 光环效果
-  REMOVE_BUFF: 'remove_buff', // 移除增益效果
-  REMOVE_DEBUFF: 'remove_debuff', // 移除减益效果
-  CLEANSE: 'cleanse', // 净化（移除所有负面效果）
-  DISPEL: 'dispel', // 驱散（移除所有正面效果）
-  KNOCKBACK: 'knockback', // 击退
-  PULL: 'pull', // 拉扯
-  TELEPORT: 'teleport', // 传送
-  SUMMON: 'summon', // 召唤
-  TRANSFORM: 'transform', // 变身
-  SHIELD: 'shield', // 护盾（有壳实现，无技能使用）
-  REFLECT: 'reflect', // 反射
-  DRAIN: 'drain', // 吸取
-  REVIVE: 'revive', // 复活
-  MISS: 'miss', // 未命中
-  STATUS: 'status', // 状态效果
-  CRITICAL: 'critical', // 暴击
-  SPECIAL: 'special', // 特殊效果
-  DEBUFF: 'debuff', // 减益效果
-  CUSTOM: 'custom', // 自定义效果（通过自定义脚本实现）
-  ...ControlKind,
+  ...StepEffectType,
+  ...ActionResultType,
+  // @deprecated 以下值仅保留在 EffectType 中以供向后兼容，当前没有任何代码使用
+  AURA: 'aura',
+  REMOVE_BUFF: 'remove_buff',
+  DISPEL: 'dispel',
+  KNOCKBACK: 'knockback',
+  PULL: 'pull',
+  TELEPORT: 'teleport',
+  SUMMON: 'summon',
+  TRANSFORM: 'transform',
+  SPECIAL: 'special',
 } as const
 export type EffectType = (typeof EffectType)[keyof typeof EffectType]
 
@@ -334,7 +353,7 @@ export interface SkillStep {
   /**
    * 步骤类型
    */
-  type: EffectType
+  type: StepEffectType
 
   // ========== 新版字段 ==========
   /**
@@ -552,7 +571,7 @@ export function convertSkillConfigToSkill(
   const skill: Skill = {
     id: config.id,
     name: config.name,
-    type: config.skillType!,
+    type: config.skillType ?? SkillType.SMALL,
     energyCost: config.energyCost || 0,
     cooldown: config.cooldown || 0,
     lastUsed,

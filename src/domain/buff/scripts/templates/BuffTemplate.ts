@@ -1,8 +1,8 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import { AttributeBuffTemplate } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
 import type { AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 
 /**
  * 持续伤害debuff模板
@@ -93,7 +93,7 @@ export abstract class StatusEffectTemplate extends BaseBuffScript {
   protected abstract getEffectName(): string
   protected abstract getEffectDescription(): string
   protected abstract getAffectedAttributes(): Array<{
-    name: string
+    name: ATTRIBUTE_CODE
     modifier: number
     type: ModifierType
   }>
@@ -203,7 +203,7 @@ export class BuffTemplateGenerator {
     effectName: string,
     effectDescription: string,
     affectedAttributes: Array<{
-      name: string
+      name: ATTRIBUTE_CODE
       modifier: number
       type: ModifierType
     }>,

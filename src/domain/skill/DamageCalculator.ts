@@ -9,6 +9,7 @@ import type { BattleEntity, StepExecutionContext } from '@/domain/battle/type/ty
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import type { ExtendedSkillStep } from '@/domain/skill/types'
 import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
+import { processExtraValues, processTargetModifiers, resolveAttributeValue } from '@/domain/skill/calculation-utils'
 import { LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
 
@@ -176,36 +177,27 @@ export class DamageCalculator {
 
     // extraValues 处理 — 从 skillStep.calculation.extraValues 中读取
     if (skillStep.calculation?.extraValues) {
-      for (const extra of skillStep.calculation.extraValues) {
-        // ponytail: maxHealth 和 currentHealth 优先从目标读取（毒素浸染、嗜血赌徒等技能）
-        const isTargetAttr =
-          extra.attribute === 'maxHealth' || extra.attribute === 'currentHealth'
-        const attrValue =
-          extra.attribute === ATTRIBUTE_CODE.attack
-            ? source.getRandomAttackDamage()
-            : getAttrVal(
-                isTargetAttr ? target : source,
-                extra.attribute as ATTRIBUTE_CODE,
-              )
-        const extraValue = attrValue * extra.ratio
-        damage += extraValue
-        breakdown.extraContributions.push({
-          attribute: extra.attribute,
-          value: extraValue,
-          ratio: extra.ratio,
-        })
+      const { total, contributions } = processExtraValues(
+        skillStep.calculation.extraValues,
+        (attr) => resolveAttributeValue(attr, source, target, {
+          [ATTRIBUTE_CODE.attack]: () => source.getRandomAttackDamage(),
+        }),
+      )
+      damage += total
+      breakdown.extraContributions.push(...contributions)
+      for (const c of contributions) {
         breakdown.steps.push({
           stepName: 'extra',
           value: damage,
-          before: damage - extraValue,
+          before: damage - c.value,
           after: damage,
           sourceType: 'skill',
-          description: `${extra.attribute} 额外加成: +${extraValue} → ${damage}`,
+          description: `${c.attribute} 额外加成: +${c.value} → ${damage}`,
         })
         this.logCalculation(
           'extra_value',
-          extraValue,
-          `${extra.attribute} 额外加成: +${extraValue}`,
+          c.value,
+          `${c.attribute} 额外加成: +${c.value}`,
         )
       }
     }
@@ -541,33 +533,24 @@ export class DamageCalculator {
 
     // targetModifiers 处理 — 目标属性修正
     if (skillStep.targetModifiers) {
-      Object.entries(skillStep.targetModifiers).forEach(([attr, modifier]) => {
-        const targetAttrValue = getAttrVal(
-          target,
-          attr as ATTRIBUTE_CODE,
-        )
-        const modifierEffect = (modifier * targetAttrValue) / 100
-        damage *= 1 + modifierEffect
-        damage = Math.floor(damage)
-        breakdown.targetModifierEffects.push({
-          attribute: attr,
-          multiplier: modifier,
-          effect: modifierEffect,
-        })
+      const { result, effects } = processTargetModifiers(skillStep.targetModifiers, target, damage)
+      damage = result
+      breakdown.targetModifierEffects.push(...effects)
+      for (const e of effects) {
         breakdown.steps.push({
           stepName: 'targetModifier',
           value: damage,
-          before: damage / (1 + modifierEffect),
+          before: damage / (1 + e.effect),
           after: damage,
           sourceType: 'skill',
-          description: `${attr} 目标修正(x${(1 + modifierEffect).toFixed(4)}): → ${damage}`,
+          description: `${e.attribute} 目标修正(x${(1 + e.effect).toFixed(4)}): → ${damage}`,
         })
         this.logCalculation(
           'target_modifier',
-          modifierEffect,
-          `${attr} 目标修正: x${1 + modifierEffect}`,
+          e.effect,
+          `${e.attribute} 目标修正: x${1 + e.effect}`,
         )
-      })
+      }
     }
 
     // 伤害阈值限制（最小/最大伤害）

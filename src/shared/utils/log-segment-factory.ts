@@ -13,6 +13,7 @@ import type { LogSegment, LogSegmentHover, NarrativeBlock } from '@/shared/types
 import {
   type BuffClassificationInput,
 } from '@/shared/types/buff-classification'
+import { ParticipantSide } from '@/domain/battle/type/types'
 
 // HACK: EXPORT_CSS 是 SCSS 令牌体系的静态快照，不参与构建。
 // 修改以下 SCSS 内容时须同步更新此处（grep "EXPORT_CSS" 定位）：
@@ -264,7 +265,7 @@ body { margin:0; background:var(--color-bg-primary); color:var(--color-text-prim
 function segToHtml(seg: LogSegment): string {
   const text = escapeHtml(seg.text)
   if (seg.kind === 'entity') {
-    const cls = seg.faction === 'ally' ? 'chip--ally' : 'chip--enemy'
+    const cls = seg.faction === ParticipantSide.ALLY ? 'chip--ally' : 'chip--enemy'
     return `<span class="chip ${cls}">${text}</span>`
   }
   if (seg.kind === 'damage') return `<b class="num num--damage">${text}</b>`

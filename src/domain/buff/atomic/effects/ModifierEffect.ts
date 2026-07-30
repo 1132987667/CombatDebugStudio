@@ -1,6 +1,6 @@
 import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { parseAttributeValue } from '@/domain/buff/atomic/parseUtils'
 
 /**
@@ -22,7 +22,7 @@ export class ModifierEffect implements IAtomicEffect {
     for (const [attr, valueStr] of Object.entries(attributes)) {
       const { value, type } = this.parseValue(valueStr)
       const finalValue = perStack ? value * stacks : value
-      ctx.addModifier(attr, finalValue, type)
+      ctx.addModifier(attr as ATTRIBUTE_CODE, finalValue, type)
     }
   }
 
@@ -39,7 +39,7 @@ export class ModifierEffect implements IAtomicEffect {
     for (const [attr, valueStr] of Object.entries(attributes)) {
       const { value, type } = this.parseValue(valueStr)
       const finalValue = perStack ? value * newStacks : value
-      ctx.addModifier(attr, finalValue, type)
+      ctx.addModifier(attr as ATTRIBUTE_CODE, finalValue, type)
     }
   }
 

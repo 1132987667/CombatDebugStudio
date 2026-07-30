@@ -1,6 +1,6 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 
 /**
  * 山林之子buff脚本
@@ -16,7 +16,7 @@ export class MountainChildBuff extends BaseBuffScript {
     const natureBonus = this.getConfigValue(context, 'natureBonus', 0.15) // 默认15%自然属性加成
     this.addModifier(
       context,
-      'NATURE_POWER',
+      ATTRIBUTE_CODE.attackBonus,
       natureBonus,
       ModifierType.MULTIPLICATIVE,
     )
@@ -58,10 +58,10 @@ export class MountainChildBuff extends BaseBuffScript {
       const newBonus = Math.min(currentBonus + enhancementRate, 0.3) // 最大30%
 
       if (newBonus > currentBonus) {
-        context.removeModifiers('NATURE_POWER')
+        context.removeModifiers(ATTRIBUTE_CODE.attackBonus)
         this.addModifier(
           context,
-          'NATURE_POWER',
+          ATTRIBUTE_CODE.attackBonus,
           newBonus,
           ModifierType.MULTIPLICATIVE,
         )
@@ -83,10 +83,10 @@ export class MountainChildBuff extends BaseBuffScript {
     const newRegen = currentRegen + 2 // 增加2点气血恢复
 
     // 更新效果
-    context.removeModifiers('NATURE_POWER')
+    context.removeModifiers(ATTRIBUTE_CODE.attackBonus)
     this.addModifier(
       context,
-      'NATURE_POWER',
+      ATTRIBUTE_CODE.attackBonus,
       newBonus,
       ModifierType.MULTIPLICATIVE,
     )

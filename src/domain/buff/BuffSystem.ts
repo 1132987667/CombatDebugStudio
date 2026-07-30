@@ -32,16 +32,17 @@ import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { EffectType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
-import { StatusCategory, StatusCategoryNames, StatusCode, getControlPriority } from '@/shared/types/status-meta'
+import { StatusCategory, StatusCode, getControlPriority } from '@/shared/types/status-meta'
 import { classifyBuff } from '@/shared/types/buff-classification'
 import { Counter } from '@/shared/utils/Counter'
+import { ConditionState } from '@/shared/types/buff-display'
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
 const NOOP_BUFF_SCRIPT: IBuffScript = {
-  onApply: () => {},
-  onRemove: () => {},
-  onUpdate: () => {},
-  onRefresh: () => {},
+  onApply: () => { },
+  onRemove: () => { },
+  onUpdate: () => { },
+  onRefresh: () => { },
   getEffectLines: () => [],
 }
 
@@ -490,7 +491,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (targetImmunities && targetImmunities.size > 0) {
       const controlTag =
         resolvedConfig.controlType &&
-        resolvedConfig.controlType !== ControlType.NONE
+          resolvedConfig.controlType !== ControlType.NONE
           ? resolvedConfig.controlType.toLowerCase()
           : null
       const buffTag = buffId.startsWith(BUFF_ID_PREFIX)
@@ -529,6 +530,24 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           if (newStacks > maxStacks) {
             // 满层：刷新持续时间，不增加层数
             this.refreshBuff(target.id, currentTurn)
+
+            // ★ 修复：通知 effectPlan 原语层数未变但需要校准（如修饰符被外部清除后恢复）
+            const buffResolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
+            if (buffResolved?.effectPlan) {
+              for (const effect of buffResolved.effectPlan) {
+                effect.handler.onStackChange?.(target.context, effect.params, maxStacks)
+              }
+              const effectLines = buffResolved.effectPlan
+                .map((e) => e.handler.getEffectLines?.(target.context, e.params) ?? [])
+                .flat()
+              if (effectLines.length > 0) {
+                target.effectLines = [
+                  ...(target.script.getEffectLines?.(target.context) ?? []),
+                  ...effectLines,
+                ]
+              }
+            }
+
             this.triggerAttributeChange(characterId)
             return target.id
           }
@@ -898,6 +917,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const modifierStack = this.getModifierStack(instance.characterId)
     modifierStack.removeModifier(instanceId)
 
+    // HACK: 分发光环修饰符时使用 instanceId 作为 sourceKey 分发到目标角色的
+    // ModifierStack，此处遍历所有角色栈确保跨角色修饰符也被清理。
+    for (const [charId, stack] of this.modifierStacks) {
+      if (charId !== instance.characterId) {
+        stack.removeModifier(instanceId)
+      }
+    }
+
     // 回收护盾值：任何带有 parameters.shieldValue 的 Buff 移除时回收
     const shieldParam = instance.context.config.parameters?.shieldValue as
       | number
@@ -963,7 +990,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return true
   }
 
-  public updatePerTurn(characterId: string): void {
+  public updatePerTurn(characterId: string, currentTurn: number = 0): void {
     const toRemove: string[] = []
     let hasNonExpiredChange = false
     this.buffInstances.forEach((instance) => {
@@ -977,7 +1004,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
       if (buffResolved?.effectPlan) {
         for (const effect of buffResolved.effectPlan) {
-          effect.handler.onTick?.(instance.context, effect.params, 0)
+          effect.handler.onTick?.(instance.context, effect.params, currentTurn)
         }
       }
 
@@ -1103,7 +1130,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
    */
   public setBuffConditionState(
     instanceId: string,
-    state: 'active' | 'inactive',
+    state: ConditionState,
   ): void {
     const instance = this.buffInstances.get(instanceId)
     if (instance) {
@@ -1118,35 +1145,18 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
   }
 
-  /** 控制效果同优先级时的排序权重（数值越大越优先） */
-  private static readonly CONTROL_TYPE_ORDER: Record<ControlType, number> = {
-    [ControlType.NONE]: 0,
-    [ControlType.SLEEP]: 1,
-    [ControlType.SILENCE]: 2,
-    [ControlType.FREEZE]: 3,
-    [ControlType.STUN]: 4,
-    [ControlType.BIND]: 5,
-  }
-
   /** 获取最高优先级的控制效果 */
   public getHighestPriorityControlEffect(characterId: string): ControlType {
     let highestPriority = -1
     let highestControlType = ControlType.NONE
-    let highestOrder = -1
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
       const config = instance.context.config
       if (config.controlType === ControlType.NONE) return
       const priority = getControlPriority(config.controlType as StatusCode)
-      if (
-        priority > highestPriority ||
-        (priority === highestPriority &&
-          (BuffSystem.CONTROL_TYPE_ORDER[config.controlType] ?? 0) >
-            highestOrder)
-      ) {
+      if (priority > highestPriority) {
         highestPriority = priority
         highestControlType = config.controlType
-        highestOrder = BuffSystem.CONTROL_TYPE_ORDER[config.controlType] ?? 0
       }
     })
     return highestControlType
@@ -1159,14 +1169,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   }
 
   public canUseSkill(characterId: string): boolean {
-    const controlType = this.getHighestPriorityControlEffect(characterId)
-    return (
-      controlType !== StatusCategory.STUN &&
-      controlType !== StatusCategory.SILENCE &&
-      controlType !== StatusCategory.FREEZE &&
-      controlType !== StatusCategory.SLEEP &&
-      controlType !== StatusCategory.BIND
-    )
+    // 任何控制效果都阻止使用技能
+    return this.getHighestPriorityControlEffect(characterId) === ControlType.NONE
   }
 
   public canAct(characterId: string): boolean {
@@ -1185,7 +1189,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.shieldValues.set(characterId, value)
   }
 
-  public update(deltaTime: number): void {}
+  public update(deltaTime: number): void { }
 
   public getBuffNameByInstanceId(instanceId: string): string | null {
     const instance = this.buffInstances.get(instanceId)
@@ -1197,8 +1201,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   public getBuffConfigByInstanceId(instanceId: string): BuffConfig | null {
     const instance = this.buffInstances.get(instanceId)
     if (!instance) return null
-    // ponytail: 直接使用 addBuff 时已合并好的运行时配置，比重新从 JSON 查更准确
-    // 旧实现仅查 buffConfigs（JSON），遗漏了仅有脚本 static CONFIG 的 buff
     return instance.context.config || null
   }
 
@@ -1216,14 +1218,5 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   public setDebugMode(enabled: boolean): void {
     this._debugMode = enabled
-  }
-
-  /**
-   * 判断指定 buffId 是否为 debuff
-   * 通过 classifyBuff 从配置结构推导
-   */
-  public isDebuff(buffId: string): boolean {
-    const jsonConfig = this.scriptRegistry.getBuffConfig(buffId)
-    return classifyBuff(jsonConfig ?? undefined).isNegative
   }
 }

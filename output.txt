@@ -12,6 +12,7 @@ CombatDebugStudio/
         1785319968503-stellar-meadow.md
         1785324003357-hidden-orchid.md
         1785325217448-hidden-nebula.md
+        1785393374525-jolly-panda.md
     skills/
         domain-migration/
             SKILL.md
@@ -47,6 +48,7 @@ src/
                 ParticipantBuffs.ts
                 ParticipantSkills.ts
                 ParticipantStats.ts
+            events/
             intervention/
                 InterventionManager.ts
             replay/
@@ -99,7 +101,6 @@ src/
         character/
             types.ts
         port/
-            di/
             IBattleLogManager.ts
             IDomainEventBus.ts
             IPersistentStorage.ts
@@ -139,6 +140,7 @@ src/
             Container.ts
         input/
             KeybindManager.ts
+        task/
     presentation/
         components/
             AttributeTooltip.vue
@@ -264,7 +266,7 @@ vite.config.ts
 文件内容:
 
 --- .mimocode/.cron-lock ---
-{"pid":20392,"startedAt":1785338133688}
+{"pid":21104,"startedAt":1785393357913}
 
 --- .mimocode/commands/verify.md ---
 ---
@@ -1827,6 +1829,107 @@ Select-String -Path "src/**/*.{vue,scss,ts}" -Pattern '\.ti1|ti2|\.fr[^o]|\.fl[^
 - `npm test`: 126 tests, 13 files, all passing ✅
 - `npm run typecheck`: clean (仅 pre-existing BuffScriptLoader error) ✅
 
+--- .mimocode/plans/1785393374525-jolly-panda.md ---
+# 修复计划：4 个严重 Bug
+## 概述
+修复报告中的 4 个严重问题，涉及 3 个文件，每处改动均为 1-10 行以内的外科手术式修改。
+---
+## 问题 4：多护盾叠加时 `onRemove` 过度扣减
+**文件**: `src/domain/buff/atomic/effects/ShieldEffect.ts`
+**根因**: `onRemove` 用完整 `_shieldAmount` 扣减全局 `shieldValues`，但该全局值可能已被 `takeDamage` 消耗，导致多减。
+**改动**: 第 48 行，扣减时取 `Math.min(shieldAmount, current)`：
+```typescript
+// 改前:
+buffSystem.setShieldValue(ctx.characterId, Math.max(0, current - shieldAmount))
+// 改后:
+const deduction = Math.min(shieldAmount, current)
+buffSystem.setShieldValue(ctx.characterId, current - deduction)
+```
+---
+## 问题 5：`onTick` 始终传入 `turn = 0`
+**文件**: `src/domain/buff/BuffSystem.ts` + `src/domain/battle/BattleSystem.ts`
+**根因**: `updatePerTurn` 没有接收 `currentTurn` 参数，内部 `onTick` 调用硬编码 `0`。
+**改动 1** — `BuffSystem.ts` 第 975 行：
+```typescript
+// 改前:
+public updatePerTurn(characterId: string): void {
+  instance.script.onUpdate(instance.context, 0)
+  effect.handler.onTick?.(instance.context, effect.params, 0)
+// 改后:
+public updatePerTurn(characterId: string, currentTurn: number = 0): void {
+  instance.script.onUpdate(instance.context, currentTurn)
+  effect.handler.onTick?.(instance.context, effect.params, currentTurn)
+```
+**改动 2** — `BattleSystem.ts` 第 922 行：
+```typescript
+// 改前:
+this.buffSystem.updatePerTurn(participant.id)
+// 改后:
+this.buffSystem.updatePerTurn(participant.id, battle.currentTurn)
+```
+注意：`instance.script.onUpdate` 的第二个参数是 `deltaTime`（毫秒）而非回合数。**不修改 `onUpdate` 的传参**，保持 `0` 或传入 `currentTurn` 效果相同（均为非零数值，实际无脚本依赖此值做精度计算）。这里采取保守方案：只传给 `onTick`，`onUpdate` 保持 `0` 不变。
+---
+## 问题 6：`_inDamageCallback` 布尔守卫误杀合法并发触发
+**文件**: `src/domain/battle/BattleSystem.ts`
+**根因**: 布尔守卫一旦进入就拒绝所有嵌套调用，反伤等合法触发被静默丢弃。
+**改动**: 第 441-448/565 行，布尔标志替换为深度计数器：
+```typescript
+// 改前:
+let _inDamageCallback = false
+// ...
+if (_inDamageCallback) return
+_inDamageCallback = true
+// ... finally:
+_inDamageCallback = false
+// 改后:
+let _damageCallbackDepth = 0
+const MAX_DAMAGE_CALLBACK_DEPTH = 3
+// ...
+if (_damageCallbackDepth >= MAX_DAMAGE_CALLBACK_DEPTH) {
+  LoggerProvider.logger.addDebugLog(
+    `伤害回调嵌套深度超过上限(${MAX_DAMAGE_CALLBACK_DEPTH})，丢弃`,
+    { level: LogLevel.WARN },
+  )
+  return
+}
+_damageCallbackDepth++
+// ... finally:
+_damageCallbackDepth--
+```
+---
+## 问题 7：`LIMITED` 满层刷新时不触发 `onStackChange`
+**文件**: `src/domain/buff/BuffSystem.ts`
+**根因**: `addBuff` 的 `LIMITED` 分支中，`newStacks > maxStacks` 时仅调用 `refreshBuff`，未通知 `effectPlan` 原语。
+**改动**: 在 `refreshBuff` 后补充 effectPlan 通知代码（与非满层分支一致）：
+```typescript
+// 在 this.refreshBuff(target.id, currentTurn) 之后、this.triggerAttributeChange 之前插入:
+const buffResolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
+if (buffResolved?.effectPlan) {
+  for (const effect of buffResolved.effectPlan) {
+    effect.handler.onStackChange?.(target.context, effect.params, maxStacks)
+  }
+  const effectLines = buffResolved.effectPlan
+    .map((e) => e.handler.getEffectLines?.(target.context, e.params) ?? [])
+    .flat()
+  if (effectLines.length > 0) {
+    target.effectLines = [
+      ...(target.script.getEffectLines?.(target.context) ?? []),
+      ...effectLines,
+    ]
+  }
+}
+```
+---
+## 验证方法
+```bash
+npm run typecheck          # 确保无类型错误
+npm run test               # 确保现有测试全部通过
+```
+额外建议的验证点：
+- `ShieldEffect` 改动后，需确认叠加护盾 + 部分消耗后分别移除不产生负值
+- `updatePerTurn` 改动后，需确认 DOT/HEAL 原语的 `onTick` 收到正确回合数（通过测试日志输出验证）
+- 递归深度计数改动后，确认正常流程不受影响、嵌套超过 3 层时正确告警
+
 --- .mimocode/skills/domain-migration/SKILL.md ---
 ---
 name: domain-migration
@@ -2815,6 +2918,7 @@ import type { UIParticipantSnapshot } from '@/shared/types/projection'
 import type { BuffRawItem } from '@/shared/types/buff-display'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { classifyBuff } from '@/shared/types/buff-classification'
 /**
  * 将 BattleEntity 映射为 UI 快照
  *
@@ -2894,7 +2998,7 @@ function buildBuffRawItems(
         description: config.description ?? '',
         remainingTurns: instance.remainingTurns,
         currentStacks: instance.currentStacks,
-        isDebuff: config.isDebuff === true,
+        isNegative: classifyBuff(config as Parameters<typeof classifyBuff>[0]).isNegative,
         attributes: config.attributes,
         effectLines: instance.effectLines ?? [],
         conditionState: instance.conditionState,
@@ -2910,7 +3014,7 @@ function buildBuffRawItems(
       result.push({
         id: s.id, buffId: s.id, name: s.name, description: '',
         remainingTurns: s.remainingTurns, currentStacks: 1,
-        isDebuff: s.type === 'debuff', effectLines: [], conditionState: undefined,
+        isNegative: s.type === 'debuff', effectLines: [], conditionState: undefined,
       })
     }
   }
@@ -5961,7 +6065,7 @@ import { SkillManager } from '@/domain/skill/SkillManager'
 import type { Container } from '@/infrastructure/di/Container'
 import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import type { BattleCommand } from '@/shared/types/battle-commands'
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
@@ -6305,13 +6409,21 @@ export class BattleSystem {
     )
     // ponytail: 防止触发器脚本（如 reflectDamage）循环递归
     // 在 DAMAGE_TAKEN 发射中再次调用 requestDamage → setDamageCallback → ... 无限递归
-    let _inDamageCallback = false
+    // 使用深度计数器替代布尔标志，允许有限嵌套（DOT→反伤→反伤的反伤），防止真正无限递归
+    let _damageCallbackDepth = 0
+    const MAX_DAMAGE_CALLBACK_DEPTH = 3
     // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
     this.buffSystem.setDamageCallback(
       (targetId: string, damage: number, rawDamage?: number, damagePercent?: number) => {
-        // ponytail: 递归守卫 — 若已在回调中则跳过，避免反弹/分摊类触发器循环
-        if (_inDamageCallback) return
-        _inDamageCallback = true
+        // ponytail: 递归守卫 — 深度计数器替代布尔标志，允许有限嵌套
+        if (_damageCallbackDepth >= MAX_DAMAGE_CALLBACK_DEPTH) {
+          LoggerProvider.logger.addDebugLog(
+            `伤害回调嵌套深度超过上限(${MAX_DAMAGE_CALLBACK_DEPTH})，丢弃: ${targetId}`,
+            { level: LogLevel.WARN },
+          )
+          return
+        }
+        _damageCallbackDepth++
         try {
           const target = battleData.participants.get(targetId)
           if (!target?.isAlive()) return
@@ -6426,7 +6538,7 @@ export class BattleSystem {
             })
           }
         } finally {
-          _inDamageCallback = false
+          _damageCallbackDepth--
         }
       },
     )
@@ -6579,17 +6691,29 @@ export class BattleSystem {
         const aura = this.buffSystem.getBuffAuraConfig(buffConfig.id)
         if (!aura || !aura.modifiers?.length || !aura.targetSelector) continue
         const isAllies = aura.targetSelector === 'allies'
-        const sourceKey = `passive:${buffConfig.id}`
         for (const [targetId, target] of participants) {
           if (targetId === id) continue
           if (!(target instanceof BattleParticipantImpl)) continue
           const sameTeam = target.team === entity.team
           if ((isAllies && sameTeam) || (!isAllies && !sameTeam)) {
-            GameDataProcessor.applyAuraModifiersToParticipant(
-              target,
-              sourceKey,
-              aura.modifiers,
-            )
+            // ponytail: 光环修饰符通过目标角色的 ModifierStack 管理，
+            // 使用 instanceId 作为 sourceKey，这样 removeBuff 时能通过
+            // removeModifier(instanceId) 正确清理跨角色修饰符。
+            const targetStack = this.buffSystem.getModifierStack(targetId)
+            for (const mod of aura.modifiers) {
+              let value = typeof mod.value === 'number' ? mod.value : 0
+              // aura 中的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
+              if (mod.type === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
+                value = Math.round(value * 10000) / 100
+              }
+              targetStack.addModifier(
+                instanceId,
+                mod.targetAttribute as ATTRIBUTE_CODE,
+                value,
+                mod.type,
+              )
+            }
+            target.recalcAll()
           }
         }
       }
@@ -6728,7 +6852,7 @@ export class BattleSystem {
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
         }
-        this.buffSystem.updatePerTurn(participant.id)
+        this.buffSystem.updatePerTurn(participant.id, battle.currentTurn)
         await this.runEndConditionCheck()
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
@@ -14869,7 +14993,6 @@ export class BuffConfigResolver {
           handler: controlHandler,
           params: {
             controlType: raw.controlType,
-            priority: raw.controlPriority ?? 50,
           },
         })
       }
@@ -14908,11 +15031,9 @@ export class BuffConfigResolver {
       cooldown: raw.cooldown ?? 0,
       stackRule: (raw.stackRule ?? 'LIMITED') as StackRule,
       controlType: (raw.controlType ?? 'NONE') as ControlType,
-      controlPriority: raw.controlPriority ?? 0,
-      isDebuff: raw.isDebuff ?? false,
       dispellable: raw.dispellable ?? true,
       tags: raw.tags ?? [],
-      immuneTags: raw.immuneTags ?? raw.immunities ?? undefined,
+      immunities: raw.immunities ?? undefined,
       parameters: raw.parameters ?? undefined,
       attributes: raw.attributes ?? undefined,
       triggers: raw.triggers ?? undefined,
@@ -15239,7 +15360,8 @@ export class ShieldEffect implements IAtomicEffect {
     // 从变量读取施加时的实际护盾值，而非重新计算
     const shieldAmount = ctx.getVariable<number>('_shieldAmount') ?? 0
     const current = buffSystem.getShieldValue(ctx.characterId)
-    buffSystem.setShieldValue(ctx.characterId, Math.max(0, current - shieldAmount))
+    const deduction = Math.min(shieldAmount, current)
+    buffSystem.setShieldValue(ctx.characterId, current - deduction)
   }
   getEffectLines(_ctx: BuffContext, params: Record<string, unknown>) {
     const value = params.value as number
@@ -16004,14 +16126,16 @@ import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { EffectType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
-import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
+import { StatusCategory, StatusCode, getControlPriority } from '@/shared/types/status-meta'
+import { classifyBuff } from '@/shared/types/buff-classification'
 import { Counter } from '@/shared/utils/Counter'
+import { ConditionState } from '@/shared/types/buff-display'
 /** 无操作脚本占位：用于有配置无脚本的 buff */
 const NOOP_BUFF_SCRIPT: IBuffScript = {
-  onApply: () => {},
-  onRemove: () => {},
-  onUpdate: () => {},
-  onRefresh: () => {},
+  onApply: () => { },
+  onRemove: () => { },
+  onUpdate: () => { },
+  onRefresh: () => { },
   getEffectLines: () => [],
 }
 export interface TriggerExecutionContext extends TriggerEventContext {
@@ -16125,7 +16249,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
                 cooldown: 0,
                 stackRule: StackRule.LIMITED,
                 controlType: ControlType.NONE,
-                controlPriority: 0,
               },
               ctx.currentTurn ?? 0,
             )
@@ -16393,19 +16516,14 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         config.controlType ??
         scriptDefaultConfig?.controlType ??
         ControlType.NONE,
-      controlPriority:
-        config.controlPriority ?? scriptDefaultConfig?.controlPriority ?? 0,
       isPermanent:
         config.isPermanent ?? scriptDefaultConfig?.isPermanent ?? false,
-      isDebuff: config.isDebuff ?? scriptDefaultConfig?.isDebuff ?? false,
-      isPositive:
-        config.isPositive ?? scriptDefaultConfig?.isPositive ?? undefined,
       iconPath: config.iconPath ?? scriptDefaultConfig?.iconPath ?? undefined,
       dispellable:
         config.dispellable ?? scriptDefaultConfig?.dispellable ?? undefined,
-      immuneTags:
-        config.immuneTags ??
-        scriptDefaultConfig?.immuneTags ??
+      immunities:
+        config.immunities ??
+        scriptDefaultConfig?.immunities ??
         jsonConfig?.immunities ??
         undefined,
       tags:
@@ -16420,19 +16538,19 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       cascadeRemove:
         config.cascadeRemove ?? scriptDefaultConfig?.cascadeRemove ?? undefined,
     }
-    // ponytail: 免疫检查 — 若目标对该 buff 的 controlType / buffId / immuneTags 免疫则跳过施加
+    // ponytail: 免疫检查 — 若目标对该 buff 的 controlType / buffId / immunities 免疫则跳过施加
     const targetImmunities = this.characterImmunities.get(characterId)
     if (targetImmunities && targetImmunities.size > 0) {
       const controlTag =
         resolvedConfig.controlType &&
-        resolvedConfig.controlType !== ControlType.NONE
+          resolvedConfig.controlType !== ControlType.NONE
           ? resolvedConfig.controlType.toLowerCase()
           : null
       const buffTag = buffId.startsWith(BUFF_ID_PREFIX)
         ? buffId.slice(BUFF_ID_PREFIX.length)
         : buffId
-      // ponytail: 也检查 immuneTags（如 slow 通过 speed 属性实现而非 controlType）
-      const immuneTagMatch = resolvedConfig.immuneTags?.some((tag) =>
+      // ponytail: 也检查 immunities（如 slow 通过 speed 属性实现而非 controlType）
+      const immuneTagMatch = resolvedConfig.immunities?.some((tag) =>
         targetImmunities.has(tag.toLowerCase()),
       )
       if (
@@ -16462,6 +16580,22 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           if (newStacks > maxStacks) {
             // 满层：刷新持续时间，不增加层数
             this.refreshBuff(target.id, currentTurn)
+            // ★ 修复：通知 effectPlan 原语层数未变但需要校准（如修饰符被外部清除后恢复）
+            const buffResolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
+            if (buffResolved?.effectPlan) {
+              for (const effect of buffResolved.effectPlan) {
+                effect.handler.onStackChange?.(target.context, effect.params, maxStacks)
+              }
+              const effectLines = buffResolved.effectPlan
+                .map((e) => e.handler.getEffectLines?.(target.context, e.params) ?? [])
+                .flat()
+              if (effectLines.length > 0) {
+                target.effectLines = [
+                  ...(target.script.getEffectLines?.(target.context) ?? []),
+                  ...effectLines,
+                ]
+              }
+            }
             this.triggerAttributeChange(characterId)
             return target.id
           }
@@ -16594,7 +16728,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
     if (context?.record) {
       context?.record.effects.push({
-        type: resolvedConfig.isDebuff ? EffectType.DEBUFF : EffectType.BUFF,
+        type: classifyBuff(resolvedConfig as Parameters<typeof classifyBuff>[0]).isNegative ? EffectType.DEBUFF : EffectType.BUFF,
         targetId: characterId,
         buffId: resolvedConfig.id,
         instanceId,
@@ -16798,6 +16932,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.buffInstances.delete(instanceId)
     const modifierStack = this.getModifierStack(instance.characterId)
     modifierStack.removeModifier(instanceId)
+    // HACK: 分发光环修饰符时使用 instanceId 作为 sourceKey 分发到目标角色的
+    // ModifierStack，此处遍历所有角色栈确保跨角色修饰符也被清理。
+    for (const [charId, stack] of this.modifierStacks) {
+      if (charId !== instance.characterId) {
+        stack.removeModifier(instanceId)
+      }
+    }
     // 回收护盾值：任何带有 parameters.shieldValue 的 Buff 移除时回收
     const shieldParam = instance.context.config.parameters?.shieldValue as
       | number
@@ -16852,7 +16993,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     instance.remainingTurns = instance.duration
     return true
   }
-  public updatePerTurn(characterId: string): void {
+  public updatePerTurn(characterId: string, currentTurn: number = 0): void {
     const toRemove: string[] = []
     let hasNonExpiredChange = false
     this.buffInstances.forEach((instance) => {
@@ -16864,7 +17005,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
       if (buffResolved?.effectPlan) {
         for (const effect of buffResolved.effectPlan) {
-          effect.handler.onTick?.(instance.context, effect.params, 0)
+          effect.handler.onTick?.(instance.context, effect.params, currentTurn)
         }
       }
       // ponytail: 永久 buff（duration === -1）跳过剩余回合递减
@@ -16977,7 +17118,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
    */
   public setBuffConditionState(
     instanceId: string,
-    state: 'active' | 'inactive',
+    state: ConditionState,
   ): void {
     const instance = this.buffInstances.get(instanceId)
     if (instance) {
@@ -16991,33 +17132,18 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       this.triggerAttributeChange(instance.characterId)
     }
   }
-  /** 控制效果同优先级时的排序权重（数值越大越优先） */
-  private static readonly CONTROL_TYPE_ORDER: Record<ControlType, number> = {
-    [ControlType.NONE]: 0,
-    [ControlType.SLEEP]: 1,
-    [ControlType.SILENCE]: 2,
-    [ControlType.FREEZE]: 3,
-    [ControlType.STUN]: 4,
-    [ControlType.BIND]: 5,
-  }
   /** 获取最高优先级的控制效果 */
   public getHighestPriorityControlEffect(characterId: string): ControlType {
     let highestPriority = -1
     let highestControlType = ControlType.NONE
-    let highestOrder = -1
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
       const config = instance.context.config
       if (config.controlType === ControlType.NONE) return
-      if (
-        config.controlPriority > highestPriority ||
-        (config.controlPriority === highestPriority &&
-          (BuffSystem.CONTROL_TYPE_ORDER[config.controlType] ?? 0) >
-            highestOrder)
-      ) {
-        highestPriority = config.controlPriority
+      const priority = getControlPriority(config.controlType as StatusCode)
+      if (priority > highestPriority) {
+        highestPriority = priority
         highestControlType = config.controlType
-        highestOrder = BuffSystem.CONTROL_TYPE_ORDER[config.controlType] ?? 0
       }
     })
     return highestControlType
@@ -17028,14 +17154,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     )
   }
   public canUseSkill(characterId: string): boolean {
-    const controlType = this.getHighestPriorityControlEffect(characterId)
-    return (
-      controlType !== StatusCategory.STUN &&
-      controlType !== StatusCategory.SILENCE &&
-      controlType !== StatusCategory.FREEZE &&
-      controlType !== StatusCategory.SLEEP &&
-      controlType !== StatusCategory.BIND
-    )
+    // 任何控制效果都阻止使用技能
+    return this.getHighestPriorityControlEffect(characterId) === ControlType.NONE
   }
   public canAct(characterId: string): boolean {
     return (
@@ -17049,7 +17169,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   setShieldValue(characterId: string, value: number): void {
     this.shieldValues.set(characterId, value)
   }
-  public update(deltaTime: number): void {}
+  public update(deltaTime: number): void { }
   public getBuffNameByInstanceId(instanceId: string): string | null {
     const instance = this.buffInstances.get(instanceId)
     if (!instance) return null
@@ -17059,8 +17179,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   public getBuffConfigByInstanceId(instanceId: string): BuffConfig | null {
     const instance = this.buffInstances.get(instanceId)
     if (!instance) return null
-    // ponytail: 直接使用 addBuff 时已合并好的运行时配置，比重新从 JSON 查更准确
-    // 旧实现仅查 buffConfigs（JSON），遗漏了仅有脚本 static CONFIG 的 buff
     return instance.context.config || null
   }
   public getSourceName(sourceId: string): string | null {
@@ -17074,16 +17192,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   }
   public setDebugMode(enabled: boolean): void {
     this._debugMode = enabled
-  }
-  /**
-   * 判断指定 buffId 是否为 debuff
-   * 按优先级：脚本静态 CONFIG → JSON 配置 → false
-   */
-  public isDebuff(buffId: string): boolean {
-    const scriptConfig = this.scriptRegistry.getDefaultConfig(buffId)
-    if (scriptConfig?.isDebuff !== undefined) return scriptConfig.isDebuff
-    const jsonConfig = this.scriptRegistry.getBuffConfig(buffId)
-    return jsonConfig?.isDebuff ?? false
   }
 }
 
@@ -17182,6 +17290,7 @@ export class ModifierStack implements IModifierStack {
 import type { TriggerExecutionContext } from '@/domain/buff/BuffSystem'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ControlType } from '@/domain/buff/types'
+import { classifyBuff } from '@/shared/types/buff-classification'
 /** 从上下文中获取源参与者的队伍 */
 function getSourceTeam(ctx: TriggerExecutionContext): string | undefined {
   if (!ctx.sourceId || !ctx.battleData?.participants) return undefined
@@ -17347,7 +17456,6 @@ export function applySilenceToAttacker(ctx: TriggerExecutionContext): void {
     {
       duration: 1,
       controlType: ControlType.SILENCE,
-      controlPriority: 50,
     },
     ctx.currentTurn ?? 0,
   )
@@ -17359,7 +17467,7 @@ export function cleanseRandomDebuff(ctx: TriggerExecutionContext): void {
   const buffs = ctx.buffSystem?.getBuffInstances(targetId) ?? []
   const debuffs = buffs.filter((b) => {
     const config = ctx.buffSystem?.getBuffConfigByInstanceId(b.id)
-    return config?.isDebuff === true && config?.dispellable !== false
+    return classifyBuff(config as Parameters<typeof classifyBuff>[0]).isNegative && config?.dispellable !== false
   })
   if (debuffs.length === 0) return
   const target = debuffs[Math.floor(Math.random() * debuffs.length)]
@@ -17432,6 +17540,9 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import { ControlKind } from '@/shared/types/status-meta'
+import {
+  ConditionState,
+} from '@/shared/types/buff-display'
 /** Buff ID 前缀常量 */
 export const BUFF_ID_PREFIX = 'buff_'
 /**
@@ -17568,19 +17679,14 @@ export interface BuffConfig {
    */
   controlType: ControlType
   /**
-   * 控制效果优先级
-   * 数值越大优先级越高
-   */
-  controlPriority: number
-  /**
    * 效果标签
    */
-  tags?: AtomicEffectType[]
+  tags?: string[]
   /**
    * 免疫标签
    * 拥有对应标签的角色免疫此Buff
    */
-  immuneTags?: string[]
+  immunities?: string[]
   /**
    * 是否可驱散
    * true表示此Buff可被驱散技能移除
@@ -17597,20 +17703,10 @@ export interface BuffConfig {
    */
   isPermanent?: boolean
   /**
-   * 是否为负面效果
-   * true表示该增益效果为debuff,会影响角色属性
-   */
-  isDebuff?: boolean
-  /**
    * 增益效果参数配置
    * 用于存储额外的自定义参数,键值对形式
    */
   parameters?: Record<string, any>
-  /**
-   * 是否为正面效果
-   * true表示该增益效果为buff,会增强角色属性
-   */
-  isPositive?: boolean
   /**
    * 属性修饰符
    * 定义属性加成，使用字符串格式如 "+10"（数值加成）、"+0.05"（百分比加成）、"-0.15"（百分比减成）
@@ -17642,20 +17738,17 @@ export interface ScriptBuffConfig {
   maxStacks?: number
   cooldown?: number
   isPermanent?: boolean
-  isDebuff?: boolean
   stackRule?: StackRule
   controlType?: ControlType
-  controlPriority?: number
   iconPath?: string
   dispellable?: boolean
-  isPositive?: boolean
   parameters?: Record<string, any>
   /** 标记该脚本完全自包含——框架不再从 JSON 读取 attributes 应用修饰符 */
   selfContained?: boolean
   /** 效果标签（同 BuffConfig.tags） */
-  tags?: AtomicEffectType[]
-  /** 免疫标签（同 BuffConfig.immuneTags） */
-  immuneTags?: string[]
+  tags?: string[]
+  /** 免疫标签（同 BuffConfig.immunities） */
+  immunities?: string[]
   /** 是否级联移除子 Buff（同 BuffConfig.cascadeRemove） */
   cascadeRemove?: boolean
 }
@@ -17724,7 +17817,7 @@ export interface BuffInstance<TParams = any> {
    * 由外部通过 BuffSystem.setBuffConditionState() 设置
    * active = 条件已满足（如已残血），inactive = 条件未满足
    */
-  conditionState?: 'active' | 'inactive'
+  conditionState?: ConditionState
   /**
    * 触发器监听器 ID 列表
    * 在 addBuff 时注册到 TriggerEventBus，removeBuff 时反注册。
@@ -19631,6 +19724,7 @@ import type { ExtendedSkillStep, ReviveStepParams } from '@/domain/skill/types'
 import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { STATUS_CODE } from '@/shared/types/status-meta'
+import { classifyBuff } from '@/shared/types/buff-classification'
 import {
   REVERSE_BONUS_ATTR_MAP,
   syncAttackRange,
@@ -19882,8 +19976,6 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
-      controlPriority: 0,
-      // 不设 isDebuff，让 addBuff 的合并链从脚本 CONFIG / JSON 配置推断
       parameters: skillStep.parameters || skillStep.effectParams || {},
     }
     const instanceId = this.buffSystem.addBuff(
@@ -20046,8 +20138,7 @@ export class SkillExecutor {
     let removed = 0
     for (const instance of instances) {
       if (removed >= count) break
-      // REMOVE_DEBUFF 只移除 isDebuff 的 buff；CLEANSE 移除所有
-      if (isRemoveDebuff && !instance.context.config?.isDebuff) continue
+      if (isRemoveDebuff && !classifyBuff(instance.context.config).isNegative) continue
       this.buffSystem.removeBuff(instance.id)
       removed++
     }
@@ -20188,7 +20279,6 @@ export class SkillExecutor {
           cooldown: 0,
           stackRule: StackRule.REFRESH,
           controlType: ControlType.NONE,
-          controlPriority: 0,
           parameters: { shieldValue: overflow },
         }
         this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
@@ -20387,7 +20477,6 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.REFRESH,
       controlType: ControlType.NONE,
-      controlPriority: 0,
       parameters: { shieldValue },
     }
     const instanceId = this.buffSystem.addBuff(
@@ -20427,8 +20516,6 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.REFRESH,
       controlType,
-      controlPriority: 100,
-      isDebuff: true,
       parameters: skillStep.parameters || {},
     }
     const instanceId = this.buffSystem.addBuff(target.id, buffId, config)
@@ -21700,11 +21787,10 @@ import type {
   BattleEndedEventData,
 } from '@/domain/battle/type/BattleEventType'
 import { useBattleStore } from '@/presentation/stores/battleStore'
-import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
+import { ParticipantSideName } from '@/domain/battle/type/types'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 /**
@@ -21752,24 +21838,24 @@ export class BattleEventManager {
    * 开始监听战斗事件
    */
   startListening() {
-    // 闃叉閲嶅璁㈤槄
+    // 防止重复订阅
     if (this.isListening) {
-      console.warn('BattleEventManager:   ')
+      console.warn('BattleEventManager: 已经处于监听状态')
       return
     }
-    // 璁㈤槄鎴樻枟鏃ュ織浜嬩欢
+    // 订阅战斗日志事件
     const battleLogHandler = (data: any) => this.handleBattleLogEvent(data)
     this.emitter.on(BattleEventCodes.BATTLE_LOG, battleLogHandler)
     this.boundHandlers.set(BattleEventCodes.BATTLE_LOG, battleLogHandler)
-    // 璁㈤槄鎴樻枟缁撴潫浜嬩欢
+    // 订阅战斗结束事件
     const battleEndHandler = (data: any) => this.handleBattleEndEvent(data)
     this.emitter.on(BattleEventCodes.BATTLE_ENDED, battleEndHandler)
     this.boundHandlers.set(BattleEventCodes.BATTLE_ENDED, battleEndHandler)
-    // Subscribe to turn start events
+    // 订阅回合开始事件
     const turnStartHandler = (data: any) => this.handleTurnStartEvent(data)
     this.emitter.on(BattleEventCodes.TURN_START, turnStartHandler)
     this.boundHandlers.set(BattleEventCodes.TURN_START, turnStartHandler)
-    // 璁㈤槄鍥炲悎缁撴潫浜嬩欢
+    // 订阅回合结束事件
     const turnEndHandler = (data: any) => this.handleTurnEndEvent(data)
     this.emitter.on(BattleEventCodes.TURN_END, turnEndHandler)
     this.boundHandlers.set(BattleEventCodes.TURN_END, turnEndHandler)
@@ -21779,104 +21865,27 @@ export class BattleEventManager {
    * 停止监听战斗事件
    */
   stopListening() {
-    // Unsubscribe all battle events
+    // 取消订阅所有战斗事件
     this.emitter.off(BattleEventCodes.BATTLE_LOG)
     this.emitter.off(BattleEventCodes.BATTLE_ENDED)
     this.emitter.off(BattleEventCodes.TURN_START)
     this.emitter.off(BattleEventCodes.TURN_END)
-    // 娓呴櫎鍥炶皟引用
+    // 清除回调引用
     this.boundHandlers.clear()
     this.isListening = false
   }
   /**
    * 处理战斗日志事件
+   *
+   * 架构说明：现代日志系统已全面采用结构化的 LogSegment[] 进行渲染。
+   * 领域层生成的 log 对象已包含完整的语义化 segments（如 kind: 'skill' | 'heal'），
+   * UI 层的 LogSeg.vue 会直接消费这些结构化数据，不再需要在此处使用正则表达式拼接 HTML 字符串。
    */
   private handleBattleLogEvent(data: BattleLogEventData) {
     try {
       if (data && data.log) {
-        const log = data.log as BattleLogEntry & {
-          htmlResult?: string
-          result?: string
-        }
-        // 濡傛灉娌℃湁 htmlResult锛屽皾璇曠敓鎴?HTML 鏍煎紡
-        if (!log.htmlResult && log.result) {
-          let htmlResult = log.result
-          // 鍒ゆ柇鏉ユ簮鍜岀洰鏍囨槸鍚︽槸鏁屾柟
-          const sourceIsAlly =
-            log.source != null &&
-            !log.source.includes('鏁屾柟') &&
-            log.source !== '系统'
-          const targetIsAlly =
-            log.target &&
-            !log.target.includes('鏁屾柟') &&
-            log.target !== '系统' &&
-            log.target !== '鎺у埗'
-          // 鏇挎崲瑙掕壊鍚嶇О棰滆壊
-          if (log.source && log.source !== '系统') {
-            const sourceClass = sourceIsAlly ? 'source-ally' : 'source-enemy'
-            htmlResult = htmlResult.replace(
-              log.source,
-              `<span class="${sourceClass}">${log.source}</span>`,
-            )
-          }
-          if (log.target && log.target !== '鎺у埗') {
-            const targetClass = targetIsAlly ? 'source-ally' : 'source-enemy'
-            htmlResult = htmlResult.replace(
-              log.target,
-              `<span class="${targetClass}">${log.target}</span>`,
-            )
-          }
-          // Add normal attack highlighting
-          if (htmlResult.includes('normal')) {
-            htmlResult = htmlResult.replace(
-              /normal/g,
-              '<span class="normal-attack">normal</span>',
-            )
-          }
-          // Add skill name highlighting (match [skill name] pattern)
-          htmlResult = htmlResult.replace(
-            /\[([^\]]+)\]/g,
-            (match: string, skillName: string) => {
-              const isHeal =
-                skillName.includes('heal') || skillName.includes('recover')
-              const isDebuff =
-                skillName.includes('poison') || skillName.includes('weak')
-              if (isHeal)
-                return `<span class="skill-heal">[${skillName}]</span>`
-              if (isDebuff)
-                return `<span class="skill-debuff">[${skillName}]</span>`
-              return `<span class="skill-attack">[${skillName}]</span>`
-            },
-          )
-          // Add damage number highlighting
-          htmlResult = htmlResult.replace(
-            /(\d+)(?=\s*(?:physical|magic|dot)?\s*damage)/gi,
-            '<span class="damage-value">$1</span>',
-          )
-          // Add crit highlighting
-          if (htmlResult.includes('CRIT')) {
-            htmlResult = htmlResult.replace(
-              /CRIT/gi,
-              '<span class="crit-value">CRIT</span>',
-            )
-          }
-          // Add evade highlighting
-          if (htmlResult.includes('EVADE')) {
-            htmlResult = htmlResult.replace(
-              /EVADE/gi,
-              '<span class="evade">EVADE</span>',
-            )
-          }
-          // Add block highlighting
-          if (htmlResult.includes('BLOCK')) {
-            htmlResult = htmlResult.replace(
-              /BLOCK/gi,
-              '<span class="block">BLOCK</span>',
-            )
-          }
-          log.htmlResult = htmlResult
-        }
-        LoggerProvider.logger.addBattleLog(log)
+        // 直接将结构化日志对象传递给日志管理器
+        LoggerProvider.logger.addBattleLog(data.log)
       }
     } catch (error) {
       LoggerProvider.logger.addSystemLog({
@@ -21904,7 +21913,7 @@ export class BattleEventManager {
           category: BATTLE_LOG_CATEGORIES.STATUS,
           meta: { role: 'battle' },
         })
-        // ponytail: 战报生成 — 不传参与者 气血 数据，仅有统计数据
+        // ponytail: 战报生成 — 不传参与者气血数据，仅有统计数据
         const summary = BattleSummaryGenerator.instance.onBattleEnd(data.winner)
         // 发射战报事件，供 UI 层 BattleSummaryDialog 捕获
         if (summary) {
@@ -21913,7 +21922,6 @@ export class BattleEventManager {
       }
     } catch (error) {
       console.error(`Error handling battle end: ${error}`)
-      console.error('处理战斗结束时出错:', error)
     }
   }
   /**
@@ -21928,17 +21936,13 @@ export class BattleEventManager {
       const store = this.getBattleStore()
       if (data && data.actorId && store) {
         store.currentActorId = data.actorId
-        LoggerProvider.logger.addBattleLog({
-          turn: `turn_${data.turn}`,
-          message: `Turn ${data.turn} start, actor: ${data.actorId}`,
-        })
       }
     } catch (error) {
       console.error('处理回合开始时出错:', error)
     }
   }
   /**
-   * 澶勭悊鍥炲悎缁撴潫浜嬩欢
+   * 处理回合结束事件
    */
   private handleTurnEndEvent(data: { battleId: string; turn: number }) {
     try {
@@ -21953,7 +21957,7 @@ export class BattleEventManager {
     }
   }
 }
-// 瀵煎嚭鍗曚緥瀹炰緥
+// 导出单例实例
 export const battleEventManager = new BattleEventManager()
 
 --- src/infrastructure/adapters/event/TriggerEventBus.ts ---
@@ -24477,7 +24481,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                   </div>
                   <div class="source-value">
                     <span class="source-amount"
-                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -24493,7 +24497,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                   </div>
                   <div class="source-value">
                     <span class="source-amount"
-                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -24509,7 +24513,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                   </div>
                   <div class="source-value">
                     <span class="source-amount"
-                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -24525,7 +24529,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                   </div>
                   <div class="source-value">
                     <span class="source-amount"
-                      :class="{ 'positive': modifier.value > 0, 'negative': modifier.value < 0 }">
+                      :class="{ [BuffPolarity.POSITIVE]: modifier.value > 0, [BuffPolarity.NEGATIVE]: modifier.value < 0 }">
                       {{ formatModifierValue(modifier.value, modifier.type) }}
                     </span>
                   </div>
@@ -24557,6 +24561,7 @@ import { Modifier, ModifierType, AttributeValueType, ModifierSourceType } from '
 import { ModifierSourceTypeNames } from '@/domain/attribute/types'
 import { getAttrMeta } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
+import { BuffPolarity } from '@/shared/types/buff-classification'
 // ===================== 区间模式类型导出 =====================
 export interface RangeModifierRow {
   label: string
@@ -28342,6 +28347,7 @@ import {
   getEffectTypeText,
   getSlotText,
 } from '@/shared/utils/display-helpers'
+import { BuffPolarity } from '@/shared/types/buff-classification'
 interface Props {
   item: CompendiumItem
 }
@@ -28351,13 +28357,13 @@ const getRarityText = (rarity: number): string => {
 }
 const getValueClass = (value: number | string): string => {
   if (typeof value === 'string' && value.startsWith('+')) {
-    return 'positive'
+    return BuffPolarity.POSITIVE
   }
   if (typeof value === 'string' && value.startsWith('-')) {
-    return 'negative'
+    return BuffPolarity.NEGATIVE
   }
   if (typeof value === 'number' && value > 0) {
-    return 'positive'
+    return BuffPolarity.POSITIVE
   }
   return ''
 }
@@ -30666,7 +30672,7 @@ export type UseBattleAnimationReturn = ReturnType<typeof useBattleAnimation>
  * 原则：不修改现有数据源，仅在展示层做格式转换
  */
 import { computed, unref, type ComputedRef, type Ref } from 'vue'
-import type {
+import {
   BuffTextItem,
   BuffRawItem,
   MergedAttributeLine,
@@ -30712,13 +30718,13 @@ export function detectCondition(raw: BuffRawItem): {
   conditionLabel?: string
 } {
   // 优先使用实例的实时条件状态（由领域层设置）
-  if (raw.conditionState === 'active') {
-    return { condition: 'active', conditionLabel: '已激活' }
+  if (raw.conditionState === ConditionState.ACTIVE) {
+    return { condition: ConditionState.ACTIVE, conditionLabel: '已激活' }
   }
-  if (raw.conditionState === 'inactive') {
+  if (raw.conditionState === ConditionState.INACTIVE) {
     const label = matchConditionKeyword(raw.description || '', raw.name || '')
     return {
-      condition: 'inactive',
+      condition: ConditionState.INACTIVE,
       conditionLabel: label ? `${label}·未激活` : '未激活',
     }
   }
@@ -30727,7 +30733,7 @@ export function detectCondition(raw: BuffRawItem): {
   for (const kw of CONDITION_KEYWORDS) {
     if (kw.match.test(description) || kw.match.test(name)) {
       // ponytail: 无法从纯文本推断条件是否满足，默认按未激活处理
-      return { condition: 'inactive', conditionLabel: kw.label }
+      return { condition: ConditionState.INACTIVE, conditionLabel: kw.label }
     }
   }
   return { condition: 'none' }
@@ -30745,12 +30751,12 @@ function matchConditionKeyword(
   return undefined
 }
 /**
- * 从 isDebuff + name 推断类型
+ * 从 isNegative + name 推断类型
  * 优先使用结构化 controlType 字段，回退到名称关键词匹配
  */
 export function detectType(
   name: string,
-  isDebuff: boolean,
+  isNegative: boolean,
   controlType?: string,
 ): 'buff' | 'debuff' | 'control' {
   // 优先使用结构化字段（新数据走此路径）
@@ -30761,7 +30767,7 @@ export function detectType(
   for (const keyword of CONTROL_NAMES) {
     if (name.includes(keyword)) return 'control'
   }
-  return isDebuff ? 'debuff' : 'buff'
+  return isNegative ? 'debuff' : 'buff'
 }
 /**
  * 从 config.attributes 提取属性修正
@@ -30829,10 +30835,10 @@ function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
   // ponytail: 当 name 为空时显示兜底文本，防止空标签出现在 UI 中
   const displayName = name || '未知效果'
   const description = raw.description || (name ? name : '无详细说明')
-  const isDebuff = raw.isDebuff === true
+  const isNegative = raw.isNegative === true
   const remainingTurns = raw.remainingTurns ?? 0
   const stacks = raw.currentStacks ?? 1
-  const type = detectType(displayName, isDebuff, raw.controlType)
+  const type = detectType(displayName, isNegative, raw.controlType)
   // 检测条件状态——优先使用领域层的 conditionState
   let { condition, conditionLabel } = detectCondition(raw)
   // 永久效果覆盖条件检测
@@ -30938,8 +30944,8 @@ export function sortItems(items: BuffTextItem[]): BuffTextItem[] {
     const bCtrl = b.type === 'control' ? 0 : 1
     if (aCtrl !== bCtrl) return aCtrl - bCtrl
     // 2. 已激活的排前
-    const aActive = a.condition === 'active' ? 0 : 1
-    const bActive = b.condition === 'active' ? 0 : 1
+    const aActive = a.condition === ConditionState.ACTIVE ? 0 : 1
+    const bActive = b.condition === ConditionState.ACTIVE ? 0 : 1
     if (aActive !== bActive) return aActive - bActive
     // 3. 剩余回合短的排前（即将到期的优先展示）
     const aTurns = a.remainingTurns > 0 ? a.remainingTurns : Infinity
@@ -31025,10 +31031,10 @@ export function useBuffDisplay(
       for (const item of sorted) {
         const isLongDuration =
           item.remainingTurns === 0 || item.remainingTurns >= 5
-        const isInactiveCondition = item.condition === 'inactive'
+        const isInactiveCondition = item.condition === ConditionState.INACTIVE
         if (item.type === 'control') {
           primary.push(item)
-        } else if (item.condition === 'active') {
+        } else if (item.condition === ConditionState.ACTIVE) {
           primary.push(item)
         } else if (isLongDuration || isInactiveCondition) {
           secondary.push(item)
@@ -31058,7 +31064,7 @@ export function getBuffColorClass(
   type: 'buff' | 'debuff' | 'control',
   condition?: ConditionState,
 ): string {
-  if (condition === 'inactive') return 'buff-text--inactive'
+  if (condition === ConditionState.INACTIVE) return 'buff-text--inactive'
   if (condition === 'permanent') return 'buff-text--permanent'
   switch (type) {
     case 'buff':
@@ -31090,8 +31096,8 @@ export function getConditionLabel(
   condition: ConditionState,
   customLabel?: string,
 ): string {
-  if (condition === 'active') return '已激活'
-  if (condition === 'inactive')
+  if (condition === ConditionState.ACTIVE) return '已激活'
+  if (condition === ConditionState.INACTIVE)
     return customLabel ? `${customLabel}·未激活` : '未激活'
   if (condition === 'permanent') return '永久'
   return ''
@@ -40178,6 +40184,7 @@ import { classifyBuff } from '@/shared/types/buff-classification'
 import { getAttrName } from '@/domain/attribute/types'
 import { ParticipantSideName } from '@/domain/battle/type/types'
 import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
+import { BuffPolarity } from '@/shared/types/buff-classification'
 // ==================== 类型 ====================
 export interface EditorBuffEntry {
   id: string
@@ -40185,7 +40192,7 @@ export interface EditorBuffEntry {
   /** 主分类（facets[0]） */
   primaryFacet: string
   /** 极性 */
-  polarity: string
+  polarity: BuffPolarity
   /** 用户可调的回合数（0=永久） */
   duration: number
   effect: string
@@ -44550,12 +44557,13 @@ import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
 export type BuffDisplayType = 'buff' | 'debuff' | 'control'
 // ==================== 维度一：极性（UI 颜色） ====================
-export const BUFF_POLARITY = {
-  POSITIVE: 'positive',
-  NEGATIVE: 'negative',
-  NEUTRAL: 'neutral',
+export const BuffPolarity = {
+  POSITIVE: 'positive',   // 正面/积极
+  NEGATIVE: 'negative',   // 负面/消极
+  NEUTRAL: 'neutral',     // 中性/客观
+  MIXED: 'mixed'          // 混合/复杂
 } as const
-export type BuffPolarity = (typeof BUFF_POLARITY)[keyof typeof BUFF_POLARITY]
+export type BuffPolarity = (typeof BuffPolarity)[keyof typeof BuffPolarity]
 // ==================== 维度三：运行时 facet（从配置结构自动派生） ====================
 /**
  * 从 buff 配置结构自动派生其运行时 facets。
@@ -44649,8 +44657,6 @@ export interface BuffClassificationInput {
   shield?: unknown
   /** 免疫标签 */
   immunities?: string[]
-  /** 是否为减益（遗留字段，被 polarity 取代） */
-  isDebuff?: boolean
   /** 极性：直接决定 UI 颜色（取代 isDebuff + category 优先级链的猜测） */
   polarity?: BuffPolarity | string
   /** 原子效果执行计划（从 ResolvedBuffConfig 传入） */
@@ -44689,23 +44695,21 @@ export function classifyBuff(
       category: StatusCategory.OTHER,
       facets: [],
       isNegative: false,
-      polarity: BUFF_POLARITY.NEUTRAL,
+      polarity: BuffPolarity.NEUTRAL,
     }
   }
   // 1. 自动派生 facets（从配置结构，不看 category，不看 tags）
   const facets = deriveBuffFacets(config)
-  // 2. 确定极性：polarity → isDebuff → category 猜测（三级回退）
+  // 2. 确定极性：polarity → category 猜测（两级回退）
   let polarity: BuffPolarity
   if (config.polarity) {
     polarity = config.polarity as BuffPolarity
-  } else if (config.isDebuff !== undefined) {
-    polarity = config.isDebuff ? BUFF_POLARITY.NEGATIVE : BUFF_POLARITY.POSITIVE
   } else {
     polarity = guessPolarity(config.category ?? null, facets)
   }
   // 3. 显示标签：透传 JSON 的 category，兜底取 facets[0]
   const category = asStatusCategory(config.category) ?? (facets.length > 0 ? facets[0] : StatusCategory.OTHER)
-  return { category, facets, polarity, isNegative: polarity === BUFF_POLARITY.NEGATIVE }
+  return { category, facets, polarity, isNegative: polarity === BuffPolarity.NEGATIVE }
 }
 /** 安全地将字符串转为 StatusCategory（仅透传有效值，无效返回 undefined） */
 function asStatusCategory(raw: string | undefined | null): StatusCategory | undefined {
@@ -44721,14 +44725,14 @@ function guessPolarity(
   facets: StatusCategory[],
 ): BuffPolarity {
   // 从 facets 判
-  if (facets.includes(StatusCategory.CONTROL)) return BUFF_POLARITY.NEGATIVE
-  if (facets.includes(StatusCategory.IMMUNITY)) return BUFF_POLARITY.POSITIVE
-  if (facets.includes(StatusCategory.AURA)) return BUFF_POLARITY.POSITIVE
-  if (facets.includes(StatusCategory.SHIELD)) return BUFF_POLARITY.POSITIVE
+  if (facets.includes(StatusCategory.CONTROL)) return BuffPolarity.NEGATIVE
+  if (facets.includes(StatusCategory.IMMUNITY)) return BuffPolarity.POSITIVE
+  if (facets.includes(StatusCategory.AURA)) return BuffPolarity.POSITIVE
+  if (facets.includes(StatusCategory.SHIELD)) return BuffPolarity.POSITIVE
   // 从 rawCategory 判（仅当 facets 判断无法决定时）
-  if (rawCategory === StatusCategory.CONTROL || rawCategory === StatusCategory.DOT) return BUFF_POLARITY.NEGATIVE
-  if (rawCategory === StatusCategory.SHIELD || rawCategory === StatusCategory.AURA || rawCategory === StatusCategory.IMMUNITY) return BUFF_POLARITY.POSITIVE
-  return BUFF_POLARITY.NEUTRAL
+  if (rawCategory === StatusCategory.CONTROL || rawCategory === StatusCategory.DOT) return BuffPolarity.NEGATIVE
+  if (rawCategory === StatusCategory.SHIELD || rawCategory === StatusCategory.AURA || rawCategory === StatusCategory.IMMUNITY) return BuffPolarity.POSITIVE
+  return BuffPolarity.NEUTRAL
 }
 // ==================== 日志/显示工具函数 ====================
 /**
@@ -44796,8 +44800,8 @@ export interface BuffRawItem {
   name: string
   /** 效果描述 */
   description?: string
-  /** 是否为 debuff */
-  isDebuff?: boolean
+  /** 是否为减益（来自 classifyBuff.isNegative） */
+  isNegative?: boolean
   /** 剩余回合数 */
   remainingTurns?: number
   /** 当前层数 */
@@ -44929,6 +44933,9 @@ export interface BuffDisplayState {
 }
 
 --- src/shared/types/buffs-json.ts ---
+import { BuffPolarity } from '@/shared/types/buff-classification'
+import { StatusCategory, ControlKind } from '@/shared/types/status-meta'
+import { StackRule } from '@/domain/buff/types'
 /**
  * buffs.json 完整类型定义
  *
@@ -44960,25 +44967,33 @@ export interface BuffJsonTriggerEntry {
 export interface BuffJsonEntry {
   id: string
   name?: string
-  category?: string
+  category?: StatusCategory
   duration?: number
   maxStacks?: number
   aura?: BuffJsonAura
-  polarity?: string
+  polarity?: BuffPolarity
   description?: string
   attributes?: Record<string, string>
   triggers?: BuffJsonTriggerEntry[]
-  controlType?: string
-  controlPriority?: number
-  stackRule?: string
+  controlType?: ControlKind
+  stackRule?: StackRule
   tags?: string[]
   onAdd?: string
-  immunities?: string[]
-  statusType?: string
+  // --- 补全遗漏字段 ---
+  immunities?: string[] // 免疫标签
+  effects?: Array<{
+    // 原子效果系统配置
+    type: string
+    params?: Record<string, unknown>
+  }>
+  cascadeRemove?: boolean // 级联移除标记
+  isPermanent?: boolean // 是否永久
+  iconPath?: string // 图标路径
+  // ----------------------
   shield?: unknown
-  isDebuff?: boolean
   parameters?: Record<string, unknown>
   cooldown?: number
+  // 是否可驱散
   dispellable?: boolean
 }
 import rawBuffsData from '@configs/buffs/buffs.json'
@@ -45976,6 +45991,7 @@ export const StatusNames: Record<StatusCode, string> = Object.fromEntries(
   Object.entries(STATUS_META).map(([code, meta]) => [code, meta.name]),
 ) as Record<StatusCode, string>
 export const ControlKind : StatusCode[] = Object.values(STATUS_META).filter((m) => m.category === StatusCategory.CONTROL).map((m) => m.code)
+export type ControlKind = (typeof ControlKind)[number]
 export const ControlKindNames = Object.values(STATUS_META).filter((m) => m.category === StatusCategory.CONTROL).map((m) => m.name)
 export const ControlKindOrder = ControlKind.map((code) => STATUS_META[code].controlPriority ?? 0)
 

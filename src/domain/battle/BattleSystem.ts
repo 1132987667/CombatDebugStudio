@@ -52,7 +52,7 @@ import type { Container } from '@/infrastructure/di/Container'
 import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 
-import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
@@ -438,14 +438,22 @@ export class BattleSystem {
 
     // ponytail: 防止触发器脚本（如 reflectDamage）循环递归
     // 在 DAMAGE_TAKEN 发射中再次调用 requestDamage → setDamageCallback → ... 无限递归
-    let _inDamageCallback = false
+    // 使用深度计数器替代布尔标志，允许有限嵌套（DOT→反伤→反伤的反伤），防止真正无限递归
+    let _damageCallbackDepth = 0
+    const MAX_DAMAGE_CALLBACK_DEPTH = 3
 
     // 注册伤害/治疗回调，Buff 触发器可直接对目标造成伤害或治疗
     this.buffSystem.setDamageCallback(
       (targetId: string, damage: number, rawDamage?: number, damagePercent?: number) => {
-        // ponytail: 递归守卫 — 若已在回调中则跳过，避免反弹/分摊类触发器循环
-        if (_inDamageCallback) return
-        _inDamageCallback = true
+        // ponytail: 递归守卫 — 深度计数器替代布尔标志，允许有限嵌套
+        if (_damageCallbackDepth >= MAX_DAMAGE_CALLBACK_DEPTH) {
+          LoggerProvider.logger.addDebugLog(
+            `伤害回调嵌套深度超过上限(${MAX_DAMAGE_CALLBACK_DEPTH})，丢弃: ${targetId}`,
+            { level: LogLevel.WARN },
+          )
+          return
+        }
+        _damageCallbackDepth++
         try {
           const target = battleData.participants.get(targetId)
           if (!target?.isAlive()) return
@@ -562,7 +570,7 @@ export class BattleSystem {
             })
           }
         } finally {
-          _inDamageCallback = false
+          _damageCallbackDepth--
         }
       },
     )
@@ -729,17 +737,29 @@ export class BattleSystem {
         const aura = this.buffSystem.getBuffAuraConfig(buffConfig.id)
         if (!aura || !aura.modifiers?.length || !aura.targetSelector) continue
         const isAllies = aura.targetSelector === 'allies'
-        const sourceKey = `passive:${buffConfig.id}`
         for (const [targetId, target] of participants) {
           if (targetId === id) continue
           if (!(target instanceof BattleParticipantImpl)) continue
           const sameTeam = target.team === entity.team
           if ((isAllies && sameTeam) || (!isAllies && !sameTeam)) {
-            GameDataProcessor.applyAuraModifiersToParticipant(
-              target,
-              sourceKey,
-              aura.modifiers,
-            )
+            // ponytail: 光环修饰符通过目标角色的 ModifierStack 管理，
+            // 使用 instanceId 作为 sourceKey，这样 removeBuff 时能通过
+            // removeModifier(instanceId) 正确清理跨角色修饰符。
+            const targetStack = this.buffSystem.getModifierStack(targetId)
+            for (const mod of aura.modifiers) {
+              let value = typeof mod.value === 'number' ? mod.value : 0
+              // aura 中的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
+              if (mod.type === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
+                value = Math.round(value * 10000) / 100
+              }
+              targetStack.addModifier(
+                instanceId,
+                mod.targetAttribute as ATTRIBUTE_CODE,
+                value,
+                mod.type,
+              )
+            }
+            target.recalcAll()
           }
         }
       }
@@ -907,7 +927,7 @@ export class BattleSystem {
           return
         }
 
-        this.buffSystem.updatePerTurn(participant.id)
+        this.buffSystem.updatePerTurn(participant.id, battle.currentTurn)
 
         await this.runEndConditionCheck()
 

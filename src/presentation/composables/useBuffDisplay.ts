@@ -6,7 +6,7 @@
  */
 
 import { computed, unref, type ComputedRef, type Ref } from 'vue'
-import type {
+import {
   BuffTextItem,
   BuffRawItem,
   MergedAttributeLine,
@@ -55,13 +55,13 @@ export function detectCondition(raw: BuffRawItem): {
   conditionLabel?: string
 } {
   // 优先使用实例的实时条件状态（由领域层设置）
-  if (raw.conditionState === 'active') {
-    return { condition: 'active', conditionLabel: '已激活' }
+  if (raw.conditionState === ConditionState.ACTIVE) {
+    return { condition: ConditionState.ACTIVE, conditionLabel: '已激活' }
   }
-  if (raw.conditionState === 'inactive') {
+  if (raw.conditionState === ConditionState.INACTIVE) {
     const label = matchConditionKeyword(raw.description || '', raw.name || '')
     return {
-      condition: 'inactive',
+      condition: ConditionState.INACTIVE,
       conditionLabel: label ? `${label}·未激活` : '未激活',
     }
   }
@@ -71,7 +71,7 @@ export function detectCondition(raw: BuffRawItem): {
   for (const kw of CONDITION_KEYWORDS) {
     if (kw.match.test(description) || kw.match.test(name)) {
       // ponytail: 无法从纯文本推断条件是否满足，默认按未激活处理
-      return { condition: 'inactive', conditionLabel: kw.label }
+      return { condition: ConditionState.INACTIVE, conditionLabel: kw.label }
     }
   }
   return { condition: 'none' }
@@ -302,8 +302,8 @@ export function sortItems(items: BuffTextItem[]): BuffTextItem[] {
     if (aCtrl !== bCtrl) return aCtrl - bCtrl
 
     // 2. 已激活的排前
-    const aActive = a.condition === 'active' ? 0 : 1
-    const bActive = b.condition === 'active' ? 0 : 1
+    const aActive = a.condition === ConditionState.ACTIVE ? 0 : 1
+    const bActive = b.condition === ConditionState.ACTIVE ? 0 : 1
     if (aActive !== bActive) return aActive - bActive
 
     // 3. 剩余回合短的排前（即将到期的优先展示）
@@ -401,10 +401,10 @@ export function useBuffDisplay(
       for (const item of sorted) {
         const isLongDuration =
           item.remainingTurns === 0 || item.remainingTurns >= 5
-        const isInactiveCondition = item.condition === 'inactive'
+        const isInactiveCondition = item.condition === ConditionState.INACTIVE
         if (item.type === 'control') {
           primary.push(item)
-        } else if (item.condition === 'active') {
+        } else if (item.condition === ConditionState.ACTIVE) {
           primary.push(item)
         } else if (isLongDuration || isInactiveCondition) {
           secondary.push(item)
@@ -435,7 +435,7 @@ export function getBuffColorClass(
   type: 'buff' | 'debuff' | 'control',
   condition?: ConditionState,
 ): string {
-  if (condition === 'inactive') return 'buff-text--inactive'
+  if (condition === ConditionState.INACTIVE) return 'buff-text--inactive'
   if (condition === 'permanent') return 'buff-text--permanent'
 
   switch (type) {
@@ -471,8 +471,8 @@ export function getConditionLabel(
   condition: ConditionState,
   customLabel?: string,
 ): string {
-  if (condition === 'active') return '已激活'
-  if (condition === 'inactive')
+  if (condition === ConditionState.ACTIVE) return '已激活'
+  if (condition === ConditionState.INACTIVE)
     return customLabel ? `${customLabel}·未激活` : '未激活'
   if (condition === 'permanent') return '永久'
   return ''

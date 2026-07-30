@@ -13,11 +13,10 @@ import type {
   BattleEndedEventData,
 } from '@/domain/battle/type/BattleEventType'
 import { useBattleStore } from '@/presentation/stores/battleStore'
-import type { BattleLogEntry } from '@/shared/types/battle-log'
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
-import { ParticipantSide, ParticipantSideName } from '@/domain/battle/type/types'
+import { ParticipantSideName } from '@/domain/battle/type/types'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
@@ -70,28 +69,28 @@ export class BattleEventManager {
    * 开始监听战斗事件
    */
   startListening() {
-    // 闃叉閲嶅璁㈤槄
+    // 防止重复订阅
     if (this.isListening) {
-      console.warn('BattleEventManager:   ')
+      console.warn('BattleEventManager: 已经处于监听状态')
       return
     }
 
-    // 璁㈤槄鎴樻枟鏃ュ織浜嬩欢
+    // 订阅战斗日志事件
     const battleLogHandler = (data: any) => this.handleBattleLogEvent(data)
     this.emitter.on(BattleEventCodes.BATTLE_LOG, battleLogHandler)
     this.boundHandlers.set(BattleEventCodes.BATTLE_LOG, battleLogHandler)
 
-    // 璁㈤槄鎴樻枟缁撴潫浜嬩欢
+    // 订阅战斗结束事件
     const battleEndHandler = (data: any) => this.handleBattleEndEvent(data)
     this.emitter.on(BattleEventCodes.BATTLE_ENDED, battleEndHandler)
     this.boundHandlers.set(BattleEventCodes.BATTLE_ENDED, battleEndHandler)
 
-    // Subscribe to turn start events
+    // 订阅回合开始事件
     const turnStartHandler = (data: any) => this.handleTurnStartEvent(data)
     this.emitter.on(BattleEventCodes.TURN_START, turnStartHandler)
     this.boundHandlers.set(BattleEventCodes.TURN_START, turnStartHandler)
 
-    // 璁㈤槄鍥炲悎缁撴潫浜嬩欢
+    // 订阅回合结束事件
     const turnEndHandler = (data: any) => this.handleTurnEndEvent(data)
     this.emitter.on(BattleEventCodes.TURN_END, turnEndHandler)
     this.boundHandlers.set(BattleEventCodes.TURN_END, turnEndHandler)
@@ -103,116 +102,29 @@ export class BattleEventManager {
    * 停止监听战斗事件
    */
   stopListening() {
-    // Unsubscribe all battle events
+    // 取消订阅所有战斗事件
     this.emitter.off(BattleEventCodes.BATTLE_LOG)
     this.emitter.off(BattleEventCodes.BATTLE_ENDED)
     this.emitter.off(BattleEventCodes.TURN_START)
     this.emitter.off(BattleEventCodes.TURN_END)
 
-    // 娓呴櫎鍥炶皟引用
+    // 清除回调引用
     this.boundHandlers.clear()
     this.isListening = false
   }
 
   /**
    * 处理战斗日志事件
+   *
+   * 架构说明：现代日志系统已全面采用结构化的 LogSegment[] 进行渲染。
+   * 领域层生成的 log 对象已包含完整的语义化 segments（如 kind: 'skill' | 'heal'），
+   * UI 层的 LogSeg.vue 会直接消费这些结构化数据，不再需要在此处使用正则表达式拼接 HTML 字符串。
    */
   private handleBattleLogEvent(data: BattleLogEventData) {
     try {
       if (data && data.log) {
-        const log = data.log as BattleLogEntry & {
-          htmlResult?: string
-          result?: string
-        }
-        // 濡傛灉娌℃湁 htmlResult锛屽皾璇曠敓鎴?HTML 鏍煎紡
-        if (!log.htmlResult && log.result) {
-          let htmlResult = log.result
-
-          // 鍒ゆ柇鏉ユ簮鍜岀洰鏍囨槸鍚︽槸鏁屾柟
-          const sourceIsAlly =
-            log.source != null &&
-            !log.source.includes('鏁屾柟') &&
-            log.source !== '系统'
-          const targetIsAlly =
-            log.target &&
-            !log.target.includes('鏁屾柟') &&
-            log.target !== '系统' &&
-            log.target !== '鎺у埗'
-
-          // 鏇挎崲瑙掕壊鍚嶇О棰滆壊
-          if (log.source && log.source !== '系统') {
-            const sourceClass = sourceIsAlly ? 'source-ally' : 'source-enemy'
-            htmlResult = htmlResult.replace(
-              log.source,
-              `<span class="${sourceClass}">${log.source}</span>`,
-            )
-          }
-          if (log.target && log.target !== '鎺у埗') {
-            const targetClass = targetIsAlly ? 'source-ally' : 'source-enemy'
-            htmlResult = htmlResult.replace(
-              log.target,
-              `<span class="${targetClass}">${log.target}</span>`,
-            )
-          }
-
-          // Add normal attack highlighting
-          if (htmlResult.includes('normal')) {
-            htmlResult = htmlResult.replace(
-              /normal/g,
-              '<span class="normal-attack">normal</span>',
-            )
-          }
-
-          // Add skill name highlighting (match [skill name] pattern)
-          htmlResult = htmlResult.replace(
-            /\[([^\]]+)\]/g,
-            (match: string, skillName: string) => {
-              const isHeal =
-                skillName.includes('heal') || skillName.includes('recover')
-              const isDebuff =
-                skillName.includes('poison') || skillName.includes('weak')
-              if (isHeal)
-                return `<span class="skill-heal">[${skillName}]</span>`
-              if (isDebuff)
-                return `<span class="skill-debuff">[${skillName}]</span>`
-              return `<span class="skill-attack">[${skillName}]</span>`
-            },
-          )
-
-          // Add damage number highlighting
-          htmlResult = htmlResult.replace(
-            /(\d+)(?=\s*(?:physical|magic|dot)?\s*damage)/gi,
-            '<span class="damage-value">$1</span>',
-          )
-
-          // Add crit highlighting
-          if (htmlResult.includes('CRIT')) {
-            htmlResult = htmlResult.replace(
-              /CRIT/gi,
-              '<span class="crit-value">CRIT</span>',
-            )
-          }
-
-          // Add evade highlighting
-          if (htmlResult.includes('EVADE')) {
-            htmlResult = htmlResult.replace(
-              /EVADE/gi,
-              '<span class="evade">EVADE</span>',
-            )
-          }
-
-          // Add block highlighting
-          if (htmlResult.includes('BLOCK')) {
-            htmlResult = htmlResult.replace(
-              /BLOCK/gi,
-              '<span class="block">BLOCK</span>',
-            )
-          }
-
-          log.htmlResult = htmlResult
-        }
-
-        LoggerProvider.logger.addBattleLog(log)
+        // 直接将结构化日志对象传递给日志管理器
+        LoggerProvider.logger.addBattleLog(data.log)
       }
     } catch (error) {
       LoggerProvider.logger.addSystemLog({
@@ -232,6 +144,7 @@ export class BattleEventManager {
       if (!store) return
       store.setBattleActive(false)
       store.setAutoPlayMode(false)
+
       if (data && data.winner) {
         const winnerLabel = ParticipantSideName[data.winner!]
         LoggerProvider.logger.addBattleLog({
@@ -241,7 +154,8 @@ export class BattleEventManager {
           category: BATTLE_LOG_CATEGORIES.STATUS,
           meta: { role: 'battle' },
         })
-        // ponytail: 战报生成 — 不传参与者 气血 数据，仅有统计数据
+
+        // ponytail: 战报生成 — 不传参与者气血数据，仅有统计数据
         const summary = BattleSummaryGenerator.instance.onBattleEnd(data.winner)
         // 发射战报事件，供 UI 层 BattleSummaryDialog 捕获
         if (summary) {
@@ -250,7 +164,6 @@ export class BattleEventManager {
       }
     } catch (error) {
       console.error(`Error handling battle end: ${error}`)
-      console.error('处理战斗结束时出错:', error)
     }
   }
 
@@ -266,10 +179,6 @@ export class BattleEventManager {
       const store = this.getBattleStore()
       if (data && data.actorId && store) {
         store.currentActorId = data.actorId
-        LoggerProvider.logger.addBattleLog({
-          turn: `turn_${data.turn}`,
-          message: `Turn ${data.turn} start, actor: ${data.actorId}`,
-        })
       }
     } catch (error) {
       console.error('处理回合开始时出错:', error)
@@ -277,7 +186,7 @@ export class BattleEventManager {
   }
 
   /**
-   * 澶勭悊鍥炲悎缁撴潫浜嬩欢
+   * 处理回合结束事件
    */
   private handleTurnEndEvent(data: { battleId: string; turn: number }) {
     try {
@@ -293,5 +202,5 @@ export class BattleEventManager {
   }
 }
 
-// 瀵煎嚭鍗曚緥瀹炰緥
+// 导出单例实例
 export const battleEventManager = new BattleEventManager()

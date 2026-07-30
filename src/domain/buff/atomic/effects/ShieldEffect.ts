@@ -45,7 +45,8 @@ export class ShieldEffect implements IAtomicEffect {
     const shieldAmount = ctx.getVariable<number>('_shieldAmount') ?? 0
 
     const current = buffSystem.getShieldValue(ctx.characterId)
-    buffSystem.setShieldValue(ctx.characterId, Math.max(0, current - shieldAmount))
+    const deduction = Math.min(shieldAmount, current)
+    buffSystem.setShieldValue(ctx.characterId, current - deduction)
   }
 
   getEffectLines(_ctx: BuffContext, params: Record<string, unknown>) {

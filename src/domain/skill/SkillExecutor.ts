@@ -285,7 +285,6 @@ export class SkillExecutor {
       cooldown: 0,
       stackRule: StackRule.LIMITED,
       controlType: ControlType.NONE,
-      // 不设 isDebuff/isPositive，让 classifyBuff 从配置结构推导
       parameters: skillStep.parameters || skillStep.effectParams || {},
     }
 
@@ -468,7 +467,6 @@ export class SkillExecutor {
     let removed = 0
     for (const instance of instances) {
       if (removed >= count) break
-      // REMOVE_DEBUFF 只移除 isDebuff 的 buff；CLEANSE 移除所有
       if (isRemoveDebuff && !classifyBuff(instance.context.config).isNegative) continue
       this.buffSystem.removeBuff(instance.id)
       removed++

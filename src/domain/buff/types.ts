@@ -2,6 +2,9 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import { ControlKind } from '@/shared/types/status-meta'
+import {
+  ConditionState,
+} from '@/shared/types/buff-display'
 
 /** Buff ID 前缀常量 */
 export const BUFF_ID_PREFIX = 'buff_'
@@ -317,7 +320,7 @@ export interface BuffInstance<TParams = any> {
    * 由外部通过 BuffSystem.setBuffConditionState() 设置
    * active = 条件已满足（如已残血），inactive = 条件未满足
    */
-  conditionState?: 'active' | 'inactive'
+  conditionState?: ConditionState
 
   /**
    * 触发器监听器 ID 列表

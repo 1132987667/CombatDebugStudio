@@ -17,8 +17,10 @@ export class BuffContext {
   }
 
   private get buffSystem(): BuffSystem {
-    if (!this._buffSystem) console.warn('BuffSystem not injected')
-    return this._buffSystem!
+    if (!this._buffSystem) {
+      throw new Error('[BuffContext] BuffSystem not injected. Ensure initialize() was called.')
+    }
+    return this._buffSystem
   }
 
   public initialize(characterId: string, instanceId: string, config: BuffConfig, buffSystem?: BuffSystem): void {

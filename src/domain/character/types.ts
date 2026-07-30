@@ -6,7 +6,6 @@ import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 export interface BuffBrief {
   id: string
   isPositive?: boolean
-  isDebuff?: boolean
 }
 
 /**

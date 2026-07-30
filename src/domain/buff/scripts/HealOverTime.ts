@@ -1,4 +1,4 @@
-﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import type { BuffEffectLine } from '@/domain/buff/types'
 
@@ -34,7 +34,7 @@ export class HealOverTime extends BaseBuffScript {
       const currentHealing = baseHealing + healingBonus
 
       this.log(context, `持续治疗：恢复 ${currentHealing} 气血值`)
-      // 这里应该调用角色的治疗方法
+      context.getBuffSystem()?.requestHeal(context.characterId, currentHealing)
 
       context.setVariable('lastHealTime', elapsed)
     }

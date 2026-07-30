@@ -63,7 +63,7 @@ export function deriveBuffFacets(config: {
       switch (effect.type) {
         case AtomicEffectType.MODIFIER: facets.push(StatusCategory.MODIFIER); break
         case AtomicEffectType.DOT: facets.push(StatusCategory.DOT); break
-        case AtomicEffectType.HEAL: facets.push(StatusCategory.TRIGGER); break  // HEAL 归入 trigger 类
+        case AtomicEffectType.HEAL: facets.push(StatusCategory.HOT); break  // HEAL 归入 HOT 类
         case AtomicEffectType.CONTROL: facets.push(StatusCategory.CONTROL); break
         case AtomicEffectType.SHIELD: facets.push(StatusCategory.SHIELD); break
         case AtomicEffectType.TRIGGER: facets.push(StatusCategory.TRIGGER); break
@@ -138,7 +138,7 @@ export interface BuffClassificationInput {
   shield?: unknown
   /** 免疫标签 */
   immunities?: string[]
-  /** 极性：直接决定 UI 颜色（取代 isDebuff + category 优先级链的猜测） */
+  /** 极性：直接决定 UI 颜色（取代 category 优先级链的猜测） */
   polarity?: BuffPolarity | string
   /** 原子效果执行计划（从 ResolvedBuffConfig 传入） */
   effectPlan?: ResolvedEffectPlan[]
@@ -168,7 +168,7 @@ export interface BuffClassificationResult {
  * Buff 分类判定函数 — 三个维度完全解耦
  *
  * 1. facets ← 从配置结构自动派生（不看 category，不看 tags）
- * 2. polarity ← 优先取 config.polarity，回退到 isDebuff，再回退到 category 猜测
+ * 2. polarity ← 优先取 config.polarity，回退到 category 猜测
  * 3. category ← 透传 JSON 的 config.category 字段（纯显示标签），兜底取 facets[0]
  */
 export function classifyBuff(

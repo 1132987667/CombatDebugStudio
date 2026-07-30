@@ -615,17 +615,25 @@ export class SkillExecutor {
           controlType: ControlType.NONE,
           parameters: { shieldValue: overflow },
         }
-        this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
-        LoggerProvider.logger.addDebugLog(
-          `回春护盾: 溢出 ${overflow} 点治疗转化为护盾`,
-          { level: LogLevel.INFO },
-        )
-        action.effects.push({
-          type: EffectType.STATUS,
-          targetId: target.id,
-          buffId: 'buff_shield',
-          description: `溢出治疗转护盾: ${overflow}`,
-        })
+        const shieldInstanceId = this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
+        if (!shieldInstanceId) {
+          LoggerProvider.logger.addDebugLog(
+            `回春护盾: 护盾施加被免疫/跳过`,
+            { level: LogLevel.WARN },
+          )
+        } else {
+          LoggerProvider.logger.addDebugLog(
+            `回春护盾: 溢出 ${overflow} 点治疗转化为护盾`,
+            { level: LogLevel.INFO },
+          )
+          action.effects.push({
+            type: EffectType.STATUS,
+            targetId: target.id,
+            buffId: 'buff_shield',
+            instanceId: shieldInstanceId,
+            description: `溢出治疗转护盾: ${overflow}`,
+          })
+        }
       } else {
         action.effects.push({
           type: EffectType.STATUS,
@@ -833,6 +841,13 @@ export class SkillExecutor {
       config,
       0,
     )
+    if (!instanceId) {
+      LoggerProvider.logger.addDebugLog(
+        `executeShield: 护盾施加被免疫/跳过: ${buffTarget.id}`,
+        { level: LogLevel.WARN },
+      )
+      return
+    }
     action.effects.push({
       type: EffectType.STATUS,
       targetId: buffTarget.id,
@@ -868,6 +883,13 @@ export class SkillExecutor {
       parameters: skillStep.parameters || {},
     }
     const instanceId = this.buffSystem.addBuff(target.id, buffId, config)
+    if (!instanceId) {
+      LoggerProvider.logger.addDebugLog(
+        `executeControl: 控制效果被免疫/跳过: ${buffId} → ${target.id}`,
+        { level: LogLevel.WARN },
+      )
+      return
+    }
     action.effects.push({
       type: EffectType.STATUS,
       targetId: target.id,

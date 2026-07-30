@@ -29,9 +29,7 @@ configs/
 docs/
 documents/
 prompts/
-scripts/
 tests/
-tools/
 
 output.txt
 

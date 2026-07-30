@@ -13,11 +13,19 @@ CombatDebugStudio/
         1785324003357-hidden-orchid.md
         1785325217448-hidden-nebula.md
         1785393374525-jolly-panda.md
+        1785399900951-swift-river.md
     skills/
         domain-migration/
             SKILL.md
     .cron-lock
     package.json
+scripts/
+    tools/
+        validate_skills.cjs
+    fix-imports.mjs
+    fix-logger-field.mjs
+    fix-loglevel-imports.mjs
+    replace-logger.cjs
 src/
     application/
         facade/
@@ -88,6 +96,29 @@ src/
                 AtomicEffectRegistry.ts
                 BuffConfigResolver.ts
                 types.ts
+            scripts/
+                templates/
+                    AttributeBuffTemplate.ts
+                    BaseBuffScript.ts
+                    BuffTemplate.ts
+                AttackUpBuff.ts
+                BerserkBuff.ts
+                CritDamageReductionDebuff.ts
+                DefenseUpBuff.ts
+                DodgeUpBuff.ts
+                GuardianBuffs.ts
+                HealOverTime.ts
+                HitReductionDebuff.ts
+                index.ts
+                MountainChildBuff.ts
+                MountainGodBuff.ts
+                PoisonDebuff.ts
+                ShieldBuff.ts
+                SpeedReductionDebuff.ts
+                SpeedUpBuff.ts
+                StoneSkinBuff.ts
+                StrongPoisonDebuff.ts
+                StunDebuff.ts
             triggers/
                 index.ts
             BuffContext.ts
@@ -266,7 +297,7 @@ vite.config.ts
 文件内容:
 
 --- .mimocode/.cron-lock ---
-{"pid":21104,"startedAt":1785393357913}
+{"pid":23784,"startedAt":1785399698002}
 
 --- .mimocode/commands/verify.md ---
 ---
@@ -1930,6 +1961,94 @@ npm run test               # 确保现有测试全部通过
 - `updatePerTurn` 改动后，需确认 DOT/HEAL 原语的 `onTick` 收到正确回合数（通过测试日志输出验证）
 - 递归深度计数改动后，确认正常流程不受影响、嵌套超过 3 层时正确告警
 
+--- .mimocode/plans/1785399900951-swift-river.md ---
+# Buff 系统修复 — 补充修复计划
+## 状态审查结果
+审计报告基于**原始方案文档**（未执行状态）编写。上一轮执行已实际覆盖了大部分条目。
+以下是对照当前代码库（已执行后）的真实遗留项：
+### 已完成（审计报告误报为遗漏）
+| 审计# | 条目 | 当前状态 |
+|-------|------|---------|
+| 1 | P0-1 修复时机 | ✅ Phase 1 已修复（ShieldBuff.ts 第 39 行） |
+| 4 | P1-5 aura 检查 | ✅ 已添加 `hasAuraEffect` 检查 |
+| 5 | P1-8 immuneTagMatch | ✅ 已改为检查 `buffTags` |
+| 6 | P1-6 currentTurn 默认值 | ✅ 已改为 `-1`，冷却加守卫 |
+| 7 | P1-7 ImmunityEffect.onRemove | ✅ 方法体已置空 |
+| 9-17 | P2 全部（1/2/4/5/11/12/13/14） | ✅ 全部已修复 |
+| 18-21 | P3 全部（3/5/6/7/9） | ✅ 全部已修复 |
+### 真正遗留项（5 项）
+| # | 文件 | 问题 | 修复 |
+|---|------|------|------|
+| R1 | `BuffSystem.ts` : `updatePerTurn` | `instance.script.onUpdate(instance.context, 0)` 硬编码 `0`，应传递 `currentTurn` | 改为 `instance.script.onUpdate(instance.context, currentTurn)` |
+| R2 | `BuffSystem.ts` : `addBuff` effectLines | Path A（effectPlan）的 effectLines 同时从脚本和 effectPlan 生成，有冗余 | Path A 仅从 effectPlan 生成，跳过 `script.getEffectLines` |
+| R3 | `BuffSystem.ts` : trigger 注册注释 | 触发器注册独立于三择一逻辑，缺少明确注释 | 添加注释说明 |
+| R4 | `BuffSystem.ts` : `addBuff` ON_APPLY 注释 | `ON_APPLY` 事件发射和 `buffAppliedCallback` 独立于三择一，缺少注释 | 添加注释说明 |
+| R5 | `BuffQuery` 接口注释 | `setShieldValue` 参数类型注释缺失 | 已有正确类型，无需修改 |
+## 执行计划
+```powershell
+# 验证命令
+npm run typecheck && npm test
+```
+### R1：updatePerTurn 传 currentTurn（1 行修改）
+**文件**：`src/domain/buff/BuffSystem.ts` 第 999 行
+**改前**：
+```typescript
+instance.script.onUpdate(instance.context, 0)
+```
+**改后**：
+```typescript
+instance.script.onUpdate(instance.context, currentTurn)
+```
+**理由**：`updatePerTurn` 已经接收 `currentTurn` 参数，effectPlan 的 `onTick` 已正确传递它。
+唯独脚本的 `onUpdate` 被硬编码了 `0`，导致 ShieldBuff._onUpdate 等基于回合的逻辑看不到当前回合数。
+### R2：effectLines 适配 Path A（约 3 行）
+**文件**：`src/domain/buff/BuffSystem.ts` 第 654-673 行
+**改前**：
+```typescript
+if (buffResolved?.effectPlan && buffResolved.effectPlan.length > 0) {
+  // effectPlan onApply ...
+  // effectLines 从 effectPlan 生成并追加到脚本 effectLines 之后
+  if (effectLines.length > 0) {
+    buffInstance.effectLines = [...buffInstance.effectLines, ...effectLines]
+  }
+}
+```
+**改后**：
+```typescript
+if (buffResolved?.effectPlan && buffResolved.effectPlan.length > 0) {
+  // effectPlan onApply ...
+  // Path A：effectLines 只从 effectPlan 生成，覆盖脚本的 effectLines
+  if (effectLines.length > 0) {
+    buffInstance.effectLines = effectLines
+  } else {
+    buffInstance.effectLines = []
+  }
+}
+```
+**理由**：Path A（纯 effectPlan）的 buff 不应展示脚本生成的 effectLines（脚本可能无 effectLines 或返回过时内容）。
+### R3：触发器注册注释（纯注释）
+**文件**：`src/domain/buff/BuffSystem.ts` 约第 688 行
+在 `resolvedConfig.triggers` 注册代码前添加：
+```typescript
+// NOTE: 触发器注册独立于 effectPlan/脚本路径，两者可以共存。
+// 触发器与效果原语正交——effectPlan 管理每回合效果，triggers 管理事件响应。
+```
+### R4：ON_APPLY 事件注释（纯注释）
+**文件**：`src/domain/buff/BuffSystem.ts` 约第 718 行
+在 `ON_APPLY` 事件发射前添加：
+```typescript
+// NOTE: ON_APPLY 事件和 buffAppliedCallback 独立于三择一逻辑。
+// 无论通过哪条路径施加，都需要通知外部系统（战斗日志、UI 等）。
+```
+## 验证方法
+1. `npm run typecheck` — 无新类型错误
+2. `npm test` — 无回归（失败数不变：11 passed / 2 pre-existing failures）
+3. 确认 ShieldBuff._onUpdate 收到正确回合数（不再固定为 0）
+## 文件修改汇总
+| 文件 | 修改类型 |
+|------|---------|
+| `src/domain/buff/BuffSystem.ts` | R1（1 行）、R2（3 行）、R3+R4（注释） |
+
 --- .mimocode/skills/domain-migration/SKILL.md ---
 ---
 name: domain-migration
@@ -2242,6 +2361,290 @@ export default [
     "vue-tsc": "^2.1.10"
   }
 }
+
+--- scripts/fix-imports.mjs ---
+// fix-imports.mjs — fix the 3 files with broken imports
+import fs from "fs";
+// 1. BattleAI.ts
+let c = fs.readFileSync("src/domain/battle/ai/BattleAI.ts", "utf-8");
+c = c.replace(
+  'import {\nimport { LoggerProvider } from \u0027@/domain/port/LoggerProvider\u0027',
+  'import { LoggerProvider } from \u0027@/domain/port/LoggerProvider\u0027'
+);
+c = c.replace("import { useBattleStore } from '@/presentation/stores/battleStore'\n", "");
+fs.writeFileSync("src/domain/battle/ai/BattleAI.ts", c, "utf-8");
+console.log("✅ BattleAI.ts");
+// 2. BattleReplayManager.ts
+c = fs.readFileSync("src/domain/battle/replay/BattleReplayManager.ts", "utf-8");
+c = c.replace(
+  'import {\nimport { LoggerProvider } from \u0027@/domain/port/LoggerProvider\u0027 BattleEventType',
+  "import { LoggerProvider } from '@/domain/port/LoggerProvider'\nimport { BattleEventType"
+);
+fs.writeFileSync("src/domain/battle/replay/BattleReplayManager.ts", c, "utf-8");
+console.log("✅ BattleReplayManager.ts");
+// 3. BattleExecutor.ts
+c = fs.readFileSync("src/domain/battle/service/BattleExecutor.ts", "utf-8");
+c = c.replace(
+  'import {\nimport { LoggerProvider } from \u0027@/domain/port/LoggerProvider\u0027 convertToBattleState',
+  "import { LoggerProvider } from '@/domain/port/LoggerProvider'\nimport { convertToBattleState"
+);
+fs.writeFileSync("src/domain/battle/service/BattleExecutor.ts", c, "utf-8");
+console.log("✅ BattleExecutor.ts");
+
+--- scripts/fix-logger-field.mjs ---
+import fs from "fs";
+// 1. AutoBattleManager
+let c = fs.readFileSync("src/domain/battle/auto/AutoBattleManager.ts", "utf-8");
+c = c.replace("private LoggerProvider = LoggerProvider", "private logger = LoggerProvider.logger");
+c = c.replace(/this\.LoggerProvider\.logger/g, "this.logger");
+fs.writeFileSync("src/domain/battle/auto/AutoBattleManager.ts", c, "utf-8");
+console.log("✅ AutoBattleManager.ts");
+// 2. InterventionManager
+c = fs.readFileSync("src/domain/battle/intervention/InterventionManager.ts", "utf-8");
+c = c.replace("private LoggerProvider = LoggerProvider", "private logger = LoggerProvider.logger");
+c = c.replace(/this\.LoggerProvider\.logger/g, "this.logger");
+fs.writeFileSync("src/domain/battle/intervention/InterventionManager.ts", c, "utf-8");
+console.log("✅ InterventionManager.ts");
+// 3. BattleReplayManager
+c = fs.readFileSync("src/domain/battle/replay/BattleReplayManager.ts", "utf-8");
+c = c.replace("private LoggerProvider = LoggerProvider", "private logger = LoggerProvider.logger");
+c = c.replace(/this\.LoggerProvider\.logger/g, "this.logger");
+fs.writeFileSync("src/domain/battle/replay/BattleReplayManager.ts", c, "utf-8");
+console.log("✅ BattleReplayManager.ts");
+
+--- scripts/fix-loglevel-imports.mjs ---
+// fix-loglevel-imports.mjs
+import fs from "fs";
+const files = [
+  "src/domain/battle/auto/AutoBattleManager.ts",
+  "src/domain/battle/logs/BuffTraceLogger.ts",
+  "src/domain/battle/logs/TraceDamageLogger.ts",
+  "src/domain/battle/replay/BattleReplayManager.ts",
+  "src/domain/battle/service/BattleRecorder.ts",
+  "src/domain/skill/DamageCalculator.ts",
+  "src/domain/skill/HealCalculator.ts",
+  "src/domain/skill/PassiveSkillManager.ts",
+  "src/domain/skill/SkillExecutor.ts",
+  "src/domain/skill/SkillManager.ts",
+];
+const NEW_IMPORT = "import { LogLevel } from '@/shared/types/battle-log'";
+let count = 0;
+for (const f of files) {
+  let c = fs.readFileSync(f, "utf-8");
+  const lines = c.split("\n");
+  let changed = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (
+      line.includes("LogLevel") &&
+      (line.includes("@/infrastructure/adapters/logging/BattleLogManager") ||
+       line.includes("@/infrastructure/adapters/logging'"))
+    ) {
+      lines[i] = NEW_IMPORT;
+      changed = true;
+    }
+  }
+  if (changed) {
+    fs.writeFileSync(f, lines.join("\n"), "utf-8");
+    count++;
+    console.log("OK " + f);
+  }
+}
+console.log("Total: " + count);
+
+--- scripts/replace-logger.cjs ---
+/**
+ * Batch replace battleLogManager with LoggerProvider.logger in domain files.
+ * Uses fs with UTF-8 encoding to avoid PowerShell encoding corruption.
+ */
+const fs = require('fs')
+const path = require('path')
+const domainRoot = path.join(__dirname, '..', 'src', 'domain')
+const files = [
+  'buff/BuffErrorBoundary.ts',
+  'buff/scripts/base/BaseBuffScript.ts',
+  'buff/BuffScriptRegistry.ts',
+  'battle/BattleManager.ts',
+  'battle/BattleSystem.ts',
+  'battle/ai/BattleAI.ts',
+  'battle/auto/AutoBattleManager.ts',
+  'battle/events/BattleEventManager.ts',
+  'battle/intervention/InterventionManager.ts',
+  'battle/logs/BuffTraceLogger.ts',
+  'battle/logs/TraceDamageLogger.ts',
+  'battle/replay/BattleReplayManager.ts',
+  'battle/replay/ReplayEngine.ts',
+  'battle/service/BattleExecutor.ts',
+  'battle/service/BattleRecorder.ts',
+  'battle/service/BattleRuleManager.ts',
+  'skill/DamageCalculator.ts',
+  'skill/HealCalculator.ts',
+  'skill/PassiveSkillManager.ts',
+  'skill/SkillExecutor.ts',
+  'skill/SkillManager.ts',
+]
+const LOGGER_IMPORT = `import { LoggerProvider } from '@/domain/port/LoggerProvider'`
+let modified = 0
+for (const rel of files) {
+  const fullPath = path.join(domainRoot, rel)
+  let content = fs.readFileSync(fullPath, 'utf-8')
+  // Replace battleLogManager.xxx → LoggerProvider.logger.xxx
+  const newContent = content.replace(/battleLogManager\./g, 'LoggerProvider.logger.')
+  if (newContent === content) continue // no changes
+  // Fix imports:
+  let result = newContent
+  // Pattern 1: import { battleLogManager, LogLevel } from '...'
+  result = result.replace(
+    /import \{ battleLogManager, (LogLevel) \} from ['"]@\/infrastructure\/adapters\/logging['"]/g,
+    "import { $1 } from '@/infrastructure/adapters/logging'"
+  )
+  // Pattern 2: import { battleLogManager } from '.../logging'
+  result = result.replace(
+    /import \{ battleLogManager \} from ['"]@\/infrastructure\/adapters\/logging['"]\s*\n?/g,
+    ''
+  )
+  // Pattern 3: import { battleLogManager } from '.../logging/BattleLogManager'
+  result = result.replace(
+    /import \{ battleLogManager \} from ['"]@\/infrastructure\/adapters\/logging\/BattleLogManager['"]\s*\n?/g,
+    ''
+  )
+  // Add LoggerProvider import (find the last import line and insert after)
+  if (!result.includes("from '@/domain/port/LoggerProvider'")) {
+    const importLines = result.match(/^import .+$/gm)
+    if (importLines && importLines.length > 0) {
+      const lastImport = importLines[importLines.length - 1]
+      result = result.replace(lastImport, lastImport + '\n' + LOGGER_IMPORT)
+    } else {
+      result = LOGGER_IMPORT + '\n' + result
+    }
+  }
+  fs.writeFileSync(fullPath, result, 'utf-8')
+  modified++
+  console.log(`✅ ${rel}`)
+}
+console.log(`\nTotal files modified: ${modified}`)
+
+--- scripts/tools/validate_skills.cjs ---
+/**
+ * 文件: validate_skills.js
+ * 功能: 技能与Buff配置验证工具
+ * 描述: 检查 skills.json 中引用的 Buff ID 是否在已实现的脚本中存在
+ * 用法: node scripts/tools/validate_skills.js
+ */
+const fs = require('fs');
+const path = require('path');
+// 路径配置
+const SKILLS_CONFIG_PATH = path.join(__dirname, '../../configs/skills/skills.json');
+const SCRIPTS_DIR = path.join(__dirname, '../../src/scripts');
+// 读取JSON文件
+function readJson(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return JSON.parse(content);
+  } catch (error) {
+    console.error(`Failed to read ${filePath}:`, error.message);
+    process.exit(1);
+  }
+}
+// 扫描Buff脚本目录，获取所有已实现的Buff ID
+function getImplementedBuffIds() {
+  const buffIds = new Set();
+  // 扫描所有子目录
+  const subdirs = ['combat', 'support'];
+  for (const subdir of subdirs) {
+    const dirPath = path.join(SCRIPTS_DIR, subdir);
+    if (!fs.existsSync(dirPath)) continue;
+    const files = fs.readdirSync(dirPath);
+    for (const file of files) {
+      if (!file.endsWith('.ts')) continue;
+      const filePath = path.join(dirPath, file);
+      const content = fs.readFileSync(filePath, 'utf-8');
+      // 查找 BUFF_ID 定义
+      const match = content.match(/BUFF_ID\s*=\s*['"]([^'"]+)['"]/);
+      if (match) {
+        buffIds.add(match[1]);
+      }
+    }
+  }
+  return buffIds;
+}
+// 从skills.json中提取所有使用的Buff ID
+function getUsedBuffIds(skills) {
+  const buffIds = new Set();
+  function extractBuffIds(obj) {
+    if (!obj) return;
+    if (Array.isArray(obj)) {
+      obj.forEach(item => extractBuffIds(item));
+    } else if (typeof obj === 'object') {
+      // 检查 effectId 字段（技能配置中使用此字段）
+      if (obj.effectId) {
+        buffIds.add(obj.effectId);
+      }
+      // 也检查 buffId 字段（兼容）
+      if (obj.buffId) {
+        buffIds.add(obj.buffId);
+      }
+      // 递归检查所有属性
+      for (const key in obj) {
+        extractBuffIds(obj[key]);
+      }
+    }
+  }
+  extractBuffIds(skills);
+  return buffIds;
+}
+// 主函数
+function validate() {
+  console.log('=== Skill & Buff Configuration Validator ===\n');
+  // 读取技能配置
+  console.log('Reading skills config...');
+  const skills = readJson(SKILLS_CONFIG_PATH);
+  console.log(`Found ${skills.length} skills\n`);
+  // 获取已实现的Buff ID
+  console.log('Scanning implemented Buff scripts...');
+  const implementedBuffIds = getImplementedBuffIds();
+  console.log(`Found ${implementedBuffIds.size} implemented Buff scripts\n`);
+  // 获取使用的Buff ID
+  console.log('Extracting used Buff IDs from skills config...');
+  const usedBuffIds = getUsedBuffIds(skills);
+  console.log(`Found ${usedBuffIds.size} Buff IDs referenced in skills\n`);
+  // 检查未实现的Buff
+  console.log('=== Validation Results ===\n');
+  const missingBuffs = [];
+  for (const buffId of usedBuffIds) {
+    if (!implementedBuffIds.has(buffId)) {
+      missingBuffs.push(buffId);
+    }
+  }
+  if (missingBuffs.length > 0) {
+    console.log('❌ Missing Buff implementations:');
+    missingBuffs.forEach(id => console.log(`   - ${id}`));
+    console.log('');
+  } else {
+    console.log('✅ All Buff IDs are properly implemented!\n');
+  }
+  // 列出已实现但未使用的Buff（可选信息）
+  const unusedBuffs = [];
+  for (const buffId of implementedBuffIds) {
+    if (!usedBuffIds.has(buffId)) {
+      unusedBuffs.push(buffId);
+    }
+  }
+  if (unusedBuffs.length > 0) {
+    console.log('ℹ️  Implemented but unused Buffs:');
+    unusedBuffs.forEach(id => console.log(`   - ${id}`));
+    console.log('');
+  }
+  // 返回状态码
+  if (missingBuffs.length > 0) {
+    console.log(`Validation FAILED: ${missingBuffs.length} missing Buff implementation(s)`);
+    process.exit(1);
+  } else {
+    console.log('Validation PASSED');
+    process.exit(0);
+  }
+}
+validate();
 
 --- src/application/facade/BattleFacade.ts ---
 import { BattleManager } from '@/domain/battle/BattleManager'
@@ -6601,6 +7004,8 @@ export class BattleSystem {
     // ★ 每次 initialize 重新注册被动和免疫，消除对外部调用顺序的依赖
     this.passiveSkillManager.clearAll()
     for (const participant of participants.values()) {
+      // 先清理上一场残留的免疫标签（防止多次 initialize 累积）
+      this.buffSystem.clearCharacterImmunities(participant.id)
       GameDataProcessor.registerParticipantPassives(participant, this.passiveSkillManager)
       const immunities = participant.getImmunities()
       if (immunities.length > 0) {
@@ -8455,7 +8860,7 @@ export class BattleParticipantImpl implements BattleEntity {
     }
     // ponytail: 背水护甲 — 能量抵扣伤害（每1能量抵扣1点伤害）
     if (
-      this.hasBuff('guardian_buff_backwater_armor') &&
+      this.buffQuery?.hasBuffWithTag(this.id, 'energy_absorption') &&
       this.currentEnergy > 0
     ) {
       const energyUsed = Math.min(this.currentEnergy, damage)
@@ -15066,8 +15471,9 @@ export class AuraEffect implements IAtomicEffect {
     }
     // allies/enemies 由 BattleSystem 统一分发，此处不重复处理
   }
-  onRemove(ctx: BuffContext, _params: Record<string, unknown>): void {
-    ctx.removeModifiers()
+  onRemove(_ctx: BuffContext, _params: Record<string, unknown>): void {
+    // NOTE: 修饰符清理由 BuffSystem.removeBuff 的 modifierStack.removeModifier(instanceId) 统一处理
+    // 此处不再重复调用 ctx.removeModifiers()
   }
   private applySelfAura(ctx: BuffContext, params: Record<string, unknown>): void {
     const modifiers = params.modifiers as ModifierTemplate[] | undefined
@@ -15244,11 +15650,10 @@ export class ImmunityEffect implements IAtomicEffect {
       buffSystem.registerSingleImmunity(ctx.characterId, tag)
     }
   }
-  onRemove(ctx: BuffContext, _params: Record<string, unknown>): void {
-    const buffSystem = ctx.getBuffSystem()
-    if (!buffSystem) return
-    // 重建整个角色的免疫集合，移除当前 Buff 的免疫标签
-    buffSystem.rebuildCharacterImmunities(ctx.characterId)
+  onRemove(_ctx: BuffContext, _params: Record<string, unknown>): void {
+    // NOTE: 不在此处调用 rebuildCharacterImmunities。
+    // 此时 Buff 实例仍为 isActive=true，rebuild 会重新包含当前 buff 的免疫标签。
+    // 真正的清理由 BuffSystem.removeBuff 第 945 行（实例已删除后）完成。
   }
   getEffectLines(_ctx: BuffContext, params: Record<string, unknown>) {
     const tags = params.tags as string[] | undefined
@@ -15306,7 +15711,7 @@ export class ModifierEffect implements IAtomicEffect {
     const stacks = ctx.getVariable<number>('_stacks') ?? 1
     return Object.entries(attributes).map(([attr, val]) => ({
       text: `${attr} ${val}${(params.perStack ?? true) && stacks > 1 ? ` ×${stacks}` : ''}`,
-      kind: 'other' as const,
+      kind: 'modifier' as const,
     }))
   }
   private parseValue(valueStr: string): { value: number; type: ModifierType } {
@@ -15464,8 +15869,10 @@ export class BuffContext {
     if (characterId && instanceId && config) this.initialize(characterId, instanceId, config)
   }
   private get buffSystem(): BuffSystem {
-    if (!this._buffSystem) console.warn('BuffSystem not injected')
-    return this._buffSystem!
+    if (!this._buffSystem) {
+      throw new Error('[BuffContext] BuffSystem not injected. Ensure initialize() was called.')
+    }
+    return this._buffSystem
   }
   public initialize(characterId: string, instanceId: string, config: BuffConfig, buffSystem?: BuffSystem): void {
     this.characterId = characterId
@@ -16039,12 +16446,12 @@ export class BuffScriptRegistry {
   }
   /** 检查脚本是否为自包含模式——脚本自行管理修饰符，框架不再重复从 JSON 读取 */
   public isSelfContained(scriptId: string): boolean {
-    // ponytail: 显式标记或任何已注册的脚本均视为自包含
-    // 纯 JSON 配置（无脚本）的 buff 才通过 applyAttributeModifiers 应用修饰符
-    return (
-      this.defaultConfigs.get(scriptId)?.selfContained === true ||
-      this.registry.has(scriptId)
-    )
+    const config = this.defaultConfigs.get(scriptId)
+    if (config?.selfContained === true) return true
+    // 有 effectPlan 的 buff 视为自包含（effectPlan 自行管理生命周期）
+    const resolved = this.getResolvedBuffConfig(scriptId)
+    if (resolved?.effectPlan && resolved.effectPlan.length > 0) return true
+    return false
   }
   public registerScript(
     scriptId: string,
@@ -16122,6 +16529,7 @@ import type {
   TriggerEventContext,
 } from '@/domain/buff/types'
 import { BUFF_ID_PREFIX, ControlType, StackRule } from '@/domain/buff/types'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { EffectType } from '@/domain/skill/types'
@@ -16206,6 +16614,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   /** 获取角色的免疫标签 */
   getCharacterImmunities(characterId: string): string[] {
     return [...(this.characterImmunities.get(characterId) ?? [])]
+  }
+  /** 清除角色的所有免疫标签（用于战斗初始化时清理上一场残留） */
+  clearCharacterImmunities(characterId: string): void {
+    this.characterImmunities.delete(characterId)
   }
   public constructor(
     scriptRegistry: BuffScriptRegistry,
@@ -16390,7 +16802,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         targetId,
         instanceId,
         params: data ?? {},
-        currentTurn: data?.currentTurn ?? 0,
+        currentTurn: data?.currentTurn ?? -1,
       } as TriggerExecutionContext)
     }
   }
@@ -16435,7 +16847,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           return
         // 冷却检查
         const turn = ctx.currentTurn ?? 0
-        if (trigger.cooldown && turn - lastTriggerTurn < trigger.cooldown)
+        if (lastTriggerTurn >= 0 && trigger.cooldown && turn - lastTriggerTurn < trigger.cooldown)
           return
         const handler = this.triggerScripts.get(trigger.scriptId)
         if (handler) {
@@ -16549,8 +16961,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       const buffTag = buffId.startsWith(BUFF_ID_PREFIX)
         ? buffId.slice(BUFF_ID_PREFIX.length)
         : buffId
-      // ponytail: 也检查 immunities（如 slow 通过 speed 属性实现而非 controlType）
-      const immuneTagMatch = resolvedConfig.immunities?.some((tag) =>
+      // 检查 buff 自身的标签（tags）是否在角色免疫集中
+      const buffTags = resolvedConfig.tags ?? []
+      const immuneTagMatch = buffTags.some((tag) =>
         targetImmunities.has(tag.toLowerCase()),
       )
       if (
@@ -16580,6 +16993,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           if (newStacks > maxStacks) {
             // 满层：刷新持续时间，不增加层数
             this.refreshBuff(target.id, currentTurn)
+            // 同步 _stacks 变量，供 ModifierEffect.perStack 读取
+            target.context.variables.set('_stacks', maxStacks)
             // ★ 修复：通知 effectPlan 原语层数未变但需要校准（如修饰符被外部清除后恢复）
             const buffResolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
             if (buffResolved?.effectPlan) {
@@ -16632,7 +17047,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         // ponytail: 独立模式也设上限，防止同一 Buff 无限叠加导致修饰符膨胀
         // 用 ?? 而非 || 避免 maxStacks:0 被误当作 falsy 回退
         const maxIndependent = resolvedConfig.maxStacks ?? 10
-        if (existingBuffs.length >= maxIndependent) {
+        if (maxIndependent > 0 && existingBuffs.length >= maxIndependent) {
           return ''
         }
         break
@@ -16669,12 +17084,23 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (!this.modifierStacks.has(characterId)) {
       this.modifierStacks.set(characterId, new ModifierStack())
     }
-    BuffErrorBoundary.wrap(() => {
+    const applyResult = BuffErrorBoundary.wrap(() => {
       // ponytail: 设置初始层数，供 onApply / 原子效果读取以缩放修饰符值
       buffContext.variables.set('_stacks', buffInstance.currentStacks)
       script.onApply(buffContext)
     })
+    if (applyResult === null) {
+      // onApply 失败 → 回滚：删除实例、归还上下文
+      this.buffInstances.delete(instanceId)
+      BuffContextPool.return(buffContext)
+      this.logger.addDebugLog(
+        `[BuffSystem] onApply 失败，已回滚: ${buffId} → ${characterId}, 等级: WARN`,
+      )
+      return ''
+    }
     // 填充特殊效果文本行（供纯文本 UI 展示）
+    // Path B（纯脚本）从脚本获取；Path A（effectPlan）从 effectPlan 获取并覆盖
+    // 两者不能叠加——effectPlan 的 effectLines 代表原子效果的完整展示
     buffInstance.effectLines = script.getEffectLines?.(buffContext) ?? []
     // ★ 数据驱动：通过 effectPlan 执行原子效果原语
     // 替代旧的 applyAttributeModifiers + applyBuffImmunities + applyBuffAuraModifiers
@@ -16683,28 +17109,26 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       for (const effect of buffResolved.effectPlan) {
         effect.handler.onApply(buffContext, effect.params)
       }
-      // 从 effectPlan 方式获取的效果文本补充到 effectLines
+      // Path A：effectLines 从 effectPlan 生成，覆盖脚本版本
       const effectLines = buffResolved.effectPlan
         .map((e) => e.handler.getEffectLines?.(buffContext, e.params) ?? [])
         .flat()
-      if (effectLines.length > 0) {
-        buffInstance.effectLines = [
-          ...buffInstance.effectLines,
-          ...effectLines,
-        ]
-      }
+      buffInstance.effectLines = effectLines.length > 0 ? effectLines : []
     } else if (!this.scriptRegistry.isSelfContained(buffId)) {
       // 向后兼容：无 effectPlan 时回退旧路径
       this.applyAttributeModifiers(characterId, instanceId, buffId)
       this.applyBuffImmunities(characterId, buffId)
     }
     // ponytail: self 目标光环始终应用（自包含脚本也在 ModifierStack 中管理）
-    if (
-      !buffResolved?.effectPlan ||
-      buffResolved.effectPlan.length === 0
-    ) {
+    // 仅当 effectPlan 中已包含 AuraEffect 时跳过，否则仍执行 aura 修饰符分发
+    const hasAuraEffect = buffResolved?.effectPlan?.some(
+      (e) => e.type === AtomicEffectType.AURA,
+    ) ?? false
+    if (!hasAuraEffect) {
       this.applyBuffAuraModifiers(characterId, instanceId, buffId)
     }
+    // NOTE: 触发器注册独立于 effectPlan/脚本路径，两者可以共存。
+    // 触发器与效果原语正交——effectPlan 管理每回合效果，triggers 管理事件响应。
     // ponytail: 注册触发器监听器 — 从配置的 triggers 数组向 TriggerEventBus 注册
     if (resolvedConfig.triggers && resolvedConfig.triggers.length > 0) {
       this.registerTriggersForInstance(
@@ -16735,6 +17159,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         description: `${characterId} 获得 ${resolvedConfig.name}`,
       })
     }
+    // NOTE: ON_APPLY 事件和 buffAppliedCallback 独立于三择一逻辑。
+    // 无论通过哪条路径施加，都需要通知外部系统（战斗日志、UI 等）。
     // ponytail: 触发 ON_APPLY 阶段 — 供其他 Buff 的触发器监听（如 "xxx 被施加时"）
     this.eventBus.emit(BattleTriggerPhase.ON_APPLY, {
       phase: BattleTriggerPhase.ON_APPLY,
@@ -16743,12 +17169,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       currentTurn,
       extra: { buffId, instanceId },
     })
-    // ponytail: 处理护盾类 Buff 的参数化护盾值
-    const shieldValue = (resolvedConfig.parameters?.shieldValue as number) ?? 0
-    if (shieldValue > 0) {
-      const current = this.getShieldValue(characterId)
-      this.setShieldValue(characterId, current + shieldValue)
-    }
     return instanceId
   }
   private applyAttributeModifiers(
@@ -16903,61 +17323,54 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     })
     return count
   }
-  public removeBuff(instanceId: string): boolean {
+  public removeBuff(instanceId: string, options?: { silent?: boolean }): boolean {
     const instance = this.buffInstances.get(instanceId)
     if (!instance || !instance.isActive) return false
-    // 若自己有父，从父的 child 集合中移除自己（避免悬空引用）
-    if (instance.parentInstanceId) {
-      const siblings = this.parentToChildren.get(instance.parentInstanceId)
-      if (siblings) {
-        siblings.delete(instanceId)
-        if (siblings.size === 0) {
-          this.parentToChildren.delete(instance.parentInstanceId)
+    // ★ 第一步就标记，防止重入
+    instance.isActive = false
+    try {
+      // 若自己有父，从父的 child 集合中移除自己
+      if (instance.parentInstanceId) {
+        const siblings = this.parentToChildren.get(instance.parentInstanceId)
+        if (siblings) {
+          siblings.delete(instanceId)
+          if (siblings.size === 0) {
+            this.parentToChildren.delete(instance.parentInstanceId)
+          }
         }
       }
-    }
-    BuffErrorBoundary.wrap(() => {
-      instance.script.onRemove(instance.context)
-    })
-    // ★ 数据驱动：执行 effectPlan 中各原语的 onRemove 清理
-    const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
-    if (buffResolved?.effectPlan) {
-      for (const effect of buffResolved.effectPlan) {
-        effect.handler.onRemove(instance.context, effect.params)
+      BuffErrorBoundary.wrap(() => {
+        instance.script.onRemove(instance.context)
+      })
+      // ★ 数据驱动：执行 effectPlan 中各原语的 onRemove 清理
+      const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
+      if (buffResolved?.effectPlan) {
+        for (const effect of buffResolved.effectPlan) {
+          BuffErrorBoundary.wrap(() => {
+            effect.handler.onRemove(instance.context, effect.params)
+          })
+        }
+      }
+    } finally {
+      // ★ 无论是否异常，保证清理
+      this.unregisterTriggersForInstance(instanceId)
+      this.buffInstances.delete(instanceId)
+      const modifierStack = this.getModifierStack(instance.characterId)
+      modifierStack.removeModifier(instanceId)
+      // 跨角色修饰符清理（光环分发场景）
+      for (const [charId, stack] of this.modifierStacks) {
+        if (charId !== instance.characterId) {
+          stack.removeModifier(instanceId)
+        }
+      }
+      BuffTraceLogger.onRemove(instance.characterId, instance.buffId, instanceId)
+      BuffContextPool.return(instance.context)
+      this.rebuildCharacterImmunities(instance.characterId)
+      this.cascadeRemoveChildren(instanceId, instance.characterId)
+      if (!options?.silent) {
+        this.triggerAttributeChange(instance.characterId)
       }
     }
-    instance.isActive = false
-    // ponytail: 反注册触发器监听器 — 必须在 delete 前执行，确保 callback 中仍能读到 instance
-    this.unregisterTriggersForInstance(instanceId)
-    this.buffInstances.delete(instanceId)
-    const modifierStack = this.getModifierStack(instance.characterId)
-    modifierStack.removeModifier(instanceId)
-    // HACK: 分发光环修饰符时使用 instanceId 作为 sourceKey 分发到目标角色的
-    // ModifierStack，此处遍历所有角色栈确保跨角色修饰符也被清理。
-    for (const [charId, stack] of this.modifierStacks) {
-      if (charId !== instance.characterId) {
-        stack.removeModifier(instanceId)
-      }
-    }
-    // 回收护盾值：任何带有 parameters.shieldValue 的 Buff 移除时回收
-    const shieldParam = instance.context.config.parameters?.shieldValue as
-      | number
-      | undefined
-    if (shieldParam && shieldParam > 0) {
-      const current = this.getShieldValue(instance.characterId)
-      this.setShieldValue(
-        instance.characterId,
-        Math.max(0, current - shieldParam),
-      )
-    }
-    // ponytail: 技术调试日志 — Buff 移除追踪
-    BuffTraceLogger.onRemove(instance.characterId, instance.buffId, instanceId)
-    BuffContextPool.return(instance.context)
-    // ponytail: 免疫标签回收 — 从剩余 Buff 重建免疫集合，防止已移除 Buff 的免疫标签残留
-    this.rebuildCharacterImmunities(instance.characterId)
-    // ponytail: 级联移除子 Buff — 从反向索引查所有 cascadeRemove===true 的子实例
-    this.cascadeRemoveChildren(instanceId, instance.characterId)
-    this.triggerAttributeChange(instance.characterId)
     return true
   }
   /**
@@ -16977,7 +17390,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       if (!childInstance || !childInstance.isActive) continue
       // 只移除标记 cascadeRemove 的子 Buff；弱依赖保留
       if (childInstance.context.config.cascadeRemove !== true) continue
-      this.removeBuff(childId)
+      this.removeBuff(childId, { silent: true })
     }
   }
   public refreshBuff(instanceId: string, currentTurn: number): boolean {
@@ -16999,7 +17412,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
       BuffErrorBoundary.wrap(() => {
-        instance.script.onUpdate(instance.context, 0)
+        instance.script.onUpdate(instance.context, currentTurn)
       })
       // ★ 数据驱动：执行 effectPlan 中各原语的 onTick（DOT/HEAL 每回合触发）
       const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
@@ -17048,23 +17461,17 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
     return false
   }
+  hasBuffWithTag(characterId: string, tag: string): boolean {
+    for (const instance of this.buffInstances.values()) {
+      if (!instance.isActive || instance.characterId !== characterId) continue
+      const config = this.getBuffConfigByInstanceId(instance.id)
+      if (config?.tags?.includes(tag)) return true
+    }
+    return false
+  }
   /** 按实例 ID 查询单个 BuffInstance */
   public getBuffInstanceById(instanceId: string): BuffInstance | undefined {
     return this.buffInstances.get(instanceId)
-  }
-  /**
-   * 检查目标角色是否有包含指定标签的 Buff
-   * @param characterId 角色 ID
-   * @param tag 效果标签（如 'heal_reduction', 'burn'）
-   */
-  public hasBuffWithTag(characterId: string, tag: string): boolean {
-    for (const instance of this.buffInstances.values()) {
-      if (instance.characterId === characterId && instance.isActive) {
-        const config = this.getBuffConfigByInstanceId(instance.id)
-        if (config?.tags?.includes(tag)) return true
-      }
-    }
-    return false
   }
   /**
    * 获取目标角色所有包含指定标签的 Buff 实例
@@ -17167,7 +17574,13 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     return this.shieldValues.get(characterId) ?? 0
   }
   setShieldValue(characterId: string, value: number): void {
-    this.shieldValues.set(characterId, value)
+    const clamped = Math.max(0, value)
+    const prev = this.shieldValues.get(characterId) ?? 0
+    this.shieldValues.set(characterId, clamped)
+    // 仅在值实际变化时触发属性变更通知（避免 takeDamage 高频调用时的无效刷新）
+    if (clamped !== prev && this.onAttributeChange) {
+      this.onAttributeChange(characterId)
+    }
   }
   public update(deltaTime: number): void { }
   public getBuffNameByInstanceId(instanceId: string): string | null {
@@ -17275,6 +17688,1597 @@ export class ModifierStack implements IModifierStack {
   }
 }
 
+--- src/domain/buff/scripts/AttackUpBuff.ts ---
+﻿/**
+ * 攻击提升buff
+ */
+import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+export class AttackUpBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'buff_atk_up'
+  protected getModifiers(): AttributeModifier[] {
+    return [{
+      attribute: ATTRIBUTE_CODE.attack,
+      value: (ctx) => this.getConfigValue(ctx, 'stackBonus', 10),
+      type: ModifierType.ADDITIVE,
+      description: '攻击力提升',
+    }]
+  }
+}
+export const BUFF_ID = AttackUpBuff.BUFF_ID
+
+--- src/domain/buff/scripts/BerserkBuff.ts ---
+/**
+ * 狂暴 Buff — 自包含脚本示范类
+ *
+ * 这是一个"完全由脚本驱动"的 Buff，不依赖 JSON 配置提供逻辑或数值。
+ * 框架通过静态 CONFIG 读取元数据（duration、stackRule 等），
+ * 通过 DEFAULT_PARAMS 提供参数默认值，运行时可从 context.config.parameters 覆写。
+ *
+ * 效果：
+ *   - 攻击力 +100（刷新时额外 +20，可累积）
+ *   - 暴击率 +20%（刷新时额外 +5%）
+ *   - 暴击伤害 +50%
+ *   - 防御力 -30%（乘法削弱）
+ *   - 每 2 回合损失 5% 当前气血值（狂暴代价）
+ */
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import type { BuffEffectLine } from '@/domain/buff/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { StackRule, ControlType, ScriptBuffConfig } from '@/domain/buff/types'
+import { EffectType } from '@/domain/skill/types'
+export class BerserkBuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_berserk'
+  /**
+   * 自包含配置——框架在注册时读取此属性，存入 BuffScriptRegistry。
+   * 调用方 addBuff() 不传或缺省字段时，从此处填充。
+   * selfContained: true 告知框架不再从 JSON attributes 重复应用修饰符。
+   * ponytail: 若脚本在 _onApply 中自行管理 modifiers，必须设置 selfContained: true，
+   *           否则 frameworks 仍会从 JSON 的 attributes 字段再应用一次，导致双倍效果。
+   */
+  public static readonly CONFIG: ScriptBuffConfig = {
+    id: 'buff_berserk',
+    name: '狂暴',
+    description: '陷入狂暴状态，攻击力大幅提升，但防御力降低，每回合损失气血值',
+    duration: 4,
+    maxStacks: 1,
+    cooldown: 9,
+    isPermanent: false,
+    stackRule: StackRule.REFRESH,
+    controlType: ControlType.NONE,
+    selfContained: true,
+  }
+  /** 参数默认值——运行时可通过 context.config.parameters 覆写 */
+  private static readonly DEFAULT_PARAMS = {
+    attackBonus: 100,
+    selfDamagePercent: 0.05,
+    selfDamageInterval: 2, // 每 N 回合触发一次自残
+    refreshAttackBonus: 20,
+    refreshCritRateBonus: 0.05,
+    defensePenalty: 0.3,
+    critRateBonus: 0.2,
+    critDamageBonus: 0.5,
+  }
+  // ==================== 气血周期 ====================
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '🔥 陷入狂暴状态！攻击力大幅提升，但防御力降低')
+    const params = this.resolveParams(context)
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      params.attackBonus,
+      ModifierType.ADDITIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.critRate,
+      params.critRateBonus,
+      ModifierType.ADDITIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.critDamage,
+      params.critDamageBonus,
+      ModifierType.ADDITIVE,
+    )
+    // ponytail: 防御削弱用 MULTIPLICATIVE，value 为 -0.3 → 最终防御 *= 0.7
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.defense,
+      -params.defensePenalty,
+      ModifierType.MULTIPLICATIVE,
+    )
+    // ponytail: 运行时状态——currentAttackBonus 供 _onRefresh 读取
+    context.setVariable('currentAttackBonus', params.attackBonus)
+    context.setVariable('currentCritRateBonus', params.critRateBonus)
+    // ponytail: 回合计数器用于 _onUpdate 自残检测（回合制，非实时时间）
+    context.setVariable('turnsSinceSelfDamage', 0)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '😌 狂暴状态结束，恢复平静')
+    // ponytail: 基类 BaseBuffScript.onRemove 已调用 context.removeModifiers()，无需重复
+  }
+  /**
+   * 每回合更新：基于回合计数器的自残检测。
+   * this.log 仅记录日志；实际伤害需通过 battleSystem 回调传递。
+   */
+  protected _onUpdate(context: BuffContext, _deltaTime: number): void {
+    const params = this.resolveParams(context)
+    const interval = params.selfDamageInterval
+    const turnsSince =
+      (context.getVariable<number>('turnsSinceSelfDamage') ?? 0) + 1
+    if (turnsSince >= interval) {
+      this.log(
+        context,
+        `💢 狂暴的代价：损失 ${(params.selfDamagePercent * 100).toFixed(0)}% 当前气血值`,
+      )
+      // 通过百分比伤害回调造成自残
+      this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
+        damagePercent: params.selfDamagePercent,
+      })
+      context.setVariable('turnsSinceSelfDamage', 0)
+    } else {
+      context.setVariable('turnsSinceSelfDamage', turnsSince)
+    }
+  }
+  /**
+   * 刷新（通过 refreshBuff API 调用，与 StackRule.REFRESH 的 remove+re-apply 不同）。
+   * 在此场景下旧修饰符仍存在，因此以增量方式叠加 refreshBonus。
+   */
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '⚡ 狂暴之力进一步增强！')
+    const params = this.resolveParams(context)
+    const currentAttack =
+      context.getVariable<number>('currentAttackBonus') ?? params.attackBonus
+    const currentCrit =
+      context.getVariable<number>('currentCritRateBonus') ??
+      params.critRateBonus
+    const newAttack = currentAttack + params.refreshAttackBonus
+    const newCrit = currentCrit + params.refreshCritRateBonus
+    // ponytail: 增量叠加——只增加 refresh 部分，原有修饰符不变
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      params.refreshAttackBonus,
+      ModifierType.ADDITIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.critRate,
+      params.refreshCritRateBonus,
+      ModifierType.ADDITIVE,
+    )
+    context.setVariable('currentAttackBonus', newAttack)
+    context.setVariable('currentCritRateBonus', newCrit)
+    this.log(
+      context,
+      `✨ 攻击力额外 +${params.refreshAttackBonus}，暴击率 +${(params.refreshCritRateBonus * 100).toFixed(0)}%`,
+    )
+  }
+  public getEffectLines(context: BuffContext): BuffEffectLine[] {
+    const params = this.resolveParams(context)
+    return [
+      {
+        text: `每 ${params.selfDamageInterval} 回合损失 ${(params.selfDamagePercent * 100).toFixed(0)}% 当前气血值`,
+        kind: 'dot',
+      },
+    ]
+  }
+  // ==================== 辅助方法 ====================
+  /**
+   * 解析参数：优先从 context.config.parameters 读取，否则使用 DEFAULT_PARAMS。
+   * 允许 JSON 或技能配置在 parameters 中覆写单个参数值。
+   */
+  private resolveParams(
+    context: BuffContext,
+  ): typeof BerserkBuff.DEFAULT_PARAMS {
+    const get = <K extends keyof typeof BerserkBuff.DEFAULT_PARAMS>(key: K) =>
+      this.getConfigValue(context, key, BerserkBuff.DEFAULT_PARAMS[key])
+    return {
+      attackBonus: get('attackBonus'),
+      selfDamagePercent: get('selfDamagePercent'),
+      selfDamageInterval: get('selfDamageInterval'),
+      refreshAttackBonus: get('refreshAttackBonus'),
+      refreshCritRateBonus: get('refreshCritRateBonus'),
+      defensePenalty: get('defensePenalty'),
+      critRateBonus: get('critRateBonus'),
+      critDamageBonus: get('critDamageBonus'),
+    }
+  }
+}
+export const BUFF_ID = BerserkBuff.BUFF_ID
+
+--- src/domain/buff/scripts/CritDamageReductionDebuff.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
+/**
+ * 暴击伤害降低debuff脚本
+ * 降低目标的暴击伤害，使其暴击时造成的伤害减少
+ */
+export class CritDamageReductionDebuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_crit_damage_reduction'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '暴击伤害被降低了！')
+    // 降低暴击伤害
+    const critDamageReduction = this.getConfigValue(context, 'critDamageReduction', 0.2) // 默认降低20%暴击伤害
+    this.addModifier(context, 'CRIT_DAMAGE', -critDamageReduction, ModifierType.MULTIPLICATIVE)
+    // 记录初始暴击伤害降低值
+    context.setVariable('critDamageReduction', critDamageReduction)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '暴击伤害恢复正常')
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    // 可以添加随时间变化的逻辑
+    const elapsed = context.getElapsedTime()
+    const recoveryRate = this.getConfigValue(context, 'recoveryRate', 0.02) // 每秒恢复2%
+    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
+      const currentReduction = context.getVariable<number>('critDamageReduction') || 0.2
+      const newReduction = Math.max(currentReduction - recoveryRate, 0)
+      if (newReduction < currentReduction) {
+        // 更新暴击伤害降低效果
+        context.removeModifiers('CRIT_DAMAGE')
+        this.addModifier(context, 'CRIT_DAMAGE', -newReduction, ModifierType.MULTIPLICATIVE)
+        context.setVariable('critDamageReduction', newReduction)
+        this.log(context, `暴击伤害逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
+      }
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '暴击伤害降低效果增强！')
+    // 刷新时增加暴击伤害降低效果
+    const currentReduction = context.getVariable<number>('critDamageReduction') || 0.2
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 0.05)
+    const newReduction = Math.min(currentReduction + refreshBonus, 0.5) // 最大降低50%
+    // 更新效果
+    context.removeModifiers('CRIT_DAMAGE')
+    this.addModifier(context, 'CRIT_DAMAGE', -newReduction, ModifierType.MULTIPLICATIVE)
+    context.setVariable('critDamageReduction', newReduction)
+    this.log(context, `暴击伤害降低提升至 ${(newReduction * 100).toFixed(1)}%`)
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = CritDamageReductionDebuff.BUFF_ID
+
+--- src/domain/buff/scripts/DefenseUpBuff.ts ---
+﻿import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+export class DefenseUpBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'buff_def_up'
+  protected getModifiers(): AttributeModifier[] {
+    return [{
+      attribute: ATTRIBUTE_CODE.defense,
+      // 从运行时变量读取当前值，未设置时使用配置默认值
+      value: (ctx) => ctx.getVariable<number>('_defenseBonus') ?? this.getConfigValue(ctx, 'defenseBonus', 15),
+      type: ModifierType.ADDITIVE,
+      description: '防御力提升',
+    }]
+  }
+  // ponytail: 成长机制由子类自行实现——模板不预设成长逻辑
+  protected _onApply(context: BuffContext): void {
+    context.setVariable('_defenseBonus', this.getConfigValue(context, 'defenseBonus', 15))
+    super._onApply(context)
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    const growthRate = this.getConfigValue(context, 'growthRate', 0.008)
+    if (growthRate <= 0) return
+    const elapsed = context.getElapsedTime()
+    // 每秒检查一次成长
+    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
+      const current = context.getVariable<number>('_defenseBonus') ?? this.getConfigValue(context, 'defenseBonus', 15)
+      const newVal = Math.floor(current * (1 + growthRate))
+      if (newVal > current) {
+        context.setVariable('_defenseBonus', newVal)
+        this.applyModifiers(context, true)
+        this.log(context, `防御力逐渐增强，当前提升：${newVal}`)
+      }
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    const current = context.getVariable<number>('_defenseBonus') ?? this.getConfigValue(context, 'defenseBonus', 15)
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 8)
+    context.setVariable('_defenseBonus', current + refreshBonus)
+    // super._onRefresh 应 shouldReapplyOnRefresh() → applyModifiers(context, true)，读取更新后的 _defenseBonus
+    super._onRefresh(context)
+    this.log(context, `防御力刷新提升至 ${current + refreshBonus}`)
+  }
+  protected shouldReapplyOnRefresh(): boolean {
+    return true
+  }
+}
+export const BUFF_ID = DefenseUpBuff.BUFF_ID
+
+--- src/domain/buff/scripts/DodgeUpBuff.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
+export class DodgeUpBuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_dodge_up'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '闪避率提升')
+    // 提升闪避率
+    const dodgeBonus = this.getConfigValue(context, 'dodgeBonus', 0.2)
+    this.addModifier(context, 'dodgeRate', dodgeBonus, ModifierType.ADDITIVE)
+    context.setVariable('dodgeBonus', dodgeBonus)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '闪避率提升效果结束')
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    // 无需特殊更新逻辑
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '闪避率提升效果刷新')
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = DodgeUpBuff.BUFF_ID
+
+--- src/domain/buff/scripts/GuardianBuffs.ts ---
+﻿/**
+ * 守护者 Buff 脚本集合
+ * 每个类对应一个 buff ID，继承 AttributeBuffTemplate 实现属性修正。
+ * ponytail: 所有类写在一个文件中减少文件数量，通过静态 BUFF_ID 自动注册。
+ */
+import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+/* ========== 复仇怒火：受击+5%攻击，可叠5层 ========== */
+export class RevengeRageBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_revenge_rage'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.attack, value: (ctx) => this.getConfigValue(ctx, 'stackBonus', 5), type: ModifierType.PERCENTAGE, description: '复仇怒火' }]
+  }
+}
+/* ========== 破甲打击：降低目标20%防御，2回合 ========== */
+export class ArmorBreakBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_armor_break'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.defense, value: -20, type: ModifierType.PERCENTAGE, description: '破甲打击' }]
+  }
+}
+/* ========== 坚毅护盾：伤害减免标记（需配合伤害拦截） ========== */
+export class FirmShieldBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_firm_shield'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.damageReduction, value: 0, type: ModifierType.ADDITIVE, description: '坚毅护盾' }]
+  }
+}
+/* ========== 静电反冲：沉默攻击者1回合（buff 本身只是标记） ========== */
+export class StaticReboundBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_static_rebound'
+  protected getModifiers(): AttributeModifier[] {
+    return []
+  }
+}
+/* ========== 先发制人：首回合伤害+25%，1回合 ========== */
+export class FirstStrikeBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_first_strike'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.damageBoost, value: 25, type: ModifierType.ADDITIVE, description: '先发制人' }]
+  }
+}
+/* ========== 蓄力爆发：下回合伤害+100%，1回合 ========== */
+export class ChargeBurstBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_charge_burst'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.damageBoost, value: 100, type: ModifierType.ADDITIVE, description: '蓄力爆发' }]
+  }
+}
+/* ========== 元素迟缓：全体敌方速度-5%，1回合 ========== */
+export class ElementSlowBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_element_slow'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.speed, value: -5, type: ModifierType.PERCENTAGE, description: '元素迟缓' }]
+  }
+}
+/* ========== 绝望气场：敌方暴击-15% ========== */
+export class DespairAuraBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_despair_aura'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.critRate, value: -15, type: ModifierType.ADDITIVE, description: '绝望气场' }]
+  }
+}
+/* ========== 治愈微风：友方防御+20%，1次攻击后移除 ========== */
+export class HealBreezeBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_heal_breeze'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.defense, value: 20, type: ModifierType.PERCENTAGE, description: '治愈微风' }]
+  }
+}
+/* ========== 以牙还牙：下次攻击伤害标记（伤害加成通过 modify_attribute 实现） ========== */
+export class EyeForEyeBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_eye_for_eye'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.damageBoost, value: 0, type: ModifierType.ADDITIVE, description: '以牙还牙' }]
+  }
+}
+/* ========== 复仇之怒：攻+30% 暴+20%，3回合 ========== */
+export class RevengeFuryBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_revenge_fury'
+  protected getModifiers(): AttributeModifier[] {
+    return [
+      { attribute: ATTRIBUTE_CODE.attack, value: 30, type: ModifierType.PERCENTAGE, description: '复仇之怒-攻' },
+      { attribute: ATTRIBUTE_CODE.critRate, value: 20, type: ModifierType.ADDITIVE, description: '复仇之怒-暴' },
+    ]
+  }
+}
+/* ========== 麻痹触手：速度-50%（标记状态） ========== */
+export class ParalyzeBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_paralyze'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.speed, value: -50, type: ModifierType.PERCENTAGE, description: '麻痹触手' }]
+  }
+}
+/* ========== 献祭之怒：攻+50% 暴+20%，永久 ========== */
+export class SacrificeRageBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_sacrifice_rage'
+  protected getModifiers(): AttributeModifier[] {
+    return [
+      { attribute: ATTRIBUTE_CODE.attack, value: 50, type: ModifierType.PERCENTAGE, description: '献祭之怒-攻' },
+      { attribute: ATTRIBUTE_CODE.critRate, value: 20, type: ModifierType.ADDITIVE, description: '献祭之怒-暴' },
+    ]
+  }
+}
+/* ========== 狂战士：攻+30% 防-15%，3回合 ========== */
+export class BerserkerBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_berserker'
+  protected getModifiers(): AttributeModifier[] {
+    return [
+      { attribute: ATTRIBUTE_CODE.attack, value: 30, type: ModifierType.PERCENTAGE, description: '狂战士-攻' },
+      { attribute: ATTRIBUTE_CODE.defense, value: -15, type: ModifierType.PERCENTAGE, description: '狂战士-防' },
+    ]
+  }
+}
+/* ========== 疾风迅雷：速度差伤害标记 ========== */
+export class WindThunderBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_wind_thunder'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.damageBoost, value: 0, type: ModifierType.ADDITIVE, description: '疾风迅雷' }]
+  }
+}
+/* ========== 随机嘲讽 ========== */
+export class RandomTauntBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_random_taunt'
+  protected getModifiers(): AttributeModifier[] {
+    return []
+  }
+}
+/* ========== 背水护甲：标记 buff，能量抵扣伤害由 BattleParticipantImpl.takeDamage 处理 ========== */
+export class BackwaterArmorBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_backwater_armor'
+  protected getModifiers(): AttributeModifier[] {
+    return []
+  }
+}
+/* ========== 疾风叠步：普攻命中+5%速度，无限叠加，持续到战斗结束 ========== */
+export class SwiftWindBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'guardian_buff_swift_wind'
+  protected getModifiers(): AttributeModifier[] {
+    return [{ attribute: ATTRIBUTE_CODE.speed, value: (ctx) => this.getConfigValue(ctx, 'stackBonus', 5), type: ModifierType.PERCENTAGE, description: '疾风叠步' }]
+  }
+}
+
+--- src/domain/buff/scripts/HealOverTime.ts ---
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import type { BuffEffectLine } from '@/domain/buff/types'
+export class HealOverTime extends BaseBuffScript {
+  public static readonly BUFF_ID = 'heal_over_time'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '获得持续治疗效果')
+    // 记录治疗相关参数
+    const baseHealing = this.getConfigValue(context, 'baseHealing', 20)
+    const healInterval = this.getConfigValue(context, 'healInterval', 1000)
+    context.setVariable('baseHealing', baseHealing)
+    context.setVariable('healInterval', healInterval)
+    context.setVariable('lastHealTime', 0)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '持续治疗效果结束')
+  }
+  protected _onUpdate(context: BuffContext, _deltaTime: number): void {
+    const elapsed = context.getElapsedTime()
+    const lastHealTime = context.getVariable<number>('lastHealTime') || 0
+    const healInterval = context.getVariable<number>('healInterval') || 1000
+    // 每隔一段时间恢复气血值
+    if (elapsed - lastHealTime >= healInterval) {
+      const baseHealing = context.getVariable<number>('baseHealing') || 20
+      const healingBonus = this.getConfigValue(context, 'healingBonus', 0)
+      const currentHealing = baseHealing + healingBonus
+      this.log(context, `持续治疗：恢复 ${currentHealing} 气血值`)
+      context.getBuffSystem()?.requestHeal(context.characterId, currentHealing)
+      context.setVariable('lastHealTime', elapsed)
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '持续治疗效果增强！')
+    // 刷新时增加治疗量
+    const baseHealing = context.getVariable<number>('baseHealing') || 20
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 5)
+    context.setVariable('baseHealing', baseHealing + refreshBonus)
+    this.log(context, `治疗量提升至 ${baseHealing + refreshBonus}`)
+  }
+  public getEffectLines(context: BuffContext): BuffEffectLine[] {
+    const baseHealing = this.getConfigValue(context, 'baseHealing', 20)
+    return [{ text: `每回合回复 ${baseHealing} 气血值`, kind: 'heal' }]
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = HealOverTime.BUFF_ID
+
+--- src/domain/buff/scripts/HitReductionDebuff.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
+/**
+ * 命中率降低debuff脚本
+ * 降低目标的命中率，使其攻击更容易被闪避
+ */
+export class HitReductionDebuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_hit_reduction'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '命中率被降低了！')
+    // 降低命中率
+    const hitReduction = this.getConfigValue(context, 'hitReduction', 0.3) // 默认降低30%命中率
+    this.addModifier(context, 'HIT_RATE', -hitReduction, ModifierType.MULTIPLICATIVE)
+    // 记录初始命中率降低值
+    context.setVariable('hitReduction', hitReduction)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '命中率恢复正常')
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    // 可以添加随时间变化的逻辑，比如命中率逐渐恢复
+    const elapsed = context.getElapsedTime()
+    const recoveryRate = this.getConfigValue(context, 'recoveryRate', 0.05) // 每秒恢复5%
+    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
+      const currentReduction = context.getVariable<number>('hitReduction') || 0.3
+      const newReduction = Math.max(currentReduction - recoveryRate, 0)
+      if (newReduction < currentReduction) {
+        // 更新命中率降低效果
+        context.removeModifiers('HIT_RATE')
+        this.addModifier(context, 'HIT_RATE', -newReduction, ModifierType.MULTIPLICATIVE)
+        context.setVariable('hitReduction', newReduction)
+        this.log(context, `命中率逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
+      }
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '命中率降低效果增强！')
+    // 刷新时增加命中率降低效果
+    const currentReduction = context.getVariable<number>('hitReduction') || 0.3
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 0.1)
+    const newReduction = Math.min(currentReduction + refreshBonus, 0.8) // 最大降低80%
+    // 更新效果
+    context.removeModifiers('HIT_RATE')
+    this.addModifier(context, 'HIT_RATE', -newReduction, ModifierType.MULTIPLICATIVE) 
+    context.setVariable('hitReduction', newReduction)
+    this.log(context, `命中率降低提升至 ${(newReduction * 100).toFixed(1)}%`)
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = HitReductionDebuff.BUFF_ID
+
+--- src/domain/buff/scripts/index.ts ---
+<二进制文件，内容未显示>
+
+--- src/domain/buff/scripts/MountainChildBuff.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
+/**
+ * 山林之子buff脚本
+ * 在山林环境中获得额外加成，包括气血恢复和属性提升
+ */
+export class MountainChildBuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_mountain_child'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '山林的力量在体内流淌！')
+    // 提升自然属性
+    const natureBonus = this.getConfigValue(context, 'natureBonus', 0.15) // 默认15%自然属性加成
+    this.addModifier(
+      context,
+      'NATURE_POWER',
+      natureBonus,
+      ModifierType.MULTIPLICATIVE,
+    )
+    // 提升气血恢复
+    const hpRegen = this.getConfigValue(context, 'hpRegen', 5) // 默认每秒恢复5点气血
+    // 记录初始值
+    context.setVariable('natureBonus', natureBonus)
+    context.setVariable('hpRegen', hpRegen)
+    context.setVariable('lastRegenTime', 0)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '山林之力消散')
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    const elapsed = context.getElapsedTime()
+    const lastRegenTime = context.getVariable<number>('lastRegenTime') || 0
+    const hpRegen = context.getVariable<number>('hpRegen') || 5
+    // 每秒恢复气血值
+    if (elapsed - lastRegenTime >= 1000) {
+      this.log(context, `山林之力恢复 ${hpRegen} 点气血值`)
+      // 这里应该调用角色的治疗方法
+      context.setVariable('lastRegenTime', elapsed)
+    }
+    // 随时间增强自然属性加成
+    const enhancementRate = this.getConfigValue(
+      context,
+      'enhancementRate',
+      0.001,
+    ) // 每秒增强0.1%
+    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
+      const currentBonus = context.getVariable<number>('natureBonus') || 0.15
+      const newBonus = Math.min(currentBonus + enhancementRate, 0.3) // 最大30%
+      if (newBonus > currentBonus) {
+        context.removeModifiers('NATURE_POWER')
+        this.addModifier(
+          context,
+          'NATURE_POWER',
+          newBonus,
+          ModifierType.MULTIPLICATIVE,
+        )
+        context.setVariable('natureBonus', newBonus)
+        this.log(context, `自然属性加成增强至 ${(newBonus * 100).toFixed(1)}%`)
+      }
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '山林之力得到强化！')
+    // 刷新时增强效果
+    const currentBonus = context.getVariable<number>('natureBonus') || 0.15
+    const currentRegen = context.getVariable<number>('hpRegen') || 5
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 0.05)
+    const newBonus = Math.min(currentBonus + refreshBonus, 0.4) // 最大40%
+    const newRegen = currentRegen + 2 // 增加2点气血恢复
+    // 更新效果
+    context.removeModifiers('NATURE_POWER')
+    this.addModifier(
+      context,
+      'NATURE_POWER',
+      newBonus,
+      ModifierType.MULTIPLICATIVE,
+    )
+    context.setVariable('natureBonus', newBonus)
+    context.setVariable('hpRegen', newRegen)
+    this.log(
+      context,
+      `自然属性加成提升至 ${(newBonus * 100).toFixed(1)}%，气血恢复提升至 ${newRegen}点/秒`,
+    )
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = MountainChildBuff.BUFF_ID
+
+--- src/domain/buff/scripts/MountainGodBuff.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { EffectType } from '@/domain/skill/types'
+export class MountainGodBuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_mountain_god'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '山神降临！获得强大的力量')
+    // 添加攻击力和防御力提升
+    const attackBonus = this.getConfigValue(context, 'attackBonus', 50)
+    const defenseBonus = this.getConfigValue(context, 'defenseBonus', 30)
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      attackBonus,
+      ModifierType.ADDITIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.defense,
+      defenseBonus,
+      ModifierType.ADDITIVE,
+    )
+    // 添加暴击率提升
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.critRate,
+      0.1,
+      ModifierType.ADDITIVE,
+    )
+    context.setVariable('initialAttackBonus', attackBonus)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '山神之力消散')
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    // 每秒钟恢复少量气血值
+    const elapsed = context.getElapsedTime()
+    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
+      const regeneration = this.getConfigValue(context, 'regeneration', 5)
+      this.log(context, `山神的祝福：恢复 ${regeneration} 气血值`)
+      this.triggerEvent(context, EffectType.HEAL, {
+        amount: regeneration,
+      })
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '山神之力得到强化！')
+    // 刷新时增加额外的攻击力
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 10)
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      refreshBonus,
+      ModifierType.ADDITIVE,
+    )
+    this.log(context, `获得额外 ${refreshBonus} 攻击力`)
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = MountainGodBuff.BUFF_ID
+
+--- src/domain/buff/scripts/PoisonDebuff.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import type { BuffEffectLine } from '@/domain/buff/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { EffectType } from '@/domain/skill/types'
+export class PoisonDebuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_poison'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '中毒了！毒素开始侵蚀身体')
+    // 降低移动速度
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.speed,
+      -0.2,
+      ModifierType.MULTIPLICATIVE,
+    )
+    // 记录初始伤害值
+    const baseDamage = this.getConfigValue(context, 'baseDamage', 10)
+    context.setVariable('baseDamage', baseDamage)
+    context.setVariable('lastDamageTime', 0)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '毒素效果消失')
+  }
+  protected _onUpdate(context: BuffContext, _deltaTime: number): void {
+    const elapsed = context.getElapsedTime()
+    const lastDamageTime = context.getVariable<number>('lastDamageTime') || 0
+    const damageInterval = this.getConfigValue(context, 'damageInterval', 2000)
+    // 每隔一段时间造成伤害
+    if (elapsed - lastDamageTime >= damageInterval) {
+      const baseDamage = context.getVariable<number>('baseDamage') || 10
+      const damageMultiplier = this.getConfigValue(
+        context,
+        'damageMultiplier',
+        1.2,
+      )
+      // 计算当前伤害（随时间递增）
+      const stacks = Math.floor(elapsed / damageInterval)
+      const currentDamage = Math.floor(
+        baseDamage * Math.pow(damageMultiplier, stacks),
+      )
+      this.log(context, `毒素伤害：${currentDamage}`)
+      // 通过触发系统造成伤害
+      this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
+        damage: currentDamage,
+      })
+      context.setVariable('lastDamageTime', elapsed)
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '毒素效果增强！')
+    // 刷新时增加伤害
+    const baseDamage = context.getVariable<number>('baseDamage') || 10
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 5)
+    context.setVariable('baseDamage', baseDamage + refreshBonus)
+    this.log(context, `毒素伤害提升至 ${baseDamage + refreshBonus}`)
+  }
+  public getEffectLines(context: BuffContext): BuffEffectLine[] {
+    const baseDamage = this.getConfigValue(context, 'baseDamage', 10)
+    return [{ text: `每回合损失 ${baseDamage} 气血值`, kind: 'dot' }]
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = PoisonDebuff.BUFF_ID
+
+--- src/domain/buff/scripts/ShieldBuff.ts ---
+import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import type { BuffEffectLine } from '@/domain/buff/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+export class ShieldBuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_shield'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '获得护盾保护')
+    // 优先使用 executeShield 传入的 shieldValue，其次为 shieldPercent * maxHP，否则按公式计算
+    // NOTE: 只存储计算因子到 context，护盾实际值统一由 BuffSystem.shieldValues 管理
+    const shieldValue = this.getConfigValue(context, 'shieldValue', -1)
+    if (shieldValue >= 0) {
+      context.setVariable('maxShieldValue', shieldValue)
+    } else {
+      const shieldPercent = this.getConfigValue(context, 'shieldPercent', -1)
+      if (shieldPercent > 0) {
+        const character = context.getCharacter()
+        const maxHP = character ? character.getAttribute(ATTRIBUTE_CODE.maxHealth) : 1000
+        const computed = Math.floor(maxHP * shieldPercent)
+        context.setVariable('maxShieldValue', computed)
+      } else {
+        const baseShield = this.getConfigValue(context, 'baseShield', 100)
+        const shieldScale = this.getConfigValue(context, 'shieldScale', 1)
+        const character = context.getCharacter()
+        const maxHP = character ? character.getAttribute(ATTRIBUTE_CODE.maxHealth) : 1000
+        const calculatedShield = Math.floor(baseShield * shieldScale + maxHP * 0.1)
+        context.setVariable('maxShieldValue', calculatedShield)
+      }
+    }
+    context.setVariable('shieldRegen', this.getConfigValue(context, 'shieldRegen', 0))
+    // 同步护盾值到 BuffSystem（供 takeDamage 吸收伤害）
+    const actualShield = context.getVariable<number>('maxShieldValue') ?? 0
+    context.getBuffSystem()?.setShieldValue(context.characterId, actualShield)
+  }
+  protected _onRemove(context: BuffContext): void {
+    const remaining = context.getBuffSystem()?.getShieldValue(context.characterId) ?? 0
+    this.log(context, `护盾效果消失，剩余护盾值：${remaining}`)
+    // 清除 BuffSystem 中的护盾值
+    context.getBuffSystem()?.setShieldValue(context.characterId, 0)
+  }
+  protected _onUpdate(context: BuffContext, _deltaTime: number): void {
+    const shieldRegen = context.getVariable<number>('shieldRegen') || 0
+    if (shieldRegen <= 0) return
+    // 每回合恢复 shieldRegen 点护盾值
+    // _onUpdate 由 updatePerTurn 每回合调用一次，无需时间判定
+    const currentGlobal = context.getBuffSystem()?.getShieldValue(context.characterId) ?? 0
+    const maxShield = context.getVariable<number>('maxShieldValue') || currentGlobal
+    const newShield = Math.min(currentGlobal + shieldRegen, maxShield)
+    context.getBuffSystem()?.setShieldValue(context.characterId, newShield)
+    this.log(context, `护盾恢复：${currentGlobal} → ${newShield}`)
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '护盾效果增强！')
+    // 刷新时增加护盾值
+    const currentGlobal = context.getBuffSystem()?.getShieldValue(context.characterId) ?? 0
+    const maxShield = context.getVariable<number>('maxShieldValue') || currentGlobal
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 20)
+    const newMaxShield = maxShield + refreshBonus
+    const newShield = currentGlobal + refreshBonus
+    context.setVariable('maxShieldValue', newMaxShield)
+    // 同步更新 BuffSystem 中的护盾值
+    context.getBuffSystem()?.setShieldValue(context.characterId, newShield)
+    this.log(context, `护盾值提升至 ${newShield}/${newMaxShield}`)
+  }
+  public getEffectLines(context: BuffContext): BuffEffectLine[] {
+    const maxShield = context.getVariable<number>('maxShieldValue') ||
+      Math.floor(this.getConfigValue(context, 'baseShield', 100) * this.getConfigValue(context, 'shieldScale', 1) + 1000 * 0.1)
+    return [{ text: `吸收 ${maxShield} 点伤害`, kind: 'shield' }]
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = ShieldBuff.BUFF_ID
+
+--- src/domain/buff/scripts/SpeedReductionDebuff.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+/**
+ * 速度降低debuff脚本
+ * 降低目标的速度，影响其行动顺序和移动能力
+ */
+export class SpeedReductionDebuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_speed_reduction'
+  protected _onApply(context: BuffContext): void {
+    const speedReduction = this.getConfigValue(context, 'speedReduction', 0.25)
+    this.log(context, '速度被降低了！')
+    this.addModifier(context, ATTRIBUTE_CODE.speed, -speedReduction, ModifierType.MULTIPLICATIVE)
+    // 记录初始速度降低值
+    context.setVariable('speedReduction', speedReduction)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '速度恢复正常')
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    // 可以添加随时间变化的逻辑，比如速度逐渐恢复
+    const elapsed = context.getElapsedTime()
+    const recoveryRate = this.getConfigValue(context, 'recoveryRate', 0.03) // 每秒恢复3%
+    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
+      const currentReduction = context.getVariable<number>('speedReduction') || 0.25
+      const newReduction = Math.max(currentReduction - recoveryRate, 0)
+      if (newReduction < currentReduction) {
+        // 更新速度降低效果
+        context.removeModifiers(ATTRIBUTE_CODE.speed)
+        this.addModifier(context, ATTRIBUTE_CODE.speed, -newReduction, ModifierType.MULTIPLICATIVE)
+        context.setVariable('speedReduction', newReduction)
+        this.log(context, `速度逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
+      }
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '速度降低效果增强！')
+    // 刷新时增加速度降低效果
+    const currentReduction = context.getVariable<number>('speedReduction') || 0.25
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 0.1)
+    const newReduction = Math.min(currentReduction + refreshBonus, 0.6) // 最大降低60%
+    // 更新效果
+    context.removeModifiers(ATTRIBUTE_CODE.speed)
+    this.addModifier(context, ATTRIBUTE_CODE.speed, -newReduction, ModifierType.MULTIPLICATIVE)
+    context.setVariable('speedReduction', newReduction)
+    this.log(context, `速度降低提升至 ${(newReduction * 100).toFixed(1)}%`)
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = SpeedReductionDebuff.BUFF_ID
+
+--- src/domain/buff/scripts/SpeedUpBuff.ts ---
+﻿import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+export class SpeedUpBuff extends AttributeBuffTemplate {
+  public static readonly BUFF_ID = 'buff_speed_up'
+  protected getModifiers(): AttributeModifier[] {
+    return [{
+      attribute: ATTRIBUTE_CODE.speed,
+      value: (ctx) => this.getConfigValue(ctx, 'speedBonus', 0.2),
+      type: ModifierType.MULTIPLICATIVE,
+      description: '速度提升',
+    }]
+  }
+}
+export const BUFF_ID = SpeedUpBuff.BUFF_ID
+
+--- src/domain/buff/scripts/StoneSkinBuff.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+/**
+ * 石化皮肤buff脚本
+ * 提供伤害减免，但可能降低移动速度
+ */
+export class StoneSkinBuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_stone_skin'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '皮肤变得如石头般坚硬！')
+    // 提供伤害减免
+    const physicalReduction = this.getConfigValue(context, 'physicalReduction', 0.3) // 默认30%伤害减免
+    this.addModifier(context, ATTRIBUTE_CODE.damageReduction, physicalReduction, ModifierType.MULTIPLICATIVE)
+    // 降低移动速度作为代价
+    const speedPenalty = this.getConfigValue(context, 'speedPenalty', 0.15) // 默认降低15%速度
+    this.addModifier(context, ATTRIBUTE_CODE.speed, -speedPenalty, ModifierType.MULTIPLICATIVE)
+    // 记录初始值
+    context.setVariable('physicalReduction', physicalReduction)
+    context.setVariable('speedPenalty', speedPenalty)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '石化皮肤效果消失')
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    // 石化效果随时间逐渐增强
+    const elapsed = context.getElapsedTime()
+    const enhancementRate = this.getConfigValue(context, 'enhancementRate', 0.005) // 每秒增强0.5%
+    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
+      const currentReduction = context.getVariable<number>('physicalReduction') || 0.3
+      const currentPenalty = context.getVariable<number>('speedPenalty') || 0.15
+      const newReduction = Math.min(currentReduction + enhancementRate, 0.6) // 最大60%
+      const newPenalty = Math.min(currentPenalty + enhancementRate * 0.5, 0.3) // 最大30%
+      if (newReduction > currentReduction) {
+        // 更新效果
+        context.removeModifiers(ATTRIBUTE_CODE.damageReduction)
+        context.removeModifiers(ATTRIBUTE_CODE.speed)
+        this.addModifier(context, ATTRIBUTE_CODE.damageReduction, newReduction, ModifierType.MULTIPLICATIVE)
+        this.addModifier(context, ATTRIBUTE_CODE.speed, -newPenalty, ModifierType.MULTIPLICATIVE)
+        context.setVariable('physicalReduction', newReduction)
+        context.setVariable('speedPenalty', newPenalty)
+        this.log(context, `石化效果增强，伤害减免：${(newReduction * 100).toFixed(1)}%，速度惩罚：${(newPenalty * 100).toFixed(1)}%`)
+      }
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '石化皮肤效果强化！')
+    // 刷新时增强效果
+    const currentReduction = context.getVariable<number>('physicalReduction') || 0.3
+    const currentPenalty = context.getVariable<number>('speedPenalty') || 0.15
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 0.1)
+    const newReduction = Math.min(currentReduction + refreshBonus, 0.8) // 最大80%
+    const newPenalty = Math.min(currentPenalty + refreshBonus * 0.3, 0.4) // 最大40%
+    // 更新效果
+    context.removeModifiers(ATTRIBUTE_CODE.damageReduction)
+    context.removeModifiers(ATTRIBUTE_CODE.speed)
+    this.addModifier(context, ATTRIBUTE_CODE.damageReduction, newReduction, ModifierType.MULTIPLICATIVE)
+    this.addModifier(context, ATTRIBUTE_CODE.speed, -newPenalty, ModifierType.MULTIPLICATIVE)
+    context.setVariable('physicalReduction', newReduction)
+    context.setVariable('speedPenalty', newPenalty)
+    this.log(context, `伤害减免提升至 ${(newReduction * 100).toFixed(1)}%，速度惩罚提升至 ${(newPenalty * 100).toFixed(1)}%`)
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = StoneSkinBuff.BUFF_ID
+
+--- src/domain/buff/scripts/StrongPoisonDebuff.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import type { BuffEffectLine } from '@/domain/buff/types'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { EffectType } from '@/domain/skill/types'
+/**
+ * 强毒debuff脚本
+ * 比普通中毒更强的毒素效果，造成更高的持续伤害
+ */
+export class StrongPoisonDebuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_strong_poison'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '强烈的毒素侵蚀身体！')
+    // 降低移动速度和攻击力
+    const speedReduction = this.getConfigValue(context, 'speedReduction', 0.2)
+    const attackReduction = this.getConfigValue(
+      context,
+      'attackReduction',
+      0.15,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.speed,
+      -speedReduction,
+      ModifierType.MULTIPLICATIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      -attackReduction,
+      ModifierType.MULTIPLICATIVE,
+    )
+    // 记录初始伤害值
+    const baseDamage = this.getConfigValue(context, 'baseDamage', 15)
+    context.setVariable('baseDamage', baseDamage)
+    context.setVariable('lastDamageTime', 0)
+    context.setVariable('speedReduction', speedReduction)
+    context.setVariable('attackReduction', attackReduction)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '强毒效果消失')
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    const elapsed = context.getElapsedTime()
+    const lastDamageTime = context.getVariable<number>('lastDamageTime') || 0
+    const damageInterval = this.getConfigValue(context, 'damageInterval', 1500) // 比普通毒更快
+    // 每隔一段时间造成伤害
+    if (elapsed - lastDamageTime >= damageInterval) {
+      const baseDamage = context.getVariable<number>('baseDamage') || 15
+      const damageMultiplier = this.getConfigValue(
+        context,
+        'damageMultiplier',
+        1.3,
+      ) // 比普通毒更强
+      // 计算当前伤害（随时间递增）
+      const stacks = Math.floor(elapsed / damageInterval)
+      const currentDamage = Math.floor(
+        baseDamage * Math.pow(damageMultiplier, stacks),
+      )
+      this.log(context, `强毒伤害：${currentDamage}`)
+      this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
+        damage: currentDamage,
+      })
+      context.setVariable('lastDamageTime', elapsed)
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '强毒效果增强！')
+    // 刷新时增加伤害和负面效果
+    const baseDamage = context.getVariable<number>('baseDamage') || 15
+    const speedReduction = context.getVariable<number>('speedReduction') || 0.2
+    const attackReduction =
+      context.getVariable<number>('attackReduction') || 0.15
+    const refreshBonus = this.getConfigValue(context, 'refreshBonus', 0.05)
+    const newSpeedReduction = Math.min(speedReduction + refreshBonus, 0.4)
+    const newAttackReduction = Math.min(attackReduction + refreshBonus, 0.3)
+    const newBaseDamage = baseDamage + 3
+    // 更新效果
+    context.removeModifiers(ATTRIBUTE_CODE.speed)
+    context.removeModifiers(ATTRIBUTE_CODE.attack)
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.speed,
+      -newSpeedReduction,
+      ModifierType.MULTIPLICATIVE,
+    )
+    this.addModifier(
+      context,
+      ATTRIBUTE_CODE.attack,
+      -newAttackReduction,
+      ModifierType.MULTIPLICATIVE,
+    )
+    context.setVariable('baseDamage', newBaseDamage)
+    context.setVariable('speedReduction', newSpeedReduction)
+    context.setVariable('attackReduction', newAttackReduction)
+    this.log(
+      context,
+      `速度降低提升至 ${(newSpeedReduction * 100).toFixed(1)}%，攻击降低提升至 ${(newAttackReduction * 100).toFixed(1)}%，基础伤害提升至 ${newBaseDamage}`,
+    )
+  }
+  public getEffectLines(context: BuffContext): BuffEffectLine[] {
+    const baseDamage = this.getConfigValue(context, 'baseDamage', 15)
+    return [{ text: `每回合损失 ${baseDamage} 气血值`, kind: 'dot' }]
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = StrongPoisonDebuff.BUFF_ID
+
+--- src/domain/buff/scripts/StunDebuff.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+/**
+ * 眩晕debuff脚本
+ * 使目标无法行动，跳过其回合
+ */
+export class StunDebuff extends BaseBuffScript {
+  public static readonly BUFF_ID = 'buff_stun'
+  protected _onApply(context: BuffContext): void {
+    this.log(context, '被眩晕了！无法行动')
+    context.setVariable('isStunned', true)
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, '眩晕效果消失')
+    context.setVariable('isStunned', false)
+  }
+  protected _onUpdate(context: BuffContext, _deltaTime: number): void {
+    // 眩晕状态只阻止行动，不影响其他属性
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, '眩晕效果延长！')
+  }
+}
+// 导出 BUFF_ID 常量
+export const BUFF_ID = StunDebuff.BUFF_ID
+
+--- src/domain/buff/scripts/templates/AttributeBuffTemplate.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import type { ModifierType as ModifierTypeEnum } from '@/domain/attribute/types'
+/**
+ * 属性修饰符声明
+ * 描述一个属性修改操作——支持固定值和动态计算两种模式
+ */
+export interface AttributeModifier {
+  /** 目标属性代码 */
+  attribute: ATTRIBUTE_CODE | string
+  /** 修饰值：固定数值或基于上下文动态计算的函数 */
+  value: number | ((context: BuffContext) => number)
+  /** 修饰类型（ADDITIVE / MULTIPLICATIVE / PERCENTAGE / FINAL） */
+  type: ModifierTypeEnum
+  /** 可选的描述（用于日志/调试） */
+  description?: string
+}
+/**
+ * 属性操作模板
+ *
+ * 设计理念：
+ * - 子类通过声明式 getModifiers() 告诉基类"我要改什么"
+ * - 基类负责在正确的时机（施加/刷新/更新）应用这些修饰符
+ * - 支持固定值和动态值两种模式
+ * - 支持单一属性和批量属性
+ * - 不预设成长逻辑——子类在 _onUpdate 中自行实现
+ *
+ *
+ * @example
+ * // 简单场景：固定值，单一属性
+ * class AttackUpBuff extends AttributeBuffTemplate {
+ *   protected getModifiers(): AttributeModifier[] {
+ *     return [{ attribute: ATTRIBUTE_CODE.attack, value: 10, type: ModifierType.ADDITIVE }]
+ *   }
+ * }
+ *
+ * @example
+ * // 动态值，多属性
+ * class MountainGodBuff extends AttributeBuffTemplate {
+ *   protected getModifiers(): AttributeModifier[] {
+ *     return [
+ *       { attribute: ATTRIBUTE_CODE.attack, value: (ctx) => this.getConfigValue(ctx, 'attackBonus', 50), type: ModifierType.ADDITIVE },
+ *       { attribute: ATTRIBUTE_CODE.defense, value: (ctx) => this.getConfigValue(ctx, 'defenseBonus', 30), type: ModifierType.ADDITIVE },
+ *     ]
+ *   }
+ * }
+ */
+export abstract class AttributeBuffTemplate extends BaseBuffScript {
+  // ==================== 子类必须实现 ====================
+  /** 声明该 Buff 需要应用的所有属性修饰符 */
+  protected abstract getModifiers(): AttributeModifier[]
+  // ==================== 子类可覆盖的配置点 ====================
+  /** 刷新时是否重新应用修饰符（默认 true） */
+  protected shouldReapplyOnRefresh(): boolean {
+    return true
+  }
+  /** 每回合更新时是否重新应用修饰符（默认 false） */
+  protected shouldReapplyOnUpdate(): boolean {
+    return false
+  }
+  // ==================== 气血周期实现 ====================
+  protected _onApply(context: BuffContext): void {
+    const modifiers = this.getModifiers()
+    this.applyModifiers(context, false, modifiers)
+    this.log(context, `√ 效果生效，应用了 ${modifiers.length} 个属性修饰符`)
+  }
+  protected _onRemove(context: BuffContext): void {
+    // NOTE: 修饰符清理由 BuffSystem.removeBuff → modifierStack.removeModifier(instanceId) 统一处理，
+    //       不在脚本层调用 context.removeModifiers()。
+    //        子类如需清理运行时变量，重写此方法并调用 super._onRemove(context)
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    if (this.shouldReapplyOnUpdate()) {
+      this.applyModifiers(context, true)
+      if (this._isDebugMode()) {
+        this.log(context, `属性已更新，重新应用了修饰符`)
+      }
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    if (this.shouldReapplyOnRefresh()) {
+      const modifiers = this.getModifiers()
+      this.applyModifiers(context, true, modifiers)
+      this.log(context, `刷新效果，重新应用了 ${modifiers.length} 个修饰符`)
+    }
+  }
+  // ==================== 核心工具方法 ====================
+  /**
+   * 应用修饰符列表到 BuffContext
+   * @param context Buff 上下文
+   * @param replace 是否先替换再应用——精确移除每个声明的属性的旧修饰符，再添加新值
+   * @param modifiers 可选——传入的修饰符列表，不传时调用 this.getModifiers()
+   */
+  protected applyModifiers(
+    context: BuffContext,
+    replace: boolean = false,
+    modifiers?: AttributeModifier[],
+  ): void {
+    modifiers ??= this.getModifiers()
+    const stacks = this.getStacks(context)
+    if (replace) {
+      // ponytail: 精确移除——只移除本 instance 下每个声明属性的旧修饰符，不影响同 instance 的其他属性
+      for (const mod of modifiers) {
+        context.removeModifiers(mod.attribute as ATTRIBUTE_CODE)
+      }
+    }
+    for (const mod of modifiers) {
+      // NOTE: 运行时校验——仅接受已知 ATTRIBUTE_CODE，非法属性跳过并 warn
+      if (
+        !Object.values(ATTRIBUTE_CODE).includes(mod.attribute as ATTRIBUTE_CODE)
+      ) {
+        this.log(
+          context,
+          `修饰符属性 "${mod.attribute}" 不在 ATTRIBUTE_CODE 中，已跳过`,
+        )
+        continue
+      }
+      // HACK: 动态 value 函数可能抛出异常——try-catch 兜底确保单个修饰符失败不拖垮整个战斗流程
+      let rawValue: number
+      if (typeof mod.value === 'function') {
+        try {
+          rawValue = mod.value(context)
+        } catch (error) {
+          this.log(context, `修饰符值计算失败 (${mod.attribute}): ${error}`)
+          rawValue = 0
+        }
+      } else {
+        rawValue = mod.value
+      }
+      const value = rawValue * stacks
+      context.addModifier(mod.attribute as ATTRIBUTE_CODE, value, mod.type)
+    }
+    if (this._isDebugMode()) {
+      for (const mod of modifiers) {
+        const rawVal =
+          typeof mod.value === 'function'
+            ? (() => {
+                try {
+                  return mod.value(context)
+                } catch {
+                  return NaN
+                }
+              })()
+            : mod.value
+        this.log(
+          context,
+          `  ├─ ${mod.description ?? mod.attribute}: ${mod.attribute} ${mod.type} ${rawVal}（${stacks}层→实际${Number.isNaN(rawVal) ? 'N/A' : rawVal * stacks}）`,
+        )
+      }
+    }
+  }
+  // ==================== 辅助方法 ====================
+  /** 读取 Buff 叠加层数，默认 1 层 */
+  protected getStacks(context: BuffContext): number {
+    return (context.getVariable<number>('_stacks') as number) ?? 1
+  }
+  /** 获取参数的便捷方法——优先从 context.config.parameters 读取，否则使用默认值 */
+  protected getParam<T>(context: BuffContext, key: string, defaultValue: T): T {
+    return this.getConfigValue(context, key, defaultValue)
+  }
+  /** 批量解析参数：合并默认值和配置值 */
+  protected resolveParams<T extends Record<string, any>>(
+    context: BuffContext,
+    defaults: T,
+  ): T {
+    const result = { ...defaults }
+    const configParams = context.config.parameters || {}
+    for (const key of Object.keys(defaults)) {
+      if (configParams[key] !== undefined) {
+        ;(result as Record<string, unknown>)[key] = configParams[key]
+      }
+    }
+    return result
+  }
+  // ==================== 调试支持 ====================
+  /** 子类可覆盖以开启调试日志 */
+  protected _isDebugMode(): boolean {
+    return false
+  }
+}
+
+--- src/domain/buff/scripts/templates/BaseBuffScript.ts ---
+import type { IBuffScript, BuffEffectLine } from '@/domain/buff/types'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
+import { ModifierType } from '@/domain/attribute/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TParams> {
+  params?: TParams
+  public onApply(context: BuffContext): void {
+    BuffErrorBoundary.wrap(() => {
+      this._onApply(context)
+    })
+  }
+  public onRemove(context: BuffContext): void {
+    BuffErrorBoundary.wrap(() => {
+      this._onRemove(context)
+    })
+    // NOTE: 修饰符清理由 BuffSystem.removeBuff → modifierStack.removeModifier(instanceId) 统一处理，
+    //       不在脚本层调用 context.removeModifiers()。
+  }
+  public onUpdate(context: BuffContext, deltaTime: number): void {
+    BuffErrorBoundary.wrap(() => {
+      this._onUpdate(context, deltaTime)
+    })
+  }
+  public onRefresh(context: BuffContext): void {
+    BuffErrorBoundary.wrap(() => {
+      this._onRefresh(context)
+    })
+  }
+  protected abstract _onApply(context: BuffContext): void
+  protected abstract _onRemove(context: BuffContext): void
+  protected abstract _onUpdate(context: BuffContext, deltaTime: number): void
+  protected abstract _onRefresh(context: BuffContext): void
+  protected addModifier(
+    context: BuffContext,
+    attribute: string,
+    value: number,
+    type: ModifierType
+  ): void {
+    context.addModifier(attribute, value, type)
+  }
+  protected getConfigValue<T>(
+    context: BuffContext,
+    key: string,
+    defaultValue: T
+  ): T {
+    return context.config.parameters?.[key] ?? defaultValue
+  }
+  protected log(context: BuffContext, message: string): void {
+    LoggerProvider.logger.addDebugLog(`[${context.config.id}] ${message}`)
+  }
+  protected triggerEvent(
+    context: BuffContext,
+    eventName: string,
+    data?: unknown
+  ): void {
+    context.triggerEvent(eventName, data)
+  }
+  /** 默认实现：无特殊效果行。子类可覆盖此方法返回 DOT/HEAL/护盾等文本 */
+  public getEffectLines(_context: BuffContext): BuffEffectLine[] {
+    return []
+  }
+}
+
+--- src/domain/buff/scripts/templates/BuffTemplate.ts ---
+﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
+import { AttributeBuffTemplate } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
+import type { AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
+import type { BuffContext } from '@/domain/buff/BuffContext'
+import { ModifierType } from '@/domain/attribute/types'
+/**
+ * 持续伤害debuff模板
+ * 用于快速创建持续伤害类debuff
+ */
+export abstract class DamageOverTimeTemplate extends BaseBuffScript {
+  protected abstract getDamageCategory(): string
+  protected abstract getBaseDamage(): number
+  protected abstract getDamageInterval(): number
+  protected abstract getDebuffName(): string
+  protected _onApply(context: BuffContext): void {
+    const debuffName = this.getDebuffName()
+    this.log(context, `${debuffName}效果生效！`)
+    const baseDamage = this.getConfigValue(
+      context,
+      'baseDamage',
+      this.getBaseDamage(),
+    )
+    const damageInterval = this.getConfigValue(
+      context,
+      'damageInterval',
+      this.getDamageInterval(),
+    )
+    context.setVariable('baseDamage', baseDamage)
+    context.setVariable('damageInterval', damageInterval)
+    context.setVariable('lastDamageTime', 0)
+    context.setVariable('damageCategory', this.getDamageCategory())
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, `${this.getDebuffName()}效果消失`)
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    const elapsed = context.getElapsedTime()
+    const lastDamageTime = context.getVariable<number>('lastDamageTime') || 0
+    const damageInterval =
+      context.getVariable<number>('damageInterval') || this.getDamageInterval()
+    // 每隔一段时间造成伤害
+    if (elapsed - lastDamageTime >= damageInterval) {
+      const baseDamage =
+        context.getVariable<number>('baseDamage') || this.getBaseDamage()
+      const damageMultiplier = this.getConfigValue(
+        context,
+        'damageMultiplier',
+        1.0,
+      )
+      // 计算当前伤害（随时间递增）
+      const stacks = Math.floor(elapsed / damageInterval)
+      const currentDamage = Math.floor(
+        baseDamage * Math.pow(damageMultiplier, stacks),
+      )
+      this.log(context, `${this.getDebuffName()}造成 ${currentDamage} 点伤害`)
+      // 这里应该调用角色的伤害方法
+      context.setVariable('lastDamageTime', elapsed)
+    }
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, `${this.getDebuffName()}效果增强！`)
+    const baseDamage =
+      context.getVariable<number>('baseDamage') || this.getBaseDamage()
+    const refreshBonus = this.getConfigValue(
+      context,
+      'refreshBonus',
+      this.getBaseDamage() * 0.2,
+    )
+    const newBaseDamage = baseDamage + refreshBonus
+    context.setVariable('baseDamage', newBaseDamage)
+    this.log(context, `${this.getDebuffName()}基础伤害提升至 ${newBaseDamage}`)
+  }
+}
+/**
+ * 状态效果buff模板
+ * 用于快速创建状态变化类buff
+ */
+export abstract class StatusEffectTemplate extends BaseBuffScript {
+  protected abstract getEffectName(): string
+  protected abstract getEffectDescription(): string
+  protected abstract getAffectedAttributes(): Array<{
+    name: string
+    modifier: number
+    type: ModifierType
+  }>
+  protected _onApply(context: BuffContext): void {
+    this.log(context, `${this.getEffectName()}效果生效！`)
+    const attributes = this.getAffectedAttributes()
+    for (const attr of attributes) {
+      const actualModifier = this.getConfigValue(
+        context,
+        `${attr.name}Modifier`,
+        attr.modifier,
+      )
+      this.addModifier(context, attr.name, actualModifier, attr.type)
+      context.setVariable(`${attr.name}Modifier`, actualModifier)
+    }
+    context.setVariable('effectName', this.getEffectName())
+  }
+  protected _onRemove(context: BuffContext): void {
+    this.log(context, `${this.getEffectName()}效果消失`)
+  }
+  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+    // 状态效果通常不需要随时间变化
+  }
+  protected _onRefresh(context: BuffContext): void {
+    this.log(context, `${this.getEffectName()}效果强化！`)
+    const attributes = this.getAffectedAttributes()
+    for (const attr of attributes) {
+      const currentModifier =
+        context.getVariable<number>(`${attr.name}Modifier`) || attr.modifier
+      const refreshBonus = this.getConfigValue(
+        context,
+        'refreshBonus',
+        attr.modifier * 0.1,
+      )
+      const newModifier = currentModifier + refreshBonus
+      context.removeModifiers(attr.name)
+      this.addModifier(context, attr.name, newModifier, attr.type)
+      context.setVariable(`${attr.name}Modifier`, newModifier)
+    }
+    this.log(context, `${this.getEffectName()}效果得到强化`)
+  }
+}
+/**
+ * 快速生成buff脚本的工具函数
+ */
+export class BuffTemplateGenerator {
+  /**
+   * 生成属性加成buff
+   */
+  static createAttributeBuff(
+    buffId: string,
+    attributeName: string,
+    baseBonus: number,
+    bonusType: ModifierType,
+    buffName: string,
+  ): typeof BaseBuffScript {
+    return class extends AttributeBuffTemplate {
+      public static readonly BUFF_ID = buffId
+      protected getModifiers(): AttributeModifier[] {
+        return [{ attribute: attributeName, value: baseBonus, type: bonusType, description: buffName }]
+      }
+    }
+  }
+  /**
+   * 生成持续伤害debuff
+   */
+  static createDamageOverTime(
+    buffId: string,
+    damageCategory: string,
+    baseDamage: number,
+    damageInterval: number,
+    debuffName: string,
+  ): typeof BaseBuffScript {
+    return class extends DamageOverTimeTemplate {
+      public static readonly BUFF_ID = buffId
+      protected getDamageCategory(): string {
+        return damageCategory
+      }
+      protected getBaseDamage(): number {
+        return baseDamage
+      }
+      protected getDamageInterval(): number {
+        return damageInterval
+      }
+      protected getDebuffName(): string {
+        return debuffName
+      }
+    }
+  }
+  /**
+   * 生成状态效果buff
+   */
+  static createStatusEffect(
+    buffId: string,
+    effectName: string,
+    effectDescription: string,
+    affectedAttributes: Array<{
+      name: string
+      modifier: number
+      type: ModifierType
+    }>,
+  ): typeof BaseBuffScript {
+    return class extends StatusEffectTemplate {
+      public static readonly BUFF_ID = buffId
+      protected getEffectName(): string {
+        return effectName
+      }
+      protected getEffectDescription(): string {
+        return effectDescription
+      }
+      protected getAffectedAttributes() {
+        return affectedAttributes
+      }
+    }
+  }
+}
+
 --- src/domain/buff/triggers/index.ts ---
 /**
  * triggers/index.ts — 触发器脚本实现 + 注册入口
@@ -17340,7 +19344,7 @@ export function healAllAllies(ctx: TriggerExecutionContext): void {
     (p: BattleEntity) => p.team === sourceTeam && p.isAlive?.(),
   )
   for (const ally of allies) {
-    ctx.buffSystem?.requestHeal(ally.id, 0)
+    // 百分比治疗路径已通过 requestDamage 处理，固定值 0 无需触发回调链
     ctx.buffSystem?.requestDamage(ally.id, 0, -percent)
   }
 }
@@ -17552,6 +19556,8 @@ export const BUFF_ID_PREFIX = 'buff_'
 export interface BuffQuery {
   getBuffInstanceIds(characterId: string): string[]
   hasBuff(characterId: string, buffId: string): boolean
+  /** 角色是否拥有包含指定 tag 的 buff */
+  hasBuffWithTag(characterId: string, tag: string): boolean
   /** 角色是否处于被控制状态（无法行动） */
   isCharacterControlled(characterId: string): boolean
   /** 角色是否能使用技能（未被沉默/眩晕等阻止技能释放） */
@@ -17895,7 +19901,6 @@ import type { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 export interface BuffBrief {
   id: string
   isPositive?: boolean
-  isDebuff?: boolean
 }
 /**
  * 角色属性接口
@@ -20281,17 +22286,25 @@ export class SkillExecutor {
           controlType: ControlType.NONE,
           parameters: { shieldValue: overflow },
         }
-        this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
-        LoggerProvider.logger.addDebugLog(
-          `回春护盾: 溢出 ${overflow} 点治疗转化为护盾`,
-          { level: LogLevel.INFO },
-        )
-        action.effects.push({
-          type: EffectType.STATUS,
-          targetId: target.id,
-          buffId: 'buff_shield',
-          description: `溢出治疗转护盾: ${overflow}`,
-        })
+        const shieldInstanceId = this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
+        if (!shieldInstanceId) {
+          LoggerProvider.logger.addDebugLog(
+            `回春护盾: 护盾施加被免疫/跳过`,
+            { level: LogLevel.WARN },
+          )
+        } else {
+          LoggerProvider.logger.addDebugLog(
+            `回春护盾: 溢出 ${overflow} 点治疗转化为护盾`,
+            { level: LogLevel.INFO },
+          )
+          action.effects.push({
+            type: EffectType.STATUS,
+            targetId: target.id,
+            buffId: 'buff_shield',
+            instanceId: shieldInstanceId,
+            description: `溢出治疗转护盾: ${overflow}`,
+          })
+        }
       } else {
         action.effects.push({
           type: EffectType.STATUS,
@@ -20485,6 +22498,13 @@ export class SkillExecutor {
       config,
       0,
     )
+    if (!instanceId) {
+      LoggerProvider.logger.addDebugLog(
+        `executeShield: 护盾施加被免疫/跳过: ${buffTarget.id}`,
+        { level: LogLevel.WARN },
+      )
+      return
+    }
     action.effects.push({
       type: EffectType.STATUS,
       targetId: buffTarget.id,
@@ -20519,6 +22539,13 @@ export class SkillExecutor {
       parameters: skillStep.parameters || {},
     }
     const instanceId = this.buffSystem.addBuff(target.id, buffId, config)
+    if (!instanceId) {
+      LoggerProvider.logger.addDebugLog(
+        `executeControl: 控制效果被免疫/跳过: ${buffId} → ${target.id}`,
+        { level: LogLevel.WARN },
+      )
+      return
+    }
     action.effects.push({
       type: EffectType.STATUS,
       targetId: target.id,
@@ -44591,7 +46618,7 @@ export function deriveBuffFacets(config: {
       switch (effect.type) {
         case AtomicEffectType.MODIFIER: facets.push(StatusCategory.MODIFIER); break
         case AtomicEffectType.DOT: facets.push(StatusCategory.DOT); break
-        case AtomicEffectType.HEAL: facets.push(StatusCategory.TRIGGER); break  // HEAL 归入 trigger 类
+        case AtomicEffectType.HEAL: facets.push(StatusCategory.HOT); break  // HEAL 归入 HOT 类
         case AtomicEffectType.CONTROL: facets.push(StatusCategory.CONTROL); break
         case AtomicEffectType.SHIELD: facets.push(StatusCategory.SHIELD); break
         case AtomicEffectType.TRIGGER: facets.push(StatusCategory.TRIGGER); break
@@ -44657,7 +46684,7 @@ export interface BuffClassificationInput {
   shield?: unknown
   /** 免疫标签 */
   immunities?: string[]
-  /** 极性：直接决定 UI 颜色（取代 isDebuff + category 优先级链的猜测） */
+  /** 极性：直接决定 UI 颜色（取代 category 优先级链的猜测） */
   polarity?: BuffPolarity | string
   /** 原子效果执行计划（从 ResolvedBuffConfig 传入） */
   effectPlan?: ResolvedEffectPlan[]
@@ -44684,7 +46711,7 @@ export interface BuffClassificationResult {
  * Buff 分类判定函数 — 三个维度完全解耦
  *
  * 1. facets ← 从配置结构自动派生（不看 category，不看 tags）
- * 2. polarity ← 优先取 config.polarity，回退到 isDebuff，再回退到 category 猜测
+ * 2. polarity ← 优先取 config.polarity，回退到 category 猜测
  * 3. category ← 透传 JSON 的 config.category 字段（纯显示标签），兜底取 facets[0]
  */
 export function classifyBuff(
@@ -47915,167 +49942,6 @@ export interface ValidationResult {
   valid: boolean
   /** 错误信息列表 */
   errors: string[]
-}
-/**
- * 技能配置JSON Schema
- */
-const skillSchema = {
-  type: 'object',
-  required: ['id', 'name', 'energyCost', 'cooldown', 'steps'],
-  properties: {
-    id: {
-      type: 'string',
-      pattern: '^skill_.*$',
-    },
-    name: {
-      type: 'string',
-      minLength: 1,
-    },
-    description: {
-      type: 'string',
-    },
-    energyCost: {
-      type: 'number',
-      minimum: 0,
-    },
-    cooldown: {
-      type: 'number',
-      minimum: 0,
-    },
-    maxUses: {
-      type: 'number',
-      minimum: 1,
-    },
-    selector: {
-      type: 'object',
-      required: ['faction'],
-      properties: {
-        faction: { type: 'string', enum: ['enemy', 'ally', 'all', 'self'] },
-        strategy: {
-          type: 'string',
-          enum: [
-            'all',
-            'random',
-            'lowest_hp',
-            'highest_hp',
-            'front',
-            'back',
-            'adjacent',
-            'first',
-          ],
-        },
-        count: { type: 'number', minimum: 1 },
-      },
-    },
-    steps: {
-      type: 'array',
-      minItems: 1,
-      items: {
-        type: 'object',
-        required: ['type'],
-        properties: {
-          type: {
-            type: 'string',
-          },
-          formula: {
-            type: 'string',
-            minLength: 1,
-          },
-          calculation: {
-            type: 'object',
-            properties: {
-              baseValue: { type: 'number' },
-              extraValues: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    attribute: { type: 'string' },
-                    ratio: { type: 'number' },
-                  },
-                },
-              },
-              damageCategory: { type: 'string' },
-              isSingleTurn: { type: 'boolean' },
-            },
-          },
-          buffId: {
-            type: 'string',
-          },
-          modifiers: {
-            type: 'array',
-          },
-          attackType: {
-            type: 'string',
-          },
-          effectId: {
-            type: 'string',
-          },
-          effectParams: {
-            type: 'object',
-          },
-          duration: {
-            type: 'number',
-          },
-          stacks: {
-            type: 'number',
-            minimum: 1,
-          },
-          targetConfig: {
-            type: 'object',
-            properties: {
-              faction: { type: 'string' },
-              strategy: { type: 'string' },
-              count: { type: 'number' },
-            },
-          },
-          condition: {
-            type: 'string',
-          },
-          priority: {
-            type: 'number',
-          },
-          parameters: {
-            type: 'object',
-          },
-        },
-      },
-    },
-    condition: {
-      type: 'string',
-    },
-    skillType: {
-      type: 'string',
-    },
-    triggerTimes: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
-    level: {
-      type: 'number',
-      minimum: 1,
-    },
-    icon: {
-      type: 'string',
-    },
-    animation: {
-      type: 'string',
-    },
-    soundEffect: {
-      type: 'string',
-    },
-    tags: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
-    parameters: {
-      type: 'object',
-    },
-  },
 }
 /**
  * 验证技能配置

@@ -638,6 +638,8 @@ export class BattleSystem {
     // ★ 每次 initialize 重新注册被动和免疫，消除对外部调用顺序的依赖
     this.passiveSkillManager.clearAll()
     for (const participant of participants.values()) {
+      // 先清理上一场残留的免疫标签（防止多次 initialize 累积）
+      this.buffSystem.clearCharacterImmunities(participant.id)
       GameDataProcessor.registerParticipantPassives(participant, this.passiveSkillManager)
       const immunities = participant.getImmunities()
       if (immunities.length > 0) {

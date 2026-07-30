@@ -16,6 +16,8 @@ export const BUFF_ID_PREFIX = 'buff_'
 export interface BuffQuery {
   getBuffInstanceIds(characterId: string): string[]
   hasBuff(characterId: string, buffId: string): boolean
+  /** 角色是否拥有包含指定 tag 的 buff */
+  hasBuffWithTag(characterId: string, tag: string): boolean
   /** 角色是否处于被控制状态（无法行动） */
   isCharacterControlled(characterId: string): boolean
   /** 角色是否能使用技能（未被沉默/眩晕等阻止技能释放） */

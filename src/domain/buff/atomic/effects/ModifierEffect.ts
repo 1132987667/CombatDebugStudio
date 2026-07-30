@@ -48,7 +48,7 @@ export class ModifierEffect implements IAtomicEffect {
     const stacks = ctx.getVariable<number>('_stacks') ?? 1
     return Object.entries(attributes).map(([attr, val]) => ({
       text: `${attr} ${val}${(params.perStack ?? true) && stacks > 1 ? ` ×${stacks}` : ''}`,
-      kind: 'other' as const,
+      kind: 'modifier' as const,
     }))
   }
 

@@ -1437,6 +1437,7 @@
     "maxStacks": 1,
     "duration": -1,
     "polarity": "positive",
+    "tags": ["energy_absorption"],
     "description": "气血低于40%时，受到伤害先由能量抵扣"
   },
   {

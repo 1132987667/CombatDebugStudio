@@ -304,12 +304,12 @@ export class BuffScriptRegistry {
 
   /** 检查脚本是否为自包含模式——脚本自行管理修饰符，框架不再重复从 JSON 读取 */
   public isSelfContained(scriptId: string): boolean {
-    // ponytail: 显式标记或任何已注册的脚本均视为自包含
-    // 纯 JSON 配置（无脚本）的 buff 才通过 applyAttributeModifiers 应用修饰符
-    return (
-      this.defaultConfigs.get(scriptId)?.selfContained === true ||
-      this.registry.has(scriptId)
-    )
+    const config = this.defaultConfigs.get(scriptId)
+    if (config?.selfContained === true) return true
+    // 有 effectPlan 的 buff 视为自包含（effectPlan 自行管理生命周期）
+    const resolved = this.getResolvedBuffConfig(scriptId)
+    if (resolved?.effectPlan && resolved.effectPlan.length > 0) return true
+    return false
   }
 
   public registerScript(

@@ -24,12 +24,10 @@ export class ImmunityEffect implements IAtomicEffect {
     }
   }
 
-  onRemove(ctx: BuffContext, _params: Record<string, unknown>): void {
-    const buffSystem = ctx.getBuffSystem()
-    if (!buffSystem) return
-
-    // 重建整个角色的免疫集合，移除当前 Buff 的免疫标签
-    buffSystem.rebuildCharacterImmunities(ctx.characterId)
+  onRemove(_ctx: BuffContext, _params: Record<string, unknown>): void {
+    // NOTE: 不在此处调用 rebuildCharacterImmunities。
+    // 此时 Buff 实例仍为 isActive=true，rebuild 会重新包含当前 buff 的免疫标签。
+    // 真正的清理由 BuffSystem.removeBuff 第 945 行（实例已删除后）完成。
   }
 
   getEffectLines(_ctx: BuffContext, params: Record<string, unknown>) {

@@ -67,7 +67,7 @@ export function healAllAllies(ctx: TriggerExecutionContext): void {
     (p: BattleEntity) => p.team === sourceTeam && p.isAlive?.(),
   )
   for (const ally of allies) {
-    ctx.buffSystem?.requestHeal(ally.id, 0)
+    // 百分比治疗路径已通过 requestDamage 处理，固定值 0 无需触发回调链
     ctx.buffSystem?.requestDamage(ally.id, 0, -percent)
   }
 }

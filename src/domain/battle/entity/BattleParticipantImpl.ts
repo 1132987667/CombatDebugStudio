@@ -627,7 +627,7 @@ export class BattleParticipantImpl implements BattleEntity {
 
     // ponytail: 背水护甲 — 能量抵扣伤害（每1能量抵扣1点伤害）
     if (
-      this.hasBuff('guardian_buff_backwater_armor') &&
+      this.buffQuery?.hasBuffWithTag(this.id, 'energy_absorption') &&
       this.currentEnergy > 0
     ) {
       const energyUsed = Math.min(this.currentEnergy, damage)

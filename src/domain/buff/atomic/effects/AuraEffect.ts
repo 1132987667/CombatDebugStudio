@@ -25,8 +25,9 @@ export class AuraEffect implements IAtomicEffect {
     // allies/enemies 由 BattleSystem 统一分发，此处不重复处理
   }
 
-  onRemove(ctx: BuffContext, _params: Record<string, unknown>): void {
-    ctx.removeModifiers()
+  onRemove(_ctx: BuffContext, _params: Record<string, unknown>): void {
+    // NOTE: 修饰符清理由 BuffSystem.removeBuff 的 modifierStack.removeModifier(instanceId) 统一处理
+    // 此处不再重复调用 ctx.removeModifiers()
   }
 
   private applySelfAura(ctx: BuffContext, params: Record<string, unknown>): void {

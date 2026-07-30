@@ -71,7 +71,7 @@
                   <span class="first-badge">状态</span>
                 </div>
               </div>
-              <div v-if="enemyTeam.length === 0" class="empty-party">(空位)</div>
+              <EmptyState v-if="enemyTeam.length === 0">(空位)</EmptyState>
             </div>
           </div>
         </div>
@@ -124,9 +124,7 @@
               </div>
             </Transition>
           </div>
-          <div v-if="groupedEnemies.length === 0" class="empty-message">
-            未找到匹配的敌人
-          </div>
+          <EmptyState v-if="groupedEnemies.length === 0">未找到匹配的敌人</EmptyState>
         </div>
       </div>
     </div>
@@ -142,6 +140,7 @@ import type { SceneData } from '@/shared/types/scene';
 import { ParticipantSide } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
+import EmptyState from '@/presentation/components/EmptyState.vue'
 
 interface GroupedEnemies {
   scene: SceneData;

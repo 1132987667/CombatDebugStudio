@@ -13,8 +13,6 @@ import {
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { ThreatManager } from '@/domain/battle/service/ThreatManager'
 
-/** 嘲讽的标签字符串（替换旧版硬编码 buff_taunt） */
-const TAUNT_TAG = 'taunt'
 
 /**
  * 根据技能 selector 解析目标

@@ -23,9 +23,7 @@
 
     <!-- 节点列表 -->
     <div class="trace-list">
-      <div v-if="filteredRoots.length === 0" class="trace-empty">
-        暂无调试日志
-      </div>
+      <EmptyState v-if="filteredRoots.length === 0">暂无调试日志</EmptyState>
       <TraceTreeNode v-for="node in filteredRoots" :key="node.traceId" :node="node" :depth="0" />
     </div>
   </div>
@@ -35,6 +33,7 @@
 import { ref, computed } from 'vue'
 import type { TraceLogEntry } from '@/shared/types/trace-log'
 import TraceTreeNode from './TraceTreeNode.vue'
+import EmptyState from '@/presentation/components/EmptyState.vue'
 
 interface Props {
   roots: TraceLogEntry[]
@@ -146,11 +145,5 @@ function matchesText(node: TraceLogEntry, kw: string): boolean {
   overflow-y: auto;
   padding: var(--space-1) 0;
   font-family: 'Consolas', 'Monaco', monospace;
-}
-
-.trace-empty {
-  text-align: center;
-  color: var(--color-text-tertiary);
-  padding: var(--space-6);
 }
 </style>

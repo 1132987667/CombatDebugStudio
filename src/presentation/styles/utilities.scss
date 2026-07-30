@@ -34,6 +34,13 @@
 .items-end { align-items: flex-end !important; }
 .items-stretch { align-items: stretch !important; }
 
+/* ----- Flex 间距（映射 --space-* 令牌） ----- */
+.gap-1 { gap: var(--space-1) !important; }
+.gap-2 { gap: var(--space-2) !important; }
+.gap-3 { gap: var(--space-3) !important; }
+.gap-4 { gap: var(--space-4) !important; }
+.gap-5 { gap: var(--space-5) !important; }
+
 /* ----- 3. 间距微调 ----- */
 .m-0 { margin: 0 !important; }
 .p-0 { padding: 0 !important; }

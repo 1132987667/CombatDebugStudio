@@ -121,9 +121,7 @@
       <div class="monitor-group">
         <Tabs v-model="activeTab" :tabs="skillTabs" size="sm" destroy-inactive>
           <template #passive>
-            <div v-if="groupedPassives.length === 0" class="no-skills">
-              暂无被动技能
-            </div>
+          <EmptyState v-if="groupedPassives.length === 0">暂无被动技能</EmptyState>
             <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
               <div v-for="group in groupedPassives" :key="group.category" class="skill-category">
                 <div class="skill-category-title">
@@ -141,10 +139,7 @@
           </template>
           <template #active>
             <div class="skills-display">
-              <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length"
-                class="no-skills">
-                暂无主动技能
-              </div>
+              <EmptyState v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length">暂无主动技能</EmptyState>
               <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
                 <div v-if="currentCharacter!.skills.small?.length" class="skill-category">
                   <div class="skill-category-title">小技能</div>
@@ -167,7 +162,7 @@
           </template>
           <template #status>
             <div class="skills-display">
-              <div v-if="buffListItems.length === 0" class="no-skills">无生效状态</div>
+              <EmptyState v-if="buffListItems.length === 0">无生效状态</EmptyState>
               <div v-else class="buff-list">
                 <BuffTextGroup v-for="buff in buffDisplay.groups" :key="buff.instanceId" :buff="buff"
                   :debug-mode="false" />
@@ -265,6 +260,7 @@ import { computed, onMounted, onUnmounted, ref, type ComputedRef } from "vue";
 
 import type { BuffRawItem } from '@/shared/types/buff-display'
 import { useBuffDisplay } from '@/presentation/composables/useBuffDisplay'
+import EmptyState from '@/presentation/components/EmptyState.vue'
 
 const battleStore = useBattleStore();
 
@@ -864,14 +860,6 @@ const handleBattleEndReplay = (winner: string) => {
   flex-direction: column;
   gap: var(--space-1);
   padding-left: var(--space-2);
-}
-
-.no-skills {
-  color: rgba(var(--rgb-white), var(--alpha-glow));
-  text-align: center;
-  padding: var(--space-2);
-  background: rgba(var(--rgb-black), var(--alpha-wash-strong));
-  border-radius: var(--radius-sm);
 }
 </style>
 

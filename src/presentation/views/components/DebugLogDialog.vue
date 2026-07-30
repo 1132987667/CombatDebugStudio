@@ -39,9 +39,7 @@
                 {{ log.error.message }}
               </div>
             </div>
-            <div v-if="localLogs.length === 0" class="log-empty">
-              暂无日志
-            </div>
+            <EmptyState v-if="localLogs.length === 0">暂无日志</EmptyState>
           </div>
         </template>
       </Tabs>
@@ -55,6 +53,7 @@ import Dialog from '@/presentation/components/Dialog.vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
 import TraceLogTree from '@/presentation/views/components/TraceLogTree.vue'
+import EmptyState from '@/presentation/components/EmptyState.vue'
 import type { LogEntry } from '@/shared/types/battle-log'
 import type { TraceLogEntry } from '@/shared/types/trace-log'
 import { LogLevel } from '@/shared/types/battle-log'
@@ -280,11 +279,5 @@ const downloadLogs = () => {
   margin-top: var(--space-1);
   color: var(--color-danger);
   font-size: var(--font-size-md);
-}
-
-.log-empty {
-  text-align: center;
-  color: var(--color-text-tertiary);
-  padding: var(--space-6);
 }
 </style>

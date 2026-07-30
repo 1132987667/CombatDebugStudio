@@ -27,22 +27,19 @@
         <span>闪避率生效</span>
       </label>
     </div>
-    <div class="speed-selector">
-      <span>自动速率:</span>
-      <button v-for="speed in speedOptions" :key="speed" class="speed-btn" :class="{ active: localSpeed === speed }"
-        @click="updateSpeed(speed)">
-        {{ speed }}x
-      </button>
-      <input type="number" v-model.number="customSpeed" class="custom-speed" placeholder="自定义"
-        @change="updateCustomSpeed">
-    </div>
+    <SpeedSelector :model-value="localSpeed" label="自动速率:" @update:model-value="updateSpeed">
+      <template #extra>
+        <input type="number" v-model.number="customSpeed" class="custom-speed" placeholder="自定义"
+          @change="updateCustomSpeed" />
+      </template>
+    </SpeedSelector>
   </Dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, reactive } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
-import { SPEED_OPTIONS } from '@/shared/constants/speed'
+import SpeedSelector from '@/presentation/components/SpeedSelector.vue'
 import { BattleRules } from '@/presentation/stores/battleStore'
 
 interface Props {
@@ -65,7 +62,6 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const speedOptions = SPEED_OPTIONS
 const localRules = reactive<BattleRules>({ ...props.rules })
 const localSpeed = ref(props.speed)
 const customSpeed = ref<number | null>(null)
@@ -129,44 +125,5 @@ const updateCustomSpeed = () => {
 .rule-item span {
   font-size: var(--font-size-md);
   color: var(--color-text-secondary);
-}
-
-.speed-selector {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border-default);
-}
-
-.speed-selector span {
-  font-size: var(--font-size-md);
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
-}
-
-.speed-btn {
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-border-tertiary);
-  background: var(--color-border-default);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  color: var(--color-info);
-  transition: all var(--transition-fast);
-}
-
-.speed-btn:hover {
-  background: var(--color-border-tertiary);
-  color: var(--color-info);
-}
-
-.speed-btn.active {
-  background: var(--color-info);
-  border-color: var(--color-info);
-  color: var(--color-bg-secondary);
-}
-
-.custom-speed {
-  width: 80px;
 }
 </style>

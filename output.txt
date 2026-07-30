@@ -15,6 +15,7 @@ CombatDebugStudio/
         1785393374525-jolly-panda.md
         1785399900951-swift-river.md
         1785407010174-eager-knight.md
+        1785418078594-glowing-panda.md
     skills/
         domain-migration/
             SKILL.md
@@ -298,7 +299,7 @@ vite.config.ts
 文件内容:
 
 --- .mimocode/.cron-lock ---
-{"pid":26076,"startedAt":1785418017143}
+{"pid":17920,"startedAt":1785427647309}
 
 --- .mimocode/commands/verify.md ---
 ---
@@ -2287,6 +2288,135 @@ npm test             # 现有全绿 + 新增测试通过
 5. Path A 的 onApply 失败回滚，不残留实例
 6. Path A/B 的 onRemove 异常后 finally 仍清理
 
+--- .mimocode/plans/1785418078594-glowing-panda.md ---
+# 架构合规审计计划
+## 验证结论总表
+| # | 问题 | 真实性 | 石匠评分 | 建议 |
+|---|------|--------|----------|------|
+| 1 | BuffConfigResolver 4 段旧格式兼容 | ✅ 真实 | P0 必须删 | 删 `attributes/controlType/immunities/aura` 兼容块 |
+| 2a | NOOP_BUFF_SCRIPT 静默吞错 | ✅ 真实 | P0 必须删 | 替换为 `null` 判空，舍弃 sentinel 模式 |
+| 2b | 配置字段多级回退链 | ✅ 真实 | P2 可缓 | 只精简到"调用方→配置→报错"两级 |
+| 2c | Path C 旧字段读取方法 | ✅ 真实 | P0 必须删 | 删 `applyAttributeModifiers/Immunities/AuraModifiers` |
+| 3 | BuffScriptRegistry 仍校验旧字段 | ✅ 真实 | P1 应修 | 改为检测旧字段就报错 |
+| 4 | PassiveSkillManager 硬编码条件名 | ✅ 真实 | P1 应修 | 阈值名改参数化，旧名报错 |
+| 5 | BattleSystem 占位随机伤害 | ✅ 真实 | P1 应修 | 一行改为 `getRandomAttackDamage()` |
+| 6 | SkillExecutor 未实现类型静默通过 | ✅ 真实 | P1 应修 | unknown → throw，WARN 不够 |
+| 7 | BattleReplayManager container.resolve | ✅ 真实 | P2 可缓 | 构造函数注入 |
+| 8 | target-resolver 等 3 处 buff_taunt 硬编码 | ✅ 真实 | P2 可缓 | 统一 `hasBuffWithTag('taunt')` |
+| 9 | BattleSystem._damageCallbackDepth WARN+return | ✅ 真实（但非 try/catch） | P1 应修 | 超限改 throw，标注 try/finally 不吞错 |
+---
+## 执行顺序（按依赖关系排列）
+### P0：必须先改，不改后续工作依赖错误结果
+**Step 1: BuffConfigResolver.buildEffectPlan — 删除 4 个旧格式兼容块**
+文件: `src/domain/buff/atomic/BuffConfigResolver.ts`
+改动: 删除第 69–117 行全部 4 个 `// 兼容旧格式` 代码段。`effects[]` 为空且非 trigger-only 时返回空 plan。
+额外: 未知原子效果类型从 `console.warn + continue` 改为 `throw new Error`。
+```typescript
+private buildEffectPlan(raw: Record<string, any>): ResolvedEffectPlan[] {
+  const plan: ResolvedEffectPlan[] = []
+  const rawEffects = raw.effects ?? []
+  for (const rawEffect of rawEffects) {
+    const handler = this.registry.get(rawEffect.type as AtomicEffectType)
+    if (!handler) {
+      throw new Error(
+        `[BuffConfigResolver] ${raw.id}: 未知原子效果类型 "${rawEffect.type}"`
+      )
+    }
+    plan.push({
+      type: rawEffect.type as AtomicEffectType,
+      handler,
+      params: rawEffect.params ?? {},
+    })
+  }
+  // 不兼容旧格式——没有 effects[] 就是空 plan，让调用方决定如何处理
+  return plan
+}
+```
+验证: `npm run typecheck` → 检查是否有调用方依赖返回的 plan 包含旧格式派生项。
+**Step 2: BuffSystem — 删除 NOOP_BUFF_SCRIPT + 删除 Path C + 删除 3 个旧字段方法**
+文件: `src/domain/buff/BuffSystem.ts`
+子任务 2a: 删除 `NOOP_BUFF_SCRIPT` 常量（第 42–48 行）
+- 所有 `script !== NOOP_BUFF_SCRIPT` 比较改为 `script !== null`
+- `_track_passive_` 分支: `script = null`（走 Path D）
+- 有配置无脚本分支: 不再占位，直接 `script = null`（走 effectPlan 或报错）
+子任务 2b: 删除 Path C 执行体（第 695–705 行）
+- 删 `else if (path === 'C') { ... }` 整个分支
+- `hasConfigEffects` 判定逻辑（第 643–650 行）一并删除
+- 路径选择改三路径: `hasScript → A, hasEffectPlan → B, 其余 → D`
+子任务 2c: 删除 3 个方法
+- `applyAttributeModifiers`（第 762–797 行）
+- `applyBuffImmunities`（第 803–820 行）
+- `applyBuffAuraModifiers`（第 878–896 行）
+- 以及 `rebuildCharacterImmunities`（第 829–860 行）中读取旧 `immunities` 字段的部分
+子任务 2d: 精简配置字段回退链为"调用方→配置→明确默认值"
+- 每个字段最多两级: `config.field ?? jsonConfig.field ?? DEFAULT`
+- 不再查 `scriptDefaultConfig`（因为脚本自包含的配置已在注册时合并）
+**Step 3: BuffScriptRegistry.validateBuffConfigs — 检测旧字段报错**
+文件: `src/domain/buff/BuffScriptRegistry.ts`
+改动: `validateBuffConfigs` 第 125–146 行改为：
+- 检查 `raw.effects` / `raw.triggers` / 是否有脚本
+- 检测到旧字段（`attributes`、`controlType`、`immunities`、`aura`）且无 `effects[]` 时 `throw new Error`
+---
+### P1：应该修，独立于 P0
+**Step 4: PassiveSkillManager.evaluateCondition — 参数化 + 旧名报错**
+文件: `src/domain/skill/PassiveSkillManager.ts`
+子任务 4a: 修改方法签名，增加 `params?: Record<string, number | string | boolean>` 参数
+子任务 4b: `source_has_debuff_count_3` → 改为 `source_has_debuff_count`，读 `params.count`
+子任务 4c: `source_energy_high` → 改为 `source_energy_high`，读 `params.ratio`（默认 0.9）
+子任务 4d: `source_turn_gt_5` → 改为 `source_turn_gt`，读 `params.turn`
+子任务 4e: `source_turn_mod_5` → 改为 `source_turn_mod`，读 `params.mod`
+子任务 4f: 旧名字 `source_has_debuff_count_3` 等 → throw Error("已废弃，请用参数化版本")
+子任务 4g: default 分支 → throw Error，不再 WARN + false
+验证: 搜索所有技能配置中用到旧条件名的地方，确保调用的地方传了 `conditionParams`。
+**Step 5: BattleSystem.generateCommandsForTurn — 占位伤害改真实属性**
+文件: `src/domain/battle/BattleSystem.ts` 第 1564 行
+改动:
+```typescript
+// 改前:
+const damage = Math.floor(Math.random() * 20) + 10
+// 改后:
+const damage = participant.getRandomAttackDamage()
+```
+验证: 检查 `BattleEntity.getRandomAttackDamage()` 是否存在（是已有方法还是需要加）。
+**Step 6: SkillExecutor.executeCustom — 未实现类型改 throw**
+文件: `src/domain/skill/SkillExecutor.ts`
+子任务 6a: `else`（第 644 行）→ throw Error("未实现的自定义步骤类型: ...")
+子任务 6b: `executeStep` 的 `default`（第 126 行）→ throw Error("未实现的技能步骤类型: ...")
+子任务 6c: `steal_item` 分支（第 596 行）保留但加注释说明 PvE 专用
+**Step 7: BattleSystem._damageCallbackDepth — 超限改 throw**
+文件: `src/domain/battle/BattleSystem.ts` 第 449–455 行
+改动: `WARN log + return` → `throw new Error`，因为超限说明有递归 bug
+---
+### P2：可缓，干净代码
+**Step 8: BattleReplayManager — 构造函数注入取代 container.resolve**
+文件:
+- `src/domain/battle/replay/BattleReplayManager.ts`
+- `src/infrastructure/di/Container.ts`（注册工厂）
+改动: 构造函数增加 `skillConfigLookup` 参数，删除 `container` 导入和 `container.resolve` 调用。
+**Step 9: 3 处 buff_taunt 硬编码 → hasBuffWithTag('taunt')**
+文件:
+- `src/domain/skill/target-resolver.ts` 第 17、62 行
+- `src/domain/battle/ai/BattleAI.ts` 第 240 行
+- `src/domain/battle/service/BattleExecutor.ts` 第 1345 行
+改动: 全部改为 `hasBuffWithTag?.('taunt')`
+删除 `target-resolver.ts` 中的 `TAUNT_BUFF_ID` 常量
+前置条件：确认 `buff_taunt` 在 `buffs.json` 中的 `tags` 包含 `"taunt"`。
+---
+## 风险与注意事项
+1. **Step 1 会崩启动**：删除旧格式兼容后，任何还在用 `attributes`/`controlType` 的 JSON buff 都会在解析时得到空 plan。需要评估 `configs/buffs/buffs.json` 中有多少 buff 还没迁移到 `effects[]`。如果数量多，可能需要在执行 Step 1 前先迁移一批 JSON。
+2. **Step 2 合并 Path C→B 需要确认**：Path C 目前的调用方——`removeBuff`、`refreshBuff`、`updatePerTurn`——对 Path C 都只是"无操作"，所以合并是安全的。但 `applyBuffImmunities` 的副作用（`characterImmunities` 集合）需要确认 Path B 的 immunity handler 是否已经替代了这个职责。
+3. **Step 4 的调用链影响**：`evaluateCondition` 的调用方在 `PassiveSkillManager.ts` 内部 `evaluateConditions` 方法（第 498 行），需要确认调用处是否传递了 `conditionParams`。
+## 验证方案
+每一步改完后执行：
+```bash
+npx vue-tsc --noEmit          # 类型检查
+npx vitest run                 # 单元测试
+```
+关键关注点：
+- Step 1/2 后：大量 buff 配置相关测试可能因 `effects[]` 缺失而失败
+- Step 4 后：被动技能相关测试可能因条件名变更而失败
+- 最终运行 `npm run dev` 确认启动无异常
+
 --- .mimocode/skills/domain-migration/SKILL.md ---
 ---
 name: domain-migration
@@ -3221,7 +3351,8 @@ export class BattleProjection {
  * - 三级回退：buff.description → 反查技能.description → 按结构自动生成
  */
 import { LogSegmentHover, LogSegmentHoverKind } from '@/shared/types/battle-log'
-import { classifyBuff, getStatusCategoryBadge, StatusCategory, type StatusCategory } from '@/shared/types/buff-classification'
+import { classifyBuff, getStatusCategoryBadge } from '@/shared/types/buff-classification'
+import { StatusCategory } from '@/shared/types/status-meta'
 import type { BuffJsonEntry, BuffJsonAuraModifier } from '@/shared/types/buffs-json'
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import type { SkillManager } from '@/domain/skill/SkillManager'
@@ -3559,7 +3690,8 @@ import type { UIParticipantSnapshot } from '@/shared/types/projection'
 import type { BuffRawItem } from '@/shared/types/buff-display'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
-import { classifyBuff, deriveBuffFacets } from '@/shared/types/buff-classification'
+import { classifyBuff } from '@/shared/types/buff-classification'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 /**
  * 将 BattleEntity 映射为 UI 快照
  *
@@ -3632,6 +3764,19 @@ function buildBuffRawItems(
       if (!config) continue
       seenIds.add(id)
       seenIds.add(config.id)
+      // 从 effectPlan 的 modifier 效果中提取修饰符数据（供展示层生成属性标签）
+      let attributes: Record<string, string> | undefined
+      const resolved = buffSystem.getResolvedBuffConfig?.(config.id)
+      const modifierEffects = resolved?.effectPlan?.filter(
+        (e: { type: string }) => e.type === AtomicEffectType.MODIFIER,
+      ) ?? []
+      if (modifierEffects.length > 0) {
+        attributes = {}
+        for (const effect of modifierEffects) {
+          const attrs = effect.params.attributes as Record<string, string> | undefined
+          if (attrs) Object.assign(attributes, attrs)
+        }
+      }
       result.push({
         id,
         buffId: config.id,
@@ -3640,11 +3785,13 @@ function buildBuffRawItems(
         remainingTurns: instance.remainingTurns,
         currentStacks: instance.currentStacks,
         isNegative: classifyBuff(config as Parameters<typeof classifyBuff>[0]).isNegative,
-        attributes: config.attributes,
+        attributes,
         effectLines: instance.effectLines ?? [],
         conditionState: instance.conditionState,
         controlType: config.controlType as string | undefined,
-        facets: deriveBuffFacets(config as Parameters<typeof deriveBuffFacets>[0]),
+        isAura: resolved?.effectPlan?.some(
+          (e: { type: string }) => e.type === AtomicEffectType.AURA,
+        ) ?? false,
       })
     }
   }
@@ -3657,7 +3804,7 @@ function buildBuffRawItems(
         id: s.id, buffId: s.id, name: s.name, description: '',
         remainingTurns: s.remainingTurns, currentStacks: 1,
         isNegative: s.type === 'debuff', effectLines: [], conditionState: undefined,
-        facets: [],
+        isAura: false,
       })
     }
   }
@@ -5467,8 +5614,8 @@ export class BaseBattleAI implements BattleAI {
       (p) => p.team !== participant.team && p.isAlive(),
     )
     if (enemies.length === 0) return ''
-    // 嘲讽优先：有 `taunt` 标签的敌方
-    const taunters = enemies.filter(e => e.hasBuff?.('buff_taunt'))
+    // 嘲讽优先：通过标签检测（替换硬编码 buff_taunt）
+    const taunters = enemies.filter(e => this.buffSystem?.hasBuffWithTag(e.id, 'taunt'))
     if (taunters.length > 0) return taunters[0].id
     // 选择血量最低的敌人
     const target = enemies.reduce((min, p) =>
@@ -7060,11 +7207,10 @@ export class BattleSystem {
       (targetId: string, damage: number, rawDamage?: number, damagePercent?: number) => {
         // ponytail: 递归守卫 — 深度计数器替代布尔标志，允许有限嵌套
         if (_damageCallbackDepth >= MAX_DAMAGE_CALLBACK_DEPTH) {
-          LoggerProvider.logger.addDebugLog(
-            `伤害回调嵌套深度超过上限(${MAX_DAMAGE_CALLBACK_DEPTH})，丢弃: ${targetId}`,
-            { level: LogLevel.WARN },
+          throw new Error(
+            `[BattleSystem] 伤害回调嵌套超过 ${MAX_DAMAGE_CALLBACK_DEPTH} 层，` +
+            `存在无限递归。目标: ${targetId}。请检查触发器配置。`
           )
-          return
         }
         _damageCallbackDepth++
         try {
@@ -8051,7 +8197,7 @@ export class BattleSystem {
       const aiInstance = battle.aiInstances?.get(participantId)
       const targetId = this.selectCommandTarget(battle, participant)
       if (targetId) {
-        const damage = Math.floor(Math.random() * 20) + 10
+        const damage = participant.getRandomAttackDamage()
         commands.push({
           type: 'APPLY_DAMAGE',
           payload: {
@@ -10034,7 +10180,6 @@ import {
   type ReplayState,
   type ReplayEvent,
 } from './ReplayEngine'
-import { container } from '@/infrastructure/di/Container'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 /**
  * 战斗回放管理器
@@ -10069,8 +10214,13 @@ export class BattleReplayManager {
    *       而非 triggerEventBus（UI 组件监听的是 mitt eventBus）。
    */
   private eventBus: IDomainEventBus | null = null
-  constructor(eventBus?: IDomainEventBus) {
+  private skillConfigLookup: ((id: string) => { cooldown: number } | undefined) | null = null
+  constructor(
+    eventBus?: IDomainEventBus,
+    skillConfigLookup?: (id: string) => { cooldown: number } | undefined,
+  ) {
     this.eventBus = eventBus ?? null
+    this.skillConfigLookup = skillConfigLookup ?? null
   }
   /**
    * 获取是否正在回放
@@ -10117,12 +10267,9 @@ export class BattleReplayManager {
     // ★ 临时关闭日志自动清理，防止长战斗回放日志被截断
     LoggerProvider.logger.setAutoCleanup(false)
     this.replayEngine = new ReplayEngine()
-    // ★ 注入技能配置查询，替代硬编码冷却值
-    try {
-      const skillManager = container.resolve<SkillManager>('SkillManager')
-      this.replayEngine.setSkillConfigLookup((id) => skillManager.getSkillConfig(id))
-    } catch {
-      console.warn('[BattleReplayManager] 无法获取 SkillManager，冷却显示为 0')
+    // ★ 注入技能配置查询（由 DI 容器在构造时传入）
+    if (this.skillConfigLookup) {
+      this.replayEngine.setSkillConfigLookup(this.skillConfigLookup)
     }
     this.loadedReplayData = recording
     const success = this.replayEngine.loadReplay(recording)
@@ -11669,6 +11816,7 @@ export class BattleExecutor {
       this.threatManager,
       this.formationRowLookup,
       this.frontProtectionLookup,
+      (e) => this.buffSystem.hasBuffWithTag(e.id, 'taunt'),
     )
   }
   /**
@@ -12172,8 +12320,8 @@ export class BattleExecutor {
       (p) => p.id !== source.id && p.team !== source.team && p.isAlive(),
     )
     if (enemies.length === 0) return ''
-    // 嘲讽优先：有 taunt 标签的敌方
-    const taunters = enemies.filter(e => e.hasBuff?.('buff_taunt'))
+    // 嘲讽优先：通过标签检测（替换硬编码 buff_taunt）
+    const taunters = enemies.filter(e => this.buffSystem.hasBuffWithTag(e.id, 'taunt'))
     if (taunters.length > 0) return taunters[0].id
     // 仇恨优先
     if (this.threatManager) {
@@ -15579,14 +15727,14 @@ export interface ResolvedBuffConfig extends BuffConfig {
 /**
  * Buff 配置解析器
  *
- * 职责：将 JSON 配置（或旧格式配置）解析为运行时 ResolvedBuffConfig，
+ * 职责：将 JSON 配置解析为运行时 ResolvedBuffConfig，
  * 核心产出是 effectPlan 数组——一个 Buff 可包含多个原子效果原语。
  *
- * 向后兼容策略：
- * - effects[] 字段存在时优先使用
- * - 不存在时从旧字段（attributes / controlType / immunities / aura）自动派生
+ * 契约：
+ * - effects[] 字段是唯一的声明方式
  * - triggers 字段保持不变，走现有 TriggerEventBus
  * - 脚本类 Buff（selfContained）的 effectPlan 为空数组，脚本自行管理
+ * - 旧字段（attributes / controlType / immunities / aura）不再被识别
  */
 export class BuffConfigResolver {
   constructor(private registry: AtomicEffectRegistry) {}
@@ -15603,14 +15751,14 @@ export class BuffConfigResolver {
   }
   private buildEffectPlan(raw: Record<string, any>): ResolvedEffectPlan[] {
     const plan: ResolvedEffectPlan[] = []
-    // 1. 优先从 effects 数组解析
     const rawEffects: Array<{ type: string; params: Record<string, unknown> }> =
       raw.effects ?? []
     for (const rawEffect of rawEffects) {
       const handler = this.registry.get(rawEffect.type as AtomicEffectType)
       if (!handler) {
-        console.warn(`[BuffConfigResolver] 未知原子效果类型: ${rawEffect.type}`)
-        continue
+        throw new Error(
+          `[BuffConfigResolver] ${raw.id ?? 'unknown'}: 未知原子效果类型 "${rawEffect.type}"`
+        )
       }
       plan.push({
         type: rawEffect.type as AtomicEffectType,
@@ -15618,53 +15766,7 @@ export class BuffConfigResolver {
         params: rawEffect.params ?? {},
       })
     }
-    if (plan.length > 0) return plan // effects 存在时优先使用，不派生
-    // 2. 兼容旧格式：从 attributes 字段自动生成 modifier 效果
-    if (raw.attributes && Object.keys(raw.attributes).length > 0) {
-      const modifierHandler = this.registry.get('modifier')
-      if (modifierHandler) {
-        plan.push({
-          type: 'modifier',
-          handler: modifierHandler,
-          params: { attributes: raw.attributes, perStack: true },
-        })
-      }
-    }
-    // 3. 兼容旧格式：从 controlType 字段自动生成 control 效果
-    if (raw.controlType && raw.controlType !== 'none' && raw.controlType !== 'NONE') {
-      const controlHandler = this.registry.get('control')
-      if (controlHandler) {
-        plan.push({
-          type: 'control',
-          handler: controlHandler,
-          params: {
-            controlType: raw.controlType,
-          },
-        })
-      }
-    }
-    // 4. 兼容旧格式：从 immunities 字段自动生成 immunity 效果
-    if (raw.immunities?.length > 0) {
-      const immunityHandler = this.registry.get('immunity')
-      if (immunityHandler) {
-        plan.push({
-          type: 'immunity',
-          handler: immunityHandler,
-          params: { tags: raw.immunities },
-        })
-      }
-    }
-    // 5. 兼容旧格式：从 aura 字段自动生成 aura 效果
-    if (raw.aura) {
-      const auraHandler = this.registry.get('aura')
-      if (auraHandler) {
-        plan.push({
-          type: 'aura',
-          handler: auraHandler,
-          params: raw.aura,
-        })
-      }
-    }
+    // 不兼容旧格式——没有 effects[] 就是空 plan
     return plan
   }
   private buildBaseConfig(raw: Record<string, any>): BuffConfig {
@@ -16550,24 +16652,36 @@ export class BuffScriptRegistry {
     this.loadEffectConfigs()
     this.validateBuffConfigs()
   }
-  /** 加载时校验：标记无脚本、无 effectPlan、无配置效果的 Buff */
+  /** 加载时校验：标记无脚本、无 effectPlan 的 Buff */
   private validateBuffConfigs(): void {
     for (const [buffId] of this.buffConfigs) {
       const raw = this.buffConfigs.get(buffId)
       if (!raw) continue
+      // 检测旧字段：仍在用 attributes/immunities/aura/shield 但没有 effects[]
+      // NOTE: controlType 不是旧字段——BuffSystem 直接从 config.controlType 读取控制查询
+      const usedLegacy: string[] = []
+      for (const f of ['attributes', 'immunities', 'aura', 'shield'] as const) {
+        const v = raw[f]
+        if (v == null) continue
+        // 空对象（attributes: {}）不算
+        if (typeof v === 'object' && Object.keys(v).length === 0) continue
+        usedLegacy.push(f)
+      }
+      if (usedLegacy.length > 0 && !raw.effects?.length) {
+        throw new Error(
+          `[BuffConfigValidator] ${buffId}: 检测到旧字段 [${usedLegacy.join(', ')}] 但无 effects[]。` +
+          `请将所有效果迁移到 effects[] 数组格式。`
+        )
+      }
       const hasScript = this.registry.has(buffId)
       const resolved = this.getResolvedBuffConfig(buffId)
       const hasEffectPlan = resolved?.effectPlan && resolved.effectPlan.length > 0
-      const hasConfigEffects = !!(
-        raw.attributes || raw.immunities?.length ||
-        raw.aura || !!raw.controlType
-      )
       const hasTriggers = (raw.triggers?.length ?? 0) > 0
-      if (!hasScript && !hasEffectPlan && !hasConfigEffects && !hasTriggers) {
+      if (!hasScript && !hasEffectPlan && !hasTriggers) {
         if (buffId.startsWith('_track_passive_')) continue
-        LoggerProvider.logger.addDebugLog(
-          `[BuffConfigValidator] 配置错误: ${buffId} 无脚本、无 effectPlan、无配置效果`,
-          { level: LogLevel.ERROR },
+        throw new Error(
+          `[BuffConfigValidator] ${buffId}: 无脚本、无 effects[]、无 triggers。` +
+          `请至少配置其一。旧字段 attributes/controlType/immunities/aura 不再被识别。`
         )
       }
     }
@@ -16617,6 +16731,13 @@ export class BuffScriptRegistry {
           maxStacks: (params.maxStacks as number) ?? 1,
           attributes:
             Object.keys(attributes).length > 0 ? attributes : undefined,
+          effects: [{
+            type: 'modifier',
+            params: {
+              attributes,
+              perStack: true,
+            },
+          }],
         }
         this.buffConfigs.set(effect.id, config)
         count++
@@ -16807,6 +16928,7 @@ import type {
 } from '@/domain/buff/types'
 import { BUFF_ID_PREFIX, ControlType, StackRule } from '@/domain/buff/types'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import type { ResolvedBuffConfig } from '@/domain/buff/atomic/BuffConfigResolver'
 import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { EffectType } from '@/domain/skill/types'
@@ -16815,14 +16937,6 @@ import { StatusCategory, StatusCode, getControlPriority } from '@/shared/types/s
 import { classifyBuff } from '@/shared/types/buff-classification'
 import { Counter } from '@/shared/utils/Counter'
 import { ConditionState } from '@/shared/types/buff-display'
-/** 无操作脚本占位：用于有配置无脚本的 buff */
-const NOOP_BUFF_SCRIPT: IBuffScript = {
-  onApply: () => { },
-  onRemove: () => { },
-  onUpdate: () => { },
-  onRefresh: () => { },
-  getEffectLines: () => [],
-}
 export interface TriggerExecutionContext extends TriggerEventContext {
   instanceId?: string
   buffSystem?: BuffSystem
@@ -17164,9 +17278,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       if (!def?.config) {
         // ponytail: 追踪 buff（_track_passive_ 前缀）是运行时动态创建的，
         // 不需要在 buffs.json 或脚本注册表中预先注册。
-        // 其他无注册的 buff 仍然拒绝。
         if (buffId.startsWith('_track_passive_')) {
-          script = NOOP_BUFF_SCRIPT
+          script = null
         } else {
           console.warn(
             `Buff ${buffId} not found — no script or config registered, skipping`,
@@ -17174,9 +17287,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           return ''
         }
       } else {
-        // ponytail: 有 buffs.json 配置但无脚本，用 no-op 占位。
-        // applyAttributeModifiers 仍然会从配置读取属性修饰符并生效。
-        script = NOOP_BUFF_SCRIPT
+        // 有 JSON 配置但无脚本——由 effectPlan 驱动，标记 script 为 null
+        script = null
         this.logger.addDebugLog(`Buff script not found: ${buffId}`)
       }
     }
@@ -17341,7 +17453,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       id: instanceId,
       characterId,
       buffId,
-      script,
+      script: script as IBuffScript,
       context: buffContext,
       startTurn: currentTurn,
       duration: resolvedConfig.duration || -1,
@@ -17361,29 +17473,20 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (!this.modifierStacks.has(characterId)) {
       this.modifierStacks.set(characterId, new ModifierStack())
     }
-    // ─── 路径判定（互斥四路径） ─────────────────────────────
+    // ─── 路径判定（互斥三路径） ─────────────────────────────
     const buffResolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
-    const hasScript = script !== NOOP_BUFF_SCRIPT
+    const hasScript = script !== null
     const hasEffectPlan = buffResolved?.effectPlan && buffResolved.effectPlan.length > 0
-    let hasConfigEffects = !!(
-      resolvedConfig.attributes ||
-      (resolvedConfig.immunities && resolvedConfig.immunities.length > 0) ||
-      (resolvedConfig.controlType && resolvedConfig.controlType !== ControlType.NONE)
-    )
-    // 单独检查 aura（BuffConfig 不含 aura 字段，需从原始 JSON 检查）
-    const rawConfig = this.scriptRegistry.getBuffConfig(buffId)
-    if (rawConfig?.aura) hasConfigEffects = true
     const isTrackPassive = buffId.startsWith('_track_passive_')
-    const hasTriggersOnly = !hasScript && !hasEffectPlan && !hasConfigEffects &&
+    const hasTriggersOnly = !hasScript && !hasEffectPlan &&
       (resolvedConfig.triggers?.length ?? 0) > 0
-    let path: 'A' | 'B' | 'C' | 'D'
+    let path: 'A' | 'B' | 'D'
     if (hasScript) path = 'A'
     else if (hasEffectPlan) path = 'B'
-    else if (hasConfigEffects) path = 'C'
     else if (isTrackPassive || hasTriggersOnly) path = 'D'
     else {
       this.logger.addDebugLog(
-        `[BuffSystem] 配置错误: ${buffId} 无脚本、无 effectPlan、无配置效果，拒绝施加`,
+        `[BuffSystem] 配置错误: ${buffId} 无脚本、无 effectPlan，拒绝施加`,
         { level: LogLevel.ERROR },
       )
       this.buffInstances.delete(instanceId)
@@ -17415,17 +17518,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       buffInstance.effectLines = buffResolved!.effectPlan
         .map(e => e.handler.getEffectLines?.(buffContext, e.params) ?? [])
         .flat()
-    } else if (path === 'C') {
-      // ─── PATH C：纯配置 ───
-      this.applyAttributeModifiers(characterId, instanceId, buffId)
-      this.applyBuffImmunities(characterId, buffId)
-      const hasAuraEffect = buffResolved?.effectPlan?.some(
-        (e) => e.type === AtomicEffectType.AURA,
-      ) ?? false
-      if (!hasAuraEffect) {
-        this.applyBuffAuraModifiers(characterId, instanceId, buffId)
-      }
-      buffInstance.effectLines = []
     } else {
       // ─── PATH D：纯标记 / trigger-only ───
       buffInstance.effectLines = []
@@ -17474,62 +17566,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     })
     return instanceId
   }
-  private applyAttributeModifiers(
-    characterId: string,
-    instanceId: string,
-    buffId: string,
-  ): void {
-    const attributes = this.scriptRegistry.getBuffAttributes(buffId)
-    if (!attributes || Object.keys(attributes).length === 0) return
-    const modifierStack = this.getModifierStack(characterId)
-    for (const [attr, valueStr] of Object.entries(attributes)) {
-      const parsed = this.scriptRegistry.parseAttributeValue(valueStr)
-      // ponytail: normalize the attribute key so JSON keys like 'ATK' → 'attack',
-      // matching the keys used by BattleParticipantImpl.syncModifiersFromProvider
-      const normalizedAttr = attr as ATTRIBUTE_CODE
-      // ponytail: 计算当前累计值供调试日志
-      const existingMods = modifierStack.getModifiers(normalizedAttr)
-      const currentTotal = existingMods.reduce((sum, m) => sum + m.value, 0)
-      modifierStack.addModifier(
-        instanceId,
-        normalizedAttr,
-        parsed.value,
-        parsed.type,
-      )
-      this.logger.addDebugLog(
-        `应用属性修饰符: ${attr} → ${normalizedAttr} = ${valueStr} (${parsed.type}) 到角色 ${characterId}`,
-      )
-      // ponytail: 技术调试日志 — Buff 修饰符变更
-      BuffTraceLogger.onModifier(
-        characterId,
-        buffId,
-        normalizedAttr,
-        valueStr,
-        currentTotal + parsed.value,
-      )
-    }
-  }
-  /**
-   * 应用 Buff 配置中的 immunities（免疫标签）到目标角色
-   * 在 addBuff 中与 applyAttributeModifiers 并列调用，确保无脚本的纯 JSON buff 也能获得免疫效果
-   */
-  private applyBuffImmunities(characterId: string, buffId: string): void {
-    const buffConfig = this.scriptRegistry.getBuffConfig(buffId)
-    if (
-      !buffConfig ||
-      !buffConfig.immunities ||
-      buffConfig.immunities.length === 0
-    )
-      return
-    let immunities = this.characterImmunities.get(characterId)
-    if (!immunities) {
-      immunities = new Set()
-      this.characterImmunities.set(characterId, immunities)
-    }
-    for (const tag of buffConfig.immunities) {
-      immunities.add(tag.toLowerCase())
-    }
-  }
   /**
    * 重建角色的免疫标签集合
    * 扫描该角色所有活跃 Buff 的 immunities 配置，重新构建 characterImmunities。
@@ -17541,14 +17577,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const immunities = new Set<string>()
     this.buffInstances.forEach((instance) => {
       if (!instance.isActive || instance.characterId !== characterId) return
-      // 从旧格式 immunities 字段收集
-      const buffConfig = this.scriptRegistry.getBuffConfig(instance.buffId)
-      if (buffConfig?.immunities) {
-        for (const tag of buffConfig.immunities) {
-          immunities.add(tag.toLowerCase())
-        }
-      }
-      // 从 effectPlan 中的 ImmunityEffect 收集（数据驱动方式）
+      // 从 effectPlan 中的 ImmunityEffect 收集
       const resolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
       if (resolved?.effectPlan) {
         for (const effect of resolved.effectPlan) {
@@ -17579,28 +17608,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       this.characterImmunities.set(characterId, immunities)
     }
     immunities.add(tag.toLowerCase())
-  }
-  /**
-   * 应用 Buff 配置中的 aura（光环修饰符）到目标角色
-   * 仅处理 targetSelector === 'self' 的光环。allies/enemies 由 BattleSystem 在初始化时分发
-   */
-  private applyBuffAuraModifiers(
-    characterId: string,
-    instanceId: string,
-    buffId: string,
-  ): void {
-    const buffConfig = this.scriptRegistry.getBuffConfig(buffId)
-    if (!buffConfig?.aura || buffConfig.aura.targetSelector !== 'self') return
-    const modifierStack = this.getModifierStack(characterId)
-    for (const mod of buffConfig.aura.modifiers) {
-      const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
-      // aura 中的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
-      let value = typeof mod.value === 'number' ? mod.value : 0
-      if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
-        value = Math.round(value * 10000) / 100
-      }
-      modifierStack.addModifier(instanceId, attrCode, value, mod.type as ModifierType)
-    }
   }
   /**
    * 获取 Buff 配置中的 aura 光环信息（供 BattleSystem 初始化时分发 allies/enemies）
@@ -17644,7 +17651,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       }
       // 路径判定（与 addBuff 对称）
       const buffScript = this.scriptRegistry.get(instance.buffId)
-      const hasScript = buffScript !== null && buffScript !== NOOP_BUFF_SCRIPT
+      const hasScript = buffScript !== null
       const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
       const hasEffectPlan = buffResolved?.effectPlan && buffResolved.effectPlan.length > 0
       if (hasScript) {
@@ -17660,7 +17667,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           })
         }
       }
-      // PATH C/D：无回调
+      // PATH D：无回调
     } finally {
       // ★ 无论是否异常，保证清理
       this.unregisterTriggersForInstance(instanceId)
@@ -17709,7 +17716,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     // 注入回合号
     instance.context.currentTurn = currentTurn
     // 路径判定（与 addBuff 对称）
-    const hasScript = instance.script !== NOOP_BUFF_SCRIPT
+    const hasScript = instance.script !== null
     const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
     const hasEffectPlan = buffResolved?.effectPlan && buffResolved.effectPlan.length > 0
     if (hasScript) {
@@ -17743,7 +17750,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       // 注入回合号到 context（修正 P0-4 的根因）
       instance.context.currentTurn = currentTurn
       // 路径判定（与 addBuff 对称）
-      const hasScript = instance.script !== NOOP_BUFF_SCRIPT
+      const hasScript = instance.script !== null
       const buffResolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
       const hasEffectPlan = buffResolved?.effectPlan && buffResolved.effectPlan.length > 0
       if (hasScript) {
@@ -17831,6 +17838,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       }
     }
     return result
+  }
+  /** 获取已解析的运行时配置（含 effectPlan，供投影层读取修饰符数据） */
+  public getResolvedBuffConfig(buffId: string): ResolvedBuffConfig | undefined {
+    return this.scriptRegistry.getResolvedBuffConfig(buffId)
   }
   public getScriptRegistry(): BuffScriptRegistry {
     return this.scriptRegistry
@@ -21488,6 +21499,8 @@ export interface PassiveSkillConfig {
   description: string
   trigger?: BattleTriggerPhase
   condition?: string
+  /** 参数化条件的参数映射（如 source_has_debuff_count 的 count 阈值） */
+  conditionParams?: Record<string, number | string | boolean>
   skillId: string
   cooldown: number
   lastTriggeredTurn?: number
@@ -21618,7 +21631,7 @@ export class PassiveSkillManager {
     // 被动有触发条件，检查是否满足
     if (
       config.condition &&
-      !this.evaluateCondition(config.condition, entity, contextTarget, context)
+      !this.evaluateCondition(config.condition, entity, contextTarget, context, config.conditionParams)
     )
       return false
     return true
@@ -21654,6 +21667,10 @@ export class PassiveSkillManager {
             entity,
             skillConfig.selector,
             skillConfig.steps,
+            undefined,
+            undefined,
+            undefined,
+            (e) => this.buffSystem.hasBuffWithTag?.(e.id, 'taunt') ?? false,
           )
         } else {
           targets = [contextTarget ?? entity]
@@ -21935,6 +21952,7 @@ export class PassiveSkillManager {
     source: BattleEntity,
     target?: BattleEntity,
     context?: PassiveTriggerContext,
+    params?: Record<string, number | string | boolean>,
   ): boolean {
     try {
       switch (condition) {
@@ -21963,28 +21981,57 @@ export class PassiveSkillManager {
           return target
             ? target.getBuffInstanceIds().some((id) => id.includes('sleep'))
             : false
-        case 'source_has_debuff_count_3':
-          // ponytail: 身上 ≥ 3 个减益时触发（守护者被动「不屈意志」专用）
-          return source.getBuffInstanceIds().length >= 3
-        case 'source_energy_high':
+        // 参数化条件：通过 params 传阈值
+        case 'source_has_debuff_count': {
+          const debuffThreshold = params?.count as number | undefined
+          if (debuffThreshold == null) {
+            throw new Error(
+              `[PassiveSkillManager] 条件 "${condition}" 需要 params.count`
+            )
+          }
+          return source.getBuffInstanceIds().length >= debuffThreshold
+        }
+        case 'source_energy_high': {
+          const energyRatio = (params?.ratio as number) ?? 0.9
           return (
             source.getAttribute('currentEnergy') /
               Math.max(1, source.getAttribute('maxEnergy')) >
-            0.9
+            energyRatio
           )
-        case 'source_turn_gt_5':
-          return (context?.currentTurn ?? 0) > 5
-        case 'source_turn_mod_5':
+        }
+        case 'source_turn_gt': {
+          const turnThreshold = params?.turn as number | undefined
+          if (turnThreshold == null) {
+            throw new Error(
+              `[PassiveSkillManager] 条件 "${condition}" 需要 params.turn`
+            )
+          }
+          return (context?.currentTurn ?? 0) > turnThreshold
+        }
+        case 'source_turn_mod': {
+          const modValue = params?.mod as number | undefined
+          if (modValue == null) {
+            throw new Error(
+              `[PassiveSkillManager] 条件 "${condition}" 需要 params.mod`
+            )
+          }
           return (
-            (context?.currentTurn ?? 0) % 5 === 0 &&
+            (context?.currentTurn ?? 0) % modValue === 0 &&
             (context?.currentTurn ?? 0) > 0
           )
-        default:
-          LoggerProvider.logger.addDebugLog(
-            `[PassiveSkillManager] 未知条件 "${condition}"，默认不触发`,
-            { level: LogLevel.WARN },
+        }
+        // 废弃的旧条件名——直接报错
+        case 'source_has_debuff_count_3':
+        case 'source_turn_gt_5':
+        case 'source_turn_mod_5':
+          throw new Error(
+            `[PassiveSkillManager] 废弃的条件名 "${condition}"。` +
+            `请改用参数化版本并从 conditionParams 传阈值。`
           )
-          return false
+        default:
+          throw new Error(
+            `[PassiveSkillManager] 未知条件 "${condition}"，请检查配置。`
+          )
       }
     } catch (err) {
       LoggerProvider.logger.addDebugLog(
@@ -22178,18 +22225,10 @@ export class SkillExecutor {
         this.executeRevive(skillStep, action, source, target, context)
         break
       default: {
-        // 未实现的步骤类型 — 当前无任何技能配置使用这些类型
-        // 升级路径：当有技能配置使用它们时，在 switch 中添加对应 case
-        LoggerProvider.logger.addDebugLog(
-          `未实现的技能步骤类型: ${skillStep.type}`,
-          { level: LogLevel.WARN },
+        throw new Error(
+          `[SkillExecutor] 未实现的技能步骤类型: ${skillStep.type}。` +
+          `请实现对应的处理逻辑或从技能配置中移除。`
         )
-        action.effects.push({
-          type: EffectType.STATUS,
-          targetId: target.id,
-          description: `步骤类型 ${skillStep.type} 未实现`,
-        })
-        break
       }
     }
   }
@@ -22667,14 +22706,10 @@ export class SkillExecutor {
         })
       }
     } else {
-      LoggerProvider.logger.addDebugLog(`自定义步骤未实现: ${desc}`, {
-        level: LogLevel.WARN,
-      })
-      action.effects.push({
-        type: EffectType.STATUS,
-        targetId: target.id,
-        description: `自定义效果待实现: ${desc}`,
-      })
+      throw new Error(
+        `[SkillExecutor] 未实现的自定义步骤类型: ${desc}（${customType}）。` +
+        `请实现对应的处理逻辑或从技能配置中移除。`
+      )
     }
   }
   /** 第三连击：每第3次普攻伤害+50% */
@@ -23330,8 +23365,8 @@ import {
 } from '@/domain/skill/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { ThreatManager } from '@/domain/battle/service/ThreatManager'
-/** 嘲讽 Buff ID — 与 configs/buffs/buffs.json 中 buff_taunt 的 id 一致 */
-const TAUNT_BUFF_ID = 'buff_taunt'
+/** 嘲讽的标签字符串（替换旧版硬编码 buff_taunt） */
+const TAUNT_TAG = 'taunt'
 /**
  * 根据技能 selector 解析目标
  * @param participants 所有参与者（Map）
@@ -23341,6 +23376,7 @@ const TAUNT_BUFF_ID = 'buff_taunt'
  * @param threatManager 可选 — 仇恨管理器（用于嘲讽检查 + 仇恨优先）
  * @param formationRowLookup 可选 — 阵型行查询回调
  * @param frontProtectionLookup 可选 — 前排保护查询回调
+ * @param hasTaunt 可选 — 嘲讽检测回调（替换硬编码 buff_taunt 查询）
  * @returns 目标实体数组
  */
 export function resolveSkillTargets(
@@ -23351,6 +23387,7 @@ export function resolveSkillTargets(
   threatManager?: ThreatManager,
   formationRowLookup?: (side: ParticipantSide, seatIndex: number) => 'front' | 'back' | null,
   frontProtectionLookup?: (side: ParticipantSide) => boolean,
+  hasTaunt?: (entity: BattleEntity) => boolean,
 ): BattleEntity[] {
   const all = Array.from(participants.values())
   // --- self ---
@@ -23370,8 +23407,10 @@ export function resolveSkillTargets(
   if (candidates.length === 0) return []
   // ★ 仅在 faction === 'enemy' 时检查嘲讽 + 仇恨（修复 S1）
   if (selector.faction === TargetFaction.ENEMY) {
-    // 嘲讽优先
-    const tauntTarget = candidates.find(e => e.hasBuff?.(TAUNT_BUFF_ID))
+    // 嘲讽优先 — 通过回调检测（由调用方注入 buffSystem.hasBuffWithTag）
+    const tauntTarget = hasTaunt
+      ? candidates.find(e => hasTaunt(e))
+      : candidates.find(e => e.hasBuff?.('buff_taunt'))
     if (tauntTarget) return [tauntTarget]
     // 仇恨优先
     if (threatManager) {
@@ -28833,20 +28872,21 @@ const effectLines = computed(() => {
     const turnText = props.buff.remainingTurns > 0
       ? `（${props.buff.remainingTurns}回合）`
       : props.buff.condition === 'permanent' ? '（永久）' : ''
-    // 条件标签
+    // 条件标签 — 使用 conditionLabel（投影层预计算），不再从 description 正则提取
     let conditionSuffix = ''
     if (props.buff.condition === 'active') conditionSuffix = '（已激活）'
-    else if (props.buff.condition === 'inactive') {
-      const match = props.buff.description.match(/（([^）]+?)）/)
-      conditionSuffix = match ? `（${match[1]}）` : ''
+    else if (props.buff.condition === 'inactive' && props.buff.conditionLabel) {
+      conditionSuffix = `（${props.buff.conditionLabel}）`
     }
     const className = mod.value > 0 ? 'effect--buff' : 'effect--debuff'
     const text = `${mod.attribute}${arrow}${absVal}%${conditionSuffix}${turnText}`
     lines.push({ text, className })
   }
   // 特殊效果行（DOT/HEAL/护盾等非属性修正效果 — 来自脚本 getEffectLines）
+  // NOTE: modifier 类效果行跳过——modifiers 区段已通过结构化数据渲染
   if (props.buff.effectLines && props.buff.effectLines.length > 0) {
     for (const el of props.buff.effectLines) {
+      if (el.kind === 'modifier') continue
       lines.push({
         text: el.text,
         className: `effect--${el.kind}`,
@@ -32909,7 +32949,6 @@ import {
   ConditionStateNames,
 } from '@/shared/types/buff-display'
 import type { ConditionState as ConditionStateType } from '@/shared/types/buff-display'
-import { StatusCategory } from '@/shared/types/status-meta'
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { getAttrName, ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 /** 极多 Buff 时次要分组的阈值 */
@@ -33020,8 +33059,6 @@ function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
   }))
   // 传递特殊效果行
   const effectLines: BuffEffectLine[] = raw.effectLines ?? []
-  // 光环判定：通过结构化 facets
-  const isAura = raw.facets.includes(StatusCategory.AURA)
   return {
     instanceId: raw.id,
     buffId: raw.buffId ?? raw.id ?? '',
@@ -33033,7 +33070,7 @@ function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
     controlType: raw.controlType,
     condition,
     conditionLabel,
-    isAura,
+    isAura: raw.isAura,
     modifiers,
     effectLines,
     ownerId: entityId,
@@ -33785,7 +33822,6 @@ import {
   LogType,
   toLogLevel,
 } from '@/shared/types/battle-log'
-import { SkillStepType } from '@/domain/skill/types'
 import type { Enemy } from '@/shared/types/enemy'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { defineStore } from 'pinia'
@@ -33807,6 +33843,15 @@ export interface BattleRules {
   /** 是否启用闪避机制 */
   dodgeEnabled: boolean
 }
+/** 动画步骤类型（与 AnimationState key 一一对应） */
+export const SkillStepType = {
+  DAMAGE: 'damage',
+  MISS: 'miss',
+  BUFF: 'buff',
+  HEAL: 'heal',
+  STATUS: 'status',
+} as const
+export type SkillStepType = (typeof SkillStepType)[keyof typeof SkillStepType]
 export interface AnimationState {
   /** 伤害动画数据（目标ID、伤害值、类型、是否暴击/治疗） */
   damage: DamageEventData | null
@@ -34901,11 +34946,12 @@ export const useDebugStore = defineStore('debug', {
 })
 
 --- src/presentation/stores/index.ts ---
-import { useBattleStore } from '@/presentation/stores/battleStore';
+import { useBattleStore, SkillStepType } from '@/presentation/stores/battleStore';
 import { useDebugStore } from '@/presentation/stores/debugStore';
 export {
   useBattleStore,
-  useDebugStore
+  useDebugStore,
+  SkillStepType
 };
 
 --- src/presentation/styles/base.scss ---
@@ -38271,10 +38317,9 @@ import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogMan
 import { container } from '@/infrastructure/di/Container';
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import Notification from "@/presentation/components/Notification.vue";
-import { useBattleStore } from '@/presentation/stores';
+import { useBattleStore, SkillStepType } from '@/presentation/stores';
 import type { LogEntry } from '@/shared/types/battle-log';
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
-import { SkillStepType } from '@/domain/skill/types';
 import type { TraceLogEntry } from '@/shared/types/trace-log';
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
@@ -39073,60 +39118,60 @@ onUnmounted(() => {
       <div class="monitor-group">
         <Tabs v-model="activeTab" :tabs="skillTabs" size="sm" destroy-inactive>
           <template #passive>
-          <div v-if="groupedPassives.length === 0" class="no-skills">
-            暂无被动技能
-          </div>
-          <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
-            <div v-for="group in groupedPassives" :key="group.category" class="skill-category">
-              <div class="skill-category-title">
-                <span class="category-dot" :style="{ background: group.color }"></span>
-                {{ group.label }}
-                <span class="category-count">({{ group.skills.length }})</span>
-              </div>
-              <div v-for="(skill, index) in group.skills" :key="index" class="skill-item passive"
-                :style="{ borderLeftColor: group.color }" @mouseenter="showSkillTooltip($event, skill)"
-                @mousemove="updateTooltipPosition" @mouseleave="hideSkillTooltip">
-                {{ skill.name || '未知技能' }}
+            <div v-if="groupedPassives.length === 0" class="no-skills">
+              暂无被动技能
+            </div>
+            <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
+              <div v-for="group in groupedPassives" :key="group.category" class="skill-category">
+                <div class="skill-category-title">
+                  <span class="category-dot" :style="{ background: group.color }"></span>
+                  {{ group.label }}
+                  <span class="category-count">({{ group.skills.length }})</span>
+                </div>
+                <div v-for="(skill, index) in group.skills" :key="index" class="skill-item passive"
+                  :style="{ borderLeftColor: group.color }" @mouseenter="showSkillTooltip($event, skill)"
+                  @mousemove="updateTooltipPosition" @mouseleave="hideSkillTooltip">
+                  {{ skill.name || '未知技能' }}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </template>
-      <template #active>
-        <div class="skills-display">
-          <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length"
-            class="no-skills">
-            暂无主动技能
-          </div>
-          <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
-            <div v-if="currentCharacter!.skills.small?.length" class="skill-category">
-              <div class="skill-category-title">小技能</div>
-              <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index" class="skill-item small"
-                @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
-                @mouseleave="hideSkillTooltip">
-                {{ skill.name || '未知技能' }}
+          </template>
+          <template #active>
+            <div class="skills-display">
+              <div v-if="!currentCharacter?.skills?.small?.length && !currentCharacter?.skills?.ultimate?.length"
+                class="no-skills">
+                暂无主动技能
+              </div>
+              <div v-else class="skills-list" @mouseleave="hideSkillTooltip">
+                <div v-if="currentCharacter!.skills.small?.length" class="skill-category">
+                  <div class="skill-category-title">小技能</div>
+                  <div v-for="(skill, index) in currentCharacter!.skills.small" :key="index" class="skill-item small"
+                    @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
+                    @mouseleave="hideSkillTooltip">
+                    {{ skill.name || '未知技能' }}
+                  </div>
+                </div>
+                <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category">
+                  <div class="skill-category-title">终极技能</div>
+                  <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index"
+                    class="skill-item ultimate" @mouseenter="showSkillTooltip($event, skill)"
+                    @mousemove="updateTooltipPosition" @mouseleave="hideSkillTooltip">
+                    {{ skill.name || '未知技能' }}
+                  </div>
+                </div>
               </div>
             </div>
-            <div v-if="currentCharacter!.skills.ultimate?.length" class="skill-category">
-              <div class="skill-category-title">终极技能</div>
-              <div v-for="(skill, index) in currentCharacter!.skills.ultimate" :key="index" class="skill-item ultimate"
-                @mouseenter="showSkillTooltip($event, skill)" @mousemove="updateTooltipPosition"
-                @mouseleave="hideSkillTooltip">
-                {{ skill.name || '未知技能' }}
+          </template>
+          <template #status>
+            <div class="skills-display">
+              <div v-if="buffListItems.length === 0" class="no-skills">无生效状态</div>
+              <div v-else class="buff-list">
+                <BuffTextGroup v-for="buff in buffDisplay.groups" :key="buff.instanceId" :buff="buff"
+                  :debug-mode="false" />
               </div>
             </div>
-          </div>
-        </div>
-      </template>
-      <template #status>
-        <div class="skills-display">
-          <div v-if="buffListItems.length === 0" class="no-skills">无生效状态</div>
-          <div v-else class="buff-list">
-            <BuffTextGroup v-for="buff in buffDisplay.groups" :key="buff.instanceId" :buff="buff" :debug-mode="false" />
-          </div>
-        </div>
-      </template>
-    </Tabs>
+          </template>
+        </Tabs>
       </div>
     </div>
     <!-- 技能悬浮提示 -->
@@ -46943,7 +46988,6 @@ export function getStatusCategoryBadge(
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { ModifierType } from '@/domain/attribute/types'
-import type { StatusCategory } from '@/shared/types/status-meta'
 /**
  * Buff 原始条目 —— 从 BuffSystem 或 InterventionManager 合并后的中间格式，
  * 作为 `toBuffTextItem()` 的输入契约，替代 `any` 参数。
@@ -46978,8 +47022,8 @@ export interface BuffRawItem {
   scriptName?: string
   /** 控制类型（来自 BuffConfig，如 "stun"、"silence"） */
   controlType?: string
-  /** 运行时 facets：从配置结构自动派生（由 participantMapper 在构建时填充） */
-  facets: StatusCategory[]
+  /** 是否为光环（检查配置中是否有 aura 配置块，由 participantMapper 在构建时填充） */
+  isAura: boolean
 }
 /** 单个 Buff 在纯文本模式下的显示条目 */
 export interface BuffTextItem {

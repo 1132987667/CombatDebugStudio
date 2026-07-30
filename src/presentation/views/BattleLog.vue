@@ -5,11 +5,7 @@
       <span class="log-title">日志</span>
 
       <div class="log-tools">
-        <label class="status-toggle" :class="{ on: showStatus }">
-          <input type="checkbox" v-model="showStatus" />
-          <span class="toggle-track"><span class="toggle-thumb"></span></span>
-          <span>状态明细</span>
-        </label>
+        <ToggleSwitch v-model="showStatus" label="状态明细" />
 
         <input class="log-keyword" v-model="keyword" placeholder="搜索…" />
         <div class="export-wrapper" ref="exportWrapperRef">
@@ -30,7 +26,7 @@
       <template #battle>
         <div class="log-content" :class="{ 'is-active': activeTab === 'battle' }"
           ref="battleContainer" @scroll="onScroll">
-      <div v-if="blocks.length === 0" class="no-logs">暂无战斗日志</div>
+      <EmptyState v-if="blocks.length === 0">暂无战斗日志</EmptyState>
 
       <div v-for="(b, i) in blocks" :key="i" class="nb" :class="'nb--' + b.type">
         <template v-if="b.type === 'battle-header'">
@@ -102,7 +98,7 @@
       <template #system>
         <div class="log-content log-content--flat" :class="{ 'is-active': activeTab === 'system' }"
           ref="systemContainer" @scroll="onScroll">
-          <div v-if="systemLogs.length === 0" class="no-logs">暂无系统日志</div>
+          <EmptyState v-if="systemLogs.length === 0">暂无系统日志</EmptyState>
 
           <div v-for="entry in systemLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
             <!-- 系统/动作/物品条目：优先 segments -->
@@ -123,7 +119,7 @@
           <div v-if="debugTotal > DEBUG_DISPLAY_LIMIT" class="flat-note">
             仅显示最近 {{ DEBUG_DISPLAY_LIMIT }} 条（共 {{ debugTotal }} 条）
           </div>
-          <div v-if="debugLogs.length === 0" class="no-logs">暂无调试日志</div>
+          <EmptyState v-if="debugLogs.length === 0">暂无调试日志</EmptyState>
 
           <div v-for="entry in debugLogs" :key="entry.index" class="flat-item" :class="flatItemClass(entry)">
             <span class="flat-seq">#{{ entry.index }}</span>
@@ -155,6 +151,8 @@ import { battleLogManager } from '@/infrastructure/adapters/logging'
 import { RoundNarrativeRenderer } from '@/domain/battle/logs/renderers/RoundNarrativeRenderer'
 import LogSeg from '@/presentation/components/LogSeg.vue'
 import Tabs from '@/presentation/components/Tabs.vue'
+import ToggleSwitch from '@/presentation/components/ToggleSwitch.vue'
+import EmptyState from '@/presentation/components/EmptyState.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
 import EntityTooltip from '@/presentation/components/EntityTooltip.vue'
 import type { TooltipData } from '@/application/projection/LogTooltipResolver'
@@ -537,53 +535,7 @@ onUnmounted(() => {
   }
 }
 
-.status-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  user-select: none;
-  color: var(--color-text-tertiary);
-  transition: color var(--transition-fast);
-}
 
-.status-toggle input {
-  display: none;
-}
-
-.status-toggle .toggle-track {
-  position: relative;
-  width: 30px;
-  height: 16px;
-  border-radius: var(--radius-full);
-  background: var(--color-border-default);
-  transition: background var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.status-toggle .toggle-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--color-text-tertiary);
-  transition: transform var(--transition-fast), background var(--transition-fast);
-}
-
-.status-toggle.on {
-  color: var(--color-energy);
-}
-
-.status-toggle.on .toggle-track {
-  background: var(--color-energy);
-}
-
-.status-toggle.on .toggle-thumb {
-  transform: translateX(14px);
-  background: var(--color-bg-secondary);
-}
 
 /* ─────────── 扁平容器（系统/调试共用） ─────────── */
 .log-content--flat {
@@ -694,14 +646,6 @@ onUnmounted(() => {
 .flat-err {
   flex-basis: 100%;
   color: var(--color-danger);
-}
-
-/* ─────────── 空状态 ─────────── */
-.no-logs {
-  text-align: center;
-  color: var(--color-text-tertiary);
-  padding: var(--space-6);
-  font-style: italic;
 }
 
 /* ─────────── 叙事块（原有样式保留） ─────────── */

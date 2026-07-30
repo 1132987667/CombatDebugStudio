@@ -5,7 +5,7 @@
       <!-- 左侧：战斗列表 -->
       <div class="recording-list">
         <div class="list-header">战斗列表</div>
-        <div v-if="recordings.length === 0" class="list-empty">暂无战斗记录</div>
+        <EmptyState v-if="recordings.length === 0">暂无战斗记录</EmptyState>
         <div v-for="rec in recordings" :key="rec.battleId"
           class="recording-item"
           :class="{ active: selectedRecording?.battleId === rec.battleId }"
@@ -21,10 +21,10 @@
       <!-- 右侧：详情 -->
       <div class="recording-detail">
         <template v-if="!selectedRecording">
-          <div class="detail-placeholder">请从左侧选择一个战斗记录</div>
+          <EmptyState v-if="!selectedRecording">请从左侧选择一个战斗记录</EmptyState>
         </template>
         <template v-else-if="selectedRecording.combatRecords.length === 0">
-          <div class="detail-placeholder">该战斗暂无详细记录</div>
+          <EmptyState v-else-if="selectedRecording.combatRecords.length === 0">该战斗暂无详细记录</EmptyState>
         </template>
         <template v-else>
           <div class="detail-header">
@@ -117,6 +117,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import EmptyState from '@/presentation/components/EmptyState.vue'
 import { container } from '@/infrastructure/di/Container'
 import { BATTLE_RECORDER_TOKEN } from '@/domain/battle/entity/BattleInterfaces'
 import type { BattleRecorder, RecordedBattle } from '@/domain/battle/service/BattleRecorder'
@@ -188,12 +189,6 @@ function formatBattleName(rec: RecordedBattle): string {
   border-bottom: 1px solid var(--color-info-bg);
 }
 
-.list-empty {
-  color: rgba(var(--rgb-white), 0.4);
-  text-align: center;
-  padding: var(--space-5) 0;
-}
-
 .recording-item {
   padding: var(--space-2) var(--space-2);
   border-radius: var(--radius-md);
@@ -233,12 +228,6 @@ function formatBattleName(rec: RecordedBattle): string {
   flex: 1;
   overflow-y: auto;
   min-width: 0;
-}
-
-.detail-placeholder {
-  color: rgba(var(--rgb-white), 0.4);
-  text-align: center;
-  padding: var(--space-8) 0;
 }
 
 .detail-header {

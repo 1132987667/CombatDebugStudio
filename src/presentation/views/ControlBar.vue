@@ -30,10 +30,8 @@
       </button>
 
       <!-- ★ 快速战斗开关 -->
-      <label class="quick-toggle" :class="{ active: store.quickMode }" @click="store.toggleQuickMode()">
-        <span class="qt-toggle-track"><span class="qt-toggle-thumb"></span></span>
-        <span class="qt-toggle-label">⚡快速</span>
-      </label>
+      <ToggleSwitch :model-value="store.quickMode" @update:model-value="store.toggleQuickMode()"
+        accent-color="var(--color-warning)" label="⚡快速" />
 
 
     </div>
@@ -51,12 +49,7 @@
       <span class="separator"></span>
 
       <!-- 调试切换开关 -->
-      <label class="debug-toggle-switch" :class="{ active: debugMode }" @click="toggleDebug">
-        <span class="toggle-track">
-          <span class="toggle-thumb"></span>
-        </span>
-        <span class="toggle-label">调试</span>
-      </label>
+      <ToggleSwitch :model-value="debugMode" @update:model-value="toggleDebug()" label="调试" />
     </div>
   </div>
 </template>
@@ -64,6 +57,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from "vue";
 import RadioButtonGroup from "@/presentation/components/RadioButtonGroup.vue";
+import ToggleSwitch from "@/presentation/components/ToggleSwitch.vue";
 import { container } from '@/infrastructure/di/Container'
 import { UIEventBus } from '@/infrastructure/adapters/event/UIEventBus'
 import type { DebugGate as DebugGateType } from '@/domain/battle/debug/DebugGate'
@@ -239,113 +233,6 @@ onUnmounted(() => {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
-/* 调试切换开关 */
-.debug-toggle-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  user-select: none;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border-hairline);
-  border-radius: var(--radius-xl);
-  transition: var(--transition-fast);
-}
 
-.debug-toggle-switch.active {
-  border-color: var(--border-debug-color-light);
-  background: rgba(var(--rgb-energy), var(--alpha-wash));
-}
-
-.toggle-track {
-  position: relative;
-  width: 36px;
-  height: 20px;
-  background: rgba(var(--rgb-white), var(--alpha-wash));
-  border-radius: 10px;
-  transition: background var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.debug-toggle-switch.active .toggle-track {
-  background: var(--color-energy);
-}
-
-.toggle-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  background: #fff;
-  border-radius: 50%;
-  transition: transform var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(var(--rgb-black), var(--alpha-border));
-}
-
-.debug-toggle-switch.active .toggle-thumb {
-  transform: translateX(16px);
-}
-
-.toggle-label {
-  color: rgba(var(--rgb-white), 0.6);
-  white-space: nowrap;
-  transition: color var(--transition-fast);
-}
-
-.debug-toggle-switch.active .toggle-label {
-  color: var(--color-energy);
-}
-
-/* ★ 快速战斗切换开关 */
-.quick-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  user-select: none;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid rgba(var(--rgb-warning), var(--alpha-border));
-  border-radius: var(--radius-xl);
-  transition: var(--transition-fast);
-}
-.quick-toggle.active {
-  border-color: var(--color-warning);
-  background: rgba(var(--rgb-warning), var(--alpha-wash));
-}
-.quick-toggle .qt-toggle-track {
-  position: relative;
-  width: 32px;
-  height: 18px;
-  background: rgba(var(--rgb-white), var(--alpha-wash));
-  border-radius: 9px;
-  transition: background var(--transition-fast);
-  flex-shrink: 0;
-}
-.quick-toggle.active .qt-toggle-track {
-  background: var(--color-warning);
-}
-.quick-toggle .qt-toggle-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  background: #fff;
-  border-radius: 50%;
-  transition: transform var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(var(--rgb-black), var(--alpha-border));
-}
-.quick-toggle.active .qt-toggle-thumb {
-  transform: translateX(14px);
-}
-.quick-toggle .qt-toggle-label {
-  color: rgba(var(--rgb-white), 0.6);
-  white-space: nowrap;
-  transition: color var(--transition-fast);
-}
-.quick-toggle.active .qt-toggle-label {
-  color: var(--color-warning);
-}
 
 </style>

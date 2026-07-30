@@ -39,13 +39,7 @@
         @input="jumpToFrame" />
     </div>
 
-    <div class="replay-speed">
-      <span class="speed-label">速度:</span>
-      <button v-for="speed in SPEED_OPTIONS" :key="speed" class="speed-btn" :class="{ active: replaySpeed === speed }"
-        @click="setSpeed(speed)">
-        {{ speed }}x
-      </button>
-    </div>
+    <SpeedSelector v-model="replaySpeed" label="速度:" />
 
     <div class="replay-timeline">
       <div class="timeline-header">
@@ -172,8 +166,8 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { raf } from '@/shared/utils/RAF';
 import { ReplayBattleEvent, BattleEventType } from '@/domain/battle/type/types';
 import { RecordedBattle } from '@/domain/battle/service/BattleRecorder';
-import { SPEED_OPTIONS } from '@/shared/constants/speed';
 import { container } from '@/infrastructure/di/Container';
+import SpeedSelector from '@/presentation/components/SpeedSelector.vue'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces';
 import type { BattleSystem } from '@/domain/battle/BattleSystem';
 // no props — all data comes from DI

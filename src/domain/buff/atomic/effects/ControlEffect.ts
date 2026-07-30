@@ -1,6 +1,6 @@
 import type { IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { CONTROL_NAMES } from '@/shared/types/effect'
+import { StatusNames, StatusCode } from '@/shared/types/status-meta'
 
 /**
  * ControlEffect — 控制原语
@@ -24,8 +24,8 @@ export class ControlEffect implements IAtomicEffect {
   }
 
   getEffectLines(_ctx: BuffContext, params: Record<string, unknown>) {
-    const controlType = params.controlType as string
-    const name = CONTROL_NAMES[controlType] ?? controlType
+    const controlType = params.controlType as StatusCode
+    const name = StatusNames[controlType] ?? controlType
     return [{
       text: `无法行动（${name}）`,
       kind: 'control' as const,

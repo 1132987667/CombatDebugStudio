@@ -11,7 +11,7 @@
  */
 
 import { LogSegmentHover, LogSegmentHoverKind } from '@/shared/types/battle-log'
-import { classifyBuff, getBuffCategoryBadge, BUFF_CATEGORY, type BuffCategory } from '@/shared/types/buff-classification'
+import { classifyBuff, getStatusCategoryBadge, StatusCategory, type StatusCategory } from '@/shared/types/buff-classification'
 import type { BuffJsonEntry, BuffJsonAuraModifier } from '@/shared/types/buffs-json'
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import type { SkillManager } from '@/domain/skill/SkillManager'
@@ -92,7 +92,7 @@ export class LogTooltipResolver {
     const classification = classifyBuff(
       resolved ? { ...config, effectPlan: resolved.effectPlan } : config,
     )
-    const badge = getBuffCategoryBadge(classification)
+    const badge = getStatusCategoryBadge(classification)
     const durationLabel = this.formatDuration(config.duration)
 
     // 描述：三级回退
@@ -117,7 +117,7 @@ export class LogTooltipResolver {
   private resolveBuffDescription(
     buffId: string,
     config: BuffJsonEntry,
-    category: BuffCategory,
+    category: StatusCategory,
   ): string {
     // ①
     if (config.description && typeof config.description === 'string' && config.description.trim()) {
@@ -144,9 +144,9 @@ export class LogTooltipResolver {
   }
 
   /** 按结构自动生成描述 */
-  private generateAutoDescription(config: BuffJsonEntry, category: BuffCategory): string {
+  private generateAutoDescription(config: BuffJsonEntry, category: StatusCategory): string {
     switch (category) {
-      case BUFF_CATEGORY.AURA: {
+      case StatusCategory.AURA: {
         const aura = config.aura
         if (aura?.modifiers?.length) {
           const items = aura!.modifiers.map(
@@ -157,20 +157,20 @@ export class LogTooltipResolver {
         }
         return '光环效果'
       }
-      case BUFF_CATEGORY.MODIFIER: {
+      case StatusCategory.MODIFIER: {
         const attrs = config.attributes
         if (attrs) {
           return Object.entries(attrs).map(([k, v]) => `${k} ${v}`).join('、')
         }
         return '属性修正'
       }
-      case BUFF_CATEGORY.CONTROL:
+      case StatusCategory.CONTROL:
         return '无法行动'
-      case BUFF_CATEGORY.DOT:
+      case StatusCategory.DOT:
         return '每回合造成持续伤害'
-      case BUFF_CATEGORY.SHIELD:
+      case StatusCategory.SHIELD:
         return '吸收伤害'
-      case BUFF_CATEGORY.TRIGGER:
+      case StatusCategory.TRIGGER:
         return '满足条件时触发效果'
       default:
         return config.name ?? '未知效果'
@@ -180,10 +180,10 @@ export class LogTooltipResolver {
   private appendBuffDetails(
     details: TooltipDetailRow[],
     config: BuffJsonEntry,
-    category: BuffCategory,
+    category: StatusCategory,
   ): void {
     switch (category) {
-      case BUFF_CATEGORY.AURA: {
+      case StatusCategory.AURA: {
         const aura = config.aura
         if (aura) {
           const scope = aura.targetSelector === 'allies' ? '全体友方' : aura.targetSelector === 'enemies' ? '全体敌方' : '自身'
@@ -199,7 +199,7 @@ export class LogTooltipResolver {
         }
         break
       }
-      case BUFF_CATEGORY.MODIFIER: {
+      case StatusCategory.MODIFIER: {
         const attrs = config.attributes
         if (attrs) {
           for (const [key, value] of Object.entries(attrs)) {
@@ -208,7 +208,7 @@ export class LogTooltipResolver {
         }
         break
       }
-      case BUFF_CATEGORY.TRIGGER: {
+      case StatusCategory.TRIGGER: {
         const triggers = config.triggers
         if (triggers?.length) {
           for (const t of triggers!) {
@@ -223,19 +223,19 @@ export class LogTooltipResolver {
         }
         break
       }
-      case BUFF_CATEGORY.CONTROL: {
+      case StatusCategory.CONTROL: {
         details.push({ label: '效果', value: '无法行动' })
         break
       }
-      case BUFF_CATEGORY.DOT: {
+      case StatusCategory.DOT: {
         details.push({ label: '类型', value: '持续伤害' })
         break
       }
-      case BUFF_CATEGORY.SHIELD: {
+      case StatusCategory.SHIELD: {
         details.push({ label: '类型', value: '护盾吸收' })
         break
       }
-      case BUFF_CATEGORY.IMMUNITY: {
+      case StatusCategory.IMMUNITY: {
         const immunities = config.immunities
         if (immunities?.length) {
           details.push({ label: '免疫列表', value: immunities!.join('、') })

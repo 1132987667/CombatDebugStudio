@@ -2,9 +2,8 @@ import type { ExtendedSkillStep } from '@/domain/skill/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { StepExecutionContext } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
-import { LogLevel } from '@/shared/types/battle-log'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
-import { EffectTag } from '@/shared/types/effect'
+import { STATUS_CODE } from '@/shared/types/status-meta'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 
 interface HealCalculationStep {
@@ -139,7 +138,7 @@ export class HealCalculator {
     if (!buffSystem) return 0
     const reductionInstances = buffSystem.getBuffInstancesWithTag(
       target.id,
-      EffectTag.HEAL_REDUCTION,
+      STATUS_CODE.HEAL_REDUCTION,
     )
     const debuffEffect =
       reductionInstances.length * HealCalculator.HEAL_REDUCTION_PER_DEBUFF

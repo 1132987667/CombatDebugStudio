@@ -19,7 +19,7 @@ import { HealCalculator } from '@/domain/skill/HealCalculator'
 import type { ExtendedSkillStep, ReviveStepParams } from '@/domain/skill/types'
 import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
-import { EffectTag } from '@/shared/types/effect'
+import { STATUS_CODE } from '@/shared/types/status-meta'
 import {
   REVERSE_BONUS_ATTR_MAP,
   syncAttackRange,
@@ -741,10 +741,10 @@ export class SkillExecutor {
     token?: DeferredDamageToken,
     burnDamagePercent: number = 0.05,
   ): void {
-    // 获取目标的 buff 实例，按 EffectTag.BURN 标签查找灼烧类 buff
+    // 获取目标的 buff 实例，按 STATUS_CODE.BURN 标签查找灼烧类 buff
     const burnInstances = this.buffSystem.getBuffInstancesWithTag(
       target.id,
-      EffectTag.BURN,
+      STATUS_CODE.BURN,
     )
     if (burnInstances.length === 0) return
 

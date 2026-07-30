@@ -9,7 +9,7 @@ import type {
   ModifierType,
   ModifierSourceType,
 } from '@/domain/attribute/types'
-import { CONTROL_KIND } from '@/shared/types'
+import { ControlKind } from '@/shared/types/status-meta'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
 
 /**
@@ -316,7 +316,7 @@ export const EffectType = {
   SPECIAL: 'special', // 特殊效果
   DEBUFF: 'debuff', // 减益效果
   CUSTOM: 'custom', // 自定义效果（通过自定义脚本实现）
-  ...CONTROL_KIND,
+  ...ControlKind,
 } as const
 export type EffectType = (typeof EffectType)[keyof typeof EffectType]
 

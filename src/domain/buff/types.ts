@@ -1,7 +1,7 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { BattleData, BattleTriggerPhase } from '@/domain/battle/type/types'
-import { CONTROL_KIND } from '@/shared/types/effect'
+import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import { ControlKind } from '@/shared/types/status-meta'
 
 /** Buff ID 前缀常量 */
 export const BUFF_ID_PREFIX = 'buff_'
@@ -100,7 +100,7 @@ export enum StackRule {
 export const ControlType = {
   /** 无控制效果 */
   NONE: 'none',
-  ...CONTROL_KIND,
+  ...ControlKind,
 } as const
 export type ControlType = (typeof ControlType)[keyof typeof ControlType]
 

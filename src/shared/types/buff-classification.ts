@@ -18,6 +18,7 @@
 
 import type { ResolvedEffectPlan } from '@/domain/buff/atomic/BuffConfigResolver'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
 
 export type BuffDisplayType = 'buff' | 'debuff' | 'control'
 
@@ -30,30 +31,7 @@ export const BUFF_POLARITY = {
 } as const
 export type BuffPolarity = (typeof BUFF_POLARITY)[keyof typeof BUFF_POLARITY]
 
-// ==================== 维度二：分类标签（纯显示） ====================
 
-export const BUFF_CATEGORY = {
-  CONTROL: 'control',
-  DOT: 'dot',
-  SHIELD: 'shield',
-  AURA: 'aura',
-  IMMUNITY: 'immunity',
-  TRIGGER: 'trigger',
-  MODIFIER: 'modifier',
-  OTHER: 'other',
-} as const
-export type BuffCategory = (typeof BUFF_CATEGORY)[keyof typeof BUFF_CATEGORY]
-
-export const BUFF_CATEGORY_LABEL: Record<BuffCategory, string> = {
-  [BUFF_CATEGORY.CONTROL]: '控制',
-  [BUFF_CATEGORY.DOT]: '持续',
-  [BUFF_CATEGORY.SHIELD]: '护盾',
-  [BUFF_CATEGORY.AURA]: '光环',
-  [BUFF_CATEGORY.IMMUNITY]: '免疫',
-  [BUFF_CATEGORY.TRIGGER]: '触发',
-  [BUFF_CATEGORY.MODIFIER]: '属性',
-  [BUFF_CATEGORY.OTHER]: '其他',
-}
 
 // ==================== 维度三：运行时 facet（从配置结构自动派生） ====================
 
@@ -75,21 +53,21 @@ export function deriveBuffFacets(config: {
   immunities?: string[]
   /** 数据驱动：从 atomic effects 派生（优先级最高） */
   effectPlan?: ResolvedEffectPlan[]
-}): BuffCategory[] {
-  const facets: BuffCategory[] = []
+}): StatusCategory[] {
+  const facets: StatusCategory[] = []
 
   // ★ 优先从 effectPlan 派生（数据驱动方式）
   if (config.effectPlan && config.effectPlan.length > 0) {
     for (const effect of config.effectPlan) {
       switch (effect.type) {
-        case AtomicEffectType.MODIFIER: facets.push(BUFF_CATEGORY.MODIFIER); break
-        case AtomicEffectType.DOT:      facets.push(BUFF_CATEGORY.DOT); break
-        case AtomicEffectType.HEAL:      facets.push(BUFF_CATEGORY.TRIGGER); break  // HEAL 归入 trigger 类
-        case AtomicEffectType.CONTROL: facets.push(BUFF_CATEGORY.CONTROL); break
-        case AtomicEffectType.SHIELD:  facets.push(BUFF_CATEGORY.SHIELD); break
-        case AtomicEffectType.TRIGGER: facets.push(BUFF_CATEGORY.TRIGGER); break
-        case AtomicEffectType.AURA:    facets.push(BUFF_CATEGORY.AURA); break
-        case AtomicEffectType.IMMUNITY: facets.push(BUFF_CATEGORY.IMMUNITY); break
+        case AtomicEffectType.MODIFIER: facets.push(StatusCategory.MODIFIER); break
+        case AtomicEffectType.DOT: facets.push(StatusCategory.DOT); break
+        case AtomicEffectType.HEAL: facets.push(StatusCategory.TRIGGER); break  // HEAL 归入 trigger 类
+        case AtomicEffectType.CONTROL: facets.push(StatusCategory.CONTROL); break
+        case AtomicEffectType.SHIELD: facets.push(StatusCategory.SHIELD); break
+        case AtomicEffectType.TRIGGER: facets.push(StatusCategory.TRIGGER); break
+        case AtomicEffectType.AURA: facets.push(StatusCategory.AURA); break
+        case AtomicEffectType.IMMUNITY: facets.push(StatusCategory.IMMUNITY); break
       }
     }
     // 去重
@@ -102,22 +80,22 @@ export function deriveBuffFacets(config: {
     typeof config.attributes === 'object' &&
     Object.keys(config.attributes).length > 0
   ) {
-    facets.push(BUFF_CATEGORY.MODIFIER)
+    facets.push(StatusCategory.MODIFIER)
   }
 
   // 触发器：有 triggers 数组
   if (config.triggers != null && config.triggers.length > 0) {
-    facets.push(BUFF_CATEGORY.TRIGGER)
+    facets.push(StatusCategory.TRIGGER)
   }
 
   // 光环：有 aura 配置
   if (config.aura != null) {
-    facets.push(BUFF_CATEGORY.AURA)
+    facets.push(StatusCategory.AURA)
   }
 
   // 护盾：有 shield 配置
   if (config.shield != null) {
-    facets.push(BUFF_CATEGORY.SHIELD)
+    facets.push(StatusCategory.SHIELD)
   }
 
   // 控制：有 controlType 且非 NONE
@@ -126,16 +104,16 @@ export function deriveBuffFacets(config: {
     config.controlType !== '' &&
     config.controlType !== 'none'
   ) {
-    facets.push(BUFF_CATEGORY.CONTROL)
+    facets.push(StatusCategory.CONTROL)
   }
 
   // 免疫：有 immunities 数组
   if (config.immunities != null && config.immunities.length > 0) {
-    facets.push(BUFF_CATEGORY.IMMUNITY)
+    facets.push(StatusCategory.IMMUNITY)
   }
 
   // 空壳/纯标记型 buff → token
-  return facets.length > 0 ? facets : [BUFF_CATEGORY.OTHER]
+  return facets.length > 0 ? facets : [StatusCategory.OTHER]
 }
 
 // ==================== classifyBuff 入参/出参 ====================
@@ -176,9 +154,9 @@ export interface BuffClassificationInput {
  */
 export interface BuffClassificationResult {
   /** 分类标签：直接从 JSON config.category 透传（纯显示用） */
-  category: BuffCategory
+  category: StatusCategory
   /** 运行时 facets：从配置结构自动派生，可能多个（['modifier', 'trigger']） */
-  facets: BuffCategory[]
+  facets: StatusCategory[]
   /** 是否为减益（由 polarity 决定） */
   isNegative: boolean
   /** 极性：直接声明 */
@@ -199,7 +177,7 @@ export function classifyBuff(
 ): BuffClassificationResult {
   if (!config) {
     return {
-      category: BUFF_CATEGORY.OTHER,
+      category: StatusCategory.OTHER,
       facets: [],
       isNegative: false,
       polarity: BUFF_POLARITY.NEUTRAL,
@@ -220,15 +198,15 @@ export function classifyBuff(
   }
 
   // 3. 显示标签：透传 JSON 的 category，兜底取 facets[0]
-  const category = asBuffCategory(config.category) ?? (facets.length > 0 ? facets[0] : BUFF_CATEGORY.OTHER)
+  const category = asStatusCategory(config.category) ?? (facets.length > 0 ? facets[0] : StatusCategory.OTHER)
 
   return { category, facets, polarity, isNegative: polarity === BUFF_POLARITY.NEGATIVE }
 }
 
-/** 安全地将字符串转为 BuffCategory（仅透传有效值，无效返回 undefined） */
-function asBuffCategory(raw: string | undefined | null): BuffCategory | undefined {
+/** 安全地将字符串转为 StatusCategory（仅透传有效值，无效返回 undefined） */
+function asStatusCategory(raw: string | undefined | null): StatusCategory | undefined {
   if (!raw) return undefined
-  for (const val of Object.values(BUFF_CATEGORY)) {
+  for (const val of Object.values(StatusCategory)) {
     if (val === raw) return val
   }
   return undefined
@@ -237,17 +215,17 @@ function asBuffCategory(raw: string | undefined | null): BuffCategory | undefine
 /** 兜底猜极性（仅当 polarity/isDebuff 都未提供时使用） */
 function guessPolarity(
   rawCategory: string | null,
-  facets: BuffCategory[],
+  facets: StatusCategory[],
 ): BuffPolarity {
   // 从 facets 判
-  if (facets.includes(BUFF_CATEGORY.CONTROL)) return BUFF_POLARITY.NEGATIVE
-  if (facets.includes(BUFF_CATEGORY.IMMUNITY)) return BUFF_POLARITY.POSITIVE
-  if (facets.includes(BUFF_CATEGORY.AURA)) return BUFF_POLARITY.POSITIVE
-  if (facets.includes(BUFF_CATEGORY.SHIELD)) return BUFF_POLARITY.POSITIVE
+  if (facets.includes(StatusCategory.CONTROL)) return BUFF_POLARITY.NEGATIVE
+  if (facets.includes(StatusCategory.IMMUNITY)) return BUFF_POLARITY.POSITIVE
+  if (facets.includes(StatusCategory.AURA)) return BUFF_POLARITY.POSITIVE
+  if (facets.includes(StatusCategory.SHIELD)) return BUFF_POLARITY.POSITIVE
 
   // 从 rawCategory 判（仅当 facets 判断无法决定时）
-  if (rawCategory === 'control' || rawCategory === 'dot') return BUFF_POLARITY.NEGATIVE
-  if (rawCategory === 'shield' || rawCategory === 'aura' || rawCategory === 'immunity') return BUFF_POLARITY.POSITIVE
+  if (rawCategory === StatusCategory.CONTROL || rawCategory === StatusCategory.DOT) return BUFF_POLARITY.NEGATIVE
+  if (rawCategory === StatusCategory.SHIELD || rawCategory === StatusCategory.AURA || rawCategory === StatusCategory.IMMUNITY) return BUFF_POLARITY.POSITIVE
 
   return BUFF_POLARITY.NEUTRAL
 }
@@ -264,7 +242,7 @@ function guessPolarity(
 export function getBuffLogClass(
   classification: BuffClassificationResult,
 ): string {
-  if (classification.facets.includes(BUFF_CATEGORY.CONTROL)) return 'log-control'
+  if (classification.facets.includes(StatusCategory.CONTROL)) return 'log-control'
   if (classification.isNegative) return 'log-debuff'
   return 'log-buff'
 }
@@ -277,20 +255,20 @@ export function getBuffLogClass(
  *   - 单个 facet → 展示 facet 的中文名
  *   - 控制类 facet → 加前缀"控制 ·"
  */
-export function getBuffCategoryBadge(
+export function getStatusCategoryBadge(
   classification: BuffClassificationResult,
 ): string {
   const { facets } = classification
 
   if (facets.length === 1) {
-    const label = BUFF_CATEGORY_LABEL[facets[0]]
+    const label = StatusCategoryNames[facets[0]]
     // 控制类额外标注
-    if (facets.includes(BUFF_CATEGORY.CONTROL)) {
+    if (facets.includes(StatusCategory.CONTROL)) {
       return `控制 · ${label}`
     }
     return label
   }
 
   // 多个 facet → 全部展示
-  return facets.map((f) => BUFF_CATEGORY_LABEL[f]).join('+')
+  return facets.map((f) => StatusCategoryNames[f]).join('+')
 }

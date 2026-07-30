@@ -19,98 +19,98 @@
 
     <Tabs v-model="activeTab" :tabs="editorTabs" equal-width>
       <template #buffs>
-    <div class="ce-tab-content">
-      <div class="buff-layout">
-        <!-- 左侧：分类栏 -->
-        <div class="buff-sidebar">
-          <div class="sidebar-title">分类</div>
-          <button v-for="cat in sidebarCategories" :key="cat.key" class="sidebar-item"
-            :class="{ active: activeCategory === cat.key }" @click="activeCategory = cat.key">
-            <span class="sidebar-dot" :class="'dot-' + cat.key"></span>
-            <span class="sidebar-label">{{ cat.label }}</span>
-            <span class="sidebar-count">{{ cat.count }}</span>
-          </button>
-        </div>
+        <div class="ce-tab-content">
+          <div class="buff-layout">
+            <!-- 左侧：分类栏 -->
+            <div class="buff-sidebar">
+              <div class="sidebar-title">分类</div>
+              <button v-for="cat in sidebarCategories" :key="cat.key" class="sidebar-item"
+                :class="{ active: activeCategory === cat.key }" @click="activeCategory = cat.key">
+                <span class="sidebar-dot" :class="'dot-' + cat.key"></span>
+                <span class="sidebar-label">{{ cat.label }}</span>
+                <span class="sidebar-count">{{ cat.count }}</span>
+              </button>
+            </div>
 
-        <!-- 右侧：状态列表 -->
-        <div class="buff-main">
-          <div class="ce-section-header">
-            <span class="section-title">{{ currentCategoryLabel }}</span>
-            <span class="status-count">{{ checkedBuffs.length }}/{{ localStatuses.length }}</span>
-          </div>
+            <!-- 右侧：状态列表 -->
+            <div class="buff-main">
+              <div class="ce-section-header">
+                <span class="section-title">{{ currentCategoryLabel }}</span>
+                <span class="status-count">{{ checkedBuffs.length }}/{{ localStatuses.length }}</span>
+              </div>
 
-          <input v-model="buffSearch" class="ce-search" placeholder="搜索状态名称..." />
+              <input v-model="buffSearch" class="ce-search" placeholder="搜索状态名称..." />
 
-          <div class="status-list">
-            <div v-for="status in filteredStatuses" :key="status.id" class="ce-status-item"
-              :class="{ active: status.active, disabled: !innerSelectedCharId }">
-              <div class="ce-status-row">
-                <label class="status-label">
-                  <input type="checkbox" v-model="status.active" :disabled="!innerSelectedCharId">
-                  <span class="ce-status-name" :class="status.polarity">
-                    {{ status.name }}
-                  </span>
-                </label>
-                <div class="ce-duration-wrap">
-                  <input type="number" class="ce-duration-input" v-model="status.duration" min="0" max="99"
-                    :disabled="!innerSelectedCharId">
-                  <span class="ce-duration-unit">回合</span>
+              <div class="status-list">
+                <div v-for="status in filteredStatuses" :key="status.id" class="ce-status-item"
+                  :class="{ active: status.active, disabled: !innerSelectedCharId }">
+                  <div class="ce-status-row">
+                    <label class="status-label">
+                      <input type="checkbox" v-model="status.active" :disabled="!innerSelectedCharId">
+                      <span class="ce-status-name" :class="status.polarity">
+                        {{ status.name }}
+                      </span>
+                    </label>
+                    <div class="ce-duration-wrap">
+                      <input type="number" class="ce-duration-input" v-model="status.duration" min="0" max="99"
+                        :disabled="!innerSelectedCharId">
+                      <span class="ce-duration-unit">回合</span>
+                    </div>
+                  </div>
+                  <div class="ce-status-desc">{{ status.effect }}</div>
+                </div>
+
+                <div v-if="filteredStatuses.length === 0" class="empty-tip">
+                  {{ buffSearch ? '无匹配状态' : (innerSelectedCharId ? '该分类暂无状态' : '请先选择角色') }}
                 </div>
               </div>
-              <div class="ce-status-desc">{{ status.effect }}</div>
-            </div>
 
-            <div v-if="filteredStatuses.length === 0" class="empty-tip">
-              {{ buffSearch ? '无匹配状态' : (innerSelectedCharId ? '该分类暂无状态' : '请先选择角色') }}
+              <div class="ce-section-actions">
+                <button class="btn-medium" @click="toggleCurrentCategory" :disabled="!innerSelectedCharId"
+                  :title="currentCategoryAllChecked ? '取消全选当前分类' : '全选当前分类'">
+                  {{ currentCategoryAllChecked ? '取消全选' : '全选本类' }}
+                </button>
+                <button class="btn-medium" @click="emitApplyBuffs"
+                  :disabled="checkedBuffs.length === 0 || !innerSelectedCharId">
+                  注入选中 ({{ checkedBuffs.length }})
+                </button>
+                <button class="btn-medium" @click="clearAllChecks" :disabled="checkedBuffs.length === 0">清空</button>
+              </div>
             </div>
-          </div>
-
-          <div class="ce-section-actions">
-            <button class="btn-medium" @click="toggleCurrentCategory" :disabled="!innerSelectedCharId"
-              :title="currentCategoryAllChecked ? '取消全选当前分类' : '全选当前分类'">
-              {{ currentCategoryAllChecked ? '取消全选' : '全选本类' }}
-            </button>
-            <button class="btn-medium" @click="emitApplyBuffs"
-              :disabled="checkedBuffs.length === 0 || !innerSelectedCharId">
-              注入选中 ({{ checkedBuffs.length }})
-            </button>
-            <button class="btn-medium" @click="clearAllChecks" :disabled="checkedBuffs.length === 0">清空</button>
           </div>
         </div>
-      </div>
-    </div>
       </template>
       <template #attrs>
-    <div class="ce-tab-content">
-      <div class="attr-grid">
-        <div v-for="attr in attrFields" :key="attr.key" class="attr-row">
-          <label class="attr-label">{{ attr.label }}</label>
-          <div class="attr-control">
-            <NumericStepper v-model.number="attrOverrides[attr.key]" :min="attr.min" :max="attr.max" :steps="attr.steps"
-              :disabled="!innerSelectedCharId" />
+        <div class="ce-tab-content">
+          <div class="attr-grid">
+            <div v-for="attr in attrFields" :key="attr.key" class="attr-row">
+              <label class="attr-label">{{ attr.label }}</label>
+              <div class="attr-control">
+                <NumericStepper v-model.number="attrOverrides[attr.key]" :min="attr.min" :max="attr.max"
+                  :steps="attr.steps" :disabled="!innerSelectedCharId" />
+              </div>
+              <span class="attr-current">当前:{{ getCurrentAttr(attr.key) }}</span>
+            </div>
           </div>
-          <span class="attr-current">当前:{{ getCurrentAttr(attr.key) }}</span>
+          <div class="ce-section-actions">
+            <button class="btn-medium" @click="emitApplyAttrs" :disabled="!innerSelectedCharId">应用属性</button>
+            <button class="btn-medium" @click="resetAttrOverrides">重置到当前值</button>
+          </div>
         </div>
-      </div>
-      <div class="ce-section-actions">
-        <button class="btn-medium" @click="emitApplyAttrs" :disabled="!innerSelectedCharId">应用属性</button>
-        <button class="btn-medium" @click="resetAttrOverrides">重置到当前值</button>
-      </div>
-    </div>
 
       </template>
       <template #reset>
-    <div class="ce-tab-content">
-      <p class="reset-desc">对选中的角色执行以下操作：</p>
-      <div class="reset-actions">
-        <button class="btn-medium reset-btn" @click="emitReset('buffs')" :disabled="!innerSelectedCharId">清除所有
-          Buff</button>
-        <button class="btn-medium reset-btn" @click="emitReset('hp_energy')"
-          :disabled="!innerSelectedCharId">恢复满血满能量</button>
-        <button class="btn-medium reset-btn btn-danger" @click="emitReset('all')"
-          :disabled="!innerSelectedCharId">完全重置</button>
-      </div>
-    </div> <!-- /ce-tab-content reset -->
+        <div class="ce-tab-content">
+          <p class="reset-desc">对选中的角色执行以下操作：</p>
+          <div class="reset-actions">
+            <button class="btn-medium reset-btn" @click="emitReset('buffs')" :disabled="!innerSelectedCharId">清除所有
+              Buff</button>
+            <button class="btn-medium reset-btn" @click="emitReset('hp_energy')"
+              :disabled="!innerSelectedCharId">恢复满血满能量</button>
+            <button class="btn-medium reset-btn btn-danger" @click="emitReset('all')"
+              :disabled="!innerSelectedCharId">完全重置</button>
+          </div>
+        </div> <!-- /ce-tab-content reset -->
       </template>
     </Tabs>
   </Dialog>
@@ -124,9 +124,10 @@ import type { TabItem } from '@/presentation/components/Tabs.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
-import { classifyBuff, type BuffCategory } from '@/shared/types/buff-classification'
+import { classifyBuff } from '@/shared/types/buff-classification'
 import { getAttrName } from '@/domain/attribute/types'
 import { ParticipantSideName } from '@/domain/battle/type/types'
+import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
 
 // ==================== 类型 ====================
 
@@ -216,16 +217,12 @@ watch(attrOverrides, () => {
 
 // ==================== 分类配置 ====================
 
-const SIDEBAR_DEFS: { key: string; label: string; categoryMatch?: BuffCategory }[] = [
-  { key: 'all', label: '全部' },
-  { key: 'modifier', label: '属性修正', categoryMatch: 'modifier' as BuffCategory },
-  { key: 'trigger', label: '触发', categoryMatch: 'trigger' as BuffCategory },
-  { key: 'aura', label: '光环', categoryMatch: 'aura' as BuffCategory },
-  { key: 'shield', label: '护盾', categoryMatch: 'shield' as BuffCategory },
-  { key: 'control', label: '控制', categoryMatch: 'control' as BuffCategory },
-  { key: 'dot', label: '持续伤害', categoryMatch: 'dot' as BuffCategory },
-  { key: 'immunity', label: '免疫', categoryMatch: 'immunity' as BuffCategory },
-  { key: 'other', label: '其他', categoryMatch: undefined },
+const SIDEBAR_DEFS: { key: string; label: string; categoryMatch?: StatusCategory }[] = [
+  { key: 'all', label: '所有' },
+  ...(Object.keys(StatusCategoryNames) as StatusCategory[]).map(key => ({
+    key: key as string,
+    label: StatusCategoryNames[key],
+  })),
 ]
 
 // ==================== 属性字段 ====================

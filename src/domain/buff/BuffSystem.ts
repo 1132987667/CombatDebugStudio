@@ -1,40 +1,39 @@
+import {
+  ATTRIBUTE_CODE,
+  ModifierSourceType,
+  ModifierType,
+  type IModifierProvider,
+} from '@/domain/attribute/types'
+import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
+import {
+  BattleTriggerPhase,
+  OLD_PHASE_NAME_MAP,
+  StepExecutionContext,
+  type BattleEntity,
+} from '@/domain/battle/type/types'
+import { BuffContextPool } from '@/domain/buff/BuffContextPool'
+import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
+import {
+  BuffAuraConfig,
+  BuffScriptRegistry,
+} from '@/domain/buff/BuffScriptRegistry'
+import { ModifierStack } from '@/domain/buff/ModifierStack'
+import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
 import type {
   BuffConfig,
   BuffInstance,
   BuffQuery,
   IBuffScript,
   TriggerAction,
+  TriggerEventContext,
 } from '@/domain/buff/types'
-import { BUFF_ID_PREFIX } from '@/domain/buff/types'
-import type { TriggerEventContext } from '@/domain/buff/types'
-import type { CombatRecord } from '@/domain/battle/combat-record'
-import {
-  ATTRIBUTE_CODE,
-  type IModifierProvider,
-  ModifierSourceType,
-  ModifierType,
-} from '@/domain/attribute/types'
-import { StackRule, ControlType } from '@/domain/buff/types'
-import { EffectType } from '@/domain/skill/types'
-import {
-  BuffScriptRegistry,
-  BuffAuraConfig,
-} from '@/domain/buff/BuffScriptRegistry'
-import { BuffContextPool } from '@/domain/buff/BuffContextPool'
-import { ModifierStack } from '@/domain/buff/ModifierStack'
-import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
-import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
+import { BUFF_ID_PREFIX, ControlType, StackRule } from '@/domain/buff/types'
 import type { IBattleLogManager } from '@/domain/port/IBattleLogManager'
-import { Counter } from '@/shared/utils/Counter'
+import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
+import { EffectType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
-import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
-import {
-  StepExecutionContext,
-  BattleTriggerPhase,
-  OLD_PHASE_NAME_MAP,
-  type BattleEntity,
-} from '@/domain/battle/type/types'
-import { TRIGGER_SCRIPTS } from '@/domain/buff/triggers/index'
+import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
+import { Counter } from '@/shared/utils/Counter'
 
 /** 无操作脚本占位：用于有配置无脚本的 buff */
 const NOOP_BUFF_SCRIPT: IBuffScript = {
@@ -789,7 +788,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       const resolved = this.scriptRegistry.getResolvedBuffConfig(instance.buffId)
       if (resolved?.effectPlan) {
         for (const effect of resolved.effectPlan) {
-          if (effect.type === 'immunity') {
+          if (effect.type === StatusCategory.IMMUNITY) {
             const tags = effect.params.tags as string[] | undefined
             if (tags) {
               for (const tag of tags) {
@@ -1166,11 +1165,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   public canUseSkill(characterId: string): boolean {
     const controlType = this.getHighestPriorityControlEffect(characterId)
     return (
-      controlType !== ControlType.STUN &&
-      controlType !== ControlType.SILENCE &&
-      controlType !== ControlType.FREEZE &&
-      controlType !== ControlType.SLEEP &&
-      controlType !== ControlType.BIND
+      controlType !== StatusCategory.STUN &&
+      controlType !== StatusCategory.SILENCE &&
+      controlType !== StatusCategory.FREEZE &&
+      controlType !== StatusCategory.SLEEP &&
+      controlType !== StatusCategory.BIND
     )
   }
 

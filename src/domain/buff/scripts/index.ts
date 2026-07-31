@@ -44,12 +44,14 @@ export {
 } from '@/domain/buff/scripts/GuardianBuffs'
 
 // 导出脚本映射，方便注入
+// NOTE: 映射键必须等于脚本类的静态 BUFF_ID——BuffScriptLoader 按 v.BUFF_ID === buffId 精确匹配，
+//       键与 BUFF_ID 不一致会导致脚本静默注册失败（此前 4 个键用短名，脚本从未被加载）。
 export const buffScripts = {
-  mountain_god: () => import('@/domain/buff/scripts/MountainGodBuff'),
-  poison: () => import('@/domain/buff/scripts/PoisonDebuff'),
-  berserk: () => import('@/domain/buff/scripts/BerserkBuff'),
+  buff_mountain_god: () => import('@/domain/buff/scripts/MountainGodBuff'),
+  buff_poison: () => import('@/domain/buff/scripts/PoisonDebuff'),
+  buff_berserk: () => import('@/domain/buff/scripts/BerserkBuff'),
   heal_over_time: () => import('@/domain/buff/scripts/HealOverTime'),
-  shield: () => import('@/domain/buff/scripts/ShieldBuff'),
+  buff_shield: () => import('@/domain/buff/scripts/ShieldBuff'),
   // 新增buff脚本映射
   buff_hit_reduction: () =>
     import('@/domain/buff/scripts/HitReductionDebuff'),

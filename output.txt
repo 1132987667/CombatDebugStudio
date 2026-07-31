@@ -6,6 +6,7 @@ CombatDebugStudio/
     plans/
         1785466682304-playful-pixel.md
         1785472199704-kind-cabin.md
+        1785479025059-quick-cabin.md
     skills/
         domain-migration/
             SKILL.md
@@ -13,6 +14,9 @@ CombatDebugStudio/
     package.json
 scripts/
     tools/
+        migrate_aura_values.cjs
+        migrate_buff_attributes.cjs
+        migrate_effects_json.cjs
         validate_skills.cjs
 src/
     application/
@@ -88,7 +92,6 @@ src/
                     TriggerEffect.ts
                 AtomicEffectRegistry.ts
                 BuffConfigResolver.ts
-                parseUtils.ts
                 types.ts
             scripts/
                 templates/
@@ -153,7 +156,6 @@ src/
             logging/
                 BattleLogManager.ts
                 index.ts
-                StructuredLogHandlers.ts
             storage/
                 index.ts
                 IndexedDbStorage.ts
@@ -293,7 +295,7 @@ vite.config.ts
 文件内容:
 
 --- .mimocode/.cron-lock ---
-{"pid":23216,"startedAt":1785468226956}
+{"pid":20112,"startedAt":1785479315960}
 
 --- .mimocode/commands/verify.md ---
 ---
@@ -526,6 +528,154 @@ LoggerProvider.logger.addBattleLog({
    - 异常兜底：临时在 `skillManager.executeSkill` 开头 `throw new Error()`，确认输出"发生异常，降级为普通攻击"警告 + 战斗不中断；改完还原。
    - 状态重置：连续"重置战斗"开新战斗，无上一场死亡结算日志残留；多次切换后 `pendingDeaths` 无累积（可用 `drainPendingDeaths()` 长度断言或用 devtools 观察）。
 
+--- .mimocode/plans/1785479025059-quick-cabin.md ---
+# 消灭 20 处启发式猜测反模式 — 实施计划
+## 一、目标与原则
+**目标**：数据生产者（配置层/领域层）显式声明业务语义；契约在唯一边界 `BuffConfigResolver.resolve()` 强制；下游删除全部猜测代码（正则/阈值/ID 前缀/字段存在性/鸭子类型/翻译表）。
+**三条原则**：
+1. 语义由生产者声明，消费者只读取
+2. 契约在唯一边界强制执行，而非消费点各自防御
+3. 命名约定升级为显式字段（`polarity`/`executionMode`/`{value,type}`/`category`/`severity`/`conditionLabel`）
+**已确认决策**（用户）：
+- 属性值**全量迁移为 `{ value: number, type: 'PERCENTAGE'|'ADDITIVE' }` 对象格式**
+- severity **按显式动作类型判定**（录制时写入）
+- 回放时序**统一到单一时间源**（接受回放速度变化，属预期行为修正）
+- 每完成 5 项汇报一次进度（按 #1-5 → #6-10 → #11-15 → #16-20 编号顺序）
+## 二、现状核实结论（与问题清单的差异，已探索确认）
+| 项 | 清单假设 | 实际现状 | 处理 |
+|---|---|---|---|
+| #16 | ParticipantBuffs 前缀匹配 | 文件不存在；hasBuff 已精确匹配（BuffSystem.ts:1000） | **跳过**，汇报时说明 |
+| #20 | 四处 `_track_passive_` 判定 | 仅 BuffSystem.ts:422、:633 两处；生产代码无创建方，仅测试用 | 改为显式 `executionMode` |
+| #2 | 缺 polarity | buffs.json 136/136 条**已有 polarity** | 契约化：resolve() 校验必填+推导兜底，删 guessPolarity |
+| #3/#15 | 大量 Buff 缺 description | 136/136 条**已有 description** | 删除"借描述"分支；generateAutoDescription 上移到 resolve() |
+| #4 | `<1` 猜测真实生效 | 数据中无裸 0.xx 值，该分支是**死代码**，删除零行为影响 | 删分支 + 数据迁移为对象格式 |
+| #8 | 配置用 ad-hoc 键名 | 配置中 32 个键名**全部已在 ATTRIBUTE_CODE**；ATTR_ALIAS 是过时冗余表 | 删 ATTR_ALIAS，校验升级为 throw |
+| #10 | 双命名并存 | buffs.json 31 处 phase：26 旧 + 5 新 | resolve() 入口归一化，下游删兼容 |
+| #11 | 含 ctrlNames 表 | 实际无 ctrlNames；有 `<1` 猜测（:348）+ 前缀 replace（:309） | 一并删除 |
+## 三、契约边界设计（BuffConfigResolver.resolve() 增强）
+`ResolvedBuffConfig` 新增/修改：
+- `polarity: 'positive'|'negative'|'neutral'` — 缺失时按 controlType(非NONE→negative)/tags(dot|poison|debuff→negative)/facet 推导，推导失败 `throw`
+- `description: string` — 缺失时用 effectSummary 自动生成（不再依赖 LogTooltipResolver 三级回退）
+- `effectSummary: string` — 从 effectPlan(MODIFIER attributes 用 getAttrName+{value,type} 格式化"攻击↑20%")/duration("2回合"/"永久")/maxStacks 派生**静态部分**（层数/剩余回合是运行时数据，不进 resolve）
+- `executionMode: 'script'|'effectPlan'|'triggerOnly'|'marker'` — 推导：registry.has→script（由 BuffScriptRegistry.getResolvedBuffConfig 补充）；effectPlan.length>0→effectPlan；triggers.length>0→triggerOnly；否则→marker
+- `triggers[].phase` — 用 OLD_PHASE_NAME_MAP 归一化为 BattleTriggerPhase 枚举，未知值 `throw`
+- `attributes` 值类型 → `{ value: number, type: 'PERCENTAGE'|'ADDITIVE' }`
+## 四、逐项修改方案
+### 批次一（#1-5）：配置契约基础
+**#4 parseAttributeValue（parseUtils.ts）**
+- 删除 `parseAttributeValue` 整个函数（唯一调用方 ModifierEffect.ts:57 改读显式对象）；BuffScriptRegistry.ts:310-315 公共转发一并删
+- `ModifierEffect.onApply/onStackChange`：`params.attributes` 值直接解构 `{ value, type }`，`perStack` 缩放不变；`getEffectLines` 格式化 `攻击 +20%`（读显式值）
+- **数据迁移**：buffs.json 全部 `effects[].params.attributes`（66 处，值在 effects 内无顶层 attributes）字符串→对象：
+  - `"+20%"`/`"15%"`/`"+0%"` → `{ value: 20, type: "PERCENTAGE" }`（value 为百分数）
+  - `"+10"`/`"-10"`/`"+1.0"`/`"1.0"`/`"+4"` → `{ value: 10, type: "ADDITIVE" }`（含 `+1.0`→1、`1.0`→1）
+  - 全部 66 处按此规则逐条迁移（value 取 parseFloat 后数值，注意 `-1`→-1、`25%`→25）
+**#2 guessPolarity（buff-classification.ts:211-226）**
+- 删除 `guessPolarity`；`classifyBuff` 的 polarity 改为必填（配置经 resolve 后必有值）
+- 调用方适配：BuffSystem.ts:710、SkillExecutor.ts:460 目前传 `BuffConfig`（无 polarity）→ 改读 `getResolvedBuffConfig(buffId).polarity`；participantMapper.ts:123、triggers/index.ts:211、LogTooltipResolver.ts:93、CharacterEditor.vue:281 传 BuffJsonEntry（JSON 全有 polarity）✓
+- 测试：buff-classification.test.ts 的"兼容猜测"用例改为断言缺失 polarity 时由 resolve 推导/throw
+**#3 generateAutoDescription（LogTooltipResolver.ts）**
+- `resolve()` 生成 description（缺失时用 effectSummary 文本）
+- LogTooltipResolver.resolveBuffDescription：删除 ②反向索引借技能描述分支；③generateAutoDescription 逻辑上移到 resolve() 后删除
+- 测试：新增 resolve() 对"缺 description 配置"自动生成断言；LogTooltipResolver.test.ts 适配
+**#1 extractConditionLabel（useBuffDisplay.ts:68-72）**
+- `BuffJsonEntry` 增可选 `conditionLabel?: string`（配置显式声明，如"残血"）
+- `detectCondition` 入参加 conditionLabel：INACTIVE 分支显式值→`${label}·未激活`，缺省→`未激活`
+- 删除 `extractConditionLabel` 正则；buffs.json 中现存"残血时触发"类描述的条目补 conditionLabel（核对后按需）
+- 测试：buff-display.test.ts:41-62 适配（无 label→`未激活`；有 label→`残血·未激活`）
+**#5 buildEffectSummary(UI)（CharacterEditor.vue:295-324）**
+- 删除 `buildEffectSummary` + `formatAttributes`（262-274，含 `Math.abs(num)>=1` 猜测）
+- `buildStatusesFromBuffs` 改读 `getResolvedBuffConfig(id).effectSummary`
+- 删除 `ATTR_ALIAS`（240-259，18 条过时冗余——配置键已全在 ATTRIBUTE_CODE）；:265 改 `getAttrName(key)` 无兜底
+### 批次二（#6-10）：翻译表与回放录制
+**#6 EFFECT_PARAM_MAP（BuffScriptRegistry.ts:190-201, 204-256）**
+- 删除翻译表 + `defenseReduction` 特殊规则 + `value>1` 量级猜测
+- effects.json 迁移：带数值键的效果（buff_atk_up.attackBonus:1.2、buff_def_reduction.defenseReduction:0.7、buff_leader_aura.teamAttackBonus:1.15 等，执行时读全文）改为直接写属性对象：`"attributes": { "attack": { "value": 20, "type": "PERCENTAGE" } }`（键用 ATTRIBUTE_CODE；1.2→+20%、0.7→-30% 语义在迁移时固化）
+- `loadEffectConfigs` 简化为直接搬运 attributes 对象生成 modifier effect，删 EFFECT_PARAM_MAP
+**#7 `<1` 修正×2（AuraEffect.ts:38-42、BattleSystem.ts:751-755）**
+- 确认 `getBuffAuraConfig`（BuffSystem.ts:782）数据源后，将 aura modifiers 值迁移为与 ModifierType 对齐（`value: 10, type: 'PERCENTAGE'` 而非 0.1），删除两处 `Math.abs(value)<1` 修正 + 789-792 的 as 断言（如存在）
+- **风险**：迁移后必须删修正，否则 double-scale（双倍缩放）——用既有 aura 测试（plan-b-battle.test.ts buff_leader_aura）守护
+**#8 statLabels（display-helpers.ts:60-72）**
+- 执行时 grep `getStatLabel` 调用方：若仅服务 buff/物品展示且 ATTRIBUTE_CODE 已覆盖 → 删除 statLabels 与 getStatLabel；否则仅删除 buff 路径使用
+**#9 handleActionReplay（BattleReplayManager.ts:298-315）**
+- `ReplayBattleEvent.data` 增 `category: BattleLogCategory`；`BattleRecorder.recordEvent` 内基于**显式**数据判定：
+  ```ts
+  // 依据 action.type(ActionTypes) + action.effects[].type(EffectType，执行时写入的显式效果类型)
+  // 有 HEAL 无 DAMAGE → HEAL；有 DAMAGE → DAMAGE；否则 STATUS；非 ACTION 事件 → STATUS
+  ```
+- `handleActionReplay` 删除 damage/heal 三元猜测，读 `event.data.category`
+- BattleExecutor.ts:845-847（emitAttackLog 内，已有契约测试覆盖）改为显式判定；1591-1593 核查为重复死代码后删
+- 测试：新增 recorder category 断言（DAMAGE/HEAL/STATUS 三类 action 事件）
+**#10 OLD_PHASE_NAME_MAP（battle/type/types.ts:811-830）**
+- `resolve()` 对 `triggers[].phase` 归一化为枚举（OLD_PHASE_NAME_MAP 保留为归一化用，未知值 throw）
+- BuffSystem.ts:349-357：删除 OLD 映射 + "未识别跳过"逻辑；`registerTriggersForInstance` 调用处改传 `getResolvedBuffConfig(buffId).triggers`（归一化后）
+- LogTooltipResolver.formatTriggerPhase（323-331）：核对 skill_passive.json 的 triggerTimes 风格后，若全为新风格则删 OLD 分支
+- 测试：resolve() 对 26 处旧风格 phase 归一化断言；未知 phase throw 断言
+### 批次三（#11-15）：领域展示剥离与 AI 摘要
+**#11 buildBuffEffectSummary（SkillExecutor.ts:336-372）**
+- 删除整个函数（含 :348 `<1` 猜测）；:312 改读 `resolved.effectSummary` + 运行时拼接（`instance.currentStacks>1 → （n/m层）`、duration）
+- :309 前缀 replace 删除 → 改读 `config.name`（displayName 是显式配置字段）
+**#12 isKeyEvent/getEventSeverity（BattleReplay.vue:439-443, 540-565）**
+- `BattleRecorder.recordEvent` 写 `data.severity: 'high'|'medium'|'low'`：BATTLE_START/END→high；STATE_CHANGE→medium；ACTION 且 `action.type==='skill'`→medium；其余 low
+- BattleReplay.vue 删除两个魔法阈值（>100/>500）改读 `data.severity`：`getEventSeverity` 直接返回；`isKeyEvent` 规则定为 `severity !== 'low'`（high+medium 皆关键，保留现有 skill/STATE_CHANGE 为关键事件的语义）
+- 测试：recorder severity 四类事件断言；isKeyEvent 纯函数化后单测
+**#13 summarizeSkillSteps（skill/types.ts:511-558）**
+- `convertSkillConfigToSkill(config, lookup: BuffConfigLookup)`；`lookup = (buffId) => getResolvedBuffConfig(buffId)?.polarity` 或复用 classifyBuff
+- `/^debuff_/` 正则改为 `lookup(buffId) === 'negative' → hasDebuff`
+- 调用方：BattleExecutor.ts:321 用 `this.buffSystem.getScriptRegistry()`；BattleAI.ts:380 的 `createAIWithSkills` 增 registry 参数（BattleSystem 初始化处注入）
+- 测试：新增 tests/unit/skill-convert.test.ts（negative/positive 的 hasDebuff/hasBuff，不依赖前缀）
+**#14 generateLogMessage（BattleRecorder.ts:651-672）**
+- 删除 generateLogMessage、recordEvent 中 `recording.logs.push`（629-644）、`RecordedBattle.logs`（:83/:172）、`BattleReplay.logs`（type/types.ts:773）——已确认全仓库无读取方
+- grep 复核 `recording.logs`/`replayData.logs` 无引用后删
+**#15 ensureIndex（LogTooltipResolver.ts:352-368）**
+- `resolveBuffDescription` 删除 ②反向索引借技能描述分支（buffs.json 全有 description，永不触发）
+- 保留 `resolveBuffSource`（"来源：技能名"是显式 steps 引用非猜测，TooltipData.source 供 EntityTooltip）
+- ensureIndex 索引永不失效：标注已知（skillManager 配置静态、惰性构建一次），不预做失效钩子
+### 批次四（#16-20）：校验、加载器、时序、执行模式
+**#16** 跳过（文件不存在，hasBuff 已精确匹配）——汇报中说明
+**#17 validateBuffConfigs（BuffScriptRegistry.ts:125-187）**
+- 删除旧字段存在性推断块（157-172）+ 顶层 attributes console.warn（132-141）
+- 校验升级为 throw：`effects[].params.attributes` 键名不在 ATTRIBUTE_CODE→throw；值必须 `{value:number, type∈{'PERCENTAGE','ADDITIVE'}}` 否则 throw；无脚本/无 effects/无 triggers（删 `_track_passive_` 特判 :180）→throw
+- 不引入 schemaVersion（数据一次性迁移，resolve() 为唯一边界）
+**#18 isBuffConstructor（BuffScriptLoader.ts）**
+- 删除 `import.meta.glob`（:30）、index.ts 硬编码排除（:34）
+- 改遍历 `scripts/index.ts` 的 `buffScripts` 显式映射（28 项）：`for ([buffId, loader] of entries) { mod = await loader(); 从 mod 导出中按 BUFF_ID===buffId 匹配类 → registry.register }`
+- `isBuffConstructor` 保留但作用域缩小：仅"已知模块内按显式 BUFF_ID 匹配类"（BUFF_ID 是类的显式身份声明，非探测）；GuardianBuffs 18 类同模块按各自 BUFF_ID 匹配（GuardianBuffs.ts 无静态 CONFIG，注册时 CONFIG 传 undefined）
+**#19 calculateEventDelay（ReplayEngine.ts:560-576）**
+- 删除硬编码 `typeDelay` 表与 baseDelay；改为：
+  ```ts
+  // actorSpeed = 事件 source 的 speed 属性（缺省 1）
+  // ACTION → getActionBudget(actorSpeed) * PHASES.impact（等待到命中瞬间）
+  // 其他事件 → getActionBudget(actorSpeed) * 0.25（短停顿）
+  // 最后 / this.speed（播放倍率）
+  ```
+- 测试：新增 ReplayEngine 时序单测（断言 delay 公式；无 source 的 ACTION 用 speed=1）
+**#20 addBuff 路径判定（BuffSystem.ts:422, 629-649）**
+- `BuffConfig` 增可选 `executionMode?: 'script'|'effectPlan'|'triggerOnly'|'marker'`
+- :422 守卫改：无脚本无 config 时，仅当调用方显式传入 `executionMode==='marker'` 放行，否则拒绝
+- :629-649：`isTrackPassive || hasTriggersOnly` → `executionMode==='triggerOnly' || executionMode==='marker'`（优先读 resolvedConfig.executionMode，否则按 hasScript/hasEffectPlan/triggers 推导）
+- BuffSystemPath.test.ts:93-95 适配（显式传 `executionMode: 'marker'`）
+## 五、测试守护（新增/修改）
+新增 tests/unit/：
+- `buff-config-resolver.test.ts` — polarity 推导/缺失 throw、description 自动生成、executionMode 四值推导、phase 归一化 + 未知 throw、effectSummary 格式
+- `attribute-value.test.ts` — attributes 对象格式校验（键名/值类型非法 → throw）
+- `replay-category.test.ts` — recordEvent 的 category/severity 断言
+- `skill-convert.test.ts` — #13 lookup 判定
+- `replay-engine-timing.test.ts` — #19 时序公式
+修改：buff-display.test.ts（#1）、buff-classification.test.ts（#2）、BuffSystemPath.test.ts（#20）、battle-executor-log.test.ts（若 emit 判定逻辑调整）、LogTooltipResolver.test.ts（#3/#15）、plan-b-battle.test.ts 保持通过（#7 aura 值域迁移守护）
+## 六、验证
+```bash
+npm run typecheck   # 全程保持通过
+npm run test        # 每批完成后全量跑
+```
+每批完成后向用户汇报该 5 项的修改内容与测试状态。
+## 七、风险清单
+1. **phase 归一化**：BuffSystem 现消费 raw triggers（addBuff :441-483 手动拼的 resolvedConfig.triggers），必须改为读 resolve 输出的归一化 triggers，否则 eventBus.on 用旧名静默失效——测试守护
+2. **classifyBuff 必填 polarity**：BuffSystem:710、SkillExecutor:460 两处先改读 resolved.polarity，编译器强制
+3. **aura value ×100 迁移**：0.1→10 后必须同步删除三处 `<1` 修正，否则 double-scale
+4. **#13 签名变更**：BattleAI createAIWithSkills 调用方（BattleSystem 初始化）需注入 registry，编译期强制
+5. **`this.speed`（播放倍率）与行动者 speed（属性）语义区分**：时序公式必须显式分流
+6. **effects.json 迁移**：19 条逐个核对，`defenseReduction: 0.7 → -30%` 语义在迁移时固化（写为 `{ value: -30, type: "PERCENTAGE" }`），不得依赖原量级规则
+
 --- .mimocode/skills/domain-migration/SKILL.md ---
 ---
 name: domain-migration
@@ -597,10 +747,6 @@ Returns `ValidationResult`, caller expects `SkillConfig[]`:
 ```ts
 return result as any as SkillConfig[]
 ```
-### CalculationLog import conflict
-Type exists in both `@/shared/types/skill` and locally in
-`DamageCalculator.ts`. Remove the type import and keep only the local
-declaration. Other files import `CalculationLog` from `@/domain/skill/DamageCalculator`.
 ### Error.captureStackTrace guard
 ```ts
 if ('captureStackTrace' in Error) {
@@ -829,7 +975,6 @@ export default [
     "eslint-plugin-vue": "^9.30.0",
     "happy-dom": "^20.11.1",
     "iconv-lite": "^0.7.3",
-    "jsdom": "^27.4.0",
     "sass": "^1.97.3",
     "typescript": "~5.6.2",
     "vite": "^6.0.5",
@@ -837,6 +982,141 @@ export default [
     "vue-tsc": "^2.1.10"
   }
 }
+
+--- scripts/tools/migrate_aura_values.cjs ---
+/**
+ * 一次性迁移脚本：buffs.json 中 aura 效果的 PERCENTAGE 小数值对齐为百分数（0.15 → 15）
+ * 与 AuraEffect/distributeAuras 中 "<1 则 ×100" 的运行时修正语义一致，迁移后可删除该修正。
+ * ADDITIVE 值保持不变（0.1 = 0.1 点，显式语义）。
+ * 运行：node scripts/tools/migrate_aura_values.cjs
+ */
+const fs = require('fs')
+const path = require('path')
+const file = path.join(__dirname, '..', '..', 'configs', 'buffs', 'buffs.json')
+const data = JSON.parse(fs.readFileSync(file, 'utf8'))
+let count = 0
+for (const buff of data) {
+  for (const effect of buff.effects || []) {
+    if (effect.type !== 'aura') continue
+    for (const mod of effect.params?.modifiers || []) {
+      if (mod.type === 'PERCENTAGE' && typeof mod.value === 'number' && Math.abs(mod.value) < 1) {
+        mod.value = Math.round(mod.value * 10000) / 100 // 与原 percentage() 精度一致
+        count++
+      }
+    }
+  }
+}
+fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n', 'utf8')
+console.log(`normalized ${count} aura PERCENTAGE values`)
+
+--- scripts/tools/migrate_buff_attributes.cjs ---
+/**
+ * 一次性迁移脚本：buffs.json 的 attributes 值从字符串格式（"+20%"、"+10"）迁移为显式对象格式
+ *   { value: 20, type: "PERCENTAGE" } / { value: 10, type: "ADDITIVE" }
+ * 规则：带 % 后缀 → PERCENTAGE（value 为百分数）；无 % → ADDITIVE（value 为绝对值）
+ * 运行：node scripts/tools/migrate_buff_attributes.cjs
+ */
+const fs = require('fs')
+const path = require('path')
+const file = path.join(__dirname, '..', '..', 'configs', 'buffs', 'buffs.json')
+const data = JSON.parse(fs.readFileSync(file, 'utf8'))
+function convertValue(v, context) {
+  if (v && typeof v === 'object' && typeof v.value === 'number' && typeof v.type === 'string') {
+    return v // 已迁移
+  }
+  if (typeof v !== 'string') {
+    throw new Error(`非字符串值: ${JSON.stringify(v)} @ ${context}`)
+  }
+  const trimmed = v.trim()
+  const isPercent = trimmed.includes('%')
+  const num = parseFloat(trimmed)
+  if (isNaN(num)) throw new Error(`无法解析数值: "${v}" @ ${context}`)
+  return isPercent
+    ? { value: num, type: 'PERCENTAGE' }
+    : { value: num, type: 'ADDITIVE' }
+}
+let count = 0
+for (const buff of data) {
+  if (buff.attributes) {
+    for (const [k, v] of Object.entries(buff.attributes)) {
+      buff.attributes[k] = convertValue(v, `${buff.id}.attributes.${k}`)
+      count++
+    }
+  }
+  if (buff.effects) {
+    for (const eff of buff.effects) {
+      const attrs = eff.params?.attributes
+      if (attrs && typeof attrs === 'object') {
+        for (const [k, v] of Object.entries(attrs)) {
+          attrs[k] = convertValue(v, `${buff.id}.effects.params.attributes.${k}`)
+          count++
+        }
+      }
+    }
+  }
+}
+fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n', 'utf8')
+console.log(`migrated ${count} attribute values`)
+
+--- scripts/tools/migrate_effects_json.cjs ---
+/**
+ * 一次性迁移脚本：effects.json 的乘数参数（attackBonus: 1.2 等）迁移为显式 attributes 对象
+ *   { "attack": { "value": 20, "type": "PERCENTAGE" } }
+ * 转换规则（与原 loadEffectConfigs 语义完全一致，删除运行时的量级猜测）：
+ *   *Bonus: v → { value: round((v-1)*100), type: PERCENTAGE }（1.2 → +20）
+ *   criticalRateBonus/criticalDamageBonus/teamHealPerTurn/controlDurationReduction: v → { value: round(v*100), PERCENTAGE }
+ *   defenseReduction: v → { value: round((1-v)*100) 取负, PERCENTAGE }（0.7 → -30）
+ *   allStatsBonus: 原实现忽略，保持忽略
+ * 运行：node scripts/tools/migrate_effects_json.cjs
+ */
+const fs = require('fs')
+const path = require('path')
+const file = path.join(__dirname, '..', '..', 'configs', 'effects', 'effects.json')
+const data = JSON.parse(fs.readFileSync(file, 'utf8'))
+/** 键 → 目标属性代码（与已删除的 EFFECT_PARAM_MAP 一致） */
+const KEY_TO_ATTR = {
+  attackBonus: 'attack',
+  defenseBonus: 'defense',
+  speedBonus: 'speed',
+  healthBonus: 'maxHealth',
+  criticalRateBonus: 'critRate',
+  criticalDamageBonus: 'critDamage',
+  teamAttackBonus: 'attack',
+  teamHealPerTurn: 'hpRegenPercent',
+  controlDurationReduction: 'controlDurationReduction',
+  defenseReduction: 'defense',
+}
+/** 键 → 转换函数（与原量级规则一致） */
+const KEY_CONVERT = {
+  defenseReduction: (v) => Math.round((1 - v) * 100) * -1, // 0.7 → -30
+  criticalRateBonus: (v) => Math.round(v * 100),
+  criticalDamageBonus: (v) => Math.round(v * 100),
+  teamHealPerTurn: (v) => Math.round(v * 100),
+  controlDurationReduction: (v) => Math.round(v * 100),
+}
+let migrated = 0
+let ignored = 0
+for (const effect of data.effects) {
+  const params = effect.params || {}
+  const attributes = {}
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value !== 'number') continue
+    const attr = KEY_TO_ATTR[key]
+    if (!attr) {
+      ignored++
+      continue // allStatsBonus 等原实现忽略的键
+    }
+    const convert = KEY_CONVERT[key] || ((v) => Math.round((v - 1) * 100))
+    attributes[attr] = { value: convert(value), type: 'PERCENTAGE' }
+    delete params[key]
+    migrated++
+  }
+  if (Object.keys(attributes).length > 0) {
+    params.attributes = { ...(params.attributes || {}), ...attributes }
+  }
+}
+fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n', 'utf8')
+console.log(`migrated ${migrated} multiplier params, ignored ${ignored} unknown keys`)
 
 --- scripts/tools/validate_skills.cjs ---
 /**
@@ -1313,11 +1593,13 @@ export class BattleProjection {
 import { LogSegmentHover, LogSegmentHoverKind } from '@/shared/types/battle-log'
 import { classifyBuff, getStatusCategoryBadge } from '@/shared/types/buff-classification'
 import { StatusCategory } from '@/shared/types/status-meta'
-import type { BuffJsonEntry, BuffJsonAuraModifier } from '@/shared/types/buffs-json'
+import type { BuffJsonEntry, BuffJsonAuraModifier, AttributeValueConfig } from '@/shared/types/buffs-json'
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import type { ResolvedBuffConfig } from '@/domain/buff/atomic/BuffConfigResolver'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { SkillConfig, SkillType } from '@/domain/skill/types'
-import { BattleTriggerPhaseName, OLD_PHASE_NAME_MAP } from '@/domain/battle/type/types'
+import { BattleTriggerPhaseName } from '@/domain/battle/type/types'
 import type { BattleTriggerPhase } from '@/domain/battle/type/types'
 // ==================== 输出类型 ====================
 /** Tooltip 卡片的明细行 */
@@ -1384,82 +1666,35 @@ export class LogTooltipResolver {
     )
     const badge = getStatusCategoryBadge(classification)
     const durationLabel = this.formatDuration(config.duration)
-    // 描述：三级回退
-    const description = this.resolveBuffDescription(buffId, config, classification.category)
+    // 描述：解析器已保证非空（缺失时由 BuffConfigResolver 自动生成）
+    const description = this.resolveBuffDescription(buffId, config)
     // 明细行
     const details: TooltipDetailRow[] = []
-    this.appendBuffDetails(details, config, classification.category)
+    this.appendBuffDetails(details, config, resolved, classification.category)
     // 来源
     const source = this.resolveBuffSource(buffId)
     return { name, description, badge, durationLabel, details, source }
   }
   /**
-   * 三级描述回退：
-   *   ① buff 配置自带 description
-   *   ② 反向索引 → 技能 description（去掉"被动效果："前缀）
-   *   ③ 按结构自动生成
+   * Buff 描述：读取解析器输出（缺失时由 BuffConfigResolver.resolve() 从效果计划自动生成），
+   * 不再做反向索引"借技能描述"或按结构拼接的运行时回退。
    */
-  private resolveBuffDescription(
-    buffId: string,
-    config: BuffJsonEntry,
-    category: StatusCategory,
-  ): string {
-    // ①
-    if (config.description && typeof config.description === 'string' && config.description.trim()) {
-      return this.cleanDescription(config.description)
+  private resolveBuffDescription(buffId: string, config: BuffJsonEntry): string {
+    const resolved = this.buffRegistry.getResolvedBuffConfig(buffId)
+    const desc = resolved?.description || config.description
+    if (desc && typeof desc === 'string' && desc.trim()) {
+      return this.cleanDescription(desc)
     }
-    // ②
-    const sourceSkills = this.getBuffSourceSkills(buffId)
-    if (sourceSkills.length > 0) {
-      for (const skill of sourceSkills) {
-        if (skill.description && skill.description.trim()) {
-          return this.cleanDescription(skill.description)
-        }
-      }
-    }
-    // ③ 自动生成
-    return this.generateAutoDescription(config, category)
+    return config.name ?? buffId
   }
   /** 去掉"被动效果："前缀 */
   private cleanDescription(desc: string): string {
     return desc.replace(/^被动效果：/, '').trim()
   }
-  /** 按结构自动生成描述 */
-  private generateAutoDescription(config: BuffJsonEntry, category: StatusCategory): string {
-    switch (category) {
-      case StatusCategory.AURA: {
-        const aura = config.aura
-        if (aura?.modifiers?.length) {
-          const items = aura!.modifiers.map(
-            (m) => `${m.targetAttribute ?? ''} ${this.formatModifierValue(m)}`,
-          ).filter(Boolean).join('、')
-          const scope = aura!.targetSelector === 'allies' ? '全体友方' : aura!.targetSelector === 'enemies' ? '全体敌方' : '自身'
-          return `提升 ${scope} ${items}`
-        }
-        return '光环效果'
-      }
-      case StatusCategory.MODIFIER: {
-        const attrs = config.attributes
-        if (attrs) {
-          return Object.entries(attrs).map(([k, v]) => `${k} ${v}`).join('、')
-        }
-        return '属性修正'
-      }
-      case StatusCategory.CONTROL:
-        return '无法行动'
-      case StatusCategory.DOT:
-        return '每回合造成持续伤害'
-      case StatusCategory.SHIELD:
-        return '吸收伤害'
-      case StatusCategory.TRIGGER:
-        return '满足条件时触发效果'
-      default:
-        return config.name ?? '未知效果'
-    }
-  }
   private appendBuffDetails(
     details: TooltipDetailRow[],
     config: BuffJsonEntry,
+    resolved: ResolvedBuffConfig | undefined,
     category: StatusCategory,
   ): void {
     switch (category) {
@@ -1480,11 +1715,21 @@ export class LogTooltipResolver {
         break
       }
       case StatusCategory.MODIFIER: {
-        const attrs = config.attributes
-        if (attrs) {
-          for (const [key, value] of Object.entries(attrs)) {
-            details.push({ label: key, value: String(value) })
-          }
+        // attributes 已迁移至 effectPlan，从解析结果读取（config.attributes 为旧字段）
+        const attrs = resolved?.effectPlan
+          ?.filter((e) => e.type === AtomicEffectType.MODIFIER)
+          .flatMap((e) =>
+            Object.entries(
+              (e.params.attributes ?? {}) as Record<string, AttributeValueConfig>,
+            ),
+          ) ?? []
+        for (const [key, cfg] of attrs) {
+          const sign = cfg.value > 0 ? '+' : ''
+          const text =
+            cfg.type === 'PERCENTAGE'
+              ? `${sign}${cfg.value}%`
+              : `${sign}${cfg.value}`
+          details.push({ label: key, value: text })
         }
         break
       }
@@ -1584,15 +1829,9 @@ export class LogTooltipResolver {
     }
   }
   // ==================== 辅助方法 ====================
-  /** 格式化触发时机：中文化，兼容新旧风格 */
+  /** 格式化触发时机：直接查中文表（所有消费端已统一为枚举值，无旧风格兼容） */
   private formatTriggerPhase(phase: string): string {
-    // 新风格直接查中文表（on_hit → 命中时）
-    const direct = BattleTriggerPhaseName[phase as BattleTriggerPhase]
-    if (direct) return direct
-    // 旧风格归一化后查中文表（ON_ATTACK_HIT → on_hit → 命中时）
-    const normalized = OLD_PHASE_NAME_MAP[phase]
-    if (normalized) return BattleTriggerPhaseName[normalized]
-    return phase
+    return BattleTriggerPhaseName[phase as BattleTriggerPhase] ?? phase
   }
   /** 格式化修饰符值 */
   private formatModifierValue(modifier: BuffJsonAuraModifier): string {
@@ -1652,6 +1891,7 @@ import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { classifyBuff } from '@/shared/types/buff-classification'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 /**
  * 将 BattleEntity 映射为 UI 快照
  *
@@ -1724,8 +1964,10 @@ function buildBuffRawItems(
       if (!config) continue
       seenIds.add(id)
       seenIds.add(config.id)
+      // 条件标签从 JSON 配置显式读取（BuffConfig 为运行时合并配置，不含展示字段）
+      const rawConfig = buffSystem.getScriptRegistry().getBuffConfig(config.id)
       // 从 effectPlan 的 modifier 效果中提取修饰符数据（供展示层生成属性标签）
-      let attributes: Record<string, string> | undefined
+      let attributes: Record<string, AttributeValueConfig> | undefined
       const resolved = buffSystem.getResolvedBuffConfig?.(config.id)
       const modifierEffects = resolved?.effectPlan?.filter(
         (e: { type: string }) => e.type === AtomicEffectType.MODIFIER,
@@ -1733,7 +1975,7 @@ function buildBuffRawItems(
       if (modifierEffects.length > 0) {
         attributes = {}
         for (const effect of modifierEffects) {
-          const attrs = effect.params.attributes as Record<string, string> | undefined
+          const attrs = effect.params.attributes as Record<string, AttributeValueConfig> | undefined
           if (attrs) Object.assign(attributes, attrs)
         }
       }
@@ -1746,6 +1988,7 @@ function buildBuffRawItems(
         currentStacks: instance.currentStacks,
         isNegative: classifyBuff(config as Parameters<typeof classifyBuff>[0]).isNegative,
         attributes,
+        conditionLabel: rawConfig?.conditionLabel,
         effectLines: instance.effectLines ?? [],
         conditionState: instance.conditionState,
         controlType: config.controlType as string | undefined,
@@ -3356,6 +3599,7 @@ import type {
 } from '@/domain/battle/type/types'
 import { BattleStatus } from '@/domain/battle/type/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
+import type { BuffConfigLookup } from '@/domain/skill/types'
 import { BattleAIFactory, BattleAI } from '@/domain/battle/ai/BattleAI'
 /**
  * AI系统类
@@ -3368,12 +3612,19 @@ export class AISystem {
   private aiInstances = new Map<string, BattleAI>()
   /** 技能管理器实例（通过构造函数注入） */
   private skillManager: SkillManager
+  /** Buff 极性查询（由 BuffScriptRegistry 已解析配置提供，AI 技能标记不依赖 ID 前缀） */
+  private buffLookup: BuffConfigLookup
   /**
    * 私有构造函数
    * @param skillManager 技能管理器实例（通过构造函数注入）
+   * @param buffLookup Buff 极性查询（缺省返回 undefined，不判定减益）
    */
-  constructor(skillManager: SkillManager) {
+  constructor(
+    skillManager: SkillManager,
+    buffLookup: BuffConfigLookup = () => undefined,
+  ) {
     this.skillManager = skillManager
+    this.buffLookup = buffLookup
   }
   /**
    * 创建AI实例集合
@@ -3389,6 +3640,7 @@ export class AISystem {
       const ai = BattleAIFactory.createAIWithSkills(
         participant.team,
         participant.getSkillList(),
+        this.buffLookup,
       )
       aiInstances.set(participant.id, ai)
       this.aiInstances.set(participant.id, ai)
@@ -3407,6 +3659,7 @@ export class AISystem {
       ai = BattleAIFactory.createAIWithSkills(
         participant.team,
         participant.getSkillList(),
+        this.buffLookup,
       )
       this.aiInstances.set(participant.id, ai)
     }
@@ -3476,6 +3729,7 @@ import {
   SkillType,
   convertSkillConfigToSkill,
 } from '@/domain/skill/types'
+import type { BuffConfigLookup } from '@/domain/skill/types'
 /** 战斗AI接口 */
 export interface BattleAI {
   /** 设置上下文（Buff系统、技能管理器）*/
@@ -3774,12 +4028,13 @@ export class BattleAIFactory {
   static createAIWithSkills(
     side: ParticipantSide,
     skills: SkillConfig[],
+    buffLookup?: BuffConfigLookup,
   ): BattleAI {
     const ai = new BaseBattleAI()
     skills.forEach((skillConfig) => {
       // ★ 被动技能不进入 AI 决策池，由 PassiveSkillManager 独立管理
       if (skillConfig.skillType === SkillType.PASSIVE) return
-      const skill = convertSkillConfigToSkill(skillConfig)
+      const skill = convertSkillConfigToSkill(skillConfig, undefined, buffLookup)
       if (skill) {
         ai['skills'].set(skill.id, skill)
       }
@@ -4195,10 +4450,6 @@ export class BattleManager {
   /** 阵型配置 */
   private allyFormation?: import('@/shared/types/formation').FormationConfig
   private enemyFormation?: import('@/shared/types/formation').FormationConfig
-  /** 设置当前场景 ID */
-  setSceneId(sceneId?: string): void {
-    this.currentSceneId = sceneId
-  }
   /** 设置阵型配置 */
   setFormations(
     ally?: import('@/shared/types/formation').FormationConfig,
@@ -4273,21 +4524,6 @@ export class BattleManager {
    */
   getBattleSystem(): BattleSystem {
     return this.battleSystem
-  }
-  /**
-   * 统一参与者状态更新接口
-   * 通过 BattleSystem 修改参与者属性，BattleSystem 为唯一数据源
-   * Store 因共享对象引用自动感知变更
-   */
-  updateParticipantState(
-    participantId: string,
-    updates: Partial<BattleEntity>,
-  ): void {
-    const battleData = this.battleSystem.getBattleData()
-    const participant = battleData?.participants.get(participantId)
-    if (participant) {
-      Object.assign(participant, updates)
-    }
   }
   /**
    * 通过命令流处理回合（第三阶段）
@@ -4506,7 +4742,13 @@ export class BattleManager {
     if (battleData?.participants) {
       battleData.participants.set(character.id, character)
     }
-    // NOTE: 被动触发延迟到 initialize() 统一执行，避免与 initialize 中的 clearAll+重注册冲突
+    // NOTE: 战斗进行中动态添加角色时，initialize() 不会再次执行（被动注册 + BATTLE_START
+    //       触发只发生在 startBattle），必须立即注册并触发该角色的被动。
+    //       编成阶段（战斗未开始）添加仍由 startBattle → initialize() 统一处理，
+    //       避免与 initialize 中的 clearAll+重注册冲突。
+    if (this.battleStateManager.getIsBattleActive()) {
+      this.battleSystem.triggerPassiveSkillsForCharacter(character)
+    }
     this.emitTeamChanged()
   }
   /**
@@ -4548,14 +4790,6 @@ export class BattleManager {
     return 999
   }
   /**
-   * 更新角色状态
-   * @param characterId - 角色 ID
-   * @param updates - 更新数据
-   */
-  updateCharacterState(characterId: string, updates: Partial<BattleEntity>) {
-    this.battleStateManager.updateCharacterManually(characterId, updates)
-  }
-  /**
    * 重置角色状态到初始值
    */
   resetCharacterStates() {
@@ -4572,42 +4806,6 @@ export class BattleManager {
     const allyCount = this.allyTeam.filter((p) => p.enabled).length
     const enemyCount = this.enemyTeam.filter((p) => p.enabled).length
     return { ally: allyCount, enemy: enemyCount }
-  }
-  /**
-   * 根据 ID 获取角色
-   * @param characterId - 角色 ID
-   * @returns BattleEntity 或 undefined
-   */
-  getCharacterById(characterId: string): BattleEntity | undefined {
-    return (
-      this.allyTeam.find((p) => p.id === characterId) ||
-      this.enemyTeam.find((p) => p.id === characterId)
-    )
-  }
-  /**
-   * 批量更新角色状态
-   * @param updates - 更新数组
-   */
-  updateMultipleCharacters(
-    updates: Array<{ id: string; data: Partial<BattleEntity> }>,
-  ) {
-    updates.forEach(({ id, data }) => {
-      this.updateCharacterState(id, data)
-    })
-  }
-  /**
-   * 批量设置角色启用状态
-   */
-  setMultipleCharactersEnabled(characterIds: string[], enabled: boolean) {
-    characterIds.forEach((id) => {
-      this.setCharacterEnabled(id, enabled)
-    })
-  }
-  /**
-   * 增加回合数
-   */
-  incrementTurn() {
-    this.battleStateManager.incrementTurn()
   }
   /**
    * 更新回合数
@@ -4893,7 +5091,7 @@ import { SkillManager } from '@/domain/skill/SkillManager'
 import type { Container } from '@/infrastructure/di/Container'
 import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import type { BattleCommand } from '@/shared/types/battle-commands'
-import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
@@ -4907,6 +5105,7 @@ import { ThreatManager } from '@/domain/battle/service/ThreatManager'
 import { FieldEffectManager } from '@/domain/battle/service/FieldEffectManager'
 import { FormationManager } from '@/domain/battle/service/FormationManager'
 import type { FormationConfig } from '@/shared/types/formation'
+import { percentage } from '@/shared/utils/math'
 /**
  * 战斗系统核心管理类
  *
@@ -5530,15 +5729,11 @@ export class BattleSystem {
             // removeModifier(instanceId) 正确清理跨角色修饰符。
             const targetStack = this.buffSystem.getModifierStack(targetId)
             for (const mod of aura.modifiers) {
-              let value = typeof mod.value === 'number' ? mod.value : 0
-              // aura 中的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
-              if (mod.type === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
-                value = Math.round(value * 10000) / 100
-              }
+              // aura 的 PERCENTAGE value 由配置显式声明（百分数），无需运行时换算
               targetStack.addModifier(
                 instanceId,
                 mod.targetAttribute as ATTRIBUTE_CODE,
-                value,
+                typeof mod.value === 'number' ? mod.value : 0,
                 mod.type,
               )
             }
@@ -5554,6 +5749,11 @@ export class BattleSystem {
    * @param participant 参与者
    */
   public triggerPassiveSkillsForCharacter(participant: BattleEntity): void {
+    // NOTE: 动态添加的角色未经过 initialize()，被动从未注册到 PassiveSkillManager
+    //       （triggerPassives 依赖 passives Map，未注册会静默 return）；
+    //       先清空再注册，保证幂等（重复调用不会累积重复被动）
+    this.passiveSkillManager.clearPassives(participant.id)
+    GameDataProcessor.registerParticipantPassives(participant, this.passiveSkillManager)
     // 触发战斗开始事件
     this.emitTriggerEvent(BattleTriggerPhase.BATTLE_START, {
       sourceId: participant.id,
@@ -5966,12 +6166,6 @@ export class BattleSystem {
       this.battleData.battleState = status
     }
   }
-  public getRoundState(): RoundStatus | undefined {
-    return this.battleData?.roundState
-  }
-  public isBattleEnded(): boolean {
-    return this.battleData?.battleState === BattleStatus.ENDED
-  }
   public getAutoBattle(): boolean {
     return this.battleData?.autoBattle ?? false
   }
@@ -6129,10 +6323,6 @@ export class BattleSystem {
    */
   public getBattleData(): BattleData | undefined {
     return this.battleData
-  }
-  /** @internal 接口兼容，委托给 setSpeed */
-  public setBattleSpeed(speed: number): void {
-    this.setSpeed(speed)
   }
   // ===================== 命令生成器（第三阶段） =====================
   /**
@@ -7693,6 +7883,7 @@ export class ParticipantSkills {
  **/
 import { ATTRIBUTE_CODE, type AttributeValue, getAttrMeta, getAttrDv } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
+import { round } from '@/shared/utils/math'
 export class ParticipantStats {
   readonly attributes = new Map<ATTRIBUTE_CODE, AttributeValue>()
   /** 全局版本号，每次变化递增 */
@@ -7807,7 +7998,7 @@ export class ParticipantStats {
     // ponytail: 加成属性（attackBonus/healthBonus）已在 enemyToParticipant 中作为
     // PERCENTAGE 修饰符注入到对应属性，此处不再重复处理。
     const value = ((attrData.base + additive) * percentMultiplier / 100 * independentMultiplier / 100) * finalMultiplier / 100
-    attrData.value = Math.round(value * 100) / 100
+    attrData.value = round(value, 2)
     // 记录计算拆解
     attrData.breakdown = {
       base: attrData.base,
@@ -8882,6 +9073,7 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { BattleEventType } from '@/domain/battle/type/types'
 import { LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import type { BattleLogCategory } from '@/shared/types/battle-log'
 import {
   ReplayEngine,
   type ReplayState,
@@ -9119,7 +9311,7 @@ export class BattleReplayManager {
   private handleReplayEvent(event: ReplayEvent) {
     switch (event.type) {
       case BattleEventType.ACTION:
-        this.handleActionReplay(event.data?.action)
+        this.handleActionReplay(event.data?.action, event.data?.category)
         break
       case BattleEventType.TURN_START:
         this.handleTurnStartReplay(event.data?.turn, event.data?.participantId)
@@ -9145,7 +9337,7 @@ export class BattleReplayManager {
     }
   }
   /** 处理动作回放 */
-  private handleActionReplay(action: any) {
+  private handleActionReplay(action: any, category?: string) {
     if (!action) return
     const sourceName = action.sourceId ?? '未知'
     const targetName = action.targetId ?? '未知'
@@ -9155,11 +9347,8 @@ export class BattleReplayManager {
       turn: action.turn ?? 0,
       message: `[回放] ${sourceName} → ${targetName}${dmgText}${healText}`,
       segments: [{ text: `[回放] ${sourceName} → ${targetName}${dmgText}${healText}` }],
-      category: (action.damage ?? 0) > 0
-        ? BATTLE_LOG_CATEGORIES.DAMAGE
-        : (action.heal ?? 0) > 0
-          ? BATTLE_LOG_CATEGORIES.HEAL
-          : BATTLE_LOG_CATEGORIES.STATUS,
+      // 日志类别由录制端写入（BattleRecorder.recordEvent），此处直接读取
+      category: (category as BattleLogCategory) ?? BATTLE_LOG_CATEGORIES.STATUS,
       meta: { role: 'action' },
     })
   }
@@ -9297,6 +9486,10 @@ import {
 } from '@/domain/battle/type/types'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import {
+  BATTLE_ANIMATION_TIMING,
+  phaseAt,
+} from '@/shared/constants/animation-timing'
 export type ReplayStateCallback = (state: ReplayState) => void
 export type ReplayEventCallback = (event: ReplayEvent) => void
 export interface ReplayState {
@@ -9750,21 +9943,18 @@ export class ReplayEngine {
       }, delay)
     })
   }
+  /**
+   * 事件间隔时序：与主系统共享唯一时间源（BATTLE_ANIMATION_TIMING）。
+   * 行动事件等待到命中瞬间（50% T），非行动事件按 windup 结束点短停顿（20% T）；
+   * 预算按 1x 基准计算，播放倍率 this.speed（0.5/1/2/5）统一缩放。
+   * NOTE: 不读取行动者的角色速度属性——那是战斗属性，与动画播放倍率语义不同。
+   */
   private calculateEventDelay(event: ReplayBattleEvent): number {
-    const baseDelay = 500
-    const typeDelay: Record<string, number> = {
-      [BattleEventType.ACTION]: 800,
-      [BattleEventType.BUFF_ADD]: 200,
-      [BattleEventType.BUFF_REMOVE]: 200,
-      [BattleEventType.BUFF_UPDATE]: 100,
-      [BattleEventType.TURN_START]: 300,
-      [BattleEventType.TURN_END]: 200,
-      [BattleEventType.BATTLE_START]: 500,
-      [BattleEventType.BATTLE_END]: 500,
-    }
-    const type = event.type || BattleEventType.ACTION
-    const delay = typeDelay[type] || baseDelay
-    return delay / this.speed
+    const ratio =
+      event.type === BattleEventType.ACTION
+        ? BATTLE_ANIMATION_TIMING.PHASES.impact
+        : BATTLE_ANIMATION_TIMING.PHASES.windup.end
+    return phaseAt(ratio, 1) / this.speed
   }
   private handleReplayEnd(): void {
     this.isPlaying = false
@@ -9834,6 +10024,7 @@ import {
   EffectType,
   StepEffectType,
   convertSkillConfigToSkill,
+  type BuffConfigLookup,
 } from '@/domain/skill/types'
 import {
   resolveSkillTargets,
@@ -10082,10 +10273,13 @@ export class BattleExecutor {
       return true
     })
     if (availableSkills.length > 0) {
+      // Buff 极性由已解析配置显式查询（AI 技能标记不依赖 ID 前缀）
+      const buffLookup: BuffConfigLookup = (buffId) =>
+        this.buffSystem.getScriptRegistry().getResolvedBuffConfig(buffId)?.polarity
       const skills = availableSkills
         .map((id) => this.skillManager.getSkillConfig(id))
         .filter(Boolean)
-        .map((c) => convertSkillConfigToSkill(c!))
+        .map((c) => convertSkillConfigToSkill(c!, undefined, buffLookup))
       const bestSkillId = this.defaultStrategy.selectBestSkill(
         skills,
         participant,
@@ -10458,6 +10652,17 @@ export class BattleExecutor {
     stepTargetType: string,
   ): BattleEntity[] {
     return resolveStepTargets(battle.participants, mainTarget, stepTargetType)
+  }
+  /**
+   * 根据技能配置选择单个目标 ID（快捷入口，内部调用 getSkillTargets）
+   */
+  selectTargetForSkill(
+    battle: BattleData,
+    source: BattleEntity,
+    skill: SkillConfig,
+  ): string {
+    const targets = this.getSkillTargets(battle, source, skill)
+    return targets.length > 0 ? targets[0].id : ''
   }
   /** ★ 识别「伪装成技能的普通攻击」
    *  数据契约：技能配置显式声明 isNormalAttack，替代名称/结构启发式猜测
@@ -11667,12 +11872,16 @@ import { BATTLE_REPLAY_VERSION } from '@/domain/battle/type/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { calculateChecksum, generateReplayId, verifyChecksum } from '@/shared/utils/Checksum'
-import { LogType, type BattleLogEntry } from '@/shared/types/battle-log'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import type { TraceLogEntry } from '@/shared/types/trace-log'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { EffectType } from '@/domain/skill/types'
+import {
+  BATTLE_LOG_CATEGORIES,
+  type BattleLogCategory,
+} from '@/shared/types/battle-log'
 /**
  * 战斗记录
  * 一场战斗的完整录制数据：包含初始状态、事件序列、回合快照、日志、
@@ -11716,8 +11925,6 @@ export interface RecordedBattle {
   }
   /** 回合记录列表 */
   rounds: BattleRound[]
-  /** 战斗日志条目 */
-  logs: BattleLogEntry[]
   /** 详细战斗记录（含伤害拆分） */
   combatRecords: CombatRecord[]
   /** 树状调试日志（阶段二：TraceLogCollector 的导出数据） */
@@ -11798,7 +12005,6 @@ export class BattleRecorder {
       events: [],
       initialState,
       rounds: [],
-      logs: [],
       combatRecords: [],
     }
     this.recordings.set(battleId, recording)
@@ -11820,55 +12026,6 @@ export class BattleRecorder {
     // ponytail: 战报累加器初始化
     BattleSummaryGenerator.instance.startBattle(battleId)
     this.scheduleCleanup()
-  }
-  public getRandomSeed(battleId: string): string | undefined {
-    return this.randomSeeds.get(battleId)
-  }
-  public startRound(
-    battleId: string,
-    roundNumber: number,
-    snapshot?: BattleStateSnapshot,
-  ) {
-    this.currentTurnNumbers.set(battleId, roundNumber)
-    const recording = this.recordings.get(battleId)
-    if (recording) {
-      const round: BattleRound = {
-        roundNumber,
-        startSnapshot: snapshot,
-        events: [],
-      }
-      recording.rounds.push(round)
-    }
-    this.recordEvent(
-      battleId,
-      BattleEventType.TURN_START,
-      {
-        roundNumber,
-        snapshot,
-      },
-      roundNumber,
-      roundNumber,
-    )
-  }
-  public endRound(battleId: string, snapshot?: BattleStateSnapshot) {
-    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
-    const recording = this.recordings.get(battleId)
-    if (recording && recording.rounds.length > 0) {
-      const currentTurn = recording.rounds[recording.rounds.length - 1]
-      if (currentTurn.roundNumber === roundNumber) {
-        currentTurn.endSnapshot = snapshot
-      }
-    }
-    this.recordEvent(
-      battleId,
-      BattleEventType.TURN_END,
-      {
-        roundNumber,
-        snapshot,
-      },
-      roundNumber,
-      roundNumber,
-    )
   }
   public recordAction(battleId: string, action: BattleAction, turn: number) {
     const roundNumber = this.currentTurnNumbers.get(battleId) || 0
@@ -11970,23 +12127,6 @@ export class BattleRecorder {
         instanceId,
         remainingTurns,
         stacks,
-        turn,
-      },
-      turn,
-      roundNumber,
-    )
-  }
-  public recordStateChange(
-    battleId: string,
-    state: Partial<BattleState>,
-    turn: number,
-  ) {
-    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
-    this.recordEvent(
-      battleId,
-      BattleEventType.STATE_CHANGE,
-      {
-        state,
         turn,
       },
       turn,
@@ -12140,22 +12280,6 @@ export class BattleRecorder {
       return null
     }
   }
-  public async validateRecording(saveKey: string): Promise<boolean> {
-    const recording = await this.storage.get<RecordedBattle>(STORAGE_STORE.RECORDINGS, saveKey)
-    if (!recording) {
-      return false
-    }
-    try {
-      if (!recording.checksum) {
-        return true
-      }
-      const { checksum, ...dataWithoutChecksum } = recording
-      return verifyChecksum(dataWithoutChecksum, checksum)
-    } catch (error) {
-      console.error('验证战斗记录时出错:', error)
-      return false
-    }
-  }
   public async getSavedRecordingsList(): Promise<string[]> {
     try {
       return await this.storage.keys(STORAGE_STORE.RECORDINGS)
@@ -12201,50 +12325,61 @@ export class BattleRecorder {
       timestamp: Date.now(),
       turn,
       roundNumber,
-      data,
+      // 录制时写入显式语义标注：日志类别与事件重要性，回放/渲染层直接读取
+      data: {
+        ...data,
+        category: this.deriveCategory(type, data),
+        severity: this.deriveSeverity(type, data),
+      },
     }
     recording.events.push(event)
-    recording.logs.push(
-      Object.assign(
-        {
-          index: recording.logs.length,
-          type: LogType.BATTLE,
-          turn,
-          message: this.generateLogMessage(type, data),
-        } satisfies BattleLogEntry,
-        {
-          eventId: event.eventId,
-          timestamp: event.timestamp,
-          roundNumber,
-          details: data,
-        },
-      ),
-    )
     if (recording.events.length > MAX_EVENT_LOG) {
       recording.events = recording.events.slice(-MAX_EVENT_LOG)
     }
   }
-  private generateLogMessage(type: string, data: any): string {
-    switch (type) {
-      case BattleEventType.BATTLE_START:
-        return '战斗开始'
-      case BattleEventType.BATTLE_END:
-        return `战斗结束，胜利方: ${data.winner}`
-      case BattleEventType.TURN_START:
-        return `回合 ${data.roundNumber || data.turn} 开始`
-      case BattleEventType.TURN_END:
-        return `回合 ${data.roundNumber || data.turn} 结束`
-      case BattleEventType.ACTION:
-        return `${data.action?.sourceId} 执行了 ${data.action?.type} 动作`
-      case BattleEventType.BUFF_ADD:
-        return `为目标 ${data.targetId} 添加了 Buff: ${data.buffId}`
-      case BattleEventType.BUFF_REMOVE:
-        return `从目标 ${data.targetId} 移除了 Buff: ${data.instanceId}`
-      case BattleEventType.BUFF_UPDATE:
-        return `更新了目标 ${data.targetId} 的 Buff: ${data.instanceId}`
-      default:
-        return `事件: ${type}`
+  /**
+   * 日志类别：基于显式动作类型（BattleAction.type）与效果类型（BattleEffect.type）判定，
+   * 不做 damage/heal 数值猜测。
+   */
+  private deriveCategory(
+    type: ReplayBattleEvent['type'],
+    data: Record<string, any>,
+  ): BattleLogCategory {
+    if (type !== BattleEventType.ACTION) return BATTLE_LOG_CATEGORIES.STATUS
+    const action = data?.action
+    if (!action) return BATTLE_LOG_CATEGORIES.STATUS
+    const effectTypes: string[] =
+      action.effects?.map((e: { type: string }) => e.type) ?? []
+    if (
+      effectTypes.includes(EffectType.HEAL) &&
+      !effectTypes.includes(EffectType.DAMAGE)
+    ) {
+      return BATTLE_LOG_CATEGORIES.HEAL
     }
+    if (effectTypes.includes(EffectType.DAMAGE)) {
+      return BATTLE_LOG_CATEGORIES.DAMAGE
+    }
+    return BATTLE_LOG_CATEGORIES.STATUS
+  }
+  /**
+   * 事件重要性：基于显式事件/动作类型判定，无魔法阈值。
+   * 战斗开始/结束 → high；状态变更 → medium；技能动作 → medium；其余 → low。
+   */
+  private deriveSeverity(
+    type: ReplayBattleEvent['type'],
+    data: Record<string, any>,
+  ): 'high' | 'medium' | 'low' {
+    if (
+      type === BattleEventType.BATTLE_START ||
+      type === BattleEventType.BATTLE_END
+    ) {
+      return 'high'
+    }
+    if (type === BattleEventType.STATE_CHANGE) return 'medium'
+    if (type === BattleEventType.ACTION && data?.action?.type === 'skill') {
+      return 'medium'
+    }
+    return 'low'
   }
   public clearRecordings() {
     this.recordings.clear()
@@ -12765,6 +12900,7 @@ import type { FieldEffectConfig } from '@/shared/types/scene'
 import { type BattleEntity } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { floor } from '@/shared/utils/math'
 interface ActiveEffect {
   config: FieldEffectConfig
   remainingTurns: number
@@ -12825,12 +12961,12 @@ export class FieldEffectManager {
         const p = eff.config.periodic
         if (p.effect === 'damage') {
           const dmg = p.isPercent
-            ? Math.floor(target.getAttribute(ATTRIBUTE_CODE.maxHealth) * p.value / 100)
+            ? floor(target.getAttribute(ATTRIBUTE_CODE.maxHealth) * p.value / 100)
             : p.value
           buffSystem.requestDamage(target.id, dmg)
         } else if (p.effect === 'heal') {
           const heal = p.isPercent
-            ? Math.floor(target.getAttribute(ATTRIBUTE_CODE.maxHealth) * p.value / 100)
+            ? floor(target.getAttribute(ATTRIBUTE_CODE.maxHealth) * p.value / 100)
             : p.value
           buffSystem.requestHeal(target.id, heal)
         } else if (p.effect === 'energy') {
@@ -14182,7 +14318,6 @@ export interface BattleReplay {
   finalState?: BattleStateSnapshot
   rounds: BattleRound[]
   events: ReplayBattleEvent[]
-  logs: BattleLogEntry[]
   result?: BattleResult
 }
 /** 战斗阶段 -- 唯一的事实来源，统一 Buff 触发、被动技能、回放、事件总线的气血周期定义 */
@@ -14224,6 +14359,7 @@ export const OLD_PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
   ON_BATTLE_END: BattleTriggerPhase.BATTLE_END,
   ON_DAMAGE_TAKEN: BattleTriggerPhase.DAMAGE_TAKEN,
   ON_ATTACK_HIT: BattleTriggerPhase.ON_HIT,
+  ON_ATTACK: BattleTriggerPhase.BEFORE_ATTACK, // 旧名"攻击时"→ 攻击前阶段
   BEFORE_ATTACK: BattleTriggerPhase.BEFORE_ATTACK,
   AFTER_ATTACK: BattleTriggerPhase.AFTER_ATTACK,
   ON_KILL: BattleTriggerPhase.ON_KILL,
@@ -14409,9 +14545,16 @@ export class AtomicEffectRegistry {
 }
 
 --- src/domain/buff/atomic/BuffConfigResolver.ts ---
-import type { IAtomicEffect, AtomicEffectType } from './types'
+import { type IAtomicEffect, AtomicEffectType } from './types'
 import { AtomicEffectRegistry } from './AtomicEffectRegistry'
-import type { BuffConfig, StackRule, ControlType } from '@/domain/buff/types'
+import type { BuffConfig, StackRule, ControlType, TriggerAction } from '@/domain/buff/types'
+import type { BuffPolarity } from '@/shared/types/buff-classification'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
+import { getAttrName, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import {
+  BattleTriggerPhase,
+  OLD_PHASE_NAME_MAP,
+} from '@/domain/battle/type/types'
 /** 解析后的运行时效果计划 */
 export interface ResolvedEffectPlan {
   type: AtomicEffectType
@@ -14425,6 +14568,12 @@ export interface ResolvedEffectPlan {
 export interface ResolvedBuffConfig extends BuffConfig {
   /** 原子效果执行计划（有序） */
   effectPlan: ResolvedEffectPlan[]
+  /** 显式声明的极性（缺失时由 controlType/tags 推导，推导失败抛错） */
+  polarity: BuffPolarity
+  /** 执行模式（'script' 由注册表脚本信息补充，此处推导数据侧模式） */
+  executionMode: 'effectPlan' | 'triggerOnly' | 'marker'
+  /** 效果摘要文本（解析时从 effectPlan/时长派生，供日志与 UI 直接读取） */
+  effectSummary: string
 }
 /**
  * Buff 配置解析器
@@ -14446,10 +14595,75 @@ export class BuffConfigResolver {
    */
   resolve(raw: Record<string, any>): ResolvedBuffConfig {
     const effectPlan = this.buildEffectPlan(raw)
+    const base = this.buildBaseConfig(raw)
+    const effectSummary = this.buildEffectSummary(raw, effectPlan)
     return {
-      ...this.buildBaseConfig(raw),
+      ...base,
       effectPlan,
+      polarity: this.derivePolarity(raw),
+      executionMode: this.deriveExecutionMode(raw),
+      effectSummary,
+      // 描述缺失时由解析器自动生成，下游不再做运行时三级回退
+      description: base.description.trim() || effectSummary,
     }
+  }
+  /** 推导数据侧执行模式：有效果 → effectPlan；仅触发器 → triggerOnly；否则 → marker */
+  private deriveExecutionMode(
+    raw: Record<string, any>,
+  ): 'effectPlan' | 'triggerOnly' | 'marker' {
+    if (raw.effects?.length) return 'effectPlan'
+    if (raw.triggers?.length) return 'triggerOnly'
+    return 'marker'
+  }
+  /** 推导显式极性：配置声明优先（校验值域），缺失时从 controlType/tags 推导，仍失败则抛错 */
+  private derivePolarity(raw: Record<string, any>): BuffPolarity {
+    const VALID = ['positive', 'negative', 'neutral', 'mixed']
+    if (raw.polarity) {
+      if (!VALID.includes(raw.polarity)) {
+        throw new Error(
+          `[BuffConfigResolver] ${raw.id ?? 'unknown'}: polarity "${raw.polarity}" 非法，须为 positive/negative/neutral/mixed`
+        )
+      }
+      return raw.polarity as BuffPolarity
+    }
+    if (raw.controlType && raw.controlType !== 'none') {
+      return 'negative'
+    }
+    const tags: string[] = raw.tags ?? []
+    if (tags.some((t) => t === 'dot' || t === 'poison' || t === 'debuff')) {
+      return 'negative'
+    }
+    throw new Error(
+      `[BuffConfigResolver] ${raw.id ?? 'unknown'}: 缺少 polarity 字段，且无法从 controlType/tags 推导`
+    )
+  }
+  /** 从效果计划派生静态效果摘要（属性修正 + 时长），供日志/UI 直接读取 */
+  private buildEffectSummary(
+    raw: Record<string, any>,
+    effectPlan: ResolvedEffectPlan[],
+  ): string {
+    const parts: string[] = []
+    for (const effect of effectPlan) {
+      if (effect.type !== AtomicEffectType.MODIFIER) continue
+      const attrs = effect.params.attributes as
+        | Record<string, AttributeValueConfig>
+        | undefined
+      if (!attrs) continue
+      for (const [code, cfg] of Object.entries(attrs)) {
+        const cn = getAttrName(code as ATTRIBUTE_CODE)
+        if (!cn) continue
+        const arrow = cfg.value >= 0 ? '↑' : '↓'
+        const text =
+          cfg.type === 'PERCENTAGE'
+            ? `${Math.abs(cfg.value)}%`
+            : `${Math.abs(cfg.value)}`
+        parts.push(`${cn}${arrow}${text}`)
+      }
+    }
+    const duration = raw.duration ?? 1
+    if (duration > 0) parts.push(`（${duration}回合）`)
+    else if (duration === -1) parts.push(`（永久）`)
+    return parts.join(' ')
   }
   private buildEffectPlan(raw: Record<string, any>): ResolvedEffectPlan[] {
     const plan: ResolvedEffectPlan[] = []
@@ -14486,8 +14700,25 @@ export class BuffConfigResolver {
       immunities: raw.immunities ?? undefined,
       parameters: raw.parameters ?? undefined,
       attributes: raw.attributes ?? undefined,
-      triggers: raw.triggers ?? undefined,
+      // 触发器阶段在此归一化为枚举值，下游不再做双命名兼容
+      triggers: raw.triggers
+        ? (raw.triggers as TriggerAction[]).map((t) => ({
+            ...t,
+            phase: this.normalizePhase(t.phase, raw.id),
+          }))
+        : undefined,
     }
+  }
+  /** 归一化触发阶段：旧风格（ON_ATTACK_HIT）→ 枚举值（on_hit），无法识别则抛错 */
+  private normalizePhase(phase: string, buffId: string): BattleTriggerPhase {
+    const normalized = OLD_PHASE_NAME_MAP[phase]
+    if (normalized) return normalized
+    if ((Object.values(BattleTriggerPhase) as string[]).includes(phase)) {
+      return phase as BattleTriggerPhase
+    }
+    throw new Error(
+      `[BuffConfigResolver] ${buffId ?? 'unknown'}: 无法识别的触发器阶段 "${phase}"`
+    )
   }
 }
 
@@ -14524,12 +14755,8 @@ export class AuraEffect implements IAtomicEffect {
     const modifiers = params.modifiers as ModifierTemplate[] | undefined
     if (!modifiers) return
     for (const mod of modifiers) {
-      let value = mod.value
-      // aura 中的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
-      if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
-        value = Math.round(value * 10000) / 100
-      }
-      ctx.addModifier(mod.targetAttribute, value, mod.type)
+      // aura 的 PERCENTAGE value 由配置显式声明（百分数，如 15 表示 15%），无需运行时换算
+      ctx.addModifier(mod.targetAttribute, mod.value, mod.type)
     }
   }
   getEffectLines(_ctx: BuffContext, params: Record<string, unknown>) {
@@ -14618,6 +14845,7 @@ export class DotEffect implements IAtomicEffect {
 --- src/domain/buff/atomic/effects/HotEffect.ts ---
 import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { round } from '@/shared/utils/math'
 /**
  * HotEffect — 持续治疗/回能原语
  *
@@ -14653,7 +14881,7 @@ export class HotEffect implements IAtomicEffect {
       if (healType === 'percent') {
         // 百分比能量：基于最大能量值（依赖问题一修复后的 getAttrVal）
         const maxEnergy = ctx.getAttrVal('maxEnergy')
-        const amount = Math.round(maxEnergy * value / 100) * stacks
+        const amount = round(maxEnergy * value / 100) * stacks
         buffSystem.requestEnergy(ctx.characterId, amount)
       } else {
         buffSystem.requestEnergy(ctx.characterId, value * stacks)
@@ -14715,26 +14943,28 @@ export class ImmunityEffect implements IAtomicEffect {
 --- src/domain/buff/atomic/effects/ModifierEffect.ts ---
 import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
-import { parseAttributeValue } from '@/domain/buff/atomic/parseUtils'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 /**
  * ModifierEffect — 属性修正原语
  *
- * 将 JSON 中的 attributes 字段（如 {"attack": "+10%", "defense": "-5%"}）
+ * 将 JSON 中的 attributes 字段（如 {"attack": { value: 20, type: "PERCENTAGE" }}）
  * 解析为 ModifierStack 上的修饰符。
  * perStack=true 时，修饰符值 × 当前层数。
+ * 值格式由配置显式声明（{ value, type }），此处不做任何格式猜测。
  */
 export class ModifierEffect implements IAtomicEffect {
   readonly type: AtomicEffectType = AtomicEffectType.MODIFIER
   onApply(ctx: BuffContext, params: Record<string, unknown>): void {
-    const attributes = params.attributes as Record<string, string> | undefined
+    const attributes = params.attributes as
+      | Record<string, AttributeValueConfig>
+      | undefined
     if (!attributes) return
     const perStack = (params.perStack as boolean) ?? true
     const stacks = (ctx.getVariable<number>('_stacks') ?? 1)
-    for (const [attr, valueStr] of Object.entries(attributes)) {
-      const { value, type } = this.parseValue(valueStr)
-      const finalValue = perStack ? value * stacks : value
-      ctx.addModifier(attr as ATTRIBUTE_CODE, finalValue, type)
+    for (const [attr, cfg] of Object.entries(attributes)) {
+      const finalValue = perStack ? cfg.value * stacks : cfg.value
+      ctx.addModifier(attr as ATTRIBUTE_CODE, finalValue, cfg.type)
     }
   }
   onRemove(ctx: BuffContext, _params: Record<string, unknown>): void {
@@ -14742,32 +14972,33 @@ export class ModifierEffect implements IAtomicEffect {
   }
   onStackChange(ctx: BuffContext, params: Record<string, unknown>, newStacks: number): void {
     ctx.removeModifiers()
-    const attributes = params.attributes as Record<string, string> | undefined
+    const attributes = params.attributes as
+      | Record<string, AttributeValueConfig>
+      | undefined
     if (!attributes) return
     const perStack = (params.perStack as boolean) ?? true
-    for (const [attr, valueStr] of Object.entries(attributes)) {
-      const { value, type } = this.parseValue(valueStr)
-      const finalValue = perStack ? value * newStacks : value
-      ctx.addModifier(attr as ATTRIBUTE_CODE, finalValue, type)
+    for (const [attr, cfg] of Object.entries(attributes)) {
+      const finalValue = perStack ? cfg.value * newStacks : cfg.value
+      ctx.addModifier(attr as ATTRIBUTE_CODE, finalValue, cfg.type)
     }
   }
   getEffectLines(ctx: BuffContext, params: Record<string, unknown>) {
-    const attributes = params.attributes as Record<string, string> | undefined
+    const attributes = params.attributes as
+      | Record<string, AttributeValueConfig>
+      | undefined
     if (!attributes) return []
     const stacks = ctx.getVariable<number>('_stacks') ?? 1
-    return Object.entries(attributes).map(([attr, val]) => ({
-      text: `${attr} ${val}${(params.perStack ?? true) && stacks > 1 ? ` ×${stacks}` : ''}`,
+    return Object.entries(attributes).map(([attr, cfg]) => ({
+      text: `${attr} ${cfg.type === 'PERCENTAGE' ? `${cfg.value}%` : cfg.value}${(params.perStack ?? true) && stacks > 1 ? ` ×${stacks}` : ''}`,
       kind: AtomicEffectType.MODIFIER,
     }))
-  }
-  private parseValue(valueStr: string): { value: number; type: ModifierType } {
-    return parseAttributeValue(valueStr)
   }
 }
 
 --- src/domain/buff/atomic/effects/ShieldEffect.ts ---
 import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { round } from '@/shared/utils/math'
 /**
  * ShieldEffect — 护盾原语
  *
@@ -14790,7 +15021,7 @@ export class ShieldEffect implements IAtomicEffect {
     let shieldAmount: number
     if (valueType === 'percent_max_hp') {
       const maxHp = ctx.getAttrVal('maxHealth')
-      shieldAmount = Math.round(maxHp * value / 100)
+      shieldAmount = round(maxHp * value / 100)
     } else {
       shieldAmount = value
     }
@@ -14846,34 +15077,6 @@ export class TriggerEffect implements IAtomicEffect {
     }
     return [{ text: '条件触发', kind: AtomicEffectType.TRIGGER }]
   }
-}
-
---- src/domain/buff/atomic/parseUtils.ts ---
-import { ModifierType } from '@/domain/attribute/types'
-/**
- * 解析属性值字符串为修饰符数值和类型
- *
- * 规则：
- * - "20%" → PERCENTAGE 20（20% 加成，计算时做 (100+20)/100 = 1.2）
- * - "0.1" → PERCENTAGE 10（小数转为百分比，×100）
- * - "15"  → ADDITIVE 15（绝对值加法）
- */
-export function parseAttributeValue(value: string): {
-  value: number
-  type: ModifierType
-} {
-  const trimmed = value.trim()
-  const isPercent = trimmed.includes('%')
-  const numericStr = trimmed.replace('%', '')
-  const numValue = parseFloat(numericStr)
-  if (isNaN(numValue)) return { value: 0, type: ModifierType.ADDITIVE }
-  if (isPercent) {
-    return { value: numValue, type: ModifierType.PERCENTAGE }
-  }
-  if (Math.abs(numValue) < 1) {
-    return { value: numValue * 100, type: ModifierType.PERCENTAGE }
-  }
-  return { value: numValue, type: ModifierType.ADDITIVE }
 }
 
 --- src/domain/buff/atomic/types.ts ---
@@ -15158,19 +15361,20 @@ export class BuffErrorBoundary {
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { container } from '@/infrastructure/di/Container'
 import type { ScriptBuffConfig, IBuffScript } from '@/domain/buff/types'
-/** Buff 脚本构造器接口，搭配类型守卫使用 */
+import { buffScripts } from '@/domain/buff/scripts/index'
+/** Buff 脚本构造器接口（静态 BUFF_ID 是类的显式身份声明，CONFIG 提供自包含配置） */
 interface BuffScriptConstructor {
   new (...args: any[]): IBuffScript
   BUFF_ID: string
   CONFIG?: ScriptBuffConfig
 }
-/** 类型守卫：判断导出值是否为 BuffScriptConstructor，且包含 BUFF_ID 静态属性（用于注册） */
-function isBuffConstructor(value: unknown): value is BuffScriptConstructor {
-  return (
-    typeof value === 'function' &&
-    typeof (value as unknown as Record<string, unknown>).BUFF_ID === 'string'
-  )
-}
+/**
+ * Buff 脚本加载器
+ *
+ * 只负责两件事：按 scripts/index.ts 的显式映射 import 模块、调用 registry.register。
+ * 不做目录扫描（import.meta.glob）、不做鸭子类型探测、不依赖路径命名约定。
+ * 模块内按 BUFF_ID 精确匹配类——BUFF_ID 是脚本类自己声明的身份，非结构推断。
+ */
 export class BuffScriptLoader {
   private loadedScripts = new Set<string>()
   private registry: BuffScriptRegistry
@@ -15178,39 +15382,37 @@ export class BuffScriptLoader {
     this.registry = registry || container.resolve('BuffScriptRegistry')
   }
   public async loadScripts(): Promise<void> {
-    try {
-      const modules = import.meta.glob('@/domain/buff/scripts/*.ts', {
-        eager: false,
-      }) as Record<string, () => Promise<Record<string, unknown>>>
-      for (const [path, moduleLoader] of Object.entries(modules)) {
-        // ponytail: 跳过 barrel 文件（index.ts），避免每个 buff 被注册两次
-        if (path.endsWith('/index.ts')) continue
-        try {
-          const module = await moduleLoader()
-          for (const [exportName, exportValue] of Object.entries(module)) {
-            if (isBuffConstructor(exportValue)) {
-              const BuffClass = exportValue
-              const buffId = BuffClass.BUFF_ID
-              // ponytail: 读取脚本类的静态 CONFIG（自包含模式），传给 registry
-              const defaultConfig = BuffClass.CONFIG
-              this.registry.register(
-                buffId,
-                () => new BuffClass(),
-                { filePath: path },
-                defaultConfig,
-              )
-              this.loadedScripts.add(exportName)
-              console.log(
-                `Loaded and registered buff script: ${exportName} (${buffId})${defaultConfig ? ' [self-contained]' : ''}`,
-              )
-            }
-          }
-        } catch (moduleError) {
-          console.error(`Failed to load module ${path}:`, moduleError)
+    for (const [buffId, moduleLoader] of Object.entries(buffScripts)) {
+      try {
+        const module = await moduleLoader()
+        const BuffClass = Object.values(module).find(
+          (v): v is BuffScriptConstructor =>
+            typeof v === 'function' &&
+            (v as BuffScriptConstructor).BUFF_ID === buffId,
+        )
+        if (!BuffClass) {
+          console.error(
+            `Buff script module 中未找到 BUFF_ID 为 "${buffId}" 的类`,
+          )
+          continue
         }
+        // 脚本类的静态 CONFIG（自包含模式），传给 registry
+        const defaultConfig = BuffClass.CONFIG
+        this.registry.register(
+          buffId,
+          () => new BuffClass(),
+          { filePath: `scripts/${buffId}` },
+          defaultConfig,
+        )
+        this.loadedScripts.add(buffId)
+        if (defaultConfig) {
+          console.log(
+            `Loaded and registered buff script: ${buffId} [self-contained]`,
+          )
+        }
+      } catch (moduleError) {
+        console.error(`Failed to load buff script ${buffId}:`, moduleError)
       }
-    } catch (error) {
-      console.error('Failed to load buff scripts:', error)
     }
   }
   public async reloadScripts(): Promise<void> {
@@ -15240,12 +15442,12 @@ import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { LogLevel } from '@/shared/types/battle-log'
 import { AtomicEffectRegistry } from '@/domain/buff/atomic/AtomicEffectRegistry'
-import { parseAttributeValue } from '@/domain/buff/atomic/parseUtils'
 import {
   BuffConfigResolver,
   type ResolvedBuffConfig,
 } from '@/domain/buff/atomic/BuffConfigResolver'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 import type { EffectsJsonData } from '@/shared/types/effects-json'
 /** 效果定义：脚本 + 配置的统一视图 */
 export interface EffectDefinition {
@@ -15306,24 +15508,7 @@ export class BuffScriptRegistry {
       if (Array.isArray(buffsData)) {
         for (const buff of buffsData) {
           if (buff.id) {
-            // 校验 attributes 值格式
-            if (buff.attributes) {
-              for (const [key, value] of Object.entries(buff.attributes)) {
-                if (typeof value !== 'string') {
-                  LoggerProvider.logger.addDebugLog(
-                    `Buff ${buff.id} 属性 ${key} 的值不是字符串: ${value}`,
-                  )
-                  continue
-                }
-                const trimmed = (value as string).trim()
-                const numericStr = trimmed.replace('%', '')
-                if (isNaN(parseFloat(numericStr))) {
-                  LoggerProvider.logger.addDebugLog(
-                    `Buff ${buff.id} 属性 ${key} 的值无法解析为数字: "${value}"`,
-                  )
-                }
-              }
-            }
+            // 配置值格式与键名校验由 validateBuffConfigs 统一执行（值须为 {value,type} 对象）
             this.buffConfigs.set(buff.id, buff as BuffJsonEntry)
             console.log(`加载 Buff 配置: ${buff.id}`)
           }
@@ -15342,57 +15527,49 @@ export class BuffScriptRegistry {
     this.loadEffectConfigs()
     this.validateBuffConfigs()
   }
-  /** 加载时校验：标记无脚本、无 effectPlan 的 Buff */
+  /** 加载时校验：不合规配置在加载时立即失败（校验失败 = 构建失败） */
   private validateBuffConfigs(): void {
     const knownCodes = Object.values(ATTRIBUTE_CODE) as string[]
+    const validateAttrs = (
+      attrs: Record<string, unknown> | undefined,
+      where: string,
+    ) => {
+      if (!attrs) return
+      for (const [key, value] of Object.entries(attrs)) {
+        if (!knownCodes.includes(key)) {
+          throw new Error(
+            `[BuffConfigValidator] ${where} 中的 "${key}" 不在 ATTRIBUTE_CODE 中，修饰符将静默失效`,
+          )
+        }
+        const cfg = value as { value?: unknown; type?: unknown } | null
+        if (
+          typeof cfg !== 'object' || cfg === null ||
+          typeof cfg.value !== 'number' ||
+          (cfg.type !== 'PERCENTAGE' && cfg.type !== 'ADDITIVE')
+        ) {
+          throw new Error(
+            `[BuffConfigValidator] ${where} 中 "${key}" 的值格式非法，须为 { value: number, type: 'PERCENTAGE'|'ADDITIVE' }`,
+          )
+        }
+      }
+    }
     for (const [buffId] of this.buffConfigs) {
       const raw = this.buffConfigs.get(buffId)
       if (!raw) continue
-      // 校验 raw.attributes 中的属性名是否在 ATTRIBUTE_CODE 中
-      if (raw.attributes) {
-        for (const key of Object.keys(raw.attributes)) {
-          if (!knownCodes.includes(key)) {
-            console.warn(
-              `[BuffConfigValidator] ${buffId}: raw.attributes 中的 "${key}" 不在 ATTRIBUTE_CODE 中，修饰符将静默失效`,
-            )
-          }
-        }
-      }
-      // 校验 effects[].params.attributes 中的属性名
+      validateAttrs(raw.attributes as Record<string, unknown> | undefined, `${buffId}.attributes`)
       if (raw.effects) {
         for (const effect of raw.effects) {
-          const attrs = (effect.params?.attributes ?? {}) as Record<string, string>
-          for (const key of Object.keys(attrs)) {
-            if (!knownCodes.includes(key)) {
-              console.warn(
-                `[BuffConfigValidator] ${buffId}: effects[].params.attributes 中的 "${key}" 不在 ATTRIBUTE_CODE 中，修饰符将静默失效`,
-              )
-            }
-          }
+          validateAttrs(
+            (effect.params?.attributes ?? undefined) as Record<string, unknown> | undefined,
+            `${buffId}.effects[].params.attributes`,
+          )
         }
-      }
-      // 检测旧字段：仍在用 attributes/immunities/aura/shield 但没有 effects[]
-      // NOTE: controlType 不是旧字段——BuffSystem 直接从 config.controlType 读取控制查询
-      const usedLegacy: string[] = []
-      for (const f of ['attributes', 'immunities', 'aura', 'shield'] as const) {
-        const v = raw[f]
-        if (v == null) continue
-        // 空对象（attributes: {}）不算
-        if (typeof v === 'object' && Object.keys(v).length === 0) continue
-        usedLegacy.push(f)
-      }
-      if (usedLegacy.length > 0 && !raw.effects?.length) {
-        throw new Error(
-          `[BuffConfigValidator] ${buffId}: 检测到旧字段 [${usedLegacy.join(', ')}] 但无 effects[]。` +
-          `请将所有效果迁移到 effects[] 数组格式。`
-        )
       }
       const hasScript = this.registry.has(buffId)
       const resolved = this.getResolvedBuffConfig(buffId)
       const hasEffectPlan = resolved?.effectPlan && resolved.effectPlan.length > 0
       const hasTriggers = (raw.triggers?.length ?? 0) > 0
       if (!hasScript && !hasEffectPlan && !hasTriggers) {
-        if (buffId.startsWith('_track_passive_')) continue
         throw new Error(
           `[BuffConfigValidator] ${buffId}: 无脚本、无 effects[]、无 triggers。` +
           `请至少配置其一。旧字段 attributes/controlType/immunities/aura 不再被识别。`
@@ -15400,20 +15577,7 @@ export class BuffScriptRegistry {
       }
     }
   }
-  /** 效果参数到属性修饰符的映射表 */
-  private static readonly EFFECT_PARAM_MAP: Record<string, string> = {
-    attackBonus: 'attack',
-    defenseBonus: 'defense',
-    speedBonus: 'speed',
-    healthBonus: 'maxHealth',
-    criticalRateBonus: 'critRate',
-    criticalDamageBonus: 'critDamage',
-    teamAttackBonus: 'attack',
-    teamHealPerTurn: 'hpRegenPercent',
-    controlDurationReduction: 'controlDurationReduction',
-    defenseReduction: 'defense',
-  }
-  /** 将 effects.json 的参数转换为 attributes 格式并加载到注册表 */
+  /** 将 effects.json 的配置加载到注册表（属性对象与 polarity 由配置显式声明，不做翻译/量级猜测） */
   private loadEffectConfigs(): void {
     try {
       const raw = effectsData as EffectsJsonData
@@ -15422,29 +15586,23 @@ export class BuffScriptRegistry {
       for (const effect of raw.effects) {
         if (!effect.id) continue
         if (this.buffConfigs.has(effect.id)) continue // buffs.json 优先
-        const attributes: Record<string, string> = {}
         const params = effect.params || {}
-        for (const [key, value] of Object.entries(params)) {
-          const attr = BuffScriptRegistry.EFFECT_PARAM_MAP[key]
-          if (!attr || typeof value !== 'number') continue
-          let pct: number
-          if (key === 'defenseReduction') {
-            pct = Math.round((1 - value) * 100) // 0.7 → -30%
-          } else if (value > 1) {
-            pct = Math.round((value - 1) * 100) // 1.2 → +20%
-          } else {
-            pct = Math.round(value * 100) // 0.03 → +3%
-          }
-          const sign = pct >= 0 ? '+' : ''
-          attributes[attr] = `${sign}${pct}%`
-        }
+        const attributes = (params.attributes ??
+          {}) as Record<string, AttributeValueConfig>
+        // polarity 由配置显式声明（type: "buff" | "debuff"）
+        const polarity =
+          effect.type === 'debuff'
+            ? 'negative'
+            : effect.type === 'buff'
+              ? 'positive'
+              : undefined
         const config: BuffJsonEntry = {
           id: effect.id,
           name: effect.id,
+          polarity,
+          description: effect.description ?? '',
           duration: (params.duration as number) ?? 1,
           maxStacks: (params.maxStacks as number) ?? 1,
-          attributes:
-            Object.keys(attributes).length > 0 ? attributes : undefined,
           effects: [{
             type: 'modifier',
             params: {
@@ -15495,10 +15653,6 @@ export class BuffScriptRegistry {
     if (!script && !config) return null
     return { script, config }
   }
-  public getBuffAttributes(buffId: string): Record<string, string> | undefined {
-    const config = this.buffConfigs.get(buffId)
-    return config?.attributes
-  }
   /** 获取已解析配置的 effectPlan（仅返回 effectPlan，无配置） */
   public getEffectPlan(
     buffId: string,
@@ -15509,12 +15663,6 @@ export class BuffScriptRegistry {
   public hasEffectPlan(buffId: string): boolean {
     const resolved = this.getResolvedBuffConfig(buffId)
     return !!resolved && resolved.effectPlan.length > 0
-  }
-  public parseAttributeValue(value: string): {
-    value: number
-    type: ModifierType
-  } {
-    return parseAttributeValue(value)
   }
   public loadBuffConfigsFromArray(configs: BuffJsonEntry[]): void {
     for (const buff of configs) {
@@ -15620,7 +15768,6 @@ import {
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import {
   BattleTriggerPhase,
-  OLD_PHASE_NAME_MAP,
   StepExecutionContext,
   type BattleEntity,
 } from '@/domain/battle/type/types'
@@ -15648,7 +15795,6 @@ import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { EffectType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import { StatusCategory, StatusCode, getControlPriority } from '@/shared/types/status-meta'
-import { classifyBuff } from '@/shared/types/buff-classification'
 import { Counter } from '@/shared/utils/Counter'
 import { ConditionState } from '@/shared/types/buff-display'
 export interface TriggerExecutionContext extends TriggerEventContext {
@@ -15925,14 +16071,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const buffInstance = this.buffInstances.get(instanceId)
     if (!buffInstance) return
     for (const trigger of triggers) {
-      const phase = OLD_PHASE_NAME_MAP[trigger.phase]
-      if (!phase) {
-        this.logger.addDebugLog(
-          `触发器阶段 ${trigger.phase} 未识别，跳过注册`,
-          { level: LogLevel.WARN },
-        )
-        continue
-      }
+      // phase 已由 BuffConfigResolver 归一化为枚举值，直接注册
+      const phase = trigger.phase
       let triggerCount = 0
       let lastTriggerTurn = -999
       const callback = (ctx: TriggerEventContext) => {
@@ -15990,9 +16130,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (!script) {
       const def = this.scriptRegistry.resolve(buffId)
       if (!def?.config) {
-        // ponytail: 追踪 buff（_track_passive_ 前缀）是运行时动态创建的，
-        // 不需要在 buffs.json 或脚本注册表中预先注册。
-        if (buffId.startsWith('_track_passive_')) {
+        // 运行时动态创建的 marker buff 由调用方显式声明执行模式
+        if (config.executionMode === 'marker') {
           script = null
         } else {
           console.warn(
@@ -16049,6 +16188,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       parameters:
         config.parameters ?? scriptDefaultConfig?.parameters ?? undefined,
       attributes: config.attributes ?? jsonConfig?.attributes ?? undefined,
+      executionMode: config.executionMode ?? undefined,
       triggers: config.triggers ?? jsonConfig?.triggers as TriggerAction[] | undefined,
       cascadeRemove:
         config.cascadeRemove ?? scriptDefaultConfig?.cascadeRemove ?? undefined,
@@ -16191,13 +16331,18 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const buffResolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
     const hasScript = script !== null
     const hasEffectPlan = buffResolved?.effectPlan && buffResolved.effectPlan.length > 0
-    const isTrackPassive = buffId.startsWith('_track_passive_')
+    // 执行模式由解析器推导（JSON 配置）或调用方显式声明（动态 buff）
+    const executionMode = buffResolved?.executionMode ?? resolvedConfig.executionMode
     const hasTriggersOnly = !hasScript && !hasEffectPlan &&
       (resolvedConfig.triggers?.length ?? 0) > 0
+    const isMarkerOrTrigger =
+      executionMode === 'marker' ||
+      executionMode === 'triggerOnly' ||
+      (!executionMode && hasTriggersOnly)
     let path: 'A' | 'B' | 'D'
     if (hasScript) path = 'A'
     else if (hasEffectPlan) path = 'B'
-    else if (isTrackPassive || hasTriggersOnly) path = 'D'
+    else if (isMarkerOrTrigger) path = 'D'
     else {
       this.logger.addDebugLog(
         `[BuffSystem] 配置错误: ${buffId} 无脚本、无 effectPlan，拒绝施加`,
@@ -16238,11 +16383,12 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
     // NOTE: 触发器注册独立于 effectPlan/脚本路径，两者可以共存。
     // 触发器与效果原语正交——effectPlan 管理每回合效果，triggers 管理事件响应。
-    // ponytail: 注册触发器监听器 — 从配置的 triggers 数组向 TriggerEventBus 注册
-    if (resolvedConfig.triggers && resolvedConfig.triggers.length > 0) {
+    // 注册解析器归一化后的 triggers（phase 已是枚举值）
+    const normalizedTriggers = buffResolved?.triggers ?? resolvedConfig.triggers
+    if (normalizedTriggers && normalizedTriggers.length > 0) {
       this.registerTriggersForInstance(
         instanceId,
-        resolvedConfig.triggers,
+        normalizedTriggers,
         characterId,
       )
     }
@@ -16261,7 +16407,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     }
     if (context?.record) {
       context?.record.effects.push({
-        type: classifyBuff(resolvedConfig as Parameters<typeof classifyBuff>[0]).isNegative ? EffectType.DEBUFF : EffectType.BUFF,
+        type: buffResolved?.polarity === 'negative' ? EffectType.DEBUFF : EffectType.BUFF,
         targetId: characterId,
         buffId: resolvedConfig.id,
         instanceId,
@@ -16325,10 +16471,37 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
   }
   /**
    * 获取 Buff 配置中的 aura 光环信息（供 BattleSystem 初始化时分发 allies/enemies）
-   * NOTE: 旧字段 `aura` 已逐步迁移至 effectPlan（`AtomicEffectType.AURA`），
-   *       此方法保留用于兼容尚未迁移的 JSON 配置。
+   * 优先从 effectPlan（`AtomicEffectType.AURA`）读取——configs 已迁移至 effects[] 格式；
+   * 旧字段 `aura` 保留用于兼容尚未迁移的 JSON 配置。
    */
   public getBuffAuraConfig(buffId: string): BuffAuraConfig | undefined {
+    // 新格式：effectPlan 中的 AURA 效果（targetSelector + modifiers 由配置显式声明）
+    const resolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
+    const auraEffect = resolved?.effectPlan?.find(
+      (e) => e.type === AtomicEffectType.AURA,
+    )
+    if (auraEffect) {
+      const params = auraEffect.params as {
+        targetSelector?: string
+        modifiers?: Array<{
+          id?: string
+          targetAttribute: string
+          type: string
+          value: number
+          condition?: string
+        }>
+      }
+      if (params.targetSelector && params.modifiers?.length) {
+        return {
+          targetSelector: params.targetSelector as BuffAuraConfig['targetSelector'],
+          modifiers: params.modifiers.map((m) => ({
+            ...m,
+            type: m.type as ModifierType,
+          })),
+        }
+      }
+    }
+    // 旧格式兼容：raw.aura（尚未迁移的 JSON 配置）
     const raw = this.scriptRegistry.getBuffConfig(buffId)
     if (!raw?.aura) return undefined
     // HACK: BuffJsonAuraModifier.type 是 string，ModifierType 也是 string 字面量，
@@ -18641,6 +18814,7 @@ export const TRIGGER_SCRIPTS: Record<
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 import {
   ConditionState,
 } from '@/shared/types/buff-display'
@@ -18825,10 +18999,16 @@ export interface BuffConfig {
    */
   parameters?: Record<string, any>
   /**
-   * 属性修饰符
-   * 定义属性加成，使用字符串格式如 "+10"（数值加成）、"+0.05"（百分比加成）、"-0.15"（百分比减成）
+   * 执行模式（显式声明，取代 ID 前缀/字段组合推断）
+   * 'script'=脚本驱动；'effectPlan'=数据驱动原语；'triggerOnly'=仅触发器；'marker'=纯标记
+   * JSON 配置由 BuffConfigResolver 解析时推导；运行时动态创建的 buff 由调用方显式传入
    */
-  attributes?: Record<string, string>
+  executionMode?: 'script' | 'effectPlan' | 'triggerOnly' | 'marker'
+  /**
+   * 属性修饰符
+   * 显式声明数值与类型：{ value: 20, type: 'PERCENTAGE' } = +20%，{ value: 10, type: 'ADDITIVE' } = +10 点
+   */
+  attributes?: Record<string, AttributeValueConfig>
   /**
    * 触发器配置
    * 定义 Buff 在特定阶段自动触发的行为（如回合开始治疗、受击反弹等）
@@ -19463,6 +19643,7 @@ import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
 import { processExtraValues, processTargetModifiers, resolveAttributeValue } from '@/domain/skill/calculation-utils'
 import { LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
+import { floor } from '@/shared/utils/math'
 export interface DamageCalculationConfig {
   enableCrit: boolean
   /** 是否启用闪避机制（默认关闭，对齐 BattleRuleManager） */
@@ -19650,7 +19831,7 @@ export class DamageCalculator {
       const critMultiplier = (cd ?? this.config.critDamage) / 100
       breakdown.critDamage = cd
       breakdown.critMultiplier = critMultiplier
-      damage = Math.floor(damage * critMultiplier)
+      damage = floor(damage * critMultiplier)
       breakdown.postCritDamage = damage
       breakdown.steps.push({
         stepName: 'crit',
@@ -19675,7 +19856,7 @@ export class DamageCalculator {
     breakdown.damageBoost = dmgBoost
     if (dmgBoost > 0) {
       const before = damage
-      damage = Math.floor(damage * (1 + dmgBoost / 100))
+      damage = floor(damage * (1 + dmgBoost / 100))
       breakdown.steps.push({
         stepName: 'damageBoost',
         value: damage,
@@ -19692,7 +19873,7 @@ export class DamageCalculator {
       breakdown.fireSkillDmgBonus = fireBonus
       if (fireBonus > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 + fireBonus / 100))
+        damage = floor(damage * (1 + fireBonus / 100))
         breakdown.steps.push({
           stepName: 'fireSkillDmgBonus',
           value: damage,
@@ -19713,7 +19894,7 @@ export class DamageCalculator {
       breakdown.physicalSkillDmgBonus = physBonus
       if (physBonus > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 + physBonus / 100))
+        damage = floor(damage * (1 + physBonus / 100))
         breakdown.steps.push({
           stepName: 'physicalSkillDmgBonus',
           value: damage,
@@ -19734,7 +19915,7 @@ export class DamageCalculator {
       breakdown.damageToLowHp = lowHpBonus
       if (lowHpBonus > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 + lowHpBonus / 100))
+        damage = floor(damage * (1 + lowHpBonus / 100))
         breakdown.steps.push({
           stepName: 'damageToLowHp',
           value: damage,
@@ -19747,7 +19928,7 @@ export class DamageCalculator {
     }
     // 捕获原始伤害（来源方全部产出，目标方减免前）
     // NOTE: extraValues 累加可能产生小数，与最终伤害保持一致取整，保证日志与反伤基数为整数
-    breakdown.rawDamage = Math.floor(damage)
+    breakdown.rawDamage = floor(damage)
     damage = breakdown.rawDamage
     breakdown.steps.push({
       stepName: 'rawDamage',
@@ -19766,7 +19947,7 @@ export class DamageCalculator {
       breakdown.critDmgTakenReduction = critReduction
       if (critReduction > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 - critReduction / 100))
+        damage = floor(damage * (1 - critReduction / 100))
         breakdown.steps.push({
           stepName: 'critDmgTakenReduction',
           value: damage,
@@ -19787,7 +19968,7 @@ export class DamageCalculator {
       )
       const beforeDef = damage
       damage = Math.max(0, damage - breakdown.defenseValue)
-      damage = Math.floor(damage)
+      damage = floor(damage)
       breakdown.steps.push({
         stepName: 'defense',
         value: damage,
@@ -19817,7 +19998,7 @@ export class DamageCalculator {
         breakdown.normalAtkReduction = reduction
         if (reduction > 0) {
           const before = damage
-          damage = Math.floor(damage * (1 - reduction / 100))
+          damage = floor(damage * (1 - reduction / 100))
           breakdown.steps.push({
             stepName: 'normalAtkReduction',
             value: damage,
@@ -19835,7 +20016,7 @@ export class DamageCalculator {
         breakdown.skillDmgReduction = reduction
         if (reduction > 0) {
           const before = damage
-          damage = Math.floor(damage * (1 - reduction / 100))
+          damage = floor(damage * (1 - reduction / 100))
           breakdown.steps.push({
             stepName: 'skillDmgReduction',
             value: damage,
@@ -19878,7 +20059,7 @@ export class DamageCalculator {
       breakdown.elementalResistance = elementalRes
       if (elementalRes > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 - elementalRes / 100))
+        damage = floor(damage * (1 - elementalRes / 100))
         breakdown.steps.push({
           stepName: 'elementalResistance',
           value: damage,
@@ -19893,7 +20074,7 @@ export class DamageCalculator {
         const fieldMod = this.config.fieldElementalModifier(resolvedType)
         if (fieldMod !== 0) {
           const before = damage
-          damage = Math.floor(damage * (1 + fieldMod / 100))
+          damage = floor(damage * (1 + fieldMod / 100))
           breakdown.steps.push({
             stepName: 'fieldElemental',
             value: damage,
@@ -19911,7 +20092,7 @@ export class DamageCalculator {
       breakdown.damageReduction = dmgReduction
       if (dmgReduction > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 - dmgReduction / 100))
+        damage = floor(damage * (1 - dmgReduction / 100))
         breakdown.steps.push({
           stepName: 'damageReduction',
           value: damage,
@@ -19938,7 +20119,7 @@ export class DamageCalculator {
     )
     if (breakdown.damageTakenIncrease > 0) {
       const before = damage
-      damage = Math.floor(damage * (1 + breakdown.damageTakenIncrease / 100))
+      damage = floor(damage * (1 + breakdown.damageTakenIncrease / 100))
       breakdown.steps.push({
         stepName: 'dmgTakenIncrease',
         value: damage,
@@ -19985,7 +20166,7 @@ export class DamageCalculator {
       })
     }
     // 确保非负整数
-    damage = Math.max(0, Math.floor(damage))
+    damage = Math.max(0, floor(damage))
     breakdown.finalDamage = damage
     breakdown.steps.push({
       stepName: 'final',
@@ -20153,6 +20334,7 @@ import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { STATUS_CODE } from '@/shared/types/status-meta'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { processExtraValues, processTargetModifiers } from '@/domain/skill/calculation-utils'
+import { floor } from '@/shared/utils/math'
 interface HealCalculationStep {
   step: string
   value: number
@@ -20219,14 +20401,14 @@ export class HealCalculator {
     // 负面状态影响（降低治疗效果）
     const debuffEffect = this.calculateDebuffEffect(target, buffSystem)
     if (debuffEffect > 0) {
-      heal = Math.floor(heal * (1 - debuffEffect))
+      heal = floor(heal * (1 - debuffEffect))
       this.calculationLogs.push({
         step: 'debuff',
         value: debuffEffect,
         description: `减益效果: -${Math.round(debuffEffect * 100)}%`,
       })
     }
-    heal = Math.max(0, Math.floor(heal))
+    heal = Math.max(0, floor(heal))
     if (context?.record) {
       context.record.effects?.push({
         type: 'heal',
@@ -20923,7 +21105,6 @@ export class PassiveSkillManager {
 --- src/domain/skill/SkillExecutor.ts ---
 import {
   ATTRIBUTE_CODE,
-  getAttrName,
   ModifierSourceType,
   ModifierType,
   type Modifier,
@@ -20943,7 +21124,6 @@ import type { ExtendedSkillStep, ReviveStepParams } from '@/domain/skill/types'
 import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { STATUS_CODE } from '@/shared/types/status-meta'
-import { classifyBuff } from '@/shared/types/buff-classification'
 import {
   REVERSE_BONUS_ATTR_MAP,
   syncAttackRange,
@@ -21198,8 +21378,7 @@ export class SkillExecutor {
     const buffCfgForName = this.buffSystem
       .getScriptRegistry()
       .getBuffConfig(buffId)
-    const buffName =
-      buffCfgForName?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
+    const buffName = buffCfgForName?.name ?? buffId
     action.effects.push({
       type: EffectType.BUFF,
       sourceId: source.id,
@@ -21212,17 +21391,22 @@ export class SkillExecutor {
     })
     // 仅在非被动上下文中打日志（被动由 triggerPassives 统一输出，避免重复）
     if (instanceId && !context?.fromPassive) {
-      const buffCfg = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
-      const displayName =
-        buffCfg?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
-      // 构建 Buff 效果摘要
-      const effectSummary = this.buildBuffEffectSummary(buffId, instanceId)
+      // 效果摘要由 BuffConfigResolver 解析时生成（effectSummary），此处仅补充运行时层数
+      const resolved = this.buffSystem
+        .getScriptRegistry()
+        .getResolvedBuffConfig(buffId)
+      let effectSummary = resolved?.effectSummary ?? ''
+      const instance = this.buffSystem.getBuffInstanceById(instanceId)
+      if (instance && instance.currentStacks > 1) {
+        const maxStacks = resolved?.maxStacks ?? instance.currentStacks
+        effectSummary += ` （${instance.currentStacks}/${maxStacks}层）`
+      }
       LoggerProvider.logger.addBattleLog({
         turn: action?.turn || 1,
-        message: `${displayName}  ${effectSummary}`,
+        message: `${buffName}  ${effectSummary}`,
         segments: [
           {
-            text: displayName,
+            text: buffName,
             classStr: 'log-buff',
             kind: 'buff',
             hover: { kind: 'buff', id: buffId },
@@ -21233,43 +21417,6 @@ export class SkillExecutor {
         meta: { role: 'sub' },
       })
     }
-  }
-  /**
-   * 构建 Buff 效果摘要文本
-   * 从 Buff 配置中提取属性修正、层数、持续时间等效果描述
-   */
-  private buildBuffEffectSummary(buffId: string, instanceId: string): string {
-    const parts: string[] = []
-    const config = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
-    if (!config) return ''
-    // 属性修正
-    if (config.attributes) {
-      for (const [attr, valStr] of Object.entries(config.attributes)) {
-        const cn = getAttrName(attr as ATTRIBUTE_CODE)
-        const num = parseFloat(valStr)
-        if (isNaN(num)) continue
-        const pct = Math.abs(
-          valStr.includes('%') ? num : Math.abs(num) < 1 ? num * 100 : num,
-        )
-        const arrow = num >= 0 ? '↑' : '↓'
-        parts.push(`${cn}${arrow}${Math.round(pct)}%`)
-      }
-    }
-    // 层数
-    const instance = this.buffSystem.getBuffInstanceById(instanceId)
-    if (instance && instance.currentStacks > 1) {
-      // 显示当前层数/最大层数
-      const maxStacks = config.maxStacks ?? instance.currentStacks
-      parts.push(`（${instance.currentStacks}/${maxStacks}层）`)
-    }
-    // 持续时间
-    const duration = config.duration ?? 0
-    if (duration > 0) {
-      parts.push(`（${duration}回合）`)
-    } else if (duration === -1) {
-      parts.push(`（永久）`)
-    }
-    return parts.join(' ') || config.name || ''
   }
   /** 运行时修改目标属性（modify_attribute 步骤） */
   private executeModifyAttribute(
@@ -21287,10 +21434,7 @@ export class SkillExecutor {
       const attrData = modTarget.getAttrValue(attrCode)
       if (!attrData) continue
       let value = typeof mod.value === 'number' ? mod.value : 0
-      // PERCENTAGE 值在配置中是百分比值（如 5 表示 5%），直接使用
-      if (mod.type === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
-        value = Math.round(value * 10000) / 100
-      }
+      // PERCENTAGE 值由配置显式声明为百分数（如 5 表示 5%），直接使用
       const sourceKey = `passive:runtime:${mod.id || skillStep.buffId || 'mod'}`
       // 去重 — 移除同 sourceKey 的旧修饰符再添加新值
       attrData.modifiers = attrData.modifiers.filter(
@@ -21347,7 +21491,11 @@ export class SkillExecutor {
     let removed = 0
     for (const instance of instances) {
       if (removed >= count) break
-      if (isRemoveDebuff && !classifyBuff(instance.context.config).isNegative) continue
+      // 减益判定读取显式声明的 polarity（由 BuffConfigResolver 解析时写入）
+      const polarity = this.buffSystem
+        .getScriptRegistry()
+        .getResolvedBuffConfig(instance.buffId)?.polarity
+      if (isRemoveDebuff && polarity !== 'negative') continue
       this.buffSystem.removeBuff(instance.id)
       removed++
     }
@@ -22858,10 +23006,18 @@ export interface ConvertSkillOptions {
   lastUsed?: number
 }
 /**
+ * Buff 极性查询：由调用方注入（通常基于 BuffScriptRegistry 已解析配置的 polarity），
+ * 取代按 ID 前缀猜极性的隐式契约。
+ */
+export type BuffConfigLookup = (buffId: string) => string | undefined
+/**
  * 汇总技能步骤的伤害/治疗/类型标记
  * 遍历全部 steps 而非只读第一个
  */
-function summarizeSkillSteps(steps: SkillStep[]): {
+function summarizeSkillSteps(
+  steps: SkillStep[],
+  lookup?: BuffConfigLookup,
+): {
   totalDamage: number
   totalHeal: number
   hasBuff: boolean
@@ -22893,9 +23049,11 @@ function summarizeSkillSteps(steps: SkillStep[]): {
     }
     if (step.type === 'apply_buff') {
       const buffId = step.buffId || step.effectId || ''
-      if (/^debuff_/.test(buffId)) {
+      if (!buffId) continue
+      // 极性由显式查询决定（lookup 返回配置声明的 polarity），不做 ID 前缀猜测
+      if (lookup?.(buffId) === 'negative') {
         hasDebuff = true
-      } else if (buffId) {
+      } else {
         hasBuff = true
       }
     }
@@ -22906,15 +23064,17 @@ function summarizeSkillSteps(steps: SkillStep[]): {
 }
 /**
  * 将 SkillConfig 转换为 Skill（AI系统使用的运行时类型）
+ * @param lookup 可选的 Buff 极性查询（未注入时不判减益，仅标记为 buff）
  */
 export function convertSkillConfigToSkill(
   config: SkillConfig,
   options: ConvertSkillOptions = {},
+  lookup?: BuffConfigLookup,
 ): Skill {
   const { lastUsed = 0 } = options
   const steps = config.steps || []
   const firstStep = steps[0] as ExtendedSkillStep | undefined
-  const summary = summarizeSkillSteps(steps)
+  const summary = summarizeSkillSteps(steps, lookup)
   const skill: Skill = {
     id: config.id,
     name: config.name,
@@ -23744,26 +23904,6 @@ export class BattleLogManager implements IBattleLogManager {
     this.addItemLog({ segments })
   }
   /**
-   * 添加回合开始日志
-   */
-  addTurnStartLog(turn: number): void {
-    this.addBattleLog({
-      turn,
-      message: `第${turn}回合开始`,
-      segments: [{ text: `第${turn}回合开始` }],
-    })
-  }
-  /**
-   * 添加回合结束日志
-   */
-  addTurnEndLog(turn: number): void {
-    this.addBattleLog({
-      turn,
-      message: `第${turn}回合结束`,
-      segments: [{ text: `第${turn}回合结束` }],
-    })
-  }
-  /**
    * 获取调试日志
    */
   getDebugLogs(): LogEntry[] {
@@ -23987,228 +24127,6 @@ export {
 } from '@/infrastructure/adapters/logging/BattleLogManager'
 // 导出日志处理器
 export { ConsoleLogHandler } from '@/infrastructure/adapters/logging/BattleLogManager'
-// 结构化处理器 (JSON/CSV)
-export { JsonLogHandler, CsvLogHandler } from './StructuredLogHandlers'
-
---- src/infrastructure/adapters/logging/StructuredLogHandlers.ts ---
-/**
- * 文件：StructuredLogHandlers.ts
- * 功能：结构化日志处理器 - JSON/CSV 格式输出
- * 描述：实现 JSON 和 CSV 格式的日志导出功能
- */
-import type { LogEntry, LogHandler } from '@/shared/types/battle-log'
-import { LogType, LogLevelLabel } from '@/shared/types/battle-log'
-/**
- * JSON 日志处理器
- * 将日志格式化为 JSON 字符串，支持Pretty Print和Compact两种模式
- */
-export class JsonLogHandler implements LogHandler {
-  private prettyPrint: boolean
-  private includeTimestamp: boolean
-  private outputBuffer: LogEntry[] = []
-  private maxBufferSize: number
-  constructor(options?: {
-    prettyPrint?: boolean
-    includeTimestamp?: boolean
-    maxBufferSize?: number
-    onOutput?: (json: string) => void
-  }) {
-    this.prettyPrint = options?.prettyPrint ?? true
-    this.includeTimestamp = options?.includeTimestamp ?? true
-    this.maxBufferSize = options?.maxBufferSize ?? 100
-    this.onOutput = options?.onOutput
-  }
-  private onOutput?: (json: string) => void
-  handle(entry: LogEntry): void {
-    this.outputBuffer.push(entry)
-    // 达到缓冲区大小时输出
-    if (this.outputBuffer.length >= this.maxBufferSize) {
-      this.flush()
-    }
-  }
-  /**
-   * 立即输出所有缓冲的日志
-   */
-  flush(): string {
-    if (this.outputBuffer.length === 0) {
-      return '[]'
-    }
-    const logs = this.outputBuffer.map((entry) => this.formatEntry(entry))
-    const json = this.prettyPrint
-      ? JSON.stringify(logs, null, 2)
-      : JSON.stringify(logs)
-    this.outputBuffer = []
-    if (this.onOutput) {
-      this.onOutput(json)
-    }
-    return json
-  }
-  /**
-   * 格式化单个日志条目为 JSON 对象
-   */
-  private formatEntry(entry: LogEntry): Record<string, any> {
-    const result: Record<string, any> = {
-      index: entry.index,
-      type: entry.type,
-      level: entry.level !== undefined ? LogLevelLabel[entry.level] : undefined,
-      message: entry.message,
-      segments: entry.segments,
-      source: entry.source,
-      target: entry.target,
-      action: entry.action,
-      turn: entry.turn,
-      category: entry.category,
-      detailCategory: entry.detailCategory,
-      context: entry.context,
-      error: entry.error
-        ? {
-            name: entry.error.name,
-            message: entry.error.message,
-            stack: entry.error.stack,
-          }
-        : undefined,
-    }
-    if (this.includeTimestamp) {
-      result.timestamp = new Date().toISOString()
-    }
-    // 移除 undefined 字段
-    Object.keys(result).forEach((key) => {
-      if (result[key] === undefined) {
-        delete result[key]
-      }
-    })
-    return result
-  }
-  /**
-   * 导出为 JSON 文件
-   */
-  exportToFile(filename: string = 'battle-logs.json'): void {
-    const json = this.flush()
-    const blob = new Blob([json], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-}
-/**
- * CSV 日志处理器
- * 将日志格式化为 CSV 格式，适合导入 Excel 等工具分析
- */
-export class CsvLogHandler implements LogHandler {
-  private delimiter: string
-  private includeHeader: boolean
-  private outputBuffer: LogEntry[] = []
-  private maxBufferSize: number
-  private headers: string[]
-  constructor(options?: {
-    delimiter?: string
-    includeHeader?: boolean
-    maxBufferSize?: number
-    onOutput?: (csv: string) => void
-  }) {
-    this.delimiter = options?.delimiter ?? ','
-    this.includeHeader = options?.includeHeader ?? true
-    this.maxBufferSize = options?.maxBufferSize ?? 100
-    this.onOutput = options?.onOutput
-    this.headers = [
-      'index',
-      'type',
-      'level',
-      'message',
-      'source',
-      'target',
-      'action',
-      'turn',
-      'category',
-      'context',
-      'error',
-      'timestamp',
-    ]
-  }
-  private onOutput?: (csv: string) => void
-  handle(entry: LogEntry): void {
-    this.outputBuffer.push(entry)
-    if (this.outputBuffer.length >= this.maxBufferSize) {
-      this.flush()
-    }
-  }
-  /**
-   * 立即输出所有缓冲的日志
-   */
-  flush(): string {
-    if (this.outputBuffer.length === 0) {
-      return this.includeHeader ? this.headers.join(this.delimiter) : ''
-    }
-    const lines: string[] = []
-    if (this.includeHeader && this.outputBuffer.length === this.maxBufferSize) {
-      lines.push(this.headers.join(this.delimiter))
-    }
-    this.outputBuffer.forEach((entry) => {
-      lines.push(this.formatEntry(entry))
-    })
-    const csv = lines.join('\n')
-    this.outputBuffer = []
-    if (this.onOutput) {
-      this.onOutput(csv)
-    }
-    return csv
-  }
-  /**
-   * 格式化单个日志条目为 CSV 行
-   */
-  private formatEntry(entry: LogEntry): string {
-    const values = [
-      entry.index.toString(),
-      entry.type,
-      entry.level !== undefined ? LogLevelLabel[entry.level] : '',
-      this.escapeCsvField(entry.message || ''),
-      this.escapeCsvField(entry.source || ''),
-      this.escapeCsvField(entry.target || ''),
-      this.escapeCsvField(entry.action || ''),
-      this.escapeCsvField(String(entry.turn ?? '')),
-      entry.category || '',
-      entry.context ? this.escapeCsvField(JSON.stringify(entry.context)) : '',
-      entry.error ? this.escapeCsvField(entry.error.message) : '',
-      new Date().toISOString(),
-    ]
-    return values.join(this.delimiter)
-  }
-  /**
-   * 转义 CSV 字段
-   */
-  private escapeCsvField(field: string): string {
-    // 如果字段包含分隔符、引号或换行符，需要用引号包裹并转义内部引号
-    if (
-      field.includes(this.delimiter) ||
-      field.includes('"') ||
-      field.includes('\n') ||
-      field.includes('\r')
-    ) {
-      return `"${field.replace(/"/g, '""')}"`
-    }
-    return field
-  }
-  /**
-   * 导出为 CSV 文件
-   */
-  exportToFile(filename: string = 'battle-logs.csv'): void {
-    const csv = this.flush()
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-}
 
 --- src/infrastructure/adapters/storage/index.ts ---
 /**
@@ -25076,7 +24994,15 @@ export function initializeContainer(): void {
   )
   // 6. 注册核心战斗组件（依赖上面注册的服务）
   container.register(TURN_MANAGER_TOKEN.toString(), new TurnManager(buffSystem))
-  container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
+  // AI 注入 Buff 极性查询（已解析配置的 polarity），技能标记不依赖 ID 前缀
+  container.register(
+    AI_SYSTEM_TOKEN.toString(),
+    new AISystem(
+      skillManager,
+      (buffId) =>
+        buffScriptRegistry.getResolvedBuffConfig(buffId)?.polarity,
+    ),
+  )
   container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder(persistentStorage))
   container.register(
     BATTLE_RULE_MANAGER_TOKEN.toString(),
@@ -25337,6 +25263,7 @@ import { ModifierSourceTypeNames } from '@/domain/attribute/types'
 import { getAttrMeta } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
 import { BuffPolarity } from '@/shared/types/buff-classification'
+import { round } from '@/shared/utils/math'
 // ===================== 区间模式类型导出 =====================
 export interface RangeModifierRow {
   label: string
@@ -25386,7 +25313,7 @@ const getSourceLabel = (source: ModifierSourceType): string => {
   return ModifierSourceTypeNames[source] || source
 }
 const formatValue = (value: number, valueType: AttributeValueType): string => {
-  const rounded = Math.round(value * 100) / 100
+  const rounded = round(value, 2)
   if (valueType === AttributeValueType.PERCENT) {
     return rounded > 0 ? `+${rounded}%` : `${rounded}%`
   }
@@ -28994,7 +28921,7 @@ const tooltipStyle = computed(() => {
       <h3 class="section-title">属性加成</h3>
       <div class="stats-grid">
         <div v-for="(value, key) in item.stats" :key="key" class="stat-item">
-          <span class="stat-label">{{ getStatLabel(key) }}</span>
+          <span class="stat-label">{{ getAttrName(key as ATTRIBUTE_CODE) }}</span>
           <span class="stat-value" :class="getValueClass(value)">{{ formatValue(value) }}</span>
         </div>
       </div>
@@ -29021,10 +28948,10 @@ import type { CompendiumItem } from '@/presentation/composables/useCompendium'
 import { rarityNames } from '@/shared/types/Item'
 import {
   getItemTypeText,
-  getStatLabel,
   getEffectTypeText,
   getSlotText,
 } from '@/shared/utils/display-helpers'
+import { getAttrName, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { BuffPolarity } from '@/shared/types/buff-classification'
 interface Props {
   item: CompendiumItem
@@ -31443,62 +31370,38 @@ import {
 import type { ConditionState as ConditionStateType } from '@/shared/types/buff-display'
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { getAttrName, ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 /** 极多 Buff 时次要分组的阈值 */
 const SECONDARY_THRESHOLD = 20
 /**
  * 从 config.attributes 提取属性修正
- * key=attribute code（如 "speed"），value=格式如 "+0.05"（5%/层）或 "+20%"（20%）
+ * key=attribute code（如 "speed"），value=显式声明的 { value, type } 对象（如 { value: 5, type: "PERCENTAGE" }）
  * @param stacks 当前层数，用于缩放可叠加 buff
  */
 function extractAttributesFromConfig(
-  attributes: Record<ATTRIBUTE_CODE, string>,
+  attributes: Record<ATTRIBUTE_CODE, AttributeValueConfig>,
   stacks: number,
 ): Array<{ attr: string; value: number; isFlat?: boolean }> {
   const result: Array<{ attr: string; value: number; isFlat?: boolean }> = []
-  for (const [code, valueStr] of Object.entries(attributes)) {
+  for (const [code, cfg] of Object.entries(attributes)) {
     const cn = getAttrName(code as ATTRIBUTE_CODE)
     if (!cn) continue
-    const trimmed = valueStr.trim()
-    const isPercent = trimmed.includes('%')
-    const numericStr = trimmed.replace('%', '')
-    const numValue = parseFloat(numericStr)
-    if (isNaN(numValue)) continue
-    let perStack: number
-    let isFlat: boolean | undefined
-    if (isPercent) {
-      // "+20%" → 20（百分比点）
-      perStack = numValue
-      isFlat = undefined
-    } else if (Math.abs(numValue) < 1) {
-      // "+0.05" → 5（小数转百分比）
-      perStack = numValue * 100
-      isFlat = undefined
-    } else {
-      // "+10" → 固定值 10
-      perStack = numValue
-      isFlat = true
-    }
-    result.push({ attr: cn, value: Math.round(perStack * stacks), isFlat })
+    // value 语义由配置显式声明：PERCENTAGE 为百分比点，ADDITIVE 为固定值
+    const isFlat = cfg.type === 'ADDITIVE' ? true : undefined
+    result.push({ attr: cn, value: Math.round(cfg.value * stacks), isFlat })
   }
   return result
 }
 /**
- * 从描述文本中提取条件标签（2-4 字的中文关键词，位于"时触发"/"后触发"/"时"/"后"等标记前）
- * 例："残血时触发" → "残血"，"暴击后触发" → "暴击"
- */
-function extractConditionLabel(description?: string): string | undefined {
-  if (!description) return undefined
-  const match = description.match(/([\u4e00-\u9fa5]{2,4})(?:时触发|后触发|时|后)/)
-  return match?.[1]
-}
-/**
  * 检测 Buff 的条件状态 — 通过结构化 conditionState 决定
  * conditionState 缺失时视为无条件(NONE)
+ * 条件标签（如 "残血"）由配置显式声明（conditionLabel），不做正则解析
  */
 export function detectCondition(raw: {
   conditionState?: string
   description?: string
   remainingTurns?: number
+  conditionLabel?: string
 }): { condition: ConditionStateType; conditionLabel?: string } {
   // 优先级 1: 领域层结构化 conditionState
   if (raw.conditionState) {
@@ -31506,7 +31409,7 @@ export function detectCondition(raw: {
       return { condition: ConditionState.ACTIVE, conditionLabel: '已激活' }
     }
     if (raw.conditionState === ConditionState.INACTIVE) {
-      const label = extractConditionLabel(raw.description)
+      const label = raw.conditionLabel
       return {
         condition: ConditionState.INACTIVE,
         conditionLabel: label ? `${label}·${ConditionStateNames[ConditionState.INACTIVE]}` : ConditionStateNames[ConditionState.INACTIVE],
@@ -31533,14 +31436,15 @@ function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
   const isNegative = raw.isNegative === true
   const remainingTurns = raw.remainingTurns ?? 0
   const stacks = raw.currentStacks ?? 1
-  // 条件状态 — 使用 detectCondition 统一处理（结构化 → 启发式回退）
+  // 条件状态 — 使用 detectCondition 统一处理（结构化 → 显式 conditionLabel）
   const { condition, conditionLabel } = detectCondition({
     conditionState: raw.conditionState,
     description,
     remainingTurns,
+    conditionLabel: raw.conditionLabel,
   })
   // 构造修饰符列表 — 从 config.attributes 提取
-  const extracted = extractAttributesFromConfig(raw.attributes ?? {} as Record<ATTRIBUTE_CODE, string>, stacks)
+  const extracted = extractAttributesFromConfig(raw.attributes ?? {} as Record<ATTRIBUTE_CODE, AttributeValueConfig>, stacks)
   const modifiers = extracted.map((e) => ({
     sourceName: name,
     attribute: e.attr,
@@ -39750,9 +39654,8 @@ function getEventTypeLabel(type: string): string {
   return labels[type] || type;
 }
 function getEventSeverity(event: ReplayBattleEvent): string {
-  if (event.type === BattleEventType.BATTLE_START || event.type === BattleEventType.BATTLE_END) return 'high';
-  if (event.type === BattleEventType.ACTION && event.data?.action?.damage && event.data.action.damage > 100) return 'medium';
-  return 'low';
+  // 重要性由录制端显式标注（BattleRecorder.recordEvent），此处直接读取
+  return event.data?.severity ?? 'low'
 }
 function isBookmarked(index: number): boolean {
   return bookmarkedEvents.value.has(index);
@@ -39833,25 +39736,9 @@ function getEventDetails(event: ReplayBattleEvent): string {
   }
 }
 function isKeyEvent(event: ReplayBattleEvent): boolean {
-  // 定义关键事件类型
-  const keyEventTypes = [BattleEventType.BATTLE_START, BattleEventType.BATTLE_END];
-  // 检查是否是关键事件类型
-  if (keyEventTypes.includes(event.type)) {
-    return true;
-  }
-  // 检查是否是高伤害攻击
-  if (event.type === BattleEventType.ACTION && event.data.action.damage && event.data.action.damage > 500) {
-    return true;
-  }
-  // 检查是否是技能释放
-  if (event.type === BattleEventType.ACTION && event.data.action.type === 'skill') {
-    return true;
-  }
-  // 检查是否是状态变化
-  if (event.type === BattleEventType.STATE_CHANGE) {
-    return true;
-  }
-  return false;
+  // 关键事件 = 录制端显式标注的非低重要性事件（high+medium）
+  // 语义：战斗开始/结束(high)、技能动作与状态变更(medium)为关键，普攻/数值事件为 low
+  return (event.data?.severity ?? 'low') !== 'low';
 }
 function cleanup() {
   if (playInterval.value) {
@@ -40710,10 +40597,11 @@ import NumericStepper from '@/presentation/components/NumericStepper.vue'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import { classifyBuff } from '@/shared/types/buff-classification'
-import { getAttrName } from '@/domain/attribute/types'
 import { ParticipantSideName } from '@/domain/battle/type/types'
 import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
 import { BuffPolarity } from '@/shared/types/buff-classification'
+import { container } from '@/infrastructure/di/Container'
+import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 // ==================== 类型 ====================
 export interface EditorBuffEntry {
   id: string
@@ -40802,44 +40690,11 @@ const attrFields: AttrOverrideItem[] = [
   { key: 'defense', label: '防御', min: 0, max: 99999, steps: [100, 10, 1] },
   { key: 'speed', label: '速度', min: 0, max: 9999, steps: [100, 10, 1] },
 ]
-// ==================== 属性名 → 中文（兜底：getAttrName 不认识的 ad-hoc 键） ====================
-const ATTR_ALIAS: Record<string, string> = {
-  dmgReduction: '伤害减免',
-  HIT_RATE: '命中率',
-  critDamageTaken: '暴击承伤',
-  poisonResist: '毒抗',
-  demonDamage: '对妖伤害',
-  fireDamage: '火攻',
-  fireDamageTaken: '火伤减免',
-  waterDamageTaken: '水伤减免',
-  slowImmune: '减速免疫',
-  stunResist: '眩晕抵抗',
-  knockbackResist: '击退抵抗',
-  bleedResist: '流血抵抗',
-  burnImmune: '灼烧免疫',
-  burnDuration: '灼烧延长',
-  skillCooldown: '技能冷却',
-  webSuccessRate: '蛛网成功率',
-  healEffect: '治疗效果',
-  energyCost: '能量消耗',
-}
-/** 格式化属性修正为可读文本 */
-function formatAttributes(attrs: Record<string, string>): string {
-  return Object.entries(attrs)
-    .map(([key, val]) => {
-      const cn = getAttrName(key as never) || ATTR_ALIAS[key] || key
-      // 数值格式化：+1.0 → +1, +20% → +20%, -10 → -10
-      const num = parseFloat(val)
-      if (val.endsWith('%')) return `${cn}${val}`
-      if (Math.abs(num) >= 1) return `${cn}+${Math.round(num)}`
-      if (num > 0) return `${cn}+${Math.round(num * 100)}%`
-      return `${cn}${val}`
-    })
-    .join('，')
-}
 // ==================== Methods ====================
+/** 效果摘要由 BuffConfigResolver 解析时生成（effectSummary），UI 只读取 */
 function buildStatusesFromBuffs() {
   const buffList = Array.isArray(buffsData) ? buffsData : []
+  const registry = container.resolve<BuffScriptRegistry>('BuffScriptRegistry')
   return buffList.map((buff: BuffJsonEntry) => {
     const classification = classifyBuff(buff)
     const primaryFacet = classification.facets.length > 0 ? classification.facets[0] : 'other'
@@ -40849,40 +40704,10 @@ function buildStatusesFromBuffs() {
       primaryFacet,
       polarity: classification.polarity,
       duration: buff.duration !== undefined && buff.duration > 0 ? buff.duration : 0,
-      effect: buff.description || buildEffectSummary(buff),
+      effect: buff.description || registry.getResolvedBuffConfig(buff.id)?.effectSummary || buff.name,
       active: false,
     }
   })
-}
-function buildEffectSummary(buff: BuffJsonEntry): string {
-  const parts: string[] = []
-  if (buff.attributes) {
-    parts.push(formatAttributes(buff.attributes))
-  }
-  if (buff.aura) {
-    const scope = buff.aura.targetSelector === 'allies' ? '全体友方' : buff.aura.targetSelector === 'enemies' ? '全体敌方' : '自身'
-    parts.push(`光环·${scope}`)
-  }
-  if (buff.immunities?.length) {
-    parts.push(`免疫:${buff.immunities.join('，')}`)
-  }
-  if (buff.controlType) {
-    const ctrlNames: Record<string, string> = { stun: '眩晕', silence: '沉默', freeze: '冰冻', sleep: '睡眠', bind: '束缚' }
-    parts.push(`控制:${ctrlNames[buff.controlType] || buff.controlType}`)
-  }
-  if (buff.triggers?.length) {
-    const triggerNames: Record<string, string> = {
-      apply_poison: '附加中毒', deal_dot_damage: '持续伤害',
-      heal_percent_max_hp: '按比例回血', heal_lowest_hp_ally: '治疗最低友方',
-      heal_all_allies: '全体回血', apply_shield: '附加护盾',
-      reflect_damage: '反弹伤害', reflect_fire_damage: '反弹火伤',
-      apply_debuff_to_attacker: '攻击者减益', cleanse_random_debuff: '净化减益',
-      summon_unit: '召唤单位', apply_silence_to_attacker: '沉默攻击者',
-    }
-    const t = triggerNames[buff.triggers[0].scriptId]
-    parts.push(`触发:${t || buff.triggers[0].scriptId}${buff.triggers.length > 1 ? `等${buff.triggers.length}个` : ''}`)
-  }
-  return parts.join(' | ')
 }
 function getCurrentAttr(key: string): number {
   return props.currentAttrs[key] ?? 0
@@ -44955,7 +44780,7 @@ export interface BuffClassificationInput {
   /** 触发器配置 */
   triggers?: unknown[]
   /** 属性修饰符 */
-  attributes?: Record<string, string>
+  attributes?: Record<string, unknown>
   /** 护盾配置 */
   shield?: unknown
   /** 免疫标签 */
@@ -45003,13 +44828,9 @@ export function classifyBuff(
   }
   // 1. 自动派生 facets（从配置结构，不看 category，不看 tags）
   const facets = deriveBuffFacets(config)
-  // 2. 确定极性：polarity → category 猜测（两级回退）
-  let polarity: BuffPolarity
-  if (config.polarity) {
-    polarity = config.polarity as BuffPolarity
-  } else {
-    polarity = guessPolarity(config.category ?? null, facets)
-  }
+  // 2. 确定极性：读取显式声明的 polarity；缺失视为 NEUTRAL（不猜测）
+  //    （配置数据经 BuffConfigResolver.resolve() 后必有 polarity，此处兜底仅服务动态创建的无配置 buff）
+  const polarity = (config.polarity ?? BuffPolarity.NEUTRAL) as BuffPolarity
   // 3. 显示标签：透传 JSON 的 category，兜底取 facets[0]
   const category = asStatusCategory(config.category) ?? (facets.length > 0 ? facets[0] : StatusCategory.OTHER)
   return { category, facets, polarity, isNegative: polarity === BuffPolarity.NEGATIVE }
@@ -45021,21 +44842,6 @@ function asStatusCategory(raw: string | undefined | null): StatusCategory | unde
     if (val === raw) return val
   }
   return undefined
-}
-/** 兜底猜极性（仅当 polarity/isDebuff 都未提供时使用） */
-function guessPolarity(
-  rawCategory: string | null,
-  facets: StatusCategory[],
-): BuffPolarity {
-  // 从 facets 判
-  if (facets.includes(StatusCategory.CONTROL)) return BuffPolarity.NEGATIVE
-  if (facets.includes(StatusCategory.IMMUNITY)) return BuffPolarity.POSITIVE
-  if (facets.includes(StatusCategory.AURA)) return BuffPolarity.POSITIVE
-  if (facets.includes(StatusCategory.SHIELD)) return BuffPolarity.POSITIVE
-  // 从 rawCategory 判（仅当 facets 判断无法决定时）
-  if (rawCategory === StatusCategory.CONTROL || rawCategory === StatusCategory.DOT) return BuffPolarity.NEGATIVE
-  if (rawCategory === StatusCategory.SHIELD || rawCategory === StatusCategory.AURA || rawCategory === StatusCategory.IMMUNITY) return BuffPolarity.POSITIVE
-  return BuffPolarity.NEUTRAL
 }
 // ==================== 日志/显示工具函数 ====================
 /**
@@ -45086,6 +44892,7 @@ export function getStatusCategoryBadge(
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { ModifierType } from '@/domain/attribute/types'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 /**
  * Buff 原始条目 —— 从 BuffSystem 合并后的中间格式，
  * 作为 `toBuffTextItem()` 的输入契约，替代 `any` 参数。
@@ -45108,8 +44915,10 @@ export interface BuffRawItem {
   remainingTurns?: number
   /** 当前层数 */
   currentStacks?: number
-  /** 属性修正（key=attribute code, value=如 "+0.05" 或 "+20%"，per-stack 值） */
-  attributes?: Record<ATTRIBUTE_CODE, string>
+  /** 属性修正（key=attribute code, value=显式声明的 { value, type } 对象，per-stack 值） */
+  attributes?: Record<ATTRIBUTE_CODE, AttributeValueConfig>
+  /** 显式声明的条件标签（如 "残血"），供 condition 为 inactive 时拼接 "残血·未激活" */
+  conditionLabel?: string
   /** 特殊效果行 */
   effectLines?: BuffEffectLine[]
   /** 领域层条件状态（由 BuffSystem.setBuffConditionState 设置）
@@ -45259,6 +45068,14 @@ export interface BuffJsonTriggerEntry {
   maxTriggers?: number
   condition?: string
 }
+/**
+ * 属性修饰符值配置：显式声明数值与类型，取代 "<1 猜百分比" 的隐式契约。
+ * value 语义：PERCENTAGE 为百分数（20 表示 +20%），ADDITIVE 为绝对值（10 表示 +10）。
+ */
+export interface AttributeValueConfig {
+  value: number
+  type: 'PERCENTAGE' | 'ADDITIVE'
+}
 export interface BuffJsonEntry {
   id: string
   name?: string
@@ -45268,7 +45085,9 @@ export interface BuffJsonEntry {
   aura?: BuffJsonAura
   polarity?: BuffPolarity
   description?: string
-  attributes?: Record<string, string>
+  /** 条件标签（如 "残血"），供 UI 在条件未激活时显示 "残血·未激活" */
+  conditionLabel?: string
+  attributes?: Record<string, AttributeValueConfig>
   triggers?: BuffJsonTriggerEntry[]
   controlType?: ControlKind
   stackRule?: StackRule
@@ -46962,20 +46781,6 @@ export const effectTypeLabels: Record<string, string> = {
 export function getEffectTypeText(type: string): string {
   return effectTypeLabels[type] || type
 }
-// ───── 属性标签 ─────
-export const statLabels: Record<string, string> = {
-  attack: '攻击力',
-  defense: '防御力',
-  speed: '速度',
-  health: '气血值',
-  critRate: '暴击率',
-  critDamage: '暴击伤害',
-  physicalDamage: '伤害',
-  magicDamage: '魔法伤害',
-}
-export function getStatLabel(key: string): string {
-  return statLabels[key] || key
-}
 
 --- src/shared/utils/format.ts ---
 import { round } from '@/shared/utils/math'
@@ -47734,6 +47539,15 @@ export function ceil(number: number | string, precision = 0): number {
   const factor = Math.pow(10, precision)
   return Math.ceil((num - Number.EPSILON) * factor) / factor
 }
+/**
+ * 将小数比率转为百分比数值（0.15 → 15），保留 2 位小数
+ * 用于把配置中的 PERCENTAGE 比率值对齐 ModifierType 的百分比单位
+ * @param value - 比率值（如 0.15 表示 15%）
+ * @returns 百分比数值，若输入无效则返回 NaN
+ */
+export function percentage(value: number): number {
+  return round(value * 100, 2)
+}
 
 --- src/shared/utils/object-pool.ts ---
 /**
@@ -47817,19 +47631,6 @@ export class ObjectPool<T> {
       `Object pool prewarmed with ${count} instances`,
     )
   }
-}
-// 预定义的对象池实例
-export const createBuffContextPool = () => {
-  return new ObjectPool<BuffContext>({
-    maxSize: 100,
-    create: () => {
-      // ponytail: 创建空 BuffContext 实例，在 borrow 后通过 initialize 初始化
-      return new BuffContext()
-    },
-    reset: (context) => {
-      context.variables.clear()
-    },
-  })
 }
 
 --- src/shared/utils/RAF.ts ---

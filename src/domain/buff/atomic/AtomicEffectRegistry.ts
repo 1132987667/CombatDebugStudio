@@ -8,6 +8,8 @@ import { ShieldEffect } from './effects/ShieldEffect'
 import { TriggerEffect } from './effects/TriggerEffect'
 import { AuraEffect } from './effects/AuraEffect'
 import { ImmunityEffect } from './effects/ImmunityEffect'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 
 /**
  * 原子效果注册表 — 管理 7 + 1 种内置原语，并提供扩展点
@@ -37,7 +39,7 @@ export class AtomicEffectRegistry {
   /** 扩展点：允许外部注册自定义原子效果（JSON type 字符串映射） */
   registerCustom(type: string, handler: IAtomicEffect): void {
     if (!Object.values(AtomicEffectType).includes(type as AtomicEffectType)) {
-      console.warn(`[AtomicEffectRegistry] 注册非标准原子效果类型: ${type}，请确认拼写正确`)
+      LoggerProvider.logger.addDebugLog(`[AtomicEffectRegistry] 注册非标准原子效果类型: ${type}，请确认拼写正确`, { level: LogLevel.WARN })
     }
     this.handlers.set(type as AtomicEffectType, handler)
   }

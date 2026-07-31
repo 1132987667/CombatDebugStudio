@@ -1338,31 +1338,8 @@
     "category": "attribute",
     "maxStacks": 1,
     "duration": 2,
-    "effects": [
-      {
-        "type": "modifier",
-        "params": {
-          "attributes": {
-            "attack": {
-              "value": 30,
-              "type": "PERCENTAGE"
-            },
-            "defense": {
-              "value": 30,
-              "type": "PERCENTAGE"
-            },
-            "speed": {
-              "value": 10,
-              "type": "ADDITIVE"
-            }
-          },
-          "perStack": true
-        }
-      }
-    ],
-    "onAdd": "owner.attributes.attack=owner.attributes.attack*1.3;owner.attributes.defense=owner.attributes.defense*1.3;owner.attributes.speed=owner.attributes.speed+10;",
     "polarity": "positive",
-    "description": "攻击+30%，防御+30%，速度+10，持续2回合"
+    "description": "攻击+50，防御+30，暴击率+10%，每回合恢复5气血（由 MountainGodBuff 脚本驱动）"
   },
   {
     "id": "buff_commander",
@@ -1745,18 +1722,8 @@
     "tags": [
       "heal_reduction"
     ],
-    "triggers": [
-      {
-        "phase": "ON_TURN_START",
-        "scriptId": "deal_dot_damage",
-        "params": {
-          "damageCategory": "elemental",
-          "baseDamageFormula": "target.maxHp * 0.03"
-        }
-      }
-    ],
     "polarity": "negative",
-    "description": "每回合持续伤害"
+    "description": "每回合持续伤害（伤害随层数递增，由 PoisonDebuff 脚本驱动）"
   },
   {
     "id": "buff_strong_poison",
@@ -1801,17 +1768,8 @@
     "category": "shield",
     "maxStacks": 1,
     "duration": 1,
-    "effects": [
-      {
-        "type": "shield",
-        "params": {
-          "value": 10,
-          "valueType": "percent_max_hp"
-        }
-      }
-    ],
     "polarity": "positive",
-    "description": "护盾"
+    "description": "护盾（含每回合恢复与刷新增强，由 ShieldBuff 脚本驱动；护盾值由 executeShield/applyShield 传入）"
   },
   {
     "id": "guardian_buff_revenge_rage",

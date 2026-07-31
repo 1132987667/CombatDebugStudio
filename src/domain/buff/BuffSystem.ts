@@ -413,15 +413,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         if (config.executionMode === 'marker') {
           script = null
         } else {
-          console.warn(
+          this.logger.addDebugLog(
             `Buff ${buffId} not found — no script or config registered, skipping`,
+            { level: LogLevel.WARN },
           )
           return ''
         }
       } else {
         // 有 JSON 配置但无脚本——由 effectPlan 驱动，标记 script 为 null
         script = null
-        this.logger.addDebugLog(`Buff script not found: ${buffId}`)
+        this.logger.addDebugLog(`Buff script not found: ${buffId}`, { level: LogLevel.WARN })
       }
     }
 
@@ -696,6 +697,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       instanceId,
       buffInstance.currentStacks,
       buffInstance.duration,
+      undefined,
+      context?.trace,
     )
 
     // ponytail: 通知外部（如 BattleSystem）buff 已添加，用于触发 UI 动画

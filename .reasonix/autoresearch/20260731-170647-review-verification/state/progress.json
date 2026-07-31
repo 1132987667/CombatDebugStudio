@@ -1,0 +1,19 @@
+{
+  "task_id": "20260731-170647-review-verification",
+  "status": "complete",
+  "verification": {
+    "npm_test": "23 files / 186 tests passed (incl. new BuffScriptLoader.test.ts)",
+    "typecheck": "clean"
+  },
+  "steps": [
+    {"name": "核验矛盾1（映射键）", "status": "done", "finding": "工作区已是全名+注释；修复未提交（HEAD 5300cfc、index.ts 最后提交 8bd658f）；评审基于旧快照"},
+    {"name": "核验矛盾2（variables.clear）", "status": "done", "finding": "BuffContext.initialize 已无 clear()，有 NOTE 注释；工作区未提交"},
+    {"name": "核验 PATH ERROR 回滚", "status": "done", "finding": "BuffSystem.ts:644-645 确有 buffInstances.delete + BuffContextPool.return，评审成立，文档已修正"},
+    {"name": "核验 hasScript 配套适配", "status": "done", "finding": "BuffScriptRegistry.ts:153-155 已是 registry.has || hasOwnProperty(buffScripts) 双判断，评审不成立"},
+    {"name": "核验行号引用", "status": "done", "finding": "ShieldBuff.ts:36、DotEffect.ts:28-29、HotEffect.ts:32-34 均准确，评审'行号失效'不成立"},
+    {"name": "核验回归测试声明", "status": "done", "finding": "tests/ 原无任何 loader 用例，文档'含回归验证'不实；已补 BuffScriptLoader.test.ts（3 用例）"},
+    {"name": "核验 git 提交时间线", "status": "done", "finding": "4e10eb4 不含 index.ts 修改；buffs.json 清理在工作区（-45 行）"},
+    {"name": "修正文档成立问题", "status": "done", "finding": "PATH ERROR 补回滚描述；P2-3 改'设计意图未确认'；头部加代码基线；第六节更新测试数"},
+    {"name": "补 loader 回归测试", "status": "done", "finding": "tests/unit/core/buff/BuffScriptLoader.test.ts 3 用例全绿"}
+  ]
+}

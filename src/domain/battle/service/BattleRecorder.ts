@@ -31,7 +31,7 @@ import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { calculateChecksum, generateReplayId, verifyChecksum } from '@/shared/utils/Checksum'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
-import type { TraceLogEntry } from '@/shared/types/trace-log'
+import type { TraceEvent } from '@/shared/types/trace-event'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { EffectType } from '@/domain/skill/types'
@@ -85,8 +85,8 @@ export interface RecordedBattle {
   rounds: BattleRound[]
   /** 详细战斗记录（含伤害拆分） */
   combatRecords: CombatRecord[]
-  /** 树状调试日志（阶段二：TraceLogCollector 的导出数据） */
-  traceLogs?: TraceLogEntry[]
+  /** 结构化调试追踪事件（TraceEvent[]，战斗结束时由 TraceEventCollector 导出） */
+  traceEvents?: TraceEvent[]
   /** 战斗结果 */
   result?: BattleResult
   /** 数据校验和 */
@@ -238,11 +238,11 @@ export class BattleRecorder {
     BattleSummaryGenerator.instance.onAction(record)
   }
 
-  /** 记录树状调试日志（由 TraceLogCollector 在战斗结束时导出） */
-  public recordTraceLogs(battleId: string, entries: TraceLogEntry[]): void {
+  /** 记录结构化调试追踪事件（由 TraceEventCollector 在战斗结束时导出） */
+  public recordTraceEvents(battleId: string, entries: TraceEvent[]): void {
     const recording = this.recordings.get(battleId)
     if (recording) {
-      recording.traceLogs = entries
+      recording.traceEvents = entries
     }
   }
 
@@ -425,6 +425,7 @@ export class BattleRecorder {
       await this.storage.set(STORAGE_STORE.RECORDINGS, saveKey, saveData)
     } catch (e) {
       LoggerProvider.logger.addDebugLog(`保存战斗记录失败: 存储异常`, {
+        level: LogLevel.ERROR,
         context: { saveKey, error: e },
       })
       return saveKey
@@ -432,10 +433,6 @@ export class BattleRecorder {
 
     // 在内存记录中保存持久化键名（供删除和清理使用）
     recording.saveKey = saveKey
-
-    LoggerProvider.logger.addDebugLog(`保存战斗记录: ${battleId}`, {
-      context: { saveKey, checksum: checksumValue },
-    })
 
     return saveKey
   }
@@ -468,6 +465,11 @@ export class BattleRecorder {
         }
       }
 
+      // ★ 旧持久化数据中的 traceLogs 字段（旧 TraceLogEntry 结构）不迁移：
+      //    无任何消费者（回放/UI 都不读取），且旧结构无法映射为合法 TraceEvent
+      //    （缺少 correlationId/phase/payload），不做类型谎言的字段改名。
+      //    字段保留在持久化 JSON 中，新代码不再读取。
+
       this.recordings.set(recording.battleId, recording)
       if (recording.randomSeed) {
         this.randomSeeds.set(recording.battleId, recording.randomSeed)
@@ -493,7 +495,6 @@ export class BattleRecorder {
   public async deleteRecording(saveKey: string): Promise<boolean> {
     await this.storage.remove(STORAGE_STORE.RECORDINGS, saveKey)
 
-    LoggerProvider.logger.addDebugLog(`删除战斗记录: ${saveKey}`)
     return true
   }
 
@@ -507,9 +508,6 @@ export class BattleRecorder {
     for (const k of matching) {
       await this.storage.remove(STORAGE_STORE.RECORDINGS, k)
       deleted++
-    }
-    if (deleted > 0) {
-      LoggerProvider.logger.addDebugLog(`删除战斗记录 battleId=${battleId}: 共 ${deleted} 条`)
     }
     return deleted > 0
   }
@@ -597,7 +595,6 @@ export class BattleRecorder {
     this.recordings.clear()
     this.randomSeeds.clear()
     this.currentTurnNumbers.clear()
-    LoggerProvider.logger.addDebugLog('清空所有战斗记录')
   }
 
   public clearRecording(battleId: string): void {
@@ -605,7 +602,6 @@ export class BattleRecorder {
       this.recordings.delete(battleId)
       this.randomSeeds.delete(battleId)
       this.currentTurnNumbers.delete(battleId)
-      LoggerProvider.logger.addDebugLog(`清理战斗记录: ${battleId}`)
     }
   }
 
@@ -638,9 +634,8 @@ export class BattleRecorder {
       // ★ 同步清理持久化记录
       if (recording.saveKey) {
         this.storage.remove(STORAGE_STORE.RECORDINGS, recording.saveKey)
-          .catch((e) => LoggerProvider.logger.addDebugLog(`清理持久化记录失败: ${recording.saveKey}`, { error: e }))
+          .catch((e) => LoggerProvider.logger.addDebugLog(`清理持久化记录失败: ${recording.saveKey}`, { level: LogLevel.ERROR, error: e }))
       }
-      LoggerProvider.logger.addDebugLog(`清理过期战斗记录: ${battleId}`)
     }
   }
 }

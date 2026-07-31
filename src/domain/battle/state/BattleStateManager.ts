@@ -1,6 +1,8 @@
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { BattleStatus } from '@/domain/battle/type/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 
 /**
  * 战斗状态管理器
@@ -114,7 +116,9 @@ export class BattleStateManager {
         this.handleBattleEnd()
       }
     } catch (error) {
-      console.error('同步战斗状态时出错:', error)
+      LoggerProvider.logger.addDebugLog(`同步战斗状态时出错: ${String(error)}`, {
+        level: LogLevel.ERROR,
+      })
       // 出错后重置状态
       this.resetState()
     }

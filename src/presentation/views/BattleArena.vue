@@ -97,7 +97,7 @@ import Notification from "@/presentation/components/Notification.vue";
 import { useBattleStore, SkillStepType } from '@/presentation/stores';
 import type { LogEntry } from '@/shared/types/battle-log';
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
-import type { TraceLogEntry } from '@/shared/types/trace-log';
+import type { TraceEventNode } from '@/shared/types/trace-event';
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
 import BattleDashboard from "./BattleDashboard.vue";
@@ -137,7 +137,7 @@ const showRecordingDialog = ref(false);
 const debugLogs = ref<LogEntry[]>([]);
 
 // 树状调试日志数据
-const traceRoots = ref<TraceLogEntry[]>([]);
+const traceRoots = ref<TraceEventNode[]>([]);
 
 const CT = {
   common: {
@@ -164,9 +164,10 @@ async function updateTraceRoots() {
       const collector = bs.traceCollector
       const allTurns = new Set<number>()
       for (const e of collector.getAll()) {
-        if (e.turn != null) allTurns.add(Number(e.turn))
+        // 无回合信息的事件（如 Buff 生命周期）落在 turn-0 桶，一并纳入展示
+        allTurns.add(e.turn != null ? Number(e.turn) : 0)
       }
-      const roots: TraceLogEntry[] = []
+      const roots: TraceEventNode[] = []
       for (const turn of allTurns) {
         roots.push(...collector.getRootsByTurn(turn))
       }

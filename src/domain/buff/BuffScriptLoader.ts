@@ -2,6 +2,8 @@ import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { container } from '@/infrastructure/di/Container'
 import type { ScriptBuffConfig, IBuffScript } from '@/domain/buff/types'
 import { buffScripts } from '@/domain/buff/scripts/index'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 
 /** Buff 脚本构造器接口（静态 BUFF_ID 是类的显式身份声明，CONFIG 提供自包含配置） */
 interface BuffScriptConstructor {
@@ -35,8 +37,9 @@ export class BuffScriptLoader {
             (v as BuffScriptConstructor).BUFF_ID === buffId,
         )
         if (!BuffClass) {
-          console.error(
+          LoggerProvider.logger.addDebugLog(
             `Buff script module 中未找到 BUFF_ID 为 "${buffId}" 的类`,
+            { level: LogLevel.ERROR },
           )
           continue
         }
@@ -49,13 +52,11 @@ export class BuffScriptLoader {
           defaultConfig,
         )
         this.loadedScripts.add(buffId)
-        if (defaultConfig) {
-          console.log(
-            `Loaded and registered buff script: ${buffId} [self-contained]`,
-          )
-        }
       } catch (moduleError) {
-        console.error(`Failed to load buff script ${buffId}:`, moduleError)
+        LoggerProvider.logger.addDebugLog(`Failed to load buff script ${buffId}:`, {
+          level: LogLevel.ERROR,
+          error: moduleError as Error,
+        })
       }
     }
   }

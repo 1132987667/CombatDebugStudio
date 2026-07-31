@@ -13,6 +13,8 @@ import type { TriggerExecutionContext } from '@/domain/buff/BuffSystem'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ControlType } from '@/domain/buff/types'
 import { classifyBuff } from '@/shared/types/buff-classification'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 
 /** 从上下文中获取源参与者的队伍 */
 function getSourceTeam(ctx: TriggerExecutionContext): string | undefined {
@@ -246,7 +248,7 @@ export function summonUnit(ctx: TriggerExecutionContext): void {
   const summonId = (ctx.params?.summonId as string) ?? ''
   const duration = (ctx.params?.duration as number) ?? 3
   if (!summonId) {
-    console.warn('[Trigger] summon_unit — 缺少 summonId 参数')
+    LoggerProvider.logger.addDebugLog('[Trigger] summon_unit — 缺少 summonId 参数', { level: LogLevel.WARN })
     return
   }
   const sourceTeam = getSourceTeam(ctx)

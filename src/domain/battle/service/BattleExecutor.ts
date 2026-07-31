@@ -24,7 +24,8 @@ import {
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { skillSegment } from '@/shared/utils/log-segment-factory'
 import { TraceDamageLogger } from '@/domain/battle/logs/TraceDamageLogger'
-import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
+import { createTraceEvent, TraceLevel, TracePhase, type TraceScope } from '@/shared/types/trace-event'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import type { ThreatManager } from '@/domain/battle/service/ThreatManager'
 import type { ReviveTracker } from '@/domain/battle/service/ReviveTracker'
@@ -116,7 +117,9 @@ export class BattleExecutor {
     new BalancedAIPriorityStrategy()
 
   /** 树状调试日志收集器（可选） */
-  private traceCollector?: TraceLogCollector
+  private tracePort?: IDebugTracePort
+  /** P1: 因果链序号（corr_${turn}_${seq} 命名空间，文档 §4.5.3） */
+  private scopeSeq = 0
   private traceCounter = 0
 
   /** 当前行动顺序号（用于记录 / UI 展示） */
@@ -131,8 +134,8 @@ export class BattleExecutor {
   getActionOrder(): number {
     return this.currentActionOrder
   }
-  setTraceCollector(collector: TraceLogCollector): void {
-    this.traceCollector = collector
+  setTracePort(port: IDebugTracePort | null): void {
+    this.tracePort = port ?? undefined
   }
 
   /** 待处理的死亡事件（延迟结算，复活机制用） */
@@ -187,6 +190,35 @@ export class BattleExecutor {
     battle: BattleData,
     participant: BattleEntity,
   ): Promise<void> {
+    // P1: 根 scope — 一次行动一个因果链（文档 §4.5）。
+    //     AI_DECISION 挂根（base），ACTION_EXECUTION 与子事件挂 actionScope（parentId=ACTION_EXECUTION 事件 id）
+    let baseScope: TraceScope | undefined
+    let actionScope: TraceScope | undefined
+    if (this.tracePort) {
+      const base = this.tracePort.beginScope(
+        `corr_${battle.currentTurn ?? 1}_${++this.scopeSeq}`,
+        TracePhase.ACTION_EXECUTION,
+        { battleId: battle.battleId, turn: battle.currentTurn ?? 1 },
+      )
+      baseScope = base
+      const execId = this.tracePort.isEnabled(TracePhase.ACTION_EXECUTION)
+        ? this.tracePort.emit(
+            createTraceEvent({
+              correlationId: base.correlationId,
+              parentId: base.parentId,
+              phase: TracePhase.ACTION_EXECUTION,
+              battleId: battle.battleId,
+              turn: battle.currentTurn ?? 1,
+              sourceId: participant.id,
+              level: TraceLevel.DEBUG,
+              summary: `${participant.name} 执行行动`,
+              payload: { controlMode: participant.controlMode },
+            }),
+          )
+        : undefined
+      actionScope = base.child(TracePhase.ACTION_EXECUTION, execId)
+    }
+
     // 检查参与者是否被控制
     if (this.isParticipantControlled(participant)) {
       const action = BattleActionHelper.createStatus({
@@ -220,16 +252,8 @@ export class BattleExecutor {
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
       })
-      LoggerProvider.logger.addDebugLog(
-        `角色[${participant.name}]被控制，无法行动`,
-      )
       return
     }
-
-    const context = createPassiveContext(
-      BattleTriggerPhase.BEFORE_ATTACK,
-      battle,
-    )
 
     switch (participant.controlMode) {
       case 'AI': {
@@ -238,6 +262,7 @@ export class BattleExecutor {
           const decision = aiInstance.makeDecision(
             convertToBattleState(battle),
             participant,
+            baseScope,
           )
           const suggestedTargetId = decision.targetId
           if (decision.type === 'skill' && decision.skillId) {
@@ -249,6 +274,7 @@ export class BattleExecutor {
                   battle,
                   participant,
                   suggestedTargetId,
+                  actionScope,
                 )
               } else {
                 await this.selectAndExecuteSkill(
@@ -256,7 +282,7 @@ export class BattleExecutor {
                   participant,
                   skill,
                   suggestedTargetId,
-                  context,
+                  actionScope,
                 )
               }
             } else {
@@ -264,6 +290,7 @@ export class BattleExecutor {
                 battle,
                 participant,
                 suggestedTargetId,
+                actionScope,
               )
             }
           } else {
@@ -271,22 +298,20 @@ export class BattleExecutor {
               battle,
               participant,
               suggestedTargetId,
+              actionScope,
             )
           }
         } else {
           // ponytail: 有 AI 标志但无实例，降级为 AUTO
-          await this.autoDecision(battle, participant, context)
+        await this.autoDecision(battle, participant, actionScope)
         }
         break
       }
       case 'AUTO':
-        await this.autoDecision(battle, participant, context)
+        await this.autoDecision(battle, participant, actionScope)
         break
       case 'MANUAL':
         // ponytail: 玩家手操，由 Store/UI 直接驱动
-        LoggerProvider.logger.addDebugLog(
-          `玩家手操角色[${participant.name}]，跳过自动决策`,
-        )
         break
     }
 
@@ -299,7 +324,7 @@ export class BattleExecutor {
   private async autoDecision(
     battle: BattleData,
     participant: BattleEntity,
-    context: PassiveTriggerContext,
+    scope?: TraceScope,
   ): Promise<void> {
     const currentEnergy = participant.getAttribute(ATTRIBUTE_CODE.currentEnergy)
     const activeSkillIds = participant.getSkillIds(SkillType.ACTIVE)
@@ -333,7 +358,7 @@ export class BattleExecutor {
         if (skill) {
           // ★ 拦截普通攻击，强制走普攻路径
           if (this.isNormalAttackSkill(skill)) {
-            await this.selectAndExecuteAttack(battle, participant)
+            await this.selectAndExecuteAttack(battle, participant, undefined, scope)
             return
           }
           await this.selectAndExecuteSkill(
@@ -341,7 +366,7 @@ export class BattleExecutor {
             participant,
             skill,
             undefined,
-            context,
+            scope,
           )
           return
         }
@@ -352,7 +377,7 @@ export class BattleExecutor {
       if (skill) {
         // ★ 拦截普通攻击，强制走普攻路径
         if (this.isNormalAttackSkill(skill)) {
-          await this.selectAndExecuteAttack(battle, participant)
+          await this.selectAndExecuteAttack(battle, participant, undefined, scope)
           return
         }
         await this.selectAndExecuteSkill(
@@ -360,13 +385,13 @@ export class BattleExecutor {
           participant,
           skill,
           undefined,
-          context,
+          scope,
         )
         return
       }
     }
 
-    await this.selectAndExecuteAttack(battle, participant)
+    await this.selectAndExecuteAttack(battle, participant, undefined, scope)
   }
 
   // ============ 技能执行 ============
@@ -379,7 +404,7 @@ export class BattleExecutor {
     source: BattleEntity,
     skill: SkillConfig,
     suggestedTargetId?: string,
-    context?: PassiveTriggerContext,
+    scope?: TraceScope,
   ): Promise<BattleAction> {
     if (
       'isSkillAvailable' in source &&
@@ -411,8 +436,8 @@ export class BattleExecutor {
     if (targets.length === 0) {
       LoggerProvider.logger.addDebugLog(
         `技能执行失败: 未找到有效目标 ${skill.id}`,
+        { level: LogLevel.WARN },
       )
-      console.error(`技能执行失败: 未找到有效目标 ${skill.id}`)
       return this.selectAndExecuteAttack(battleData, source)
     }
 
@@ -431,6 +456,8 @@ export class BattleExecutor {
         createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battleData, {
           target: targets[0],
           targetId: targets[0]?.id,
+          trace: scope,
+          parentTraceId: scope?.parentId,
         }),
       )
       // 收集 BEFORE_ATTACK 被动触发记录（将在技能执行时写入每个 CombatRecord）
@@ -482,10 +509,12 @@ export class BattleExecutor {
           (stepTargetType, mainTarget) =>
             this.resolveStepTargets(battleData, mainTarget, stepTargetType),
           damageToken,
+          scope,
         )
         if (!skillAction.success) {
           LoggerProvider.logger.addDebugLog(
             `技能执行失败: ${skill.id}，跳过目标 ${target.id} — ${skillAction.effects[0]?.description || '未知原因'}`,
+            { level: LogLevel.WARN },
           )
           continue
         }
@@ -509,9 +538,7 @@ export class BattleExecutor {
         this.battleRecorder.recordCombatRecord(battleData.battleId, record)
         // ponytail: 技术调试日志 — 技能伤害计算链路追踪
         try {
-          this.traceCounter++
-          const skillTraceId = `skill_${this.traceCounter}_${Date.now()}`
-          TraceDamageLogger.log(record, this.traceCollector, skillTraceId)
+          TraceDamageLogger.log(record, this.tracePort, scope?.correlationId, scope?.parentId)
         } catch {
           // 调试日志失败绝不中断战斗
         }
@@ -624,6 +651,7 @@ export class BattleExecutor {
         meta: { role: 'action', skillName: skill.name || skill.id },
       })
       LoggerProvider.logger.addDebugLog(`技能执行失败: ${skill.id}`, {
+        level: LogLevel.ERROR,
         error: error as Error,
       })
       action.type = ActionTypes.ATTACK
@@ -696,6 +724,7 @@ export class BattleExecutor {
       }
       LoggerProvider.logger.addDebugLog(
         `建议目标 ${suggestedTargetId} 不满足 selector 约束，回退到自动解析`,
+        { level: LogLevel.WARN },
       )
     }
     return resolveSkillTargets(
@@ -1129,10 +1158,6 @@ export class BattleExecutor {
       results: [],
     })
 
-    LoggerProvider.logger.addDebugLog(
-      `普通攻击: ${source.name} → ${target.name}，被闪避`,
-    )
-
     // 闪避后触发 DODGE 被动技能（闪避者作为触发者）
     this.passiveSkillManager.triggerPassives(
       target,
@@ -1214,10 +1239,6 @@ export class BattleExecutor {
       ],
     })
 
-    LoggerProvider.logger.addDebugLog(
-      `普通攻击: ${source.name} → ${target.name}`,
-    )
-
     // settleDamage 内部已处理：ON_HIT/DAMAGE_TAKEN 被动、pendingDeaths
   }
 
@@ -1228,13 +1249,15 @@ export class BattleExecutor {
     battle: BattleData,
     source: BattleEntity,
     suggestedTargetId?: string,
+    scope?: TraceScope,
   ): Promise<BattleAction> {
     const targetId = this.selectTarget(battle, source, suggestedTargetId)
     const target = battle.participants.get(targetId)
 
     if (!target) {
-      LoggerProvider.logger.addDebugLog(`攻击失败: 未找到目标 ${targetId}`)
-      console.error(`攻击失败: 未找到目标 ${targetId}`)
+      LoggerProvider.logger.addDebugLog(`攻击失败: 未找到目标 ${targetId}`, {
+        level: LogLevel.WARN,
+      })
       return this.createBattleAction(
         source.id,
         source.id,
@@ -1244,10 +1267,6 @@ export class BattleExecutor {
 
     const currentTurn = battle.currentTurn
 
-    // 生成此攻击的 traceId（因果链根节点）
-    this.traceCounter++
-    const atkTraceId = `atk_${this.traceCounter}_${Date.now()}`
-
     // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
     LoggerProvider.logger.beginBufferSubLogs()
 
@@ -1256,6 +1275,8 @@ export class BattleExecutor {
       createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battle, {
         target,
         targetId,
+        trace: scope,
+        parentTraceId: scope?.parentId,
       }),
     )
     // 收集 BEFORE_ATTACK 被动触发记录
@@ -1281,7 +1302,7 @@ export class BattleExecutor {
       attackStep,
       source,
       target,
-      createStepContext(record, undefined),
+      createStepContext(record, undefined, false, undefined, scope),
     )
 
     const action = this.createBattleAction(source.id, targetId, currentTurn)
@@ -1315,7 +1336,7 @@ export class BattleExecutor {
     this.battleRecorder.recordCombatRecord(battle.battleId, record)
     // ponytail: 技术调试日志 — 伤害计算链路追踪
     try {
-      TraceDamageLogger.log(record, this.traceCollector, atkTraceId)
+      TraceDamageLogger.log(record, this.tracePort, scope?.correlationId, scope?.parentId)
     } catch {
       // 调试日志失败绝不中断战斗
     }
@@ -1327,6 +1348,8 @@ export class BattleExecutor {
         targetId,
         damage: action.damage,
         isCritical: damageResult.isCritical,
+        trace: scope,
+        parentTraceId: scope?.parentId,
       }),
     )
 
@@ -1350,6 +1373,7 @@ export class BattleExecutor {
       }
       LoggerProvider.logger.addDebugLog(
         `建议目标 ${suggestedTargetId} 无效（已死/非敌方/不存在），回退到随机选择`,
+        { level: LogLevel.WARN },
       )
     }
     const enemies = Array.from(battle.participants.values()).filter(
@@ -1460,6 +1484,7 @@ export class BattleExecutor {
   async executeAction(
     battle: BattleData,
     action: BattleAction,
+    scope?: TraceScope,
   ): Promise<BattleAction> {
     const source = battle.participants.get(action.sourceId)
     const target = battle.participants.get(action.targetId)
@@ -1484,6 +1509,7 @@ export class BattleExecutor {
           undefined,
           undefined,
           damageToken,
+          scope,
         )
         if (!skillAction.success) {
           // ponytail: early-return 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
@@ -1698,6 +1724,7 @@ export class BattleExecutor {
         // ★ 出错时也刷出缓冲的 sub 日志，防止内存泄漏
         LoggerProvider.logger.flushBufferedSubLogs()
         LoggerProvider.logger.addDebugLog(`技能执行失败: ${action.skillId}`, {
+          level: LogLevel.ERROR,
           error: error as Error,
         })
         action.type = ActionTypes.ATTACK

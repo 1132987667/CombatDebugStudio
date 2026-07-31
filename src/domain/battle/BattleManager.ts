@@ -25,6 +25,7 @@ import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import type { Emitter } from 'mitt'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 
 /**
  * 战斗管理器
@@ -264,7 +265,9 @@ export class BattleManager {
       this.emitTeamChanged()
       return { battleId: battleData.battleId }
     } catch (error) {
-      console.error('初始化队伍数据时出错:', error)
+      LoggerProvider.logger.addDebugLog(`初始化队伍数据时出错: ${String(error)}`, {
+        level: LogLevel.ERROR,
+      })
       throw error
     }
   }
@@ -491,7 +494,6 @@ export class BattleManager {
    * @param battleId 战斗 ID
    */
   setBattleId(battleId: string) {
-    console.log('BattleManager setBattleId', battleId)
     this.battleStateManager.setBattleId(battleId)
   }
 
@@ -532,7 +534,7 @@ export class BattleManager {
     const enemyTeam = this.getEnabledEnemyTeam()
 
     if (allyTeam.length === 0 || enemyTeam.length === 0) {
-      LoggerProvider.logger.addDebugLog('队伍数据未初始化，请先添加角色到队伍')
+      LoggerProvider.logger.addDebugLog('队伍数据未初始化，请先添加角色到队伍', { level: LogLevel.WARN })
       return null
     }
 

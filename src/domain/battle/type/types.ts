@@ -18,6 +18,7 @@ import { Counter } from '@/shared/utils/Counter'
 import { SkillType } from '@/domain/skill/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import type { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
+import type { TraceScope } from '@/shared/types/trace-event'
 
 const counter = new Counter()
 /**
@@ -908,6 +909,8 @@ export interface PassiveTriggerContext {
   readonly isCritical?: boolean
   readonly cause?: string
   readonly parentTraceId?: string
+  /** 因果链作用域（文档 §4.5）— P1 起由 createPassiveContext 的 overrides 传入 */
+  readonly trace?: TraceScope
 }
 
 /**
@@ -921,6 +924,8 @@ export interface StepExecutionContext {
   readonly fromPassive?: boolean
   /** 触发的伤害量（用于 damageDealt/damageTaken 等动态属性） */
   readonly damage?: number
+  /** 因果链作用域（文档 §4.5）— P1 起由 createStepContext 携带，发射点从 context.trace 取 */
+  readonly trace?: TraceScope
 }
 
 /**
@@ -963,6 +968,7 @@ export function createStepContext(
   token?: DeferredDamageToken,
   fromPassive?: boolean,
   damage?: number,
+  trace?: TraceScope,
 ): StepExecutionContext {
-  return { record, token, fromPassive, damage }
+  return { record, token, fromPassive, damage, trace }
 }

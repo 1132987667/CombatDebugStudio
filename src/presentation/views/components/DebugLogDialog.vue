@@ -55,13 +55,13 @@ import type { TabItem } from '@/presentation/components/Tabs.vue'
 import TraceLogTree from '@/presentation/views/components/TraceLogTree.vue'
 import EmptyState from '@/presentation/components/EmptyState.vue'
 import type { LogEntry } from '@/shared/types/battle-log'
-import type { TraceLogEntry } from '@/shared/types/trace-log'
+import type { TraceEventNode } from '@/shared/types/trace-event'
 import { LogLevel } from '@/shared/types/battle-log'
 
 interface Props {
   modelValue: boolean
   logs: LogEntry[]
-  traceRoots?: TraceLogEntry[]
+  traceRoots?: TraceEventNode[]
 }
 
 interface Emits {

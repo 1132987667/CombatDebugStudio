@@ -20,6 +20,7 @@ import type { RAFTimer } from '@/shared/utils/RAF'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 
 export class BattleLifecycleManager {
   private autoBattleTimerId?: symbol
@@ -93,7 +94,9 @@ export class BattleLifecycleManager {
       try {
         await this.battleRecorder.saveRecording(battle.battleId)
       } catch (e) {
-        LoggerProvider.logger.addDebugLog(`保存战斗记录失败: ${e}`)
+        LoggerProvider.logger.addDebugLog(`保存战斗记录失败: ${e}`, {
+          level: LogLevel.ERROR,
+        })
       }
     }
 
@@ -184,7 +187,9 @@ export class BattleLifecycleManager {
         }
       } catch (error) {
         this.stopAutoBattle()
-        console.error('自动战斗循环出错:', error)
+        LoggerProvider.logger.addDebugLog(`自动战斗循环出错: ${String(error)}`, {
+          level: LogLevel.ERROR,
+        })
       }
     }
 

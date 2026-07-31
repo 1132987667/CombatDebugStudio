@@ -275,7 +275,6 @@ export class BattleRuleManager {
 
     // 深度合并配置
     this.config = this.deepMerge(this.config, updates)
-    LoggerProvider.logger.addDebugLog('战斗规则配置已更新')
   }
 
   /**
@@ -418,7 +417,6 @@ export class BattleRuleManager {
       }
 
       this.config = newConfig
-      LoggerProvider.logger.addDebugLog('战斗规则配置导入成功')
       return { success: true }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误'
@@ -434,7 +432,6 @@ export class BattleRuleManager {
    */
   public resetToDefault(): void {
     this.config = this.getDefaultConfig()
-    LoggerProvider.logger.addDebugLog('战斗规则配置已重置为默认值')
   }
 
   /**

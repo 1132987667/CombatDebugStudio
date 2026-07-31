@@ -8,9 +8,20 @@
 import { ATTRIBUTE_CODE, type AttributeValue, getAttrMeta, getAttrDv } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 import { round } from '@/shared/utils/math'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 
 export class ParticipantStats {
   readonly attributes = new Map<ATTRIBUTE_CODE, AttributeValue>()
+
+  /** P1: 调试追踪端口（静态注入——实体深埋于参与者内部，经 BattleParticipantImpl.setTracePort 转发） */
+  private static tracePort: IDebugTracePort | null = null
+  private static recalcSeq = 0
+
+  /** 设置调试追踪端口（BattleSystem 初始化时注入） */
+  static setTracePort(port: IDebugTracePort | null): void {
+    ParticipantStats.tracePort = port
+  }
 
   /** 全局版本号，每次变化递增 */
   private version: number = 0
@@ -140,7 +151,25 @@ export class ParticipantStats {
     // ponytail: 加成属性（attackBonus/healthBonus）已在 enemyToParticipant 中作为
     // PERCENTAGE 修饰符注入到对应属性，此处不再重复处理。
     const value = ((attrData.base + additive) * percentMultiplier / 100 * independentMultiplier / 100) * finalMultiplier / 100
-    attrData.value = round(value, 2)
+    const before = attrData.value
+    const after = round(value, 2)
+    attrData.value = after
+    // P1: ATTRIBUTE_RECALC 事件（trace 级高频，文档 §5 示例 4）
+    if (ParticipantStats.tracePort?.isEnabled(TracePhase.ATTRIBUTE_RECALC)) {
+      ParticipantStats.tracePort.emit(
+        createTraceEvent({
+          correlationId: `attr_recalc_${attrCode}_${++ParticipantStats.recalcSeq}`,
+          phase: TracePhase.ATTRIBUTE_RECALC,
+          level: TraceLevel.TRACE,
+          summary: `属性重算 ${attrCode} ${before} → ${after}`,
+          payload: {
+            attribute: attrCode,
+            before: { final: before },
+            after: { final: after },
+          },
+        }),
+      )
+    }
     // 记录计算拆解
     attrData.breakdown = {
       base: attrData.base,

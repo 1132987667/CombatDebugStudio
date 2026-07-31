@@ -15,6 +15,10 @@ import {
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 import type { EffectsJsonData } from '@/shared/types/effects-json'
+// NOTE: 仅引用静态脚本清单（映射键 = 脚本类 BUFF_ID），用于构造时校验。
+//       BuffScriptLoader.loadScripts 是异步的、晚于 registry 构造，此时 this.registry 尚为空，
+//       因此"是否有脚本"须以静态清单判断，而非注册表。
+import { buffScripts } from '@/domain/buff/scripts/index'
 
 /** 效果定义：脚本 + 配置的统一视图 */
 export interface EffectDefinition {
@@ -86,17 +90,17 @@ export class BuffScriptRegistry {
           if (buff.id) {
             // 配置值格式与键名校验由 validateBuffConfigs 统一执行（值须为 {value,type} 对象）
             this.buffConfigs.set(buff.id, buff as BuffJsonEntry)
-            console.log(`加载 Buff 配置: ${buff.id}`)
           }
         }
-        LoggerProvider.logger.addDebugLog(
-          `Loaded ${this.buffConfigs.size} buff configs from buffs.json`,
-        )
+        // TODO(P1): CONFIG_LOAD 事件落地后覆盖配置加载信息
       } else {
-        LoggerProvider.logger.addDebugLog('buffs.json 格式错误: 不是数组')
+        LoggerProvider.logger.addDebugLog('buffs.json 格式错误: 不是数组', {
+          level: LogLevel.ERROR,
+        })
       }
     } catch (error) {
       LoggerProvider.logger.addDebugLog('加载 Buff 配置失败:', {
+        level: LogLevel.ERROR,
         error: error as Error,
       })
     }
@@ -146,7 +150,9 @@ export class BuffScriptRegistry {
         }
       }
 
-      const hasScript = this.registry.has(buffId)
+      const hasScript =
+        this.registry.has(buffId) ||
+        Object.prototype.hasOwnProperty.call(buffScripts, buffId)
       const resolved = this.getResolvedBuffConfig(buffId)
       const hasEffectPlan = resolved?.effectPlan && resolved.effectPlan.length > 0
       const hasTriggers = (raw.triggers?.length ?? 0) > 0
@@ -198,12 +204,11 @@ export class BuffScriptRegistry {
         count++
       }
       if (count > 0) {
-        LoggerProvider.logger.addDebugLog(
-          `Loaded ${count} effect configs from effects.json`,
-        )
+        // TODO(P1): CONFIG_LOAD 事件落地后覆盖配置加载信息
       }
     } catch (error) {
       LoggerProvider.logger.addDebugLog('加载效果配置失败:', {
+        level: LogLevel.ERROR,
         error: error as Error,
       })
     }
@@ -280,6 +285,7 @@ export class BuffScriptRegistry {
     if (this.registry.has(scriptId)) {
       LoggerProvider.logger.addDebugLog(
         `BUFF脚本 "${scriptId}" 已经注册, 请检查`,
+        { level: LogLevel.WARN },
       )
     }
     this.registry.set(scriptId, {
@@ -293,21 +299,12 @@ export class BuffScriptRegistry {
     })
     if (defaultConfig) {
       this.defaultConfigs.set(scriptId, defaultConfig)
-      LoggerProvider.logger.addDebugLog(
-        `BUFF脚本 "${scriptId}" 提供自包含配置 (${Object.keys(defaultConfig).length} 个字段)`,
-      )
     }
-    LoggerProvider.logger.addDebugLog(`注册BUFF脚本: ${scriptId}`)
   }
 
   /** 获取脚本自包含的默认配置 */
   public getDefaultConfig(scriptId: string): ScriptBuffConfig | undefined {
     return this.defaultConfigs.get(scriptId)
-  }
-
-  /** 检查脚本是否为自包含模式——脚本自行管理修饰符，框架不再重复从 JSON 读取 */
-  public isSelfContained(scriptId: string): boolean {
-    return this.defaultConfigs.get(scriptId)?.selfContained === true
   }
 
   public registerScript(
@@ -333,7 +330,7 @@ export class BuffScriptRegistry {
     } catch (e) {
       LoggerProvider.logger.addDebugLog(
         `Failed to instantiate script "${scriptId}":`,
-        { error: e as Error },
+        { level: LogLevel.ERROR, error: e as Error },
       )
       return null
     }

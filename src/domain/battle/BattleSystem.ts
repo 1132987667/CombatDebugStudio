@@ -22,7 +22,8 @@ import {
 } from '@/domain/battle/entity/BattleInterfaces'
 import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
-import { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import { TraceEventCollector } from '@/domain/battle/logs/TraceEventCollector'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
 import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
 import { BattleRecorder, type RecordedBattle } from '@/domain/battle/service/BattleRecorder'
@@ -225,14 +226,15 @@ export class BattleSystem {
       () => !this.shouldSuppressAnimationEvents(),
     )
 
-    // 树状调试日志收集器
-    this.traceCollector = new TraceLogCollector()
-    this.executor.setTraceCollector(this.traceCollector)
-    this.passiveSkillManager.setTraceCollector(this.traceCollector)
-    BuffTraceLogger.setCollector(this.traceCollector)
+    // 结构化调试追踪收集器（IDebugTracePort 实现）
+    this.traceCollector = new TraceEventCollector()
+    this.executor.setTracePort(this.traceCollector)
+    this.passiveSkillManager.setTracePort(this.traceCollector)
+    BuffTraceLogger.setTracePort(this.traceCollector)
+    BattleParticipantImpl.setTracePort(this.traceCollector)
   }
 
-  readonly traceCollector: TraceLogCollector
+  readonly traceCollector: TraceEventCollector
 
   /**
    * 获取触发器事件总线实例
@@ -384,9 +386,10 @@ export class BattleSystem {
     this.activeBattleId = battleData.battleId
 
     battleData.participants = participants
-    console.log('初始化战斗数据', battleData)
 
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
+    // P1: 注入调试追踪端口（AI_DECISION 事件用；AISystem 负责转发到每个 AI 实例，含惰性创建的）
+    this.aiSystem.setTracePort(this.traceCollector)
     battleData.skillManager = this.skillManager
 
     battleData.currentTurn = 0
@@ -817,6 +820,30 @@ export class BattleSystem {
       (p) => p.isAlive(),
     )
 
+    // P1: TURN_FLOW 事件 — 回合开始（文档 §5 示例 5）
+    if (this.traceCollector.isEnabled(TracePhase.TURN_FLOW)) {
+      const aliveByTeam = { ally: 0, enemy: 0 }
+      aliveParticipants.forEach((p) => {
+        if (p.team === ParticipantSide.ALLY) aliveByTeam.ally++
+        else aliveByTeam.enemy++
+      })
+      this.traceCollector.emit(
+        createTraceEvent({
+          correlationId: `turn_${battle.currentTurn ?? 1}`,
+          phase: TracePhase.TURN_FLOW,
+          battleId: battle.battleId,
+          turn: battle.currentTurn,
+          level: TraceLevel.INFO,
+          summary: `回合 ${battle.currentTurn} 开始`,
+          payload: {
+            action: 'TURN_START',
+            aliveCount: aliveByTeam,
+            energyGain: this.ruleManager.getCombatRules().energyGainPerTurn,
+          },
+        }),
+      )
+    }
+
     try {
       // 触发回合开始事件
       aliveParticipants.forEach((participant) => {
@@ -857,9 +884,6 @@ export class BattleSystem {
       aliveParticipants.forEach((participant) => {
         participant.gainEnergy(combatRules.energyGainPerTurn)
       })
-      LoggerProvider.logger.addDebugLog(
-        '角色能量增加: ' + combatRules.energyGainPerTurn,
-      )
 
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
@@ -887,7 +911,6 @@ export class BattleSystem {
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0]!)
 
       for (let i = 0; i < currentTurnOrder.length; i++) {
-        console.log('当前回合 顺序', i, currentTurnOrder)
         await this.animationManager.waitForAnimation()
 
         // 【竞态条件防护】检查战斗状态是否仍然有效
@@ -913,6 +936,7 @@ export class BattleSystem {
           await this.executor.executeParticipantAction(battle, participant)
         } catch (error) {
           LoggerProvider.logger.addDebugLog('角色行动执行出错:', {
+            level: LogLevel.ERROR,
             error: error as Error,
           })
           await this.executor.executeDefaultAction(battle, participant)
@@ -938,12 +962,7 @@ export class BattleSystem {
           return
         }
 
-        // 打印当前所有参战角色气血
-        battle.participants.forEach((participant) => {
-          console.log(
-            `角色 ${participant.name} 当前气血: ${participant.getAttribute(ATTRIBUTE_CODE.currentHealth)}/${participant.getAttribute(ATTRIBUTE_CODE.maxHealth)}`,
-          )
-        })
+        // TODO(P1): 属性重算事件（ATTRIBUTE_RECALC）落地后，气血变化由事件链可见，此打印删除
       }
 
       await this.animationManager.waitForAnimation()
@@ -1047,6 +1066,21 @@ export class BattleSystem {
 
       battle.roundState = RoundStatus.END
 
+      // P1: TURN_FLOW 事件 — 回合结束（文档 §5 示例 5）
+      if (this.traceCollector.isEnabled(TracePhase.TURN_FLOW)) {
+        this.traceCollector.emit(
+          createTraceEvent({
+            correlationId: `turn_${battle.currentTurn ?? 1}`,
+            phase: TracePhase.TURN_FLOW,
+            battleId: battle.battleId,
+            turn: battle.currentTurn,
+            level: TraceLevel.INFO,
+            summary: `回合 ${battle.currentTurn} 结束`,
+            payload: { action: 'TURN_END' },
+          }),
+        )
+      }
+
       this.battleRecorder.recordTurnEnd(battleId, battle.currentTurn || 1)
 
       battle.currentTurn++
@@ -1055,7 +1089,6 @@ export class BattleSystem {
         level: LogLevel.ERROR,
         error: error as Error,
       })
-      console.error('处理回合时出错:', error)
     } finally {
       this.animationManager.cleanupAnimationState()
     }
@@ -1158,9 +1191,9 @@ export class BattleSystem {
    * @param winner - 胜利者类型
    */
   public async endBattle(winner: ParticipantSide): Promise<void> {
-    // 战斗结束前将树状调试日志写入 BattleRecorder
+    // 战斗结束前将结构化调试追踪事件写入 BattleRecorder
     if (this.battleData) {
-      this.battleRecorder.recordTraceLogs(
+      this.battleRecorder.recordTraceEvents(
         this.battleData.battleId,
         this.traceCollector.exportAll(),
       )
@@ -1426,7 +1459,7 @@ export class BattleSystem {
    * 回合执行事件
    */
   public onTurnExecuted(turnNumber: number): void {
-    LoggerProvider.logger.addDebugLog(`回合 ${turnNumber} 执行完成`)
+    // TODO(P1): TURN_FLOW 事件（文档 §5 示例 5）落地后覆盖回合流转信息
   }
 
   /**

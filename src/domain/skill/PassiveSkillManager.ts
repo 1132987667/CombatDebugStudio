@@ -3,7 +3,7 @@ import {
   EffectRenderer,
   type RenderContext,
 } from '@/domain/battle/logs/EffectRenderer'
-import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import {
   BATTLE_CONSTANTS,
@@ -23,7 +23,7 @@ import type { SkillConfig } from '@/domain/skill/types'
 import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
-import { createTraceLogEntry } from '@/shared/types/trace-log'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import { DamageCategory } from '@/domain/skill/types'
 
 export interface PassiveSkillConfig {
@@ -61,8 +61,8 @@ export class PassiveSkillManager {
   private skillManager: SkillManager
   private buffSystem: BuffSystem
 
-  /** 可选的 TraceLogCollector */
-  private traceCollector?: TraceLogCollector
+  /** 可选的 IDebugTracePort */
+  private tracePort?: IDebugTracePort
   private traceCounter = 0
 
   /** EffectRenderer — 结构化效果 → LogSegment 渲染 */
@@ -91,8 +91,8 @@ export class PassiveSkillManager {
   /** 动画发射开关（由 BattleSystem 注入动态 getter） */
   private _getAnimationEnabled: () => boolean = () => true
 
-  setTraceCollector(c: TraceLogCollector): void {
-    this.traceCollector = c
+  setTracePort(port: IDebugTracePort | null): void {
+    this.tracePort = port ?? undefined
   }
 
   /** ★ 注入动画发射开关 getter（headless/quickMode 时抑制动画事件） */
@@ -149,22 +149,46 @@ export class PassiveSkillManager {
       currentTurn: 0,
     },
   ): boolean {
-    if (config.trigger !== context.phase) return false
+    if (config.trigger !== context.phase) {
+      this.emitPassiveSkipped(config, entity, context, 'PHASE_MISMATCH', {
+        phaseMatch: false,
+        expected: config.trigger,
+        actual: context.phase,
+      })
+      return false
+    }
     // 检查冷却时间是否到，config.cooldown = -1 表示无冷却
     if (config.cooldown > 0 && config.lastTriggeredTurn) {
       const currentTurn = context.currentTurn
-      if (currentTurn - config.lastTriggeredTurn < config.cooldown) return false
+      if (currentTurn - config.lastTriggeredTurn < config.cooldown) {
+        this.emitPassiveSkipped(config, entity, context, 'COOLDOWN', {
+          cooldown: {
+            ready: false,
+            remaining: config.cooldown - (currentTurn - config.lastTriggeredTurn),
+            lastTriggeredTurn: config.lastTriggeredTurn,
+          },
+        })
+        return false
+      }
     }
     // 检查最大触发次数是否超过
     if (
       config.maxTriggerCount &&
       config.triggerCount &&
       config.triggerCount >= config.maxTriggerCount
-    )
+    ) {
+      this.emitPassiveSkipped(config, entity, context, 'MAX_TRIGGERS', {
+        maxTriggers: { limit: config.maxTriggerCount, used: config.triggerCount },
+      })
       return false
+    }
     // 检查触发概率是否命中
-    if (config.triggerProbability && Math.random() > config.triggerProbability)
+    if (config.triggerProbability && Math.random() > config.triggerProbability) {
+      this.emitPassiveSkipped(config, entity, context, 'PROBABILITY', {
+        probability: { required: config.triggerProbability, passed: false },
+      })
       return false
+    }
     if (
       config.trigger === BattleTriggerPhase.HP_LOWER_THAN &&
       config.hpThreshold
@@ -172,15 +196,62 @@ export class PassiveSkillManager {
       const hpPercent =
         entity.getAttribute(ATTRIBUTE_CODE.currentHealth) /
         Math.max(1, entity.getAttribute(ATTRIBUTE_CODE.maxHealth))
-      if (hpPercent > config.hpThreshold / 100) return false
+      if (hpPercent > config.hpThreshold / 100) {
+        this.emitPassiveSkipped(config, entity, context, 'CONDITION', {
+          condition: {
+            expr: `HP_LOWER_THAN ${config.hpThreshold}%`,
+            passed: false,
+            hpPercent: Math.round(hpPercent * 100) / 100,
+          },
+        })
+        return false
+      }
     }
     // 被动有触发条件，检查是否满足
     if (
       config.condition &&
       !this.evaluateCondition(config.condition, entity, contextTarget, context, config.conditionParams)
-    )
+    ) {
+      this.emitPassiveSkipped(config, entity, context, 'CONDITION', {
+        condition: { expr: config.condition, passed: false },
+      })
       return false
+    }
     return true
+  }
+
+  /**
+   * 发射 PASSIVE_TRIGGER 跳过事件（trace 级，默认折叠；文档 §5 示例 3）
+   * 记录"没发生"与记录"发生"同等重要——当前系统的黑洞所在
+   */
+  private emitPassiveSkipped(
+    config: PassiveSkillConfig,
+    entity: BattleEntity,
+    context: PassiveTriggerContext,
+    skipReason: string,
+    checks: Record<string, unknown>,
+  ): void {
+    if (!this.tracePort || !this.tracePort.isEnabled(TracePhase.PASSIVE_TRIGGER)) return
+    this.tracePort.emit(
+      createTraceEvent({
+        correlationId: context.trace?.correlationId ?? `pas_skip_${++this.traceCounter}`,
+        phase: TracePhase.PASSIVE_TRIGGER,
+        parentId: context.trace?.parentId ?? context.parentTraceId,
+        battleId: context?.trace?.meta?.battleId,
+        turn: context.currentTurn,
+        sourceId: entity.id,
+        level: TraceLevel.TRACE,
+        summary: `被动跳过 [${entity.name}] ${config.name || config.skillId}：${skipReason}`,
+        payload: {
+          passiveId: config.skillId,
+          owner: entity.name,
+          trigger: context.phase,
+          verdict: 'SKIPPED',
+          skipReason,
+          checks,
+        },
+      }),
+    )
   }
 
   /**
@@ -270,23 +341,29 @@ export class PassiveSkillManager {
         })
       }
 
-      // TraceLogCollector 输出
-      if (this.traceCollector && hasExecuted) {
-        this.traceCounter++
+      // IDebugTracePort 输出（结构化 TraceEvent）
+      if (this.tracePort && hasExecuted) {
         const configName = config.name || config.skillId
-        const traceId = `pas_${this.traceCounter}_${Date.now()}`
-        this.traceCollector.add({
-          ...createTraceLogEntry(
-            traceId,
-            context?.parentTraceId,
-            configName,
-            0,
-            `${entity.name} 触发 【${configName}】`,
-            1,
-          ),
-          turn: context.currentTurn,
-          source: entity.id,
-        })
+        if (this.tracePort.isEnabled(TracePhase.PASSIVE_TRIGGER)) {
+          this.tracePort.emit(
+            createTraceEvent({
+              correlationId: context?.trace?.correlationId ?? `pas_${++this.traceCounter}`,
+              phase: TracePhase.PASSIVE_TRIGGER,
+              parentId: context?.trace?.parentId ?? context?.parentTraceId,
+              battleId: context?.trace?.meta?.battleId,
+              turn: context.currentTurn,
+              sourceId: entity.id,
+              level: TraceLevel.DEBUG,
+              summary: `${entity.name} 触发 【${configName}】`,
+              payload: {
+                passiveId: config.skillId,
+                owner: entity.name,
+                trigger: context?.phase,
+                verdict: 'TRIGGERED',
+              },
+            }),
+          )
+        }
       }
     }
   }

@@ -2,6 +2,8 @@ import type { BuffConfig } from '@/domain/buff/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 
 export class BuffContext {
   public characterId: string = ''
@@ -28,7 +30,8 @@ export class BuffContext {
     this.characterId = characterId
     this.instanceId = instanceId
     this.config = config
-    this.variables.clear()
+    // NOTE: 不在此处清除 variables——池化路径由 ObjectPool.reset()（归还时）清空并
+    //       经 borrow 的 validate 保证为空，直接构造路径 variables 天然为空。避免重复清除。
     if (buffSystem) this._buffSystem = buffSystem
   }
 
@@ -58,15 +61,20 @@ export class BuffContext {
     type: ModifierType,
   ): void {
     const system = this.buffSystem
-    if (!system) { console.warn('BuffSystem not injected, cannot add modifier'); return }
+    if (!system) {
+      LoggerProvider.logger.addDebugLog('BuffSystem not injected, cannot add modifier', { level: LogLevel.WARN })
+      return
+    }
     const modifierStack = system.getModifierStack(this.characterId)
     modifierStack.addModifier(this.instanceId, attribute, value, type)
-    if (attribute === ATTRIBUTE_CODE.speed) console.log(`Speed modifier added for character ${this.characterId}`)
   }
 
   public removeModifiers(attribute?: ATTRIBUTE_CODE): void {
     const system = this.buffSystem
-    if (!system) { console.warn('BuffSystem not injected, cannot remove modifiers'); return }
+    if (!system) {
+      LoggerProvider.logger.addDebugLog('BuffSystem not injected, cannot remove modifiers', { level: LogLevel.WARN })
+      return
+    }
     const modifierStack = system.getModifierStack(this.characterId)
     modifierStack.removeModifier(this.instanceId, attribute)
   }
@@ -94,7 +102,7 @@ export class BuffContext {
     if (system) {
       system.executeTriggerScript(this.instanceId, this.characterId, eventName, data as Record<string, unknown> | undefined)
     } else {
-      console.warn(`BuffSystem not injected, cannot trigger event: ${eventName}`, data)
+      LoggerProvider.logger.addDebugLog(`BuffSystem not injected, cannot trigger event: ${eventName}`, { level: LogLevel.WARN })
     }
   }
 }

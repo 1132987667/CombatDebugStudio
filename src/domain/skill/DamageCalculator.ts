@@ -450,7 +450,7 @@ export class DamageCalculator {
       }
       const elementType = skillStep.elementType
       if (!elementType) {
-        console.warn(`ELEMENTAL 类型伤害缺少 elementType，默认使用 HUO(火)`)
+        LoggerProvider.logger.addDebugLog(`ELEMENTAL 类型伤害缺少 elementType，默认使用 HUO(火)`, { level: LogLevel.WARN })
       }
       const resolvedType = elementType || 'HUO'
       const resAttr =
@@ -642,7 +642,7 @@ export class DamageCalculator {
 
   applyDamage(target: BattleEntity, damage: number): number {
     if (!target.isAlive()) {
-      LoggerProvider.logger.addDebugLog('目标已死亡，无法造成伤害')
+      LoggerProvider.logger.addDebugLog('目标已死亡，无法造成伤害', { level: LogLevel.DEBUG })
       return 0
     }
     const actualDamage = target.takeDamage(damage)

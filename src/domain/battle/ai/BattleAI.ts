@@ -14,13 +14,18 @@ import {
   BATTLE_CONSTANTS,
 } from '@/domain/battle/type/types'
 import { EffectType } from '@/domain/skill/types'
+import { LogLevel } from '@/shared/types/battle-log'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
+import type { TraceScope } from '@/shared/types/trace-event'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import {
   AIPriorityStrategy,
   AIPriorityStrategyFactory,
   AI_STRATEGY,
+  type SkillWeight,
 } from '@/domain/battle/ai/AIPriorityStrategy'
 import {
   SkillConfig,
@@ -35,10 +40,15 @@ export interface BattleAI {
   /** 设置上下文（Buff系统、技能管理器）*/
   setContext(buffSystem: BuffSystem, skillManager: SkillManager): void
 
+  /** 设置调试追踪端口（BattleSystem 创建 AI 实例后注入，AI_DECISION 事件用） */
+  setTracePort(port: IDebugTracePort | null): void
+
   /** 做出战斗决策 */
   makeDecision(
     battleState: BattleState,
     participant: BattleEntity,
+    /** 因果链作用域（文档 §4.5）— 由 BattleExecutor 传入，AI_DECISION 事件挂到根下 */
+    trace?: TraceScope,
   ): BattleAction
 
   /** 选择攻击目标 */
@@ -46,9 +56,6 @@ export interface BattleAI {
 
   /** 判断是否应该使用技能 */
   shouldUseSkill(participant: BattleEntity): boolean
-
-  /** 选择要使用的技能 */
-  selectSkill(participant: BattleEntity): string | null
 
   /** 选择普通攻击 */
   selectAttack(participant: BattleEntity): BattleAction
@@ -77,6 +84,8 @@ export class BaseBattleAI implements BattleAI {
   protected buffSystem?: BuffSystem
   protected skillManager?: SkillManager
   protected priorityStrategy: AIPriorityStrategy
+  /** 调试追踪端口（由 BattleSystem 注入，AI_DECISION 事件用） */
+  protected tracePort?: IDebugTracePort
 
   constructor(
     skillIds?: string[],
@@ -96,6 +105,11 @@ export class BaseBattleAI implements BattleAI {
   public setPriorityStrategy(strategyName: string): void {
     this.priorityStrategy =
       AIPriorityStrategyFactory.createStrategy(strategyName)
+  }
+
+  /** 设置追踪端口（BattleSystem 创建 AI 实例后注入） */
+  public setTracePort(port: IDebugTracePort | null): void {
+    this.tracePort = port ?? undefined
   }
 
   /** 获取当前优先级策略 */
@@ -127,45 +141,125 @@ export class BaseBattleAI implements BattleAI {
   public makeDecision(
     battleState: BattleState,
     participant: BattleEntity,
+    trace?: TraceScope,
   ): BattleAction {
     try {
       if (!battleState || !participant) {
-        LoggerProvider.logger.addDebugLog('AI决策参数无效')
+        LoggerProvider.logger.addDebugLog('AI决策参数无效', { level: LogLevel.WARN })
         return this.selectAttack(participant)
       }
 
       const battleAnalysis = this.analyzeBattleState(battleState, participant)
       if (battleAnalysis.shouldUseSkill) {
-        const skillId = this.selectSkill(
-          participant,
-          battleState,
-          battleAnalysis,
-        )
-        console.log(`${participant.name} chose skill`, skillId)
+        // 计算候选权重（与 selectSkill 同源，供 AI_DECISION 事件携带）
+        const availableSkills: Skill[] = []
+        this.skills.forEach((skill) => {
+          if (skill.type === SkillType.PASSIVE) return
+          if (
+            participant.isSkillAvailable(skill.id) &&
+            this.canUseSkill(skill, participant)
+          ) {
+            availableSkills.push(skill)
+          }
+        })
+        const weights =
+          availableSkills.length > 0
+            ? this.priorityStrategy.calculateSkillWeights(
+                battleState,
+                participant,
+                availableSkills,
+              )
+            : []
+        const skillId = weights.length > 0 ? weights[0].skillId : null
+        this.emitAiDecision(trace, participant, battleAnalysis, weights, skillId)
         if (skillId) {
           try {
             return this.createSkillStep(battleState, participant, skillId)
           } catch (skillError) {
-            console.error('技能执行出错:', skillError)
-            LoggerProvider.logger.addDebugLog('Skill execution error')
+            LoggerProvider.logger.addDebugLog(`技能执行出错: ${String(skillError)}`, {
+              level: LogLevel.ERROR,
+            })
             return this.selectAttack(participant)
           }
         }
       }
 
+      // 普攻回退：也留下决策痕迹（weights 为空）
+      this.emitAiDecision(trace, participant, battleAnalysis, [], null)
       return this.selectAttack(participant)
     } catch (error) {
-      LoggerProvider.logger.addDebugLog('AI决策出错')
-      console.error('AI决策出错', error)
+      LoggerProvider.logger.addDebugLog(`AI决策出错: ${String(error)}`, {
+        level: LogLevel.ERROR,
+      })
       try {
         return this.selectAttack(participant)
       } catch (attackError) {
-        console.error('攻击执行出错:', attackError)
-        LoggerProvider.logger.addDebugLog('攻击执行出错')
+        LoggerProvider.logger.addDebugLog(`攻击执行出错: ${String(attackError)}`, {
+          level: LogLevel.ERROR,
+        })
       }
     }
 
     return this.selectAttack(participant)
+  }
+
+  /**
+   * 发射 AI_DECISION 追踪事件（文档 §5 示例 2）
+   * 决策即行动的起点——correlationId 来自 scope，挂到因果链根下
+   */
+  private emitAiDecision(
+    trace: TraceScope | undefined,
+    participant: BattleEntity,
+    battleAnalysis: BattleAnalysis,
+    weights: SkillWeight[],
+    selectedSkillId: string | null,
+  ): void {
+    if (!this.tracePort || !trace) return
+    if (!this.tracePort.isEnabled(TracePhase.AI_DECISION)) return
+
+    const selectedName = selectedSkillId
+      ? (this.skills.get(selectedSkillId)?.name ?? selectedSkillId)
+      : '普通攻击'
+    const energyCost = selectedSkillId
+      ? (this.skills.get(selectedSkillId)?.energyCost ?? 0)
+      : 0
+    const energyBefore = participant.currentEnergy
+
+    this.tracePort.emit(
+      createTraceEvent({
+        correlationId: trace.correlationId,
+        parentId: trace.parentId,
+        phase: TracePhase.AI_DECISION,
+        battleId: trace.meta?.battleId,
+        turn: trace.meta?.turn,
+        sourceId: participant.id,
+        level: TraceLevel.DEBUG,
+        summary:
+          `AI决策 ${participant.name} 选择【${selectedName}】` +
+          `${weights.length > 0 ? `(权重 ${weights[0].weight})` : ''}`,
+        payload: {
+          actorId: participant.id,
+          strategy: this.priorityStrategy.constructor.name,
+          analysis: {
+            teamHealthPercent: battleAnalysis.teamHealthPercent,
+            hasLowHealthAlly: battleAnalysis.hasLowHealthAlly,
+            highestThreat: battleAnalysis.highestThreatEnemy?.enemy
+              ? {
+                  id: battleAnalysis.highestThreatEnemy.enemy.id,
+                  value: battleAnalysis.highestThreatEnemy.threat,
+                }
+              : undefined,
+          },
+          weights: weights.map((w) => ({
+            skillId: w.skillId,
+            weight: w.weight,
+            breakdown: w.reason,
+          })),
+          selected: selectedSkillId ?? 'normal_attack',
+          energy: { before: energyBefore, cost: energyCost, after: Math.max(0, energyBefore - energyCost) },
+        },
+      }),
+    )
   }
 
   /** 分析战场状态 */
@@ -271,43 +365,6 @@ export class BaseBattleAI implements BattleAI {
     }
 
     return false
-  }
-
-  /** 选择要使用的技能 */
-  public selectSkill(
-    participant: BattleEntity,
-    battleState?: BattleState,
-    battleAnalysis?: BattleAnalysis,
-  ): string | null {
-    const availableSkills: Skill[] = []
-
-    this.skills.forEach((skill) => {
-      // ponytail: 跳过被动技能——被动由系统自动触发，不应出现在 AI 可选列表中
-      if (skill.type === SkillType.PASSIVE) return
-      if (
-        participant.isSkillAvailable(skill.id) &&
-        this.canUseSkill(skill, participant)
-      ) {
-        availableSkills.push(skill)
-      }
-    })
-
-    if (availableSkills.length === 0) return null
-
-    // Use priority strategy to select skill
-    if (battleState && battleAnalysis) {
-      const weights = this.priorityStrategy.calculateSkillWeights(
-        battleState,
-        participant,
-        availableSkills,
-      )
-      if (weights.length > 0) {
-        return weights[0].skillId
-      }
-    }
-
-    // Fallback: select first available skill
-    return availableSkills[0].id
   }
 
   /** 检查是否能使用技能 */

@@ -25,9 +25,8 @@ export class BerserkBuff extends BaseBuffScript {
   /**
    * 自包含配置——框架在注册时读取此属性，存入 BuffScriptRegistry。
    * 调用方 addBuff() 不传或缺省字段时，从此处填充。
-   * selfContained: true 告知框架不再从 JSON attributes 重复应用修饰符。
-   * ponytail: 若脚本在 _onApply 中自行管理 modifiers，必须设置 selfContained: true，
-   *           否则 frameworks 仍会从 JSON 的 attributes 字段再应用一次，导致双倍效果。
+   * NOTE: 路径互斥由框架的 PATH 判定保证——有脚本（PATH A）时 effectPlan/JSON attributes
+   *       一律不执行，脚本通过 context.addModifier() 自行管理修饰符，无需 selfContained 标记。
    */
   public static readonly CONFIG: ScriptBuffConfig = {
     id: 'buff_berserk',

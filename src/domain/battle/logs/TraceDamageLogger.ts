@@ -1,37 +1,36 @@
 /**
  * 文件: TraceDamageLogger.ts
  * 功能: 技术调试日志 — 伤害计算链路追踪
- * 描述: 将 CombatRecord.damageBreakdown 结构化为 TraceLogEntry 树。
- *       输出到 TraceLogCollector 供 UI 树状展示。
- *       保留 DEBUG 摘要行作为快速参考。
- * 版本: 2.0.0
+ * 描述: 将 CombatRecord.damageBreakdown 结构化为 TraceEvent 输出到 TraceEventCollector。
+ *       v2 起不再为每个步骤建树节点——steps 整体进 payload.steps（与 DamageBreakdown 同源直出），
+ *       UI 展开 payload 表格查看逐步 before→after。
+ *       DEBUG 摘要行（DMG_SUM）保留待 P0 迁移。
+ * 版本: 3.0.0
  */
 
-import type { CombatRecord, DamageBreakdown, DamageStep } from '@/domain/battle/combat-record'
-import { LogLevel } from '@/shared/types/battle-log'
-import { LoggerProvider } from '@/domain/port/LoggerProvider'
-import { createTraceLogEntry } from '@/shared/types/trace-log'
-import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import type { CombatRecord } from '@/domain/battle/combat-record'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 
 /**
  * 伤害计算链路追踪器
- * 将伤害拆解信息输出到 TraceLogCollector 和调试日志
+ * 将伤害拆解信息输出到 TraceEventCollector 和调试日志
  */
 export class TraceDamageLogger {
   private static traceCounter = 0
 
   /**
-   * 记录伤害计算链路到 TraceLogCollector（树状）
+   * 记录伤害计算链路到 TraceEventCollector（结构化事件）
    * 同时输出 DEBUG 摘要行到传统日志
    *
    * @param record - 战斗记录（含 damageBreakdown）
-   * @param collector - TraceLogCollector 实例
-   * @param rootTraceId - 父攻击动作的 traceId（可选，不传则自建根 traceId）
-   * @param parentTraceId - 父节点的 traceId（可选，用于挂到攻击树）
+   * @param tracePort - IDebugTracePort 实例（未注入时为 no-op）
+   * @param rootTraceId - 父攻击动作的关联键（可选，不传则自建）
+   * @param parentTraceId - 父事件的 id（可选，用于挂到行动树）
    */
   static log(
     record: CombatRecord,
-    collector?: TraceLogCollector,
+    tracePort?: IDebugTracePort,
     rootTraceId?: string,
     parentTraceId?: string,
   ): void {
@@ -42,90 +41,45 @@ export class TraceDamageLogger {
     const target = record.targetName ?? 'unknown'
     const turn = record.turn
 
-    // === DEBUG 摘要行（始终输出） ===
-    const defMul = breakdown.defenseMultiplier ?? 1
-    const defReduction = ((1 - defMul) * 100).toFixed(2)
-    const skillInfo = record.skillName ? ` skill=${record.skillName}` : ''
-    LoggerProvider.logger.addDebugLog(
-      `DMG_SUM ${source}→${target} |` +
-      ` base=${breakdown.baseDamage} final=${breakdown.finalDamage}` +
-      ` crit=${breakdown.isCritical} defRed=${defReduction}%${skillInfo}`,
-      { level: LogLevel.DEBUG },
-    )
+    // 没有 tracePort 时跳过事件输出
+    if (!tracePort) return
 
-    // 没有 collector 时跳过树输出
-    if (!collector) return
+    // === 结构化 TraceEvent（替换树状 TraceLogEntry） ===
+    // TODO(P1): scope 机制（文档 §4.5）落地后，correlationId 改从 context.trace 取
+    const correlationId = rootTraceId ?? `trace_dmg_${++this.traceCounter}`
+    const final = breakdown.finalDamage
 
-    // === 树状 TraceLogEntry ===
-    const dmgTraceId = rootTraceId ?? `trace_dmg_${++this.traceCounter}`
-    const actionName = record.skillName || '普通攻击'
-
-    // 根节点：伤害计算
-    collector.add({
-      ...createTraceLogEntry(dmgTraceId, parentTraceId, actionName, breakdown.finalDamage, `${source}→${target} 伤害计算`, 0),
-      turn,
-      source: record.actorId,
-      target: record.targetId,
-    })
-
-    // 步骤：从 DamageBreakdown.steps 生成子节点
-    if (breakdown.steps && breakdown.steps.length > 0) {
-      for (let i = 0; i < breakdown.steps.length; i++) {
-        const step = breakdown.steps[i]
-        const stepTraceId = `${dmgTraceId}_${step.stepName}_${i}`
-        collector.add({
-          ...createTraceLogEntry(
-            stepTraceId,
-            dmgTraceId,
-            step.stepName,
-            step.value,
-            step.description,
-            1,
-          ),
+    if (tracePort.isEnabled(TracePhase.DAMAGE_CALCULATION)) {
+      tracePort.emit(
+        createTraceEvent({
+          correlationId,
+          phase: TracePhase.DAMAGE_CALCULATION,
+          parentId: parentTraceId,
+          battleId: record.battleId,
           turn,
-          source: record.actorId,
-          target: record.targetId,
-          // ★ 效果链数据：传透 before/after/sourceType 供 UI 展示
-          before: step.before,
-          after: step.after,
-          sourceType: step.sourceType,
-        })
-      }
+          sourceId: record.actorId,
+          targetId: record.targetId,
+          level: TraceLevel.DEBUG,
+          summary:
+            `伤害计算 ${source}→${target} ${breakdown.baseDamage}→${final}` +
+            `${breakdown.isCritical ? ' ★暴击' : ''}`,
+          payload: {
+            sourceId: record.actorId,
+            targetId: record.targetId,
+            skillName: record.skillName,
+            base: breakdown.baseDamage,
+            raw: breakdown.rawDamage ?? breakdown.postCritDamage,
+            final,
+            crit: {
+              rate: breakdown.critRate,
+              multiplier: breakdown.critMultiplier,
+              triggered: breakdown.isCritical,
+            },
+            category: breakdown.damageCategory,
+            steps: breakdown.steps, // 直接复用 DamageStep[]（含 before/after）
+          },
+        }),
+      )
     }
-
-    // 防御减免详情（步骤未覆盖时补充）
-    if (!breakdown.steps?.some((s) => s.stepName === 'defense' || s.stepName === 'Defense')) {
-      const defTraceId = `${dmgTraceId}_defense`
-      const defRedPct = ((1 - defMul) * 100).toFixed(2)
-      collector.add({
-        ...createTraceLogEntry(
-          defTraceId,
-          dmgTraceId,
-          'defense',
-          breakdown.effectiveDefense ?? breakdown.defenseValue,
-          `防御减免 ${defRedPct}% (def=${breakdown.defenseValue})`,
-          1,
-        ),
-        turn,
-        source: record.actorId,
-        target: record.targetId,
-      })
-    }
-
-    // 结果行
-    const resultTraceId = `${dmgTraceId}_result`
-    collector.add({
-      ...createTraceLogEntry(
-        resultTraceId,
-        dmgTraceId,
-        'result',
-        breakdown.finalDamage,
-        `★ 最终伤害: ${breakdown.finalDamage}`,
-        1,
-      ),
-      turn,
-      source: record.actorId,
-      target: record.targetId,
-    })
   }
 }

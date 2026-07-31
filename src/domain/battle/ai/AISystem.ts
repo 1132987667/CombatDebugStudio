@@ -16,6 +16,8 @@ import type {
 import { BattleStatus } from '@/domain/battle/type/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import type { BuffConfigLookup } from '@/domain/skill/types'
+import type { TraceScope } from '@/shared/types/trace-event'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import { BattleAIFactory, BattleAI } from '@/domain/battle/ai/BattleAI'
 
 /**
@@ -27,6 +29,15 @@ import { BattleAIFactory, BattleAI } from '@/domain/battle/ai/BattleAI'
 export class AISystem {
   /** AI实例存储映射，以参与者ID为键，用于缓存和复用 */
   private aiInstances = new Map<string, BattleAI>()
+  /** 调试追踪端口（由 BattleSystem 注入，转发给每个 AI 实例——含 getOrCreateAI 惰性创建的） */
+  private tracePort?: IDebugTracePort
+
+  /** 设置调试追踪端口（BattleSystem 初始化时注入） */
+  setTracePort(port: IDebugTracePort | null): void {
+    this.tracePort = port ?? undefined
+    // 已创建的实例立即生效
+    this.aiInstances.forEach((ai) => ai.setTracePort(this.tracePort ?? null))
+  }
   /** 技能管理器实例（通过构造函数注入） */
   private skillManager: SkillManager
   /** Buff 极性查询（由 BuffScriptRegistry 已解析配置提供，AI 技能标记不依赖 ID 前缀） */
@@ -61,6 +72,7 @@ export class AISystem {
         participant.getSkillList(),
         this.buffLookup,
       )
+      ai.setTracePort(this.tracePort ?? null)
       aiInstances.set(participant.id, ai)
       this.aiInstances.set(participant.id, ai)
     })
@@ -83,6 +95,8 @@ export class AISystem {
         participant.getSkillList(),
         this.buffLookup,
       )
+      // 惰性创建的实例同样注入追踪端口（AI_DECISION 事件不丢失）
+      ai.setTracePort(this.tracePort ?? null)
       this.aiInstances.set(participant.id, ai)
     }
 
@@ -99,13 +113,14 @@ export class AISystem {
   public makeDecision(
     battleState: BattleState,
     participant: BattleEntity,
+    trace?: TraceScope,
   ): BattleAction {
     const ai = this.getOrCreateAI(participant)
     if (!ai) {
       throw new Error(`Failed to create AI for participant: ${participant.id}`)
     }
 
-    return ai.makeDecision(battleState, participant)
+    return ai.makeDecision(battleState, participant, trace)
   }
 
   /**

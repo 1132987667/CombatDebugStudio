@@ -3,6 +3,7 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 
 export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TParams> {
   params?: TParams
@@ -56,7 +57,7 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
   }
 
   protected log(context: BuffContext, message: string): void {
-    LoggerProvider.logger.addDebugLog(`[${context.config.id}] ${message}`)
+    LoggerProvider.logger.addDebugLog(`[${context.config.id}] ${message}`, { level: LogLevel.DEBUG })
   }
 
   protected triggerEvent(

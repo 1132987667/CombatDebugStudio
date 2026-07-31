@@ -109,7 +109,6 @@ export class ReplayEngine {
       LoggerProvider.logger.addSystemLog({
         message: '加载回放失败: ' + error,
       })
-      console.error('加载回放时出错:', error)
       return false
     }
   }

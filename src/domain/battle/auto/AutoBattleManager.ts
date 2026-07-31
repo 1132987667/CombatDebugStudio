@@ -85,9 +85,8 @@ export class AutoBattleManager {
       this.battleStateManager.syncBattleState()
       return true
     } catch (error) {
-      console.error('开始自动战斗时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
-      this.logger.addDebugLog(`开始自动战斗时出错: ${errorMsg}`)
+      this.logger.addDebugLog(`开始自动战斗时出错: ${errorMsg}`, { level: LogLevel.ERROR })
       return false
     }
   }
@@ -104,9 +103,8 @@ export class AutoBattleManager {
       this.battleStateManager.syncBattleState()
       return true
     } catch (error) {
-      console.error('停止自动战斗时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
-      this.logger.addDebugLog(`停止自动战斗时出错: ${errorMsg}`)
+      this.logger.addDebugLog(`停止自动战斗时出错: ${errorMsg}`, { level: LogLevel.ERROR })
       return false
     }
   }
@@ -130,7 +128,7 @@ export class AutoBattleManager {
 
     // ⭐ 并发锁：防止快速连点导致两个 processTurn 异步并发执行
     if (this.isProcessing) {
-      this.logger.addDebugLog('已有单步执行进行中，忽略重复请求')
+      this.logger.addDebugLog('已有单步执行进行中，忽略重复请求', { level: LogLevel.WARN })
       return
     }
 
@@ -154,9 +152,8 @@ export class AutoBattleManager {
         this.battleSystem.togglePause()
       }
     } catch (error) {
-      console.error('执行回合时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
-      this.logger.addDebugLog(`执行回合时出错: ${errorMsg}`)
+      this.logger.addDebugLog(`执行回合时出错: ${errorMsg}`, { level: LogLevel.ERROR })
       // 出错时也暂停（仅在战斗仍活跃时）
       if (!this.battleSystem.getIsPaused() && this.battleSystem.isBattleInProgress()) {
         this.battleSystem.togglePause()

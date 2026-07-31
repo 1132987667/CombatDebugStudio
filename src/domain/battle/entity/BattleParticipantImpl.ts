@@ -31,6 +31,7 @@ import {
   ModifierType,
 } from '@/domain/attribute/types'
 import { ParticipantStats } from '@/domain/battle/entity/ParticipantStats'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import type { BuffQuery } from '@/domain/buff/types'
 import { ParticipantSkills } from '@/domain/battle/entity/ParticipantSkills'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
@@ -92,6 +93,11 @@ export class BattleParticipantImpl implements BattleEntity {
 
   /** 属性缓存 Map */
   private stats = new ParticipantStats()
+
+  /** 静态转发调试追踪端口到 ParticipantStats（实体深埋，见 ParticipantStats.setTracePort） */
+  static setTracePort(port: IDebugTracePort | null): void {
+    ParticipantStats.setTracePort(port)
+  }
 
   /**
    * 属性版本戳，直接映射到 stats.version。

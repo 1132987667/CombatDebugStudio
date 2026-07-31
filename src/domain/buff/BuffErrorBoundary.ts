@@ -1,4 +1,5 @@
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 export enum BuffErrorType {
   CONFIG_ERROR = 'config_error',
   RUNTIME_ERROR = 'runtime_error',
@@ -55,19 +56,19 @@ export class BuffErrorBoundary {
     const buffError = BuffErrorBoundary.parseError(error, options)
     switch (buffError.type) {
       case BuffErrorType.CONFIG_ERROR:
-        LoggerProvider.logger.addDebugLog(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        LoggerProvider.logger.addDebugLog(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`, { level: LogLevel.ERROR })
         break
       case BuffErrorType.RUNTIME_ERROR:
-        LoggerProvider.logger.addDebugLog(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        LoggerProvider.logger.addDebugLog(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`, { level: LogLevel.ERROR })
         break
       case BuffErrorType.DEPENDENCY_ERROR:
-        LoggerProvider.logger.addDebugLog(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        LoggerProvider.logger.addDebugLog(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`, { level: LogLevel.ERROR })
         break
       default:
-        LoggerProvider.logger.addDebugLog(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        LoggerProvider.logger.addDebugLog(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`, { level: LogLevel.ERROR })
         break
     }
-    if (buffError.stack) LoggerProvider.logger.addDebugLog(`Buff error stack: ${buffError.stack}`)
+    if (buffError.stack) LoggerProvider.logger.addDebugLog(`Buff error stack: ${buffError.stack}`, { level: LogLevel.ERROR })
   }
 
   private static parseError(
@@ -100,7 +101,7 @@ export class BuffErrorBoundary {
       try { return fn() } catch (error) {
         retries++
         if (retries >= maxRetries) { BuffErrorBoundary.handleError(error, options); return null }
-        LoggerProvider.logger.addDebugLog(`Retrying buff script execution (${retries}/${maxRetries})`)
+        LoggerProvider.logger.addDebugLog(`Retrying buff script execution (${retries}/${maxRetries})`, { level: LogLevel.WARN })
       }
     }
     return null

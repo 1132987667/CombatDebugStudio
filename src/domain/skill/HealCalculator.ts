@@ -5,6 +5,7 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { STATUS_CODE } from '@/shared/types/status-meta'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 import { processExtraValues, processTargetModifiers } from '@/domain/skill/calculation-utils'
 import { floor } from '@/shared/utils/math'
 
@@ -128,11 +129,11 @@ export class HealCalculator {
 
   applyHeal(target: BattleEntity, heal: number): number {
     if (!target.isAlive()) {
-      LoggerProvider.logger.addDebugLog('目标已死亡，无法进行治疗')
+      LoggerProvider.logger.addDebugLog('目标已死亡，无法进行治疗', { level: LogLevel.DEBUG })
       return 0
     }
     if (target.isFullHealth()) {
-      LoggerProvider.logger.addDebugLog('目标气血值已满，无需治疗')
+      LoggerProvider.logger.addDebugLog('目标气血值已满，无需治疗', { level: LogLevel.DEBUG })
       return 0
     }
     const actualHeal = target.heal(heal)

@@ -19,6 +19,8 @@ import { LogLevel } from '@/shared/types/battle-log'
 import { validateSkillConfigs } from '@/shared/utils/schema-validator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { createStepContext } from '@/domain/battle/type/types'
+import type { TraceScope } from '@/shared/types/trace-event'
+
 interface CalculationContext {
   skillStep: SkillStep
   action: BattleAction
@@ -26,6 +28,8 @@ interface CalculationContext {
   targets: BattleEntity[]
   record?: CombatRecord
   token?: DeferredDamageToken
+  /** 因果链作用域（文档 §4.5） */
+  trace?: TraceScope
 }
 
 export class SkillManager {
@@ -144,13 +148,14 @@ export class SkillManager {
     ) => BattleEntity[],
     /** ponytail: 延迟伤害令牌 — 传入时只记录不扣血，调用方动画后 applyAll */
     token?: DeferredDamageToken,
+    /** 因果链作用域（文档 §4.5）— 贯穿到 DamageCalculator/HealCalculator/BuffSystem */
+    trace?: TraceScope,
   ): BattleAction {
     const config = this.skillConfigs.get(skillId)
     if (!config) {
       LoggerProvider.logger.addDebugLog(`技能 ${skillId} 不存在配置`, {
         level: LogLevel.WARN,
       })
-      console.error(`技能 ${skillId} 不存在配置`)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
         targetId: target.id,
@@ -182,7 +187,6 @@ export class SkillManager {
         `技能 ${skillId} 不可用: ${availability.reason}`,
         { level: LogLevel.WARN },
       )
-      console.log(`技能 ${skillId} 不可用:`, availability.reason)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
         targetId: target.id,
@@ -212,7 +216,6 @@ export class SkillManager {
       LoggerProvider.logger.addDebugLog(`技能 ${skillId} 无有效目标`, {
         level: LogLevel.WARN,
       })
-      console.error(`技能 ${skillId} 无有效目标`)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
         targetId: source.id,
@@ -317,7 +320,7 @@ export class SkillManager {
         (step.type === EffectType.DEAL_DAMAGE || step.type === EffectType.HEAL) &&
         !(step as ExtendedSkillStep).calculation
       ) {
-        console.warn(`[SkillManager] 技能 ${skillId} 步骤缺少 calculation 配置`, step)
+        LoggerProvider.logger.addDebugLog(`[SkillManager] 技能 ${skillId} 步骤缺少 calculation 配置`, { level: LogLevel.WARN })
       }
     }
     for (const step of steps) {
@@ -328,6 +331,7 @@ export class SkillManager {
         targets: [target],
         record,
         token,
+        trace,
       }
       this.executeStep(ctx)
 
@@ -344,6 +348,7 @@ export class SkillManager {
             targets: [extraTarget],
             record,
             token,
+            trace,
           }
           this.executeStep(extraCtx)
         }
@@ -372,7 +377,7 @@ export class SkillManager {
       ctx.action,
       ctx.source,
       ctx.targets[0],
-      createStepContext(ctx.record, ctx.token),
+      createStepContext(ctx.record, ctx.token, false, undefined, ctx.trace),
     )
   }
 

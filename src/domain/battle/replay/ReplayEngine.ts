@@ -16,6 +16,10 @@ import {
 } from '@/domain/battle/type/types'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import {
+  BATTLE_ANIMATION_TIMING,
+  phaseAt,
+} from '@/shared/constants/animation-timing'
 export type ReplayStateCallback = (state: ReplayState) => void
 export type ReplayEventCallback = (event: ReplayEvent) => void
 
@@ -557,22 +561,18 @@ export class ReplayEngine {
     })
   }
 
+  /**
+   * 事件间隔时序：与主系统共享唯一时间源（BATTLE_ANIMATION_TIMING）。
+   * 行动事件等待到命中瞬间（50% T），非行动事件按 windup 结束点短停顿（20% T）；
+   * 预算按 1x 基准计算，播放倍率 this.speed（0.5/1/2/5）统一缩放。
+   * NOTE: 不读取行动者的角色速度属性——那是战斗属性，与动画播放倍率语义不同。
+   */
   private calculateEventDelay(event: ReplayBattleEvent): number {
-    const baseDelay = 500
-    const typeDelay: Record<string, number> = {
-      [BattleEventType.ACTION]: 800,
-      [BattleEventType.BUFF_ADD]: 200,
-      [BattleEventType.BUFF_REMOVE]: 200,
-      [BattleEventType.BUFF_UPDATE]: 100,
-      [BattleEventType.TURN_START]: 300,
-      [BattleEventType.TURN_END]: 200,
-      [BattleEventType.BATTLE_START]: 500,
-      [BattleEventType.BATTLE_END]: 500,
-    }
-
-    const type = event.type || BattleEventType.ACTION
-    const delay = typeDelay[type] || baseDelay
-    return delay / this.speed
+    const ratio =
+      event.type === BattleEventType.ACTION
+        ? BATTLE_ANIMATION_TIMING.PHASES.impact
+        : BATTLE_ANIMATION_TIMING.PHASES.windup.end
+    return phaseAt(ratio, 1) / this.speed
   }
 
   private handleReplayEnd(): void {

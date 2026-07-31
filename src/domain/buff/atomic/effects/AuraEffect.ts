@@ -1,7 +1,6 @@
 import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { ModifierTemplate } from '@/domain/skill/types'
-
 /**
  * AuraEffect — 光环原语
  *
@@ -35,12 +34,8 @@ export class AuraEffect implements IAtomicEffect {
     if (!modifiers) return
 
     for (const mod of modifiers) {
-      let value = mod.value
-      // aura 中的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
-      if (mod.type === 'PERCENTAGE' && Math.abs(value) < 1) {
-        value = Math.round(value * 10000) / 100
-      }
-      ctx.addModifier(mod.targetAttribute, value, mod.type)
+      // aura 的 PERCENTAGE value 由配置显式声明（百分数，如 15 表示 15%），无需运行时换算
+      ctx.addModifier(mod.targetAttribute, mod.value, mod.type)
     }
   }
 

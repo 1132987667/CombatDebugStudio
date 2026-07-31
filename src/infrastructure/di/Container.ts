@@ -96,7 +96,6 @@ import { BattleManager } from '@/domain/battle/BattleManager'
 import { BattleSystem } from '@/domain/battle/BattleSystem'
 import { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { battleEventManager } from '@/infrastructure/adapters/event/BattleEventManager'
-import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
 import { BattleRecorder } from '@/domain/battle/service/BattleRecorder'
 import { BattleRuleManager } from '@/domain/battle/service/BattleRuleManager'
@@ -171,7 +170,15 @@ export function initializeContainer(): void {
 
   // 6. 注册核心战斗组件（依赖上面注册的服务）
   container.register(TURN_MANAGER_TOKEN.toString(), new TurnManager(buffSystem))
-  container.register(AI_SYSTEM_TOKEN.toString(), new AISystem(skillManager))
+  // AI 注入 Buff 极性查询（已解析配置的 polarity），技能标记不依赖 ID 前缀
+  container.register(
+    AI_SYSTEM_TOKEN.toString(),
+    new AISystem(
+      skillManager,
+      (buffId) =>
+        buffScriptRegistry.getResolvedBuffConfig(buffId)?.polarity,
+    ),
+  )
   container.register(BATTLE_RECORDER_TOKEN.toString(), new BattleRecorder(persistentStorage))
   container.register(
     BATTLE_RULE_MANAGER_TOKEN.toString(),
@@ -202,12 +209,6 @@ export function initializeContainer(): void {
     return new AutoBattleManager(battleSystem, battleStateManager)
   }, true)
 
-  container.registerFactory('InterventionManager', () => {
-    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
-    const battleStateManager = container.resolve<BattleStateManager>('BattleStateManager')
-    return new InterventionManager(battleSystem, battleStateManager, persistentStorage)
-  }, true)
-
   container.registerFactory('BattleReplayManager', () => {
     return new BattleReplayManager(triggerEventBus)
   }, true)
@@ -219,14 +220,12 @@ export function initializeContainer(): void {
       const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
       const battleStateManager = container.resolve<BattleStateManager>('BattleStateManager')
       const autoBattleManager = container.resolve<AutoBattleManager>('AutoBattleManager')
-      const interventionManager = container.resolve<InterventionManager>('InterventionManager')
       const battleReplayManager = container.resolve<BattleReplayManager>('BattleReplayManager')
 
       const battleManager = new BattleManager(
         battleSystem,
         battleStateManager,
         autoBattleManager,
-        interventionManager,
         battleReplayManager,
         uiEventBus,
         uiEventBus.getEmitter(),

@@ -131,7 +131,7 @@ export interface BuffClassificationInput {
   /** 触发器配置 */
   triggers?: unknown[]
   /** 属性修饰符 */
-  attributes?: Record<string, string>
+  attributes?: Record<string, unknown>
   /** 护盾配置 */
   shield?: unknown
   /** 免疫标签 */
@@ -184,13 +184,9 @@ export function classifyBuff(
   // 1. 自动派生 facets（从配置结构，不看 category，不看 tags）
   const facets = deriveBuffFacets(config)
 
-  // 2. 确定极性：polarity → category 猜测（两级回退）
-  let polarity: BuffPolarity
-  if (config.polarity) {
-    polarity = config.polarity as BuffPolarity
-  } else {
-    polarity = guessPolarity(config.category ?? null, facets)
-  }
+  // 2. 确定极性：读取显式声明的 polarity；缺失视为 NEUTRAL（不猜测）
+  //    （配置数据经 BuffConfigResolver.resolve() 后必有 polarity，此处兜底仅服务动态创建的无配置 buff）
+  const polarity = (config.polarity ?? BuffPolarity.NEUTRAL) as BuffPolarity
 
   // 3. 显示标签：透传 JSON 的 category，兜底取 facets[0]
   const category = asStatusCategory(config.category) ?? (facets.length > 0 ? facets[0] : StatusCategory.OTHER)
@@ -205,24 +201,6 @@ function asStatusCategory(raw: string | undefined | null): StatusCategory | unde
     if (val === raw) return val
   }
   return undefined
-}
-
-/** 兜底猜极性（仅当 polarity/isDebuff 都未提供时使用） */
-function guessPolarity(
-  rawCategory: string | null,
-  facets: StatusCategory[],
-): BuffPolarity {
-  // 从 facets 判
-  if (facets.includes(StatusCategory.CONTROL)) return BuffPolarity.NEGATIVE
-  if (facets.includes(StatusCategory.IMMUNITY)) return BuffPolarity.POSITIVE
-  if (facets.includes(StatusCategory.AURA)) return BuffPolarity.POSITIVE
-  if (facets.includes(StatusCategory.SHIELD)) return BuffPolarity.POSITIVE
-
-  // 从 rawCategory 判（仅当 facets 判断无法决定时）
-  if (rawCategory === StatusCategory.CONTROL || rawCategory === StatusCategory.DOT) return BuffPolarity.NEGATIVE
-  if (rawCategory === StatusCategory.SHIELD || rawCategory === StatusCategory.AURA || rawCategory === StatusCategory.IMMUNITY) return BuffPolarity.POSITIVE
-
-  return BuffPolarity.NEUTRAL
 }
 
 // ==================== 日志/显示工具函数 ====================

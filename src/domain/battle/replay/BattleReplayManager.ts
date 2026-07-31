@@ -3,6 +3,7 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { BattleEventType } from '@/domain/battle/type/types'
 import { LogLevel, BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log'
+import type { BattleLogCategory } from '@/shared/types/battle-log'
 import {
   ReplayEngine,
   type ReplayState,
@@ -268,7 +269,7 @@ export class BattleReplayManager {
   private handleReplayEvent(event: ReplayEvent) {
     switch (event.type) {
       case BattleEventType.ACTION:
-        this.handleActionReplay(event.data?.action)
+        this.handleActionReplay(event.data?.action, event.data?.category)
         break
       case BattleEventType.TURN_START:
         this.handleTurnStartReplay(event.data?.turn, event.data?.participantId)
@@ -295,7 +296,7 @@ export class BattleReplayManager {
   }
 
   /** 处理动作回放 */
-  private handleActionReplay(action: any) {
+  private handleActionReplay(action: any, category?: string) {
     if (!action) return
     const sourceName = action.sourceId ?? '未知'
     const targetName = action.targetId ?? '未知'
@@ -305,11 +306,8 @@ export class BattleReplayManager {
       turn: action.turn ?? 0,
       message: `[回放] ${sourceName} → ${targetName}${dmgText}${healText}`,
       segments: [{ text: `[回放] ${sourceName} → ${targetName}${dmgText}${healText}` }],
-      category: (action.damage ?? 0) > 0
-        ? BATTLE_LOG_CATEGORIES.DAMAGE
-        : (action.heal ?? 0) > 0
-          ? BATTLE_LOG_CATEGORIES.HEAL
-          : BATTLE_LOG_CATEGORIES.STATUS,
+      // 日志类别由录制端写入（BattleRecorder.recordEvent），此处直接读取
+      category: (category as BattleLogCategory) ?? BATTLE_LOG_CATEGORIES.STATUS,
       meta: { role: 'action' },
     })
   }

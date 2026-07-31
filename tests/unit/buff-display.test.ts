@@ -49,9 +49,16 @@ describe('detectCondition', () => {
     expect(
       detectCondition({
         conditionState: 'inactive',
+        conditionLabel: '残血',
         description: '残血时触发',
       } as any),
     ).toEqual({ condition: 'inactive', conditionLabel: '残血·未激活' })
+    expect(
+      detectCondition({
+        conditionState: 'inactive',
+        description: '残血时触发',
+      } as any),
+    ).toEqual({ condition: 'inactive', conditionLabel: '未激活' })
   })
 
   it('无条件时返回 none', () => {

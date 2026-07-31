@@ -1,5 +1,6 @@
 import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { round } from '@/shared/utils/math'
 
 /**
  * ShieldEffect — 护盾原语
@@ -25,7 +26,7 @@ export class ShieldEffect implements IAtomicEffect {
     let shieldAmount: number
     if (valueType === 'percent_max_hp') {
       const maxHp = ctx.getAttrVal('maxHealth')
-      shieldAmount = Math.round(maxHp * value / 100)
+      shieldAmount = round(maxHp * value / 100)
     } else {
       shieldAmount = value
     }

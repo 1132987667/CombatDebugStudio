@@ -16,6 +16,7 @@ import type { BattleEntity, ParticipantSide } from '@/domain/battle/type/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { classifyBuff } from '@/shared/types/buff-classification'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 
 /**
  * 将 BattleEntity 映射为 UI 快照
@@ -99,8 +100,11 @@ function buildBuffRawItems(
       seenIds.add(id)
       seenIds.add(config.id)
 
+      // 条件标签从 JSON 配置显式读取（BuffConfig 为运行时合并配置，不含展示字段）
+      const rawConfig = buffSystem.getScriptRegistry().getBuffConfig(config.id)
+
       // 从 effectPlan 的 modifier 效果中提取修饰符数据（供展示层生成属性标签）
-      let attributes: Record<string, string> | undefined
+      let attributes: Record<string, AttributeValueConfig> | undefined
       const resolved = buffSystem.getResolvedBuffConfig?.(config.id)
       const modifierEffects = resolved?.effectPlan?.filter(
         (e: { type: string }) => e.type === AtomicEffectType.MODIFIER,
@@ -108,7 +112,7 @@ function buildBuffRawItems(
       if (modifierEffects.length > 0) {
         attributes = {}
         for (const effect of modifierEffects) {
-          const attrs = effect.params.attributes as Record<string, string> | undefined
+          const attrs = effect.params.attributes as Record<string, AttributeValueConfig> | undefined
           if (attrs) Object.assign(attributes, attrs)
         }
       }
@@ -122,6 +126,7 @@ function buildBuffRawItems(
         currentStacks: instance.currentStacks,
         isNegative: classifyBuff(config as Parameters<typeof classifyBuff>[0]).isNegative,
         attributes,
+        conditionLabel: rawConfig?.conditionLabel,
         effectLines: instance.effectLines ?? [],
         conditionState: instance.conditionState,
         controlType: config.controlType as string | undefined,
@@ -132,18 +137,5 @@ function buildBuffRawItems(
     }
   }
 
-  // 源2: InterventionManager 手动状态
-  const manualEffects = entity.statusEffects ?? []
-  for (const s of manualEffects) {
-    if (!seenIds.has(s.id)) {
-      seenIds.add(s.id)
-      result.push({
-        id: s.id, buffId: s.id, name: s.name, description: '',
-        remainingTurns: s.remainingTurns, currentStacks: 1,
-        isNegative: s.type === 'debuff', effectLines: [], conditionState: undefined,
-        isAura: false,
-      })
-    }
-  }
   return result
 }

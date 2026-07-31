@@ -305,7 +305,7 @@ LogCollector（收集）
   └→ BattleLogManager / TraceLogCollector
 
 LogParser（解析）
-  └→ BattleLogFormatter / StructuredLogHandlers
+  └→ StructuredLogHandlers
 
 LogRenderer（渲染）
   └→ BattleLog.vue / LogTooltipResolver

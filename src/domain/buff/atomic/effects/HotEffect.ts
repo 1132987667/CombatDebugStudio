@@ -1,5 +1,6 @@
 import { type IAtomicEffect, AtomicEffectType } from '../types'
 import type { BuffContext } from '@/domain/buff/BuffContext'
+import { round } from '@/shared/utils/math'
 
 /**
  * HotEffect — 持续治疗/回能原语
@@ -40,7 +41,7 @@ export class HotEffect implements IAtomicEffect {
       if (healType === 'percent') {
         // 百分比能量：基于最大能量值（依赖问题一修复后的 getAttrVal）
         const maxEnergy = ctx.getAttrVal('maxEnergy')
-        const amount = Math.round(maxEnergy * value / 100) * stacks
+        const amount = round(maxEnergy * value / 100) * stacks
         buffSystem.requestEnergy(ctx.characterId, amount)
       } else {
         buffSystem.requestEnergy(ctx.characterId, value * stacks)

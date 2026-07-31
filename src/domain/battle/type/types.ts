@@ -770,7 +770,6 @@ export interface BattleReplay {
   finalState?: BattleStateSnapshot
   rounds: BattleRound[]
   events: ReplayBattleEvent[]
-  logs: BattleLogEntry[]
   result?: BattleResult
 }
 
@@ -815,6 +814,7 @@ export const OLD_PHASE_NAME_MAP: Record<string, BattleTriggerPhase> = {
   ON_BATTLE_END: BattleTriggerPhase.BATTLE_END,
   ON_DAMAGE_TAKEN: BattleTriggerPhase.DAMAGE_TAKEN,
   ON_ATTACK_HIT: BattleTriggerPhase.ON_HIT,
+  ON_ATTACK: BattleTriggerPhase.BEFORE_ATTACK, // 旧名"攻击时"→ 攻击前阶段
   BEFORE_ATTACK: BattleTriggerPhase.BEFORE_ATTACK,
   AFTER_ATTACK: BattleTriggerPhase.AFTER_ATTACK,
   ON_KILL: BattleTriggerPhase.ON_KILL,

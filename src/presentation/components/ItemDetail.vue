@@ -28,7 +28,7 @@
       <h3 class="section-title">属性加成</h3>
       <div class="stats-grid">
         <div v-for="(value, key) in item.stats" :key="key" class="stat-item">
-          <span class="stat-label">{{ getStatLabel(key) }}</span>
+          <span class="stat-label">{{ getAttrName(key as ATTRIBUTE_CODE) }}</span>
           <span class="stat-value" :class="getValueClass(value)">{{ formatValue(value) }}</span>
         </div>
       </div>
@@ -60,10 +60,10 @@ import type { CompendiumItem } from '@/presentation/composables/useCompendium'
 import { rarityNames } from '@/shared/types/Item'
 import {
   getItemTypeText,
-  getStatLabel,
   getEffectTypeText,
   getSlotText,
 } from '@/shared/utils/display-helpers'
+import { getAttrName, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { BuffPolarity } from '@/shared/types/buff-classification'
 
 interface Props {

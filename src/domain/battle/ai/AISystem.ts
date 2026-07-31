@@ -15,6 +15,7 @@ import type {
 } from '@/domain/battle/type/types'
 import { BattleStatus } from '@/domain/battle/type/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
+import type { BuffConfigLookup } from '@/domain/skill/types'
 import { BattleAIFactory, BattleAI } from '@/domain/battle/ai/BattleAI'
 
 /**
@@ -28,13 +29,20 @@ export class AISystem {
   private aiInstances = new Map<string, BattleAI>()
   /** 技能管理器实例（通过构造函数注入） */
   private skillManager: SkillManager
+  /** Buff 极性查询（由 BuffScriptRegistry 已解析配置提供，AI 技能标记不依赖 ID 前缀） */
+  private buffLookup: BuffConfigLookup
 
   /**
    * 私有构造函数
    * @param skillManager 技能管理器实例（通过构造函数注入）
+   * @param buffLookup Buff 极性查询（缺省返回 undefined，不判定减益）
    */
-  constructor(skillManager: SkillManager) {
+  constructor(
+    skillManager: SkillManager,
+    buffLookup: BuffConfigLookup = () => undefined,
+  ) {
     this.skillManager = skillManager
+    this.buffLookup = buffLookup
   }
 
   /**
@@ -51,6 +59,7 @@ export class AISystem {
       const ai = BattleAIFactory.createAIWithSkills(
         participant.team,
         participant.getSkillList(),
+        this.buffLookup,
       )
       aiInstances.set(participant.id, ai)
       this.aiInstances.set(participant.id, ai)
@@ -72,6 +81,7 @@ export class AISystem {
       ai = BattleAIFactory.createAIWithSkills(
         participant.team,
         participant.getSkillList(),
+        this.buffLookup,
       )
       this.aiInstances.set(participant.id, ai)
     }
@@ -115,24 +125,4 @@ export class AISystem {
     this.aiInstances.clear()
   }
 
-  /**
-   * 转换为战斗状态
-   * 将内部 BattleData 转换为 BattleState，用于 AI 决策
-   * 私有方法，仅在 AI 决策过程中调用
-   * @param battle - 战斗数据对象
-   * @returns BattleState - 转换后的战斗状态对象
-   */
-  private convertToBattleState(battle: BattleData): BattleState {
-    return {
-      battleId: battle.battleId,
-      participants: new Map(battle.participants),
-      actions: [...battle.actions],
-      turnOrder: [...battle.turnOrder],
-      currentTurn: battle.currentTurn,
-      battleState: battle.battleState ?? BattleStatus.ACTIVE,
-      startTime: battle.startTime,
-      endTime: undefined,
-      winner: undefined,
-    }
-  }
 }

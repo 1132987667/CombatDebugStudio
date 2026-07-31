@@ -41,4 +41,10 @@ export interface IDomainEventBus {
    * @param listenerId 监听器分组 ID
    */
   offByListenerId(listenerId: string): void
+
+  /**
+   * 清除所有监听器
+   * 用于战斗重置时清理全部注册，防止跨战斗残留
+   */
+  clear(): void
 }

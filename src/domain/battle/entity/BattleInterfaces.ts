@@ -130,12 +130,6 @@ export interface IBattleSystem {
   getBattleData(): BattleData | undefined
 
   /**
-   * 获取当前战斗的参与者信息
-   * @returns BattleEntity[] - 当前战斗的参与者数组
-   */
-  getCurParticipantsInfo(): BattleEntity[]
-
-  /**
    * 加载技能配置
    * @param skillConfigs 技能配置数组
    */

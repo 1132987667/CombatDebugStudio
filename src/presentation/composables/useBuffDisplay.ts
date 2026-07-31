@@ -17,68 +17,41 @@ import {
 import type { ConditionState as ConditionStateType } from '@/shared/types/buff-display'
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { getAttrName, ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 
 /** 极多 Buff 时次要分组的阈值 */
 const SECONDARY_THRESHOLD = 20
 
 /**
  * 从 config.attributes 提取属性修正
- * key=attribute code（如 "speed"），value=格式如 "+0.05"（5%/层）或 "+20%"（20%）
+ * key=attribute code（如 "speed"），value=显式声明的 { value, type } 对象（如 { value: 5, type: "PERCENTAGE" }）
  * @param stacks 当前层数，用于缩放可叠加 buff
  */
 function extractAttributesFromConfig(
-  attributes: Record<ATTRIBUTE_CODE, string>,
+  attributes: Record<ATTRIBUTE_CODE, AttributeValueConfig>,
   stacks: number,
 ): Array<{ attr: string; value: number; isFlat?: boolean }> {
   const result: Array<{ attr: string; value: number; isFlat?: boolean }> = []
-  for (const [code, valueStr] of Object.entries(attributes)) {
+  for (const [code, cfg] of Object.entries(attributes)) {
     const cn = getAttrName(code as ATTRIBUTE_CODE)
     if (!cn) continue
-    const trimmed = valueStr.trim()
-    const isPercent = trimmed.includes('%')
-    const numericStr = trimmed.replace('%', '')
-    const numValue = parseFloat(numericStr)
-    if (isNaN(numValue)) continue
-
-    let perStack: number
-    let isFlat: boolean | undefined
-
-    if (isPercent) {
-      // "+20%" → 20（百分比点）
-      perStack = numValue
-      isFlat = undefined
-    } else if (Math.abs(numValue) < 1) {
-      // "+0.05" → 5（小数转百分比）
-      perStack = numValue * 100
-      isFlat = undefined
-    } else {
-      // "+10" → 固定值 10
-      perStack = numValue
-      isFlat = true
-    }
-    result.push({ attr: cn, value: Math.round(perStack * stacks), isFlat })
+    // value 语义由配置显式声明：PERCENTAGE 为百分比点，ADDITIVE 为固定值
+    const isFlat = cfg.type === 'ADDITIVE' ? true : undefined
+    result.push({ attr: cn, value: Math.round(cfg.value * stacks), isFlat })
   }
   return result
 }
 
 /**
- * 从描述文本中提取条件标签（2-4 字的中文关键词，位于"时触发"/"后触发"/"时"/"后"等标记前）
- * 例："残血时触发" → "残血"，"暴击后触发" → "暴击"
- */
-function extractConditionLabel(description?: string): string | undefined {
-  if (!description) return undefined
-  const match = description.match(/([\u4e00-\u9fa5]{2,4})(?:时触发|后触发|时|后)/)
-  return match?.[1]
-}
-
-/**
  * 检测 Buff 的条件状态 — 通过结构化 conditionState 决定
  * conditionState 缺失时视为无条件(NONE)
+ * 条件标签（如 "残血"）由配置显式声明（conditionLabel），不做正则解析
  */
 export function detectCondition(raw: {
   conditionState?: string
   description?: string
   remainingTurns?: number
+  conditionLabel?: string
 }): { condition: ConditionStateType; conditionLabel?: string } {
   // 优先级 1: 领域层结构化 conditionState
   if (raw.conditionState) {
@@ -86,7 +59,7 @@ export function detectCondition(raw: {
       return { condition: ConditionState.ACTIVE, conditionLabel: '已激活' }
     }
     if (raw.conditionState === ConditionState.INACTIVE) {
-      const label = extractConditionLabel(raw.description)
+      const label = raw.conditionLabel
       return {
         condition: ConditionState.INACTIVE,
         conditionLabel: label ? `${label}·${ConditionStateNames[ConditionState.INACTIVE]}` : ConditionStateNames[ConditionState.INACTIVE],
@@ -116,15 +89,16 @@ function toBuffTextItem(raw: BuffRawItem, entityId: string): BuffTextItem {
   const remainingTurns = raw.remainingTurns ?? 0
   const stacks = raw.currentStacks ?? 1
 
-  // 条件状态 — 使用 detectCondition 统一处理（结构化 → 启发式回退）
+  // 条件状态 — 使用 detectCondition 统一处理（结构化 → 显式 conditionLabel）
   const { condition, conditionLabel } = detectCondition({
     conditionState: raw.conditionState,
     description,
     remainingTurns,
+    conditionLabel: raw.conditionLabel,
   })
 
   // 构造修饰符列表 — 从 config.attributes 提取
-  const extracted = extractAttributesFromConfig(raw.attributes ?? {} as Record<ATTRIBUTE_CODE, string>, stacks)
+  const extracted = extractAttributesFromConfig(raw.attributes ?? {} as Record<ATTRIBUTE_CODE, AttributeValueConfig>, stacks)
   const modifiers = extracted.map((e) => ({
     sourceName: name,
     attribute: e.attr,

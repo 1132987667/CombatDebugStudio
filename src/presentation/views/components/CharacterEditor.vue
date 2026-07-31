@@ -125,10 +125,11 @@ import NumericStepper from '@/presentation/components/NumericStepper.vue'
 import { buffsData } from '@/shared/types/buffs-json'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import { classifyBuff } from '@/shared/types/buff-classification'
-import { getAttrName } from '@/domain/attribute/types'
 import { ParticipantSideName } from '@/domain/battle/type/types'
 import { StatusCategory, StatusCategoryNames } from '@/shared/types/status-meta'
 import { BuffPolarity } from '@/shared/types/buff-classification'
+import { container } from '@/infrastructure/di/Container'
+import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 // ==================== 类型 ====================
 
 export interface EditorBuffEntry {
@@ -235,48 +236,12 @@ const attrFields: AttrOverrideItem[] = [
   { key: 'speed', label: '速度', min: 0, max: 9999, steps: [100, 10, 1] },
 ]
 
-// ==================== 属性名 → 中文（兜底：getAttrName 不认识的 ad-hoc 键） ====================
-
-const ATTR_ALIAS: Record<string, string> = {
-  dmgReduction: '伤害减免',
-  HIT_RATE: '命中率',
-  critDamageTaken: '暴击承伤',
-  poisonResist: '毒抗',
-  demonDamage: '对妖伤害',
-  fireDamage: '火攻',
-  fireDamageTaken: '火伤减免',
-  waterDamageTaken: '水伤减免',
-  slowImmune: '减速免疫',
-  stunResist: '眩晕抵抗',
-  knockbackResist: '击退抵抗',
-  bleedResist: '流血抵抗',
-  burnImmune: '灼烧免疫',
-  burnDuration: '灼烧延长',
-  skillCooldown: '技能冷却',
-  webSuccessRate: '蛛网成功率',
-  healEffect: '治疗效果',
-  energyCost: '能量消耗',
-}
-
-/** 格式化属性修正为可读文本 */
-function formatAttributes(attrs: Record<string, string>): string {
-  return Object.entries(attrs)
-    .map(([key, val]) => {
-      const cn = getAttrName(key as never) || ATTR_ALIAS[key] || key
-      // 数值格式化：+1.0 → +1, +20% → +20%, -10 → -10
-      const num = parseFloat(val)
-      if (val.endsWith('%')) return `${cn}${val}`
-      if (Math.abs(num) >= 1) return `${cn}+${Math.round(num)}`
-      if (num > 0) return `${cn}+${Math.round(num * 100)}%`
-      return `${cn}${val}`
-    })
-    .join('，')
-}
-
 // ==================== Methods ====================
 
+/** 效果摘要由 BuffConfigResolver 解析时生成（effectSummary），UI 只读取 */
 function buildStatusesFromBuffs() {
   const buffList = Array.isArray(buffsData) ? buffsData : []
+  const registry = container.resolve<BuffScriptRegistry>('BuffScriptRegistry')
   return buffList.map((buff: BuffJsonEntry) => {
     const classification = classifyBuff(buff)
     const primaryFacet = classification.facets.length > 0 ? classification.facets[0] : 'other'
@@ -286,41 +251,10 @@ function buildStatusesFromBuffs() {
       primaryFacet,
       polarity: classification.polarity,
       duration: buff.duration !== undefined && buff.duration > 0 ? buff.duration : 0,
-      effect: buff.description || buildEffectSummary(buff),
+      effect: buff.description || registry.getResolvedBuffConfig(buff.id)?.effectSummary || buff.name,
       active: false,
     }
   })
-}
-
-function buildEffectSummary(buff: BuffJsonEntry): string {
-  const parts: string[] = []
-  if (buff.attributes) {
-    parts.push(formatAttributes(buff.attributes))
-  }
-  if (buff.aura) {
-    const scope = buff.aura.targetSelector === 'allies' ? '全体友方' : buff.aura.targetSelector === 'enemies' ? '全体敌方' : '自身'
-    parts.push(`光环·${scope}`)
-  }
-  if (buff.immunities?.length) {
-    parts.push(`免疫:${buff.immunities.join('，')}`)
-  }
-  if (buff.controlType) {
-    const ctrlNames: Record<string, string> = { stun: '眩晕', silence: '沉默', freeze: '冰冻', sleep: '睡眠', bind: '束缚' }
-    parts.push(`控制:${ctrlNames[buff.controlType] || buff.controlType}`)
-  }
-  if (buff.triggers?.length) {
-    const triggerNames: Record<string, string> = {
-      apply_poison: '附加中毒', deal_dot_damage: '持续伤害',
-      heal_percent_max_hp: '按比例回血', heal_lowest_hp_ally: '治疗最低友方',
-      heal_all_allies: '全体回血', apply_shield: '附加护盾',
-      reflect_damage: '反弹伤害', reflect_fire_damage: '反弹火伤',
-      apply_debuff_to_attacker: '攻击者减益', cleanse_random_debuff: '净化减益',
-      summon_unit: '召唤单位', apply_silence_to_attacker: '沉默攻击者',
-    }
-    const t = triggerNames[buff.triggers[0].scriptId]
-    parts.push(`触发:${t || buff.triggers[0].scriptId}${buff.triggers.length > 1 ? `等${buff.triggers.length}个` : ''}`)
-  }
-  return parts.join(' | ')
 }
 
 function getCurrentAttr(key: string): number {

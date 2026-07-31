@@ -8,12 +8,12 @@ import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { LogLevel } from '@/shared/types/battle-log'
 import { AtomicEffectRegistry } from '@/domain/buff/atomic/AtomicEffectRegistry'
-import { parseAttributeValue } from '@/domain/buff/atomic/parseUtils'
 import {
   BuffConfigResolver,
   type ResolvedBuffConfig,
 } from '@/domain/buff/atomic/BuffConfigResolver'
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 import type { EffectsJsonData } from '@/shared/types/effects-json'
 
 /** 效果定义：脚本 + 配置的统一视图 */
@@ -84,24 +84,7 @@ export class BuffScriptRegistry {
       if (Array.isArray(buffsData)) {
         for (const buff of buffsData) {
           if (buff.id) {
-            // 校验 attributes 值格式
-            if (buff.attributes) {
-              for (const [key, value] of Object.entries(buff.attributes)) {
-                if (typeof value !== 'string') {
-                  LoggerProvider.logger.addDebugLog(
-                    `Buff ${buff.id} 属性 ${key} 的值不是字符串: ${value}`,
-                  )
-                  continue
-                }
-                const trimmed = (value as string).trim()
-                const numericStr = trimmed.replace('%', '')
-                if (isNaN(parseFloat(numericStr))) {
-                  LoggerProvider.logger.addDebugLog(
-                    `Buff ${buff.id} 属性 ${key} 的值无法解析为数字: "${value}"`,
-                  )
-                }
-              }
-            }
+            // 配置值格式与键名校验由 validateBuffConfigs 统一执行（值须为 {value,type} 对象）
             this.buffConfigs.set(buff.id, buff as BuffJsonEntry)
             console.log(`加载 Buff 配置: ${buff.id}`)
           }
@@ -121,54 +104,46 @@ export class BuffScriptRegistry {
     this.validateBuffConfigs()
   }
 
-  /** 加载时校验：标记无脚本、无 effectPlan 的 Buff */
+  /** 加载时校验：不合规配置在加载时立即失败（校验失败 = 构建失败） */
   private validateBuffConfigs(): void {
     const knownCodes = Object.values(ATTRIBUTE_CODE) as string[]
+
+    const validateAttrs = (
+      attrs: Record<string, unknown> | undefined,
+      where: string,
+    ) => {
+      if (!attrs) return
+      for (const [key, value] of Object.entries(attrs)) {
+        if (!knownCodes.includes(key)) {
+          throw new Error(
+            `[BuffConfigValidator] ${where} 中的 "${key}" 不在 ATTRIBUTE_CODE 中，修饰符将静默失效`,
+          )
+        }
+        const cfg = value as { value?: unknown; type?: unknown } | null
+        if (
+          typeof cfg !== 'object' || cfg === null ||
+          typeof cfg.value !== 'number' ||
+          (cfg.type !== 'PERCENTAGE' && cfg.type !== 'ADDITIVE')
+        ) {
+          throw new Error(
+            `[BuffConfigValidator] ${where} 中 "${key}" 的值格式非法，须为 { value: number, type: 'PERCENTAGE'|'ADDITIVE' }`,
+          )
+        }
+      }
+    }
 
     for (const [buffId] of this.buffConfigs) {
       const raw = this.buffConfigs.get(buffId)
       if (!raw) continue
 
-      // 校验 raw.attributes 中的属性名是否在 ATTRIBUTE_CODE 中
-      if (raw.attributes) {
-        for (const key of Object.keys(raw.attributes)) {
-          if (!knownCodes.includes(key)) {
-            console.warn(
-              `[BuffConfigValidator] ${buffId}: raw.attributes 中的 "${key}" 不在 ATTRIBUTE_CODE 中，修饰符将静默失效`,
-            )
-          }
-        }
-      }
-
-      // 校验 effects[].params.attributes 中的属性名
+      validateAttrs(raw.attributes as Record<string, unknown> | undefined, `${buffId}.attributes`)
       if (raw.effects) {
         for (const effect of raw.effects) {
-          const attrs = (effect.params?.attributes ?? {}) as Record<string, string>
-          for (const key of Object.keys(attrs)) {
-            if (!knownCodes.includes(key)) {
-              console.warn(
-                `[BuffConfigValidator] ${buffId}: effects[].params.attributes 中的 "${key}" 不在 ATTRIBUTE_CODE 中，修饰符将静默失效`,
-              )
-            }
-          }
+          validateAttrs(
+            (effect.params?.attributes ?? undefined) as Record<string, unknown> | undefined,
+            `${buffId}.effects[].params.attributes`,
+          )
         }
-      }
-
-      // 检测旧字段：仍在用 attributes/immunities/aura/shield 但没有 effects[]
-      // NOTE: controlType 不是旧字段——BuffSystem 直接从 config.controlType 读取控制查询
-      const usedLegacy: string[] = []
-      for (const f of ['attributes', 'immunities', 'aura', 'shield'] as const) {
-        const v = raw[f]
-        if (v == null) continue
-        // 空对象（attributes: {}）不算
-        if (typeof v === 'object' && Object.keys(v).length === 0) continue
-        usedLegacy.push(f)
-      }
-      if (usedLegacy.length > 0 && !raw.effects?.length) {
-        throw new Error(
-          `[BuffConfigValidator] ${buffId}: 检测到旧字段 [${usedLegacy.join(', ')}] 但无 effects[]。` +
-          `请将所有效果迁移到 effects[] 数组格式。`
-        )
       }
 
       const hasScript = this.registry.has(buffId)
@@ -177,7 +152,6 @@ export class BuffScriptRegistry {
       const hasTriggers = (raw.triggers?.length ?? 0) > 0
 
       if (!hasScript && !hasEffectPlan && !hasTriggers) {
-        if (buffId.startsWith('_track_passive_')) continue
         throw new Error(
           `[BuffConfigValidator] ${buffId}: 无脚本、无 effects[]、无 triggers。` +
           `请至少配置其一。旧字段 attributes/controlType/immunities/aura 不再被识别。`
@@ -186,21 +160,7 @@ export class BuffScriptRegistry {
     }
   }
 
-  /** 效果参数到属性修饰符的映射表 */
-  private static readonly EFFECT_PARAM_MAP: Record<string, string> = {
-    attackBonus: 'attack',
-    defenseBonus: 'defense',
-    speedBonus: 'speed',
-    healthBonus: 'maxHealth',
-    criticalRateBonus: 'critRate',
-    criticalDamageBonus: 'critDamage',
-    teamAttackBonus: 'attack',
-    teamHealPerTurn: 'hpRegenPercent',
-    controlDurationReduction: 'controlDurationReduction',
-    defenseReduction: 'defense',
-  }
-
-  /** 将 effects.json 的参数转换为 attributes 格式并加载到注册表 */
+  /** 将 effects.json 的配置加载到注册表（属性对象与 polarity 由配置显式声明，不做翻译/量级猜测） */
   private loadEffectConfigs(): void {
     try {
       const raw = effectsData as EffectsJsonData
@@ -209,29 +169,23 @@ export class BuffScriptRegistry {
       for (const effect of raw.effects) {
         if (!effect.id) continue
         if (this.buffConfigs.has(effect.id)) continue // buffs.json 优先
-        const attributes: Record<string, string> = {}
         const params = effect.params || {}
-        for (const [key, value] of Object.entries(params)) {
-          const attr = BuffScriptRegistry.EFFECT_PARAM_MAP[key]
-          if (!attr || typeof value !== 'number') continue
-          let pct: number
-          if (key === 'defenseReduction') {
-            pct = Math.round((1 - value) * 100) // 0.7 → -30%
-          } else if (value > 1) {
-            pct = Math.round((value - 1) * 100) // 1.2 → +20%
-          } else {
-            pct = Math.round(value * 100) // 0.03 → +3%
-          }
-          const sign = pct >= 0 ? '+' : ''
-          attributes[attr] = `${sign}${pct}%`
-        }
+        const attributes = (params.attributes ??
+          {}) as Record<string, AttributeValueConfig>
+        // polarity 由配置显式声明（type: "buff" | "debuff"）
+        const polarity =
+          effect.type === 'debuff'
+            ? 'negative'
+            : effect.type === 'buff'
+              ? 'positive'
+              : undefined
         const config: BuffJsonEntry = {
           id: effect.id,
           name: effect.id,
+          polarity,
+          description: effect.description ?? '',
           duration: (params.duration as number) ?? 1,
           maxStacks: (params.maxStacks as number) ?? 1,
-          attributes:
-            Object.keys(attributes).length > 0 ? attributes : undefined,
           effects: [{
             type: 'modifier',
             params: {
@@ -289,11 +243,6 @@ export class BuffScriptRegistry {
     return { script, config }
   }
 
-  public getBuffAttributes(buffId: string): Record<string, string> | undefined {
-    const config = this.buffConfigs.get(buffId)
-    return config?.attributes
-  }
-
   /** 获取已解析配置的 effectPlan（仅返回 effectPlan，无配置） */
   public getEffectPlan(
     buffId: string,
@@ -305,13 +254,6 @@ export class BuffScriptRegistry {
   public hasEffectPlan(buffId: string): boolean {
     const resolved = this.getResolvedBuffConfig(buffId)
     return !!resolved && resolved.effectPlan.length > 0
-  }
-
-  public parseAttributeValue(value: string): {
-    value: number
-    type: ModifierType
-  } {
-    return parseAttributeValue(value)
   }
 
   public loadBuffConfigsFromArray(configs: BuffJsonEntry[]): void {

@@ -184,6 +184,11 @@ export class BattleService {
     return this.battleManager.getIsBattleActive()
   }
 
+  /** 获取指定参与者的本场复活次数 */
+  getReviveCount(characterId: string): number {
+    return this.battleManager.getBattleSystem().getReviveTracker().getReviveCount(characterId)
+  }
+
   togglePause(): void {
     this.battleManager.togglePause()
   }

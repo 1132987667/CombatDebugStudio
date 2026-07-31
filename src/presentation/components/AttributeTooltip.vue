@@ -168,7 +168,7 @@ import { ModifierSourceTypeNames } from '@/domain/attribute/types'
 import { getAttrMeta } from '@/domain/attribute/types'
 import { formatModifierValue } from '@/shared/utils/format'
 import { BuffPolarity } from '@/shared/types/buff-classification'
-
+import { round } from '@/shared/utils/math'
 // ===================== 区间模式类型导出 =====================
 export interface RangeModifierRow {
   label: string
@@ -225,7 +225,7 @@ const getSourceLabel = (source: ModifierSourceType): string => {
 }
 
 const formatValue = (value: number, valueType: AttributeValueType): string => {
-  const rounded = Math.round(value * 100) / 100
+  const rounded = round(value, 2)
   if (valueType === AttributeValueType.PERCENT) {
     return rounded > 0 ? `+${rounded}%` : `${rounded}%`
   }

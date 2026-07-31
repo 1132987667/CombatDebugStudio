@@ -63,6 +63,15 @@ export function ceil(number: number | string, precision = 0): number {
   }
 
   const factor = Math.pow(10, precision)
-  // ponytail: 减去极小值，解决 1.01 变成 1.0100000000000002 导致错误向上进位的问题
   return Math.ceil((num - Number.EPSILON) * factor) / factor
+}
+
+/**
+ * 将小数比率转为百分比数值（0.15 → 15），保留 2 位小数
+ * 用于把配置中的 PERCENTAGE 比率值对齐 ModifierType 的百分比单位
+ * @param value - 比率值（如 0.15 表示 15%）
+ * @returns 百分比数值，若输入无效则返回 NaN
+ */
+export function percentage(value: number): number {
+  return round(value * 100, 2)
 }

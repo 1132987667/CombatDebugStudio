@@ -52,7 +52,7 @@ import type { Container } from '@/infrastructure/di/Container'
 import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import type { BattleCommand } from '@/shared/types/battle-commands'
 
-import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { DamageCategory, type SkillConfig } from '@/domain/skill/types'
@@ -66,7 +66,7 @@ import { ThreatManager } from '@/domain/battle/service/ThreatManager'
 import { FieldEffectManager } from '@/domain/battle/service/FieldEffectManager'
 import { FormationManager } from '@/domain/battle/service/FormationManager'
 import type { FormationConfig } from '@/shared/types/formation'
-
+import { percentage } from '@/shared/utils/math'
 /**
  * 战斗系统核心管理类
  *
@@ -748,15 +748,11 @@ export class BattleSystem {
             // removeModifier(instanceId) 正确清理跨角色修饰符。
             const targetStack = this.buffSystem.getModifierStack(targetId)
             for (const mod of aura.modifiers) {
-              let value = typeof mod.value === 'number' ? mod.value : 0
-              // aura 中的 PERCENTAGE value 为 0.15（表示 15%），需 ×100 对齐 ModifierType 单位
-              if (mod.type === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
-                value = Math.round(value * 10000) / 100
-              }
+              // aura 的 PERCENTAGE value 由配置显式声明（百分数），无需运行时换算
               targetStack.addModifier(
                 instanceId,
                 mod.targetAttribute as ATTRIBUTE_CODE,
-                value,
+                typeof mod.value === 'number' ? mod.value : 0,
                 mod.type,
               )
             }
@@ -773,6 +769,12 @@ export class BattleSystem {
    * @param participant 参与者
    */
   public triggerPassiveSkillsForCharacter(participant: BattleEntity): void {
+    // NOTE: 动态添加的角色未经过 initialize()，被动从未注册到 PassiveSkillManager
+    //       （triggerPassives 依赖 passives Map，未注册会静默 return）；
+    //       先清空再注册，保证幂等（重复调用不会累积重复被动）
+    this.passiveSkillManager.clearPassives(participant.id)
+    GameDataProcessor.registerParticipantPassives(participant, this.passiveSkillManager)
+
     // 触发战斗开始事件
     this.emitTriggerEvent(BattleTriggerPhase.BATTLE_START, {
       sourceId: participant.id,
@@ -1095,21 +1097,6 @@ export class BattleSystem {
   }
 
   /**
-   * 添加战斗动作到记录
-   * @param action - 战斗动作
-   */
-  private addBattleAction(action: BattleAction): void {
-    const battle = this.battleData
-    if (battle) {
-      battle.actions.push(action)
-
-      if (battle.actions.length > MAX_ACTION_HISTORY) {
-        battle.actions = battle.actions.slice(-MAX_ACTION_HISTORY)
-      }
-    }
-  }
-
-  /**
    * 检测战斗结束条件并处理
    * 委托给 ruleManager 进行规则判定，只负责后续副作用（结束战斗、日志）
    */
@@ -1242,6 +1229,8 @@ export class BattleSystem {
     this.currentAllyFormation = null
     this.currentEnemyFormation = null
     this.lifecycleManager.resetBattle()
+    // ★ 兜底清理触发器事件总线残留监听器（正常路径 removeBuff 已反注册，此处防漏网）
+    this.getTriggerEventBus().clear()
   }
 
   public getBattleStatus(): string | undefined {
@@ -1254,13 +1243,7 @@ export class BattleSystem {
     }
   }
 
-  public getRoundState(): RoundStatus | undefined {
-    return this.battleData?.roundState
-  }
 
-  public isBattleEnded(): boolean {
-    return this.battleData?.battleState === BattleStatus.ENDED
-  }
 
   public getAutoBattle(): boolean {
     return this.battleData?.autoBattle ?? false
@@ -1447,23 +1430,10 @@ export class BattleSystem {
   }
 
   /**
-   * 获取当前所有参与者信息
-   * @returns 参与者数组
-   */
-  public getCurParticipantsInfo(): BattleEntity[] {
-    return Array.from(this.battleData.participants.values())
-  }
-
-  /**
    * 获取当前战斗数据
    */
   public getBattleData(): BattleData | undefined {
     return this.battleData
-  }
-
-  /** @internal 接口兼容，委托给 setSpeed */
-  public setBattleSpeed(speed: number): void {
-    this.setSpeed(speed)
   }
 
   // ===================== 命令生成器（第三阶段） =====================

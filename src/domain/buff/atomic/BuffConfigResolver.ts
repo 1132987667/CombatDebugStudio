@@ -1,6 +1,13 @@
-import type { IAtomicEffect, AtomicEffectType } from './types'
+import { type IAtomicEffect, AtomicEffectType } from './types'
 import { AtomicEffectRegistry } from './AtomicEffectRegistry'
-import type { BuffConfig, StackRule, ControlType } from '@/domain/buff/types'
+import type { BuffConfig, StackRule, ControlType, TriggerAction } from '@/domain/buff/types'
+import type { BuffPolarity } from '@/shared/types/buff-classification'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
+import { getAttrName, type ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import {
+  BattleTriggerPhase,
+  OLD_PHASE_NAME_MAP,
+} from '@/domain/battle/type/types'
 
 /** 解析后的运行时效果计划 */
 export interface ResolvedEffectPlan {
@@ -16,6 +23,12 @@ export interface ResolvedEffectPlan {
 export interface ResolvedBuffConfig extends BuffConfig {
   /** 原子效果执行计划（有序） */
   effectPlan: ResolvedEffectPlan[]
+  /** 显式声明的极性（缺失时由 controlType/tags 推导，推导失败抛错） */
+  polarity: BuffPolarity
+  /** 执行模式（'script' 由注册表脚本信息补充，此处推导数据侧模式） */
+  executionMode: 'effectPlan' | 'triggerOnly' | 'marker'
+  /** 效果摘要文本（解析时从 effectPlan/时长派生，供日志与 UI 直接读取） */
+  effectSummary: string
 }
 
 /**
@@ -39,11 +52,79 @@ export class BuffConfigResolver {
    */
   resolve(raw: Record<string, any>): ResolvedBuffConfig {
     const effectPlan = this.buildEffectPlan(raw)
+    const base = this.buildBaseConfig(raw)
+    const effectSummary = this.buildEffectSummary(raw, effectPlan)
 
     return {
-      ...this.buildBaseConfig(raw),
+      ...base,
       effectPlan,
+      polarity: this.derivePolarity(raw),
+      executionMode: this.deriveExecutionMode(raw),
+      effectSummary,
+      // 描述缺失时由解析器自动生成，下游不再做运行时三级回退
+      description: base.description.trim() || effectSummary,
     }
+  }
+
+  /** 推导数据侧执行模式：有效果 → effectPlan；仅触发器 → triggerOnly；否则 → marker */
+  private deriveExecutionMode(
+    raw: Record<string, any>,
+  ): 'effectPlan' | 'triggerOnly' | 'marker' {
+    if (raw.effects?.length) return 'effectPlan'
+    if (raw.triggers?.length) return 'triggerOnly'
+    return 'marker'
+  }
+
+  /** 推导显式极性：配置声明优先（校验值域），缺失时从 controlType/tags 推导，仍失败则抛错 */
+  private derivePolarity(raw: Record<string, any>): BuffPolarity {
+    const VALID = ['positive', 'negative', 'neutral', 'mixed']
+    if (raw.polarity) {
+      if (!VALID.includes(raw.polarity)) {
+        throw new Error(
+          `[BuffConfigResolver] ${raw.id ?? 'unknown'}: polarity "${raw.polarity}" 非法，须为 positive/negative/neutral/mixed`
+        )
+      }
+      return raw.polarity as BuffPolarity
+    }
+    if (raw.controlType && raw.controlType !== 'none') {
+      return 'negative'
+    }
+    const tags: string[] = raw.tags ?? []
+    if (tags.some((t) => t === 'dot' || t === 'poison' || t === 'debuff')) {
+      return 'negative'
+    }
+    throw new Error(
+      `[BuffConfigResolver] ${raw.id ?? 'unknown'}: 缺少 polarity 字段，且无法从 controlType/tags 推导`
+    )
+  }
+
+  /** 从效果计划派生静态效果摘要（属性修正 + 时长），供日志/UI 直接读取 */
+  private buildEffectSummary(
+    raw: Record<string, any>,
+    effectPlan: ResolvedEffectPlan[],
+  ): string {
+    const parts: string[] = []
+    for (const effect of effectPlan) {
+      if (effect.type !== AtomicEffectType.MODIFIER) continue
+      const attrs = effect.params.attributes as
+        | Record<string, AttributeValueConfig>
+        | undefined
+      if (!attrs) continue
+      for (const [code, cfg] of Object.entries(attrs)) {
+        const cn = getAttrName(code as ATTRIBUTE_CODE)
+        if (!cn) continue
+        const arrow = cfg.value >= 0 ? '↑' : '↓'
+        const text =
+          cfg.type === 'PERCENTAGE'
+            ? `${Math.abs(cfg.value)}%`
+            : `${Math.abs(cfg.value)}`
+        parts.push(`${cn}${arrow}${text}`)
+      }
+    }
+    const duration = raw.duration ?? 1
+    if (duration > 0) parts.push(`（${duration}回合）`)
+    else if (duration === -1) parts.push(`（永久）`)
+    return parts.join(' ')
   }
 
   private buildEffectPlan(raw: Record<string, any>): ResolvedEffectPlan[] {
@@ -84,7 +165,25 @@ export class BuffConfigResolver {
       immunities: raw.immunities ?? undefined,
       parameters: raw.parameters ?? undefined,
       attributes: raw.attributes ?? undefined,
-      triggers: raw.triggers ?? undefined,
+      // 触发器阶段在此归一化为枚举值，下游不再做双命名兼容
+      triggers: raw.triggers
+        ? (raw.triggers as TriggerAction[]).map((t) => ({
+            ...t,
+            phase: this.normalizePhase(t.phase, raw.id),
+          }))
+        : undefined,
     }
+  }
+
+  /** 归一化触发阶段：旧风格（ON_ATTACK_HIT）→ 枚举值（on_hit），无法识别则抛错 */
+  private normalizePhase(phase: string, buffId: string): BattleTriggerPhase {
+    const normalized = OLD_PHASE_NAME_MAP[phase]
+    if (normalized) return normalized
+    if ((Object.values(BattleTriggerPhase) as string[]).includes(phase)) {
+      return phase as BattleTriggerPhase
+    }
+    throw new Error(
+      `[BuffConfigResolver] ${buffId ?? 'unknown'}: 无法识别的触发器阶段 "${phase}"`
+    )
   }
 }

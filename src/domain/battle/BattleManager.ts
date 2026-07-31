@@ -8,7 +8,6 @@
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import { BattleStateManager } from '@/domain/battle/state/BattleStateManager'
 import { AutoBattleManager } from '@/domain/battle/auto/AutoBattleManager'
-import { InterventionManager } from '@/domain/battle/intervention/InterventionManager'
 import { BattleReplayManager } from '@/domain/battle/replay/BattleReplayManager'
 import {
   ParticipantSide,
@@ -37,7 +36,6 @@ export class BattleManager {
    * @param battleSystem 战斗系统实例
    * @param battleStateManager 战斗状态管理器实例
    * @param autoBattleManager 自动战斗管理器实例
-   * @param interventionManager 干预管理器实例
    * @param battleReplayManager 战斗回放管理器实例
    */
   /** 已注册的事件处理器引用（用于 off 时精确移除） */
@@ -59,7 +57,6 @@ export class BattleManager {
     private battleSystem: BattleSystem,
     private battleStateManager: BattleStateManager,
     private autoBattleManager: AutoBattleManager,
-    private interventionManager: InterventionManager,
     private battleReplayManager: BattleReplayManager,
     private readonly uiEventPort: IUIEventPort,
     private readonly emitter: Emitter<BattleEvents>,
@@ -71,11 +68,6 @@ export class BattleManager {
   /** 阵型配置 */
   private allyFormation?: import('@/shared/types/formation').FormationConfig
   private enemyFormation?: import('@/shared/types/formation').FormationConfig
-
-  /** 设置当前场景 ID */
-  setSceneId(sceneId?: string): void {
-    this.currentSceneId = sceneId
-  }
 
   /** 设置阵型配置 */
   setFormations(
@@ -160,22 +152,6 @@ export class BattleManager {
   }
 
   /**
-   * 统一参与者状态更新接口
-   * 通过 BattleSystem 修改参与者属性，BattleSystem 为唯一数据源
-   * Store 因共享对象引用自动感知变更
-   */
-  updateParticipantState(
-    participantId: string,
-    updates: Partial<BattleEntity>,
-  ): void {
-    const battleData = this.battleSystem.getBattleData()
-    const participant = battleData?.participants.get(participantId)
-    if (participant) {
-      Object.assign(participant, updates)
-    }
-  }
-
-  /**
    * 通过命令流处理回合（第三阶段）
    * 生成 BattleCommand[] 供 Store 执行，不直接修改状态
    * @returns BattleCommand[] 命令序列
@@ -206,13 +182,6 @@ export class BattleManager {
    */
   getAutoBattleManager() {
     return this.autoBattleManager
-  }
-
-  /**
-   * 获取手动干预管理器
-   */
-  getInterventionManager() {
-    return this.interventionManager
   }
 
   /**
@@ -427,7 +396,13 @@ export class BattleManager {
       battleData.participants.set(character.id, character)
     }
 
-    // NOTE: 被动触发延迟到 initialize() 统一执行，避免与 initialize 中的 clearAll+重注册冲突
+    // NOTE: 战斗进行中动态添加角色时，initialize() 不会再次执行（被动注册 + BATTLE_START
+    //       触发只发生在 startBattle），必须立即注册并触发该角色的被动。
+    //       编成阶段（战斗未开始）添加仍由 startBattle → initialize() 统一处理，
+    //       避免与 initialize 中的 clearAll+重注册冲突。
+    if (this.battleStateManager.getIsBattleActive()) {
+      this.battleSystem.triggerPassiveSkillsForCharacter(character)
+    }
     this.emitTeamChanged()
   }
 
@@ -473,15 +448,6 @@ export class BattleManager {
   }
 
   /**
-   * 更新角色状态
-   * @param characterId - 角色 ID
-   * @param updates - 更新数据
-   */
-  updateCharacterState(characterId: string, updates: Partial<BattleEntity>) {
-    this.battleStateManager.updateCharacterManually(characterId, updates)
-  }
-
-  /**
    * 重置角色状态到初始值
    */
   resetCharacterStates() {
@@ -501,46 +467,6 @@ export class BattleManager {
     const enemyCount = this.enemyTeam.filter((p) => p.enabled).length
 
     return { ally: allyCount, enemy: enemyCount }
-  }
-
-  /**
-   * 根据 ID 获取角色
-   * @param characterId - 角色 ID
-   * @returns BattleEntity 或 undefined
-   */
-  getCharacterById(characterId: string): BattleEntity | undefined {
-    return (
-      this.allyTeam.find((p) => p.id === characterId) ||
-      this.enemyTeam.find((p) => p.id === characterId)
-    )
-  }
-
-  /**
-   * 批量更新角色状态
-   * @param updates - 更新数组
-   */
-  updateMultipleCharacters(
-    updates: Array<{ id: string; data: Partial<BattleEntity> }>,
-  ) {
-    updates.forEach(({ id, data }) => {
-      this.updateCharacterState(id, data)
-    })
-  }
-
-  /**
-   * 批量设置角色启用状态
-   */
-  setMultipleCharactersEnabled(characterIds: string[], enabled: boolean) {
-    characterIds.forEach((id) => {
-      this.setCharacterEnabled(id, enabled)
-    })
-  }
-
-  /**
-   * 增加回合数
-   */
-  incrementTurn() {
-    this.battleStateManager.incrementTurn()
   }
 
   /**

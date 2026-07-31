@@ -34,6 +34,15 @@ export interface BuffJsonTriggerEntry {
   condition?: string
 }
 
+/**
+ * 属性修饰符值配置：显式声明数值与类型，取代 "<1 猜百分比" 的隐式契约。
+ * value 语义：PERCENTAGE 为百分数（20 表示 +20%），ADDITIVE 为绝对值（10 表示 +10）。
+ */
+export interface AttributeValueConfig {
+  value: number
+  type: 'PERCENTAGE' | 'ADDITIVE'
+}
+
 export interface BuffJsonEntry {
   id: string
   name?: string
@@ -43,7 +52,9 @@ export interface BuffJsonEntry {
   aura?: BuffJsonAura
   polarity?: BuffPolarity
   description?: string
-  attributes?: Record<string, string>
+  /** 条件标签（如 "残血"），供 UI 在条件未激活时显示 "残血·未激活" */
+  conditionLabel?: string
+  attributes?: Record<string, AttributeValueConfig>
   triggers?: BuffJsonTriggerEntry[]
   controlType?: ControlKind
   stackRule?: StackRule

@@ -505,10 +505,19 @@ export interface ConvertSkillOptions {
 }
 
 /**
+ * Buff 极性查询：由调用方注入（通常基于 BuffScriptRegistry 已解析配置的 polarity），
+ * 取代按 ID 前缀猜极性的隐式契约。
+ */
+export type BuffConfigLookup = (buffId: string) => string | undefined
+
+/**
  * 汇总技能步骤的伤害/治疗/类型标记
  * 遍历全部 steps 而非只读第一个
  */
-function summarizeSkillSteps(steps: SkillStep[]): {
+function summarizeSkillSteps(
+  steps: SkillStep[],
+  lookup?: BuffConfigLookup,
+): {
   totalDamage: number
   totalHeal: number
   hasBuff: boolean
@@ -544,9 +553,11 @@ function summarizeSkillSteps(steps: SkillStep[]): {
 
     if (step.type === 'apply_buff') {
       const buffId = step.buffId || step.effectId || ''
-      if (/^debuff_/.test(buffId)) {
+      if (!buffId) continue
+      // 极性由显式查询决定（lookup 返回配置声明的 polarity），不做 ID 前缀猜测
+      if (lookup?.(buffId) === 'negative') {
         hasDebuff = true
-      } else if (buffId) {
+      } else {
         hasBuff = true
       }
     }
@@ -559,16 +570,18 @@ function summarizeSkillSteps(steps: SkillStep[]): {
 
 /**
  * 将 SkillConfig 转换为 Skill（AI系统使用的运行时类型）
+ * @param lookup 可选的 Buff 极性查询（未注入时不判减益，仅标记为 buff）
  */
 export function convertSkillConfigToSkill(
   config: SkillConfig,
   options: ConvertSkillOptions = {},
+  lookup?: BuffConfigLookup,
 ): Skill {
   const { lastUsed = 0 } = options
 
   const steps = config.steps || []
   const firstStep = steps[0] as ExtendedSkillStep | undefined
-  const summary = summarizeSkillSteps(steps)
+  const summary = summarizeSkillSteps(steps, lookup)
 
   const skill: Skill = {
     id: config.id,

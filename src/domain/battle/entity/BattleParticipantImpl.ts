@@ -799,35 +799,6 @@ export class BattleParticipantImpl implements BattleEntity {
   }
 
   /**
-   * 创建参与者快照
-   * @param buffSnapshots - Buff实例快照列表
-   * @returns 参与者快照数据
-   */
-  toSnapshot(buffSnapshots: BuffInstanceSnapshot[] = []): ParticipantSnapshot {
-    const skillCooldowns = this.skillManager.exportCooldownSnapshot()
-
-    return {
-      id: this.id,
-      name: this.name,
-      team: this.team,
-      hp: this.currentHealth,
-      maxHp: this.maxHealth,
-      energy: this.currentEnergy,
-      maxEnergy: this.maxEnergy,
-      buffs: buffSnapshots,
-      skillCooldowns,
-      statusEffects: this.statusEffects ? [...this.statusEffects] : [],
-      attributes: {
-        attack: this.attack,
-        defense: this.defense,
-        speed: this.speed,
-        critRate: this.critRate,
-        critDamage: this.critDamage,
-      },
-    }
-  }
-
-  /**
    * 导出所有属性详情（含基础值、最终值、修饰符、计算公式）
    * @returns 属性详情列表
    */

@@ -203,7 +203,11 @@ export const useBattleStore = defineStore('battle', () => {
     try {
       if (!projection) {
         const buffSystem = container.resolve<BuffSystem>('BuffSystem')
-        projection = new BattleProjection({ participants }, buffSystem)
+        projection = new BattleProjection(
+          { participants },
+          buffSystem,
+          (id) => battleService.value?.getReviveCount(id) ?? 0,
+        )
       }
       const allEntities = [...allyTeam.value, ...enemyTeam.value]
       projection.clear()

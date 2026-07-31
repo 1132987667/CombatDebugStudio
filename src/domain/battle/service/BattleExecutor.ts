@@ -49,6 +49,7 @@ import {
   EffectType,
   StepEffectType,
   convertSkillConfigToSkill,
+  type BuffConfigLookup,
 } from '@/domain/skill/types'
 import {
   resolveSkillTargets,
@@ -315,10 +316,13 @@ export class BattleExecutor {
     })
 
     if (availableSkills.length > 0) {
+      // Buff 极性由已解析配置显式查询（AI 技能标记不依赖 ID 前缀）
+      const buffLookup: BuffConfigLookup = (buffId) =>
+        this.buffSystem.getScriptRegistry().getResolvedBuffConfig(buffId)?.polarity
       const skills = availableSkills
         .map((id) => this.skillManager.getSkillConfig(id))
         .filter(Boolean)
-        .map((c) => convertSkillConfigToSkill(c!))
+        .map((c) => convertSkillConfigToSkill(c!, undefined, buffLookup))
       const bestSkillId = this.defaultStrategy.selectBestSkill(
         skills,
         participant,

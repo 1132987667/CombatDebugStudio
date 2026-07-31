@@ -28,13 +28,17 @@ import {
 import { BATTLE_REPLAY_VERSION } from '@/domain/battle/type/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import { SeededRandom } from '@/shared/utils/SeededRandom'
-import { calculateChecksum, generateReplayId } from '@/shared/utils/Checksum'
-import { LogType, type BattleLogEntry } from '@/shared/types/battle-log'
+import { calculateChecksum, generateReplayId, verifyChecksum } from '@/shared/utils/Checksum'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import type { TraceLogEntry } from '@/shared/types/trace-log'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { EffectType } from '@/domain/skill/types'
+import {
+  BATTLE_LOG_CATEGORIES,
+  type BattleLogCategory,
+} from '@/shared/types/battle-log'
 
 /**
  * 战斗记录
@@ -77,14 +81,8 @@ export interface RecordedBattle {
       currentEnergy: number
     }>
   }
-  /** 战斗初始状态快照 */
-  initialSnapshot?: BattleStateSnapshot
-  /** 战斗最终状态快照 */
-  finalSnapshot?: BattleStateSnapshot
   /** 回合记录列表 */
   rounds: BattleRound[]
-  /** 战斗日志条目 */
-  logs: BattleLogEntry[]
   /** 详细战斗记录（含伤害拆分） */
   combatRecords: CombatRecord[]
   /** 树状调试日志（阶段二：TraceLogCollector 的导出数据） */
@@ -173,7 +171,6 @@ export class BattleRecorder {
       events: [],
       initialState,
       rounds: [],
-      logs: [],
       combatRecords: [],
     }
 
@@ -200,77 +197,6 @@ export class BattleRecorder {
     BattleSummaryGenerator.instance.startBattle(battleId)
 
     this.scheduleCleanup()
-  }
-
-  public getRandomSeed(battleId: string): string | undefined {
-    return this.randomSeeds.get(battleId)
-  }
-
-  public recordInitialSnapshot(
-    battleId: string,
-    snapshot: BattleStateSnapshot,
-  ) {
-    const recording = this.recordings.get(battleId)
-    if (recording) {
-      recording.initialSnapshot = snapshot
-    }
-  }
-
-  public recordFinalSnapshot(battleId: string, snapshot: BattleStateSnapshot) {
-    const recording = this.recordings.get(battleId)
-    if (recording) {
-      recording.finalSnapshot = snapshot
-    }
-  }
-
-  public startRound(
-    battleId: string,
-    roundNumber: number,
-    snapshot?: BattleStateSnapshot,
-  ) {
-    this.currentTurnNumbers.set(battleId, roundNumber)
-    const recording = this.recordings.get(battleId)
-    if (recording) {
-      const round: BattleRound = {
-        roundNumber,
-        startSnapshot: snapshot,
-        events: [],
-      }
-      recording.rounds.push(round)
-    }
-
-    this.recordEvent(
-      battleId,
-      BattleEventType.TURN_START,
-      {
-        roundNumber,
-        snapshot,
-      },
-      roundNumber,
-      roundNumber,
-    )
-  }
-
-  public endRound(battleId: string, snapshot?: BattleStateSnapshot) {
-    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
-    const recording = this.recordings.get(battleId)
-    if (recording && recording.rounds.length > 0) {
-      const currentTurn = recording.rounds[recording.rounds.length - 1]
-      if (currentTurn.roundNumber === roundNumber) {
-        currentTurn.endSnapshot = snapshot
-      }
-    }
-
-    this.recordEvent(
-      battleId,
-      BattleEventType.TURN_END,
-      {
-        roundNumber,
-        snapshot,
-      },
-      roundNumber,
-      roundNumber,
-    )
   }
 
   public recordAction(battleId: string, action: BattleAction, turn: number) {
@@ -379,24 +305,6 @@ export class BattleRecorder {
         instanceId,
         remainingTurns,
         stacks,
-        turn,
-      },
-      turn,
-      roundNumber,
-    )
-  }
-
-  public recordStateChange(
-    battleId: string,
-    state: Partial<BattleState>,
-    turn: number,
-  ) {
-    const roundNumber = this.currentTurnNumbers.get(battleId) || 0
-    this.recordEvent(
-      battleId,
-      BattleEventType.STATE_CHANGE,
-      {
-        state,
         turn,
       },
       turn,
@@ -552,8 +460,7 @@ export class BattleRecorder {
 
       if (recording.checksum) {
         const { checksum, ...dataWithoutChecksum } = recording
-        const calculatedChecksum = calculateChecksum(dataWithoutChecksum)
-        if (calculatedChecksum !== checksum) {
+        if (!verifyChecksum(dataWithoutChecksum, checksum)) {
           LoggerProvider.logger.addDebugLog('战斗记录校验失败:', {
             level: LogLevel.ERROR,
           })
@@ -574,25 +481,6 @@ export class BattleRecorder {
     }
   }
 
-  public async validateRecording(saveKey: string): Promise<boolean> {
-    const recording = await this.storage.get<RecordedBattle>(STORAGE_STORE.RECORDINGS, saveKey)
-    if (!recording) {
-      return false
-    }
-
-    try {
-      if (!recording.checksum) {
-        return true
-      }
-
-      const { checksum, ...dataWithoutChecksum } = recording
-      const calculatedChecksum = calculateChecksum(dataWithoutChecksum)
-      return calculatedChecksum === checksum
-    } catch (error) {
-      console.error('验证战斗记录时出错:', error)
-      return false
-    }
-  }
 
   public async getSavedRecordingsList(): Promise<string[]> {
     try {
@@ -644,54 +532,65 @@ export class BattleRecorder {
       timestamp: Date.now(),
       turn,
       roundNumber,
-      data,
+      // 录制时写入显式语义标注：日志类别与事件重要性，回放/渲染层直接读取
+      data: {
+        ...data,
+        category: this.deriveCategory(type, data),
+        severity: this.deriveSeverity(type, data),
+      },
     }
 
     recording.events.push(event)
-
-    recording.logs.push(
-      Object.assign(
-        {
-          index: recording.logs.length,
-          type: LogType.BATTLE,
-          turn,
-          message: this.generateLogMessage(type, data),
-        } satisfies BattleLogEntry,
-        {
-          eventId: event.eventId,
-          timestamp: event.timestamp,
-          roundNumber,
-          details: data,
-        },
-      ),
-    )
 
     if (recording.events.length > MAX_EVENT_LOG) {
       recording.events = recording.events.slice(-MAX_EVENT_LOG)
     }
   }
 
-  private generateLogMessage(type: string, data: any): string {
-    switch (type) {
-      case BattleEventType.BATTLE_START:
-        return '战斗开始'
-      case BattleEventType.BATTLE_END:
-        return `战斗结束，胜利方: ${data.winner}`
-      case BattleEventType.TURN_START:
-        return `回合 ${data.roundNumber || data.turn} 开始`
-      case BattleEventType.TURN_END:
-        return `回合 ${data.roundNumber || data.turn} 结束`
-      case BattleEventType.ACTION:
-        return `${data.action?.sourceId} 执行了 ${data.action?.type} 动作`
-      case BattleEventType.BUFF_ADD:
-        return `为目标 ${data.targetId} 添加了 Buff: ${data.buffId}`
-      case BattleEventType.BUFF_REMOVE:
-        return `从目标 ${data.targetId} 移除了 Buff: ${data.instanceId}`
-      case BattleEventType.BUFF_UPDATE:
-        return `更新了目标 ${data.targetId} 的 Buff: ${data.instanceId}`
-      default:
-        return `事件: ${type}`
+  /**
+   * 日志类别：基于显式动作类型（BattleAction.type）与效果类型（BattleEffect.type）判定，
+   * 不做 damage/heal 数值猜测。
+   */
+  private deriveCategory(
+    type: ReplayBattleEvent['type'],
+    data: Record<string, any>,
+  ): BattleLogCategory {
+    if (type !== BattleEventType.ACTION) return BATTLE_LOG_CATEGORIES.STATUS
+    const action = data?.action
+    if (!action) return BATTLE_LOG_CATEGORIES.STATUS
+    const effectTypes: string[] =
+      action.effects?.map((e: { type: string }) => e.type) ?? []
+    if (
+      effectTypes.includes(EffectType.HEAL) &&
+      !effectTypes.includes(EffectType.DAMAGE)
+    ) {
+      return BATTLE_LOG_CATEGORIES.HEAL
     }
+    if (effectTypes.includes(EffectType.DAMAGE)) {
+      return BATTLE_LOG_CATEGORIES.DAMAGE
+    }
+    return BATTLE_LOG_CATEGORIES.STATUS
+  }
+
+  /**
+   * 事件重要性：基于显式事件/动作类型判定，无魔法阈值。
+   * 战斗开始/结束 → high；状态变更 → medium；技能动作 → medium；其余 → low。
+   */
+  private deriveSeverity(
+    type: ReplayBattleEvent['type'],
+    data: Record<string, any>,
+  ): 'high' | 'medium' | 'low' {
+    if (
+      type === BattleEventType.BATTLE_START ||
+      type === BattleEventType.BATTLE_END
+    ) {
+      return 'high'
+    }
+    if (type === BattleEventType.STATE_CHANGE) return 'medium'
+    if (type === BattleEventType.ACTION && data?.action?.type === 'skill') {
+      return 'medium'
+    }
+    return 'low'
   }
 
   public clearRecordings() {

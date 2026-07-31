@@ -11,7 +11,6 @@
  *
  * 提供统一的日志接口：
  * - BattleLogManager: 统一日志管理器（融合系统日志和战斗日志）
- * - BattleLogFormatter: 战斗日志格式化工具
  * - ConsoleLogHandler: 控制台日志处理器
  *
  * @module logging
@@ -37,12 +36,6 @@ export {
   battleLogManager,
 } from '@/infrastructure/adapters/logging/BattleLogManager'
 
-// 导出 BattleLogFormatter 命名空间
-export { BattleLogFormatter } from './BattleLogFormatter'
-
 // 导出日志处理器
 export { ConsoleLogHandler } from '@/infrastructure/adapters/logging/BattleLogManager'
-
-// 结构化处理器 (JSON/CSV)
-export { JsonLogHandler, CsvLogHandler } from './StructuredLogHandlers'
 

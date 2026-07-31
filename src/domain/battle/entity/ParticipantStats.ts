@@ -7,6 +7,7 @@
  **/
 import { ATTRIBUTE_CODE, type AttributeValue, getAttrMeta, getAttrDv } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
+import { round } from '@/shared/utils/math'
 
 export class ParticipantStats {
   readonly attributes = new Map<ATTRIBUTE_CODE, AttributeValue>()
@@ -139,7 +140,7 @@ export class ParticipantStats {
     // ponytail: 加成属性（attackBonus/healthBonus）已在 enemyToParticipant 中作为
     // PERCENTAGE 修饰符注入到对应属性，此处不再重复处理。
     const value = ((attrData.base + additive) * percentMultiplier / 100 * independentMultiplier / 100) * finalMultiplier / 100
-    attrData.value = Math.round(value * 100) / 100
+    attrData.value = round(value, 2)
     // 记录计算拆解
     attrData.breakdown = {
       base: attrData.base,
@@ -150,13 +151,5 @@ export class ParticipantStats {
     }
     // 更新版本戳，标记为已计算
     attrData.cachedVersion = this.version
-  }
-
-  getAllBaseAttributes(): Record<string, number> {
-    const result: Record<string, number> = {}
-    for (const [code, attrData] of this.attributes) {
-      result[code] = attrData.base
-    }
-    return result
   }
 }

@@ -7,14 +7,15 @@
 import type { BuffEffectLine } from '@/domain/buff/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { ModifierType } from '@/domain/attribute/types'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 
 /**
- * Buff 原始条目 —— 从 BuffSystem 或 InterventionManager 合并后的中间格式，
+ * Buff 原始条目 —— 从 BuffSystem 合并后的中间格式，
  * 作为 `toBuffTextItem()` 的输入契约，替代 `any` 参数。
  * id/buffId/name 为必填字段，其余可选。
  */
 export interface BuffRawItem {
-  /** Buff 实例 ID（源1）或效果 ID（源2） */
+  /** Buff 实例 ID 或效果 ID */
   id: string
   /** Buff 实例 ID（与 id 二选一） */
   instanceId?: string
@@ -30,8 +31,10 @@ export interface BuffRawItem {
   remainingTurns?: number
   /** 当前层数 */
   currentStacks?: number
-  /** 属性修正（key=attribute code, value=如 "+0.05" 或 "+20%"，per-stack 值） */
-  attributes?: Record<ATTRIBUTE_CODE, string>
+  /** 属性修正（key=attribute code, value=显式声明的 { value, type } 对象，per-stack 值） */
+  attributes?: Record<ATTRIBUTE_CODE, AttributeValueConfig>
+  /** 显式声明的条件标签（如 "残血"），供 condition 为 inactive 时拼接 "残血·未激活" */
+  conditionLabel?: string
   /** 特殊效果行 */
   effectLines?: BuffEffectLine[]
   /** 领域层条件状态（由 BuffSystem.setBuffConditionState 设置）

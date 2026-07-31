@@ -171,7 +171,12 @@ describe('BuffSystem', () => {
         attributes: { attack: '+50' },
       })
       registry.loadBuffConfigsFromArray([
-        { id: 'child_buff', name: 'Child Buff', attributes: { attack: '+50' } },
+        {
+          id: 'child_buff',
+          name: 'Child Buff',
+          polarity: 'positive',
+          attributes: { attack: { value: 50, type: 'ADDITIVE' } },
+        },
       ])
       registry.registerScript('parent_buff', { ...noopScript })
       registry.registerScript('child_buff', { ...noopScript })

@@ -234,8 +234,7 @@
       :attribute-code="attrTooltipData.attributeCode" />
 
     <!-- 战斗回放 -->
-    <BattleReplay @replay-event="handleReplayEvent" @replay-start="handleReplayStart" @replay-end="handleReplayEnd"
-      @replay-pause="handleReplayPause" />
+    <BattleReplay />
 
   </div>
 </template>
@@ -244,7 +243,7 @@
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { ATTRIBUTE_CODE, AttributeMetaMap, AttributeValueType, getAttrDv, getAttrMeta, type Modifier, ModifierType, ModifierTypeNames } from "@/domain/attribute/types";
 import { getAttributeDisplayConfig } from '@/presentation/config/attributeDisplay';
-import { BattleEventType, BattleEntity } from '@/domain/battle/type/types';
+import { BattleEntity } from '@/domain/battle/type/types';
 import { getStepTypeDisplayName } from "@/domain/skill/constants";
 import type { SkillConfig } from "@/domain/skill/types";
 import { formatTargetConfig, SkillType, SkillTypeName, ExtendedSkillStep } from "@/domain/skill/types";
@@ -691,74 +690,6 @@ onUnmounted(() => {
   if (attrTooltipHideTimer) { clearTimeout(attrTooltipHideTimer); attrTooltipHideTimer = null }
 })
 
-// ------------------------------------------------------------
-// 战斗回放相关方法
-
-const handleReplayEvent = (event: any, index: number) => {
-  console.log('回放事件:', event, '索引:', index);
-
-  // 根据事件类型处理不同的回放逻辑
-  switch (event.type) {
-    case BattleEventType.ACTION:
-      handleActionReplay(event.data.action);
-      break;
-    case BattleEventType.TURN_START:
-      handleTurnStartReplay(event.data.turn, event.data.participantId);
-      break;
-    case BattleEventType.TURN_END:
-      handleTurnEndReplay(event.data.turn);
-      break;
-    case BattleEventType.BATTLE_START:
-      handleBattleStartReplay();
-      break;
-    case BattleEventType.BATTLE_END:
-      handleBattleEndReplay(event.data.winner);
-      break;
-  }
-};
-
-const handleReplayStart = (recording: any) => {
-  console.log('开始回放:', recording);
-  battleStore.resetBattle();
-  if (battleStore.battleService) {
-    battleStore.battleService.startReplay(recording);
-  }
-};
-
-const handleReplayEnd = (recording: any) => {
-  console.log('回放结束:', recording);
-  if (battleStore.battleService) {
-    battleStore.battleService.stopReplay();
-  }
-};
-
-const handleReplayPause = (recording: any, index: number) => {
-  console.log('回放暂停:', recording, '当前索引:', index);
-  if (battleStore.battleService) {
-    battleStore.battleService.pauseReplay();
-  }
-};
-
-// 具体的回放处理方法
-const handleActionReplay = (action: any) => {
-  console.log('回放动作:', action);
-};
-
-const handleTurnStartReplay = (turn: number, participantId: string) => {
-  console.log('回放回合开始:', turn, '行动者:', participantId);
-};
-
-const handleTurnEndReplay = (turn: number) => {
-  console.log('回放回合结束:', turn);
-};
-
-const handleBattleStartReplay = () => {
-  console.log('回放战斗开始');
-};
-
-const handleBattleEndReplay = (winner: string) => {
-  console.log('回放战斗结束:', winner);
-};
 </script>
 
 <style scoped>

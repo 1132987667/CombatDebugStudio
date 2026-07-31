@@ -55,8 +55,7 @@ src/domain/<subdomain>/
 └── index.ts       # (optional) barrel exports
 ```
 
-Battle subdomain has additional subdirectories: `ai/`, `auto/`, `intervention/`,
-`logs/`, `replay/`, `state/`, `type/`, `debug/`.
+Battle subdomain has additional subdirectories: `ai/`, `auto/`, `logs/`, `replay/`, `state/`, `type/`, `debug/`.
 
 ## Strict-Mode Type Fixes
 
@@ -85,10 +84,6 @@ Returns `ValidationResult`, caller expects `SkillConfig[]`:
 return result as any as SkillConfig[]
 ```
 
-### CalculationLog import conflict
-Type exists in both `@/shared/types/skill` and locally in
-`DamageCalculator.ts`. Remove the type import and keep only the local
-declaration. Other files import `CalculationLog` from `@/domain/skill/DamageCalculator`.
 
 ### Error.captureStackTrace guard
 ```ts

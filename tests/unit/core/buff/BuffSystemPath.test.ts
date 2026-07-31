@@ -90,9 +90,10 @@ describe('BuffSystem 路径判定', () => {
     expect(instances.length).toBe(1)
   })
 
-  it('Path D: _track_passive_ 前缀 Buff 无效果仅注册', () => {
-    const id = buffSystem.addBuff('char_1', '_track_passive_some_effect', createBuffConfig({
-      id: '_track_passive_some_effect',
+  it('Path D: 显式声明 executionMode=marker 的 Buff 无效果仅注册', () => {
+    const id = buffSystem.addBuff('char_1', 'track_marker_buff', createBuffConfig({
+      id: 'track_marker_buff',
+      executionMode: 'marker',
     }), 1)
     expect(id).toBeTruthy()
   })

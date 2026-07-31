@@ -1,22 +1,22 @@
 import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { container } from '@/infrastructure/di/Container'
 import type { ScriptBuffConfig, IBuffScript } from '@/domain/buff/types'
+import { buffScripts } from '@/domain/buff/scripts/index'
 
-/** Buff 脚本构造器接口，搭配类型守卫使用 */
+/** Buff 脚本构造器接口（静态 BUFF_ID 是类的显式身份声明，CONFIG 提供自包含配置） */
 interface BuffScriptConstructor {
   new (...args: any[]): IBuffScript
   BUFF_ID: string
   CONFIG?: ScriptBuffConfig
 }
 
-/** 类型守卫：判断导出值是否为 BuffScriptConstructor，且包含 BUFF_ID 静态属性（用于注册） */
-function isBuffConstructor(value: unknown): value is BuffScriptConstructor {
-  return (
-    typeof value === 'function' &&
-    typeof (value as unknown as Record<string, unknown>).BUFF_ID === 'string'
-  )
-}
-
+/**
+ * Buff 脚本加载器
+ *
+ * 只负责两件事：按 scripts/index.ts 的显式映射 import 模块、调用 registry.register。
+ * 不做目录扫描（import.meta.glob）、不做鸭子类型探测、不依赖路径命名约定。
+ * 模块内按 BUFF_ID 精确匹配类——BUFF_ID 是脚本类自己声明的身份，非结构推断。
+ */
 export class BuffScriptLoader {
   private loadedScripts = new Set<string>()
   private registry: BuffScriptRegistry
@@ -26,39 +26,37 @@ export class BuffScriptLoader {
   }
 
   public async loadScripts(): Promise<void> {
-    try {
-      const modules = import.meta.glob('@/domain/buff/scripts/*.ts', {
-        eager: false,
-      }) as Record<string, () => Promise<Record<string, unknown>>>
-      for (const [path, moduleLoader] of Object.entries(modules)) {
-        // ponytail: 跳过 barrel 文件（index.ts），避免每个 buff 被注册两次
-        if (path.endsWith('/index.ts')) continue
-        try {
-          const module = await moduleLoader()
-          for (const [exportName, exportValue] of Object.entries(module)) {
-            if (isBuffConstructor(exportValue)) {
-              const BuffClass = exportValue
-              const buffId = BuffClass.BUFF_ID
-              // ponytail: 读取脚本类的静态 CONFIG（自包含模式），传给 registry
-              const defaultConfig = BuffClass.CONFIG
-              this.registry.register(
-                buffId,
-                () => new BuffClass(),
-                { filePath: path },
-                defaultConfig,
-              )
-              this.loadedScripts.add(exportName)
-              console.log(
-                `Loaded and registered buff script: ${exportName} (${buffId})${defaultConfig ? ' [self-contained]' : ''}`,
-              )
-            }
-          }
-        } catch (moduleError) {
-          console.error(`Failed to load module ${path}:`, moduleError)
+    for (const [buffId, moduleLoader] of Object.entries(buffScripts)) {
+      try {
+        const module = await moduleLoader()
+        const BuffClass = Object.values(module).find(
+          (v): v is BuffScriptConstructor =>
+            typeof v === 'function' &&
+            (v as BuffScriptConstructor).BUFF_ID === buffId,
+        )
+        if (!BuffClass) {
+          console.error(
+            `Buff script module 中未找到 BUFF_ID 为 "${buffId}" 的类`,
+          )
+          continue
         }
+        // 脚本类的静态 CONFIG（自包含模式），传给 registry
+        const defaultConfig = BuffClass.CONFIG
+        this.registry.register(
+          buffId,
+          () => new BuffClass(),
+          { filePath: `scripts/${buffId}` },
+          defaultConfig,
+        )
+        this.loadedScripts.add(buffId)
+        if (defaultConfig) {
+          console.log(
+            `Loaded and registered buff script: ${buffId} [self-contained]`,
+          )
+        }
+      } catch (moduleError) {
+        console.error(`Failed to load buff script ${buffId}:`, moduleError)
       }
-    } catch (error) {
-      console.error('Failed to load buff scripts:', error)
     }
   }
 

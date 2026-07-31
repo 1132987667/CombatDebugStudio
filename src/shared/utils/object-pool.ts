@@ -93,17 +93,3 @@ export class ObjectPool<T> {
     )
   }
 }
-
-// 预定义的对象池实例
-export const createBuffContextPool = () => {
-  return new ObjectPool<BuffContext>({
-    maxSize: 100,
-    create: () => {
-      // ponytail: 创建空 BuffContext 实例，在 borrow 后通过 initialize 初始化
-      return new BuffContext()
-    },
-    reset: (context) => {
-      context.variables.clear()
-    },
-  })
-}

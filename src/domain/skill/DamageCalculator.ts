@@ -12,6 +12,7 @@ import { AttackType, DamageCategory, ElementType } from '@/domain/skill/types'
 import { processExtraValues, processTargetModifiers, resolveAttributeValue } from '@/domain/skill/calculation-utils'
 import { LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
+import { floor } from '@/shared/utils/math'
 
 export interface DamageCalculationConfig {
   enableCrit: boolean
@@ -219,7 +220,7 @@ export class DamageCalculator {
       const critMultiplier = (cd ?? this.config.critDamage) / 100
       breakdown.critDamage = cd
       breakdown.critMultiplier = critMultiplier
-      damage = Math.floor(damage * critMultiplier)
+      damage = floor(damage * critMultiplier)
       breakdown.postCritDamage = damage
       breakdown.steps.push({
         stepName: 'crit',
@@ -247,7 +248,7 @@ export class DamageCalculator {
     breakdown.damageBoost = dmgBoost
     if (dmgBoost > 0) {
       const before = damage
-      damage = Math.floor(damage * (1 + dmgBoost / 100))
+      damage = floor(damage * (1 + dmgBoost / 100))
       breakdown.steps.push({
         stepName: 'damageBoost',
         value: damage,
@@ -265,7 +266,7 @@ export class DamageCalculator {
       breakdown.fireSkillDmgBonus = fireBonus
       if (fireBonus > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 + fireBonus / 100))
+        damage = floor(damage * (1 + fireBonus / 100))
         breakdown.steps.push({
           stepName: 'fireSkillDmgBonus',
           value: damage,
@@ -287,7 +288,7 @@ export class DamageCalculator {
       breakdown.physicalSkillDmgBonus = physBonus
       if (physBonus > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 + physBonus / 100))
+        damage = floor(damage * (1 + physBonus / 100))
         breakdown.steps.push({
           stepName: 'physicalSkillDmgBonus',
           value: damage,
@@ -309,7 +310,7 @@ export class DamageCalculator {
       breakdown.damageToLowHp = lowHpBonus
       if (lowHpBonus > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 + lowHpBonus / 100))
+        damage = floor(damage * (1 + lowHpBonus / 100))
         breakdown.steps.push({
           stepName: 'damageToLowHp',
           value: damage,
@@ -323,7 +324,7 @@ export class DamageCalculator {
 
     // 捕获原始伤害（来源方全部产出，目标方减免前）
     // NOTE: extraValues 累加可能产生小数，与最终伤害保持一致取整，保证日志与反伤基数为整数
-    breakdown.rawDamage = Math.floor(damage)
+    breakdown.rawDamage = floor(damage)
     damage = breakdown.rawDamage
     breakdown.steps.push({
       stepName: 'rawDamage',
@@ -343,7 +344,7 @@ export class DamageCalculator {
       breakdown.critDmgTakenReduction = critReduction
       if (critReduction > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 - critReduction / 100))
+        damage = floor(damage * (1 - critReduction / 100))
         breakdown.steps.push({
           stepName: 'critDmgTakenReduction',
           value: damage,
@@ -365,7 +366,7 @@ export class DamageCalculator {
       )
       const beforeDef = damage
       damage = Math.max(0, damage - breakdown.defenseValue)
-      damage = Math.floor(damage)
+      damage = floor(damage)
       breakdown.steps.push({
         stepName: 'defense',
         value: damage,
@@ -396,7 +397,7 @@ export class DamageCalculator {
         breakdown.normalAtkReduction = reduction
         if (reduction > 0) {
           const before = damage
-          damage = Math.floor(damage * (1 - reduction / 100))
+          damage = floor(damage * (1 - reduction / 100))
           breakdown.steps.push({
             stepName: 'normalAtkReduction',
             value: damage,
@@ -414,7 +415,7 @@ export class DamageCalculator {
         breakdown.skillDmgReduction = reduction
         if (reduction > 0) {
           const before = damage
-          damage = Math.floor(damage * (1 - reduction / 100))
+          damage = floor(damage * (1 - reduction / 100))
           breakdown.steps.push({
             stepName: 'skillDmgReduction',
             value: damage,
@@ -458,7 +459,7 @@ export class DamageCalculator {
       breakdown.elementalResistance = elementalRes
       if (elementalRes > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 - elementalRes / 100))
+        damage = floor(damage * (1 - elementalRes / 100))
         breakdown.steps.push({
           stepName: 'elementalResistance',
           value: damage,
@@ -474,7 +475,7 @@ export class DamageCalculator {
         const fieldMod = this.config.fieldElementalModifier(resolvedType)
         if (fieldMod !== 0) {
           const before = damage
-          damage = Math.floor(damage * (1 + fieldMod / 100))
+          damage = floor(damage * (1 + fieldMod / 100))
           breakdown.steps.push({
             stepName: 'fieldElemental',
             value: damage,
@@ -493,7 +494,7 @@ export class DamageCalculator {
       breakdown.damageReduction = dmgReduction
       if (dmgReduction > 0) {
         const before = damage
-        damage = Math.floor(damage * (1 - dmgReduction / 100))
+        damage = floor(damage * (1 - dmgReduction / 100))
         breakdown.steps.push({
           stepName: 'damageReduction',
           value: damage,
@@ -521,7 +522,7 @@ export class DamageCalculator {
     )
     if (breakdown.damageTakenIncrease > 0) {
       const before = damage
-      damage = Math.floor(damage * (1 + breakdown.damageTakenIncrease / 100))
+      damage = floor(damage * (1 + breakdown.damageTakenIncrease / 100))
       breakdown.steps.push({
         stepName: 'dmgTakenIncrease',
         value: damage,
@@ -571,7 +572,7 @@ export class DamageCalculator {
     }
 
     // 确保非负整数
-    damage = Math.max(0, Math.floor(damage))
+    damage = Math.max(0, floor(damage))
 
     breakdown.finalDamage = damage
     breakdown.steps.push({

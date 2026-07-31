@@ -111,15 +111,16 @@ describe('classifyBuff (v2 strict)', () => {
     expect(r.facets).toEqual([StatusCategory.MODIFIER, StatusCategory.TRIGGER])
   })
 
-  // --- polarity 兜底 ---
-  it('guesses negative from control facet', () => {
-    const r = classifyBuff({ controlType: 'stun' })
+  // --- polarity：显式声明优先，缺失视为 NEUTRAL（不做结构猜测） ---
+  it('uses explicitly declared polarity', () => {
+    const r = classifyBuff({ controlType: 'stun', polarity: 'negative' })
     expect(r.isNegative).toBe(true)
   })
 
-  it('v1 compat: raw category string still works for polarity guess', () => {
-    const r = classifyBuff({ category: 'dot' })
-    expect(r.isNegative).toBe(true)
+  it('missing polarity defaults to NEUTRAL (no guessing)', () => {
+    const r = classifyBuff({ controlType: 'stun' })
+    expect(r.isNegative).toBe(false)
+    expect(r.polarity).toBe(BuffPolarity.NEUTRAL)
   })
 })
 

@@ -437,9 +437,8 @@ function getEventTypeLabel(type: string): string {
 }
 
 function getEventSeverity(event: ReplayBattleEvent): string {
-  if (event.type === BattleEventType.BATTLE_START || event.type === BattleEventType.BATTLE_END) return 'high';
-  if (event.type === BattleEventType.ACTION && event.data?.action?.damage && event.data.action.damage > 100) return 'medium';
-  return 'low';
+  // 重要性由录制端显式标注（BattleRecorder.recordEvent），此处直接读取
+  return event.data?.severity ?? 'low'
 }
 
 
@@ -538,30 +537,9 @@ function getEventDetails(event: ReplayBattleEvent): string {
 }
 
 function isKeyEvent(event: ReplayBattleEvent): boolean {
-  // 定义关键事件类型
-  const keyEventTypes = [BattleEventType.BATTLE_START, BattleEventType.BATTLE_END];
-
-  // 检查是否是关键事件类型
-  if (keyEventTypes.includes(event.type)) {
-    return true;
-  }
-
-  // 检查是否是高伤害攻击
-  if (event.type === BattleEventType.ACTION && event.data.action.damage && event.data.action.damage > 500) {
-    return true;
-  }
-
-  // 检查是否是技能释放
-  if (event.type === BattleEventType.ACTION && event.data.action.type === 'skill') {
-    return true;
-  }
-
-  // 检查是否是状态变化
-  if (event.type === BattleEventType.STATE_CHANGE) {
-    return true;
-  }
-
-  return false;
+  // 关键事件 = 录制端显式标注的非低重要性事件（high+medium）
+  // 语义：战斗开始/结束(high)、技能动作与状态变更(medium)为关键，普攻/数值事件为 low
+  return (event.data?.severity ?? 'low') !== 'low';
 }
 
 function cleanup() {

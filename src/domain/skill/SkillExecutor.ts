@@ -1,6 +1,5 @@
 import {
   ATTRIBUTE_CODE,
-  getAttrName,
   ModifierSourceType,
   ModifierType,
   type Modifier,
@@ -20,7 +19,6 @@ import type { ExtendedSkillStep, ReviveStepParams } from '@/domain/skill/types'
 import { EffectType } from '@/domain/skill/types'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { STATUS_CODE } from '@/shared/types/status-meta'
-import { classifyBuff } from '@/shared/types/buff-classification'
 import {
   REVERSE_BONUS_ATTR_MAP,
   syncAttackRange,
@@ -289,8 +287,7 @@ export class SkillExecutor {
     const buffCfgForName = this.buffSystem
       .getScriptRegistry()
       .getBuffConfig(buffId)
-    const buffName =
-      buffCfgForName?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
+    const buffName = buffCfgForName?.name ?? buffId
     action.effects.push({
       type: EffectType.BUFF,
       sourceId: source.id,
@@ -304,19 +301,23 @@ export class SkillExecutor {
 
     // 仅在非被动上下文中打日志（被动由 triggerPassives 统一输出，避免重复）
     if (instanceId && !context?.fromPassive) {
-      const buffCfg = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
-      const displayName =
-        buffCfg?.name ?? buffId.replace(/^(guardian_|buff_|debuff_)/, '')
-
-      // 构建 Buff 效果摘要
-      const effectSummary = this.buildBuffEffectSummary(buffId, instanceId)
+      // 效果摘要由 BuffConfigResolver 解析时生成（effectSummary），此处仅补充运行时层数
+      const resolved = this.buffSystem
+        .getScriptRegistry()
+        .getResolvedBuffConfig(buffId)
+      let effectSummary = resolved?.effectSummary ?? ''
+      const instance = this.buffSystem.getBuffInstanceById(instanceId)
+      if (instance && instance.currentStacks > 1) {
+        const maxStacks = resolved?.maxStacks ?? instance.currentStacks
+        effectSummary += ` （${instance.currentStacks}/${maxStacks}层）`
+      }
 
       LoggerProvider.logger.addBattleLog({
         turn: action?.turn || 1,
-        message: `${displayName}  ${effectSummary}`,
+        message: `${buffName}  ${effectSummary}`,
         segments: [
           {
-            text: displayName,
+            text: buffName,
             classStr: 'log-buff',
             kind: 'buff',
             hover: { kind: 'buff', id: buffId },
@@ -327,48 +328,6 @@ export class SkillExecutor {
         meta: { role: 'sub' },
       })
     }
-  }
-
-  /**
-   * 构建 Buff 效果摘要文本
-   * 从 Buff 配置中提取属性修正、层数、持续时间等效果描述
-   */
-  private buildBuffEffectSummary(buffId: string, instanceId: string): string {
-    const parts: string[] = []
-    const config = this.buffSystem.getScriptRegistry().getBuffConfig(buffId)
-    if (!config) return ''
-
-    // 属性修正
-    if (config.attributes) {
-      for (const [attr, valStr] of Object.entries(config.attributes)) {
-        const cn = getAttrName(attr as ATTRIBUTE_CODE)
-        const num = parseFloat(valStr)
-        if (isNaN(num)) continue
-        const pct = Math.abs(
-          valStr.includes('%') ? num : Math.abs(num) < 1 ? num * 100 : num,
-        )
-        const arrow = num >= 0 ? '↑' : '↓'
-        parts.push(`${cn}${arrow}${Math.round(pct)}%`)
-      }
-    }
-
-    // 层数
-    const instance = this.buffSystem.getBuffInstanceById(instanceId)
-    if (instance && instance.currentStacks > 1) {
-      // 显示当前层数/最大层数
-      const maxStacks = config.maxStacks ?? instance.currentStacks
-      parts.push(`（${instance.currentStacks}/${maxStacks}层）`)
-    }
-
-    // 持续时间
-    const duration = config.duration ?? 0
-    if (duration > 0) {
-      parts.push(`（${duration}回合）`)
-    } else if (duration === -1) {
-      parts.push(`（永久）`)
-    }
-
-    return parts.join(' ') || config.name || ''
   }
 
   /** 运行时修改目标属性（modify_attribute 步骤） */
@@ -389,10 +348,7 @@ export class SkillExecutor {
       if (!attrData) continue
 
       let value = typeof mod.value === 'number' ? mod.value : 0
-      // PERCENTAGE 值在配置中是百分比值（如 5 表示 5%），直接使用
-      if (mod.type === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
-        value = Math.round(value * 10000) / 100
-      }
+      // PERCENTAGE 值由配置显式声明为百分数（如 5 表示 5%），直接使用
 
       const sourceKey = `passive:runtime:${mod.id || skillStep.buffId || 'mod'}`
 
@@ -457,7 +413,11 @@ export class SkillExecutor {
     let removed = 0
     for (const instance of instances) {
       if (removed >= count) break
-      if (isRemoveDebuff && !classifyBuff(instance.context.config).isNegative) continue
+      // 减益判定读取显式声明的 polarity（由 BuffConfigResolver 解析时写入）
+      const polarity = this.buffSystem
+        .getScriptRegistry()
+        .getResolvedBuffConfig(instance.buffId)?.polarity
+      if (isRemoveDebuff && polarity !== 'negative') continue
       this.buffSystem.removeBuff(instance.id)
       removed++
     }

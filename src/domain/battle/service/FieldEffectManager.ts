@@ -8,6 +8,7 @@ import type { FieldEffectConfig } from '@/shared/types/scene'
 import { type BattleEntity } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
+import { floor } from '@/shared/utils/math'
 
 interface ActiveEffect {
   config: FieldEffectConfig
@@ -75,12 +76,12 @@ export class FieldEffectManager {
         const p = eff.config.periodic
         if (p.effect === 'damage') {
           const dmg = p.isPercent
-            ? Math.floor(target.getAttribute(ATTRIBUTE_CODE.maxHealth) * p.value / 100)
+            ? floor(target.getAttribute(ATTRIBUTE_CODE.maxHealth) * p.value / 100)
             : p.value
           buffSystem.requestDamage(target.id, dmg)
         } else if (p.effect === 'heal') {
           const heal = p.isPercent
-            ? Math.floor(target.getAttribute(ATTRIBUTE_CODE.maxHealth) * p.value / 100)
+            ? floor(target.getAttribute(ATTRIBUTE_CODE.maxHealth) * p.value / 100)
             : p.value
           buffSystem.requestHeal(target.id, heal)
         } else if (p.effect === 'energy') {

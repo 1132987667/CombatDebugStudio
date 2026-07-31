@@ -1,6 +1,7 @@
 import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BattleTriggerPhase } from '@/domain/battle/type/types'
 import { AtomicEffectType } from '@/domain/buff/atomic/types'
+import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 import {
   ConditionState,
 } from '@/shared/types/buff-display'
@@ -211,10 +212,17 @@ export interface BuffConfig {
   parameters?: Record<string, any>
 
   /**
-   * 属性修饰符
-   * 定义属性加成，使用字符串格式如 "+10"（数值加成）、"+0.05"（百分比加成）、"-0.15"（百分比减成）
+   * 执行模式（显式声明，取代 ID 前缀/字段组合推断）
+   * 'script'=脚本驱动；'effectPlan'=数据驱动原语；'triggerOnly'=仅触发器；'marker'=纯标记
+   * JSON 配置由 BuffConfigResolver 解析时推导；运行时动态创建的 buff 由调用方显式传入
    */
-  attributes?: Record<string, string>
+  executionMode?: 'script' | 'effectPlan' | 'triggerOnly' | 'marker'
+
+  /**
+   * 属性修饰符
+   * 显式声明数值与类型：{ value: 20, type: 'PERCENTAGE' } = +20%，{ value: 10, type: 'ADDITIVE' } = +10 点
+   */
+  attributes?: Record<string, AttributeValueConfig>
 
   /**
    * 触发器配置

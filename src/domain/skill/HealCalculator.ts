@@ -6,6 +6,7 @@ import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { STATUS_CODE } from '@/shared/types/status-meta'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { processExtraValues, processTargetModifiers } from '@/domain/skill/calculation-utils'
+import { floor } from '@/shared/utils/math'
 
 interface HealCalculationStep {
   step: string
@@ -81,7 +82,7 @@ export class HealCalculator {
     // 负面状态影响（降低治疗效果）
     const debuffEffect = this.calculateDebuffEffect(target, buffSystem)
     if (debuffEffect > 0) {
-      heal = Math.floor(heal * (1 - debuffEffect))
+      heal = floor(heal * (1 - debuffEffect))
       this.calculationLogs.push({
         step: 'debuff',
         value: debuffEffect,
@@ -89,7 +90,7 @@ export class HealCalculator {
       })
     }
 
-    heal = Math.max(0, Math.floor(heal))
+    heal = Math.max(0, floor(heal))
 
     if (context?.record) {
       context.record.effects?.push({

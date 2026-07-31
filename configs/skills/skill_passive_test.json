@@ -153,7 +153,7 @@
             "id": "test_atk_up",
             "targetAttribute": "attack",
             "type": "PERCENTAGE",
-            "value": 0.1,
+            "value": 10,
             "sourceName": "战斗鼓舞"
           }
         ]

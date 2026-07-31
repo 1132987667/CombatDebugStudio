@@ -28,6 +28,7 @@ import {
   SkillType,
   convertSkillConfigToSkill,
 } from '@/domain/skill/types'
+import type { BuffConfigLookup } from '@/domain/skill/types'
 
 /** 战斗AI接口 */
 export interface BattleAI {
@@ -372,12 +373,13 @@ export class BattleAIFactory {
   static createAIWithSkills(
     side: ParticipantSide,
     skills: SkillConfig[],
+    buffLookup?: BuffConfigLookup,
   ): BattleAI {
     const ai = new BaseBattleAI()
     skills.forEach((skillConfig) => {
       // ★ 被动技能不进入 AI 决策池，由 PassiveSkillManager 独立管理
       if (skillConfig.skillType === SkillType.PASSIVE) return
-      const skill = convertSkillConfigToSkill(skillConfig)
+      const skill = convertSkillConfigToSkill(skillConfig, undefined, buffLookup)
       if (skill) {
         ai['skills'].set(skill.id, skill)
       }

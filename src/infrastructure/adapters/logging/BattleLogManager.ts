@@ -349,28 +349,6 @@ export class BattleLogManager implements IBattleLogManager {
   }
 
   /**
-   * 添加回合开始日志
-   */
-  addTurnStartLog(turn: number): void {
-    this.addBattleLog({
-      turn,
-      message: `第${turn}回合开始`,
-      segments: [{ text: `第${turn}回合开始` }],
-    })
-  }
-
-  /**
-   * 添加回合结束日志
-   */
-  addTurnEndLog(turn: number): void {
-    this.addBattleLog({
-      turn,
-      message: `第${turn}回合结束`,
-      segments: [{ text: `第${turn}回合结束` }],
-    })
-  }
-
-  /**
    * 获取调试日志
    */
   getDebugLogs(): LogEntry[] {

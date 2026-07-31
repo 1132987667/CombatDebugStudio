@@ -41,13 +41,30 @@ function createMockRegistries(): { buffRegistry: BuffScriptRegistry; skillManage
           name: '铁甲护体',
           category: 'attribute',
           duration: -1,
-          attributes: { dmgReduction: '+20%' },
+          attributes: { dmgReduction: { value: 20, type: 'PERCENTAGE' } },
         },
         buff_no_config: undefined,
       }
       return configs[id]
     }),
-    getResolvedBuffConfig: vi.fn(() => undefined),
+    getResolvedBuffConfig: vi.fn((id: string) => {
+      if (id === 'buff_iron_armor') {
+        // 解析结果：attributes 已迁移至 effectPlan 的 MODIFIER 原语
+        return {
+          id: 'buff_iron_armor',
+          name: '铁甲护体',
+          description: '',
+          polarity: 'positive',
+          effectPlan: [{
+            type: 'modifier',
+            params: {
+              attributes: { dmgReduction: { value: 20, type: 'PERCENTAGE' } },
+            },
+          }],
+        }
+      }
+      return undefined
+    }),
   } as unknown as BuffScriptRegistry
 
   const skillManager = {

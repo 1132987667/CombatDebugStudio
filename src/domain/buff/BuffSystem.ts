@@ -7,7 +7,6 @@ import {
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import {
   BattleTriggerPhase,
-  OLD_PHASE_NAME_MAP,
   StepExecutionContext,
   type BattleEntity,
 } from '@/domain/battle/type/types'
@@ -35,7 +34,6 @@ import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 import { EffectType } from '@/domain/skill/types'
 import { LogLevel } from '@/shared/types/battle-log'
 import { StatusCategory, StatusCode, getControlPriority } from '@/shared/types/status-meta'
-import { classifyBuff } from '@/shared/types/buff-classification'
 import { Counter } from '@/shared/utils/Counter'
 import { ConditionState } from '@/shared/types/buff-display'
 
@@ -347,14 +345,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (!buffInstance) return
 
     for (const trigger of triggers) {
-      const phase = OLD_PHASE_NAME_MAP[trigger.phase]
-      if (!phase) {
-        this.logger.addDebugLog(
-          `触发器阶段 ${trigger.phase} 未识别，跳过注册`,
-          { level: LogLevel.WARN },
-        )
-        continue
-      }
+      // phase 已由 BuffConfigResolver 归一化为枚举值，直接注册
+      const phase = trigger.phase
       let triggerCount = 0
       let lastTriggerTurn = -999
 
@@ -417,9 +409,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     if (!script) {
       const def = this.scriptRegistry.resolve(buffId)
       if (!def?.config) {
-        // ponytail: 追踪 buff（_track_passive_ 前缀）是运行时动态创建的，
-        // 不需要在 buffs.json 或脚本注册表中预先注册。
-        if (buffId.startsWith('_track_passive_')) {
+        // 运行时动态创建的 marker buff 由调用方显式声明执行模式
+        if (config.executionMode === 'marker') {
           script = null
         } else {
           console.warn(
@@ -477,6 +468,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       parameters:
         config.parameters ?? scriptDefaultConfig?.parameters ?? undefined,
       attributes: config.attributes ?? jsonConfig?.attributes ?? undefined,
+      executionMode: config.executionMode ?? undefined,
       triggers: config.triggers ?? jsonConfig?.triggers as TriggerAction[] | undefined,
       cascadeRemove:
         config.cascadeRemove ?? scriptDefaultConfig?.cascadeRemove ?? undefined,
@@ -630,14 +622,19 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
     const buffResolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
     const hasScript = script !== null
     const hasEffectPlan = buffResolved?.effectPlan && buffResolved.effectPlan.length > 0
-    const isTrackPassive = buffId.startsWith('_track_passive_')
+    // 执行模式由解析器推导（JSON 配置）或调用方显式声明（动态 buff）
+    const executionMode = buffResolved?.executionMode ?? resolvedConfig.executionMode
     const hasTriggersOnly = !hasScript && !hasEffectPlan &&
       (resolvedConfig.triggers?.length ?? 0) > 0
+    const isMarkerOrTrigger =
+      executionMode === 'marker' ||
+      executionMode === 'triggerOnly' ||
+      (!executionMode && hasTriggersOnly)
 
     let path: 'A' | 'B' | 'D'
     if (hasScript) path = 'A'
     else if (hasEffectPlan) path = 'B'
-    else if (isTrackPassive || hasTriggersOnly) path = 'D'
+    else if (isMarkerOrTrigger) path = 'D'
     else {
       this.logger.addDebugLog(
         `[BuffSystem] 配置错误: ${buffId} 无脚本、无 effectPlan，拒绝施加`,
@@ -680,11 +677,12 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     // NOTE: 触发器注册独立于 effectPlan/脚本路径，两者可以共存。
     // 触发器与效果原语正交——effectPlan 管理每回合效果，triggers 管理事件响应。
-    // ponytail: 注册触发器监听器 — 从配置的 triggers 数组向 TriggerEventBus 注册
-    if (resolvedConfig.triggers && resolvedConfig.triggers.length > 0) {
+    // 注册解析器归一化后的 triggers（phase 已是枚举值）
+    const normalizedTriggers = buffResolved?.triggers ?? resolvedConfig.triggers
+    if (normalizedTriggers && normalizedTriggers.length > 0) {
       this.registerTriggersForInstance(
         instanceId,
-        resolvedConfig.triggers,
+        normalizedTriggers,
         characterId,
       )
     }
@@ -707,7 +705,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
     if (context?.record) {
       context?.record.effects.push({
-        type: classifyBuff(resolvedConfig as Parameters<typeof classifyBuff>[0]).isNegative ? EffectType.DEBUFF : EffectType.BUFF,
+        type: buffResolved?.polarity === 'negative' ? EffectType.DEBUFF : EffectType.BUFF,
         targetId: characterId,
         buffId: resolvedConfig.id,
         instanceId,
@@ -776,10 +774,38 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
   /**
    * 获取 Buff 配置中的 aura 光环信息（供 BattleSystem 初始化时分发 allies/enemies）
-   * NOTE: 旧字段 `aura` 已逐步迁移至 effectPlan（`AtomicEffectType.AURA`），
-   *       此方法保留用于兼容尚未迁移的 JSON 配置。
+   * 优先从 effectPlan（`AtomicEffectType.AURA`）读取——configs 已迁移至 effects[] 格式；
+   * 旧字段 `aura` 保留用于兼容尚未迁移的 JSON 配置。
    */
   public getBuffAuraConfig(buffId: string): BuffAuraConfig | undefined {
+    // 新格式：effectPlan 中的 AURA 效果（targetSelector + modifiers 由配置显式声明）
+    const resolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
+    const auraEffect = resolved?.effectPlan?.find(
+      (e) => e.type === AtomicEffectType.AURA,
+    )
+    if (auraEffect) {
+      const params = auraEffect.params as {
+        targetSelector?: string
+        modifiers?: Array<{
+          id?: string
+          targetAttribute: string
+          type: string
+          value: number
+          condition?: string
+        }>
+      }
+      if (params.targetSelector && params.modifiers?.length) {
+        return {
+          targetSelector: params.targetSelector as BuffAuraConfig['targetSelector'],
+          modifiers: params.modifiers.map((m) => ({
+            ...m,
+            type: m.type as ModifierType,
+          })),
+        }
+      }
+    }
+
+    // 旧格式兼容：raw.aura（尚未迁移的 JSON 配置）
     const raw = this.scriptRegistry.getBuffConfig(buffId)
     if (!raw?.aura) return undefined
     // HACK: BuffJsonAuraModifier.type 是 string，ModifierType 也是 string 字面量，

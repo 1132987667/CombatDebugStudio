@@ -54,20 +54,3 @@ export const effectTypeLabels: Record<string, string> = {
 export function getEffectTypeText(type: string): string {
   return effectTypeLabels[type] || type
 }
-
-// ───── 属性标签 ─────
-
-export const statLabels: Record<string, string> = {
-  attack: '攻击力',
-  defense: '防御力',
-  speed: '速度',
-  health: '气血值',
-  critRate: '暴击率',
-  critDamage: '暴击伤害',
-  physicalDamage: '伤害',
-  magicDamage: '魔法伤害',
-}
-
-export function getStatLabel(key: string): string {
-  return statLabels[key] || key
-}

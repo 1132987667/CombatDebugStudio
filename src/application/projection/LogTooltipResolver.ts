@@ -13,11 +13,13 @@
 import { LogSegmentHover, LogSegmentHoverKind } from '@/shared/types/battle-log'
 import { classifyBuff, getStatusCategoryBadge } from '@/shared/types/buff-classification'
 import { StatusCategory } from '@/shared/types/status-meta'
-import type { BuffJsonEntry, BuffJsonAuraModifier } from '@/shared/types/buffs-json'
+import type { BuffJsonEntry, BuffJsonAuraModifier, AttributeValueConfig } from '@/shared/types/buffs-json'
 import type { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
+import type { ResolvedBuffConfig } from '@/domain/buff/atomic/BuffConfigResolver'
+import { AtomicEffectType } from '@/domain/buff/atomic/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import { SkillConfig, SkillType } from '@/domain/skill/types'
-import { BattleTriggerPhaseName, OLD_PHASE_NAME_MAP } from '@/domain/battle/type/types'
+import { BattleTriggerPhaseName } from '@/domain/battle/type/types'
 import type { BattleTriggerPhase } from '@/domain/battle/type/types'
 
 // ==================== 输出类型 ====================
@@ -96,12 +98,12 @@ export class LogTooltipResolver {
     const badge = getStatusCategoryBadge(classification)
     const durationLabel = this.formatDuration(config.duration)
 
-    // 描述：三级回退
-    const description = this.resolveBuffDescription(buffId, config, classification.category)
+    // 描述：解析器已保证非空（缺失时由 BuffConfigResolver 自动生成）
+    const description = this.resolveBuffDescription(buffId, config)
 
     // 明细行
     const details: TooltipDetailRow[] = []
-    this.appendBuffDetails(details, config, classification.category)
+    this.appendBuffDetails(details, config, resolved, classification.category)
 
     // 来源
     const source = this.resolveBuffSource(buffId)
@@ -110,33 +112,16 @@ export class LogTooltipResolver {
   }
 
   /**
-   * 三级描述回退：
-   *   ① buff 配置自带 description
-   *   ② 反向索引 → 技能 description（去掉"被动效果："前缀）
-   *   ③ 按结构自动生成
+   * Buff 描述：读取解析器输出（缺失时由 BuffConfigResolver.resolve() 从效果计划自动生成），
+   * 不再做反向索引"借技能描述"或按结构拼接的运行时回退。
    */
-  private resolveBuffDescription(
-    buffId: string,
-    config: BuffJsonEntry,
-    category: StatusCategory,
-  ): string {
-    // ①
-    if (config.description && typeof config.description === 'string' && config.description.trim()) {
-      return this.cleanDescription(config.description)
+  private resolveBuffDescription(buffId: string, config: BuffJsonEntry): string {
+    const resolved = this.buffRegistry.getResolvedBuffConfig(buffId)
+    const desc = resolved?.description || config.description
+    if (desc && typeof desc === 'string' && desc.trim()) {
+      return this.cleanDescription(desc)
     }
-
-    // ②
-    const sourceSkills = this.getBuffSourceSkills(buffId)
-    if (sourceSkills.length > 0) {
-      for (const skill of sourceSkills) {
-        if (skill.description && skill.description.trim()) {
-          return this.cleanDescription(skill.description)
-        }
-      }
-    }
-
-    // ③ 自动生成
-    return this.generateAutoDescription(config, category)
+    return config.name ?? buffId
   }
 
   /** 去掉"被动效果："前缀 */
@@ -144,43 +129,10 @@ export class LogTooltipResolver {
     return desc.replace(/^被动效果：/, '').trim()
   }
 
-  /** 按结构自动生成描述 */
-  private generateAutoDescription(config: BuffJsonEntry, category: StatusCategory): string {
-    switch (category) {
-      case StatusCategory.AURA: {
-        const aura = config.aura
-        if (aura?.modifiers?.length) {
-          const items = aura!.modifiers.map(
-            (m) => `${m.targetAttribute ?? ''} ${this.formatModifierValue(m)}`,
-          ).filter(Boolean).join('、')
-          const scope = aura!.targetSelector === 'allies' ? '全体友方' : aura!.targetSelector === 'enemies' ? '全体敌方' : '自身'
-          return `提升 ${scope} ${items}`
-        }
-        return '光环效果'
-      }
-      case StatusCategory.MODIFIER: {
-        const attrs = config.attributes
-        if (attrs) {
-          return Object.entries(attrs).map(([k, v]) => `${k} ${v}`).join('、')
-        }
-        return '属性修正'
-      }
-      case StatusCategory.CONTROL:
-        return '无法行动'
-      case StatusCategory.DOT:
-        return '每回合造成持续伤害'
-      case StatusCategory.SHIELD:
-        return '吸收伤害'
-      case StatusCategory.TRIGGER:
-        return '满足条件时触发效果'
-      default:
-        return config.name ?? '未知效果'
-    }
-  }
-
   private appendBuffDetails(
     details: TooltipDetailRow[],
     config: BuffJsonEntry,
+    resolved: ResolvedBuffConfig | undefined,
     category: StatusCategory,
   ): void {
     switch (category) {
@@ -201,11 +153,21 @@ export class LogTooltipResolver {
         break
       }
       case StatusCategory.MODIFIER: {
-        const attrs = config.attributes
-        if (attrs) {
-          for (const [key, value] of Object.entries(attrs)) {
-            details.push({ label: key, value: String(value) })
-          }
+        // attributes 已迁移至 effectPlan，从解析结果读取（config.attributes 为旧字段）
+        const attrs = resolved?.effectPlan
+          ?.filter((e) => e.type === AtomicEffectType.MODIFIER)
+          .flatMap((e) =>
+            Object.entries(
+              (e.params.attributes ?? {}) as Record<string, AttributeValueConfig>,
+            ),
+          ) ?? []
+        for (const [key, cfg] of attrs) {
+          const sign = cfg.value > 0 ? '+' : ''
+          const text =
+            cfg.type === 'PERCENTAGE'
+              ? `${sign}${cfg.value}%`
+              : `${sign}${cfg.value}`
+          details.push({ label: key, value: text })
         }
         break
       }
@@ -319,15 +281,9 @@ export class LogTooltipResolver {
 
   // ==================== 辅助方法 ====================
 
-  /** 格式化触发时机：中文化，兼容新旧风格 */
+  /** 格式化触发时机：直接查中文表（所有消费端已统一为枚举值，无旧风格兼容） */
   private formatTriggerPhase(phase: string): string {
-    // 新风格直接查中文表（on_hit → 命中时）
-    const direct = BattleTriggerPhaseName[phase as BattleTriggerPhase]
-    if (direct) return direct
-    // 旧风格归一化后查中文表（ON_ATTACK_HIT → on_hit → 命中时）
-    const normalized = OLD_PHASE_NAME_MAP[phase]
-    if (normalized) return BattleTriggerPhaseName[normalized]
-    return phase
+    return BattleTriggerPhaseName[phase as BattleTriggerPhase] ?? phase
   }
 
   /** 格式化修饰符值 */

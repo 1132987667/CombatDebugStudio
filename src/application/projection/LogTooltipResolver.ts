@@ -286,10 +286,10 @@ export class LogTooltipResolver {
     return BattleTriggerPhaseName[phase as BattleTriggerPhase] ?? phase
   }
 
-  /** 格式化修饰符值 */
+  /** 格式化修饰符值 — value 已是百分数（10 = 10%），直接输出，不做 ×100 */
   private formatModifierValue(modifier: BuffJsonAuraModifier): string {
     if (modifier.value == null) return ''
-    const pct = Math.round(modifier.value * 100)
+    const pct = Math.round(modifier.value)
     const type = modifier.type === 'PERCENTAGE' ? '%' : ''
     return `${pct}${type}`
   }

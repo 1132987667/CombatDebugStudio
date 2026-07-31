@@ -1979,15 +1979,6 @@
     "category": "trigger",
     "maxStacks": 1,
     "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_ATTACK",
-        "scriptId": "bonus_damage",
-        "params": {
-          "percent": 0.5
-        }
-      }
-    ],
     "polarity": "positive",
     "description": "下次攻击附加等同上一次所受伤害50%的额外伤害"
   },
@@ -2149,16 +2140,6 @@
     "category": "trigger",
     "maxStacks": 1,
     "duration": -1,
-    "triggers": [
-      {
-        "phase": "ON_DAMAGE_TAKEN",
-        "scriptId": "energy_absorb",
-        "params": {
-          "hpThreshold": 0.4
-        },
-        "condition": "self.hp_ratio < 0.4"
-      }
-    ],
     "polarity": "positive",
     "tags": [
       "energy_absorption"
@@ -2325,25 +2306,6 @@
     "parameters": {
       "perStackValue": 4
     }
-  },
-  {
-    "id": "buff_extra_action",
-    "polarity": "positive",
-    "name": "再次行动",
-    "description": "可以再次行动",
-    "duration": 1,
-    "maxStacks": 1,
-    "cooldown": 0,
-    "stackRule": "refresh",
-    "dispellable": false,
-    "parameters": {},
-    "triggers": [
-      {
-        "phase": "after_attack",
-        "scriptId": "grant_extra_action",
-        "params": {}
-      }
-    ]
   },
   {
     "id": "buff_kuilan",
@@ -2688,56 +2650,6 @@
     }
   },
   {
-    "id": "buff_liuxue",
-    "polarity": "negative",
-    "name": "流血",
-    "description": "下个回合气血减少${value}，为流血伤害",
-    "duration": 1,
-    "maxStacks": 20,
-    "cooldown": 0,
-    "stackRule": "limited",
-    "dispellable": true,
-    "parameters": {
-      "damageType": "flat",
-      "damageCategory": "BLEED"
-    },
-    "triggers": [
-      {
-        "phase": "turn_start",
-        "scriptId": "dot_damage",
-        "params": {
-          "valueType": "flat",
-          "damageCategory": "BLEED"
-        }
-      }
-    ]
-  },
-  {
-    "id": "buff_zhongdu",
-    "polarity": "negative",
-    "name": "中毒",
-    "description": "下个回合开始气血减少${value}%，为中毒伤害",
-    "duration": 1,
-    "maxStacks": 20,
-    "cooldown": 0,
-    "stackRule": "limited",
-    "dispellable": true,
-    "parameters": {
-      "damageType": "percent",
-      "damageCategory": "POISON"
-    },
-    "triggers": [
-      {
-        "phase": "turn_start",
-        "scriptId": "dot_damage",
-        "params": {
-          "valueType": "percent",
-          "damageCategory": "POISON"
-        }
-      }
-    ]
-  },
-  {
     "id": "buff_qingxin",
     "polarity": "positive",
     "name": "清心",
@@ -2876,58 +2788,6 @@
     "parameters": {
       "perStackValue": 5
     }
-  },
-  {
-    "id": "buff_lingfu",
-    "polarity": "positive",
-    "name": "灵复",
-    "description": "每层灵复增加下个回合开始回复灵力3%",
-    "duration": 1,
-    "maxStacks": 10,
-    "cooldown": 0,
-    "stackRule": "limited",
-    "dispellable": true,
-    "parameters": {
-      "perStackValue": 3,
-      "resourceType": "energy"
-    },
-    "triggers": [
-      {
-        "phase": "turn_start",
-        "scriptId": "regen_resource",
-        "params": {
-          "resourceType": "energy",
-          "valueType": "percent",
-          "perStackValue": 3
-        }
-      }
-    ]
-  },
-  {
-    "id": "buff_zaisheng",
-    "polarity": "positive",
-    "name": "再生",
-    "description": "每层再生增加下个回合开始回复气血3%",
-    "duration": 1,
-    "maxStacks": 10,
-    "cooldown": 0,
-    "stackRule": "limited",
-    "dispellable": true,
-    "parameters": {
-      "perStackValue": 3,
-      "resourceType": "health"
-    },
-    "triggers": [
-      {
-        "phase": "turn_start",
-        "scriptId": "regen_resource",
-        "params": {
-          "resourceType": "health",
-          "valueType": "percent",
-          "perStackValue": 3
-        }
-      }
-    ]
   },
   {
     "id": "buff_taunt",

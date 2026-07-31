@@ -35,7 +35,7 @@ export interface DamageStep {
   before?: number
   /** 此步骤计算后的伤害值（与 value 一致，结构化冗余以便 UI 直接读） */
   after?: number
-  sourceType?: DamageSource
+  sourceType?: DamageSource | 'base' | 'system'
   /**
    * 子步骤（嵌套步骤）。
    * 最大嵌套深度 3：顶层步骤可以作为父节点包含 children，子节点不再嵌套。

@@ -4508,6 +4508,7 @@
     "name": "普通攻击",
     "description": "基础普通攻击",
     "skillType": "small",
+    "isNormalAttack": true,
     "energyCost": 0,
     "cooldown": 0,
     "selector": { "faction": "enemy", "strategy": "first" },

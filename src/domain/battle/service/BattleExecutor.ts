@@ -19,6 +19,7 @@ import {
   BATTLE_LOG_CATEGORIES,
   LogLevel,
   type BattleLogCategory,
+  type LogSegment,
 } from '@/shared/types/battle-log'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { skillSegment } from '@/shared/utils/log-segment-factory'
@@ -72,6 +73,40 @@ import {
 } from '@/domain/battle/combat-record'
 
 /**
+ * 目标结算结果 —— 仅用于日志渲染的局部视图模型（ViewModel）。
+ * 严禁在此结构中塞入任何非日志渲染所需的业务字段（如 buffId, skillStepType）。
+ * 业务持久化请使用 CombatRecord，本结构随方法作用域结束自动销毁。
+ */
+interface TargetResult {
+  target: BattleEntity
+  hpBefore: number
+  hpAfter: number
+  /** token 记录值（settleDamage 返回值只用于 overkill 记录，不覆盖此值） */
+  damage: number
+  heal: number
+  /** 减免前原始伤害（action 日志"造成 X 点伤害"的口径） */
+  rawDamage: number
+}
+
+/**
+ * 行动表现清单 —— 用于解耦"伤害结算"与"日志拼装"的局部数据契约。
+ * 仅在 selectAndExecuteSkill / selectAndExecuteAttack 内部流转，不跨越方法边界。
+ */
+interface ActionManifest {
+  type: 'skill' | 'attack'
+  source: BattleEntity
+  targets: BattleEntity[]
+  skillName: string
+  skillId?: string
+  isMiss: boolean
+  isCrit: boolean
+  /** action 级伤害/治疗总量（header 文本与 category 用；纯治疗路径 results 为空但 totalHeal > 0） */
+  totalDamage: number
+  totalHeal: number
+  results: TargetResult[]
+}
+
+/**
  * 战斗执行器
  * 封装参与者的行动决策、技能/攻击执行、伤害/治疗应用、日志记录等运行时逻辑。
  */
@@ -115,6 +150,12 @@ export class BattleExecutor {
     const deaths = [...this.pendingDeaths]
     this.pendingDeaths = []
     return deaths
+  }
+
+  /** 重置跨回合/跨战斗的可变状态。由 BattleSystem.resetBattle() 调用。 */
+  reset(): void {
+    this.pendingDeaths = []
+    this.currentActionOrder = 0
   }
 
   constructor(
@@ -392,24 +433,22 @@ export class BattleExecutor {
       const prePassiveRecords = this.passiveSkillManager.drainLastTriggeredPassives()
       // ponytail: 启用延迟伤害令牌 — 技能执行只记录数值不实际扣血
       const damageToken = new DeferredDamageToken()
-      const pendingDamages: Array<{
-        target: BattleEntity
-        damage: number
-        heal: number
-      }> = []
 
       let totalDamage = 0
       let totalHeal = 0
-      let totalRawDamage = 0
       const allEffects: BattleEffect[] = []
-      const targetResults: Array<{
-        target: BattleEntity
-        finalDamage: number
-        rawDamage: number
-        heal: number
-        hpBefore: number
-        hpAfter: number
-      }> = []
+      const manifest: ActionManifest = {
+        type: 'skill',
+        source,
+        targets,
+        skillName: skill.name || skill.id,
+        skillId: skill.id,
+        isMiss: false,
+        isCrit: false,
+        totalDamage: 0,
+        totalHeal: 0,
+        results: [],
+      }
 
       for (const target of targets) {
         if (!target.isAlive()) continue
@@ -452,13 +491,6 @@ export class BattleExecutor {
         record.message = `${source.name} 对 ${target.name} 使用 ${skill.name || skill.id}，造成 ${skillAction.damage ?? 0} 伤害`
         records.push(record)
 
-        if ((skillAction.damage ?? 0) > 0 || (skillAction.heal ?? 0) > 0) {
-          pendingDamages.push({
-            target,
-            damage: skillAction.damage ?? 0,
-            heal: skillAction.heal ?? 0,
-          })
-        }
         totalDamage += skillAction.damage ?? 0
         totalHeal += skillAction.heal ?? 0
         allEffects.push(...skillAction.effects)
@@ -484,29 +516,16 @@ export class BattleExecutor {
       action.damage = totalDamage
       action.heal = totalHeal
       action.effects = allEffects
+      manifest.totalDamage = totalDamage
+      manifest.totalHeal = totalHeal
 
-      const sourcePrefix = `[${ParticipantSideName[source.team]}]`
-      const targetNames = targets
-        .map((t) => {
-          const prefix = `[${ParticipantSideName[t.team]}]`
-          const name = t.id === source.id ? '自身' : t.name
-          return `${prefix}${name}`
-        })
-        .join(', ')
-      const damageText = totalRawDamage > 0 ? `，造成 ${totalRawDamage} 点伤害` : ''
-      const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点气血` : ''
       // NOTE: 固定预算模型 — 伤害/治疗走飞行→命中，治疗单独走直接命中
       if (targets.length > 0 && (totalDamage > 0 || totalHeal > 0)) {
         const primaryTarget = targets[0]
         const isCrit = allEffects.some(
           (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
         )
-
-        // NOTE: 在扣血前捕获 气血 用于叙事日志
-        const hpBeforeMap = new Map<string, number>()
-        for (const pd of pendingDamages) {
-          hpBeforeMap.set(pd.target.id, pd.target.currentHealth)
-        }
+        manifest.isCrit = isCrit
 
         if (totalDamage > 0) {
           // 攻击/伤害技能 → 飞行（0→50%T）+ 命中（50%→100%T）
@@ -520,39 +539,38 @@ export class BattleExecutor {
 
           // 命中瞬间（50%T）：统一应用所有延迟伤害，统一走 settleDamage
           // NOTE: 先按 target.id 聚合 entries，确保多步骤技能对同一目标只触发一次 ON_HIT/DAMAGE_TAKEN
-          const resultMap = new Map<string, (typeof targetResults)[0]>()
+          const resultMap = new Map<string, TargetResult>()
           for (const entry of damageToken.getEntries()) {
             if (!entry.target.isAlive()) continue
             const existing = resultMap.get(entry.target.id)
             if (existing) {
-              existing.finalDamage += entry.damage
+              existing.damage += entry.damage
               existing.rawDamage += entry.rawDamage
               existing.heal += entry.heal
               existing.hpAfter = entry.target.currentHealth
             } else {
               resultMap.set(entry.target.id, {
                 target: entry.target,
-                finalDamage: entry.damage,
+                damage: entry.damage,
                 rawDamage: entry.rawDamage,
                 heal: entry.heal,
                 hpBefore: entry.target.currentHealth,
                 hpAfter: entry.target.currentHealth,
               })
             }
-            totalRawDamage += entry.rawDamage
           }
           // 按目标聚合后，每个目标调用一次 settleDamage
-          targetResults.length = 0
+          manifest.results.length = 0
           for (const r of resultMap.values()) {
-            if (r.finalDamage > 0) {
-              const actualDamage = this.settleDamage(source, r.target, r.finalDamage, r.rawDamage, isCrit, battleData)
+            if (r.damage > 0) {
+              const actualDamage = this.settleDamage(source, r.target, r.damage, r.rawDamage, isCrit, battleData)
               overkillMap.set(r.target.id, Math.max(0, actualDamage - r.hpBefore))
             }
             if (r.heal > 0) {
               r.target.heal(r.heal)
             }
             r.hpAfter = r.target.currentHealth
-            targetResults.push(r)
+            manifest.results.push(r)
           }
           damageToken.clear()
 
@@ -576,136 +594,31 @@ export class BattleExecutor {
           })
         }
 
-        // NOTE: 扣血后捕获 气血，构建叙事日志
-        const primaryHpBefore =
-          pendingDamages.length > 0
-            ? hpBeforeMap.get(pendingDamages[0].target.id)
-            : undefined
-        const primaryHpAfter =
-          pendingDamages.length > 0
-            ? pendingDamages[0].target.currentHealth
-            : undefined
-        const logTarget =
-          pendingDamages.length > 0 ? pendingDamages[0].target : undefined
-        const skillId = skill.id || skill.name || ''
-        let skillSeg: ReturnType<typeof skillSegment>
-        try {
-          skillSeg = skillSegment(skillId, this.skillManager)
-        } catch {
-          skillSeg = {
-            text: `【${skill.name || skillId}】`,
-            classStr: 'log-skill',
-          }
-        }
-        // NOTE: 动态决定日志类别，确保日志面板能正确渲染
-        let logCategory: BattleLogCategory = BATTLE_LOG_CATEGORIES.STATUS
-        if (totalDamage > 0) logCategory = BATTLE_LOG_CATEGORIES.DAMAGE
-        else if (totalHeal > 0) logCategory = BATTLE_LOG_CATEGORIES.HEAL
-        LoggerProvider.logger.addBattleLog({
-          turn: battleData.currentTurn,
-          message: `${sourcePrefix}${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}`,
-          segments: [
-            {
-              text: `${sourcePrefix}${source.name}`,
-              classStr:
-                source.team === ParticipantSide.ALLY
-                  ? 'log-friendly'
-                  : 'log-hostile',
-              kind: 'entity',
-              faction: source.team,
-            },
-            {
-              text: ` 对 ${targetNames} `,
-              classStr: targets.every((t) => t.team === ParticipantSide.ALLY)
-                ? 'log-friendly'
-                : 'log-hostile',
-            },
-            { text: ' 使用 ' },
-            skillSeg,
-            { text: `${damageText}${healText}` },
-          ],
-          category: logCategory,
-          meta: {
-            role: 'action',
-            entityId: logTarget?.id,
-            hpBefore: primaryHpBefore,
-            hpAfter: primaryHpAfter,
-            damage: totalDamage,
-            crit: isCrit,
-            kill: logTarget ? !logTarget.isAlive() : false,
-            skillName: skill.name || skill.id,
-          },
-        })
-
-        // ★ 刷出缓冲的 BEFORE_ATTACK sub 日志
-        LoggerProvider.logger.flushBufferedSubLogs()
-
-        // ★ 为每个目标输出 result sub 日志
-        for (const r of targetResults) {
-          const tPrefix = `[${ParticipantSideName[r.target.team]}]`
-          const tName = r.target.id === source.id ? '自身' : r.target.name
-
-          if (r.finalDamage > 0) {
-            LoggerProvider.logger.addBattleLog({
-              turn: battleData.currentTurn,
-              message: `${tPrefix}${tName} 受到 ${r.finalDamage} 点伤害  ${r.hpBefore} → ${r.hpAfter}`,
-              segments: [
-                { text: `${tPrefix}${tName}`, classStr: r.target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.team },
-                { text: ' 受到 ' },
-                { text: `${r.finalDamage}`, classStr: 'log-damage', kind: 'damage' },
-                { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
-              ],
-              category: BATTLE_LOG_CATEGORIES.DAMAGE,
-              meta: { role: 'sub', entityId: r.target.id, hpBefore: r.hpBefore, hpAfter: r.hpAfter, damage: r.finalDamage },
-            })
-          }
-
-          if (r.heal > 0) {
-            LoggerProvider.logger.addBattleLog({
-              turn: battleData.currentTurn,
-              message: `${tPrefix}${tName} 恢复 ${r.heal} 点气血  ${r.hpBefore} → ${r.hpAfter}`,
-              segments: [
-                { text: `${tPrefix}${tName}`, classStr: r.target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.team },
-                { text: ' 恢复 ' },
-                { text: `${r.heal}`, classStr: 'log-heal', kind: 'heal' },
-                { text: ` 点气血  ${r.hpBefore} → ${r.hpAfter}` },
-              ],
-              category: BATTLE_LOG_CATEGORIES.HEAL,
-              meta: { role: 'sub', entityId: r.target.id, hpBefore: r.hpBefore, hpAfter: r.hpAfter, heal: r.heal },
-            })
-          }
-        }
+        // NOTE: 扣血后捕获 气血，构建叙事日志（emitSkillLog 按 action → 缓冲 sub → result 顺序发射）
+        this.emitSkillLog(battleData, manifest)
 
         // settleDamage 内部已处理：ON_HIT/DAMAGE_TAKEN 被动 + pendingDeaths（B1 修复：ON_DEATH/ON_KILL 改由 runEndConditionCheck 延迟触发）
       } else if (totalDamage === 0 && totalHeal === 0) {
         // 无伤害/治疗时仍输出行动日志
-        const skillId = skill.id || skill.name || ''
-        LoggerProvider.logger.addBattleLog({
-          turn: battleData.currentTurn,
-          message: `${sourcePrefix}${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}`,
-          segments: [
-            {
-              text: `${sourcePrefix}${source.name}`,
-              classStr:
-                source.team === ParticipantSide.ALLY
-                  ? 'log-friendly'
-                  : 'log-hostile',
-              kind: 'entity',
-              faction: source.team,
-            },
-            { text: ` 对 ${targetNames} 使用 ` },
-            { text: `【${skill.name || skillId}】`, classStr: 'log-skill' },
-          ],
-          category: BATTLE_LOG_CATEGORIES.STATUS,
-          meta: { role: 'action', skillName: skill.name || skill.id },
-        })
-
-        // ★ 刷出缓冲的 BEFORE_ATTACK sub 日志
-        LoggerProvider.logger.flushBufferedSubLogs()
+        this.emitSkillLog(battleData, manifest)
       }
     } catch (error) {
       // ★ catch 路径也需刷出缓冲的 sub 日志，防止内存泄漏
       LoggerProvider.logger.flushBufferedSubLogs()
+      // ★ 异常兜底：输出用户可见的降级警告，防止日志静默丢失（风险点 3 修复）
+      const warnSegs: LogSegment[] = [
+        this.buildEntitySegment(source),
+        { text: ' 尝试使用 ' },
+        { text: `【${skill.name || skill.id}】`, classStr: 'log-skill' },
+        { text: ' 时发生异常，降级为普通攻击', classStr: 'log-info' },
+      ]
+      LoggerProvider.logger.addBattleLog({
+        turn: battleData.currentTurn,
+        message: warnSegs.map((s) => s.text).join(''),
+        segments: warnSegs,
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'action', skillName: skill.name || skill.id },
+      })
       LoggerProvider.logger.addDebugLog(`技能执行失败: ${skill.id}`, {
         error: error as Error,
       })
@@ -821,28 +734,11 @@ export class BattleExecutor {
     return targets.length > 0 ? targets[0].id : ''
   }
 
-  /** ★ 精准识别「伪装成技能的普通攻击」
-   *  名称模糊匹配 + 结构特征兜底，确保所有普通攻击都被拦截走普攻路径
+  /** ★ 识别「伪装成技能的普通攻击」
+   *  数据契约：技能配置显式声明 isNormalAttack，替代名称/结构启发式猜测
    */
   private isNormalAttackSkill(skill: SkillConfig): boolean {
-    if (!skill) return false
-    // 名称模糊匹配
-    if (skill.name?.includes('普通攻击')) return true
-    if (
-      skill.id?.includes('normal_attack') ||
-      skill.id?.includes('basic_attack')
-    )
-      return true
-    // 结构特征兜底：无消耗、无冷却、单段纯伤害
-    if (
-      skill.energyCost === 0 &&
-      skill.cooldown === 0 &&
-      skill.steps?.length === 1 &&
-      skill.steps[0].type === 'deal_damage'
-    ) {
-      return true
-    }
-    return false
+    return skill?.isNormalAttack === true
   }
 
   // ============ 普通攻击 ============
@@ -890,84 +786,234 @@ export class BattleExecutor {
   }
 
   /**
-   * 生成攻击日志参数
+   * 构建带阵营前缀和着色的实体片段
    */
-  generateAttackLogParams(
-    source: BattleEntity,
-    target: BattleEntity,
-    turnNumber: number,
-    options: { isMiss?: boolean; damage?: number; isCritical?: boolean },
-  ): {
-    turn: number
-    message: string
-    segments: import('@/shared/types/battle-log').LogSegment[]
-    category: import('@/shared/types/battle-log').BattleLogCategory
-  } {
-    const { isMiss = false, isCritical = false } = options
-    const sourcePrefix =
-      `[${ParticipantSideName[source.team]}]`
-    const targetPrefix =
-      `[${ParticipantSideName[target.team]}]`
+  private buildEntitySegment(
+    entity: BattleEntity,
+    isSelf: boolean = false,
+  ): LogSegment {
+    const prefix = `[${ParticipantSideName[entity.team]}]`
+    const name = isSelf ? '自身' : entity.name
+    return {
+      text: `${prefix}${name}`,
+      classStr:
+        entity.team === ParticipantSide.ALLY
+          ? 'log-friendly'
+          : 'log-hostile',
+      kind: 'entity',
+      faction: entity.team,
+    }
+  }
 
-    if (isMiss) {
-      return {
-        turn: turnNumber,
-        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name} 发起「普通攻击」`,
-        segments: [
-          {
-            text: `${sourcePrefix}${source.name}`,
-            classStr:
-              source.team === ParticipantSide.ALLY
-                ? 'log-friendly'
-                : 'log-hostile',
-            kind: 'entity',
-            faction: source.team,
-          },
-          { text: ' 对 ' },
-          {
-            text: `${targetPrefix}${target.name}`,
-            classStr:
-              target.team === ParticipantSide.ALLY
-                ? 'log-friendly'
-                : 'log-hostile',
-            kind: 'entity',
-            faction: target.team,
-          },
-          { text: '「普通攻击」' },
-        ],
-        category: BATTLE_LOG_CATEGORIES.STATUS,
+  /**
+   * 构建带颜色的数值片段（伤害/治疗）
+   */
+  private buildValueSegment(
+    value: number,
+    type: 'damage' | 'heal',
+  ): LogSegment {
+    return {
+      text: `${value}`,
+      classStr: type === 'damage' ? 'log-damage' : 'log-heal',
+      kind: type,
+    }
+  }
+
+  /**
+   * 统一发射技能日志 — 顺序：action header → 缓冲的 BEFORE_ATTACK sub 日志 → 各目标 result sub
+   */
+  private emitSkillLog(battle: BattleData, m: ActionManifest): void {
+    const { source, targets, results, totalDamage, totalHeal } = m
+    const totalRaw = results.reduce((s, r) => s + r.rawDamage, 0)
+    const primary = results[0]
+
+    const damageText = totalRaw > 0 ? `，造成 ${totalRaw} 点伤害` : ''
+    const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点气血` : ''
+    const targetSegs: LogSegment[] = []
+    targets.forEach((t, i) => {
+      if (i > 0) targetSegs.push({ text: ', ' })
+      targetSegs.push(this.buildEntitySegment(t, t.id === source.id))
+    })
+    const skillId = m.skillId || m.skillName || ''
+    let skillSeg: ReturnType<typeof skillSegment>
+    try {
+      skillSeg = skillSegment(skillId, this.skillManager)
+    } catch {
+      skillSeg = {
+        text: `【${m.skillName || skillId}】`,
+        classStr: 'log-skill',
       }
     }
+    const headerSegs: LogSegment[] = [
+      this.buildEntitySegment(source),
+      { text: ' 对 ' },
+      ...targetSegs,
+      { text: ' 使用 ' },
+      skillSeg,
+      { text: `${damageText}${healText}` },
+    ]
 
-    return {
-      turn: turnNumber,
-      message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name} 发起「普通攻击」`,
-      segments: [
-        {
-          text: `${sourcePrefix}${source.name}`,
-          classStr:
-            source.team === ParticipantSide.ALLY
-              ? 'log-friendly'
-              : 'log-hostile',
-          kind: 'entity',
-          faction: source.team,
-        },
+    // NOTE: 动态决定日志类别，确保日志面板能正确渲染
+    let logCategory: BattleLogCategory = BATTLE_LOG_CATEGORIES.STATUS
+    if (totalDamage > 0) logCategory = BATTLE_LOG_CATEGORIES.DAMAGE
+    else if (totalHeal > 0) logCategory = BATTLE_LOG_CATEGORIES.HEAL
+
+    LoggerProvider.logger.addBattleLog({
+      turn: battle.currentTurn,
+      message: headerSegs.map((s) => s.text).join(''),
+      segments: headerSegs,
+      category: logCategory,
+      meta: {
+        role: 'action',
+        entityId: primary?.target.id,
+        hpBefore: primary?.hpBefore,
+        hpAfter: primary?.hpAfter,
+        damage: totalDamage,
+        crit: m.isCrit,
+        kill: primary ? !primary.target.isAlive() : false,
+        skillName: m.skillName,
+      },
+    })
+
+    // ★ 刷出缓冲的 BEFORE_ATTACK sub 日志
+    LoggerProvider.logger.flushBufferedSubLogs()
+
+    // ★ 为每个目标输出 result sub 日志
+    for (const r of results) {
+      if (r.damage > 0) {
+        const dmgSegs: LogSegment[] = [
+          this.buildEntitySegment(r.target, r.target.id === source.id),
+          { text: ' 受到 ' },
+          this.buildValueSegment(r.damage, 'damage'),
+          { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
+        ]
+        LoggerProvider.logger.addBattleLog({
+          turn: battle.currentTurn,
+          message: dmgSegs.map((s) => s.text).join(''),
+          segments: dmgSegs,
+          category: BATTLE_LOG_CATEGORIES.DAMAGE,
+          meta: {
+            role: 'sub',
+            entityId: r.target.id,
+            hpBefore: r.hpBefore,
+            hpAfter: r.hpAfter,
+            damage: r.damage,
+          },
+        })
+      }
+
+      if (r.heal > 0) {
+        const healSegs: LogSegment[] = [
+          this.buildEntitySegment(r.target, r.target.id === source.id),
+          { text: ' 恢复 ' },
+          this.buildValueSegment(r.heal, 'heal'),
+          { text: ` 点气血  ${r.hpBefore} → ${r.hpAfter}` },
+        ]
+        LoggerProvider.logger.addBattleLog({
+          turn: battle.currentTurn,
+          message: healSegs.map((s) => s.text).join(''),
+          segments: healSegs,
+          category: BATTLE_LOG_CATEGORIES.HEAL,
+          meta: {
+            role: 'sub',
+            entityId: r.target.id,
+            hpBefore: r.hpBefore,
+            hpAfter: r.hpAfter,
+            heal: r.heal,
+          },
+        })
+      }
+    }
+  }
+
+  /**
+   * 统一发射普通攻击日志 — miss 或 hit（action + result sub）
+   */
+  private emitAttackLog(battle: BattleData, m: ActionManifest): void {
+    const { source, targets, isMiss, results } = m
+    const target = targets[0]
+
+    if (isMiss) {
+      const missSegs: LogSegment[] = [
+        this.buildEntitySegment(source),
         { text: ' 对 ' },
-        {
-          text: `${targetPrefix}${target.name}`,
-          classStr:
-            target.team === ParticipantSide.ALLY
-              ? 'log-friendly'
-              : 'log-hostile',
-          kind: 'entity',
-          faction: target.team,
+        this.buildEntitySegment(target),
+        { text: ' 发起「普通攻击」' },
+      ]
+      LoggerProvider.logger.addBattleLog({
+        turn: battle.currentTurn,
+        message: missSegs.map((s) => s.text).join(''),
+        segments: missSegs,
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: {
+          role: 'action',
+          entityId: target.id,
+          miss: true,
+          skillName: m.skillName,
         },
-        { text: ` 发起「普通攻击」` },
-      ],
-      category: isCritical
+      })
+
+      // 闪避结果作为 Sub 节点
+      LoggerProvider.logger.addBattleLog({
+        turn: battle.currentTurn,
+        message: '被闪避!',
+        segments: [{ text: '被闪避!', classStr: 'log-heal' }],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: {
+          role: 'sub',
+          miss: true,
+        },
+      })
+      return
+    }
+
+    const r = results[0]
+    const rawSuffix = `，造成 ${r.rawDamage} 点伤害`
+    const hitSegs: LogSegment[] = [
+      this.buildEntitySegment(source),
+      { text: ' 对 ' },
+      this.buildEntitySegment(target),
+      { text: ` 发起「普通攻击」${rawSuffix}` },
+    ]
+    LoggerProvider.logger.addBattleLog({
+      turn: battle.currentTurn,
+      message: hitSegs.map((s) => s.text).join(''),
+      segments: hitSegs,
+      category: m.isCrit
         ? BATTLE_LOG_CATEGORIES.CRIT
         : BATTLE_LOG_CATEGORIES.DAMAGE,
-    }
+      meta: {
+        role: 'action',
+        entityId: target.id,
+        hpBefore: r.hpBefore,
+        hpAfter: r.hpAfter,
+        damage: r.rawDamage,
+        crit: m.isCrit,
+        kill: !target.isAlive(),
+        skillName: m.skillName,
+      },
+    })
+
+    // result sub 行：最终伤害 + 气血变化
+    const dmgSegs: LogSegment[] = [
+      this.buildEntitySegment(target),
+      { text: ' 受到 ' },
+      this.buildValueSegment(r.damage, 'damage'),
+      { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
+    ]
+    LoggerProvider.logger.addBattleLog({
+      turn: battle.currentTurn,
+      message: dmgSegs.map((s) => s.text).join(''),
+      segments: dmgSegs,
+      category: BATTLE_LOG_CATEGORIES.DAMAGE,
+      meta: {
+        role: 'sub',
+        entityId: target.id,
+        hpBefore: r.hpBefore,
+        hpAfter: r.hpAfter,
+        damage: r.damage,
+      },
+    })
   }
 
   /**
@@ -1045,7 +1091,6 @@ export class BattleExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    turnNumber: number,
     battle: BattleData,
   ): Promise<void> {
     action.effects.push({
@@ -1068,32 +1113,16 @@ export class BattleExecutor {
       targetId: target.id,
     })
 
-    const logParams = this.generateAttackLogParams(source, target, turnNumber, {
+    this.emitAttackLog(battle, {
+      type: 'attack',
+      source,
+      targets: [target],
+      skillName: '普通攻击',
       isMiss: true,
-    })
-    LoggerProvider.logger.addBattleLog({
-      turn: logParams.turn,
-      message: logParams.message,
-      segments: logParams.segments,
-      category: logParams.category,
-      meta: {
-        role: 'action',
-        entityId: target.id,
-        miss: true,
-        skillName: '普通攻击',
-      },
-    })
-
-    // 闪避结果作为 Sub 节点
-    LoggerProvider.logger.addBattleLog({
-      turn: turnNumber,
-      message: '被闪避!',
-      segments: [{ text: '被闪避!', classStr: 'log-heal' }],
-      category: BATTLE_LOG_CATEGORIES.STATUS,
-      meta: {
-        role: 'sub',
-        miss: true,
-      },
+      isCrit: false,
+      totalDamage: 0,
+      totalHeal: 0,
+      results: [],
     })
 
     LoggerProvider.logger.addDebugLog(
@@ -1160,48 +1189,25 @@ export class BattleExecutor {
       isHeal: false,
     })
 
-    const logParams = this.generateAttackLogParams(
+    this.emitAttackLog(battle, {
+      type: 'attack',
       source,
-      target,
-      battle.currentTurn,
-      {
-        damage,
-        isCritical,
-      },
-    )
-    const rawSuffix = `，造成 ${rawDamage} 点伤害`
-    const targetPrefix = `[${ParticipantSideName[target.team]}]`
-    const targetFaction = target.team
-
-    LoggerProvider.logger.addBattleLog({
-      turn: logParams.turn,
-      message: logParams.message + rawSuffix,
-      segments: [...logParams.segments, { text: rawSuffix }],
-      category: logParams.category,
-      meta: {
-        role: 'action',
-        entityId: target.id,
-        hpBefore,
-        hpAfter,
-        damage: rawDamage,
-        crit: isCritical,
-        kill: !target.isAlive(),
-        skillName: '普通攻击',
-      },
-    })
-
-    // result sub 行：最终伤害 + 气血变化
-    LoggerProvider.logger.addBattleLog({
-      turn: battle.currentTurn,
-      message: `${targetPrefix}${target.name} 受到 ${damage} 点伤害  ${hpBefore} → ${hpAfter}`,
-      segments: [
-        { text: `${targetPrefix}${target.name}`, classStr: target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFaction },
-        { text: ' 受到 ' },
-        { text: `${damage}`, classStr: 'log-damage', kind: 'damage' },
-        { text: ` 点伤害  ${hpBefore} → ${hpAfter}` },
+      targets: [target],
+      skillName: '普通攻击',
+      isMiss: false,
+      isCrit: isCritical,
+      totalDamage: damage,
+      totalHeal: 0,
+      results: [
+        {
+          target,
+          hpBefore,
+          hpAfter,
+          damage,
+          heal: 0,
+          rawDamage,
+        },
       ],
-      category: BATTLE_LOG_CATEGORIES.DAMAGE,
-      meta: { role: 'sub', entityId: target.id, hpBefore, hpAfter, damage },
     })
 
     LoggerProvider.logger.addDebugLog(
@@ -1289,7 +1295,7 @@ export class BattleExecutor {
     }
 
     if (damageResult.isMiss) {
-      await this.handleMissAttack(action, source, target, currentTurn, battle)
+      await this.handleMissAttack(action, source, target, battle)
     } else {
       await this.handleHitAttack(action, source, target, damageResult, battle, record)
     }

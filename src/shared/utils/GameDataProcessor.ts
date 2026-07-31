@@ -11,22 +11,19 @@ import {
   ATTRIBUTE_CODE,
   ModifierSourceType,
   ModifierType,
-  type Modifier,
 } from '@/domain/attribute/types'
 import {
   BattleParticipantImpl,
   type BattleParticipantData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
 import { BattleEntity, ParticipantSide, BattleTriggerPhase } from '@/domain/battle/type/types'
-import type { CharacterStats } from '@/domain/character/types'
 import type {
   PassiveSkillConfig,
   PassiveSkillManager,
 } from '@/domain/skill/PassiveSkillManager'
-import type { SkillConfig, SkillStep } from '@/domain/skill/types'
+import type { SkillConfig } from '@/domain/skill/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
-import type { FormationConfig } from '@/shared/types/formation'
 import { Counter } from '@/shared/utils/Counter'
 import { DataProcessor } from '@/shared/utils/DataProcessor'
 import { toArray } from '@/shared/utils/Utils'
@@ -37,8 +34,6 @@ import passiveSkillsData from '@configs/skills/skill_passive.json'
 import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
 import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
 import skillsData from '@configs/skills/skills.json'
-import formationsData from '@configs/formations/formations.json'
-import { BuffAuraModifier } from '@/domain/buff/BuffScriptRegistry'
 
 const enemiesData = [
   ...(enemiesDataRaw as Enemy[]),
@@ -209,38 +204,6 @@ export class GameDataProcessor {
     return participant
   }
 
-  /**
-   * 将光环 aura 修饰符分发到指定的参与者
-   * 由 BattleSystem.initialize 在 pending buff 循环后调用，处理 allies/enemies 光环
-   */
-  static applyAuraModifiersToParticipant(
-    target: BattleParticipantImpl,
-    sourceKey: string,
-    modifiers: BuffAuraModifier[],
-  ): void {
-    for (const mod of modifiers) {
-      const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
-      let value = typeof mod.value === 'number' ? mod.value : 0
-      if (mod.type === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
-        value = Math.round(value * 10000) / 100
-      }
-      const m: Modifier = {
-        sourceKey,
-        sourceType: ModifierSourceType.SKILL,
-        attribute: attrCode,
-        value,
-        type: mod.type,
-        description: sourceKey,
-      }
-      const attrData = target.getAttrVal(attrCode)
-      if (attrData) {
-        attrData.modifiers.push(m)
-        attrData.cachedVersion = -1
-      }
-    }
-    target.recalcAll()
-  }
-
   /** 将 triggerTimes 字符串映射到 BattleTriggerPhase */
   private static readonly TRIGGER_TIME_MAP: Record<string, BattleTriggerPhase> =
     {
@@ -313,26 +276,6 @@ export class GameDataProcessor {
   }
 
   /**
-   * 从被动技能构建结构化修饰符模板列表
-   * 根据名称搜索敌人
-   */
-  static searchEnemiesByName(name: string, limit?: number): Enemy[] {
-    const cacheKey = `enemy_search_${name}_${limit}`
-    const cached = DataProcessor.getCachedData<Enemy[]>(cacheKey)
-    if (cached) return cached
-
-    const result = DataProcessor.search(enemiesData, {
-      fields: ['name'],
-      keyword: name,
-      fuzzy: true,
-    })
-
-    const limitedResult = limit ? result.slice(0, limit) : result
-    DataProcessor.setCachedData(cacheKey, limitedResult)
-    return limitedResult
-  }
-
-  /**
    * 根据场景ID获取场景数据
    */
   static findSceneById(sceneId: string): SceneData | undefined {
@@ -344,37 +287,6 @@ export class GameDataProcessor {
       DataProcessor.setCachedData(cacheKey, scene)
     }
     return scene
-  }
-
-  /**
-   * 获取场景中的敌人数据
-   */
-  static getSceneEnemies(
-    sceneId: string,
-    difficulty: 'easy' | 'normal' | 'hard' = 'easy',
-  ): Enemy[] {
-    const cacheKey = `scene_enemies_${sceneId}_${difficulty}`
-    const cached = DataProcessor.getCachedData<Enemy[]>(cacheKey)
-    if (cached) return cached
-    const scene = GameDataProcessor.findSceneById(sceneId)
-    if (!scene) return []
-
-    const enemyIds = scene.difficulties[difficulty]?.enemyIds || []
-    const enemies = enemyIds
-      .map((id) => {
-        const enemyCacheKey = `enemy_${id}`
-        const cachedEnemy = DataProcessor.getCachedData<Enemy>(enemyCacheKey)
-        if (cachedEnemy) return cachedEnemy
-        const enemy = DataProcessor.find(enemiesData, (e) => e.id === id)
-        if (enemy) {
-          DataProcessor.setCachedData(enemyCacheKey, enemy)
-        }
-        return enemy
-      })
-      .filter((enemy): enemy is Enemy => enemy !== undefined)
-
-    DataProcessor.setCachedData(cacheKey, enemies)
-    return enemies
   }
 
   /**
@@ -401,66 +313,6 @@ export class GameDataProcessor {
   }
 
   /**
-   * 获取角色的技能信息
-   */
-  static getCharacterSkills(id: string): {
-    small?: SkillConfig[]
-    passive?: SkillConfig[]
-    ultimate?: SkillConfig[]
-  } {
-    if (!id) return {}
-
-    const cacheKey = `character_skills_${id}`
-    const cached = DataProcessor.getCachedData(cacheKey)
-    if (cached) return cached
-
-    const enemyCacheKey = `enemy_${id}`
-    const cachedEnemy = DataProcessor.getCachedData<Enemy>(enemyCacheKey)
-    const enemy =
-      cachedEnemy || DataProcessor.find(enemiesData, (e) => e.id === id)
-    if (!enemy) return {}
-
-    if (!cachedEnemy) {
-      DataProcessor.setCachedData(enemyCacheKey, enemy)
-    }
-
-    const skills: Record<string, SkillConfig[] | undefined> = {}
-
-    const smallIds = GameDataProcessor.normalizeSkillIds(enemy.skills?.small)
-    const passiveIds = GameDataProcessor.normalizeSkillIds(
-      enemy.skills?.passive,
-    )
-    const ultimateIds = GameDataProcessor.normalizeSkillIds(
-      enemy.skills?.ultimate,
-    )
-
-    if (smallIds.length > 0) {
-      skills.small = smallIds
-        .map((id) => GameDataProcessor.findSkillById(id))
-        .filter((s): s is SkillConfig => s !== undefined)
-    }
-    if (passiveIds.length > 0) {
-      skills.passive = passiveIds
-        .map((id) => GameDataProcessor.findSkillById(id))
-        .filter((s): s is SkillConfig => s !== undefined)
-    }
-    if (ultimateIds.length > 0) {
-      skills.ultimate = ultimateIds
-        .map((id) => GameDataProcessor.findSkillById(id))
-        .filter((s): s is SkillConfig => s !== undefined)
-    }
-
-    DataProcessor.setCachedData(cacheKey, skills)
-    return skills
-  }
-
-  /**
-   * 从被动技能中解析属性加成
-   * @param passiveSkills - 被动技能配置数组
-   * @returns 属性加成映射，包含来源详情
-   */
-
-  /**
    * 根据技能 ID 数组获取技能配置
    * @param skillIds - 技能 ID 数组
    * @returns SkillConfig[] - 技能配置数组
@@ -482,254 +334,5 @@ export class GameDataProcessor {
         return skill
       })
       .filter((skill): skill is SkillConfig => skill !== undefined)
-  }
-
-  /**
-   * 将技能 ID 标准化为数组格式
-   * @param skillIds - 技能 ID（字符串、字符串数组或对象）
-   * @returns 标准化后的技能 ID 数组
-   */
-  static normalizeSkillIds(
-    skillIds: string | string[] | object | undefined,
-  ): string[] {
-    if (!skillIds) return []
-    if (Array.isArray(skillIds)) {
-      // 过滤掉非字符串元素
-      return skillIds.filter((id) => typeof id === 'string')
-    }
-    if (typeof skillIds === 'string') {
-      return [skillIds]
-    }
-    // 如果是对象，返回空数组，防止出现[object Object]错误
-    console.warn(
-      '技能ID格式错误，预期字符串或字符串数组，实际为对象:',
-      skillIds,
-    )
-    return []
-  }
-
-  /**
-   * 过滤活跃角色
-   */
-  static filterActiveCharacters(
-    characters: CharacterStats[],
-  ): CharacterStats[] {
-    return DataProcessor.filter(characters, {
-      condition: (char) => char.enabled === true,
-      sortBy: 'speed',
-      sortDirection: 'desc',
-    })
-  }
-
-  /**
-   * 根据ID查找角色
-   */
-  static findCharacterById(
-    characters: CharacterStats[],
-    enemyParty: CharacterStats[],
-    characterId: string,
-  ): CharacterStats | undefined {
-    return (
-      DataProcessor.find(characters, (c) => c.id === characterId) ||
-      DataProcessor.find(enemyParty, (e) => e.id === characterId)
-    )
-  }
-
-  /**
-   * 根据名称查找角色
-   */
-  static findCharacterByName(
-    characters: CharacterStats[],
-    enemyParty: CharacterStats[],
-    name: string,
-  ): CharacterStats | undefined {
-    return (
-      DataProcessor.find(characters, (c) => c.name === name) ||
-      DataProcessor.find(enemyParty, (e) => e.name === name)
-    )
-  }
-
-  /**
-   * 计算角色属性加成
-   */
-  static calculateStatBonus(character: CharacterStats, stat: string): number {
-    if (!character.buffs) return 0
-
-    const bonuses = character.buffs.filter((buff) => !buff.isPositive)
-    if (stat === ATTRIBUTE_CODE.attackBonus) return bonuses.length * 10
-    if (stat === ATTRIBUTE_CODE.defenseBonus) return bonuses.length * 5
-    return 0
-  }
-
-  /**
-   * 计算伤害加成
-   */
-  static calculateDamageBonus(character: CharacterStats): number {
-    if (!character.buffs) return 0
-
-    const bonuses = character.buffs.filter((buff) => buff.isPositive)
-    return bonuses.length * 15
-  }
-
-  /**
-   * 计算最终属性值
-   */
-  static calculateFinalStat(character: CharacterStats, stat: string): number {
-    const base = stat === 'attack' ? character.attack : character.defense
-    const bonus = GameDataProcessor.calculateStatBonus(character, stat)
-    return Math.floor(base * (1 + bonus / 100))
-  }
-
-  /**
-   * 验证战斗角色数据
-   */
-  static validateBattleCharacter(character: CharacterStats): {
-    isValid: boolean
-    errors: string[]
-  } {
-    return DataProcessor.validate(character, [
-      { field: 'id', type: 'required', message: '角色ID是必填字段' },
-      { field: 'name', type: 'required', message: '角色名称是必填字段' },
-      {
-        field: 'level',
-        type: 'number',
-        min: 1,
-        max: 100,
-        message: '等级必须在1-100之间',
-      },
-      {
-        field: 'maxHp',
-        type: 'number',
-        min: 1,
-        message: '最大气血值必须大于0',
-      },
-      {
-        field: 'currentHp',
-        type: 'number',
-        min: 0,
-        message: '当前气血值不能为负数',
-      },
-      { field: 'attack', type: 'number', min: 0, message: '攻击力不能为负数' },
-      { field: 'defense', type: 'number', min: 0, message: '防御力不能为负数' },
-      { field: 'speed', type: 'number', min: 0, message: '速度不能为负数' },
-    ])
-  }
-
-  /**
-   * 获取角色被动技能
-   */
-  static getCharacterPassiveSkill(character: CharacterStats): string {
-    const skills = GameDataProcessor.getCharacterSkills(
-      character.originalId || '',
-    )
-    return skills.passive?.map((s) => s.name).join(', ') || ''
-  }
-
-  /**
-   * 获取角色小技能
-   */
-  static getCharacterSmallSkill(character: CharacterStats): string {
-    const skills = GameDataProcessor.getCharacterSkills(
-      character.originalId || '',
-    )
-    return skills.small?.map((s) => s.name).join(', ') || ''
-  }
-
-  /**
-   * 获取角色终极技能
-   */
-  static getCharacterUltimateSkill(character: CharacterStats): string {
-    const skills = GameDataProcessor.getCharacterSkills(
-      character.originalId || '',
-    )
-    return skills.ultimate?.map((s) => s.name).join(', ') || ''
-  }
-
-  /**
-   * 分组场景敌人数据
-   */
-  static groupEnemiesByScene(): Array<{ scene: SceneData; enemies: Enemy[] }> {
-    const cacheKey = 'grouped_enemies'
-    const cached = DataProcessor.getCachedData<any[]>(cacheKey)
-    if (cached) return cached
-
-    const grouped = scenesData
-      .map((scene) => {
-        const sceneEnemies = scene.difficulties.easy.enemyIds
-          .map((id: string) => {
-            const enemies = GameDataProcessor.findEnemiesByIds([id])
-            return enemies.length > 0 ? enemies[0] : undefined
-          })
-          .filter((enemy): enemy is Enemy => enemy !== undefined)
-
-        return { scene, enemies: sceneEnemies }
-      })
-      .filter((group) => group.enemies.length > 0)
-
-    DataProcessor.setCachedData(cacheKey, grouped)
-    return grouped
-  }
-
-  /**
-   * 搜索和过滤敌人数据
-   */
-  static searchAndFilterEnemies(
-    searchQuery: string,
-    sceneId?: string,
-  ): { grouped: Array<{ scene: SceneData; enemies: Enemy[] }>; all: Enemy[] } {
-    let allEnemies = [...enemiesData]
-
-    // 按名称搜索
-    if (searchQuery.trim()) {
-      allEnemies = DataProcessor.search(allEnemies, {
-        fields: ['name'],
-        keyword: searchQuery,
-        fuzzy: true,
-      })
-    }
-
-    // 按场景过滤
-    if (sceneId) {
-      const scene = GameDataProcessor.findSceneById(sceneId)
-      if (scene) {
-        const sceneEnemyIds = new Set([
-          ...scene.difficulties.easy.enemyIds,
-          ...scene.difficulties.normal.enemyIds,
-          ...scene.difficulties.hard.enemyIds,
-        ])
-        allEnemies = allEnemies.filter((enemy) => sceneEnemyIds.has(enemy.id))
-      }
-    }
-
-    const grouped = scenesData
-      .map((scene) => {
-        const sceneEnemies = allEnemies.filter(
-          (enemy) =>
-            scene.difficulties.easy.enemyIds.includes(enemy.id) ||
-            scene.difficulties.normal.enemyIds.includes(enemy.id) ||
-            scene.difficulties.hard.enemyIds.includes(enemy.id),
-        )
-        return { scene, enemies: sceneEnemies }
-      })
-      .filter((group) => group.enemies.length > 0)
-
-    return { grouped, all: allEnemies }
-  }
-
-  /**
-   * 清除所有缓存
-   */
-  static clearCache(): void {
-    DataProcessor.clearCache()
-  }
-
-  /** 获取所有阵型配置 */
-  static getFormationsData(): FormationConfig[] {
-    return formationsData as FormationConfig[]
-  }
-
-  /** 根据 ID 查找阵型配置 */
-  static findFormationById(id: string): FormationConfig | undefined {
-    return (formationsData as FormationConfig[]).find(f => f.id === id)
   }
 }

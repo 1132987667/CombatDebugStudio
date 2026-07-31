@@ -405,18 +405,6 @@ export class BattleLogManager implements IBattleLogManager {
   }
 
   /**
-   * 搜索战斗日志
-   */
-  searchBattleLogs(keyword: string): BattleLogEntry[] {
-    const lowerKeyword = keyword.toLowerCase()
-    return this.battleLogs.filter(
-      (log) =>
-        (log.source ?? '').toLowerCase().includes(lowerKeyword) ||
-        (log.target ?? '').toLowerCase().includes(lowerKeyword),
-    )
-  }
-
-  /**
    * 清除战斗日志
    */
   clearLogs(): void {

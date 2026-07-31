@@ -1227,6 +1227,7 @@ export class BattleSystem {
 
   public resetBattle(): void {
     // ponytail: 清除上一场战斗的被动注册、连击状态和待处理额外行动，防止跨战斗污染
+    this.executor.reset() // ★ 新增：重置 pendingDeaths / currentActionOrder，防止跨战斗残留
     this.passiveSkillManager.clearAll()
     this.skillManager.getExecutor().clearAllComboStates()
     this.skillManager.getExecutor().drainExtraActions()

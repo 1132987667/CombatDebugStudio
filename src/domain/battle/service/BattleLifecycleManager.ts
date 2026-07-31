@@ -68,6 +68,10 @@ export class BattleLifecycleManager {
       targetId: 'system',
       skillId: '',
       turn: battle.currentTurn || 1,
+      systemMeta: {
+        event: 'battle_end',
+        result: winner === ParticipantSide.ALLY ? 'win' : 'lose',
+      },
       effects: [
         {
           type: 'status',

@@ -5,6 +5,7 @@ CombatDebugStudio/
         verify.md
     plans/
         1785466682304-playful-pixel.md
+        1785472199704-kind-cabin.md
     skills/
         domain-migration/
             SKILL.md
@@ -43,7 +44,6 @@ src/
                 ParticipantBuffs.ts
                 ParticipantSkills.ts
                 ParticipantStats.ts
-            events/
             intervention/
                 InterventionManager.ts
             logs/
@@ -128,6 +128,7 @@ src/
         character/
             types.ts
         port/
+            di/
             IBattleLogManager.ts
             IDomainEventBus.ts
             IPersistentStorage.ts
@@ -168,7 +169,6 @@ src/
             Container.ts
         input/
             KeybindManager.ts
-        task/
     presentation/
         components/
             AttributeTooltip.vue
@@ -297,7 +297,7 @@ vite.config.ts
 文件内容:
 
 --- .mimocode/.cron-lock ---
-{"pid":23804,"startedAt":1785466580441}
+{"pid":404,"startedAt":1785472171670}
 
 --- .mimocode/commands/verify.md ---
 ---
@@ -406,6 +406,129 @@ private buildResult(meta: BattleLogMeta): LogSegment[] | undefined {
    - 回合标题出现标签（有击杀时"击杀!"；被动触发多时"多重触发"）
    - 暴击/击杀动作行出现 `★ 暴击!` / `✦ 击杀!` 高亮，且不与 sub 行重复数值
    - 战斗日志"导出 txt/html"（BattleDataGenerator 路径）正常、标签一致
+
+--- .mimocode/plans/1785472199704-kind-cabin.md ---
+# BattleExecutor 数据流重塑 — 修复三个风险点
+## 背景
+上一轮评审识别出 BattleExecutor 的三个风险点，用户提交了最终修改方案（5 个步骤）。逐行核对后，方案中的部分代码与现有实现有接口偏差（虚构 API、硬编码错误、日志顺序/类别回归风险），本计划在忠实落地用户意图的前提下修正这些偏差，并保持重构前后行为一致。
+**三个风险点**：
+1. **状态泄漏（P0）**：`pendingDeaths` / `currentActionOrder` 是实例级可变状态，`BattleSystem.resetBattle()` 未重置，跨战斗残留。
+2. **DTO 职责混淆**：`targetResults` 是内联匿名对象（BattleExecutor.ts:405-412），无类型契约。
+3. **God Method + 异常路径**：`selectAndExecuteSkill`（332-753）内联全部日志；catch（706-721）静默降级为随机普攻，无用户可见警告日志。
+## 涉及文件
+| 文件 | 改动 |
+|---|---|
+| `src/domain/battle/service/BattleExecutor.ts` | 主改动（reset / DTO / helper / 日志发射器） |
+| `src/domain/battle/BattleSystem.ts` | `resetBattle()` 加一行 `this.executor.reset()` |
+---
+## 改动 1：`BattleExecutor.ts` — reset()（风险点 1）
+在 `drainPendingDeaths()`（110-118）附近新增：
+```ts
+/** 重置跨回合/跨战斗的可变状态。由 BattleSystem.resetBattle() 调用。 */
+reset(): void {
+  this.pendingDeaths = []
+  this.currentActionOrder = 0
+}
+```
+`traceCounter` 不重置（trace id 带 `Date.now()`，单调递增无害，重置反而引入同毫秒冲突）。
+## 改动 2：`BattleSystem.ts` — resetBattle() 接线
+`resetBattle()`（1228-1244）开头新增 `this.executor.reset()`（executor 字段在 :115）。
+## 改动 3：`BattleExecutor.ts` — 局部 DTO（风险点 2）
+类外部（import 之后）新增两个 interface：
+```ts
+/** 目标结算结果 —— 仅用于日志渲染的局部视图模型，随方法作用域结束销毁 */
+interface TargetResult {
+  target: BattleEntity
+  hpBefore: number
+  hpAfter: number
+  damage: number      // token 记录值（= 现有 targetResults.finalDamage，settleDamage 返回值只进 overkill）
+  heal: number
+  rawDamage: number   // 保留：action 日志"造成 X 点伤害"用 rawDamage（现有 496/1172 行）
+}
+/** 行动表现清单 —— 伤害结算与日志拼装之间的局部数据契约，仅在方法内流转 */
+interface ActionManifest {
+  type: 'skill' | 'attack'
+  source: BattleEntity
+  targets: BattleEntity[]
+  skillName: string
+  skillId?: string
+  isMiss: boolean
+  isCrit: boolean     // 提级到 manifest：现有 isCrit 是全局判定（allEffects.some，501-503），非 per-target
+  results: TargetResult[]
+}
+```
+需确认 `LogSegment` 类型已导入（文件已导入 `skillSegment` 等，缺则补 `import type { LogSegment } from '@/shared/types/battle-log'`）。
+## 改动 4：`BattleExecutor.ts` — helper 提取（风险点 2 配套）
+新增两个 private 方法（实现按用户方案）：
+- `buildEntitySegment(entity, isSelf = false): LogSegment` — `[阵营前缀]名`，classStr 按 `entity.team === ALLY ? 'log-friendly' : 'log-hostile'`，`kind: 'entity'` + `faction`。
+- `buildValueSegment(value, type: 'damage' | 'heal'): LogSegment` — classStr `log-damage`/`log-heal`，kind 同 type。
+## 改动 5：`BattleExecutor.ts` — 重构 selectAndExecuteSkill（风险点 3）
+**保持不变的部分**（严格保留，动画时序不动）：
+- 方法签名、技能可用性校验、`getSkillTargets`、BEFORE_ATTACK 被动缓冲、`executeSkill` 循环 + `recordCombatRecord` 循环（含 TraceDamageLogger try/catch）。
+- 动画三分支结构：伤害路径（511-565，flight → resultMap 聚合 → settleDamage/overkill → impact）、治疗路径（566-577，`damageToken.applyAll()` + `triggerDirectImpactAndWait`，**不填 targetResults**）、零值路径。
+- `isCrit` 计算（501-503）、`overkillMap`（548-549）。
+- 复活结算（724-737）、AFTER_ATTACK 被动（739-749）、`recordBattleAction`（751）。
+**替换的部分**：
+1. `targetResults`（405-412 内联匿名类型）→ `const manifest: ActionManifest`（`results` 初始为 `[]`），结算循环（545-556）填充 `manifest.results`（元素按 TargetResult 结构，damage/heal 用 token 记录值，hpAfter 为扣血后快照）。
+2. 内联 action 日志 + sub 日志块（604-677）→ `this.emitSkillLog(battleData, manifest)`。
+3. 零值分支内联日志（680-705）→ 同样 `this.emitSkillLog(battleData, manifest)`（results 为空 → category STATUS）。
+4. catch（706-721）新增降级警告日志（风险点 3 修复目标），其余保留：
+```ts
+LoggerProvider.logger.addBattleLog({
+  turn: battleData.currentTurn,
+  message: `${source.name} 尝试使用 ${skill.name} 时发生异常，降级为普通攻击`,
+  segments: [
+    this.buildEntitySegment(source),
+    { text: ' 尝试使用 ' },
+    { text: `【${skill.name}】`, classStr: 'log-skill' },
+    { text: ' 时发生异常，降级为普通攻击', classStr: 'log-info' },
+  ],
+  category: BATTLE_LOG_CATEGORIES.STATUS,
+  meta: { role: 'action', skillName: skill.name, error: true },
+})
+```
+## 改动 6：`BattleExecutor.ts` — 新增 emitSkillLog / emitAttackLog，删除 generateAttackLogParams
+**新增 `private emitSkillLog(battle: BattleData, m: ActionManifest)`**，按用户方案结构，但修正 4 点（均与现有行为对齐）：
+1. **日志顺序**：action header → `LoggerProvider.logger.flushBufferedSubLogs()` → results sub。现有顺序即 action(604) → flush(641) → sub(644-677)，BEFORE_ATTACK 被动 sub 日志必须保持在 action 与 result 之间（RoundNarrativeRenderer 按序挂 subs）。
+2. **category**：`totalDmg > 0 ? DAMAGE : totalHeal > 0 ? HEAL : STATUS`（用户方案漏 STATUS 分支，零值时会错误输出 HEAL）。
+3. **meta 补全**：`role: 'action'`、`entityId`/`hpBefore`/`hpAfter`（取 `results[0]`，≈ 现有 `logTarget` = pendingDamages[0].target）、`damage: totalDmg`、`crit: m.isCrit`、`kill: results[0]?.target 未存活`（缺失会导致 RoundNarrativeRenderer 的回合"击杀!"标签与 ✦ 高亮丢失）、`skillName`。
+4. **文本口径**：header 的"造成 X 点伤害"用 rawDamage 总和（现有 496 行用 `totalRawDamage`），"恢复 X 点气血"用 heal 总和；技能段复用现有 `skillSegment(skillId, this.skillManager)` + try/catch 回退（不手写 hover 段）。
+5. targets 段按用户方案逐个 `buildEntitySegment`（含 `t.id === source.id ? '自身'` 判断）并用 ', ' 连接。
+**新增 `private emitAttackLog(battle: BattleData, m: ActionManifest)`**，按用户方案结构，修正 3 点：
+1. **miss 分支**：category STATUS；action meta 用现有字段 `{ role, entityId, miss: true, skillName }`；"被闪避!" sub 保留现有 classStr `'log-heal'`（现存样式，勿改）。
+2. **hit 分支**：category `m.isCrit ? CRIT : DAMAGE`（现有 generateAttackLogParams 967-969 逻辑）；message 由 segments join 生成（用户方案漏了 `[友方]/[敌方]` 前缀）；"造成 X 点伤害"用 rawDamage（现有 1172 行）；action meta.damage 用 rawDamage、sub meta.damage 用 finalDamage（现有 1186/1204 口径）；meta 含 `kill: !target.isAlive()`。
+3. 纯治疗技能不产出 sub 日志是现有行为（治疗分支不填 results），emitSkillLog 的 heal sub 分支仅为"伤害+治疗混合技能"服务，保持。
+**删除 `generateAttackLogParams`（895-971）**：被 emitAttackLog 取代，调用方仅 handleMissAttack(1071)/handleHitAttack(1163)，无外部引用（BattleExecutor 仅被 BattleSystem 引用，后者不调它）。
+**替换调用点**（动画/结算/被动逻辑保留在 handle 方法内，仅日志块替换）：
+- `handleMissAttack`：1071-1097 两个 addBattleLog → `this.emitAttackLog(battle, { type: 'attack', source, targets: [target], skillName: '普通攻击', isMiss: true, isCrit: false, results: [] })`
+- `handleHitAttack`：1163-1205 两个 addBattleLog → `this.emitAttackLog(battle, { type: 'attack', source, targets: [target], skillName: '普通攻击', isMiss: false, isCrit: isCritical, results: [{ target, hpBefore, hpAfter, damage, heal: 0, rawDamage }] })`
+**`executeAction` 技能路径（1465-1702）不动**：独立入口（预构建 action 执行），日志结构不同（单目标、action.turn、isCrit 来自 skillAction），用户方案未覆盖，保持最小 diff。
+---
+## 用户方案修正点汇总（为什么偏离用户给的代码）
+| # | 用户方案 | 实际修正 |
+|---|---|---|
+| 1 | `playFlightAnimation/playImpactAnimation` | 不存在；用 `animationManager.triggerFlightPhaseAndWait/triggerImpactPhaseAndWait`，参数与现有 513-519/559-565 完全一致 |
+| 2 | `TargetResult.isCrit` 硬编码 false | isCrit 提级到 manifest，全局判定（现有 501-503） |
+| 3 | emitSkillLog 在 flush 之前输出 results | 保持 action → flush → results 顺序 |
+| 4 | category `totalDmg>0 ? DAMAGE : HEAL` | 补 STATUS 分支 |
+| 5 | meta 缺 kill/entityId/hpBefore/hpAfter | 补全（kill 影响回合标签） |
+| 6 | catch 用 `log-warning` | 样式不存在，改用 `log-info`（_battle-log.scss:307 有样式） |
+| 7 | emitAttackLog message 无前缀、用 finalDamage | segments join 生成（带前缀）；rawSuffix 用 rawDamage |
+| 8 | TargetResult 无 rawDamage、damage 用 settleDamage 返回值 | 保留 rawDamage；damage/heal 用 token 记录值（护盾吸收时数值与现有一致） |
+| 9 | 手写技能 hover 段 | 复用现有 `skillSegment()`（含 try/catch 回退） |
+**已知的有意行为变化**（可接受，执行时验证）：
+- 多目标混合阵营时，action header 目标名从"整段统一色"变为"按目标独立着色"（更精确；单目标/同阵营场景零差异）。
+- 零值分支技能名获得悬浮提示（复用 skillSegment 后），现有无 hover。
+**范围外发现（不做）**：TraceLogCollector 跨战斗累积 — `exportAll()`（BattleSystem.ts:1178）自带清空（TraceLogCollector.ts:189-190），泄漏面小且用户方案未要求。
+---
+## 验证清单
+1. **类型检查**：`npm run typecheck`（ActionManifest/TargetResult/LogSegment 无报错）。
+2. **现有测试无回归**：`npm run test`（8 个 unit + e2e；reset() 为两行赋值属琐碎逻辑，按 AGENTS.md 不新增测试）。
+3. **手动验证**（`npm run dev`）：
+   - 跑一场战斗：日志面板颜色（friendly/hostile/damage/heal/crit）、气血箭头（hpBefore → hpAfter）、技能名悬浮（skillSegment hover）、暴击 CRIT 类别、击杀"✦"标记，与重构前一致。
+   - 动画时序：技能名飞行 → 扣血数字 → 命中特效，顺序无错位（await 位置严格保留）。
+   - 异常兜底：临时在 `skillManager.executeSkill` 开头 `throw new Error()`，确认输出"发生异常，降级为普通攻击"警告 + 战斗不中断；改完还原。
+   - 状态重置：连续"重置战斗"开新战斗，无上一场死亡结算日志残留；多次切换后 `pendingDeaths` 无累积（可用 `drainPendingDeaths()` 长度断言或用 devtools 观察）。
 
 --- .mimocode/skills/domain-migration/SKILL.md ---
 ---
@@ -5867,6 +5990,7 @@ export class BattleSystem {
   }
   public resetBattle(): void {
     // ponytail: 清除上一场战斗的被动注册、连击状态和待处理额外行动，防止跨战斗污染
+    this.executor.reset() // ★ 新增：重置 pendingDeaths / currentActionOrder，防止跨战斗残留
     this.passiveSkillManager.clearAll()
     this.skillManager.getExecutor().clearAllComboStates()
     this.skillManager.getExecutor().drainExtraActions()
@@ -6211,7 +6335,7 @@ export interface DamageStep {
   before?: number
   /** 此步骤计算后的伤害值（与 value 一致，结构化冗余以便 UI 直接读） */
   after?: number
-  sourceType?: DamageSource
+  sourceType?: DamageSource | 'base' | 'system'
   /**
    * 子步骤（嵌套步骤）。
    * 最大嵌套深度 3：顶层步骤可以作为父节点包含 children，子节点不再嵌套。
@@ -8724,7 +8848,6 @@ export class RoundNarrativeRenderer {
       flushAction()
       flushSettlement()
       flushSnapshot()
-      flushRound()
     }
     for (const e of entries) {
       const meta = e.meta ?? {}
@@ -8738,9 +8861,10 @@ export class RoundNarrativeRenderer {
         continue
       }
       const turn = e.turn
-      // 回合切换 → 先落盘上一回合，再推入回合头
+      // 回合切换 → 先落盘上一回合（含回合标签），再推入回合头
       if (turn !== currentTurn) {
         flushAll()
+        flushRound()
         // ★ 防止 turn: 0 产生“第 0 回合”分隔线
         if (turn > 0) {
           const roundBlock: Extract<
@@ -8807,6 +8931,7 @@ export class RoundNarrativeRenderer {
       }
     }
     flushAll()
+    flushRound()
     // 战报摘要：战斗结束后追加 summary 块
     const summary = BattleSummaryGenerator.instance.lastSummary
     if (summary) {
@@ -8849,7 +8974,7 @@ export class RoundNarrativeRenderer {
           { text: `MVP: ${mvp} — 总伤害 ${mvpDmg}`, classStr: 'log-friendly' },
         ])
       }
-      blocks.push({ type: 'summary', lines: summaryLines })
+      blocks.push({ type: NarrativeBlockType.SUMMARY, lines: summaryLines })
     }
     return blocks
   }
@@ -10103,7 +10228,9 @@ import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationMana
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import {
   BATTLE_LOG_CATEGORIES,
+  LogLevel,
   type BattleLogCategory,
+  type LogSegment,
 } from '@/shared/types/battle-log'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { skillSegment } from '@/shared/utils/log-segment-factory'
@@ -10155,6 +10282,38 @@ import {
   type CombatRecord,
 } from '@/domain/battle/combat-record'
 /**
+ * 目标结算结果 —— 仅用于日志渲染的局部视图模型（ViewModel）。
+ * 严禁在此结构中塞入任何非日志渲染所需的业务字段（如 buffId, skillStepType）。
+ * 业务持久化请使用 CombatRecord，本结构随方法作用域结束自动销毁。
+ */
+interface TargetResult {
+  target: BattleEntity
+  hpBefore: number
+  hpAfter: number
+  /** token 记录值（settleDamage 返回值只用于 overkill 记录，不覆盖此值） */
+  damage: number
+  heal: number
+  /** 减免前原始伤害（action 日志"造成 X 点伤害"的口径） */
+  rawDamage: number
+}
+/**
+ * 行动表现清单 —— 用于解耦"伤害结算"与"日志拼装"的局部数据契约。
+ * 仅在 selectAndExecuteSkill / selectAndExecuteAttack 内部流转，不跨越方法边界。
+ */
+interface ActionManifest {
+  type: 'skill' | 'attack'
+  source: BattleEntity
+  targets: BattleEntity[]
+  skillName: string
+  skillId?: string
+  isMiss: boolean
+  isCrit: boolean
+  /** action 级伤害/治疗总量（header 文本与 category 用；纯治疗路径 results 为空但 totalHeal > 0） */
+  totalDamage: number
+  totalHeal: number
+  results: TargetResult[]
+}
+/**
  * 战斗执行器
  * 封装参与者的行动决策、技能/攻击执行、伤害/治疗应用、日志记录等运行时逻辑。
  */
@@ -10192,6 +10351,11 @@ export class BattleExecutor {
     const deaths = [...this.pendingDeaths]
     this.pendingDeaths = []
     return deaths
+  }
+  /** 重置跨回合/跨战斗的可变状态。由 BattleSystem.resetBattle() 调用。 */
+  reset(): void {
+    this.pendingDeaths = []
+    this.currentActionOrder = 0
   }
   constructor(
     private readonly skillManager: SkillManager,
@@ -10452,23 +10616,21 @@ export class BattleExecutor {
       const prePassiveRecords = this.passiveSkillManager.drainLastTriggeredPassives()
       // ponytail: 启用延迟伤害令牌 — 技能执行只记录数值不实际扣血
       const damageToken = new DeferredDamageToken()
-      const pendingDamages: Array<{
-        target: BattleEntity
-        damage: number
-        heal: number
-      }> = []
       let totalDamage = 0
       let totalHeal = 0
-      let totalRawDamage = 0
       const allEffects: BattleEffect[] = []
-      const targetResults: Array<{
-        target: BattleEntity
-        finalDamage: number
-        rawDamage: number
-        heal: number
-        hpBefore: number
-        hpAfter: number
-      }> = []
+      const manifest: ActionManifest = {
+        type: 'skill',
+        source,
+        targets,
+        skillName: skill.name || skill.id,
+        skillId: skill.id,
+        isMiss: false,
+        isCrit: false,
+        totalDamage: 0,
+        totalHeal: 0,
+        results: [],
+      }
       for (const target of targets) {
         if (!target.isAlive()) continue
         const record = createEmptyRecord(
@@ -10506,13 +10668,6 @@ export class BattleExecutor {
         record.damage = skillAction.damage ?? 0
         record.message = `${source.name} 对 ${target.name} 使用 ${skill.name || skill.id}，造成 ${skillAction.damage ?? 0} 伤害`
         records.push(record)
-        if ((skillAction.damage ?? 0) > 0 || (skillAction.heal ?? 0) > 0) {
-          pendingDamages.push({
-            target,
-            damage: skillAction.damage ?? 0,
-            heal: skillAction.heal ?? 0,
-          })
-        }
         totalDamage += skillAction.damage ?? 0
         totalHeal += skillAction.heal ?? 0
         allEffects.push(...skillAction.effects)
@@ -10536,27 +10691,15 @@ export class BattleExecutor {
       action.damage = totalDamage
       action.heal = totalHeal
       action.effects = allEffects
-      const sourcePrefix = `[${ParticipantSideName[source.team]}]`
-      const targetNames = targets
-        .map((t) => {
-          const prefix = `[${ParticipantSideName[t.team]}]`
-          const name = t.id === source.id ? '自身' : t.name
-          return `${prefix}${name}`
-        })
-        .join(', ')
-      const damageText = totalRawDamage > 0 ? `，造成 ${totalRawDamage} 点伤害` : ''
-      const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点气血` : ''
+      manifest.totalDamage = totalDamage
+      manifest.totalHeal = totalHeal
       // NOTE: 固定预算模型 — 伤害/治疗走飞行→命中，治疗单独走直接命中
       if (targets.length > 0 && (totalDamage > 0 || totalHeal > 0)) {
         const primaryTarget = targets[0]
         const isCrit = allEffects.some(
           (e: BattleEffect) => e.type === EffectType.DAMAGE && e.isCritical,
         )
-        // NOTE: 在扣血前捕获 气血 用于叙事日志
-        const hpBeforeMap = new Map<string, number>()
-        for (const pd of pendingDamages) {
-          hpBeforeMap.set(pd.target.id, pd.target.currentHealth)
-        }
+        manifest.isCrit = isCrit
         if (totalDamage > 0) {
           // 攻击/伤害技能 → 飞行（0→50%T）+ 命中（50%→100%T）
           await this.animationManager.triggerFlightPhaseAndWait({
@@ -10568,39 +10711,38 @@ export class BattleExecutor {
           })
           // 命中瞬间（50%T）：统一应用所有延迟伤害，统一走 settleDamage
           // NOTE: 先按 target.id 聚合 entries，确保多步骤技能对同一目标只触发一次 ON_HIT/DAMAGE_TAKEN
-          const resultMap = new Map<string, (typeof targetResults)[0]>()
+          const resultMap = new Map<string, TargetResult>()
           for (const entry of damageToken.getEntries()) {
             if (!entry.target.isAlive()) continue
             const existing = resultMap.get(entry.target.id)
             if (existing) {
-              existing.finalDamage += entry.damage
+              existing.damage += entry.damage
               existing.rawDamage += entry.rawDamage
               existing.heal += entry.heal
               existing.hpAfter = entry.target.currentHealth
             } else {
               resultMap.set(entry.target.id, {
                 target: entry.target,
-                finalDamage: entry.damage,
+                damage: entry.damage,
                 rawDamage: entry.rawDamage,
                 heal: entry.heal,
                 hpBefore: entry.target.currentHealth,
                 hpAfter: entry.target.currentHealth,
               })
             }
-            totalRawDamage += entry.rawDamage
           }
           // 按目标聚合后，每个目标调用一次 settleDamage
-          targetResults.length = 0
+          manifest.results.length = 0
           for (const r of resultMap.values()) {
-            if (r.finalDamage > 0) {
-              const actualDamage = this.settleDamage(source, r.target, r.finalDamage, r.rawDamage, isCrit, battleData)
+            if (r.damage > 0) {
+              const actualDamage = this.settleDamage(source, r.target, r.damage, r.rawDamage, isCrit, battleData)
               overkillMap.set(r.target.id, Math.max(0, actualDamage - r.hpBefore))
             }
             if (r.heal > 0) {
               r.target.heal(r.heal)
             }
             r.hpAfter = r.target.currentHealth
-            targetResults.push(r)
+            manifest.results.push(r)
           }
           damageToken.clear()
           await this.animationManager.triggerImpactPhaseAndWait({
@@ -10621,130 +10763,30 @@ export class BattleExecutor {
             isHeal: true,
           })
         }
-        // NOTE: 扣血后捕获 气血，构建叙事日志
-        const primaryHpBefore =
-          pendingDamages.length > 0
-            ? hpBeforeMap.get(pendingDamages[0].target.id)
-            : undefined
-        const primaryHpAfter =
-          pendingDamages.length > 0
-            ? pendingDamages[0].target.currentHealth
-            : undefined
-        const logTarget =
-          pendingDamages.length > 0 ? pendingDamages[0].target : undefined
-        const skillId = skill.id || skill.name || ''
-        let skillSeg: ReturnType<typeof skillSegment>
-        try {
-          skillSeg = skillSegment(skillId, this.skillManager)
-        } catch {
-          skillSeg = {
-            text: `【${skill.name || skillId}】`,
-            classStr: 'log-skill',
-          }
-        }
-        // NOTE: 动态决定日志类别，确保日志面板能正确渲染
-        let logCategory: BattleLogCategory = BATTLE_LOG_CATEGORIES.STATUS
-        if (totalDamage > 0) logCategory = BATTLE_LOG_CATEGORIES.DAMAGE
-        else if (totalHeal > 0) logCategory = BATTLE_LOG_CATEGORIES.HEAL
-        LoggerProvider.logger.addBattleLog({
-          turn: battleData.currentTurn,
-          message: `${sourcePrefix}${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}${damageText}${healText}`,
-          segments: [
-            {
-              text: `${sourcePrefix}${source.name}`,
-              classStr:
-                source.team === ParticipantSide.ALLY
-                  ? 'log-friendly'
-                  : 'log-hostile',
-              kind: 'entity',
-              faction: source.team,
-            },
-            {
-              text: ` 对 ${targetNames} `,
-              classStr: targets.every((t) => t.team === ParticipantSide.ALLY)
-                ? 'log-friendly'
-                : 'log-hostile',
-            },
-            { text: ' 使用 ' },
-            skillSeg,
-            { text: `${damageText}${healText}` },
-          ],
-          category: logCategory,
-          meta: {
-            role: 'action',
-            entityId: logTarget?.id,
-            hpBefore: primaryHpBefore,
-            hpAfter: primaryHpAfter,
-            damage: totalDamage,
-            crit: isCrit,
-            kill: logTarget ? !logTarget.isAlive() : false,
-            skillName: skill.name || skill.id,
-          },
-        })
-        // ★ 刷出缓冲的 BEFORE_ATTACK sub 日志
-        LoggerProvider.logger.flushBufferedSubLogs()
-        // ★ 为每个目标输出 result sub 日志
-        for (const r of targetResults) {
-          const tPrefix = `[${ParticipantSideName[r.target.team]}]`
-          const tName = r.target.id === source.id ? '自身' : r.target.name
-          if (r.finalDamage > 0) {
-            LoggerProvider.logger.addBattleLog({
-              turn: battleData.currentTurn,
-              message: `${tPrefix}${tName} 受到 ${r.finalDamage} 点伤害  ${r.hpBefore} → ${r.hpAfter}`,
-              segments: [
-                { text: `${tPrefix}${tName}`, classStr: r.target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.team },
-                { text: ' 受到 ' },
-                { text: `${r.finalDamage}`, classStr: 'log-damage', kind: 'damage' },
-                { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
-              ],
-              category: BATTLE_LOG_CATEGORIES.DAMAGE,
-              meta: { role: 'sub', entityId: r.target.id, hpBefore: r.hpBefore, hpAfter: r.hpAfter, damage: r.finalDamage },
-            })
-          }
-          if (r.heal > 0) {
-            LoggerProvider.logger.addBattleLog({
-              turn: battleData.currentTurn,
-              message: `${tPrefix}${tName} 恢复 ${r.heal} 点气血  ${r.hpBefore} → ${r.hpAfter}`,
-              segments: [
-                { text: `${tPrefix}${tName}`, classStr: r.target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: r.target.team },
-                { text: ' 恢复 ' },
-                { text: `${r.heal}`, classStr: 'log-heal', kind: 'heal' },
-                { text: ` 点气血  ${r.hpBefore} → ${r.hpAfter}` },
-              ],
-              category: BATTLE_LOG_CATEGORIES.HEAL,
-              meta: { role: 'sub', entityId: r.target.id, hpBefore: r.hpBefore, hpAfter: r.hpAfter, heal: r.heal },
-            })
-          }
-        }
+        // NOTE: 扣血后捕获 气血，构建叙事日志（emitSkillLog 按 action → 缓冲 sub → result 顺序发射）
+        this.emitSkillLog(battleData, manifest)
         // settleDamage 内部已处理：ON_HIT/DAMAGE_TAKEN 被动 + pendingDeaths（B1 修复：ON_DEATH/ON_KILL 改由 runEndConditionCheck 延迟触发）
       } else if (totalDamage === 0 && totalHeal === 0) {
         // 无伤害/治疗时仍输出行动日志
-        const skillId = skill.id || skill.name || ''
-        LoggerProvider.logger.addBattleLog({
-          turn: battleData.currentTurn,
-          message: `${sourcePrefix}${source.name} 对 ${targetNames} 使用 ${skill.name || skill.id}`,
-          segments: [
-            {
-              text: `${sourcePrefix}${source.name}`,
-              classStr:
-                source.team === ParticipantSide.ALLY
-                  ? 'log-friendly'
-                  : 'log-hostile',
-              kind: 'entity',
-              faction: source.team,
-            },
-            { text: ` 对 ${targetNames} 使用 ` },
-            { text: `【${skill.name || skillId}】`, classStr: 'log-skill' },
-          ],
-          category: BATTLE_LOG_CATEGORIES.STATUS,
-          meta: { role: 'action', skillName: skill.name || skill.id },
-        })
-        // ★ 刷出缓冲的 BEFORE_ATTACK sub 日志
-        LoggerProvider.logger.flushBufferedSubLogs()
+        this.emitSkillLog(battleData, manifest)
       }
     } catch (error) {
       // ★ catch 路径也需刷出缓冲的 sub 日志，防止内存泄漏
       LoggerProvider.logger.flushBufferedSubLogs()
+      // ★ 异常兜底：输出用户可见的降级警告，防止日志静默丢失（风险点 3 修复）
+      const warnSegs: LogSegment[] = [
+        this.buildEntitySegment(source),
+        { text: ' 尝试使用 ' },
+        { text: `【${skill.name || skill.id}】`, classStr: 'log-skill' },
+        { text: ' 时发生异常，降级为普通攻击', classStr: 'log-info' },
+      ]
+      LoggerProvider.logger.addBattleLog({
+        turn: battleData.currentTurn,
+        message: warnSegs.map((s) => s.text).join(''),
+        segments: warnSegs,
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: { role: 'action', skillName: skill.name || skill.id },
+      })
       LoggerProvider.logger.addDebugLog(`技能执行失败: ${skill.id}`, {
         error: error as Error,
       })
@@ -10853,28 +10895,11 @@ export class BattleExecutor {
     const targets = this.getSkillTargets(battle, source, skill)
     return targets.length > 0 ? targets[0].id : ''
   }
-  /** ★ 精准识别「伪装成技能的普通攻击」
-   *  名称模糊匹配 + 结构特征兜底，确保所有普通攻击都被拦截走普攻路径
+  /** ★ 识别「伪装成技能的普通攻击」
+   *  数据契约：技能配置显式声明 isNormalAttack，替代名称/结构启发式猜测
    */
   private isNormalAttackSkill(skill: SkillConfig): boolean {
-    if (!skill) return false
-    // 名称模糊匹配
-    if (skill.name?.includes('普通攻击')) return true
-    if (
-      skill.id?.includes('normal_attack') ||
-      skill.id?.includes('basic_attack')
-    )
-      return true
-    // 结构特征兜底：无消耗、无冷却、单段纯伤害
-    if (
-      skill.energyCost === 0 &&
-      skill.cooldown === 0 &&
-      skill.steps?.length === 1 &&
-      skill.steps[0].type === 'deal_damage'
-    ) {
-      return true
-    }
-    return false
+    return skill?.isNormalAttack === true
   }
   // ============ 普通攻击 ============
   /**
@@ -10918,82 +10943,221 @@ export class BattleExecutor {
     })
   }
   /**
-   * 生成攻击日志参数
+   * 构建带阵营前缀和着色的实体片段
    */
-  generateAttackLogParams(
-    source: BattleEntity,
-    target: BattleEntity,
-    turnNumber: number,
-    options: { isMiss?: boolean; damage?: number; isCritical?: boolean },
-  ): {
-    turn: number
-    message: string
-    segments: import('@/shared/types/battle-log').LogSegment[]
-    category: import('@/shared/types/battle-log').BattleLogCategory
-  } {
-    const { isMiss = false, isCritical = false } = options
-    const sourcePrefix =
-      `[${ParticipantSideName[source.team]}]`
-    const targetPrefix =
-      `[${ParticipantSideName[target.team]}]`
-    if (isMiss) {
-      return {
-        turn: turnNumber,
-        message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name} 发起「普通攻击」`,
-        segments: [
-          {
-            text: `${sourcePrefix}${source.name}`,
-            classStr:
-              source.team === ParticipantSide.ALLY
-                ? 'log-friendly'
-                : 'log-hostile',
-            kind: 'entity',
-            faction: source.team,
-          },
-          { text: ' 对 ' },
-          {
-            text: `${targetPrefix}${target.name}`,
-            classStr:
-              target.team === ParticipantSide.ALLY
-                ? 'log-friendly'
-                : 'log-hostile',
-            kind: 'entity',
-            faction: target.team,
-          },
-          { text: '「普通攻击」' },
-        ],
-        category: BATTLE_LOG_CATEGORIES.STATUS,
+  private buildEntitySegment(
+    entity: BattleEntity,
+    isSelf: boolean = false,
+  ): LogSegment {
+    const prefix = `[${ParticipantSideName[entity.team]}]`
+    const name = isSelf ? '自身' : entity.name
+    return {
+      text: `${prefix}${name}`,
+      classStr:
+        entity.team === ParticipantSide.ALLY
+          ? 'log-friendly'
+          : 'log-hostile',
+      kind: 'entity',
+      faction: entity.team,
+    }
+  }
+  /**
+   * 构建带颜色的数值片段（伤害/治疗）
+   */
+  private buildValueSegment(
+    value: number,
+    type: 'damage' | 'heal',
+  ): LogSegment {
+    return {
+      text: `${value}`,
+      classStr: type === 'damage' ? 'log-damage' : 'log-heal',
+      kind: type,
+    }
+  }
+  /**
+   * 统一发射技能日志 — 顺序：action header → 缓冲的 BEFORE_ATTACK sub 日志 → 各目标 result sub
+   */
+  private emitSkillLog(battle: BattleData, m: ActionManifest): void {
+    const { source, targets, results, totalDamage, totalHeal } = m
+    const totalRaw = results.reduce((s, r) => s + r.rawDamage, 0)
+    const primary = results[0]
+    const damageText = totalRaw > 0 ? `，造成 ${totalRaw} 点伤害` : ''
+    const healText = totalHeal > 0 ? `，恢复 ${totalHeal} 点气血` : ''
+    const targetSegs: LogSegment[] = []
+    targets.forEach((t, i) => {
+      if (i > 0) targetSegs.push({ text: ', ' })
+      targetSegs.push(this.buildEntitySegment(t, t.id === source.id))
+    })
+    const skillId = m.skillId || m.skillName || ''
+    let skillSeg: ReturnType<typeof skillSegment>
+    try {
+      skillSeg = skillSegment(skillId, this.skillManager)
+    } catch {
+      skillSeg = {
+        text: `【${m.skillName || skillId}】`,
+        classStr: 'log-skill',
       }
     }
-    return {
-      turn: turnNumber,
-      message: `${sourcePrefix}${source.name} 对 ${targetPrefix}${target.name} 发起「普通攻击」`,
-      segments: [
-        {
-          text: `${sourcePrefix}${source.name}`,
-          classStr:
-            source.team === ParticipantSide.ALLY
-              ? 'log-friendly'
-              : 'log-hostile',
-          kind: 'entity',
-          faction: source.team,
-        },
+    const headerSegs: LogSegment[] = [
+      this.buildEntitySegment(source),
+      { text: ' 对 ' },
+      ...targetSegs,
+      { text: ' 使用 ' },
+      skillSeg,
+      { text: `${damageText}${healText}` },
+    ]
+    // NOTE: 动态决定日志类别，确保日志面板能正确渲染
+    let logCategory: BattleLogCategory = BATTLE_LOG_CATEGORIES.STATUS
+    if (totalDamage > 0) logCategory = BATTLE_LOG_CATEGORIES.DAMAGE
+    else if (totalHeal > 0) logCategory = BATTLE_LOG_CATEGORIES.HEAL
+    LoggerProvider.logger.addBattleLog({
+      turn: battle.currentTurn,
+      message: headerSegs.map((s) => s.text).join(''),
+      segments: headerSegs,
+      category: logCategory,
+      meta: {
+        role: 'action',
+        entityId: primary?.target.id,
+        hpBefore: primary?.hpBefore,
+        hpAfter: primary?.hpAfter,
+        damage: totalDamage,
+        crit: m.isCrit,
+        kill: primary ? !primary.target.isAlive() : false,
+        skillName: m.skillName,
+      },
+    })
+    // ★ 刷出缓冲的 BEFORE_ATTACK sub 日志
+    LoggerProvider.logger.flushBufferedSubLogs()
+    // ★ 为每个目标输出 result sub 日志
+    for (const r of results) {
+      if (r.damage > 0) {
+        const dmgSegs: LogSegment[] = [
+          this.buildEntitySegment(r.target, r.target.id === source.id),
+          { text: ' 受到 ' },
+          this.buildValueSegment(r.damage, 'damage'),
+          { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
+        ]
+        LoggerProvider.logger.addBattleLog({
+          turn: battle.currentTurn,
+          message: dmgSegs.map((s) => s.text).join(''),
+          segments: dmgSegs,
+          category: BATTLE_LOG_CATEGORIES.DAMAGE,
+          meta: {
+            role: 'sub',
+            entityId: r.target.id,
+            hpBefore: r.hpBefore,
+            hpAfter: r.hpAfter,
+            damage: r.damage,
+          },
+        })
+      }
+      if (r.heal > 0) {
+        const healSegs: LogSegment[] = [
+          this.buildEntitySegment(r.target, r.target.id === source.id),
+          { text: ' 恢复 ' },
+          this.buildValueSegment(r.heal, 'heal'),
+          { text: ` 点气血  ${r.hpBefore} → ${r.hpAfter}` },
+        ]
+        LoggerProvider.logger.addBattleLog({
+          turn: battle.currentTurn,
+          message: healSegs.map((s) => s.text).join(''),
+          segments: healSegs,
+          category: BATTLE_LOG_CATEGORIES.HEAL,
+          meta: {
+            role: 'sub',
+            entityId: r.target.id,
+            hpBefore: r.hpBefore,
+            hpAfter: r.hpAfter,
+            heal: r.heal,
+          },
+        })
+      }
+    }
+  }
+  /**
+   * 统一发射普通攻击日志 — miss 或 hit（action + result sub）
+   */
+  private emitAttackLog(battle: BattleData, m: ActionManifest): void {
+    const { source, targets, isMiss, results } = m
+    const target = targets[0]
+    if (isMiss) {
+      const missSegs: LogSegment[] = [
+        this.buildEntitySegment(source),
         { text: ' 对 ' },
-        {
-          text: `${targetPrefix}${target.name}`,
-          classStr:
-            target.team === ParticipantSide.ALLY
-              ? 'log-friendly'
-              : 'log-hostile',
-          kind: 'entity',
-          faction: target.team,
+        this.buildEntitySegment(target),
+        { text: ' 发起「普通攻击」' },
+      ]
+      LoggerProvider.logger.addBattleLog({
+        turn: battle.currentTurn,
+        message: missSegs.map((s) => s.text).join(''),
+        segments: missSegs,
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: {
+          role: 'action',
+          entityId: target.id,
+          miss: true,
+          skillName: m.skillName,
         },
-        { text: ` 发起「普通攻击」` },
-      ],
-      category: isCritical
+      })
+      // 闪避结果作为 Sub 节点
+      LoggerProvider.logger.addBattleLog({
+        turn: battle.currentTurn,
+        message: '被闪避!',
+        segments: [{ text: '被闪避!', classStr: 'log-heal' }],
+        category: BATTLE_LOG_CATEGORIES.STATUS,
+        meta: {
+          role: 'sub',
+          miss: true,
+        },
+      })
+      return
+    }
+    const r = results[0]
+    const rawSuffix = `，造成 ${r.rawDamage} 点伤害`
+    const hitSegs: LogSegment[] = [
+      this.buildEntitySegment(source),
+      { text: ' 对 ' },
+      this.buildEntitySegment(target),
+      { text: ` 发起「普通攻击」${rawSuffix}` },
+    ]
+    LoggerProvider.logger.addBattleLog({
+      turn: battle.currentTurn,
+      message: hitSegs.map((s) => s.text).join(''),
+      segments: hitSegs,
+      category: m.isCrit
         ? BATTLE_LOG_CATEGORIES.CRIT
         : BATTLE_LOG_CATEGORIES.DAMAGE,
-    }
+      meta: {
+        role: 'action',
+        entityId: target.id,
+        hpBefore: r.hpBefore,
+        hpAfter: r.hpAfter,
+        damage: r.rawDamage,
+        crit: m.isCrit,
+        kill: !target.isAlive(),
+        skillName: m.skillName,
+      },
+    })
+    // result sub 行：最终伤害 + 气血变化
+    const dmgSegs: LogSegment[] = [
+      this.buildEntitySegment(target),
+      { text: ' 受到 ' },
+      this.buildValueSegment(r.damage, 'damage'),
+      { text: ` 点伤害  ${r.hpBefore} → ${r.hpAfter}` },
+    ]
+    LoggerProvider.logger.addBattleLog({
+      turn: battle.currentTurn,
+      message: dmgSegs.map((s) => s.text).join(''),
+      segments: dmgSegs,
+      category: BATTLE_LOG_CATEGORIES.DAMAGE,
+      meta: {
+        role: 'sub',
+        entityId: target.id,
+        hpBefore: r.hpBefore,
+        hpAfter: r.hpAfter,
+        damage: r.damage,
+      },
+    })
   }
   /**
    * 伤害结算 — 所有伤害路径的唯一执行入口
@@ -11064,7 +11228,6 @@ export class BattleExecutor {
     action: BattleAction,
     source: BattleEntity,
     target: BattleEntity,
-    turnNumber: number,
     battle: BattleData,
   ): Promise<void> {
     action.effects.push({
@@ -11084,31 +11247,16 @@ export class BattleExecutor {
     await this.animationManager.triggerMissImpactAndWait({
       targetId: target.id,
     })
-    const logParams = this.generateAttackLogParams(source, target, turnNumber, {
+    this.emitAttackLog(battle, {
+      type: 'attack',
+      source,
+      targets: [target],
+      skillName: '普通攻击',
       isMiss: true,
-    })
-    LoggerProvider.logger.addBattleLog({
-      turn: logParams.turn,
-      message: logParams.message,
-      segments: logParams.segments,
-      category: logParams.category,
-      meta: {
-        role: 'action',
-        entityId: target.id,
-        miss: true,
-        skillName: '普通攻击',
-      },
-    })
-    // 闪避结果作为 Sub 节点
-    LoggerProvider.logger.addBattleLog({
-      turn: turnNumber,
-      message: '被闪避!',
-      segments: [{ text: '被闪避!', classStr: 'log-heal' }],
-      category: BATTLE_LOG_CATEGORIES.STATUS,
-      meta: {
-        role: 'sub',
-        miss: true,
-      },
+      isCrit: false,
+      totalDamage: 0,
+      totalHeal: 0,
+      results: [],
     })
     LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}，被闪避`,
@@ -11165,46 +11313,25 @@ export class BattleExecutor {
       isCritical,
       isHeal: false,
     })
-    const logParams = this.generateAttackLogParams(
+    this.emitAttackLog(battle, {
+      type: 'attack',
       source,
-      target,
-      battle.currentTurn,
-      {
-        damage,
-        isCritical,
-      },
-    )
-    const rawSuffix = `，造成 ${rawDamage} 点伤害`
-    const targetPrefix = `[${ParticipantSideName[target.team]}]`
-    const targetFaction = target.team
-    LoggerProvider.logger.addBattleLog({
-      turn: logParams.turn,
-      message: logParams.message + rawSuffix,
-      segments: [...logParams.segments, { text: rawSuffix }],
-      category: logParams.category,
-      meta: {
-        role: 'action',
-        entityId: target.id,
-        hpBefore,
-        hpAfter,
-        damage: rawDamage,
-        crit: isCritical,
-        kill: !target.isAlive(),
-        skillName: '普通攻击',
-      },
-    })
-    // result sub 行：最终伤害 + 气血变化
-    LoggerProvider.logger.addBattleLog({
-      turn: battle.currentTurn,
-      message: `${targetPrefix}${target.name} 受到 ${damage} 点伤害  ${hpBefore} → ${hpAfter}`,
-      segments: [
-        { text: `${targetPrefix}${target.name}`, classStr: target.team === ParticipantSide.ALLY ? 'log-friendly' : 'log-hostile', kind: 'entity', faction: targetFaction },
-        { text: ' 受到 ' },
-        { text: `${damage}`, classStr: 'log-damage', kind: 'damage' },
-        { text: ` 点伤害  ${hpBefore} → ${hpAfter}` },
+      targets: [target],
+      skillName: '普通攻击',
+      isMiss: false,
+      isCrit: isCritical,
+      totalDamage: damage,
+      totalHeal: 0,
+      results: [
+        {
+          target,
+          hpBefore,
+          hpAfter,
+          damage,
+          heal: 0,
+          rawDamage,
+        },
       ],
-      category: BATTLE_LOG_CATEGORIES.DAMAGE,
-      meta: { role: 'sub', entityId: target.id, hpBefore, hpAfter, damage },
     })
     LoggerProvider.logger.addDebugLog(
       `普通攻击: ${source.name} → ${target.name}`,
@@ -11279,7 +11406,7 @@ export class BattleExecutor {
       if (critBuff) this.buffSystem.removeBuff(critBuff.id)
     }
     if (damageResult.isMiss) {
-      await this.handleMissAttack(action, source, target, currentTurn, battle)
+      await this.handleMissAttack(action, source, target, battle)
     } else {
       await this.handleHitAttack(action, source, target, damageResult, battle, record)
     }
@@ -11428,10 +11555,7 @@ export class BattleExecutor {
     const target = battle.participants.get(action.targetId)
     if (!source || !target) {
       LoggerProvider.logger.addDebugLog(
-        `执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`,
-      )
-      console.error(
-        `执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`,
+        `执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`, { level: LogLevel.ERROR },
       )
       return action
     }
@@ -11439,7 +11563,6 @@ export class BattleExecutor {
       try {
         // NOTE: 令牌模式 — 用局部 token 替代全局 toggle
         const damageToken = new DeferredDamageToken()
-        // ponytail: 主动技能执行时禁用 buffApplied 回调，避免与下方动画循环重复
         this.buffSystem.setBuffAppliedCallbackEnabled(false)
         const skillAction = this.skillManager.executeSkill(
           action.skillId,
@@ -11454,7 +11577,7 @@ export class BattleExecutor {
           // ponytail: early-return 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
           this.buffSystem.setBuffAppliedCallbackEnabled(true)
           LoggerProvider.logger.addDebugLog(
-            `技能执行失败: ${action.skillId} — ${skillAction.effects[0]?.description || '未知原因'}`,
+            `技能执行失败: ${action.skillId} — ${skillAction.effects[0]?.description || '未知原因'}`, { level: LogLevel.ERROR },
           )
           action.damage = 0
           action.heal = 0
@@ -11768,6 +11891,10 @@ export class BattleLifecycleManager {
       targetId: 'system',
       skillId: '',
       turn: battle.currentTurn || 1,
+      systemMeta: {
+        event: 'battle_end',
+        result: winner === ParticipantSide.ALLY ? 'win' : 'lose',
+      },
       effects: [
         {
           type: 'status',
@@ -14134,6 +14261,13 @@ export interface BattleAction {
   turn?: number
   /** 动作产生的效果列表 */
   effects: BattleEffect[]
+  /** 系统事件元数据（sourceId='system' 时使用，替代文本猜测） */
+  systemMeta?: {
+    /** 系统事件类型 */
+    event: 'battle_start' | 'battle_end'
+    /** 战斗结果（battle_end 时有效） */
+    result?: 'win' | 'lose'
+  }
   /** 扩展数据（步骤间传递的临时数据，如治疗溢出量） */
   extra?: BattleActionExtra
 }
@@ -14176,6 +14310,7 @@ export const BattleActionHelper = {
     critDamage?: number
     effects?: BattleEffect[]
     turn?: number
+    systemMeta?: BattleAction['systemMeta']
   }): BattleAction {
     return {
       id: this.generateId(options.type),
@@ -14195,6 +14330,7 @@ export const BattleActionHelper = {
       timestamp: Date.now(),
       turn: options.turn,
       effects: options.effects ?? [],
+      ...(options.systemMeta ? { systemMeta: options.systemMeta } : {}),
     }
   },
   /**
@@ -14231,6 +14367,7 @@ export const BattleActionHelper = {
     critDamage?: number
     effects?: BattleEffect[]
     turn?: number
+    systemMeta?: BattleAction['systemMeta']
   }): BattleAction {
     return this.create({ type: 'skill', ...options })
   },
@@ -23140,6 +23277,8 @@ export interface SkillConfig {
   steps: SkillStep[] // 技能步骤列表
   condition?: string // 施放条件
   skillType?: SkillType // 技能类型
+  /** 是否为普通攻击（显式契约，替代名称/结构启发式猜测） */
+  isNormalAttack?: boolean // 普通攻击标志
   triggerTimes?: string[] // 触发时机（被动技能专用）
   passiveCategory?: AtomicEffectType[] // 被动技能分类（数组，支持多分类）
   level?: number // 技能等级
@@ -24325,6 +24464,9 @@ export class BattleLogManager implements IBattleLogManager {
    */
   addDebugLog(message: string, options: DebugLogParams = {}): void {
     const { level = LogLevel.INFO, context, error } = options
+    if (level === LogLevel.ERROR) {
+      console.error(message, error)
+    }
     const entry: LogEntry = {
       index: this.indexCounter.next(),
       type: LogType.DEBUG,
@@ -24468,17 +24610,6 @@ export class BattleLogManager implements IBattleLogManager {
    */
   getFilteredLogs(): LogEntry[] {
     return this.getAllLogs().filter((log) => this.shouldDisplayLog(log))
-  }
-  /**
-   * 搜索战斗日志
-   */
-  searchBattleLogs(keyword: string): BattleLogEntry[] {
-    const lowerKeyword = keyword.toLowerCase()
-    return this.battleLogs.filter(
-      (log) =>
-        (log.source ?? '').toLowerCase().includes(lowerKeyword) ||
-        (log.target ?? '').toLowerCase().includes(lowerKeyword),
-    )
   }
   /**
    * 清除战斗日志
@@ -45431,6 +45562,8 @@ function generateLogSegments(
 }
 /**
  * 生成系统日志片段
+ * NOTE: 数据契约优先 — 系统事件的类别/级别由 BattleAction.systemMeta 显式声明，
+ *       不再解析 description 文本（文本只承载展示内容）。
  */
 function generateSystemLogSegments(action: BattleAction): {
   category: BattleLogCategory
@@ -45438,24 +45571,16 @@ function generateSystemLogSegments(action: BattleAction): {
   segments: LogSegment[]
 } {
   const description = action.effects[0]?.description || ''
-  if (description.includes('战斗开始')) {
+  const meta = action.systemMeta
+  // battle_start / battle_end → SYSTEM 类别；结果从 meta.result 读取，不猜文本
+  if (meta?.event === 'battle_start' || meta?.event === 'battle_end') {
     return {
       category: BATTLE_LOG_CATEGORIES.SYSTEM,
-      level: 'info',
+      level: meta.result === 'lose' ? 'warning' : 'info',
       segments: [{ text: description }],
     }
   }
-  if (
-    description.includes('战斗结束') ||
-    description.includes('胜利') ||
-    description.includes('失败')
-  ) {
-    return {
-      category: BATTLE_LOG_CATEGORIES.SYSTEM,
-      level: description.includes('胜利') ? 'info' : 'warning',
-      segments: [{ text: description }],
-    }
-  }
+  // 无 systemMeta 的系统 action（历史兼容）：仍按 SYSTEM 处理
   return {
     category: BATTLE_LOG_CATEGORIES.SYSTEM,
     level: 'info',
@@ -47985,22 +48110,19 @@ import {
   ATTRIBUTE_CODE,
   ModifierSourceType,
   ModifierType,
-  type Modifier,
 } from '@/domain/attribute/types'
 import {
   BattleParticipantImpl,
   type BattleParticipantData,
 } from '@/domain/battle/entity/BattleParticipantImpl'
 import { BattleEntity, ParticipantSide, BattleTriggerPhase } from '@/domain/battle/type/types'
-import type { CharacterStats } from '@/domain/character/types'
 import type {
   PassiveSkillConfig,
   PassiveSkillManager,
 } from '@/domain/skill/PassiveSkillManager'
-import type { SkillConfig, SkillStep } from '@/domain/skill/types'
+import type { SkillConfig } from '@/domain/skill/types'
 import type { Enemy } from '@/shared/types/enemy'
 import type { SceneData } from '@/shared/types/scene'
-import type { FormationConfig } from '@/shared/types/formation'
 import { Counter } from '@/shared/utils/Counter'
 import { DataProcessor } from '@/shared/utils/DataProcessor'
 import { toArray } from '@/shared/utils/Utils'
@@ -48011,8 +48133,6 @@ import passiveSkillsData from '@configs/skills/skill_passive.json'
 import guardianPassiveSkillsData from '@configs/skills/skill_passive_guardian.json'
 import passiveTestSkillsData from '@configs/skills/skill_passive_test.json'
 import skillsData from '@configs/skills/skills.json'
-import formationsData from '@configs/formations/formations.json'
-import { BuffAuraModifier } from '@/domain/buff/BuffScriptRegistry'
 const enemiesData = [
   ...(enemiesDataRaw as Enemy[]),
   ...(enemiesTestDataRaw as Enemy[]),
@@ -48167,37 +48287,6 @@ export class GameDataProcessor {
     }
     return participant
   }
-  /**
-   * 将光环 aura 修饰符分发到指定的参与者
-   * 由 BattleSystem.initialize 在 pending buff 循环后调用，处理 allies/enemies 光环
-   */
-  static applyAuraModifiersToParticipant(
-    target: BattleParticipantImpl,
-    sourceKey: string,
-    modifiers: BuffAuraModifier[],
-  ): void {
-    for (const mod of modifiers) {
-      const attrCode = mod.targetAttribute as ATTRIBUTE_CODE
-      let value = typeof mod.value === 'number' ? mod.value : 0
-      if (mod.type === ModifierType.PERCENTAGE && Math.abs(value) < 1) {
-        value = Math.round(value * 10000) / 100
-      }
-      const m: Modifier = {
-        sourceKey,
-        sourceType: ModifierSourceType.SKILL,
-        attribute: attrCode,
-        value,
-        type: mod.type,
-        description: sourceKey,
-      }
-      const attrData = target.getAttrVal(attrCode)
-      if (attrData) {
-        attrData.modifiers.push(m)
-        attrData.cachedVersion = -1
-      }
-    }
-    target.recalcAll()
-  }
   /** 将 triggerTimes 字符串映射到 BattleTriggerPhase */
   private static readonly TRIGGER_TIME_MAP: Record<string, BattleTriggerPhase> =
     {
@@ -48263,23 +48352,6 @@ export class GameDataProcessor {
     }
   }
   /**
-   * 从被动技能构建结构化修饰符模板列表
-   * 根据名称搜索敌人
-   */
-  static searchEnemiesByName(name: string, limit?: number): Enemy[] {
-    const cacheKey = `enemy_search_${name}_${limit}`
-    const cached = DataProcessor.getCachedData<Enemy[]>(cacheKey)
-    if (cached) return cached
-    const result = DataProcessor.search(enemiesData, {
-      fields: ['name'],
-      keyword: name,
-      fuzzy: true,
-    })
-    const limitedResult = limit ? result.slice(0, limit) : result
-    DataProcessor.setCachedData(cacheKey, limitedResult)
-    return limitedResult
-  }
-  /**
    * 根据场景ID获取场景数据
    */
   static findSceneById(sceneId: string): SceneData | undefined {
@@ -48291,34 +48363,6 @@ export class GameDataProcessor {
       DataProcessor.setCachedData(cacheKey, scene)
     }
     return scene
-  }
-  /**
-   * 获取场景中的敌人数据
-   */
-  static getSceneEnemies(
-    sceneId: string,
-    difficulty: 'easy' | 'normal' | 'hard' = 'easy',
-  ): Enemy[] {
-    const cacheKey = `scene_enemies_${sceneId}_${difficulty}`
-    const cached = DataProcessor.getCachedData<Enemy[]>(cacheKey)
-    if (cached) return cached
-    const scene = GameDataProcessor.findSceneById(sceneId)
-    if (!scene) return []
-    const enemyIds = scene.difficulties[difficulty]?.enemyIds || []
-    const enemies = enemyIds
-      .map((id) => {
-        const enemyCacheKey = `enemy_${id}`
-        const cachedEnemy = DataProcessor.getCachedData<Enemy>(enemyCacheKey)
-        if (cachedEnemy) return cachedEnemy
-        const enemy = DataProcessor.find(enemiesData, (e) => e.id === id)
-        if (enemy) {
-          DataProcessor.setCachedData(enemyCacheKey, enemy)
-        }
-        return enemy
-      })
-      .filter((enemy): enemy is Enemy => enemy !== undefined)
-    DataProcessor.setCachedData(cacheKey, enemies)
-    return enemies
   }
   /**
    * 根据技能ID查找技能
@@ -48341,57 +48385,6 @@ export class GameDataProcessor {
     return skill
   }
   /**
-   * 获取角色的技能信息
-   */
-  static getCharacterSkills(id: string): {
-    small?: SkillConfig[]
-    passive?: SkillConfig[]
-    ultimate?: SkillConfig[]
-  } {
-    if (!id) return {}
-    const cacheKey = `character_skills_${id}`
-    const cached = DataProcessor.getCachedData(cacheKey)
-    if (cached) return cached
-    const enemyCacheKey = `enemy_${id}`
-    const cachedEnemy = DataProcessor.getCachedData<Enemy>(enemyCacheKey)
-    const enemy =
-      cachedEnemy || DataProcessor.find(enemiesData, (e) => e.id === id)
-    if (!enemy) return {}
-    if (!cachedEnemy) {
-      DataProcessor.setCachedData(enemyCacheKey, enemy)
-    }
-    const skills: Record<string, SkillConfig[] | undefined> = {}
-    const smallIds = GameDataProcessor.normalizeSkillIds(enemy.skills?.small)
-    const passiveIds = GameDataProcessor.normalizeSkillIds(
-      enemy.skills?.passive,
-    )
-    const ultimateIds = GameDataProcessor.normalizeSkillIds(
-      enemy.skills?.ultimate,
-    )
-    if (smallIds.length > 0) {
-      skills.small = smallIds
-        .map((id) => GameDataProcessor.findSkillById(id))
-        .filter((s): s is SkillConfig => s !== undefined)
-    }
-    if (passiveIds.length > 0) {
-      skills.passive = passiveIds
-        .map((id) => GameDataProcessor.findSkillById(id))
-        .filter((s): s is SkillConfig => s !== undefined)
-    }
-    if (ultimateIds.length > 0) {
-      skills.ultimate = ultimateIds
-        .map((id) => GameDataProcessor.findSkillById(id))
-        .filter((s): s is SkillConfig => s !== undefined)
-    }
-    DataProcessor.setCachedData(cacheKey, skills)
-    return skills
-  }
-  /**
-   * 从被动技能中解析属性加成
-   * @param passiveSkills - 被动技能配置数组
-   * @returns 属性加成映射，包含来源详情
-   */
-  /**
    * 根据技能 ID 数组获取技能配置
    * @param skillIds - 技能 ID 数组
    * @returns SkillConfig[] - 技能配置数组
@@ -48413,230 +48406,6 @@ export class GameDataProcessor {
         return skill
       })
       .filter((skill): skill is SkillConfig => skill !== undefined)
-  }
-  /**
-   * 将技能 ID 标准化为数组格式
-   * @param skillIds - 技能 ID（字符串、字符串数组或对象）
-   * @returns 标准化后的技能 ID 数组
-   */
-  static normalizeSkillIds(
-    skillIds: string | string[] | object | undefined,
-  ): string[] {
-    if (!skillIds) return []
-    if (Array.isArray(skillIds)) {
-      // 过滤掉非字符串元素
-      return skillIds.filter((id) => typeof id === 'string')
-    }
-    if (typeof skillIds === 'string') {
-      return [skillIds]
-    }
-    // 如果是对象，返回空数组，防止出现[object Object]错误
-    console.warn(
-      '技能ID格式错误，预期字符串或字符串数组，实际为对象:',
-      skillIds,
-    )
-    return []
-  }
-  /**
-   * 过滤活跃角色
-   */
-  static filterActiveCharacters(
-    characters: CharacterStats[],
-  ): CharacterStats[] {
-    return DataProcessor.filter(characters, {
-      condition: (char) => char.enabled === true,
-      sortBy: 'speed',
-      sortDirection: 'desc',
-    })
-  }
-  /**
-   * 根据ID查找角色
-   */
-  static findCharacterById(
-    characters: CharacterStats[],
-    enemyParty: CharacterStats[],
-    characterId: string,
-  ): CharacterStats | undefined {
-    return (
-      DataProcessor.find(characters, (c) => c.id === characterId) ||
-      DataProcessor.find(enemyParty, (e) => e.id === characterId)
-    )
-  }
-  /**
-   * 根据名称查找角色
-   */
-  static findCharacterByName(
-    characters: CharacterStats[],
-    enemyParty: CharacterStats[],
-    name: string,
-  ): CharacterStats | undefined {
-    return (
-      DataProcessor.find(characters, (c) => c.name === name) ||
-      DataProcessor.find(enemyParty, (e) => e.name === name)
-    )
-  }
-  /**
-   * 计算角色属性加成
-   */
-  static calculateStatBonus(character: CharacterStats, stat: string): number {
-    if (!character.buffs) return 0
-    const bonuses = character.buffs.filter((buff) => !buff.isPositive)
-    if (stat === ATTRIBUTE_CODE.attackBonus) return bonuses.length * 10
-    if (stat === ATTRIBUTE_CODE.defenseBonus) return bonuses.length * 5
-    return 0
-  }
-  /**
-   * 计算伤害加成
-   */
-  static calculateDamageBonus(character: CharacterStats): number {
-    if (!character.buffs) return 0
-    const bonuses = character.buffs.filter((buff) => buff.isPositive)
-    return bonuses.length * 15
-  }
-  /**
-   * 计算最终属性值
-   */
-  static calculateFinalStat(character: CharacterStats, stat: string): number {
-    const base = stat === 'attack' ? character.attack : character.defense
-    const bonus = GameDataProcessor.calculateStatBonus(character, stat)
-    return Math.floor(base * (1 + bonus / 100))
-  }
-  /**
-   * 验证战斗角色数据
-   */
-  static validateBattleCharacter(character: CharacterStats): {
-    isValid: boolean
-    errors: string[]
-  } {
-    return DataProcessor.validate(character, [
-      { field: 'id', type: 'required', message: '角色ID是必填字段' },
-      { field: 'name', type: 'required', message: '角色名称是必填字段' },
-      {
-        field: 'level',
-        type: 'number',
-        min: 1,
-        max: 100,
-        message: '等级必须在1-100之间',
-      },
-      {
-        field: 'maxHp',
-        type: 'number',
-        min: 1,
-        message: '最大气血值必须大于0',
-      },
-      {
-        field: 'currentHp',
-        type: 'number',
-        min: 0,
-        message: '当前气血值不能为负数',
-      },
-      { field: 'attack', type: 'number', min: 0, message: '攻击力不能为负数' },
-      { field: 'defense', type: 'number', min: 0, message: '防御力不能为负数' },
-      { field: 'speed', type: 'number', min: 0, message: '速度不能为负数' },
-    ])
-  }
-  /**
-   * 获取角色被动技能
-   */
-  static getCharacterPassiveSkill(character: CharacterStats): string {
-    const skills = GameDataProcessor.getCharacterSkills(
-      character.originalId || '',
-    )
-    return skills.passive?.map((s) => s.name).join(', ') || ''
-  }
-  /**
-   * 获取角色小技能
-   */
-  static getCharacterSmallSkill(character: CharacterStats): string {
-    const skills = GameDataProcessor.getCharacterSkills(
-      character.originalId || '',
-    )
-    return skills.small?.map((s) => s.name).join(', ') || ''
-  }
-  /**
-   * 获取角色终极技能
-   */
-  static getCharacterUltimateSkill(character: CharacterStats): string {
-    const skills = GameDataProcessor.getCharacterSkills(
-      character.originalId || '',
-    )
-    return skills.ultimate?.map((s) => s.name).join(', ') || ''
-  }
-  /**
-   * 分组场景敌人数据
-   */
-  static groupEnemiesByScene(): Array<{ scene: SceneData; enemies: Enemy[] }> {
-    const cacheKey = 'grouped_enemies'
-    const cached = DataProcessor.getCachedData<any[]>(cacheKey)
-    if (cached) return cached
-    const grouped = scenesData
-      .map((scene) => {
-        const sceneEnemies = scene.difficulties.easy.enemyIds
-          .map((id: string) => {
-            const enemies = GameDataProcessor.findEnemiesByIds([id])
-            return enemies.length > 0 ? enemies[0] : undefined
-          })
-          .filter((enemy): enemy is Enemy => enemy !== undefined)
-        return { scene, enemies: sceneEnemies }
-      })
-      .filter((group) => group.enemies.length > 0)
-    DataProcessor.setCachedData(cacheKey, grouped)
-    return grouped
-  }
-  /**
-   * 搜索和过滤敌人数据
-   */
-  static searchAndFilterEnemies(
-    searchQuery: string,
-    sceneId?: string,
-  ): { grouped: Array<{ scene: SceneData; enemies: Enemy[] }>; all: Enemy[] } {
-    let allEnemies = [...enemiesData]
-    // 按名称搜索
-    if (searchQuery.trim()) {
-      allEnemies = DataProcessor.search(allEnemies, {
-        fields: ['name'],
-        keyword: searchQuery,
-        fuzzy: true,
-      })
-    }
-    // 按场景过滤
-    if (sceneId) {
-      const scene = GameDataProcessor.findSceneById(sceneId)
-      if (scene) {
-        const sceneEnemyIds = new Set([
-          ...scene.difficulties.easy.enemyIds,
-          ...scene.difficulties.normal.enemyIds,
-          ...scene.difficulties.hard.enemyIds,
-        ])
-        allEnemies = allEnemies.filter((enemy) => sceneEnemyIds.has(enemy.id))
-      }
-    }
-    const grouped = scenesData
-      .map((scene) => {
-        const sceneEnemies = allEnemies.filter(
-          (enemy) =>
-            scene.difficulties.easy.enemyIds.includes(enemy.id) ||
-            scene.difficulties.normal.enemyIds.includes(enemy.id) ||
-            scene.difficulties.hard.enemyIds.includes(enemy.id),
-        )
-        return { scene, enemies: sceneEnemies }
-      })
-      .filter((group) => group.enemies.length > 0)
-    return { grouped, all: allEnemies }
-  }
-  /**
-   * 清除所有缓存
-   */
-  static clearCache(): void {
-    DataProcessor.clearCache()
-  }
-  /** 获取所有阵型配置 */
-  static getFormationsData(): FormationConfig[] {
-    return formationsData as FormationConfig[]
-  }
-  /** 根据 ID 查找阵型配置 */
-  static findFormationById(id: string): FormationConfig | undefined {
-    return (formationsData as FormationConfig[]).find(f => f.id === id)
   }
 }
 
@@ -49707,7 +49476,8 @@ export function getVisualEffect(
   "include": [
     "src/domain/**/*.ts",
     "src/application/**/*.ts",
-    "src/infrastructure/**/*.ts"
+    "src/infrastructure/**/*.ts",
+    "src/**/*.d.ts"
   ],
   "exclude": [
     "src/main.ts"

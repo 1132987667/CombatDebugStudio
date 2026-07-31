@@ -1485,6 +1485,7 @@
   },
   {
     "id": "buff_guaranteed_crit",
+    "polarity": "positive",
     "name": "必暴",
     "description": "下一次攻击必定暴击",
     "duration": 1,
@@ -1496,6 +1497,7 @@
   },
   {
     "id": "buff_shield_test",
+    "polarity": "positive",
     "name": "护盾",
     "description": "吸收伤害的护盾",
     "duration": 1,
@@ -1508,6 +1510,7 @@
   },
   {
     "id": "buff_attack_up_20",
+    "polarity": "positive",
     "name": "攻击提升",
     "description": "攻击力提升20%",
     "duration": 2,
@@ -1519,6 +1522,7 @@
   },
   {
     "id": "buff_poison_test",
+    "polarity": "negative",
     "name": "中毒",
     "description": "每回合损失10%最大气血值",
     "duration": 3,
@@ -1533,6 +1537,7 @@
   },
   {
     "id": "buff_shenfeng",
+    "polarity": "positive",
     "name": "神锋",
     "description": "每层神锋增加真实伤害比例${value}%",
     "duration": 1,
@@ -1548,6 +1553,7 @@
   },
   {
     "id": "buff_xunlei",
+    "polarity": "positive",
     "name": "迅雷",
     "description": "每层迅雷增加下个回合内出手速度4%",
     "duration": 1,
@@ -1563,6 +1569,7 @@
   },
   {
     "id": "buff_extra_action",
+    "polarity": "positive",
     "name": "再次行动",
     "description": "可以再次行动",
     "duration": 1,
@@ -1581,6 +1588,7 @@
   },
   {
     "id": "buff_kuilan",
+    "polarity": "negative",
     "name": "溃烂",
     "description": "下回合气血回复减少40%",
     "duration": 1,
@@ -1596,6 +1604,7 @@
   },
   {
     "id": "buff_daodi",
+    "polarity": "negative",
     "name": "倒地",
     "description": "下回合无法攻击",
     "duration": 1,
@@ -1612,6 +1621,7 @@
   },
   {
     "id": "buff_fengyin",
+    "polarity": "negative",
     "name": "封印",
     "description": "下回合无法使用主动型战技",
     "duration": 1,
@@ -1628,6 +1638,7 @@
   },
   {
     "id": "buff_jiaoxie",
+    "polarity": "negative",
     "name": "缴械",
     "description": "下回合无法使用武器",
     "duration": 1,
@@ -1644,6 +1655,7 @@
   },
   {
     "id": "buff_lianji",
+    "polarity": "positive",
     "name": "连击",
     "description": "每层连击增加下个回合内连击概率4%",
     "duration": 1,
@@ -1659,6 +1671,7 @@
   },
   {
     "id": "buff_fanji",
+    "polarity": "positive",
     "name": "反击",
     "description": "每层反击增加下个回合内反击概率4%",
     "duration": 1,
@@ -1674,6 +1687,7 @@
   },
   {
     "id": "buff_yishang",
+    "polarity": "negative",
     "name": "易伤",
     "description": "每层易伤增加下个回合内受到伤害4点",
     "duration": 1,
@@ -1689,6 +1703,7 @@
   },
   {
     "id": "buff_xuruo",
+    "polarity": "negative",
     "name": "虚弱",
     "description": "每层虚弱减少下个回合内造成伤害3%",
     "duration": 1,
@@ -1704,6 +1719,7 @@
   },
   {
     "id": "buff_chihuan",
+    "polarity": "negative",
     "name": "迟缓",
     "description": "每层迟缓减少下个回合内出手速度3%",
     "duration": 1,
@@ -1719,6 +1735,7 @@
   },
   {
     "id": "buff_jiansu",
+    "polarity": "negative",
     "name": "减速",
     "description": "每层减速减少下个回合内闪避概率3%",
     "duration": 1,
@@ -1734,6 +1751,7 @@
   },
   {
     "id": "buff_mumang",
+    "polarity": "negative",
     "name": "目盲",
     "description": "每层目盲减少下个回合内命中概率3%",
     "duration": 1,
@@ -1749,6 +1767,7 @@
   },
   {
     "id": "buff_pojia",
+    "polarity": "negative",
     "name": "破甲",
     "description": "每层破甲减少下个回合内物理防御3%",
     "duration": 1,
@@ -1764,6 +1783,7 @@
   },
   {
     "id": "buff_fali",
+    "polarity": "negative",
     "name": "乏力",
     "description": "每层乏力减少下个回合内物理攻击3%",
     "duration": 1,
@@ -1779,6 +1799,7 @@
   },
   {
     "id": "buff_liuxue",
+    "polarity": "negative",
     "name": "流血",
     "description": "下个回合气血减少${value}，为流血伤害",
     "duration": 1,
@@ -1797,6 +1818,7 @@
   },
   {
     "id": "buff_zhongdu",
+    "polarity": "negative",
     "name": "中毒",
     "description": "下个回合开始气血减少${value}%，为中毒伤害",
     "duration": 1,
@@ -1815,6 +1837,7 @@
   },
   {
     "id": "buff_qingxin",
+    "polarity": "positive",
     "name": "清心",
     "description": "每层清心增加下个回合内免疫减益概率8%",
     "duration": 1,
@@ -1830,6 +1853,7 @@
   },
   {
     "id": "buff_shipo",
+    "polarity": "positive",
     "name": "识破",
     "description": "每层识破增加下个回合内会心概率4%",
     "duration": 1,
@@ -1845,6 +1869,7 @@
   },
   {
     "id": "buff_piaomiao",
+    "polarity": "positive",
     "name": "飘渺",
     "description": "每层飘渺增加下个回合内闪避率4%",
     "duration": 1,
@@ -1860,6 +1885,7 @@
   },
   {
     "id": "buff_jiangu",
+    "polarity": "positive",
     "name": "坚固",
     "description": "每层坚固增加下个回合内物理防御增幅4%",
     "duration": 1,
@@ -1875,6 +1901,7 @@
   },
   {
     "id": "buff_yongwu",
+    "polarity": "positive",
     "name": "勇武",
     "description": "每层勇武增加下个回合内物理攻击增幅5%",
     "duration": 1,
@@ -1890,6 +1917,7 @@
   },
   {
     "id": "buff_lingfu",
+    "polarity": "positive",
     "name": "灵复",
     "description": "每层灵复增加下个回合开始回复灵力3%",
     "duration": 1,
@@ -1908,6 +1936,7 @@
   },
   {
     "id": "buff_zaisheng",
+    "polarity": "positive",
     "name": "再生",
     "description": "每层再生增加下个回合开始回复气血3%",
     "duration": 1,

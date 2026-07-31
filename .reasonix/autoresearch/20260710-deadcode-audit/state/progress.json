@@ -1,0 +1,25 @@
+{
+  "task_id": "20260710-deadcode-audit",
+  "goal": "验证报告声称的 5 个猜测型函数并修复",
+  "verdict": "5 个声称中 2 个不存在（detectTurnAnnotation/isFatal，延续虚构模式），3 个真实存在",
+  "real_functions": [
+    {"name": "isNormalAttackSkill", "file": "src/domain/battle/service/BattleExecutor.ts", "issue": "名称/ID/结构三重启发式，结构兜底会误中 3 个被动技能"},
+    {"name": "generateSystemLogSegments", "file": "src/shared/types/battle-log.ts", "issue": "description.includes 文本猜测；战斗开始分支是死分支，失败分支永不命中（模板恒含胜利者）"},
+    {"name": "guessPolarity", "file": "src/shared/types/buff-classification.ts", "issue": "136 个 buff 中 29 个缺 polarity 字段走猜测"}
+  ],
+  "fixes": [
+    {"file": "src/domain/skill/types.ts", "change": "SkillConfig 加 isNormalAttack?: boolean 字段"},
+    {"file": "configs/skills/skills.json", "change": "普攻 skill_normal_attack 标 isNormalAttack: true"},
+    {"file": "src/domain/battle/service/BattleExecutor.ts", "change": "isNormalAttackSkill 简化为读字段，删除启发式"},
+    {"file": "src/domain/battle/type/types.ts", "change": "BattleAction 加 systemMeta {event,result} + BattleActionHelper 透传"},
+    {"file": "src/domain/battle/service/BattleLifecycleManager.ts", "change": "战斗结束注入 systemMeta {event:'battle_end', result}"},
+    {"file": "src/shared/types/battle-log.ts", "change": "generateSystemLogSegments 改读 systemMeta 契约"},
+    {"file": "configs/buffs/buffs.json", "change": "29 个缺失 polarity 的 buff 补全（15 positive / 14 negative）"}
+  ],
+  "verification": {
+    "typecheck": "0 错误（基线 16 存量已被工作区预先存在的修复消除，本改动未新增）",
+    "tests": "20 文件 / 170 测试全部通过",
+    "buff_polarity_coverage": "136/136 = 100%（修改前 107/136 = 78.7%）"
+  },
+  "completion_summary": "报告的 5 个猜测型函数中 2 个不存在；3 个真实存在且均已按数据契约方向修复：isNormalAttackSkill 改显式字段、generateSystemLogSegments 改 systemMeta 契约（顺带消除了死分支和永不命中的失败分支）、guessPolarity 通过补全配置数据实现 100% 覆盖。"
+}

@@ -366,6 +366,14 @@ export interface BattleAction {
   /** 动作产生的效果列表 */
   effects: BattleEffect[]
 
+  /** 系统事件元数据（sourceId='system' 时使用，替代文本猜测） */
+  systemMeta?: {
+    /** 系统事件类型 */
+    event: 'battle_start' | 'battle_end'
+    /** 战斗结果（battle_end 时有效） */
+    result?: 'win' | 'lose'
+  }
+
   /** 扩展数据（步骤间传递的临时数据，如治疗溢出量） */
   extra?: BattleActionExtra
 }
@@ -411,6 +419,7 @@ export const BattleActionHelper = {
     critDamage?: number
     effects?: BattleEffect[]
     turn?: number
+    systemMeta?: BattleAction['systemMeta']
   }): BattleAction {
     return {
       id: this.generateId(options.type),
@@ -430,6 +439,7 @@ export const BattleActionHelper = {
       timestamp: Date.now(),
       turn: options.turn,
       effects: options.effects ?? [],
+      ...(options.systemMeta ? { systemMeta: options.systemMeta } : {}),
     }
   },
 
@@ -468,6 +478,7 @@ export const BattleActionHelper = {
     critDamage?: number
     effects?: BattleEffect[]
     turn?: number
+    systemMeta?: BattleAction['systemMeta']
   }): BattleAction {
     return this.create({ type: 'skill', ...options })
   },

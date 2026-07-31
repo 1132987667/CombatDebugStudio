@@ -838,6 +838,8 @@ function generateLogSegments(
 
 /**
  * 生成系统日志片段
+ * NOTE: 数据契约优先 — 系统事件的类别/级别由 BattleAction.systemMeta 显式声明，
+ *       不再解析 description 文本（文本只承载展示内容）。
  */
 function generateSystemLogSegments(action: BattleAction): {
   category: BattleLogCategory
@@ -845,27 +847,18 @@ function generateSystemLogSegments(action: BattleAction): {
   segments: LogSegment[]
 } {
   const description = action.effects[0]?.description || ''
+  const meta = action.systemMeta
 
-  if (description.includes('战斗开始')) {
+  // battle_start / battle_end → SYSTEM 类别；结果从 meta.result 读取，不猜文本
+  if (meta?.event === 'battle_start' || meta?.event === 'battle_end') {
     return {
       category: BATTLE_LOG_CATEGORIES.SYSTEM,
-      level: 'info',
+      level: meta.result === 'lose' ? 'warning' : 'info',
       segments: [{ text: description }],
     }
   }
 
-  if (
-    description.includes('战斗结束') ||
-    description.includes('胜利') ||
-    description.includes('失败')
-  ) {
-    return {
-      category: BATTLE_LOG_CATEGORIES.SYSTEM,
-      level: description.includes('胜利') ? 'info' : 'warning',
-      segments: [{ text: description }],
-    }
-  }
-
+  // 无 systemMeta 的系统 action（历史兼容）：仍按 SYSTEM 处理
   return {
     category: BATTLE_LOG_CATEGORIES.SYSTEM,
     level: 'info',

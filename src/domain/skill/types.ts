@@ -468,6 +468,8 @@ export interface SkillConfig {
   steps: SkillStep[] // 技能步骤列表
   condition?: string // 施放条件
   skillType?: SkillType // 技能类型
+  /** 是否为普通攻击（显式契约，替代名称/结构启发式猜测） */
+  isNormalAttack?: boolean // 普通攻击标志
   triggerTimes?: string[] // 触发时机（被动技能专用）
   passiveCategory?: AtomicEffectType[] // 被动技能分类（数组，支持多分类）
   level?: number // 技能等级

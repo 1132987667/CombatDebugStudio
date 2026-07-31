@@ -24,22 +24,19 @@ export class HitReductionDebuff extends BaseBuffScript {
     this.log(context, '命中率恢复正常')
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
-    // 可以添加随时间变化的逻辑，比如命中率逐渐恢复
-    const elapsed = context.getElapsedTime()
-    const recoveryRate = this.getConfigValue(context, 'recoveryRate', 0.05) // 每秒恢复5%
-    
-    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
-      const currentReduction = context.getVariable<number>('hitReduction') || 0.3
-      const newReduction = Math.max(currentReduction - recoveryRate, 0)
-      
-      if (newReduction < currentReduction) {
-        // 更新命中率降低效果
-        context.removeModifiers(ATTRIBUTE_CODE.hit)
-        this.addModifier(context, ATTRIBUTE_CODE.hit, -newReduction, ModifierType.MULTIPLICATIVE)
-        context.setVariable('hitReduction', newReduction)
-        this.log(context, `命中率逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
-      }
+  protected _onUpdate(context: BuffContext): void {
+    // 每回合逐渐恢复命中率
+    const recoveryRate = this.getConfigValue(context, 'recoveryRate', 0.05) // 每回合恢复5%
+
+    const currentReduction = context.getVariable<number>('hitReduction') || 0.3
+    const newReduction = Math.max(currentReduction - recoveryRate, 0)
+
+    if (newReduction < currentReduction) {
+      // 更新命中率降低效果
+      context.removeModifiers(ATTRIBUTE_CODE.hit)
+      this.addModifier(context, ATTRIBUTE_CODE.hit, -newReduction, ModifierType.MULTIPLICATIVE)
+      context.setVariable('hitReduction', newReduction)
+      this.log(context, `命中率逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
     }
   }
 

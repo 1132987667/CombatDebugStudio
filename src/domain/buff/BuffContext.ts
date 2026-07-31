@@ -7,7 +7,6 @@ export class BuffContext {
   public characterId: string = ''
   public instanceId: string = ''
   public config: BuffConfig = {} as BuffConfig
-  public startTime: number = 0
   public variables = new Map<string, string | number | boolean>()
   /** 当前回合号（由 updatePerTurn 注入，供脚本 onUpdate 读取） */
   public currentTurn: number = 0
@@ -29,7 +28,6 @@ export class BuffContext {
     this.characterId = characterId
     this.instanceId = instanceId
     this.config = config
-    this.startTime = Date.now()
     this.variables.clear()
     if (buffSystem) this._buffSystem = buffSystem
   }
@@ -38,19 +36,8 @@ export class BuffContext {
     this.characterId = ''
     this.instanceId = ''
     this.config = {} as BuffConfig
-    this.startTime = 0
     this.variables.clear()
     this._buffSystem = null
-  }
-
-  /**
-   * 获取流逝时间（毫秒）
-   * 用于 Buff 脚本中基于实时时间的逻辑（如 DOT 每 2 秒触发一次）。
-   * ponytail: 回合制系统的主要计时由 `updatePerTurn` 驱动（回合递减），
-   *           但部分持续效果（毒/hot）使用实时时间实现平滑触发。两套体系并存。
-   */
-  public getElapsedTime(): number {
-    return Date.now() - this.startTime
   }
 
   public setVariable(key: string, value: string | number | boolean): void {

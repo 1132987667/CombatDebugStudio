@@ -9,7 +9,7 @@
  * - 一致性：classStr 和 hover 在同一处决定
  */
 
-import type { LogSegment, LogSegmentHover, NarrativeBlock } from '@/shared/types/battle-log'
+import { LogSegment, LogSegmentHover, NarrativeBlock, NarrativeBlockType } from '@/shared/types/battle-log'
 import {
   type BuffClassificationInput,
 } from '@/shared/types/buff-classification'
@@ -89,18 +89,18 @@ export function blocksToText(blocks: NarrativeBlock[]): string {
   const lines: string[] = []
   for (const b of blocks) {
     switch (b.type) {
-      case 'battle-header':
+      case NarrativeBlockType.BATTLE_HEADER:
         lines.push('═══════════════════════════════════════════')
         lines.push(segsText(b.segments))
         lines.push('═══════════════════════════════════════════')
         lines.push('')
         break
-      case 'round':
+      case NarrativeBlockType.ROUND:
         lines.push(b.turn === 0
           ? `─────────────────────── 战斗开始 ───────────────────────`
           : `─────────────────────── 第 ${b.turn} 回合${b.tag ? ` · ${b.tag}` : ''} ───────────────────────`)
         break
-      case 'action':
+      case NarrativeBlockType.ACTION:
         lines.push(`◆ ${segsText(b.header)}`)
         if (b.result) lines.push(`  ${segsText(b.result)}`)
         for (let k = 0; k < b.subs.length; k++) {
@@ -108,21 +108,21 @@ export function blocksToText(blocks: NarrativeBlock[]): string {
           lines.push(`  ${prefix} ${segsText(b.subs[k])}`)
         }
         break
-      case 'settlement':
+      case NarrativeBlockType.SETTLEMENT:
         lines.push('')
         lines.push('  ── 回合结算 ──')
         for (const line of b.lines) lines.push(`    ${segsText(line)}`)
         break
-      case 'snapshot':
+      case NarrativeBlockType.SNAPSHOT:
         lines.push('')
         lines.push('  ── 态势 ──')
         for (const line of b.lines) lines.push(`    ${segsText(line)}`)
         break
-      case 'section':
+      case NarrativeBlockType.SECTION:
         lines.push(`【${b.title}】`)
         for (const line of b.lines) lines.push(`  ${segsText(line)}`)
         break
-      case 'summary':
+      case NarrativeBlockType.SUMMARY:
         lines.push('')
         lines.push('═══════════════════════════════════════════')
         for (const line of b.lines) lines.push(segsText(line))
@@ -286,15 +286,15 @@ function segsToHtml(segs: LogSegment[]): string {
 
 function blockToHtml(b: NarrativeBlock): string {
   switch (b.type) {
-    case 'battle-header':
+    case NarrativeBlockType.BATTLE_HEADER:
       return `<div class="nb nb--battle-header"><span class="rule rule--double"></span>` +
         `<div class="battle-line">${segsToHtml(b.segments)}</div>` +
         `<span class="rule rule--double"></span></div>`
-    case 'round':
+    case NarrativeBlockType.ROUND:
       return `<div class="nb nb--round"><span class="rule"></span>` +
         `<span class="round-label">第 ${b.turn} 回合${b.tag ? ` · ${escapeHtml(b.tag)}` : ''}</span>` +
         `<span class="rule"></span></div>`
-    case 'action': {
+    case NarrativeBlockType.ACTION: {
       let html = `<div class="nb nb--action"><div class="action-header">` +
         `<span class="glyph">◆</span>${segsToHtml(b.header)}</div>`
       if (b.result) html += `<div class="action-result">${segsToHtml(b.result)}</div>`
@@ -304,18 +304,18 @@ function blockToHtml(b: NarrativeBlock): string {
       })
       return html + '</div>'
     }
-    case 'settlement':
+    case NarrativeBlockType.SETTLEMENT:
       return `<div class="nb nb--settlement"><div class="sub-header">` +
         `<span class="rule rule--thin"></span>回合结算<span class="rule rule--thin"></span></div>` +
         b.lines.map(l => `<div class="indent-line">${segsToHtml(l)}</div>`).join('') + '</div>'
-    case 'snapshot':
+    case NarrativeBlockType.SNAPSHOT:
       return `<div class="nb nb--snapshot"><div class="sub-header">` +
         `<span class="rule rule--thin"></span>态势<span class="rule rule--thin"></span></div>` +
         b.lines.map(l => `<div class="indent-line">${segsToHtml(l)}</div>`).join('') + '</div>'
-    case 'section':
+    case NarrativeBlockType.SECTION:
       return `<div class="nb nb--section"><div class="section-title">【${escapeHtml(b.title)}】</div>` +
         b.lines.map(l => `<div class="indent-line">${segsToHtml(l)}</div>`).join('') + '</div>'
-    case 'summary':
+    case NarrativeBlockType.SUMMARY:
       return `<div class="nb nb--summary"><span class="rule rule--double"></span>` +
         `<div class="summary-content">` +
         b.lines.map(l => `<div class="summary-line">${segsToHtml(l)}</div>`).join('') +

@@ -950,9 +950,9 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       const hasEffectPlan = buffResolved?.effectPlan && buffResolved.effectPlan.length > 0
 
       if (hasScript) {
-        // PATH A：脚本 onUpdate（deltaTime 传 0，脚本从 context.currentTurn 读回合）
+        // PATH A：脚本 onUpdate（每回合一次，脚本从 context.currentTurn 读回合号）
         BuffErrorBoundary.wrap(() => {
-          instance.script.onUpdate(instance.context, 0)
+          instance.script.onUpdate(instance.context)
         })
       } else if (hasEffectPlan) {
         // PATH B：effectPlan onTick（有错误边界）
@@ -1149,8 +1149,6 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       this.onAttributeChange(characterId)
     }
   }
-
-  public update(deltaTime: number): void { }
 
   public getBuffNameByInstanceId(instanceId: string): string | null {
     const instance = this.buffInstances.get(instanceId)

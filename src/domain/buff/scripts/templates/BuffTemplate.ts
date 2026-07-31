@@ -11,7 +11,6 @@ import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 export abstract class DamageOverTimeTemplate extends BaseBuffScript {
   protected abstract getDamageCategory(): string
   protected abstract getBaseDamage(): number
-  protected abstract getDamageInterval(): number
   protected abstract getDebuffName(): string
 
   protected _onApply(context: BuffContext): void {
@@ -23,15 +22,8 @@ export abstract class DamageOverTimeTemplate extends BaseBuffScript {
       'baseDamage',
       this.getBaseDamage(),
     )
-    const damageInterval = this.getConfigValue(
-      context,
-      'damageInterval',
-      this.getDamageInterval(),
-    )
 
     context.setVariable('baseDamage', baseDamage)
-    context.setVariable('damageInterval', damageInterval)
-    context.setVariable('lastDamageTime', 0)
     context.setVariable('damageCategory', this.getDamageCategory())
   }
 
@@ -39,33 +31,25 @@ export abstract class DamageOverTimeTemplate extends BaseBuffScript {
     this.log(context, `${this.getDebuffName()}效果消失`)
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
-    const elapsed = context.getElapsedTime()
-    const lastDamageTime = context.getVariable<number>('lastDamageTime') || 0
-    const damageInterval =
-      context.getVariable<number>('damageInterval') || this.getDamageInterval()
+  protected _onUpdate(context: BuffContext): void {
+    const baseDamage =
+      context.getVariable<number>('baseDamage') || this.getBaseDamage()
+    const damageMultiplier = this.getConfigValue(
+      context,
+      'damageMultiplier',
+      1.0,
+    )
 
-    // 每隔一段时间造成伤害
-    if (elapsed - lastDamageTime >= damageInterval) {
-      const baseDamage =
-        context.getVariable<number>('baseDamage') || this.getBaseDamage()
-      const damageMultiplier = this.getConfigValue(
-        context,
-        'damageMultiplier',
-        1.0,
-      )
+    // 每回合造成一次伤害，伤害随回合数递增
+    const stacks = (context.getVariable<number>('damageStacks') ?? 0) + 1
+    const currentDamage = Math.floor(
+      baseDamage * Math.pow(damageMultiplier, stacks),
+    )
 
-      // 计算当前伤害（随时间递增）
-      const stacks = Math.floor(elapsed / damageInterval)
-      const currentDamage = Math.floor(
-        baseDamage * Math.pow(damageMultiplier, stacks),
-      )
+    this.log(context, `${this.getDebuffName()}造成 ${currentDamage} 点伤害`)
+    // 这里应该调用角色的伤害方法
 
-      this.log(context, `${this.getDebuffName()}造成 ${currentDamage} 点伤害`)
-      // 这里应该调用角色的伤害方法
-
-      context.setVariable('lastDamageTime', elapsed)
-    }
+    context.setVariable('damageStacks', stacks)
   }
 
   protected _onRefresh(context: BuffContext): void {
@@ -119,7 +103,7 @@ export abstract class StatusEffectTemplate extends BaseBuffScript {
     this.log(context, `${this.getEffectName()}效果消失`)
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+  protected _onUpdate(context: BuffContext): void {
     // 状态效果通常不需要随时间变化
   }
 
@@ -175,7 +159,6 @@ export class BuffTemplateGenerator {
     buffId: string,
     damageCategory: string,
     baseDamage: number,
-    damageInterval: number,
     debuffName: string,
   ): typeof BaseBuffScript {
     return class extends DamageOverTimeTemplate {
@@ -185,9 +168,6 @@ export class BuffTemplateGenerator {
       }
       protected getBaseDamage(): number {
         return baseDamage
-      }
-      protected getDamageInterval(): number {
-        return damageInterval
       }
       protected getDebuffName(): string {
         return debuffName

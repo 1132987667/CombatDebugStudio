@@ -40,16 +40,13 @@ export class MountainGodBuff extends BaseBuffScript {
     this.log(context, '山神之力消散')
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
-    // 每秒钟恢复少量气血值
-    const elapsed = context.getElapsedTime()
-    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
-      const regeneration = this.getConfigValue(context, 'regeneration', 5)
-      this.log(context, `山神的祝福：恢复 ${regeneration} 气血值`)
-      this.triggerEvent(context, EffectType.HEAL, {
-        amount: regeneration,
-      })
-    }
+  protected _onUpdate(context: BuffContext): void {
+    // 每回合恢复少量气血值
+    const regeneration = this.getConfigValue(context, 'regeneration', 5)
+    this.log(context, `山神的祝福：恢复 ${regeneration} 气血值`)
+    this.triggerEvent(context, EffectType.HEAL, {
+      amount: regeneration,
+    })
   }
 
   protected _onRefresh(context: BuffContext): void {

@@ -21,41 +21,33 @@ export class PoisonDebuff extends BaseBuffScript {
     // 记录初始伤害值
     const baseDamage = this.getConfigValue(context, 'baseDamage', 10)
     context.setVariable('baseDamage', baseDamage)
-    context.setVariable('lastDamageTime', 0)
   }
 
   protected _onRemove(context: BuffContext): void {
     this.log(context, '毒素效果消失')
   }
 
-  protected _onUpdate(context: BuffContext, _deltaTime: number): void {
-    const elapsed = context.getElapsedTime()
-    const lastDamageTime = context.getVariable<number>('lastDamageTime') || 0
-    const damageInterval = this.getConfigValue(context, 'damageInterval', 2000)
+  protected _onUpdate(context: BuffContext): void {
+    const baseDamage = context.getVariable<number>('baseDamage') || 10
+    const damageMultiplier = this.getConfigValue(
+      context,
+      'damageMultiplier',
+      1.2,
+    )
 
-    // 每隔一段时间造成伤害
-    if (elapsed - lastDamageTime >= damageInterval) {
-      const baseDamage = context.getVariable<number>('baseDamage') || 10
-      const damageMultiplier = this.getConfigValue(
-        context,
-        'damageMultiplier',
-        1.2,
-      )
+    // 每回合造成一次伤害，伤害随回合数递增
+    const stacks = (context.getVariable<number>('damageStacks') ?? 0) + 1
+    const currentDamage = Math.floor(
+      baseDamage * Math.pow(damageMultiplier, stacks),
+    )
 
-      // 计算当前伤害（随时间递增）
-      const stacks = Math.floor(elapsed / damageInterval)
-      const currentDamage = Math.floor(
-        baseDamage * Math.pow(damageMultiplier, stacks),
-      )
+    this.log(context, `毒素伤害：${currentDamage}`)
+    // 通过触发系统造成伤害
+    this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
+      damage: currentDamage,
+    })
 
-      this.log(context, `毒素伤害：${currentDamage}`)
-      // 通过触发系统造成伤害
-      this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
-        damage: currentDamage,
-      })
-
-      context.setVariable('lastDamageTime', elapsed)
-    }
+    context.setVariable('damageStacks', stacks)
   }
 
   protected _onRefresh(context: BuffContext): void {

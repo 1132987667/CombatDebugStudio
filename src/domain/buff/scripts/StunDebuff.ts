@@ -19,7 +19,7 @@ export class StunDebuff extends BaseBuffScript {
     context.setVariable('isStunned', false)
   }
 
-  protected _onUpdate(context: BuffContext, _deltaTime: number): void {
+  protected _onUpdate(context: BuffContext): void {
     // 眩晕状态只阻止行动，不影响其他属性
   }
 

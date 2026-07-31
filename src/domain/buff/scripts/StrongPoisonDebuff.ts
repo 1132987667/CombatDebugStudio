@@ -37,7 +37,6 @@ export class StrongPoisonDebuff extends BaseBuffScript {
     // 记录初始伤害值
     const baseDamage = this.getConfigValue(context, 'baseDamage', 15)
     context.setVariable('baseDamage', baseDamage)
-    context.setVariable('lastDamageTime', 0)
     context.setVariable('speedReduction', speedReduction)
     context.setVariable('attackReduction', attackReduction)
   }
@@ -46,33 +45,26 @@ export class StrongPoisonDebuff extends BaseBuffScript {
     this.log(context, '强毒效果消失')
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
-    const elapsed = context.getElapsedTime()
-    const lastDamageTime = context.getVariable<number>('lastDamageTime') || 0
-    const damageInterval = this.getConfigValue(context, 'damageInterval', 1500) // 比普通毒更快
+  protected _onUpdate(context: BuffContext): void {
+    const baseDamage = context.getVariable<number>('baseDamage') || 15
+    const damageMultiplier = this.getConfigValue(
+      context,
+      'damageMultiplier',
+      1.3,
+    ) // 比普通毒更强
 
-    // 每隔一段时间造成伤害
-    if (elapsed - lastDamageTime >= damageInterval) {
-      const baseDamage = context.getVariable<number>('baseDamage') || 15
-      const damageMultiplier = this.getConfigValue(
-        context,
-        'damageMultiplier',
-        1.3,
-      ) // 比普通毒更强
+    // 每回合造成一次伤害，伤害随回合数递增
+    const stacks = (context.getVariable<number>('damageStacks') ?? 0) + 1
+    const currentDamage = Math.floor(
+      baseDamage * Math.pow(damageMultiplier, stacks),
+    )
 
-      // 计算当前伤害（随时间递增）
-      const stacks = Math.floor(elapsed / damageInterval)
-      const currentDamage = Math.floor(
-        baseDamage * Math.pow(damageMultiplier, stacks),
-      )
+    this.log(context, `强毒伤害：${currentDamage}`)
+    this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
+      damage: currentDamage,
+    })
 
-      this.log(context, `强毒伤害：${currentDamage}`)
-      this.triggerEvent(context, EffectType.DEAL_DAMAGE, {
-        damage: currentDamage,
-      })
-
-      context.setVariable('lastDamageTime', elapsed)
-    }
+    context.setVariable('damageStacks', stacks)
   }
 
   protected _onRefresh(context: BuffContext): void {

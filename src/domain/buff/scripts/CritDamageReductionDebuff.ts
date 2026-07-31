@@ -24,22 +24,19 @@ export class CritDamageReductionDebuff extends BaseBuffScript {
     this.log(context, '暴击伤害恢复正常')
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
-    // 可以添加随时间变化的逻辑
-    const elapsed = context.getElapsedTime()
-    const recoveryRate = this.getConfigValue(context, 'recoveryRate', 0.02) // 每秒恢复2%
-    
-    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
-      const currentReduction = context.getVariable<number>('critDamageReduction') || 0.2
-      const newReduction = Math.max(currentReduction - recoveryRate, 0)
-      
-      if (newReduction < currentReduction) {
-        // 更新暴击伤害降低效果
-        context.removeModifiers(ATTRIBUTE_CODE.critDamage)
-        this.addModifier(context, ATTRIBUTE_CODE.critDamage, -newReduction, ModifierType.MULTIPLICATIVE)
-        context.setVariable('critDamageReduction', newReduction)
-        this.log(context, `暴击伤害逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
-      }
+  protected _onUpdate(context: BuffContext): void {
+    // 每回合逐渐恢复暴击伤害
+    const recoveryRate = this.getConfigValue(context, 'recoveryRate', 0.02) // 每回合恢复2%
+
+    const currentReduction = context.getVariable<number>('critDamageReduction') || 0.2
+    const newReduction = Math.max(currentReduction - recoveryRate, 0)
+
+    if (newReduction < currentReduction) {
+      // 更新暴击伤害降低效果
+      context.removeModifiers(ATTRIBUTE_CODE.critDamage)
+      this.addModifier(context, ATTRIBUTE_CODE.critDamage, -newReduction, ModifierType.MULTIPLICATIVE)
+      context.setVariable('critDamageReduction', newReduction)
+      this.log(context, `暴击伤害逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
     }
   }
 

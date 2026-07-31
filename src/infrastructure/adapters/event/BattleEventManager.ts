@@ -192,7 +192,7 @@ export class BattleEventManager {
     try {
       if (data) {
         LoggerProvider.logger.addBattleLog({
-          turn: `回合${data.turn}`,
+          turn: data.turn,
           message: `回合${data.turn}结束`,
         })
       }

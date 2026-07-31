@@ -29,31 +29,28 @@ export class StoneSkinBuff extends BaseBuffScript {
     this.log(context, '石化皮肤效果消失')
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
-    // 石化效果随时间逐渐增强
-    const elapsed = context.getElapsedTime()
-    const enhancementRate = this.getConfigValue(context, 'enhancementRate', 0.005) // 每秒增强0.5%
-    
-    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
-      const currentReduction = context.getVariable<number>('physicalReduction') || 0.3
-      const currentPenalty = context.getVariable<number>('speedPenalty') || 0.15
-      
-      const newReduction = Math.min(currentReduction + enhancementRate, 0.6) // 最大60%
-      const newPenalty = Math.min(currentPenalty + enhancementRate * 0.5, 0.3) // 最大30%
-      
-      if (newReduction > currentReduction) {
-        // 更新效果
-        context.removeModifiers(ATTRIBUTE_CODE.damageReduction)
-        context.removeModifiers(ATTRIBUTE_CODE.speed)
-        
-        this.addModifier(context, ATTRIBUTE_CODE.damageReduction, newReduction, ModifierType.MULTIPLICATIVE)
-        this.addModifier(context, ATTRIBUTE_CODE.speed, -newPenalty, ModifierType.MULTIPLICATIVE)
-        
-        context.setVariable('physicalReduction', newReduction)
-        context.setVariable('speedPenalty', newPenalty)
-        
-        this.log(context, `石化效果增强，伤害减免：${(newReduction * 100).toFixed(1)}%，速度惩罚：${(newPenalty * 100).toFixed(1)}%`)
-      }
+  protected _onUpdate(context: BuffContext): void {
+    // 石化效果每回合逐渐增强
+    const enhancementRate = this.getConfigValue(context, 'enhancementRate', 0.005) // 每回合增强0.5%
+
+    const currentReduction = context.getVariable<number>('physicalReduction') || 0.3
+    const currentPenalty = context.getVariable<number>('speedPenalty') || 0.15
+
+    const newReduction = Math.min(currentReduction + enhancementRate, 0.6) // 最大60%
+    const newPenalty = Math.min(currentPenalty + enhancementRate * 0.5, 0.3) // 最大30%
+
+    if (newReduction > currentReduction) {
+      // 更新效果
+      context.removeModifiers(ATTRIBUTE_CODE.damageReduction)
+      context.removeModifiers(ATTRIBUTE_CODE.speed)
+
+      this.addModifier(context, ATTRIBUTE_CODE.damageReduction, newReduction, ModifierType.MULTIPLICATIVE)
+      this.addModifier(context, ATTRIBUTE_CODE.speed, -newPenalty, ModifierType.MULTIPLICATIVE)
+
+      context.setVariable('physicalReduction', newReduction)
+      context.setVariable('speedPenalty', newPenalty)
+
+      this.log(context, `石化效果增强，伤害减免：${(newReduction * 100).toFixed(1)}%，速度惩罚：${(newPenalty * 100).toFixed(1)}%`)
     }
   }
 

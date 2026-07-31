@@ -103,7 +103,7 @@ export class BerserkBuff extends BaseBuffScript {
    * 每回合更新：基于回合计数器的自残检测。
    * this.log 仅记录日志；实际伤害需通过 battleSystem 回调传递。
    */
-  protected _onUpdate(context: BuffContext, _deltaTime: number): void {
+  protected _onUpdate(context: BuffContext): void {
     const params = this.resolveParams(context)
     const interval = params.selfDamageInterval
     const turnsSince =

@@ -59,12 +59,22 @@ export const LogLevelClass: Record<LogLevel, string> = {
   [LogLevel.TRACE]: 'log-trace',
 }
 
+export const BattleLogMetaRole = {
+  ACTION: 'action',
+  SUB: 'sub',
+  SETTLEMENT: 'settlement',
+  SNAPSHOT: 'snapshot',
+  CONDITION: 'condition',
+  BATTLE: 'battle',
+} as const
+export type BattleLogMetaRole = (typeof BattleLogMetaRole)[keyof typeof BattleLogMetaRole]
+
 /**
  * 叙事元数据 —— 渲染器据此生成 气血 箭头、高光标记、块归类
  */
 export interface BattleLogMeta {
   /** 叙事角色：决定归入哪种块 */
-  role?: 'action' | 'sub' | 'settlement' | 'snapshot' | 'condition' | 'battle'
+  role?: BattleLogMetaRole
   entityId?: string
   entityName?: string
   entityFaction?: 'ally' | 'enemy'
@@ -78,7 +88,7 @@ export interface BattleLogMeta {
   immune?: boolean
   miss?: boolean
   skillName?: string
-  /** 回合标签线索：'multi-trigger' | 'kill' | 'lethal-protect' | 'final' */
+  /** 回合标签（可选）：提供后作为回合标签默认值；未提供时渲染器按本回合击杀/sub 统计计算 */
   roundTag?: string
 }
 
@@ -207,7 +217,7 @@ export interface LogEntry {
  */
 export interface BattleLogEntry extends LogEntry {
   /** 回合号（必需） */
-  turn: number | string
+  turn: number
   /** 日志消息（必需） */
   message: string
   /** 叙事元数据（可选，渲染器据此生成 气血 箭头、高光标记、块归类） */
@@ -260,6 +270,18 @@ export interface LogSegment {
   faction?: ParticipantSide
 }
 
+export const NarrativeBlockType = {
+  BATTLE_HEADER: 'battle-header',
+  SECTION: 'section',
+  ROUND: 'round',
+  ACTION: 'action',
+  SETTLEMENT: 'settlement',
+  SNAPSHOT: 'snapshot',
+  SUMMARY: 'summary',
+  PLAIN: 'plain',
+} as const
+export type NarrativeBlockType = (typeof NarrativeBlockType)[keyof typeof NarrativeBlockType]
+
 /**
  * 叙事块 — 玩家日志的渲染单元
  * 与 BattleLogMeta.role 对应，渲染器据此决定布局
@@ -273,8 +295,6 @@ export type NarrativeBlock =
       header: LogSegment[]
       result?: LogSegment[]
       subs: LogSegment[][]
-      /** 是否造成击杀（用于回合标签推断） */
-      kill?: boolean
     }
   | { type: 'settlement'; lines: LogSegment[][] }
   | { type: 'snapshot'; lines: LogSegment[][] }
@@ -506,32 +526,6 @@ export function createCritAttackLogSegments(
 }
 
 /**
- * 创建默认的战斗日志条目
- */
-export function createDefaultBattleLogEntry(
-  turn: string,
-  source: string,
-  action: string,
-  target: string,
-  result: string,
-  level: BattleLogMessageType = 'info',
-  category: BattleLogCategory = 'system',
-): BattleLogEntry {
-  return {
-    turn,
-    source,
-    action,
-    target,
-    index: -1,
-    type: LogType.BATTLE,
-    message: result,
-    level: toLogLevel(level),
-    category,
-    segments: [{ text: result }],
-  }
-}
-
-/**
  * 格式化日志时间戳
  */
 export function formatLogTimestamp(timestamp: number): string {
@@ -721,7 +715,6 @@ export function battleActionToLogEntry(
   options?: BattleActionToLogEntryOptions,
 ): BattleLogEntry {
   const turn = options?.turnNumber ?? action.turn ?? 1
-  const turnStr = `回合${turn}`
 
   let sourceName = action.sourceId
   if (action.sourceId === 'system') {
@@ -763,7 +756,7 @@ export function battleActionToLogEntry(
   )
 
   return {
-    turn: turnStr,
+    turn,
     source: sourceName,
     action: '对',
     target: targetName,
@@ -1118,7 +1111,7 @@ export interface UnifiedLogParams {
 }
 
 /** 战斗日志参数 — turn 必填 */
-export type BattleLogParams = UnifiedLogParams & { turn: number | string }
+export type BattleLogParams = UnifiedLogParams & { turn: number }
 
 /** 调试日志参数 */
 export interface DebugLogParams {

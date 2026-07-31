@@ -19,7 +19,7 @@ export class DodgeUpBuff extends BaseBuffScript {
     this.log(context, '闪避率提升效果结束')
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+  protected _onUpdate(context: BuffContext): void {
     // 无需特殊更新逻辑
   }
 

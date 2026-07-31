@@ -1,4 +1,4 @@
-// 导出所�?Buff 脚本
+// 导出所有Buff 脚本
 export * from '@/domain/buff/scripts/templates/BaseBuffScript'
 export * from '@/domain/buff/scripts/templates/BuffTemplate'
 
@@ -21,7 +21,7 @@ export { MountainChildBuff } from '@/domain/buff/scripts/MountainChildBuff'
 export { StrongPoisonDebuff } from '@/domain/buff/scripts/StrongPoisonDebuff'
 export { StunDebuff } from '@/domain/buff/scripts/StunDebuff'
 
-// 守护�?buff 脚本
+// 守护者buff 脚本
 export {
   RevengeRageBuff,
   ArmorBreakBuff,
@@ -43,7 +43,7 @@ export {
   SwiftWindBuff,
 } from '@/domain/buff/scripts/GuardianBuffs'
 
-// 导出脚本映射，方便注�?
+// 导出脚本映射，方便注入
 export const buffScripts = {
   mountain_god: () => import('@/domain/buff/scripts/MountainGodBuff'),
   poison: () => import('@/domain/buff/scripts/PoisonDebuff'),
@@ -66,7 +66,7 @@ export const buffScripts = {
   buff_strong_poison: () =>
     import('@/domain/buff/scripts/StrongPoisonDebuff'),
   buff_stun: () => import('@/domain/buff/scripts/StunDebuff'),
-  // 守护�?buff 脚本
+  // 守护者buff 脚本
   guardian_buff_revenge_rage: () =>
     import('@/domain/buff/scripts/GuardianBuffs'),
   guardian_buff_armor_break: () =>

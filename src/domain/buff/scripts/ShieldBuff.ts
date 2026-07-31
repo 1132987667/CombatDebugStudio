@@ -44,7 +44,7 @@ export class ShieldBuff extends BaseBuffScript {
     context.getBuffSystem()?.setShieldValue(context.characterId, 0)
   }
 
-  protected _onUpdate(context: BuffContext, _deltaTime: number): void {
+  protected _onUpdate(context: BuffContext): void {
     const shieldRegen = context.getVariable<number>('shieldRegen') || 0
     if (shieldRegen <= 0) return
 

@@ -167,7 +167,6 @@ const renderer = new RoundNarrativeRenderer()
 let tooltipResolver: LogTooltipResolver | null = null
 try {
   const skillManager = container.resolve<SkillManager>('SkillManager')
-  renderer.setSkillLookup(skillManager)
   const buffRegistry = container.resolve<BuffScriptRegistry>('BuffScriptRegistry')
   tooltipResolver = new LogTooltipResolver(buffRegistry, skillManager)
 } catch {

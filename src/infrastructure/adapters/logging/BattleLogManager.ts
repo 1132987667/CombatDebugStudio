@@ -233,6 +233,10 @@ export class BattleLogManager implements IBattleLogManager {
   addDebugLog(message: string, options: DebugLogParams = {}): void {
     const { level = LogLevel.INFO, context, error } = options
 
+    if (level === LogLevel.ERROR) {
+      console.error(message, error)
+    }
+
     const entry: LogEntry = {
       index: this.indexCounter.next(),
       type: LogType.DEBUG,

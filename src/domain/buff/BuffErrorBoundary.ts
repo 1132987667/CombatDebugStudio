@@ -1,5 +1,5 @@
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
-﻿export enum BuffErrorType {
+export enum BuffErrorType {
   CONFIG_ERROR = 'config_error',
   RUNTIME_ERROR = 'runtime_error',
   DEPENDENCY_ERROR = 'dependency_error',

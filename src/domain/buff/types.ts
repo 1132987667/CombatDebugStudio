@@ -60,11 +60,11 @@ export interface IBuffScript<TParams = any> {
 
   /**
    * 增益效果更新时的回调函数
-   * 每帧调用,用于处理持续效果或定时逻辑
+   * 每回合调用一次（由 BuffSystem.updatePerTurn 驱动），用于处理持续效果或定时逻辑
    * @param context - 增益效果上下文对象,包含角色、属性等信息
-   * @param deltaTime - 距离上一帧的时间增量(毫秒)
+   * 回合号从 context.currentTurn 读取
    */
-  onUpdate(context: BuffContext, deltaTime: number): void
+  onUpdate(context: BuffContext): void
 
   /**
    * 增益效果刷新时的回调函数

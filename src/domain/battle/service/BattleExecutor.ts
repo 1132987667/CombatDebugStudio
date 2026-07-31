@@ -17,6 +17,7 @@ import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationMana
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import {
   BATTLE_LOG_CATEGORIES,
+  LogLevel,
   type BattleLogCategory,
 } from '@/shared/types/battle-log'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
@@ -1455,10 +1456,7 @@ export class BattleExecutor {
 
     if (!source || !target) {
       LoggerProvider.logger.addDebugLog(
-        `执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`,
-      )
-      console.error(
-        `执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`,
+        `执行动作失败: 无效的源或目标 sourceId=${action.sourceId}, targetId=${action.targetId}`, { level: LogLevel.ERROR },
       )
       return action
     }
@@ -1467,7 +1465,6 @@ export class BattleExecutor {
       try {
         // NOTE: 令牌模式 — 用局部 token 替代全局 toggle
         const damageToken = new DeferredDamageToken()
-        // ponytail: 主动技能执行时禁用 buffApplied 回调，避免与下方动画循环重复
         this.buffSystem.setBuffAppliedCallbackEnabled(false)
         const skillAction = this.skillManager.executeSkill(
           action.skillId,
@@ -1482,7 +1479,7 @@ export class BattleExecutor {
           // ponytail: early-return 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
           this.buffSystem.setBuffAppliedCallbackEnabled(true)
           LoggerProvider.logger.addDebugLog(
-            `技能执行失败: ${action.skillId} — ${skillAction.effects[0]?.description || '未知原因'}`,
+            `技能执行失败: ${action.skillId} — ${skillAction.effects[0]?.description || '未知原因'}`, { level: LogLevel.ERROR },
           )
           action.damage = 0
           action.heal = 0

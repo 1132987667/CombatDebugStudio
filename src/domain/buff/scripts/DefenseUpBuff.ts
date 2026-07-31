@@ -21,20 +21,17 @@ export class DefenseUpBuff extends AttributeBuffTemplate {
     super._onApply(context)
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+  protected _onUpdate(context: BuffContext): void {
     const growthRate = this.getConfigValue(context, 'growthRate', 0.008)
     if (growthRate <= 0) return
 
-    const elapsed = context.getElapsedTime()
-    // 每秒检查一次成长
-    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
-      const current = context.getVariable<number>('_defenseBonus') ?? this.getConfigValue(context, 'defenseBonus', 15)
-      const newVal = Math.floor(current * (1 + growthRate))
-      if (newVal > current) {
-        context.setVariable('_defenseBonus', newVal)
-        this.applyModifiers(context, true)
-        this.log(context, `防御力逐渐增强，当前提升：${newVal}`)
-      }
+    // 每回合成长一次
+    const current = context.getVariable<number>('_defenseBonus') ?? this.getConfigValue(context, 'defenseBonus', 15)
+    const newVal = Math.floor(current * (1 + growthRate))
+    if (newVal > current) {
+      context.setVariable('_defenseBonus', newVal)
+      this.applyModifiers(context, true)
+      this.log(context, `防御力逐渐增强，当前提升：${newVal}`)
     }
   }
 

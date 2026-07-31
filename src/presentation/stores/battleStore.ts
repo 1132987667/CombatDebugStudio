@@ -909,7 +909,7 @@ export const useBattleStore = defineStore('battle', () => {
       )
       if (!shouldDisplay || !log) continue
       battleLogManager.addBattleLog({
-        turn: log.turn ?? sortedActions.indexOf(action) + 1,
+        turn: log.turn,
         message: log.segments?.map((s) => s.text).join('') ?? '',
         segments: log.segments,
         category: log.category ?? 'battle',

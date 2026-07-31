@@ -80,7 +80,7 @@ export abstract class AttributeBuffTemplate extends BaseBuffScript {
     //        子类如需清理运行时变量，重写此方法并调用 super._onRemove(context)
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
+  protected _onUpdate(context: BuffContext): void {
     if (this.shouldReapplyOnUpdate()) {
       this.applyModifiers(context, true)
       if (this._isDebugMode()) {

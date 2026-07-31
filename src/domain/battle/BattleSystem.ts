@@ -1556,8 +1556,7 @@ export class BattleSystem {
       // 检查是否被控制
       if (participant.hasBuff(STUN_BUFF_ID)) continue
 
-      // AI 决策或默认攻击
-      const aiInstance = battle.aiInstances?.get(participantId)
+      // 默认攻击（AI 决策后续扩展）
       const targetId = this.selectCommandTarget(battle, participant)
       if (targetId) {
         const damage = participant.getRandomAttackDamage()

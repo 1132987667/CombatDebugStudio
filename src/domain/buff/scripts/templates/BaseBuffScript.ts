@@ -21,9 +21,9 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
     //       不在脚本层调用 context.removeModifiers()。
   }
 
-  public onUpdate(context: BuffContext, deltaTime: number): void {
+  public onUpdate(context: BuffContext): void {
     BuffErrorBoundary.wrap(() => {
-      this._onUpdate(context, deltaTime)
+      this._onUpdate(context)
     })
   }
 
@@ -35,7 +35,7 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
 
   protected abstract _onApply(context: BuffContext): void
   protected abstract _onRemove(context: BuffContext): void
-  protected abstract _onUpdate(context: BuffContext, deltaTime: number): void
+  protected abstract _onUpdate(context: BuffContext): void
   protected abstract _onRefresh(context: BuffContext): void
 
   protected addModifier(

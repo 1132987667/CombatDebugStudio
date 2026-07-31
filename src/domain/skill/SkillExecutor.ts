@@ -312,7 +312,7 @@ export class SkillExecutor {
       const effectSummary = this.buildBuffEffectSummary(buffId, instanceId)
 
       LoggerProvider.logger.addBattleLog({
-        turn: (action?.turn as number) || 1,
+        turn: action?.turn || 1,
         message: `${displayName}  ${effectSummary}`,
         segments: [
           {

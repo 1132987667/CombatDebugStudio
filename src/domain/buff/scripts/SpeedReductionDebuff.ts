@@ -22,22 +22,19 @@ export class SpeedReductionDebuff extends BaseBuffScript {
     this.log(context, '速度恢复正常')
   }
 
-  protected _onUpdate(context: BuffContext, deltaTime: number): void {
-    // 可以添加随时间变化的逻辑，比如速度逐渐恢复
-    const elapsed = context.getElapsedTime()
-    const recoveryRate = this.getConfigValue(context, 'recoveryRate', 0.03) // 每秒恢复3%
-    
-    if (Math.floor(elapsed / 1000) > Math.floor((elapsed - deltaTime) / 1000)) {
-      const currentReduction = context.getVariable<number>('speedReduction') || 0.25
-      const newReduction = Math.max(currentReduction - recoveryRate, 0)
-      
-      if (newReduction < currentReduction) {
-        // 更新速度降低效果
-        context.removeModifiers(ATTRIBUTE_CODE.speed)
-        this.addModifier(context, ATTRIBUTE_CODE.speed, -newReduction, ModifierType.MULTIPLICATIVE)
-        context.setVariable('speedReduction', newReduction)
-        this.log(context, `速度逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
-      }
+  protected _onUpdate(context: BuffContext): void {
+    // 每回合逐渐恢复速度
+    const recoveryRate = this.getConfigValue(context, 'recoveryRate', 0.03) // 每回合恢复3%
+
+    const currentReduction = context.getVariable<number>('speedReduction') || 0.25
+    const newReduction = Math.max(currentReduction - recoveryRate, 0)
+
+    if (newReduction < currentReduction) {
+      // 更新速度降低效果
+      context.removeModifiers(ATTRIBUTE_CODE.speed)
+      this.addModifier(context, ATTRIBUTE_CODE.speed, -newReduction, ModifierType.MULTIPLICATIVE)
+      context.setVariable('speedReduction', newReduction)
+      this.log(context, `速度逐渐恢复，当前降低：${(newReduction * 100).toFixed(1)}%`)
     }
   }
 

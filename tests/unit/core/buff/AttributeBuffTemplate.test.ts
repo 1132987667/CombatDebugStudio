@@ -269,7 +269,7 @@ describe('AttributeBuffTemplate', () => {
       }])
       context.getVariable = vi.fn().mockReturnValue(1)
 
-      buff['_onUpdate'](context, 0)
+      buff['_onUpdate'](context)
 
       expect(context.addModifier).not.toHaveBeenCalled()
     })

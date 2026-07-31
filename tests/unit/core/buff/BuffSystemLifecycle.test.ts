@@ -58,7 +58,7 @@ describe('BuffSystem 生命周期', () => {
       const log: string[] = []
       registry.registerScript('lifecycle_a', {
         onApply: () => { log.push('apply') },
-        onUpdate: (_ctx, _dt) => { log.push('update') },
+        onUpdate: (_ctx) => { log.push('update') },
         onRemove: () => { log.push('remove') },
         onRefresh: () => { log.push('refresh') },
       })

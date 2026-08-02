@@ -50,6 +50,8 @@ export type BattleParticipantData = {
   attributeValues?: Partial<Record<ATTRIBUTE_CODE, number>>
   /** ponytail: P0/AI-1 — 控制模式，默认 AI */
   controlMode?: ControlMode
+  /** 是否完全不会攻击（木人/训练靶子） */
+  noAttack?: boolean
 }
 
 /**
@@ -117,6 +119,9 @@ export class BattleParticipantImpl implements BattleEntity {
   /** ponytail: P0/AI-1 — 参与者控制模式 */
   controlMode: ControlMode = 'AI'
 
+  /** 是否完全不会攻击（木人/训练靶子） */
+  noAttack?: boolean
+
   /** 本回合受击能量获取次数（每回合最多3次） */
   private _energyHitCountThisRound = 0
 
@@ -157,9 +162,12 @@ export class BattleParticipantImpl implements BattleEntity {
     this.team = data.team
     this.enabled = data.enabled ?? true
     this.seatIndex = data.seatIndex ?? 0
+    this.stats.setOwnerId(this.id)
+    this.stats.setOwnerName(this.name)
     this.statusEffects = data.statusEffects
     this.skills = data.skills
     this.controlMode = data.controlMode ?? 'AI'
+    this.noAttack = data.noAttack
     this.skillManager = new ParticipantSkills(this.skills)
 
     if (data.attributeValues) {
@@ -264,9 +272,9 @@ export class BattleParticipantImpl implements BattleEntity {
     this.notifyDirty()
   }
 
-  recalcAll(): void {
+  recalcAll(triggerSource?: string): void {
     this.syncModifiersFromProvider()
-    this.stats.recalculateAll()
+    this.stats.recalculateAll(triggerSource)
     // ponytail: maxHealth 变化时将 currentHealth 同步到新上限
     this.clampCurrentHealth()
     this.notifyDirty()

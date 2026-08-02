@@ -209,18 +209,3 @@ export function getStatName(type: CombatStatType): string {
   }
   return names[type]
 }
-
-/**
- * 获取战斗属性图标
- */
-export function getStatIcon(type: CombatStatType): string {
-  const icons: Record<CombatStatType, string> = {
-    currentHealth: '❤️',
-    energy: '⚡',
-    attack: '⚔️',
-    defense: '🛡️',
-    speed: '💨',
-    crit: '🎯',
-  }
-  return icons[type]
-}

@@ -1,0 +1,29 @@
+{
+  "task_id": "20260731-224957-debug-log-requirements",
+  "status": "COMPLETED",
+  "iterations": 9,
+  "stale_count": 0,
+  "started_at": "2026-07-31T22:49:00+08:00",
+  "completed_at": "2026-08-01T01:36:00+08:00",
+  "success_criteria_audit": [
+    {
+      "criterion": "复现并定位 TypeError: Cannot read properties of null (reading 'classList')",
+      "evidence": "jsdom 复现：stack 精确指向 applyFilterState (line 937:31) 的 $(`#chip-${k}`).classList → bindEvents → 初始化；grep 确认 HTML 中 chip id 为 chip-a（v2 遗留），而 JS（v3 起）引用 chip-actor"
+    },
+    {
+      "criterion": "修复 id 不一致",
+      "evidence": "HTML id 统一：chip-a → chip-actor（edit_file 应用，grep 确认无 chip-a[^c] 残留）"
+    },
+    {
+      "criterion": "真实 DOM 回归验证（修复前必现、修复后全通过）",
+      "evidence": "jsdom（项目依赖）完整交互回归：修复前初始化即抛错；修复后 17 项交互（初始化/战斗结算/再跑一场/条件断点/手动暂停/单步/过滤联动/播放停止/聚焦模式/树折叠/书签/键盘↑↓与/搜索/会话弹层/导出）全部 OK，无未捕获错误；jsdom 仅有的 scrollIntoView/createObjectURL/下载导航提示为 jsdom 未实现，真实浏览器均有"
+    },
+    {
+      "criterion": "最终验证",
+      "evidence": "node --check JS 语法 OK；div 配对 254/254；文件头 3C 21 44（UTF-8 无 BOM）"
+    }
+  ],
+  "pivots": [],
+  "blockers": [],
+  "completion_summary": "迭代 9（bug 修复）：用户报告打开页面即报 TypeError: Cannot read properties of null (reading 'classList')。根因：HTML 中「仅单位A」过滤 chip 的 id 是 chip-a（v2 时代遗留），而 JS 从 v3 起统一用 chip-actor 引用（遍历键为 actor），applyFilterState 初始化时 $('#chip-actor') 返回 null → classList 报错。此前 v3/v4 只做了 node --check 语法验证，未做运行时验证，导致不一致漏检。修复：HTML id 统一为 chip-actor。用 jsdom（项目已有依赖）做真实 DOM 回归：修复前初始化即抛错，修复后 17 项交互全部通过、无未捕获错误（仅 jsdom 未实现的 scrollIntoView/createObjectURL/下载导航提示，真实浏览器正常）。documents/调试日志UI示例.html 修复完成。"
+}

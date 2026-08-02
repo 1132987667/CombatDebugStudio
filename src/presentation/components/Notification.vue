@@ -8,7 +8,7 @@
 -->
 
 <template>
-  <div class="notifications-container">
+  <div class="notifications-container" aria-live="polite">
     <div v-for="notification in notifications" :key="notification.id" class="notification"
       :class="`notification-${notification.type}`">
       <div class="notification-icon">
@@ -18,9 +18,9 @@
         <div class="notification-title">{{ notification.title }}</div>
         <div class="notification-message">{{ notification.message }}</div>
       </div>
-      <div class="notification-close" @click="removeNotification(notification.id)">
+      <button class="notification-close" aria-label="关闭通知" @click="removeNotification(notification.id)">
         &times;
-      </div>
+      </button>
     </div>
   </div>
 </template>
@@ -39,13 +39,14 @@ interface NotificationItem {
 const notifications = ref<NotificationItem[]>([])
 
 const getIcon = (type: string): string => {
+  // NOTE: 禁 emoji——用无 emoji 变体的文本符号，颜色区分类型
   const icons: Record<string, string> = {
     success: '✓',
     error: '✗',
-    info: 'ℹ',
-    warning: '⚠'
+    info: 'i',
+    warning: '!'
   }
-  return icons[type] || 'ℹ'
+  return icons[type] || 'i'
 }
 
 const addNotification = (title: string, message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info', duration: number = 3000): void => {

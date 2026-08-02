@@ -19,7 +19,7 @@
           <div class="dialog-content">
             <div v-for="module in debugModules" :key="module.name" class="debug-module">
               <div class="module-header">
-                <span class="module-icon">{{ module.icon }}</span>
+                <span v-if="module.icon" class="module-icon">{{ module.icon }}</span>
                 <span class="module-name">{{ module.name }}</span>
               </div>
               <div class="module-buttons">
@@ -110,7 +110,8 @@ interface DebugButton {
 
 interface DebugModule {
   name: string
-  icon: string
+  /** 可选模块图标（禁 emoji，需用 SVG 时在此提供） */
+  icon?: string
   buttons: DebugButton[]
 }
 
@@ -139,7 +140,6 @@ const dialogStyle = computed(() => ({
 const debugModules: DebugModule[] = [
   {
     name: '战斗控制',
-    icon: '⚔️',
     buttons: [
       { label: '立即胜利', action: 'win_battle', description: '直接判定我方胜利', class: 'btn-success' },
       { label: '立即失败', action: 'lose_battle', description: '直接判定敌方胜利', class: 'btn-danger' },
@@ -149,7 +149,6 @@ const debugModules: DebugModule[] = [
   },
   {
     name: '角色状态',
-    icon: '👤',
     buttons: [
       { label: '满血', action: 'full_health', description: '恢复所有角色气血', class: 'btn-success' },
       { label: '满能量', action: 'full_energy', description: '恢复所有角色能量', class: 'btn-info' },
@@ -159,7 +158,6 @@ const debugModules: DebugModule[] = [
   },
   {
     name: '战斗事件',
-    icon: '🎯',
     buttons: [
       { label: '触发暴击', action: 'force_crit', description: '下次攻击必定暴击', class: 'btn-info' },
       { label: '触发闪避', action: 'force_dodge', description: '下次攻击必定闪避', class: 'btn-info' },
@@ -169,7 +167,6 @@ const debugModules: DebugModule[] = [
   },
   {
     name: '系统调试',
-    icon: '🔧',
     buttons: [
       { label: '输出日志', action: 'dump_logs', description: '输出当前日志到控制台', class: 'btn-default' },
       { label: '导出状态', action: 'export_state', description: '导出战斗状态', class: 'btn-default' },
@@ -180,7 +177,6 @@ const debugModules: DebugModule[] = [
   },
   {
     name: '日志调试',
-    icon: '📝',
     buttons: [
       { label: '战斗日志', action: 'log_battle', description: '调用 addBattleLog', class: 'btn-info' },
       { label: '系统日志', action: 'log_system', description: '调用 addSystemLog', class: 'btn-info' },
@@ -191,12 +187,10 @@ const debugModules: DebugModule[] = [
   },
   {
     name: '数据生成',
-    icon: '📊',
     buttons: [],
   },
   {
     name: '动画调试',
-    icon: '🎬',
     buttons: [
       { label: '测试伤害数字', action: 'test_damage_num', description: '在选中角色上显示伤害飘字', class: 'btn-info' },
       { label: '测试暴击数字', action: 'test_crit_num', description: '在选中角色上显示暴击飘字', class: 'btn-warning' },
@@ -282,7 +276,7 @@ const handleButtonClick = (action: string) => {
   background: rgba(var(--rgb-white), var(--alpha-tint));
   color: rgba(var(--rgb-white), 0.8);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .debug-btn:hover {
@@ -380,7 +374,7 @@ const handleButtonClick = (action: string) => {
   color: rgba(var(--rgb-white), 0.7);
   font-size: 11px;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .style-btn:hover {
@@ -431,7 +425,7 @@ const handleButtonClick = (action: string) => {
   color: rgba(var(--rgb-white), 0.7);
   font-size: var(--font-size-md);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .log-gen-opt-btn:hover {
@@ -453,7 +447,7 @@ const handleButtonClick = (action: string) => {
   background: var(--border-debug-color-dark);
   color: var(--color-energy);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   font-weight: var(--font-weight-medium);
   align-self: flex-start;
 }

@@ -48,7 +48,7 @@ const resolvedOptions = SPEED_OPTIONS
   border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--color-info);
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .speed-btn:hover {

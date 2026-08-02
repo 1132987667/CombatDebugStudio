@@ -30,7 +30,7 @@
     <SpeedSelector :model-value="localSpeed" label="自动速率:" @update:model-value="updateSpeed">
       <template #extra>
         <input type="number" v-model.number="customSpeed" class="custom-speed" placeholder="自定义"
-          @change="updateCustomSpeed" />
+          aria-label="自定义速率" @change="updateCustomSpeed" />
       </template>
     </SpeedSelector>
   </Dialog>

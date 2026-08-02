@@ -4,8 +4,8 @@
       <div class="snapshot-section">
         <div class="snapshot-section-title">导出 / 导入</div>
         <div class="snapshot-btn-group">
-          <button class="snapshot-btn primary" @click="exportState">📋 导出当前状态 (JSON)</button>
-          <button class="snapshot-btn" @click="importState">📂 导入状态数据</button>
+          <button class="snapshot-btn primary" @click="exportState">导出当前状态 (JSON)</button>
+          <button class="snapshot-btn" @click="importState">导入状态数据</button>
         </div>
       </div>
 
@@ -15,8 +15,8 @@
           <span class="snapshot-time">{{ debugStore.lastExportTime || '无' }}</span>
         </div>
         <div class="snapshot-btn-group">
-          <button class="snapshot-btn small" @click="viewExport">👁 查看导出</button>
-          <button class="snapshot-btn small" @click="reloadExport">🔄 重载导出</button>
+          <button class="snapshot-btn small" @click="viewExport">查看导出</button>
+          <button class="snapshot-btn small" @click="reloadExport">重载导出</button>
         </div>
       </div>
 
@@ -25,11 +25,15 @@
       </div>
     </div>
   </Dialog>
+
+  <!-- 通知（替换原生 alert） -->
+  <Notification ref="notification" />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import Notification from '@/presentation/components/Notification.vue'
 import { container } from '@/infrastructure/di/Container'
 import { useBattleStore, useDebugStore } from '@/presentation/stores'
 import type { BattleService } from '@/application/facade/BattleFacade'
@@ -48,6 +52,9 @@ const debugStore = useDebugStore()
 
 const battleStore = useBattleStore()
 
+// 通知实例（替换原生 alert，走统一通知组件）
+const notification = ref<InstanceType<typeof Notification> | null>(null)
+
 const currentCharacter = computed(() => {
   const id = battleStore.selectedCharacterId
   if (!id) return null
@@ -57,7 +64,7 @@ const currentCharacter = computed(() => {
 const exportState = async () => {
   try {
     if (!currentCharacter.value) {
-      alert('请先选择一个角色')
+      notification.value?.addNotification("提示", "请先选择一个角色", "warning")
       return
     }
 
@@ -113,10 +120,10 @@ const exportState = async () => {
 
     await navigator.clipboard.writeText(JSON.stringify(exportData, null, 2))
     debugStore.lastExportTime = new Date().toLocaleString()
-    alert(`角色 "${char.name}" 的状态数据已复制到剪贴板`)
+    notification.value?.addNotification("导出成功", `角色 "${char.name}" 的状态数据已复制到剪贴板`, "success")
   } catch (error) {
     console.warn('导出状态失败:', error)
-    alert(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`)
+    notification.value?.addNotification("导出失败", error instanceof Error ? error.message : '未知错误', "error")
   }
 }
 
@@ -125,11 +132,11 @@ const importState = () => {
     const state = debugStore.importState()
     if (state) {
       console.log('导入状态成功:', state)
-      alert('状态数据导入成功')
+      notification.value?.addNotification("导入成功", "状态数据导入成功", "success")
     }
   } catch (error) {
     console.warn('导入状态失败:', error)
-    alert(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`)
+    notification.value?.addNotification("导入失败", error instanceof Error ? error.message : '未知错误', "error")
   }
 }
 
@@ -138,7 +145,7 @@ const viewExport = () => {
     const state = debugStore.viewExport()
     if (state) {
       console.log('导出状态:', state)
-      alert('查看控制台输出')
+      notification.value?.addNotification("提示", "查看控制台输出", "info")
     }
   } catch (error) {
     console.warn('查看导出状态失败:', error)
@@ -191,7 +198,7 @@ const reloadExport = () => {
   background: rgba(var(--rgb-energy), var(--alpha-tint));
   color: var(--color-energy);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   outline: 1px solid rgba(var(--rgb-black), 0.8);
   outline-offset: -3px;
 }

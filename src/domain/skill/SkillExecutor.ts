@@ -46,6 +46,9 @@ export class SkillExecutor {
   /** 连击追踪状态（key = 攻击者 entity ID） */
   private comboStates = new Map<string, ComboState>()
 
+  /** 轮转 buff 追踪状态（key = 施法者 entity ID；值 = 下一次轮转到 buffIds 的下标） */
+  private rotatingBuffIndex = new Map<string, number>()
+
   /** 待处理的额外行动请求（上限 10，防无限增长） */
   private pendingExtraActions: string[] = []
   private static readonly MAX_PENDING_ACTIONS = 10
@@ -73,6 +76,16 @@ export class SkillExecutor {
   /** 清空所有连击追踪状态（战斗初始化时调用） */
   public clearAllComboStates(): void {
     this.comboStates.clear()
+  }
+
+  /** 清理指定角色的轮转 buff 状态 */
+  public cleanupRotatingState(entityId: string): void {
+    this.rotatingBuffIndex.delete(entityId)
+  }
+
+  /** 清空所有轮转 buff 状态（战斗初始化时调用） */
+  public clearAllRotatingStates(): void {
+    this.rotatingBuffIndex.clear()
   }
 
   executeStep(
@@ -280,7 +293,7 @@ export class SkillExecutor {
       buffTarget.id,
       buffId,
       buffConfig,
-      0,
+      action.turn ?? 0,
       context,
     )
     // 解析 Buff 展示名称
@@ -543,6 +556,9 @@ export class SkillExecutor {
           description: `时之沙触发！${source.name} 获得额外行动`,
         })
       }
+    } else if (customType === 'rotating_apply_buff') {
+      // 轮转施法 — 按 buffIds 顺序逐个施加，循环往复
+      this.handleRotatingApplyBuff(skillStep, action, source, target, context)
     } else if (customType === 'steal_item') {
       // 盗窃本能 — PvE 掉落系统，非战斗逻辑
       LoggerProvider.logger.addDebugLog('盗窃本能: PvE 掉落系统专用', {
@@ -564,7 +580,7 @@ export class SkillExecutor {
           controlType: ControlType.NONE,
           parameters: { shieldValue: overflow },
         }
-        const shieldInstanceId = this.buffSystem.addBuff(target.id, 'buff_shield', config, 0)
+        const shieldInstanceId = this.buffSystem.addBuff(target.id, 'buff_shield', config, action.turn ?? 0)
         if (!shieldInstanceId) {
           LoggerProvider.logger.addDebugLog(
             `回春护盾: 护盾施加被免疫/跳过`,
@@ -595,6 +611,64 @@ export class SkillExecutor {
         `[SkillExecutor] 未实现的自定义步骤类型: ${desc}（${customType}）。` +
         `请实现对应的处理逻辑或从技能配置中移除。`
       )
+    }
+  }
+
+  /**
+   * 轮转施法 — 按 parameters.buffIds 顺序逐个施加，到末尾回到开头
+   *
+   * 每次调用前进一格（即使目标免疫/已满层也前进，保证轮转节奏稳定），
+   * 复用 executeBuff 的完整施加管线（构造 config → addBuff → 效果收集）。
+   * 层数 > 1 时：首次走完整管线，剩余层数直接叠层（LIMITED 规则每次 +1 层）。
+   */
+  private handleRotatingApplyBuff(
+    skillStep: ExtendedSkillStep,
+    action: BattleAction,
+    source: BattleEntity,
+    target: BattleEntity,
+    context?: StepExecutionContext,
+  ): void {
+    const buffIds = (skillStep.parameters?.buffIds as string[] | undefined) ?? []
+    if (buffIds.length === 0) return
+
+    const index = this.rotatingBuffIndex.get(source.id) ?? 0
+    const buffId = buffIds[index % buffIds.length]
+    this.rotatingBuffIndex.set(source.id, index + 1)
+
+    const stacks = Math.max(1, skillStep.stacks ?? 1)
+
+    // 首次施加：复用 executeBuff（把动态选中的 buffId 注入临时步骤）
+    this.executeBuff(
+      { ...skillStep, buffId },
+      action,
+      source,
+      target,
+      context,
+    )
+
+    // 额外层数：直接叠层（首次已是 1 层，这里补足到 stacks 层）
+    if (stacks > 1) {
+      const buffTarget =
+        skillStep.targetConfig?.faction === 'self' ? source : target
+      const stackConfig: Partial<BuffConfig> = {
+        id: buffId,
+        description: '',
+        duration: skillStep.duration ?? -1,
+        maxStacks: stacks,
+        cooldown: 0,
+        stackRule: StackRule.LIMITED,
+        controlType: ControlType.NONE,
+        parameters: skillStep.parameters || skillStep.effectParams || {},
+      }
+      for (let i = 1; i < stacks; i++) {
+        this.buffSystem.addBuff(
+          buffTarget.id,
+          buffId,
+          stackConfig,
+          action.turn ?? 0,
+          context,
+        )
+      }
     }
   }
 
@@ -784,7 +858,7 @@ export class SkillExecutor {
       buffTarget.id,
       'buff_shield',
       config,
-      0,
+      action.turn ?? 0,
     )
     if (!instanceId) {
       LoggerProvider.logger.addDebugLog(
@@ -827,7 +901,7 @@ export class SkillExecutor {
       controlType,
       parameters: skillStep.parameters || {},
     }
-    const instanceId = this.buffSystem.addBuff(target.id, buffId, config)
+    const instanceId = this.buffSystem.addBuff(target.id, buffId, config, action.turn ?? 0)
     if (!instanceId) {
       LoggerProvider.logger.addDebugLog(
         `executeControl: 控制效果被免疫/跳过: ${buffId} → ${target.id}`,

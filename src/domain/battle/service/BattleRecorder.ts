@@ -450,7 +450,8 @@ export class BattleRecorder {
       const recording = savedData
 
       // ★ 旧数据一次性迁移：补充缺失字段
-      for (const record of recording.combatRecords ?? []) {
+      recording.combatRecords ??= []
+      for (const record of recording.combatRecords) {
         if (record.actionOrder === undefined) record.actionOrder = 0
         if (record.overkill === undefined) record.overkill = 0
       }

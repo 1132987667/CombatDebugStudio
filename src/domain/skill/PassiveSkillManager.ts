@@ -4,6 +4,11 @@ import {
   type RenderContext,
 } from '@/domain/battle/logs/EffectRenderer'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
+import {
+  PassiveSkipReason,
+  PassiveVerdict,
+  type PassiveSkipReason as PassiveSkipReasonType,
+} from '@/shared/types/trace-event'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import {
   BATTLE_CONSTANTS,
@@ -75,6 +80,21 @@ export class PassiveSkillManager {
     ownerName: string
     effectSummary: string
   }> = []
+
+  /** 最近一次 shouldTriggerPassive 通过时的检查明细（供 TRIGGERED 事件取证，文档 §5 示例 3） */
+  private lastPassChecks: Record<string, unknown> | null = null
+
+  /** 回合级触发统计（供 TURN_END 的 passiveTriggers，文档 §5 示例 5） */
+  private turnFiredCount = 0
+  private turnSkippedCount = 0
+
+  /** 获取并清零回合触发统计（fired=实际执行，skipped=跳过） */
+  getAndResetTurnCounters(): { fired: number; skipped: number } {
+    const result = { fired: this.turnFiredCount, skipped: this.turnSkippedCount }
+    this.turnFiredCount = 0
+    this.turnSkippedCount = 0
+    return result
+  }
 
   /** 获取并清空最近触发的被动记录 */
   drainLastTriggeredPassives(): Array<{
@@ -150,7 +170,7 @@ export class PassiveSkillManager {
     },
   ): boolean {
     if (config.trigger !== context.phase) {
-      this.emitPassiveSkipped(config, entity, context, 'PHASE_MISMATCH', {
+      this.emitPassiveSkipped(config, entity, context, PassiveSkipReason.PHASE_MISMATCH, {
         phaseMatch: false,
         expected: config.trigger,
         actual: context.phase,
@@ -161,7 +181,7 @@ export class PassiveSkillManager {
     if (config.cooldown > 0 && config.lastTriggeredTurn) {
       const currentTurn = context.currentTurn
       if (currentTurn - config.lastTriggeredTurn < config.cooldown) {
-        this.emitPassiveSkipped(config, entity, context, 'COOLDOWN', {
+        this.emitPassiveSkipped(config, entity, context, PassiveSkipReason.COOLDOWN, {
           cooldown: {
             ready: false,
             remaining: config.cooldown - (currentTurn - config.lastTriggeredTurn),
@@ -177,14 +197,14 @@ export class PassiveSkillManager {
       config.triggerCount &&
       config.triggerCount >= config.maxTriggerCount
     ) {
-      this.emitPassiveSkipped(config, entity, context, 'MAX_TRIGGERS', {
+      this.emitPassiveSkipped(config, entity, context, PassiveSkipReason.MAX_TRIGGERS, {
         maxTriggers: { limit: config.maxTriggerCount, used: config.triggerCount },
       })
       return false
     }
     // 检查触发概率是否命中
     if (config.triggerProbability && Math.random() > config.triggerProbability) {
-      this.emitPassiveSkipped(config, entity, context, 'PROBABILITY', {
+      this.emitPassiveSkipped(config, entity, context, PassiveSkipReason.PROBABILITY, {
         probability: { required: config.triggerProbability, passed: false },
       })
       return false
@@ -197,7 +217,7 @@ export class PassiveSkillManager {
         entity.getAttribute(ATTRIBUTE_CODE.currentHealth) /
         Math.max(1, entity.getAttribute(ATTRIBUTE_CODE.maxHealth))
       if (hpPercent > config.hpThreshold / 100) {
-        this.emitPassiveSkipped(config, entity, context, 'CONDITION', {
+        this.emitPassiveSkipped(config, entity, context, PassiveSkipReason.CONDITION, {
           condition: {
             expr: `HP_LOWER_THAN ${config.hpThreshold}%`,
             passed: false,
@@ -212,10 +232,25 @@ export class PassiveSkillManager {
       config.condition &&
       !this.evaluateCondition(config.condition, entity, contextTarget, context, config.conditionParams)
     ) {
-      this.emitPassiveSkipped(config, entity, context, 'CONDITION', {
+      this.emitPassiveSkipped(config, entity, context, PassiveSkipReason.CONDITION, {
         condition: { expr: config.condition, passed: false },
       })
       return false
+    }
+    // 所有检查通过 —— 记录检查明细供 TRIGGERED 事件取证
+    this.lastPassChecks = {
+      phaseMatch: true,
+      cooldown: { ready: true, remaining: 0 },
+      probability: config.triggerProbability
+        ? { required: config.triggerProbability, passed: true }
+        : undefined,
+      maxTriggers: config.maxTriggerCount
+        ? { limit: config.maxTriggerCount, used: config.triggerCount ?? 0 }
+        : undefined,
+      condition: config.condition
+        ? { expr: config.condition, passed: true }
+        : undefined,
+      targetAlive: true,
     }
     return true
   }
@@ -228,10 +263,11 @@ export class PassiveSkillManager {
     config: PassiveSkillConfig,
     entity: BattleEntity,
     context: PassiveTriggerContext,
-    skipReason: string,
+    skipReason: PassiveSkipReasonType,
     checks: Record<string, unknown>,
   ): void {
     if (!this.tracePort || !this.tracePort.isEnabled(TracePhase.PASSIVE_TRIGGER)) return
+    this.turnSkippedCount++
     this.tracePort.emit(
       createTraceEvent({
         correlationId: context.trace?.correlationId ?? `pas_skip_${++this.traceCounter}`,
@@ -246,7 +282,7 @@ export class PassiveSkillManager {
           passiveId: config.skillId,
           owner: entity.name,
           trigger: context.phase,
-          verdict: 'SKIPPED',
+          verdict: PassiveVerdict.SKIPPED,
           skipReason,
           checks,
         },
@@ -343,6 +379,7 @@ export class PassiveSkillManager {
 
       // IDebugTracePort 输出（结构化 TraceEvent）
       if (this.tracePort && hasExecuted) {
+        this.turnFiredCount++
         const configName = config.name || config.skillId
         if (this.tracePort.isEnabled(TracePhase.PASSIVE_TRIGGER)) {
           this.tracePort.emit(
@@ -359,7 +396,8 @@ export class PassiveSkillManager {
                 passiveId: config.skillId,
                 owner: entity.name,
                 trigger: context?.phase,
-                verdict: 'TRIGGERED',
+                verdict: PassiveVerdict.TRIGGERED,
+                checks: this.lastPassChecks ?? undefined,
               },
             }),
           )

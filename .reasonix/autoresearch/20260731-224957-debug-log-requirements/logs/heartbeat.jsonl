@@ -1,0 +1,8 @@
+﻿{"ts":"2026-07-31T23:05:00+08:00","iteration":2,"event":"user_feedback_revise","note":"用户质疑原文完整覆盖清单未保留（抗性/穿透被压缩为等、证据链总结段被省略），启动修订迭代"}
+{"ts":"2026-07-31T23:20:00+08:00","iteration":3,"event":"user_request_ui_design","note":"用户提供三栏式 UI 设计方案，要求补充进文档并加入我的想法和优化点"}
+{"ts":"2026-07-31T23:40:00+08:00","iteration":4,"event":"user_request_html_example","note":"用户要求抛开现有主题样式，依据当前文档用 HTML 写最终示例"}
+{"ts":"2026-07-31T23:55:00+08:00","iteration":5,"event":"user_critique_binding","note":"用户批评示例绑定了现有系统（机制名/已有标注/项目示例数据），要求纯最终形态，重写示例"}
+{"ts":"2026-08-01T00:10:00+08:00","iteration":6,"event":"user_review_iterate","note":"用户指出上版问题多（点击左侧树会收缩等），要求自我评审后迭代"}
+{"ts":"2026-08-01T00:30:00+08:00","iteration":7,"event":"user_dual_role_review","note":"用户要求以用户视角+开发者视角各提意见，结合两份意见再迭代"}
+{"ts":"2026-08-01T01:00:00+08:00","iteration":8,"event":"v4_implemented","note":"用户选定全部 4 个迭代方向（条件断点+单步 / trace聚合+书签注释 / 瀑布图+时间轴播放 / 跨场统计+漂移报警），v4 全部落地"}
+{"ts":"2026-08-01T01:30:00+08:00","iteration":9,"event":"bugfix_chip_id","note":"用户报错 TypeError: Cannot read properties of null (reading classList)"}

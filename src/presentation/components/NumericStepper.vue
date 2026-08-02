@@ -120,7 +120,7 @@ function clamp(v: number, lo: number, hi: number): number {
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   user-select: none;
   line-height: 1;
 }

@@ -21,7 +21,10 @@
   overflow-y: auto;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s ease;
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base),
+    visibility var(--transition-base);
   z-index: var(--z-modal);
 }
 
@@ -60,12 +63,16 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .close-btn:hover {
   background: var(--color-brand-red);
   color: var(--color-text-primary);
+}
+
+.close-btn:active:not(:disabled) {
+  transform: scale(0.92);
 }
 
 .hint-grid {
@@ -83,7 +90,7 @@
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .hint-item:hover {
@@ -182,7 +189,7 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   color: var(--color-info);
 }
 

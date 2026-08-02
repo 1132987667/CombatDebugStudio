@@ -26,7 +26,9 @@
 
     <!-- 调试信息（可折叠） -->
     <div v-if="debugMode" class="group-debug">
-      <div class="debug-toggle" @click.stop="battleStore.setShowDebug(!showDebug)">
+      <div class="debug-toggle" role="button" tabindex="0" @click.stop="battleStore.setShowDebug(!showDebug)"
+        @keydown.enter.stop.prevent="battleStore.setShowDebug(!showDebug)"
+        @keydown.space.stop.prevent="battleStore.setShowDebug(!showDebug)">
         {{ showDebug ? '▼' : '▶' }} 调试信息
       </div>
       <div v-if="showDebug" class="debug-content">

@@ -4,8 +4,7 @@
  * 描述: 将 CombatRecord.damageBreakdown 结构化为 TraceEvent 输出到 TraceEventCollector。
  *       v2 起不再为每个步骤建树节点——steps 整体进 payload.steps（与 DamageBreakdown 同源直出），
  *       UI 展开 payload 表格查看逐步 before→after。
- *       DEBUG 摘要行（DMG_SUM）保留待 P0 迁移。
- * 版本: 3.0.0
+ * 版本: 3.1.0
  */
 
 import type { CombatRecord } from '@/domain/battle/combat-record'
@@ -45,7 +44,8 @@ export class TraceDamageLogger {
     if (!tracePort) return
 
     // === 结构化 TraceEvent（替换树状 TraceLogEntry） ===
-    // TODO(P1): scope 机制（文档 §4.5）落地后，correlationId 改从 context.trace 取
+    // NOTE: correlationId/parentId 由调用方（BattleExecutor）从 action scope 传入（文档 §4.5）；
+    //       未传入时兜底自建命名，仅防御——正常流程总有 scope
     const correlationId = rootTraceId ?? `trace_dmg_${++this.traceCounter}`
     const final = breakdown.finalDamage
 

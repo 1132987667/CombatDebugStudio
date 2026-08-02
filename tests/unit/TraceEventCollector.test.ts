@@ -3,8 +3,9 @@
  * 功能: TraceEventCollector（IDebugTracePort 实现 + 查询能力）单测
  */
 import { describe, it, expect } from 'vitest'
-import { TraceEventCollector } from '@/domain/battle/logs/TraceEventCollector'
-import { createTraceEvent, TracePhase } from '@/shared/types/trace-event'
+import { TraceEventCollector, TRACE_EVENT_ADDED } from '@/domain/battle/logs/TraceEventCollector'
+import { createTraceEvent, TracePhase, type TraceEvent } from '@/shared/types/trace-event'
+import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
 
 /** 便捷构建：显式 id + correlationId，支持 turn 等附加字段 */
 function ev(
@@ -83,7 +84,7 @@ describe('TraceEventCollector', () => {
     expect(c.query({ phase: 'nonexistent_phase' })).toEqual([])
     expect(c.query({ battleId: 'b_missing' })).toEqual([])
     // 组合维度：turn 有数据但 phase 无匹配 → 空
-    expect(c.query({ turn: 1, phase: 'buff_lifecycle' })).toEqual([])
+    expect(c.query({ turn: 1, phase: TracePhase.BUFF_LIFECYCLE })).toEqual([])
   })
 
   it('returns roots by turn', () => {
@@ -168,5 +169,86 @@ describe('TraceEventCollector', () => {
     c2.importAll(exported)
     expect(c2.size).toBe(1)
     expect(c2.getTree('x')).not.toBeNull()
+  })
+
+  it('P3: evicts oldest entries when maxEntries exceeded (环形缓冲)', () => {
+    const c = new TraceEventCollector(undefined, { maxEntries: 3 })
+    c.emit(ev('a', undefined, TracePhase.ACTION_EXECUTION, 'A', { turn: 1 }))
+    c.emit(ev('b', undefined, TracePhase.DAMAGE_CALCULATION, 'B', { turn: 1 }))
+    c.emit(ev('c', undefined, TracePhase.BUFF_LIFECYCLE, 'C', { turn: 1 }))
+    c.emit(ev('d', undefined, TracePhase.PASSIVE_TRIGGER, 'D', { turn: 2 }))
+    c.emit(ev('e', undefined, TracePhase.TURN_FLOW, 'E', { turn: 2 }))
+
+    expect(c.size).toBe(3)
+    expect(c.getAll().map((e) => e.id).sort()).toEqual(['c', 'd', 'e'])
+    // 索引同步淘汰：turn-1 桶只剩 c；phase 索引同步清理
+    expect(c.query({ turn: 1 }).map((e) => e.id)).toEqual(['c'])
+    expect(c.query({ phase: TracePhase.DAMAGE_CALCULATION })).toEqual([])
+  })
+
+  it('P3: phase gating skips disabled phases (细粒度门控)', () => {
+    const c = new TraceEventCollector()
+    c.setPhaseEnabled(TracePhase.DAMAGE_CALCULATION, false)
+
+    expect(c.isEnabled(TracePhase.DAMAGE_CALCULATION)).toBe(false)
+    expect(c.isEnabled(TracePhase.BUFF_LIFECYCLE)).toBe(true)
+
+    c.emit(ev('a', undefined, TracePhase.DAMAGE_CALCULATION, '应被跳过'))
+    c.emit(ev('b', undefined, TracePhase.BUFF_LIFECYCLE, '正常'))
+
+    expect(c.getAll().map((e) => e.id)).toEqual(['b'])
+  })
+
+  it('P3: batch gating via setPhasesEnabled', () => {
+    const c = new TraceEventCollector()
+    c.setPhasesEnabled({
+      [TracePhase.ATTRIBUTE_RECALC]: false,
+      [TracePhase.PASSIVE_TRIGGER]: false,
+    })
+
+    c.emit(ev('a', undefined, TracePhase.ATTRIBUTE_RECALC, '跳过'))
+    c.emit(ev('b', undefined, TracePhase.AI_DECISION, '保留'))
+
+    expect(c.getAll().map((e) => e.id)).toEqual(['b'])
+  })
+
+  it('broadcasts TRACE_EVENT_ADDED on emit when eventBus provided (实时流推模式)', () => {
+    const received: Array<{ name: string; payload: TraceEvent }> = []
+    const bus: IDomainEventBus = {
+      emit: (name, payload) => received.push({ name, payload: payload as TraceEvent }),
+      on: () => {},
+      off: () => {},
+      offByListenerId: () => {},
+      clear: () => {},
+    }
+    const c = new TraceEventCollector(bus)
+    c.emit(ev('a', undefined, TracePhase.ACTION_EXECUTION, '行动', { turn: 1 }))
+
+    expect(received).toHaveLength(1)
+    expect(received[0].name).toBe(TRACE_EVENT_ADDED)
+    expect(received[0].payload.id).toBe('a')
+    expect(received[0].payload.turn).toBe(1)
+  })
+
+  it('does not broadcast when eventBus absent (no-op)', () => {
+    const c = new TraceEventCollector()
+    expect(() => c.emit(ev('a', undefined, TracePhase.ACTION_EXECUTION, '行动'))).not.toThrow()
+  })
+
+  it('gated phase does not broadcast (门控跳过时无推送)', () => {
+    const received: string[] = []
+    const bus: IDomainEventBus = {
+      emit: (name) => received.push(name),
+      on: () => {},
+      off: () => {},
+      offByListenerId: () => {},
+      clear: () => {},
+    }
+    const c = new TraceEventCollector(bus)
+    c.setPhaseEnabled(TracePhase.DAMAGE_CALCULATION, false)
+    c.emit(ev('a', undefined, TracePhase.DAMAGE_CALCULATION, '应被门控跳过'))
+
+    expect(received).toHaveLength(0)
+    expect(c.size).toBe(0)
   })
 })

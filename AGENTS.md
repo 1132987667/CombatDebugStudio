@@ -128,7 +128,13 @@ tests/               # 测试（unit / e2e / factories / fixtures / mocks）
 **别名**: `@/` → `src/`, `@configs/` → `configs/`
 
 ## 禁止
-不要将文本大小设置为 --font-size-md 以下
+- 不要将文本大小设置为 --font-size-md 以下
+- UI 中禁止使用 emoji：图标一律用 SVG 或矢量字符；控制类符号（⏮ ⏪ ▶ ⏸ ⚡ 等 emoji 性质字符）同样禁止，装饰性 emoji（🔖 📌 等）也不允许
+- **禁止文件编码错乱（乱码）。** 写文件前确认目标文件编码，写入后保持原样：
+  - `documents/` 下的 `.md` 文档：**必须 UTF-8 带 BOM**（文件头 `EF BB BF`）——Windows 记事本等工具靠 BOM 识别 UTF-8，无 BOM 会按 GBK 解码成乱码（`鎶€鑳戒激瀹` 即此症状）。`documents/需求文档/调试日志改造.md` 是带 BOM 惯例文件
+  - 源代码（`.ts` / `.vue` / `.scss` / `.json`）：UTF-8 无 BOM（编辑器自动检测，正常）
+  - `edit_file` / `multi_edit` 保留原文件编码；**`write_file` 覆盖已有文件前先读前 3 字节确认原 BOM 状态**，有 BOM 必须带 BOM 写回；新建 `documents/` 下的 `.md` 一律带 BOM
+  - 写完文档验证：文件头 3 字节应为 `EF BB BF`（`[System.IO.File]::ReadAllBytes(path)[0..2]`），再交付
 
 ## 当前状态
 

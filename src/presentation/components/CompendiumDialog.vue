@@ -36,7 +36,8 @@
               </div>
               <ul v-else class="compendium-list">
                 <li v-for="item in currentList" :key="item.id" class="compendium-list-item"
-                  :class="{ selected: selectedId === item.id }" @click="selectItem(item.id)">
+                  :class="{ selected: selectedId === item.id }" role="button" tabindex="0" @click="selectItem(item.id)"
+                  @keydown.enter.prevent="selectItem(item.id)" @keydown.space.prevent="selectItem(item.id)">
                   <span class="item-name">{{ getItemName(item) }}</span>
                   <span v-if="'level' in item" class="item-level">Lv.{{ (item as CompendiumEnemy).level }}</span>
                   <span v-if="'rarity' in item" class="item-rarity"
@@ -202,7 +203,7 @@ watch(activeTab, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-dropdown);
 }
 
 .compendium-container {

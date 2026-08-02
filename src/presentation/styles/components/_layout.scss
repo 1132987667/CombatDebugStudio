@@ -33,16 +33,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* ponytail: header-height constant, extract to token if shared elsewhere */
   height: 80px;
   box-sizing: border-box;
 }
 
 .tool-header h1 {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-xxxl);
   color: var(--color-brand-red);
-  margin: 0;
-  letter-spacing: 2px;
+  letter-spacing: var(--letter-spacing-2);
 }
 
 .tool-header .subtitle {
@@ -59,7 +57,7 @@
 .main-layout {
   display: grid;
   grid-template-columns: 25% 1fr 25%;
-  gap: var(--space-4);
+  gap: var(--space-2);
   height: calc(100vh - 80px - 67px);
   margin-top: 80px;
   overflow: hidden;
@@ -281,10 +279,6 @@
   background: var(--color-bg-tertiary-active);
 }
 
-.scene-header:hover .expand-icon {
-  transform: scale(1.2);
-}
-
 .scene-name {
   font-weight: var(--font-weight-bold);
   color: var(--color-brand-red);
@@ -295,7 +289,7 @@
 }
 
 .scene-count {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
   margin-left: auto;
 }
 
@@ -331,13 +325,13 @@
 /* ----- 空状态 ----- */
 .empty-message {
   text-align: center;
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
   padding: var(--space-6) var(--space-4);
   font-style: italic;
 }
 
 .empty-party {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
   text-align: center;
   padding: var(--space-4);
   font-style: italic;
@@ -398,12 +392,16 @@
   border: 1px solid var(--color-border-default);
   padding: 0.4rem 0.75rem;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .control-btn:hover:not(:disabled) {
   background: var(--color-bg-tertiary-hover);
   border-color: var(--color-border-tertiary-hover);
+}
+
+.control-btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .control-btn:disabled {
@@ -427,7 +425,7 @@
   justify-content: center;
   gap: var(--space-2);
   min-width: 120px;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .auto-play-btn:hover:not(:disabled) {
@@ -473,7 +471,7 @@
   justify-content: center;
   gap: var(--space-2);
   min-width: 120px;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .speed-control-btn:hover:not(:disabled) {

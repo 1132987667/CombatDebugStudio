@@ -2,7 +2,9 @@
   <div class="control-bar">
     <!-- 自动战斗状态指示器 -->
     <div v-if="isAutoPlaying" class="auto-battle-indicator">
-      <span class="auto-indicator-icon">⚡</span>
+      <span class="auto-indicator-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 8-10h-7z"/></svg>
+      </span>
       <span class="auto-indicator-text">自动战斗中</span>
       <span class="auto-indicator-speed">x{{ props.battleSpeed ?? 1 }}</span>
     </div>
@@ -25,20 +27,25 @@
 
       <!-- 战斗速度控制按钮 -->
       <button class="control-btn speed-control-btn" @click="toggleBattleSpeed">
-        <span class="speed-icon">⚡</span>
+        <span class="speed-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 8-10h-7z"/></svg>
+        </span>
         <span class="speed-text">战斗速度 x{{ props.battleSpeed ?? 1 }}</span>
       </button>
 
       <!-- ★ 快速战斗开关 -->
       <ToggleSwitch :model-value="store.quickMode" @update:model-value="store.toggleQuickMode()"
-        accent-color="var(--color-warning)" label="⚡快速" />
+        accent-color="var(--color-warning)" label="快速" />
 
 
     </div>
     <div class="control-group right">
       <!-- 调试模式：暂停相位指示 + 暂停 / 单步调试 -->
       <template v-if="debugMode">
-        <span v-if="debugPhase" class="debug-phase-badge">⏸ 暂停于：{{ debugPhaseLabel }}</span>
+        <span v-if="debugPhase" class="debug-phase-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="3" width="5" height="18" rx="1"/><rect x="14" y="3" width="5" height="18" rx="1"/></svg>
+          暂停于：{{ debugPhaseLabel }}
+        </span>
         <button class="control-btn" @click="handleDebugStep" :disabled="!debugPhase">
           {{ debugPhase ? '继 续' : '暂 停' }}
         </button>
@@ -168,7 +175,7 @@ onUnmounted(() => {
   border: 1px solid var(--border-debug-color-light);
   border-radius: var(--radius-xl);
   animation: pulse-glow 2s ease-in-out infinite;
-  z-index: 100;
+  z-index: var(--z-float);
 }
 
 .auto-indicator-icon {

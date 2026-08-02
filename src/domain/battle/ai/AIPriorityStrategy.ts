@@ -13,12 +13,29 @@ import { BATTLE_CONSTANTS } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { SkillType } from '@/domain/skill/types'
 /**
+ * 权重贡献项（数值化 breakdown，文档 §4.3）
+ * 每个 label 对应一条权重调整规则，value 为该规则贡献的数值（可为负）
+ */
+export interface WeightBreakdownItem {
+  label: string
+  value: number
+}
+
+/** 权重计算结果（数值 + 贡献项列表） */
+interface WeightDetail {
+  value: number
+  items: WeightBreakdownItem[]
+}
+
+/**
  * 技能权重接口
  */
 export interface SkillWeight {
   skillId: string
   weight: number
   reason: string
+  /** 数值化贡献项 — 逐项 label + value，供 AI_DECISION payload 与验收故事 B 取证 */
+  breakdown: WeightBreakdownItem[]
 }
 
 /**
@@ -69,25 +86,25 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
 
     // 计算每个技能的权重
     for (const skill of skills) {
-      let weight = 0
-      let reason = ''
+      const base = this.getBaseWeightDetail(skill)
+      const battle = this.adjustWeightByBattleStateDetail(skill, battleAnalysis)
+      const participantAdj = this.adjustWeightByParticipantStateDetail(
+        skill,
+        participant,
+      )
 
-      // 基础权重
-      weight += this.getBaseWeight(skill)
-      reason += '基础权重'
+      const breakdown: WeightBreakdownItem[] = [
+        ...base.items,
+        ...battle.items,
+        ...participantAdj.items,
+      ]
+      const weight = Math.max(0, base.value + battle.value + participantAdj.value)
+      const reason =
+        breakdown
+          .map((i) => `${i.label}${i.value >= 0 ? '+' : ''}${i.value}`)
+          .join(' + ') || '无调整'
 
-      // 根据战场形势调整权重
-      weight += this.adjustWeightByBattleState(skill, battleAnalysis)
-      reason += ', 战场形势调整'
-
-      // 根据角色状态调整权重
-      weight += this.adjustWeightByParticipantState(skill, participant)
-      reason += ', 角色状态调整'
-
-      // 确保权重为正数
-      weight = Math.max(0, weight)
-
-      weights.push({ skillId: skill.id, weight, reason })
+      weights.push({ skillId: skill.id, weight, reason, breakdown })
     }
 
     // 按权重排序
@@ -209,42 +226,50 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
   }
 
   /**
-   * 获取基础权重
+   * 获取基础权重（数值化贡献项）
    */
-  protected getBaseWeight(skill: Skill): number {
-    let weight = 50 // 基础权重
+  protected getBaseWeightDetail(skill: Skill): WeightDetail {
+    const items: WeightBreakdownItem[] = [{ label: '基础', value: 50 }]
+    let value = 50
 
     // 根据技能类型调整
     switch (skill.type) {
       case SkillType.ULTIMATE:
-        weight += 30
+        value += 30
+        items.push({ label: '终结技', value: 30 })
         break
       case SkillType.SMALL:
-        weight += 10
+        value += 10
+        items.push({ label: '小技能', value: 10 })
         break
       case SkillType.PASSIVE:
-        weight = 0 // 被动技能不主动使用
+        value = 0 // 被动技能不主动使用
+        items.length = 0
+        items.push({ label: '被动', value: 0 })
         break
     }
 
-    return weight
+    return { value, items }
   }
 
   /**
-   * 根据战场形势调整权重
+   * 根据战场形势调整权重（数值化贡献项）
    */
-  protected adjustWeightByBattleState(
+  protected adjustWeightByBattleStateDetail(
     skill: Skill,
     battleAnalysis: BattleAnalysis,
-  ): number {
+  ): WeightDetail {
+    const items: WeightBreakdownItem[] = []
     let adjustment = 0
 
     // 治疗技能调整
     if (skill.heal && skill.heal > 0) {
       if (battleAnalysis.hasLowHealthAlly) {
         adjustment += 40
+        items.push({ label: '低血量队友', value: 40 })
       } else if (battleAnalysis.needsHealing) {
         adjustment += 20
+        items.push({ label: '队友需治疗', value: 20 })
       }
     }
 
@@ -255,6 +280,7 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
         BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD
       ) {
         adjustment += 30
+        items.push({ label: '高威胁目标', value: 30 })
       }
     }
 
@@ -263,6 +289,7 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
       // 有高威胁敌人时，增益技能更有价值
       if (battleAnalysis.highestThreatEnemy.threat > 0) {
         adjustment += 15
+        items.push({ label: '增益对抗', value: 15 })
       }
     }
     if (skill.hasDebuff) {
@@ -272,19 +299,21 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
         BATTLE_CONSTANTS.SKILL_SELECTION_THREAT_THRESHOLD
       ) {
         adjustment += 20
+        items.push({ label: '减益对抗', value: 20 })
       }
     }
 
-    return adjustment
+    return { value: adjustment, items }
   }
 
   /**
-   * 根据角色状态调整权重
+   * 根据角色状态调整权重（数值化贡献项）
    */
-  protected adjustWeightByParticipantState(
+  protected adjustWeightByParticipantStateDetail(
     skill: Skill,
     participant: BattleEntity,
-  ): number {
+  ): WeightDetail {
+    const items: WeightBreakdownItem[] = []
     let adjustment = 0
     const healthPercent =
       participant.getAttribute(ATTRIBUTE_CODE.currentHealth) /
@@ -300,6 +329,7 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
         skill.energyCost / participant.getAttribute(ATTRIBUTE_CODE.maxEnergy)
     ) {
       adjustment -= 50
+      items.push({ label: '能量不足', value: -50 })
     }
 
     // 气血值过低时优先使用治疗技能
@@ -309,9 +339,10 @@ export class BaseAIPriorityStrategy implements AIPriorityStrategy {
       healthPercent < BATTLE_CONSTANTS.CRITICAL_HEALTH_THRESHOLD
     ) {
       adjustment += 30
+      items.push({ label: '自身低血', value: 30 })
     }
 
-    return adjustment
+    return { value: adjustment, items }
   }
 }
 
@@ -328,17 +359,20 @@ export class AggressiveAIPriorityStrategy extends BaseAIPriorityStrategy {
   }
 
   /**
-   * 获取基础权重
+   * 获取基础权重（数值化贡献项）
    */
-  protected getBaseWeight(skill: Skill): number {
-    let weight = super.getBaseWeight(skill)
+  protected getBaseWeightDetail(skill: Skill): WeightDetail {
+    const base = super.getBaseWeightDetail(skill)
 
     // 增加伤害技能的权重
     if (skill.damage && skill.damage > 0) {
-      weight += 20
+      return {
+        value: base.value + 20,
+        items: [...base.items, { label: '攻击加成', value: 20 }],
+      }
     }
 
-    return weight
+    return base
   }
 }
 
@@ -355,27 +389,30 @@ export class DefensiveAIPriorityStrategy extends BaseAIPriorityStrategy {
   }
 
   /**
-   * 获取基础权重
+   * 获取基础权重（数值化贡献项）
    */
-  protected getBaseWeight(skill: Skill): number {
-    let weight = super.getBaseWeight(skill)
+  protected getBaseWeightDetail(skill: Skill): WeightDetail {
+    const base = super.getBaseWeightDetail(skill)
 
     // 增加治疗技能的权重
     if (skill.heal && skill.heal > 0) {
-      weight += 30
+      return {
+        value: base.value + 30,
+        items: [...base.items, { label: '治疗加成', value: 30 }],
+      }
     }
 
-    return weight
+    return base
   }
 
   /**
-   * 根据角色状态调整权重
+   * 根据角色状态调整权重（数值化贡献项）
    */
-  protected adjustWeightByParticipantState(
+  protected adjustWeightByParticipantStateDetail(
     skill: Skill,
     participant: BattleEntity,
-  ): number {
-    let adjustment = super.adjustWeightByParticipantState(skill, participant)
+  ): WeightDetail {
+    const base = super.adjustWeightByParticipantStateDetail(skill, participant)
 
     const healthPercent =
       participant.getAttribute(ATTRIBUTE_CODE.currentHealth) /
@@ -383,10 +420,14 @@ export class DefensiveAIPriorityStrategy extends BaseAIPriorityStrategy {
 
     // 气血值越低，治疗技能权重越高
     if (skill.heal && skill.heal > 0 && healthPercent < 0.5) {
-      adjustment += (0.5 - healthPercent) * 100
+      const value = (0.5 - healthPercent) * 100
+      return {
+        value: base.value + value,
+        items: [...base.items, { label: '低气血治疗', value }],
+      }
     }
 
-    return adjustment
+    return base
   }
 }
 

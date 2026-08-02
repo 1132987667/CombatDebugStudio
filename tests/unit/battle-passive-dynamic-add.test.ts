@@ -9,6 +9,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { initializeContainer, container } from '@/infrastructure/di/Container'
 import type { BattleManager } from '@/domain/battle/BattleManager'
+import type { PassiveSkillManager } from '@/domain/skill/PassiveSkillManager'
 import { ParticipantSide } from '@/domain/battle/type/types'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
@@ -76,5 +77,19 @@ describe('战斗中动态添加角色触发被动', () => {
     // startBattle → initialize() 统一注册并触发 BATTLE_START 被动（不重复、不遗漏）
     await battleManager.startBattle()
     expect(bard.getAttribute(ATTRIBUTE_CODE.attack)).toBeCloseTo(baseAttack * 1.1, 5)
+  })
+
+  it('回合级被动统计接线：BATTLE_START 触发计入 fired（TURN_END passiveTriggers 数据源，文档 §5 示例 5）', async () => {
+    const battleManager = container.resolve<BattleManager>('BattleManager')
+    const { allies, enemies } = createBattleParticipantsFromConfig()
+    battleManager.initializeTeams(allies, enemies)
+    await battleManager.startBattle()
+
+    // startBattle 已触发 BATTLE_START 被动（test_passive_attack_up_battle_start 等）→ fired 计数应 > 0
+    const passiveManager = container.resolve<PassiveSkillManager>('PassiveSkillManager')
+    const counters = passiveManager.getAndResetTurnCounters()
+    expect(counters.fired).toBeGreaterThan(0)
+    // 清零后可复用：再次读取为 0（TURN_END 消费后不重复计数）
+    expect(passiveManager.getAndResetTurnCounters().fired).toBe(0)
   })
 })

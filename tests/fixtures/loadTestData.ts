@@ -50,8 +50,13 @@ export function getPassiveSkills(): SkillConfig[] {
 
 import type { Enemy } from '@/shared/types/enemy'
 import enemiesDataRaw from '@configs/enemies/enemies.json'
+import enemiesTestDataRaw from '@configs/enemies/enemies_test.json'
 
-const enemiesData = enemiesDataRaw as Enemy[]
+// 与 GameDataProcessor 保持同一合并口径：正式敌人 + 测试敌人
+const enemiesData = [
+  ...(enemiesDataRaw as Enemy[]),
+  ...(enemiesTestDataRaw as Enemy[]),
+] as Enemy[]
 
 /** 按 ID 查找敌人配置 */
 export function getEnemyConfig(id: string): Enemy | undefined {

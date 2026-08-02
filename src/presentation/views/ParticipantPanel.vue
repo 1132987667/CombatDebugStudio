@@ -17,7 +17,7 @@
       <div class="section-header">
         <span>参战管理</span>
         <div class="expand-collapse-controls">
-          <button class="btn-medium" @click="clearParticipants"
+          <button class="btn-medium" @click="confirmClear = true"
             :disabled="allyTeam.length === 0 && enemyTeam.length === 0">
             <span class="icon mr-2">[−]</span>清空
           </button>
@@ -30,7 +30,9 @@
             <div class="party-members">
               <div v-for="char in allyTeam" :key="char.id" class="character-item"
                 :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
-                @click="selectCharacter(char.id)">
+                role="button" tabindex="0" @click="selectCharacter(char.id)"
+                @keydown.enter="onCharKeydown($event, char.id)"
+                @keydown.space="onCharKeydown($event, char.id)">
                 <div class="char-check">
                   <input type="checkbox" :checked="char.enabled"
                     @change="toggleCharacterEnabled(char.id, ($event.target as HTMLInputElement).checked)" @click.stop>
@@ -56,7 +58,9 @@
             <div class="party-members">
               <div v-for="char in enemyTeam" :key="char.id" class="character-item"
                 :class="{ selected: selectedCharacterId === char.id, disabled: !char.enabled }"
-                @click="selectCharacter(char.id)">
+                role="button" tabindex="0" @click="selectCharacter(char.id)"
+                @keydown.enter="onCharKeydown($event, char.id)"
+                @keydown.space="onCharKeydown($event, char.id)">
                 <div class="char-check">
                   <input type="checkbox" :checked="char.enabled"
                     @change="toggleCharacterEnabled(char.id, ($event.target as HTMLInputElement).checked)" @click.stop>
@@ -79,7 +83,7 @@
       <div class="section-actions">
         <button class="btn-medium" @click="moveCharacter(-1)"><span class="icon mr-2">[↑]</span>上调</button>
         <button class="btn-medium" @click="moveCharacter(1)"><span class="icon mr-2">[↓]</span>下调</button>
-        <button class="btn-medium btn-remove" @click="removeSelectedCharacter"><span class="icon mr-2">[−]</span>移除</button>
+        <button class="btn-medium btn-remove" @click="confirmRemove = true"><span class="icon mr-2">[−]</span>移除</button>
       </div>
     </div>
 
@@ -97,12 +101,14 @@
       </div>
       <div class="section-content">
         <div class="character-search">
-          <input type="text" v-model="enemySearch" placeholder="搜索角色库..." class="search-input">
+          <input type="text" v-model="enemySearch" placeholder="搜索角色库..." class="search-input" aria-label="搜索角色库">
         </div>
         <div class="scene-enemy-list">
           <div v-for="group in groupedEnemies" :key="group.scene.id" class="scene-group">
-            <div class="scene-header" @click="toggleSceneExpand(group.scene.id)">
-              <span class="expand-icon">{{ isSceneExpanded(group.scene.id) ? '-' : '+' }}</span>
+            <div class="scene-header" role="button" tabindex="0" @click="toggleSceneExpand(group.scene.id)"
+              @keydown.enter.prevent="toggleSceneExpand(group.scene.id)"
+              @keydown.space.prevent="toggleSceneExpand(group.scene.id)">
+              <span class="expand-icon mr-2">{{ isSceneExpanded(group.scene.id) ? '[-]' : '[+]' }}</span>
               <span class="scene-name">{{ group.scene.name }}</span>
               <span class="scene-level">Lv.{{ group.scene.requiredLevel }}+</span>
               <span class="scene-count">{{ group.enemies.length }}人</span>
@@ -110,7 +116,9 @@
             <Transition name="scene-enemies">
               <div class="scene-enemies" v-show="isSceneExpanded(group.scene.id)">
                 <div v-for="enemy in group.enemies" :key="enemy.id" class="character-item"
-                  :class="{ selected: isRosterCharSelected(enemy.id) }" @click="previewRosterCharacter(enemy)">
+                  :class="{ selected: isRosterCharSelected(enemy.id) }" role="button" tabindex="0"
+                  @click="previewRosterCharacter(enemy)" @keydown.enter.prevent="previewRosterCharacter(enemy)"
+                  @keydown.space.prevent="previewRosterCharacter(enemy)">
                   <div class="char-info">
                     <span class="char-name">{{ enemy.name }} (Lv.{{ enemy.level }})</span>
                     <span class="char-stats">气血:{{ enemy.stats.maxHealth }} 攻击:{{ enemy.stats.minAttack
@@ -128,6 +136,12 @@
         </div>
       </div>
     </div>
+
+    <!-- 危险操作二次确认 -->
+    <ConfirmDialog v-model="confirmClear" title="清空参战角色" message="确定要清空当前所有参战角色吗？"
+      confirm-text="清空" danger @confirm="clearParticipants" />
+    <ConfirmDialog v-model="confirmRemove" title="移除角色" message="确定要移除当前选中的角色吗？"
+      confirm-text="移除" danger @confirm="removeSelectedCharacter" />
   </div>
 </template>
 
@@ -141,6 +155,7 @@ import { ParticipantSide } from "@/domain/battle/type/types";
 import type { BattleService } from '@/application/facade/BattleFacade';
 import { useBattleStore } from '@/presentation/stores';
 import EmptyState from '@/presentation/components/EmptyState.vue'
+import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 
 interface GroupedEnemies {
   scene: SceneData;
@@ -474,6 +489,17 @@ const removeSelectedCharacter = () => {
     battleService.removeCharacter(selectedId);
   }
 };
+
+/** 角色项键盘操作：Enter/Space 选中；焦点在嵌套控件（启用 checkbox）时不拦截，避免吞掉 Space 切换 */
+const onCharKeydown = (e: KeyboardEvent, charId: string) => {
+  if (e.target !== e.currentTarget) return
+  e.preventDefault()
+  selectCharacter(charId)
+};
+
+// 危险操作二次确认状态
+const confirmRemove = ref(false);
+const confirmClear = ref(false);
 
 const clearParticipants = () => {
   battleService.clearParticipants();

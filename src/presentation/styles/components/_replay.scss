@@ -76,6 +76,11 @@
   -webkit-appearance: none;
 }
 
+.frame-slider:focus-visible {
+  outline: 2px solid var(--color-info);
+  outline-offset: 2px;
+}
+
 .frame-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -137,7 +142,7 @@
   border-radius: 50%;
   background: var(--color-text-tertiary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .timeline-event:hover {
@@ -247,7 +252,7 @@
   padding: 8px 12px;
   border-bottom: 1px solid var(--color-border-default);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   color: var(--color-text-primary);
 }
 
@@ -315,7 +320,7 @@
 }
 
 .event-time {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
 }
 
 .event-details {

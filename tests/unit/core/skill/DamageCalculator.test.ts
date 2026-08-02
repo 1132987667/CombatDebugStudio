@@ -140,7 +140,7 @@ describe('DamageCalculator', () => {
       expect(result.damage).toBe(190)
     })
 
-    it('should order breakdown steps: crit → source bonuses → rawDamage → defense', () => {
+    it('should order breakdown steps: crit → source bonuses → defense', () => {
       // 测试步骤链顺序
       const source = createMockEntity()
       const target = createMockEntity()
@@ -175,18 +175,14 @@ describe('DamageCalculator', () => {
       expect(breakdown).toBeDefined()
       const stepNames = breakdown.steps.map((s: { stepName: string }) => s.stepName)
 
-      // 关键顺序：crit → damageBoost → rawDamage → defense → final
+      // 关键顺序：crit → damageBoost → defense（rawDamage/final 为无变换打点，不再入链）
       const critIdx = stepNames.indexOf('crit')
       const boostIdx = stepNames.indexOf('damageBoost')
-      const rawIdx = stepNames.indexOf('rawDamage')
       const defIdx = stepNames.indexOf('defense')
-      const finalIdx = stepNames.indexOf('final')
 
       expect(critIdx).toBeGreaterThanOrEqual(0)
       expect(boostIdx).toBeGreaterThan(critIdx)
-      expect(rawIdx).toBeGreaterThan(boostIdx)
-      expect(defIdx).toBeGreaterThan(rawIdx)
-      expect(finalIdx).toBeGreaterThan(defIdx)
+      expect(defIdx).toBeGreaterThan(boostIdx)
     })
 
     it('should correctly compute rawDamage for TRUE damage with source bonuses', () => {
@@ -518,12 +514,13 @@ describe('DamageCalculator', () => {
       const breakdown = context.record.damageBreakdown
       const stepNames = breakdown.steps.map((s: { stepName: string }) => s.stepName)
 
-      // 预期步骤顺序（不含 physicalSkillDmgBonus — ELEMENTAL damage 不触发）
+      // 预期步骤顺序（不含 physicalSkillDmgBonus — ELEMENTAL damage 不触发；
+      // 不含 rawDamage/final — 无变换打点，值在 payload 顶层 raw/final 字段）
       const expectedOrder = [
         'base', 'extra', 'preCrit', 'crit', 'damageBoost', 'fireSkillDmgBonus',
-        'damageToLowHp', 'rawDamage',
+        'damageToLowHp',
         'critDmgTakenReduction', 'defense', 'skillDmgReduction',
-        'elementalResistance', 'damageReduction', 'dmgTakenIncrease', 'final',
+        'elementalResistance', 'damageReduction', 'dmgTakenIncrease',
       ]
       const filtered = stepNames.filter((n: string) => expectedOrder.includes(n))
       expect(filtered).toEqual(expectedOrder)
@@ -555,10 +552,9 @@ describe('DamageCalculator', () => {
       const breakdown = context.record.damageBreakdown
       const steps = breakdown.steps
 
-      // 除 clamp 外，每步的 after 应等于下一步的 before
+      // 除 clamp 外，每步的 after 应等于下一步的 before（steps 只含实际变换环节，链连续）
       for (let i = 0; i < steps.length - 1; i++) {
         if (steps[i + 1].stepName === 'clamp') continue
-        if (steps[i].stepName === 'final') break
         expect(steps[i].after).toBe(steps[i + 1].before)
       }
     })

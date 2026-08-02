@@ -179,5 +179,71 @@
         "stacks": 1
       }
     ]
+  },
+  {
+    "id": "test_passive_control_rotator",
+    "name": "控制轮转",
+    "description": "每次攻击命中时80%概率，按控制优先级从低到高轮转施加持续1回合的控制buff",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "enemy", "strategy": "first" },
+    "triggerTimes": ["on_hit"],
+    "triggerProbability": 0.8,
+    "passiveCategory": ["trigger", "control"],
+    "steps": [
+      {
+        "type": "custom",
+        "targetConfig": { "faction": "enemy" },
+        "duration": 1,
+        "stacks": 1,
+        "parameters": {
+          "customType": "rotating_apply_buff",
+          "buffIds": [
+            "buff_seal_all",
+            "buff_seal",
+            "buff_bind",
+            "buff_guard_web",
+            "buff_lava_bind",
+            "guardian_buff_random_taunt",
+            "buff_confusion",
+            "buff_petrify",
+            "buff_stun",
+            "guardian_buff_paralyze"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "test_passive_dot_rotator",
+    "name": "持续轮转",
+    "description": "每次攻击命中时80%概率，按顺序轮转施加持续1回合、3层的持续伤害buff",
+    "skillType": "passive",
+    "energyCost": 0,
+    "cooldown": 0,
+    "selector": { "faction": "enemy", "strategy": "first" },
+    "triggerTimes": ["on_hit"],
+    "triggerProbability": 0.8,
+    "passiveCategory": ["trigger", "dot"],
+    "steps": [
+      {
+        "type": "custom",
+        "targetConfig": { "faction": "enemy" },
+        "duration": 1,
+        "stacks": 3,
+        "parameters": {
+          "customType": "rotating_apply_buff",
+          "buffIds": [
+            "buff_suffocation",
+            "buff_bleed",
+            "buff_drowning",
+            "buff_burn",
+            "buff_poison",
+            "buff_strong_poison"
+          ]
+        }
+      }
+    ]
   }
 ]

@@ -3,7 +3,8 @@
   显示参与者的属性和状态信息
 -->
 <template>
-  <div class="member-card" ref="cardRef" :class="[cardClasses, cardVisualStateClass]" @click="handleClick">
+  <div class="member-card" ref="cardRef" :class="[cardClasses, cardVisualStateClass]" role="button" tabindex="0"
+    @click="handleClick" @keydown.enter="handleClick" @keydown.space.prevent="handleClick">
     <div class="member-info">
       <!-- 名称和行动标识 -->
       <div class="member-name">

@@ -13,9 +13,9 @@
     </div>
 
     <!-- 错误提示 -->
-    <div v-if="battleStore.error.hasError" class="error-toast" @click="battleStore.clearError()">
+    <div v-if="battleStore.error.hasError" class="error-toast" role="alert" @click="battleStore.clearError()">
       <span class="error-message">{{ battleStore.error.message }}</span>
-      <span class="error-close">&times;</span>
+      <button class="error-close" aria-label="关闭错误提示">&times;</button>
     </div>
 
     <div class="tool-header">
@@ -64,7 +64,7 @@
 
     <BattleRecordingDialog v-model="showRecordingDialog" />
 
-    <DebugLogDialog v-model="showDebugLogDialog" :logs="debugLogs" :trace-roots="traceRoots" @clear="clearDebugLogs" />
+    <DebugLogDialog v-model="showDebugLogDialog" :logs="debugLogs" :trace-roots="traceRoots" :trace-events="traceEvents" :actor-names="actorNames" @clear="clearDebugLogs" @refresh-trace="updateTraceRoots" />
 
     <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
 
@@ -72,7 +72,7 @@
     <ControlBar :is-battle-active="battleStore.isBattleActive"
       :is-auto-playing="battleStore.autoPlayMode" :is-paused="battleStore.isPaused"
       :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
-      @end-battle="endBattle" @reset-battle="resetBattle" @toggle-auto-play="toggleAutoPlay"
+      @end-battle="endBattle" @reset-battle="requestResetBattle" @toggle-auto-play="toggleAutoPlay"
       @battle-speed-change="handleBattleSpeedChange" />
 
     <!-- 快捷键提示面板 -->
@@ -80,6 +80,11 @@
 
     <!-- 通知组件 -->
     <Notification ref="notification" />
+
+    <!-- 重置战斗二次确认 -->
+    <ConfirmDialog v-model="confirmResetBattle" title="重置战斗"
+      message="确定要重置当前战斗吗？所有战斗进度将清空。"
+      confirm-text="重置" danger @confirm="resetBattle" />
   </div>
 </template>
 
@@ -89,15 +94,18 @@ import { ATTRIBUTE_CODE, ModifierType } from "@/domain/attribute/types";
 import { ParticipantSide } from "@/domain/battle/type/types.ts";
 import type { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader';
 import { BuffSystem } from '@/domain/buff/BuffSystem';
+import { TRACE_EVENT_ADDED } from '@/domain/battle/logs/TraceEventCollector';
+import type { IDomainEventBus } from '@/domain/port/IDomainEventBus';
 import { DamageCategory } from '@/domain/skill/types';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
 import { container } from '@/infrastructure/di/Container';
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import Notification from "@/presentation/components/Notification.vue";
+import ConfirmDialog from "@/presentation/components/ConfirmDialog.vue";
 import { useBattleStore, SkillStepType } from '@/presentation/stores';
 import type { LogEntry } from '@/shared/types/battle-log';
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
-import type { TraceEventNode } from '@/shared/types/trace-event';
+import type { TraceEvent, TraceEventNode } from '@/shared/types/trace-event';
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
 import BattleDashboard from "./BattleDashboard.vue";
@@ -139,6 +147,18 @@ const debugLogs = ref<LogEntry[]>([]);
 // 树状调试日志数据
 const traceRoots = ref<TraceEventNode[]>([]);
 
+// 实时流调试日志数据（TraceEvent 全量）
+const traceEvents = ref<TraceEvent[]>([]);
+
+/** 实体 ID → 角色名 映射（调试日志显示名字而非内部 ID，来源：battleStore 投影快照） */
+const actorNames = computed<Record<string, string>>(() => {
+  const m: Record<string, string> = {}
+  for (const [id, p] of battleStore.participants) {
+    m[id] = p.name
+  }
+  return m
+})
+
 const CT = {
   common: {
 
@@ -172,6 +192,23 @@ async function updateTraceRoots() {
         roots.push(...collector.getRootsByTurn(turn))
       }
       traceRoots.value = roots
+      traceEvents.value = collector.getAll()
+    }
+  } catch {
+    // 战斗系统未就绪时静默忽略
+  }
+}
+
+/** 从 BattleSystem.traceCollector 刷新实时流事件（TRACE_EVENT_ADDED 广播时触发） */
+async function refreshTraceEvents() {
+  // 弹窗关闭时零成本跳过：订阅常驻，但只在调试面板可见时才全量刷新（避免战斗循环内每次 emit 都 O(n) 复制）
+  if (!showDebugLogDialog.value) return
+  try {
+    const { BATTLE_SYSTEM_TOKEN } = await import('@/domain/battle/entity/BattleInterfaces')
+    const { BattleSystem } = await import('@/domain/battle/BattleSystem')
+    const bs = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
+    if (bs?.traceCollector) {
+      traceEvents.value = bs.traceCollector.getAll()
     }
   } catch {
     // 战斗系统未就绪时静默忽略
@@ -459,6 +496,9 @@ onMounted(() => {
   };
   battleLogManager.addListener(debugLogListener);
   debugLogs.value = battleLogManager.getDebugLogs();
+  // 订阅结构化追踪事件（TRACE_EVENT_ADDED）— 实时流视图随战斗进行自动追加
+  traceEventBus = container.resolve<BuffSystem>('BuffSystem').getEventBus();
+  traceEventBus.on(TRACE_EVENT_ADDED, refreshTraceEvents);
 });
 
 // 监听战斗活跃状态变化
@@ -473,6 +513,20 @@ watch(
       if (battleFieldRef.value) {
         battleFieldRef.value.cleanupAnimations();
       }
+    }
+  }
+);
+
+// 每场战斗开始时重建 TRACE_EVENT_ADDED 订阅
+// resetBattle() 会 clear() 共享触发总线（兜底清理触发器监听器），TRACE_EVENT_ADDED 订阅被一并清除；
+// 以 currentBattleId 变化为重建信号（每次新战斗必变；isActive 可能保持 true 不变，如战斗中清空队伍后重开）。
+// off 对未注册 handler 是 no-op，幂等安全，保证始终恰好 1 个订阅。
+watch(
+  () => battleStore.currentBattleId,
+  () => {
+    if (traceEventBus) {
+      traceEventBus.off(TRACE_EVENT_ADDED, refreshTraceEvents);
+      traceEventBus.on(TRACE_EVENT_ADDED, refreshTraceEvents);
     }
   }
 );
@@ -677,6 +731,12 @@ const endBattle = async () => {
   }
 };
 
+// 重置战斗（先二次确认，防误触丢进度）
+const confirmResetBattle = ref(false);
+const requestResetBattle = () => {
+  confirmResetBattle.value = true;
+};
+
 // 重置战斗
 const resetBattle = async () => {
   try {
@@ -729,12 +789,17 @@ const selectCharacter = (characterId: string) => {
 };
 
 let debugLogListener: (() => void) | null = null
+let traceEventBus: IDomainEventBus | null = null
 
 onUnmounted(() => {
   battleStore.destroy();
   if (debugLogListener) {
     battleLogManager.removeListener(debugLogListener);
     debugLogListener = null;
+  }
+  if (traceEventBus) {
+    traceEventBus.off(TRACE_EVENT_ADDED, refreshTraceEvents);
+    traceEventBus = null;
   }
 });
 </script>
@@ -752,7 +817,7 @@ onUnmounted(() => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: var(--z-overlay);
 
   .loading-spinner {
     width: 60px;
@@ -841,6 +906,9 @@ onUnmounted(() => {
     font-weight: var(--font-weight-bold);
     cursor: pointer;
     padding: 0 var(--space-1);
+    background: none;
+    border: none;
+    line-height: 1;
 
     &:hover {
       opacity: 0.8;

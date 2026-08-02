@@ -145,7 +145,7 @@ const tooltipStyle = computed(() => {
 <style scoped lang="scss">
 .entity-tooltip {
   position: fixed;
-  z-index: 10000;
+  z-index: var(--z-tooltip);
   width: 300px;
   max-width: 90vw;
   max-height: 50vh;

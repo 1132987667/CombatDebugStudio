@@ -126,6 +126,8 @@ $transition-fast: var(--transition-fast);
   --color-casting-bg: #2a2a4e;
   --color-casting-bg-glow: #3a3a5e;
   --color-crit-bg: #2a2a1e;
+  --color-round-announce: #ffd478; /* 回合公告金（BattleField 圆公告） */
+  --rgb-round-announce: 255, 212, 120;
   --color-overlay-panel: rgba(var(--rgb-overlay), 0.96);
   --color-border-hairline: rgba(var(--rgb-white), 0.08);
 
@@ -226,11 +228,13 @@ $transition-fast: var(--transition-fast);
      6. 层级 (z-index)
      ========================================================================== */
   --z-base: 1;
+  --z-float: 100; /* 浮动文本/战斗徽标层（场景内，低于 dropdown） */
   --z-dropdown: 1000;
   --z-sticky: 1100;
   --z-overlay: 1300;
   --z-modal: 1400;
   --z-toast: 1500;
+  --z-tooltip: 10000; /* tooltip 顶层（悬停提示，永远在最上） */
 
   /* ==========================================================================
      7. 过渡与动画
@@ -251,7 +255,8 @@ $transition-fast: var(--transition-fast);
 
   --color-text-primary: #1a1a2e;
   --color-text-secondary: #444444;
-  --color-text-tertiary: #888888;
+  /* NOTE: #888 在浅底仅 ≈2.9:1 不达 AA，加深至 #666（≈5.1:1） */
+  --color-text-tertiary: #666666;
   --color-text-disabled: #cccccc;
   --color-text-inverse: #ffffff;
 

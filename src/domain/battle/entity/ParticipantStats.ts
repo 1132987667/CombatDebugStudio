@@ -113,7 +113,25 @@ export class ParticipantStats {
     this.invalidateCache()
   }
 
-  recalculateAll(): void {
+  /** 归属实体 ID（由宿主 BattleEntity 设置，供 ATTRIBUTE_RECALC 事件定位） */
+  private ownerId = ''
+
+  /** 归属实体名称（供事件摘要展示——调试日志面向开发者，显示名字而非内部 ID） */
+  private ownerName = ''
+
+  setOwnerId(id: string): void {
+    this.ownerId = id
+  }
+
+  setOwnerName(name: string): void {
+    this.ownerName = name
+  }
+
+  /** 本次重算的触发源（文档 §5 示例 4 triggeredBy），由 recalculateAll 调用方传入 */
+  private pendingTriggerSource?: string
+
+  recalculateAll(triggerSource?: string): void {
+    this.pendingTriggerSource = triggerSource
     this.invalidateCache()
     for (const code of Object.values(ATTRIBUTE_CODE)) {
       this.recalcAttribute(code)
@@ -155,17 +173,37 @@ export class ParticipantStats {
     const after = round(value, 2)
     attrData.value = after
     // P1: ATTRIBUTE_RECALC 事件（trace 级高频，文档 §5 示例 4）
-    if (ParticipantStats.tracePort?.isEnabled(TracePhase.ATTRIBUTE_RECALC)) {
+    //     只记录值实际变化的属性：invalidateCache 会对全部属性幂等重算，
+    //     绝大多数属性无修饰符变化（before === after），记录即噪音（与 steps 同原则）
+    if (
+      ParticipantStats.tracePort?.isEnabled(TracePhase.ATTRIBUTE_RECALC) &&
+      before !== after
+    ) {
+      // before 的 breakdown 用上次计算记录（attrData.breakdown），after 用本次计算的 modifier 拆解
+      const prev = attrData.breakdown
       ParticipantStats.tracePort.emit(
         createTraceEvent({
           correlationId: `attr_recalc_${attrCode}_${++ParticipantStats.recalcSeq}`,
           phase: TracePhase.ATTRIBUTE_RECALC,
           level: TraceLevel.TRACE,
-          summary: `属性重算 ${attrCode} ${before} → ${after}`,
+          summary: `属性重算 ${this.ownerName || this.ownerId} ${attrCode} ${before} → ${after}`,
           payload: {
+            entityId: this.ownerId,
             attribute: attrCode,
-            before: { final: before },
-            after: { final: after },
+            triggeredBy: this.pendingTriggerSource,
+            before: {
+              base: prev?.base ?? attrData.base,
+              additive: prev?.additive ?? 0,
+              // prev.percentMultiplier 已是归一化值（存时除以 100），无需再除
+              percent: prev?.percentMultiplier ?? 1,
+              final: before,
+            },
+            after: {
+              base: attrData.base,
+              additive,
+              percent: percentMultiplier / 100,
+              final: after,
+            },
           },
         }),
       )

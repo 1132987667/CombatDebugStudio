@@ -1,70 +1,92 @@
 <!--
- * æ–‡ä»¶: TraceTreeNode.vue
- * åŠŸèƒ½: é€’å½’æ ‘èŠ‚ç‚¹ç»„ä»¶
- * æè¿°: æ¸²æŸ“ä¸€ä¸ª TraceEventNode èŠ‚ç‚¹åŠå…¶å­èŠ‚ç‚¹ï¼Œæ”¯æŒå¯æŠ˜å ã€‚
- *       èŠ‚ç‚¹è¡Œ = phase å¾½ç«  + summaryï¼›å±•å¼€åæ¸²æŸ“ payload è¡¨æ ¼ï¼Œ
- *       steps æ•°ç»„æŒ‰ beforeâ†’after æ•ˆæœé“¾å±•ç¤ºã€‚
+ * ÎÄ¼ş: TraceTreeNode.vue
+ * ¹¦ÄÜ: µİ¹éÊ÷½Úµã×é¼ş
+ * ÃèÊö: äÖÈ¾Ò»¸ö TraceEventNode ½Úµã¼°Æä×Ó½Úµã£¬Ö§³Ö¿ÉÕÛµş¡£
+ *       ½ÚµãĞĞ = ĞĞ¶¯ĞòºÅ(ÓÉ TraceLogTree Ìá¹©) + ½ÇÉ«»ÕÕÂ + phase »ÕÕÂ + summary£»
+ *       trace ¼¶±ğĞĞÌá¹©"¸´ÖÆ"°´Å¥£¨¸´ÖÆ¸Ã½ÚµãÍêÕû JSON£©¡£
+ *       Õ¹¿ªºóÓÉ TracePayloadViewer äÖÈ¾ payload ½â¶ÁÊÓÍ¼£¨steps Ğ§¹ûÁ´ / key-value Íø¸ñ£©¡£
 -->
 
 <template>
-  <div class="trace-node" :style="{ paddingLeft: depth * 16 + 'px' }">
+  <div class="trace-node">
     <div class="trace-row" :class="[
       'phase-' + node.phase,
-      { 'is-expandable': hasChildren, 'is-expanded': expanded }
-    ]" @click="toggle">
-      <!-- å±•å¼€/æŠ˜å ç®­å¤´ -->
-      <span v-if="hasChildren" class="trace-arrow">{{ expanded ? 'â–¼' : 'â–¶' }}</span>
+      {
+        'is-expandable': hasChildren,
+        'is-expanded': expanded,
+        'is-trace': node.level === 'trace',
+      },
+    ]" :tabindex="hasChildren ? 0 : undefined" @click="toggle" @keydown.enter="toggle"
+      @keydown.space.prevent="toggle">
+      <!-- Õ¹¿ª/ÕÛµş¼ıÍ·£¨Õ¹¿ªÊ±Ğı×ª 90¡ã£© -->
+      <span v-if="hasChildren" class="trace-arrow" :class="{ rotated: expanded }">7œ4</span>
       <span v-else class="trace-arrow trace-arrow-placeholder"> </span>
 
-      <!-- phase å¾½ç«  -->
-      <span class="phase-badge" :class="'phase-' + node.phase">{{ node.phase }}</span>
+      <!-- ½ÇÉ«»ÕÕÂ£¨ID ¡ú Ãû×ÖÓ³Éä£¬²»Ïò¿ª·¢Õß±©Â¶ÄÚ²¿ ID£© -->
+      <span v-if="actorLabel" class="actor-badge" :title="actorTitle">{{ actorLabel }}</span>
 
-      <!-- æ‘˜è¦ -->
+      <!-- phase »ÕÕÂ -->
+      <span class="phase-badge" :class="'phase-' + node.phase">{{ node.phase }} ¡¤ {{ phaseLabel(node.phase) }}</span>
+
+      <!-- ÕªÒª -->
       <span class="trace-summary">{{ node.summary }}</span>
 
-      <!-- trace çº§åˆ«æ ‡è®°ï¼ˆé»˜è®¤æŠ˜å çš„ç»†èŠ‚ï¼‰ -->
+      <!-- ÅĞ¶¨»ÕÕÂ£º±»¶¯´¥·¢ 7½7/7¾1¡¢ÉËº¦±©»÷ ¡ï£¨´Ó payload ÌáÁ¶£¬²»²ØÏ¸½Ú£© -->
+      <span v-if="verdict" class="verdict-badge" :class="verdict.cls">{{ verdict.text }}</span>
+
+      <!-- Ïà¶ÔÉÏÒ»ÊÂ¼şºÄÊ± -->
+      <span v-if="elapsedMs !== null" class="elapsed-tag" :title="'Ïà¶Ô¸¸ÊÂ¼şºÄÊ±'">75 {{ elapsedMs }}ms</span>
+
+      <!-- trace ¼¶±ğ±ê¼Ç + ¸´ÖÆ£¨trace ĞĞÕ¹Ê¾×îÏ¸Á£¶ÈÊı¾İ£¬Ìá¹©Ò»¼ü¸´ÖÆ£© -->
       <span v-if="node.level === 'trace'" class="level-tag">trace</span>
+      <button
+        v-if="node.level === 'trace'"
+        class="copy-btn"
+        :title="'¸´ÖÆ¸ÃÌõÊı¾İ (JSON)'"
+        @click.stop="copyNode"
+      >{{ copied ? 'ÒÑ¸´ÖÆ' : '¸´ÖÆ' }}</button>
     </div>
 
-    <!-- payload è¡¨æ ¼ -->
+    <!-- payload ½â¶ÁÊÓÍ¼ -->
     <div v-if="expanded && hasPayload" class="trace-payload">
-      <div v-for="(value, key) in node.payload" :key="key" class="payload-row">
-        <span class="payload-key">{{ key }}</span>
-        <!-- steps æ•°ç»„ï¼šæŒ‰ before â†’ after æ•ˆæœé“¾å±•ç¤º -->
-        <span v-if="key === 'steps' && Array.isArray(value)" class="payload-steps">
-          <span v-for="(s, i) in value" :key="i" class="step-row">
-            <span class="step-before">{{ s.before }}</span>
-            <span class="step-arrow">â†’</span>
-            <span class="step-after">{{ s.after }}</span>
-            <span class="step-name">{{ s.stepName }}</span>
-            <span class="step-desc">{{ s.description }}</span>
-          </span>
-        </span>
-        <span v-else class="payload-value">{{ formatValue(value) }}</span>
-      </div>
+      <TracePayloadViewer :payload="node.payload" />
     </div>
 
-    <!-- å­èŠ‚ç‚¹ -->
+    <!-- ×Ó½Úµã -->
     <div v-if="expanded && hasChildren" class="trace-children">
-      <TraceTreeNode v-for="child in node.children" :key="child.id" :node="child" :depth="depth + 1" />
+      <TraceTreeNode
+        v-for="child in node.children"
+        :key="child.id"
+        :node="child"
+        :depth="depth + 1"
+        :actor-names="actorNames"
+        :parent-timestamp="node.timestamp"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { TraceEventNode } from '@/shared/types/trace-event'
+import { computed, ref } from 'vue'
+import { TracePhase, TracePhaseLabel, type TraceEventNode } from '@/shared/types/trace-event'
+import TracePayloadViewer from './TracePayloadViewer.vue'
 
 interface Props {
   node: TraceEventNode
   depth: number
+  /** ÊµÌå ID ¡ú ½ÇÉ«Ãû Ó³Éä£¨À´×Ô battleStore Í¶Ó°¿ìÕÕ£©£¬Î´Ó³Éä»ØÍË ID */
+  actorNames?: Record<string, string>
+  /** ¸¸ÊÂ¼ş timestamp£¨performance.now£©£¬ÓÃÓÚÏÔÊ¾Ïà¶ÔºÄÊ± */
+  parentTimestamp?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   depth: 0,
+  actorNames: () => ({}),
+  parentTimestamp: undefined,
 })
 
-const expanded = ref(props.depth < 1) // ç¬¬ä¸€å±‚é»˜è®¤å±•å¼€
+const expanded = ref(props.depth < 1) // µÚÒ»²ãÄ¬ÈÏÕ¹¿ª
 
 const hasChildren = computed(() => !!props.node.children && props.node.children.length > 0)
 
@@ -74,166 +96,314 @@ const toggle = () => {
   if (hasChildren.value) expanded.value = !expanded.value
 }
 
-/** payload å€¼æ ¼å¼åŒ–ï¼šå¯¹è±¡/æ•°ç»„ â†’ JSONï¼Œå…¶ä½™ â†’ å­—ç¬¦ä¸² */
-function formatValue(v: unknown): string {
-  if (v === undefined || v === null) return 'â€”'
-  if (typeof v === 'object') return JSON.stringify(v)
-  return String(v)
+/** phase ÏÔÊ¾±êÇ©£ºÓ¢ÎÄÖµ + ÖĞÎÄÃû£¨Î´Öª phase »ØÍËÓ¢ÎÄÔ­Öµ£© */
+const phaseLabel = (p: string): string => TracePhaseLabel[p as TracePhase] ?? p
+
+/** ½ÇÉ«»ÕÕÂÎÄ±¾£ºsource ¡ú target£¨Í¬Ãû»òµ¥·½Ê±Ö»ÏÔÊ¾Ò»¸ö£»Î´Ó³Éä»ØÍË ID£© */
+const actorLabel = computed(() => {
+  const src = props.node.sourceId ? props.actorNames[props.node.sourceId] : undefined
+  const tgt = props.node.targetId ? props.actorNames[props.node.targetId] : undefined
+  if (!src && !tgt) return ''
+  if (!tgt || tgt === src) return src || tgt
+  return `${src || props.node.sourceId} ¡ú ${tgt}`
+})
+
+const actorTitle = computed(() => {
+  const parts = []
+  if (props.node.sourceId) parts.push(`À´Ô´: ${props.actorNames[props.node.sourceId] ?? props.node.sourceId}`)
+  if (props.node.targetId) parts.push(`Ä¿±ê: ${props.actorNames[props.node.targetId] ?? props.node.targetId}`)
+  return parts.join(' ¡¤ ')
+})
+
+/** Ïà¶Ô¸¸ÊÂ¼şºÄÊ±£¨ms£©£»¸ù½ÚµãÎŞ¸¸Ôò²»ÏÔÊ¾ */
+const elapsedMs = computed(() => {
+  if (props.parentTimestamp === undefined) return null
+  const d = props.node.timestamp - props.parentTimestamp
+  return d >= 0 ? d.toFixed(2) : null
+})
+
+/** ÅĞ¶¨»ÕÕÂ£ºpassive ´¥·¢/Ìø¹ı¡¢ÉËº¦±©»÷£¨payload ÌáÁ¶£¬½á¹ûÏÔĞÔ£© */
+const verdict = computed<{ text: string; cls: string } | null>(() => {
+  const p = props.node.payload
+  if (props.node.phase === TracePhase.PASSIVE_TRIGGER) {
+    if (p.verdict === 'TRIGGERED') return { text: '7½7 ´¥·¢', cls: 'ok' }
+    if (p.verdict === 'SKIPPED') return { text: '7¾1 Ìø¹ı', cls: 'skip' }
+    return null
+  }
+  if (props.node.phase === TracePhase.DAMAGE_CALCULATION) {
+    const crit = p.crit as { triggered?: boolean } | undefined
+    if (crit?.triggered) return { text: '¡ï ±©»÷', cls: 'crit' }
+    return null
+  }
+  return null
+})
+
+/** ¸´ÖÆ¸Ã½ÚµãÍêÕûÊı¾İ£¨º¬×Ó½Úµã£©µ½¼ôÌù°å£¬³É¹¦ºó¶ÌÔİ·´À¡"ÒÑ¸´ÖÆ" */
+const copied = ref(false)
+let copyTimer: ReturnType<typeof setTimeout> | undefined
+
+const copyNode = async () => {
+  const text = JSON.stringify(props.node, null, 2)
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch {
+    // ¶µµ×£º·Ç°²È«ÉÏÏÂÎÄ£¨·Ç localhost µÄ http£©ÏÂ Clipboard API ²»¿ÉÓÃ
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+  }
+  copied.value = true
+  clearTimeout(copyTimer)
+  copyTimer = setTimeout(() => (copied.value = false), 1500)
 }
 </script>
 
 <style scoped lang="scss">
+/* ¨T¨T¨T phase ¡ú RGB ·ÖÁ¿Ó³Éä£¨ĞĞÉ«Ìõ + »ÕÕÂ¹²ÓÃ£¬±£Ö¤É«²ÊÒ»ÖÂ£© ¨T¨T¨T
+   ¼ÆËãÀàÓÃ±¥ºÍÓïÒåÉ«£»Á÷³Ì/ÅäÖÃÀà¹éÀ¶»ÒÖĞĞÔ×é£¬¿ËÖÆ²»²Êºç */
+$phase-rgbs: (
+  'damage_calculation': var(--rgb-danger),
+  'heal_calculation': var(--rgb-success),
+  'buff_lifecycle': var(--rgb-energy),
+  'buff_trigger': var(--rgb-energy),
+  'passive_trigger': var(--rgb-debuff),
+  'ai_decision': var(--rgb-warning),
+  'action_execution': var(--rgb-skill-active),
+  'battle_lifecycle': var(--rgb-skill-active),
+  'turn_flow': var(--rgb-shield),
+  'attribute_recalc': var(--rgb-skill-active),
+  'config_load': var(--rgb-neutral),
+  'config_validation': var(--rgb-neutral),
+);
+
 .trace-node {
   user-select: none;
 }
 
+/* ¨T¨T¨T ĞĞ ¨T¨T¨T */
 .trace-row {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-sm);
+  gap: var(--space-2);
+  padding: 3px var(--space-2);
+  min-height: 28px;
+  border-left: 3px solid transparent; /* phase É«ÌõÃªµã */
+  border-radius: var(--radius-md);
   cursor: default;
-  line-height: 1.6;
-  min-height: 22px;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 
   &:hover {
     background: var(--color-bg-hover);
+
+    .trace-arrow {
+      color: var(--color-text-secondary);
+    }
   }
 
   &.is-expandable {
     cursor: pointer;
   }
+
+  /* ¼üÅÌ¿É´ï£º½¹µã»· */
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: -2px;
+  }
+
+  /* phase É«Ìõ + »ÕÕÂÅäÉ« */
+  @each $phase, $rgb in $phase-rgbs {
+    &.phase-#{$phase} {
+      border-left-color: rgb($rgb);
+
+      .phase-badge {
+        color: rgb($rgb);
+        background: rgba($rgb, 0.12);
+        border-color: rgba($rgb, 0.35);
+      }
+    }
+  }
+
+  /* trace ĞĞ£ºÏ¸½ÚĞĞÕûÌå½µ¼¶£¨É«Ìõ/»ÕÕÂ/ÕªÒª£©£¬hover ½öÇáÎ¢»Ö¸´ */
+  &.is-trace {
+    border-left-color: var(--color-border-default);
+
+    .phase-badge {
+      color: var(--color-text-tertiary);
+      background: var(--color-bg-tertiary);
+      border-color: var(--color-border-default);
+    }
+
+    .trace-summary {
+      color: var(--color-text-tertiary);
+    }
+
+    &:hover {
+      background: var(--color-bg-hover);
+
+      .trace-summary {
+        color: var(--color-text-secondary);
+      }
+    }
+  }
 }
 
+/* ¨T¨T¨T ¼ıÍ· ¨T¨T¨T */
 .trace-arrow {
   display: inline-block;
-  width: 12px;
+  width: 14px;
   flex-shrink: 0;
   color: var(--color-text-tertiary);
   text-align: center;
+  font-size: 0.65em;
+  transition:
+    transform var(--transition-fast),
+    color var(--transition-fast);
+
+  &.rotated {
+    transform: rotate(90deg);
+  }
 }
 
 .trace-arrow-placeholder {
   visibility: hidden;
 }
 
-.phase-badge {
-  font-size: 0.78em;
-  line-height: 1.4;
-  padding: 0 6px;
-  border-radius: 3px;
-  background: var(--color-bg-tertiary, #f0f0f0);
+/* ¨T¨T¨T ½ÇÉ«»ÕÕÂ£ºÖĞĞÔ»Ò½ºÄÒ£¨ID ¡ú Ãû×ÖÓ³Éä£¬²»±©Â¶ÄÚ²¿ ID£© ¨T¨T¨T */
+.actor-badge {
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-default);
   color: var(--color-text-secondary);
   flex-shrink: 0;
-
-  &.phase-damage_calculation {
-    background: var(--color-damage, #e04f4f);
-    color: #fff;
-  }
-
-  &.phase-heal_calculation {
-    background: var(--color-heal, #3fa95f);
-    color: #fff;
-  }
-
-  &.phase-buff_lifecycle,
-  &.phase-buff_trigger {
-    background: var(--color-energy, #d9a441);
-    color: #fff;
-  }
-
-  &.phase-passive_trigger {
-    background: var(--color-info, #4a7dbd);
-    color: #fff;
-  }
-
-  &.phase-ai_decision {
-    background: var(--color-warning, #b0662f);
-    color: #fff;
-  }
-
-  &.phase-action_execution {
-    background: var(--color-text-tertiary, #888);
-    color: #fff;
-  }
+  white-space: nowrap;
+  max-width: 12em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* ¨T¨T¨T phase »ÕÕÂ£¨°µµ×½ºÄÒ£ºÍ¬É«ÎÄ×Ö + °ëÍ¸Ã÷µ× + Ï¸±ß¿ò£© ¨T¨T¨T */
+.phase-badge {
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* ¨T¨T¨T ÕªÒª ¨T¨T¨T */
 .trace-summary {
+  font-size: var(--font-size-sm);
   color: var(--color-text-primary);
   flex: 1;
+  min-width: 8em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* ¨T¨T¨T ÅĞ¶¨»ÕÕÂ£¨7½7/¡ï£¬½á¹ûÏÔĞÔ£© ¨T¨T¨T */
+.verdict-badge {
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  &.ok {
+    color: var(--color-success);
+    background: rgba(var(--rgb-success), 0.12);
+    border: 1px solid rgba(var(--rgb-success), 0.35);
+  }
+
+  &.skip {
+    color: var(--color-text-tertiary);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-default);
+  }
+
+  &.crit {
+    color: var(--color-warning);
+    background: rgba(var(--rgb-warning), 0.12);
+    border: 1px solid rgba(var(--rgb-warning), 0.35);
+  }
+}
+
+/* ¨T¨T¨T Ïà¶ÔºÄÊ± ¨T¨T¨T */
+.elapsed-tag {
+  font-size: var(--font-size-xxs);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono);
+  flex-shrink: 0;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+/* ¨T¨T¨T trace ¼¶±ğ±êÇ© ¨T¨T¨T */
 .level-tag {
-  font-size: 0.72em;
+  font-size: var(--font-size-xxs);
+  line-height: 1.7;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-default);
   color: var(--color-text-tertiary);
-  opacity: 0.7;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   flex-shrink: 0;
 }
 
+/* ¨T¨T¨T ¸´ÖÆ°´Å¥£ºµÍµ÷½ºÄÒ£¬hover ¸¡ÏÖ info É« ¨T¨T¨T */
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xxs);
+  line-height: 1.7;
+  padding: 0 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast);
+
+  &:hover {
+    color: var(--color-info);
+    border-color: rgba(var(--rgb-info), var(--alpha-border));
+    background: rgba(var(--rgb-info), var(--alpha-tint));
+  }
+}
+
+/* ¨T¨T¨T ×Ó½Úµã£º×óÔµĞéÏßÒıµ¼Ê÷²ã¼¶£¬Ëõ½ø¶ÔÆë¸¸ĞĞÄÚÈİÆğµã ¨T¨T¨T */
+.trace-children {
+  margin-left: 24px;
+  padding-left: 8px;
+  border-left: 1px dashed var(--color-border-tertiary);
+}
+
+/* ¨T¨T¨T payload ½â¶ÁÊÓÍ¼ÈİÆ÷£¨äÖÈ¾Î¯ÍĞ TracePayloadViewer£© ¨T¨T¨T */
 .trace-payload {
-  margin-left: 20px;
-  padding: var(--space-1) var(--space-2);
+  margin: 4px 0 4px 24px;
+  padding: var(--space-2) var(--space-3);
   background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
-  font-size: 0.9em;
-}
-
-.payload-row {
-  display: flex;
-  gap: var(--space-2);
-  align-items: baseline;
-  padding: 1px 0;
-}
-
-.payload-key {
-  color: var(--color-info);
-  flex-shrink: 0;
-  min-width: 90px;
-}
-
-.payload-value {
-  color: var(--color-text-secondary);
-  word-break: break-all;
-}
-
-.payload-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.step-row {
-  display: flex;
-  gap: 6px;
-  align-items: baseline;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.step-before {
-  color: var(--color-text-secondary);
-  min-width: 28px;
-  text-align: right;
-}
-
-.step-arrow {
-  color: var(--color-text-tertiary);
-}
-
-.step-after {
-  color: var(--color-damage);
-  min-width: 28px;
-}
-
-.step-name {
-  color: var(--color-text-tertiary);
-  min-width: 60px;
-}
-
-.step-desc {
-  color: var(--color-text-secondary);
 }
 </style>

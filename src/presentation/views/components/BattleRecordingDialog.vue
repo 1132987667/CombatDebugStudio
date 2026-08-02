@@ -10,7 +10,7 @@
           <div class="recording-name">{{ formatBattleName(rec) }}</div>
           <div class="recording-meta">
             <span>{{ new Date(rec.startTime).toLocaleTimeString() }}</span>
-            <span class="recording-count">{{ rec.combatRecords.length }} 次行动</span>
+            <span class="recording-count">{{ rec.combatRecords?.length ?? 0 }} 次行动</span>
           </div>
         </div>
       </div>
@@ -20,10 +20,10 @@
         <template v-if="!selectedRecording">
           <EmptyState v-if="!selectedRecording">请从左侧选择一个战斗记录</EmptyState>
         </template>
-        <EmptyState v-else-if="selectedRecording.combatRecords.length === 0">该战斗暂无详细记录</EmptyState>
+        <EmptyState v-else-if="(selectedRecording.combatRecords?.length ?? 0) === 0">该战斗暂无详细记录</EmptyState>
         <template v-else>
           <div class="detail-header">
-            共 {{ selectedRecording.combatRecords.length }} 次行动
+            共 {{ selectedRecording.combatRecords?.length ?? 0 }} 次行动
           </div>
           <div class="detail-actions">
             <div v-for="(record, idx) in selectedRecording.combatRecords" :key="record.id" class="action-card"

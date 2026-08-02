@@ -7,6 +7,11 @@
 import gsap from 'gsap'
 import { ActionResultType } from '@/domain/battle/type/types'
 
+/** prefers-reduced-motion：用户系统开启"减少动态效果"时跳过/缩短动画（无障碍要求） */
+const prefersReducedMotion = (): boolean => {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 export interface AnimationConfig {
   battleSpeed: number
 }
@@ -77,6 +82,9 @@ export class BattleAnimationService {
   }
 
   playAttackAnimation(data: AttackAnimationData): Promise<void> {
+    // 无障碍：减少动效时跳过动画（攻击者回原位 = 初始态，无副作用）
+    if (prefersReducedMotion()) return Promise.resolve()
+
     return new Promise((resolve) => {
       const timeline = this.createTimeline()
       const moveDistance = 30
@@ -135,7 +143,7 @@ export class BattleAnimationService {
         color: var(--color-energy-deep);
         text-shadow: 0 0 10px rgba(var(--rgb-energy), 0.8);
         pointer-events: none;
-        z-index: 100;
+        z-index: var(--z-float);
         white-space: nowrap;
       `
       targetElement.style.position = 'relative'
@@ -176,6 +184,9 @@ export class BattleAnimationService {
   }
 
   playHitAnimation(data: HitAnimationData): Promise<void> {
+    // 无障碍：减少动效时跳过受击动画（伤害文本由日志兜底）
+    if (prefersReducedMotion()) return Promise.resolve()
+
     return new Promise((resolve) => {
       const timeline = this.createTimeline()
 
@@ -223,6 +234,8 @@ export class BattleAnimationService {
   }
 
   playShakeAnimation(data: ShakeAnimationData): void {
+    if (prefersReducedMotion()) return
+
     const intensityMap = {
       light: { distance: 3, times: 3 },
       medium: { distance: 5, times: 5 },
@@ -443,6 +456,9 @@ export class BattleAnimationService {
     targetElement: HTMLElement,
     isPositive: boolean,
   ): Promise<void> {
+    // 无障碍：减少动效时跳过 Buff 辉光
+    if (prefersReducedMotion()) return Promise.resolve()
+
     return new Promise((resolve) => {
       const timeline = this.createTimeline()
       const color = isPositive
@@ -468,6 +484,12 @@ export class BattleAnimationService {
   }
 
   playDeathAnimation(targetElement: HTMLElement): Promise<void> {
+    // 无障碍：减少动效时直接落到最终视觉状态（死亡灰化）
+    if (prefersReducedMotion()) {
+      gsap.set(targetElement, { opacity: 0.3, scale: 0.95, filter: 'grayscale(1)' })
+      return Promise.resolve()
+    }
+
     return new Promise((resolve) => {
       const timeline = this.createTimeline()
 
@@ -502,10 +524,12 @@ export class BattleAnimationService {
   }
 
   getAnimationDuration(): number {
+    if (prefersReducedMotion()) return 0
     return this.getScaledDuration(this.BASE_ATTACK_DURATION)
   }
 
   getTotalAttackSequenceDuration(): number {
+    if (prefersReducedMotion()) return 0
     return this.getScaledDuration(
       this.BASE_ATTACK_DURATION +
         this.SKILL_NAME_DELAY +

@@ -500,7 +500,7 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   height: 5px;
   border: 0 solid rgba(var(--accent-rgb), var(--alpha-border));
   pointer-events: none;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 .t-select__tick--tl { top: 3px; left: 3px; border-top-width: 1px; border-left-width: 1px; }
 .t-select__tick--br { bottom: 3px; right: 3px; border-bottom-width: 1px; border-right-width: 1px; }
@@ -535,7 +535,7 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   line-height: 1;
   cursor: pointer;
   opacity: 0;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 .t-select__trigger:hover .t-select__clear { opacity: 1; }
 .t-select__clear:hover { background: rgba(var(--rgb-danger), var(--alpha-wash-strong)); color: var(--color-danger); }
@@ -680,7 +680,7 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   color: var(--accent);
   opacity: 0;
   transform: scale(0.5);
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 .t-select__option.is-selected .t-select__option-check { opacity: 1; transform: scale(1); }
 
@@ -714,7 +714,6 @@ defineExpose({ focus: () => triggerRef.value?.focus() })
   border-top: 1px solid var(--color-border-default);
   background: rgba(var(--rgb-black), var(--alpha-wash));
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xxs);
   letter-spacing: 0.5px;
 }
 .t-select__footer-count { color: var(--accent); font-weight: var(--font-weight-bold); }

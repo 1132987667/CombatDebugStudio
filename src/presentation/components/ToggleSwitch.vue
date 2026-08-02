@@ -1,6 +1,6 @@
 <template>
   <label class="toggle-switch" :class="{ active: modelValue }" :style="{ '--toggle-accent': accentColor }">
-    <input type="checkbox" class="toggle-input" :checked="modelValue" @change="toggle" />
+    <input type="checkbox" class="toggle-input" :checked="modelValue" @change="toggle" :aria-label="label || undefined" />
     <span class="toggle-track"><span class="toggle-thumb"></span></span>
     <span v-if="label" class="toggle-label">{{ label }}</span>
   </label>
@@ -36,7 +36,18 @@ function toggle() {
 }
 
 .toggle-input {
-  display: none;
+  /* 视觉隐藏但保持可聚焦（display:none 会丢失键盘可达性） */
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.toggle-input:focus-visible + .toggle-track {
+  outline: 2px solid var(--color-info);
+  outline-offset: 2px;
 }
 
 .toggle-track {
@@ -58,7 +69,7 @@ function toggle() {
   border-radius: 50%;
   background: var(--color-text-tertiary);
   transition: transform var(--transition-fast), background var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 .toggle-switch.active {

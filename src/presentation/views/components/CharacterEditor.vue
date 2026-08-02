@@ -7,7 +7,7 @@
 
 <template>
   <Dialog :model-value="modelValue" @update:model-value="handleModelValueChange" title="角色编辑器" width="45vw"
-    height="50vh" :show-mask="false" :mask-closable="false">
+    height="50vh" :show-mask="false" :mask-closable="false" :esc-closable="false">
     <template #header-actions>
       <select v-model="innerSelectedCharId" class="char-selector" @change="emitSelectChar">
         <option value="" disabled>{{ characters.length === 0 ? '暂无参战角色' : '选择角色' }}</option>
@@ -39,7 +39,7 @@
                 <span class="status-count">{{ checkedBuffs.length }}/{{ localStatuses.length }}</span>
               </div>
 
-              <input v-model="buffSearch" class="ce-search" placeholder="搜索状态名称..." />
+              <input v-model="buffSearch" class="ce-search" placeholder="搜索状态名称..." aria-label="搜索状态名称" />
 
               <div class="status-list">
                 <div v-for="status in filteredStatuses" :key="status.id" class="ce-status-item"
@@ -53,7 +53,7 @@
                     </label>
                     <div class="ce-duration-wrap">
                       <input type="number" class="ce-duration-input" v-model="status.duration" min="0" max="99"
-                        :disabled="!innerSelectedCharId">
+                        :disabled="!innerSelectedCharId" aria-label="状态持续回合数">
                       <span class="ce-duration-unit">回合</span>
                     </div>
                   </div>
@@ -107,18 +107,24 @@
               Buff</button>
             <button class="btn-medium reset-btn" @click="emitReset('hp_energy')"
               :disabled="!innerSelectedCharId">恢复满血满能量</button>
-            <button class="btn-medium reset-btn btn-danger" @click="emitReset('all')"
+            <button class="btn-medium reset-btn btn-danger" @click="confirmResetAll = true"
               :disabled="!innerSelectedCharId">完全重置</button>
           </div>
         </div> <!-- /ce-tab-content reset -->
       </template>
     </Tabs>
   </Dialog>
+
+  <!-- 完全重置二次确认 -->
+  <ConfirmDialog v-model="confirmResetAll" title="完全重置"
+    message="确定要对选中角色执行完全重置吗？将清除所有 Buff 并恢复初始属性。"
+    confirm-text="重置" danger @confirm="emitReset('all')" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
 import NumericStepper from '@/presentation/components/NumericStepper.vue'
@@ -306,6 +312,9 @@ function emitApplyAttrs() {
   _skipDirtyMark = true
   attrDirty.value = false
 }
+
+// 完全重置二次确认
+const confirmResetAll = ref(false)
 
 function emitReset(mode: 'buffs' | 'hp_energy' | 'all') {
   if (!innerSelectedCharId.value) return

@@ -324,16 +324,9 @@ export class DamageCalculator {
 
     // 捕获原始伤害（来源方全部产出，目标方减免前）
     // NOTE: extraValues 累加可能产生小数，与最终伤害保持一致取整，保证日志与反伤基数为整数
+    //       rawDamage 值在 payload 顶层（raw 字段）可查，steps 只记录实际变换环节，不重复打点
     breakdown.rawDamage = floor(damage)
     damage = breakdown.rawDamage
-    breakdown.steps.push({
-      stepName: 'rawDamage',
-      value: damage,
-      before: damage,
-      after: damage,
-      sourceType: 'system',
-      description: `原始伤害（来源方产出）: ${damage}`,
-    })
 
     // 暴击承伤减免（目标方）
     if (damageResult.isCritical) {
@@ -367,24 +360,18 @@ export class DamageCalculator {
       const beforeDef = damage
       damage = Math.max(0, damage - breakdown.defenseValue)
       damage = floor(damage)
-      breakdown.steps.push({
-        stepName: 'defense',
-        value: damage,
-        before: beforeDef,
-        after: damage,
-        sourceType: 'system',
-        description: `防御减免(-${breakdown.defenseValue}): ${beforeDef} → ${damage}`,
-      })
-    } else {
-      breakdown.steps.push({
-        stepName: 'defense',
-        value: damage,
-        before: damage,
-        after: damage,
-        sourceType: 'system',
-        description: `真实伤害，跳过防御减免`,
-      })
+      if (damage !== beforeDef) {
+        breakdown.steps.push({
+          stepName: 'defense',
+          value: damage,
+          before: beforeDef,
+          after: damage,
+          sourceType: 'system',
+          description: `防御减免(-${breakdown.defenseValue}): ${beforeDef} → ${damage}`,
+        })
+      }
     }
+    // TRUE 伤害跳过防御减免：无数值变换，不记录步骤（category=TRUE 已在 payload 顶层）
 
     // 攻击类型伤害减免 — 真实伤害跳过
     if (damageCategory !== DamageCategory.TRUE) {
@@ -426,16 +413,8 @@ export class DamageCalculator {
           })
         }
       }
-    } else {
-      breakdown.steps.push({
-        stepName: 'atkTypeReduction',
-        value: damage,
-        before: damage,
-        after: damage,
-        sourceType: 'system',
-        description: `真实伤害，跳过攻击类型减免`,
-      })
     }
+    // TRUE 伤害跳过攻击类型减免：无数值变换，不记录步骤
 
     // 五行抗性 — 仅 ELEMENTAL 根据元素类型走对应抗性
     if (damageCategory === DamageCategory.ELEMENTAL) {
@@ -504,16 +483,8 @@ export class DamageCalculator {
           description: `伤害减免(${dmgReduction}%): ${before} → ${damage}`,
         })
       }
-    } else {
-      breakdown.steps.push({
-        stepName: 'damageReduction',
-        value: damage,
-        before: damage,
-        after: damage,
-        sourceType: 'system',
-        description: `真实伤害，跳过伤害减免`,
-      })
     }
+    // TRUE 伤害跳过伤害减免：无数值变换，不记录步骤
 
     // 受到伤害增加
     breakdown.damageTakenIncrease = getAttrVal(
@@ -575,14 +546,7 @@ export class DamageCalculator {
     damage = Math.max(0, floor(damage))
 
     breakdown.finalDamage = damage
-    breakdown.steps.push({
-      stepName: 'final',
-      value: damage,
-      before: damage,
-      after: damage,
-      sourceType: 'system',
-      description: `最终伤害: ${damage}`,
-    })
+    // final 值在 payload 顶层（final 字段）可查，steps 只记录变换环节，终点不重复打点
 
     // 写入 CombatRecord
     if (context?.record) {

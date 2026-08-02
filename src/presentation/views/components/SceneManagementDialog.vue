@@ -15,7 +15,7 @@
       </div>
       <div class="scene-actions">
         <input type="text" v-model="localSceneName" placeholder="测试场景名称" class="scene-input"
-          @keydown.enter="handleSave">
+          aria-label="测试场景名称" @keydown.enter="handleSave">
         <button class="btn-medium" @click="handleSave" :disabled="!localSceneName.trim()">[S]保存</button>
       </div>
     </div>
@@ -30,7 +30,7 @@
           <option v-for="scene in savedScenes" :key="scene" :value="scene">{{ scene }}</option>
         </select>
         <button class="btn-medium" @click="handleLoad" :disabled="!localSelectedScene">[L]加载</button>
-        <button class="btn-medium btn-danger" @click="handleDelete" :disabled="!localSelectedScene">[D]删除</button>
+        <button class="btn-medium btn-danger" @click="confirmDelete = true" :disabled="!localSelectedScene">[D]删除</button>
       </div>
     </div>
 
@@ -38,11 +38,17 @@
       暂保存的场景，点击保存按钮创建新场景
     </div>
   </Dialog>
+
+  <!-- 删除场景二次确认 -->
+  <ConfirmDialog v-model="confirmDelete" title="删除场景"
+    :message="`确定要删除场景「${localSelectedScene}」吗？删除后不可恢复。`"
+    confirm-text="删除" danger @confirm="doDelete" />
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import Dialog from '@/presentation/components/Dialog.vue'
+import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 
 interface Props {
   modelValue: boolean
@@ -105,7 +111,10 @@ const handleLoad = () => {
   }
 }
 
-const handleDelete = () => {
+// 删除场景（二次确认后执行）
+const confirmDelete = ref(false)
+
+const doDelete = () => {
   if (localSelectedScene.value) {
     emit('delete', localSelectedScene.value)
     localSelectedScene.value = ''

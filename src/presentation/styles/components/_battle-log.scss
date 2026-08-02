@@ -208,10 +208,6 @@
   font-size: 1.1em;
 }
 
-.crit-value::before {
-  content: '🔥 ';
-}
-
 .heal-value {
   color: var(--color-heal);
   font-weight: var(--font-weight-bold);
@@ -463,7 +459,7 @@
   display: block;
   height: 100%;
   background: var(--color-heal);
-  transition: width 0.4s ease;
+  transition: width var(--transition-slow);
 }
 
 .snap-bar i.low {
@@ -483,7 +479,7 @@
 /* 微交互 */
 @media (prefers-reduced-motion: no-preference) {
   .log-block {
-    animation: block-in 0.18s ease-out;
+    animation: block-in var(--transition-fast);
   }
 
   @keyframes block-in {

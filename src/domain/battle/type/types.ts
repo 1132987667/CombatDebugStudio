@@ -163,6 +163,8 @@ export const ActionTypes = {
   BUFF: 'buff',
   ITEM: 'item',
   STATUS: 'status',
+  /** 跳过行动（noAttack 单位专用，如木人/训练靶子） */
+  SKIP: 'skip',
 } as const
 
 export type ActionTypes = (typeof ActionTypes)[keyof typeof ActionTypes]
@@ -263,8 +265,8 @@ export interface BattleEntity {
   getAttribute(attribute: ATTRIBUTE_CODE | string): number
   /** 快捷获取属性值对象（包含基础值、修饰符等） */
   getAttrValue(attr: ATTRIBUTE_CODE): AttributeValue | undefined
-  /** 批量预计算所有属性（回合开始时调用） */
-  recalcAll(): void
+  /** 批量预计算所有属性（回合开始时调用）；triggerSource 可选，供 ATTRIBUTE_RECALC 事件溯源 */
+  recalcAll(triggerSource?: string): void
   /** 设置属性值 */
   setAttribute(attribute: string, value: number): void
   /** 设置修饰符提供者 */
@@ -294,6 +296,9 @@ export interface BattleEntity {
 
   /** ponytail: P0/AI-1 — 参与者控制模式，影响技能/目标选择方式 */
   controlMode: ControlMode
+
+  /** 是否完全不会攻击（木人/训练靶子；AI 决策时直接跳过行动） */
+  noAttack?: boolean
 
   /**
    * 统一技能可执行性检查
@@ -522,6 +527,22 @@ export const BattleActionHelper = {
     turn?: number
   }): BattleAction {
     return this.create({ type: 'status', ...options })
+  },
+
+  /**
+   * 创建跳过行动动作（noAttack 单位专用）
+   * targetId 指向自身，语义为「无行动」
+   */
+  createSkip(options: {
+    sourceId: string
+    turn: number
+  }): BattleAction {
+    return this.create({
+      type: 'skip',
+      sourceId: options.sourceId,
+      targetId: options.sourceId,
+      turn: options.turn,
+    })
   },
 }
 

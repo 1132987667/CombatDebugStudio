@@ -5,8 +5,9 @@
  *       - 发射侧：实现 IDebugTracePort（emit/isEnabled/beginScope）
  *       - 查询侧：id/correlationId/phase/battleId/turn 索引，树重建，UI 消费
  *       emit 永不抛异常（调试日志的失败绝不能中断战斗）。
+ *       P3：内存上限（环形缓冲，默认每收集器 5000 条）+ 细粒度 phase 门控（默认全开，可配置）。
  * 使用方式（由 BattleSystem 初始化时创建并注入）：
- *   const collector = new TraceEventCollector(eventBus?)
+ *   const collector = new TraceEventCollector(eventBus?, { maxEntries: 5000 })
  *   collector.emit(event)
  *   const roots = collector.getRootsByTurn(turn)
  *   const results = collector.query({ phase: 'damage_calculation' })
@@ -34,6 +35,12 @@ export interface TraceQuery {
   limit?: number
 }
 
+/** 收集器选项（P3 性能生产化） */
+export interface TraceCollectorOptions {
+  /** 内存上限（环形缓冲，超出时淘汰最旧条目；默认 5000，0 = 不限制） */
+  maxEntries?: number
+}
+
 export class TraceEventCollector implements IDebugTracePort {
   /** 所有条目按 id 索引 */
   private entries = new Map<string, TraceEvent>()
@@ -50,20 +57,41 @@ export class TraceEventCollector implements IDebugTracePort {
   /** 事件总线（用于实时推送） */
   private eventBus?: IDomainEventBus
 
+  /** 内存上限（环形缓冲） */
+  private readonly maxEntries: number
+
+  /** 细粒度 phase 门控（P3）— 默认全开，setPhaseEnabled 可按 phase 关闭 */
+  private readonly phaseGates = new Map<TracePhase, boolean>()
+
   private counter = 0
 
-  constructor(eventBus?: IDomainEventBus) {
+  constructor(eventBus?: IDomainEventBus, options?: TraceCollectorOptions) {
     this.eventBus = eventBus
+    this.maxEntries = options?.maxEntries ?? 5000
   }
 
   // ───────────────────────── IDebugTracePort ─────────────────────────
 
   /**
    * 该 phase 是否开启追踪
-   * 默认全开；P3 按 TracePhase 细粒度门控（文档 §7 第四层）
+   * P3 细粒度门控：默认全开，setPhaseEnabled 关闭的 phase 返回 false（发射点据此跳过 payload 构建）
    */
-  isEnabled(_phase: TracePhase): boolean {
-    return true
+  isEnabled(phase: TracePhase): boolean {
+    return this.phaseGates.get(phase) ?? true
+  }
+
+  /** 按 phase 细粒度门控（P3）：设为 false 后该 phase 的发射点跳过 */
+  setPhaseEnabled(phase: TracePhase, enabled: boolean): void {
+    this.phaseGates.set(phase, enabled)
+  }
+
+  /** 批量门控（P3）：例如生产环境按需关闭高频 trace 级 phase；非 boolean 值（undefined）保持默认不覆盖 */
+  setPhasesEnabled(gates: Partial<Record<TracePhase, boolean>>): void {
+    for (const [phase, enabled] of Object.entries(gates)) {
+      if (typeof enabled === 'boolean') {
+        this.phaseGates.set(phase as TracePhase, enabled)
+      }
+    }
   }
 
   /**
@@ -94,6 +122,10 @@ export class TraceEventCollector implements IDebugTracePort {
    */
   emit(event: TraceEvent): string {
     try {
+      // P3 门控兜底：phase 被关闭时直接跳过（发射点按 §6.1 规范先查 isEnabled，此分支仅防御）
+      // 返回 event.id（createTraceEvent 总生成 id）；正常流程不会走到这里，返回值不用于挂接 parentId
+      if (!this.isEnabled(event.phase)) return event.id ?? ''
+
       const id = event.id || `evt_${++this.counter}`
       // 防御：重复 id 静默跳过，避免静默覆盖破坏已有树（正常流程 id 由 createTraceEvent 唯一生成）
       if (this.entries.has(id)) return id
@@ -118,6 +150,9 @@ export class TraceEventCollector implements IDebugTracePort {
         this.byBattle.get(indexed.battleId)!.push(id)
       }
 
+      // P3 环形缓冲：超出内存上限时淘汰最旧条目（Map 迭代序 = 插入序）
+      this.evictIfNeeded()
+
       // 实时推送（无 eventBus 时为 no-op）
       if (this.eventBus) {
         this.eventBus.emit(TRACE_EVENT_ADDED, indexed)
@@ -127,6 +162,33 @@ export class TraceEventCollector implements IDebugTracePort {
       // 调试日志的失败绝不能中断战斗（文档 §7 关键约束）
       return event.id ?? ''
     }
+  }
+
+  /** P3 环形缓冲：超出 maxEntries 时淘汰最旧条目并同步清理索引 */
+  private evictIfNeeded(): void {
+    while (this.maxEntries > 0 && this.entries.size > this.maxEntries) {
+      const oldestId = this.entries.keys().next().value as string
+      const oldest = this.entries.get(oldestId)
+      this.entries.delete(oldestId)
+      if (!oldest) continue
+
+      const turn = typeof oldest.turn === 'number' ? oldest.turn : 0
+      this.removeFromIndex(this.byTurn, turn, oldestId)
+      this.removeFromIndex(this.byPhase, oldest.phase, oldestId)
+      if (oldest.battleId) this.removeFromIndex(this.byBattle, oldest.battleId, oldestId)
+    }
+  }
+
+  private removeFromIndex(
+    index: Map<string | number, string[]>,
+    key: string | number,
+    id: string,
+  ): void {
+    const list = index.get(key)
+    if (!list) return
+    const i = list.indexOf(id)
+    if (i >= 0) list.splice(i, 1)
+    if (list.length === 0) index.delete(key)
   }
 
   // ───────────────────────── 查询能力 ─────────────────────────
@@ -259,6 +321,8 @@ export class TraceEventCollector implements IDebugTracePort {
 
   /**
    * 导入序列化数据（从持久化恢复）
+   * NOTE（P3）：导入同样受 phase 门控与环形缓冲约束——被门控 phase 的事件会被跳过，
+   * 超 maxEntries 时淘汰最旧。调试场景恢复快照语义可接受；如需完整恢复可临时调大 maxEntries。
    */
   importAll(entries: TraceEvent[]): void {
     this.entries.clear()

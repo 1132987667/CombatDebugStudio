@@ -10,26 +10,28 @@
     </div>
 
     <div class="replay-controls">
-      <button class="control-btn" @click="goToStart" :disabled="!canReplay" title="回到开始">
-        ⏮
+      <button class="control-btn" @click="goToStart" :disabled="!canReplay" title="回到开始" aria-label="回到开始">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5 3 1 8l4 5V3zM11 3l-4 5 4 5V3z"/></svg>
       </button>
-      <button class="control-btn" @click="stepBack" :disabled="!canStepBack" title="上一步">
-        ⏪
+      <button class="control-btn" @click="stepBack" :disabled="!canStepBack" title="上一步" aria-label="上一步">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6 3 2 8l4 5V3z"/></svg>
       </button>
-      <button class="control-btn" @click="stepBackFrame" :disabled="!canStepBack" title="逐帧后退">
-        ⏪
+      <button class="control-btn" @click="stepBackFrame" :disabled="!canStepBack" title="逐帧后退" aria-label="逐帧后退">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6 3 2 8l4 5V3zM13 3v10h-2V3z"/></svg>
       </button>
-      <button class="control-btn play-btn" @click="togglePlayPause" :disabled="!canReplay" title="播放/暂停">
-        {{ isPlaying ? '⏸' : '▶' }}
+      <button class="control-btn play-btn" @click="togglePlayPause" :disabled="!canReplay"
+        :aria-label="isPlaying ? '暂停' : '播放'" title="播放/暂停">
+        <svg v-if="isPlaying" width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2h3v12H4zM9 2h3v12H9z"/></svg>
+        <svg v-else width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5 2l9 6-9 6V2z"/></svg>
       </button>
-      <button class="control-btn" @click="stepForwardFrame" :disabled="!canStepForward" title="逐帧前进">
-        ⏩
+      <button class="control-btn" @click="stepForwardFrame" :disabled="!canStepForward" title="逐帧前进" aria-label="逐帧前进">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 3h2v10H4zM10 3l4 5-4 5V3z"/></svg>
       </button>
-      <button class="control-btn" @click="stepForward" :disabled="!canStepForward" title="下一步">
-        ⏩
+      <button class="control-btn" @click="stepForward" :disabled="!canStepForward" title="下一步" aria-label="下一步">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M10 3l4 5-4 5V3z"/></svg>
       </button>
-      <button class="control-btn" @click="goToEnd" :disabled="!canReplay" title="跳到结束">
-        ⏭
+      <button class="control-btn" @click="goToEnd" :disabled="!canReplay" title="跳到结束" aria-label="跳到结束">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5 3l4 5-4 5V3zM11 3l4 5-4 5V3z"/></svg>
       </button>
     </div>
 
@@ -61,7 +63,9 @@
             @click="jumpToEvent(index)" @contextmenu.prevent="toggleBookmark(index)">
             <div class="event-marker"></div>
             <div v-if="isKeyEvent(event)" class="key-event-indicator">!</div>
-            <div v-if="isBookmarked(index)" class="bookmark-indicator">🔖</div>
+            <div v-if="isBookmarked(index)" class="bookmark-indicator">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 1h8v14l-4-3-4 3V1z"/></svg>
+            </div>
             <div class="event-tooltip">
               <div class="tooltip-header">{{ getEventTypeLabel(event.type) }}</div>
               <div class="tooltip-turn">回合: {{ event.turn }}</div>
@@ -93,7 +97,7 @@
             <option value="key">关键事件</option>
             <option value="bookmarked">已标记</option>
           </select>
-          <input v-model="searchQuery" placeholder="搜索事件..." class="search-input" />
+          <input v-model="searchQuery" placeholder="搜索事件..." class="search-input" aria-label="搜索事件" />
         </div>
       </div>
       <div class="events-list">
@@ -113,11 +117,15 @@
           <div class="event-details">{{ getEventDetails(event) }}</div>
           <div class="event-actions">
             <button class="action-icon" @click.stop="toggleBookmark(index)"
+              :aria-label="isBookmarked(index) ? '取消标记' : '标记事件'"
               :title="isBookmarked(index) ? '取消标记' : '标记事件'">
-              {{ isBookmarked(index) ? '🔖' : '📌' }}
+              <svg v-if="isBookmarked(index)" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"
+                aria-hidden="true"><path d="M4 1h8v14l-4-3-4 3V1z"/></svg>
+              <svg v-else width="14" height="14" viewBox="0 0 16 16" fill="currentColor"
+                aria-hidden="true"><path d="M8 1a4.5 4.5 0 0 1 4.5 4.5c0 2.2-1.6 3.9-3 5.4V15H6.5v-4.1c-1.4-1.5-3-3.2-3-5.4A4.5 4.5 0 0 1 8 1zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
             </button>
-            <button class="action-icon" @click.stop="inspectEvent(event)" title="详细查看">
-              🔍
+            <button class="action-icon" @click.stop="inspectEvent(event)" title="详细查看" aria-label="详细查看">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M6.5 1a5.5 5.5 0 1 0 3.3 9.9l4.1 4.1 1.4-1.4-4.1-4.1A5.5 5.5 0 0 0 6.5 1zm0 2a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z"/></svg>
             </button>
           </div>
         </div>
@@ -156,8 +164,13 @@
     <div class="replay-actions">
       <button class="action-btn" @click="loadRecording">加载记录</button>
       <button class="action-btn" @click="saveCurrentRecording">保存记录</button>
-      <button class="action-btn" @click="deleteCurrentRecording" :disabled="!currentRecording">删除记录</button>
+      <button class="action-btn" @click="confirmDeleteRecording = true" :disabled="!currentRecording">删除记录</button>
     </div>
+
+    <!-- 删除记录二次确认 -->
+    <ConfirmDialog v-model="confirmDeleteRecording" title="删除记录"
+      message="确定要删除当前战斗记录吗？删除后不可恢复。"
+      confirm-text="删除" danger @confirm="deleteCurrentRecording" />
   </div>
 </template>
 
@@ -168,6 +181,7 @@ import { ReplayBattleEvent, BattleEventType } from '@/domain/battle/type/types';
 import { RecordedBattle } from '@/domain/battle/service/BattleRecorder';
 import { container } from '@/infrastructure/di/Container';
 import SpeedSelector from '@/presentation/components/SpeedSelector.vue'
+import ConfirmDialog from '@/presentation/components/ConfirmDialog.vue'
 import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces';
 import type { BattleSystem } from '@/domain/battle/BattleSystem';
 // no props — all data comes from DI
@@ -182,6 +196,7 @@ const emit = defineEmits<{
 }>();
 
 const currentRecording = ref<RecordedBattle | null>(null);
+const confirmDeleteRecording = ref(false);
 const currentEventIndex = ref(0);
 const currentFrame = ref(0);
 const isPlaying = ref(false);

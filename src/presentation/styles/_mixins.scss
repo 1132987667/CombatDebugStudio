@@ -82,11 +82,10 @@
 ) {
   display: inline-flex;
   align-items: center;
-  padding: 1px 6px;
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-full);
   background: $bg;
   color: $fg;
-  font-size: var(--font-size-xxs);
   font-weight: var(--font-weight-bold);
 }
 

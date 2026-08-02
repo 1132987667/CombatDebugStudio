@@ -27,8 +27,8 @@
   min-width: 300px;
   max-width: 400px;
   color: var(--color-text-primary);
-  animation: slideIn 0.3s ease-out;
-  transition: all 0.3s ease;
+  animation: slideIn var(--transition-base);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
   border-left: 4px solid var(--color-border-default);
 }
 
@@ -97,6 +97,8 @@
   transition: opacity var(--transition-fast);
   flex-shrink: 0;
   line-height: 1;
+  padding: 0;
+  color: inherit;
 }
 
 .notification-close:hover {

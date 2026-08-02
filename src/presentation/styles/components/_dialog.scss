@@ -73,7 +73,7 @@
 /* ----- 对话框过渡动画 ----- */
 .dialog-fade-enter-active,
 .dialog-fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-base);
 }
 
 .dialog-fade-enter-from,
@@ -83,7 +83,7 @@
 
 .dialog-fade-enter-active .dialog-container,
 .dialog-fade-leave-active .dialog-container {
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-base);
 }
 
 .dialog-fade-enter-from .dialog-container,

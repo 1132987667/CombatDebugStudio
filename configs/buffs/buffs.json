@@ -128,14 +128,14 @@
     "id": "buff_suffocation",
     "name": "窒息",
     "category": "dot",
-    "maxStacks": 1,
+    "maxStacks": 3,
     "duration": 3,
     "effects": [
       {
         "type": "dot",
         "params": {
           "damageType": "percent",
-          "value": 0
+          "value": 3
         }
       }
     ],
@@ -389,14 +389,14 @@
     "id": "buff_bleed",
     "name": "流血",
     "category": "dot",
-    "maxStacks": 1,
+    "maxStacks": 3,
     "duration": 2,
     "effects": [
       {
         "type": "dot",
         "params": {
           "damageType": "percent",
-          "value": 0
+          "value": 3
         }
       }
     ],
@@ -864,14 +864,14 @@
     "id": "buff_drowning",
     "name": "溺水",
     "category": "dot",
-    "maxStacks": 1,
+    "maxStacks": 3,
     "duration": 3,
     "effects": [
       {
         "type": "dot",
         "params": {
           "damageType": "percent",
-          "value": 0
+          "value": 3
         }
       }
     ],
@@ -882,7 +882,7 @@
     "id": "buff_burn",
     "name": "灼烧",
     "category": "dot",
-    "maxStacks": 1,
+    "maxStacks": 3,
     "duration": 2,
     "tags": [
       "burn"
@@ -892,7 +892,7 @@
         "type": "dot",
         "params": {
           "damageType": "percent",
-          "value": 0
+          "value": 3
         }
       }
     ],
@@ -1717,7 +1717,7 @@
     "id": "buff_poison",
     "name": "中毒",
     "category": "dot",
-    "maxStacks": 1,
+    "maxStacks": 3,
     "duration": 2,
     "tags": [
       "heal_reduction"
@@ -1729,7 +1729,7 @@
     "id": "buff_strong_poison",
     "name": "剧毒",
     "category": "dot",
-    "maxStacks": 1,
+    "maxStacks": 3,
     "duration": 2,
     "triggers": [
       {

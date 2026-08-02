@@ -2,6 +2,8 @@
   战斗视觉特效层
   覆盖在战场上方，实现技能名飞行、光弹尾迹、命中爆炸、治疗光环、护盾六边形、屏幕震动等效果
   纯 DOM + CSS 动画实现，无 GSAP 依赖，动画结束后自动清理
+  NOTE: 本文件内的裸 hex/rgba（#ffaa30 等）是特效层专属色板（粒子/辉光/渐变），
+        与 UI 语义色 token 体系隔离，属有意豁免——特效色追求视觉表现，不参与语义 token 化
 -->
 <template>
   <div id="visual-effects-root" class="battle-visual-effects" :class="{ 'screen-shake': shaking }">

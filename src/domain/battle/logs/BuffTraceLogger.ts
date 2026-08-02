@@ -7,7 +7,7 @@
  * 版本: 3.1.0
  */
 
-import { createTraceEvent, TraceLevel, TracePhase, type TraceScope } from '@/shared/types/trace-event'
+import { createTraceEvent, BuffAction, TraceLevel, TracePhase, type TraceScope } from '@/shared/types/trace-event'
 import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 
 /**
@@ -27,6 +27,7 @@ export class BuffTraceLogger {
 
   /**
    * Buff 施加时调用
+   * extras 提供文档 §5 示例 4 的取证字段（buffId/path/stackRule/maxStacks/modifiers），可选向后兼容
    */
   static onApply(
     characterId: string,
@@ -36,6 +37,13 @@ export class BuffTraceLogger {
     duration: number,
     parentTraceId?: string,
     trace?: TraceScope,
+    extras?: {
+      buffId?: string
+      path?: 'A' | 'B' | 'D'
+      stackRule?: string
+      maxStacks?: number
+      modifiers?: Array<{ attribute: string; value: number; type: string }>
+    },
   ): void {
     const id = ++this.counter
 
@@ -55,9 +63,14 @@ export class BuffTraceLogger {
           payload: {
             buffName,
             instanceId,
-            action: 'APPLY',
+            action: BuffAction.APPLY,
             stacks,
             duration,
+            buffId: extras?.buffId,
+            path: extras?.path,
+            stackRule: extras?.stackRule,
+            maxStacks: extras?.maxStacks,
+            modifiers: extras?.modifiers,
           },
         }),
       )
@@ -91,7 +104,7 @@ export class BuffTraceLogger {
           payload: {
             buffName,
             instanceId,
-            action: 'REMOVE',
+            action: BuffAction.REMOVE,
           },
         }),
       )
@@ -128,7 +141,7 @@ export class BuffTraceLogger {
           payload: {
             buffName,
             instanceId,
-            action: 'UPDATE',
+            action: BuffAction.UPDATE,
             oldStacks,
             newStacks,
             remainingTurns,
@@ -166,7 +179,7 @@ export class BuffTraceLogger {
           summary: `【${buffName}】 ${attribute} ${valueStr}`,
           payload: {
             buffName,
-            action: 'MODIFIER',
+            action: BuffAction.MODIFIER,
             attribute,
             value: valueStr,
             currentTotal,

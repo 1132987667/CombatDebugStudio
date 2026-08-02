@@ -151,6 +151,7 @@ export class GameDataProcessor {
       level: enemy.level,
       enabled: true,
       seatIndex,
+      noAttack: enemy.noAttack ?? false,
       skills: {
         small: GameDataProcessor.getSkillByIds(enemy.skills?.small ?? []),
         passive: passiveSkills,
@@ -263,10 +264,11 @@ export class GameDataProcessor {
           cooldown: skill.cooldown || 0,
           condition: skill.condition,
           maxTriggerCount,
-          // 从 parameters 中读取额外触发配置
-          triggerProbability: skill.parameters?.triggerProbability as
-            | number
-            | undefined,
+          // 从 parameters 或顶层读取额外触发配置（兼容两种写法）
+          triggerProbability:
+            (skill.parameters?.triggerProbability as
+              | number
+              | undefined) ?? skill.triggerProbability,
           hpThreshold: skill.parameters?.hpThreshold as number | undefined,
         }
 

@@ -98,7 +98,10 @@
       </div>
       <!-- 进阶属性（折叠） -->
       <div class="monitor-group" v-if="tierFilters.advanced">
-        <div class="monitor-subtitle" @click="advancedExpanded = !advancedExpanded" style="cursor:pointer">
+        <div class="monitor-subtitle" role="button" tabindex="0" style="cursor:pointer"
+          @click="advancedExpanded = !advancedExpanded"
+          @keydown.enter.prevent="advancedExpanded = !advancedExpanded"
+          @keydown.space.prevent="advancedExpanded = !advancedExpanded">
           进阶属性 {{ advancedExpanded ? '▼' : '▶' }}
         </div>
         <div v-show="advancedExpanded">
@@ -327,11 +330,11 @@ const attackRange = computed(() => {
 
 // 进阶属性配置
 const groupLabels: Record<string, string> = {
-  defense: '🛡️ 防御',
-  offense: '⚔️ 攻击',
-  elemental: '🔥 元素',
-  control: '🌀 控制',
-  utility: '✨ 辅助',
+  defense: '防御',
+  offense: '攻击',
+  elemental: '元素',
+  control: '控制',
+  utility: '辅助',
 }
 const advancedExpanded = ref(false)
 const tierFilters = ref({
@@ -374,7 +377,8 @@ const buffListItems = computed((): BuffRawItem[] => currentCharacterSnap.value?.
 
 const buffDisplay = useBuffDisplay(buffListItems, computed(() => currentCharacter.value?.id ?? ''), 99)
 
-/** 被动技能分类展示配置 */
+/** 被动技能分类展示配置
+ *  NOTE: 分类色为被动技能专属色板，集中在此配置（不散落），与 tokens 的 --cat-*（数据分类圆点）色板语义不同，故不合并 */
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; priority: number }> = {
   aura: { label: '光环', color: '#34d399', priority: 0 },
   trigger: { label: '触发', color: '#a78bfa', priority: 1 },
@@ -800,7 +804,7 @@ onUnmounted(() => {
  */
 .skill-tooltip {
   position: fixed;
-  z-index: 10000;
+  z-index: var(--z-tooltip);
   min-width: 280px;
   max-width: 360px;
   padding: var(--space-3) var(--space-4);

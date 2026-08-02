@@ -20,7 +20,9 @@
               />
             </div>
           <div v-if="longDurationItems && longDurationItems.length > 0" class="panel-secondary">
-              <div class="secondary-toggle" @click="showSecondary = !showSecondary">
+              <div class="secondary-toggle" role="button" tabindex="0" @click="showSecondary = !showSecondary"
+                @keydown.enter.prevent="showSecondary = !showSecondary"
+                @keydown.space.prevent="showSecondary = !showSecondary">
                 {{ showSecondary ? '▼' : '▶' }} 其他效果（{{ longDurationItems.length }}）
               </div>
               <div v-if="showSecondary" class="secondary-groups">
@@ -174,7 +176,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
   padding: 0 4px;
   line-height: 1;
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast) ease;
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .panel-close:hover {
@@ -282,7 +284,7 @@ const summaryLines = computed<SummaryLine[]>(() => {
 /* 过渡动画 */
 .panel-fade-enter-active,
 .panel-fade-leave-active {
-  transition: all 200ms ease-out;
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .panel-fade-enter-from,

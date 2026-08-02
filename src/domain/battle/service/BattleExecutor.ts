@@ -264,6 +264,27 @@ export class BattleExecutor {
             participant,
             baseScope,
           )
+          // ★ 木人/训练靶子：noAttack 跳过行动（AI 返回 skip 决策）
+          if (decision.type === ActionTypes.SKIP) {
+            LoggerProvider.logger.addBattleLog({
+              turn: battle.currentTurn || 1,
+              message: `${participant.name} 未行动`,
+              segments: [
+                {
+                  text: participant.name,
+                  classStr:
+                    participant.team === ParticipantSide.ALLY
+                      ? 'log-friendly'
+                      : 'log-hostile',
+                  kind: 'entity',
+                  faction: participant.team,
+                },
+                { text: ' 未行动' },
+              ],
+              category: BATTLE_LOG_CATEGORIES.STATUS,
+            })
+            return
+          }
           const suggestedTargetId = decision.targetId
           if (decision.type === 'skill' && decision.skillId) {
             const skill = this.skillManager.getSkillConfig(decision.skillId)
@@ -1107,6 +1128,7 @@ export class BattleExecutor {
     // 5. 死亡 → pendingDeaths（延迟结算，兼容复活机制）
     if (!target.isAlive()) {
       this.skillManager.getExecutor().cleanupComboState(target.id)
+      this.skillManager.getExecutor().cleanupRotatingState(target.id)
       this.pendingDeaths.push({
         deadId: target.id,
         killerId: source?.id ?? 'system',

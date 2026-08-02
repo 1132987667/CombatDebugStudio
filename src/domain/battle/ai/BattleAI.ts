@@ -144,6 +144,14 @@ export class BaseBattleAI implements BattleAI {
     trace?: TraceScope,
   ): BattleAction {
     try {
+      // 木人/训练靶子：不攻击，直接跳过行动
+      if (participant.noAttack) {
+        return BattleActionHelper.createSkip({
+          sourceId: participant.id,
+          turn: battleState?.currentTurn ?? 1,
+        })
+      }
+
       if (!battleState || !participant) {
         LoggerProvider.logger.addDebugLog('AI决策参数无效', { level: LogLevel.WARN })
         return this.selectAttack(participant)
@@ -224,6 +232,10 @@ export class BaseBattleAI implements BattleAI {
       ? (this.skills.get(selectedSkillId)?.energyCost ?? 0)
       : 0
     const energyBefore = participant.currentEnergy
+    // §3.2 冷却快照：选中技能的配置冷却（运行时剩余冷却由战斗系统维护，此处给配置值）
+    const cooldown = selectedSkillId
+      ? (this.skills.get(selectedSkillId)?.cooldown ?? 0)
+      : 0
 
     this.tracePort.emit(
       createTraceEvent({
@@ -252,11 +264,13 @@ export class BaseBattleAI implements BattleAI {
           },
           weights: weights.map((w) => ({
             skillId: w.skillId,
+            name: this.skills.get(w.skillId)?.name ?? w.skillId,
             weight: w.weight,
-            breakdown: w.reason,
+            breakdown: w.breakdown,
           })),
           selected: selectedSkillId ?? 'normal_attack',
           energy: { before: energyBefore, cost: energyCost, after: Math.max(0, energyBefore - energyCost) },
+          cooldown: { selected: cooldown },
         },
       }),
     )

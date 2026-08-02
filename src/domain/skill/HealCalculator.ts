@@ -8,6 +8,8 @@ import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { LogLevel } from '@/shared/types/battle-log'
 import { processExtraValues, processTargetModifiers } from '@/domain/skill/calculation-utils'
 import { floor } from '@/shared/utils/math'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 
 interface HealCalculationStep {
   step: string
@@ -17,6 +19,13 @@ interface HealCalculationStep {
 
 export class HealCalculator {
   calculationLogs: HealCalculationStep[] = []
+
+  /** 可选的 IDebugTracePort（由 BattleSystem 经 SkillManager 注入，供 HEAL_CALCULATION 发射） */
+  private tracePort: IDebugTracePort | null = null
+
+  setTracePort(port: IDebugTracePort | null): void {
+    this.tracePort = port
+  }
 
   /** 清空计算日志 */
   clearCalculationLogs(): void {
@@ -37,6 +46,8 @@ export class HealCalculator {
   ): { heal: number; overflow: number } {
     this.calculationLogs = []
     let heal = 0
+    // 修饰前计算值（baseValue + extraValues 之后、targetModifiers/cap/debuff 之前）— 供 HEAL_CALCULATION 的 before 语义
+    let baseBeforeModifiers = 0
 
     if (skillStep.calculation) {
       heal = skillStep.calculation.baseValue
@@ -54,6 +65,9 @@ export class HealCalculator {
         heal += total
       }
     }
+    // 修饰前计算值（baseValue + extraValues 之后、targetModifiers/cap/debuff 之前）— 供 HEAL_CALCULATION 的 before 语义
+    // 与最终 heal 同口径 floor，避免 before 显示浮点而 after 为整数
+    baseBeforeModifiers = floor(heal)
 
     // targetModifiers 处理
     if (skillStep.targetModifiers) {
@@ -100,6 +114,39 @@ export class HealCalculator {
         value: heal,
         description: `治疗 ${heal}`,
       })
+    }
+
+    // 发射 HEAL_CALCULATION（文档 §7 第二层：calculateHeal 末尾；scope 来源 context.trace）
+    if (
+      this.tracePort &&
+      context?.trace &&
+      this.tracePort.isEnabled(TracePhase.HEAL_CALCULATION)
+    ) {
+      this.tracePort.emit(
+        createTraceEvent({
+          phase: TracePhase.HEAL_CALCULATION,
+          correlationId: context.trace.correlationId,
+          parentId: context.trace.parentId,
+          battleId: context.trace.meta?.battleId,
+          turn: context.trace.meta?.turn,
+          sourceId: source.id,
+          targetId: target.id,
+          level: TraceLevel.DEBUG,
+          summary:
+            `治疗计算 ${source.name}→${target.name} ` +
+            `${baseBeforeModifiers}→${heal}` +
+            `${overflow > 0 ? ` (溢出 ${overflow})` : ''}`,
+          payload: {
+            sourceId: source.id,
+            targetId: target.id,
+            stepId: skillStep.id,
+            base: baseBeforeModifiers,
+            final: heal,
+            overflow,
+            steps: [...this.calculationLogs], // 复用 HealCalculationStep[]（含 before→after 语义）
+          },
+        }),
+      )
     }
 
     return { heal, overflow }

@@ -23,7 +23,7 @@ import {
 import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
 import { TraceEventCollector } from '@/domain/battle/logs/TraceEventCollector'
-import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
+import { createTraceEvent, TraceLevel, TracePhase, TurnFlowAction, TraceTriggerSource } from '@/shared/types/trace-event'
 import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
 import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
 import { BattleRecorder, type RecordedBattle } from '@/domain/battle/service/BattleRecorder'
@@ -227,9 +227,11 @@ export class BattleSystem {
     )
 
     // 结构化调试追踪收集器（IDebugTracePort 实现）
-    this.traceCollector = new TraceEventCollector()
+    // NOTE: 传入触发事件总线，emit 时广播 TRACE_EVENT_ADDED，供 UI 实时流订阅（文档 §7 P2）
+    this.traceCollector = new TraceEventCollector(this.getTriggerEventBus())
     this.executor.setTracePort(this.traceCollector)
     this.passiveSkillManager.setTracePort(this.traceCollector)
+    this.skillManager.setTracePort(this.traceCollector)
     BuffTraceLogger.setTracePort(this.traceCollector)
     BattleParticipantImpl.setTracePort(this.traceCollector)
   }
@@ -674,7 +676,7 @@ export class BattleSystem {
       if (scene?.fieldEffects?.length) {
         this.fieldEffectManager.loadFromScene(scene.fieldEffects)
         this.fieldEffectManager.applyModifiers(participants, this.buffSystem)
-        allParticipants.forEach(p => p.recalcAll())
+        allParticipants.forEach(p => p.recalcAll(TraceTriggerSource.FIELD_EFFECT))
         battleData.turnOrder = this.turnManager.createTurnOrder(
           Array.from(participants.values()),
         )
@@ -696,7 +698,7 @@ export class BattleSystem {
     }
     // 阵型 Buff 施加后重新计算属性
     if (this.currentAllyFormation || this.currentEnemyFormation) {
-      allParticipants.forEach(p => p.recalcAll())
+      allParticipants.forEach(p => p.recalcAll(TraceTriggerSource.FORMATION))
       battleData.turnOrder = this.turnManager.createTurnOrder(
         Array.from(participants.values()),
       )
@@ -836,7 +838,8 @@ export class BattleSystem {
           level: TraceLevel.INFO,
           summary: `回合 ${battle.currentTurn} 开始`,
           payload: {
-            action: 'TURN_START',
+            action: TurnFlowAction.TURN_START,
+            turnOrder: battle.turnOrder,
             aliveCount: aliveByTeam,
             energyGain: this.ruleManager.getCombatRules().energyGainPerTurn,
           },
@@ -1076,7 +1079,10 @@ export class BattleSystem {
             turn: battle.currentTurn,
             level: TraceLevel.INFO,
             summary: `回合 ${battle.currentTurn} 结束`,
-            payload: { action: 'TURN_END' },
+            payload: {
+              action: TurnFlowAction.TURN_END,
+              passiveTriggers: this.passiveSkillManager.getAndResetTurnCounters(),
+            },
           }),
         )
       }
@@ -1250,6 +1256,7 @@ export class BattleSystem {
     this.executor.reset() // ★ 新增：重置 pendingDeaths / currentActionOrder，防止跨战斗残留
     this.passiveSkillManager.clearAll()
     this.skillManager.getExecutor().clearAllComboStates()
+    this.skillManager.getExecutor().clearAllRotatingStates()
     this.skillManager.getExecutor().drainExtraActions()
     this.threatManager.reset()
     if (this.battleData) {
@@ -1264,6 +1271,8 @@ export class BattleSystem {
     this.lifecycleManager.resetBattle()
     // ★ 兜底清理触发器事件总线残留监听器（正常路径 removeBuff 已反注册，此处防漏网）
     this.getTriggerEventBus().clear()
+    // ★ 清空调试追踪收集器 — 战斗隔离（文档 §3.2）：上一场战斗的 TraceEvent 不混入下一场
+    this.traceCollector.clear()
   }
 
   public getBattleStatus(): string | undefined {

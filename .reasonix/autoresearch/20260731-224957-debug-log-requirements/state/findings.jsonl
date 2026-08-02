@@ -1,0 +1,8 @@
+﻿{"ts":"2026-07-31T23:06:00+08:00","finding":"原文价值=逐项枚举的完整性（checklist），机制映射价值=落地对应，二者应共存而非替换","evidence":"documents/调试日志要求.md 修订后 §2 完整保留 7 大类 37 子项与结尾证据链段，§3 逐条对照"}
+{"ts":"2026-07-31T23:06:00+08:00","finding":"原文价值=逐项枚举的完整性（checklist），机制映射价值=落地对应，二者应共存而非替换","evidence":"documents/调试日志要求.md 修订后 §2 完整保留 7 大类 37 子项与结尾证据链段，§3 逐条对照"}
+{"ts":"2026-07-31T23:22:00+08:00","finding":"现有 DebugLogDialog 为 Tabs 三视图（树状/实时流/日志）+五维过滤+JSON 导出；三栏方案可复用 TraceLogTree/TracePayloadViewer 数据，卡片模板应按 TracePhase 注册而非硬编码四步","evidence":"src/presentation/views/components/DebugLogDialog.vue 全文（width=80vw、filteredStream、exportTraceJson）"}
+{"ts":"2026-07-31T23:41:00+08:00","finding":"项目无 test1.html（DebugLogDialog 注释提到的原型已不在仓库）；HTML 示例应采用自包含单文件 + UTF-8 无 BOM + meta charset 声明，与源码编码惯例一致","evidence":"Get-ChildItem *.html 仅 index.html 与 build/dist"}
+{"ts":"2026-07-31T23:56:00+08:00","finding":"用户要的是文档要求的理想最终形态展示，与现有系统能否实现无关；示例应使用用户方案自带的数据（单位A/B/C、HP 3200→1985、Final_DMG 公式、roll 0.642>0.35）而非项目文档示例","evidence":"Pasted text #3 三栏方案原文"}
+{"ts":"2026-08-01T00:12:00+08:00","finding":"上版核心缺陷：树整树重建且展开状态未持久化（点击带 group 节点触发 renderTree 导致手动展开的子树收缩）；actor 过滤用文本包含判断（卡片文本无单位A字样导致误过滤）；卡片点击重建列表丢失滚动位置；缩略图标题写死与选中组不一致","evidence":"documents/调试日志UI示例.html 自查"}
+{"ts":"2026-08-01T00:31:00+08:00","finding":"用户向不足：无敏感性分析/无性能热点呈现/无键盘导航/无书签/无聚焦模式/导出缺元信息/坏数据无降级；工程向不足：渲染器无注册表/无防御渲染/过滤全量扫描/无渲染耗时自测/过滤不持久/无战斗结算报告","evidence":"v2 版本深度审视"}
+{"ts":"2026-08-01T01:31:00+08:00","finding":"根因：HTML 中「仅单位A」chip 的 id 为 chip-a，JS（v3 起）统一引用 chip-actor，applyFilterState 里 $(#chip-actor) 返回 null 触发 classList 报错；此前 v3/v4 验证只用 node --check 查语法，未做运行时验证，漏掉此不一致","evidence":"jsdom 复现：stack 指向 applyFilterState (line 937) → bindEvents → 初始化；grep 确认 id=chip-a 而 JS 引用 chip-actor"}

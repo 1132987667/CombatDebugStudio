@@ -10,14 +10,14 @@
 <template>
   <Teleport to="body">
     <Transition name="dialog-fade">
-      <div v-if="modelValue" class="dialog-overlay" :class="{ 'dialog-overlay--transparent': !showMask }"
-        @click.self="onOverlayClick">
+      <div v-if="modelValue" ref="overlayRef" class="dialog-overlay" :class="{ 'dialog-overlay--transparent': !showMask }"
+        role="dialog" aria-modal="true" :aria-label="title" tabindex="-1" @click.self="onOverlayClick">
         <div class="dialog-container" :style="{ width: width, height: height }">
           <div class="dialog-header">
             <span class="dialog-title">{{ title }}</span>
             <div class="dialog-header-actions">
               <slot name="header-actions"></slot>
-              <button class="dialog-close" @click="close">×</button>
+              <button class="dialog-close" aria-label="关闭弹窗" @click="close">×</button>
             </div>
           </div>
           <div class="dialog-content">
@@ -32,8 +32,14 @@
   </Teleport>
 </template>
 
+<script lang="ts">
+// NOTE: 模块级弹窗打开栈——多个 Dialog 实例（嵌套弹窗）共享，
+// 保证只有最顶层的弹窗响应 ESC/Tab，body 滚动锁按引用计数管理
+const openDialogKeys: symbol[] = [];
+</script>
+
 <script setup lang="ts">
-import { watch } from "vue";
+import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 interface Props {
   modelValue: boolean;
@@ -44,12 +50,15 @@ interface Props {
   showMask?: boolean;
   /** 点击遮罩时是否关闭弹窗，默认 true。设为 false 时点击遮罩不关闭 */
   maskClosable?: boolean;
+  /** 按 ESC 时是否关闭弹窗，默认 true。编辑类弹窗（未保存内容）应设为 false */
+  escClosable?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   width: "60vw",
   showMask: true,
   maskClosable: true,
+  escClosable: true,
 });
 
 const emit = defineEmits<{
@@ -62,6 +71,47 @@ const close = () => {
   emit("close");
 };
 
+/* ═══ 无障碍：ESC 关闭 + Tab 焦点陷阱 + 打开聚焦/关闭还原 ═══
+   嵌套弹窗（如确认弹窗叠在对话框上）：只有栈顶实例响应 ESC/Tab */
+const overlayRef = ref<HTMLElement | null>(null);
+const instanceKey = Symbol("dialog");
+let isOpen = false;
+let lastFocused: HTMLElement | null = null;
+
+const getFocusable = (): HTMLElement[] => {
+  const el = overlayRef.value;
+  if (!el) return [];
+  return Array.from(
+    el.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+  ).filter((node) => !node.hasAttribute("disabled"));
+};
+
+const handleKeydown = (e: KeyboardEvent) => {
+  // 非最顶层弹窗不响应（嵌套时 ESC 只关最上层）
+  if (!isOpen || openDialogKeys[openDialogKeys.length - 1] !== instanceKey) return;
+  if (e.key === "Escape") {
+    // 编辑类弹窗（escClosable=false）不响应 ESC，避免误触丢未保存内容
+    if (props.escClosable) close();
+    return;
+  }
+  // Tab 焦点陷阱：焦点在弹窗内循环，不逃逸到背景页面
+  if (e.key === "Tab") {
+    const focusables = getFocusable();
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+};
+
 /** 点击遮罩时根据 maskClosable 决定是否关闭 */
 const onOverlayClick = () => {
   if (props.maskClosable) {
@@ -69,16 +119,49 @@ const onOverlayClick = () => {
   }
 }
 
+const releaseOverflow = () => {
+  if (openDialogKeys.length === 0) {
+    window.document.body.style.overflow = "";
+  }
+};
+
 watch(
   () => props.modelValue,
   (val) => {
     if (val) {
-      window.document.body.style.overflow = "hidden";
+      isOpen = true;
+      if (openDialogKeys.length === 0) {
+        window.document.body.style.overflow = "hidden";
+      }
+      openDialogKeys.push(instanceKey);
+      lastFocused = document.activeElement as HTMLElement | null;
+      window.addEventListener("keydown", handleKeydown);
+      nextTick(() => {
+        // 聚焦 overlay 本体（tabindex=-1），Tab 首击落到弹窗内第一个控件，不误触 × 按钮
+        overlayRef.value?.focus();
+      });
     } else {
-      window.document.body.style.overflow = "";
+      isOpen = false;
+      window.removeEventListener("keydown", handleKeydown);
+      const idx = openDialogKeys.indexOf(instanceKey);
+      if (idx !== -1) openDialogKeys.splice(idx, 1);
+      releaseOverflow();
+      lastFocused?.focus?.();
+      lastFocused = null;
     }
-  }
+  },
+  { immediate: true } // 以 modelValue=true 初始挂载时也注册 ESC/焦点/滚动锁
 );
+
+onBeforeUnmount(() => {
+  // 卸载兜底：若弹窗仍开着（父级 v-if 移除），清理监听与滚动锁
+  window.removeEventListener("keydown", handleKeydown);
+  const idx = openDialogKeys.indexOf(instanceKey);
+  if (idx !== -1) {
+    openDialogKeys.splice(idx, 1);
+    releaseOverflow();
+  }
+});
 </script>
 
 <style scoped>
@@ -140,9 +223,13 @@ watch(
 }
 
 /* 过渡动画 */
-.dialog-fade-enter-active,
-.dialog-fade-leave-active {
+.dialog-fade-enter-active {
   transition: opacity var(--transition-base), transform var(--transition-base);
+}
+
+/* NOTE: 退出比进入快（退出 ≈ 进入的 60-70%） */
+.dialog-fade-leave-active {
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 
 .dialog-fade-enter-from,

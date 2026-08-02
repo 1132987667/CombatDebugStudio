@@ -58,7 +58,7 @@
       padding: 0.1rem 0.3rem;
       border-radius: var(--radius-none);
       background: rgba(var(--rgb-white), var(--alpha-wash));
-      color: var(--color-text-disabled);
+      color: var(--color-text-tertiary);
     }
   }
 
@@ -117,11 +117,15 @@
   color: var(--color-text-tertiary);
   cursor: pointer;
   font-size: 0.85rem;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .tab-btn:hover {
   color: var(--color-text-primary);
+}
+
+.tab-btn:active {
+  opacity: 0.7;
 }
 
 .tab-btn.active {
@@ -218,7 +222,7 @@
 }
 
 .no-skills {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
   text-align: center;
   padding: var(--space-3) var(--space-2);
 }
@@ -237,11 +241,15 @@
   padding: 0.3rem 0.5rem;
   cursor: pointer;
   text-align: left;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .intervention-btn:hover {
   background: var(--color-border-tertiary);
+}
+
+.intervention-btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .intervention-btn.danger {
@@ -351,7 +359,7 @@
 }
 
 .no-logs {
-  color: var(--color-text-disabled);
+  color: var(--color-text-tertiary);
   text-align: center;
   padding: var(--space-4);
   font-style: italic;

@@ -534,7 +534,7 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
                 .flat()
               if (effectLines.length > 0) {
                 target.effectLines = [
-                  ...(target.script.getEffectLines?.(target.context) ?? []),
+                  ...(target.script?.getEffectLines?.(target.context) ?? []),
                   ...effectLines,
                 ]
               }
@@ -550,9 +550,10 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
           target.context.variables.set('_stacks', newStacks)
           // ponytail: 手动触发 onRefresh 以重新计算修饰符（applyModifiers 读取 _stacks），
           // 不使用 refreshBuff 因为它会重置 remainingTurns 且依赖 _onRefresh 分支
-          target.script.onRefresh(target.context)
+          // 兼容无脚本 buff（effectPlan 驱动，script 为 null）——叠层只走下方的 effectPlan 分支
+          target.script?.onRefresh?.(target.context)
           target.effectLines =
-            target.script.getEffectLines?.(target.context) ?? []
+            target.script?.getEffectLines?.(target.context) ?? []
           // ★ 数据驱动：通知 effectPlan 各原语层数变化（如 ModifierEffect 重新计算值）
           const buffResolved = this.scriptRegistry.getResolvedBuffConfig(buffId)
           if (buffResolved?.effectPlan) {
@@ -699,6 +700,19 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       buffInstance.duration,
       undefined,
       context?.trace,
+      {
+        buffId: resolvedConfig.id,
+        path,
+        stackRule: resolvedConfig.stackRule,
+        maxStacks: resolvedConfig.maxStacks,
+        modifiers: resolvedConfig.attributes
+          ? Object.entries(resolvedConfig.attributes).map(([attribute, cfg]) => ({
+              attribute,
+              value: cfg.value,
+              type: cfg.type,
+            }))
+          : undefined,
+      },
     )
 
     // ponytail: 通知外部（如 BattleSystem）buff 已添加，用于触发 UI 动画
@@ -972,6 +986,11 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
 
       // 注入回合号到 context（修正 P0-4 的根因）
       instance.context.currentTurn = currentTurn
+
+      // ★ 持续到下一个回合结束：施加当轮的结算既不触发 onTick/onUpdate 也不扣减回合。
+      // 例：duration=1 在第 N 轮施加 → 第 N 轮结束仍在 → 第 N+1 轮结束移除。
+      // 放在 tick 之前执行，保证 dot 跳伤次数与行动顺序无关（快/慢单位施加均为 N 次）。
+      if (instance.startTurn === currentTurn) return
 
       // 路径判定（与 addBuff 对称）
       const hasScript = instance.script !== null

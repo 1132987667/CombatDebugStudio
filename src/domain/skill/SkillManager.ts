@@ -18,6 +18,7 @@ import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import { LogLevel } from '@/shared/types/battle-log'
 import { validateSkillConfigs } from '@/shared/utils/schema-validator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import { createStepContext } from '@/domain/battle/type/types'
 import type { TraceScope } from '@/shared/types/trace-event'
 
@@ -53,6 +54,11 @@ export class SkillManager {
       this.healCalculator,
       this.buffSystem,
     )
+  }
+
+  /** 注入调试追踪端口（转发给 HealCalculator，供 HEAL_CALCULATION 发射） */
+  setTracePort(port: IDebugTracePort | null): void {
+    this.healCalculator.setTracePort(port)
   }
 
   getSkillConfigs(): Map<string, SkillConfig> {

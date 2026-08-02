@@ -73,7 +73,7 @@ const tooltipText = computed(() => {
   line-height: var(--line-height-md);
   white-space: nowrap;
   cursor: default;
-  transition: all var(--transition-fast) ease;
+  transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 /* 增益 */

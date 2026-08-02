@@ -29,6 +29,8 @@ export interface Enemy {
   stats: EnemyStats
   drops: EnemyDrop[]
   skills: EnemySkills
+  /** 是否完全不会攻击（木人/训练靶子；AI 回合直接跳过行动） */
+  noAttack?: boolean
 }
 
 export interface EnemyInstance extends Enemy {

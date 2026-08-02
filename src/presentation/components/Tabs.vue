@@ -187,36 +187,42 @@ defineExpose({ updateIndicator })
   min-height: 0;
 }
 
-/* ====== 页签头：分层背景 + 底部描边，指示条悬浮其上 ====== */
+/* ====== 页签头：凹陷轨道（segmented 容器），激活胶囊悬浮其上 ====== */
 .tabs-header {
   position: relative;
+  z-index: 0; /* 建立层叠上下文：胶囊(0) 在轨道上，页签文字(1) 在胶囊上 */
   display: flex;
-  background:
-    linear-gradient(180deg, rgba(var(--rgb-white), var(--alpha-tint)) 0%, transparent 100%),
-    var(--color-bg-tertiary);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
   flex-shrink: 0;
 }
 
 .tabs-tab {
   position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-1) var(--space-3);
   background: transparent;
   border: none;
+  border-radius: var(--radius-lg);
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-md); /* AGENTS.md 红线：文本不低于 --font-size-md */
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   font-family: inherit;
   line-height: var(--line-height-md);
   white-space: nowrap;
   cursor: pointer;
-  transition: color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
 
-  &:hover:not(:disabled) {
+  &:hover:not(:disabled):not(.is-active) {
     color: var(--color-text-primary);
     background: var(--color-bg-hover);
   }
@@ -233,13 +239,13 @@ defineExpose({ updateIndicator })
 
   &.is-active {
     color: var(--tabs-accent);
-    font-weight: var(--font-weight-bold);
-    text-shadow: 0 0 8px var(--tabs-accent-glow);
+    font-weight: var(--font-weight-semibold);
   }
 }
 
-.tabs-root--sm .tabs-tab {
-  padding: var(--space-1) var(--space-3);
+/* md 标准（默认）：更大横向留白 */
+.tabs-root--md .tabs-tab {
+  padding: var(--space-1) var(--space-4);
 }
 
 .tabs-root--equal .tabs-tab {
@@ -255,16 +261,20 @@ defineExpose({ updateIndicator })
   height: 16px;
   padding: 0 5px;
   border-radius: var(--radius-full);
-  background: var(--color-border-default);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-bg-primary);
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-xxs);
   font-weight: var(--font-weight-bold);
   font-family: var(--font-family-mono);
-  transition: background-color var(--transition-fast), color var(--transition-fast),
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
     box-shadow var(--transition-fast);
 
   .is-active & {
     background: var(--tabs-accent);
+    border-color: transparent;
     color: var(--color-bg-secondary);
     box-shadow: 0 0 6px var(--tabs-accent-glow);
   }
@@ -296,15 +306,19 @@ defineExpose({ updateIndicator })
   }
 }
 
-/* ====== 滑动指示条：2px 霓虹底线，压住 header 底边 ====== */
+/* ====== 滑动胶囊指示条：覆盖激活页签，left/width 由 JS 校准 ====== */
 .tabs-indicator {
   position: absolute;
-  bottom: -1px;
-  height: 2px;
+  /* 顶部对齐轨道 padding，底部留出 border-bottom 宽度，精确覆盖页签区域 */
+  top: var(--space-1);
+  bottom: calc(var(--space-1) + 1px);
   border-radius: var(--radius-full);
-  background: var(--tabs-accent);
-  box-shadow: 0 0 8px var(--tabs-accent-glow);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--tabs-accent-glow);
+  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
   pointer-events: none;
+  z-index: 0;
 }
 
 /* ====== 面板：flex 列布局，让日志/列表类内容自然撑满 ====== */

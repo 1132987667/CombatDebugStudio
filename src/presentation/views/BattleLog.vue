@@ -7,7 +7,7 @@
       <div class="log-tools">
         <ToggleSwitch v-model="showStatus" label="状态明细" />
 
-        <input class="log-keyword" v-model="keyword" placeholder="搜索…" />
+        <input class="log-keyword" v-model="keyword" placeholder="搜索…" aria-label="搜索日志" />
         <div class="export-wrapper" ref="exportWrapperRef">
           <button class="export-btn" @click="showExportMenu = !showExportMenu" title="导出当前页签日志">
             导出 ▾
@@ -25,7 +25,7 @@
       <!-- ═══ 容器 A：战斗页签 ═══ -->
       <template #battle>
         <div class="log-content" :class="{ 'is-active': activeTab === 'battle' }"
-          ref="battleContainer" @scroll="onScroll">
+          ref="battleContainer" @scroll="onScroll" aria-live="polite">
       <EmptyState v-if="blocks.length === 0">暂无战斗日志</EmptyState>
 
       <div v-for="(b, i) in blocks" :key="i" class="nb" :class="'nb--' + b.type">
@@ -590,7 +590,6 @@ onUnmounted(() => {
 .flat-level {
   padding: 0 5px;
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-xxs);
   font-weight: var(--font-weight-bold);
   background: var(--color-border-default);
   color: var(--color-text-secondary);

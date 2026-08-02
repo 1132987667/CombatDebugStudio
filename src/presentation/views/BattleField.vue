@@ -311,10 +311,10 @@ onUnmounted(() => {
   font-family: 'Cinzel', 'Noto Serif SC', serif;
   font-size: 48px;
   font-weight: 900;
-  color: #ffd478;
+  color: var(--color-round-announce);
   text-shadow:
-    0 0 20px rgba(255, 212, 120, 0.8),
-    0 0 40px rgba(255, 212, 120, 0.4),
+    0 0 20px rgba(var(--rgb-round-announce), 0.8),
+    0 0 40px rgba(var(--rgb-round-announce), 0.4),
     0 4px 8px rgba(var(--rgb-black), 0.95);
   animation: round-rise ease-out forwards;
   white-space: nowrap;

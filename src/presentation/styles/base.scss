@@ -20,6 +20,8 @@ html {
   font-size: var(--font-size-base);
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  /* 数值列防跳动：战斗数值/日志/统计统一 tabular 数字（等宽主字体下无副作用） */
+  font-variant-numeric: tabular-nums;
 }
 
 /* ----- 2. Body 基础设置 ----- */
@@ -308,4 +310,16 @@ html {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+/* ----- 15. 动效降级（prefers-reduced-motion 全局兜底） ----- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

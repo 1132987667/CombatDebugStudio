@@ -20,8 +20,8 @@ export const DEMO_ARCHIVE: UnifiedArchive = {
   checksum: 'a3f8c2e1',
   initialState: {
     participants: [
-      { id: 'u1', name: '剑士 · 阿尔托莉雅', maxHp: 3200, hp: 3200, maxEnergy: 100, energy: 100, buffs: [{ name: '魔力放出', stacks: 3, turns: 3 }] },
-      { id: 'u2', name: '骷髅战士', maxHp: 1500, hp: 1500, maxEnergy: 100, energy: 60, buffs: [] },
+      { id: 'u1', name: '剑士 · 阿尔托莉雅', maxHp: 3200, hp: 3200, maxEnergy: 100, energy: 100, side: 'ally', buffs: [{ name: '魔力放出', stacks: 3, turns: 3 }] },
+      { id: 'u2', name: '骷髅战士', maxHp: 1500, hp: 1500, maxEnergy: 100, energy: 60, side: 'enemy', buffs: [] },
     ],
   },
   events: [

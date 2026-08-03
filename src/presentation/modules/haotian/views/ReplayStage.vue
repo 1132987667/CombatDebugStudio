@@ -9,7 +9,7 @@
 
     <div class="ht-arena">
       <div v-for="(side, si) in sides" :key="si" class="ht-arena-side" :class="{ right: si === 1 }">
-        <div v-for="p in side" :key="p.id" class="ht-unit" :data-uid="p.id"
+        <div v-for="p in side" :key="p.id" class="ht-unit" :data-uid="p.id" :ref="(el) => registerUnit(p.id, el)"
           :class="{ dead: hpOf(p) <= 0, acting: actingId === p.id }">
           <div class="ht-u-top">
             <span class="ht-u-name">{{ p.name }}</span>
@@ -25,7 +25,6 @@
           <div class="ht-u-buffs">
             <span v-for="b in buffsOf(p)" :key="b.name" class="ht-bf">{{ b.name }}{{ b.stacks > 1 ? ' ×' + b.stacks : '' }}</span>
           </div>
-          <div class="ht-floats"></div>
         </div>
       </div>
       <div class="ht-arena-mid"><span class="ht-vs">VS</span></div>
@@ -36,13 +35,13 @@
     </div>
 
     <div class="ht-transport">
-      <button class="ht-tbtn" title="回到开头" @click="store.seekTo(0)">⏮</button>
-      <button class="ht-tbtn" title="上一事件 (←)" @click="store.stepEvent(-1)">⏪</button>
+      <button class="ht-tbtn" title="回到开头" @click="store.seekTo(0)">回到开头</button>
+      <button class="ht-tbtn" title="上一事件 (←)" @click="store.stepEvent(-1)">上一事件</button>
       <button class="ht-tbtn primary" title="播放/暂停 (空格)" @click="store.togglePlay()">
         {{ store.playback.playing ? '⏸' : '▶' }}
       </button>
-      <button class="ht-tbtn" title="下一事件 (→)" @click="store.stepEvent(1)">⏩</button>
-      <button class="ht-tbtn" title="到结尾" @click="store.seekTo(store.duration)">⏭</button>
+      <button class="ht-tbtn" title="下一事件 (→)" @click="store.stepEvent(1)">下一事件</button>
+      <button class="ht-tbtn" title="到结尾" @click="store.seekTo(store.duration)">到结尾</button>
 
       <div class="ht-speed-seg">
         <button v-for="s in SPEEDS" :key="s" :class="{ on: store.playback.speed === s }" :title="`播放速度 ${s} 倍`" @click="store.playback.speed = s">
@@ -61,6 +60,9 @@
       <button class="ht-tbtn tgl" :class="{ on: store.playback.follow }" title="播放时跟随事件流 (F)"
         @click="store.playback.follow = !store.playback.follow">⌖</button>
     </div>
+
+    <!-- 战斗视觉特效层（复用唤灵台同款 BattleVisualEffects，视口坐标定位） -->
+    <BattleVisualEffects ref="vfRef" />
   </div>
 </template>
 
@@ -70,6 +72,8 @@ import type { ArchiveParticipant, UnifiedEvent } from '@/domain/battle/replay/un
 import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import { useHaotianStore } from '../stores/haotianStore'
+import BattleVisualEffects from '@/presentation/components/BattleVisualEffects.vue'
+import { getActionBudget } from '@/shared/constants/animation-timing'
 
 const SPEEDS = [0.5, 1, 2, 4]
 
@@ -78,8 +82,15 @@ const store = useHaotianStore()
 const meta = (ev: UnifiedEvent) => PHASE_META[ev.phase]
 
 const participants = computed<ArchiveParticipant[]>(() => store.archive?.initialState.participants ?? [])
+/** 按阵营分左右：存档标注了 side 则 ally 左 / enemy 右；老档无 side 字段 → fallback 按人数均分 */
 const sides = computed<ArchiveParticipant[][]>(() => {
   const list = participants.value
+  if (list.length > 0 && list.every((p) => p.side)) {
+    return [
+      list.filter((p) => p.side === 'ally'),
+      list.filter((p) => p.side === 'enemy'),
+    ]
+  }
   const mid = Math.ceil(list.length / 2)
   return [list.slice(0, mid), list.slice(mid)]
 })
@@ -131,23 +142,37 @@ function onSeekClick(e: MouseEvent): void {
   store.seekTo(((e.clientX - rect.left) / rect.width) * store.duration, { keepPlay: true })
 }
 
-// ───────────── 特效（fx）─────────────
+// ───────────── 特效（fx · 复用唤灵台 BattleVisualEffects）─────────────
 
 const actingId = ref<string | null>(null)
+const vfRef = ref<InstanceType<typeof BattleVisualEffects> | null>(null)
+const unitEls = new Map<string, HTMLElement>()
 
-function floatNum(unitId: string, text: string, cls: string): void {
-  const unit = document.querySelector<HTMLElement>(`.ht-arena .ht-unit[data-uid="${unitId}"] .ht-floats`)
-  if (!unit) return
-  const f = document.createElement('span')
-  f.className = `ht-float-num ${cls}`
-  f.style.left = 35 + Math.random() * 30 + '%'
-  f.textContent = text
-  unit.appendChild(f)
-  setTimeout(() => f.remove(), 960)
+/** 注册单位 DOM 供 BattleVisualEffects 定位（坐标按视口计算，与唤灵台 BattleField 同模式） */
+function registerUnit(id: string, el: HTMLElement | null): void {
+  if (el) {
+    unitEls.set(id, el)
+    vfRef.value?.registerCard(id, el)
+  } else {
+    unitEls.delete(id)
+    vfRef.value?.unregisterCard(id)
+  }
+}
+
+// vfRef 就绪时补注册已渲染单位（解决渲染时序竞态）
+watch(vfRef, (vf) => {
+  if (!vf) return
+  for (const [id, el] of unitEls) vf.registerCard(id, el)
+}, { immediate: true })
+
+function sideOf(id: string): 'left' | 'right' {
+  return sides.value[0].some((p) => p.id === id) ? 'left' : 'right'
 }
 
 function fx(ev: UnifiedEvent): void {
   const pl = (ev.payload ?? {}) as Record<string, unknown>
+  const vf = vfRef.value
+  const budget = getActionBudget(1)
   if (ev.phase === 'action_execution') {
     const src = ev.sourceId
     if (src) {
@@ -155,19 +180,26 @@ function fx(ev: UnifiedEvent): void {
       setTimeout(() => {
         if (actingId.value === src) actingId.value = null
       }, 750)
+      // 技能名 + 光弹飞行（唤灵台同款特效，替代自造浮字）
+      if (vf && ev.targetId) {
+        vf.playFlightSequence(src, ev.targetId, String(pl.skill ?? ev.summary), sideOf(src), 'fire', budget)
+      }
     }
   } else if (ev.phase === 'damage_calculation') {
     const target = ev.targetId
-    if (!target) return
+    if (!target || !vf) return
     if (pl.dodge) {
-      floatNum(target, '闪避', 'dodge')
+      vf.showMissText(target, budget)
     } else {
-      floatNum(target, (pl.crit ? '暴击 ' : '−') + String(pl.result ?? 0), pl.crit ? 'crit' : '')
-      if (pl.death) setTimeout(() => floatNum(target, '阵亡', 'dodge'), 260)
+      vf.showImpact(target, 'fire', budget)
+      vf.showDamageNum(target, Number(pl.result ?? 0), !!pl.crit, budget)
+      if (pl.crit) vf.showScreenShake()
     }
-  } else if (ev.phase === 'buff_lifecycle' && ev.targetId) {
-    if (pl.resisted) floatNum(ev.targetId, '抵抗', 'resist')
-    else if (pl.action === 'update') floatNum(ev.targetId, `${String(pl.buff)} ×${String(pl.stacks)}`, 'buffup')
+  } else if (ev.phase === 'heal_calculation') {
+    const target = ev.targetId
+    if (!target || !vf) return
+    vf.showHealAura(target, budget)
+    vf.showHealNum(target, Number(pl.result ?? 0), budget)
   }
 }
 

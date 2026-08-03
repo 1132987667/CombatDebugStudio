@@ -236,9 +236,6 @@
       :display-text="attrTooltipData.displayText" :range-layers="attrTooltipData.rangeLayers"
       :attribute-code="attrTooltipData.attributeCode" />
 
-    <!-- 战斗回放 -->
-    <BattleReplay />
-
   </div>
 </template>
 
@@ -256,7 +253,6 @@ import BuffTextGroup from "@/presentation/components/BuffTextGroup.vue";
 import Tabs from '@/presentation/components/Tabs.vue'
 import type { TabItem } from '@/presentation/components/Tabs.vue'
 import { useBattleStore } from '@/presentation/stores';
-import BattleReplay from "@/presentation/views/BattleReplay.vue";
 import { formatBonusValue } from '@/shared/utils/format';
 import { computed, onMounted, onUnmounted, ref, type ComputedRef } from "vue";
 

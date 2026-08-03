@@ -39,7 +39,7 @@ interface LegacyLog {
   schema?: string
   version?: string
   meta?: { battleId?: string; seed?: string | number; rng?: string; engine?: string; recordedAt?: string }
-  units?: Array<{ id: string; name: string; maxHp?: number }>
+  units?: Array<{ id: string; name: string; maxHp?: number; side?: 'ally' | 'enemy' }>
   timeline?: LegacyRound[]
 }
 
@@ -192,6 +192,7 @@ export function migrateUnifiedLog(raw: unknown): MigrateResult {
         maxEnergy: 100,
         energy: 0,
         buffs: [],
+        side: u.side,
       })),
     },
     events,

@@ -94,11 +94,6 @@
   font-weight: var(--font-weight-bold);
 }
 
-.ht-chip-hint {
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-md);
-}
-
 .ht-cmd-spacer {
   flex: 1;
 }
@@ -428,33 +423,6 @@
   color: var(--ht-green);
   font-size: var(--font-size-md);
   padding: 0 7px;
-}
-
-.ht-floats {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.ht-float-num {
-  position: absolute;
-  top: 12%;
-  font-family: var(--ht-mono);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-lg);
-  animation: ht-floatUp 0.95s ease-out both;
-  white-space: nowrap;
-}
-
-.ht-float-num.crit { color: var(--ht-amber); font-size: var(--font-size-xl); }
-.ht-float-num.dodge { color: var(--ht-cyan); }
-.ht-float-num.resist { color: var(--ht-orange); }
-
-@keyframes ht-floatUp {
-  0% { opacity: 0; transform: translate(-50%, 10px) scale(0.8); }
-  15% { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
-  100% { opacity: 0; transform: translate(-50%, -34px) scale(1); }
 }
 
 .ht-overlay {

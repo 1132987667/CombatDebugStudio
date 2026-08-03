@@ -26,7 +26,7 @@
       <div class="ht-mode" :class="{ on: store.mode === 'debug' }" role="tabpanel">
         <div class="ht-grid">
           <DebugTimeline style="flex: 1.1; min-width: 0" />
-          <DebugCards style="flex: 1.6; min-width: 0" />
+          <DebugCards :active="props.active" style="flex: 1.6; min-width: 0" />
           <div style="flex: 1.3; min-width: 0; display: flex; flex-direction: column; min-height: 0">
             <div class="ht-pane" style="--pc: var(--color-success)">
               <div class="ht-pane-hd">

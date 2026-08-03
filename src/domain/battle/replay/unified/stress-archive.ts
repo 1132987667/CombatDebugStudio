@@ -31,8 +31,8 @@ const SKILLS = ['誓约胜利之剑', '骨刺', '烈焰灼烧', '雷霆斩', '�
  */
 export function createStressArchive(eventCount: number, seed = 0x8f3a7c21): UnifiedArchive {
   const rng = createRng(seed)
-  const p1 = { id: 'u1', name: '剑士 · 阿尔托莉雅', maxHp: 3200 }
-  const p2 = { id: 'u2', name: '骷髅战士', maxHp: 1500 }
+  const p1 = { id: 'u1', name: '剑士 · 阿尔托莉雅', maxHp: 3200, side: 'ally' as const }
+  const p2 = { id: 'u2', name: '骷髅战士', maxHp: 1500, side: 'enemy' as const }
   const participants = [
     { ...p1, hp: p1.maxHp, maxEnergy: 100, energy: 100, buffs: [] as Array<{ name: string; stacks: number; turns: number }> },
     { ...p2, hp: p2.maxHp, maxEnergy: 100, energy: 60, buffs: [] as Array<{ name: string; stacks: number; turns: number }> },

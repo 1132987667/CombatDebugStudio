@@ -3,8 +3,8 @@
     <div class="ht-pane-hd">
       <span class="t">事件流 · 卡片流</span>
       <span style="display: flex; gap: 6px; align-items: center">
-        <button class="ht-tbtn" title="上一事件（←）" @click="store.stepEvent(-1)">⏪</button>
-        <button class="ht-tbtn" title="下一事件（空格/→）" @click="store.stepEvent(1)">⏩</button>
+        <button class="ht-tbtn" title="上一事件（←）" @click="store.stepEvent(-1)">上一事件</button>
+        <button class="ht-tbtn" title="下一事件（空格/→）" @click="store.stepEvent(1)">下一事件</button>
         <span class="s">投影 2 · 因果链</span>
       </span>
     </div>
@@ -14,25 +14,25 @@
     </div>
     <div class="ht-pane-bd ht-vscroll" ref="scrollRef" @scroll.passive="onScroll">
       <div v-if="items.length" class="ht-vlist" :style="{ height: totalHeight + 'px' }">
-        <div v-for="item in visible" :key="item.id" class="ht-vitem" :ref="(el) => measure(item.id, el as HTMLElement | null)"
+        <div v-for="item in visible" :key="item.id" class="ht-vitem" :data-id="item.id"
+          :ref="(el) => measure(item.id, el as HTMLElement | null)"
           :style="{ transform: `translateY(${offsetOf(item.id)}px)` }">
           <div class="ht-ev" :title="`${item.summary}（点击检视，右键切换书签）`"
             :class="[toneClass(item), { on: item.id === store.selectedId, 'dbg-dim': meta(item).debugOnly, bm: store.isBookmarked(item.id), dim: isDim(item.id) }]"
-            @click="store.focusEvent(item.id, { seek: true })"
-            @contextmenu.prevent="store.toggleBookmark(item.id)">
-          <div class="ht-ev-hd">
-            <span v-if="item.payload?.seg" class="ht-ev-step">段 {{ item.payload.seg }}</span>
-            <span class="ht-ev-title">{{ item.summary }}</span>
-            <span v-if="store.isBookmarked(item.id)" class="ht-ev-bm" title="书签（右键切换）">◆</span>
-            <span class="ht-ev-badge" :class="badgeOf(item)[0]">{{ badgeOf(item)[1] }}</span>
-          </div>
-          <div class="ht-ev-bd" v-html="descHtml(item)"></div>
-          <div class="ht-ev-meta">
-            {{ item.correlationId }}<template v-if="item.parentId"> · ← {{ item.parentId }}</template>
-            <template v-if="item.sourceId"> · {{ item.sourceId }}</template>
-            <template v-if="item.targetId"> → {{ item.targetId }}</template>
-            · 时间={{ formatTime(item.timestamp) }}
-          </div>
+            @click="store.focusEvent(item.id, { seek: true })" @contextmenu.prevent="store.toggleBookmark(item.id)">
+            <div class="ht-ev-hd">
+              <span v-if="item.payload?.seg" class="ht-ev-step">段 {{ item.payload.seg }}</span>
+              <span class="ht-ev-title">{{ item.summary }}</span>
+              <span v-if="store.isBookmarked(item.id)" class="ht-ev-bm" title="书签（右键切换）">◆</span>
+              <span class="ht-ev-badge" :class="badgeOf(item)[0]">{{ badgeOf(item)[1] }}</span>
+            </div>
+            <div class="ht-ev-bd" v-html="descHtml(item)"></div>
+            <div class="ht-ev-meta">
+              {{ item.correlationId }}<template v-if="item.parentId"> · ← {{ item.parentId }}</template>
+              <template v-if="item.sourceId"> · {{ item.sourceId }}</template>
+              <template v-if="item.targetId"> → {{ item.targetId }}</template>
+              · 时间={{ formatTime(item.timestamp) }}
+            </div>
             <div v-if="segIndicators.length" class="ht-ev-multi">
               <i v-for="(m, j) in segIndicators" :key="j" :class="[m, curSeg === j + 1 ? 'cur' : '']"></i>
             </div>
@@ -53,6 +53,8 @@ import { PHASE_META } from '@/domain/battle/replay/unified/unified-archive'
 import { escapeHtml } from '@/shared/utils/log-segment-factory'
 import { formatTime } from '@/domain/battle/replay/unified/unified-sim'
 import { useHaotianStore } from '../stores/haotianStore'
+
+const props = defineProps<{ active?: boolean }>()
 
 const store = useHaotianStore()
 const scrollRef = ref<HTMLElement | null>(null)
@@ -82,6 +84,10 @@ function onScroll(): void {
 function measure(id: string, el: HTMLElement | null): void {
   if (!el) return
   const h = el.offsetHeight
+  // NOTE: 容器 display:none（昊天镜 tab 未激活 / 未切到调试模式）时 offsetHeight 恒为 0，
+  // 写入缓存会让虚拟列表按 0 高度布局 → 首次打开时所有卡片叠在一起。隐藏期测量直接忽略，
+  // 待容器可见后由 remeasure() 显式重测（vitem 为绝对定位 + translateY，DOM 复用不触发 :ref 回调）。
+  if (h <= 0) return
   if (heights.get(id) !== h) {
     heights.set(id, h)
     if (!layoutRaf) {
@@ -91,6 +97,18 @@ function measure(id: string, el: HTMLElement | null): void {
       })
     }
   }
+}
+
+/** 容器变为可见后重测已渲染项，修正隐藏期缺失/错误的高度缓存 */
+function remeasure(): void {
+  nextTick(() => {
+    const box = scrollRef.value
+    if (!box || !box.offsetParent) return
+    box.querySelectorAll<HTMLElement>('.ht-vitem').forEach((el) => {
+      const id = el.getAttribute('data-id')
+      if (id) measure(id, el)
+    })
+  })
 }
 
 function offsetOf(id: string): number {
@@ -134,10 +152,12 @@ watch(
   },
 )
 
+// 容器从隐藏变为可见（昊天镜 tab 激活 / 切到调试模式）时重测视口与已渲染卡片高度
 watch(
-  () => store.mode,
-  (m) => {
-    if (m === 'debug') nextTick(updateView)
+  [() => props.active, () => store.mode],
+  () => {
+    nextTick(updateView)
+    remeasure()
   },
 )
 

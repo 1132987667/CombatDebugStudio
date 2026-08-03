@@ -196,7 +196,6 @@ defineExpose({ updateIndicator })
   padding: var(--space-1);
   background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border-default);
-  border-radius: var(--radius-lg);
   flex-shrink: 0;
 }
 
@@ -210,7 +209,7 @@ defineExpose({ updateIndicator })
   padding: var(--space-1) var(--space-3);
   background: transparent;
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   color: var(--color-text-tertiary);
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);

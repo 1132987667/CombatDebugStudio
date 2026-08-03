@@ -19,6 +19,8 @@ export interface ArchiveParticipant {
   maxEnergy: number
   energy: number
   buffs?: ArchiveBuff[]
+  /** 阵营（可选）：实时流 / 演示存档标注；老档迁移缺省时回放舞台按人数均分 fallback */
+  side?: 'ally' | 'enemy'
 }
 
 /** 存档 Buff（初始状态 / 锚点 / buff 生命周期） */

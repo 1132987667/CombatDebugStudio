@@ -298,6 +298,7 @@ export const useHaotianStore = defineStore('haotian', () => {
         hp: p.currentHealth,
         maxEnergy: p.maxEnergy,
         energy: p.currentEnergy,
+        side: p.team,
       })
     }
     return out

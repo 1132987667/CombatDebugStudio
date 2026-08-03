@@ -11,8 +11,6 @@
       </button>
     </div>
 
-    <span class="ht-chip-hint">同一事件流 · 两个投影</span>
-
     <div class="ht-cmd-spacer"></div>
 
     <select v-model="source" class="ht-btn" aria-label="档案来源" title="数据源：演示存档 / 战斗记录 / 压测合成 / 实时战斗">

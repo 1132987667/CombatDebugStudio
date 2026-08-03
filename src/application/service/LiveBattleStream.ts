@@ -22,6 +22,8 @@ export interface LiveParticipant {
   hp: number
   maxEnergy: number
   energy: number
+  /** 阵营（来自 UIParticipantSnapshot.team），用于回放舞台按阵营布局 */
+  side?: 'ally' | 'enemy'
 }
 
 export interface LiveBattleStreamDeps {
@@ -139,6 +141,7 @@ export class LiveBattleStream {
           maxEnergy: p.maxEnergy,
           energy: p.energy,
           buffs: [],
+          side: p.side,
         })),
       },
       events,

@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>封神榜 · 后台数据管理 — 样式 Demo</title>
+<!--
+  封神榜（后台数据管理）界面样式 Demo
+  用途：展示模块全部功能样式（列表 / 表单 / 校验 / 数据包 / 健康检查 / 操作日志等），
+        不实现任何真实功能。数据为示例占位。
+  依据：《封神榜功能需求规格说明书.md》功能域组织。
+  说明：本文件为独立 HTML，内联样式与脚本，无外部依赖。
+-->
+<style>
+  :root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #0f0f1a;
+    --bg-tertiary: #16213e;
+    --border-default: #1a3a5e;
+    --border-strong: #2b4d77;
+    --text-primary: #ffffff;
+    --text-secondary: #e6e6f0;
+    --text-tertiary: #8888a8;
+    --brand-red: #e94560;
+    --danger: #f44336;
+    --warning: #ff9800;
+    --info: #4fc3f7;
+    --buff: #4caf50;
+    --debuff: #a855f7;
+    --energy: #22d3ee;
+    --live: #f97316;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    font-size: 14px; /* 不低于 --font-size-md */
+    line-height: 1.6;
+    overflow: hidden;
+  }
+  button { font-family: inherit; font-size: 14px; cursor: pointer; }
+  input, select { font-family: inherit; font-size: 14px; }
+
+  /* ========== 顶栏 ========== */
+  .tool-header {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; padding: 0 20px;
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-primary) 100%);
+    border-bottom: 2px solid var(--border-default);
+  }
+  .brand { display: flex; align-items: baseline; gap: 12px; min-width: 220px; }
+  .brand-name {
+    font-size: 20px; font-weight: 700; letter-spacing: 4px; color: var(--brand-red);
+    text-shadow: 0 0 12px rgba(233, 69, 96, 0.35);
+  }
+  .brand-sub { font-size: 14px; color: var(--text-tertiary); letter-spacing: 1px; }
+  .module-tabs { display: flex; gap: 4px; }
+  .module-tab {
+    padding: 8px 22px; border: 1px solid transparent; border-radius: var(--radius-md) var(--radius-md) 0 0;
+    background: transparent; color: var(--text-tertiary); font-size: 15px; letter-spacing: 2px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .module-tab:hover:not(.active):not(.disabled) { color: var(--text-secondary); background: rgba(255,255,255,0.04); }
+  .module-tab.active {
+    color: var(--energy); font-weight: 700;
+    border-color: var(--border-strong); border-bottom-color: transparent;
+    background: var(--bg-primary); text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+  }
+  .module-tab.disabled { opacity: 0.4; cursor: not-allowed; }
+  .header-actions { display: flex; align-items: center; gap: 10px; min-width: 220px; justify-content: flex-end; }
+  .version-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-full, 999px);
+    color: var(--energy); font-size: 13px; background: rgba(34, 211, 238, 0.08);
+  }
+  .version-badge::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--energy); box-shadow: 0 0 6px var(--energy);
+  }
+
+  /* ========== 主布局 ========== */
+  .main-layout { display: flex; height: calc(100vh - 64px); }
+  .sidebar {
+    width: 210px; flex-shrink: 0; background: var(--bg-secondary);
+    border-right: 1px solid var(--border-default);
+    display: flex; flex-direction: column; padding: 14px 10px; gap: 18px; overflow-y: auto;
+  }
+  .side-title { font-size: 12px; color: var(--text-tertiary); letter-spacing: 2px; padding: 0 8px 6px; }
+  .side-item {
+    display: block; width: 100%; text-align: left;
+    padding: 8px 12px; border: none; border-radius: var(--radius-sm);
+    background: transparent; color: var(--text-secondary); letter-spacing: 1px;
+  }
+  .side-item:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+  .side-item.active { background: var(--bg-tertiary); color: var(--energy); font-weight: 700; }
+  .side-footer {
+    margin-top: auto; padding: 10px 8px; border-top: 1px solid var(--border-default);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .storage-stat { font-size: 12px; color: var(--text-tertiary); }
+  .storage-stat .ok { color: var(--buff); }
+
+  /* ========== 主内容 ========== */
+  .content { flex: 1; overflow-y: auto; padding: 18px 22px; }
+  .view { display: none; }
+  .view.active { display: block; animation: fadein 0.2s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .page-title { font-size: 16px; font-weight: 700; letter-spacing: 2px; margin-bottom: 14px; }
+  .page-title .hint { font-size: 13px; font-weight: 400; color: var(--text-tertiary); margin-left: 10px; letter-spacing: 0; }
+
+  /* 工具条 */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 12px; background: var(--bg-secondary);
+    border: 1px solid var(--border-default); border-radius: var(--radius-md); margin-bottom: 12px;
+  }
+  .toolbar .spacer { flex: 1; }
+  .search-box { position: relative; }
+  .search-box input {
+    width: 200px; padding: 6px 10px 6px 28px;
+    background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+    color: var(--text-primary); outline: none;
+  }
+  .search-box input:focus { border-color: var(--energy); }
+  .search-box::before {
+    content: "⌕"; position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+    color: var(--text-tertiary); font-size: 15px;
+  }
+  .filter-select {
+    padding: 6px 8px; background: var(--bg-primary); border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm); color: var(--text-secondary); outline: none;
+  }
+  .range-input { width: 72px; padding: 6px 8px; background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-primary); }
+  .range-label { color: var(--text-tertiary); font-size: 13px; }
+
+  .btn {
+    padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong);
+    background: var(--bg-tertiary); color: var(--text-primary); transition: filter 0.15s;
+  }
+  .btn:hover { filter: brightness(1.15); }
+  .btn-primary { background: var(--brand-red); border-color: var(--brand-red); }
+  .btn-ghost { background: transparent; }
+  .btn-sm { padding: 3px 10px; font-size: 13px; }
+  .btn-danger { color: var(--danger); border-color: rgba(244, 67, 54, 0.5); background: transparent; }
+  .btn-success { color: var(--buff); border-color: rgba(76, 175, 80, 0.5); background: transparent; }
+
+  /* 表格 */
+  .table-wrap {
+    background: var(--bg-secondary); border: 1px solid var(--border-default);
+    border-radius: var(--radius-md); overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; padding: 9px 12px; font-size: 13px; font-weight: 700;
+    color: var(--text-tertiary); letter-spacing: 1px;
+    background: var(--bg-tertiary); border-bottom: 1px solid var(--border-default);
+    white-space: nowrap;
+  }
+  tbody td { padding: 8px 12px; border-bottom: 1px solid rgba(26, 58, 94, 0.4); color: var(--text-secondary); }
+  tbody tr:hover td { background: rgba(255,255,255,0.03); }
+  tbody tr:last-child td { border-bottom: none; }
+  td.id { color: var(--info); font-family: Consolas, monospace; font-size: 13px; }
+  td.num { font-family: Consolas, monospace; color: var(--text-primary); }
+  .row-actions { display: flex; gap: 6px; }
+
+  /* 标签 */
+  .tag {
+    display: inline-block; padding: 1px 8px; border-radius: var(--radius-sm);
+    font-size: 12px; letter-spacing: 1px; border: 1px solid transparent; white-space: nowrap;
+  }
+  .tag-buff { color: var(--buff); border-color: rgba(76,175,80,0.4); background: rgba(76,175,80,0.1); }
+  .tag-debuff { color: var(--debuff); border-color: rgba(168,85,247,0.4); background: rgba(168,85,247,0.1); }
+  .tag-control { color: var(--warning); border-color: rgba(255,152,0,0.4); background: rgba(255,152,0,0.1); }
+  .tag-aura { color: var(--energy); border-color: rgba(34,211,238,0.4); background: rgba(34,211,238,0.1); }
+  .tag-muted { color: var(--text-tertiary); border-color: var(--border-default); }
+  .tag-danger { color: var(--danger); border-color: rgba(244,67,54,0.5); background: rgba(244,67,54,0.08); }
+  .tag-warn { color: var(--warning); border-color: rgba(255,152,0,0.5); background: rgba(255,152,0,0.08); }
+  .tag-ok { color: var(--buff); border-color: rgba(76,175,80,0.5); background: rgba(76,175,80,0.08); }
+
+  /* 分页 */
+  .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 12px 4px 0; }
+  .pagination .page-info { color: var(--text-tertiary); font-size: 13px; margin-right: 8px; }
+  .page-btn {
+    min-width: 28px; padding: 3px 8px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-default); background: var(--bg-secondary); color: var(--text-secondary);
+  }
+  .page-btn.active { background: var(--energy); border-color: var(--energy); color: var(--bg-primary); font-weight: 700; }
+  .page-btn:hover:not(.active) { border-color: var(--border-strong); }
+
+  /* 复选框 */
+  input[type="checkbox"] { accent-color: var(--energy); width: 14px; height: 14px; cursor: pointer; }
+
+  /* ========== 抽屉（编辑表单） ========== */
+  .drawer-mask, .dialog-mask {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 50; display: none;
+  }
+  .drawer-mask.show, .dialog-mask.show { display: block; }
+  .drawer {
+    position: fixed; top: 0; right: -480px; width: 480px; height: 100vh; z-index: 60;
+    background: var(--bg-primary); border-left: 1px solid var(--border-strong);
+    box-shadow: var(--shadow); transition: right 0.25s ease; display: flex; flex-direction: column;
+  }
+  .drawer.show { right: 0; }
+  .drawer-wide { right: -640px; width: 640px; }
+  .drawer-wide.show { right: 0; }
+  .drawer-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--border-default); background: var(--bg-tertiary);
+  }
+  .drawer-header .title { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+  .drawer-close { background: none; border: none; color: var(--text-tertiary); font-size: 18px; }
+  .drawer-close:hover { color: var(--text-primary); }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+
+  /* 表单 */
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 13px; letter-spacing: 1px; }
+  .form-label .required { color: var(--danger); margin-left: 2px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 7px 10px; background: var(--bg-secondary);
+    border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+    color: var(--text-primary); outline: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--energy); }
+  .form-input.invalid { border-color: var(--danger); box-shadow: 0 0 0 1px rgba(244,67,54,0.4); }
+  .form-row { display: flex; gap: 12px; }
+  .form-row .form-group { flex: 1; }
+  .form-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+  .form-error { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--danger); margin-top: 4px; }
+  .form-error::before { content: "⚠"; }
+  .form-warn { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--warning); margin-top: 4px; }
+  .form-warn::before { content: "ⓘ"; }
+  .tag-picker { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; background: var(--bg-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); }
+  .tag-picker .tag { cursor: default; }
+  .drawer-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 12px 20px; border-top: 1px solid var(--border-default); background: var(--bg-secondary);
+  }
+
+  /* ========== 弹窗 ========== */
+  .dialog {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96);
+    width: 640px; max-width: 92vw; max-height: 84vh; overflow-y: auto; z-index: 70;
+    background: var(--bg-primary); border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow); display: none;
+  }
+  .dialog.show { display: block; animation: popin 0.2s ease; }
+  @keyframes popin { from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+  .dialog-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--border-default); background: var(--bg-tertiary);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .dialog-header .title { font-size: 15px; font-weight: 700; letter-spacing: 2px; }
+  .dialog-body { padding: 18px 20px; }
+  .dialog-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px; border-top: 1px solid var(--border-default); }
+
+  /* 选项卡片 */
+  .option-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .option-card {
+    padding: 12px; border: 1px solid var(--border-default); border-radius: var(--radius-md);
+    background: var(--bg-secondary); cursor: pointer;
+  }
+  .option-card:hover { border-color: var(--border-strong); }
+  .option-card.selected { border-color: var(--energy); background: rgba(34,211,238,0.06); }
+  .option-card .opt-name { font-weight: 700; margin-bottom: 4px; }
+  .option-card .opt-desc { font-size: 12px; color: var(--text-tertiary); }
+  .check-list { display: flex; flex-wrap: wrap; gap: 10px; padding: 8px 0; }
+  .check-list label { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+
+  /* 拖拽上传区 */
+  .drop-zone {
+    border: 1.5px dashed var(--border-strong); border-radius: var(--radius-md);
+    padding: 26px; text-align: center; color: var(--text-tertiary); background: var(--bg-secondary);
+  }
+  .drop-zone .dz-main { color: var(--energy); font-size: 15px; margin-bottom: 4px; }
+
+  /* 统计卡 */
+  .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card {
+    padding: 14px; border: 1px solid var(--border-default); border-radius: var(--radius-md);
+    background: var(--bg-secondary); text-align: center;
+  }
+  .stat-card .stat-num { font-size: 24px; font-weight: 700; font-family: Consolas, monospace; }
+  .stat-card .stat-label { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; letter-spacing: 1px; }
+  .stat-card.ok .stat-num { color: var(--buff); }
+  .stat-card.warn .stat-num { color: var(--warning); }
+  .stat-card.danger .stat-num { color: var(--danger); }
+
+  /* 操作日志时间线 */
+  .timeline { position: relative; padding-left: 22px; }
+  .timeline::before {
+    content: ""; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px;
+    background: var(--border-default);
+  }
+  .tl-item { position: relative; padding: 6px 0 10px; }
+  .tl-item::before {
+    content: ""; position: absolute; left: -21px; top: 10px; width: 10px; height: 10px;
+    border-radius: 50%; background: var(--bg-tertiary); border: 2px solid var(--info);
+  }
+  .tl-item.op-create::before { border-color: var(--buff); }
+  .tl-item.op-update::before { border-color: var(--info); }
+  .tl-item.op-delete::before { border-color: var(--danger); }
+  .tl-item.op-import::before { border-color: var(--energy); }
+  .tl-time { font-size: 12px; color: var(--text-tertiary); font-family: Consolas, monospace; }
+  .tl-body { margin-top: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tl-desc { color: var(--text-secondary); }
+
+  /* 公式表 */
+  .formula { font-family: Consolas, "Courier New", monospace; color: var(--energy); font-size: 13px; }
+
+  .divider { border: none; border-top: 1px solid var(--border-default); margin: 16px 0; }
+  .section-block { margin-bottom: 18px; }
+  .block-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--text-secondary); letter-spacing: 1px; }
+  .block-title .sub { font-weight: 400; color: var(--text-tertiary); font-size: 12px; }
+
+  /* ===== 场景难度编组 ===== */
+  .diff-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+  .diff-tab {
+    padding: 5px 16px; border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+    background: var(--bg-secondary); color: var(--text-tertiary); font-size: 13px; letter-spacing: 1px;
+  }
+  .diff-tab:hover { border-color: var(--border-strong); color: var(--text-secondary); }
+  .diff-tab.active { background: var(--bg-tertiary); color: var(--energy); border-color: var(--border-strong); font-weight: 700; }
+  .diff-pane { display: none; }
+  .diff-pane.active { display: block; }
+  .mode-switch { display: flex; gap: 8px; margin-bottom: 10px; }
+  .mode-radio {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+    border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+    color: var(--text-secondary); cursor: pointer; font-size: 13px;
+  }
+  .mode-radio:hover { border-color: var(--border-strong); }
+  .mode-radio input { accent-color: var(--energy); width: 13px; height: 13px; cursor: pointer; }
+
+  /* ===== 角色编组 / 站位表 ===== */
+  .seat-list { display: flex; flex-direction: column; gap: 6px; }
+  .seat-row {
+    display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+    background: var(--bg-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+  }
+  .seat-row .seat-index {
+    width: 34px; text-align: center; font-family: Consolas, monospace; color: var(--text-tertiary); font-size: 13px; flex-shrink: 0;
+  }
+  .seat-row .seat-position {
+    width: 52px; text-align: center; font-size: 12px; flex-shrink: 0;
+  }
+  .pos-front { color: var(--warning); border: 1px solid rgba(255,152,0,0.4); border-radius: var(--radius-sm); padding: 1px 0; }
+  .pos-back { color: var(--info); border: 1px solid rgba(79,195,247,0.4); border-radius: var(--radius-sm); padding: 1px 0; }
+  .seat-row select {
+    flex: 1; padding: 4px 8px; background: var(--bg-primary); border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm); color: var(--text-secondary); outline: none;
+  }
+  .seat-row select:focus { border-color: var(--energy); }
+  .seat-empty { color: var(--text-tertiary); font-size: 13px; text-align: center; padding: 10px; }
+  .seat-warn {
+    font-size: 12px; color: var(--warning); margin-top: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .seat-warn::before { content: "⚠"; }
+
+  /* 编组显示（表格内缩略） */
+  .diff-summary { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+  .diff-summary .row-line { display: flex; align-items: center; gap: 6px; }
+  .diff-summary .d-name { width: 22px; color: var(--text-tertiary); font-size: 12px; flex-shrink: 0; }
+
+  /* 添加成员行 */
+  .add-member { display: flex; gap: 6px; margin-top: 8px; }
+  .add-member select { flex: 1; padding: 5px 8px; background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-secondary); outline: none; }
+  .add-member select:focus { border-color: var(--energy); }
+</style>
+</head>
+<body>
+
+<!-- ============ 顶栏 ============ -->
+<header class="tool-header">
+  <div class="brand">
+    <span class="brand-name">太初道枢</span>
+    <span class="brand-sub">封神榜 · 后台数据管理</span>
+  </div>
+  <nav class="module-tabs">
+    <button class="module-tab active">封神榜</button>
+    <button class="module-tab disabled" title="样式 Demo 仅展示封神榜">唤灵台</button>
+    <button class="module-tab disabled" title="样式 Demo 仅展示封神榜">演劫台</button>
+    <button class="module-tab disabled" title="样式 Demo 仅展示封神榜">昊天镜</button>
+  </nav>
+  <div class="header-actions">
+    <span class="version-badge" title="任何写操作都会递增全局数据版本号">数据版本 v1.42</span>
+    <button class="btn btn-ghost btn-sm">多窗口同步 · 2</button>
+    <button class="btn btn-ghost btn-sm">帮助</button>
+  </div>
+</header>
+
+<div class="main-layout">
+  <!-- ============ 左侧导航 ============ -->
+  <aside class="sidebar">
+    <div class="side-group">
+      <div class="side-title">数据域</div>
+      <button class="side-item active" data-view="actors">角色</button>
+      <button class="side-item" data-view="skills">技能</button>
+      <button class="side-item" data-view="buffs">状态与 Buff</button>
+      <button class="side-item" data-view="enemies">敌人</button>
+      <button class="side-item" data-view="scenes">场景</button>
+      <button class="side-item" data-view="formations">阵型</button>
+      <button class="side-item" data-view="lineups">预设阵容</button>
+      <button class="side-item" data-view="materials">材料</button>
+      <button class="side-item" data-view="equipment">装备</button>
+      <button class="side-item" data-view="elements">阵营克制</button>
+      <button class="side-item" data-view="growth">成长曲线</button>
+      <button class="side-item" data-view="drops">掉落组</button>
+    </div>
+    <div class="side-group">
+      <div class="side-title">系统功能</div>
+      <button class="side-item" data-view="formulas">属性与公式</button>
+      <button class="side-item" data-view="rules">战斗规则参数</button>
+      <button class="side-item" data-view="packages">数据包管理</button>
+      <button class="side-item" data-view="health">健康检查</button>
+      <button class="side-item" data-view="logs">操作日志</button>
+    </div>
+    <div class="side-footer">
+      <div class="storage-stat">IndexedDB <span class="ok">● 已连接</span></div>
+      <div class="storage-stat">占用 2.4 MB · 版本迁移 v1 → v2</div>
+    </div>
+  </aside>
+
+  <!-- ============ 主内容 ============ -->
+  <main class="content">
+
+    <!-- ===== 角色 ===== -->
+    <section class="view active" id="view-actors">
+      <div class="page-title">角色管理 <span class="hint">定万物命格 —— 基础属性 / 成长曲线 / 技能绑定 / 阵营元素</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <select class="filter-select"><option value="">全部阵营</option><option>火</option><option>水</option><option>木</option></select>
+        <span class="range-label">等级</span>
+        <input class="range-input" value="1"> — <input class="range-input" value="99">
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm" onclick="openDrawer()">＋ 新增角色</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-sm" title="复制选中数据为模板">复制为模板</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th><input type="checkbox"></th><th>ID</th><th>名称</th><th>等级</th><th>气血</th><th>攻击</th><th>防御</th><th>速度</th><th>技能</th><th>阵营</th><th>修改时间</th><th>操作</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">hero_001</td><td>炎澜剑仙</td><td class="num">45</td><td class="num">3120</td><td class="num">280–340</td><td class="num">120</td><td class="num">95</td><td><span class="tag tag-buff">×3</span></td><td><span class="tag tag-aura">火</span></td><td class="num">08-01 14:22</td><td class="row-actions"><button class="btn btn-sm" onclick="openDrawer()">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">hero_002</td><td>碧水灵侍</td><td class="num">42</td><td class="num">2860</td><td class="num">240–300</td><td class="num">140</td><td class="num">110</td><td><span class="tag tag-buff">×2</span></td><td><span class="tag tag-aura">水</span></td><td class="num">08-01 13:05</td><td class="row-actions"><button class="btn btn-sm" onclick="openDrawer()">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">hero_003</td><td>青木行者</td><td class="num">40</td><td class="num">2980</td><td class="num">260–320</td><td class="num">130</td><td class="num">100</td><td><span class="tag tag-buff">×3</span></td><td><span class="tag tag-aura">木</span></td><td class="num">07-31 20:41</td><td class="row-actions"><button class="btn btn-sm" onclick="openDrawer()">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">hero_004</td><td>玄冰圣女</td><td class="num">38</td><td class="num">2720</td><td class="num">230–290</td><td class="num">150</td><td class="num">105</td><td><span class="tag tag-buff">×2</span></td><td><span class="tag tag-aura">水</span></td><td class="num">07-31 18:12</td><td class="row-actions"><button class="btn btn-sm" onclick="openDrawer()">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">hero_005</td><td>岩甲卫士</td><td class="num">45</td><td class="num">3560</td><td class="num">200–250</td><td class="num">180</td><td class="num">80</td><td><span class="tag tag-buff">×2</span></td><td><span class="tag tag-aura">土</span></td><td class="num">07-30 09:30</td><td class="row-actions"><button class="btn btn-sm" onclick="openDrawer()">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span class="page-info">共 128 条 · 数据版本 v1.42</span>
+        <button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button><button class="page-btn">4</button><button class="page-btn">5</button><button class="page-btn">»</button>
+      </div>
+    </section>
+
+    <!-- ===== 技能 ===== -->
+    <section class="view" id="view-skills">
+      <div class="page-title">技能管理 <span class="hint">掌仙班位阶 —— 主动/被动 · 能量消耗 · 步骤编排 · 效果组合</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <select class="filter-select"><option value="">全部类型</option><option>主动 · 小技能</option><option>主动 · 大技能</option><option>被动</option></select>
+        <span class="range-label">能量消耗</span>
+        <input class="range-input" value="0"> — <input class="range-input" value="150">
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm" onclick="openDialog('skill-form')">＋ 新增技能</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>类型</th><th>能量</th><th>冷却</th><th>目标规则</th><th>效果组合</th><th>修改时间</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">skill_001</td><td>花蕊迷雾</td><td><span class="tag tag-debuff">主动 · 小</span></td><td class="num">50</td><td class="num">2</td><td>敌方·首目标·×1</td><td><span class="tag tag-debuff">命中↓30%</span></td><td class="num">08-01 14:22</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">skill_002</td><td>炎龙焚天</td><td><span class="tag tag-aura">主动 · 大</span></td><td class="num">150</td><td class="num">5</td><td>敌方·全体</td><td><span class="tag tag-debuff">灼烧 ×2</span><span class="tag tag-debuff">攻↓</span></td><td class="num">08-01 13:05</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">skill_003</td><td>战意昂扬</td><td><span class="tag tag-muted">被动</span></td><td class="num">—</td><td class="num">—</td><td>自身</td><td><span class="tag tag-buff">攻↑20%</span></td><td class="num">07-31 20:41</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">skill_004</td><td>甘霖普降</td><td><span class="tag tag-aura">主动 · 大</span></td><td class="num">150</td><td class="num">4</td><td>友方·全体</td><td><span class="tag tag-buff">治疗 120%</span><span class="tag tag-buff">护盾</span></td><td class="num">07-30 09:30</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 64 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">»</button></div>
+    </section>
+
+    <!-- ===== Buff ===== -->
+    <section class="view" id="view-buffs">
+      <div class="page-title">状态与 Buff 管理 <span class="hint">增益 / 减益 / 控制 · 叠加规则 · 效果链</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <select class="filter-select"><option value="">全部极性</option><option>增益</option><option>减益</option><option>控制</option></select>
+        <select class="filter-select"><option value="">全部类别</option><option>属性修正</option><option>持续伤害</option><option>护盾</option><option>光环</option><option>免疫</option></select>
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm" onclick="openDialog('buff-form')">＋ 新增 Buff</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>极性</th><th>类别</th><th>持续</th><th>叠加规则</th><th>效果</th><th>效果链</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">buff_atk_up</td><td>攻击力提升</td><td><span class="tag tag-buff">增益</span></td><td><span class="tag tag-buff">属性修正</span></td><td class="num">3 回合</td><td><span class="tag tag-ok">刷新</span></td><td>攻击 +20%</td><td>—</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">buff_poison</td><td>中毒</td><td><span class="tag tag-debuff">减益</span></td><td><span class="tag tag-debuff">持续伤害</span></td><td class="num">4 回合</td><td><span class="tag tag-ok">独立叠加</span></td><td>每回合 攻击×10%</td><td><span class="tag tag-muted">链：腐蚀</span></td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">buff_stun</td><td>眩晕</td><td><span class="tag tag-control">控制</span></td><td><span class="tag tag-control">控制</span></td><td class="num">1 回合</td><td><span class="tag tag-ok">替换</span></td><td>无法行动</td><td>—</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">buff_commander_aura</td><td>统领光环</td><td><span class="tag tag-buff">增益</span></td><td><span class="tag tag-aura">光环</span></td><td class="num">永久</td><td><span class="tag tag-ok">替换</span></td><td>全体友方 攻击 +10%</td><td><span class="tag tag-muted">父 Buff</span></td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">buff_mountain_god</td><td>山神祝福</td><td><span class="tag tag-buff">增益</span></td><td><span class="tag tag-buff">免疫</span></td><td class="num">3 回合</td><td><span class="tag tag-ok">替换</span></td><td>免伤 50% · 免疫控制</td><td>—</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 32 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">»</button></div>
+    </section>
+
+    <!-- ===== 敌人 ===== -->
+    <section class="view" id="view-enemies">
+      <div class="page-title">敌人管理 <span class="hint">属性 / 技能组 / 掉落物</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <span class="range-label">等级</span>
+        <input class="range-input" value="1"> — <input class="range-input" value="99">
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm">＋ 新增敌人</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>等级</th><th>气血</th><th>攻击</th><th>防御</th><th>速度</th><th>技能组</th><th>掉落</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">enemy_001</td><td>花妖</td><td class="num">1</td><td class="num">57</td><td class="num">6–9</td><td class="num">3</td><td class="num">11</td><td><span class="tag tag-muted">花蕊迷雾</span></td><td><span class="tag tag-buff">灵草 ×2 (80%)</span></td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">enemy_007</td><td>毒蛛妖后</td><td class="num">15</td><td class="num">680</td><td class="num">45–60</td><td class="num">28</td><td class="num">55</td><td><span class="tag tag-debuff">剧毒之吻</span></td><td><span class="tag tag-buff">毒液囊 ×1 (60%)</span></td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">boss_001</td><td>深渊魔主</td><td class="num">30</td><td class="num">5200</td><td class="num">180–230</td><td class="num">120</td><td class="num">90</td><td><span class="tag tag-aura">灭世魔焰</span></td><td><span class="tag tag-warn">魔核 ×1 (30%)</span></td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 42 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">»</button></div>
+    </section>
+
+    <!-- ===== 场景 ===== -->
+    <section class="view" id="view-scenes">
+      <div class="page-title">场景管理 <span class="hint">多难度敌人编组（直接敌人列表 / 引用预设阵容）· 所需等级 · 通关奖励</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <select class="filter-select"><option value="">全部难度</option><option>易</option><option>普</option><option>难</option></select>
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm" onclick="openSceneDrawer()">＋ 新增场景</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>难度</th><th>敌人编组</th><th>所需等级</th><th>奖励</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">scene_001</td><td>小花山</td><td><span class="tag tag-ok">易</span> <span class="tag tag-aura">普</span> <span class="tag tag-danger">难</span></td><td>易：花妖×3 · 普：食人花妖×3 · <span class="tag tag-aura">难：花妖先锋阵</span></td><td class="num">1</td><td>经验 100 · 金币 200</td><td class="row-actions"><button class="btn btn-sm" onclick="openSceneDrawer('scene_001')">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">scene_002</td><td>浅水涧</td><td><span class="tag tag-ok">易</span> <span class="tag tag-aura">普</span> <span class="tag tag-danger">难</span></td><td>易：小虾兵×3 · 普：虾兵队长×3 · <span class="tag tag-aura">难：浅水涧巡守阵</span></td><td class="num">3</td><td>经验 150 · 金币 300</td><td class="row-actions"><button class="btn btn-sm" onclick="openSceneDrawer('scene_002')">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">scene_003</td><td>碎石坡</td><td><span class="tag tag-ok">易</span> <span class="tag tag-aura">普</span> <span class="tag tag-danger">难</span></td><td>易：巨石精×3 · 普：岩甲精×3 · 难：山魈首领+守护者</td><td class="num">5</td><td>经验 200 · 金币 400</td><td class="row-actions"><button class="btn btn-sm" onclick="openSceneDrawer('scene_003')">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 8 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">»</button></div>
+    </section>
+
+    <!-- ===== 阵型 ===== -->
+    <section class="view" id="view-formations">
+      <div class="page-title">阵型管理 <span class="hint">站位布局 / 阵型增益 / 前排保护</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm">＋ 新增阵型</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>站位布局</th><th>阵型增益</th><th>前排保护</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">crane_wing</td><td>鹤翼阵</td><td>前×2 · 后×2</td><td>前排防御↑ · 后排速度↑</td><td><span class="tag tag-ok">开启</span></td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">iron_wall</td><td>铁壁阵</td><td>前×2 · 后×2</td><td>全体防御↑</td><td><span class="tag tag-ok">开启</span></td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 4 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">»</button></div>
+    </section>
+
+    <!-- ===== 预设阵容 ===== -->
+    <section class="view" id="view-lineups">
+      <div class="page-title">预设阵容管理 <span class="hint">角色组合 + 阵型绑定 + 阵营 · 供场景难度引用与唤灵台一键布阵</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <select class="filter-select"><option value="">全部阵营</option><option>我方</option><option>敌方</option></select>
+        <select class="filter-select"><option value="">全部标签</option><option>均衡</option><option>防守</option><option>试炼</option></select>
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm" onclick="openLineupDrawer()">＋ 新增阵容</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-sm" title="复制选中阵容为模板">复制为模板</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>阵营</th><th>角色组合</th><th>阵型</th><th>标签</th><th>被场景引用</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">lineup_001</td><td>五行试炼阵</td><td><span class="tag tag-ok">我方</span></td><td>火护法 · 金护法 · 水护法 · 木护法</td><td><span class="tag tag-aura">鹤翼阵</span></td><td><span class="tag tag-muted">均衡</span><span class="tag tag-muted">开荒</span></td><td>—</td><td class="row-actions"><button class="btn btn-sm" onclick="openLineupDrawer('lineup_001')">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">lineup_002</td><td>铁壁坚守阵</td><td><span class="tag tag-ok">我方</span></td><td>土护法 · 金护法 · 水护法 · 火护法</td><td><span class="tag tag-aura">铁壁阵</span></td><td><span class="tag tag-muted">防守</span></td><td>—</td><td class="row-actions"><button class="btn btn-sm" onclick="openLineupDrawer('lineup_002')">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">lineup_003</td><td>花妖先锋阵</td><td><span class="tag tag-debuff">敌方</span></td><td>花妖王 · 花妖 · 食人花妖 · 草精</td><td><span class="tag tag-aura">鹤翼阵</span></td><td><span class="tag tag-muted">敌方</span><span class="tag tag-muted">试炼</span></td><td><span class="tag tag-aura">小花山·难</span></td><td class="row-actions"><button class="btn btn-sm" onclick="openLineupDrawer('lineup_003')">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">lineup_004</td><td>浅水涧巡守阵</td><td><span class="tag tag-debuff">敌方</span></td><td>金甲蟹将 · 铁甲蟹将 · 幼年蟹将 · 虾兵统领</td><td><span class="tag tag-aura">铁壁阵</span></td><td><span class="tag tag-muted">敌方</span><span class="tag tag-muted">试炼</span></td><td><span class="tag tag-aura">浅水涧·难</span></td><td class="row-actions"><button class="btn btn-sm" onclick="openLineupDrawer('lineup_004')">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 4 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">»</button></div>
+    </section>
+
+    <!-- ===== 材料 ===== -->
+    <section class="view" id="view-materials">
+      <div class="page-title">材料管理 <span class="hint">材料与消耗品 · 稀有度 · 使用效果</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <select class="filter-select"><option value="">全部类型</option><option>材料</option><option>消耗品</option></select>
+        <select class="filter-select"><option value="">全部稀有度</option><option>★1</option><option>★2</option><option>★3</option></select>
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm">＋ 新增材料</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>类型</th><th>稀有度</th><th>效果</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">mat_001</td><td>灵草</td><td><span class="tag tag-muted">材料</span></td><td>★1</td><td>炼制基础丹药</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">mat_003</td><td>毒液囊</td><td><span class="tag tag-muted">材料</span></td><td>★2</td><td>炼制毒药</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">elix_001</td><td>小还丹</td><td><span class="tag tag-buff">消耗品</span></td><td>★1</td><td>恢复气血 30</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">elix_002</td><td>中还丹</td><td><span class="tag tag-buff">消耗品</span></td><td>★2</td><td>恢复气血 80</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 12 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">»</button></div>
+    </section>
+
+    <!-- ===== 装备 ===== -->
+    <section class="view" id="view-equipment">
+      <div class="page-title">装备管理 <span class="hint">部位 / 属性加成 / 穿戴门槛 · 挂载到角色身上生效</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <select class="filter-select"><option value="">全部部位</option><option>武器</option><option>防具</option><option>饰品</option></select>
+        <select class="filter-select"><option value="">全部稀有度</option><option>★1</option><option>★2</option><option>★3</option></select>
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm">＋ 新增装备</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>部位</th><th>稀有度</th><th>属性加成</th><th>穿戴门槛</th><th>阵营限制</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">weapon_001</td><td>铁剑</td><td><span class="tag tag-aura">武器</span></td><td>★1</td><td class="num">攻击 +12</td><td class="num">等级 1</td><td>—</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">armor_001</td><td>皮甲</td><td><span class="tag tag-aura">防具</span></td><td>★1</td><td class="num">防御 +8</td><td class="num">等级 1</td><td>—</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">accessory_001</td><td>速度之符</td><td><span class="tag tag-buff">饰品</span></td><td>★2</td><td class="num">速度 +8%</td><td class="num">等级 5</td><td>—</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 6 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">»</button></div>
+      <div class="form-hint">现状：装备此前混于材料域（`weapon_001 铁剑` / `armor_001 皮甲` / `accessory_001 速度之符`），本域独立后补全 `slot / stats / requiredLevel` 字段。</div>
+    </section>
+
+    <!-- ===== 阵营克制 ===== -->
+    <section class="view" id="view-elements">
+      <div class="page-title">阵营与元素克制管理 <span class="hint">克制矩阵驱动伤害 / 命中修正</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm">＋ 新增元素</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="section-block">
+        <div class="block-title">元素定义</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>被克制</th><th>克制他人</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox"></td><td class="id">fire</td><td><span class="tag tag-aura">火</span></td><td>被 水 克制</td><td>克制 木</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+              <tr><td><input type="checkbox"></td><td class="id">water</td><td><span class="tag tag-aura">水</span></td><td>被 土 克制</td><td>克制 火</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+              <tr><td><input type="checkbox"></td><td class="id">wood</td><td><span class="tag tag-aura">木</span></td><td>被 火 克制</td><td>克制 土</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+              <tr><td><input type="checkbox"></td><td class="id">earth</td><td><span class="tag tag-aura">土</span></td><td>被 木 克制</td><td>克制 水</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="section-block">
+        <div class="block-title">克制矩阵</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>攻击方</th><th>防御方</th><th>伤害系数</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tag tag-aura">火</span></td><td><span class="tag tag-aura">木</span></td><td class="num">1.2</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+              <tr><td><span class="tag tag-aura">水</span></td><td><span class="tag tag-aura">火</span></td><td class="num">1.2</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+              <tr><td><span class="tag tag-aura">木</span></td><td><span class="tag tag-aura">土</span></td><td class="num">1.2</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+              <tr><td><span class="tag tag-aura">土</span></td><td><span class="tag tag-aura">水</span></td><td class="num">1.2</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+              <tr><td colspan="2">无克制关系</td><td class="num">1.0</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-hint">`DamageCalculator` / `HitCalculator` 将按攻击方 vs 防御方阵营查询本矩阵修正伤害 / 命中。</div>
+      </div>
+    </section>
+
+    <!-- ===== 成长曲线 ===== -->
+    <section class="view" id="view-growth">
+      <div class="page-title">成长曲线管理 <span class="hint">每级属性增量 · 经验表 · 供演劫台养成</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm">＋ 新增曲线</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>每级增量</th><th>经验表</th><th>引用角色</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">growth_balanced</td><td>均衡型</td><td class="num">攻+8 防+4 气血+60 速+2</td><td class="num">Lv2:120 · Lv3:260 …</td><td class="id">hero_001</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">growth_attack</td><td>攻击型</td><td class="num">攻+12 防+2 气血+45 速+3</td><td class="num">Lv2:140 · Lv3:300 …</td><td class="id">hero_002</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">growth_defense</td><td>防御型</td><td class="num">攻+4 防+10 气血+90 速+1</td><td class="num">Lv2:110 · Lv3:240 …</td><td class="id">hero_005</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 4 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">»</button></div>
+      <div class="form-hint">现状：成长曲线仅为角色编辑器中的枚举文本，未数据化；本域独立后角色 `growth` 字段引用曲线 ID，实现"逐级推导属性"。</div>
+    </section>
+
+    <!-- ===== 掉落组 ===== -->
+    <section class="view" id="view-drops">
+      <div class="page-title">掉落组管理 <span class="hint">物品组 + 概率 · 供敌人引用 · 替代敌人内嵌 drops</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm">＋ 新增掉落组</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>掉落条目</th><th>被敌人引用</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">drop_flora</td><td>花草系掉落</td><td>灵草 ×1 <span class="tag tag-ok">80%</span> · 毒液囊 ×1 <span class="tag tag-ok">60%</span></td><td class="id">enemy_001 · enemy_004</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">drop_boss</td><td>首领掉落</td><td>魔核 ×1 <span class="tag tag-ok">30%</span> · 大还丹 ×1 <span class="tag tag-ok">50%</span></td><td class="id">boss_001</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">复制</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 3 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">»</button></div>
+      <div class="form-hint">现状：掉落概率内嵌在敌人 `drops` 字段；此域为演进项，场景/敌人增多、掉落需复用时再抽取，不提前强制迁移。</div>
+    </section>
+
+    <!-- ===== 属性与公式 ===== -->
+    <section class="view" id="view-formulas">
+      <div class="page-title">属性与公式管理 <span class="hint">一级 / 二级属性 · 计算规则 · 属性上限</span></div>
+      <div class="section-block">
+        <div class="block-title">属性定义</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>属性</th><th>级别</th><th>上限</th><th>默认</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td>气血</td><td><span class="tag tag-aura">一级</span></td><td class="num">9999</td><td class="num">100</td><td>0 时死亡</td></tr>
+              <tr><td>攻击（最小–最大）</td><td><span class="tag tag-aura">一级</span></td><td class="num">1–9999</td><td class="num">10–15</td><td>决定伤害波动</td></tr>
+              <tr><td>防御</td><td><span class="tag tag-aura">一级</span></td><td class="num">9999</td><td class="num">5</td><td>减伤 = 防御 × 0.01</td></tr>
+              <tr><td>速度</td><td><span class="tag tag-aura">一级</span></td><td class="num">9999</td><td class="num">10</td><td>决定行动顺序</td></tr>
+              <tr><td>暴击率</td><td><span class="tag tag-buff">二级</span></td><td class="num">0–100%</td><td class="num">10%</td><td>攻击产生暴击的概率</td></tr>
+              <tr><td>暴击伤害</td><td><span class="tag tag-buff">二级</span></td><td class="num">100–500%</td><td class="num">125%</td><td>暴击时伤害倍率</td></tr>
+              <tr><td>命中率 / 闪避率</td><td><span class="tag tag-buff">二级</span></td><td class="num">0–100%</td><td class="num">100% / 5%</td><td>实际命中 = 命中 − 闪避</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="section-block">
+        <div class="block-title">计算公式</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>名称</th><th>公式</th><th>来源</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td>基础伤害</td><td class="formula">rand(攻击最小, 攻击最大) × Σ修正系数</td><td>DamageCalculator</td><td class="row-actions"><button class="btn btn-sm">编辑</button></td></tr>
+              <tr><td>防御减免</td><td class="formula">最终伤害 = 基础伤害 × (1 − 防御 × 0.01)</td><td>DamageCalculator</td><td class="row-actions"><button class="btn btn-sm">编辑</button></td></tr>
+              <tr><td>暴击</td><td class="formula">暴击伤害 = 最终伤害 × 暴击伤害倍率</td><td>DamageCalculator</td><td class="row-actions"><button class="btn btn-sm">编辑</button></td></tr>
+              <tr><td>实际命中</td><td class="formula">命中概率 = 命中率 − 目标闪避率</td><td>HitCalculator</td><td class="row-actions"><button class="btn btn-sm">编辑</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="form-hint">说明：昊天镜可查询公式定义反推伤害计算，用于调试与平衡性分析。表达式引擎动态解析为增强项。</div>
+      </div>
+    </section>
+
+    <!-- ===== 战斗规则参数 ===== -->
+    <section class="view" id="view-rules">
+      <div class="page-title">战斗规则参数管理 <span class="hint">伤害倍率 / 暴击概率 / Buff 上限 · 调参收拢为数据</span></div>
+      <div class="toolbar">
+        <div class="search-box"><input type="text" placeholder="按名称模糊搜索…"></div>
+        <span class="spacer"></span>
+        <button class="btn btn-primary btn-sm">＋ 新增参数</button>
+        <button class="btn btn-sm" onclick="openDialog('import-dialog')">批量导入</button>
+        <button class="btn btn-sm" onclick="openDialog('export-dialog')">导出</button>
+        <button class="btn btn-danger btn-sm">删除所选</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><input type="checkbox"></th><th>ID</th><th>名称</th><th>当前值</th><th>合法范围</th><th>用途</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td class="id">damage_multiplier</td><td>伤害倍率</td><td class="num">1.0</td><td class="num">0.1 – 5.0</td><td>全局伤害修正</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">crit_chance</td><td>暴击概率</td><td class="num">10%</td><td class="num">0 – 100%</td><td>基础暴击率</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">max_buffs_per_character</td><td>Buff 上限</td><td class="num">20</td><td class="num">1 – 99</td><td>单角色最大 Buff 数</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">default_cooldown</td><td>默认冷却</td><td class="num">2</td><td class="num">0 – 20</td><td>未指定冷却时的兜底</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+            <tr><td><input type="checkbox"></td><td class="id">stack_multiplier</td><td>叠加衰减</td><td class="num">0.8</td><td class="num">0.1 – 1.0</td><td>Buff 叠加效果衰减系数</td><td class="row-actions"><button class="btn btn-sm">编辑</button><button class="btn btn-danger btn-sm">删</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="page-info">共 8 条</span><button class="page-btn">«</button><button class="page-btn active">1</button><button class="page-btn">»</button></div>
+      <div class="form-hint">现状：`configs/params/buff-global-params.json` 已含 Buff 上限、默认冷却、平衡性系数；BattleRulesDialog 的伤害倍率 / 暴击概率等参数待收拢进本域。唤灵台读取后临时覆盖，封神榜保存值为默认值，随战斗快照冻结。</div>
+    </section>
+
+    <!-- ===== 数据包管理 ===== -->
+    <section class="view" id="view-packages">
+      <div class="page-title">数据包管理 <span class="hint">JSON 完整 / 选择性导出 · 全量 / 增量导入 · 版本迁移</span></div>
+      <div class="stat-cards">
+        <div class="stat-card"><div class="stat-num">8</div><div class="stat-label">数据表</div></div>
+        <div class="stat-card"><div class="stat-num">290</div><div class="stat-label">数据条目</div></div>
+        <div class="stat-card"><div class="stat-num">v1 → v2</div><div class="stat-label">版本迁移</div></div>
+        <div class="stat-card ok"><div class="stat-num">3</div><div class="stat-label">备份包</div></div>
+      </div>
+      <div class="section-block">
+        <div class="block-title">导出 <span class="sub">一键备份 / 版本回退 / 团队协作</span></div>
+        <div class="table-wrap" style="padding:14px;">
+          <div class="check-list">
+            <label><input type="checkbox" checked> 角色</label>
+            <label><input type="checkbox" checked> 技能</label>
+            <label><input type="checkbox" checked> Buff</label>
+            <label><input type="checkbox" checked> 敌人</label>
+            <label><input type="checkbox" checked> 场景</label>
+            <label><input type="checkbox" checked> 阵型</label>
+            <label><input type="checkbox" checked> 预设阵容</label>
+            <label><input type="checkbox" checked> 材料</label>
+          </div>
+          <div class="form-row" style="margin-top:10px;">
+            <div class="form-group">
+              <label class="form-label">导出范围</label>
+              <select class="form-select"><option>全部数据（完整包）</option><option>按表选择（选择性导出）</option><option>最近 7 天修改</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">包含元信息</label>
+              <select class="form-select"><option>dataVersion + 导出时间 + 表清单</option><option>仅数据</option></select>
+            </div>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:10px;">
+            <button class="btn btn-primary" onclick="openDialog('export-dialog')">预览导出包</button>
+            <button class="btn">直接下载 JSON</button>
+          </div>
+        </div>
+      </div>
+      <div class="section-block">
+        <div class="block-title">导入 <span class="sub">全量覆盖 / 增量合并</span></div>
+        <div class="table-wrap" style="padding:14px;">
+          <div class="drop-zone">
+            <div class="dz-main">将 JSON 数据包拖拽到此处，或点击选择文件</div>
+            <div>支持 .json · 完整包或选择性导出包</div>
+          </div>
+          <div class="form-row" style="margin-top:10px;">
+            <div class="form-group">
+              <label class="form-label">导入策略</label>
+              <select class="form-select"><option>全量导入（覆盖现有数据）</option><option>增量导入（合并，ID 冲突时保留现有）</option><option>增量导入（合并，ID 冲突时以包内为准）</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">导入前备份</label>
+              <select class="form-select"><option>自动导出当前数据为备份</option><option>不备份</option></select>
+            </div>
+          </div>
+          <div class="form-warn">导入会递增数据版本号（当前 v1.42 → v1.43），战斗中的队伍将收到「数据已更新」提示。</div>
+        </div>
+      </div>
+      <div class="section-block">
+        <div class="block-title">版本迁移记录</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>DB 版本</th><th>变更内容</th><th>状态</th><th>时间</th></tr></thead>
+            <tbody>
+              <tr><td class="num">v1</td><td>创建 recordings / snapshots store</td><td><span class="tag tag-ok">已应用</span></td><td class="num">2026-07-15</td></tr>
+              <tr><td class="num">v2</td><td>新增封神榜数据表（角色 / 技能 / Buff / 敌人 / 场景 / 阵型 / 预设阵容 / 材料 / 元数据）</td><td><span class="tag tag-ok">已应用</span></td><td class="num">2026-08-01</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 健康检查 ===== -->
+    <section class="view" id="view-health">
+      <div class="page-title">全局健康检查 <span class="hint">引用完整性扫描 · 断裂引用报告</span></div>
+      <div class="stat-cards">
+        <div class="stat-card"><div class="stat-num">8</div><div class="stat-label">扫描表数</div></div>
+        <div class="stat-card"><div class="stat-num">290</div><div class="stat-label">检查条目</div></div>
+        <div class="stat-card warn"><div class="stat-num">3</div><div class="stat-label">断裂引用</div></div>
+        <div class="stat-card"><div class="stat-num">1</div><div class="stat-label">上次扫描</div></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>引用方</th><th>引用字段</th><th>缺失 ID</th><th>所属数据表</th><th>建议动作</th><th>处理</th></tr></thead>
+          <tbody>
+            <tr><td class="id">hero_003</td><td>skillIds</td><td class="id" style="color:var(--danger)">skill_999</td><td>技能</td><td>补建技能或移除引用</td><td><button class="btn btn-sm">移除引用</button><button class="btn btn-sm">补建</button></td></tr>
+            <tr><td class="id">skill_002</td><td>steps[0].effectId</td><td class="id" style="color:var(--danger)">buff_burn_x</td><td>Buff</td><td>补建 Buff 或改引用</td><td><button class="btn btn-sm">移除引用</button><button class="btn btn-sm">补建</button></td></tr>
+            <tr><td class="id">scene_003</td><td>difficulties.hard.enemyIds</td><td class="id" style="color:var(--danger)">boss_009</td><td>敌人</td><td>补建敌人或改难度编组</td><td><button class="btn btn-sm">移除引用</button><button class="btn btn-sm">补建</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn btn-primary">重新扫描</button>
+        <button class="btn">导出报告</button>
+      </div>
+    </section>
+
+    <!-- ===== 操作日志 ===== -->
+    <section class="view" id="view-logs">
+      <div class="page-title">操作日志 <span class="hint">记录每条数据的修改时间戳与操作类型（增 / 删 / 改 / 导入）</span></div>
+      <div class="table-wrap" style="padding:16px 18px;">
+        <div class="timeline">
+          <div class="tl-item op-create">
+            <div class="tl-time">2026-08-01 14:22:31</div>
+            <div class="tl-body"><span class="tag tag-ok">新增</span><span class="tl-desc">角色 <b>炎澜剑仙</b>（hero_001）· 技能绑定 skill_001/skill_002</span></div>
+          </div>
+          <div class="tl-item op-update">
+            <div class="tl-time">2026-08-01 13:05:47</div>
+            <div class="tl-body"><span class="tag tag-aura">修改</span><span class="tl-desc">技能 <b>炎龙焚天</b>（skill_002）· 暴击率由 125% 调整至 135%</span></div>
+          </div>
+          <div class="tl-item op-delete">
+            <div class="tl-time">2026-08-01 11:48:02</div>
+            <div class="tl-body"><span class="tag tag-danger">删除</span><span class="tl-desc">Buff <b>旧版狂暴</b>（buff_rage_old）· 已由 buff_berserk 替代</span></div>
+          </div>
+          <div class="tl-item op-import">
+            <div class="tl-time">2026-08-01 09:00:15</div>
+            <div class="tl-body"><span class="tag tag-buff">导入</span><span class="tl-desc">数据包 <b>season2_scenes.json</b> · 增量合并 3 条场景 · 版本 v1.41 → v1.42</span></div>
+          </div>
+          <div class="tl-item op-update">
+            <div class="tl-time">2026-07-31 20:41:09</div>
+            <div class="tl-body"><span class="tag tag-aura">修改</span><span class="tl-desc">敌人 <b>毒蛛妖后</b>（enemy_007）· 掉落毒液囊概率 50% → 60%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="form-hint" style="margin-top:8px;">昊天镜可据此判断某场战斗所用数据在当时的状态（配合战斗快照还原）。</div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ 编辑抽屉（角色） ============ -->
+<div class="drawer-mask" id="drawer-mask"></div>
+<aside class="drawer" id="editor-drawer">
+  <div class="drawer-header">
+    <span class="title">编辑角色 · 炎澜剑仙 <span style="color:var(--text-tertiary); font-weight:400;">hero_001</span></span>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-group">
+      <label class="form-label">名称<span class="required">*</span></label>
+      <input class="form-input invalid" value="炎澜剑仙">
+      <div class="form-error">名称与现有角色「炎澜剑仙」重复（唯一性检测）</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">ID<span class="required">*</span></label>
+        <input class="form-input" value="hero_001" disabled style="opacity:0.6;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">等级</label>
+        <input class="form-input invalid" value="45" type="number">
+        <div class="form-error">等级需在 1~99 之间（数值范围约束）</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">气血</label>
+        <input class="form-input" value="3120" type="number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">速度</label>
+        <input class="form-input" value="95" type="number">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">最小攻击</label>
+        <input class="form-input" value="280" type="number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">最大攻击</label>
+        <input class="form-input" value="340" type="number">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">防御</label>
+        <input class="form-input" value="120" type="number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">暴击率（%）</label>
+        <input class="form-input invalid" value="150" type="number">
+        <div class="form-error">暴击率需在 0~100% 之间（数值范围约束）</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">所属阵营 / 元素</label>
+      <select class="form-select"><option>火</option><option>水</option><option>木</option><option>土</option></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">可用技能<span class="required">*</span></label>
+      <div class="tag-picker">
+        <span class="tag tag-buff">skill_001 炎龙焚天 ✕</span>
+        <span class="tag tag-buff">skill_003 战意昂扬 ✕</span>
+        <span class="tag tag-danger">skill_999 ？（引用完整性）</span>
+      </div>
+      <div class="form-error">技能 skill_999 不存在，无法保存（引用完整性检查）</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">成长曲线</label>
+      <select class="form-select"><option>均衡型（每级 攻击+8 防御+4 气血+60）</option><option>攻击型</option><option>防御型</option><option>速度型</option></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">描述</label>
+      <textarea class="form-textarea" rows="3">手持炎刃的剑仙，擅长范围灼烧与爆发输出。</textarea>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-ghost" onclick="closeDrawer()">取消</button>
+    <button class="btn" onclick="closeDrawer()">保存草稿</button>
+    <button class="btn btn-primary" onclick="closeDrawer()" title="演示：存在校验错误时保存按钮置灰">保存</button>
+  </div>
+</aside>
+
+<!-- ============ 编辑抽屉（场景） ============ -->
+<aside class="drawer drawer-wide" id="scene-drawer">
+  <div class="drawer-header">
+    <span class="title">编辑场景 · 小花山 <span style="color:var(--text-tertiary); font-weight:400;">scene_001</span></span>
+    <button class="drawer-close" onclick="closeSceneDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-group">
+      <label class="form-label">名称<span class="required">*</span></label>
+      <input class="form-input" value="小花山">
+    </div>
+    <div class="form-group">
+      <label class="form-label">背景描述</label>
+      <textarea class="form-textarea" rows="2">花果山外围，花妖草精遍布，是初出茅庐的修仙者试炼之地。</textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">所需等级</label>
+        <input class="form-input" value="1" type="number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">通关奖励 · 经验</label>
+        <input class="form-input" value="100" type="number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">通关奖励 · 金币</label>
+        <input class="form-input" value="200" type="number">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">难度敌人编组<span class="required">*</span>
+        <span style="color:var(--text-tertiary); font-weight:400; font-size:12px;">直接列敌人 与 引用预设阵容 二选一，lineupId 优先</span>
+      </label>
+      <div class="diff-tabs">
+        <button class="diff-tab active" data-diff="easy" onclick="switchDiff(this)">易</button>
+        <button class="diff-tab" data-diff="normal" onclick="switchDiff(this)">普</button>
+        <button class="diff-tab" data-diff="hard" onclick="switchDiff(this)">难</button>
+      </div>
+
+      <div class="diff-pane active" data-pane="easy">
+        <div class="mode-switch">
+          <label class="mode-radio"><input type="radio" name="mode-easy" checked onchange="switchMode('easy')"> 直接列敌人</label>
+          <label class="mode-radio"><input type="radio" name="mode-easy" onchange="switchMode('easy')"> 引用预设阵容</label>
+        </div>
+        <div class="mode-pane" data-mode="enemy" data-pane="easy">
+          <div class="tag-picker">
+            <span class="tag tag-debuff">enemy_001 花妖 ✕</span>
+            <span class="tag tag-debuff">enemy_002 草精 ✕</span>
+            <span class="tag tag-debuff">enemy_003 幼年山魈 ✕</span>
+          </div>
+          <div class="add-member">
+            <select><option value="">选择敌人加入编组…</option><option>enemy_004 食人花妖</option><option>enemy_005 巨石精</option><option>enemy_006 成年山魈</option></select>
+            <button class="btn btn-sm">＋ 添加</button>
+          </div>
+        </div>
+        <div class="mode-pane" data-mode="lineup" data-pane="easy" style="display:none;">
+          <select class="form-select"><option value="">选择预设阵容…</option><option>lineup_003 花妖先锋阵（敌方）</option><option>lineup_004 浅水涧巡守阵（敌方）</option></select>
+        </div>
+      </div>
+
+      <div class="diff-pane" data-pane="normal">
+        <div class="mode-switch">
+          <label class="mode-radio"><input type="radio" name="mode-normal" checked onchange="switchMode('normal')"> 直接列敌人</label>
+          <label class="mode-radio"><input type="radio" name="mode-normal" onchange="switchMode('normal')"> 引用预设阵容</label>
+        </div>
+        <div class="mode-pane" data-mode="enemy" data-pane="normal">
+          <div class="tag-picker">
+            <span class="tag tag-debuff">enemy_004 食人花妖 ✕</span>
+            <span class="tag tag-debuff">enemy_005 巨石精 ✕</span>
+            <span class="tag tag-debuff">enemy_006 成年山魈 ✕</span>
+          </div>
+          <div class="add-member">
+            <select><option value="">选择敌人加入编组…</option><option>enemy_007 花妖王</option><option>enemy_008 山魈首领</option></select>
+            <button class="btn btn-sm">＋ 添加</button>
+          </div>
+        </div>
+        <div class="mode-pane" data-mode="lineup" data-pane="normal" style="display:none;">
+          <select class="form-select"><option value="">选择预设阵容…</option><option>lineup_003 花妖先锋阵（敌方）</option><option>lineup_004 浅水涧巡守阵（敌方）</option></select>
+        </div>
+      </div>
+
+      <div class="diff-pane" data-pane="hard">
+        <div class="mode-switch">
+          <label class="mode-radio"><input type="radio" name="mode-hard" onchange="switchMode('hard')"> 直接列敌人</label>
+          <label class="mode-radio"><input type="radio" name="mode-hard" checked onchange="switchMode('hard')"> 引用预设阵容</label>
+        </div>
+        <div class="mode-pane" data-mode="enemy" data-pane="hard" style="display:none;">
+          <div class="tag-picker">
+            <span class="tag tag-debuff">enemy_007 花妖王 ✕</span>
+            <span class="tag tag-debuff">boss_001 小花山守护者 ✕</span>
+          </div>
+          <div class="add-member">
+            <select><option value="">选择敌人加入编组…</option><option>enemy_008 山魈首领</option></select>
+            <button class="btn btn-sm">＋ 添加</button>
+          </div>
+        </div>
+        <div class="mode-pane" data-mode="lineup" data-pane="hard">
+          <select class="form-select"><option value="">选择预设阵容…</option><option selected>lineup_003 花妖先锋阵（敌方）</option><option>lineup_004 浅水涧巡守阵（敌方）</option></select>
+          <div class="form-warn" style="margin-top:6px;">引用阵容后，本难度将按阵容展开为参战者（角色按 side 归队、按阵型落位）。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">引用关系预览</label>
+      <div class="tag-picker">
+        <span class="tag tag-aura">难：lineup_003 花妖先锋阵</span>
+      </div>
+      <div class="form-hint">场景难度的 lineupId 优先于 enemyIds；被引用阵容删除前需先解除本场景引用（健康检查拦截）。</div>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-ghost" onclick="closeSceneDrawer()">取消</button>
+    <button class="btn btn-primary" onclick="closeSceneDrawer()">保存</button>
+  </div>
+</aside>
+
+<!-- ============ 编辑抽屉（预设阵容） ============ -->
+<aside class="drawer drawer-wide" id="lineup-drawer">
+  <div class="drawer-header">
+    <span class="title">编辑预设阵容 · 五行试炼阵 <span style="color:var(--text-tertiary); font-weight:400;">lineup_001</span></span>
+    <button class="drawer-close" onclick="closeLineupDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-group">
+      <label class="form-label">名称<span class="required">*</span></label>
+      <input class="form-input" value="五行试炼阵">
+    </div>
+    <div class="form-group">
+      <label class="form-label">用途说明</label>
+      <textarea class="form-textarea" rows="2">五系护法齐整的均衡阵容，攻守兼备，适合 1~10 级关卡开荒。</textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">阵营<span class="required">*</span></label>
+        <select class="form-select"><option>我方（ally）</option><option>敌方（enemy）</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">绑定阵型<span class="required">*</span></label>
+        <select class="form-select" onchange="switchFormation(this)">
+          <option value="crane_wing" selected>鹤翼阵 · 前×2 后×2</option>
+          <option value="iron_wall">铁壁阵 · 前×2 后×2</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">角色编组<span class="required">*</span>
+        <span style="color:var(--text-tertiary); font-weight:400; font-size:12px;">站位索引对应阵型 slots</span>
+      </label>
+      <div class="seat-list" id="seat-list">
+        <div class="seat-row"><span class="seat-index">0</span><span class="seat-position pos-front">前排</span><select><option value="">— 空位 —</option><option selected>guardian_fire 火护法</option><option>guardian_gold 金护法</option><option>guardian_water 水护法</option><option>guardian_wood 木护法</option><option>guardian_earth 土护法</option></select><button class="btn btn-sm btn-danger" title="移除该站位角色">✕</button></div>
+        <div class="seat-row"><span class="seat-index">1</span><span class="seat-position pos-front">前排</span><select><option value="">— 空位 —</option><option>guardian_fire 火护法</option><option selected>guardian_gold 金护法</option><option>guardian_water 水护法</option><option>guardian_wood 木护法</option><option>guardian_earth 土护法</option></select><button class="btn btn-sm btn-danger" title="移除该站位角色">✕</button></div>
+        <div class="seat-row"><span class="seat-index">2</span><span class="seat-position pos-back">后排</span><select><option value="">— 空位 —</option><option>guardian_fire 火护法</option><option>guardian_gold 金护法</option><option selected>guardian_water 水护法</option><option>guardian_wood 木护法</option><option>guardian_earth 土护法</option></select><button class="btn btn-sm btn-danger" title="移除该站位角色">✕</button></div>
+        <div class="seat-row"><span class="seat-index">3</span><span class="seat-position pos-back">后排</span><select><option value="">— 空位 —</option><option>guardian_fire 火护法</option><option>guardian_gold 金护法</option><option>guardian_water 水护法</option><option selected>guardian_wood 木护法</option><option>guardian_earth 土护法</option></select><button class="btn btn-sm btn-danger" title="移除该站位角色">✕</button></div>
+      </div>
+      <div class="add-member">
+        <select><option value="">添加空位角色…</option><option>guardian_fire 火护法</option><option>guardian_gold 金护法</option><option>guardian_water 水护法</option><option>guardian_wood 木护法</option><option>guardian_earth 土护法</option></select>
+        <button class="btn btn-sm">＋ 添加</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">用途标签</label>
+      <div class="tag-picker">
+        <span class="tag tag-buff">均衡 ✕</span>
+        <span class="tag tag-buff">开荒 ✕</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">被场景引用</label>
+      <div class="tag-picker">
+        <span class="tag tag-aura">小花山·难（scene_001 hard）</span>
+      </div>
+      <div class="form-warn">本阵容被 1 个场景难度引用，删除将被健康检查拦截。</div>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-ghost" onclick="closeLineupDrawer()">取消</button>
+    <button class="btn btn-primary" onclick="closeLineupDrawer()">保存</button>
+  </div>
+</aside>
+
+<!-- ============ 弹窗：导出 ============ -->
+<div class="dialog-mask" id="export-mask" onclick="closeDialog('export-dialog')"></div>
+<div class="dialog" id="export-dialog">
+  <div class="dialog-header"><span class="title">导出数据包</span><button class="drawer-close" onclick="closeDialog('export-dialog')">✕</button></div>
+  <div class="dialog-body">
+    <div class="option-cards">
+      <div class="option-card selected">
+        <div class="opt-name">完整数据包</div>
+        <div class="opt-desc">全部 7 张表 · 含 dataVersion / 导出时间 / 表清单 · 用于备份与回退</div>
+      </div>
+      <div class="option-card">
+        <div class="opt-name">选择性导出</div>
+        <div class="opt-desc">按表 / 按 ID 列表 / 按最近修改时间选取子集</div>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="form-group">
+      <label class="form-label">文件名</label>
+      <input class="form-input" value="taichu_package_v1.42.json">
+    </div>
+    <div class="form-group">
+      <label class="form-label">预览（前 20 行）</label>
+      <textarea class="form-textarea" rows="6" style="font-family:Consolas,monospace; font-size:12px;" readonly>{ "meta": { "dataVersion": "1.42", "exportedAt": "2026-08-01T14:30:00Z", "tables": ["actors","skills","buffs","enemies","scenes","formations","lineups","materials"], "count": 294 }, "actors": [ { "id": "hero_001", "name": "炎澜剑仙", ... } ] }</textarea>
+    </div>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn btn-ghost" onclick="closeDialog('export-dialog')">取消</button>
+    <button class="btn btn-primary" onclick="closeDialog('export-dialog')">确认导出</button>
+  </div>
+</div>
+
+<!-- ============ 弹窗：导入 ============ -->
+<div class="dialog-mask" id="import-mask" onclick="closeDialog('import-dialog')"></div>
+<div class="dialog" id="import-dialog">
+  <div class="dialog-header"><span class="title">批量导入</span><button class="drawer-close" onclick="closeDialog('import-dialog')">✕</button></div>
+  <div class="dialog-body">
+    <div class="drop-zone" style="padding:20px;">
+      <div class="dz-main">选择要导入的数据包文件（.json）</div>
+      <div>支持完整包或选择性导出包 · 导入前建议先导出备份</div>
+    </div>
+    <div class="form-row" style="margin-top:12px;">
+      <div class="form-group">
+        <label class="form-label">导入策略</label>
+        <select class="form-select"><option>全量导入（覆盖）</option><option>增量合并 · 保留现有</option><option>增量合并 · 以包内为准</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">校验强度</label>
+        <select class="form-select"><option>严格（引用 + 数值 + 唯一性）</option><option>宽松（仅 JSON 结构）</option></select>
+      </div>
+    </div>
+    <div class="form-warn">导入将递增数据版本号；若含断裂引用，将拒绝导入并给出报告。</div>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn btn-ghost" onclick="closeDialog('import-dialog')">取消</button>
+    <button class="btn btn-primary" onclick="closeDialog('import-dialog')">开始导入</button>
+  </div>
+</div>
+
+<script>
+  // ===== 纯样式演示交互：不实现任何真实功能 =====
+  // 左侧数据域 / 系统功能切换
+  document.querySelectorAll('.side-item').forEach(function (item) {
+    item.addEventListener('click', function () {
+      document.querySelectorAll('.side-item').forEach(function (i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('active'); });
+      var target = document.getElementById('view-' + item.dataset.view);
+      if (target) target.classList.add('active');
+    });
+  });
+
+  // 抽屉（编辑表单）
+  function openDrawer() {
+    document.getElementById('drawer-mask').classList.add('show');
+    document.getElementById('editor-drawer').classList.add('show');
+  }
+  function closeDrawer() {
+    document.getElementById('drawer-mask').classList.remove('show');
+    document.getElementById('editor-drawer').classList.remove('show');
+  }
+
+  // 弹窗（导出 / 导入）
+  function openDialog(id) {
+    var maskId = id === 'export-dialog' ? 'export-mask' : 'import-mask';
+    document.getElementById(maskId).classList.add('show');
+    document.getElementById(id).classList.add('show');
+  }
+  function closeDialog(id) {
+    var maskId = id === 'export-dialog' ? 'export-mask' : 'import-mask';
+    document.getElementById(maskId).classList.remove('show');
+    document.getElementById(id).classList.remove('show');
+  }
+
+  // 导出弹窗选项卡片选中态
+  document.querySelectorAll('#export-dialog .option-card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      document.querySelectorAll('#export-dialog .option-card').forEach(function (c) { c.classList.remove('selected'); });
+      card.classList.add('selected');
+    });
+  });
+
+  // ===== 场景编辑抽屉 =====
+  function openSceneDrawer(id) {
+    var title = document.querySelector('#scene-drawer .drawer-header .title');
+    if (id) {
+      var names = { scene_001: '小花山', scene_002: '浅水涧', scene_003: '碎石坡' };
+      title.innerHTML = '编辑场景 · ' + (names[id] || id) + ' <span style="color:var(--text-tertiary); font-weight:400;">' + id + '</span>';
+    } else {
+      title.innerHTML = '新增场景 <span style="color:var(--text-tertiary); font-weight:400;">（ID 自动生成）</span>';
+    }
+    document.getElementById('drawer-mask').classList.add('show');
+    document.getElementById('scene-drawer').classList.add('show');
+  }
+  function closeSceneDrawer() {
+    document.getElementById('drawer-mask').classList.remove('show');
+    document.getElementById('scene-drawer').classList.remove('show');
+  }
+  // 难度 tab 切换
+  function switchDiff(btn) {
+    var tabs = btn.parentElement.querySelectorAll('.diff-tab');
+    tabs.forEach(function (t) { t.classList.remove('active'); });
+    btn.classList.add('active');
+    var key = btn.dataset.diff;
+    document.querySelectorAll('.diff-pane[data-pane="' + key + '"]').forEach(function (p) { p.classList.add('active'); });
+    document.querySelectorAll('.diff-pane:not([data-pane="' + key + '"])').forEach(function (p) { p.classList.remove('active'); });
+  }
+  // 编组形态切换（直接列敌人 / 引用预设阵容）
+  function switchMode(key) {
+    var radio = document.querySelector('input[name="mode-' + key + '"]:checked');
+    if (!radio) return;
+    var radios = document.querySelectorAll('input[name="mode-' + key + '"]');
+    var isLineup = Array.prototype.indexOf.call(radios, radio) === 1;
+    document.querySelectorAll('.mode-pane[data-pane="' + key + '"]').forEach(function (p) {
+      p.style.display = (isLineup ? p.dataset.mode === 'lineup' : p.dataset.mode === 'enemy') ? '' : 'none';
+    });
+  }
+
+  // ===== 预设阵容编辑抽屉 =====
+  function openLineupDrawer(id) {
+    var title = document.querySelector('#lineup-drawer .drawer-header .title');
+    if (id) {
+      var names = { lineup_001: '五行试炼阵', lineup_002: '铁壁坚守阵', lineup_003: '花妖先锋阵', lineup_004: '浅水涧巡守阵' };
+      title.innerHTML = '编辑预设阵容 · ' + (names[id] || id) + ' <span style="color:var(--text-tertiary); font-weight:400;">' + id + '</span>';
+    } else {
+      title.innerHTML = '新增预设阵容 <span style="color:var(--text-tertiary); font-weight:400;">（ID 自动生成）</span>';
+    }
+    document.getElementById('drawer-mask').classList.add('show');
+    document.getElementById('lineup-drawer').classList.add('show');
+  }
+  function closeLineupDrawer() {
+    document.getElementById('drawer-mask').classList.remove('show');
+    document.getElementById('lineup-drawer').classList.remove('show');
+  }
+  // 切换阵型：更新站位布局
+  function switchFormation(sel) {
+    var rows = document.querySelectorAll('#seat-list .seat-row');
+    rows.forEach(function (row) {
+      var idx = parseInt(row.querySelector('.seat-index').textContent, 10);
+      var isFront = idx < 2;
+      var pos = row.querySelector('.seat-position');
+      pos.textContent = isFront ? '前排' : '后排';
+      pos.className = 'seat-position ' + (isFront ? 'pos-front' : 'pos-back');
+    });
+  }
+
+  // 遮罩点击关闭全部抽屉
+  document.getElementById('drawer-mask').addEventListener('click', function () {
+    closeDrawer();
+    closeSceneDrawer();
+    closeLineupDrawer();
+  });
+</script>
+</body>
+</html>

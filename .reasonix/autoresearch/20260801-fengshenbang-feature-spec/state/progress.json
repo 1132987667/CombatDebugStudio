@@ -1,0 +1,15 @@
+{
+  "task_id": "20260801-fengshenbang-feature-spec",
+  "phase": "complete",
+  "stale_count": 0,
+  "iterations": 2,
+  "created": "2026-08-01T15:00:00",
+  "completed": true,
+  "deliverable": "documents/封神榜功能需求规格说明书.md",
+  "success_criteria_audit": {
+    "c1_doc_exists_full_coverage": {"status": "pass", "evidence": "9 章齐全：实体 CRUD(3) / 完整性校验(4) / 导入导出备份(5) / 数据接口联动(6) / 辅助功能(7)，覆盖用户设计一、二、三、四、六全部内容"},
+    "c2_per_section_fields_links_current": {"status": "pass", "evidence": "每实体节含字段表+联动方式+现状对照；第 8 章衔接盘点现有实现（IndexedDbStorage/IPersistentStorage/schema-validator/GameDataProcessor/对话框/snapshots store/迁移先例）"},
+    "c3_consistent_with_overall_doc": {"status": "pass", "evidence": "与《太初道枢总体设计.md》第 3 章八大数据域一致；引用 9.3 界面调整；闭环数据流图一致"},
+    "c4_utf8_no_bom": {"status": "pass", "evidence": "BOM check 35 32 229（# 开头），无 BOM"}
+  }
+}

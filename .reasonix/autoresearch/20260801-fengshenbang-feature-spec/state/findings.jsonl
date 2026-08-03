@@ -1,0 +1,5 @@
+{"ts":"2026-08-01T15:00:00","finding":"IndexedDbStorage 现状：DB_NAME=combat-debug-studio, DB_VERSION=1, 仅 recordings/snapshots 两个 store；实现 IPersistentStorage 端口（set/get/remove/keys/clear/keysByField/getStats）","source":"src/infrastructure/adapters/storage/IndexedDbStorage.ts"}
+{"ts":"2026-08-01T15:00:00","finding":"storage 入口导出 persistentStorage 单例 + migrateLegacyLocalStorage；migration 为 localStorage→IndexedDB 一次性迁移（cds:idb-migration-v1 标记）","source":"src/infrastructure/adapters/storage/index.ts, migration.ts"}
+{"ts":"2026-08-01T15:00:00","finding":"configs/ 数据域：skills(主动+被动)、buffs+effects、enemies(含 drops)、scenes(难度/rewards/requiredLevel)、formations(slots/effects)、materials(material/consumable)、params(global/validation/debug/balancing)","source":"configs/*.json"}
+{"ts":"2026-08-01T15:00:00","finding":"现有封神榜形态对话框：CharacterEditor(角色/属性/Buff)、CompendiumDialog(图鉴)、SceneManagementDialog(场景保存/加载/删除)；校验工具 schema-validator.ts 已存在","source":"src/presentation/views/components/*.vue, src/shared/utils/schema-validator.ts"}
+{"ts":"2026-08-01T15:00:00","finding":"总体设计文档第3章封神榜：八大数据域与配置文件映射；9.3 界面调整要求(M1)：顶部操作按钮按模块收敛——封神榜(角色编辑/图鉴/场景管理)","source":"documents/太初道枢总体设计.md"}

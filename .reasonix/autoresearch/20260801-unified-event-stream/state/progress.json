@@ -1,0 +1,18 @@
+{
+  "task_id": "20260801-unified-event-stream",
+  "goal": "结合《项目分析报告》与《统一战斗事件流方案.md》两份文档，有则改之无则加勉",
+  "status": "complete",
+  "scope": "核实两份文档论断与代码现状差异；用户决策：只修改文档，不执行代码改造",
+  "success_criteria": [
+    "对每条文档论断给出现状已修复/仍存在的结论，附 file:line 证据 — 达成（findings.jsonl 16 条 + §1.4 七条事实）",
+    "修订统一战斗事件流方案.md 使其反映代码现状 — 达成（v1.1）"
+  ],
+  "verification_gates": [
+    "typecheck/test — 不适用（本次只改文档，未动代码）",
+    "markdown 结构校验 — 通过（围栏配平/标题完整）"
+  ],
+  "findings": "三份 .mimocode/plans/ 归档计划已全部执行完毕（无则加勉）；统一事件流方案四大不一致点全部仍存在（有则改之，但用户决策只改文档）",
+  "pivots": 1,
+  "completion_summary": "documents/统一战斗事件流方案.md 从 v1.0 待评审修订为 v1.1 已评审：新增 §1.4 现状核对七条事实、修正 RecordedBattle 定义位置、ReplayEngine 死代码链、traceEvents 零读取方三处表述、§5.1/§7 消费端改造收敛到 BattleReplay.vue、P2 含死代码链清理、§8 补两条新风险",
+  "blockers": []
+}

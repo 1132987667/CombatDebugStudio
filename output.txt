@@ -55,7 +55,7 @@ src/
                 BuffTraceLogger.ts
                 EffectRenderer.ts
                 TraceDamageLogger.ts
-                TraceLogCollector.ts
+                TraceEventCollector.ts
             replay/
                 BattleReplayManager.ts
                 ReplayEngine.ts
@@ -112,7 +112,6 @@ src/
                 PoisonDebuff.ts
                 ShieldBuff.ts
                 SpeedReductionDebuff.ts
-                SpeedUpBuff.ts
                 StoneSkinBuff.ts
                 StrongPoisonDebuff.ts
                 StunDebuff.ts
@@ -130,6 +129,7 @@ src/
             types.ts
         port/
             IBattleLogManager.ts
+            IDebugTracePort.ts
             IDomainEventBus.ts
             IPersistentStorage.ts
             IUIEventPort.ts
@@ -262,7 +262,7 @@ src/
             projection.ts
             scene.ts
             status-meta.ts
-            trace-log.ts
+            trace-event.ts
         utils/
             attributeSync.ts
             Checksum.ts
@@ -799,6 +799,7 @@ The DDD migration was executed incrementally across these phases:
 ## Bug 修复 = 根因，不是表象
 报告中提到的只是一个表象。grep 你碰到的函数的**每个调用方**，然后修共享函数一次——一个 guard 在那里的 diff 比在每个调用方修一次小，只修报告里提到的那条路径会留下另一个调用方继续坏着。
 ## 石匠守则
+例外：大型重要功能需求可不完全遵守以下守则。
 - 不写没人要求的抽象层。
 - 不引入可避免的新依赖。
 - 不写没人要的样板代码。
@@ -1833,10 +1834,10 @@ export class LogTooltipResolver {
   private formatTriggerPhase(phase: string): string {
     return BattleTriggerPhaseName[phase as BattleTriggerPhase] ?? phase
   }
-  /** 格式化修饰符值 */
+  /** 格式化修饰符值 — value 已是百分数（10 = 10%），直接输出，不做 ×100 */
   private formatModifierValue(modifier: BuffJsonAuraModifier): string {
     if (modifier.value == null) return ''
-    const pct = Math.round(modifier.value * 100)
+    const pct = Math.round(modifier.value)
     const type = modifier.type === 'PERCENTAGE' ? '%' : ''
     return `${pct}${type}`
   }
@@ -3600,6 +3601,8 @@ import type {
 import { BattleStatus } from '@/domain/battle/type/types'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import type { BuffConfigLookup } from '@/domain/skill/types'
+import type { TraceScope } from '@/shared/types/trace-event'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import { BattleAIFactory, BattleAI } from '@/domain/battle/ai/BattleAI'
 /**
  * AI系统类
@@ -3610,6 +3613,14 @@ import { BattleAIFactory, BattleAI } from '@/domain/battle/ai/BattleAI'
 export class AISystem {
   /** AI实例存储映射，以参与者ID为键，用于缓存和复用 */
   private aiInstances = new Map<string, BattleAI>()
+  /** 调试追踪端口（由 BattleSystem 注入，转发给每个 AI 实例——含 getOrCreateAI 惰性创建的） */
+  private tracePort?: IDebugTracePort
+  /** 设置调试追踪端口（BattleSystem 初始化时注入） */
+  setTracePort(port: IDebugTracePort | null): void {
+    this.tracePort = port ?? undefined
+    // 已创建的实例立即生效
+    this.aiInstances.forEach((ai) => ai.setTracePort(this.tracePort ?? null))
+  }
   /** 技能管理器实例（通过构造函数注入） */
   private skillManager: SkillManager
   /** Buff 极性查询（由 BuffScriptRegistry 已解析配置提供，AI 技能标记不依赖 ID 前缀） */
@@ -3642,6 +3653,7 @@ export class AISystem {
         participant.getSkillList(),
         this.buffLookup,
       )
+      ai.setTracePort(this.tracePort ?? null)
       aiInstances.set(participant.id, ai)
       this.aiInstances.set(participant.id, ai)
     })
@@ -3661,6 +3673,8 @@ export class AISystem {
         participant.getSkillList(),
         this.buffLookup,
       )
+      // 惰性创建的实例同样注入追踪端口（AI_DECISION 事件不丢失）
+      ai.setTracePort(this.tracePort ?? null)
       this.aiInstances.set(participant.id, ai)
     }
     return ai
@@ -3675,12 +3689,13 @@ export class AISystem {
   public makeDecision(
     battleState: BattleState,
     participant: BattleEntity,
+    trace?: TraceScope,
   ): BattleAction {
     const ai = this.getOrCreateAI(participant)
     if (!ai) {
       throw new Error(`Failed to create AI for participant: ${participant.id}`)
     }
-    return ai.makeDecision(battleState, participant)
+    return ai.makeDecision(battleState, participant, trace)
   }
   /**
    * 移除单个AI实例
@@ -3715,13 +3730,18 @@ import {
   BATTLE_CONSTANTS,
 } from '@/domain/battle/type/types'
 import { EffectType } from '@/domain/skill/types'
+import { LogLevel } from '@/shared/types/battle-log'
 import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
+import type { TraceScope } from '@/shared/types/trace-event'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import type { SkillManager } from '@/domain/skill/SkillManager'
 import {
   AIPriorityStrategy,
   AIPriorityStrategyFactory,
   AI_STRATEGY,
+  type SkillWeight,
 } from '@/domain/battle/ai/AIPriorityStrategy'
 import {
   SkillConfig,
@@ -3734,17 +3754,19 @@ import type { BuffConfigLookup } from '@/domain/skill/types'
 export interface BattleAI {
   /** 设置上下文（Buff系统、技能管理器）*/
   setContext(buffSystem: BuffSystem, skillManager: SkillManager): void
+  /** 设置调试追踪端口（BattleSystem 创建 AI 实例后注入，AI_DECISION 事件用） */
+  setTracePort(port: IDebugTracePort | null): void
   /** 做出战斗决策 */
   makeDecision(
     battleState: BattleState,
     participant: BattleEntity,
+    /** 因果链作用域（文档 §4.5）— 由 BattleExecutor 传入，AI_DECISION 事件挂到根下 */
+    trace?: TraceScope,
   ): BattleAction
   /** 选择攻击目标 */
   selectTarget(battleState: BattleState, participant: BattleEntity): string
   /** 判断是否应该使用技能 */
   shouldUseSkill(participant: BattleEntity): boolean
-  /** 选择要使用的技能 */
-  selectSkill(participant: BattleEntity): string | null
   /** 选择普通攻击 */
   selectAttack(participant: BattleEntity): BattleAction
 }
@@ -3769,6 +3791,8 @@ export class BaseBattleAI implements BattleAI {
   protected buffSystem?: BuffSystem
   protected skillManager?: SkillManager
   protected priorityStrategy: AIPriorityStrategy
+  /** 调试追踪端口（由 BattleSystem 注入，AI_DECISION 事件用） */
+  protected tracePort?: IDebugTracePort
   constructor(
     skillIds?: string[],
     strategyName: string = AI_STRATEGY.BALANCED,
@@ -3785,6 +3809,10 @@ export class BaseBattleAI implements BattleAI {
   public setPriorityStrategy(strategyName: string): void {
     this.priorityStrategy =
       AIPriorityStrategyFactory.createStrategy(strategyName)
+  }
+  /** 设置追踪端口（BattleSystem 创建 AI 实例后注入） */
+  public setTracePort(port: IDebugTracePort | null): void {
+    this.tracePort = port ?? undefined
   }
   /** 获取当前优先级策略 */
   public getPriorityStrategy(): AIPriorityStrategy {
@@ -3811,42 +3839,119 @@ export class BaseBattleAI implements BattleAI {
   public makeDecision(
     battleState: BattleState,
     participant: BattleEntity,
+    trace?: TraceScope,
   ): BattleAction {
     try {
       if (!battleState || !participant) {
-        LoggerProvider.logger.addDebugLog('AI决策参数无效')
+        LoggerProvider.logger.addDebugLog('AI决策参数无效', { level: LogLevel.WARN })
         return this.selectAttack(participant)
       }
       const battleAnalysis = this.analyzeBattleState(battleState, participant)
       if (battleAnalysis.shouldUseSkill) {
-        const skillId = this.selectSkill(
-          participant,
-          battleState,
-          battleAnalysis,
-        )
-        console.log(`${participant.name} chose skill`, skillId)
+        // 计算候选权重（与 selectSkill 同源，供 AI_DECISION 事件携带）
+        const availableSkills: Skill[] = []
+        this.skills.forEach((skill) => {
+          if (skill.type === SkillType.PASSIVE) return
+          if (
+            participant.isSkillAvailable(skill.id) &&
+            this.canUseSkill(skill, participant)
+          ) {
+            availableSkills.push(skill)
+          }
+        })
+        const weights =
+          availableSkills.length > 0
+            ? this.priorityStrategy.calculateSkillWeights(
+                battleState,
+                participant,
+                availableSkills,
+              )
+            : []
+        const skillId = weights.length > 0 ? weights[0].skillId : null
+        this.emitAiDecision(trace, participant, battleAnalysis, weights, skillId)
         if (skillId) {
           try {
             return this.createSkillStep(battleState, participant, skillId)
           } catch (skillError) {
-            console.error('技能执行出错:', skillError)
-            LoggerProvider.logger.addDebugLog('Skill execution error')
+            LoggerProvider.logger.addDebugLog(`技能执行出错: ${String(skillError)}`, {
+              level: LogLevel.ERROR,
+            })
             return this.selectAttack(participant)
           }
         }
       }
+      // 普攻回退：也留下决策痕迹（weights 为空）
+      this.emitAiDecision(trace, participant, battleAnalysis, [], null)
       return this.selectAttack(participant)
     } catch (error) {
-      LoggerProvider.logger.addDebugLog('AI决策出错')
-      console.error('AI决策出错', error)
+      LoggerProvider.logger.addDebugLog(`AI决策出错: ${String(error)}`, {
+        level: LogLevel.ERROR,
+      })
       try {
         return this.selectAttack(participant)
       } catch (attackError) {
-        console.error('攻击执行出错:', attackError)
-        LoggerProvider.logger.addDebugLog('攻击执行出错')
+        LoggerProvider.logger.addDebugLog(`攻击执行出错: ${String(attackError)}`, {
+          level: LogLevel.ERROR,
+        })
       }
     }
     return this.selectAttack(participant)
+  }
+  /**
+   * 发射 AI_DECISION 追踪事件（文档 §5 示例 2）
+   * 决策即行动的起点——correlationId 来自 scope，挂到因果链根下
+   */
+  private emitAiDecision(
+    trace: TraceScope | undefined,
+    participant: BattleEntity,
+    battleAnalysis: BattleAnalysis,
+    weights: SkillWeight[],
+    selectedSkillId: string | null,
+  ): void {
+    if (!this.tracePort || !trace) return
+    if (!this.tracePort.isEnabled(TracePhase.AI_DECISION)) return
+    const selectedName = selectedSkillId
+      ? (this.skills.get(selectedSkillId)?.name ?? selectedSkillId)
+      : '普通攻击'
+    const energyCost = selectedSkillId
+      ? (this.skills.get(selectedSkillId)?.energyCost ?? 0)
+      : 0
+    const energyBefore = participant.currentEnergy
+    this.tracePort.emit(
+      createTraceEvent({
+        correlationId: trace.correlationId,
+        parentId: trace.parentId,
+        phase: TracePhase.AI_DECISION,
+        battleId: trace.meta?.battleId,
+        turn: trace.meta?.turn,
+        sourceId: participant.id,
+        level: TraceLevel.DEBUG,
+        summary:
+          `AI决策 ${participant.name} 选择【${selectedName}】` +
+          `${weights.length > 0 ? `(权重 ${weights[0].weight})` : ''}`,
+        payload: {
+          actorId: participant.id,
+          strategy: this.priorityStrategy.constructor.name,
+          analysis: {
+            teamHealthPercent: battleAnalysis.teamHealthPercent,
+            hasLowHealthAlly: battleAnalysis.hasLowHealthAlly,
+            highestThreat: battleAnalysis.highestThreatEnemy?.enemy
+              ? {
+                  id: battleAnalysis.highestThreatEnemy.enemy.id,
+                  value: battleAnalysis.highestThreatEnemy.threat,
+                }
+              : undefined,
+          },
+          weights: weights.map((w) => ({
+            skillId: w.skillId,
+            weight: w.weight,
+            breakdown: w.reason,
+          })),
+          selected: selectedSkillId ?? 'normal_attack',
+          energy: { before: energyBefore, cost: energyCost, after: Math.max(0, energyBefore - energyCost) },
+        },
+      }),
+    )
   }
   /** 分析战场状态 */
   protected analyzeBattleState(
@@ -3937,38 +4042,6 @@ export class BaseBattleAI implements BattleAI {
       }
     }
     return false
-  }
-  /** 选择要使用的技能 */
-  public selectSkill(
-    participant: BattleEntity,
-    battleState?: BattleState,
-    battleAnalysis?: BattleAnalysis,
-  ): string | null {
-    const availableSkills: Skill[] = []
-    this.skills.forEach((skill) => {
-      // ponytail: 跳过被动技能——被动由系统自动触发，不应出现在 AI 可选列表中
-      if (skill.type === SkillType.PASSIVE) return
-      if (
-        participant.isSkillAvailable(skill.id) &&
-        this.canUseSkill(skill, participant)
-      ) {
-        availableSkills.push(skill)
-      }
-    })
-    if (availableSkills.length === 0) return null
-    // Use priority strategy to select skill
-    if (battleState && battleAnalysis) {
-      const weights = this.priorityStrategy.calculateSkillWeights(
-        battleState,
-        participant,
-        availableSkills,
-      )
-      if (weights.length > 0) {
-        return weights[0].skillId
-      }
-    }
-    // Fallback: select first available skill
-    return availableSkills[0].id
   }
   /** 检查是否能使用技能 */
   private canUseSkill(skill: Skill, participant: BattleEntity): boolean {
@@ -4123,9 +4196,8 @@ export class AutoBattleManager {
       this.battleStateManager.syncBattleState()
       return true
     } catch (error) {
-      console.error('开始自动战斗时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
-      this.logger.addDebugLog(`开始自动战斗时出错: ${errorMsg}`)
+      this.logger.addDebugLog(`开始自动战斗时出错: ${errorMsg}`, { level: LogLevel.ERROR })
       return false
     }
   }
@@ -4141,9 +4213,8 @@ export class AutoBattleManager {
       this.battleStateManager.syncBattleState()
       return true
     } catch (error) {
-      console.error('停止自动战斗时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
-      this.logger.addDebugLog(`停止自动战斗时出错: ${errorMsg}`)
+      this.logger.addDebugLog(`停止自动战斗时出错: ${errorMsg}`, { level: LogLevel.ERROR })
       return false
     }
   }
@@ -4164,7 +4235,7 @@ export class AutoBattleManager {
     }
     // ⭐ 并发锁：防止快速连点导致两个 processTurn 异步并发执行
     if (this.isProcessing) {
-      this.logger.addDebugLog('已有单步执行进行中，忽略重复请求')
+      this.logger.addDebugLog('已有单步执行进行中，忽略重复请求', { level: LogLevel.WARN })
       return
     }
     this.isProcessing = true
@@ -4182,9 +4253,8 @@ export class AutoBattleManager {
         this.battleSystem.togglePause()
       }
     } catch (error) {
-      console.error('执行回合时出错:', error)
       const errorMsg = error instanceof Error ? error.message : String(error)
-      this.logger.addDebugLog(`执行回合时出错: ${errorMsg}`)
+      this.logger.addDebugLog(`执行回合时出错: ${errorMsg}`, { level: LogLevel.ERROR })
       // 出错时也暂停（仅在战斗仍活跃时）
       if (!this.battleSystem.getIsPaused() && this.battleSystem.isBattleInProgress()) {
         this.battleSystem.togglePause()
@@ -4412,6 +4482,7 @@ import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import type { Emitter } from 'mitt'
 import { GameDataProcessor } from '@/shared/utils/GameDataProcessor'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 /**
  * 战斗管理器
  * 负责协调各个子管理器，提供统一的接口给UI组件
@@ -4626,7 +4697,9 @@ export class BattleManager {
       this.emitTeamChanged()
       return { battleId: battleData.battleId }
     } catch (error) {
-      console.error('初始化队伍数据时出错:', error)
+      LoggerProvider.logger.addDebugLog(`初始化队伍数据时出错: ${String(error)}`, {
+        level: LogLevel.ERROR,
+      })
       throw error
     }
   }
@@ -4827,7 +4900,6 @@ export class BattleManager {
    * @param battleId 战斗 ID
    */
   setBattleId(battleId: string) {
-    console.log('BattleManager setBattleId', battleId)
     this.battleStateManager.setBattleId(battleId)
   }
   /**
@@ -4862,7 +4934,7 @@ export class BattleManager {
     const allyTeam = this.getEnabledAllyTeam()
     const enemyTeam = this.getEnabledEnemyTeam()
     if (allyTeam.length === 0 || enemyTeam.length === 0) {
-      LoggerProvider.logger.addDebugLog('队伍数据未初始化，请先添加角色到队伍')
+      LoggerProvider.logger.addDebugLog('队伍数据未初始化，请先添加角色到队伍', { level: LogLevel.WARN })
       return null
     }
     // 为队伍成员分配位置序号（支持阵型槽位）
@@ -5062,7 +5134,8 @@ import {
 } from '@/domain/battle/entity/BattleInterfaces'
 import { BattleParticipantImpl } from '@/domain/battle/entity/BattleParticipantImpl'
 import { BuffTraceLogger } from '@/domain/battle/logs/BuffTraceLogger'
-import { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import { TraceEventCollector } from '@/domain/battle/logs/TraceEventCollector'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import { BattleExecutor } from '@/domain/battle/service/BattleExecutor'
 import { BattleLifecycleManager } from '@/domain/battle/service/BattleLifecycleManager'
 import { BattleRecorder, type RecordedBattle } from '@/domain/battle/service/BattleRecorder'
@@ -5246,13 +5319,14 @@ export class BattleSystem {
     this.passiveSkillManager.setAnimationEnabledGetter(
       () => !this.shouldSuppressAnimationEvents(),
     )
-    // 树状调试日志收集器
-    this.traceCollector = new TraceLogCollector()
-    this.executor.setTraceCollector(this.traceCollector)
-    this.passiveSkillManager.setTraceCollector(this.traceCollector)
-    BuffTraceLogger.setCollector(this.traceCollector)
+    // 结构化调试追踪收集器（IDebugTracePort 实现）
+    this.traceCollector = new TraceEventCollector()
+    this.executor.setTracePort(this.traceCollector)
+    this.passiveSkillManager.setTracePort(this.traceCollector)
+    BuffTraceLogger.setTracePort(this.traceCollector)
+    BattleParticipantImpl.setTracePort(this.traceCollector)
   }
-  readonly traceCollector: TraceLogCollector
+  readonly traceCollector: TraceEventCollector
   /**
    * 获取触发器事件总线实例
    * @returns 触发器事件总线实例
@@ -5390,8 +5464,9 @@ export class BattleSystem {
     // 【防止跨战斗污染】设置当前活跃战斗 ID
     this.activeBattleId = battleData.battleId
     battleData.participants = participants
-    console.log('初始化战斗数据', battleData)
     battleData.aiInstances = this.aiSystem.createAIInstances(participants)
+    // P1: 注入调试追踪端口（AI_DECISION 事件用；AISystem 负责转发到每个 AI 实例，含惰性创建的）
+    this.aiSystem.setTracePort(this.traceCollector)
     battleData.skillManager = this.skillManager
     battleData.currentTurn = 0
     battleData.currentTurn = 1
@@ -5788,6 +5863,29 @@ export class BattleSystem {
     const aliveParticipants = Array.from(battle.participants.values()).filter(
       (p) => p.isAlive(),
     )
+    // P1: TURN_FLOW 事件 — 回合开始（文档 §5 示例 5）
+    if (this.traceCollector.isEnabled(TracePhase.TURN_FLOW)) {
+      const aliveByTeam = { ally: 0, enemy: 0 }
+      aliveParticipants.forEach((p) => {
+        if (p.team === ParticipantSide.ALLY) aliveByTeam.ally++
+        else aliveByTeam.enemy++
+      })
+      this.traceCollector.emit(
+        createTraceEvent({
+          correlationId: `turn_${battle.currentTurn ?? 1}`,
+          phase: TracePhase.TURN_FLOW,
+          battleId: battle.battleId,
+          turn: battle.currentTurn,
+          level: TraceLevel.INFO,
+          summary: `回合 ${battle.currentTurn} 开始`,
+          payload: {
+            action: 'TURN_START',
+            aliveCount: aliveByTeam,
+            energyGain: this.ruleManager.getCombatRules().energyGainPerTurn,
+          },
+        }),
+      )
+    }
     try {
       // 触发回合开始事件
       aliveParticipants.forEach((participant) => {
@@ -5823,9 +5921,6 @@ export class BattleSystem {
       aliveParticipants.forEach((participant) => {
         participant.gainEnergy(combatRules.energyGainPerTurn)
       })
-      LoggerProvider.logger.addDebugLog(
-        '角色能量增加: ' + combatRules.energyGainPerTurn,
-      )
       // 【脏标记流控】回合开始前批量预计算所有参与者属性
       aliveParticipants.forEach((participant) => {
         if (
@@ -5847,7 +5942,6 @@ export class BattleSystem {
       const battleId = battle.battleId
       this.battleRecorder.recordTurnStart(battleId, 1, currentTurnOrder[0]!)
       for (let i = 0; i < currentTurnOrder.length; i++) {
-        console.log('当前回合 顺序', i, currentTurnOrder)
         await this.animationManager.waitForAnimation()
         // 【竞态条件防护】检查战斗状态是否仍然有效
         if (battle.battleState !== BattleStatus.ACTIVE) {
@@ -5868,6 +5962,7 @@ export class BattleSystem {
           await this.executor.executeParticipantAction(battle, participant)
         } catch (error) {
           LoggerProvider.logger.addDebugLog('角色行动执行出错:', {
+            level: LogLevel.ERROR,
             error: error as Error,
           })
           await this.executor.executeDefaultAction(battle, participant)
@@ -5886,12 +5981,7 @@ export class BattleSystem {
         if (battle.battleState !== BattleStatus.ACTIVE) {
           return
         }
-        // 打印当前所有参战角色气血
-        battle.participants.forEach((participant) => {
-          console.log(
-            `角色 ${participant.name} 当前气血: ${participant.getAttribute(ATTRIBUTE_CODE.currentHealth)}/${participant.getAttribute(ATTRIBUTE_CODE.maxHealth)}`,
-          )
-        })
+        // TODO(P1): 属性重算事件（ATTRIBUTE_RECALC）落地后，气血变化由事件链可见，此打印删除
       }
       await this.animationManager.waitForAnimation()
       // 【竞态条件防护】检查战斗状态是否仍然有效
@@ -5983,6 +6073,20 @@ export class BattleSystem {
         })
       }
       battle.roundState = RoundStatus.END
+      // P1: TURN_FLOW 事件 — 回合结束（文档 §5 示例 5）
+      if (this.traceCollector.isEnabled(TracePhase.TURN_FLOW)) {
+        this.traceCollector.emit(
+          createTraceEvent({
+            correlationId: `turn_${battle.currentTurn ?? 1}`,
+            phase: TracePhase.TURN_FLOW,
+            battleId: battle.battleId,
+            turn: battle.currentTurn,
+            level: TraceLevel.INFO,
+            summary: `回合 ${battle.currentTurn} 结束`,
+            payload: { action: 'TURN_END' },
+          }),
+        )
+      }
       this.battleRecorder.recordTurnEnd(battleId, battle.currentTurn || 1)
       battle.currentTurn++
     } catch (error) {
@@ -5990,7 +6094,6 @@ export class BattleSystem {
         level: LogLevel.ERROR,
         error: error as Error,
       })
-      console.error('处理回合时出错:', error)
     } finally {
       this.animationManager.cleanupAnimationState()
     }
@@ -6086,9 +6189,9 @@ export class BattleSystem {
    * @param winner - 胜利者类型
    */
   public async endBattle(winner: ParticipantSide): Promise<void> {
-    // 战斗结束前将树状调试日志写入 BattleRecorder
+    // 战斗结束前将结构化调试追踪事件写入 BattleRecorder
     if (this.battleData) {
-      this.battleRecorder.recordTraceLogs(
+      this.battleRecorder.recordTraceEvents(
         this.battleData.battleId,
         this.traceCollector.exportAll(),
       )
@@ -6316,7 +6419,7 @@ export class BattleSystem {
    * 回合执行事件
    */
   public onTurnExecuted(turnNumber: number): void {
-    LoggerProvider.logger.addDebugLog(`回合 ${turnNumber} 执行完成`)
+    // TODO(P1): TURN_FLOW 事件（文档 §5 示例 5）落地后覆盖回合流转信息
   }
   /**
    * 获取当前战斗数据
@@ -6936,6 +7039,7 @@ import {
   ModifierType,
 } from '@/domain/attribute/types'
 import { ParticipantStats } from '@/domain/battle/entity/ParticipantStats'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import type { BuffQuery } from '@/domain/buff/types'
 import { ParticipantSkills } from '@/domain/battle/entity/ParticipantSkills'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
@@ -6988,6 +7092,10 @@ export class BattleParticipantImpl implements BattleEntity {
   private skillManager: ParticipantSkills
   /** 属性缓存 Map */
   private stats = new ParticipantStats()
+  /** 静态转发调试追踪端口到 ParticipantStats（实体深埋，见 ParticipantStats.setTracePort） */
+  static setTracePort(port: IDebugTracePort | null): void {
+    ParticipantStats.setTracePort(port)
+  }
   /**
    * 属性版本戳，直接映射到 stats.version。
    * ponytail: 统一原本两套独立的版本号（_statsVersion + stats.version）为一套，
@@ -7884,8 +7992,17 @@ export class ParticipantSkills {
 import { ATTRIBUTE_CODE, type AttributeValue, getAttrMeta, getAttrDv } from '@/domain/attribute/types'
 import { ModifierType, ModifierSourceType, type Modifier } from '@/domain/attribute/types'
 import { round } from '@/shared/utils/math'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 export class ParticipantStats {
   readonly attributes = new Map<ATTRIBUTE_CODE, AttributeValue>()
+  /** P1: 调试追踪端口（静态注入——实体深埋于参与者内部，经 BattleParticipantImpl.setTracePort 转发） */
+  private static tracePort: IDebugTracePort | null = null
+  private static recalcSeq = 0
+  /** 设置调试追踪端口（BattleSystem 初始化时注入） */
+  static setTracePort(port: IDebugTracePort | null): void {
+    ParticipantStats.tracePort = port
+  }
   /** 全局版本号，每次变化递增 */
   private version: number = 0
   /** 获取当前版本号（供外部比对） */
@@ -7998,7 +8115,25 @@ export class ParticipantStats {
     // ponytail: 加成属性（attackBonus/healthBonus）已在 enemyToParticipant 中作为
     // PERCENTAGE 修饰符注入到对应属性，此处不再重复处理。
     const value = ((attrData.base + additive) * percentMultiplier / 100 * independentMultiplier / 100) * finalMultiplier / 100
-    attrData.value = round(value, 2)
+    const before = attrData.value
+    const after = round(value, 2)
+    attrData.value = after
+    // P1: ATTRIBUTE_RECALC 事件（trace 级高频，文档 §5 示例 4）
+    if (ParticipantStats.tracePort?.isEnabled(TracePhase.ATTRIBUTE_RECALC)) {
+      ParticipantStats.tracePort.emit(
+        createTraceEvent({
+          correlationId: `attr_recalc_${attrCode}_${++ParticipantStats.recalcSeq}`,
+          phase: TracePhase.ATTRIBUTE_RECALC,
+          level: TraceLevel.TRACE,
+          summary: `属性重算 ${attrCode} ${before} → ${after}`,
+          payload: {
+            attribute: attrCode,
+            before: { final: before },
+            after: { final: after },
+          },
+        }),
+      )
+    }
     // 记录计算拆解
     attrData.breakdown = {
       base: attrData.base,
@@ -8164,26 +8299,25 @@ export class BattleSummaryGenerator {
 --- src/domain/battle/logs/BuffTraceLogger.ts ---
 /**
  * 文件: BuffTraceLogger.ts
- * 功能: 技术调试日志 — Buff 变更追踪
- * 描述: 在 Buff 施加/移除/属性变更时输出 TraceLogEntry 到 TraceLogCollector，
- *       同时保留 TRACE 级别文本日志。
- * 版本: 2.0.0
+ * 功能: 技术调试日志 — Buff 生命周期追踪
+ * 描述: 在 Buff 施加/移除/层数变更/修饰符变更时输出 TraceEvent 到 TraceEventCollector。
+ *       level 定级 debug（文档 §6.3），TRACE 只留给高频细节与"跳过"记录。
+ *       correlationId 从调用链 context.trace 取（文档 §4.5），未传入时退化为自建命名。
+ * 版本: 3.1.0
  */
-import { LogLevel } from '@/shared/types/battle-log'
-import { LoggerProvider } from '@/domain/port/LoggerProvider'
-import { createTraceLogEntry } from '@/shared/types/trace-log'
-import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import { createTraceEvent, TraceLevel, TracePhase, type TraceScope } from '@/shared/types/trace-event'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 /**
- * Buff 变更追踪器
+ * Buff 生命周期追踪器
  * 纯静态方法，在 BuffSystem 的关键路径上调用。
  */
 export class BuffTraceLogger {
   private static counter = 0
-  /** 可选的 TraceLogCollector（由 BattleSystem 注入） */
-  private static collector: TraceLogCollector | null = null
-  /** 设置 TraceLogCollector 实例 */
-  static setCollector(c: TraceLogCollector | null): void {
-    this.collector = c
+  /** 可选的 IDebugTracePort（由 BattleSystem 注入） */
+  private static tracePort: IDebugTracePort | null = null
+  /** 设置 IDebugTracePort 实例 */
+  static setTracePort(port: IDebugTracePort | null): void {
+    this.tracePort = port
   }
   /**
    * Buff 施加时调用
@@ -8195,27 +8329,31 @@ export class BuffTraceLogger {
     stacks: number,
     duration: number,
     parentTraceId?: string,
+    trace?: TraceScope,
   ): void {
     const id = ++this.counter
-    const traceId = `buff_apply_${id}`
-    LoggerProvider.logger.addDebugLog(
-      `[${id}] BUFF_APPLY ${buffName}→${characterId} |` +
-      ` instance=${instanceId} stack=${stacks} duration=${duration}`,
-      { level: LogLevel.TRACE },
-    )
-    if (this.collector) {
-      this.collector.add({
-        ...createTraceLogEntry(
-          traceId,
-          parentTraceId,
-          'buff_apply',
-          stacks,
-          `施加 【${buffName}】 (层数 ${stacks}, 持续 ${duration >= 0 ? duration + '回合' : '永久'})`,
-          1,
-        ),
-        source: characterId,
-        target: characterId,
-      })
+    if (this.tracePort && this.tracePort.isEnabled(TracePhase.BUFF_LIFECYCLE)) {
+      this.tracePort.emit(
+        createTraceEvent({
+          correlationId: trace?.correlationId ?? `buff_apply_${id}`,
+          phase: TracePhase.BUFF_LIFECYCLE,
+          parentId: trace?.parentId ?? parentTraceId,
+          battleId: trace?.meta?.battleId,
+          turn: trace?.meta?.turn,
+          sourceId: characterId,
+          targetId: characterId,
+          level: TraceLevel.DEBUG,
+          summary:
+            `施加 【${buffName}】 (层数 ${stacks}, 持续 ${duration >= 0 ? duration + '回合' : '永久'})`,
+          payload: {
+            buffName,
+            instanceId,
+            action: 'APPLY',
+            stacks,
+            duration,
+          },
+        }),
+      )
     }
   }
   /**
@@ -8226,26 +8364,28 @@ export class BuffTraceLogger {
     buffName: string,
     instanceId: string,
     parentTraceId?: string,
+    trace?: TraceScope,
   ): void {
     const id = ++this.counter
-    const traceId = `buff_remove_${id}`
-    LoggerProvider.logger.addDebugLog(
-      `[${id}] BUFF_REMOVE ${buffName}→${characterId} | instance=${instanceId}`,
-      { level: LogLevel.TRACE },
-    )
-    if (this.collector) {
-      this.collector.add({
-        ...createTraceLogEntry(
-          traceId,
-          parentTraceId,
-          'buff_remove',
-          0,
-          `移除 【${buffName}】`,
-          1,
-        ),
-        source: characterId,
-        target: characterId,
-      })
+    if (this.tracePort && this.tracePort.isEnabled(TracePhase.BUFF_LIFECYCLE)) {
+      this.tracePort.emit(
+        createTraceEvent({
+          correlationId: trace?.correlationId ?? `buff_remove_${id}`,
+          phase: TracePhase.BUFF_LIFECYCLE,
+          parentId: trace?.parentId ?? parentTraceId,
+          battleId: trace?.meta?.battleId,
+          turn: trace?.meta?.turn,
+          sourceId: characterId,
+          targetId: characterId,
+          level: TraceLevel.DEBUG,
+          summary: `移除 【${buffName}】`,
+          payload: {
+            buffName,
+            instanceId,
+            action: 'REMOVE',
+          },
+        }),
+      )
     }
   }
   /**
@@ -8259,27 +8399,31 @@ export class BuffTraceLogger {
     newStacks: number,
     remainingTurns: number,
     parentTraceId?: string,
+    trace?: TraceScope,
   ): void {
     const id = ++this.counter
-    const traceId = `buff_update_${id}`
-    LoggerProvider.logger.addDebugLog(
-      `[${id}] BUFF_UPDATE ${buffName}→${characterId} |` +
-      ` instance=${instanceId} stack=${oldStacks}→${newStacks} remain=${remainingTurns}`,
-      { level: LogLevel.TRACE },
-    )
-    if (this.collector) {
-      this.collector.add({
-        ...createTraceLogEntry(
-          traceId,
-          parentTraceId,
-          'buff_update',
-          newStacks - oldStacks,
-          `【${buffName}】 层数 ${oldStacks}→${newStacks}`,
-          1,
-        ),
-        source: characterId,
-        target: characterId,
-      })
+    if (this.tracePort && this.tracePort.isEnabled(TracePhase.BUFF_LIFECYCLE)) {
+      this.tracePort.emit(
+        createTraceEvent({
+          correlationId: trace?.correlationId ?? `buff_update_${id}`,
+          phase: TracePhase.BUFF_LIFECYCLE,
+          parentId: trace?.parentId ?? parentTraceId,
+          battleId: trace?.meta?.battleId,
+          turn: trace?.meta?.turn,
+          sourceId: characterId,
+          targetId: characterId,
+          level: TraceLevel.DEBUG,
+          summary: `【${buffName}】 层数 ${oldStacks}→${newStacks}`,
+          payload: {
+            buffName,
+            instanceId,
+            action: 'UPDATE',
+            oldStacks,
+            newStacks,
+            remainingTurns,
+          },
+        }),
+      )
     }
   }
   /**
@@ -8292,27 +8436,30 @@ export class BuffTraceLogger {
     valueStr: string,
     currentTotal: number,
     parentTraceId?: string,
+    trace?: TraceScope,
   ): void {
     const id = ++this.counter
-    const traceId = `buff_mod_${id}`
-    LoggerProvider.logger.addDebugLog(
-      `[${id}] BUFF_MOD ${buffName}→${characterId} |` +
-      ` attr=${attribute} mod=${valueStr} total=${currentTotal}`,
-      { level: LogLevel.TRACE },
-    )
-    if (this.collector) {
-      this.collector.add({
-        ...createTraceLogEntry(
-          traceId,
-          parentTraceId,
-          'buff_modifier',
-          currentTotal,
-          `【${buffName}】 ${attribute} ${valueStr}`,
-          1,
-        ),
-        source: characterId,
-        target: characterId,
-      })
+    if (this.tracePort && this.tracePort.isEnabled(TracePhase.BUFF_LIFECYCLE)) {
+      this.tracePort.emit(
+        createTraceEvent({
+          correlationId: trace?.correlationId ?? `buff_mod_${id}`,
+          phase: TracePhase.BUFF_LIFECYCLE,
+          parentId: trace?.parentId ?? parentTraceId,
+          battleId: trace?.meta?.battleId,
+          turn: trace?.meta?.turn,
+          sourceId: characterId,
+          targetId: characterId,
+          level: TraceLevel.DEBUG,
+          summary: `【${buffName}】 ${attribute} ${valueStr}`,
+          payload: {
+            buffName,
+            action: 'MODIFIER',
+            attribute,
+            value: valueStr,
+            currentTotal,
+          },
+        }),
+      )
     }
   }
 }
@@ -8769,34 +8916,33 @@ export class RoundNarrativeRenderer {
 /**
  * 文件: TraceDamageLogger.ts
  * 功能: 技术调试日志 — 伤害计算链路追踪
- * 描述: 将 CombatRecord.damageBreakdown 结构化为 TraceLogEntry 树。
- *       输出到 TraceLogCollector 供 UI 树状展示。
- *       保留 DEBUG 摘要行作为快速参考。
- * 版本: 2.0.0
+ * 描述: 将 CombatRecord.damageBreakdown 结构化为 TraceEvent 输出到 TraceEventCollector。
+ *       v2 起不再为每个步骤建树节点——steps 整体进 payload.steps（与 DamageBreakdown 同源直出），
+ *       UI 展开 payload 表格查看逐步 before→after。
+ *       DEBUG 摘要行（DMG_SUM）保留待 P0 迁移。
+ * 版本: 3.0.0
  */
-import type { CombatRecord, DamageBreakdown, DamageStep } from '@/domain/battle/combat-record'
-import { LogLevel } from '@/shared/types/battle-log'
-import { LoggerProvider } from '@/domain/port/LoggerProvider'
-import { createTraceLogEntry } from '@/shared/types/trace-log'
-import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import type { CombatRecord } from '@/domain/battle/combat-record'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 /**
  * 伤害计算链路追踪器
- * 将伤害拆解信息输出到 TraceLogCollector 和调试日志
+ * 将伤害拆解信息输出到 TraceEventCollector 和调试日志
  */
 export class TraceDamageLogger {
   private static traceCounter = 0
   /**
-   * 记录伤害计算链路到 TraceLogCollector（树状）
+   * 记录伤害计算链路到 TraceEventCollector（结构化事件）
    * 同时输出 DEBUG 摘要行到传统日志
    *
    * @param record - 战斗记录（含 damageBreakdown）
-   * @param collector - TraceLogCollector 实例
-   * @param rootTraceId - 父攻击动作的 traceId（可选，不传则自建根 traceId）
-   * @param parentTraceId - 父节点的 traceId（可选，用于挂到攻击树）
+   * @param tracePort - IDebugTracePort 实例（未注入时为 no-op）
+   * @param rootTraceId - 父攻击动作的关联键（可选，不传则自建）
+   * @param parentTraceId - 父事件的 id（可选，用于挂到行动树）
    */
   static log(
     record: CombatRecord,
-    collector?: TraceLogCollector,
+    tracePort?: IDebugTracePort,
     rootTraceId?: string,
     parentTraceId?: string,
   ): void {
@@ -8805,188 +8951,212 @@ export class TraceDamageLogger {
     const source = record.actorName
     const target = record.targetName ?? 'unknown'
     const turn = record.turn
-    // === DEBUG 摘要行（始终输出） ===
-    const defMul = breakdown.defenseMultiplier ?? 1
-    const defReduction = ((1 - defMul) * 100).toFixed(2)
-    const skillInfo = record.skillName ? ` skill=${record.skillName}` : ''
-    LoggerProvider.logger.addDebugLog(
-      `DMG_SUM ${source}→${target} |` +
-      ` base=${breakdown.baseDamage} final=${breakdown.finalDamage}` +
-      ` crit=${breakdown.isCritical} defRed=${defReduction}%${skillInfo}`,
-      { level: LogLevel.DEBUG },
-    )
-    // 没有 collector 时跳过树输出
-    if (!collector) return
-    // === 树状 TraceLogEntry ===
-    const dmgTraceId = rootTraceId ?? `trace_dmg_${++this.traceCounter}`
-    const actionName = record.skillName || '普通攻击'
-    // 根节点：伤害计算
-    collector.add({
-      ...createTraceLogEntry(dmgTraceId, parentTraceId, actionName, breakdown.finalDamage, `${source}→${target} 伤害计算`, 0),
-      turn,
-      source: record.actorId,
-      target: record.targetId,
-    })
-    // 步骤：从 DamageBreakdown.steps 生成子节点
-    if (breakdown.steps && breakdown.steps.length > 0) {
-      for (let i = 0; i < breakdown.steps.length; i++) {
-        const step = breakdown.steps[i]
-        const stepTraceId = `${dmgTraceId}_${step.stepName}_${i}`
-        collector.add({
-          ...createTraceLogEntry(
-            stepTraceId,
-            dmgTraceId,
-            step.stepName,
-            step.value,
-            step.description,
-            1,
-          ),
+    // 没有 tracePort 时跳过事件输出
+    if (!tracePort) return
+    // === 结构化 TraceEvent（替换树状 TraceLogEntry） ===
+    // TODO(P1): scope 机制（文档 §4.5）落地后，correlationId 改从 context.trace 取
+    const correlationId = rootTraceId ?? `trace_dmg_${++this.traceCounter}`
+    const final = breakdown.finalDamage
+    if (tracePort.isEnabled(TracePhase.DAMAGE_CALCULATION)) {
+      tracePort.emit(
+        createTraceEvent({
+          correlationId,
+          phase: TracePhase.DAMAGE_CALCULATION,
+          parentId: parentTraceId,
+          battleId: record.battleId,
           turn,
-          source: record.actorId,
-          target: record.targetId,
-          // ★ 效果链数据：传透 before/after/sourceType 供 UI 展示
-          before: step.before,
-          after: step.after,
-          sourceType: step.sourceType,
-        })
-      }
+          sourceId: record.actorId,
+          targetId: record.targetId,
+          level: TraceLevel.DEBUG,
+          summary:
+            `伤害计算 ${source}→${target} ${breakdown.baseDamage}→${final}` +
+            `${breakdown.isCritical ? ' ★暴击' : ''}`,
+          payload: {
+            sourceId: record.actorId,
+            targetId: record.targetId,
+            skillName: record.skillName,
+            base: breakdown.baseDamage,
+            raw: breakdown.rawDamage ?? breakdown.postCritDamage,
+            final,
+            crit: {
+              rate: breakdown.critRate,
+              multiplier: breakdown.critMultiplier,
+              triggered: breakdown.isCritical,
+            },
+            category: breakdown.damageCategory,
+            steps: breakdown.steps, // 直接复用 DamageStep[]（含 before/after）
+          },
+        }),
+      )
     }
-    // 防御减免详情（步骤未覆盖时补充）
-    if (!breakdown.steps?.some((s) => s.stepName === 'defense' || s.stepName === 'Defense')) {
-      const defTraceId = `${dmgTraceId}_defense`
-      const defRedPct = ((1 - defMul) * 100).toFixed(2)
-      collector.add({
-        ...createTraceLogEntry(
-          defTraceId,
-          dmgTraceId,
-          'defense',
-          breakdown.effectiveDefense ?? breakdown.defenseValue,
-          `防御减免 ${defRedPct}% (def=${breakdown.defenseValue})`,
-          1,
-        ),
-        turn,
-        source: record.actorId,
-        target: record.targetId,
-      })
-    }
-    // 结果行
-    const resultTraceId = `${dmgTraceId}_result`
-    collector.add({
-      ...createTraceLogEntry(
-        resultTraceId,
-        dmgTraceId,
-        'result',
-        breakdown.finalDamage,
-        `★ 最终伤害: ${breakdown.finalDamage}`,
-        1,
-      ),
-      turn,
-      source: record.actorId,
-      target: record.targetId,
-    })
   }
 }
 
---- src/domain/battle/logs/TraceLogCollector.ts ---
+--- src/domain/battle/logs/TraceEventCollector.ts ---
 /**
- * 文件: TraceLogCollector.ts
- * 功能: 树状调试日志收集器
- * 描述: 收集并索引 TraceLogEntry，按 traceId 存储、按 parentTraceId 重建树。
- *       挂在 BattleRecorder 上随 RecordedBattle 持久化，通过 eventBus 发 TRACE_LOG_ADDED 供 UI 实时追加。
- *
- * 使用方式（由 BattleSystem 在初始化时创建并注入）：
- *   const collector = new TraceLogCollector(eventBus)
- *   collector.add(entry)
- *   const tree = collector.getTree(rootTraceId)
- *   const results = collector.query({ turn: 1, phase: 'TURN_START' })
+ * 文件: TraceEventCollector.ts
+ * 功能: 结构化调试追踪事件收集器（IDebugTracePort 实现 + 查询能力）
+ * 描述: 唯一 trace 收集管道（替换式迁移，无新旧并存）。
+ *       - 发射侧：实现 IDebugTracePort（emit/isEnabled/beginScope）
+ *       - 查询侧：id/correlationId/phase/battleId/turn 索引，树重建，UI 消费
+ *       emit 永不抛异常（调试日志的失败绝不能中断战斗）。
+ * 使用方式（由 BattleSystem 初始化时创建并注入）：
+ *   const collector = new TraceEventCollector(eventBus?)
+ *   collector.emit(event)
+ *   const roots = collector.getRootsByTurn(turn)
+ *   const results = collector.query({ phase: 'damage_calculation' })
  */
-import type { TraceLogEntry } from '@/shared/types/trace-log'
 import type { IDomainEventBus } from '@/domain/port/IDomainEventBus'
-/** TRACE_LOG_ADDED 事件名称常量 */
-export const TRACE_LOG_ADDED = 'TRACE_LOG_ADDED'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
+import type {
+  TraceEvent,
+  TraceEventNode,
+  TracePhase,
+  TraceScope,
+  TraceScopeMeta,
+} from '@/shared/types/trace-event'
+/** TRACE_EVENT_ADDED 事件名称常量 */
+export const TRACE_EVENT_ADDED = 'TRACE_EVENT_ADDED'
 export interface TraceQuery {
   turn?: number
   phase?: string
+  battleId?: string
   actorId?: string
-  stepName?: string
+  level?: string
   limit?: number
 }
-export class TraceLogCollector {
-  /** 所有条目按 traceId 索引 */
-  private entries = new Map<string, TraceLogEntry>()
-  /** 按回合索引（turn → traceId[]） */
+export class TraceEventCollector implements IDebugTracePort {
+  /** 所有条目按 id 索引 */
+  private entries = new Map<string, TraceEvent>()
+  /** 按回合索引（turn → id[]） */
   private byTurn = new Map<number, string[]>()
+  /** 按 phase 索引（phase → id[]） */
+  private byPhase = new Map<string, string[]>()
+  /** 按 battleId 索引（battleId → id[]） */
+  private byBattle = new Map<string, string[]>()
   /** 事件总线（用于实时推送） */
   private eventBus?: IDomainEventBus
   private counter = 0
   constructor(eventBus?: IDomainEventBus) {
     this.eventBus = eventBus
   }
+  // ───────────────────────── IDebugTracePort ─────────────────────────
   /**
-   * 添加一条 TraceLogEntry
+   * 该 phase 是否开启追踪
+   * 默认全开；P3 按 TracePhase 细粒度门控（文档 §7 第四层）
    */
-  add(entry: TraceLogEntry): void {
-    const traceId = entry.traceId || `trace_${++this.counter}`
-    const indexed: TraceLogEntry = { ...entry, traceId }
-    this.entries.set(traceId, indexed)
-    // 按回合索引
-    const turn = typeof entry.turn === 'number' ? entry.turn : parseInt(String(entry.turn), 10) || 0
-    if (!this.byTurn.has(turn)) {
-      this.byTurn.set(turn, [])
-    }
-    this.byTurn.get(turn)!.push(traceId)
-    // 实时推送
-    if (this.eventBus) {
-      this.eventBus.emit(TRACE_LOG_ADDED, indexed)
-    }
+  isEnabled(_phase: TracePhase): boolean {
+    return true
   }
   /**
-   * 批量添加
+   * 开启一个因果链作用域（文档 §4.5）
    */
-  addAll(entries: TraceLogEntry[]): void {
-    for (const e of entries) {
-      this.add(e)
+  beginScope(
+    correlationId: string,
+    phase: TracePhase,
+    meta?: TraceScopeMeta,
+    parentId?: string,
+  ): TraceScope {
+    const scope: TraceScope = {
+      correlationId,
+      phase,
+      parentId,
+      meta,
+      child: (childPhase: TracePhase, childParentId?: string): TraceScope => ({
+        ...scope,
+        phase: childPhase,
+        parentId: childParentId ?? scope.parentId,
+      }),
     }
+    return scope
   }
   /**
-   * 根据 rootTraceId 重建树（递归）
-   * 返回根节点及其所有后代（children 填充）
+   * 发射一条追踪事件 — 永不抛异常，返回事件 id（供子事件挂 parentId）
    */
-  getTree(rootTraceId: string): TraceLogEntry | null {
-    const root = this.entries.get(rootTraceId)
+  emit(event: TraceEvent): string {
+    try {
+      const id = event.id || `evt_${++this.counter}`
+      // 防御：重复 id 静默跳过，避免静默覆盖破坏已有树（正常流程 id 由 createTraceEvent 唯一生成）
+      if (this.entries.has(id)) return id
+      const indexed: TraceEvent = { ...event, id }
+      this.entries.set(id, indexed)
+      // 按回合索引
+      const turn = typeof indexed.turn === 'number' ? indexed.turn : 0
+      if (!this.byTurn.has(turn)) this.byTurn.set(turn, [])
+      this.byTurn.get(turn)!.push(id)
+      // 按 phase 索引
+      if (!this.byPhase.has(indexed.phase)) this.byPhase.set(indexed.phase, [])
+      this.byPhase.get(indexed.phase)!.push(id)
+      // 按 battleId 索引
+      if (indexed.battleId) {
+        if (!this.byBattle.has(indexed.battleId)) {
+          this.byBattle.set(indexed.battleId, [])
+        }
+        this.byBattle.get(indexed.battleId)!.push(id)
+      }
+      // 实时推送（无 eventBus 时为 no-op）
+      if (this.eventBus) {
+        this.eventBus.emit(TRACE_EVENT_ADDED, indexed)
+      }
+      return id
+    } catch {
+      // 调试日志的失败绝不能中断战斗（文档 §7 关键约束）
+      return event.id ?? ''
+    }
+  }
+  // ───────────────────────── 查询能力 ─────────────────────────
+  /**
+   * 根据根事件 id 重建树（递归）
+   */
+  getTree(rootId: string): TraceEventNode | null {
+    const root = this.entries.get(rootId)
     if (!root) return null
-    const buildChildren = (parentId: string): TraceLogEntry[] => {
-      const children: TraceLogEntry[] = []
+    const buildChildren = (parentId: string): TraceEventNode[] => {
+      const children: TraceEventNode[] = []
       for (const entry of this.entries.values()) {
-        if (entry.parentTraceId === parentId) {
+        if (entry.parentId === parentId) {
           children.push({
             ...entry,
-            children: buildChildren(entry.traceId),
+            children: buildChildren(entry.id),
           })
         }
       }
-      // 按 indentLevel 排序
-      children.sort((a, b) => a.indentLevel - b.indentLevel)
       return children
     }
-    return { ...root, children: buildChildren(rootTraceId) }
+    return { ...root, children: buildChildren(rootId) }
   }
   /**
-   * 查询符合条件的条目（扁平结果）
+   * 查询符合条件的条目（扁平结果，turn/phase/battleId 走索引交集）
+   * 某维度有条件但索引无结果时返回空数组（不静默丢弃条件）
    */
-  query(query: TraceQuery): TraceLogEntry[] {
-    let results = Array.from(this.entries.values())
+  query(query: TraceQuery): TraceEvent[] {
+    let ids: string[] | null = null
     if (query.turn != null) {
       const turnIds = this.byTurn.get(query.turn)
       if (!turnIds) return []
-      const idSet = new Set(turnIds)
-      results = results.filter((e) => idSet.has(e.traceId))
+      ids = turnIds
     }
+    if (query.phase) {
+      const phaseIds = this.byPhase.get(query.phase)
+      if (!phaseIds) return []
+      ids = ids === null ? phaseIds : this.intersectIds(ids, phaseIds)
+    }
+    if (query.battleId) {
+      const battleIds = this.byBattle.get(query.battleId)
+      if (!battleIds) return []
+      ids = ids === null ? battleIds : this.intersectIds(ids, battleIds)
+    }
+    if (ids === null) ids = Array.from(this.entries.keys())
+    let results = ids
+      .map((id) => this.entries.get(id)!)
+      .filter((e): e is TraceEvent => !!e)
     if (query.actorId) {
-      results = results.filter((e) => e.source === query.actorId || e.target === query.actorId)
+      results = results.filter(
+        (e) => e.sourceId === query.actorId || e.targetId === query.actorId,
+      )
     }
-    if (query.stepName) {
-      results = results.filter((e) => e.stepName === query.stepName)
+    if (query.level) {
+      results = results.filter((e) => e.level === query.level)
     }
     if (query.limit && results.length > query.limit) {
       results = results.slice(0, query.limit)
@@ -8994,63 +9164,66 @@ export class TraceLogCollector {
     return results
   }
   /**
-   * 获取某一回合的所有 traceId
+   * 获取某一回合的所有事件 id
    */
   getTraceIdsByTurn(turn: number): string[] {
     return this.byTurn.get(turn) ?? []
   }
   /**
-   * 获取某一回合的所有根节点（无 parentTraceId 的条目），并挂好子树
+   * 获取某一回合的所有根节点（无 parentId 的条目），并挂好子树
    */
-  getRootsByTurn(turn: number): TraceLogEntry[] {
+  getRootsByTurn(turn: number): TraceEventNode[] {
     const ids = this.byTurn.get(turn)
     if (!ids) return []
     const roots = ids
       .map((id) => this.entries.get(id)!)
-      .filter((e) => !e.parentTraceId)
+      .filter((e) => !!e && !e.parentId)
     return this.buildTrees(roots)
   }
   /**
    * 为根节点列表挂好 children 子树
    */
-  private buildTrees(roots: TraceLogEntry[]): TraceLogEntry[] {
-    const buildChildren = (parentId: string): TraceLogEntry[] => {
-      const children: TraceLogEntry[] = []
+  private buildTrees(roots: TraceEvent[]): TraceEventNode[] {
+    const buildChildren = (parentId: string): TraceEventNode[] => {
+      const children: TraceEventNode[] = []
       for (const entry of this.entries.values()) {
-        if (entry.parentTraceId === parentId) {
+        if (entry.parentId === parentId) {
           children.push({
             ...entry,
-            children: buildChildren(entry.traceId),
+            children: buildChildren(entry.id),
           })
         }
       }
-      children.sort((a, b) => a.indentLevel - b.indentLevel)
       return children
     }
     return roots.map((root) => ({
       ...root,
-      children: buildChildren(root.traceId),
+      children: buildChildren(root.id),
     }))
   }
   /**
    * 获取所有存储的条目
    */
-  getAll(): TraceLogEntry[] {
+  getAll(): TraceEvent[] {
     return Array.from(this.entries.values())
   }
   /**
    * 导出为序列化数据（用于持久化）
    */
-  exportAll(): TraceLogEntry[] {
+  exportAll(): TraceEvent[] {
     return this.getAll()
   }
   /**
    * 导入序列化数据（从持久化恢复）
    */
-  importAll(entries: TraceLogEntry[]): void {
+  importAll(entries: TraceEvent[]): void {
     this.entries.clear()
     this.byTurn.clear()
-    this.addAll(entries)
+    this.byPhase.clear()
+    this.byBattle.clear()
+    for (const e of entries) {
+      this.emit(e)
+    }
   }
   /**
    * 清空
@@ -9058,12 +9231,21 @@ export class TraceLogCollector {
   clear(): void {
     this.entries.clear()
     this.byTurn.clear()
+    this.byPhase.clear()
+    this.byBattle.clear()
   }
   /**
    * 当前条目数
    */
   get size(): number {
     return this.entries.size
+  }
+  /**
+   * 两个 id 列表取交集（索引查询用）
+   */
+  private intersectIds(a: string[], b: string[]): string[] {
+    const set = new Set(b)
+    return a.filter((id) => set.has(id))
   }
 }
 
@@ -9567,7 +9749,6 @@ export class ReplayEngine {
       LoggerProvider.logger.addSystemLog({
         message: '加载回放失败: ' + error,
       })
-      console.error('加载回放时出错:', error)
       return false
     }
   }
@@ -10000,7 +10181,8 @@ import {
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import { skillSegment } from '@/shared/utils/log-segment-factory'
 import { TraceDamageLogger } from '@/domain/battle/logs/TraceDamageLogger'
-import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
+import { createTraceEvent, TraceLevel, TracePhase, type TraceScope } from '@/shared/types/trace-event'
 import { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
 import type { ThreatManager } from '@/domain/battle/service/ThreatManager'
 import type { ReviveTracker } from '@/domain/battle/service/ReviveTracker'
@@ -10087,7 +10269,9 @@ export class BattleExecutor {
   private readonly defaultStrategy: AIPriorityStrategy =
     new BalancedAIPriorityStrategy()
   /** 树状调试日志收集器（可选） */
-  private traceCollector?: TraceLogCollector
+  private tracePort?: IDebugTracePort
+  /** P1: 因果链序号（corr_${turn}_${seq} 命名空间，文档 §4.5.3） */
+  private scopeSeq = 0
   private traceCounter = 0
   /** 当前行动顺序号（用于记录 / UI 展示） */
   private currentActionOrder = 0
@@ -10099,8 +10283,8 @@ export class BattleExecutor {
   getActionOrder(): number {
     return this.currentActionOrder
   }
-  setTraceCollector(collector: TraceLogCollector): void {
-    this.traceCollector = collector
+  setTracePort(port: IDebugTracePort | null): void {
+    this.tracePort = port ?? undefined
   }
   /** 待处理的死亡事件（延迟结算，复活机制用） */
   private pendingDeaths: Array<{
@@ -10149,6 +10333,34 @@ export class BattleExecutor {
     battle: BattleData,
     participant: BattleEntity,
   ): Promise<void> {
+    // P1: 根 scope — 一次行动一个因果链（文档 §4.5）。
+    //     AI_DECISION 挂根（base），ACTION_EXECUTION 与子事件挂 actionScope（parentId=ACTION_EXECUTION 事件 id）
+    let baseScope: TraceScope | undefined
+    let actionScope: TraceScope | undefined
+    if (this.tracePort) {
+      const base = this.tracePort.beginScope(
+        `corr_${battle.currentTurn ?? 1}_${++this.scopeSeq}`,
+        TracePhase.ACTION_EXECUTION,
+        { battleId: battle.battleId, turn: battle.currentTurn ?? 1 },
+      )
+      baseScope = base
+      const execId = this.tracePort.isEnabled(TracePhase.ACTION_EXECUTION)
+        ? this.tracePort.emit(
+            createTraceEvent({
+              correlationId: base.correlationId,
+              parentId: base.parentId,
+              phase: TracePhase.ACTION_EXECUTION,
+              battleId: battle.battleId,
+              turn: battle.currentTurn ?? 1,
+              sourceId: participant.id,
+              level: TraceLevel.DEBUG,
+              summary: `${participant.name} 执行行动`,
+              payload: { controlMode: participant.controlMode },
+            }),
+          )
+        : undefined
+      actionScope = base.child(TracePhase.ACTION_EXECUTION, execId)
+    }
     // 检查参与者是否被控制
     if (this.isParticipantControlled(participant)) {
       const action = BattleActionHelper.createStatus({
@@ -10182,15 +10394,8 @@ export class BattleExecutor {
         ],
         category: BATTLE_LOG_CATEGORIES.STATUS,
       })
-      LoggerProvider.logger.addDebugLog(
-        `角色[${participant.name}]被控制，无法行动`,
-      )
       return
     }
-    const context = createPassiveContext(
-      BattleTriggerPhase.BEFORE_ATTACK,
-      battle,
-    )
     switch (participant.controlMode) {
       case 'AI': {
         const aiInstance = battle.aiInstances?.get(participant.id)
@@ -10198,6 +10403,7 @@ export class BattleExecutor {
           const decision = aiInstance.makeDecision(
             convertToBattleState(battle),
             participant,
+            baseScope,
           )
           const suggestedTargetId = decision.targetId
           if (decision.type === 'skill' && decision.skillId) {
@@ -10209,6 +10415,7 @@ export class BattleExecutor {
                   battle,
                   participant,
                   suggestedTargetId,
+                  actionScope,
                 )
               } else {
                 await this.selectAndExecuteSkill(
@@ -10216,7 +10423,7 @@ export class BattleExecutor {
                   participant,
                   skill,
                   suggestedTargetId,
-                  context,
+                  actionScope,
                 )
               }
             } else {
@@ -10224,6 +10431,7 @@ export class BattleExecutor {
                 battle,
                 participant,
                 suggestedTargetId,
+                actionScope,
               )
             }
           } else {
@@ -10231,22 +10439,20 @@ export class BattleExecutor {
               battle,
               participant,
               suggestedTargetId,
+              actionScope,
             )
           }
         } else {
           // ponytail: 有 AI 标志但无实例，降级为 AUTO
-          await this.autoDecision(battle, participant, context)
+        await this.autoDecision(battle, participant, actionScope)
         }
         break
       }
       case 'AUTO':
-        await this.autoDecision(battle, participant, context)
+        await this.autoDecision(battle, participant, actionScope)
         break
       case 'MANUAL':
         // ponytail: 玩家手操，由 Store/UI 直接驱动
-        LoggerProvider.logger.addDebugLog(
-          `玩家手操角色[${participant.name}]，跳过自动决策`,
-        )
         break
     }
     participant.afterAction()
@@ -10257,7 +10463,7 @@ export class BattleExecutor {
   private async autoDecision(
     battle: BattleData,
     participant: BattleEntity,
-    context: PassiveTriggerContext,
+    scope?: TraceScope,
   ): Promise<void> {
     const currentEnergy = participant.getAttribute(ATTRIBUTE_CODE.currentEnergy)
     const activeSkillIds = participant.getSkillIds(SkillType.ACTIVE)
@@ -10290,7 +10496,7 @@ export class BattleExecutor {
         if (skill) {
           // ★ 拦截普通攻击，强制走普攻路径
           if (this.isNormalAttackSkill(skill)) {
-            await this.selectAndExecuteAttack(battle, participant)
+            await this.selectAndExecuteAttack(battle, participant, undefined, scope)
             return
           }
           await this.selectAndExecuteSkill(
@@ -10298,7 +10504,7 @@ export class BattleExecutor {
             participant,
             skill,
             undefined,
-            context,
+            scope,
           )
           return
         }
@@ -10309,7 +10515,7 @@ export class BattleExecutor {
       if (skill) {
         // ★ 拦截普通攻击，强制走普攻路径
         if (this.isNormalAttackSkill(skill)) {
-          await this.selectAndExecuteAttack(battle, participant)
+          await this.selectAndExecuteAttack(battle, participant, undefined, scope)
           return
         }
         await this.selectAndExecuteSkill(
@@ -10317,12 +10523,12 @@ export class BattleExecutor {
           participant,
           skill,
           undefined,
-          context,
+          scope,
         )
         return
       }
     }
-    await this.selectAndExecuteAttack(battle, participant)
+    await this.selectAndExecuteAttack(battle, participant, undefined, scope)
   }
   // ============ 技能执行 ============
   /**
@@ -10333,7 +10539,7 @@ export class BattleExecutor {
     source: BattleEntity,
     skill: SkillConfig,
     suggestedTargetId?: string,
-    context?: PassiveTriggerContext,
+    scope?: TraceScope,
   ): Promise<BattleAction> {
     if (
       'isSkillAvailable' in source &&
@@ -10363,8 +10569,8 @@ export class BattleExecutor {
     if (targets.length === 0) {
       LoggerProvider.logger.addDebugLog(
         `技能执行失败: 未找到有效目标 ${skill.id}`,
+        { level: LogLevel.WARN },
       )
-      console.error(`技能执行失败: 未找到有效目标 ${skill.id}`)
       return this.selectAndExecuteAttack(battleData, source)
     }
     action.targetId = targets[0].id
@@ -10379,6 +10585,8 @@ export class BattleExecutor {
         createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battleData, {
           target: targets[0],
           targetId: targets[0]?.id,
+          trace: scope,
+          parentTraceId: scope?.parentId,
         }),
       )
       // 收集 BEFORE_ATTACK 被动触发记录（将在技能执行时写入每个 CombatRecord）
@@ -10426,10 +10634,12 @@ export class BattleExecutor {
           (stepTargetType, mainTarget) =>
             this.resolveStepTargets(battleData, mainTarget, stepTargetType),
           damageToken,
+          scope,
         )
         if (!skillAction.success) {
           LoggerProvider.logger.addDebugLog(
             `技能执行失败: ${skill.id}，跳过目标 ${target.id} — ${skillAction.effects[0]?.description || '未知原因'}`,
+            { level: LogLevel.WARN },
           )
           continue
         }
@@ -10450,9 +10660,7 @@ export class BattleExecutor {
         this.battleRecorder.recordCombatRecord(battleData.battleId, record)
         // ponytail: 技术调试日志 — 技能伤害计算链路追踪
         try {
-          this.traceCounter++
-          const skillTraceId = `skill_${this.traceCounter}_${Date.now()}`
-          TraceDamageLogger.log(record, this.traceCollector, skillTraceId)
+          TraceDamageLogger.log(record, this.tracePort, scope?.correlationId, scope?.parentId)
         } catch {
           // 调试日志失败绝不中断战斗
         }
@@ -10557,6 +10765,7 @@ export class BattleExecutor {
         meta: { role: 'action', skillName: skill.name || skill.id },
       })
       LoggerProvider.logger.addDebugLog(`技能执行失败: ${skill.id}`, {
+        level: LogLevel.ERROR,
         error: error as Error,
       })
       action.type = ActionTypes.ATTACK
@@ -10625,6 +10834,7 @@ export class BattleExecutor {
       }
       LoggerProvider.logger.addDebugLog(
         `建议目标 ${suggestedTargetId} 不满足 selector 约束，回退到自动解析`,
+        { level: LogLevel.WARN },
       )
     }
     return resolveSkillTargets(
@@ -11027,9 +11237,6 @@ export class BattleExecutor {
       totalHeal: 0,
       results: [],
     })
-    LoggerProvider.logger.addDebugLog(
-      `普通攻击: ${source.name} → ${target.name}，被闪避`,
-    )
     // 闪避后触发 DODGE 被动技能（闪避者作为触发者）
     this.passiveSkillManager.triggerPassives(
       target,
@@ -11102,9 +11309,6 @@ export class BattleExecutor {
         },
       ],
     })
-    LoggerProvider.logger.addDebugLog(
-      `普通攻击: ${source.name} → ${target.name}`,
-    )
     // settleDamage 内部已处理：ON_HIT/DAMAGE_TAKEN 被动、pendingDeaths
   }
   /**
@@ -11114,12 +11318,14 @@ export class BattleExecutor {
     battle: BattleData,
     source: BattleEntity,
     suggestedTargetId?: string,
+    scope?: TraceScope,
   ): Promise<BattleAction> {
     const targetId = this.selectTarget(battle, source, suggestedTargetId)
     const target = battle.participants.get(targetId)
     if (!target) {
-      LoggerProvider.logger.addDebugLog(`攻击失败: 未找到目标 ${targetId}`)
-      console.error(`攻击失败: 未找到目标 ${targetId}`)
+      LoggerProvider.logger.addDebugLog(`攻击失败: 未找到目标 ${targetId}`, {
+        level: LogLevel.WARN,
+      })
       return this.createBattleAction(
         source.id,
         source.id,
@@ -11127,9 +11333,6 @@ export class BattleExecutor {
       )
     }
     const currentTurn = battle.currentTurn
-    // 生成此攻击的 traceId（因果链根节点）
-    this.traceCounter++
-    const atkTraceId = `atk_${this.traceCounter}_${Date.now()}`
     // ★ 开始缓冲 BEFORE_ATTACK 的 sub 日志
     LoggerProvider.logger.beginBufferSubLogs()
     this.passiveSkillManager.triggerPassives(
@@ -11137,6 +11340,8 @@ export class BattleExecutor {
       createPassiveContext(BattleTriggerPhase.BEFORE_ATTACK, battle, {
         target,
         targetId,
+        trace: scope,
+        parentTraceId: scope?.parentId,
       }),
     )
     // 收集 BEFORE_ATTACK 被动触发记录
@@ -11160,7 +11365,7 @@ export class BattleExecutor {
       attackStep,
       source,
       target,
-      createStepContext(record, undefined),
+      createStepContext(record, undefined, false, undefined, scope),
     )
     const action = this.createBattleAction(source.id, targetId, currentTurn)
     // ★ 消耗必暴标记（无论是自然暴击还是必暴强制暴击，只要暴击了就消耗）
@@ -11189,7 +11394,7 @@ export class BattleExecutor {
     this.battleRecorder.recordCombatRecord(battle.battleId, record)
     // ponytail: 技术调试日志 — 伤害计算链路追踪
     try {
-      TraceDamageLogger.log(record, this.traceCollector, atkTraceId)
+      TraceDamageLogger.log(record, this.tracePort, scope?.correlationId, scope?.parentId)
     } catch {
       // 调试日志失败绝不中断战斗
     }
@@ -11200,6 +11405,8 @@ export class BattleExecutor {
         targetId,
         damage: action.damage,
         isCritical: damageResult.isCritical,
+        trace: scope,
+        parentTraceId: scope?.parentId,
       }),
     )
     this.recordBattleAction(battle, action)
@@ -11221,6 +11428,7 @@ export class BattleExecutor {
       }
       LoggerProvider.logger.addDebugLog(
         `建议目标 ${suggestedTargetId} 无效（已死/非敌方/不存在），回退到随机选择`,
+        { level: LogLevel.WARN },
       )
     }
     const enemies = Array.from(battle.participants.values()).filter(
@@ -11319,6 +11527,7 @@ export class BattleExecutor {
   async executeAction(
     battle: BattleData,
     action: BattleAction,
+    scope?: TraceScope,
   ): Promise<BattleAction> {
     const source = battle.participants.get(action.sourceId)
     const target = battle.participants.get(action.targetId)
@@ -11341,6 +11550,7 @@ export class BattleExecutor {
           undefined,
           undefined,
           damageToken,
+          scope,
         )
         if (!skillAction.success) {
           // ponytail: early-return 路径也需恢复回调，否则后续被动触发丢失 BUFF_EFFECT 事件
@@ -11543,6 +11753,7 @@ export class BattleExecutor {
         // ★ 出错时也刷出缓冲的 sub 日志，防止内存泄漏
         LoggerProvider.logger.flushBufferedSubLogs()
         LoggerProvider.logger.addDebugLog(`技能执行失败: ${action.skillId}`, {
+          level: LogLevel.ERROR,
           error: error as Error,
         })
         action.type = ActionTypes.ATTACK
@@ -11621,6 +11832,7 @@ import type { RAFTimer } from '@/shared/utils/RAF'
 import type { BattleAnimationManager } from '@/domain/battle/BattleAnimationManager'
 import type { DebugGate } from '@/domain/battle/debug/DebugGate'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 export class BattleLifecycleManager {
   private autoBattleTimerId?: symbol
   private autoBattleLoop?: () => Promise<void>
@@ -11684,7 +11896,9 @@ export class BattleLifecycleManager {
       try {
         await this.battleRecorder.saveRecording(battle.battleId)
       } catch (e) {
-        LoggerProvider.logger.addDebugLog(`保存战斗记录失败: ${e}`)
+        LoggerProvider.logger.addDebugLog(`保存战斗记录失败: ${e}`, {
+          level: LogLevel.ERROR,
+        })
       }
     }
     battle.battleState = BattleStatus.ENDED
@@ -11760,7 +11974,9 @@ export class BattleLifecycleManager {
         }
       } catch (error) {
         this.stopAutoBattle()
-        console.error('自动战斗循环出错:', error)
+        LoggerProvider.logger.addDebugLog(`自动战斗循环出错: ${String(error)}`, {
+          level: LogLevel.ERROR,
+        })
       }
     }
     const delay = this.getBattleDelay()
@@ -11874,7 +12090,7 @@ import { SeededRandom } from '@/shared/utils/SeededRandom'
 import { calculateChecksum, generateReplayId, verifyChecksum } from '@/shared/utils/Checksum'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
-import type { TraceLogEntry } from '@/shared/types/trace-log'
+import type { TraceEvent } from '@/shared/types/trace-event'
 import { BattleSummaryGenerator } from '@/domain/battle/logs/BattleSummaryGenerator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { EffectType } from '@/domain/skill/types'
@@ -11927,8 +12143,8 @@ export interface RecordedBattle {
   rounds: BattleRound[]
   /** 详细战斗记录（含伤害拆分） */
   combatRecords: CombatRecord[]
-  /** 树状调试日志（阶段二：TraceLogCollector 的导出数据） */
-  traceLogs?: TraceLogEntry[]
+  /** 结构化调试追踪事件（TraceEvent[]，战斗结束时由 TraceEventCollector 导出） */
+  traceEvents?: TraceEvent[]
   /** 战斗结果 */
   result?: BattleResult
   /** 数据校验和 */
@@ -12063,11 +12279,11 @@ export class BattleRecorder {
     // ponytail: 战报数据累积
     BattleSummaryGenerator.instance.onAction(record)
   }
-  /** 记录树状调试日志（由 TraceLogCollector 在战斗结束时导出） */
-  public recordTraceLogs(battleId: string, entries: TraceLogEntry[]): void {
+  /** 记录结构化调试追踪事件（由 TraceEventCollector 在战斗结束时导出） */
+  public recordTraceEvents(battleId: string, entries: TraceEvent[]): void {
     const recording = this.recordings.get(battleId)
     if (recording) {
-      recording.traceLogs = entries
+      recording.traceEvents = entries
     }
   }
   public recordBuffAdd(
@@ -12233,15 +12449,13 @@ export class BattleRecorder {
       await this.storage.set(STORAGE_STORE.RECORDINGS, saveKey, saveData)
     } catch (e) {
       LoggerProvider.logger.addDebugLog(`保存战斗记录失败: 存储异常`, {
+        level: LogLevel.ERROR,
         context: { saveKey, error: e },
       })
       return saveKey
     }
     // 在内存记录中保存持久化键名（供删除和清理使用）
     recording.saveKey = saveKey
-    LoggerProvider.logger.addDebugLog(`保存战斗记录: ${battleId}`, {
-      context: { saveKey, checksum: checksumValue },
-    })
     return saveKey
   }
   public async loadRecording(saveKey: string): Promise<RecordedBattle | null> {
@@ -12268,6 +12482,10 @@ export class BattleRecorder {
           return null
         }
       }
+      // ★ 旧持久化数据中的 traceLogs 字段（旧 TraceLogEntry 结构）不迁移：
+      //    无任何消费者（回放/UI 都不读取），且旧结构无法映射为合法 TraceEvent
+      //    （缺少 correlationId/phase/payload），不做类型谎言的字段改名。
+      //    字段保留在持久化 JSON 中，新代码不再读取。
       this.recordings.set(recording.battleId, recording)
       if (recording.randomSeed) {
         this.randomSeeds.set(recording.battleId, recording.randomSeed)
@@ -12289,7 +12507,6 @@ export class BattleRecorder {
   }
   public async deleteRecording(saveKey: string): Promise<boolean> {
     await this.storage.remove(STORAGE_STORE.RECORDINGS, saveKey)
-    LoggerProvider.logger.addDebugLog(`删除战斗记录: ${saveKey}`)
     return true
   }
   /**
@@ -12302,9 +12519,6 @@ export class BattleRecorder {
     for (const k of matching) {
       await this.storage.remove(STORAGE_STORE.RECORDINGS, k)
       deleted++
-    }
-    if (deleted > 0) {
-      LoggerProvider.logger.addDebugLog(`删除战斗记录 battleId=${battleId}: 共 ${deleted} 条`)
     }
     return deleted > 0
   }
@@ -12385,14 +12599,12 @@ export class BattleRecorder {
     this.recordings.clear()
     this.randomSeeds.clear()
     this.currentTurnNumbers.clear()
-    LoggerProvider.logger.addDebugLog('清空所有战斗记录')
   }
   public clearRecording(battleId: string): void {
     if (this.recordings.has(battleId)) {
       this.recordings.delete(battleId)
       this.randomSeeds.delete(battleId)
       this.currentTurnNumbers.delete(battleId)
-      LoggerProvider.logger.addDebugLog(`清理战斗记录: ${battleId}`)
     }
   }
   private scheduleCleanup(): void {
@@ -12421,9 +12633,8 @@ export class BattleRecorder {
       // ★ 同步清理持久化记录
       if (recording.saveKey) {
         this.storage.remove(STORAGE_STORE.RECORDINGS, recording.saveKey)
-          .catch((e) => LoggerProvider.logger.addDebugLog(`清理持久化记录失败: ${recording.saveKey}`, { error: e }))
+          .catch((e) => LoggerProvider.logger.addDebugLog(`清理持久化记录失败: ${recording.saveKey}`, { level: LogLevel.ERROR, error: e }))
       }
-      LoggerProvider.logger.addDebugLog(`清理过期战斗记录: ${battleId}`)
     }
   }
 }
@@ -12696,7 +12907,6 @@ export class BattleRuleManager {
     }
     // 深度合并配置
     this.config = this.deepMerge(this.config, updates)
-    LoggerProvider.logger.addDebugLog('战斗规则配置已更新')
   }
   /**
    * 深度合并对象
@@ -12820,7 +13030,6 @@ export class BattleRuleManager {
         }
       }
       this.config = newConfig
-      LoggerProvider.logger.addDebugLog('战斗规则配置导入成功')
       return { success: true }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误'
@@ -12835,7 +13044,6 @@ export class BattleRuleManager {
    */
   public resetToDefault(): void {
     this.config = this.getDefaultConfig()
-    LoggerProvider.logger.addDebugLog('战斗规则配置已重置为默认值')
   }
   /**
    * 检查战斗是否应该结束
@@ -13266,6 +13474,8 @@ export class TurnManager {
 import type { BattleSystem } from '@/domain/battle/BattleSystem'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { BattleStatus } from '@/domain/battle/type/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 /**
  * 战斗状态管理器
  * 负责 UI 层与核心战斗系统之间的状态同步与转换
@@ -13364,7 +13574,9 @@ export class BattleStateManager {
         this.handleBattleEnd()
       }
     } catch (error) {
-      console.error('同步战斗状态时出错:', error)
+      LoggerProvider.logger.addDebugLog(`同步战斗状态时出错: ${String(error)}`, {
+        level: LogLevel.ERROR,
+      })
       // 出错后重置状态
       this.resetState()
     }
@@ -13626,6 +13838,7 @@ import { Counter } from '@/shared/utils/Counter'
 import { SkillType } from '@/domain/skill/types'
 import type { CombatRecord } from '@/domain/battle/combat-record'
 import type { DeferredDamageToken } from '@/domain/skill/DeferredDamageToken'
+import type { TraceScope } from '@/shared/types/trace-event'
 const counter = new Counter()
 /**
  * 战斗状态常量
@@ -14448,6 +14661,8 @@ export interface PassiveTriggerContext {
   readonly isCritical?: boolean
   readonly cause?: string
   readonly parentTraceId?: string
+  /** 因果链作用域（文档 §4.5）— P1 起由 createPassiveContext 的 overrides 传入 */
+  readonly trace?: TraceScope
 }
 /**
  * 技能步骤执行上下文 — SkillExecutor / DamageCalculator / HealCalculator / BuffSystem 专用
@@ -14460,6 +14675,8 @@ export interface StepExecutionContext {
   readonly fromPassive?: boolean
   /** 触发的伤害量（用于 damageDealt/damageTaken 等动态属性） */
   readonly damage?: number
+  /** 因果链作用域（文档 §4.5）— P1 起由 createStepContext 携带，发射点从 context.trace 取 */
+  readonly trace?: TraceScope
 }
 /**
  * 触发器事件上下文 — TriggerEventBus / BuffSystem.executeTriggerScript 专用
@@ -14499,8 +14716,9 @@ export function createStepContext(
   token?: DeferredDamageToken,
   fromPassive?: boolean,
   damage?: number,
+  trace?: TraceScope,
 ): StepExecutionContext {
-  return { record, token, fromPassive, damage }
+  return { record, token, fromPassive, damage, trace }
 }
 
 --- src/domain/buff/atomic/AtomicEffectRegistry.ts ---
@@ -14514,6 +14732,8 @@ import { ShieldEffect } from './effects/ShieldEffect'
 import { TriggerEffect } from './effects/TriggerEffect'
 import { AuraEffect } from './effects/AuraEffect'
 import { ImmunityEffect } from './effects/ImmunityEffect'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 /**
  * 原子效果注册表 — 管理 7 + 1 种内置原语，并提供扩展点
  */
@@ -14538,7 +14758,7 @@ export class AtomicEffectRegistry {
   /** 扩展点：允许外部注册自定义原子效果（JSON type 字符串映射） */
   registerCustom(type: string, handler: IAtomicEffect): void {
     if (!Object.values(AtomicEffectType).includes(type as AtomicEffectType)) {
-      console.warn(`[AtomicEffectRegistry] 注册非标准原子效果类型: ${type}，请确认拼写正确`)
+      LoggerProvider.logger.addDebugLog(`[AtomicEffectRegistry] 注册非标准原子效果类型: ${type}，请确认拼写正确`, { level: LogLevel.WARN })
     }
     this.handlers.set(type as AtomicEffectType, handler)
   }
@@ -15132,6 +15352,8 @@ import type { BuffConfig } from '@/domain/buff/types'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { BuffSystem } from '@/domain/buff/BuffSystem'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 export class BuffContext {
   public characterId: string = ''
   public instanceId: string = ''
@@ -15154,7 +15376,8 @@ export class BuffContext {
     this.characterId = characterId
     this.instanceId = instanceId
     this.config = config
-    this.variables.clear()
+    // NOTE: 不在此处清除 variables——池化路径由 ObjectPool.reset()（归还时）清空并
+    //       经 borrow 的 validate 保证为空，直接构造路径 variables 天然为空。避免重复清除。
     if (buffSystem) this._buffSystem = buffSystem
   }
   public reset(): void {
@@ -15179,14 +15402,19 @@ export class BuffContext {
     type: ModifierType,
   ): void {
     const system = this.buffSystem
-    if (!system) { console.warn('BuffSystem not injected, cannot add modifier'); return }
+    if (!system) {
+      LoggerProvider.logger.addDebugLog('BuffSystem not injected, cannot add modifier', { level: LogLevel.WARN })
+      return
+    }
     const modifierStack = system.getModifierStack(this.characterId)
     modifierStack.addModifier(this.instanceId, attribute, value, type)
-    if (attribute === ATTRIBUTE_CODE.speed) console.log(`Speed modifier added for character ${this.characterId}`)
   }
   public removeModifiers(attribute?: ATTRIBUTE_CODE): void {
     const system = this.buffSystem
-    if (!system) { console.warn('BuffSystem not injected, cannot remove modifiers'); return }
+    if (!system) {
+      LoggerProvider.logger.addDebugLog('BuffSystem not injected, cannot remove modifiers', { level: LogLevel.WARN })
+      return
+    }
     const modifierStack = system.getModifierStack(this.characterId)
     modifierStack.removeModifier(this.instanceId, attribute)
   }
@@ -15210,7 +15438,7 @@ export class BuffContext {
     if (system) {
       system.executeTriggerScript(this.instanceId, this.characterId, eventName, data as Record<string, unknown> | undefined)
     } else {
-      console.warn(`BuffSystem not injected, cannot trigger event: ${eventName}`, data)
+      LoggerProvider.logger.addDebugLog(`BuffSystem not injected, cannot trigger event: ${eventName}`, { level: LogLevel.WARN })
     }
   }
 }
@@ -15247,6 +15475,7 @@ export const BuffContextPool = new BuffContextPoolClass()
 
 --- src/domain/buff/BuffErrorBoundary.ts ---
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 export enum BuffErrorType {
   CONFIG_ERROR = 'config_error',
   RUNTIME_ERROR = 'runtime_error',
@@ -15298,19 +15527,19 @@ export class BuffErrorBoundary {
     const buffError = BuffErrorBoundary.parseError(error, options)
     switch (buffError.type) {
       case BuffErrorType.CONFIG_ERROR:
-        LoggerProvider.logger.addDebugLog(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        LoggerProvider.logger.addDebugLog(`Buff config error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`, { level: LogLevel.ERROR })
         break
       case BuffErrorType.RUNTIME_ERROR:
-        LoggerProvider.logger.addDebugLog(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        LoggerProvider.logger.addDebugLog(`Buff runtime error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`, { level: LogLevel.ERROR })
         break
       case BuffErrorType.DEPENDENCY_ERROR:
-        LoggerProvider.logger.addDebugLog(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        LoggerProvider.logger.addDebugLog(`Buff dependency error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`, { level: LogLevel.ERROR })
         break
       default:
-        LoggerProvider.logger.addDebugLog(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`)
+        LoggerProvider.logger.addDebugLog(`Unknown buff error${options?.buffId ? ` (${options.buffId})` : ''}: ${buffError.message}`, { level: LogLevel.ERROR })
         break
     }
-    if (buffError.stack) LoggerProvider.logger.addDebugLog(`Buff error stack: ${buffError.stack}`)
+    if (buffError.stack) LoggerProvider.logger.addDebugLog(`Buff error stack: ${buffError.stack}`, { level: LogLevel.ERROR })
   }
   private static parseError(
     error: unknown,
@@ -15341,7 +15570,7 @@ export class BuffErrorBoundary {
       try { return fn() } catch (error) {
         retries++
         if (retries >= maxRetries) { BuffErrorBoundary.handleError(error, options); return null }
-        LoggerProvider.logger.addDebugLog(`Retrying buff script execution (${retries}/${maxRetries})`)
+        LoggerProvider.logger.addDebugLog(`Retrying buff script execution (${retries}/${maxRetries})`, { level: LogLevel.WARN })
       }
     }
     return null
@@ -15362,6 +15591,8 @@ import { BuffScriptRegistry } from '@/domain/buff/BuffScriptRegistry'
 import { container } from '@/infrastructure/di/Container'
 import type { ScriptBuffConfig, IBuffScript } from '@/domain/buff/types'
 import { buffScripts } from '@/domain/buff/scripts/index'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 /** Buff 脚本构造器接口（静态 BUFF_ID 是类的显式身份声明，CONFIG 提供自包含配置） */
 interface BuffScriptConstructor {
   new (...args: any[]): IBuffScript
@@ -15391,8 +15622,9 @@ export class BuffScriptLoader {
             (v as BuffScriptConstructor).BUFF_ID === buffId,
         )
         if (!BuffClass) {
-          console.error(
+          LoggerProvider.logger.addDebugLog(
             `Buff script module 中未找到 BUFF_ID 为 "${buffId}" 的类`,
+            { level: LogLevel.ERROR },
           )
           continue
         }
@@ -15405,13 +15637,11 @@ export class BuffScriptLoader {
           defaultConfig,
         )
         this.loadedScripts.add(buffId)
-        if (defaultConfig) {
-          console.log(
-            `Loaded and registered buff script: ${buffId} [self-contained]`,
-          )
-        }
       } catch (moduleError) {
-        console.error(`Failed to load buff script ${buffId}:`, moduleError)
+        LoggerProvider.logger.addDebugLog(`Failed to load buff script ${buffId}:`, {
+          level: LogLevel.ERROR,
+          error: moduleError as Error,
+        })
       }
     }
   }
@@ -15449,6 +15679,10 @@ import {
 import type { BuffJsonEntry } from '@/shared/types/buffs-json'
 import type { AttributeValueConfig } from '@/shared/types/buffs-json'
 import type { EffectsJsonData } from '@/shared/types/effects-json'
+// NOTE: 仅引用静态脚本清单（映射键 = 脚本类 BUFF_ID），用于构造时校验。
+//       BuffScriptLoader.loadScripts 是异步的、晚于 registry 构造，此时 this.registry 尚为空，
+//       因此"是否有脚本"须以静态清单判断，而非注册表。
+import { buffScripts } from '@/domain/buff/scripts/index'
 /** 效果定义：脚本 + 配置的统一视图 */
 export interface EffectDefinition {
   script: IBuffScript | null
@@ -15510,17 +15744,17 @@ export class BuffScriptRegistry {
           if (buff.id) {
             // 配置值格式与键名校验由 validateBuffConfigs 统一执行（值须为 {value,type} 对象）
             this.buffConfigs.set(buff.id, buff as BuffJsonEntry)
-            console.log(`加载 Buff 配置: ${buff.id}`)
           }
         }
-        LoggerProvider.logger.addDebugLog(
-          `Loaded ${this.buffConfigs.size} buff configs from buffs.json`,
-        )
+        // TODO(P1): CONFIG_LOAD 事件落地后覆盖配置加载信息
       } else {
-        LoggerProvider.logger.addDebugLog('buffs.json 格式错误: 不是数组')
+        LoggerProvider.logger.addDebugLog('buffs.json 格式错误: 不是数组', {
+          level: LogLevel.ERROR,
+        })
       }
     } catch (error) {
       LoggerProvider.logger.addDebugLog('加载 Buff 配置失败:', {
+        level: LogLevel.ERROR,
         error: error as Error,
       })
     }
@@ -15565,7 +15799,9 @@ export class BuffScriptRegistry {
           )
         }
       }
-      const hasScript = this.registry.has(buffId)
+      const hasScript =
+        this.registry.has(buffId) ||
+        Object.prototype.hasOwnProperty.call(buffScripts, buffId)
       const resolved = this.getResolvedBuffConfig(buffId)
       const hasEffectPlan = resolved?.effectPlan && resolved.effectPlan.length > 0
       const hasTriggers = (raw.triggers?.length ?? 0) > 0
@@ -15615,12 +15851,11 @@ export class BuffScriptRegistry {
         count++
       }
       if (count > 0) {
-        LoggerProvider.logger.addDebugLog(
-          `Loaded ${count} effect configs from effects.json`,
-        )
+        // TODO(P1): CONFIG_LOAD 事件落地后覆盖配置加载信息
       }
     } catch (error) {
       LoggerProvider.logger.addDebugLog('加载效果配置失败:', {
+        level: LogLevel.ERROR,
         error: error as Error,
       })
     }
@@ -15686,6 +15921,7 @@ export class BuffScriptRegistry {
     if (this.registry.has(scriptId)) {
       LoggerProvider.logger.addDebugLog(
         `BUFF脚本 "${scriptId}" 已经注册, 请检查`,
+        { level: LogLevel.WARN },
       )
     }
     this.registry.set(scriptId, {
@@ -15699,19 +15935,11 @@ export class BuffScriptRegistry {
     })
     if (defaultConfig) {
       this.defaultConfigs.set(scriptId, defaultConfig)
-      LoggerProvider.logger.addDebugLog(
-        `BUFF脚本 "${scriptId}" 提供自包含配置 (${Object.keys(defaultConfig).length} 个字段)`,
-      )
     }
-    LoggerProvider.logger.addDebugLog(`注册BUFF脚本: ${scriptId}`)
   }
   /** 获取脚本自包含的默认配置 */
   public getDefaultConfig(scriptId: string): ScriptBuffConfig | undefined {
     return this.defaultConfigs.get(scriptId)
-  }
-  /** 检查脚本是否为自包含模式——脚本自行管理修饰符，框架不再重复从 JSON 读取 */
-  public isSelfContained(scriptId: string): boolean {
-    return this.defaultConfigs.get(scriptId)?.selfContained === true
   }
   public registerScript(
     scriptId: string,
@@ -15735,7 +15963,7 @@ export class BuffScriptRegistry {
     } catch (e) {
       LoggerProvider.logger.addDebugLog(
         `Failed to instantiate script "${scriptId}":`,
-        { error: e as Error },
+        { level: LogLevel.ERROR, error: e as Error },
       )
       return null
     }
@@ -16134,15 +16362,16 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
         if (config.executionMode === 'marker') {
           script = null
         } else {
-          console.warn(
+          this.logger.addDebugLog(
             `Buff ${buffId} not found — no script or config registered, skipping`,
+            { level: LogLevel.WARN },
           )
           return ''
         }
       } else {
         // 有 JSON 配置但无脚本——由 effectPlan 驱动，标记 script 为 null
         script = null
-        this.logger.addDebugLog(`Buff script not found: ${buffId}`)
+        this.logger.addDebugLog(`Buff script not found: ${buffId}`, { level: LogLevel.WARN })
       }
     }
     // 调用方传的配置（除 name/description）> 脚本静态 CONFIG > JSON 配置 > 硬编码默认值
@@ -16400,6 +16629,8 @@ export class BuffSystem implements IModifierProvider, BuffQuery {
       instanceId,
       buffInstance.currentStacks,
       buffInstance.duration,
+      undefined,
+      context?.trace,
     )
     // ponytail: 通知外部（如 BattleSystem）buff 已添加，用于触发 UI 动画
     if (this.buffAppliedCallbackEnabled && this.onBuffApplied) {
@@ -16981,9 +17212,8 @@ export class BerserkBuff extends BaseBuffScript {
   /**
    * 自包含配置——框架在注册时读取此属性，存入 BuffScriptRegistry。
    * 调用方 addBuff() 不传或缺省字段时，从此处填充。
-   * selfContained: true 告知框架不再从 JSON attributes 重复应用修饰符。
-   * ponytail: 若脚本在 _onApply 中自行管理 modifiers，必须设置 selfContained: true，
-   *           否则 frameworks 仍会从 JSON 的 attributes 字段再应用一次，导致双倍效果。
+   * NOTE: 路径互斥由框架的 PATH 判定保证——有脚本（PATH A）时 effectPlan/JSON attributes
+   *       一律不执行，脚本通过 context.addModifier() 自行管理修饰符，无需 selfContained 标记。
    */
   public static readonly CONFIG: ScriptBuffConfig = {
     id: 'buff_berserk',
@@ -17536,12 +17766,14 @@ export {
   SwiftWindBuff,
 } from '@/domain/buff/scripts/GuardianBuffs'
 // 导出脚本映射，方便注入
+// NOTE: 映射键必须等于脚本类的静态 BUFF_ID——BuffScriptLoader 按 v.BUFF_ID === buffId 精确匹配，
+//       键与 BUFF_ID 不一致会导致脚本静默注册失败（此前 4 个键用短名，脚本从未被加载）。
 export const buffScripts = {
-  mountain_god: () => import('@/domain/buff/scripts/MountainGodBuff'),
-  poison: () => import('@/domain/buff/scripts/PoisonDebuff'),
-  berserk: () => import('@/domain/buff/scripts/BerserkBuff'),
+  buff_mountain_god: () => import('@/domain/buff/scripts/MountainGodBuff'),
+  buff_poison: () => import('@/domain/buff/scripts/PoisonDebuff'),
+  buff_berserk: () => import('@/domain/buff/scripts/BerserkBuff'),
   heal_over_time: () => import('@/domain/buff/scripts/HealOverTime'),
-  shield: () => import('@/domain/buff/scripts/ShieldBuff'),
+  buff_shield: () => import('@/domain/buff/scripts/ShieldBuff'),
   // 新增buff脚本映射
   buff_hit_reduction: () =>
     import('@/domain/buff/scripts/HitReductionDebuff'),
@@ -17910,23 +18142,6 @@ export class SpeedReductionDebuff extends BaseBuffScript {
 }
 // 导出 BUFF_ID 常量
 export const BUFF_ID = SpeedReductionDebuff.BUFF_ID
-
---- src/domain/buff/scripts/SpeedUpBuff.ts ---
-﻿import { AttributeBuffTemplate, type AttributeModifier } from '@/domain/buff/scripts/templates/AttributeBuffTemplate'
-import type { BuffContext } from '@/domain/buff/BuffContext'
-import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
-export class SpeedUpBuff extends AttributeBuffTemplate {
-  public static readonly BUFF_ID = 'buff_speed_up'
-  protected getModifiers(): AttributeModifier[] {
-    return [{
-      attribute: ATTRIBUTE_CODE.speed,
-      value: (ctx) => this.getConfigValue(ctx, 'speedBonus', 0.2),
-      type: ModifierType.MULTIPLICATIVE,
-      description: '速度提升',
-    }]
-  }
-}
-export const BUFF_ID = SpeedUpBuff.BUFF_ID
 
 --- src/domain/buff/scripts/StoneSkinBuff.ts ---
 ﻿import { BaseBuffScript } from '@/domain/buff/scripts/templates/BaseBuffScript'
@@ -18310,6 +18525,7 @@ import type { BuffContext } from '@/domain/buff/BuffContext'
 import { BuffErrorBoundary } from '@/domain/buff/BuffErrorBoundary'
 import { ATTRIBUTE_CODE, ModifierType } from '@/domain/attribute/types'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TParams> {
   params?: TParams
   public onApply(context: BuffContext): void {
@@ -18354,7 +18570,7 @@ export abstract class BaseBuffScript<TParams = any> implements IBuffScript<TPara
     return context.config.parameters?.[key] ?? defaultValue
   }
   protected log(context: BuffContext, message: string): void {
-    LoggerProvider.logger.addDebugLog(`[${context.config.id}] ${message}`)
+    LoggerProvider.logger.addDebugLog(`[${context.config.id}] ${message}`, { level: LogLevel.DEBUG })
   }
   protected triggerEvent(
     context: BuffContext,
@@ -18566,6 +18782,8 @@ import type { TriggerExecutionContext } from '@/domain/buff/BuffSystem'
 import type { BattleEntity } from '@/domain/battle/type/types'
 import { ControlType } from '@/domain/buff/types'
 import { classifyBuff } from '@/shared/types/buff-classification'
+import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 /** 从上下文中获取源参与者的队伍 */
 function getSourceTeam(ctx: TriggerExecutionContext): string | undefined {
   if (!ctx.sourceId || !ctx.battleData?.participants) return undefined
@@ -18776,7 +18994,7 @@ export function summonUnit(ctx: TriggerExecutionContext): void {
   const summonId = (ctx.params?.summonId as string) ?? ''
   const duration = (ctx.params?.duration as number) ?? 3
   if (!summonId) {
-    console.warn('[Trigger] summon_unit — 缺少 summonId 参数')
+    LoggerProvider.logger.addDebugLog('[Trigger] summon_unit — 缺少 summonId 参数', { level: LogLevel.WARN })
     return
   }
   const sourceTeam = getSourceTeam(ctx)
@@ -19381,6 +19599,43 @@ export interface IBattleLogManager {
    * @param logsData JSON 格式的日志数据
    */
   importLogs(logsData: string): void
+}
+
+--- src/domain/port/IDebugTracePort.ts ---
+/**
+ * 文件: IDebugTracePort.ts
+ * 功能: 调试追踪端口接口（领域层唯一调试日志发射接口）
+ * 描述: 领域运行时状态的结构化投影（见 documents/需求文档/调试日志改造.md v2 §4.4/§7）。
+ *       发射点先查 isEnabled 再构建 payload（热路径零开销）；emit 永不抛异常。
+ *       错误/警告不属于 TracePhase 体系，走 IBattleLogManager 错误通道（§4.6）。
+ */
+import type {
+  TraceEvent,
+  TracePhase,
+  TraceScope,
+  TraceScopeMeta,
+} from '@/shared/types/trace-event'
+export interface IDebugTracePort {
+  /**
+   * 发射一条结构化追踪事件，返回事件 id（供后续子事件挂 parentId）
+   * 实现方保证：永不抛异常（调试日志的失败绝不能中断战斗）
+   */
+  emit(event: TraceEvent): string
+  /**
+   * 该 phase 是否开启追踪
+   * 发射点先查开关再构建 payload（未开启时零序列化、零分配）
+   */
+  isEnabled(phase: TracePhase): boolean
+  /**
+   * 开启一个因果链作用域（一次行动的根，文档 §4.5）
+   * 同一因果链上的所有事件共享 correlationId，树的嵌套由 parentId 表达
+   */
+  beginScope(
+    correlationId: string,
+    phase: TracePhase,
+    meta?: TraceScopeMeta,
+    parentId?: string,
+  ): TraceScope
 }
 
 --- src/domain/port/IDomainEventBus.ts ---
@@ -20050,7 +20305,7 @@ export class DamageCalculator {
       }
       const elementType = skillStep.elementType
       if (!elementType) {
-        console.warn(`ELEMENTAL 类型伤害缺少 elementType，默认使用 HUO(火)`)
+        LoggerProvider.logger.addDebugLog(`ELEMENTAL 类型伤害缺少 elementType，默认使用 HUO(火)`, { level: LogLevel.WARN })
       }
       const resolvedType = elementType || 'HUO'
       const resAttr =
@@ -20227,7 +20482,7 @@ export class DamageCalculator {
   }
   applyDamage(target: BattleEntity, damage: number): number {
     if (!target.isAlive()) {
-      LoggerProvider.logger.addDebugLog('目标已死亡，无法造成伤害')
+      LoggerProvider.logger.addDebugLog('目标已死亡，无法造成伤害', { level: LogLevel.DEBUG })
       return 0
     }
     const actualDamage = target.takeDamage(damage)
@@ -20333,6 +20588,7 @@ import { ATTRIBUTE_CODE } from '@/domain/attribute/types'
 import type { BuffSystem } from '@/domain/buff/BuffSystem'
 import { STATUS_CODE } from '@/shared/types/status-meta'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
+import { LogLevel } from '@/shared/types/battle-log'
 import { processExtraValues, processTargetModifiers } from '@/domain/skill/calculation-utils'
 import { floor } from '@/shared/utils/math'
 interface HealCalculationStep {
@@ -20441,11 +20697,11 @@ export class HealCalculator {
   }
   applyHeal(target: BattleEntity, heal: number): number {
     if (!target.isAlive()) {
-      LoggerProvider.logger.addDebugLog('目标已死亡，无法进行治疗')
+      LoggerProvider.logger.addDebugLog('目标已死亡，无法进行治疗', { level: LogLevel.DEBUG })
       return 0
     }
     if (target.isFullHealth()) {
-      LoggerProvider.logger.addDebugLog('目标气血值已满，无需治疗')
+      LoggerProvider.logger.addDebugLog('目标气血值已满，无需治疗', { level: LogLevel.DEBUG })
       return 0
     }
     const actualHeal = target.heal(heal)
@@ -20466,7 +20722,7 @@ import {
   EffectRenderer,
   type RenderContext,
 } from '@/domain/battle/logs/EffectRenderer'
-import type { TraceLogCollector } from '@/domain/battle/logs/TraceLogCollector'
+import type { IDebugTracePort } from '@/domain/port/IDebugTracePort'
 import { BattleEventCodes } from '@/domain/battle/type/BattleEventType'
 import {
   BATTLE_CONSTANTS,
@@ -20486,7 +20742,7 @@ import type { SkillConfig } from '@/domain/skill/types'
 import type { IUIEventPort } from '@/domain/port/IUIEventPort'
 import { BATTLE_LOG_CATEGORIES, LogLevel } from '@/shared/types/battle-log'
 import { EffectType } from '@/domain/skill/types'
-import { createTraceLogEntry } from '@/shared/types/trace-log'
+import { createTraceEvent, TraceLevel, TracePhase } from '@/shared/types/trace-event'
 import { DamageCategory } from '@/domain/skill/types'
 export interface PassiveSkillConfig {
   id: string
@@ -20521,8 +20777,8 @@ export class PassiveSkillManager {
   >()
   private skillManager: SkillManager
   private buffSystem: BuffSystem
-  /** 可选的 TraceLogCollector */
-  private traceCollector?: TraceLogCollector
+  /** 可选的 IDebugTracePort */
+  private tracePort?: IDebugTracePort
   private traceCounter = 0
   /** EffectRenderer — 结构化效果 → LogSegment 渲染 */
   private effectRenderer = new EffectRenderer()
@@ -20546,8 +20802,8 @@ export class PassiveSkillManager {
   }
   /** 动画发射开关（由 BattleSystem 注入动态 getter） */
   private _getAnimationEnabled: () => boolean = () => true
-  setTraceCollector(c: TraceLogCollector): void {
-    this.traceCollector = c
+  setTracePort(port: IDebugTracePort | null): void {
+    this.tracePort = port ?? undefined
   }
   /** ★ 注入动画发射开关 getter（headless/quickMode 时抑制动画事件） */
   setAnimationEnabledGetter(getter: () => boolean): void {
@@ -20598,22 +20854,46 @@ export class PassiveSkillManager {
       currentTurn: 0,
     },
   ): boolean {
-    if (config.trigger !== context.phase) return false
+    if (config.trigger !== context.phase) {
+      this.emitPassiveSkipped(config, entity, context, 'PHASE_MISMATCH', {
+        phaseMatch: false,
+        expected: config.trigger,
+        actual: context.phase,
+      })
+      return false
+    }
     // 检查冷却时间是否到，config.cooldown = -1 表示无冷却
     if (config.cooldown > 0 && config.lastTriggeredTurn) {
       const currentTurn = context.currentTurn
-      if (currentTurn - config.lastTriggeredTurn < config.cooldown) return false
+      if (currentTurn - config.lastTriggeredTurn < config.cooldown) {
+        this.emitPassiveSkipped(config, entity, context, 'COOLDOWN', {
+          cooldown: {
+            ready: false,
+            remaining: config.cooldown - (currentTurn - config.lastTriggeredTurn),
+            lastTriggeredTurn: config.lastTriggeredTurn,
+          },
+        })
+        return false
+      }
     }
     // 检查最大触发次数是否超过
     if (
       config.maxTriggerCount &&
       config.triggerCount &&
       config.triggerCount >= config.maxTriggerCount
-    )
+    ) {
+      this.emitPassiveSkipped(config, entity, context, 'MAX_TRIGGERS', {
+        maxTriggers: { limit: config.maxTriggerCount, used: config.triggerCount },
+      })
       return false
+    }
     // 检查触发概率是否命中
-    if (config.triggerProbability && Math.random() > config.triggerProbability)
+    if (config.triggerProbability && Math.random() > config.triggerProbability) {
+      this.emitPassiveSkipped(config, entity, context, 'PROBABILITY', {
+        probability: { required: config.triggerProbability, passed: false },
+      })
       return false
+    }
     if (
       config.trigger === BattleTriggerPhase.HP_LOWER_THAN &&
       config.hpThreshold
@@ -20621,15 +20901,61 @@ export class PassiveSkillManager {
       const hpPercent =
         entity.getAttribute(ATTRIBUTE_CODE.currentHealth) /
         Math.max(1, entity.getAttribute(ATTRIBUTE_CODE.maxHealth))
-      if (hpPercent > config.hpThreshold / 100) return false
+      if (hpPercent > config.hpThreshold / 100) {
+        this.emitPassiveSkipped(config, entity, context, 'CONDITION', {
+          condition: {
+            expr: `HP_LOWER_THAN ${config.hpThreshold}%`,
+            passed: false,
+            hpPercent: Math.round(hpPercent * 100) / 100,
+          },
+        })
+        return false
+      }
     }
     // 被动有触发条件，检查是否满足
     if (
       config.condition &&
       !this.evaluateCondition(config.condition, entity, contextTarget, context, config.conditionParams)
-    )
+    ) {
+      this.emitPassiveSkipped(config, entity, context, 'CONDITION', {
+        condition: { expr: config.condition, passed: false },
+      })
       return false
+    }
     return true
+  }
+  /**
+   * 发射 PASSIVE_TRIGGER 跳过事件（trace 级，默认折叠；文档 §5 示例 3）
+   * 记录"没发生"与记录"发生"同等重要——当前系统的黑洞所在
+   */
+  private emitPassiveSkipped(
+    config: PassiveSkillConfig,
+    entity: BattleEntity,
+    context: PassiveTriggerContext,
+    skipReason: string,
+    checks: Record<string, unknown>,
+  ): void {
+    if (!this.tracePort || !this.tracePort.isEnabled(TracePhase.PASSIVE_TRIGGER)) return
+    this.tracePort.emit(
+      createTraceEvent({
+        correlationId: context.trace?.correlationId ?? `pas_skip_${++this.traceCounter}`,
+        phase: TracePhase.PASSIVE_TRIGGER,
+        parentId: context.trace?.parentId ?? context.parentTraceId,
+        battleId: context?.trace?.meta?.battleId,
+        turn: context.currentTurn,
+        sourceId: entity.id,
+        level: TraceLevel.TRACE,
+        summary: `被动跳过 [${entity.name}] ${config.name || config.skillId}：${skipReason}`,
+        payload: {
+          passiveId: config.skillId,
+          owner: entity.name,
+          trigger: context.phase,
+          verdict: 'SKIPPED',
+          skipReason,
+          checks,
+        },
+      }),
+    )
   }
   /**
    * 触发被动技能
@@ -20707,23 +21033,29 @@ export class PassiveSkillManager {
           effectSummary: `${entity.name} 触发 【${config.name || config.skillId}】`,
         })
       }
-      // TraceLogCollector 输出
-      if (this.traceCollector && hasExecuted) {
-        this.traceCounter++
+      // IDebugTracePort 输出（结构化 TraceEvent）
+      if (this.tracePort && hasExecuted) {
         const configName = config.name || config.skillId
-        const traceId = `pas_${this.traceCounter}_${Date.now()}`
-        this.traceCollector.add({
-          ...createTraceLogEntry(
-            traceId,
-            context?.parentTraceId,
-            configName,
-            0,
-            `${entity.name} 触发 【${configName}】`,
-            1,
-          ),
-          turn: context.currentTurn,
-          source: entity.id,
-        })
+        if (this.tracePort.isEnabled(TracePhase.PASSIVE_TRIGGER)) {
+          this.tracePort.emit(
+            createTraceEvent({
+              correlationId: context?.trace?.correlationId ?? `pas_${++this.traceCounter}`,
+              phase: TracePhase.PASSIVE_TRIGGER,
+              parentId: context?.trace?.parentId ?? context?.parentTraceId,
+              battleId: context?.trace?.meta?.battleId,
+              turn: context.currentTurn,
+              sourceId: entity.id,
+              level: TraceLevel.DEBUG,
+              summary: `${entity.name} 触发 【${configName}】`,
+              payload: {
+                passiveId: config.skillId,
+                owner: entity.name,
+                trigger: context?.phase,
+                verdict: 'TRIGGERED',
+              },
+            }),
+          )
+        }
       }
     }
   }
@@ -21967,6 +22299,7 @@ import { LogLevel } from '@/shared/types/battle-log'
 import { validateSkillConfigs } from '@/shared/utils/schema-validator'
 import { LoggerProvider } from '@/domain/port/LoggerProvider'
 import { createStepContext } from '@/domain/battle/type/types'
+import type { TraceScope } from '@/shared/types/trace-event'
 interface CalculationContext {
   skillStep: SkillStep
   action: BattleAction
@@ -21974,6 +22307,8 @@ interface CalculationContext {
   targets: BattleEntity[]
   record?: CombatRecord
   token?: DeferredDamageToken
+  /** 因果链作用域（文档 §4.5） */
+  trace?: TraceScope
 }
 export class SkillManager {
   private skillConfigs: Map<string, SkillConfig> = new Map()
@@ -22074,13 +22409,14 @@ export class SkillManager {
     ) => BattleEntity[],
     /** ponytail: 延迟伤害令牌 — 传入时只记录不扣血，调用方动画后 applyAll */
     token?: DeferredDamageToken,
+    /** 因果链作用域（文档 §4.5）— 贯穿到 DamageCalculator/HealCalculator/BuffSystem */
+    trace?: TraceScope,
   ): BattleAction {
     const config = this.skillConfigs.get(skillId)
     if (!config) {
       LoggerProvider.logger.addDebugLog(`技能 ${skillId} 不存在配置`, {
         level: LogLevel.WARN,
       })
-      console.error(`技能 ${skillId} 不存在配置`)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
         targetId: target.id,
@@ -22111,7 +22447,6 @@ export class SkillManager {
         `技能 ${skillId} 不可用: ${availability.reason}`,
         { level: LogLevel.WARN },
       )
-      console.log(`技能 ${skillId} 不可用:`, availability.reason)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
         targetId: target.id,
@@ -22140,7 +22475,6 @@ export class SkillManager {
       LoggerProvider.logger.addDebugLog(`技能 ${skillId} 无有效目标`, {
         level: LogLevel.WARN,
       })
-      console.error(`技能 ${skillId} 无有效目标`)
       return BattleActionHelper.createSkill({
         sourceId: source.id,
         targetId: source.id,
@@ -22239,7 +22573,7 @@ export class SkillManager {
         (step.type === EffectType.DEAL_DAMAGE || step.type === EffectType.HEAL) &&
         !(step as ExtendedSkillStep).calculation
       ) {
-        console.warn(`[SkillManager] 技能 ${skillId} 步骤缺少 calculation 配置`, step)
+        LoggerProvider.logger.addDebugLog(`[SkillManager] 技能 ${skillId} 步骤缺少 calculation 配置`, { level: LogLevel.WARN })
       }
     }
     for (const step of steps) {
@@ -22250,6 +22584,7 @@ export class SkillManager {
         targets: [target],
         record,
         token,
+        trace,
       }
       this.executeStep(ctx)
       // 处理步骤级 targetType（如 random_adjacent 溅射伤害）
@@ -22265,6 +22600,7 @@ export class SkillManager {
             targets: [extraTarget],
             record,
             token,
+            trace,
           }
           this.executeStep(extraCtx)
         }
@@ -22290,7 +22626,7 @@ export class SkillManager {
       ctx.action,
       ctx.source,
       ctx.targets[0],
-      createStepContext(ctx.record, ctx.token),
+      createStepContext(ctx.record, ctx.token, false, undefined, ctx.trace),
     )
   }
   registerCalculator(name: string, calculator: unknown): void {
@@ -36726,7 +37062,7 @@ import Notification from "@/presentation/components/Notification.vue";
 import { useBattleStore, SkillStepType } from '@/presentation/stores';
 import type { LogEntry } from '@/shared/types/battle-log';
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
-import type { TraceLogEntry } from '@/shared/types/trace-log';
+import type { TraceEventNode } from '@/shared/types/trace-event';
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
 import BattleDashboard from "./BattleDashboard.vue";
@@ -36760,7 +37096,7 @@ const showRecordingDialog = ref(false);
 // ponytail: 调试面板现在独立监听事件总线，无需 BattleArena 维护 phase 状态
 const debugLogs = ref<LogEntry[]>([]);
 // 树状调试日志数据
-const traceRoots = ref<TraceLogEntry[]>([]);
+const traceRoots = ref<TraceEventNode[]>([]);
 const CT = {
   common: {
   },
@@ -36784,9 +37120,10 @@ async function updateTraceRoots() {
       const collector = bs.traceCollector
       const allTurns = new Set<number>()
       for (const e of collector.getAll()) {
-        if (e.turn != null) allTurns.add(Number(e.turn))
+        // 无回合信息的事件（如 Buff 生命周期）落在 turn-0 桶，一并纳入展示
+        allTurns.add(e.turn != null ? Number(e.turn) : 0)
       }
-      const roots: TraceLogEntry[] = []
+      const roots: TraceEventNode[] = []
       for (const turn of allTurns) {
         roots.push(...collector.getRootsByTurn(turn))
       }
@@ -41820,12 +42157,12 @@ import type { TabItem } from '@/presentation/components/Tabs.vue'
 import TraceLogTree from '@/presentation/views/components/TraceLogTree.vue'
 import EmptyState from '@/presentation/components/EmptyState.vue'
 import type { LogEntry } from '@/shared/types/battle-log'
-import type { TraceLogEntry } from '@/shared/types/trace-log'
+import type { TraceEventNode } from '@/shared/types/trace-event'
 import { LogLevel } from '@/shared/types/battle-log'
 interface Props {
   modelValue: boolean
   logs: LogEntry[]
-  traceRoots?: TraceLogEntry[]
+  traceRoots?: TraceEventNode[]
 }
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
@@ -42137,73 +42474,118 @@ const handleDelete = () => {
 --- src/presentation/views/components/TraceLogTree.vue ---
 <!--
  * 文件: TraceLogTree.vue
- * 功能: 树状调试日志渲染组件
- * 描述: 递归渲染 TraceLogEntry 树，支持可折叠子树和过滤，
+ * 功能: 树状调试追踪渲染组件（P2：五维过滤 + 因果链查询）
+ * 描述: 递归渲染 TraceEventNode 树，支持 phase / actorId / battleId / level / correlationId / 文本 过滤。
+ *       过滤语义：节点自身命中或子树命中则保留（树形过滤）。
  *       替换 DebugLogDialog 的扁平列表。
  *
  * 使用方式：
- *   <TraceLogTree :roots="traceLogs" />
- *   其中 traceLogs = collector.getRootsByTurn(turn)
+ *   <TraceLogTree :roots="traceRoots" />
+ *   其中 traceRoots = collector.getRootsByTurn(turn)
 -->
 <template>
   <div class="trace-log-tree">
-    <!-- 过滤条 -->
+    <!-- 过滤条（五维 + 因果链查询） -->
     <div class="trace-filter">
       <input v-model="filterText" placeholder="过滤关键词..." class="filter-input" />
-      <select v-model="filterStep" class="filter-select">
-        <option value="">全部步骤</option>
-        <option v-for="s in stepTypes" :key="s" :value="s">{{ s }}</option>
+      <select v-model="filterPhase" class="filter-select">
+        <option value="">全部阶段</option>
+        <option v-for="p in phaseTypes" :key="p" :value="p">{{ p }}</option>
       </select>
+      <select v-model="filterActor" class="filter-select">
+        <option value="">全部角色</option>
+        <option v-for="a in actorTypes" :key="a" :value="a">{{ a }}</option>
+      </select>
+      <select v-model="filterBattle" class="filter-select">
+        <option value="">全部战斗</option>
+        <option v-for="b in battleTypes" :key="b" :value="b">{{ b }}</option>
+      </select>
+      <select v-model="filterLevel" class="filter-select">
+        <option value="">全部级别</option>
+        <option v-for="l in levelTypes" :key="l" :value="l">{{ l }}</option>
+      </select>
+      <input v-model="filterCorrelation" placeholder="因果链 correlationId..." class="filter-input filter-corr" />
       <span class="trace-count">{{ visibleCount }} 条</span>
     </div>
     <!-- 节点列表 -->
     <div class="trace-list">
       <EmptyState v-if="filteredRoots.length === 0">暂无调试日志</EmptyState>
-      <TraceTreeNode v-for="node in filteredRoots" :key="node.traceId" :node="node" :depth="0" />
+      <TraceTreeNode v-for="node in filteredRoots" :key="node.id" :node="node" :depth="0" />
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { TraceLogEntry } from '@/shared/types/trace-log'
+import type { TraceEventNode } from '@/shared/types/trace-event'
+import { TraceLevel } from '@/shared/types/trace-event'
 import TraceTreeNode from './TraceTreeNode.vue'
 import EmptyState from '@/presentation/components/EmptyState.vue'
 interface Props {
-  roots: TraceLogEntry[]
+  roots: TraceEventNode[]
 }
 const props = withDefaults(defineProps<Props>(), {
   roots: () => [],
 })
 const filterText = ref('')
-const filterStep = ref('')
-/** 收集所有出现的 stepName 作为过滤选项 */
-const stepTypes = computed(() => {
+const filterPhase = ref('')
+const filterActor = ref('')
+const filterBattle = ref('')
+const filterLevel = ref('')
+const filterCorrelation = ref('')
+const levelTypes = Object.values(TraceLevel)
+/** 收集树中出现的 phase / actorId / battleId 作为过滤选项 */
+const phaseTypes = computed(() => collectValues((n) => n.phase))
+const actorTypes = computed(() => collectValues((n) => [n.sourceId, n.targetId].filter(Boolean)))
+const battleTypes = computed(() => collectValues((n) => n.battleId))
+function collectValues(pick: (n: TraceEventNode) => string | string[] | undefined): string[] {
   const set = new Set<string>()
-  const walk = (nodes: TraceLogEntry[]) => {
+  const walk = (nodes: TraceEventNode[]) => {
     for (const n of nodes) {
-      if (n.stepName) set.add(n.stepName)
+      const v = pick(n)
+      if (typeof v === 'string') set.add(v)
+      else v?.forEach((x) => set.add(x))
       if (n.children) walk(n.children)
     }
   }
   walk(props.roots)
   return Array.from(set).sort()
-})
-/** 过滤后的节点 */
+}
+/** 过滤后的节点（节点自身或子树命中则保留） */
 const filteredRoots = computed(() => {
   let nodes = props.roots
-  if (filterStep.value) {
-    nodes = nodes.filter((n) => matchesStep(n, filterStep.value))
+  if (filterPhase.value) nodes = nodes.filter((n) => matches(n, (x) => x.phase === filterPhase.value))
+  if (filterActor.value) {
+    const actor = filterActor.value
+    nodes = nodes.filter((n) => matches(n, (x) => x.sourceId === actor || x.targetId === actor))
+  }
+  if (filterBattle.value) {
+    const battle = filterBattle.value
+    nodes = nodes.filter((n) => matches(n, (x) => x.battleId === battle))
+  }
+  if (filterLevel.value) {
+    const level = filterLevel.value
+    nodes = nodes.filter((n) => matches(n, (x) => x.level === level))
+  }
+  if (filterCorrelation.value) {
+    const corr = filterCorrelation.value.trim()
+    if (corr) nodes = nodes.filter((n) => matches(n, (x) => x.correlationId === corr))
   }
   if (filterText.value) {
     const kw = filterText.value.toLowerCase()
-    nodes = nodes.filter((n) => matchesText(n, kw))
+    nodes = nodes.filter((n) => matches(n, (x) => `${x.summary} ${x.phase}`.toLowerCase().includes(kw)))
   }
   return nodes
 })
+/** 节点自身命中 predicate，或任一子树命中（树形过滤保留祖先） */
+function matches(node: TraceEventNode, pred: (n: TraceEventNode) => boolean): boolean {
+  if (pred(node)) return true
+  if (node.children) return node.children.some((c) => matches(c, pred))
+  return false
+}
 /** 计算显示的条目数 */
 const visibleCount = computed(() => {
   let count = 0
-  const walk = (nodes: TraceLogEntry[]) => {
+  const walk = (nodes: TraceEventNode[]) => {
     for (const n of nodes) {
       count++
       if (n.children) walk(n.children)
@@ -42212,17 +42594,6 @@ const visibleCount = computed(() => {
   walk(filteredRoots.value)
   return count
 })
-function matchesStep(node: TraceLogEntry, step: string): boolean {
-  if (node.stepName === step) return true
-  if (node.children) return node.children.some((c) => matchesStep(c, step))
-  return false
-}
-function matchesText(node: TraceLogEntry, kw: string): boolean {
-  const searchText = `${node.stepName} ${node.description} ${node.message ?? ''}`.toLowerCase()
-  if (searchText.includes(kw)) return true
-  if (node.children) return node.children.some((c) => matchesText(c, kw))
-  return false
-}
 </script>
 <style scoped lang="scss">
 .trace-log-tree {
@@ -42232,6 +42603,7 @@ function matchesText(node: TraceLogEntry, kw: string): boolean {
 }
 .trace-filter {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
   padding: var(--space-2);
   border-bottom: 1px solid var(--color-border-default);
@@ -42240,11 +42612,16 @@ function matchesText(node: TraceLogEntry, kw: string): boolean {
 }
 .filter-input {
   flex: 1;
+  min-width: 120px;
   background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border-default);
   color: var(--color-text-primary);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
+}
+.filter-corr {
+  flex: 2;
+  font-family: 'Consolas', 'Monaco', monospace;
 }
 .filter-select {
   background: var(--color-bg-tertiary);
@@ -42269,77 +42646,71 @@ function matchesText(node: TraceLogEntry, kw: string): boolean {
 <!--
  * 文件: TraceTreeNode.vue
  * 功能: 递归树节点组件
- * 描述: 渲染一个 TraceLogEntry 节点及其子节点，支持可折叠。
+ * 描述: 渲染一个 TraceEventNode 节点及其子节点，支持可折叠。
+ *       节点行 = phase 徽章 + summary；展开后渲染 payload 表格，
+ *       steps 数组按 before→after 效果链展示。
 -->
 <template>
   <div class="trace-node" :style="{ paddingLeft: depth * 16 + 'px' }">
     <div class="trace-row" :class="[
-      'step-' + node.stepName,
+      'phase-' + node.phase,
       { 'is-expandable': hasChildren, 'is-expanded': expanded }
     ]" @click="toggle">
       <!-- 展开/折叠箭头 -->
       <span v-if="hasChildren" class="trace-arrow">{{ expanded ? '▼' : '▶' }}</span>
       <span v-else class="trace-arrow trace-arrow-placeholder"> </span>
-      <!-- 步骤名 -->
-      <span class="trace-step" :class="'step-' + node.stepName">
-        {{ node.stepName }}
-      </span>
-      <!-- 效果链：before → after（当 before !== after 且均非 undefined 时显示） -->
-      <span v-if="hasEffectChain" class="trace-effect-chain">
-        <span class="eff-before">{{ node.before }}</span>
-        <span class="eff-arrow">→</span>
-        <span class="eff-after">{{ node.after }}</span>
-      </span>
-      <!-- 数值 -->
-      <span v-if="node.stepValue !== 0 && !hasEffectChain" class="trace-value" :class="valueColorClass">
-        {{ node.stepValue }}
-      </span>
-      <span v-else-if="node.stepValue !== 0 && hasEffectChain" class="trace-value" :class="valueColorClass">
-        = {{ node.stepValue }}
-      </span>
-      <!-- 来源标记 -->
-      <span v-if="node.sourceType" class="trace-source">{{ node.sourceType }}</span>
-      <!-- 描述 -->
-      <span class="trace-desc">{{ node.description || node.message || '' }}</span>
+      <!-- phase 徽章 -->
+      <span class="phase-badge" :class="'phase-' + node.phase">{{ node.phase }}</span>
+      <!-- 摘要 -->
+      <span class="trace-summary">{{ node.summary }}</span>
+      <!-- trace 级别标记（默认折叠的细节） -->
+      <span v-if="node.level === 'trace'" class="level-tag">trace</span>
+    </div>
+    <!-- payload 表格 -->
+    <div v-if="expanded && hasPayload" class="trace-payload">
+      <div v-for="(value, key) in node.payload" :key="key" class="payload-row">
+        <span class="payload-key">{{ key }}</span>
+        <!-- steps 数组：按 before → after 效果链展示 -->
+        <span v-if="key === 'steps' && Array.isArray(value)" class="payload-steps">
+          <span v-for="(s, i) in value" :key="i" class="step-row">
+            <span class="step-before">{{ s.before }}</span>
+            <span class="step-arrow">→</span>
+            <span class="step-after">{{ s.after }}</span>
+            <span class="step-name">{{ s.stepName }}</span>
+            <span class="step-desc">{{ s.description }}</span>
+          </span>
+        </span>
+        <span v-else class="payload-value">{{ formatValue(value) }}</span>
+      </div>
     </div>
     <!-- 子节点 -->
     <div v-if="expanded && hasChildren" class="trace-children">
-      <TraceTreeNode v-for="child in node.children" :key="child.traceId" :node="child" :depth="depth + 1" />
+      <TraceTreeNode v-for="child in node.children" :key="child.id" :node="child" :depth="depth + 1" />
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { TraceLogEntry } from '@/shared/types/trace-log'
+import type { TraceEventNode } from '@/shared/types/trace-event'
 interface Props {
-  node: TraceLogEntry
+  node: TraceEventNode
   depth: number
 }
 const props = withDefaults(defineProps<Props>(), {
   depth: 0,
 })
 const expanded = ref(props.depth < 1) // 第一层默认展开
-const hasChildren = computed(() => props.node.children && props.node.children.length > 0)
-/** 有 before/after 且数值不同步时显示效果链箭头 */
-const hasEffectChain = computed(() => {
-  return props.node.before !== undefined
-    && props.node.after !== undefined
-    && props.node.before !== props.node.after
-})
+const hasChildren = computed(() => !!props.node.children && props.node.children.length > 0)
+const hasPayload = computed(() => Object.keys(props.node.payload ?? {}).length > 0)
 const toggle = () => {
   if (hasChildren.value) expanded.value = !expanded.value
 }
-/** 根据 stepName 和数值正负决定颜色 */
-const valueColorClass = computed(() => {
-  const name = props.node.stepName?.toLowerCase() ?? ''
-  if (name === 'result' || name === 'final') return 'value-final'
-  if (name === 'crit' || name === 'critical') return 'value-crit'
-  if (name === 'heal') return 'value-heal'
-  if (name.includes('damage') || name.includes('dmg') || name === 'base') return 'value-damage'
-  if (props.node.stepValue > 0) return 'value-positive'
-  if (props.node.stepValue < 0) return 'value-negative'
-  return ''
-})
+/** payload 值格式化：对象/数组 → JSON，其余 → 字符串 */
+function formatValue(v: unknown): string {
+  if (v === undefined || v === null) return '—'
+  if (typeof v === 'object') return JSON.stringify(v)
+  return String(v)
+}
 </script>
 <style scoped lang="scss">
 .trace-node {
@@ -42371,103 +42742,104 @@ const valueColorClass = computed(() => {
 .trace-arrow-placeholder {
   visibility: hidden;
 }
-.trace-step {
-  color: var(--color-info);
-  font-weight: var(--font-weight-medium);
-  flex-shrink: 0;
-  min-width: 60px;
-  &.step-result,
-  &.step-final {
-    color: var(--color-warning);
-    font-weight: var(--font-weight-bold);
-  }
-  &.step-base,
-  &.step-BaseDamage {
-    color: var(--color-text-secondary);
-  }
-  &.step-crit,
-  &.step-CritCheck {
-    color: var(--color-crit);
-  }
-  &.step-defense,
-  &.step-Defense {
-    color: var(--color-debuff);
-  }
-  &.step-heal,
-  &.step-Heal {
-    color: var(--color-heal);
-  }
-  &.step-buff_apply,
-  &.step-buff_remove,
-  &.step-buff_update,
-  &.step-buff_modifier {
-    color: var(--color-energy);
-  }
-}
-.trace-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: var(--font-weight-semibold);
-  flex-shrink: 0;
-  min-width: 30px;
-  text-align: right;
-  &.value-damage {
-    color: var(--color-damage);
-  }
-  &.value-heal {
-    color: var(--color-heal);
-  }
-  &.value-crit {
-    color: var(--color-crit);
-  }
-  &.value-final {
-    color: var(--color-warning);
-    font-weight: var(--font-weight-bold);
-  }
-  &.value-positive {
-    color: var(--color-energy);
-  }
-  &.value-negative {
-    color: var(--color-warning);
-  }
-}
-/* 效果链：before → after */
-.trace-effect-chain {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: var(--font-weight-semibold);
-  flex-shrink: 0;
-  min-width: 60px;
-  .eff-before {
-    color: var(--color-text-secondary);
-    font-size: 0.85em;
-  }
-  .eff-arrow {
-    color: var(--color-text-tertiary);
-    font-size: 0.8em;
-  }
-  .eff-after {
-    color: var(--color-damage);
-  }
-}
-/* 来源标记 */
-.trace-source {
-  display: inline-block;
-  padding: 0 4px;
-  font-size: 0.75em;
+.phase-badge {
+  font-size: 0.78em;
   line-height: 1.4;
+  padding: 0 6px;
   border-radius: 3px;
   background: var(--color-bg-tertiary, #f0f0f0);
-  color: var(--color-text-tertiary);
-  flex-shrink: 0;
-}
-.trace-desc {
   color: var(--color-text-secondary);
+  flex-shrink: 0;
+  &.phase-damage_calculation {
+    background: var(--color-damage, #e04f4f);
+    color: #fff;
+  }
+  &.phase-heal_calculation {
+    background: var(--color-heal, #3fa95f);
+    color: #fff;
+  }
+  &.phase-buff_lifecycle,
+  &.phase-buff_trigger {
+    background: var(--color-energy, #d9a441);
+    color: #fff;
+  }
+  &.phase-passive_trigger {
+    background: var(--color-info, #4a7dbd);
+    color: #fff;
+  }
+  &.phase-ai_decision {
+    background: var(--color-warning, #b0662f);
+    color: #fff;
+  }
+  &.phase-action_execution {
+    background: var(--color-text-tertiary, #888);
+    color: #fff;
+  }
+}
+.trace-summary {
+  color: var(--color-text-primary);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.level-tag {
+  font-size: 0.72em;
+  color: var(--color-text-tertiary);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.trace-payload {
+  margin-left: 20px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.9em;
+}
+.payload-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: 1px 0;
+}
+.payload-key {
+  color: var(--color-info);
+  flex-shrink: 0;
+  min-width: 90px;
+}
+.payload-value {
+  color: var(--color-text-secondary);
+  word-break: break-all;
+}
+.payload-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.step-row {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-before {
+  color: var(--color-text-secondary);
+  min-width: 28px;
+  text-align: right;
+}
+.step-arrow {
+  color: var(--color-text-tertiary);
+}
+.step-after {
+  color: var(--color-damage);
+  min-width: 28px;
+}
+.step-name {
+  color: var(--color-text-tertiary);
+  min-width: 60px;
+}
+.step-desc {
+  color: var(--color-text-secondary);
 }
 </style>
 
@@ -46250,65 +46622,119 @@ export const ControlKindOrder = ControlKind.map(
   (code) => STATUS_META[code].controlPriority ?? 0,
 )
 
---- src/shared/types/trace-log.ts ---
+--- src/shared/types/trace-event.ts ---
 /**
- * 文件: trace-log.ts
- * 功能: 技术调试日志类型定义
- * 描述: 定义 TraceLogEntry 接口，用于记录完整的伤害计算链路、
- *       Buff 变更、属性重算等开发调试信息。
- *       对应设计文档中的"底层：技术调试日志 (DEBUG/TRACE)"。
+ * 文件: trace-event.ts
+ * 功能: 结构化调试追踪事件类型定义
+ * 描述: 领域运行时状态的结构化投影（见 documents/需求文档/调试日志改造.md v2）。
+ *       TraceEvent 是 TraceLogEntry 的替代者——一次行动的全链路事件共享同一个
+ *       correlationId，树状嵌套由 parentId 表达，结构化数据进 payload，
+ *       人类可读文本只进 summary。
  * 版本: 1.0.0
  */
-import type { LogEntry } from './battle-log'
-import { LogType } from './battle-log'
-/**
- * 技术调试日志条目
- * 扩展自 LogEntry，用于记录带父子关系的树状计算链路。
- * TRACE 级别使用 children 构建树，DEBUG 级别仅有摘要行。
- */
-export interface TraceLogEntry extends LogEntry {
-  /** 计算链唯一标识 */
-  traceId: string
-  /** 父 trace ID（用于构建树状嵌套，根节点为空） */
-  parentTraceId?: string
-  /** 计算步骤名，如 'BaseDamage', 'DefenseReduction', 'CritCheck' */
-  stepName: string
-  /** 步骤的计算值（数值结果） */
-  stepValue: number
-  /** 步骤的可读描述，如 '基础伤害: 100 (MIN=80, MAX=120, roll=100)' */
-  description: string
-  /** 缩进层级（0=根节点），用于 UI 展示时的缩进控制 */
-  indentLevel: number
-  /** 子步骤列表（仅在构建树时填充，持久化时展平为独立条目） */
-  children?: TraceLogEntry[]
-  /** 此步骤前的累计伤害（效果链 before→after 展示） */
-  before?: number
-  /** 此步骤后的累计伤害（与 stepValue 一致，结构化冗余以方便 UI 直接读取） */
-  after?: number
-  /** 来源类型：'system' | 'buff' | 'skill' | 'passive' | 'base' */
-  sourceType?: string
+/** 追踪阶段枚举 — 只描述"正在发生的领域阶段"，错误/警告不属于任何 phase（走 IBattleLogManager 错误通道） */
+export const TracePhase = {
+  // 战斗流程
+  BATTLE_LIFECYCLE: 'battle_lifecycle',
+  TURN_FLOW: 'turn_flow',
+  ACTION_EXECUTION: 'action_execution',
+  // 计算链路
+  DAMAGE_CALCULATION: 'damage_calculation',
+  HEAL_CALCULATION: 'heal_calculation',
+  ATTRIBUTE_RECALC: 'attribute_recalc',
+  // Buff 系统
+  BUFF_LIFECYCLE: 'buff_lifecycle',
+  BUFF_TRIGGER: 'buff_trigger',
+  PASSIVE_TRIGGER: 'passive_trigger',
+  // AI 决策
+  AI_DECISION: 'ai_decision',
+  // 配置与校验
+  CONFIG_LOAD: 'config_load',
+  CONFIG_VALIDATION: 'config_validation',
+} as const
+export type TracePhase = (typeof TracePhase)[keyof typeof TracePhase]
+/** 追踪事件级别 — 独立于数值型 LogLevel，字符串值便于 JSON 序列化与 UI 过滤 */
+export const TraceLevel = {
+  TRACE: 'trace',
+  DEBUG: 'debug',
+  INFO: 'info',
+  WARN: 'warn',
+  ERROR: 'error',
+} as const
+export type TraceLevel = (typeof TraceLevel)[keyof typeof TraceLevel]
+/** 作用域元信息 */
+export interface TraceScopeMeta {
+  battleId?: string
+  turn?: number
 }
 /**
- * 创建空的 TraceLogEntry
+ * correlationId 作用域 — 一次行动的因果链根（文档 §4.5）
+ * 同一因果链上 correlationId 保持不变，树的嵌套关系由每个事件的 parentId 表达。
  */
-export function createTraceLogEntry(
-  traceId: string,
-  parentTraceId: string | undefined,
-  stepName: string,
-  stepValue: number,
-  description: string,
-  indentLevel: number,
-): TraceLogEntry {
+export interface TraceScope {
+  readonly correlationId: string
+  readonly phase: TracePhase
+  /** 本 scope 事件的挂载点（根 scope 为 undefined；由调用链显式传入，供 emit 时作 parentId） */
+  readonly parentId?: string
+  readonly meta?: TraceScopeMeta
+  /** 派生子 scope：correlationId/meta 不变，phase 与 parentId 可覆盖 */
+  child(phase: TracePhase, parentId?: string): TraceScope
+}
+/** 结构化追踪事件 */
+export interface TraceEvent {
+  /** 事件唯一 ID（createTraceEvent 自动生成） */
+  id: string
+  /** 关联 ID — 同一因果链的所有事件共享此 ID */
+  correlationId: string
+  /** 父事件 ID — 构成树状嵌套 */
+  parentId?: string
+  /** 追踪阶段 */
+  phase: TracePhase
+  /** 战斗实例 ID — 隔离多场战斗 */
+  battleId?: string
+  /** 回合号 */
+  turn?: number
+  /** 来源实体 ID（供 actorId 过滤索引） */
+  sourceId?: string
+  /** 目标实体 ID（供 actorId 过滤索引） */
+  targetId?: string
+  /** 时间戳（performance.now()，非 Date.now()） */
+  timestamp: number
+  /** 结构化 payload — 按 phase 不同而不同 */
+  payload: Record<string, unknown>
+  /** 人类可读摘要（仅用于快速扫读，不作为程序输入） */
+  summary: string
+  /** 级别 */
+  level: TraceLevel
+}
+/** 树形追踪节点 — TraceEventCollector.getTree/getRootsByTurn 构建，UI 消费 */
+export interface TraceEventNode extends TraceEvent {
+  children?: TraceEventNode[]
+}
+/** createTraceEvent 输入（timestamp 由工厂生成；id 默认自动生成，可显式指定） */
+export interface TraceEventInput {
+  /** 事件唯一 ID（默认自动生成 `evt_N`） */
+  id?: string
+  correlationId: string
+  phase: TracePhase
+  summary: string
+  payload?: Record<string, unknown>
+  level?: TraceLevel
+  parentId?: string
+  battleId?: string
+  turn?: number
+  sourceId?: string
+  targetId?: string
+}
+let eventSeq = 0
+/** 创建 TraceEvent — 自动生成 id（可覆盖）与 timestamp */
+export function createTraceEvent(input: TraceEventInput): TraceEvent {
   return {
-    index: -1,
-    type: LogType.DEBUG,
-    traceId,
-    parentTraceId,
-    stepName,
-    stepValue,
-    description,
-    indentLevel,
-    message: description,
+    ...input,
+    payload: input.payload ?? {},
+    level: input.level ?? TraceLevel.DEBUG,
+    id: input.id ?? `evt_${++eventSeq}`,
+    timestamp: performance.now(),
   }
 }
 

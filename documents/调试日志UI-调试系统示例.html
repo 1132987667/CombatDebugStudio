@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>AEGIS // 战斗日志检视器 — Schema v1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════ 设计系统 ═══════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg0:#0a0d13; --bg1:#0f141d; --bg2:#141b27; --bg3:#1b2434;
+  --line:rgba(154,171,196,.09); --line2:rgba(154,171,196,.18);
+  --tx0:#e8edf5; --tx1:#9aa8bd; --tx2:#5f6f88;
+  --amber:#ffc53d; --red:#ff6b5e; --green:#3ddc97; --cyan:#41d0e8;
+  --blue:#5ea0ff; --orange:#ff9457; --teal:#2dd4bf;
+  --disp:'Chakra Petch',sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
+}
+html,body{height:100%}
+body{font-family:var(--body);background:var(--bg0);color:var(--tx0);overflow:hidden;display:flex;flex-direction:column;font-size:13px;-webkit-font-smoothing:antialiased}
+/* 分层环境背景：工程网格 + 双侧微光 + 暗角 */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(154,171,196,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(154,171,196,.04) 1px,transparent 1px);
+  background-size:36px 36px}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:
+  radial-gradient(900px 480px at 10% -8%,rgba(255,197,61,.055),transparent 60%),
+  radial-gradient(820px 520px at 96% 112%,rgba(45,212,191,.05),transparent 60%),
+  radial-gradient(1400px 900px at 50% 50%,transparent 55%,rgba(4,6,10,.6))}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2a3446;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#3a4760}
+
+/* ═══════════ 启动诊断幕 ═══════════ */
+#boot{position:fixed;inset:0;z-index:1000;background:rgba(7,9,14,.97);display:flex;align-items:center;justify-content:center;transition:opacity .5s ease,visibility .5s;cursor:pointer}
+#boot.done{opacity:0;visibility:hidden}
+.boot-panel{width:min(640px,92vw);background:var(--bg1);border:1px solid var(--line2);padding:26px 32px 24px;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.boot-kicker{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--tx2)}
+.boot-brand{font-family:var(--disp);font-weight:700;font-size:27px;letter-spacing:1px;margin:8px 0 20px}
+.boot-brand em{color:var(--amber);font-style:normal}
+#bootLines{font-family:var(--mono);font-size:12.5px;line-height:2.1;color:var(--tx1);min-height:158px}
+.bl{opacity:0;animation:lineIn .3s forwards}
+.bl .ok{color:var(--teal)} .bl .warn{color:var(--amber)} .bl .dim{color:var(--tx2)}
+.boot-bar{height:3px;background:var(--bg3);margin-top:14px;overflow:hidden}
+.boot-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--teal));transition:width .45s ease}
+.boot-skip{position:absolute;right:14px;top:12px;font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--tx2)}
+
+/* ═══════════ 指令栏 ═══════════ */
+#cmd{height:52px;flex:none;display:flex;align-items:center;gap:14px;padding:0 16px;background:linear-gradient(180deg,var(--bg2),var(--bg1));border-bottom:1px solid var(--line2);position:relative;z-index:5}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:26px;height:26px;background:linear-gradient(135deg,var(--amber),#ff8a3d);clip-path:polygon(0 0,100% 0,100% 62%,62% 100%,0 100%);display:grid;place-items:center;font-family:var(--disp);font-weight:700;color:#171004;font-size:13px}
+.brand-name{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:2px}
+.brand-name span{color:var(--tx2);font-weight:500;font-size:11px;letter-spacing:1.5px}
+.cmd-meta{font-family:var(--mono);font-size:10px;color:var(--tx2);padding-left:14px;border-left:1px solid var(--line2);line-height:1.6}
+.cmd-meta b{color:var(--tx1);font-weight:500}
+.cmd-spacer{flex:1}
+.cmd-search{position:relative}
+.cmd-search::before{content:'⌕';position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:14px}
+.cmd-search input{width:220px;background:var(--bg0);border:1px solid var(--line);color:var(--tx0);font:12.5px var(--body);padding:7px 10px 7px 29px;border-radius:4px;outline:none;transition:border-color .2s,box-shadow .2s}
+.cmd-search input:focus{border-color:rgba(45,212,191,.55);box-shadow:0 0 0 3px rgba(45,212,191,.1)}
+.btn{font:500 11.5px var(--body);letter-spacing:.4px;color:var(--tx1);background:var(--bg2);border:1px solid var(--line2);padding:7px 12px;border-radius:4px;cursor:pointer;transition:all .18s ease;white-space:nowrap}
+.btn:hover{color:var(--tx0);border-color:var(--tx2);transform:translateY(-1px)}
+.btn-amber:hover{border-color:var(--amber);color:var(--amber)}
+
+/* ═══════════ 三栏主体 ═══════════ */
+#main{flex:1;min-height:0;display:grid;grid-template-columns:272px minmax(0,1fr) 400px;position:relative;z-index:1}
+.pane{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid var(--line)}
+.pane:last-child{border-right:none}
+.pane-hd{height:40px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:var(--bg1);border-bottom:1px solid var(--line)}
+.pane-hd .t{font-family:var(--disp);font-size:10.5px;font-weight:600;letter-spacing:2.5px;color:var(--tx1);text-transform:uppercase}
+.pane-hd .t::before{content:'';display:inline-block;width:6px;height:6px;background:var(--pc,var(--amber));margin-right:9px;clip-path:polygon(0 0,100% 0,100% 60%,60% 100%,0 100%)}
+.pane-hd .s{font-family:var(--mono);font-size:10px;color:var(--tx2)}
+.pane-bd{flex:1;min-height:0;overflow-y:auto;position:relative}
+
+/* ═══════════ 时间线树 ═══════════ */
+#tree{padding:10px 0 28px}
+.t-round{margin-top:6px}
+.t-row{display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;font-size:12.5px;color:var(--tx1);border-left:2px solid transparent;transition:background .15s,color .15s;user-select:none}
+.t-row:hover{background:var(--bg2);color:var(--tx0)}
+.t-row.on{background:var(--bg2);border-left-color:var(--amber);color:var(--tx0)}
+.t-round>.t-row{font-family:var(--disp);font-weight:600;font-size:11.5px;letter-spacing:1px;color:var(--tx0)}
+.t-tgl{font-size:9px;color:var(--tx2);width:10px;transition:transform .2s;display:inline-block}
+.t-tgl.open{transform:rotate(90deg)}
+.t-ico{font-size:11px;width:16px;text-align:center;flex:none;color:var(--tx2)}
+.t-lab{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-meta{font-family:var(--mono);font-size:9.5px;color:var(--tx2)}
+.t-dot{width:6px;height:6px;border-radius:50%;flex:none}
+.t-kids{display:none;padding-left:13px;border-left:1px dashed var(--line);margin-left:19px}
+.t-kids.open{display:block}
+.t-row.dead{color:var(--red)}
+.t-row.dead .t-lab{text-decoration:line-through;text-decoration-color:rgba(255,107,94,.5)}
+
+/* ═══════════ 事件流（虚拟列表） ═══════════ */
+.stream-hd{flex:none;padding:15px 18px 13px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+.sh-title{font-family:var(--disp);font-weight:600;font-size:19px;letter-spacing:.5px}
+.sh-sub{font-family:var(--mono);font-size:10.5px;color:var(--tx2);margin-top:5px;letter-spacing:.5px}
+.sh-sub b{color:var(--tx1);font-weight:500}
+#streamScroll{flex:1;min-height:0;overflow-y:auto;position:relative}
+#streamInner{position:relative}
+.ev{background:var(--bg1);border:1px solid var(--line);border-radius:6px;position:relative;cursor:pointer;transition:transform .18s ease,border-color .18s,box-shadow .18s,background .18s;overflow:hidden}
+.ev::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--tone,var(--tx2))}
+.ev:hover{transform:translateY(-2px);border-color:var(--line2);box-shadow:0 8px 20px rgba(0,0,0,.35)}
+.ev.on{border-color:var(--tone);background:var(--bg2);box-shadow:0 0 0 1px var(--tone),0 0 18px -6px var(--tone),0 10px 26px rgba(0,0,0,.42)}
+.ev.t-damage{--tone:var(--red)} .ev.t-crit{--tone:var(--amber)} .ev.t-miss{--tone:var(--cyan)}
+.ev.t-buff{--tone:var(--blue)} .ev.t-debuff{--tone:var(--orange)} .ev.t-heal{--tone:var(--green)}
+.ev.t-death{--tone:var(--red)} .ev.t-phase{--tone:var(--tx2)}
+.ev-hd{display:flex;align-items:center;gap:8px;padding:10px 12px 6px 15px}
+.ev-step{font-family:var(--mono);font-size:9px;color:var(--tx2);border:1px solid var(--line2);padding:1px 5px;border-radius:3px;letter-spacing:1px}
+.ev-title{flex:1;font-size:13px;font-weight:600;letter-spacing:.2px}
+.ev-badge{font-family:var(--disp);font-size:9px;font-weight:600;letter-spacing:1.5px;padding:2px 8px;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+.b-crit{background:rgba(255,197,61,.14);color:var(--amber)} .b-hit{background:rgba(94,160,255,.13);color:var(--blue)}
+.b-miss{background:rgba(65,208,232,.13);color:var(--cyan)} .b-death{background:rgba(255,107,94,.15);color:var(--red)}
+.b-ok{background:rgba(61,220,151,.12);color:var(--green)}
+.ev-bd{padding:0 14px 11px 15px;font-size:12.5px;line-height:1.65;color:var(--tx1)}
+.ev-bd .hl{font-family:var(--mono);font-size:11px;color:var(--tx0);background:var(--bg3);padding:0 4px;border-radius:3px}
+.ev-bd .hd{color:var(--red);font-weight:600;font-family:var(--mono);font-size:11.5px}
+.ev-bd .hc{color:var(--amber);font-weight:600}
+.ev-multi{display:flex;gap:3px;padding:8px 14px 10px 15px;border-top:1px solid var(--line);background:rgba(0,0,0,.18)}
+.ev-multi i{flex:1;height:4px;border-radius:2px;background:var(--bg3)}
+.ev-multi i.c{background:var(--amber);box-shadow:0 0 6px rgba(255,197,61,.5)}
+.ev-multi i.m{background:var(--cyan)} .ev-multi i.h{background:var(--blue)}
+.ev-multi i.cur{outline:1px solid rgba(255,255,255,.55);outline-offset:1px}
+
+/* ═══════════ 深度检视器 ═══════════ */
+#insp{padding:16px 18px 32px}
+.insp-kicker{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;color:var(--tx2);text-transform:uppercase;margin-bottom:6px}
+.insp-title{font-family:var(--disp);font-weight:600;font-size:18px;letter-spacing:.3px}
+.insp-actions{display:flex;gap:8px;margin-top:12px}
+.sec{margin-bottom:22px;opacity:0;animation:secIn .4s forwards}
+.sec-t{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-size:10px;font-weight:600;letter-spacing:2px;color:var(--tx2);text-transform:uppercase;margin-bottom:10px}
+.sec-t::after{content:'';flex:1;height:1px;background:var(--line)}
+.ticked{position:relative}
+.ticked::before,.ticked::after{content:'';position:absolute;width:10px;height:10px;border:1px solid rgba(45,212,191,.55)}
+.ticked::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
+.ticked::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
+/* 修正项链 · 通用公式账本 */
+.fbox{background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:6px 0 0}
+.frow{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:10px;padding:7px 14px;font-size:12.5px}
+.frow+.frow{border-top:1px dashed var(--line)}
+.fop{font-family:var(--mono);font-size:12px;color:var(--tx2);text-align:center;border:1px solid var(--line);border-radius:3px;padding:2px 0}
+.fop.mul{color:var(--amber);border-color:rgba(255,197,61,.3)} .fop.sub{color:var(--red);border-color:rgba(255,107,94,.3)} .fop.add{color:var(--green);border-color:rgba(61,220,151,.3)}
+.flab{color:var(--tx1)}
+.flab .src{display:block;font-family:var(--mono);font-size:9px;color:var(--tx2);margin-top:1px;letter-spacing:.5px}
+.fval{font-family:var(--mono);font-weight:600;font-size:13px}
+.fval.pos{color:var(--green)} .fval.neg{color:var(--red)} .fval.mul{color:var(--amber)}
+.fres{display:flex;align-items:baseline;gap:12px;padding:13px 14px;margin-top:6px;border-top:1px solid var(--line2);background:rgba(255,255,255,.02)}
+.fres .lab{font-family:var(--disp);font-size:10px;letter-spacing:2px;color:var(--tx2)}
+.fres .num{font-family:var(--disp);font-weight:700;font-size:31px;color:var(--red);line-height:1;margin-left:auto;text-shadow:0 0 20px rgba(255,107,94,.4)}
+/* 随机判定凭证 */
+.rng{background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.rng+.rng{margin-top:8px}
+.rng-top{display:flex;align-items:center;gap:8px;margin-bottom:11px;font-size:12.5px}
+.rng-name{font-weight:600}
+.rng-note{color:var(--tx2);font-size:11px}
+.rng-idx{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--tx2)}
+.rng-bar{height:6px;background:var(--bg0);border-radius:3px;position:relative}
+.rng-fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;width:0;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.rng-fill.pass{background:linear-gradient(90deg,rgba(61,220,151,.2),var(--green))}
+.rng-fill.fail{background:linear-gradient(90deg,rgba(65,208,232,.2),var(--cyan))}
+.rng-th{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--tx0);box-shadow:0 0 6px rgba(255,255,255,.45)}
+.rng-nums{display:flex;justify-content:space-between;align-items:center;margin-top:9px;font-family:var(--mono);font-size:10.5px;color:var(--tx2)}
+.rng-nums b{font-weight:600;color:var(--tx1)}
+.rng-verdict{font-family:var(--disp);font-size:9px;font-weight:600;letter-spacing:1.5px;padding:2px 8px;clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)}
+.v-pass{background:rgba(61,220,151,.13);color:var(--green)} .v-fail{background:rgba(65,208,232,.13);color:var(--cyan)}
+/* 状态快照 */
+.dbox{background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.d-tgt{font-family:var(--mono);font-size:10.5px;color:var(--tx2);margin-bottom:11px;letter-spacing:.5px}
+.d-tgt b{color:var(--tx0);font-weight:500}
+.drow{display:grid;grid-template-columns:40px 1fr 58px 58px 62px;align-items:center;gap:10px}
+.drow+.drow{margin-top:9px}
+.dstat{font-family:var(--disp);font-size:10.5px;letter-spacing:1px;color:var(--tx2)}
+.dbar{height:6px;background:var(--bg0);border-radius:3px;overflow:hidden}
+.dbar i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--red),var(--amber));transition:width .8s ease}
+.dbefore{font-family:var(--mono);font-size:11px;color:var(--tx2);text-decoration:line-through;text-align:right}
+.dafter{font-family:var(--mono);font-size:14px;font-weight:600;text-align:right}
+.ddelta{font-family:var(--mono);font-size:10.5px;padding:2px 6px;border-radius:3px;text-align:right}
+.ddelta.dec{color:var(--red);background:rgba(255,107,94,.1)} .ddelta.inc{color:var(--green);background:rgba(61,220,151,.1)}
+/* 因果链 */
+.cnode{display:flex;gap:12px;position:relative;padding-bottom:15px}
+.cnode:last-child{padding-bottom:0}
+.cnode::before{content:'';position:absolute;left:10px;top:23px;bottom:-2px;width:1px;background:var(--line2)}
+.cnode:last-child::before{display:none}
+.cnum{width:21px;height:21px;flex:none;display:grid;place-items:center;font-family:var(--mono);font-size:10px;color:var(--teal);border:1px solid rgba(45,212,191,.4);background:rgba(45,212,191,.07);clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)}
+.ct{font-size:12.5px;font-weight:600}
+.cd{font-size:11.5px;color:var(--tx2);margin-top:2px;line-height:1.55}
+.insp-empty-wrap{padding:48px 10px;text-align:center}
+.insp-empty{color:var(--tx2);font-size:13px}
+.kbd-hints{margin-top:20px;display:flex;flex-direction:column;gap:9px;font-family:var(--mono);font-size:10px;color:var(--tx2)}
+.kbd-hints b{border:1px solid var(--line2);padding:1px 6px;border-radius:3px;color:var(--tx1);font-weight:500}
+
+/* ═══════════ 状态栏 / 诊断面板 / Toast ═══════════ */
+#status{height:30px;flex:none;display:flex;align-items:center;background:var(--bg1);border-top:1px solid var(--line2);font-family:var(--mono);font-size:10.5px;color:var(--tx2);position:relative;z-index:5}
+.st-item{padding:0 14px;height:100%;display:flex;align-items:center;gap:7px;border-right:1px solid var(--line);white-space:nowrap}
+.st-item.click{cursor:pointer}
+.st-item.click:hover{background:var(--bg2);color:var(--tx1)}
+.st-ok{color:var(--teal)} .st-warn{color:var(--amber)}
+.st-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);animation:pulse 2.4s infinite}
+.st-right{margin-left:auto;display:flex}
+.st-right .st-item{border-right:none;border-left:1px solid var(--line)}
+.cursor{display:inline-block;width:7px;height:12px;background:var(--teal);animation:blink 1.1s steps(1) infinite}
+#diag{position:fixed;left:0;right:0;bottom:30px;max-height:46vh;background:var(--bg1);border-top:1px solid var(--line2);z-index:50;transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
+#diag.open{transform:none;box-shadow:0 -18px 44px rgba(0,0,0,.55)}
+.diag-hd{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.diag-hd .t{font-family:var(--disp);font-size:10.5px;font-weight:600;letter-spacing:2px;color:var(--tx1)}
+.diag-hd button{margin-left:auto;background:none;border:1px solid var(--line2);color:var(--tx2);font:11px var(--mono);padding:3px 9px;border-radius:3px;cursor:pointer}
+.diag-hd button:hover{color:var(--tx0);border-color:var(--tx2)}
+.diag-list{overflow-y:auto;padding:8px 0;font-family:var(--mono);font-size:11.5px}
+.dl{display:flex;gap:12px;padding:5px 16px;color:var(--tx1);line-height:1.5}
+.dl .tag{flex:none;width:46px;font-weight:600}
+.tag.ok{color:var(--teal)} .tag.warn{color:var(--amber)} .tag.err{color:var(--red)} .tag.info{color:var(--blue)}
+#toast{position:fixed;right:18px;bottom:44px;z-index:200;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
+.toast-item{background:var(--bg2);border:1px solid var(--line2);border-left:3px solid var(--teal);padding:9px 14px;font-size:12px;border-radius:4px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:toastIn .3s cubic-bezier(.2,.8,.2,1);max-width:340px}
+
+/* ═══════════ 动画 ═══════════ */
+@keyframes blink{50%{opacity:0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes lineIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@keyframes cardIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+@keyframes secIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<!-- 启动诊断幕 -->
+<div id="boot">
+  <div class="boot-panel ticked">
+    <span class="boot-skip">点击跳过 · SKIP</span>
+    <div class="boot-kicker">AEGIS COMBAT ENGINE · OFFLINE INSPECTOR</div>
+    <div class="boot-brand">战斗日志<em>检视器</em></div>
+    <div id="bootLines"></div>
+    <div class="boot-bar"><i id="bootBar"></i></div>
+  </div>
+</div>
+
+<!-- 指令栏 -->
+<div id="cmd">
+  <div class="brand"><div class="brand-mark">A</div><div class="brand-name">AEGIS <span>// LOG INSPECTOR</span></div></div>
+  <div class="cmd-meta" id="cmdMeta">BATTLE <b>—</b><br>ENGINE <b>—</b></div>
+  <div class="cmd-spacer"></div>
+  <div class="cmd-search"><input id="q" placeholder="过滤当前事件流…"></div>
+  <button class="btn" id="btnDemo">演示日志</button>
+  <button class="btn btn-amber" id="btnStress">压测 · 合成 2k+ 事件</button>
+  <button class="btn" id="btnExportAll">导出日志</button>
+</div>
+
+<!-- 三栏主体 -->
+<div id="main">
+  <div class="pane" style="--pc:var(--amber)">
+    <div class="pane-hd"><span class="t">战斗时间线 · Timeline</span><span class="s" id="treeMeta">—</span></div>
+    <div class="pane-bd"><div id="tree"></div></div>
+  </div>
+  <div class="pane" style="--pc:var(--teal)">
+    <div class="pane-hd"><span class="t">事件流 · Event Stream</span><span class="s" id="evCount">—</span></div>
+    <div class="stream-hd"><div class="sh-title" id="shTitle">等待载入…</div><div class="sh-sub" id="shSub">—</div></div>
+    <div id="streamScroll"><div id="streamInner"></div></div>
+  </div>
+  <div class="pane" style="--pc:var(--cyan)">
+    <div class="pane-hd"><span class="t">深度检视 · Inspector</span><span class="s">SCHEMA v1.0</span></div>
+    <div class="pane-bd"><div id="insp"></div></div>
+  </div>
+</div>
+
+<!-- 状态栏 -->
+<div id="status">
+  <div class="st-item click" id="stSchema" title="点击查看校验报告">SCHEMA —</div>
+  <div class="st-item" id="stEvents">事件 —</div>
+  <div class="st-item" id="stChecks">判定 —</div>
+  <div class="st-item" id="stPerf">解析 —</div>
+  <div class="st-right">
+    <div class="st-item" id="stSeed">SEED —</div>
+    <div class="st-item"><span class="st-dot"></span>READY</div>
+    <div class="st-item" id="stClock">--:--:--</div>
+    <div class="st-item"><span class="cursor"></span></div>
+  </div>
+</div>
+
+<!-- 诊断面板 -->
+<div id="diag">
+  <div class="diag-hd"><span class="t">SCHEMA 校验报告 · VALIDATION REPORT</span><button id="btnDiagClose">关闭 ×</button></div>
+  <div class="diag-list" id="diagList"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ════════════════════════════════════════════════
+   模块 1 · Schema 契约层
+   检视器只理解 v1.0；旧格式日志一律经迁移函数升级。
+   注意：migrateLog / validateLog 为纯函数（仅字符串拼接），
+   其源码会被注入 Web Worker，在主线程外执行。
+   ════════════════════════════════════════════════ */
+var SCHEMA_VERSION = '1.0';
+var CALC_SPEC = {
+  base:  { label:'技能基础值', op:'',  src:'skill_cfg.base' },
+  atk:   { label:'攻击力',     op:'+', src:'unit.atk' },
+  def:   { label:'防御减免',   op:'−', src:'target.def' },
+  crit:  { label:'暴击倍率',   op:'×', src:'crit_rate' },
+  ele:   { label:'属性克制',   op:'×', src:'fire → ice' },
+  shield:{ label:'护盾吸收',   op:'−', src:'buff_031' },
+  vuln:  { label:'易伤加成',   op:'×', src:'debuff_012' }
+};
+
+function migrateLog(raw) {
+  var report = { converted: 0, warnings: [], errors: [], from: raw.schema };
+  if (raw.schema === '1.0') return { log: raw, report: report };
+  if (raw.schema !== '0.9') { report.errors.push('未知 schema 版本: ' + raw.schema); return { log: raw, report: report }; }
+  var rngCounter = 0;
+  var out = JSON.parse(JSON.stringify(raw));
+  out.schema = '1.0';
+  out.meta = out.meta || {};
+  out.meta.migratedFrom = '0.9';
+  (out.timeline || []).forEach(function (round) {
+    (round.children || []).forEach(function (node) {
+      (node.events || []).forEach(function (ev) {
+        var sections = [];
+        if (ev.calc) {
+          var pipeline = [];
+          Object.keys(ev.calc).forEach(function (k) {
+            if (k === 'final') return;
+            var spec = CALC_SPEC[k];
+            if (!spec) {
+              report.warnings.push('事件 ' + ev.id + ' 含未登记修正项 "' + k + '"（按通用规则渲染）');
+              spec = { label: k, op: '+', src: 'unregistered' };
+            }
+            pipeline.push({ k: k, label: spec.label, op: spec.op, v: ev.calc[k], src: spec.src });
+          });
+          sections.push({ kind: 'formula', title: '伤害计算模型 · Modifier Chain', pipeline: pipeline, result: ev.calc.final });
+          report.converted++;
+        }
+        if (ev.rolls && ev.rolls.length) {
+          var checks = ev.rolls.map(function (r) {
+            rngCounter++;
+            return { idx: rngCounter, name: r.kind, threshold: r.rate, rolled: r.roll, pass: r.roll < r.rate, note: r.buff || '' };
+          });
+          sections.push({ kind: 'rng', title: '随机判定凭证 · RNG Proof', checks: checks });
+          report.converted++;
+        }
+        if (ev.hp) {
+          sections.push({ kind: 'diff', title: '状态快照 · State Snapshot', target: ev.hp.target, rows: [{ stat: 'HP', before: ev.hp.before, after: ev.hp.after }] });
+          report.converted++;
+        }
+        if (ev.chain) {
+          sections.push({ kind: 'chain', title: '事件因果链 · Causal Chain', nodes: ev.chain });
+          report.converted++;
+        }
+        ev.sections = sections;
+        if (checksCount(sections)) ev.rngIndex = lastIdx(sections);
+        delete ev.calc; delete ev.rolls; delete ev.hp; delete ev.chain;
+      });
+    });
+  });
+  function checksCount(s){ var c=0; s.forEach(function(x){ if(x.kind==='rng') c+=x.checks.length; }); return c; }
+  function lastIdx(s){ var m=0; s.forEach(function(x){ if(x.kind==='rng') x.checks.forEach(function(c){ if(c.idx>m) m=c.idx; }); }); return m; }
+  return { log: out, report: report };
+}
+
+function validateLog(log) {
+  var errors = [], warnings = [], events = 0, checks = 0;
+  if (!log.meta || !log.meta.seed) errors.push('缺少 meta.seed，无法保证可复现性');
+  var unitIds = {};
+  (log.units || []).forEach(function (u) { unitIds[u.id] = true; });
+  (log.timeline || []).forEach(function (round) {
+    (round.children || []).forEach(function (node) {
+      (node.events || []).forEach(function (ev) {
+        events++;
+        if (!ev.id) errors.push('存在无 id 事件');
+        if (!ev.type) errors.push('事件 ' + ev.id + ' 缺少 type');
+        var secs = ev.sections || [];
+        if (!secs.length) warnings.push('事件 ' + ev.id + ' 无结构化结算数据（纯描述事件）');
+        secs.forEach(function (s) {
+          if (s.kind === 'rng') s.checks.forEach(function (c) {
+            checks++;
+            if (c.rolled < 0 || c.rolled > 1) errors.push('事件 ' + ev.id + ' 随机值越界: ' + c.rolled);
+          });
+          if (s.kind === 'diff') {
+            if (!unitIds[s.target]) warnings.push('事件 ' + ev.id + ' 引用了未登记单位 ' + s.target);
+            s.rows.forEach(function (r) {
+              if (r.after > r.before && ev.type === 'damage') warnings.push('事件 ' + ev.id + '：伤害事件但目标数值上升，请核对');
+            });
+          }
+        });
+      });
+    });
+  });
+  return { errors: errors, warnings: warnings, stats: { events: events, checks: checks } };
+}
+
+/* ════════════════════════════════════════════════
+   模块 2 · 主线程外解析（Web Worker，含同步回退）
+   ════════════════════════════════════════════════ */
+var workerSource = [
+  'var CALC_SPEC = ' + JSON.stringify(CALC_SPEC) + ';',
+  migrateLog.toString(),
+  validateLog.toString(),
+  'self.onmessage = function (e) {',
+  '  var raw = e.data;',
+  '  var t0 = performance.now();',
+  '  var parsed = JSON.parse(raw);',
+  '  var t1 = performance.now();',
+  '  self.postMessage({ phase: "parse", ms: t1 - t0, size: raw.length });',
+  '  var m = migrateLog(parsed);',
+  '  var t2 = performance.now();',
+  '  self.postMessage({ phase: "migrate", ms: t2 - t1, converted: m.report.converted, warnings: m.report.warnings, from: m.report.from });',
+  '  var v = validateLog(m.log);',
+  '  var t3 = performance.now();',
+  '  self.postMessage({ phase: "validate", ms: t3 - t2, validation: v });',
+  '  self.postMessage({ phase: "done", log: m.log, validation: v, migration: m.report, timings: { parse: t1 - t0, migrate: t2 - t1, validate: t3 - t2 } });',
+  '};'
+].join('\n');
+
+var worker = null;
+function getWorker() {
+  if (worker) return worker;
+  try { worker = new Worker(URL.createObjectURL(new Blob([workerSource], { type: 'application/javascript' }))); }
+  catch (err) { worker = null; }
+  return worker;
+}
+function runPipeline(str, onPhase, onDone) {
+  var w = getWorker();
+  if (w) {
+    w.onmessage = function (e) { var d = e.data; if (d.phase === 'done') onDone(d); else onPhase(d); };
+    w.onerror = function () { worker = null; runLocal(str, onPhase, onDone); };
+    w.postMessage(str);
+  } else runLocal(str, onPhase, onDone);
+}
+function runLocal(str, onPhase, onDone) {
+  var t0 = performance.now(), parsed = JSON.parse(str), t1 = performance.now();
+  onPhase({ phase: 'parse', ms: t1 - t0, size: str.length });
+  var m = migrateLog(parsed), t2 = performance.now();
+  onPhase({ phase: 'migrate', ms: t2 - t1, converted: m.report.converted, warnings: m.report.warnings, from: m.report.from });
+  var v = validateLog(m.log), t3 = performance.now();
+  onPhase({ phase: 'validate', ms: t3 - t2, validation: v });
+  setTimeout(function () { onDone({ log: m.log, validation: v, migration: m.report, timings: { parse: t1 - t0, migrate: t2 - t1, validate: t3 - t2 } }); }, 30);
+}
+
+/* ════════════════════════════════════════════════
+   模块 3 · 原始日志（v0.9 格式，载入时自动迁移至 v1.0）
+   ════════════════════════════════════════════════ */
+var RAW_LOG = {
+  schema: '0.9',
+  meta: { battleId: 'BT-9527', seed: 88237419, rng: 'xorshift32', engine: 'Aegis 2.4.1', recordedAt: '2026-07-31 08:14:22 UTC' },
+  units: [
+    { id: 'u1', name: '剑士 · 阿尔托莉雅', maxHp: 3200 },
+    { id: 'u2', name: '骷髅战士', maxHp: 1500 }
+  ],
+  timeline: [
+    { type: 'round', id: 'r1', name: '第 1 回合', children: [
+      { type: 'phase', id: 'r1_start', name: '回合开始 · 结算', icon: '▼', events: [
+        { id: 'e1', type: 'debuff', title: 'DOT 结算 · 烈焰灼烧', status: 'hit',
+          desc: '<b>骷髅战士</b> 受到持续伤害 <span class="hd">120</span>。',
+          hp: { target: 'u2', before: 1500, after: 1380 } }
+      ]},
+      { type: 'action', id: 'r1_a1', name: '剑士 · 阿尔托莉雅', meta: 'SPD 120', icon: '⚔', actor: 'u1', target: 'u2', events: [
+        { id: 'e2', type: 'crit', title: '多段攻击 · 誓约胜利之剑', step: 1, status: 'crit', multi: ['crit', 'miss', 'hit'],
+          desc: '第 1 段：命中并触发 <span class="hc">暴击</span>，属性克制生效，造成 <span class="hd">900</span> 点物理伤害。',
+          calc: { base: 200, atk: 450, def: 150, crit: 1.5, ele: 1.2, final: 900 },
+          rolls: [ { kind: 'hit', rate: 0.875, roll: 0.642 }, { kind: 'crit', rate: 0.25, roll: 0.12 } ],
+          hp: { target: 'u2', before: 1380, after: 480 } },
+        { id: 'e3', type: 'miss', title: '多段攻击 · 誓约胜利之剑', step: 2, status: 'miss', multi: ['crit', 'miss', 'hit'],
+          desc: '第 2 段：目标触发 <span class="hc" style="color:var(--cyan)">闪避</span>，未造成伤害。',
+          rolls: [ { kind: 'hit', rate: 0.875, roll: 0.913 } ] },
+        { id: 'e4', type: 'damage', title: '多段攻击 · 誓约胜利之剑', step: 3, status: 'hit', multi: ['crit', 'miss', 'hit'],
+          desc: '第 3 段：命中，<span class="hl">护盾</span> 吸收部分伤害，实际造成 <span class="hd">420</span>。施加 <span class="hl">破甲</span> — <span class="hc" style="color:var(--orange)">被抵抗</span>。',
+          calc: { base: 200, atk: 450, def: 150, crit: 1.0, shield: 80, final: 420 },
+          rolls: [ { kind: 'hit', rate: 0.875, roll: 0.451 }, { kind: 'resist', rate: 0.30, roll: 0.152, buff: '破甲' } ],
+          hp: { target: 'u2', before: 480, after: 60 } }
+      ]},
+      { type: 'action', id: 'r1_a2', name: '骷髅战士', meta: 'SPD 90', icon: '☠', actor: 'u2', target: 'u1', events: [
+        { id: 'e5', type: 'damage', title: '普通攻击 · 骨刺', status: 'hit',
+          desc: '命中 <b>剑士</b>，易伤加成生效，造成 <span class="hd">180</span> 点伤害 — 触发被动 <span class="hl">骑士直觉 · 反击</span>。',
+          calc: { base: 120, atk: 260, def: 230, crit: 1.0, vuln: 1.2, final: 180 },
+          rolls: [ { kind: 'hit', rate: 0.80, roll: 0.356 } ],
+          hp: { target: 'u1', before: 3200, after: 3020 },
+          chain: [
+            { t: '受到攻击', d: '骷髅战士 → 剑士 · 普通攻击' },
+            { t: '触发被动', d: '剑士【骑士直觉】：受击时 30% 概率反击' },
+            { t: '执行反击', d: '剑士 → 骷髅战士 · 造成 200 点伤害' }
+          ] }
+      ]},
+      { type: 'phase', id: 'r1_end', name: '回合结束 · 结算', icon: '▲', events: [
+        { id: 'e6', type: 'buff', title: 'Buff 衰减', status: 'hit',
+          desc: '剑士 <span class="hl">魔力放出</span> 层数 3 → 2，剩余 2 回合。' }
+      ]}
+    ]},
+    { type: 'round', id: 'r2', name: '第 2 回合', children: [
+      { type: 'phase', id: 'r2_start', name: '回合开始 · 结算', icon: '▼', events: [
+        { id: 'e7', type: 'death', title: 'DOT 结算 · 单位阵亡', status: 'death',
+          desc: '<b>骷髅战士</b> 受到 <span class="hd">120</span> 点灼烧伤害，HP 归零 — <b style="color:var(--red)">死亡，退出战斗</b>。',
+          hp: { target: 'u2', before: 60, after: 0 } }
+      ]}
+    ]}
+  ]
+};
+
+/* ════════════════════════════════════════════════
+   模块 4 · 存储与工具函数
+   ════════════════════════════════════════════════ */
+var store = { data: null, validation: null, migration: null, timings: null, node: null, event: null, filter: '' };
+var $ = function (s) { return document.querySelector(s); };
+function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+function ms(x) { return x.toFixed(1) + ' ms'; }
+function findNode(id) { for (var r of store.data.timeline) for (var n of r.children) if (n.id === id) return n; return null; }
+function findEvent(id) { for (var r of store.data.timeline) for (var n of r.children) for (var e of n.events) if (e.id === id) return e; return null; }
+function firstNode() { var r = store.data.timeline[0]; return r && r.children ? (r.children.find(function (c) { return c.type === 'action'; }) || r.children[0]) : null; }
+function unitById(id) { return (store.data.units || []).find(function (u) { return u.id === id; }); }
+function unitName(id) { var u = unitById(id); return u ? u.name : id; }
+function rngAlgo() { return store.data.meta.rng || '—'; }
+function toast(msg) {
+  var t = el('div', 'toast-item', msg);
+  $('#toast').appendChild(t);
+  setTimeout(function () { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function () { t.remove(); }, 320); }, 2200);
+}
+function download(name, text) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.download = name; a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 500);
+}
+
+/* ════════════════════════════════════════════════
+   模块 5 · 时间线树
+   ════════════════════════════════════════════════ */
+function nodeDot(node) {
+  var death = node.events.some(function (e) { return e.status === 'death'; });
+  var crit = node.events.some(function (e) { return e.status === 'crit'; });
+  var miss = node.events.some(function (e) { return e.status === 'miss'; });
+  if (death) return { c: 'var(--red)' };
+  if (crit) return { c: 'var(--amber)' };
+  if (miss) return { c: 'var(--cyan)' };
+  return null;
+}
+function renderTree() {
+  var box = $('#tree'); box.innerHTML = '';
+  var collapsed = store.data.timeline.length > 15;
+  store.data.timeline.forEach(function (round) {
+    var rw = el('div', 't-round');
+    var row = el('div', 't-row');
+    row.innerHTML = '<span class="t-tgl' + (collapsed ? '' : ' open') + '">▶</span><span class="t-ico">◈</span><span class="t-lab">' + round.name + '</span><span class="t-meta">' + round.children.length + ' 节点</span>';
+    var kids = el('div', 't-kids' + (collapsed ? '' : ' open'));
+    row.addEventListener('click', function () {
+      row.querySelector('.t-tgl').classList.toggle('open');
+      kids.classList.toggle('open');
+    });
+    round.children.forEach(function (node) {
+      var r2 = el('div', 't-row' + (node.events.some(function (e) { return e.status === 'death'; }) ? ' dead' : ''));
+      r2.dataset.id = node.id;
+      var dot = nodeDot(node);
+      r2.innerHTML = '<span class="t-ico">' + (node.icon || '·') + '</span><span class="t-lab">' + node.name + '</span>' +
+        (node.meta ? '<span class="t-meta">' + node.meta + '</span>' : '') +
+        (dot ? '<span class="t-dot" style="background:' + dot.c + ';box-shadow:0 0 6px ' + dot.c + '"></span>' : '');
+      r2.addEventListener('click', function () { selectNode(node.id); });
+      kids.appendChild(r2);
+    });
+    rw.appendChild(row); rw.appendChild(kids); box.appendChild(rw);
+  });
+  $('#treeMeta').textContent = store.data.timeline.length + ' ROUNDS';
+}
+
+/* ════════════════════════════════════════════════
+   模块 6 · 虚拟列表（性能预算：万级事件不卡顿）
+   ════════════════════════════════════════════════ */
+var VL = {
+  items: [], nodes: new Map(), heights: new Map(), offsets: [], EST: 112, GAP: 12, PAD: 16, anim: false, _raf: false, _sraf: false,
+  setItems: function (items, animate) {
+    this.items = items; this.nodes.clear(); this.heights.clear();
+    this.inner.textContent = ''; this.inner.style.height = '0px';
+    this.scroll.scrollTop = 0; this.anim = !!animate; this.layout();
+  },
+  layout: function () {
+    var n = this.items.length, y = this.PAD, i;
+    this.offsets = new Array(n);
+    for (i = 0; i < n; i++) { this.offsets[i] = y; y += (this.heights.get(this.items[i].id) || this.EST) + this.GAP; }
+    this.inner.style.height = (y + this.PAD) + 'px';
+    var st = this.scroll.scrollTop, vh = this.scroll.clientHeight;
+    var lo = 0, hi = n - 1, start = 0;
+    while (lo <= hi) { var mid = (lo + hi) >> 1; if (this.offsets[mid] < st - 240) { lo = mid + 1; start = lo; } else hi = mid - 1; }
+    var end = start;
+    while (end < n && this.offsets[end] < st + vh + 240) end++;
+    var seen = new Set(), self = this;
+    for (i = start; i < end; i++) {
+      var ev = this.items[i]; seen.add(ev.id);
+      var node = this.nodes.get(ev.id);
+      if (!node) {
+        node = createEventCard(ev, i, this.anim);
+        node.style.position = 'absolute'; node.style.left = '16px'; node.style.right = '16px';
+        this.nodes.set(ev.id, node); this.inner.appendChild(node);
+      }
+      node.style.top = this.offsets[i] + 'px';
+    }
+    this.nodes.forEach(function (node, id) { if (!seen.has(id)) { node.remove(); self.nodes.delete(id); } });
+    var changed = false;
+    this.nodes.forEach(function (node, id) {
+      if (!self.heights.has(id)) { var h = node.offsetHeight; if (h > 0) { self.heights.set(id, h); changed = true; } }
+    });
+    if (changed && !this._raf) { this._raf = true; requestAnimationFrame(function () { self._raf = false; self.layout(); }); }
+    this.anim = false;
+  },
+  ensureVisible: function (id) {
+    var i = this.items.findIndex(function (x) { return x.id === id; });
+    if (i < 0) return;
+    var h = this.heights.get(id) || this.EST, top = this.offsets[i], st = this.scroll.scrollTop, vh = this.scroll.clientHeight;
+    if (top < st + 20) this.scroll.scrollTop = Math.max(0, top - 40);
+    else if (top + h > st + vh - 20) this.scroll.scrollTop = top + h - vh + 40;
+  }
+};
+
+/* ════════════════════════════════════════════════
+   模块 7 · 事件卡片
+   ════════════════════════════════════════════════ */
+function toneOf(ev) {
+  var map = { crit: 'crit', damage: 'damage', miss: 'miss', death: 'death', buff: 'buff', debuff: 'debuff', heal: 'heal' };
+  return map[ev.type] || 'phase';
+}
+function badgeHTML(ev) {
+  var map = { crit: ['b-crit', 'CRIT'], hit: ['b-hit', 'HIT'], miss: ['b-miss', 'DODGE'], death: ['b-death', 'KILL'] };
+  var b = map[ev.status] || ['b-ok', 'OK'];
+  return '<span class="ev-badge ' + b[0] + '">' + b[1] + '</span>';
+}
+function createEventCard(ev, i, animate) {
+  var node = el('div', 'ev t-' + toneOf(ev) + (ev.id === store.event ? ' on' : ''));
+  if (animate) {
+    node.style.animation = 'cardIn .32s cubic-bezier(.2,.8,.2,1) both';
+    node.style.animationDelay = Math.min(i * 26, 260) + 'ms';
+  }
+  var hd = '<div class="ev-hd">';
+  if (ev.step) hd += '<span class="ev-step">SEG ' + ev.step + '</span>';
+  hd += '<span class="ev-title">' + ev.title + '</span>' + badgeHTML(ev) + '</div>';
+  var bd = '<div class="ev-bd">' + ev.desc + '</div>';
+  var multi = '';
+  if (ev.multi) {
+    multi = '<div class="ev-multi">' + ev.multi.map(function (m, j) {
+      return '<i class="' + (m === 'crit' ? 'c' : m === 'miss' ? 'm' : 'h') + (ev.step === j + 1 ? ' cur' : '') + '"></i>';
+    }).join('') + '</div>';
+  }
+  node.innerHTML = hd + bd + multi;
+  node.addEventListener('click', function () { selectEvent(ev.id); });
+  return node;
+}
+function markCardOn() { VL.nodes.forEach(function (node, id) { node.classList.toggle('on', id === store.event); }); }
+
+/* ════════════════════════════════════════════════
+   模块 8 · 深度检视器（全部数据驱动，零硬编码公式）
+   ════════════════════════════════════════════════ */
+function emptyInspector() {
+  return '<div class="insp-empty-wrap"><div class="insp-empty">选择中间面板的事件卡片以检视底层数据</div>' +
+    '<div class="kbd-hints"><span><b>↑</b> / <b>↓</b> 切换事件</span><span><b>ESC</b> 清除选择</span><span>点击底部 <b>SCHEMA</b> 状态条查看校验报告</span></div></div>';
+}
+function fmtVal(op, v) {
+  if (op === '×') return '× ' + v;
+  if (op === '−') return '− ' + Math.abs(v);
+  if (op === '+') return '+ ' + v;
+  return String(v);
+}
+function countUp(node, target) {
+  var t0 = performance.now(), dur = 550;
+  (function f(t) {
+    var p = Math.min(1, (t - t0) / dur); p = 1 - Math.pow(1 - p, 3);
+    node.textContent = Math.round(target * p);
+    if (p < 1) requestAnimationFrame(f);
+  })(t0);
+}
+function secFormula(s) {
+  var wrap = el('div');
+  wrap.innerHTML = '<div class="sec-t">' + s.title + '</div>';
+  var fbox = el('div', 'fbox ticked');
+  s.pipeline.forEach(function (m) {
+    var opCls = m.op === '×' ? 'mul' : (m.op === '−' ? 'sub' : 'add');
+    var vCls = m.op === '×' ? 'mul' : ((m.op === '−' || m.v < 0) ? 'neg' : 'pos');
+    var row = el('div', 'frow');
+    row.innerHTML = '<span class="fop ' + opCls + '">' + (m.op || '＝') + '</span>' +
+      '<span class="flab">' + m.label + '<span class="src">' + m.src + '</span></span>' +
+      '<span class="fval ' + vCls + '">' + fmtVal(m.op, m.v) + '</span>';
+    fbox.appendChild(row);
+  });
+  var res = el('div', 'fres');
+  res.innerHTML = '<span class="lab">FINAL · 最终结算</span><span class="num" data-v="' + s.result + '">0</span>';
+  fbox.appendChild(res);
+  wrap.appendChild(fbox);
+  return wrap;
+}
+function secRng(s) {
+  var RN = { hit: '命中判定', crit: '暴击判定', resist: '效果抵抗' };
+  var wrap = el('div');
+  wrap.innerHTML = '<div class="sec-t">' + s.title + '</div>';
+  s.checks.forEach(function (c) {
+    var pct = (c.rolled * 100).toFixed(1), th = (c.threshold * 100).toFixed(1);
+    var item = el('div', 'rng');
+    item.innerHTML = '<div class="rng-top"><span class="rng-name">' + (RN[c.name] || c.name) + '</span>' +
+      (c.note ? '<span class="rng-note">· ' + c.note + '</span>' : '') +
+      '<span class="rng-idx">RNG #' + String(c.idx).padStart(4, '0') + ' · ' + rngAlgo() + '</span></div>' +
+      '<div class="rng-bar"><i class="rng-fill ' + (c.pass ? 'pass' : 'fail') + '" data-w="' + pct + '%"></i><b class="rng-th" style="left:' + th + '%"></b></div>' +
+      '<div class="rng-nums"><span>阈值 <b>' + th + '%</b></span><span>ROLL <b style="color:' + (c.pass ? 'var(--green)' : 'var(--cyan)') + '">' + pct + '%</b></span>' +
+      '<span class="rng-verdict ' + (c.pass ? 'v-pass' : 'v-fail') + '">' + (c.pass ? '判定通过' : '判定未通过') + '</span></div>';
+    wrap.appendChild(item);
+  });
+  return wrap;
+}
+function secDiff(s) {
+  var wrap = el('div');
+  wrap.innerHTML = '<div class="sec-t">' + s.title + '</div>';
+  var box = el('div', 'dbox');
+  var u = unitById(s.target);
+  box.appendChild(el('div', 'd-tgt', 'TARGET · <b>' + (u ? u.name : s.target) + '</b>'));
+  s.rows.forEach(function (r) {
+    var delta = r.after - r.before;
+    var pct = (u && r.stat === 'HP' && u.maxHp) ? Math.max(0, Math.min(100, r.after / u.maxHp * 100)) : 100;
+    var row = el('div', 'drow');
+    row.innerHTML = '<span class="dstat">' + r.stat + '</span><span class="dbar"><i data-w="' + pct + '%"></i></span>' +
+      '<span class="dbefore">' + r.before + '</span>' +
+      '<span class="dafter" style="color:' + (delta < 0 ? 'var(--red)' : 'var(--green)') + '">' + r.after + '</span>' +
+      '<span class="ddelta ' + (delta < 0 ? 'dec' : 'inc') + '">' + (delta > 0 ? '+' : '') + delta + '</span>';
+    box.appendChild(row);
+  });
+  wrap.appendChild(box);
+  return wrap;
+}
+function secChain(s) {
+  var wrap = el('div');
+  wrap.innerHTML = '<div class="sec-t">' + s.title + '</div>';
+  s.nodes.forEach(function (n, i) {
+    var node = el('div', 'cnode');
+    node.innerHTML = '<span class="cnum">' + (i + 1) + '</span><div><div class="ct">' + n.t + '</div><div class="cd">' + n.d + '</div></div>';
+    wrap.appendChild(node);
+  });
+  return wrap;
+}
+function renderInspector(ev) {
+  var box = $('#insp'); box.innerHTML = '';
+  var hd = el('div', 'insp-hd');
+  hd.innerHTML = '<div class="insp-kicker">EVENT ' + ev.id + ' · ' + (ev.type || '').toUpperCase() +
+    (ev.rngIndex ? ' · RNG 消耗至 #' + String(ev.rngIndex).padStart(4, '0') : '') + '</div>' +
+    '<div class="insp-title">' + ev.title + '</div>' +
+    '<div class="insp-actions"><button class="btn" id="btnLink">⎘ 复制深链</button><button class="btn" id="btnExp">⇩ 导出事件 JSON</button></div>';
+  box.appendChild(hd);
+  $('#btnLink').addEventListener('click', copyDeepLink);
+  $('#btnExp').addEventListener('click', function () {
+    download('event_' + ev.id + '.json', JSON.stringify(ev, null, 2));
+    toast('已导出事件 ' + ev.id + ' 的原始 JSON');
+  });
+  var secs = ev.sections || [];
+  secs.forEach(function (s, i) {
+    var node = null;
+    if (s.kind === 'formula') node = secFormula(s);
+    else if (s.kind === 'rng') node = secRng(s);
+    else if (s.kind === 'diff') node = secDiff(s);
+    else if (s.kind === 'chain') node = secChain(s);
+    if (node) { node.classList.add('sec'); node.style.animationDelay = (i * 70) + 'ms'; box.appendChild(node); }
+  });
+  if (!secs.length) box.appendChild(el('div', 'insp-empty-wrap', '<div class="insp-empty">该事件为纯描述事件 — 无结构化结算数据</div>'));
+  requestAnimationFrame(function () { requestAnimationFrame(function () {
+    box.querySelectorAll('[data-w]').forEach(function (n) { n.style.width = n.dataset.w; });
+    var num = box.querySelector('.fres .num');
+    if (num) countUp(num, +num.dataset.v);
+  }); });
+}
+
+/* ════════════════════════════════════════════════
+   模块 9 · 选择逻辑与深链（state → URL）
+   ════════════════════════════════════════════════ */
+function selectNode(id) {
+  var node = findNode(id); if (!node) return;
+  store.node = id;
+  document.querySelectorAll('.t-row.on').forEach(function (n) { n.classList.remove('on'); });
+  var row = document.querySelector('.t-row[data-id="' + id + '"]');
+  if (row) row.classList.add('on');
+  var isAct = node.type === 'action';
+  $('#shTitle').textContent = node.name + (isAct ? ' · 行动日志' : ' · 阶段结算');
+  $('#shSub').innerHTML = isAct
+    ? 'ACTOR <b>' + unitName(node.actor) + '</b> &nbsp;→&nbsp; TARGET <b>' + unitName(node.target) + '</b> &nbsp;·&nbsp; ' + node.events.length + ' EVENTS'
+    : 'SYSTEM PHASE · ' + node.events.length + ' EVENTS';
+  applyStream();
+  syncURL();
+}
+function applyStream() {
+  var node = findNode(store.node); if (!node) return;
+  var f = store.filter.trim().toLowerCase();
+  var items = f ? node.events.filter(function (ev) { return (ev.title + ' ' + ev.desc).toLowerCase().indexOf(f) >= 0; }) : node.events.slice();
+  VL.setItems(items, true);
+  $('#evCount').textContent = items.length + ' / ' + node.events.length + ' EVENTS';
+  markCardOn();
+}
+function selectEvent(id) {
+  store.event = id;
+  var ev = findEvent(id);
+  markCardOn();
+  if (ev) renderInspector(ev);
+  syncURL();
+}
+function syncURL() {
+  var h = '#';
+  if (store.node) h += 'n=' + store.node;
+  if (store.event) h += (h.length > 1 ? '&' : '') + 'e=' + store.event;
+  try { history.replaceState(null, '', h.length > 1 ? h : location.pathname + location.search); } catch (err) {}
+}
+function applyURL() {
+  var m = location.hash.match(/n=([^&]+)/), m2 = location.hash.match(/e=([^&]+)/);
+  if (m && findNode(m[1])) {
+    selectNode(m[1]);
+    if (m2 && findEvent(m2[1])) { selectEvent(m2[1]); VL.ensureVisible(m2[1]); }
+  } else {
+    var first = firstNode();
+    if (first) selectNode(first.id);
+  }
+}
+function copyDeepLink() {
+  var url = location.href, done = function () { toast('深链已复制 — 可直接粘贴到缺陷单'); };
+  var fb = function () {
+    var ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta);
+    ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); done();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done).catch(fb);
+  else fb();
+}
+
+/* ════════════════════════════════════════════════
+   模块 10 · 状态栏与诊断面板
+   ════════════════════════════════════════════════ */
+function updateStatus() {
+  var v = store.validation;
+  $('#stSchema').innerHTML = 'SCHEMA v' + SCHEMA_VERSION + ' · <span class="' + (v.errors.length ? 'st-warn' : 'st-ok') + '">' + v.errors.length + ' 错误 / ' + v.warnings.length + ' 警告</span>';
+  $('#stEvents').textContent = '事件 ' + v.stats.events;
+  $('#stChecks').textContent = '判定 ' + v.stats.checks;
+  $('#stPerf').textContent = '解析 ' + ms(store.timings.parse + store.timings.migrate + store.timings.validate);
+  $('#stSeed').textContent = 'SEED ' + store.data.meta.seed + ' · ' + rngAlgo();
+  $('#cmdMeta').innerHTML = 'BATTLE <b>' + store.data.meta.battleId + '</b><br>ENGINE <b>' + store.data.meta.engine + '</b>';
+}
+function openDiag() {
+  var list = $('#diagList'); list.innerHTML = '';
+  var v = store.validation || { errors: [], warnings: [], stats: {} };
+  var rows = [];
+  rows.push(['info', 'SCHEMA', '原始版本 v' + (store.migration ? store.migration.from : store.data.schema) + ' → 当前 v' + SCHEMA_VERSION]);
+  if (store.migration && store.migration.from !== '1.0') rows.push(['ok', '迁移', '已应用 ' + store.migration.converted + ' 处结构转换']);
+  (store.migration ? store.migration.warnings : []).forEach(function (w) { rows.push(['warn', '迁移', w]); });
+  v.errors.forEach(function (x) { rows.push(['err', '错误', x]); });
+  v.warnings.forEach(function (x) { rows.push(['warn', '警告', x]); });
+  if (!v.errors.length) rows.push(['ok', '校验', '结构校验通过 — ' + v.stats.events + ' 事件 / ' + v.stats.checks + ' 次随机判定']);
+  rows.push(['info', '性能', '解析 ' + ms(store.timings.parse) + ' · 迁移 ' + ms(store.timings.migrate) + ' · 校验 ' + ms(store.timings.validate) + '（主线程外）']);
+  if (rows.length > 80) rows = rows.slice(0, 80).concat([['info', '折叠', '… 另有 ' + (rows.length - 80) + ' 条同类记录']]);
+  rows.forEach(function (r) {
+    var d = el('div', 'dl');
+    d.innerHTML = '<span class="tag ' + r[0] + '">' + r[1] + '</span><span>' + r[2] + '</span>';
+    list.appendChild(d);
+  });
+  $('#diag').classList.add('open');
+}
+
+/* ════════════════════════════════════════════════
+   模块 11 · 压测日志合成器（v0.9 格式，走完整管线）
+   ════════════════════════════════════════════════ */
+function genStressLog() {
+  var s = 1234567;
+  var rnd = function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  var names = ['剑士', '法师', '游侠', '牧师', '狂战', '刺客', '术士', '圣骑'];
+  var units = names.map(function (n, i) { return { id: 's' + i, name: n + '·' + i, maxHp: 3000 }; });
+  var skills = ['斩击', '火球术', '精准射击', '治疗术', '狂暴挥砍', '影袭', '诅咒之矢', '圣光斩'];
+  var rounds = [], eid = 0, R = 150, A = 10, r, a;
+  for (r = 1; r <= R; r++) {
+    var children = [];
+    children.push({ type: 'phase', id: 'g' + r + '_s', name: '回合开始 · 结算', icon: '▼', events: [
+      { id: 'ge' + (++eid), type: 'debuff', title: 'DOT 结算 · 烈焰风暴', status: 'hit', desc: '场地效果对全体造成 <span class="hd">' + (60 + Math.floor(rnd() * 80)) + '</span> 点伤害。' }
+    ]});
+    var order = units.slice().sort(function () { return rnd() - 0.5; });
+    for (a = 0; a < A; a++) {
+      var actor = order[a], target = units[Math.floor(rnd() * 8)];
+      var sk = skills[Math.floor(rnd() * 8)], evs = [];
+      var crit = rnd() < 0.25, dodge = rnd() < 0.15;
+      if (dodge) {
+        evs.push({ id: 'ge' + (++eid), type: 'miss', title: sk, status: 'miss', rolls: [{ kind: 'hit', rate: 0.85, roll: +(0.85 + rnd() * 0.14).toFixed(3) }], desc: actor.name + ' 的 ' + sk + ' 被 <span class="hc" style="color:var(--cyan)">闪避</span>。' });
+      } else {
+        var base = 100 + Math.floor(rnd() * 150), atk = 200 + Math.floor(rnd() * 300), def = 100 + Math.floor(rnd() * 150);
+        var fin = base + atk - def; if (crit) fin = Math.round(fin * 1.5);
+        var calc = { base: base, atk: atk, def: def }; if (crit) calc.crit = 1.5;
+        if (rnd() < 0.3) { calc.shield = 40 + Math.floor(rnd() * 60); fin -= calc.shield; }
+        calc.final = Math.max(1, fin);
+        var rolls = [{ kind: 'hit', rate: 0.85, roll: +(rnd() * 0.8).toFixed(3) }];
+        if (crit) rolls.push({ kind: 'crit', rate: 0.25, roll: +(rnd() * 0.24).toFixed(3) });
+        var before = 800 + Math.floor(rnd() * 2000), after = Math.max(0, before - calc.final);
+        evs.push({ id: 'ge' + (++eid), type: crit ? 'crit' : 'damage', title: sk, status: crit ? 'crit' : 'hit', calc: calc, rolls: rolls, hp: { target: target.id, before: before, after: after }, desc: actor.name + ' → ' + target.name + '：' + (crit ? '<span class="hc">暴击</span>，' : '') + '造成 <span class="hd">' + calc.final + '</span> 点伤害。' });
+        if (after === 0) evs.push({ id: 'ge' + (++eid), type: 'death', title: '单位阵亡', status: 'death', desc: '<b style="color:var(--red)">' + target.name + '</b> HP 归零，退出战斗。' });
+      }
+      children.push({ type: 'action', id: 'g' + r + '_a' + a, name: actor.name, meta: 'SPD ' + (80 + Math.floor(rnd() * 60)), icon: '⚔', actor: actor.id, target: target.id, events: evs });
+    }
+    children.push({ type: 'phase', id: 'g' + r + '_e', name: '回合结束 · 结算', icon: '▲', events: [
+      { id: 'ge' + (++eid), type: 'buff', title: 'Buff 衰减', status: 'hit', desc: '全场增益状态持续时间 -1。' }
+    ]});
+    rounds.push({ type: 'round', id: 'g' + r, name: '第 ' + r + ' 回合', children: children });
+  }
+  return { schema: '0.9', meta: { battleId: 'STRESS-' + (Date.now() % 100000), seed: 987654321, rng: 'xorshift32', engine: 'Aegis 2.4.1 · 压测合成' }, units: units, timeline: rounds };
+}
+
+/* ════════════════════════════════════════════════
+   模块 12 · 载入管线与启动
+   ════════════════════════════════════════════════ */
+function adoptResult(res) {
+  store.data = res.log; store.validation = res.validation;
+  store.migration = res.migration; store.timings = res.timings;
+  store.node = null; store.event = null;
+  renderTree(); updateStatus();
+}
+function loadLog(rawObj, label) {
+  toast('正在解析 ' + label + ' …');
+  runPipeline(JSON.stringify(rawObj), function () {}, function (res) {
+    adoptResult(res);
+    applyURL();
+    toast(label + '：' + res.validation.stats.events + ' 事件 · 校验 ' + (res.validation.errors.length ? '异常' : '通过') + ' · 解析 ' + ms(res.timings.parse + res.timings.migrate + res.timings.validate));
+  });
+}
+var bootSkip = false, bootLineIdx = 0;
+function bootLine(html) {
+  var i = bootLineIdx++;
+  setTimeout(function () { $('#bootLines').appendChild(el('div', 'bl', html)); }, i * 170);
+}
+function setBar(p) { var i = bootLineIdx; setTimeout(function () { $('#bootBar').style.width = p + '%'; }, i * 170); }
+function boot() {
+  var t0 = performance.now();
+  bootLine('> AEGIS INSPECTOR 启动 <span class="dim">· 解析管线已移交工作线程</span>'); setBar(8);
+  runPipeline(JSON.stringify(RAW_LOG),
+    function (d) {
+      if (d.phase === 'parse') { bootLine('> 解析原始日志 <span class="dim">schema v0.9</span> ..... <span class="ok">OK</span> <span class="dim">' + (d.size / 1024).toFixed(1) + ' KB · ' + ms(d.ms) + '</span>'); setBar(32); }
+      if (d.phase === 'migrate') {
+        bootLine(d.from === '1.0'
+          ? '> Schema 版本匹配 ......... <span class="ok">无需迁移</span>'
+          : '> Schema 迁移 v0.9 → v1.0 .. <span class="ok">已应用</span> <span class="dim">' + d.converted + ' 处结构转换 · ' + ms(d.ms) + '</span>');
+        setBar(58);
+      }
+      if (d.phase === 'validate') {
+        var v = d.validation;
+        bootLine('> 结构校验 ............... <span class="' + (v.errors.length ? 'warn' : 'ok') + '">' + (v.errors.length ? '异常' : '通过') + '</span> <span class="dim">' + v.errors.length + ' 错误 / ' + v.warnings.length + ' 警告 · ' + v.stats.events + ' 事件 / ' + v.stats.checks + ' 判定</span>');
+        setBar(84);
+      }
+    },
+    function (res) {
+      bootLine('> 构建索引与视图 ......... <span class="ok">就绪</span>'); setBar(100);
+      adoptResult(res); applyURL();
+      var wait = Math.max(0, 1350 - (performance.now() - t0));
+      setTimeout(function () { $('#boot').classList.add('done'); }, bootSkip ? 0 : wait);
+    });
+  $('#boot').addEventListener('click', function () { bootSkip = true; if (store.data) $('#boot').classList.add('done'); });
+}
+
+/* ════════════════════════════════════════════════
+   模块 13 · 全局事件绑定与初始化
+   ════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function () {
+  VL.scroll = $('#streamScroll'); VL.inner = $('#streamInner');
+  VL.scroll.addEventListener('scroll', function () {
+    if (!VL._sraf) { VL._sraf = true; requestAnimationFrame(function () { VL._sraf = false; VL.layout(); }); }
+  }, { passive: true });
+
+  $('#insp').innerHTML = emptyInspector();
+  $('#q').addEventListener('input', function (e) { store.filter = e.target.value; applyStream(); });
+  $('#btnDemo').addEventListener('click', function () { loadLog(RAW_LOG, '演示日志'); });
+  $('#btnStress').addEventListener('click', function () { loadLog(genStressLog(), '压测日志'); });
+  $('#btnExportAll').addEventListener('click', function () {
+    download('aegis_log_' + store.data.meta.battleId + '_v' + SCHEMA_VERSION + '.json', JSON.stringify(store.data, null, 2));
+    toast('已导出全量战斗日志（v1.0 结构）');
+  });
+  $('#stSchema').addEventListener('click', function () { $('#diag').classList.toggle('open'); openDiag(); });
+  $('#btnDiagClose').addEventListener('click', function () { $('#diag').classList.remove('open'); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      var items = VL.items; if (!items.length) return;
+      var i = items.findIndex(function (x) { return x.id === store.event; });
+      i = e.key === 'ArrowDown' ? Math.min(items.length - 1, i + 1) : Math.max(0, i < 0 ? 0 : i - 1);
+      selectEvent(items[i].id);
+      VL.ensureVisible(items[i].id);
+    } else if (e.key === 'Escape') {
+      store.event = null; markCardOn();
+      $('#insp').innerHTML = emptyInspector();
+      $('#diag').classList.remove('open');
+      syncURL();
+    }
+  });
+
+  setInterval(function () {
+    var d = new Date();
+    $('#stClock').textContent = 'UTC ' + String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0') + ':' + String(d.getUTCSeconds()).padStart(2, '0');
+  }, 1000);
+
+  boot();
+});
+</script>
+</body>
+</html>

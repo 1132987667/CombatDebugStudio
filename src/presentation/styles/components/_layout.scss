@@ -1,7 +1,7 @@
 /* ==========================================================================
    Component: Layout (_layout.scss)
    依赖: tokens.scss
-   作用: 主布局、顶栏、三栏面板、控制栏
+   作用: 主布局、三栏面板、控制栏（公共顶部栏样式见 components/ModuleHeader.vue）
    ========================================================================== */
 @use '../mixins' as *;
 
@@ -16,44 +16,7 @@
   overflow: hidden;
 }
 
-/* ----- 顶栏 ----- */
-.tool-header {
-  background: linear-gradient(
-    135deg,
-    var(--color-bg-tertiary) 0%,
-    var(--color-bg-primary) 100%
-  );
-  padding: var(--space-4) var(--space-6);
-  border-bottom: 2px solid var(--color-border-default);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: var(--z-sticky);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 80px;
-  box-sizing: border-box;
-}
-
-.tool-header h1 {
-  font-size: var(--font-size-xxxl);
-  color: var(--color-brand-red);
-  letter-spacing: var(--letter-spacing-2);
-}
-
-.tool-header .subtitle {
-  color: var(--color-text-tertiary);
-  margin: var(--space-2) 0 0 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: var(--space-3);
-}
-
-/* ----- 三栏主布局 ----- */
+/* ----- 三栏主布局（唤灵台） ----- */
 .main-layout {
   display: grid;
   grid-template-columns: 25% 1fr 25%;
@@ -174,6 +137,39 @@
 .selected-info .value {
   font-weight: var(--font-weight-semibold);
   color: var(--color-info);
+}
+
+/* ----- 未开发模块占位区（昊天镜/封神榜/演劫台） ----- */
+.module-layout {
+  height: calc(100vh - 80px - 67px);
+  margin-top: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* 昊天镜等无底部控制栏的模块：占满到视口底部，消除 67px 空白 */
+.module-layout--full {
+  height: calc(100vh - 80px);
+}
+
+.module-placeholder {
+  text-align: center;
+  padding: var(--space-6);
+  color: var(--color-text-tertiary);
+}
+
+.module-placeholder-title {
+  margin: 0 0 var(--space-3) 0;
+  font-size: var(--font-size-xxl);
+  color: var(--color-info);
+  letter-spacing: 4px;
+}
+
+.module-placeholder-desc {
+  margin: 0;
+  font-size: var(--font-size-md);
 }
 
 /* ----- 底部控制栏 ----- */

@@ -48,6 +48,8 @@ import {
 export interface RecordedBattle {
   /** 战斗实例 ID */
   battleId: string
+  /** 保存时的显示名（saveRecording 注入） */
+  name?: string
   /** 回放 ID（用于定位单次录制） */
   replayId: string
   /** 录制格式版本号 */

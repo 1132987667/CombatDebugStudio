@@ -18,21 +18,27 @@
       <button class="error-close" aria-label="关闭错误提示">&times;</button>
     </div>
 
-    <div class="tool-header">
-      <h1>回合制战斗系统测试工具 v1.0</h1>
-      <div class="header-actions">
-        <button class="btn-medium" @click="showDataSnapshotDialog = true">数据快照</button>
-        <button class="btn-medium" @click="showRecordingDialog = true">战斗记录</button>
-        <button class="btn-medium" @click="showDebugLogDialog = true">调试日志</button>
-        <button class="btn-medium" @click="showDebugControlDialog = true">调试面板</button>
-        <button class="btn-medium" @click="showCompendiumDialog = true">图鉴</button>
-        <button class="btn-medium" @click="showRulesDialog = true">战斗规则</button>
-        <button class="btn-medium" @click="showSceneDialog = true">场景管理</button>
-        <button class="btn-medium" @click="showStatusDialog = true">角色编辑</button>
-      </div>
-    </div>
+    <!-- 公共顶部栏：太初道枢 + 模块 Tab + 按模块收敛的操作按钮（9.3） -->
+    <ModuleHeader v-model:active-module="activeModule">
+      <template #actions>
+        <template v-if="activeModule === 'huanling'">
+          <button class="btn-medium" @click="showRulesDialog = true">战斗规则</button>
+          <!-- NOTE: 调试控制/数据快照操作活战场（battleStore/BattleField 动画），归属唤灵台而非分析模块 -->
+          <button class="btn-medium" @click="showDataSnapshotDialog = true">数据快照</button>
+          <button class="btn-medium" @click="showDebugControlDialog = true">调试面板</button>
+          <button class="btn-medium" @click="saveRecording">保存战斗记录</button>
+        </template>
+        <template v-else-if="activeModule === 'fengshen'">
+          <button class="btn-medium" @click="showStatusDialog = true">角色编辑</button>
+          <button class="btn-medium" @click="showCompendiumDialog = true">图鉴</button>
+          <button class="btn-medium" @click="showSceneDialog = true">场景管理</button>
+        </template>
+      </template>
+    </ModuleHeader>
 
-    <div class="main-layout">
+    <!-- 唤灵台（默认模块）：v-show 保活，切 Tab 不销毁战场状态 -->
+    <div v-show="activeModule === 'huanling'" class="main-layout" :id="modulePanelId('huanling')"
+      role="tabpanel" :aria-labelledby="moduleTabId('huanling')">
       <!-- 左侧：参战角色配置 -->
       <ParticipantPanel />
 
@@ -42,6 +48,30 @@
 
       <!-- 右侧：调试面板 -->
       <BattleDashboard />
+    </div>
+
+    <!-- 昊天镜：战斗分析（双工作台 · 回放系统 ⇄ 调试系统） -->
+    <div v-show="activeModule === 'haotian'" class="module-layout module-layout--full" :id="modulePanelId('haotian')"
+      role="tabpanel" :aria-labelledby="moduleTabId('haotian')">
+      <HaotianMirror :active="activeModule === 'haotian'" />
+    </div>
+
+    <!-- 封神榜：数据后台管理（M1/M2 开发中，先占位） -->
+    <div v-show="activeModule === 'fengshen'" class="module-layout" :id="modulePanelId('fengshen')"
+      role="tabpanel" :aria-labelledby="moduleTabId('fengshen')">
+      <div class="module-placeholder">
+        <h2 class="module-placeholder-title">封神榜</h2>
+        <p class="module-placeholder-desc">游戏数据后台管理（开发中）</p>
+      </div>
+    </div>
+
+    <!-- 演劫台：游戏模块（规划中） -->
+    <div v-show="activeModule === 'yanjie'" class="module-layout" :id="modulePanelId('yanjie')"
+      role="tabpanel" :aria-labelledby="moduleTabId('yanjie')">
+      <div class="module-placeholder">
+        <h2 class="module-placeholder-title">演劫台</h2>
+        <p class="module-placeholder-desc">游戏对局模块（规划中）</p>
+      </div>
     </div>
 
     <!-- 对话框组件 -->
@@ -62,14 +92,10 @@
 
     <DataSnapshotDialog v-model="showDataSnapshotDialog" />
 
-    <BattleRecordingDialog v-model="showRecordingDialog" />
-
-    <DebugLogDialog v-model="showDebugLogDialog" :logs="debugLogs" :trace-roots="traceRoots" :trace-events="traceEvents" :actor-names="actorNames" @clear="clearDebugLogs" @refresh-trace="updateTraceRoots" />
-
     <DebugControlDialog v-model="showDebugControlDialog" @action="handleDebugAction" />
 
-    <!-- 底部控制栏 -->
-    <ControlBar :is-battle-active="battleStore.isBattleActive"
+    <!-- 底部控制栏（唤灵台专属） -->
+    <ControlBar v-show="activeModule === 'huanling'" :is-battle-active="battleStore.isBattleActive"
       :is-auto-playing="battleStore.autoPlayMode" :is-paused="battleStore.isPaused"
       :battle-speed="battleStore.battleSpeed" @start-battle="startBattle"
       @end-battle="endBattle" @reset-battle="requestResetBattle" @toggle-auto-play="toggleAutoPlay"
@@ -94,32 +120,30 @@ import { ATTRIBUTE_CODE, ModifierType } from "@/domain/attribute/types";
 import { ParticipantSide } from "@/domain/battle/type/types.ts";
 import type { BuffScriptLoader } from '@/domain/buff/BuffScriptLoader';
 import { BuffSystem } from '@/domain/buff/BuffSystem';
-import { TRACE_EVENT_ADDED } from '@/domain/battle/logs/TraceEventCollector';
-import type { IDomainEventBus } from '@/domain/port/IDomainEventBus';
 import { DamageCategory } from '@/domain/skill/types';
 import { battleLogManager } from '@/infrastructure/adapters/logging/BattleLogManager';
 import { container } from '@/infrastructure/di/Container';
+import type { BattleSystem } from '@/domain/battle/BattleSystem';
+import { BATTLE_SYSTEM_TOKEN } from '@/domain/battle/entity/BattleInterfaces';
 import CompendiumDialog from "@/presentation/components/CompendiumDialog.vue";
 import Notification from "@/presentation/components/Notification.vue";
 import ConfirmDialog from "@/presentation/components/ConfirmDialog.vue";
 import { useBattleStore, SkillStepType } from '@/presentation/stores';
-import type { LogEntry } from '@/shared/types/battle-log';
 import { BATTLE_LOG_CATEGORIES } from '@/shared/types/battle-log';
-import type { TraceEvent, TraceEventNode } from '@/shared/types/trace-event';
 import { GameDataProcessor } from "@/shared/utils/GameDataProcessor";
 import { computed, onMounted, onUnmounted, ref, shallowReactive, watch } from "vue";
 import BattleDashboard from "./BattleDashboard.vue";
 import BattleField from "./BattleField.vue";
-import BattleRecordingDialog from "./components/BattleRecordingDialog.vue";
 import BattleRulesDialog from "./components/BattleRulesDialog.vue";
 import type { CharacterOption } from "./components/CharacterEditor.vue";
 import CharacterEditor from "./components/CharacterEditor.vue";
 import DataSnapshotDialog from "./components/DataSnapshotDialog.vue";
 import DebugControlDialog from "./components/DebugControlDialog.vue";
-import DebugLogDialog from "./components/DebugLogDialog.vue";
 import SceneManagementDialog from "./components/SceneManagementDialog.vue";
 import ControlBar from "./ControlBar.vue";
+import ModuleHeader, { modulePanelId, moduleTabId, type ModuleId } from "@/presentation/components/ModuleHeader.vue";
 import ParticipantPanel from "./ParticipantPanel.vue";
+import HaotianMirror from "@/presentation/modules/haotian/HaotianMirror.vue";
 // 通知组件引用
 const notification = ref<InstanceType<typeof Notification> | null>(null);
 
@@ -136,28 +160,12 @@ const showSceneDialog = ref(false);
 const showStatusDialog = ref(false);
 const showCompendiumDialog = ref(false);
 const showDataSnapshotDialog = ref(false);
-const showDebugLogDialog = ref(false);
 const showDebugControlDialog = ref(false);
-const showRecordingDialog = ref(false);
+
+// 当前激活模块（9.3：唤灵台为默认模块）
+const activeModule = ref<ModuleId>('huanling');
 
 // ponytail: 调试面板现在独立监听事件总线，无需 BattleArena 维护 phase 状态
-
-const debugLogs = ref<LogEntry[]>([]);
-
-// 树状调试日志数据
-const traceRoots = ref<TraceEventNode[]>([]);
-
-// 实时流调试日志数据（TraceEvent 全量）
-const traceEvents = ref<TraceEvent[]>([]);
-
-/** 实体 ID → 角色名 映射（调试日志显示名字而非内部 ID，来源：battleStore 投影快照） */
-const actorNames = computed<Record<string, string>>(() => {
-  const m: Record<string, string> = {}
-  for (const [id, p] of battleStore.participants) {
-    m[id] = p.name
-  }
-  return m
-})
 
 const CT = {
   common: {
@@ -175,56 +183,6 @@ const CT = {
 }
 
 /** 从 BattleSystem.traceCollector 刷新树状日志 */
-async function updateTraceRoots() {
-  try {
-    const { BATTLE_SYSTEM_TOKEN } = await import('@/domain/battle/entity/BattleInterfaces')
-    const { BattleSystem } = await import('@/domain/battle/BattleSystem')
-    const bs = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
-    if (bs?.traceCollector) {
-      const collector = bs.traceCollector
-      const allTurns = new Set<number>()
-      for (const e of collector.getAll()) {
-        // 无回合信息的事件（如 Buff 生命周期）落在 turn-0 桶，一并纳入展示
-        allTurns.add(e.turn != null ? Number(e.turn) : 0)
-      }
-      const roots: TraceEventNode[] = []
-      for (const turn of allTurns) {
-        roots.push(...collector.getRootsByTurn(turn))
-      }
-      traceRoots.value = roots
-      traceEvents.value = collector.getAll()
-    }
-  } catch {
-    // 战斗系统未就绪时静默忽略
-  }
-}
-
-/** 从 BattleSystem.traceCollector 刷新实时流事件（TRACE_EVENT_ADDED 广播时触发） */
-async function refreshTraceEvents() {
-  // 弹窗关闭时零成本跳过：订阅常驻，但只在调试面板可见时才全量刷新（避免战斗循环内每次 emit 都 O(n) 复制）
-  if (!showDebugLogDialog.value) return
-  try {
-    const { BATTLE_SYSTEM_TOKEN } = await import('@/domain/battle/entity/BattleInterfaces')
-    const { BattleSystem } = await import('@/domain/battle/BattleSystem')
-    const bs = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString())
-    if (bs?.traceCollector) {
-      traceEvents.value = bs.traceCollector.getAll()
-    }
-  } catch {
-    // 战斗系统未就绪时静默忽略
-  }
-}
-
-// 打开弹窗时刷新
-watch(showDebugLogDialog, async (val) => {
-  if (val) await updateTraceRoots()
-})
-
-const clearDebugLogs = () => {
-  debugLogs.value = [];
-  battleLogManager.clearLogs();
-};
-
 const handleDebugAction = async (action: string) => {
   console.log('Debug action:', action)
   switch (action) {
@@ -490,15 +448,6 @@ onMounted(() => {
   battleService.loadSkillConfigs();
   // 初始化队伍数据
   initBattle();
-  // 监听 battleLogManager 的调试日志 — 通过 addListener 订阅而非 setInterval 轮询
-  debugLogListener = () => {
-    debugLogs.value = battleLogManager.getDebugLogs();
-  };
-  battleLogManager.addListener(debugLogListener);
-  debugLogs.value = battleLogManager.getDebugLogs();
-  // 订阅结构化追踪事件（TRACE_EVENT_ADDED）— 实时流视图随战斗进行自动追加
-  traceEventBus = container.resolve<BuffSystem>('BuffSystem').getEventBus();
-  traceEventBus.on(TRACE_EVENT_ADDED, refreshTraceEvents);
 });
 
 // 监听战斗活跃状态变化
@@ -516,21 +465,6 @@ watch(
     }
   }
 );
-
-// 每场战斗开始时重建 TRACE_EVENT_ADDED 订阅
-// resetBattle() 会 clear() 共享触发总线（兜底清理触发器监听器），TRACE_EVENT_ADDED 订阅被一并清除；
-// 以 currentBattleId 变化为重建信号（每次新战斗必变；isActive 可能保持 true 不变，如战斗中清空队伍后重开）。
-// off 对未注册 handler 是 no-op，幂等安全，保证始终恰好 1 个订阅。
-watch(
-  () => battleStore.currentBattleId,
-  () => {
-    if (traceEventBus) {
-      traceEventBus.off(TRACE_EVENT_ADDED, refreshTraceEvents);
-      traceEventBus.on(TRACE_EVENT_ADDED, refreshTraceEvents);
-    }
-  }
-);
-
 
 // 战斗规则组件事件处理
 const updateSpeed = (speed: number) => {
@@ -717,7 +651,22 @@ const endBattle = async () => {
     const result = await battleStore.endBattle(ParticipantSide.ALLY);
 
     if (result) {
-      notification.value?.addNotification("成功", "战斗已结束", "success");
+      // P1: 战斗结束自动持久化录制，供昊天镜「战斗记录」调用
+      const battleId = battleStore.currentBattleId;
+      let saved = false;
+      if (battleId) {
+        try {
+          const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString());
+          saved = !!(await battleSystem.saveBattleRecording(battleId));
+        } catch {
+          saved = false;
+        }
+      }
+      notification.value?.addNotification(
+        "成功",
+        saved ? "战斗已结束，记录已保存，可在昊天镜回放" : "战斗已结束",
+        "success",
+      );
     } else {
       notification.value?.addNotification("错误", battleStore.error.message || "结束战斗失败", "error");
     }
@@ -783,24 +732,35 @@ const handleBattleSpeedChange = (speed: number) => {
   battleStore.setBattleSpeed(speed);
 };
 
+/** 将当前战斗录制持久化到 IndexedDB，供昊天镜「最新战斗录制」源调用 */
+const saveRecording = async () => {
+  const battleId = battleStore.currentBattleId;
+  if (!battleId) {
+    notification.value?.addNotification("提示", "当前没有进行中的战斗", "warning");
+    return;
+  }
+  try {
+    const battleSystem = container.resolve<BattleSystem>(BATTLE_SYSTEM_TOKEN.toString());
+    const saveKey = await battleSystem.saveBattleRecording(battleId);
+    if (saveKey) {
+      battleLogManager.addSystemLog({ message: `战斗记录已保存: ${battleId}` });
+      notification.value?.addNotification("成功", "战斗记录已保存到本地，可在昊天镜回放", "success");
+    } else {
+      notification.value?.addNotification("错误", "保存失败：未找到该战斗的录制数据", "error");
+    }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    notification.value?.addNotification("错误", `保存失败: ${errorMsg}`, "error");
+  }
+};
+
 // 选择角色
 const selectCharacter = (characterId: string) => {
   battleStore.selectCharacter(characterId);
 };
 
-let debugLogListener: (() => void) | null = null
-let traceEventBus: IDomainEventBus | null = null
-
 onUnmounted(() => {
   battleStore.destroy();
-  if (debugLogListener) {
-    battleLogManager.removeListener(debugLogListener);
-    debugLogListener = null;
-  }
-  if (traceEventBus) {
-    traceEventBus.off(TRACE_EVENT_ADDED, refreshTraceEvents);
-    traceEventBus = null;
-  }
 });
 </script>
 

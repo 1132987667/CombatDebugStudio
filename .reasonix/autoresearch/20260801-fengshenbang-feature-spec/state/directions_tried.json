@@ -1,0 +1,6 @@
+{
+  "directions_tried": [
+    {"dir": "现状核对：存储层/数据域/现有组件/总体设计文档", "outcome": "ok", "evidence": "findings.jsonl"}
+  ],
+  "next_direction": "编写规格说明书文档，五域全覆盖并与现状衔接"
+}

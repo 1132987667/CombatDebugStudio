@@ -34,7 +34,7 @@
       </div>
       <!-- 数据生成模块控件 -->
       <div v-if="module.name === '数据生成'" class="log-gen-control">
-        <div class="log-gen-row">
+        <div class="log-gen-row flex items-center gap-2">
           <span class="log-gen-label">模式:</span>
           <div class="log-gen-options">
             <button v-for="opt in modeOptions" :key="opt.value"
@@ -42,7 +42,7 @@
               @click="genMode = opt.value">{{ opt.label }}</button>
           </div>
         </div>
-        <div class="log-gen-row">
+        <div class="log-gen-row flex items-center gap-2">
           <span class="log-gen-label">格式:</span>
           <div class="log-gen-options">
             <button v-for="opt in formatOptions" :key="opt.value"
@@ -50,11 +50,11 @@
               @click="genFormat = opt.value">{{ opt.label }}</button>
           </div>
         </div>
-        <div class="log-gen-row">
+        <div class="log-gen-row flex items-center gap-2">
           <span class="log-gen-label">场次:</span>
           <NumericStepper v-model="genCount" :min="1" :max="50" :steps="[1, 10, 50]" />
         </div>
-        <div class="log-gen-row">
+        <div class="log-gen-row flex items-center gap-2">
           <span class="log-gen-label">记录:</span>
           <ToggleSwitch v-model="genRecord" label="保存回放/调试记录（昊天镜可加载）" />
         </div>
@@ -354,11 +354,6 @@ const handleButtonClick = (action: string) => {
   gap: var(--space-2);
 }
 
-.log-gen-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
 
 .log-gen-label {
   color: rgba(var(--rgb-white), 0.6);
